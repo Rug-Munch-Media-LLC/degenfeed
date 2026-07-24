@@ -2,8 +2,6 @@
  * Cross-poster per-target publishers
  */
 
-import type { ProtocolName } from './crossposter-types';
-
 // ─── Publisher implementations ──────────────────────────────────────────
 
 async function publishToNostrRelay(_payload: unknown): Promise<boolean> {

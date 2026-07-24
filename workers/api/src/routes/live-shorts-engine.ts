@@ -6,13 +6,13 @@
  */
 
 import type { Env } from '../index';
-import type { LiveShortRecord, Protocol, ViewerCounts } from './live-shorts-types';
-import { DEFAULT_PROTOCOLS, MAX_LIVE_SHORT_DURATION_SECONDS } from './live-shorts-types';
-import { selectBackend, type ProtocolId } from '../lib/live-shorts/protocol-strategies';
+import { type ProtocolId, selectBackend } from '../lib/live-shorts/protocol-strategies';
 import { getStrategy } from '../lib/live-shorts/strategies';
 import { announceStreamToAllProtocols } from '../lib/stream-announcer';
 import { broadcastToAll } from '../ws-broadcast';
 import { CHANNELS } from '../ws-channels';
+import type { LiveShortRecord, Protocol, ViewerCounts } from './live-shorts-types';
+import { MAX_LIVE_SHORT_DURATION_SECONDS } from './live-shorts-types';
 
 // ─── KV Key Helpers ──────────────────────────────────────────────────────
 export function liveShortKey(id: string): string {
@@ -46,7 +46,12 @@ export async function readStringArray(env: Env, key: string): Promise<string[]> 
   }
 }
 
-export async function writeStringArray(env: Env, key: string, arr: string[], ttl: number): Promise<void> {
+export async function writeStringArray(
+  env: Env,
+  key: string,
+  arr: string[],
+  ttl: number,
+): Promise<void> {
   await env.CONTENT_STORE?.put(key, JSON.stringify(arr), {
     expirationTtl: ttl,
   });
@@ -294,7 +299,10 @@ export async function scheduleAutoEnd(
 /**
  * Internal: end a live short, clean up indexes, trigger post-processing.
  */
-export async function endLiveShortInternal(env: Env, sessionId: string): Promise<LiveShortRecord | null> {
+export async function endLiveShortInternal(
+  env: Env,
+  sessionId: string,
+): Promise<LiveShortRecord | null> {
   const raw = await env.CONTENT_STORE?.get(liveShortKey(sessionId));
   if (!raw) return null;
 
@@ -550,4 +558,3 @@ export async function handleLiveShortEnded(env: Env, sessionId: string): Promise
     { expirationTtl: 86400 * 30 }, // Keep for 30 days now that it's archived
   );
 }
-

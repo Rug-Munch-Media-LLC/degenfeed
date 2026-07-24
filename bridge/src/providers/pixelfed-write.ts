@@ -62,8 +62,8 @@ async function apiFetch<T>(
   };
 
   // Add auth if not already present on multipart form
-  if (!headers['Authorization']) {
-    headers['Authorization'] = `Bearer ${PIXELFED_ACCESS_TOKEN}`;
+  if (!headers.Authorization) {
+    headers.Authorization = `Bearer ${PIXELFED_ACCESS_TOKEN}`;
   }
 
   try {
@@ -121,11 +121,11 @@ export async function uploadMedia(
   body += `Content-Type: ${mimeType}${CRLF}${CRLF}`;
 
   const textEncoder = new TextEncoder();
-  const prefix = textEncoder.encode(body);
-  const suffix = textEncoder.encode(`${CRLF}--${boundary}${CRLF}`);
+  const _prefix = textEncoder.encode(body);
+  const _suffix = textEncoder.encode(`${CRLF}--${boundary}${CRLF}`);
 
   if (description) {
-    const descPart = `Content-Disposition: form-data; name="description"${CRLF}${CRLF}${description}${CRLF}--${boundary}--${CRLF}`;
+    const _descPart = `Content-Disposition: form-data; name="description"${CRLF}${CRLF}${description}${CRLF}--${boundary}--${CRLF}`;
     // We can't easily construct this with raw bytes and string intermixed
     // Let's use a simpler approach: fetch with FormData-like body
   }

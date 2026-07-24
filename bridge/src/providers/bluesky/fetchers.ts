@@ -1,6 +1,7 @@
 import type { UnifiedPost } from '../../../server';
 import { postToUnified } from './mapper';
 import type { BskyFeedResponse } from './types';
+
 const $fetch = globalThis.fetch;
 
 const PDS_BASE = 'http://127.0.0.1:3012';

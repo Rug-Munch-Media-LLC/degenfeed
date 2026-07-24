@@ -147,9 +147,9 @@ export class RedditOAuth {
       password: this.config.password,
     });
 
-    const basicAuth = Buffer.from(
-      `${this.config.clientId}:${this.config.clientSecret}`,
-    ).toString('base64');
+    const basicAuth = Buffer.from(`${this.config.clientId}:${this.config.clientSecret}`).toString(
+      'base64',
+    );
 
     const res = await fetch(REDDIT_AUTH_URL, {
       method: 'POST',

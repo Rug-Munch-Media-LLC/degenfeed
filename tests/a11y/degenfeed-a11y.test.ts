@@ -8,45 +8,81 @@
  * Uses axe-core via @axe-core/playwright for automated audit scans.
  * ═════════════════════════════════════════════════════════════════════════════
  */
-import { expect, test } from '@playwright/test';
+
 import type { Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
 // ─── Mock data ──────────────────────────────────────────────────────────────
 
 const MOCK_FEED = {
   data: [
     {
-      id: 'post-1', protocol: 'nostr', text: 'Bitcoin is the future of money!',
+      id: 'post-1',
+      protocol: 'nostr',
+      text: 'Bitcoin is the future of money!',
       html: '<p>Bitcoin is the future of money!</p>',
       createdAt: new Date(Date.now() - 3600000).toISOString(),
-      author: { id: 'npub1abc', displayName: 'Satoshi', avatarUrl: '', handle: 'satoshi', metadata: {} },
-      embeds: [], metrics: { likes: 42, reposts: 10, replies: 5, quotes: 2 },
+      author: {
+        id: 'npub1abc',
+        displayName: 'Satoshi',
+        avatarUrl: '',
+        handle: 'satoshi',
+        metadata: {},
+      },
+      embeds: [],
+      metrics: { likes: 42, reposts: 10, replies: 5, quotes: 2 },
       engagement: { viewerLiked: false, viewerReposted: false, viewerBookmarked: false },
-      niches: ['bitcoin'], parentId: null, raw: {},
+      niches: ['bitcoin'],
+      parentId: null,
+      raw: {},
     },
     {
-      id: 'post-2', protocol: 'farcaster', text: 'Just deployed my first smart contract on Base 🚀',
+      id: 'post-2',
+      protocol: 'farcaster',
+      text: 'Just deployed my first smart contract on Base 🚀',
       html: '<p>Just deployed my first smart contract on Base 🚀</p>',
       createdAt: new Date(Date.now() - 7200000).toISOString(),
-      author: { id: 'fid:123', displayName: 'Builder Guy', avatarUrl: '', handle: 'builder', metadata: {} },
-      embeds: [], metrics: { likes: 128, reposts: 33, replies: 12, quotes: 5 },
+      author: {
+        id: 'fid:123',
+        displayName: 'Builder Guy',
+        avatarUrl: '',
+        handle: 'builder',
+        metadata: {},
+      },
+      embeds: [],
+      metrics: { likes: 128, reposts: 33, replies: 12, quotes: 5 },
       engagement: { viewerLiked: false, viewerReposted: false, viewerBookmarked: false },
-      niches: ['base', 'solidity'], parentId: null, raw: {},
+      niches: ['base', 'solidity'],
+      parentId: null,
+      raw: {},
     },
     {
-      id: 'post-3', protocol: 'bluesky', text: 'AT Protocol is the most underrated social graph.',
+      id: 'post-3',
+      protocol: 'bluesky',
+      text: 'AT Protocol is the most underrated social graph.',
       createdAt: new Date(Date.now() - 10800000).toISOString(),
-      author: { id: 'did:plc:xyz', displayName: 'Protocol Maxi', avatarUrl: '', handle: 'maxi.bsky.social', metadata: {} },
-      embeds: [], metrics: { likes: 67, reposts: 15, replies: 8, quotes: 1 },
+      author: {
+        id: 'did:plc:xyz',
+        displayName: 'Protocol Maxi',
+        avatarUrl: '',
+        handle: 'maxi.bsky.social',
+        metadata: {},
+      },
+      embeds: [],
+      metrics: { likes: 67, reposts: 15, replies: 8, quotes: 1 },
       engagement: { viewerLiked: false, viewerReposted: false, viewerBookmarked: false },
-      niches: ['atproto', 'decentralization'], parentId: null, raw: {},
+      niches: ['atproto', 'decentralization'],
+      parentId: null,
+      raw: {},
     },
   ],
   meta: {
-    total: 3, limit: 50,
+    total: 3,
+    limit: 50,
     perProtocol: { nostr: 1, farcaster: 1, bluesky: 1 },
     trending: [{ topic: 'bitcoin', count: 1, score: 42 }],
-    fetchedAt: Date.now(), topOfHour: 'post-2',
+    fetchedAt: Date.now(),
+    topOfHour: 'post-2',
   },
 };
 
@@ -55,9 +91,15 @@ const MOCK_PREFERENCES = {};
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 async function setupPage(page: Page) {
-  await page.route('**/api/feed/home**', async (route) => { await route.fulfill({ json: MOCK_FEED }); });
-  await page.route('**/api/feed/for-you**', async (route) => { await route.fulfill({ json: MOCK_FEED }); });
-  await page.route('**/api/preferences', async (route) => { await route.fulfill({ json: MOCK_PREFERENCES }); });
+  await page.route('**/api/feed/home**', async (route) => {
+    await route.fulfill({ json: MOCK_FEED });
+  });
+  await page.route('**/api/feed/for-you**', async (route) => {
+    await route.fulfill({ json: MOCK_FEED });
+  });
+  await page.route('**/api/preferences', async (route) => {
+    await route.fulfill({ json: MOCK_PREFERENCES });
+  });
 }
 
 async function runAxeScan(page: Page) {
@@ -204,9 +246,7 @@ test.describe('Accessibility: Color Contrast', () => {
 
     const results = await runAxeScan(page);
     // axe-core includes color-contrast checks by default
-    const contrastViolations = results.violations.filter(
-      (v) => v.id === 'color-contrast',
-    );
+    const contrastViolations = results.violations.filter((v) => v.id === 'color-contrast');
     expect(contrastViolations.length).toBe(0);
   });
 
@@ -216,9 +256,7 @@ test.describe('Accessibility: Color Contrast', () => {
     await page.waitForLoadState('networkidle');
 
     const results = await runAxeScan(page);
-    const contrastViolations = results.violations.filter(
-      (v) => v.id === 'color-contrast',
-    );
+    const contrastViolations = results.violations.filter((v) => v.id === 'color-contrast');
     for (const violation of contrastViolations) {
       for (const node of violation.nodes) {
         // If contrast failures exist, they should at least be on non-text elements
@@ -239,7 +277,7 @@ test.describe('Accessibility: Focus Management', () => {
     // Press Tab to get the first focusable element
     await page.keyboard.press('Tab');
     const focused = page.locator(':focus');
-    const focusedText = await focused.textContent();
+    const _focusedText = await focused.textContent();
     // Should be a skip link or first nav item
     expect(focused).toBeAttached();
   });

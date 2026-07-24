@@ -33,6 +33,7 @@
  * - **Base**: Zora-compatible ERC-20 with bonding curve (wrapped)
  * - **Bridge**: Wormhole-style attestation for cross-chain
  * - **Live Stream**: PeerTube/Owncast integration for live boosts
+ * - **Free Posting**: Gasless announcements on Lens/Farcaster/Zora
  */
 
 export {
@@ -61,6 +62,37 @@ export {
   getDeploymentCost,
   getFeeSummary,
 } from './fees';
+
+// ─── Free / Gasless Posting Modules ─────────────────────────────────────
+
+export {
+  estimateZoraCoinGas,
+  getZoraCoinUrl,
+  isCoinDeployed,
+  prepareZoraCoinCreation,
+} from './zora-free';
+export type {
+  FreeCoinCreationInput,
+  GasEstimate,
+  PreparedCoinCreation,
+} from './zora-free';
+
+export { LensFreePostClient } from './lens-free';
+export type {
+  CreatorCoinPost,
+  LensFreePostConfig,
+  MomokaPostResult,
+} from './lens-free';
+
+export { FarcasterFreePostClient, getNeynarFreeTierInfo } from './farcaster-free';
+export type {
+  CreatorCoinCastInput,
+  FarcasterFreePostConfig,
+  FarcasterPostMode,
+  FreeCastResult,
+} from './farcaster-free';
+
+// ─── Live Stream ─────────────────────────────────────────────────────────
 
 export {
   applyLiveBoost,

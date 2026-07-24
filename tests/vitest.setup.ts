@@ -11,12 +11,24 @@ import { afterEach, vi } from 'vitest';
 if (typeof globalThis.localStorage === 'undefined') {
   (globalThis as Record<string, unknown>).localStorage = {
     _data: {} as Record<string, string>,
-    getItem(key: string) { return this._data[key] ?? null; },
-    setItem(key: string, value: string) { this._data[key] = String(value); },
-    removeItem(key: string) { delete this._data[key]; },
-    clear() { this._data = {}; },
-    get length() { return Object.keys(this._data).length; },
-    key(index: number) { return Object.keys(this._data)[index] ?? null; },
+    getItem(key: string) {
+      return this._data[key] ?? null;
+    },
+    setItem(key: string, value: string) {
+      this._data[key] = String(value);
+    },
+    removeItem(key: string) {
+      delete this._data[key];
+    },
+    clear() {
+      this._data = {};
+    },
+    get length() {
+      return Object.keys(this._data).length;
+    },
+    key(index: number) {
+      return Object.keys(this._data)[index] ?? null;
+    },
   };
 }
 

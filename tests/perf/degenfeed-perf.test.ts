@@ -10,8 +10,9 @@
  * the code is performant enough for production use.
  * ═════════════════════════════════════════════════════════════════════════════
  */
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { Protocol, UnifiedPost, UnifiedIdentity } from '@degenfeed/types';
+
+import type { Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // ─── Mocks for adapters (same pattern as integration tests) ─────────────────
 
@@ -22,17 +23,26 @@ const mockPublish = vi.fn();
 vi.mock('@degenfeed/cross-protocol-bridge/src/transforms/index', () => {
   const mockAdapterMap = new Map<string, any>();
   const adapterIds = [
-    'activitypub→atproto', 'activitypub→nostr', 'atproto→nostr',
-    'nostr→farcaster', 'rss→activitypub',
+    'activitypub→atproto',
+    'activitypub→nostr',
+    'atproto→nostr',
+    'nostr→farcaster',
+    'rss→activitypub',
   ];
   for (const id of adapterIds) {
     mockAdapterMap.set(id, {
-      id, name: id, source: id.split('→')[0], target: id.split('→')[1],
-      healthCheck: mockHealthCheck, transform: mockTransform, publish: mockPublish,
+      id,
+      name: id,
+      source: id.split('→')[0],
+      target: id.split('→')[1],
+      healthCheck: mockHealthCheck,
+      transform: mockTransform,
+      publish: mockPublish,
     });
   }
   return {
-    registerAdapter: vi.fn(), getAdapter: vi.fn((id: string) => mockAdapterMap.get(id) ?? null),
+    registerAdapter: vi.fn(),
+    getAdapter: vi.fn((id: string) => mockAdapterMap.get(id) ?? null),
     getAllAdapters: vi.fn(() => Array.from(mockAdapterMap.values())),
     registerBuiltinAdapters: vi.fn(),
   };
@@ -42,23 +52,38 @@ vi.mock('@degenfeed/cross-protocol-bridge/src/transforms/index', () => {
 
 function createIdentity(id = 'test:user1'): UnifiedIdentity {
   return {
-    id, primary: { protocol: 'nostr', id: 'npub1test' },
+    id,
+    primary: { protocol: 'nostr', id: 'npub1test' },
     handles: { nostr: 'testuser', farcaster: null, lens: null, bluesky: null, mastodon: null },
-    displayName: 'Test User', bio: '', avatarUrl: '',
-    verified: [], followerCount: 100, followingCount: 50, links: [], keys: {},
+    displayName: 'Test User',
+    bio: '',
+    avatarUrl: '',
+    verified: [],
+    followerCount: 100,
+    followingCount: 50,
+    links: [],
+    keys: {},
   };
 }
 
 function createPost(id: string, protocol: Protocol, text?: string): UnifiedPost {
   return {
-    id, protocol,
+    id,
+    protocol,
     author: createIdentity(`${protocol}:author`),
     text: text ?? 'Performance test post content',
     html: `<p>${text ?? 'Performance test post content'}</p>`,
-    embeds: [], createdAt: Date.now(),
+    embeds: [],
+    createdAt: Date.now(),
     metrics: { likes: 10, reposts: 2, replies: 1, quotes: 0 },
-    engagement: { viewerLiked: false, viewerReposted: false, viewerBookmarked: false, raw: { likes: 10, reposts: 2, replies: 1, quotes: 0 } },
-    niches: ['test'], raw: {},
+    engagement: {
+      viewerLiked: false,
+      viewerReposted: false,
+      viewerBookmarked: false,
+      raw: { likes: 10, reposts: 2, replies: 1, quotes: 0 },
+    },
+    niches: ['test'],
+    raw: {},
   };
 }
 
@@ -200,9 +225,7 @@ describe('Performance: Concurrent Users', () => {
     const { Bridge } = await import('@degenfeed/cross-protocol-bridge');
     const bridge = new Bridge({ enabled: true });
 
-    const posts = Array.from({ length: 50 }, (_, i) =>
-      createPost(`nostr:conc${i}`, 'nostr'),
-    );
+    const posts = Array.from({ length: 50 }, (_, i) => createPost(`nostr:conc${i}`, 'nostr'));
 
     const { elapsedMs } = await measureTime(async () => {
       return await Promise.all(posts.map((p) => bridge.bridgePost(p, 'farcaster')));
@@ -220,19 +243,23 @@ describe('Performance: Concurrent Users', () => {
 
     // Link 25 identities
     for (let i = 0; i < 25; i++) {
-      linkIdentity(`df:conc${i}`, `0x${i.toString(16).padStart(40, '0')}`, 'nostr', `npub-conc${i}`, `user${i}`);
+      linkIdentity(
+        `df:conc${i}`,
+        `0x${i.toString(16).padStart(40, '0')}`,
+        'nostr',
+        `npub-conc${i}`,
+        `user${i}`,
+      );
     }
 
     const { elapsedMs } = await measureTime(async () => {
       return await Promise.all(
-        Array.from({ length: 25 }, (_, i) =>
-          resolveByIdentity('nostr', `npub-conc${i}`)),
+        Array.from({ length: 25 }, (_, i) => resolveByIdentity('nostr', `npub-conc${i}`)),
       );
     });
 
     const identities = await Promise.all(
-      Array.from({ length: 25 }, (_, i) =>
-        resolveByIdentity('nostr', `npub-conc${i}`)),
+      Array.from({ length: 25 }, (_, i) => resolveByIdentity('nostr', `npub-conc${i}`)),
     );
     const found = identities.filter(Boolean).length;
     expect(found).toBe(25);

@@ -1,0 +1,80 @@
+{
+  "name": "DegenFeed Self-Hosted",
+  "description": "Your own creator platform — cross-protocol content feed, Ghost blog, ActivityPub, and creator coin. Deploy on your domain, own your data.",
+  "type": "docker-compose",
+  "icon": "https://degenfeed.xyz/favicon.ico",
+  "categories": ["social", "blogging", "creator", "fediverse"],
+  "documentation": "https://docs.degenfeed.xyz/self-host",
+  "min_resources": {
+    "cpu": 1,
+    "memory": 2048,
+    "disk": 20480
+  },
+  "recommended_resources": {
+    "cpu": 2,
+    "memory": 4096,
+    "disk": 51200
+  },
+  "variables": [
+    {
+      "name": "DOMAIN",
+      "label": "Your Domain",
+      "description": "Domain name (DNS A record must point to this server)",
+      "type": "text",
+      "required": true,
+      "placeholder": "alice.xyz"
+    },
+    {
+      "name": "CREATOR_WALLET",
+      "label": "Creator Wallet Address",
+      "description": "Your wallet address for the creator coin (EVM or Solana)",
+      "type": "text",
+      "required": true,
+      "placeholder": "0x..."
+    },
+    {
+      "name": "CREATOR_USERNAME",
+      "label": "Fediverse Username",
+      "description": "Your fediverse handle username (e.g., @alice@alice.xyz)",
+      "type": "text",
+      "default": "creator",
+      "required": false
+    },
+    {
+      "name": "ACME_EMAIL",
+      "label": "Admin Email",
+      "description": "Email for Let's Encrypt expiry notifications",
+      "type": "email",
+      "required": false
+    },
+    {
+      "name": "WHITE_LABEL",
+      "label": "White Label Mode",
+      "description": "Remove DegenFeed branding from the UI",
+      "type": "boolean",
+      "default": "false",
+      "required": false
+    },
+    {
+      "name": "BRAND_COLOR",
+      "label": "Brand Color",
+      "description": "Primary brand color (hex)",
+      "type": "text",
+      "default": "",
+      "required": false,
+      "placeholder": "#ff6b6b"
+    },
+    {
+      "name": "CREATOR_COIN_CHAIN",
+      "label": "Creator Coin Chain",
+      "description": "Blockchain for creator coin deployment",
+      "type": "select",
+      "options": ["base", "solana"],
+      "default": "base",
+      "required": false
+    }
+  ],
+  "compose_file": "https://raw.githubusercontent.com/RugMunchMedia/degenfeed-web/main/deploy/docker-compose.prod.yml",
+  "env_file": "https://raw.githubusercontent.com/RugMunchMedia/degenfeed-web/main/deploy/.env.example",
+  "post_install_message": "## DegenFeed Self-Hosted is LIVE! 🚀\n\n| URL | Description |\n|-----|------------|\n| https://$DOMAIN/ | DegenFeed profile + content hub |\n| https://$DOMAIN/articles | Blog (Ghost) |\n| https://$DOMAIN/articles/ghost | Blog Admin |\n| https://$DOMAIN/coin | Creator Coin |\n| https://$DOMAIN/live | Live Streams |\n| @$CREATOR_USERNAME@$DOMAIN | ActivityPub handle |\n\n### Next Steps\n\n1. **Set up your blog:** Visit https://$DOMAIN/articles/ghost to create admin account\n2. **Connect accounts:** Go to Settings → Connected Accounts\n3. **Creator coin:** Configure at https://$DOMAIN/admin/coin\n4. **Backups:** Set up automated backups (see docs)\n\n### Useful Commands\n\n```bash\n# View logs\ndocker compose logs -f\n\n# Update\ndocker compose pull && docker compose up -d\n\n# Backup\ntar czf backup.tar.gz data/ .env articles/\n```\n\n📖 Full guide: https://docs.degenfeed.xyz/self-host\n💬 Support: https://discord.gg/degenfeed"
+}

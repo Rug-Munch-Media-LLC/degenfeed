@@ -7,14 +7,13 @@
 
 import { Hono } from 'hono';
 import type { Env } from '../index';
-
-import feddyCore from './feddy-core';
-import feddyCommunity from './feddy-community';
-import feddyMembers from './feddy-members';
 import feddyAdmin from './feddy-admin';
+import feddyCommunity from './feddy-community';
+import feddyCore from './feddy-core';
 import feddyFeatures from './feddy-features';
-import feddyTreasury from './feddy-treasury';
+import feddyMembers from './feddy-members';
 import feddyModeration from './feddy-moderation';
+import feddyTreasury from './feddy-treasury';
 import feddyWebhooks from './feddy-webhooks';
 
 const feddy = new Hono<{ Bindings: Env }>();

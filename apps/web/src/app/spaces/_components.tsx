@@ -1,12 +1,11 @@
 // === Sub-components ===
 // Extended for all content types: Audio, Video, Photos, Announcements
 
-import { getProtocolColor, getProtocolIcon, getProtocolLabel } from '@degenfeed/ui';
 import Image from 'next/image';
 import { useCallback, useState } from 'react';
 import { QuickTipButton } from '../../components/QuickTipButton';
 import { LiveDot, Waveform } from './_animations';
-import type { SpaceItem, SpacePlatform, SpaceSpeaker } from './_types';
+import type { SpaceItem, SpaceSpeaker } from './_types';
 import { formatDuration, formatScheduledDate, timeAgo } from './_utils';
 
 export function AvatarImg({

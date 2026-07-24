@@ -17,7 +17,7 @@
  *   });
  */
 
-import { type SubscriptionTier, TIER_PRICES_CENTS, TIER_PRICES_CENTS_YEARLY } from './types';
+import type { SubscriptionTier } from './types';
 
 // ─── Types ───────────────────────────────────────────────────────────────
 

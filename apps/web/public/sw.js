@@ -1,22 +1,25 @@
-/* ── DegenFeed Service Worker v3 ───────────────────────────────
+/* ── DegenFeed Service Worker v4 ───────────────────────────────
  *  Features:
  *    - Navigation preload for instant back/forward navigations
  *    - Precached critical shell pages at install time
  *    - Cache-first for static assets (images, fonts, CSS, JS)
  *    - Stale-while-revalidate for API responses
- *    - Network-first for dynamic pages (feed, notifications)
+ *    - Network-first for dynamic pages (feed, notifications, live)
  *    - Cache versioning with automatic old-cache cleanup
- *    - Offline fallback page
+ *    - Offline fallback page with retry
  *    - Background periodic refresh of cached API data
+ *    - Graceful timeout for slow networks (10s)
  *  ────────────────────────────────────────────────────────── */
 
 const CACHE = {
-  static: 'degenfeed-static-v3',
-  page: 'degenfeed-pages-v3',
-  api: 'degenfeed-api-v3',
-  font: 'degenfeed-fonts-v3',
-  image: 'degenfeed-images-v3',
+  static: 'degenfeed-static-v4',
+  page: 'degenfeed-pages-v4',
+  api: 'degenfeed-api-v4',
+  font: 'degenfeed-fonts-v4',
+  image: 'degenfeed-images-v4',
 };
+
+const NETWORK_TIMEOUT_MS = 10000;
 
 /* ── Critical shell pages to precache at install time ─────── */
 const PRECACHE_URLS = [
@@ -26,8 +29,7 @@ const PRECACHE_URLS = [
   '/discover',
   '/trending',
   '/shorts',
-  '/notifications',
-  '/messages',
+  '/live',
   '/search',
   '/news',
   '/status',
@@ -164,7 +166,21 @@ async function networkFirst(request, cacheName) {
 }
 
 /**
- * Navigation strategy: use preload response, network-first fallback.
+ * Fetch with timeout — fails gracefully if network is slow.
+ */
+async function fetchWithTimeout(request, ms) {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), ms);
+  try {
+    const res = await fetch(request, { signal: controller.signal });
+    return res;
+  } finally {
+    clearTimeout(id);
+  }
+}
+
+/**
+ * Navigation strategy: use preload response, network-first with timeout.
  *
  * Navigation preload (`preloadResponse`) enables the browser to send
  * a fetch in parallel with the service worker boot, cutting ~100ms
@@ -184,9 +200,9 @@ async function navStrategy(event) {
     }
   }
 
-  // Fall back to network-first
+  // Fall back to network-first with timeout
   try {
-    const res = await fetch(event.request);
+    const res = await fetchWithTimeout(event.request, NETWORK_TIMEOUT_MS);
     if (res.ok) {
       const clone = res.clone();
       caches.open(CACHE.page).then((c) => c.put(event.request, clone));

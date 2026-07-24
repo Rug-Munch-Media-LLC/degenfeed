@@ -106,7 +106,7 @@ export function getEraName(eraIndex: number): string {
 }
 
 export function getEraColor(eraIndex: number): string {
-  return CURVE_ERAS[eraIndex]?.color ?? CURVE_ERAS[0]?.color;
+  return CURVE_ERAS[eraIndex]?.color ?? CURVE_ERAS[0]?.color ?? '';
 }
 
 // ─── Token Calculations ──────────────────────────────────────────────────

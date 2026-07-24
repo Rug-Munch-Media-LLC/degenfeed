@@ -12,7 +12,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 // We import the pure helpers from the source — these don't use globalThis.fetch.
 // For fetchMastodonPosts tests we use lazy import so we can mock fetch first.
 import { guessNiches, statusToPost, stripHtml } from '../../bridge/src/providers/gotosocial';
-import type { UnifiedPost } from '../../bridge/src/server/types';
 
 function makeStatus(overrides: Record<string, unknown> = {}) {
   return {

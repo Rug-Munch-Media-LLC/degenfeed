@@ -17,6 +17,8 @@ export interface RegistryEntry {
 }
 
 export class RegistryClient {
+  registryAddress: Address;
+
   constructor(registryAddress: Address) {
     this.registryAddress = registryAddress;
   }

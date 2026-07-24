@@ -201,9 +201,17 @@ function adjustMixForPreference(
   };
 
   const protocolMap: Record<string, keyof MixWeights> = {
-    nostr: 'social', farcaster: 'social', lens: 'social', bluesky: 'social',
-    threads: 'social', mastodon: 'mastodon', lemmy: 'lemmy',
-    peertube: 'peertube', youtube: 'youtube', rss: 'rss', reddit: 'reddit',
+    nostr: 'social',
+    farcaster: 'social',
+    lens: 'social',
+    bluesky: 'social',
+    threads: 'social',
+    mastodon: 'mastodon',
+    lemmy: 'lemmy',
+    peertube: 'peertube',
+    youtube: 'youtube',
+    rss: 'rss',
+    reddit: 'reddit',
   };
 
   // "Show more from X" — triple the weight for that source
@@ -278,7 +286,12 @@ export async function buildUnifiedFeed(
   const startTime = Date.now();
   const sources = resolveSources(opts.sources);
   let mix = getMixWeights(opts.mix ?? 'balanced');
-  mix = adjustMixForPreference(mix, opts.showMoreProtocol, opts.showLessProtocol, opts.excludeProtocols);
+  mix = adjustMixForPreference(
+    mix,
+    opts.showMoreProtocol,
+    opts.showLessProtocol,
+    opts.excludeProtocols,
+  );
   const limit = Math.min(opts.limit ?? 100, 200);
   const section = opts.section ?? 'hot';
 

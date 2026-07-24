@@ -3,17 +3,17 @@
 /**
  * DegenFeed — The Web3 Social Universe.
  *
- * A stunning, addictive landing page that feels like Twitter/X, Threads,
- * and Bluesky had a web3 baby. Animated hero with orbiting protocol logos,
- * live ticker, featured creators, bento grid, and smooth scroll animations.
+ * We're fighting for data independence, creator content control,
+ * and a space where creators can actually own their content and their audience.
+ * One app. 25 protocols. Your data, never sold.
  */
 
 import Link from 'next/link';
-import { useMemo, useRef, useState, useEffect, useCallback } from 'react';
-import { useProtocolConnections } from '../hooks/useProtocolConnections';
-import { ProtocolConnectFlow } from '../components/ProtocolConnectFlow';
-import { OrbitingProtocols } from '../components/hero/OrbitingProtocols';
+import { useEffect, useMemo, useState } from 'react';
 import { LiveTicker } from '../components/hero/LiveTicker';
+import { OrbitingProtocols } from '../components/hero/OrbitingProtocols';
+import { ProtocolConnectFlow } from '../components/ProtocolConnectFlow';
+import { useProtocolConnections } from '../hooks/useProtocolConnections';
 
 /* ─── Types ──────────────────────────────────────────────────────── */
 
@@ -110,10 +110,42 @@ const FEED_PREVIEW: FeedPreviewItem[] = [
 ];
 
 const FEATURED_CREATORS: Creator[] = [
-  { id: '1', name: 'Alice', handle: 'alice.eth', protocol: 'farcaster', followers: '12.4K', avatar: 'A', badge: '🏆 Top Creator' },
-  { id: '2', name: 'Bob', handle: 'bob@hachyderm.io', protocol: 'mastodon', followers: '8.2K', avatar: 'B', badge: '🔥 Trending' },
-  { id: '3', name: 'Carol', handle: 'carol.bsky.social', protocol: 'bluesky', followers: '15.7K', avatar: 'C', badge: '✨ Rising Star' },
-  { id: '4', name: 'Dave', handle: 'npub1dave', protocol: 'nostr', followers: '6.9K', avatar: 'D', badge: '⚡ Zap King' },
+  {
+    id: '1',
+    name: 'Alice',
+    handle: 'alice.eth',
+    protocol: 'farcaster',
+    followers: '12.4K',
+    avatar: 'A',
+    badge: '🏆 Top Creator',
+  },
+  {
+    id: '2',
+    name: 'Bob',
+    handle: 'bob@hachyderm.io',
+    protocol: 'mastodon',
+    followers: '8.2K',
+    avatar: 'B',
+    badge: '🔥 Trending',
+  },
+  {
+    id: '3',
+    name: 'Carol',
+    handle: 'carol.bsky.social',
+    protocol: 'bluesky',
+    followers: '15.7K',
+    avatar: 'C',
+    badge: '✨ Rising Star',
+  },
+  {
+    id: '4',
+    name: 'Dave',
+    handle: 'npub1dave',
+    protocol: 'nostr',
+    followers: '6.9K',
+    avatar: 'D',
+    badge: '⚡ Zap King',
+  },
 ];
 
 const TRENDING_TOPICS = [
@@ -129,8 +161,14 @@ const TRENDING_TOPICS = [
 
 function ProtocolBadge({ pid, connected }: { pid: string; connected?: boolean }) {
   const labels: Record<string, string> = {
-    nostr: 'Nostr', farcaster: 'Farcaster', lens: 'Lens', bluesky: 'Bluesky',
-    mastodon: 'Mastodon', reddit: 'Reddit', peertube: 'PeerTube', pixelfed: 'PixelFed',
+    nostr: 'Nostr',
+    farcaster: 'Farcaster',
+    lens: 'Lens',
+    bluesky: 'Bluesky',
+    mastodon: 'Mastodon',
+    reddit: 'Reddit',
+    peertube: 'PeerTube',
+    pixelfed: 'PixelFed',
   };
   const color = PROTOCOL_COLORS[pid] || 'var(--color-muted)';
 
@@ -174,7 +212,10 @@ function FeedPreviewCard({ item, index }: { item: FeedPreviewItem; index: number
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <span className="text-sm font-bold text-[var(--color-fg)] truncate">{item.author}</span>
-            <span className="protocol-badge" style={{ background: `${color}15`, color, border: `1px solid ${color}30` }}>
+            <span
+              className="protocol-badge"
+              style={{ background: `${color}15`, color, border: `1px solid ${color}30` }}
+            >
               {item.protocol}
             </span>
           </div>
@@ -182,25 +223,53 @@ function FeedPreviewCard({ item, index }: { item: FeedPreviewItem; index: number
         <span className="text-xs text-[var(--color-muted)]">{item.time}</span>
       </div>
 
-      <p className="mb-3 text-sm leading-relaxed text-[var(--color-fg)]">
-        {item.text}
-      </p>
+      <p className="mb-3 text-sm leading-relaxed text-[var(--color-fg)]">{item.text}</p>
 
       <div className="flex items-center gap-4 text-xs text-[var(--color-muted)]">
         <button type="button" className="post-action gap-1.5" aria-label="Like">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <path d="M14 9V5a3 3 0 00-3-3l-4 9v11h11.28a2 2 0 002-1.7l1.38-9a2 2 0 00-2-2.3H14z" />
           </svg>
           {item.likes}
         </button>
         <button type="button" className="post-action gap-1.5" aria-label="Repost">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="17 1 21 5 17 9" /><path d="M3 11V9a4 4 0 014-4h14" /><polyline points="7 23 3 19 7 15" /><path d="M21 13v2a4 4 0 01-4 4H3" />
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <polyline points="17 1 21 5 17 9" />
+            <path d="M3 11V9a4 4 0 014-4h14" />
+            <polyline points="7 23 3 19 7 15" />
+            <path d="M21 13v2a4 4 0 01-4 4H3" />
           </svg>
           {item.reposts}
         </button>
         <button type="button" className="post-action gap-1.5" aria-label="Reply">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
           </svg>
         </button>
@@ -266,7 +335,7 @@ export default function HomePage() {
   const { connectedCount, totalCount, connections } = useProtocolConnections();
   const [connectOpen, setConnectOpen] = useState(false);
   const [scrollY, setScrollY] = useState(0);
-  const [liveStats, setLiveStats] = useState({ protocols: 12, posts: 10427, uptime: 99.9 });
+  const [liveStats, setLiveStats] = useState({ protocols: 25, posts: 10427, uptime: 99.9 });
 
   const hasConnections = connectedCount > 0;
   const feedPreview = useMemo(() => FEED_PREVIEW.sort(() => Math.random() - 0.5).slice(0, 4), []);
@@ -299,7 +368,8 @@ export default function HomePage() {
         <div
           className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] opacity-40"
           style={{
-            background: 'radial-gradient(ellipse at center, rgba(0,255,65,0.08) 0%, transparent 70%)',
+            background:
+              'radial-gradient(ellipse at center, rgba(0,255,65,0.08) 0%, transparent 70%)',
             transform: `translateY(${scrollY * 0.15}px)`,
             transition: 'transform 0.1s ease-out',
           }}
@@ -322,7 +392,8 @@ export default function HomePage() {
 
           {/* Tagline */}
           <div className="mb-3 max-w-3xl">
-            <span className="inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-semibold mb-4"
+            <span
+              className="inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-semibold mb-4"
               style={{
                 borderColor: 'var(--color-accent)',
                 background: 'var(--color-accent-soft)',
@@ -330,7 +401,7 @@ export default function HomePage() {
               }}
             >
               <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-accent)] animate-pulse" />
-              Live — 12 Protocols Connected
+              Live — 25+ Protocols Connected
             </span>
             <h1
               className="text-display sm:text-[5rem] md:text-[6rem] font-black leading-[1] tracking-[-0.05em] mb-3"
@@ -344,9 +415,14 @@ export default function HomePage() {
               className="mx-auto max-w-2xl text-lg md:text-xl leading-relaxed"
               style={{ color: 'var(--color-fg-secondary)' }}
             >
-              One feed to rule them all. Nostr. Farcaster. Lens. Bluesky. Mastodon.
-              <br />
-              Cross-post. Tip in crypto. Own your content.
+              — 25 protocols, one app, your data —
+            </p>
+            <p
+              className="mx-auto mt-2 max-w-2xl text-base md:text-lg leading-relaxed"
+              style={{ color: 'var(--color-fg-secondary)' }}
+            >
+              We&apos;re fighting for data independence, creator content control, and a space where
+              creators can actually own their content and their audience.
             </p>
           </div>
 
@@ -356,25 +432,37 @@ export default function HomePage() {
             style={{ color: 'var(--color-muted)' }}
           >
             <div className="text-center">
-              <div className="text-2xl font-black tabular-nums" style={{ color: 'var(--color-accent)' }}>
-                {liveStats.protocols}
+              <div
+                className="text-2xl font-black tabular-nums"
+                style={{ color: 'var(--color-accent)' }}
+              >
+                25+
               </div>
               <div className="text-xs font-medium uppercase tracking-wider">Protocols</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-black tabular-nums" style={{ color: 'var(--color-accent)' }}>
+              <div
+                className="text-2xl font-black tabular-nums"
+                style={{ color: 'var(--color-accent)' }}
+              >
                 {liveStats.posts.toLocaleString()}+
               </div>
               <div className="text-xs font-medium uppercase tracking-wider">Posts & Counting</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-black tabular-nums" style={{ color: 'var(--color-accent)' }}>
+              <div
+                className="text-2xl font-black tabular-nums"
+                style={{ color: 'var(--color-accent)' }}
+              >
                 {liveStats.uptime}%
               </div>
               <div className="text-xs font-medium uppercase tracking-wider">Uptime</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-black tabular-nums" style={{ color: 'var(--color-accent)' }}>
+              <div
+                className="text-2xl font-black tabular-nums"
+                style={{ color: 'var(--color-accent)' }}
+              >
                 100%
               </div>
               <div className="text-xs font-medium uppercase tracking-wider">Decentralized</div>
@@ -383,11 +471,17 @@ export default function HomePage() {
 
           {/* CTAs */}
           <div className="flex flex-wrap items-center justify-center gap-3 mb-6">
-            <Link
-              href="/feed"
-              className="btn-primary text-base px-8 py-3 gap-2"
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <Link href="/feed" className="btn-primary text-base px-8 py-3 gap-2">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <path d="M5 12h14M12 5l7 7-7 7" />
               </svg>
               Browse Your Feed
@@ -397,8 +491,18 @@ export default function HomePage() {
               onClick={() => setConnectOpen(true)}
               className="btn-secondary text-base px-8 py-3 gap-2"
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
               </svg>
               {hasConnections ? 'Manage Protocols' : 'Connect Your Protocols'}
             </button>
@@ -406,16 +510,23 @@ export default function HomePage() {
 
           {/* Protocol connection indicators */}
           <div className="flex flex-wrap justify-center gap-2 mb-4">
-            {Object.entries(connections).slice(0, 7).map(([id, conn]) => (
-              <ProtocolBadge key={id} pid={id} connected={conn.connected} />
-            ))}
+            {Object.entries(connections)
+              .slice(0, 7)
+              .map(([id, conn]) => (
+                <ProtocolBadge key={id} pid={id} connected={conn.connected} />
+              ))}
           </div>
 
           {/* Live Ticker */}
-          <div className="w-full max-w-4xl mt-4 rounded-xl border" style={{ borderColor: 'var(--color-border)', background: 'var(--color-card)' }}>
+          <div
+            className="w-full max-w-4xl mt-4 rounded-xl border"
+            style={{ borderColor: 'var(--color-border)', background: 'var(--color-card)' }}
+          >
             <div className="flex items-center gap-2 px-4 pt-3 pb-1">
               <span className="live-badge text-[10px]">Live</span>
-              <span className="text-xs font-semibold text-[var(--color-fg)]">What&apos;s Hot Right Now</span>
+              <span className="text-xs font-semibold text-[var(--color-fg)]">
+                What&apos;s Hot Right Now
+              </span>
             </div>
             <LiveTicker />
           </div>
@@ -430,27 +541,36 @@ export default function HomePage() {
               style={{ borderColor: 'var(--color-border)', background: 'var(--color-card)' }}
             >
               <h3 className="mb-4 flex items-center gap-2 text-sm font-bold text-[var(--color-fg)]">
-                <span className="flex h-7 w-7 items-center justify-center rounded-lg text-xs" style={{ background: 'var(--color-accent-soft)', color: 'var(--color-accent)' }}>
+                <span
+                  className="flex h-7 w-7 items-center justify-center rounded-lg text-xs"
+                  style={{ background: 'var(--color-accent-soft)', color: 'var(--color-accent)' }}
+                >
                   ⚡
                 </span>
                 Your Networks
               </h3>
               <div className="space-y-2.5">
-                {Object.entries(connections).slice(0, 6).map(([id, conn]) => (
-                  <div key={id} className="flex items-center gap-2.5">
-                    <span
-                      className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[9px] font-bold"
-                      style={{ background: `${conn.color}18`, color: conn.color, opacity: conn.connected ? 1 : 0.4 }}
-                    >
-                      {conn.icon}
-                    </span>
-                    <span className="flex-1 text-xs text-[var(--color-fg)]">{conn.name}</span>
-                    <span
-                      className={`h-2 w-2 rounded-full ${conn.connected ? 'bg-[var(--color-accent)]' : 'bg-[var(--color-muted)]'}`}
-                      style={conn.connected ? { boxShadow: '0 0 6px var(--color-accent)' } : {}}
-                    />
-                  </div>
-                ))}
+                {Object.entries(connections)
+                  .slice(0, 6)
+                  .map(([id, conn]) => (
+                    <div key={id} className="flex items-center gap-2.5">
+                      <span
+                        className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[9px] font-bold"
+                        style={{
+                          background: `${conn.color}18`,
+                          color: conn.color,
+                          opacity: conn.connected ? 1 : 0.4,
+                        }}
+                      >
+                        {conn.icon}
+                      </span>
+                      <span className="flex-1 text-xs text-[var(--color-fg)]">{conn.name}</span>
+                      <span
+                        className={`h-2 w-2 rounded-full ${conn.connected ? 'bg-[var(--color-accent)]' : 'bg-[var(--color-muted)]'}`}
+                        style={conn.connected ? { boxShadow: '0 0 6px var(--color-accent)' } : {}}
+                      />
+                    </div>
+                  ))}
               </div>
               <button
                 type="button"
@@ -468,19 +588,25 @@ export default function HomePage() {
               style={{ borderColor: 'var(--color-border)', background: 'var(--color-card)' }}
             >
               <h3 className="mb-4 flex items-center gap-2 text-sm font-bold text-[var(--color-fg)]">
-                <span className="flex h-7 w-7 items-center justify-center rounded-lg text-xs" style={{ background: 'rgba(249,24,128,0.12)', color: '#f91880' }}>
+                <span
+                  className="flex h-7 w-7 items-center justify-center rounded-lg text-xs"
+                  style={{ background: 'rgba(249,24,128,0.12)', color: '#f91880' }}
+                >
                   🔥
                 </span>
                 Trending
               </h3>
               <div className="space-y-2">
                 {TRENDING_TOPICS.map((t) => (
-                  <div key={t.topic}
+                  <div
+                    key={t.topic}
                     className="flex items-center justify-between rounded-lg px-3 py-2 transition-colors hover:bg-[var(--color-overlay)]"
                   >
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-semibold text-[var(--color-fg)]">{t.topic}</span>
+                        <span className="text-sm font-semibold text-[var(--color-fg)]">
+                          {t.topic}
+                        </span>
                       </div>
                       <span className="text-xs text-[var(--color-muted)]">{t.posts} posts</span>
                     </div>
@@ -496,20 +622,25 @@ export default function HomePage() {
               style={{ borderColor: 'var(--color-border)', background: 'var(--color-card)' }}
             >
               <h3 className="mb-4 flex items-center gap-2 text-sm font-bold text-[var(--color-fg)]">
-                <span className="flex h-7 w-7 items-center justify-center rounded-lg text-xs" style={{ background: 'rgba(0,186,124,0.12)', color: '#00ba7c' }}>
+                <span
+                  className="flex h-7 w-7 items-center justify-center rounded-lg text-xs"
+                  style={{ background: 'rgba(0,186,124,0.12)', color: '#00ba7c' }}
+                >
                   📊
                 </span>
                 Platform Stats
               </h3>
               <div className="space-y-3">
                 {[
-                  { label: 'Protocols Supported', value: '15+' },
+                  { label: 'Protocols Supported', value: '25+' },
                   { label: 'Active Sources', value: '468' },
                   { label: 'Daily Active Users', value: '2,847' },
                   { label: 'Posts Indexed', value: '10,427' },
                   { label: 'Your Protocols', value: `${connectedCount}` },
                 ].map((stat) => (
-                  <div key={stat.label} className="flex items-center justify-between border-b pb-2 last:border-0 last:pb-0"
+                  <div
+                    key={stat.label}
+                    className="flex items-center justify-between border-b pb-2 last:border-0 last:pb-0"
                     style={{ borderColor: 'var(--color-border)' }}
                   >
                     <span className="text-xs text-[var(--color-muted)]">{stat.label}</span>
@@ -524,7 +655,10 @@ export default function HomePage() {
         {/* ════════════ WHAT'S HAPPENING ════════════ */}
         <section className="mb-12">
           <div className="mb-5 flex items-center justify-between">
-            <h2 className="text-xl font-bold text-[var(--color-fg)]" style={{ fontFamily: 'var(--font-heading)' }}>
+            <h2
+              className="text-xl font-bold text-[var(--color-fg)]"
+              style={{ fontFamily: 'var(--font-heading)' }}
+            >
               What&apos;s happening
             </h2>
             <Link
@@ -545,7 +679,10 @@ export default function HomePage() {
         {/* ════════════ FEATURED CREATORS ════════════ */}
         <section className="mb-12">
           <div className="mb-5 flex items-center gap-2">
-            <h2 className="text-xl font-bold text-[var(--color-fg)]" style={{ fontFamily: 'var(--font-heading)' }}>
+            <h2
+              className="text-xl font-bold text-[var(--color-fg)]"
+              style={{ fontFamily: 'var(--font-heading)' }}
+            >
               Featured Creators
             </h2>
             <span className="live-badge text-[10px]">Trending</span>
@@ -563,21 +700,29 @@ export default function HomePage() {
           style={{ borderColor: 'var(--color-border)', background: 'var(--color-card)' }}
         >
           {/* Decorative gradient */}
-          <div className="absolute inset-0 pointer-events-none opacity-30"
+          <div
+            className="absolute inset-0 pointer-events-none opacity-30"
             style={{
-              background: 'radial-gradient(ellipse at 30% 50%, var(--color-accent-glow) 0%, transparent 60%), radial-gradient(ellipse at 70% 50%, var(--color-accent-secondary-glow) 0%, transparent 60%)',
+              background:
+                'radial-gradient(ellipse at 30% 50%, var(--color-accent-glow) 0%, transparent 60%), radial-gradient(ellipse at 70% 50%, var(--color-accent-secondary-glow) 0%, transparent 60%)',
             }}
           />
 
           <div className="relative">
-            <h2 className="text-3xl md:text-4xl font-black mb-3" style={{ fontFamily: 'var(--font-heading)' }}>
+            <h2
+              className="text-3xl md:text-4xl font-black mb-3"
+              style={{ fontFamily: 'var(--font-heading)' }}
+            >
               <span className="gradient-text">Connect your protocols.</span>
               <br />
               See the universe.
             </h2>
-            <p className="mx-auto mb-6 max-w-lg text-sm leading-relaxed" style={{ color: 'var(--color-fg-secondary)' }}>
+            <p
+              className="mx-auto mb-6 max-w-lg text-sm leading-relaxed"
+              style={{ color: 'var(--color-fg-secondary)' }}
+            >
               Link your accounts across Nostr, Farcaster, Lens, Bluesky, Mastodon, and more.
-              See everything in one unified feed. Post once, reach everywhere.
+              See everything in one unified feed. Post once, reach 25+ protocols.
             </p>
             <div className="flex flex-wrap justify-center gap-2 mb-6">
               {['mastodon', 'bluesky', 'nostr', 'farcaster', 'lens', 'reddit'].map((pid) => (
@@ -589,12 +734,74 @@ export default function HomePage() {
               onClick={() => setConnectOpen(true)}
               className="btn-primary text-base px-10 py-3.5 gap-2"
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4" /><polyline points="10 17 15 12 10 7" /><line x1="15" y1="12" x2="3" y2="12" />
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4" />
+                <polyline points="10 17 15 12 10 7" />
+                <line x1="15" y1="12" x2="3" y2="12" />
               </svg>
               Get Started
             </button>
           </div>
+        </section>
+
+        {/* ════════════ MISSION + VALUE PROPS + FEATURES ════════════ */}
+        {/* ════════════ MISSION STATEMENT ════════════ */}
+        <div
+          className="mb-8 rounded-2xl border p-6 text-center"
+          style={{ borderColor: 'var(--color-border)', background: 'var(--color-card)' }}
+        >
+          <p
+            className="text-base md:text-lg leading-relaxed italic"
+            style={{ color: 'var(--color-fg-secondary)' }}
+          >
+            &ldquo;DegenFeed exists to unify the fragmented decentralized social web. We don&apos;t
+            own your content &mdash; we give you the tools to own it yourself.&rdquo;
+          </p>
+        </div>
+
+        {/* ════════════ VALUE PROPS ════════════ */}
+        <section className="mb-8 grid gap-3 sm:grid-cols-3">
+          {[
+            {
+              icon: '✦',
+              title: 'Your content, seen everywhere.',
+              desc: 'Your identity, owned by you.',
+            },
+            {
+              icon: '◆',
+              title: 'Your identity, owned by you.',
+              desc: 'Not by a corporation. Not by us.',
+            },
+            {
+              icon: '⬟',
+              title: 'Your data, never sold.',
+              desc: 'No ads. No trackers. No data brokers. Period.',
+            },
+          ].map((vp, i) => (
+            <div
+              key={vp.title}
+              className="feed-enter rounded-xl border p-4 text-center"
+              style={{
+                borderColor: 'var(--color-border)',
+                background: 'var(--color-card)',
+                animationDelay: `${i * 80}ms`,
+              }}
+            >
+              <div className="text-lg font-black gradient-text mb-1">{vp.title}</div>
+              <div className="text-xs" style={{ color: 'var(--color-muted)' }}>
+                {vp.desc}
+              </div>
+            </div>
+          ))}
         </section>
 
         {/* ════════════ FEATURES GRID ════════════ */}
@@ -603,7 +810,7 @@ export default function HomePage() {
             {
               icon: '✦',
               title: 'Cross-Protocol Posting',
-              desc: 'Write once, publish to 15+ protocols. Replies from any network appear in one thread.',
+              desc: 'Write once, publish to 25+ protocols. Replies from any network appear in one thread.',
               colour: 'var(--color-accent-glow)',
             },
             {
@@ -664,17 +871,37 @@ export default function HomePage() {
           style={{ borderColor: 'var(--color-border)', color: 'var(--color-muted)' }}
         >
           <nav className="mb-3 flex flex-wrap justify-center gap-4">
-            <Link href="/about" className="hover:underline">About</Link>
-            <Link href="/features" className="hover:underline">Features</Link>
-            <Link href="/docs" className="hover:underline">Docs</Link>
-            <Link href="/faq" className="hover:underline">FAQ</Link>
-            <Link href="/privacy" className="hover:underline">Privacy</Link>
-            <Link href="/terms" className="hover:underline">Terms</Link>
-            <a href="https://github.com/rugmunchmedia/degenfeed" target="_blank" rel="noopener noreferrer" className="hover:underline">GitHub</a>
+            <Link href="/about" className="hover:underline">
+              About
+            </Link>
+            <Link href="/features" className="hover:underline">
+              Features
+            </Link>
+            <Link href="/docs" className="hover:underline">
+              Docs
+            </Link>
+            <Link href="/faq" className="hover:underline">
+              FAQ
+            </Link>
+            <Link href="/privacy" className="hover:underline">
+              Privacy
+            </Link>
+            <Link href="/terms" className="hover:underline">
+              Terms
+            </Link>
+            <a
+              href="https://github.com/rugmunchmedia/degenfeed"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:underline"
+            >
+              GitHub
+            </a>
           </nav>
           <p>
-            &copy; {new Date().getFullYear()} DegenFeed &mdash; a Rug Munch Media LLC product.
-            Open source. Free forever. <span className="hidden sm:inline">No account required.</span>
+            &copy; {new Date().getFullYear()} DegenFeed &mdash; a Rug Munch Media LLC product. Open
+            source. Free forever. Your data, never sold.{' '}
+            <span className="hidden sm:inline">No account required to browse.</span>
           </p>
         </footer>
       </div>

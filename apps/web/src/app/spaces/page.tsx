@@ -6,7 +6,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../../components/AuthProvider';
 import { ANIM_STYLES, LiveDot, SpacesIcon } from './_animations';
 import {
-  ContentTypeBadge,
   EmptyState,
   GridSkeleton,
   LiveSkeleton,

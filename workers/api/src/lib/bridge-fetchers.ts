@@ -12,7 +12,7 @@ import type { SourceContent } from './bridge-types';
 
 async function reliableFetch<T>(
   protocol: string,
-  context: string,
+  _context: string,
   operation: () => Promise<T>,
   env: Env,
 ): Promise<T | null> {

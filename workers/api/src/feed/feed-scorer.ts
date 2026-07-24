@@ -26,7 +26,7 @@ import {
   type TrendingTopic,
   type UserAlgorithmPreferences,
 } from '@degenfeed/feed-core';
-import type { Protocol, UnifiedPost } from '@degenfeed/types';
+import type { UnifiedPost } from '@degenfeed/types';
 import { type Env, log } from '../index';
 import type { StoredUserPreferences } from './feed-cache';
 
@@ -39,7 +39,7 @@ export function parsePrefsFromQuery(
   const platforms = params.get('platforms');
   const recencyWeight = Number(params.get('recencyWeight'));
   const engagementWeight = Number(params.get('engagementWeight'));
-  const diversityBoost = params.get('diversityBoost');
+  const _diversityBoost = params.get('diversityBoost');
   if (!niches && !platforms && !recencyWeight && !engagementWeight) return null;
   return {
     niches: niches ? { active: niches.split(',').filter(Boolean), discoverNew: true } : undefined,

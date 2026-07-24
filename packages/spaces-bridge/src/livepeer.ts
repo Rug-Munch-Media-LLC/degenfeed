@@ -74,7 +74,7 @@ export const livepeerBridge: PlatformBridge = {
         streamKey: stream.streamKey,
         playbackId: stream.playbackId,
         ingestUrl: 'rtmp://rtmp.livepeer.live/live',
-        apiKeyHint: apiKey.slice(0, 8) + '...',
+        apiKeyHint: `${apiKey.slice(0, 8)}...`,
       },
     };
   },

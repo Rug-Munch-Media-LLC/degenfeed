@@ -7,11 +7,8 @@
 import { Hono } from 'hono';
 import type { Env } from '../index';
 import { jsonResponse, noCacheJsonResponse } from '../index';
+import { liveShortKey } from './live-shorts-engine';
 import type { LiveShortRecord } from './live-shorts-types';
-import {
-  liveShortKey,
-  readStringArray,
-} from './live-shorts-engine';
 
 const liveShorts = new Hono<{ Bindings: Env }>();
 // ═════════════════════════════════════════════════════════════════════════
@@ -197,6 +194,5 @@ liveShorts.get('/:id/live-meta', async (c) => {
     return jsonResponse({ error: `Failed to get live meta: ${msg}` }, 500);
   }
 });
-
 
 export default liveShorts;

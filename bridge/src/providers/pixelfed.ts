@@ -13,6 +13,7 @@
  */
 
 import type { SchemaGuard, UnifiedPost } from '../server/types';
+
 const $fetch = globalThis.fetch;
 
 const PIXELFED_LOCAL = 'http://127.0.0.1:9090';

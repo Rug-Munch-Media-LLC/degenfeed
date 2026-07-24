@@ -17,17 +17,17 @@
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
-  stripHtml,
-  guessNiches,
+  ALL_FEEDS,
+  extractEnclosures,
   extractFeaturedImage,
   extractMetadata,
-  extractEnclosures,
-  parseFeedXml,
+  FEED_COUNT,
+  getFeaturedFeeds,
   getFeedsByCategory,
   getNewsletterFeeds,
-  getFeaturedFeeds,
-  FEED_COUNT,
-  ALL_FEEDS,
+  guessNiches,
+  parseFeedXml,
+  stripHtml,
 } from '../../bridge/src/providers/rss';
 
 describe('RSS Provider — stripHtml', () => {
@@ -40,7 +40,7 @@ describe('RSS Provider — stripHtml', () => {
   });
 
   it('should decode HTML entities', () => {
-    expect(stripHtml('&amp; &lt; &gt; &quot; &#39; &#x27; &#x2F; &nbsp;')).toBe('& < > " \' \' /');
+    expect(stripHtml('&amp; &lt; &gt; &quot; &#39; &#x27; &#x2F; &nbsp;')).toBe("& < > \" ' ' /");
   });
 
   it('should collapse multiple spaces', () => {
@@ -89,7 +89,9 @@ describe('RSS Provider — guessNiches', () => {
   });
 
   it('should detect zero-knowledge from zk mention', () => {
-    expect(guessNiches('ZK proof verification costs drop 90%', ['crypto'])).toContain('zero-knowledge');
+    expect(guessNiches('ZK proof verification costs drop 90%', ['crypto'])).toContain(
+      'zero-knowledge',
+    );
   });
 
   it('should detect rwa from real-world mention', () => {
@@ -109,7 +111,9 @@ describe('RSS Provider — guessNiches', () => {
   });
 
   it('should detect wallet from self-custody mention', () => {
-    expect(guessNiches('Self-custody hardware wallet best practices', ['crypto'])).toContain('wallet');
+    expect(guessNiches('Self-custody hardware wallet best practices', ['crypto'])).toContain(
+      'wallet',
+    );
   });
 
   it('should detect oracle from pyth mention', () => {
@@ -199,7 +203,8 @@ describe('RSS Provider — extractEnclosures', () => {
   });
 
   it('should handle multiple enclosures', () => {
-    const e = '<enclosure url="https://example.com/a.mp3" type="audio/mpeg"/><enclosure url="https://example.com/b.mp4" type="video/mp4"/>';
+    const e =
+      '<enclosure url="https://example.com/a.mp3" type="audio/mpeg"/><enclosure url="https://example.com/b.mp4" type="video/mp4"/>';
     const enclosures = extractEnclosures(e);
     expect(enclosures).toHaveLength(2);
   });

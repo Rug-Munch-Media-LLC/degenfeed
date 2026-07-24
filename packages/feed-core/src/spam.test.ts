@@ -73,7 +73,7 @@ describe('spamScore', () => {
     const post = makePost('Make money fast with this guaranteed profit system!');
     const result = spamScore(post);
     // Now matches multiple patterns; verify at least one spam pattern was caught
-    expect(result.signals.some(s => s.startsWith('spam-patterns'))).toBe(true);
+    expect(result.signals.some((s) => s.startsWith('spam-patterns'))).toBe(true);
   });
 
   it('should flag crypto scam patterns (giveaway)', () => {

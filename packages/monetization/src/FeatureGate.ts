@@ -245,7 +245,7 @@ export function PremiumGate({
             </p>
             <a
               href=
-    `/pricing?upgrade=${userTier}`;
+    `/pricing?upgrade=$userTier`;
     className =
       'inline-block w-full rounded-lg bg-amber-500 px-4 py-2 text-xs font-bold text-black hover:bg-amber-400 transition-colors text-center' >
       Upgrade;

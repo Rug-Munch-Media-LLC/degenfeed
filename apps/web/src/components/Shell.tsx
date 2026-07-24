@@ -94,7 +94,7 @@ function DesktopHeader({
 }) {
   return (
     <div className={className}>
-      <div className="mx-auto flex max-w-[1260px] items-center justify-between px-4 h-14">
+      <div className="container-safe flex items-center justify-between h-14">
         {/* Left: Logo */}
         <Link href="/feed" className="flex items-center gap-2 shrink-0" aria-label="DegenFeed Home">
           <Image
@@ -103,6 +103,7 @@ function DesktopHeader({
             width={28}
             height={28}
             className="h-7 w-7 rounded-lg logo-glow"
+            priority
           />
           <span
             className="text-base font-bold tracking-tight hidden sm:inline"
@@ -118,6 +119,7 @@ function DesktopHeader({
             type="button"
             onClick={onSearchOpen}
             className="flex w-full items-center gap-2 rounded-full border border-[var(--color-glass-border)] bg-[var(--color-card)] px-4 py-2 text-sm text-[var(--color-muted)] transition-all hover:border-degen-500/30 hover:text-[var(--color-fg)] focus-visible:outline-2 focus-visible:outline-degen-500 focus-visible:outline-offset-2"
+            style={{ minHeight: '44px' }}
             aria-label="Open search"
           >
             <svg
@@ -135,18 +137,19 @@ function DesktopHeader({
               <line x1="21" y1="21" x2="16.65" y2="16.65" />
             </svg>
             <span className="flex-1 text-left">Search DegenFeed</span>
-            <kbd className="rounded-md border border-white/10 bg-white/[0.06] px-1.5 py-0.5 font-mono text-[9px] font-medium leading-none text-[var(--color-muted)]">
+            <kbd className="rounded-md border border-white/10 bg-white/[0.06] px-1.5 py-0.5 font-mono text-[9px] font-medium leading-none text-[var(--color-muted)] hidden sm:inline">
               ⌘K
             </kbd>
           </button>
         </div>
 
         {/* Right: Actions */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <Link
-            href="/notifications"
-            className="flex h-9 w-9 items-center justify-center rounded-full text-[var(--color-muted)] transition-colors hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)]"
-            aria-label="Notifications"
+            href="/live"
+            className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--color-muted)] transition-colors hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)]"
+            style={{ minHeight: '44px', minWidth: '44px' }}
+            aria-label="Live streams"
           >
             <svg
               width="20"
@@ -159,13 +162,14 @@ function DesktopHeader({
               strokeLinejoin="round"
               aria-hidden="true"
             >
-              <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
-              <path d="M13.73 21a2 2 0 01-3.46 0" />
+              <circle cx="12" cy="12" r="10" />
+              <polygon points="10 8 16 12 10 16 10 8" />
             </svg>
           </Link>
           <Link
             href="/settings"
-            className="flex h-9 w-9 items-center justify-center rounded-full text-[var(--color-muted)] transition-colors hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)]"
+            className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--color-muted)] transition-colors hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)]"
+            style={{ minHeight: '44px', minWidth: '44px' }}
             aria-label="Settings"
           >
             <svg
@@ -208,15 +212,16 @@ function MobileTopBar({
 
   return (
     <div
-      className="flex items-center justify-between border-b border-[var(--color-glass-border)] px-4 py-2 lg:hidden"
+      className="flex items-center justify-between border-b border-[var(--color-glass-border)] px-2 sm:px-4 py-2 lg:hidden"
       style={{ zIndex: 10 }}
     >
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-0.5 sm:gap-1 min-w-0">
         {showBack ? (
           <button
             type="button"
             onClick={() => router.back()}
-            className="-ml-1 flex h-9 w-9 items-center justify-center rounded-full text-[var(--color-muted)] transition-colors hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)]"
+            className="-ml-1 flex h-11 w-11 items-center justify-center rounded-full text-[var(--color-muted)] transition-colors hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)] shrink-0"
+            style={{ minHeight: '44px', minWidth: '44px' }}
             aria-label="Go back"
           >
             <svg
@@ -238,7 +243,8 @@ function MobileTopBar({
           <button
             type="button"
             onClick={onMenuToggle}
-            className="-ml-2 flex h-9 w-9 items-center justify-center rounded-full text-[var(--color-muted)] transition-colors hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)]"
+            className="-ml-2 flex h-11 w-11 items-center justify-center rounded-full text-[var(--color-muted)] transition-colors hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)] shrink-0"
+            style={{ minHeight: '44px', minWidth: '44px' }}
             aria-label="Open navigation menu"
           >
             <svg
@@ -257,20 +263,24 @@ function MobileTopBar({
             </svg>
           </button>
         )}
-        <span className="text-base font-bold ml-1" style={{ color: 'var(--color-fg)' }}>
+        <span
+          className="text-base font-bold ml-1 truncate max-w-[160px] sm:max-w-[240px]"
+          style={{ color: 'var(--color-fg)' }}
+        >
           {pageTitle}
         </span>
       </div>
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
         <button
           type="button"
           onClick={onSearchOpen}
-          className="flex h-9 w-9 items-center justify-center rounded-full text-[var(--color-muted)] transition-colors hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)]"
+          className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--color-muted)] transition-colors hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)]"
+          style={{ minHeight: '44px', minWidth: '44px' }}
           aria-label="Search"
         >
           <svg
-            width="18"
-            height="18"
+            width="20"
+            height="20"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -283,7 +293,11 @@ function MobileTopBar({
             <line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
         </button>
-        <Link href="/feed" className="flex items-center shrink-0" aria-label="DegenFeed Home">
+        <Link
+          href="/feed"
+          className="flex items-center shrink-0 ml-0.5"
+          aria-label="DegenFeed Home"
+        >
           <Image src="/icon.svg" alt="" width={26} height={26} className="h-6 w-6 rounded-lg" />
         </Link>
       </div>
@@ -537,7 +551,7 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
     return () => window.removeEventListener('keydown', handler);
   }, [cycleLayout]);
 
-  const sidebarWidth = sidebarCollapsed ? 'w-[72px]' : 'w-[275px]';
+  const sidebarWidth = sidebarCollapsed ? 'w-[72px]' : 'w-[240px] xl:w-[275px]';
 
   return (
     <div
@@ -549,6 +563,8 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
 
       <SkipLinks />
       <OfflineBanner />
+      {/* Spacer for safe area on desktop header */}
+      <div className="hidden lg:block safe-area-top" />
 
       {/* Desktop header */}
       <div
@@ -559,11 +575,11 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
       </div>
 
       {/* Three-column layout */}
-      <div className="mx-auto flex w-full max-w-[1260px] flex-1 pt-0 lg:pt-14">
+      <div className="container-safe flex flex-1 pt-0 lg:pt-14">
         {/* Left Sidebar (desktop, hide on landing) */}
         {pathname !== '/' && (
           <div
-            className={`hidden lg:block sticky top-14 h-[calc(100vh-3.5rem)] shrink-0 overflow-y-auto border-r border-[var(--color-glass-border)] transition-[width] duration-200 ease-in-out ${sidebarWidth}`}
+            className={`hidden lg:block sticky top-14 h-[calc(100dvh-3.5rem)] shrink-0 overflow-y-auto scrollbar-none border-r border-[var(--color-glass-border)] transition-[width] duration-200 ease-in-out ${sidebarWidth}`}
           >
             <LeftSidebar
               collapsed={sidebarCollapsed}
@@ -580,8 +596,8 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
           aria-label="Main content"
           tabIndex={-1}
           className={`
-            relative z-10 min-h-screen animate-page-enter
-            ${pathname !== '/' && !isSelfLayoutPage ? 'pb-16 lg:pb-0' : ''}
+            relative z-10 min-h-screen min-h-[100dvh] animate-page-enter
+            ${pathname !== '/' && !isSelfLayoutPage ? 'pb-[calc(env(safe-area-inset-bottom,0px)+4.5rem)] lg:pb-0' : ''}
             w-full min-w-0 border-r border-[var(--color-glass-border)]
             ${pathname === '/' ? 'max-w-none border-r-0' : isSelfLayoutPage ? 'flex-1' : 'max-w-[600px] flex-1'}
           `}

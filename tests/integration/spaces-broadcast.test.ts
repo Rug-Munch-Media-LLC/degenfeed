@@ -11,7 +11,7 @@
  * ═════════════════════════════════════════════════════════════════════════════
  */
 
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 // Import pure utility functions directly (no transitive workspace deps)
 import { getGateLabel } from '../../packages/spaces-bridge/src/premium';
@@ -19,7 +19,7 @@ import type { SpaceGating, SpaceItem, SpacePlatform } from '../../packages/space
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
-function makeSpace(overrides: Partial<SpaceItem> = {}): SpaceItem {
+function _makeSpace(overrides: Partial<SpaceItem> = {}): SpaceItem {
   return {
     id: 'nostr:test123',
     title: 'Test Space',
@@ -110,7 +110,12 @@ describe('Spaces — Premium Gate Checking', () => {
 
   it('should check token gate and return failure without RPC', async () => {
     const { checkTokenGate } = await import('../../packages/spaces-bridge/src/premium');
-    const gating: SpaceGating = { type: 'token', tokenAddress: '0xabc', minBalance: '1', chainId: 1 };
+    const gating: SpaceGating = {
+      type: 'token',
+      tokenAddress: '0xabc',
+      minBalance: '1',
+      chainId: 1,
+    };
     const result = await checkTokenGate('0xuser', gating);
     expect(result.allowed).toBe(false);
   });

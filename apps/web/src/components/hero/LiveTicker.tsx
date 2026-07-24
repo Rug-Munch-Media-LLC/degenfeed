@@ -38,10 +38,7 @@ export function LiveTicker() {
               color: 'var(--color-fg-secondary)',
             }}
           >
-            <span
-              className="h-1.5 w-1.5 rounded-full"
-              style={{ background: item.color }}
-            />
+            <span className="h-1.5 w-1.5 rounded-full" style={{ background: item.color }} />
             <span>{item.text}</span>
             <span
               className="rounded px-1 py-0.5 text-[9px] font-semibold uppercase tracking-wider"

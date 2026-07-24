@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 /* ─── Types ───────────────────────────────────────────────────── */
 
@@ -127,7 +127,7 @@ const RECENT_CONTENT: ContentItem[] = [
 
 /* ─── Mini Chart Sparkline ────────────────────────────────────── */
 
-function Sparkline({ data, color }: { data: number[]; color: string }) {
+function _Sparkline({ data, color }: { data: number[]; color: string }) {
   const max = Math.max(...data, 1);
   const w = 80;
   const h = 28;

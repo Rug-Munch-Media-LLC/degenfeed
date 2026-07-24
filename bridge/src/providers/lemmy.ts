@@ -10,7 +10,8 @@
  */
 
 import type { SchemaGuard, UnifiedPost } from '../server/types';
-const $fetch = globalThis.fetch;
+
+const _$fetch = globalThis.fetch;
 
 const LEMMY_LOCAL = 'http://127.0.0.1:8536';
 
@@ -168,10 +169,18 @@ export async function searchLemmy(
   instance: string = '127.0.0.1:8536',
   limit: number = 20,
   page: number = 1,
-): Promise<{ data: UnifiedPost[]; communities: Array<Record<string, unknown>>; meta: Record<string, unknown> }> {
+): Promise<{
+  data: UnifiedPost[];
+  communities: Array<Record<string, unknown>>;
+  meta: Record<string, unknown>;
+}> {
   const baseUrl = instance.startsWith('http') ? instance : `http://${instance}`;
   const hostname = new URL(baseUrl).hostname;
-  const result: { data: UnifiedPost[]; communities: Array<Record<string, unknown>>; meta: Record<string, unknown> } = {
+  const result: {
+    data: UnifiedPost[];
+    communities: Array<Record<string, unknown>>;
+    meta: Record<string, unknown>;
+  } = {
     data: [],
     communities: [],
     meta: { q, type: searchType, instance: hostname, page, limit },
@@ -186,7 +195,7 @@ export async function searchLemmy(
 
     if (!res.ok) return result;
 
-    const data = await res.json() as {
+    const data = (await res.json()) as {
       posts?: LemmyPostView[];
       communities?: Array<{ community: LemmyCommunity }>;
       users?: Array<Record<string, unknown>>;

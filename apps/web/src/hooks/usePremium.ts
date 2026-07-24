@@ -1,11 +1,5 @@
 'use client';
 
-import {
-  type SubscriptionTier,
-  TIER_CONFIGS,
-  TIER_NAMES,
-  TierManager,
-} from '@degenfeed/monetization';
 import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../components/AuthProvider';
 

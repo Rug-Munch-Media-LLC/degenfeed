@@ -68,7 +68,7 @@
   --text-h6: 0.875rem;
 
   /* Heading line-height */
-  --leading-display: 1.0;
+  --leading-display: 1;
   --leading-hero: 1.05;
   --leading-h1: 1.1;
   --leading-h2: 1.2;
@@ -162,12 +162,40 @@
   --ring-offset: 2px;
   --ring-color: var(--color-accent);
 
-  /* ═══ Safe Area ═════════════════════════════════════════════════════════ */
+  /* ═══ Safe Area (Notched Phones) ═══════════════════════════════════════ */
 
+  /* Standard env() safe areas — fall back to 0px on non-notched devices */
   --sat: env(safe-area-inset-top, 0px);
   --sab: env(safe-area-inset-bottom, 0px);
   --sal: env(safe-area-inset-left, 0px);
   --sar: env(safe-area-inset-right, 0px);
+
+  /* iOS viewport-height dynamic (dvh) fallback */
+  --vh: 1vh;
+  --dvh: 1dvh;
+  --svh: 1svh;
+  --lvh: 1lvh;
+
+  /* ═══ Mobile Breakpoint Tokens ═══════════════════════════════════════════ */
+
+  --bp-sm: 640px;
+  --bp-md: 768px;
+  --bp-lg: 1024px;
+  --bp-xl: 1280px;
+  --bp-2xl: 1440px;
+  --bp-xs-min: 320px;
+
+  /* ═══ Touch Target (minimum 44px per WCAG 2.5.5 / 2.5.8) ══════════════ */
+
+  --touch-target-min: 44px;
+  --touch-target-comfortable: 48px;
+
+  /* ═══ Content Max-Widths ════════════════════════════════════════════════ */
+
+  --content-max-narrow: 600px; /* Feed posts, reading */
+  --content-max-default: 680px; /* Article body, prose */
+  --content-max-wide: 900px; /* Media grid, cards */
+  --content-max-full: 1260px; /* Three-column layout */
 
   /* ═══ Z-Index Scale ════════════════════════════════════════════════════ */
 

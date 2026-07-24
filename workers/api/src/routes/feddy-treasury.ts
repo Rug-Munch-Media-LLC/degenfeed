@@ -10,6 +10,7 @@ import { jsonResponse, noCacheJsonResponse } from '../index';
 import {
   addTreasuryTx,
   checkTokenGate,
+  getAllCommunityMembers,
   getCommunityByName,
   getTokenConfig,
   getTokenGates,
@@ -19,17 +20,13 @@ import {
   setTokenGates,
   setTreasury,
   updateMemberTokenBalance,
-  getAllCommunityMembers,
 } from '../lib/feddy-store';
 import {
-  checkPremium,
   csrfCheck,
   requireModOrResponse,
   requireOwnerOrResponse,
   requireSession,
-  sanitizeHtml,
   sanitizeString,
-  shortenWallet,
 } from './feddy-helpers';
 
 const feddy = new Hono<{ Bindings: Env }>();

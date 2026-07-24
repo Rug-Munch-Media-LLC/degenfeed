@@ -11,6 +11,7 @@ import { jsonResponse, noCacheJsonResponse, rateLimit } from '../index';
 import type { FeddyCategory, FeddyCommunity } from '../lib/feddy-store';
 import {
   autocompleteSearch,
+  buildGtsHandle,
   CATEGORY_META,
   createCommunity,
   generateCommunityId,
@@ -24,7 +25,6 @@ import {
   VALID_CATEGORIES,
   VALID_CATEGORIES_SET,
   validateCommunityName,
-  buildGtsHandle,
 } from '../lib/feddy-store';
 import {
   checkPremium,
@@ -207,7 +207,6 @@ feddy.post('/create', async (c) => {
   }
 });
 
-
 // ─── GET /api/feddy/directory — Public community directory ──────────
 
 feddy.get('/directory', async (c) => {
@@ -236,7 +235,6 @@ feddy.get('/directory', async (c) => {
 
   return noCacheJsonResponse(result);
 });
-
 
 // ─── GET /api/feddy/directory/categories — Category list ───────────
 

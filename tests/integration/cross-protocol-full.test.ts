@@ -14,8 +14,9 @@
  * and search modules with mocked adapter transforms (which touch external APIs).
  * ═════════════════════════════════════════════════════════════════════════════
  */
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { Protocol, UnifiedPost, UnifiedIdentity } from '@degenfeed/types';
+
+import type { Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // ─── Mocks for external adapters ────────────────────────────────────────────
 
@@ -60,7 +61,13 @@ function createIdentity(overrides: Partial<UnifiedIdentity> = {}): UnifiedIdenti
   return {
     id: overrides.id ?? 'test:user1',
     primary: overrides.primary ?? { protocol: 'nostr', id: 'npub1test' },
-    handles: overrides.handles ?? { nostr: 'testuser', farcaster: 'testuser', lens: null, bluesky: 'testuser.bsky.social', mastodon: 'testuser@social.test' },
+    handles: overrides.handles ?? {
+      nostr: 'testuser',
+      farcaster: 'testuser',
+      lens: null,
+      bluesky: 'testuser.bsky.social',
+      mastodon: 'testuser@social.test',
+    },
     displayName: overrides.displayName ?? 'Test User',
     bio: overrides.bio ?? 'Cross-protocol test user',
     avatarUrl: overrides.avatarUrl ?? '',
@@ -87,7 +94,9 @@ function createPost(
     createdAt: overrides.createdAt ?? Date.now(),
     metrics: overrides.metrics ?? { likes: 10, reposts: 2, replies: 1, quotes: 0 },
     engagement: overrides.engagement ?? {
-      viewerLiked: false, viewerReposted: false, viewerBookmarked: false,
+      viewerLiked: false,
+      viewerReposted: false,
+      viewerBookmarked: false,
       raw: { likes: 10, reposts: 2, replies: 1, quotes: 0 },
     },
     niches: overrides.niches ?? ['crypto', 'web3'],
@@ -155,7 +164,11 @@ describe('Cross-Protocol: Mastodon → Nostr Bridge', () => {
     const { Bridge } = await import('@degenfeed/cross-protocol-bridge');
     const bridge = new Bridge({ enabled: true });
 
-    const post = createPost({ id: 'mastodon:post3', protocol: 'mastodon', text: 'Video content that fails transform' });
+    const post = createPost({
+      id: 'mastodon:post3',
+      protocol: 'mastodon',
+      text: 'Video content that fails transform',
+    });
     const result = await bridge.bridgePost(post, 'nostr');
     expect(result.success).toBe(false);
     expect(result.error).toContain('Unsupported media type');
@@ -172,8 +185,15 @@ describe('Cross-Protocol: Nostr → ActivityPub Bridge', () => {
   });
 
   it('bridges a Nostr note to Mastodon via ActivityPub', async () => {
-    mockTransform.mockResolvedValue({ success: true as const, payload: { text: 'Nostr note', hashtags: ['nostr'] } });
-    mockPublish.mockResolvedValue({ success: true as const, nativeId: 'ap-post-789', url: 'https://social.test/@user/789' });
+    mockTransform.mockResolvedValue({
+      success: true as const,
+      payload: { text: 'Nostr note', hashtags: ['nostr'] },
+    });
+    mockPublish.mockResolvedValue({
+      success: true as const,
+      nativeId: 'ap-post-789',
+      url: 'https://social.test/@user/789',
+    });
 
     const { Bridge } = await import('@degenfeed/cross-protocol-bridge');
     const bridge = new Bridge({ enabled: true });
@@ -186,8 +206,15 @@ describe('Cross-Protocol: Nostr → ActivityPub Bridge', () => {
   });
 
   it('bridges a Nostr note to Farcaster', async () => {
-    mockTransform.mockResolvedValue({ success: true as const, payload: { text: 'Nostr→Farcaster test' } });
-    mockPublish.mockResolvedValue({ success: true as const, nativeId: 'fc-cast-456', url: 'https://farcaster.example.com/cast/456' });
+    mockTransform.mockResolvedValue({
+      success: true as const,
+      payload: { text: 'Nostr→Farcaster test' },
+    });
+    mockPublish.mockResolvedValue({
+      success: true as const,
+      nativeId: 'fc-cast-456',
+      url: 'https://farcaster.example.com/cast/456',
+    });
 
     const { Bridge } = await import('@degenfeed/cross-protocol-bridge');
     const bridge = new Bridge({ enabled: true });
@@ -209,25 +236,32 @@ describe('Cross-Protocol: Identity Resolution', () => {
   });
 
   it('links and resolves identities across protocols', async () => {
-    const { linkIdentity, resolveByIdentity, resolveByWallet, getLinkedProtocols } =
-      await import('@degenfeed/cross-protocol-bridge');
+    const { linkIdentity, resolveByIdentity, resolveByWallet, getLinkedProtocols } = await import(
+      '@degenfeed/cross-protocol-bridge'
+    );
 
-    linkIdentity('df:user1', '0xabc', 'nostr', 'npub1test', 'testuser', { displayName: 'Test User' });
-    linkIdentity('df:user1', '0xabc', 'farcaster', 'fid:456', 'testuser_fc', { displayName: 'Test User FC' });
-    linkIdentity('df:user1', '0xabc', 'bluesky', 'did:plc:test', 'testuser.bsky.social', { displayName: 'Test User BSky' });
+    linkIdentity('df:user1', '0xabc', 'nostr', 'npub1test', 'testuser', {
+      displayName: 'Test User',
+    });
+    linkIdentity('df:user1', '0xabc', 'farcaster', 'fid:456', 'testuser_fc', {
+      displayName: 'Test User FC',
+    });
+    linkIdentity('df:user1', '0xabc', 'bluesky', 'did:plc:test', 'testuser.bsky.social', {
+      displayName: 'Test User BSky',
+    });
 
     // Resolve by identity
     const resolved = resolveByIdentity('nostr', 'npub1test');
     expect(resolved).toBeDefined();
-    expect(resolved!.displayName).toBe('Test User');
-    expect(resolved!.protocols).toHaveLength(3);
-    expect(resolved!.protocols.map((p) => p.protocol)).toContain('farcaster');
-    expect(resolved!.protocols.map((p) => p.protocol)).toContain('bluesky');
+    expect(resolved?.displayName).toBe('Test User');
+    expect(resolved?.protocols).toHaveLength(3);
+    expect(resolved?.protocols.map((p) => p.protocol)).toContain('farcaster');
+    expect(resolved?.protocols.map((p) => p.protocol)).toContain('bluesky');
 
     // Resolve by wallet
     const byWallet = resolveByWallet('0xabc');
     expect(byWallet).toBeDefined();
-    expect(byWallet!.walletAddress).toBe('0xabc');
+    expect(byWallet?.walletAddress).toBe('0xabc');
 
     // Get linked protocols
     const protocols = getLinkedProtocols('df:user1');
@@ -242,16 +276,17 @@ describe('Cross-Protocol: Identity Resolution', () => {
 
     const byHandle = resolveByHandle('mastodon', 'user@social.test');
     expect(byHandle).toBeDefined();
-    expect(byHandle!.dfId).toBe('df:user2');
+    expect(byHandle?.dfId).toBe('df:user2');
 
     const byNostrHandle = resolveByHandle('nostr', 'nostr_user');
     expect(byNostrHandle).toBeDefined();
-    expect(byNostrHandle!.dfId).toBe('df:user2');
+    expect(byNostrHandle?.dfId).toBe('df:user2');
   });
 
   it('returns undefined for unlinked identities', async () => {
-    const { resolveByIdentity, resolveByHandle, resolveByWallet } =
-      await import('@degenfeed/cross-protocol-bridge');
+    const { resolveByIdentity, resolveByHandle, resolveByWallet } = await import(
+      '@degenfeed/cross-protocol-bridge'
+    );
 
     expect(resolveByIdentity('nostr', 'nonexistent')).toBeUndefined();
     expect(resolveByHandle('farcaster', 'nobody')).toBeUndefined();
@@ -259,8 +294,9 @@ describe('Cross-Protocol: Identity Resolution', () => {
   });
 
   it('unlinks identity correctly', async () => {
-    const { linkIdentity, unlinkIdentity, getLinkedProtocols } =
-      await import('@degenfeed/cross-protocol-bridge');
+    const { linkIdentity, unlinkIdentity, getLinkedProtocols } = await import(
+      '@degenfeed/cross-protocol-bridge'
+    );
 
     linkIdentity('df:user3', '0x111', 'nostr', 'npub3', 'user3');
     linkIdentity('df:user3', '0x111', 'farcaster', 'fid:789', 'user3_fc');
@@ -288,10 +324,13 @@ describe('Cross-Protocol: Identity Resolution', () => {
   });
 
   it('finds linked identities in text', async () => {
-    const { linkIdentity, findLinkedIdentitiesInText } =
-      await import('@degenfeed/cross-protocol-bridge');
+    const { linkIdentity, findLinkedIdentitiesInText } = await import(
+      '@degenfeed/cross-protocol-bridge'
+    );
 
-    linkIdentity('df:find1', '0x333', 'nostr', 'npub-find', 'findable_user', { displayName: 'Findable User' });
+    linkIdentity('df:find1', '0x333', 'nostr', 'npub-find', 'findable_user', {
+      displayName: 'Findable User',
+    });
 
     const found = findLinkedIdentitiesInText('Hey @findable_user, great post!');
     expect(found.length).toBeGreaterThanOrEqual(1);
