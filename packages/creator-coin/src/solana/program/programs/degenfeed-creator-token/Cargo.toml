@@ -1,0 +1,30 @@
+[package]
+name = "degenfeed-creator-token"
+version = "0.1.0"
+description = "DegenFeed Creator Coin — Solana Anchor Program"
+edition = "2021"
+
+[lib]
+name = "degenfeed_creator_token"
+crate-type = ["cdylib", "lib"]
+
+[features]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+cpi = ["no-entrypoint"]
+default = []
+
+[dependencies]
+anchor-lang = { version = "0.30.1", features = ["init-if-needed"] }
+anchor-spl = { version = "0.30.1", features = ["token"] }
+solana-program = "1.18.26"
+spl-token = { version = "4.1.0", features = ["no-entrypoint"] }
+spl-associated-token-account = "2.1.0"
+uint = "0.9.5"
+
+[profile.release]
+opt-level = "z"
+overflow-checks = true
+lto = true
+debug = false

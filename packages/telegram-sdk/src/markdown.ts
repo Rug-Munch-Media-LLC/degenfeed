@@ -190,6 +190,7 @@ function closeOpenTags(html: string): string {
   let match: RegExpExecArray | null;
 
   while ((match = tagRegex.exec(html)) !== null) {
+    if (!match[1]) continue;
     const fullTag = match[0];
     const tagName = match[1]?.toLowerCase();
 

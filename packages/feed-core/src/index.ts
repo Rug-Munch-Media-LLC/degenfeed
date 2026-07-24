@@ -6,6 +6,39 @@ import type {
   UnifiedPost,
 } from '@degenfeed/types';
 
+// ─── User-Controlled Feed Algorithm ────────────────────────────────
+export type {
+  AlgorithmAuditEntry,
+  AlgorithmContext,
+  AlgorithmMode,
+  AlgorithmScoreBreakdown,
+  AlgorithmTransparency,
+  AlgorithmWeights,
+  FeedAlgorithm,
+  NicheSelection,
+  ProtocolWeights,
+  ReasonEntry,
+  ScoredPost,
+  ScorerFn,
+  UserAlgorithmPreferences,
+} from './algorithm';
+export {
+  ALL_NICHES,
+  AlgorithmAuditLog,
+  buildAlgorithmTransparency,
+  DEFAULT_WEIGHTS,
+  FeedAlgorithm,
+  globalAuditLog,
+  MODE_LABELS,
+  MODE_PRESETS,
+  NICHE_LABELS,
+  scoreNiche,
+  scorePopularity,
+  scoreProtocol,
+  scoreQuality,
+  scoreRecency,
+  scoreRelevance,
+} from './algorithm';
 export type { CircuitState } from './circuit-breaker';
 export { CircuitBreaker, CircuitBreakerError } from './circuit-breaker';
 export type { ModerationCheckResult, ModerationThresholds } from './moderation';
@@ -388,8 +421,6 @@ const CRYPTO_RELEVANCE_TERMS = new Set([
 ]);
 
 // ─── Tech / AI / general-interest terms ──────────────────────
-// Added so non-crypto content (AI, tech, science, policy) passes
-// the relevance filter. Users can still toggle non-crypto OFF.
 const TECH_AI_TERMS = new Set([
   'ai',
   'artificial intelligence',
@@ -476,7 +507,6 @@ const ENGLISH_STOPWORDS = new Set([
   'been',
   'more',
   'when',
-  'they',
   'what',
   'like',
   'just',
@@ -532,9 +562,6 @@ function gatherRelevanceText(post: UnifiedPost): string {
 }
 
 export function isRelevantPost(post: UnifiedPost): boolean {
-  // Compute niches inline so we don't depend on the caller having run
-  // enrichPostNiches first. This makes the function safe to call on
-  // a fresh post straight out of a provider.
   const computedNiches =
     post.niches.length > 0
       ? post.niches
@@ -545,8 +572,6 @@ export function isRelevantPost(post: UnifiedPost): boolean {
   const text = gatherRelevanceText({ ...post, niches: computedNiches });
 
   if (computedNiches.length > 0) {
-    // Even with niches, require at least one match to a core crypto signal
-    // so the feed doesn't get polluted by miscategorized noise.
     const hasCoreSignal =
       /\b(crypto|bitcoin|btc|ethereum|eth|solana|sol|defi|nft|web3|blockchain|altcoin|stablecoin|l2|rollup|etf|macro|regulation|security|memecoin|ai|onchain|token)\b/.test(
         text,
@@ -611,8 +636,6 @@ function primaryUrl(post: UnifiedPost): string | null {
 function normalizeUrlForDedup(url: string): string {
   try {
     const u = new URL(url.toLowerCase());
-    // Strip instance domain from ActivityPub post URLs so cross-instance
-    // copies of the same post deduplicate. /@user/123 → same across instances.
     if (u.pathname.startsWith('/@') || u.pathname.includes('/users/')) {
       const parts = u.pathname.split('/');
       const lastTwo = parts.filter(Boolean).slice(-2).join('/');
@@ -894,7 +917,7 @@ export type {
   ScoreBreakdown,
   ScorerContext,
   TrendingTopic,
-  UserAlgorithmPreferences,
+  UserAlgorithmPreferences as RankingUserPrefs,
 } from '@degenfeed/ranking';
 export {
   checkDiversity,

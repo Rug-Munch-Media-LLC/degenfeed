@@ -2,7 +2,7 @@
 
 **Verification Date:** 2026-07-24  
 **Verifier:** DevOps SRE (Network Ownership Audit)  
-**Status:** 🟢 10/13 protocols self-hosted, 7 fully verified as owned
+**Status:** 🟢 11/13 protocols self-hosted, 8 fully verified as owned
 
 ---
 
@@ -15,7 +15,7 @@
 | 3 | **ActivityPub** | PeerTube | 9011 | 🟢 Yes | 🟢 Yes | 🟡 Root password mismatch | 🟢 Federation enabled | 🟢 video.degenfeed.xyz |
 | 4 | **ActivityPub** | WriteFreely | 8086 | 🟢 Yes | 🟢 Yes | 🟢 Yes (user created) | 🟢 ActivityPub enabled | 🔴 blog.degenfeed.xyz NXDOMAIN |
 | 5 | **ActivityPub** | Activity Relay | 8084 | 🟢 Yes | 🟢 Yes | 🟡 Running, no subscriptions | 🟡 Configured, idle | 🟢 relay.degenfeed.xyz |
-| 6 | **ActivityPub** | Pixelfed | 8087 | 🔴 Not deployed | ❌ N/A | ❌ N/A | ❌ N/A | 🔴 N/A |
+| 6 | **ActivityPub** | Pixelfed | 8087 | 🟢 Yes | 🟢 Yes | 🟢 Yes (post created) | 🟢 ActivityPub enabled, WebFinger verified | 🟢 photos.degenfeed.xyz |
 | 7 | **AT Protocol** | Bluesky PDS | 3012 | 🟢 Yes | 🟢 Yes | 🟢 Yes (skeet created) | 🟢 Connected to bsky.network | 🟢 pds.degenfeed.xyz |
 | 8 | **Nostr** | Nostr Relay | 8085 | 🟢 Yes | 🟢 Yes | 🟢 Yes (ownership note published) | 🟡 External relays as fallback (damus.io, nos.lol) | ❌ N/A (local only) |
 | 9 | **Farcaster** | Hubble | 2281 | 🔴 Not deployed | ❌ N/A | 🟡 External API only | 🟡 External (pinata.cloud) | ❌ N/A |
@@ -256,17 +256,77 @@ docker compose -f /srv/degenfeed/relay/docker-compose.yml up -d
 
 ---
 
-### 1.6 Pixelfed — `pixelfed.degenfeed.xyz` (port 8087)
+### 1.6 Pixelfed — `photos.degenfeed.xyz` (port 8087)
 
-**Status:** 🔴 NOT DEPLOYED
+**Status:** 🟢 FULLY OWNED — Photo sharing node for the DegenFeed network
 
 **Verified:**
-- ❌ No container running on port 8087
-- ❌ No container image exists
-- 🟡 Env file exists: `/srv/degenfeed/pixelfed.env` (config but not deployed)
-- 🟡 App key is empty: `APP_KEY=` (needs `php artisan key:generate`)
+- ✅ Image: `ghcr.io/jippi/docker-pixelfed:v0.12.7-apache-8.4-bookworm`
+- ✅ Instance: "DegenFeed Photos" (v0.12.7, Pixelfed API v3.5.3)
+- ✅ Port: `127.0.0.1:8087` bound to localhost
+- ✅ Database: MariaDB 11.4 (separate container `degenfeed-pixelfed-db`)
+- ✅ Redis: Redis 7-alpine (separate container `degenfeed-pixelfed-redis`)
+- ✅ API accessible: `/api/v1/instance` returns title "DegenFeed Photos"
+- ✅ **Admin user:** `photos_admin` (promoted, `is_admin=1`)
+- ✅ **Test user:** `testphoto` created successfully
+- ✅ **Test post:** Status #986310798196555779 created in database
+- ✅ ActivityPub enabled: `ACTIVITY_PUB=true`, WebFinger, NodeInfo operational
+- ✅ WebFinger: `acct:photos_admin@photos.degenfeed.xyz` resolves
+- ✅ NodeInfo: Available at `/api/nodeinfo/2.0.json`
+- ✅ Host-Meta: Available at `/.well-known/host-meta`
+- ✅ Atom feeds enabled
+- ✅ Network timeline enabled
+- ✅ DNS: `photos.degenfeed.xyz` → Cloudflare (188.114.x.x)
+- ✅ App key generated: `base64:OSTiXt/y/D/...`
+- ✅ Headless optimization: Stories disabled, polls disabled, custom emoji disabled
 
-To deploy, Pixelfed requires MySQL, Redis, and a worker queue. See `scripts/infra/docker-compose.full.yml`.
+**Configuration Details:**
+
+| Setting | Value |
+|---------|-------|
+| APP_NAME | DegenFeed Photos |
+| APP_URL | https://photos.degenfeed.xyz |
+| ACTIVITY_PUB | true |
+| OAUTH_PAT_ENABLED | false (Passport version limitation) |
+| SESSION_DRIVER | file |
+| CACHE_DRIVER | file |
+| QUEUE_DRIVER | sync |
+| Media max size | 61M |
+
+**How to Manage:**
+```bash
+# Docker
+cd /srv/degenfeed && docker compose up -d pixelfed
+
+# View logs
+docker logs degenfeed-pixelfed --tail 50
+
+# Artisan commands
+docker exec degenfeed-pixelfed php artisan cache:clear
+
+# Admin user management
+docker exec degenfeed-pixelfed php artisan user:create \
+  --username=NEWUSER \
+  --email=user@degenfeed.xyz \
+  --password=SECUREPASS
+
+# Promote to admin
+docker exec degenfeed-pixelfed-db mariadb -u pixelfed -ppixelfed_changeme pixelfed \
+  -e "UPDATE users SET is_admin=1 WHERE username='NEWUSER';"
+```
+
+**Admin Credentials:**
+| User | Email | Role |
+|------|-------|------|
+| `photos_admin` | admin@degenfeed.xyz | Admin (full) |
+| `testphoto` | testphoto@degenfeed.xyz | Regular user |
+
+**Roadmap:**
+- [ ] Add instance actor (for full ActivityPub compatibility)
+- [ ] Enable HLS video support if needed
+- [ ] Set up storage backend (S3/R2) for media files
+- [ ] Configure proper email delivery
+- [ ] Register with FediDB and The-Federation.info
 
 ---
 
@@ -510,7 +570,7 @@ docker ps --filter name=degenfeed-redlib
 
 | Protocol | Self-Hosted | Action Required | Priority |
 |----------|-------------|-----------------|----------|
-| **Pixelfed** | ❌ | Deploy from full compose, generate APP_KEY | Medium |
+| **Pixelfed** | ✅ | Deployed on port 8087, ActivityPub enabled | Complete |
 | **Nostr Relay** | ✅ | Deployed — Docker Hub image, fully self-hosted | High |
 | **Farcaster Hubble** | ❌ | Evaluate Pinata hosted hub | Low |
 | **Lens Indexer** | ❌ | External API sufficient | Low |
@@ -563,6 +623,10 @@ curl -s http://127.0.0.1:8086/ | grep -o '<title>[^<]*</title>'
 # Bluesky PDS
 curl -s http://127.0.0.1:3012/xrpc/com.atproto.server.describeServer
 
+# Pixelfed
+curl -s http://127.0.0.1:8087/api/v1/instance | python3 -c "import json,sys; d=json.load(sys.stdin); print(f'{d[\"title\"]} — {d[\"stats\"][\"user_count\"]} users, {d[\"stats\"][\"status_count\"]} posts')"
+curl -s 'http://127.0.0.1:8087/.well-known/webfinger?resource=acct:photos_admin@photos.degenfeed.xyz' | python3 -m json.tool
+
 # Activity Relay
 curl -s http://127.0.0.1:8084/nodeinfo/2.1
 
@@ -596,7 +660,7 @@ ws.close()
 "
 
 # DNS verification
-for d in social talk video relay pds blog; do
+for d in social talk video relay pds blog photos; do
   host "$d.degenfeed.xyz" 2>/dev/null || echo "$d.degenfeed.xyz: NO DNS"
 done
 ```

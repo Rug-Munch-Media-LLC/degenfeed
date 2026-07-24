@@ -7,10 +7,9 @@ export {
   formatCount,
   formatDate,
   formatDuration,
+  formatTimeAgo,
   formatTimestamp,
 } from '@degenfeed/utils';
-
-export { formatTimeAgo } from '@degenfeed/utils';
 
 import { formatTimeAgo as timeAgo } from '@degenfeed/utils';
 

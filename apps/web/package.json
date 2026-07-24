@@ -41,7 +41,6 @@
     "@degenfeed/realtime": "workspace:*",
     "@degenfeed/source-discovery": "workspace:*",
     "@degenfeed/storage": "workspace:*",
-    "@degenfeed/tip-contract": "workspace:*",
     "@degenfeed/types": "workspace:*",
     "@degenfeed/ui": "workspace:*",
     "@degenfeed/utils": "workspace:*",

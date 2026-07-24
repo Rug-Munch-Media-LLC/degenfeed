@@ -35,7 +35,14 @@ export async function handleRedditCallback(code: string, state: string): Promise
     body: JSON.stringify({ code }),
   });
   if (!res.ok) throw new Error('Reddit auth failed');
-  const data = await res.json();
+  const d = (await res.json()) as Record<string, unknown>;
+  const data = d as unknown as {
+    id: string;
+    name: string;
+    icon_img?: string;
+    accessToken: string;
+    refreshToken?: string;
+  };
 
   const record = await buildIdentityRecord({
     protocol: 'reddit',

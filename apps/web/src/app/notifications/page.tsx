@@ -554,9 +554,10 @@ export default function NotificationsPage() {
 
   /* == Filter =============================================== */
   const filtered = useMemo(() => {
-    let f = activeProtocol === 'all'
-      ? notifications
-      : notifications.filter((n) => n.protocol === activeProtocol);
+    let f =
+      activeProtocol === 'all'
+        ? notifications
+        : notifications.filter((n) => n.protocol === activeProtocol);
     if (activeTypeGroup !== 'all') {
       f = f.filter((n) => n.type === activeTypeGroup);
     }
@@ -572,7 +573,7 @@ export default function NotificationsPage() {
     for (const n of filtered) {
       const key = n.type || 'other';
       if (!groups[key]) groups[key] = [];
-      groups[key]!.push(n);
+      groups[key]?.push(n);
     }
     return groups;
   }, [filtered]);
@@ -791,9 +792,15 @@ export default function NotificationsPage() {
               const groupUnread = groupItems.filter((n) => !n.read).length;
               if (groupItems.length === 0) return null;
               return (
-                <details key={typeKey} className="group border-b border-[var(--color-border)] last:border-b-0" open>
+                <details
+                  key={typeKey}
+                  className="group border-b border-[var(--color-border)] last:border-b-0"
+                  open
+                >
                   <summary className="sticky top-[180px] z-10 flex cursor-pointer items-center gap-2 bg-[var(--color-bg)] px-4 py-2 text-xs font-semibold text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors select-none">
-                    <span className="text-sm" aria-hidden="true">{groupIcon}</span>
+                    <span className="text-sm" aria-hidden="true">
+                      {groupIcon}
+                    </span>
                     <span>{groupLabel}</span>
                     {groupUnread > 0 && (
                       <span className="ml-auto flex h-4 min-w-[16px] items-center justify-center rounded-full bg-degen-500 px-1 text-[9px] font-bold text-black">

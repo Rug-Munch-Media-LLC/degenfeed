@@ -28,6 +28,10 @@ export interface ProtocolFeedConfig {
   id: string;
   name: string;
   color: string;
+  /** Background/accent color for hero cards */
+  bgColor: string;
+  /** Darker shade for borders */
+  borderColor: string;
   icon: string;
   description: string;
   /** Shown in the identity bar */
@@ -40,6 +44,8 @@ export interface ProtocolFeedConfig {
   postNoun: string;
   /** API endpoint for protocol-specific feed */
   endpoint: string;
+  /** Theme accent that overrides --color-accent on protocol pages */
+  themeAccent?: string;
 }
 
 /**
@@ -53,6 +59,15 @@ function buildRankingTabs(qualityDescription: string) {
     { id: 'new', label: 'New', description: 'Chronological — latest first' },
     { id: 'trending', label: '📈 Trending', description: 'Rising engagement velocity right now' },
   ];
+}
+
+/** Compute backdrop/border colors from main color */
+function themeFromColor(hex: string) {
+  return {
+    bgColor: `${hex}12`,
+    borderColor: `${hex}30`,
+    themeAccent: hex,
+  };
 }
 
 export const PROTOCOL_CONFIGS: Record<string, ProtocolFeedConfig> = {
@@ -71,6 +86,7 @@ export const PROTOCOL_CONFIGS: Record<string, ProtocolFeedConfig> = {
     feedParam: 'farcaster',
     postNoun: 'cast',
     endpoint: '/api/feed/home',
+    ...themeFromColor('#8a63d2'),
   },
   lens: {
     id: 'lens',
@@ -90,6 +106,7 @@ export const PROTOCOL_CONFIGS: Record<string, ProtocolFeedConfig> = {
     feedParam: 'lens',
     postNoun: 'publication',
     endpoint: '/api/feed/home',
+    ...themeFromColor('#abfe2c'),
   },
   bluesky: {
     id: 'bluesky',
@@ -106,6 +123,7 @@ export const PROTOCOL_CONFIGS: Record<string, ProtocolFeedConfig> = {
     feedParam: 'bluesky',
     postNoun: 'skeet',
     endpoint: '/api/feed/home',
+    ...themeFromColor('#1185fe'),
   },
   nostr: {
     id: 'nostr',
@@ -122,6 +140,7 @@ export const PROTOCOL_CONFIGS: Record<string, ProtocolFeedConfig> = {
     feedParam: 'nostr',
     postNoun: 'note',
     endpoint: '/api/feed/home',
+    ...themeFromColor('#8e30eb'),
   },
   mastodon: {
     id: 'mastodon',
@@ -141,6 +160,7 @@ export const PROTOCOL_CONFIGS: Record<string, ProtocolFeedConfig> = {
     feedParam: 'mastodon',
     postNoun: 'toot',
     endpoint: '/api/feed/home',
+    ...themeFromColor('#6364ff'),
   },
 };
 
@@ -198,6 +218,11 @@ export function ProtocolFeedPage({ protocol }: Props) {
       document.documentElement.style.setProperty('--protocol-accent', config.color);
       document.documentElement.style.setProperty('--protocol-accent-rgb', hexToRgb(config.color));
       document.documentElement.setAttribute('data-protocol', protocol);
+      // Also set a CSS variable so FeedCards can use protocol-specific highlights
+      document.documentElement.style.setProperty(
+        '--protocol-accent-bg',
+        config.bgColor || `${config.color}12`,
+      );
     }
   }, [protocol, config]);
 
@@ -231,7 +256,6 @@ export function ProtocolFeedPage({ protocol }: Props) {
       startTransition(() => {
         setActiveTab(tabId);
       });
-      // Brief delay to allow exit animation to play, then re-enable
       setTimeout(() => setTabTransitioning(false), 350);
     },
     [activeTab, config],
@@ -244,7 +268,6 @@ export function ProtocolFeedPage({ protocol }: Props) {
       url.searchParams.set('limit', '25');
       url.searchParams.set('protocols', config.feedParam);
       if (SORT_TAB_IDS.has(activeTab)) {
-        // Hot / Quality / New / Trending map straight onto the worker sorts.
         url.searchParams.set('sort', activeTab);
       }
       if (activeTab === 'local') {
@@ -418,14 +441,23 @@ export function ProtocolFeedPage({ protocol }: Props) {
           {/* Left column — main feed */}
           <div className="min-w-0 flex-1">
             {/* Tab bar + density toggle */}
-            <div className="mb-4 flex items-center justify-between gap-3 overflow-x-auto border-b border-[var(--color-glass-border)] pb-0">
-              <div className="flex gap-1 overflow-x-auto scrollbar-none">
+            <div
+              className="mb-4 flex items-center justify-between gap-3 overflow-x-auto border-b pb-0"
+              style={{ borderColor: 'var(--color-glass-border)' }}
+            >
+              <div
+                className="flex gap-1 overflow-x-auto scrollbar-none"
+                role="tablist"
+                aria-label="Feed sort order"
+              >
                 {config.tabs.map((tab) => {
                   const isActive = activeTab === tab.id;
                   return (
                     <button
                       key={tab.id}
                       type="button"
+                      role="tab"
+                      aria-selected={isActive}
                       onClick={() => handleTabChange(tab.id)}
                       className={`relative whitespace-nowrap px-4 py-2.5 text-sm font-medium transition-all duration-200 ${
                         isActive
@@ -446,17 +478,14 @@ export function ProtocolFeedPage({ protocol }: Props) {
                     </button>
                   );
                 })}
-                {/* == Dedicated Trending page link == */}
                 <Link
                   href={`/${config.id}/trending`}
-                  className="relative whitespace-nowrap px-4 py-2.5 text-sm font-medium text-[var(--color-muted)] transition-colors hover:text-[var(--color-muted)]"
+                  className="relative whitespace-nowrap px-4 py-2.5 text-sm font-medium text-[var(--color-muted)] transition-colors hover:text-[var(--color-fg)]"
                 >
                   📈 Trending
                   <span
                     className="absolute bottom-0 left-1/2 h-0.5 w-10 -translate-x-1/2 rounded-full opacity-0 transition-opacity hover:opacity-60"
-                    style={{
-                      backgroundColor: config.color,
-                    }}
+                    style={{ backgroundColor: config.color }}
                   />
                 </Link>
               </div>
@@ -469,7 +498,9 @@ export function ProtocolFeedPage({ protocol }: Props) {
             {(() => {
               const currentTab = config.tabs.find((t) => t.id === activeTab);
               return currentTab?.description ? (
-                <p className="mb-4 text-xs text-[var(--color-muted)]">{currentTab.description}</p>
+                <p className="mb-4 text-xs" style={{ color: 'var(--color-muted)' }}>
+                  {currentTab.description}
+                </p>
               ) : null;
             })()}
 
@@ -504,7 +535,7 @@ export function ProtocolFeedPage({ protocol }: Props) {
                   : density === 'visual'
                     ? 'feed-density-visual'
                     : ''
-              } ${tabTransitioning ? (tabDirection === 'right' ? 'tab-content-exit' : 'tab-content-exit') : 'tab-content-enter'}`}
+              } ${tabTransitioning ? 'tab-content-exit' : 'tab-content-enter'}`}
               key={`${activeTab}-${contentType}`}
             >
               <FeedList
@@ -536,7 +567,7 @@ export function ProtocolFeedPage({ protocol }: Props) {
                 <h3 className="mb-1 text-base font-bold" style={{ color: config.color }}>
                   No {config.postNoun}s found
                 </h3>
-                <p className="mx-auto max-w-xs text-sm text-[var(--color-muted)]">
+                <p className="mx-auto max-w-xs text-sm" style={{ color: 'var(--color-muted)' }}>
                   There are no {config.postNoun}s from {config.name} right now. This can happen when
                   the network is slow or the API is temporarily unavailable.
                 </p>

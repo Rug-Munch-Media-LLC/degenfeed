@@ -120,12 +120,14 @@ export function getDynamicPrice(supply: bigint): bigint {
   // Overall linear progress (0 to SCALING)
   const linearProgress = (supply * SCALING) / GRADUATION_SUPPLY;
 
-  // Find current era
+  // Find current era (getCurrentEra always returns a valid index)
   const era = getCurrentEra(supply);
+  const curveEra = CURVE_ERAS[era];
+  if (!curveEra) return MIN_PRICE;
 
   // Compute era-local progress for the exponent adjustment
-  const eraStart = era === 0 ? 0n : CURVE_ERAS[era - 1]?.endSupply;
-  const eraEnd = CURVE_ERAS[era]?.endSupply;
+  const eraStart = era === 0 ? 0n : (CURVE_ERAS[era - 1]?.endSupply ?? 0n);
+  const eraEnd = curveEra.endSupply;
   const eraRange = eraEnd - eraStart;
 
   // Spline: blend the linear progress with an era-local exponent
@@ -137,12 +139,11 @@ export function getDynamicPrice(supply: bigint): bigint {
   const progressFraction =
     eraRange > 0n ? Number(((supply - eraStart) * SCALING) / eraRange) / Number(SCALING) : 0;
 
-  const exponent = CURVE_ERAS[era]?.exponent;
-  const slopeMul = CURVE_ERAS[era]?.slopeMultiplier;
+  const { exponent, slopeMultiplier } = curveEra;
 
   // Era-adjusted price: amplify by slope multiplier, shaped by exponent
   const adjustedProgress = Math.max(0.001, progressFraction) ** exponent;
-  const eraBoost = 1 + (slopeMul - 1) * adjustedProgress;
+  const eraBoost = 1 + (slopeMultiplier - 1) * adjustedProgress;
   const adjustedPrice = Number(rawPrice) * eraBoost;
 
   // Clamp
@@ -157,7 +158,8 @@ export function getDynamicPrice(supply: bigint): bigint {
  */
 export function getCurrentEra(supply: bigint): number {
   for (let i = 0; i < CURVE_ERAS.length; i++) {
-    if (supply <= CURVE_ERAS[i]?.endSupply) return i;
+    const era = CURVE_ERAS[i];
+    if (era && supply <= era.endSupply) return i;
   }
   return CURVE_ERAS.length - 1;
 }

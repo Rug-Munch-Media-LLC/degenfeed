@@ -3,20 +3,24 @@
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { rerankResults } from '@/lib/fuzzySearch';
-import type { CommunityResult, IdentityResult, FlatItem, SearchResponse, SearchResult, VideoResult } from './SearchTypes';
 import {
-  formatDate,
-  formatDuration,
-  formatCount,
   getProfileUrl,
   getRecentSearches,
-  saveRecentSearch,
   getTrendingIcon,
-  TRENDING_TOPICS,
   PROTOCOL_FILTERS,
+  saveRecentSearch,
+  TRENDING_TOPICS,
 } from './SearchHelpers';
-import { SearchResultsContainer } from './SearchResultsSection';
 import { SearchIcon } from './SearchIcons';
+import { SearchResultsContainer } from './SearchResultsSection';
+import type {
+  CommunityResult,
+  FlatItem,
+  IdentityResult,
+  SearchResponse,
+  SearchResult,
+  VideoResult,
+} from './SearchTypes';
 
 export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [query, setQuery] = useState('');
@@ -70,7 +74,10 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
           setTrendingTopics(
             data.data.map((item) => ({
               label: item.title,
-              query: item.title.toLowerCase().replace(/[^a-z0-9 ]/g, '').slice(0, 50),
+              query: item.title
+                .toLowerCase()
+                .replace(/[^a-z0-9 ]/g, '')
+                .slice(0, 50),
               icon: getTrendingIcon(item.title),
             })),
           );
@@ -78,17 +85,29 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
           setTrendingTopics(null);
         }
       })
-      .catch(() => { if (!cancelled) setTrendingTopics(null); })
-      .finally(() => { if (!cancelled) setTrendingLoading(false); });
-    return () => { cancelled = true; };
+      .catch(() => {
+        if (!cancelled) setTrendingTopics(null);
+      })
+      .finally(() => {
+        if (!cancelled) setTrendingLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [open, query]);
 
   // Reset state when opened
   useEffect(() => {
     if (open) {
-      setQuery(''); setResults([]); setIdentities([]);
-      setCommunities([]); setVideos([]); setSearched(false);
-      setSelectedIndex(-1); setProtocolFilter(null); setError(null);
+      setQuery('');
+      setResults([]);
+      setIdentities([]);
+      setCommunities([]);
+      setVideos([]);
+      setSearched(false);
+      setSelectedIndex(-1);
+      setProtocolFilter(null);
+      setError(null);
       setLoading(false);
       setTimeout(() => inputRef.current?.focus(), 50);
     }
@@ -103,46 +122,74 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
     el?.scrollIntoView({ block: 'nearest' });
   }, [selectedIndex]);
 
-  const doSearch = useCallback(async (q: string) => {
-    if (q.length < 2) {
-      setResults([]); setIdentities([]); setCommunities([]); setVideos([]); setSearched(false);
-      return;
-    }
-    setLoading(true); setSearched(true); setError(null); setSelectedIndex(-1);
-    try {
-      const pf = protocolFilter ? `&protocols=${protocolFilter}` : '';
-      const res = await fetch(`/api/search?q=${encodeURIComponent(q)}&limit=20${pf}`, { credentials: 'include' });
-      const data: SearchResponse = res.ok ? ((await res.json()) as SearchResponse) : {};
-      const rawPosts = data.data ?? [];
-      if (rawPosts.length > 0) {
-        setResults(rerankResults(
-          rawPosts.map((p, i) => ({ ...p, searchText: p.text, searchAuthor: p.author.displayName, originalIndex: i })),
-          q,
-        ));
-      } else {
+  const doSearch = useCallback(
+    async (q: string) => {
+      if (q.length < 2) {
         setResults([]);
+        setIdentities([]);
+        setCommunities([]);
+        setVideos([]);
+        setSearched(false);
+        return;
       }
-      setIdentities(data.identities ?? []);
-      setCommunities(data.communities ?? []);
-      setVideos(data.videos ?? []);
-    } catch (err) {
-      setResults([]); setIdentities([]); setCommunities([]); setVideos([]);
-      setError(err instanceof Error ? err.message : 'Search failed');
-    }
-    setLoading(false);
-  }, [protocolFilter]);
+      setLoading(true);
+      setSearched(true);
+      setError(null);
+      setSelectedIndex(-1);
+      try {
+        const pf = protocolFilter ? `&protocols=${protocolFilter}` : '';
+        const res = await fetch(`/api/search?q=${encodeURIComponent(q)}&limit=20${pf}`, {
+          credentials: 'include',
+        });
+        const data: SearchResponse = res.ok ? ((await res.json()) as SearchResponse) : {};
+        const rawPosts = data.data ?? [];
+        if (rawPosts.length > 0) {
+          setResults(
+            rerankResults(
+              rawPosts.map((p, i) => ({
+                ...p,
+                searchText: p.text,
+                searchAuthor: p.author.displayName,
+                originalIndex: i,
+              })),
+              q,
+            ),
+          );
+        } else {
+          setResults([]);
+        }
+        setIdentities(data.identities ?? []);
+        setCommunities(data.communities ?? []);
+        setVideos(data.videos ?? []);
+      } catch (err) {
+        setResults([]);
+        setIdentities([]);
+        setCommunities([]);
+        setVideos([]);
+        setError(err instanceof Error ? err.message : 'Search failed');
+      }
+      setLoading(false);
+    },
+    [protocolFilter],
+  );
 
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
-  const handleChange = useCallback((val: string) => {
-    setQuery(val);
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => doSearch(val), 200);
-  }, [doSearch]);
+  const handleChange = useCallback(
+    (val: string) => {
+      setQuery(val);
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      debounceRef.current = setTimeout(() => doSearch(val), 200);
+    },
+    [doSearch],
+  );
 
-  const triggerSearch = useCallback((q: string) => {
-    setQuery(q);
-    doSearch(q);
-  }, [doSearch]);
+  const triggerSearch = useCallback(
+    (q: string) => {
+      setQuery(q);
+      doSearch(q);
+    },
+    [doSearch],
+  );
 
   const commitSearch = useCallback((q: string) => {
     const trimmed = q.trim();
@@ -150,41 +197,72 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
     setRecentSearches(getRecentSearches());
   }, []);
 
-  const navigateToItem = useCallback((item: FlatItem) => {
-    const q = query.trim();
-    if (q) saveRecentSearch(q);
-    switch (item.type) {
-      case 'identity': router.push(getProfileUrl(item.data as IdentityResult)); break;
-      case 'post': router.push(`/post/${encodeURIComponent((item.data as SearchResult).id)}`); break;
-      case 'community': window.open((item.data as CommunityResult).url, '_blank', 'noopener,noreferrer'); break;
-      case 'video': window.open((item.data as VideoResult).url, '_blank', 'noopener,noreferrer'); break;
-    }
-    onClose();
-  }, [query, router, onClose]);
+  const navigateToItem = useCallback(
+    (item: FlatItem) => {
+      const q = query.trim();
+      if (q) saveRecentSearch(q);
+      switch (item.type) {
+        case 'identity':
+          router.push(getProfileUrl(item.data as IdentityResult));
+          break;
+        case 'post':
+          router.push(`/post/${encodeURIComponent((item.data as SearchResult).id)}`);
+          break;
+        case 'community':
+          window.open((item.data as CommunityResult).url, '_blank', 'noopener,noreferrer');
+          break;
+        case 'video':
+          window.open((item.data as VideoResult).url, '_blank', 'noopener,noreferrer');
+          break;
+      }
+      onClose();
+    },
+    [query, router, onClose],
+  );
 
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Escape') { onClose(); return; }
-    if (e.key === 'ArrowDown') { e.preventDefault(); setSelectedIndex((p) => (p < flatItems.length - 1 ? p + 1 : 0)); return; }
-    if (e.key === 'ArrowUp') { e.preventDefault(); setSelectedIndex((p) => (p > 0 ? p - 1 : flatItems.length - 1)); return; }
-    if (e.key === 'Enter') {
-      if (selectedIndex >= 0 && selectedIndex < flatItems.length) {
-        e.preventDefault();
-        const item = flatItems[selectedIndex]; if (item) navigateToItem(item);
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
         return;
       }
-      if (query.trim().length >= 2) {
+      if (e.key === 'ArrowDown') {
         e.preventDefault();
-        commitSearch(query);
-        router.push(`/search?q=${encodeURIComponent(query.trim())}`);
-        onClose();
+        setSelectedIndex((p) => (p < flatItems.length - 1 ? p + 1 : 0));
+        return;
       }
-    }
-  }, [flatItems, selectedIndex, navigateToItem, query, router, onClose, commitSearch]);
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setSelectedIndex((p) => (p > 0 ? p - 1 : flatItems.length - 1));
+        return;
+      }
+      if (e.key === 'Enter') {
+        if (selectedIndex >= 0 && selectedIndex < flatItems.length) {
+          e.preventDefault();
+          const item = flatItems[selectedIndex];
+          if (item) navigateToItem(item);
+          return;
+        }
+        if (query.trim().length >= 2) {
+          e.preventDefault();
+          commitSearch(query);
+          router.push(`/search?q=${encodeURIComponent(query.trim())}`);
+          onClose();
+        }
+      }
+    },
+    [flatItems, selectedIndex, navigateToItem, query, router, onClose, commitSearch],
+  );
 
   const handleClear = useCallback(() => {
-    setQuery(''); setResults([]); setIdentities([]);
-    setCommunities([]); setVideos([]); setSearched(false);
-    setSelectedIndex(-1); setError(null);
+    setQuery('');
+    setResults([]);
+    setIdentities([]);
+    setCommunities([]);
+    setVideos([]);
+    setSearched(false);
+    setSelectedIndex(-1);
+    setError(null);
     inputRef.current?.focus();
   }, []);
 
@@ -201,7 +279,9 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
       aria-modal="true"
       aria-label="Search"
       onKeyDown={handleKeyDown}
-      onClick={(e) => { if (e.target === overlayRef.current) onClose(); }}
+      onClick={(e) => {
+        if (e.target === overlayRef.current) onClose();
+      }}
       className="fixed inset-0 z-[65] flex items-start justify-center bg-black/60 pt-[15vh] backdrop-blur-sm"
     >
       <div className="w-full max-w-xl px-4">
@@ -223,30 +303,53 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
             enterKeyHint="search"
           />
           {query && (
-            <button type="button" onClick={handleClear}
+            <button
+              type="button"
+              onClick={handleClear}
               className="absolute right-12 top-1/2 -translate-y-1/2 flex items-center justify-center h-6 w-6 rounded-full text-[var(--color-muted)] hover:text-[var(--color-fg)] hover:bg-[var(--color-card)] transition-colors"
               aria-label="Clear search"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              >
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
               </svg>
             </button>
           )}
           <span className="hidden sm:flex absolute right-3 top-1/2 -translate-y-1/2 items-center gap-1">
-            <kbd className="rounded-md border border-white/10 bg-white/[0.06] px-1.5 py-0.5 font-mono text-[9px] font-medium leading-none text-[var(--color-muted)]">↑↓</kbd>
-            <kbd className="rounded-md border border-white/10 bg-white/[0.06] px-1.5 py-0.5 font-mono text-[9px] font-medium leading-none text-[var(--color-muted)]">↵</kbd>
-            <button type="button" onClick={onClose}
+            <kbd className="rounded-md border border-white/10 bg-white/[0.06] px-1.5 py-0.5 font-mono text-[9px] font-medium leading-none text-[var(--color-muted)]">
+              ↑↓
+            </kbd>
+            <kbd className="rounded-md border border-white/10 bg-white/[0.06] px-1.5 py-0.5 font-mono text-[9px] font-medium leading-none text-[var(--color-muted)]">
+              ↵
+            </kbd>
+            <button
+              type="button"
+              onClick={onClose}
               className="rounded-lg px-1.5 py-0.5 text-[10px] text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
               aria-label="Close search"
             >
-              <kbd className="rounded-md border border-white/10 bg-white/[0.06] px-1.5 py-0.5 font-mono text-[10px] font-medium leading-none">ESC</kbd>
+              <kbd className="rounded-md border border-white/10 bg-white/[0.06] px-1.5 py-0.5 font-mono text-[10px] font-medium leading-none">
+                ESC
+              </kbd>
             </button>
           </span>
-          <button type="button" onClick={onClose}
+          <button
+            type="button"
+            onClick={onClose}
             className="flex sm:hidden absolute right-3 top-1/2 -translate-y-1/2 rounded-lg px-1.5 py-0.5 text-[10px] text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
             aria-label="Close search"
           >
-            <kbd className="rounded-md border border-white/10 bg-white/[0.06] px-1.5 py-0.5 font-mono text-[10px] font-medium leading-none">ESC</kbd>
+            <kbd className="rounded-md border border-white/10 bg-white/[0.06] px-1.5 py-0.5 font-mono text-[10px] font-medium leading-none">
+              ESC
+            </kbd>
           </button>
         </div>
 
@@ -254,7 +357,9 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
         {query.length >= 2 && (
           <div className="mb-3 flex flex-wrap gap-1.5 px-1">
             {PROTOCOL_FILTERS.map((pf) => (
-              <button key={pf.id ?? 'all'} type="button"
+              <button
+                key={pf.id ?? 'all'}
+                type="button"
                 onClick={() => {
                   const next = protocolFilter === pf.id ? null : pf.id;
                   setProtocolFilter(next);
@@ -276,23 +381,53 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
         {showRecent && (
           <div className="rounded-2xl bg-[var(--color-card)] shadow-lg shadow-black/10 overflow-hidden">
             <div className="flex items-center justify-between px-4 py-2.5 border-b border-[var(--color-border)]">
-              <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--color-muted)]">Recent Searches</span>
-              <button type="button" onClick={() => { localStorage.removeItem('df_recent_searches'); setRecentSearches([]); }}
-                className="text-[10px] text-[var(--color-muted)] hover:text-red-400 transition-colors">Clear</button>
+              <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--color-muted)]">
+                Recent Searches
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  localStorage.removeItem('df_recent_searches');
+                  setRecentSearches([]);
+                }}
+                className="text-[10px] text-[var(--color-muted)] hover:text-red-400 transition-colors"
+              >
+                Clear
+              </button>
             </div>
             <div className="py-1">
               {recentSearches.map((q) => (
-                <button key={q} type="button" onClick={() => triggerSearch(q)}
+                <button
+                  key={q}
+                  type="button"
+                  onClick={() => triggerSearch(q)}
                   onMouseDown={(e) => e.preventDefault()}
                   className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-[var(--color-fg)] hover:bg-[var(--color-overlay)] transition-colors text-left group"
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"
-                    className="shrink-0 text-[var(--color-muted)]">
-                    <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    className="shrink-0 text-[var(--color-muted)]"
+                  >
+                    <circle cx="12" cy="12" r="10" />
+                    <polyline points="12 6 12 12 16 14" />
                   </svg>
                   <span className="truncate flex-1">{q}</span>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"
-                    className="shrink-0 text-[var(--color-muted)] opacity-0 group-hover:opacity-100 transition-opacity">
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    className="shrink-0 text-[var(--color-muted)] opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
                     <polyline points="9 18 15 12 9 6" />
                   </svg>
                 </button>
@@ -309,10 +444,14 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
             </div>
             <div className="p-3 flex flex-wrap gap-1.5">
               {effectiveTrending.map((t) => (
-                <button key={t.query} type="button" onClick={() => triggerSearch(t.query)}
+                <button
+                  key={t.query}
+                  type="button"
+                  onClick={() => triggerSearch(t.query)}
                   className="flex items-center gap-1.5 rounded-full bg-[var(--color-overlay)] px-3 py-1.5 text-xs text-[var(--color-fg)] hover:bg-degen-500/10 hover:text-degen-400 transition-colors"
                 >
-                  <span>{t.icon}</span><span>{t.label}</span>
+                  <span>{t.icon}</span>
+                  <span>{t.label}</span>
                 </button>
               ))}
             </div>
@@ -323,8 +462,19 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
         {!searched && !loading && !query && !showRecent && !showTrending && (
           <div className="rounded-2xl bg-[var(--color-card)] shadow-lg shadow-black/10 py-12 text-center">
             <div className="mb-4 text-[var(--color-muted)] opacity-30">
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mx-auto">
-                <circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" />
+              <svg
+                width="48"
+                height="48"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="mx-auto"
+              >
+                <circle cx="11" cy="11" r="8" />
+                <path d="M21 21l-4.35-4.35" />
               </svg>
             </div>
             <p className="text-sm text-[var(--color-muted)] max-w-xs mx-auto leading-relaxed">

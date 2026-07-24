@@ -452,6 +452,7 @@ const server = http.createServer(async (req, res) => {
           'http://127.0.0.1:8086/',
           'http://127.0.0.1:8087/api/v1/timelines/public',
           'https://api.zora.co/graphql',
+          'http://127.0.0.1:8092/api/status',
         ].map(checkSourceHealth),
       );
       const [
@@ -465,6 +466,7 @@ const server = http.createServer(async (req, res) => {
         writefreelyHealthy,
         pixelfedHealthy,
         zoraHealthy,
+        owncastHealthy,
       ] = results;
       return jsonOk(res, {
         status: results.some(Boolean) ? 'ok' : 'degraded',
@@ -481,8 +483,15 @@ const server = http.createServer(async (req, res) => {
           lens: { healthy: false },
           pixelfed: { healthy: pixelfedHealthy },
           zora: { healthy: zoraHealthy },
+          owncast: { healthy: owncastHealthy },
         },
       });
+    }
+
+    if (path === '/api/live' || path === '/api/streams/live') {
+      const { fetchLiveStreams } = await import('../providers/live');
+      const result = await fetchLiveStreams();
+      return jsonOk(res, result);
     }
 
     if (path === '/api/feed/trending' || path === '/api/trending/sidebar') {

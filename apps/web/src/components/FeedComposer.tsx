@@ -23,12 +23,60 @@ interface ProtocolTarget {
 }
 
 const TARGETS: ProtocolTarget[] = [
-  { id: 'nostr', label: 'Nostr', charLimit: 50000, color: '#8e30eb', icon: '⚡', maxMedia: 10, mediaTypes: ['image/*', 'video/*'] },
-  { id: 'farcaster', label: 'Farcaster', charLimit: 320, color: '#8a63d2', icon: '◈', maxMedia: 4, mediaTypes: ['image/*'] },
-  { id: 'lens', label: 'Lens', charLimit: 5000, color: '#abfe2c', icon: '🌿', maxMedia: 4, mediaTypes: ['image/*', 'video/*'] },
-  { id: 'bluesky', label: 'Bluesky', charLimit: 300, color: '#1185fe', icon: '🦋', maxMedia: 4, mediaTypes: ['image/*'] },
-  { id: 'threads', label: 'Threads', charLimit: 500, color: '#101010', icon: '⊞', maxMedia: 10, mediaTypes: ['image/*', 'video/*'] },
-  { id: 'mastodon', label: 'Mastodon', charLimit: 5000, color: '#6364ff', icon: '🐘', maxMedia: 4, mediaTypes: ['image/*', 'video/*'] },
+  {
+    id: 'nostr',
+    label: 'Nostr',
+    charLimit: 50000,
+    color: '#8e30eb',
+    icon: '⚡',
+    maxMedia: 10,
+    mediaTypes: ['image/*', 'video/*'],
+  },
+  {
+    id: 'farcaster',
+    label: 'Farcaster',
+    charLimit: 320,
+    color: '#8a63d2',
+    icon: '◈',
+    maxMedia: 4,
+    mediaTypes: ['image/*'],
+  },
+  {
+    id: 'lens',
+    label: 'Lens',
+    charLimit: 5000,
+    color: '#abfe2c',
+    icon: '🌿',
+    maxMedia: 4,
+    mediaTypes: ['image/*', 'video/*'],
+  },
+  {
+    id: 'bluesky',
+    label: 'Bluesky',
+    charLimit: 300,
+    color: '#1185fe',
+    icon: '🦋',
+    maxMedia: 4,
+    mediaTypes: ['image/*'],
+  },
+  {
+    id: 'threads',
+    label: 'Threads',
+    charLimit: 500,
+    color: '#101010',
+    icon: '⊞',
+    maxMedia: 10,
+    mediaTypes: ['image/*', 'video/*'],
+  },
+  {
+    id: 'mastodon',
+    label: 'Mastodon',
+    charLimit: 5000,
+    color: '#6364ff',
+    icon: '🐘',
+    maxMedia: 4,
+    mediaTypes: ['image/*', 'video/*'],
+  },
 ];
 
 /** Convert hex color to comma-separated RGB for CSS rgba() usage */
@@ -128,7 +176,7 @@ export function FeedComposer({
       for (const m of media) URL.revokeObjectURL(m.previewUrl);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [media]);
 
   const handleTextChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const el = e.target;
@@ -315,13 +363,12 @@ export function FeedComposer({
           {media.length > 0 && (
             <div className="mb-2 flex flex-wrap gap-2">
               {media.map((m) => (
-                <div key={m.id} className="group relative h-20 w-20 overflow-hidden rounded-xl border border-[var(--color-border)]">
+                <div
+                  key={m.id}
+                  className="group relative h-20 w-20 overflow-hidden rounded-xl border border-[var(--color-border)]"
+                >
                   {m.file.type.startsWith('video/') ? (
-                    <video
-                      src={m.previewUrl}
-                      className="h-full w-full object-cover"
-                      muted
-                    />
+                    <video src={m.previewUrl} className="h-full w-full object-cover" muted />
                   ) : (
                     // biome-ignore lint/performance/noImgElement: blob URL cannot use next/image
                     <img
@@ -336,8 +383,18 @@ export function FeedComposer({
                     className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition-opacity group-hover:opacity-100"
                     aria-label="Remove media"
                   >
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" aria-hidden="true">
-                      <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                    <svg
+                      width="10"
+                      height="10"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                      aria-hidden="true"
+                    >
+                      <line x1="18" y1="6" x2="6" y2="18" />
+                      <line x1="6" y1="6" x2="18" y2="18" />
                     </svg>
                   </button>
                   <span className="absolute bottom-1 left-1 rounded bg-black/60 px-1 text-[8px] text-white">
@@ -349,7 +406,9 @@ export function FeedComposer({
           )}
 
           {mediaError && (
-            <p className="mb-1 text-xs text-red-400" role="alert">{mediaError}</p>
+            <p className="mb-1 text-xs text-red-400" role="alert">
+              {mediaError}
+            </p>
           )}
 
           {/* ── Protocol target buttons ── */}
@@ -409,7 +468,9 @@ export function FeedComposer({
                 const near = pct >= 85 && !over;
                 return (
                   <div key={t.id} className="flex items-center gap-1.5 text-[10px]">
-                    <span className="shrink-0" aria-hidden="true">{t.icon}</span>
+                    <span className="shrink-0" aria-hidden="true">
+                      {t.icon}
+                    </span>
                     <div className="h-1 w-12 overflow-hidden rounded-full bg-[var(--color-overlay)]">
                       <div
                         className={`h-full rounded-full transition-all duration-300 ${
@@ -420,7 +481,11 @@ export function FeedComposer({
                     </div>
                     <span
                       className={`font-mono tabular-nums ${
-                        over ? 'text-red-400' : near ? 'text-yellow-400' : 'text-[var(--color-muted)]'
+                        over
+                          ? 'text-red-400'
+                          : near
+                            ? 'text-yellow-400'
+                            : 'text-[var(--color-muted)]'
                       }`}
                     >
                       {charCount}/{t.charLimit.toLocaleString()}
@@ -469,7 +534,17 @@ export function FeedComposer({
                 aria-label="Attach media"
                 title="Attach images or video"
               >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
                   <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
                   <circle cx="8.5" cy="8.5" r="1.5" />
                   <polyline points="21 15 16 10 5 21" />

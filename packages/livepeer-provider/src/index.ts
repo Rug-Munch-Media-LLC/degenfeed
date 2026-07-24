@@ -210,7 +210,9 @@ export class LivepeerProvider {
 
     return {
       id: String(data.id ?? ''),
-      rtmpUrl: String(data.rtmpAddress ?? data.ingest?.rtmp ?? ''),
+      rtmpUrl: String(
+        data.rtmpAddress ?? (data.ingest as Record<string, string> | undefined)?.rtmp ?? '',
+      ),
       streamKey: String(data.streamKey ?? ''),
       playbackUrl: String(
         data.playbackUrl ?? `https://livepeerr.io/hls/${data.playbackId}/index.m3u8`,
@@ -304,9 +306,10 @@ export class LivepeerProvider {
         playbackUrl: String(
           data.playbackUrl ?? `https://livepeerr.io/hls/${data.playbackId}/index.m3u8`,
         ),
-        ipfsCid: (storage?.ipfs?.cid as string) ?? undefined,
-        duration: Number(data.videoSpec?.duration ?? 0),
-        size: Number(data.videoSpec?.size ?? 0),
+        ipfsCid:
+          ((storage?.ipfs as Record<string, string> | undefined)?.cid as string) ?? undefined,
+        duration: Number((data.videoSpec as Record<string, number> | undefined)?.duration ?? 0),
+        size: Number((data.videoSpec as Record<string, number> | undefined)?.size ?? 0),
         ready: data.status === 'ready',
       };
     } catch {

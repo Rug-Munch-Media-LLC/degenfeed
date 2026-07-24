@@ -97,13 +97,7 @@ interface FeedMeta {
 }
 
 export default function FeedPage() {
-  const {
-    signedInProtocols,
-    engage,
-    publish,
-    ready,
-    walletAddress,
-  } = useAuth();
+  const { signedInProtocols, engage, publish, ready, walletAddress } = useAuth();
   const { showToast } = useToast();
   const isAdmin = walletAddress ? ADMIN_WALLETS.has(walletAddress.toLowerCase()) : false;
 

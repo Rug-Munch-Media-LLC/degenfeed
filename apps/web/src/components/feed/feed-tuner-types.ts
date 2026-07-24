@@ -5,7 +5,13 @@
  * without pulling in the entire UI component.
  */
 
-// ─── Types (all fields required for strict type safety) ───────
+// ─── Algorithm types ───────────────────────────────────────────────
+
+import type { AlgorithmWeights, NicheSelection, ProtocolWeights, AlgorithmMode } from '@degenfeed/feed-core';
+
+export type { AlgorithmWeights, NicheSelection, ProtocolWeights, AlgorithmMode };
+
+// ─── Feed Mix types (existing) ────────────────────────────────────
 
 export interface ProtocolWeight {
   weight: number;
@@ -272,4 +278,46 @@ export function saveSavedMixes(mixes: SavedMix[]): void {
   } catch {
     /* quota */
   }
+}
+
+// ─── Algorithm Preference Persistence ─────────────────────────────
+
+const LS_ALGORITHM_PREFS = 'df_algorithm_prefs';
+
+export interface AlgorithmUserPreferences {
+  weights: AlgorithmWeights;
+  niches: NicheSelection;
+  protocolWeights: ProtocolWeights;
+  mode: AlgorithmMode;
+}
+
+export function loadAlgorithmPrefs(): AlgorithmUserPreferences {
+  if (typeof window === 'undefined') return getDefaultAlgorithmPrefs();
+  try {
+    const raw = localStorage.getItem(LS_ALGORITHM_PREFS);
+    if (raw) {
+      return JSON.parse(raw) as AlgorithmUserPreferences;
+    }
+  } catch {
+    /* ignore */
+  }
+  return getDefaultAlgorithmPrefs();
+}
+
+export function saveAlgorithmPrefs(prefs: AlgorithmUserPreferences): void {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(LS_ALGORITHM_PREFS, JSON.stringify(prefs));
+  } catch {
+    /* quota */
+  }
+}
+
+export function getDefaultAlgorithmPrefs(): AlgorithmUserPreferences {
+  return {
+    weights: { recency: 60, popularity: 50, relevance: 70, protocolDiversity: 40, nicheFocus: 50 },
+    niches: { active: ['crypto', 'bitcoin', 'ethereum', 'defi', 'ai', 'tech'], discoverNew: true },
+    protocolWeights: {},
+    mode: 'standard',
+  };
 }
