@@ -2,8 +2,6 @@
  * @degenfeed/web — Bluesky Media View Types
  */
 
-import type { UnifiedPost } from '@degenfeed/types';
-
 // ─── Tab Configuration ───────────────────────────────────────────
 
 export type TabId = 'images' | 'videos' | 'trending';

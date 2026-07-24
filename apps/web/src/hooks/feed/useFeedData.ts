@@ -11,10 +11,10 @@
 'use client';
 
 import type { UnifiedPost } from '@degenfeed/types';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { encodeTopicWeights } from '../../components/FeedTuner';
 import { fetchWithSwr, getCached } from '../../lib/fetchWithCache';
-import type { AsyncState, FeedMeta, FeedTab, LoadingState } from '../../types/api';
+import type { FeedMeta, FeedTab, LoadingState } from '../../types/api';
 
 export interface UseFeedDataOptions {
   activeTab: FeedTab;

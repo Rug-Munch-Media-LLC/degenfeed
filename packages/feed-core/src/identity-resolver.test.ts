@@ -18,7 +18,7 @@ describe('IdentityResolver', () => {
   it('should resolve a single protocol identity', async () => {
     const profile = await resolver.resolve('nostr', 'npub1abc');
     expect(profile).toBeDefined();
-    expect(profile!.primaryProtocol).toBe('nostr');
+    expect(profile?.primaryProtocol).toBe('nostr');
     expect(profile.handles).toHaveLength(1);
     expect(profile.handles[0].protocol).toBe('nostr');
     expect(profile.handles[0].userId).toBe('npub1abc');
@@ -82,7 +82,7 @@ describe('IdentityResolver', () => {
     expect(profiles).toHaveLength(3);
     const alice = profiles.find((p) => p.handles.some((h) => h.userId === 'npub1abc'));
     expect(alice).toBeDefined();
-    expect(alice!.protocolCount).toBe(2);
+    expect(alice?.protocolCount).toBe(2);
   });
 
   it('should search by handle', async () => {

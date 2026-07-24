@@ -12,7 +12,6 @@ import { DEFAULT_CRYPTO_FEEDS } from './config';
 import { deduplicateRssPosts } from './dedup';
 import { normalizeFeedInput } from './helpers';
 import { feedToUnifiedPosts, parseRss } from './parsers';
-import { computeQualityScore } from './quality';
 import type { RssFeedConfig, RssProviderOptions, ScoredRssPost } from './types';
 
 export class RssProvider implements FeedProvider {

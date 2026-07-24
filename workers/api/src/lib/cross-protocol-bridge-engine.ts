@@ -8,14 +8,19 @@
  *   - bridge-replies.ts   → Reply fetchers per protocol
  */
 
+export { fetchSourceContent } from './bridge-fetchers';
+export {
+  bridgeContent,
+  bridgeContentToAll,
+  fetchReplies,
+  getBridgeHandler,
+  handleBridgeWebhook,
+} from './bridge-publish';
 export type {
   BridgeContentInput,
-  BridgeResult,
-  BridgeReport,
-  SourceContent,
-  CrossProtocolReply,
   BridgeDirectionHandler,
+  BridgeReport,
+  BridgeResult,
+  CrossProtocolReply,
+  SourceContent,
 } from './bridge-types';
-
-export { fetchSourceContent } from './bridge-fetchers';
-export { getBridgeHandler, bridgeContent, bridgeContentToAll, handleBridgeWebhook, fetchReplies } from './bridge-publish';

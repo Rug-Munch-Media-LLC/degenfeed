@@ -35,7 +35,26 @@ export type ChannelSubcategory =
   | 'defi-hacks'
   | 'privacy-tech'
   | 'infrastructure'
-  | 'layer2-scaling';
+  | 'layer2-scaling'
+  // ── Additional subcategories used in config ──────────────────
+  | 'swing-trading'
+  | 'futures-trading'
+  | 'crypto-gaming'
+  | 'nft-market'
+  | 'nft-trading'
+  | 'nft-insights'
+  | 'nft-gaming'
+  | 'web3-gaming'
+  | 'nft-education'
+  | 'bitcoin-macro'
+  | 'bitcoin-philosophy'
+  | 'bitcoin-education'
+  | 'beginner-friendly'
+  | 'scam-awareness'
+  | 'cybersecurity'
+  | 'smart-contracts'
+  | 'blockchain-dev'
+  | 'web3-dev';
 
 export interface YouTubeVideoItem {
   id: string;

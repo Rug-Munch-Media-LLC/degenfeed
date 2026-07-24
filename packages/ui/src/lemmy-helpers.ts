@@ -5,8 +5,16 @@
 // ─── Thread Colors (rainbow) ────────────────────────────────────────
 
 export const THREAD_COLORS = [
-  '#00b868', '#6364ff', '#ff4500', '#1185fe', '#abfe2c',
-  '#e040fb', '#ffa726', '#06d6a0', '#ef476f', '#ffd166',
+  '#00b868',
+  '#6364ff',
+  '#ff4500',
+  '#1185fe',
+  '#abfe2c',
+  '#e040fb',
+  '#ffa726',
+  '#06d6a0',
+  '#ef476f',
+  '#ffd166',
 ];
 
 export function getThreadColor(depth: number): string {
@@ -40,8 +48,12 @@ export function timeAgo(ts: number): string {
 
 export function getExactTime(ts: number): string {
   return new Date(ts).toLocaleString(undefined, {
-    year: 'numeric', month: 'short', day: 'numeric',
-    hour: '2-digit', minute: '2-digit', second: '2-digit',
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
     timeZoneName: 'short',
   });
 }
@@ -64,10 +76,14 @@ export function isVideoUrl(url: string): boolean {
     const path = parsed.pathname.toLowerCase();
     if (/\.(mp4|webm|mov|avi|mkv|m3u8)$/i.test(path)) return true;
     if (
-      host.includes('youtube.com') || host.includes('youtu.be') ||
-      host.includes('vimeo.com') || host.includes('peertube') ||
-      host.includes('twitch.tv') || host.includes('dailymotion.com')
-    ) return true;
+      host.includes('youtube.com') ||
+      host.includes('youtu.be') ||
+      host.includes('vimeo.com') ||
+      host.includes('peertube') ||
+      host.includes('twitch.tv') ||
+      host.includes('dailymotion.com')
+    )
+      return true;
     return false;
   } catch {
     return false;

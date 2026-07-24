@@ -9,7 +9,7 @@
  *   - ENS placeholder (records intent)
  *
  * Plans:
- *   free      — GtS + ATProto + Nostr + RSS only (self-serve Farcaster/Lens via redirect)
+ *   free      — GtS + ATProto + Nostr + RSS + Lemmy + PeerTube + Pixelfed (self-serve Farcaster/Lens via redirect)
  *   standard  — Farcaster ($5 gas) + Lens ($2 gas) + $3 service — user pays $10 total
  *   complete  — standard + custom Lens handle (up to 8 chars, $10 gas) + ENS ($10) — user pays $20 (bundle saves $7)
  *   premium   — everything covered by $10/mo subscription
@@ -34,7 +34,7 @@ export const REGISTRATION_PLANS: RegistrationPlan[] = [
     id: 'free',
     label: 'Free',
     oneTimePriceUsd: 0,
-    description: 'GtS + Bluesky PDS + Nostr + RSS',
+    description: 'GtS + Bluesky PDS + Nostr + RSS + Lemmy + PeerTube + Pixelfed',
   },
   {
     id: 'standard',
@@ -82,6 +82,9 @@ export interface RegistrationResults {
   rss: AccountResult;
   farcaster: AccountResult;
   lens: AccountResult;
+  lemmy?: AccountResult;
+  peertube?: AccountResult;
+  pixelfed?: AccountResult;
   ens?: AccountResult;
 }
 
@@ -247,6 +250,9 @@ export function calculateCharges(
         { item: 'AT Protocol PDS', cost: '$0', covered: true },
         { item: 'Nostr keypair', cost: '$0', covered: true },
         { item: 'RSS feed', cost: '$0', covered: true },
+        { item: 'Lemmy account', cost: '$0', covered: true },
+        { item: 'PeerTube account', cost: '$0', covered: true },
+        { item: 'Pixelfed account', cost: '$0', covered: true },
       ],
       serviceFeeCents: 0,
       ourProfit: 0, // Profit comes from subscription
@@ -305,7 +311,11 @@ export function calculateCharges(
                 },
               ]
             : []),
-          { item: 'GoToSocial + PDS + Nostr + RSS', cost: '$0', covered: true },
+          {
+            item: 'GoToSocial + PDS + Nostr + RSS + Lemmy + PeerTube + Pixelfed',
+            cost: '$0',
+            covered: true,
+          },
         ],
         serviceFeeCents: ourProfit * 100,
       };
@@ -363,7 +373,11 @@ export function calculateCharges(
                 },
               ]
             : []),
-          { item: 'GoToSocial + PDS + Nostr + RSS', cost: '$0', covered: true },
+          {
+            item: 'GoToSocial + PDS + Nostr + RSS + Lemmy + PeerTube + Pixelfed',
+            cost: '$0',
+            covered: true,
+          },
         ],
         serviceFeeCents: ourProfit * 100,
       };
@@ -377,6 +391,9 @@ export function calculateCharges(
           { item: 'AT Protocol PDS', cost: '$0', covered: true },
           { item: 'Nostr keypair', cost: '$0', covered: true },
           { item: 'RSS feed', cost: '$0', covered: true },
+          { item: 'Lemmy account', cost: '$0', covered: true },
+          { item: 'PeerTube account', cost: '$0', covered: true },
+          { item: 'Pixelfed account', cost: '$0', covered: true },
         ],
         serviceFeeCents: 0,
         ourProfit: 0,
@@ -503,6 +520,36 @@ export async function storeAllIdentities(
     };
   }
 
+  // Lemmy
+  if (results.lemmy?.ok && results.lemmy.identifier) {
+    updatable.lemmy = {
+      handle: results.lemmy.handle || results.lemmy.identifier,
+      instance: 'community.degenfeed.xyz',
+      verified: true,
+      autoCreated: true,
+    };
+  }
+
+  // PeerTube
+  if (results.peertube?.ok && results.peertube.identifier) {
+    updatable.peertube = {
+      handle: results.peertube.handle || results.peertube.identifier,
+      instance: 'video.degenfeed.xyz',
+      verified: true,
+      autoCreated: true,
+    };
+  }
+
+  // Pixelfed
+  if (results.pixelfed?.ok && results.pixelfed.identifier) {
+    updatable.pixelfed = {
+      handle: results.pixelfed.handle || results.pixelfed.identifier,
+      instance: 'pixelfed.social',
+      verified: true,
+      autoCreated: true,
+    };
+  }
+
   try {
     await env.IDENTITIES.put(key, JSON.stringify(updated));
     log('info', 'Registration identities stored', {
@@ -549,6 +596,30 @@ export function generateRecoveryPackage(results: RegistrationResults): RecoveryP
       protocol: 'Nostr',
       identifier: results.nostr.identifier,
       recoveryMethod: 'Private key (nsec) — SAVE THIS. We cannot recover it.',
+    });
+  }
+
+  if (results.lemmy?.ok) {
+    accounts.push({
+      protocol: 'Lemmy',
+      identifier: results.lemmy.handle || results.lemmy.identifier,
+      recoveryMethod: 'Password + email (saved to your account)',
+    });
+  }
+
+  if (results.peertube?.ok) {
+    accounts.push({
+      protocol: 'PeerTube',
+      identifier: results.peertube.handle || results.peertube.identifier,
+      recoveryMethod: 'Password + email (saved to your account)',
+    });
+  }
+
+  if (results.pixelfed?.ok) {
+    accounts.push({
+      protocol: 'Pixelfed',
+      identifier: results.pixelfed.handle || results.pixelfed.identifier,
+      recoveryMethod: 'Password + email (saved to your account)',
     });
   }
 

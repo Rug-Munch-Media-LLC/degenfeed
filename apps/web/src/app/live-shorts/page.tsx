@@ -297,7 +297,7 @@ export default function LiveShortsPage() {
   const handleGoLive = useCallback(() => setGoLiveOpen(true), []);
 
   const handleStartLiveShort = useCallback(
-    (data: {
+    (_data: {
       title: string;
       description: string;
       maxDuration: number;
@@ -305,8 +305,7 @@ export default function LiveShortsPage() {
       tokenAddress: string;
       tokenSymbol: string;
     }) => {
-      // In production: POST /api/live-shorts/start
-      console.log('Start live short:', data);
+      // TODO: POST /api/live-shorts/start
     },
     [],
   );

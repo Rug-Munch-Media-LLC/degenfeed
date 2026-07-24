@@ -81,7 +81,7 @@ describe('CrossProtocolThread', () => {
     const thread = registerReply('mastodon', 'post-1', reply);
 
     expect(thread).toBeDefined();
-    expect(thread!.replies).toHaveLength(1);
+    expect(thread?.replies).toHaveLength(1);
     expect(thread.replies[0].id).toBe('reply-1');
   });
 
@@ -150,9 +150,9 @@ describe('CrossProtocolThread', () => {
 
     const meta = getThreadMeta('mastodon', 'post-1');
     expect(meta).not.toBeNull();
-    expect(meta!.replyCount).toBe(2);
-    expect(meta!.bridgeCount).toBe(1);
-    expect(meta!.protocolCount).toBe(2);
+    expect(meta?.replyCount).toBe(2);
+    expect(meta?.bridgeCount).toBe(1);
+    expect(meta?.protocolCount).toBe(2);
   });
 
   it('should prune old threads', () => {
@@ -160,7 +160,7 @@ describe('CrossProtocolThread', () => {
     registerReply('mastodon', 'post-2', makeReply('r2', 'nostr'));
 
     // Set a large cutoff to prune everything
-    const pruned = pruneThreads(-1_000_000_000);  // huge negative = prune all
+    const pruned = pruneThreads(-1_000_000_000); // huge negative = prune all
     expect(pruned).toBe(2);
   });
 });

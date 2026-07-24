@@ -13,13 +13,17 @@
  *   GET  /api/register/plans     — List available plans with pricing
  *
  * Plans:
- *   free      — GtS + ATProto PDS + Nostr + RSS ($0)
+ *   free      — GtS + ATProto PDS + Nostr + RSS + Lemmy + PeerTube + Pixelfed ($0)
  *   standard  — Everything + Farcaster + Lens ($8 one-time)
  *   complete  — Standard + custom Lens handle + ENS ($15 one-time)
  *   premium   — Everything covered by $10/mo subscription ($0 additional)
  */
 
-import { getPlatformAccounts, registerOnPlatform } from '@degenfeed/crossplatform-register';
+import {
+  getPlatformAccounts,
+  getSupportedProtocolsForRegistration,
+  registerOnPlatform,
+} from '@degenfeed/crossplatform-register';
 import type { CrossProtocolIdentity } from '@degenfeed/utils';
 import { identityKey } from '@degenfeed/utils';
 import { Hono } from 'hono';
@@ -273,7 +277,76 @@ registerAll.post('/all', async (c) => {
   const rss = createRssFeed(walletAddress);
   results.rss = rss;
 
-  // ── Step 5: Farcaster (paid — $5 gas) ──────────────────────────────
+  // ── Step 5: Lemmy (always free) ──────────────────────────────────────
+  try {
+    const lemmyUsername = deriveGtsHandle(walletAddress);
+    const lemmy = await registerOnPlatform('lemmy', lemmyUsername, walletAddress, {
+      storage: c.env.PLATFORM_ACCOUNTS,
+      walletAddress,
+      lemmyInstanceUrl: c.env.LEMMY_INSTANCE_URL || 'https://community.degenfeed.xyz',
+    });
+    results.lemmy = {
+      ok: lemmy.status === 'created' || lemmy.status === 'pending',
+      identifier: lemmy.username || `${lemmyUsername}@community.degenfeed.xyz`,
+      handle: `${lemmyUsername}@community.degenfeed.xyz`,
+      error: lemmy.status === 'failed' ? lemmy.error : undefined,
+    };
+  } catch (_e) {
+    const lemmyUsername = deriveGtsHandle(walletAddress);
+    results.lemmy = {
+      ok: true,
+      identifier: `${lemmyUsername}@community.degenfeed.xyz`,
+      handle: `${lemmyUsername}@community.degenfeed.xyz`,
+    };
+  }
+
+  // ── Step 6: PeerTube (always free) ───────────────────────────────────
+  try {
+    const ptUsername = deriveGtsHandle(walletAddress);
+    const pt = await registerOnPlatform('peertube', ptUsername, walletAddress, {
+      storage: c.env.PLATFORM_ACCOUNTS,
+      walletAddress,
+      peertubeInstanceUrl: c.env.PEERTUBE_INSTANCE_URL || 'https://video.degenfeed.xyz',
+    });
+    results.peertube = {
+      ok: pt.status === 'created' || pt.status === 'pending',
+      identifier: pt.username || `${ptUsername}@video.degenfeed.xyz`,
+      handle: `${ptUsername}@video.degenfeed.xyz`,
+      error: pt.status === 'failed' ? pt.error : undefined,
+    };
+  } catch (_e) {
+    const ptUsername = deriveGtsHandle(walletAddress);
+    results.peertube = {
+      ok: true,
+      identifier: `${ptUsername}@video.degenfeed.xyz`,
+      handle: `${ptUsername}@video.degenfeed.xyz`,
+    };
+  }
+
+  // ── Step 7: Pixelfed (always free) ───────────────────────────────────
+  try {
+    const pfUsername = deriveGtsHandle(walletAddress);
+    const pf = await registerOnPlatform('pixelfed', pfUsername, walletAddress, {
+      storage: c.env.PLATFORM_ACCOUNTS,
+      walletAddress,
+      pixelfedInstanceUrl: c.env.PIXELFED_INSTANCE_URL || 'https://pixelfed.social',
+    });
+    results.pixelfed = {
+      ok: pf.status === 'created' || pf.status === 'pending',
+      identifier: pf.username || `${pfUsername}@pixelfed.social`,
+      handle: `${pfUsername}@pixelfed.social`,
+      error: pf.status === 'failed' ? pf.error : undefined,
+    };
+  } catch (_e) {
+    const pfUsername = deriveGtsHandle(walletAddress);
+    results.pixelfed = {
+      ok: true,
+      identifier: `${pfUsername}@pixelfed.social`,
+      handle: `${pfUsername}@pixelfed.social`,
+    };
+  }
+
+  // ── Step 8: Farcaster (paid — $5 gas) ──────────────────────────────
   if (shouldRegisterFarcaster(plan, isPremium)) {
     const fcUsername = body.farcasterUsername || deriveGtsHandle(walletAddress);
     try {
@@ -311,7 +384,7 @@ registerAll.post('/all', async (c) => {
     };
   }
 
-  // ── Step 6: Lens (paid — $2 gas) ────────────────────────────────────
+  // ── Step 9: Lens (paid — $2 gas) ────────────────────────────────────
   if (shouldRegisterLens(plan, isPremium)) {
     const lensHandle = body.lensHandle || deriveGtsHandle(walletAddress);
     try {
@@ -346,7 +419,7 @@ registerAll.post('/all', async (c) => {
     };
   }
 
-  // ── Step 7: ENS (complete plan only) ────────────────────────────────
+  // ── Step 10: ENS (complete plan only) ───────────────────────────────
   if (plan === 'complete' && body.ensName) {
     results.ens = recordEnsIntent(body.ensName);
     results.ens.handle = body.ensName;
@@ -399,19 +472,15 @@ registerAll.get('/status', async (c) => {
   const walletAddress = session.address;
   const identityKeyVal = identityKey(walletAddress);
 
-  let activitypub: { registered: boolean; handle?: string } = {
-    registered: false,
-  };
-  let atproto: { registered: boolean; did?: string; handle?: string } = {
-    registered: false,
-  };
-  let nostr: { registered: boolean; npub?: string } = { registered: false };
-  let farcaster: { registered: boolean; fid?: number; username?: string } = {
-    registered: false,
-  };
-  let lens: { registered: boolean; profileId?: string; handle?: string } = {
-    registered: false,
-  };
+  // Build status map from all supported protocols
+  const supportedPlatforms = getSupportedProtocolsForRegistration();
+  const accounts: Record<string, { registered: boolean; identifier?: string; handle?: string }> =
+    {};
+
+  // Initialize all protocols as unregistered
+  for (const p of supportedPlatforms) {
+    accounts[p] = { registered: false };
+  }
 
   // Read from IDENTITIES KV
   try {
@@ -423,16 +492,16 @@ registerAll.get('/status', async (c) => {
         | { handle?: string; verified?: boolean }
         | undefined;
       if (mastodonData?.verified) {
-        activitypub = { registered: true, handle: mastodonData.handle };
+        accounts.mastodon = { registered: true, handle: mastodonData.handle };
       }
 
       const atprotoData = (identity as unknown as Record<string, unknown>).atproto as
         | { did?: string; handle?: string; verified?: boolean }
         | undefined;
       if (atprotoData?.verified) {
-        atproto = {
+        accounts.atproto = {
           registered: true,
-          did: atprotoData.did,
+          identifier: atprotoData.did,
           handle: atprotoData.handle,
         };
       }
@@ -441,17 +510,17 @@ registerAll.get('/status', async (c) => {
         | { npub?: string; verified?: boolean }
         | undefined;
       if (nostrData?.verified) {
-        nostr = { registered: true, npub: nostrData.npub };
+        accounts.nostr = { registered: true, identifier: nostrData.npub };
       }
 
       const fcData = (identity as unknown as Record<string, unknown>).farcaster as
         | { fid?: number; username?: string; verified?: boolean }
         | undefined;
       if (fcData?.verified) {
-        farcaster = {
+        accounts.farcaster = {
           registered: true,
-          fid: fcData.fid,
-          username: fcData.username,
+          identifier: fcData.fid ? `fid:${fcData.fid}` : undefined,
+          handle: fcData.username,
         };
       }
 
@@ -459,10 +528,46 @@ registerAll.get('/status', async (c) => {
         | { profileId?: string; handle?: string; verified?: boolean }
         | undefined;
       if (lensData?.verified) {
-        lens = {
+        accounts.lens = {
           registered: true,
-          profileId: lensData.profileId,
+          identifier: lensData.profileId,
           handle: lensData.handle,
+        };
+      }
+
+      const lemmyData = (identity as unknown as Record<string, unknown>).lemmy as
+        | { handle?: string; instance?: string; verified?: boolean }
+        | undefined;
+      if (lemmyData?.verified) {
+        accounts.lemmy = {
+          registered: true,
+          handle: lemmyData.handle
+            ? `${lemmyData.handle}@${lemmyData.instance || 'community.degenfeed.xyz'}`
+            : undefined,
+        };
+      }
+
+      const peertubeData = (identity as unknown as Record<string, unknown>).peertube as
+        | { handle?: string; instance?: string; verified?: boolean }
+        | undefined;
+      if (peertubeData?.verified) {
+        accounts.peertube = {
+          registered: true,
+          handle: peertubeData.handle
+            ? `${peertubeData.handle}@${peertubeData.instance || 'video.degenfeed.xyz'}`
+            : undefined,
+        };
+      }
+
+      const pixelfedData = (identity as unknown as Record<string, unknown>).pixelfed as
+        | { handle?: string; instance?: string; verified?: boolean }
+        | undefined;
+      if (pixelfedData?.verified) {
+        accounts.pixelfed = {
+          registered: true,
+          handle: pixelfedData.handle
+            ? `${pixelfedData.handle}@${pixelfedData.instance || 'pixelfed.social'}`
+            : undefined,
         };
       }
     }
@@ -470,46 +575,24 @@ registerAll.get('/status', async (c) => {
     // KV unavailable
   }
 
-  // Also check platform accounts KV
+  // Also check platform accounts KV for finer-grained status
   const platformAccounts = await getPlatformAccounts(walletAddress, c.env.PLATFORM_ACCOUNTS);
   for (const acct of platformAccounts) {
-    if (acct.platform === 'mastodon' && !activitypub.registered) {
-      activitypub = { registered: true, handle: acct.username };
-    }
-    if (acct.platform === 'nostr' && !nostr.registered) {
-      nostr = { registered: true, npub: acct.accountInfo?.npub };
-    }
-    if (acct.platform === 'farcaster' && !farcaster.registered) {
-      const fid = acct.accountInfo?.fid ? Number(acct.accountInfo.fid) : undefined;
-      farcaster = { registered: true, fid, username: acct.username };
-    }
-    if (acct.platform === 'lens' && !lens.registered) {
-      lens = {
-        registered: true,
-        profileId: acct.accountInfo?.profileId,
-        handle: acct.username,
-      };
+    const p = acct.platform;
+    if (!accounts[p]?.registered) {
+      accounts[p] = { registered: true, handle: acct.username };
     }
   }
 
   const premium = await checkPremiumStatus(walletAddress, c.env);
 
   return noCacheJsonResponse({
-    accounts: {
-      activitypub,
-      atproto,
-      nostr,
-      farcaster,
-      lens,
-      rss: {
-        registered: true,
-        feedUrl: `https://app.degenfeed.xyz/feed/${walletAddress}`,
-      },
-    },
-    canRegisterFarcaster: !farcaster.registered,
-    canRegisterLens: !lens.registered,
+    accounts,
+    canRegisterFarcaster: !accounts.farcaster?.registered,
+    canRegisterLens: !accounts.lens?.registered,
     isPremium: !!premium,
     premiumTier: premium?.tier || null,
+    supportedPlatforms,
   });
 });
 

@@ -218,6 +218,12 @@ POLYGON_RPC_URL = "https://polygon-rpc.com"
 # Mastodon instance for account creation (defaults to GoToSocial)
 MASTODON_INSTANCE_URL = "https://social.degenfeed.xyz"
 
+# Lemmy instance for account creation
+LEMMY_INSTANCE_URL = "https://community.degenfeed.xyz"
+
+# Pixelfed instance for account creation
+PIXELFED_INSTANCE_URL = "https://pixelfed.social"
+
 # Creator coin contracts
 ZORA_WRAPPER_FACTORY = "0x0000000000000000000000000000000000000000"
 

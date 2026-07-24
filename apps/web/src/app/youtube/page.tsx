@@ -175,7 +175,6 @@ export default function YouTubePage() {
 
   const handleTip = useCallback((_video: EnrichedYouTubeVideo) => {
     // TODO: Open tip modal with creator coin
-    console.log('Tip video:', _video.id);
   }, []);
 
   const handleShare = useCallback((video: EnrichedYouTubeVideo) => {
@@ -185,12 +184,10 @@ export default function YouTubePage() {
 
   const handleSave = useCallback((_video: EnrichedYouTubeVideo) => {
     // TODO: Save to bookmarks/watch later
-    console.log('Save video:', _video.id);
   }, []);
 
   const handleCrossPost = useCallback((_video: EnrichedYouTubeVideo) => {
     // TODO: Open cross-post modal (Nostr, Farcaster, Bluesky, Mastodon)
-    console.log('Cross-post video:', _video.id);
   }, []);
 
   const handleSearch = useCallback((query: string) => {

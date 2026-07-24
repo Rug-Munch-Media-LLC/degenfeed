@@ -1,5 +1,7 @@
 'use client';
 
+'use client';
+
 import {
   addBlockedUser,
   addBookmark,
@@ -43,11 +45,7 @@ import {
   ProtocolBadge,
 } from './ProtocolBadge';
 import { ReportModal } from './ReportModal';
-import {
-  ReputationBadge,
-  type ReputationBadgeProgress,
-  type ReputationBadgeScore,
-} from './ReputationBadge';
+import { ReputationBadge } from './ReputationBadge';
 import { TokenChart } from './TokenChart';
 import { TranslationPreview } from './TranslationPreview';
 
@@ -55,137 +53,20 @@ import { TranslationPreview } from './TranslationPreview';
  * Schedule low-priority work during idle periods.
  * Falls back to setTimeout if requestIdleCallback is unavailable (SSR, older browsers).
  */
-const scheduleIdle =
-  typeof window !== 'undefined' && 'requestIdleCallback' in window
-    ? (fn: () => void) => window.requestIdleCallback(fn, { timeout: 2000 })
-    : (fn: () => void) => setTimeout(fn, 1);
 
 export type { ReportModalProps } from './ReportModal';
 export type { UnifiedPost };
 
-export interface EngageResult {
-  ok: boolean;
-  error?: string;
-}
+import type { LocalState, PostCardProps } from './PostCardTypes';
 
-export type EngageHandler = (
-  action: EngagementAction,
-  postId: string,
-  content?: string,
-) => Promise<EngageResult> | EngageResult;
+export type { EngageHandler, EngageResult, PostCardProps } from './PostCardTypes';
 
-export interface PostCardProps {
-  post: UnifiedPost;
-  onEngage?: EngageHandler;
-  onClick?: (postId: string) => void;
-  expanded?: boolean;
-  onTip?: (post: UnifiedPost) => void;
-  onPaywall?: (post: UnifiedPost) => void;
-  /** Connected protocols for the current viewer — used to derive default tip currency */
-  viewerProtocols?: string[];
-  /** Called when a report is successfully submitted */
-  onReport?: (postId: string) => void;
-  /**
-   * Cross-protocol identity badges to show for the post author.
-   * Each entry is a protocol key (nostr, farcaster, lens, bluesky, mastodon, reddit).
-   * These are the OTHER protocols the author has linked to their wallet.
-   */
-  crossProtocolBadges?: string[];
-  /**
-   * Called when the user wants to publish translated content to another protocol.
-   * Opens ComposeModal with the translated content pre-filled for the target protocol.
-   */
-  onTranslatePublish?: (content: string, targetProtocol: string) => void;
-  /**
-   * Called when the user wants to reply to this post from another protocol.
-   * Opens ComposeModal in cross-protocol reply mode.
-   */
-  onCrossReplyOpen?: (post: UnifiedPost) => void;
-  /**
-   * If true, the viewer is an admin and sees moderation actions
-   * (Remove post, Ban user) in the three-dot menu.
-   */
-  isAdmin?: boolean;
-  /**
-   * Called when an admin removes this post. The API call removes it
-   * from the feed for all users.
-   */
-  onAdminRemove?: (postId: string) => void;
-  /**
-   * Called when an admin bans the post author. Passes the userId
-   * and protocol for cross-protocol enforcement.
-   */
-  onAdminBan?: (userId: string, protocol: string, handle?: string) => void;
-  /**
-   * Optional reputation score for the post author.
-   * When provided, shows a reputation badge next to the display name.
-   */
-  reputation?: ReputationBadgeScore | null;
-  /**
-   * Right-click / long-press context menu handler.
-   */
-  onContextMenu?: (e: React.MouseEvent, postId: string) => void;
-  /**
-   * Optional progress data for the reputation level progress bar (shown in tooltip).
-   */
-  reputationProgress?: ReputationBadgeProgress | null;
-  /**
-   * Called when user clicks "Show more like this" — boosts the post's topic.
-   * The post's niches[0] is used as the topic to boost.
-   */
-  onShowMoreLikeThis?: (topic: string) => void;
-  /**
-   * Called when user clicks "Show less like this" — demotes the post's topic.
-   * The post's niches[0] is used as the topic to demote.
-   */
-  onShowLessLikeThis?: (topic: string) => void;
-  /**
-   * Called when user clicks "Why am I seeing this?" in the three-dot menu.
-   * Opens the FeedWhyCard transparency panel for this post.
-   */
-  onWhyThisPost?: (post: UnifiedPost) => void;
-  /**
-   * Called when user opens the enhanced share sheet from engagement bar.
-   * Receives the post to share. When provided, overrides the default
-   * native Web Share API behavior.
-   */
-  onOpenShareSheet?: (post: UnifiedPost) => void;
-}
-
-const MAX_TEXT_LENGTH = 500;
-
-function buildScoreTooltip(score: NonNullable<UnifiedPost['score']>): string {
-  const lines = [
-    `Score: ${score.total.toFixed(2)}`,
-    `  recency: ${score.recency.toFixed(2)}`,
-    `  engagement: ${score.engagement.toFixed(2)}`,
-    `  relevance: ${score.relevance.toFixed(2)}`,
-    `  quality: ${score.quality.toFixed(2)}`,
-    `  source: ${score.source.toFixed(2)}`,
-    `  velocity: ${score.velocity.toFixed(2)}`,
-  ];
-  if (score.reasons.length > 0) {
-    lines.push(`Signals: ${score.reasons.join(', ')}`);
-  }
-  return lines.join('\n');
-}
-
-function buildQualityTooltip(quality: NonNullable<UnifiedPost['qualityScore']>): string {
-  const lines = [`Protocol quality: ${quality.score}/${quality.max}`];
-  if (quality.reasons.length > 0) {
-    lines.push(`Signals: ${quality.reasons.join(', ')}`);
-  }
-  return lines.join('\n');
-}
-
-// ─── Local state type (shared with PostCardEngagement) ────────────
-
-interface LocalState {
-  engagement: UnifiedPost['engagement'];
-  metrics: UnifiedPost['metrics'];
-}
-
-// ─── Main component ───────────────────────────────────────────────
+import {
+  buildQualityTooltip,
+  buildScoreTooltip,
+  MAX_TEXT_LENGTH,
+  scheduleIdle,
+} from './PostCardHelpers';
 
 function PostCardComponent({
   post,

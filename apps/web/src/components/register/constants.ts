@@ -1,4 +1,4 @@
-import type { PlanInfo, ProcessingStep } from './types';
+import type { PlanInfo } from './types';
 
 export const PLANS: PlanInfo[] = [
   {

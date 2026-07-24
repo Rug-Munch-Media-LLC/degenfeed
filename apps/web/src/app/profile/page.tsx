@@ -1,12 +1,7 @@
 'use client';
 
-import type { PlatformAccount, RegisterPlatformStatusData } from '@degenfeed/ui';
-import {
-  CrossPlatformCard,
-  CrossPlatformSetup,
-  ErrorBoundary,
-  ReputationBadge,
-} from '@degenfeed/ui';
+import type { PlatformAccount } from '@degenfeed/ui';
+import { CrossPlatformSetup, ErrorBoundary, ReputationBadge } from '@degenfeed/ui';
 import {
   CredentialCard,
   CredentialSecurityNote,
@@ -123,9 +118,7 @@ function SignedInView({ p }: { p: ReturnType<typeof useProfile> }) {
           <CrossPlatformSetup
             key={p.crossPlatformKey}
             walletAddress={p.walletAddress ?? ''}
-            onRegisterComplete={(result: PlatformAccount | RegisterPlatformStatusData) =>
-              p.handleRegistered(result as PlatformAccount)
-            }
+            onRegistered={(result: PlatformAccount) => p.handleRegistered(result)}
           />
         </div>
       )}
@@ -177,8 +170,14 @@ function SignedInView({ p }: { p: ReturnType<typeof useProfile> }) {
         <CredentialsProgressBanner connectedCount={p.identities.length} totalPlatforms={5} />
         <div className="mt-3 space-y-3">
           {p.identities.map((id) => {
-            const card = registrationToCredential(id);
-            return <CredentialCard key={id.id} credential={card} />;
+            const result: Parameters<typeof registrationToCredential>[0] = {
+              platform: id.protocol,
+              status: 'created',
+              username: id.handle ?? id.displayName,
+              accountInfo: { username: id.handle ?? '' },
+            };
+            const card = registrationToCredential(result);
+            return card ? <CredentialCard key={id.id} credential={card} /> : null;
           })}
         </div>
         <div className="mt-3">
@@ -188,13 +187,7 @@ function SignedInView({ p }: { p: ReturnType<typeof useProfile> }) {
 
       {/* Identity Linker */}
       <div className="mb-6">
-        <IdentityLinker
-          primaryIdentity={p.primaryIdentity}
-          linkedIdentities={p.linkedIdentities}
-          walletAddress={p.walletAddress ?? ''}
-          onSetPrimary={p.setPrimary}
-          onUnlink={p.handleUnlink}
-        />
+        <IdentityLinker />
       </div>
 
       {/* Tabs */}
@@ -204,10 +197,11 @@ function SignedInView({ p }: { p: ReturnType<typeof useProfile> }) {
       </div>
 
       {/* Modals */}
-      {p.showEditModal && <EditProfileModal onClose={() => p.setShowEditModal(false)} />}
-      {p.showGoLiveModal && <GoLiveModal onClose={() => p.setShowGoLiveModal(false)} />}
+      {p.showEditModal && <EditProfileModal open onClose={() => p.setShowEditModal(false)} />}
+      {p.showGoLiveModal && <GoLiveModal isOpen onClose={() => p.setShowGoLiveModal(false)} />}
       {p.showUpgradeModal && (
         <PremiumPaymentModal
+          open
           onClose={() => p.setShowUpgradeModal(false)}
           onSuccess={() => {
             p.refreshPremium();

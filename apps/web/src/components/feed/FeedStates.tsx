@@ -1,7 +1,5 @@
 'use client';
 
-import type { UnifiedPost } from '@degenfeed/types';
-
 interface FeedMeta {
   total?: number;
   limit?: number;

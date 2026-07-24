@@ -108,7 +108,7 @@ function parseAtomFeed(xml: string, label: string, limit: number): UnifiedPost[]
     const authorName = authorMatch ? authorMatch[1] : label;
 
     const embeds: Array<{ kind: string; url: string; meta?: Record<string, unknown> }> = [];
-    if (link && link.match(/\.(jpg|jpeg|png|gif|webp)/i)) {
+    if (link?.match(/\.(jpg|jpeg|png|gif|webp)/i)) {
       embeds.push({ kind: 'image', url: link });
     }
     if (mediaMatch) {

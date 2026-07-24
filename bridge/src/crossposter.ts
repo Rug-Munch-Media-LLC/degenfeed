@@ -462,7 +462,7 @@ async function publishToPeerTube(payload: unknown): Promise<boolean> {
 }
 
 async function publishToFarcaster(_payload: unknown): Promise<boolean> {
-  const hubUrl = process.env.FARCASTER_HUB_URL || 'https://hub.farcaster.standardcrypto.vc:2281';
+  const _hubUrl = process.env.FARCASTER_HUB_URL || 'https://hub.farcaster.standardcrypto.vc:2281';
   const payload = _payload as { text: string; embeds: Array<{ url: string }> };
   if (!process.env.FARCASTER_SIGNER_KEY) return false;
 

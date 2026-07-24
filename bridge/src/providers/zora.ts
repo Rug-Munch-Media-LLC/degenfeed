@@ -121,7 +121,7 @@ export function guessNiches(name: string, description: string, collectionName: s
 
 function truncate(str: string, maxLen: number): string {
   if (str.length <= maxLen) return str;
-  return str.slice(0, maxLen - 3) + '...';
+  return `${str.slice(0, maxLen - 3)}...`;
 }
 
 function formatPrice(ethPrice: number | null, usdcPrice: number | null): string {

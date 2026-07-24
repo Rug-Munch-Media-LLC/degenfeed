@@ -1,6 +1,15 @@
 import type { UnifiedIdentity } from '@degenfeed/types';
 
-export type RegistrationPlatform = 'farcaster' | 'lens' | 'bluesky' | 'mastodon' | 'nostr';
+export type RegistrationPlatform =
+  | 'farcaster'
+  | 'lens'
+  | 'bluesky'
+  | 'mastodon'
+  | 'nostr'
+  | 'lemmy'
+  | 'peertube'
+  | 'pixelfed';
+
 export type RegistrationStatus = 'pending' | 'created' | 'failed';
 
 export interface PlatformRegistration {
@@ -23,4 +32,10 @@ export interface RegisterOptions {
   blueskyInvitePool?: KVNamespace;
   mastodonInstanceUrl?: string;
   mastodonAccessToken?: string;
+  /** Lemmy instance URL (default: https://community.degenfeed.xyz) */
+  lemmyInstanceUrl?: string;
+  /** PeerTube instance URL (default: https://video.degenfeed.xyz) */
+  peertubeInstanceUrl?: string;
+  /** Pixelfed instance URL (default: https://pixelfed.social) */
+  pixelfedInstanceUrl?: string;
 }

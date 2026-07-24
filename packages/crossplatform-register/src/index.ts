@@ -7,9 +7,12 @@
 //   bluesky.ts     — registerBluesky (AT Protocol)
 //   mastodon.ts    — registerMastodon (Fediverse instance)
 //   nostr.ts       — registerNostr (local key generation)
+//   lemmy.ts       — registerLemmy (Lemmy API v3)
+//   peertube.ts    — registerPeerTube (PeerTube REST API)
+//   pixelfed.ts    — registerPixelfed (Mastodon-compatible API)
 //   kv.ts          — platformAccountKey, getPlatformAccounts, persistPlatformAccount
 //   invite-pool.ts — acquireInviteCode, returnInviteCode, addInviteCodesToPool
-//   register.ts    — registerOnPlatform (unified public API)
+//   register.ts    — registerOnPlatform (unified public API), getSupportedProtocolsForRegistration
 
 export type { TransactionRequest } from './evm-utils';
 export { privateKeyToAddress, signTransaction } from './evm-utils';
@@ -20,7 +23,7 @@ export {
   returnInviteCode,
 } from './register/invite-pool';
 export { getPlatformAccounts, platformAccountKey, platformAccountsIndexKey } from './register/kv';
-export { registerOnPlatform } from './register/register';
+export { getSupportedProtocolsForRegistration, registerOnPlatform } from './register/register';
 export type {
   PlatformRegistration,
   RegisterOptions,

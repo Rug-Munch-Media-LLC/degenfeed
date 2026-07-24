@@ -14,11 +14,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
-import {
-  PROTOCOL_LIST,
-  type ProtocolConfig,
-  SIDEBAR_ORDER,
-} from '../../components/feed/feed-protocols';
+import { PROTOCOL_LIST, SIDEBAR_ORDER } from '../../components/feed/feed-protocols';
 
 // ─── Protocol icon/color mapping for sidebar ─────────────────────────
 
@@ -122,7 +118,7 @@ export function FeedShell({ children }: FeedShellProps) {
     if (activeEl) {
       activeEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
     }
-  }, [activeProtocol, pathname]);
+  }, []);
 
   return (
     <div

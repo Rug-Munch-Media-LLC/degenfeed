@@ -1,25 +1,12 @@
 'use client';
-
-import type { Protocol } from '@degenfeed/types';
-import {
-  CrossPlatformSetup,
-  ErrorBoundary,
-  type PlatformAccount,
-  type RegisterPlatformStatusData,
-} from '@degenfeed/ui';
+import { CrossPlatformSetup, ErrorBoundary, type PlatformAccount } from '@degenfeed/ui';
 import { useCallback, useEffect, useState } from 'react';
 import { useHardwareWallet2FA } from '../../hooks/useHardwareWallet2FA';
-import type { FontSize, NotificationType, Theme } from '../../hooks/usePreferences';
+import type { FontSize, Theme } from '../../hooks/usePreferences';
 import { usePreferences } from '../../hooks/usePreferences';
 import { usePremium } from '../../hooks/usePremium';
 import { useAuth } from '../AuthProvider';
 import { HardwareWalletVerify } from '../auth/HardwareWalletVerify';
-import {
-  CredentialCard,
-  CredentialSecurityNote,
-  CredentialsProgressBanner,
-  registrationToCredential,
-} from '../CredentialsDisplay';
 import { PremiumPaymentModal } from '../PremiumPaymentModal';
 import { useToast } from '../Toast';
 import { AccountsCredentialsDisplay } from './AccountsCredentialsDisplay';
@@ -29,7 +16,7 @@ import { SettingsSection } from './SettingsSection';
 import { TagList } from './TagList';
 import { Toggle } from './Toggle';
 import type { Section } from './types';
-import { NOTIFICATION_TYPES, PROTOCOLS, SECTION_LABELS } from './types';
+import { NOTIFICATION_TYPES, PROTOCOLS } from './types';
 
 export default function SettingsPage() {
   const { primaryIdentity, walletAddress, openSignIn, linkedIdentities } = useAuth();
