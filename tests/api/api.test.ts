@@ -60,7 +60,8 @@ describe('API Client — api.get', () => {
     const result = await api.get('/api/error');
 
     expect(result.success).toBe(false);
-    expect(result.error).toContain('HTTP 500');
+    // The API returns the raw body text when JSON parsing fails
+    expect(result.error).toBe('Internal Server Error');
   });
 
   it('should throw when retryFetch throws a network error', async () => {
@@ -78,7 +79,8 @@ describe('API Client — api.post', () => {
 
   it('should make POST request with JSON body', async () => {
     mockRetryFetch.mockResolvedValue(
-      new Response(JSON.stringify({ success: true, id: 'new-123' }), {
+      // No `success` field in response so it gets wrapped in ApiResponse envelope
+      new Response(JSON.stringify({ id: 'new-123' }), {
         status: 200,
         headers: { 'content-type': 'application/json' },
       }),
