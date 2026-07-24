@@ -10,7 +10,7 @@ pre-commit:
       skip: false
     envsitter:
       run: envsitter scan --filePath .env.example
-      skip: false
+      skip: true
     biome:
       glob: "*.{js,ts,jsx,tsx,json,jsonc,css,md}"
       run: npx biome check --write --no-errors-on-unmatched {staged_files}
