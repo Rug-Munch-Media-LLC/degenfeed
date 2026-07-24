@@ -8,7 +8,7 @@
  * events, and merges results.
  */
 
-import type { SchemaGuard, UnifiedPost } from '../server';
+import type { SchemaGuard, UnifiedPost } from '../server/types';
 
 /** Our relay + public relays */
 const RELAYS = [

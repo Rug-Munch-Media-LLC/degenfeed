@@ -8,6 +8,7 @@ import { fetchPeerTubePosts } from '../providers/peertube';
 import { fetchPixelfedPosts } from '../providers/pixelfed';
 import { fetchRedditPosts } from '../providers/redlib';
 import { fetchRssBridgePosts } from '../providers/rssbridge';
+import { fetch as fetchRssPosts } from '../providers/rss';
 import { fetchZoraPosts } from '../providers/zora';
 import type { UnifiedPost } from './types';
 
@@ -16,7 +17,12 @@ type ProviderFetcher = (limit: number) => Promise<UnifiedPost[]>;
 export const PROVIDERS: Record<string, { name: string; fetch: ProviderFetcher }> = {
   mastodon: { name: 'Mastodon/GTS', fetch: fetchMastodonPosts },
   reddit: { name: 'Reddit/Redlib', fetch: fetchRedditPosts },
-  rss: { name: 'RSS-Bridge', fetch: fetchRssBridgePosts },
+  rss: { name: 'RSS+Newsletter (100+ sources)', fetch: fetchRssPosts },
+  newsletter: { name: 'Newsletters (Substack/Medium/Mirror/Paragraph/Ghost/Beehiiv)', fetch: async (limit) => {
+    const { fetchNewsletterPosts } = await import('../providers/rss');
+    return fetchNewsletterPosts(limit);
+  }},
+  rssbridge: { name: 'RSS-Bridge (legacy)', fetch: fetchRssBridgePosts },
   lemmy: { name: 'Lemmy', fetch: fetchLemmyPosts },
   peertube: { name: 'PeerTube', fetch: fetchPeerTubePosts },
   bluesky: { name: 'Bluesky/PDS', fetch: fetchBlueskyPosts },

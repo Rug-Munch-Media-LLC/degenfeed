@@ -17,7 +17,7 @@
  *   GET /api/sales        — Sale events
  */
 
-import type { SchemaGuard, UnifiedPost } from '../server';
+import type { SchemaGuard, UnifiedPost } from '../server/types';
 
 // ─── Configuration ────────────────────────────────────────────────────
 

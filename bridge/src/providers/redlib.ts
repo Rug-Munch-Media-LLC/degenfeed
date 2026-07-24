@@ -10,7 +10,7 @@
  * Long-term fix: register Reddit OAuth2 app for authenticated API access.
  */
 
-import type { SchemaGuard, UnifiedPost } from '../server';
+import type { SchemaGuard, UnifiedPost } from '../server/types';
 
 const REDDIT_RSS = 'https://www.reddit.com';
 

@@ -9,7 +9,7 @@
  * DeFi, NFTs, tech, and web3.
  */
 
-import type { SchemaGuard, UnifiedPost } from '../server';
+import type { SchemaGuard, UnifiedPost } from '../server/types';
 
 const LEMMY_LOCAL = 'http://127.0.0.1:8536';
 
@@ -159,9 +159,63 @@ export function postToUnified(
   };
 }
 
+// ─── Search across instances ──────────────────────────────────────────
+
+export async function searchLemmy(
+  q: string,
+  searchType: string = 'Posts',
+  instance: string = '127.0.0.1:8536',
+  limit: number = 20,
+  page: number = 1,
+): Promise<{ data: UnifiedPost[]; communities: Array<Record<string, unknown>>; meta: Record<string, unknown> }> {
+  const baseUrl = instance.startsWith('http') ? instance : `http://${instance}`;
+  const hostname = new URL(baseUrl).hostname;
+  const result: { data: UnifiedPost[]; communities: Array<Record<string, unknown>>; meta: Record<string, unknown> } = {
+    data: [],
+    communities: [],
+    meta: { q, type: searchType, instance: hostname, page, limit },
+  };
+
+  try {
+    const url = `${baseUrl}/api/v3/search?q=${encodeURIComponent(q)}&type_=${searchType}&sort=Hot&limit=${Math.min(limit, 50)}&page=${page}`;
+    const res = await globalThis.fetch(url, {
+      headers: { 'User-Agent': 'DegenFeed-Bridge/0.1' },
+      signal: AbortSignal.timeout(8000),
+    });
+
+    if (!res.ok) return result;
+
+    const data = await res.json() as {
+      posts?: LemmyPostView[];
+      communities?: Array<{ community: LemmyCommunity }>;
+      users?: Array<Record<string, unknown>>;
+    };
+
+    if (data.posts) {
+      result.data = data.posts
+        .map((pv) => postToUnified(pv, hostname, q))
+        .filter((p): p is UnifiedPost => p !== null);
+    }
+
+    if (data.communities) {
+      result.communities = data.communities.map((c) => ({
+        name: c.community?.name || '',
+        title: c.community?.title || '',
+        actor_id: c.community?.actor_id || '',
+      }));
+    }
+
+    result.meta = { ...result.meta, total: result.data.length + result.communities.length };
+  } catch {
+    // Return empty result
+  }
+
+  return result;
+}
+
 // ─── Fetch from instance ────────────────────────────────────────────
 
-async function fetchCommunityPosts(
+export async function fetchCommunityPosts(
   baseUrl: string,
   community: string,
   limit: number,
@@ -169,7 +223,7 @@ async function fetchCommunityPosts(
   try {
     const hostname = new URL(baseUrl).hostname;
     const url = `${baseUrl}/api/v3/post/list?community_name=${encodeURIComponent(community)}&sort=Hot&limit=${Math.min(limit, 20)}`;
-    const res = await fetch(url, {
+    const res = await globalThis.fetch(url, {
       headers: { 'User-Agent': 'DegenFeed-Bridge/0.1' },
       signal: AbortSignal.timeout(5000),
     });
@@ -244,5 +298,7 @@ export async function fetchLemmyPosts(limit = 20): Promise<UnifiedPost[]> {
   return deduped;
 }
 
-/** @alias Use `fetch` as the standardized export name */
+/** @alias Standardized export - renamed to avoid shadowing global fetch */
+export const fetchPosts = fetchLemmyPosts;
+/** @deprecated Use `fetchPosts` instead */
 export const fetch = fetchLemmyPosts;

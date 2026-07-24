@@ -12,7 +12,7 @@
  * We use user Atom feeds as the primary source since they're publicly accessible.
  */
 
-import type { SchemaGuard, UnifiedPost } from '../server';
+import type { SchemaGuard, UnifiedPost } from '../server/types';
 
 const PIXELFED_LOCAL = 'http://127.0.0.1:9090';
 
