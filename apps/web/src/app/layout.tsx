@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { Inter, JetBrains_Mono, Sora } from 'next/font/google';
 import { cookies } from 'next/headers';
 import Script from 'next/script';
+import '../styles/design-tokens.css';
 import './globals.css';
 import { AuthProvider } from '../components/AuthProvider';
 import { ConditionalShell } from '../components/ConditionalShell';

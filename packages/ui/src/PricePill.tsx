@@ -39,13 +39,18 @@ export function PricePill({ ticker, data }: { ticker: string; data?: PriceData }
   if (!data) return null;
   const change = data.usd_24h_change;
   const isUp = change !== undefined && change >= 0;
-  const color = isUp ? '#22c55e' : '#ef4444';
+  const color = isUp ? 'var(--color-accent)' : 'var(--color-danger)';
   const arrow = isUp ? '▲' : '▼';
 
   return (
     <span
       className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-xs font-mono cursor-help transition-colors hover:opacity-80"
-      style={{ backgroundColor: `${color}15`, color }}
+      style={{
+        backgroundColor: isUp
+          ? 'var(--color-accent-glow)'
+          : 'color-mix(in srgb, var(--color-danger) 15%, transparent)',
+        color,
+      }}
       title={`24h: ${change !== undefined ? `${change.toFixed(1)}%` : 'N/A'}\n7d: ${data.usd_7d_change !== undefined ? `${data.usd_7d_change.toFixed(1)}%` : 'N/A'}\n30d: ${data.usd_30d_change !== undefined ? `${data.usd_30d_change.toFixed(1)}%` : 'N/A'}\nMarket Cap: $${data.usd_market_cap ? `${(data.usd_market_cap / 1e9).toFixed(2)}B` : 'N/A'}`}
     >
       {arrow} ${ticker} $

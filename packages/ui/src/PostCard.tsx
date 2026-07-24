@@ -1462,8 +1462,8 @@ function PostCardComponent({
           <span
             className="mb-2 inline-flex items-center gap-1.5 self-start rounded-full px-2.5 py-1 text-[11px] font-medium"
             style={{
-              backgroundColor: '#1010101a',
-              color: '#101010',
+              backgroundColor: 'color-mix(in srgb, var(--color-fg) 10%, transparent)',
+              color: 'var(--color-fg)',
             }}
             title="Delivered via ActivityPub federation"
           >

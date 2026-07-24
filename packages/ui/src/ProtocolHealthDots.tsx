@@ -127,7 +127,7 @@ export const ProtocolHealthDots = memo(function ProtocolHealthDots({
           <span
             className="inline-block h-2 w-2 rounded-full transition-colors"
             style={{
-              backgroundColor: STATUS_COLORS[status.status] ?? '#666',
+              backgroundColor: STATUS_COLORS[status.status] ?? 'var(--color-muted)',
               boxShadow:
                 status.status === 'degraded'
                   ? '0 0 4px rgba(250, 204, 21, 0.5)'

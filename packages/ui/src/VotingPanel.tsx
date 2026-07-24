@@ -206,9 +206,9 @@ export function VotingPanel({
 
       {/* Vote bars */}
       <div className="space-y-3">
-        <VoteBar label="For" count={totals.for} total={totalVotes} color="#22c55e" />
-        <VoteBar label="Against" count={totals.against} total={totalVotes} color="#ef4444" />
-        <VoteBar label="Abstain" count={totals.abstain} total={totalVotes} color="#6b7280" />
+        <VoteBar label="For" count={totals.for} total={totalVotes} color="var(--color-accent)" />
+        <VoteBar label="Against" count={totals.against} total={totalVotes} color="var(--color-danger)" />
+        <VoteBar label="Abstain" count={totals.abstain} total={totalVotes} color="var(--color-muted)" />
       </div>
 
       {/* Vote actions */}
@@ -279,10 +279,10 @@ export function VotingPanel({
 
 function StatusBadge({ status }: { status: ProposalStatus }) {
   const meta: Record<ProposalStatus, { label: string; color: string }> = {
-    active: { label: 'Active', color: '#22c55e' },
-    passed: { label: 'Passed', color: '#22c55e' },
-    rejected: { label: 'Rejected', color: '#ef4444' },
-    cancelled: { label: 'Cancelled', color: '#6b7280' },
+    active: { label: 'Active', color: 'var(--color-accent)' },
+    passed: { label: 'Passed', color: 'var(--color-accent)' },
+    rejected: { label: 'Rejected', color: 'var(--color-danger)' },
+    cancelled: { label: 'Cancelled', color: 'var(--color-muted)' },
   };
   const m = meta[status];
   return (

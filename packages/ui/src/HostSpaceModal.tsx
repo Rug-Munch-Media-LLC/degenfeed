@@ -332,7 +332,7 @@ export function HostSpaceModal({
                         : 'border-[var(--color-glass-border)] opacity-40 hover:opacity-70'
                     } ${!isConnected ? 'cursor-not-allowed opacity-20' : 'cursor-pointer'}`}
                     style={{
-                      color: isEnabled ? getProtocolColor(protocol.id) : '#666',
+                      color: isEnabled ? getProtocolColor(protocol.id) : 'var(--color-muted)',
                       backgroundColor: isEnabled
                         ? `${getProtocolColor(protocol.id)}15`
                         : 'transparent',

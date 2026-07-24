@@ -793,11 +793,11 @@ export function LiveReactionOverlay({
           background: transparent;
         }
         .scrollbar-thin::-webkit-scrollbar-thumb {
-          background: rgba(255, 255, 255, 0.1);
+          background: var(--color-glass-border);
           border-radius: 999px;
         }
         .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-          background: rgba(255, 255, 255, 0.2);
+          background: color-mix(in srgb, var(--color-glass-border) 80%, white);
         }
       `}</style>
     </section>

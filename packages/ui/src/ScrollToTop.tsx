@@ -49,7 +49,7 @@ export const ScrollToTop = memo(function ScrollToTop({
           cx="22"
           cy="22"
           r="16"
-          stroke="rgba(255,255,255,0.1)"
+          stroke="var(--color-glass-border)"
           strokeWidth="2.5"
           fill="none"
         />

@@ -73,7 +73,7 @@ export const CrossProtocolThreadIndicator = memo(function CrossProtocolThreadInd
             className="h-1.5 rounded-full"
             style={{
               width: `${Math.max(8, count * 8)}px`,
-              backgroundColor: PROTOCOL_COLORS[protocol] ?? '#666',
+              backgroundColor: PROTOCOL_COLORS[protocol] ?? 'var(--color-muted)',
               marginLeft: i > 0 ? '2px' : '0',
             }}
             title={`${getProtocolLabel(protocol)}: ${count} repl${count === 1 ? 'y' : 'ies'}`}
