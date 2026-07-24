@@ -80,7 +80,8 @@ const STEPS: TourStep[] = [
 
 // === Helpers ==============================================================
 
-function getTargetRect(selector: string): DOMRect | null {
+function getTargetRect(selector: string | undefined): DOMRect | null {
+  if (!selector) return null;
   if (typeof document === 'undefined') return null;
   try {
     // Try multiple strategies to find the element
@@ -136,7 +137,7 @@ export function GuidedTour({ forceShow = false, onComplete }: GuidedTourProps) {
   const stepTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const step = STEPS[currentStep]!;
+  const step = STEPS[currentStep] as (typeof STEPS)[number];
 
   // == Initialize tour =================================================
   useEffect(() => {
@@ -408,7 +409,8 @@ export function GuidedTour({ forceShow = false, onComplete }: GuidedTourProps) {
             <div className="flex items-center gap-1.5">
               {STEPS.map((_, i) => (
                 <span
-                  key={`dot-${STEPS.length}-${i}`}
+                  // biome-ignore lint/suspicious/noArrayIndexKey: static array, never reordered
+                  key={`dot-${i}`}
                   className={`h-1.5 rounded-full transition-all duration-300 ${
                     i === currentStep
                       ? 'w-5 bg-degen-400 shadow-[0_0_6px_rgba(0,255,65,0.4)]'

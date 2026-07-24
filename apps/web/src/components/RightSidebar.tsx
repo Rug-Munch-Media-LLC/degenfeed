@@ -61,7 +61,7 @@ const FOOTER_LINKS = [
   { href: '/privacy', label: 'Privacy' },
   { href: '/terms', label: 'Terms' },
   { href: '/status', label: 'Status' },
-  { href: '/developers', label: 'Developers' },
+  { href: 'https://git.rugmunch.io/RugMunchMedia/degenfeed-web', label: 'Source' },
 ];
 
 /* === Search bar ============================================= */
@@ -280,17 +280,29 @@ function PremiumCta() {
 function SidebarFooter() {
   return (
     <div className="flex flex-wrap gap-x-2 gap-y-1 px-1">
-      {FOOTER_LINKS.map((link) => (
-        <Link
-          key={link.href}
-          href={link.href}
-          className="text-xs text-[var(--color-muted)] transition-colors hover:underline"
-        >
-          {link.label}
-        </Link>
-      ))}
+      {FOOTER_LINKS.map((link) =>
+        link.href.startsWith('http') ? (
+          <a
+            key={link.href}
+            href={link.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-[var(--color-muted)] transition-colors hover:underline"
+          >
+            {link.label}
+          </a>
+        ) : (
+          <Link
+            key={link.href}
+            href={link.href}
+            className="text-xs text-[var(--color-muted)] transition-colors hover:underline"
+          >
+            {link.label}
+          </Link>
+        ),
+      )}
       <span className="text-xs text-[var(--color-muted)] opacity-50">
-        © {new Date().getFullYear()} DegenFeed
+        &copy; {new Date().getFullYear()} DegenFeed
       </span>
     </div>
   );

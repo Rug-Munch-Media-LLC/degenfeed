@@ -397,7 +397,7 @@ pnpm typecheck && pnpm lint && pnpm test`}</CodeBlock>
             View on Forgejo
           </a>
           <a
-            href="https://gitlab.com/cryptorugmuncher/degenfeed-web"
+            href="https://git.rugmunch.io/RugMunchMedia/degenfeed-web"
             target="_blank"
             rel="noopener noreferrer"
             className="btn-secondary text-xs"

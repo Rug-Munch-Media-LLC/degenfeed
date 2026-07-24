@@ -154,7 +154,8 @@ function decodeJwtPayload(token: string): Record<string, unknown> | null {
   try {
     const parts = token.split('.');
     if (parts.length !== 3) return null;
-    const payload = parts[1];
+    // biome-ignore lint/style/noNonNullAssertion: length checked above
+    const payload = parts[1]!;
     const json = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
     return JSON.parse(json) as Record<string, unknown>;
   } catch {

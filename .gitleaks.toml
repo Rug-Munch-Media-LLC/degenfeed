@@ -82,6 +82,17 @@ paths = [
   '''\.ruff_cache/''',
   '''\.mypy_cache/''',
   '''vendor/''',
+  '''\.vercel/''',
+  '''\.turbo/''',
+  '''playwright-report/''',
+  '''target/''',
+  '''out/''',
+  '''lib/forge-std/''',
+  '''\.tsbuildinfo''',
+  '''index\.js\.map''',
+  '''crossref/.*\.json''',
+  '''scripts/enterprise-firewall\.py''',
+  '''scripts/proprietary-firewall\.py''',
 ]
 
 # Stopwords (false-positive patterns to ignore)

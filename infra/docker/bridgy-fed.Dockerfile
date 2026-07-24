@@ -26,10 +26,11 @@ RUN git clone --depth 1 --branch "${BRIDGY_FED_VERSION}" "${BRIDGY_FED_REPO}" /a
 
 WORKDIR /app
 
+# Use a proper shell script for conditional install
 RUN if [ -f pyproject.toml ]; then \
-      uv pip install --system --no-cache . \
+      uv pip install --system --no-cache . ; \
     elif [ -f requirements.txt ]; then \
-      pip install --no-cache-dir -r requirements.txt \
+      pip install --no-cache-dir -r requirements.txt ; \
     fi
 
 RUN mkdir -p /data && chown nobody:nogroup /data

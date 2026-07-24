@@ -85,23 +85,7 @@ interface RegistrationResponse {
   action?: string;
 }
 
-interface RegistrationStatus {
-  accounts: Record<
-    string,
-    {
-      registered: boolean;
-      handle?: string;
-      did?: string;
-      npub?: string;
-      fid?: number;
-      username?: string;
-      profileId?: string;
-      feedUrl?: string;
-    }
-  >;
-  isPremium: boolean;
-  premiumTier: string | null;
-}
+// RegistrationStatus - unused, kept for reference
 
 // === Lens Handle Pricing Tiers ============================================
 
@@ -432,9 +416,9 @@ function Step2_ChooseUsernames({
 
       <div className="space-y-4">
         <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-4">
-          <label className="mb-1.5 block text-sm font-medium text-[var(--color-fg)]">
+          <span className="mb-1.5 block text-sm font-medium text-[var(--color-fg)]">
             GoToSocial (Fediverse)
-          </label>
+          </span>
           <p className="mb-2 text-xs text-[var(--color-muted)]">
             Auto-generated from your wallet address. No input needed.
           </p>
@@ -444,9 +428,9 @@ function Step2_ChooseUsernames({
         </div>
 
         <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-4">
-          <label className="mb-1.5 block text-sm font-medium text-[var(--color-fg)]">
+          <span className="mb-1.5 block text-sm font-medium text-[var(--color-fg)]">
             Bluesky PDS Handle
-          </label>
+          </span>
           <p className="mb-2 text-xs text-[var(--color-muted)]">
             Auto-generated on our PDS. No input needed.
           </p>
@@ -628,8 +612,8 @@ function Step3_ReviewCosts({
           </h3>
         </div>
         <div className="divide-y divide-[var(--color-border)]">
-          {charges.breakdown.map((item, i) => (
-            <CostRow key={i} label={item.item} cost={item.cost} covered={item.covered} />
+          {charges.breakdown.map((item) => (
+            <CostRow key={item.item} label={item.item} cost={item.cost} covered={item.covered} />
           ))}
         </div>
         <div className="border-t border-[var(--color-border)] bg-degen-500/[0.03] px-4 py-3">
@@ -1045,8 +1029,8 @@ function Step6_Success_RecoveryKeys({
       {/* Next steps */}
       <h3 className="mb-2 text-sm font-bold text-[var(--color-fg)]">Next Steps</h3>
       <ul className="mb-6 space-y-1.5">
-        {nextSteps.map((step, i) => (
-          <li key={i} className="flex items-center gap-2 text-xs text-[var(--color-muted)]">
+        {nextSteps.map((step) => (
+          <li key={step} className="flex items-center gap-2 text-xs text-[var(--color-muted)]">
             <span className="text-degen-400">{'→'}</span>
             {step}
           </li>
@@ -1293,39 +1277,6 @@ export function RegisterFlow({ onComplete, compact = false }: RegisterFlowProps)
     }
   }, [selectedPlan, isPremium, handleGasCost, handleLabel]);
 
-  // == Handle confirm (moves to sign step) =============
-  const handleConfirm = useCallback(
-    async (planOverride?: PlanId) => {
-      const plan = planOverride || selectedPlan;
-      if (!plan) return;
-
-      if (!compact) {
-        setStep(3); // Sign step
-        return;
-      }
-      // In compact mode, skip sign and go straight to processing
-      await executeRegistration(plan, true);
-    },
-    [selectedPlan, compact, executeRegistration],
-  );
-
-  // == Handle plan selection ===========================
-  const handlePlanSelect = useCallback(
-    (id: PlanId) => {
-      setSelectedPlan(id);
-      if (compact && id === 'free') {
-        // In compact mode, free goes straight to processing
-        handleConfirm(id);
-        return;
-      }
-      setStep(1);
-    },
-    [
-      compact, // In compact mode, free goes straight to processing
-      handleConfirm,
-    ],
-  );
-
   // == Execute registration ============================
   const executeRegistration = useCallback(
     async (plan: PlanId, skipSign: boolean = false) => {
@@ -1425,6 +1376,39 @@ export function RegisterFlow({ onComplete, compact = false }: RegisterFlowProps)
       showToast,
       onComplete,
       compact,
+    ],
+  );
+
+  // == Handle confirm (moves to sign step) =============
+  const handleConfirm = useCallback(
+    async (planOverride?: PlanId) => {
+      const plan = planOverride || selectedPlan;
+      if (!plan) return;
+
+      if (!compact) {
+        setStep(3); // Sign step
+        return;
+      }
+      // In compact mode, skip sign and go straight to processing
+      await executeRegistration(plan, true);
+    },
+    [selectedPlan, compact, executeRegistration],
+  );
+
+  // == Handle plan selection ===========================
+  const handlePlanSelect = useCallback(
+    (id: PlanId) => {
+      setSelectedPlan(id);
+      if (compact && id === 'free') {
+        // In compact mode, free goes straight to processing
+        handleConfirm(id);
+        return;
+      }
+      setStep(1);
+    },
+    [
+      compact, // In compact mode, free goes straight to processing
+      handleConfirm,
     ],
   );
 

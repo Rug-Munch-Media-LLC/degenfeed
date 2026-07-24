@@ -702,5 +702,5 @@ pnpm build  # Production build
 
 ---
 
-*See [ARCHITECTURE.md](../ARCHITECTURE.md) for the full architecture reference.*
-*See [CONTRIBUTING.md](../CONTRIBUTING.md) for contribution guidelines.*
+*See [ARCHITECTURE.md](./ARCHITECTURE.md) for the full architecture reference.*
+*See [CONTRIBUTING.md](./CONTRIBUTING.md) for contribution guidelines.*
