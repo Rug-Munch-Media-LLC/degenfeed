@@ -10,6 +10,7 @@
  */
 
 import type { SchemaGuard, UnifiedPost } from '../server/types';
+const $fetch = globalThis.fetch;
 
 const LEMMY_LOCAL = 'http://127.0.0.1:8536';
 

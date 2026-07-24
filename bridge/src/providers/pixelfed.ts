@@ -13,6 +13,7 @@
  */
 
 import type { SchemaGuard, UnifiedPost } from '../server/types';
+const $fetch = globalThis.fetch;
 
 const PIXELFED_LOCAL = 'http://127.0.0.1:9090';
 
@@ -154,7 +155,7 @@ function parseAtomFeed(xml: string, label: string, limit: number): UnifiedPost[]
 
 async function fetchAtomFeed(url: string, label: string, limit: number): Promise<UnifiedPost[]> {
   try {
-    const res = await fetch(url, {
+    const res = await $fetch(url, {
       headers: { 'User-Agent': 'DegenFeed-Bridge/0.1 (Pixelfed)' },
       signal: AbortSignal.timeout(5000),
     });
@@ -171,7 +172,7 @@ async function fetchAtomFeed(url: string, label: string, limit: number): Promise
 async function fetchFromInstance(baseUrl: string, limit: number): Promise<UnifiedPost[]> {
   try {
     const hostname = new URL(baseUrl).hostname;
-    const res = await fetch(
+    const res = await $fetch(
       `${baseUrl}/api/v1/timelines/public?local=true&limit=${Math.min(limit, 20)}`,
       {
         headers: { 'User-Agent': 'DegenFeed-Bridge/0.1 (Pixelfed)' },

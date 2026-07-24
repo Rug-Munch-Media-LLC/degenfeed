@@ -18,6 +18,7 @@
  */
 
 import type { SchemaGuard, UnifiedPost } from '../server/types';
+const $fetch = globalThis.fetch;
 
 // ─── Configuration ────────────────────────────────────────────────────
 
@@ -142,7 +143,7 @@ async function fetchFromIndexer<T>(path: string, limit: number): Promise<T[]> {
   const url = `${ZORA_INDEXER_URL}${path}?limit=${limit}`;
 
   try {
-    const res = await fetch(url, {
+    const res = await $fetch(url, {
       headers: { 'User-Agent': 'DegenFeed-Bridge/0.1' },
       signal: AbortSignal.timeout(5000),
     });

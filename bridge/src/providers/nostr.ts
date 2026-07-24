@@ -9,6 +9,7 @@
  */
 
 import type { SchemaGuard, UnifiedPost } from '../server/types';
+const $fetch = globalThis.fetch;
 
 /** Our relay + public relays */
 const RELAYS = [

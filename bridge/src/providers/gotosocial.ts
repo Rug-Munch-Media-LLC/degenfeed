@@ -10,6 +10,7 @@
  */
 
 import type { SchemaGuard, UnifiedPost } from '../server/types';
+const $fetch = globalThis.fetch;
 
 const GTS_BASE = 'http://127.0.0.1:8082';
 
@@ -160,7 +161,7 @@ async function fetchFromGts(limit: number): Promise<UnifiedPost[]> {
   }
 
   try {
-    const tokenRes = await fetch(`${GTS_BASE}/oauth/token`, {
+    const tokenRes = await $fetch(`${GTS_BASE}/oauth/token`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -178,7 +179,7 @@ async function fetchFromGts(limit: number): Promise<UnifiedPost[]> {
     } else {
       const data = (await tokenRes.json()) as { access_token?: string };
       if (data.access_token) {
-        const res = await fetch(`${GTS_BASE}/api/v1/timelines/public?local=true&limit=${limit}`, {
+        const res = await $fetch(`${GTS_BASE}/api/v1/timelines/public?local=true&limit=${limit}`, {
           headers: { Authorization: `Bearer ${data.access_token}` },
         });
         if (res.ok) {
@@ -189,7 +190,7 @@ async function fetchFromGts(limit: number): Promise<UnifiedPost[]> {
     }
 
     // Try without auth (some instances allow it)
-    const res = await fetch(`${GTS_BASE}/api/v1/timelines/public?local=true&limit=${limit}`);
+    const res = await $fetch(`${GTS_BASE}/api/v1/timelines/public?local=true&limit=${limit}`);
     if (res.ok) {
       const raw = (await res.json()) as MastodonStatus[];
       return raw.map((s) => statusToPost(s, 'social.degenfeed.xyz'));
@@ -210,7 +211,7 @@ async function fetchFromPublicInstances(limit: number): Promise<UnifiedPost[]> {
   const fetches = PUBLIC_INSTANCES.map(async (baseUrl) => {
     try {
       const hostname = new URL(baseUrl).hostname;
-      const res = await fetch(
+      const res = await $fetch(
         `${baseUrl}/api/v1/timelines/public?local=true&limit=${perInstance}`,
         { headers: { 'User-Agent': 'DegenFeed-Bridge/0.1' } },
       );

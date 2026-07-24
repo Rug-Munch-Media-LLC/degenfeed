@@ -18,9 +18,10 @@
 7. [Owncast (Live Streaming)](#7-owncast)
 8. [Activity Relay (Fediverse Relay)](#8-activity-relay)
 9. [Nostr Relay](#9-nostr-relay)
-10. [DegenFeed Web App](#10-degenfeed-web-app)
-11. [Emergency Procedures](#11-emergency-procedures)
-12. [Gopass Setup](#12-gopass-setup)
+10. [Farcaster](#10-farcaster)
+11. [DegenFeed Web App](#11-degenfeed-web-app)
+12. [Emergency Procedures](#12-emergency-procedures)
+13. [Gopass Setup](#13-gopass-setup)
 
 ---
 
@@ -372,7 +373,100 @@ curl -s http://127.0.0.1:8085/ 2>/dev/null
 
 ---
 
-## 10. DegenFeed Web App
+## 10. Farcaster
+
+> **Status:** Hubble container running but NOT synced (no peers). Neynar API key needed for data.
+
+| Field | Value |
+|-------|-------|
+| **Neynar API** | `https://api.neynar.com/v2/` — free tier (10k req/day) |
+| **Neynar signup** | https://dev.neynar.com/ |
+| **Hubble container** | `degenfeed-hubble` |
+| **Hubble REST API** | `http://127.0.0.1:2281` |
+| **Hubble gRPC API** | `127.0.0.1:2283` (NOT publicly reachable — prevents diff sync) |
+| **Env file (bridge)** | `/srv/work/repos/degenfeed-web/bridge/.env` |
+
+### Provider Fallback Chain
+
+The bridge Farcaster provider (`bridge/src/providers/farcaster.ts`) uses this fallback chain:
+
+1. **Neynar API** (primary) — requires `NEYNAR_API_KEY` in `.env`
+   - Full cast data: text, reactions, embeds, author profiles
+   - Free tier: 10,000 requests/day (enough for a feed bridge)
+2. **Self-hosted Hubble** (fallback) — configured via `FARCASTER_HUB_URL`
+   - Uses raw hub REST API (`/v1/castsByFid` for curated FIDs)
+   - FID → username mapping requires an external index (Neynar or Hubble sync)
+   - **Current status:** Hubble has no peers (port 2283 behind NAT) — returns empty
+3. **Returns empty** if neither source is available
+
+### How to Get Farcaster Working (Recommended Path)
+
+1. **Get a free Neynar API key:**
+   ```bash
+   # Step 1: Go to https://dev.neynar.com/ and sign up (free, no credit card)
+   # Step 2: Create a new app to get your API key
+   # Step 3: Store the key securely
+   gopass insert rmi/infra/neynar_api_key
+
+   # Step 4: Add the key to bridge .env
+   # Edit /srv/work/repos/degenfeed-web/bridge/.env and set:
+   # NEYNAR_API_KEY=your_key_here
+   ```
+
+2. **Restart the bridge:**
+   ```bash
+   systemctl restart degenfeed-bridge
+   journalctl -u degenfeed-bridge --no-pager -n 20
+   ```
+
+3. **Verify:**
+   ```bash
+   curl -s http://127.0.0.1:8787/api/feed/farcaster | python3 -c "
+   import json,sys
+   d=json.load(sys.stdin)
+   print(f'Posts: {len(d[\"posts\"])}')
+   for p in d['posts'][:3]:
+       print(f'  - {p[\"author\"][\"displayName\"]}: {p[\"text\"][:80]}')
+   print(f'Source meta: {d[\"meta\"][\"perProtocol\"]}')
+   "
+   ```
+   Expected: `Posts: N` (N > 0)
+
+### Hubble Troubleshooting
+
+Hubble uses port 2283 for gRPC diff sync. If this port isn't publicly reachable,
+the hub can't participate in the peer-to-peer sync network:
+
+```bash
+# Check Hubble sync status
+curl -s http://127.0.0.1:2281/v1/info | python3 -m json.tool
+
+# Expected healthy output:
+# { "version": "1.19.3", "isSyncing": false, "rootHash": "...", "peerId": "12D3..." }
+# If peerId is empty, the hub has no peers — casting data is empty
+
+# Check Hubble logs
+docker logs degenfeed-hubble 2>/dev/null | tail -20
+```
+
+To fix Hubble sync, the RPC port must be accessible:
+- **Option A:** Set up port forwarding on Talos for port 2283
+- **Option B:** Use a VPN/tunnel (WireGuard) to expose the port
+- **Option C:** Use Neynar API instead (simpler, free for low volume)
+
+### Env Vars Reference
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `NEYNAR_API_KEY` | No (but recommended) | — | Free API key from neynar.com |
+| `FARCASTER_HUB_URL` | No | `http://127.0.0.1:2281` | Hubble hub REST API URL |
+| `FARCASTER_FID` | No | — | FID for crossposting |
+| `FARCASTER_SIGNER_UUID` | No | — | Signer UUID for crossposting |
+| `FARCASTER_SIGNER_KEY` | No | — | Signer private key for crossposting |
+
+---
+
+## 12. DegenFeed Web App
 
 | Field | Value |
 |-------|-------|
@@ -416,7 +510,7 @@ curl -s http://127.0.0.1:3100/api/health
 
 ---
 
-## 11. Emergency Procedures
+## 13. Emergency Procedures
 
 ### Password Lost — Docker Exec Recovery
 
@@ -470,7 +564,7 @@ docker start owncast-owncast-1
 
 ---
 
-## 12. Gopass Setup
+## 14. Gopass Setup
 
 ### Initialize
 ```bash

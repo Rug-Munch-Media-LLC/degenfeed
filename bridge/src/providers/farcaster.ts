@@ -16,6 +16,7 @@
  */
 
 import type { SchemaGuard, UnifiedPost } from '../server/types';
+const $fetch = globalThis.fetch;
 
 const NEYNAR_BASE = 'https://api.neynar.com';
 const NEYNAR_API_KEY = process.env.NEYNAR_API_KEY || '';
@@ -79,7 +80,7 @@ async function fetchFromNeynar(limit: number): Promise<UnifiedPost[]> {
   try {
     // Fetch recent casts for curated users using v2 feed endpoint
     const url = `${NEYNAR_BASE}/v2/farcaster/feed?fids=${fidsToFetch.slice(0, 5).join(',')}&limit=${perUser * 5}&feed_type=filter&filter_type=fids`;
-    const res = await fetch(url, {
+    const res = await $fetch(url, {
       headers: { 'User-Agent': 'DegenFeed-Bridge/0.1', api_key: NEYNAR_API_KEY },
       signal: AbortSignal.timeout(8000),
     });
@@ -109,7 +110,7 @@ async function searchNeynar(limit: number): Promise<UnifiedPost[]> {
   for (const q of queries.slice(0, 4)) {
     try {
       const url = `${NEYNAR_BASE}/v2/farcaster/cast/search?q=${encodeURIComponent(q)}&limit=${perQuery}`;
-      const res = await fetch(url, {
+      const res = await $fetch(url, {
         headers: { 'User-Agent': 'DegenFeed-Bridge/0.1', api_key: NEYNAR_API_KEY },
         signal: AbortSignal.timeout(5000),
       });
