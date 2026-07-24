@@ -1,6 +1,6 @@
 import http from 'node:http';
-import { startCrossPoster } from '../crossposter';
-import { startIndexer, reindex, getIndexerStatus, indexPosts } from '../search-indexer';
+import { startCrossPoster, getCrossPosterStats } from '../crossposter';
+import { startIndexer, reindex, getIndexerStatus } from '../search-indexer';
 import { buildFeed, DEFAULT_PREFERENCES, PROVIDERS } from './feeds';
 
 // Catch unhandled rejections to prevent process crashes
@@ -207,6 +207,8 @@ async function crossProtocolSearch(
   sources: string[],
   page: number,
   limit: number,
+  types?: string[],
+  niches?: string[],
 ): Promise<UnifiedSearchResult> {
   const result: UnifiedSearchResult = {
     data: [],
@@ -219,18 +221,30 @@ async function crossProtocolSearch(
   // Try Meilisearch first (unified index with `source` field)
   try {
     const meiliUrl = process.env.MEILISEARCH_URL || 'http://127.0.0.1:7700';
-    const meiliKey = process.env.MEILI_SEARCH_KEY || '';
+    const meiliKey = process.env.MEILI_SEARCH_KEY || process.env.MEILI_MASTER_KEY || '01b9dbb2adc08f7aba179b30e0f215a76604180a4b736b0899204bf0f6f397fb';
 
-    const filterClause =
-      sources.length > 0 && !sources.includes('all')
-        ? sources.map((s) => `source = ${s}`).join(' OR ')
-        : undefined;
+    const filterClause = (() => {
+      const filters: string[] = [];
+      if (sources.length > 0 && !sources.includes('all')) {
+        const sourceFilters = sources.map((s) => `source = "${s}"`);
+        filters.push(`(${sourceFilters.join(' OR ')})`);
+      }
+      if (types && types.length > 0) {
+        const typeFilters = types.map((t) => `contentType = "${t}"`);
+        filters.push(`(${typeFilters.join(' OR ')})`);
+      }
+      if (niches && niches.length > 0) {
+        const nicheFilters = niches.map((n) => `niches = "${n}"`);
+        filters.push(`(${nicheFilters.join(' OR ')})`);
+      }
+      return filters.length > 0 ? filters.join(' AND ') : undefined;
+    })();
 
     const meiliRes = await fetch(`${meiliUrl}/indexes/posts/search`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        ...(meiliKey ? { Authorization: `Bearer ${meiliKey}` } : {}),
+        Authorization: `Bearer ${meiliKey}`,
       },
       body: JSON.stringify({
         q,
@@ -250,23 +264,53 @@ async function crossProtocolSearch(
         totalHits?: number;
       };
 
-      result.data = (meiliData.hits || []).map((hit: Record<string, unknown>) => ({
-        id: String(hit.id || ''),
-        protocol: String(hit.source || hit.protocol || 'unknown'),
-        text: String((hit as Record<string, unknown>)._formatted?.text || hit.text || ''),
-        author: {
-          displayName: String((hit as Record<string, unknown>).authorName || 'Unknown'),
-          handle: String((hit as Record<string, unknown>).authorHandle || ''),
-          avatarUrl: String((hit as Record<string, unknown>).authorAvatar || ''),
-          id: String((hit as Record<string, unknown>).authorId || ''),
-        },
-        createdAt: Number((hit as Record<string, unknown>).createdAt || Date.now()),
-        metrics: {},
-        niches: Array.isArray((hit as Record<string, unknown>).niches)
-          ? ((hit as Record<string, unknown>).niches as string[])
-          : [],
-        url: String((hit as Record<string, unknown>).url || ''),
-      }));
+      result.data = (meiliData.hits || []).map((hit: Record<string, unknown>) => {
+        const protocol = String(hit.source || 'unknown');
+        return {
+          id: String(hit.id || ''),
+          protocol,
+          sourceLabel: String(hit.sourceLabel || protocol),
+          contentType: String(hit.contentType || 'post'),
+          text: String((hit as Record<string, unknown>)._formatted?.text || hit.text || ''),
+          author: {
+            displayName: String(hit.authorName || 'Unknown'),
+            handle: String(hit.authorHandle || ''),
+            avatarUrl: String(hit.authorAvatar || ''),
+            id: String(hit.authorId || ''),
+          },
+          createdAt: Number(hit.createdAt || Date.now()),
+          metrics: (() => {
+            try { return JSON.parse(String(hit.metrics || '{}')); } catch { return {}; }
+          })(),
+          niches: Array.isArray(hit.niches) ? hit.niches as string[] : [],
+          url: String(hit.url || ''),
+          imageUrl: String(hit.imageUrl || ''),
+        };
+      });
+
+      // Collect unique identities from results
+      const identityMap = new Map<string, Record<string, unknown>>();
+      for (const hit of (meiliData.hits || []) as Array<Record<string, unknown>>) {
+        const authorId = String(hit.authorId || '');
+        if (!authorId) continue;
+        if (identityMap.has(authorId)) {
+          (identityMap.get(authorId)!.postCount as number)++;
+        } else {
+          identityMap.set(authorId, {
+            id: authorId,
+            protocol: String(hit.source || 'unknown'),
+            displayName: String(hit.authorName || 'Unknown'),
+            handle: String(hit.authorHandle || ''),
+            avatarUrl: String(hit.authorAvatar || '') || null,
+            bio: String(hit.authorBio || ''),
+            postCount: 1,
+          });
+        }
+      }
+      result.identities = [...identityMap.values()] as Array<{
+        id: string; protocol: string; displayName: string;
+        handle: string; avatarUrl: string | null; bio: string; postCount: number;
+      }>;
 
       result.meta.total = meiliData.estimatedTotalHits ?? meiliData.totalHits ?? result.data.length;
       return result;
@@ -384,6 +428,25 @@ const server = http.createServer(async (req, res) => {
       });
     }
 
+
+
+    // ── Unified Search (cross-protocol) ─────────────────────────
+    // ── Indexer Management ────────────────────────────────────
+    // GET /api/search/indexer/status
+    // POST /api/search/indexer/reindex
+    if (path === '/api/search/indexer/status') {
+      return jsonOk(res, getIndexerStatus());
+    }
+    if (path === '/api/search/indexer/reindex') {
+      try {
+        const result = await reindex();
+        return jsonOk(res, { ok: true, ...result });
+      } catch (err) {
+        res.writeHead(409, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ error: (err as Error).message }));
+      }
+    }
+
     // ── Unified Search (cross-protocol) ─────────────────────────
     // GET /api/search?q=bitcoin&sources=mastodon,bluesky,nostr&type=post,article&niches=defi,ai&page=1&limit=20
     if (path.startsWith('/api/search')) {
@@ -415,23 +478,7 @@ const server = http.createServer(async (req, res) => {
       return jsonOk(res, results);
     }
 
-    // ── Indexer Management ────────────────────────────────────
-    // GET /api/search/indexer/status
-    // POST /api/search/indexer/reindex
-    if (path.startsWith('/api/search/indexer')) {
-      if (path.endsWith('/status')) {
-        return jsonOk(res, getIndexerStatus());
-      }
-      if (path.endsWith('/reindex') && req.method === 'POST') {
-        try {
-          const result = await reindex();
-          return jsonOk(res, { ok: true, ...result });
-        } catch (err) {
-          res.writeHead(409, { 'Content-Type': 'application/json' });
-          return res.end(JSON.stringify({ error: (err as Error).message }));
-        }
-      }
-    }
+
 
     // ── Unified Notifications (cross-protocol) ──────────────────
     // GET /api/notifications?wallet=0x...&limit=20
@@ -677,6 +724,22 @@ const server = http.createServer(async (req, res) => {
       const proto = path.replace('/api/feed/', '');
       const limit = Math.min(parseInt(searchParams.get('limit') || '25', 10), 200);
       const page = parseInt(searchParams.get('page') || '1', 10);
+      // Override: route zora requests through the zora provider directly
+      if (proto === 'zora') {
+        const { fetchZoraPosts } = await import('../providers/zora');
+        const posts = await fetchZoraPosts(limit);
+        return jsonOk(res, {
+          posts,
+          meta: {
+            total: posts.length,
+            page,
+            limit,
+            source: 'zora-indexer',
+            fetchedAt: Date.now(),
+          },
+        });
+      }
+
       const allowed = [
         'mastodon',
         'lemmy',
@@ -688,6 +751,7 @@ const server = http.createServer(async (req, res) => {
         'pixelfed',
         'reddit',
         'rss',
+        'zora',
       ];
       if (allowed.includes(proto)) {
         const result = await buildFeed([proto], limit);
@@ -763,18 +827,16 @@ const server = http.createServer(async (req, res) => {
 server.listen(PORT, '127.0.0.1', () => {
   console.log(`[bridge] DegenFeed Bridge v0.4.0 running on http://127.0.0.1:${PORT}`);
   console.log(
-    '[bridge] Data sources: Mastodon/GTS, Reddit/Redlib, RSS-Bridge, Lemmy, PeerTube, Bluesky/PDS, Nostr, Farcaster, Lens, Pixelfed',
+    '[bridge] Data sources: Mastodon/GTS, Reddit/Redlib, RSS-Bridge, Lemmy, PeerTube, Bluesky/PDS, Nostr, Farcaster, Lens, Pixelfed, Zora',
   );
-  console.log('[bridge] Cross-poster: GTS→Nostr, GTS→Bluesky, GTS→PeerTube, Lemmy→Nostr');
+  console.log('[bridge] Cross-poster: GTS→Nostr, GTS→Bluesky, GTS→PeerTube, GTS→Lens, GTS→Farcaster, GTS→Pixelfed, GTS→WriteFreely, Pixelfed→Mastodon, Lemmy→Nostr');
   console.log('[bridge] Cross-protocol search: Meilisearch unified index + direct fallback');
   console.log('[bridge] Cross-protocol notifications: unified stream from all protocols');
-  // Start cross-poster and search indexer
   startCrossPoster();
-  
-  // Start search indexer (initializes Meilisearch, indexes all content)
+  // Start unified search indexer
   startIndexer().then(() => {
-    console.log('[bridge] Search indexer started');
+    console.log('[bridge] Search indexer started successfully');
   }).catch((err) => {
-    console.error('[bridge] Search indexer failed to start:', err);
+    console.error('[bridge] Search indexer failed:', err);
   });
 });
