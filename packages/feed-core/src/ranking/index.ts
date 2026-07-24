@@ -71,7 +71,7 @@ export const WEIGHTS_V2 = {
 
 export const RECENCY_HALF_LIFE_HOURS = 12;
 export const VELOCITY_WINDOW_HOURS = 4;
-export const PLATFORM_TIER: Record<Protocol, number> = {
+export const PLATFORM_TIER: Partial<Record<Protocol, number>> = {
   nostr: 1,
   farcaster: 1,
   lens: 1,

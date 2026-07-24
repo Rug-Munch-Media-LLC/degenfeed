@@ -302,9 +302,11 @@ export class IdentityResolver {
    */
   async resolveNip05(nip05: string, fetchFn: typeof fetch = fetch): Promise<ProtocolHandle | null> {
     try {
-      const username = parts[0] ?? '';
-      const domain = parts[1] ?? '';
-      const url = `https://${domain}/.well-known/nostr.json?name=${encodeURIComponent(username)}`;
+      const atIndex = nip05.indexOf('@');
+      if (atIndex <= 0 || atIndex === nip05.length - 1) return null;
+      const username = nip05.slice(0, atIndex);
+      const domain = nip05.slice(atIndex + 1);
+      const url = `https://${domain}/.well-known/nostr.json?name=${encodeURIComponent(username!)}`;
       const res = await fetchFn(url, {
         signal: AbortSignal.timeout(5000),
       });
@@ -317,9 +319,10 @@ export class IdentityResolver {
         nip05?: Record<string, { nip05?: string; [key: string]: unknown }>;
       };
 
-      if (!data.names || !data.names[username]) return null;
+      if (!data.names) return null;
+      const pubkey = data.names[username!];
+      if (!pubkey) return null;
 
-      const pubkey = data.names[username];
 
       return {
         protocol: 'nostr',
