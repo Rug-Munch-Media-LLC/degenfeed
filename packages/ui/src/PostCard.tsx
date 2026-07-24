@@ -1,7 +1,5 @@
 'use client';
 
-'use client';
-
 import {
   addBlockedUser,
   addBookmark,
@@ -14,59 +12,86 @@ import {
   saveFollow,
   unmuteIdentity,
 } from '@degenfeed/storage';
-import type { EngagementAction, UnifiedPost } from '@degenfeed/types';
-import { detectTokens, formatTimeAgo, parseVideoUrl } from '@degenfeed/utils';
-import Image from 'next/image';
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { BlueskyPostContext } from './BlueskyPostContext';
-import { CommunityBadge } from './CommunityBadge';
+import type { ContentProof, EngagementAction } from '@degenfeed/types';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { EmbedModal } from './EmbedModal';
-import { IdentityBadge } from './IdentityBadge';
-import { LemmyThreadView } from './LemmyThreadView';
-import { LensPublicationBadge } from './LensPublicationBadge';
-import { MastodonInstanceContext } from './MastodonInstanceContext';
-
-import { PeerTubeEmbed } from './PeerTubeEmbed';
 import {
   applyOptimistic,
   PostCardEngagement,
   type PostCardEngagementProps,
 } from './PostCardEngagement';
-import {
-  FrameCard,
-  ImageGrid,
-  LinkPreview,
-  PermanenceBadge,
-  VideoEmbedCard,
-} from './PostCardMedia';
-import {
-  getProtocolIcon as _getProtocolIcon,
-  getProtocolLabel as _getProtocolLabel,
-  ProtocolBadge,
-} from './ProtocolBadge';
+import { MAX_TEXT_LENGTH, scheduleIdle } from './PostCardHelpers';
+import type { LocalState, PostCardProps } from './PostCardTypes';
+import { PostBody, PostHeader, PostMedia, PostMetrics, PostThread } from './post-card';
 import { ReportModal } from './ReportModal';
-import { ReputationBadge } from './ReputationBadge';
-import { TokenChart } from './TokenChart';
 import { TranslationPreview } from './TranslationPreview';
 
-/**
- * Schedule low-priority work during idle periods.
- * Falls back to setTimeout if requestIdleCallback is unavailable (SSR, older browsers).
- */
+// ─── Local permanence badge ────────────────────────────────────────
 
-export type { ReportModalProps } from './ReportModal';
-export type { UnifiedPost };
+function PermanenceBadgeLink({ proof }: { proof: ContentProof }) {
+  const tooltipParts: string[] = [];
+  if (proof.arweaveTxId) {
+    tooltipParts.push(`Arweave: ${proof.arweaveTxId.slice(0, 8)}...${proof.arweaveTxId.slice(-4)}`);
+  }
+  if (proof.ipfsCid) {
+    tooltipParts.push(`IPFS: ${proof.ipfsCid.slice(0, 8)}...`);
+  }
+  if (proof.onChainTxHash) {
+    const chainName = proof.onChainChainId === 8453 ? 'Base' : `Chain ${proof.onChainChainId}`;
+    tooltipParts.push(
+      `${chainName}: ${proof.onChainTxHash.slice(0, 8)}...${proof.onChainTxHash.slice(-4)}`,
+    );
+  }
 
-import type { LocalState, PostCardProps } from './PostCardTypes';
+  const tooltip =
+    tooltipParts.length > 0
+      ? `Stored permanently\n${tooltipParts.join('\n')}`
+      : 'Stored permanently';
 
-export type { EngageHandler, EngageResult, PostCardProps } from './PostCardTypes';
+  return (
+    <div className="flex flex-wrap gap-2 items-center">
+      <a
+        href={
+          proof.arweaveTxId
+            ? `https://arweave.net/${proof.arweaveTxId}`
+            : proof.ipfsCid
+              ? `https://ipfs.io/ipfs/${proof.ipfsCid}`
+              : undefined
+        }
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex items-center gap-1 rounded-full bg-cyan-950/40 px-2 py-0.5 text-[10px] font-medium text-cyan-400 hover:bg-cyan-900/50 transition-colors"
+        title={tooltip}
+        onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => e.stopPropagation()}
+      >
+        <span>🔗</span> Permanent
+      </a>
 
-import {
-  buildQualityTooltip,
-  buildScoreTooltip,
-  MAX_TEXT_LENGTH,
-  scheduleIdle,
-} from './PostCardHelpers';
+      {proof.onChainTxHash && (
+        <a
+          href={
+            proof.onChainChainId === 8453
+              ? `https://basescan.org/tx/${proof.onChainTxHash}`
+              : proof.onChainChainId === 1
+                ? `https://etherscan.io/tx/${proof.onChainTxHash}`
+                : undefined
+          }
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 rounded-full bg-amber-950/40 px-2 py-0.5 text-[10px] font-medium text-amber-400 hover:bg-amber-900/50 transition-colors"
+          title={`On-chain anchor on ${proof.onChainChainId === 8453 ? 'Base' : `Chain ${proof.onChainChainId}`}: ${proof.onChainTxHash.slice(0, 8)}...${proof.onChainTxHash.slice(-4)}`}
+          onClick={(e) => e.stopPropagation()}
+          onKeyDown={(e) => e.stopPropagation()}
+        >
+          <span>🔒</span> On-chain
+        </a>
+      )}
+    </div>
+  );
+}
+
+// ─── Main component ────────────────────────────────────────────────
 
 function PostCardComponent({
   post,
@@ -101,12 +126,10 @@ function PostCardComponent({
   const [following, setFollowing] = useState(false);
   const [muted, setMuted] = useState(false);
   const [blocked, setBlocked] = useState(false);
-  const [showMenu, setShowMenu] = useState(false);
   const [showEmbedModal, setShowEmbedModal] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [showTranslateMenu, setShowTranslateMenu] = useState(false);
   const [communityMuted, setCommunityMuted] = useState(false);
-  const [showMuteWordMenu, setShowMuteWordMenu] = useState(false);
   const [animatingLike, setAnimatingLike] = useState(false);
   const [translateTarget, setTranslateTarget] = useState<string | null>(null);
   const [translationResult, setTranslationResult] = useState<{
@@ -119,11 +142,8 @@ function PostCardComponent({
     removedProtocolElements: string[];
   } | null>(null);
   const [translating, setTranslating] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
 
   const isSelf = post.author.id === 'self' || post.author.id.startsWith('self:');
-  const raw: Record<string, unknown> | undefined = post.raw as Record<string, unknown> | undefined;
-  const _relays: string[] = Array.isArray(raw?.relays) ? (raw.relays as string[]) : [];
 
   useEffect(() => {
     if (typeof window === 'undefined' || !post.author.id) return;
@@ -153,35 +173,11 @@ function PostCardComponent({
     };
   }, [post.author.id, post.community]);
 
-  // Close dropdown on outside click
-  useEffect(() => {
-    if (!showMenu) return;
-    const handler = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setShowMenu(false);
-      }
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [showMenu]);
-
-  // Close dropdown on Escape
-  useEffect(() => {
-    if (!showMenu) return;
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setShowMenu(false);
-    };
-    document.addEventListener('keydown', handler);
-    return () => document.removeEventListener('keydown', handler);
-  }, [showMenu]);
-
   useEffect(() => {
     setLocalState({ engagement: post.engagement, metrics: post.metrics });
   }, [post.engagement, post.metrics]);
 
-  // Cross-protocol bridge reply counts — fetched lazily when the post is
-  // being viewed (expanded) or the user opens the reply UI. Reads the
-  // aggregate of `bridge:reply:{dfUri}:*` KV records via the status API.
+  // Cross-protocol bridge reply counts
   useEffect(() => {
     if (!post.dfUri || !(expanded || showReply)) return;
     let cancelled = false;
@@ -296,7 +292,6 @@ function PostCardComponent({
 
   const handleBlock = useCallback(async () => {
     if (!post.author.id) return;
-    setShowMenu(false);
     const next = !blocked;
     setBlocked(next);
     try {
@@ -311,7 +306,6 @@ function PostCardComponent({
   }, [blocked, post.author.id, post.author.displayName, post.protocol]);
 
   const handleMuteFromMenu = useCallback(async () => {
-    setShowMenu(false);
     if (!post.author.id) return;
     const next = !muted;
     setMuted(next);
@@ -327,46 +321,14 @@ function PostCardComponent({
   }, [muted, post.author.id, post.author.displayName]);
 
   const handleReport = useCallback(() => {
-    setShowMenu(false);
     setShowReportModal(true);
   }, []);
 
   const handleEmbed = useCallback(() => {
-    setShowMenu(false);
     setShowEmbedModal(true);
   }, []);
 
-  const handleMuteCommunity = useCallback(async () => {
-    setShowMenu(false);
-    if (!post.community) return;
-    const communityName = post.community.name;
-    const next = !communityMuted;
-    setCommunityMuted(next);
-    try {
-      const { muteCommunity, unmuteCommunity } = await import('@degenfeed/storage');
-      if (next) {
-        await muteCommunity(communityName.toLowerCase(), communityName, post.community.instance);
-      } else {
-        await unmuteCommunity(communityName.toLowerCase());
-      }
-    } catch {
-      setCommunityMuted(!next);
-    }
-  }, [communityMuted, post.community]);
-
-  const handleMuteWordFromMenu = useCallback(async (word: string) => {
-    setShowMenu(false);
-    setShowMuteWordMenu(false);
-    try {
-      const { addMutedWord } = await import('@degenfeed/storage');
-      await addMutedWord(word);
-    } catch {
-      /* ignore */
-    }
-  }, []);
-
   const handleFlagAsSpam = useCallback(async () => {
-    setShowMenu(false);
     try {
       await fetch('/api/moderation/report', {
         method: 'POST',
@@ -387,20 +349,43 @@ function PostCardComponent({
     }
   }, [post.id, post.protocol]);
 
+  const handleMuteCommunity = useCallback(async () => {
+    if (!post.community) return;
+    const communityName = post.community.name;
+    const next = !communityMuted;
+    setCommunityMuted(next);
+    try {
+      const { muteCommunity, unmuteCommunity } = await import('@degenfeed/storage');
+      if (next) {
+        await muteCommunity(communityName.toLowerCase(), communityName, post.community.instance);
+      } else {
+        await unmuteCommunity(communityName.toLowerCase());
+      }
+    } catch {
+      setCommunityMuted(!next);
+    }
+  }, [communityMuted, post.community]);
+
+  const handleMuteWordFromMenu = useCallback(async (word: string) => {
+    try {
+      const { addMutedWord } = await import('@degenfeed/storage');
+      await addMutedWord(word);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
   const handleAdminRemove = useCallback(() => {
-    setShowMenu(false);
     onAdminRemove?.(post.id);
   }, [onAdminRemove, post.id]);
 
   const handleAdminBan = useCallback(() => {
-    setShowMenu(false);
     onAdminBan?.(post.author.id, post.protocol, post.author.displayName);
   }, [onAdminBan, post.author.id, post.author.displayName, post.protocol]);
 
   const handleTranslate = useCallback(
     async (targetProtocol: string) => {
       setShowTranslateMenu(false);
-      setShowMenu(false);
       setTranslating(true);
       setTranslateTarget(targetProtocol);
       try {
@@ -509,9 +494,6 @@ function PostCardComponent({
     ],
   );
 
-  const isNostr = post.protocol === 'nostr';
-  const nostrBadge: any = isNostr ? <span>Nostr</span> : null;
-
   return (
     <>
       <article
@@ -527,850 +509,72 @@ function PostCardComponent({
         aria-label={`Post by ${post.author.displayName}`}
         style={{ transitionDuration: 'var(--duration-fast)' }}
       >
-        {/* Author row */}
-        <div className="author-row group mb-2 flex items-center gap-3">
-          <Image
-            src={
-              post.author.avatarUrl ||
-              'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 fill=%22%23333%22/%3E%3Ctext x=%2216%22 y=%2222%22 text-anchor=%22middle%22 fill=%22%23999%22 font-size=%2216%22%3E%40%3C/text%3E%3C/svg%3E'
-            }
-            alt={`Avatar of ${post.author.displayName}`}
-            width={32}
-            height={32}
-            sizes="32px"
-            className="avatar h-8 w-8 rounded-full bg-[var(--color-muted)] object-cover"
-            loading="lazy"
-            decoding="async"
-          />
-          <div className="flex-1 min-w-0">
-            {post.protocol === 'lemmy' && post.community && (
-              <div className="lemmy-community-row mb-0.5">
-                <CommunityBadge name={post.community.name} icon={post.community.icon} size="sm" />
-                <span className="ml-1 text-xs text-muted-foreground">posted in </span>
-                <a
-                  href={`/c/${post.community.name}`}
-                  className="text-xs font-medium hover:underline text-muted-foreground"
-                  onClick={(e) => e.stopPropagation()}
-                  onKeyDown={(e) => e.stopPropagation()}
-                >
-                  c/{post.community.name}
-                </a>
-              </div>
-            )}
-            <div className="flex items-center gap-2">
-              <span className="author-name truncate text-sm font-semibold text-[var(--color-fg)]">
-                {post.author.displayName}
-              </span>
-              {post.protocol === 'nostr' && post.author.handles.nostr?.includes('@') && (
-                <span
-                  className="flex-shrink-0 dark:text-blue-300 text-blue-600 text-xs"
-                  title="NIP-05 verified"
-                >
-                  ✓
-                </span>
-              )}
-              {reputation && (
-                <ReputationBadge
-                  score={reputation}
-                  progress={reputationProgress ?? null}
-                  size="xs"
-                  showIcon={true}
-                  showLabel={true}
-                  showTooltip={true}
-                  showProgress={false}
-                />
-              )}
-              <ProtocolBadge protocol={post.protocol} />
+        {/* Author row (avatar, name, badges, menu, follow/mute) */}
+        <PostHeader
+          post={post}
+          isSelf={isSelf}
+          reputation={reputation}
+          reputationProgress={reputationProgress}
+          crossProtocolBadges={crossProtocolBadges}
+          following={following}
+          muted={muted}
+          blocked={blocked}
+          communityMuted={communityMuted}
+          isAdmin={isAdmin}
+          showTranslateMenu={showTranslateMenu}
+          translating={translating}
+          translateTarget={translateTarget}
+          onToggleFollow={toggleFollow}
+          onToggleMute={toggleMute}
+          onBlock={handleBlock}
+          onMuteFromMenu={handleMuteFromMenu}
+          onReport={handleReport}
+          onEmbed={handleEmbed}
+          onFlagAsSpam={handleFlagAsSpam}
+          onShowMoreLikeThis={onShowMoreLikeThis ? (t) => onShowMoreLikeThis(t) : undefined}
+          onShowLessLikeThis={onShowLessLikeThis ? (t) => onShowLessLikeThis(t) : undefined}
+          onWhyThisPost={onWhyThisPost}
+          onAdminRemove={isAdmin ? handleAdminRemove : undefined}
+          onAdminBan={isAdmin ? handleAdminBan : undefined}
+          onMuteCommunity={handleMuteCommunity}
+          onMuteWordFromMenu={handleMuteWordFromMenu}
+          onShowTranslateMenu={() => setShowTranslateMenu((v) => !v)}
+          onTranslate={handleTranslate}
+        />
 
-              {crossProtocolBadges && crossProtocolBadges.length > 0 && (
-                <div className="flex shrink-0 flex-wrap gap-1">
-                  {crossProtocolBadges.slice(0, 3).map((p) => (
-                    <IdentityBadge key={p} protocol={p} size="xs" />
-                  ))}
-                  {crossProtocolBadges.length > 3 && (
-                    <span className="flex items-center px-1 text-[10px] text-[var(--color-muted)]">
-                      +{crossProtocolBadges.length - 3}
-                    </span>
-                  )}
-                </div>
-              )}
+        {/* Post body (paywall, text, token charts) */}
+        <PostBody
+          post={post}
+          expanded={expanded}
+          showFullText={showFullText}
+          needsTruncation={needsTruncation}
+          displayText={displayText}
+          onShowFullText={() => setShowFullText(true)}
+          onPaywall={onPaywall}
+        />
 
-              {/* Three-dot menu */}
-              {!isSelf && (
-                <div ref={menuRef} className="relative shrink-0">
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowMenu((v) => !v);
-                    }}
-                    className="rounded-lg min-w-[44px] min-h-[44px] flex items-center justify-center text-[var(--color-muted)] hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)] transition-colors"
-                    aria-label="More actions"
-                    aria-haspopup="true"
-                    aria-expanded={showMenu}
-                  >
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 16 16"
-                      fill="currentColor"
-                      aria-hidden="true"
-                      className="shrink-0"
-                    >
-                      <circle cx="8" cy="3" r="1.5" />
-                      <circle cx="8" cy="8" r="1.5" />
-                      <circle cx="8" cy="13" r="1.5" />
-                    </svg>
-                  </button>
-                  {showMenu && (
-                    <div
-                      className="three-dot-menu absolute right-0 top-full z-50 mt-1 w-44 overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] py-1 shadow-2xl"
-                      role="menu"
-                      onClick={(e) => e.stopPropagation()}
-                      onKeyDown={(e) => e.stopPropagation()}
-                    >
-                      <button
-                        type="button"
-                        role="menuitem"
-                        onClick={handleEmbed}
-                        className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-[var(--color-fg)] hover:bg-[var(--color-muted)] transition-colors"
-                      >
-                        <svg
-                          width="14"
-                          height="14"
-                          viewBox="0 0 16 16"
-                          fill="none"
-                          aria-hidden="true"
-                          className="shrink-0 text-blue-400"
-                        >
-                          <path
-                            d="M4 2v12M12 2v12M2 4h12M2 12h12"
-                            stroke="currentColor"
-                            strokeWidth="1.5"
-                            strokeLinecap="round"
-                          />
-                        </svg>
-                        Embed post
-                      </button>
-
-                      {onWhyThisPost && (
-                        <button
-                          type="button"
-                          role="menuitem"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setShowMenu(false);
-                            onWhyThisPost(post);
-                          }}
-                          className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-degen-400 hover:bg-degen-500/10 transition-colors"
-                        >
-                          <svg
-                            width="14"
-                            height="14"
-                            viewBox="0 0 16 16"
-                            fill="none"
-                            aria-hidden="true"
-                            className="shrink-0"
-                          >
-                            <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.2" />
-                            <path
-                              d="M8 7.5v4M8 5v.5"
-                              stroke="currentColor"
-                              strokeWidth="1.5"
-                              strokeLinecap="round"
-                            />
-                          </svg>
-                          Why am I seeing this?
-                        </button>
-                      )}
-
-                      <button
-                        type="button"
-                        role="menuitem"
-                        onClick={handleFlagAsSpam}
-                        className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-[var(--color-fg)] hover:bg-[var(--color-muted)] transition-colors"
-                      >
-                        <svg
-                          width="14"
-                          height="14"
-                          viewBox="0 0 16 16"
-                          fill="none"
-                          aria-hidden="true"
-                          className="shrink-0 text-orange-400"
-                        >
-                          <path
-                            d="M4 2v12M4 2l8 3-8 3"
-                            stroke="currentColor"
-                            strokeWidth="1.5"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                        </svg>
-                        Flag as spam
-                      </button>
-
-                      {post.niches.length > 0 && onShowMoreLikeThis && (
-                        <button
-                          type="button"
-                          role="menuitem"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setShowMenu(false);
-                            onShowMoreLikeThis(post.niches[0] ?? 'crypto');
-                          }}
-                          className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-green-400 hover:bg-green-500/10 transition-colors"
-                        >
-                          <svg
-                            width="14"
-                            height="14"
-                            viewBox="0 0 16 16"
-                            fill="none"
-                            aria-hidden="true"
-                            className="shrink-0"
-                          >
-                            <path
-                              d="M8 2v12M2 8h12"
-                              stroke="currentColor"
-                              strokeWidth="1.5"
-                              strokeLinecap="round"
-                            />
-                          </svg>
-                          Show more like this
-                        </button>
-                      )}
-                      {post.niches.length > 0 && onShowLessLikeThis && (
-                        <button
-                          type="button"
-                          role="menuitem"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setShowMenu(false);
-                            onShowLessLikeThis(post.niches[0] ?? 'crypto');
-                          }}
-                          className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-orange-400 hover:bg-orange-500/10 transition-colors"
-                        >
-                          <svg
-                            width="14"
-                            height="14"
-                            viewBox="0 0 16 16"
-                            fill="none"
-                            aria-hidden="true"
-                            className="shrink-0"
-                          >
-                            <path
-                              d="M2 8h12"
-                              stroke="currentColor"
-                              strokeWidth="1.5"
-                              strokeLinecap="round"
-                            />
-                          </svg>
-                          Show less like this
-                        </button>
-                      )}
-
-                      <button
-                        type="button"
-                        role="menuitem"
-                        onClick={handleReport}
-                        className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-[var(--color-fg)] hover:bg-[var(--color-muted)] transition-colors"
-                      >
-                        <svg
-                          width="14"
-                          height="14"
-                          viewBox="0 0 16 16"
-                          fill="none"
-                          aria-hidden="true"
-                          className="shrink-0 text-yellow-500"
-                        >
-                          <path d="M8 1L16 15H0L8 1Z" fill="currentColor" opacity="0.8" />
-                        </svg>
-                        Report post
-                      </button>
-
-                      {isAdmin && onAdminRemove && (
-                        <button
-                          type="button"
-                          role="menuitem"
-                          onClick={handleAdminRemove}
-                          className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-red-400 hover:bg-red-500/10 transition-colors"
-                        >
-                          <svg
-                            width="14"
-                            height="14"
-                            viewBox="0 0 16 16"
-                            fill="none"
-                            aria-hidden="true"
-                            className="shrink-0"
-                          >
-                            <path
-                              d="M2 4h12M5 4V2h6v2M3 4l1 10h8l1-10"
-                              stroke="currentColor"
-                              strokeWidth="1.5"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                          </svg>
-                          Remove post
-                        </button>
-                      )}
-                      {isAdmin && onAdminBan && (
-                        <button
-                          type="button"
-                          role="menuitem"
-                          onClick={handleAdminBan}
-                          className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-orange-400 hover:bg-orange-500/10 transition-colors"
-                        >
-                          <svg
-                            width="14"
-                            height="14"
-                            viewBox="0 0 16 16"
-                            fill="none"
-                            aria-hidden="true"
-                            className="shrink-0"
-                          >
-                            <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.5" />
-                            <line
-                              x1="3.5"
-                              y1="8"
-                              x2="12.5"
-                              y2="8"
-                              stroke="currentColor"
-                              strokeWidth="1.5"
-                              strokeLinecap="round"
-                            />
-                            <path
-                              d="M8 3v3M8 10v3"
-                              stroke="currentColor"
-                              strokeWidth="1"
-                              strokeLinecap="round"
-                            />
-                          </svg>
-                          Ban user
-                        </button>
-                      )}
-
-                      <button
-                        type="button"
-                        role="menuitem"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setShowTranslateMenu((v) => !v);
-                        }}
-                        className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-[var(--color-fg)] hover:bg-[var(--color-muted)] transition-colors"
-                      >
-                        <svg
-                          width="14"
-                          height="14"
-                          viewBox="0 0 16 16"
-                          fill="none"
-                          aria-hidden="true"
-                          className="shrink-0 text-blue-400"
-                        >
-                          <path
-                            d="M2 2h6l1 2H3L2 2zm2 4h4l1 2H5l-1-2zm3 4h2l3 6H8l-1-2-1 2H4l3-6z"
-                            fill="currentColor"
-                          />
-                          <path
-                            d="M12 2l2 4-2 4"
-                            stroke="currentColor"
-                            strokeWidth="1.2"
-                            strokeLinecap="round"
-                          />
-                        </svg>
-                        Translate to...
-                      </button>
-
-                      {showTranslateMenu && (
-                        <div className="border-t border-[var(--color-border)]">
-                          {(['nostr', 'farcaster', 'lens', 'mastodon', 'bluesky', 'lemmy'] as const)
-                            .filter((p) => p !== post.protocol)
-                            .map((protocol) => (
-                              <button
-                                key={protocol}
-                                type="button"
-                                role="menuitem"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  void handleTranslate(protocol);
-                                }}
-                                disabled={translating}
-                                className="flex w-full items-center gap-3 px-4 py-2 pl-8 text-left text-sm text-[var(--color-muted)] hover:bg-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors disabled:opacity-50"
-                              >
-                                {translating && translateTarget === protocol ? (
-                                  <span className="text-[10px] animate-pulse">...</span>
-                                ) : (
-                                  <span className="text-[0.7em] opacity-60">
-                                    {_getProtocolIcon(protocol)}
-                                  </span>
-                                )}
-                                {_getProtocolLabel(protocol)}
-                              </button>
-                            ))}
-                        </div>
-                      )}
-
-                      {post.community && (
-                        <button
-                          type="button"
-                          role="menuitem"
-                          onClick={handleMuteCommunity}
-                          className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-[var(--color-fg)] hover:bg-[var(--color-muted)] transition-colors"
-                        >
-                          <svg
-                            width="14"
-                            height="14"
-                            viewBox="0 0 16 16"
-                            fill="none"
-                            aria-hidden="true"
-                            className="shrink-0 text-purple-400"
-                          >
-                            <rect
-                              x="2"
-                              y="2"
-                              width="5"
-                              height="5"
-                              rx="1"
-                              stroke="currentColor"
-                              strokeWidth="1.2"
-                            />
-                            <rect
-                              x="9"
-                              y="2"
-                              width="5"
-                              height="5"
-                              rx="1"
-                              stroke="currentColor"
-                              strokeWidth="1.2"
-                            />
-                            <rect
-                              x="2"
-                              y="9"
-                              width="5"
-                              height="5"
-                              rx="1"
-                              stroke="currentColor"
-                              strokeWidth="1.2"
-                            />
-                            <rect
-                              x="9"
-                              y="9"
-                              width="5"
-                              height="5"
-                              rx="1"
-                              stroke="currentColor"
-                              strokeWidth="1.2"
-                            />
-                          </svg>
-                          {communityMuted ? 'Unmute community' : `Mute /c/${post.community.name}`}
-                        </button>
-                      )}
-
-                      <button
-                        type="button"
-                        role="menuitem"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setShowMuteWordMenu((v) => !v);
-                        }}
-                        className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-[var(--color-fg)] hover:bg-[var(--color-muted)] transition-colors"
-                      >
-                        <svg
-                          width="14"
-                          height="14"
-                          viewBox="0 0 16 16"
-                          fill="none"
-                          aria-hidden="true"
-                          className="shrink-0 text-orange-400"
-                        >
-                          <path
-                            d="M12 10a4 4 0 0 0 0-8M8 14a6 6 0 0 1-6-6M8 14a6 6 0 0 0 6-6M8 14V2"
-                            stroke="currentColor"
-                            strokeWidth="1.5"
-                            strokeLinecap="round"
-                          />
-                          <line
-                            x1="2"
-                            y1="14"
-                            x2="14"
-                            y2="2"
-                            stroke="currentColor"
-                            strokeWidth="1.5"
-                            strokeLinecap="round"
-                          />
-                        </svg>
-                        Mute word
-                      </button>
-
-                      {showMuteWordMenu &&
-                        (() => {
-                          const candidates = [
-                            ...new Set(
-                              (post.text || '')
-                                .toLowerCase()
-                                .split(/[\s,;:.!?]+/)
-                                .filter((w) => w.length > 3 && w.length < 30 && !/^\d+$/.test(w))
-                                .slice(0, 6),
-                            ),
-                          ];
-                          return (
-                            <div className="border-t border-[var(--color-border)]">
-                              {candidates.length === 0 && (
-                                <p className="px-4 py-2 text-xs text-[var(--color-muted)]">
-                                  No words to mute
-                                </p>
-                              )}
-                              {candidates.map((word) => (
-                                <button
-                                  key={word}
-                                  type="button"
-                                  role="menuitem"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    void handleMuteWordFromMenu(word);
-                                  }}
-                                  className="flex w-full items-center gap-3 px-4 py-2 pl-8 text-left text-sm text-[var(--color-muted)] hover:bg-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
-                                >
-                                  &ldquo;{word}&rdquo;
-                                </button>
-                              ))}
-                            </div>
-                          );
-                        })()}
-
-                      <button
-                        type="button"
-                        role="menuitem"
-                        onClick={handleBlock}
-                        className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-[var(--color-fg)] hover:bg-[var(--color-muted)] transition-colors"
-                      >
-                        <svg
-                          width="14"
-                          height="14"
-                          viewBox="0 0 16 16"
-                          fill="none"
-                          aria-hidden="true"
-                          className="shrink-0 text-red-400"
-                        >
-                          <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.5" />
-                          <line
-                            x1="3.5"
-                            y1="8"
-                            x2="12.5"
-                            y2="8"
-                            stroke="currentColor"
-                            strokeWidth="1.5"
-                            strokeLinecap="round"
-                          />
-                        </svg>
-                        {blocked ? 'Unblock user' : 'Block user'}
-                      </button>
-                      <button
-                        type="button"
-                        role="menuitem"
-                        onClick={handleMuteFromMenu}
-                        className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-[var(--color-fg)] hover:bg-[var(--color-muted)] transition-colors"
-                      >
-                        <svg
-                          width="14"
-                          height="14"
-                          viewBox="0 0 16 16"
-                          fill="none"
-                          aria-hidden="true"
-                          className="shrink-0 text-[var(--color-muted)]"
-                        >
-                          <path
-                            d="M12 10a4 4 0 0 0 0-8M8 14a6 6 0 0 1-6-6M8 14a6 6 0 0 0 6-6M8 14V2"
-                            stroke="currentColor"
-                            strokeWidth="1.5"
-                            strokeLinecap="round"
-                          />
-                          <line
-                            x1="2"
-                            y1="14"
-                            x2="14"
-                            y2="2"
-                            stroke="currentColor"
-                            strokeWidth="1.5"
-                            strokeLinecap="round"
-                          />
-                        </svg>
-                        {muted ? 'Unmute user' : 'Mute user'}
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              <button
-                type="button"
-                onClick={toggleFollow}
-                className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors ${
-                  following
-                    ? 'bg-degen-500/20 text-degen-400'
-                    : 'border border-[var(--color-border)] text-[var(--color-muted)] hover:border-degen-500/30 hover:text-degen-400'
-                }`}
-                aria-label={
-                  following
-                    ? `Unfollow ${post.author.handles[post.protocol] ?? post.author.displayName}`
-                    : `Follow ${post.author.handles[post.protocol] ?? post.author.displayName}`
-                }
-                aria-pressed={following}
-                title={following ? 'Unfollow' : 'Follow'}
-              >
-                {following ? '✓ Following' : '+ Follow'}
-              </button>
-              <button
-                type="button"
-                onClick={toggleMute}
-                className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors ${
-                  muted
-                    ? 'bg-red-500/20 text-red-400'
-                    : 'border border-[var(--color-border)] text-[var(--color-muted)] hover:border-red-500/30 hover:text-red-400'
-                }`}
-                aria-label={
-                  muted
-                    ? `Unmute ${post.author.handles[post.protocol] ?? post.author.displayName}`
-                    : `Mute ${post.author.handles[post.protocol] ?? post.author.displayName}`
-                }
-                aria-pressed={muted}
-                title={muted ? 'Unmute author' : 'Mute author'}
-              >
-                {muted ? '🔇 Muted' : '🔇'}
-              </button>
-            </div>
-            <div className="author-handle flex items-center gap-2 text-xs text-[var(--color-muted)]">
-              <span className="truncate">
-                {post.author.handles[post.protocol] ?? post.author.id.slice(0, 16)}
-              </span>
-              <span>·</span>
-              <time
-                dateTime={new Date(post.createdAt).toISOString()}
-                title={new Date(post.createdAt).toLocaleString()}
-              >
-                {formatTimeAgo(post.createdAt)}
-              </time>
-              {post.score && (
-                <>
-                  <span>·</span>
-                  <span
-                    className="inline-flex items-center gap-1 rounded-full bg-degen-500/10 px-1.5 py-0.5 text-[10px] font-medium text-degen-400"
-                    title={buildScoreTooltip(post.score)}
-                  >
-                    ★ {Math.round(post.score.total * 10) / 10}
-                  </span>
-                </>
-              )}
-              {post.qualityBadge === 'verified' && (
-                <span
-                  className="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium text-amber-400"
-                  title={
-                    post.qualityScore
-                      ? buildQualityTooltip(post.qualityScore)
-                      : 'High-quality post by protocol rules'
-                  }
-                >
-                  ⭐ Verified
-                </span>
-              )}
-              {(post.isHot || post.isTrending) && (
-                <span
-                  className="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-orange-500/10 px-1.5 py-0.5 text-[10px] font-medium text-orange-400"
-                  title={post.isHot ? 'Rising engagement velocity' : 'High engagement'}
-                >
-                  🔥 Hot
-                </span>
-              )}
-              {post.qualityScore && post.qualityBadge !== 'verified' && (
-                <span
-                  className="inline-flex shrink-0 items-center rounded-full border border-[var(--color-border)] px-1.5 py-0.5 text-[10px] tabular-nums text-[var(--color-muted)]"
-                  title={buildQualityTooltip(post.qualityScore)}
-                >
-                  Q {post.qualityScore.score}/{post.qualityScore.max}
-                </span>
-              )}
-              {/* Hover-only high-quality badge */}
-              {(post.feedDebug?.qualityScore ?? (post.score?.quality ?? 0) / 3) > 0.7 && (
-                <span
-                  className="relative z-10 inline-flex shrink-0 items-center gap-0.5 rounded-full bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity"
-                  title="This post was rated as high quality by the content quality filter"
-                >
-                  ⚡ High Quality
-                </span>
-              )}
-            </div>
-          </div>
+        {/* Media embeds (images, videos, links, frames) */}
+        <div className="mb-3">
+          <PostMedia post={post} authorName={post.author.displayName} />
         </div>
 
-        {/* Content */}
-        {post.paywall && (
-          <div className="mb-3 rounded-xl border border-purple-900/30 bg-purple-900/10 p-4 text-center">
-            <div className="mb-2 text-2xl">🔒</div>
-            <p className="mb-3 text-sm text-[var(--color-muted)]">This post is locked.</p>
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onPaywall?.(post);
-              }}
-              className="rounded-lg bg-purple-600 px-4 py-2 text-xs font-semibold text-[var(--color-fg)] hover:bg-purple-500 transition-colors"
-            >
-              Unlock for {post.paywall.amount} SOL
-            </button>
-          </div>
-        )}
-        <div className="content-text mb-3 text-[15px] leading-[1.5] text-[var(--color-fg)] whitespace-pre-wrap break-words">
-          {displayText}
-          {needsTruncation && !showFullText && (
-            <button
-              type="button"
-              className="ml-1 text-degen-500 hover:text-degen-400 transition-colors"
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowFullText(true);
-              }}
-              aria-label="Show more"
-            >
-              Show more
-            </button>
-          )}
-        </div>
+        {/* Niche tags */}
+        <PostMetrics post={post} />
 
-        {/* Inline token charts */}
-        {post.text &&
-          detectTokens(post.text).map((token, i) => (
-            <TokenChart key={token.address ?? token.symbol ?? `token-${i}`} {...token} compact />
-          ))}
-
-        {/* Embeds (media, links, frames, videos) */}
-        {post.embeds.length > 0 && (
+        {/* Permanence badge */}
+        {post.contentProof && (
           <div className="mb-3">
-            {(() => {
-              const images = post.embeds.filter((e) => e.kind === 'image').map((e) => e.url);
-              const links = post.embeds.filter((e) => e.kind === 'link');
-              const videos = post.embeds.filter((e) => e.kind === 'video');
-              const frames = post.embeds.filter((e) => e.kind === 'frame');
-              return (
-                <>
-                  {images.length > 0 && (
-                    <ImageGrid images={images} authorName={post.author.displayName} />
-                  )}
-                  {frames.map((embed) => (
-                    <FrameCard key={`frame-${embed.url}`} url={embed.url} />
-                  ))}
-                  {frames.length === 0 &&
-                    post.protocol === 'farcaster' &&
-                    links.length > 0 &&
-                    links[0]?.url && (
-                      <FrameCard key={`link-frame-${links[0].url}`} url={links[0].url} />
-                    )}
-                  {links.map((embed) => {
-                    const linkVideoInfo = parseVideoUrl(embed.url);
-                    if (linkVideoInfo) {
-                      return (
-                        <VideoEmbedCard key={`link-video-${embed.url}`} videoInfo={linkVideoInfo} />
-                      );
-                    }
-                    return (
-                      <LinkPreview
-                        key={`link-${embed.url}`}
-                        embed={embed}
-                        authorName={post.author.displayName}
-                      />
-                    );
-                  })}
-                  {videos.map((embed) => {
-                    const videoInfo = parseVideoUrl(embed.url);
-                    if (!videoInfo) {
-                      return (
-                        <a
-                          key={`video-${embed.url}`}
-                          href={embed.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="mt-2 block w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-muted)] p-3 text-xs text-degen-500 hover:text-degen-400 transition-colors truncate"
-                          onClick={(e) => e.stopPropagation()}
-                          onKeyDown={(e) => e.stopPropagation()}
-                        >
-                          ▶ {embed.url.replace(/^https?:\/\//, '').slice(0, 60)}
-                        </a>
-                      );
-                    }
-                    return <VideoEmbedCard key={`video-${embed.url}`} videoInfo={videoInfo} />;
-                  })}
-                </>
-              );
-            })()}
+            <PermanenceBadgeLink proof={post.contentProof} />
           </div>
         )}
 
-        {post.niches.length > 0 && (
-          <div className="niche-tags mb-3 flex flex-wrap gap-1">
-            {post.niches.slice(0, 5).map((n) => (
-              <span
-                key={n}
-                className="rounded-full border border-[var(--color-border)] px-2 py-0.5 text-[10px] font-medium text-[var(--color-muted)]"
-              >
-                {n}
-              </span>
-            ))}
-          </div>
-        )}
+        {/* Protocol-specific thread views & context badges */}
+        <PostThread post={post} />
 
-        {post.contentProof && <PermanenceBadge proof={post.contentProof} />}
-
-        {post.protocol === 'lemmy' && <LemmyThreadView post={post} />}
-        {post.protocol === 'peertube' && (
-          <PeerTubeEmbed
-            url={
-              post.embeds.find((e) => e.kind === 'video')?.url ??
-              post.embeds.find((e) => e.kind === 'link')?.url ??
-              ''
-            }
-            title={raw?.videoTitle as string | undefined}
-            channelName={raw?.channelName as string | undefined}
-          />
-        )}
-        {nostrBadge}
-        {post.protocol === 'mastodon' && (
-          <MastodonInstanceContext
-            instance={(raw?.instance as string) ?? 'mastodon.social'}
-            federatedFrom={raw?.federatedFrom as string | undefined}
-          />
-        )}
-        {post.protocol === 'lens' && <LensPublicationBadge post={post} />}
-        {post.protocol === 'bluesky' && <BlueskyPostContext post={post} />}
-        {post.protocol === 'threads' && raw?._viaActivityPub && (
-          <span
-            className="mb-2 inline-flex items-center gap-1.5 self-start rounded-full px-2.5 py-1 text-[11px] font-medium"
-            style={{
-              backgroundColor: 'color-mix(in srgb, var(--color-fg) 10%, transparent)',
-              color: 'var(--color-fg)',
-            }}
-            title="Delivered via ActivityPub federation"
-          >
-            <svg
-              width="10"
-              height="10"
-              viewBox="0 0 16 16"
-              fill="none"
-              aria-hidden="true"
-              className="shrink-0"
-            >
-              <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.2" />
-              <path
-                d="M8 2v12M2 8h12"
-                stroke="currentColor"
-                strokeWidth="1.2"
-                strokeLinecap="round"
-              />
-            </svg>
-            via ActivityPub
-          </span>
-        )}
-
-        {/* Engagement metrics + Tip */}
+        {/* Engagement actions (like, repost, reply, share, tip) */}
         <PostCardEngagement {...engagementProps} />
       </article>
+
       <EmbedModal
         open={showEmbedModal}
         onClose={() => setShowEmbedModal(false)}
@@ -1457,3 +661,5 @@ function PostCardComponent({
 }
 
 export const PostCard = memo(PostCardComponent);
+
+export type { EngageHandler, EngageResult, PostCardProps } from './PostCardTypes';

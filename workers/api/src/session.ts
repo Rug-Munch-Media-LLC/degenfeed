@@ -47,6 +47,9 @@ export async function revokeSession(nonce: string, expEpochMs: number, env: Env)
 
 /**
  * Check if a session nonce has been revoked.
+ *
+ * DESIGN DECISION: fail-closed during KV outages to prevent compromised
+ * sessions from being used; operators will be alerted via error logs.
  */
 export async function isSessionRevoked(nonce: string, env: Env): Promise<boolean> {
   if (!env.CACHE) return false;
@@ -54,8 +57,13 @@ export async function isSessionRevoked(nonce: string, env: Env): Promise<boolean
     const result = await env.CACHE.get(revokedSessionKey(nonce));
     return result !== null;
   } catch {
-    // KV hiccup — assume not revoked (fail open to avoid locking out all users)
-    return false;
+    // KV hiccup — deny all sessions (fail-closed) so revoked sessions
+    // cannot pass through during KV outages. Operators will see the
+    // error log and investigate the KV degradation.
+    console.error('[session] isSessionRevoked: KV read failed, denying session (fail-closed)', {
+      nonce: nonce.slice(0, 8),
+    });
+    return true;
   }
 }
 
@@ -92,7 +100,11 @@ async function isAddressRevoked(address: string, env: Env): Promise<boolean> {
     const result = await env.CACHE.get(`revoked:address:${address.toLowerCase()}`);
     return result !== null;
   } catch {
-    return false;
+    // KV hiccup — fail-closed: treat address as revoked during KV outage
+    console.error('[session] isAddressRevoked: KV read failed, denying session (fail-closed)', {
+      address: address.slice(0, 8),
+    });
+    return true;
   }
 }
 

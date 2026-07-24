@@ -99,7 +99,7 @@ export default function GlobalError({
               style={{
                 fontSize: '0.875rem',
                 lineHeight: '1.6',
-                color: '#71767b',
+                color: '#8b8f93',
                 margin: '0 0 4px',
               }}
             >
@@ -171,7 +171,7 @@ export default function GlobalError({
                   borderRadius: '9999px',
                   fontSize: '0.8125rem',
                   fontWeight: 600,
-                  color: '#71767b',
+                  color: '#8b8f93',
                   background: 'transparent',
                   border: '1px solid #2f3336',
                   cursor: 'pointer',

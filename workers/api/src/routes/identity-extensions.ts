@@ -668,3 +668,148 @@ export async function handleStatus(_request: Request, env: Env): Promise<Respons
     },
   });
 }
+
+// ─── Auto-Discovery Routes ─────────────────────────────────────────
+
+/**
+ * POST /api/identity/discover
+ *
+ * Auto-discover ALL protocol identities linked to the authenticated wallet.
+ * Runs multi-protocol discovery and returns results.
+ * Requires wallet session. Results cached for 1 hour.
+ */
+export async function handleIdentityDiscover(request: Request, env: Env): Promise<Response> {
+  const session = await requireSession(request, env);
+  if (session instanceof Response) return session;
+
+  const walletAddress = session.address;
+  const url = new URL(request.url);
+  const forceRefresh = url.searchParams.get('refresh') === 'true';
+
+  try {
+    const { discoverIdentities, getDiscoveryTimestampKey } = await import(
+      '../lib/identity-discovery'
+    );
+
+    const result = await discoverIdentities(walletAddress, env, { forceRefresh });
+
+    // Get last discovery timestamp
+    let lastDiscovery: number | null = null;
+    try {
+      const ts = await env.CACHE?.get(getDiscoveryTimestampKey(walletAddress));
+      if (ts) lastDiscovery = Number(ts);
+    } catch {
+      // ignore
+    }
+
+    return jsonResponse({
+      data: {
+        ...result,
+        lastDiscovery,
+        cacheTtl: 3600,
+      },
+    });
+  } catch (err) {
+    return jsonResponse({ error: `Discovery failed: ${String(err)}` }, 500);
+  }
+}
+
+/**
+ * POST /api/identity/link-all
+ *
+ * Link ALL discovered identities to the authenticated wallet in one call.
+ * Takes the discovered identities array (as returned by /api/identity/discover)
+ * and stores them all in the IDENTITIES KV.
+ * Requires wallet session.
+ */
+export async function handleIdentityLinkAll(request: Request, env: Env): Promise<Response> {
+  const session = await requireSession(request, env);
+  if (session instanceof Response) return session;
+
+  const walletAddress = session.address;
+
+  let body: {
+    discovered?: Array<{
+      protocol: string;
+      identity: Record<string, unknown>;
+      confidence: 'verified' | 'inferred';
+    }>;
+  };
+  try {
+    body = (await request.json()) as {
+      discovered?: Array<{
+        protocol: string;
+        identity: Record<string, unknown>;
+        confidence: 'verified' | 'inferred';
+      }>;
+    };
+  } catch {
+    return jsonResponse({ error: 'Invalid JSON body' }, 400);
+  }
+
+  if (!body.discovered || !Array.isArray(body.discovered) || body.discovered.length === 0) {
+    return jsonResponse({ error: 'Missing or empty discovered array' }, 400);
+  }
+
+  try {
+    const { linkDiscoveredIdentities } = await import('../lib/identity-discovery');
+
+    const result = await linkDiscoveredIdentities(
+      walletAddress,
+      body.discovered as Parameters<typeof linkDiscoveredIdentities>[1],
+      env,
+    );
+
+    return jsonResponse({
+      success: true,
+      data: result,
+    });
+  } catch (err) {
+    return jsonResponse({ error: `Failed to link identities: ${String(err)}` }, 500);
+  }
+}
+
+/**
+ * GET /api/identity/discovery/status
+ *
+ * Get the discovery status for the authenticated wallet.
+ * Returns: lastDiscovery timestamp, linked count, pending discoveries.
+ */
+export async function handleIdentityDiscoveryStatus(request: Request, env: Env): Promise<Response> {
+  const session = await requireSession(request, env);
+  if (session instanceof Response) return session;
+
+  const walletAddress = session.address;
+
+  // Get last discovery timestamp
+  let lastDiscovery: number | null = null;
+  try {
+    const ts = await env.CACHE?.get(`identity:discovery:ts:${walletAddress.toLowerCase()}`);
+    if (ts) lastDiscovery = Number(ts);
+  } catch {
+    // ignore
+  }
+
+  // Get cached discovery results if available
+  let cachedResult: Record<string, unknown> | null = null;
+  try {
+    const cached = await env.CACHE?.get(`identity:discovery:${walletAddress.toLowerCase()}`);
+    if (cached) cachedResult = JSON.parse(cached) as Record<string, unknown>;
+  } catch {
+    // ignore
+  }
+
+  return jsonResponse({
+    data: {
+      walletAddress,
+      lastDiscovery,
+      cachedResult: cachedResult
+        ? {
+            discoveredCount: (cachedResult.discovered as unknown[])?.length || 0,
+            alreadyLinkedCount: (cachedResult.alreadyLinked as string[])?.length || 0,
+          }
+        : null,
+      canDiscover: !lastDiscovery || Date.now() - lastDiscovery > 300000, // 5 min min interval
+    },
+  });
+}

@@ -2,10 +2,12 @@
 
 import Link from 'next/link';
 import { useCallback, useState } from 'react';
+import { IdentityDiscoveryWizard } from '../../components/IdentityDiscoveryWizard';
+import { useWalletConnect } from '../../hooks/useWalletConnect';
 
 /* ─── Types ───────────────────────────────────────────────────── */
 
-type Step = 'welcome' | 'interests' | 'connect' | 'feed';
+type Step = 'welcome' | 'interests' | 'connect' | 'discover' | 'feed';
 
 interface Interest {
   id: string;
@@ -117,9 +119,11 @@ export default function OnboardingPage() {
   const [step, setStep] = useState<Step>('welcome');
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
   const [connectedProtocols, setConnectedProtocols] = useState<string[]>([]);
+  const [discoveryLinked, setDiscoveryLinked] = useState(0);
+  const { address: walletAddress } = useWalletConnect();
 
-  const stepIndex = ['welcome', 'interests', 'connect', 'feed'].indexOf(step);
-  const totalSteps = 4;
+  const stepIndex = ['welcome', 'interests', 'connect', 'discover', 'feed'].indexOf(step);
+  const totalSteps = 5;
 
   const toggleInterest = useCallback((id: string) => {
     setSelectedInterests((prev) =>
@@ -131,6 +135,11 @@ export default function OnboardingPage() {
     setConnectedProtocols((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
     );
+  }, []);
+
+  const handleDiscoveryComplete = useCallback((count: number) => {
+    setDiscoveryLinked(count);
+    setStep('feed');
   }, []);
 
   return (
@@ -328,12 +337,52 @@ export default function OnboardingPage() {
             >
               ← Back
             </button>
-            <Link href="/feed" className="btn-primary text-sm px-8 py-2.5">
-              {connectedProtocols.length > 0
-                ? `Done — Start Exploring`
-                : "Skip, I'll connect later"}
-            </Link>
+            <button
+              type="button"
+              onClick={() => (walletAddress ? setStep('discover') : setStep('feed'))}
+              className="btn-primary text-sm px-8 py-2.5"
+            >
+              Continue
+            </button>
           </div>
+        </div>
+      )}
+
+      {/* ═══ IDENTITY DISCOVERY ═══ */}
+      {step === 'discover' && (
+        <div>
+          <StepBadge num={4} label="Auto-Discover Identities" />
+          <h2
+            className="mb-2 text-2xl font-bold text-[var(--color-fg)]"
+            style={{ fontFamily: 'var(--font-heading)' }}
+          >
+            Find your accounts across the web
+          </h2>
+          <p className="mb-6 text-sm text-[var(--color-muted)]">
+            We&apos;ll scan ENS, Farcaster, Lens, Nostr, Bluesky, and more to find all your linked
+            identities. This brings your complete social graph into one feed.
+          </p>
+
+          {walletAddress ? (
+            <IdentityDiscoveryWizard
+              walletAddress={walletAddress}
+              variant="onboarding"
+              onComplete={handleDiscoveryComplete}
+              onDismiss={() => setStep('feed')}
+            />
+          ) : (
+            <div className="rounded-xl border border-amber-500/20 bg-amber-500/[0.03] p-6 text-center">
+              <p className="mb-2 text-sm text-amber-400">
+                Connect your wallet first to enable identity discovery
+              </p>
+              <p className="text-xs text-[var(--color-muted)]">
+                You can also do this later from your profile settings.
+              </p>
+              <Link href="/feed" className="btn-primary mt-4 inline-block px-6 py-2 text-sm">
+                Skip for now →
+              </Link>
+            </div>
+          )}
         </div>
       )}
 
@@ -349,9 +398,10 @@ export default function OnboardingPage() {
           >
             You&apos;re all set!
           </h1>
-          <p className="mx-auto mb-8 max-w-sm text-sm leading-relaxed text-[var(--color-muted)]">
-            Your feed is personalized and ready. Start exploring content from across the
-            decentralized social universe.
+          <p className="mx-auto mb-8 max-w-md text-sm leading-relaxed text-[var(--color-muted)]">
+            {discoveryLinked > 0
+              ? `We found and linked ${discoveryLinked} identities across the decentralized web. Your feed is unified with content from all your networks.`
+              : 'Your feed is personalized and ready. Start exploring content from across the decentralized social universe.'}
           </p>
           <Link href="/feed" className="btn-primary text-base px-10 py-3 gap-2">
             <svg

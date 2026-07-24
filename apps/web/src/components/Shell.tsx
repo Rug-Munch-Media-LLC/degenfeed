@@ -16,6 +16,7 @@ import { KeyboardShortcuts } from './KeyboardShortcuts';
 import { LeftSidebar } from './LeftSidebar';
 import { OfflineBanner } from './OfflineBanner';
 import { ProtocolConnectFlow } from './ProtocolConnectFlow';
+import { ProtocolHealthBanner } from './ProtocolHealthBanner';
 import { ProtocolQuickSwitcher } from './ProtocolQuickSwitcher';
 import { QuickJumpFloating } from './QuickJumpFloating';
 import { RightSidebar } from './RightSidebar';
@@ -532,7 +533,7 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
       }
       if ((e.key === 'k' || e.key === 'K') && (e.ctrlKey || e.metaKey)) {
         e.preventDefault();
-        setQuickSwitcherOpen(true);
+        setSearchOpen((prev) => !prev);
         return;
       }
       if (e.key === '?' && !e.ctrlKey && !e.metaKey) {
@@ -620,6 +621,7 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
             }}
           />
 
+          <ProtocolHealthBanner />
           <OnboardingProvider>
             <ScreenReaderAnnouncerProvider>
               {children}

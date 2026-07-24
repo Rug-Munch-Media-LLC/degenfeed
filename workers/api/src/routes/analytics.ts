@@ -21,7 +21,7 @@ import { checkPremiumStatus } from '../premium';
 
 const MEILISEARCH_URL = 'https://search.degenfeed.xyz';
 const ANALYTICS_CACHE_TTL = 120; // 2 minutes for freshness
-const MASTODON_INSTANCE = 'https://social.degenfeed.xyz';
+const GTS_INSTANCE = 'https://social.degenfeed.xyz';
 const FARCASTER_DEFAULT_HUB = 'https://hub.farcaster.standardcrypto.vc:2281';
 const LENS_DEFAULT_API = 'https://api-v2.lens.dev/graphql';
 const BSKY_PUBLIC_API = 'https://public.api.bsky.app';
@@ -439,7 +439,7 @@ function extractProtocolIdentities(identity: CrossProtocolIdentity): ProtocolIde
     result.push({
       protocol: 'mastodon',
       handle: identity.mastodon.handle,
-      instance: identity.mastodon.instance || MASTODON_INSTANCE,
+      instance: identity.mastodon.instance || GTS_INSTANCE,
     });
   }
   return result;

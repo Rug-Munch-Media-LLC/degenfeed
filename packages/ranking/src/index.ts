@@ -43,6 +43,30 @@ export {
 } from './scorer';
 
 import { computeQualitySignals, computeAuthorReputation as computeReputation } from './scorer';
+import {
+  freshnessBoost as freshnessBoostFn,
+  normalizeEngagement as normalizeEngagementFn,
+  recencyDecay as recencyDecayFn,
+  sourceWeight as sourceWeightFn,
+} from './unified-scorer';
+
+export type {
+  EngagementSnapshot,
+  ScoreBreakdown as UnifiedScoreBreakdown,
+  ScorePostOptions,
+  ScoringWeights,
+  UnifiedMode,
+} from './unified-scorer';
+// ─── Unified scoring (replaces both FeedAlgorithm and scoreBreakdownV2) ─
+export {
+  DEFAULT_UNIFIED_WEIGHTS,
+  freshnessBoost,
+  normalizeEngagement,
+  recencyDecay,
+  scorePost,
+  sourceWeight,
+  UNIFIED_MODE_PRESETS,
+} from './unified-scorer';
 
 export const WEIGHTS = {
   w1: 1.0,
@@ -77,6 +101,7 @@ export const PLATFORM_TIER: Record<Protocol, number> = {
   bluesky: 1,
   mastodon: 1,
   lemmy: 1,
+  pixelfed: 1,
   threads: 0.7,
   atproto: 1,
   zora: 0.8,
@@ -145,24 +170,7 @@ export interface ScoreBreakdown {
   reasons: string[];
 }
 
-export function recencyDecay(createdAt: number, now: number, halfLifeHours: number): number {
-  const ageHours = Math.max(0, (now - createdAt) / (1000 * 60 * 60));
-  return 0.5 ** (ageHours / halfLifeHours);
-}
-
-export function freshnessBoost(createdAt: number, now: number): number {
-  const ageMin = (now - createdAt) / 60000;
-  if (ageMin < 15) return 2.0;
-  if (ageMin < 60) return 1.5;
-  if (ageMin < 120) return 1.2;
-  return 1.0;
-}
-
-export function normalizeEngagement(post: UnifiedPost): number {
-  const m = post.metrics;
-  const raw = m.likes + m.reposts * 2 + m.replies * 3 + m.quotes * 4;
-  return Math.log(1 + raw);
-}
+// recencyDecay, freshnessBoost, normalizeEngagement are exported from './unified-scorer'
 
 export function engagementVelocity(
   post: UnifiedPost,
@@ -180,9 +188,7 @@ export function engagementVelocity(
   return 1 + Math.min(velocity / 5, 2);
 }
 
-export function sourceWeight(protocol: Protocol): number {
-  return PLATFORM_TIER_WEIGHTS[protocol] ?? 0.5;
-}
+// sourceWeight is exported from './unified-scorer'
 
 export function qualityBoost(
   post: UnifiedPost,
@@ -229,11 +235,11 @@ export function scoreBreakdownV2(post: UnifiedPost, ctx: RankingContext): ScoreB
   const isMuted = post.niches.some((n) => muted.has(n));
   if (isMuted) reasons.push('muted-niche');
 
-  const recency = recencyDecay(post.createdAt, ctx.now, RECENCY_HALF_LIFE_HOURS);
+  const recency = recencyDecayFn(post.createdAt, ctx.now, RECENCY_HALF_LIFE_HOURS);
   if (recency > 0.8) reasons.push('fresh');
   else if (recency < 0.2) reasons.push('aging');
 
-  const engagement = normalizeEngagement(post);
+  const engagement = normalizeEngagementFn(post);
   if (engagement > 3) reasons.push('viral');
 
   const relevance =
@@ -265,7 +271,7 @@ export function scoreBreakdownV2(post: UnifiedPost, ctx: RankingContext): ScoreB
   const diversity = prefs?.diversityBoost === false ? 0 : Math.max(-0.8, -extra * 0.2);
   if (diversity < 0) reasons.push('author-diversity');
 
-  const source = sourceWeight(post.protocol);
+  const source = sourceWeightFn(post.protocol);
   const prev = ctx.previousEngagement?.get(post.id);
   const baseVelocity = engagementVelocity(post, prev, ctx.now);
   // Blend KV-based velocity with engagement-rate velocity from signals
@@ -296,7 +302,7 @@ export function scoreBreakdownV2(post: UnifiedPost, ctx: RankingContext): ScoreB
     source * (v2.source ?? 0.8);
 
   const total =
-    baseScore * freshnessBoost(post.createdAt, ctx.now) * Math.max(0.05, qualityNormalized);
+    baseScore * freshnessBoostFn(post.createdAt, ctx.now) * Math.max(0.05, qualityNormalized);
 
   if (isMuted) reasons.unshift('muted-penalty');
 

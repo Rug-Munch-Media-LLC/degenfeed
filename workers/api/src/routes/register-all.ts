@@ -183,7 +183,7 @@ registerAll.post('/all', async (c) => {
     const gts = await registerOnPlatform('mastodon', gtsUsername, walletAddress, {
       storage: c.env.PLATFORM_ACCOUNTS,
       walletAddress,
-      mastodonInstanceUrl: c.env.MASTODON_INSTANCE_URL || 'https://social.degenfeed.xyz',
+      mastodonInstanceUrl: c.env.GOTOSOCIAL_INSTANCE_URL || 'https://social.degenfeed.xyz',
     });
     if (gts.status === 'created') {
       results.activitypub = {

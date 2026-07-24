@@ -100,6 +100,10 @@ export interface Env {
   DEPLOYMENTS?: KVNamespace;
   /** KV namespace for reports, bans, and moderation state */
   REPORTS?: KVNamespace;
+  /** When "true", enables real on-chain creator coin deployments. When false/absent, returns "coming soon" */
+  ENABLE_REAL_DEPLOYMENTS?: string;
+  /** Factory contract address for creator coin deployments on Base (Zora or DegenFeed factory) */
+  COIN_FACTORY_ADDRESS?: string;
   /** Comma-separated admin wallet addresses (lowercase) for moderation dashboard access */
   ADMIN_WALLETS?: string;
   /** PeerTube instance URL for livestreams (default: https://video.degenfeed.xyz) */
@@ -197,8 +201,8 @@ export interface Env {
   POLYGON_RPC_URL?: string;
   /** Private key of the premium wallet for paying on-chain registration fees */
   PREMIUM_WALLET_KEY?: string;
-  /** Mastodon instance URL for account creation */
-  MASTODON_INSTANCE_URL?: string;
+  /** GoToSocial instance URL (ActivityPub-compatible Mastodon API) for account creation */
+  GOTOSOCIAL_INSTANCE_URL?: string;
   /** Lemmy instance URL for account creation */
   LEMMY_INSTANCE_URL?: string;
   /** Pixelfed instance URL for account creation */
@@ -415,6 +419,12 @@ export function getGtsConfig(env: Env) {
 
 // ─── Response helper ─────────────────────────────────────────────────
 
+/**
+ * @deprecated Use response-helpers.ts (ok/created/badRequest/unauthorized/notFound/serverError) instead.
+ * response-helpers.ts wraps responses in a consistent { data } envelope.
+ * Routes using jsonResponse() should be migrated to response-helpers for consistency.
+ * Migrated routes: health.ts
+ */
 export function jsonResponse(
   data: unknown,
   status = 200,
@@ -533,6 +543,17 @@ export async function scheduled(
   // ── Daily digest — 14:00 UTC ──────────────────────────────────────
   if (cron === '0 14 * * *') {
     await handleCron(env);
+
+    // Process expired GDPR account deletion requests (24h grace period)
+    try {
+      const { processPendingDeletions } = await import('./routes/account-delete');
+      const result = await processPendingDeletions(env);
+      if (result.processed > 0 || result.errors > 0) {
+        log('info', '[scheduled] GDPR deletion processing complete', result);
+      }
+    } catch (err) {
+      log('error', '[scheduled] GDPR deletion processing failed', err);
+    }
   }
 
   // ── Weekly source discovery + health maintenance — Sunday 12:00 UTC ──
@@ -548,6 +569,34 @@ export async function scheduled(
     }
 
     // Initialize health tracking for newly discovered sources
+
+    // ── Weekly identity re-discovery ────────────────────────────────
+    try {
+      const { discoverIdentities } = await import('./lib/identity-discovery');
+      const { identityKey } = await import('@degenfeed/utils');
+      // Scan all wallets with linked identities and re-discover
+      // This catches newly created protocol accounts that were linked after initial discovery
+      let cursor: string | undefined;
+      let rechecked = 0;
+      do {
+        const list = await env.IDENTITIES?.list({ cursor, limit: 100 });
+        if (!list) break;
+        cursor = list.cursor;
+        for (const key of list.keys) {
+          const wallet = key.name.replace('identity:', '');
+          if (!wallet.startsWith('0x') && !wallet.startsWith('0x')) continue;
+          try {
+            await discoverIdentities(wallet, env, { forceRefresh: true });
+            rechecked++;
+          } catch {
+            // Skip wallets that fail — likely stale entries
+          }
+        }
+      } while (cursor);
+      log('info', '[scheduled] identity re-discovery complete', { rechecked });
+    } catch (err) {
+      log('error', '[scheduled] identity re-discovery failed', err);
+    }
     try {
       const { initSourceHealth } = await import('./routes/source-health');
       const allSourcesRaw = await env.CACHE?.get('discovered:sources:all');

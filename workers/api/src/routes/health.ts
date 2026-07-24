@@ -1,6 +1,7 @@
-import { DEFAULT_RELAYS, type Env, jsonResponse, noCacheJsonResponse } from '../index';
+import { DEFAULT_RELAYS, type Env } from '../index';
 import { getQueueStats } from '../lib/offline-queue';
 import { getTxMonitorStats } from '../lib/transaction-monitor';
+import { ok } from '../response-helpers';
 
 /**
  * GET /api/health — Legacy relay health
@@ -30,7 +31,7 @@ export async function handleRelaysHealth(env: Env): Promise<Response> {
     }
   }
 
-  return jsonResponse({
+  return ok({
     relays: results,
     healthy: Object.values(results).filter((r) => r === 'ok').length,
   });
@@ -73,7 +74,7 @@ interface ProtocolsHealthResponse {
 export async function handleProtocolsHealth(env: Env): Promise<Response> {
   const cacheKey = 'health:protocols:v1';
   const cached = await readProtocolsCache(env, cacheKey);
-  if (cached) return jsonResponse(cached);
+  if (cached) return ok(cached);
 
   const { checkProvidersHealth, isCircuitOpen, DEFAULT_PROTOCOLS } = await import(
     '../feed/feed-fetcher'
@@ -139,7 +140,7 @@ export async function handleProtocolsHealth(env: Env): Promise<Response> {
   // Cache for 30 seconds to avoid hammering APIs.
   await writeProtocolsCache(env, cacheKey, body);
 
-  return jsonResponse(body);
+  return ok(body);
 }
 
 // ─── Postiz health check ─────────────────────────────────────────
@@ -294,7 +295,7 @@ export async function handleFullHealth(env: Env): Promise<Response> {
     overallLatency: Math.round(performance.now() - start),
   };
 
-  return noCacheJsonResponse(body);
+  return ok(body, { 'cache-control': 'no-store, must-revalidate' });
 }
 
 // Import getErrorCounts lazily — depends on error-logger module

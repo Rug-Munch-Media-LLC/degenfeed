@@ -3,12 +3,13 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useNotifications } from '../hooks/useNotifications';
 import { useAuth } from './AuthProvider';
 
 interface NavItem {
   href: string;
   label: string;
-  icon: 'feed' | 'search' | 'compose' | 'live' | 'profile';
+  icon: 'home' | 'search' | 'compose' | 'notifications' | 'profile';
   requiresAuth?: boolean;
 }
 
@@ -17,7 +18,7 @@ interface NavItem {
 function NavIcon({ type, active }: { type: NavItem['icon']; active: boolean }) {
   const sw = active ? 2.5 : 1.5;
   switch (type) {
-    case 'feed':
+    case 'home':
       return (
         <svg
           width="24"
@@ -74,25 +75,21 @@ function NavIcon({ type, active }: { type: NavItem['icon']; active: boolean }) {
           <line x1="5" y1="12" x2="19" y2="12" />
         </svg>
       );
-    case 'live':
-      return active ? (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z" />
-        </svg>
-      ) : (
+    case 'notifications':
+      return (
         <svg
           width="24"
           height="24"
           viewBox="0 0 24 24"
-          fill="none"
+          fill={active ? 'currentColor' : 'none'}
           stroke="currentColor"
           strokeWidth={sw}
           strokeLinecap="round"
           strokeLinejoin="round"
           aria-hidden="true"
         >
-          <circle cx="12" cy="12" r="10" />
-          <polygon points="10 8 16 12 10 16 10 8" fill={active ? 'currentColor' : 'none'} />
+          <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
+          {active && <path d="M13.73 21a2 2 0 01-3.46 0" />}
         </svg>
       );
     case 'profile':
@@ -124,10 +121,10 @@ function NavIcon({ type, active }: { type: NavItem['icon']; active: boolean }) {
 /* === Nav config ============================================= */
 
 const NAV_ITEMS: NavItem[] = [
-  { href: '/feed', label: 'Feed', icon: 'feed' },
+  { href: '/feed', label: 'Home', icon: 'home' },
   { href: '/search', label: 'Search', icon: 'search' },
   { href: '/compose', label: 'Post', icon: 'compose', requiresAuth: true },
-  { href: '/live', label: 'Live', icon: 'live' },
+  { href: '/notifications', label: 'Alerts', icon: 'notifications' },
   { href: '/profile', label: 'Profile', icon: 'profile', requiresAuth: true },
 ];
 
@@ -135,6 +132,7 @@ function isActiveMatch(pathname: string, item: NavItem): boolean {
   if (item.href === '/feed') {
     return (
       pathname === '/feed' ||
+      pathname === '/' ||
       pathname === '/home' ||
       pathname === '/home/all' ||
       pathname.startsWith('/feed/')
@@ -143,8 +141,8 @@ function isActiveMatch(pathname: string, item: NavItem): boolean {
   if (item.href === '/search') {
     return pathname === '/search';
   }
-  if (item.href === '/live') {
-    return pathname === '/live' || pathname.startsWith('/live/') || pathname.startsWith('/spaces');
+  if (item.href === '/notifications') {
+    return pathname === '/notifications' || pathname.startsWith('/notifications/');
   }
   if (item.href === '/profile') {
     return pathname === '/profile' || pathname.startsWith('/profile/');
@@ -156,8 +154,9 @@ function isActiveMatch(pathname: string, item: NavItem): boolean {
  * BottomNav — Fixed bottom navigation bar for mobile.
  *
  * Features:
- * - 5 tabs: Feed, Search, Compose, Live, Profile
+ * - 5 tabs: Home, Search, Compose (+), Notifications (badge), Profile
  * - Active indicator with accent color and glow
+ * - Unread notification badge from useNotifications hook
  * - Smooth slide-up entrance animation
  * - Safe area insets for notched phones
  * - All touch targets ≥ 44px
@@ -169,6 +168,7 @@ export function BottomNav() {
   const { ready, signedInProtocols, openCompose, openSignIn } = useAuth();
   const hasSignedIn = ready && Object.values(signedInProtocols).some(Boolean);
   const signedIn = ready && hasSignedIn;
+  const { unreadCount } = useNotifications(signedIn);
   const [mounted, setMounted] = useState(false);
   const prevActiveRef = useRef<string>('/feed');
 
@@ -287,6 +287,16 @@ export function BottomNav() {
                   </svg>
                 ) : (
                   <NavIcon type={item.icon} active={active} />
+                )}
+                {/* Unread badge for notifications */}
+                {item.href === '/notifications' && unreadCount > 0 && (
+                  <span
+                    role="status"
+                    className="absolute -right-0.5 -top-0.5 flex min-w-[18px] items-center justify-center rounded-full bg-degen-500 px-1 text-[9px] font-bold leading-tight text-black"
+                    aria-label={`${unreadCount} unread notifications`}
+                  >
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </span>
                 )}
               </span>
               <span className="leading-tight truncate max-w-[3rem] text-[9px]">{item.label}</span>

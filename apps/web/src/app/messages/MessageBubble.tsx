@@ -5,6 +5,13 @@ import { formatMessageTime } from '../../hooks/useMessages';
 
 /* === Props =================================================== */
 
+export interface DeliveryBadge {
+  protocol: string;
+  ok: boolean;
+  nativeId?: string;
+  error?: string;
+}
+
 export interface MessageBubbleProps {
   content: string;
   fromId: string;
@@ -12,8 +19,63 @@ export interface MessageBubbleProps {
   createdAt: number;
   encrypted: boolean;
   isMe: boolean;
+  /** Delivery status badges (shown on sent messages) */
+  deliveryStatus?: DeliveryBadge[];
   /** Pass user label (shortId) for the other side on 1st message of a group */
   showSender?: boolean;
+}
+
+/* === Protocol Badge Dot ====================================== */
+
+function ProtocolBadge({ protocol, ok }: { protocol: string; ok: boolean }) {
+  const color = ok ? getProtocolColor(protocol) : '#ef4444';
+  const icon = getProtocolIcon(protocol);
+  const label = getProtocolLabel(protocol);
+  const title = ok ? `Delivered via ${label}` : `${label} failed`;
+
+  return (
+    <span
+      className="inline-flex items-center justify-center rounded-full text-[8px] border border-[var(--color-border)]"
+      style={{
+        width: '14px',
+        height: '14px',
+        backgroundColor: ok ? `${color}30` : '#ef444420',
+        color: ok ? color : '#ef4444',
+      }}
+      role="img"
+      title={title}
+      aria-label={title}
+    >
+      {icon}
+    </span>
+  );
+}
+
+/* === Delivery Status Badges ================================== */
+
+function DeliveryBadges({ statuses }: { statuses: DeliveryBadge[] }) {
+  if (!statuses || statuses.length === 0) return null;
+
+  const delivered = statuses.filter((s) => s.ok);
+  const failed = statuses.filter((s) => !s.ok);
+
+  return (
+    <div className="flex items-center gap-0.5" role="list" aria-label="Delivery status">
+      {delivered.length > 0 && (
+        <span className="text-[8px] text-[var(--color-muted)] mr-0.5" aria-hidden="true">
+          {'\u2713'}
+        </span>
+      )}
+      {delivered.map((s) => (
+        <ProtocolBadge key={`ok-${s.protocol}`} protocol={s.protocol} ok={true} />
+      ))}
+      {failed.length > 0 && (
+        <span className="text-[8px] text-red-400 ml-0.5" aria-label={`${failed.length} failed`}>
+          {'\u2717'}
+        </span>
+      )}
+    </div>
+  );
 }
 
 /* === Component =============================================== */
@@ -24,6 +86,7 @@ export function MessageBubble({
   createdAt,
   encrypted,
   isMe,
+  deliveryStatus,
 }: MessageBubbleProps) {
   const protocolColor = getProtocolColor(protocol);
   const protocolIcon = getProtocolIcon(protocol);
@@ -41,7 +104,7 @@ export function MessageBubble({
         {/* Message text */}
         <p className="text-sm whitespace-pre-wrap break-words leading-relaxed">{content}</p>
 
-        {/* Footer: time + protocol + lock */}
+        {/* Footer: time + protocol + lock + delivery */}
         <div
           className={`flex items-center gap-1.5 mt-1.5 ${isMe ? 'justify-end' : 'justify-start'}`}
         >
@@ -71,6 +134,9 @@ export function MessageBubble({
               </svg>
             </span>
           )}
+
+          {/* Delivery status badges */}
+          {isMe && deliveryStatus && <DeliveryBadges statuses={deliveryStatus} />}
 
           {/* Protocol icon */}
           <span

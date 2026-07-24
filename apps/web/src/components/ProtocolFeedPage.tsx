@@ -7,6 +7,7 @@ import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
+import { useRealtimeFeed } from '../hooks/useRealtimeFeed';
 import { useAuth } from './AuthProvider';
 import { ContentFilterBar, type ContentType } from './ContentFilterBar';
 import { ContentMosaic } from './ContentMosaic';
@@ -206,6 +207,9 @@ export function ProtocolFeedPage({ protocol }: Props) {
   const [feedMeta, setFeedMeta] = useState<FeedMeta>({});
   const [newPostCount, setNewPostCount] = useState(0);
   const [contentType, setContentType] = useState<ContentType>('all');
+
+  // ── Real-time feed updates via WebSocket ──
+  const realtimeFeed = useRealtimeFeed('home', protocol);
   const [density, setDensity] = useState<DensityMode>('comfortable');
   const [tabTransitioning, setTabTransitioning] = useState(false);
   const lastPostIdRef = useRef<string | null>(null);
@@ -355,6 +359,33 @@ export function ProtocolFeedPage({ protocol }: Props) {
       if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
     };
   }, [fetchFeed, config, fetchFeatured]);
+
+  // Handle real-time post insertion from WebSocket
+  const handleRealtimeInsert = useCallback(() => {
+    const queued = realtimeFeed.insertQueued();
+    if (queued.length > 0) {
+      setPosts((prev) => {
+        const newPosts = queued.map((q) => q.post);
+        const existingIds = new Set(prev.map((p) => p.id));
+        const trulyNew = newPosts.filter((p) => !existingIds.has(p.id));
+        if (trulyNew.length === 0) return prev;
+        return [...trulyNew, ...prev];
+      });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [realtimeFeed]);
+
+  // Auto-insert at top
+  useEffect(() => {
+    if (realtimeFeed.newPostCount > 0) {
+      const timer = setTimeout(() => {
+        if (window.scrollY < 80) {
+          handleRealtimeInsert();
+        }
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [realtimeFeed.newPostCount, handleRealtimeInsert]);
 
   const handleRefresh = useCallback(() => {
     setNewPostCount(0);
@@ -515,7 +546,41 @@ export function ProtocolFeedPage({ protocol }: Props) {
             {/* Quick jump — mobile dropdown */}
             <QuickJumpSidebar color={config.color} activeTab={activeTab} onJump={setActiveTab} />
 
+            {/* Live indicator */}
+            <div className="mb-3 flex items-center gap-2">
+              <span
+                className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-semibold transition-all ${
+                  realtimeFeed.connected
+                    ? 'bg-degen-500/10 text-degen-400'
+                    : 'bg-yellow-500/10 text-yellow-400'
+                }`}
+              >
+                <span
+                  className={`inline-block h-1.5 w-1.5 rounded-full ${
+                    realtimeFeed.connected
+                      ? 'animate-pulse bg-degen-400 shadow-[0_0_6px_rgba(34,197,94,0.6)]'
+                      : 'bg-yellow-400'
+                  }`}
+                />
+                {realtimeFeed.connected
+                  ? 'Live'
+                  : realtimeFeed.connectionState === 'reconnecting'
+                    ? 'Reconnecting…'
+                    : 'Connecting…'}
+              </span>
+            </div>
+
             {/* == Feed */}
+            {/* Real-time new posts banner */}
+            {realtimeFeed.newPostCount > 0 && (
+              <div className="mb-4 animate-slideDown">
+                <FeedPollerBanner
+                  count={realtimeFeed.newPostCount}
+                  onRefresh={handleRealtimeInsert}
+                />
+              </div>
+            )}
+
             <FeedPollerBanner count={newPostCount} onRefresh={handleRefresh} />
 
             {feedMeta.notices && feedMeta.notices.length > 0 && (

@@ -185,6 +185,18 @@ export function ChatView({
                 createdAt={msg.createdAt}
                 encrypted={msg.encrypted}
                 isMe={isMe}
+                deliveryStatus={
+                  (
+                    msg as {
+                      deliveryStatus?: Array<{
+                        protocol: string;
+                        ok: boolean;
+                        nativeId?: string;
+                        error?: string;
+                      }>;
+                    }
+                  ).deliveryStatus
+                }
               />
             );
           })}

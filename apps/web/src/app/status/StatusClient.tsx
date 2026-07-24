@@ -204,10 +204,10 @@ export function StatusClient({ initialData }: { initialData: ProtocolsHealthResp
     }
   }, []);
 
-  // Auto-refresh every 60 seconds
+  // Auto-refresh every 30 seconds
   useEffect(() => {
     if (!autoRefresh) return;
-    const id = setInterval(refresh, 60_000);
+    const id = setInterval(refresh, 30_000);
     return () => clearInterval(id);
   }, [autoRefresh, refresh]);
 
@@ -220,6 +220,30 @@ export function StatusClient({ initialData }: { initialData: ProtocolsHealthResp
     <div>
       <SummaryBanner summary={summary} checkedAt={checkedAt} />
 
+      {/* Last updated timestamp */}
+      {checkedAt > 0 && (
+        <div className="mb-3 flex items-center gap-2 text-xs text-[var(--color-muted)]">
+          <span
+            className="inline-block h-2 w-2 rounded-full"
+            style={{
+              backgroundColor:
+                summary.down === 0 && summary.degraded === 0
+                  ? 'var(--color-accent)'
+                  : summary.down > 0
+                    ? '#ef4444'
+                    : '#eab308',
+            }}
+          />
+          <span>
+            Last updated{' '}
+            <span className="font-mono font-medium text-[var(--color-fg)]">
+              {timeAgo(checkedAt)}
+            </span>
+          </span>
+          {loading && <span className="ml-1 animate-pulse text-[10px]">⟳</span>}
+        </div>
+      )}
+
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-sm font-semibold text-[var(--color-fg)]">Per-Protocol Status</h2>
         <div className="flex items-center gap-3">
@@ -230,7 +254,7 @@ export function StatusClient({ initialData }: { initialData: ProtocolsHealthResp
               onChange={(e) => setAutoRefresh(e.target.checked)}
               className="h-3 w-3 rounded border-white/20 bg-[var(--color-muted)] text-degen-500 focus:ring-degen-500"
             />
-            Auto-refresh (60s)
+            Auto-refresh (30s)
           </label>
           <button
             type="button"
@@ -270,6 +294,33 @@ export function StatusClient({ initialData }: { initialData: ProtocolsHealthResp
               <p className="mb-2 text-xs text-[var(--color-muted)]">{meta.description}</p>
 
               {/* Metrics row */}
+              {/* Success rate bar */}
+              <div className="mb-2 flex items-center gap-2">
+                <div
+                  className="h-1.5 flex-1 overflow-hidden rounded-full"
+                  style={{ backgroundColor: 'var(--color-overlay)' }}
+                >
+                  <div
+                    className="h-full rounded-full transition-all duration-500"
+                    style={{
+                      width: `${status === 'up' ? 100 : status === 'degraded' ? 60 : 10}%`,
+                      backgroundColor:
+                        status === 'up'
+                          ? 'var(--color-accent)'
+                          : status === 'degraded'
+                            ? '#eab308'
+                            : '#ef4444',
+                    }}
+                  />
+                </div>
+                <span
+                  className="shrink-0 font-mono text-[10px] font-medium tabular-nums"
+                  style={{ color: 'var(--color-fg)' }}
+                >
+                  {status === 'up' ? '100%' : status === 'degraded' ? '~60%' : '0%'}
+                </span>
+              </div>
+
               <div className="mt-auto flex items-center gap-4 text-[10px] text-[var(--color-muted)]">
                 {latency !== null && (
                   <span>

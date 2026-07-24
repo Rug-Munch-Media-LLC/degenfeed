@@ -15,6 +15,7 @@ import { getInvitePoolStats } from '@degenfeed/crossplatform-register/bluesky-in
 import type { CrossProtocolIdentity } from '@degenfeed/utils';
 import { identityKey } from '@degenfeed/utils';
 import { type Env, jsonResponse, log, noCacheJsonResponse } from '../index';
+import { sealForWallet } from '../lib/crypto-seal';
 import { checkPremiumStatus } from '../premium';
 import { requireSession } from '../session';
 
@@ -88,11 +89,12 @@ export async function handleRegisterPlatform(request: Request, env: Env): Promis
   const result = await registerOnPlatform(platform, desiredUsername, walletAddress, {
     storage: env.PLATFORM_ACCOUNTS,
     walletAddress,
+    sealSecret: (plaintext: string) => sealForWallet(env, plaintext, walletAddress, 'nostr-key'),
     baseRpcUrl: env.BASE_RPC_URL,
     premiumWalletPrivateKey: env.PREMIUM_WALLET_KEY,
     polygonRpcUrl: env.POLYGON_RPC_URL,
     blueskyInvitePool: env.BLUESKY_INVITE_POOL,
-    mastodonInstanceUrl: env.MASTODON_INSTANCE_URL || 'https://social.degenfeed.xyz',
+    mastodonInstanceUrl: env.GOTOSOCIAL_INSTANCE_URL || 'https://social.degenfeed.xyz',
     lemmyInstanceUrl: env.LEMMY_INSTANCE_URL || 'https://community.degenfeed.xyz',
     peertubeInstanceUrl: env.PEERTUBE_INSTANCE_URL || 'https://video.degenfeed.xyz',
     pixelfedInstanceUrl: env.PIXELFED_INSTANCE_URL || 'https://pixelfed.social',

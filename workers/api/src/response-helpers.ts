@@ -23,6 +23,9 @@
  *
  * In a future cleanup, jsonResponse can be re-exported from here
  * instead of index.ts, but both coexist for now.
+ *
+ * Migration progress: 1 route converted (health.ts)
+ * Remaining routes using legacy jsonResponse(): ~140
  */
 
 import { logError } from './error-logger';

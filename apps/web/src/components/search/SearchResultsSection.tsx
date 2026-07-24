@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { useMemo } from 'react';
 import type {
   CommunityResult,
   FlatItem,
@@ -38,8 +39,20 @@ export function SearchResultsContainer({
   onCommitSearch,
 }: SearchResultsContainerProps) {
   const router = useRouter();
+
+  // Extract unique topics/niches from all results
+  const topics = useMemo(() => {
+    const topicSet = new Set<string>();
+    results.forEach((r) => r.niches?.forEach((n) => topicSet.add(n)));
+    return Array.from(topicSet).slice(0, 8);
+  }, [results]);
+
   const hasAnyResults =
-    identities.length > 0 || results.length > 0 || communities.length > 0 || videos.length > 0;
+    identities.length > 0 ||
+    results.length > 0 ||
+    communities.length > 0 ||
+    videos.length > 0 ||
+    topics.length > 0;
 
   if (!hasAnyResults) {
     return (
@@ -61,6 +74,32 @@ export function SearchResultsContainer({
 
   return (
     <div className="max-h-[55vh] overflow-y-auto rounded-2xl bg-[var(--color-card)] shadow-lg shadow-black/10">
+      {/* Topics section */}
+      {topics.length > 0 && (
+        <div>
+          <div className="sticky top-0 z-10 bg-[var(--color-card)]/95 backdrop-blur-sm px-4 py-2 text-[10px] font-semibold uppercase tracking-widest text-[var(--color-muted)] border-b border-[var(--color-border)]">
+            Topics
+          </div>
+          <div className="flex flex-wrap gap-1.5 px-4 py-2.5">
+            {topics.map((topic) => (
+              <button
+                key={topic}
+                type="button"
+                onClick={() => {
+                  onCommitSearch(query);
+                  router.push(`/search?q=${encodeURIComponent(topic)}`);
+                  onClose();
+                }}
+                className="inline-flex items-center gap-1 rounded-full border border-[var(--color-border)] bg-[var(--color-card)] px-2.5 py-1 text-[11px] font-medium text-[var(--color-fg)] hover:border-degen-500/30 hover:text-degen-400 transition-colors"
+              >
+                <span className="text-[10px]">#</span>
+                {topic}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       <PeopleSection
         identities={identities}
         flatItems={flatItems}

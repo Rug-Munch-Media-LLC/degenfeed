@@ -16,8 +16,10 @@
  *   user:subscriptions:{wallet}   → JSON array of feed IDs (subscribed to)
  */
 
-import type { CustomFeed, FeedRecipe } from '@degenfeed/types';
-import { type Env, jsonResponse, noCacheJsonResponse } from '../index';
+import { scorePost } from '@degenfeed/ranking';
+import type { CustomFeed, FeedRecipe, Protocol, UnifiedPost } from '@degenfeed/types';
+import { ContentPipeline } from '../feed/content-pipeline';
+import { type Env, jsonResponse, log, noCacheJsonResponse } from '../index';
 import { requirePremiumTier } from '../premium';
 import { requireSession } from '../session';
 
@@ -327,9 +329,10 @@ export async function handleCustomFeedPublic(request: Request, env: Env): Promis
 
 /**
  * GET /api/custom-feeds/:id — Get feed details
+ * Supports ?preview=true to include the first 5 posts as a preview.
  */
 export async function handleCustomFeedGet(
-  _request: Request,
+  request: Request,
   env: Env,
   id: string,
 ): Promise<Response> {
@@ -339,8 +342,262 @@ export async function handleCustomFeedGet(
   }
 
   const subscribers = await getSubscribers(env, id);
+  const response: Record<string, unknown> = {
+    feed,
+    subscriberCount: subscribers.length,
+  };
 
-  return noCacheJsonResponse({ feed, subscriberCount: subscribers.length });
+  // Include preview posts when ?preview=true
+  const url = new URL(request.url);
+  if (url.searchParams.get('preview') === 'true') {
+    try {
+      const pipeline = new ContentPipeline(env);
+      const feedResult = await pipeline.buildFeed({
+        protocols: feed.config.sources as Protocol[],
+        sort: 'trending',
+        limit: 5,
+        niches: Object.entries(feed.config.topics)
+          .filter(([, w]) => w > 0)
+          .map(([t]) => t),
+        contentTypes: feed.config.contentTypes.length > 0 ? feed.config.contentTypes : undefined,
+        minEngagement: feed.config.minEngagement > 0 ? feed.config.minEngagement : undefined,
+        excludeTopics: feed.config.excludeTopics.length > 0 ? feed.config.excludeTopics : undefined,
+        excludeWords: feed.config.excludeWords.length > 0 ? feed.config.excludeWords : undefined,
+        language: feed.config.language || undefined,
+        creatorFilter: feed.config.creatorFilter?.length ? feed.config.creatorFilter : undefined,
+      });
+      response.preview = feedResult.posts.slice(0, 5);
+    } catch (err) {
+      log('warn', `[custom-feed] preview failed for ${id}`, err);
+      response.preview = [];
+    }
+  }
+
+  return noCacheJsonResponse(response);
+}
+
+// ─── Execute cache helpers ────────────────────────────────────────
+
+const EXECUTE_CACHE_TTL = 60; // 60s primary TTL
+const EXECUTE_STALE_TTL = 300; // 5min stale-while-revalidate window
+
+function executeCacheKey(id: string, sort: string, cursor: string): string {
+  return `custom-feed:execute:${id}:${sort}:${cursor || '0'}`;
+}
+
+/**
+ * GET /api/custom-feeds/:id/execute — Execute a custom feed recipe
+ *
+ * Loads the recipe from KV, runs the content pipeline with the recipe's
+ * filters, scores results with the unified scorer, caches in KV, and
+ * returns paginated posts.
+ *
+ * Query params:
+ *   sort   — recent | trending | top  (default: trending)
+ *   limit  — max posts per page (max 100, default 50)
+ *   cursor — pagination cursor
+ */
+export async function handleCustomFeedExecute(
+  request: Request,
+  env: Env,
+  id: string,
+): Promise<Response> {
+  const feed = await getFeed(env, id);
+  if (!feed) {
+    return jsonResponse({ error: 'Feed not found' }, 404);
+  }
+
+  const url = new URL(request.url);
+  const sort = url.searchParams.get('sort') || 'trending';
+  const limit = Math.min(Number(url.searchParams.get('limit')) || 50, 100);
+  const cursor = url.searchParams.get('cursor') || '';
+
+  // Build sort mode for pipeline
+  let pipelineSort: 'trending' | 'newest' | 'curated' | 'for-you';
+  switch (sort) {
+    case 'recent':
+      pipelineSort = 'newest';
+      break;
+    case 'top':
+      // Top = highest engagement, treated as trending but without freshness boost
+      pipelineSort = 'trending';
+      break;
+    case 'trending':
+    default:
+      pipelineSort = 'trending';
+      break;
+  }
+
+  // ── Check KV cache (with stale-while-revalidate) ──────────────
+  const cacheKey = executeCacheKey(id, sort, cursor);
+  const cachedRaw = await env.CUSTOM_FEEDS?.get(cacheKey);
+  if (cachedRaw) {
+    try {
+      const cached = JSON.parse(cachedRaw) as {
+        posts: UnifiedPost[];
+        nextCursor?: string;
+        cachedAt: number;
+      };
+      // Serve fresh if within TTL
+      if (Date.now() - cached.cachedAt < EXECUTE_CACHE_TTL * 1000) {
+        return jsonResponse({
+          data: cached.posts,
+          meta: {
+            total: cached.posts.length,
+            nextCursor: cached.nextCursor,
+            sort,
+            generatedAt: cached.cachedAt,
+          },
+        });
+      }
+      // Stale but serve while revalidating in background
+      if (Date.now() - cached.cachedAt < EXECUTE_STALE_TTL * 1000) {
+        // Trigger background refresh (fire-and-forget)
+        void refreshExecuteCache(env, feed, cacheKey, sort, pipelineSort, limit).catch(() => {});
+        return jsonResponse({
+          data: cached.posts,
+          meta: {
+            total: cached.posts.length,
+            nextCursor: cached.nextCursor,
+            sort,
+            generatedAt: cached.cachedAt,
+            stale: true,
+          },
+        });
+      }
+    } catch {
+      // Corrupted cache — ignore and rebuild
+    }
+  }
+
+  // ── Execute feed pipeline ───────────────────────────────────────
+  try {
+    const pipeline = new ContentPipeline(env);
+
+    // Build niche preference set from recipe topics
+    const boostedNiches = Object.entries(feed.config.topics)
+      .filter(([, w]) => w > 0)
+      .map(([t]) => t);
+
+    const feedResult = await pipeline.buildFeed({
+      protocols: feed.config.sources as Protocol[],
+      sort: pipelineSort,
+      limit,
+      cursor: cursor || undefined,
+      niches: boostedNiches.length > 0 ? boostedNiches : undefined,
+      contentTypes: feed.config.contentTypes.length > 0 ? feed.config.contentTypes : undefined,
+      minEngagement: feed.config.minEngagement > 0 ? feed.config.minEngagement : undefined,
+      excludeTopics: feed.config.excludeTopics.length > 0 ? feed.config.excludeTopics : undefined,
+      excludeWords: feed.config.excludeWords.length > 0 ? feed.config.excludeWords : undefined,
+      language: feed.config.language || undefined,
+      creatorFilter: feed.config.creatorFilter?.length ? feed.config.creatorFilter : undefined,
+    });
+
+    // Apply unified scorer to each post for ranking transparency
+    const scored = feedResult.posts.map((post) => {
+      const result = scorePost(post, {
+        mode: 'standard',
+        now: Date.now(),
+      });
+      return {
+        ...post,
+        score: {
+          total: result.total,
+          recency: result.breakdown.recency,
+          engagement: result.breakdown.engagement,
+          relevance: result.breakdown.relevance,
+          quality: result.breakdown.quality,
+          diversity: result.breakdown.diversity,
+          source: result.breakdown.source,
+          velocity: result.breakdown.velocity,
+          reasons: result.breakdown.reasons,
+        },
+      };
+    });
+
+    // For "top" sort: re-rank by raw engagement (ignoring freshness)
+    let sorted = scored;
+    if (sort === 'top') {
+      sorted = [...scored].sort((a, b) => {
+        const aEng = a.metrics.likes + a.metrics.reposts * 2 + a.metrics.replies * 3;
+        const bEng = b.metrics.likes + b.metrics.reposts * 2 + b.metrics.replies * 3;
+        return bEng - aEng;
+      });
+    }
+
+    const response = {
+      data: sorted.slice(0, limit),
+      meta: {
+        total: sorted.slice(0, limit).length,
+        nextCursor: sorted.length > limit ? String(sorted[limit - 1]?.createdAt ?? '') : undefined,
+        sort,
+        generatedAt: Date.now(),
+      },
+    };
+
+    // ── Cache the result ─────────────────────────────────────────
+    if (env.CUSTOM_FEEDS) {
+      const cachePayload = {
+        posts: response.data,
+        nextCursor: response.meta.nextCursor,
+        cachedAt: Date.now(),
+      };
+      void env.CUSTOM_FEEDS.put(cacheKey, JSON.stringify(cachePayload), {
+        expirationTtl: EXECUTE_CACHE_TTL,
+      });
+    }
+
+    return jsonResponse(response);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Internal error';
+    log('error', `[custom-feed] execute failed for ${id}`, err);
+    return jsonResponse({ error: message, meta: { sort, total: 0 } }, 500);
+  }
+}
+
+/**
+ * Background refresh for stale cache entries.
+ */
+async function refreshExecuteCache(
+  env: Env,
+  feed: CustomFeed,
+  cacheKey: string,
+  sort: string,
+  pipelineSort: 'trending' | 'newest' | 'curated' | 'for-you',
+  limit: number,
+): Promise<void> {
+  try {
+    const pipeline = new ContentPipeline(env);
+
+    const boostedNiches = Object.entries(feed.config.topics)
+      .filter(([, w]) => w > 0)
+      .map(([t]) => t);
+
+    const feedResult = await pipeline.buildFeed({
+      protocols: feed.config.sources as Protocol[],
+      sort: pipelineSort,
+      limit,
+      niches: boostedNiches.length > 0 ? boostedNiches : undefined,
+      contentTypes: feed.config.contentTypes.length > 0 ? feed.config.contentTypes : undefined,
+      minEngagement: feed.config.minEngagement > 0 ? feed.config.minEngagement : undefined,
+      excludeTopics: feed.config.excludeTopics.length > 0 ? feed.config.excludeTopics : undefined,
+      excludeWords: feed.config.excludeWords.length > 0 ? feed.config.excludeWords : undefined,
+      language: feed.config.language || undefined,
+      creatorFilter: feed.config.creatorFilter?.length ? feed.config.creatorFilter : undefined,
+    });
+
+    const payload = {
+      posts: feedResult.posts.slice(0, limit),
+      nextCursor: feedResult.nextCursor,
+      cachedAt: Date.now(),
+    };
+
+    await env.CUSTOM_FEEDS?.put(cacheKey, JSON.stringify(payload), {
+      expirationTtl: EXECUTE_CACHE_TTL,
+    });
+  } catch {
+    // Background refresh failure is non-critical
+  }
 }
 
 /**

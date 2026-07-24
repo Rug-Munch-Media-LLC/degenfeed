@@ -19,13 +19,15 @@ import {
   type PresetName,
   type ProtocolQualityResult,
   type RankingContext,
+  type ScoreBreakdown as RankingV2ScoreBreakdown,
   type ResolvedPreset,
   rankDiverse,
-  type ScoreBreakdown,
   scoreBreakdownV2,
   type TrendingTopic,
   type UserAlgorithmPreferences,
 } from '@degenfeed/feed-core';
+import type { ScoringWeights, UnifiedMode } from '@degenfeed/ranking';
+import { scorePost as unifiedScorePost } from '@degenfeed/ranking';
 import type { UnifiedPost } from '@degenfeed/types';
 import { type Env, log } from '../index';
 import type { StoredUserPreferences } from './feed-cache';
@@ -261,7 +263,7 @@ export type RankedPost = UnifiedPost & {
 
 export interface ScoredPost {
   post: UnifiedPost;
-  breakdown: ScoreBreakdown;
+  breakdown: RankingV2ScoreBreakdown;
 }
 
 export interface ScoreAndRankOptions {
@@ -290,6 +292,16 @@ export interface ScoreAndRankOptions {
   presetName?: PresetName;
   /** Resolved preset ready to apply. */
   resolvedPreset?: ResolvedPreset;
+  // ── Unified scorer mode (replaces scoreBreakdownV2) ────────────
+  /**
+   * When set, uses scorePost() from @degenfeed/ranking instead of
+   * scoreBreakdownV2 for scoring. The mode value determines the preset
+   * weights and adjustments. Supported: 'standard' | 'morning-digest' |
+   * 'breaking-news' | 'deep-dive' | 'quick-scroll' | 'for-you'.
+   */
+  unifiedMode?: UnifiedMode;
+  /** User weight overrides when using the unified scorer. */
+  unifiedUserWeights?: Partial<ScoringWeights>;
 }
 
 export interface ScoreAndRankResult {
@@ -333,10 +345,40 @@ export async function scoreAndRank(
   ctx.previousEngagement = previousEngagement;
 
   // Compute score breakdowns for transparency / hover signals.
-  const scoredRelevant: ScoredPost[] = posts.map((p) => ({
-    post: p,
-    breakdown: scoreBreakdownV2(p, ctx),
-  }));
+  const scoredRelevant: ScoredPost[] = posts.map((p) => {
+    if (opts.unifiedMode) {
+      const { total, breakdown } = unifiedScorePost(p, {
+        mode: opts.unifiedMode,
+        userWeights: opts.unifiedUserWeights,
+        userNiches: ctx.viewerNiches,
+        followedCreators: ctx.followed,
+        mutedNiches: new Set(ctx.preferences?.mutedNiches ?? []),
+        recentAuthors: ctx.recentAuthors,
+        previousEngagement: ctx.previousEngagement,
+        sourceQuality: ctx.sourceQuality,
+        now: ctx.now,
+      });
+      return {
+        post: p,
+        breakdown: {
+          total,
+          recency: breakdown.recency,
+          engagement: breakdown.engagement,
+          relevance: breakdown.relevance,
+          quality: breakdown.quality,
+          reputation: breakdown.reputation,
+          diversity: breakdown.diversity,
+          source: breakdown.source,
+          velocity: breakdown.velocity,
+          reasons: [...breakdown.reasons],
+        } as RankingV2ScoreBreakdown,
+      };
+    }
+    return {
+      post: p,
+      breakdown: scoreBreakdownV2(p, ctx),
+    };
+  });
 
   // Store current engagement snapshots for next velocity calculation.
   void storeEngagementSnapshots(env, posts);

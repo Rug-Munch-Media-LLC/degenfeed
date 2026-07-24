@@ -168,7 +168,7 @@ async function getLensProfile(profileId: string): Promise<{
   }
 }
 
-// ─── Simulation helpers (placeholders for on-chain integration) ────────────
+// ─── Real deployment via coin-deployer service ────────────────────────────
 
 async function deployCreatorCoin(opts: {
   creator: string;
@@ -182,21 +182,31 @@ async function deployCreatorCoin(opts: {
     cliffDays?: number;
   };
   feeConfig?: { creatorFeeBps?: number; platformFeeBps?: number };
+  env?: Env;
 }): Promise<{ coinAddress: string; tokenId: string; signature: string }> {
-  // In production, calls the creator coin factory on Polygon.
-  const input = `${opts.creator}:${opts.symbol}:${opts.chainId}:${Date.now()}`;
-  const hashBytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(input));
-  const hashArr = Array.from(new Uint8Array(hashBytes));
-  const addr =
-    '0x' +
-    hashArr
-      .slice(0, 20)
-      .map((b) => b.toString(16).padStart(2, '0'))
-      .join('');
+  if (!opts.env) {
+    throw new Error('Environment required for deployment');
+  }
+  const { deployCoin } = await import('../lib/coin-deployer');
+
+  const result = await deployCoin(
+    {
+      creator: opts.creator,
+      name: opts.name,
+      symbol: opts.symbol,
+      chain: 'base',
+      protocol: 'lens',
+      metadataUri: opts.uri,
+      vestingConfig: opts.vestingConfig,
+      feeConfig: opts.feeConfig,
+    },
+    opts.env,
+  );
+
   return {
-    coinAddress: addr,
-    tokenId: '1',
-    signature: `0x${crypto.randomUUID().replace(/-/g, '')}`,
+    coinAddress: result.coinAddress,
+    tokenId: result.tokenId,
+    signature: result.txHash,
   };
 }
 
@@ -291,7 +301,7 @@ export async function handleLensCoinDeploy(request: Request, env: Env): Promise<
   const profile = await getLensProfile(profileId);
   const genSymbol = symbol || generateSymbol(profile.handle);
 
-  // Deploy on Polygon (Lens native chain) with bridge to Base
+  // Deploy on Base via our factory
   let deployResult: { coinAddress: string; tokenId: string; signature: string };
   try {
     deployResult = await deployCreatorCoin({
@@ -302,9 +312,11 @@ export async function handleLensCoinDeploy(request: Request, env: Env): Promise<
       chainId: 137, // Polygon
       vestingConfig: { vestingDurationDays, creatorAllocationBps, cliffDays },
       feeConfig: { creatorFeeBps, platformFeeBps },
+      env,
     });
   } catch (err) {
-    return jsonResponse({ error: `Deployment failed: ${String(err)}` }, 500);
+    const message = err instanceof Error ? err.message : String(err);
+    return jsonResponse({ error: `Deployment failed: ${message}` }, 500);
   }
 
   // Register cross-chain mapping

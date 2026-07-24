@@ -9,9 +9,13 @@
  */
 
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { LiveTicker } from '../components/hero/LiveTicker';
-import { OrbitingProtocols } from '../components/hero/OrbitingProtocols';
+import { CTASection } from '../components/landing/CTASection';
+import { FeatureGrid } from '../components/landing/FeatureGrid';
+import { HeroSection } from '../components/landing/HeroSection';
+import { ProtocolShowcase } from '../components/landing/ProtocolShowcase';
+import { StatsBar } from '../components/landing/StatsBar';
 import { ProtocolConnectFlow } from '../components/ProtocolConnectFlow';
 import { useProtocolConnections } from '../hooks/useProtocolConnections';
 
@@ -209,9 +213,9 @@ function FeedPreviewCard({ item, index }: { item: FeedPreviewItem; index: number
         >
           {item.protocol.charAt(0).toUpperCase()}
         </span>
-        <div className="flex-1 min-w-0">
+        <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-bold text-[var(--color-fg)] truncate">{item.author}</span>
+            <span className="truncate text-sm font-bold text-[var(--color-fg)]">{item.author}</span>
             <span
               className="protocol-badge"
               style={{ background: `${color}15`, color, border: `1px solid ${color}30` }}
@@ -236,6 +240,7 @@ function FeedPreviewCard({ item, index }: { item: FeedPreviewItem; index: number
             strokeWidth="1.5"
             strokeLinecap="round"
             strokeLinejoin="round"
+            aria-hidden="true"
           >
             <path d="M14 9V5a3 3 0 00-3-3l-4 9v11h11.28a2 2 0 002-1.7l1.38-9a2 2 0 00-2-2.3H14z" />
           </svg>
@@ -251,6 +256,7 @@ function FeedPreviewCard({ item, index }: { item: FeedPreviewItem; index: number
             strokeWidth="1.5"
             strokeLinecap="round"
             strokeLinejoin="round"
+            aria-hidden="true"
           >
             <polyline points="17 1 21 5 17 9" />
             <path d="M3 11V9a4 4 0 014-4h14" />
@@ -269,6 +275,7 @@ function FeedPreviewCard({ item, index }: { item: FeedPreviewItem; index: number
             strokeWidth="1.5"
             strokeLinecap="round"
             strokeLinejoin="round"
+            aria-hidden="true"
           >
             <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
           </svg>
@@ -303,7 +310,7 @@ function CreatorCard({ creator, index }: { creator: Creator; index: number }) {
       </span>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-bold text-[var(--color-fg)] truncate">{creator.name}</span>
+          <span className="truncate text-sm font-bold text-[var(--color-fg)]">{creator.name}</span>
           {creator.badge && (
             <span className="whitespace-nowrap rounded-full bg-[var(--color-accent-secondary)]/15 px-2 py-0.5 text-[9px] font-semibold text-[var(--color-accent-secondary)]">
               {creator.badge}
@@ -318,7 +325,7 @@ function CreatorCard({ creator, index }: { creator: Creator; index: number }) {
       </div>
       <button
         type="button"
-        className="shrink-0 rounded-full border px-3 py-1 text-[11px] font-semibold transition-all hover:bg-[var(--color-accent)] hover:text-black hover:border-[var(--color-accent)]"
+        className="shrink-0 rounded-full border px-3 py-1 text-[11px] font-semibold transition-all hover:border-[var(--color-accent)] hover:bg-[var(--color-accent)] hover:text-black"
         style={{ borderColor: 'var(--color-border)', color: 'var(--color-accent)' }}
       >
         Follow
@@ -332,194 +339,26 @@ function CreatorCard({ creator, index }: { creator: Creator; index: number }) {
    ═══════════════════════════════════════════════════════════════════ */
 
 export default function HomePage() {
-  const { connectedCount, totalCount, connections } = useProtocolConnections();
+  const { connectedCount, connections } = useProtocolConnections();
   const [connectOpen, setConnectOpen] = useState(false);
-  const [scrollY, setScrollY] = useState(0);
-  const [liveStats, setLiveStats] = useState({ protocols: 25, posts: 10427, uptime: 99.9 });
-
-  const hasConnections = connectedCount > 0;
   const feedPreview = useMemo(() => FEED_PREVIEW.sort(() => Math.random() - 0.5).slice(0, 4), []);
-
-  // Live-updating stats
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setLiveStats((s) => ({
-        ...s,
-        posts: s.posts + Math.floor(Math.random() * 3),
-      }));
-    }, 3000);
-    return () => clearInterval(interval);
-  }, []);
-
-  // Scroll-based parallax
-  useEffect(() => {
-    const handleScroll = () => setScrollY(window.scrollY);
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
   return (
     <div className="relative min-h-screen">
       {/* Background glow layers */}
-      <div className="fixed inset-0 pointer-events-none z-0" aria-hidden="true">
+      <div className="pointer-events-none fixed inset-0 z-0" aria-hidden="true">
         <div className="bg-cyber absolute inset-0" />
         <div className="bg-noise" />
-        {/* Animated ambient glow */}
-        <div
-          className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] opacity-40"
-          style={{
-            background:
-              'radial-gradient(ellipse at center, rgba(0,255,65,0.08) 0%, transparent 70%)',
-            transform: `translateY(${scrollY * 0.15}px)`,
-            transition: 'transform 0.1s ease-out',
-          }}
-        />
       </div>
 
       <div className="relative z-10 mx-auto max-w-[1100px] px-4">
-        {/* ════════════ HERO SECTION ════════════════ */}
-        <section className="relative flex flex-col items-center pt-8 md:pt-16 pb-8 text-center">
-          {/* Animated protocol orbit */}
+        {/* ════════════ HERO SECTION (Redesigned) ════════════ */}
+        <HeroSection />
+
+        {/* ════════════ LIVE TICKER ════════════ */}
+        <section className="mb-8">
           <div
-            className="mb-6 md:mb-8"
-            style={{
-              transform: `translateY(${scrollY * -0.05}px)`,
-              opacity: Math.max(1 - scrollY / 600, 0.4),
-            }}
-          >
-            <OrbitingProtocols />
-          </div>
-
-          {/* Tagline */}
-          <div className="mb-3 max-w-3xl">
-            <span
-              className="inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-semibold mb-4"
-              style={{
-                borderColor: 'var(--color-accent)',
-                background: 'var(--color-accent-soft)',
-                color: 'var(--color-accent)',
-              }}
-            >
-              <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-accent)] animate-pulse" />
-              Live — 25+ Protocols Connected
-            </span>
-            <h1
-              className="text-display sm:text-[5rem] md:text-[6rem] font-black leading-[1] tracking-[-0.05em] mb-3"
-              style={{ fontFamily: 'var(--font-heading)' }}
-            >
-              <span className="gradient-text">The Web3</span>
-              <br />
-              Social Universe
-            </h1>
-            <p
-              className="mx-auto max-w-2xl text-lg md:text-xl leading-relaxed"
-              style={{ color: 'var(--color-fg-secondary)' }}
-            >
-              — 25 protocols, one app, your data —
-            </p>
-            <p
-              className="mx-auto mt-2 max-w-2xl text-base md:text-lg leading-relaxed"
-              style={{ color: 'var(--color-fg-secondary)' }}
-            >
-              We&apos;re fighting for data independence, creator content control, and a space where
-              creators can actually own their content and their audience.
-            </p>
-          </div>
-
-          {/* Live stats counter */}
-          <div
-            className="mb-8 flex flex-wrap justify-center gap-6 md:gap-10"
-            style={{ color: 'var(--color-muted)' }}
-          >
-            <div className="text-center">
-              <div
-                className="text-2xl font-black tabular-nums"
-                style={{ color: 'var(--color-accent)' }}
-              >
-                25+
-              </div>
-              <div className="text-xs font-medium uppercase tracking-wider">Protocols</div>
-            </div>
-            <div className="text-center">
-              <div
-                className="text-2xl font-black tabular-nums"
-                style={{ color: 'var(--color-accent)' }}
-              >
-                {liveStats.posts.toLocaleString()}+
-              </div>
-              <div className="text-xs font-medium uppercase tracking-wider">Posts & Counting</div>
-            </div>
-            <div className="text-center">
-              <div
-                className="text-2xl font-black tabular-nums"
-                style={{ color: 'var(--color-accent)' }}
-              >
-                {liveStats.uptime}%
-              </div>
-              <div className="text-xs font-medium uppercase tracking-wider">Uptime</div>
-            </div>
-            <div className="text-center">
-              <div
-                className="text-2xl font-black tabular-nums"
-                style={{ color: 'var(--color-accent)' }}
-              >
-                100%
-              </div>
-              <div className="text-xs font-medium uppercase tracking-wider">Decentralized</div>
-            </div>
-          </div>
-
-          {/* CTAs */}
-          <div className="flex flex-wrap items-center justify-center gap-3 mb-6">
-            <Link href="/feed" className="btn-primary text-base px-8 py-3 gap-2">
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M5 12h14M12 5l7 7-7 7" />
-              </svg>
-              Browse Your Feed
-            </Link>
-            <button
-              type="button"
-              onClick={() => setConnectOpen(true)}
-              className="btn-secondary text-base px-8 py-3 gap-2"
-            >
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <line x1="12" y1="5" x2="12" y2="19" />
-                <line x1="5" y1="12" x2="19" y2="12" />
-              </svg>
-              {hasConnections ? 'Manage Protocols' : 'Connect Your Protocols'}
-            </button>
-          </div>
-
-          {/* Protocol connection indicators */}
-          <div className="flex flex-wrap justify-center gap-2 mb-4">
-            {Object.entries(connections)
-              .slice(0, 7)
-              .map(([id, conn]) => (
-                <ProtocolBadge key={id} pid={id} connected={conn.connected} />
-              ))}
-          </div>
-
-          {/* Live Ticker */}
-          <div
-            className="w-full max-w-4xl mt-4 rounded-xl border"
+            className="w-full rounded-xl border"
             style={{ borderColor: 'var(--color-border)', background: 'var(--color-card)' }}
           >
             <div className="flex items-center gap-2 px-4 pt-3 pb-1">
@@ -532,12 +371,21 @@ export default function HomePage() {
           </div>
         </section>
 
+        {/* ════════════ FEATURE GRID ════════════ */}
+        <FeatureGrid />
+
+        {/* ════════════ PROTOCOL SHOWCASE ════════════ */}
+        <ProtocolShowcase />
+
+        {/* ════════════ STATS BAR ════════════ */}
+        <StatsBar />
+
         {/* ════════════ TRENDING + STATS BENTO ════════════ */}
-        <section className="mb-12">
+        <section className="mb-12 mt-8">
           <div className="grid gap-4 md:grid-cols-3">
             {/* Your Networks */}
             <div
-              className="rounded-2xl border p-5 hover-lift"
+              className="hover-lift rounded-2xl border p-5"
               style={{ borderColor: 'var(--color-border)', background: 'var(--color-card)' }}
             >
               <h3 className="mb-4 flex items-center gap-2 text-sm font-bold text-[var(--color-fg)]">
@@ -584,7 +432,7 @@ export default function HomePage() {
 
             {/* Trending */}
             <div
-              className="rounded-2xl border p-5 hover-lift"
+              className="hover-lift rounded-2xl border p-5"
               style={{ borderColor: 'var(--color-border)', background: 'var(--color-card)' }}
             >
               <h3 className="mb-4 flex items-center gap-2 text-sm font-bold text-[var(--color-fg)]">
@@ -618,7 +466,7 @@ export default function HomePage() {
 
             {/* Platform Stats */}
             <div
-              className="rounded-2xl border p-5 hover-lift"
+              className="hover-lift rounded-2xl border p-5"
               style={{ borderColor: 'var(--color-border)', background: 'var(--color-card)' }}
             >
               <h3 className="mb-4 flex items-center gap-2 text-sm font-bold text-[var(--color-fg)]">
@@ -694,73 +542,16 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* ════════════ CONNECT PROTOCOLS BANNER ════════════ */}
-        <section
-          className="relative mb-12 overflow-hidden rounded-3xl border p-8 md:p-12 text-center"
-          style={{ borderColor: 'var(--color-border)', background: 'var(--color-card)' }}
-        >
-          {/* Decorative gradient */}
-          <div
-            className="absolute inset-0 pointer-events-none opacity-30"
-            style={{
-              background:
-                'radial-gradient(ellipse at 30% 50%, var(--color-accent-glow) 0%, transparent 60%), radial-gradient(ellipse at 70% 50%, var(--color-accent-secondary-glow) 0%, transparent 60%)',
-            }}
-          />
+        {/* ════════════ CTA SECTION (Redesigned) ════════════ */}
+        <CTASection />
 
-          <div className="relative">
-            <h2
-              className="text-3xl md:text-4xl font-black mb-3"
-              style={{ fontFamily: 'var(--font-heading)' }}
-            >
-              <span className="gradient-text">Connect your protocols.</span>
-              <br />
-              See the universe.
-            </h2>
-            <p
-              className="mx-auto mb-6 max-w-lg text-sm leading-relaxed"
-              style={{ color: 'var(--color-fg-secondary)' }}
-            >
-              Link your accounts across Nostr, Farcaster, Lens, Bluesky, Mastodon, and more. See
-              everything in one unified feed. Post once, reach 25+ protocols.
-            </p>
-            <div className="flex flex-wrap justify-center gap-2 mb-6">
-              {['mastodon', 'bluesky', 'nostr', 'farcaster', 'lens', 'reddit'].map((pid) => (
-                <ProtocolBadge key={pid} pid={pid} connected={connections[pid]?.connected} />
-              ))}
-            </div>
-            <button
-              type="button"
-              onClick={() => setConnectOpen(true)}
-              className="btn-primary text-base px-10 py-3.5 gap-2"
-            >
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4" />
-                <polyline points="10 17 15 12 10 7" />
-                <line x1="15" y1="12" x2="3" y2="12" />
-              </svg>
-              Get Started
-            </button>
-          </div>
-        </section>
-
-        {/* ════════════ MISSION + VALUE PROPS + FEATURES ════════════ */}
         {/* ════════════ MISSION STATEMENT ════════════ */}
         <div
           className="mb-8 rounded-2xl border p-6 text-center"
           style={{ borderColor: 'var(--color-border)', background: 'var(--color-card)' }}
         >
           <p
-            className="text-base md:text-lg leading-relaxed italic"
+            className="text-base italic leading-relaxed md:text-lg"
             style={{ color: 'var(--color-fg-secondary)' }}
           >
             &ldquo;DegenFeed exists to unify the fragmented decentralized social web. We don&apos;t
@@ -768,106 +559,9 @@ export default function HomePage() {
           </p>
         </div>
 
-        {/* ════════════ VALUE PROPS ════════════ */}
-        <section className="mb-8 grid gap-3 sm:grid-cols-3">
-          {[
-            {
-              icon: '✦',
-              title: 'Your content, seen everywhere.',
-              desc: 'Your identity, owned by you.',
-            },
-            {
-              icon: '◆',
-              title: 'Your identity, owned by you.',
-              desc: 'Not by a corporation. Not by us.',
-            },
-            {
-              icon: '⬟',
-              title: 'Your data, never sold.',
-              desc: 'No ads. No trackers. No data brokers. Period.',
-            },
-          ].map((vp, i) => (
-            <div
-              key={vp.title}
-              className="feed-enter rounded-xl border p-4 text-center"
-              style={{
-                borderColor: 'var(--color-border)',
-                background: 'var(--color-card)',
-                animationDelay: `${i * 80}ms`,
-              }}
-            >
-              <div className="text-lg font-black gradient-text mb-1">{vp.title}</div>
-              <div className="text-xs" style={{ color: 'var(--color-muted)' }}>
-                {vp.desc}
-              </div>
-            </div>
-          ))}
-        </section>
-
-        {/* ════════════ FEATURES GRID ════════════ */}
-        <section className="mb-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {[
-            {
-              icon: '✦',
-              title: 'Cross-Protocol Posting',
-              desc: 'Write once, publish to 25+ protocols. Replies from any network appear in one thread.',
-              colour: 'var(--color-accent-glow)',
-            },
-            {
-              icon: '○',
-              title: 'Creator Coins',
-              desc: 'Deploy your own token on Base and Solana. Anti-bot, anti-whale, anti-rug.',
-              colour: 'var(--color-accent-secondary-glow)',
-            },
-            {
-              icon: '▶',
-              title: 'Stream Everywhere',
-              desc: 'Broadcast to 7 protocols at once. Solo streams, Spaces audio, and live minting.',
-              colour: 'var(--color-accent-glow)',
-            },
-            {
-              icon: '⚡',
-              title: 'Cross-Chain Tipping',
-              desc: 'Tip in ETH, SOL, USDC, or Lightning. 0% platform fees. Unified leaderboard.',
-              colour: 'rgba(249,24,128,0.12)',
-            },
-            {
-              icon: '◈',
-              title: 'Self-Hosted',
-              desc: 'Run your own relays, indexers, and frontend. No one can deplatform you — ever.',
-              colour: 'var(--color-accent-glow)',
-            },
-            {
-              icon: '⊞',
-              title: '25+ Sources',
-              desc: 'Nostr, Farcaster, Lens, Bluesky, Mastodon, Reddit, RSS, YouTube, PeerTube, and more.',
-              colour: 'var(--color-accent-secondary-glow)',
-            },
-          ].map((feature, i) => (
-            <article
-              key={feature.title}
-              className="feed-enter rounded-2xl border p-5 transition-all duration-300 hover:border-[var(--color-accent)]/20 hover:scale-[1.02]"
-              style={{
-                borderColor: 'var(--color-border)',
-                background: 'var(--color-card)',
-                animationDelay: `${i * 80}ms`,
-              }}
-            >
-              <div
-                className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl text-base font-bold"
-                style={{ background: feature.colour, color: 'var(--color-accent)' }}
-              >
-                {feature.icon}
-              </div>
-              <h3 className="mb-1.5 text-sm font-bold text-[var(--color-fg)]">{feature.title}</h3>
-              <p className="text-xs leading-relaxed text-[var(--color-muted)]">{feature.desc}</p>
-            </article>
-          ))}
-        </section>
-
         {/* ════════════ FOOTER ════════════ */}
         <footer
-          className="border-t pt-8 pb-12 text-center text-xs"
+          className="border-t pb-12 pt-8 text-center text-xs"
           style={{ borderColor: 'var(--color-border)', color: 'var(--color-muted)' }}
         >
           <nav className="mb-3 flex flex-wrap justify-center gap-4">

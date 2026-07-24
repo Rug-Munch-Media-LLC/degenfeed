@@ -89,6 +89,39 @@ export interface PostCardEngagementProps {
   onOpenShareSheet?: () => void;
 }
 
+// ─── Like Particle Burst ─────────────────────────────────────────
+
+function LikeParticles({ active }: { active: boolean }) {
+  if (!active) return null;
+  const particles = [
+    { dx: -10, dy: -12, color: '#f91880' },
+    { dx: 10, dy: -12, color: '#ff6b9d' },
+    { dx: -15, dy: -5, color: '#ff8fab' },
+    { dx: 15, dy: -5, color: '#f91880' },
+    { dx: 0, dy: -16, color: '#ff6b9d' },
+  ];
+  return (
+    <>
+      {particles.map((p, i) => (
+        <span
+          /* biome-ignore lint/suspicious/noArrayIndexKey: static ephemeral particle burst */
+          key={i}
+          className="like-particle"
+          style={
+            {
+              '--dx': `${p.dx}px`,
+              '--dy': `${p.dy}px`,
+              backgroundColor: p.color,
+              animationDelay: `${i * 30}ms`,
+            } as React.CSSProperties
+          }
+          aria-hidden="true"
+        />
+      ))}
+    </>
+  );
+}
+
 // ─── Component ─────────────────────────────────────────────────────
 
 export const PostCardEngagement = memo(function PostCardEngagement({
@@ -109,10 +142,15 @@ export const PostCardEngagement = memo(function PostCardEngagement({
   const [animatingRepost, setAnimatingRepost] = useState(false);
   const [animatingBookmark, setAnimatingBookmark] = useState(false);
   const [animatingReply, setAnimatingReply] = useState(false);
+  const [likeParticles, setLikeParticles] = useState(false);
 
   const handleLike = useCallback(
     (e: React.MouseEvent) => {
       e.stopPropagation();
+      if (!localState.engagement.viewerLiked) {
+        setLikeParticles(true);
+        setTimeout(() => setLikeParticles(false), 600);
+      }
       void onPerform(localState.engagement.viewerLiked ? 'unlike' : 'like');
     },
     [onPerform, localState.engagement.viewerLiked],
@@ -173,71 +211,120 @@ export const PostCardEngagement = memo(function PostCardEngagement({
           </span>
         ) : (
           <>
+            {/* TASK 4: Like button with Twitter-style heart animation + particle burst */}
             <button
               type="button"
-              className={`flex items-center gap-1 transition-all duration-200 hover:text-red-400 press-effect ${
-                localState.engagement.viewerLiked ? 'text-red-400' : 'text-[var(--color-muted)]'
+              className={`action-btn group relative ${
+                localState.engagement.viewerLiked ? 'liked' : ''
               }`}
               onClick={handleLike}
               aria-label="Like post"
               aria-pressed={localState.engagement.viewerLiked}
             >
+              <LikeParticles active={likeParticles} />
               <span
-                className={`inline-block transition-transform duration-200 ${
-                  animatingLike ? 'animate-heart-bounce' : ''
-                } ${localState.engagement.viewerLiked ? 'scale-110' : ''}`}
-                style={{
-                  transformOrigin: 'center',
-                }}
+                className={`like-particle-container inline-block ${
+                  animatingLike ? 'animate-heart-pop' : ''
+                }`}
                 aria-hidden="true"
               >
-                {localState.engagement.viewerLiked ? '❤️' : '♡'}
+                {localState.engagement.viewerLiked ? (
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="var(--color-like-active)"
+                    aria-hidden="true"
+                  >
+                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                  </svg>
+                ) : (
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    aria-hidden="true"
+                  >
+                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                  </svg>
+                )}
               </span>{' '}
               <span aria-label={`${localState.metrics.likes} likes`}>
                 {formatCount(localState.metrics.likes)}
               </span>
             </button>
+
+            {/* TASK 4: Repost with green pulse animation */}
             <button
               type="button"
-              className={`flex items-center gap-1 transition-all duration-200 hover:text-green-400 ${
-                localState.engagement.viewerReposted
-                  ? 'text-green-400'
-                  : 'text-[var(--color-muted)]'
+              className={`action-btn group ${
+                localState.engagement.viewerReposted ? 'reposted' : ''
               }`}
               onClick={handleRepost}
               aria-label="Repost post"
               aria-pressed={localState.engagement.viewerReposted}
             >
               <span
-                className={`inline-block ${animatingRepost ? 'animate-repost-spin' : ''}`}
+                className={`inline-block ${animatingRepost ? 'animate-repost-pulse' : ''}`}
                 aria-hidden="true"
               >
-                ↻
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <polyline points="17 1 21 5 17 9" />
+                  <path d="M3 11V9a4 4 0 0 1 4-4h14" />
+                  <polyline points="7 23 3 19 7 15" />
+                  <path d="M21 13v2a4 4 0 0 1-4 4H3" />
+                </svg>
               </span>{' '}
               <span aria-label={`${localState.metrics.reposts} reposts`}>
                 {formatCount(localState.metrics.reposts)}
               </span>
             </button>
+
+            {/* TASK 4: Reply button */}
             <button
               type="button"
-              className={`flex items-center gap-1 transition-all duration-200 hover:text-blue-400 ${
-                animatingReply ? 'scale-110' : ''
-              }`}
+              className={`action-btn group ${animatingReply ? 'animate-heart-pop' : ''}`}
               onClick={handleReplyToggle}
               aria-label="Reply to post"
               aria-expanded={showReply}
             >
-              <span className="inline-block transition-transform" aria-hidden="true">
-                ↩
+              <span className="inline-block" aria-hidden="true">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                </svg>
               </span>{' '}
               <span aria-label={`${localState.metrics.replies} replies`}>
                 {formatCount(localState.metrics.replies)}
               </span>
             </button>
+
             {onCrossReplyOpen && (
               <button
                 type="button"
-                className="flex items-center gap-1 transition-colors hover:text-purple-400"
+                className="action-btn hover:text-purple-400"
                 onClick={(e) => {
                   e.stopPropagation();
                   onCrossReplyOpen(post);
@@ -245,15 +332,28 @@ export const PostCardEngagement = memo(function PostCardEngagement({
                 aria-label="Reply from another protocol"
                 title="Reply from another protocol via the DegenFeed bridge"
               >
-                ⇄ <span className="hidden sm:inline">Bridge</span>
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                </svg>
+                <span className="hidden sm:inline">Bridge</span>
               </button>
             )}
+
+            {/* TASK 4: Bookmark with star fill animation */}
             <button
               type="button"
-              className={`flex items-center gap-1 transition-all duration-200 hover:text-purple-400 ${
-                localState.engagement.viewerBookmarked
-                  ? 'text-purple-400'
-                  : 'text-[var(--color-muted)]'
+              className={`action-btn group ${
+                localState.engagement.viewerBookmarked ? 'bookmarked' : ''
               }`}
               onClick={handleBookmark}
               aria-label="Bookmark post"
@@ -263,14 +363,38 @@ export const PostCardEngagement = memo(function PostCardEngagement({
                 className={`inline-block ${animatingBookmark ? 'animate-bookmark-pop' : ''}`}
                 aria-hidden="true"
               >
-                {localState.engagement.viewerBookmarked ? '🔖' : '📑'}
+                {localState.engagement.viewerBookmarked ? (
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="var(--color-accent-secondary)"
+                    aria-hidden="true"
+                  >
+                    <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+                  </svg>
+                ) : (
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+                  </svg>
+                )}
               </span>
             </button>
           </>
         )}
         <button
           type="button"
-          className="flex items-center gap-1 transition-all duration-200 hover:text-purple-400 text-[var(--color-muted)]"
+          className="action-btn hover:text-purple-400"
           onClick={handleShareClick}
           aria-label="Share post"
           title="Share post to other platforms"
@@ -296,7 +420,7 @@ export const PostCardEngagement = memo(function PostCardEngagement({
         {post.dfUri && (
           <button
             type="button"
-            className="flex items-center gap-1 font-mono text-xs transition-colors hover:text-degen-400"
+            className="action-btn hover:text-degen-400 font-mono"
             onClick={(e) => {
               e.stopPropagation();
               void navigator.clipboard.writeText(post.dfUri as string);
@@ -304,7 +428,22 @@ export const PostCardEngagement = memo(function PostCardEngagement({
             aria-label="Copy df:// URI"
             title={post.dfUri as string}
           >
-            ⛓ df://
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <line x1="2" y1="12" x2="22" y2="12" />
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+            </svg>
+            <span className="hidden sm:inline">df://</span>
           </button>
         )}
         {onTip && (
@@ -318,7 +457,7 @@ export const PostCardEngagement = memo(function PostCardEngagement({
         {post.protocol === 'nostr' && post.metrics.quotes > 0 && onTip && (
           <button
             type="button"
-            className="flex items-center gap-1 text-yellow-400 text-xs"
+            className="action-btn text-yellow-400 hover:text-yellow-300"
             onClick={(e) => {
               e.stopPropagation();
               onTip(post);
@@ -326,7 +465,8 @@ export const PostCardEngagement = memo(function PostCardEngagement({
             aria-label={`${post.metrics.quotes} zaps for post`}
             title={`${post.metrics.quotes} zaps`}
           >
-            ⚡{post.metrics.quotes}
+            <span className="inline-block tip-available">⚡</span>
+            <span>{post.metrics.quotes}</span>
           </button>
         )}
       </div>

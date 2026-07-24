@@ -114,9 +114,9 @@ export default function ConversationPage() {
             headers: { 'content-type': 'application/json' },
             credentials: 'include',
             body: JSON.stringify({
-              toId: other,
-              protocol: convMeta.protocol,
-              content: text,
+              to: other,
+              body: text,
+              preferredProtocol: convMeta.protocol,
               nostrPubkey: tokens.nostr_pubkey,
               auth: tokens,
             }),

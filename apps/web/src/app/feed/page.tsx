@@ -49,6 +49,7 @@ import { useFeedLayout } from '../../hooks/useFeedLayout';
 import { useFeedPosition } from '../../hooks/useFeedPosition';
 import { useHapticFeedback } from '../../hooks/useHapticFeedback';
 import { useNotifications } from '../../hooks/useNotifications';
+import { useRealtimeFeed } from '../../hooks/useRealtimeFeed';
 import { useReturningUser } from '../../hooks/useReturningUser';
 import { useScrollVelocity } from '../../hooks/useScrollVelocity';
 import { useSwipeTabs } from '../../hooks/useSwipeTabs';
@@ -134,6 +135,50 @@ export default function FeedPage() {
   const haptic = useHapticFeedback();
   const _router = useRouter();
   const returnUser = useReturningUser();
+
+  // ── Real-time feed updates via WebSocket ──
+  const realtimeFeed = useRealtimeFeed(
+    activeTab === 'trending' ? 'trending' : activeTab === 'following' ? 'home' : 'for-you',
+    protocolFilter,
+  );
+  const realtimeInsertedRef = useRef(false);
+
+  // When the user clicks the real-time banner, insert queued posts
+  const handleRealtimeInsert = useCallback(() => {
+    const queued = realtimeFeed.insertQueued();
+    if (queued.length > 0) {
+      realtimeInsertedRef.current = true;
+      setPosts((prev) => {
+        const newPosts = queued.map((q) => q.post);
+        const existingIds = new Set(prev.map((p) => p.id));
+        const trulyNew = newPosts.filter((p) => !existingIds.has(p.id));
+        if (trulyNew.length === 0) return prev;
+        return [...trulyNew, ...prev];
+      });
+      // Scroll to top
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [realtimeFeed]);
+
+  // Auto-insert posts when user is at the top of the feed
+  useEffect(() => {
+    if (realtimeFeed.newPostCount > 0 && !realtimeInsertedRef.current) {
+      // Check if user is near the top — handled via scroll detection in the hook
+      const checkAndAutoInsert = () => {
+        if (window.scrollY < 80) {
+          handleRealtimeInsert();
+        }
+      };
+      // Give the DOM a moment to render
+      const timer = setTimeout(checkAndAutoInsert, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [realtimeFeed.newPostCount, handleRealtimeInsert]);
+
+  // Reset the insertion flag when posts change (e.g., tab switch)
+  useEffect(() => {
+    realtimeInsertedRef.current = false;
+  }, [activeTab, protocolFilter]);
 
   const [topicWeights, setTopicWeights] = useState<Record<string, number>>({});
   const [_showFeedInfo, _setShowFeedInfo] = useState(false);
@@ -542,6 +587,30 @@ export default function FeedPage() {
             />
           </div>
 
+          {/* Live indicator */}
+          <div className="mb-3 flex items-center gap-2">
+            <span
+              className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-semibold transition-all ${
+                realtimeFeed.connected
+                  ? 'bg-degen-500/10 text-degen-400'
+                  : 'bg-yellow-500/10 text-yellow-400'
+              }`}
+            >
+              <span
+                className={`inline-block h-1.5 w-1.5 rounded-full ${
+                  realtimeFeed.connected
+                    ? 'animate-pulse bg-degen-400 shadow-[0_0_6px_rgba(34,197,94,0.6)]'
+                    : 'bg-yellow-400'
+                }`}
+              />
+              {realtimeFeed.connected
+                ? 'Live'
+                : realtimeFeed.connectionState === 'reconnecting'
+                  ? 'Reconnecting…'
+                  : 'Connecting…'}
+            </span>
+          </div>
+
           <div className="mb-4 flex items-center justify-between">
             <FeedTabBar
               tabs={FEED_TABS}
@@ -618,7 +687,18 @@ export default function FeedPage() {
               {e}
             </div>
           ))}
-          {newAvailable && (
+          {/* Real-time new posts banner (WebSocket) */}
+          {realtimeFeed.newPostCount > 0 && (
+            <div className="mb-4 animate-slideDown">
+              <FeedNewPostsBanner
+                count={realtimeFeed.newPostCount}
+                onRefresh={handleRealtimeInsert}
+              />
+            </div>
+          )}
+
+          {/* Polling new posts banner (fallback) */}
+          {newAvailable && realtimeFeed.newPostCount === 0 && (
             <div className="mb-4">
               <FeedNewPostsBanner count={posts.length} onRefresh={refreshNow} />
             </div>

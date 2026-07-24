@@ -15,6 +15,13 @@
  * ENHANCED: End-of-feed discovery cards, smooth staggered fade-in for new
  * posts, boredom-aware content injection, category breaks every ~12 posts,
  * and optional reading progress tracking for expanded posts.
+ *
+ * TASK 1: Staggered fade-in for new posts (50ms delay per post), slide
+ * transitions for tab switching, fade-out for removed posts, pull-to-refresh
+ * spinner indicator, new posts banner with spring animation.
+ *
+ * TASK 3: Density modes (compact / default / visual) with localStorage
+ * persistence and a toggle UI.
  */
 
 import type { UnifiedPost } from '@degenfeed/types';
@@ -127,9 +134,55 @@ export interface FeedListProps {
    * on each render cycle that includes a category break position.
    */
   categoryNiches?: string[];
+  /**
+   * TASK 3: Density mode — 'compact' | 'default' | 'visual'
+   */
+  density?: 'compact' | 'default' | 'visual';
+  /**
+   * TASK 5: Direction of tab slide transition ('left' | 'right')
+   */
+  slideDirection?: 'left' | 'right';
 }
 
 /* ── Sub-components ───────────────────────────────────────────── */
+
+/** TASK 6: Per-protocol empty state configurations with personality */
+const PROTOCOL_EMPTY_MESSAGES: Record<string, { title: string; body: string; cta?: string }> = {
+  nostr: {
+    title: 'Nostr feed is quiet',
+    body: 'No notes from connected relays right now. Try adding more relays or following some Nostr users to see their notes.',
+    cta: 'Explore relays',
+  },
+  farcaster: {
+    title: 'No Farcaster casts',
+    body: 'Farcaster hubs returned no recent casts. This might be a hub connectivity issue or the protocol is taking a breather.',
+    cta: 'Connect Farcaster',
+  },
+  lens: {
+    title: 'Lens is taking a moment',
+    body: 'The Lens API returned no recent publications. Check back soon — the garden grows fast.',
+    cta: 'Connect Lens',
+  },
+  bluesky: {
+    title: 'Bluesky is quiet',
+    body: 'AT Protocol returned no recent posts. Bluesky feeds can be sparse — your follows make it better.',
+    cta: 'Connect Bluesky',
+  },
+  mastodon: {
+    title: 'Fediverse is napping',
+    body: 'No Mastodon/GotoSocial posts found. The fediverse runs on community — follow more instances to fill your timeline.',
+    cta: 'Connect Mastodon',
+  },
+  reddit: {
+    title: 'Reddit is throttling',
+    body: 'Reddit feeds are notoriously rate-limited. Try again in a few minutes or browse a different subreddit.',
+    cta: 'Browse subreddits',
+  },
+  rss: {
+    title: 'News feed is quiet',
+    body: 'No recent articles from your RSS sources. New stories arrive every hour — this feed fills up fast.',
+  },
+};
 
 function EmptyState({
   protocolLabel,
@@ -141,29 +194,61 @@ function EmptyState({
   onSignIn?: () => void;
 }) {
   const color = protocolColor || 'var(--color-accent)';
+  const protocolKey = protocolLabel?.toLowerCase() ?? '';
+  const custom = Object.keys(PROTOCOL_EMPTY_MESSAGES).find(
+    (k) => protocolKey.includes(k) || protocolKey === k,
+  );
+  const msg = custom ? PROTOCOL_EMPTY_MESSAGES[custom] : null;
+
+  // Protocol-specific illustration emoji
+  const illustration =
+    custom === 'nostr'
+      ? '\u26A1'
+      : custom === 'farcaster'
+        ? '\u25C8'
+        : custom === 'lens'
+          ? '\ud83c\udf31'
+          : custom === 'bluesky'
+            ? '\ud83e\udd8b'
+            : custom === 'mastodon'
+              ? '\ud83d\udc18'
+              : custom === 'reddit'
+                ? 'R'
+                : custom === 'rss'
+                  ? '\ud83d\udcf0'
+                  : '\u25C6';
+
   return (
     <div className="border-b border-[var(--color-glass-border)] px-4 py-16 text-center">
       <div
         className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full"
         style={{ backgroundColor: `${color}18` }}
       >
-        <span className="text-3xl" style={{ color }}>
-          {protocolLabel ? '○' : '◆'}
+        <span className="text-2xl" style={{ color }}>
+          {illustration}
         </span>
       </div>
       <h3 className="mb-2 text-lg font-semibold text-[var(--color-fg)]">
-        {protocolLabel ? `No ${protocolLabel} posts yet` : 'The feed is warming up'}
+        {msg?.title ?? (protocolLabel ? `No ${protocolLabel} posts yet` : 'The feed is warming up')}
       </h3>
       <p className="mx-auto mb-6 max-w-sm text-sm text-[var(--color-muted)]">
-        {protocolLabel
-          ? 'This network is quiet right now. Try another tab or sign in to compose.'
-          : 'Pulling the first posts from every network. This usually takes a few seconds.'}
+        {msg?.body ??
+          (protocolLabel
+            ? 'This network is quiet right now. Try another tab or sign in to compose.'
+            : 'Pulling the first posts from every network. This usually takes a few seconds.')}
       </p>
-      {onSignIn && (
-        <button type="button" onClick={onSignIn} className="btn-primary text-sm">
-          Sign in to compose
-        </button>
-      )}
+      <div className="flex items-center justify-center gap-3">
+        {onSignIn && (
+          <button type="button" onClick={onSignIn} className="btn-primary text-sm">
+            {protocolLabel ? `Connect ${protocolLabel}` : 'Sign in to compose'}
+          </button>
+        )}
+        {msg?.cta && (
+          <button type="button" className="btn-secondary text-sm">
+            {msg.cta}
+          </button>
+        )}
+      </div>
     </div>
   );
 }
@@ -345,6 +430,8 @@ export const FeedList = memo(function FeedList({
   onShowMoreLikeThis,
   onShowLessLikeThis,
   onContextMenu,
+  density = 'default',
+  slideDirection,
 }: FeedListProps) {
   const sentinelRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -591,10 +678,21 @@ export const FeedList = memo(function FeedList({
   const hasEndOfFeed = !hasMore && filteredPosts.length > 0;
   const suggestions = endOfFeedSuggestions ?? [];
 
+  // TASK 3: Density mode class
+  const densityClass = density !== 'default' ? `feed-density-${density}` : '';
+
+  // TASK 1: Slide transition class for tab switching
+  const slideClass = slideDirection
+    ? slideDirection === 'right'
+      ? 'feed-slide-in-right'
+      : 'feed-slide-in-left'
+    : '';
+
   return (
     <div
       ref={containerRef}
       role="feed"
+      className={`${densityClass} ${slideClass}`}
       aria-label={protocolLabel ? `${protocolLabel} feed` : 'Feed'}
     >
       {(() => {
@@ -632,6 +730,7 @@ export const FeedList = memo(function FeedList({
               style={
                 {
                   '--stagger-i': i,
+                  '--stagger-delay': '50ms',
                 } as React.CSSProperties
               }
             >

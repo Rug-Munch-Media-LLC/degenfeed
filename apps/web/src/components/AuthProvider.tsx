@@ -59,17 +59,15 @@ export interface ComposeReplyContext {
   parentPreview?: string;
 }
 
-export interface AuthContextValue {
+// ── Split contexts: identity state (rarely changes) vs actions (stable refs) ──
+
+/** Values that change only when identity/wallet data changes */
+export interface AuthStateValue {
   signedInProtocols: Record<string, boolean>;
-  tokens: Record<string, string>;
   /** Active wallet address (backward-compat: first wallet in the list) */
   walletAddress?: string;
   /** All connected wallet addresses */
   walletAddresses: string[];
-  /** Index of the currently active wallet */
-  activeWalletIndex: number;
-  /** Number of connected wallets */
-  walletCount: number;
   /** Metadata for each connected wallet */
   walletMeta: Record<string, StoredWalletMeta>;
   primaryIdentity?: StoredIdentity;
@@ -77,6 +75,16 @@ export interface AuthContextValue {
   isWalletOnly: boolean;
   linkGtsUrl?: string | null;
   nostrPublicId?: string;
+}
+
+/** Stable action functions + frequently-changing non-identity state */
+export interface AuthActionValue {
+  tokens: Record<string, string>;
+  /** Index of the currently active wallet */
+  activeWalletIndex: number;
+  /** Number of connected wallets */
+  walletCount: number;
+  ready: boolean;
   openSignIn: () => void;
   openCompose: () => void;
   /** Open the composer in cross-protocol reply mode for the given parent post. */
@@ -109,17 +117,32 @@ export interface AuthContextValue {
     replyProtocol: string,
     content: string,
   ) => Promise<{ ok: boolean; nativeId?: string; error?: string }>;
-  ready: boolean;
   setPrimaryIdentity: (id: string) => Promise<void>;
   unlinkIdentity: (id: string) => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextValue | null>(null);
+/** Combined type for backward compatibility with existing consumers */
+export interface AuthContextValue extends AuthStateValue, AuthActionValue {}
 
-export function useAuth(): AuthContextValue {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth must be used within an AuthProvider');
+const AuthStateContext = createContext<AuthStateValue | null>(null);
+const AuthActionContext = createContext<AuthActionValue | null>(null);
+
+/**
+ * Read only identity state — does NOT re-render when action callbacks change.
+ * Preferred for components that only need signedInProtocols, walletAddress, etc.
+ */
+export function useAuthState(): AuthStateValue {
+  const ctx = useContext(AuthStateContext);
+  if (!ctx) throw new Error('useAuthState must be used within an AuthProvider');
   return ctx;
+}
+
+/** Combined convenience hook — reads from both contexts. Backward compatible. */
+export function useAuth(): AuthContextValue {
+  const state = useContext(AuthStateContext);
+  const actions = useContext(AuthActionContext);
+  if (!state || !actions) throw new Error('useAuth must be used within an AuthProvider');
+  return { ...state, ...actions };
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -746,28 +769,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setShowCompose(true);
   }, []);
 
-  const contextValue = useMemo(
+  // ── Split contexts: state (rarely-changing identity) vs actions (stable callbacks) ──
+
+  const stateValue = useMemo(
     () => ({
       signedInProtocols,
-      tokens,
       walletAddress,
       walletAddresses,
-      activeWalletIndex,
-      walletCount,
       walletMeta,
       primaryIdentity,
       linkedIdentities,
       isWalletOnly,
       linkGtsUrl,
+      nostrPublicId,
+    }),
+    [
+      signedInProtocols,
+      walletAddress,
+      walletAddresses,
+      walletMeta,
+      primaryIdentity,
+      linkedIdentities,
+      isWalletOnly,
+      linkGtsUrl,
+      nostrPublicId,
+    ],
+  );
+
+  const actionValue = useMemo(
+    () => ({
+      tokens,
+      activeWalletIndex,
+      walletCount,
+      ready,
       openSignIn,
       openCompose,
       openComposeReply,
       signOut: handleSignOut,
-      nostrPublicId,
       publish: handlePublish,
       engage: handleEngage,
       crossReply: handleCrossReply,
-      ready,
       setPrimaryIdentity: handleSetPrimary,
       unlinkIdentity: handleUnlink,
       switchWallet,
@@ -775,26 +816,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       removeWallet,
     }),
     [
-      signedInProtocols,
       tokens,
-      walletAddress,
-      walletAddresses,
       activeWalletIndex,
       walletCount,
-      walletMeta,
-      primaryIdentity,
-      linkedIdentities,
-      isWalletOnly,
-      linkGtsUrl,
+      ready,
       openSignIn,
       openCompose,
       openComposeReply,
       handleSignOut,
-      nostrPublicId,
       handlePublish,
       handleEngage,
       handleCrossReply,
-      ready,
       handleSetPrimary,
       handleUnlink,
       switchWallet,
@@ -804,53 +836,55 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   return (
-    <AuthContext.Provider value={contextValue}>
-      {children}
+    <AuthStateContext.Provider value={stateValue}>
+      <AuthActionContext.Provider value={actionValue}>
+        {children}
 
-      <SignInModal
-        open={showSignIn}
-        onClose={() => setShowSignIn(false)}
-        onSignIn={handleSignIn}
-        walletAddress={walletAddress}
-        walletSigningIn={walletSigningIn || solanaSigningIn}
-        availableWallets={availableWallets}
-      />
+        <SignInModal
+          open={showSignIn}
+          onClose={() => setShowSignIn(false)}
+          onSignIn={handleSignIn}
+          walletAddress={walletAddress}
+          walletSigningIn={walletSigningIn || solanaSigningIn}
+          availableWallets={availableWallets}
+        />
 
-      <ComposeModal
-        open={showCompose}
-        onClose={() => {
-          setShowCompose(false);
-          setComposeReplyContext(undefined);
-        }}
-        signedInProtocols={signedInProtocols}
-        onPublish={handlePublish}
-        replyContext={composeReplyContext}
-        onCrossReply={handleCrossReply}
-        onRequestSignIn={() => {
-          setShowCompose(false);
-          setShowSignIn(true);
-        }}
-        primaryIdentity={
-          primaryIdentity
-            ? {
-                displayName: primaryIdentity.displayName,
-                handle: primaryIdentity.handle,
-                avatarUrl: primaryIdentity.avatarUrl,
-              }
-            : undefined
-        }
-        nostrBridgePublicId={nostrPublicId}
-        onNostrBridge={async (text) => {
-          if (!nostrPublicId) return;
-          await publishNoteToNostr({ text, publicId: nostrPublicId });
-        }}
-        onSchedule={(text, targets, scheduledAt) => schedulePost(text, targets, scheduledAt)}
-        scheduledPosts={scheduledPosts}
-        onCancelSchedule={(id) => cancelSchedule(id)}
-        onPublishScheduledNow={(id) => {
-          publishNow(id);
-        }}
-      />
-    </AuthContext.Provider>
+        <ComposeModal
+          open={showCompose}
+          onClose={() => {
+            setShowCompose(false);
+            setComposeReplyContext(undefined);
+          }}
+          signedInProtocols={signedInProtocols}
+          onPublish={handlePublish}
+          replyContext={composeReplyContext}
+          onCrossReply={handleCrossReply}
+          onRequestSignIn={() => {
+            setShowCompose(false);
+            setShowSignIn(true);
+          }}
+          primaryIdentity={
+            primaryIdentity
+              ? {
+                  displayName: primaryIdentity.displayName,
+                  handle: primaryIdentity.handle,
+                  avatarUrl: primaryIdentity.avatarUrl,
+                }
+              : undefined
+          }
+          nostrBridgePublicId={nostrPublicId}
+          onNostrBridge={async (text) => {
+            if (!nostrPublicId) return;
+            await publishNoteToNostr({ text, publicId: nostrPublicId });
+          }}
+          onSchedule={(text, targets, scheduledAt) => schedulePost(text, targets, scheduledAt)}
+          scheduledPosts={scheduledPosts}
+          onCancelSchedule={(id) => cancelSchedule(id)}
+          onPublishScheduledNow={(id) => {
+            publishNow(id);
+          }}
+        />
+      </AuthActionContext.Provider>
+    </AuthStateContext.Provider>
   );
 }

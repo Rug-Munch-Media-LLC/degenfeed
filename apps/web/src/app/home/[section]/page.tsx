@@ -5,7 +5,7 @@ import type { EngagementAction } from '@degenfeed/types';
 import { ErrorBoundary, FeedList, NotificationBell, type UnifiedPost } from '@degenfeed/ui';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../../../components/AuthProvider';
 import { FeedPollerBanner } from '../../../components/FeedPollerBanner';
 
@@ -16,7 +16,49 @@ const TipModal = dynamic(
 
 import { useFeedPoller } from '../../../hooks/useFeedPoller';
 import { useNotifications } from '../../../hooks/useNotifications';
+import { useRealtimeFeed } from '../../../hooks/useRealtimeFeed';
 import { SECTIONS } from '../sections';
+
+/** Web3 quotes for empty states (TASK 6) */
+const WEB3_QUOTES = [
+  { text: "Don't trust, verify.", cite: 'Bitcoin Maximalist' },
+  { text: 'Code is law.', cite: 'Lawrence Lessig' },
+  { text: 'Be your own bank.', cite: 'Bitcoin Meme' },
+  {
+    text: "The internet of money shouldn't be slower than the internet of information.",
+    cite: 'Vitalik Buterin',
+  },
+  { text: 'In cyberspace, everyone is a pseudonym.', cite: 'Wei Dai' },
+  { text: 'Privacy is not secrecy.', cite: 'Zooko Wilcox' },
+  { text: "Satoshi's vision was peer-to-peer electronic cash.", cite: 'Hal Finney' },
+  { text: 'The cypherpunks are writing code.', cite: 'Eric Hughes' },
+  {
+    text: "Decentralization is not an end state, it's a continuous process.",
+    cite: 'Balaji Srinivasan',
+  },
+  { text: 'Web3 is the internet owned by the builders and users.', cite: 'Packy McCormick' },
+  { text: "Nostr doesn't require any infrastructure — it just needs relays.", cite: 'fiatjaf' },
+  { text: 'Farcaster is a sufficiently decentralized social network.', cite: 'Dan Romero' },
+  { text: 'The AT Protocol is a protocol for decentralized social media.', cite: 'Bluesky Team' },
+  { text: 'Lens Protocol is a user-owned, open social graph.', cite: 'Stani Kulechov' },
+];
+
+function RandomWeb3Quote() {
+  const quote = useMemo(
+    () =>
+      WEB3_QUOTES[Math.floor(Math.random() * WEB3_QUOTES.length)] ?? {
+        text: 'The future is decentralized.',
+        cite: 'Unknown',
+      },
+    [],
+  );
+  return (
+    <div className="web3-quote mt-6">
+      <blockquote>&ldquo;{quote.text}&rdquo;</blockquote>
+      <cite>&mdash; {quote.cite}</cite>
+    </div>
+  );
+}
 
 interface Props {
   params: Promise<{ section: string }>;
@@ -36,20 +78,37 @@ function getProtocolColor(p: string): string {
 }
 
 function SectionNav({ current }: { current: string }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll active tab into view
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const activeEl = containerRef.current.querySelector('[data-active="true"]');
+    if (activeEl) {
+      activeEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    }
+  }, []);
+
   return (
-    <div className="mb-4 flex gap-1 overflow-x-auto pb-2">
+    <div
+      ref={containerRef}
+      className="mb-2 flex gap-1 overflow-x-auto pb-2 scrollbar-none"
+      role="tablist"
+      aria-label="Feed categories"
+    >
       {SECTIONS.map((s) => (
         <a
           key={s.id}
           href={`/home/${s.id}`}
-          className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium transition-all ${
-            s.id === current
-              ? 'text-[var(--color-fg)]'
-              : 'text-[var(--color-muted)] hover:text-[var(--color-muted)]'
-          }`}
-          style={s.id === current ? { backgroundColor: `${s.color}22`, color: s.color } : {}}
+          role="tab"
+          aria-selected={s.id === current}
+          data-active={s.id === current}
+          className={`feed-tab ${s.id === current ? 'active' : ''}`}
         >
-          {s.icon} {s.label}
+          <span className="flex items-center gap-1.5">
+            <span style={{ color: s.color }}>{s.icon}</span>
+            <span>{s.label}</span>
+          </span>
         </a>
       ))}
     </div>
@@ -200,6 +259,57 @@ function SectionContent({ section }: { section: string }) {
   const { notifications, unreadCount, fetchNotifications, markRead } =
     useNotifications(hasSignedIn);
 
+  // TASK 3: Density mode persisted in localStorage
+  const [density, setDensity] = useState<'compact' | 'default' | 'visual'>(() => {
+    if (typeof window === 'undefined') return 'default';
+    return (
+      (localStorage.getItem('df_feed_density') as 'compact' | 'default' | 'visual') || 'default'
+    );
+  });
+
+  // TASK 5: Last updated timestamp
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [headerScrolled, setHeaderScrolled] = useState(false);
+  const headerRef = useRef<HTMLDivElement>(null);
+
+  // Track scroll for sticky header shadow
+  useEffect(() => {
+    const handler = () => {
+      setHeaderScrolled(window.scrollY > 10);
+    };
+    window.addEventListener('scroll', handler, { passive: true });
+    return () => window.removeEventListener('scroll', handler);
+  }, []);
+
+  const handleDensityChange = useCallback((d: 'compact' | 'default' | 'visual') => {
+    setDensity(d);
+    try {
+      localStorage.setItem('df_feed_density', d);
+    } catch {
+      /* storage unavailable */
+    }
+  }, []);
+
+  // TASK 5: Human-readable "time ago" for last updated
+  const [lastUpdatedText, setLastUpdatedText] = useState('');
+  useEffect(() => {
+    if (!lastUpdated) {
+      setLastUpdatedText('');
+      return;
+    }
+    const update = () => {
+      const diff = Date.now() - lastUpdated.getTime();
+      const seconds = Math.floor(diff / 1000);
+      if (seconds < 10) setLastUpdatedText('Updated just now');
+      else if (seconds < 60) setLastUpdatedText(`Updated ${seconds}s ago`);
+      else if (seconds < 3600) setLastUpdatedText(`Updated ${Math.floor(seconds / 60)}m ago`);
+      else setLastUpdatedText(`Updated ${Math.floor(seconds / 3600)}h ago`);
+    };
+    update();
+    const interval = setInterval(update, 30_000);
+    return () => clearInterval(interval);
+  }, [lastUpdated]);
+
   // Derive protocol from section id for protocol-specific pages
   const PROTOCOL_SECTIONS = new Set([
     'nostr',
@@ -256,6 +366,39 @@ function SectionContent({ section }: { section: string }) {
     [section, activePreset],
   );
 
+  // ── Real-time feed updates via WebSocket ──
+  const realtimeFeed = useRealtimeFeed(
+    section === 'trending' ? 'trending' : 'home',
+    sectionProtocol,
+  );
+
+  // Handle real-time post insertion
+  const handleRealtimeInsert = useCallback(() => {
+    const queued = realtimeFeed.insertQueued();
+    if (queued.length > 0) {
+      setPosts((prev) => {
+        const newPosts = queued.map((q) => q.post);
+        const existingIds = new Set(prev.map((p) => p.id));
+        const trulyNew = newPosts.filter((p) => !existingIds.has(p.id));
+        if (trulyNew.length === 0) return prev;
+        return [...trulyNew, ...prev];
+      });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [realtimeFeed]);
+
+  // Auto-insert at top
+  useEffect(() => {
+    if (realtimeFeed.newPostCount > 0) {
+      const timer = setTimeout(() => {
+        if (window.scrollY < 80) {
+          handleRealtimeInsert();
+        }
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [realtimeFeed.newPostCount, handleRealtimeInsert]);
+
   // Poll for new posts in the background (only needs the data array)
   const { newPostCount, refresh: resetNewPosts } = useFeedPoller(
     async () => {
@@ -277,6 +420,7 @@ function SectionContent({ section }: { section: string }) {
         setPosts(result.data);
         setFeedMeta(result.meta ?? {});
         setState(result.data.length ? 'loaded' : 'empty');
+        setLastUpdated(new Date());
       } catch (err) {
         if (!cancelled) {
           setError(err instanceof Error ? err.message : 'Failed');
@@ -322,176 +466,288 @@ function SectionContent({ section }: { section: string }) {
     return engage(action, postId, post.protocol, { content });
   };
 
-  const handleRetry = () => {
+  const handleRetry = useCallback(() => {
     resetNewPosts();
     setRefreshKey((k) => k + 1);
-  };
+  }, [resetNewPosts]);
 
   return (
     <ErrorBoundary>
-      <div className="mx-auto max-w-2xl px-4 py-4">
-        <FeedPollerBanner count={newPostCount} onRefresh={handleRetry} />
-        <SectionNav current={section} />
-
-        <div className="mb-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <span className="text-2xl" style={{ color }}>
-              {icon}
-            </span>
-            <div>
-              <h1 className="text-lg font-bold text-[var(--color-fg)]">{displayName}</h1>
-            </div>
-            <span
-              className="rounded-full px-2 py-0.5 text-xs font-medium"
-              style={{ backgroundColor: `${color}22`, color }}
-            >
-              {displayName}
-            </span>
-            {/* == Preset selector == */}
-            <div className="relative flex items-center gap-1">
-              <select
-                value={activePreset}
-                onChange={async (e) => {
-                  const newPreset = e.target.value;
-                  setActivePreset(newPreset);
-                  // Save preset to KV if signed in
-                  if (hasSignedIn) {
-                    try {
-                      await fetch('/api/presets', {
-                        method: 'POST',
-                        credentials: 'include',
-                        headers: { 'content-type': 'application/json' },
-                        body: JSON.stringify({
-                          presetName: newPreset,
-                          protocol: sectionProtocol,
-                        }),
-                      });
-                    } catch {
-                      /* non-critical */
-                    }
-                  }
-                  // Refetch with the new preset
-                  const result = await fetchFeed(newPreset);
-                  setPosts(result.data);
-                  setFeedMeta(result.meta ?? {});
-                  setState(result.data.length ? 'loaded' : 'empty');
-                }}
-                className="rounded-md border border-[var(--color-border)] bg-[var(--color-muted)] px-2 py-1 text-[11px] text-[var(--color-muted)] focus:outline-none focus:ring-1 focus:ring-degen-500"
-                aria-label="Quality preset"
-              >
-                {PRESET_NAMES.map((name) => (
-                  <option key={name} value={name}>
-                    {PRESET_LABELS[name] ?? name}
-                  </option>
-                ))}
-              </select>
-              {activePreset !== 'balanced' && (
-                <span
-                  className="rounded-full px-1.5 py-0.5 text-[10px] font-medium text-degen-400"
-                  style={{ backgroundColor: '#22c55e22' }}
-                >
-                  {PRESET_LABELS[activePreset] ?? activePreset}
+      <div className="mx-auto max-w-2xl px-0 py-0">
+        {/* TASK 5: Sticky header with backdrop blur + glass effect */}
+        <div ref={headerRef} className={`feed-header-sticky ${headerScrolled ? 'scrolled' : ''}`}>
+          <div className="px-4 pt-3 pb-0">
+            {/* Top row: icon, title, live indicator, actions */}
+            <div className="mb-2 flex items-center justify-between">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="text-xl shrink-0" style={{ color }}>
+                  {icon}
                 </span>
+                <h1 className="text-base font-bold text-[var(--color-fg)] truncate">
+                  {displayName}
+                </h1>
+                {/* TASK 5: Last updated timestamp */}
+                {lastUpdatedText && (
+                  <span className={`last-updated ${state === 'loading' ? 'refreshing' : ''}`}>
+                    {lastUpdatedText}
+                  </span>
+                )}
+                {/* Live indicator */}
+                <div className="flex items-center gap-2 shrink-0">
+                  <span
+                    className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[9px] font-semibold transition-all ${
+                      realtimeFeed.connected
+                        ? 'bg-degen-500/10 text-degen-400'
+                        : 'bg-yellow-500/10 text-yellow-400'
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-1.5 w-1.5 rounded-full ${
+                        realtimeFeed.connected
+                          ? 'animate-pulse bg-degen-400 shadow-[0_0_6px_rgba(34,197,94,0.6)]'
+                          : 'bg-yellow-400'
+                      }`}
+                    />
+                    {realtimeFeed.connected
+                      ? 'Live'
+                      : realtimeFeed.connectionState === 'reconnecting'
+                        ? 'Reconnecting\u2026'
+                        : 'Connecting\u2026'}
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                {/* TASK 3: Density toggle (desktop) */}
+                <div className="hidden sm:flex">
+                  {/* biome-ignore lint/a11y/useSemanticElements: div with role="group" for CSS styling flexibility */}
+                  <div className="flex items-center gap-0.5" role="group" aria-label="Feed density">
+                    {(['compact', 'default', 'visual'] as const).map((mode) => (
+                      <button
+                        key={mode}
+                        type="button"
+                        aria-pressed={density === mode}
+                        onClick={() => handleDensityChange(mode)}
+                        className={`density-toggle-btn ${density === mode ? 'active' : ''}`}
+                        title={mode.charAt(0).toUpperCase() + mode.slice(1)}
+                      >
+                        {mode === 'compact' ? '\u25AC' : mode === 'default' ? '\u2261' : '\u25A3'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                {hasSignedIn && (
+                  <NotificationBell
+                    notifications={notifications}
+                    unreadCount={unreadCount}
+                    onFetch={fetchNotifications}
+                    onMarkRead={markRead}
+                  />
+                )}
+                {hasSignedIn ? (
+                  <button
+                    type="button"
+                    className="btn-primary text-xs !py-1 !px-3"
+                    onClick={openCompose}
+                  >
+                    Compose
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="btn-secondary text-xs !py-1 !px-3"
+                    onClick={openSignIn}
+                  >
+                    Sign In
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Preset + protocol filter chips row */}
+            <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center gap-2">
+                {/* Preset selector */}
+                <div className="relative flex items-center gap-1">
+                  <select
+                    value={activePreset}
+                    onChange={async (e) => {
+                      const newPreset = e.target.value;
+                      setActivePreset(newPreset);
+                      if (hasSignedIn) {
+                        try {
+                          await fetch('/api/presets', {
+                            method: 'POST',
+                            credentials: 'include',
+                            headers: { 'content-type': 'application/json' },
+                            body: JSON.stringify({
+                              presetName: newPreset,
+                              protocol: sectionProtocol,
+                            }),
+                          });
+                        } catch {
+                          /* non-critical */
+                        }
+                      }
+                      const result = await fetchFeed(newPreset);
+                      setPosts(result.data);
+                      setFeedMeta(result.meta ?? {});
+                      setState(result.data.length ? 'loaded' : 'empty');
+                    }}
+                    className="rounded-md border border-[var(--color-border)] bg-[var(--color-muted-bg)] px-2 py-1 text-[10px] text-[var(--color-muted)] focus:outline-none focus:ring-1 focus:ring-degen-500"
+                    aria-label="Quality preset"
+                  >
+                    {PRESET_NAMES.map((name) => (
+                      <option key={name} value={name}>
+                        {PRESET_LABELS[name] ?? name}
+                      </option>
+                    ))}
+                  </select>
+                  {activePreset !== 'balanced' && (
+                    <span
+                      className="rounded-full px-1.5 py-0.5 text-[9px] font-medium text-degen-400"
+                      style={{ backgroundColor: '#22c55e22' }}
+                    >
+                      {PRESET_LABELS[activePreset] ?? activePreset}
+                    </span>
+                  )}
+                </div>
+              </div>
+              {/* TASK 5: Protocol filter chips (all feed only) */}
+              {section === 'all' && (
+                <div className="flex gap-1 overflow-x-auto scrollbar-none max-w-[40%] sm:max-w-none">
+                  {['nostr', 'farcaster', 'lens', 'bluesky', 'mastodon', 'reddit', 'rss'].map(
+                    (p) => (
+                      <button
+                        key={p}
+                        type="button"
+                        className="protocol-chip"
+                        style={{ borderColor: `${getProtocolColor(p)}33` }}
+                        onClick={() => router.push(`/home/${p}`)}
+                        aria-label={`View ${p} feed`}
+                      >
+                        {p === 'nostr'
+                          ? '\u26A1'
+                          : p === 'farcaster'
+                            ? '\u25C8'
+                            : p === 'lens'
+                              ? '\u25CE'
+                              : p === 'bluesky'
+                                ? '\u2601'
+                                : p === 'mastodon'
+                                  ? '\uD83D\uDC18'
+                                  : p === 'reddit'
+                                    ? 'R'
+                                    : '\uD83D\uDCF0'}
+                      </button>
+                    ),
+                  )}
+                </div>
               )}
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            {hasSignedIn && (
-              <NotificationBell
-                notifications={notifications}
-                unreadCount={unreadCount}
-                onFetch={fetchNotifications}
-                onMarkRead={markRead}
-              />
-            )}
-            {hasSignedIn ? (
-              <button type="button" className="btn-primary text-xs" onClick={openCompose}>
-                Compose
-              </button>
-            ) : (
-              <button type="button" className="btn-secondary text-xs" onClick={openSignIn}>
-                Sign In
-              </button>
-            )}
-          </div>
+
+          {/* Tab navigation inside sticky header */}
+          <SectionNav current={section} />
         </div>
 
-        {feedMeta.notices && feedMeta.notices.length > 0 && (
-          <div className="mb-3 rounded-lg border border-yellow-500/20 bg-yellow-500/10 p-3 text-xs text-yellow-400">
-            {feedMeta.notices.map((n) => (
-              <div key={n}>{n}</div>
-            ))}
+        {/* Feed poller banners */}
+        <FeedPollerBanner count={newPostCount} onRefresh={handleRetry} />
+        {realtimeFeed.newPostCount > 0 && (
+          <div className="mb-4 animate-slideDown">
+            <FeedPollerBanner count={realtimeFeed.newPostCount} onRefresh={handleRealtimeInsert} />
           </div>
         )}
 
-        {feedMeta.errors && feedMeta.errors.length > 0 && (
-          <div className="mb-3 rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-xs text-red-400">
-            {feedMeta.errors.map((e) => (
-              <div key={e}>{e}</div>
-            ))}
-          </div>
-        )}
+        <div className="px-4 py-4">
+          {/* Notices, errors, trending */}
+          {feedMeta.notices && feedMeta.notices.length > 0 && (
+            <div className="mb-3 rounded-lg border border-yellow-500/20 bg-yellow-500/10 p-3 text-xs text-yellow-400">
+              {feedMeta.notices.map((n) => (
+                <div key={n}>{n}</div>
+              ))}
+            </div>
+          )}
 
-        {feedMeta.trending && feedMeta.trending.length > 0 && (
-          <div className="mb-3 flex flex-wrap gap-2">
-            {feedMeta.trending.map((t) => (
-              <span
-                key={t.topic}
-                className="rounded-full border border-degen-500/30 bg-degen-500/10 px-2 py-0.5 text-xs text-degen-400"
-              >
-                {t.topic}
-              </span>
-            ))}
-          </div>
-        )}
+          {feedMeta.errors && feedMeta.errors.length > 0 && (
+            <div className="mb-3 rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-xs text-red-400">
+              {feedMeta.errors.map((e) => (
+                <div key={e}>{e}</div>
+              ))}
+            </div>
+          )}
 
-        {hasSignedIn && (
-          <div className="mb-3 flex flex-wrap items-center gap-2 text-xs text-[var(--color-muted)]">
-            <span className="text-degen-400">Signed in:</span>
-            {Object.keys(signedInProtocols).map((p) => (
-              <span
-                key={p}
-                className="rounded-full px-2 py-0.5 font-medium"
-                style={{ backgroundColor: `${getProtocolColor(p)}22`, color: getProtocolColor(p) }}
-              >
-                {p}
-              </span>
-            ))}
-            <a href="/profile" className="ml-auto text-degen-500 hover:underline">
-              Profile
-            </a>
-          </div>
-        )}
+          {feedMeta.trending && feedMeta.trending.length > 0 && (
+            <div className="mb-3 flex flex-wrap gap-2">
+              {feedMeta.trending.map((t) => (
+                <span
+                  key={t.topic}
+                  className="rounded-full border border-degen-500/30 bg-degen-500/10 px-2 py-0.5 text-xs text-degen-400"
+                >
+                  {t.topic}
+                </span>
+              ))}
+            </div>
+          )}
 
-        <FeedList
-          state={state}
-          posts={posts}
-          error={error}
-          protocolLabel={displayName}
-          onPostClick={(id) => router.push(`/post/${encodeURIComponent(id)}`)}
-          onEngage={handleEngage}
-          onTip={(post) => setTipPost(post)}
-          onRetry={handleRetry}
-          onCrossReplyOpen={(post) => {
-            const nativeId = post.id.replace(
-              /^(nostr:|farcaster:|lens:|bluesky:|mastodon:|reddit:|rss:|threads:)/,
-              '',
-            );
-            openComposeReply({
-              parentPostUri: post.dfUri ?? `df://${post.protocol}:${nativeId}`,
-              parentProtocol: post.protocol,
-              parentPreview: post.text.slice(0, 120),
-            });
-          }}
-        />
+          {hasSignedIn && (
+            <div className="mb-3 flex flex-wrap items-center gap-2 text-xs text-[var(--color-muted)]">
+              <span className="text-degen-400">Signed in:</span>
+              {Object.keys(signedInProtocols).map((p) => (
+                <span
+                  key={p}
+                  className="rounded-full px-2 py-0.5 font-medium"
+                  style={{
+                    backgroundColor: `${getProtocolColor(p)}22`,
+                    color: getProtocolColor(p),
+                  }}
+                >
+                  {p}
+                </span>
+              ))}
+              <a href="/profile" className="ml-auto text-degen-500 hover:underline">
+                Profile
+              </a>
+            </div>
+          )}
 
-        <SectionEmptyState
-          section={section}
-          state={state}
-          hasSignedIn={hasSignedIn}
-          onSignIn={openSignIn}
-          onRetry={handleRetry}
-        />
+          {/* TASK 1+3: FeedList with density mode */}
+          <FeedList
+            state={state}
+            posts={posts}
+            error={error}
+            protocolLabel={displayName}
+            density={density}
+            onPostClick={(id) => router.push(`/post/${encodeURIComponent(id)}`)}
+            onEngage={handleEngage}
+            onTip={(post) => setTipPost(post)}
+            onRetry={handleRetry}
+            onCrossReplyOpen={(post) => {
+              const nativeId = post.id.replace(
+                /^(nostr:|farcaster:|lens:|bluesky:|mastodon:|reddit:|rss:|threads:)/,
+                '',
+              );
+              openComposeReply({
+                parentPostUri: post.dfUri ?? `df://${post.protocol}:${nativeId}`,
+                parentProtocol: post.protocol,
+                parentPreview: post.text.slice(0, 120),
+              });
+            }}
+          />
+
+          {/* TASK 6: Empty state with personality + Web3 quote easter egg */}
+          {state === 'empty' && posts.length === 0 && (
+            <div className="tab-content-slide-in">
+              <SectionEmptyState
+                section={section}
+                state={state}
+                hasSignedIn={hasSignedIn}
+                onSignIn={openSignIn}
+                onRetry={handleRetry}
+              />
+              <RandomWeb3Quote />
+            </div>
+          )}
+        </div>
 
         {tipPost && (
           <TipModal

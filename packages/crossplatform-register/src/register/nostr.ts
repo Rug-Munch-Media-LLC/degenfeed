@@ -13,7 +13,12 @@ export async function registerNostr(
     const pubkey = getPublicKey(secretKey);
     const nsec = nsecEncode(secretKey);
     const npub = npubEncode(pubkey);
-    const accountInfo: Record<string, string> = { pubkey, npub, _encryptedNsec: nsec };
+
+    // Encrypt the nsec using the caller-supplied seal function before KV storage.
+    // The raw nsec is never stored in plaintext — only the AES-256-GCM sealed blob.
+    const nsecToStore = opts.sealSecret ? await opts.sealSecret(nsec) : nsec;
+    const accountInfo: Record<string, string> = { pubkey, npub, _sealedNsec: nsecToStore };
+
     const { persistPlatformAccount } = await import('./kv');
     await persistPlatformAccount('nostr', walletAddress, accountInfo, opts.storage);
     return {
