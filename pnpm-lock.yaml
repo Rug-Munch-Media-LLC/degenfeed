@@ -12,6 +12,15 @@ importers:
 
   .:
     dependencies:
+      '@degenfeed/creator-coin':
+        specifier: workspace:*
+        version: link:packages/creator-coin
+      '@degenfeed/monetization':
+        specifier: workspace:*
+        version: link:packages/monetization
+      '@degenfeed/spaces-bridge':
+        specifier: workspace:*
+        version: link:packages/spaces-bridge
       swr:
         specifier: ^2.4.2
         version: 2.4.2(react@19.2.7)
@@ -73,6 +82,9 @@ importers:
       '@degenfeed/bluesky-sdk':
         specifier: workspace:*
         version: link:../../packages/bluesky-sdk
+      '@degenfeed/creator-coin':
+        specifier: workspace:*
+        version: link:../../packages/creator-coin
       '@degenfeed/farcaster-sdk':
         specifier: workspace:*
         version: link:../../packages/farcaster-sdk
@@ -88,6 +100,9 @@ importers:
       '@degenfeed/lens-sdk':
         specifier: workspace:*
         version: link:../../packages/lens-sdk
+      '@degenfeed/monetization':
+        specifier: workspace:*
+        version: link:../../packages/monetization
       '@degenfeed/nostr-sdk':
         specifier: workspace:*
         version: link:../../packages/nostr-sdk
@@ -103,6 +118,9 @@ importers:
       '@degenfeed/source-discovery':
         specifier: workspace:*
         version: link:../../packages/source-discovery
+      '@degenfeed/spaces-bridge':
+        specifier: workspace:*
+        version: link:../../packages/spaces-bridge
       '@degenfeed/storage':
         specifier: workspace:*
         version: link:../../packages/storage
