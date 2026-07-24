@@ -39,6 +39,9 @@ export async function GET(request: NextRequest) {
     }
 
     // Handle-based lookup - try to resolve across protocols
+    if (!handle) {
+      return NextResponse.json({ error: 'Handle required' }, { status: 400 });
+    }
     const identities: Record<string, { id: string; displayName: string } | null> = {};
 
     // Try to determine protocol from handle format

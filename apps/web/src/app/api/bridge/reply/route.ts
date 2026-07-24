@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from 'next/server';
-import { requireSession } from '../../_auth';
+import { getSessionFromRequest } from '../../_auth';
 // TODO: Wire to worker backend
 export const dynamic = 'force-dynamic';
 
@@ -30,8 +30,10 @@ const VALID_PROTOCOLS = [
  * }
  */
 export async function POST(request: NextRequest) {
-  const session = await requireSession(request);
-  if (session instanceof NextResponse) return session;
+  const session = await getSessionFromRequest(request);
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
 
   try {
     const body = await request.json();
