@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter, JetBrains_Mono, Sora } from 'next/font/google';
+import { Plus_Jakarta_Sans, Syne, JetBrains_Mono } from 'next/font/google';
 import { cookies } from 'next/headers';
 import Script from 'next/script';
 import '../styles/design-tokens.css';
@@ -13,8 +13,20 @@ import { SolanaProvider } from '../components/SolanaProvider';
 import { ToastProvider } from '../components/Toast';
 import { Web3Provider } from '../components/Web3Provider';
 
-const inter = Inter({ subsets: ['latin'], display: 'swap', variable: '--font-body' });
-const sora = Sora({ subsets: ['latin'], display: 'swap', variable: '--font-heading' });
+const plusJakarta = Plus_Jakarta_Sans({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-body',
+  weight: ['400', '500', '600', '700', '800'],
+});
+
+const syne = Syne({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-heading',
+  weight: ['400', '500', '600', '700', '800'],
+});
+
 const jetbrainsMono = JetBrains_Mono({
   subsets: ['latin'],
   display: 'swap',
@@ -25,11 +37,11 @@ export const metadata: Metadata = {
   manifest: '/manifest.json',
   metadataBase: new URL('https://app.degenfeed.xyz'),
   title: {
-    default: 'DegenFeed — Web3 Social Media Aggregator | Nostr, Farcaster, Lens, Bluesky',
+    default: 'DegenFeed — The Web3 Social Universe | Nostr, Farcaster, Lens, Bluesky',
     template: '%s — DegenFeed',
   },
   description:
-    'Aggregate Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, Reddit, and RSS into one unified feed. Cross-post across protocols, tip creators in crypto, and follow web3 communities without switching apps.',
+    'The Web3 Social Universe. Aggregate Nostr, Farcaster, Lens, Bluesky, Mastodon, and more into one unified feed. Cross-post, tip creators in crypto, and follow web3 communities without switching apps.',
   keywords: [
     'nostr feed',
     'farcaster client',
@@ -43,9 +55,9 @@ export const metadata: Metadata = {
     'decentralized social media',
   ],
   openGraph: {
-    title: 'DegenFeed — Web3 Social Media Aggregator | Nostr, Farcaster, Lens, Bluesky',
+    title: 'DegenFeed — The Web3 Social Universe',
     description:
-      'Aggregate Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, Reddit, and RSS into one unified feed. Cross-post across protocols, tip creators in crypto, and follow web3 communities without switching apps.',
+      'Aggregate Nostr, Farcaster, Lens, Bluesky, Mastodon, and more into one unified feed. Cross-post and tip creators in crypto.',
     url: 'https://app.degenfeed.xyz',
     siteName: 'DegenFeed',
     type: 'website',
@@ -55,15 +67,15 @@ export const metadata: Metadata = {
         url: '/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'DegenFeed — Web3 social media aggregator connecting Nostr, Farcaster, Lens, Bluesky, Mastodon',
+        alt: 'DegenFeed — The Web3 Social Universe',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'DegenFeed — Web3 Social Media Aggregator',
+    title: 'DegenFeed — The Web3 Social Universe',
     description:
-      'Aggregate Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, Reddit, RSS in one unified feed. Cross-post and tip creators in crypto.',
+      'Aggregate Nostr, Farcaster, Lens, Bluesky, Mastodon, and more in one unified feed. Cross-post and tip creators in crypto.',
     images: ['/og-image.png'],
   },
   robots: {
@@ -76,15 +88,11 @@ export const metadata: Metadata = {
   alternates: {
     canonical: 'https://app.degenfeed.xyz',
   },
-  other: {
-    'google-site-verification': 'degenfeed-google-site-verification',
-    'theme-color': '#000000',
-  },
 };
 
 export const viewport: Viewport = {
   themeColor: '#000000',
-  colorScheme: 'light dark',
+  colorScheme: 'dark',
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
@@ -94,10 +102,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html
       lang="en"
-      className={`${theme} ${inter.variable} ${sora.variable} ${jetbrainsMono.variable}`}
+      className={`dark ${plusJakarta.variable} ${syne.variable} ${jetbrainsMono.variable}`}
       suppressHydrationWarning
     >
-      <body>
+      <body className="antialiased">
         <a href="#main-content" className="skip-link">
           Skip to content
         </a>
@@ -124,35 +132,27 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="application-name" content="DegenFeed" />
         <link rel="apple-touch-icon" href="/icon-192.png" />
-        {/* Windows PWA */}
         <meta name="msapplication-TileColor" content="#000000" />
         <meta name="msapplication-tap-highlight" content="no" />
 
         {/* == LCP: Preconnect to critical origins == */}
         <link rel="preconnect" href="https://app.degenfeed.xyz" />
         <link rel="preconnect" href="https://degenfeed.xyz" />
-        <link rel="preconnect" href="https://community.degenfeed.xyz" />
-        <link rel="preconnect" href="https://video.degenfeed.xyz" />
         <link rel="dns-prefetch" href="https://app.degenfeed.xyz" />
         <link rel="dns-prefetch" href="https://degenfeed.xyz" />
-        <link rel="dns-prefetch" href="https://community.degenfeed.xyz" />
-        <link rel="dns-prefetch" href="https://video.degenfeed.xyz" />
         <link rel="dns-prefetch" href="https://pbs.twimg.com" />
         <link rel="dns-prefetch" href="https://cdn.bsky.app" />
 
-        {/* == LCP: Defer non-critical third-party scripts == */}
+        {/* == LCP: Preload critical assets == */}
         <link rel="preload" href="/icon.svg" as="image" fetchPriority="high" />
-        <link rel="preload" href="/icon-192.png" as="image" fetchPriority="high" />
 
-        {/* == Critical CSS inlining — above-the-fold styles (<14KB) == */}
+        {/* == Critical CSS inlining — above-the-fold styles == */}
         <style data-critical="1">
           {[
-            'body{--bg:#000;--fg:#e7e9ea;background:var(--bg);color:var(--fg);margin:0;font-family:Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}',
-            'html:not(.dark) body{--bg:#fff;--fg:#171717}',
-            '.skip-link{position:absolute;top:-100%;left:0;z-index:100;padding:8px 16px;background:var(--color-accent,#16a34a);color:#000;font-weight:600}',
+            'body{--bg:#000;--fg:#e7e9ea;background:var(--bg);color:var(--fg);margin:0;font-family:"Plus Jakarta Sans",Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}',
+            '.skip-link{position:absolute;top:-100%;left:0;z-index:100;padding:8px 16px;background:var(--color-accent,#00ff41);color:#000;font-weight:600}',
             '.skip-link:focus{top:0}',
-            '.aurora-bg{position:fixed;inset:0;pointer-events:none;z-index:0}',
-            '.noise-overlay{position:fixed;inset:0;pointer-events:none;z-index:1;opacity:.03}',
+            '.scanline{position:fixed;inset:0;pointer-events:none;z-index:9998;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.03) 2px,rgba(0,0,0,0.03) 4px)}',
             'img,video{max-width:100%;height:auto;vertical-align:middle}',
             '@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}',
           ].join('')}
@@ -169,7 +169,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           id="sw-register"
           strategy="afterInteractive"
         >{`if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').catch(()=>{})}`}</Script>
-        {/* JSON-LD structured data — tiny payload, no render impact */}
+        {/* Scanline overlay for cyberpunk texture */}
+        <div className="scanline" aria-hidden="true" />
+        {/* JSON-LD structured data */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -179,7 +181,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               name: 'DegenFeed',
               url: 'https://app.degenfeed.xyz',
               description:
-                'Aggregate Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, Reddit, and RSS into one unified feed. Cross-post across protocols, tip creators in crypto, and follow web3 communities without switching apps.',
+                'The Web3 Social Universe. Aggregate Nostr, Farcaster, Lens, Bluesky, Mastodon, and more.',
               applicationCategory: 'SocialNetworkingApplication',
               operatingSystem: 'All',
               offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
@@ -188,14 +190,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 name: 'Rug Munch Media LLC',
                 url: 'https://app.degenfeed.xyz',
               },
-              screenshot: { '@type': 'ImageObject', url: 'https://app.degenfeed.xyz/og-image.png' },
               featureList: [
                 'Multi-protocol feed aggregation',
-                'Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, Reddit, RSS',
+                'Nostr, Farcaster, Lens, Bluesky, Mastodon, and more',
                 'Cross-protocol search',
                 'Real-time notifications',
-                'Token and community pages',
-                'Premium subscriptions',
+                'Creator coins and tipping',
+                'Live streaming across protocols',
               ],
             }),
           }}
