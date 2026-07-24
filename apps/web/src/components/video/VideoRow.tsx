@@ -8,10 +8,10 @@
  * smooth scrolling, card snap alignment.
  */
 
-import { useRef, useState, useCallback, useEffect } from 'react';
 import Link from 'next/link';
-import { VideoCard } from './VideoCard';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { UnifiedVideo } from './useVideoHub';
+import { VideoCard } from './VideoCard';
 
 interface VideoRowProps {
   title: string;
@@ -59,16 +59,22 @@ export function VideoRow({
       el.removeEventListener('scroll', checkScroll);
       window.removeEventListener('resize', checkScroll);
     };
-  }, [checkScroll, videos.length]);
+  }, [checkScroll]);
 
-  const scrollBy = useCallback((direction: 'left' | 'right') => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const cardWidth = size === 'sm' ? 200 : size === 'md' ? 272 : 336;
-    const gap = 16;
-    const scrollAmount = (cardWidth + gap) * 2;
-    el.scrollBy({ left: direction === 'left' ? -scrollAmount : scrollAmount, behavior: 'smooth' });
-  }, [size]);
+  const scrollBy = useCallback(
+    (direction: 'left' | 'right') => {
+      const el = scrollRef.current;
+      if (!el) return;
+      const cardWidth = size === 'sm' ? 200 : size === 'md' ? 272 : 336;
+      const gap = 16;
+      const scrollAmount = (cardWidth + gap) * 2;
+      el.scrollBy({
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth',
+      });
+    },
+    [size],
+  );
 
   return (
     <section className={`relative ${className}`}>
@@ -97,7 +103,16 @@ export function VideoRow({
               className="absolute left-1 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-[var(--color-card)]/90 text-[var(--color-fg)] shadow-lg backdrop-blur-sm opacity-0 transition-opacity group-hover:opacity-100 hover:bg-[var(--color-card)]"
               aria-label="Scroll left"
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                aria-hidden="true"
+              >
                 <path d="M15 18l-6-6 6-6" />
               </svg>
             </button>
@@ -149,7 +164,16 @@ export function VideoRow({
               className="absolute right-1 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-[var(--color-card)]/90 text-[var(--color-fg)] shadow-lg backdrop-blur-sm opacity-0 transition-opacity group-hover:opacity-100 hover:bg-[var(--color-card)]"
               aria-label="Scroll right"
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                aria-hidden="true"
+              >
                 <path d="M9 18l6-6-6-6" />
               </svg>
             </button>

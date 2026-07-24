@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import useSWR from 'swr';
 
 /* === Types ============================================ */
@@ -139,12 +139,7 @@ export function usePeerTubeStream(
   tokenAddress: string,
   tokenSymbol?: string,
 ): UsePeerTubeStreamResult {
-  const {
-    data,
-    error,
-    isLoading,
-    mutate,
-  } = useSWR<PeerTubeStreamResponse>(
+  const { data, error, isLoading, mutate } = useSWR<PeerTubeStreamResponse>(
     tokenAddress ? `/api/token/${tokenAddress}/peertube` : null,
     fetcher,
     {
@@ -202,7 +197,7 @@ export function usePeerTubeStream(
       });
 
       if (!res.ok) {
-        const errBody = await res.json().catch(() => ({})) as { error?: string };
+        const errBody = (await res.json().catch(() => ({}))) as { error?: string };
         throw new Error(errBody.error || `HTTP ${res.status}`);
       }
 
@@ -226,7 +221,7 @@ export function usePeerTubeStream(
     });
 
     if (!res.ok) {
-      const errBody = await res.json().catch(() => ({})) as { error?: string };
+      const errBody = (await res.json().catch(() => ({}))) as { error?: string };
       throw new Error(errBody.error || `HTTP ${res.status}`);
     }
 
@@ -239,9 +234,7 @@ export function usePeerTubeStream(
   const fetchChat = useCallback(
     async (cursor?: string): Promise<ChatFetchResult> => {
       const params = cursor ? `?cursor=${encodeURIComponent(cursor)}` : '';
-      const res = await fetch(
-        `/api/token/${tokenAddress}/peertube/chat${params}`,
-      );
+      const res = await fetch(`/api/token/${tokenAddress}/peertube/chat${params}`);
 
       if (!res.ok) throw new Error(`Failed to fetch chat: HTTP ${res.status}`);
       return res.json() as Promise<ChatFetchResult>;
@@ -258,7 +251,7 @@ export function usePeerTubeStream(
       });
 
       if (!res.ok) {
-        const errBody = await res.json().catch(() => ({})) as { error?: string };
+        const errBody = (await res.json().catch(() => ({}))) as { error?: string };
         throw new Error(errBody.error || `HTTP ${res.status}`);
       }
     },

@@ -225,7 +225,12 @@ export function CreateSpaceModal({
             aria-label="Close"
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-              <path d="M12 4L4 12M4 4l8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              <path
+                d="M12 4L4 12M4 4l8 8"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+              />
             </svg>
           </button>
         </div>
@@ -234,7 +239,10 @@ export function CreateSpaceModal({
         <div className="flex-1 overflow-y-auto space-y-5 px-5 py-4">
           {/* Title */}
           <div>
-            <label htmlFor="space-title" className="mb-1.5 block text-xs font-semibold text-[var(--color-muted)] uppercase tracking-wider">
+            <label
+              htmlFor="space-title"
+              className="mb-1.5 block text-xs font-semibold text-[var(--color-muted)] uppercase tracking-wider"
+            >
               Space topic
             </label>
             <input
@@ -249,7 +257,9 @@ export function CreateSpaceModal({
             />
             <div className="mt-1.5 flex items-center justify-between">
               <p className="text-[10px] text-[var(--color-muted)]">What&apos;s this space about?</p>
-              <span className={`text-[10px] font-mono transition-colors ${titleRemaining < 10 ? 'text-red-400' : 'text-[var(--color-muted)]'}`}>
+              <span
+                className={`text-[10px] font-mono transition-colors ${titleRemaining < 10 ? 'text-red-400' : 'text-[var(--color-muted)]'}`}
+              >
                 {titleRemaining}
               </span>
             </div>
@@ -257,7 +267,10 @@ export function CreateSpaceModal({
 
           {/* Description */}
           <div>
-            <label htmlFor="space-desc" className="mb-1.5 block text-xs font-semibold text-[var(--color-muted)] uppercase tracking-wider">
+            <label
+              htmlFor="space-desc"
+              className="mb-1.5 block text-xs font-semibold text-[var(--color-muted)] uppercase tracking-wider"
+            >
               Description <span className="font-normal text-gray-600">(optional)</span>
             </label>
             <textarea
@@ -273,7 +286,10 @@ export function CreateSpaceModal({
 
           {/* Tags */}
           <div>
-            <label htmlFor="space-tags" className="mb-1.5 block text-xs font-semibold text-[var(--color-muted)] uppercase tracking-wider">
+            <label
+              htmlFor="space-tags"
+              className="mb-1.5 block text-xs font-semibold text-[var(--color-muted)] uppercase tracking-wider"
+            >
               Tags <span className="font-normal text-gray-600">(comma-separated)</span>
             </label>
             <input
@@ -290,7 +306,9 @@ export function CreateSpaceModal({
           <div className="flex items-center justify-between rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-muted)]/5 px-4 py-3">
             <div>
               <p className="text-xs font-medium text-[var(--color-fg)]">Auto-record space</p>
-              <p className="text-[10px] text-[var(--color-muted)]">Recording will be saved as a podcast</p>
+              <p className="text-[10px] text-[var(--color-muted)]">
+                Recording will be saved as a podcast
+              </p>
             </div>
             <button
               type="button"
@@ -313,7 +331,8 @@ export function CreateSpaceModal({
           {/* Broadcast protocols */}
           <div>
             <p className="mb-2.5 text-xs font-semibold text-[var(--color-muted)] uppercase tracking-wider">
-              Broadcast to protocols <span className="font-normal text-gray-600">(requires sign-in)</span>
+              Broadcast to protocols{' '}
+              <span className="font-normal text-gray-600">(requires sign-in)</span>
             </p>
             <div className="flex flex-wrap gap-2">
               {BROADCAST_PROTOCOLS.map((protocol) => {
@@ -323,16 +342,26 @@ export function CreateSpaceModal({
                   <button
                     key={protocol.id}
                     type="button"
-                    onClick={() => { if (isConnected) toggleProtocol(protocol.id); }}
+                    onClick={() => {
+                      if (isConnected) toggleProtocol(protocol.id);
+                    }}
                     disabled={!isConnected}
                     className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-all border ${
-                      isEnabled ? 'border-current opacity-100' : 'border-[var(--color-glass-border)] opacity-40 hover:opacity-70'
+                      isEnabled
+                        ? 'border-current opacity-100'
+                        : 'border-[var(--color-glass-border)] opacity-40 hover:opacity-70'
                     } ${!isConnected ? 'cursor-not-allowed opacity-20' : 'cursor-pointer'}`}
                     style={{
                       color: isEnabled ? getProtocolColor(protocol.id) : '#666',
-                      backgroundColor: isEnabled ? `${getProtocolColor(protocol.id)}15` : 'transparent',
+                      backgroundColor: isEnabled
+                        ? `${getProtocolColor(protocol.id)}15`
+                        : 'transparent',
                     }}
-                    title={!isConnected ? `Not signed into ${getProtocolLabel(protocol.id)}` : `${getProtocolLabel(protocol.id)} — ${isEnabled ? 'will broadcast' : 'no broadcast'}`}
+                    title={
+                      !isConnected
+                        ? `Not signed into ${getProtocolLabel(protocol.id)}`
+                        : `${getProtocolLabel(protocol.id)} — ${isEnabled ? 'will broadcast' : 'no broadcast'}`
+                    }
                   >
                     <span className="text-[0.7em]">{getProtocolIcon(protocol.id)}</span>
                     {getProtocolLabel(protocol.id)}
@@ -344,7 +373,9 @@ export function CreateSpaceModal({
 
           {/* When */}
           <div>
-            <p className="mb-2.5 text-xs font-semibold text-[var(--color-muted)] uppercase tracking-wider">When</p>
+            <p className="mb-2.5 text-xs font-semibold text-[var(--color-muted)] uppercase tracking-wider">
+              When
+            </p>
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
@@ -355,7 +386,15 @@ export function CreateSpaceModal({
                     : 'border-[var(--color-glass-border)] text-[var(--color-muted)] hover:text-[var(--color-fg)]'
                 }`}
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  aria-hidden="true"
+                >
                   <polygon points="5 3 19 12 5 21 5 3" />
                 </svg>
                 Start Now
@@ -369,7 +408,15 @@ export function CreateSpaceModal({
                     : 'border-[var(--color-glass-border)] text-[var(--color-muted)] hover:text-[var(--color-fg)]'
                 }`}
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  aria-hidden="true"
+                >
                   <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
                   <line x1="16" y1="2" x2="16" y2="6" />
                   <line x1="8" y1="2" x2="8" y2="6" />
@@ -380,7 +427,10 @@ export function CreateSpaceModal({
             </div>
             {mode === 'schedule' && (
               <div className="mt-3">
-                <label htmlFor="space-schedule" className="mb-1.5 block text-xs font-medium text-[var(--color-muted)]">
+                <label
+                  htmlFor="space-schedule"
+                  className="mb-1.5 block text-xs font-medium text-[var(--color-muted)]"
+                >
                   Pick date & time
                 </label>
                 <input

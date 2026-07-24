@@ -12,11 +12,10 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useAuth } from './AuthProvider';
-import { useWeb3 } from './Web3Provider';
 import { usePremium } from '../hooks/usePremium';
+import { useAuth } from './AuthProvider';
 import { useToast } from './Toast';
-import { PremiumPaymentModal } from './PremiumPaymentModal';
+import { useWeb3 } from './Web3Provider';
 
 // === Types ================================================================
 
@@ -89,7 +88,16 @@ interface RegistrationResponse {
 interface RegistrationStatus {
   accounts: Record<
     string,
-    { registered: boolean; handle?: string; did?: string; npub?: string; fid?: number; username?: string; profileId?: string; feedUrl?: string }
+    {
+      registered: boolean;
+      handle?: string;
+      did?: string;
+      npub?: string;
+      fid?: number;
+      username?: string;
+      profileId?: string;
+      feedUrl?: string;
+    }
   >;
   isPremium: boolean;
   premiumTier: string | null;
@@ -151,7 +159,19 @@ function HandlePriceIndicator({ length, premium }: { length: number; premium: bo
           <span
             className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-medium ${colorMap[tier.color]}`}
           >
-            {length > 0 && <span className="mr-1">{tier.color === 'green' ? '✓' : tier.color === 'yellow' ? '●' : tier.color === 'orange' ? '●' : tier.color === 'red' ? '◆' : '·'}</span>}
+            {length > 0 && (
+              <span className="mr-1">
+                {tier.color === 'green'
+                  ? '✓'
+                  : tier.color === 'yellow'
+                    ? '●'
+                    : tier.color === 'orange'
+                      ? '●'
+                      : tier.color === 'red'
+                        ? '◆'
+                        : '·'}
+              </span>
+            )}
             {tier.label}
           </span>
         </div>
@@ -167,8 +187,8 @@ function HandlePriceIndicator({ length, premium }: { length: number; premium: bo
       </div>
       {tier.color !== 'green' && tier.color !== 'muted' && (
         <p className="text-[10px] text-[var(--color-muted)] leading-relaxed">
-          These are Polygon gas costs for Lens profile creation — we pass through at cost.
-          Standard handles (9+ chars) are always included free.
+          These are Polygon gas costs for Lens profile creation — we pass through at cost. Standard
+          handles (9+ chars) are always included free.
         </p>
       )}
     </div>
@@ -223,13 +243,7 @@ const PLANS: PlanInfo[] = [
 
 // === Step indicator =======================================================
 
-function StepIndicator({
-  steps,
-  current,
-}: {
-  steps: string[];
-  current: number;
-}) {
+function StepIndicator({ steps, current }: { steps: string[]; current: number }) {
   return (
     <div className="mb-8 flex items-center gap-2">
       {steps.map((label, i) => (
@@ -475,7 +489,10 @@ function Step2_ChooseUsernames({
             </label>
             <p className="mb-2 text-xs text-[var(--color-muted)]">
               Leave blank for auto-generated. Pricing is based on handle length — shorter = more
-              gas. {isPremium ? 'Premium covers all handle lengths.' : 'Standard (9+ chars) always included.'}
+              gas.{' '}
+              {isPremium
+                ? 'Premium covers all handle lengths.'
+                : 'Standard (9+ chars) always included.'}
             </p>
             <input
               id="lens-handle"
@@ -524,22 +541,12 @@ function Step2_ChooseUsernames({
 
 // === Cost breakdown row ===================================================
 
-function CostRow({
-  label,
-  cost,
-  covered,
-}: {
-  label: string;
-  cost: string;
-  covered: boolean;
-}) {
+function CostRow({ label, cost, covered }: { label: string; cost: string; covered: boolean }) {
   return (
     <div className="flex items-center justify-between px-4 py-2.5">
       <span className="text-sm text-[var(--color-fg)]">{label}</span>
       <span
-        className={`text-sm font-semibold ${
-          covered ? 'text-degen-400' : 'text-[var(--color-fg)]'
-        }`}
+        className={`text-sm font-semibold ${covered ? 'text-degen-400' : 'text-[var(--color-fg)]'}`}
       >
         {covered && cost !== '$0' ? '✓ Covered' : cost}
       </span>
@@ -630,7 +637,9 @@ function Step3_ReviewCosts({
             <span className="text-sm font-bold text-[var(--color-fg)]">
               {isPremium && plan !== 'free' ? 'Total (covered by Premium)' : 'Total one-time'}
             </span>
-            <span className={`text-sm font-bold ${isPremium ? 'text-degen-400' : 'text-[var(--color-fg)]'}`}>
+            <span
+              className={`text-sm font-bold ${isPremium ? 'text-degen-400' : 'text-[var(--color-fg)]'}`}
+            >
               {charges.total}
             </span>
           </div>
@@ -649,12 +658,12 @@ function Step3_ReviewCosts({
           <p className="text-xs text-[var(--color-muted)] leading-relaxed">
             {charges.requiresConfirmation
               ? `⚠️ Gas costs exceed plan budget. +$${charges.overage?.toFixed(2)} extra required.`
-              : '✅ Gas costs within plan budget. No extra charges.'
-            }
+              : '✅ Gas costs within plan budget. No extra charges.'}
           </p>
           <p className="mt-1.5 text-[11px] text-[var(--color-muted)] leading-relaxed">
-            We charge a flat ${charges.ourProfit} service fee for handling all 5 protocol registrations,
-            recovery key generation, and account handoff. Gas is pass-through — we don't mark it up.
+            We charge a flat ${charges.ourProfit} service fee for handling all 5 protocol
+            registrations, recovery key generation, and account handoff. Gas is pass-through — we
+            don't mark it up.
             <strong> We never lose money on a registration.</strong>
           </p>
         </div>
@@ -669,8 +678,8 @@ function Step3_ReviewCosts({
           <p className="mb-3 text-xs text-[var(--color-muted)] leading-relaxed">
             The combined on-chain gas costs (${(charges.overage || 0) + 7} total) exceed the plan's
             gas budget ($7). We need your approval to charge an additional{' '}
-            <strong className="text-orange-400">+${charges.overage?.toFixed(2)}</strong> to cover the
-            difference.
+            <strong className="text-orange-400">+${charges.overage?.toFixed(2)}</strong> to cover
+            the difference.
           </p>
           <div className="flex gap-2">
             <button
@@ -874,7 +883,10 @@ function Step5_Processing({
       if ((step.id === 'farcaster' || step.id === 'lens') && plan === 'free') {
         return { ...step, status: 'done' as const };
       }
-      return { ...step, status: doneKeys.has(step.id) ? ('done' as const) : ('processing' as const) };
+      return {
+        ...step,
+        status: doneKeys.has(step.id) ? ('done' as const) : ('processing' as const),
+      };
     });
   }, [results, plan]);
 
@@ -996,7 +1008,7 @@ function Step6_Success_RecoveryKeys({
   onRestart: () => void;
 }) {
   const successCount = Object.values(results).filter((r) => r.ok).length;
-  const failCount = Object.values(results).filter((r => !r.ok)).length;
+  const failCount = Object.values(results).filter((r) => !r.ok).length;
 
   return (
     <div>
@@ -1017,9 +1029,7 @@ function Step6_Success_RecoveryKeys({
 
       <div className="mb-6 rounded-xl border border-amber-500/10 bg-amber-500/[0.03] px-4 py-3">
         <p className="text-xs font-medium text-amber-400">⚠️ Save your recovery information</p>
-        <p className="text-[11px] text-[var(--color-muted)]">
-          {recoveryInfo.message}
-        </p>
+        <p className="text-[11px] text-[var(--color-muted)]">{recoveryInfo.message}</p>
       </div>
 
       {/* Recovery cards */}
@@ -1120,16 +1130,16 @@ export function RegisterFlow({ onComplete, compact = false }: RegisterFlowProps)
   const [lensHandle, setLensHandle] = useState('');
   const [ensName, setEnsName] = useState('');
   const [signing, setSigning] = useState(false);
-  const [processing, setProcessing] = useState(false);
+  const [_processing, setProcessing] = useState(false);
   const [results, setResults] = useState<Record<string, AccountResult>>({});
-  const [charges, setCharges] = useState<ChargeBreakdown | null>(null);
+  const [_charges, setCharges] = useState<ChargeBreakdown | null>(null);
   const [recoveryInfo, setRecoveryInfo] = useState<RecoveryPackage | null>(null);
   const [nextSteps, setNextSteps] = useState<string[]>([]);
   const [error, setError] = useState('');
-  const [plans, setPlans] = useState<PlanInfo[]>(PLANS);
+  const [_plans, setPlans] = useState<PlanInfo[]>(PLANS);
   const [confirmedOverage, setConfirmedOverage] = useState(false);
-  const [requiresOverageConfirm, setRequiresOverageConfirm] = useState(false);
-  const [pendingOverageInfo, setPendingOverageInfo] = useState<{
+  const [_requiresOverageConfirm, setRequiresOverageConfirm] = useState(false);
+  const [_pendingOverageInfo, setPendingOverageInfo] = useState<{
     proposedTotal: string;
     overage: number;
   } | null>(null);
@@ -1161,7 +1171,11 @@ export function RegisterFlow({ onComplete, compact = false }: RegisterFlowProps)
         totalCents: 0,
         breakdown: [
           { item: 'Farcaster ID ($5 gas)', cost: '$5', covered: true },
-          { item: `Lens Profile — ${handleLabel} ($${handleGasCost} gas)`, cost: `$${handleGasCost}`, covered: true },
+          {
+            item: `Lens Profile — ${handleLabel} ($${handleGasCost} gas)`,
+            cost: `$${handleGasCost}`,
+            covered: true,
+          },
           { item: 'GoToSocial account', cost: '$0', covered: true },
           { item: 'AT Protocol PDS', cost: '$0', covered: true },
           { item: 'Nostr keypair', cost: '$0', covered: true },
@@ -1188,15 +1202,26 @@ export function RegisterFlow({ onComplete, compact = false }: RegisterFlowProps)
           ourProfit,
           requiresConfirmation: overage > 0,
           overage,
-          overageReason: overage > 0
-            ? `Gas costs ($${totalGas}) exceed plan budget ($${gasBudget}). +$${overage.toFixed(2)} extra required.`
-            : undefined,
+          overageReason:
+            overage > 0
+              ? `Gas costs ($${totalGas}) exceed plan budget ($${gasBudget}). +$${overage.toFixed(2)} extra required.`
+              : undefined,
           breakdown: [
             { item: 'Farcaster ID ($5 gas)', cost: '$5', covered: false },
-            { item: `Lens Profile — ${handleLabel} ($${handleGasCost} gas)`, cost: `$${handleGasCost}`, covered: false },
+            {
+              item: `Lens Profile — ${handleLabel} ($${handleGasCost} gas)`,
+              cost: `$${handleGasCost}`,
+              covered: false,
+            },
             { item: 'Service fee (our profit)', cost: `$${ourProfit}`, covered: false },
             ...(handleUpcharge > 0
-              ? [{ item: `Short handle premium ($${handleUpcharge} upcharge)`, cost: `$${handleUpcharge}`, covered: false }]
+              ? [
+                  {
+                    item: `Short handle premium ($${handleUpcharge} upcharge)`,
+                    cost: `$${handleUpcharge}`,
+                    covered: false,
+                  },
+                ]
               : []),
             ...(overage > 0
               ? [{ item: `Gas overage (exceeds plan budget)`, cost: `$${overage}`, covered: false }]
@@ -1219,15 +1244,26 @@ export function RegisterFlow({ onComplete, compact = false }: RegisterFlowProps)
           ourProfit,
           requiresConfirmation: overage > 0,
           overage,
-          overageReason: overage > 0
-            ? `Gas costs ($${totalGas}) exceed plan budget ($${gasBudget}). +$${overage.toFixed(2)} extra required.`
-            : undefined,
+          overageReason:
+            overage > 0
+              ? `Gas costs ($${totalGas}) exceed plan budget ($${gasBudget}). +$${overage.toFixed(2)} extra required.`
+              : undefined,
           breakdown: [
             { item: 'Farcaster ID ($5 gas)', cost: '$5', covered: false },
-            { item: `Lens Profile — ${handleLabel} ($${handleGasCost} gas)`, cost: `$${handleGasCost}`, covered: false },
+            {
+              item: `Lens Profile — ${handleLabel} ($${handleGasCost} gas)`,
+              cost: `$${handleGasCost}`,
+              covered: false,
+            },
             { item: 'ENS domain ($10)', cost: '$10', covered: false },
             ...(handleUpcharge > 0
-              ? [{ item: `Premium handle upcharge ($${handleUpcharge})`, cost: `$${handleUpcharge}`, covered: false }]
+              ? [
+                  {
+                    item: `Premium handle upcharge ($${handleUpcharge})`,
+                    cost: `$${handleUpcharge}`,
+                    covered: false,
+                  },
+                ]
               : []),
             { item: 'Service fee (our profit)', cost: `$${ourProfit}`, covered: false },
             { item: 'Bundle discount', cost: '-$7', covered: false },
@@ -1268,7 +1304,10 @@ export function RegisterFlow({ onComplete, compact = false }: RegisterFlowProps)
       }
       setStep(1);
     },
-    [compact],
+    [
+      compact, // In compact mode, free goes straight to processing
+      handleConfirm,
+    ],
   );
 
   // == Execute registration ============================
@@ -1346,7 +1385,10 @@ export function RegisterFlow({ onComplete, compact = false }: RegisterFlowProps)
         setNextSteps(data.nextSteps);
         setStep(5); // Success
         onComplete?.();
-        showToast('success', `🎉 ${data.accounts ? Object.values(data.accounts).filter((a) => a.ok).length : 0} accounts created!`);
+        showToast(
+          'success',
+          `🎉 ${data.accounts ? Object.values(data.accounts).filter((a) => a.ok).length : 0} accounts created!`,
+        );
       } catch (err) {
         const msg = err instanceof Error ? err.message : 'Network error';
         setError(msg);
@@ -1357,7 +1399,17 @@ export function RegisterFlow({ onComplete, compact = false }: RegisterFlowProps)
         setProcessing(false);
       }
     },
-    [walletAddress, farcasterUsername, lensHandle, ensName, confirmedOverage, signMessage, showToast, onComplete, compact],
+    [
+      walletAddress,
+      farcasterUsername,
+      lensHandle,
+      ensName,
+      confirmedOverage,
+      signMessage,
+      showToast,
+      onComplete,
+      compact,
+    ],
   );
 
   // == Handle confirm (moves to sign step) =============
@@ -1373,7 +1425,7 @@ export function RegisterFlow({ onComplete, compact = false }: RegisterFlowProps)
       // In compact mode, skip sign and go straight to processing
       await executeRegistration(plan, true);
     },
-    [selectedPlan, compact, walletAddress, executeRegistration],
+    [selectedPlan, compact, executeRegistration],
   );
 
   // == Handle overage confirmation =====================
@@ -1426,9 +1478,7 @@ export function RegisterFlow({ onComplete, compact = false }: RegisterFlowProps)
       <div className="space-y-4">
         {step === 0 && (
           <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-4">
-            <h3 className="mb-3 text-sm font-bold text-[var(--color-fg)]">
-              Quick Registration
-            </h3>
+            <h3 className="mb-3 text-sm font-bold text-[var(--color-fg)]">Quick Registration</h3>
             <div className="grid gap-2">
               {PLANS.map((plan) => (
                 <button
@@ -1438,9 +1488,7 @@ export function RegisterFlow({ onComplete, compact = false }: RegisterFlowProps)
                   className="flex items-center justify-between rounded-lg border border-[var(--color-glass-border)] px-3 py-2.5 text-left hover:bg-[var(--color-overlay)] transition-colors"
                 >
                   <div>
-                    <span className="text-sm font-medium text-[var(--color-fg)]">
-                      {plan.label}
-                    </span>
+                    <span className="text-sm font-medium text-[var(--color-fg)]">{plan.label}</span>
                     <p className="text-[10px] text-[var(--color-muted)]">{plan.description}</p>
                   </div>
                   <span
@@ -1555,16 +1603,10 @@ export function RegisterFlow({ onComplete, compact = false }: RegisterFlowProps)
         )}
 
         {step === 3 && selectedPlan && (
-          <Step4_WalletSignature
-            onBack={() => setStep(2)}
-            onSign={handleSign}
-            signing={signing}
-          />
+          <Step4_WalletSignature onBack={() => setStep(2)} onSign={handleSign} signing={signing} />
         )}
 
-        {step === 4 && (
-          <Step5_Processing results={results} plan={selectedPlan || 'free'} />
-        )}
+        {step === 4 && <Step5_Processing results={results} plan={selectedPlan || 'free'} />}
 
         {step === 5 && recoveryInfo && (
           <Step6_Success_RecoveryKeys

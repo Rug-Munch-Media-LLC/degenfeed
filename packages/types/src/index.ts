@@ -207,9 +207,9 @@ export interface UnifiedPost {
     /** Resolved symbol (set server-side when creating the post) */
     displaySymbol?: string;
     /** Resolved NFT name (set server-side when creating) */
-  displayName?: string;
-  /** Optional user biography */
-  bio?: string;
+    displayName?: string;
+    /** Optional user biography */
+    bio?: string;
   };
   /** Number of tips received on this post */
   tipCount?: number;
@@ -288,7 +288,15 @@ export interface CustomFeed {
 
 // ─── Visual Feed types ─────────────────────────────────────────
 
-export type VisualSource = 'pixelfed' | 'zora' | 'bluesky' | 'nostr' | 'farcaster' | 'gotosocial' | 'mastodon' | 'all';
+export type VisualSource =
+  | 'pixelfed'
+  | 'zora'
+  | 'bluesky'
+  | 'nostr'
+  | 'farcaster'
+  | 'gotosocial'
+  | 'mastodon'
+  | 'all';
 
 export interface VisualPost {
   /** Canonical id: `${source}:${nativeId}` */

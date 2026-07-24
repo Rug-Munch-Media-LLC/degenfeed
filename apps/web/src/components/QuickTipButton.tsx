@@ -89,13 +89,7 @@ export function QuickTipButton({
       if (sending) return;
       setSending(true);
       try {
-        await createTip(
-          recipientAuthorId,
-          recipientProtocol,
-          currency,
-          amount,
-          publicationId,
-        );
+        await createTip(recipientAuthorId, recipientProtocol, currency, amount, publicationId);
         setSent(true);
         triggerConfetti();
         onTipSent?.();
@@ -111,7 +105,6 @@ export function QuickTipButton({
       createTip,
       recipientProtocol,
       recipientAuthorId,
-      recipientDisplayName,
       publicationId,
       sending,
       onTipSent,

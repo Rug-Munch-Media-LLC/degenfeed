@@ -6,7 +6,7 @@
  * shared packages (feed-providers, token-gate) to detect Node.js vs Workers.
  */
 declare var process:
-	| {
-			env: Record<string, string | undefined>;
-	  }
-	| undefined;
+  | {
+      env: Record<string, string | undefined>;
+    }
+  | undefined;

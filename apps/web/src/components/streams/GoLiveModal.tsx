@@ -215,7 +215,14 @@ function TokenGateConfig({
 
 /* === Main Modal =============================================== */
 
-export function GoLiveModal({ isOpen, onClose, onStart, defaultCoinAddress, defaultCoinSymbol, defaultSurfaces }: GoLiveModalProps) {
+export function GoLiveModal({
+  isOpen,
+  onClose,
+  onStart,
+  defaultCoinAddress,
+  defaultCoinSymbol,
+  defaultSurfaces,
+}: GoLiveModalProps) {
   const [form, setForm] = useState<GoLiveForm>({
     title: '',
     streamType: 'solo',

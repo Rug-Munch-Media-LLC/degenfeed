@@ -1124,9 +1124,7 @@ export const SignInModal = memo(function SignInModal({
                         <div className="text-sm font-medium text-[var(--color-fg)] group-hover:text-degen-400 transition-colors">
                           {proto.label}
                         </div>
-                        <div className="text-xs text-[var(--color-muted)]">
-                          {proto.description}
-                        </div>
+                        <div className="text-xs text-[var(--color-muted)]">{proto.description}</div>
                       </div>
                       <span className="text-xs text-gray-600">→</span>
                     </button>

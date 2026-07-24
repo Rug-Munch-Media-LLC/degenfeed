@@ -13,16 +13,15 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
-import RecoveryCodes from './RecoveryCodes';
 import TOTPSetup from './TOTPSetup';
 
 type SecurityView =
-  | 'idle'           // Showing current status
-  | 'loading'        // Fetching status
-  | 'setup'          // TOTP setup flow (QR code → verify)
+  | 'idle' // Showing current status
+  | 'loading' // Fetching status
+  | 'setup' // TOTP setup flow (QR code → verify)
   | 'recovery-codes' // Showing recovery codes after setup
-  | 'disable'        // Disable 2FA — needs code input
-  | 'error';         // Error state
+  | 'disable' // Disable 2FA — needs code input
+  | 'error'; // Error state
 
 interface SecuritySettingsProps {
   /** Called when 2FA state changes (for parent to track) */
@@ -61,14 +60,17 @@ export default function SecuritySettings({ onStateChange }: SecuritySettingsProp
   }, [checkStatus]);
 
   // Called after successful TOTP setup with recovery codes
-  const handleVerified = useCallback((_recoveryCodes: string[]) => {
-    setEnabled(true);
-    onStateChange?.(true);
-    setView('recovery-codes');
-  }, [onStateChange]);
+  const handleVerified = useCallback(
+    (_recoveryCodes: string[]) => {
+      setEnabled(true);
+      onStateChange?.(true);
+      setView('recovery-codes');
+    },
+    [onStateChange],
+  );
 
   // Called after user acknowledges recovery codes
-  const handleRecoveryAcknowledged = useCallback(() => {
+  const _handleRecoveryAcknowledged = useCallback(() => {
     setView('idle');
   }, []);
 
@@ -126,8 +128,8 @@ export default function SecuritySettings({ onStateChange }: SecuritySettingsProp
     // Parent should pass codes here from the verify response
     return (
       <div className="text-center text-xs text-[var(--color-muted)] py-4">
-        Recovery codes were shown after setup. If you missed them,
-        you can disable and re-enable 2FA to regenerate them.
+        Recovery codes were shown after setup. If you missed them, you can disable and re-enable 2FA
+        to regenerate them.
       </div>
     );
   }
@@ -163,9 +165,7 @@ export default function SecuritySettings({ onStateChange }: SecuritySettingsProp
               Authenticator App (TOTP)
             </div>
             <p className="text-xs text-[var(--color-muted)]">
-              {enabled
-                ? 'Two-factor authentication is active'
-                : 'Add an extra layer of security'}
+              {enabled ? 'Two-factor authentication is active' : 'Add an extra layer of security'}
             </p>
           </div>
         </div>
@@ -175,11 +175,7 @@ export default function SecuritySettings({ onStateChange }: SecuritySettingsProp
             Enabled
           </span>
         ) : (
-          <button
-            type="button"
-            onClick={() => setView('setup')}
-            className="btn-primary text-xs"
-          >
+          <button type="button" onClick={() => setView('setup')} className="btn-primary text-xs">
             Enable
           </button>
         )}
@@ -190,8 +186,8 @@ export default function SecuritySettings({ onStateChange }: SecuritySettingsProp
         <>
           {/* Explanation */}
           <p className="text-xs text-[var(--color-muted)] leading-relaxed">
-            To disable two-factor authentication, enter a code from your authenticator app
-            or one of your recovery codes.
+            To disable two-factor authentication, enter a code from your authenticator app or one of
+            your recovery codes.
           </p>
 
           {/* Code input */}
@@ -234,8 +230,8 @@ export default function SecuritySettings({ onStateChange }: SecuritySettingsProp
           {/* Note about recovery codes */}
           <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2">
             <p className="text-[10px] text-amber-400/70">
-              Lost your authenticator app? Use one of your recovery codes instead.
-              Each code can only be used once.
+              Lost your authenticator app? Use one of your recovery codes instead. Each code can
+              only be used once.
             </p>
           </div>
         </>

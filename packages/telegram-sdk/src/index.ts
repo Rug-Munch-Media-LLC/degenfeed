@@ -22,10 +22,17 @@ import type {
   TgWebhookInfo,
 } from './types';
 
-export type { TgChat, TgChatMember, TgInlineKeyboardMarkup, TgInputMedia, TgMessage, TgUser, TgWebhookInfo };
-
 export * from './markdown';
 export * from './media';
+export type {
+  TgChat,
+  TgChatMember,
+  TgInlineKeyboardMarkup,
+  TgInputMedia,
+  TgMessage,
+  TgUser,
+  TgWebhookInfo,
+};
 
 // ─── Constants ─────────────────────────────────────────────────────
 
@@ -36,7 +43,7 @@ const TG_API_BASE = 'https://api.telegram.org';
 const TG_RATE_LIMIT_RPS = 30;
 
 /** Default retry delay (ms) when rate-limited. */
-const TG_RATE_LIMIT_RETRY_MS = 1_000;
+const _TG_RATE_LIMIT_RETRY_MS = 1_000;
 
 /** Max retries for rate-limited requests. */
 const TG_MAX_RETRIES = 3;
@@ -225,10 +232,7 @@ export class TGBotClient {
    * Make a request to the Telegram Bot API.
    * Handles rate limiting, network errors, and Telegram error responses.
    */
-  private async request<T>(
-    method: string,
-    body?: FormData | Record<string, unknown>,
-  ): Promise<T> {
+  private async request<T>(method: string, body?: FormData | Record<string, unknown>): Promise<T> {
     await this.rateLimiter.acquire();
 
     let lastError: Error | null = null;
@@ -304,7 +308,6 @@ export class TGBotClient {
         // Network or parse error — retry
         lastError = err instanceof Error ? err : new Error(String(err));
         if (attempt < TG_MAX_RETRIES - 1) {
-          continue;
         }
       }
     }
@@ -394,7 +397,8 @@ export class TGBotClient {
     formData.append('photo', new Blob([photo]), 'photo.jpg');
     if (opts?.caption) formData.append('caption', opts.caption);
     if (opts?.parseMode) formData.append('parse_mode', opts.parseMode);
-    if (opts?.replyToMessageId) formData.append('reply_to_message_id', String(opts.replyToMessageId));
+    if (opts?.replyToMessageId)
+      formData.append('reply_to_message_id', String(opts.replyToMessageId));
     if (opts?.hasSpoiler) formData.append('has_spoiler', 'true');
 
     const msg = await this.request<TgMessage>('sendPhoto', formData);
@@ -463,10 +467,7 @@ export class TGBotClient {
    * @param media   - Array of media items (photo or video).
    * @returns Array of message IDs.
    */
-  async sendMediaGroup(
-    chatId: string,
-    media: TgInputMedia[],
-  ): Promise<SendMediaGroupResult> {
+  async sendMediaGroup(chatId: string, media: TgInputMedia[]): Promise<SendMediaGroupResult> {
     if (media.length === 0) {
       throw new TelegramError('Media group must contain at least 1 item', 400);
     }
@@ -663,10 +664,7 @@ export class TGBotClient {
    * @param opts - Optional: secret token for X-Telegram-Bot-Api-Secret-Token header.
    * @returns True if the webhook was set successfully.
    */
-  async setWebhook(
-    url: string,
-    opts?: { secretToken?: string },
-  ): Promise<boolean> {
+  async setWebhook(url: string, opts?: { secretToken?: string }): Promise<boolean> {
     const body: Record<string, unknown> = { url };
     if (opts?.secretToken) body.secret_token = opts.secretToken;
     const result = await this.request<true>('setWebhook', body);
@@ -701,14 +699,6 @@ export class TGBotClient {
   getBotToken(): string {
     if (this.botToken.length <= 12) return '****';
     return `${this.botToken.slice(0, 8)}...${this.botToken.slice(-4)}`;
-  }
-
-  /**
-   * Internal: get the raw bot token. Only use for constructing API URLs.
-   * @internal
-   */
-  private getRawToken(): string {
-    return this.botToken;
   }
 
   // ─── File Download ─────────────────────────────────────────────

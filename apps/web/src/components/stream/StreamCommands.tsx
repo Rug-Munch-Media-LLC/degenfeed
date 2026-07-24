@@ -11,16 +11,49 @@ interface CommandInfo {
 }
 
 const COMMANDS: CommandInfo[] = [
-  { command: '/slow', description: 'Toggle slow mode (3s cooldown)', usage: '/slow', modOnly: false },
-  { command: '/clear', description: 'Clear chat messages (mod only)', usage: '/clear', modOnly: true },
-  { command: '/ban', description: 'Ban a user from chat', usage: '/ban @username', modOnly: true, example: '/ban @spammer' },
-  { command: '/timeout', description: 'Timeout a user for duration', usage: '/timeout @username 10m', modOnly: true, example: '/timeout @baduser 5m' },
+  {
+    command: '/slow',
+    description: 'Toggle slow mode (3s cooldown)',
+    usage: '/slow',
+    modOnly: false,
+  },
+  {
+    command: '/clear',
+    description: 'Clear chat messages (mod only)',
+    usage: '/clear',
+    modOnly: true,
+  },
+  {
+    command: '/ban',
+    description: 'Ban a user from chat',
+    usage: '/ban @username',
+    modOnly: true,
+    example: '/ban @spammer',
+  },
+  {
+    command: '/timeout',
+    description: 'Timeout a user for duration',
+    usage: '/timeout @username 10m',
+    modOnly: true,
+    example: '/timeout @baduser 5m',
+  },
   { command: '/mod', description: 'Add moderator', usage: '/mod @username', modOnly: true },
   { command: '/unmod', description: 'Remove moderator', usage: '/unmod @username', modOnly: true },
   { command: '/subonly', description: 'Subscriber-only mode', usage: '/subonly', modOnly: true },
   { command: '/emoteonly', description: 'Emote-only mode', usage: '/emoteonly', modOnly: true },
-  { command: '/title', description: 'Change stream title', usage: '/title New Title', modOnly: true },
-  { command: '/game', description: 'Change stream category', usage: '/game Category', modOnly: true, example: '/game Crypto' },
+  {
+    command: '/title',
+    description: 'Change stream title',
+    usage: '/title New Title',
+    modOnly: true,
+  },
+  {
+    command: '/game',
+    description: 'Change stream category',
+    usage: '/game Category',
+    modOnly: true,
+    example: '/game Crypto',
+  },
   { command: '/help', description: 'Show available commands', usage: '/help', modOnly: false },
 ];
 
@@ -33,7 +66,10 @@ interface StreamCommandsProps {
 export function StreamCommands({ isMod = false }: StreamCommandsProps) {
   const [search, setSearch] = useState('');
   const filtered = search
-    ? COMMANDS.filter((c) => c.command.includes(search) || c.description.toLowerCase().includes(search.toLowerCase()))
+    ? COMMANDS.filter(
+        (c) =>
+          c.command.includes(search) || c.description.toLowerCase().includes(search.toLowerCase()),
+      )
     : COMMANDS;
 
   const visible = isMod ? filtered : filtered.filter((c) => !c.modOnly);

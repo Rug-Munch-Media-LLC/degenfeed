@@ -129,7 +129,7 @@ export default async function AuthCallbackPage({ searchParams }: AuthCallbackPro
   );
   const pathParts = url.pathname.split('/');
   const providerFromPath = pathParts[pathParts.length - 1] || params.provider || 'gotosocial';
-  const provider = PROVIDER_CONFIG[providerFromPath] ?? PROVIDER_CONFIG['gotosocial']!;
+  const provider = PROVIDER_CONFIG[providerFromPath] ?? PROVIDER_CONFIG.gotosocial!;
 
   const apiBase = process.env.NEXT_PUBLIC_API_URL ?? '';
 

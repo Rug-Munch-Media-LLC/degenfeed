@@ -63,7 +63,12 @@ export function ModPanel({
 
   const handleDelete = useCallback(async () => {
     if (!isOwner) return;
-    if (!window.confirm('Are you sure you want to delete this community? This action cannot be undone.')) return;
+    if (
+      !window.confirm(
+        'Are you sure you want to delete this community? This action cannot be undone.',
+      )
+    )
+      return;
 
     setSaving(true);
     setError(null);
@@ -117,7 +122,9 @@ export function ModPanel({
       {/* Settings form */}
       <div className="space-y-4">
         <div>
-          <label className="mb-1 block text-xs font-medium text-[var(--color-fg)]">Display Name</label>
+          <label className="mb-1 block text-xs font-medium text-[var(--color-fg)]">
+            Display Name
+          </label>
           <input
             type="text"
             value={displayName}
@@ -128,7 +135,9 @@ export function ModPanel({
         </div>
 
         <div>
-          <label className="mb-1 block text-xs font-medium text-[var(--color-fg)]">Description</label>
+          <label className="mb-1 block text-xs font-medium text-[var(--color-fg)]">
+            Description
+          </label>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
@@ -154,7 +163,9 @@ export function ModPanel({
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="mb-1 block text-xs font-medium text-[var(--color-fg)]">Avatar URL</label>
+            <label className="mb-1 block text-xs font-medium text-[var(--color-fg)]">
+              Avatar URL
+            </label>
             <input
               type="text"
               value={avatarUrl}
@@ -164,7 +175,9 @@ export function ModPanel({
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-[var(--color-fg)]">Banner URL</label>
+            <label className="mb-1 block text-xs font-medium text-[var(--color-fg)]">
+              Banner URL
+            </label>
             <input
               type="text"
               value={bannerUrl}

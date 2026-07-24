@@ -1,7 +1,7 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../../../components/AuthProvider';
 
 // === Types ================================================================
@@ -150,7 +150,7 @@ const PLATFORM_COLORS: Record<string, string> = {
 
 // === Helpers ==============================================================
 
-function shortenAddress(addr: string): string {
+function _shortenAddress(addr: string): string {
   if (addr.length < 10) return addr;
   return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
 }
@@ -278,7 +278,9 @@ function PlatformCard({
           </div>
           <div className="flex items-center justify-between text-[11px]">
             <span className="text-[var(--color-muted)]">Connected</span>
-            <span className="font-medium text-[var(--color-fg)]">{formatDate(connected.connectedAt)}</span>
+            <span className="font-medium text-[var(--color-fg)]">
+              {formatDate(connected.connectedAt)}
+            </span>
           </div>
           {connected.expiresAt && (
             <div className="flex items-center justify-between text-[11px]">
@@ -332,9 +334,15 @@ function CrossPostComposer({
             title: title || undefined,
           }),
         });
-        const data = (await res.json()) as { ok?: boolean; error?: string; result?: { nativeUrl?: string } };
+        const data = (await res.json()) as {
+          ok?: boolean;
+          error?: string;
+          result?: { nativeUrl?: string };
+        };
         if (data.ok) {
-          setResult(`✅ Published to ${target}${data.result?.nativeUrl ? `: ${data.result.nativeUrl}` : ''}`);
+          setResult(
+            `✅ Published to ${target}${data.result?.nativeUrl ? `: ${data.result.nativeUrl}` : ''}`,
+          );
         } else {
           setResult(`❌ Failed to publish to ${target}: ${data.error}`);
         }
@@ -448,7 +456,9 @@ function CrossPostComposer({
           disabled={!text || selectedTargets.length === 0 || publishing}
           className="btn-primary text-sm disabled:opacity-40"
         >
-          {publishing ? 'Publishing...' : `Publish to ${selectedTargets.length || 0} platform${selectedTargets.length !== 1 ? 's' : ''}`}
+          {publishing
+            ? 'Publishing...'
+            : `Publish to ${selectedTargets.length || 0} platform${selectedTargets.length !== 1 ? 's' : ''}`}
         </button>
         <span className="text-[11px] text-[var(--color-muted)]">
           {selectedTargets.length === 0
@@ -725,10 +735,7 @@ export default function CrossPostPage() {
   const [loading, setLoading] = useState(true);
   const [showSubstackModal, setShowSubstackModal] = useState(false);
 
-  const connectedPlatforms = useMemo(
-    () => accounts.map((a) => a.platform),
-    [accounts],
-  );
+  const connectedPlatforms = useMemo(() => accounts.map((a) => a.platform), [accounts]);
 
   const loadAccounts = useCallback(async () => {
     setLoading(true);
@@ -827,7 +834,8 @@ export default function CrossPostPage() {
           </div>
           <h1 className="text-2xl font-bold text-[var(--color-fg)]">Cross-Platform Publishing</h1>
           <p className="mt-2 text-sm text-[var(--color-muted)]">
-            Connect your wallet to publish across centralized and decentralized platforms from one place.
+            Connect your wallet to publish across centralized and decentralized platforms from one
+            place.
           </p>
           <div className="mt-8">
             <Link href="/creator" className="btn-primary text-sm">
@@ -860,9 +868,7 @@ export default function CrossPostPage() {
 
       {/* Connected Accounts Grid */}
       <section className="mb-8">
-        <h2 className="mb-4 text-sm font-semibold text-[var(--color-fg)]">
-          Connected Platforms
-        </h2>
+        <h2 className="mb-4 text-sm font-semibold text-[var(--color-fg)]">Connected Platforms</h2>
         {loading ? (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {[...Array(8)].map((_, i) => (
@@ -886,10 +892,7 @@ export default function CrossPostPage() {
 
       {/* Quick Cross-Post Composer */}
       <section className="mb-8">
-        <CrossPostComposer
-          connectedPlatforms={connectedPlatforms}
-          onPublish={handlePublish}
-        />
+        <CrossPostComposer connectedPlatforms={connectedPlatforms} onPublish={handlePublish} />
       </section>
 
       {/* Scheduled Posts */}
@@ -929,7 +932,10 @@ export default function CrossPostPage() {
                   ['Instagram', '2,200', '10', '✓', 'Visual'],
                   ['Pinterest', '500', '1', '-', 'Pin'],
                 ].map(([platform, chars, images, video, type]) => (
-                  <tr key={platform} className="border-b border-[var(--color-border)] last:border-0">
+                  <tr
+                    key={platform}
+                    className="border-b border-[var(--color-border)] last:border-0"
+                  >
                     <td className="py-2 pr-4 font-medium text-[var(--color-fg)]">{platform}</td>
                     <td className="py-2 pr-4 text-[var(--color-muted)]">{chars}</td>
                     <td className="py-2 pr-4 text-[var(--color-muted)]">{images}</td>
@@ -944,9 +950,7 @@ export default function CrossPostPage() {
       </section>
 
       {/* Substack setup modal */}
-      {showSubstackModal && (
-        <SubstackSetupModal onClose={() => setShowSubstackModal(false)} />
-      )}
+      {showSubstackModal && <SubstackSetupModal onClose={() => setShowSubstackModal(false)} />}
     </div>
   );
 }

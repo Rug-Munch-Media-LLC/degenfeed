@@ -6,9 +6,9 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { useLiveStreams } from '../components/streams/useLiveStreams';
 import { getLinkedProtocols, useCrossProtocolIdentity } from '../hooks/useCrossProtocolIdentity';
 import { useNotifications } from '../hooks/useNotifications';
-import { useLiveStreams } from '../components/streams/useLiveStreams';
 import { useAuth } from './AuthProvider';
 import { useToast } from './Toast';
 

@@ -92,9 +92,7 @@ export default function RegisterPage() {
               <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-degen-500/10 text-lg text-degen-400">
                 ⚡
               </div>
-              <h3 className="mb-1.5 text-sm font-bold text-[var(--color-fg)]">
-                Nostr Keypair
-              </h3>
+              <h3 className="mb-1.5 text-sm font-bold text-[var(--color-fg)]">Nostr Keypair</h3>
               <p className="text-xs text-[var(--color-muted)]">
                 Fresh keypair generated for the decentralized Nostr network. Your npub is yours to
                 use anywhere. Free forever.
@@ -105,9 +103,7 @@ export default function RegisterPage() {
               <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-degen-500/10 text-lg text-degen-400">
                 🔗
               </div>
-              <h3 className="mb-1.5 text-sm font-bold text-[var(--color-fg)]">
-                Farcaster ID
-              </h3>
+              <h3 className="mb-1.5 text-sm font-bold text-[var(--color-fg)]">Farcaster ID</h3>
               <p className="text-xs text-[var(--color-muted)]">
                 On-chain Farcaster identity registered on Base. Your FID is yours. We pay the $5 gas
                 fee. Standard plan or Premium.
@@ -118,9 +114,7 @@ export default function RegisterPage() {
               <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-degen-500/10 text-lg text-degen-400">
                 ◎
               </div>
-              <h3 className="mb-1.5 text-sm font-bold text-[var(--color-fg)]">
-                Lens Profile
-              </h3>
+              <h3 className="mb-1.5 text-sm font-bold text-[var(--color-fg)]">Lens Profile</h3>
               <p className="text-xs text-[var(--color-muted)]">
                 Decentralized Lens Protocol profile on Polygon. Your handle is your NFT. We pay the
                 $2 gas. Standard plan or Premium.
@@ -131,9 +125,7 @@ export default function RegisterPage() {
               <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-degen-500/10 text-lg text-degen-400">
                 📡
               </div>
-              <h3 className="mb-1.5 text-sm font-bold text-[var(--color-fg)]">
-                RSS Feed + ENS
-              </h3>
+              <h3 className="mb-1.5 text-sm font-bold text-[var(--color-fg)]">RSS Feed + ENS</h3>
               <p className="text-xs text-[var(--color-muted)]">
                 Auto-generated RSS feed for your content. Complete plan adds an ENS domain so your
                 identity is a name you own.
@@ -199,9 +191,7 @@ export default function RegisterPage() {
           </h2>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-5">
-              <h3 className="mb-1.5 text-sm font-bold text-[var(--color-fg)]">
-                1. Pick your plan
-              </h3>
+              <h3 className="mb-1.5 text-sm font-bold text-[var(--color-fg)]">1. Pick your plan</h3>
               <p className="text-xs text-[var(--color-muted)]">
                 Free tier creates everything that doesn&apos;t cost gas. Paid tiers cover on-chain
                 registration fees. Premium subscription makes it all $0.

@@ -12,7 +12,8 @@ export function renderWelcomeHtml(params: WelcomeTemplateParams): string {
     ? `<img src="${logoUrl}" alt="DegenFeed" width="32" height="32" style="display:block;border:0;outline:none;" />`
     : '<span style="color:#10b981;font-size:24px;font-weight:700;">◆</span>';
 
-  const profileUrl = creatorProfileUrl ?? `https://degenfeed.xyz/profile/${encodeURIComponent(creatorName)}`;
+  const profileUrl =
+    creatorProfileUrl ?? `https://degenfeed.xyz/profile/${encodeURIComponent(creatorName)}`;
 
   const body = `
     <!-- Header -->

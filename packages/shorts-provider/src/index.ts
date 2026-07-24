@@ -26,11 +26,6 @@ import {
 } from '@degenfeed/peertube-provider/federated';
 import type { YouTubeVideoItem } from '@degenfeed/youtube-provider';
 import { fetchYouTubeFeed } from '@degenfeed/youtube-provider';
-import {
-  fetchBlueskyShorts,
-  searchBlueskyVideos,
-  type BskyVideoItem,
-} from '@degenfeed/atproto-shorts-provider';
 
 export type { UserInterestProfile } from './scorer';
 export { computeShortScore, rankShorts } from './scorer';
@@ -49,7 +44,14 @@ export const SOURCE_COLORS: Record<string, string> = {
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
-export type ShortVideoSource = 'peertube' | 'youtube' | 'twitter' | 'tiktok_rss' | 'instagram' | 'direct' | 'bluesky';
+export type ShortVideoSource =
+  | 'peertube'
+  | 'youtube'
+  | 'twitter'
+  | 'tiktok_rss'
+  | 'instagram'
+  | 'direct'
+  | 'bluesky';
 
 export interface ShortVideoItem {
   id: string;
@@ -235,7 +237,7 @@ const CRYPTO_TIKTOK_CREATORS = [
 /**
  * TikTok oEmbed endpoint — returns embed metadata for a video URL.
  */
-const TIKTOK_OEMBED = 'https://www.tiktok.com/oembed';
+const _TIKTOK_OEMBED = 'https://www.tiktok.com/oembed';
 
 /**
  * Fetch TikTok shorts from trending crypto creators.
@@ -247,8 +249,16 @@ export async function fetchTikTokShorts(limit: number = 20): Promise<ShortVideoI
   // Strategy 1: Try oEmbed for known creator videos
   // TikTok oEmbed accepts a URL and returns metadata
   const searchQueries = [
-    'crypto', 'bitcoin', 'defi', 'trading', 'web3',
-    'cryptocurrency', 'blockchain', 'nft', 'memecoin', 'altcoins',
+    'crypto',
+    'bitcoin',
+    'defi',
+    'trading',
+    'web3',
+    'cryptocurrency',
+    'blockchain',
+    'nft',
+    'memecoin',
+    'altcoins',
   ];
 
   // Try RSS-Bridge if configured (via env) — fallback to simulated discovery
@@ -283,9 +293,7 @@ export async function fetchTikTokShorts(limit: number = 20): Promise<ShortVideoI
         sourceColor: SOURCE_COLORS.tiktok_rss,
         canTip: false,
       });
-    } catch {
-      continue;
-    }
+    } catch {}
   }
 
   return shorts.slice(0, limit);
@@ -312,7 +320,7 @@ const CRYPTO_INSTAGRAM_CREATORS = [
 /**
  * Instagram oEmbed endpoint.
  */
-const INSTAGRAM_OEMBED = 'https://api.instagram.com/oembed';
+const _INSTAGRAM_OEMBED = 'https://api.instagram.com/oembed';
 
 /**
  * Fetch Instagram Reels from crypto creators.
@@ -322,8 +330,16 @@ export async function fetchInstagramReels(limit: number = 20): Promise<ShortVide
   const shorts: ShortVideoItem[] = [];
 
   const topics = [
-    'crypto', 'bitcoin', 'defi', 'trading', 'web3',
-    'nft', 'blockchain', 'memecoin', 'altcoins', 'ethereum',
+    'crypto',
+    'bitcoin',
+    'defi',
+    'trading',
+    'web3',
+    'nft',
+    'blockchain',
+    'memecoin',
+    'altcoins',
+    'ethereum',
   ];
 
   for (let i = 0; i < Math.min(limit, 10); i++) {
@@ -352,9 +368,7 @@ export async function fetchInstagramReels(limit: number = 20): Promise<ShortVide
         sourceColor: SOURCE_COLORS.instagram,
         canTip: false,
       });
-    } catch {
-      continue;
-    }
+    } catch {}
   }
 
   return shorts.slice(0, limit);

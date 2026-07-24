@@ -37,20 +37,12 @@
  * - ETH as sole pair currency, payout currency, and fee currency
  * - 0.5% + creator fee split: platform, creator, referrer
  */
-import { createCoin, tradeCoin, getCoin, CreateConstants } from '@zoralabs/coins-sdk';
-import { createWalletClient, createPublicClient, http, type Address } from 'viem';
+import { CreateConstants, createCoin, getCoin, tradeCoin } from '@zoralabs/coins-sdk';
+import { type Address, createPublicClient, createWalletClient, http } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import { base } from 'viem/chains';
-import type {
-  DeployCoinInput,
-  BuyCoinInput,
-  CoinInfo,
-  CoinPrice,
-  DeployResult,
-  TradeResult,
-  ZoraCoin,
-} from './types';
-import { fetchZoraCoinInfo, fetchZoraTrendingCoins, fetchZoraCreatorCoins } from './zora-api';
+import type { BuyCoinInput, CoinInfo, DeployCoinInput, DeployResult, TradeResult } from './types';
+import { fetchZoraCoinInfo, fetchZoraCreatorCoins, fetchZoraTrendingCoins } from './zora-api';
 
 // ═════════════════════════════════════════════════════════════════════════
 // Constants
@@ -96,7 +88,10 @@ export const ZORA_FACTORY_ABI = [
   {
     type: 'function' as const,
     name: 'getCoin',
-    inputs: [{ name: 'creator', type: 'address' }, { name: 'index', type: 'uint256' }],
+    inputs: [
+      { name: 'creator', type: 'address' },
+      { name: 'index', type: 'uint256' },
+    ],
     outputs: [{ type: 'address' }],
     stateMutability: 'view' as const,
   },
@@ -315,7 +310,9 @@ export class ZoraCreatorCoinClient {
       throw new Error(`Creator fee exceeds max 200 bps (2%): got ${opts.creatorFeeBps}`);
     }
     if (opts.creatorAllocationBps !== undefined && opts.creatorAllocationBps > 1500) {
-      throw new Error(`Creator allocation exceeds max 1500 bps (15%): got ${opts.creatorAllocationBps}`);
+      throw new Error(
+        `Creator allocation exceeds max 1500 bps (15%): got ${opts.creatorAllocationBps}`,
+      );
     }
 
     const result = await createCoin({
@@ -380,7 +377,7 @@ export class ZoraCreatorCoinClient {
 
     return {
       txHash: receipt.transactionHash,
-      tokensReceived: undefined,  // SDK receipt doesn't expose exact tokens out
+      tokensReceived: undefined, // SDK receipt doesn't expose exact tokens out
       ethSpent: opts.amountIn.toString(),
       platformFee: fee.toString(),
       explorerUrl: `https://basescan.org/tx/${receipt.transactionHash}`,
@@ -425,7 +422,7 @@ export class ZoraCreatorCoinClient {
     return {
       txHash: receipt.transactionHash,
       tokensReceived: opts.amountIn.toString(),
-      ethReceived: undefined,  // SDK receipt doesn't expose exact ETH out
+      ethReceived: undefined, // SDK receipt doesn't expose exact ETH out
       explorerUrl: `https://basescan.org/tx/${receipt.transactionHash}`,
     };
   }
@@ -514,13 +511,7 @@ export class ZoraCreatorCoinClient {
  * This client works with older Zora v1 creator coin contracts.
  */
 export class EvmCreatorTokenClient {
-  private walletClient: any;
-  private publicClient: any;
-
-  constructor(
-    walletClient: any,
-    publicClient: any,
-  ) {
+  constructor(walletClient: any, publicClient: any) {
     this.walletClient = walletClient;
     this.publicClient = publicClient;
   }

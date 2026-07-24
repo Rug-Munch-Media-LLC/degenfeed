@@ -81,7 +81,7 @@ function MiniStat({ label, value, accent }: { label: string; value: string; acce
 
 // === Filter Pill ==========================================================
 
-function FilterPill<T extends string>({
+function FilterPill<_T extends string>({
   label,
   active,
   onClick,

@@ -13,10 +13,9 @@
  *   - Analytics per campaign
  */
 
-import { renderNewsletterHtml } from '../templates/newsletter';
-import { renderWelcomeHtml } from '../templates/welcome';
-import { renderReceiptHtml } from '../templates/receipt';
 import { renderNewArticleHtml } from '../templates/new-article';
+import { renderReceiptHtml } from '../templates/receipt';
+import { renderWelcomeHtml } from '../templates/welcome';
 
 // ─── Types ─────────────────────────────────────────────────────────
 
@@ -110,26 +109,17 @@ export class EmailEngine {
     return `newsletter:${parts.join(':')}`;
   }
 
-  private generateId(): string {
-    return crypto.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
-  }
-
   private isValidEmail(email: string): boolean {
     if (typeof email !== 'string') return false;
     if (email.length > 254) return false;
     return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
   }
 
-  private escapeCsv(s: string): string {
-    if (s.includes(',') || s.includes('"') || s.includes('\n')) {
-      return `"${s.replace(/"/g, '""')}"`;
-    }
-    return s;
-  }
-
   // ─── Mailgun Delivery ──────────────────────────────────────
 
-  private async sendViaMailgun(opts: SendOptions): Promise<{ success: boolean; id?: string; error?: string }> {
+  private async sendViaMailgun(
+    opts: SendOptions,
+  ): Promise<{ success: boolean; id?: string; error?: string }> {
     const formData = new URLSearchParams();
     formData.set('from', `${this.config.fromName ?? 'DegenFeed'} <${this.config.fromAddress}>`);
     formData.set('subject', opts.subject);
@@ -195,7 +185,9 @@ export class EmailEngine {
 
   // ─── SendGrid Backup Delivery ──────────────────────────────
 
-  private async sendViaSendgrid(opts: SendOptions): Promise<{ success: boolean; id?: string; error?: string }> {
+  private async sendViaSendgrid(
+    opts: SendOptions,
+  ): Promise<{ success: boolean; id?: string; error?: string }> {
     if (!this.config.sendgridKey) {
       return { success: false, error: 'SendGrid key not configured' };
     }
@@ -277,7 +269,11 @@ export class EmailEngine {
       if (fallback.success) {
         return { ...fallback, provider: 'sendgrid' };
       }
-      return { ...fallback, provider: 'sendgrid', error: `Mailgun: ${result.error}; SendGrid: ${fallback.error}` };
+      return {
+        ...fallback,
+        provider: 'sendgrid',
+        error: `Mailgun: ${result.error}; SendGrid: ${fallback.error}`,
+      };
     }
 
     return { ...result, provider: 'mailgun' };
@@ -517,7 +513,9 @@ export class EmailEngine {
     return filtered;
   }
 
-  async getSubscriberCount(creatorId: string): Promise<{ free: number; paid: number; token: number }> {
+  async getSubscriberCount(
+    creatorId: string,
+  ): Promise<{ free: number; paid: number; token: number }> {
     const key = this.kvKey('subscriber-count', creatorId);
     const raw = await this.config.kv.get(key);
     if (raw) {
@@ -544,11 +542,15 @@ export class EmailEngine {
     });
   }
 
-  async sendPaymentReceipt(email: string, amount: number, opts?: {
-    creatorName?: string;
-    planName?: string;
-    currency?: string;
-  }): Promise<void> {
+  async sendPaymentReceipt(
+    email: string,
+    amount: number,
+    opts?: {
+      creatorName?: string;
+      planName?: string;
+      currency?: string;
+    },
+  ): Promise<void> {
     const now = new Date();
     const nextBilling = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // +30 days
 
@@ -557,8 +559,16 @@ export class EmailEngine {
       amount,
       currency: opts?.currency ?? 'USD',
       planName: opts?.planName ?? 'Subscription',
-      billingDate: now.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
-      nextBillingDate: nextBilling.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+      billingDate: now.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      }),
+      nextBillingDate: nextBilling.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      }),
       receiptUrl: `https://degenfeed.xyz/billing/receipts?email=${encodeURIComponent(email)}`,
     });
 
@@ -570,13 +580,16 @@ export class EmailEngine {
     });
   }
 
-  async sendNewArticleAlert(email: string, article: {
-    title: string;
-    excerpt: string;
-    url: string;
-    authorName: string;
-    imageUrl?: string;
-  }): Promise<void> {
+  async sendNewArticleAlert(
+    email: string,
+    article: {
+      title: string;
+      excerpt: string;
+      url: string;
+      authorName: string;
+      imageUrl?: string;
+    },
+  ): Promise<void> {
     const html = renderNewArticleHtml({
       authorName: article.authorName,
       title: article.title,
@@ -601,7 +614,14 @@ export class EmailEngine {
   async getNewsletterStats(postId: string): Promise<NewsletterStats> {
     // Aggregate stats from KV for all campaigns related to this post
     let campaignStats: NewsletterStats = {
-      sent: 0, delivered: 0, opened: 0, clicked: 0, bounced: 0, unsubscribed: 0, openRate: 0, clickRate: 0,
+      sent: 0,
+      delivered: 0,
+      opened: 0,
+      clicked: 0,
+      bounced: 0,
+      unsubscribed: 0,
+      openRate: 0,
+      clickRate: 0,
     };
 
     // Use `list` if available (Cloudflare Workers) or iterate known keys
@@ -720,7 +740,9 @@ export class EmailEngine {
       const raw = await this.config.kv.get(globalKey);
       const set = new Set(raw ? raw.split('\n').filter(Boolean) : []);
       set.add(normalizedEmail);
-      await this.config.kv.put(globalKey, [...set].join('\n'), { expirationTtl: 60 * 60 * 24 * 400 });
+      await this.config.kv.put(globalKey, [...set].join('\n'), {
+        expirationTtl: 60 * 60 * 24 * 400,
+      });
     }
   }
 
@@ -787,11 +809,11 @@ export class EmailEngine {
     const eventData = data['event-data'] as Record<string, unknown> | undefined;
 
     // Some webhooks nest under event-data
-    const eventType = eventData?.event as string ?? event;
+    const eventType = (eventData?.event as string) ?? event;
     const email = (eventData?.recipient as string) ?? recipient;
     const reason = (eventData?.reason as string) ?? (eventData?.error as string) ?? '';
     const url = eventData?.url as string;
-    const tags = (eventData?.['tags'] as string[]) ?? [];
+    const tags = (eventData?.tags as string[]) ?? [];
 
     // Extract campaign ID from tags
     const campaignTag = tags.find((t: string) => t.startsWith('campaign:'));
@@ -869,7 +891,11 @@ export class EmailEngine {
     await this.config.kv.put(indexKey, [...set].join('\n'), { expirationTtl: 60 * 60 * 24 * 400 });
   }
 
-  private async updateSubscriberCount(creatorId: string, tier: string, delta: number): Promise<void> {
+  private async updateSubscriberCount(
+    creatorId: string,
+    tier: string,
+    delta: number,
+  ): Promise<void> {
     const key = this.kvKey('subscriber-count', creatorId);
     const raw = await this.config.kv.get(key);
     const counts = raw
@@ -883,7 +909,11 @@ export class EmailEngine {
     await this.config.kv.put(key, JSON.stringify(counts), { expirationTtl: 60 * 60 * 24 * 400 });
   }
 
-  private async incrementCampaignStat(campaignId: string, field: string, amount: number): Promise<void> {
+  private async incrementCampaignStat(
+    campaignId: string,
+    field: string,
+    amount: number,
+  ): Promise<void> {
     const statKey = this.kvKey('campaign-stats', campaignId);
     const raw = await this.config.kv.get(statKey);
     const stats = raw ? (JSON.parse(raw) as Record<string, number>) : {};

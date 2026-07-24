@@ -82,7 +82,7 @@ export type {
   UploadVideoOptions,
   VideoUpdateOptions,
 } from './upload';
-export { PeerTubeUploader, PeerTubeUploadError, createPeerTubeUploader } from './upload';
+export { createPeerTubeUploader, PeerTubeUploadError, PeerTubeUploader } from './upload';
 
 // ─── Constants ───────────────────────────────────────────────────────
 

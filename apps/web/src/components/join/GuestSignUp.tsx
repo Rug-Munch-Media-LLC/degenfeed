@@ -242,9 +242,7 @@ export function GuestSignUp({
           )}
           <div>
             <h3 className="text-sm font-bold text-[var(--color-fg)]">
-              {cfg
-                ? `Create your DegenFeed account`
-                : 'Create your free account'}
+              {cfg ? `Create your DegenFeed account` : 'Create your free account'}
             </h3>
             <p className="text-xs text-[var(--color-muted)]">
               {suggestedHandle
@@ -342,10 +340,7 @@ export function GuestSignUp({
 
         {/* Error */}
         {error && (
-          <div
-            className="rounded-xl border border-red-900/40 bg-red-950/20 px-3 py-2"
-            role="alert"
-          >
+          <div className="rounded-xl border border-red-900/40 bg-red-950/20 px-3 py-2" role="alert">
             <p className="text-[11px] text-red-400">{error}</p>
           </div>
         )}
@@ -369,9 +364,7 @@ export function GuestSignUp({
             onClick={handleSignUp}
             className="w-full rounded-xl bg-degen-500 px-4 py-2.5 text-xs font-bold text-black transition-all hover:bg-degen-400 disabled:opacity-50"
           >
-            {cfg
-              ? `Continue with ${cfg.label}`
-              : 'Continue'}
+            {cfg ? `Continue with ${cfg.label}` : 'Continue'}
           </button>
         )}
       </div>

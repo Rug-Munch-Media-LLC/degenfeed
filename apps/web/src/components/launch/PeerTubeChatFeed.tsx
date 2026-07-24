@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
-import type { ChatMessage } from '../../hooks/usePeerTubeStream';
+import { useEffect, useRef, useState } from 'react';
 import { useIsMobile, useKeyboardHeight } from '../../hooks/useMobileResponsive';
+import type { ChatMessage } from '../../hooks/usePeerTubeStream';
 
 /* === Types ============================================ */
 
@@ -53,7 +53,7 @@ export default function PeerTubeChatFeed({
     if (autoScroll && messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [messages, autoScroll]);
+  }, [autoScroll]);
 
   const handleScroll = () => {
     const el = chatContainerRef.current;
@@ -100,9 +100,7 @@ export default function PeerTubeChatFeed({
         {/* Header */}
         <div className="flex items-center justify-between border-b border-[var(--color-border)] px-3 py-2">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-[var(--color-fg)]">
-              💬 Live Chat
-            </span>
+            <span className="text-xs font-semibold text-[var(--color-fg)]">💬 Live Chat</span>
             <span className="flex items-center gap-1 text-[10px] text-[var(--color-muted)]">
               <span
                 className={`inline-block h-1.5 w-1.5 rounded-full ${
@@ -139,9 +137,7 @@ export default function PeerTubeChatFeed({
               </p>
             </div>
           ) : (
-            messages.map((msg) => (
-              <ChatBubble key={msg.id} message={msg} compact />
-            ))
+            messages.map((msg) => <ChatBubble key={msg.id} message={msg} compact />)
           )}
           <div ref={messagesEndRef} />
         </div>
@@ -184,14 +180,10 @@ export default function PeerTubeChatFeed({
       {/* Header */}
       <div className="flex items-center justify-between border-b border-[var(--color-border)] px-4 py-3">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold text-[var(--color-fg)]">
-            💬 Live Chat
-          </span>
+          <span className="text-sm font-semibold text-[var(--color-fg)]">💬 Live Chat</span>
           <span
             className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium ${
-              isConnected
-                ? 'bg-green-500/10 text-green-400'
-                : 'bg-red-500/10 text-red-400'
+              isConnected ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'
             }`}
           >
             <span
@@ -203,9 +195,7 @@ export default function PeerTubeChatFeed({
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-[10px] text-[var(--color-muted)]">
-            {messages.length} messages
-          </span>
+          <span className="text-[10px] text-[var(--color-muted)]">{messages.length} messages</span>
           <a
             href={`https://video.degenfeed.xyz/search?search=$${tokenSymbol?.toLowerCase() ?? tokenAddress.slice(0, 8)}`}
             target="_blank"
@@ -227,17 +217,13 @@ export default function PeerTubeChatFeed({
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <div className="text-3xl opacity-30">💬</div>
-            <p className="mt-2 text-sm text-[var(--color-muted)]">
-              No messages yet
-            </p>
+            <p className="mt-2 text-sm text-[var(--color-muted)]">No messages yet</p>
             <p className="text-xs text-[var(--color-muted)]">
               Chat is federated via PeerTube&apos;s XMPP network
             </p>
           </div>
         ) : (
-          messages.map((msg) => (
-            <ChatBubble key={msg.id} message={msg} />
-          ))
+          messages.map((msg) => <ChatBubble key={msg.id} message={msg} />)
         )}
         <div ref={messagesEndRef} />
       </div>
@@ -283,13 +269,7 @@ export default function PeerTubeChatFeed({
 
 /* === Chat Bubble ===================================== */
 
-function ChatBubble({
-  message,
-  compact = false,
-}: {
-  message: ChatMessage;
-  compact?: boolean;
-}) {
+function ChatBubble({ message, compact = false }: { message: ChatMessage; compact?: boolean }) {
   const isWalletAddress = message.accountName.startsWith('0x');
 
   return (

@@ -1,6 +1,5 @@
 'use client';
 
-import { useVideoRecommendations } from '../../hooks/useRecommendations';
 import { useRecordInteraction } from '../../hooks/useRecommendations';
 
 interface ContinueWatchingItem {
@@ -25,10 +24,7 @@ interface ContinueWatchingProps {
  * Shows what the user was in the middle of watching so they can pick
  * up where they left off.
  */
-export function ContinueWatching({
-  recentlyWatched,
-  onResume,
-}: ContinueWatchingProps) {
+export function ContinueWatching({ recentlyWatched, onResume }: ContinueWatchingProps) {
   const recordInteraction = useRecordInteraction();
 
   // For the MVP, we show loading state while the recommendation engine
@@ -73,7 +69,12 @@ export function ContinueWatching({
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-muted-foreground">
                   <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.5}
+                      d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
+                    />
                   </svg>
                 </div>
               )}
@@ -118,22 +119,8 @@ export function ContinueWatching({
 
 // === Barrel export for convenience =======================================
 
-export {
-  RecommendedRow,
-} from './RecommendedRow';
-
-export {
-  BecauseYouWatched,
-} from './BecauseYouWatched';
-
-export {
-  TrendingForYou,
-} from './TrendingForYou';
-
-export {
-  DiscoverNew,
-} from './DiscoverNew';
-
-export {
-  RecommendationCard,
-} from './RecommendationCard';
+export { BecauseYouWatched } from './BecauseYouWatched';
+export { DiscoverNew } from './DiscoverNew';
+export { RecommendationCard } from './RecommendationCard';
+export { RecommendedRow } from './RecommendedRow';
+export { TrendingForYou } from './TrendingForYou';

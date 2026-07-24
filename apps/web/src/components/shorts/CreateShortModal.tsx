@@ -15,11 +15,7 @@
 
 import { useCallback, useMemo, useState } from 'react';
 import { PublishProgress, type PublishResult } from './PublishProgress';
-import {
-  PROTOCOL_META,
-  buildShareUrl,
-  type ShortProtocol,
-} from './protocolMeta';
+import { buildShareUrl, PROTOCOL_META, type ShortProtocol } from './protocolMeta';
 
 // === Types ================================================================
 
@@ -29,12 +25,7 @@ interface CreateShortModalProps {
   onCreated?: (result: { id: string; title: string }) => void;
 }
 
-type PublishStage =
-  | 'form'
-  | 'uploading'
-  | 'publishing'
-  | 'done'
-  | 'error';
+type PublishStage = 'form' | 'uploading' | 'publishing' | 'done' | 'error';
 
 interface PublishResponse {
   id: string;
@@ -49,8 +40,18 @@ interface PublishResponse {
 
 // === Available protocols for selection (user-facing) ======================
 
-const AVAILABLE_PROTOCOLS: { key: ShortProtocol; label: string; color: string; description: string }[] = [
-  { key: 'activitypub', label: 'ActivityPub', color: '#6364ff', description: 'Mastodon, Pixelfed, PeerTube' },
+const AVAILABLE_PROTOCOLS: {
+  key: ShortProtocol;
+  label: string;
+  color: string;
+  description: string;
+}[] = [
+  {
+    key: 'activitypub',
+    label: 'ActivityPub',
+    color: '#6364ff',
+    description: 'Mastodon, Pixelfed, PeerTube',
+  },
   { key: 'atproto', label: 'AT Protocol', color: '#0085ff', description: 'Bluesky, Flashes' },
   { key: 'nostr', label: 'Nostr', color: '#7c3aed', description: 'Snort, Coracle, Primal' },
   { key: 'farcaster', label: 'Farcaster', color: '#8b5cf6', description: 'Warpcast, Supercast' },
@@ -254,8 +255,8 @@ export function CreateShortModal({ open, onClose, onCreated }: CreateShortModalP
         }
 
         // Always add DegenFeed as a "success"
-        if (data.degenfeedUrl && !results['degenfeed']) {
-          results['degenfeed'] = {
+        if (data.degenfeedUrl && !results.degenfeed) {
+          results.degenfeed = {
             ok: true,
             url: data.degenfeedUrl,
             protocol: 'degenfeed',
@@ -284,8 +285,15 @@ export function CreateShortModal({ open, onClose, onCreated }: CreateShortModalP
       }
     },
     [
-      title, caption, hashtags, videoUrl, thumbnailUrl,
-      selectedProtocols, mintOnZora, hasZora, parseHashtags, onCreated,
+      title,
+      caption,
+      videoUrl,
+      thumbnailUrl,
+      selectedProtocols,
+      mintOnZora,
+      hasZora,
+      parseHashtags,
+      onCreated,
     ],
   );
 
@@ -392,9 +400,7 @@ export function CreateShortModal({ open, onClose, onCreated }: CreateShortModalP
 
         {/* == Protocol Selector == */}
         <div>
-          <label className="mb-2 block text-xs font-medium text-white/70">
-            Publish to
-          </label>
+          <label className="mb-2 block text-xs font-medium text-white/70">Publish to</label>
           <div className="flex flex-wrap gap-2">
             {AVAILABLE_PROTOCOLS.map((p) => {
               const active = selectedProtocols.has(p.key);
@@ -416,8 +422,21 @@ export function CreateShortModal({ open, onClose, onCreated }: CreateShortModalP
                   />
                   {p.label}
                   {active && (
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="text-degen-400">
-                      <path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                    <svg
+                      width="12"
+                      height="12"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      aria-hidden="true"
+                      className="text-degen-400"
+                    >
+                      <path
+                        d="M20 6L9 17l-5-5"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
                     </svg>
                   )}
                 </button>
@@ -450,9 +469,7 @@ export function CreateShortModal({ open, onClose, onCreated }: CreateShortModalP
               />
             </button>
             <div className="flex-1">
-              <label className="text-xs font-medium text-white/80">
-                Mint as Zora NFT
-              </label>
+              <label className="text-xs font-medium text-white/80">Mint as Zora NFT</label>
               <p className="text-[10px] text-white/40">
                 Your short becomes a tradeable video NFT on Zora Network
               </p>
@@ -462,9 +479,7 @@ export function CreateShortModal({ open, onClose, onCreated }: CreateShortModalP
 
         {/* Error */}
         {error && (
-          <div className="rounded-lg bg-red-500/10 px-3 py-2 text-xs text-red-400">
-            {error}
-          </div>
+          <div className="rounded-lg bg-red-500/10 px-3 py-2 text-xs text-red-400">{error}</div>
         )}
 
         {/* Submit */}
@@ -475,7 +490,13 @@ export function CreateShortModal({ open, onClose, onCreated }: CreateShortModalP
         >
           <span className="flex items-center justify-center gap-2">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <path
+                d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
             Publish to {protocolList.length} protocol{protocolList.length !== 1 ? 's' : ''}
           </span>
@@ -496,7 +517,12 @@ export function CreateShortModal({ open, onClose, onCreated }: CreateShortModalP
         <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-degen-500/10">
           <svg className="h-8 w-8 animate-spin text-degen-400" viewBox="0 0 24 24" fill="none">
             <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.3" />
-            <path d="M12 2a10 10 0 019.95 9" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+            <path
+              d="M12 2a10 10 0 019.95 9"
+              stroke="currentColor"
+              strokeWidth="3"
+              strokeLinecap="round"
+            />
           </svg>
         </div>
         <h3 className="text-base font-semibold text-white">Processing video…</h3>
@@ -525,12 +551,19 @@ export function CreateShortModal({ open, onClose, onCreated }: CreateShortModalP
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-degen-500/10">
             <svg className="h-5 w-5 animate-spin text-degen-400" viewBox="0 0 24 24" fill="none">
               <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.3" />
-              <path d="M12 2a10 10 0 019.95 9" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+              <path
+                d="M12 2a10 10 0 019.95 9"
+                stroke="currentColor"
+                strokeWidth="3"
+                strokeLinecap="round"
+              />
             </svg>
           </div>
           <div>
             <h3 className="text-sm font-semibold text-white">Publishing everywhere…</h3>
-            <p className="text-xs text-white/40">Your short is being distributed to all selected protocols</p>
+            <p className="text-xs text-white/40">
+              Your short is being distributed to all selected protocols
+            </p>
           </div>
         </div>
 
@@ -549,15 +582,16 @@ export function CreateShortModal({ open, onClose, onCreated }: CreateShortModalP
   function renderDone() {
     const allResults = { ...publishResults };
     // Ensure degenfeed is shown even if not in selected protocols
-    if (!allResults['degenfeed'] && degenfeedUrl) {
-      allResults['degenfeed'] = { ok: true, url: degenfeedUrl, protocol: 'degenfeed' };
+    if (!allResults.degenfeed && degenfeedUrl) {
+      allResults.degenfeed = { ok: true, url: degenfeedUrl, protocol: 'degenfeed' };
     }
 
     const successCount = Object.values(allResults).filter((r) => r.ok).length;
     const totalCount = Object.keys(allResults).length;
-    const reachDisplay = totalReach > 0
-      ? `~${totalReach >= 1_000_000 ? `${(totalReach / 1_000_000).toFixed(1)}M` : `${(totalReach / 1_000).toFixed(0)}K`}`
-      : '';
+    const reachDisplay =
+      totalReach > 0
+        ? `~${totalReach >= 1_000_000 ? `${(totalReach / 1_000_000).toFixed(1)}M` : `${(totalReach / 1_000).toFixed(0)}K`}`
+        : '';
 
     return (
       <div className="flex flex-col gap-4 py-2">
@@ -570,17 +604,16 @@ export function CreateShortModal({ open, onClose, onCreated }: CreateShortModalP
           <p className="text-center text-xs text-white/50">
             Your short is now visible to{' '}
             <span className="font-semibold text-degen-400">{reachDisplay} potential viewers</span>{' '}
-            across <span className="font-semibold text-white/80">{successCount} platform{successCount !== 1 ? 's' : ''}</span>
+            across{' '}
+            <span className="font-semibold text-white/80">
+              {successCount} platform{successCount !== 1 ? 's' : ''}
+            </span>
           </p>
         </div>
 
         {/* Protocol results */}
         <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-3">
-          <PublishProgress
-            results={allResults}
-            pending={[]}
-            totalProtocols={totalCount}
-          />
+          <PublishProgress results={allResults} pending={[]} totalProtocols={totalCount} />
         </div>
 
         {/* == Share section == */}
@@ -593,11 +626,7 @@ export function CreateShortModal({ open, onClose, onCreated }: CreateShortModalP
                 .map(([protocol]) => {
                   const meta = PROTOCOL_META[protocol as ShortProtocol];
                   if (!meta) return null;
-                  const shareUrl = buildShareUrl(
-                    protocol as ShortProtocol,
-                    publishId,
-                    title,
-                  );
+                  const shareUrl = buildShareUrl(protocol as ShortProtocol, publishId, title);
                   return (
                     <a
                       key={protocol}
@@ -704,8 +733,19 @@ export function CreateShortModal({ open, onClose, onCreated }: CreateShortModalP
     return (
       <div className="flex flex-col items-center gap-4 py-8">
         <div className="flex h-14 w-14 items-center justify-center rounded-full bg-red-500/10">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="text-red-400">
-            <path d="M12 9v4M12 17h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" stroke="currentColor" strokeWidth="1.5" />
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            aria-hidden="true"
+            className="text-red-400"
+          >
+            <path
+              d="M12 9v4M12 17h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+              stroke="currentColor"
+              strokeWidth="1.5"
+            />
           </svg>
         </div>
         <div className="text-center">
@@ -790,7 +830,12 @@ export function CreateShortModal({ open, onClose, onCreated }: CreateShortModalP
               aria-label="Close"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                <path
+                  d="M18 6L6 18M6 6l12 12"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
               </svg>
             </button>
           )}

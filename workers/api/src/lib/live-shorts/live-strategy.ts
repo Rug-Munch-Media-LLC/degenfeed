@@ -12,40 +12,40 @@
  *   - "native": Our own DegenFeed experience
  */
 
-import type { Env } from "../../index";
+import type { Env } from '../../index';
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
 export type ProtocolId =
-  | "activitypub"
-  | "atproto"
-  | "nostr"
-  | "farcaster"
-  | "lens"
-  | "zora"
-  | "degenfeed";
+  | 'activitypub'
+  | 'atproto'
+  | 'nostr'
+  | 'farcaster'
+  | 'lens'
+  | 'zora'
+  | 'degenfeed';
 
-export type BackendType = "peertube" | "livepeer" | "mux_owned";
+export type BackendType = 'peertube' | 'livepeer' | 'mux_owned';
 
-export type NativeLiveSupport = "full" | "partial" | "none";
+export type NativeLiveSupport = 'full' | 'partial' | 'none';
 
 export type DisplayFormat =
-  | "embedded_hls"       // Native HLS embed (PeerTube, DegenFeed)
-  | "external_embed_with_live_badge"  // Bluesky embed card
-  | "native_live_event"  // Nostr Kind 30311
-  | "frame_with_hls"     // Farcaster Frame with video
-  | "link_with_metadata" // Lens Open Action
-  | "live_nft"           // Zora live NFT
-  | "vertical_swipe";    // DegenFeed native
+  | 'embedded_hls' // Native HLS embed (PeerTube, DegenFeed)
+  | 'external_embed_with_live_badge' // Bluesky embed card
+  | 'native_live_event' // Nostr Kind 30311
+  | 'frame_with_hls' // Farcaster Frame with video
+  | 'link_with_metadata' // Lens Open Action
+  | 'live_nft' // Zora live NFT
+  | 'vertical_swipe'; // DegenFeed native
 
 export type PostFormat =
-  | "note_with_attachment"
-  | "embed_card"
-  | "kind_30311"
-  | "live_frame"
-  | "publication_with_open_action"
-  | "live_erc1155"
-  | "native_short";
+  | 'note_with_attachment'
+  | 'embed_card'
+  | 'kind_30311'
+  | 'live_frame'
+  | 'publication_with_open_action'
+  | 'live_erc1155'
+  | 'native_short';
 
 export interface LiveShortConfig {
   /** Which backend this protocol uses for RTMP→HLS transcoding. */
@@ -131,10 +131,7 @@ export interface ProtocolStrategy {
    * - Zora: NFT views
    * - DegenFeed: WebSocket connections
    */
-  getViewerCount(
-    env: Env,
-    protocolId: string,
-  ): Promise<ViewerCountResult>;
+  getViewerCount(env: Env, protocolId: string): Promise<ViewerCountResult>;
 
   /**
    * Post a tip notification on this protocol.

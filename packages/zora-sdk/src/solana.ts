@@ -20,31 +20,20 @@
  * ```
  */
 
-import {
-  PublicKey,
-  SystemProgram,
-  SYSVAR_RENT_PUBKEY,
-  ComputeBudgetProgram,
-} from '@solana/web3.js';
-import {
-  type AnchorProvider,
-  type IdlTypes,
-  Program,
-  type Provider,
-  BN,
-} from '@coral-xyz/anchor';
+import { type AnchorProvider, BN, Program } from '@coral-xyz/anchor';
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
-  TOKEN_PROGRAM_ID,
   getAssociatedTokenAddressSync,
+  TOKEN_PROGRAM_ID,
 } from '@solana/spl-token';
+import { PublicKey, SYSVAR_RENT_PUBKEY, SystemProgram } from '@solana/web3.js';
 import type {
-  SolanaTokenInput,
   SolanaBuyInput,
-  SolanaSellInput,
   SolanaDeployResult,
-  TradeResult,
+  SolanaSellInput,
+  SolanaTokenInput,
   TokenInfo,
+  TradeResult,
   VestedClaimResult,
 } from './types';
 
@@ -54,9 +43,7 @@ import type {
 //   import idl from '../target/idl/degenfeed_creator_token.json';
 // For now, define the key types manually.
 
-export const PROGRAM_ID = new PublicKey(
-  'DFCCrTn111111111111111111111111111111111111',
-);
+export const PROGRAM_ID = new PublicKey('DFCCrTn111111111111111111111111111111111111');
 
 // PDA seed constants (must match Rust program)
 // Use TextEncoder instead of Buffer for workers compat
@@ -85,26 +72,17 @@ export function deriveTokenState(creator: PublicKey, tokenSeed: bigint): [Public
 
 /** Derive the Token Mint PDA */
 export function deriveTokenMint(tokenState: PublicKey): [PublicKey, number] {
-  return PublicKey.findProgramAddressSync(
-    [SEED_TOKEN_MINT, tokenState.toBytes()],
-    PROGRAM_ID,
-  );
+  return PublicKey.findProgramAddressSync([SEED_TOKEN_MINT, tokenState.toBytes()], PROGRAM_ID);
 }
 
 /** Derive the Mint Authority PDA */
 export function deriveMintAuthority(mint: PublicKey): [PublicKey, number] {
-  return PublicKey.findProgramAddressSync(
-    [SEED_MINT_AUTHORITY, mint.toBytes()],
-    PROGRAM_ID,
-  );
+  return PublicKey.findProgramAddressSync([SEED_MINT_AUTHORITY, mint.toBytes()], PROGRAM_ID);
 }
 
 /** Derive the Token Vault PDA */
 export function deriveTokenVault(mint: PublicKey): [PublicKey, number] {
-  return PublicKey.findProgramAddressSync(
-    [SEED_TOKEN_VAULT, mint.toBytes()],
-    PROGRAM_ID,
-  );
+  return PublicKey.findProgramAddressSync([SEED_TOKEN_VAULT, mint.toBytes()], PROGRAM_ID);
 }
 
 /** Derive the Buyer State PDA */
@@ -117,26 +95,17 @@ export function deriveBuyerState(buyer: PublicKey, mint: PublicKey): [PublicKey,
 
 /** Derive the Vesting Vault PDA */
 export function deriveVestingVault(mint: PublicKey): [PublicKey, number] {
-  return PublicKey.findProgramAddressSync(
-    [SEED_VESTING_VAULT, mint.toBytes()],
-    PROGRAM_ID,
-  );
+  return PublicKey.findProgramAddressSync([SEED_VESTING_VAULT, mint.toBytes()], PROGRAM_ID);
 }
 
 /** Derive the Recipient State PDA */
 export function deriveRecipientState(mint: PublicKey): [PublicKey, number] {
-  return PublicKey.findProgramAddressSync(
-    [SEED_RECIPIENT_STATE, mint.toBytes()],
-    PROGRAM_ID,
-  );
+  return PublicKey.findProgramAddressSync([SEED_RECIPIENT_STATE, mint.toBytes()], PROGRAM_ID);
 }
 
 /** Derive the Platform Fee Vault PDA */
 export function derivePlatformFeeVault(): [PublicKey, number] {
-  return PublicKey.findProgramAddressSync(
-    [PLATFORM_FEE_VAULT_SEED],
-    PROGRAM_ID,
-  );
+  return PublicKey.findProgramAddressSync([PLATFORM_FEE_VAULT_SEED], PROGRAM_ID);
 }
 
 // ─── Explorer URL helpers ───────────────────────────────────────────────────
@@ -330,11 +299,7 @@ export class SolanaCreatorTokenSDK {
     const { tokenState } = await this.resolveTokenState(mintPubkey);
     const [mintAuthority] = deriveMintAuthority(mintPubkey);
     const [vestingVault] = deriveVestingVault(mintPubkey);
-    const vestingVaultTokenAccount = getAssociatedTokenAddressSync(
-      mintPubkey,
-      mintAuthority,
-      true,
-    );
+    const vestingVaultTokenAccount = getAssociatedTokenAddressSync(mintPubkey, mintAuthority, true);
     const creatorTokenAccount = getAssociatedTokenAddressSync(mintPubkey, creator);
 
     const signature = await this.program.methods
@@ -396,11 +361,7 @@ export class SolanaCreatorTokenSDK {
    * @param platformFeeBps - Platform fee in bps (max 100 = 1%)
    * @param creatorFeeBps - Creator fee in bps (max 200 = 2%)
    */
-  async setFees(
-    mint: string,
-    platformFeeBps: number,
-    creatorFeeBps: number,
-  ): Promise<string> {
+  async setFees(mint: string, platformFeeBps: number, creatorFeeBps: number): Promise<string> {
     const creator = this.provider.wallet.publicKey;
     const mintPubkey = new PublicKey(mint);
     const { tokenState } = await this.resolveTokenState(mintPubkey);
@@ -464,7 +425,7 @@ export class SolanaCreatorTokenSDK {
     // For now, we fetch the TokenState using the mint-based derivation or
     // scan program accounts. In production, maintain a PDA index.
     try {
-      const tokenStateAccount = await this.program.account.tokenState.fetch(tokenState);
+      const _tokenStateAccount = await this.program.account.tokenState.fetch(tokenState);
       // This won't work directly because tokenState is derived from mint, not the other way.
       // We need a different approach.
     } catch {
@@ -474,8 +435,8 @@ export class SolanaCreatorTokenSDK {
       ]);
       if (accounts.length === 0) throw new Error(`Token not found: ${mint}`);
 
-      const tokenStatePda = accounts[0]!.publicKey;
-      const data = accounts[0]!.account as any;
+      const _tokenStatePda = accounts[0]?.publicKey;
+      const data = accounts[0]?.account as any;
 
       return {
         address: mint,
@@ -544,11 +505,63 @@ function getProgramIdl(): any {
         discriminator: [175, 58, 225, 88, 32, 20, 77, 143],
         accounts: [
           { name: 'creator', writable: true, signer: true },
-          { name: 'tokenState', writable: true, pda: { seeds: [{ kind: 'const', value: [116, 111, 107, 101, 110, 45, 115, 116, 97, 116, 101] }, { kind: 'account', path: 'creator' }, { kind: 'arg', path: 'token_seed' }] } },
-          { name: 'mint', writable: true, pda: { seeds: [{ kind: 'const', value: [116, 111, 107, 101, 110, 45, 109, 105, 110, 116] }, { kind: 'account', path: 'token_state' }] } },
-          { name: 'mintAuthority', writable: false, pda: { seeds: [{ kind: 'const', value: [109, 105, 110, 116, 45, 97, 117, 116, 104, 111, 114, 105, 116, 121] }, { kind: 'account', path: 'mint' }] } },
-          { name: 'tokenVault', writable: true, pda: { seeds: [{ kind: 'const', value: [116, 111, 107, 101, 110, 45, 118, 97, 117, 108, 116] }, { kind: 'account', path: 'mint' }] } },
-          { name: 'vestingVault', writable: true, pda: { seeds: [{ kind: 'const', value: [118, 101, 115, 116, 105, 110, 103, 45, 118, 97, 117, 108, 116] }, { kind: 'account', path: 'mint' }] } },
+          {
+            name: 'tokenState',
+            writable: true,
+            pda: {
+              seeds: [
+                { kind: 'const', value: [116, 111, 107, 101, 110, 45, 115, 116, 97, 116, 101] },
+                { kind: 'account', path: 'creator' },
+                { kind: 'arg', path: 'token_seed' },
+              ],
+            },
+          },
+          {
+            name: 'mint',
+            writable: true,
+            pda: {
+              seeds: [
+                { kind: 'const', value: [116, 111, 107, 101, 110, 45, 109, 105, 110, 116] },
+                { kind: 'account', path: 'token_state' },
+              ],
+            },
+          },
+          {
+            name: 'mintAuthority',
+            writable: false,
+            pda: {
+              seeds: [
+                {
+                  kind: 'const',
+                  value: [109, 105, 110, 116, 45, 97, 117, 116, 104, 111, 114, 105, 116, 121],
+                },
+                { kind: 'account', path: 'mint' },
+              ],
+            },
+          },
+          {
+            name: 'tokenVault',
+            writable: true,
+            pda: {
+              seeds: [
+                { kind: 'const', value: [116, 111, 107, 101, 110, 45, 118, 97, 117, 108, 116] },
+                { kind: 'account', path: 'mint' },
+              ],
+            },
+          },
+          {
+            name: 'vestingVault',
+            writable: true,
+            pda: {
+              seeds: [
+                {
+                  kind: 'const',
+                  value: [118, 101, 115, 116, 105, 110, 103, 45, 118, 97, 117, 108, 116],
+                },
+                { kind: 'account', path: 'mint' },
+              ],
+            },
+          },
           { name: 'vestingVaultTokenAccount', writable: true },
           { name: 'platformFeeVault', writable: true },
           { name: 'tokenProgram' },
@@ -659,21 +672,23 @@ function getProgramIdl(): any {
           { name: 'recipientState', writable: true },
           { name: 'systemProgram' },
         ],
-        args: [{
-          name: 'recipients',
-          type: {
-            vec: {
-              defined: {
-                name: 'Recipient',
-                fields: [
-                  { name: 'address', type: 'publicKey' },
-                  { name: 'shareBps', type: 'u16' },
-                  { name: 'label', type: 'string' },
-                ],
+        args: [
+          {
+            name: 'recipients',
+            type: {
+              vec: {
+                defined: {
+                  name: 'Recipient',
+                  fields: [
+                    { name: 'address', type: 'publicKey' },
+                    { name: 'shareBps', type: 'u16' },
+                    { name: 'label', type: 'string' },
+                  ],
+                },
               },
             },
           },
-        }],
+        ],
       },
     ],
     accounts: [

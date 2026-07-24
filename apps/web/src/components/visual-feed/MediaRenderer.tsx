@@ -5,7 +5,7 @@
  * aspect ratio containers, and play button overlay for videos.
  */
 
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 interface MediaRendererProps {
   imageUrl: string;
@@ -79,7 +79,10 @@ export function MediaRenderer({
       )}
 
       {!loaded && !blurHash && (
-        <div className="absolute inset-0 animate-pulse" style={{ backgroundColor: 'var(--color-muted)' }} />
+        <div
+          className="absolute inset-0 animate-pulse"
+          style={{ backgroundColor: 'var(--color-muted)' }}
+        />
       )}
 
       {/* Image */}
@@ -131,7 +134,13 @@ export function MediaRenderer({
               aria-label="Play video"
             >
               <span className="flex h-14 w-14 items-center justify-center rounded-full bg-white/90 text-black shadow-xl backdrop-blur-sm transition-transform hover:scale-105">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  aria-hidden="true"
+                >
                   <path d="M8 5v14l11-7z" />
                 </svg>
               </span>
@@ -147,7 +156,13 @@ export function MediaRenderer({
               aria-label="Pause video"
             >
               <span className="flex h-12 w-12 items-center justify-center rounded-full bg-white/80 text-black backdrop-blur-sm">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  aria-hidden="true"
+                >
                   <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
                 </svg>
               </span>
@@ -160,7 +175,15 @@ export function MediaRenderer({
       {isNFT && (
         <div className="absolute left-2 top-2 z-10">
           <span className="inline-flex items-center gap-1 rounded-full bg-purple-500/80 px-2 py-0.5 text-[10px] font-semibold text-white backdrop-blur-sm">
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+            <svg
+              width="10"
+              height="10"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              aria-hidden="true"
+            >
               <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
             </svg>
             NFT

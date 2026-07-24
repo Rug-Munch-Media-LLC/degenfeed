@@ -41,7 +41,9 @@ export default function CreatorInfo({
   // Loading state
   if (loading) {
     return (
-      <div className={`rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-3 sm:p-4 ${className}`}>
+      <div
+        className={`rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-3 sm:p-4 ${className}`}
+      >
         <div className="flex items-start gap-3">
           <div className="skeleton h-10 w-10 shrink-0 rounded-full" />
           <div className="flex-1 space-y-2">
@@ -104,7 +106,9 @@ export default function CreatorInfo({
                   </svg>
                 ))}
               </div>
-              <span className={`text-[9px] sm:text-[10px] font-semibold ${reputationColor(creator.reputation)}`}>
+              <span
+                className={`text-[9px] sm:text-[10px] font-semibold ${reputationColor(creator.reputation)}`}
+              >
                 {creator.reputation}/100
               </span>
             </div>
@@ -139,7 +143,9 @@ export default function CreatorInfo({
                               : platform === 'website'
                                 ? '🌐'
                                 : '🔗'}
-                  <span className="hidden sm:inline">{platform.charAt(0).toUpperCase() + platform.slice(1)}</span>
+                  <span className="hidden sm:inline">
+                    {platform.charAt(0).toUpperCase() + platform.slice(1)}
+                  </span>
                 </a>
               ))}
             </div>

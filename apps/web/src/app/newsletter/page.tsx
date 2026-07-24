@@ -1081,7 +1081,9 @@ export default function NewsletterPage() {
               <div className="space-y-2">
                 {TOP_NEWSLETTERS_THIS_WEEK.slice(0, 5).map((nl, i) => (
                   <div key={nl.name} className="flex items-center gap-2">
-                    <span className="w-4 text-[10px] font-bold text-[var(--color-muted)]">{i + 1}</span>
+                    <span className="w-4 text-[10px] font-bold text-[var(--color-muted)]">
+                      {i + 1}
+                    </span>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-[11px] font-medium text-[var(--color-fg)]">
                         {nl.name}
@@ -1090,10 +1092,10 @@ export default function NewsletterPage() {
                     <span
                       className="rounded px-1.5 py-0.5 text-[8px] font-medium uppercase"
                       style={{
-                        backgroundColor:
-                          (NEWSLETTER_CATEGORIES.find((c) => c.id === nl.category)?.color
-                            ? `${NEWSLETTER_CATEGORIES.find((c) => c.id === nl.category)?.color}15`
-                            : '#1f2937'),
+                        backgroundColor: NEWSLETTER_CATEGORIES.find((c) => c.id === nl.category)
+                          ?.color
+                          ? `${NEWSLETTER_CATEGORIES.find((c) => c.id === nl.category)?.color}15`
+                          : '#1f2937',
                         color:
                           NEWSLETTER_CATEGORIES.find((c) => c.id === nl.category)?.color ??
                           '#9ca3af',

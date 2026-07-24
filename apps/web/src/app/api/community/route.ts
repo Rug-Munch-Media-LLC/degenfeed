@@ -6,8 +6,8 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const name = typeof body.name === 'string' ? body.name.trim() : '';
-    const displayName = typeof body.displayName === 'string' ? body.displayName.trim() : name;
-    const description = typeof body.description === 'string' ? body.description.trim() : '';
+    const _displayName = typeof body.displayName === 'string' ? body.displayName.trim() : name;
+    const _description = typeof body.description === 'string' ? body.description.trim() : '';
 
     if (!name || name.length < 2) {
       return NextResponse.json({ error: 'Name must be at least 2 characters' }, { status: 400 });

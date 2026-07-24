@@ -103,9 +103,9 @@ function createGhostToken(adminKey: string): string {
   const [id, secret] = adminKey.split(':');
   if (!id || !secret) throw new Error('Invalid Ghost Admin API key format (expected id:secret)');
   // Ghost Admin API uses a simple base64-encoded token
-  const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT', kid: id }));
+  const _header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT', kid: id }));
   const now = Math.floor(Date.now() / 1000);
-  const payload = btoa(JSON.stringify({ iat: now, exp: now + 600, aud: '/admin/' }));
+  const _payload = btoa(JSON.stringify({ iat: now, exp: now + 600, aud: '/admin/' }));
   // For HMAC we'd need a crypto lib; Ghost also accepts the raw key as Bearer
   // for Content API. For Admin API, we use the key directly as Basic auth.
   return btoa(`${id}:${secret}`);
@@ -126,10 +126,7 @@ export class GhostBridge {
 
   // ─── Private helpers ────────────────────────────────────────────
 
-  private async adminFetch(
-    path: string,
-    options: RequestInit = {},
-  ): Promise<Response> {
+  private async adminFetch(path: string, options: RequestInit = {}): Promise<Response> {
     const url = `${this.ghostUrl}/ghost/api/admin${path}`;
     const res = await fetch(url, {
       ...options,
@@ -194,7 +191,10 @@ export class GhostBridge {
   }
 
   async getPosts(opts: { limit?: number; tag?: string } = {}): Promise<GhostPost[]> {
-    const params = new URLSearchParams({ include: 'tags,authors', limit: String(opts.limit || 20) });
+    const params = new URLSearchParams({
+      include: 'tags,authors',
+      limit: String(opts.limit || 20),
+    });
     if (opts.tag) params.set('filter', `tag:${opts.tag}`);
     const res = await this.contentFetch(`/posts/?${params.toString()}`);
     const json = (await res.json()) as { posts: Record<string, unknown>[] };
@@ -378,12 +378,14 @@ export class GhostBridge {
 
   async crossPublish(postId: string, protocols: Protocol[]): Promise<PublishResults> {
     const post = await this.getPost(postId);
-    const results: Record<Protocol, { ok: boolean; url?: string; error?: string }> =
-      {} as Record<Protocol, { ok: boolean; url?: string; error?: string }>;
+    const results: Record<Protocol, { ok: boolean; url?: string; error?: string }> = {} as Record<
+      Protocol,
+      { ok: boolean; url?: string; error?: string }
+    >;
 
-    const summary = post.excerpt || post.html.replace(/<[^>]+>/g, '').slice(0, 300);
-    const link = `${this.ghostUrl}/${post.slug}`;
-    const title = post.title;
+    const _summary = post.excerpt || post.html.replace(/<[^>]+>/g, '').slice(0, 300);
+    const _link = `${this.ghostUrl}/${post.slug}`;
+    const _title = post.title;
 
     for (const protocol of protocols) {
       try {
@@ -397,7 +399,10 @@ export class GhostBridge {
           }
           case 'farcaster': {
             // Farcaster cast via Hub API
-            results[protocol] = { ok: true, url: `https://warpcast.com/~/conversations/${post.slug}` };
+            results[protocol] = {
+              ok: true,
+              url: `https://warpcast.com/~/conversations/${post.slug}`,
+            };
             break;
           }
           case 'lens': {
@@ -407,12 +412,18 @@ export class GhostBridge {
           }
           case 'bluesky': {
             // Bluesky post via AT Protocol
-            results[protocol] = { ok: true, url: `https://bsky.app/profile/degenfeed.xyz/post/${post.slug}` };
+            results[protocol] = {
+              ok: true,
+              url: `https://bsky.app/profile/degenfeed.xyz/post/${post.slug}`,
+            };
             break;
           }
           case 'mastodon': {
             // Mastodon toot via ActivityPub
-            results[protocol] = { ok: true, url: `https://social.degenfeed.xyz/@degenfeed/${post.slug}` };
+            results[protocol] = {
+              ok: true,
+              url: `https://social.degenfeed.xyz/@degenfeed/${post.slug}`,
+            };
             break;
           }
           default: {

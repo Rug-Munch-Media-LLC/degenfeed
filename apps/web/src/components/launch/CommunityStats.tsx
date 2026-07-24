@@ -1,7 +1,5 @@
 'use client';
 
-import type { HolderEntry } from '../../hooks/useTokenCommunity';
-
 // Local format helper
 function formatCompact(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
@@ -37,7 +35,9 @@ export default function CommunityStats({
   // Loading state
   if (loading) {
     return (
-      <div className={`rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-3 sm:p-4 ${className}`}>
+      <div
+        className={`rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-3 sm:p-4 ${className}`}
+      >
         <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
           📊 Community Stats
         </h3>
@@ -53,7 +53,9 @@ export default function CommunityStats({
   // Error state
   if (error) {
     return (
-      <div className={`rounded-xl border border-red-500/20 bg-red-500/5 p-4 text-center ${className}`}>
+      <div
+        className={`rounded-xl border border-red-500/20 bg-red-500/5 p-4 text-center ${className}`}
+      >
         <p className="text-xs text-red-400">{error}</p>
         {onRetry && (
           <button
@@ -69,7 +71,9 @@ export default function CommunityStats({
   }
 
   return (
-    <div className={`rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-3 sm:p-4 ${className}`}>
+    <div
+      className={`rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-3 sm:p-4 ${className}`}
+    >
       <h3 className="mb-2 sm:mb-3 text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
         📊 Community Stats
       </h3>

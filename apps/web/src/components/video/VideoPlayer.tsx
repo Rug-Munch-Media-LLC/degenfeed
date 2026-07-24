@@ -69,7 +69,16 @@ export function VideoPlayer({
       >
         <div className="text-center">
           <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full border border-red-500/30 bg-red-500/10">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-red-400" aria-hidden="true">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              className="text-red-400"
+              aria-hidden="true"
+            >
               <circle cx="12" cy="12" r="10" />
               <line x1="12" y1="8" x2="12" y2="12" />
               <line x1="12" y1="16" x2="12.01" y2="16" />
@@ -82,7 +91,9 @@ export function VideoPlayer({
             rel="noopener noreferrer"
             className="mt-2 inline-block text-xs text-degen-500 hover:text-degen-400"
           >
-            Open in {source === 'youtube' ? 'YouTube' : source === 'peertube' ? 'PeerTube' : 'new tab'} &rarr;
+            Open in{' '}
+            {source === 'youtube' ? 'YouTube' : source === 'peertube' ? 'PeerTube' : 'new tab'}{' '}
+            &rarr;
           </a>
         </div>
       </div>

@@ -108,7 +108,6 @@ export default function TOTPVerify({
           }}
           placeholder="000000"
           className="w-40 text-center text-2xl tracking-[0.5em] font-mono font-bold bg-[var(--color-overlay)] border-2 border-[var(--color-glass-border)] rounded-xl px-4 py-3 text-[var(--color-fg)] focus:border-degen-500 focus:outline-none focus:ring-2 focus:ring-degen-500/30 placeholder:text-[var(--color-muted)]/30"
-          autoFocus
           aria-label="6-digit authentication code"
         />
       </div>

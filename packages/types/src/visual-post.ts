@@ -3,9 +3,16 @@
  * Every photo, video, NFT, and media post normalizes to this shape.
  */
 
-import type { UnifiedIdentity, EngagementMetrics, EngagementVector, Embed } from './index';
+import type { Embed, EngagementMetrics, EngagementVector, UnifiedIdentity } from './index';
 
-export type VisualSource = 'pixelfed' | 'zora' | 'bluesky' | 'nostr' | 'farcaster' | 'gotosocial' | 'mastodon';
+export type VisualSource =
+  | 'pixelfed'
+  | 'zora'
+  | 'bluesky'
+  | 'nostr'
+  | 'farcaster'
+  | 'gotosocial'
+  | 'mastodon';
 
 export interface VisualPost {
   /** Canonical id: `${source}:${nativeId}` */

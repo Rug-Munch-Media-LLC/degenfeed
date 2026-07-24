@@ -1049,9 +1049,9 @@ export default function CreatorDashboard() {
               </Link>
             </div>
             <p className="mt-3 text-xs text-[var(--color-muted)]">
-              Connect your accounts on centralized platforms and publish to all of them
-              from one place. OAuth-supported platforms connect securely via their APIs.
-              For others (Substack), use email-to-post.
+              Connect your accounts on centralized platforms and publish to all of them from one
+              place. OAuth-supported platforms connect securely via their APIs. For others
+              (Substack), use email-to-post.
             </p>
           </div>
 
@@ -1214,15 +1214,21 @@ export default function CreatorDashboard() {
           {/* Article Stats */}
           <div className="grid grid-cols-3 gap-4">
             <div className="card border-[var(--color-border)] bg-[var(--color-overlay)] p-4 backdrop-blur-xl">
-              <p className="text-[10px] font-medium uppercase tracking-wider text-[var(--color-muted)]">Published</p>
+              <p className="text-[10px] font-medium uppercase tracking-wider text-[var(--color-muted)]">
+                Published
+              </p>
               <p className="mt-1 text-xl font-semibold text-[var(--color-fg)]">--</p>
             </div>
             <div className="card border-[var(--color-border)] bg-[var(--color-overlay)] p-4 backdrop-blur-xl">
-              <p className="text-[10px] font-medium uppercase tracking-wider text-[var(--color-muted)]">Total Tips</p>
+              <p className="text-[10px] font-medium uppercase tracking-wider text-[var(--color-muted)]">
+                Total Tips
+              </p>
               <p className="mt-1 text-xl font-semibold text-[var(--color-fg)]">--</p>
             </div>
             <div className="card border-[var(--color-border)] bg-[var(--color-overlay)] p-4 backdrop-blur-xl">
-              <p className="text-[10px] font-medium uppercase tracking-wider text-[var(--color-muted)]">Subscribers</p>
+              <p className="text-[10px] font-medium uppercase tracking-wider text-[var(--color-muted)]">
+                Subscribers
+              </p>
               <p className="mt-1 text-xl font-semibold text-[var(--color-fg)]">--</p>
             </div>
           </div>
@@ -1233,8 +1239,8 @@ export default function CreatorDashboard() {
               <div>
                 <h3 className="text-sm font-semibold text-[var(--color-fg)]">Ghost CMS Articles</h3>
                 <p className="text-xs text-[var(--color-muted)]">
-                  Write and publish long-form articles via our headless Ghost CMS.
-                  Articles appear on the DegenFeed Articles page and can be sent as newsletters.
+                  Write and publish long-form articles via our headless Ghost CMS. Articles appear
+                  on the DegenFeed Articles page and can be sent as newsletters.
                 </p>
               </div>
               <a href="/articles" className="btn-primary shrink-0 text-xs">
@@ -1247,10 +1253,7 @@ export default function CreatorDashboard() {
           <div className="card border-[var(--color-border)] bg-[var(--color-overlay)] p-5 backdrop-blur-xl">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-sm font-semibold text-[var(--color-fg)]">Recent Articles</h3>
-              <a
-                href="/articles"
-                className="text-xs text-[var(--color-accent)] hover:underline"
-              >
+              <a href="/articles" className="text-xs text-[var(--color-accent)] hover:underline">
                 View All
               </a>
             </div>
@@ -1259,8 +1262,8 @@ export default function CreatorDashboard() {
                 📄
               </div>
               <p className="text-xs text-[var(--color-muted)]">
-                Articles from Ghost CMS will appear here. Subscribe to the newsletter to get notified
-                of new articles.
+                Articles from Ghost CMS will appear here. Subscribe to the newsletter to get
+                notified of new articles.
               </p>
               <div className="mt-4 flex justify-center gap-3">
                 <a href="/articles" className="btn-secondary text-xs">
@@ -1278,19 +1281,27 @@ export default function CreatorDashboard() {
 
           {/* Newsletter Settings */}
           <div className="card border-[var(--color-border)] bg-[var(--color-overlay)] p-5 backdrop-blur-xl">
-            <h3 className="mb-4 text-sm font-semibold text-[var(--color-fg)]">Newsletter Settings</h3>
+            <h3 className="mb-4 text-sm font-semibold text-[var(--color-fg)]">
+              Newsletter Settings
+            </h3>
             <div className="space-y-4 text-xs text-[var(--color-muted)]">
               <div className="flex items-center justify-between">
                 <span>Free newsletter tier</span>
-                <span className="rounded-full bg-degen-500/10 px-2 py-0.5 text-degen-400">Active</span>
+                <span className="rounded-full bg-degen-500/10 px-2 py-0.5 text-degen-400">
+                  Active
+                </span>
               </div>
               <div className="flex items-center justify-between">
                 <span>Premium newsletter tier</span>
-                <span className="rounded-full bg-[var(--color-overlay)] px-2 py-0.5 text-[var(--color-muted)]">Not configured</span>
+                <span className="rounded-full bg-[var(--color-overlay)] px-2 py-0.5 text-[var(--color-muted)]">
+                  Not configured
+                </span>
               </div>
               <div className="flex items-center justify-between">
                 <span>Cross-platform announcements</span>
-                <span className="rounded-full bg-degen-500/10 px-2 py-0.5 text-degen-400">Active</span>
+                <span className="rounded-full bg-degen-500/10 px-2 py-0.5 text-degen-400">
+                  Active
+                </span>
               </div>
               <div className="flex items-center justify-between">
                 <span>Email provider</span>

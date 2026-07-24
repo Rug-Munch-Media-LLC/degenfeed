@@ -1,9 +1,9 @@
 'use client';
 
-import Link from 'next/link';
 import Image from 'next/image';
+import Link from 'next/link';
 import type { DirectoryEntry, FeddyCategory } from './types';
-import { CATEGORY_LABELS, CATEGORY_EMOJIS } from './types';
+import { CATEGORY_EMOJIS, CATEGORY_LABELS } from './types';
 
 // === Helpers ===========================================================
 
@@ -94,7 +94,10 @@ export function CommunityCard({ entry }: { entry: DirectoryEntry }) {
         ))}
 
         {entry.linkedCoin && (
-          <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[9px] font-medium text-amber-400" title="Linked creator coin">
+          <span
+            className="ml-auto inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[9px] font-medium text-amber-400"
+            title="Linked creator coin"
+          >
             <span>🪙</span>
           </span>
         )}

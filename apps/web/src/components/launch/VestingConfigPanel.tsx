@@ -62,7 +62,13 @@ const PRESETS: VestingPreset[] = [
 
 /* === Vesting Timeline Visualization =================== */
 
-function VestingTimeline({ config, allocationPct }: { config: VestingConfig; allocationPct: number }) {
+function VestingTimeline({
+  config,
+  allocationPct,
+}: {
+  config: VestingConfig;
+  allocationPct: number;
+}) {
   const totalDays = Math.ceil((config.cliffDuration + config.vestingDuration) / 86400);
   const daysToShow = Math.min(totalDays, 180); // cap visual at 180 days
   const segments: Array<{ label: string; pct: number; color: string }> = [];
@@ -86,9 +92,10 @@ function VestingTimeline({ config, allocationPct }: { config: VestingConfig; all
   }
 
   if (config.vestingDuration > 0) {
-    const vestPct = config.initialUnlockBps > 0 || config.cliffDuration > 0
-      ? 100 - segments.reduce((s, seg) => s + seg.pct, 0)
-      : 100;
+    const vestPct =
+      config.initialUnlockBps > 0 || config.cliffDuration > 0
+        ? 100 - segments.reduce((s, seg) => s + seg.pct, 0)
+        : 100;
     segments.push({
       label: `${Math.ceil(config.vestingDuration / 86400)}d vest`,
       pct: vestPct / 100,
@@ -114,7 +121,8 @@ function VestingTimeline({ config, allocationPct }: { config: VestingConfig; all
         ))}
       </div>
       <div className="pt-1 text-center text-[10px] text-[var(--color-muted)]">
-        {config.initialUnlockBps > 0 ? `${(config.initialUnlockBps / 100).toFixed(0)}%` : '0%'} at launch
+        {config.initialUnlockBps > 0 ? `${(config.initialUnlockBps / 100).toFixed(0)}%` : '0%'} at
+        launch
         {' → '}
         {config.cliffDuration > 0
           ? `${Math.ceil(config.cliffDuration / 86400)}d cliff`
@@ -128,7 +136,12 @@ function VestingTimeline({ config, allocationPct }: { config: VestingConfig; all
 
 /* === Main Component =================================== */
 
-export default function VestingConfigPanel({ config, onChange, creatorAllocation, supply }: VestingConfigPanelProps) {
+export default function VestingConfigPanel({
+  config,
+  onChange,
+  creatorAllocation,
+  supply,
+}: VestingConfigPanelProps) {
   const [activePreset, setActivePreset] = useState<string | null>(() => {
     const match = PRESETS.find(
       (p) =>
@@ -163,9 +176,12 @@ export default function VestingConfigPanel({ config, onChange, creatorAllocation
     const totalDays = Math.ceil((config.cliffDuration + config.vestingDuration) / 86400);
     const milestones = [25, 50, 75, 100];
     for (const pct of milestones) {
-      const vestDay = Math.ceil(config.cliffDuration / 86400 + (config.vestingDuration * pct) / 100 / 86400);
+      const vestDay = Math.ceil(
+        config.cliffDuration / 86400 + (config.vestingDuration * pct) / 100 / 86400,
+      );
       if (vestDay <= totalDays) {
-        const vestedPct = config.initialUnlockBps / 100 + ((100 - config.initialUnlockBps / 100) * pct) / 100;
+        const vestedPct =
+          config.initialUnlockBps / 100 + ((100 - config.initialUnlockBps / 100) * pct) / 100;
         rows.push({ label: `${pct}% Vested`, day: vestDay, pct: vestedPct });
       }
     }
@@ -209,8 +225,8 @@ export default function VestingConfigPanel({ config, onChange, creatorAllocation
         <h2 className="text-lg font-bold text-[var(--color-fg)]">Vesting Schedule</h2>
         <p className="mt-1 text-sm text-[var(--color-muted)]">
           Configure how your creator allocation unlocks. All parameters are{' '}
-          <strong className="text-degen-400">on-chain and immutable</strong> — no hidden bundles,
-          no special backroom deals.
+          <strong className="text-degen-400">on-chain and immutable</strong> — no hidden bundles, no
+          special backroom deals.
         </p>
       </div>
 
@@ -255,14 +271,19 @@ export default function VestingConfigPanel({ config, onChange, creatorAllocation
                 >
                   {preset.label}
                 </span>
-                {activePreset === preset.id && (
-                  <span className="text-degen-400 text-xs">✓</span>
-                )}
+                {activePreset === preset.id && <span className="text-degen-400 text-xs">✓</span>}
               </div>
               <p className="mt-0.5 text-[10px] text-[var(--color-muted)]">{preset.description}</p>
               {preset.locked && preset.lockReason && (
                 <div className="mt-1 flex items-center gap-1 text-[10px] text-yellow-400">
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <svg
+                    width="10"
+                    height="10"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
                     <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
                     <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                   </svg>
@@ -320,7 +341,9 @@ export default function VestingConfigPanel({ config, onChange, creatorAllocation
             <div className="flex justify-between mb-1">
               <label className="text-xs text-[var(--color-muted)]">Cliff Duration</label>
               <span className="text-xs font-medium tabular-nums text-[var(--color-fg)]">
-                {config.cliffDuration === 0 ? 'None' : `${Math.round(config.cliffDuration / 86400)} days`}
+                {config.cliffDuration === 0
+                  ? 'None'
+                  : `${Math.round(config.cliffDuration / 86400)} days`}
               </span>
             </div>
             <input
@@ -384,9 +407,7 @@ export default function VestingConfigPanel({ config, onChange, creatorAllocation
               <span className="text-[var(--color-muted)]">
                 {row.label}
                 {row.day > 0 && (
-                  <span className="text-[10px] text-[var(--color-muted)]">
-                    {' '}(Day {row.day})
-                  </span>
+                  <span className="text-[10px] text-[var(--color-muted)]"> (Day {row.day})</span>
                 )}
               </span>
               <span className="font-medium tabular-nums text-[var(--color-fg)]">
@@ -432,9 +453,9 @@ export default function VestingConfigPanel({ config, onChange, creatorAllocation
           <div>
             <p className="text-[11px] font-medium text-degen-400">Fully Transparent & Immutable</p>
             <p className="mt-0.5 text-[10px] text-[var(--color-muted)]">
-              Your vesting schedule is written on-chain at deployment and can never be changed.
-              No hidden bundles, no special terms — what you see here is what gets deployed.
-              Community members can verify the exact parameters by reading the contract.
+              Your vesting schedule is written on-chain at deployment and can never be changed. No
+              hidden bundles, no special terms — what you see here is what gets deployed. Community
+              members can verify the exact parameters by reading the contract.
             </p>
           </div>
         </div>

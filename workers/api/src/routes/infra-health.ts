@@ -22,8 +22,8 @@
  * database connections, certificate expiry, etc.
  */
 
-import type { Env } from "../index";
-import { jsonResponse, noCacheJsonResponse } from "../index";
+import type { Env } from '../index';
+import { jsonResponse, noCacheJsonResponse } from '../index';
 
 // ─── Types ───────────────────────────────────────────────────────────────
 
@@ -32,7 +32,7 @@ export interface ServiceHealth {
   subdomain: string;
   protocol: string;
   url: string;
-  status: "up" | "degraded" | "down" | "not_deployed";
+  status: 'up' | 'degraded' | 'down' | 'not_deployed';
   latency: number;
   lastChecked: number;
   version?: string;
@@ -49,17 +49,17 @@ export interface InfraHealthResponse {
     degraded: number;
     down: number;
   };
-  overall: "healthy" | "degraded" | "down";
+  overall: 'healthy' | 'degraded' | 'down';
   checkedAt: number;
 }
 
 export interface InfraStatusResponse {
-  status: "operational" | "partial_outage" | "major_outage";
+  status: 'operational' | 'partial_outage' | 'major_outage';
   message: string;
   services: Record<
     string,
     {
-      status: ServiceHealth["status"];
+      status: ServiceHealth['status'];
       incident?: string;
       lastIncident?: string;
     }
@@ -94,11 +94,11 @@ interface ServiceDef {
 
 const SERVICES: ServiceDef[] = [
   {
-    name: "GoToSocial",
-    subdomain: "social",
-    protocol: "ActivityPub",
-    getUrl: (env) => env.GTS_INSTANCE_URL || "https://social.degenfeed.xyz",
-    healthEndpoint: "/api/v1/instance",
+    name: 'GoToSocial',
+    subdomain: 'social',
+    protocol: 'ActivityPub',
+    getUrl: (env) => env.GTS_INSTANCE_URL || 'https://social.degenfeed.xyz',
+    healthEndpoint: '/api/v1/instance',
     healthCheck: async (url) => {
       const start = performance.now();
       const res = await fetch(`${url}/api/v1/instance`, {
@@ -123,11 +123,11 @@ const SERVICES: ServiceDef[] = [
     },
   },
   {
-    name: "AT Protocol PDS",
-    subdomain: "pds",
-    protocol: "AT Protocol",
-    getUrl: (env) => env.PDS_INSTANCE_URL || "https://pds.degenfeed.xyz",
-    healthEndpoint: "/xrpc/_health",
+    name: 'AT Protocol PDS',
+    subdomain: 'pds',
+    protocol: 'AT Protocol',
+    getUrl: (env) => env.PDS_INSTANCE_URL || 'https://pds.degenfeed.xyz',
+    healthEndpoint: '/xrpc/_health',
     healthCheck: async (url) => {
       const start = performance.now();
       const res = await fetch(`${url}/xrpc/_health`, {
@@ -145,11 +145,11 @@ const SERVICES: ServiceDef[] = [
     },
   },
   {
-    name: "Nostr Relay",
-    subdomain: "relay",
-    protocol: "Nostr",
-    getUrl: (env) => env.RELAY_INSTANCE_URL || "https://relay.degenfeed.xyz",
-    healthEndpoint: "/",
+    name: 'Nostr Relay',
+    subdomain: 'relay',
+    protocol: 'Nostr',
+    getUrl: (env) => env.RELAY_INSTANCE_URL || 'https://relay.degenfeed.xyz',
+    healthEndpoint: '/',
     healthCheck: async (url) => {
       const start = performance.now();
       // Nostr relays respond on their WebSocket or with a simple GET
@@ -167,12 +167,11 @@ const SERVICES: ServiceDef[] = [
     },
   },
   {
-    name: "PeerTube",
-    subdomain: "video",
-    protocol: "PeerTube (ActivityPub)",
-    getUrl: (env) =>
-      env.PEERTUBE_INSTANCE_URL || "https://video.degenfeed.xyz",
-    healthEndpoint: "/api/v1/instance/health",
+    name: 'PeerTube',
+    subdomain: 'video',
+    protocol: 'PeerTube (ActivityPub)',
+    getUrl: (env) => env.PEERTUBE_INSTANCE_URL || 'https://video.degenfeed.xyz',
+    healthEndpoint: '/api/v1/instance/health',
     healthCheck: async (url) => {
       const start = performance.now();
       const res = await fetch(`${url}/api/v1/instance/health`, {
@@ -190,12 +189,11 @@ const SERVICES: ServiceDef[] = [
     },
   },
   {
-    name: "Matrix Synapse",
-    subdomain: "matrix",
-    protocol: "Matrix",
-    getUrl: (env) =>
-      env.MATRIX_INSTANCE_URL || "https://matrix.degenfeed.xyz",
-    healthEndpoint: "/_matrix/health",
+    name: 'Matrix Synapse',
+    subdomain: 'matrix',
+    protocol: 'Matrix',
+    getUrl: (env) => env.MATRIX_INSTANCE_URL || 'https://matrix.degenfeed.xyz',
+    healthEndpoint: '/_matrix/health',
     healthCheck: async (url) => {
       const start = performance.now();
       const res = await fetch(`${url}/_matrix/health`, {
@@ -213,12 +211,11 @@ const SERVICES: ServiceDef[] = [
     },
   },
   {
-    name: "Ghost CMS",
-    subdomain: "articles",
-    protocol: "Blog CMS",
-    getUrl: (env) =>
-      env.GHOST_INSTANCE_URL || "https://articles.degenfeed.xyz",
-    healthEndpoint: "/ghost/api/admin/ping/",
+    name: 'Ghost CMS',
+    subdomain: 'articles',
+    protocol: 'Blog CMS',
+    getUrl: (env) => env.GHOST_INSTANCE_URL || 'https://articles.degenfeed.xyz',
+    healthEndpoint: '/ghost/api/admin/ping/',
     healthCheck: async (url) => {
       const start = performance.now();
       const res = await fetch(`${url}/ghost/api/admin/ping/`, {
@@ -236,12 +233,11 @@ const SERVICES: ServiceDef[] = [
     },
   },
   {
-    name: "Owncast",
-    subdomain: "live",
-    protocol: "Live Streaming",
-    getUrl: (env) =>
-      env.OWNCAST_INSTANCE_URL || "https://live.degenfeed.xyz",
-    healthEndpoint: "/api/health",
+    name: 'Owncast',
+    subdomain: 'live',
+    protocol: 'Live Streaming',
+    getUrl: (env) => env.OWNCAST_INSTANCE_URL || 'https://live.degenfeed.xyz',
+    healthEndpoint: '/api/health',
     healthCheck: async (url) => {
       const start = performance.now();
       const res = await fetch(`${url}/api/health`, {
@@ -259,12 +255,11 @@ const SERVICES: ServiceDef[] = [
     },
   },
   {
-    name: "WriteFreely",
-    subdomain: "blog",
-    protocol: "ActivityPub Blog",
-    getUrl: (env) =>
-      env.WRITEFREELY_INSTANCE_URL || "https://blog.degenfeed.xyz",
-    healthEndpoint: "/",
+    name: 'WriteFreely',
+    subdomain: 'blog',
+    protocol: 'ActivityPub Blog',
+    getUrl: (env) => env.WRITEFREELY_INSTANCE_URL || 'https://blog.degenfeed.xyz',
+    healthEndpoint: '/',
     healthCheck: async (url) => {
       const start = performance.now();
       const res = await fetch(url, {
@@ -279,12 +274,11 @@ const SERVICES: ServiceDef[] = [
     },
   },
   {
-    name: "Mobilizon",
-    subdomain: "events",
-    protocol: "ActivityPub Events",
-    getUrl: (env) =>
-      env.MOBILIZON_INSTANCE_URL || "https://events.degenfeed.xyz",
-    healthEndpoint: "/api/health",
+    name: 'Mobilizon',
+    subdomain: 'events',
+    protocol: 'ActivityPub Events',
+    getUrl: (env) => env.MOBILIZON_INSTANCE_URL || 'https://events.degenfeed.xyz',
+    healthEndpoint: '/api/health',
     healthCheck: async (url) => {
       const start = performance.now();
       const res = await fetch(`${url}/api/health`, {
@@ -305,12 +299,10 @@ const SERVICES: ServiceDef[] = [
 
 // ─── Cache helpers (30-second TTL) ───────────────────────────────────────
 
-const CACHE_KEY = "infra:health:v2";
+const CACHE_KEY = 'infra:health:v2';
 const CACHE_TTL_MS = 30_000;
 
-async function readCache(
-  env: Env,
-): Promise<InfraHealthResponse | null> {
+async function readCache(env: Env): Promise<InfraHealthResponse | null> {
   if (!env.CACHE) return null;
   try {
     const raw = await env.CACHE.get(CACHE_KEY);
@@ -323,10 +315,7 @@ async function readCache(
   }
 }
 
-async function writeCache(
-  env: Env,
-  data: InfraHealthResponse,
-): Promise<void> {
+async function writeCache(env: Env, data: InfraHealthResponse): Promise<void> {
   if (!env.CACHE) return;
   try {
     await env.CACHE.put(CACHE_KEY, JSON.stringify(data), {
@@ -361,7 +350,7 @@ export async function handleInfraHealth(env: Env): Promise<Response> {
           subdomain: svc.subdomain,
           protocol: svc.protocol,
           url,
-          status: status.ok ? ("up" as const) : ("degraded" as const),
+          status: status.ok ? ('up' as const) : ('degraded' as const),
           latency: status.latency,
           lastChecked: now,
           version: status.version,
@@ -374,11 +363,10 @@ export async function handleInfraHealth(env: Env): Promise<Response> {
           subdomain: svc.subdomain,
           protocol: svc.protocol,
           url,
-          status: "down" as const,
+          status: 'down' as const,
           latency: 0,
           lastChecked: now,
-          error:
-            e instanceof Error ? e.message : "Health check failed",
+          error: e instanceof Error ? e.message : 'Health check failed',
         };
       }
     }),
@@ -386,17 +374,17 @@ export async function handleInfraHealth(env: Env): Promise<Response> {
 
   const summary = {
     total: results.length,
-    up: results.filter((r) => r.status === "up").length,
-    degraded: results.filter((r) => r.status === "degraded").length,
-    down: results.filter((r) => r.status === "down").length,
+    up: results.filter((r) => r.status === 'up').length,
+    degraded: results.filter((r) => r.status === 'degraded').length,
+    down: results.filter((r) => r.status === 'down').length,
   };
 
   const overall =
     summary.down > 0
-      ? ("down" as const)
+      ? ('down' as const)
       : summary.degraded > 0
-        ? ("degraded" as const)
-        : ("healthy" as const);
+        ? ('degraded' as const)
+        : ('healthy' as const);
 
   const body: InfraHealthResponse = {
     services: results,
@@ -415,10 +403,7 @@ export async function handleInfraHealth(env: Env): Promise<Response> {
  * Individual service health check.
  * Never cached — always fresh.
  */
-export async function handleInfraServiceHealth(
-  env: Env,
-  serviceName: string,
-): Promise<Response> {
+export async function handleInfraServiceHealth(env: Env, serviceName: string): Promise<Response> {
   const svc = SERVICES.find(
     (s) =>
       s.name.toLowerCase() === serviceName.toLowerCase() ||
@@ -449,7 +434,7 @@ export async function handleInfraServiceHealth(
       subdomain: svc.subdomain,
       protocol: svc.protocol,
       url,
-      status: status.ok ? "up" : "degraded",
+      status: status.ok ? 'up' : 'degraded',
       latency: status.latency,
       lastChecked: now,
       version: status.version,
@@ -462,10 +447,10 @@ export async function handleInfraServiceHealth(
       subdomain: svc.subdomain,
       protocol: svc.protocol,
       url,
-      status: "down",
+      status: 'down',
       latency: 0,
       lastChecked: now,
-      error: e instanceof Error ? e.message : "Health check failed",
+      error: e instanceof Error ? e.message : 'Health check failed',
     });
   }
 }
@@ -490,36 +475,30 @@ export async function handleInfraStatus(env: Env): Promise<Response> {
   return buildStatusResponse(health);
 }
 
-function buildStatusResponse(
-  health: InfraHealthResponse,
-): Response {
-  const downServices = health.services.filter((s) => s.status === "down");
-  const degradedServices = health.services.filter(
-    (s) => s.status === "degraded",
-  );
+function buildStatusResponse(health: InfraHealthResponse): Response {
+  const downServices = health.services.filter((s) => s.status === 'down');
+  const degradedServices = health.services.filter((s) => s.status === 'degraded');
 
-  let overallStatus: "operational" | "partial_outage" | "major_outage";
+  let overallStatus: 'operational' | 'partial_outage' | 'major_outage';
   let message: string;
 
   if (downServices.length >= health.services.length / 2) {
-    overallStatus = "major_outage";
+    overallStatus = 'major_outage';
     message = `Major outage affecting ${downServices.length}/${health.services.length} services. Investigation in progress.`;
   } else if (downServices.length > 0 || degradedServices.length > 0) {
-    overallStatus = "partial_outage";
+    overallStatus = 'partial_outage';
     const affected = [
       ...downServices.map((s) => s.name),
       ...degradedServices.map((s) => `${s.name} (degraded)`),
     ];
-    message = `Partial outage affecting: ${affected.join(", ")}.`;
+    message = `Partial outage affecting: ${affected.join(', ')}.`;
   } else {
-    overallStatus = "operational";
-    message = "All self-hosted infrastructure services are operational.";
+    overallStatus = 'operational';
+    message = 'All self-hosted infrastructure services are operational.';
   }
 
-  const serviceStatuses: Record<
-    string,
-    { status: ServiceHealth["status"]; incident?: string }
-  > = {};
+  const serviceStatuses: Record<string, { status: ServiceHealth['status']; incident?: string }> =
+    {};
   for (const svc of health.services) {
     serviceStatuses[svc.name] = {
       status: svc.status,
@@ -530,7 +509,7 @@ function buildStatusResponse(
   // Estimated uptime — in production this would come from Prometheus
   const mockUptimeByService: Record<string, number> = {};
   for (const svc of health.services) {
-    mockUptimeByService[svc.name] = svc.status === "up" ? 100 : 0;
+    mockUptimeByService[svc.name] = svc.status === 'up' ? 100 : 0;
   }
 
   const body: InfraStatusResponse = {
@@ -539,9 +518,7 @@ function buildStatusResponse(
     services: serviceStatuses,
     uptime: {
       overall:
-        health.services.filter((s) => s.status === "up").length /
-        health.services.length *
-        100,
+        (health.services.filter((s) => s.status === 'up').length / health.services.length) * 100,
       byService: mockUptimeByService,
     },
     maintenance: {

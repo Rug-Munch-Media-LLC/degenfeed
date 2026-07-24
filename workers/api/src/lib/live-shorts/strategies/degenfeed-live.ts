@@ -18,11 +18,11 @@
  * Native live support: FULL — this is our own platform.
  */
 
-import type { Env } from "../../../index";
-import type { ProtocolStrategy, LiveSessionInfo, ViewerCountResult } from "../live-strategy";
-import { LIVE_SHORT_STRATEGIES } from "../protocol-strategies";
-import { broadcastToAll } from "../../../ws-broadcast";
-import { CHANNELS } from "../../../ws-channels";
+import type { Env } from '../../../index';
+import { broadcastToAll } from '../../../ws-broadcast';
+import { CHANNELS } from '../../../ws-channels';
+import type { LiveSessionInfo, ProtocolStrategy, ViewerCountResult } from '../live-strategy';
+import { LIVE_SHORT_STRATEGIES } from '../protocol-strategies';
 
 const STRATEGY = LIVE_SHORT_STRATEGIES.degenfeed;
 
@@ -33,7 +33,7 @@ export const degenfeedLiveStrategy: ProtocolStrategy = {
   config: STRATEGY,
 
   async announceLive(
-    env: Env,
+    _env: Env,
     sessionId: string,
     creator: string,
     creatorHandle: string,
@@ -44,7 +44,7 @@ export const degenfeedLiveStrategy: ProtocolStrategy = {
     // Announce to DegenFeed users via WebSocket
     // The live short is already registered in KV by the route handler
     broadcastToAll(CHANNELS.FEED_NEW, {
-      type: "live_short_started",
+      type: 'live_short_started',
       sessionId,
       creator,
       creatorHandle,
@@ -52,7 +52,7 @@ export const degenfeedLiveStrategy: ProtocolStrategy = {
       playbackUrl,
       duration,
       startedAt: Date.now(),
-      platform: "degenfeed",
+      platform: 'degenfeed',
     });
 
     return {
@@ -63,26 +63,23 @@ export const degenfeedLiveStrategy: ProtocolStrategy = {
   },
 
   async updateEnded(
-    env: Env,
+    _env: Env,
     sessionId: string,
-    protocolId: string,
+    _protocolId: string,
     title: string,
     recordingUrl: string,
   ): Promise<void> {
     broadcastToAll(CHANNELS.FEED_NEW, {
-      type: "live_short_ended",
+      type: 'live_short_ended',
       sessionId,
       title,
       recordingUrl,
       endedAt: Date.now(),
-      platform: "degenfeed",
+      platform: 'degenfeed',
     });
   },
 
-  async getViewerCount(
-    env: Env,
-    protocolId: string,
-  ): Promise<ViewerCountResult> {
+  async getViewerCount(env: Env, protocolId: string): Promise<ViewerCountResult> {
     // DegenFeed: count active WebSocket connections viewing this live short
     // In production, this would read from a real-time viewer counter in KV
     // or a Durable Object tracking active connections.
@@ -102,7 +99,7 @@ export const degenfeedLiveStrategy: ProtocolStrategy = {
   },
 
   async postTipNotification(
-    env: Env,
+    _env: Env,
     protocolId: string,
     tipper: string,
     amount: string,
@@ -110,18 +107,16 @@ export const degenfeedLiveStrategy: ProtocolStrategy = {
     message?: string,
   ): Promise<void> {
     // Broadcast tip to all viewers of this live short
-    const fromShort = tipper.length > 10
-      ? `${tipper.slice(0, 6)}...${tipper.slice(-4)}`
-      : tipper;
+    const fromShort = tipper.length > 10 ? `${tipper.slice(0, 6)}...${tipper.slice(-4)}` : tipper;
 
     broadcastToAll(CHANNELS.TIP_RECEIVED, {
-      type: "live_short_tip",
+      type: 'live_short_tip',
       sessionId: protocolId,
       amount,
       chain,
       from: fromShort,
       message: message || `Live short tip! 🎁`,
-      platform: "degenfeed",
+      platform: 'degenfeed',
     });
   },
 };

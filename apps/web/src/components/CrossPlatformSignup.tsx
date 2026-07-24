@@ -380,8 +380,8 @@ export function CrossPlatformSignup({
             <span className="font-bold text-degen-400">$0</span>
           </div>
           <p className="mt-0.5 text-[11px] text-[var(--color-muted)]">
-            Premium is <strong>$10/month</strong> — covers Farcaster ($5) + Lens ($2) gas fees.
-            We pass through gas at cost.{' '}
+            Premium is <strong>$10/month</strong> — covers Farcaster ($5) + Lens ($2) gas fees. We
+            pass through gas at cost.{' '}
             <a href="/premium" className="text-degen-400 hover:underline font-medium">
               See full pricing →
             </a>
@@ -564,9 +564,7 @@ function CostRow({ label, cost, note }: { label: string; cost: string; note: str
       <div className="flex items-center gap-2 shrink-0 ml-3">
         <span
           className={`text-sm font-semibold ${
-            isFree || note.includes('Covered')
-              ? 'text-degen-400'
-              : 'text-[var(--color-fg)]'
+            isFree || note.includes('Covered') ? 'text-degen-400' : 'text-[var(--color-fg)]'
           }`}
         >
           {cost}

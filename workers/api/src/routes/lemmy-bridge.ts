@@ -62,7 +62,10 @@ function getClient(jwt?: string): LemmyClient {
 }
 
 /** Determine the best community for a piece of content. */
-function suggestCommunity(text: string, niches: string[]): { id: string; title: string; confidence: number } {
+function suggestCommunity(
+  text: string,
+  niches: string[],
+): { id: string; title: string; confidence: number } {
   const textLower = text.toLowerCase();
 
   let bestScore = 0;
@@ -108,10 +111,7 @@ function sanitizePostBody(raw: unknown): string {
 
 // ─── POST /api/lemmy/bridge/cross-post — Cross-post TO Lemmy ─────────
 
-export async function handleLemmyBridgeCrossPost(
-  request: Request,
-  env: Env,
-): Promise<Response> {
+export async function handleLemmyBridgeCrossPost(request: Request, env: Env): Promise<Response> {
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
 
@@ -236,10 +236,7 @@ export async function handleLemmyBridgeCrossPost(
 
 // ─── POST /api/lemmy/bridge/share — Share Lemmy post to other protocols
 
-export async function handleLemmyBridgeShare(
-  request: Request,
-  env: Env,
-): Promise<Response> {
+export async function handleLemmyBridgeShare(request: Request, env: Env): Promise<Response> {
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
 
@@ -308,8 +305,9 @@ export async function handleLemmyBridgeShare(
 
           case 'nostr': {
             // Publish kind 1 note via relay
-            const { createTextNote, signEvent, getPublicKey, generateSecretKey } =
-              await import('@degenfeed/nostr-sdk');
+            const { createTextNote, signEvent, getPublicKey, generateSecretKey } = await import(
+              '@degenfeed/nostr-sdk'
+            );
             const { RelayPool } = await import('@degenfeed/nostr-sdk');
             const relays = (env.RELAY_URLS || '').split(',').filter(Boolean);
             if (relays.length === 0) {
@@ -337,7 +335,7 @@ export async function handleLemmyBridgeShare(
             await pool.publish(signed);
             await pool.close();
 
-            const pubkey = getPublicKey(secretKey);
+            const _pubkey = getPublicKey(secretKey);
             results.nostr = {
               ok: true,
               id: signed.id,
@@ -373,29 +371,32 @@ export async function handleLemmyBridgeShare(
             pds.setAuth(sessionData.accessJwt);
 
             // Create a record (skeet) via com.atproto.repo.createRecord
-            const recordRes = await fetch('https://bsky.social/xrpc/com.atproto.repo.createRecord', {
-              method: 'POST',
-              headers: {
-                'content-type': 'application/json',
-                authorization: `Bearer ${sessionData.accessJwt}`,
-              },
-              body: JSON.stringify({
-                repo: sessionData.did,
-                collection: 'app.bsky.feed.post',
-                record: {
-                  text: shareText.slice(0, 300),
-                  createdAt: new Date().toISOString(),
-                  facets: postUrl
-                    ? [
-                        {
-                          index: { byteStart: 0, byteEnd: shareText.length },
-                          features: [{ $type: 'app.bsky.richtext.facet#link', uri: postUrl }],
-                        },
-                      ]
-                    : undefined,
+            const recordRes = await fetch(
+              'https://bsky.social/xrpc/com.atproto.repo.createRecord',
+              {
+                method: 'POST',
+                headers: {
+                  'content-type': 'application/json',
+                  authorization: `Bearer ${sessionData.accessJwt}`,
                 },
-              }),
-            });
+                body: JSON.stringify({
+                  repo: sessionData.did,
+                  collection: 'app.bsky.feed.post',
+                  record: {
+                    text: shareText.slice(0, 300),
+                    createdAt: new Date().toISOString(),
+                    facets: postUrl
+                      ? [
+                          {
+                            index: { byteStart: 0, byteEnd: shareText.length },
+                            features: [{ $type: 'app.bsky.richtext.facet#link', uri: postUrl }],
+                          },
+                        ]
+                      : undefined,
+                  },
+                }),
+              },
+            );
             if (recordRes.ok) {
               const recordData = (await recordRes.json()) as { uri: string; cid: string };
               results.atprotocol = {
@@ -444,10 +445,7 @@ export async function handleLemmyBridgeShare(
 
 // ─── GET /api/lemmy/bridge/status — Bridge status ─────────────────────
 
-export async function handleLemmyBridgeStatus(
-  _request: Request,
-  env: Env,
-): Promise<Response> {
+export async function handleLemmyBridgeStatus(_request: Request, env: Env): Promise<Response> {
   const configStatus: Record<string, { configured: boolean; instance?: string }> = {
     lemmyBotJwt: { configured: !!env.LEMMY_BOT_JWT, instance: BRIDGE_INSTANCE },
     mastodonBot: {

@@ -19,8 +19,8 @@
  *   4. Users can leave anytime with their data and identity
  */
 
-import type { Env } from "../index";
-import type { SessionPayload } from "../session";
+import type { Env } from '../index';
+import type { SessionPayload } from '../session';
 
 // ─── Types ───────────────────────────────────────────────────────────────
 
@@ -126,32 +126,38 @@ export async function verifyUserOwnership(
   const mobilizonHandle = deriveMobilizonHandle(wallet);
 
   // Base URLs
-  const gtsBase = env.GTS_INSTANCE_URL || "https://social.degenfeed.xyz";
-  const pdsBase = env.PDS_INSTANCE_URL || "https://pds.degenfeed.xyz";
-  const relayBase = env.RELAY_INSTANCE_URL || "https://relay.degenfeed.xyz";
-  const peertubeBase =
-    env.PEERTUBE_INSTANCE_URL || "https://video.degenfeed.xyz";
-  const matrixBase = env.MATRIX_INSTANCE_URL || "https://matrix.degenfeed.xyz";
-  const ghostBase = env.GHOST_INSTANCE_URL || "https://articles.degenfeed.xyz";
-  const writefreelyBase =
-    env.WRITEFREELY_INSTANCE_URL || "https://blog.degenfeed.xyz";
-  const owncastBase = env.OWNCAST_INSTANCE_URL || "https://live.degenfeed.xyz";
-  const mobilizonBase =
-    env.MOBILIZON_INSTANCE_URL || "https://events.degenfeed.xyz";
+  const gtsBase = env.GTS_INSTANCE_URL || 'https://social.degenfeed.xyz';
+  const pdsBase = env.PDS_INSTANCE_URL || 'https://pds.degenfeed.xyz';
+  const relayBase = env.RELAY_INSTANCE_URL || 'https://relay.degenfeed.xyz';
+  const peertubeBase = env.PEERTUBE_INSTANCE_URL || 'https://video.degenfeed.xyz';
+  const matrixBase = env.MATRIX_INSTANCE_URL || 'https://matrix.degenfeed.xyz';
+  const ghostBase = env.GHOST_INSTANCE_URL || 'https://articles.degenfeed.xyz';
+  const writefreelyBase = env.WRITEFREELY_INSTANCE_URL || 'https://blog.degenfeed.xyz';
+  const owncastBase = env.OWNCAST_INSTANCE_URL || 'https://live.degenfeed.xyz';
+  const mobilizonBase = env.MOBILIZON_INSTANCE_URL || 'https://events.degenfeed.xyz';
 
   // Run all checks in parallel
-  const [apStatus, atpStatus, nostrStatus, ptStatus, mxStatus, ghStatus, wfStatus, ocStatus, mbStatus] =
-    await Promise.all([
-      checkActivityPub(wallet, gtsHandle, gtsBase, env),
-      checkAtProtocol(wallet, pdsHandle, pdsBase, env),
-      checkNostr(wallet, nostrPubkey, relayBase, env),
-      checkPeerTube(wallet, peertubeUsername, peertubeBase, env),
-      checkMatrix(wallet, matrixUserId, matrixBase, env),
-      checkGhost(wallet, ghostSlug, ghostBase, env),
-      checkWriteFreely(wallet, writefreelyHandle, writefreelyBase, env),
-      checkOwncast(wallet, owncastHandle, owncastBase, env),
-      checkMobilizon(wallet, mobilizonHandle, mobilizonBase, env),
-    ]);
+  const [
+    apStatus,
+    atpStatus,
+    nostrStatus,
+    ptStatus,
+    mxStatus,
+    ghStatus,
+    wfStatus,
+    ocStatus,
+    mbStatus,
+  ] = await Promise.all([
+    checkActivityPub(wallet, gtsHandle, gtsBase, env),
+    checkAtProtocol(wallet, pdsHandle, pdsBase, env),
+    checkNostr(wallet, nostrPubkey, relayBase, env),
+    checkPeerTube(wallet, peertubeUsername, peertubeBase, env),
+    checkMatrix(wallet, matrixUserId, matrixBase, env),
+    checkGhost(wallet, ghostSlug, ghostBase, env),
+    checkWriteFreely(wallet, writefreelyHandle, writefreelyBase, env),
+    checkOwncast(wallet, owncastHandle, owncastBase, env),
+    checkMobilizon(wallet, mobilizonHandle, mobilizonBase, env),
+  ]);
 
   return {
     wallet,
@@ -165,9 +171,9 @@ export async function verifyUserOwnership(
     owncast: ocStatus,
     mobilizon: mbStatus,
     canLeaveAnytime: true,
-    dataExportUrl: "/api/export/all",
-    keyExportInstructions: "/docs/key-export",
-    migrationGuideUrl: "/docs/migration",
+    dataExportUrl: '/api/export/all',
+    keyExportInstructions: '/docs/key-export',
+    migrationGuideUrl: '/docs/migration',
     checkedAt: now,
   };
 }
@@ -179,17 +185,16 @@ export async function verifyUserOwnership(
  * Users get @handle@social.degenfeed.xyz
  */
 async function checkActivityPub(
-  wallet: string,
+  _wallet: string,
   handle: string,
   instanceUrl: string,
   _env: Env,
 ): Promise<ProtocolAccount> {
   const acct = `${handle}@${new URL(instanceUrl).hostname}`;
   try {
-    const res = await fetch(
-      `${instanceUrl}/api/v1/accounts/lookup?acct=${handle}`,
-      { signal: AbortSignal.timeout(5_000) },
-    );
+    const res = await fetch(`${instanceUrl}/api/v1/accounts/lookup?acct=${handle}`, {
+      signal: AbortSignal.timeout(5_000),
+    });
     if (res.ok) {
       return {
         hosted: true,
@@ -264,13 +269,9 @@ async function checkNostr(
 ): Promise<ProtocolAccount> {
   try {
     const res = await fetch(relayUrl, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify([
-        "REQ",
-        "sovereignty-check",
-        { authors: [npub], limit: 1 },
-      ]),
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(['REQ', 'sovereignty-check', { authors: [npub], limit: 1 }]),
       signal: AbortSignal.timeout(5_000),
     });
     if (res.ok) {
@@ -305,10 +306,9 @@ async function checkPeerTube(
 ): Promise<ProtocolAccount> {
   const channelHandle = `${username}@${new URL(instanceUrl).hostname}`;
   try {
-    const res = await fetch(
-      `${instanceUrl}/api/v1/accounts/${username}`,
-      { signal: AbortSignal.timeout(5_000) },
-    );
+    const res = await fetch(`${instanceUrl}/api/v1/accounts/${username}`, {
+      signal: AbortSignal.timeout(5_000),
+    });
     if (res.ok) {
       return {
         hosted: true,
@@ -342,10 +342,9 @@ async function checkMatrix(
   _env: Env,
 ): Promise<ProtocolAccount> {
   try {
-    const res = await fetch(
-      `${homeserverUrl}/_matrix/client/v3/profile/${userId}`,
-      { signal: AbortSignal.timeout(5_000) },
-    );
+    const res = await fetch(`${homeserverUrl}/_matrix/client/v3/profile/${userId}`, {
+      signal: AbortSignal.timeout(5_000),
+    });
     if (res.ok) {
       return {
         hosted: true,
@@ -378,10 +377,9 @@ async function checkGhost(
   _env: Env,
 ): Promise<ProtocolAccount> {
   try {
-    const res = await fetch(
-      `${instanceUrl}/ghost/api/admin/users/slug/${slug}/`,
-      { signal: AbortSignal.timeout(5_000) },
-    );
+    const res = await fetch(`${instanceUrl}/ghost/api/admin/users/slug/${slug}/`, {
+      signal: AbortSignal.timeout(5_000),
+    });
     if (res.ok) {
       return {
         hosted: true,
@@ -413,10 +411,9 @@ async function checkWriteFreely(
 ): Promise<ProtocolAccount> {
   const fullHandle = `${handle}@${new URL(instanceUrl).hostname}`;
   try {
-    const res = await fetch(
-      `${instanceUrl}/api/collections?alias=${handle}`,
-      { signal: AbortSignal.timeout(5_000) },
-    );
+    const res = await fetch(`${instanceUrl}/api/collections?alias=${handle}`, {
+      signal: AbortSignal.timeout(5_000),
+    });
     if (res.ok) {
       return {
         hosted: true,
@@ -525,7 +522,7 @@ export function derivePdsHandle(wallet: string): string {
 export function deriveNostrPubkey(_wallet: string): string {
   // In production, this would be the user's actual npub
   // derived from their Nostr keypair which THEY generate and hold
-  return "npub1...";
+  return 'npub1...';
 }
 
 /** Derive a PeerTube username from wallet address */
@@ -575,62 +572,59 @@ export async function generateExportManifest(
   return {
     wallet,
     exportedAt: new Date().toISOString(),
-    formats: ["json", "csv", "sqlite"],
+    formats: ['json', 'csv', 'sqlite'],
     protocols: {
       activitypub: {
-        label: "GoToSocial (ActivityPub)",
+        label: 'GoToSocial (ActivityPub)',
         dataPaths: [
           `/data/gotosocial/${gtsHandle}/posts`,
           `/data/gotosocial/${gtsHandle}/media`,
           `/data/gotosocial/${gtsHandle}/follows`,
         ],
         exportUrl: `https://social.degenfeed.xyz/settings/export`,
-        format: "json",
-        size: "~50MB",
+        format: 'json',
+        size: '~50MB',
       },
       atproto: {
-        label: "AT Protocol PDS",
-        dataPaths: [
-          `/data/pds/repos/${wallet}`,
-          `/data/pds/blobs/${wallet}`,
-        ],
+        label: 'AT Protocol PDS',
+        dataPaths: [`/data/pds/repos/${wallet}`, `/data/pds/blobs/${wallet}`],
         exportUrl: `https://pds.degenfeed.xyz/xrpc/com.atproto.sync.getRepo?did=${wallet}`,
-        format: "car",
-        size: "~100MB",
+        format: 'car',
+        size: '~100MB',
       },
       nostr: {
-        label: "Nostr",
+        label: 'Nostr',
         dataPaths: [`/data/nostr-relay/events/${wallet}`],
-        exportUrl: "/api/export/nostr",
-        format: "json",
-        size: "~10MB",
+        exportUrl: '/api/export/nostr',
+        format: 'json',
+        size: '~10MB',
       },
       peertube: {
-        label: "PeerTube",
+        label: 'PeerTube',
         dataPaths: [
           `/data/peertube/videos/${peertubeUsername}`,
           `/data/peertube/data/${peertubeUsername}`,
         ],
         exportUrl: `https://video.degenfeed.xyz/api/v1/videos?author=${peertubeUsername}`,
-        format: "mp4+json",
-        size: "~500MB",
+        format: 'mp4+json',
+        size: '~500MB',
       },
       ghost: {
-        label: "Ghost CMS",
+        label: 'Ghost CMS',
         dataPaths: [`/data/ghost/${wallet}`],
         exportUrl: `https://articles.degenfeed.xyz/ghost/api/admin/db/`,
-        format: "json",
-        size: "~5MB",
+        format: 'json',
+        size: '~5MB',
       },
       matrix: {
-        label: "Matrix",
+        label: 'Matrix',
         dataPaths: [`/data/synapse/${wallet}`],
         exportUrl: `https://matrix.degenfeed.xyz/_matrix/client/v3/user/${wallet}/export`,
-        format: "json",
-        size: "~20MB",
+        format: 'json',
+        size: '~20MB',
       },
     },
-    totalSize: "~685MB",
+    totalSize: '~685MB',
     ready: true,
   };
 }

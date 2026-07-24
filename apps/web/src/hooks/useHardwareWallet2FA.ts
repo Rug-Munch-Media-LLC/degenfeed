@@ -23,13 +23,9 @@ interface UseHardwareWallet2FAOptions {
   onError?: (error: string) => void;
 }
 
-interface SignWithEthereumFn {
-  (message: string): Promise<string>;
-}
+type SignWithEthereumFn = (message: string) => Promise<string>;
 
-interface SignWithSolanaFn {
-  (message: string): Promise<string>;
-}
+type SignWithSolanaFn = (message: string) => Promise<string>;
 
 export function useHardwareWallet2FA(opts?: UseHardwareWallet2FAOptions) {
   const [challenge, setChallenge] = useState<string | null>(null);

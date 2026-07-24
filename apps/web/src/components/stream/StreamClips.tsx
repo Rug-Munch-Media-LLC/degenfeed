@@ -12,7 +12,7 @@ function formatViews(n: number): string {
   return String(n);
 }
 
-function formatDate(iso: string): string {
+function _formatDate(iso: string): string {
   const d = new Date(iso);
   const now = Date.now();
   const diff = now - d.getTime();
@@ -29,7 +29,18 @@ export function StreamClips({ clips }: StreamClipsProps) {
   return (
     <section aria-label="Clips" className="space-y-3">
       <div className="flex items-center gap-2">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="text-white/50">
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+          className="text-white/50"
+        >
           <polygon points="23 7 16 12 23 17 23 7" />
           <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
         </svg>
@@ -47,7 +58,13 @@ export function StreamClips({ clips }: StreamClipsProps) {
             {/* Play icon overlay */}
             <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 transition-opacity group-hover:opacity-100">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-degen-500/90 text-black shadow-lg">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  aria-hidden="true"
+                >
                   <polygon points="6 3 20 12 6 21 6 3" />
                 </svg>
               </div>

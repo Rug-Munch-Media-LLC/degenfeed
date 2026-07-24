@@ -320,7 +320,8 @@ export function IdentityLinker() {
                         <span className="rounded-full bg-degen-500/15 px-2 py-0.5 text-[10px] font-medium text-degen-400">
                           ✓ Linked
                         </span>
-                        {linked.find((l: LinkedIdentity) => l.protocol === protocol)?.manualLinking && (
+                        {linked.find((l: LinkedIdentity) => l.protocol === protocol)
+                          ?.manualLinking && (
                           <span className="rounded-full bg-yellow-500/15 px-2 py-0.5 text-[10px] font-medium text-yellow-400">
                             Manual
                           </span>

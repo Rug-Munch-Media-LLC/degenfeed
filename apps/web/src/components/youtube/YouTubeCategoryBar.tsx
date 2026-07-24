@@ -65,7 +65,14 @@ export const YouTubeCategoryBar = memo(function YouTubeCategoryBar({
           className="absolute left-0 z-10 rounded-full p-1 bg-[var(--color-card)] border border-[var(--color-glass-border)] text-[var(--color-muted)] hover:text-[var(--color-fg)] shadow-md transition-colors focus:outline-none"
           aria-label="Scroll categories left"
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
             <path d="M15 18L9 12L15 6" />
           </svg>
         </button>
@@ -109,7 +116,14 @@ export const YouTubeCategoryBar = memo(function YouTubeCategoryBar({
           className="absolute right-0 z-10 rounded-full p-1 bg-[var(--color-card)] border border-[var(--color-glass-border)] text-[var(--color-muted)] hover:text-[var(--color-fg)] shadow-md transition-colors focus:outline-none"
           aria-label="Scroll categories right"
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
             <path d="M9 18L15 12L9 6" />
           </svg>
         </button>

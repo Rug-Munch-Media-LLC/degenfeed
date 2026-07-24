@@ -169,7 +169,9 @@ export default function BuySellInterface({
                   {flashSaleDiscount}% off — limited time only!
                 </p>
               </div>
-              <span className="text-[10px] font-bold text-yellow-400 animate-pulse">{flashSaleDiscount}% OFF</span>
+              <span className="text-[10px] font-bold text-yellow-400 animate-pulse">
+                {flashSaleDiscount}% OFF
+              </span>
             </div>
           </div>
         )}
@@ -185,7 +187,9 @@ export default function BuySellInterface({
                   {creatorEventMessage || 'Special discount from the creator!'}
                 </p>
               </div>
-              <span className="text-[10px] font-bold text-degen-400">{creatorEventDiscount}% OFF</span>
+              <span className="text-[10px] font-bold text-degen-400">
+                {creatorEventDiscount}% OFF
+              </span>
             </div>
           </div>
         )}
@@ -278,16 +282,22 @@ export default function BuySellInterface({
         </div>
 
         {/* Buy the Dip button */}
-        {mode === 'buy' && price24hAgo !== undefined && price24hAgo > 0 && price !== null && price < price24hAgo * 0.95 && (
-          <button
-            type="button"
-            onClick={() => onBuy?.('0.05')}
-            disabled={disabled || loading}
-            className="w-full rounded-xl py-2.5 text-xs font-bold transition-all touch-target bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-500/30 text-cyan-400 hover:from-cyan-500/30 hover:to-blue-500/30"
-          >
-            📉 Buy the Dip! Price is {(price24hAgo && price) ? `${Math.round((1 - price / price24hAgo) * 100)}%` : ''} below 24h high
-          </button>
-        )}
+        {mode === 'buy' &&
+          price24hAgo !== undefined &&
+          price24hAgo > 0 &&
+          price !== null &&
+          price < price24hAgo * 0.95 && (
+            <button
+              type="button"
+              onClick={() => onBuy?.('0.05')}
+              disabled={disabled || loading}
+              className="w-full rounded-xl py-2.5 text-xs font-bold transition-all touch-target bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-500/30 text-cyan-400 hover:from-cyan-500/30 hover:to-blue-500/30"
+            >
+              📉 Buy the Dip! Price is{' '}
+              {price24hAgo && price ? `${Math.round((1 - price / price24hAgo) * 100)}%` : ''} below
+              24h high
+            </button>
+          )}
 
         {/* One-click toggle */}
         {mode === 'buy' && onToggleOneClick && (

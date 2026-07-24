@@ -26,9 +26,9 @@ function resolveWorkerUrl(): string {
 function forwardHeaders(request: Request): Record<string, string> {
   const headers: Record<string, string> = {};
   const cookie = request.headers.get('cookie');
-  if (cookie) headers['Cookie'] = cookie;
+  if (cookie) headers.Cookie = cookie;
   const auth = request.headers.get('authorization');
-  if (auth) headers['Authorization'] = auth;
+  if (auth) headers.Authorization = auth;
   const csrf = request.headers.get('x-csrf-token');
   if (csrf) headers['X-CSRF-Token'] = csrf;
   const forwardedFor = request.headers.get('x-forwarded-for');

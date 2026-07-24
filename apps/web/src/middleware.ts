@@ -19,6 +19,7 @@
  */
 
 import { type NextRequest, NextResponse } from 'next/server';
+import { extractJwtFromRequest, isJwt, type JwtClaims, verifyRmiJwt } from '@/lib/jwt-auth';
 import {
   adminLimiter,
   authLimiter,
@@ -291,30 +292,54 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
   }
 
   // == Step 5: Session verification for mutating methods ==========
-  const secret = process.env.AUTH_SECRET;
-  if (!secret) {
-    console.error('[middleware] AUTH_SECRET environment variable is not set');
-    return stamp(unauthorizedResponse(corsHeaders));
-  }
-
   const authHeader = request.headers.get('authorization');
   const cookieHeader = request.headers.get('cookie');
 
+  // Track authentication source for downstream use
   let payload: SessionPayload | null = null;
+  let jwtClaims: JwtClaims | null = null;
+  let _authMethod: 'wallet' | 'jwt' | null = null;
 
-  // Try Authorization: Bearer <token>
-  if (authHeader?.startsWith(AUTH_TOKEN_PREFIX)) {
-    const token = authHeader.slice(AUTH_TOKEN_PREFIX.length).trim();
-    if (token) {
-      payload = await verifySessionCookie(token, secret);
+  // Try JWT from rmi-backend first (Authorization: Bearer <jwt>)
+  const rmiToken = cookieHeader ? extractJwtFromRequest(request) : null;
+  if (rmiToken && isJwt(rmiToken)) {
+    jwtClaims = await verifyRmiJwt(rmiToken);
+    if (jwtClaims) {
+      _authMethod = 'jwt';
+      // Map JWT claims to session-like payload for downstream middleware
+      payload = {
+        address: jwtClaims.wallet ?? `rmi:${jwtClaims.id}`,
+        chain: 'ethereum',
+        exp: Date.now() + 3600000,
+        nonce: '',
+      };
     }
   }
 
-  // Fall back to session cookie
+  // Fall back to wallet HMAC session (existing flow)
   if (!payload) {
-    const cookieValue = parseSessionCookie(cookieHeader);
-    if (cookieValue) {
-      payload = await verifySessionCookie(cookieValue, secret);
+    const secret = process.env.AUTH_SECRET;
+    if (!secret) {
+      console.error('[middleware] AUTH_SECRET environment variable is not set');
+      return stamp(unauthorizedResponse(corsHeaders));
+    }
+
+    // Try Authorization: Bearer <token>
+    if (authHeader?.startsWith(AUTH_TOKEN_PREFIX)) {
+      const token = authHeader.slice(AUTH_TOKEN_PREFIX.length).trim();
+      if (token) {
+        payload = await verifySessionCookie(token, secret);
+        if (payload) _authMethod = 'wallet';
+      }
+    }
+
+    // Fall back to session cookie
+    if (!payload) {
+      const cookieValue = parseSessionCookie(cookieHeader);
+      if (cookieValue) {
+        payload = await verifySessionCookie(cookieValue, secret);
+        if (payload) _authMethod = 'wallet';
+      }
     }
   }
 

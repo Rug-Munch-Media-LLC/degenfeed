@@ -5,8 +5,8 @@
  * to Telegram channels using the TGBotClient.
  */
 
-import { TGBotClient } from './index';
-import type { TgResponse, TgMessage, TgInputMedia } from './types';
+import type { TGBotClient } from './index';
+import type { TgInputMedia } from './types';
 
 // ─── Upload Photo ──────────────────────────────────────────────────
 

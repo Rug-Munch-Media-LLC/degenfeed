@@ -70,7 +70,11 @@ function Avatar({ src, name, className = '' }: { src?: string; name: string; cla
 
 function LiveDot() {
   return (
-    <span className="relative flex h-2 w-2 items-center justify-center" role="img" aria-label="Live">
+    <span
+      className="relative flex h-2 w-2 items-center justify-center"
+      role="img"
+      aria-label="Live"
+    >
       <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" />
       <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
     </span>
@@ -91,7 +95,12 @@ function formatScheduledDate(iso: string): string {
   const time = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
   if (d.toDateString() === now.toDateString()) return `Today at ${time}`;
   if (d.toDateString() === tomorrow.toDateString()) return `Tomorrow at ${time}`;
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+  return d.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
 }
 
 // === SpaceCard ====================================================
@@ -129,7 +138,9 @@ export function SpaceCard({ space, variant, onJoin, onReminder, onTip }: SpaceCa
             className={`h-9 w-9 ${variant === 'live' ? 'ring-2 ring-degen-500/20' : ''}`}
           />
           <div className="min-w-0">
-            <p className="truncate text-xs font-semibold text-[var(--color-fg)]">{space.hostName}</p>
+            <p className="truncate text-xs font-semibold text-[var(--color-fg)]">
+              {space.hostName}
+            </p>
             <div className="mt-0.5 flex items-center gap-1.5">
               {variant === 'live' && (
                 <>
@@ -144,7 +155,15 @@ export function SpaceCard({ space, variant, onJoin, onReminder, onTip }: SpaceCa
               )}
               {variant === 'upcoming' && space.scheduledAt && (
                 <span className="flex items-center gap-1 text-[10px] font-medium text-cyan-400">
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                  <svg
+                    width="10"
+                    height="10"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    aria-hidden="true"
+                  >
                     <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
                     <line x1="16" y1="2" x2="16" y2="6" />
                     <line x1="8" y1="2" x2="8" y2="6" />
@@ -155,7 +174,10 @@ export function SpaceCard({ space, variant, onJoin, onReminder, onTip }: SpaceCa
               )}
               {variant === 'past' && (
                 <span className="text-[10px] text-[var(--color-muted)]">
-                  Ended{space.recording?.duration ? ` · ${Math.floor(space.recording.duration / 60)}m` : ''}
+                  Ended
+                  {space.recording?.duration
+                    ? ` · ${Math.floor(space.recording.duration / 60)}m`
+                    : ''}
                 </span>
               )}
             </div>
@@ -202,7 +224,16 @@ export function SpaceCard({ space, variant, onJoin, onReminder, onTip }: SpaceCa
       <div className="mb-3 flex items-center gap-2">
         {variant === 'live' && (
           <>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true" className="text-degen-500">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              aria-hidden="true"
+              className="text-degen-500"
+            >
               <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
               <circle cx="12" cy="12" r="3" />
             </svg>

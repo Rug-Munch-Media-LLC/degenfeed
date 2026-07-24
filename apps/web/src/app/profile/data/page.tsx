@@ -276,20 +276,20 @@ export default function DataPage() {
   /* === Collect all user data from IndexedDB ================== */
 
   const collectAllData = useCallback(async (): Promise<Record<string, unknown>> => {
-        const identityId = primaryIdentity?.id ?? '';
-        const [
-          identities,
-          bookmarks,
-          follows,
-          muted,
-          mutedWords,
-          blocked,
-          mutedCommunities,
-          blockedCommunities,
-        ] = await Promise.all([
-          getAllIdentities().catch(() => []),
-          getBookmarks().catch(() => []),
-          getFollows(identityId).catch(() => []),
+    const identityId = primaryIdentity?.id ?? '';
+    const [
+      identities,
+      bookmarks,
+      follows,
+      muted,
+      mutedWords,
+      blocked,
+      mutedCommunities,
+      blockedCommunities,
+    ] = await Promise.all([
+      getAllIdentities().catch(() => []),
+      getBookmarks().catch(() => []),
+      getFollows(identityId).catch(() => []),
       getMutedIdentities(identityId).catch(() => []),
       getMutedWords(identityId).catch(() => []),
       getBlockedUsers(identityId).catch(() => []),

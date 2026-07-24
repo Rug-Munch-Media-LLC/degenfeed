@@ -9,8 +9,8 @@
  */
 
 import { memo, useRef, useState } from 'react';
-import { YouTubeShortsCard } from './YouTubeShortsCard';
 import type { YouTubeShort } from './useYouTube';
+import { YouTubeShortsCard } from './YouTubeShortsCard';
 
 // === Types ===============================================================
 
@@ -73,9 +73,7 @@ export const YouTubeShortsFeed = memo(function YouTubeShortsFeed({
         <h2 className="text-lg font-bold text-[var(--color-fg)] flex items-center gap-2">
           <span className="text-pink-500">{'\uD83D\uDCBF'}</span>
           {title}
-          <span className="text-[11px] font-normal text-[var(--color-muted)] ml-1">
-            YouTube
-          </span>
+          <span className="text-[11px] font-normal text-[var(--color-muted)] ml-1">YouTube</span>
         </h2>
         {/* Scroll buttons (desktop) */}
         <div className="hidden md:flex items-center gap-1">
@@ -86,7 +84,14 @@ export const YouTubeShortsFeed = memo(function YouTubeShortsFeed({
             className="rounded-full p-1.5 border border-[var(--color-glass-border)] text-[var(--color-muted)] hover:text-[var(--color-fg)] disabled:opacity-30 transition-colors focus:outline-none"
             aria-label="Scroll left"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
               <path d="M15 18L9 12L15 6" />
             </svg>
           </button>
@@ -97,7 +102,14 @@ export const YouTubeShortsFeed = memo(function YouTubeShortsFeed({
             className="rounded-full p-1.5 border border-[var(--color-glass-border)] text-[var(--color-muted)] hover:text-[var(--color-fg)] disabled:opacity-30 transition-colors focus:outline-none"
             aria-label="Scroll right"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
               <path d="M9 18L15 12L9 6" />
             </svg>
           </button>
@@ -106,7 +118,10 @@ export const YouTubeShortsFeed = memo(function YouTubeShortsFeed({
 
       {/* Error */}
       {error && (
-        <div className="mb-3 rounded-lg border border-red-900/30 bg-red-950/20 px-4 py-2 text-xs text-red-400" role="alert">
+        <div
+          className="mb-3 rounded-lg border border-red-900/30 bg-red-950/20 px-4 py-2 text-xs text-red-400"
+          role="alert"
+        >
           {error}
         </div>
       )}

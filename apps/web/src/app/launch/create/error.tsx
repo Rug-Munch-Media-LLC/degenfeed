@@ -21,9 +21,7 @@ export default function CreateCoinError({
           ⚠
         </span>
       </div>
-      <h1 className="mb-2 text-2xl font-bold text-[var(--color-fg)]">
-        Something went wrong
-      </h1>
+      <h1 className="mb-2 text-2xl font-bold text-[var(--color-fg)]">Something went wrong</h1>
       <p className="mb-8 text-sm text-[var(--color-muted)]">
         Failed to load the coin creation wizard. Please try again.
       </p>

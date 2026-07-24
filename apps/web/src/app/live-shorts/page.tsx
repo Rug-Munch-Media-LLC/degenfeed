@@ -40,7 +40,6 @@ import { LiveShortsHeader } from '../../components/live-shorts/LiveShortsHeader'
 import type {
   LiveShortProtocol,
   LiveShortSession,
-  StartLiveShortInput,
 } from '../../components/live-shorts/useLiveShorts';
 import { useActiveLiveShorts } from '../../components/live-shorts/useLiveShorts';
 

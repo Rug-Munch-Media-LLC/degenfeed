@@ -263,7 +263,7 @@ function VideoPlayer({
 export function LiveShortsViewer({ session, onClose, onShare }: LiveShortsViewerProps) {
   const [chatOpen, setChatOpen] = useState(false);
   const [ended, setEnded] = useState(false);
-  const [showTipModal, setShowTipModal] = useState(false);
+  const [_showTipModal, setShowTipModal] = useState(false);
 
   const { tips } = useLiveShortTips(session.id);
   const { total: viewerTotal, breakdown } = useLiveShortViewers(session.id);

@@ -99,21 +99,27 @@ export function validateVestingConfig(config: VestingConfig, reputationScore: nu
     config.initialUnlockBps < VESTING_CONSTRAINTS.INITIAL_UNLOCK_BPS_MIN ||
     config.initialUnlockBps > VESTING_CONSTRAINTS.INITIAL_UNLOCK_BPS_MAX
   ) {
-    errors.push(`Initial unlock must be 0-${VESTING_CONSTRAINTS.INITIAL_UNLOCK_BPS_MAX} bps (0-30%)`);
+    errors.push(
+      `Initial unlock must be 0-${VESTING_CONSTRAINTS.INITIAL_UNLOCK_BPS_MAX} bps (0-30%)`,
+    );
   }
 
   if (
     config.cliffDuration < VESTING_CONSTRAINTS.CLIFF_DURATION_MIN ||
     config.cliffDuration > VESTING_CONSTRAINTS.CLIFF_DURATION_MAX
   ) {
-    errors.push(`Cliff duration must be 0-${VESTING_CONSTRAINTS.CLIFF_DURATION_MAX} seconds (0-90 days)`);
+    errors.push(
+      `Cliff duration must be 0-${VESTING_CONSTRAINTS.CLIFF_DURATION_MAX} seconds (0-90 days)`,
+    );
   }
 
   if (
     config.vestingDuration < VESTING_CONSTRAINTS.VESTING_DURATION_MIN ||
     config.vestingDuration > VESTING_CONSTRAINTS.VESTING_DURATION_MAX
   ) {
-    errors.push(`Vesting duration must be ${VESTING_CONSTRAINTS.VESTING_DURATION_MIN}-${VESTING_CONSTRAINTS.VESTING_DURATION_MAX} seconds (7 days-2 years)`);
+    errors.push(
+      `Vesting duration must be ${VESTING_CONSTRAINTS.VESTING_DURATION_MIN}-${VESTING_CONSTRAINTS.VESTING_DURATION_MAX} seconds (7 days-2 years)`,
+    );
   }
 
   // Reputation gate
@@ -130,10 +136,14 @@ export function validateVestingConfig(config: VestingConfig, reputationScore: nu
   const mostLiberal = available[available.length - 1];
   if (mostLiberal) {
     if (config.initialUnlockBps > mostLiberal.config.initialUnlockBps) {
-      errors.push(`Initial unlock cannot exceed ${mostLiberal.config.initialUnlockBps} bps for your reputation`);
+      errors.push(
+        `Initial unlock cannot exceed ${mostLiberal.config.initialUnlockBps} bps for your reputation`,
+      );
     }
     if (config.vestingDuration < mostLiberal.config.vestingDuration && !isExactPreset) {
-      errors.push(`Vesting duration cannot be shorter than ${mostLiberal.config.vestingDuration}s for your reputation`);
+      errors.push(
+        `Vesting duration cannot be shorter than ${mostLiberal.config.vestingDuration}s for your reputation`,
+      );
     }
   }
 
@@ -163,7 +173,10 @@ export function generateVestingSchedule(
 ): VestingSchedulePoint[] {
   const points: VestingSchedulePoint[] = [];
   const daySeconds = 86_400;
-  const totalDays = Math.ceil(config.vestingDuration / daySeconds) + Math.ceil(config.cliffDuration / daySeconds) + 1;
+  const totalDays =
+    Math.ceil(config.vestingDuration / daySeconds) +
+    Math.ceil(config.cliffDuration / daySeconds) +
+    1;
   const maxDays = Math.min(totalDays, 730); // cap at 2 years
 
   for (let day = 0; day <= maxDays; day++) {
@@ -184,7 +197,11 @@ export function generateVestingSchedule(
     }
 
     // Cliff end
-    if (config.cliffDuration > 0 && elapsed >= config.cliffDuration && points.findIndex(p => p.isCliffEnd && p.day === day / 1) === -1) {
+    if (
+      config.cliffDuration > 0 &&
+      elapsed >= config.cliffDuration &&
+      points.findIndex((p) => p.isCliffEnd && p.day === day / 1) === -1
+    ) {
       const cliffDay = Math.floor(config.cliffDuration / daySeconds);
       const initialPct = config.initialUnlockBps / 100;
       points.push({
@@ -202,7 +219,8 @@ export function generateVestingSchedule(
     if (elapsed >= config.cliffDuration) {
       const elapsedSinceCliff = elapsed - config.cliffDuration;
       const vestProgress = Math.min(elapsedSinceCliff / config.vestingDuration, 1);
-      const pct = config.initialUnlockBps / 100 + (100 - config.initialUnlockBps / 100) * vestProgress;
+      const pct =
+        config.initialUnlockBps / 100 + (100 - config.initialUnlockBps / 100) * vestProgress;
       const unlocked = Number((totalAllocation * BigInt(Math.floor(pct * 100))) / 10_000n);
 
       // Only add milestone points (every 10% or key transitions)

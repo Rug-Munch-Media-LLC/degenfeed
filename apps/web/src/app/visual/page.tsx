@@ -15,7 +15,10 @@ import { ErrorBoundary } from '../../components/ErrorBoundary';
 
 // Dynamic import to avoid SSR issues with intersection observer / canvas
 const VisualFeedLayout = dynamic(
-  () => import('../../components/visual-feed/VisualFeedLayout').then((m) => ({ default: m.VisualFeedLayout })),
+  () =>
+    import('../../components/visual-feed/VisualFeedLayout').then((m) => ({
+      default: m.VisualFeedLayout,
+    })),
   {
     ssr: false,
     loading: () => <VisualFeedSkeleton />,
@@ -24,7 +27,11 @@ const VisualFeedLayout = dynamic(
 
 function VisualFeedSkeleton() {
   return (
-    <div className="mx-auto w-full max-w-7xl px-3 py-4 sm:px-6 lg:px-8 animate-page-enter" role="status" aria-label="Loading visual feed">
+    <div
+      className="mx-auto w-full max-w-7xl px-3 py-4 sm:px-6 lg:px-8 animate-page-enter"
+      role="status"
+      aria-label="Loading visual feed"
+    >
       <div className="sr-only">Loading visual feed...</div>
       {/* Header skeleton */}
       <div className="mb-6">

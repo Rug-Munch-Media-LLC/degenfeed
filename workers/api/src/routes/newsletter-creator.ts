@@ -15,9 +15,9 @@
  *   GET    /api/newsletter/creator/health          EmailEngine health check
  */
 
-import { EmailEngine, type EmailEngineConfig } from '../lib/email-engine';
 import type { Env } from '../index';
 import { jsonResponse, noCacheJsonResponse } from '../index';
+import { EmailEngine, type EmailEngineConfig } from '../lib/email-engine';
 
 // ─── Helpers ─────────────────────────────────────────────────
 
@@ -40,10 +40,7 @@ function getUserId(request: Request, env: Env): string | null {
 
 function isAdmin(request: Request, env: Env): boolean {
   const auth = request.headers.get('authorization') ?? '';
-  return (
-    auth === `Bearer ${env.NEWSLETTER_API_KEY}` ||
-    auth === `Bearer ${env.ADMIN_API_KEY}`
-  );
+  return auth === `Bearer ${env.NEWSLETTER_API_KEY}` || auth === `Bearer ${env.ADMIN_API_KEY}`;
 }
 
 function getCreatorId(request: Request, env: Env): string | null {
@@ -96,10 +93,7 @@ function createEngine(env: Env): EmailEngine | null {
 
 // ─── POST /api/newsletter/creator/send ──────────────────────
 
-export async function handleCreatorNewsletterSend(
-  request: Request,
-  env: Env,
-): Promise<Response> {
+export async function handleCreatorNewsletterSend(request: Request, env: Env): Promise<Response> {
   if (request.method !== 'POST') {
     return jsonResponse({ error: 'Method not allowed' }, 405);
   }
@@ -111,9 +105,13 @@ export async function handleCreatorNewsletterSend(
 
   const engine = createEngine(env);
   if (!engine) {
-    return jsonResponse({
-      error: 'Email engine not configured (MAILGUN_API_KEY, MAILGUN_DOMAIN, EMAIL_FROM_ADDRESS required)',
-    }, 500);
+    return jsonResponse(
+      {
+        error:
+          'Email engine not configured (MAILGUN_API_KEY, MAILGUN_DOMAIN, EMAIL_FROM_ADDRESS required)',
+      },
+      500,
+    );
   }
 
   let body: {
@@ -155,10 +153,13 @@ export async function handleCreatorNewsletterSend(
       minTokenHold: body.minTokenHold,
     });
 
-    return jsonResponse({
-      ok: true,
-      result,
-    }, result.success ? 200 : 500);
+    return jsonResponse(
+      {
+        ok: true,
+        result,
+      },
+      result.success ? 200 : 500,
+    );
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     return jsonResponse({ error: `Send failed: ${msg}` }, 500);
@@ -269,13 +270,16 @@ export async function handleCreatorNewsletterSubscribe(
       engine.sendWelcomeEmail(email, creatorId).catch(() => {});
     }
 
-    return jsonResponse({
-      ok: true,
-      email,
-      tier,
-      creatorId,
-      action: 'subscribed',
-    }, 201);
+    return jsonResponse(
+      {
+        ok: true,
+        email,
+        tier,
+        creatorId,
+        action: 'subscribed',
+      },
+      201,
+    );
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     return jsonResponse({ error: msg }, 500);
@@ -327,10 +331,7 @@ export async function handleCreatorNewsletterUnsubscribe(
 
 // ─── GET /api/newsletter/creator/count ──────────────────────
 
-export async function handleCreatorNewsletterCount(
-  request: Request,
-  env: Env,
-): Promise<Response> {
+export async function handleCreatorNewsletterCount(request: Request, env: Env): Promise<Response> {
   if (request.method !== 'GET') {
     return jsonResponse({ error: 'Method not allowed' }, 405);
   }
@@ -359,10 +360,7 @@ export async function handleCreatorNewsletterCount(
 
 // ─── GET /api/newsletter/creator/stats/:postId ──────────────
 
-export async function handleCreatorNewsletterStats(
-  request: Request,
-  env: Env,
-): Promise<Response> {
+export async function handleCreatorNewsletterStats(request: Request, env: Env): Promise<Response> {
   if (request.method !== 'GET') {
     return jsonResponse({ error: 'Method not allowed' }, 405);
   }
@@ -389,10 +387,7 @@ export async function handleCreatorNewsletterStats(
 
 // ─── POST /api/newsletter/creator/webhook/mailgun ──────────
 
-export async function handleMailgunWebhook(
-  request: Request,
-  env: Env,
-): Promise<Response> {
+export async function handleMailgunWebhook(request: Request, env: Env): Promise<Response> {
   if (request.method !== 'POST') {
     return jsonResponse({ error: 'Method not allowed' }, 405);
   }
@@ -439,7 +434,7 @@ export async function handleMailgunWebhook(
   }
 
   const eventData = body['event-data'] as Record<string, unknown> | undefined;
-  const event = eventData?.event as string ?? (body.event as string);
+  const event = (eventData?.event as string) ?? (body.event as string);
 
   if (event) {
     await engine.processMailgunWebhook(event, body);
@@ -451,10 +446,7 @@ export async function handleMailgunWebhook(
 
 // ─── GET /api/newsletter/creator/health ─────────────────────
 
-export async function handleCreatorNewsletterHealth(
-  request: Request,
-  env: Env,
-): Promise<Response> {
+export async function handleCreatorNewsletterHealth(request: Request, env: Env): Promise<Response> {
   if (request.method !== 'GET') {
     return jsonResponse({ error: 'Method not allowed' }, 405);
   }

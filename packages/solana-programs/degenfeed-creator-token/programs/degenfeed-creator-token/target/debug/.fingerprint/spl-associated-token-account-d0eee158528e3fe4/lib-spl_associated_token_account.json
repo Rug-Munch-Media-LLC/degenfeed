@@ -1,1 +1,29 @@
-{"rustc":9777074978655410247,"features":"[\"no-entrypoint\"]","declared_features":"[\"no-entrypoint\", \"test-sbf\"]","target":13653270454399553497,"profile":2241668132362809309,"path":18036626510063110423,"deps":[[58942224022519477,"solana_program",false,17003232644796355677],[3945313091618437376,"borsh",false,1437989340767188904],[5157631553186200874,"num_traits",false,14352592734685700884],[8008191657135824715,"thiserror",false,345000375925994425],[10033748892508491956,"spl_token",false,13241592424051212136],[11263754829263059703,"num_derive",false,5311617551746577747],[15559901821075876280,"spl_token_2022",false,730923431759928875],[16912878040847476921,"assert_matches",false,10205550666584050352]],"local":[{"CheckDepInfo":{"dep_info":"debug/.fingerprint/spl-associated-token-account-d0eee158528e3fe4/dep-lib-spl_associated_token_account","checksum":false}}],"rustflags":[],"config":8247474407144887393,"compile_kind":0}
+{
+  "rustc": 9777074978655410247,
+  "features": "[\"no-entrypoint\"]",
+  "declared_features": "[\"no-entrypoint\", \"test-sbf\"]",
+  "target": 13653270454399553497,
+  "profile": 2241668132362809309,
+  "path": 18036626510063110423,
+  "deps": [
+    [58942224022519477, "solana_program", false, 17003232644796355677],
+    [3945313091618437376, "borsh", false, 1437989340767188904],
+    [5157631553186200874, "num_traits", false, 14352592734685700884],
+    [8008191657135824715, "thiserror", false, 345000375925994425],
+    [10033748892508491956, "spl_token", false, 13241592424051212136],
+    [11263754829263059703, "num_derive", false, 5311617551746577747],
+    [15559901821075876280, "spl_token_2022", false, 730923431759928875],
+    [16912878040847476921, "assert_matches", false, 10205550666584050352]
+  ],
+  "local": [
+    {
+      "CheckDepInfo": {
+        "dep_info": "debug/.fingerprint/spl-associated-token-account-d0eee158528e3fe4/dep-lib-spl_associated_token_account",
+        "checksum": false
+      }
+    }
+  ],
+  "rustflags": [],
+  "config": 8247474407144887393,
+  "compile_kind": 0
+}

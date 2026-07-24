@@ -1,1 +1,23 @@
-{"rustc":9777074978655410247,"features":"[\"default\", \"std\"]","declared_features":"[\"bytes\", \"const-generics\", \"default\", \"rc\", \"std\"]","target":4760962088884618199,"profile":2241668132362809309,"path":16161318408366112319,"deps":[[6124836340423303934,"hashbrown",false,18296996438307364373],[6158418542118401464,"borsh_derive",false,10112757019565513000]],"local":[{"CheckDepInfo":{"dep_info":"debug/.fingerprint/borsh-ba87777e5b23c744/dep-lib-borsh","checksum":false}}],"rustflags":[],"config":8247474407144887393,"compile_kind":0}
+{
+  "rustc": 9777074978655410247,
+  "features": "[\"default\", \"std\"]",
+  "declared_features": "[\"bytes\", \"const-generics\", \"default\", \"rc\", \"std\"]",
+  "target": 4760962088884618199,
+  "profile": 2241668132362809309,
+  "path": 16161318408366112319,
+  "deps": [
+    [6124836340423303934, "hashbrown", false, 18296996438307364373],
+    [6158418542118401464, "borsh_derive", false, 10112757019565513000]
+  ],
+  "local": [
+    {
+      "CheckDepInfo": {
+        "dep_info": "debug/.fingerprint/borsh-ba87777e5b23c744/dep-lib-borsh",
+        "checksum": false
+      }
+    }
+  ],
+  "rustflags": [],
+  "config": 8247474407144887393,
+  "compile_kind": 0
+}

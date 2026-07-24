@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useCallback, useState } from 'react';
-import { type PremiumTier, TIERS } from '../hooks/usePremium';
+import type { PremiumTier } from '../hooks/usePremium';
 import SubscriberBadge from './SubscriberBadge';
 
 interface SubscribeButtonProps {

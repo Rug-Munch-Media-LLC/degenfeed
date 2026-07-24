@@ -77,11 +77,11 @@ const faqs = [
   },
   {
     q: 'Can I be deplatformed?',
-    a: 'No. DegenFeed is built on open protocols — Nostr, Farcaster, Bluesky, Lens, and Mastodon. Your identity lives on these protocols, not on DegenFeed. Even if DegenFeed\'s hosted instance went offline, your accounts on each protocol remain independently accessible. You can self-host the entire DegenFeed stack on your own infrastructure, ensuring no single entity can ever silence you. Content moderation on DegenFeed\'s hosted instance follows our Community Guidelines, but your fundamental access to the underlying protocols is never at risk.',
+    a: "No. DegenFeed is built on open protocols — Nostr, Farcaster, Bluesky, Lens, and Mastodon. Your identity lives on these protocols, not on DegenFeed. Even if DegenFeed's hosted instance went offline, your accounts on each protocol remain independently accessible. You can self-host the entire DegenFeed stack on your own infrastructure, ensuring no single entity can ever silence you. Content moderation on DegenFeed's hosted instance follows our Community Guidelines, but your fundamental access to the underlying protocols is never at risk.",
   },
   {
     q: 'How do I own my data?',
-    a: 'Your data ownership is baked into DegenFeed\'s architecture. Social protocol credentials (Nostr nsec, Bluesky app passwords) are encrypted in your browser and never sent to our servers. Your posts are published to open protocols where you control the keys. You can export all your data at any time via /api/account/export in JSON or CSV format. If you self-host, you have full database access. DegenFeed never sells, rents, or monetizes your data — there are no ads, no trackers, and no data brokers.',
+    a: "Your data ownership is baked into DegenFeed's architecture. Social protocol credentials (Nostr nsec, Bluesky app passwords) are encrypted in your browser and never sent to our servers. Your posts are published to open protocols where you control the keys. You can export all your data at any time via /api/account/export in JSON or CSV format. If you self-host, you have full database access. DegenFeed never sells, rents, or monetizes your data — there are no ads, no trackers, and no data brokers.",
   },
   {
     q: 'How do I go live / start livestreaming?',
@@ -93,7 +93,7 @@ const faqs = [
   },
   {
     q: 'When is DegenFeed launching?',
-    a: 'DegenFeed is already live at app.degenfeed.xyz! The feed is fully operational — you can browse content from all 15+ protocols right now without an account. The waitlist is for premium features: cross-protocol posting, creator coins, livestreaming, and analytics. We\'re rolling out these features gradually through Q3–Q4 2026. Join the waitlist to get early access as each feature launches.',
+    a: "DegenFeed is already live at app.degenfeed.xyz! The feed is fully operational — you can browse content from all 15+ protocols right now without an account. The waitlist is for premium features: cross-protocol posting, creator coins, livestreaming, and analytics. We're rolling out these features gradually through Q3–Q4 2026. Join the waitlist to get early access as each feature launches.",
   },
   {
     q: 'How does the algorithm rank posts?',

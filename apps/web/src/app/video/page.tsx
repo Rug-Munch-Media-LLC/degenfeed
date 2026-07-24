@@ -20,15 +20,15 @@
 import { ErrorBoundary } from '@degenfeed/ui';
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { VideoHubLayout } from '../../components/video/VideoHubLayout';
-import { VideoSourceFilter } from '../../components/video/VideoSourceFilter';
-import type { AggregatorSourceCount } from '../../components/video/VideoSourceFilter';
 import {
   type UnifiedVideo,
   type UnifiedVideoFeed,
   useAggregatorFeed,
   useVideoCategories,
 } from '../../components/video/useVideoHub';
+import { VideoHubLayout } from '../../components/video/VideoHubLayout';
+import type { AggregatorSourceCount } from '../../components/video/VideoSourceFilter';
+import { VideoSourceFilter } from '../../components/video/VideoSourceFilter';
 
 // === Platform color mapping (matches VideoSourceBadge) ===================
 
@@ -47,7 +47,7 @@ export default function VideoHubPage() {
   // URL params
   const [category, setCategory] = useState('all');
   const [source, setSource] = useState('all');
-  const [sort] = useState('trending');
+  const [_sort] = useState('trending');
   const [cursor, setCursor] = useState<string | undefined>();
   const [allVideos, setAllVideos] = useState<UnifiedVideo[]>([]);
   const [hasMore, setHasMore] = useState(true);
@@ -90,7 +90,7 @@ export default function VideoHubPage() {
     setCursor(undefined);
     setAllVideos([]);
     setHasMore(true);
-  }, [category, source, sort]);
+  }, []);
 
   // Filter videos client-side by source when a source is selected
   const filteredVideos = useMemo(() => {
@@ -134,15 +134,14 @@ export default function VideoHubPage() {
   const handleLoadMore = useCallback(() => {
     if (loadingMore || !hasMore) return;
     setLoadingMore(true);
-    setCursor(String((allVideos.length / 60) + 1));
+    setCursor(String(allVideos.length / 60 + 1));
     setLoadingMore(false);
   }, [loadingMore, hasMore, allVideos.length]);
 
   const handleSearch = useCallback((query: string, searchSource: string) => {
     const params = new URLSearchParams({ q: query });
     if (searchSource !== 'all') params.set('source', searchSource);
-    window.location.href =
-      `/video?search=${encodeURIComponent(query)}${searchSource !== 'all' ? `&source=${searchSource}` : ''}`;
+    window.location.href = `/video?search=${encodeURIComponent(query)}${searchSource !== 'all' ? `&source=${searchSource}` : ''}`;
   }, []);
 
   // Map source counts to filter options with colors
@@ -157,7 +156,12 @@ export default function VideoHubPage() {
     const standardPlatforms = ['youtube', 'twitch', 'rumble', 'peertube', 'zora'];
     for (const pid of standardPlatforms) {
       if (!mapped.find((m) => m.id === pid) && allVideos.length > 0) {
-        mapped.push({ id: pid, label: pid.charAt(0).toUpperCase() + pid.slice(1), count: 0, color: PLATFORM_COLORS[pid] ?? '#888' });
+        mapped.push({
+          id: pid,
+          label: pid.charAt(0).toUpperCase() + pid.slice(1),
+          count: 0,
+          color: PLATFORM_COLORS[pid] ?? '#888',
+        });
       }
     }
     return mapped;

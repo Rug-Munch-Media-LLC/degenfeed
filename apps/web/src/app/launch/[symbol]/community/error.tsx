@@ -25,9 +25,7 @@ export default function CommunityError({
           ⚠
         </span>
       </div>
-      <h1 className="mb-2 text-2xl font-bold text-[var(--color-fg)]">
-        Community not available
-      </h1>
+      <h1 className="mb-2 text-2xl font-bold text-[var(--color-fg)]">Community not available</h1>
       <p className="mb-8 text-sm text-[var(--color-muted)]">
         Something went wrong loading the community hub.
       </p>

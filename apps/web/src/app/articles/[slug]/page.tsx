@@ -1,10 +1,9 @@
 'use client';
 
-import { useAuth } from '../../../components/AuthProvider';
-import { useWeb3 } from '../../../components/Web3Provider';
 import { formatTimeAgo, shortenAddress } from '@degenfeed/utils';
 import { useParams } from 'next/navigation';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useWeb3 } from '../../../components/Web3Provider';
 
 // === Types =========================================================
 
@@ -68,9 +67,7 @@ function TipModal({
           <div className="text-center">
             <div className="mb-3 text-3xl">✦</div>
             <h3 className="mb-2 text-lg font-semibold text-[#e5e7eb]">Tip Sent!</h3>
-            <p className="mb-4 text-sm text-[#9ca3af]">
-              Thank you for supporting this article.
-            </p>
+            <p className="mb-4 text-sm text-[#9ca3af]">Thank you for supporting this article.</p>
             <button
               onClick={onClose}
               className="rounded-lg bg-[#00ff41] px-6 py-2 text-sm font-semibold text-black transition-colors hover:bg-[#00cc34]"
@@ -81,7 +78,9 @@ function TipModal({
         ) : (
           <>
             <h3 className="mb-1 text-lg font-semibold text-[#e5e7eb]">✦ Tip the Author</h3>
-            <p className="mb-4 text-sm text-[#9ca3af]">Support &ldquo;{postTitle.slice(0, 60)}&rdquo;</p>
+            <p className="mb-4 text-sm text-[#9ca3af]">
+              Support &ldquo;{postTitle.slice(0, 60)}&rdquo;
+            </p>
 
             {!address ? (
               <div className="mb-4 rounded-lg bg-[#1f2937] p-4 text-center">
@@ -124,9 +123,7 @@ function TipModal({
                 </div>
 
                 <div className="mb-4 rounded-lg bg-[#1f2937] p-3">
-                  <p className="text-xs text-[#6b7280]">
-                    From: {shortenAddress(address)}
-                  </p>
+                  <p className="text-xs text-[#6b7280]">From: {shortenAddress(address)}</p>
                   <p className="mt-1 text-xs text-[#6b7280]">
                     You will send {amount} {currency}
                   </p>
@@ -163,11 +160,27 @@ function ShareMenu({ post }: { post: GhostPost }) {
   const text = `${post.title} — DegenFeed`;
 
   const shareLinks = [
-    { name: 'Twitter/X', url: `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, color: '#1da1f2' },
+    {
+      name: 'Twitter/X',
+      url: `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`,
+      color: '#1da1f2',
+    },
     { name: 'Nostr', url: `nostr:${encodeURIComponent(url)}`, color: '#8e30eb' },
-    { name: 'Warpcast', url: `https://warpcast.com/~/compose?text=${encodeURIComponent(`${text} ${url}`)}`, color: '#8a63d2' },
-    { name: 'Lens', url: `https://hey.xyz/?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`, color: '#abfe2c' },
-    { name: 'Bluesky', url: `https://bsky.app/intent/compose?text=${encodeURIComponent(`${text} ${url}`)}`, color: '#1185fe' },
+    {
+      name: 'Warpcast',
+      url: `https://warpcast.com/~/compose?text=${encodeURIComponent(`${text} ${url}`)}`,
+      color: '#8a63d2',
+    },
+    {
+      name: 'Lens',
+      url: `https://hey.xyz/?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`,
+      color: '#abfe2c',
+    },
+    {
+      name: 'Bluesky',
+      url: `https://bsky.app/intent/compose?text=${encodeURIComponent(`${text} ${url}`)}`,
+      color: '#1185fe',
+    },
     { name: 'Copy Link', url: '', color: '#6b7280' },
   ];
 
@@ -176,7 +189,9 @@ function ShareMenu({ post }: { post: GhostPost }) {
       try {
         await navigator.clipboard.writeText(url);
         alert('Link copied!');
-      } catch { /* fallback */ }
+      } catch {
+        /* fallback */
+      }
       return;
     }
     window.open(link.url, '_blank', 'noopener,noreferrer');
@@ -280,7 +295,7 @@ function TokenGate({ post }: { post: GhostPost }) {
             minTokenHold: post.minTokenHold,
           }),
         });
-        const data = await res.json() as { ok: boolean };
+        const data = (await res.json()) as { ok: boolean };
         setHasToken(data.ok);
       } catch {
         setHasToken(false);
@@ -316,7 +331,7 @@ function TokenGate({ post }: { post: GhostPost }) {
       </p>
       <div className="flex justify-center gap-3">
         <button
-          onClick={() => window.location.href = '/premium'}
+          onClick={() => (window.location.href = '/premium')}
           className="rounded-lg bg-[#00ff41] px-6 py-2 text-sm font-semibold text-black transition-colors hover:bg-[#00cc34]"
         >
           Upgrade to Premium
@@ -354,7 +369,7 @@ export default function ArticlePage() {
           if (res.status === 404) throw new Error('Article not found');
           throw new Error('Failed to load article');
         }
-        const data = await res.json() as { post: GhostPost };
+        const data = (await res.json()) as { post: GhostPost };
         setPost(data.post);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unknown error');
@@ -412,9 +427,13 @@ export default function ArticlePage() {
     <article className="mx-auto max-w-3xl px-4 py-8">
       {/* Breadcrumb */}
       <nav className="mb-6 text-xs text-[#6b7280]">
-        <a href="/" className="hover:text-[#00ff41]">Home</a>
+        <a href="/" className="hover:text-[#00ff41]">
+          Home
+        </a>
         <span className="mx-2">/</span>
-        <a href="/articles" className="hover:text-[#00ff41]">Articles</a>
+        <a href="/articles" className="hover:text-[#00ff41]">
+          Articles
+        </a>
         <span className="mx-2">/</span>
         <span className="text-[#9ca3af]">{post.slug}</span>
       </nav>
@@ -450,7 +469,11 @@ export default function ArticlePage() {
               <div key={author.name} className="flex items-center gap-2">
                 <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#1f2937] text-xs font-semibold text-[#00ff41]">
                   {author.avatar ? (
-                    <img src={author.avatar} alt={author.name} className="h-9 w-9 rounded-full object-cover" />
+                    <img
+                      src={author.avatar}
+                      alt={author.name}
+                      className="h-9 w-9 rounded-full object-cover"
+                    />
                   ) : (
                     author.name.charAt(0).toUpperCase()
                   )}

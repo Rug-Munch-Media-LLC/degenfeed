@@ -1,8 +1,8 @@
 'use client';
 
-import { useCallback, useState } from 'react';
 import Image from 'next/image';
-import type { FeddyCommunity, CommunityPost } from './types';
+import { useCallback, useState } from 'react';
+import type { CommunityPost, FeddyCommunity } from './types';
 
 // === Helpers ===========================================================
 
@@ -82,14 +82,10 @@ function PostComposer({
             className="w-full resize-none rounded-lg border border-[var(--color-border)] bg-[var(--color-overlay)] p-3 text-sm text-[var(--color-fg)] placeholder-[var(--color-muted)] outline-none transition-all focus:border-degen-500/40"
           />
 
-          {error && (
-            <p className="mt-2 text-xs text-red-400">{error}</p>
-          )}
+          {error && <p className="mt-2 text-xs text-red-400">{error}</p>}
 
           <div className="mt-2 flex items-center justify-between">
-            <span className="text-[10px] text-[var(--color-muted)]">
-              {text.length}/5000
-            </span>
+            <span className="text-[10px] text-[var(--color-muted)]">{text.length}/5000</span>
             <button
               type="button"
               onClick={handlePost}
@@ -157,7 +153,7 @@ function PostCard({ post }: { post: CommunityPost }) {
                       rel="noopener noreferrer"
                       className="block rounded-lg border border-[var(--color-border)] bg-[var(--color-overlay)] p-3 text-xs text-degen-400 hover:underline"
                     >
-                      {embed.meta?.title as string || embed.url}
+                      {(embed.meta?.title as string) || embed.url}
                     </a>
                   )}
                 </div>
@@ -205,9 +201,7 @@ export function CommunityFeed({
 
       {!isMember && walletAddress && (
         <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-4 text-center">
-          <p className="text-sm text-[var(--color-muted)]">
-            Join this community to post.
-          </p>
+          <p className="text-sm text-[var(--color-muted)]">Join this community to post.</p>
         </div>
       )}
 

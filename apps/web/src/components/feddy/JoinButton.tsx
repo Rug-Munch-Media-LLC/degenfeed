@@ -96,9 +96,7 @@ export function JoinButton({
         {loading ? '...' : isMember ? 'Leave Community' : 'Join Community'}
       </button>
 
-      {error && (
-        <p className="mt-2 text-[10px] text-red-400 text-center">{error}</p>
-      )}
+      {error && <p className="mt-2 text-[10px] text-red-400 text-center">{error}</p>}
     </div>
   );
 }

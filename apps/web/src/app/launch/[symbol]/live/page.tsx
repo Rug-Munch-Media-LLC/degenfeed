@@ -8,12 +8,12 @@
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
-import { StreamCoinOverlay } from '../../../../components/streams/StreamCoinOverlay';
 import { GoLiveModal } from '../../../../components/streams/GoLiveModal';
-import { useBondingCurve } from '../../../../hooks/useBondingCurve';
-import { useActiveStream } from '../../../../hooks/useTokenStreams';
-import { usePeerTubeStream } from '../../../../hooks/usePeerTubeStream';
+import { StreamCoinOverlay } from '../../../../components/streams/StreamCoinOverlay';
 import { useStreamChat } from '../../../../components/streams/useStreamChat';
+import { useBondingCurve } from '../../../../hooks/useBondingCurve';
+import { usePeerTubeStream } from '../../../../hooks/usePeerTubeStream';
+import { useActiveStream } from '../../../../hooks/useTokenStreams';
 
 /* === Types ============================================ */
 
@@ -81,23 +81,18 @@ function StreamNotLive({
       <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-degen-500/20 to-purple-500/20">
         <span className="text-4xl">📡</span>
       </div>
-      <h1 className="mb-2 text-2xl font-bold text-[var(--color-fg)]">
-        No Live Stream Yet
-      </h1>
+      <h1 className="mb-2 text-2xl font-bold text-[var(--color-fg)]">No Live Stream Yet</h1>
       <p className="mb-2 text-sm text-[var(--color-muted)]">
         The creator of <strong className="text-degen-400">${symbol.toUpperCase()}</strong>{' '}
         hasn&apos;t started a live stream yet.
       </p>
       <p className="mb-8 text-sm text-[var(--color-muted)]">
-        When they go live, the stream will appear here with the bonding curve overlay,
-        live chat, and real-time trade feed.
+        When they go live, the stream will appear here with the bonding curve overlay, live chat,
+        and real-time trade feed.
       </p>
 
       <div className="flex justify-center gap-3">
-        <Link
-          href={`/launch/${symbol}`}
-          className="btn-secondary px-5 py-2.5 text-sm"
-        >
+        <Link href={`/launch/${symbol}`} className="btn-secondary px-5 py-2.5 text-sm">
           ← Back to Coin
         </Link>
         {onGoLive && (
@@ -179,7 +174,7 @@ export default function CoinLaunchStreamPage() {
             setCoinMeta({
               address: `0x${Math.random().toString(16).slice(2, 42)}`,
               symbol: symbol.toUpperCase(),
-              name: symbol.charAt(0).toUpperCase() + symbol.slice(1) + ' Token',
+              name: `${symbol.charAt(0).toUpperCase() + symbol.slice(1)} Token`,
             });
           }
         }
@@ -197,7 +192,9 @@ export default function CoinLaunchStreamPage() {
     };
 
     void fetchMeta();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [symbol]);
 
   const coinAddress = coinMeta?.address ?? '';
@@ -298,7 +295,14 @@ export default function CoinLaunchStreamPage() {
             href={`/launch/${symbol}`}
             className="flex items-center gap-1.5 text-xs text-[var(--color-muted)] hover:text-degen-400 transition-colors shrink-0"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
               <line x1="19" y1="12" x2="5" y2="12" />
               <polyline points="12 19 5 12 12 5" />
             </svg>
@@ -384,9 +388,7 @@ export default function CoinLaunchStreamPage() {
                 <p className="text-sm font-medium text-[var(--color-fg)]">
                   {stream?.title ?? `${tokenSymbol} Launch Stream`}
                 </p>
-                <p className="text-xs text-[var(--color-muted)]">
-                  Stream is starting...
-                </p>
+                <p className="text-xs text-[var(--color-muted)]">Stream is starting...</p>
                 {peertube.stream?.playbackUrl && (
                   <a
                     href={peertube.stream.playbackUrl}
@@ -434,7 +436,9 @@ export default function CoinLaunchStreamPage() {
             <div className="flex-1 space-y-0.5 overflow-y-auto overscroll-contain p-2">
               {chat.messages.length === 0 ? (
                 <div className="flex h-full items-center justify-center">
-                  <p className="text-xs text-[var(--color-muted)]">No messages yet. Start the conversation!</p>
+                  <p className="text-xs text-[var(--color-muted)]">
+                    No messages yet. Start the conversation!
+                  </p>
                 </div>
               ) : (
                 chat.messages.map((msg) => (
@@ -443,9 +447,7 @@ export default function CoinLaunchStreamPage() {
                     className="rounded-lg px-2 py-1.5 transition-colors hover:bg-[var(--color-overlay)]"
                   >
                     <div className="flex items-center gap-1.5">
-                      <span className="text-xs font-medium text-degen-400">
-                        {msg.displayName}
-                      </span>
+                      <span className="text-xs font-medium text-degen-400">{msg.displayName}</span>
                       {msg.badge && (
                         <span className="rounded bg-degen-500/10 px-1 py-0 text-[8px] font-medium text-degen-400">
                           {msg.badge}
@@ -463,7 +465,9 @@ export default function CoinLaunchStreamPage() {
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
-                  const input = (e.target as HTMLFormElement).elements.namedItem('chat') as HTMLInputElement;
+                  const input = (e.target as HTMLFormElement).elements.namedItem(
+                    'chat',
+                  ) as HTMLInputElement;
                   if (input.value.trim()) {
                     chat.sendMessage(input.value.trim());
                     input.value = '';

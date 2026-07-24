@@ -38,9 +38,7 @@ export default function StatCard({
             {label}
           </span>
           <div className="mt-1 flex items-baseline gap-2">
-            <span className="text-xl font-bold tracking-tight text-[var(--color-fg)]">
-              {value}
-            </span>
+            <span className="text-xl font-bold tracking-tight text-[var(--color-fg)]">{value}</span>
             {trend && (
               <span
                 className={`inline-flex items-center gap-0.5 text-[11px] font-medium ${
@@ -53,21 +51,31 @@ export default function StatCard({
               >
                 {trend.direction === 'up' && (
                   <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
-                    <path d="M5 1v8M1 5l4-4 4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    <path
+                      d="M5 1v8M1 5l4-4 4 4"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
                   </svg>
                 )}
                 {trend.direction === 'down' && (
                   <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
-                    <path d="M5 9V1M1 5l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    <path
+                      d="M5 9V1M1 5l4 4 4-4"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
                   </svg>
                 )}
                 {trend.value}
               </span>
             )}
           </div>
-          {sub && (
-            <span className="mt-0.5 block text-[10px] text-[var(--color-muted)]">{sub}</span>
-          )}
+          {sub && <span className="mt-0.5 block text-[10px] text-[var(--color-muted)]">{sub}</span>}
         </div>
         {icon && (
           <div className="ml-3 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[var(--color-overlay)]">

@@ -32,7 +32,10 @@ export function BadgeShowcase() {
   return (
     <div className="flex flex-wrap gap-2">
       {(Object.keys(CHAT_BADGES) as ChatBadge[]).map((badge) => (
-        <div key={badge} className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5">
+        <div
+          key={badge}
+          className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5"
+        >
           <StreamBadge badge={badge} size="md" />
           <span className="text-[9px] text-white/40">{badge}</span>
         </div>

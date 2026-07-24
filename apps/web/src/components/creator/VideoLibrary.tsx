@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import type { CreatorVideoMeta } from './useCreatorVideos';
-import { useCreatorVideos, useCreatorVideoActions } from './useCreatorVideos';
+import { useCreatorVideos } from './useCreatorVideos';
 
 // === Helpers =============================================================
 
@@ -98,7 +98,9 @@ function VideoCard({
         )}
 
         {/* State badge */}
-        <span className={`absolute right-2 top-2 rounded-md bg-black/70 px-1.5 py-0.5 text-[10px] font-medium ${state.color}`}>
+        <span
+          className={`absolute right-2 top-2 rounded-md bg-black/70 px-1.5 py-0.5 text-[10px] font-medium ${state.color}`}
+        >
           {state.text}
         </span>
       </div>
@@ -161,7 +163,10 @@ function VideoCard({
                 <div className="absolute right-0 top-8 z-20 w-36 rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] py-1 shadow-xl">
                   <button
                     type="button"
-                    onClick={() => { setShowMenu(false); onEdit(video); }}
+                    onClick={() => {
+                      setShowMenu(false);
+                      onEdit(video);
+                    }}
                     className="flex w-full items-center gap-2 px-3 py-2 text-xs text-[var(--color-fg)] transition-colors hover:bg-[var(--color-overlay)]"
                   >
                     ✏️ Edit
@@ -176,7 +181,10 @@ function VideoCard({
                   </a>
                   <button
                     type="button"
-                    onClick={() => { setShowMenu(false); onDelete(video); }}
+                    onClick={() => {
+                      setShowMenu(false);
+                      onDelete(video);
+                    }}
                     className="flex w-full items-center gap-2 px-3 py-2 text-xs text-red-400 transition-colors hover:bg-red-500/10"
                   >
                     🗑️ Delete

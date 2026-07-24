@@ -23,8 +23,8 @@ export default function RecoveryCodes({ codes, onAcknowledged }: RecoveryCodesPr
   const handleDownload = useCallback(() => {
     const header = 'DegenFeed — 2FA Recovery Codes\n';
     const warning = 'Keep these codes safe. Each code can only be used once.\n';
-    const footer = '\nGenerated: ' + new Date().toISOString().split('T')[0];
-    const content = header + warning + '\n' + codes.join('\n') + footer;
+    const footer = `\nGenerated: ${new Date().toISOString().split('T')[0]}`;
+    const content = `${header + warning}\n${codes.join('\n')}${footer}`;
 
     const blob = new Blob([content], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
@@ -74,13 +74,14 @@ export default function RecoveryCodes({ codes, onAcknowledged }: RecoveryCodesPr
       {/* Warning banner */}
       <div className="rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-3">
         <div className="flex items-start gap-3">
-          <span className="text-lg shrink-0 mt-0.5" aria-hidden="true">⚠️</span>
+          <span className="text-lg shrink-0 mt-0.5" aria-hidden="true">
+            ⚠️
+          </span>
           <div>
             <p className="text-sm font-semibold text-amber-400">Save These Codes</p>
             <p className="text-xs text-amber-400/70 mt-1">
-              These recovery codes will <strong>never be shown again</strong>.
-              If you lose access to your authenticator app, these are the only way
-              to regain access to your account.
+              These recovery codes will <strong>never be shown again</strong>. If you lose access to
+              your authenticator app, these are the only way to regain access to your account.
             </p>
           </div>
         </div>
@@ -113,7 +114,16 @@ export default function RecoveryCodes({ codes, onAcknowledged }: RecoveryCodesPr
           className="flex-1 rounded-lg border border-[var(--color-glass-border)] bg-[var(--color-overlay)] px-4 py-2.5 text-xs font-medium text-[var(--color-fg)] hover:bg-[var(--color-card)] transition-colors"
         >
           <span className="flex items-center justify-center gap-2">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              aria-hidden="true"
+            >
               <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
               <polyline points="7 10 12 15 17 10" />
               <line x1="12" y1="15" x2="12" y2="3" />
@@ -127,7 +137,16 @@ export default function RecoveryCodes({ codes, onAcknowledged }: RecoveryCodesPr
           className="flex-1 rounded-lg border border-[var(--color-glass-border)] bg-[var(--color-overlay)] px-4 py-2.5 text-xs font-medium text-[var(--color-fg)] hover:bg-[var(--color-card)] transition-colors"
         >
           <span className="flex items-center justify-center gap-2">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              aria-hidden="true"
+            >
               <polyline points="6 9 6 2 18 2 18 9" />
               <path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2" />
               <rect x="6" y="14" width="12" height="8" />
@@ -141,7 +160,16 @@ export default function RecoveryCodes({ codes, onAcknowledged }: RecoveryCodesPr
           className="flex-1 rounded-lg border border-[var(--color-glass-border)] bg-[var(--color-overlay)] px-4 py-2.5 text-xs font-medium text-[var(--color-fg)] hover:bg-[var(--color-card)] transition-colors"
         >
           <span className="flex items-center justify-center gap-2">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              aria-hidden="true"
+            >
               <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
               <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
             </svg>
@@ -151,11 +179,7 @@ export default function RecoveryCodes({ codes, onAcknowledged }: RecoveryCodesPr
       </div>
 
       {/* I've Saved Them button */}
-      <button
-        type="button"
-        onClick={onAcknowledged}
-        className="btn-primary w-full text-sm"
-      >
+      <button type="button" onClick={onAcknowledged} className="btn-primary w-full text-sm">
         I&apos;ve saved my recovery codes
       </button>
     </div>

@@ -1,3 +1,36 @@
+// ─── Source Discovery (folded from @degenfeed/source-discovery) ───
+export type {
+  DiscoveredSource,
+  DiscoveryConfig,
+  DiscoveryRun,
+  DiscoveryStats,
+  DiscoveryStatus,
+  Platform,
+  SourceHealth,
+  SourceLifecycle,
+  TrendingSource,
+} from '@degenfeed/source-discovery';
+export {
+  aggregateStats,
+  buildTrendingSource,
+  CRYPTO_KEYWORDS,
+  computeQualityScore,
+  computeSourceHealthScore,
+  computeTrendingScore,
+  DEFAULT_DISCOVERY_CONFIG,
+  detectStaleSources,
+  discoverLemmyCommunities,
+  discoverNewSources,
+  discoverNewsletters,
+  discoverPeerTubeChannels,
+  discoverRedditSubreddits,
+  discoverRSSFeeds,
+  discoverYouTubeChannels,
+  estimateRelevance,
+  getNewThisWeek,
+  isBlocklisted,
+  SEARCH_KEYWORDS,
+} from '@degenfeed/source-discovery';
 export { BlueskyProvider, CURATED_BSKY_ACTORS } from './providers/bluesky';
 export { CURATED_FARCASTER_FIDS, DEFAULT_HUB_URL, FarcasterProvider } from './providers/farcaster';
 export {
@@ -78,37 +111,3 @@ export {
   withRetry,
   withTimeout,
 } from './utils';
-
-// ─── Source Discovery (folded from @degenfeed/source-discovery) ───
-export type {
-  DiscoveredSource,
-  DiscoveryConfig,
-  DiscoveryRun,
-  DiscoveryStats,
-  DiscoveryStatus,
-  Platform,
-  SourceHealth,
-  SourceLifecycle,
-  TrendingSource,
-} from '@degenfeed/source-discovery';
-export {
-  aggregateStats,
-  buildTrendingSource,
-  computeQualityScore,
-  computeSourceHealthScore,
-  computeTrendingScore,
-  detectStaleSources,
-  discoverLemmyCommunities,
-  discoverNewSources,
-  discoverNewsletters,
-  discoverPeerTubeChannels,
-  discoverRSSFeeds,
-  discoverRedditSubreddits,
-  discoverYouTubeChannels,
-  estimateRelevance,
-  getNewThisWeek,
-  isBlocklisted,
-  CRYPTO_KEYWORDS,
-  DEFAULT_DISCOVERY_CONFIG,
-  SEARCH_KEYWORDS,
-} from '@degenfeed/source-discovery';

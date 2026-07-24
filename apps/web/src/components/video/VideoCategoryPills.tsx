@@ -7,7 +7,7 @@
  * Passes the selected category up to the parent for filtering.
  */
 
-import { useRef, useState, useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 // === Categories definition ===============================================
 
@@ -88,7 +88,16 @@ export function VideoCategoryPills({
           className="absolute left-0 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-card)]/90 text-[var(--color-muted)] shadow-lg backdrop-blur-sm hover:text-[var(--color-fg)] transition-colors"
           aria-label="Scroll categories left"
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            aria-hidden="true"
+          >
             <path d="M15 18l-6-6 6-6" />
           </svg>
         </button>
@@ -127,7 +136,9 @@ export function VideoCategoryPills({
               </span>
               <span>{cat.label}</span>
               {cat.count !== undefined && (
-                <span className={`text-[10px] ${isActive ? 'opacity-70' : 'text-[var(--color-muted)]'}`}>
+                <span
+                  className={`text-[10px] ${isActive ? 'opacity-70' : 'text-[var(--color-muted)]'}`}
+                >
                   {cat.count}
                 </span>
               )}
@@ -144,7 +155,16 @@ export function VideoCategoryPills({
           className="absolute right-0 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-card)]/90 text-[var(--color-muted)] shadow-lg backdrop-blur-sm hover:text-[var(--color-fg)] transition-colors"
           aria-label="Scroll categories right"
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            aria-hidden="true"
+          >
             <path d="M9 18l6-6-6-6" />
           </svg>
         </button>

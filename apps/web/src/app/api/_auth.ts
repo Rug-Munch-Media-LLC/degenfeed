@@ -9,7 +9,7 @@
  *   ADMIN_WALLETS       — comma‑separated list of admin wallet addresses
  */
 
-import { createHmac, timingSafeEqual } from 'crypto';
+import { createHmac, timingSafeEqual } from 'node:crypto';
 import { NextResponse } from 'next/server';
 
 // === Types ============================================================

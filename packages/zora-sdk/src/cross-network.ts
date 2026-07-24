@@ -38,16 +38,17 @@
  * 6. Record mapping in cross-chain registry
  * 7. Return addresses on both chains
  */
+
+import type { KVStore } from './cross-chain/registry';
+import { CrossChainRegistry } from './cross-chain/registry';
+import { collectTokenGenerationFee, TOKEN_GENERATION_FEE_USD } from './token-fees';
 import type {
+  CostBreakdown,
+  DualChainCoin,
   DualChainCoinConfig,
   DualChainDeployResult,
   DualChainPrice,
-  DualChainCoin,
-  CostBreakdown,
 } from './types';
-import { collectTokenGenerationFee, TOKEN_GENERATION_FEE_USD } from './token-fees';
-import { CrossChainRegistry } from './cross-chain/registry';
-import type { KVStore } from './cross-chain/registry';
 
 // ═════════════════════════════════════════════════════════════════════════
 // Types
@@ -77,9 +78,7 @@ export interface CrossNetworkResult {
  * @param chain Which chain to show costs for
  * @returns CostBreakdown with all estimated costs
  */
-export function getDeploymentCostBreakdown(
-  chain: 'solana' | 'base' = 'solana',
-): CostBreakdown {
+export function getDeploymentCostBreakdown(_chain: 'solana' | 'base' = 'solana'): CostBreakdown {
   return {
     tokenGenerationFee: {
       amount: TOKEN_GENERATION_FEE_USD,
@@ -130,9 +129,7 @@ export function getDeploymentCostBreakdown(
  * @param config Token configuration
  * @returns Solana token address and transaction info
  */
-async function deploySolanaToken(
-  config: DualChainCoinConfig,
-): Promise<{
+async function deploySolanaToken(config: DualChainCoinConfig): Promise<{
   mintAddress: string;
   tokenState: string;
   txHash: string;
@@ -184,8 +181,8 @@ async function deploySolanaToken(
  * @returns VAA hash for creating the wrapped token
  */
 async function wormholeAttestToken(
-  chain: 'solana',
-  tokenAddress: string,
+  _chain: 'solana',
+  _tokenAddress: string,
 ): Promise<{ vaa: string }> {
   // In production, uses Wormhole Token Bridge:
   //   const solanaWormhole = new Wormhole('solana', solanaRpc);
@@ -216,10 +213,7 @@ async function wormholeAttestToken(
  * @param targetChain Target chain ('base')
  * @returns Wrapped token address on Base
  */
-async function wormholeCreateWrapped(
-  vaa: string,
-  targetChain: 'base',
-): Promise<`0x${string}`> {
+async function wormholeCreateWrapped(_vaa: string, _targetChain: 'base'): Promise<`0x${string}`> {
   // In production, calls Wormhole Token Bridge on Base:
   //   const baseWormhole = new Wormhole('base', baseRpc);
   //   const wrapped = await baseWormhole.createWrapped(vaa);
@@ -251,7 +245,7 @@ async function wormholeCreateWrapped(
  */
 async function registerWrappedForZora(
   baseTokenAddress: `0x${string}`,
-  config: DualChainCoinConfig,
+  _config: DualChainCoinConfig,
 ): Promise<{ url: string; registered: boolean }> {
   // In production, there are two approaches:
   //
@@ -295,9 +289,7 @@ async function registerWrappedForZora(
  * @param coin The dual-chain coin to check prices for
  * @returns DualChainPrice with prices on both chains
  */
-export async function getDualChainPrice(
-  coin: DualChainCoin,
-): Promise<DualChainPrice> {
+export async function getDualChainPrice(coin: DualChainCoin): Promise<DualChainPrice> {
   // Fetch price on Solana via Jupiter API
   const solPrice = await fetchJupiterPrice(coin.solana.address);
 
@@ -332,7 +324,7 @@ export async function getDualChainPrice(
  * @param mintAddress SPL token mint address
  * @returns Price in USD
  */
-async function fetchJupiterPrice(mintAddress: string): Promise<number> {
+async function fetchJupiterPrice(_mintAddress: string): Promise<number> {
   // In production, call Jupiter's price API:
   //   const res = await fetch(
   //     `https://price.jup.ag/v6/price?ids=${mintAddress}`
@@ -352,7 +344,7 @@ async function fetchJupiterPrice(mintAddress: string): Promise<number> {
  * @param tokenAddress Wrapped ERC-20 token address on Base
  * @returns Price in USD
  */
-async function fetchUniswapV4Price(tokenAddress: `0x${string}`): Promise<number> {
+async function fetchUniswapV4Price(_tokenAddress: `0x${string}`): Promise<number> {
   // In production, call DEX subgraph or Zora price API:
   //   const res = await fetch(
   //     `https://api.zora.engineering/api/coin?address=${tokenAddress}&chainId=8453`
@@ -503,9 +495,7 @@ export async function deployDualChainCoin(
  * Old-style cross-network deployer that deploys on either Base or Solana.
  * The new model always deploys on Solana and wraps to Base.
  */
-export async function deployCrossNetwork(
-  opts: CrossNetworkOpts,
-): Promise<CrossNetworkResult> {
+export async function deployCrossNetwork(opts: CrossNetworkOpts): Promise<CrossNetworkResult> {
   console.warn(
     '[deprecated] deployCrossNetwork() is deprecated. Use deployDualChainCoin() for the one-coin dual-chain model.',
   );

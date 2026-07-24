@@ -264,10 +264,7 @@ export function PasskeySetup({ onRegistered, onError }: PasskeySetupProps) {
       {loading ? (
         <div className="space-y-2">
           {[1, 2].map((i) => (
-            <div
-              key={i}
-              className="h-14 animate-pulse rounded-xl bg-[var(--color-overlay)]"
-            />
+            <div key={i} className="h-14 animate-pulse rounded-xl bg-[var(--color-overlay)]" />
           ))}
         </div>
       ) : passkeys.length === 0 ? (
@@ -314,7 +311,6 @@ export function PasskeySetup({ onRegistered, onError }: PasskeySetupProps) {
                     placeholder="Passkey name"
                     maxLength={64}
                     className="input flex-1 text-sm py-1"
-                    autoFocus
                   />
                   <button
                     type="button"
@@ -459,9 +455,9 @@ export function PasskeySetup({ onRegistered, onError }: PasskeySetupProps) {
           </svg>
           <div>
             <p className="text-xs text-[var(--color-muted)]">
-              <strong className="text-[var(--color-fg)]">Phishing-resistant.</strong>{' '}
-              Passkeys are bound to this site (degenfeed.xyz). A fake website cannot trick your
-              browser into using them. Your biometric data never leaves your device.
+              <strong className="text-[var(--color-fg)]">Phishing-resistant.</strong> Passkeys are
+              bound to this site (degenfeed.xyz). A fake website cannot trick your browser into
+              using them. Your biometric data never leaves your device.
             </p>
             <p className="mt-1 text-xs text-[var(--color-muted)]">
               Compatible with: fingerprint sensors, Face ID, Windows Hello, YubiKeys, and

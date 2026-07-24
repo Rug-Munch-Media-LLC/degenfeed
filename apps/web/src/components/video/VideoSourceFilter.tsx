@@ -82,15 +82,7 @@ interface SourceToggleProps {
   loading?: boolean;
 }
 
-function SourceToggle({
-  id,
-  label,
-  count,
-  isActive,
-  color,
-  onClick,
-  loading,
-}: SourceToggleProps) {
+function SourceToggle({ id, label, count, isActive, color, onClick, loading }: SourceToggleProps) {
   const handleClick = useCallback(() => onClick(id), [id, onClick]);
 
   return (
@@ -104,9 +96,7 @@ function SourceToggle({
           : 'text-[var(--color-muted)] border-transparent hover:text-[var(--color-fg)] hover:border-[var(--color-glass-border)]'
       } disabled:opacity-50`}
       style={
-        isActive && color
-          ? { borderColor: `${color}40`, backgroundColor: `${color}10` }
-          : undefined
+        isActive && color ? { borderColor: `${color}40`, backgroundColor: `${color}10` } : undefined
       }
       aria-pressed={isActive}
     >
@@ -161,7 +151,14 @@ const PLATFORM_SVGS: Record<string, React.ReactNode> = {
     </svg>
   ),
   zora: (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
       <circle cx="12" cy="12" r="10" />
       <path d="M8 12h8M12 8v8" />
     </svg>

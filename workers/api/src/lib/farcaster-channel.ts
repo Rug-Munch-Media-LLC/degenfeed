@@ -11,132 +11,123 @@
  * @see https://docs.neynar.com/reference/publish-cast
  */
 
-import type { Env } from "../index";
+import type { Env } from '../index';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
 export interface FarcasterChannel {
-	id: string;
-	name: string;
-	description?: string;
-	/** Parent URL for the channel (used for casting to channels) */
-	parentUrl: string;
-	/** Relevance score for category matching */
-	relevance: number;
+  id: string;
+  name: string;
+  description?: string;
+  /** Parent URL for the channel (used for casting to channels) */
+  parentUrl: string;
+  /** Relevance score for category matching */
+  relevance: number;
 }
 
 export interface ChannelAnnouncement {
-	channelId: string;
-	castHash?: string;
-	error?: string;
+  channelId: string;
+  castHash?: string;
+  error?: string;
 }
 
 // ─── Channel Registry ──────────────────────────────────────────────────────
 // Maps stream categories and tags to known Farcaster channels.
 
 const CHANNEL_REGISTRY: Array<{
-	keywords: string[];
-	channel: FarcasterChannel;
+  keywords: string[];
+  channel: FarcasterChannel;
 }> = [
-	{
-		keywords: ["live", "streaming", "irl"],
-		channel: {
-			id: "fc-live",
-			name: "/fc-live",
-			description: "Live streaming on Farcaster",
-			parentUrl:
-				"chain://eip155:7777777/erc721:0x84257a52c85bd6fbd3c091b4cb3d5100b09630a2",
-			relevance: 10,
-		},
-	},
-	{
-		keywords: ["music", "concert", "dj"],
-		channel: {
-			id: "music",
-			name: "/music",
-			description: "Music on Farcaster",
-			parentUrl:
-				"chain://eip155:7777777/erc721:0x84257a52c85bd6fbd3c091b4cb3d5100b09630a2",
-			relevance: 8,
-		},
-	},
-	{
-		keywords: ["art", "nft", "digital-art"],
-		channel: {
-			id: "art",
-			name: "/art",
-			description: "Art on Farcaster",
-			parentUrl:
-				"chain://eip155:7777777/erc721:0x84257a52c85bd6fbd3c091b4cb3d5100b09630a2",
-			relevance: 8,
-		},
-	},
-	{
-		keywords: ["gaming", "games", "play"],
-		channel: {
-			id: "gaming",
-			name: "/gaming",
-			description: "Gaming on Farcaster",
-			parentUrl:
-				"chain://eip155:7777777/erc721:0x84257a52c85bd6fbd3c091b4cb3d5100b09630a2",
-			relevance: 7,
-		},
-	},
-	{
-		keywords: ["tech", "coding", "dev", "programming", "build"],
-		channel: {
-			id: "tech",
-			name: "/tech",
-			description: "Technology on Farcaster",
-			parentUrl:
-				"chain://eip155:7777777/erc721:0x84257a52c85bd6fbd3c091b4cb3d5100b09630a2",
-			relevance: 7,
-		},
-	},
-	{
-		keywords: ["news", "current-events", "journalism"],
-		channel: {
-			id: "news",
-			name: "/news",
-			description: "News on Farcaster",
-			parentUrl:
-				"chain://eip155:7777777/erc721:0x84257a52c85bd6fbd3c091b4cb3d5100b09630a2",
-			relevance: 7,
-		},
-	},
-	{
-		keywords: ["sports", "sport", "esports"],
-		channel: {
-			id: "sports",
-			name: "/sports",
-			description: "Sports on Farcaster",
-			parentUrl:
-				"chain://eip155:7777777/erc721:0x84257a52c85bd6fbd3c091b4cb3d5100b09630a2",
-			relevance: 7,
-		},
-	},
-	{
-		keywords: ["talk", "discussion", "podcast", "space", "audio"],
-		channel: {
-			id: "audio",
-			name: "/audio",
-			description: "Audio spaces and podcasts on Farcaster",
-			parentUrl:
-				"chain://eip155:7777777/erc721:0x84257a52c85bd6fbd3c091b4cb3d5100b09630a2",
-			relevance: 9,
-		},
-	},
-	{
-		keywords: ["defi", "crypto", "trading", "token", "coin"],
-		channel: {
-			id: "degen",
-			name: "/degen",
-			description: "Degens of Farcaster",
-			parentUrl:
-				"chain://eip155:7777777/erc721:0x84257a52c85bd6fbd3c091b4cb3d5100b09630a2",
-			relevance: 6,
-		},
-	},
+  {
+    keywords: ['live', 'streaming', 'irl'],
+    channel: {
+      id: 'fc-live',
+      name: '/fc-live',
+      description: 'Live streaming on Farcaster',
+      parentUrl: 'chain://eip155:7777777/erc721:0x84257a52c85bd6fbd3c091b4cb3d5100b09630a2',
+      relevance: 10,
+    },
+  },
+  {
+    keywords: ['music', 'concert', 'dj'],
+    channel: {
+      id: 'music',
+      name: '/music',
+      description: 'Music on Farcaster',
+      parentUrl: 'chain://eip155:7777777/erc721:0x84257a52c85bd6fbd3c091b4cb3d5100b09630a2',
+      relevance: 8,
+    },
+  },
+  {
+    keywords: ['art', 'nft', 'digital-art'],
+    channel: {
+      id: 'art',
+      name: '/art',
+      description: 'Art on Farcaster',
+      parentUrl: 'chain://eip155:7777777/erc721:0x84257a52c85bd6fbd3c091b4cb3d5100b09630a2',
+      relevance: 8,
+    },
+  },
+  {
+    keywords: ['gaming', 'games', 'play'],
+    channel: {
+      id: 'gaming',
+      name: '/gaming',
+      description: 'Gaming on Farcaster',
+      parentUrl: 'chain://eip155:7777777/erc721:0x84257a52c85bd6fbd3c091b4cb3d5100b09630a2',
+      relevance: 7,
+    },
+  },
+  {
+    keywords: ['tech', 'coding', 'dev', 'programming', 'build'],
+    channel: {
+      id: 'tech',
+      name: '/tech',
+      description: 'Technology on Farcaster',
+      parentUrl: 'chain://eip155:7777777/erc721:0x84257a52c85bd6fbd3c091b4cb3d5100b09630a2',
+      relevance: 7,
+    },
+  },
+  {
+    keywords: ['news', 'current-events', 'journalism'],
+    channel: {
+      id: 'news',
+      name: '/news',
+      description: 'News on Farcaster',
+      parentUrl: 'chain://eip155:7777777/erc721:0x84257a52c85bd6fbd3c091b4cb3d5100b09630a2',
+      relevance: 7,
+    },
+  },
+  {
+    keywords: ['sports', 'sport', 'esports'],
+    channel: {
+      id: 'sports',
+      name: '/sports',
+      description: 'Sports on Farcaster',
+      parentUrl: 'chain://eip155:7777777/erc721:0x84257a52c85bd6fbd3c091b4cb3d5100b09630a2',
+      relevance: 7,
+    },
+  },
+  {
+    keywords: ['talk', 'discussion', 'podcast', 'space', 'audio'],
+    channel: {
+      id: 'audio',
+      name: '/audio',
+      description: 'Audio spaces and podcasts on Farcaster',
+      parentUrl: 'chain://eip155:7777777/erc721:0x84257a52c85bd6fbd3c091b4cb3d5100b09630a2',
+      relevance: 9,
+    },
+  },
+  {
+    keywords: ['defi', 'crypto', 'trading', 'token', 'coin'],
+    channel: {
+      id: 'degen',
+      name: '/degen',
+      description: 'Degens of Farcaster',
+      parentUrl: 'chain://eip155:7777777/erc721:0x84257a52c85bd6fbd3c091b4cb3d5100b09630a2',
+      relevance: 6,
+    },
+  },
 ];
 
 // ─── Channel Discovery ──────────────────────────────────────────────────────
@@ -147,40 +138,37 @@ const CHANNEL_REGISTRY: Array<{
  * Matches against the channel registry by keyword overlap.
  * Returns channels sorted by relevance (highest first), max 3.
  */
-export function getRelevantChannels(
-	category?: string,
-	tags?: string[],
-): FarcasterChannel[] {
-	const allTerms = [
-		category?.toLowerCase() ?? "",
-		...(tags ?? []).map((t) => t.toLowerCase()),
-	].filter(Boolean);
+export function getRelevantChannels(category?: string, tags?: string[]): FarcasterChannel[] {
+  const allTerms = [
+    category?.toLowerCase() ?? '',
+    ...(tags ?? []).map((t) => t.toLowerCase()),
+  ].filter(Boolean);
 
-	if (allTerms.length === 0) {
-		// Default: suggest the general live channel
-		const defaultChannel = CHANNEL_REGISTRY[0]?.channel;
-		return defaultChannel ? [defaultChannel] : [];
-	}
+  if (allTerms.length === 0) {
+    // Default: suggest the general live channel
+    const defaultChannel = CHANNEL_REGISTRY[0]?.channel;
+    return defaultChannel ? [defaultChannel] : [];
+  }
 
-	const scored = CHANNEL_REGISTRY.map((entry) => {
-		const matchCount = entry.keywords.filter((kw) =>
-			allTerms.some((term) => term.includes(kw) || kw.includes(term)),
-		).length;
-		return {
-			channel: entry.channel,
-			score: matchCount * entry.channel.relevance,
-		};
-	})
-		.filter((s) => s.score > 0)
-		.sort((a, b) => b.score - a.score)
-		.slice(0, 3);
+  const scored = CHANNEL_REGISTRY.map((entry) => {
+    const matchCount = entry.keywords.filter((kw) =>
+      allTerms.some((term) => term.includes(kw) || kw.includes(term)),
+    ).length;
+    return {
+      channel: entry.channel,
+      score: matchCount * entry.channel.relevance,
+    };
+  })
+    .filter((s) => s.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3);
 
-	if (scored.length === 0) {
-		const defaultChannel = CHANNEL_REGISTRY[0]?.channel;
-		return defaultChannel ? [defaultChannel] : [];
-	}
+  if (scored.length === 0) {
+    const defaultChannel = CHANNEL_REGISTRY[0]?.channel;
+    return defaultChannel ? [defaultChannel] : [];
+  }
 
-	return scored.map((s) => s.channel);
+  return scored.map((s) => s.channel);
 }
 
 // ─── Channel Announcement ───────────────────────────────────────────────────
@@ -199,58 +187,58 @@ export function getRelevantChannels(
  * @returns ChannelAnnouncement with cast hash on success
  */
 export async function postToFarcasterChannel(
-	env: Env,
-	channelId: string,
-	text: string,
-	embedUrl: string,
-	parentUrl: string,
+  env: Env,
+  channelId: string,
+  text: string,
+  embedUrl: string,
+  parentUrl: string,
 ): Promise<ChannelAnnouncement> {
-	const apiKey = env.NEYNAR_API_KEY;
-	if (!apiKey) {
-		return {
-			channelId,
-			error: "NEYNAR_API_KEY not configured",
-		};
-	}
+  const apiKey = env.NEYNAR_API_KEY;
+  if (!apiKey) {
+    return {
+      channelId,
+      error: 'NEYNAR_API_KEY not configured',
+    };
+  }
 
-	// Ensure text is within Farcaster's 320-char limit
-	const castText = text.length > 320 ? `${text.slice(0, 317)}...` : text;
+  // Ensure text is within Farcaster's 320-char limit
+  const castText = text.length > 320 ? `${text.slice(0, 317)}...` : text;
 
-	try {
-		const response = await fetch("https://api.neynar.com/v2/farcaster/cast", {
-			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-				api_key: apiKey,
-				"user-agent": "DegenFeed/1.0 (Farcaster Integration)",
-			},
-			body: JSON.stringify({
-				text: castText,
-				embeds: [{ url: embedUrl }],
-				channel_id: channelId,
-				parent_url: parentUrl,
-			}),
-		});
+  try {
+    const response = await fetch('https://api.neynar.com/v2/farcaster/cast', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        api_key: apiKey,
+        'user-agent': 'DegenFeed/1.0 (Farcaster Integration)',
+      },
+      body: JSON.stringify({
+        text: castText,
+        embeds: [{ url: embedUrl }],
+        channel_id: channelId,
+        parent_url: parentUrl,
+      }),
+    });
 
-		if (!response.ok) {
-			const errorBody = await response.text().catch(() => "unknown");
-			return {
-				channelId,
-				error: `Neynar API error ${response.status}: ${errorBody}`,
-			};
-		}
+    if (!response.ok) {
+      const errorBody = await response.text().catch(() => 'unknown');
+      return {
+        channelId,
+        error: `Neynar API error ${response.status}: ${errorBody}`,
+      };
+    }
 
-		const data = (await response.json()) as { cast?: { hash?: string } };
-		return {
-			channelId,
-			castHash: data.cast?.hash,
-		};
-	} catch (err) {
-		return {
-			channelId,
-			error: err instanceof Error ? err.message : String(err),
-		};
-	}
+    const data = (await response.json()) as { cast?: { hash?: string } };
+    return {
+      channelId,
+      castHash: data.cast?.hash,
+    };
+  } catch (err) {
+    return {
+      channelId,
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
 }
 
 // ─── Bulk Channel Announcement ──────────────────────────────────────────────
@@ -270,32 +258,30 @@ export async function postToFarcasterChannel(
  * @returns Array of announcement results
  */
 export async function announceToRelevantChannels(
-	env: Env,
-	embedUrl: string,
-	title: string,
-	creatorHandle: string,
-	category?: string,
-	tags?: string[],
+  env: Env,
+  embedUrl: string,
+  title: string,
+  creatorHandle: string,
+  category?: string,
+  tags?: string[],
 ): Promise<ChannelAnnouncement[]> {
-	const channels = getRelevantChannels(category, tags);
+  const channels = getRelevantChannels(category, tags);
 
-	if (channels.length === 0) return [];
+  if (channels.length === 0) return [];
 
-	const text = `🔴 LIVE: ${title}\n\n${creatorHandle} is streaming on DegenFeed`;
+  const text = `🔴 LIVE: ${title}\n\n${creatorHandle} is streaming on DegenFeed`;
 
-	const results = await Promise.allSettled(
-		channels.map((ch) =>
-			postToFarcasterChannel(env, ch.id, text, embedUrl, ch.parentUrl),
-		),
-	);
+  const results = await Promise.allSettled(
+    channels.map((ch) => postToFarcasterChannel(env, ch.id, text, embedUrl, ch.parentUrl)),
+  );
 
-	return results.map((r, i) => {
-		if (r.status === "fulfilled") return r.value;
-		return {
-			channelId: channels[i]?.id ?? "unknown",
-			error: r.reason instanceof Error ? r.reason.message : String(r.reason),
-		};
-	});
+  return results.map((r, i) => {
+    if (r.status === 'fulfilled') return r.value;
+    return {
+      channelId: channels[i]?.id ?? 'unknown',
+      error: r.reason instanceof Error ? r.reason.message : String(r.reason),
+    };
+  });
 }
 
 // ─── Neynar Cast Publishing (for posting frames as casts) ──────────────────
@@ -314,48 +300,48 @@ export async function announceToRelevantChannels(
  * @returns Cast hash on success
  */
 export async function postCastToFarcaster(
-	env: Env,
-	signerUuid: string,
-	text: string,
-	embedUrls: string[] = [],
-	channelId?: string,
+  env: Env,
+  signerUuid: string,
+  text: string,
+  embedUrls: string[] = [],
+  channelId?: string,
 ): Promise<{ hash?: string; error?: string }> {
-	const apiKey = env.NEYNAR_API_KEY;
-	if (!apiKey) {
-		return { error: "NEYNAR_API_KEY not configured" };
-	}
+  const apiKey = env.NEYNAR_API_KEY;
+  if (!apiKey) {
+    return { error: 'NEYNAR_API_KEY not configured' };
+  }
 
-	const castText = text.length > 320 ? `${text.slice(0, 317)}...` : text;
+  const castText = text.length > 320 ? `${text.slice(0, 317)}...` : text;
 
-	try {
-		const body: Record<string, unknown> = {
-			signer_uuid: signerUuid,
-			text: castText,
-			embeds: embedUrls.map((url) => ({ url })),
-		};
+  try {
+    const body: Record<string, unknown> = {
+      signer_uuid: signerUuid,
+      text: castText,
+      embeds: embedUrls.map((url) => ({ url })),
+    };
 
-		if (channelId) {
-			body.channel_id = channelId;
-		}
+    if (channelId) {
+      body.channel_id = channelId;
+    }
 
-		const response = await fetch("https://api.neynar.com/v2/farcaster/cast", {
-			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-				api_key: apiKey,
-				"user-agent": "DegenFeed/1.0",
-			},
-			body: JSON.stringify(body),
-		});
+    const response = await fetch('https://api.neynar.com/v2/farcaster/cast', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        api_key: apiKey,
+        'user-agent': 'DegenFeed/1.0',
+      },
+      body: JSON.stringify(body),
+    });
 
-		if (!response.ok) {
-			const errorBody = await response.text().catch(() => "unknown");
-			return { error: `Neynar error ${response.status}: ${errorBody}` };
-		}
+    if (!response.ok) {
+      const errorBody = await response.text().catch(() => 'unknown');
+      return { error: `Neynar error ${response.status}: ${errorBody}` };
+    }
 
-		const data = (await response.json()) as { cast?: { hash?: string } };
-		return { hash: data.cast?.hash };
-	} catch (err) {
-		return { error: err instanceof Error ? err.message : String(err) };
-	}
+    const data = (await response.json()) as { cast?: { hash?: string } };
+    return { hash: data.cast?.hash };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : String(err) };
+  }
 }

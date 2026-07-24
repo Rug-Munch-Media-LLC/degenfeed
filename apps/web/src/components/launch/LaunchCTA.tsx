@@ -19,7 +19,9 @@ export default function LaunchCTA({ className = '' }: LaunchCTAProps) {
         <div className="mx-auto mb-3 sm:mb-4 flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-degen-500/20 to-purple-500/20 touch-target">
           <span className="text-2xl sm:text-3xl">🚀</span>
         </div>
-        <h2 className="text-xl font-bold text-[var(--color-fg)] sm:text-2xl">Launch Your Own Coin</h2>
+        <h2 className="text-xl font-bold text-[var(--color-fg)] sm:text-2xl">
+          Launch Your Own Coin
+        </h2>
         <p className="mx-auto mt-2 max-w-md text-xs text-[var(--color-muted)] sm:text-sm">
           Create your own creator coin with a fair prebonding curve. Set your parameters, share with
           your community, and watch it grow toward graduation.

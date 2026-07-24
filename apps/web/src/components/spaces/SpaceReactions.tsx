@@ -26,13 +26,7 @@ interface FloatingEmoji {
   createdAt: number;
 }
 
-function FloatingEmojiBubble({
-  item,
-  onDone,
-}: {
-  item: FloatingEmoji;
-  onDone: () => void;
-}) {
+function FloatingEmojiBubble({ item, onDone }: { item: FloatingEmoji; onDone: () => void }) {
   const elRef = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
@@ -94,7 +88,7 @@ export function SpaceReactions({
   // Auto-scroll to bottom when new reactions come in
   useEffect(() => {
     reactionsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [reactions.length]);
+  }, []);
 
   const addReaction = useCallback(
     (emoji: string) => {
@@ -169,9 +163,7 @@ export function SpaceReactions({
       {/* Reaction feed */}
       <div className="relative max-h-40 space-y-1 overflow-y-auto">
         {reactions.length === 0 ? (
-          <p className="py-4 text-center text-[11px] text-[var(--color-muted)]">
-            No reactions yet
-          </p>
+          <p className="py-4 text-center text-[11px] text-[var(--color-muted)]">No reactions yet</p>
         ) : (
           reactions.slice(-20).map((r, i) => (
             <div
@@ -191,11 +183,7 @@ export function SpaceReactions({
       {/* Floating reactions overlay */}
       <div className="relative h-0 overflow-visible">
         {floating.map((item) => (
-          <FloatingEmojiBubble
-            key={item.id}
-            item={item}
-            onDone={() => removeFloating(item.id)}
-          />
+          <FloatingEmojiBubble key={item.id} item={item} onDone={() => removeFloating(item.id)} />
         ))}
       </div>
     </div>

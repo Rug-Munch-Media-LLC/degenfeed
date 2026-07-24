@@ -3,9 +3,22 @@
  */
 
 export type FeddyCategory =
-  | 'crypto' | 'tech' | 'art' | 'music' | 'gaming' | 'sports'
-  | 'food' | 'travel' | 'fashion' | 'health' | 'education'
-  | 'finance' | 'science' | 'literature' | 'film' | 'general';
+  | 'crypto'
+  | 'tech'
+  | 'art'
+  | 'music'
+  | 'gaming'
+  | 'sports'
+  | 'food'
+  | 'travel'
+  | 'fashion'
+  | 'health'
+  | 'education'
+  | 'finance'
+  | 'science'
+  | 'literature'
+  | 'film'
+  | 'general';
 
 export type FederationStatus = 'active' | 'limited' | 'suspended';
 /** Extended member roles with badge tiers */
@@ -70,7 +83,11 @@ export interface CommunityPost {
   authorDisplayName: string;
   authorAvatarUrl?: string;
   text: string;
-  embeds?: Array<{ kind: 'image' | 'video' | 'link' | 'poll'; url: string; meta?: Record<string, unknown> }>;
+  embeds?: Array<{
+    kind: 'image' | 'video' | 'link' | 'poll';
+    url: string;
+    meta?: Record<string, unknown>;
+  }>;
   gtsStatusId: string;
   createdAt: number;
   likes: number;
@@ -238,8 +255,15 @@ export interface Report {
 }
 
 export type ReportCategory =
-  | 'spam' | 'harassment' | 'hate_speech' | 'violence' | 'nsfw'
-  | 'impersonation' | 'copyright' | 'scam' | 'other';
+  | 'spam'
+  | 'harassment'
+  | 'hate_speech'
+  | 'violence'
+  | 'nsfw'
+  | 'impersonation'
+  | 'copyright'
+  | 'scam'
+  | 'other';
 
 export interface Appeal {
   id: string;

@@ -292,7 +292,7 @@ export const FeedWhyCard = memo(function FeedWhyCard({ post, onClose }: FeedWhyC
             </div>
           </div>
         </details>
-    )}
+      )}
 
       <a
         href="/settings"

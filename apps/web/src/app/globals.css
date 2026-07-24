@@ -8,9 +8,9 @@
 
 :root {
   /* == Font families == */
-  --font-heading: 'Sora', 'Inter', system-ui, sans-serif;
-  --font-body: 'Inter', system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --font-heading: "Sora", "Inter", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "Fira Code", monospace;
 
   /* == Heading sizes (h1-h6) == */
   --text-h1: 2rem;
@@ -2872,11 +2872,14 @@
 
 /* Whale alert glow pulse */
 @keyframes whale-glow {
-  0%, 100% {
+  0%,
+  100% {
     box-shadow: 0 0 8px rgba(0, 255, 65, 0.2);
   }
   50% {
-    box-shadow: 0 0 20px rgba(0, 255, 65, 0.4), 0 0 40px rgba(0, 255, 65, 0.1);
+    box-shadow:
+      0 0 20px rgba(0, 255, 65, 0.4),
+      0 0 40px rgba(0, 255, 65, 0.1);
   }
 }
 
@@ -2906,7 +2909,8 @@
 
 /* Streak flame */
 @keyframes streak-flame {
-  0%, 100% {
+  0%,
+  100% {
     transform: scale(1) rotate(-3deg);
   }
   50% {

@@ -31,7 +31,15 @@ export interface UnifiedVideo {
   embedUrl?: string;
   duration: number;
   durationLabel: string;
-  source: 'youtube' | 'twitch' | 'rumble' | 'peertube' | 'zora' | 'shorts' | 'livestream' | 'creator';
+  source:
+    | 'youtube'
+    | 'twitch'
+    | 'rumble'
+    | 'peertube'
+    | 'zora'
+    | 'shorts'
+    | 'livestream'
+    | 'creator';
   sourceLabel: string;
   sourceColor: string;
   channelName: string;
@@ -396,11 +404,14 @@ export function useAggregatorFollow() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/video/aggregator/creator/${encodeURIComponent(creatorId)}/follow`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'content-type': 'application/json' },
-      });
+      const res = await fetch(
+        `/api/video/aggregator/creator/${encodeURIComponent(creatorId)}/follow`,
+        {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'content-type': 'application/json' },
+        },
+      );
       if (!res.ok) throw new Error(`Follow failed: ${res.status}`);
       return (await res.json()) as { success: boolean; followed: number };
     } catch (err) {
@@ -416,11 +427,14 @@ export function useAggregatorFollow() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/video/aggregator/creator/${encodeURIComponent(creatorId)}/follow`, {
-        method: 'DELETE',
-        credentials: 'include',
-        headers: { 'content-type': 'application/json' },
-      });
+      const res = await fetch(
+        `/api/video/aggregator/creator/${encodeURIComponent(creatorId)}/follow`,
+        {
+          method: 'DELETE',
+          credentials: 'include',
+          headers: { 'content-type': 'application/json' },
+        },
+      );
       if (!res.ok) throw new Error(`Unfollow failed: ${res.status}`);
       return (await res.json()) as { success: boolean };
     } catch (err) {

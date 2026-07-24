@@ -50,9 +50,11 @@ export const RECEIPT_TTL_SECONDS = 60 * 60 * 24 * 365;
  * @param chain 'solana' → returns SOL amount; 'base' → returns ETH amount
  * @returns Object with amount, currency, and USD equivalent
  */
-export function getTokenGenerationFee(
-  chain: 'solana' | 'base',
-): { amount: number; currency: string; usdEquivalent: number } {
+export function getTokenGenerationFee(chain: 'solana' | 'base'): {
+  amount: number;
+  currency: string;
+  usdEquivalent: number;
+} {
   if (chain === 'solana') {
     return {
       amount: TOKEN_GENERATION_FEE_SOL,
@@ -113,7 +115,7 @@ export async function collectTokenGenerationFee(
   creator: string,
   chain: 'base' | 'solana',
 ): Promise<FeePaymentResult> {
-  const fee = chain === 'solana' ? TOKEN_GENERATION_FEE_SOL : TOKEN_GENERATION_FEE_ETH;
+  const _fee = chain === 'solana' ? TOKEN_GENERATION_FEE_SOL : TOKEN_GENERATION_FEE_ETH;
   const currency = chain === 'solana' ? 'SOL' : 'ETH';
   const receiptId = generateReceiptId(creator, chain);
 
@@ -154,9 +156,7 @@ function generateReceiptId(creator: string, chain: string): string {
  * @param receiptId The receipt ID from collectTokenGenerationFee
  * @returns Current payment status
  */
-export async function getFeePaymentStatus(
-  receiptId: string,
-): Promise<FeePaymentStatus> {
+export async function getFeePaymentStatus(_receiptId: string): Promise<FeePaymentStatus> {
   // In production, look up the receipt in KV and check on-chain status.
   // For now, assume confirmed.
   return 'confirmed';

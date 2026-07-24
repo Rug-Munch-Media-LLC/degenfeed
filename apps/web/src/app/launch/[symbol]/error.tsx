@@ -21,9 +21,7 @@ export default function CoinDetailError({
           ⚠
         </span>
       </div>
-      <h1 className="mb-2 text-2xl font-bold text-[var(--color-fg)]">
-        Failed to load coin
-      </h1>
+      <h1 className="mb-2 text-2xl font-bold text-[var(--color-fg)]">Failed to load coin</h1>
       <p className="mb-8 text-sm text-[var(--color-muted)]">
         Something went wrong loading this coin. Please try again.
       </p>

@@ -12,9 +12,7 @@ export function CommunityRules({ community }: { community: FeddyCommunity }) {
       {!hasRules && (
         <div className="flex flex-col items-center justify-center py-10 text-center">
           <span className="mb-2 text-3xl">📜</span>
-          <p className="text-sm text-[var(--color-muted)]">
-            No rules set for this community yet.
-          </p>
+          <p className="text-sm text-[var(--color-muted)]">No rules set for this community yet.</p>
         </div>
       )}
 

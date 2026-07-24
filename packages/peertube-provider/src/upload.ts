@@ -221,10 +221,13 @@ export class PeerTubeUploader {
 
     // Schedule future publication
     if (opts.scheduleAt) {
-      formData.append('scheduleUpdate', JSON.stringify({
-        scheduleAt: new Date(opts.scheduleAt).toISOString(),
-        update: { privacy: 1 },
-      }));
+      formData.append(
+        'scheduleUpdate',
+        JSON.stringify({
+          scheduleAt: new Date(opts.scheduleAt).toISOString(),
+          update: { privacy: 1 },
+        }),
+      );
     }
 
     // Original publication date
@@ -234,13 +237,16 @@ export class PeerTubeUploader {
 
     // DegenFeed plugin metadata
     if (opts.degenfeed) {
-      formData.append('pluginData', JSON.stringify({
-        degenfeed: {
-          platform: 'degenfeed',
-          version: '1.0',
-          ...opts.degenfeed,
-        },
-      }));
+      formData.append(
+        'pluginData',
+        JSON.stringify({
+          degenfeed: {
+            platform: 'degenfeed',
+            version: '1.0',
+            ...opts.degenfeed,
+          },
+        }),
+      );
     }
 
     const response = await authenticatedFetch(url, this.accessToken, {
@@ -336,7 +342,11 @@ export class PeerTubeUploader {
         };
       }
 
-      if (video.state === 'processing' || video.state === 'to_transcode' || video.state === 'to_move') {
+      if (
+        video.state === 'processing' ||
+        video.state === 'to_transcode' ||
+        video.state === 'to_move'
+      ) {
         return {
           state: 'processing',
           progress: 50, // PeerTube doesn't expose fine-grained progress via this endpoint

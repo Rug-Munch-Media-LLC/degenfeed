@@ -1,17 +1,22 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
-import Link from 'next/link';
 import { ErrorBoundary } from '@degenfeed/ui';
-import { StreamPlayer } from '../../../components/stream/StreamPlayer';
+import Link from 'next/link';
+import { useCallback, useMemo, useState } from 'react';
 import { StreamChat } from '../../../components/stream/StreamChat';
+import { StreamClips } from '../../../components/stream/StreamClips';
 import { StreamInfo } from '../../../components/stream/StreamInfo';
+import { StreamMiniPlayer } from '../../../components/stream/StreamMiniPlayer';
+import { StreamPlayer } from '../../../components/stream/StreamPlayer';
 import { StreamSchedule } from '../../../components/stream/StreamSchedule';
 import { StreamVODs } from '../../../components/stream/StreamVODs';
-import { StreamClips } from '../../../components/stream/StreamClips';
-import { StreamMiniPlayer } from '../../../components/stream/StreamMiniPlayer';
-import { generateMockStream, generateMockVODs, generateMockClips, generateMockSchedule } from '../../../components/stream/types';
 import type { StreamExtended } from '../../../components/stream/types';
+import {
+  generateMockClips,
+  generateMockSchedule,
+  generateMockStream,
+  generateMockVODs,
+} from '../../../components/stream/types';
 
 /* === Mock Creator Lookup ====================================== */
 /* In production, this would use the route param to fetch stream data */
@@ -24,7 +29,10 @@ function useStreamData(id: string): StreamExtended {
     id,
     title: id.includes('stream') ? base.title : `${id}'s Stream`,
     creatorHandle: id,
-    creatorDisplayName: id.split('_').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
+    creatorDisplayName: id
+      .split('_')
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(' '),
     creatorId: base.creatorId ?? id,
   };
 }
@@ -35,7 +43,9 @@ export default function StreamPage({ params }: { params: { creator: string } }) 
   const stream = useStreamData(params.creator);
   const [isTheater, setIsTheater] = useState(false);
   const [showMiniPlayer, setShowMiniPlayer] = useState(false);
-  const [activeSection, setActiveSection] = useState<'about' | 'schedule' | 'vods' | 'clips'>('about');
+  const [activeSection, setActiveSection] = useState<'about' | 'schedule' | 'vods' | 'clips'>(
+    'about',
+  );
   const [showSidebar, setShowSidebar] = useState(true);
 
   const vods = useMemo(() => generateMockVODs(6), []);
@@ -64,7 +74,18 @@ export default function StreamPage({ params }: { params: { creator: string } }) 
             <Link href="/live" className="text-white/40 hover:text-white/70 transition-colors">
               Live
             </Link>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="text-white/20">
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+              className="text-white/20"
+            >
               <polyline points="9 18 15 12 9 6" />
             </svg>
             <span className="text-white/70 truncate">{stream.creatorDisplayName}</span>
@@ -110,7 +131,9 @@ export default function StreamPage({ params }: { params: { creator: string } }) 
                         : 'border-transparent text-white/40 hover:text-white/70'
                     }`}
                   >
-                    <span aria-hidden="true" className="text-sm">{tab.icon}</span>
+                    <span aria-hidden="true" className="text-sm">
+                      {tab.icon}
+                    </span>
                     {tab.label}
                   </button>
                 ))}
@@ -121,22 +144,30 @@ export default function StreamPage({ params }: { params: { creator: string } }) 
                 {activeSection === 'about' && (
                   <div className="space-y-4">
                     <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                      <h3 className="text-sm font-semibold text-white/80">About {stream.creatorDisplayName}</h3>
+                      <h3 className="text-sm font-semibold text-white/80">
+                        About {stream.creatorDisplayName}
+                      </h3>
                       <p className="mt-2 text-xs leading-relaxed text-white/50">
-                        Welcome to the stream! We talk about crypto, DeFi, web3, and everything in between.
-                        Make sure to follow and subscribe so you never miss a stream!
+                        Welcome to the stream! We talk about crypto, DeFi, web3, and everything in
+                        between. Make sure to follow and subscribe so you never miss a stream!
                       </p>
                       <div className="mt-3 grid grid-cols-3 gap-3 border-t border-white/10 pt-3">
                         <div className="text-center">
-                          <p className="text-xs font-bold text-white">{stream.stats.totalViews.toLocaleString()}</p>
+                          <p className="text-xs font-bold text-white">
+                            {stream.stats.totalViews.toLocaleString()}
+                          </p>
                           <p className="text-[9px] text-white/40">Channel Views</p>
                         </div>
                         <div className="text-center">
-                          <p className="text-xs font-bold text-white">{stream.stats.followers.toLocaleString()}</p>
+                          <p className="text-xs font-bold text-white">
+                            {stream.stats.followers.toLocaleString()}
+                          </p>
                           <p className="text-[9px] text-white/40">Followers</p>
                         </div>
                         <div className="text-center">
-                          <p className="text-xs font-bold text-white">{stream.stats.subscribers.toLocaleString()}</p>
+                          <p className="text-xs font-bold text-white">
+                            {stream.stats.subscribers.toLocaleString()}
+                          </p>
                           <p className="text-[9px] text-white/40">Subscribers</p>
                         </div>
                       </div>
@@ -156,7 +187,9 @@ export default function StreamPage({ params }: { params: { creator: string } }) 
                               {(handle[0] ?? '?').toUpperCase()}
                             </div>
                             <div className="min-w-0">
-                              <p className="truncate text-xs font-medium text-white/70">@{handle}</p>
+                              <p className="truncate text-xs font-medium text-white/70">
+                                @{handle}
+                              </p>
                               <p className="text-[9px] text-white/30">Live</p>
                             </div>
                           </Link>
@@ -186,7 +219,17 @@ export default function StreamPage({ params }: { params: { creator: string } }) 
                     className="flex h-6 w-6 items-center justify-center rounded text-white/30 hover:text-white/60"
                     aria-label="Close chat"
                   >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden="true"
+                    >
                       <polyline points="15 18 9 12 15 6" />
                     </svg>
                   </button>
@@ -207,7 +250,17 @@ export default function StreamPage({ params }: { params: { creator: string } }) 
               className="fixed right-4 top-20 z-40 flex items-center gap-1.5 rounded-lg bg-degen-500/20 border border-degen-500/30 px-3 py-2 text-xs font-medium text-degen-400 hover:bg-degen-500/30 transition-all"
               aria-label="Show chat"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
                 <polyline points="9 18 15 12 9 6" />
               </svg>
               Show Chat

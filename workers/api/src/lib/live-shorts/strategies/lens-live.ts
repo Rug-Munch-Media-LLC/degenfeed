@@ -13,9 +13,9 @@
  * Native live support: NONE — we build the experience on top of publications.
  */
 
-import type { Env } from "../../../index";
-import type { ProtocolStrategy, LiveSessionInfo, ViewerCountResult } from "../live-strategy";
-import { LIVE_SHORT_STRATEGIES } from "../protocol-strategies";
+import type { Env } from '../../../index';
+import type { LiveSessionInfo, ProtocolStrategy, ViewerCountResult } from '../live-strategy';
+import { LIVE_SHORT_STRATEGIES } from '../protocol-strategies';
 
 const STRATEGY = LIVE_SHORT_STRATEGIES.lens;
 
@@ -35,16 +35,16 @@ export const lensLiveStrategy: ProtocolStrategy = {
     duration: number,
   ): Promise<LiveSessionInfo> {
     try {
-      const { LensClient } = await import("@degenfeed/lens-sdk");
-      const apiUrl = env.LENS_API_URL ?? "https://api-v2.lens.dev/graphql";
-      const accessToken = env.LENS_ACCESS_TOKEN ?? "";
+      const { LensClient } = await import('@degenfeed/lens-sdk');
+      const apiUrl = env.LENS_API_URL ?? 'https://api-v2.lens.dev/graphql';
+      const accessToken = env.LENS_ACCESS_TOKEN ?? '';
 
       if (!accessToken) {
         return {
-          protocolId: "",
-          protocolUrl: "",
+          protocolId: '',
+          protocolUrl: '',
           announced: false,
-          error: "Lens API access token not configured",
+          error: 'Lens API access token not configured',
         };
       }
 
@@ -59,7 +59,7 @@ export const lensLiveStrategy: ProtocolStrategy = {
         ``,
         `⏱ ${duration}s short`,
         `📺 ${playbackUrl}`,
-      ].join("\n");
+      ].join('\n');
 
       // Use Lens's metadata attributes for live status
       const result = (await client.request(
@@ -72,15 +72,15 @@ export const lensLiveStrategy: ProtocolStrategy = {
         {
           request: {
             content,
-            locale: "en",
+            locale: 'en',
             metadata: {
               attributes: [
-                { key: "isLive", value: "true", type: "BOOLEAN" },
-                { key: "liveUrl", value: playbackUrl, type: "STRING" },
-                { key: "livePlatform", value: "DegenFeed", type: "STRING" },
-                { key: "liveDuration", value: String(duration), type: "NUMBER" },
-                { key: "liveSessionId", value: sessionId, type: "STRING" },
-                { key: "creatorAddress", value: creator, type: "STRING" },
+                { key: 'isLive', value: 'true', type: 'BOOLEAN' },
+                { key: 'liveUrl', value: playbackUrl, type: 'STRING' },
+                { key: 'livePlatform', value: 'DegenFeed', type: 'STRING' },
+                { key: 'liveDuration', value: String(duration), type: 'NUMBER' },
+                { key: 'liveSessionId', value: sessionId, type: 'STRING' },
+                { key: 'creatorAddress', value: creator, type: 'STRING' },
               ],
             },
           },
@@ -92,10 +92,10 @@ export const lensLiveStrategy: ProtocolStrategy = {
 
       if (!txHash) {
         return {
-          protocolId: "",
-          protocolUrl: "",
+          protocolId: '',
+          protocolUrl: '',
           announced: false,
-          error: (postResult?.reason as string) ?? "No txHash from Lens relay",
+          error: (postResult?.reason as string) ?? 'No txHash from Lens relay',
         };
       }
 
@@ -106,8 +106,8 @@ export const lensLiveStrategy: ProtocolStrategy = {
       };
     } catch (err) {
       return {
-        protocolId: "",
-        protocolUrl: "",
+        protocolId: '',
+        protocolUrl: '',
         announced: false,
         error: err instanceof Error ? err.message : String(err),
       };
@@ -116,7 +116,7 @@ export const lensLiveStrategy: ProtocolStrategy = {
 
   async updateEnded(
     env: Env,
-    sessionId: string,
+    _sessionId: string,
     protocolId: string,
     title: string,
     recordingUrl: string,
@@ -125,56 +125,51 @@ export const lensLiveStrategy: ProtocolStrategy = {
     if (!protocolId) return;
 
     try {
-      const { LensClient } = await import("@degenfeed/lens-sdk");
-      const apiUrl = env.LENS_API_URL ?? "https://api-v2.lens.dev/graphql";
-      const accessToken = env.LENS_ACCESS_TOKEN ?? "";
+      const { LensClient } = await import('@degenfeed/lens-sdk');
+      const apiUrl = env.LENS_API_URL ?? 'https://api-v2.lens.dev/graphql';
+      const accessToken = env.LENS_ACCESS_TOKEN ?? '';
       if (!accessToken) return;
 
       const client = new LensClient(apiUrl);
       client.setAuth(accessToken);
 
-      const content = [
-        `✅ Recording available: ${title}`,
-        ``,
-        `📺 ${recordingUrl}`,
-      ].join("\n");
+      const content = [`✅ Recording available: ${title}`, ``, `📺 ${recordingUrl}`].join('\n');
 
-      await client.request(
-        `mutation CreatePost($request: CreatePostRequest!) {
+      await client
+        .request(
+          `mutation CreatePost($request: CreatePostRequest!) {
           post(request: $request) {
             ... on RelayResult { txHash }
             ... on RelayError { reason }
           }
         }`,
-        {
-          request: {
-            content,
-            locale: "en",
-            metadata: {
-              attributes: [
-                { key: "isLive", value: "false", type: "BOOLEAN" },
-                { key: "recordingUrl", value: recordingUrl, type: "STRING" },
-                { key: "originalPostId", value: protocolId, type: "STRING" },
-              ],
+          {
+            request: {
+              content,
+              locale: 'en',
+              metadata: {
+                attributes: [
+                  { key: 'isLive', value: 'false', type: 'BOOLEAN' },
+                  { key: 'recordingUrl', value: recordingUrl, type: 'STRING' },
+                  { key: 'originalPostId', value: protocolId, type: 'STRING' },
+                ],
+              },
             },
           },
-        },
-      ).catch(() => {});
+        )
+        .catch(() => {});
     } catch {
       // Non-critical
     }
   },
 
-  async getViewerCount(
-    env: Env,
-    protocolId: string,
-  ): Promise<ViewerCountResult> {
+  async getViewerCount(env: Env, protocolId: string): Promise<ViewerCountResult> {
     // Lens: use publication stats as viewer proxy
     if (!protocolId) return { count: 0, rawSignal: 0 };
 
     try {
-      const { LensClient } = await import("@degenfeed/lens-sdk");
-      const apiUrl = env.LENS_API_URL ?? "https://api-v2.lens.dev/graphql";
+      const { LensClient } = await import('@degenfeed/lens-sdk');
+      const apiUrl = env.LENS_API_URL ?? 'https://api-v2.lens.dev/graphql';
       const client = new LensClient(apiUrl);
 
       const data = (await client.request(
@@ -192,9 +187,7 @@ export const lensLiveStrategy: ProtocolStrategy = {
       if (!stats) return { count: 0, rawSignal: 0 };
 
       const rawSignal =
-        (stats.totalUpvotes ?? 0) +
-        (stats.totalComments ?? 0) +
-        (stats.totalMirrors ?? 0);
+        (stats.totalUpvotes ?? 0) + (stats.totalComments ?? 0) + (stats.totalMirrors ?? 0);
 
       const count = Math.floor(rawSignal * 3) + 2;
 

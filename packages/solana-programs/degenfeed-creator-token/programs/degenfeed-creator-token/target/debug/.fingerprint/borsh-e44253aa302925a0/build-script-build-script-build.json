@@ -1,1 +1,20 @@
-{"rustc":9777074978655410247,"features":"[\"borsh-derive\", \"default\", \"derive\", \"std\", \"unstable__schema\"]","declared_features":"[\"ascii\", \"borsh-derive\", \"bson\", \"bytes\", \"de_strict_order\", \"default\", \"derive\", \"hashbrown\", \"indexmap\", \"rc\", \"std\", \"unstable__schema\", \"uuid\"]","target":17883862002600103897,"profile":2225463790103693989,"path":4380013180134868958,"deps":[[13574026637917657776,"cfg_aliases",false,9703546376730934236]],"local":[{"CheckDepInfo":{"dep_info":"debug/.fingerprint/borsh-e44253aa302925a0/dep-build-script-build-script-build","checksum":false}}],"rustflags":[],"config":8247474407144887393,"compile_kind":0}
+{
+  "rustc": 9777074978655410247,
+  "features": "[\"borsh-derive\", \"default\", \"derive\", \"std\", \"unstable__schema\"]",
+  "declared_features": "[\"ascii\", \"borsh-derive\", \"bson\", \"bytes\", \"de_strict_order\", \"default\", \"derive\", \"hashbrown\", \"indexmap\", \"rc\", \"std\", \"unstable__schema\", \"uuid\"]",
+  "target": 17883862002600103897,
+  "profile": 2225463790103693989,
+  "path": 4380013180134868958,
+  "deps": [[13574026637917657776, "cfg_aliases", false, 9703546376730934236]],
+  "local": [
+    {
+      "CheckDepInfo": {
+        "dep_info": "debug/.fingerprint/borsh-e44253aa302925a0/dep-build-script-build-script-build",
+        "checksum": false
+      }
+    }
+  ],
+  "rustflags": [],
+  "config": 8247474407144887393,
+  "compile_kind": 0
+}

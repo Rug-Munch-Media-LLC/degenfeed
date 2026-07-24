@@ -5,8 +5,8 @@
  * Uses CSS columns for natural masonry layout with staggered card heights.
  */
 
-import { useCallback, useRef } from 'react';
 import type { VisualPost } from '@degenfeed/types';
+import { useCallback, useRef } from 'react';
 import { VisualFeedCard } from './VisualFeedCard';
 
 interface VisualFeedGridProps {
@@ -123,9 +123,7 @@ export function VisualFeedGrid({
       )}
 
       {/* Infinite scroll sentinel */}
-      {hasMore && !loading && (
-        <div ref={sentinelCallback} className="h-4" />
-      )}
+      {hasMore && !loading && <div ref={sentinelCallback} className="h-4" />}
 
       {/* End of feed */}
       {!hasMore && posts.length > 0 && (

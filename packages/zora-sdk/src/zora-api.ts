@@ -97,7 +97,9 @@ export async function fetchZoraTrendingCoins(limit: number = 20): Promise<CoinIn
   const res = await fetchWithTimeout(`${COINS_API_BASE}/api/explore/trending?limit=${clamped}`);
   const data = (await res.json()) as ZoraCoin[] | { data: ZoraCoin[] };
 
-  const coins: ZoraCoin[] = Array.isArray(data) ? data : (data as { data: ZoraCoin[] }).data ?? [];
+  const coins: ZoraCoin[] = Array.isArray(data)
+    ? data
+    : ((data as { data: ZoraCoin[] }).data ?? []);
   return coins.map(normalizeZoraCoin);
 }
 
@@ -134,7 +136,10 @@ export async function fetchZoraCreatorCoins(creatorAddress: string): Promise<str
   const res = await fetchWithTimeout(
     `${COINS_API_BASE}/api/profile?identifier=${creatorAddress.toLowerCase()}`,
   );
-  const data = await res.json() as { coins?: Array<{ address: string }>; data?: { coins?: Array<{ address: string }> } };
+  const data = (await res.json()) as {
+    coins?: Array<{ address: string }>;
+    data?: { coins?: Array<{ address: string }> };
+  };
   const coins = data.coins ?? (data as any).data?.coins ?? [];
   return coins.map((c: { address: string }) => c.address);
 }
@@ -156,12 +161,13 @@ export interface ZoraComment {
  * @returns Array of comments.
  */
 export async function fetchZoraLiveComments(streamId: string): Promise<ZoraComment[]> {
-  const res = await fetchWithTimeout(
-    `${COINS_API_BASE}/api/live/${streamId}/comments`,
-  );
-  const data = (await res.json()) as ZoraComment[] | { comments: ZoraComment[]; data?: { comments?: ZoraComment[] } };
+  const res = await fetchWithTimeout(`${COINS_API_BASE}/api/live/${streamId}/comments`);
+  const data = (await res.json()) as
+    | ZoraComment[]
+    | { comments: ZoraComment[]; data?: { comments?: ZoraComment[] } };
   if (Array.isArray(data)) return data;
-  if ((data as { comments: ZoraComment[] }).comments) return (data as { comments: ZoraComment[] }).comments;
+  if ((data as { comments: ZoraComment[] }).comments)
+    return (data as { comments: ZoraComment[] }).comments;
   if ((data as any).data?.comments) return (data as any).data.comments;
   return [];
 }
@@ -179,11 +185,12 @@ export async function fetchZoraBatchPrices(
 ): Promise<Map<`0x${string}`, string>> {
   if (addresses.length === 0) return new Map();
 
-  const params = addresses.map(a => `addresses=${a.toLowerCase()}`).join('&');
+  const params = addresses.map((a) => `addresses=${a.toLowerCase()}`).join('&');
   const res = await fetchWithTimeout(`${COINS_API_BASE}/api/prices?${params}`);
   const data = (await res.json()) as Record<string, string> | { prices: Record<string, string> };
 
-  const prices: Record<string, string> = (data as { prices: Record<string, string> }).prices ?? data as Record<string, string>;
+  const prices: Record<string, string> =
+    (data as { prices: Record<string, string> }).prices ?? (data as Record<string, string>);
   const priceMap = new Map<`0x${string}`, string>();
   for (const [addr, price] of Object.entries(prices)) {
     priceMap.set(addr as `0x${string}`, price);

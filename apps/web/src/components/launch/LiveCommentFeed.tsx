@@ -1,8 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useLiveComments } from '../../hooks/useLiveComments';
 import type { TokenComment } from '../../hooks/useLiveComments';
+import { useLiveComments } from '../../hooks/useLiveComments';
 import { useIsMobile, useKeyboardHeight } from '../../hooks/useMobileResponsive';
 
 /* === Config =========================================== */
@@ -165,9 +165,7 @@ export default function LiveCommentFeed({
           <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--color-fg)]">
             {isConnected ? 'LIVE' : 'RECONNECTING...'}
           </span>
-          <span className="text-[11px] text-[var(--color-muted)]">
-            {onlineCount} watching
-          </span>
+          <span className="text-[11px] text-[var(--color-muted)]">{onlineCount} watching</span>
         </div>
         <div className="flex items-center gap-2">
           {!compact && (
@@ -209,7 +207,10 @@ export default function LiveCommentFeed({
           <div
             ref={scrollRef}
             className="flex-1 space-y-0.5 overflow-y-auto px-3 py-2"
-            style={{ maxHeight: isMobile ? '40vh' : compact ? 240 : 400, minHeight: compact ? 80 : 120 }}
+            style={{
+              maxHeight: isMobile ? '40vh' : compact ? 240 : 400,
+              minHeight: compact ? 80 : 120,
+            }}
           >
             {isLoading && comments.length === 0 && (
               <div className="space-y-2 py-4">
@@ -286,7 +287,8 @@ function CommentBubble({ comment }: { comment: TokenComment }) {
 
   const creatorClass = comment.isCreator ? 'border-l-2 border-degen-400' : '';
 
-  const displayName = comment.authorHandle || `${comment.author.slice(0, 6)}...${comment.author.slice(-4)}`;
+  const displayName =
+    comment.authorHandle || `${comment.author.slice(0, 6)}...${comment.author.slice(-4)}`;
 
   return (
     <div
@@ -295,11 +297,7 @@ function CommentBubble({ comment }: { comment: TokenComment }) {
       {/* Avatar */}
       <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded-full bg-degen-500/20">
         {comment.authorAvatar ? (
-          <img
-            src={comment.authorAvatar}
-            alt=""
-            className="h-full w-full object-cover"
-          />
+          <img src={comment.authorAvatar} alt="" className="h-full w-full object-cover" />
         ) : (
           <span className="text-[9px] font-bold text-degen-400">
             {comment.author.charAt(2).toUpperCase() || '?'}
@@ -327,9 +325,7 @@ function CommentBubble({ comment }: { comment: TokenComment }) {
             {formatTimeAgo(comment.timestamp)}
           </span>
         </div>
-        <p className="text-xs text-[var(--color-fg)] break-words leading-tight">
-          {comment.text}
-        </p>
+        <p className="text-xs text-[var(--color-fg)] break-words leading-tight">{comment.text}</p>
       </div>
     </div>
   );

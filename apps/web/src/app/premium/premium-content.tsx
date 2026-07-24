@@ -4,9 +4,8 @@ import { useCallback, useState } from 'react';
 import { PremiumPaymentModal } from '../../components/PremiumPaymentModal';
 import {
   ComparisonTable,
-  PricingCard,
   getDefaultTiers,
-  type PricingTier,
+  PricingCard,
 } from '../../components/pricing/PricingTable';
 import { type PremiumTier, usePremium } from '../../hooks/usePremium';
 
@@ -15,8 +14,8 @@ import { type PremiumTier, usePremium } from '../../hooks/usePremium';
 function FreeForeverBanner() {
   return (
     <div className="rounded-xl border border-green-500/20 bg-green-500/5 p-4 text-center text-sm text-green-400">
-      <span className="font-semibold">✨ Free Forever:</span> Browse, read, search, and engage across
-      all 15+ protocols. No account, no payment, no time limit.
+      <span className="font-semibold">✨ Free Forever:</span> Browse, read, search, and engage
+      across all 15+ protocols. No account, no payment, no time limit.
     </div>
   );
 }
@@ -27,12 +26,9 @@ export function PremiumContent() {
   const { tier, loading: statusLoading } = usePremium();
   const [showPayment, setShowPayment] = useState(false);
 
-  const handleSubscribe = useCallback(
-    async (_selectedTier: PremiumTier) => {
-      setShowPayment(true);
-    },
-    [],
-  );
+  const handleSubscribe = useCallback(async (_selectedTier: PremiumTier) => {
+    setShowPayment(true);
+  }, []);
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-10 sm:py-16">
@@ -72,9 +68,7 @@ export function PremiumContent() {
 
       {/* FAQ */}
       <div className="rounded-xl border border-[var(--color-glass-border)] bg-white/[0.02] p-6">
-        <h2 className="mb-4 text-lg font-semibold text-[var(--color-fg)]">
-          Premium FAQ
-        </h2>
+        <h2 className="mb-4 text-lg font-semibold text-[var(--color-fg)]">Premium FAQ</h2>
         <dl className="space-y-4 text-sm text-[var(--color-muted)]">
           <div>
             <dt className="font-medium text-[var(--color-fg)]">Can I cancel anytime?</dt>
@@ -102,9 +96,7 @@ export function PremiumContent() {
             </dd>
           </div>
           <div>
-            <dt className="font-medium text-[var(--color-fg)]">
-              Can I switch between plans?
-            </dt>
+            <dt className="font-medium text-[var(--color-fg)]">Can I switch between plans?</dt>
             <dd>
               Yes. Upgrade or downgrade anytime. Changes apply immediately; credits are prorated.
             </dd>
@@ -112,8 +104,8 @@ export function PremiumContent() {
           <div>
             <dt className="font-medium text-[var(--color-fg)]">Is self-hosting free?</dt>
             <dd>
-              Yes — the entire DegenFeed stack is open source (AGPL-3.0) and free to self-host.
-              No license fees, no hidden costs.
+              Yes — the entire DegenFeed stack is open source (AGPL-3.0) and free to self-host. No
+              license fees, no hidden costs.
             </dd>
           </div>
         </dl>

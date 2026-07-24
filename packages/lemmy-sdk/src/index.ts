@@ -335,18 +335,12 @@ export class LemmyClient {
     const params: Record<string, string | number> = { q: query, type_: 'Communities' };
     if (opts.limit) params.limit = opts.limit;
     if (opts.page) params.page = opts.page;
-    const res = await this.get<{ communities: LemmyCommunityView[] }>(
-      '/api/v3/search',
-      params,
-    );
+    const res = await this.get<{ communities: LemmyCommunityView[] }>('/api/v3/search', params);
     return res.communities;
   }
 
   /** Follow or unfollow a community. Returns updated community view. */
-  async followCommunity(
-    communityId: number,
-    follow: boolean,
-  ): Promise<LemmyCommunityView> {
+  async followCommunity(communityId: number, follow: boolean): Promise<LemmyCommunityView> {
     const res = await this.post<{ community_view: LemmyCommunityView }>(
       '/api/v3/community/follow',
       { community_id: communityId, follow },
@@ -458,10 +452,7 @@ export class LemmyClient {
   }
 
   /** Edit a comment. Requires auth. */
-  async editComment(
-    commentId: number,
-    content: string,
-  ): Promise<LemmyCommentView> {
+  async editComment(commentId: number, content: string): Promise<LemmyCommentView> {
     const res = await this.put<{ comment_view: LemmyCommentView }>('/api/v3/comment', {
       comment_id: commentId,
       content,
@@ -527,14 +518,11 @@ export interface LemmyFeedMeta {
 /**
  * Convert a raw LemmyPostView to a UnifiedPost for the DegenFeed feed pipeline.
  */
-export function lemmyToUnifiedPost(
-  postView: LemmyPostView,
-  meta: LemmyFeedMeta,
-): UnifiedPost {
+export function lemmyToUnifiedPost(postView: LemmyPostView, meta: LemmyFeedMeta): UnifiedPost {
   const { post, creator, community, counts } = postView;
   const instance = new URL(meta.instanceUrl).hostname;
   const nativeId = `lemmy:${community.name}:${post.id}`;
-  const isLink = !!post.url && !post.body;
+  const _isLink = !!post.url && !post.body;
   const text = post.body || post.name || '';
 
   // Build identity

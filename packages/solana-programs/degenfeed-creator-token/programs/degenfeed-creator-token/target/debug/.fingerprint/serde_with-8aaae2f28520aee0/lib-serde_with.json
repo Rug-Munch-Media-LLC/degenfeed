@@ -1,1 +1,23 @@
-{"rustc":9777074978655410247,"features":"[\"macros\"]","declared_features":"[\"alloc\", \"base64\", \"chrono\", \"chrono_0_4\", \"default\", \"guide\", \"hex\", \"indexmap\", \"indexmap_1\", \"json\", \"macros\", \"std\", \"time_0_3\"]","target":7701392951120055508,"profile":2241668132362809309,"path":11638631166275656125,"deps":[[6557439603276904804,"serde",false,12150905954680325886],[7968062800359406015,"serde_with_macros",false,16169408994456127887]],"local":[{"CheckDepInfo":{"dep_info":"debug/.fingerprint/serde_with-8aaae2f28520aee0/dep-lib-serde_with","checksum":false}}],"rustflags":[],"config":8247474407144887393,"compile_kind":0}
+{
+  "rustc": 9777074978655410247,
+  "features": "[\"macros\"]",
+  "declared_features": "[\"alloc\", \"base64\", \"chrono\", \"chrono_0_4\", \"default\", \"guide\", \"hex\", \"indexmap\", \"indexmap_1\", \"json\", \"macros\", \"std\", \"time_0_3\"]",
+  "target": 7701392951120055508,
+  "profile": 2241668132362809309,
+  "path": 11638631166275656125,
+  "deps": [
+    [6557439603276904804, "serde", false, 12150905954680325886],
+    [7968062800359406015, "serde_with_macros", false, 16169408994456127887]
+  ],
+  "local": [
+    {
+      "CheckDepInfo": {
+        "dep_info": "debug/.fingerprint/serde_with-8aaae2f28520aee0/dep-lib-serde_with",
+        "checksum": false
+      }
+    }
+  ],
+  "rustflags": [],
+  "config": 8247474407144887393,
+  "compile_kind": 0
+}

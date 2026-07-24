@@ -23,11 +23,7 @@ interface PlatformGreetingProps {
 
 /* === Component ================================================== */
 
-export function PlatformGreeting({
-  platform,
-  compact = false,
-  onDismiss,
-}: PlatformGreetingProps) {
+export function PlatformGreeting({ platform, compact = false, onDismiss }: PlatformGreetingProps) {
   const cfg = PLATFORM_CONFIG[platform];
   const [dismissed, setDismissed] = useState(false);
   const [visible, setVisible] = useState(false);
@@ -105,9 +101,7 @@ export function PlatformGreeting({
 
         {/* Content */}
         <div className="min-w-0 flex-1">
-          <p
-            className={`font-semibold text-[var(--color-fg)] ${compact ? 'text-xs' : 'text-sm'}`}
-          >
+          <p className={`font-semibold text-[var(--color-fg)] ${compact ? 'text-xs' : 'text-sm'}`}>
             {isDegenFeed
               ? 'Welcome back!'
               : isDirect
@@ -116,11 +110,7 @@ export function PlatformGreeting({
                   ? `From ${cfg.label}? You're in the right place.`
                   : 'Welcome!'}
           </p>
-          <p
-            className={`mt-0.5 text-[var(--color-muted)] ${
-              compact ? 'text-[10px]' : 'text-xs'
-            }`}
-          >
+          <p className={`mt-0.5 text-[var(--color-muted)] ${compact ? 'text-[10px]' : 'text-xs'}`}>
             {isDegenFeed
               ? 'Full access unlocked.'
               : isDirect

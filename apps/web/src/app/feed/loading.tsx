@@ -1,8 +1,5 @@
 import { PostCardSkeleton } from '@degenfeed/ui/server';
-import {
-  ContentShellSkeleton,
-  SidebarSkeleton,
-} from '@/components/loading/PageSkeleton';
+import { ContentShellSkeleton, SidebarSkeleton } from '@/components/loading/PageSkeleton';
 
 export default function FeedLoading() {
   return (

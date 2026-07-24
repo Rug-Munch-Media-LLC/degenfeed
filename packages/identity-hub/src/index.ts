@@ -11,7 +11,7 @@
  */
 
 import type { Protocol } from '@degenfeed/types';
-import { identityKey, type CrossProtocolIdentity, type ProtocolId } from '@degenfeed/utils';
+import { type CrossProtocolIdentity, identityKey, type ProtocolId } from '@degenfeed/utils';
 
 // ─── Types ───────────────────────────────────────────────────────────────
 
@@ -199,17 +199,38 @@ export class IdentityHub {
       if (raw) {
         const record = JSON.parse(raw) as CrossProtocolIdentity;
         const protoFields: ProtocolId[] = [
-          'nostr', 'farcaster', 'lens', 'bluesky', 'mastodon',
-          'reddit', 'threads', 'lemmy', 'rss', 'peertube',
-          'atproto', 'zora', 'telegram',
+          'nostr',
+          'farcaster',
+          'lens',
+          'bluesky',
+          'mastodon',
+          'reddit',
+          'threads',
+          'lemmy',
+          'rss',
+          'peertube',
+          'atproto',
+          'zora',
+          'telegram',
         ];
 
         for (const p of protoFields) {
-          const info = (record as unknown as Record<string, unknown>)[p] as Record<string, unknown> | undefined;
-          if (info && info.verified) {
+          const info = (record as unknown as Record<string, unknown>)[p] as
+            | Record<string, unknown>
+            | undefined;
+          if (info?.verified) {
             protocols[p as Protocol] = {
               linked: true,
-              identifier: String(info.did || info.coinAddress || info.userId || info.npub || info.fid || info.profileId || info.username || ''),
+              identifier: String(
+                info.did ||
+                  info.coinAddress ||
+                  info.userId ||
+                  info.npub ||
+                  info.fid ||
+                  info.profileId ||
+                  info.username ||
+                  '',
+              ),
               handle: String(info.handle || info.username || ''),
               displayName: String(info.displayName || ''),
               autoCreated: Boolean(info.autoCreated),
@@ -222,9 +243,21 @@ export class IdentityHub {
         }
       } else {
         // No record — all protocols unlinked
-        for (const p of ['nostr', 'farcaster', 'lens', 'bluesky', 'mastodon',
-          'reddit', 'threads', 'lemmy', 'rss', 'peertube',
-          'atproto', 'zora', 'telegram'] as Protocol[]) {
+        for (const p of [
+          'nostr',
+          'farcaster',
+          'lens',
+          'bluesky',
+          'mastodon',
+          'reddit',
+          'threads',
+          'lemmy',
+          'rss',
+          'peertube',
+          'atproto',
+          'zora',
+          'telegram',
+        ] as Protocol[]) {
           protocols[p] = { linked: false, autoCreated: false };
         }
       }
@@ -316,10 +349,7 @@ export class IdentityHub {
    * Currently supports: AT Protocol (PDS), Mastodon, Zora.
    * Premium check: auto-creation only for premium users.
    */
-  async autoCreateAccounts(
-    wallet: string,
-    protocols: Protocol[],
-  ): Promise<AutoCreateResult[]> {
+  async autoCreateAccounts(wallet: string, protocols: Protocol[]): Promise<AutoCreateResult[]> {
     const premium = await this.getPremiumStatus(wallet);
     const results: AutoCreateResult[] = [];
 
@@ -433,10 +463,7 @@ export class IdentityHub {
    * Auto-create a Zora coin for a wallet.
    * Placeholder — actual Zora coin creation requires on-chain tx.
    */
-  private async autoCreateZora(
-    wallet: string,
-    premium: PremiumStatus,
-  ): Promise<AutoCreateResult> {
+  private async autoCreateZora(_wallet: string, premium: PremiumStatus): Promise<AutoCreateResult> {
     if (!premium.isPremium) {
       return { protocol: 'zora', ok: false, error: 'Premium subscription required' };
     }
@@ -447,7 +474,8 @@ export class IdentityHub {
     return {
       protocol: 'zora',
       ok: false,
-      error: 'Zora coin creation requires on-chain transaction from wallet. Use /link/zora endpoint.',
+      error:
+        'Zora coin creation requires on-chain transaction from wallet. Use /link/zora endpoint.',
     };
   }
 }
@@ -458,11 +486,15 @@ export class IdentityHub {
  * Create an IdentityHub instance from a Cloudflare Workers Env-compatible KV.
  */
 export function createIdentityHub(
-  kv: { get: (key: string) => Promise<string | null>; put: (key: string, value: string, options?: { expirationTtl?: number }) => Promise<void>; delete: (key: string) => Promise<void> },
+  kv: {
+    get: (key: string) => Promise<string | null>;
+    put: (key: string, value: string, options?: { expirationTtl?: number }) => Promise<void>;
+    delete: (key: string) => Promise<void>;
+  },
   encryptionSecret?: string,
 ): IdentityHub {
   return new IdentityHub({ kv, encryptionSecret });
 }
 
-export type { ProtocolId, CrossProtocolIdentity } from '@degenfeed/utils';
+export type { CrossProtocolIdentity, ProtocolId } from '@degenfeed/utils';
 export { identityKey } from '@degenfeed/utils';

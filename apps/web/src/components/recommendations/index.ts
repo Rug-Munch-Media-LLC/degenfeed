@@ -1,6 +1,6 @@
-export { RecommendedRow } from './RecommendedRow';
 export { BecauseYouWatched } from './BecauseYouWatched';
-export { TrendingForYou } from './TrendingForYou';
-export { DiscoverNew } from './DiscoverNew';
 export { ContinueWatching } from './ContinueWatching';
+export { DiscoverNew } from './DiscoverNew';
 export { RecommendationCard } from './RecommendationCard';
+export { RecommendedRow } from './RecommendedRow';
+export { TrendingForYou } from './TrendingForYou';

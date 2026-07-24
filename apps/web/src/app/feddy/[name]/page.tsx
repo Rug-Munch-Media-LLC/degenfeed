@@ -1,19 +1,24 @@
 'use client';
 
-import { use, useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
+import { use, useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../../../components/AuthProvider';
 import { CommunityBanner } from '../../../components/feddy/CommunityBanner';
 import { CommunityFeed } from '../../../components/feddy/CommunityFeed';
-import { CommunitySidebar } from '../../../components/feddy/CommunitySidebar';
 import { CommunityMemberList } from '../../../components/feddy/CommunityMemberList';
 import { CommunityRules } from '../../../components/feddy/CommunityRules';
+import { CommunitySidebar } from '../../../components/feddy/CommunitySidebar';
 import { JoinButton } from '../../../components/feddy/JoinButton';
 import { ModPanel } from '../../../components/feddy/ModPanel';
-import { PremiumUpsell } from '../../../components/feddy/PremiumUpsell';
-import { usePremium } from '../../../hooks/usePremium';
+import type {
+  CommunityStats,
+  FeddyCommunity,
+  CommunityMember as Member,
+  MemberRole,
+  CommunityPost as Post,
+} from '../../../components/feddy/types';
 import { GoLiveModal } from '../../../components/streams/GoLiveModal';
-import type { FeddyCommunity, CommunityMember as Member, CommunityPost as Post, CommunityStats, MemberRole } from '../../../components/feddy/types';
+import { usePremium } from '../../../hooks/usePremium';
 
 // === Skeleton ==========================================================
 
@@ -40,11 +45,7 @@ function CommunitySkeleton() {
 
 // === Community Page ====================================================
 
-export default function CommunityPage({
-  params,
-}: {
-  params: Promise<{ name: string }>;
-}) {
+export default function CommunityPage({ params }: { params: Promise<{ name: string }> }) {
   const { name } = use(params);
   const { walletAddress } = useAuth();
   const { tier: premiumTier } = usePremium();
@@ -71,7 +72,7 @@ export default function CommunityPage({
         throw new Error(`API returned ${res.status}`);
       }
 
-      const data = await res.json() as {
+      const data = (await res.json()) as {
         community: FeddyCommunity & { viewerRole: MemberRole | null };
         posts: Post[];
         members: Member[];
@@ -140,17 +141,17 @@ export default function CommunityPage({
           >
             Create Community
           </Link>
-      </div>
+        </div>
 
-      {/* Go Live Modal */}
-      <GoLiveModal
-        isOpen={showGoLiveModal}
-        onClose={() => setShowGoLiveModal(false)}
-        defaultSurfaces={['community', 'visual-feed', 'discover']}
-      />
-    </div>
-  );
-}
+        {/* Go Live Modal */}
+        <GoLiveModal
+          isOpen={showGoLiveModal}
+          onClose={() => setShowGoLiveModal(false)}
+          defaultSurfaces={['community', 'visual-feed', 'discover']}
+        />
+      </div>
+    );
+  }
 
   const isOwner = viewerRole === 'owner';
   const isMod = viewerRole === 'moderator' || isOwner;
@@ -159,10 +160,7 @@ export default function CommunityPage({
   return (
     <div className="min-h-screen animate-page-enter">
       {/* Banner */}
-      <CommunityBanner
-        community={community}
-        viewerRole={viewerRole}
-      />
+      <CommunityBanner community={community} viewerRole={viewerRole} />
 
       <div className="mx-auto max-w-6xl px-4 py-6">
         {/* Nav tabs */}
@@ -178,7 +176,13 @@ export default function CommunityPage({
                   : 'border-transparent text-[var(--color-muted)] hover:text-[var(--color-fg)]'
               }`}
             >
-              {tab === 'feed' ? 'Feed' : tab === 'members' ? 'Members' : tab === 'rules' ? 'Rules' : 'About'}
+              {tab === 'feed'
+                ? 'Feed'
+                : tab === 'members'
+                  ? 'Members'
+                  : tab === 'rules'
+                    ? 'Rules'
+                    : 'About'}
             </button>
           ))}
 
@@ -196,7 +200,7 @@ export default function CommunityPage({
           </button>
 
           {/* Mod button */}
-          {(isMod) && (
+          {isMod && (
             <button
               type="button"
               onClick={() => setShowModPanel(!showModPanel)}
@@ -215,11 +219,7 @@ export default function CommunityPage({
           {/* Main content */}
           <div className="flex-1 min-w-0">
             {showModPanel ? (
-              <ModPanel
-                community={community}
-                viewerRole={viewerRole}
-                onUpdate={fetchCommunity}
-              />
+              <ModPanel community={community} viewerRole={viewerRole} onUpdate={fetchCommunity} />
             ) : activeTab === 'feed' ? (
               <CommunityFeed
                 community={community}
@@ -267,7 +267,9 @@ export default function CommunityPage({
                 {community.linkedCoin && (
                   <div className="rounded-xl border border-degen-500/20 bg-degen-500/5 p-4">
                     <p className="text-xs font-medium text-degen-400">Linked Creator Coin</p>
-                    <p className="mt-1 font-mono text-sm text-[var(--color-fg)]">{community.linkedCoin}</p>
+                    <p className="mt-1 font-mono text-sm text-[var(--color-fg)]">
+                      {community.linkedCoin}
+                    </p>
                   </div>
                 )}
               </div>
@@ -276,11 +278,7 @@ export default function CommunityPage({
 
           {/* Sidebar */}
           <div className="w-full lg:w-80 shrink-0 space-y-4">
-            <CommunitySidebar
-              community={community}
-              stats={stats}
-              viewerRole={viewerRole}
-            />
+            <CommunitySidebar community={community} stats={stats} viewerRole={viewerRole} />
 
             {isMember && (
               <JoinButton

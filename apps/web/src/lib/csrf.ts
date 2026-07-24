@@ -47,10 +47,7 @@ export function clearCsrfToken(): void {
  *
  * Usage: replace fetch(url, opts) with csrfFetch(url, opts).
  */
-export async function csrfFetch(
-  input: RequestInfo | URL,
-  init?: RequestInit,
-): Promise<Response> {
+export async function csrfFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
   const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
 
   // Only attach CSRF token to state-changing API requests

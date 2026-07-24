@@ -9,8 +9,8 @@
  */
 
 import { memo } from 'react';
-import { YouTubeSourceBadge } from './YouTubeSourceBadge';
 import { formatYouTubeCount } from './useYouTube';
+import { YouTubeSourceBadge } from './YouTubeSourceBadge';
 
 // === Types ===============================================================
 

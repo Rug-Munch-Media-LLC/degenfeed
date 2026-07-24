@@ -43,11 +43,11 @@ export interface CurveEra {
 }
 
 export const CURVE_ERAS: CurveEra[] = [
-  { endSupply: (GRADUATION_SUPPLY * 5n) / 100n, exponent: 2.2, slopeMultiplier: 3.0 },   // 0-5% — steal deal
-  { endSupply: (GRADUATION_SUPPLY * 15n) / 100n, exponent: 1.6, slopeMultiplier: 1.8 },  // 5-15% — early
-  { endSupply: (GRADUATION_SUPPLY * 40n) / 100n, exponent: 1.0, slopeMultiplier: 1.0 },  // 15-40% — cruise
-  { endSupply: (GRADUATION_SUPPLY * 70n) / 100n, exponent: 1.5, slopeMultiplier: 1.5 },  // 40-70% — FOMO
-  { endSupply: GRADUATION_SUPPLY, exponent: 2.0, slopeMultiplier: 2.2 },                  // 70-100% — finale
+  { endSupply: (GRADUATION_SUPPLY * 5n) / 100n, exponent: 2.2, slopeMultiplier: 3.0 }, // 0-5% — steal deal
+  { endSupply: (GRADUATION_SUPPLY * 15n) / 100n, exponent: 1.6, slopeMultiplier: 1.8 }, // 5-15% — early
+  { endSupply: (GRADUATION_SUPPLY * 40n) / 100n, exponent: 1.0, slopeMultiplier: 1.0 }, // 15-40% — cruise
+  { endSupply: (GRADUATION_SUPPLY * 70n) / 100n, exponent: 1.5, slopeMultiplier: 1.5 }, // 40-70% — FOMO
+  { endSupply: GRADUATION_SUPPLY, exponent: 2.0, slopeMultiplier: 2.2 }, // 70-100% — finale
 ];
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -124,8 +124,8 @@ export function getDynamicPrice(supply: bigint): bigint {
   const era = getCurrentEra(supply);
 
   // Compute era-local progress for the exponent adjustment
-  const eraStart = era === 0 ? 0n : CURVE_ERAS[era - 1]!.endSupply;
-  const eraEnd = CURVE_ERAS[era]!.endSupply;
+  const eraStart = era === 0 ? 0n : CURVE_ERAS[era - 1]?.endSupply;
+  const eraEnd = CURVE_ERAS[era]?.endSupply;
   const eraRange = eraEnd - eraStart;
 
   // Spline: blend the linear progress with an era-local exponent
@@ -134,15 +134,14 @@ export function getDynamicPrice(supply: bigint): bigint {
 
   // Apply era exponent to make it super-linear
   // At low progress, price stays lower; at high progress, it accelerates
-  const progressFraction = eraRange > 0n
-    ? Number((supply - eraStart) * SCALING / eraRange) / Number(SCALING)
-    : 0;
+  const progressFraction =
+    eraRange > 0n ? Number(((supply - eraStart) * SCALING) / eraRange) / Number(SCALING) : 0;
 
-  const exponent = CURVE_ERAS[era]!.exponent;
-  const slopeMul = CURVE_ERAS[era]!.slopeMultiplier;
+  const exponent = CURVE_ERAS[era]?.exponent;
+  const slopeMul = CURVE_ERAS[era]?.slopeMultiplier;
 
   // Era-adjusted price: amplify by slope multiplier, shaped by exponent
-  const adjustedProgress = Math.pow(Math.max(0.001, progressFraction), exponent);
+  const adjustedProgress = Math.max(0.001, progressFraction) ** exponent;
   const eraBoost = 1 + (slopeMul - 1) * adjustedProgress;
   const adjustedPrice = Number(rawPrice) * eraBoost;
 
@@ -158,7 +157,7 @@ export function getDynamicPrice(supply: bigint): bigint {
  */
 export function getCurrentEra(supply: bigint): number {
   for (let i = 0; i < CURVE_ERAS.length; i++) {
-    if (supply <= CURVE_ERAS[i]!.endSupply) return i;
+    if (supply <= CURVE_ERAS[i]?.endSupply) return i;
   }
   return CURVE_ERAS.length - 1;
 }
@@ -176,7 +175,13 @@ export function getEraName(supply: bigint): string {
  * Get the current era's color for UI.
  */
 export function getEraColor(supply: bigint): string {
-  const colors = ['from-cyan-500 to-degen-400', 'from-degen-500 to-degen-400', 'from-degen-400 to-yellow-400', 'from-yellow-400 to-orange-500', 'from-orange-500 to-red-500'];
+  const colors = [
+    'from-cyan-500 to-degen-400',
+    'from-degen-500 to-degen-400',
+    'from-degen-400 to-yellow-400',
+    'from-yellow-400 to-orange-500',
+    'from-orange-500 to-red-500',
+  ];
   return colors[getCurrentEra(supply)] ?? colors[0]!;
 }
 
@@ -229,10 +234,7 @@ export function calculateEthOut(
  * Apply flash sale discount to a price.
  * Discount decays linearly over the flash sale window.
  */
-export function applyFlashSaleDiscount(
-  basePrice: bigint,
-  flashSale: FlashSale,
-): bigint {
+export function applyFlashSaleDiscount(basePrice: bigint, flashSale: FlashSale): bigint {
   if (!flashSale.active) return basePrice;
 
   const now = Date.now();
@@ -249,7 +251,7 @@ export function applyFlashSaleDiscount(
  * Calculate the optimal flash sale discount to create FOMO.
  * Targets: price dips 3-8% below current curve price.
  */
-export function calculateFlashSaleDiscount(price: bigint): FlashSale {
+export function calculateFlashSaleDiscount(_price: bigint): FlashSale {
   // Random-ish discount between 3% and 8% (300-800 bps)
   const discountBps = 300 + Math.floor(Math.random() * 500);
   return {
@@ -266,10 +268,7 @@ export function calculateFlashSaleDiscount(price: bigint): FlashSale {
 /**
  * Calculate the price with a creator event discount applied.
  */
-export function applyCreatorEventDiscount(
-  basePrice: bigint,
-  event: CreatorEvent,
-): bigint {
+export function applyCreatorEventDiscount(basePrice: bigint, event: CreatorEvent): bigint {
   if (!event.active || event.remainingBuys <= 0) return basePrice;
 
   const discount = (basePrice * BigInt(event.discountBps)) / 10_000n;
@@ -294,10 +293,7 @@ export function getStreakMultiplier(streakDays: number): number {
 /**
  * Calculate bonus tokens from a streak.
  */
-export function calculateStreakBonus(
-  baseTokens: bigint,
-  streakDays: number,
-): bigint {
+export function calculateStreakBonus(baseTokens: bigint, streakDays: number): bigint {
   const multiplier = getStreakMultiplier(streakDays);
   if (multiplier <= 1.0) return 0n;
   const bonusFraction = BigInt(Math.round((multiplier - 1) * 10000));
@@ -308,7 +304,7 @@ export function calculateStreakBonus(
  * Check if a streak is still alive (buy within 36 hours of last buy).
  */
 export function isStreakAlive(lastBuyTimestamp: number, now: number = Date.now()): boolean {
-  return (now - lastBuyTimestamp) < 36 * 60 * 60 * 1000; // 36 hours grace
+  return now - lastBuyTimestamp < 36 * 60 * 60 * 1000; // 36 hours grace
 }
 
 // ─── Price Prediction ────────────────────────────────────────────────────────
@@ -375,8 +371,8 @@ export function getGraduationProgress(supply: bigint, uniqueBuyers: number): num
  * Assumes initial liquidity = remaining ETH + remaining tokens at current curve price.
  */
 export function estimateUniswapPrice(
-  curveEthBalance: bigint,
-  curveTokenSupply: bigint,
+  _curveEthBalance: bigint,
+  _curveTokenSupply: bigint,
   currentPrice: bigint,
 ): bigint {
   // Rough estimate: the AMM price after migrating liquidity

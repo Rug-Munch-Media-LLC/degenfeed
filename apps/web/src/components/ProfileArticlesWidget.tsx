@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { formatTimeAgo } from '@degenfeed/utils';
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
 
 // === Types =========================================================
 
@@ -49,7 +49,7 @@ export function ProfileArticlesWidget({
         if (tag) params.set('tag', tag);
         const res = await fetch(`/api/ghost/posts?${params.toString()}`);
         if (!res.ok) throw new Error('Failed to load');
-        const data = await res.json() as { posts: GhostPost[] };
+        const data = (await res.json()) as { posts: GhostPost[] };
         setArticles(data.posts);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unknown error');
@@ -103,10 +103,7 @@ export function ProfileArticlesWidget({
           <h3 className="text-xs font-semibold uppercase tracking-wider text-[#9ca3af]">
             📄 Latest Articles
           </h3>
-          <Link
-            href="/articles"
-            className="text-[10px] text-[#00ff41] hover:underline"
-          >
+          <Link href="/articles" className="text-[10px] text-[#00ff41] hover:underline">
             View All
           </Link>
         </div>
@@ -144,10 +141,7 @@ export function ProfileArticlesWidget({
     <div>
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-base font-semibold text-[#e5e7eb]">📄 Articles</h2>
-        <Link
-          href="/articles"
-          className="text-xs text-[#00ff41] hover:underline"
-        >
+        <Link href="/articles" className="text-xs text-[#00ff41] hover:underline">
           View All
         </Link>
       </div>

@@ -5,15 +5,14 @@
  * Each protocol's strategy is implemented in its own file and exported here.
  */
 
-import type { ProtocolId, ProtocolStrategy } from "../live-strategy";
-
-import { activityPubLiveStrategy } from "./peertube-live";
-import { atProtoLiveStrategy } from "./atproto-live";
-import { nostrLiveStrategy } from "./nostr-live";
-import { farcasterLiveStrategy } from "./farcaster-live";
-import { lensLiveStrategy } from "./lens-live";
-import { zoraLiveStrategy } from "./zora-live";
-import { degenfeedLiveStrategy } from "./degenfeed-live";
+import type { ProtocolId, ProtocolStrategy } from '../live-strategy';
+import { atProtoLiveStrategy } from './atproto-live';
+import { degenfeedLiveStrategy } from './degenfeed-live';
+import { farcasterLiveStrategy } from './farcaster-live';
+import { lensLiveStrategy } from './lens-live';
+import { nostrLiveStrategy } from './nostr-live';
+import { activityPubLiveStrategy } from './peertube-live';
+import { zoraLiveStrategy } from './zora-live';
 
 // ─── Strategy Registry ─────────────────────────────────────────────────
 
@@ -34,7 +33,7 @@ const STRATEGY_MAP: Record<string, ProtocolStrategy> = {
  * Throws if the protocol is not supported.
  */
 export function getStrategy(protocol: string): ProtocolStrategy {
-  const normalized = protocol.toLowerCase().replace(/[^a-z]/g, "");
+  const normalized = protocol.toLowerCase().replace(/[^a-z]/g, '');
   const strategy = STRATEGY_MAP[normalized];
   if (!strategy) {
     throw new Error(`No live short strategy for protocol: ${protocol}`);
@@ -59,9 +58,9 @@ export function getAllProtocolIds(): ProtocolId[] {
 export {
   activityPubLiveStrategy,
   atProtoLiveStrategy,
-  nostrLiveStrategy,
+  degenfeedLiveStrategy,
   farcasterLiveStrategy,
   lensLiveStrategy,
+  nostrLiveStrategy,
   zoraLiveStrategy,
-  degenfeedLiveStrategy,
 };

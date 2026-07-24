@@ -1,13 +1,21 @@
 'use client';
 
-import useSWR from 'swr';
 import { useCallback } from 'react';
-import { fetchWithSwr } from '../lib/fetchWithCache';
+import useSWR from 'swr';
 import { getCsrfToken } from '../lib/csrf';
+import { fetchWithSwr } from '../lib/fetchWithCache';
 
 // === Types ================================================================
 
-export type ContentSource = 'youtube' | 'peertube' | 'tiktok' | 'instagram' | 'twitch' | 'kick' | 'rumble' | 'odysee';
+export type ContentSource =
+  | 'youtube'
+  | 'peertube'
+  | 'tiktok'
+  | 'instagram'
+  | 'twitch'
+  | 'kick'
+  | 'rumble'
+  | 'odysee';
 
 export type InteractionAction = 'watch' | 'like' | 'share' | 'skip' | 'complete' | 'tip';
 
@@ -99,10 +107,7 @@ export function useVideoRecommendations(opts?: {
 /**
  * Personalized shorts recommendations.
  */
-export function useShortsRecommendations(opts?: {
-  limit?: number;
-  categories?: string[];
-}) {
+export function useShortsRecommendations(opts?: { limit?: number; categories?: string[] }) {
   const params = new URLSearchParams();
   if (opts?.limit) params.set('limit', String(opts.limit));
   if (opts?.categories?.length) params.set('categories', opts.categories.join(','));
@@ -119,11 +124,10 @@ export function useShortsRecommendations(opts?: {
  * Live stream recommendations.
  */
 export function useStreamRecommendations() {
-  return useSWR<RankedContent[]>(
-    '/api/recommendations/streams',
-    recommendationsFetcher,
-    { revalidateOnFocus: false, dedupingInterval: 30_000 },
-  );
+  return useSWR<RankedContent[]>('/api/recommendations/streams', recommendationsFetcher, {
+    revalidateOnFocus: false,
+    dedupingInterval: 30_000,
+  });
 }
 
 /**
@@ -157,11 +161,10 @@ export function usePersonalizedTrending(category?: string) {
  * Discover new creators outside user's bubble.
  */
 export function useDiscoverNew() {
-  return useSWR<RankedContent[]>(
-    '/api/recommendations/discover',
-    recommendationsFetcher,
-    { revalidateOnFocus: false, dedupingInterval: 300_000 },
-  );
+  return useSWR<RankedContent[]>('/api/recommendations/discover', recommendationsFetcher, {
+    revalidateOnFocus: false,
+    dedupingInterval: 300_000,
+  });
 }
 
 // === Interaction recording =================================================

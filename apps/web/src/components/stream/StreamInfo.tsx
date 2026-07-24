@@ -1,13 +1,13 @@
 'use client';
 
 import { useState } from 'react';
+import { StreamClipButton } from './StreamClipButton';
+import { StreamFollowButton } from './StreamFollowButton';
+import { StreamReportButton } from './StreamReportButton';
+import { StreamShareButton } from './StreamShareButton';
+import { StreamSubscribeButton } from './StreamSubscribeButton';
 import type { StreamExtended } from './types';
 import { getCategoryInfo } from './types';
-import { StreamFollowButton } from './StreamFollowButton';
-import { StreamSubscribeButton } from './StreamSubscribeButton';
-import { StreamReportButton } from './StreamReportButton';
-import { StreamClipButton } from './StreamClipButton';
-import { StreamShareButton } from './StreamShareButton';
 
 /* === StreamInfo Component ===================================== */
 
@@ -24,9 +24,7 @@ export function StreamInfo({ stream }: StreamInfoProps) {
       {/* Title + actions row */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 flex-1">
-          <h1 className="text-xl font-bold text-white sm:text-2xl line-clamp-2">
-            {stream.title}
-          </h1>
+          <h1 className="text-xl font-bold text-white sm:text-2xl line-clamp-2">{stream.title}</h1>
           <div className="mt-1.5 flex items-center gap-2 flex-wrap">
             {/* Category badge */}
             <span
@@ -63,7 +61,11 @@ export function StreamInfo({ stream }: StreamInfoProps) {
           <div className="relative">
             <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-degen-500/30 to-purple-500/30 text-sm font-bold text-degen-400 ring-2 ring-degen-500/20">
               {stream.creatorAvatar ? (
-                <img src={stream.creatorAvatar} alt={stream.creatorDisplayName} className="h-full w-full rounded-full object-cover" />
+                <img
+                  src={stream.creatorAvatar}
+                  alt={stream.creatorDisplayName}
+                  className="h-full w-full rounded-full object-cover"
+                />
               ) : (
                 stream.creatorHandle[0]?.toUpperCase() || '?'
               )}
@@ -97,9 +99,13 @@ export function StreamInfo({ stream }: StreamInfoProps) {
       <div className="rounded-xl border border-white/10 bg-white/5 p-4">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-semibold text-white/90">About</h3>
-          <span className="text-[10px] text-white/30">{stream.viewerCount.toLocaleString()} watching</span>
+          <span className="text-[10px] text-white/30">
+            {stream.viewerCount.toLocaleString()} watching
+          </span>
         </div>
-        <p className={`mt-2 text-sm leading-relaxed text-white/60 ${expanded ? '' : 'line-clamp-3'}`}>
+        <p
+          className={`mt-2 text-sm leading-relaxed text-white/60 ${expanded ? '' : 'line-clamp-3'}`}
+        >
           {stream.description}
         </p>
         {stream.description.length > 150 && (
@@ -123,7 +129,9 @@ export function StreamInfo({ stream }: StreamInfoProps) {
             <p className="text-[9px] text-white/40">Streams</p>
           </div>
           <div className="text-center">
-            <p className="text-xs font-bold text-white">{formatCount(stream.stats.averageViewers)}</p>
+            <p className="text-xs font-bold text-white">
+              {formatCount(stream.stats.averageViewers)}
+            </p>
             <p className="text-[9px] text-white/40">Avg Viewers</p>
           </div>
         </div>

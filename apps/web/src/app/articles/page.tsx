@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { formatTimeAgo } from '@degenfeed/utils';
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
 
 // === Types =========================================================
 
@@ -66,9 +66,7 @@ function ArticleCard({ post }: { post: GhostPost }) {
 
         <div className="flex items-center justify-between text-xs text-[#6b7280]">
           <div className="flex items-center gap-2">
-            {post.authors.length > 0 && (
-              <span>{post.authors[0]!.name}</span>
-            )}
+            {post.authors.length > 0 && <span>{post.authors[0]?.name}</span>}
             <span>·</span>
             <span>{post.readingTime} min read</span>
           </div>
@@ -140,7 +138,8 @@ function NewsletterBanner() {
       <div className="mx-auto max-w-xl text-center">
         <h2 className="mb-2 text-lg font-semibold text-[#e5e7eb]">📫 Never Miss an Article</h2>
         <p className="mb-5 text-sm text-[#9ca3af]">
-          Get the best of web3, AI, and crypto delivered to your inbox. Free + Premium tiers available.
+          Get the best of web3, AI, and crypto delivered to your inbox. Free + Premium tiers
+          available.
         </p>
         <form onSubmit={handleSubscribe} className="flex gap-2">
           <input
@@ -160,7 +159,10 @@ function NewsletterBanner() {
           </button>
         </form>
         <p className="mt-3 text-xs text-[#6b7280]">
-          <a href="/premium" className="text-[#00ff41] hover:underline">Upgrade to Premium</a> for exclusive deep dives
+          <a href="/premium" className="text-[#00ff41] hover:underline">
+            Upgrade to Premium
+          </a>{' '}
+          for exclusive deep dives
         </p>
       </div>
     </div>
@@ -224,7 +226,7 @@ export default function ArticlesPage() {
       try {
         const res = await fetch('/api/ghost/posts?limit=50');
         if (!res.ok) throw new Error('Failed to load articles');
-        const data = await res.json() as { posts: GhostPost[]; meta: { total: number } };
+        const data = (await res.json()) as { posts: GhostPost[]; meta: { total: number } };
         setPosts(data.posts);
         // Collect all unique tags
         const tags = new Set<string>();
@@ -241,9 +243,7 @@ export default function ArticlesPage() {
     fetchPosts();
   }, []);
 
-  const filteredPosts = selectedTag
-    ? posts.filter((p) => p.tags.includes(selectedTag))
-    : posts;
+  const filteredPosts = selectedTag ? posts.filter((p) => p.tags.includes(selectedTag)) : posts;
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
@@ -282,7 +282,9 @@ export default function ArticlesPage() {
         </div>
       ) : filteredPosts.length === 0 ? (
         <div className="rounded-xl border border-[#1f2937] p-8 text-center">
-          <p className="text-sm text-[#9ca3af]">No articles found{selectedTag ? ` with tag #${selectedTag}` : ''}.</p>
+          <p className="text-sm text-[#9ca3af]">
+            No articles found{selectedTag ? ` with tag #${selectedTag}` : ''}.
+          </p>
         </div>
       ) : (
         <>

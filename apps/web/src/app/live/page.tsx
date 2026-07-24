@@ -1,15 +1,19 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
 import { ErrorBoundary } from '@degenfeed/ui';
+import { useCallback, useMemo, useState } from 'react';
+import { StreamCategoriesBar } from '../../components/stream/StreamCategories';
+import type { StreamCategory } from '../../components/stream/types';
 import { GoLiveModal } from '../../components/streams/GoLiveModal';
 import { LiveHeader } from '../../components/streams/LiveHeader';
 import { LiveStreamGrid } from '../../components/streams/LiveStreamGrid';
-import { UpcomingStreams } from '../../components/streams/UpcomingStreams';
 import { SpacesHub } from '../../components/streams/SpacesHub';
-import { StreamCategoriesBar } from '../../components/stream/StreamCategories';
-import { type LiveStream, type StreamType, useLiveStreams } from '../../components/streams/useLiveStreams';
-import type { StreamCategory } from '../../components/stream/types';
+import { UpcomingStreams } from '../../components/streams/UpcomingStreams';
+import {
+  type LiveStream,
+  type StreamType,
+  useLiveStreams,
+} from '../../components/streams/useLiveStreams';
 
 /* === Count streams by type ==================================== */
 
@@ -43,7 +47,7 @@ export default function LivePage() {
       result = result.filter((s) => (streamCategoryMap[s.streamType] ?? 'tech') === activeCategory);
     }
     return result;
-  }, [streams, activeTab, activeCategory]);
+  }, [streams, activeTab, activeCategory, streamCategoryMap]);
 
   const spaces = useMemo(() => streams.filter((s) => s.streamType === 'spaces'), [streams]);
   const counts = useMemo(() => countByType(streams), [streams]);
@@ -100,7 +104,18 @@ export default function LivePage() {
             <section aria-label="Recommended for you">
               <div className="mb-3 flex items-center gap-2">
                 <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-degen-500/20 to-emerald-500/10 text-sm">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="text-degen-400">
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                    className="text-degen-400"
+                  >
                     <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
                   </svg>
                 </span>
@@ -199,14 +214,14 @@ function LiveTabsNav({
                 : 'text-white/40 hover:bg-white/5 hover:text-white/70'
             }`}
           >
-            <span className="text-sm" aria-hidden="true">{tab.icon}</span>
+            <span className="text-sm" aria-hidden="true">
+              {tab.icon}
+            </span>
             <span>{tab.label}</span>
             {count !== undefined && count > 0 && (
               <span
                 className={`ml-0.5 rounded-full px-1.5 py-0.5 text-[9px] font-semibold tabular-nums ${
-                  isActive
-                    ? 'bg-degen-500/20 text-degen-400'
-                    : 'bg-white/5 text-white/30'
+                  isActive ? 'bg-degen-500/20 text-degen-400' : 'bg-white/5 text-white/30'
                 }`}
               >
                 {count}
@@ -264,11 +279,45 @@ function HeroFeaturedSection({
         </div>
         {streams.length > 1 && (
           <div className="flex items-center gap-1">
-            <button type="button" onClick={handlePrev} className="flex h-7 w-7 items-center justify-center rounded-lg border border-white/10 text-white/40 hover:text-white" aria-label="Previous featured">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6" /></svg>
+            <button
+              type="button"
+              onClick={handlePrev}
+              className="flex h-7 w-7 items-center justify-center rounded-lg border border-white/10 text-white/40 hover:text-white"
+              aria-label="Previous featured"
+            >
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <polyline points="15 18 9 12 15 6" />
+              </svg>
             </button>
-            <button type="button" onClick={handleNext} className="flex h-7 w-7 items-center justify-center rounded-lg border border-white/10 text-white/40 hover:text-white" aria-label="Next featured">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6" /></svg>
+            <button
+              type="button"
+              onClick={handleNext}
+              className="flex h-7 w-7 items-center justify-center rounded-lg border border-white/10 text-white/40 hover:text-white"
+              aria-label="Next featured"
+            >
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
             </button>
           </div>
         )}
@@ -284,7 +333,12 @@ function HeroFeaturedSection({
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-r from-black/40 to-transparent" />
         {/* Noise */}
-        <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")` }} />
+        <div
+          className="absolute inset-0 opacity-[0.03]"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
+          }}
+        />
 
         {/* Content */}
         <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8">
@@ -309,7 +363,11 @@ function HeroFeaturedSection({
             <div className="flex items-center gap-2">
               <div className="flex h-7 w-7 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-degen-500/30 to-purple-500/30 text-[7px] font-bold text-degen-400">
                 {featured.creatorAvatar ? (
-                  <img src={featured.creatorAvatar} alt="" className="h-full w-full rounded-full object-cover" />
+                  <img
+                    src={featured.creatorAvatar}
+                    alt=""
+                    className="h-full w-full rounded-full object-cover"
+                  />
                 ) : (
                   featured.creatorHandle[0]?.toUpperCase() || '?'
                 )}
@@ -338,7 +396,10 @@ function HeroFeaturedSection({
               <button
                 key={i}
                 type="button"
-                onClick={(e) => { e.stopPropagation(); setCurrentIndex(i); }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setCurrentIndex(i);
+                }}
                 className={`h-1.5 rounded-full transition-all ${
                   i === currentIndex ? 'w-6 bg-white' : 'w-1.5 bg-white/40 hover:bg-white/60'
                 }`}

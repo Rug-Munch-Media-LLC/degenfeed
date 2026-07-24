@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import type { TradeEvent } from '../../hooks/useBondingCurve';
 import { useIsMobile } from '../../hooks/useMobileResponsive';
 
@@ -42,9 +42,9 @@ const TIMEFRAMES = ['1h', '6h', '24h', 'all'] as const;
 const ERA_COLORS: Record<string, string> = {
   'Steal Deal': '#06b6d4',
   'Early Bird': '#22c55e',
-  'Cruise': '#eab308',
+  Cruise: '#eab308',
   'FOMO Zone': '#f97316',
-  'Finale': '#ef4444',
+  Finale: '#ef4444',
 };
 
 export default function BondingCurveChart({
@@ -81,22 +81,25 @@ export default function BondingCurveChart({
   // == Swipe handler for timeframe change on mobile ======
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    touchStartX.current = e.touches[0]!.clientX;
-    touchStartY.current = e.touches[0]!.clientY;
+    touchStartX.current = e.touches[0]?.clientX;
+    touchStartY.current = e.touches[0]?.clientY;
   }, []);
 
-  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
-    const dx = e.changedTouches[0]!.clientX - touchStartX.current;
-    const dy = Math.abs(e.changedTouches[0]!.clientY - touchStartY.current);
-    if (Math.abs(dx) < 50 || dy > Math.abs(dx)) return; // Minimum swipe + horizontal only
+  const handleTouchEnd = useCallback(
+    (e: React.TouchEvent) => {
+      const dx = e.changedTouches[0]?.clientX - touchStartX.current;
+      const dy = Math.abs(e.changedTouches[0]?.clientY - touchStartY.current);
+      if (Math.abs(dx) < 50 || dy > Math.abs(dx)) return; // Minimum swipe + horizontal only
 
-    const idx = TIMEFRAMES.indexOf(timeframe);
-    if (dx > 0 && idx > 0) {
-      onTimeframeChange?.(TIMEFRAMES[idx - 1]!);
-    } else if (dx < 0 && idx < TIMEFRAMES.length - 1) {
-      onTimeframeChange?.(TIMEFRAMES[idx + 1]!);
-    }
-  }, [timeframe, onTimeframeChange]);
+      const idx = TIMEFRAMES.indexOf(timeframe);
+      if (dx > 0 && idx > 0) {
+        onTimeframeChange?.(TIMEFRAMES[idx - 1]!);
+      } else if (dx < 0 && idx < TIMEFRAMES.length - 1) {
+        onTimeframeChange?.(TIMEFRAMES[idx + 1]!);
+      }
+    },
+    [timeframe, onTimeframeChange],
+  );
 
   // == Generate curve points ==============================
 
@@ -134,7 +137,14 @@ export default function BondingCurveChart({
 
   const { pathDef, gradientId, maxPrice, minPrice, timeRange, minTime } = useMemo(() => {
     if (points.length < 2) {
-      return { pathDef: '', gradientId: 'curve-grad', maxPrice: 0, minPrice: 0, timeRange: 1, minTime: 0 };
+      return {
+        pathDef: '',
+        gradientId: 'curve-grad',
+        maxPrice: 0,
+        minPrice: 0,
+        timeRange: 1,
+        minTime: 0,
+      };
     }
     const prices = points.map(([, p]) => p);
     const maxP = Math.max(...prices, 0.0001);
@@ -150,7 +160,10 @@ export default function BondingCurveChart({
 
     const svgPoints = points.map(([t, p]) => {
       const x = ((t - minT) / tRange) * width;
-      const y = volumeHeight + height - ((p - paddedMin) / (paddedMax - paddedMin)) * (height - volumeHeight);
+      const y =
+        volumeHeight +
+        height -
+        ((p - paddedMin) / (paddedMax - paddedMin)) * (height - volumeHeight);
       return `${x},${y}`;
     });
 
@@ -184,12 +197,12 @@ export default function BondingCurveChart({
       x: ((d.timestamp - minTime) / timeRange) * width,
       height: (d.volume / maxVol) * volumeHeight * 0.8,
     }));
-  }, [volumeData, minTime, timeRange]);
+  }, [volumeData, minTime, timeRange, volumeHeight]);
 
   // == Prediction line points =============================
 
   const predictionPoints = useMemo(() => {
-    if (!points.length || !priceAfter10Buys && !priceAfter50Buys) return null;
+    if (!points.length || (!priceAfter10Buys && !priceAfter50Buys)) return null;
 
     const lastP = points[points.length - 1]!;
     const predictions: Array<[number, number]> = [[lastP[0], lastP[1]]];
@@ -210,20 +223,26 @@ export default function BondingCurveChart({
     if (!userBuys?.length || timeRange <= 1) return [];
     return userBuys.map((buy) => ({
       x: ((buy.timestamp - minTime) / timeRange) * width,
-      y: volumeHeight + height - ((buy.price - minPrice) / (maxPrice - minPrice || maxPrice * 0.1)) * (height - volumeHeight),
+      y:
+        volumeHeight +
+        height -
+        ((buy.price - minPrice) / (maxPrice - minPrice || maxPrice * 0.1)) *
+          (height - volumeHeight),
       amount: buy.amount,
     }));
   }, [userBuys, minTime, timeRange, height, maxPrice, minPrice, volumeHeight]);
 
   // == Era color =========================================
 
-  const eraColor = eraName ? ERA_COLORS[eraName] ?? '#22c55e' : '#22c55e';
+  const eraColor = eraName ? (ERA_COLORS[eraName] ?? '#22c55e') : '#22c55e';
 
   // == Loading skeleton ===================================
 
   if (loading) {
     return (
-      <div className={`rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] ${className}`}>
+      <div
+        className={`rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] ${className}`}
+      >
         <div className="skeleton w-full rounded-xl" style={{ height }} />
       </div>
     );
@@ -272,15 +291,15 @@ export default function BondingCurveChart({
       {price !== null && !compact && (
         <div
           className={`absolute z-10 rounded-lg border border-[var(--color-border)] bg-[var(--color-glass-bg)] px-2 sm:px-3 py-1 sm:py-1.5 backdrop-blur-xl ${
-            isMobile
-              ? 'left-1/2 -translate-x-1/2 top-1.5'
-              : 'right-3 top-3'
+            isMobile ? 'left-1/2 -translate-x-1/2 top-1.5' : 'right-3 top-3'
           }`}
         >
           <span className="text-[8px] sm:text-[10px] font-medium uppercase tracking-wider text-[var(--color-muted)]">
             Price
           </span>
-          <div className={`text-sm sm:text-lg font-bold tabular-nums ${isUp ? 'text-degen-400' : 'text-red-400'}`}>
+          <div
+            className={`text-sm sm:text-lg font-bold tabular-nums ${isUp ? 'text-degen-400' : 'text-red-400'}`}
+          >
             ${price.toFixed(price < 0.01 ? 8 : price < 1 ? 6 : 4)}
           </div>
         </div>
@@ -360,7 +379,10 @@ export default function BondingCurveChart({
         )}
 
         {/* Area fill */}
-        <path d={`${pathDef} L${width},${volumeHeight + height} L0,${volumeHeight + height} Z`} fill={`url(#${gradientId})`} />
+        <path
+          d={`${pathDef} L${width},${volumeHeight + height} L0,${volumeHeight + height} Z`}
+          fill={`url(#${gradientId})`}
+        />
 
         {/* Main curve line */}
         <path
@@ -377,11 +399,17 @@ export default function BondingCurveChart({
         {predictionPoints && !compact && (
           <>
             <path
-              d={`M${predictionPoints.map(([t, p], i) => {
-                const x = ((t - minTime) / timeRange) * width;
-                const yVal = volumeHeight + height - ((p - minPrice) / (maxPrice - minPrice || maxPrice * 0.1 + 0.01)) * (height - volumeHeight);
-                return `${i === 0 ? '' : ' '}${x},${yVal}`;
-              }).join(' L')}`}
+              d={`M${predictionPoints
+                .map(([t, p], i) => {
+                  const x = ((t - minTime) / timeRange) * width;
+                  const yVal =
+                    volumeHeight +
+                    height -
+                    ((p - minPrice) / (maxPrice - minPrice || maxPrice * 0.1 + 0.01)) *
+                      (height - volumeHeight);
+                  return `${i === 0 ? '' : ' '}${x},${yVal}`;
+                })
+                .join(' L')}`}
               fill="none"
               stroke={lineColor}
               strokeWidth="1"
@@ -392,7 +420,13 @@ export default function BondingCurveChart({
             {priceAfter10Buys && (
               <text
                 x={width - 10}
-                y={volumeHeight + height - ((priceAfter10Buys - minPrice) / (maxPrice - minPrice || maxPrice * 0.1 + 0.01)) * (height - volumeHeight) - 6}
+                y={
+                  volumeHeight +
+                  height -
+                  ((priceAfter10Buys - minPrice) / (maxPrice - minPrice || maxPrice * 0.1 + 0.01)) *
+                    (height - volumeHeight) -
+                  6
+                }
                 fill="var(--color-muted)"
                 fontSize="8"
                 textAnchor="end"
@@ -409,7 +443,8 @@ export default function BondingCurveChart({
           <circle
             cx={width}
             cy={
-              volumeHeight + height -
+              volumeHeight +
+              height -
               (((points[points.length - 1]?.[1] ?? 0) - minPrice) /
                 (maxPrice - minPrice || maxPrice * 0.1 + 0.01)) *
                 (height - volumeHeight)
@@ -424,7 +459,14 @@ export default function BondingCurveChart({
         {/* "You bought here" markers */}
         {userBuyMarkers.map((marker, i) => (
           <g key={`buy-${i}`}>
-            <circle cx={marker.x} cy={marker.y} r="4" fill="var(--color-fg)" stroke={lineColor} strokeWidth="1.5" />
+            <circle
+              cx={marker.x}
+              cy={marker.y}
+              r="4"
+              fill="var(--color-fg)"
+              stroke={lineColor}
+              strokeWidth="1.5"
+            />
             <line
               x1={marker.x - 4}
               y1={marker.y - 4}
@@ -446,7 +488,15 @@ export default function BondingCurveChart({
 
         {/* Volume axis separator */}
         {!compact && volumeData?.length && (
-          <line x1="0" y1={volumeHeight} x2={width} y2={volumeHeight} stroke="var(--color-border)" strokeWidth="0.5" opacity="0.3" />
+          <line
+            x1="0"
+            y1={volumeHeight}
+            x2={width}
+            y2={volumeHeight}
+            stroke="var(--color-border)"
+            strokeWidth="0.5"
+            opacity="0.3"
+          />
         )}
       </svg>
 

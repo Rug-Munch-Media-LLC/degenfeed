@@ -7,13 +7,8 @@
  * auto-play, preloading, infinite scroll, and pull-to-dismiss.
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
 import { ErrorBoundary } from '@degenfeed/ui';
-import { ShortsSourceBadge } from './ShortsSourceBadge';
-import { ShortsOverlay } from './ShortsOverlay';
-import { ShortsActions } from './ShortsActions';
-import { ShortsProgress } from './ShortsProgress';
-import { ShortsCreatorInfo } from './ShortsCreatorInfo';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { UseShortsResult } from './useShorts';
 
 // === Constants ============================================================
@@ -86,7 +81,7 @@ export function ShortsFeed({
   const [showToast, setShowToast] = useState<string | null>(null);
   const [prerenderedVideos, setPrerenderedVideos] = useState<Set<number>>(new Set());
   const [pullDismissing, setPullDismissing] = useState(false);
-  const dismissTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const _dismissTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // == Snap-scroll detection via IntersectionObserver =====================
   useEffect(() => {
@@ -403,7 +398,12 @@ export function ShortsFeed({
           <div className="flex h-screen w-full snap-start flex-col items-center justify-center gap-4 bg-black px-6">
             <div className="flex h-16 w-16 items-center justify-center rounded-full border border-red-500/30 bg-red-500/10">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M12 9v4M12 17h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" stroke="currentColor" strokeWidth="1.5" className="text-red-400" />
+                <path
+                  d="M12 9v4M12 17h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  className="text-red-400"
+                />
               </svg>
             </div>
             <p className="text-sm text-[var(--color-muted)]">Couldn&apos;t load shorts</p>
@@ -422,8 +422,23 @@ export function ShortsFeed({
         {!loading && !error && videos.length === 0 && (
           <div className="flex h-screen w-full snap-start flex-col items-center justify-center gap-4 bg-black px-6">
             <div className="flex h-16 w-16 items-center justify-center rounded-full border border-degen-500/30 bg-degen-500/10">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="text-degen-400">
-                <rect x="4" y="4" width="16" height="16" rx="3" stroke="currentColor" strokeWidth="1.5" />
+              <svg
+                width="28"
+                height="28"
+                viewBox="0 0 24 24"
+                fill="none"
+                aria-hidden="true"
+                className="text-degen-400"
+              >
+                <rect
+                  x="4"
+                  y="4"
+                  width="16"
+                  height="16"
+                  rx="3"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                />
                 <path d="M10 9L16 12L10 15V9Z" fill="currentColor" />
               </svg>
             </div>
@@ -493,12 +508,29 @@ export function ShortsFeed({
         {!hasMore && videos.length > 0 && (
           <div className="flex h-screen w-full snap-start flex-col items-center justify-center gap-3 bg-black px-6">
             <div className="flex h-12 w-12 items-center justify-center rounded-full border border-degen-500/20 bg-degen-500/5">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="text-degen-400/60">
-                <rect x="4" y="4" width="16" height="16" rx="3" stroke="currentColor" strokeWidth="1.5" />
+              <svg
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                aria-hidden="true"
+                className="text-degen-400/60"
+              >
+                <rect
+                  x="4"
+                  y="4"
+                  width="16"
+                  height="16"
+                  rx="3"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                />
                 <path d="M10 9L16 12L10 15V9Z" fill="currentColor" />
               </svg>
             </div>
-            <p className="text-sm font-medium text-[var(--color-muted)]">You&apos;re all caught up</p>
+            <p className="text-sm font-medium text-[var(--color-muted)]">
+              You&apos;re all caught up
+            </p>
             <p className="text-xs text-[var(--color-muted)]">More shorts coming soon</p>
             <button
               type="button"
@@ -564,7 +596,13 @@ export function ShortsFeed({
             aria-label="Back to feed"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <path
+                d="M15 18l-6-6 6-6"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
             <span className="hidden sm:inline">Feed</span>
           </a>

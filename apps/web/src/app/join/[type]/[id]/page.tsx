@@ -74,7 +74,10 @@ export default async function JoinPage({ params, searchParams }: Props) {
           <p className="mt-2 text-gray-400">
             &quot;{type}&quot; is not valid. Use stream, space, or coin-launch.
           </p>
-          <a href="https://app.degenfeed.xyz" className="mt-4 inline-block text-[#ff0040] hover:underline">
+          <a
+            href="https://app.degenfeed.xyz"
+            className="mt-4 inline-block text-[#ff0040] hover:underline"
+          >
             Go to DegenFeed
           </a>
         </div>
@@ -87,14 +90,7 @@ export default async function JoinPage({ params, searchParams }: Props) {
 
   const protocol = ref ? (PROTOCOL_INFO[ref] ?? null) : null;
 
-  return (
-    <JoinPageContent
-      type={type}
-      id={id}
-      streamData={streamData}
-      protocol={protocol}
-    />
-  );
+  return <JoinPageContent type={type} id={id} streamData={streamData} protocol={protocol} />;
 }
 
 // === Data fetching ====================================================
@@ -152,7 +148,8 @@ function JoinPageContent({
   const isLive = streamData?.isLive ?? true;
   const title = streamData?.title || (type === 'space' ? 'Audio Space' : 'Live Stream');
   const description = streamData?.description || '';
-  const creatorHandle = streamData?.creatorHandle || streamData?.creator?.slice(0, 10) || 'DegenFeed Creator';
+  const creatorHandle =
+    streamData?.creatorHandle || streamData?.creator?.slice(0, 10) || 'DegenFeed Creator';
   const thumbnail = streamData?.thumbnail || null;
   const streamUrl = streamData?.streamUrl || `https://app.degenfeed.xyz/live/${id}`;
   const viewerCount = streamData?.viewerCount ?? 0;
@@ -171,7 +168,10 @@ function JoinPageContent({
       {protocol && (
         <div
           className="relative z-10 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium"
-          style={{ backgroundColor: protocol.color + '20', borderBottom: `1px solid ${protocol.color}40` }}
+          style={{
+            backgroundColor: `${protocol.color}20`,
+            borderBottom: `1px solid ${protocol.color}40`,
+          }}
         >
           <span>{protocol.icon}</span>
           <span>
@@ -195,7 +195,11 @@ function JoinPageContent({
             </span>
           )}
           <span className="rounded-full bg-gray-800 px-3 py-1 text-xs font-medium text-gray-400">
-            {type === 'space' ? 'Audio Space' : type === 'coin-launch' ? 'Coin Launch' : 'Live Stream'}
+            {type === 'space'
+              ? 'Audio Space'
+              : type === 'coin-launch'
+                ? 'Coin Launch'
+                : 'Live Stream'}
           </span>
         </div>
 
@@ -222,9 +226,7 @@ function JoinPageContent({
 
         {/* Title and creator */}
         <h1 className="mb-2 text-center text-2xl font-bold sm:text-3xl">{title}</h1>
-        {description && (
-          <p className="mb-4 max-w-lg text-center text-gray-400">{description}</p>
-        )}
+        {description && <p className="mb-4 max-w-lg text-center text-gray-400">{description}</p>}
         <p className="mb-6 text-sm text-gray-500">
           by <span className="font-medium text-gray-300">{creatorHandle}</span>
         </p>
@@ -258,15 +260,30 @@ function JoinPageContent({
             {type === 'space' ? (
               <>
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"
+                  />
                 </svg>
                 Join Space
               </>
             ) : (
               <>
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
                 </svg>
                 Watch Stream
               </>
@@ -323,7 +340,7 @@ function JoinPageContent({
 // === Helpers ==========================================================
 
 function formatNumber(n: number): string {
-  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
-  if (n >= 1_000) return (n / 1_000).toFixed(1) + 'K';
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
   return String(n);
 }

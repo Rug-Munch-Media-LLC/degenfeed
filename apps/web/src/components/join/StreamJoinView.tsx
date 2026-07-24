@@ -9,12 +9,12 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import type { StreamExtended } from '../stream/types';
 import { StreamPlayer } from '../stream/StreamPlayer';
-import { PLATFORM_CONFIG, type JoinStreamData, type SourcePlatform } from './types';
+import type { StreamExtended } from '../stream/types';
 import { GuestChat } from './GuestChat';
-import { JoinActions } from './JoinActions';
 import { GuestSignUp } from './GuestSignUp';
+import { JoinActions } from './JoinActions';
+import { type JoinStreamData, PLATFORM_CONFIG, type SourcePlatform } from './types';
 
 /* === Props ====================================================== */
 
@@ -47,13 +47,7 @@ function StreamJoinSkeleton() {
 
 /* === Error ====================================================== */
 
-function StreamJoinError({
-  message,
-  onRetry,
-}: {
-  message: string;
-  onRetry: () => void;
-}) {
+function StreamJoinError({ message, onRetry }: { message: string; onRetry: () => void }) {
   return (
     <div className="mx-auto flex min-h-[calc(100dvh-4rem)] max-w-lg flex-col items-center justify-center px-4">
       <div className="flex flex-col items-center rounded-2xl border border-red-900/40 bg-red-950/20 px-8 py-12 text-center backdrop-blur-sm">
@@ -84,11 +78,7 @@ function StreamJoinError({
 
 /* === Main Component ============================================ */
 
-export function StreamJoinView({
-  streamId,
-  sourcePlatform,
-  sourceInstance,
-}: StreamJoinViewProps) {
+export function StreamJoinView({ streamId, sourcePlatform, sourceInstance }: StreamJoinViewProps) {
   const [stream, setStream] = useState<JoinStreamData | null>(null);
   const [streamExt, setStreamExt] = useState<StreamExtended | null>(null);
   const [loading, setLoading] = useState(true);
@@ -197,11 +187,7 @@ export function StreamJoinView({
   return (
     <div className="mx-auto flex min-h-[calc(100dvh-4rem)] max-w-7xl flex-col">
       {/* Player + Chat row */}
-      <div
-        className={`flex flex-col ${
-          theaterMode ? '' : 'lg:flex-row'
-        } gap-4 p-4 pb-20 sm:pb-4`}
-      >
+      <div className={`flex flex-col ${theaterMode ? '' : 'lg:flex-row'} gap-4 p-4 pb-20 sm:pb-4`}>
         {/* Player */}
         <div className={`flex-1 ${theaterMode ? '' : 'min-w-0'}`}>
           {extendedStream && (

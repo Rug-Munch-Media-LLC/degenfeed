@@ -86,11 +86,7 @@ function chainTokenKey(chainId: number, token: string): string {
   return `${XCHAIN_PREFIX}chain:${chainId}:${token.toLowerCase()}`;
 }
 
-function resolveKey(
-  sourceChain: number,
-  sourceToken: string,
-  targetChain: number,
-): string {
+function resolveKey(sourceChain: number, sourceToken: string, targetChain: number): string {
   return `${XCHAIN_PREFIX}resolve:${sourceChain}:${sourceToken.toLowerCase()}:${targetChain}`;
 }
 
@@ -160,20 +156,28 @@ export class CrossChainRegistry {
     await kvPutJson(this.kv, tKey, tExisting);
 
     // Resolve key: source chain + token → target chain
-    await kvPutJson(this.kv, resolveKey(opts.source.chainId, opts.source.token, opts.target.chainId), {
-      token: opts.target.token,
-      chainId: opts.target.chainId,
-      protocol: opts.target.protocol,
-      creatorId: opts.target.creatorId,
-    });
+    await kvPutJson(
+      this.kv,
+      resolveKey(opts.source.chainId, opts.source.token, opts.target.chainId),
+      {
+        token: opts.target.token,
+        chainId: opts.target.chainId,
+        protocol: opts.target.protocol,
+        creatorId: opts.target.creatorId,
+      },
+    );
 
     // Resolve key: target chain + token → source chain (bidirectional)
-    await kvPutJson(this.kv, resolveKey(opts.target.chainId, opts.target.token, opts.source.chainId), {
-      token: opts.source.token,
-      chainId: opts.source.chainId,
-      protocol: opts.source.protocol,
-      creatorId: opts.source.creatorId,
-    });
+    await kvPutJson(
+      this.kv,
+      resolveKey(opts.target.chainId, opts.target.token, opts.source.chainId),
+      {
+        token: opts.source.token,
+        chainId: opts.source.chainId,
+        protocol: opts.source.protocol,
+        creatorId: opts.source.creatorId,
+      },
+    );
 
     // Chain-token lookup (source)
     await kvPutJson(this.kv, chainTokenKey(opts.source.chainId, opts.source.token), {

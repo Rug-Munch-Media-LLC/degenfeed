@@ -37,7 +37,7 @@ const PHASE_BADGES: Record<string, { label: string; color: string }> = {
   graduated: { label: '✅ Graduated', color: 'text-fuchsia-400 bg-fuchsia-500/10' },
 };
 
-function shortenAddress(addr: string): string {
+function _shortenAddress(addr: string): string {
   if (addr.length < 10) return addr;
   return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
 }
@@ -86,7 +86,9 @@ export default function CoinCard({ coin, rank, featured = false, className = '' 
                 ${coin.symbol}
               </span>
             </div>
-            <p className="mt-0.5 text-[10px] sm:text-[11px] text-[var(--color-muted)]">by {coin.creator.name}</p>
+            <p className="mt-0.5 text-[10px] sm:text-[11px] text-[var(--color-muted)]">
+              by {coin.creator.name}
+            </p>
           </div>
 
           {/* Phase badge */}

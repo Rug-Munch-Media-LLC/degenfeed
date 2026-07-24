@@ -125,10 +125,7 @@ export class LiveFeedGenerator {
    * Called by the Bluesky feed generator endpoint (app.bsky.feed.getFeedSkeleton).
    * Returns live stream announcement posts sorted by viewer count (most popular first).
    */
-  async getFeedSkeleton(
-    limit: number = 50,
-    cursor?: string,
-  ): Promise<FeedSkeleton> {
+  async getFeedSkeleton(limit: number = 50, cursor?: string): Promise<FeedSkeleton> {
     const items = await this.getFeedItems();
 
     // Filter out ended streams
@@ -152,10 +149,7 @@ export class LiveFeedGenerator {
     }
 
     const page = liveItems.slice(startIndex, startIndex + limit);
-    const nextCursor =
-      page.length === limit
-        ? page[page.length - 1]?.streamId
-        : undefined;
+    const nextCursor = page.length === limit ? page[page.length - 1]?.streamId : undefined;
 
     return {
       feed: page.map((item) => ({ post: item.postUri })),
@@ -228,11 +222,9 @@ export class LiveFeedGenerator {
   private async storeFeedItems(items: LiveFeedItem[]): Promise<void> {
     // Cap at 500 items
     const trimmed = items.slice(0, 500);
-    await this.kv.put(
-      'bsky:live-feed:items',
-      JSON.stringify(trimmed),
-      { expirationTtl: 86400 * 7 },
-    ).catch(() => {});
+    await this.kv
+      .put('bsky:live-feed:items', JSON.stringify(trimmed), { expirationTtl: 86400 * 7 })
+      .catch(() => {});
   }
 }
 
@@ -260,7 +252,8 @@ export interface GetFeedSkeletonRequest {
 export const DEGENFEED_FEED_GENERATOR_DID = 'did:web:live.degenfeed.xyz';
 export const DEGENFEED_FEED_URI = 'at://live.degenfeed.xyz/app.bsky.feed.generator/degenfeed-live';
 export const DEGENFEED_FEED_DISPLAY_NAME = 'DegenFeed Live';
-export const DEGENFEED_FEED_DESCRIPTION = 'Live streams and spaces on DegenFeed — crypto, web3, defi, and more';
+export const DEGENFEED_FEED_DESCRIPTION =
+  'Live streams and spaces on DegenFeed — crypto, web3, defi, and more';
 
 /**
  * FeedGenEndpoint wraps LiveFeedGenerator for route compatibility.

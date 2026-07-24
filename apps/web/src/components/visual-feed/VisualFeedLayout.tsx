@@ -5,11 +5,11 @@
  * Provides the unified visual browsing experience.
  */
 
-import { useCallback, useState, useRef } from 'react';
 import type { VisualPost } from '@degenfeed/types';
+import { useCallback, useRef, useState } from 'react';
 import { FilterBar } from './FilterBar';
-import { VisualFeedGrid } from './VisualFeedGrid';
 import { useVisualFeed } from './useVisualFeed';
+import { VisualFeedGrid } from './VisualFeedGrid';
 
 export function VisualFeedLayout() {
   const [activeFilter, setActiveFilter] = useState('all');
@@ -96,7 +96,15 @@ export function VisualFeedLayout() {
               background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%)',
             }}
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" aria-hidden="true">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="white"
+              strokeWidth="2"
+              aria-hidden="true"
+            >
               <rect x="3" y="3" width="18" height="18" rx="2" />
               <circle cx="8.5" cy="8.5" r="1.5" fill="white" />
               <path d="M21 15l-5-5L5 21" strokeLinecap="round" />
@@ -114,7 +122,15 @@ export function VisualFeedLayout() {
             className="ml-auto flex items-center gap-1.5 rounded-lg border border-[var(--color-border)] bg-[var(--color-overlay)] px-3 py-1.5 text-xs font-medium text-[var(--color-fg)] transition-colors hover:bg-[var(--color-card-hover)]"
             aria-label="Refresh feed"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              aria-hidden="true"
+            >
               <path d="M1 4v6h6M23 20v-6h-6" />
               <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15" />
             </svg>
@@ -202,14 +218,25 @@ export function VisualFeedLayout() {
                 className="rounded-lg p-1 text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
                 aria-label="Close"
               >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  aria-hidden="true"
+                >
                   <path d="M18 6L6 18M6 6l12 12" />
                 </svg>
               </button>
             </div>
 
             {/* Preview */}
-            <div className="mb-4 flex items-center gap-3 rounded-lg p-3" style={{ backgroundColor: 'var(--color-overlay)' }}>
+            <div
+              className="mb-4 flex items-center gap-3 rounded-lg p-3"
+              style={{ backgroundColor: 'var(--color-overlay)' }}
+            >
               <img
                 src={showTipModal.imageUrl}
                 alt=""

@@ -1,9 +1,9 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { CommunityCard } from '../../components/feddy/CommunityCard';
+import { useCallback, useEffect, useState } from 'react';
 import { CategoryBrowser } from '../../components/feddy/CategoryBrowser';
+import { CommunityCard } from '../../components/feddy/CommunityCard';
 import { FeddyHeader } from '../../components/feddy/FeddyHeader';
 import type { FeddyCategory } from '../../components/feddy/types';
 
@@ -38,7 +38,10 @@ function DirectorySkeleton() {
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {Array.from({ length: 8 }).map((_, i) => (
-        <div key={i} className="animate-pulse rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-4">
+        <div
+          key={i}
+          className="animate-pulse rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-4"
+        >
           <div className="mb-3 flex items-center gap-3">
             <div className="h-12 w-12 rounded-xl bg-[var(--color-muted)]/20" />
             <div className="flex-1 space-y-2">
@@ -137,7 +140,7 @@ export default function FeddyDirectoryPage() {
   // Initial load and reload on filter changes
   useEffect(() => {
     fetchDirectory({ reset: true });
-  }, [category, sort, search]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [fetchDirectory]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Load more
   const handleLoadMore = useCallback(() => {
@@ -157,10 +160,7 @@ export default function FeddyDirectoryPage() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 sm:py-8 animate-page-enter">
       {/* Header */}
-      <FeddyHeader
-        totalCommunities={total}
-        onCreateLink="/feddy/create"
-      />
+      <FeddyHeader totalCommunities={total} onCreateLink="/feddy/create" />
 
       {/* Search bar */}
       <div className="mb-6">
@@ -173,7 +173,11 @@ export default function FeddyDirectoryPage() {
               stroke="currentColor"
               strokeWidth="2"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
             </svg>
             <input
               type="text"
@@ -220,7 +224,13 @@ export default function FeddyDirectoryPage() {
                   : 'border border-[var(--color-border)] bg-[var(--color-overlay)] text-[var(--color-muted)] hover:text-[var(--color-fg)]'
               }`}
             >
-              {s === 'members' ? 'Most Members' : s === 'newest' ? 'Newest' : s === 'trending' ? 'Trending' : 'Most Posts'}
+              {s === 'members'
+                ? 'Most Members'
+                : s === 'newest'
+                  ? 'Newest'
+                  : s === 'trending'
+                    ? 'Trending'
+                    : 'Most Posts'}
             </button>
           ))}
         </div>
@@ -247,9 +257,7 @@ export default function FeddyDirectoryPage() {
       {loading && entries.length === 0 && <DirectorySkeleton />}
 
       {/* Empty state */}
-      {!loading && entries.length === 0 && (
-        <EmptyDirectory category={category} search={search} />
-      )}
+      {!loading && entries.length === 0 && <EmptyDirectory category={category} search={search} />}
 
       {/* Community grid */}
       {entries.length > 0 && (

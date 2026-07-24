@@ -46,10 +46,7 @@ export interface NewArticleTemplateParams {
 /**
  * Wraps an HTML body in a full email document with shared styles.
  */
-export function emailDocument(
-  bodyHtml: string,
-  preheader?: string,
-): string {
+export function emailDocument(bodyHtml: string, preheader?: string): string {
   const preheaderHtml = preheader
     ? `<!--[if !mso]><!-- -->
     <div style="display:none;font-size:1px;color:#ffffff;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;mso-hide:all;">

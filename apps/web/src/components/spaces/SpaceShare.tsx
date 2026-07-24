@@ -28,9 +28,8 @@ export function SpaceShare({
   const [showShareMenu, setShowShareMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  const spaceUrl = typeof window !== 'undefined'
-    ? `${window.location.origin}/spaces/${spaceId}`
-    : '';
+  const spaceUrl =
+    typeof window !== 'undefined' ? `${window.location.origin}/spaces/${spaceId}` : '';
 
   const handleCopyLink = useCallback(async () => {
     try {
@@ -196,7 +195,10 @@ export function SpaceShare({
                 >
                   <span
                     className="flex h-7 w-7 items-center justify-center rounded-lg text-[11px]"
-                    style={{ backgroundColor: `${getProtocolColor(protocol)}18`, color: getProtocolColor(protocol) }}
+                    style={{
+                      backgroundColor: `${getProtocolColor(protocol)}18`,
+                      color: getProtocolColor(protocol),
+                    }}
                   >
                     {getProtocolIcon(protocol)}
                   </span>

@@ -32,7 +32,10 @@ export default function RecoveryCodeInput({
   // Format the code as XXXX-XXXX-XXXX while typing
   const handleInput = useCallback((value: string) => {
     // Remove non-hex characters
-    const hex = value.replace(/[^0-9a-fA-F]/g, '').toLowerCase().slice(0, 12);
+    const hex = value
+      .replace(/[^0-9a-fA-F]/g, '')
+      .toLowerCase()
+      .slice(0, 12);
 
     // Auto-insert dashes at positions 4 and 8
     let formatted = hex;
@@ -100,9 +103,7 @@ export default function RecoveryCodeInput({
             <circle cx="12" cy="12" r="3" />
           </svg>
         </div>
-        <h3 className="text-sm font-semibold text-[var(--color-fg)] mb-1">
-          Recovery Code
-        </h3>
+        <h3 className="text-sm font-semibold text-[var(--color-fg)] mb-1">Recovery Code</h3>
         <p className="text-xs text-[var(--color-muted)]">
           Enter one of your recovery codes. Each code can only be used once.
         </p>
@@ -122,7 +123,6 @@ export default function RecoveryCodeInput({
           }}
           placeholder="XXXX-XXXX-XXXX"
           className="w-56 text-center text-lg tracking-wider font-mono font-bold bg-[var(--color-overlay)] border-2 border-[var(--color-glass-border)] rounded-xl px-4 py-3 text-[var(--color-fg)] focus:border-degen-500 focus:outline-none focus:ring-2 focus:ring-degen-500/30 placeholder:text-[var(--color-muted)]/30"
-          autoFocus
           aria-label="Recovery code"
         />
       </div>

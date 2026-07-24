@@ -16,9 +16,19 @@ export function StreamMiniPlayer({ title, onClose, onExpand }: StreamMiniPlayerP
   return (
     <div className="fixed bottom-4 right-4 z-50 w-72 overflow-hidden rounded-xl border border-white/10 bg-black shadow-2xl transition-all animate-slide-up">
       {/* Video area */}
-      <div className="relative aspect-video bg-gradient-to-br from-degen-500/20 to-purple-600/20 cursor-pointer" onClick={onExpand}>
+      <div
+        className="relative aspect-video bg-gradient-to-br from-degen-500/20 to-purple-600/20 cursor-pointer"
+        onClick={onExpand}
+      >
         <div className="absolute inset-0 flex items-center justify-center">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="white" opacity="0.4" aria-hidden="true">
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="white"
+            opacity="0.4"
+            aria-hidden="true"
+          >
             <polygon points="6 3 20 12 6 21 6 3" />
           </svg>
         </div>
@@ -26,12 +36,26 @@ export function StreamMiniPlayer({ title, onClose, onExpand }: StreamMiniPlayerP
         {/* Close button */}
         <button
           type="button"
-          onClick={(e) => { e.stopPropagation(); onClose(); }}
+          onClick={(e) => {
+            e.stopPropagation();
+            onClose();
+          }}
           className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white/60 transition-colors hover:bg-black/80 hover:text-white"
           aria-label="Close mini player"
         >
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
           </svg>
         </button>
       </div>
@@ -45,7 +69,17 @@ export function StreamMiniPlayer({ title, onClose, onExpand }: StreamMiniPlayerP
           className="flex h-6 w-6 items-center justify-center rounded text-white/50 hover:text-white"
           aria-label={isMuted ? 'Unmute' : 'Mute'}
         >
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
             {isMuted ? (
               <>
                 <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />

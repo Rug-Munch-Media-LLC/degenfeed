@@ -44,9 +44,7 @@ export interface OfflineQueueState {
   isOnline: boolean;
 }
 
-export type ReplayHandler<T = unknown> = (
-  operation: QueuedOperation<T>,
-) => Promise<boolean>;
+export type ReplayHandler<T = unknown> = (operation: QueuedOperation<T>) => Promise<boolean>;
 
 export interface UseOfflineQueueOptions {
   /** Database name for IndexedDB (default: 'degenfeed-offline-queue') */
@@ -331,7 +329,7 @@ export function useOfflineQueue<T = unknown>(options: UseOfflineQueueOptions = {
       window.removeEventListener('offline', handleOffline);
       mountedRef.current = false;
     };
-  }, [autoProcess]);
+  }, [autoProcess, processQueue]);
 
   // Refresh queue size on mount and periodically
   useEffect(() => {
@@ -340,7 +338,7 @@ export function useOfflineQueue<T = unknown>(options: UseOfflineQueueOptions = {
     // Poll for size changes (in case other tabs add operations)
     const interval = setInterval(refreshSize, 30_000);
     return () => clearInterval(interval);
-  }, []);
+  }, [refreshSize]);
 
   const refreshSize = useCallback(async () => {
     try {
@@ -439,10 +437,12 @@ export function useOfflineQueue<T = unknown>(options: UseOfflineQueueOptions = {
 
         const batch = sorted.slice(i, i + batchSize);
 
-        const results = await Promise.allSettled(
+        const _results = await Promise.allSettled(
           batch.map(async (op) => {
             try {
-              const success = await (handlerRef.current as (op: QueuedOperation<T>) => Promise<boolean>)(op as QueuedOperation<T>);
+              const success = await (
+                handlerRef.current as (op: QueuedOperation<T>) => Promise<boolean>
+              )(op as QueuedOperation<T>);
 
               if (success) {
                 // Successful — remove from queue
@@ -457,7 +457,9 @@ export function useOfflineQueue<T = unknown>(options: UseOfflineQueueOptions = {
                   // Max retries exceeded — remove and mark as failed permanently
                   await removeOperation(dbName, storeName, op.id);
                   failed++;
-                  console.warn(`[offline-queue] Operation "${op.name}" (${op.id}) failed permanently after ${op.maxRetries} retries`);
+                  console.warn(
+                    `[offline-queue] Operation "${op.name}" (${op.id}) failed permanently after ${op.maxRetries} retries`,
+                  );
                 } else {
                   // Update retry count and keep in queue
                   await updateOperation(dbName, storeName, op);

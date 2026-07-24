@@ -57,9 +57,7 @@ function WhaleAlertBanner({ usdValue, wallet }: { usdValue: number; wallet: stri
           : 'bg-gradient-to-r from-degen-500/10 via-yellow-500/10 to-degen-500/10 border border-degen-500/20'
       }`}
     >
-      <span className={`text-lg ${isMega ? 'animate-pulse' : ''}`}>
-        {isMega ? '🐋💎' : '🐋'}
-      </span>
+      <span className={`text-lg ${isMega ? 'animate-pulse' : ''}`}>{isMega ? '🐋💎' : '🐋'}</span>
       <div className="flex-1 min-w-0">
         <p className={`text-xs font-bold ${isMega ? 'text-purple-400' : 'text-degen-400'}`}>
           {isMega ? 'MEGA WHALE ALERT' : 'WHALE ALERT'}
@@ -68,9 +66,7 @@ function WhaleAlertBanner({ usdValue, wallet }: { usdValue: number; wallet: stri
           {shortenAddress(wallet)} bought {formatAmount(usdValue)}
         </p>
       </div>
-      {isMega && (
-        <span className="text-[8px] font-bold text-purple-400 animate-pulse">● LIVE</span>
-      )}
+      {isMega && <span className="text-[8px] font-bold text-purple-400 animate-pulse">● LIVE</span>}
     </div>
   );
 }
@@ -124,24 +120,47 @@ function ActivityHeatmap({ data }: { data?: number[] }) {
   if (!data?.length) return null;
 
   const maxVal = Math.max(...data, 1);
-  const hours = ['12a', '', '2a', '', '4a', '', '6a', '', '8a', '', '10a', '', '12p', '', '2p', '', '4p', '', '6p', '', '8p', '', '10p', ''];
+  const hours = [
+    '12a',
+    '',
+    '2a',
+    '',
+    '4a',
+    '',
+    '6a',
+    '',
+    '8a',
+    '',
+    '10a',
+    '',
+    '12p',
+    '',
+    '2p',
+    '',
+    '4p',
+    '',
+    '6p',
+    '',
+    '8p',
+    '',
+    '10p',
+    '',
+  ];
 
   return (
     <div className="flex items-end gap-[1px] px-1 py-1">
       {data.slice(0, 24).map((val, i) => (
-        <div
-          key={`hm-${i}`}
-          className="group relative flex-1"
-        >
+        <div key={`hm-${i}`} className="group relative flex-1">
           <div
             className="w-full rounded-sm transition-all duration-300"
             style={{
               height: `${Math.max(2, (val / maxVal) * 16)}px`,
-              backgroundColor: val > maxVal * 0.7
-                ? 'var(--color-accent)'
-                : val > maxVal * 0.3
-                  ? 'var(--color-accent-dim)'
-                  : 'var(--color-muted-bg)',
+              backgroundColor:
+                val > maxVal * 0.7
+                  ? 'var(--color-accent)'
+                  : val > maxVal * 0.3
+                    ? 'var(--color-accent-dim)'
+                    : 'var(--color-muted-bg)',
               opacity: val > 0 ? 0.7 : 0.3,
             }}
           />
@@ -241,7 +260,9 @@ export default function TradeFeed({
   // Error state
   if (error) {
     return (
-      <div className={`rounded-xl border border-red-500/20 bg-red-500/5 p-4 text-center ${className}`}>
+      <div
+        className={`rounded-xl border border-red-500/20 bg-red-500/5 p-4 text-center ${className}`}
+      >
         <p className="text-xs text-red-400">{error}</p>
         {onRetry && (
           <button
@@ -259,12 +280,19 @@ export default function TradeFeed({
   // Empty state
   if (trades.length === 0) {
     return (
-      <div className={`rounded-xl border border-dashed border-[var(--color-border)] bg-[var(--color-card)] p-4 sm:p-6 text-center ${className}`}>
+      <div
+        className={`rounded-xl border border-dashed border-[var(--color-border)] bg-[var(--color-card)] p-4 sm:p-6 text-center ${className}`}
+      >
         <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-[var(--color-accent-glow)]">
           <svg
-            width="18" height="18" viewBox="0 0 24 24"
-            fill="none" stroke="currentColor" strokeWidth="2"
-            strokeLinecap="round" strokeLinejoin="round"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
             className="text-degen-400"
           >
             <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
@@ -321,9 +349,7 @@ export default function TradeFeed({
       />
 
       {/* Activity heatmap */}
-      {activityHeatmap && !isMobile && (
-        <ActivityHeatmap data={activityHeatmap} />
-      )}
+      {activityHeatmap && !isMobile && <ActivityHeatmap data={activityHeatmap} />}
 
       {/* Header */}
       <div className="flex items-center gap-2 px-1 py-2">

@@ -89,7 +89,7 @@ export const ADD_ONS: AddOn[] = [
 function FrequencyBadge({ freq }: { freq: 'one-time' | 'yearly' }) {
   const styles = {
     'one-time': 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-    'yearly': 'bg-amber-500/10 text-amber-400 border-amber-500/20',
+    yearly: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
   };
 
   return (
@@ -123,10 +123,11 @@ function AddOnCardItem({ addOn }: { addOn: AddOn }) {
       </div>
       <div className="mt-3 rounded-lg bg-[var(--color-overlay)] px-3 py-2">
         <div className="flex items-start gap-2">
-          <span className="mt-0.5 text-[10px] text-[var(--color-muted)]" aria-hidden="true">⛽</span>
+          <span className="mt-0.5 text-[10px] text-[var(--color-muted)]" aria-hidden="true">
+            ⛽
+          </span>
           <p className="text-[11px] leading-relaxed text-[var(--color-muted)]">
-            <span className="font-medium text-[var(--color-fg)]">Covers:</span>{' '}
-            {addOn.covers}
+            <span className="font-medium text-[var(--color-fg)]">Covers:</span> {addOn.covers}
           </p>
         </div>
       </div>
@@ -143,7 +144,9 @@ export function AddOnsSection({ addOns = ADD_ONS }: { addOns?: AddOn[] }) {
       <div className="rounded-2xl border border-degen-500/10 bg-gradient-to-r from-degen-500/[0.03] to-transparent p-5">
         <div className="flex items-start gap-3">
           <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-degen-500/10">
-            <span className="text-sm" aria-hidden="true">🪄</span>
+            <span className="text-sm" aria-hidden="true">
+              🪄
+            </span>
           </div>
           <div>
             <h3 className="text-sm font-bold text-[var(--color-fg)]">
@@ -169,16 +172,17 @@ export function AddOnsSection({ addOns = ADD_ONS }: { addOns?: AddOn[] }) {
       {/* Callout */}
       <div className="rounded-xl border border-amber-500/10 bg-amber-500/[0.03] px-4 py-3">
         <div className="flex items-start gap-2.5">
-          <span className="mt-0.5 text-sm" aria-hidden="true">💡</span>
+          <span className="mt-0.5 text-sm" aria-hidden="true">
+            💡
+          </span>
           <div>
             <p className="text-xs font-medium text-[var(--color-fg)]">
               Already on Premium or Creator? Protocol registration is covered.
             </p>
             <p className="mt-0.5 text-[11px] text-[var(--color-muted)]">
               Your subscription covers the initial Farcaster ($5) and Lens ($2) registration fees.
-              Add-ons are only for <strong>custom handles</strong>,{' '}
-              <strong>extra domains</strong>, and <strong>additional coins</strong> beyond what&apos;s
-              included.
+              Add-ons are only for <strong>custom handles</strong>, <strong>extra domains</strong>,
+              and <strong>additional coins</strong> beyond what&apos;s included.
             </p>
           </div>
         </div>
@@ -204,7 +208,11 @@ export function CostBreakdown() {
         <CostRow label="RSS Feed" cost="Free" note="Auto-generated" />
         <CostRow label="Farcaster Registration" cost="$5 gas" note="Covered by Premium" />
         <CostRow label="Lens Protocol Registration" cost="$2 gas" note="Covered by Premium" />
-        <CostRow label="Custom Lens Handle 9+ chars (optional)" cost="Included" note="Free in all plans" />
+        <CostRow
+          label="Custom Lens Handle 9+ chars (optional)"
+          cost="Included"
+          note="Free in all plans"
+        />
         <CostRow label="Custom Lens Handle 7-8 chars (optional)" cost="+$5–8" note="Extra gas" />
         <CostRow label="Custom Lens Handle 5-6 chars (optional)" cost="+$15–25" note="Extra gas" />
         <CostRow label="Custom Lens Handle 3-4 chars (optional)" cost="+$50–200" note="Extra gas" />
@@ -216,8 +224,8 @@ export function CostBreakdown() {
           <span className="font-bold text-degen-400">$0 with Premium subscription</span>
         </div>
         <p className="mt-0.5 text-[11px] text-[var(--color-muted)]">
-          Premium is <strong>$10/month</strong> — and covers the $5 Farcaster + $2 Lens gas fees
-          as part of your subscription. After that, it&apos;s just $10/month with no hidden costs.
+          Premium is <strong>$10/month</strong> — and covers the $5 Farcaster + $2 Lens gas fees as
+          part of your subscription. After that, it&apos;s just $10/month with no hidden costs.
         </p>
       </div>
     </div>
@@ -234,7 +242,11 @@ function CostRow({ label, cost, note }: { label: string; cost: string; note: str
       <div className="flex items-center gap-2 shrink-0 ml-3">
         <span
           className={`text-sm font-semibold ${
-            isFree ? 'text-degen-400' : cost.includes('Covered') ? 'text-degen-400' : 'text-[var(--color-fg)]'
+            isFree
+              ? 'text-degen-400'
+              : cost.includes('Covered')
+                ? 'text-degen-400'
+                : 'text-[var(--color-fg)]'
           }`}
         >
           {cost}

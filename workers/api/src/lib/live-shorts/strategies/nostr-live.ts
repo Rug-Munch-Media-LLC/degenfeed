@@ -17,14 +17,15 @@
  * Native live support: FULL — Kind 30311 is the nostr native live event.
  */
 
-import type { NostrEvent } from "@degenfeed/nostr-sdk";
-import type { Env } from "../../../index";
-import type { ProtocolStrategy, LiveSessionInfo, ViewerCountResult } from "../live-strategy";
-import { LIVE_SHORT_STRATEGIES } from "../protocol-strategies";
+import type { NostrEvent } from '@degenfeed/nostr-sdk';
+import type { Env } from '../../../index';
+import type { LiveSessionInfo, ProtocolStrategy, ViewerCountResult } from '../live-strategy';
+import { LIVE_SHORT_STRATEGIES } from '../protocol-strategies';
 
 const STRATEGY = LIVE_SHORT_STRATEGIES.nostr;
 
-const DEFAULT_RELAYS = "wss://relay.damus.io,wss://nos.lol,wss://relay.primal.net,wss://relay.degenfeed.xyz";
+const DEFAULT_RELAYS =
+  'wss://relay.damus.io,wss://nos.lol,wss://relay.primal.net,wss://relay.degenfeed.xyz';
 
 /**
  * Nostr live short strategy using Kind 30311.
@@ -35,28 +36,28 @@ export const nostrLiveStrategy: ProtocolStrategy = {
   async announceLive(
     env: Env,
     sessionId: string,
-    creator: string,
+    _creator: string,
     creatorHandle: string,
     title: string,
     playbackUrl: string,
     duration: number,
   ): Promise<LiveSessionInfo> {
     try {
-      const nostr = await import("@degenfeed/nostr-sdk");
-      const nsec = env.NOSTR_PRIVATE_KEY ?? "";
+      const nostr = await import('@degenfeed/nostr-sdk');
+      const nsec = env.NOSTR_PRIVATE_KEY ?? '';
 
       if (!nsec) {
         return {
-          protocolId: "",
-          protocolUrl: "",
+          protocolId: '',
+          protocolUrl: '',
           announced: false,
-          error: "NOSTR_PRIVATE_KEY not configured",
+          error: 'NOSTR_PRIVATE_KEY not configured',
         };
       }
 
       const pubkey = nostr.getPublicKey(nsec);
       const relayUrls = (env.RELAY_URLS || DEFAULT_RELAYS)
-        .split(",")
+        .split(',')
         .map((u: string) => u.trim())
         .filter(Boolean);
 
@@ -64,29 +65,29 @@ export const nostrLiveStrategy: ProtocolStrategy = {
       // NIP-93: The 'd' tag uniquely identifies the live event.
       // Re-publishing with the same 'd' replaces the previous event.
       const tags: string[][] = [
-        ["d", `degenfeed-live-${sessionId}`],
-        ["title", title],
-        ["summary", `Live short by ${creatorHandle} on DegenFeed`],
-        ["streaming", playbackUrl],
-        ["status", "live"],
-        ["current_participants", "1"],
-        ["t", "short"],
-        ["t", "liveshort"],
-        ["t", "degenfeed"],
-        ["duration", String(Math.min(duration, 120))],
-        ["p", pubkey],
-        ["relays", relayUrls[0] ?? "wss://relay.degenfeed.xyz"],
-        ["image", `https://app.degenfeed.xyz/og/live/${sessionId}`],
+        ['d', `degenfeed-live-${sessionId}`],
+        ['title', title],
+        ['summary', `Live short by ${creatorHandle} on DegenFeed`],
+        ['streaming', playbackUrl],
+        ['status', 'live'],
+        ['current_participants', '1'],
+        ['t', 'short'],
+        ['t', 'liveshort'],
+        ['t', 'degenfeed'],
+        ['duration', String(Math.min(duration, 120))],
+        ['p', pubkey],
+        ['relays', relayUrls[0] ?? 'wss://relay.degenfeed.xyz'],
+        ['image', `https://app.degenfeed.xyz/og/live/${sessionId}`],
       ];
 
       const content = [
         `🔴 LIVE SHORT: ${title}`,
-        "",
+        '',
         `${creatorHandle} is streaming on DegenFeed`,
-        "",
+        '',
         `Duration: ${duration}s`,
         `Watch: ${playbackUrl}`,
-      ].join("\n");
+      ].join('\n');
 
       const unsigned = {
         pubkey,
@@ -110,8 +111,8 @@ export const nostrLiveStrategy: ProtocolStrategy = {
       };
     } catch (err) {
       return {
-        protocolId: "",
-        protocolUrl: "",
+        protocolId: '',
+        protocolUrl: '',
         announced: false,
         error: err instanceof Error ? err.message : String(err),
       };
@@ -127,32 +128,30 @@ export const nostrLiveStrategy: ProtocolStrategy = {
   ): Promise<void> {
     // Re-publish with status=ended (replaceable event)
     try {
-      const nostr = await import("@degenfeed/nostr-sdk");
-      const nsec = env.NOSTR_PRIVATE_KEY ?? "";
+      const nostr = await import('@degenfeed/nostr-sdk');
+      const nsec = env.NOSTR_PRIVATE_KEY ?? '';
       if (!nsec || !protocolId) return;
 
       const pubkey = nostr.getPublicKey(nsec);
       const relayUrls = (env.RELAY_URLS || DEFAULT_RELAYS)
-        .split(",")
+        .split(',')
         .map((u: string) => u.trim())
         .filter(Boolean);
 
       const tags: string[][] = [
-        ["d", `degenfeed-live-${sessionId}`],
-        ["status", "ended"],
-        ["ended_at", String(Math.floor(Date.now() / 1000))],
-        ["title", title],
-        ["t", "short"],
-        ["t", "degenfeed"],
-        ["recording", recordingUrl],
-        ["p", pubkey],
+        ['d', `degenfeed-live-${sessionId}`],
+        ['status', 'ended'],
+        ['ended_at', String(Math.floor(Date.now() / 1000))],
+        ['title', title],
+        ['t', 'short'],
+        ['t', 'degenfeed'],
+        ['recording', recordingUrl],
+        ['p', pubkey],
       ];
 
-      const content = [
-        `✅ RECORDING: ${title}`,
-        "",
-        `Watch the recording: ${recordingUrl}`,
-      ].join("\n");
+      const content = [`✅ RECORDING: ${title}`, '', `Watch the recording: ${recordingUrl}`].join(
+        '\n',
+      );
 
       const unsigned = {
         pubkey,
@@ -171,17 +170,14 @@ export const nostrLiveStrategy: ProtocolStrategy = {
     }
   },
 
-  async getViewerCount(
-    env: Env,
-    protocolId: string,
-  ): Promise<ViewerCountResult> {
+  async getViewerCount(env: Env, protocolId: string): Promise<ViewerCountResult> {
     // Fetch the Kind 30311 event and read current_participants
     if (!protocolId) return { count: 0, rawSignal: 0 };
 
     try {
-      const nostr = await import("@degenfeed/nostr-sdk");
+      const nostr = await import('@degenfeed/nostr-sdk');
       const relayUrls = (env.RELAY_URLS || DEFAULT_RELAYS)
-        .split(",")
+        .split(',')
         .map((u: string) => u.trim())
         .filter(Boolean);
 
@@ -192,7 +188,7 @@ export const nostrLiveStrategy: ProtocolStrategy = {
       const event = events[0] as NostrEvent | undefined;
       if (!event) return { count: 0, rawSignal: 0 };
 
-      const participants = event.tags?.find((t: string[]) => t[0] === "current_participants");
+      const participants = event.tags?.find((t: string[]) => t[0] === 'current_participants');
       const count = participants?.[1] ? parseInt(participants[1], 10) : 0;
 
       return {
@@ -214,13 +210,13 @@ export const nostrLiveStrategy: ProtocolStrategy = {
   ): Promise<void> {
     // Post a kind 9734 zap request or kind 1 reaction with tip info
     try {
-      const nostr = await import("@degenfeed/nostr-sdk");
-      const nsec = env.NOSTR_PRIVATE_KEY ?? "";
+      const nostr = await import('@degenfeed/nostr-sdk');
+      const nsec = env.NOSTR_PRIVATE_KEY ?? '';
       if (!nsec || !protocolId) return;
 
       const pubkey = nostr.getPublicKey(nsec);
       const relayUrls = (env.RELAY_URLS || DEFAULT_RELAYS)
-        .split(",")
+        .split(',')
         .map((u: string) => u.trim())
         .filter(Boolean);
 
@@ -233,11 +229,11 @@ export const nostrLiveStrategy: ProtocolStrategy = {
         created_at: Math.floor(Date.now() / 1000),
         kind: 1,
         tags: [
-          ["e", protocolId],
-          ["p", pubkey],
-          ["t", "tip"],
-          ["amount", amount],
-          ["chain", chain],
+          ['e', protocolId],
+          ['p', pubkey],
+          ['t', 'tip'],
+          ['amount', amount],
+          ['chain', chain],
         ],
         content,
       };

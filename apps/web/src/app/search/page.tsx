@@ -206,9 +206,11 @@ export default function SearchPage() {
     source?: string;
     score: number;
   }
-  const [autocompleteSuggestions, setAutocompleteSuggestions] = useState<AutocompleteSuggestion[]>([]);
+  const [autocompleteSuggestions, setAutocompleteSuggestions] = useState<AutocompleteSuggestion[]>(
+    [],
+  );
   const [showAutocomplete, setShowAutocomplete] = useState(false);
-  const [acLoading, setAcLoading] = useState(false);
+  const [_acLoading, setAcLoading] = useState(false);
   const autocompleteRef = useRef<AbortController | null>(null);
 
   // == Recent & trending searches ==
@@ -395,7 +397,7 @@ export default function SearchPage() {
         setLoading(false);
       }
     },
-    [protocolFilter],
+    [protocolFilter, saveRecentSearch],
   );
 
   const loadMore = useCallback(() => {
@@ -521,10 +523,15 @@ export default function SearchPage() {
             <div className="absolute left-0 right-0 top-full z-50 mt-1 overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] shadow-lg">
               {autocompleteSuggestions.map((s, i) => {
                 const typeIcon =
-                  s.type === 'creator' ? '👤' :
-                  s.type === 'community' ? '🏘️' :
-                  s.type === 'coin' ? '🪙' :
-                  s.type === 'trending' ? '🔥' : '⌕';
+                  s.type === 'creator'
+                    ? '👤'
+                    : s.type === 'community'
+                      ? '🏘️'
+                      : s.type === 'coin'
+                        ? '🪙'
+                        : s.type === 'trending'
+                          ? '🔥'
+                          : '⌕';
                 return (
                   <button
                     key={`${s.text}-${i}`}
@@ -537,7 +544,10 @@ export default function SearchPage() {
                     {s.source && (
                       <span
                         className="shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-medium"
-                        style={{ backgroundColor: `${getProtocolColor(s.source)}18`, color: getProtocolColor(s.source) }}
+                        style={{
+                          backgroundColor: `${getProtocolColor(s.source)}18`,
+                          color: getProtocolColor(s.source),
+                        }}
                       >
                         {s.source}
                       </span>
