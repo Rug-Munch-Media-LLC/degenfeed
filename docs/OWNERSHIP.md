@@ -19,6 +19,7 @@
 9. [Activity Relay](#9-activity-relay)
 10. [Meilisearch](#10-meilisearch)
 11. [Cross-Posting System](#11-cross-posting-system)
+12. [Pixelfed (ActivityPub Photos)](#12-pixelfed-activitypub-photos)
 
 ---
 

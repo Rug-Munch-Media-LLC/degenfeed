@@ -20,7 +20,6 @@
     "@degenfeed/feed-core": "workspace:*",
     "@degenfeed/feed-providers": "workspace:*",
     "@degenfeed/identity": "workspace:*",
-    "@degenfeed/identity-hub": "workspace:*",
     "@degenfeed/lens-sdk": "workspace:*",
     "@degenfeed/livepeer-provider": "workspace:*",
     "@degenfeed/mirror-bridge": "workspace:*",

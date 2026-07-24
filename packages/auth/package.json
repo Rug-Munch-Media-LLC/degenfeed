@@ -14,7 +14,6 @@
     "lint": "biome check src/"
   },
   "dependencies": {
-    "@degenfeed/identity-hub": "workspace:*",
     "@degenfeed/mastodon-sdk": "workspace:*",
     "@degenfeed/nostr-sdk": "workspace:*",
     "@degenfeed/storage": "workspace:*",

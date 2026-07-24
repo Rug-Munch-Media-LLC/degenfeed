@@ -1006,3 +1006,35 @@ For platforms we want to run ourselves:
 ---
 
 *This is a living document. Update as new platforms emerge, integration status changes, or user data becomes available.*
+
+---
+
+## 13. Newly Integrated: Audius
+
+| Field | Value |
+|-------|--------|
+| **Protocol** | Open Audio Protocol (custom) |
+| **License** | Apache-2.0 |
+| **Reach** | ~400M streams, open music catalog |
+| **API** | REST API + JS SDK (`@audius/sdk`) + gRPC |
+| **Bridge TO** | 🔶 API write (requires auth) |
+| **Bridge FROM** | ✅ Trending tracks, artist updates, playlists |
+| **Self-Host** | ✅ Docker validator (go-openaudio) |
+| **Content Types** | Music tracks, albums, playlists, artist profiles |
+| **Priority** | 1 — Integrated. See docs/MISSED_PLATFORMS.md |
+| **Notes** | Free tier: 500K requests/month. First decentralized music integration. |
+
+## 14. Newly Integrated: Rarible Protocol
+
+| Field | Value |
+|-------|--------|
+| **Protocol** | Rarible Protocol (EVM + custom) |
+| **License** | MIT |
+| **Reach** | 5,000+ marketplaces, billions of NFTs indexed |
+| **API** | REST API + TS SDK (`@rarible/sdk`) + MCP server |
+| **Bridge TO** | ✅ NFT minting, listing, buying (via SDK) |
+| **Bridge FROM** | ✅ NFT sales, mints, listings across 7+ chains |
+| **Self-Host** | ✅ Docker validator + MCP server |
+| **Content Types** | NFT sales, mints, listings, collection data |
+| **Priority** | 1 — Integrated. See docs/MISSED_PLATFORMS.md |
+| **Notes** | Aggregated orderbook includes OpenSea data. 99.99% uptime. |

@@ -22,10 +22,11 @@ export async function requestWalletNonce(address: string): Promise<string> {
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: 'Nonce request failed' }));
-    throw new Error(err.error || 'Nonce request failed');
+    throw new Error((err as { error: string }).error || 'Nonce request failed');
   }
-  const data = await res.json();
-  return data.nonce;
+  const data = (await res.json()) as Record<string, unknown>;
+  const nonceData = data as unknown as { nonce?: string; message?: string };
+  return nonceData.nonce ?? '';
 }
 
 /**
@@ -68,7 +69,7 @@ export async function verifyWalletSignature(
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: 'Verification failed' }));
-    throw new Error(err.error || 'Verification failed');
+    throw new Error((err as { error: string }).error || 'Verification failed');
   }
 
   // Capture the CSRF token from the response header

@@ -215,7 +215,9 @@ export default function SearchPage() {
 
   // == Recent & trending searches ==
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
-  const [trendingPerProtocol, setTrendingPerProtocol] = useState<Record<string, string[]> | null>(null);
+  const [trendingPerProtocol, setTrendingPerProtocol] = useState<Record<string, string[]> | null>(
+    null,
+  );
   const [trendingSearches] = useState<string[]>([
     'bitcoin',
     'ethereum',
@@ -238,12 +240,14 @@ export default function SearchPage() {
         for (const item of data.data) {
           const source = item.source || 'all';
           if (!grouped[source]) grouped[source] = [];
-          grouped[source]!.push(item.title);
+          grouped[source]?.push(item.title);
         }
         setTrendingPerProtocol(grouped);
       })
       .catch(() => {});
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
   const MAX_RECENT_SEARCHES = 8;
 
@@ -804,7 +808,10 @@ export default function SearchPage() {
                 }`}
                 style={
                   protocolFilter === proto
-                    ? { backgroundColor: `${getProtocolColor(proto)}22`, color: getProtocolColor(proto) }
+                    ? {
+                        backgroundColor: `${getProtocolColor(proto)}22`,
+                        color: getProtocolColor(proto),
+                      }
                     : undefined
                 }
               >

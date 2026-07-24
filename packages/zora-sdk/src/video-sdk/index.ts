@@ -104,7 +104,8 @@ export class ZoraVideoSDK {
       royaltyBps: opts.royaltyBps,
     });
     const metadataUri = await uploadMetadataToIpfs(metadata, this.pinataConfig);
-    const contractAddress: Address = ZORA_NFT_CONTRACTS[chain] ?? ZORA_NFT_CONTRACTS.base;
+    const contractAddress: Address =
+      ZORA_NFT_CONTRACTS[chain] ?? (ZORA_NFT_CONTRACTS.base as Address);
 
     if (this.walletClient) {
       const txHash = await this.walletClient.sendTransaction({
@@ -329,10 +330,10 @@ export class ZoraVideoSDK {
         if (cached) return (JSON.parse(cached) as ZoraVideoNFT[]).slice(0, limit);
       } catch {}
     }
-    const defaultAddress: Address = ZORA_NFT_CONTRACTS.base;
+    const defaultAddress: Address = ZORA_NFT_CONTRACTS.base as Address;
     return Array.from({ length: limit }, (_, i) => ({
       tokenId: String(i + 1),
-      contractAddress: ZORA_NFT_CONTRACTS[network] ?? defaultAddress,
+      contractAddress: (ZORA_NFT_CONTRACTS[network] ?? defaultAddress) as Address,
       name: `Trending Video #${i + 1}`,
       description: `A trending video on ${network}`,
       videoUri: `ipfs://QmTrendingVideo${i}`,

@@ -10,7 +10,7 @@ import {
   encodeTipWithMessageData,
   getTipChainConfig,
   getTipContractAddress,
-} from '@degenfeed/web3';
+} from './tip-contract-data';
 
 // ─── Types ────────────────────────────────────────────────────────────────
 

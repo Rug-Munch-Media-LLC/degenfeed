@@ -29,13 +29,14 @@ const NAV_SECTIONS: NavSection[] = [
     label: 'Management',
     items: [
       { href: '/admin/users', icon: '👥', label: 'Users' },
-      { href: '/admin/platforms', icon: '🔌', label: 'Platforms' },
+      { href: '/admin/protocols', icon: '🔌', label: 'Protocols' },
+      { href: '/admin/revenue', icon: '💰', label: 'Revenue' },
     ],
   },
   {
     label: 'Infrastructure',
     items: [
-      { href: '/admin/hosts', icon: '🖥️', label: 'Hosts' },
+      { href: '/admin/hosts', icon: '🖥️', label: 'Hosts & Servers' },
       { href: '/admin/system', icon: '⚙️', label: 'System' },
     ],
   },

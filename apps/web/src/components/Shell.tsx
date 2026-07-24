@@ -20,8 +20,8 @@ import { ProtocolQuickSwitcher } from './ProtocolQuickSwitcher';
 import { QuickJumpFloating } from './QuickJumpFloating';
 import { RightSidebar } from './RightSidebar';
 import { ScreenReaderAnnouncerProvider } from './ScreenReaderAnnouncer';
-import { SearchOverlay } from './search/SearchOverlay';
 import { SkipLinks } from './SkipLinks';
+import { SearchOverlay } from './search/SearchOverlay';
 import { useToast } from './Toast';
 
 const OnboardingModal = dynamic(
@@ -373,8 +373,18 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
   const { trackVisit } = useRecentVisited();
   const edgeSwipeStartX = useRef(0);
 
-  // Sidebar collapse state
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  // Sidebar collapse state — persist preference
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('df_sidebar_collapsed') === 'true';
+    }
+    return false;
+  });
+
+  // Persist collapse state
+  useEffect(() => {
+    localStorage.setItem('df_sidebar_collapsed', String(sidebarCollapsed));
+  }, [sidebarCollapsed]);
 
   // Scroll-aware header visibility
   const [showDesktopHeader, setShowDesktopHeader] = useState(true);

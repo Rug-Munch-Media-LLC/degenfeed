@@ -15,7 +15,7 @@
  * Uses the existing @degenfeed/* SDKs for real API calls.
  */
 
-import { IdentityHub } from '@degenfeed/identity-hub';
+import { IdentityHub } from '@degenfeed/auth';
 import type { Protocol } from '@degenfeed/types';
 import type { Env } from '../index';
 import { recordBridgeOperation, withReliability } from './bridge-reliability';

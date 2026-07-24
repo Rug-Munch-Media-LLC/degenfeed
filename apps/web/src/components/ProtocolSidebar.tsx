@@ -160,6 +160,78 @@ const MASTODON_WIDGETS: SidebarWidget[] = [
   },
 ];
 
+// === Reddit ============================================================
+
+const REDDIT_WIDGETS: SidebarWidget[] = [
+  {
+    id: 'trending-subs',
+    title: 'Trending Subreddits',
+    icon: '🔴',
+    items: [
+      { label: 'r/CryptoCurrency', sublabel: '8.2m members', badge: '📈' },
+      { label: 'r/ethereum', sublabel: '4.1m members', badge: '⬡' },
+      { label: 'r/Solana', sublabel: '1.3m members', badge: '◎' },
+      { label: 'r/defi', sublabel: '890k members', badge: '🏦' },
+      { label: 'r/NFT', sublabel: '650k members', badge: '🎨' },
+    ],
+  },
+  {
+    id: 'crypto-dailies',
+    title: 'Daily Discussions',
+    icon: '💬',
+    items: [
+      { label: 'r/CryptoCurrency Daily', sublabel: '12.4k comments', badge: '🔥' },
+      { label: 'r/ethereum Daily', sublabel: '3.2k comments', badge: '🔥' },
+      { label: 'r/Solana Daily', sublabel: '2.1k comments', badge: '💬' },
+    ],
+  },
+];
+
+// === Lemmy ============================================================
+
+const LEMMY_WIDGETS: SidebarWidget[] = [
+  {
+    id: 'active-communities',
+    title: 'Active Communities',
+    icon: '🌿',
+    items: [
+      { label: 'c/crypto', sublabel: 'lemmy.world', badge: '🟢' },
+      { label: 'c/bitcoin', sublabel: 'lemmy.ml', badge: '🟢' },
+      { label: 'c/opensource', sublabel: 'programming.dev', badge: '🟢' },
+      { label: 'c/technology', sublabel: 'lemmy.world', badge: '🟢' },
+    ],
+  },
+];
+
+// === RSS ==============================================================
+
+const RSS_WIDGETS: SidebarWidget[] = [
+  {
+    id: 'top-sources',
+    title: 'Top Sources',
+    icon: '📡',
+    items: [
+      { label: 'CoinDesk', sublabel: 'Crypto news', badge: '🟢' },
+      { label: 'The Block', sublabel: 'Blockchain reporting', badge: '🟢' },
+      { label: 'Decrypt', sublabel: 'Web3 culture', badge: '🟢' },
+      { label: 'Bankless', sublabel: 'Ethereum ecosystem', badge: '🟢' },
+      { label: 'Messari', sublabel: 'Crypto research', badge: '📊' },
+    ],
+  },
+  {
+    id: 'categories',
+    title: 'Categories',
+    icon: '📂',
+    items: [
+      { label: 'DeFi', sublabel: '24 sources', badge: '🏦' },
+      { label: 'NFTs', sublabel: '18 sources', badge: '🎨' },
+      { label: 'Layer 2', sublabel: '15 sources', badge: '🔗' },
+      { label: 'Regulation', sublabel: '12 sources', badge: '⚖️' },
+      { label: 'Security', sublabel: '9 sources', badge: '🔒' },
+    ],
+  },
+];
+
 // === Registry ========================================================
 
 const PROTOCOL_WIDGETS: Record<string, SidebarWidget[]> = {
@@ -168,6 +240,9 @@ const PROTOCOL_WIDGETS: Record<string, SidebarWidget[]> = {
   bluesky: BLUESKY_WIDGETS,
   nostr: NOSTR_WIDGETS,
   mastodon: MASTODON_WIDGETS,
+  reddit: REDDIT_WIDGETS,
+  lemmy: LEMMY_WIDGETS,
+  rss: RSS_WIDGETS,
 };
 
 // === Quick actions ===================================================
@@ -192,6 +267,18 @@ const PROTOCOL_QUICK_ACTIONS: Record<string, { label: string; href: string; icon
   mastodon: [
     { label: 'Browse Instances', href: '/search?q=mastodon+instances', icon: '🏛️' },
     { label: 'Mastodon Trending', href: '/mastodon/trending', icon: '📈' },
+  ],
+  reddit: [
+    { label: 'Explore Subreddits', href: '/c', icon: '🔴' },
+    { label: 'Reddit Trending', href: '/reddit/trending', icon: '📈' },
+  ],
+  lemmy: [
+    { label: 'Browse Communities', href: '/search?q=lemmy', icon: '🌿' },
+    { label: 'Lemmy Trending', href: '/lemmy/trending', icon: '📈' },
+  ],
+  rss: [
+    { label: 'News Feed', href: '/feed?protocol=rss', icon: '📰' },
+    { label: 'All Sources', href: '/discover', icon: '🔍' },
   ],
 };
 

@@ -106,9 +106,6 @@ importers:
       '@degenfeed/storage':
         specifier: workspace:*
         version: link:../../packages/storage
-      '@degenfeed/tip-contract':
-        specifier: workspace:*
-        version: link:../../packages/tip-contract
       '@degenfeed/types':
         specifier: workspace:*
         version: link:../../packages/types
@@ -207,33 +204,8 @@ importers:
         specifier: ^1
         version: 1.6.4(@algolia/client-search@5.55.2)(@types/node@26.1.0)(axios@1.18.1)(change-case@5.4.4)(idb-keyval@6.2.6)(jwt-decode@4.0.0)(postcss@8.5.16)(qrcode@1.5.4)(react@19.2.7)(search-insights@2.17.3)(terser@5.48.0)(typescript@5.9.3)
 
-  packages/atproto-shorts-provider:
-    dependencies:
-      '@degenfeed/bluesky-sdk':
-        specifier: workspace:*
-        version: link:../bluesky-sdk
-      '@degenfeed/feed-core':
-        specifier: workspace:*
-        version: link:../feed-core
-      '@degenfeed/types':
-        specifier: workspace:*
-        version: link:../types
-    devDependencies:
-      '@biomejs/biome':
-        specifier: ^2.5.2
-        version: 2.5.2
-      typescript:
-        specifier: ^5.5.0
-        version: 5.9.3
-      vitest:
-        specifier: ^4.1.10
-        version: 4.1.10(@types/node@26.1.0)(happy-dom@20.10.6(bufferutil@4.1.0)(utf-8-validate@6.0.6))(jsdom@29.1.1(@noble/hashes@2.2.0))(vite@6.4.3(@types/node@26.1.0)(jiti@1.21.7)(terser@5.48.0)(tsx@4.23.0)(yaml@2.9.0))
-
   packages/auth:
     dependencies:
-      '@degenfeed/identity-hub':
-        specifier: workspace:*
-        version: link:../identity-hub
       '@degenfeed/mastodon-sdk':
         specifier: workspace:*
         version: link:../mastodon-sdk
@@ -265,6 +237,71 @@ importers:
       '@degenfeed/types':
         specifier: workspace:*
         version: link:../types
+    devDependencies:
+      '@biomejs/biome':
+        specifier: ^2.5.2
+        version: 2.5.2
+      typescript:
+        specifier: ^5.5.0
+        version: 5.9.3
+      vitest:
+        specifier: ^4.1.10
+        version: 4.1.10(@types/node@26.1.0)(happy-dom@20.10.6(bufferutil@4.1.0)(utf-8-validate@6.0.6))(jsdom@29.1.1(@noble/hashes@2.2.0))(vite@6.4.3(@types/node@26.1.0)(jiti@1.21.7)(terser@5.48.0)(tsx@4.23.0)(yaml@2.9.0))
+
+  packages/creator-coin:
+    dependencies:
+      '@coral-xyz/anchor':
+        specifier: ^0.30.1
+        version: 0.30.1(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)
+      '@degenfeed/zora-sdk':
+        specifier: workspace:*
+        version: link:../zora-sdk
+      '@solana/spl-token':
+        specifier: ^0.4.9
+        version: 0.4.15(@solana/web3.js@1.98.4(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6))(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@6.0.6)
+      '@solana/web3.js':
+        specifier: ^1.98.0
+        version: 1.98.4(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)
+      '@zoralabs/coins-sdk':
+        specifier: ^0.8.0
+        version: 0.8.0(abitype@1.2.3(typescript@5.9.3)(zod@3.25.76))(viem@2.55.2(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))
+      viem:
+        specifier: ^2.55.0
+        version: 2.55.2(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76)
+      zod:
+        specifier: ^3.23.0
+        version: 3.25.76
+    devDependencies:
+      typescript:
+        specifier: ^5.5.0
+        version: 5.9.3
+
+  packages/cross-protocol-bridge:
+    dependencies:
+      '@degenfeed/bluesky-sdk':
+        specifier: workspace:*
+        version: link:../bluesky-sdk
+      '@degenfeed/farcaster-sdk':
+        specifier: workspace:*
+        version: link:../farcaster-sdk
+      '@degenfeed/identity':
+        specifier: workspace:*
+        version: link:../identity
+      '@degenfeed/lens-sdk':
+        specifier: workspace:*
+        version: link:../lens-sdk
+      '@degenfeed/mastodon-sdk':
+        specifier: workspace:*
+        version: link:../mastodon-sdk
+      '@degenfeed/nostr-sdk':
+        specifier: workspace:*
+        version: link:../nostr-sdk
+      '@degenfeed/types':
+        specifier: workspace:*
+        version: link:../types
+      '@degenfeed/utils':
+        specifier: workspace:*
+        version: link:../utils
     devDependencies:
       '@biomejs/biome':
         specifier: ^2.5.2
@@ -414,22 +451,6 @@ importers:
         specifier: ^4.1.10
         version: 4.1.10(@types/node@26.1.0)(happy-dom@20.10.6(bufferutil@4.1.0)(utf-8-validate@6.0.6))(jsdom@29.1.1(@noble/hashes@2.2.0))(vite@6.4.3(@types/node@26.1.0)(jiti@1.21.7)(terser@5.48.0)(tsx@4.23.0)(yaml@2.9.0))
 
-  packages/github-sdk:
-    dependencies:
-      '@degenfeed/types':
-        specifier: workspace:*
-        version: link:../types
-    devDependencies:
-      '@biomejs/biome':
-        specifier: ^2.5.2
-        version: 2.5.2
-      typescript:
-        specifier: ^5.5.0
-        version: 5.9.3
-      vitest:
-        specifier: ^4.1.10
-        version: 4.1.10(@types/node@26.1.0)(happy-dom@20.10.6(bufferutil@4.1.0)(utf-8-validate@6.0.6))(jsdom@29.1.1(@noble/hashes@2.2.0))(vite@6.4.3(@types/node@26.1.0)(jiti@1.21.7)(terser@5.48.0)(tsx@4.23.0)(yaml@2.9.0))
-
   packages/identity:
     dependencies:
       '@degenfeed/nostr-sdk':
@@ -438,25 +459,6 @@ importers:
       '@degenfeed/types':
         specifier: workspace:*
         version: link:../types
-    devDependencies:
-      '@biomejs/biome':
-        specifier: ^2.5.2
-        version: 2.5.2
-      typescript:
-        specifier: ^5.5.0
-        version: 5.9.3
-      vitest:
-        specifier: ^4.1.10
-        version: 4.1.10(@types/node@26.1.0)(happy-dom@20.10.6(bufferutil@4.1.0)(utf-8-validate@6.0.6))(jsdom@29.1.1(@noble/hashes@2.2.0))(vite@6.4.3(@types/node@26.1.0)(jiti@1.21.7)(terser@5.48.0)(tsx@4.23.0)(yaml@2.9.0))
-
-  packages/identity-hub:
-    dependencies:
-      '@degenfeed/types':
-        specifier: workspace:*
-        version: link:../types
-      '@degenfeed/utils':
-        specifier: workspace:*
-        version: link:../utils
     devDependencies:
       '@biomejs/biome':
         specifier: ^2.5.2
@@ -541,22 +543,6 @@ importers:
         specifier: ^4.1.10
         version: 4.1.10(@types/node@26.1.0)(happy-dom@20.10.6(bufferutil@4.1.0)(utf-8-validate@6.0.6))(jsdom@29.1.1(@noble/hashes@2.2.0))(vite@6.4.3(@types/node@26.1.0)(jiti@1.21.7)(terser@5.48.0)(tsx@4.23.0)(yaml@2.9.0))
 
-  packages/matrix-sdk:
-    dependencies:
-      '@degenfeed/types':
-        specifier: workspace:*
-        version: link:../types
-    devDependencies:
-      '@biomejs/biome':
-        specifier: ^2.5.2
-        version: 2.5.2
-      typescript:
-        specifier: ^5.5.0
-        version: 5.9.3
-      vitest:
-        specifier: ^4.1.10
-        version: 4.1.10(@types/node@26.1.0)(happy-dom@20.10.6(bufferutil@4.1.0)(utf-8-validate@6.0.6))(jsdom@29.1.1(@noble/hashes@2.2.0))(vite@6.4.3(@types/node@26.1.0)(jiti@1.21.7)(terser@5.48.0)(tsx@4.23.0)(yaml@2.9.0))
-
   packages/mirror-bridge:
     dependencies:
       '@degenfeed/types':
@@ -565,22 +551,6 @@ importers:
       '@degenfeed/utils':
         specifier: workspace:*
         version: link:../utils
-    devDependencies:
-      '@biomejs/biome':
-        specifier: ^2.5.2
-        version: 2.5.2
-      typescript:
-        specifier: ^5.5.0
-        version: 5.9.3
-      vitest:
-        specifier: ^4.1.10
-        version: 4.1.10(@types/node@26.1.0)(happy-dom@20.10.6(bufferutil@4.1.0)(utf-8-validate@6.0.6))(jsdom@29.1.1(@noble/hashes@2.2.0))(vite@6.4.3(@types/node@26.1.0)(jiti@1.21.7)(terser@5.48.0)(tsx@4.23.0)(yaml@2.9.0))
-
-  packages/newsletter-bridge-sdk:
-    dependencies:
-      '@degenfeed/types':
-        specifier: workspace:*
-        version: link:../types
     devDependencies:
       '@biomejs/biome':
         specifier: ^2.5.2
@@ -657,46 +627,6 @@ importers:
       vitest:
         specifier: ^2.1.9
         version: 2.1.9(@types/node@26.1.0)(happy-dom@20.10.6(bufferutil@4.1.0)(utf-8-validate@6.0.6))(jsdom@29.1.1(@noble/hashes@2.2.0))(terser@5.48.0)
-
-  packages/protocols:
-    dependencies:
-      '@degenfeed/bluesky-sdk':
-        specifier: workspace:*
-        version: link:../bluesky-sdk
-      '@degenfeed/farcaster-sdk':
-        specifier: workspace:*
-        version: link:../farcaster-sdk
-      '@degenfeed/lens-sdk':
-        specifier: workspace:*
-        version: link:../lens-sdk
-      '@degenfeed/mastodon-sdk':
-        specifier: workspace:*
-        version: link:../mastodon-sdk
-      '@degenfeed/nostr-sdk':
-        specifier: workspace:*
-        version: link:../nostr-sdk
-      '@degenfeed/rss-sdk':
-        specifier: workspace:*
-        version: link:../rss-sdk
-      '@degenfeed/telegram-sdk':
-        specifier: workspace:*
-        version: link:../telegram-sdk
-      '@degenfeed/threads-sdk':
-        specifier: workspace:*
-        version: link:../threads-sdk
-      '@degenfeed/types':
-        specifier: workspace:*
-        version: link:../types
-    devDependencies:
-      '@biomejs/biome':
-        specifier: ^2.5.2
-        version: 2.5.2
-      typescript:
-        specifier: ^5.5.0
-        version: 5.9.3
-      vitest:
-        specifier: ^4.1.10
-        version: 4.1.10(@types/node@26.1.0)(happy-dom@20.10.6(bufferutil@4.1.0)(utf-8-validate@6.0.6))(jsdom@29.1.1(@noble/hashes@2.2.0))(vite@6.4.3(@types/node@26.1.0)(jiti@1.21.7)(terser@5.48.0)(tsx@4.23.0)(yaml@2.9.0))
 
   packages/ranking:
     dependencies:
@@ -784,6 +714,8 @@ importers:
         specifier: ^4.1.10
         version: 4.1.10(@types/node@26.1.0)(happy-dom@20.10.6(bufferutil@4.1.0)(utf-8-validate@6.0.6))(jsdom@29.1.1(@noble/hashes@2.2.0))(vite@6.4.3(@types/node@26.1.0)(jiti@1.21.7)(terser@5.48.0)(tsx@4.23.0)(yaml@2.9.0))
 
+  packages/solana-programs: {}
+
   packages/source-discovery:
     dependencies:
       '@degenfeed/feed-core':
@@ -866,12 +798,6 @@ importers:
       vitest:
         specifier: ^4.1.10
         version: 4.1.10(@types/node@26.1.0)(happy-dom@20.10.6(bufferutil@4.1.0)(utf-8-validate@6.0.6))(jsdom@29.1.1(@noble/hashes@2.2.0))(vite@6.4.3(@types/node@26.1.0)(jiti@1.21.7)(terser@5.48.0)(tsx@4.23.0)(yaml@2.9.0))
-
-  packages/tip-contract:
-    devDependencies:
-      typescript:
-        specifier: ^5.5.0
-        version: 5.9.3
 
   packages/token-gate:
     dependencies:
@@ -957,30 +883,7 @@ importers:
         specifier: ^4.1.10
         version: 4.1.10(@types/node@26.1.0)(happy-dom@20.10.6(bufferutil@4.1.0)(utf-8-validate@6.0.6))(jsdom@29.1.1(@noble/hashes@2.2.0))(vite@6.4.3(@types/node@26.1.0)(jiti@1.21.7)(terser@5.48.0)(tsx@4.23.0)(yaml@2.9.0))
 
-  packages/video:
-    dependencies:
-      '@degenfeed/feed-core':
-        specifier: workspace:*
-        version: link:../feed-core
-      '@degenfeed/types':
-        specifier: workspace:*
-        version: link:../types
-    devDependencies:
-      '@biomejs/biome':
-        specifier: ^2.5.2
-        version: 2.5.2
-      typescript:
-        specifier: ^5.5.0
-        version: 5.9.3
-      vitest:
-        specifier: ^4.1.10
-        version: 4.1.10(@types/node@26.1.0)(happy-dom@20.10.6(bufferutil@4.1.0)(utf-8-validate@6.0.6))(jsdom@29.1.1(@noble/hashes@2.2.0))(vite@6.4.3(@types/node@26.1.0)(jiti@1.21.7)(terser@5.48.0)(tsx@4.23.0)(yaml@2.9.0))
-
   packages/web3:
-    dependencies:
-      '@degenfeed/tip-contract':
-        specifier: workspace:*
-        version: link:../tip-contract
     devDependencies:
       typescript:
         specifier: ^5.5.0
@@ -1015,14 +918,14 @@ importers:
         version: 1.98.4(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)
       '@zoralabs/coins-sdk':
         specifier: ^0.8.0
-        version: 0.8.0(abitype@1.2.3(typescript@5.9.3)(zod@3.22.3))(viem@2.55.2(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.22.3))
+        version: 0.8.0(abitype@1.2.3(typescript@5.9.3)(zod@3.25.76))(viem@2.55.2(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))
     devDependencies:
       typescript:
         specifier: ^5.5.0
         version: 5.9.3
       viem:
         specifier: ^2.55.0
-        version: 2.55.2(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.22.3)
+        version: 2.55.2(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76)
 
   workers/api:
     dependencies:
@@ -1044,9 +947,6 @@ importers:
       '@degenfeed/identity':
         specifier: workspace:*
         version: link:../../packages/identity
-      '@degenfeed/identity-hub':
-        specifier: workspace:*
-        version: link:../../packages/identity-hub
       '@degenfeed/lens-sdk':
         specifier: workspace:*
         version: link:../../packages/lens-sdk
@@ -1121,7 +1021,7 @@ importers:
         version: 4.12.28
       viem:
         specifier: ^2.55.0
-        version: 2.55.2(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.22.3)
+        version: 2.55.2(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76)
     devDependencies:
       '@biomejs/biome':
         specifier: ^2.5.2
@@ -5484,6 +5384,9 @@ packages:
   zod@3.22.3:
     resolution: {integrity: sha512-EjIevzuJRiRPbVH4mGc8nApb/lVLKVpmUhAaR5R5doKGfAnGJ6Gr3CViAVjP+4FWSxCsybeWQdcgCtbX+7oZug==}
 
+  zod@3.25.76:
+    resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
+
   zwitch@2.0.4:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
 
@@ -7264,19 +7167,19 @@ snapshots:
 
   '@zip.js/zip.js@2.8.26': {}
 
-  '@zoralabs/coins-sdk@0.8.0(abitype@1.2.3(typescript@5.9.3)(zod@3.22.3))(viem@2.55.2(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.22.3))':
+  '@zoralabs/coins-sdk@0.8.0(abitype@1.2.3(typescript@5.9.3)(zod@3.25.76))(viem@2.55.2(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))':
     dependencies:
       '@hey-api/client-fetch': 0.8.4
       '@zoralabs/protocol-deployments': 0.7.6
-      abitype: 1.2.3(typescript@5.9.3)(zod@3.22.3)
-      viem: 2.55.2(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.22.3)
+      abitype: 1.2.3(typescript@5.9.3)(zod@3.25.76)
+      viem: 2.55.2(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76)
 
   '@zoralabs/protocol-deployments@0.7.6': {}
 
-  abitype@1.2.3(typescript@5.9.3)(zod@3.22.3):
+  abitype@1.2.3(typescript@5.9.3)(zod@3.25.76):
     optionalDependencies:
       typescript: 5.9.3
-      zod: 3.22.3
+      zod: 3.25.76
 
   acorn-walk@8.3.2: {}
 
@@ -8665,7 +8568,7 @@ snapshots:
       is-docker: 2.2.1
       is-wsl: 2.2.0
 
-  ox@0.14.30(typescript@5.9.3)(zod@3.22.3):
+  ox@0.14.30(typescript@5.9.3)(zod@3.25.76):
     dependencies:
       '@adraffy/ens-normalize': 1.11.1
       '@noble/ciphers': 1.3.0
@@ -8673,7 +8576,7 @@ snapshots:
       '@noble/hashes': 1.8.0
       '@scure/bip32': 1.7.0
       '@scure/bip39': 1.6.0
-      abitype: 1.2.3(typescript@5.9.3)(zod@3.22.3)
+      abitype: 1.2.3(typescript@5.9.3)(zod@3.25.76)
       eventemitter3: 5.0.1
     optionalDependencies:
       typescript: 5.9.3
@@ -9502,15 +9405,15 @@ snapshots:
       '@types/unist': 3.0.3
       vfile-message: 4.0.3
 
-  viem@2.55.2(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.22.3):
+  viem@2.55.2(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76):
     dependencies:
       '@noble/curves': 1.9.1
       '@noble/hashes': 1.8.0
       '@scure/bip32': 1.7.0
       '@scure/bip39': 1.6.0
-      abitype: 1.2.3(typescript@5.9.3)(zod@3.22.3)
+      abitype: 1.2.3(typescript@5.9.3)(zod@3.25.76)
       isows: 1.0.7(ws@8.21.1(bufferutil@4.1.0)(utf-8-validate@6.0.6))
-      ox: 0.14.30(typescript@5.9.3)(zod@3.22.3)
+      ox: 0.14.30(typescript@5.9.3)(zod@3.25.76)
       ws: 8.21.1(bufferutil@4.1.0)(utf-8-validate@6.0.6)
     optionalDependencies:
       typescript: 5.9.3
@@ -9951,5 +9854,7 @@ snapshots:
       youch-core: 0.3.3
 
   zod@3.22.3: {}
+
+  zod@3.25.76: {}
 
   zwitch@2.0.4: {}

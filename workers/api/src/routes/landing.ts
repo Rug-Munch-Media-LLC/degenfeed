@@ -465,7 +465,7 @@ document.querySelectorAll('a[href^="#"]').forEach(a => {
     if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
 });
-console.log('[DegenFeed] Landing page loaded');`;
+// Landing page loaded`;
 
 function htmlResponse(body: string, cacheSeconds = 300): Response {
   return new Response(body, {

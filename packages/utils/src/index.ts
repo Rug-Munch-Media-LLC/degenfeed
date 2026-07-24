@@ -55,7 +55,6 @@ export function formatTimestamp(ts: number): string {
   });
 }
 
-
 // ─── HTML sanitization ────────────────────────────────────────────────
 
 const HTML_ENTITIES: Record<string, string> = {

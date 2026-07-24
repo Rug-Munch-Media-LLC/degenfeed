@@ -13,7 +13,7 @@ export async function signInWithThreads(): Promise<StoredIdentity> {
   const res = await fetch('/api/auth/threads/authorize', { credentials: 'include' });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: 'Threads auth not available' }));
-    throw new Error(err.error ?? 'Threads auth not available');
+    throw new Error((err as { error: string }).error ?? 'Threads auth not available');
   }
   const data = (await res.json()) as { authorizeUrl: string; state: string };
   window.location.href = data.authorizeUrl;
@@ -29,7 +29,7 @@ export async function handleThreadsCallback(code: string, state: string): Promis
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: 'Token exchange failed' }));
-    throw new Error(err.error ?? 'Token exchange failed');
+    throw new Error((err as { error: string }).error ?? 'Token exchange failed');
   }
   const data = (await res.json()) as {
     userId: string;

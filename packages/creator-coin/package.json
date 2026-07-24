@@ -1,0 +1,37 @@
+{
+  "name": "@degenfeed/creator-coin",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./client": "./src/client.ts",
+    "./evm": "./src/evm/client.ts",
+    "./solana": "./src/solana/client.ts",
+    "./cross-chain": "./src/cross-chain/bridge.ts",
+    "./live-stream": "./src/live-stream.ts",
+    "./bonding-curve": "./src/bonding-curve.ts",
+    "./fees": "./src/fees.ts",
+    "./types": "./src/types.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "tsc",
+    "forge:build": "cd contracts && forge build",
+    "anchor:build": "cd ../solana-programs/degenfeed-creator-token && anchor build"
+  },
+  "dependencies": {
+    "@coral-xyz/anchor": "^0.30.1",
+    "@degenfeed/zora-sdk": "workspace:*",
+    "@solana/spl-token": "^0.4.9",
+    "@solana/web3.js": "^1.98.0",
+    "@zoralabs/coins-sdk": "^0.8.0",
+    "viem": "^2.55.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0"
+  }
+}

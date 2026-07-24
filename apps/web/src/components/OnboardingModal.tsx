@@ -645,10 +645,24 @@ export function OnboardingModal() {
                     {/* Mastodon */}
                     <details className="group rounded-xl border border-white/[0.06] bg-white/[0.02] overflow-hidden transition-all">
                       <summary className="flex cursor-pointer items-center gap-3 px-4 py-3.5 text-sm font-medium text-white/70 hover:text-white transition-colors">
-                        <span className="flex h-8 w-8 items-center justify-center rounded-lg text-base bg-[#6364ff]/20 text-[#6364ff]">🐘</span>
+                        <span className="flex h-8 w-8 items-center justify-center rounded-lg text-base bg-[#6364ff]/20 text-[#6364ff]">
+                          🐘
+                        </span>
                         <span className="flex-1">Connect Mastodon</span>
-                        <span className="rounded-full bg-white/[0.04] px-2 py-0.5 text-[10px] text-white/40">optional</span>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="transition-transform group-open:rotate-180" aria-hidden="true">
+                        <span className="rounded-full bg-white/[0.04] px-2 py-0.5 text-[10px] text-white/40">
+                          optional
+                        </span>
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          className="transition-transform group-open:rotate-180"
+                          aria-hidden="true"
+                        >
                           <polyline points="6 9 12 15 18 9" />
                         </svg>
                       </summary>
@@ -675,10 +689,24 @@ export function OnboardingModal() {
                     {/* Bluesky */}
                     <details className="group rounded-xl border border-white/[0.06] bg-white/[0.02] overflow-hidden transition-all">
                       <summary className="flex cursor-pointer items-center gap-3 px-4 py-3.5 text-sm font-medium text-white/70 hover:text-white transition-colors">
-                        <span className="flex h-8 w-8 items-center justify-center rounded-lg text-base bg-[#1185fe]/20 text-[#1185fe]">🦋</span>
+                        <span className="flex h-8 w-8 items-center justify-center rounded-lg text-base bg-[#1185fe]/20 text-[#1185fe]">
+                          🦋
+                        </span>
                         <span className="flex-1">Connect Bluesky</span>
-                        <span className="rounded-full bg-white/[0.04] px-2 py-0.5 text-[10px] text-white/40">optional</span>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="transition-transform group-open:rotate-180" aria-hidden="true">
+                        <span className="rounded-full bg-white/[0.04] px-2 py-0.5 text-[10px] text-white/40">
+                          optional
+                        </span>
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          className="transition-transform group-open:rotate-180"
+                          aria-hidden="true"
+                        >
                           <polyline points="6 9 12 15 18 9" />
                         </svg>
                       </summary>
@@ -708,10 +736,24 @@ export function OnboardingModal() {
                     {/* Nostr */}
                     <details className="group rounded-xl border border-white/[0.06] bg-white/[0.02] overflow-hidden transition-all">
                       <summary className="flex cursor-pointer items-center gap-3 px-4 py-3.5 text-sm font-medium text-white/70 hover:text-white transition-colors">
-                        <span className="flex h-8 w-8 items-center justify-center rounded-lg text-base bg-[#8e30eb]/20 text-[#8e30eb]">⚡</span>
+                        <span className="flex h-8 w-8 items-center justify-center rounded-lg text-base bg-[#8e30eb]/20 text-[#8e30eb]">
+                          ⚡
+                        </span>
                         <span className="flex-1">Create Nostr Keys</span>
-                        <span className="rounded-full bg-white/[0.04] px-2 py-0.5 text-[10px] text-white/40">optional</span>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="transition-transform group-open:rotate-180" aria-hidden="true">
+                        <span className="rounded-full bg-white/[0.04] px-2 py-0.5 text-[10px] text-white/40">
+                          optional
+                        </span>
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          className="transition-transform group-open:rotate-180"
+                          aria-hidden="true"
+                        >
                           <polyline points="6 9 12 15 18 9" />
                         </svg>
                       </summary>
@@ -722,7 +764,9 @@ export function OnboardingModal() {
                         <div className="rounded-lg bg-white/[0.03] px-3 py-3">
                           <div className="flex items-center justify-between">
                             <div>
-                              <p className="text-[10px] font-medium text-white/40 uppercase tracking-wider">Public Key</p>
+                              <p className="text-[10px] font-medium text-white/40 uppercase tracking-wider">
+                                Public Key
+                              </p>
                               <p className="mt-0.5 text-xs font-mono text-degen-400 break-all">
                                 npub1...
                               </p>
@@ -744,7 +788,9 @@ export function OnboardingModal() {
                     {/* Visual progress indicator */}
                     <div className="mt-4 rounded-xl border border-white/[0.04] bg-white/[0.01] px-4 py-3">
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-[10px] font-medium text-white/40 uppercase tracking-wider">Connection Progress</span>
+                        <span className="text-[10px] font-medium text-white/40 uppercase tracking-wider">
+                          Connection Progress
+                        </span>
                         <span className="text-[10px] font-mono text-white/30">0 / 3</span>
                       </div>
                       <div className="flex gap-1.5">

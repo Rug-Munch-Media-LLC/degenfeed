@@ -75,6 +75,30 @@ const PROTOCOL_STATS: ProtocolHealth[] = [
     ],
   },
   {
+    id: 'audius',
+    name: 'Audius',
+    status: 'up',
+    postsToday: 1893,
+    usersOnline: 0,
+    stats: [
+      { label: 'tracks trending', value: '1,893' },
+      { label: 'catalog', value: '400M+ streams' },
+      { label: 'free tier', value: '500K req/mo' },
+    ],
+  },
+  {
+    id: 'rarible',
+    name: 'NFT Markets',
+    status: 'up',
+    postsToday: 5640,
+    usersOnline: 0,
+    stats: [
+      { label: 'sales today', value: '5,640' },
+      { label: 'chains', value: '7+' },
+      { label: 'marketplaces', value: 'aggregated' },
+    ],
+  },
+  {
     id: 'threads',
     name: 'Threads',
     status: 'degraded',

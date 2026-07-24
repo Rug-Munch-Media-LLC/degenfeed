@@ -199,6 +199,12 @@ export interface Env {
   PREMIUM_WALLET_KEY?: string;
   /** Mastodon instance URL for account creation */
   MASTODON_INSTANCE_URL?: string;
+  /** Lemmy instance URL for account creation */
+  LEMMY_INSTANCE_URL?: string;
+  /** Pixelfed instance URL for account creation */
+  PIXELFED_INSTANCE_URL?: string;
+  /** Nostr relay URLs (comma-separated) */
+  NOSTR_RELAYS?: string;
 
   // ─── Self-hosted infrastructure URLs ────────────────────────────────────
   /** AT Protocol PDS instance URL — pds.degenfeed.xyz */

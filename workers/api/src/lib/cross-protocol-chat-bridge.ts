@@ -66,7 +66,7 @@ async function resolvePlatformAuth(env: Env, creatorWallet: string): Promise<Pla
   try {
     // Try to use IdentityHub for per-creator credentials
     if (!env.IDENTITIES) return auth;
-    const { IdentityHub } = await import('@degenfeed/identity-hub');
+    const { IdentityHub } = await import('@degenfeed/auth');
     const hub = new IdentityHub({ kv: env.IDENTITIES });
     const resolved = await hub.resolveWallet(creatorWallet);
 

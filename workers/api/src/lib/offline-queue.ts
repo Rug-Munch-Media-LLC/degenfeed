@@ -327,7 +327,6 @@ async function listDeadLetterKeys(env: Env, max: number): Promise<string[]> {
   // Use KV list (available in Cloudflare Workers with wrangler)
   // Fallback: iterate prefix keys
   try {
-    // @ts-expect-error — KVNamespace.list() is available in Workers runtime
     const listed = await env.CACHE.list({
       prefix: DEAD_LETTER_PREFIX,
       limit: max,
@@ -399,7 +398,6 @@ export async function getQueueStats(env?: Env): Promise<QueueStats> {
     // Count dead letters
     let deadLetter = 0;
     try {
-      // @ts-expect-error — KVNamespace.list() is available in Workers runtime
       const listed = await env.CACHE.list({ prefix: DEAD_LETTER_PREFIX });
       deadLetter = listed?.keys?.length ?? 0;
     } catch {

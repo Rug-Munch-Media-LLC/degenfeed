@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 // === Types ============================================================
 
@@ -30,6 +30,16 @@ interface ActivityEntry {
   message: string;
   timestamp: number;
   severity?: 'info' | 'warning' | 'error';
+}
+
+interface AlertItem {
+  id: string;
+  type: 'protocol_down' | 'high_cpu' | 'disk_warning' | 'high_latency' | 'error_spike';
+  message: string;
+  severity: 'critical' | 'warning' | 'info';
+  timestamp: number;
+  protocol?: string;
+  value?: string;
 }
 
 // === Helpers ==========================================================
@@ -139,22 +149,50 @@ const DEFAULT_ACTIVITY: ActivityEntry[] = [
   },
 ];
 
+const DEFAULT_ALERTS: AlertItem[] = [
+  {
+    id: 'alert1', type: 'high_cpu', message: 'CPU at 91% on Talos (Nostr relay worker)',
+    severity: 'warning', timestamp: Date.now() - 120000, value: '91%',
+  },
+  {
+    id: 'alert2', type: 'disk_warning', message: 'Disk usage at 82% on Hydra — /data partition',
+    severity: 'warning', timestamp: Date.now() - 300000, value: '82%',
+  },
+  {
+    id: 'alert3', type: 'high_latency', message: 'Mastodon fetcher avg latency > 2s',
+    severity: 'warning', timestamp: Date.now() - 600000, value: '2.3s',
+  },
+  {
+    id: 'alert4', type: 'error_spike', message: 'Error rate spike on RSS feeds (3.4%)',
+    severity: 'info', timestamp: Date.now() - 1800000, value: '3.4%',
+  },
+];
+
 // === Component ========================================================
 
 export default function AdminDashboardPage() {
   const [stats, setStats] = useState<DashboardStats>(DEFAULT_STATS);
   const [activity, setActivity] = useState<ActivityEntry[]>(DEFAULT_ACTIVITY);
+  const [alerts, setAlerts] = useState<AlertItem[]>(DEFAULT_ALERTS);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; kind: 'success' | 'error' } | null>(null);
+
+  const showToast = useCallback((message: string, kind: 'success' | 'error' = 'success') => {
+    setToast({ message, kind });
+    setTimeout(() => setToast(null), 3000);
+  }, []);
 
   const fetchDashboard = useCallback(async () => {
     try {
       const res = await fetch('/api/admin/stats', { credentials: 'include' });
       if (res.ok) {
-        const data = (await res.json()) as { stats: DashboardStats; activity: ActivityEntry[] };
+        const data = (await res.json()) as { stats: DashboardStats; activity: ActivityEntry[]; alerts: AlertItem[] };
         if (data.stats) setStats(data.stats);
         if (data.activity) setActivity(data.activity);
+        if (data.alerts) setAlerts(data.alerts);
       }
     } catch {
       // use defaults
@@ -163,6 +201,8 @@ export default function AdminDashboardPage() {
 
   useEffect(() => {
     fetchDashboard().finally(() => setLoading(false));
+    const pi = setInterval(fetchDashboard, 15000);
+    return () => clearInterval(pi);
   }, [fetchDashboard]);
 
   const handleRefresh = useCallback(async () => {
@@ -171,6 +211,30 @@ export default function AdminDashboardPage() {
     await fetchDashboard();
     setRefreshing(false);
   }, [fetchDashboard]);
+
+  const handleQuickAction = useCallback(async (action: string) => {
+    setActionLoading(action);
+    try {
+      const res = await fetch(`/api/admin/system/actions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ action }),
+      });
+      if (res.ok) {
+        showToast(`${action.replace('_', ' ')} started successfully`);
+      } else {
+        showToast(`Failed to ${action.replace('_', ' ')}`, 'error');
+      }
+    } catch {
+      showToast('Network error', 'error');
+    } finally {
+      setActionLoading(null);
+    }
+  }, [showToast]);
+
+  const criticalAlerts = useMemo(() => alerts.filter((a) => a.severity === 'critical'), [alerts]);
+  const warningAlerts = useMemo(() => alerts.filter((a) => a.severity === 'warning'), [alerts]);
 
   if (loading) {
     return <AdminDashboardSkeleton />;
@@ -198,6 +262,19 @@ export default function AdminDashboardPage() {
           {refreshing ? 'Refreshing…' : 'Refresh'}
         </button>
       </div>
+
+      {/* Toast */}
+      {toast && (
+        <div
+          className={`fixed right-4 top-4 z-50 rounded-xl px-4 py-3 text-sm font-medium shadow-2xl transition-all ${
+            toast.kind === 'success'
+              ? 'border border-green-500/30 bg-green-900/40 text-green-300'
+              : 'border border-red-500/30 bg-red-900/40 text-red-300'
+          }`}
+        >
+          {toast.message}
+        </div>
+      )}
 
       {/* Error */}
       {error && (
@@ -326,6 +403,49 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
+      {/* Alerts panel */}
+      {alerts.length > 0 && (
+        <div className="mb-8">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-[var(--color-fg)]">
+              🚨 Alerts {criticalAlerts.length > 0 && <span className="ml-2 rounded-full bg-red-500/20 px-2 py-0.5 text-[10px] text-red-400">{criticalAlerts.length} critical</span>}
+              {warningAlerts.length > 0 && <span className="ml-2 rounded-full bg-yellow-500/20 px-2 py-0.5 text-[10px] text-yellow-400">{warningAlerts.length} warnings</span>}
+            </h2>
+          </div>
+          <div className="space-y-2">
+            {alerts.slice(0, 4).map((alert) => (
+              <div
+                key={alert.id}
+                className={`flex items-center justify-between rounded-xl border px-4 py-3 ${
+                  alert.severity === 'critical'
+                    ? 'border-red-500/30 bg-red-900/15'
+                    : alert.severity === 'warning'
+                      ? 'border-yellow-500/20 bg-yellow-900/10'
+                      : 'border-[var(--color-border)] bg-[var(--color-card)]'
+                }`}
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <span className={`text-base ${alert.severity === 'critical' ? 'animate-pulse' : ''}`}>
+                    {alert.type === 'protocol_down' ? '🔴' : alert.type === 'high_cpu' ? '🔥' : alert.type === 'disk_warning' ? '💾' : alert.type === 'high_latency' ? '⏱️' : '📈'}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-xs font-medium text-[var(--color-fg)]">{alert.message}</p>
+                    <p className="text-[10px] text-[var(--color-muted)]">{formatTime(alert.timestamp)}</p>
+                  </div>
+                </div>
+                {alert.value && (
+                  <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                    alert.severity === 'critical' ? 'bg-red-500/20 text-red-400' : 'bg-yellow-500/20 text-yellow-400'
+                  }`}>
+                    {alert.value}
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* == Row 3: System gauges + quick actions == */}
       <div className="grid gap-6 lg:grid-cols-2">
         {/* System health gauges */}
@@ -358,9 +478,49 @@ export default function AdminDashboardPage() {
             <QuickActionButton href="/admin/content" icon="📝" label="Content Feed" />
             <QuickActionButton href="/admin/users" icon="👥" label="User Management" />
             <QuickActionButton href="/admin/system" icon="⚙️" label="System Settings" />
-            <QuickActionButton href="/admin/platforms" icon="🔌" label="Platforms" />
+            <QuickActionButton href="/admin/protocols" icon="🔌" label="Protocols" />
           </div>
         </div>
+      </div>
+
+      {/* == Row 4: Admin quick actions (restart, clear cache, view logs) == */}
+      <div className="mt-6 grid gap-6 lg:grid-cols-3">
+        <button
+          type="button"
+          onClick={() => handleQuickAction('restart_api')}
+          disabled={actionLoading === 'restart_api'}
+          className="flex items-center gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-5 py-4 transition-colors hover:border-yellow-500/30 hover:bg-[var(--color-muted)] disabled:opacity-40 text-left"
+        >
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-yellow-500/15 text-lg">↻</span>
+          <div>
+            <p className="text-sm font-medium text-[var(--color-fg)]">Restart Service</p>
+            <p className="text-[10px] text-[var(--color-muted)]">Restart the API server</p>
+          </div>
+        </button>
+        <button
+          type="button"
+          onClick={() => handleQuickAction('clear_cache')}
+          disabled={actionLoading === 'clear_cache'}
+          className="flex items-center gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-5 py-4 transition-colors hover:border-degen-500/30 hover:bg-[var(--color-muted)] disabled:opacity-40 text-left"
+        >
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-degen-500/15 text-lg">🗑️</span>
+          <div>
+            <p className="text-sm font-medium text-[var(--color-fg)]">Clear Cache</p>
+            <p className="text-[10px] text-[var(--color-muted)]">Purge all cached data</p>
+          </div>
+        </button>
+        <button
+          type="button"
+          onClick={() => handleQuickAction('view_logs')}
+          disabled={actionLoading === 'view_logs'}
+          className="flex items-center gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-5 py-4 transition-colors hover:border-blue-500/30 hover:bg-[var(--color-muted)] disabled:opacity-40 text-left"
+        >
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500/15 text-lg">📋</span>
+          <div>
+            <p className="text-sm font-medium text-[var(--color-fg)]">View Logs</p>
+            <p className="text-[10px] text-[var(--color-muted)]">Open system logs viewer</p>
+          </div>
+        </button>
       </div>
     </div>
   );

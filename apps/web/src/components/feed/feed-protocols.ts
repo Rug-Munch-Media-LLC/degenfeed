@@ -3,6 +3,9 @@
  *
  * Central registry for protocol metadata used across feed components.
  * Each protocol has: icon, color, label, endpoint, and route path.
+ *
+ * Last updated: 2026-07-24 — Added Audius & Rarible protocols
+ * See docs/MISSED_PLATFORMS.md for research details
  */
 
 export interface ProtocolConfig {
@@ -144,6 +147,34 @@ export const PROTOCOLS: Record<string, ProtocolConfig> = {
       { label: 'mints today', value: '10k+' },
     ],
   },
+  audius: {
+    id: 'audius',
+    label: 'Audius',
+    color: '#cc0fe0',
+    icon: '🎵',
+    description: 'Decentralized music streaming — trending tracks & artist updates',
+    endpoint: '/api/feed/audius',
+    route: '/feed/music',
+    postNoun: 'track',
+    stats: [
+      { label: 'catalog', value: '400M+ streams' },
+      { label: 'free tier', value: '500K req/mo' },
+    ],
+  },
+  rarible: {
+    id: 'rarible',
+    label: 'NFT Markets',
+    color: '#feda02',
+    icon: '🖼️',
+    description: 'Cross-chain NFT sales, mints & trending collections',
+    endpoint: '/api/feed/rarible',
+    route: '/feed/nft-market',
+    postNoun: 'sale',
+    stats: [
+      { label: 'chains', value: '7+' },
+      { label: 'marketplaces', value: 'aggregated' },
+    ],
+  },
   rss: {
     id: 'rss',
     label: 'RSS/News',
@@ -183,6 +214,8 @@ export const SIDEBAR_ORDER = [
   'nostr',
   'farcaster',
   'lens',
+  'audius',
+  'rarible',
   'peertube',
   'lemmy',
   'pixelfed',

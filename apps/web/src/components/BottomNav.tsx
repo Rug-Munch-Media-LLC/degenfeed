@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useNotifications } from '../hooks/useNotifications';
-import { useProtocolConnections } from '../hooks/useProtocolConnections';
 import { useAuth } from './AuthProvider';
 
 interface NavItem {
@@ -133,6 +132,22 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/profile', label: 'Profile', icon: 'profile', requiresAuth: true },
 ];
 
+function isActiveMatch(pathname: string, item: NavItem): boolean {
+  if (item.href === '/feed') {
+    return pathname === '/feed' || pathname === '/home' || pathname === '/home/all';
+  }
+  if (item.href === '/notifications') {
+    return pathname === '/notifications' || pathname.startsWith('/notifications/');
+  }
+  if (item.href === '/search') {
+    return pathname === '/search';
+  }
+  if (item.href === '/profile') {
+    return pathname === '/profile' || pathname.startsWith('/profile/');
+  }
+  return pathname === item.href || pathname.startsWith(`${item.href}/`);
+}
+
 export function BottomNav() {
   const pathname = usePathname() ?? '/';
   const { ready, signedInProtocols, openCompose, openSignIn } = useAuth();
@@ -153,17 +168,17 @@ export function BottomNav() {
 
   return (
     <nav
-      aria-label="Mobile"
-      className="bottom-nav fixed inset-x-0 bottom-0 z-40 border-t border-[var(--color-border)] backdrop-blur-xl pb-[env(safe-area-inset-bottom)] lg:hidden"
-      style={{ backgroundColor: 'var(--color-glass-bg)' }}
+      aria-label="Mobile navigation"
+      className="bottom-nav fixed inset-x-0 bottom-0 z-40 border-t backdrop-blur-xl lg:hidden"
+      style={{
+        borderColor: 'var(--color-glass-border)',
+        backgroundColor: 'var(--color-glass-bg)',
+        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+      }}
     >
-      <div className="flex items-stretch justify-around">
+      <div className="mx-auto flex max-w-lg items-stretch justify-around">
         {NAV_ITEMS.map((item) => {
-          const isFeed = item.href === '/feed';
-          const active =
-            pathname === item.href ||
-            pathname.startsWith(`${item.href}/`) ||
-            (isFeed && (pathname === '/feed' || pathname === '/home' || pathname === '/home/all'));
+          const active = isActiveMatch(pathname, item);
 
           // Compose is a special action button
           if (item.href === '/compose') {
@@ -172,10 +187,10 @@ export function BottomNav() {
                 key={item.href}
                 type="button"
                 onClick={handleCompose}
-                className="relative flex flex-col items-center justify-center gap-0.5 py-1 text-[10px] font-medium transition-colors h-full flex-1 max-w-[80px] focus-visible:outline-2 focus-visible:outline-degen-500 focus-visible:outline-offset-[-2px] text-[var(--color-muted)] hover:text-[var(--color-fg)]"
+                className="relative flex flex-col items-center justify-center gap-0.5 py-1 text-[10px] font-medium transition-colors h-full flex-1 max-w-[72px] focus-visible:outline-2 focus-visible:outline-degen-500 focus-visible:outline-offset-2 text-[var(--color-muted)] hover:text-[var(--color-fg)]"
                 aria-label={signedIn ? 'Create new post' : 'Sign in to post'}
               >
-                <span className="relative flex h-10 w-10 items-center justify-center rounded-full bg-degen-500 text-black shadow-lg transition-all hover:scale-105 active:scale-95">
+                <span className="relative flex h-10 w-10 items-center justify-center rounded-full bg-[var(--color-accent)] text-black shadow-lg transition-all hover:scale-105 active:scale-95">
                   <NavIcon type="compose" active={false} />
                 </span>
                 <span className="leading-tight truncate max-w-[3rem] text-[9px]">Post</span>
@@ -183,52 +198,67 @@ export function BottomNav() {
             );
           }
 
+          const needsAuth = item.requiresAuth && !signedIn;
+          const href = needsAuth ? '#' : item.href;
+          const label = needsAuth ? 'Sign in to access' : item.label;
+
+          const inner = (
+            <span
+              className={`relative flex h-10 w-10 items-center justify-center rounded-xl transition-all ${
+                active ? 'bg-degen-500/15 shadow-[0_0_12px_rgba(0,255,65,0.1)]' : ''
+              }`}
+              style={{ minHeight: '44px', minWidth: '44px' }}
+            >
+              {needsAuth ? (
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                  <path d="M7 11V7a5 5 0 0110 0v4" />
+                </svg>
+              ) : (
+                <NavIcon type={item.icon} active={active} />
+              )}
+
+              {/* Unread badge on notifications */}
+              {item.href === '/notifications' && unreadCount > 0 && (
+                <span
+                  className="absolute -right-0.5 -top-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-degen-500 px-1 text-[8px] font-bold text-black"
+                  style={{ lineHeight: 1 }}
+                >
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
+            </span>
+          );
+
           return (
             <Link
               key={item.href}
-              href={!signedIn && item.requiresAuth ? '/feed' : item.href}
+              href={href}
               prefetch
-              className={`relative flex flex-col items-center justify-center gap-0.5 py-1 text-[10px] font-medium transition-colors h-full flex-1 max-w-[80px] focus-visible:outline-2 focus-visible:outline-degen-500 focus-visible:outline-offset-[-2px] ${
+              onClick={(e) => {
+                if (needsAuth) {
+                  e.preventDefault();
+                  openSignIn();
+                }
+              }}
+              className={`relative flex flex-col items-center justify-center gap-0.5 py-1 text-[10px] font-medium transition-colors h-full flex-1 max-w-[72px] focus-visible:outline-2 focus-visible:outline-degen-500 focus-visible:outline-offset-2 ${
                 active ? 'text-degen-400' : 'text-[var(--color-muted)] hover:text-[var(--color-fg)]'
               }`}
               aria-current={active ? 'page' : undefined}
-              title={item.requiresAuth && !signedIn ? 'Sign in to access' : item.label}
+              title={label}
+              aria-label={label}
             >
-              <span
-                className={`relative flex h-10 w-10 items-center justify-center rounded-xl transition-all ${
-                  active ? 'bg-degen-500/15 shadow-[0_0_12px_rgba(0,255,65,0.1)]' : ''
-                }`}
-                style={{ minHeight: '44px', minWidth: '44px' }}
-              >
-                {!signedIn && item.requiresAuth ? (
-                  <svg
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    aria-hidden="true"
-                  >
-                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                    <path d="M7 11V7a5 5 0 0110 0v4" />
-                  </svg>
-                ) : (
-                  <NavIcon type={item.icon} active={active} />
-                )}
-
-                {/* Unread badge on notifications */}
-                {item.href === '/notifications' && unreadCount > 0 && (
-                  <span
-                    className="absolute -right-0.5 -top-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-degen-500 px-1 text-[8px] font-bold text-black"
-                    style={{ lineHeight: 1 }}
-                  >
-                    {unreadCount > 9 ? '9+' : unreadCount}
-                  </span>
-                )}
-              </span>
+              {inner}
               <span className="leading-tight truncate max-w-[3rem] text-[9px]">{item.label}</span>
             </Link>
           );

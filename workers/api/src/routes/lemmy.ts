@@ -68,7 +68,7 @@ function parseLimit(raw: string | null, defaultVal: number = DEFAULT_FEED_LIMIT)
 
 export async function handleLemmyFeed(request: Request, _env: Env): Promise<Response> {
   const url = new URL(request.url);
-  const instance = url.searchParams.get('instance') || INSTANCES[0];
+  const instance: string = url.searchParams.get('instance') || INSTANCES[0] || 'https://community.degenfeed.xyz';
   const sort = url.searchParams.get('sort') || 'Hot';
   const limit = parseLimit(url.searchParams.get('limit'), DEFAULT_FEED_LIMIT);
 
@@ -121,7 +121,7 @@ export async function handleLemmyCommunity(
   name: string,
 ): Promise<Response> {
   const url = new URL(request.url);
-  const instance = url.searchParams.get('instance') || INSTANCES[0];
+  const instance: string = url.searchParams.get('instance') || INSTANCES[0] || 'https://community.degenfeed.xyz';
   const sort = url.searchParams.get('sort') || 'Hot';
   const limit = parseLimit(url.searchParams.get('limit'), 20);
 
@@ -203,7 +203,7 @@ export async function handleLemmyPostCreate(request: Request, env: Env): Promise
       jwt?: string;
     };
 
-    const instance = body.instance || INSTANCES[0];
+    const instance: string = body.instance || INSTANCES[0] || 'https://community.degenfeed.xyz';
     const communityId = body.communityId;
     const communityName = body.communityName;
     const name = sanitizeString(body.title, 250);
@@ -289,7 +289,7 @@ export async function handleLemmyCommentCreate(request: Request, env: Env): Prom
       jwt?: string;
     };
 
-    const instance = body.instance || INSTANCES[0];
+    const instance: string = body.instance || INSTANCES[0] || 'https://community.degenfeed.xyz';
     const postId = body.postId;
     const content = sanitizeString(body.content, 50000);
     const parentId = body.parentId;
@@ -483,7 +483,7 @@ export async function handleLemmyPostById(
   idParam: string,
 ): Promise<Response> {
   const url = new URL(request.url);
-  const instance = url.searchParams.get('instance') || INSTANCES[0];
+  const instance: string = url.searchParams.get('instance') || INSTANCES[0] || 'https://community.degenfeed.xyz';
   const postId = Number(idParam);
 
   if (Number.isNaN(postId) || postId < 1) {

@@ -11,17 +11,17 @@ export function ProtocolHero({ config }: ProtocolHeroProps) {
     <div
       className="relative mb-6 overflow-hidden rounded-2xl border transition-all"
       style={{
-        borderColor: `${config.color}33`,
-        background: `linear-gradient(145deg, ${config.color}18 0%, ${config.color}06 50%, transparent 100%)`,
+        borderColor: config.borderColor || `${config.color}33`,
+        background: `linear-gradient(145deg, ${config.bgColor || `${config.color}18`} 0%, ${config.color}06 50%, transparent 100%)`,
       }}
     >
-      {/* Decorative elements */}
+      {/* Decorative elements — protocol colored glow */}
       <div
-        className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full opacity-15 blur-3xl"
+        className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full opacity-20 blur-3xl"
         style={{ backgroundColor: config.color }}
       />
       <div
-        className="pointer-events-none absolute -bottom-8 -left-8 h-24 w-24 rounded-full opacity-10 blur-2xl"
+        className="pointer-events-none absolute -bottom-8 -left-8 h-24 w-24 rounded-full opacity-15 blur-2xl"
         style={{ backgroundColor: config.color }}
       />
       <div
@@ -35,17 +35,18 @@ export function ProtocolHero({ config }: ProtocolHeroProps) {
         {/* Top row: icon + title */}
         <div className="mb-5 flex items-start gap-5">
           <div
-            className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl text-2xl sm:h-20 sm:w-20 sm:text-3xl"
+            className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl text-2xl sm:h-20 sm:w-20 sm:text-3xl transition-transform hover:scale-105"
             style={{
               backgroundColor: `${config.color}22`,
               color: config.color,
               boxShadow: `0 0 30px ${config.color}33, inset 0 1px 0 ${config.color}22`,
             }}
+            aria-hidden="true"
           >
             {config.icon}
           </div>
           <div className="min-w-0 flex-1 pt-1">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-wrap">
               <h1
                 className="text-2xl font-bold tracking-tight sm:text-3xl"
                 style={{ color: 'var(--color-fg)' }}
@@ -87,7 +88,7 @@ export function ProtocolHero({ config }: ProtocolHeroProps) {
               {i < config.stats.length - 1 && (
                 <div
                   className="hidden h-6 w-px sm:block"
-                  style={{ backgroundColor: `${config.color}22` }}
+                  style={{ backgroundColor: config.borderColor || `${config.color}22` }}
                 />
               )}
             </div>

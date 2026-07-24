@@ -90,8 +90,14 @@ function TrendingCard({
   protocol: string;
 }) {
   return (
-    <div className="flex items-center justify-between rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] px-4 py-3 transition-all hover:border-degen-500/20 hover:bg-[var(--color-card-hover)]">
-      <div className="min-w-0 flex-1">
+    <div
+      className="flex items-center justify-between rounded-xl border transition-all hover:border-degen-500/20 hover:bg-[var(--color-card-hover)]"
+      style={{
+        borderColor: 'var(--color-glass-border)',
+        backgroundColor: 'var(--color-card)',
+      }}
+    >
+      <div className="min-w-0 flex-1 px-4 py-3">
         <div className="flex items-center gap-2">
           <span className="text-sm font-semibold" style={{ color: 'var(--color-fg)' }}>
             {topic}
@@ -119,7 +125,7 @@ function TrendingCard({
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
-        style={{ color: 'var(--color-muted)' }}
+        style={{ color: 'var(--color-muted)', marginRight: '1rem' }}
         aria-hidden="true"
       >
         <polyline points="9 18 15 12 9 6" />
@@ -132,7 +138,13 @@ function TrendingCard({
 
 function FeedPreviewCard({ item }: { item: FeedPreviewItem }) {
   return (
-    <div className="group rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-4 transition-all hover:border-degen-500/20 hover:shadow-md">
+    <div
+      className="group rounded-xl border p-4 transition-all hover:border-degen-500/20 hover:shadow-md"
+      style={{
+        borderColor: 'var(--color-glass-border)',
+        backgroundColor: 'var(--color-card)',
+      }}
+    >
       <div className="mb-2 flex items-center gap-2">
         <span
           className="flex h-6 w-6 items-center justify-center rounded-full text-[9px] font-bold"
@@ -189,17 +201,68 @@ export default function HomePage() {
   // Randomize feed preview
   const feedPreview = useMemo(() => FEED_PREVIEW.sort(() => Math.random() - 0.5).slice(0, 3), []);
 
+  /* ─── Protocol connection badge helper ─── */
+  function ProtocolBadge({ pid }: { pid: string }) {
+    const conn = connections[pid];
+    if (!conn) return null;
+    const isConnected = conn.connected;
+    return (
+      <button
+        type="button"
+        onClick={() => setConnectOpen(true)}
+        className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-semibold transition-all ${
+          isConnected
+            ? 'bg-degen-500/10 text-degen-400'
+            : 'border text-[var(--color-muted)] hover:border-degen-500/30'
+        }`}
+        style={{
+          borderColor: isConnected ? 'transparent' : 'var(--color-glass-border)',
+        }}
+      >
+        <span
+          className={`h-2 w-2 rounded-full ${isConnected ? 'bg-degen-500' : 'bg-[var(--color-muted)]'}`}
+        />
+        {conn.name}
+        {isConnected && ' ✓'}
+      </button>
+    );
+  }
+
   return (
     <div className="landing-page">
-      {/* Background glow */}
+      {/* Background glow — warm green aura */}
       <div className="home-bg-glow" aria-hidden="true" />
 
       <div className="mx-auto max-w-[1000px] px-4 py-8 md:py-16">
-        {/* ══════════════ WELCOME ══════════════ */}
-        <section className="mb-12">
+        {/* ══════════════ HERO — "Your Decentralized Social Home" ══════════════ */}
+        <section className="mb-12 text-center md:text-left">
           <WelcomeGreeting connectedProtocols={connectedCount} totalProtocols={totalCount} />
 
-          <div className="mt-6 flex flex-wrap items-center gap-3">
+          {/* Vision statement */}
+          <div
+            className="mt-3 max-w-2xl rounded-2xl border p-4 md:p-5"
+            style={{
+              borderColor: 'var(--color-glass-border)',
+              backgroundColor: 'var(--color-card)',
+            }}
+          >
+            <h2
+              className="text-lg font-bold leading-snug md:text-xl"
+              style={{ color: 'var(--color-fg)', fontFamily: 'var(--font-heading)' }}
+            >
+              All your decentralized social networks.{' '}
+              <span className="gradient-text">One unified feed.</span>
+            </h2>
+            <p
+              className="mt-1 max-w-xl text-sm leading-relaxed"
+              style={{ color: 'var(--color-muted)' }}
+            >
+              DegenFeed brings together Nostr, Farcaster, Lens, Bluesky, Mastodon, Reddit, and RSS
+              into one timeline. Post once, reach everywhere. No platform fees. No deplatforming.
+            </p>
+          </div>
+
+          <div className="mt-5 flex flex-wrap items-center gap-3">
             <Link
               href="/feed"
               className="inline-flex items-center gap-2 rounded-2xl bg-[var(--color-accent)] px-6 py-3 text-sm font-bold text-black transition-all hover:bg-[var(--color-accent)]/90 hover:shadow-lg hover:shadow-[var(--color-accent)]/20"
@@ -222,8 +285,12 @@ export default function HomePage() {
             <button
               type="button"
               onClick={() => setConnectOpen(true)}
-              className="inline-flex items-center gap-2 rounded-2xl border border-[var(--color-glass-border)] bg-[var(--color-card)] px-6 py-3 text-sm font-semibold transition-all hover:border-degen-500/30 hover:bg-[var(--color-card-hover)]"
-              style={{ color: 'var(--color-fg)' }}
+              className="inline-flex items-center gap-2 rounded-2xl border px-6 py-3 text-sm font-semibold transition-all hover:border-degen-500/30 hover:bg-[var(--color-card-hover)]"
+              style={{
+                borderColor: 'var(--color-glass-border)',
+                backgroundColor: 'var(--color-card)',
+                color: 'var(--color-fg)',
+              }}
             >
               <svg
                 width="16"
@@ -244,30 +311,16 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* ══════════════ VALUE PROPOSITION ══════════════ */}
-        <section className="mb-12">
-          <div className="rounded-2xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-6 md:p-8">
-            <h2
-              className="mb-2 text-2xl font-bold"
-              style={{ color: 'var(--color-fg)', fontFamily: 'var(--font-heading)' }}
-            >
-              All your decentralized social networks in one place.
-            </h2>
-            <p
-              className="max-w-2xl text-sm leading-relaxed"
-              style={{ color: 'var(--color-muted)' }}
-            >
-              DegenFeed brings together Nostr, Farcaster, Lens, Bluesky, Mastodon, Reddit, and RSS
-              into one unified timeline. Post once, reach everywhere. No platform fees. No one can
-              deplatform you.
-            </p>
-          </div>
-        </section>
-
-        {/* ══════════════ BENTO GRID ══════════════ */}
+        {/* ══════════════ BENTO GRID — Networks, Trending, Stats ══════════════ */}
         <div className="mb-12 grid gap-4 md:grid-cols-3">
           {/* Protocol connection status (span 1) */}
-          <div className="rounded-2xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-5">
+          <div
+            className="rounded-2xl border p-5"
+            style={{
+              borderColor: 'var(--color-glass-border)',
+              backgroundColor: 'var(--color-card)',
+            }}
+          >
             <h3
               className="mb-3 flex items-center gap-2 text-sm font-bold"
               style={{ color: 'var(--color-fg)' }}
@@ -300,15 +353,24 @@ export default function HomePage() {
             <button
               type="button"
               onClick={() => setConnectOpen(true)}
-              className="mt-3 w-full rounded-xl border border-dashed border-[var(--color-glass-border)] py-2 text-[11px] font-semibold transition-colors hover:border-degen-500/30 hover:bg-degen-500/5"
-              style={{ color: 'var(--color-muted)' }}
+              className="mt-3 w-full rounded-xl border border-dashed py-2 text-[11px] font-semibold transition-colors hover:border-degen-500/30 hover:bg-degen-500/5"
+              style={{
+                borderColor: 'var(--color-glass-border)',
+                color: 'var(--color-muted)',
+              }}
             >
               + Connect a protocol
             </button>
           </div>
 
           {/* Trending (span 1) */}
-          <div className="rounded-2xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-5">
+          <div
+            className="rounded-2xl border p-5"
+            style={{
+              borderColor: 'var(--color-glass-border)',
+              backgroundColor: 'var(--color-card)',
+            }}
+          >
             <h3
               className="mb-3 flex items-center gap-2 text-sm font-bold"
               style={{ color: 'var(--color-fg)' }}
@@ -326,7 +388,13 @@ export default function HomePage() {
           </div>
 
           {/* Stats (span 1) */}
-          <div className="rounded-2xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-5">
+          <div
+            className="rounded-2xl border p-5"
+            style={{
+              borderColor: 'var(--color-glass-border)',
+              backgroundColor: 'var(--color-card)',
+            }}
+          >
             <h3
               className="mb-3 flex items-center gap-2 text-sm font-bold"
               style={{ color: 'var(--color-fg)' }}
@@ -345,7 +413,10 @@ export default function HomePage() {
               ].map((stat) => (
                 <div
                   key={stat.label}
-                  className="flex items-center justify-between border-b border-[var(--color-glass-border)] pb-2 last:border-0 last:pb-0"
+                  className="flex items-center justify-between border-b pb-2 last:border-0 last:pb-0"
+                  style={{
+                    borderColor: 'var(--color-glass-border)',
+                  }}
                 >
                   <span className="text-xs" style={{ color: 'var(--color-muted)' }}>
                     {stat.label}
@@ -384,7 +455,13 @@ export default function HomePage() {
         </section>
 
         {/* ══════════════ PROTOCOL ONBOARDING ══════════════ */}
-        <section className="mb-12 rounded-2xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-6 md:p-8">
+        <section
+          className="mb-12 rounded-2xl border p-6 md:p-8"
+          style={{
+            borderColor: 'var(--color-glass-border)',
+            backgroundColor: 'var(--color-card)',
+          }}
+        >
           <div className="flex flex-col items-center text-center md:flex-row md:text-left md:gap-8">
             <div className="mb-4 md:mb-0 md:flex-1">
               <h2
@@ -398,23 +475,9 @@ export default function HomePage() {
                 everything in one unified feed.
               </p>
               <div className="flex flex-wrap gap-2">
-                {['mastodon', 'bluesky', 'nostr', 'farcaster'].map((pid) => {
-                  const conn = connections[pid];
-                  if (!conn) return null;
-                  const isConnected = conn.connected;
-                  return (
-                    <button
-                      key={pid}
-                      type="button"
-                      onClick={() => setConnectOpen(true)}
-                      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-semibold transition-all ${isConnected ? 'bg-degen-500/10 text-degen-400' : 'border border-[var(--color-glass-border)] text-[var(--color-muted)] hover:border-degen-500/30'}`}
-                    >
-                      <span className="h-2 w-2 rounded-full ${isConnected ? 'bg-degen-500' : 'bg-[var(--color-muted)]'}" />
-                      {conn.name}
-                      {isConnected && ' ✓'}
-                    </button>
-                  );
-                })}
+                {['mastodon', 'bluesky', 'nostr', 'farcaster'].map((pid) => (
+                  <ProtocolBadge key={pid} pid={pid} />
+                ))}
               </div>
             </div>
             <button
@@ -442,42 +505,130 @@ export default function HomePage() {
           </div>
         </section>
 
+        {/* ══════════════ VALUE PROPOSITION CARDS ══════════════ */}
+        <section className="mb-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {[
+            {
+              icon: '✦',
+              title: 'Cross-Protocol Posting',
+              desc: 'Write once, publish to 15+ protocols. Replies from any network appear in one thread.',
+              colour: 'rgba(0,255,65,0.12)',
+            },
+            {
+              icon: '○',
+              title: 'Creator Coins',
+              desc: 'Deploy your own token on Base and Solana. Anti-bot, anti-whale, anti-rug.',
+              colour: 'rgba(168,85,247,0.12)',
+            },
+            {
+              icon: '▶',
+              title: 'Stream Everywhere',
+              desc: 'Broadcast to 7 protocols at once. Solo streams, Spaces audio, and live minting.',
+              colour: 'rgba(0,255,65,0.10)',
+            },
+            {
+              icon: '⚡',
+              title: 'Cross-Chain Tipping',
+              desc: 'Tip in ETH, SOL, USDC, or Lightning. 0% platform fees. Unified leaderboard.',
+              colour: 'rgba(250,204,21,0.12)',
+            },
+            {
+              icon: '◈',
+              title: 'Self-Hosted',
+              desc: 'Run your own relays, indexers, and frontend. No one can deplatform you — ever.',
+              colour: 'rgba(59,130,246,0.12)',
+            },
+            {
+              icon: '⊞',
+              title: '25+ Sources',
+              desc: 'Nostr, Farcaster, Lens, Bluesky, Mastodon, Reddit, RSS, YouTube, PeerTube, and more.',
+              colour: 'rgba(0,255,65,0.12)',
+            },
+          ].map((feature) => (
+            <article
+              key={feature.title}
+              className="rounded-2xl border p-5 transition-all hover:border-degen-500/20"
+              style={{
+                borderColor: 'var(--color-glass-border)',
+                backgroundColor: 'var(--color-card)',
+              }}
+            >
+              <div
+                className="mb-3 flex h-9 w-9 items-center justify-center rounded-xl text-base font-bold"
+                style={{
+                  backgroundColor: feature.colour,
+                  color: 'var(--color-accent)',
+                }}
+              >
+                {feature.icon}
+              </div>
+              <h3 className="mb-1 text-sm font-bold" style={{ color: 'var(--color-fg)' }}>
+                {feature.title}
+              </h3>
+              <p className="text-xs leading-relaxed" style={{ color: 'var(--color-muted)' }}>
+                {feature.desc}
+              </p>
+            </article>
+          ))}
+        </section>
+
         {/* ══════════════ FOOTER ══════════════ */}
         <footer
-          className="border-t border-[var(--color-glass-border)] pt-8 text-center text-xs"
-          style={{ color: 'var(--color-muted)' }}
+          className="border-t pt-8 text-center text-xs"
+          style={{
+            borderColor: 'var(--color-glass-border)',
+            color: 'var(--color-muted)',
+          }}
         >
           <nav className="mb-3 flex flex-wrap justify-center gap-4">
-            <Link href="/about" className="hover:underline">
+            <Link
+              href="/about"
+              className="hover:underline focus-visible:outline-2 focus-visible:outline-degen-500"
+            >
               About
             </Link>
-            <Link href="/features" className="hover:underline">
+            <Link
+              href="/features"
+              className="hover:underline focus-visible:outline-2 focus-visible:outline-degen-500"
+            >
               Features
             </Link>
-            <Link href="/docs" className="hover:underline">
+            <Link
+              href="/docs"
+              className="hover:underline focus-visible:outline-2 focus-visible:outline-degen-500"
+            >
               Docs
             </Link>
-            <Link href="/faq" className="hover:underline">
+            <Link
+              href="/faq"
+              className="hover:underline focus-visible:outline-2 focus-visible:outline-degen-500"
+            >
               FAQ
             </Link>
-            <Link href="/privacy" className="hover:underline">
+            <Link
+              href="/privacy"
+              className="hover:underline focus-visible:outline-2 focus-visible:outline-degen-500"
+            >
               Privacy
             </Link>
-            <Link href="/terms" className="hover:underline">
+            <Link
+              href="/terms"
+              className="hover:underline focus-visible:outline-2 focus-visible:outline-degen-500"
+            >
               Terms
             </Link>
             <a
               href="https://github.com/rugmunchmedia/degenfeed"
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:underline"
+              className="hover:underline focus-visible:outline-2 focus-visible:outline-degen-500"
             >
               GitHub
             </a>
           </nav>
           <p>
             &copy; {new Date().getFullYear()} DegenFeed &mdash; a Rug Munch Media LLC product. Open
-            source. Free forever.
+            source. Free forever. <span className="hidden sm:inline">No account required.</span>
           </p>
         </footer>
       </div>

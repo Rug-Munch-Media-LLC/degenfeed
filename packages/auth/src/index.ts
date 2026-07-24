@@ -1,5 +1,8 @@
 // ─── @degenfeed/auth — barrel exports ──────────────────────────
 
+export type { ActiveSession, StoredIdentity } from '@degenfeed/types';
+export type { EncryptedBlob } from './crypto';
+export { decryptSecret, encryptSecret } from './crypto';
 // ─── Identity Hub (folded from @degenfeed/identity-hub) ───────────
 export type {
   AutoCreateResult,
@@ -9,11 +12,8 @@ export type {
   ProtocolIdentity,
   ResolvedIdentity,
   ResolvedProtocolInfo,
-} from '@degenfeed/identity-hub';
-export { createIdentityHub, IdentityHub } from '@degenfeed/identity-hub';
-export type { ActiveSession, StoredIdentity } from '@degenfeed/types';
-export type { EncryptedBlob } from './crypto';
-export { decryptSecret, encryptSecret } from './crypto';
+} from './identity-hub';
+export { createIdentityHub, IdentityHub } from './identity-hub';
 export { buildIdentityRecord } from './persistence';
 export { refreshBlueskySession, signInWithBluesky } from './providers/bluesky';
 export { signInWithFarcaster, signInWithFarcasterSigner } from './providers/farcaster';

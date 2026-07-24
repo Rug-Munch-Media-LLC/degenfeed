@@ -110,7 +110,7 @@ export function FeedShell({ children }: FeedShellProps) {
       if (prevRoute) router.push(prevRoute);
     }
     setTouchDelta(0);
-  }, [touchDelta, activeProtocol]);
+  }, [touchDelta, activeProtocol, router.push]);
 
   // ── Route transition state: fade on protocol change — NO flash ──
   const [transitioning, setTransitioning] = useState(false);

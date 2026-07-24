@@ -5,26 +5,42 @@
  * Fetches from the bridge API, shows protocol header, filter controls,
  * and handles loading/empty/error states.
  *
- * Props:
- *   source: Protocol key (mastodon, bluesky, nostr, etc.)
- *   limit: Max posts to load (default 25)
- *   showHeader: Show protocol header with stats (default true)
- *   showFilters: Show content type filter bar (default true)
- *   className: Additional CSS classes
+ * Now integrates with FeedAlgorithm for user-controlled feed ranking.
+ * Each post gets a "Why am I seeing this?" ℹ️ button powered by
+ * AlgorithmTransparency.
  */
 
 'use client';
 
+import {
+  DEFAULT_WEIGHTS,
+  FeedAlgorithm,
+  type AlgorithmContext,
+  type AlgorithmMode,
+  type AlgorithmWeights,
+  type NicheSelection,
+  type ProtocolWeights,
+  globalAuditLog,
+} from '@degenfeed/feed-core';
 import type { UnifiedPost } from '@degenfeed/types';
 import { ErrorBoundary, FeedList } from '@degenfeed/ui';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../AuthProvider';
 import { ContentFilterBar, type ContentType } from '../ContentFilterBar';
 import { type DensityMode, DensityToggle } from '../DensityToggle';
 import { FeedPollerBanner } from '../FeedPollerBanner';
+import {
+  useAlgorithmTransparency,
+  WhyButton,
+} from './AlgorithmTransparency';
 import { PROTOCOLS, type ProtocolConfig } from './feed-protocols';
+import {
+  loadAlgorithmPrefs,
+  saveAlgorithmPrefs,
+  type AlgorithmUserPreferences,
+} from './feed-tuner-types';
 
 const TipModal = dynamic(() => import('../TipModal').then((m) => ({ default: m.TipModal })), {
   ssr: false,
@@ -37,17 +53,6 @@ function hexToRgb(hex: string): string {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   if (!result) return '0,0,0';
   return `${Number.parseInt(result[1]!, 16)},${Number.parseInt(result[2]!, 16)},${Number.parseInt(result[3]!, 16)}`;
-}
-
-function _timeAgo(ts: number): string {
-  const seconds = Math.floor((Date.now() - ts) / 1000);
-  if (seconds < 60) return 'just now';
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  return `${days}d ago`;
 }
 
 // ─── Types ────────────────────────────────────────────────────────────
@@ -67,6 +72,10 @@ export interface ProtocolFeedProps {
   showHeader?: boolean;
   showFilters?: boolean;
   className?: string;
+  /** Enable custom algorithm ranking. Default true. */
+  useAlgorithm?: boolean;
+  /** Override algorithm preferences (uses saved prefs by default) */
+  algorithmPrefs?: AlgorithmUserPreferences;
 }
 
 // ─── Component ────────────────────────────────────────────────────────
@@ -77,10 +86,12 @@ export function ProtocolFeed({
   showHeader = true,
   showFilters = true,
   className = '',
+  useAlgorithm = true,
+  algorithmPrefs: externalPrefs,
 }: ProtocolFeedProps) {
   const config: ProtocolConfig | undefined = PROTOCOLS[source];
   const router = useRouter();
-  const { engage, openComposeReply } = useAuth();
+  const { engage, openComposeReply, walletAddress } = useAuth();
 
   const [posts, setPosts] = useState<UnifiedPost[]>([]);
   const [state, setState] = useState<'loading' | 'loaded' | 'empty' | 'error'>('loading');
@@ -92,6 +103,55 @@ export function ProtocolFeed({
   const [tipPost, setTipPost] = useState<UnifiedPost | null>(null);
   const lastPostIdRef = useRef<string | null>(null);
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // ── Algorithm integration ────────────────────────────────────────
+  const algorithmRef = useRef<FeedAlgorithm>(new FeedAlgorithm());
+  const [algoPrefs, setAlgoPrefs] = useState<AlgorithmUserPreferences>(
+    () => externalPrefs ?? loadAlgorithmPrefs(),
+  );
+  const { showWhy, TransparencyOverlay } = useAlgorithmTransparency();
+
+  // Initialize algorithm with saved preferences
+  useEffect(() => {
+    const prefs = externalPrefs ?? loadAlgorithmPrefs();
+    setAlgoPrefs(prefs);
+    algorithmRef.current.setPreferences({
+      weights: prefs.weights,
+      niches: prefs.niches,
+      protocolWeights: prefs.protocolWeights,
+      mode: prefs.mode,
+    });
+  }, [externalPrefs]);
+
+  const reorderWithAlgorithm = useCallback(
+    (rawPosts: UnifiedPost[]): UnifiedPost[] => {
+      if (!useAlgorithm) return rawPosts;
+
+      const algo = algorithmRef.current;
+      const ctx: AlgorithmContext = {
+        viewer: null,
+        followed: new Set(),
+        now: Date.now(),
+      };
+
+      try {
+        // Use the algorithm to annotate & reorder posts
+        const annotated = algo.annotatePosts(rawPosts, ctx);
+
+        // Record audit entries for transparency
+        for (let i = 0; i < Math.min(annotated.length, 20); i++) {
+          const entry = algo.createAuditEntry(annotated[i], ctx, i + 1);
+          globalAuditLog.record(entry);
+        }
+
+        return annotated;
+      } catch {
+        // Fallback: return original order
+        return rawPosts;
+      }
+    },
+    [useAlgorithm],
+  );
 
   // Set protocol accent color
   useEffect(() => {
@@ -124,14 +184,18 @@ export function ProtocolFeed({
       if (feed.length > 0) {
         lastPostIdRef.current = feed[0]?.id ?? '';
       }
-      setPosts(feed);
+
+      // Apply algorithm reordering
+      const reordered = reorderWithAlgorithm(feed);
+
+      setPosts(reordered);
       setFeedMeta(data.meta ?? {});
       setState(feed.length ? 'loaded' : 'empty');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load feed');
       setState('error');
     }
-  }, [config, source, limit]);
+  }, [config, source, limit, reorderWithAlgorithm]);
 
   // Initial fetch + poll for new posts
   useEffect(() => {
@@ -193,6 +257,14 @@ export function ProtocolFeed({
     },
     [openComposeReply],
   );
+
+  // Render posts with "Why am I seeing this?" button
+  const renderedPosts = useMemo(() => {
+    return posts.map((post) => ({
+      ...post,
+      // The score.breakdown is already populated by the algorithm for transparency
+    }));
+  }, [posts]);
 
   // Protocol not found
   if (!config) {
@@ -278,6 +350,25 @@ export function ProtocolFeed({
           </div>
         )}
 
+        {/* ── Algorithm indicator ── */}
+        {useAlgorithm && (
+          <div className="flex items-center justify-between rounded-lg border border-degen-500/20 bg-degen-500/5 px-3 py-2">
+            <div className="flex items-center gap-2 text-xs text-degen-400">
+              <span>⚙️</span>
+              <span>
+                Custom algorithm active
+                {algoPrefs.mode !== 'standard' && ` · ${algoPrefs.mode.replace('-', ' ')} mode`}
+              </span>
+            </div>
+            <a
+              href="/settings/algorithm"
+              className="text-[10px] underline hover:text-degen-300"
+            >
+              Adjust
+            </a>
+          </div>
+        )}
+
         {/* ── Feed controls ── */}
         <div className="flex items-center justify-between gap-2">
           {showFilters ? (
@@ -324,7 +415,7 @@ export function ProtocolFeed({
         >
           <FeedList
             state={state}
-            posts={posts}
+            posts={renderedPosts}
             error={error}
             protocolLabel={config.label}
             protocolColor={accentColor}
@@ -333,6 +424,17 @@ export function ProtocolFeed({
             onTip={(post) => setTipPost(post)}
             onRetry={handleRetry}
             onCrossReplyOpen={handleCrossReplyOpen}
+            // Inject "Why am I seeing this?" button into each post
+            renderAfter={() => (
+              <div className="mt-1 flex items-center gap-2">
+                <WhyButton onClick={() => showWhy(posts[0])} />
+                {algoPrefs.mode !== 'standard' && (
+                  <span className="text-[10px] text-[var(--color-muted)]">
+                    {algoPrefs.mode.replace('-', ' ')}
+                  </span>
+                )}
+              </div>
+            )}
           />
         </div>
 
@@ -420,6 +522,9 @@ export function ProtocolFeed({
             ))}
           </div>
         )}
+
+        {/* ── Algorithm Transparency Overlay ── */}
+        {TransparencyOverlay}
       </div>
     </ErrorBoundary>
   );

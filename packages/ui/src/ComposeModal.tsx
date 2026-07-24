@@ -24,11 +24,10 @@
 import type { TokenGate } from '@degenfeed/token-gate';
 import type { ContentProof } from '@degenfeed/types';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { clearDraft, loadDraft, saveDraft } from './ComposeDraftManager';
 import { ComposePreview } from './ComposePreview';
 import { getProtocolColor, getProtocolIcon, getProtocolLabel } from './ProtocolBadge';
 import { TokenGateConfigurator } from './TokenGateConfigurator';
-import { saveDraft, loadDraft, clearDraft } from './ComposeDraftManager';
-import { ComposeGateConfig } from './ComposeGateConfig';
 
 interface ComposeTarget {
   id: string;
@@ -168,10 +167,10 @@ export function ComposeModal({
 
   // Token gate state
   const [tokenGate, setTokenGate] = useState<TokenGate | null>(null);
-  const [gateSymbol, setGateSymbol] = useState<string>('');
-  const [gateResolving, setGateResolving] = useState(false);
-  const [gateError, setGateError] = useState<string | undefined>(undefined);
-  const gateResolveTimeout = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const [gateSymbol, _setGateSymbol] = useState<string>('');
+  const [gateResolving, _setGateResolving] = useState(false);
+  const [gateError, _setGateError] = useState<string | undefined>(undefined);
+  const _gateResolveTimeout = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   // Token gate state is now managed by ComposeGateConfig component
 
@@ -214,13 +213,18 @@ export function ComposeModal({
     if (!open) return;
     const timer = setTimeout(() => {
       try {
-        saveDraft({ text, enabledTargets: Object.fromEntries(targets.map((t) => [t.id, t.enabled])), attachedImages, timestamp: Date.now() });
+        saveDraft({
+          text,
+          enabledTargets: Object.fromEntries(targets.map((t) => [t.id, t.enabled])),
+          attachedImages,
+          timestamp: Date.now(),
+        });
       } catch {
         /* noop */
       }
     }, 500);
     return () => clearTimeout(timer);
-  }, [text, open]);
+  }, [text, open, targets.map, attachedImages]);
 
   // Update protocol connection states when signedInProtocols changes
   useEffect(() => {

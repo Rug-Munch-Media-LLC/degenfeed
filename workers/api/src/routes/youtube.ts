@@ -35,7 +35,7 @@ function getFetcher(c: { env: Env }): YouTubeFetcher {
   return new YouTubeFetcher(c.env.YOUTUBE_API_KEY ?? '');
 }
 
-function parseLimit(limitStr: string | undefined, defaultVal = 20, maxVal = 50): number {
+function parseLimit(limitStr: string | null | undefined, defaultVal = 20, maxVal = 50): number {
   const n = Number(limitStr);
   return Number.isFinite(n) && n > 0 ? Math.min(n, maxVal) : defaultVal;
 }

@@ -11,9 +11,7 @@
   "scripts": {
     "typecheck": "tsc --noEmit"
   },
-  "dependencies": {
-    "@degenfeed/tip-contract": "workspace:*"
-  },
+  "dependencies": {},
   "devDependencies": {
     "typescript": "^5.5.0"
   }

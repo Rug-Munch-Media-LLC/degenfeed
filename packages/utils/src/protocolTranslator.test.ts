@@ -115,14 +115,14 @@ describe('estimateTranslationLoss', () => {
   });
 
   it('should return warning when content exceeds target maxLength by >20%', () => {
-    const longContent = 'x'.repeat(PROTOCOL_FORMATS.nostr?.maxLength * 2);
+    const longContent = 'x'.repeat((PROTOCOL_FORMATS.nostr?.maxLength ?? 0) * 2);
     const warning = estimateTranslationLoss(longContent, 'lens', 'nostr');
     expect(warning).not.toBeNull();
     expect(warning).toContain('truncated');
   });
 
   it('should return strong warning when content exceeds target by >50%', () => {
-    const veryLong = 'x'.repeat(PROTOCOL_FORMATS.nostr?.maxLength * 5);
+    const veryLong = 'x'.repeat((PROTOCOL_FORMATS.nostr?.maxLength ?? 0) * 5);
     const warning = estimateTranslationLoss(veryLong, 'lens', 'nostr');
     expect(warning).not.toBeNull();
     expect(warning).toContain('lose');
