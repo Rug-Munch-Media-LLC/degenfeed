@@ -77,7 +77,7 @@ const config: Config = {
           '0%': { transform: 'rotate(360deg) translateX(var(--orbit-radius)) rotate(-360deg)' },
           '100%': { transform: 'rotate(0deg) translateX(var(--orbit-radius)) rotate(0deg)' },
         },
-        'float': {
+        float: {
           '0%, 100%': { transform: 'translateY(0)' },
           '50%': { transform: 'translateY(-10px)' },
         },
@@ -166,7 +166,7 @@ const config: Config = {
         'heart-pop': 'heart-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
         'orbit-spin': 'orbit-spin 8s linear infinite',
         'orbit-spin-reverse': 'orbit-spin-reverse 12s linear infinite',
-        'float': 'float 3s ease-in-out infinite',
+        float: 'float 3s ease-in-out infinite',
         'pulse-glow': 'pulse-glow 2s ease-in-out infinite',
         'particle-burst': 'particle-burst 0.6s ease-out forwards',
         'slide-in-right': 'slide-in-right 0.3s ease-out',

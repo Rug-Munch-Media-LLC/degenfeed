@@ -10,12 +10,12 @@
  * ═════════════════════════════════════════════════════════════════════════════
  */
 
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
-  DEFAULT_DISCOVERY_CONFIG,
   computeQualityScore,
   computeSourceHealthScore,
   computeTrendingScore,
+  DEFAULT_DISCOVERY_CONFIG,
   detectStaleSources,
   estimateRelevance,
   getNewThisWeek,
@@ -58,14 +58,22 @@ describe('Creator Discovery — Quality Scoring', () => {
   }
 
   it('should auto-approve high-quality sources', () => {
-    const candidate = makeCandidate({ subscriberCount: 50000, weeklyActivity: 10, relevanceScore: 0.9 });
+    const candidate = makeCandidate({
+      subscriberCount: 50000,
+      weeklyActivity: 10,
+      relevanceScore: 0.9,
+    });
     const result = computeQualityScore(candidate, DEFAULT_DISCOVERY_CONFIG);
     expect(result.score).toBeGreaterThan(0.5);
     expect(result.passed).toBe(true);
   });
 
   it('should reject low-subscriber sources', () => {
-    const candidate = makeCandidate({ subscriberCount: 10, weeklyActivity: 1, relevanceScore: 0.9 });
+    const candidate = makeCandidate({
+      subscriberCount: 10,
+      weeklyActivity: 1,
+      relevanceScore: 0.9,
+    });
     const result = computeQualityScore(candidate, DEFAULT_DISCOVERY_CONFIG);
     expect(result.passed).toBe(false);
     expect(result.signals.subscribers).toBeLessThan(0.1);
@@ -73,7 +81,9 @@ describe('Creator Discovery — Quality Scoring', () => {
 
   it('should apply blocklist penalty for scam keywords', () => {
     const candidate = makeCandidate({ name: 'Free Bitcoin Scam' });
-    expect(isBlocklisted(candidate.name, candidate.description, DEFAULT_DISCOVERY_CONFIG)).toBe(true);
+    expect(isBlocklisted(candidate.name, candidate.description, DEFAULT_DISCOVERY_CONFIG)).toBe(
+      true,
+    );
     const result = computeQualityScore(candidate, DEFAULT_DISCOVERY_CONFIG);
     expect(result.signals.penalty).toBeLessThan(0);
   });

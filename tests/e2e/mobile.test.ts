@@ -9,71 +9,134 @@
  * across multiple device widths for responsive layout verification.
  * ═════════════════════════════════════════════════════════════════════════════
  */
-import { expect, test } from '@playwright/test';
+
 import type { Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
 // ─── Mock data ──────────────────────────────────────────────────────────────
 
 const MOCK_FEED = {
   data: [
     {
-      id: 'post-1', protocol: 'nostr', text: 'Bitcoin is the future of money!',
+      id: 'post-1',
+      protocol: 'nostr',
+      text: 'Bitcoin is the future of money!',
       html: '<p>Bitcoin is the future of money!</p>',
       createdAt: new Date(Date.now() - 3600000).toISOString(),
-      author: { id: 'npub1abc', displayName: 'Satoshi', avatarUrl: '', handle: 'satoshi', metadata: {} },
-      embeds: [], metrics: { likes: 42, reposts: 10, replies: 5, quotes: 2 },
+      author: {
+        id: 'npub1abc',
+        displayName: 'Satoshi',
+        avatarUrl: '',
+        handle: 'satoshi',
+        metadata: {},
+      },
+      embeds: [],
+      metrics: { likes: 42, reposts: 10, replies: 5, quotes: 2 },
       engagement: { viewerLiked: false, viewerReposted: false, viewerBookmarked: false },
-      niches: ['bitcoin'], parentId: null, raw: {},
+      niches: ['bitcoin'],
+      parentId: null,
+      raw: {},
     },
     {
-      id: 'post-2', protocol: 'farcaster', text: 'Just deployed my first smart contract on Base 🚀',
+      id: 'post-2',
+      protocol: 'farcaster',
+      text: 'Just deployed my first smart contract on Base 🚀',
       html: '<p>Just deployed my first smart contract on Base 🚀</p>',
       createdAt: new Date(Date.now() - 7200000).toISOString(),
-      author: { id: 'fid:123', displayName: 'Builder Guy', avatarUrl: '', handle: 'builder', metadata: {} },
-      embeds: [], metrics: { likes: 128, reposts: 33, replies: 12, quotes: 5 },
+      author: {
+        id: 'fid:123',
+        displayName: 'Builder Guy',
+        avatarUrl: '',
+        handle: 'builder',
+        metadata: {},
+      },
+      embeds: [],
+      metrics: { likes: 128, reposts: 33, replies: 12, quotes: 5 },
       engagement: { viewerLiked: false, viewerReposted: false, viewerBookmarked: false },
-      niches: ['base', 'solidity'], parentId: null, raw: {},
+      niches: ['base', 'solidity'],
+      parentId: null,
+      raw: {},
     },
     {
-      id: 'post-3', protocol: 'bluesky', text: 'AT Protocol is the most underrated social graph.',
+      id: 'post-3',
+      protocol: 'bluesky',
+      text: 'AT Protocol is the most underrated social graph.',
       createdAt: new Date(Date.now() - 10800000).toISOString(),
-      author: { id: 'did:plc:xyz', displayName: 'Protocol Maxi', avatarUrl: '', handle: 'maxi.bsky.social', metadata: {} },
-      embeds: [], metrics: { likes: 67, reposts: 15, replies: 8, quotes: 1 },
+      author: {
+        id: 'did:plc:xyz',
+        displayName: 'Protocol Maxi',
+        avatarUrl: '',
+        handle: 'maxi.bsky.social',
+        metadata: {},
+      },
+      embeds: [],
+      metrics: { likes: 67, reposts: 15, replies: 8, quotes: 1 },
       engagement: { viewerLiked: false, viewerReposted: false, viewerBookmarked: false },
-      niches: ['atproto', 'decentralization'], parentId: null, raw: {},
+      niches: ['atproto', 'decentralization'],
+      parentId: null,
+      raw: {},
     },
   ],
   meta: {
-    total: 3, limit: 50,
+    total: 3,
+    limit: 50,
     perProtocol: { nostr: 1, farcaster: 1, bluesky: 1 },
     trending: [{ topic: 'bitcoin', count: 1, score: 42 }],
-    fetchedAt: Date.now(), topOfHour: 'post-2',
+    fetchedAt: Date.now(),
+    topOfHour: 'post-2',
   },
 };
 
 const MOCK_NEWS = {
   data: [
     {
-      id: 'news-1', protocol: 'rss', text: 'Bitcoin reaches new all-time high amid institutional adoption',
+      id: 'news-1',
+      protocol: 'rss',
+      text: 'Bitcoin reaches new all-time high amid institutional adoption',
       html: '<p>Bitcoin reaches new all-time high amid institutional adoption</p>',
       createdAt: new Date().toISOString(),
-      author: { id: 'rss:coindesk', displayName: 'CoinDesk', avatarUrl: '', handle: 'coindesk', metadata: {} },
+      author: {
+        id: 'rss:coindesk',
+        displayName: 'CoinDesk',
+        avatarUrl: '',
+        handle: 'coindesk',
+        metadata: {},
+      },
       embeds: [{ kind: 'link', url: 'https://example.com/article' }],
       metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
       engagement: { viewerLiked: false, viewerReposted: false, viewerBookmarked: false },
-      niches: ['bitcoin'], parentId: null, raw: {},
+      niches: ['bitcoin'],
+      parentId: null,
+      raw: {},
     },
   ],
-  meta: { total: 1, limit: 50, category: 'all', mustRead: false, trending: [], sourceCounts: { rss: 1 }, fetchedAt: Date.now(), sources: 1 },
+  meta: {
+    total: 1,
+    limit: 50,
+    category: 'all',
+    mustRead: false,
+    trending: [],
+    sourceCounts: { rss: 1 },
+    fetchedAt: Date.now(),
+    sources: 1,
+  },
 };
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 async function setupMobilePage(page: Page) {
-  await page.route('**/api/feed/home**', async (route) => { await route.fulfill({ json: MOCK_FEED }); });
-  await page.route('**/api/feed/for-you**', async (route) => { await route.fulfill({ json: MOCK_FEED }); });
-  await page.route('**/api/preferences', async (route) => { await route.fulfill({ json: {} }); });
-  await page.route('**/api/feed/news**', async (route) => { await route.fulfill({ json: MOCK_NEWS }); });
+  await page.route('**/api/feed/home**', async (route) => {
+    await route.fulfill({ json: MOCK_FEED });
+  });
+  await page.route('**/api/feed/for-you**', async (route) => {
+    await route.fulfill({ json: MOCK_FEED });
+  });
+  await page.route('**/api/preferences', async (route) => {
+    await route.fulfill({ json: {} });
+  });
+  await page.route('**/api/feed/news**', async (route) => {
+    await route.fulfill({ json: MOCK_NEWS });
+  });
 }
 
 // ─── 1. Mobile Navigation ──────────────────────────────────────────────────
@@ -86,7 +149,9 @@ test.describe('Mobile: Navigation', () => {
     await page.waitForLoadState('networkidle');
 
     // Bottom nav should be visible
-    await expect(page.locator('nav[aria-label="Mobile"], nav.bottom-nav, [class*="bottom-nav"]').first()).toBeVisible({ timeout: 30000 });
+    await expect(
+      page.locator('nav[aria-label="Mobile"], nav.bottom-nav, [class*="bottom-nav"]').first(),
+    ).toBeVisible({ timeout: 30000 });
   });
 
   test('bottom nav shows all primary navigation items', async ({ page }) => {
@@ -96,7 +161,9 @@ test.describe('Mobile: Navigation', () => {
     await page.waitForLoadState('networkidle');
 
     // Should show Feed/Home, News, Videos/Search and Explore
-    const bottomNav = page.locator('nav[aria-label="Mobile"], nav.bottom-nav, [class*="bottom-nav"]').first();
+    const bottomNav = page
+      .locator('nav[aria-label="Mobile"], nav.bottom-nav, [class*="bottom-nav"]')
+      .first();
     await expect(bottomNav).toBeVisible({ timeout: 30000 });
 
     // Check that common nav items are present
@@ -114,7 +181,10 @@ test.describe('Mobile: Navigation', () => {
     await page.waitForLoadState('networkidle');
 
     // Find and tap a nav link to another section
-    const newsLink = page.locator('nav[aria-label="Mobile"] a, nav.bottom-nav a, [class*="bottom-nav"] a').filter({ hasText: /News/i }).first();
+    const newsLink = page
+      .locator('nav[aria-label="Mobile"] a, nav.bottom-nav a, [class*="bottom-nav"] a')
+      .filter({ hasText: /News/i })
+      .first();
     if (await newsLink.isVisible()) {
       await newsLink.tap();
       await page.waitForTimeout(2000);
@@ -162,7 +232,9 @@ test.describe('Mobile: Touch Targets', () => {
     await page.goto('/feed');
     await page.waitForLoadState('networkidle');
 
-    const bottomNav = page.locator('nav[aria-label="Mobile"], nav.bottom-nav, [class*="bottom-nav"]').first();
+    const bottomNav = page
+      .locator('nav[aria-label="Mobile"], nav.bottom-nav, [class*="bottom-nav"]')
+      .first();
     if (await bottomNav.isVisible()) {
       const items = bottomNav.locator('a, button');
       const itemCount = await items.count();
@@ -230,21 +302,25 @@ test.describe('Mobile: Swipe Gestures', () => {
 
 test.describe('Mobile: Responsive Layout', () => {
   const breakpoints = [
-    { width: 320, height: 568, name: 'iPhone SE' },    // Small mobile
-    { width: 390, height: 844, name: 'iPhone 13' },     // Standard mobile
-    { width: 768, height: 1024, name: 'iPad' },         // Tablet
-    { width: 1024, height: 768, name: 'iPad Landscape' },// Tablet landscape
+    { width: 320, height: 568, name: 'iPhone SE' }, // Small mobile
+    { width: 390, height: 844, name: 'iPhone 13' }, // Standard mobile
+    { width: 768, height: 1024, name: 'iPad' }, // Tablet
+    { width: 1024, height: 768, name: 'iPad Landscape' }, // Tablet landscape
   ];
 
   for (const bp of breakpoints) {
-    test(`feed page renders correctly at ${bp.name} (${bp.width}×${bp.height})`, async ({ page }) => {
+    test(`feed page renders correctly at ${bp.name} (${bp.width}×${bp.height})`, async ({
+      page,
+    }) => {
       await page.setViewportSize({ width: bp.width, height: bp.height });
       await setupMobilePage(page);
       await page.goto('/feed');
       await page.waitForLoadState('networkidle');
 
       // Content should be visible regardless of viewport
-      await expect(page.locator('article, [class*="post"], [class*="Post"]').first()).toBeVisible({ timeout: 30000 });
+      await expect(page.locator('article, [class*="post"], [class*="Post"]').first()).toBeVisible({
+        timeout: 30000,
+      });
 
       // No horizontal overflow
       const overflowX = await page.evaluate(() => {
@@ -298,7 +374,9 @@ test.describe('Mobile: Bottom Navigation', () => {
     await page.goto('/feed');
     await page.waitForLoadState('networkidle');
 
-    const bottomNav = page.locator('nav[aria-label="Mobile"], nav.bottom-nav, [class*="bottom-nav"]').first();
+    const bottomNav = page
+      .locator('nav[aria-label="Mobile"], nav.bottom-nav, [class*="bottom-nav"]')
+      .first();
     if (await bottomNav.isVisible()) {
       // The active/current page nav item should have some visual distinction
       const navItems = bottomNav.locator('a, button');

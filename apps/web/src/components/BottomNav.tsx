@@ -2,13 +2,13 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useNotifications } from '../hooks/useNotifications';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from './AuthProvider';
 
 interface NavItem {
   href: string;
   label: string;
-  icon: 'feed' | 'search' | 'compose' | 'notifications' | 'profile';
+  icon: 'feed' | 'search' | 'compose' | 'live' | 'profile';
   requiresAuth?: boolean;
 }
 
@@ -18,23 +18,26 @@ function NavIcon({ type, active }: { type: NavItem['icon']; active: boolean }) {
   const sw = active ? 2.5 : 1.5;
   switch (type) {
     case 'feed':
-      return active ? (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-          <path d="M21 20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.49a1 1 0 01.386-.79l8-6.222a1 1 0 011.228 0l8 6.222a1 1 0 01.386.79V20z" />
-        </svg>
-      ) : (
+      return (
         <svg
           width="24"
           height="24"
           viewBox="0 0 24 24"
-          fill="none"
+          fill={active ? 'currentColor' : 'none'}
           stroke="currentColor"
           strokeWidth={sw}
           strokeLinecap="round"
           strokeLinejoin="round"
           aria-hidden="true"
         >
-          <path d="M21 20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.49a1 1 0 01.386-.79l8-6.222a1 1 0 011.228 0l8 6.222a1 1 0 01.386.79V20z" />
+          {active ? (
+            <path d="M21 20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.49a1 1 0 01.386-.79l8-6.222a1 1 0 011.228 0l8 6.222a1 1 0 01.386.79V20z" />
+          ) : (
+            <>
+              <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+              <polyline points="9 22 9 12 15 12 15 22" />
+            </>
+          )}
         </svg>
       );
     case 'search':
@@ -71,16 +74,10 @@ function NavIcon({ type, active }: { type: NavItem['icon']; active: boolean }) {
           <line x1="5" y1="12" x2="19" y2="12" />
         </svg>
       );
-    case 'notifications':
+    case 'live':
       return active ? (
         <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-          <path d="M11.996 2c-4.062 0-7 2.692-7 6v3.089c0 1.036-.633 1.965-1.516 2.355C2.685 13.997 2 14.996 2 16.05v.698c0 .832.538 1.252 1.184 1.252h17.632c.646 0 1.184-.42 1.184-1.252v-.699c0-1.052-.685-2.052-1.48-2.506-.883-.39-1.516-1.319-1.516-2.355V8c0-3.308-2.938-6-7.004-6z" />
-          <path
-            d="M15 19a3 3 0 11-6 0"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-          />
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z" />
         </svg>
       ) : (
         <svg
@@ -94,29 +91,31 @@ function NavIcon({ type, active }: { type: NavItem['icon']; active: boolean }) {
           strokeLinejoin="round"
           aria-hidden="true"
         >
-          <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
-          <path d="M13.73 21a2 2 0 01-3.46 0" />
+          <circle cx="12" cy="12" r="10" />
+          <polygon points="10 8 16 12 10 16 10 8" fill={active ? 'currentColor' : 'none'} />
         </svg>
       );
     case 'profile':
-      return active ? (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-          <path d="M12 12c3.314 0 6-2.686 6-6s-2.686-6-6-6-6 2.686-6 6 2.686 6 6 6zm0 2c-4.418 0-8 2.686-8 6v2h16v-2c0-3.314-3.582-6-8-6z" />
-        </svg>
-      ) : (
+      return (
         <svg
           width="24"
           height="24"
           viewBox="0 0 24 24"
-          fill="none"
+          fill={active ? 'currentColor' : 'none'}
           stroke="currentColor"
           strokeWidth={sw}
           strokeLinecap="round"
           strokeLinejoin="round"
           aria-hidden="true"
         >
-          <circle cx="12" cy="8" r="4" />
-          <path d="M20 21a8 8 0 00-16 0" />
+          {active ? (
+            <path d="M12 12c3.314 0 6-2.686 6-6s-2.686-6-6-6-6 2.686-6 6 2.686 6 6 6zm0 2c-4.418 0-8 2.686-8 6v2h16v-2c0-3.314-3.582-6-8-6z" />
+          ) : (
+            <>
+              <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </>
+          )}
         </svg>
       );
   }
@@ -128,19 +127,24 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/feed', label: 'Feed', icon: 'feed' },
   { href: '/search', label: 'Search', icon: 'search' },
   { href: '/compose', label: 'Post', icon: 'compose', requiresAuth: true },
-  { href: '/notifications', label: 'Alerts', icon: 'notifications' },
+  { href: '/live', label: 'Live', icon: 'live' },
   { href: '/profile', label: 'Profile', icon: 'profile', requiresAuth: true },
 ];
 
 function isActiveMatch(pathname: string, item: NavItem): boolean {
   if (item.href === '/feed') {
-    return pathname === '/feed' || pathname === '/home' || pathname === '/home/all';
-  }
-  if (item.href === '/notifications') {
-    return pathname === '/notifications' || pathname.startsWith('/notifications/');
+    return (
+      pathname === '/feed' ||
+      pathname === '/home' ||
+      pathname === '/home/all' ||
+      pathname.startsWith('/feed/')
+    );
   }
   if (item.href === '/search') {
     return pathname === '/search';
+  }
+  if (item.href === '/live') {
+    return pathname === '/live' || pathname.startsWith('/live/') || pathname.startsWith('/spaces');
   }
   if (item.href === '/profile') {
     return pathname === '/profile' || pathname.startsWith('/profile/');
@@ -148,38 +152,66 @@ function isActiveMatch(pathname: string, item: NavItem): boolean {
   return pathname === item.href || pathname.startsWith(`${item.href}/`);
 }
 
+/**
+ * BottomNav — Fixed bottom navigation bar for mobile.
+ *
+ * Features:
+ * - 5 tabs: Feed, Search, Compose, Live, Profile
+ * - Active indicator with accent color and glow
+ * - Smooth slide-up entrance animation
+ * - Safe area insets for notched phones
+ * - All touch targets ≥ 44px
+ * - Blur backdrop
+ * - Keyboard accessible
+ */
 export function BottomNav() {
   const pathname = usePathname() ?? '/';
   const { ready, signedInProtocols, openCompose, openSignIn } = useAuth();
   const hasSignedIn = ready && Object.values(signedInProtocols).some(Boolean);
   const signedIn = ready && hasSignedIn;
-  const { unreadCount } = useNotifications(signedIn);
+  const [mounted, setMounted] = useState(false);
+  const prevActiveRef = useRef<string>('/feed');
+
+  // Mount animation: slide in from bottom after route mount
+  useEffect(() => {
+    const timer = requestAnimationFrame(() => setMounted(true));
+    return () => cancelAnimationFrame(timer);
+  }, []);
 
   // Hide bottom nav on landing page
   if (pathname === '/') return null;
 
-  const handleCompose = () => {
+  const handleCompose = useCallback(() => {
     if (signedIn) {
       openCompose();
     } else {
       openSignIn();
     }
-  };
+  }, [signedIn, openCompose, openSignIn]);
 
   return (
     <nav
       aria-label="Mobile navigation"
-      className="bottom-nav fixed inset-x-0 bottom-0 border-t backdrop-blur-xl lg:hidden"
+      className={`
+        fixed inset-x-0 bottom-0 z-[var(--z-bottom-nav,45)]
+        border-t backdrop-blur-2xl
+        transition-transform duration-300 ease-out
+        lg:hidden
+        ${mounted ? 'translate-y-0' : 'translate-y-full'}
+      `}
       style={{
         borderColor: 'var(--color-glass-border)',
         backgroundColor: 'var(--color-glass-bg)',
         paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-        zIndex: 'var(--z-bottom-nav, 45)',
+        WebkitBackdropFilter: 'blur(24px)',
+        backdropFilter: 'blur(24px)',
       }}
     >
-      <div className="mx-auto flex max-w-lg items-stretch justify-around">
+      <div className="mx-auto flex max-w-lg items-stretch justify-around px-1">
         {NAV_ITEMS.map((item) => {
           const active = isActiveMatch(pathname, item);
+          // Track for transition animations
+          if (active) prevActiveRef.current = item.href;
 
           // Compose is a special action button
           if (item.href === '/compose') {
@@ -188,11 +220,12 @@ export function BottomNav() {
                 key={item.href}
                 type="button"
                 onClick={handleCompose}
-                className="relative flex flex-col items-center justify-center gap-0.5 py-1 text-[10px] font-medium transition-colors h-full flex-1 max-w-[72px] focus-visible:outline-2 focus-visible:outline-degen-500 focus-visible:outline-offset-2 text-[var(--color-muted)] hover:text-[var(--color-fg)]"
+                className="relative flex flex-1 max-w-[72px] flex-col items-center justify-center gap-0.5 px-1 py-1.5 text-[10px] font-medium transition-colors duration-150 text-[var(--color-muted)] hover:text-[var(--color-fg)] active:scale-95"
+                style={{ minHeight: '44px', minWidth: '44px' }}
                 aria-label={signedIn ? 'Create new post' : 'Sign in to post'}
               >
                 <span
-                  className="relative flex items-center justify-center rounded-full bg-[var(--color-accent)] text-black shadow-lg transition-all hover:scale-105 active:scale-95"
+                  className="relative flex items-center justify-center rounded-full bg-[var(--color-accent)] text-black shadow-lg shadow-[var(--color-accent-glow-strong)] transition-all duration-200 hover:scale-105 active:scale-95"
                   style={{ minHeight: '44px', minWidth: '44px' }}
                 >
                   <NavIcon type="compose" active={false} />
@@ -206,44 +239,6 @@ export function BottomNav() {
           const href = needsAuth ? '#' : item.href;
           const label = needsAuth ? 'Sign in to access' : item.label;
 
-          const inner = (
-            <span
-              className={`relative flex h-10 w-10 items-center justify-center rounded-xl transition-all ${
-                active ? 'bg-degen-500/15 shadow-[0_0_12px_rgba(0,255,65,0.1)]' : ''
-              }`}
-              style={{ minHeight: '44px', minWidth: '44px' }}
-            >
-              {needsAuth ? (
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden="true"
-                >
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                  <path d="M7 11V7a5 5 0 0110 0v4" />
-                </svg>
-              ) : (
-                <NavIcon type={item.icon} active={active} />
-              )}
-
-              {/* Unread badge on notifications */}
-              {item.href === '/notifications' && unreadCount > 0 && (
-                <span
-                  className="absolute -right-0.5 -top-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-degen-500 px-1 text-[8px] font-bold text-black"
-                  style={{ lineHeight: 1 }}
-                >
-                  {unreadCount > 9 ? '9+' : unreadCount}
-                </span>
-              )}
-            </span>
-          );
-
           return (
             <Link
               key={item.href}
@@ -255,14 +250,45 @@ export function BottomNav() {
                   openSignIn();
                 }
               }}
-              className={`relative flex flex-col items-center justify-center gap-0.5 py-1 text-[10px] font-medium transition-colors h-full flex-1 max-w-[72px] focus-visible:outline-2 focus-visible:outline-degen-500 focus-visible:outline-offset-2 ${
-                active ? 'text-degen-400' : 'text-[var(--color-muted)] hover:text-[var(--color-fg)]'
-              }`}
+              className={`
+                relative flex flex-1 max-w-[72px] flex-col items-center justify-center gap-0.5 px-1 py-1.5
+                text-[10px] font-medium transition-all duration-150
+                focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-accent)]
+                active:scale-95
+                ${active ? 'text-[var(--color-accent)]' : 'text-[var(--color-muted)] hover:text-[var(--color-fg)]'}
+              `}
+              style={{ minHeight: '44px', minWidth: '44px' }}
               aria-current={active ? 'page' : undefined}
               title={label}
               aria-label={label}
             >
-              {inner}
+              <span
+                className={`
+                  relative flex h-10 w-10 items-center justify-center rounded-xl
+                  transition-all duration-200
+                  ${active ? 'bg-[var(--color-accent-soft)] shadow-[0_0_12px_var(--color-accent-glow)]' : ''}
+                `}
+                style={{ minHeight: '44px', minWidth: '44px' }}
+              >
+                {needsAuth ? (
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                    <path d="M7 11V7a5 5 0 0110 0v4" />
+                  </svg>
+                ) : (
+                  <NavIcon type={item.icon} active={active} />
+                )}
+              </span>
               <span className="leading-tight truncate max-w-[3rem] text-[9px]">{item.label}</span>
             </Link>
           );

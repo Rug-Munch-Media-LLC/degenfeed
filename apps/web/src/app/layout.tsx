@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Plus_Jakarta_Sans, Syne, JetBrains_Mono } from 'next/font/google';
+import { JetBrains_Mono, Plus_Jakarta_Sans, Syne } from 'next/font/google';
 import { cookies } from 'next/headers';
 import Script from 'next/script';
 import '../styles/design-tokens.css';
@@ -93,11 +93,15 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   themeColor: '#000000',
   colorScheme: 'dark',
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const cookieStore = await cookies();
-  const theme = cookieStore.get('df_theme')?.value || 'dark';
+  const _theme = cookieStore.get('df_theme')?.value || 'dark';
 
   return (
     <html
@@ -132,8 +136,15 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="application-name" content="DegenFeed" />
         <link rel="apple-touch-icon" href="/icon-192.png" />
+        <link
+          rel="apple-touch-startup-image"
+          href="/icon-512.png"
+          media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)"
+        />
+        <link rel="mask-icon" href="/icon.svg" color="#00ff41" />
         <meta name="msapplication-TileColor" content="#000000" />
         <meta name="msapplication-tap-highlight" content="no" />
+        <meta name="msapplication-TileImage" content="/icon-512.png" />
 
         {/* == LCP: Preconnect to critical origins == */}
         <link rel="preconnect" href="https://app.degenfeed.xyz" />

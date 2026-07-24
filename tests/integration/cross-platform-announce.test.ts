@@ -11,7 +11,7 @@
  * ═════════════════════════════════════════════════════════════════════════════
  */
 
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   BRIDGE_PATHS,
   CircuitBreaker,
@@ -131,24 +131,32 @@ describe('Circuit Breaker', () => {
     cb.configure('test-path', DEFAULT_CIRCUIT_CONFIG);
     const state = cb.getState('test-path');
     expect(state).toBeDefined();
-    expect(state!.state).toBe('closed');
+    expect(state?.state).toBe('closed');
   });
 
   it('should open after threshold failures', () => {
     const cb = new CircuitBreaker();
-    cb.configure('test-path', { failureThreshold: 3, resetTimeoutMs: 30000, halfOpenMaxRequests: 3 });
+    cb.configure('test-path', {
+      failureThreshold: 3,
+      resetTimeoutMs: 30000,
+      halfOpenMaxRequests: 3,
+    });
     expect(cb.isAllowed('test-path')).toBe(true);
     cb.recordFailure('test-path');
     cb.recordFailure('test-path');
     cb.recordFailure('test-path'); // 3rd failure
     expect(cb.isAllowed('test-path')).toBe(false);
-    expect(cb.getState('test-path')!.state).toBe('open');
+    expect(cb.getState('test-path')?.state).toBe('open');
   });
 
   it('should go half-open after reset timeout', () => {
     vi.useFakeTimers();
     const cb = new CircuitBreaker();
-    cb.configure('test-path', { failureThreshold: 2, resetTimeoutMs: 10000, halfOpenMaxRequests: 2 });
+    cb.configure('test-path', {
+      failureThreshold: 2,
+      resetTimeoutMs: 10000,
+      halfOpenMaxRequests: 2,
+    });
     cb.recordFailure('test-path');
     cb.recordFailure('test-path');
     expect(cb.isAllowed('test-path')).toBe(false);
@@ -160,11 +168,15 @@ describe('Circuit Breaker', () => {
 
   it('should reset on success', () => {
     const cb = new CircuitBreaker();
-    cb.configure('test-path', { failureThreshold: 3, resetTimeoutMs: 30000, halfOpenMaxRequests: 3 });
+    cb.configure('test-path', {
+      failureThreshold: 3,
+      resetTimeoutMs: 30000,
+      halfOpenMaxRequests: 3,
+    });
     cb.recordFailure('test-path');
     cb.recordFailure('test-path');
     cb.recordSuccess('test-path');
-    expect(cb.getState('test-path')!.state).toBe('closed');
-    expect(cb.getState('test-path')!.failureCount).toBe(0);
+    expect(cb.getState('test-path')?.state).toBe('closed');
+    expect(cb.getState('test-path')?.failureCount).toBe(0);
   });
 });

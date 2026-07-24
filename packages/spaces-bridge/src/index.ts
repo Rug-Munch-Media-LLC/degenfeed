@@ -42,7 +42,7 @@
  *   await announceSpace(space, ['farcaster', 'bluesky']);
  */
 
-import { announceSpace, getAnnounceBridge, getConfiguredAnnouncePlatforms } from './announce';
+import { announceSpace } from './announce';
 import { kickBridge } from './kick';
 import { livepeerBridge } from './livepeer';
 import { livePhotosBridge } from './livephotos';
@@ -56,7 +56,6 @@ import type {
   CreateSpaceOptions,
   CreateSpaceResult,
   PlatformBridge,
-  SpaceAnnouncement,
   SpaceContentType,
   SpaceItem,
   SpacePlatform,
@@ -375,7 +374,7 @@ export async function getSpaceById(id: string): Promise<SpaceItem | null> {
 
   // Fallback: search all bridges
   for (const [, bridge] of Object.entries(BRIDGES)) {
-    if (!bridge || !bridge.getLiveSpaces) continue;
+    if (!bridge?.getLiveSpaces) continue;
     try {
       const spaces = await bridge.getLiveSpaces();
       const found = spaces.find((s) => s.id === id);

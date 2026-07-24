@@ -11,7 +11,6 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { SubscriptionRecord } from '../../packages/storage/src/types';
 import {
   buildSubscriptionRecord,
   getTier,
@@ -19,6 +18,7 @@ import {
   isPremium,
   isSubscriptionActive,
 } from '../../packages/storage/src/subscription';
+import type { SubscriptionRecord } from '../../packages/storage/src/types';
 
 describe('Subscription Tier Management', () => {
   beforeEach(() => {

@@ -8,9 +8,9 @@
 import { GtSClient } from '@degenfeed/mastodon-sdk';
 import type { Env } from '../index';
 import { jsonResponse } from '../index';
-import { parseSessionCookie, requireSession, validateCsrfToken } from '../session';
 import type { MemberRole } from '../lib/feddy-store';
 import { getMemberRole } from '../lib/feddy-store';
+import { parseSessionCookie, requireSession, validateCsrfToken } from '../session';
 
 // ─── GoToSocial Client ─────────────────────────────────────────
 

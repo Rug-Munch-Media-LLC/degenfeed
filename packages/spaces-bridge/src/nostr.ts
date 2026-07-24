@@ -8,8 +8,8 @@
  * rather than importing from the worker (which creates a circular dep).
  */
 
+import type { UnsignedEvent } from '@degenfeed/nostr-sdk';
 import { getPublicKey, RelayPool, signEvent } from '@degenfeed/nostr-sdk';
-import type { UnsignedEvent, NostrEvent } from '@degenfeed/nostr-sdk';
 import type { CreateSpaceOptions, PlatformBridge, SpaceItem, SpacePlatformData } from './types';
 
 // ─── Constants ───────────────────────────────────────────────────────────
@@ -153,7 +153,10 @@ export const nostrBridge: PlatformBridge = {
       ['title', space.title],
       ['summary', space.description || space.title],
       ['streaming', `${APP_URL}/spaces/${space.id}`],
-      ['status', space.status === 'live' ? 'live' : space.status === 'scheduled' ? 'planned' : 'ended'],
+      [
+        'status',
+        space.status === 'live' ? 'live' : space.status === 'scheduled' ? 'planned' : 'ended',
+      ],
       ['current_participants', String(space.listeners || 0)],
       ['t', 'space'],
       ['t', 'audio'],

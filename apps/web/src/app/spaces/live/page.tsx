@@ -158,7 +158,7 @@ export default function LiveSpacesPage() {
     setActiveSpaceId(id);
   }, []);
 
-  const handleBroadcast = useCallback(async (text: string, protocols: string[]) => {
+  const _handleBroadcast = useCallback(async (text: string, protocols: string[]) => {
     const res = await fetch('/api/publish', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },

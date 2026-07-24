@@ -133,15 +133,17 @@ export function LikeButton({
         <span
           key={p.id}
           className="like-particle"
-          style={{
-            '--particle-end': `${Math.cos(p.angle) * p.distance}px ${Math.sin(p.angle) * p.distance}px`,
-            background: p.color,
-            width: p.size,
-            height: p.size,
-            left: p.x,
-            top: p.y,
-            animation: 'particle-burst 0.6s ease-out forwards',
-          } as React.CSSProperties}
+          style={
+            {
+              '--particle-end': `${Math.cos(p.angle) * p.distance}px ${Math.sin(p.angle) * p.distance}px`,
+              background: p.color,
+              width: p.size,
+              height: p.size,
+              left: p.x,
+              top: p.y,
+              animation: 'particle-burst 0.6s ease-out forwards',
+            } as React.CSSProperties
+          }
         />
       ))}
     </button>

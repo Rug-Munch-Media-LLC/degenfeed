@@ -22,9 +22,11 @@ function getTimeBasedGreeting(): { greeting: string; emoji: string } {
 }
 
 function getTimeBasedSubtitle(connectedCount: number, totalCount: number): string {
-  if (connectedCount === 0) return 'Your decentralized social home. Connect a protocol to get started.';
+  if (connectedCount === 0)
+    return 'Your decentralized social home. Connect a protocol to get started.';
   if (connectedCount === totalCount) return 'All protocols connected! Your unified feed is live.';
-  if (connectedCount > 2) return `You're connected to ${connectedCount} protocols. Your world is growing.`;
+  if (connectedCount > 2)
+    return `You're connected to ${connectedCount} protocols. Your world is growing.`;
   return `You're connected to ${connectedCount} protocol${connectedCount !== 1 ? 's' : ''}. Add more to see everything in one place.`;
 }
 

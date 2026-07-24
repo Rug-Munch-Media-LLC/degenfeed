@@ -6,8 +6,8 @@
 
 import { Hono } from 'hono';
 import type { Env } from '../index';
-import liveShortsRouter from './live-shorts-router';
 import liveShortsMeta from './live-shorts-meta';
+import liveShortsRouter from './live-shorts-router';
 
 const liveShorts = new Hono<{ Bindings: Env }>();
 liveShorts.route('/', liveShortsRouter);

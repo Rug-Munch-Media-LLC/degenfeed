@@ -5,7 +5,7 @@
  * j/k: navigate posts, l: like, r: reply, t: tip, n: new post, /: search.
  */
 
-import { useEffect, useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 
 export interface KeyboardShortcutHandlers {
   onNext?: () => void;

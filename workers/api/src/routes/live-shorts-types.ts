@@ -3,7 +3,6 @@
  */
 
 import type { AnnouncementResults } from '../lib/stream-announcer';
-import type { ProtocolId } from '../lib/live-shorts/live-strategy';
 
 export type Protocol =
   | 'activitypub'

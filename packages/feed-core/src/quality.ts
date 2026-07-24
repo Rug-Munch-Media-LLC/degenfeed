@@ -245,8 +245,8 @@ export function computeQualityScore(post: UnifiedPost, context: QualityContext):
   const punctPenalty = Math.min(excessivePunct * 0.05, 0.15);
 
   // Bonus for substantive text with diverse vocabulary
-  const words = text.split(/\s+/).filter(w => w.length > 0);
-  const uniqueWords = new Set(words.map(w => w.toLowerCase())).size;
+  const words = text.split(/\s+/).filter((w) => w.length > 0);
+  const uniqueWords = new Set(words.map((w) => w.toLowerCase())).size;
   const vocabDiversity = words.length > 10 ? uniqueWords / words.length : 0.5;
   const vocabBonus = vocabDiversity > 0.7 ? 0.1 : 0;
 
@@ -278,7 +278,8 @@ export function computeQualityScore(post: UnifiedPost, context: QualityContext):
   const mediaComponent = (media / 2) * 5;
 
   // New quality components
-  const bonusComponent = (vocabBonus + originalContent - clickbaitPenalty - punctPenalty - linkOnlyPenalty) * 100;
+  const bonusComponent =
+    (vocabBonus + originalContent - clickbaitPenalty - punctPenalty - linkOnlyPenalty) * 100;
 
   const score =
     spamComponent +

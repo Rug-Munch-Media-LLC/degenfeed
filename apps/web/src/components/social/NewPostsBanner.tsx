@@ -19,7 +19,9 @@ export function NewPostsBanner({ count, onClick }: NewPostsBannerProps) {
       aria-label={`Load ${count} new posts`}
     >
       <span className="notif-dot" />
-      <span>{count} new {count === 1 ? 'post' : 'posts'} — tap to load</span>
+      <span>
+        {count} new {count === 1 ? 'post' : 'posts'} — tap to load
+      </span>
       <svg
         width="14"
         height="14"

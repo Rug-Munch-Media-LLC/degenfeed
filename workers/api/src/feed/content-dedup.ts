@@ -19,9 +19,9 @@ import type { UnifiedPost } from '@degenfeed/types';
 // ─── Known aggregator domains ─────────────────────────────────────
 
 const AGGREGATOR_PATTERNS = [
-  /redlib\./i,        // Redlib (privacy Reddit frontend)
-  /lemmy\..*/i,        // Lemmy instances
-  /reddit\.com/i,      // Reddit native
+  /redlib\./i, // Redlib (privacy Reddit frontend)
+  /lemmy\..*/i, // Lemmy instances
+  /reddit\.com/i, // Reddit native
   /news\.google\.com/i,
   /medium\.com/i,
   /substack\.com/i,
@@ -126,9 +126,7 @@ function extractCanonicalUrl(text: string): string | null {
       if (skipDomains.some((d) => u.hostname.includes(d))) continue;
       // Normalize: strip trailing slash, remove tracking params
       return u.origin + u.pathname.replace(/\/$/, '');
-    } catch {
-      continue;
-    }
+    } catch {}
   }
   return null;
 }
@@ -170,7 +168,10 @@ export function deduplicateCrossProtocol(posts: UnifiedPost[]): DedupResult {
     { post: UnifiedPost; score: number; protocols: Set<string> }
   >();
   const urlToPost = new Map<string, { post: UnifiedPost; score: number; protocols: Set<string> }>();
-  const canonicalUrls = new Map<string, { post: UnifiedPost; score: number; protocols: Set<string> }>();
+  const canonicalUrls = new Map<
+    string,
+    { post: UnifiedPost; score: number; protocols: Set<string> }
+  >();
   const rssTitles = new Map<string, { post: UnifiedPost; score: number }>();
 
   let crossProtocol = 0;
@@ -197,7 +198,8 @@ export function deduplicateCrossProtocol(posts: UnifiedPost[]): DedupResult {
       // Pick the best source (higher quality rank wins, engagement breaks ties)
       const existingQuality = SOURCE_QUALITY_RANK[existing.post.protocol] ?? 50;
       const incomingQuality = SOURCE_QUALITY_RANK[post.protocol] ?? 50;
-      const incomingBetter = incomingQuality > existingQuality || 
+      const incomingBetter =
+        incomingQuality > existingQuality ||
         (incomingQuality === existingQuality && score > existing.score);
 
       if (incomingBetter) {
@@ -209,7 +211,8 @@ export function deduplicateCrossProtocol(posts: UnifiedPost[]): DedupResult {
         const existingEntry = keep.get(existing.post.id);
         if (existingEntry) {
           (existingEntry as unknown as Record<string, unknown>).crossProtocolSources = [
-            ...((existingEntry as unknown as Record<string, unknown>).crossProtocolSources as string[] ?? []),
+            ...(((existingEntry as unknown as Record<string, unknown>)
+              .crossProtocolSources as string[]) ?? []),
             post.protocol,
           ];
         }
@@ -225,7 +228,8 @@ export function deduplicateCrossProtocol(posts: UnifiedPost[]): DedupResult {
 
       const existingQuality = SOURCE_QUALITY_RANK[existing.post.protocol] ?? 50;
       const incomingQuality = SOURCE_QUALITY_RANK[post.protocol] ?? 50;
-      const incomingBetter = incomingQuality > existingQuality ||
+      const incomingBetter =
+        incomingQuality > existingQuality ||
         (incomingQuality === existingQuality && score > existing.score);
 
       if (incomingBetter) {
@@ -237,7 +241,8 @@ export function deduplicateCrossProtocol(posts: UnifiedPost[]): DedupResult {
         const existingEntry = keep.get(existing.post.id);
         if (existingEntry) {
           (existingEntry as unknown as Record<string, unknown>).crossProtocolSources = [
-            ...((existingEntry as unknown as Record<string, unknown>).crossProtocolSources as string[] ?? []),
+            ...(((existingEntry as unknown as Record<string, unknown>)
+              .crossProtocolSources as string[]) ?? []),
             post.protocol,
           ];
         }
@@ -254,7 +259,8 @@ export function deduplicateCrossProtocol(posts: UnifiedPost[]): DedupResult {
 
           const existingQuality = SOURCE_QUALITY_RANK[existing.post.protocol] ?? 50;
           const incomingQuality = SOURCE_QUALITY_RANK[post.protocol] ?? 50;
-          const incomingBetter = incomingQuality > existingQuality ||
+          const incomingBetter =
+            incomingQuality > existingQuality ||
             (incomingQuality === existingQuality && score > existing.score);
 
           if (incomingBetter) {
@@ -270,10 +276,13 @@ export function deduplicateCrossProtocol(posts: UnifiedPost[]): DedupResult {
             const existingEntry = keep.get(existing.post.id);
             if (existingEntry) {
               const sources = new Set([
-                ...((existingEntry as unknown as Record<string, unknown>).crossProtocolSources as string[] ?? []),
+                ...(((existingEntry as unknown as Record<string, unknown>)
+                  .crossProtocolSources as string[]) ?? []),
                 post.protocol,
               ]);
-              (existingEntry as unknown as Record<string, unknown>).crossProtocolSources = [...sources];
+              (existingEntry as unknown as Record<string, unknown>).crossProtocolSources = [
+                ...sources,
+              ];
             }
           }
           if (!shouldKeep) break;
@@ -312,7 +321,7 @@ export function deduplicateCrossProtocol(posts: UnifiedPost[]): DedupResult {
     // ── 5. Aggregator dedup ────────────────────────────────────
     if (shouldKeep && canonicalUrl && isAggregatorUrl(canonicalUrl)) {
       // Check if the original article is already kept via a non-aggregator source
-      for (const [keptId, keptPost] of keep) {
+      for (const [_keptId, keptPost] of keep) {
         const keptUrl = extractCanonicalUrl(keptPost.text);
         if (keptUrl && !isAggregatorUrl(keptUrl)) {
           // See if they share the same content hash
@@ -373,8 +382,11 @@ export function deduplicateCrossProtocol(posts: UnifiedPost[]): DedupResult {
     if (canonicalUrl && canonicalUrls.has(canonicalUrl)) {
       const entry = canonicalUrls.get(canonicalUrl)!;
       if (entry.protocols.size > 1) {
-        const existing = (post as unknown as Record<string, unknown>).crossProtocolSources as string[] ?? [];
-        const additional = [...entry.protocols].filter((p) => p !== post.protocol && !existing.includes(p));
+        const existing =
+          ((post as unknown as Record<string, unknown>).crossProtocolSources as string[]) ?? [];
+        const additional = [...entry.protocols].filter(
+          (p) => p !== post.protocol && !existing.includes(p),
+        );
         if (additional.length > 0) {
           return {
             ...post,

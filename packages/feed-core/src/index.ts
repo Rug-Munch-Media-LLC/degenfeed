@@ -639,7 +639,10 @@ function levenshteinDistance(a: string, b: string): number {
   const prev: number[] = new Array(bn + 1);
   const curr: number[] = new Array(bn + 1);
 
-  for (let j = 0; j <= bn; j++) { prev[j] = j; curr[j] = 0; }
+  for (let j = 0; j <= bn; j++) {
+    prev[j] = j;
+    curr[j] = 0;
+  }
 
   for (let i = 1; i <= an; i++) {
     curr[0] = i;
@@ -955,7 +958,8 @@ export function deduplicatePosts(posts: UnifiedPost[]): UnifiedPost[] {
     if (curl && seen.canonicalUrl.has(curl)) {
       const matched = out.find((o) => extractCanonicalUrl(o) === curl);
       if (matched) {
-        const cross = ((matched as unknown as Record<string, unknown>).crossPostedTo as string[]) ?? [];
+        const cross =
+          ((matched as unknown as Record<string, unknown>).crossPostedTo as string[]) ?? [];
         if (!cross.includes(p.protocol)) cross.push(p.protocol);
         (matched as unknown as Record<string, unknown>).crossPostedTo = cross;
       }
@@ -1011,7 +1015,8 @@ export function deduplicatePosts(posts: UnifiedPost[]): UnifiedPost[] {
             return `rss:${ed}:${et.toLowerCase().slice(0, 80)}` === rssKey;
           });
           if (existing) {
-            const cross = ((existing as unknown as Record<string, unknown>).crossPostedTo as string[]) ?? [];
+            const cross =
+              ((existing as unknown as Record<string, unknown>).crossPostedTo as string[]) ?? [];
             if (!cross.includes(p.protocol)) cross.push(p.protocol);
             (existing as unknown as Record<string, unknown>).crossPostedTo = cross;
             // Keep the version with more content (likely the original)
@@ -1036,7 +1041,8 @@ export function deduplicatePosts(posts: UnifiedPost[]): UnifiedPost[] {
           const existingUrl = extractCanonicalUrl(existing);
           if (existingUrl && normalizeUrlForDedup(existingUrl) === normalCurl) {
             matchedAggregator = true;
-            const cross = ((existing as unknown as Record<string, unknown>).crossPostedTo as string[]) ?? [];
+            const cross =
+              ((existing as unknown as Record<string, unknown>).crossPostedTo as string[]) ?? [];
             if (!cross.includes(p.protocol)) cross.push(p.protocol);
             (existing as unknown as Record<string, unknown>).crossPostedTo = cross;
             break;
@@ -1056,7 +1062,8 @@ export function deduplicatePosts(posts: UnifiedPost[]): UnifiedPost[] {
           const existing = out[cand.index];
           if (!existing) continue;
           matchedProtocol = existing.protocol;
-          const cross = ((existing as unknown as Record<string, unknown>).crossPostedTo as string[]) ?? [];
+          const cross =
+            ((existing as unknown as Record<string, unknown>).crossPostedTo as string[]) ?? [];
           if (!cross.includes(p.protocol)) cross.push(p.protocol);
           (existing as unknown as Record<string, unknown>).crossPostedTo = cross;
           break;
@@ -1080,7 +1087,8 @@ export function deduplicatePosts(posts: UnifiedPost[]): UnifiedPost[] {
             const existing = out[cand.index];
             if (!existing) continue;
             matchedProtocol = existing.protocol;
-            const cross = ((existing as unknown as Record<string, unknown>).crossPostedTo as string[]) ?? [];
+            const cross =
+              ((existing as unknown as Record<string, unknown>).crossPostedTo as string[]) ?? [];
             if (!cross.includes(p.protocol)) cross.push(p.protocol);
             (existing as unknown as Record<string, unknown>).crossPostedTo = cross;
             break;

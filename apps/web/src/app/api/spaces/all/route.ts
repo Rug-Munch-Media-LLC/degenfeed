@@ -1,4 +1,3 @@
-import type { SpaceContentType, SpacePlatform } from '@degenfeed/spaces-bridge';
 import { getContentType, getLiveSpaces } from '@degenfeed/spaces-bridge';
 import { NextResponse } from 'next/server';
 

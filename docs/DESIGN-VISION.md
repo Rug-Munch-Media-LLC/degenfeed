@@ -2,7 +2,7 @@
 
 ## Brand
 
-**DegenFeed** is the multi-protocol social aggregator — one window into Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, and RSS. Our brand is: **dark, technical, premium, open-source-first, privacy-respecting.**
+**DegenFeed** is the Web3 Social Universe — 25 protocols, one app, your data, never sold. Our brand is: **dark, technical, premium, open-source-first, privacy-respecting.**
 
 ### Visual Identity
 - **Primary color**: Degen Green `#22c55e` (degen-500) — electric, cyberpunk, crypto-native
@@ -111,8 +111,8 @@ Defined in `packages/ui/src/ProtocolBadge.tsx`:
 
 ### Copy Standards
 - App name: "DegenFeed" (capital D, capital F)
-- Tagline: "The open social graph"
-- Footer: "MIT Licensed. Open Source."
+- Tagline: "The Web3 Social Universe"
+- Footer: "Your data, never sold. Open Source."
 - Protocol names: Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, RSS
 - No emoji in UI without `aria-label`
 - All user-facing error messages are human-readable, not raw error codes

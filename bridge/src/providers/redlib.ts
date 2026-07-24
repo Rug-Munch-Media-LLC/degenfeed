@@ -267,7 +267,7 @@ async function fetchFromRedditOAuth(subreddit: string, limit: number): Promise<U
   try {
     const path = `/r/${encodeURIComponent(subreddit)}/hot.json?limit=${Math.min(limit, 25)}`;
     const res = await getRedditOAuth().apiFetch(path, { timeout: 8000 });
-    if (!res || !res.ok) {
+    if (!res?.ok) {
       if (res?.status === 429) {
         console.log(`[bridge] Reddit OAuth: rate limited on r/${subreddit}`);
       } else if (res?.status === 403) {

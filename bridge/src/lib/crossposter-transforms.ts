@@ -178,7 +178,7 @@ export const TRANSFORMS: Record<string, TransformFunction> = {
       firstLine.length > 0 ? firstLine.slice(0, 120) : `Post from ${post.author.displayName}`;
 
     const body = `${text}\n\n— *Originally posted on ${post.protocol} by ${post.author.displayName}*`;
-    const truncatedBody = body.length > 500000 ? body.slice(0, 499990) + '\n\n[truncated]' : body;
+    const truncatedBody = body.length > 500000 ? `${body.slice(0, 499990)}\n\n[truncated]` : body;
 
     return {
       success: true,

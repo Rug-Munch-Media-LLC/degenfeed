@@ -7,6 +7,8 @@
 
 import type { FeeStructure } from './types';
 import { DEFAULT_FEES } from './types';
+export type { FeeStructure };
+export { DEFAULT_FEES };
 
 /**
  * Calculate the fee split for a trade.

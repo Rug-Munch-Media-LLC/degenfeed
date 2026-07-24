@@ -1,6 +1,5 @@
 'use client';
 
-import { getProtocolColor, getProtocolIcon, getProtocolLabel } from '@degenfeed/ui';
 import { useCallback, useRef, useState } from 'react';
 
 // === Types ========================================================
@@ -44,7 +43,7 @@ export function SpaceShare({
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Merge platforms and protocols into a unique list
-  const allPlatforms = [...new Set([...platforms, ...protocols])];
+  const _allPlatforms = [...new Set([...platforms, ...protocols])];
 
   const spaceUrl =
     typeof window !== 'undefined' ? `${window.location.origin}/spaces/${spaceId}` : '';

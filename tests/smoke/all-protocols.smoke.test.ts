@@ -9,7 +9,7 @@
  * run fast and deterministically without requiring real protocol endpoints.
  * ═════════════════════════════════════════════════════════════════════════════
  */
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // ─── Mocks ──────────────────────────────────────────────────────────────────
 
@@ -52,20 +52,20 @@ function createMockAdapter(id: string, name: string, source: string, target: str
 
 const mockAdapters = {
   activitypubToAtproto: createMockAdapter(
-    'activitypub→atproto', 'ActivityPub → AT Protocol', 'mastodon', 'bluesky',
+    'activitypub→atproto',
+    'ActivityPub → AT Protocol',
+    'mastodon',
+    'bluesky',
   ),
   activitypubToNostr: createMockAdapter(
-    'activitypub→nostr', 'ActivityPub → Nostr', 'mastodon', 'nostr',
+    'activitypub→nostr',
+    'ActivityPub → Nostr',
+    'mastodon',
+    'nostr',
   ),
-  atprotoToNostr: createMockAdapter(
-    'atproto→nostr', 'AT Protocol → Nostr', 'bluesky', 'nostr',
-  ),
-  nostrToFarcaster: createMockAdapter(
-    'nostr→farcaster', 'Nostr → Farcaster', 'nostr', 'farcaster',
-  ),
-  rssToActivitypub: createMockAdapter(
-    'rss→activitypub', 'RSS → ActivityPub', 'rss', 'mastodon',
-  ),
+  atprotoToNostr: createMockAdapter('atproto→nostr', 'AT Protocol → Nostr', 'bluesky', 'nostr'),
+  nostrToFarcaster: createMockAdapter('nostr→farcaster', 'Nostr → Farcaster', 'nostr', 'farcaster'),
+  rssToActivitypub: createMockAdapter('rss→activitypub', 'RSS → ActivityPub', 'rss', 'mastodon'),
 };
 
 vi.mock('@degenfeed/cross-protocol-bridge/src/transforms/activitypub-to-atproto', () => ({
@@ -86,13 +86,19 @@ vi.mock('@degenfeed/cross-protocol-bridge/src/transforms/rss-to-activitypub', ()
 
 // ─── Factories ──────────────────────────────────────────────────────────────
 
-import type { Protocol, UnifiedPost, UnifiedIdentity } from '@degenfeed/types';
+import type { Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
 
 function createMockIdentity(overrides: Partial<UnifiedIdentity> = {}): UnifiedIdentity {
   return {
     id: overrides.id ?? 'test:user1',
     primary: overrides.primary ?? { protocol: 'nostr', id: 'npub1test' },
-    handles: overrides.handles ?? { nostr: 'testuser', farcaster: null, lens: null, bluesky: null, mastodon: null },
+    handles: overrides.handles ?? {
+      nostr: 'testuser',
+      farcaster: null,
+      lens: null,
+      bluesky: null,
+      mastodon: null,
+    },
     displayName: overrides.displayName ?? 'Test User',
     bio: overrides.bio ?? 'Test bio',
     avatarUrl: overrides.avatarUrl ?? '',
@@ -119,7 +125,9 @@ function createMockPost(
     createdAt: overrides.createdAt ?? Date.now(),
     metrics: overrides.metrics ?? { likes: 0, reposts: 0, replies: 0, quotes: 0 },
     engagement: overrides.engagement ?? {
-      viewerLiked: false, viewerReposted: false, viewerBookmarked: false,
+      viewerLiked: false,
+      viewerReposted: false,
+      viewerBookmarked: false,
       raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
     },
     niches: overrides.niches ?? ['crypto'],
@@ -210,7 +218,9 @@ describe('Protocol Health — Bridge Publishes Content Across Protocols', () => 
       payload: { text: 'Hello Farcaster!', embeds: [] },
     });
 
-    const result = await mockAdapters.nostrToFarcaster.transform({ text: 'Hello Farcaster!' } as any);
+    const result = await mockAdapters.nostrToFarcaster.transform({
+      text: 'Hello Farcaster!',
+    } as any);
     expect(result.success).toBe(true);
     if (result.success) {
       const publishResult = await mockAdapters.nostrToFarcaster.publish(result.payload);
@@ -227,7 +237,9 @@ describe('Protocol Health — Bridge Publishes Content Across Protocols', () => 
       payload: { text: 'Hello from Bluesky!', hashtags: ['atproto'] },
     });
 
-    const result = await mockAdapters.atprotoToNostr.transform({ text: 'Hello from Bluesky!' } as any);
+    const result = await mockAdapters.atprotoToNostr.transform({
+      text: 'Hello from Bluesky!',
+    } as any);
     expect(result.success).toBe(true);
     if (result.success) {
       const publishResult = await mockAdapters.atprotoToNostr.publish(result.payload);
@@ -257,7 +269,9 @@ describe('Protocol Health — Bridge Publishes Content Across Protocols', () => 
       payload: { text: 'Hello Bluesky!', hashtags: ['fediverse', 'bridged'] },
     });
 
-    const result = await mockAdapters.activitypubToAtproto.transform({ text: 'Hello Bluesky!' } as any);
+    const result = await mockAdapters.activitypubToAtproto.transform({
+      text: 'Hello Bluesky!',
+    } as any);
     expect(result.success).toBe(true);
     if (result.success) {
       const publishResult = await mockAdapters.activitypubToAtproto.publish(result.payload);
@@ -323,7 +337,9 @@ describe('Protocol Health — Error Handling and Timeouts', () => {
         ),
     );
 
-    const result = await mockAdapters.activitypubToAtproto.transform({ text: 'slow content' } as any);
+    const result = await mockAdapters.activitypubToAtproto.transform({
+      text: 'slow content',
+    } as any);
     expect(result.success).toBe(false);
     if (!result.success) {
       expect(result.error).toContain('timed out');
@@ -340,9 +356,9 @@ describe('Protocol Health — Error Handling and Timeouts', () => {
       new Error('connect ECONNREFUSED 127.0.0.1:443'),
     );
 
-    await expect(
-      mockAdapters.rssToActivitypub.publish({ text: 'test' }),
-    ).rejects.toThrow('ECONNREFUSED');
+    await expect(mockAdapters.rssToActivitypub.publish({ text: 'test' })).rejects.toThrow(
+      'ECONNREFUSED',
+    );
   });
 });
 
@@ -406,7 +422,9 @@ describe('Protocol Health — Cross-Protocol Post Visibility', () => {
       payload: { text: post.text, hashtags: [] },
     });
 
-    const transformResult = await mockAdapters.activitypubToNostr.transform({ text: post.text } as any);
+    const transformResult = await mockAdapters.activitypubToNostr.transform({
+      text: post.text,
+    } as any);
     expect(transformResult.success).toBe(true);
 
     if (transformResult.success) {
@@ -449,7 +467,9 @@ describe('Protocol Health — Cross-Protocol Post Visibility', () => {
       payload: { text: post.text, embeds: [] },
     });
 
-    const transformResult = await mockAdapters.nostrToFarcaster.transform({ text: post.text } as any);
+    const transformResult = await mockAdapters.nostrToFarcaster.transform({
+      text: post.text,
+    } as any);
     expect(transformResult.success).toBe(true);
 
     if (transformResult.success) {

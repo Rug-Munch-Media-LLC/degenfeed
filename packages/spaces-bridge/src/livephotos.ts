@@ -14,7 +14,7 @@ import type { CreateSpaceOptions, PlatformBridge, SpaceItem, SpacePlatformData }
 
 // ─── Shared: Upload image to Nostr ──────────────────────────────────────
 
-async function uploadToNostrBlob(imageUrl: string): Promise<string | null> {
+async function _uploadToNostrBlob(imageUrl: string): Promise<string | null> {
   // In production, upload to a nostr blob storage service
   // For now, return the original URL
   return imageUrl;
@@ -181,7 +181,7 @@ export const livePhotosBridge: PlatformBridge = {
           url: nostrResult.url,
           metadata: { imageUrl: options.photoUrls[0] },
         });
-      } catch (e2) {
+      } catch (_e2) {
         // Return a minimal fallback
         results.push({
           platform: 'nostr-pictures',
@@ -201,7 +201,7 @@ export const livePhotosBridge: PlatformBridge = {
     return [];
   },
 
-  async getSpace(nativeId: string): Promise<SpaceItem | null> {
+  async getSpace(_nativeId: string): Promise<SpaceItem | null> {
     // TODO: Query DB for stored live photo events
     return null;
   },

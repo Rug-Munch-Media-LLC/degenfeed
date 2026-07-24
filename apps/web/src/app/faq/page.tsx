@@ -5,17 +5,20 @@ import { FAQClient } from './faq-client';
 export const revalidate = 86400;
 
 export const metadata: Metadata = {
-  title: 'FAQ — Web3 Social Media Questions Answered | DegenFeed',
+  title: 'FAQ — DegenFeed Web3 Social Universe Questions Answered',
   description:
-    'Frequently asked questions about DegenFeed — the web3 social media platform. Learn about cross-protocol posting, crypto tipping, Nostr, Farcaster, Lens, Bluesky, communities, self-hosting, and more.',
+    'Everything you need to know about DegenFeed — the Web3 Social Universe. What makes it web3, how cross-posting works, creator coins, self-hosting, data ownership, and how to get started on 25+ decentralized social protocols.',
   keywords: [
     'web3 social media faq',
     'decentralized social network questions',
-    'crypto tipping how to',
-    'nostr vs farcaster',
+    'how does degenfeed work',
+    'what makes it web3',
+    'nostr vs farcaster vs bluesky',
     'what is web3 social',
     'cross protocol posting guide',
     'decentralized twitter alternative faq',
+    'creator coins explained',
+    'self host social media',
   ],
   alternates: { canonical: 'https://app.degenfeed.xyz/faq' },
   openGraph: {

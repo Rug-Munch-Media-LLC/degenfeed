@@ -9,6 +9,7 @@
  */
 
 import type { SchemaGuard, UnifiedPost } from '../server/types';
+
 const $fetch = globalThis.fetch;
 
 const PEERTUBE_BASE = 'http://127.0.0.1:9011';

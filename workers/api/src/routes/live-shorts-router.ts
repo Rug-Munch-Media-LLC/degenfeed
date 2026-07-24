@@ -8,7 +8,6 @@ import { Hono } from 'hono';
 import type { Env } from '../index';
 import { jsonResponse, noCacheJsonResponse } from '../index';
 import { requireSession } from '../session';
-import type { LiveShortRecord, Protocol } from './live-shorts-types';
 import {
   activeIndexKey,
   broadcastTipToStream,
@@ -18,13 +17,10 @@ import {
   getAggregatedViewerCount,
   handleLiveShortEnded,
   liveShortKey,
-  pastIndexKey,
   readStringArray,
-  scheduleAutoEnd,
   startLiveShort,
-  viewersKey,
-  writeStringArray,
 } from './live-shorts-engine';
+import type { LiveShortRecord, Protocol } from './live-shorts-types';
 
 const liveShorts = new Hono<{ Bindings: Env }>();
 // ═════════════════════════════════════════════════════════════════════════
@@ -462,6 +458,5 @@ liveShorts.post('/:id/recording', async (c) => {
     return jsonResponse({ error: `Failed to store recording: ${msg}` }, 500);
   }
 });
-
 
 export default liveShorts;

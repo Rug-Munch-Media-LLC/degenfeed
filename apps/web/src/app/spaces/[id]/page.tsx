@@ -1,7 +1,7 @@
 'use client';
 
 import { SpaceRoom } from '@degenfeed/ui';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ANIM_STYLES } from '../_animations';
 import type { SpaceItem } from '../_types';
 
@@ -52,7 +52,7 @@ export default function SpaceDetailPage({
             }
           }
         }
-      } catch (e) {
+      } catch (_e) {
         if (!cancelled) setError('Failed to load space');
       } finally {
         if (!cancelled) setLoading(false);

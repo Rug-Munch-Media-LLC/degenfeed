@@ -15,10 +15,7 @@ export function StreakFlame({ streak, size = 'md' }: StreakFlameProps) {
   const px = sizeMap[size];
 
   return (
-    <div
-      className="relative inline-flex items-center gap-1"
-      title={`${streak}-day streak! 🔥`}
-    >
+    <div className="relative inline-flex items-center gap-1" title={`${streak}-day streak! 🔥`}>
       <svg
         width={px}
         height={px}

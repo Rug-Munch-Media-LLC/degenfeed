@@ -14,7 +14,10 @@
     "./live-stream": "./src/live-stream.ts",
     "./bonding-curve": "./src/bonding-curve.ts",
     "./fees": "./src/fees.ts",
-    "./types": "./src/types.ts"
+    "./types": "./src/types.ts",
+    "./zora-free": "./src/zora-free.ts",
+    "./lens-free": "./src/lens-free.ts",
+    "./farcaster-free": "./src/farcaster-free.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
@@ -24,6 +27,8 @@
   },
   "dependencies": {
     "@coral-xyz/anchor": "^0.30.1",
+    "@degenfeed/farcaster-sdk": "workspace:*",
+    "@degenfeed/lens-sdk": "workspace:*",
     "@degenfeed/zora-sdk": "workspace:*",
     "@solana/spl-token": "^0.4.9",
     "@solana/web3.js": "^1.98.0",

@@ -33,7 +33,7 @@ async function lensGql(
     'User-Agent': 'DegenFeed-Bridge/0.1',
   };
   if (jwt) {
-    headers['Authorization'] = `Bearer ${jwt}`;
+    headers.Authorization = `Bearer ${jwt}`;
     headers['X-Access-Token'] = jwt;
   }
 
@@ -54,7 +54,7 @@ async function lensGql(
 
 // ─── Signing Helpers ───────────────────────────────────────────────────────
 
-async function deriveAddress(privateKey: string): Promise<string> {
+async function _deriveAddress(privateKey: string): Promise<string> {
   try {
     const ethers = await import('ethers');
     const wallet = new ethers.Wallet(privateKey);
@@ -96,9 +96,7 @@ async function signMessage(message: string, privateKey: string): Promise<string>
     // viem not available
   }
 
-  throw new Error(
-    'Cannot sign message: install ethers (pnpm add ethers) or viem (pnpm add viem)',
-  );
+  throw new Error('Cannot sign message: install ethers (pnpm add ethers) or viem (pnpm add viem)');
 }
 
 // ─── Public API ────────────────────────────────────────────────────────────
@@ -169,10 +167,7 @@ export async function authenticateLens(
       }
     `;
 
-    const verifyResponse = await lensGql(
-      mutation,
-      { request: { id: challengeId, signature } },
-    );
+    const verifyResponse = await lensGql(mutation, { request: { id: challengeId, signature } });
 
     const result = verifyResponse?.data?.verify as
       | { accessToken?: string; refreshToken?: string }
@@ -210,7 +205,7 @@ export async function publishToLens(
 ): Promise<{ ok: boolean; publicationId?: string; error?: string }> {
   try {
     // Truncate to Lens's maximum post length (5000 chars)
-    const content = text.length > 5000 ? text.slice(0, 4970) + '...' : text;
+    const content = text.length > 5000 ? `${text.slice(0, 4970)}...` : text;
 
     // Build Lens-compatible publication metadata (v2.0 format)
     const metadata = {
@@ -243,11 +238,7 @@ export async function publishToLens(
     // Use an inline data URI for the contentURI.
     const contentURI = `data:application/json,${encodeURIComponent(JSON.stringify(metadata))}`;
 
-    const response = await lensGql(
-      mutation,
-      { request: { profileId, contentURI } },
-      jwtToken,
-    );
+    const response = await lensGql(mutation, { request: { profileId, contentURI } }, jwtToken);
 
     const result = response?.data?.createMomokaPublication as
       | { id?: string; proof?: string; reason?: string }

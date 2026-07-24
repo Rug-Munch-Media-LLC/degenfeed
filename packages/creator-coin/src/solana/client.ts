@@ -91,7 +91,8 @@ export class CreatorCoinSolanaClient {
     const name = config.name.slice(0, 32);
     const symbol = config.symbol.slice(0, 10);
 
-    const sig = await this.program.methods
+    const methods = this.program.methods!;
+    const sig = await methods
       .createToken(
         new BN(tokenSeed.toString()),
         name,
@@ -140,7 +141,8 @@ export class CreatorCoinSolanaClient {
     const buyerTokenAccount = getAssociatedTokenAddressSync(mint, buyer);
     const [platformFeeVault] = derivePlatformFeeVault();
 
-    const sig = await this.program.methods
+    const methods = this.program.methods!;
+    const sig = await methods
       .buyTokens(new BN(opts.amountIn.toString()), new BN(opts.minTokensOut.toString()))
       .accounts({
         buyer,
@@ -177,7 +179,8 @@ export class CreatorCoinSolanaClient {
     const sellerTokenAccount = getAssociatedTokenAddressSync(mint, seller);
     const [platformFeeVault] = derivePlatformFeeVault();
 
-    const sig = await this.program.methods
+    const methods = this.program.methods!;
+    const sig = await methods
       .sellTokens(new BN(opts.amountIn.toString()))
       .accounts({
         seller,
@@ -204,7 +207,7 @@ export class CreatorCoinSolanaClient {
 
   async getTokenInfo(mint: string): Promise<TokenInfo> {
     const mintPubkey = new PublicKey(mint);
-    const accounts = await this.program.account.tokenState.all([
+    const accounts = await (this.program.account as any).tokenState.all([
       { memcmp: { offset: 32, bytes: mintPubkey.toBase58() } },
     ]);
 
@@ -230,7 +233,7 @@ export class CreatorCoinSolanaClient {
   private async resolveTokenState(
     mint: PublicKey,
   ): Promise<{ tokenState: PublicKey; creator: PublicKey; seed: bigint }> {
-    const accounts = await this.program.account.tokenState.all([
+    const accounts = await (this.program.account as any).tokenState.all([
       { memcmp: { offset: 32, bytes: mint.toBase58() } },
     ]);
     if (accounts.length === 0) throw new Error(`No token state for mint ${mint.toBase58()}`);

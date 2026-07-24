@@ -32,7 +32,7 @@ const farcasterBridge: AnnounceBridge = {
 
       const text =
         announcement.text.length > 280
-          ? announcement.text.slice(0, 277) + '...'
+          ? `${announcement.text.slice(0, 277)}...`
           : announcement.text;
 
       // Post cast with embedded link
@@ -214,7 +214,7 @@ const blueskyBridge: AnnounceBridge = {
 };
 
 async function fetchAndUploadBlueskyImage(
-  imageUrl: string,
+  _imageUrl: string,
   _accessJwt: string,
 ): Promise<{ data: { cid: string; mimeType: string } }> {
   // Simplified: return placeholder. In production, download and upload via blob endpoint
@@ -225,7 +225,7 @@ async function fetchAndUploadBlueskyImage(
 
 const mastodonBridge: AnnounceBridge = {
   platform: 'mastodon',
-  async announce(space: SpaceItem, announcement: SpaceAnnouncement) {
+  async announce(_space: SpaceItem, announcement: SpaceAnnouncement) {
     try {
       const token = process.env.MASTODON_ACCESS_TOKEN;
       if (!token) {
@@ -391,7 +391,7 @@ const telegramBridge: AnnounceBridge = {
 
 const twitterBridge: AnnounceBridge = {
   platform: 'twitter',
-  async announce(space: SpaceItem, announcement: SpaceAnnouncement) {
+  async announce(_space: SpaceItem, announcement: SpaceAnnouncement) {
     try {
       const apiKey = process.env.TWITTER_API_KEY;
       const apiSecret = process.env.TWITTER_API_SECRET;

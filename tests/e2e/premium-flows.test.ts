@@ -12,15 +12,15 @@
  * ═════════════════════════════════════════════════════════════════════════════
  */
 
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import type { TokenGate } from '../../packages/token-gate/src';
 import {
   CHAIN_LABELS,
-  TYPE_LABELS,
   checkTokenGate,
   checkTokenGateCached,
   formatGateDescription,
   resolveTokenGateSymbol,
+  TYPE_LABELS,
 } from '../../packages/token-gate/src';
 
 describe('Premium — Token Gate Types', () => {
@@ -42,7 +42,12 @@ describe('Premium — Token Gate Types', () => {
 
 describe('Premium — Gate Description Formatting', () => {
   it('should format ERC20 gate description with balance', () => {
-    const gate: TokenGate = { type: 'erc20', chain: 'ethereum', contractAddress: '0xabc', minBalance: 100 };
+    const gate: TokenGate = {
+      type: 'erc20',
+      chain: 'ethereum',
+      contractAddress: '0xabc',
+      minBalance: 100,
+    };
     const desc = formatGateDescription(gate, 'USDC');
     expect(desc).toContain('100');
     expect(desc).toContain('USDC');
@@ -57,14 +62,24 @@ describe('Premium — Gate Description Formatting', () => {
   });
 
   it('should format ERC721 gate description with tokenId', () => {
-    const gate: TokenGate = { type: 'erc721', chain: 'ethereum', contractAddress: '0xnft', tokenId: '42' };
+    const gate: TokenGate = {
+      type: 'erc721',
+      chain: 'ethereum',
+      contractAddress: '0xnft',
+      tokenId: '42',
+    };
     const desc = formatGateDescription(gate, 'RareNFT');
     expect(desc).toContain('#42');
     expect(desc).toContain('RareNFT');
   });
 
   it('should format ERC1155 gate description', () => {
-    const gate: TokenGate = { type: 'erc1155', chain: 'polygon', contractAddress: '0xmulti', tokenId: '7' };
+    const gate: TokenGate = {
+      type: 'erc1155',
+      chain: 'polygon',
+      contractAddress: '0xmulti',
+      tokenId: '7',
+    };
     const desc = formatGateDescription(gate, 'MultiToken');
     expect(desc).toContain('#7');
     expect(desc).toContain('MultiToken');
@@ -99,7 +114,11 @@ describe('Premium — Token Gate Verification', () => {
   });
 
   it('should return false for unsupported gate type', async () => {
-    const gate: TokenGate = { type: 'erc20' as never, chain: 'ethereum' as never, contractAddress: '0xabc' };
+    const gate: TokenGate = {
+      type: 'erc20' as never,
+      chain: 'ethereum' as never,
+      contractAddress: '0xabc',
+    };
     // Type is wrong but the function handles unknown types gracefully
     const result = await checkTokenGate(gate, '0xuser');
     expect(result).toBe(false);

@@ -11,9 +11,9 @@ import { jsonResponse, noCacheJsonResponse } from '../index';
 import type { Appeal, Report, ReportCategory } from '../lib/feddy-store';
 import {
   addFedBlocklistEntry,
-  addModLogEntry,
   createAppeal,
   createReport,
+  type FedBlocklistEntry,
   getAppeals,
   getCommunityByName,
   getFedBlocklist,
@@ -22,25 +22,15 @@ import {
   getModLog,
   getReports,
   isBanned,
+  type KeywordFilter,
+  REPORT_CATEGORIES,
   resolveAppeal,
   setKeywordFilters,
   setLinkBlocklist,
-  updateReportStatus,
   unbanMember,
-  type KeywordFilter,
-  type FedBlocklistEntry,
-  REPORT_CATEGORIES,
+  updateReportStatus,
 } from '../lib/feddy-store';
-import {
-  checkPremium,
-  csrfCheck,
-  requireModOrResponse,
-  requireOwnerOrResponse,
-  requireSession,
-  sanitizeHtml,
-  sanitizeString,
-  shortenWallet,
-} from './feddy-helpers';
+import { csrfCheck, requireModOrResponse, requireSession, sanitizeString } from './feddy-helpers';
 
 const feddy = new Hono<{ Bindings: Env }>();
 
@@ -409,6 +399,5 @@ feddy.get('/:name/fed-blocklist', async (c) => {
   const blocklist = await getFedBlocklist(c.env, community.id);
   return noCacheJsonResponse({ blocklist });
 });
-
 
 export default feddy;

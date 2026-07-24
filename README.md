@@ -1,4 +1,4 @@
-# DegenFeed — The Web3 Social Superapp
+# DegenFeed — The Web3 Social Universe
 
 [![CI](https://github.com/RugMunchMedia/degenfeed-web/actions/workflows/ci.yml/badge.svg)](https://github.com/RugMunchMedia/degenfeed-web/actions/workflows/ci.yml)
 [![Deploy](https://github.com/RugMunchMedia/degenfeed-web/actions/workflows/deploy.yml/badge.svg)](https://github.com/RugMunchMedia/degenfeed-web/actions/workflows/deploy.yml)
@@ -9,16 +9,17 @@
 [![Cloudflare](https://img.shields.io/badge/edge-Cloudflare-F38020?logo=cloudflare)](https://cloudflare.com)
 [![License](https://img.shields.io/badge/license-AGPL--3.0-blue)](LICENSE)
 
-**🌐 Live at [app.degenfeed.xyz](https://app.degenfeed.xyz)**  
+**🌐 Live at [app.degenfeed.xyz](https://app.degenfeed.xyz) — no account required to browse**  
 **📖 Docs: [docs.degenfeed.xyz](https://docs.degenfeed.xyz)**  
-**💬 Join the waitlist: [app.degenfeed.xyz/waitlist](https://app.degenfeed.xyz/waitlist)**  
-**🏠 Self-host: one-command deploy with Docker Compose**
+**🏠 Self-host: `docker compose up -d`**
+
+> *"DegenFeed exists to unify the fragmented decentralized social web. We don't own your content — we give you the tools to own it yourself."*
 
 ---
 
 ## What is DegenFeed?
 
-**DegenFeed** is the universal layer for decentralized social media. It aggregates content from **15+ protocols** into one unified feed, lets you **cross-post across all of them**, and gives you tools to earn — tips, creator coins, and subscriptions — without platform fees.
+**DegenFeed** is the Web3 Social Universe — an open-source, multi-protocol aggregator that unifies **25+ decentralized social protocols** into one app. Nostr, Farcaster, Lens, Bluesky, Mastodon, Reddit, RSS, YouTube, PeerTube, Telegram, Discord, and more — all in a single ranked feed. Cross-post to every protocol simultaneously. Launch your own creator coin on Base or Solana. Tip creators in ETH, SOL, USDC, or Lightning with zero platform fees. Livestream to 7 platforms at once.
 
 | You can | Without |
 |---------|---------|
@@ -110,7 +111,7 @@
 
 ---
 
-## Integrated Protocols (21+)
+## Integrated Protocols (25+)
 
 | Protocol | Feed | Post | Tip | Creator Coin | Livestream | Spaces |
 |----------|------|------|-----|-------------|------------|--------|
@@ -134,6 +135,10 @@
 | Webhooks | ✅ | ✅ | — | — | — | — |
 | Zora | — | — | ✅ | ✅ (Wrap) | — | — |
 | Solana | — | — | ✅ | ✅ (SPL) | — | — |
+| **Pixelfed** | ✅ | ✅ | — | — | — | — |
+| **Odysee / LBRY** | ✅ | — | — | — | — | — |
+| **Hacker News** | ✅ | — | — | — | — | — |
+| **Mirror.xyz** | ✅ | — | — | — | — | — |
 
 ---
 
@@ -286,6 +291,9 @@ DegenFeed is open source. You can inspect, fork, and self-host every line of cod
 | [docs/CREATOR_GUIDE.md](docs/CREATOR_GUIDE.md) | Creator monetization: coins, tips, livestreaming, and growth strategies |
 | [docs/DEVELOPER_GUIDE.md](docs/DEVELOPER_GUIDE.md) | How to add protocols, contribute features, and extend the platform |
 | [docs/INTEGRATIONS.md](docs/INTEGRATIONS.md) | Per-protocol integration details and API references |
+| [docs/BLOG.md](docs/BLOG.md) | Launch announcement — why we built it, technical deep dive, roadmap |
+| [docs/PRESS.md](docs/PRESS.md) | Press kit — logos, metrics, founder info, contact |
+| [docs/README.md](docs/README.md) | Full documentation index with links to every doc |
 | [DEPLOYMENT.md](DEPLOYMENT.md) | Cloudflare Pages + Workers deployment guide |
 | [PRODUCT.md](PRODUCT.md) | Product charter, mission, and goals |
 | [ROADMAP.md](ROADMAP.md) | Next 90 days of feature development |

@@ -9,6 +9,7 @@ import type { Env } from '../index';
 import { jsonResponse, noCacheJsonResponse } from '../index';
 import type { CommunityEvent, CommunityPoll } from '../lib/feddy-store';
 import {
+  addModLogEntry,
   createBadge,
   createEvent,
   createPoll,
@@ -17,29 +18,26 @@ import {
   getCommunityEvents,
   getCommunityPolls,
   getEventRSVPs,
+  getMemberRole,
   getPinnedPosts,
   getUpcomingEvents,
   getWikiPages,
+  isCommunityMember,
+  type MemberRole,
   pinPost,
   rsvpEvent,
   setMemberRole,
   setWikiPages,
   unpinPost,
   votePoll,
-  isCommunityMember,
-  getMemberRole,
-  type MemberRole,
-  addModLogEntry,
 } from '../lib/feddy-store';
 import {
-  checkPremium,
   csrfCheck,
   requireModOrResponse,
   requireOwnerOrResponse,
   requireSession,
   sanitizeHtml,
   sanitizeString,
-  shortenWallet,
 } from './feddy-helpers';
 
 const feddy = new Hono<{ Bindings: Env }>();
@@ -121,7 +119,6 @@ feddy.get('/:name/pinned', async (c) => {
   const posts = await getPinnedPosts(c.env, community.id);
   return noCacheJsonResponse({ posts });
 });
-
 
 // ─── Events ────────────────────────────────────────────────────────────
 

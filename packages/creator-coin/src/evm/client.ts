@@ -30,7 +30,7 @@ export class CreatorCoinEVMClient {
     this.publicClient = createPublicClient({
       chain: base,
       transport: http(opts.rpcUrl || 'https://mainnet.base.org'),
-    });
+    }) as ReturnType<typeof createPublicClient>;
 
     if (opts.privateKey) {
       const account = privateKeyToAccount(opts.privateKey as `0x${string}`);
@@ -247,14 +247,14 @@ const coinAbi = {
   },
   getPrice: {
     type: 'function' as const,
-    name: 'getCurrentPrice',
+    name: 'getPrice',
     inputs: [],
     outputs: [{ type: 'uint256' }],
     stateMutability: 'view' as const,
   },
   creator: {
     type: 'function' as const,
-    name: 'owner',
+    name: 'creator',
     inputs: [],
     outputs: [{ type: 'address' }],
     stateMutability: 'view' as const,

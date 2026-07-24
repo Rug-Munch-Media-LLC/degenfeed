@@ -64,7 +64,7 @@ export default defineConfig({
     },
 
     footer: {
-      message: 'Released under the MIT License.',
+      message: 'Released under the AGPL-3.0 License.',
       copyright: 'Copyright © 2026 Rug Munch Media LLC',
     },
 

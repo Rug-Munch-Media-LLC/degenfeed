@@ -1,0 +1,268 @@
+# DegenFeed Self-Hosted — Production Docker Compose
+# =======================================================
+# Deploy: docker compose -f docker-compose.prod.yml up -d
+# Logs:   docker compose -f docker-compose.prod.yml logs -f
+# Stop:   docker compose -f docker-compose.prod.yml down
+# Update: docker compose -f docker-compose.prod.yml pull && docker compose -f docker-compose.prod.yml up -d
+#
+# Prerequisites:
+#   - Docker Engine 24+ with Compose v2 plugin
+#   - Domain DNS A record pointing to this server
+#   - Ports 80/443 open
+#
+# Architecture:
+#   nginx (TLS termination + reverse proxy)
+#     ├── degenfeed:3000  (Next.js 16 app)
+#     ├── ghost:2368      (Blog — /articles/*)
+#     └── gotosocial:8080 (ActivityPub — /.well-known/*, /api/*, /auth/*)
+#
+# After starting:
+#   - DegenFeed UI:      https://${DOMAIN}/
+#   - Blog:              https://${DOMAIN}/articles
+#   - Blog Admin:        https://${DOMAIN}/articles/ghost
+#   - ActivityPub:       @${CREATOR_USERNAME}@${DOMAIN}
+#   - Creator Coin:      https://${DOMAIN}/coin
+#   - Live Streams:      https://${DOMAIN}/live
+
+# ── Shared Configuration ──────────────────────────────────────────────
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+x-deploy: &default-deploy
+  resources:
+    limits:
+      cpus: "1"
+      memory: 512M
+    reservations:
+      cpus: "0.25"
+      memory: 256M
+
+x-security: &default-security
+  cap_drop:
+    - ALL
+  security_opt:
+    - no-new-privileges:true
+  read_only: true
+  tmpfs:
+    - /tmp:size=100M
+
+services:
+  # ── Reverse Proxy (nginx) ───────────────────────────────────────────
+  # TLS termination via Let's Encrypt (Certbot) or Cloudflare.
+  # Routes traffic to internal services by path prefix.
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - DOMAIN=${DOMAIN:?DOMAIN is required}
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./data/nginx/ssl:/etc/nginx/ssl:ro
+      - ./data/nginx/logs:/var/log/nginx
+    logging: *default-logging
+    deploy:
+      <<: *default-deploy
+    depends_on:
+      degenfeed:
+        condition: service_started
+      ghost:
+        condition: service_started
+      gotosocial:
+        condition: service_started
+    networks:
+      - degenfeed
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:80/api/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+
+  # ── DegenFeed Web (Next.js 16) ──────────────────────────────────────
+  # The main application — profile, feed, creator coin, live streams.
+  # Built from the monorepo; ships as a standalone Next.js server.
+  degenfeed:
+    image: ghcr.io/rugmunchmedia/degenfeed-web:${IMAGE_TAG:-latest}
+    build:
+      context: ..
+      dockerfile: scripts/self-host/Dockerfile
+      args:
+        NEXT_PUBLIC_APP_URL: "https://${DOMAIN}"
+        NEXT_PUBLIC_API_BASE: "https://${DOMAIN}"
+        NEXT_PUBLIC_API_URL: "https://${DOMAIN}"
+    restart: unless-stopped
+    expose:
+      - "3000"
+    environment:
+      # ── Required ──
+      - DOMAIN=${DOMAIN}
+      - CREATOR_WALLET=${CREATOR_WALLET:?CREATOR_WALLET is required}
+      # ── Optional ──
+      - CREATOR_USERNAME=${CREATOR_USERNAME:-creator}
+      - CREATOR_COIN_ADDRESS=${CREATOR_COIN_ADDRESS:-}
+      - CREATOR_COIN_CHAIN=${CREATOR_COIN_CHAIN:-base}
+      # ── App ──
+      - NODE_ENV=production
+      - HOSTNAME=0.0.0.0
+      - PORT=3000
+      - NEXT_PUBLIC_APP_URL=https://${DOMAIN}
+      - NEXT_PUBLIC_API_BASE=https://${DOMAIN}
+      - NEXT_PUBLIC_API_URL=https://${DOMAIN}
+      - SELF_HOSTED=true
+      - DATA_DIR=/app/data
+      # ── Cross-protocol credentials ──
+      - NOSTR_PRIVATE_KEY=${NOSTR_PRIVATE_KEY:-}
+      - NEYNAR_API_KEY=${NEYNAR_API_KEY:-}
+      - BSKY_DID=${BSKY_DID:-}
+      - GTS_CLIENT_ID=${GTS_CLIENT_ID:-}
+      - GTS_CLIENT_SECRET=${GTS_CLIENT_SECRET:-}
+      - YOUTUBE_API_KEY=${YOUTUBE_API_KEY:-}
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN:-}
+      - TELEGRAM_BOT_NAME=${TELEGRAM_BOT_NAME:-}
+      - REDDIT_CLIENT_ID=${REDDIT_CLIENT_ID:-}
+      - REDDIT_CLIENT_SECRET=${REDDIT_CLIENT_SECRET:-}
+      # ── Creator coins / Web3 ──
+      - BASE_RPC_URL=${BASE_RPC_URL:-https://mainnet.base.org}
+      - SOLANA_RPC_URL=${SOLANA_RPC_URL:-https://api.mainnet-beta.solana.com}
+      - ZORA_WRAPPER_FACTORY=${ZORA_WRAPPER_FACTORY:-}
+      - PREMIUM_WALLET_KEY=${PREMIUM_WALLET_KEY:-}
+      - NEXT_PUBLIC_ADMIN_WALLETS=${ADMIN_WALLETS:-}
+      - NEXT_PUBLIC_VAPID_PUBLIC_KEY=${VAPID_PUBLIC_KEY:-}
+    volumes:
+      - ./data/degenfeed:/app/data
+      - ./articles:/app/articles:ro
+    logging: *default-logging
+    deploy:
+      <<: *default-deploy
+    networks:
+      - degenfeed
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+    depends_on:
+      redis:
+        condition: service_started
+    <<: *default-security
+
+  # ── Redis (Caching & Queues) ────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    expose:
+      - "6379"
+    volumes:
+      - ./data/redis:/data
+    logging: *default-logging
+    deploy:
+      <<: *default-deploy
+    networks:
+      - degenfeed
+    command: redis-server --appendonly yes --save 60 1 --loglevel warning
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+
+  # ── Ghost Blog (Long-form publishing) ──────────────────────────────
+  ghost:
+    image: ghost:5-alpine
+    restart: unless-stopped
+    expose:
+      - "2368"
+    environment:
+      - url=https://${DOMAIN}/articles
+      - database__client=sqlite3
+      - database__connection__filename=/var/lib/ghost/content/data/ghost.db
+      - mail__transport=Direct
+      - mail__from="${CREATOR_USERNAME:-Creator}" <noreply@${DOMAIN}>
+      - privacy__useRpcPing=false
+      - privacy__useUpdateCheck=false
+    volumes:
+      - ./data/ghost:/var/lib/ghost/content
+    logging: *default-logging
+    deploy:
+      <<: *default-deploy
+    networks:
+      - degenfeed
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:2368/ghost/api/admin/ping/"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 5
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+
+  # ── GoToSocial (ActivityPub / Fediverse) ──────────────────────────
+  gotosocial:
+    image: superseriousbusiness/gotosocial:latest
+    restart: unless-stopped
+    expose:
+      - "8080"
+    environment:
+      - GTS_HOST=${DOMAIN}
+      - GTS_ACCOUNT_DOMAIN=${DOMAIN}
+      - GTS_PORT=8080
+      - GTS_TRUSTED_PROXIES=nginx
+      - GTS_PROTOCOL=https
+      - GTS_LETS_ENCRYPT_ENABLED=false
+      - GTS_LANDING_PAGE_USER=${CREATOR_USERNAME:-creator}
+      - GTS_APPLICATION_NAME=DegenFeed (@${CREATOR_USERNAME:-creator}@${DOMAIN})
+      - GTS_STORAGE_BACKEND=local
+    volumes:
+      - ./data/gotosocial:/gotosocial/storage
+    logging: *default-logging
+    deploy:
+      <<: *default-deploy
+    networks:
+      - degenfeed
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:8080/api/v1/instance"]
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+
+  # ── Cloudflare Tunnel (Optional) ───────────────────────────────────
+  # Exposes services without opening ports 80/443.
+  # See: deploy/cloudflared-setup.sh for setup instructions.
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    profiles:
+      - tunnel
+    command: tunnel --no-autoupdate run
+    environment:
+      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN:-}
+    logging: *default-logging
+    deploy:
+      <<: *default-deploy
+    networks:
+      - degenfeed
+    depends_on:
+      - nginx
+
+networks:
+  degenfeed:
+    driver: bridge

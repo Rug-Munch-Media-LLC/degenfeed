@@ -5,15 +5,19 @@ import { useMemo, useState } from 'react';
 const faqs = [
   {
     q: 'What is DegenFeed?',
-    a: "DegenFeed is an open-source, multi-protocol social aggregator for web3. It pulls posts from Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, Reddit, and RSS into one unified, ranked timeline. No account needed to browse — just open the app and see what's trending across every decentralized social network at once. Connect a wallet to post, tip, and engage across protocols.",
+    a: "DegenFeed is the Web3 Social Universe — an open-source, multi-protocol aggregator that unifies 25+ decentralized social protocols into one app. Nostr, Farcaster, Lens, Bluesky, Mastodon, Reddit, RSS, YouTube, and more, all in a single ranked feed. No account needed to browse. Connect a wallet to post, tip, launch creator coins, and engage across every protocol at once. We don't own your content — we give you the tools to own it yourself.",
   },
   {
-    q: 'How is DegenFeed different from Twitter/X?',
-    a: 'DegenFeed is not a walled garden. It reads from 10 open protocols and lets you post to multiple networks simultaneously. There are no ads, no algorithm manipulation, no data selling, and no pay-to-play visibility. The ranking algorithm is transparent — every post shows its score breakdown. DegenFeed is open source (AGPL-3.0), self-hostable, and governed by the community.',
+    q: 'How is DegenFeed different from Twitter/X, Bluesky, and Mastodon?',
+    a: "Twitter/X is a walled garden — ads, algorithms you can't see, data sold to the highest bidder, and you can be deplatformed instantly. Bluesky is open protocol but single-client focused. Mastodon is federated but fragmented across instances. DegenFeed is none of these things. We aggregate all of them into one app while adding what none of them have: cross-protocol posting, creator coins, cross-chain tipping in ETH/SOL/USDC/Lightning, livestreaming to 7 protocols at once, transparent open-source ranking, and zero platform fees. Your identity lives on open protocols, not on DegenFeed. There is no lock-in, no data selling, no algorithm manipulation.",
   },
   {
     q: 'What protocols does DegenFeed support?',
     a: 'Nostr (kind 1 text notes, kind 7 reactions, NIP-05/07/46), Farcaster (casts, replies, reactions via Hub API), Lens (profiles, publications, mirrors via GraphQL v2), Bluesky (AT Protocol — posts, likes, reposts), Mastodon / ActivityPub (via GotoSocial instance + federated instances), Threads (read-only via HTML scraping), Reddit (RSS + JSON API), RSS / Atom (353+ sources including YouTube, PeerTube, Mirror.xyz, Substack, Medium, Hacker News), and Lemmy (federated communities via API v3).',
+  },
+  {
+    q: 'What makes DegenFeed web3?',
+    a: "DegenFeed is web3 at its core. Sign in with your crypto wallet (EVM or Solana) — no email, no password, no phone number. Your identity is your wallet address and your protocol handles. Creator coins are real ERC-20 and SPL tokens deployed on Base and Solana. Tipping happens on-chain — ETH, SOL, USDC, or Lightning — with zero platform fees. Livestreams can include live NFT minting. Communities support token gating and on-chain DAO governance. Your protocol credentials never leave your browser — posts are signed client-side. DegenFeed doesn't have a database of user content; your data lives on the protocols, secured by their respective cryptographic primitives.",
   },
   {
     q: 'How does cross-protocol posting work?',
@@ -102,6 +106,10 @@ const faqs = [
   {
     q: 'What chains and wallets are supported?',
     a: 'DegenFeed supports Ethereum (MetaMask, Rainbow, WalletConnect, Coinbase Wallet), Base (same EVM wallets), Optimism, Arbitrum, Solana (Phantom, Backpack, Solflare), and Lightning Network (via Nostr zaps). For creator coins, deployment is on Base (ERC-20) and Solana (SPL). Tipping works across all supported chains. Cross-chain bridging between EVM and Solana uses Wormhole.',
+  },
+  {
+    q: 'How do I get started?',
+    a: 'Open app.degenfeed.xyz and start browsing — no account required. To post, cross-post, tip, and engage, click "Sign In" and connect an EVM wallet (MetaMask, Rainbow, WalletConnect) or Solana wallet (Phantom, Backpack, Solflare). Once signed in, go to Settings → Connected Accounts to link your Nostr, Farcaster, Lens, Bluesky, or Mastodon handles. Then use the composer to write a post and select which protocols to publish to. Browse the Feed, Trending, and News tabs to discover content across all 25+ protocols. For full docs, visit docs.degenfeed.xyz.',
   },
 ];
 

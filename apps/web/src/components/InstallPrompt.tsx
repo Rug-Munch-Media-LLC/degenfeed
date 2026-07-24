@@ -9,6 +9,14 @@ declare global {
   }
 }
 
+/**
+ * InstallPrompt — "Add to Home Screen" PWA install prompt.
+ *
+ * Shows as a floating bottom sheet 30 seconds into browsing.
+ * Uses the native `beforeinstallprompt` event.
+ * Applies safe area inset and backdrop blur.
+ * All touch targets ≥ 44px.
+ */
 export function InstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showPrompt, setShowPrompt] = useState(false);
@@ -62,32 +70,60 @@ export function InstallPrompt() {
 
   return (
     <div
-      className="fixed bottom-20 left-1/2 z-50 w-full max-w-sm -translate-x-1/2 px-4 animate-slide-up"
+      className="fixed inset-x-4 bottom-[calc(env(safe-area-inset-bottom,0px)+5rem)] z-50 mx-auto max-w-sm animate-slide-up"
       role="dialog"
       aria-label="Install app"
     >
-      <div className="rounded-xl border bg-card p-4 shadow-2xl">
+      <div
+        className="rounded-xl border p-4 shadow-2xl backdrop-blur-2xl"
+        style={{
+          backgroundColor: 'var(--color-glass-bg-heavy)',
+          borderColor: 'var(--color-glass-border)',
+        }}
+      >
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-lg font-bold text-primary-foreground">
-            D
+          <div
+            className="flex h-11 w-11 items-center justify-center rounded-xl text-lg font-bold"
+            style={{
+              background: 'var(--color-accent-soft)',
+              color: 'var(--color-accent)',
+            }}
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M21 20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.49a1 1 0 01.386-.79l8-6.222a1 1 0 011.228 0l8 6.222a1 1 0 01.386.79V20z" />
+            </svg>
           </div>
-          <div className="flex-1">
-            <h3 className="text-sm font-semibold">Install DegenFeed</h3>
-            <p className="text-xs text-muted-foreground">Add to home screen for faster access</p>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold" style={{ color: 'var(--color-fg)' }}>
+              Install DegenFeed
+            </p>
+            <p className="text-xs" style={{ color: 'var(--color-muted)' }}>
+              Add to home screen for faster access
+            </p>
           </div>
         </div>
         <div className="mt-3 flex gap-2">
           <button
             type="button"
             onClick={handleInstall}
-            className="flex-1 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+            className="flex-1 rounded-lg px-4 py-2.5 text-sm font-semibold transition-all duration-200 hover:scale-[1.02] active:scale-95"
+            style={{
+              background: 'var(--color-accent)',
+              color: '#000',
+              minHeight: '44px',
+            }}
           >
             Install
           </button>
           <button
             type="button"
             onClick={() => setShowPrompt(false)}
-            className="rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted"
+            className="rounded-lg px-4 py-2.5 text-sm font-medium transition-colors"
+            style={{
+              color: 'var(--color-muted)',
+              background: 'var(--color-overlay)',
+              minHeight: '44px',
+            }}
           >
             Not now
           </button>
