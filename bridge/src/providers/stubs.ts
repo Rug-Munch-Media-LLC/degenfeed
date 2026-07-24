@@ -1,26 +1,14 @@
 /**
- * Stub providers for protocols without a running local service.
- * Returns empty results gracefully so the bridge doesn't error out.
+ * @deprecated All stub providers have been replaced with real implementations.
+ *
+ * Old stubs: fetchNostrPosts, fetchFarcasterPosts, fetchLensPosts, fetchPixelfedPosts
+ * New providers:
+ *   - ./nostr.ts   — connects to self-hosted relay + public relays via WebSocket
+ *   - ./farcaster.ts — uses Neynar API + public Farcaster hubs
+ *   - ./lens.ts    — uses Lens v2 GraphQL API
+ *   - ./pixelfed.ts — uses public Pixelfed instances via Mastodon-compatible API
+ *
+ * This file exists only to prevent import errors if something still references it.
+ * All imports in server.ts point to the individual provider files directly.
  */
-
-import type { UnifiedPost } from '../server';
-
-export async function fetchNostrPosts(_limit: number): Promise<UnifiedPost[]> {
-  // Nostr relay connector TBD — would connect to wss://relay.damus.io etc.
-  return [];
-}
-
-export async function fetchFarcasterPosts(_limit: number): Promise<UnifiedPost[]> {
-  // Farcaster hub connector TBD — would query nemes.farcaster.xyz:2283
-  return [];
-}
-
-export async function fetchLensPosts(_limit: number): Promise<UnifiedPost[]> {
-  // Lens API connector TBD — would query lens-api or direct polygon RPC
-  return [];
-}
-
-export async function fetchPixelfedPosts(_limit: number): Promise<UnifiedPost[]> {
-  // Pixelfed / ActivityPub connector TBD
-  return [];
-}
+export {};

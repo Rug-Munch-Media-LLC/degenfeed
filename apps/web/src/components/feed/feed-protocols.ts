@@ -130,6 +130,20 @@ export const PROTOCOLS: Record<string, ProtocolConfig> = {
       { label: 'photos shared', value: 'millions' },
     ],
   },
+  zora: {
+    id: 'zora',
+    label: 'Zora',
+    color: '#6b21a8',
+    icon: '🎨',
+    description: 'NFT minting protocol with creator coins',
+    endpoint: '/api/feed/zora',
+    route: '/feed/nfts',
+    postNoun: 'mint',
+    stats: [
+      { label: 'network', value: 'Zora/Base' },
+      { label: 'mints today', value: '10k+' },
+    ],
+  },
   rss: {
     id: 'rss',
     label: 'RSS/News',
@@ -172,6 +186,7 @@ export const SIDEBAR_ORDER = [
   'peertube',
   'lemmy',
   'pixelfed',
+  'zora',
   'rss',
   'reddit',
 ] as const;

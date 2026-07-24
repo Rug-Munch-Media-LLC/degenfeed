@@ -6,26 +6,31 @@
  *
  * Data sources (all REAL — no mock fallback):
  *   - Mastodon (GoToSocial + public instances, port 8082)
- *   - Redlib / Reddit (port 8281 + RSS fallback)
+ *   - Reddit (Redlib + JSON API + RSS fallback, port 8281)
  *   - RSS-Bridge + direct RSS feeds (port 8282)
  *   - Lemmy (port 8536 + external instances)
  *   - PeerTube (port 9011)
  *   - Bluesky / PDS (port 3012 + public API)
+ *   - Nostr (self-hosted relay :8085 + public relays)
+ *   - Farcaster (Neynar API + public hubs)
+ *   - Lens (Lens v2 GraphQL API)
+ *   - Pixelfed (self-hosted :8087 + public instances)
+ *   - Zora (NFT minting protocol via GraphQL API)
  */
 
 import http from 'node:http';
+import { startCrossPoster } from './crossposter';
 import { fetchBlueskyPosts } from './providers/bluesky';
+import { fetchFarcasterPosts } from './providers/farcaster';
 import { fetchMastodonPosts } from './providers/gotosocial';
 import { fetchLemmyPosts } from './providers/lemmy';
+import { fetchLensPosts } from './providers/lens';
+import { fetchNostrPosts } from './providers/nostr';
 import { fetchPeerTubePosts } from './providers/peertube';
+import { fetchPixelfedPosts } from './providers/pixelfed';
 import { fetchRedditPosts } from './providers/redlib';
 import { fetchRssBridgePosts } from './providers/rssbridge';
-import {
-  fetchFarcasterPosts,
-  fetchLensPosts,
-  fetchNostrPosts,
-  fetchPixelfedPosts,
-} from './providers/stubs';
+import { fetchZoraPosts } from './providers/zora';
 
 // ─── Constants ─────────────────────────────────────────────────────────
 
@@ -54,7 +59,14 @@ export interface UnifiedPost {
   html?: string;
   embeds: { kind: string; url: string; meta?: Record<string, unknown> }[];
   createdAt: number;
-  metrics: { likes: number; reposts: number; replies: number; quotes: number; views?: number };
+  metrics: {
+    likes: number;
+    reposts: number;
+    replies: number;
+    quotes: number;
+    views?: number;
+    zaps?: number;
+  };
   engagement: {
     viewerLiked: boolean;
     viewerReposted: boolean;
@@ -80,6 +92,7 @@ const PROVIDERS: Record<string, { name: string; fetch: ProviderFetcher }> = {
   farcaster: { name: 'Farcaster', fetch: fetchFarcasterPosts },
   lens: { name: 'Lens', fetch: fetchLensPosts },
   pixelfed: { name: 'Pixelfed', fetch: fetchPixelfedPosts },
+  zora: { name: 'Zora (NFT)', fetch: fetchZoraPosts },
 };
 
 // ─── Feed Builder ──────────────────────────────────────────────────────
@@ -95,7 +108,16 @@ async function buildFeed(
   // Determine which providers to call
   const activeProtocols = protocols.filter((p) => p in PROVIDERS);
   if (activeProtocols.length === 0) {
-    activeProtocols.push('mastodon', 'reddit', 'rss', 'lemmy', 'bluesky');
+    activeProtocols.push(
+      'mastodon',
+      'reddit',
+      'rss',
+      'lemmy',
+      'bluesky',
+      'nostr',
+      'farcaster',
+      'lens',
+    );
   }
 
   // Calculate per-provider limit (distribute, give some buffer)
@@ -136,7 +158,7 @@ async function buildFeed(
     console.log(`[bridge] ${protocol}: ${count} posts`);
   }
 
-  // If we got NO real data at all, return empty (no mock fallback)
+  // If we got NO real data at all, return empty
   if (allPosts.length === 0) {
     notices.push('All content sources returned no data. Check that backend services are running.');
     return {
@@ -200,7 +222,18 @@ const DEFAULT_PREFERENCES = {
   exploreRatio: 30,
   activePreset: null,
   feedMixConfig: {
-    sources: ['mastodon', 'reddit', 'rss', 'lemmy', 'peertube', 'bluesky'],
+    sources: [
+      'mastodon',
+      'reddit',
+      'rss',
+      'lemmy',
+      'peertube',
+      'bluesky',
+      'nostr',
+      'farcaster',
+      'lens',
+      'pixelfed',
+    ],
     contentTypes: { posts: 100, images: 40, videos: 20, links: 30, threads: 40 },
     recencyWeight: 1.0,
     engagementWeight: 1.0,
@@ -255,7 +288,7 @@ const server = http.createServer(async (req, res) => {
   try {
     // ── Health check ──────────────────────────────────────────
     if (path === '/api/health' || path === '/health' || path === '/api') {
-      return jsonOk(res, { status: 'ok', service: 'degenfeed-bridge', version: '0.2.0' });
+      return jsonOk(res, { status: 'ok', service: 'degenfeed-bridge', version: '0.3.0' });
     }
 
     // ── Feed endpoints ────────────────────────────────────────
@@ -267,7 +300,8 @@ const server = http.createServer(async (req, res) => {
     ) {
       const limit = Math.min(parseInt(searchParams.get('limit') || '50', 10), 200);
       const protocolsRaw =
-        searchParams.get('protocols') || 'mastodon,reddit,rss,lemmy,peertube,bluesky';
+        searchParams.get('protocols') ||
+        'mastodon,reddit,rss,lemmy,peertube,bluesky,nostr,farcaster,lens,pixelfed';
       const protocols = protocolsRaw
         .split(',')
         .map((p: string) => p.trim())
@@ -279,6 +313,19 @@ const server = http.createServer(async (req, res) => {
 
     // ── Feed health ───────────────────────────────────────────
     if (path === '/api/feed/health') {
+      const healthChecks = await Promise.all([
+        checkSourceHealth('http://127.0.0.1:8082/api/v1/instance'),
+        checkSourceHealth('http://127.0.0.1:8281/settings'),
+        checkSourceHealth('http://127.0.0.1:8282/'),
+        checkSourceHealth('http://127.0.0.1:8536/api/v3/post/list?sort=Hot&limit=1'),
+        checkSourceHealth('http://127.0.0.1:9011/api/v1/videos?count=1'),
+        checkSourceHealth('http://127.0.0.1:3012/xrpc/com.atproto.server.describeServer'),
+        checkSourceHealth('http://127.0.0.1:8085/'),
+        checkSourceHealth('http://127.0.0.1:8086/'),
+        checkSourceHealth('http://127.0.0.1:8087/api/v1/timelines/public'),
+        checkSourceHealth('https://api.zora.co/graphql'),
+      ]);
+
       const [
         mastodonHealthy,
         redditHealthy,
@@ -286,14 +333,11 @@ const server = http.createServer(async (req, res) => {
         lemmyHealthy,
         peertubeHealthy,
         blueskyHealthy,
-      ] = await Promise.all([
-        checkSourceHealth('http://127.0.0.1:8082/api/v1/instance'),
-        checkSourceHealth('http://127.0.0.1:8281/settings'),
-        checkSourceHealth('http://127.0.0.1:8282/'),
-        checkSourceHealth('http://127.0.0.1:8536/api/v3/post/list?sort=Hot&limit=1'),
-        checkSourceHealth('http://127.0.0.1:9011/api/v1/videos?count=1'),
-        checkSourceHealth('http://127.0.0.1:3012/xrpc/com.atproto.server.describeServer'),
-      ]);
+        nostrHealthy,
+        writefreelyHealthy,
+        pixelfedHealthy,
+        zoraHealthy,
+      ] = healthChecks;
 
       const allHealthy =
         mastodonHealthy ||
@@ -301,7 +345,10 @@ const server = http.createServer(async (req, res) => {
         rssHealthy ||
         lemmyHealthy ||
         peertubeHealthy ||
-        blueskyHealthy;
+        blueskyHealthy ||
+        nostrHealthy ||
+        pixelfedHealthy ||
+        zoraHealthy;
 
       return jsonOk(res, {
         status: allHealthy ? 'ok' : 'degraded',
@@ -312,18 +359,22 @@ const server = http.createServer(async (req, res) => {
           lemmy: { healthy: lemmyHealthy, label: 'Lemmy' },
           peertube: { healthy: peertubeHealthy, label: 'PeerTube' },
           bluesky: { healthy: blueskyHealthy, label: 'Bluesky PDS' },
-          nostr: { healthy: false, label: 'Nostr (relay connector TBD)' },
-          farcaster: { healthy: false, label: 'Farcaster (hub connector TBD)' },
-          lens: { healthy: false, label: 'Lens (API connector TBD)' },
-          pixelfed: { healthy: false, label: 'Pixelfed (connector TBD)' },
+          nostr: { healthy: nostrHealthy, label: 'Nostr Relay' },
+          writefreely: { healthy: writefreelyHealthy, label: 'WriteFreely' },
+          farcaster: { healthy: false, label: 'Farcaster (external API)' },
+          lens: { healthy: false, label: 'Lens (GraphQL API)' },
+          pixelfed: { healthy: pixelfedHealthy, label: 'Pixelfed' },
+          zora: { healthy: zoraHealthy, label: 'Zora (NFT Protocol)' },
         },
       });
     }
 
-    // ── Trending (dynamic from feed data) ─────────────────────
+    // ── Trending ─────────────────────────────────────
     if (path === '/api/feed/trending' || path === '/api/trending/sidebar') {
-      // Try to derive trending topics from actual feed data
-      const { posts } = await buildFeed(['mastodon', 'reddit', 'rss'], 50);
+      const { posts } = await buildFeed(
+        ['mastodon', 'reddit', 'rss', 'nostr', 'farcaster', 'lens'],
+        50,
+      );
       const nicheCounts = new Map<string, number>();
       for (const p of posts) {
         for (const n of p.niches) {
@@ -340,7 +391,6 @@ const server = http.createServer(async (req, res) => {
           score: count * 500,
         }));
 
-      // Fallback topics if feed is empty
       if (topics.length === 0) {
         return jsonOk(res, {
           topics: [
@@ -361,7 +411,7 @@ const server = http.createServer(async (req, res) => {
       return jsonOk(res, { topics });
     }
 
-    // ── Feed news (real RSS, no mock) ─────────────────────────
+    // ── Feed news (real RSS) ─────────────────────────
     if (path === '/api/feed/news') {
       const rssPosts = await fetchRssBridgePosts(10);
       return jsonOk(res, {
@@ -371,53 +421,28 @@ const server = http.createServer(async (req, res) => {
     }
 
     // ── Per-protocol feed endpoints ───────────────────────────
-    if (path === '/api/feed/mastodon') {
+    if (path.startsWith('/api/feed/')) {
+      const proto = path.replace('/api/feed/', '');
       const limit = Math.min(parseInt(searchParams.get('limit') || '25', 10), 200);
-      const { posts, meta } = await buildFeed(['mastodon'], limit);
-      return jsonOk(res, { data: posts, meta });
-    }
-    if (path === '/api/feed/lemmy') {
-      const limit = Math.min(parseInt(searchParams.get('limit') || '25', 10), 200);
-      const { posts, meta } = await buildFeed(['lemmy'], limit);
-      return jsonOk(res, { data: posts, meta });
-    }
-    if (path === '/api/feed/peertube') {
-      const limit = Math.min(parseInt(searchParams.get('limit') || '25', 10), 200);
-      const { posts, meta } = await buildFeed(['peertube'], limit);
-      return jsonOk(res, { data: posts, meta });
-    }
-    if (path === '/api/feed/bluesky') {
-      const limit = Math.min(parseInt(searchParams.get('limit') || '25', 10), 200);
-      const { posts, meta } = await buildFeed(['bluesky'], limit);
-      return jsonOk(res, { data: posts, meta });
-    }
-    if (path === '/api/feed/nostr') {
-      const limit = Math.min(parseInt(searchParams.get('limit') || '25', 10), 200);
-      const { posts, meta } = await buildFeed(['nostr'], limit);
-      return jsonOk(res, { data: posts, meta });
-    }
-    if (path === '/api/feed/farcaster') {
-      const limit = Math.min(parseInt(searchParams.get('limit') || '25', 10), 200);
-      const { posts, meta } = await buildFeed(['farcaster'], limit);
-      return jsonOk(res, { data: posts, meta });
-    }
-    if (path === '/api/feed/lens') {
-      const limit = Math.min(parseInt(searchParams.get('limit') || '25', 10), 200);
-      const { posts, meta } = await buildFeed(['lens'], limit);
-      return jsonOk(res, { data: posts, meta });
-    }
-    if (path === '/api/feed/pixelfed') {
-      const limit = Math.min(parseInt(searchParams.get('limit') || '25', 10), 200);
-      const { posts, meta } = await buildFeed(['pixelfed'], limit);
-      return jsonOk(res, { data: posts, meta });
-    }
-    if (path === '/api/feed/reddit') {
-      const limit = Math.min(parseInt(searchParams.get('limit') || '25', 10), 200);
-      const { posts, meta } = await buildFeed(['reddit'], limit);
-      return jsonOk(res, { data: posts, meta });
+      const allowedProtocols = [
+        'mastodon',
+        'lemmy',
+        'peertube',
+        'bluesky',
+        'nostr',
+        'farcaster',
+        'lens',
+        'pixelfed',
+        'reddit',
+        'rss',
+      ];
+      if (allowedProtocols.includes(proto)) {
+        const { posts, meta } = await buildFeed([proto], limit);
+        return jsonOk(res, { data: posts, meta });
+      }
     }
 
-    // ── Feed stats ──────────────────────────────────────────────
+    // ── Feed stats ────────────────────────────────────────────
     if (path === '/api/feed/stats') {
       const protocolKeys = Object.keys(PROVIDERS);
       const results = await Promise.allSettled(
@@ -443,7 +468,7 @@ const server = http.createServer(async (req, res) => {
       return jsonOk(res, { totalPosts, sources, fetchedAt: Date.now() });
     }
 
-    // ── Preferences ─────────────────────────────────────────────
+    // ── Preferences ───────────────────────────────────────────
     if (path === '/api/preferences' || path === '/v1/preferences') {
       if (req.method === 'POST') {
         return jsonOk(res, { ok: true });
@@ -451,17 +476,17 @@ const server = http.createServer(async (req, res) => {
       return jsonOk(res, DEFAULT_PREFERENCES);
     }
 
-    // ── Bookmark endpoints ─────────────────────────────────────
+    // ── Bookmark endpoints ───────────────────────────────────
     if (path.startsWith('/api/bookmarks') || path.startsWith('/v1/bookmarks')) {
       return jsonOk(res, { data: [], meta: { total: 0 } });
     }
 
-    // ── Community endpoints ────────────────────────────────────
+    // ── Community endpoints ──────────────────────────────────
     if (path.startsWith('/api/communities')) {
       return jsonOk(res, { data: [] });
     }
 
-    // ── Search (backed by Meilisearch) ────────────────────────
+    // ── Search (backed by Meilisearch) ──────────────────────
     if (path.startsWith('/api/search') || path.startsWith('/v1/search')) {
       const q = searchParams.get('q') || '';
       const index = searchParams.get('index') || 'posts';
@@ -501,13 +526,7 @@ const server = http.createServer(async (req, res) => {
         const totalHits = meiliData.estimatedTotalHits ?? meiliData.total ?? 0;
         return jsonOk(res, {
           data: meiliData.hits,
-          meta: {
-            total: totalHits,
-            page,
-            limit,
-            index: safeIndex,
-            q,
-          },
+          meta: { total: totalHits, page, limit, index: safeIndex, q },
         });
       } catch (err) {
         console.warn('[bridge] Meilisearch search error:', err);
@@ -515,27 +534,29 @@ const server = http.createServer(async (req, res) => {
       }
     }
 
-    // ── Leaderboard ────────────────────────────────────────────
-    if (path.startsWith('/api/leaderboard') || path.startsWith('/v1/leaderboard')) {
-      return jsonOk(res, { data: [], meta: { total: 0 } });
+    // ── Other endpoints ─────────────────────────────────
+    const OTHER_ENDPOINTS = [
+      '/api/leaderboard',
+      '/v1/leaderboard',
+      '/api/moderation',
+      '/v1/moderation',
+      '/api/notifications',
+      '/v1/notifications',
+      '/api/identity',
+      '/v1/identity',
+    ];
+    for (const ep of OTHER_ENDPOINTS) {
+      if (path.startsWith(ep)) {
+        const data = ep.includes('auth')
+          ? { authenticated: false, user: null }
+          : ep.includes('publish')
+            ? { ok: true, id: `post:${Date.now()}` }
+            : { data: [], meta: { total: 0 } };
+        return jsonOk(res, data);
+      }
     }
 
-    // ── Moderation ─────────────────────────────────────────────
-    if (path.startsWith('/api/moderation') || path.startsWith('/v1/moderation')) {
-      return jsonOk(res, { ok: true });
-    }
-
-    // ── Notifications ──────────────────────────────────────────
-    if (path.startsWith('/api/notifications') || path.startsWith('/v1/notifications')) {
-      return jsonOk(res, { data: [], meta: { total: 0 } });
-    }
-
-    // ── Identity ───────────────────────────────────────────────
-    if (path.startsWith('/api/identity') || path.startsWith('/v1/identity')) {
-      return jsonOk(res, { data: null });
-    }
-
-    // ── Auth endpoints (return success for all GET checks) ────
+    // ── Auth endpoints ─────────────────────────────────
     if (path.startsWith('/api/auth') || path.startsWith('/v1/auth')) {
       if (req.method === 'GET') {
         return jsonOk(res, { authenticated: false, user: null });
@@ -543,12 +564,12 @@ const server = http.createServer(async (req, res) => {
       return jsonOk(res, { ok: true });
     }
 
-    // ── Publish ────────────────────────────────────────────────
+    // ── Publish ────────────────────────────────────────
     if (path.startsWith('/api/publish')) {
       return jsonOk(res, { ok: true, id: `post:${Date.now()}` });
     }
 
-    // ─── Catch-all ────────────────────────────────────────────
+    // ─── Catch-all ────────────────────────────────────
     return jsonOk(res, { status: 'ok', path, service: 'degenfeed-bridge' });
   } catch (err) {
     console.error('[bridge] Error:', err);
@@ -563,9 +584,11 @@ function jsonOk(res: http.ServerResponse, data: unknown) {
 }
 
 server.listen(PORT, '127.0.0.1', () => {
-  console.log(`[bridge] DegenFeed Bridge v0.2.0 running on http://127.0.0.1:${PORT}`);
+  console.log(`[bridge] DegenFeed Bridge v0.3.0 running on http://127.0.0.1:${PORT}`);
   console.log(
-    `[bridge] Data sources: Mastodon/GTS, Reddit/Redlib, RSS-Bridge, Lemmy, PeerTube, Bluesky/PDS`,
+    `[bridge] Data sources: Mastodon/GTS, Reddit/Redlib, RSS-Bridge, Lemmy, PeerTube, Bluesky/PDS, Nostr, Farcaster, Lens, Pixelfed`,
   );
-  console.log(`[bridge] Mock data has been removed — all sources return live data`);
+  console.log(`[bridge] All 10 protocol providers active — no stubs`);
+  // Start cross-poster (GTS → Nostr relay)
+  startCrossPoster(120000);
 });
