@@ -11,6 +11,8 @@
  *   - GoToSocial (ActivityPub) → Nostr Relay (WebSocket)
  *   - GoToSocial → Bluesky (AT Protocol via PDS)
  *   - GoToSocial → PeerTube (video announcements)
+ *   - GoToSocial → Farcaster (Neynar API)
+ *   - GoToSocial → Lens (Lens API)
  *   - Lemmy → Nostr (announce hot posts)
  *
  * The cross-poster polls source protocols and publishes formatted
@@ -21,7 +23,7 @@ import type { UnifiedPost } from './server';
 
 // ─── Types ──────────────────────────────────────────────────────────────
 
-export type ProtocolName = 'mastodon' | 'nostr' | 'bluesky' | 'peertube' | 'lemmy' | 'farcaster';
+export type ProtocolName = 'mastodon' | 'nostr' | 'bluesky' | 'peertube' | 'lemmy' | 'farcaster' | 'lens';
 
 export interface CrossPairConfig {
   /** Unique pair ID */
@@ -352,6 +354,21 @@ const TRANSFORMS: Record<string, TransformFunction> = {
   },
 
   /**
+   * Transform for Lens: create Lens publication
+   */
+  lens: (post: UnifiedPost): TransformResult => {
+    const text =
+      post.text.length > 5000
+        ? `${post.text.slice(0, 4980)}...\n\n[Cross-posted from ${post.protocol}]`
+        : `${post.text}\n\n[Cross-posted from ${post.protocol}]`;
+
+    return {
+      success: true,
+      payload: { text, embeds: post.embeds.map((e) => ({ url: e.url })) },
+    };
+  },
+
+  /**
    * Transform for Mastodon: create status
    */
   mastodon: (post: UnifiedPost): TransformResult => {
@@ -462,14 +479,101 @@ async function publishToPeerTube(payload: unknown): Promise<boolean> {
 }
 
 async function publishToFarcaster(_payload: unknown): Promise<boolean> {
-  const _hubUrl = process.env.FARCASTER_HUB_URL || 'https://hub.farcaster.standardcrypto.vc:2281';
-  const payload = _payload as { text: string; embeds: Array<{ url: string }> };
-  if (!process.env.FARCASTER_SIGNER_KEY) return false;
+  const apiKey = process.env.NEYNAR_API_KEY;
+  const signerUuid = process.env.FARCASTER_SIGNER_UUID;
+  const payload = _payload as { text: string; embeds?: Array<{ url: string }> };
 
-  // In production, this would create a signed message using the signer key
-  // and submit to the Hub. For now, just log.
-  console.log(`[crossposter] Would cast to Farcaster: "${payload.text.slice(0, 50)}..."`);
-  return true;
+  if (!apiKey || !signerUuid) {
+    console.log('[crossposter] Farcaster: missing NEYNAR_API_KEY or FARCASTER_SIGNER_UUID');
+    return false;
+  }
+
+  // Farcaster has a 320 character limit per cast
+  const truncatedText =
+    payload.text.length > 320
+      ? `${payload.text.slice(0, 317)}...`
+      : payload.text;
+
+  try {
+    const res = await fetch('https://api.neynar.com/v2/farcaster/cast', {
+      method: 'POST',
+      headers: {
+        'api_key': apiKey,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        signer_uuid: signerUuid,
+        text: truncatedText,
+        embeds: payload.embeds || [],
+      }),
+    });
+
+    if (res.ok) {
+      const data = (await res.json()) as { cast?: { hash?: string } };
+      console.log(`[crossposter] ✓ Farcaster cast: ${data.cast?.hash || 'ok'}`);
+      return true;
+    }
+
+    const errBody = await res.text().catch(() => '');
+    console.log(`[crossposter] ✗ Farcaster: HTTP ${res.status} ${errBody.slice(0, 200)}`);
+    return false;
+  } catch (err) {
+    console.log(`[crossposter] ✗ Farcaster error: ${(err as Error).message}`);
+    return false;
+  }
+}
+
+async function publishToLens(_payload: unknown): Promise<boolean> {
+  const lensApiUrl = process.env.LENS_API_URL || 'https://api-v2.lens.dev/graphql';
+  const accessToken = process.env.LENS_ACCESS_TOKEN || '';
+  const profileId = process.env.LENS_PROFILE_ID || '';
+  const payload = _payload as { text: string; embeds?: Array<{ url: string }> };
+
+  if (!accessToken || !profileId) {
+    console.log('[crossposter] Lens: missing LENS_ACCESS_TOKEN or LENS_PROFILE_ID');
+    return false;
+  }
+
+  // Lens has a 5000 character limit per publication
+  const truncatedText =
+    payload.text.length > 5000
+      ? `${payload.text.slice(0, 4997)}...`
+      : payload.text;
+
+  try {
+    const res = await fetch(lensApiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({
+        query: `mutation CreatePost($request: CreatePublicPostRequest!) {
+          createPost(request: $request) {
+            ... on Post { id }
+          }
+        }`,
+        variables: {
+          request: {
+            profileId,
+            contentURI: `data:text/plain,${encodeURIComponent(truncatedText)}`,
+          },
+        },
+      }),
+    });
+
+    if (res.ok) {
+      console.log(`[crossposter] ✓ Lens post successful`);
+      return true;
+    }
+
+    const errBody = await res.text().catch(() => '');
+    console.log(`[crossposter] ✗ Lens: HTTP ${res.status} ${errBody.slice(0, 200)}`);
+    return false;
+  } catch (err) {
+    console.log(`[crossposter] ✗ Lens error: ${(err as Error).message}`);
+    return false;
+  }
 }
 
 async function publishToMastodon(payload: unknown): Promise<boolean> {
@@ -501,6 +605,7 @@ const PUBLISHERS: Record<string, (payload: unknown) => Promise<boolean>> = {
   bluesky: publishToBluesky,
   peertube: publishToPeerTube,
   farcaster: publishToFarcaster,
+  lens: publishToLens,
   mastodon: publishToMastodon,
 };
 
@@ -679,6 +784,35 @@ const DEFAULT_CONFIG: CrossPairConfig[] = [
     targetConfigs: {},
     // Only announce posts that contain video embeds
     contentFilter: (post: UnifiedPost) => post.embeds.some((e) => e.kind === 'video'),
+  },
+  {
+    id: 'gts-to-farcaster',
+    source: 'mastodon',
+    targets: ['farcaster'],
+    enabled: true,
+    pollIntervalMs: 60000,
+    rateLimit: { maxPosts: 5, windowMs: 3600000 },
+    sourceConfig: {},
+    targetConfigs: {
+      farcaster: {
+        apiKey: process.env.NEYNAR_API_KEY || '',
+        signerUuid: process.env.FARCASTER_SIGNER_UUID || '',
+      },
+    },
+  },
+  {
+    id: 'gts-to-lens',
+    source: 'mastodon',
+    targets: ['lens'],
+    enabled: true,
+    pollIntervalMs: 60000,
+    rateLimit: { maxPosts: 5, windowMs: 3600000 },
+    sourceConfig: {},
+    targetConfigs: {
+      lens: {
+        apiUrl: process.env.LENS_API_URL || 'https://api-v2.lens.dev/graphql',
+      },
+    },
   },
   {
     id: 'lemmy-to-nostr',

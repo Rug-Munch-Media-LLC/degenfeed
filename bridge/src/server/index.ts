@@ -453,6 +453,8 @@ const server = http.createServer(async (req, res) => {
           'http://127.0.0.1:8087/api/v1/timelines/public',
           'https://api.zora.co/graphql',
           'http://127.0.0.1:8092/api/status',
+          'http://127.0.0.1:2281/v1/info',
+          'http://127.0.0.1:8099/health',
         ].map(checkSourceHealth),
       );
       const [
@@ -467,6 +469,8 @@ const server = http.createServer(async (req, res) => {
         pixelfedHealthy,
         zoraHealthy,
         owncastHealthy,
+        farcasterHealthy,
+        lensHealthy,
       ] = results;
       return jsonOk(res, {
         status: results.some(Boolean) ? 'ok' : 'degraded',
@@ -479,8 +483,8 @@ const server = http.createServer(async (req, res) => {
           bluesky: { healthy: blueskyHealthy },
           nostr: { healthy: nostrHealthy },
           writefreely: { healthy: writefreelyHealthy },
-          farcaster: { healthy: false },
-          lens: { healthy: false },
+          farcaster: { healthy: farcasterHealthy },
+          lens: { healthy: lensHealthy },
           pixelfed: { healthy: pixelfedHealthy },
           zora: { healthy: zoraHealthy },
           owncast: { healthy: owncastHealthy },
