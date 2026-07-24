@@ -1,5 +1,5 @@
 /**
- * DegenFeed Cross-Poster v2
+ * DegenFeed Cross-Poster v3
  *
  * Cross-platform posting engine — configurable source→target pairs with:
  *   - Transform pipelines per pair
@@ -13,6 +13,9 @@
  *   - GoToSocial → PeerTube (video announcements)
  *   - GoToSocial → Farcaster (Neynar API)
  *   - GoToSocial → Lens (Lens API)
+ *   - GoToSocial → Pixelfed (photo cross-posts)
+ *   - GoToSocial → WriteFreely (long posts as blog)
+ *   - Pixelfed → Mastodon (new photo announcements)
  *   - Lemmy → Nostr (announce hot posts)
  *
  * The cross-poster polls source protocols and publishes formatted
@@ -23,7 +26,16 @@ import type { UnifiedPost } from './server/types';
 
 // ─── Types ──────────────────────────────────────────────────────────────
 
-export type ProtocolName = 'mastodon' | 'nostr' | 'bluesky' | 'peertube' | 'lemmy' | 'farcaster' | 'lens';
+export type ProtocolName =
+  | 'mastodon'
+  | 'nostr'
+  | 'bluesky'
+  | 'peertube'
+  | 'lemmy'
+  | 'farcaster'
+  | 'lens'
+  | 'pixelfed'
+  | 'writefreely';
 
 export interface CrossPairConfig {
   /** Unique pair ID */
@@ -379,6 +391,68 @@ const TRANSFORMS: Record<string, TransformFunction> = {
       payload: { status: text, visibility: 'public' },
     };
   },
+
+  /**
+   * Transform for Pixelfed: photo cross-post
+   * Only works if post has image embeds
+   */
+  pixelfed: (post: UnifiedPost): TransformResult => {
+    const imageEmbeds = post.embeds.filter((e) => e.kind === 'image' && e.url);
+    if (imageEmbeds.length === 0) {
+      return { success: false, error: 'No images to cross-post to Pixelfed' };
+    }
+
+    const attribution = post.text
+      ? `${post.text}\n\n— ${post.author.displayName} (${post.protocol})`
+      : `Photo from ${post.author.displayName} (${post.protocol})`;
+
+    // Pixelfed max caption length is 500 chars
+    const caption = attribution.length > 497
+      ? `${attribution.slice(0, 494)}...`
+      : attribution;
+
+    return {
+      success: true,
+      payload: {
+        caption,
+        images: imageEmbeds.slice(0, 4).map((e) => e.url),
+        visibility: 'public',
+        protocol: post.protocol,
+        authorName: post.author.displayName,
+      },
+    };
+  },
+
+  /**
+   * Transform for WriteFreely: long-form blog cross-post
+   * Only posts content that's substantial enough for a blog (>= 100 chars)
+   */
+  writefreely: (post: UnifiedPost): TransformResult => {
+    const text = post.text || '';
+    if (text.length < 20) {
+      return { success: false, error: 'Content too short for blog post' };
+    }
+
+    const firstLine = text.split('\n')[0] || '';
+    const title = firstLine.length > 0
+      ? firstLine.slice(0, 120)
+      : `Post from ${post.author.displayName}`;
+
+    const body = `${text}\n\n— *Originally posted on ${post.protocol} by ${post.author.displayName}*`;
+    const truncatedBody = body.length > 500000
+      ? body.slice(0, 499990) + '\n\n[truncated]'
+      : body;
+
+    return {
+      success: true,
+      payload: {
+        title,
+        body: truncatedBody,
+        tags: [...post.niches, post.protocol, 'degenfeed', 'crosspost'],
+        protocol: post.protocol,
+      },
+    };
+  },
 };
 
 // ─── Publishers ─────────────────────────────────────────────────────────
@@ -598,6 +672,112 @@ async function publishToMastodon(payload: unknown): Promise<boolean> {
   }
 }
 
+/**
+ * Publish to Pixelfed: download images and post with caption.
+ * Uses the pixelfed-write provider for actual API calls.
+ */
+async function publishToPixelfed(_payload: unknown): Promise<boolean> {
+  const payload = _payload as {
+    caption: string;
+    images: string[];
+    visibility: string;
+    protocol: string;
+    authorName: string;
+  };
+
+  if (!payload.images || payload.images.length === 0) {
+    console.log('[crossposter] Pixelfed: no images in payload');
+    return false;
+  }
+
+  try {
+    const { publishUnifiedPost } = await import('./providers/pixelfed-write');
+
+    // Build a minimal UnifiedPost-like structure
+    const mockPost = {
+      text: payload.caption,
+      embeds: payload.images.map((url: string) => ({ kind: 'image', url, meta: {} })),
+      protocol: payload.protocol || 'mastodon',
+      author: {
+        displayName: payload.authorName || 'Unknown',
+        id: '',
+        primary: { protocol: 'mastodon', id: '' },
+        handles: {},
+        bio: '',
+        avatarUrl: '',
+        followerCount: 0,
+        followingCount: 0,
+        links: [],
+        keys: {},
+      },
+      id: '',
+      createdAt: Date.now(),
+      metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
+      engagement: {
+        viewerLiked: false,
+        viewerReposted: false,
+        viewerBookmarked: false,
+        raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
+      },
+      raw: {},
+      niches: [],
+    };
+
+    const result = await publishUnifiedPost(mockPost as UnifiedPost);
+    if (result.ok) {
+      console.log(`[crossposter] ✓ Pixelfed: ${result.status?.url || 'ok'}`);
+      return true;
+    }
+    console.log(`[crossposter] ✗ Pixelfed: ${result.error}`);
+    return false;
+  } catch (err) {
+    console.log(`[crossposter] ✗ Pixelfed error: ${(err as Error).message}`);
+    return false;
+  }
+}
+
+/**
+ * Publish to WriteFreely: create blog post from transformed payload.
+ */
+async function publishToWriteFreely(_payload: unknown): Promise<boolean> {
+  const payload = _payload as {
+    title: string;
+    body: string;
+    tags?: string[];
+    protocol: string;
+  };
+
+  const token = process.env.WRITEFREELY_TOKEN || '';
+  const alias = process.env.WRITEFREELY_ALIAS || 'degenfeed';
+
+  if (!token) {
+    console.log('[crossposter] WriteFreely: missing WRITEFREELY_TOKEN');
+    return false;
+  }
+
+  try {
+    const { postToWriteFreely } = await import('./providers/writefreely-write');
+
+    const result = await postToWriteFreely(
+      payload.title,
+      payload.body,
+      token,
+      alias,
+      payload.tags,
+    );
+
+    if (result.ok) {
+      console.log(`[crossposter] ✓ WriteFreely: ${result.post?.url || 'ok'}`);
+      return true;
+    }
+    console.log(`[crossposter] ✗ WriteFreely: ${result.error}`);
+    return false;
+  } catch (err) {
+    console.log(`[crossposter] ✗ WriteFreely error: ${(err as Error).message}`);
+    return false;
+  }
+}
+
 // ─── Publisher lookup ───────────────────────────────────────────────────
 
 const PUBLISHERS: Record<string, (payload: unknown) => Promise<boolean>> = {
@@ -607,6 +787,8 @@ const PUBLISHERS: Record<string, (payload: unknown) => Promise<boolean>> = {
   farcaster: publishToFarcaster,
   lens: publishToLens,
   mastodon: publishToMastodon,
+  pixelfed: publishToPixelfed,
+  writefreely: publishToWriteFreely,
 };
 
 // ─── Source Pollers ─────────────────────────────────────────────────────
@@ -652,6 +834,7 @@ async function fetchLatestGtsPost(): Promise<UnifiedPost | null> {
       content: string;
       created_at: string;
       account: { id: string; username: string; acct: string; display_name: string };
+      media_attachments?: Array<{ type: string; url: string }>;
     }>;
 
     if (!raw.length) return null;
@@ -673,7 +856,11 @@ async function fetchLatestGtsPost(): Promise<UnifiedPost | null> {
         keys: {},
       },
       text: s.content.replace(/<[^>]*>/g, '').trim(),
-      embeds: [],
+      embeds: (s.media_attachments || []).map((m) => ({
+        kind: m.type === 'video' ? 'video' as const : 'image' as const,
+        url: m.url,
+        meta: {},
+      })),
       createdAt: new Date(s.created_at).getTime(),
       metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
       engagement: {
@@ -687,6 +874,70 @@ async function fetchLatestGtsPost(): Promise<UnifiedPost | null> {
     };
   } catch (err) {
     console.log('[crossposter] GTS fetch error:', (err as Error).message);
+    return null;
+  }
+}
+
+async function fetchLatestPixelfedPost(): Promise<UnifiedPost | null> {
+  const pixelfedBase = process.env.PIXELFED_BASE_URL || 'http://127.0.0.1:8087';
+  const token = process.env.PIXELFED_ACCESS_TOKEN || '';
+
+  if (!token) {
+    console.log('[crossposter] Pixelfed: missing PIXELFED_ACCESS_TOKEN');
+    return null;
+  }
+
+  try {
+    const res = await fetch(`${pixelfedBase}/api/v1/timelines/public?local=true&limit=1`, {
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+    });
+    if (!res.ok) return null;
+
+    const raw = (await res.json()) as Array<{
+      id: string;
+      content: string;
+      created_at: string;
+      media_attachments?: Array<{ type: string; url: string; description?: string }>;
+      account: { id: string; username: string; acct: string; display_name: string };
+    }>;
+
+    if (!raw.length) return null;
+
+    const s = raw[0];
+    return {
+      id: `pixelfed:${s.id}@photos.degenfeed.xyz`,
+      protocol: 'pixelfed',
+      author: {
+        id: `pixelfed:${s.account.id}`,
+        primary: { protocol: 'pixelfed', id: s.account.id },
+        handles: { pixelfed: s.account.acct },
+        displayName: s.account.display_name || s.account.username,
+        bio: '',
+        avatarUrl: '',
+        followerCount: 0,
+        followingCount: 0,
+        links: [],
+        keys: {},
+      },
+      text: s.content.replace(/<[^>]*>/g, '').trim(),
+      embeds: (s.media_attachments || []).map((m) => ({
+        kind: (m.type === 'video' ? 'video' : 'image') as 'image' | 'video',
+        url: m.url,
+        meta: { description: m.description || '' },
+      })),
+      createdAt: new Date(s.created_at).getTime(),
+      metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
+      engagement: {
+        viewerLiked: false,
+        viewerReposted: false,
+        viewerBookmarked: false,
+        raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
+      },
+      raw: s,
+      niches: [],
+    };
+  } catch (err) {
+    console.log('[crossposter] Pixelfed fetch error:', (err as Error).message);
     return null;
   }
 }
@@ -815,6 +1066,45 @@ const DEFAULT_CONFIG: CrossPairConfig[] = [
     },
   },
   {
+    id: 'gts-to-pixelfed',
+    source: 'mastodon',
+    targets: ['pixelfed'],
+    enabled: true,
+    pollIntervalMs: 120000,
+    rateLimit: { maxPosts: 4, windowMs: 3600000 },
+    sourceConfig: {},
+    targetConfigs: {},
+    // Only posts with images
+    contentFilter: (post: UnifiedPost) =>
+      post.embeds.some((e) => e.kind === 'image'),
+  },
+  {
+    id: 'gts-to-writefreely',
+    source: 'mastodon',
+    targets: ['writefreely'],
+    enabled: true,
+    pollIntervalMs: 120000,
+    rateLimit: { maxPosts: 6, windowMs: 3600000 },
+    sourceConfig: {},
+    targetConfigs: {},
+    // Only substantial text content
+    contentFilter: (post: UnifiedPost) => (post.text?.length || 0) >= 100,
+  },
+  {
+    id: 'pixelfed-to-mastodon',
+    source: 'pixelfed',
+    targets: ['mastodon'],
+    enabled: true,
+    pollIntervalMs: 120000,
+    rateLimit: { maxPosts: 4, windowMs: 3600000 },
+    sourceConfig: {},
+    targetConfigs: {
+      mastodon: {
+        instance: process.env.MASTODON_INSTANCE || 'https://social.degenfeed.xyz',
+      },
+    },
+  },
+  {
     id: 'lemmy-to-nostr',
     source: 'lemmy',
     targets: ['nostr'],
@@ -835,6 +1125,7 @@ const failureTracker = new FailureTracker();
 const SOURCE_POLLERS: Record<string, () => Promise<UnifiedPost | null>> = {
   mastodon: fetchLatestGtsPost,
   lemmy: fetchLatestLemmyPost,
+  pixelfed: fetchLatestPixelfedPost,
 };
 
 /** Last seen post ID per source */
