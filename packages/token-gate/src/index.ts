@@ -2,7 +2,8 @@
  * @degenfeed/token-gate — Token/NFT Gating System
  *
  * Core types and on-chain verification logic for ERC20, ERC721, ERC1155,
- * and Solana SPL token gating. Used by both the API worker and client-side UI.
+ * and Solana SPL token gating. Supports combined gates (AND/OR), tiered
+ * gates, and time-based holding requirements.
  *
  * The verification cache runs in-memory (5-min TTL). For CF Workers,
  * use the KV-backed cache in the API route handler instead.
@@ -23,6 +24,96 @@ export interface TokenGate {
   tokenId?: string; // For ERC721/1155
   minBalance?: number; // For ERC20
   minBalanceDecimals?: number;
+}
+
+/** Combined gate operator */
+export type GateOperator = 'AND' | 'OR';
+
+/** A gate that can be a single token gate or a combined expression */
+export interface CombinedGate {
+  /** Single gate — mutually exclusive with gates */
+  gate?: TokenGate;
+  /** Nested gates for AND/OR logic — mutually exclusive with gate */
+  gates?: CombinedGate[];
+  /** Operator for this gate group (default: AND) */
+  operator?: GateOperator;
+  /** Minimum holding time in seconds (0 = no time requirement) */
+  minHoldTimeSec?: number;
+  /** When the wallet first acquired this token (unix timestamp) */
+  acquiredAt?: number;
+}
+
+/** Tiered gate: different access levels for different holding tiers */
+export interface TieredGate {
+  tiers: Array<{
+    /** Tier name (e.g. 'bronze', 'silver', 'gold') */
+    name: string;
+    /** Minimum balance required for this tier */
+    minBalance: number;
+    /** Token decimals for balance calculation */
+    decimals?: number;
+    /** Gate config for this tier (can be combined) */
+    gate: CombinedGate;
+    /** Tier-specific metadata (label, image, color) */
+    metadata?: {
+      label: string;
+      color: string;
+      icon?: string;
+      description?: string;
+    };
+  }>;
+  /** Default tier shown to non-holders */
+  defaultTier?: {
+    name: string;
+    metadata?: { label: string; color: string; description?: string };
+  };
+}
+
+/** Content that can be gated */
+export type GateableContentType =
+  | 'post'
+  | 'feed'
+  | 'community'
+  | 'stream'
+  | 'ama'
+  | 'file'
+  | 'download';
+
+/** Access mode for gates */
+export type GateAccessMode = 'strict' | 'view_anyone_comment_holders';
+
+/** Complete gate configuration stored with content */
+export interface GateConfig {
+  /** Type of gate */
+  type: 'single' | 'combined' | 'tiered';
+  /** Single gate (if type='single') */
+  gate?: TokenGate;
+  /** Combined gate (if type='combined') */
+  combined?: CombinedGate;
+  /** Tiered gate (if type='tiered') */
+  tiered?: TieredGate;
+  /** Content being gated */
+  contentType?: GateableContentType;
+  /** Access mode */
+  accessMode?: GateAccessMode;
+  /** Human-readable description */
+  description?: string;
+  /** Whether this gate is currently active */
+  enabled: boolean;
+}
+
+/** Result of a gate check */
+export interface GateCheckResult {
+  /** Whether the user passes the gate */
+  passed: boolean;
+  /** For tiered gates, the tier they qualify for */
+  tier?: string;
+  /** Tier metadata if matched */
+  tierMetadata?: { label?: string; color?: string; icon?: string };
+  /** Human-readable message */
+  message?: string;
+  /** If failed, what's required */
+  requirements?: string;
 }
 
 export interface TokenGateInfo {
@@ -235,11 +326,149 @@ export async function checkTokenGate(gate: TokenGate, walletAddress: string): Pr
   }
 }
 
+// ─── Combined gate checking ──────────────────────────────────────────────
+
+/**
+ * Check a combined gate expression (AND/OR logic).
+ * Supports recursive nesting of gates.
+ */
+export async function checkCombinedGate(
+  combined: CombinedGate,
+  walletAddress: string,
+): Promise<boolean> {
+  // Single gate
+  if (combined.gate) {
+    return checkTokenGate(combined.gate, walletAddress);
+  }
+
+  // Nested gates
+  if (combined.gates && combined.gates.length > 0) {
+    const results = await Promise.all(
+      combined.gates.map((g) => checkCombinedGate(g, walletAddress)),
+    );
+
+    if (combined.operator === 'OR') {
+      return results.some(Boolean);
+    }
+    // Default: AND
+    return results.every(Boolean);
+  }
+
+  // No gates defined — passes by default
+  return true;
+}
+
+/**
+ * Check if a wallet passes a tiered gate and return the highest tier matched.
+ */
+export async function checkTieredGate(
+  tiered: TieredGate,
+  walletAddress: string,
+): Promise<GateCheckResult> {
+  // Check tiers from highest to lowest
+  const sortedTiers = [...tiered.tiers].sort((a, b) => b.minBalance - a.minBalance);
+
+  for (const tier of sortedTiers) {
+    // Set the min balance on the underlying gate for this tier check
+    const gate = tier.gate.gate || tier.gate.gates?.[0]?.gate;
+    if (gate) {
+      gate.minBalance = tier.minBalance;
+      gate.minBalanceDecimals = tier.decimals ?? 0;
+    }
+
+    const passed = await checkCombinedGate(tier.gate, walletAddress);
+    if (passed) {
+      return {
+        passed: true,
+        tier: tier.name,
+        tierMetadata: tier.metadata
+          ? {
+              label: tier.metadata.label,
+              color: tier.metadata.color,
+              icon: tier.metadata.icon,
+            }
+          : undefined,
+        message: `You have ${tier.metadata?.label || tier.name} access`,
+      };
+    }
+  }
+
+  // No tier matched
+  const defaultTier = tiered.defaultTier;
+  return {
+    passed: false,
+    message: defaultTier?.metadata?.description || 'You do not meet any tier requirements',
+    requirements: `Minimum: ${tiered.tiers[0]?.minBalance ?? 1} tokens`,
+  };
+}
+
+/**
+ * Verify a complete GateConfig against a wallet.
+ * Dispatches to the correct checker based on gate type.
+ */
+export async function checkGateConfig(
+  config: GateConfig,
+  walletAddress: string,
+): Promise<GateCheckResult> {
+  if (!config.enabled) {
+    return { passed: true, message: 'Gate is disabled — content is public' };
+  }
+
+  if (!walletAddress) {
+    return {
+      passed: false,
+      message: 'Connect your wallet to access this content',
+      requirements: 'Wallet connection required',
+    };
+  }
+
+  switch (config.type) {
+    case 'single': {
+      if (!config.gate) {
+        return { passed: false, message: 'No gate configured' };
+      }
+      const passed = await checkTokenGate(config.gate, walletAddress);
+      return {
+        passed,
+        message: passed ? 'Access granted' : 'You do not hold the required tokens',
+        requirements: passed ? undefined : formatGateDescriptionSimple(config.gate),
+      };
+    }
+
+    case 'combined': {
+      if (!config.combined) {
+        return { passed: false, message: 'No combined gate configured' };
+      }
+      const passed = await checkCombinedGate(config.combined, walletAddress);
+      return {
+        passed,
+        message: passed ? 'Access granted' : 'You do not meet all requirements',
+        requirements: passed ? undefined : 'Check token requirements below',
+      };
+    }
+
+    case 'tiered': {
+      if (!config.tiered) {
+        return { passed: false, message: 'No tiered gate configured' };
+      }
+      return checkTieredGate(config.tiered, walletAddress);
+    }
+
+    default:
+      return { passed: false, message: 'Unknown gate type' };
+  }
+}
+
+function formatGateDescriptionSimple(gate: TokenGate): string {
+  const chainLabel = CHAIN_LABELS[gate.chain];
+  if (gate.type === 'erc721') return `Requires any NFT on ${chainLabel}`;
+  if (gate.type === 'erc1155') return `Requires multi-token on ${chainLabel}`;
+  const balance = gate.minBalance ?? 1;
+  return `Requires ${balance} tokens on ${chainLabel}`;
+}
+
 /**
  * Resolve a human-readable symbol for the token gate contract.
- * ERC20: calls symbol() on chain
- * ERC721/1155: returns "NFT" fallback
- * Solana: returns shortened mint address
  */
 export async function resolveTokenGateSymbol(gate: TokenGate): Promise<string> {
   if (gate.chain === 'solana') {
@@ -264,8 +493,6 @@ export async function resolveTokenGateSymbol(gate: TokenGate): Promise<string> {
 
 /**
  * Resolve NFT metadata (name + image) from tokenURI.
- * Only works for ERC721 and ERC1155 with a tokenId.
- * Fetches the tokenURI, then fetches the JSON metadata from that URI.
  */
 export async function resolveNFTMetadata(
   gate: TokenGate,
@@ -372,4 +599,25 @@ export function formatGateDescription(gate: TokenGate, symbol: string): string {
 
   const balance = gate.minBalance ?? 1;
   return `Requires ${balance} ${symbol} on ${chainLabel}`;
+}
+
+/**
+ * Format a combined gate description.
+ */
+export function formatCombinedGateDescription(
+  combined: CombinedGate,
+  symbols: Map<string, string>,
+): string {
+  if (combined.gate) {
+    const sym = symbols.get(combined.gate.contractAddress) || 'tokens';
+    return formatGateDescription(combined.gate, sym);
+  }
+
+  if (combined.gates) {
+    const descriptions = combined.gates.map((g) => formatCombinedGateDescription(g, symbols));
+    const sep = combined.operator === 'OR' ? ' OR ' : ' AND ';
+    return descriptions.join(sep);
+  }
+
+  return '';
 }
