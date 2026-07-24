@@ -18,6 +18,7 @@
     "@degenfeed/crossplatform-register": "workspace:*",
     "@degenfeed/farcaster-sdk": "workspace:*",
     "@degenfeed/feed-core": "workspace:*",
+    "@degenfeed/ghost-bridge": "workspace:*",
     "@degenfeed/feed-providers": "workspace:*",
     "@degenfeed/identity": "workspace:*",
     "@degenfeed/lens-sdk": "workspace:*",

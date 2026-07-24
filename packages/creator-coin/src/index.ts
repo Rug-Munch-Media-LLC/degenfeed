@@ -65,32 +65,30 @@ export {
 
 // ─── Free / Gasless Posting Modules ─────────────────────────────────────
 
-export {
-  estimateZoraCoinGas,
-  getZoraCoinUrl,
-  isCoinDeployed,
-  prepareZoraCoinCreation,
-} from './zora-free';
-export type {
-  FreeCoinCreationInput,
-  GasEstimate,
-  PreparedCoinCreation,
-} from './zora-free';
-
-export { LensFreePostClient } from './lens-free';
-export type {
-  CreatorCoinPost,
-  LensFreePostConfig,
-  MomokaPostResult,
-} from './lens-free';
-
-export { FarcasterFreePostClient, getNeynarFreeTierInfo } from './farcaster-free';
 export type {
   CreatorCoinCastInput,
   FarcasterFreePostConfig,
   FarcasterPostMode,
   FreeCastResult,
 } from './farcaster-free';
+export { FarcasterFreePostClient, getNeynarFreeTierInfo } from './farcaster-free';
+export type {
+  CreatorCoinPost,
+  LensFreePostConfig,
+  MomokaPostResult,
+} from './lens-free';
+export { LensFreePostClient } from './lens-free';
+export type {
+  FreeCoinCreationInput,
+  GasEstimate,
+  PreparedCoinCreation,
+} from './zora-free';
+export {
+  estimateZoraCoinGas,
+  getZoraCoinUrl,
+  isCoinDeployed,
+  prepareZoraCoinCreation,
+} from './zora-free';
 
 // ─── Live Stream ─────────────────────────────────────────────────────────
 

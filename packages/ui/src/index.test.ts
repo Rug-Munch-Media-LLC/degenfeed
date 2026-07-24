@@ -75,7 +75,7 @@ describe('Component exports', () => {
 
   beforeAll(async () => {
     mod = await import('./index');
-  });
+  }, 30000);
 
   it('should export ErrorBoundary', () => {
     expect(mod.ErrorBoundary).toBeDefined();

@@ -74,6 +74,10 @@ export class CreatorCoinSolanaClient {
     this.program = new Program(getIdl(), provider);
   }
 
+  private get methods(): any {
+    return this.program.methods;
+  }
+
   // ─── Deploy ──────────────────────────────────────────────────────────────
 
   async deployCoin(config: CreatorCoinConfig): Promise<DeployResult> {
@@ -91,8 +95,7 @@ export class CreatorCoinSolanaClient {
     const name = config.name.slice(0, 32);
     const symbol = config.symbol.slice(0, 10);
 
-    const methods = this.program.methods!;
-    const sig = await methods
+    const sig = await this.methods
       .createToken(
         new BN(tokenSeed.toString()),
         name,
@@ -141,8 +144,7 @@ export class CreatorCoinSolanaClient {
     const buyerTokenAccount = getAssociatedTokenAddressSync(mint, buyer);
     const [platformFeeVault] = derivePlatformFeeVault();
 
-    const methods = this.program.methods!;
-    const sig = await methods
+    const sig = await this.methods
       .buyTokens(new BN(opts.amountIn.toString()), new BN(opts.minTokensOut.toString()))
       .accounts({
         buyer,
@@ -179,8 +181,7 @@ export class CreatorCoinSolanaClient {
     const sellerTokenAccount = getAssociatedTokenAddressSync(mint, seller);
     const [platformFeeVault] = derivePlatformFeeVault();
 
-    const methods = this.program.methods!;
-    const sig = await methods
+    const sig = await this.methods
       .sellTokens(new BN(opts.amountIn.toString()))
       .accounts({
         seller,

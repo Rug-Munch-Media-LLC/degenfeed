@@ -7,6 +7,7 @@
 
 import type { FeeStructure } from './types';
 import { DEFAULT_FEES } from './types';
+
 export type { FeeStructure };
 export { DEFAULT_FEES };
 
