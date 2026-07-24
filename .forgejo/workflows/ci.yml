@@ -95,9 +95,41 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: pnpm --filter degenfeed-web test:e2e --project=axe-a11y
 
+  audit:
+    runs-on: docker-x64
+    needs: [lint]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.7.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: pnpm install --frozen-lockfile
+      - name: pnpm audit (production)
+        continue-on-error: true
+        id: audit
+        run: pnpm audit --prod --audit-level=high 2>&1 | tee /tmp/audit.log
+      - name: Fail on critical or high vulnerabilities
+        if: failure()
+        run: |
+          echo "::error::pnpm audit found HIGH or CRITICAL vulnerabilities"
+          exit 1
+
+  security-headers:
+    runs-on: docker-x64
+    steps:
+      - name: Check security headers on production endpoints
+        run: |
+          for url in https://degenfeed.xyz https://app.degenfeed.xyz; do
+            echo "=== $url ==="
+            curl -sI "$url" | grep -iE "^(strict-transport-security|content-security-policy|x-frame-options|x-content-type-options|referrer-policy)" || echo "  MISSING HEADERS"
+          done
+
   build:
     runs-on: docker-x64
-    needs: [lint, typecheck, test]
+    needs: [lint, typecheck, test, audit]
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4

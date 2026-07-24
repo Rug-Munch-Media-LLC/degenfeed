@@ -20,7 +20,7 @@ import { ProtocolQuickSwitcher } from './ProtocolQuickSwitcher';
 import { QuickJumpFloating } from './QuickJumpFloating';
 import { RightSidebar } from './RightSidebar';
 import { ScreenReaderAnnouncerProvider } from './ScreenReaderAnnouncer';
-import { SearchOverlay } from './SearchOverlay';
+import { SearchOverlay } from './search/SearchOverlay';
 import { SkipLinks } from './SkipLinks';
 import { useToast } from './Toast';
 

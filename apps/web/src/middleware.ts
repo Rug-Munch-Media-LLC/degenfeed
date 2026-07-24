@@ -268,8 +268,12 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     }
   }
 
-  // Helper: stamp rate-limit headers onto any outgoing response
+  // Generate a correlation ID for this request
+  const requestId = crypto.randomUUID().slice(0, 8);
+
+  // Helper: stamp rate-limit headers + correlation ID onto any outgoing response
   const stamp = (response: NextResponse): NextResponse => {
+    response.headers.set('x-request-id', requestId);
     if (rateLimitMeta) {
       setRateLimitHeaders(response.headers, rateLimitMeta.limit, rateLimitMeta.result);
     }

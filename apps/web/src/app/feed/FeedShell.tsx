@@ -12,7 +12,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import { PROTOCOL_LIST, SIDEBAR_ORDER } from '../../components/feed/feed-protocols';
 
@@ -30,6 +30,7 @@ interface FeedShellProps {
 
 export function FeedShell({ children }: FeedShellProps) {
   const pathname = usePathname();
+  const router = useRouter();
 
   // Determine the active protocol from the current path
   const activeProtocol = SIDEBAR_ORDER.find(

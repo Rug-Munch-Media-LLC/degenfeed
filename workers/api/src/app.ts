@@ -582,6 +582,22 @@ async function withSession(
   return resp;
 }
 
+// ─── Middleware: Request ID correlation ─────────────────────
+// Every request gets a unique x-request-id header for log correlation.
+// Added before CORS so it's always present.
+app.use('*', async (c, next) => {
+  const reqId = crypto.randomUUID().slice(0, 8);
+  c.set('requestId', reqId);
+  await next();
+  if (c.res) {
+    c.res = new Response(c.res.body, {
+      status: c.res.status,
+      statusText: c.res.statusText,
+      headers: { ...Object.fromEntries(c.res.headers), 'x-request-id': reqId },
+    });
+  }
+});
+
 // ─── Middleware: CORS post-response ──────────────────────────
 // Registered first so it wraps every response with CORS headers.
 app.use('*', async (c, next) => {
