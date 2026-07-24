@@ -1450,7 +1450,7 @@ app.route('/api/token', tokenCommunity);
 app.route('/api/token', peertubeStreams);
 
 // ─── API: Live Shorts (60s cross-protocol live broadcasting) ───
-import liveShorts from './routes/live-shorts';
+import liveShorts from './routes/live-shorts-index';
 
 app.route('/api/live-shorts', liveShorts);
 app.route('/v1/live-shorts', liveShorts);
