@@ -18,11 +18,14 @@ function nextSkelId(): string {
  * to prevent Cumulative Layout Shift (CLS) during loading.
  * Renders `count` skeleton cards with `role="status"` for a11y.
  * Server-safe: no hooks, no "use client" dependency.
+ *
+ * Uses the `.skeleton-shimmer` CSS class from the design system for
+ * consistent shimmer animation across the entire app.
  */
 export function PostCardSkeleton({ count = 1 }: PostCardSkeletonProps) {
   const uid = nextSkelId();
   return (
-    <output className="block w-full" aria-label="Loading posts">
+    <output className="block w-full" aria-label="Loading posts" aria-busy="true">
       {Array.from({ length: count }).map((_, i) => (
         <div
           key={`${uid}-${i}`}
@@ -49,9 +52,13 @@ export function PostCardSkeleton({ count = 1 }: PostCardSkeletonProps) {
           {/* Content lines skeleton — matches PostCard's content-text mb-3 */}
           <div className="mb-3 space-y-2">
             <div className="skeleton-shimmer h-3 w-full rounded" />
-            <div className="skeleton-shimmer h-3 w-11/12 rounded" />
+            <div className="skeleton-shimmer h-3 w-[91.666%] rounded" />
             <div className="skeleton-shimmer h-3 w-3/4 rounded" />
           </div>
+          {/* Media skeleton — optional media area */}
+          {i % 3 === 0 && (
+            <div className="mb-3 skeleton-shimmer aspect-video w-full rounded-xl" />
+          )}
           {/* Engagement bar skeleton — matches PostCardEngagement layout */}
           <div className="mt-1 flex items-center gap-4">
             {[0, 1, 2, 3].map((k) => (
@@ -65,5 +72,18 @@ export function PostCardSkeleton({ count = 1 }: PostCardSkeletonProps) {
         </div>
       ))}
     </output>
+  );
+}
+
+/**
+ * Minimal shimmer skeleton for inline loading states.
+ * Renders a single shimmer line matching the parent width.
+ */
+export function InlineSkeleton({ width = '100%', height = 16 }: { width?: string; height?: number }) {
+  return (
+    <div
+      className="skeleton-shimmer"
+      style={{ width, height, borderRadius: 'var(--radius-sm, 6px)' }}
+    />
   );
 }

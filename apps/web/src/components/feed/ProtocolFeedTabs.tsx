@@ -4,10 +4,12 @@
  * ProtocolFeedTabs — Protocol filter tabs for the unified feed.
  *
  * Shows a row of protocol badges that filter the feed by protocol source.
- * Includes "All Protocols" default tab.
+ * Includes "All Protocols" default tab. Features smooth animated active
+ * indicator, hover states, and optional count badges.
  */
 
 import { getProtocolColor } from '@degenfeed/ui';
+import { useRef, useCallback, useEffect, useState } from 'react';
 
 /* ─── Protocol tab config ───────────────────────────────────── */
 
@@ -47,17 +49,66 @@ export function ProtocolFeedTabs({
   onTabChange,
   showCounts = false,
 }: ProtocolFeedTabsProps) {
+  const tabsRef = useRef<HTMLDivElement>(null);
+  const [indicatorStyle, setIndicatorStyle] = useState<{
+    left: number;
+    width: number;
+    color: string;
+    opacity: number;
+  }>({ left: 0, width: 0, color: '#00ff41', opacity: 0 });
+
+  const updateIndicator = useCallback(() => {
+    if (!tabsRef.current) return;
+    const activeIdx = tabs.findIndex((t) => t.id === activeTab);
+    if (activeIdx < 0) return;
+    const button = tabsRef.current.querySelector<HTMLButtonElement>(
+      `[data-tab-idx="${activeIdx}"]`,
+    );
+    if (!button) return;
+    const containerRect = tabsRef.current.getBoundingClientRect();
+    const btnRect = button.getBoundingClientRect();
+    setIndicatorStyle({
+      left: btnRect.left - containerRect.left,
+      width: btnRect.width,
+      color: tabs[activeIdx]?.color ?? '#00ff41',
+      opacity: 1,
+    });
+  }, [tabs, activeTab]);
+
+  // Update indicator on mount and resize
+  useEffect(() => {
+    updateIndicator();
+    const observer = new ResizeObserver(updateIndicator);
+    if (tabsRef.current) observer.observe(tabsRef.current);
+    return () => observer.disconnect();
+  }, [updateIndicator]);
+
   return (
     <div
-      className="flex gap-1 overflow-x-auto pb-2 scrollbar-none"
+      className="relative flex gap-1 overflow-x-auto pb-2 scrollbar-none"
       role="tablist"
       aria-label="Filter by protocol"
+      ref={tabsRef}
     >
-      {tabs.map((tab) => {
+      {/* Smooth sliding indicator */}
+      <span
+        className="absolute bottom-2 h-[3px] rounded-full pointer-events-none"
+        style={{
+          left: indicatorStyle.left,
+          width: indicatorStyle.width,
+          backgroundColor: indicatorStyle.color,
+          boxShadow: `0 0 8px ${indicatorStyle.color}66`,
+          opacity: indicatorStyle.opacity,
+          transition: 'left 0.3s cubic-bezier(0.19, 1, 0.22, 1), width 0.3s cubic-bezier(0.19, 1, 0.22, 1), opacity 0.2s ease-out',
+        }}
+      />
+
+      {tabs.map((tab, idx) => {
         const isActive = activeTab === tab.id;
         return (
           <button
             key={tab.id ?? 'all'}
+            data-tab-idx={idx}
             type="button"
             role="tab"
             aria-selected={isActive}
@@ -83,8 +134,11 @@ export function ProtocolFeedTabs({
             <span>{tab.label}</span>
             {showCounts && tab.count !== undefined && (
               <span
-                className="ml-0.5 rounded-full px-1.5 py-0 text-[9px] font-medium opacity-60"
-                style={{ backgroundColor: `${tab.color}20` }}
+                className="ml-0.5 rounded-full px-1.5 py-0 text-[9px] font-medium"
+                style={{
+                  backgroundColor: `${tab.color}20`,
+                  opacity: isActive ? 1 : 0.6,
+                }}
               >
                 {tab.count}
               </span>
