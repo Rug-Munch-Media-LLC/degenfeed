@@ -4,8 +4,8 @@ import type { WalletSession } from '@degenfeed/auth';
 import { buildSiweMessage, requestWalletNonce, verifyWalletSignature } from '@degenfeed/auth';
 import { saveWalletIdentity } from '@degenfeed/storage';
 import { useCallback, useState } from 'react';
-import { setCsrfToken } from '../lib/csrf';
 import { useWeb3 } from '../components/Web3Provider';
+import { setCsrfToken } from '../lib/csrf';
 
 export function useWalletSignIn() {
   const { account, isConnected, connect, signMessage } = useWeb3();

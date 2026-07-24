@@ -128,7 +128,7 @@ export function StreamChat({ streamId, maxHeight = '400px' }: StreamChatProps) {
   useEffect(() => {
     if (!autoScroll) return;
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, autoScroll]);
+  }, [autoScroll]);
 
   // Detect manual scroll-up to pause auto-scroll
   const handleScroll = useCallback(() => {

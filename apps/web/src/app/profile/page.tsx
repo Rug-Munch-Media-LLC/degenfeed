@@ -22,12 +22,12 @@ import {
 import { EditProfileModal } from '../../components/EditProfileModal';
 import { IdentityLinker } from '../../components/IdentityLinker';
 import { PremiumPaymentModal } from '../../components/PremiumPaymentModal';
+import { GoLiveModal } from '../../components/streams/GoLiveModal';
 import { useToast } from '../../components/Toast';
 import { useWeb3 } from '../../components/Web3Provider';
 import { useOnboarding } from '../../hooks/useOnboarding';
 import { usePremium } from '../../hooks/usePremium';
 import { type SubscriptionStatus, useSubscription } from '../../hooks/useSubscription';
-import { GoLiveModal } from '../../components/streams/GoLiveModal';
 
 export const dynamic = 'force-dynamic';
 
@@ -792,7 +792,8 @@ export default function ProfilePage() {
                             className="h-full rounded-full transition-all duration-500"
                             style={{
                               width: `${Math.round((repProgress.progress || 0) * 100)}%`,
-                              background: 'linear-gradient(90deg, var(--color-accent), #22c55e, #4ade80)',
+                              background:
+                                'linear-gradient(90deg, var(--color-accent), #22c55e, #4ade80)',
                             }}
                           />
                         </div>

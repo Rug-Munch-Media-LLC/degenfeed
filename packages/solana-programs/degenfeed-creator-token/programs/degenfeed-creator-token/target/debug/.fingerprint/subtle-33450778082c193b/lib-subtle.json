@@ -1,1 +1,20 @@
-{"rustc":9777074978655410247,"features":"[\"default\", \"i128\", \"std\"]","declared_features":"[\"default\", \"i128\", \"nightly\", \"std\"]","target":490461438668937970,"profile":2241668132362809309,"path":12713393376038233315,"deps":[],"local":[{"CheckDepInfo":{"dep_info":"debug/.fingerprint/subtle-33450778082c193b/dep-lib-subtle","checksum":false}}],"rustflags":[],"config":8247474407144887393,"compile_kind":0}
+{
+  "rustc": 9777074978655410247,
+  "features": "[\"default\", \"i128\", \"std\"]",
+  "declared_features": "[\"default\", \"i128\", \"nightly\", \"std\"]",
+  "target": 490461438668937970,
+  "profile": 2241668132362809309,
+  "path": 12713393376038233315,
+  "deps": [],
+  "local": [
+    {
+      "CheckDepInfo": {
+        "dep_info": "debug/.fingerprint/subtle-33450778082c193b/dep-lib-subtle",
+        "checksum": false
+      }
+    }
+  ],
+  "rustflags": [],
+  "config": 8247474407144887393,
+  "compile_kind": 0
+}

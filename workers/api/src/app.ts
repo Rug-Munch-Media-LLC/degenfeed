@@ -66,10 +66,19 @@ import {
   handleCommunityGet,
   handleCommunityJoin,
 } from './routes/community';
+import {
+  handleAccountStatus,
+  handleConnectPlatform,
+  handleDisconnectPlatform,
+  handleListConnectedAccounts,
+  handleOAuthCallback,
+  handleSubstackEmailSetup,
+} from './routes/connected-accounts';
 import { handleContentResolve } from './routes/content';
 import { creatorConfig } from './routes/creator-config';
 import { creatorVesting } from './routes/creator-vesting';
 import { creatorVideos } from './routes/creator-videos';
+import { handleCrossPostCentralized } from './routes/cross-post-centralized';
 import { crossProtocolCoin } from './routes/cross-protocol-coin';
 import { handleCrossReply } from './routes/cross-reply';
 import { handleAltFeed, handleNewsletterFeed, handleTopFeed } from './routes/curated';
@@ -113,17 +122,6 @@ import {
   handleDiscoverTrending,
 } from './routes/discover';
 import {
-  handleGhostNewsletterSend,
-  handleGhostPostBySlug,
-  handleGhostPostCreate,
-  handleGhostPosts,
-  handleGhostCrossPost,
-  handleGhostSubscribe,
-  handleGhostSubscribers,
-  handleGhostTip,
-  handleGhostUnsubscribe,
-} from './routes/ghost';
-import {
   handleEmailRegister,
   handleEmailSignIn,
   handleEmailStatus,
@@ -156,6 +154,16 @@ import {
   handlePerProtocolCategoryFeed,
 } from './routes/feed-category';
 import {
+  handleCategoryFeed,
+  handleUnifiedFeed as handleContentPipelineFeed,
+  handleDefaultFeed,
+  handleNetworkFeed,
+  handleSourceDiscovery,
+  handleTrendingContent,
+  handleForYouFeed as handleUnifiedForYouFeed,
+  handleUnifiedSearch,
+} from './routes/feed-unified';
+import {
   handleAdjustTopic,
   handleClearTopic,
   handleFeedback,
@@ -178,6 +186,17 @@ import {
   handleXp,
   handleXpAward,
 } from './routes/gamification';
+import {
+  handleGhostCrossPost,
+  handleGhostNewsletterSend,
+  handleGhostPostBySlug,
+  handleGhostPostCreate,
+  handleGhostPosts,
+  handleGhostSubscribe,
+  handleGhostSubscribers,
+  handleGhostTip,
+  handleGhostUnsubscribe,
+} from './routes/ghost';
 import {
   handleGitHubBridgeActivity,
   handleGitHubConnect,
@@ -215,6 +234,11 @@ import {
   handleResolveWallet,
   handleResolveZora,
 } from './routes/identity-extensions';
+import {
+  handleInfraHealth,
+  handleInfraServiceHealth,
+  handleInfraStatus,
+} from './routes/infra-health';
 import { handleLandingCss, handleLandingHtml, handleLandingJs } from './routes/landing';
 import {
   handleLeaderboardCommunities,
@@ -223,12 +247,6 @@ import {
   handleLeaderboardTrending,
   handleRefreshLeaderboards,
 } from './routes/leaderboard';
-import {
-  handleLemmyBridgeCrossPost,
-  handleLemmyBridgeShare,
-  handleLemmyBridgeStatus,
-} from './routes/lemmy-bridge';
-import { handleLemmyDiscover } from './routes/lemmy-discover';
 import {
   handleLemmyCommentCreate,
   handleLemmyCommunity,
@@ -239,30 +257,18 @@ import {
   handleLemmyTrending,
 } from './routes/lemmy';
 import {
+  handleLemmyBridgeCrossPost,
+  handleLemmyBridgeShare,
+  handleLemmyBridgeStatus,
+} from './routes/lemmy-bridge';
+import { handleLemmyDiscover } from './routes/lemmy-discover';
+import {
   handleLemmyTipCreate,
   handleLemmyTipLeaderboard,
   handleLemmyTipStats,
 } from './routes/lemmy-tip';
 import { handleLensCoinDeploy, handleLensCoinGet, handleLensCoinTip } from './routes/lens-coin';
 import { handleLinksPage } from './routes/links';
-import {
-  handleMirrorArticles,
-  handleMirrorArticleByTxId,
-  handleMirrorImport,
-  handleMirrorPublish,
-  handleMirrorSearch,
-  handleMirrorTrending,
-} from './routes/mirror';
-import {
-  handleParagraphArticles,
-  handleParagraphArticlesByFid,
-  handleParagraphImport,
-  handleParagraphNewsletterStats,
-  handleParagraphPublish,
-  handleParagraphSearch,
-  handleParagraphSubscribe,
-  handleParagraphTrending,
-} from './routes/paragraph';
 import {
   handleMastodonLeaderboard,
   handleMastodonTipCreate,
@@ -283,6 +289,14 @@ import {
   handleUnreadCount,
 } from './routes/messages';
 import {
+  handleMirrorArticleByTxId,
+  handleMirrorArticles,
+  handleMirrorImport,
+  handleMirrorPublish,
+  handleMirrorSearch,
+  handleMirrorTrending,
+} from './routes/mirror';
+import {
   handleBanUser,
   handleBlockSync,
   handleCheckBanned,
@@ -292,11 +306,6 @@ import {
   handleResolveReport,
   handleSubmitReport,
 } from './routes/moderation';
-import {
-  handleInfraHealth,
-  handleInfraServiceHealth,
-  handleInfraStatus,
-} from './routes/infra-health';
 import { handleNewsFeed } from './routes/news';
 import {
   handleNewsletterDigest,
@@ -312,13 +321,6 @@ import {
   handleNewsletterBridgeStats,
 } from './routes/newsletter-bridge';
 import {
-  handleNewsletterCreateDraft,
-  handleNewsletterSend,
-  handleNewsletterSendTest,
-  handleNewsletterSubscriberRemove,
-  handleNewsletterSubscribersList,
-} from './routes/newsletter-send';
-import {
   handleCreatorNewsletterCount,
   handleCreatorNewsletterHealth,
   handleCreatorNewsletterSend,
@@ -328,6 +330,13 @@ import {
   handleCreatorNewsletterUnsubscribe,
   handleMailgunWebhook,
 } from './routes/newsletter-creator';
+import {
+  handleNewsletterCreateDraft,
+  handleNewsletterSend,
+  handleNewsletterSendTest,
+  handleNewsletterSubscriberRemove,
+  handleNewsletterSubscribersList,
+} from './routes/newsletter-send';
 import { handleMarkAllRead, handleNotifications } from './routes/notifications';
 import { handleNotify } from './routes/notify';
 import {
@@ -344,6 +353,16 @@ import {
   handleTwitterCallback,
 } from './routes/oauth-providers';
 import { handlePostOg } from './routes/og';
+import {
+  handleParagraphArticles,
+  handleParagraphArticlesByFid,
+  handleParagraphImport,
+  handleParagraphNewsletterStats,
+  handleParagraphPublish,
+  handleParagraphSearch,
+  handleParagraphSubscribe,
+  handleParagraphTrending,
+} from './routes/paragraph';
 import peertubeStreams from './routes/peertube-streams';
 import {
   handlePeerTubeLeaderboard,
@@ -392,30 +411,21 @@ import {
 import { handleRssFeed } from './routes/rss';
 import { handleRssXml } from './routes/rss-xml';
 import {
-	handleDeleteScheduledPost,
-	handleListScheduledPosts,
-	handlePublishNow,
-	handleSchedulePost,
-	handleUpdateScheduledPost,
+  handleDeleteScheduledPost,
+  handleListScheduledPosts,
+  handlePublishNow,
+  handleSchedulePost,
+  handleUpdateScheduledPost,
 } from './routes/scheduled';
 import {
-	handleAccountStatus,
-	handleConnectPlatform,
-	handleDisconnectPlatform,
-	handleListConnectedAccounts,
-	handleOAuthCallback,
-	handleSubstackEmailSetup,
-} from './routes/connected-accounts';
-import { handleCrossPostCentralized } from './routes/cross-post-centralized';
-import {
-	handleSearch,
-	handleSearchAutocomplete,
-	handleSearchCoins,
-	handleSearchCommunities,
-	handleSearchCreators,
-	handleSearchIdentity,
-	handleSearchIndex,
-	handleSearchTrending,
+  handleSearch,
+  handleSearchAutocomplete,
+  handleSearchCoins,
+  handleSearchCommunities,
+  handleSearchCreators,
+  handleSearchIdentity,
+  handleSearchIndex,
+  handleSearchTrending,
 } from './routes/search';
 import {
   handleCreateShort,
@@ -432,16 +442,6 @@ import {
   handleZoraCreator,
   handleZoraTrending,
 } from './routes/shorts';
-import {
-  handleCategoryFeed,
-  handleDefaultFeed,
-  handleForYouFeed as handleUnifiedForYouFeed,
-  handleNetworkFeed,
-  handleSourceDiscovery,
-  handleTrendingContent,
-  handleUnifiedFeed as handleContentPipelineFeed,
-  handleUnifiedSearch,
-} from './routes/feed-unified';
 import {
   handleSourcesApprove,
   handleSourcesDiscover,
@@ -877,11 +877,15 @@ app.all('/api/feed/per-protocol/:protocol/:category', async (c) =>
 app.all('/api/feed/unified', async (c) => handleContentPipelineFeed(c.req.raw, c.env));
 app.get('/api/feed/unified/trending', async (c) => handleTrendingContent(c.req.raw, c.env));
 app.get('/api/feed/unified/for-you', async (c) => handleUnifiedForYouFeed(c.req.raw, c.env));
-app.get('/api/feed/unified/category/:id', async (c) => handleCategoryFeed(c.req.raw, c.env, c.req.param('id')));
+app.get('/api/feed/unified/category/:id', async (c) =>
+  handleCategoryFeed(c.req.raw, c.env, c.req.param('id')),
+);
 app.get('/api/feed/unified/search', async (c) => handleUnifiedSearch(c.req.raw, c.env));
 app.get('/api/feed/unified/sources', async (c) => handleSourceDiscovery(c.req.raw, c.env));
 app.post('/api/feed/unified/default', async (c) => handleDefaultFeed(c.req.raw, c.env));
-app.get('/api/feed/unified/network/:network', async (c) => handleNetworkFeed(c.req.raw, c.env, c.req.param('network')));
+app.get('/api/feed/unified/network/:network', async (c) =>
+  handleNetworkFeed(c.req.raw, c.env, c.req.param('network')),
+);
 // Visual feed — masonry-grid media feed from Pixelfed, Zora, Bluesky, etc.
 app.all('/api/feed/visual', async (c) => handleVisualFeed(c.req.raw, c.env));
 app.all('/api/feed/visual/trending', async (c) => handleVisualTrending(c.req.raw, c.env));
@@ -1096,6 +1100,12 @@ app.delete('/api/custom-feeds/:id', async (c) =>
   withSession(c, () => handleCustomFeedDelete(c.req.raw, c.env, c.req.param('id'))),
 );
 
+import {
+  handleBookmarkAdd,
+  handleBookmarkCheck,
+  handleBookmarkList,
+  handleBookmarkRemove,
+} from './routes/bookmarks';
 // ─── API: Bookmarks (session-gated) ─────────────────────────
 // ─── API: Bridge Health ──────────────────────────────────────────
 import {
@@ -1105,13 +1115,6 @@ import {
   handleProtocolHealth,
   handleProtocolStats,
 } from './routes/bridge-health';
-
-import {
-  handleBookmarkAdd,
-  handleBookmarkCheck,
-  handleBookmarkList,
-  handleBookmarkRemove,
-} from './routes/bookmarks';
 import {
   handleFollowAdd,
   handleFollowCheck,
@@ -1396,6 +1399,7 @@ app.all('/api/subscription/:creator', async (c) =>
 
 // ─── API: Tiers ──────────────────────────────────────────────
 import tiers from './routes/tiers';
+
 app.route('/api/tiers', tiers);
 
 // ─── API: Preferences ───────────────────────────────────────
@@ -1608,12 +1612,16 @@ app.get('/api/mirror/search', async (c) => handleMirrorSearch(c.req.raw, c.env))
 
 // ─── API: Paragraph.xyz Bridge ───────────────────────────
 app.post('/api/paragraph/publish', async (c) => handleParagraphPublish(c.req.raw, c.env));
-app.get('/api/paragraph/articles/:fid', async (c) => handleParagraphArticlesByFid(c.req.raw, c.env));
+app.get('/api/paragraph/articles/:fid', async (c) =>
+  handleParagraphArticlesByFid(c.req.raw, c.env),
+);
 app.get('/api/paragraph/articles', async (c) => handleParagraphArticles(c.req.raw, c.env));
 app.get('/api/paragraph/trending', async (c) => handleParagraphTrending(c.req.raw, c.env));
 app.post('/api/paragraph/import', async (c) => handleParagraphImport(c.req.raw, c.env));
 app.post('/api/paragraph/subscribe', async (c) => handleParagraphSubscribe(c.req.raw, c.env));
-app.get('/api/paragraph/newsletter/stats', async (c) => handleParagraphNewsletterStats(c.req.raw, c.env));
+app.get('/api/paragraph/newsletter/stats', async (c) =>
+  handleParagraphNewsletterStats(c.req.raw, c.env),
+);
 app.get('/api/paragraph/search', async (c) => handleParagraphSearch(c.req.raw, c.env));
 
 // ─── API: Creator Newsletter (EmailEngine) ────────────────
@@ -1713,10 +1721,10 @@ app.get('/api/trending/sidebar', async (c) => handleTrendingSidebar(c.req.raw, c
 
 // ─── API: Trending Scraper & Aggregation ────────────────────
 import {
-	handleCrossTrending,
-	handleTrendingAggregated,
-	handleTrendingNow,
-	handleTrendingPerPlatform,
+  handleCrossTrending,
+  handleTrendingAggregated,
+  handleTrendingNow,
+  handleTrendingPerPlatform,
 } from './routes/trending';
 
 app.get('/api/trending/aggregated', async (c) => handleTrendingAggregated(c.req.raw, c.env));
@@ -1833,40 +1841,64 @@ app.all('/api/moderation/sync', (c) => handleBlockSync(c.req.raw, c.env));
 // ─── API: Schedule ─────────────────────────────────────────
 app.all('/api/schedule', (c) => handleSchedulePost(c.req.raw, c.env));
 app.get('/api/scheduled', (c) => handleListScheduledPosts(c.req.raw, c.env));
-app.put('/api/schedule/:id', async (c) => handleUpdateScheduledPost(c.req.raw, c.env, c.req.param('id')));
-app.delete('/api/schedule/:id', async (c) => handleDeleteScheduledPost(c.req.raw, c.env, c.req.param('id')));
-app.post('/api/schedule/:id/publish-now', async (c) => handlePublishNow(c.req.raw, c.env, c.req.param('id')));
+app.put('/api/schedule/:id', async (c) =>
+  handleUpdateScheduledPost(c.req.raw, c.env, c.req.param('id')),
+);
+app.delete('/api/schedule/:id', async (c) =>
+  handleDeleteScheduledPost(c.req.raw, c.env, c.req.param('id')),
+);
+app.post('/api/schedule/:id/publish-now', async (c) =>
+  handlePublishNow(c.req.raw, c.env, c.req.param('id')),
+);
 
 // ─── API: Connected Centralized Accounts ─────────────────────────
 app.get('/api/accounts/connected', async (c) => handleListConnectedAccounts(c.req.raw, c.env));
 app.post('/api/accounts/connect/:platform', async (c) =>
-	handleConnectPlatform(c.req.raw, c.env, c.req.param('platform')),
+  handleConnectPlatform(c.req.raw, c.env, c.req.param('platform')),
 );
 app.get('/api/accounts/callback/:platform', async (c) =>
-	handleOAuthCallback(c.req.raw, c.env, c.req.param('platform')),
+  handleOAuthCallback(c.req.raw, c.env, c.req.param('platform')),
 );
 app.delete('/api/accounts/disconnect/:platform', async (c) =>
-	handleDisconnectPlatform(c.req.raw, c.env, c.req.param('platform')),
+  handleDisconnectPlatform(c.req.raw, c.env, c.req.param('platform')),
 );
 app.get('/api/accounts/status/:platform', async (c) =>
-	handleAccountStatus(c.req.raw, c.env, c.req.param('platform')),
+  handleAccountStatus(c.req.raw, c.env, c.req.param('platform')),
 );
-app.all('/api/accounts/connect/substack/email', async (c) => handleSubstackEmailSetup(c.req.raw, c.env));
+app.all('/api/accounts/connect/substack/email', async (c) =>
+  handleSubstackEmailSetup(c.req.raw, c.env),
+);
 
 // ─── API: Cross-Post to Centralized Platforms ─────────────────────
-app.post('/api/cross-post/medium', async (c) => handleCrossPostCentralized(c.req.raw, c.env, 'medium'));
-app.post('/api/cross-post/substack', async (c) => handleCrossPostCentralized(c.req.raw, c.env, 'substack'));
-app.post('/api/cross-post/youtube', async (c) => handleCrossPostCentralized(c.req.raw, c.env, 'youtube'));
-app.post('/api/cross-post/tiktok', async (c) => handleCrossPostCentralized(c.req.raw, c.env, 'tiktok'));
-app.post('/api/cross-post/instagram', async (c) => handleCrossPostCentralized(c.req.raw, c.env, 'instagram'));
-app.post('/api/cross-post/linkedin', async (c) => handleCrossPostCentralized(c.req.raw, c.env, 'linkedin'));
-app.post('/api/cross-post/reddit', async (c) => handleCrossPostCentralized(c.req.raw, c.env, 'reddit'));
-app.post('/api/cross-post/pinterest', async (c) => handleCrossPostCentralized(c.req.raw, c.env, 'pinterest'));
+app.post('/api/cross-post/medium', async (c) =>
+  handleCrossPostCentralized(c.req.raw, c.env, 'medium'),
+);
+app.post('/api/cross-post/substack', async (c) =>
+  handleCrossPostCentralized(c.req.raw, c.env, 'substack'),
+);
+app.post('/api/cross-post/youtube', async (c) =>
+  handleCrossPostCentralized(c.req.raw, c.env, 'youtube'),
+);
+app.post('/api/cross-post/tiktok', async (c) =>
+  handleCrossPostCentralized(c.req.raw, c.env, 'tiktok'),
+);
+app.post('/api/cross-post/instagram', async (c) =>
+  handleCrossPostCentralized(c.req.raw, c.env, 'instagram'),
+);
+app.post('/api/cross-post/linkedin', async (c) =>
+  handleCrossPostCentralized(c.req.raw, c.env, 'linkedin'),
+);
+app.post('/api/cross-post/reddit', async (c) =>
+  handleCrossPostCentralized(c.req.raw, c.env, 'reddit'),
+);
+app.post('/api/cross-post/pinterest', async (c) =>
+  handleCrossPostCentralized(c.req.raw, c.env, 'pinterest'),
+);
 
 // ─── API: Platform Limits (for UI content adaptation) ─────────────
-app.get('/api/cross-post/limits', async (c) => {
-	const { PLATFORM_LIMITS } = await import('./routes/cross-post-centralized');
-	return jsonResponse({ limits: PLATFORM_LIMITS });
+app.get('/api/cross-post/limits', async (_c) => {
+  const { PLATFORM_LIMITS } = await import('./routes/cross-post-centralized');
+  return jsonResponse({ limits: PLATFORM_LIMITS });
 });
 
 // ─── API: Audio Spaces ───────────────────────────────────────────

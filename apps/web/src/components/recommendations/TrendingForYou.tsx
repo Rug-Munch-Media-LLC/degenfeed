@@ -13,10 +13,7 @@ interface TrendingForYouProps {
  * Shows what's popular in the user's specific interest areas,
  * not global trending.
  */
-export function TrendingForYou({
-  category,
-  limit = 8,
-}: TrendingForYouProps) {
+export function TrendingForYou({ category, limit = 8 }: TrendingForYouProps) {
   const { data: trending, error, isLoading } = usePersonalizedTrending(category);
 
   if (error || (!isLoading && !trending?.length)) return null;
@@ -42,15 +39,13 @@ export function TrendingForYou({
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {trending!.slice(0, limit).map((content, index) => (
+          {trending?.slice(0, limit).map((content, index) => (
             <div key={content.id} className="relative">
               {/* Trend rank badge */}
               <span className="absolute -top-1 -left-1 z-10 bg-orange-500 text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">
                 {index + 1}
               </span>
-              <RecommendationCard
-                content={content}
-              />
+              <RecommendationCard content={content} />
             </div>
           ))}
         </div>
@@ -61,7 +56,7 @@ export function TrendingForYou({
           <button
             type="button"
             className="text-sm text-primary hover:underline"
-            onClick={() => window.location.href = '/trending'}
+            onClick={() => (window.location.href = '/trending')}
           >
             View all trending
           </button>

@@ -21,26 +21,88 @@ export interface StreamCategoryInfo {
 }
 
 export const STREAM_CATEGORIES: StreamCategoryInfo[] = [
-  { id: 'gaming', label: 'Gaming', icon: '🎮', color: '#9146FF', description: 'Video games and esports' },
-  { id: 'music', label: 'Music', icon: '🎵', color: '#FF4081', description: 'Live music performances' },
-  { id: 'crypto', label: 'Crypto & Web3', icon: '🪙', color: '#00ff41', description: 'Crypto, DeFi, and Web3' },
-  { id: 'art', label: 'Art & Creative', icon: '🎨', color: '#FF6B35', description: 'Creative arts and design' },
-  { id: 'irl', label: 'IRL & Lifestyle', icon: '🌍', color: '#00C853', description: 'Real life streaming' },
-  { id: 'talk', label: 'Talk Shows & Podcasts', icon: '🎙️', color: '#FFD600', description: 'Conversations and interviews' },
-  { id: 'education', label: 'Education', icon: '📚', color: '#2196F3', description: 'Learning and tutorials' },
-  { id: 'sports', label: 'Sports', icon: '⚽', color: '#F44336', description: 'Sports and fitness' },
-  { id: 'tech', label: 'Tech & Coding', icon: '💻', color: '#00BCD4', description: 'Technology and programming' },
-  { id: 'trading', label: 'Trading', icon: '📈', color: '#4CAF50', description: 'Markets and trading' },
+  {
+    id: 'gaming',
+    label: 'Gaming',
+    icon: '🎮',
+    color: '#9146FF',
+    description: 'Video games and esports',
+  },
+  {
+    id: 'music',
+    label: 'Music',
+    icon: '🎵',
+    color: '#FF4081',
+    description: 'Live music performances',
+  },
+  {
+    id: 'crypto',
+    label: 'Crypto & Web3',
+    icon: '🪙',
+    color: '#00ff41',
+    description: 'Crypto, DeFi, and Web3',
+  },
+  {
+    id: 'art',
+    label: 'Art & Creative',
+    icon: '🎨',
+    color: '#FF6B35',
+    description: 'Creative arts and design',
+  },
+  {
+    id: 'irl',
+    label: 'IRL & Lifestyle',
+    icon: '🌍',
+    color: '#00C853',
+    description: 'Real life streaming',
+  },
+  {
+    id: 'talk',
+    label: 'Talk Shows & Podcasts',
+    icon: '🎙️',
+    color: '#FFD600',
+    description: 'Conversations and interviews',
+  },
+  {
+    id: 'education',
+    label: 'Education',
+    icon: '📚',
+    color: '#2196F3',
+    description: 'Learning and tutorials',
+  },
+  {
+    id: 'sports',
+    label: 'Sports',
+    icon: '⚽',
+    color: '#F44336',
+    description: 'Sports and fitness',
+  },
+  {
+    id: 'tech',
+    label: 'Tech & Coding',
+    icon: '💻',
+    color: '#00BCD4',
+    description: 'Technology and programming',
+  },
+  {
+    id: 'trading',
+    label: 'Trading',
+    icon: '📈',
+    color: '#4CAF50',
+    description: 'Markets and trading',
+  },
 ];
 
 export function getCategoryInfo(id: string): StreamCategoryInfo {
-  return STREAM_CATEGORIES.find((c) => c.id === id) ?? {
-    id: id as StreamCategory,
-    label: id.charAt(0).toUpperCase() + id.slice(1),
-    icon: '📡',
-    color: '#888',
-    description: '',
-  };
+  return (
+    STREAM_CATEGORIES.find((c) => c.id === id) ?? {
+      id: id as StreamCategory,
+      label: id.charAt(0).toUpperCase() + id.slice(1),
+      icon: '📡',
+      color: '#888',
+      description: '',
+    }
+  );
 }
 
 /* === Stream Quality =========================================== */
@@ -63,7 +125,14 @@ export const QUALITY_OPTIONS: QualityOption[] = [
 
 /* === Chat Types =============================================== */
 
-export type ChatBadge = 'subscriber' | 'moderator' | 'vip' | 'og' | 'verified' | 'founder' | 'degen';
+export type ChatBadge =
+  | 'subscriber'
+  | 'moderator'
+  | 'vip'
+  | 'og'
+  | 'verified'
+  | 'founder'
+  | 'degen';
 
 export interface BadgeInfo {
   id: ChatBadge;
@@ -194,20 +263,74 @@ export interface ViewerAnalytics {
 /* === Mock Data Generator ====================================== */
 
 const CATEGORIES: StreamCategory[] = [
-  'gaming', 'music', 'crypto', 'art', 'irl', 'talk', 'education', 'sports', 'tech', 'trading',
+  'gaming',
+  'music',
+  'crypto',
+  'art',
+  'irl',
+  'talk',
+  'education',
+  'sports',
+  'tech',
+  'trading',
 ];
 
 const STREAM_TITLES: Record<StreamCategory, string[]> = {
-  gaming: ['Elden Ring — No Hit Run', 'Valorant Ranked Grind', 'Minecraft Survival Series', 'Fortnite Zero Build Ws'],
-  music: ['Lo-Fi Beats to DeFi To', 'Live Piano Improv', 'Producing a Beat from Scratch', 'Synthwave DJ Set'],
-  crypto: ['DeFi Alpha Call — L2 Summer', 'Solana Ecosystem Deep Dive', 'BTC Post-Halving Analysis', 'Yield Farming Strategies'],
-  art: ['Digital Painting Commission', 'Pixel Art Speed Build', '3D Modeling in Blender', 'Character Design Stream'],
-  irl: ['Coffee & Code Morning Routine', 'Studio vlog — Build Day', 'Tokyo Walk & Talk', 'Desk Setup Tour'],
-  talk: ['Crypto Twitter Roundtable', 'The Degen Chat Podcast', 'Interview with a Founder', 'AMA — Ask Me Anything'],
-  education: ['React Masterclass', 'Solidity Smart Contracts 101', 'Python for Data Science', 'System Design Interview Prep'],
+  gaming: [
+    'Elden Ring — No Hit Run',
+    'Valorant Ranked Grind',
+    'Minecraft Survival Series',
+    'Fortnite Zero Build Ws',
+  ],
+  music: [
+    'Lo-Fi Beats to DeFi To',
+    'Live Piano Improv',
+    'Producing a Beat from Scratch',
+    'Synthwave DJ Set',
+  ],
+  crypto: [
+    'DeFi Alpha Call — L2 Summer',
+    'Solana Ecosystem Deep Dive',
+    'BTC Post-Halving Analysis',
+    'Yield Farming Strategies',
+  ],
+  art: [
+    'Digital Painting Commission',
+    'Pixel Art Speed Build',
+    '3D Modeling in Blender',
+    'Character Design Stream',
+  ],
+  irl: [
+    'Coffee & Code Morning Routine',
+    'Studio vlog — Build Day',
+    'Tokyo Walk & Talk',
+    'Desk Setup Tour',
+  ],
+  talk: [
+    'Crypto Twitter Roundtable',
+    'The Degen Chat Podcast',
+    'Interview with a Founder',
+    'AMA — Ask Me Anything',
+  ],
+  education: [
+    'React Masterclass',
+    'Solidity Smart Contracts 101',
+    'Python for Data Science',
+    'System Design Interview Prep',
+  ],
   sports: ['NBA 2K League Match', 'F1 Race Watchalong', 'FIFA Ultimate Team', 'Poker Night'],
-  tech: ['Building a Full-Stack App Live', 'Linux Server Hardening', 'AI/ML Paper Review', 'Open Source Contribution'],
-  trading: ['Day Trading S&P 500', 'Forex Analysis & Signals', 'Options Flow Deep Dive', 'Crypto Swing Trading'],
+  tech: [
+    'Building a Full-Stack App Live',
+    'Linux Server Hardening',
+    'AI/ML Paper Review',
+    'Open Source Contribution',
+  ],
+  trading: [
+    'Day Trading S&P 500',
+    'Forex Analysis & Signals',
+    'Options Flow Deep Dive',
+    'Crypto Swing Trading',
+  ],
 };
 
 const CREATORS = [
@@ -311,9 +434,33 @@ export function generateMockClips(count = 8): Clip[] {
 export function generateMockSchedule(): StreamSchedule[] {
   const now = Date.now();
   return [
-    { id: 'sched-1', title: 'Weekly DeFi Roundup', category: 'crypto', scheduledAt: new Date(now + 86400000 * 2).toISOString(), description: 'Top DeFi news and analysis' },
-    { id: 'sched-2', title: 'Live Coding: DEX on Base', category: 'tech', scheduledAt: new Date(now + 86400000 * 3).toISOString(), description: 'Building a decentralized exchange' },
-    { id: 'sched-3', title: 'Gaming Night — Elden Ring', category: 'gaming', scheduledAt: new Date(now + 86400000).toISOString(), description: 'Late night gaming session' },
-    { id: 'sched-4', title: 'Music Production Stream', category: 'music', scheduledAt: new Date(now + 86400000 * 4).toISOString(), description: 'Making lo-fi beats live' },
+    {
+      id: 'sched-1',
+      title: 'Weekly DeFi Roundup',
+      category: 'crypto',
+      scheduledAt: new Date(now + 86400000 * 2).toISOString(),
+      description: 'Top DeFi news and analysis',
+    },
+    {
+      id: 'sched-2',
+      title: 'Live Coding: DEX on Base',
+      category: 'tech',
+      scheduledAt: new Date(now + 86400000 * 3).toISOString(),
+      description: 'Building a decentralized exchange',
+    },
+    {
+      id: 'sched-3',
+      title: 'Gaming Night — Elden Ring',
+      category: 'gaming',
+      scheduledAt: new Date(now + 86400000).toISOString(),
+      description: 'Late night gaming session',
+    },
+    {
+      id: 'sched-4',
+      title: 'Music Production Stream',
+      category: 'music',
+      scheduledAt: new Date(now + 86400000 * 4).toISOString(),
+      description: 'Making lo-fi beats live',
+    },
   ];
 }

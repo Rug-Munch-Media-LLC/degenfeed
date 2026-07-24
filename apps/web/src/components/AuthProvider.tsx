@@ -570,7 +570,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         showToast('error', `Sign-in failed: ${message}`);
       }
     },
-    [signInWithEthereum, refresh, signInWithSolana, showToast],
+    [signInWithEthereum, refresh, signInWithSolana, showToast, evmChainId],
   );
 
   const handlePublish = usePublish(tokens);

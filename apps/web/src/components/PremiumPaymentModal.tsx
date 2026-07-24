@@ -110,8 +110,7 @@ function StepSelectTier({ onSelect }: { onSelect: (tier: PremiumTier) => void })
               {tier.id === 'pro' && (
                 <div className="mt-1.5 rounded-lg bg-degen-500/5 border border-degen-500/10 px-3 py-1.5">
                   <p className="text-[11px] text-degen-400/80 leading-relaxed">
-                    💡 Covers Farcaster ($5) + Lens ($2) registration fees. 
-                    No hidden costs.
+                    💡 Covers Farcaster ($5) + Lens ($2) registration fees. No hidden costs.
                   </p>
                 </div>
               )}
@@ -334,24 +333,24 @@ function StepSuccess({ tier, onClose }: { tier: TierConfig; onClose: () => void 
         <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--color-muted)] mb-2">
           What&apos;s next
         </h3>
-          <ul className="space-y-2">
-            <li className="flex items-start gap-2 text-xs text-[var(--color-muted)]">
-              <span className="text-degen-400 mt-0.5">✦</span>
-              {tier.features.slice(1, 4).join(' · ')}
-            </li>
-            {tier.id === 'pro' && (
-              <>
-                <li className="flex items-start gap-2 text-xs text-[var(--color-muted)]">
-                  <span className="text-degen-400 mt-0.5">✦</span>
-                  Your Farcaster ($5) and Lens ($2) registration fees are covered
-                </li>
-                <li className="flex items-start gap-2 text-xs text-[var(--color-muted)]">
-                  <span className="text-degen-400 mt-0.5">✦</span>
-                  Register at /settings to create your accounts
-                </li>
-              </>
-            )}
-          </ul>
+        <ul className="space-y-2">
+          <li className="flex items-start gap-2 text-xs text-[var(--color-muted)]">
+            <span className="text-degen-400 mt-0.5">✦</span>
+            {tier.features.slice(1, 4).join(' · ')}
+          </li>
+          {tier.id === 'pro' && (
+            <>
+              <li className="flex items-start gap-2 text-xs text-[var(--color-muted)]">
+                <span className="text-degen-400 mt-0.5">✦</span>
+                Your Farcaster ($5) and Lens ($2) registration fees are covered
+              </li>
+              <li className="flex items-start gap-2 text-xs text-[var(--color-muted)]">
+                <span className="text-degen-400 mt-0.5">✦</span>
+                Register at /settings to create your accounts
+              </li>
+            </>
+          )}
+        </ul>
       </div>
 
       <button

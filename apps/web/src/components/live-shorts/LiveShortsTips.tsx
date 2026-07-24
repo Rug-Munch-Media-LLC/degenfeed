@@ -62,12 +62,12 @@ export function LiveShortsTips({ tips }: LiveShortsTipsProps) {
   if (visibleTips.length === 0) return null;
 
   return (
-      <div
-        className="pointer-events-none absolute right-4 top-16 z-20 flex flex-col items-end gap-2"
-        aria-live="polite"
-        role="status"
-        aria-label="Live tips"
-      >
+    <div
+      className="pointer-events-none absolute right-4 top-16 z-20 flex flex-col items-end gap-2"
+      aria-live="polite"
+      role="status"
+      aria-label="Live tips"
+    >
       {visibleTips.map((tip) => (
         <div
           key={tip.visibleId}

@@ -5,40 +5,36 @@
  * GET /api/feed/post/:id?format=og
  */
 
-import type { UnifiedPost } from "@degenfeed/types";
-import type { Env } from "../index";
+import type { UnifiedPost } from '@degenfeed/types';
+import type { Env } from '../index';
 
-export async function handlePostOg(
-	_request: Request,
-	env: Env,
-	postId: string,
-): Promise<Response> {
-	const decoded = decodeURIComponent(postId);
+export async function handlePostOg(_request: Request, env: Env, postId: string): Promise<Response> {
+  const decoded = decodeURIComponent(postId);
 
-	let post: UnifiedPost | null = null;
-	try {
-		const stored = await env.CACHE?.get(`post:${decoded}`);
-		if (stored) post = JSON.parse(stored) as UnifiedPost;
-	} catch {
-		/* empty -- error deliberately ignored */
-	}
+  let post: UnifiedPost | null = null;
+  try {
+    const stored = await env.CACHE?.get(`post:${decoded}`);
+    if (stored) post = JSON.parse(stored) as UnifiedPost;
+  } catch {
+    /* empty -- error deliberately ignored */
+  }
 
-	if (!post) {
-		return new Response("<html><body><p>Post not found</p></body></html>", {
-			status: 404,
-			headers: { "content-type": "text/html" },
-		});
-	}
+  if (!post) {
+    return new Response('<html><body><p>Post not found</p></body></html>', {
+      status: 404,
+      headers: { 'content-type': 'text/html' },
+    });
+  }
 
-	const text = post.text.slice(0, 200);
-	const image =
-		post.embeds.find((e) => e.kind === "image")?.url ||
-		post.author.avatarUrl ||
-		"https://degenfeed.xyz/og-image.png";
-	const author = post.author.displayName;
-	const protocol = post.protocol;
+  const text = post.text.slice(0, 200);
+  const image =
+    post.embeds.find((e) => e.kind === 'image')?.url ||
+    post.author.avatarUrl ||
+    'https://degenfeed.xyz/og-image.png';
+  const author = post.author.displayName;
+  const protocol = post.protocol;
 
-	const html = `<!DOCTYPE html>
+  const html = `<!DOCTYPE html>
 <html>
 <head>
 <meta charset="utf-8">
@@ -56,19 +52,19 @@ export async function handlePostOg(
 <body><p>${escapeHtml(author)}: ${escapeHtml(text)}</p></body>
 </html>`;
 
-	return new Response(html, {
-		status: 200,
-		headers: {
-			"content-type": "text/html",
-			"cache-control": "public, s-maxage=300, stale-while-revalidate=600",
-		},
-	});
+  return new Response(html, {
+    status: 200,
+    headers: {
+      'content-type': 'text/html',
+      'cache-control': 'public, s-maxage=300, stale-while-revalidate=600',
+    },
+  });
 }
 
 function escapeHtml(s: string): string {
-	return s
-		.replace(/&/g, "&amp;")
-		.replace(/</g, "&lt;")
-		.replace(/>/g, "&gt;")
-		.replace(/"/g, "&quot;");
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }

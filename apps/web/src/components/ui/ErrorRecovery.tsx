@@ -1,17 +1,11 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 // === Types =================================================================
 
-export type ErrorCategory =
-  | 'network'
-  | 'wallet'
-  | 'contract'
-  | 'stream'
-  | 'coin'
-  | 'unknown';
+export type ErrorCategory = 'network' | 'wallet' | 'contract' | 'stream' | 'coin' | 'unknown';
 
 export type RecoveryAction =
   | 'retry'
@@ -56,7 +50,11 @@ export interface ErrorRecoveryProps {
   /** Show a loading spinner while recovering */
   recovering?: boolean;
   /** Optional render prop for completely custom recovery UI */
-  children?: (suggestion: RecoverySuggestion, recover: () => void, dismiss: () => void) => ReactNode;
+  children?: (
+    suggestion: RecoverySuggestion,
+    recover: () => void,
+    dismiss: () => void,
+  ) => ReactNode;
   /** Auto-dismiss after this many ms (0 = no auto-dismiss) */
   autoDismissMs?: number;
 }
@@ -65,33 +63,71 @@ export interface ErrorRecoveryProps {
 
 const CATEGORY_PATTERNS: Record<ErrorCategory, RegExp[]> = {
   network: [
-    /network/i, /timeout/i, /timed\s*out/i, /fetch/i, /abort/i,
-    /DNS/i, /ENOTFOUND/i, /ECONNREFUSED/i, /ECONNRESET/i,
-    /5\d{2}/, /429/, /rate\s*limit/i, /offline/i,
-    /internet/i, /connection/i, /socket/i,
+    /network/i,
+    /timeout/i,
+    /timed\s*out/i,
+    /fetch/i,
+    /abort/i,
+    /DNS/i,
+    /ENOTFOUND/i,
+    /ECONNREFUSED/i,
+    /ECONNRESET/i,
+    /5\d{2}/,
+    /429/,
+    /rate\s*limit/i,
+    /offline/i,
+    /internet/i,
+    /connection/i,
+    /socket/i,
   ],
   wallet: [
-    /wallet/i, /rejected/i, /denied/i, /insufficient/i,
-    /wrong\s*network/i, /disconnected/i, /user\s*cancel/i,
-    /provider.*not.*found/i, /no\s*wallet/i,
+    /wallet/i,
+    /rejected/i,
+    /denied/i,
+    /insufficient/i,
+    /wrong\s*network/i,
+    /disconnected/i,
+    /user\s*cancel/i,
+    /provider.*not.*found/i,
+    /no\s*wallet/i,
   ],
   contract: [
-    /revert/i, /gas/i, /nonce/i, /contract/i, /execution/i,
-    /already\s*known/i, /underpriced/i,
+    /revert/i,
+    /gas/i,
+    /nonce/i,
+    /contract/i,
+    /execution/i,
+    /already\s*known/i,
+    /underpriced/i,
   ],
   stream: [
-    /stream/i, /RTMP/i, /encoder/i, /bandwidth/i, /PeerTube/i,
-    /broadcast/i, /ingest/i, /live.*error/i,
+    /stream/i,
+    /RTMP/i,
+    /encoder/i,
+    /bandwidth/i,
+    /PeerTube/i,
+    /broadcast/i,
+    /ingest/i,
+    /live.*error/i,
   ],
   coin: [
-    /deploy/i, /coin/i, /vesting/i, /graduation/i, /bridge/i,
-    /wormhole/i, /curve/i, /launch/i,
+    /deploy/i,
+    /coin/i,
+    /vesting/i,
+    /graduation/i,
+    /bridge/i,
+    /wormhole/i,
+    /curve/i,
+    /launch/i,
   ],
   unknown: [],
 };
 
 function detectCategory(message: string): ErrorCategory {
-  for (const [category, patterns] of Object.entries(CATEGORY_PATTERNS) as [ErrorCategory, RegExp[]][]) {
+  for (const [category, patterns] of Object.entries(CATEGORY_PATTERNS) as [
+    ErrorCategory,
+    RegExp[],
+  ][]) {
     if (category === 'unknown') continue;
     for (const p of patterns) {
       if (p.test(message)) return category;
@@ -108,7 +144,8 @@ function getSuggestion(category: ErrorCategory): RecoverySuggestion {
   switch (category) {
     case 'network':
       return {
-        message: 'Network connection issue. Your internet might be down or our servers are unreachable.',
+        message:
+          'Network connection issue. Your internet might be down or our servers are unreachable.',
         action: 'retry',
         actionLabel: 'Retry',
         icon: '📡',
@@ -144,7 +181,7 @@ function getSuggestion(category: ErrorCategory): RecoverySuggestion {
       };
     case 'coin':
       return {
-        message: 'A coin operation didn\'t complete as expected. Your funds are safe.',
+        message: "A coin operation didn't complete as expected. Your funds are safe.",
         action: 'retry',
         actionLabel: 'Try Again',
         icon: '🪙',
@@ -171,7 +208,8 @@ function ActionIcon({ action }: { action: RecoveryAction }) {
     connect_wallet: 'M12 4v16m-8-8h16',
     switch_network: 'M4 4h16v16H4zM8 8h8v8H8z',
     check_stream_key: 'M10 12h4v4m-2-6V6m0 12h0',
-    contact_support: 'M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10zM12 16v-4m0-4h.01',
+    contact_support:
+      'M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10zM12 16v-4m0-4h.01',
     dismiss: 'M6 18L18 6M6 6l12 12',
     refresh: 'M1 4v6h6M23 20v-6h-6M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15',
     add_funds: 'M12 4v16m-8-8h16',
@@ -230,9 +268,8 @@ export function ErrorRecovery({
   autoDismissMs = 0,
 }: ErrorRecoveryProps) {
   const message = error?.message ?? String(error ?? 'Unknown error');
-  const category = error && 'category' in error && error.category
-    ? error.category
-    : detectCategory(message);
+  const category =
+    error && 'category' in error && error.category ? error.category : detectCategory(message);
 
   const suggestion = forcedSuggestion ?? getSuggestion(category);
   const title = forcedTitle ?? getTitleForCategory(category);
@@ -269,7 +306,9 @@ export function ErrorRecovery({
         role="alert"
         className={`flex items-start gap-3 rounded-xl border border-yellow-500/20 bg-yellow-500/5 p-3 text-sm ${className}`}
       >
-        <span className="shrink-0 text-base mt-0.5" aria-hidden="true">{suggestion.icon}</span>
+        <span className="shrink-0 text-base mt-0.5" aria-hidden="true">
+          {suggestion.icon}
+        </span>
         <div className="min-w-0 flex-1">
           <p className="font-medium text-[var(--color-fg)]">{suggestion.message}</p>
           <div className="mt-2 flex items-center gap-2">
@@ -373,12 +412,18 @@ export function ErrorRecovery({
 
 function getTitleForCategory(category: ErrorCategory): string {
   switch (category) {
-    case 'network': return 'Connection Issue';
-    case 'wallet': return 'Wallet Error';
-    case 'contract': return 'Transaction Error';
-    case 'stream': return 'Stream Error';
-    case 'coin': return 'Coin Operation Failed';
-    default: return 'Something Went Wrong';
+    case 'network':
+      return 'Connection Issue';
+    case 'wallet':
+      return 'Wallet Error';
+    case 'contract':
+      return 'Transaction Error';
+    case 'stream':
+      return 'Stream Error';
+    case 'coin':
+      return 'Coin Operation Failed';
+    default:
+      return 'Something Went Wrong';
   }
 }
 
@@ -405,9 +450,8 @@ export function RecoveryToast({
   className = '',
 }: RecoveryToastProps) {
   const message = error?.message ?? String(error ?? 'Unknown error');
-  const category = error && 'category' in error && error.category
-    ? error.category
-    : detectCategory(message);
+  const category =
+    error && 'category' in error && error.category ? error.category : detectCategory(message);
   const suggestion = getSuggestion(category);
   const [visible, setVisible] = useState(true);
 
@@ -429,9 +473,13 @@ export function RecoveryToast({
         position === 'top' ? 'top-4' : 'bottom-4'
       } ${className}`}
     >
-      <span className="shrink-0 text-lg" aria-hidden="true">{suggestion.icon}</span>
+      <span className="shrink-0 text-lg" aria-hidden="true">
+        {suggestion.icon}
+      </span>
       <div className="min-w-0 flex-1">
-        <p className="text-xs font-medium text-[var(--color-fg)] line-clamp-2">{suggestion.message}</p>
+        <p className="text-xs font-medium text-[var(--color-fg)] line-clamp-2">
+          {suggestion.message}
+        </p>
       </div>
       <div className="flex shrink-0 items-center gap-2">
         <button
@@ -484,8 +532,19 @@ export function RetryButton({
         <span className="h-3 w-3 animate-spin rounded-full border-2 border-degen-400 border-t-transparent" />
       ) : (
         <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-          <path d="M3 8a5 5 0 019.9-1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-          <path d="M13 3v4H9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          <path
+            d="M3 8a5 5 0 019.9-1"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+          />
+          <path
+            d="M13 3v4H9"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
         </svg>
       )}
       {label}

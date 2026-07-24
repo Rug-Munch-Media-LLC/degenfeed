@@ -15,9 +15,9 @@
  * Native live support: NONE — we build on top of Livepeer + NFT metadata.
  */
 
-import type { Env } from "../../../index";
-import type { ProtocolStrategy, LiveSessionInfo, ViewerCountResult } from "../live-strategy";
-import { LIVE_SHORT_STRATEGIES } from "../protocol-strategies";
+import type { Env } from '../../../index';
+import type { LiveSessionInfo, ProtocolStrategy, ViewerCountResult } from '../live-strategy';
+import { LIVE_SHORT_STRATEGIES } from '../protocol-strategies';
 
 const STRATEGY = LIVE_SHORT_STRATEGIES.zora;
 
@@ -51,12 +51,12 @@ export const zoraLiveStrategy: ProtocolStrategy = {
         animation_url: playbackUrl, // HLS stream URL
         image: `https://app.degenfeed.xyz/og/live/${sessionId}.png`,
         attributes: [
-          { trait_type: "Status", value: "Live" },
-          { trait_type: "Duration (s)", value: duration },
-          { trait_type: "Creator", value: creatorHandle },
-          { trait_type: "Platform", value: "DegenFeed" },
-          { trait_type: "Session", value: sessionId },
-          { trait_type: "Type", value: "Live Short" },
+          { trait_type: 'Status', value: 'Live' },
+          { trait_type: 'Duration (s)', value: duration },
+          { trait_type: 'Creator', value: creatorHandle },
+          { trait_type: 'Platform', value: 'DegenFeed' },
+          { trait_type: 'Session', value: sessionId },
+          { trait_type: 'Type', value: 'Live Short' },
         ],
         properties: {
           live: true,
@@ -67,11 +67,9 @@ export const zoraLiveStrategy: ProtocolStrategy = {
         },
       };
 
-      await env.CONTENT_STORE?.put(
-        zoraMetaKey,
-        JSON.stringify(metadata),
-        { expirationTtl: 86400 * 7 },
-      );
+      await env.CONTENT_STORE?.put(zoraMetaKey, JSON.stringify(metadata), {
+        expirationTtl: 86400 * 7,
+      });
 
       return {
         protocolId: sessionId,
@@ -80,8 +78,8 @@ export const zoraLiveStrategy: ProtocolStrategy = {
       };
     } catch (err) {
       return {
-        protocolId: "",
-        protocolUrl: "",
+        protocolId: '',
+        protocolUrl: '',
         announced: false,
         error: err instanceof Error ? err.message : String(err),
       };
@@ -108,7 +106,7 @@ export const zoraLiveStrategy: ProtocolStrategy = {
       metadata.animation_url = recordingUrl;
       (metadata.attributes as Array<Record<string, unknown>>)?.forEach(
         (attr: Record<string, unknown>) => {
-          if (attr.trait_type === "Status") attr.value = "Recording";
+          if (attr.trait_type === 'Status') attr.value = 'Recording';
         },
       );
       (metadata.properties as Record<string, unknown>).live = false;
@@ -116,25 +114,23 @@ export const zoraLiveStrategy: ProtocolStrategy = {
       (metadata.properties as Record<string, unknown>).endedAt = Date.now();
 
       // Update metadata in KV
-      await env.CONTENT_STORE?.put(
-        zoraMetaKey,
-        JSON.stringify(metadata),
-        { expirationTtl: 86400 * 30 },
-      );
+      await env.CONTENT_STORE?.put(zoraMetaKey, JSON.stringify(metadata), {
+        expirationTtl: 86400 * 30,
+      });
 
       // Attempt to mint as NFT via the Zora integration
       try {
-        const { ZoraVideoIntegration } = await import("../../zora-video");
+        const { ZoraVideoIntegration } = await import('../../zora-video');
         const zora = new ZoraVideoIntegration(env);
         const mintResult = await zora.mintVideoNFT({
           videoUrl: recordingUrl,
           thumbnailUrl: `https://app.degenfeed.xyz/og/live/${sessionId}.png`,
           title,
-          description: `Live short recording by ${metadata.creatorHandle ?? "creator"}`,
-          creator: String(metadata.creator ?? ""),
+          description: `Live short recording by ${metadata.creatorHandle ?? 'creator'}`,
+          creator: String(metadata.creator ?? ''),
           editionSize: 1,
           contentHash: `live-short-${sessionId}`,
-          chain: "base",
+          chain: 'base',
         });
 
         if (mintResult.ok && mintResult.tokenId) {
@@ -144,11 +140,9 @@ export const zoraLiveStrategy: ProtocolStrategy = {
             mintResult.contractAddress;
           (metadata.properties as Record<string, unknown>).zoraUrl = mintResult.zoraUrl;
 
-          await env.CONTENT_STORE?.put(
-            zoraMetaKey,
-            JSON.stringify(metadata),
-            { expirationTtl: 86400 * 30 },
-          );
+          await env.CONTENT_STORE?.put(zoraMetaKey, JSON.stringify(metadata), {
+            expirationTtl: 86400 * 30,
+          });
         }
       } catch {
         // Minting is best-effort — the metadata is still accessible
@@ -158,10 +152,7 @@ export const zoraLiveStrategy: ProtocolStrategy = {
     }
   },
 
-  async getViewerCount(
-    env: Env,
-    protocolId: string,
-  ): Promise<ViewerCountResult> {
+  async getViewerCount(_env: Env, _protocolId: string): Promise<ViewerCountResult> {
     // Zora: no real-time viewer tracking for NFT metadata.
     // Return 0 — DegenFeed will use the direct HLS connection count.
     return { count: 0, rawSignal: 0 };
@@ -180,8 +171,9 @@ export const zoraLiveStrategy: ProtocolStrategy = {
     try {
       const tipKey = `zora:live-tip:${_protocolId}`;
       const existing = await env.CONTENT_STORE?.get(tipKey).catch(() => null);
-      const tips: Array<{ tipper: string; amount: string; timestamp: number }> =
-        existing ? JSON.parse(existing) : [];
+      const tips: Array<{ tipper: string; amount: string; timestamp: number }> = existing
+        ? JSON.parse(existing)
+        : [];
       tips.push({ tipper, amount, timestamp: Date.now() });
       // Keep only last 100 tips
       const trimmed = tips.slice(-100);

@@ -145,7 +145,14 @@ export function CommunityMemberList({
 
   // Sort: owners first, then mods, then members
   const sorted = [...members].sort((a, b) => {
-    const rank: Record<MemberRole, number> = { owner: 0, moderator: 1, contributor: 2, vip: 2, og: 2, member: 3 };
+    const rank: Record<MemberRole, number> = {
+      owner: 0,
+      moderator: 1,
+      contributor: 2,
+      vip: 2,
+      og: 2,
+      member: 3,
+    };
     return (rank[a.role] ?? 3) - (rank[b.role] ?? 3);
   });
 

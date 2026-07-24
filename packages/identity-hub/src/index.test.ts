@@ -3,7 +3,7 @@
  */
 
 import { describe, expect, it, vi } from 'vitest';
-import { IdentityHub, createIdentityHub } from './index';
+import { createIdentityHub, IdentityHub } from './index';
 
 // ─── Mock KV ───────────────────────────────────────────────────────────
 

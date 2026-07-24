@@ -8,7 +8,11 @@ interface StreamSubscribeButtonProps {
   onSubscribe?: (id: string) => void;
 }
 
-export function StreamSubscribeButton({ streamId, isSubscribed: initial = false, onSubscribe }: StreamSubscribeButtonProps) {
+export function StreamSubscribeButton({
+  streamId,
+  isSubscribed: initial = false,
+  onSubscribe,
+}: StreamSubscribeButtonProps) {
   const [subscribed, setSubscribed] = useState(initial);
   const [showTiers, setShowTiers] = useState(false);
 
@@ -18,11 +22,14 @@ export function StreamSubscribeButton({ streamId, isSubscribed: initial = false,
     { level: 'Tier 3', price: '$24.99', badge: 'SUB', color: '#D499FF' },
   ];
 
-  const handleSubscribe = useCallback((tier: string) => {
-    setSubscribed(true);
-    setShowTiers(false);
-    onSubscribe?.(streamId);
-  }, [streamId, onSubscribe]);
+  const handleSubscribe = useCallback(
+    (_tier: string) => {
+      setSubscribed(true);
+      setShowTiers(false);
+      onSubscribe?.(streamId);
+    },
+    [streamId, onSubscribe],
+  );
 
   if (subscribed) {
     return (
@@ -63,7 +70,10 @@ export function StreamSubscribeButton({ streamId, isSubscribed: initial = false,
               className="flex w-full items-center justify-between px-4 py-3 text-xs transition-colors hover:bg-white/5"
             >
               <div className="flex items-center gap-2">
-                <span className="rounded px-1.5 py-0.5 text-[8px] font-bold text-white" style={{ backgroundColor: tier.color }}>
+                <span
+                  className="rounded px-1.5 py-0.5 text-[8px] font-bold text-white"
+                  style={{ backgroundColor: tier.color }}
+                >
                   {tier.badge}
                 </span>
                 <span className="text-white/90">{tier.level}</span>

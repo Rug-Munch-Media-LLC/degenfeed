@@ -76,23 +76,23 @@ const nextConfig = {
           {
             key: 'Content-Security-Policy',
             value:
-              "default-src 'self'; "
-              + "script-src 'self' 'unsafe-inline' 'unsafe-eval'; "
-              + "style-src 'self' 'unsafe-inline'; "
-              + "img-src 'self' data: https: blob:; "
-              + "connect-src 'self' https: wss:; "
-              + "frame-src 'self' https:; "
-              + "font-src 'self'; "
-              + "object-src 'none'; "
-              + "base-uri 'self'; "
-              + "form-action 'self'",
+              "default-src 'self'; " +
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
+              "style-src 'self' 'unsafe-inline'; " +
+              "img-src 'self' data: https: blob:; " +
+              "connect-src 'self' https: wss:; " +
+              "frame-src 'self' https:; " +
+              "font-src 'self'; " +
+              "object-src 'none'; " +
+              "base-uri 'self'; " +
+              "form-action 'self'",
           },
         ],
       },
     ];
   },
 
-  eslint: { ignoreDuringBuilds: true },    // TODO: Remove by 2026-08-01 — gradually fix lint errors
+  eslint: { ignoreDuringBuilds: true }, // TODO: Remove by 2026-08-01 — gradually fix lint errors
 };
 
 export default nextConfig;

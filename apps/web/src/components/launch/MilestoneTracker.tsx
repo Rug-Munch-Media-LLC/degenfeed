@@ -1,7 +1,6 @@
 'use client';
 
 import { useTokenProgress } from '../../hooks/useTokenCommunity';
-import type { TokenMilestone } from '../../hooks/useTokenCommunity';
 
 /* === Milestone definitions =========================== */
 
@@ -42,7 +41,9 @@ export default function MilestoneTracker({
 
   if (compact) {
     return (
-      <div className={`rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-3 sm:p-4 ${className}`}>
+      <div
+        className={`rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-3 sm:p-4 ${className}`}
+      >
         <h3 className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
           🏆 Community Progress
         </h3>
@@ -87,7 +88,9 @@ export default function MilestoneTracker({
   }
 
   return (
-    <div className={`rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-3 sm:p-4 ${className}`}>
+    <div
+      className={`rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-3 sm:p-4 ${className}`}
+    >
       <h3 className="mb-2 sm:mb-3 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
         🏆 Community Goals
       </h3>
@@ -156,7 +159,8 @@ function MilestoneBadge({
     >
       <span className="text-[10px] sm:text-sm">{milestone.icon}</span>
       <span className="text-[9px] sm:text-[10px] font-medium">
-        {milestone.value}{milestone.type === 'holders' ? 'H' : milestone.type === 'volume' ? 'ETH' : 'D'}
+        {milestone.value}
+        {milestone.type === 'holders' ? 'H' : milestone.type === 'volume' ? 'ETH' : 'D'}
       </span>
       {showLabel && (
         <span className="text-[8px] sm:text-[9px] text-[var(--color-muted)] truncate max-w-[60px] sm:max-w-[80px]">

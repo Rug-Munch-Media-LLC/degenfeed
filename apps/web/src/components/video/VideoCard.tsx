@@ -15,9 +15,9 @@
 
 import Link from 'next/link';
 import { useCallback, useState } from 'react';
-import { VideoSourceBadge } from './VideoSourceBadge';
 import { CreatorPresence } from './CreatorPresence';
-import type { UnifiedVideo, CreatorProfile } from './useVideoHub';
+import type { CreatorProfile, UnifiedVideo } from './useVideoHub';
+import { VideoSourceBadge } from './VideoSourceBadge';
 
 interface VideoCardProps {
   video: UnifiedVideo;
@@ -116,7 +116,9 @@ export function VideoCard({
       onMouseLeave={() => setHovered(false)}
     >
       {/* Thumbnail */}
-      <div className={`relative ${cfg.thumbnail} mb-2 overflow-hidden rounded-xl bg-[var(--color-card)]`}>
+      <div
+        className={`relative ${cfg.thumbnail} mb-2 overflow-hidden rounded-xl bg-[var(--color-card)]`}
+      >
         <img
           src={video.thumbnailUrl}
           alt={video.title}
@@ -217,7 +219,17 @@ export function VideoCard({
             className="shrink-0 self-start rounded-lg p-1 text-[var(--color-muted)] opacity-0 transition-opacity hover:text-[var(--color-fg)] group-hover:opacity-100"
             aria-label="Save video"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
               <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" />
             </svg>
           </button>

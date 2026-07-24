@@ -98,7 +98,9 @@ function generateMockStreams(): LiveStreamsResponse {
       startedAt: now - Math.floor(Math.random() * 7200000),
       tokenAddress: type === 'launch' ? `0x${Math.random().toString(16).slice(2, 42)}` : undefined,
       tokenSymbol:
-        type === 'launch' ? (['DEGEN', 'MEME', 'SOL', 'PEPE', 'DOGE', 'BONK'][i % 6] ?? 'DEGEN') : undefined,
+        type === 'launch'
+          ? (['DEGEN', 'MEME', 'SOL', 'PEPE', 'DOGE', 'BONK'][i % 6] ?? 'DEGEN')
+          : undefined,
       bondingCurveProgress: type === 'launch' ? Math.floor(Math.random() * 100) : undefined,
       tags: ['crypto', 'defi', type],
     };

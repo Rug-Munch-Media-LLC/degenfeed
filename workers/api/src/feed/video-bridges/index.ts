@@ -14,14 +14,14 @@
 
 // ─── Bridge exports ────────────────────────────────────────────────────────
 
-export * from "./odysee";
-export * from "./rumble";
-export * from "./dtube";
-export * from "./bitchute";
-export * from "./peertube";
-export * from "./dailymotion";
-export * from "./vimeo";
-export * from "./twitch";
+export * from './bitchute';
+export * from './dailymotion';
+export * from './dtube';
+export * from './odysee';
+export * from './peertube';
+export * from './rumble';
+export * from './twitch';
+export * from './vimeo';
 
 // ─── Source registry ───────────────────────────────────────────────────────
 
@@ -31,18 +31,18 @@ export * from "./twitch";
  * users follow once and get content from everywhere.
  */
 export const BRIDGE_SOURCES = [
-	"youtube",
-	"twitch",
-	"rumble",
-	"odysee",
-	"dtube",
-	"peertube",
-	"bitchute",
-	"dailymotion",
-	"vimeo",
-	"zora",
-	"tiktok",
-	"instagram",
+  'youtube',
+  'twitch',
+  'rumble',
+  'odysee',
+  'dtube',
+  'peertube',
+  'bitchute',
+  'dailymotion',
+  'vimeo',
+  'zora',
+  'tiktok',
+  'instagram',
 ] as const;
 
 export type BridgeSource = (typeof BRIDGE_SOURCES)[number];
@@ -50,20 +50,17 @@ export type BridgeSource = (typeof BRIDGE_SOURCES)[number];
 /**
  * Platform metadata for badges and UI.
  */
-export const BRIDGE_SOURCE_META: Record<
-	string,
-	{ label: string; color: string; icon?: string }
-> = {
-	youtube: { label: "YouTube", color: "#FF0000" },
-	twitch: { label: "Twitch", color: "#9146FF" },
-	rumble: { label: "Rumble", color: "#85C742" },
-	odysee: { label: "Odysee", color: "#FF6A00" },
-	dtube: { label: "DTube", color: "#FF0000" },
-	peertube: { label: "PeerTube", color: "#F1680D" },
-	bitchute: { label: "BitChute", color: "#8B0000" },
-	dailymotion: { label: "Dailymotion", color: "#0066FF" },
-	vimeo: { label: "Vimeo", color: "#1AB7EA" },
-	zora: { label: "Zora", color: "#0052FF" },
-	tiktok: { label: "TikTok", color: "#010101" },
-	instagram: { label: "Instagram", color: "#E1306C" },
+export const BRIDGE_SOURCE_META: Record<string, { label: string; color: string; icon?: string }> = {
+  youtube: { label: 'YouTube', color: '#FF0000' },
+  twitch: { label: 'Twitch', color: '#9146FF' },
+  rumble: { label: 'Rumble', color: '#85C742' },
+  odysee: { label: 'Odysee', color: '#FF6A00' },
+  dtube: { label: 'DTube', color: '#FF0000' },
+  peertube: { label: 'PeerTube', color: '#F1680D' },
+  bitchute: { label: 'BitChute', color: '#8B0000' },
+  dailymotion: { label: 'Dailymotion', color: '#0066FF' },
+  vimeo: { label: 'Vimeo', color: '#1AB7EA' },
+  zora: { label: 'Zora', color: '#0052FF' },
+  tiktok: { label: 'TikTok', color: '#010101' },
+  instagram: { label: 'Instagram', color: '#E1306C' },
 };

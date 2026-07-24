@@ -23,27 +23,21 @@
 
 import { ErrorBoundary } from '@degenfeed/ui';
 import { useCallback, useState } from 'react';
+import type { EnrichedYouTubeVideo, YouTubeShort } from '../../components/youtube/useYouTube';
 import {
-  YouTubeVideoGrid,
-} from '../../components/youtube/YouTubeVideoGrid';
-import {
-  YouTubeShortsFeed,
-} from '../../components/youtube/YouTubeShortsFeed';
-import {
-  YouTubeCategoryBar,
-} from '../../components/youtube/YouTubeCategoryBar';
+  useYouTubeCategories,
+  useYouTubeRecommended,
+  useYouTubeShorts,
+  useYouTubeTrending,
+} from '../../components/youtube/useYouTube';
+import { YouTubeCategoryBar } from '../../components/youtube/YouTubeCategoryBar';
 import {
   YouTubeSearchBar,
   YouTubeSearchResults,
 } from '../../components/youtube/YouTubeSearchResults';
+import { YouTubeShortsFeed } from '../../components/youtube/YouTubeShortsFeed';
 import { YouTubeSourceBadge } from '../../components/youtube/YouTubeSourceBadge';
-import {
-  useYouTubeTrending,
-  useYouTubeRecommended,
-  useYouTubeShorts,
-  useYouTubeCategories,
-} from '../../components/youtube/useYouTube';
-import type { EnrichedYouTubeVideo, YouTubeShort } from '../../components/youtube/useYouTube';
+import { YouTubeVideoGrid } from '../../components/youtube/YouTubeVideoGrid';
 
 // === Constants ===========================================================
 
@@ -69,7 +63,10 @@ function YouTubePageSkeleton() {
       {/* Category bar skeleton */}
       <div className="flex gap-2">
         {Array.from({ length: 8 }).map((_, i) => (
-          <div key={`cat-skel-${i}`} className="h-8 w-20 rounded-full bg-[var(--color-card)] border border-[var(--color-glass-border)]" />
+          <div
+            key={`cat-skel-${i}`}
+            className="h-8 w-20 rounded-full bg-[var(--color-card)] border border-[var(--color-glass-border)]"
+          />
         ))}
       </div>
 
@@ -78,7 +75,10 @@ function YouTubePageSkeleton() {
         <div className="h-6 w-48 rounded bg-[var(--color-muted)]" />
         <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {Array.from({ length: 8 }).map((_, i) => (
-            <div key={`grid-skel-${i}`} className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] overflow-hidden">
+            <div
+              key={`grid-skel-${i}`}
+              className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] overflow-hidden"
+            >
               <div className="aspect-video bg-[var(--color-muted)]" />
               <div className="p-3 space-y-2">
                 <div className="h-4 w-3/4 rounded bg-[var(--color-muted)]" />
@@ -94,7 +94,10 @@ function YouTubePageSkeleton() {
         <div className="h-6 w-36 rounded bg-[var(--color-muted)]" />
         <div className="flex gap-3">
           {Array.from({ length: 5 }).map((_, i) => (
-            <div key={`shorts-skel-${i}`} className="w-44 md:w-52 aspect-[9/16] rounded-xl bg-[var(--color-card)] border border-[var(--color-glass-border)]" />
+            <div
+              key={`shorts-skel-${i}`}
+              className="w-44 md:w-52 aspect-[9/16] rounded-xl bg-[var(--color-card)] border border-[var(--color-glass-border)]"
+            />
           ))}
         </div>
       </div>
@@ -108,15 +111,20 @@ function YouTubePageError({ message, onRetry }: { message: string; onRetry: () =
   return (
     <div className="flex flex-col items-center justify-center py-20 text-center">
       <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-950/30 border border-red-900/30">
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="text-red-500">
+        <svg
+          width="32"
+          height="32"
+          viewBox="0 0 24 24"
+          fill="none"
+          aria-hidden="true"
+          className="text-red-500"
+        >
           <rect x="4" y="4" width="16" height="16" rx="3" stroke="currentColor" strokeWidth="1.5" />
           <path d="M10 9L16 12L10 15V9Z" fill="currentColor" />
         </svg>
       </div>
       <h2 className="text-xl font-bold text-[var(--color-fg)] mb-2">YouTube Content Unavailable</h2>
-      <p className="text-sm text-[var(--color-muted)] max-w-md mb-6">
-        {message}
-      </p>
+      <p className="text-sm text-[var(--color-muted)] max-w-md mb-6">{message}</p>
       <button
         type="button"
         onClick={onRetry}
@@ -148,20 +156,12 @@ export default function YouTubePage() {
     mutate: retryTrending,
   } = useYouTubeTrending(activeCategory, TRENDING_LIMIT);
 
-  const {
-    videos: recommended,
-    isLoading: recommendedLoading,
-  } = useYouTubeRecommended(RECOMMENDED_LIMIT);
+  const { videos: recommended, isLoading: recommendedLoading } =
+    useYouTubeRecommended(RECOMMENDED_LIMIT);
 
-  const {
-    shorts,
-    isLoading: shortsLoading,
-  } = useYouTubeShorts('crypto', SHORTS_LIMIT);
+  const { shorts, isLoading: shortsLoading } = useYouTubeShorts('crypto', SHORTS_LIMIT);
 
-  const {
-    categories,
-    isLoading: categoriesLoading,
-  } = useYouTubeCategories();
+  const { categories, isLoading: categoriesLoading } = useYouTubeCategories();
 
   // == Callbacks ==
 
@@ -261,7 +261,11 @@ export default function YouTubePage() {
             {/* ══ Error State ══ */}
             {isError && (
               <YouTubePageError
-                message={trendingErr instanceof Error ? trendingErr.message : 'Failed to load YouTube content.'}
+                message={
+                  trendingErr instanceof Error
+                    ? trendingErr.message
+                    : 'Failed to load YouTube content.'
+                }
                 onRetry={() => retryTrending()}
               />
             )}
@@ -336,10 +340,15 @@ export default function YouTubePage() {
                 {activeCategory === 'all' && (
                   <section aria-label="Crypto & Blockchain">
                     <YouTubeVideoGrid
-                      videos={trending.filter((v) =>
-                        ['crypto', 'tech'].includes(v.category) ||
-                        v.tags.some((t) => ['crypto', 'bitcoin', 'ethereum', 'blockchain', 'defi'].includes(t)),
-                      ).slice(0, 8)}
+                      videos={trending
+                        .filter(
+                          (v) =>
+                            ['crypto', 'tech'].includes(v.category) ||
+                            v.tags.some((t) =>
+                              ['crypto', 'bitcoin', 'ethereum', 'blockchain', 'defi'].includes(t),
+                            ),
+                        )
+                        .slice(0, 8)}
                       title="Crypto & Blockchain"
                       onPlay={handlePlay}
                       onTip={handleTip}
@@ -354,9 +363,10 @@ export default function YouTubePage() {
                 <footer className="border-t border-[var(--color-glass-border)] pt-6 pb-4">
                   <div className="flex flex-col items-center text-center gap-2">
                     <p className="text-xs text-[var(--color-muted)] max-w-lg">
-                      <YouTubeSourceBadge source="youtube" size="sm" /> Content is sourced from YouTube and
-                      curated algorithmically for your interests. We clearly label all content by its original source.
-                      YouTube is a trademark of Google LLC. This project is not affiliated with or endorsed by YouTube.
+                      <YouTubeSourceBadge source="youtube" size="sm" /> Content is sourced from
+                      YouTube and curated algorithmically for your interests. We clearly label all
+                      content by its original source. YouTube is a trademark of Google LLC. This
+                      project is not affiliated with or endorsed by YouTube.
                     </p>
                     <div className="flex items-center gap-3 text-[10px] text-[var(--color-muted)]">
                       <span>{'\u25B6'} YouTube = Red badge</span>

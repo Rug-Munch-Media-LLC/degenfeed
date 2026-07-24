@@ -13,10 +13,7 @@ export const dynamic = 'force-dynamic';
  * Premium tier: unlimited targets.
  * Free tier: limited to 3 targets per request.
  */
-export async function POST(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
     if (!id || id.length < 8) {
@@ -34,16 +31,17 @@ export async function POST(
     }
 
     // Fetch video details to include in the announcement
-    const baseUrl = process.env.WORKER_URL
-      ?? process.env.NEXT_PUBLIC_WORKER_URL
-      ?? process.env.NEXT_PUBLIC_API_BASE
-      ?? 'http://localhost:8787';
+    const baseUrl =
+      process.env.WORKER_URL ??
+      process.env.NEXT_PUBLIC_WORKER_URL ??
+      process.env.NEXT_PUBLIC_API_BASE ??
+      'http://localhost:8787';
 
     const forwardedHeaders: Record<string, string> = {};
     const cookie = request.headers.get('cookie');
-    if (cookie) forwardedHeaders['Cookie'] = cookie;
+    if (cookie) forwardedHeaders.Cookie = cookie;
     const auth = request.headers.get('authorization');
-    if (auth) forwardedHeaders['Authorization'] = auth;
+    if (auth) forwardedHeaders.Authorization = auth;
 
     // Get video metadata for the announcement
     const videoRes = await fetch(`${baseUrl}/api/creator/videos/${id}`, {
@@ -53,7 +51,7 @@ export async function POST(
     let videoTitle = 'Untitled';
     let videoUrl = '';
     if (videoRes.ok) {
-      const videoData = await videoRes.json() as { video?: { title: string; url: string } };
+      const videoData = (await videoRes.json()) as { video?: { title: string; url: string } };
       if (videoData.video) {
         videoTitle = videoData.video.title;
         videoUrl = videoData.video.url;

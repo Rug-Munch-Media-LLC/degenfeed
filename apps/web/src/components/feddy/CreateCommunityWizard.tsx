@@ -25,7 +25,8 @@ function validateName(name: string): string | null {
   if (cleaned.length < 3) return 'Community name must be at least 3 characters';
   if (cleaned.length > 30) return 'Community name must be at most 30 characters';
   if (!/^[a-z0-9-]+$/.test(cleaned)) return 'Use only lowercase letters, numbers, and hyphens';
-  if (cleaned.startsWith('-') || cleaned.endsWith('-')) return 'Name cannot start or end with a hyphen';
+  if (cleaned.startsWith('-') || cleaned.endsWith('-'))
+    return 'Name cannot start or end with a hyphen';
   if (/--/.test(cleaned)) return 'Name cannot contain consecutive hyphens';
   return null;
 }
@@ -48,9 +49,11 @@ function StepName({
       <div className="rounded-xl border border-purple-500/20 bg-purple-500/5 p-4">
         <p className="text-xs text-purple-400">
           Your community will be accessible at{' '}
-          <span className="font-mono font-bold">degenfeed.xyz/feddy/{name || 'your-name'}</span>{' '}
-          and federate via{' '}
-          <span className="font-mono font-bold">@{name || 'your-name'}@communities.degenfeed.xyz</span>
+          <span className="font-mono font-bold">degenfeed.xyz/feddy/{name || 'your-name'}</span> and
+          federate via{' '}
+          <span className="font-mono font-bold">
+            @{name || 'your-name'}@communities.degenfeed.xyz
+          </span>
         </p>
       </div>
 
@@ -69,7 +72,6 @@ function StepName({
               ? 'border-red-500/40 focus:border-red-500/60 focus:ring-red-500/20'
               : 'border-[var(--color-border)] focus:border-degen-500/40 focus:ring-degen-500/20'
           }`}
-          autoFocus
         />
         <div className="mt-1.5 flex items-center justify-between">
           <p className="text-[10px] text-[var(--color-muted)]">
@@ -240,14 +242,17 @@ function StepRules({
             Preview
           </p>
           <ol className="space-y-2">
-            {rulesText.split('\n').filter((r) => r.trim()).map((rule, i) => (
-              <li key={i} className="flex gap-2 text-xs text-[var(--color-muted)]">
-                <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-degen-500/15 text-[8px] font-bold text-degen-400">
-                  {i + 1}
-                </span>
-                <span>{rule}</span>
-              </li>
-            ))}
+            {rulesText
+              .split('\n')
+              .filter((r) => r.trim())
+              .map((rule, i) => (
+                <li key={i} className="flex gap-2 text-xs text-[var(--color-muted)]">
+                  <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-degen-500/15 text-[8px] font-bold text-degen-400">
+                    {i + 1}
+                  </span>
+                  <span>{rule}</span>
+                </li>
+              ))}
           </ol>
         </div>
       )}
@@ -344,7 +349,10 @@ function StepReview({
   linkedCoin: string;
 }) {
   const rulesList = rulesText.split('\n').filter((r) => r.trim());
-  const tagsList = tags.split(',').map((t) => t.trim()).filter(Boolean);
+  const tagsList = tags
+    .split(',')
+    .map((t) => t.trim())
+    .filter(Boolean);
   const catEmoji = CATEGORY_EMOJIS[category as FeddyCategory] || '🌐';
   const catLabel = CATEGORY_LABELS[category as FeddyCategory] || category;
 
@@ -361,7 +369,15 @@ function StepReview({
         {/* Banner preview */}
         <div
           className="h-24 bg-gradient-to-r from-degen-500/10 via-purple-500/10 to-degen-500/5 sm:h-32"
-          style={bannerUrl ? { backgroundImage: `url(${bannerUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}}
+          style={
+            bannerUrl
+              ? {
+                  backgroundImage: `url(${bannerUrl})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                }
+              : {}
+          }
         />
 
         <div className="px-4 pb-4 sm:px-5">
@@ -389,16 +405,17 @@ function StepReview({
 
           {/* Handle */}
           <div className="mt-3 rounded-lg bg-[var(--color-overlay)] px-3 py-2">
-            <p className="font-mono text-xs text-degen-400">
-              @{name}@communities.degenfeed.xyz
-            </p>
+            <p className="font-mono text-xs text-degen-400">@{name}@communities.degenfeed.xyz</p>
           </div>
 
           {/* Tags */}
           {tagsList.length > 0 && (
             <div className="mt-3 flex flex-wrap gap-1.5">
               {tagsList.slice(0, 5).map((tag) => (
-                <span key={tag} className="rounded-full bg-[var(--color-overlay)] px-2 py-0.5 text-[9px] text-[var(--color-muted)]">
+                <span
+                  key={tag}
+                  className="rounded-full bg-[var(--color-overlay)] px-2 py-0.5 text-[9px] text-[var(--color-muted)]"
+                >
                   #{tag}
                 </span>
               ))}
@@ -436,11 +453,7 @@ function StepReview({
 
 // === Main Wizard =======================================================
 
-export function CreateCommunityWizard({
-  onCreated,
-}: {
-  onCreated: (name: string) => void;
-}) {
+export function CreateCommunityWizard({ onCreated }: { onCreated: (name: string) => void }) {
   const [currentStep, setCurrentStep] = useState<number>(0);
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -462,14 +475,30 @@ export function CreateCommunityWizard({
   // Handle field changes
   const handleFieldChange = useCallback((field: string, value: string | boolean) => {
     switch (field) {
-      case 'displayName': setDisplayName(value as string); break;
-      case 'description': setDescription(value as string); break;
-      case 'category': setCategory(value as FeddyCategory); break;
-      case 'tags': setTags(value as string); break;
-      case 'linkedCoin': setLinkedCoin(value as string); break;
-      case 'avatarUrl': setAvatarUrl(value as string); break;
-      case 'bannerUrl': setBannerUrl(value as string); break;
-      case 'isPrivate': setIsPrivate(value as boolean); break;
+      case 'displayName':
+        setDisplayName(value as string);
+        break;
+      case 'description':
+        setDescription(value as string);
+        break;
+      case 'category':
+        setCategory(value as FeddyCategory);
+        break;
+      case 'tags':
+        setTags(value as string);
+        break;
+      case 'linkedCoin':
+        setLinkedCoin(value as string);
+        break;
+      case 'avatarUrl':
+        setAvatarUrl(value as string);
+        break;
+      case 'bannerUrl':
+        setBannerUrl(value as string);
+        break;
+      case 'isPrivate':
+        setIsPrivate(value as boolean);
+        break;
     }
   }, []);
 
@@ -530,7 +559,10 @@ export function CreateCommunityWizard({
           description,
           rules: rulesText.split('\n').filter((r) => r.trim()),
           category,
-          tags: tags.split(',').map((t) => t.trim()).filter(Boolean),
+          tags: tags
+            .split(',')
+            .map((t) => t.trim())
+            .filter(Boolean),
           avatar: avatarUrl || undefined,
           banner: bannerUrl || undefined,
           isPrivate,
@@ -540,17 +572,31 @@ export function CreateCommunityWizard({
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error((data as Record<string, string>).error || `Failed to create (${res.status})`);
+        throw new Error(
+          (data as Record<string, string>).error || `Failed to create (${res.status})`,
+        );
       }
 
-      const community = await res.json() as { name: string };
+      const community = (await res.json()) as { name: string };
       onCreated(community.name);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create community');
     } finally {
       setCreating(false);
     }
-  }, [name, displayName, description, rulesText, category, tags, avatarUrl, bannerUrl, isPrivate, linkedCoin, onCreated]);
+  }, [
+    name,
+    displayName,
+    description,
+    rulesText,
+    category,
+    tags,
+    avatarUrl,
+    bannerUrl,
+    isPrivate,
+    linkedCoin,
+    onCreated,
+  ]);
 
   const step = STEPS[currentStep];
 
@@ -563,7 +609,7 @@ export function CreateCommunityWizard({
             <div key={s} className="flex items-center">
               <button
                 type="button"
-                onClick={() => i < currentStep ? setCurrentStep(i) : undefined}
+                onClick={() => (i < currentStep ? setCurrentStep(i) : undefined)}
                 className={`flex items-center gap-1.5 text-xs font-medium transition-all ${
                   i === currentStep
                     ? 'text-degen-400'
@@ -583,7 +629,9 @@ export function CreateCommunityWizard({
                 >
                   {i < currentStep ? '✓' : i + 1}
                 </span>
-                <span className="hidden sm:inline">{STEP_ICONS[s]} {s}</span>
+                <span className="hidden sm:inline">
+                  {STEP_ICONS[s]} {s}
+                </span>
               </button>
               {i < STEPS.length - 1 && (
                 <div
@@ -617,12 +665,7 @@ export function CreateCommunityWizard({
             onChange={handleFieldChange}
           />
         )}
-        {step === 'Rules' && (
-          <StepRules
-            rulesText={rulesText}
-            onChange={setRulesText}
-          />
-        )}
+        {step === 'Rules' && <StepRules rulesText={rulesText} onChange={setRulesText} />}
         {step === 'Appearance' && (
           <StepAppearance
             avatarUrl={avatarUrl}

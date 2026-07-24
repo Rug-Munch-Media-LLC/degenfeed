@@ -1,9 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { CHAT_BADGES, type ChatBadge, DEFAULT_EMOTES, type Emote } from './types';
 import type { ChatMessage } from '../streams/useStreamChat';
 import { useStreamChat } from '../streams/useStreamChat';
+import { CHAT_BADGES, type ChatBadge, DEFAULT_EMOTES, type Emote } from './types';
 
 /* === Badge display ============================================ */
 
@@ -24,7 +24,13 @@ function ChatBadgeDisplay({ badge }: { badge?: ChatBadge | string }) {
 
 /* === Emote Picker ============================================= */
 
-function EmotePicker({ onSelect, onClose }: { onSelect: (emote: Emote) => void; onClose: () => void }) {
+function EmotePicker({
+  onSelect,
+  onClose,
+}: {
+  onSelect: (emote: Emote) => void;
+  onClose: () => void;
+}) {
   const categories = Array.from(new Set(DEFAULT_EMOTES.map((e) => e.category ?? 'other')));
   const [activeCategory, setActiveCategory] = useState(categories[0]);
 
@@ -40,7 +46,9 @@ function EmotePicker({ onSelect, onClose }: { onSelect: (emote: Emote) => void; 
             type="button"
             onClick={() => setActiveCategory(cat)}
             className={`rounded-lg px-2.5 py-1 text-[10px] font-medium capitalize transition-colors ${
-              activeCategory === cat ? 'bg-degen-500/20 text-degen-400' : 'text-white/50 hover:text-white/80'
+              activeCategory === cat
+                ? 'bg-degen-500/20 text-degen-400'
+                : 'text-white/50 hover:text-white/80'
             }`}
           >
             {cat}
@@ -54,7 +62,10 @@ function EmotePicker({ onSelect, onClose }: { onSelect: (emote: Emote) => void; 
           <button
             key={emote.id}
             type="button"
-            onClick={() => { onSelect(emote); onClose(); }}
+            onClick={() => {
+              onSelect(emote);
+              onClose();
+            }}
             className="flex aspect-square items-center justify-center rounded-lg text-lg transition-colors hover:bg-white/10"
             title={emote.name}
           >
@@ -70,7 +81,9 @@ function EmotePicker({ onSelect, onClose }: { onSelect: (emote: Emote) => void; 
 
 function ChatMessageBubble({ msg, isLocal }: { msg: ChatMessage; isLocal: boolean }) {
   return (
-    <div className={`flex items-start gap-2 px-3 py-1.5 transition-colors hover:bg-white/5 ${isLocal ? 'bg-degen-500/5' : ''}`}>
+    <div
+      className={`flex items-start gap-2 px-3 py-1.5 transition-colors hover:bg-white/5 ${isLocal ? 'bg-degen-500/5' : ''}`}
+    >
       {/* Avatar */}
       <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-degen-500/30 to-purple-500/30 text-[7px] font-bold text-degen-400">
         {msg.avatarUrl ? (
@@ -82,11 +95,15 @@ function ChatMessageBubble({ msg, isLocal }: { msg: ChatMessage; isLocal: boolea
 
       <div className="min-w-0 flex-1">
         <div className="flex items-baseline gap-1 flex-wrap">
-          <span className={`truncate text-xs font-semibold ${isLocal ? 'text-degen-400' : 'text-white/90'}`}>
+          <span
+            className={`truncate text-xs font-semibold ${isLocal ? 'text-degen-400' : 'text-white/90'}`}
+          >
             {msg.displayName}
           </span>
           {(msg as ChatMessage & { badge?: string }).badge && (
-            <ChatBadgeDisplay badge={(msg as ChatMessage & { badge?: string }).badge as ChatBadge} />
+            <ChatBadgeDisplay
+              badge={(msg as ChatMessage & { badge?: string }).badge as ChatBadge}
+            />
           )}
           <span className="shrink-0 text-[9px] tabular-nums text-white/30">
             {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -100,7 +117,11 @@ function ChatMessageBubble({ msg, isLocal }: { msg: ChatMessage; isLocal: boolea
 
 /* === Chat Input =============================================== */
 
-function ChatInputField({ onSend, disabled, onSlowMode: onSlowModeProp }: {
+function ChatInputField({
+  onSend,
+  disabled,
+  onSlowMode: onSlowModeProp,
+}: {
   onSend: (text: string) => void;
   disabled?: boolean;
   onSlowMode?: (v: boolean) => void;
@@ -111,32 +132,38 @@ function ChatInputField({ onSend, disabled, onSlowMode: onSlowModeProp }: {
   const [cooldown, setCooldown] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const handleSubmit = useCallback((e: React.FormEvent) => {
-    e.preventDefault();
-    if (!value.trim() || cooldown) return;
-    if (value.startsWith('/')) {
-      // Command handling
-      const cmd = value.slice(1).split(' ').shift()?.toLowerCase() ?? '';
-      if (cmd === 'slow') {
-        setSlowMode((v) => { onSlowModeProp?.(!v); return !v; });
-        setValue('');
-        return;
+  const handleSubmit = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!value.trim() || cooldown) return;
+      if (value.startsWith('/')) {
+        // Command handling
+        const cmd = value.slice(1).split(' ').shift()?.toLowerCase() ?? '';
+        if (cmd === 'slow') {
+          setSlowMode((v) => {
+            onSlowModeProp?.(!v);
+            return !v;
+          });
+          setValue('');
+          return;
+        }
+        if (cmd === 'clear') {
+          setValue('');
+          return;
+        }
       }
-      if (cmd === 'clear') {
-        setValue('');
-        return;
+      onSend(value.trim());
+      setValue('');
+      if (slowMode) {
+        setCooldown(true);
+        setTimeout(() => setCooldown(false), 3000);
       }
-    }
-    onSend(value.trim());
-    setValue('');
-    if (slowMode) {
-      setCooldown(true);
-      setTimeout(() => setCooldown(false), 3000);
-    }
-  }, [value, onSend, cooldown, slowMode, onSlowModeProp]);
+    },
+    [value, onSend, cooldown, slowMode, onSlowModeProp],
+  );
 
   const handleEmoteSelect = useCallback((emote: Emote) => {
-    setValue((v) => v + ' ' + emote.src + ' ');
+    setValue((v) => `${v} ${emote.src} `);
     inputRef.current?.focus();
   }, []);
 
@@ -151,7 +178,17 @@ function ChatInputField({ onSend, disabled, onSlowMode: onSlowModeProp }: {
             className="flex h-8 w-8 items-center justify-center rounded-lg text-white/40 transition-colors hover:bg-white/10 hover:text-white"
             aria-label="Emotes"
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
               <circle cx="12" cy="12" r="10" />
               <path d="M8 14s1.5 2 4 2 4-2 4-2" />
               <line x1="9" y1="9" x2="9.01" y2="9" />
@@ -159,10 +196,7 @@ function ChatInputField({ onSend, disabled, onSlowMode: onSlowModeProp }: {
             </svg>
           </button>
           {showEmotes && (
-            <EmotePicker
-              onSelect={handleEmoteSelect}
-              onClose={() => setShowEmotes(false)}
-            />
+            <EmotePicker onSelect={handleEmoteSelect} onClose={() => setShowEmotes(false)} />
           )}
         </div>
 
@@ -217,7 +251,11 @@ interface StreamChatProps {
   onSlowMode?: (v: boolean) => void;
 }
 
-export function StreamChat({ streamId, maxHeight = 'calc(100vh - 80px)', onSlowMode }: StreamChatProps) {
+export function StreamChat({
+  streamId,
+  maxHeight = 'calc(100vh - 80px)',
+  onSlowMode,
+}: StreamChatProps) {
   const { messages, sendMessage, isConnected } = useStreamChat({ streamId });
   const bottomRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -229,14 +267,14 @@ export function StreamChat({ streamId, maxHeight = 'calc(100vh - 80px)', onSlowM
     if (!autoScroll) return;
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
     setUnreadCount(0);
-  }, [messages, autoScroll]);
+  }, [autoScroll]);
 
   // Track unread when not auto-scrolling
   useEffect(() => {
     if (!autoScroll) {
       setUnreadCount((c) => c + 1);
     }
-  }, [messages.length, autoScroll]);
+  }, [autoScroll]);
 
   const handleScroll = useCallback(() => {
     const el = containerRef.current;
@@ -271,9 +309,7 @@ export function StreamChat({ streamId, maxHeight = 'calc(100vh - 80px)', onSlowM
               +{unreadCount}
             </span>
           )}
-          <span className="text-[10px] tabular-nums text-white/40">
-            {messages.length}
-          </span>
+          <span className="text-[10px] tabular-nums text-white/40">{messages.length}</span>
         </div>
       </div>
 
@@ -293,11 +329,7 @@ export function StreamChat({ streamId, maxHeight = 'calc(100vh - 80px)', onSlowM
           </div>
         ) : (
           messages.map((msg) => (
-            <ChatMessageBubble
-              key={msg.id}
-              msg={msg}
-              isLocal={msg.userId === 'local-user'}
-            />
+            <ChatMessageBubble key={msg.id} msg={msg} isLocal={msg.userId === 'local-user'} />
           ))
         )}
         <div ref={bottomRef} />
@@ -314,7 +346,17 @@ export function StreamChat({ streamId, maxHeight = 'calc(100vh - 80px)', onSlowM
           className="absolute bottom-14 right-3 flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-gray-800 text-white/50 shadow-lg transition-all hover:text-white"
           aria-label="Scroll to bottom"
         >
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
             <polyline points="6 9 12 15 18 9" />
           </svg>
         </button>

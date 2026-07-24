@@ -9,8 +9,8 @@
  * new notifications arrive via WebSocket.
  */
 
-import { CHANNELS, useRealtimeContext } from '@degenfeed/ui';
 import type { Notification } from '@degenfeed/ui';
+import { CHANNELS, useRealtimeContext } from '@degenfeed/ui';
 import {
   createContext,
   useCallback,

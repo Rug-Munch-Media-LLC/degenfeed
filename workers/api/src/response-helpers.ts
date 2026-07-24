@@ -25,8 +25,8 @@
  * instead of index.ts, but both coexist for now.
  */
 
-import { logError } from "./error-logger";
-import type { Env } from "./index";
+import { logError } from './error-logger';
+import type { Env } from './index';
 
 // ─── Success responses ──────────────────────────────────────────
 
@@ -34,31 +34,25 @@ import type { Env } from "./index";
  * 200 OK — Standard successful response.
  * Wraps data in a `{ data }` envelope for consistency.
  */
-export function ok<T>(
-	data: T,
-	extraHeaders?: Record<string, string>,
-): Response {
-	return jsonResponse(data, 200, extraHeaders);
+export function ok<T>(data: T, extraHeaders?: Record<string, string>): Response {
+  return jsonResponse(data, 200, extraHeaders);
 }
 
 /**
  * 201 Created — Resource was successfully created.
  */
-export function created<T>(
-	data: T,
-	extraHeaders?: Record<string, string>,
-): Response {
-	return jsonResponse(data, 201, extraHeaders);
+export function created<T>(data: T, extraHeaders?: Record<string, string>): Response {
+  return jsonResponse(data, 201, extraHeaders);
 }
 
 /**
  * 204 No Content — Success but no body to return.
  */
 export function noContent(): Response {
-	return new Response(null, {
-		status: 204,
-		headers: { "cache-control": "no-store" },
-	});
+  return new Response(null, {
+    status: 204,
+    headers: { 'cache-control': 'no-store' },
+  });
 }
 
 // ─── Error responses ────────────────────────────────────────────
@@ -66,104 +60,86 @@ export function noContent(): Response {
 /**
  * 400 Bad Request — Client sent invalid input.
  */
-export function badRequest(
-	message: string,
-	extraHeaders?: Record<string, string>,
-): Response {
-	return jsonResponse({ error: message }, 400, extraHeaders);
+export function badRequest(message: string, extraHeaders?: Record<string, string>): Response {
+  return jsonResponse({ error: message }, 400, extraHeaders);
 }
 
 /**
  * 401 Unauthorized — Authentication required or failed.
  */
 export function unauthorized(
-	message = "Unauthorized",
-	extraHeaders?: Record<string, string>,
+  message = 'Unauthorized',
+  extraHeaders?: Record<string, string>,
 ): Response {
-	return jsonResponse({ error: message }, 401, extraHeaders);
+  return jsonResponse({ error: message }, 401, extraHeaders);
 }
 
 /**
  * 403 Forbidden — Authenticated but not permitted.
  */
-export function forbidden(
-	message = "Forbidden",
-	extraHeaders?: Record<string, string>,
-): Response {
-	return jsonResponse({ error: message }, 403, extraHeaders);
+export function forbidden(message = 'Forbidden', extraHeaders?: Record<string, string>): Response {
+  return jsonResponse({ error: message }, 403, extraHeaders);
 }
 
 /**
  * 404 Not Found — Resource does not exist.
  */
-export function notFound(
-	message = "Not found",
-	extraHeaders?: Record<string, string>,
-): Response {
-	return jsonResponse({ error: message }, 404, extraHeaders);
+export function notFound(message = 'Not found', extraHeaders?: Record<string, string>): Response {
+  return jsonResponse({ error: message }, 404, extraHeaders);
 }
 
 /**
  * 405 Method Not Allowed — HTTP method not supported for this endpoint.
  */
 export function methodNotAllowed(
-	message = "Method not allowed",
-	extraHeaders?: Record<string, string>,
+  message = 'Method not allowed',
+  extraHeaders?: Record<string, string>,
 ): Response {
-	return jsonResponse({ error: message }, 405, extraHeaders);
+  return jsonResponse({ error: message }, 405, extraHeaders);
 }
 
 /**
  * 409 Conflict — Resource state conflict (e.g., duplicate).
  */
-export function conflict(
-	message: string,
-	extraHeaders?: Record<string, string>,
-): Response {
-	return jsonResponse({ error: message }, 409, extraHeaders);
+export function conflict(message: string, extraHeaders?: Record<string, string>): Response {
+  return jsonResponse({ error: message }, 409, extraHeaders);
 }
 
 /**
  * 410 Gone — Resource has been permanently removed.
  */
-export function gone(
-	message: string,
-	extraHeaders?: Record<string, string>,
-): Response {
-	return jsonResponse({ error: message }, 410, extraHeaders);
+export function gone(message: string, extraHeaders?: Record<string, string>): Response {
+  return jsonResponse({ error: message }, 410, extraHeaders);
 }
 
 /**
  * 415 Unsupported Media Type — Request body format not supported.
  */
 export function unsupportedMediaType(
-	message = "Unsupported media type",
-	extraHeaders?: Record<string, string>,
+  message = 'Unsupported media type',
+  extraHeaders?: Record<string, string>,
 ): Response {
-	return jsonResponse({ error: message }, 415, extraHeaders);
+  return jsonResponse({ error: message }, 415, extraHeaders);
 }
 
 /**
  * 422 Unprocessable Entity — Semantic validation failure.
  */
-export function unprocessable(
-	message: string,
-	extraHeaders?: Record<string, string>,
-): Response {
-	return jsonResponse({ error: message }, 422, extraHeaders);
+export function unprocessable(message: string, extraHeaders?: Record<string, string>): Response {
+  return jsonResponse({ error: message }, 422, extraHeaders);
 }
 
 /**
  * 429 Too Many Requests — Rate limit exceeded.
  */
 export function tooManyRequests(
-	retryAfterMs: number,
-	extraHeaders?: Record<string, string>,
+  retryAfterMs: number,
+  extraHeaders?: Record<string, string>,
 ): Response {
-	return jsonResponse({ error: "Rate limit exceeded", retryAfterMs }, 429, {
-		"retry-after": String(Math.ceil(retryAfterMs / 1000)),
-		...extraHeaders,
-	});
+  return jsonResponse({ error: 'Rate limit exceeded', retryAfterMs }, 429, {
+    'retry-after': String(Math.ceil(retryAfterMs / 1000)),
+    ...extraHeaders,
+  });
 }
 
 /**
@@ -171,38 +147,38 @@ export function tooManyRequests(
  * ALWAYS logs the error with context before returning a sanitized message.
  */
 export function serverError(
-	env: Env,
-	error: unknown,
-	ctx?: { route?: string; method?: string },
+  env: Env,
+  error: unknown,
+  ctx?: { route?: string; method?: string },
 ): Response {
-	if (ctx?.route) {
-		logError(env, error, {
-			route: ctx.route,
-			method: ctx.method ?? "UNKNOWN",
-			statusCode: 500,
-		});
-	}
-	return jsonResponse({ error: "Internal server error" }, 500);
+  if (ctx?.route) {
+    logError(env, error, {
+      route: ctx.route,
+      method: ctx.method ?? 'UNKNOWN',
+      statusCode: 500,
+    });
+  }
+  return jsonResponse({ error: 'Internal server error' }, 500);
 }
 
 /**
  * 502 Bad Gateway — Upstream service returned an error.
  */
 export function badGateway(
-	message = "Upstream service error",
-	extraHeaders?: Record<string, string>,
+  message = 'Upstream service error',
+  extraHeaders?: Record<string, string>,
 ): Response {
-	return jsonResponse({ error: message }, 502, extraHeaders);
+  return jsonResponse({ error: message }, 502, extraHeaders);
 }
 
 /**
  * 503 Service Unavailable — Temporary overload or maintenance.
  */
 export function serviceUnavailable(
-	message = "Service temporarily unavailable",
-	extraHeaders?: Record<string, string>,
+  message = 'Service temporarily unavailable',
+  extraHeaders?: Record<string, string>,
 ): Response {
-	return jsonResponse({ error: message }, 503, extraHeaders);
+  return jsonResponse({ error: message }, 503, extraHeaders);
 }
 
 // ─── Shared JSON response builder ───────────────────────────────
@@ -213,16 +189,16 @@ export function serviceUnavailable(
  * in index.ts — both are kept for backward compatibility.
  */
 export function jsonResponse(
-	data: unknown,
-	status = 200,
-	extraHeaders?: Record<string, string>,
+  data: unknown,
+  status = 200,
+  extraHeaders?: Record<string, string>,
 ): Response {
-	const headers: Record<string, string> = {
-		"content-type": "application/json",
-		...(status >= 200 && status < 300
-			? { "cache-control": "public, max-age=30" }
-			: { "cache-control": "no-store" }),
-		...extraHeaders,
-	};
-	return new Response(JSON.stringify(data), { status, headers });
+  const headers: Record<string, string> = {
+    'content-type': 'application/json',
+    ...(status >= 200 && status < 300
+      ? { 'cache-control': 'public, max-age=30' }
+      : { 'cache-control': 'no-store' }),
+    ...extraHeaders,
+  };
+  return new Response(JSON.stringify(data), { status, headers });
 }

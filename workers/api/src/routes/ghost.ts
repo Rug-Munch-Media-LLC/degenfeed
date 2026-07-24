@@ -14,7 +14,7 @@
  */
 
 import { GhostBridge, type Protocol } from '@degenfeed/ghost-bridge';
-import type { Env, jsonResponse, noCacheJsonResponse } from '../index';
+import type { Env } from '../index';
 import { requireSession } from '../session';
 
 // ─── Types ─────────────────────────────────────────────────────────
@@ -221,7 +221,10 @@ export async function handleGhostCrossPost(request: Request, env: GhostEnv): Pro
 
 // ─── POST /api/ghost/newsletter/send — Send newsletter ───────────
 
-export async function handleGhostNewsletterSend(request: Request, env: GhostEnv): Promise<Response> {
+export async function handleGhostNewsletterSend(
+  request: Request,
+  env: GhostEnv,
+): Promise<Response> {
   try {
     const session = await requireSession(request, env);
     if (session instanceof Response) return session;
@@ -234,7 +237,7 @@ export async function handleGhostNewsletterSend(request: Request, env: GhostEnv)
 
     // Cross-post summary to all protocols
     try {
-      const post = await bridge.getPost(body.postId);
+      const _post = await bridge.getPost(body.postId);
       await bridge.crossPublish(body.postId, ['nostr', 'farcaster', 'bluesky']);
     } catch {
       // Non-fatal — newsletter still sent
@@ -289,9 +292,10 @@ export async function handleGhostSubscribe(request: Request, env: GhostEnv): Pro
       ok: true,
       email: subscriber.email,
       tier,
-      message: tier === 'paid'
-        ? 'Subscribed to paid newsletter! Check your email for payment details.'
-        : 'Subscribed to free newsletter! Check your email for confirmation.',
+      message:
+        tier === 'paid'
+          ? 'Subscribed to paid newsletter! Check your email for payment details.'
+          : 'Subscribed to free newsletter! Check your email for confirmation.',
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error';
@@ -328,7 +332,7 @@ export async function handleGhostUnsubscribe(request: Request, env: GhostEnv): P
 
 // ─── GET /api/ghost/subscribers — List subscribers (admin) ────────
 
-export async function handleGhostSubscribers(request: Request, env: GhostEnv): Promise<Response> {
+export async function handleGhostSubscribers(_request: Request, env: GhostEnv): Promise<Response> {
   try {
     const subscribers: Array<Record<string, unknown>> = [];
 

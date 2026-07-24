@@ -20,14 +20,44 @@ import { type GuestIdentity, PLATFORM_CONFIG, type SourcePlatform } from './type
 const STORAGE_KEY = 'df_guest_identity';
 
 const GUEST_ADJECTIVES = [
-  'Bold', 'Clever', 'Swift', 'Brave', 'Calm', 'Eager', 'Fancy', 'Grand',
-  'Happy', 'Jolly', 'Keen', 'Lively', 'Mellow', 'Noble', 'Proud', 'Quick',
-  'Rapid', 'Sharp', 'Sure', 'Wise',
+  'Bold',
+  'Clever',
+  'Swift',
+  'Brave',
+  'Calm',
+  'Eager',
+  'Fancy',
+  'Grand',
+  'Happy',
+  'Jolly',
+  'Keen',
+  'Lively',
+  'Mellow',
+  'Noble',
+  'Proud',
+  'Quick',
+  'Rapid',
+  'Sharp',
+  'Sure',
+  'Wise',
 ];
 
 const GUEST_NOUNS = [
-  'Degen', 'Maxi', 'Whale', 'Shark', 'Fox', 'Owl', 'Bear', 'Wolf',
-  'Lynx', 'Hawk', 'Ape', 'Bull', 'Koala', 'Panda', 'Raven',
+  'Degen',
+  'Maxi',
+  'Whale',
+  'Shark',
+  'Fox',
+  'Owl',
+  'Bear',
+  'Wolf',
+  'Lynx',
+  'Hawk',
+  'Ape',
+  'Bull',
+  'Koala',
+  'Panda',
+  'Raven',
 ];
 
 /* === Helpers ===================================================== */
@@ -139,9 +169,7 @@ function GuestMessageBubble({
             })}
           </span>
         </div>
-        <p className="text-xs leading-relaxed text-[var(--color-fg)]/70 break-words">
-          {msg.text}
-        </p>
+        <p className="text-xs leading-relaxed text-[var(--color-fg)]/70 break-words">{msg.text}</p>
       </div>
     </div>
   );
@@ -191,13 +219,7 @@ function GuestChatInput({
           className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-degen-500 text-black transition-all hover:bg-degen-400 disabled:opacity-30"
           aria-label="Send message"
         >
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            aria-hidden="true"
-          >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
             <polygon points="5 3 19 12 5 21 5 3" />
           </svg>
         </button>
@@ -239,14 +261,14 @@ export function GuestChat({
     if (!autoScroll) return;
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
     setUnreadCount(0);
-  }, [messages, autoScroll]);
+  }, [autoScroll]);
 
   // Track unread when not auto-scrolling
   useEffect(() => {
     if (!autoScroll) {
       setUnreadCount((c) => c + 1);
     }
-  }, [messages.length, autoScroll]);
+  }, [autoScroll]);
 
   const handleScroll = useCallback(() => {
     const el = containerRef.current;
@@ -288,9 +310,7 @@ export function GuestChat({
           </span>
           <span
             className={`inline-block h-1.5 w-1.5 rounded-full ${
-              isConnected
-                ? 'bg-degen-500 shadow-[0_0_6px_rgba(0,255,65,0.5)]'
-                : 'bg-amber-500'
+              isConnected ? 'bg-degen-500 shadow-[0_0_6px_rgba(0,255,65,0.5)]' : 'bg-amber-500'
             }`}
             title={isConnected ? 'Connected' : 'Offline'}
           />
@@ -340,11 +360,7 @@ export function GuestChat({
       <GuestChatInput
         onSend={handleSend}
         disabled={false}
-        placeholder={
-          platformCfg
-            ? `Chat as ${guest.displayName}...`
-            : 'Chat as guest...'
-        }
+        placeholder={platformCfg ? `Chat as ${guest.displayName}...` : 'Chat as guest...'}
       />
 
       {/* Scroll to bottom */}

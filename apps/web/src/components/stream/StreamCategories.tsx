@@ -1,6 +1,6 @@
 'use client';
 
-import { STREAM_CATEGORIES, type StreamCategory, getCategoryInfo } from './types';
+import { getCategoryInfo, STREAM_CATEGORIES, type StreamCategory } from './types';
 
 /* === Category Pill ============================================ */
 
@@ -17,9 +17,7 @@ export function StreamCategoryPill({ category, active = false, onClick }: Stream
       type="button"
       onClick={() => onClick?.(category)}
       className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-medium transition-all active:scale-[0.97] whitespace-nowrap ${
-        active
-          ? 'text-white shadow-sm'
-          : 'text-white/50 hover:text-white/80 border border-white/10'
+        active ? 'text-white shadow-sm' : 'text-white/50 hover:text-white/80 border border-white/10'
       }`}
       style={active ? { backgroundColor: info.color, color: '#000' } : {}}
     >
@@ -36,9 +34,16 @@ interface StreamCategoriesBarProps {
   onCategoryChange?: (category: StreamCategory | 'all') => void;
 }
 
-export function StreamCategoriesBar({ activeCategory = 'all', onCategoryChange }: StreamCategoriesBarProps) {
+export function StreamCategoriesBar({
+  activeCategory = 'all',
+  onCategoryChange,
+}: StreamCategoriesBarProps) {
   return (
-    <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none" role="tablist" aria-label="Stream categories">
+    <div
+      className="flex gap-2 overflow-x-auto pb-2 scrollbar-none"
+      role="tablist"
+      aria-label="Stream categories"
+    >
       <button
         type="button"
         role="tab"
@@ -87,7 +92,9 @@ export function StreamCategoryGrid({ onSelectCategory }: StreamCategoryGridProps
           >
             {cat.icon}
           </div>
-          <span className="text-xs font-semibold text-white/80 group-hover:text-white">{cat.label}</span>
+          <span className="text-xs font-semibold text-white/80 group-hover:text-white">
+            {cat.label}
+          </span>
           <span className="text-[9px] text-white/30">{cat.description}</span>
         </button>
       ))}

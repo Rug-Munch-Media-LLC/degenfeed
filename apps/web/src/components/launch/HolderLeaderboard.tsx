@@ -37,7 +37,9 @@ export default function HolderLeaderboard({
   // Loading state — mobile friendly
   if (loading) {
     return (
-      <div className={`rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-3 sm:p-4 ${className}`}>
+      <div
+        className={`rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-3 sm:p-4 ${className}`}
+      >
         <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
           🏆 Top Holders
         </h3>
@@ -53,7 +55,9 @@ export default function HolderLeaderboard({
   // Error state
   if (error) {
     return (
-      <div className={`rounded-xl border border-red-500/20 bg-red-500/5 p-4 text-center ${className}`}>
+      <div
+        className={`rounded-xl border border-red-500/20 bg-red-500/5 p-4 text-center ${className}`}
+      >
         <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
           🏆 Top Holders
         </h3>
@@ -74,7 +78,9 @@ export default function HolderLeaderboard({
   // Empty state — mobile friendly
   if (holders.length === 0) {
     return (
-      <div className={`rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-3 sm:p-4 ${className}`}>
+      <div
+        className={`rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-3 sm:p-4 ${className}`}
+      >
         <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
           🏆 Top Holders
         </h3>
@@ -88,7 +94,9 @@ export default function HolderLeaderboard({
   }
 
   return (
-    <div className={`rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-3 sm:p-4 ${className}`}>
+    <div
+      className={`rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-3 sm:p-4 ${className}`}
+    >
       <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
         🏆 Top Holders
       </h3>
@@ -144,10 +152,14 @@ function HolderRow({ entry, rank }: { entry: HolderEntry; rank: number }) {
             {displayName}
           </span>
           {entry.isCreator && (
-            <span className="text-[9px] shrink-0" title="Creator">👑</span>
+            <span className="text-[9px] shrink-0" title="Creator">
+              👑
+            </span>
           )}
           {badgeIcon && (
-            <span className="text-[9px] shrink-0" title={topBadge}>{badgeIcon}</span>
+            <span className="text-[9px] shrink-0" title={topBadge}>
+              {badgeIcon}
+            </span>
           )}
         </div>
       </div>

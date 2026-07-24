@@ -47,7 +47,7 @@ export function useLiveComments(tokenAddress: string): UseLiveCommentsResult {
   const [comments, setComments] = useState<TokenComment[]>([]);
   const [onlineCount, setOnlineCount] = useState(0);
   const [isConnected, setIsConnected] = useState(false);
-  const wsRef = useRef<WebSocket | null>(null);
+  const _wsRef = useRef<WebSocket | null>(null);
   const reconnectRef = useRef<number>(0);
   const maxReconnect = useRef(5);
 
@@ -187,9 +187,7 @@ export function useLiveComments(tokenAddress: string): UseLiveCommentsResult {
 
         if (!res.ok) {
           const errBody = await res.json().catch(() => ({}));
-          throw new Error(
-            (errBody as { error?: string }).error || `HTTP ${res.status}`,
-          );
+          throw new Error((errBody as { error?: string }).error || `HTTP ${res.status}`);
         }
 
         // The posted comment will arrive via WebSocket broadcast

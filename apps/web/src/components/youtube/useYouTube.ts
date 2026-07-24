@@ -74,7 +74,13 @@ interface YouTubeResponse<T> {
 }
 
 interface ChannelResponse {
-  channel: { name: string; channelId: string; avatar: string; subscriberCount: number; videoCount: number } | null;
+  channel: {
+    name: string;
+    channelId: string;
+    avatar: string;
+    subscriberCount: number;
+    videoCount: number;
+  } | null;
   videos: EnrichedYouTubeVideo[];
   meta: { count: number; source: string; sourceLabel: string };
 }
@@ -238,22 +244,25 @@ export function useYouTubeCategories() {
  * Infinite scroll hook for trending videos.
  */
 export function useYouTubeTrendingInfinite(category = 'all', limit = 20) {
-  const getKey = (pageIndex: number, previousPageData: YouTubeResponse<EnrichedYouTubeVideo> | null) => {
+  const getKey = (
+    pageIndex: number,
+    previousPageData: YouTubeResponse<EnrichedYouTubeVideo> | null,
+  ) => {
     if (previousPageData && previousPageData.data.length < limit) return null;
     return `/api/youtube/trending?category=${encodeURIComponent(category)}&limit=${limit}&page=${pageIndex + 1}`;
   };
 
-  const { data, error, isLoading, isValidating, mutate, size, setSize } = useSWRInfinite<YouTubeResponse<EnrichedYouTubeVideo>>(
-    getKey,
-    fetcher,
-    {
-      revalidateOnFocus: false,
-      dedupingInterval: 300_000,
-    },
-  );
+  const { data, error, isLoading, isValidating, mutate, size, setSize } = useSWRInfinite<
+    YouTubeResponse<EnrichedYouTubeVideo>
+  >(getKey, fetcher, {
+    revalidateOnFocus: false,
+    dedupingInterval: 300_000,
+  });
 
   const allVideos = data?.flatMap((page) => page.data) ?? [];
-  const hasMore = data ? (data[data.length - 1] as typeof data[number])?.data.length >= limit : true;
+  const hasMore = data
+    ? (data[data.length - 1] as (typeof data)[number])?.data.length >= limit
+    : true;
 
   return {
     videos: allVideos,

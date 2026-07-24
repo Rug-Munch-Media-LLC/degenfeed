@@ -35,33 +35,39 @@ export default function VideoUploader({ mode, onClose, onSuccess }: VideoUploade
 
   const isShort = mode === 'short';
 
-  const handleFileSelect = useCallback((file: File) => {
-    const maxSize = isShort ? 100 * 1024 * 1024 : 500 * 1024 * 1024;
-    if (file.size > maxSize) {
-      setError(`File too large. Maximum: ${isShort ? '100MB' : '500MB'}`);
-      return;
-    }
+  const handleFileSelect = useCallback(
+    (file: File) => {
+      const maxSize = isShort ? 100 * 1024 * 1024 : 500 * 1024 * 1024;
+      if (file.size > maxSize) {
+        setError(`File too large. Maximum: ${isShort ? '100MB' : '500MB'}`);
+        return;
+      }
 
-    // Auto-fill title from filename
-    if (!title) {
-      const name = file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ');
-      setTitle(name.slice(0, 120));
-    }
+      // Auto-fill title from filename
+      if (!title) {
+        const name = file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ');
+        setTitle(name.slice(0, 120));
+      }
 
-    setSelectedFile(file);
-    setError(null);
-  }, [isShort, title]);
+      setSelectedFile(file);
+      setError(null);
+    },
+    [isShort, title],
+  );
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setDragOver(false);
-    const file = e.dataTransfer.files[0];
-    if (file && file.type.startsWith('video/')) {
-      handleFileSelect(file);
-    } else {
-      setError('Please select a video file');
-    }
-  }, [handleFileSelect]);
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      setDragOver(false);
+      const file = e.dataTransfer.files[0];
+      if (file?.type.startsWith('video/')) {
+        handleFileSelect(file);
+      } else {
+        setError('Please select a video file');
+      }
+    },
+    [handleFileSelect],
+  );
 
   const handleSubmit = useCallback(async () => {
     if (!selectedFile) {
@@ -124,7 +130,19 @@ export default function VideoUploader({ mode, onClose, onSuccess }: VideoUploade
       setStage('error');
       setError(e instanceof Error ? e.message : 'Upload failed');
     }
-  }, [selectedFile, title, description, tags, privacy, scheduleAt, thumbnail, isShort, uploadVideo, uploadShort, onSuccess]);
+  }, [
+    selectedFile,
+    title,
+    description,
+    tags,
+    privacy,
+    scheduleAt,
+    thumbnail,
+    isShort,
+    uploadVideo,
+    uploadShort,
+    onSuccess,
+  ]);
 
   const handleReset = useCallback(() => {
     setStage('select');
@@ -162,7 +180,12 @@ export default function VideoUploader({ mode, onClose, onSuccess }: VideoUploade
             aria-label="Close"
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              <path
+                d="M4 4l8 8M12 4l-8 8"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+              />
             </svg>
           </button>
         </div>
@@ -179,11 +202,16 @@ export default function VideoUploader({ mode, onClose, onSuccess }: VideoUploade
                     ? 'border-degen-500/40 bg-degen-500/5'
                     : 'border-[var(--color-border)] bg-[var(--color-overlay)] hover:border-[var(--color-muted)]'
               }`}
-              onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setDragOver(true);
+              }}
               onDragLeave={() => setDragOver(false)}
               onDrop={handleDrop}
               onClick={() => fileInputRef.current?.click()}
-              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') fileInputRef.current?.click(); }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') fileInputRef.current?.click();
+              }}
               role="button"
               tabIndex={0}
               aria-label="Select video file"
@@ -207,7 +235,10 @@ export default function VideoUploader({ mode, onClose, onSuccess }: VideoUploade
                   </p>
                   <button
                     type="button"
-                    onClick={(e) => { e.stopPropagation(); setSelectedFile(null); }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedFile(null);
+                    }}
                     className="mt-2 text-xs text-red-400 hover:text-red-300"
                   >
                     Remove
@@ -347,8 +378,20 @@ export default function VideoUploader({ mode, onClose, onSuccess }: VideoUploade
           <div className="space-y-6 py-8 text-center">
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-degen-500/20">
               <svg className="h-8 w-8 animate-spin text-degen-400" viewBox="0 0 24 24" fill="none">
-                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.3" />
-                <path d="M12 2a10 10 0 019.95 9" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  opacity="0.3"
+                />
+                <path
+                  d="M12 2a10 10 0 019.95 9"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                />
               </svg>
             </div>
             <h3 className="text-sm font-semibold text-[var(--color-fg)]">
@@ -382,8 +425,8 @@ export default function VideoUploader({ mode, onClose, onSuccess }: VideoUploade
             </div>
             <h3 className="text-sm font-semibold text-[var(--color-fg)]">Upload Complete!</h3>
             <p className="text-xs text-[var(--color-muted)]">
-              Your video "{result.title}" has been uploaded to PeerTube and is being processed.
-              It will appear on the Video Hub shortly.
+              Your video "{result.title}" has been uploaded to PeerTube and is being processed. It
+              will appear on the Video Hub shortly.
             </p>
             <div className="flex justify-center gap-3">
               <button type="button" onClick={handleReset} className="btn-secondary text-sm">

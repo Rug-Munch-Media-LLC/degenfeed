@@ -9,9 +9,9 @@
  */
 
 import { memo, useState } from 'react';
-import { YouTubeSourceBadge } from './YouTubeSourceBadge';
-import { formatYouTubeCount, formatYouTubeDuration, formatYouTubeTimeAgo } from './useYouTube';
 import type { EnrichedYouTubeVideo } from './useYouTube';
+import { formatYouTubeCount, formatYouTubeDuration, formatYouTubeTimeAgo } from './useYouTube';
+import { YouTubeSourceBadge } from './YouTubeSourceBadge';
 
 // === Types ===============================================================
 
@@ -80,7 +80,11 @@ export const YouTubeVideoCard = memo(function YouTubeVideoCard({
       {/* == Thumbnail == */}
       <div
         className={`relative overflow-hidden bg-[var(--color-muted)] ${
-          isFeatured ? 'lg:w-3/5 aspect-video lg:aspect-auto' : isCompact ? 'aspect-video' : 'aspect-video w-full'
+          isFeatured
+            ? 'lg:w-3/5 aspect-video lg:aspect-auto'
+            : isCompact
+              ? 'aspect-video'
+              : 'aspect-video w-full'
         }`}
       >
         {/* biome-ignore lint/performance/noImgElement: external thumbnail */}
@@ -137,7 +141,9 @@ export const YouTubeVideoCard = memo(function YouTubeVideoCard({
       {/* == Card Body == */}
       <div className={`flex flex-1 flex-col ${isFeatured ? 'lg:w-2/5' : ''} p-3`}>
         {/* Title */}
-        <h3 className={`font-semibold text-[var(--color-fg)] line-clamp-2 leading-snug group-hover:text-red-400 transition-colors ${isFeatured ? 'text-lg' : isCompact ? 'text-xs' : 'text-sm'}`}>
+        <h3
+          className={`font-semibold text-[var(--color-fg)] line-clamp-2 leading-snug group-hover:text-red-400 transition-colors ${isFeatured ? 'text-lg' : isCompact ? 'text-xs' : 'text-sm'}`}
+        >
           <button
             type="button"
             onClick={handlePlay}
@@ -150,7 +156,9 @@ export const YouTubeVideoCard = memo(function YouTubeVideoCard({
 
         {/* Channel info */}
         <div className={`mt-1.5 flex items-center gap-2 ${isCompact ? 'mt-1' : ''}`}>
-          <div className={`rounded-full bg-[var(--color-overlay)] overflow-hidden flex-shrink-0 ${isCompact ? 'h-5 w-5' : 'h-6 w-6'}`}>
+          <div
+            className={`rounded-full bg-[var(--color-overlay)] overflow-hidden flex-shrink-0 ${isCompact ? 'h-5 w-5' : 'h-6 w-6'}`}
+          >
             {video.channelAvatar ? (
               // biome-ignore lint/performance/noImgElement: channel avatar
               <img
@@ -165,13 +173,17 @@ export const YouTubeVideoCard = memo(function YouTubeVideoCard({
               </div>
             )}
           </div>
-          <span className={`text-[var(--color-muted)] truncate ${isCompact ? 'text-[11px]' : 'text-xs'}`}>
+          <span
+            className={`text-[var(--color-muted)] truncate ${isCompact ? 'text-[11px]' : 'text-xs'}`}
+          >
             {video.channelName}
           </span>
         </div>
 
         {/* Views + time ago */}
-        <div className={`mt-auto flex items-center gap-2 text-[11px] text-[var(--color-muted)] tabular-nums ${isCompact ? 'pt-1' : 'pt-2'}`}>
+        <div
+          className={`mt-auto flex items-center gap-2 text-[11px] text-[var(--color-muted)] tabular-nums ${isCompact ? 'pt-1' : 'pt-2'}`}
+        >
           <span>{formatYouTubeCount(video.viewCount)} views</span>
           <span>&middot;</span>
           <span>{formatYouTubeTimeAgo(video.publishedAt)}</span>
@@ -203,11 +215,17 @@ export const YouTubeVideoCard = memo(function YouTubeVideoCard({
             handleAction('tip', onTip);
           }}
           className={`flex flex-1 items-center justify-center gap-1 px-2 py-2 text-[10px] transition-colors focus:outline-none hover:bg-amber-500/5 ${
-            video.canTip ? 'text-amber-400 hover:text-amber-300' : 'text-[var(--color-muted)] hover:text-amber-400'
+            video.canTip
+              ? 'text-amber-400 hover:text-amber-300'
+              : 'text-[var(--color-muted)] hover:text-amber-400'
           }`}
           aria-label={`Tip ${video.channelName}`}
           disabled={!video.canTip}
-          title={video.canTip ? `Tip with ${video.creatorCoin?.symbol ?? 'coin'}` : 'Tipping not available'}
+          title={
+            video.canTip
+              ? `Tip with ${video.creatorCoin?.symbol ?? 'coin'}`
+              : 'Tipping not available'
+          }
         >
           <span>{'\u26A1'}</span>
           <span>Tip</span>
@@ -224,7 +242,11 @@ export const YouTubeVideoCard = memo(function YouTubeVideoCard({
           aria-label="Share video"
         >
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-            <path d="M9 4C9.82843 4 10.5 3.32843 10.5 2.5C10.5 1.67157 9.82843 1 9 1C8.17157 1 7.5 1.67157 7.5 2.5C7.5 2.5 7.5 2.5 7.5 2.5L4.5 4M9 8C9.82843 8 10.5 8.67157 10.5 9.5C10.5 10.3284 9.82843 11 9 11C8.17157 11 7.5 10.3284 7.5 9.5C7.5 9.5 7.5 9.5 7.5 9.5L4.5 8M3 6C3 6.82843 2.32843 7.5 1.5 7.5C0.671573 7.5 0 6.82843 0 6C0 5.17157 0.671573 4.5 1.5 4.5C2.32843 4.5 3 5.17157 3 6Z" stroke="currentColor" strokeWidth="1.2"/>
+            <path
+              d="M9 4C9.82843 4 10.5 3.32843 10.5 2.5C10.5 1.67157 9.82843 1 9 1C8.17157 1 7.5 1.67157 7.5 2.5C7.5 2.5 7.5 2.5 7.5 2.5L4.5 4M9 8C9.82843 8 10.5 8.67157 10.5 9.5C10.5 10.3284 9.82843 11 9 11C8.17157 11 7.5 10.3284 7.5 9.5C7.5 9.5 7.5 9.5 7.5 9.5L4.5 8M3 6C3 6.82843 2.32843 7.5 1.5 7.5C0.671573 7.5 0 6.82843 0 6C0 5.17157 0.671573 4.5 1.5 4.5C2.32843 4.5 3 5.17157 3 6Z"
+              stroke="currentColor"
+              strokeWidth="1.2"
+            />
           </svg>
           <span>Share</span>
         </button>
@@ -240,10 +262,14 @@ export const YouTubeVideoCard = memo(function YouTubeVideoCard({
           aria-label="Save video"
         >
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-            <path d="M2.5 1H9.5C9.77614 1 10 1.22386 10 1.5V10.5C10 10.7761 9.77614 11 9.5 11H2.5C2.22386 11 2 10.7761 2 10.5V1.5C2 1.22386 2.22386 1 2.5 1Z" stroke="currentColor" strokeWidth="1.2"/>
-            <path d="M4 3H8" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
-            <path d="M4 5H8" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
-            <path d="M4 7H6.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+            <path
+              d="M2.5 1H9.5C9.77614 1 10 1.22386 10 1.5V10.5C10 10.7761 9.77614 11 9.5 11H2.5C2.22386 11 2 10.7761 2 10.5V1.5C2 1.22386 2.22386 1 2.5 1Z"
+              stroke="currentColor"
+              strokeWidth="1.2"
+            />
+            <path d="M4 3H8" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+            <path d="M4 5H8" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+            <path d="M4 7H6.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
           </svg>
           <span>Save</span>
         </button>

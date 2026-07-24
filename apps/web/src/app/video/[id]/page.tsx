@@ -16,28 +16,42 @@ import { ErrorBoundary } from '@degenfeed/ui';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import type { UnifiedVideo } from '../../../components/video/useVideoHub';
 import { VideoPlayer } from '../../../components/video/VideoPlayer';
 import { VideoSourceBadge } from '../../../components/video/VideoSourceBadge';
-import { VideoRow } from '../../../components/video/VideoRow';
-import type { UnifiedVideo } from '../../../components/video/useVideoHub';
 
 // === Mock data for demonstration ==========================================
 
 function getMockVideo(id: string): UnifiedVideo {
   const idx = Number(id.split('-').pop()) || 0;
   const categories = [
-    'crypto', 'gaming', 'music', 'tech', 'art',
-    'education', 'entertainment', 'sports', 'news', 'science',
-    'comedy', 'irl', 'talk', 'trading',
+    'crypto',
+    'gaming',
+    'music',
+    'tech',
+    'art',
+    'education',
+    'entertainment',
+    'sports',
+    'news',
+    'science',
+    'comedy',
+    'irl',
+    'talk',
+    'trading',
   ];
-  const sources: Array<UnifiedVideo['source']> = [
-    'youtube', 'peertube', 'shorts', 'livestream',
-  ];
+  const sources: Array<UnifiedVideo['source']> = ['youtube', 'peertube', 'shorts', 'livestream'];
   const sourceLabels: Record<string, string> = {
-    youtube: 'YouTube', peertube: 'PeerTube', shorts: 'Shorts', livestream: 'Live',
+    youtube: 'YouTube',
+    peertube: 'PeerTube',
+    shorts: 'Shorts',
+    livestream: 'Live',
   };
   const sourceColors: Record<string, string> = {
-    youtube: '#FF0000', peertube: '#F1680D', shorts: '#FF0050', livestream: '#9146FF',
+    youtube: '#FF0000',
+    peertube: '#F1680D',
+    shorts: '#FF0050',
+    livestream: '#9146FF',
   };
 
   const cat = categories[idx % categories.length]!;
@@ -125,9 +139,9 @@ function formatViews(views: number): string {
 
 export default function VideoDetailPage() {
   const params = useParams<{ id: string }>();
-  const router = useRouter();
+  const _router = useRouter();
   const [saved, setSaved] = useState(false);
-  const [showShare, setShowShare] = useState(false);
+  const [_showShare, setShowShare] = useState(false);
 
   const videoId = params?.id ?? '';
 
@@ -144,16 +158,18 @@ export default function VideoDetailPage() {
     }
   }, [videoId]);
 
-  const handlePlay = useCallback((v: UnifiedVideo) => {
+  const _handlePlay = useCallback((v: UnifiedVideo) => {
     window.open(v.videoUrl, '_blank', 'noopener noreferrer');
   }, []);
 
   const handleWatchLater = useCallback(() => {
     if (!video) return;
     try {
-      const existing = JSON.parse(
-        localStorage.getItem('df:watch-later') ?? '[]',
-      ) as { id: string; title: string; addedAt: number }[];
+      const existing = JSON.parse(localStorage.getItem('df:watch-later') ?? '[]') as {
+        id: string;
+        title: string;
+        addedAt: number;
+      }[];
       if (!existing.some((i) => i.id === video.id)) {
         existing.push({ id: video.id, title: video.title, addedAt: Date.now() });
         localStorage.setItem('df:watch-later', JSON.stringify(existing));
@@ -198,10 +214,12 @@ export default function VideoDetailPage() {
   const handleShare = useCallback(() => {
     const url = window.location.href;
     if (navigator.share) {
-      navigator.share({
-        title: video?.title ?? 'Video',
-        url,
-      }).catch(() => {});
+      navigator
+        .share({
+          title: video?.title ?? 'Video',
+          url,
+        })
+        .catch(() => {});
     } else {
       navigator.clipboard.writeText(url).catch(() => {});
       setShowShare(true);
@@ -218,7 +236,16 @@ export default function VideoDetailPage() {
     return (
       <div className="mx-auto max-w-7xl px-4 py-16 text-center">
         <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full border border-red-500/30 bg-red-500/10">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-red-400" aria-hidden="true">
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            className="text-red-400"
+            aria-hidden="true"
+          >
             <circle cx="12" cy="12" r="10" />
             <line x1="12" y1="8" x2="12" y2="12" />
             <line x1="12" y1="16" x2="12.01" y2="16" />
@@ -251,9 +278,7 @@ export default function VideoDetailPage() {
             Video Hub
           </Link>
           <span>/</span>
-          <span className="max-w-[200px] truncate text-[var(--color-fg)]">
-            {video.title}
-          </span>
+          <span className="max-w-[200px] truncate text-[var(--color-fg)]">{video.title}</span>
         </nav>
 
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
@@ -290,9 +315,7 @@ export default function VideoDetailPage() {
                   {formatViews(video.views)} views
                 </span>
                 <span className="text-xs text-[var(--color-muted)]">·</span>
-                <span className="text-xs text-[var(--color-muted)]">
-                  {video.publishedLabel}
-                </span>
+                <span className="text-xs text-[var(--color-muted)]">{video.publishedLabel}</span>
               </div>
             </div>
 
@@ -330,7 +353,16 @@ export default function VideoDetailPage() {
                   onClick={handleWatchLater}
                   className="flex items-center gap-1.5 rounded-lg border border-[var(--color-glass-border)] px-3 py-2 text-xs font-medium text-[var(--color-muted)] hover:text-[var(--color-fg)] hover:border-degen-500/30 transition-colors"
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    aria-hidden="true"
+                  >
                     <path d="M12 6v6l4 2" />
                     <circle cx="12" cy="12" r="10" />
                   </svg>
@@ -346,7 +378,16 @@ export default function VideoDetailPage() {
                       : 'border-[var(--color-glass-border)] text-[var(--color-muted)] hover:text-[var(--color-fg)]'
                   }`}
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill={saved ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill={saved ? 'currentColor' : 'none'}
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    aria-hidden="true"
+                  >
                     <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" />
                   </svg>
                   {saved ? 'Saved' : 'Save'}
@@ -357,7 +398,16 @@ export default function VideoDetailPage() {
                   onClick={handleShare}
                   className="flex items-center gap-1.5 rounded-lg border border-[var(--color-glass-border)] px-3 py-2 text-xs font-medium text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    aria-hidden="true"
+                  >
                     <circle cx="18" cy="5" r="3" />
                     <circle cx="6" cy="12" r="3" />
                     <circle cx="18" cy="19" r="3" />
@@ -373,7 +423,16 @@ export default function VideoDetailPage() {
                   rel="noopener noreferrer"
                   className="flex items-center gap-1.5 rounded-lg border border-[var(--color-glass-border)] px-3 py-2 text-xs font-medium text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    aria-hidden="true"
+                  >
                     <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" />
                     <polyline points="15 3 21 3 21 9" />
                     <line x1="10" y1="14" x2="21" y2="3" />
@@ -439,8 +498,16 @@ export default function VideoDetailPage() {
               {/* Placeholder comments */}
               <div className="space-y-4">
                 {[
-                  { author: 'CryptoMaxi', text: 'Great breakdown! Really helpful for understanding the space.', time: '2h ago' },
-                  { author: 'Web3Dev', text: 'Would love to see a follow-up on the technical details.', time: '5h ago' },
+                  {
+                    author: 'CryptoMaxi',
+                    text: 'Great breakdown! Really helpful for understanding the space.',
+                    time: '2h ago',
+                  },
+                  {
+                    author: 'Web3Dev',
+                    text: 'Would love to see a follow-up on the technical details.',
+                    time: '5h ago',
+                  },
                   { author: 'DegenTrader', text: 'This aged well 🚀', time: '1d ago' },
                 ].map((comment, i) => (
                   <div key={i} className="flex gap-3">
@@ -496,9 +563,7 @@ export default function VideoDetailPage() {
                       <h3 className="text-xs font-semibold text-[var(--color-fg)] leading-tight line-clamp-2 group-hover:text-degen-400 transition-colors">
                         {rv.title}
                       </h3>
-                      <p className="mt-1 text-[10px] text-[var(--color-muted)]">
-                        {rv.channelName}
-                      </p>
+                      <p className="mt-1 text-[10px] text-[var(--color-muted)]">{rv.channelName}</p>
                       <p className="text-[10px] text-[var(--color-muted)]">
                         {formatViews(rv.views)} views · {rv.publishedLabel}
                       </p>

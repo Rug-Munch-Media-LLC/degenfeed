@@ -73,10 +73,7 @@ export async function verifyToken(token: string): Promise<TokenPayload | null> {
     const key = await getHmacKey(secret);
     const data = new TextEncoder().encode(`${headerB64}.${payloadB64}`);
 
-    const sigRaw = Uint8Array.from(
-      base64UrlDecode(signatureB64),
-      c => c.charCodeAt(0),
-    );
+    const sigRaw = Uint8Array.from(base64UrlDecode(signatureB64), (c) => c.charCodeAt(0));
 
     const isValid = await crypto.subtle.verify('HMAC', key, sigRaw, data);
     if (!isValid) return null;

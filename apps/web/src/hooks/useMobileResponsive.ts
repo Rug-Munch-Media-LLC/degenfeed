@@ -73,7 +73,7 @@ export function useKeyboardHeight(): number {
     // Use visualViewport API when available (more accurate)
     if (window.visualViewport) {
       const onViewport = () => {
-        const diff = initialViewport.current - window.visualViewport!.height;
+        const diff = initialViewport.current - window.visualViewport?.height;
         setHeight(diff > 100 ? diff : 0);
       };
       window.visualViewport.addEventListener('resize', onViewport);
@@ -95,7 +95,11 @@ interface PullToRefreshOptions {
   disabled?: boolean;
 }
 
-export function usePullToRefresh({ onRefresh, threshold = 80, disabled = false }: PullToRefreshOptions) {
+export function usePullToRefresh({
+  onRefresh,
+  threshold = 80,
+  disabled = false,
+}: PullToRefreshOptions) {
   const [pullDistance, setPullDistance] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
   const startY = useRef(0);
@@ -107,7 +111,7 @@ export function usePullToRefresh({ onRefresh, threshold = 80, disabled = false }
       if (disabled || refreshing) return;
       // Only enable at top of scroll
       if (containerRef.current && containerRef.current.scrollTop > 0) return;
-      startY.current = e.touches[0]!.clientY;
+      startY.current = e.touches[0]?.clientY;
       pulling.current = true;
     },
     [disabled, refreshing],
@@ -116,7 +120,7 @@ export function usePullToRefresh({ onRefresh, threshold = 80, disabled = false }
   const handleTouchMove = useCallback(
     (e: TouchEvent) => {
       if (!pulling.current || disabled || refreshing) return;
-      const diff = e.touches[0]!.clientY - startY.current;
+      const diff = e.touches[0]?.clientY - startY.current;
       if (diff > 0) {
         // Apply resistance
         setPullDistance(Math.min(diff * 0.4, threshold * 1.5));
@@ -173,7 +177,11 @@ interface SwipeDismissOptions {
   disabled?: boolean;
 }
 
-export function useSwipeDismiss({ onDismiss, threshold = 100, disabled = false }: SwipeDismissOptions) {
+export function useSwipeDismiss({
+  onDismiss,
+  threshold = 100,
+  disabled = false,
+}: SwipeDismissOptions) {
   const [swipeOffset, setSwipeOffset] = useState(0);
   const startX = useRef(0);
   const startY = useRef(0);
@@ -183,8 +191,8 @@ export function useSwipeDismiss({ onDismiss, threshold = 100, disabled = false }
   const handleTouchStart = useCallback(
     (e: TouchEvent) => {
       if (disabled) return;
-      startX.current = e.touches[0]!.clientX;
-      startY.current = e.touches[0]!.clientY;
+      startX.current = e.touches[0]?.clientX;
+      startY.current = e.touches[0]?.clientY;
       swiping.current = true;
     },
     [disabled],
@@ -193,8 +201,8 @@ export function useSwipeDismiss({ onDismiss, threshold = 100, disabled = false }
   const handleTouchMove = useCallback(
     (e: TouchEvent) => {
       if (!swiping.current || disabled) return;
-      const dx = e.touches[0]!.clientX - startX.current;
-      const dy = e.touches[0]!.clientY - startY.current;
+      const dx = e.touches[0]?.clientX - startX.current;
+      const dy = e.touches[0]?.clientY - startY.current;
       // Only horizontal swipes
       if (Math.abs(dx) > Math.abs(dy) && dx > 0) {
         setSwipeOffset(dx);

@@ -64,14 +64,16 @@ function buildWelcomeEmail(name: string, tier: 'free' | 'paid'): string {
     <div class="content">
       <h1 style="color: #f9fafb; font-size: 24px;">Welcome${name ? `, ${name}` : ''}!</h1>
       <p style="color: #9ca3af; font-size: 15px; line-height: 1.6;">
-        ${tier === 'paid'
-          ? "You're now subscribed to the <strong style='color:#00ff41'>DegenFeed Premium Newsletter</strong> — paid subscribers get exclusive deep dives, early access to alpha, and token-gated content."
-          : "You're now subscribed to the <strong style='color:#00ff41'>DegenFeed Newsletter</strong> — free weekly digests of the best in crypto, web3, AI, and decentralized tech."
+        ${
+          tier === 'paid'
+            ? "You're now subscribed to the <strong style='color:#00ff41'>DegenFeed Premium Newsletter</strong> — paid subscribers get exclusive deep dives, early access to alpha, and token-gated content."
+            : "You're now subscribed to the <strong style='color:#00ff41'>DegenFeed Newsletter</strong> — free weekly digests of the best in crypto, web3, AI, and decentralized tech."
         }
       </p>
-      ${tier === 'paid'
-        ? '<p style="color: #9ca3af; font-size: 14px;">Your first premium issue will arrive soon. In the meantime, explore exclusive content at <a href="https://degenfeed.xyz/articles" style="color: #00ff41;">degenfeed.xyz/articles</a>.</p>'
-        : '<p style="color: #9ca3af; font-size: 14px;">Your first issue arrives soon. Browse the latest articles at <a href="https://degenfeed.xyz/articles" style="color: #00ff41;">degenfeed.xyz/articles</a>.</p>'
+      ${
+        tier === 'paid'
+          ? '<p style="color: #9ca3af; font-size: 14px;">Your first premium issue will arrive soon. In the meantime, explore exclusive content at <a href="https://degenfeed.xyz/articles" style="color: #00ff41;">degenfeed.xyz/articles</a>.</p>'
+          : '<p style="color: #9ca3af; font-size: 14px;">Your first issue arrives soon. Browse the latest articles at <a href="https://degenfeed.xyz/articles" style="color: #00ff41;">degenfeed.xyz/articles</a>.</p>'
       }
       <a class="btn" href="https://degenfeed.xyz/articles">Browse Articles</a>
     </div>
@@ -85,9 +87,7 @@ function buildWelcomeEmail(name: string, tier: 'free' | 'paid'): string {
 
 function buildArticleEmail(post: GhostPost, tier: 'free' | 'paid'): string {
   const isGated = tier === 'free' && post.subscriberOnly;
-  const contentPreview = isGated
-    ? post.excerpt.slice(0, 300) + '...'
-    : post.html.slice(0, 2000);
+  const contentPreview = isGated ? `${post.excerpt.slice(0, 300)}...` : post.html.slice(0, 2000);
 
   return `<!doctype html>
 <html><head><meta charset="utf-8"/>${EMAIL_STYLES}</head>
@@ -108,18 +108,20 @@ function buildArticleEmail(post: GhostPost, tier: 'free' | 'paid'): string {
         <h2 class="post-title">${post.title}</h2>
         ${post.featuredImage ? `<img src="${post.featuredImage}" alt="" style="width:100%;border-radius:8px;margin:12px 0;max-height:300px;object-fit:cover;"/>` : ''}
         <div class="post-excerpt">${contentPreview}</div>
-        ${isGated
-          ? `<div class="tip-section"><p style="color: #f5a623; font-size: 13px;">✦ This article is for paid subscribers only</p><p style="color: #9ca3af; font-size: 13px;">Upgrade to Premium to read the full article.</p><a class="btn" href="https://degenfeed.xyz/premium">Upgrade to Premium</a></div>`
-          : `<a class="btn" href="https://degenfeed.xyz/articles/${post.slug}">Read Full Article</a>`
+        ${
+          isGated
+            ? `<div class="tip-section"><p style="color: #f5a623; font-size: 13px;">✦ This article is for paid subscribers only</p><p style="color: #9ca3af; font-size: 13px;">Upgrade to Premium to read the full article.</p><a class="btn" href="https://degenfeed.xyz/premium">Upgrade to Premium</a></div>`
+            : `<a class="btn" href="https://degenfeed.xyz/articles/${post.slug}">Read Full Article</a>`
         }
       </div>
 
-      ${post.tipAddresses
-        ? `<div class="tip-section">
+      ${
+        post.tipAddresses
+          ? `<div class="tip-section">
             <p style="color: #e5e7eb; font-size: 14px; margin: 0 0 8px 0;">✦ Support this author</p>
             <p style="color: #9ca3af; font-size: 12px; margin: 0;">Send tips via ETH, SOL, BTC, or Lightning</p>
            </div>`
-        : ''
+          : ''
       }
 
       <div style="margin-top: 24px;">
@@ -352,7 +354,7 @@ export class NewsletterEngine {
 
   async announceToProtocols(post: GhostPost): Promise<void> {
     const protocols: Protocol[] = ['nostr', 'farcaster', 'bluesky', 'lens', 'mastodon'];
-    const summary = post.excerpt || post.html.replace(/<[^>]+>/g, '').slice(0, 280);
+    const _summary = post.excerpt || post.html.replace(/<[^>]+>/g, '').slice(0, 280);
 
     console.log(
       `[NewsletterEngine] Announcing "${post.title}" to protocols: ${protocols.join(', ')}`,
@@ -369,9 +371,8 @@ export class NewsletterEngine {
 
   async sendWelcome(email: string, name: string, tier: 'free' | 'paid'): Promise<boolean> {
     const html = buildWelcomeEmail(name, tier);
-    const subject = tier === 'paid'
-      ? 'Welcome to DegenFeed Premium! 🚀'
-      : 'Welcome to DegenFeed Newsletter 📫';
+    const subject =
+      tier === 'paid' ? 'Welcome to DegenFeed Premium! 🚀' : 'Welcome to DegenFeed Newsletter 📫';
 
     const result = await this.sendEmail([{ email, name }], subject, html);
     return result.sent > 0;

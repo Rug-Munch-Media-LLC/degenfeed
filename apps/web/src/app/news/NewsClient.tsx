@@ -163,7 +163,9 @@ function NewsCard({ post }: { post: UnifiedPost }) {
               {sentimentEmoji(sentiment)} {sentiment}
             </span>
           )}
-          <span className="ml-auto text-[10px] text-[var(--color-muted)]">{formatTime(post.createdAt)}</span>
+          <span className="ml-auto text-[10px] text-[var(--color-muted)]">
+            {formatTime(post.createdAt)}
+          </span>
         </div>
 
         <a

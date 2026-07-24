@@ -10,7 +10,10 @@ export default function LaunchLoading() {
       {/* Stats skeleton */}
       <div className="grid grid-cols-3 gap-4 mb-8">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-4">
+          <div
+            key={i}
+            className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-4"
+          >
             <div className="skeleton h-3 w-20 rounded mb-2" />
             <div className="skeleton h-8 w-24 rounded" />
           </div>

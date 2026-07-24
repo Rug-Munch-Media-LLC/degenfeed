@@ -5,14 +5,14 @@
  * without making actual HTTP calls to the Telegram API.
  */
 
-import { describe, it, expect } from 'vitest';
-import { TGBotClient, TelegramError, TelegramRateLimitError } from './index';
+import { describe, expect, it } from 'vitest';
+import { TelegramError, TelegramRateLimitError, TGBotClient } from './index';
 import {
+  buildTelegramContent,
+  escapeHtml,
+  escapeMarkdownV2,
   formatForTelegram,
   stripUnsupportedTags,
-  escapeMarkdownV2,
-  escapeHtml,
-  buildTelegramContent,
 } from './markdown';
 
 // ─── TGBotClient ───────────────────────────────────────────────────
@@ -64,7 +64,7 @@ describe('formatForTelegram', () => {
   });
 
   it('should close open HTML tags after truncation', () => {
-    const text = '<b>Hello world ' + 'x'.repeat(4080) + '</b>';
+    const text = `<b>Hello world ${'x'.repeat(4080)}</b>`;
     const result = formatForTelegram(text, { parseMode: 'HTML' });
     // Should not have unclosed <b>
     const openCount = (result.match(/<b(?:\s[^>]*)?>/g) || []).length;

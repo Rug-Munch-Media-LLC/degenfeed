@@ -1,6 +1,6 @@
 'use client';
 
-import type { CreatorVideoMeta, VideoAnalytics as VideoAnalyticsData } from './useCreatorVideos';
+import type { CreatorVideoMeta } from './useCreatorVideos';
 import { useCreatorVideo } from './useCreatorVideos';
 
 // === Helpers =============================================================
@@ -79,12 +79,7 @@ function StatCard({
 }) {
   return (
     <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-overlay)] p-4 backdrop-blur-xl">
-      {accent && (
-        <div
-          className="mb-3 h-0.5 w-8 rounded-full"
-          style={{ background: accent }}
-        />
-      )}
+      {accent && <div className="mb-3 h-0.5 w-8 rounded-full" style={{ background: accent }} />}
       <span className="text-[10px] font-medium uppercase tracking-wider text-[var(--color-muted)]">
         {label}
       </span>
@@ -96,7 +91,12 @@ function StatCard({
 
 // === Protocol breakdown ==================================================
 
-function ProtocolBar({ label, value, max, color }: {
+function ProtocolBar({
+  label,
+  value,
+  max,
+  color,
+}: {
   label: string;
   value: number;
   max: number;
@@ -145,7 +145,12 @@ export default function VideoAnalytics({ video, onClose }: VideoAnalyticsProps) 
             aria-label="Close"
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              <path
+                d="M4 4l8 8M12 4l-8 8"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+              />
             </svg>
           </button>
         </div>
@@ -199,7 +204,9 @@ export default function VideoAnalytics({ video, onClose }: VideoAnalyticsProps) 
             {/* Views over time */}
             {analytics.viewsOverTime.length > 0 && (
               <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-overlay)] p-5 backdrop-blur-xl">
-                <h3 className="mb-4 text-sm font-semibold text-[var(--color-fg)]">Views Over Time</h3>
+                <h3 className="mb-4 text-sm font-semibold text-[var(--color-fg)]">
+                  Views Over Time
+                </h3>
                 <div className="overflow-x-auto pb-2">
                   <div className="min-w-[300px]">
                     <MiniBarChart data={analytics.viewsOverTime} height={100} />
@@ -210,7 +217,9 @@ export default function VideoAnalytics({ video, onClose }: VideoAnalyticsProps) 
 
             {analytics.tipsOverTime.length > 0 && analytics.totalTipsUsdCents > 0 && (
               <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-overlay)] p-5 backdrop-blur-xl">
-                <h3 className="mb-4 text-sm font-semibold text-[var(--color-fg)]">Tips Over Time</h3>
+                <h3 className="mb-4 text-sm font-semibold text-[var(--color-fg)]">
+                  Tips Over Time
+                </h3>
                 <div className="overflow-x-auto pb-2">
                   <div className="min-w-[300px]">
                     <MiniBarChart data={analytics.tipsOverTime} height={80} />
@@ -223,7 +232,9 @@ export default function VideoAnalytics({ video, onClose }: VideoAnalyticsProps) 
               {/* Source breakdown */}
               {Object.keys(analytics.sourceBreakdown).length > 0 && (
                 <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-overlay)] p-5 backdrop-blur-xl">
-                  <h3 className="mb-4 text-sm font-semibold text-[var(--color-fg)]">Traffic Sources</h3>
+                  <h3 className="mb-4 text-sm font-semibold text-[var(--color-fg)]">
+                    Traffic Sources
+                  </h3>
                   <div className="space-y-2.5">
                     {Object.entries(analytics.sourceBreakdown)
                       .sort(([, a], [, b]) => b - a)
@@ -285,7 +296,9 @@ export default function VideoAnalytics({ video, onClose }: VideoAnalyticsProps) 
               <div className="grid grid-cols-2 gap-2 text-xs">
                 <div>
                   <span className="text-[var(--color-muted)]">UUID: </span>
-                  <span className="font-mono text-[var(--color-fg)]">{video.uuid.slice(0, 12)}...</span>
+                  <span className="font-mono text-[var(--color-fg)]">
+                    {video.uuid.slice(0, 12)}...
+                  </span>
                 </div>
                 <div>
                   <span className="text-[var(--color-muted)]">Category: </span>

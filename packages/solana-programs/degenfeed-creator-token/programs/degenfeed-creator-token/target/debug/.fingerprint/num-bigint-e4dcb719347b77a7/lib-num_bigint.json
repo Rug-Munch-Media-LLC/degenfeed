@@ -1,1 +1,23 @@
-{"rustc":9777074978655410247,"features":"[]","declared_features":"[\"arbitrary\", \"default\", \"quickcheck\", \"rand\", \"serde\", \"std\"]","target":12411347335010930099,"profile":2225463790103693989,"path":7126178445208355861,"deps":[[5157631553186200874,"num_traits",false,11452981693236707869],[16795989132585092538,"num_integer",false,18049722259896314739]],"local":[{"CheckDepInfo":{"dep_info":"debug/.fingerprint/num-bigint-e4dcb719347b77a7/dep-lib-num_bigint","checksum":false}}],"rustflags":[],"config":8247474407144887393,"compile_kind":0}
+{
+  "rustc": 9777074978655410247,
+  "features": "[]",
+  "declared_features": "[\"arbitrary\", \"default\", \"quickcheck\", \"rand\", \"serde\", \"std\"]",
+  "target": 12411347335010930099,
+  "profile": 2225463790103693989,
+  "path": 7126178445208355861,
+  "deps": [
+    [5157631553186200874, "num_traits", false, 11452981693236707869],
+    [16795989132585092538, "num_integer", false, 18049722259896314739]
+  ],
+  "local": [
+    {
+      "CheckDepInfo": {
+        "dep_info": "debug/.fingerprint/num-bigint-e4dcb719347b77a7/dep-lib-num_bigint",
+        "checksum": false
+      }
+    }
+  ],
+  "rustflags": [],
+  "config": 8247474407144887393,
+  "compile_kind": 0
+}

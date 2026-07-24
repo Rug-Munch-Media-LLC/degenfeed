@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { type StreamExtended, type StreamQuality, QUALITY_OPTIONS } from './types';
+import { QUALITY_OPTIONS, type StreamExtended, type StreamQuality } from './types';
 
 /* === Internal HLS/Mock Player ================================= */
 
@@ -20,7 +20,9 @@ function VideoDisplay({ stream }: { stream: StreamExtended }) {
   };
 
   return (
-    <div className={`absolute inset-0 flex items-center justify-center bg-gradient-to-br ${gradients[stream.category] ?? 'from-gray-800 to-gray-900'}`}>
+    <div
+      className={`absolute inset-0 flex items-center justify-center bg-gradient-to-br ${gradients[stream.category] ?? 'from-gray-800 to-gray-900'}`}
+    >
       {/* Noise texture */}
       <div
         className="absolute inset-0 opacity-[0.03]"
@@ -31,7 +33,14 @@ function VideoDisplay({ stream }: { stream: StreamExtended }) {
       {/* Center content */}
       <div className="relative z-10 flex flex-col items-center gap-4">
         <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-black/30 backdrop-blur-sm">
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="white" opacity="0.6" aria-hidden="true">
+          <svg
+            width="40"
+            height="40"
+            viewBox="0 0 24 24"
+            fill="white"
+            opacity="0.6"
+            aria-hidden="true"
+          >
             <polygon points="6 3 20 12 6 21 6 3" />
           </svg>
         </div>
@@ -67,7 +76,17 @@ function IconPause({ size = 20 }: { size?: number }) {
 
 function IconVolume({ muted }: { muted: boolean }) {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       {muted ? (
         <>
           <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
@@ -87,7 +106,17 @@ function IconVolume({ muted }: { muted: boolean }) {
 
 function IconMaximize() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <polyline points="15 3 21 3 21 9" />
       <polyline points="9 21 3 21 3 15" />
       <line x1="21" y1="3" x2="14" y2="10" />
@@ -98,7 +127,17 @@ function IconMaximize() {
 
 function IconMinimize() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <polyline points="4 14 10 14 10 20" />
       <polyline points="20 10 14 10 14 4" />
       <line x1="14" y1="10" x2="21" y2="3" />
@@ -109,7 +148,17 @@ function IconMinimize() {
 
 function IconPiP() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <rect x="2" y="3" width="20" height="14" rx="2" />
       <rect x="11" y="9" width="8" height="6" rx="1" />
     </svg>
@@ -118,7 +167,17 @@ function IconPiP() {
 
 function IconSettings() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <circle cx="12" cy="12" r="3" />
       <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" />
     </svg>
@@ -134,7 +193,12 @@ interface StreamPlayerProps {
   isTheater?: boolean;
 }
 
-export function StreamPlayer({ stream, onClose, onTheaterToggle, isTheater = false }: StreamPlayerProps) {
+export function StreamPlayer({
+  stream,
+  onClose,
+  onTheaterToggle,
+  isTheater = false,
+}: StreamPlayerProps) {
   const [isPlaying, setIsPlaying] = useState(true);
   const [isMuted, setIsMuted] = useState(false);
   const [volume, setVolume] = useState(1);
@@ -220,10 +284,14 @@ export function StreamPlayer({ stream, onClose, onTheaterToggle, isTheater = fal
       <VideoDisplay stream={stream} />
 
       {/* Top gradients */}
-      <div className={`pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/60 to-transparent transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0'}`} />
+      <div
+        className={`pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/60 to-transparent transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0'}`}
+      />
 
       {/* Top bar */}
-      <div className={`absolute inset-x-0 top-0 z-20 flex items-center justify-between p-3 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+      <div
+        className={`absolute inset-x-0 top-0 z-20 flex items-center justify-between p-3 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+      >
         <div className="flex items-center gap-2">
           <span className="flex items-center gap-1.5 rounded-md bg-red-600 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow-lg">
             <span className="relative flex h-2 w-2">
@@ -240,9 +308,25 @@ export function StreamPlayer({ stream, onClose, onTheaterToggle, isTheater = fal
           </span>
         </div>
         {onClose && (
-          <button type="button" onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-full bg-black/40 text-white/70 backdrop-blur-sm transition-colors hover:bg-black/60 hover:text-white" aria-label="Close player">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-black/40 text-white/70 backdrop-blur-sm transition-colors hover:bg-black/60 hover:text-white"
+            aria-label="Close player"
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
           </button>
         )}
@@ -277,16 +361,28 @@ export function StreamPlayer({ stream, onClose, onTheaterToggle, isTheater = fal
       </div>
 
       {/* Bottom controls bar */}
-      <div className={`absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-black/80 via-black/40 to-transparent pt-8 pb-2 px-3 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+      <div
+        className={`absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-black/80 via-black/40 to-transparent pt-8 pb-2 px-3 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+      >
         <div className="flex items-center gap-1.5">
           {/* Play/Pause */}
-          <button type="button" onClick={togglePlay} className="flex h-8 w-8 items-center justify-center rounded-lg text-white/80 transition-colors hover:bg-white/10 hover:text-white" aria-label={isPlaying ? 'Pause' : 'Play'}>
+          <button
+            type="button"
+            onClick={togglePlay}
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-white/80 transition-colors hover:bg-white/10 hover:text-white"
+            aria-label={isPlaying ? 'Pause' : 'Play'}
+          >
             {isPlaying ? <IconPause size={18} /> : <IconPlay size={18} />}
           </button>
 
           {/* Volume */}
           <div className="group flex items-center gap-1">
-            <button type="button" onClick={toggleMute} className="flex h-8 w-8 items-center justify-center rounded-lg text-white/80 transition-colors hover:bg-white/10 hover:text-white" aria-label={isMuted ? 'Unmute' : 'Mute'}>
+            <button
+              type="button"
+              onClick={toggleMute}
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-white/80 transition-colors hover:bg-white/10 hover:text-white"
+              aria-label={isMuted ? 'Unmute' : 'Mute'}
+            >
               <IconVolume muted={isMuted} />
             </button>
             <div className="w-0 overflow-hidden transition-all duration-200 group-hover:w-20">
@@ -326,7 +422,10 @@ export function StreamPlayer({ stream, onClose, onTheaterToggle, isTheater = fal
                   <button
                     key={opt.id}
                     type="button"
-                    onClick={() => { setQuality(opt.id); setShowQuality(false); }}
+                    onClick={() => {
+                      setQuality(opt.id);
+                      setShowQuality(false);
+                    }}
                     className={`flex w-full items-center justify-between px-3 py-2 text-xs transition-colors hover:bg-white/5 ${
                       quality === opt.id ? 'text-degen-400 bg-degen-500/10' : 'text-white/70'
                     }`}
@@ -347,7 +446,17 @@ export function StreamPlayer({ stream, onClose, onTheaterToggle, isTheater = fal
             aria-label={isTheater ? 'Exit theater mode' : 'Theater mode'}
             title={isTheater ? 'Exit theater mode' : 'Theater mode'}
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
               {isTheater ? (
                 <>
                   <polyline points="4 14 10 14 10 20" />
@@ -367,12 +476,22 @@ export function StreamPlayer({ stream, onClose, onTheaterToggle, isTheater = fal
           </button>
 
           {/* Picture-in-Picture */}
-          <button type="button" onClick={handlePiP} className="flex h-8 w-8 items-center justify-center rounded-lg text-white/80 transition-colors hover:bg-white/10 hover:text-white" aria-label="Picture in picture">
+          <button
+            type="button"
+            onClick={handlePiP}
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-white/80 transition-colors hover:bg-white/10 hover:text-white"
+            aria-label="Picture in picture"
+          >
             <IconPiP />
           </button>
 
           {/* Fullscreen */}
-          <button type="button" onClick={handleFullscreen} className="flex h-8 w-8 items-center justify-center rounded-lg text-white/80 transition-colors hover:bg-white/10 hover:text-white" aria-label={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}>
+          <button
+            type="button"
+            onClick={handleFullscreen}
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-white/80 transition-colors hover:bg-white/10 hover:text-white"
+            aria-label={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+          >
             {isFullscreen ? <IconMinimize /> : <IconMaximize />}
           </button>
         </div>

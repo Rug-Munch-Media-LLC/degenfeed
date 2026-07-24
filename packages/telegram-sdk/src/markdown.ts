@@ -77,10 +77,7 @@ export function formatForTelegram(
  * Strip HTML tags that Telegram does not support.
  * Preserves supported tags and their allowed attributes.
  */
-export function stripUnsupportedTags(
-  text: string,
-  targetParseMode: 'HTML' | 'MarkdownV2',
-): string {
+export function stripUnsupportedTags(text: string, targetParseMode: 'HTML' | 'MarkdownV2'): string {
   if (targetParseMode === 'MarkdownV2') {
     // MarkdownV2 has stricter escaping rules; strip all HTML
     // since it won't render anyway in Markdown mode
@@ -105,10 +102,7 @@ export function stripUnsupportedTags(
  */
 export function escapeMarkdownV2(text: string): string {
   // Characters that must be escaped: _ * [ ] ( ) ~ ` > # + - = | { } . !
-  return text.replace(
-    /[_*[\]()~`>#+\-=|{}.!\\]/g,
-    '\\$&',
-  );
+  return text.replace(/[_*[\]()~`>#+\-=|{}.!\\]/g, '\\$&');
 }
 
 /**
@@ -116,10 +110,7 @@ export function escapeMarkdownV2(text: string): string {
  * Escapes <, >, & that aren't part of recognized tags.
  */
 export function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
+  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
 /**
@@ -160,11 +151,7 @@ export function buildTelegramContent(
  * Truncate text at the given length, attempting to balance HTML tags
  * so the resulting string is still valid for Telegram's parser.
  */
-function truncateWithTagBalance(
-  text: string,
-  maxLen: number,
-  mode: 'HTML' | 'MarkdownV2',
-): string {
+function truncateWithTagBalance(text: string, maxLen: number, mode: 'HTML' | 'MarkdownV2'): string {
   if (text.length <= maxLen) return text;
 
   // Find a good break point: try to end at a word boundary
@@ -204,7 +191,7 @@ function closeOpenTags(html: string): string {
 
   while ((match = tagRegex.exec(html)) !== null) {
     const fullTag = match[0];
-    const tagName = match[1]!.toLowerCase();
+    const tagName = match[1]?.toLowerCase();
 
     if (!SUPPORTED_HTML_TAGS.has(tagName)) continue;
 
@@ -245,7 +232,7 @@ function stripUnsupportedAttrs(tag: string, tagName: string): string {
   const allowedSet = new Set(allowed);
   return tag.replace(
     /(\s+)([a-zA-Z-]+)(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+))?/g,
-    (match, whitespace, attrName) => {
+    (match, _whitespace, attrName) => {
       return allowedSet.has(attrName) ? match : '';
     },
   );

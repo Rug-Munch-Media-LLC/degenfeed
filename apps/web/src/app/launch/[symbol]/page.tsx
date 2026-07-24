@@ -3,10 +3,9 @@
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import BondingCurveChart from '../../../components/launch/BondingCurveChart';
 import BuySellInterface from '../../../components/launch/BuySellInterface';
-import type { CoinCardData } from '../../../components/launch/CoinCard';
 import CommunityStats from '../../../components/launch/CommunityStats';
 import CreatorInfo from '../../../components/launch/CreatorInfo';
 import HolderLeaderboard from '../../../components/launch/HolderLeaderboard';
@@ -16,13 +15,13 @@ import LiveStreamPlayer from '../../../components/launch/LiveStreamPlayer';
 import MilestoneTracker from '../../../components/launch/MilestoneTracker';
 import ProgressBar from '../../../components/launch/ProgressBar';
 import TradeFeed from '../../../components/launch/TradeFeed';
+import { GoLiveModal } from '../../../components/streams/GoLiveModal';
 import {
   formatBondingPrice,
   formatBondingUsd,
   useBondingCurve,
 } from '../../../hooks/useBondingCurve';
 import { useTokenCommunity } from '../../../hooks/useTokenCommunity';
-import { GoLiveModal } from '../../../components/streams/GoLiveModal';
 
 const ShareModal = dynamic(() => import('../../../components/launch/ShareModal'), { ssr: false });
 
@@ -69,17 +68,27 @@ function MetricCard({
   accent,
   sub,
   subUp,
-}: { label: string; value: string; accent?: boolean; sub?: string; subUp?: boolean }) {
+}: {
+  label: string;
+  value: string;
+  accent?: boolean;
+  sub?: string;
+  subUp?: boolean;
+}) {
   return (
     <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] p-2.5 sm:p-3">
       <span className="text-[9px] sm:text-[10px] font-medium uppercase tracking-wider text-[var(--color-muted)]">
         {label}
       </span>
-      <p className={`mt-0.5 text-sm sm:text-base font-bold tabular-nums ${accent ? 'text-degen-400' : 'text-[var(--color-fg)]'}`}>
+      <p
+        className={`mt-0.5 text-sm sm:text-base font-bold tabular-nums ${accent ? 'text-degen-400' : 'text-[var(--color-fg)]'}`}
+      >
         {value}
       </p>
       {sub && (
-        <p className={`text-[9px] sm:text-[10px] tabular-nums ${subUp === undefined ? '' : subUp ? 'text-degen-400' : 'text-red-400'}`}>
+        <p
+          className={`text-[9px] sm:text-[10px] tabular-nums ${subUp === undefined ? '' : subUp ? 'text-degen-400' : 'text-red-400'}`}
+        >
           {sub}
         </p>
       )}
@@ -112,7 +121,7 @@ function CoinPageSkeleton() {
 
 export default function CoinPage() {
   const params = useParams();
-  const router = useRouter();
+  const _router = useRouter();
   const symbol = typeof params.symbol === 'string' ? params.symbol : '';
 
   // Fetch live bonding curve data
@@ -139,9 +148,7 @@ export default function CoinPage() {
 
   // Community engagement data
   const tokenAddress = curve?.tokenAddress ?? pageData?.address ?? '';
-  const {
-    data: communityData,
-  } = useTokenCommunity(tokenAddress);
+  const { data: communityData } = useTokenCommunity(tokenAddress);
 
   // Fetch coin metadata
   useEffect(() => {
@@ -161,7 +168,7 @@ export default function CoinPage() {
             setPageData({
               address: `0x${Math.random().toString(16).slice(2, 42)}`,
               symbol: symbol.toUpperCase(),
-              name: symbol.charAt(0).toUpperCase() + symbol.slice(1) + ' Token',
+              name: `${symbol.charAt(0).toUpperCase() + symbol.slice(1)} Token`,
               description:
                 'A community-driven creator coin launching on DegenFeed with a fair bonding curve. Join the prebonding phase and be part of the journey to graduation!',
               creator: {
@@ -393,12 +400,25 @@ export default function CoinPage() {
               label="Price"
               value={price ? formatBondingPrice(price) : '—'}
               accent
-              sub={curve?.priceChange24h !== undefined ? `${curve.priceChange24h >= 0 ? '+' : ''}${curve.priceChange24h.toFixed(2)}% (24h)` : undefined}
+              sub={
+                curve?.priceChange24h !== undefined
+                  ? `${curve.priceChange24h >= 0 ? '+' : ''}${curve.priceChange24h.toFixed(2)}% (24h)`
+                  : undefined
+              }
               subUp={curve?.priceChange24h ? curve.priceChange24h >= 0 : undefined}
             />
-            <MetricCard label="Total Raised" value={totalRaised !== null ? formatBondingUsd(totalRaised) : '—'} />
-            <MetricCard label="Holders" value={holderCount !== null ? formatCompact(holderCount) : '—'} />
-            <MetricCard label="Market Cap" value={curve?.marketCap ? formatBondingUsd(curve.marketCap) : '—'} />
+            <MetricCard
+              label="Total Raised"
+              value={totalRaised !== null ? formatBondingUsd(totalRaised) : '—'}
+            />
+            <MetricCard
+              label="Holders"
+              value={holderCount !== null ? formatCompact(holderCount) : '—'}
+            />
+            <MetricCard
+              label="Market Cap"
+              value={curve?.marketCap ? formatBondingUsd(curve.marketCap) : '—'}
+            />
           </div>
 
           {/* Social proof banner */}
@@ -425,17 +445,15 @@ export default function CoinPage() {
                     <span className="relative inline-flex h-2 w-2 rounded-full bg-degen-500" />
                   </span>
                   <span className="text-xs font-medium text-degen-400">
-                    {curve.phaseLabel || `${curve.phase.charAt(0).toUpperCase() + curve.phase.slice(1)} phase`}
+                    {curve.phaseLabel ||
+                      `${curve.phase.charAt(0).toUpperCase() + curve.phase.slice(1)} phase`}
                     {curve.phase === 'early' && ' — 2% max buys! Bonding in progress'}
                   </span>
                 </div>
               )}
 
               {/* Live Stream Player */}
-              <LiveStreamPlayer
-                tokenAddress={tokenAddress}
-                tokenSymbol={coinSymbol}
-              />
+              <LiveStreamPlayer tokenAddress={tokenAddress} tokenSymbol={coinSymbol} />
 
               {/* Live Comment Feed */}
               <LiveCommentFeed tokenAddress={tokenAddress} />
@@ -590,14 +608,18 @@ export default function CoinPage() {
 
               {/* Holder Leaderboard */}
               <HolderLeaderboard
-                holders={communityData?.leaderboard ?? curve?.holderList?.map(h => ({
-                  wallet: h.address,
-                  amount: String(h.usdValue),
-                  percentage: h.percentage,
-                  usdValue: h.usdValue,
-                  badges: [],
-                  isCreator: false,
-                })) ?? []}
+                holders={
+                  communityData?.leaderboard ??
+                  curve?.holderList?.map((h) => ({
+                    wallet: h.address,
+                    amount: String(h.usdValue),
+                    percentage: h.percentage,
+                    usdValue: h.usdValue,
+                    badges: [],
+                    isCreator: false,
+                  })) ??
+                  []
+                }
                 loading={curveLoading}
               />
             </div>

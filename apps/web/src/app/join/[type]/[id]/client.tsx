@@ -27,7 +27,7 @@ interface Props {
 }
 
 export function joinPageClient({ type, id }: Props) {
-  const [data, setData] = useState<StreamData | null>(null);
+  const [_data, setData] = useState<StreamData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

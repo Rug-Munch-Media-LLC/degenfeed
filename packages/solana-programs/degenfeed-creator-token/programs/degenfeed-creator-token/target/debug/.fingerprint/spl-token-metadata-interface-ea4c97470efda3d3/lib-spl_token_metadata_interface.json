@@ -1,1 +1,27 @@
-{"rustc":9777074978655410247,"features":"[]","declared_features":"[\"serde-traits\"]","target":9387220730171101230,"profile":2241668132362809309,"path":10299064909154023589,"deps":[[58942224022519477,"solana_program",false,17003232644796355677],[3784172344122591063,"spl_type_length_value",false,4412569801272648967],[3945313091618437376,"borsh",false,1437989340767188904],[10946175359771311590,"spl_program_error",false,5441809040457466061],[11243181971954000585,"spl_pod",false,15169297009116634063],[13512345730525792728,"spl_discriminator",false,3125699861963997784]],"local":[{"CheckDepInfo":{"dep_info":"debug/.fingerprint/spl-token-metadata-interface-ea4c97470efda3d3/dep-lib-spl_token_metadata_interface","checksum":false}}],"rustflags":[],"config":8247474407144887393,"compile_kind":0}
+{
+  "rustc": 9777074978655410247,
+  "features": "[]",
+  "declared_features": "[\"serde-traits\"]",
+  "target": 9387220730171101230,
+  "profile": 2241668132362809309,
+  "path": 10299064909154023589,
+  "deps": [
+    [58942224022519477, "solana_program", false, 17003232644796355677],
+    [3784172344122591063, "spl_type_length_value", false, 4412569801272648967],
+    [3945313091618437376, "borsh", false, 1437989340767188904],
+    [10946175359771311590, "spl_program_error", false, 5441809040457466061],
+    [11243181971954000585, "spl_pod", false, 15169297009116634063],
+    [13512345730525792728, "spl_discriminator", false, 3125699861963997784]
+  ],
+  "local": [
+    {
+      "CheckDepInfo": {
+        "dep_info": "debug/.fingerprint/spl-token-metadata-interface-ea4c97470efda3d3/dep-lib-spl_token_metadata_interface",
+        "checksum": false
+      }
+    }
+  ],
+  "rustflags": [],
+  "config": 8247474407144887393,
+  "compile_kind": 0
+}

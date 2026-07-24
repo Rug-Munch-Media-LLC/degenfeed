@@ -30,7 +30,16 @@ function CheckIcon({ highlight }: { highlight?: boolean }) {
       }`}
       aria-hidden="true"
     >
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
         <polyline points="20 6 9 17 4 12" />
       </svg>
     </span>
@@ -39,8 +48,19 @@ function CheckIcon({ highlight }: { highlight?: boolean }) {
 
 function DashIcon() {
   return (
-    <span className="inline-flex items-center justify-center shrink-0 text-[var(--color-muted)]/30" aria-hidden="true">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+    <span
+      className="inline-flex items-center justify-center shrink-0 text-[var(--color-muted)]/30"
+      aria-hidden="true"
+    >
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      >
         <line x1="5" y1="12" x2="19" y2="12" />
       </svg>
     </span>
@@ -127,9 +147,7 @@ function PricingCard({
         )}
       </div>
       {tier.price !== 'Free forever' && tier.price !== '$0' && tier.price !== 'Custom' && (
-        <p className="mt-0.5 text-[11px] text-[var(--color-muted)]">
-          {tier.priceYearly}
-        </p>
+        <p className="mt-0.5 text-[11px] text-[var(--color-muted)]">{tier.priceYearly}</p>
       )}
       <p className="mt-2 text-xs text-[var(--color-muted)] leading-relaxed">{tier.description}</p>
 
@@ -176,19 +194,11 @@ function PricingCard({
           <li
             key={f.name}
             className={`flex items-start gap-2 text-sm ${
-              f.included
-                ? 'text-[var(--color-fg)]'
-                : 'text-[var(--color-muted)]'
+              f.included ? 'text-[var(--color-fg)]' : 'text-[var(--color-muted)]'
             } ${f.highlight ? 'font-medium' : ''}`}
           >
-            {f.included ? (
-              <CheckIcon highlight={f.highlight} />
-            ) : (
-              <DashIcon />
-            )}
-            <span className={!f.included ? 'line-through opacity-40' : ''}>
-              {f.name}
-            </span>
+            {f.included ? <CheckIcon highlight={f.highlight} /> : <DashIcon />}
+            <span className={!f.included ? 'line-through opacity-40' : ''}>{f.name}</span>
           </li>
         ))}
       </ul>
@@ -211,143 +221,242 @@ const COMPARISON_ROWS: ComparisonRow[] = [
   {
     category: 'Core Features',
     feature: 'Verified badge',
-    basic: true, pro: true, platinum: true, enterprise: true,
+    basic: true,
+    pro: true,
+    platinum: true,
+    enterprise: true,
   },
   {
     feature: 'Browse all content & feeds',
-    basic: true, pro: true, platinum: true, enterprise: true,
+    basic: true,
+    pro: true,
+    platinum: true,
+    enterprise: true,
   },
   {
     feature: 'Join communities',
-    basic: true, pro: true, platinum: true, enterprise: true,
+    basic: true,
+    pro: true,
+    platinum: true,
+    enterprise: true,
   },
   {
     feature: 'Tip creators (free)',
-    basic: true, pro: true, platinum: true, enterprise: true,
+    basic: true,
+    pro: true,
+    platinum: true,
+    enterprise: true,
   },
   {
     feature: 'Basic profile',
-    basic: true, pro: true, platinum: true, enterprise: true,
+    basic: true,
+    pro: true,
+    platinum: true,
+    enterprise: true,
   },
   {
     category: 'Publishing',
     feature: 'Post to 3 protocols',
-    basic: true, pro: true, platinum: true, enterprise: true,
+    basic: true,
+    pro: true,
+    platinum: true,
+    enterprise: true,
   },
   {
     feature: 'Post to ALL 12+ protocols',
-    basic: false, pro: true, platinum: true, enterprise: true,
+    basic: false,
+    pro: true,
+    platinum: true,
+    enterprise: true,
   },
   {
     feature: 'Scheduled posts',
-    basic: false, pro: true, platinum: true, enterprise: true,
+    basic: false,
+    pro: true,
+    platinum: true,
+    enterprise: true,
   },
   {
     feature: 'Cross-network posting (X, YouTube, Reddit)',
-    basic: false, pro: false, platinum: true, enterprise: true,
+    basic: false,
+    pro: false,
+    platinum: true,
+    enterprise: true,
   },
   {
     feature: 'Buffer-style scheduling (queue, calendar)',
-    basic: false, pro: false, platinum: true, enterprise: true,
+    basic: false,
+    pro: false,
+    platinum: true,
+    enterprise: true,
   },
   {
     category: 'Monetization',
     feature: 'Creator coins',
-    basic: false, pro: true, platinum: true, enterprise: true,
+    basic: false,
+    pro: true,
+    platinum: true,
+    enterprise: true,
   },
   {
     feature: 'UNLIMITED creator coins',
-    basic: false, pro: false, platinum: true, enterprise: true,
+    basic: false,
+    pro: false,
+    platinum: true,
+    enterprise: true,
   },
   {
     category: 'Live Streaming',
     feature: 'Live streaming (solo, spaces)',
-    basic: false, pro: true, platinum: true, enterprise: true,
+    basic: false,
+    pro: true,
+    platinum: true,
+    enterprise: true,
   },
   {
     feature: 'Multi-creator collab streams',
-    basic: false, pro: false, platinum: true, enterprise: true,
+    basic: false,
+    pro: false,
+    platinum: true,
+    enterprise: true,
   },
   {
     category: 'Communities',
     feature: 'Create Feddy Communities',
-    basic: false, pro: true, platinum: true, enterprise: true,
+    basic: false,
+    pro: true,
+    platinum: true,
+    enterprise: true,
   },
   {
     feature: 'UNLIMITED Feddy Communities',
-    basic: false, pro: false, platinum: true, enterprise: true,
+    basic: false,
+    pro: false,
+    platinum: true,
+    enterprise: true,
   },
   {
     feature: 'Telegram/Discord integration',
-    basic: false, pro: false, platinum: true, enterprise: true,
+    basic: false,
+    pro: false,
+    platinum: true,
+    enterprise: true,
   },
   {
     feature: 'Custom community domain',
-    basic: false, pro: false, platinum: true, enterprise: true,
+    basic: false,
+    pro: false,
+    platinum: true,
+    enterprise: true,
   },
   {
     category: 'Analytics',
     feature: 'Basic analytics',
-    basic: false, pro: true, platinum: true, enterprise: true,
+    basic: false,
+    pro: true,
+    platinum: true,
+    enterprise: true,
   },
   {
     feature: 'Advanced analytics dashboard',
-    basic: false, pro: false, platinum: true, enterprise: true,
+    basic: false,
+    pro: false,
+    platinum: true,
+    enterprise: true,
   },
   {
     category: 'Profile & Content',
     feature: 'Custom profile',
-    basic: false, pro: true, platinum: true, enterprise: true,
+    basic: false,
+    pro: true,
+    platinum: true,
+    enterprise: true,
   },
   {
     feature: 'Token-gated content',
-    basic: false, pro: true, platinum: true, enterprise: true,
+    basic: false,
+    pro: true,
+    platinum: true,
+    enterprise: true,
   },
   {
     category: 'Support & Access',
     feature: 'Priority support',
-    basic: false, pro: false, platinum: true, enterprise: true,
+    basic: false,
+    pro: false,
+    platinum: true,
+    enterprise: true,
   },
   {
     feature: 'API access',
-    basic: false, pro: false, platinum: true, enterprise: true,
+    basic: false,
+    pro: false,
+    platinum: true,
+    enterprise: true,
   },
   {
     feature: 'Early protocol access',
-    basic: false, pro: false, platinum: true, enterprise: true,
+    basic: false,
+    pro: false,
+    platinum: true,
+    enterprise: true,
   },
   {
     category: 'Enterprise',
     feature: 'Self-host option',
-    basic: false, pro: false, platinum: false, enterprise: true,
+    basic: false,
+    pro: false,
+    platinum: false,
+    enterprise: true,
   },
   {
     feature: 'White-label',
-    basic: false, pro: false, platinum: false, enterprise: true,
+    basic: false,
+    pro: false,
+    platinum: false,
+    enterprise: true,
   },
   {
     feature: 'Custom protocol integrations',
-    basic: false, pro: false, platinum: false, enterprise: true,
+    basic: false,
+    pro: false,
+    platinum: false,
+    enterprise: true,
   },
   {
     feature: 'Dedicated infrastructure',
-    basic: false, pro: false, platinum: false, enterprise: true,
+    basic: false,
+    pro: false,
+    platinum: false,
+    enterprise: true,
   },
   {
     feature: 'SLA guarantee',
-    basic: false, pro: false, platinum: false, enterprise: true,
+    basic: false,
+    pro: false,
+    platinum: false,
+    enterprise: true,
   },
   {
     feature: 'Team management',
-    basic: false, pro: false, platinum: false, enterprise: true,
+    basic: false,
+    pro: false,
+    platinum: false,
+    enterprise: true,
   },
   {
     feature: 'SSO / SAML',
-    basic: false, pro: false, platinum: false, enterprise: true,
+    basic: false,
+    pro: false,
+    platinum: false,
+    enterprise: true,
   },
   {
     feature: 'Custom contract & pricing',
-    basic: false, pro: false, platinum: false, enterprise: true,
+    basic: false,
+    pro: false,
+    platinum: false,
+    enterprise: true,
   },
 ];
 
@@ -363,9 +472,7 @@ function ComparisonTable() {
             <th className="px-4 py-3 text-center text-xs font-medium text-[var(--color-muted)]">
               Basic
             </th>
-            <th className="px-4 py-3 text-center text-xs font-medium text-degen-400">
-              Pro
-            </th>
+            <th className="px-4 py-3 text-center text-xs font-medium text-degen-400">Pro</th>
             <th className="px-4 py-3 text-center text-xs font-medium text-[var(--color-muted)]">
               Platinum
             </th>
@@ -392,7 +499,9 @@ function ComparisonTable() {
               ) : (
                 <>
                   <td className="px-4 py-2.5 text-sm text-[var(--color-fg)]">{row.feature}</td>
-                  <td className="px-4 py-2.5 text-center">{row.basic ? <CheckIcon /> : <DashIcon />}</td>
+                  <td className="px-4 py-2.5 text-center">
+                    {row.basic ? <CheckIcon /> : <DashIcon />}
+                  </td>
                   <td className="px-4 py-2.5 text-center">
                     {row.pro ? <CheckIcon highlight /> : <DashIcon />}
                   </td>
@@ -497,4 +606,4 @@ export const getDefaultTiers = (): PricingTier[] => [
   },
 ];
 
-export { PricingCard, ComparisonTable, type ComparisonRow };
+export { type ComparisonRow, ComparisonTable, PricingCard };

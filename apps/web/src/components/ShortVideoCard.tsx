@@ -260,7 +260,7 @@ export const ShortVideoCard = memo(function ShortVideoCard({
   const [tipModalOpen, setTipModalOpen] = useState(false);
   const [emotes, setEmotes] = useState<Array<{ id: number; emoji: string; x: number }>>([]);
   const [pullDismissProgress, setPullDismissProgress] = useState(0);
-  const [isDismissing, setIsDismissing] = useState(false);
+  const [_isDismissing, setIsDismissing] = useState(false);
   const overlayTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const progressTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const progressStartRef = useRef<number>(0);
@@ -488,16 +488,16 @@ export const ShortVideoCard = memo(function ShortVideoCard({
   }, [isPeertube, videoInfo]);
 
   // == Pull-down to dismiss ================================================
-  const handlePullStart = useCallback((e: React.TouchEvent | React.MouseEvent) => {
+  const _handlePullStart = useCallback((e: React.TouchEvent | React.MouseEvent) => {
     if ('touches' in e) {
-      pullStartY.current = e.touches[0]!.clientY;
+      pullStartY.current = e.touches[0]?.clientY;
     } else {
       pullStartY.current = e.clientY;
     }
   }, []);
 
-  const handlePullMove = useCallback((e: React.TouchEvent | React.MouseEvent) => {
-    const currentY = 'touches' in e ? e.touches[0]!.clientY : e.clientY;
+  const _handlePullMove = useCallback((e: React.TouchEvent | React.MouseEvent) => {
+    const currentY = 'touches' in e ? e.touches[0]?.clientY : e.clientY;
     const delta = currentY - pullStartY.current;
     if (delta > 0) {
       const progress = Math.min(delta / 200, 1);
@@ -505,7 +505,7 @@ export const ShortVideoCard = memo(function ShortVideoCard({
     }
   }, []);
 
-  const handlePullEnd = useCallback(() => {
+  const _handlePullEnd = useCallback(() => {
     if (pullDismissProgress > 0.5) {
       setIsDismissing(true);
       setPullDismissProgress(1);
@@ -616,11 +616,11 @@ export const ShortVideoCard = memo(function ShortVideoCard({
   // Track Y start for panel drag
   const panelDragStartRef = useRef(0);
   const handleInfoTouchStart = useCallback((e: React.TouchEvent) => {
-    panelDragStartRef.current = e.touches[0]!.clientY;
+    panelDragStartRef.current = e.touches[0]?.clientY;
   }, []);
   const handleInfoTouchEnd = useCallback(
     (e: React.TouchEvent) => {
-      const deltaY = e.changedTouches[0]!.clientY - panelDragStartRef.current;
+      const deltaY = e.changedTouches[0]?.clientY - panelDragStartRef.current;
       handleInfoDrag(e, deltaY);
     },
     [handleInfoDrag],

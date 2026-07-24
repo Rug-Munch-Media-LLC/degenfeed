@@ -86,22 +86,15 @@ const DEFAULT_AUDIO_OPTIONS: AudioQualityOptions = {
 
 export class SpacesAudio {
   private roomId: string;
-  private token: string;
   private isConnected = false;
   private isSpeaker = false;
   private isMuted = false;
   private audioOptions: AudioQualityOptions;
   private listeners = new Map<SpacesAudioEvent, Set<SpacesAudioCallback>>();
-  private liveKitRoom: unknown = null; // Room instance when LiveKit is integrated
-  private localTrack: unknown = null;  // Local audio track when speaking
 
   // ── Constructor ────────────────────────────────────────────────
 
-  constructor(
-    roomId: string,
-    token: string,
-    options?: Partial<AudioQualityOptions>,
-  ) {
+  constructor(roomId: string, token: string, options?: Partial<AudioQualityOptions>) {
     this.roomId = roomId;
     this.token = token;
     this.audioOptions = { ...DEFAULT_AUDIO_OPTIONS, ...options };
@@ -270,7 +263,7 @@ export class SpacesAudio {
     if (!this.listeners.has(event)) {
       this.listeners.set(event, new Set());
     }
-    this.listeners.get(event)!.add(callback);
+    this.listeners.get(event)?.add(callback);
   }
 
   off(event: SpacesAudioEvent, callback: SpacesAudioCallback): void {
@@ -307,8 +300,8 @@ export class SpacesAudio {
  *   Response: { token: "eyJ..." }
  */
 export function createLiveKitToken(
-  apiKey: string,
-  apiSecret: string,
+  _apiKey: string,
+  _apiSecret: string,
   room: string,
   identity: string,
   _name: string,

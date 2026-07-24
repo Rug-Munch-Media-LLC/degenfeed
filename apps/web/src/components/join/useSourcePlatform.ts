@@ -124,8 +124,7 @@ export function useSourcePlatform(): UseSourcePlatformResult {
     }
 
     // 3. Check user-agent for platform-specific clients
-    const ua =
-      typeof navigator !== 'undefined' ? navigator.userAgent : '';
+    const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
     const uaPlatform = detectFromUserAgent(ua);
     if (uaPlatform) {
       return {

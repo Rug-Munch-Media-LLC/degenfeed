@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 
 interface SubscriberBadgeProps {
   tier: 'fan' | 'supporter' | 'patron';

@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 
 // === Types ===============================================================
 
@@ -120,9 +120,7 @@ function PlatformRow({
       {/* Checkbox */}
       <div
         className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 transition-all ${
-          selected
-            ? 'border-degen-500 bg-degen-500'
-            : 'border-[var(--color-muted)] bg-transparent'
+          selected ? 'border-degen-500 bg-degen-500' : 'border-[var(--color-muted)] bg-transparent'
         }`}
       >
         {selected && (
@@ -219,7 +217,8 @@ export default function CrossPlatformPublisher({
 
   const allSelected = selectedPlatforms.size === PLATFORMS.length;
 
-  const canPublish = selectedPlatforms.size > 0 && (showEditor ? publishText.trim().length > 0 : true);
+  const canPublish =
+    selectedPlatforms.size > 0 && (showEditor ? publishText.trim().length > 0 : true);
 
   const handlePublish = useCallback(async () => {
     if (!canPublish) return;
@@ -411,7 +410,13 @@ export default function CrossPlatformPublisher({
           >
             {results?.some((r) => !r.ok) ? 'Retry Failed' : 'Publish to Selected'}
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              <path
+                d="M1 7h12M7 1l6 6-6 6"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
           </button>
         )}
@@ -419,9 +424,15 @@ export default function CrossPlatformPublisher({
           <div className="flex items-center gap-2 text-sm text-[var(--color-muted)]">
             <svg className="h-4 w-4 animate-spin text-degen-400" viewBox="0 0 24 24" fill="none">
               <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.3" />
-              <path d="M12 2a10 10 0 019.95 9" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+              <path
+                d="M12 2a10 10 0 019.95 9"
+                stroke="currentColor"
+                strokeWidth="3"
+                strokeLinecap="round"
+              />
             </svg>
-            Publishing to {selectedPlatforms.size} platform{selectedPlatforms.size !== 1 ? 's' : ''}...
+            Publishing to {selectedPlatforms.size} platform{selectedPlatforms.size !== 1 ? 's' : ''}
+            ...
           </div>
         )}
       </div>
@@ -450,7 +461,12 @@ export default function CrossPlatformPublisher({
                 aria-label="Close"
               >
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                  <path
+                    d="M4 4l8 8M12 4l-8 8"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                  />
                 </svg>
               </button>
             )}
@@ -468,9 +484,7 @@ export default function CrossPlatformPublisher({
     <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-5">
       <div className="mb-4">
         <h3 className="text-sm font-semibold text-[var(--color-fg)]">Publish to Platforms</h3>
-        <p className="text-xs text-[var(--color-muted)]">
-          Select where to publish this video
-        </p>
+        <p className="text-xs text-[var(--color-muted)]">Select where to publish this video</p>
       </div>
       {body}
     </div>

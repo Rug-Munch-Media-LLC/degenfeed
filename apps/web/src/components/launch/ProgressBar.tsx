@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 interface ProgressBarProps {
   /** 0–100 percentage to graduation */
@@ -55,17 +55,17 @@ const PHASE_GLOW: Record<string, string> = {
 const ERA_GRADIENTS: Record<string, string> = {
   'Steal Deal': 'from-cyan-500 to-degen-400',
   'Early Bird': 'from-degen-500 to-degen-400',
-  'Cruise': 'from-degen-400 to-yellow-400',
+  Cruise: 'from-degen-400 to-yellow-400',
   'FOMO Zone': 'from-yellow-400 to-orange-500',
-  'Finale': 'from-orange-500 to-red-500',
+  Finale: 'from-orange-500 to-red-500',
 };
 
 const ERA_GLOWS: Record<string, string> = {
   'Steal Deal': 'shadow-cyan-500/30',
   'Early Bird': 'shadow-degen-500/30',
-  'Cruise': 'shadow-yellow-400/30',
+  Cruise: 'shadow-yellow-400/30',
   'FOMO Zone': 'shadow-orange-500/30',
-  'Finale': 'shadow-red-500/30',
+  Finale: 'shadow-red-500/30',
 };
 
 export default function ProgressBar({
@@ -87,7 +87,7 @@ export default function ProgressBar({
 }: ProgressBarProps) {
   const clamped = Math.min(100, Math.max(0, progress));
   const height = size === 'sm' ? 'h-2' : size === 'lg' ? 'h-4' : 'h-3';
-  const textSize = size === 'sm' ? 'text-xs' : 'text-sm';
+  const _textSize = size === 'sm' ? 'text-xs' : 'text-sm';
   const isGraduated = clamped >= 100;
 
   // == Fireworks state ====================================
@@ -116,26 +116,27 @@ export default function ProgressBar({
   }, [clamped, showFireworks]);
 
   // Determine gradient from era or phase
-  const barGradient = eraName && ERA_GRADIENTS[eraName]
-    ? ERA_GRADIENTS[eraName]
-    : PHASE_COLORS[phase];
-  const glowColor = eraName && ERA_GLOWS[eraName]
-    ? ERA_GLOWS[eraName]
-    : PHASE_GLOW[phase];
+  const barGradient =
+    eraName && ERA_GRADIENTS[eraName] ? ERA_GRADIENTS[eraName] : PHASE_COLORS[phase];
+  const glowColor = eraName && ERA_GLOWS[eraName] ? ERA_GLOWS[eraName] : PHASE_GLOW[phase];
 
   // Milestone positions on the progress bar
   const milestonePositions = useMemo(() => {
     if (size === 'sm') return [];
-    return [10, 25, 50, 75].filter((m) => !isGraduated).map((m) => ({
-      percent: m,
-      reached: clamped >= m,
-    }));
+    return [10, 25, 50, 75]
+      .filter((_m) => !isGraduated)
+      .map((m) => ({
+        percent: m,
+        reached: clamped >= m,
+      }));
   }, [clamped, isGraduated, size]);
 
   return (
     <div className={`space-y-1.5 ${className}`}>
       {/* Label row */}
-      <div className={`flex items-center justify-between gap-2 ${size === 'sm' ? 'text-[11px] sm:text-xs' : 'text-xs sm:text-sm'}`}>
+      <div
+        className={`flex items-center justify-between gap-2 ${size === 'sm' ? 'text-[11px] sm:text-xs' : 'text-xs sm:text-sm'}`}
+      >
         <span className="font-medium text-[var(--color-fg)] truncate">
           {isGraduated ? '🚀 Graduated!' : label || `${Math.round(clamped)}% to graduation`}
         </span>
@@ -230,7 +231,10 @@ export default function ProgressBar({
           <span className="text-[11px] text-[var(--color-muted)] tabular-nums">
             {isGraduated ? '100%' : `${Math.round(clamped)}%`}
             {eraName && !isGraduated && (
-              <> · <span className="font-medium">{eraName}</span></>
+              <>
+                {' '}
+                · <span className="font-medium">{eraName}</span>
+              </>
             )}
           </span>
 
@@ -266,7 +270,9 @@ export default function ProgressBar({
                 width: `${4 + Math.random() * 8}px`,
                 height: `${4 + Math.random() * 8}px`,
                 borderRadius: '50%',
-                backgroundColor: ['#22c55e', '#06b6d4', '#f59e0b', '#f97316', '#a855f7', '#ef4444'][Math.floor(Math.random() * 6)]!,
+                backgroundColor: ['#22c55e', '#06b6d4', '#f59e0b', '#f97316', '#a855f7', '#ef4444'][
+                  Math.floor(Math.random() * 6)
+                ]!,
                 animationDelay: `${Math.random() * 0.5}s`,
                 animationDuration: `${1 + Math.random() * 1}s`,
               }}

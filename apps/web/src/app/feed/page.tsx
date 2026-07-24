@@ -842,6 +842,7 @@ export default function FeedPage() {
       creatorDiversity,
       exploreRatio,
       activePreset,
+      announce,
     ],
   );
 

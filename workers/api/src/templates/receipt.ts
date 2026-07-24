@@ -75,7 +75,9 @@ export function renderReceiptHtml(params: ReceiptTemplateParams): string {
             </tr>
           </table>
 
-          ${receiptUrl ? `
+          ${
+            receiptUrl
+              ? `
           <!-- View Receipt Button -->
           <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center">
             <tr>
@@ -92,7 +94,9 @@ export function renderReceiptHtml(params: ReceiptTemplateParams): string {
               </td>
             </tr>
           </table>
-          ` : ''}
+          `
+              : ''
+          }
         </div>
       </td>
     </tr>

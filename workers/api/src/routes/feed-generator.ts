@@ -18,14 +18,14 @@
  */
 
 import {
-	buildFeedGeneratorDidDoc,
-	describeFeedGenerator,
-	FEED_GENERATOR_HANDLE,
-	LiveFeedGenerator,
-} from "@degenfeed/bluesky-sdk/feed-generator";
-import { Hono } from "hono";
-import type { Env } from "../index";
-import { jsonResponse, noCacheJsonResponse } from "../index";
+  buildFeedGeneratorDidDoc,
+  describeFeedGenerator,
+  FEED_GENERATOR_HANDLE,
+  LiveFeedGenerator,
+} from '@degenfeed/bluesky-sdk/feed-generator';
+import { Hono } from 'hono';
+import type { Env } from '../index';
+import { jsonResponse, noCacheJsonResponse } from '../index';
 
 // ─── Router ───────────────────────────────────────────────────────────────
 
@@ -38,16 +38,16 @@ const feedGen = new Hono<{ Bindings: Env }>();
 // service endpoint. Required for feed generator discovery.
 // ═══════════════════════════════════════════════════════════════════════
 
-feedGen.get("/.well-known/did.json", async (_c) => {
-	const didDoc = buildFeedGeneratorDidDoc();
+feedGen.get('/.well-known/did.json', async (_c) => {
+  const didDoc = buildFeedGeneratorDidDoc();
 
-	return new Response(JSON.stringify(didDoc), {
-		headers: {
-			"content-type": "application/json",
-			"access-control-allow-origin": "*",
-			"cache-control": "public, max-age=86400",
-		},
-	});
+  return new Response(JSON.stringify(didDoc), {
+    headers: {
+      'content-type': 'application/json',
+      'access-control-allow-origin': '*',
+      'cache-control': 'public, max-age=86400',
+    },
+  });
 });
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -57,30 +57,27 @@ feedGen.get("/.well-known/did.json", async (_c) => {
 // and the feeds it provides.
 // ═══════════════════════════════════════════════════════════════════════
 
-feedGen.get(
-	"/api/bsky-feed/xrpc/app.bsky.feed.describeFeedGenerator",
-	async (_c) => {
-		const description = describeFeedGenerator();
+feedGen.get('/api/bsky-feed/xrpc/app.bsky.feed.describeFeedGenerator', async (_c) => {
+  const description = describeFeedGenerator();
 
-		// The AT Protocol expects feeds array — we provide one feed
-		const response = {
-			did: description.did,
-			feeds: [
-				{
-					uri: `at://${FEED_GENERATOR_HANDLE}/app.bsky.feed.generator/degenfeed-live`,
-					name: description.displayName,
-					description: description.description,
-				},
-			],
-			links: {
-				privacyPolicy: "https://degenfeed.xyz/privacy",
-				termsOfService: "https://degenfeed.xyz/terms",
-			},
-		};
+  // The AT Protocol expects feeds array — we provide one feed
+  const response = {
+    did: description.did,
+    feeds: [
+      {
+        uri: `at://${FEED_GENERATOR_HANDLE}/app.bsky.feed.generator/degenfeed-live`,
+        name: description.displayName,
+        description: description.description,
+      },
+    ],
+    links: {
+      privacyPolicy: 'https://degenfeed.xyz/privacy',
+      termsOfService: 'https://degenfeed.xyz/terms',
+    },
+  };
 
-		return noCacheJsonResponse(response);
-	},
-);
+  return noCacheJsonResponse(response);
+});
 
 // ═══════════════════════════════════════════════════════════════════════
 // GET /api/bsky-feed/xrpc/app.bsky.feed.getFeedSkeleton
@@ -93,67 +90,65 @@ feedGen.get(
 //   cursor — pagination cursor
 // ═══════════════════════════════════════════════════════════════════════
 
-feedGen.get("/api/bsky-feed/xrpc/app.bsky.feed.getFeedSkeleton", async (c) => {
-	try {
-		const feedUri = c.req.query("feed") ?? "";
-		const limitParam = c.req.query("limit");
-		const cursor = c.req.query("cursor");
+feedGen.get('/api/bsky-feed/xrpc/app.bsky.feed.getFeedSkeleton', async (c) => {
+  try {
+    const feedUri = c.req.query('feed') ?? '';
+    const limitParam = c.req.query('limit');
+    const cursor = c.req.query('cursor');
 
-		// Validate that the requested feed is ours
-		const expectedFeed = `at://${FEED_GENERATOR_HANDLE}/app.bsky.feed.generator/degenfeed-live`;
-		if (feedUri && feedUri !== expectedFeed) {
-			return jsonResponse(
-				{
-					error: "Unknown feed",
-					message: `This feed generator only serves "${expectedFeed}"`,
-				},
-				400,
-			);
-		}
+    // Validate that the requested feed is ours
+    const expectedFeed = `at://${FEED_GENERATOR_HANDLE}/app.bsky.feed.generator/degenfeed-live`;
+    if (feedUri && feedUri !== expectedFeed) {
+      return jsonResponse(
+        {
+          error: 'Unknown feed',
+          message: `This feed generator only serves "${expectedFeed}"`,
+        },
+        400,
+      );
+    }
 
-		const limit = Math.min(Math.max(Number(limitParam) || 50, 1), 100);
+    const limit = Math.min(Math.max(Number(limitParam) || 50, 1), 100);
 
-		// Get the live feed skeleton
-		const liveFeed = new LiveFeedGenerator({
-			get: async (key: string) => {
-				try {
-					return (await c.env.CONTENT_STORE?.get(key)) ?? null;
-				} catch {
-					return null;
-				}
-			},
-			put: async (key: string, value: string) => {
-				await c.env.CONTENT_STORE?.put(key, value, {
-					expirationTtl: 86400 * 7,
-				}).catch(() => {});
-			},
-			delete: async (key: string) => {
-				await c.env.CONTENT_STORE?.delete(key).catch(() => {});
-			},
-		});
+    // Get the live feed skeleton
+    const liveFeed = new LiveFeedGenerator({
+      get: async (key: string) => {
+        try {
+          return (await c.env.CONTENT_STORE?.get(key)) ?? null;
+        } catch {
+          return null;
+        }
+      },
+      put: async (key: string, value: string) => {
+        await c.env.CONTENT_STORE?.put(key, value, {
+          expirationTtl: 86400 * 7,
+        }).catch(() => {});
+      },
+      delete: async (key: string) => {
+        await c.env.CONTENT_STORE?.delete(key).catch(() => {});
+      },
+    });
 
-		const skeleton = await liveFeed.getFeedSkeleton(limit, cursor);
+    const skeleton = await liveFeed.getFeedSkeleton(limit, cursor);
 
-		return noCacheJsonResponse(skeleton);
-	} catch (err) {
-		const msg = err instanceof Error ? err.message : String(err);
-		return jsonResponse({ error: `Feed skeleton failed: ${msg}` }, 500);
-	}
+    return noCacheJsonResponse(skeleton);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return jsonResponse({ error: `Feed skeleton failed: ${msg}` }, 500);
+  }
 });
 
 // ═══════════════════════════════════════════════════════════════════════
 // GET /api/bsky-feed/health — Feed generator health check
 // ═══════════════════════════════════════════════════════════════════════
 
-feedGen.get("/api/bsky-feed/health", async (_c) => {
-	return noCacheJsonResponse({
-		ok: true,
-		did: describeFeedGenerator().did,
-		feeds: [
-			`at://${FEED_GENERATOR_HANDLE}/app.bsky.feed.generator/degenfeed-live`,
-		],
-		updatedAt: new Date().toISOString(),
-	});
+feedGen.get('/api/bsky-feed/health', async (_c) => {
+  return noCacheJsonResponse({
+    ok: true,
+    did: describeFeedGenerator().did,
+    feeds: [`at://${FEED_GENERATOR_HANDLE}/app.bsky.feed.generator/degenfeed-live`],
+    updatedAt: new Date().toISOString(),
+  });
 });
 
 export default feedGen;

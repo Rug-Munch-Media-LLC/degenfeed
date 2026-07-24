@@ -78,7 +78,13 @@ function BondingCurveChart({ progress }: { progress: number }) {
 
 /* === Main Component =========================================== */
 
-export function StreamCoinOverlay({ stream, coinAddress, streamId, tokenSymbol, onBuy }: StreamCoinOverlayProps) {
+export function StreamCoinOverlay({
+  stream,
+  coinAddress,
+  streamId,
+  tokenSymbol,
+  onBuy,
+}: StreamCoinOverlayProps) {
   const { showToast } = useToast();
   const { ready, signedInProtocols } = useAuth();
   const hasSignedIn = ready && Object.values(signedInProtocols).some(Boolean);
@@ -89,12 +95,12 @@ export function StreamCoinOverlay({ stream, coinAddress, streamId, tokenSymbol, 
       return;
     }
     // In a real app, this would open a swap modal or redirect
-    showToast('success', `Opening buy flow for $${stream!.tokenSymbol}...`);
-  }, [hasSignedIn, stream!.tokenSymbol, showToast]);
+    showToast('success', `Opening buy flow for $${stream?.tokenSymbol}...`);
+  }, [hasSignedIn, stream?.tokenSymbol, showToast]);
 
-  if (stream!.streamType !== 'launch' || !stream!.tokenSymbol) return null;
+  if (stream?.streamType !== 'launch' || !stream?.tokenSymbol) return null;
 
-  const progress = stream!.bondingCurveProgress ?? 0;
+  const progress = stream?.bondingCurveProgress ?? 0;
   const remaining = 100 - progress;
 
   return (
@@ -106,7 +112,9 @@ export function StreamCoinOverlay({ stream, coinAddress, streamId, tokenSymbol, 
             🪙
           </span>
           <div>
-            <p className="text-sm font-bold text-[var(--color-fg)]">${stream!.tokenSymbol} Launch</p>
+            <p className="text-sm font-bold text-[var(--color-fg)]">
+              ${stream?.tokenSymbol} Launch
+            </p>
             <p className="text-[10px] text-[var(--color-muted)]">
               Bonding curve — {remaining}% remaining
             </p>
@@ -153,7 +161,7 @@ export function StreamCoinOverlay({ stream, coinAddress, streamId, tokenSymbol, 
         onClick={handleBuy}
         className="w-full rounded-xl bg-gradient-to-r from-pink-500 to-fuchsia-500 px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-pink-500/20 transition-all hover:from-pink-400 hover:to-fuchsia-400 hover:shadow-pink-500/30 active:scale-[0.98]"
       >
-        Buy ${stream!.tokenSymbol}
+        Buy ${stream?.tokenSymbol}
       </button>
     </div>
   );

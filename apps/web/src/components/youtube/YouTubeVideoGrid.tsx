@@ -10,8 +10,8 @@
  */
 
 import { memo, useEffect, useRef, useState } from 'react';
-import { YouTubeVideoCard } from './YouTubeVideoCard';
 import type { EnrichedYouTubeVideo } from './useYouTube';
+import { YouTubeVideoCard } from './YouTubeVideoCard';
 
 // === Types ===============================================================
 
@@ -102,7 +102,14 @@ function EmptyState({ message }: { message: string }) {
   return (
     <div className="flex flex-col items-center justify-center py-16 text-center">
       <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[var(--color-overlay)]">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="text-[var(--color-muted)]">
+        <svg
+          width="28"
+          height="28"
+          viewBox="0 0 24 24"
+          fill="none"
+          aria-hidden="true"
+          className="text-[var(--color-muted)]"
+        >
           <rect x="4" y="4" width="16" height="16" rx="3" stroke="currentColor" strokeWidth="1.5" />
           <path d="M10 9L16 12L10 15V9Z" fill="currentColor" />
         </svg>
@@ -147,9 +154,7 @@ export const YouTubeVideoGrid = memo(function YouTubeVideoGrid({
         <h2 className="text-lg font-bold text-[var(--color-fg)] mb-4 flex items-center gap-2">
           <span className="text-red-500">{'\u25B6'}</span>
           {title}
-          <span className="text-[11px] font-normal text-[var(--color-muted)] ml-1">
-            YouTube
-          </span>
+          <span className="text-[11px] font-normal text-[var(--color-muted)] ml-1">YouTube</span>
         </h2>
       )}
 

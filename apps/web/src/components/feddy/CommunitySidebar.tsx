@@ -1,6 +1,6 @@
 'use client';
 
-import type { FeddyCommunity, CommunityStats, MemberRole } from './types';
+import type { CommunityStats, FeddyCommunity, MemberRole } from './types';
 
 function formatCount(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
@@ -40,7 +40,9 @@ export function CommunitySidebar({
           {stats && (
             <>
               <div>
-                <p className="text-lg font-bold text-degen-400">{formatCount(stats.postsLast24h)}</p>
+                <p className="text-lg font-bold text-degen-400">
+                  {formatCount(stats.postsLast24h)}
+                </p>
                 <p className="text-[10px] text-[var(--color-muted)]">Posts 24h</p>
               </div>
               <div>
@@ -102,7 +104,9 @@ export function CommunitySidebar({
           {community.linkedCoin && (
             <p>
               <span className="text-[var(--color-fg)]">Coin:</span>{' '}
-              <span className="font-mono text-amber-400">{community.linkedCoin.slice(0, 10)}...</span>
+              <span className="font-mono text-amber-400">
+                {community.linkedCoin.slice(0, 10)}...
+              </span>
             </p>
           )}
         </div>

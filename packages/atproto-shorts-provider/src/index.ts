@@ -236,7 +236,9 @@ async function fetchCreatorVideos(
   if (creators.length === 0 || maxItems <= 0) return [];
 
   const results = await Promise.allSettled(
-    creators.map((did) => fetchAuthorFeedVideos(did, Math.ceil(maxItems / creators.length) + 2, signal)),
+    creators.map((did) =>
+      fetchAuthorFeedVideos(did, Math.ceil(maxItems / creators.length) + 2, signal),
+    ),
   );
 
   const allVideos: BskyVideoItem[] = [];
@@ -286,10 +288,7 @@ async function fetchAuthorFeedVideos(
 /**
  * Process a Bluesky feed response into BskyVideoItem[], filtering for video embeds.
  */
-function processFeedPosts(
-  feed: BskyFeedViewPost[],
-  maxItems: number,
-): BskyVideoItem[] {
+function processFeedPosts(feed: BskyFeedViewPost[], maxItems: number): BskyVideoItem[] {
   const videos: BskyVideoItem[] = [];
 
   for (const item of feed) {

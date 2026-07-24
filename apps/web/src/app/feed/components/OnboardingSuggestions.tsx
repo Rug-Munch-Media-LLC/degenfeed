@@ -1,9 +1,9 @@
 'use client';
 
 import type { Protocol } from '@degenfeed/types';
+import { EmptyState } from '@degenfeed/ui';
 import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../../../components/AuthProvider';
-import { EmptyState } from '@degenfeed/ui';
 
 interface SuggestedFollow {
   id: string;

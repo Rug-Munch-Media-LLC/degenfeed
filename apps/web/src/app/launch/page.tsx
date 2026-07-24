@@ -56,7 +56,7 @@ export default function LaunchPage() {
   const [coins, setCoins] = useState<CoinCardData[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ totalLaunched: 0, totalVolume: 0, activePrebonding: 0 });
-  const [error, setError] = useState<string | null>(null);
+  const [error, _setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;

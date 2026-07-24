@@ -8,10 +8,10 @@
  * action buttons, and source badge. Netflix-style.
  */
 
-import { useCallback, useState } from 'react';
 import Link from 'next/link';
-import { VideoSourceBadge } from './VideoSourceBadge';
+import { useCallback, useState } from 'react';
 import type { UnifiedVideo } from './useVideoHub';
+import { VideoSourceBadge } from './VideoSourceBadge';
 
 interface VideoHeroProps {
   video: UnifiedVideo;
@@ -28,9 +28,11 @@ export function VideoHero({ video, onPlay, className = '' }: VideoHeroProps) {
 
   const handleWatchLater = useCallback(() => {
     try {
-      const existing = JSON.parse(
-        localStorage.getItem('df:watch-later') ?? '[]',
-      ) as { id: string; title: string; addedAt: number }[];
+      const existing = JSON.parse(localStorage.getItem('df:watch-later') ?? '[]') as {
+        id: string;
+        title: string;
+        addedAt: number;
+      }[];
       if (!existing.some((i) => i.id === video.id)) {
         existing.push({ id: video.id, title: video.title, addedAt: Date.now() });
         localStorage.setItem('df:watch-later', JSON.stringify(existing));
@@ -71,10 +73,7 @@ export function VideoHero({ video, onPlay, className = '' }: VideoHeroProps) {
       <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8 md:p-12">
         {/* Source badge */}
         <div className="mb-3">
-          <VideoSourceBadge
-            source={video.source}
-            size="md"
-          />
+          <VideoSourceBadge source={video.source} size="md" />
         </div>
 
         {/* Title */}
@@ -99,9 +98,7 @@ export function VideoHero({ video, onPlay, className = '' }: VideoHeroProps) {
 
         {/* Description */}
         {video.description && (
-          <p className="mb-5 max-w-lg text-sm text-white/60 line-clamp-2">
-            {video.description}
-          </p>
+          <p className="mb-5 max-w-lg text-sm text-white/60 line-clamp-2">{video.description}</p>
         )}
 
         {/* Action buttons */}
@@ -122,7 +119,17 @@ export function VideoHero({ video, onPlay, className = '' }: VideoHeroProps) {
             onClick={handleWatchLater}
             className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-5 py-2.5 text-sm font-medium text-white backdrop-blur-sm transition-all hover:bg-white/20"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
               <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" />
             </svg>
             Watch Later
@@ -132,7 +139,17 @@ export function VideoHero({ video, onPlay, className = '' }: VideoHeroProps) {
             href={`/video/${video.id}`}
             className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-5 py-2.5 text-sm font-medium text-white backdrop-blur-sm transition-all hover:bg-white/20"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
               <circle cx="12" cy="12" r="3" />
               <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" />
             </svg>

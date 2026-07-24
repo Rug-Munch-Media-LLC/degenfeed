@@ -18,8 +18,8 @@ export function PremiumUpsell({ feature }: { feature: string }) {
           {feature} is a Premium Feature
         </h2>
         <p className="mb-6 text-sm text-[var(--color-muted)] max-w-md mx-auto">
-          Upgrade to DegenFeed Premium to create and manage Feddy Communities —
-          ActivityPub-native groups that federate across the Fediverse.
+          Upgrade to DegenFeed Premium to create and manage Feddy Communities — ActivityPub-native
+          groups that federate across the Fediverse.
         </p>
 
         {/* Benefits */}

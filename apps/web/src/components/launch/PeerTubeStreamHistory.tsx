@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { usePeerTubeStream, type StreamHistoryItem } from '../../hooks/usePeerTubeStream';
+import { useEffect, useState } from 'react';
 import { useIsMobile } from '../../hooks/useMobileResponsive';
+import { type StreamHistoryItem, usePeerTubeStream } from '../../hooks/usePeerTubeStream';
 
 /* === Types ============================================ */
 
@@ -71,7 +71,7 @@ export default function PeerTubeStreamHistory({
       .finally(() => {
         setLoading(false);
       });
-  }, [tokenAddress, tokenSymbol, limit, fetchHistory]);
+  }, [tokenSymbol, limit, fetchHistory]);
 
   // Loading skeleton — mobile friendly
   if (loading) {
@@ -112,9 +112,7 @@ export default function PeerTubeStreamHistory({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-[var(--color-fg)]">
-          📼 Past Streams
-        </h3>
+        <h3 className="text-sm font-semibold text-[var(--color-fg)]">📼 Past Streams</h3>
         {total > responsiveLimit && (
           <span className="text-[10px] text-[var(--color-muted)]">
             Showing {displayStreams.length} of {total}

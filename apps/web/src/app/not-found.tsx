@@ -42,7 +42,16 @@ export default function NotFound() {
           aria-hidden="true"
           className="opacity-80"
         >
-          <rect x="8" y="8" width="64" height="64" rx="16" stroke="currentColor" strokeWidth="1.5" opacity="0.12" />
+          <rect
+            x="8"
+            y="8"
+            width="64"
+            height="64"
+            rx="16"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            opacity="0.12"
+          />
           <circle cx="40" cy="34" r="10" stroke="currentColor" strokeWidth="1.5" opacity="0.25" />
           <path
             d="M26 56c0-8 5-12 14-12s14 4 14 12"
@@ -89,8 +98,20 @@ export default function NotFound() {
 
       <Link href="/" className="btn-primary mb-10">
         <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-          <path d="M1 8l7-6 7 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          <path d="M3 6v7h3v-4h4v4h3V6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          <path
+            d="M1 8l7-6 7 6"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <path
+            d="M3 6v7h3v-4h4v4h3V6"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
         </svg>
         Go Home
       </Link>

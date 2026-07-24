@@ -560,8 +560,8 @@ export default function DiscoverPage() {
   const [trendingCreatorsState, setTrendingCreatorsState] = useState<
     'loading' | 'loaded' | 'empty' | 'error'
   >('loading');
-  const [recommendedCreators, setRecommendedCreators] = useState<DiscoverPerson[]>([]);
-  const [recommendedCreatorsState, setRecommendedCreatorsState] = useState<
+  const [_recommendedCreators, _setRecommendedCreators] = useState<DiscoverPerson[]>([]);
+  const [_recommendedCreatorsState, _setRecommendedCreatorsState] = useState<
     'loading' | 'loaded' | 'empty' | 'error'
   >('loading');
   const [crossNetworkTrending, setCrossNetworkTrending] = useState<TrendingItem[]>([]);
@@ -570,13 +570,23 @@ export default function DiscoverPage() {
   >('loading');
   const [creatorSearchQuery, setCreatorSearchQuery] = useState('');
   const [creatorSearchResults, setCreatorSearchResults] = useState<DiscoverPerson[]>([]);
-  const [creatorSearchState, setCreatorSearchState] = useState<'idle' | 'loading' | 'loaded' | 'empty' | 'error'>('idle');
+  const [creatorSearchState, setCreatorSearchState] = useState<
+    'idle' | 'loading' | 'loaded' | 'empty' | 'error'
+  >('idle');
 
   interface TrendingItem {
-    id: string; title: string; description: string; url: string;
-    source: string; sourceLabel: string; sourceColor: string;
-    score: number; velocity: number; engagement: number;
-    thumbnailUrl?: string; publishedAt: number;
+    id: string;
+    title: string;
+    description: string;
+    url: string;
+    source: string;
+    sourceLabel: string;
+    sourceColor: string;
+    score: number;
+    velocity: number;
+    engagement: number;
+    thumbnailUrl?: string;
+    publishedAt: number;
     metadata: Record<string, unknown>;
   }
 
@@ -877,7 +887,7 @@ export default function DiscoverPage() {
           </section>
 
           {/* ═══ TRENDING CREATORS ═══ */}
-          {(trendingCreatorsState === 'loaded' && trendingCreators.length > 0) && (
+          {trendingCreatorsState === 'loaded' && trendingCreators.length > 0 && (
             <section>
               <SectionHeader
                 emoji={'\uD83D\uDD25'}
@@ -927,7 +937,10 @@ export default function DiscoverPage() {
                         </span>
                         <span
                           className="shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-medium"
-                          style={{ backgroundColor: `${item.sourceColor}18`, color: item.sourceColor }}
+                          style={{
+                            backgroundColor: `${item.sourceColor}18`,
+                            color: item.sourceColor,
+                          }}
                         >
                           {item.sourceLabel}
                         </span>
@@ -936,7 +949,7 @@ export default function DiscoverPage() {
                         {item.description}
                       </p>
                       <div className="mt-1 flex items-center gap-3 text-[10px] text-[var(--color-muted)]">
-                        <span>🔥 {(item.score)}</span>
+                        <span>🔥 {item.score}</span>
                         <span>⚡ {Math.round(item.velocity)}/hr</span>
                       </div>
                     </div>
@@ -947,7 +960,7 @@ export default function DiscoverPage() {
           )}
 
           {/* ═══ RECOMMENDED FOR YOU ═══ */}
-          {(recommendedState === 'loaded' && recommendedPosts.length > 0) && (
+          {recommendedState === 'loaded' && recommendedPosts.length > 0 && (
             <section>
               <SectionHeader
                 emoji={'\uD83D\uDCA1'}

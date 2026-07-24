@@ -1,7 +1,6 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
 import { useAuth } from '../../../components/AuthProvider';
 import { CreateCommunityWizard } from '../../../components/feddy/CreateCommunityWizard';
 import { PremiumUpsell } from '../../../components/feddy/PremiumUpsell';
@@ -64,8 +63,8 @@ export default function CreateCommunityPage() {
           Create a Feddy Community
         </h1>
         <p className="mt-2 text-sm text-[var(--color-muted)]">
-          Launch an ActivityPub-native group that federates across the Fediverse.
-          Your community will have its own handle and appear on Mastodon, Pixelfed, Lemmy, and more.
+          Launch an ActivityPub-native group that federates across the Fediverse. Your community
+          will have its own handle and appear on Mastodon, Pixelfed, Lemmy, and more.
         </p>
       </div>
 

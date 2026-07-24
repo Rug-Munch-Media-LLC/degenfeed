@@ -264,16 +264,6 @@ export { estimateTranslationLoss, PROTOCOL_FORMATS, translateContent } from './p
 
 // ─── Cross-protocol communities ────────────────────────────────────────
 
-export type { CrossProtocolCommunity } from './community';
-export {
-  COMMUNITY_INDEX_KEY,
-  COMMUNITY_KV_PREFIX,
-  communityFeedKey,
-  communityKey,
-  communityMembersKey,
-  slugifyCommunity,
-} from './community';
-
 // ─── Identity (folded from @degenfeed/identity) ───────────────────
 export type {
   HandleResolution,
@@ -289,3 +279,12 @@ export {
   resolveFediverseHandle,
   resolveHandle,
 } from '@degenfeed/identity';
+export type { CrossProtocolCommunity } from './community';
+export {
+  COMMUNITY_INDEX_KEY,
+  COMMUNITY_KV_PREFIX,
+  communityFeedKey,
+  communityKey,
+  communityMembersKey,
+  slugifyCommunity,
+} from './community';

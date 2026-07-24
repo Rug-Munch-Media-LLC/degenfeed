@@ -16,12 +16,12 @@
  * - Configurable drift window (±1 step default)
  */
 
-import { bytesToHex } from "@noble/hashes/utils";
+import { bytesToHex } from '@noble/hashes/utils';
 
 // ─── Constants ────────────────────────────────────────────────
 
 /** RFC 4648 Base32 alphabet (no padding characters used internally). */
-const BASE32_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+const BASE32_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
 
 /** Time step in seconds (RFC 6238 §5.1 — 30s is standard). */
 const TIME_STEP = 30;
@@ -41,12 +41,12 @@ const OFFSET_MASK = 0x0f;
 // ─── Exports ──────────────────────────────────────────────────
 
 export interface TOTPSecret {
-	base32: string;
-	hex: string;
+  base32: string;
+  hex: string;
 }
 
 export interface TOTPOptions {
-	window?: number;
+  window?: number;
 }
 
 // ─── Public API ───────────────────────────────────────────────
@@ -57,11 +57,11 @@ export interface TOTPOptions {
  * or type into their authenticator app.
  */
 export function generateTOTPSecret(): TOTPSecret {
-	const bytes = crypto.getRandomValues(new Uint8Array(20));
-	return {
-		base32: bytesToBase32(bytes),
-		hex: bytesToHex(bytes),
-	};
+  const bytes = crypto.getRandomValues(new Uint8Array(20));
+  return {
+    base32: bytesToBase32(bytes),
+    hex: bytesToHex(bytes),
+  };
 }
 
 /**
@@ -73,21 +73,17 @@ export function generateTOTPSecret(): TOTPSecret {
  * @param label - User identifier (e.g. wallet address truncated)
  * @param issuer - Service name displayed in the authenticator app
  */
-export function buildOtpauthUrl(
-	base32Secret: string,
-	label: string,
-	issuer = "DegenFeed",
-): string {
-	const encodedIssuer = encodeURIComponent(issuer);
-	const encodedLabel = encodeURIComponent(label);
-	return (
-		`otpauth://totp/${encodedIssuer}:${encodedLabel}` +
-		`?secret=${base32Secret}` +
-		`&issuer=${encodedIssuer}` +
-		`&algorithm=SHA1` +
-		`&digits=${OTP_DIGITS}` +
-		`&period=${TIME_STEP}`
-	);
+export function buildOtpauthUrl(base32Secret: string, label: string, issuer = 'DegenFeed'): string {
+  const encodedIssuer = encodeURIComponent(issuer);
+  const encodedLabel = encodeURIComponent(label);
+  return (
+    `otpauth://totp/${encodedIssuer}:${encodedLabel}` +
+    `?secret=${base32Secret}` +
+    `&issuer=${encodedIssuer}` +
+    `&algorithm=SHA1` +
+    `&digits=${OTP_DIGITS}` +
+    `&period=${TIME_STEP}`
+  );
 }
 
 /**
@@ -99,21 +95,21 @@ export function buildOtpauthUrl(
  * for 3 total checks (covers ±30s drift).
  */
 export async function verifyTOTP(
-	secret: string,
-	code: string,
-	opts?: TOTPOptions,
+  secret: string,
+  code: string,
+  opts?: TOTPOptions,
 ): Promise<boolean> {
-	const window = opts?.window ?? DEFAULT_WINDOW;
-	const now = Math.floor(Date.now() / 1000 / TIME_STEP);
+  const window = opts?.window ?? DEFAULT_WINDOW;
+  const now = Math.floor(Date.now() / 1000 / TIME_STEP);
 
-	// Check the current window and ±window adjacent windows
-	for (let i = -window; i <= window; i++) {
-		const generated = await generateTOTP(secret, now + i);
-		if (generated === code) {
-			return true;
-		}
-	}
-	return false;
+  // Check the current window and ±window adjacent windows
+  for (let i = -window; i <= window; i++) {
+    const generated = await generateTOTP(secret, now + i);
+    if (generated === code) {
+      return true;
+    }
+  }
+  return false;
 }
 
 /**
@@ -126,33 +122,35 @@ export async function verifyTOTP(
  *   3. HMAC-SHA1(key=secret, msg=counter)
  *   4. Dynamic truncation → 4 bytes → 31-bit integer → mod 10^6
  */
-export async function generateTOTP(
-	secret: string,
-	counter: number,
-): Promise<string> {
-	const key = base32ToBytes(secret);
+export async function generateTOTP(secret: string, counter: number): Promise<string> {
+  const key = base32ToBytes(secret);
 
-	// Step 2: counter → 8-byte big-endian
-	const counterBuf = new ArrayBuffer(8);
-	const counterView = new DataView(counterBuf);
-	counterView.setBigUint64(0, BigInt(counter), false);
+  // Step 2: counter → 8-byte big-endian
+  const counterBuf = new ArrayBuffer(8);
+  const counterView = new DataView(counterBuf);
+  counterView.setBigUint64(0, BigInt(counter), false);
 
-	// Step 3: HMAC-SHA1
-	const hmac = await hmacSha1(key, new Uint8Array(counterBuf));
+  // Step 3: HMAC-SHA1
+  const hmac = await hmacSha1(key, new Uint8Array(counterBuf));
 
-	// Step 4: Dynamic truncation (RFC 4226 §5.3)
-	const offset = hmac[hmac.length - 1] & OFFSET_MASK;
-	if (hmac[offset] === undefined || hmac[offset + 1] === undefined || hmac[offset + 2] === undefined || hmac[offset + 3] === undefined) {
-		throw new Error('TOTP: offset out of bounds');
-	}
-	const binaryCode =
-		((hmac[offset] & DYNAMIC_TRUNCATION_MASK) << 24) |
-		((hmac[offset + 1] & 0xff) << 16) |
-		((hmac[offset + 2] & 0xff) << 8) |
-		(hmac[offset + 3] & 0xff);
+  // Step 4: Dynamic truncation (RFC 4226 §5.3)
+  const offset = hmac[hmac.length - 1] & OFFSET_MASK;
+  if (
+    hmac[offset] === undefined ||
+    hmac[offset + 1] === undefined ||
+    hmac[offset + 2] === undefined ||
+    hmac[offset + 3] === undefined
+  ) {
+    throw new Error('TOTP: offset out of bounds');
+  }
+  const binaryCode =
+    ((hmac[offset] & DYNAMIC_TRUNCATION_MASK) << 24) |
+    ((hmac[offset + 1] & 0xff) << 16) |
+    ((hmac[offset + 2] & 0xff) << 8) |
+    (hmac[offset + 3] & 0xff);
 
-	const otp = binaryCode % 10 ** OTP_DIGITS;
-	return otp.toString().padStart(OTP_DIGITS, "0");
+  const otp = binaryCode % 10 ** OTP_DIGITS;
+  return otp.toString().padStart(OTP_DIGITS, '0');
 }
 
 /**
@@ -160,8 +158,8 @@ export async function generateTOTP(
  * Useful for debugging and testing.
  */
 export async function getCurrentTOTP(secret: string): Promise<string> {
-	const counter = Math.floor(Date.now() / 1000 / TIME_STEP);
-	return generateTOTP(secret, counter);
+  const counter = Math.floor(Date.now() / 1000 / TIME_STEP);
+  return generateTOTP(secret, counter);
 }
 
 // ─── HMAC-SHA1 (Web Crypto) ──────────────────────────────────
@@ -173,19 +171,16 @@ export async function getCurrentTOTP(secret: string): Promise<string> {
  * Returns a 20-byte (160-bit) SHA-1 digest synchronizing with
  * the session.ts pattern of `await crypto.subtle.sign(...)`.
  */
-async function hmacSha1(
-	key: Uint8Array,
-	data: Uint8Array,
-): Promise<Uint8Array> {
-	const cryptoKey = await crypto.subtle.importKey(
-		"raw",
-		key as Uint8Array<ArrayBuffer>,
-		{ name: "HMAC", hash: "SHA-1" },
-		false,
-		["sign"],
-	);
-	const signature = await crypto.subtle.sign("HMAC", cryptoKey, data as BufferSource);
-	return new Uint8Array(signature);
+async function hmacSha1(key: Uint8Array, data: Uint8Array): Promise<Uint8Array> {
+  const cryptoKey = await crypto.subtle.importKey(
+    'raw',
+    key as Uint8Array<ArrayBuffer>,
+    { name: 'HMAC', hash: 'SHA-1' },
+    false,
+    ['sign'],
+  );
+  const signature = await crypto.subtle.sign('HMAC', cryptoKey, data as BufferSource);
+  return new Uint8Array(signature);
 }
 
 // ─── Base32 encoding / decoding (RFC 4648) ────────────────────
@@ -195,26 +190,26 @@ async function hmacSha1(
  * Standard format used by all TOTP authenticator apps.
  */
 export function bytesToBase32(bytes: Uint8Array): string {
-	let result = "";
-	let bits = 0;
-	let bitLen = 0;
+  let result = '';
+  let bits = 0;
+  let bitLen = 0;
 
-	for (const byte of bytes) {
-		bits = (bits << 8) | byte;
-		bitLen += 8;
+  for (const byte of bytes) {
+    bits = (bits << 8) | byte;
+    bitLen += 8;
 
-		while (bitLen >= 5) {
-			bitLen -= 5;
-			result += BASE32_ALPHABET[(bits >> bitLen) & 0x1f];
-		}
-	}
+    while (bitLen >= 5) {
+      bitLen -= 5;
+      result += BASE32_ALPHABET[(bits >> bitLen) & 0x1f];
+    }
+  }
 
-	// Emit remaining bits with zero-padding
-	if (bitLen > 0) {
-		result += BASE32_ALPHABET[(bits << (5 - bitLen)) & 0x1f];
-	}
+  // Emit remaining bits with zero-padding
+  if (bitLen > 0) {
+    result += BASE32_ALPHABET[(bits << (5 - bitLen)) & 0x1f];
+  }
 
-	return result;
+  return result;
 }
 
 /**
@@ -222,26 +217,26 @@ export function bytesToBase32(bytes: Uint8Array): string {
  * Handles both padded and unpadded input, and is case-insensitive.
  */
 export function base32ToBytes(base32: string): Uint8Array {
-	const clean = base32.toUpperCase().replace(/=+$/, "");
-	const bytes: number[] = [];
+  const clean = base32.toUpperCase().replace(/=+$/, '');
+  const bytes: number[] = [];
 
-	let bits = 0;
-	let bitLen = 0;
+  let bits = 0;
+  let bitLen = 0;
 
-	for (const char of clean) {
-		const idx = BASE32_ALPHABET.indexOf(char);
-		if (idx === -1) continue; // skip invalid chars
+  for (const char of clean) {
+    const idx = BASE32_ALPHABET.indexOf(char);
+    if (idx === -1) continue; // skip invalid chars
 
-		bits = (bits << 5) | idx;
-		bitLen += 5;
+    bits = (bits << 5) | idx;
+    bitLen += 5;
 
-		if (bitLen >= 8) {
-			bitLen -= 8;
-			bytes.push((bits >> bitLen) & 0xff);
-		}
-	}
+    if (bitLen >= 8) {
+      bitLen -= 8;
+      bytes.push((bits >> bitLen) & 0xff);
+    }
+  }
 
-	return new Uint8Array(bytes);
+  return new Uint8Array(bytes);
 }
 
 // ─── Validation helpers ───────────────────────────────────────
@@ -251,12 +246,12 @@ export function base32ToBytes(base32: string): Uint8Array {
  * Must be exactly 6 decimal digits.
  */
 export function isValidTOTPCode(code: string): boolean {
-	return /^\d{6}$/.test(code);
+  return /^\d{6}$/.test(code);
 }
 
 /**
  * Basic sanity check for a recovery code format (XXXX-XXXX-XXXX).
  */
 export function isValidRecoveryCodeFormat(code: string): boolean {
-	return /^[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}$/i.test(code);
+  return /^[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}$/i.test(code);
 }

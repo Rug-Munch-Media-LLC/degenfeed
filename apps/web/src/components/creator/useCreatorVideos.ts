@@ -155,63 +155,66 @@ export function useCreatorVideoActions() {
     return data as UploadResult;
   }, []);
 
-  const uploadShort = useCallback(async (input: {
-    file: File | Blob;
-    title: string;
-    description?: string;
-    tags?: string[];
-    thumbnail?: File | Blob;
-  }): Promise<UploadResult> => {
-    const formData = new FormData();
-    formData.append('file', input.file);
-    formData.append('title', input.title);
-    if (input.description) formData.append('description', input.description);
-    if (input.tags) formData.append('tags', input.tags.join(','));
-    if (input.thumbnail) formData.append('thumbnail', input.thumbnail);
+  const uploadShort = useCallback(
+    async (input: {
+      file: File | Blob;
+      title: string;
+      description?: string;
+      tags?: string[];
+      thumbnail?: File | Blob;
+    }): Promise<UploadResult> => {
+      const formData = new FormData();
+      formData.append('file', input.file);
+      formData.append('title', input.title);
+      if (input.description) formData.append('description', input.description);
+      if (input.tags) formData.append('tags', input.tags.join(','));
+      if (input.thumbnail) formData.append('thumbnail', input.thumbnail);
 
-    const res = await fetch('/api/creator/videos/short', {
-      method: 'POST',
-      credentials: 'include',
-      body: formData,
-    });
+      const res = await fetch('/api/creator/videos/short', {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
+      });
 
-    const data = await res.json();
-    if (!res.ok) {
-      throw new Error(data.error ?? 'Short upload failed');
-    }
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error ?? 'Short upload failed');
+      }
 
-    mutate('/api/creator/videos');
-    mutate('/api/creator/videos?type=short');
-    return data as UploadResult;
-  }, []);
+      mutate('/api/creator/videos');
+      mutate('/api/creator/videos?type=short');
+      return data as UploadResult;
+    },
+    [],
+  );
 
-  const updateVideo = useCallback(async (
-    uuid: string,
-    input: Partial<UploadVideoInput>,
-  ): Promise<boolean> => {
-    const formData = new FormData();
-    if (input.title) formData.append('title', input.title);
-    if (input.description !== undefined) formData.append('description', input.description);
-    if (input.tags) formData.append('tags', input.tags.join(','));
-    if (input.category !== undefined) formData.append('category', String(input.category));
-    if (input.privacy) formData.append('privacy', String(input.privacy));
-    if (input.thumbnail) formData.append('thumbnail', input.thumbnail);
+  const updateVideo = useCallback(
+    async (uuid: string, input: Partial<UploadVideoInput>): Promise<boolean> => {
+      const formData = new FormData();
+      if (input.title) formData.append('title', input.title);
+      if (input.description !== undefined) formData.append('description', input.description);
+      if (input.tags) formData.append('tags', input.tags.join(','));
+      if (input.category !== undefined) formData.append('category', String(input.category));
+      if (input.privacy) formData.append('privacy', String(input.privacy));
+      if (input.thumbnail) formData.append('thumbnail', input.thumbnail);
 
-    const res = await fetch(`/api/creator/videos/${uuid}`, {
-      method: 'PUT',
-      credentials: 'include',
-      body: formData,
-    });
+      const res = await fetch(`/api/creator/videos/${uuid}`, {
+        method: 'PUT',
+        credentials: 'include',
+        body: formData,
+      });
 
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({ error: 'Update failed' }));
-      throw new Error(data.error);
-    }
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({ error: 'Update failed' }));
+        throw new Error(data.error);
+      }
 
-    mutate('/api/creator/videos');
-    mutate(`/api/creator/videos/${uuid}`);
-    return true;
-  }, []);
+      mutate('/api/creator/videos');
+      mutate(`/api/creator/videos/${uuid}`);
+      return true;
+    },
+    [],
+  );
 
   const deleteVideo = useCallback(async (uuid: string): Promise<boolean> => {
     const res = await fetch(`/api/creator/videos/${uuid}`, {

@@ -419,7 +419,9 @@ export default function AdminPlatformsPage() {
               )}
 
               <div className="flex items-center justify-between border-t border-[var(--color-border)] pt-3">
-                <span className="text-[10px] text-[var(--color-muted)]">{formatTime(platform.lastFetch)}</span>
+                <span className="text-[10px] text-[var(--color-muted)]">
+                  {formatTime(platform.lastFetch)}
+                </span>
                 <label
                   className="flex cursor-pointer items-center gap-2"
                   aria-label={`Toggle ${platform.name}`}

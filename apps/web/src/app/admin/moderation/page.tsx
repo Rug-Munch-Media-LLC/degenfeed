@@ -467,7 +467,9 @@ export default function AdminModerationPage() {
                   >
                     {REASON_LABELS[report.reason] || report.reason}
                   </span>
-                  <span className="text-[10px] text-[var(--color-muted)]">{formatTime(report.reportedAt)}</span>
+                  <span className="text-[10px] text-[var(--color-muted)]">
+                    {formatTime(report.reportedAt)}
+                  </span>
                 </div>
 
                 <p className="mb-1 text-xs text-[var(--color-muted)]">

@@ -3,31 +3,27 @@
 import dynamic from 'next/dynamic';
 import { useCallback, useState } from 'react';
 import { useAuth } from '../../../components/AuthProvider';
-import { useWeb3 } from '../../../components/Web3Provider';
 import type { CreatorVideoMeta } from '../../../components/creator/useCreatorVideos';
 import VideoLibrary from '../../../components/creator/VideoLibrary';
+import { useWeb3 } from '../../../components/Web3Provider';
 
 // === Dynamic imports (heavy modals) =======================================
 
-const VideoUploader = dynamic(
-  () => import('../../../components/creator/VideoUploader'),
-  { ssr: false },
-);
+const VideoUploader = dynamic(() => import('../../../components/creator/VideoUploader'), {
+  ssr: false,
+});
 
-const VideoEditor = dynamic(
-  () => import('../../../components/creator/VideoEditor'),
-  { ssr: false },
-);
+const VideoEditor = dynamic(() => import('../../../components/creator/VideoEditor'), {
+  ssr: false,
+});
 
-const VideoAnalytics = dynamic(
-  () => import('../../../components/creator/VideoAnalytics'),
-  { ssr: false },
-);
+const VideoAnalytics = dynamic(() => import('../../../components/creator/VideoAnalytics'), {
+  ssr: false,
+});
 
-const ShortCreator = dynamic(
-  () => import('../../../components/creator/ShortCreator'),
-  { ssr: false },
-);
+const ShortCreator = dynamic(() => import('../../../components/creator/ShortCreator'), {
+  ssr: false,
+});
 
 // === Types ===============================================================
 
@@ -92,8 +88,8 @@ export default function CreatorVideosPage() {
           </div>
           <h1 className="text-2xl font-bold text-[var(--color-fg)]">Creator Videos</h1>
           <p className="mt-2 text-sm text-[var(--color-muted)]">
-            Connect a wallet to upload, manage, and monetize your video content on DegenFeed.
-            Videos are hosted on PeerTube, cross-posted to all protocols, and monetizable via tips.
+            Connect a wallet to upload, manage, and monetize your video content on DegenFeed. Videos
+            are hosted on PeerTube, cross-posted to all protocols, and monetizable via tips.
           </p>
           <div className="mt-8">
             <button type="button" onClick={openSignIn} className="btn-primary">
@@ -112,7 +108,9 @@ export default function CreatorVideosPage() {
   const handleConfirmDelete = useCallback(async () => {
     if (!confirmDeleteUuid) return;
     try {
-      const { useCreatorVideoActions } = await import('../../../components/creator/useCreatorVideos');
+      const { useCreatorVideoActions } = await import(
+        '../../../components/creator/useCreatorVideos'
+      );
       // Can't call hooks outside component — use direct fetch instead
       const res = await fetch(`/api/creator/videos/${confirmDeleteUuid}`, {
         method: 'DELETE',
@@ -143,8 +141,8 @@ export default function CreatorVideosPage() {
             Creator Videos
           </h1>
           <p className="mt-1 text-sm text-[var(--color-muted)]">
-            Upload, manage, and monetize your video content. Hosted on PeerTube,
-            distributed across all protocols. Labeled as &quot;DegenFeed Creator&quot; on the Video Hub.
+            Upload, manage, and monetize your video content. Hosted on PeerTube, distributed across
+            all protocols. Labeled as &quot;DegenFeed Creator&quot; on the Video Hub.
           </p>
         </div>
         <div className="flex gap-2">
@@ -162,7 +160,12 @@ export default function CreatorVideosPage() {
             className="btn-primary flex items-center gap-2 text-sm"
           >
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-              <path d="M7 1v12M1 7h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              <path
+                d="M7 1v12M1 7h12"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+              />
             </svg>
             Upload Video
           </button>
@@ -179,7 +182,8 @@ export default function CreatorVideosPage() {
             </span>
           </div>
           <p className="mt-1 text-xs text-[var(--color-muted)]">
-            All videos are uploaded to our PeerTube instance at video.degenfeed.xyz and federated via ActivityPub.
+            All videos are uploaded to our PeerTube instance at video.degenfeed.xyz and federated
+            via ActivityPub.
           </p>
         </div>
 
@@ -191,7 +195,8 @@ export default function CreatorVideosPage() {
             </span>
           </div>
           <p className="mt-1 text-xs text-[var(--color-muted)]">
-            Videos are automatically announced to ActivityPub, Nostr, AT Protocol, Farcaster, and Lens.
+            Videos are automatically announced to ActivityPub, Nostr, AT Protocol, Farcaster, and
+            Lens.
           </p>
         </div>
 
@@ -203,7 +208,8 @@ export default function CreatorVideosPage() {
             </span>
           </div>
           <p className="mt-1 text-xs text-[var(--color-muted)]">
-            Each video supports tips via DegenFeed&apos;s unified tipping system. Creators can also link creator coins.
+            Each video supports tips via DegenFeed&apos;s unified tipping system. Creators can also
+            link creator coins.
           </p>
         </div>
 
@@ -215,7 +221,8 @@ export default function CreatorVideosPage() {
             </span>
           </div>
           <p className="mt-1 text-xs text-[var(--color-muted)]">
-            All uploads appear on the Video Hub labeled as &quot;DegenFeed Creator&quot; with your profile link.
+            All uploads appear on the Video Hub labeled as &quot;DegenFeed Creator&quot; with your
+            profile link.
           </p>
         </div>
       </div>
@@ -287,10 +294,7 @@ export default function CreatorVideosPage() {
       )}
 
       {analyticsVideo && (
-        <VideoAnalytics
-          video={analyticsVideo}
-          onClose={() => setAnalyticsVideo(null)}
-        />
+        <VideoAnalytics video={analyticsVideo} onClose={() => setAnalyticsVideo(null)} />
       )}
 
       {/* Delete confirmation */}
@@ -303,15 +307,18 @@ export default function CreatorVideosPage() {
               </div>
               <h3 className="text-base font-semibold text-[var(--color-fg)]">Delete Video?</h3>
               <p className="mt-2 text-sm text-[var(--color-muted)]">
-                Are you sure you want to delete &ldquo;{deletingVideo.title}&rdquo;?
-                This permanently removes it from PeerTube and all protocols.
+                Are you sure you want to delete &ldquo;{deletingVideo.title}&rdquo;? This
+                permanently removes it from PeerTube and all protocols.
               </p>
             </div>
 
             <div className="mt-6 flex gap-3">
               <button
                 type="button"
-                onClick={() => { setDeletingVideo(null); setConfirmDeleteUuid(null); }}
+                onClick={() => {
+                  setDeletingVideo(null);
+                  setConfirmDeleteUuid(null);
+                }}
                 className="flex-1 rounded-lg border border-[var(--color-border)] bg-[var(--color-overlay)] py-2.5 text-sm text-[var(--color-fg)] transition-colors hover:bg-[var(--color-card)]"
               >
                 Cancel

@@ -23,16 +23,10 @@ export interface RetryOptions {
 
 const RETRYABLE_STATUS = new Set([408, 429, 500, 502, 503, 504]);
 
-function attachCsrfHeader(
-  url: string,
-  fetchOptions?: RequestInit,
-): RequestInit | undefined {
+function attachCsrfHeader(url: string, fetchOptions?: RequestInit): RequestInit | undefined {
   const method = fetchOptions?.method ?? 'GET';
   // Only attach CSRF token to state-changing /api/* requests
-  if (
-    ['GET', 'HEAD'].includes(method.toUpperCase()) ||
-    !url.startsWith('/api/')
-  ) {
+  if (['GET', 'HEAD'].includes(method.toUpperCase()) || !url.startsWith('/api/')) {
     return fetchOptions;
   }
   const token = getCsrfToken();

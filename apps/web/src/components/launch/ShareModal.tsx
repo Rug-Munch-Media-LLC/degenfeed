@@ -17,11 +17,6 @@ function getShareText(symbol: string, name: string, url: string, platform: strin
   switch (platform) {
     case 'twitter':
       return `${base}\n\n${url}\n\n#DegenFeed #CreatorCoins #Web3`;
-    case 'farcaster':
-    case 'bluesky':
-    case 'mastodon':
-    case 'nostr':
-    case 'copy':
     default:
       return `${base}\n\n${url}`;
   }
@@ -114,7 +109,7 @@ export default function ShareModal({
   const handleTouchStart = useCallback(
     (e: React.TouchEvent) => {
       if (!isMobile) return;
-      touchStartRef.current = { x: e.touches[0]!.clientX, y: e.touches[0]!.clientY };
+      touchStartRef.current = { x: e.touches[0]?.clientX, y: e.touches[0]?.clientY };
     },
     [isMobile],
   );
@@ -122,7 +117,7 @@ export default function ShareModal({
   const handleTouchEnd = useCallback(
     (e: React.TouchEvent) => {
       if (!isMobile || !touchStartRef.current) return;
-      const dy = e.changedTouches[0]!.clientY - touchStartRef.current.y;
+      const dy = e.changedTouches[0]?.clientY - touchStartRef.current.y;
       if (dy > 100) {
         onClose();
       }
@@ -168,9 +163,7 @@ export default function ShareModal({
       {/* Modal content */}
       <div
         className={`relative w-full max-w-md animate-slide-up shadow-2xl border border-[var(--color-border)] bg-[var(--color-card)] ${
-          isMobile
-            ? 'modal-mobile-content rounded-t-2xl rounded-b-none pb-safe'
-            : 'rounded-2xl p-6'
+          isMobile ? 'modal-mobile-content rounded-t-2xl rounded-b-none pb-safe' : 'rounded-2xl p-6'
         } ${isMobile ? 'p-5' : ''}`}
         style={isMobile ? { maxHeight: '90dvh' } : undefined}
       >

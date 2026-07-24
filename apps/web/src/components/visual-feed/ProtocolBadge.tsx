@@ -12,7 +12,8 @@ interface ProtocolBadgeProps {
 }
 
 export function ProtocolBadge({ badge, color, label, size = 'sm' }: ProtocolBadgeProps) {
-  const sizeClasses = size === 'sm' ? 'text-[10px] px-1.5 py-0.5 gap-0.5' : 'text-xs px-2 py-1 gap-1';
+  const sizeClasses =
+    size === 'sm' ? 'text-[10px] px-1.5 py-0.5 gap-0.5' : 'text-xs px-2 py-1 gap-1';
 
   return (
     <span
@@ -23,7 +24,9 @@ export function ProtocolBadge({ badge, color, label, size = 'sm' }: ProtocolBadg
         border: `1px solid ${color}30`,
       }}
     >
-      <span className="text-[inherit]" aria-hidden="true">{badge}</span>
+      <span className="text-[inherit]" aria-hidden="true">
+        {badge}
+      </span>
       <span className="sr-only">{label}</span>
       {size === 'md' && <span className="ml-0.5">{label}</span>}
     </span>

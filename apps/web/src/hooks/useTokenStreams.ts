@@ -105,9 +105,7 @@ export function useTokenStreams(tokenAddress: string): UseTokenStreamsResult {
 
       if (!res.ok) {
         const errBody = await res.json().catch(() => ({}));
-        throw new Error(
-          (errBody as { error?: string }).error || `HTTP ${res.status}`,
-        );
+        throw new Error((errBody as { error?: string }).error || `HTTP ${res.status}`);
       }
 
       const newStream = (await res.json()) as TokenStream;
@@ -123,9 +121,7 @@ export function useTokenStreams(tokenAddress: string): UseTokenStreamsResult {
 
     if (!res.ok) {
       const errBody = await res.json().catch(() => ({}));
-      throw new Error(
-        (errBody as { error?: string }).error || `HTTP ${res.status}`,
-      );
+      throw new Error((errBody as { error?: string }).error || `HTTP ${res.status}`);
     }
   }, [tokenAddress]);
 
@@ -136,9 +132,7 @@ export function useTokenStreams(tokenAddress: string): UseTokenStreamsResult {
 
     if (!res.ok) {
       const errBody = await res.json().catch(() => ({}));
-      throw new Error(
-        (errBody as { error?: string }).error || `HTTP ${res.status}`,
-      );
+      throw new Error((errBody as { error?: string }).error || `HTTP ${res.status}`);
     }
 
     return (await res.json()) as StreamJoinResult;

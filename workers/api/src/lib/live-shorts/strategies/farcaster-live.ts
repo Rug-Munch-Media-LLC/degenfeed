@@ -17,9 +17,9 @@
  * native player experience.
  */
 
-import type { Env } from "../../../index";
-import type { ProtocolStrategy, LiveSessionInfo, ViewerCountResult } from "../live-strategy";
-import { LIVE_SHORT_STRATEGIES } from "../protocol-strategies";
+import type { Env } from '../../../index';
+import type { LiveSessionInfo, ProtocolStrategy, ViewerCountResult } from '../live-strategy';
+import { LIVE_SHORT_STRATEGIES } from '../protocol-strategies';
 
 const STRATEGY = LIVE_SHORT_STRATEGIES.farcaster;
 
@@ -32,37 +32,39 @@ export const farcasterLiveStrategy: ProtocolStrategy = {
   async announceLive(
     env: Env,
     sessionId: string,
-    creator: string,
+    _creator: string,
     creatorHandle: string,
     title: string,
-    playbackUrl: string,
+    _playbackUrl: string,
     duration: number,
   ): Promise<LiveSessionInfo> {
     try {
-      const { HubClient, buildFarcasterCastMessage } = await import(
-        "@degenfeed/farcaster-sdk"
-      );
+      const { HubClient, buildFarcasterCastMessage } = await import('@degenfeed/farcaster-sdk');
 
       // The live activity URL — serves fc:live meta tags
       const activityUrl = `https://app.degenfeed.xyz/frames/live/${sessionId}`;
 
       // Build cast text with reference to the activity URL
-      const text = `🔴 LIVE SHORT: ${title}\n\n${creatorHandle} is live!\n\n⏱ ${duration}s\n\n${activityUrl}`.slice(0, 320);
+      const text =
+        `🔴 LIVE SHORT: ${title}\n\n${creatorHandle} is live!\n\n⏱ ${duration}s\n\n${activityUrl}`.slice(
+          0,
+          320,
+        );
 
       // Use configured signer
-      const signerKeyHex = env.FARCASTER_SIGNER_KEY ?? "";
-      const fid = Number(env.FARCASTER_FID ?? "");
+      const signerKeyHex = env.FARCASTER_SIGNER_KEY ?? '';
+      const fid = Number(env.FARCASTER_FID ?? '');
 
       if (!signerKeyHex || !fid) {
         return {
-          protocolId: "",
-          protocolUrl: "",
+          protocolId: '',
+          protocolUrl: '',
           announced: false,
-          error: "Farcaster credentials not configured",
+          error: 'Farcaster credentials not configured',
         };
       }
 
-      const hubUrl = env.FARCASTER_HUB_URL ?? "https://hub.farcaster.standardcrypto.vc:2281";
+      const hubUrl = env.FARCASTER_HUB_URL ?? 'https://hub.farcaster.standardcrypto.vc:2281';
 
       // Build and sign the cast
       const signed = buildFarcasterCastMessage({
@@ -74,10 +76,10 @@ export const farcasterLiveStrategy: ProtocolStrategy = {
 
       if (!signed.ok || !signed.messageHex) {
         return {
-          protocolId: "",
-          protocolUrl: "",
+          protocolId: '',
+          protocolUrl: '',
           announced: false,
-          error: signed.error ?? "Failed to build cast",
+          error: signed.error ?? 'Failed to build cast',
         };
       }
 
@@ -94,8 +96,8 @@ export const farcasterLiveStrategy: ProtocolStrategy = {
       };
     } catch (err) {
       return {
-        protocolId: "",
-        protocolUrl: "",
+        protocolId: '',
+        protocolUrl: '',
         announced: false,
         error: err instanceof Error ? err.message : String(err),
       };
@@ -104,7 +106,7 @@ export const farcasterLiveStrategy: ProtocolStrategy = {
 
   async updateEnded(
     env: Env,
-    sessionId: string,
+    _sessionId: string,
     protocolId: string,
     title: string,
     recordingUrl: string,
@@ -113,12 +115,10 @@ export const farcasterLiveStrategy: ProtocolStrategy = {
     if (!protocolId) return;
 
     try {
-      const { HubClient, buildFarcasterCastMessage } = await import(
-        "@degenfeed/farcaster-sdk"
-      );
+      const { HubClient, buildFarcasterCastMessage } = await import('@degenfeed/farcaster-sdk');
 
-      const signerKeyHex = env.FARCASTER_SIGNER_KEY ?? "";
-      const fid = Number(env.FARCASTER_FID ?? "");
+      const signerKeyHex = env.FARCASTER_SIGNER_KEY ?? '';
+      const fid = Number(env.FARCASTER_FID ?? '');
       if (!signerKeyHex || !fid) return;
 
       const text = `✅ Recording available: ${title}\n\n📺 ${recordingUrl}`.slice(0, 320);
@@ -133,7 +133,7 @@ export const farcasterLiveStrategy: ProtocolStrategy = {
       if (!signed.ok) return;
 
       const client = new HubClient(
-        env.FARCASTER_HUB_URL ?? "https://hub.farcaster.standardcrypto.vc:2281",
+        env.FARCASTER_HUB_URL ?? 'https://hub.farcaster.standardcrypto.vc:2281',
       );
       await client.submitMessage(signed.messageHex);
     } catch {
@@ -141,16 +141,13 @@ export const farcasterLiveStrategy: ProtocolStrategy = {
     }
   },
 
-  async getViewerCount(
-    env: Env,
-    protocolId: string,
-  ): Promise<ViewerCountResult> {
+  async getViewerCount(env: Env, protocolId: string): Promise<ViewerCountResult> {
     // Farcaster: count reactions + recasts as viewer proxy
     if (!protocolId) return { count: 0, rawSignal: 0 };
 
     try {
-      const { HubClient } = await import("@degenfeed/farcaster-sdk");
-      const hubUrl = env.FARCASTER_HUB_URL ?? "https://hub.farcaster.standardcrypto.vc:2281";
+      const { HubClient } = await import('@degenfeed/farcaster-sdk');
+      const hubUrl = env.FARCASTER_HUB_URL ?? 'https://hub.farcaster.standardcrypto.vc:2281';
       const client = new HubClient(hubUrl);
 
       const cast = await client.getCast(protocolId);

@@ -10,7 +10,7 @@
 
 import { useCallback } from 'react';
 import type { UnifiedVideo } from './useVideoHub';
-import { useContinueWatching, type ContinueWatchingItem } from './useVideoHub';
+import { useContinueWatching } from './useVideoHub';
 import { VideoRow } from './VideoRow';
 
 interface VideoContinueWatchingProps {
@@ -18,10 +18,7 @@ interface VideoContinueWatchingProps {
   maxItems?: number;
 }
 
-export function VideoContinueWatching({
-  onPlay,
-  maxItems = 10,
-}: VideoContinueWatchingProps) {
+export function VideoContinueWatching({ onPlay, maxItems = 10 }: VideoContinueWatchingProps) {
   const { items, removeItem } = useContinueWatching();
 
   const handlePlay = useCallback(
@@ -31,7 +28,7 @@ export function VideoContinueWatching({
     [onPlay],
   );
 
-  const handleDismiss = useCallback(
+  const _handleDismiss = useCallback(
     (videoId: string) => {
       removeItem(videoId);
     },

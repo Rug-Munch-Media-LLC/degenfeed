@@ -73,11 +73,7 @@ export const PROTOCOL_META: Record<
 };
 
 /** Share links builder per protocol */
-export function buildShareUrl(
-  protocol: ShortProtocol,
-  shortId: string,
-  title: string,
-): string {
+export function buildShareUrl(protocol: ShortProtocol, shortId: string, title: string): string {
   const appUrl = `https://app.degenfeed.xyz/shorts/${shortId}`;
   const encodedUrl = encodeURIComponent(appUrl);
   const encodedTitle = encodeURIComponent(title);

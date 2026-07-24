@@ -1,14 +1,13 @@
 'use client';
 
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
-import { useTokenCommunity } from '../../../../hooks/useTokenCommunity';
-import { useBondingCurve } from '../../../../hooks/useBondingCurve';
+import CommunityStats from '../../../../components/launch/CommunityStats';
+import HolderLeaderboard from '../../../../components/launch/HolderLeaderboard';
 import LiveCommentFeed from '../../../../components/launch/LiveCommentFeed';
 import LiveStreamPlayer from '../../../../components/launch/LiveStreamPlayer';
 import MilestoneTracker from '../../../../components/launch/MilestoneTracker';
-import CommunityStats from '../../../../components/launch/CommunityStats';
-import HolderLeaderboard from '../../../../components/launch/HolderLeaderboard';
+import { useBondingCurve } from '../../../../hooks/useBondingCurve';
+import { useTokenCommunity } from '../../../../hooks/useTokenCommunity';
 
 /* === Types ============================================ */
 
@@ -42,8 +41,13 @@ function CommunitySkeleton() {
 export default function TokenCommunityPage({ params }: CommunityPageProps) {
   const { symbol } = params;
   // Derive token address from the symbol — in production this comes from the metadata
-  const { curve, price, totalRaised, holderCount, isLoading: curveLoading } =
-    useBondingCurve(symbol);
+  const {
+    curve,
+    price,
+    totalRaised,
+    holderCount,
+    isLoading: curveLoading,
+  } = useBondingCurve(symbol);
 
   const tokenAddress = curve?.tokenAddress || '';
 
@@ -107,10 +111,7 @@ export default function TokenCommunityPage({ params }: CommunityPageProps) {
             The permanent home for {symbol.toUpperCase()} holders
           </p>
         </div>
-        <Link
-          href={`/launch/${symbol}`}
-          className="btn-secondary px-4 py-2 text-sm"
-        >
+        <Link href={`/launch/${symbol}`} className="btn-secondary px-4 py-2 text-sm">
           ← Back to Token
         </Link>
       </div>
@@ -119,17 +120,12 @@ export default function TokenCommunityPage({ params }: CommunityPageProps) {
         {/* ════════ MAIN CONTENT ════════ */}
         <div className="min-w-0 flex-1 space-y-6">
           {/* Creator Stream */}
-          <LiveStreamPlayer
-            tokenAddress={tokenAddress}
-            tokenSymbol={symbol.toUpperCase()}
-          />
+          <LiveStreamPlayer tokenAddress={tokenAddress} tokenSymbol={symbol.toUpperCase()} />
 
           {/* Discussion Board */}
           <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)]">
             <div className="border-b border-[var(--color-border)] px-4 py-3">
-              <h2 className="text-sm font-semibold text-[var(--color-fg)]">
-                💬 Discussion
-              </h2>
+              <h2 className="text-sm font-semibold text-[var(--color-fg)]">💬 Discussion</h2>
               <p className="text-xs text-[var(--color-muted)]">
                 {communityStats?.total ?? 0} messages in this community
               </p>
@@ -141,9 +137,7 @@ export default function TokenCommunityPage({ params }: CommunityPageProps) {
 
           {/* Past Streams / Recordings (placeholder) */}
           <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-4">
-            <h2 className="mb-3 text-sm font-semibold text-[var(--color-fg)]">
-              📺 Past Streams
-            </h2>
+            <h2 className="mb-3 text-sm font-semibold text-[var(--color-fg)]">📺 Past Streams</h2>
             <p className="text-xs text-[var(--color-muted)] text-center py-6">
               No past streams yet. When the creator goes live, recordings will appear here.
             </p>
@@ -197,9 +191,7 @@ export default function TokenCommunityPage({ params }: CommunityPageProps) {
                   )}
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-[var(--color-fg)]">
-                    {curve.creator.name}
-                  </p>
+                  <p className="text-sm font-medium text-[var(--color-fg)]">{curve.creator.name}</p>
                   <div className="flex items-center gap-1">
                     <span className="text-[10px] text-[var(--color-muted)]">
                       Rep: {curve.creator.reputation}

@@ -26,265 +26,224 @@
  *   GET  /api/shorts/zora/creator  — Creator's Zora video NFTs
  */
 
-import type { ShortVideoSource } from "@degenfeed/shorts-provider";
-import type { UserInterestProfile } from "@degenfeed/shorts-provider/scorer";
-import { ShortsAggregator } from "../feed/shorts-aggregator";
-import { UnifiedShortsFeed } from "../feed/shorts-unified";
-import type { Env } from "../index";
-import { jsonResponse, noCacheJsonResponse } from "../index";
-import {
-	type ShortProtocol,
-	UnifiedShortsPipeline,
-} from "../lib/unified-shorts";
-import { ZoraVideoIntegration } from "../lib/zora-video";
-import { requireSession } from "../session";
+import type { ShortVideoSource } from '@degenfeed/shorts-provider';
+import type { UserInterestProfile } from '@degenfeed/shorts-provider/scorer';
+import { ShortsAggregator } from '../feed/shorts-aggregator';
+import { UnifiedShortsFeed } from '../feed/shorts-unified';
+import type { Env } from '../index';
+import { jsonResponse, noCacheJsonResponse } from '../index';
+import { type ShortProtocol, UnifiedShortsPipeline } from '../lib/unified-shorts';
+import { ZoraVideoIntegration } from '../lib/zora-video';
+import { requireSession } from '../session';
 
 // ─── Default user profile for unauthenticated requests ────────────────────
 
 const DEFAULT_USER_PROFILE: UserInterestProfile = {
-	topics: {
-		crypto: 0.8,
-		defi: 0.7,
-		bitcoin: 0.7,
-		ethereum: 0.6,
-		trading: 0.6,
-		nft: 0.5,
-		memecoin: 0.4,
-		ai: 0.5,
-		security: 0.4,
-		macro: 0.5,
-		layer2: 0.5,
-		onchain: 0.6,
-	},
+  topics: {
+    crypto: 0.8,
+    defi: 0.7,
+    bitcoin: 0.7,
+    ethereum: 0.6,
+    trading: 0.6,
+    nft: 0.5,
+    memecoin: 0.4,
+    ai: 0.5,
+    security: 0.4,
+    macro: 0.5,
+    layer2: 0.5,
+    onchain: 0.6,
+  },
 };
 
 // ─── Request parsing helpers ──────────────────────────────────────────────
 
 interface RequestParams {
-	limit: number;
-	cursor?: string;
-	topics?: string[];
-	seenIds: Set<string>;
+  limit: number;
+  cursor?: string;
+  topics?: string[];
+  seenIds: Set<string>;
 }
 
 function parseParams(url: URL, request: Request): RequestParams {
-	const limit = Math.min(
-		Math.max(1, Number(url.searchParams.get("limit")) || 20),
-		50,
-	);
-	const cursor = url.searchParams.get("cursor") || undefined;
-	const topicsParam = url.searchParams.get("topics") || "";
-	const topics = topicsParam
-		? topicsParam.split(",").filter(Boolean)
-		: undefined;
-	const seenIds = parseSeenIds(request);
-	return { limit, cursor, topics, seenIds };
+  const limit = Math.min(Math.max(1, Number(url.searchParams.get('limit')) || 20), 50);
+  const cursor = url.searchParams.get('cursor') || undefined;
+  const topicsParam = url.searchParams.get('topics') || '';
+  const topics = topicsParam ? topicsParam.split(',').filter(Boolean) : undefined;
+  const seenIds = parseSeenIds(request);
+  return { limit, cursor, topics, seenIds };
 }
 
 function parseSeenIds(request: Request): Set<string> {
-	const seen = new Set<string>();
-	const header = request.headers.get("x-shorts-seen");
-	if (header) {
-		for (const id of header.split(",")) {
-			const trimmed = id.trim();
-			if (trimmed) seen.add(trimmed);
-		}
-	}
-	const cookie = request.headers.get("cookie") ?? "";
-	const match = cookie.match(/shorts-seen=([^;]+)/);
-	if (match?.[1]) {
-		try {
-			const decoded = decodeURIComponent(match[1]);
-			for (const id of decoded.split(",")) {
-				const trimmed = id.trim();
-				if (trimmed) seen.add(trimmed);
-			}
-		} catch {
-			// Malformed cookie — ignore
-		}
-	}
-	return seen;
+  const seen = new Set<string>();
+  const header = request.headers.get('x-shorts-seen');
+  if (header) {
+    for (const id of header.split(',')) {
+      const trimmed = id.trim();
+      if (trimmed) seen.add(trimmed);
+    }
+  }
+  const cookie = request.headers.get('cookie') ?? '';
+  const match = cookie.match(/shorts-seen=([^;]+)/);
+  if (match?.[1]) {
+    try {
+      const decoded = decodeURIComponent(match[1]);
+      for (const id of decoded.split(',')) {
+        const trimmed = id.trim();
+        if (trimmed) seen.add(trimmed);
+      }
+    } catch {
+      // Malformed cookie — ignore
+    }
+  }
+  return seen;
 }
 
-async function loadUserProfile(
-	_request: Request,
-	_env: Env,
-): Promise<UserInterestProfile> {
-	// Load from KV-based user preferences (falls back to defaults if no session)
-	return DEFAULT_USER_PROFILE;
+async function loadUserProfile(_request: Request, _env: Env): Promise<UserInterestProfile> {
+  // Load from KV-based user preferences (falls back to defaults if no session)
+  return DEFAULT_USER_PROFILE;
 }
 
 // ─── Handler: Main shorts feed ───────────────────────────────────────────
 
-export async function handleShortsFeed(
-	request: Request,
-	env: Env,
-): Promise<Response> {
-	if (request.method !== "GET") {
-		return jsonResponse({ error: "Method not allowed" }, 405);
-	}
+export async function handleShortsFeed(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'GET') {
+    return jsonResponse({ error: 'Method not allowed' }, 405);
+  }
 
-	const url = new URL(request.url);
-	const params = parseParams(url, request);
+  const url = new URL(request.url);
+  const params = parseParams(url, request);
 
-	const aggregator = new ShortsAggregator(env);
-	const result = await aggregator.getFeed({
-		limit: params.limit,
-		cursor: params.cursor,
-		topics: params.topics,
-		seenIds: params.seenIds,
-	});
+  const aggregator = new ShortsAggregator(env);
+  const result = await aggregator.getFeed({
+    limit: params.limit,
+    cursor: params.cursor,
+    topics: params.topics,
+    seenIds: params.seenIds,
+  });
 
-	return noCacheJsonResponse(result);
+  return noCacheJsonResponse(result);
 }
 
 // ─── Handler: Feed (alias for /api/shorts/feed) ──────────────────────────
 
-export async function handleShortsFeedEndpoint(
-	request: Request,
-	env: Env,
-): Promise<Response> {
-	return handleShortsFeed(request, env);
+export async function handleShortsFeedEndpoint(request: Request, env: Env): Promise<Response> {
+  return handleShortsFeed(request, env);
 }
 
 // ─── Handler: Trending shorts ────────────────────────────────────────────
 
-export async function handleShortsTrending(
-	request: Request,
-	env: Env,
-): Promise<Response> {
-	if (request.method !== "GET") {
-		return jsonResponse({ error: "Method not allowed" }, 405);
-	}
+export async function handleShortsTrending(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'GET') {
+    return jsonResponse({ error: 'Method not allowed' }, 405);
+  }
 
-	const url = new URL(request.url);
-	const limit = Math.min(
-		Math.max(1, Number(url.searchParams.get("limit")) || 20),
-		50,
-	);
+  const url = new URL(request.url);
+  const limit = Math.min(Math.max(1, Number(url.searchParams.get('limit')) || 20), 50);
 
-	const aggregator = new ShortsAggregator(env);
-	const result = await aggregator.getTrending({
-		limit,
-		trendingWindow: Number(url.searchParams.get("window")) || 7 * 24 * 60 * 60,
-	});
+  const aggregator = new ShortsAggregator(env);
+  const result = await aggregator.getTrending({
+    limit,
+    trendingWindow: Number(url.searchParams.get('window')) || 7 * 24 * 60 * 60,
+  });
 
-	return noCacheJsonResponse(result);
+  return noCacheJsonResponse(result);
 }
 
 // ─── Handler: For You (personalized) shorts ──────────────────────────────
 
-export async function handleShortsForYou(
-	request: Request,
-	env: Env,
-): Promise<Response> {
-	if (request.method !== "GET") {
-		return jsonResponse({ error: "Method not allowed" }, 405);
-	}
+export async function handleShortsForYou(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'GET') {
+    return jsonResponse({ error: 'Method not allowed' }, 405);
+  }
 
-	const url = new URL(request.url);
-	const params = parseParams(url, request);
-	const userProfile = await loadUserProfile(request, env);
+  const url = new URL(request.url);
+  const params = parseParams(url, request);
+  const userProfile = await loadUserProfile(request, env);
 
-	const aggregator = new ShortsAggregator(env);
-	const result = await aggregator.getForYou(userProfile, {
-		limit: params.limit,
-		seenIds: params.seenIds,
-	});
+  const aggregator = new ShortsAggregator(env);
+  const result = await aggregator.getForYou(userProfile, {
+    limit: params.limit,
+    seenIds: params.seenIds,
+  });
 
-	return noCacheJsonResponse(result);
+  return noCacheJsonResponse(result);
 }
 
 // ─── Handler: Shorts by source ───────────────────────────────────────────
 
-const VALID_SOURCES: ShortVideoSource[] = [
-	"youtube",
-	"peertube",
-	"tiktok_rss",
-	"instagram",
-];
+const VALID_SOURCES: ShortVideoSource[] = ['youtube', 'peertube', 'tiktok_rss', 'instagram'];
 
-export async function handleShortsBySource(
-	request: Request,
-	env: Env,
-): Promise<Response> {
-	if (request.method !== "GET") {
-		return jsonResponse({ error: "Method not allowed" }, 405);
-	}
+export async function handleShortsBySource(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'GET') {
+    return jsonResponse({ error: 'Method not allowed' }, 405);
+  }
 
-	const url = new URL(request.url);
-	const source = url.pathname.split("/").pop() as ShortVideoSource;
-	const params = parseParams(url, request);
+  const url = new URL(request.url);
+  const source = url.pathname.split('/').pop() as ShortVideoSource;
+  const params = parseParams(url, request);
 
-	if (!VALID_SOURCES.includes(source)) {
-		return jsonResponse(
-			{ error: `Invalid source. Valid: ${VALID_SOURCES.join(", ")}` },
-			400,
-		);
-	}
+  if (!VALID_SOURCES.includes(source)) {
+    return jsonResponse({ error: `Invalid source. Valid: ${VALID_SOURCES.join(', ')}` }, 400);
+  }
 
-	const aggregator = new ShortsAggregator(env);
-	const result = await aggregator.getBySource(source, {
-		limit: params.limit,
-		cursor: params.cursor,
-		topics: params.topics,
-	});
+  const aggregator = new ShortsAggregator(env);
+  const result = await aggregator.getBySource(source, {
+    limit: params.limit,
+    cursor: params.cursor,
+    topics: params.topics,
+  });
 
-	return noCacheJsonResponse(result);
+  return noCacheJsonResponse(result);
 }
 
 // ─── Handler: Create short via PeerTube ──────────────────────────────────
 
-export async function handleCreateShort(
-	request: Request,
-	_env: Env,
-): Promise<Response> {
-	if (request.method !== "POST") {
-		return jsonResponse({ error: "Method not allowed" }, 405);
-	}
+export async function handleCreateShort(request: Request, _env: Env): Promise<Response> {
+  if (request.method !== 'POST') {
+    return jsonResponse({ error: 'Method not allowed' }, 405);
+  }
 
-	try {
-		const body = (await request.json()) as {
-			title: string;
-			description?: string;
-			videoUrl: string;
-			thumbnailUrl?: string;
-		};
+  try {
+    const body = (await request.json()) as {
+      title: string;
+      description?: string;
+      videoUrl: string;
+      thumbnailUrl?: string;
+    };
 
-		if (!body.title || !body.videoUrl) {
-			return jsonResponse({ error: "title and videoUrl are required" }, 400);
-		}
+    if (!body.title || !body.videoUrl) {
+      return jsonResponse({ error: 'title and videoUrl are required' }, 400);
+    }
 
-		// Upload to PeerTube instance — pending PeerTube API integration
-		// This requires PeerTube OAuth credentials configured in env
-		// For now, return a placeholder response indicating the flow
+    // Upload to PeerTube instance — pending PeerTube API integration
+    // This requires PeerTube OAuth credentials configured in env
+    // For now, return a placeholder response indicating the flow
 
-		return jsonResponse(
-			{
-				success: true,
-				message:
-					"Short submitted for review. It will appear in the feed once approved.",
-				short: {
-					id: `degenfeed:${crypto.randomUUID()}`,
-					title: body.title,
-					videoUrl: body.videoUrl,
-					thumbnailUrl: body.thumbnailUrl,
-					source: "direct",
-					sourceLabel: "DegenFeed",
-					status: "pending_review",
-				},
-			},
-			201,
-		);
-	} catch (err) {
-		return jsonResponse(
-			{
-				error: "Invalid request body",
-				details: err instanceof Error ? err.message : "Unknown error",
-			},
-			400,
-		);
-	}
+    return jsonResponse(
+      {
+        success: true,
+        message: 'Short submitted for review. It will appear in the feed once approved.',
+        short: {
+          id: `degenfeed:${crypto.randomUUID()}`,
+          title: body.title,
+          videoUrl: body.videoUrl,
+          thumbnailUrl: body.thumbnailUrl,
+          source: 'direct',
+          sourceLabel: 'DegenFeed',
+          status: 'pending_review',
+        },
+      },
+      201,
+    );
+  } catch (err) {
+    return jsonResponse(
+      {
+        error: 'Invalid request body',
+        details: err instanceof Error ? err.message : 'Unknown error',
+      },
+      400,
+    );
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -293,374 +252,325 @@ export async function handleCreateShort(
 
 // ─── POST /api/shorts/publish — Publish short to selected protocols ─────
 
-export async function handleUnifiedPublish(
-	request: Request,
-	env: Env,
-): Promise<Response> {
-	if (request.method !== "POST") {
-		return jsonResponse({ error: "Method not allowed" }, 405);
-	}
+export async function handleUnifiedPublish(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'POST') {
+    return jsonResponse({ error: 'Method not allowed' }, 405);
+  }
 
-	const session = await requireSession(request, env);
-	if (session instanceof Response) return session;
+  const session = await requireSession(request, env);
+  if (session instanceof Response) return session;
 
-	try {
-		const body = (await request.json()) as {
-			videoUrl: string;
-			thumbnailUrl?: string;
-			title: string;
-			caption?: string;
-			hashtags?: string[];
-			protocols?: string[];
-			mintOnZora?: boolean;
-			creatorCoin?: { symbol: string; address: string; chain: string };
-			duration?: number;
-		};
+  try {
+    const body = (await request.json()) as {
+      videoUrl: string;
+      thumbnailUrl?: string;
+      title: string;
+      caption?: string;
+      hashtags?: string[];
+      protocols?: string[];
+      mintOnZora?: boolean;
+      creatorCoin?: { symbol: string; address: string; chain: string };
+      duration?: number;
+    };
 
-		if (!body.title || !body.videoUrl) {
-			return jsonResponse({ error: "title and videoUrl are required" }, 400);
-		}
+    if (!body.title || !body.videoUrl) {
+      return jsonResponse({ error: 'title and videoUrl are required' }, 400);
+    }
 
-		const validProtocols: ShortProtocol[] = [
-			"activitypub",
-			"atproto",
-			"nostr",
-			"farcaster",
-			"lens",
-			"zora",
-			"peertube",
-			"degenfeed",
-		];
+    const validProtocols: ShortProtocol[] = [
+      'activitypub',
+      'atproto',
+      'nostr',
+      'farcaster',
+      'lens',
+      'zora',
+      'peertube',
+      'degenfeed',
+    ];
 
-		const protocols = (body.protocols ?? ["degenfeed"]).filter(
-			(p): p is ShortProtocol => validProtocols.includes(p as ShortProtocol),
-		);
+    const protocols = (body.protocols ?? ['degenfeed']).filter((p): p is ShortProtocol =>
+      validProtocols.includes(p as ShortProtocol),
+    );
 
-		const pipeline = new UnifiedShortsPipeline(env);
-		const result = await pipeline.publishShort({
-			videoUrl: body.videoUrl,
-			thumbnailUrl: body.thumbnailUrl ?? "",
-			title: body.title,
-			caption: body.caption ?? "",
-			hashtags: body.hashtags ?? [],
-			protocols,
-			mintOnZora: body.mintOnZora ?? false,
-			creatorAddress: session.address,
-			creatorHandle: session.handle ?? session.address.slice(0, 10),
-			creatorAvatar: session.avatar,
-			creatorCoin: body.creatorCoin,
-			duration: body.duration ?? 30,
-		});
+    const pipeline = new UnifiedShortsPipeline(env);
+    const result = await pipeline.publishShort({
+      videoUrl: body.videoUrl,
+      thumbnailUrl: body.thumbnailUrl ?? '',
+      title: body.title,
+      caption: body.caption ?? '',
+      hashtags: body.hashtags ?? [],
+      protocols,
+      mintOnZora: body.mintOnZora ?? false,
+      creatorAddress: session.address,
+      creatorHandle: session.handle ?? session.address.slice(0, 10),
+      creatorAvatar: session.avatar,
+      creatorCoin: body.creatorCoin,
+      duration: body.duration ?? 30,
+    });
 
-		if (!result.success && Object.keys(result.errors).length > 0) {
-			return jsonResponse(result, 207); // Multi-Status: partial failure
-		}
+    if (!result.success && Object.keys(result.errors).length > 0) {
+      return jsonResponse(result, 207); // Multi-Status: partial failure
+    }
 
-		return jsonResponse(result, 201);
-	} catch (err) {
-		return jsonResponse(
-			{
-				error: "Publish failed",
-				details: err instanceof Error ? err.message : String(err),
-			},
-			500,
-		);
-	}
+    return jsonResponse(result, 201);
+  } catch (err) {
+    return jsonResponse(
+      {
+        error: 'Publish failed',
+        details: err instanceof Error ? err.message : String(err),
+      },
+      500,
+    );
+  }
 }
 
 // ─── POST /api/shorts/mint — Mint as Zora video NFT ─────────────────────
 
-export async function handleUnifiedMint(
-	request: Request,
-	env: Env,
-): Promise<Response> {
-	if (request.method !== "POST") {
-		return jsonResponse({ error: "Method not allowed" }, 405);
-	}
+export async function handleUnifiedMint(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'POST') {
+    return jsonResponse({ error: 'Method not allowed' }, 405);
+  }
 
-	const session = await requireSession(request, env);
-	if (session instanceof Response) return session;
+  const session = await requireSession(request, env);
+  if (session instanceof Response) return session;
 
-	try {
-		const body = (await request.json()) as {
-			shortId: string;
-		};
+  try {
+    const body = (await request.json()) as {
+      shortId: string;
+    };
 
-		if (!body.shortId) {
-			return jsonResponse({ error: "shortId is required" }, 400);
-		}
+    if (!body.shortId) {
+      return jsonResponse({ error: 'shortId is required' }, 400);
+    }
 
-		const pipeline = new UnifiedShortsPipeline(env);
-		const result = await pipeline.mintZoraShort(body.shortId);
+    const pipeline = new UnifiedShortsPipeline(env);
+    const result = await pipeline.mintZoraShort(body.shortId);
 
-		return jsonResponse(result, 201);
-	} catch (err) {
-		return jsonResponse(
-			{
-				error: "Mint failed",
-				details: err instanceof Error ? err.message : String(err),
-			},
-			500,
-		);
-	}
+    return jsonResponse(result, 201);
+  } catch (err) {
+    return jsonResponse(
+      {
+        error: 'Mint failed',
+        details: err instanceof Error ? err.message : String(err),
+      },
+      500,
+    );
+  }
 }
 
 // ─── GET /api/shorts/unified/feed — Unified multi-protocol shorts feed ──
 
-export async function handleUnifiedFeed(
-	request: Request,
-	env: Env,
-): Promise<Response> {
-	if (request.method !== "GET") {
-		return jsonResponse({ error: "Method not allowed" }, 405);
-	}
+export async function handleUnifiedFeed(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'GET') {
+    return jsonResponse({ error: 'Method not allowed' }, 405);
+  }
 
-	const url = new URL(request.url);
-	const sourcesParam = url.searchParams.get("sources") || "";
-	const sources = sourcesParam
-		? (sourcesParam.split(",").filter(Boolean) as ReturnType<
-				typeof getFeedSources
-			>)
-		: undefined;
-	const sort = (url.searchParams.get("sort") || "trending") as
-		| "trending"
-		| "newest"
-		| "for-you";
-	const limit = Math.min(
-		Math.max(1, Number(url.searchParams.get("limit")) || 20),
-		50,
-	);
-	const cursor = url.searchParams.get("cursor") || undefined;
-	const excludeIds =
-		url.searchParams.get("exclude")?.split(",").filter(Boolean) || [];
+  const url = new URL(request.url);
+  const sourcesParam = url.searchParams.get('sources') || '';
+  const sources = sourcesParam
+    ? (sourcesParam.split(',').filter(Boolean) as ReturnType<typeof getFeedSources>)
+    : undefined;
+  const sort = (url.searchParams.get('sort') || 'trending') as 'trending' | 'newest' | 'for-you';
+  const limit = Math.min(Math.max(1, Number(url.searchParams.get('limit')) || 20), 50);
+  const cursor = url.searchParams.get('cursor') || undefined;
+  const excludeIds = url.searchParams.get('exclude')?.split(',').filter(Boolean) || [];
 
-	const feed = new UnifiedShortsFeed(env);
-	const result = await feed.getFeed({
-		sources: sources as any,
-		sort,
-		limit,
-		cursor,
-		excludeIds,
-	});
+  const feed = new UnifiedShortsFeed(env);
+  const result = await feed.getFeed({
+    sources: sources as any,
+    sort,
+    limit,
+    cursor,
+    excludeIds,
+  });
 
-	return noCacheJsonResponse(result);
+  return noCacheJsonResponse(result);
 }
 
 // ─── GET /api/shorts/unified/:source — Source-specific unified feed ─────
 
-export async function handleUnifiedFeedBySource(
-	request: Request,
-	env: Env,
-): Promise<Response> {
-	if (request.method !== "GET") {
-		return jsonResponse({ error: "Method not allowed" }, 405);
-	}
+export async function handleUnifiedFeedBySource(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'GET') {
+    return jsonResponse({ error: 'Method not allowed' }, 405);
+  }
 
-	const url = new URL(request.url);
-	const source = url.pathname.split("/").pop() as string;
-	const sort = (url.searchParams.get("sort") || "newest") as
-		| "trending"
-		| "newest"
-		| "for-you";
-	const limit = Math.min(
-		Math.max(1, Number(url.searchParams.get("limit")) || 20),
-		50,
-	);
-	const cursor = url.searchParams.get("cursor") || undefined;
-	const excludeIds =
-		url.searchParams.get("exclude")?.split(",").filter(Boolean) || [];
+  const url = new URL(request.url);
+  const source = url.pathname.split('/').pop() as string;
+  const sort = (url.searchParams.get('sort') || 'newest') as 'trending' | 'newest' | 'for-you';
+  const limit = Math.min(Math.max(1, Number(url.searchParams.get('limit')) || 20), 50);
+  const cursor = url.searchParams.get('cursor') || undefined;
+  const excludeIds = url.searchParams.get('exclude')?.split(',').filter(Boolean) || [];
 
-	const validSources = [
-		"activitypub",
-		"atproto",
-		"nostr",
-		"farcaster",
-		"lens",
-		"zora",
-		"peertube",
-		"youtube",
-		"tiktok",
-		"instagram",
-		"degenfeed",
-	];
+  const validSources = [
+    'activitypub',
+    'atproto',
+    'nostr',
+    'farcaster',
+    'lens',
+    'zora',
+    'peertube',
+    'youtube',
+    'tiktok',
+    'instagram',
+    'degenfeed',
+  ];
 
-	if (!validSources.includes(source)) {
-		return jsonResponse(
-			{ error: `Invalid source. Valid: ${validSources.join(", ")}` },
-			400,
-		);
-	}
+  if (!validSources.includes(source)) {
+    return jsonResponse({ error: `Invalid source. Valid: ${validSources.join(', ')}` }, 400);
+  }
 
-	const feed = new UnifiedShortsFeed(env);
-	const result = await feed.getFeed({
-		sources: [source as any],
-		sort,
-		limit,
-		cursor,
-		excludeIds,
-	});
+  const feed = new UnifiedShortsFeed(env);
+  const result = await feed.getFeed({
+    sources: [source as any],
+    sort,
+    limit,
+    cursor,
+    excludeIds,
+  });
 
-	return noCacheJsonResponse(result);
+  return noCacheJsonResponse(result);
 }
 
 // ─── POST /api/shorts/:id/tip — Tip a short ───────────────────────────────
 
-export async function handleShortsTip(
-	request: Request,
-	env: Env,
-): Promise<Response> {
-	if (request.method !== "POST") {
-		return jsonResponse({ error: "Method not allowed" }, 405);
-	}
+export async function handleShortsTip(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'POST') {
+    return jsonResponse({ error: 'Method not allowed' }, 405);
+  }
 
-	const session = await requireSession(request, env);
-	if (session instanceof Response) return session;
+  const session = await requireSession(request, env);
+  if (session instanceof Response) return session;
 
-	const url = new URL(request.url);
-	const shortId = url.pathname.split("/")[3]; // /api/shorts/:id/tip
+  const url = new URL(request.url);
+  const shortId = url.pathname.split('/')[3]; // /api/shorts/:id/tip
 
-	if (!shortId) {
-		return jsonResponse({ error: "Missing short ID" }, 400);
-	}
+  if (!shortId) {
+    return jsonResponse({ error: 'Missing short ID' }, 400);
+  }
 
-	try {
-		const body = (await request.json()) as {
-			amount: number;
-			chain?: string;
-			protocol?: string;
-		};
+  try {
+    const body = (await request.json()) as {
+      amount: number;
+      chain?: string;
+      protocol?: string;
+    };
 
-		if (!body.amount || body.amount <= 0) {
-			return jsonResponse({ error: "amount must be a positive number" }, 400);
-		}
+    if (!body.amount || body.amount <= 0) {
+      return jsonResponse({ error: 'amount must be a positive number' }, 400);
+    }
 
-		const pipeline = new UnifiedShortsPipeline(env);
-		const result = await pipeline.tipShort(
-			shortId,
-			body.amount,
-			(body.chain as any) ?? "base",
-			(body.protocol as ShortProtocol) ?? "degenfeed",
-		);
+    const pipeline = new UnifiedShortsPipeline(env);
+    const result = await pipeline.tipShort(
+      shortId,
+      body.amount,
+      (body.chain as any) ?? 'base',
+      (body.protocol as ShortProtocol) ?? 'degenfeed',
+    );
 
-		return jsonResponse(result);
-	} catch (err) {
-		return jsonResponse(
-			{
-				error: "Tip failed",
-				details: err instanceof Error ? err.message : String(err),
-			},
-			500,
-		);
-	}
+    return jsonResponse(result);
+  } catch (err) {
+    return jsonResponse(
+      {
+        error: 'Tip failed',
+        details: err instanceof Error ? err.message : String(err),
+      },
+      500,
+    );
+  }
 }
 
 // ─── POST /api/shorts/:id/share — Share short to a protocol ──────────────
 
-export async function handleShortsShare(
-	request: Request,
-	env: Env,
-): Promise<Response> {
-	if (request.method !== "POST") {
-		return jsonResponse({ error: "Method not allowed" }, 405);
-	}
+export async function handleShortsShare(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'POST') {
+    return jsonResponse({ error: 'Method not allowed' }, 405);
+  }
 
-	const session = await requireSession(request, env);
-	if (session instanceof Response) return session;
+  const session = await requireSession(request, env);
+  if (session instanceof Response) return session;
 
-	const url = new URL(request.url);
-	const shortId = url.pathname.split("/")[3]; // /api/shorts/:id/share
+  const url = new URL(request.url);
+  const shortId = url.pathname.split('/')[3]; // /api/shorts/:id/share
 
-	if (!shortId) {
-		return jsonResponse({ error: "Missing short ID" }, 400);
-	}
+  if (!shortId) {
+    return jsonResponse({ error: 'Missing short ID' }, 400);
+  }
 
-	try {
-		const body = (await request.json()) as {
-			protocol: string;
-		};
+  try {
+    const body = (await request.json()) as {
+      protocol: string;
+    };
 
-		if (!body.protocol) {
-			return jsonResponse({ error: "protocol is required" }, 400);
-		}
+    if (!body.protocol) {
+      return jsonResponse({ error: 'protocol is required' }, 400);
+    }
 
-		const pipeline = new UnifiedShortsPipeline(env);
-		const result = await pipeline.shareShort(
-			shortId,
-			body.protocol as ShortProtocol,
-		);
+    const pipeline = new UnifiedShortsPipeline(env);
+    const result = await pipeline.shareShort(shortId, body.protocol as ShortProtocol);
 
-		return jsonResponse(result);
-	} catch (err) {
-		return jsonResponse(
-			{
-				error: "Share failed",
-				details: err instanceof Error ? err.message : String(err),
-			},
-			500,
-		);
-	}
+    return jsonResponse(result);
+  } catch (err) {
+    return jsonResponse(
+      {
+        error: 'Share failed',
+        details: err instanceof Error ? err.message : String(err),
+      },
+      500,
+    );
+  }
 }
 
 // ─── GET /api/shorts/zora/trending — Trending Zora video NFTs ───────────
 
-export async function handleZoraTrending(
-	request: Request,
-	env: Env,
-): Promise<Response> {
-	if (request.method !== "GET") {
-		return jsonResponse({ error: "Method not allowed" }, 405);
-	}
+export async function handleZoraTrending(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'GET') {
+    return jsonResponse({ error: 'Method not allowed' }, 405);
+  }
 
-	const url = new URL(request.url);
-	const limit = Math.min(
-		Math.max(1, Number(url.searchParams.get("limit")) || 20),
-		50,
-	);
+  const url = new URL(request.url);
+  const limit = Math.min(Math.max(1, Number(url.searchParams.get('limit')) || 20), 50);
 
-	const zora = new ZoraVideoIntegration(env);
-	const nfts = await zora.getTrendingVideoNFTs(limit);
+  const zora = new ZoraVideoIntegration(env);
+  const nfts = await zora.getTrendingVideoNFTs(limit);
 
-	return noCacheJsonResponse({ nfts, count: nfts.length });
+  return noCacheJsonResponse({ nfts, count: nfts.length });
 }
 
 // ─── GET /api/shorts/zora/creator — Creator's Zora video NFTs ──────────
 
-export async function handleZoraCreator(
-	request: Request,
-	env: Env,
-): Promise<Response> {
-	if (request.method !== "GET") {
-		return jsonResponse({ error: "Method not allowed" }, 405);
-	}
+export async function handleZoraCreator(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'GET') {
+    return jsonResponse({ error: 'Method not allowed' }, 405);
+  }
 
-	const url = new URL(request.url);
-	const creatorAddress = url.searchParams.get("creator");
+  const url = new URL(request.url);
+  const creatorAddress = url.searchParams.get('creator');
 
-	if (!creatorAddress) {
-		return jsonResponse({ error: "creator query parameter is required" }, 400);
-	}
+  if (!creatorAddress) {
+    return jsonResponse({ error: 'creator query parameter is required' }, 400);
+  }
 
-	const zora = new ZoraVideoIntegration(env);
-	const nfts = await zora.getCreatorVideoNFTs(creatorAddress);
+  const zora = new ZoraVideoIntegration(env);
+  const nfts = await zora.getCreatorVideoNFTs(creatorAddress);
 
-	return noCacheJsonResponse({ nfts, count: nfts.length });
+  return noCacheJsonResponse({ nfts, count: nfts.length });
 }
 
 // ─── Helper: infer feed sources from query param ──────────────────────────
 
 function getFeedSources(raw: string): string[] {
-	const validSources = [
-		"activitypub",
-		"atproto",
-		"nostr",
-		"farcaster",
-		"lens",
-		"zora",
-		"peertube",
-		"youtube",
-		"tiktok",
-		"instagram",
-		"degenfeed",
-	];
-	return raw.split(",").filter((s) => validSources.includes(s.trim()));
+  const validSources = [
+    'activitypub',
+    'atproto',
+    'nostr',
+    'farcaster',
+    'lens',
+    'zora',
+    'peertube',
+    'youtube',
+    'tiktok',
+    'instagram',
+    'degenfeed',
+  ];
+  return raw.split(',').filter((s) => validSources.includes(s.trim()));
 }

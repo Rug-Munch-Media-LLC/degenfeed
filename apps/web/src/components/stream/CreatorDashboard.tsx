@@ -1,11 +1,17 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { generateMockStream, type ViewerAnalytics, type StreamExtended } from './types';
+import { generateMockStream, type ViewerAnalytics } from './types';
 
 /* === Stat Card ================================================ */
 
-function StatCard({ label, value, change, icon, color }: {
+function StatCard({
+  label,
+  value,
+  change,
+  icon,
+  color,
+}: {
   label: string;
   value: string;
   change?: string;
@@ -16,11 +22,16 @@ function StatCard({ label, value, change, icon, color }: {
   return (
     <div className="rounded-xl border border-white/10 bg-white/5 p-4 transition-all hover:border-white/20">
       <div className="flex items-center justify-between">
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg" style={{ backgroundColor: `${color}15` }}>
+        <div
+          className="flex h-10 w-10 items-center justify-center rounded-lg"
+          style={{ backgroundColor: `${color}15` }}
+        >
           {icon}
         </div>
         {change && (
-          <span className={`text-[10px] font-medium ${isPositive ? 'text-degen-400' : 'text-red-400'}`}>
+          <span
+            className={`text-[10px] font-medium ${isPositive ? 'text-degen-400' : 'text-red-400'}`}
+          >
             {change}
           </span>
         )}
@@ -45,7 +56,8 @@ function ViewerChart({ data }: { data: ViewerAnalytics }) {
             className="flex-1 rounded-t-sm transition-all hover:opacity-80"
             style={{
               height: `${Math.max(height, 3)}%`,
-              backgroundColor: point.count > data.averageViewers ? 'rgba(0,255,65,0.5)' : 'rgba(255,255,255,0.1)',
+              backgroundColor:
+                point.count > data.averageViewers ? 'rgba(0,255,65,0.5)' : 'rgba(255,255,255,0.1)',
             }}
             title={`${point.count} viewers`}
           />
@@ -57,7 +69,12 @@ function ViewerChart({ data }: { data: ViewerAnalytics }) {
 
 /* === Metric bar =============================================== */
 
-function MetricBar({ label, value, max, color }: {
+function MetricBar({
+  label,
+  value,
+  max,
+  color,
+}: {
   label: string;
   value: number;
   max: number;
@@ -68,9 +85,14 @@ function MetricBar({ label, value, max, color }: {
     <div className="flex items-center gap-3">
       <span className="w-24 text-[10px] text-white/50">{label}</span>
       <div className="flex-1 h-2 rounded-full bg-white/5 overflow-hidden">
-        <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, backgroundColor: color }} />
+        <div
+          className="h-full rounded-full transition-all duration-500"
+          style={{ width: `${pct}%`, backgroundColor: color }}
+        />
       </div>
-      <span className="w-16 text-right text-[10px] font-medium text-white/70 tabular-nums">{value.toLocaleString()}</span>
+      <span className="w-16 text-right text-[10px] font-medium text-white/70 tabular-nums">
+        {value.toLocaleString()}
+      </span>
     </div>
   );
 }
@@ -149,7 +171,9 @@ export function CreatorDashboard({ streamId }: CreatorDashboardProps) {
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" />
               LIVE
             </span>
-            <span className="text-sm font-semibold text-white/90">{streams?.title ?? 'Stream'}</span>
+            <span className="text-sm font-semibold text-white/90">
+              {streams?.title ?? 'Stream'}
+            </span>
           </div>
           <button
             type="button"
@@ -166,11 +190,21 @@ export function CreatorDashboard({ streamId }: CreatorDashboardProps) {
             { label: 'Uptime', value: uptime, color: '#00ff41' },
             { label: 'Bitrate', value: `${bitrate} Kbps`, color: '#2196F3' },
             { label: 'FPS', value: String(fps), color: '#FFD600' },
-            { label: 'Dropped Frames', value: `${droppedFrames.toFixed(1)}%`, color: droppedFrames > 1 ? '#F44336' : '#00C853' },
-            { label: 'Viewers', value: streams?.viewerCount.toLocaleString() ?? '0', color: '#9146FF' },
+            {
+              label: 'Dropped Frames',
+              value: `${droppedFrames.toFixed(1)}%`,
+              color: droppedFrames > 1 ? '#F44336' : '#00C853',
+            },
+            {
+              label: 'Viewers',
+              value: streams?.viewerCount.toLocaleString() ?? '0',
+              color: '#9146FF',
+            },
           ].map((m) => (
             <div key={m.label} className="text-center">
-              <p className="text-xs font-bold text-white tabular-nums" style={{ color: m.color }}>{m.value}</p>
+              <p className="text-xs font-bold text-white tabular-nums" style={{ color: m.color }}>
+                {m.value}
+              </p>
               <p className="text-[9px] text-white/30 mt-0.5">{m.label}</p>
             </div>
           ))}
@@ -202,10 +236,97 @@ export function CreatorDashboard({ streamId }: CreatorDashboardProps) {
         <div className="space-y-4 animate-fade-in">
           {/* Stat cards */}
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <StatCard label="Peak Viewers" value={analytics.peakViewers.toLocaleString()} change="+12%" icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00ff41" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>} color="#00ff41" />
-            <StatCard label="Avg Viewers" value={analytics.averageViewers.toLocaleString()} icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2196F3" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 00-3-3.87" /><path d="M16 3.13a4 4 0 010 7.75" /></svg>} color="#2196F3" />
-            <StatCard label="New Followers" value={analytics.newFollowers.toLocaleString()} change="+8%" icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFD600" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="8.5" cy="7" r="4" /><line x1="20" y1="8" x2="20" y2="14" /><line x1="23" y1="11" x2="17" y2="11" /></svg>} color="#FFD600" />
-            <StatCard label="Tips Received" value={`$${analytics.tipsReceived.toFixed(2)}`} change="+23%" icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF4081" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><line x1="12" y1="1" x2="12" y2="23" /><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" /></svg>} color="#FF4081" />
+            <StatCard
+              label="Peak Viewers"
+              value={analytics.peakViewers.toLocaleString()}
+              change="+12%"
+              icon={
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#00ff41"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+              }
+              color="#00ff41"
+            />
+            <StatCard
+              label="Avg Viewers"
+              value={analytics.averageViewers.toLocaleString()}
+              icon={
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#2196F3"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                  <path d="M23 21v-2a4 4 0 00-3-3.87" />
+                  <path d="M16 3.13a4 4 0 010 7.75" />
+                </svg>
+              }
+              color="#2196F3"
+            />
+            <StatCard
+              label="New Followers"
+              value={analytics.newFollowers.toLocaleString()}
+              change="+8%"
+              icon={
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#FFD600"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+                  <circle cx="8.5" cy="7" r="4" />
+                  <line x1="20" y1="8" x2="20" y2="14" />
+                  <line x1="23" y1="11" x2="17" y2="11" />
+                </svg>
+              }
+              color="#FFD600"
+            />
+            <StatCard
+              label="Tips Received"
+              value={`$${analytics.tipsReceived.toFixed(2)}`}
+              change="+23%"
+              icon={
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#FF4081"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <line x1="12" y1="1" x2="12" y2="23" />
+                  <path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
+                </svg>
+              }
+              color="#FF4081"
+            />
           </div>
 
           {/* Viewer chart */}
@@ -232,7 +353,9 @@ export function CreatorDashboard({ streamId }: CreatorDashboardProps) {
                     <div className="mt-0.5 h-1.5 rounded-full bg-white/5 overflow-hidden">
                       <div
                         className="h-full rounded-full bg-gradient-to-r from-degen-500 to-emerald-400"
-                        style={{ width: `${(chatter.messages / (analytics.topChatters[0]?.messages ?? 1)) * 100}%` }}
+                        style={{
+                          width: `${(chatter.messages / (analytics.topChatters[0]?.messages ?? 1)) * 100}%`,
+                        }}
                       />
                     </div>
                   </div>
@@ -246,8 +369,18 @@ export function CreatorDashboard({ streamId }: CreatorDashboardProps) {
       {activeTab === 'chat' && (
         <div className="rounded-xl border border-white/10 bg-white/5 p-4 animate-fade-in">
           <div className="space-y-3">
-            <MetricBar label="Total Messages" value={analytics.topChatters.reduce((a, c) => a + c.messages, 0)} max={2000} color="#00ff41" />
-            <MetricBar label="Unique Chatters" value={analytics.topChatters.length} max={50} color="#9146FF" />
+            <MetricBar
+              label="Total Messages"
+              value={analytics.topChatters.reduce((a, c) => a + c.messages, 0)}
+              max={2000}
+              color="#00ff41"
+            />
+            <MetricBar
+              label="Unique Chatters"
+              value={analytics.topChatters.length}
+              max={50}
+              color="#9146FF"
+            />
             <MetricBar label="Commands Used" value={23} max={100} color="#2196F3" />
             <MetricBar label="Emotes Used" value={156} max={500} color="#FFD600" />
           </div>
@@ -262,7 +395,14 @@ export function CreatorDashboard({ streamId }: CreatorDashboardProps) {
               { label: 'Tips', value: '$456.78', change: '+23%', color: '#FF4081' },
               { label: 'Total This Stream', value: '$802.38', change: '+18%', color: '#00ff41' },
             ].map((item) => (
-              <StatCard key={item.label} label={item.label} value={item.value} change={item.change} icon={<div />} color={item.color} />
+              <StatCard
+                key={item.label}
+                label={item.label}
+                value={item.value}
+                change={item.change}
+                icon={<div />}
+                color={item.color}
+              />
             ))}
           </div>
         </div>
@@ -273,23 +413,45 @@ export function CreatorDashboard({ streamId }: CreatorDashboardProps) {
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-sm font-semibold text-white/80">VOD Management</h3>
-              <p className="text-xs text-white/40 mt-1">Your past broadcasts are automatically saved. Download or export highlights.</p>
+              <p className="text-xs text-white/40 mt-1">
+                Your past broadcasts are automatically saved. Download or export highlights.
+              </p>
             </div>
-            <button type="button" className="rounded-lg border border-white/10 px-3 py-1.5 text-xs text-white/50 hover:bg-white/5">
+            <button
+              type="button"
+              className="rounded-lg border border-white/10 px-3 py-1.5 text-xs text-white/50 hover:bg-white/5"
+            >
               Export to PeerTube
             </button>
           </div>
           <div className="mt-4 grid grid-cols-1 gap-2">
             {['Current Stream (in progress)', 'Previous Stream — DeFi Deep Dive'].map((vod, i) => (
-              <div key={i} className="flex items-center gap-3 rounded-lg border border-white/10 p-3">
+              <div
+                key={i}
+                className="flex items-center gap-3 rounded-lg border border-white/10 p-3"
+              >
                 <div className="aspect-video w-20 rounded bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="white" opacity="0.3" aria-hidden="true"><polygon points="6 3 20 12 6 21 6 3" /></svg>
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="white"
+                    opacity="0.3"
+                    aria-hidden="true"
+                  >
+                    <polygon points="6 3 20 12 6 21 6 3" />
+                  </svg>
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="truncate text-xs font-medium text-white/70">{vod}</p>
                   <p className="text-[10px] text-white/30 mt-0.5">2.3 GB • 3h 24m</p>
                 </div>
-                <button type="button" className="rounded-lg border border-white/10 px-2.5 py-1 text-[9px] text-white/40 hover:bg-white/5">Download</button>
+                <button
+                  type="button"
+                  className="rounded-lg border border-white/10 px-2.5 py-1 text-[9px] text-white/40 hover:bg-white/5"
+                >
+                  Download
+                </button>
               </div>
             ))}
           </div>

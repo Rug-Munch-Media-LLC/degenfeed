@@ -1,8 +1,7 @@
 'use client';
 
-import { useVideoRecommendations } from '../../hooks/useRecommendations';
+import { useRecordInteraction, useVideoRecommendations } from '../../hooks/useRecommendations';
 import { RecommendationCard } from './RecommendationCard';
-import { useRecordInteraction } from '../../hooks/useRecommendations';
 
 interface RecommendedRowProps {
   title?: string;
@@ -50,9 +49,7 @@ export function RecommendedRow({
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-lg font-bold text-foreground">{title}</h2>
         {recommendations.length > 0 && (
-          <span className="text-xs text-muted-foreground">
-            Based on what you watch
-          </span>
+          <span className="text-xs text-muted-foreground">Based on what you watch</span>
         )}
       </div>
 

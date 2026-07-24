@@ -470,43 +470,43 @@ document.querySelectorAll('a[href^="#"]').forEach(a => {
 console.log('[DegenFeed] Landing page loaded');`;
 
 function htmlResponse(body: string, cacheSeconds = 300): Response {
-	return new Response(body, {
-		status: 200,
-		headers: {
-			"content-type": "text/html; charset=utf-8",
-			"cache-control": `public, max-age=${cacheSeconds}`,
-		},
-	});
+  return new Response(body, {
+    status: 200,
+    headers: {
+      'content-type': 'text/html; charset=utf-8',
+      'cache-control': `public, max-age=${cacheSeconds}`,
+    },
+  });
 }
 
 function cssResponse(body: string): Response {
-	return new Response(body, {
-		status: 200,
-		headers: {
-			"content-type": "text/css; charset=utf-8",
-			"cache-control": "public, max-age=3600",
-		},
-	});
+  return new Response(body, {
+    status: 200,
+    headers: {
+      'content-type': 'text/css; charset=utf-8',
+      'cache-control': 'public, max-age=3600',
+    },
+  });
 }
 
 function jsResponse(body: string): Response {
-	return new Response(body, {
-		status: 200,
-		headers: {
-			"content-type": "application/javascript; charset=utf-8",
-			"cache-control": "public, max-age=3600",
-		},
-	});
+  return new Response(body, {
+    status: 200,
+    headers: {
+      'content-type': 'application/javascript; charset=utf-8',
+      'cache-control': 'public, max-age=3600',
+    },
+  });
 }
 
 export function handleLandingHtml(_request: Request, _env: unknown): Response {
-	return htmlResponse(LANDING_HTML);
+  return htmlResponse(LANDING_HTML);
 }
 
 export function handleLandingCss(_request: Request, _env: unknown): Response {
-	return cssResponse(LANDING_CSS);
+  return cssResponse(LANDING_CSS);
 }
 
 export function handleLandingJs(_request: Request, _env: unknown): Response {
-	return jsResponse(LANDING_JS);
+  return jsResponse(LANDING_JS);
 }

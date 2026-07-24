@@ -279,9 +279,24 @@ export default function HomePage() {
                 '@type': 'BreadcrumbList',
                 '@id': 'https://app.degenfeed.xyz/#breadcrumb',
                 itemListElement: [
-                  { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://app.degenfeed.xyz' },
-                  { '@type': 'ListItem', position: 2, name: 'Features', item: 'https://app.degenfeed.xyz/features' },
-                  { '@type': 'ListItem', position: 3, name: 'FAQ', item: 'https://app.degenfeed.xyz/faq' },
+                  {
+                    '@type': 'ListItem',
+                    position: 1,
+                    name: 'Home',
+                    item: 'https://app.degenfeed.xyz',
+                  },
+                  {
+                    '@type': 'ListItem',
+                    position: 2,
+                    name: 'Features',
+                    item: 'https://app.degenfeed.xyz/features',
+                  },
+                  {
+                    '@type': 'ListItem',
+                    position: 3,
+                    name: 'FAQ',
+                    item: 'https://app.degenfeed.xyz/faq',
+                  },
                 ],
               },
               {
@@ -290,10 +305,7 @@ export default function HomePage() {
                 name: 'Rug Munch Media LLC',
                 url: 'https://app.degenfeed.xyz',
                 logo: 'https://app.degenfeed.xyz/icon-512.png',
-                sameAs: [
-                  'https://git.rugmunch.io/RugMunchMedia',
-                  'https://codeberg.org/degenfeed',
-                ],
+                sameAs: ['https://git.rugmunch.io/RugMunchMedia', 'https://codeberg.org/degenfeed'],
               },
             ],
           }),

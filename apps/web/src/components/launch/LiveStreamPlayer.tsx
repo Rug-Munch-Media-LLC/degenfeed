@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useActiveStream, useTokenStreams } from '../../hooks/useTokenStreams';
-import { usePeerTubeStream } from '../../hooks/usePeerTubeStream';
+import { useEffect, useState } from 'react';
 import { useIsMobile, useKeyboardHeight } from '../../hooks/useMobileResponsive';
+import { usePeerTubeStream } from '../../hooks/usePeerTubeStream';
+import { useActiveStream, useTokenStreams } from '../../hooks/useTokenStreams';
 import LiveCommentFeed from './LiveCommentFeed';
 import PeerTubeChatFeed from './PeerTubeChatFeed';
 
@@ -25,12 +25,11 @@ export default function LiveStreamPlayer({
   className = '',
 }: LiveStreamPlayerProps) {
   const isMobileScreen = useIsMobile();
-  const keyboardHeight = useKeyboardHeight();
+  const _keyboardHeight = useKeyboardHeight();
 
   // Legacy stream (non-PeerTube fallback)
   const legacy = useActiveStream(tokenAddress);
-  const { startStream: legacyStart, endStream: legacyEnd } =
-    useTokenStreams(tokenAddress);
+  const { startStream: legacyStart, endStream: legacyEnd } = useTokenStreams(tokenAddress);
 
   // PeerTube stream (primary)
   const peertube = usePeerTubeStream(tokenAddress, tokenSymbol);
@@ -50,15 +49,17 @@ export default function LiveStreamPlayer({
     streamKey: string;
     embedUrl: string;
   } | null>(null);
-  const [chatMessages, setChatMessages] = useState<Array<{
-    id: string;
-    displayName: string;
-    accountName: string;
-    message: string;
-    timestamp: number;
-    isHolder?: boolean;
-    isCreator?: boolean;
-  }>>([]);
+  const [chatMessages, setChatMessages] = useState<
+    Array<{
+      id: string;
+      displayName: string;
+      accountName: string;
+      message: string;
+      timestamp: number;
+      isHolder?: boolean;
+      isCreator?: boolean;
+    }>
+  >([]);
 
   // Poll chat messages when stream is live
   useEffect(() => {
@@ -201,159 +202,163 @@ export default function LiveStreamPlayer({
             )}
 
             <div className={isMobileScreen ? 'px-5 pb-5' : ''}>
-            <h3 className="text-lg font-bold text-[var(--color-fg)]">Go Live</h3>
-            <p className="mt-1 text-sm text-[var(--color-muted)]">
-              Start streaming to your token community
-            </p>
+              <h3 className="text-lg font-bold text-[var(--color-fg)]">Go Live</h3>
+              <p className="mt-1 text-sm text-[var(--color-muted)]">
+                Start streaming to your token community
+              </p>
 
-            <div className="mt-4 space-y-4">
-              {/* Stream title */}
-              <div>
-                <label className="block text-xs font-medium text-[var(--color-muted)] mb-1">
-                  Stream Title
-                </label>
-                <input
-                  type="text"
-                  value={streamTitle}
-                  onChange={(e) => setStreamTitle(e.target.value)}
-                  placeholder="e.g. AMA with the team! 🎙️"
-                  maxLength={200}
-                  className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-overlay)] px-3 py-2 text-sm text-[var(--color-fg)] placeholder-[var(--color-muted)] outline-none focus:border-degen-500/30"
-                />
-              </div>
-
-              {/* Stream description */}
-              <div>
-                <label className="block text-xs font-medium text-[var(--color-muted)] mb-1">
-                  Description
-                </label>
-                <textarea
-                  value={streamDescription}
-                  onChange={(e) => setStreamDescription(e.target.value)}
-                  placeholder="What's this stream about?"
-                  maxLength={1000}
-                  rows={3}
-                  className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-overlay)] px-3 py-2 text-sm text-[var(--color-fg)] placeholder-[var(--color-muted)] outline-none focus:border-degen-500/30 resize-none"
-                />
-              </div>
-
-              {/* Stream platform */}
-              <div>
-                <label className="block text-xs font-medium text-[var(--color-muted)] mb-1">
-                  Platform
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setStreamPlatform('peertube')}
-                    className={`rounded-lg border px-3 py-2 text-xs font-medium transition-colors ${
-                      streamPlatform === 'peertube'
-                        ? 'border-degen-500/30 bg-degen-500/10 text-degen-400'
-                        : 'border-[var(--color-border)] bg-[var(--color-overlay)] text-[var(--color-muted)] hover:text-[var(--color-fg)]'
-                    }`}
-                  >
-                    📹 PeerTube (Recommended)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setStreamPlatform('legacy')}
-                    className={`rounded-lg border px-3 py-2 text-xs font-medium transition-colors ${
-                      streamPlatform === 'legacy'
-                        ? 'border-degen-500/30 bg-degen-500/10 text-degen-400'
-                        : 'border-[var(--color-border)] bg-[var(--color-overlay)] text-[var(--color-muted)] hover:text-[var(--color-fg)]'
-                    }`}
-                  >
-                    🔗 External URL
-                  </button>
-                </div>
-                {streamPlatform === 'peertube' && (
-                  <p className="mt-1 text-[10px] text-[var(--color-muted)]">
-                    🌐 Federated via PeerTube — reaches ActivityPub, Nostr, Farcaster, Bluesky
-                  </p>
-                )}
-              </div>
-
-              {/* Stream type (legacy only) */}
-              {streamPlatform === 'legacy' && (
+              <div className="mt-4 space-y-4">
+                {/* Stream title */}
                 <div>
                   <label className="block text-xs font-medium text-[var(--color-muted)] mb-1">
-                    Stream Type
+                    Stream Title
                   </label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {(['video', 'audio', 'spaces'] as const).map((type) => (
-                      <button
-                        key={type}
-                        type="button"
-                        onClick={() => setStreamType(type)}
-                        className={`rounded-lg border px-3 py-2 text-xs font-medium transition-colors ${
-                          streamType === type
-                            ? 'border-degen-500/30 bg-degen-500/10 text-degen-400'
-                            : 'border-[var(--color-border)] bg-[var(--color-overlay)] text-[var(--color-muted)] hover:text-[var(--color-fg)]'
-                        }`}
-                      >
-                        {type === 'video' ? '📹 Video' : type === 'audio' ? '🎧 Audio' : '💬 Spaces'}
-                      </button>
-                    ))}
-                  </div>
+                  <input
+                    type="text"
+                    value={streamTitle}
+                    onChange={(e) => setStreamTitle(e.target.value)}
+                    placeholder="e.g. AMA with the team! 🎙️"
+                    maxLength={200}
+                    className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-overlay)] px-3 py-2 text-sm text-[var(--color-fg)] placeholder-[var(--color-muted)] outline-none focus:border-degen-500/30"
+                  />
                 </div>
-              )}
 
-              {/* Token gating */}
-              <div>
-                <label className="block text-xs font-medium text-[var(--color-muted)] mb-1">
-                  Access Requirements
-                </label>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="tokenGated"
-                      checked={tokenGated}
-                      onChange={(e) => setTokenGated(e.target.checked)}
-                      className="rounded border-[var(--color-border)] bg-[var(--color-overlay)] text-degen-500 focus:ring-degen-500/30"
-                    />
-                    <label htmlFor="tokenGated" className="text-xs text-[var(--color-fg)]">
-                      Require minimum token hold to watch
-                    </label>
+                {/* Stream description */}
+                <div>
+                  <label className="block text-xs font-medium text-[var(--color-muted)] mb-1">
+                    Description
+                  </label>
+                  <textarea
+                    value={streamDescription}
+                    onChange={(e) => setStreamDescription(e.target.value)}
+                    placeholder="What's this stream about?"
+                    maxLength={1000}
+                    rows={3}
+                    className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-overlay)] px-3 py-2 text-sm text-[var(--color-fg)] placeholder-[var(--color-muted)] outline-none focus:border-degen-500/30 resize-none"
+                  />
+                </div>
+
+                {/* Stream platform */}
+                <div>
+                  <label className="block text-xs font-medium text-[var(--color-muted)] mb-1">
+                    Platform
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setStreamPlatform('peertube')}
+                      className={`rounded-lg border px-3 py-2 text-xs font-medium transition-colors ${
+                        streamPlatform === 'peertube'
+                          ? 'border-degen-500/30 bg-degen-500/10 text-degen-400'
+                          : 'border-[var(--color-border)] bg-[var(--color-overlay)] text-[var(--color-muted)] hover:text-[var(--color-fg)]'
+                      }`}
+                    >
+                      📹 PeerTube (Recommended)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setStreamPlatform('legacy')}
+                      className={`rounded-lg border px-3 py-2 text-xs font-medium transition-colors ${
+                        streamPlatform === 'legacy'
+                          ? 'border-degen-500/30 bg-degen-500/10 text-degen-400'
+                          : 'border-[var(--color-border)] bg-[var(--color-overlay)] text-[var(--color-muted)] hover:text-[var(--color-fg)]'
+                      }`}
+                    >
+                      🔗 External URL
+                    </button>
                   </div>
-                  {tokenGated && (
-                    <input
-                      type="number"
-                      value={minHold}
-                      onChange={(e) => setMinHold(Math.max(0, Number(e.target.value)))}
-                      min={0}
-                      placeholder="Minimum token amount"
-                      className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-overlay)] px-3 py-2 text-sm text-[var(--color-fg)] outline-none focus:border-degen-500/30"
-                    />
+                  {streamPlatform === 'peertube' && (
+                    <p className="mt-1 text-[10px] text-[var(--color-muted)]">
+                      🌐 Federated via PeerTube — reaches ActivityPub, Nostr, Farcaster, Bluesky
+                    </p>
                   )}
                 </div>
+
+                {/* Stream type (legacy only) */}
+                {streamPlatform === 'legacy' && (
+                  <div>
+                    <label className="block text-xs font-medium text-[var(--color-muted)] mb-1">
+                      Stream Type
+                    </label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {(['video', 'audio', 'spaces'] as const).map((type) => (
+                        <button
+                          key={type}
+                          type="button"
+                          onClick={() => setStreamType(type)}
+                          className={`rounded-lg border px-3 py-2 text-xs font-medium transition-colors ${
+                            streamType === type
+                              ? 'border-degen-500/30 bg-degen-500/10 text-degen-400'
+                              : 'border-[var(--color-border)] bg-[var(--color-overlay)] text-[var(--color-muted)] hover:text-[var(--color-fg)]'
+                          }`}
+                        >
+                          {type === 'video'
+                            ? '📹 Video'
+                            : type === 'audio'
+                              ? '🎧 Audio'
+                              : '💬 Spaces'}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Token gating */}
+                <div>
+                  <label className="block text-xs font-medium text-[var(--color-muted)] mb-1">
+                    Access Requirements
+                  </label>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        id="tokenGated"
+                        checked={tokenGated}
+                        onChange={(e) => setTokenGated(e.target.checked)}
+                        className="rounded border-[var(--color-border)] bg-[var(--color-overlay)] text-degen-500 focus:ring-degen-500/30"
+                      />
+                      <label htmlFor="tokenGated" className="text-xs text-[var(--color-fg)]">
+                        Require minimum token hold to watch
+                      </label>
+                    </div>
+                    {tokenGated && (
+                      <input
+                        type="number"
+                        value={minHold}
+                        onChange={(e) => setMinHold(Math.max(0, Number(e.target.value)))}
+                        min={0}
+                        placeholder="Minimum token amount"
+                        className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-overlay)] px-3 py-2 text-sm text-[var(--color-fg)] outline-none focus:border-degen-500/30"
+                      />
+                    )}
+                  </div>
+                </div>
               </div>
-            </div>
 
-            {startError && (
-              <p className="mt-2 text-xs text-red-400">{startError}</p>
-            )}
+              {startError && <p className="mt-2 text-xs text-red-400">{startError}</p>}
 
-            <div className="mt-6 flex gap-3">
-              <button
-                type="button"
-                onClick={() => setShowStartModal(false)}
-                className="btn-secondary flex-1 text-sm"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleStartStream}
-                disabled={!streamTitle.trim() || isStarting}
-                className="btn-primary flex-1 text-sm disabled:opacity-50"
-              >
-                {isStarting ? 'Starting...' : `Go Live ${streamPlatform === 'peertube' ? '🌐' : '🚀'}`}
-              </button>
+              <div className="mt-6 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowStartModal(false)}
+                  className="btn-secondary flex-1 text-sm"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleStartStream}
+                  disabled={!streamTitle.trim() || isStarting}
+                  className="btn-primary flex-1 text-sm disabled:opacity-50"
+                >
+                  {isStarting
+                    ? 'Starting...'
+                    : `Go Live ${streamPlatform === 'peertube' ? '🌐' : '🚀'}`}
+                </button>
+              </div>
             </div>
           </div>
         </div>
-      </div>
       )}
 
       {/* OBS Setup Card */}
@@ -380,7 +385,9 @@ export default function LiveStreamPlayer({
               <CopyButton text={showSetup.rtmpUrl} />
             </div>
             <div className="flex items-center gap-2 rounded-lg bg-black/20 p-3">
-              <span className="text-xs font-medium text-[var(--color-muted)] w-20">Stream Key:</span>
+              <span className="text-xs font-medium text-[var(--color-muted)] w-20">
+                Stream Key:
+              </span>
               <code className="flex-1 truncate rounded bg-black/30 px-2 py-1 text-xs font-mono text-degen-300">
                 {showSetup.streamKey}
               </code>
@@ -513,9 +520,7 @@ function LiveStreamView({
           <span className="text-xs font-bold uppercase tracking-wider text-red-400 flex-shrink-0">
             LIVE
           </span>
-          <span className="text-xs text-[var(--color-muted)] truncate">
-            {stream.title}
-          </span>
+          <span className="text-xs text-[var(--color-muted)] truncate">{stream.title}</span>
           {streamDuration > 0 && (
             <span className="text-[10px] text-[var(--color-muted)] flex-shrink-0 hidden sm:inline">
               {formatDuration(streamDuration)}
@@ -595,12 +600,8 @@ function LiveStreamView({
             <div className="flex aspect-video w-full items-center justify-center bg-gradient-to-br from-degen-500/10 to-purple-500/10">
               <div className="text-center">
                 <div className="text-5xl">📹</div>
-                <p className="mt-2 text-sm font-medium text-[var(--color-fg)]">
-                  PeerTube Stream
-                </p>
-                <p className="text-xs text-[var(--color-muted)]">
-                  {stream.title}
-                </p>
+                <p className="mt-2 text-sm font-medium text-[var(--color-fg)]">PeerTube Stream</p>
+                <p className="text-xs text-[var(--color-muted)]">{stream.title}</p>
                 {stream.playbackUrl && (
                   <a
                     href={stream.playbackUrl}
@@ -618,7 +619,10 @@ function LiveStreamView({
 
         {/* Chat sidebar (PeerTube only) */}
         {isPeerTube && (
-          <div className="w-full lg:w-80 lg:max-h-[calc(100vw*0.5625)] xl:w-96 flex-shrink-0 border-t lg:border-t-0 lg:border-l border-[var(--color-border)]" style={isMobileScreen ? { maxHeight: '50vh' } : undefined}>
+          <div
+            className="w-full lg:w-80 lg:max-h-[calc(100vw*0.5625)] xl:w-96 flex-shrink-0 border-t lg:border-t-0 lg:border-l border-[var(--color-border)]"
+            style={isMobileScreen ? { maxHeight: '50vh' } : undefined}
+          >
             <PeerTubeChatFeed
               messages={chatMessages}
               onSend={onSendChat}
@@ -633,22 +637,13 @@ function LiveStreamView({
 
       {/* Stream actions bar */}
       <div className="flex flex-wrap items-center gap-2 border-t border-[var(--color-border)] px-4 py-2">
-        <button
-          type="button"
-          className="btn-primary flex items-center gap-1 px-3 py-1.5 text-xs"
-        >
+        <button type="button" className="btn-primary flex items-center gap-1 px-3 py-1.5 text-xs">
           🎁 Tip Creator
         </button>
-        <button
-          type="button"
-          className="btn-secondary flex items-center gap-1 px-3 py-1.5 text-xs"
-        >
+        <button type="button" className="btn-secondary flex items-center gap-1 px-3 py-1.5 text-xs">
           🪙 Buy Token
         </button>
-        <button
-          type="button"
-          className="btn-secondary flex items-center gap-1 px-3 py-1.5 text-xs"
-        >
+        <button type="button" className="btn-secondary flex items-center gap-1 px-3 py-1.5 text-xs">
           🔗 Share
         </button>
 
@@ -656,15 +651,21 @@ function LiveStreamView({
           {isPeerTube ? (
             <>
               <span className="flex items-center gap-1">
-                🌐 <a href="https://video.degenfeed.xyz" target="_blank" rel="noopener noreferrer" className="hover:text-degen-400 transition-colors">PeerTube</a>
+                🌐{' '}
+                <a
+                  href="https://video.degenfeed.xyz"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-degen-400 transition-colors"
+                >
+                  PeerTube
+                </a>
               </span>
               <span className="text-[var(--color-border)]">|</span>
               <span className="flex items-center gap-1">💬 XMPP Chat</span>
             </>
           ) : (
-            <>
-              <span>📹 {stream.streamType ?? 'video'}</span>
-            </>
+            <span>📹 {stream.streamType ?? 'video'}</span>
           )}
         </span>
       </div>
@@ -681,7 +682,7 @@ function LiveStreamView({
 
 /* === Stream Offline State ============================ */
 
-function StreamOffline({
+function _StreamOffline({
   tokenAddress,
   tokenSymbol,
   isCreator,
@@ -744,9 +745,7 @@ function StreamOffline({
           <div className="mt-4 flex items-center gap-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-overlay)] px-4 py-2">
             <span className="text-lg">🌐</span>
             <div className="text-left">
-              <p className="text-xs font-medium text-[var(--color-fg)]">
-                PeerTube Livestreaming
-              </p>
+              <p className="text-xs font-medium text-[var(--color-fg)]">PeerTube Livestreaming</p>
               <p className="text-[10px] text-[var(--color-muted)]">
                 Federated to ActivityPub, Nostr, Farcaster, Bluesky, Telegram
               </p>

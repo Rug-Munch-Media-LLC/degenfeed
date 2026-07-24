@@ -57,9 +57,10 @@ interface EmoteSuggestionProps {
 }
 
 export function EmoteSuggestion({ query, onSelect }: EmoteSuggestionProps) {
-  const matches = DEFAULT_EMOTES.filter((e) =>
-    e.name.toLowerCase().includes(query.toLowerCase()) ||
-    (e.category ?? '').includes(query.toLowerCase()),
+  const matches = DEFAULT_EMOTES.filter(
+    (e) =>
+      e.name.toLowerCase().includes(query.toLowerCase()) ||
+      (e.category ?? '').includes(query.toLowerCase()),
   );
 
   if (matches.length === 0) return null;

@@ -8,8 +8,8 @@
  */
 
 import { memo, useState } from 'react';
-import { formatYouTubeCount, formatYouTubeTimeAgo } from './useYouTube';
 import type { YouTubeShort } from './useYouTube';
+import { formatYouTubeCount, formatYouTubeTimeAgo } from './useYouTube';
 
 // === Types ===============================================================
 
@@ -51,9 +51,9 @@ export const YouTubeShortsCard = memo(function YouTubeShortsCard({
     <article
       className="group relative flex-shrink-0 w-44 md:w-52 rounded-xl overflow-hidden border border-[var(--color-glass-border)] bg-[var(--color-card)] transition-all duration-200 hover:border-pink-500/30 hover:shadow-lg hover:shadow-pink-500/10 cursor-pointer"
       onClick={handlePlay}
-      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handlePlay(); }}
-      role="button"
-      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') handlePlay();
+      }}
       aria-label={`Play Short: ${short.title}`}
     >
       {/* Thumbnail — 9:16 aspect ratio */}
@@ -99,9 +99,7 @@ export const YouTubeShortsCard = memo(function YouTubeShortsCard({
         <h3 className="text-xs font-semibold text-[var(--color-fg)] line-clamp-2 leading-snug">
           {short.title}
         </h3>
-        <p className="text-[10px] text-[var(--color-muted)] truncate">
-          {short.channelName}
-        </p>
+        <p className="text-[10px] text-[var(--color-muted)] truncate">{short.channelName}</p>
         <p className="text-[10px] text-[var(--color-muted)]">
           {formatYouTubeTimeAgo(short.publishedAt)}
         </p>
@@ -112,9 +110,7 @@ export const YouTubeShortsCard = memo(function YouTubeShortsCard({
         type="button"
         onClick={handleLike}
         className={`absolute bottom-3 right-3 flex items-center gap-1 rounded-full px-2 py-1 text-[10px] transition-all backdrop-blur-sm ${
-          liked
-            ? 'bg-pink-600/40 text-pink-300'
-            : 'bg-black/30 text-white/80 hover:bg-black/50'
+          liked ? 'bg-pink-600/40 text-pink-300' : 'bg-black/30 text-white/80 hover:bg-black/50'
         }`}
         aria-label={liked ? 'Unlike' : 'Like'}
       >

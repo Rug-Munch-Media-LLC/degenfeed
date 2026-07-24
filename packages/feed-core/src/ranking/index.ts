@@ -18,6 +18,8 @@
  * - source: protocol tier weight (Nostr > Threads, etc.)
  * - spam: multiplicative penalty (1 - spamScore) — >0.7 demoted, >0.9 dropped
  */
+
+import type { Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
 import {
   BOOST_TERMS,
   buildQualityAuthorProfile,
@@ -25,7 +27,6 @@ import {
   keywordRelevance,
   PLATFORM_TIER_WEIGHTS,
 } from '../index';
-import type { Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
 
 export type {
   AuthorReputation,

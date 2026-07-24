@@ -23,26 +23,23 @@
  *     hardware wallets)
  */
 
-import type { Env } from "../index";
-import { jsonResponse, rateLimit } from "../index";
-import { hwWallet2FAStatusKey, hwWalletChallengeKey } from "../kv-key-patterns";
-import {
-	verifyEthereumSignature,
-	verifySolanaSignature,
-} from "../lib/signature-verify";
-import { requireSession } from "../session";
+import type { Env } from '../index';
+import { jsonResponse, rateLimit } from '../index';
+import { hwWallet2FAStatusKey, hwWalletChallengeKey } from '../kv-key-patterns';
+import { verifyEthereumSignature, verifySolanaSignature } from '../lib/signature-verify';
+import { requireSession } from '../session';
 
 // ─── Types ──────────────────────────────────────────────────────────
 
 export interface HwChallenge {
-	nonce: string;
-	challenge: string;
-	expiresAt: number;
+  nonce: string;
+  challenge: string;
+  expiresAt: number;
 }
 
 export interface Hw2FAStatus {
-	enabled: boolean;
-	lastVerifiedAt: number | null;
+  enabled: boolean;
+  lastVerifiedAt: number | null;
 }
 
 // ─── Constants ───────────────────────────────────────────────────────
@@ -64,37 +61,33 @@ const VERIFY_RATE_LIMIT = 5; // max 5 verify attempts per 60s per address
  *   - Explicit disclaimer: no transaction authorization
  */
 function buildChallengeMessage(
-	wallet: string,
-	chain: string,
-	timestamp: string,
-	nonce: string,
+  wallet: string,
+  chain: string,
+  timestamp: string,
+  nonce: string,
 ): string {
-	return [
-		"DegenFeed authentication challenge",
-		"",
-		`Chain: ${chain}`,
-		`Wallet: ${wallet}`,
-		`Timestamp: ${timestamp}`,
-		`Nonce: ${nonce}`,
-		"",
-		"Sign this message to prove you control this wallet.",
-		"This does NOT authorize any transaction or on-chain action.",
-		"If you did not request this, ignore this message.",
-	].join("\n");
+  return [
+    'DegenFeed authentication challenge',
+    '',
+    `Chain: ${chain}`,
+    `Wallet: ${wallet}`,
+    `Timestamp: ${timestamp}`,
+    `Nonce: ${nonce}`,
+    '',
+    'Sign this message to prove you control this wallet.',
+    'This does NOT authorize any transaction or on-chain action.',
+    'If you did not request this, ignore this message.',
+  ].join('\n');
 }
 
 /**
  * Store a 2FA challenge in KV with 5-minute TTL.
  */
-async function storeChallenge(
-	env: Env,
-	address: string,
-	challenge: HwChallenge,
-): Promise<void> {
-	const key = hwWalletChallengeKey(address, challenge.nonce);
-	await env.CACHE?.put(key, JSON.stringify(challenge), {
-		expirationTtl: Math.ceil(CHALLENGE_TTL_MS / 1000),
-	});
+async function storeChallenge(env: Env, address: string, challenge: HwChallenge): Promise<void> {
+  const key = hwWalletChallengeKey(address, challenge.nonce);
+  await env.CACHE?.put(key, JSON.stringify(challenge), {
+    expirationTtl: Math.ceil(CHALLENGE_TTL_MS / 1000),
+  });
 }
 
 /**
@@ -102,21 +95,21 @@ async function storeChallenge(
  * Returns null if not found or expired.
  */
 async function consumeChallenge(
-	env: Env,
-	address: string,
-	nonce: string,
+  env: Env,
+  address: string,
+  nonce: string,
 ): Promise<HwChallenge | null> {
-	const key = hwWalletChallengeKey(address, nonce);
-	try {
-		const raw = await env.CACHE?.get(key);
-		if (!raw) return null;
-		const challenge = JSON.parse(raw) as HwChallenge;
-		// Delete immediately to prevent replay
-		await env.CACHE?.delete(key).catch(() => {});
-		return challenge;
-	} catch {
-		return null;
-	}
+  const key = hwWalletChallengeKey(address, nonce);
+  try {
+    const raw = await env.CACHE?.get(key);
+    if (!raw) return null;
+    const challenge = JSON.parse(raw) as HwChallenge;
+    // Delete immediately to prevent replay
+    await env.CACHE?.delete(key).catch(() => {});
+    return challenge;
+  } catch {
+    return null;
+  }
 }
 
 // ─── Routes ──────────────────────────────────────────────────────────
@@ -131,64 +124,54 @@ async function consumeChallenge(
  * Response:
  *   { challenge: string, nonce: string, expiresIn: number }
  */
-export async function handleHwWalletChallenge(
-	request: Request,
-	env: Env,
-): Promise<Response> {
-	const session = await requireSession(request, env);
-	if (session instanceof Response) return session;
+export async function handleHwWalletChallenge(request: Request, env: Env): Promise<Response> {
+  const session = await requireSession(request, env);
+  if (session instanceof Response) return session;
 
-	const ip =
-		request.headers.get("cf-connecting-ip") ||
-		request.headers.get("x-forwarded-for") ||
-		"unknown";
+  const ip =
+    request.headers.get('cf-connecting-ip') || request.headers.get('x-forwarded-for') || 'unknown';
 
-	// Rate limit: 5 challenge requests per 60s per address
-	const rl = await rateLimit(
-		env,
-		`${ip}:${session.address}`,
-		"hw2fa:challenge",
-		CHALLENGE_RATE_LIMIT,
-		60_000,
-	);
-	if (!rl.allowed) {
-		return new Response(
-			JSON.stringify({
-				error: "Too many challenge requests. Try again later.",
-				retryAfterMs: rl.retryAfter,
-			}),
-			{
-				status: 429,
-				headers: {
-					"content-type": "application/json",
-					"retry-after": String(Math.ceil(rl.retryAfter / 1000)),
-				},
-			},
-		);
-	}
+  // Rate limit: 5 challenge requests per 60s per address
+  const rl = await rateLimit(
+    env,
+    `${ip}:${session.address}`,
+    'hw2fa:challenge',
+    CHALLENGE_RATE_LIMIT,
+    60_000,
+  );
+  if (!rl.allowed) {
+    return new Response(
+      JSON.stringify({
+        error: 'Too many challenge requests. Try again later.',
+        retryAfterMs: rl.retryAfter,
+      }),
+      {
+        status: 429,
+        headers: {
+          'content-type': 'application/json',
+          'retry-after': String(Math.ceil(rl.retryAfter / 1000)),
+        },
+      },
+    );
+  }
 
-	const nonce = crypto.randomUUID();
-	const timestamp = new Date().toISOString();
-	const challenge = buildChallengeMessage(
-		session.address,
-		session.chain,
-		timestamp,
-		nonce,
-	);
+  const nonce = crypto.randomUUID();
+  const timestamp = new Date().toISOString();
+  const challenge = buildChallengeMessage(session.address, session.chain, timestamp, nonce);
 
-	const hwChallenge: HwChallenge = {
-		nonce,
-		challenge,
-		expiresAt: Date.now() + CHALLENGE_TTL_MS,
-	};
+  const hwChallenge: HwChallenge = {
+    nonce,
+    challenge,
+    expiresAt: Date.now() + CHALLENGE_TTL_MS,
+  };
 
-	await storeChallenge(env, session.address, hwChallenge);
+  await storeChallenge(env, session.address, hwChallenge);
 
-	return jsonResponse({
-		challenge,
-		nonce,
-		expiresIn: Math.floor(CHALLENGE_TTL_MS / 1000),
-	});
+  return jsonResponse({
+    challenge,
+    nonce,
+    expiresIn: Math.floor(CHALLENGE_TTL_MS / 1000),
+  });
 }
 
 /**
@@ -205,104 +188,81 @@ export async function handleHwWalletChallenge(
  *   { verified: true } on success
  *   { error: string } on failure
  */
-export async function handleHwWalletVerify(
-	request: Request,
-	env: Env,
-): Promise<Response> {
-	const session = await requireSession(request, env);
-	if (session instanceof Response) return session;
+export async function handleHwWalletVerify(request: Request, env: Env): Promise<Response> {
+  const session = await requireSession(request, env);
+  if (session instanceof Response) return session;
 
-	const ip =
-		request.headers.get("cf-connecting-ip") ||
-		request.headers.get("x-forwarded-for") ||
-		"unknown";
+  const ip =
+    request.headers.get('cf-connecting-ip') || request.headers.get('x-forwarded-for') || 'unknown';
 
-	// Rate limit: 5 verify attempts per 60s per address
-	const rl = await rateLimit(
-		env,
-		`${ip}:${session.address}`,
-		"hw2fa:verify",
-		VERIFY_RATE_LIMIT,
-		60_000,
-	);
-	if (!rl.allowed) {
-		return new Response(
-			JSON.stringify({
-				error: "Too many verification attempts. Try again later.",
-				retryAfterMs: rl.retryAfter,
-			}),
-			{
-				status: 429,
-				headers: {
-					"content-type": "application/json",
-					"retry-after": String(Math.ceil(rl.retryAfter / 1000)),
-				},
-			},
-		);
-	}
+  // Rate limit: 5 verify attempts per 60s per address
+  const rl = await rateLimit(
+    env,
+    `${ip}:${session.address}`,
+    'hw2fa:verify',
+    VERIFY_RATE_LIMIT,
+    60_000,
+  );
+  if (!rl.allowed) {
+    return new Response(
+      JSON.stringify({
+        error: 'Too many verification attempts. Try again later.',
+        retryAfterMs: rl.retryAfter,
+      }),
+      {
+        status: 429,
+        headers: {
+          'content-type': 'application/json',
+          'retry-after': String(Math.ceil(rl.retryAfter / 1000)),
+        },
+      },
+    );
+  }
 
-	let body: { signature?: string; nonce?: string };
-	try {
-		body = (await request.json()) as { signature?: string; nonce?: string };
-	} catch {
-		return jsonResponse({ error: "Invalid JSON body" }, 400);
-	}
+  let body: { signature?: string; nonce?: string };
+  try {
+    body = (await request.json()) as { signature?: string; nonce?: string };
+  } catch {
+    return jsonResponse({ error: 'Invalid JSON body' }, 400);
+  }
 
-	if (!body.signature || !body.nonce) {
-		return jsonResponse(
-			{ error: "Missing required fields: signature, nonce" },
-			400,
-		);
-	}
+  if (!body.signature || !body.nonce) {
+    return jsonResponse({ error: 'Missing required fields: signature, nonce' }, 400);
+  }
 
-	// Retrieve and consume the challenge (prevents replay)
-	const stored = await consumeChallenge(env, session.address, body.nonce);
-	if (!stored) {
-		return jsonResponse(
-			{ error: "Challenge not found or already used. Request a new one." },
-			400,
-		);
-	}
+  // Retrieve and consume the challenge (prevents replay)
+  const stored = await consumeChallenge(env, session.address, body.nonce);
+  if (!stored) {
+    return jsonResponse({ error: 'Challenge not found or already used. Request a new one.' }, 400);
+  }
 
-	if (Date.now() > stored.expiresAt) {
-		return jsonResponse(
-			{ error: "Challenge has expired. Request a new one." },
-			400,
-		);
-	}
+  if (Date.now() > stored.expiresAt) {
+    return jsonResponse({ error: 'Challenge has expired. Request a new one.' }, 400);
+  }
 
-	// Verify the signature recovers to the session's wallet address
-	let isValid = false;
-	if (session.chain === "ethereum") {
-		isValid = verifyEthereumSignature(
-			stored.challenge,
-			body.signature,
-			session.address,
-		);
-	} else if (session.chain === "solana") {
-		isValid = verifySolanaSignature(
-			stored.challenge,
-			body.signature,
-			session.address,
-		);
-	} else {
-		return jsonResponse({ error: `Unsupported chain: ${session.chain}` }, 400);
-	}
+  // Verify the signature recovers to the session's wallet address
+  let isValid = false;
+  if (session.chain === 'ethereum') {
+    isValid = verifyEthereumSignature(stored.challenge, body.signature, session.address);
+  } else if (session.chain === 'solana') {
+    isValid = verifySolanaSignature(stored.challenge, body.signature, session.address);
+  } else {
+    return jsonResponse({ error: `Unsupported chain: ${session.chain}` }, 400);
+  }
 
-	if (!isValid) {
-		return jsonResponse(
-			{
-				error:
-					"Invalid signature. Make sure you signed with the correct wallet and chain.",
-			},
-			401,
-		);
-	}
+  if (!isValid) {
+    return jsonResponse(
+      {
+        error: 'Invalid signature. Make sure you signed with the correct wallet and chain.',
+      },
+      401,
+    );
+  }
 
-	// Mark 2FA as verified
-	await save2FAVerified(env, session.address);
+  // Mark 2FA as verified
+  await save2FAVerified(env, session.address);
 
-	return jsonResponse({ verified: true });
+  return jsonResponse({ verified: true });
 }
 
 /**
@@ -313,15 +273,12 @@ export async function handleHwWalletVerify(
  * Response:
  *   { enabled: boolean, lastVerifiedAt: number | null }
  */
-export async function handleHwWalletStatus(
-	request: Request,
-	env: Env,
-): Promise<Response> {
-	const session = await requireSession(request, env);
-	if (session instanceof Response) return session;
+export async function handleHwWalletStatus(request: Request, env: Env): Promise<Response> {
+  const session = await requireSession(request, env);
+  if (session instanceof Response) return session;
 
-	const status = await get2FAStatus(env, session.address);
-	return jsonResponse(status);
+  const status = await get2FAStatus(env, session.address);
+  return jsonResponse(status);
 }
 
 /**
@@ -337,57 +294,52 @@ export async function handleHwWalletStatus(
  * Response:
  *   { enabled: boolean, message: string }
  */
-export async function handleHwWalletToggle(
-	request: Request,
-	env: Env,
-): Promise<Response> {
-	const session = await requireSession(request, env);
-	if (session instanceof Response) return session;
+export async function handleHwWalletToggle(request: Request, env: Env): Promise<Response> {
+  const session = await requireSession(request, env);
+  if (session instanceof Response) return session;
 
-	let body: { enabled?: boolean };
-	try {
-		body = (await request.json()) as { enabled?: boolean };
-	} catch {
-		return jsonResponse({ error: "Invalid JSON body" }, 400);
-	}
+  let body: { enabled?: boolean };
+  try {
+    body = (await request.json()) as { enabled?: boolean };
+  } catch {
+    return jsonResponse({ error: 'Invalid JSON body' }, 400);
+  }
 
-	if (typeof body.enabled !== "boolean") {
-		return jsonResponse({ error: "Missing required field: enabled" }, 400);
-	}
+  if (typeof body.enabled !== 'boolean') {
+    return jsonResponse({ error: 'Missing required field: enabled' }, 400);
+  }
 
-	if (body.enabled) {
-		// Enabling requires a recent verification.
-		// The caller should have just completed /verify.
-		const status = await get2FAStatus(env, session.address);
-		if (!status.lastVerifiedAt) {
-			return jsonResponse(
-				{
-					error:
-						"You must first verify your hardware wallet by completing the challenge flow.",
-				},
-				400,
-			);
-		}
-		// Last verification must be within the last 5 minutes
-		if (Date.now() - status.lastVerifiedAt > CHALLENGE_TTL_MS) {
-			return jsonResponse(
-				{
-					error:
-						"Your last hardware wallet verification has expired. Please verify again.",
-				},
-				400,
-			);
-		}
-	}
+  if (body.enabled) {
+    // Enabling requires a recent verification.
+    // The caller should have just completed /verify.
+    const status = await get2FAStatus(env, session.address);
+    if (!status.lastVerifiedAt) {
+      return jsonResponse(
+        {
+          error: 'You must first verify your hardware wallet by completing the challenge flow.',
+        },
+        400,
+      );
+    }
+    // Last verification must be within the last 5 minutes
+    if (Date.now() - status.lastVerifiedAt > CHALLENGE_TTL_MS) {
+      return jsonResponse(
+        {
+          error: 'Your last hardware wallet verification has expired. Please verify again.',
+        },
+        400,
+      );
+    }
+  }
 
-	await set2FAEnabled(env, session.address, body.enabled);
+  await set2FAEnabled(env, session.address, body.enabled);
 
-	return jsonResponse({
-		enabled: body.enabled,
-		message: body.enabled
-			? "Hardware wallet 2FA is now enabled. You will be prompted to sign a challenge on your next login."
-			: "Hardware wallet 2FA has been disabled.",
-	});
+  return jsonResponse({
+    enabled: body.enabled,
+    message: body.enabled
+      ? 'Hardware wallet 2FA is now enabled. You will be prompted to sign a challenge on your next login.'
+      : 'Hardware wallet 2FA has been disabled.',
+  });
 }
 
 /**
@@ -404,31 +356,28 @@ export async function handleHwWalletToggle(
  * Returns a CSRF token on success (same shape as wallet verify),
  * so the frontend can start making authenticated requests.
  */
-export async function handleHwWalletVerifyOnLogin(
-	request: Request,
-	env: Env,
-): Promise<Response> {
-	const session = await requireSession(request, env);
-	if (session instanceof Response) return session;
+export async function handleHwWalletVerifyOnLogin(request: Request, env: Env): Promise<Response> {
+  const session = await requireSession(request, env);
+  if (session instanceof Response) return session;
 
-	// First check if 2FA is enabled
-	const status = await get2FAStatus(env, session.address);
-	if (!status.enabled) {
-		// 2FA isn't enabled — skip verification
-		return jsonResponse({ verified: true, skipped: true });
-	}
+  // First check if 2FA is enabled
+  const status = await get2FAStatus(env, session.address);
+  if (!status.enabled) {
+    // 2FA isn't enabled — skip verification
+    return jsonResponse({ verified: true, skipped: true });
+  }
 
-	// Verify the signed challenge
-	const verifyResult = await handleHwWalletVerify(request, env);
-	if (verifyResult.status !== 200) {
-		return verifyResult;
-	}
+  // Verify the signed challenge
+  const verifyResult = await handleHwWalletVerify(request, env);
+  if (verifyResult.status !== 200) {
+    return verifyResult;
+  }
 
-	return jsonResponse({
-		verified: true,
-		skipped: false,
-		message: "Hardware wallet 2FA challenge verified.",
-	});
+  return jsonResponse({
+    verified: true,
+    skipped: false,
+    message: 'Hardware wallet 2FA challenge verified.',
+  });
 }
 
 // ─── KV Storage ─────────────────────────────────────────────────────
@@ -439,45 +388,38 @@ export async function handleHwWalletVerifyOnLogin(
  * hardware wallet control at this time. The toggle enables the feature.
  */
 async function save2FAVerified(env: Env, address: string): Promise<void> {
-	const key = hwWallet2FAStatusKey(address);
-	const existing = await get2FAStatus(env, address);
-	const status: Hw2FAStatus = {
-		enabled: existing.enabled,
-		lastVerifiedAt: Date.now(),
-	};
-	await env.CACHE?.put(key, JSON.stringify(status));
+  const key = hwWallet2FAStatusKey(address);
+  const existing = await get2FAStatus(env, address);
+  const status: Hw2FAStatus = {
+    enabled: existing.enabled,
+    lastVerifiedAt: Date.now(),
+  };
+  await env.CACHE?.put(key, JSON.stringify(status));
 }
 
 /**
  * Set whether hardware wallet 2FA is enabled for an address.
  */
-async function set2FAEnabled(
-	env: Env,
-	address: string,
-	enabled: boolean,
-): Promise<void> {
-	const key = hwWallet2FAStatusKey(address);
-	const existing = await get2FAStatus(env, address);
-	const status: Hw2FAStatus = {
-		enabled,
-		lastVerifiedAt: enabled ? existing.lastVerifiedAt : null,
-	};
-	await env.CACHE?.put(key, JSON.stringify(status));
+async function set2FAEnabled(env: Env, address: string, enabled: boolean): Promise<void> {
+  const key = hwWallet2FAStatusKey(address);
+  const existing = await get2FAStatus(env, address);
+  const status: Hw2FAStatus = {
+    enabled,
+    lastVerifiedAt: enabled ? existing.lastVerifiedAt : null,
+  };
+  await env.CACHE?.put(key, JSON.stringify(status));
 }
 
 /**
  * Get the hardware wallet 2FA status for an address.
  */
-export async function get2FAStatus(
-	env: Env,
-	address: string,
-): Promise<Hw2FAStatus> {
-	const key = hwWallet2FAStatusKey(address);
-	try {
-		const raw = await env.CACHE?.get(key);
-		if (!raw) return { enabled: false, lastVerifiedAt: null };
-		return JSON.parse(raw) as Hw2FAStatus;
-	} catch {
-		return { enabled: false, lastVerifiedAt: null };
-	}
+export async function get2FAStatus(env: Env, address: string): Promise<Hw2FAStatus> {
+  const key = hwWallet2FAStatusKey(address);
+  try {
+    const raw = await env.CACHE?.get(key);
+    if (!raw) return { enabled: false, lastVerifiedAt: null };
+    return JSON.parse(raw) as Hw2FAStatus;
+  } catch {
+    return { enabled: false, lastVerifiedAt: null };
+  }
 }

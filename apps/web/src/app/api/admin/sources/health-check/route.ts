@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from 'next/server';
-import { requireAdmin } from '../../_auth';
 // TODO: Wire to worker backend
 import { cullLowQualitySources, getStats, runHealthCheck } from '../../../../../lib/source-engine';
+import { requireAdmin } from '../../_auth';
 
 export const runtime = 'nodejs';
 

@@ -5,8 +5,8 @@
  * Opens the creator coin purchase flow.
  */
 
-import { useCallback } from 'react';
 import type { VisualPost } from '@degenfeed/types';
+import { useCallback } from 'react';
 
 interface CollectButtonProps {
   post: VisualPost;
@@ -14,24 +14,29 @@ interface CollectButtonProps {
 }
 
 export function CollectButton({ post, size = 'sm' }: CollectButtonProps) {
-  const handleCollect = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (post.collectUrl) {
-      window.open(post.collectUrl, '_blank', 'noopener,noreferrer');
-    }
-  }, [post.collectUrl]);
+  const handleCollect = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (post.collectUrl) {
+        window.open(post.collectUrl, '_blank', 'noopener,noreferrer');
+      }
+    },
+    [post.collectUrl],
+  );
 
   if (!post.collectUrl) return null;
 
-  const sizeClasses = size === 'sm' ? 'h-7 w-7 text-xs' : 'h-9 rounded-full px-3 text-sm';
+  const _sizeClasses = size === 'sm' ? 'h-7 w-7 text-xs' : 'h-9 rounded-full px-3 text-sm';
 
   return (
     <button
       type="button"
       onClick={handleCollect}
       className={`inline-flex items-center justify-center gap-1 rounded-full font-medium transition-all hover:scale-105 active:scale-95 ${
-        size === 'sm' ? '' : 'border border-cyan-500/30 bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20'
+        size === 'sm'
+          ? ''
+          : 'border border-cyan-500/30 bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20'
       }`}
       aria-label="Collect creator coin"
     >

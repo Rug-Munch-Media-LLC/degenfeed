@@ -124,9 +124,7 @@ export function CreatorPresence({
           </div>
         )}
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-[var(--color-fg)] truncate">
-            {creator.name}
-          </p>
+          <p className="text-sm font-semibold text-[var(--color-fg)] truncate">{creator.name}</p>
           <p className="text-[11px] text-[var(--color-muted)]">
             {formatCount(creator.totalFollowers)} total followers
           </p>
@@ -155,9 +153,7 @@ export function CreatorPresence({
 
       {/* Description */}
       {creator.description && (
-        <p className="mb-3 text-xs text-[var(--color-muted)] line-clamp-2">
-          {creator.description}
-        </p>
+        <p className="mb-3 text-xs text-[var(--color-muted)] line-clamp-2">{creator.description}</p>
       )}
 
       {/* Platform presence list */}
@@ -194,16 +190,12 @@ function CreatorPlatformRow({ platform }: { platform: CreatorPlatform }) {
         showLabel={false}
         className="shrink-0"
       />
-      <span className="min-w-0 flex-1 truncate text-[var(--color-fg)]">
-        @{platform.handle}
-      </span>
+      <span className="min-w-0 flex-1 truncate text-[var(--color-fg)]">@{platform.handle}</span>
       <span className="shrink-0 tabular-nums text-[var(--color-muted)]">
         {formatCount(followerCount)} {meta.metric}
       </span>
       {platform.nftCount !== undefined && platform.nftCount > 0 && (
-        <span className="shrink-0 text-[10px] text-blue-400">
-          {platform.nftCount} NFTs
-        </span>
+        <span className="shrink-0 text-[10px] text-blue-400">{platform.nftCount} NFTs</span>
       )}
     </a>
   );

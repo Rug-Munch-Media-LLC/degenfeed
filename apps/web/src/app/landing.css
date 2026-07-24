@@ -1141,13 +1141,13 @@
   .protocol-marquee,
   .feature-showcase-card,
   .coming-soon-item {
-    animation: none !important;
-    transition-duration: 0.01ms !important;
-    transform: none !important;
+    animation: none;
+    transition-duration: 0.01ms;
+    transform: none;
   }
 
   .hero-proof-dot {
-    animation: none !important;
+    animation: none;
   }
 
   .protocol-marquee-fade {
@@ -1159,12 +1159,12 @@
   }
 
   .feature-showcase-card .card-accent {
-    animation: none !important;
+    animation: none;
   }
 
   .landing-page .scroll-reveal {
-    opacity: 1 !important;
-    animation: none !important;
+    opacity: 1;
+    animation: none;
   }
 }
 

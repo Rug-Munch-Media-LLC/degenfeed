@@ -39,7 +39,7 @@ const INSTANCES = [
 
 const DEFAULT_FEED_LIMIT = 30;
 const MAX_FEED_LIMIT = 100;
-const TRENDING_COMMUNITIES = [
+const _TRENDING_COMMUNITIES = [
   'crypto',
   'defi',
   'technology',
@@ -65,10 +65,7 @@ function parseLimit(raw: string | null, defaultVal: number = DEFAULT_FEED_LIMIT)
 
 // ─── GET /api/lemmy/feed — Discussion feed ────────────────────────────
 
-export async function handleLemmyFeed(
-  request: Request,
-  env: Env,
-): Promise<Response> {
+export async function handleLemmyFeed(request: Request, _env: Env): Promise<Response> {
   const url = new URL(request.url);
   const instance = url.searchParams.get('instance') || INSTANCES[0];
   const sort = url.searchParams.get('sort') || 'Hot';
@@ -119,7 +116,7 @@ export async function handleLemmyFeed(
 
 export async function handleLemmyCommunity(
   request: Request,
-  env: Env,
+  _env: Env,
   name: string,
 ): Promise<Response> {
   const url = new URL(request.url);
@@ -188,10 +185,7 @@ export async function handleLemmyCommunity(
 
 // ─── POST /api/lemmy/post — Create post on Lemmy (cross-post) ────────
 
-export async function handleLemmyPostCreate(
-  request: Request,
-  env: Env,
-): Promise<Response> {
+export async function handleLemmyPostCreate(request: Request, env: Env): Promise<Response> {
   // Requires session for authenticated user
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
@@ -281,10 +275,7 @@ export async function handleLemmyPostCreate(
 
 // ─── POST /api/lemmy/comment — Comment on a Lemmy post ───────────────
 
-export async function handleLemmyCommentCreate(
-  request: Request,
-  env: Env,
-): Promise<Response> {
+export async function handleLemmyCommentCreate(request: Request, env: Env): Promise<Response> {
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
 
@@ -346,10 +337,7 @@ export async function handleLemmyCommentCreate(
 
 // ─── GET /api/lemmy/trending — Trending across Lemmy instances ───────
 
-export async function handleLemmyTrending(
-  request: Request,
-  env: Env,
-): Promise<Response> {
+export async function handleLemmyTrending(request: Request, _env: Env): Promise<Response> {
   const url = new URL(request.url);
   const limit = parseLimit(url.searchParams.get('limit'), 20);
 
@@ -374,7 +362,7 @@ export async function handleLemmyTrending(
 
       // Try a few high-traffic communities for trending detection
       const communitySamples = ['crypto', 'technology', 'all'];
-      const batch: Array<{ post: typeof results[0]['post']; signal: string }> = [];
+      const batch: Array<{ post: (typeof results)[0]['post']; signal: string }> = [];
 
       for (const comm of communitySamples) {
         try {
@@ -384,7 +372,7 @@ export async function handleLemmyTrending(
           });
 
           for (const pv of posts) {
-            const engagementSignal =
+            const _engagementSignal =
               pv.counts.upvotes +
               pv.counts.comments * 3 +
               (pv.counts.score > 0 ? pv.counts.score * 2 : 0);
@@ -447,10 +435,7 @@ export async function handleLemmyTrending(
 
 // ─── GET /api/lemmy/instances — List known healthy instances ─────────
 
-export async function handleLemmyInstances(
-  _request: Request,
-  _env: Env,
-): Promise<Response> {
+export async function handleLemmyInstances(_request: Request, _env: Env): Promise<Response> {
   const results: Array<{
     url: string;
     hostname: string;
@@ -493,7 +478,7 @@ export async function handleLemmyInstances(
 
 export async function handleLemmyPostById(
   request: Request,
-  env: Env,
+  _env: Env,
   idParam: string,
 ): Promise<Response> {
   const url = new URL(request.url);

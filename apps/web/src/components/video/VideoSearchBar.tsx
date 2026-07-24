@@ -7,8 +7,8 @@
  * Debounced input that navigates to the search results view.
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 interface SearchSourceOption {
   id: string;
@@ -43,11 +43,12 @@ export function VideoSearchBar({
   const [query, setQuery] = useState(initialQuery);
   const [source, setSource] = useState(initialSource);
   const [showSourceMenu, setShowSourceMenu] = useState(false);
-  const [isFocused, setIsFocused] = useState(false);
+  const [_isFocused, setIsFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const sourceMenuRef = useRef<HTMLDivElement>(null);
 
-  const activeSource = SEARCH_SOURCES.find((s) => s.id === source) ?? SEARCH_SOURCES[0] as SearchSourceOption;
+  const activeSource =
+    SEARCH_SOURCES.find((s) => s.id === source) ?? (SEARCH_SOURCES[0] as SearchSourceOption);
 
   // Close source menu on outside click
   useEffect(() => {
@@ -73,30 +74,36 @@ export function VideoSearchBar({
       } else {
         const params = new URLSearchParams({ q: trimmed });
         if (source !== 'all') params.set('source', source);
-        router.push(`/video?search=${encodeURIComponent(trimmed)}${source !== 'all' ? `&source=${source}` : ''}`);
+        router.push(
+          `/video?search=${encodeURIComponent(trimmed)}${source !== 'all' ? `&source=${source}` : ''}`,
+        );
       }
     },
     [query, source, router, onSearch],
   );
 
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        inputRef.current?.blur();
-        setShowSourceMenu(false);
-      }
-    },
-    [],
-  );
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      inputRef.current?.blur();
+      setShowSourceMenu(false);
+    }
+  }, []);
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className={`relative flex items-center ${className}`}
-    >
+    <form onSubmit={handleSubmit} className={`relative flex items-center ${className}`}>
       {/* Search icon */}
       <div className="pointer-events-none absolute left-3 z-10 text-[var(--color-muted)]">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
           <circle cx="11" cy="11" r="8" />
           <path d="M21 21l-4.35-4.35" />
         </svg>
@@ -123,10 +130,7 @@ export function VideoSearchBar({
           onClick={() => setShowSourceMenu((prev) => !prev)}
           className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] font-medium text-[var(--color-muted)] hover:text-[var(--color-fg)] hover:bg-[var(--color-overlay)] transition-colors"
         >
-          <span
-            className="h-2 w-2 rounded-full"
-            style={{ backgroundColor: activeSource.color }}
-          />
+          <span className="h-2 w-2 rounded-full" style={{ backgroundColor: activeSource.color }} />
           <span>{activeSource.label}</span>
           <svg
             width="10"

@@ -25,8 +25,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Terms of Service — DegenFeed',
-    description:
-      'Terms of Service for DegenFeed, operated by Rug Munch Media LLC.',
+    description: 'Terms of Service for DegenFeed, operated by Rug Munch Media LLC.',
     images: ['https://app.degenfeed.xyz/og-image.png'],
   },
   alternates: { canonical: 'https://app.degenfeed.xyz/terms' },

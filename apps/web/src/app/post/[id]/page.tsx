@@ -508,7 +508,9 @@ function ThreadReplyCard({
               ↔ {protocolLabel(bridgeSource !== reply.protocol ? bridgeSource : reply.protocol)}
             </span>
           )}
-          <span className="text-[10px] text-[var(--color-muted)]">{formatTimeAgo(reply.createdAt)} ago</span>
+          <span className="text-[10px] text-[var(--color-muted)]">
+            {formatTimeAgo(reply.createdAt)} ago
+          </span>
         </div>
         {isCrossProtocol && (
           <p className="mb-1.5 text-[10px] italic text-degen-400/80">

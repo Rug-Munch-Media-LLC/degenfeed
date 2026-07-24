@@ -91,7 +91,7 @@ export function FeaturedStreams({ streams, isLoading = false, onPlay }: Featured
     updateScrollButtons();
     el.addEventListener('scroll', updateScrollButtons, { passive: true });
     return () => el.removeEventListener('scroll', updateScrollButtons);
-  }, [updateScrollButtons, streams]);
+  }, [updateScrollButtons]);
 
   const scroll = (direction: 'left' | 'right') => {
     const el = scrollRef.current;

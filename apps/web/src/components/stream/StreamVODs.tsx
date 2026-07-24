@@ -1,6 +1,6 @@
 'use client';
 
-import { type VOD, generateMockVODs } from './types';
+import { generateMockVODs, type VOD } from './types';
 
 interface StreamVODsProps {
   vods?: VOD[];
@@ -30,7 +30,18 @@ export function StreamVODs({ vods }: StreamVODsProps) {
   return (
     <section aria-label="Past broadcasts" className="space-y-3">
       <div className="flex items-center gap-2">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="text-white/50">
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+          className="text-white/50"
+        >
           <polygon points="23 7 16 12 23 17 23 7" />
           <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
         </svg>
@@ -48,7 +59,14 @@ export function StreamVODs({ vods }: StreamVODsProps) {
             {/* Thumbnail placeholder */}
             <div className="relative aspect-video w-28 shrink-0 overflow-hidden rounded-lg bg-gradient-to-br from-gray-700 to-gray-800">
               <div className="absolute inset-0 flex items-center justify-center">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="white" opacity="0.3" aria-hidden="true">
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="white"
+                  opacity="0.3"
+                  aria-hidden="true"
+                >
                   <polygon points="6 3 20 12 6 21 6 3" />
                 </svg>
               </div>
@@ -58,7 +76,9 @@ export function StreamVODs({ vods }: StreamVODsProps) {
             </div>
 
             <div className="min-w-0 flex-1">
-              <p className="truncate text-xs font-medium text-white/80 group-hover:text-white">{vod.title}</p>
+              <p className="truncate text-xs font-medium text-white/80 group-hover:text-white">
+                {vod.title}
+              </p>
               <p className="mt-0.5 text-[10px] text-white/40">{formatViews(vod.views)} views</p>
               <p className="text-[10px] text-white/30">{formatDate(vod.createdAt)}</p>
             </div>

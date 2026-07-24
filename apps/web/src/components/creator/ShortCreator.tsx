@@ -1,13 +1,9 @@
 'use client';
 
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { useCreatorVideoActions } from './useCreatorVideos';
 import { PublishProgress, type PublishResult } from '../shorts/PublishProgress';
-import {
-  PROTOCOL_META,
-  buildShareUrl,
-  type ShortProtocol,
-} from '../shorts/protocolMeta';
+import { buildShareUrl, PROTOCOL_META, type ShortProtocol } from '../shorts/protocolMeta';
+import { useCreatorVideoActions } from './useCreatorVideos';
 
 // === Types ===============================================================
 
@@ -209,11 +205,11 @@ export default function ShortCreator({ onClose, onSuccess }: ShortCreatorProps) 
       }, 1000);
 
       setStage('recording');
-    } catch (e) {
+    } catch (_e) {
       setError('Failed to start recording.');
       stream.getTracks().forEach((t) => t.stop());
     }
-  }, [startCamera]);
+  }, [startCamera, handleStopRecording]);
 
   // == Stop recording ==================================================
 
@@ -314,16 +310,28 @@ export default function ShortCreator({ onClose, onSuccess }: ShortCreatorProps) 
       const results: Record<string, PublishResult> = {};
       for (const protocol of protocols) {
         if (data.urls[protocol]) {
-          results[protocol] = { ok: true, url: data.urls[protocol], protocol: protocol as ShortProtocol };
+          results[protocol] = {
+            ok: true,
+            url: data.urls[protocol],
+            protocol: protocol as ShortProtocol,
+          };
         } else if (data.errors[protocol]) {
-          results[protocol] = { ok: false, error: data.errors[protocol], protocol: protocol as ShortProtocol };
+          results[protocol] = {
+            ok: false,
+            error: data.errors[protocol],
+            protocol: protocol as ShortProtocol,
+          };
         } else {
-          results[protocol] = { ok: false, error: 'Unknown error', protocol: protocol as ShortProtocol };
+          results[protocol] = {
+            ok: false,
+            error: 'Unknown error',
+            protocol: protocol as ShortProtocol,
+          };
         }
       }
 
-      if (data.degenfeedUrl && !results['degenfeed']) {
-        results['degenfeed'] = { ok: true, url: data.degenfeedUrl, protocol: 'degenfeed' };
+      if (data.degenfeedUrl && !results.degenfeed) {
+        results.degenfeed = { ok: true, url: data.degenfeedUrl, protocol: 'degenfeed' };
       }
 
       setPublishResults(results);
@@ -340,9 +348,16 @@ export default function ShortCreator({ onClose, onSuccess }: ShortCreatorProps) 
       setError(e instanceof Error ? e.message : 'Publish failed');
     }
   }, [
-    recordedBlob, title, caption, hashtags, selectedProtocols,
-    mintOnZora, hasZora, recordingTime, parseHashtags,
-    uploadShort, onSuccess,
+    recordedBlob,
+    title,
+    caption,
+    selectedProtocols,
+    mintOnZora,
+    hasZora,
+    recordingTime,
+    parseHashtags,
+    uploadShort,
+    onSuccess,
   ]);
 
   // == Reset ===========================================================
@@ -379,12 +394,20 @@ export default function ShortCreator({ onClose, onSuccess }: ShortCreatorProps) 
     return (
       <button
         type="button"
-        onClick={() => { cleanup(); onClose(); }}
+        onClick={() => {
+          cleanup();
+          onClose();
+        }}
         className="absolute right-3 top-3 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white transition-colors hover:bg-black/70"
         aria-label="Close"
       >
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+          <path
+            d="M4 4l8 8M12 4l-8 8"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+          />
         </svg>
       </button>
     );
@@ -406,7 +429,8 @@ export default function ShortCreator({ onClose, onSuccess }: ShortCreatorProps) 
             <h2 className="text-xl font-bold text-white">Create a Short</h2>
             <p className="mt-2 text-sm text-gray-400">
               Record a vertical video up to {MAX_DURATION} seconds.
-              <br />It will be cross-posted to all your selected protocols.
+              <br />
+              It will be cross-posted to all your selected protocols.
             </p>
 
             {error && (
@@ -425,7 +449,10 @@ export default function ShortCreator({ onClose, onSuccess }: ShortCreatorProps) 
             </button>
             <button
               type="button"
-              onClick={() => { cleanup(); onClose(); }}
+              onClick={() => {
+                cleanup();
+                onClose();
+              }}
               className="mt-4 text-xs text-gray-500 hover:text-gray-400"
             >
               Cancel
@@ -436,12 +463,7 @@ export default function ShortCreator({ onClose, onSuccess }: ShortCreatorProps) 
         {/* Recording */}
         {stage === 'recording' && (
           <div className="relative aspect-[9/16] bg-black">
-            <video
-              ref={videoRef}
-              className="h-full w-full object-cover"
-              playsInline
-              muted
-            />
+            <video ref={videoRef} className="h-full w-full object-cover" playsInline muted />
             <div className="absolute left-4 top-4 flex items-center gap-2">
               <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-red-500" />
               <span className="font-mono text-sm font-bold text-white tabular-nums">
@@ -458,7 +480,13 @@ export default function ShortCreator({ onClose, onSuccess }: ShortCreatorProps) 
                 aria-label="Toggle camera"
               >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                  <path d="M23 7l-4 4V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2v-3l4 4V7z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  <path
+                    d="M23 7l-4 4V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2v-3l4 4V7z"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
                   <circle cx="12" cy="13" r="3" stroke="currentColor" strokeWidth="1.5" />
                 </svg>
               </button>
@@ -479,12 +507,7 @@ export default function ShortCreator({ onClose, onSuccess }: ShortCreatorProps) 
         {stage === 'preview' && previewUrl && (
           <div className="p-4">
             <div className="relative mx-auto aspect-[9/16] max-h-[50vh] overflow-hidden rounded-xl bg-black">
-              <video
-                src={previewUrl}
-                className="h-full w-full object-cover"
-                controls
-                playsInline
-              />
+              <video src={previewUrl} className="h-full w-full object-cover" controls playsInline />
             </div>
 
             <div className="mt-4 space-y-3">
@@ -542,9 +565,7 @@ export default function ShortCreator({ onClose, onSuccess }: ShortCreatorProps) 
         {/* Protocol Selection */}
         {stage === 'protocols' && (
           <div className="p-4">
-            <h3 className="text-base font-bold text-white mb-3">
-              Choose where to publish
-            </h3>
+            <h3 className="text-base font-bold text-white mb-3">Choose where to publish</h3>
             <p className="text-xs text-gray-400 mb-4">
               Your short will be cross-posted to all selected protocols instantly.
             </p>
@@ -569,8 +590,21 @@ export default function ShortCreator({ onClose, onSuccess }: ShortCreatorProps) 
                     />
                     {p.label}
                     {active && (
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="text-degen-400">
-                        <path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        aria-hidden="true"
+                        className="text-degen-400"
+                      >
+                        <path
+                          d="M20 6L9 17l-5-5"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
                       </svg>
                     )}
                   </button>
@@ -603,9 +637,7 @@ export default function ShortCreator({ onClose, onSuccess }: ShortCreatorProps) 
                   />
                 </button>
                 <div className="flex-1">
-                  <label className="text-xs font-medium text-white/80">
-                    Mint as Zora NFT
-                  </label>
+                  <label className="text-xs font-medium text-white/80">Mint as Zora NFT</label>
                   <p className="text-[10px] text-white/40">
                     Becomes a tradeable video NFT on Zora Network
                   </p>
@@ -643,9 +675,25 @@ export default function ShortCreator({ onClose, onSuccess }: ShortCreatorProps) 
         {stage === 'uploading' && (
           <div className="flex flex-col items-center justify-center px-6 py-16 text-center">
             <div className="mb-6">
-              <svg className="h-12 w-12 animate-spin text-degen-400" viewBox="0 0 24 24" fill="none">
-                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.3" />
-                <path d="M12 2a10 10 0 019.95 9" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+              <svg
+                className="h-12 w-12 animate-spin text-degen-400"
+                viewBox="0 0 24 24"
+                fill="none"
+              >
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  opacity="0.3"
+                />
+                <path
+                  d="M12 2a10 10 0 019.95 9"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                />
               </svg>
             </div>
             <h3 className="text-base font-semibold text-white">Uploading Video…</h3>
@@ -669,9 +717,25 @@ export default function ShortCreator({ onClose, onSuccess }: ShortCreatorProps) 
           <div className="p-4">
             <div className="flex items-center gap-3 mb-4">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-degen-500/10">
-                <svg className="h-5 w-5 animate-spin text-degen-400" viewBox="0 0 24 24" fill="none">
-                  <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.3" />
-                  <path d="M12 2a10 10 0 019.95 9" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+                <svg
+                  className="h-5 w-5 animate-spin text-degen-400"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                >
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="3"
+                    opacity="0.3"
+                  />
+                  <path
+                    d="M12 2a10 10 0 019.95 9"
+                    stroke="currentColor"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                  />
                 </svg>
               </div>
               <div>
@@ -700,11 +764,13 @@ export default function ShortCreator({ onClose, onSuccess }: ShortCreatorProps) 
               <p className="text-center text-xs text-white/50">
                 Your short is live across{' '}
                 <span className="font-semibold text-white/80">
-                  {Object.values(publishResults).filter((r) => r.ok).length} platform{Object.values(publishResults).filter((r) => r.ok).length !== 1 ? 's' : ''}
+                  {Object.values(publishResults).filter((r) => r.ok).length} platform
+                  {Object.values(publishResults).filter((r) => r.ok).length !== 1 ? 's' : ''}
                 </span>
                 {totalReach > 0 && (
                   <>
-                    {' '}—{' '}
+                    {' '}
+                    —{' '}
                     <span className="font-semibold text-degen-400">
                       ~{(totalReach / 1_000_000).toFixed(1)}M potential viewers
                     </span>
@@ -738,7 +804,10 @@ export default function ShortCreator({ onClose, onSuccess }: ShortCreatorProps) 
                           rel="noopener noreferrer"
                           className="inline-flex items-center gap-1 rounded-full border border-white/10 px-2.5 py-1 text-[11px] font-medium text-white/70 transition-all hover:bg-white/10"
                         >
-                          <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: meta.color }} />
+                          <span
+                            className="h-1.5 w-1.5 rounded-full"
+                            style={{ backgroundColor: meta.color }}
+                          />
                           Share on {meta.shortLabel}
                         </a>
                       );
@@ -796,7 +865,10 @@ export default function ShortCreator({ onClose, onSuccess }: ShortCreatorProps) 
               </button>
               <button
                 type="button"
-                onClick={() => { cleanup(); onClose(); }}
+                onClick={() => {
+                  cleanup();
+                  onClose();
+                }}
                 className="flex-1 rounded-lg bg-degen-500 py-2.5 text-sm font-bold text-black"
               >
                 Done
@@ -821,10 +893,21 @@ export default function ShortCreator({ onClose, onSuccess }: ShortCreatorProps) 
             )}
 
             <div className="mt-8 flex gap-3">
-              <button type="button" onClick={handleReset} className="rounded-lg bg-gray-800 px-6 py-2.5 text-sm text-gray-300 transition-colors hover:bg-gray-700">
+              <button
+                type="button"
+                onClick={handleReset}
+                className="rounded-lg bg-gray-800 px-6 py-2.5 text-sm text-gray-300 transition-colors hover:bg-gray-700"
+              >
                 Try Again
               </button>
-              <button type="button" onClick={() => { cleanup(); onClose(); }} className="rounded-lg bg-degen-500 px-6 py-2.5 text-sm font-bold text-black">
+              <button
+                type="button"
+                onClick={() => {
+                  cleanup();
+                  onClose();
+                }}
+                className="rounded-lg bg-degen-500 px-6 py-2.5 text-sm font-bold text-black"
+              >
                 Close
               </button>
             </div>

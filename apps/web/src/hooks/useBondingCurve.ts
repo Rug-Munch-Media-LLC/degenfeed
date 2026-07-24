@@ -305,9 +305,9 @@ export function formatEraDisplay(eraName: string): string {
   const emojis: Record<string, string> = {
     'Steal Deal': '💎',
     'Early Bird': '🐦',
-    'Cruise': '🚗',
+    Cruise: '🚗',
     'FOMO Zone': '🔥',
-    'Finale': '🚀',
+    Finale: '🚀',
   };
   return `${emojis[eraName] ?? '⚡'} ${eraName}`;
 }

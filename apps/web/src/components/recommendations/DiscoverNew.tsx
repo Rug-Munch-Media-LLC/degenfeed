@@ -11,9 +11,7 @@ interface DiscoverNewProps {
  * "Discover New Creators" — surfaces content from creators the user
  * hasn't interacted with, breaking filter bubbles.
  */
-export function DiscoverNew({
-  limit = 6,
-}: DiscoverNewProps) {
+export function DiscoverNew({ limit = 6 }: DiscoverNewProps) {
   const { data: discoveries, error, isLoading } = useDiscoverNew();
 
   if (error || (!isLoading && !discoveries?.length)) return null;
@@ -27,7 +25,9 @@ export function DiscoverNew({
             Step outside your bubble — fresh voices you haven&apos;t seen yet
           </p>
         </div>
-        <span className="text-lg" role="img" aria-label="sparkles">✨</span>
+        <span className="text-lg" role="img" aria-label="sparkles">
+          ✨
+        </span>
       </div>
 
       {isLoading ? (
@@ -42,7 +42,7 @@ export function DiscoverNew({
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {discoveries!.slice(0, limit).map((content) => (
+          {discoveries?.slice(0, limit).map((content) => (
             <div key={content.id} className="group relative">
               <RecommendationCard content={content} />
               {/* New creator badge */}

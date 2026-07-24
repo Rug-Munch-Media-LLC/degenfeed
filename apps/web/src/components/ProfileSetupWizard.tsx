@@ -251,7 +251,6 @@ export function ProfileSetupWizard({ onComplete, onClose }: ProfileSetupWizardPr
               placeholder="Your display name"
               className="input w-full text-base"
               maxLength={64}
-              autoFocus
             />
           </div>
         )}

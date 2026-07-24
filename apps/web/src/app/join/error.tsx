@@ -19,7 +19,8 @@ export default function JoinError({
         </span>
         <h2 className="mb-2 text-lg font-bold text-[var(--color-fg)]">Something went wrong</h2>
         <p className="mb-6 text-sm text-[var(--color-muted)]">
-          {error.message || 'An unexpected error occurred while loading this page. Please try again.'}
+          {error.message ||
+            'An unexpected error occurred while loading this page. Please try again.'}
         </p>
         <div className="flex gap-3">
           <button

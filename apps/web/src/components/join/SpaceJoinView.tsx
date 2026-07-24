@@ -9,12 +9,12 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { SpaceStage } from '../spaces/SpaceStage';
 import { SpaceListeners } from '../spaces/SpaceListeners';
 import { SpaceReactions } from '../spaces/SpaceReactions';
-import { PLATFORM_CONFIG, type JoinSpaceData, type SourcePlatform } from './types';
-import { JoinActions } from './JoinActions';
+import { SpaceStage } from '../spaces/SpaceStage';
 import { GuestSignUp } from './GuestSignUp';
+import { JoinActions } from './JoinActions';
+import { type JoinSpaceData, PLATFORM_CONFIG, type SourcePlatform } from './types';
 
 /* === Props ====================================================== */
 
@@ -48,13 +48,7 @@ function SpaceJoinSkeleton() {
 
 /* === Error ====================================================== */
 
-function SpaceJoinError({
-  message,
-  onRetry,
-}: {
-  message: string;
-  onRetry: () => void;
-}) {
+function SpaceJoinError({ message, onRetry }: { message: string; onRetry: () => void }) {
   return (
     <div className="mx-auto flex min-h-[calc(100dvh-4rem)] max-w-lg flex-col items-center justify-center px-4">
       <div className="flex max-w-md flex-col items-center rounded-2xl border border-red-900/40 bg-red-950/20 px-8 py-12 text-center backdrop-blur-sm">
@@ -205,19 +199,13 @@ export function SpaceJoinView({
     [spaceId],
   );
 
-  const handleTip = useCallback(
-    (_spaceId: string, _speakerId?: string) => {
-      // Tip is handled by JoinActions via the TipModal
-    },
-    [],
-  );
+  const handleTip = useCallback((_spaceId: string, _speakerId?: string) => {
+    // Tip is handled by JoinActions via the TipModal
+  }, []);
 
   // Guest identity for reactions
   const guestUserId = useMemo(
-    () =>
-      typeof window !== 'undefined'
-        ? `guest-${Date.now().toString(36)}`
-        : 'guest-anonymous',
+    () => (typeof window !== 'undefined' ? `guest-${Date.now().toString(36)}` : 'guest-anonymous'),
     [],
   );
 

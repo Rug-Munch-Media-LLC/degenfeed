@@ -18,8 +18,8 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
-import { useWeb3 } from '../Web3Provider';
 import { useHardwareWallet2FA } from '../../hooks/useHardwareWallet2FA';
+import { useWeb3 } from '../Web3Provider';
 
 export type HwWalletVerifyMode = 'setup' | 'login' | 'inline';
 export type HwWalletType = 'ethereum' | 'solana';
@@ -77,18 +77,11 @@ export function HardwareWalletVerify({
   walletType,
 }: HardwareWalletVerifyProps) {
   const web3 = useWeb3();
-  const {
-    challenge,
-    step,
-    loading,
-    error,
-    startChallenge,
-    signAndVerifyWithEthereum,
-    reset,
-  } = useHardwareWallet2FA({
-    onVerified,
-    onError: () => {},
-  });
+  const { challenge, step, loading, error, startChallenge, signAndVerifyWithEthereum, reset } =
+    useHardwareWallet2FA({
+      onVerified,
+      onError: () => {},
+    });
 
   const [expanded, setExpanded] = useState(mode !== 'inline');
 
@@ -126,9 +119,7 @@ export function HardwareWalletVerify({
             <ShieldCheckIcon />
           </div>
           <div className="flex-1 min-w-0">
-            <div className="text-sm font-semibold text-[var(--color-fg)]">
-              Hardware Wallet 2FA
-            </div>
+            <div className="text-sm font-semibold text-[var(--color-fg)]">Hardware Wallet 2FA</div>
             <div className="text-xs text-[var(--color-muted)]">
               Verify with your Ledger, Trezor, or hardware wallet
             </div>
@@ -250,9 +241,7 @@ export function HardwareWalletVerify({
               </svg>
             </div>
             <div>
-              <div className="text-sm font-medium text-degen-400">
-                Hardware Wallet Verified
-              </div>
+              <div className="text-sm font-medium text-degen-400">Hardware Wallet Verified</div>
               <div className="text-xs text-[var(--color-muted)]">
                 Your identity has been confirmed via hardware wallet signature.
               </div>
@@ -299,8 +288,7 @@ export function HardwareWalletVerify({
                 </span>
               ) : (
                 <span className="flex items-center justify-center gap-2">
-                  Sign with{' '}
-                  {web3.walletName || 'Hardware Wallet'}
+                  Sign with {web3.walletName || 'Hardware Wallet'}
                 </span>
               )}
             </button>

@@ -21,8 +21,8 @@
  *   const valid = await verifyRecoveryCode(env, wallet, code);
  */
 
-import type { Env } from "../index";
-import { recoveryCodeHashKey } from "../kv-key-patterns";
+import type { Env } from '../index';
+import { recoveryCodeHashKey } from '../kv-key-patterns';
 
 // ─── Constants ────────────────────────────────────────────────
 
@@ -46,39 +46,39 @@ const RECOVERY_CODE_TTL = 5 * 365 * 24 * 60 * 60; // ~157M seconds
  * @returns Array of plaintext recovery codes (display to user exactly once).
  */
 export async function generateRecoveryCodes(
-	env: Env,
-	address: string,
-	count: number = DEFAULT_CODE_COUNT,
+  env: Env,
+  address: string,
+  count: number = DEFAULT_CODE_COUNT,
 ): Promise<string[]> {
-	const codes: string[] = [];
-	const normalizedAddress = address.toLowerCase();
+  const codes: string[] = [];
+  const normalizedAddress = address.toLowerCase();
 
-	for (let i = 0; i < count; i++) {
-		const bytes = crypto.getRandomValues(new Uint8Array(BYTES_PER_CODE));
-		const hex = bytesToHex(bytes);
+  for (let i = 0; i < count; i++) {
+    const bytes = crypto.getRandomValues(new Uint8Array(BYTES_PER_CODE));
+    const hex = bytesToHex(bytes);
 
-		// Format: XXXX-XXXX-XXXX
-		const code = `${hex.slice(0, 4)}-${hex.slice(4, 8)}-${hex.slice(8, 12)}`;
+    // Format: XXXX-XXXX-XXXX
+    const code = `${hex.slice(0, 4)}-${hex.slice(4, 8)}-${hex.slice(8, 12)}`;
 
-		// SHA-256 hash — never store plaintext
-		const hash = await sha256Hex(code);
+    // SHA-256 hash — never store plaintext
+    const hash = await sha256Hex(code);
 
-		// Store in KV with long TTL
-		const key = recoveryCodeHashKey(normalizedAddress, hash);
-		try {
-			await env.CACHE?.put(key, "1", {
-				expirationTtl: RECOVERY_CODE_TTL,
-			});
-		} catch {
-			// KV write failure — continue generating remaining codes
-			// The user can regenerate if setup fails
-			console.error(`[recovery-codes] Failed to store code ${i + 1}/${count}`);
-		}
+    // Store in KV with long TTL
+    const key = recoveryCodeHashKey(normalizedAddress, hash);
+    try {
+      await env.CACHE?.put(key, '1', {
+        expirationTtl: RECOVERY_CODE_TTL,
+      });
+    } catch {
+      // KV write failure — continue generating remaining codes
+      // The user can regenerate if setup fails
+      console.error(`[recovery-codes] Failed to store code ${i + 1}/${count}`);
+    }
 
-		codes.push(code);
-	}
+    codes.push(code);
+  }
 
-	return codes;
+  return codes;
 }
 
 /**
@@ -91,33 +91,33 @@ export async function generateRecoveryCodes(
  * depends on KV round-trip time.
  */
 export async function verifyRecoveryCode(
-	env: Env,
-	address: string,
-	code: string,
+  env: Env,
+  address: string,
+  code: string,
 ): Promise<boolean> {
-	const normalizedAddress = address.toLowerCase();
+  const normalizedAddress = address.toLowerCase();
 
-	// Validate format first (fast reject)
-	if (!/^[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}$/i.test(code)) {
-		return false;
-	}
+  // Validate format first (fast reject)
+  if (!/^[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}$/i.test(code)) {
+    return false;
+  }
 
-	const hash = await sha256Hex(code);
-	const key = recoveryCodeHashKey(normalizedAddress, hash);
+  const hash = await sha256Hex(code);
+  const key = recoveryCodeHashKey(normalizedAddress, hash);
 
-	try {
-		const exists = await env.CACHE?.get(key);
-		if (exists === null || exists === undefined) {
-			return false;
-		}
+  try {
+    const exists = await env.CACHE?.get(key);
+    if (exists === null || exists === undefined) {
+      return false;
+    }
 
-		// One-time use — delete immediately
-		await env.CACHE?.delete(key);
-		return true;
-	} catch {
-		// KV hiccup — fail closed (don't allow login through a broken check)
-		return false;
-	}
+    // One-time use — delete immediately
+    await env.CACHE?.delete(key);
+    return true;
+  } catch {
+    // KV hiccup — fail closed (don't allow login through a broken check)
+    return false;
+  }
 }
 
 /**
@@ -127,14 +127,11 @@ export async function verifyRecoveryCode(
  *
  * @returns Number of codes found, or -1 if we can't determine (KV error).
  */
-export async function countRemainingRecoveryCodes(
-	_env: Env,
-	_address: string,
-): Promise<number> {
-	// We store hashes with deterministic keys based on the hash itself.
-	// Without a list index, we can't enumerate them efficiently.
-	// Return -1 to signal "unknown" — the UI should handle this gracefully.
-	return -1;
+export async function countRemainingRecoveryCodes(_env: Env, _address: string): Promise<number> {
+  // We store hashes with deterministic keys based on the hash itself.
+  // Without a list index, we can't enumerate them efficiently.
+  // Return -1 to signal "unknown" — the UI should handle this gracefully.
+  return -1;
 }
 
 // ─── SHA-256 helper ───────────────────────────────────────────
@@ -143,11 +140,11 @@ export async function countRemainingRecoveryCodes(
  * Compute the SHA-256 hex digest of a string using the Web Crypto API.
  */
 export async function sha256Hex(input: string): Promise<string> {
-	const encoder = new TextEncoder();
-	const data = encoder.encode(input);
-	const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-	const hashBytes = new Uint8Array(hashBuffer);
-	return bytesToHex(hashBytes);
+  const encoder = new TextEncoder();
+  const data = encoder.encode(input);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashBytes = new Uint8Array(hashBuffer);
+  return bytesToHex(hashBytes);
 }
 
 /**
@@ -156,9 +153,9 @@ export async function sha256Hex(input: string): Promise<string> {
  * (though it's fine if imported — we use it in totp.ts).
  */
 function bytesToHex(bytes: Uint8Array): string {
-	let hex = "";
-	for (const byte of bytes) {
-		hex += byte.toString(16).padStart(2, "0");
-	}
-	return hex;
+  let hex = '';
+  for (const byte of bytes) {
+    hex += byte.toString(16).padStart(2, '0');
+  }
+  return hex;
 }

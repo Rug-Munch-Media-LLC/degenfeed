@@ -38,8 +38,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'DegenFeed Documentation — API, Guides & Self-Hosting',
-    description:
-      'Complete API reference, protocol guides, and self-hosting documentation.',
+    description: 'Complete API reference, protocol guides, and self-hosting documentation.',
     images: ['https://app.degenfeed.xyz/og-image.png'],
   },
 };

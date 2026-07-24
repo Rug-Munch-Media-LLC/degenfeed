@@ -174,9 +174,7 @@ export class LivepeerProvider {
    * Returns RTMP ingest credentials (rtmpUrl + streamKey) for OBS/etc.
    * The HLS playback URL is available immediately for viewers.
    */
-  async createStream(
-    opts: LivepeerStreamOptions,
-  ): Promise<LivepeerStreamResult> {
+  async createStream(opts: LivepeerStreamOptions): Promise<LivepeerStreamResult> {
     const body: Record<string, unknown> = {
       name: opts.name,
       record: opts.record ?? true,
@@ -215,8 +213,7 @@ export class LivepeerProvider {
       rtmpUrl: String(data.rtmpAddress ?? data.ingest?.rtmp ?? ''),
       streamKey: String(data.streamKey ?? ''),
       playbackUrl: String(
-        data.playbackUrl ??
-          `https://livepeerr.io/hls/${data.playbackId}/index.m3u8`,
+        data.playbackUrl ?? `https://livepeerr.io/hls/${data.playbackId}/index.m3u8`,
       ),
       playbackId: String(data.playbackId ?? ''),
       status: String(data.status ?? 'idle'),
@@ -232,11 +229,7 @@ export class LivepeerProvider {
    * Poll this during a live short to track engagement.
    */
   async getStreamStatus(streamId: string): Promise<LivepeerStreamStatus> {
-    const response = await apiFetch(
-      this.baseUrl,
-      this.apiKey,
-      `/stream/${streamId}`,
-    );
+    const response = await apiFetch(this.baseUrl, this.apiKey, `/stream/${streamId}`);
 
     const data = (await response.json()) as Record<string, unknown>;
 
@@ -301,11 +294,7 @@ export class LivepeerProvider {
    */
   async getRecording(assetId: string): Promise<LivepeerRecordingResult | null> {
     try {
-      const response = await apiFetch(
-        this.baseUrl,
-        this.apiKey,
-        `/asset/${assetId}`,
-      );
+      const response = await apiFetch(this.baseUrl, this.apiKey, `/asset/${assetId}`);
 
       const data = (await response.json()) as Record<string, unknown>;
       const storage = data.storage as Record<string, unknown> | undefined;
@@ -313,8 +302,7 @@ export class LivepeerProvider {
       return {
         assetId: String(data.id ?? ''),
         playbackUrl: String(
-          data.playbackUrl ??
-            `https://livepeerr.io/hls/${data.playbackId}/index.m3u8`,
+          data.playbackUrl ?? `https://livepeerr.io/hls/${data.playbackId}/index.m3u8`,
         ),
         ipfsCid: (storage?.ipfs?.cid as string) ?? undefined,
         duration: Number(data.videoSpec?.duration ?? 0),
@@ -333,23 +321,16 @@ export class LivepeerProvider {
    * for NFT metadata on Zora or other platforms.
    */
   async exportToIPFS(assetId: string): Promise<{ ipfsCid: string }> {
-    const response = await apiFetch(
-      this.baseUrl,
-      this.apiKey,
-      `/asset/${assetId}/export`,
-      {
-        method: 'POST',
-        body: JSON.stringify({ ipfs: true }),
-      },
-    );
+    const response = await apiFetch(this.baseUrl, this.apiKey, `/asset/${assetId}/export`, {
+      method: 'POST',
+      body: JSON.stringify({ ipfs: true }),
+    });
 
     const data = (await response.json()) as Record<string, unknown>;
     const ipfs = data.ipfs as Record<string, unknown> | undefined;
 
     if (!ipfs?.cid) {
-      throw new LivepeerProviderError(
-        'IPFS export completed but no CID returned',
-      );
+      throw new LivepeerProviderError('IPFS export completed but no CID returned');
     }
 
     return { ipfsCid: String(ipfs.cid) };

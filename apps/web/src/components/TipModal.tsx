@@ -1,7 +1,6 @@
 'use client';
 
-import { TIP_CHAIN_CONFIG } from '@degenfeed/web3';
-import { tipOnChain } from '@degenfeed/web3';
+import { TIP_CHAIN_CONFIG, tipOnChain } from '@degenfeed/web3';
 import { QRCodeSVG } from 'qrcode.react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { TipPostContext } from '../hooks/useTip';
@@ -372,6 +371,7 @@ export function TipModal({
     postContext,
     recipientDisplayName,
     announce,
+    confettiAmount,
   ]);
 
   // == Fiat amount equivalents =============================================
@@ -399,7 +399,7 @@ export function TipModal({
     if (!fiatValue) return 0;
     const match = fiatValue.match(/\d+/);
     return match ? Number.parseInt(match[0], 10) : 0;
-  }, [amount]);
+  }, [amount, fiatEquivalents]);
 
   if (!open) return null;
 

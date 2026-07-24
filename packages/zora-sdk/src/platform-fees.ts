@@ -18,7 +18,7 @@
  * - 0.5% on ALL rewards distributed through our platform
  * - Collected to DegenFeed platform treasury address
  */
-import { formatEther, type Address } from 'viem';
+import { type Address, formatEther } from 'viem';
 
 // ═════════════════════════════════════════════════════════════════════════
 // Constants
@@ -53,10 +53,7 @@ const BPS_DENOMINATOR = 10_000n;
  * @param feeBps Fee in basis points (defaults to 50 = 0.5%)
  * @returns The fee amount in the same unit as input
  */
-export function calculateFee(
-  amount: bigint,
-  feeBps: number = PLATFORM_FEE_BPS,
-): bigint {
+export function calculateFee(amount: bigint, feeBps: number = PLATFORM_FEE_BPS): bigint {
   return (amount * BigInt(feeBps)) / BPS_DENOMINATOR;
 }
 
@@ -73,7 +70,7 @@ export function calculateFee(
  */
 export async function collectPlatformFee(
   amount: bigint,
-  recipient?: Address,
+  _recipient?: Address,
   feeBps: number = PLATFORM_FEE_BPS,
 ): Promise<bigint> {
   // Validate fee bounds

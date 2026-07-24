@@ -666,7 +666,7 @@ interface CreateCoinWizardProps {
 }
 
 export default function CreateCoinWizard({ className = '' }: CreateCoinWizardProps) {
-  const router = useRouter();
+  const _router = useRouter();
 
   const [step, setStep] = useState<StepId>(1);
   const [deploying, setDeploying] = useState(false);
@@ -703,9 +703,11 @@ export default function CreateCoinWizard({ className = '' }: CreateCoinWizardPro
     if (params.supply < 1000) errors[2] = 'Minimum supply is 1,000';
     if (params.creatorAllocation < 0) errors[2] = 'Allocation must be 0 or more';
     const vc = params.vestingConfig;
-    if (vc.initialUnlockBps < 0 || vc.initialUnlockBps > 3000) errors[3] = 'Initial unlock must be 0-30%';
+    if (vc.initialUnlockBps < 0 || vc.initialUnlockBps > 3000)
+      errors[3] = 'Initial unlock must be 0-30%';
     if (vc.cliffDuration < 0 || vc.cliffDuration > 7_776_000) errors[3] = 'Cliff must be 0-90 days';
-    if (vc.vestingDuration < 604_800 || vc.vestingDuration > 63_072_000) errors[3] = 'Vesting must be 7 days-2 years';
+    if (vc.vestingDuration < 604_800 || vc.vestingDuration > 63_072_000)
+      errors[3] = 'Vesting must be 7 days-2 years';
     const totalSplit = params.revenueSplits.reduce((s, r) => s + r.percentage, 0);
     if (totalSplit > 100) errors[4] = 'Revenue splits exceed 100%';
     return errors;
@@ -727,9 +729,12 @@ export default function CreateCoinWizard({ className = '' }: CreateCoinWizardPro
       case 3: {
         const vc = params.vestingConfig;
         return (
-          vc.initialUnlockBps >= 0 && vc.initialUnlockBps <= 3000 &&
-          vc.cliffDuration >= 0 && vc.cliffDuration <= 7_776_000 &&
-          vc.vestingDuration >= 604_800 && vc.vestingDuration <= 63_072_000
+          vc.initialUnlockBps >= 0 &&
+          vc.initialUnlockBps <= 3000 &&
+          vc.cliffDuration >= 0 &&
+          vc.cliffDuration <= 7_776_000 &&
+          vc.vestingDuration >= 604_800 &&
+          vc.vestingDuration <= 63_072_000
         );
       }
       case 4:

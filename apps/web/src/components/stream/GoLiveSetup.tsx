@@ -33,7 +33,10 @@ export function GoLiveSetup({ onStart, onCancel, initialData }: GoLiveSetupProps
   const [isStarting, setIsStarting] = useState(false);
 
   const addTag = useCallback(() => {
-    const tag = tagInput.trim().toLowerCase().replace(/[^a-z0-9-]/g, '');
+    const tag = tagInput
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9-]/g, '');
     if (tag && !form.tags.includes(tag) && form.tags.length < 5) {
       setForm((f) => ({ ...f, tags: [...f.tags, tag] }));
     }
@@ -59,7 +62,9 @@ export function GoLiveSetup({ onStart, onCancel, initialData }: GoLiveSetupProps
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-sm font-semibold text-white/90">Stream Key</h3>
-            <p className="text-[10px] text-white/40">Use this key in OBS or your streaming software</p>
+            <p className="text-[10px] text-white/40">
+              Use this key in OBS or your streaming software
+            </p>
           </div>
           <button
             type="button"
@@ -92,9 +97,7 @@ export function GoLiveSetup({ onStart, onCancel, initialData }: GoLiveSetupProps
             {step > s ? '✓' : s}
           </button>
         ))}
-        <span className="text-[10px] text-white/30">
-          Step {step} of 3
-        </span>
+        <span className="text-[10px] text-white/30">Step {step} of 3</span>
       </div>
 
       {/* Step 1: Basic Info */}
@@ -118,7 +121,10 @@ export function GoLiveSetup({ onStart, onCancel, initialData }: GoLiveSetupProps
           </div>
 
           <div>
-            <label htmlFor="setup-category" className="mb-1.5 block text-sm font-medium text-white/80">
+            <label
+              htmlFor="setup-category"
+              className="mb-1.5 block text-sm font-medium text-white/80"
+            >
               Category
             </label>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
@@ -134,7 +140,9 @@ export function GoLiveSetup({ onStart, onCancel, initialData }: GoLiveSetupProps
                   }`}
                 >
                   <span className="text-lg">{cat.icon}</span>
-                  <span className={`text-[10px] font-medium ${form.category === cat.id ? 'text-degen-400' : 'text-white/60'}`}>
+                  <span
+                    className={`text-[10px] font-medium ${form.category === cat.id ? 'text-degen-400' : 'text-white/60'}`}
+                  >
                     {cat.label}
                   </span>
                 </button>
@@ -143,7 +151,11 @@ export function GoLiveSetup({ onStart, onCancel, initialData }: GoLiveSetupProps
           </div>
 
           <div className="flex justify-end">
-            <button type="button" onClick={() => setStep(2)} className="rounded-lg bg-degen-500 px-6 py-2 text-xs font-bold text-black hover:bg-degen-400">
+            <button
+              type="button"
+              onClick={() => setStep(2)}
+              className="rounded-lg bg-degen-500 px-6 py-2 text-xs font-bold text-black hover:bg-degen-400"
+            >
               Next — Stream Settings
             </button>
           </div>
@@ -182,16 +194,29 @@ export function GoLiveSetup({ onStart, onCancel, initialData }: GoLiveSetupProps
                 maxLength={20}
                 className="flex-1 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-white outline-none placeholder:text-white/30 focus:border-degen-500/40"
               />
-              <button type="button" onClick={addTag} disabled={!tagInput.trim() || form.tags.length >= 5} className="rounded-lg border border-white/10 px-3 py-2 text-xs text-white/50 hover:bg-white/5 disabled:opacity-30">
+              <button
+                type="button"
+                onClick={addTag}
+                disabled={!tagInput.trim() || form.tags.length >= 5}
+                className="rounded-lg border border-white/10 px-3 py-2 text-xs text-white/50 hover:bg-white/5 disabled:opacity-30"
+              >
                 Add
               </button>
             </div>
             {form.tags.length > 0 && (
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {form.tags.map((tag) => (
-                  <span key={tag} className="inline-flex items-center gap-1 rounded-full bg-degen-500/10 px-2.5 py-1 text-[10px] font-medium text-degen-400">
+                  <span
+                    key={tag}
+                    className="inline-flex items-center gap-1 rounded-full bg-degen-500/10 px-2.5 py-1 text-[10px] font-medium text-degen-400"
+                  >
                     #{tag}
-                    <button type="button" onClick={() => removeTag(tag)} className="ml-0.5 text-degen-400/60 hover:text-degen-400" aria-label={`Remove ${tag}`}>
+                    <button
+                      type="button"
+                      onClick={() => removeTag(tag)}
+                      className="ml-0.5 text-degen-400/60 hover:text-degen-400"
+                      aria-label={`Remove ${tag}`}
+                    >
                       ×
                     </button>
                   </span>
@@ -201,10 +226,18 @@ export function GoLiveSetup({ onStart, onCancel, initialData }: GoLiveSetupProps
           </div>
 
           <div className="flex justify-between">
-            <button type="button" onClick={() => setStep(1)} className="rounded-lg border border-white/10 px-6 py-2 text-xs text-white/50 hover:bg-white/5">
+            <button
+              type="button"
+              onClick={() => setStep(1)}
+              className="rounded-lg border border-white/10 px-6 py-2 text-xs text-white/50 hover:bg-white/5"
+            >
               Back
             </button>
-            <button type="button" onClick={() => setStep(3)} className="rounded-lg bg-degen-500 px-6 py-2 text-xs font-bold text-black hover:bg-degen-400">
+            <button
+              type="button"
+              onClick={() => setStep(3)}
+              className="rounded-lg bg-degen-500 px-6 py-2 text-xs font-bold text-black hover:bg-degen-400"
+            >
               Next — Review & Go Live
             </button>
           </div>
@@ -230,7 +263,9 @@ export function GoLiveSetup({ onStart, onCancel, initialData }: GoLiveSetupProps
               <div className="mt-1 flex items-center gap-2 text-xs text-white/50">
                 <span>{STREAM_CATEGORIES.find((c) => c.id === form.category)?.label}</span>
                 {form.tags.map((t) => (
-                  <span key={t} className="text-white/30">#{t}</span>
+                  <span key={t} className="text-white/30">
+                    #{t}
+                  </span>
                 ))}
               </div>
               {form.description && (
@@ -244,8 +279,16 @@ export function GoLiveSetup({ onStart, onCancel, initialData }: GoLiveSetupProps
             <label className="mb-1.5 block text-sm font-medium text-white/80">Stream Latency</label>
             <div className="flex gap-2">
               {[
-                { value: 'low' as const, label: 'Low Latency', desc: 'Near real-time, slight quality reduction' },
-                { value: 'normal' as const, label: 'Normal', desc: 'Standard latency, best quality' },
+                {
+                  value: 'low' as const,
+                  label: 'Low Latency',
+                  desc: 'Near real-time, slight quality reduction',
+                },
+                {
+                  value: 'normal' as const,
+                  label: 'Normal',
+                  desc: 'Standard latency, best quality',
+                },
               ].map((opt) => (
                 <button
                   key={opt.value}
@@ -257,7 +300,9 @@ export function GoLiveSetup({ onStart, onCancel, initialData }: GoLiveSetupProps
                       : 'border-white/10 hover:border-white/20'
                   }`}
                 >
-                  <p className={`text-xs font-semibold ${form.latency === opt.value ? 'text-degen-400' : 'text-white/70'}`}>
+                  <p
+                    className={`text-xs font-semibold ${form.latency === opt.value ? 'text-degen-400' : 'text-white/70'}`}
+                  >
                     {opt.label}
                   </p>
                   <p className="mt-0.5 text-[9px] text-white/40">{opt.desc}</p>
@@ -268,7 +313,11 @@ export function GoLiveSetup({ onStart, onCancel, initialData }: GoLiveSetupProps
 
           {/* Actions */}
           <div className="flex gap-3 pt-2">
-            <button type="button" onClick={() => setStep(2)} className="flex-1 rounded-lg border border-white/10 px-4 py-2.5 text-xs text-white/50 hover:bg-white/5">
+            <button
+              type="button"
+              onClick={() => setStep(2)}
+              className="flex-1 rounded-lg border border-white/10 px-4 py-2.5 text-xs text-white/50 hover:bg-white/5"
+            >
               Back
             </button>
             <button

@@ -11,16 +11,17 @@ export const dynamic = 'force-dynamic';
  */
 export async function POST(request: Request) {
   try {
-    const baseUrl = process.env.WORKER_URL
-      ?? process.env.NEXT_PUBLIC_WORKER_URL
-      ?? process.env.NEXT_PUBLIC_API_BASE
-      ?? 'http://localhost:8787';
+    const baseUrl =
+      process.env.WORKER_URL ??
+      process.env.NEXT_PUBLIC_WORKER_URL ??
+      process.env.NEXT_PUBLIC_API_BASE ??
+      'http://localhost:8787';
 
     const forwardedHeaders: Record<string, string> = {};
     const cookie = request.headers.get('cookie');
-    if (cookie) forwardedHeaders['Cookie'] = cookie;
+    if (cookie) forwardedHeaders.Cookie = cookie;
     const auth = request.headers.get('authorization');
-    if (auth) forwardedHeaders['Authorization'] = auth;
+    if (auth) forwardedHeaders.Authorization = auth;
 
     // Forward the original multipart body as-is
     const body = await request.blob();
