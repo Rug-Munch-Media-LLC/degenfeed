@@ -60,7 +60,9 @@ function getJwtExpiry(token: string): number | null {
   try {
     const parts = token.split('.');
     if (parts.length !== 3) return null;
-    const payload = JSON.parse(atob(parts[1]?.replace(/-/g, '+').replace(/_/g, '/'))) as {
+    const payloadPart = parts[1];
+    if (!payloadPart) return null;
+    const payload = JSON.parse(atob(payloadPart.replace(/-/g, '+').replace(/_/g, '/'))) as {
       exp?: number;
     };
     return payload.exp ?? null;

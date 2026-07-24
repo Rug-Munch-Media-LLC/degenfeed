@@ -158,16 +158,21 @@ export default function ConversationPage() {
   if (convMeta) {
     effectiveConv = convMeta;
   } else {
-    const lastMsg =
-      messages.length > 0
-        ? {
-            id: messages[0]?.id,
-            content: messages[0]?.content,
-            fromId: messages[0]?.fromId,
-            createdAt: messages[0]?.createdAt,
-            read: true,
-          }
-        : null;
+    const lastMsg: {
+      id: string;
+      content: string;
+      fromId: string;
+      createdAt: number;
+      read: boolean;
+    } | null = messages.length > 0
+      ? {
+          id: messages[0]!.id,
+          content: messages[0]!.content ?? '',
+          fromId: messages[0]!.fromId ?? '',
+          createdAt: messages[0]!.createdAt ?? Date.now(),
+          read: true,
+        }
+      : null;
 
     effectiveConv = {
       conversationId,

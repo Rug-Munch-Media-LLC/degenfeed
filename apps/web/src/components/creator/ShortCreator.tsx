@@ -156,6 +156,19 @@ export default function ShortCreator({ onClose, onSuccess }: ShortCreatorProps) 
     }
   }, [cameraFacing]);
 
+  // == Stop recording ==================================================
+
+  const handleStopRecording = useCallback(() => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
+    }
+  }, []);
+
   // == Start recording =================================================
 
   const handleStartRecording = useCallback(async () => {
@@ -210,19 +223,6 @@ export default function ShortCreator({ onClose, onSuccess }: ShortCreatorProps) 
       stream.getTracks().forEach((t) => t.stop());
     }
   }, [startCamera, handleStopRecording]);
-
-  // == Stop recording ==================================================
-
-  const handleStopRecording = useCallback(() => {
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
-
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-      mediaRecorderRef.current.stop();
-    }
-  }, []);
 
   // == Toggle camera ===================================================
 

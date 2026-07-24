@@ -168,8 +168,11 @@ function decodeJwtPayload(token: string): Record<string, unknown> | null {
 async function verifyRs256(token: string, key: CryptoKey): Promise<boolean> {
   try {
     const parts = token.split('.');
+    if (parts.length !== 3) return false;
     const data = new TextEncoder().encode(`${parts[0]}.${parts[1]}`);
-    const signature = Uint8Array.from(atob(parts[2].replace(/-/g, '+').replace(/_/g, '/')), (c) =>
+    const sigPart = parts[2];
+    if (!sigPart) return false;
+    const signature = Uint8Array.from(atob(sigPart.replace(/-/g, '+').replace(/_/g, '/')), (c) =>
       c.charCodeAt(0),
     );
 
@@ -185,8 +188,11 @@ async function verifyRs256(token: string, key: CryptoKey): Promise<boolean> {
 async function verifyHs256(token: string, key: CryptoKey): Promise<boolean> {
   try {
     const parts = token.split('.');
+    if (parts.length !== 3) return false;
     const data = new TextEncoder().encode(`${parts[0]}.${parts[1]}`);
-    const signature = Uint8Array.from(atob(parts[2].replace(/-/g, '+').replace(/_/g, '/')), (c) =>
+    const sigPart = parts[2];
+    if (!sigPart) return false;
+    const signature = Uint8Array.from(atob(sigPart.replace(/-/g, '+').replace(/_/g, '/')), (c) =>
       c.charCodeAt(0),
     );
 

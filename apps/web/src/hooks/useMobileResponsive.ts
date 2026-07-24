@@ -73,7 +73,8 @@ export function useKeyboardHeight(): number {
     // Use visualViewport API when available (more accurate)
     if (window.visualViewport) {
       const onViewport = () => {
-        const diff = initialViewport.current - window.visualViewport?.height;
+        const vh = window.visualViewport?.height ?? 0;
+        const diff = (initialViewport.current ?? 0) - vh;
         setHeight(diff > 100 ? diff : 0);
       };
       window.visualViewport.addEventListener('resize', onViewport);
@@ -111,7 +112,7 @@ export function usePullToRefresh({
       if (disabled || refreshing) return;
       // Only enable at top of scroll
       if (containerRef.current && containerRef.current.scrollTop > 0) return;
-      startY.current = e.touches[0]?.clientY;
+      startY.current = e.touches[0]?.clientY ?? 0;
       pulling.current = true;
     },
     [disabled, refreshing],
@@ -120,7 +121,7 @@ export function usePullToRefresh({
   const handleTouchMove = useCallback(
     (e: TouchEvent) => {
       if (!pulling.current || disabled || refreshing) return;
-      const diff = e.touches[0]?.clientY - startY.current;
+      const diff = (e.touches[0]?.clientY ?? 0) - startY.current;
       if (diff > 0) {
         // Apply resistance
         setPullDistance(Math.min(diff * 0.4, threshold * 1.5));
@@ -191,8 +192,8 @@ export function useSwipeDismiss({
   const handleTouchStart = useCallback(
     (e: TouchEvent) => {
       if (disabled) return;
-      startX.current = e.touches[0]?.clientX;
-      startY.current = e.touches[0]?.clientY;
+      startX.current = e.touches[0]?.clientX ?? 0;
+      startY.current = e.touches[0]?.clientY ?? 0;
       swiping.current = true;
     },
     [disabled],
@@ -201,8 +202,8 @@ export function useSwipeDismiss({
   const handleTouchMove = useCallback(
     (e: TouchEvent) => {
       if (!swiping.current || disabled) return;
-      const dx = e.touches[0]?.clientX - startX.current;
-      const dy = e.touches[0]?.clientY - startY.current;
+      const dx = (e.touches[0]?.clientX ?? 0) - startX.current;
+      const dy = (e.touches[0]?.clientY ?? 0) - startY.current;
       // Only horizontal swipes
       if (Math.abs(dx) > Math.abs(dy) && dx > 0) {
         setSwipeOffset(dx);

@@ -81,14 +81,14 @@ export default function BondingCurveChart({
   // == Swipe handler for timeframe change on mobile ======
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    touchStartX.current = e.touches[0]?.clientX;
-    touchStartY.current = e.touches[0]?.clientY;
+    touchStartX.current = e.touches[0]?.clientX ?? 0;
+    touchStartY.current = e.touches[0]?.clientY ?? 0;
   }, []);
 
   const handleTouchEnd = useCallback(
     (e: React.TouchEvent) => {
-      const dx = e.changedTouches[0]?.clientX - touchStartX.current;
-      const dy = Math.abs(e.changedTouches[0]?.clientY - touchStartY.current);
+      const dx = (e.changedTouches[0]?.clientX ?? 0) - touchStartX.current;
+      const dy = Math.abs((e.changedTouches[0]?.clientY ?? 0) - touchStartY.current);
       if (Math.abs(dx) < 50 || dy > Math.abs(dx)) return; // Minimum swipe + horizontal only
 
       const idx = TIMEFRAMES.indexOf(timeframe);
