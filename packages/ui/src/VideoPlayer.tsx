@@ -9,6 +9,11 @@
 //   MiniPlayer.tsx — Floating draggable mini player
 //   index.tsx    — Main VideoPlayer component
 
-export type { VideoPlatform, AspectRatio, QualityLevel, VideoPlayerProps } from './VideoPlayer/types';
-export { formatTime, formatCount } from './VideoPlayer/helpers';
+export { formatCount, formatTime } from './VideoPlayer/helpers';
 export { VideoPlayer } from './VideoPlayer/index';
+export type {
+  AspectRatio,
+  QualityLevel,
+  VideoPlatform,
+  VideoPlayerProps,
+} from './VideoPlayer/types';
