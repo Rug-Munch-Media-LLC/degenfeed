@@ -215,6 +215,7 @@ export default function SearchPage() {
 
   // == Recent & trending searches ==
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
+  const [trendingPerProtocol, setTrendingPerProtocol] = useState<Record<string, string[]> | null>(null);
   const [trendingSearches] = useState<string[]>([
     'bitcoin',
     'ethereum',
@@ -225,6 +226,25 @@ export default function SearchPage() {
     'memecoin',
     'layer2',
   ]);
+
+  // Fetch trending across all protocols
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/trending/aggregated?limit=15&minScore=3', { credentials: 'include' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data: { data?: Array<{ title: string; source?: string }> } | null) => {
+        if (cancelled || !data?.data) return;
+        const grouped: Record<string, string[]> = {};
+        for (const item of data.data) {
+          const source = item.source || 'all';
+          if (!grouped[source]) grouped[source] = [];
+          grouped[source]!.push(item.title);
+        }
+        setTrendingPerProtocol(grouped);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
   const MAX_RECENT_SEARCHES = 8;
 
   // Load recent searches from localStorage on mount
@@ -599,25 +619,60 @@ export default function SearchPage() {
           )}
           <div>
             <h2 className="text-xs font-medium uppercase tracking-wider text-[var(--color-muted)] mb-2">
-              Trending Searches
+              Trending Across Protocols
             </h2>
-            <div className="flex flex-wrap gap-2">
-              {trendingSearches.map((q) => (
-                <button
-                  key={q}
-                  type="button"
-                  onClick={() => {
-                    setQuery(q);
-                    updateUrl(q);
-                    doSearch(q);
-                  }}
-                  className="inline-flex items-center gap-1 rounded-full border border-[var(--color-border)] bg-[var(--color-card)] px-3 py-1.5 text-xs font-medium text-[var(--color-fg)] transition-colors hover:border-degen-500/30 hover:text-degen-400"
-                >
-                  <span className="text-[10px]">🔥</span>
-                  {q}
-                </button>
-              ))}
-            </div>
+            {trendingPerProtocol ? (
+              <div className="space-y-2">
+                {Object.entries(trendingPerProtocol).map(([source, items]) => (
+                  <div key={source} className="flex flex-wrap items-center gap-1.5">
+                    <span
+                      className="rounded px-1.5 py-0.5 text-[9px] font-semibold uppercase"
+                      style={{
+                        backgroundColor: `${getProtocolColor(source === 'all' ? 'bluesky' : source)}18`,
+                        color: getProtocolColor(source === 'all' ? 'bluesky' : source),
+                      }}
+                    >
+                      {source === 'all' ? 'All' : source}
+                    </span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {items.slice(0, 4).map((q) => (
+                        <button
+                          key={q}
+                          type="button"
+                          onClick={() => {
+                            setQuery(q);
+                            updateUrl(q);
+                            doSearch(q);
+                          }}
+                          className="inline-flex items-center gap-1 rounded-full border border-[var(--color-border)] bg-[var(--color-card)] px-2.5 py-1 text-[11px] font-medium text-[var(--color-fg)] transition-colors hover:border-degen-500/30 hover:text-degen-400"
+                        >
+                          <span className="text-[9px]">🔥</span>
+                          {q}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {trendingSearches.map((q) => (
+                  <button
+                    key={q}
+                    type="button"
+                    onClick={() => {
+                      setQuery(q);
+                      updateUrl(q);
+                      doSearch(q);
+                    }}
+                    className="inline-flex items-center gap-1 rounded-full border border-[var(--color-border)] bg-[var(--color-card)] px-3 py-1.5 text-xs font-medium text-[var(--color-fg)] transition-colors hover:border-degen-500/30 hover:text-degen-400"
+                  >
+                    <span className="text-[10px]">🔥</span>
+                    {q}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -724,6 +779,46 @@ export default function SearchPage() {
             )}
           </div>
         )}
+
+      {/* ═══ Results Grouped by Protocol ═══ */}
+      {searched && !loading && !error && sortedPosts.length > 0 && showAll && (
+        <div className="mb-8">
+          <h2 className="mb-3 text-xs font-medium uppercase tracking-widest text-[var(--color-muted)]">
+            Results by Protocol
+          </h2>
+          <div className="flex flex-wrap gap-1.5 mb-4">
+            {Object.entries(
+              sortedPosts.reduce<Record<string, number>>((acc, p) => {
+                acc[p.protocol] = (acc[p.protocol] || 0) + 1;
+                return acc;
+              }, {}),
+            ).map(([proto, count]) => (
+              <button
+                key={proto}
+                type="button"
+                onClick={() => setProtocolFilter(protocolFilter === proto ? null : proto)}
+                className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-medium transition-all ${
+                  protocolFilter === proto
+                    ? 'bg-degen-500/20 text-degen-400 shadow-sm'
+                    : 'bg-[var(--color-card)] text-[var(--color-muted)] hover:text-[var(--color-fg)]'
+                }`}
+                style={
+                  protocolFilter === proto
+                    ? { backgroundColor: `${getProtocolColor(proto)}22`, color: getProtocolColor(proto) }
+                    : undefined
+                }
+              >
+                <span
+                  className="h-1.5 w-1.5 rounded-full"
+                  style={{ backgroundColor: getProtocolColor(proto) }}
+                />
+                {proto}
+                <span className="font-mono">({count})</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ═══ People Results ═══ */}
       {visibleIdentities.length > 0 && (

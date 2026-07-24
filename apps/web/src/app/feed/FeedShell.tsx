@@ -101,16 +101,26 @@ export function FeedShell({ children }: FeedShellProps) {
       const nextId: string | undefined = SIDEBAR_ORDER[currentIdx + 1];
       if (!nextId) return;
       const nextRoute = PROTOCOL_META[nextId]?.route;
-      if (nextRoute && typeof window !== 'undefined') window.location.href = nextRoute;
+      if (nextRoute) router.push(nextRoute);
     } else if (touchDelta > 0 && currentIdx > 0) {
       // Swipe right → previous protocol
       const prevId: string | undefined = SIDEBAR_ORDER[currentIdx - 1];
       if (!prevId) return;
       const prevRoute = PROTOCOL_META[prevId]?.route;
-      if (prevRoute && typeof window !== 'undefined') window.location.href = prevRoute;
+      if (prevRoute) router.push(prevRoute);
     }
     setTouchDelta(0);
   }, [touchDelta, activeProtocol]);
+
+  // ── Route transition state: fade on protocol change — NO flash ──
+  const [transitioning, setTransitioning] = useState(false);
+  const prevPathRef = useRef(pathname);
+  useEffect(() => {
+    if (prevPathRef.current !== pathname) {
+      setTransitioning(false);
+      prevPathRef.current = pathname;
+    }
+  }, [pathname]);
 
   // ── Scroll active tab into view ──
   useEffect(() => {
@@ -265,8 +275,12 @@ export function FeedShell({ children }: FeedShellProps) {
           </div>
         )}
 
-        {/* ── Child content ── */}
-        <div className="px-4 py-4 sm:px-6">{children}</div>
+        {/* ── Child content with smooth route transitions ── */}
+        <div
+          className={`px-4 py-4 sm:px-6 transition-opacity duration-200 ${transitioning ? 'opacity-0' : 'opacity-100'}`}
+        >
+          {children}
+        </div>
       </main>
 
       {/* ── Right gutter (optional, for future use) ── */}

@@ -534,21 +534,48 @@ export default function NotificationsPage() {
   } = useNotifications(hasSignedIn);
 
   const [activeProtocol, setActiveProtocol] = useState<string>('all');
+  const [activeTypeGroup, setActiveTypeGroup] = useState<string>('all');
   const [visibleCount, setVisibleCount] = useState(30);
   const [showPrefs, setShowPrefs] = useState(false);
   const loaderRef = useRef<HTMLDivElement>(null);
 
+  /* == Type grouping — grouped by notification type ============ */
+  const TYPE_GROUPS = [
+    { id: 'all', label: 'All', icon: '🔔' },
+    { id: 'like', label: 'Likes', icon: '❤️' },
+    { id: 'repost', label: 'Reposts', icon: '🔄' },
+    { id: 'mirror', label: 'Mirrors', icon: '🔄' },
+    { id: 'reply', label: 'Replies', icon: '💬' },
+    { id: 'follow', label: 'Follows', icon: '➕' },
+    { id: 'mention', label: 'Mentions', icon: '@' },
+    { id: 'tip', label: 'Tips', icon: '⚡' },
+    { id: 'collect', label: 'Collects', icon: '📦' },
+  ] as const;
+
   /* == Filter =============================================== */
-  const filtered = useMemo(
-    () =>
-      activeProtocol === 'all'
-        ? notifications
-        : notifications.filter((n) => n.protocol === activeProtocol),
-    [notifications, activeProtocol],
-  );
+  const filtered = useMemo(() => {
+    let f = activeProtocol === 'all'
+      ? notifications
+      : notifications.filter((n) => n.protocol === activeProtocol);
+    if (activeTypeGroup !== 'all') {
+      f = f.filter((n) => n.type === activeTypeGroup);
+    }
+    return f;
+  }, [notifications, activeProtocol, activeTypeGroup]);
 
   const visible = filtered.slice(0, visibleCount);
   const hasMore = visibleCount < filtered.length;
+
+  /* == Grouped notifications by type for accordion view ====== */
+  const groupedByType = useMemo(() => {
+    const groups: Record<string, typeof filtered> = {};
+    for (const n of filtered) {
+      const key = n.type || 'other';
+      if (!groups[key]) groups[key] = [];
+      groups[key]!.push(n);
+    }
+    return groups;
+  }, [filtered]);
 
   /* == Unread counts per protocol =========================== */
   const unreadByProtocol = useMemo(() => {
@@ -673,8 +700,33 @@ export default function NotificationsPage() {
             </div>
           </div>
 
+          {/* Type group filter — unified by notification type */}
+          <div className="flex items-center gap-1 border-b border-[var(--color-border)] px-4 py-2 overflow-x-auto scrollbar-none">
+            {TYPE_GROUPS.map((g) => {
+              const active = activeTypeGroup === g.id;
+              return (
+                <button
+                  key={g.id}
+                  type="button"
+                  onClick={() => {
+                    setActiveTypeGroup((prev) => (prev === g.id ? 'all' : g.id));
+                    setVisibleCount(30);
+                  }}
+                  className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium whitespace-nowrap transition-all ${
+                    active
+                      ? 'bg-degen-500/15 text-degen-400 shadow-sm'
+                      : 'text-[var(--color-muted)] hover:text-[var(--color-fg)] hover:bg-[var(--color-overlay)]'
+                  }`}
+                >
+                  <span aria-hidden="true">{g.icon}</span>
+                  <span>{g.label}</span>
+                </button>
+              );
+            })}
+          </div>
+
           {/* Protocol filter pills */}
-          <div className="flex items-center gap-1.5 border-t border-[var(--color-border)] px-4 py-2.5 overflow-x-auto scrollbar-none">
+          <div className="flex items-center gap-1.5 px-4 py-2 overflow-x-auto scrollbar-none">
             {PROTOCOLS.map((p) => {
               const unread = p.id === 'all' ? unreadCount : (unreadByProtocol[p.id] ?? 0);
               const active = activeProtocol === p.id;
@@ -732,26 +784,59 @@ export default function NotificationsPage() {
           <EmptyState hasSignedIn={hasSignedIn} />
         ) : (
           <>
-            <div className="divide-y divide-[var(--color-border)]">
-              {visible.map((n) => (
-                <NotificationRow
-                  key={n.id}
-                  id={n.id}
-                  type={n.type}
-                  protocol={n.protocol}
-                  sourceProtocol={n.sourceProtocol}
-                  actorName={n.actorName}
-                  actorHandle={n.actorHandle}
-                  actorAvatar={n.actorAvatar}
-                  postText={n.postText}
-                  createdAt={n.createdAt}
-                  read={n.read}
-                  amount={(n as { amount?: string }).amount}
-                  currency={(n as { currency?: string }).currency}
-                  onMarkRead={markRead}
-                />
-              ))}
-            </div>
+            {/* Grouped by type with collapsible sections */}
+            {Object.entries(groupedByType).map(([typeKey, groupItems]) => {
+              const groupLabel = TYPE_GROUPS.find((g) => g.id === typeKey)?.label || typeKey;
+              const groupIcon = TYPE_GROUPS.find((g) => g.id === typeKey)?.icon || '💬';
+              const groupUnread = groupItems.filter((n) => !n.read).length;
+              if (groupItems.length === 0) return null;
+              return (
+                <details key={typeKey} className="group border-b border-[var(--color-border)] last:border-b-0" open>
+                  <summary className="sticky top-[180px] z-10 flex cursor-pointer items-center gap-2 bg-[var(--color-bg)] px-4 py-2 text-xs font-semibold text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors select-none">
+                    <span className="text-sm" aria-hidden="true">{groupIcon}</span>
+                    <span>{groupLabel}</span>
+                    {groupUnread > 0 && (
+                      <span className="ml-auto flex h-4 min-w-[16px] items-center justify-center rounded-full bg-degen-500 px-1 text-[9px] font-bold text-black">
+                        {groupUnread}
+                      </span>
+                    )}
+                    <svg
+                      width="12"
+                      height="12"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      className="transition-transform group-open:rotate-180"
+                      aria-hidden="true"
+                    >
+                      <polyline points="6 9 12 15 18 9" />
+                    </svg>
+                  </summary>
+                  <div className="divide-y divide-[var(--color-border)]">
+                    {groupItems.slice(0, visibleCount).map((n) => (
+                      <NotificationRow
+                        key={n.id}
+                        id={n.id}
+                        type={n.type}
+                        protocol={n.protocol}
+                        sourceProtocol={n.sourceProtocol}
+                        actorName={n.actorName}
+                        actorHandle={n.actorHandle}
+                        actorAvatar={n.actorAvatar}
+                        postText={n.postText}
+                        createdAt={n.createdAt}
+                        read={n.read}
+                        amount={(n as { amount?: string }).amount}
+                        currency={(n as { currency?: string }).currency}
+                        onMarkRead={markRead}
+                      />
+                    ))}
+                  </div>
+                </details>
+              );
+            })}
 
             {/* Infinite scroll sentinel */}
             <div ref={loaderRef} className="h-px" />
