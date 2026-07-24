@@ -207,7 +207,7 @@ export class StripeIntegration {
       );
       return {
         type: event.type,
-        data: { object: event.data.object as Record<string, unknown> },
+        data: { object: event.data.object as unknown as Record<string, unknown> },
       };
     } catch (err) {
       console.error('[StripeIntegration] Webhook signature verification failed:', err);

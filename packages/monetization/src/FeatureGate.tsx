@@ -18,6 +18,7 @@
  *   </PremiumGate>
  */
 
+import React from 'react';
 import { TierManager } from './TierManager';
 import {
   FEATURE_LABELS,
@@ -227,35 +228,23 @@ export function PremiumGate({
         <div className="pointer-events-none select-none blur-sm opacity-40">
           {children}
         </div>
-        <div
-    className =
-      "absolute inset-0 flex items-center justify-center">
-          <div className =
-      "rounded-2xl border border-amber-500/20 bg-[var(--color-card)]/95 backdrop-blur-sm p-5 text-center mx-4 max-w-xs shadow-xl">
-            <div className =
-        "mb-2 text-2xl">⭐ < />div < h3;
-    className = 'text-sm font-bold text-[var(--color-fg)] mb-1' > { featureName } < /3>h < p;
-    className = 'text-xs text-[var(--color-muted)] mb-3 leading-relaxed' > Upgrade;
-    to;
-    requiredTierName;
-    to;
-    unlock;
-    featureName;
-    .
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="rounded-2xl border border-amber-500/20 bg-[var(--color-card)]/95 backdrop-blur-sm p-5 text-center mx-4 max-w-xs shadow-xl">
+            <div className="mb-2 text-2xl">⭐</div>
+            <p className="text-sm font-bold text-[var(--color-fg)] mb-1">{featureName}</p>
+            <p className="text-xs text-[var(--color-muted)] mb-3 leading-relaxed">
+              Upgrade to {requiredTierName} to unlock {featureName}.
             </p>
             <a
-              href=
-    `/pricing?upgrade=$userTier`;
-    className =
-      'inline-block w-full rounded-lg bg-amber-500 px-4 py-2 text-xs font-bold text-black hover:bg-amber-400 transition-colors text-center' >
-      Upgrade;
-    to;
-    requiredTierName;
-    </a>
+              href={`/pricing?upgrade=${userTier}`}
+              className="inline-block w-full rounded-lg bg-amber-500 px-4 py-2 text-xs font-bold text-black hover:bg-amber-400 transition-colors text-center"
+            >
+              Upgrade to {requiredTierName}
+            </a>
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   return null;

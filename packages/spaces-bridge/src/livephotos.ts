@@ -135,7 +135,7 @@ export const livePhotosBridge: PlatformBridge = {
       const nostrResult = await publishNostrPictureEvent(
         options.title,
         options.description,
-        imageUrl,
+        imageUrl!,
         options.hostId,
         options.hostName,
       );
@@ -143,7 +143,7 @@ export const livePhotosBridge: PlatformBridge = {
         platform: 'nostr-pictures',
         nativeId: nostrResult.id,
         url: nostrResult.url,
-        metadata: { kind: 20, imageUrl },
+        metadata: { kind: 20, imageUrl: imageUrl! },
       });
     } catch (e) {
       console.warn('[livephotos] Nostr publish failed:', e);
@@ -152,7 +152,7 @@ export const livePhotosBridge: PlatformBridge = {
     // Publish to Pixelfed if configured
     if (process.env.PIXELFED_ACCESS_TOKEN) {
       const pixelfedResult = await publishToPixelfed(
-        imageUrl,
+        imageUrl!,
         options.description ?? options.title,
       );
       if (pixelfedResult) {
@@ -171,7 +171,7 @@ export const livePhotosBridge: PlatformBridge = {
         const nostrResult = await publishNostrPictureEvent(
           options.title,
           options.description,
-          options.photoUrls[0],
+          options.photoUrls[0] ?? '',
           options.hostId,
           options.hostName,
         );

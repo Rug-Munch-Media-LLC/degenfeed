@@ -55,12 +55,6 @@ function mockXmlResponse(xml: string, status = 200) {
 describe('Bridge Matrix — Source Content Fetching', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.useFakeTimers();
-    vi.setSystemTime(4000000);
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
   });
 
   describe('fetchFromActivityPub', () => {
@@ -84,7 +78,7 @@ describe('Bridge Matrix — Source Content Fetching', () => {
         }),
       );
 
-      const { fetchFromActivityPub } = await import('../lib/cross-protocol-bridge-engine');
+      const { fetchFromActivityPub } = await import('../lib/bridge-fetchers');
       const result = await fetchFromActivityPub(
         'status-123',
         {
@@ -101,14 +95,14 @@ describe('Bridge Matrix — Source Content Fetching', () => {
     });
 
     it('returns null when auth is missing', async () => {
-      const { fetchFromActivityPub } = await import('../lib/cross-protocol-bridge-engine');
+      const { fetchFromActivityPub } = await import('../lib/bridge-fetchers');
       const result = await fetchFromActivityPub('status-123', {}, mockEnv);
       expect(result).toBeNull();
     });
 
     it('returns null on HTTP error', async () => {
       mockFetch.mockResolvedValue(mockJsonResponse(null, 404));
-      const { fetchFromActivityPub } = await import('../lib/cross-protocol-bridge-engine');
+      const { fetchFromActivityPub } = await import('../lib/bridge-fetchers');
       const result = await fetchFromActivityPub(
         'status-123',
         { mastodon: 'bad-token', mastodon_instance: 'https://social.test.xyz' },
@@ -126,7 +120,7 @@ describe('Bridge Matrix — Source Content Fetching', () => {
         }),
       );
 
-      const { fetchFromAtProtocol } = await import('../lib/cross-protocol-bridge-engine');
+      const { fetchFromAtProtocol } = await import('../lib/bridge-fetchers');
       const result = await fetchFromAtProtocol(
         'rkey-123',
         { bluesky_jwt: 'test-jwt', did: 'did:plc:test' },
@@ -152,7 +146,7 @@ describe('Bridge Matrix — Source Content Fetching', () => {
         }),
       );
 
-      const { fetchFromAtProtocol } = await import('../lib/cross-protocol-bridge-engine');
+      const { fetchFromAtProtocol } = await import('../lib/bridge-fetchers');
       const result = await fetchFromAtProtocol(
         'at://did:plc:test/app.bsky.feed.post/rkey-123',
         { bluesky_jwt: 'bad-jwt', did: 'did:plc:test' },
@@ -183,7 +177,7 @@ describe('Bridge Matrix — Source Content Fetching', () => {
         }),
       );
 
-      const { fetchFromNostr } = await import('../lib/cross-protocol-bridge-engine');
+      const { fetchFromNostr } = await import('../lib/bridge-fetchers');
       const result = await fetchFromNostr('note-abc', {}, mockEnv);
 
       expect(result).not.toBeNull();
@@ -193,7 +187,7 @@ describe('Bridge Matrix — Source Content Fetching', () => {
 
     it('returns null when no events found', async () => {
       mockFetch.mockResolvedValue(mockJsonResponse({ events: [] }));
-      const { fetchFromNostr } = await import('../lib/cross-protocol-bridge-engine');
+      const { fetchFromNostr } = await import('../lib/bridge-fetchers');
       const result = await fetchFromNostr('nonexistent-event', {}, mockEnv);
       expect(result).toBeNull();
     });
@@ -212,7 +206,7 @@ describe('Bridge Matrix — Source Content Fetching', () => {
         }),
       );
 
-      const { fetchFromFarcaster } = await import('../lib/cross-protocol-bridge-engine');
+      const { fetchFromFarcaster } = await import('../lib/bridge-fetchers');
       const result = await fetchFromFarcaster('0xcast-hash', {}, mockEnv);
 
       expect(result).not.toBeNull();
@@ -233,7 +227,7 @@ describe('Bridge Matrix — Source Content Fetching', () => {
         }),
       );
 
-      const { fetchFromLens } = await import('../lib/cross-protocol-bridge-engine');
+      const { fetchFromLens } = await import('../lib/bridge-fetchers');
       const result = await fetchFromLens('pub-123', {}, mockEnv);
 
       expect(result).not.toBeNull();
@@ -249,7 +243,7 @@ describe('Bridge Matrix — Source Content Fetching', () => {
         }),
       );
 
-      const { fetchFromTelegram } = await import('../lib/cross-protocol-bridge-engine');
+      const { fetchFromTelegram } = await import('../lib/bridge-fetchers');
       const result = await fetchFromTelegram(
         '42',
         {
@@ -262,7 +256,7 @@ describe('Bridge Matrix — Source Content Fetching', () => {
     });
 
     it('returns null without bot token', async () => {
-      const { fetchFromTelegram } = await import('../lib/cross-protocol-bridge-engine');
+      const { fetchFromTelegram } = await import('../lib/bridge-fetchers');
       const result = await fetchFromTelegram('42', { telegram_chat_id: '-1001234567890' }, mockEnv);
       expect(result).toBeNull();
     });
@@ -284,7 +278,7 @@ describe('Bridge Matrix — Source Content Fetching', () => {
 
       mockFetch.mockResolvedValue(mockXmlResponse(rssXml));
 
-      const { fetchFromRss } = await import('../lib/cross-protocol-bridge-engine');
+      const { fetchFromRss } = await import('../lib/bridge-fetchers');
       const result = await fetchFromRss(
         'article-123',
         { rss_feed_url: 'https://example.com/feed.xml' },
@@ -314,7 +308,7 @@ describe('Bridge Matrix — Source Content Fetching', () => {
         }),
       );
 
-      const { fetchFromZora } = await import('../lib/cross-protocol-bridge-engine');
+      const { fetchFromZora } = await import('../lib/bridge-fetchers');
       const result = await fetchFromZora('0xcontract:1', {}, mockEnv);
 
       expect(result).not.toBeNull();
@@ -352,7 +346,7 @@ describe('Bridge Matrix — Direction Handlers', () => {
   ];
 
   it('returns a handler for every protocol→protocol combination', async () => {
-    const { getBridgeHandler } = await import('../lib/cross-protocol-bridge-engine');
+    const { getBridgeHandler } = await import('../lib/bridge-publish');
 
     for (const source of protocols) {
       for (const target of protocols) {
@@ -368,121 +362,121 @@ describe('Bridge Matrix — Direction Handlers', () => {
   });
 
   it('ActivityPub → AT Protocol (Bluesky)', async () => {
-    const { getBridgeHandler } = await import('../lib/cross-protocol-bridge-engine');
+    const { getBridgeHandler } = await import('../lib/bridge-publish');
     const handler = getBridgeHandler('mastodon', 'bluesky');
     expect(handler).not.toBeNull();
   });
 
   it('AT Protocol → ActivityPub', async () => {
-    const { getBridgeHandler } = await import('../lib/cross-protocol-bridge-engine');
+    const { getBridgeHandler } = await import('../lib/bridge-publish');
     const handler = getBridgeHandler('bluesky', 'mastodon');
     expect(handler).not.toBeNull();
   });
 
   it('ActivityPub → Nostr', async () => {
-    const { getBridgeHandler } = await import('../lib/cross-protocol-bridge-engine');
+    const { getBridgeHandler } = await import('../lib/bridge-publish');
     const handler = getBridgeHandler('mastodon', 'nostr');
     expect(handler).not.toBeNull();
   });
 
   it('Nostr → ActivityPub', async () => {
-    const { getBridgeHandler } = await import('../lib/cross-protocol-bridge-engine');
+    const { getBridgeHandler } = await import('../lib/bridge-publish');
     const handler = getBridgeHandler('nostr', 'mastodon');
     expect(handler).not.toBeNull();
   });
 
   it('ActivityPub → Farcaster', async () => {
-    const { getBridgeHandler } = await import('../lib/cross-protocol-bridge-engine');
+    const { getBridgeHandler } = await import('../lib/bridge-publish');
     const handler = getBridgeHandler('mastodon', 'farcaster');
     expect(handler).not.toBeNull();
   });
 
   it('Farcaster → ActivityPub', async () => {
-    const { getBridgeHandler } = await import('../lib/cross-protocol-bridge-engine');
+    const { getBridgeHandler } = await import('../lib/bridge-publish');
     const handler = getBridgeHandler('farcaster', 'mastodon');
     expect(handler).not.toBeNull();
   });
 
   it('ActivityPub → Telegram', async () => {
-    const { getBridgeHandler } = await import('../lib/cross-protocol-bridge-engine');
+    const { getBridgeHandler } = await import('../lib/bridge-publish');
     const handler = getBridgeHandler('mastodon', 'telegram');
     expect(handler).not.toBeNull();
   });
 
   it('ActivityPub → RSS', async () => {
-    const { getBridgeHandler } = await import('../lib/cross-protocol-bridge-engine');
+    const { getBridgeHandler } = await import('../lib/bridge-publish');
     const handler = getBridgeHandler('mastodon', 'rss');
     expect(handler).not.toBeNull();
   });
 
   it('ActivityPub → Zora', async () => {
-    const { getBridgeHandler } = await import('../lib/cross-protocol-bridge-engine');
+    const { getBridgeHandler } = await import('../lib/bridge-publish');
     const handler = getBridgeHandler('mastodon', 'zora');
     expect(handler).not.toBeNull();
   });
 
   it('Zora → ActivityPub', async () => {
-    const { getBridgeHandler } = await import('../lib/cross-protocol-bridge-engine');
+    const { getBridgeHandler } = await import('../lib/bridge-publish');
     const handler = getBridgeHandler('zora', 'mastodon');
     expect(handler).not.toBeNull();
   });
 
   it('Telegram → ActivityPub', async () => {
-    const { getBridgeHandler } = await import('../lib/cross-protocol-bridge-engine');
+    const { getBridgeHandler } = await import('../lib/bridge-publish');
     const handler = getBridgeHandler('telegram', 'mastodon');
     expect(handler).not.toBeNull();
   });
 
   it('RSS → ActivityPub', async () => {
-    const { getBridgeHandler } = await import('../lib/cross-protocol-bridge-engine');
+    const { getBridgeHandler } = await import('../lib/bridge-publish');
     const handler = getBridgeHandler('rss', 'mastodon');
     expect(handler).not.toBeNull();
   });
 
   it('Nostr → Farcaster', async () => {
-    const { getBridgeHandler } = await import('../lib/cross-protocol-bridge-engine');
+    const { getBridgeHandler } = await import('../lib/bridge-publish');
     const handler = getBridgeHandler('nostr', 'farcaster');
     expect(handler).not.toBeNull();
   });
 
   it('Farcaster → Nostr', async () => {
-    const { getBridgeHandler } = await import('../lib/cross-protocol-bridge-engine');
+    const { getBridgeHandler } = await import('../lib/bridge-publish');
     const handler = getBridgeHandler('farcaster', 'nostr');
     expect(handler).not.toBeNull();
   });
 
   it('Lens → Bluesky', async () => {
-    const { getBridgeHandler } = await import('../lib/cross-protocol-bridge-engine');
+    const { getBridgeHandler } = await import('../lib/bridge-publish');
     const handler = getBridgeHandler('lens', 'bluesky');
     expect(handler).not.toBeNull();
   });
 
   it('Zora → Bluesky', async () => {
-    const { getBridgeHandler } = await import('../lib/cross-protocol-bridge-engine');
+    const { getBridgeHandler } = await import('../lib/bridge-publish');
     const handler = getBridgeHandler('zora', 'bluesky');
     expect(handler).not.toBeNull();
   });
 
   it('Zora → Nostr', async () => {
-    const { getBridgeHandler } = await import('../lib/cross-protocol-bridge-engine');
+    const { getBridgeHandler } = await import('../lib/bridge-publish');
     const handler = getBridgeHandler('zora', 'nostr');
     expect(handler).not.toBeNull();
   });
 
   it('Zora → Farcaster', async () => {
-    const { getBridgeHandler } = await import('../lib/cross-protocol-bridge-engine');
+    const { getBridgeHandler } = await import('../lib/bridge-publish');
     const handler = getBridgeHandler('zora', 'farcaster');
     expect(handler).not.toBeNull();
   });
 
   it('Zora → Telegram', async () => {
-    const { getBridgeHandler } = await import('../lib/cross-protocol-bridge-engine');
+    const { getBridgeHandler } = await import('../lib/bridge-publish');
     const handler = getBridgeHandler('zora', 'telegram');
     expect(handler).not.toBeNull();
   });
 
   it('Zora → RSS', async () => {
-    const { getBridgeHandler } = await import('../lib/cross-protocol-bridge-engine');
+    const { getBridgeHandler } = await import('../lib/bridge-publish');
     const handler = getBridgeHandler('zora', 'rss');
     expect(handler).not.toBeNull();
   });
@@ -502,7 +496,7 @@ describe('Bridge Matrix — Zora Special Handlers', () => {
   });
 
   it('bridge Mastodon → Zora generates mint URL', async () => {
-    const { getBridgeHandler } = await import('../lib/cross-protocol-bridge-engine');
+    const { getBridgeHandler } = await import('../lib/bridge-publish');
     const handler = getBridgeHandler('mastodon', 'zora');
     expect(handler).not.toBeNull();
 
@@ -514,7 +508,7 @@ describe('Bridge Matrix — Zora Special Handlers', () => {
   });
 
   it('bridge Bluesky → Zora generates mint URL', async () => {
-    const { getBridgeHandler } = await import('../lib/cross-protocol-bridge-engine');
+    const { getBridgeHandler } = await import('../lib/bridge-publish');
     const handler = getBridgeHandler('bluesky', 'zora');
     expect(handler).not.toBeNull();
 
@@ -524,7 +518,7 @@ describe('Bridge Matrix — Zora Special Handlers', () => {
   });
 
   it('bridge Nostr → Zora generates mint URL', async () => {
-    const { getBridgeHandler } = await import('../lib/cross-protocol-bridge-engine');
+    const { getBridgeHandler } = await import('../lib/bridge-publish');
     const handler = getBridgeHandler('nostr', 'zora');
     expect(handler).not.toBeNull();
 
@@ -534,7 +528,7 @@ describe('Bridge Matrix — Zora Special Handlers', () => {
   });
 
   it('bridge Farcaster → Zora generates mint URL', async () => {
-    const { getBridgeHandler } = await import('../lib/cross-protocol-bridge-engine');
+    const { getBridgeHandler } = await import('../lib/bridge-publish');
     const handler = getBridgeHandler('farcaster', 'zora');
     expect(handler).not.toBeNull();
 
@@ -544,7 +538,7 @@ describe('Bridge Matrix — Zora Special Handlers', () => {
   });
 
   it('bridge Lens → Zora generates mint URL', async () => {
-    const { getBridgeHandler } = await import('../lib/cross-protocol-bridge-engine');
+    const { getBridgeHandler } = await import('../lib/bridge-publish');
     const handler = getBridgeHandler('lens', 'zora');
     expect(handler).not.toBeNull();
 
@@ -554,7 +548,7 @@ describe('Bridge Matrix — Zora Special Handlers', () => {
   });
 
   it('bridge Telegram → Zora generates mint URL', async () => {
-    const { getBridgeHandler } = await import('../lib/cross-protocol-bridge-engine');
+    const { getBridgeHandler } = await import('../lib/bridge-publish');
     const handler = getBridgeHandler('telegram', 'zora');
     expect(handler).not.toBeNull();
 
@@ -578,7 +572,7 @@ describe('Bridge Matrix — Protocol Reply Fetchers', () => {
   });
 
   it('fetchReplies dispatches to correct protocol', async () => {
-    const { fetchReplies } = await import('../lib/cross-protocol-bridge-engine');
+    const { fetchReplies } = await import('../lib/bridge-fetchers');
 
     mockFetch.mockResolvedValue(
       mockJsonResponse({
@@ -603,7 +597,7 @@ describe('Bridge Matrix — Protocol Reply Fetchers', () => {
   });
 
   it('returns empty array for unknown protocol', async () => {
-    const { fetchReplies } = await import('../lib/cross-protocol-bridge-engine');
+    const { fetchReplies } = await import('../lib/bridge-fetchers');
     const replies = await fetchReplies('unknown', 'id-1', {}, mockEnv);
     expect(replies).toEqual([]);
   });
@@ -626,7 +620,7 @@ describe('Bridge Matrix — bridgeContent Integration', () => {
   });
 
   it('bridges content from one protocol to all others', async () => {
-    const { bridgeContentToAll } = await import('../lib/cross-protocol-bridge-engine');
+    const { bridgeContentToAll } = await import('../lib/bridge-publish');
 
     const report = await bridgeContentToAll(
       {
@@ -644,7 +638,7 @@ describe('Bridge Matrix — bridgeContent Integration', () => {
   });
 
   it('handles empty targets gracefully', async () => {
-    const { bridgeContent } = await import('../lib/cross-protocol-bridge-engine');
+    const { bridgeContent } = await import('../lib/bridge-publish');
 
     const report = await bridgeContent(
       {
@@ -662,7 +656,7 @@ describe('Bridge Matrix — bridgeContent Integration', () => {
   });
 
   it('skips bridge when source equals target', async () => {
-    const { bridgeContent } = await import('../lib/cross-protocol-bridge-engine');
+    const { bridgeContent } = await import('../lib/bridge-publish');
 
     const report = await bridgeContent(
       {
@@ -679,7 +673,7 @@ describe('Bridge Matrix — bridgeContent Integration', () => {
   });
 
   it('handleBridgeWebhook creates proper bridge report', async () => {
-    const { handleBridgeWebhook } = await import('../lib/cross-protocol-bridge-engine');
+    const { handleBridgeWebhook } = await import('../lib/bridge-publish');
 
     const report = await handleBridgeWebhook(
       'nostr',

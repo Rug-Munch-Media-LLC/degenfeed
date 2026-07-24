@@ -721,8 +721,8 @@ export default function HomePage() {
               className="mx-auto mb-6 max-w-lg text-sm leading-relaxed"
               style={{ color: 'var(--color-fg-secondary)' }}
             >
-              Link your accounts across Nostr, Farcaster, Lens, Bluesky, Mastodon, and more.
-              See everything in one unified feed. Post once, reach 25+ protocols.
+              Link your accounts across Nostr, Farcaster, Lens, Bluesky, Mastodon, and more. See
+              everything in one unified feed. Post once, reach 25+ protocols.
             </p>
             <div className="flex flex-wrap justify-center gap-2 mb-6">
               {['mastodon', 'bluesky', 'nostr', 'farcaster', 'lens', 'reddit'].map((pid) => (

@@ -131,9 +131,9 @@ export const peertubeBridge: PlatformBridge = {
       description: options.description ?? `Audio space hosted by ${options.hostName}`,
       channelName,
       tags: [...(options.tags ?? []), 'audio-only', 'degenfeed', 'space'],
-      tokenAddress: options.peertubeTokenAddress,
-      tokenSymbol: options.peertubeTokenSymbol,
-      creatorAddress: options.peertubeCreatorAddress,
+      tokenAddress: options.peertubeTokenAddress ?? '',
+      tokenSymbol: options.peertubeTokenSymbol ?? '',
+      creatorAddress: options.peertubeCreatorAddress ?? '',
       tokenGated: options.gating?.type === 'token',
       category: 13, // Tech
       privacy: 1, // Public

@@ -37,7 +37,7 @@
  */
 
 import { CreateConstants, createCoinCall } from '@zoralabs/coins-sdk';
-import { type Address, type Hex, createPublicClient, http } from 'viem';
+import { type Address, createPublicClient, type Hex, http } from 'viem';
 import { base, baseSepolia } from 'viem/chains';
 
 // ─── Constants ─────────────────────────────────────────────────────────────
@@ -119,9 +119,7 @@ function getPublicClient(chain: 'base' | 'base-sepolia') {
   return createPublicClient({
     chain: chainConfig,
     transport: http(
-      chain === 'base-sepolia'
-        ? 'https://sepolia.base.org'
-        : 'https://mainnet.base.org',
+      chain === 'base-sepolia' ? 'https://sepolia.base.org' : 'https://mainnet.base.org',
     ),
   });
 }
@@ -173,7 +171,8 @@ export async function prepareZoraCoinCreation(
 
   return {
     calls,
-    predictedCoinAddress: result.predictedCoinAddress ?? ('0x0000000000000000000000000000000000000000' as Address),
+    predictedCoinAddress:
+      result.predictedCoinAddress ?? ('0x0000000000000000000000000000000000000000' as Address),
     chain,
     gasEstimateWei: undefined,
     estimatedCostEth: undefined,
@@ -202,11 +201,11 @@ export async function estimateZoraCoinGas(
   let totalGasLimit = 0n;
   for (const call of calls) {
     try {
-      const gas = await publicClient.estimateGas({
+      const gas = (await publicClient.estimateGas({
         to: call.to,
         data: call.data,
         value: call.value,
-      }) as bigint;
+      })) as bigint;
       totalGasLimit += gas;
     } catch {
       // Fallback: typical coin creation uses ~350k gas on Base L2

@@ -151,7 +151,8 @@ describe('PostCard', () => {
   it('should render protocol badge', () => {
     renderPostCard();
     // ProtocolBadge renders the protocol name or icon
-    expect(screen.getByText('⚡')).toBeDefined(); // nostr emoji
+    // ⚡ appears in multiple places (badge, tip buttons); check at least one exists
+    expect(screen.getAllByText('⚡').length).toBeGreaterThanOrEqual(1);
   });
 
   it('should have accessible aria-label', () => {

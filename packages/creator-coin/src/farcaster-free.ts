@@ -354,9 +354,7 @@ export class FarcasterFreePostClient {
    * Keeps within Farcaster's 320-character limit.
    */
   private buildCastText(input: CreatorCoinCastInput): string {
-    const description = input.description
-      ? ` — ${input.description}`
-      : '';
+    const description = input.description ? ` — ${input.description}` : '';
 
     const text = `🪙 New creator coin: ${input.coinName} (${input.coinSymbol})${description}
 
@@ -364,9 +362,7 @@ Contract: ${input.coinAddress.slice(0, 10)}...${input.coinAddress.slice(-6)}
 #Crypto #DegenFeed #${input.coinSymbol.toUpperCase()}`;
 
     // Truncate to 320 chars max
-    return text.length <= MAX_CAST_LENGTH
-      ? text
-      : text.slice(0, MAX_CAST_LENGTH - 3) + '...';
+    return text.length <= MAX_CAST_LENGTH ? text : text.slice(0, MAX_CAST_LENGTH - 3) + '...';
   }
 
   /**
