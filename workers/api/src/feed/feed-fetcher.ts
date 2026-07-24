@@ -77,6 +77,9 @@ export const PROVIDER_TIMEOUTS: Record<Protocol, number> = {
   webhook: 3000,
   github: 5000,
   'newsletter-bridge': 5000,
+  email: 5000,
+  google: 5000,
+  twitter: 5000,
   mirror: 5000,
   paragraph: 5000,
 };
@@ -210,6 +213,7 @@ export function getProvider(protocol: Protocol, env: Env): FeedProvider {
 // network, not from the Cloudflare edge.
 class RssWithFallbackProvider implements FeedProvider {
   readonly protocol: Protocol = 'rss';
+  readonly schema: import('@degenfeed/feed-providers').SchemaGuard = () => true;
   private readonly env: Env;
   private readonly rmi: RmiDataBusProvider;
 

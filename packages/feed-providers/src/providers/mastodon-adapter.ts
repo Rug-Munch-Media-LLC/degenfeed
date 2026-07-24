@@ -141,7 +141,7 @@ export function statusToUnifiedPost(status: GtSStatus, instanceUrl: string): Uni
   });
 }
 
-async function _fetchHashtagTimeline(
+export async function fetchHashtagTimeline(
   instanceUrl: string,
   tag: string,
   limit: number,
@@ -152,7 +152,7 @@ async function _fetchHashtagTimeline(
   return fetchJson<GtSStatus[]>(url, { headers: { 'user-agent': DEFAULT_USER_AGENT } });
 }
 
-async function _fetchPublicTimeline(instanceUrl: string, limit: number): Promise<GtSStatus[]> {
+export async function fetchPublicTimeline(instanceUrl: string, limit: number): Promise<GtSStatus[]> {
   const url = buildUrl(instanceUrl, '/api/v1/timelines/public', {
     limit: String(limit),
     local: 'true',
@@ -160,7 +160,6 @@ async function _fetchPublicTimeline(instanceUrl: string, limit: number): Promise
   return fetchJson<GtSStatus[]>(url, { headers: { 'user-agent': DEFAULT_USER_AGENT } });
 }
 
-export
 export interface MastodonProviderOptions {
   instanceUrl?: string;
   fallbackInstances?: string[];
@@ -269,12 +268,11 @@ export interface MisskeyNote {
   visibility: 'public' | 'home' | 'followers' | 'specified';
 }
 
-export
 export interface MisskeyNotesResponse {
   notes: MisskeyNote[];
 }
 
-async function _fetchMisskeyTrendingNotes(
+export async function fetchMisskeyTrendingNotes(
   instanceUrl: string,
   limit: number,
 ): Promise<GtSStatus[]> {
@@ -296,7 +294,7 @@ async function _fetchMisskeyTrendingNotes(
   }
 }
 
-async function _fetchMisskeyLocalTimeline(
+export async function fetchMisskeyLocalTimeline(
   instanceUrl: string,
   limit: number,
 ): Promise<GtSStatus[]> {

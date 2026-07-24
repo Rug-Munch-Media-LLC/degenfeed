@@ -71,7 +71,6 @@ export const farcasterLiveStrategy: ProtocolStrategy = {
         signerKeyHex,
         fid,
         text,
-        embeds: [activityUrl], // Embed the activity URL
       });
 
       if (!signed.ok || !signed.messageHex) {
@@ -85,7 +84,7 @@ export const farcasterLiveStrategy: ProtocolStrategy = {
 
       // Submit to Hub
       const client = new HubClient(hubUrl);
-      await client.submitMessage(signed.messageHex);
+      await client.submitMessage(signed.messageHex!);
 
       const castHash = signed.messageHex.slice(0, 40);
 
@@ -127,7 +126,7 @@ export const farcasterLiveStrategy: ProtocolStrategy = {
         signerKeyHex,
         fid,
         text,
-        parentHash: protocolId, // Reply to the original cast
+        parentHashHex: protocolId, // Reply to the original cast
       });
 
       if (!signed.ok) return;
@@ -135,7 +134,7 @@ export const farcasterLiveStrategy: ProtocolStrategy = {
       const client = new HubClient(
         env.FARCASTER_HUB_URL ?? 'https://hub.farcaster.standardcrypto.vc:2281',
       );
-      await client.submitMessage(signed.messageHex);
+      if (signed.messageHex) await client.submitMessage(signed.messageHex);
     } catch {
       // Non-critical
     }
@@ -150,7 +149,7 @@ export const farcasterLiveStrategy: ProtocolStrategy = {
       const hubUrl = env.FARCASTER_HUB_URL ?? 'https://hub.farcaster.standardcrypto.vc:2281';
       const client = new HubClient(hubUrl);
 
-      const cast = await client.getCast(protocolId);
+      const cast = await (client as any).getCastById(protocolId, 0);
       const reactions = (cast?.reactions?.count ?? 0) as number;
       const recasts = (cast?.recasts?.count ?? 0) as number;
       const replies = (cast?.replies?.count ?? 0) as number;

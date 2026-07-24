@@ -162,6 +162,44 @@ export function FeedShell({ children }: FeedShellProps) {
             )}
           </Link>
 
+          {/* ── Media hub shortcuts ── */}
+          <div className="h-px bg-[var(--color-glass-border)] my-2" />
+
+          <Link
+            href="/feed/media"
+            className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+              pathname === '/feed/media'
+                ? 'bg-[var(--color-overlay)] text-[var(--color-fg)]'
+                : 'text-[var(--color-muted)] hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)]'
+            }`}
+            style={
+              pathname === '/feed/media'
+                ? { borderLeft: '3px solid #ff6b9d', marginLeft: '-3px' }
+                : undefined
+            }
+          >
+            <span className="flex h-6 w-6 items-center justify-center text-sm" aria-hidden="true">🎨</span>
+            <span className="flex-1 truncate">Media Hub</span>
+          </Link>
+
+          <Link
+            href="/feed/live"
+            className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+              pathname === '/feed/live'
+                ? 'bg-[var(--color-overlay)] text-[var(--color-fg)]'
+                : 'text-[var(--color-muted)] hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)]'
+            }`}
+            style={
+              pathname === '/feed/live'
+                ? { borderLeft: '3px solid #ef4444', marginLeft: '-3px' }
+                : undefined
+            }
+          >
+            <span className="flex h-6 w-6 items-center justify-center text-sm" aria-hidden="true">●</span>
+            <span className="flex-1 truncate">Live</span>
+            <span className="h-1.5 w-1.5 shrink-0 animate-pulse rounded-full" style={{ backgroundColor: '#ef4444' }} />
+          </Link>
+
           <div className="h-px bg-[var(--color-glass-border)] my-2" />
 
           {/* Per-protocol links */}
@@ -232,6 +270,30 @@ export function FeedShell({ children }: FeedShellProps) {
             }`}
           >
             ◆ All
+          </Link>
+          <Link
+            href="/feed/media"
+            data-active={pathname === '/feed/media' ? 'true' : undefined}
+            className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-colors ${
+              pathname === '/feed/media'
+                ? 'text-[var(--color-fg)] bg-[#ff6b9d]18'
+                : 'text-[var(--color-muted)] hover:text-[var(--color-fg)] bg-[var(--color-overlay)]'
+            }`}
+            style={pathname === '/feed/media' ? { backgroundColor: '#ff6b9d18', color: '#ff6b9d' } : undefined}
+          >
+            🎨 Media
+          </Link>
+          <Link
+            href="/feed/live"
+            data-active={pathname === '/feed/live' ? 'true' : undefined}
+            className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-colors ${
+              pathname === '/feed/live'
+                ? 'text-[var(--color-fg)]'
+                : 'text-[var(--color-muted)] hover:text-[var(--color-fg)] bg-[var(--color-overlay)]'
+            }`}
+            style={pathname === '/feed/live' ? { backgroundColor: '#ef444418', color: '#ef4444' } : undefined}
+          >
+            ● Live
           </Link>
           {SIDEBAR_ORDER.map((pid) => {
             const meta = PROTOCOL_META[pid];

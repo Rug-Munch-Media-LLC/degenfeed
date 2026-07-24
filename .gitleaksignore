@@ -1,0 +1,96 @@
+# ══════════════════════════════════════════════════════════════════════════════
+# Gitleaks Ignore — DegenFeed Web
+# ══════════════════════════════════════════════════════════════════════════════
+# Pattern: one SHA1 fingerprint per line.
+#   <commit>:<file>:<rule-id>:<line>
+#
+# REVIEW THESE (potential real secrets in docs — needs investigation):
+#   docs/NETWORK_OWNERSHIP.md — ethereum-private-key (JWT secrets in docs)
+#   docs/DEPLOYED.md — ethereum-private-key
+# ══════════════════════════════════════════════════════════════════════════════
+
+# ⚠️  REAL SECRETS NOT YET FIXED — Pipeline will flag these until resolved:
+#   docs/NETWORK_OWNERSHIP.md:106  — ethereum-private-key
+#   docs/NETWORK_OWNERSHIP.md:294  — ethereum-private-key
+#   docs/DEPLOYED.md:70            — ethereum-private-key
+#   TODO: Redact these JWT secrets from docs. They are NOT added to this
+#   ignore file — the pipeline WILL fail on them until fixed.
+
+# ── gopass-reference: documented workflows, not secrets ─────────────────────
+8fbb05f7308a6494861ad2158b3ab0c8e31a2d3e:docs/ADMIN_ACCESS.md:gopass-reference:409
+a40f104296f2778680567a5c3e8677d7bce9f81f:docs/CLOUDFLARE_SETUP.md:gopass-reference:232
+b336c2ac0e10ce2b8d53266982c0d3553c5c6fb2:scripts/health-check.sh:gopass-reference:323
+11a78eaaa4dc44ff3fdf707ce108752811e9e503:docker/DNS.md:gopass-reference:34
+11a78eaaa4dc44ff3fdf707ce108752811e9e503:docs/stripe-setup.md:gopass-reference:72
+11a78eaaa4dc44ff3fdf707ce108752811e9e503:docs/stripe-setup.md:gopass-reference:73
+11a78eaaa4dc44ff3fdf707ce108752811e9e503:docs/stripe-setup.md:gopass-reference:74
+11a78eaaa4dc44ff3fdf707ce108752811e9e503:docs/stripe-setup.md:gopass-reference:75
+11a78eaaa4dc44ff3fdf707ce108752811e9e503:docs/stripe-setup.md:gopass-reference:76
+ad75aa5912132efc2d083ada7213eaaef01af097:CLOUDFLARE.md:gopass-reference:116
+ad75aa5912132efc2d083ada7213eaaef01af097:scripts/deploy/rollback.sh:gopass-reference:71
+ad75aa5912132efc2d083ada7213eaaef01af097:scripts/deploy/rollback.sh:gopass-reference:72
+ad75aa5912132efc2d083ada7213eaaef01af097:scripts/deploy/rollback.sh:gopass-reference:86
+ad75aa5912132efc2d083ada7213eaaef01af097:scripts/deploy/rollback.sh:gopass-reference:87
+860a153c4c26e02dcb10097d99a11b87cec2fae7:scripts/deploy/setup-cloudflare.sh:gopass-reference:50
+860a153c4c26e02dcb10097d99a11b87cec2fae7:scripts/deploy/setup-cloudflare.sh:gopass-reference:55
+860a153c4c26e02dcb10097d99a11b87cec2fae7:scripts/deploy/setup-cloudflare.sh:gopass-reference:66
+860a153c4c26e02dcb10097d99a11b87cec2fae7:scripts/deploy/setup-cloudflare.sh:gopass-reference:72
+860a153c4c26e02dcb10097d99a11b87cec2fae7:scripts/deploy/setup-cloudflare.sh:gopass-reference:73
+5b394f6c92e959f84aa8a800e95a4af05695e605:scripts/deploy/setup-cloudflare.sh:gopass-reference:50
+5b394f6c92e959f84aa8a800e95a4af05695e605:scripts/deploy/setup-cloudflare.sh:gopass-reference:55
+5b394f6c92e959f84aa8a800e95a4af05695e605:scripts/deploy/setup-cloudflare.sh:gopass-reference:66
+5b394f6c92e959f84aa8a800e95a4af05695e605:scripts/deploy/setup-cloudflare.sh:gopass-reference:72
+5b394f6c92e959f84aa8a800e95a4af05695e605:scripts/deploy/setup-cloudflare.sh:gopass-reference:73
+aeeefd7c83346b40f67d90a20eaa8114c167e307:REMAINING.md:gopass-reference:25
+aeeefd7c83346b40f67d90a20eaa8114c167e307:REMAINING.md:gopass-reference:26
+aeeefd7c83346b40f67d90a20eaa8114c167e307:REMAINING.md:gopass-reference:27
+aeeefd7c83346b40f67d90a20eaa8114c167e307:REMAINING.md:gopass-reference:28
+aeeefd7c83346b40f67d90a20eaa8114c167e307:REMAINING.md:gopass-reference:29
+aeeefd7c83346b40f67d90a20eaa8114c167e307:REMAINING.md:gopass-reference:30
+aeeefd7c83346b40f67d90a20eaa8114c167e307:REMAINING.md:gopass-reference:36
+
+# ── internal-hostname: infrastructure docs in an internal repo ─────────────
+5652aeb10503c809e005b37baf3268501db9eeba:docs/DEPLOYMENT.md:internal-hostname:565
+5652aeb10503c809e005b37baf3268501db9eeba:docs/DEPLOYMENT.md:internal-hostname:566
+b336c2ac0e10ce2b8d53266982c0d3553c5c6fb2:docs/PRODUCTION_ARCHITECTURE.md:internal-hostname:62
+b336c2ac0e10ce2b8d53266982c0d3553c5c6fb2:docs/PRODUCTION_ARCHITECTURE.md:internal-hostname:101
+b336c2ac0e10ce2b8d53266982c0d3553c5c6fb2:docs/PRODUCTION_ARCHITECTURE.md:internal-hostname:122
+b336c2ac0e10ce2b8d53266982c0d3553c5c6fb2:docs/PRODUCTION_ARCHITECTURE.md:internal-hostname:166
+b336c2ac0e10ce2b8d53266982c0d3553c5c6fb2:docs/PRODUCTION_ARCHITECTURE.md:internal-hostname:228
+b336c2ac0e10ce2b8d53266982c0d3553c5c6fb2:workers/api/.dev.vars.example:internal-hostname:153
+ba4a87b723a1d306f02b839e50f2ae7f2baeecb9:apps/web/.env.example:internal-hostname:172
+ba4a87b723a1d306f02b839e50f2ae7f2baeecb9:apps/web/.env.example:internal-hostname:175
+ba4a87b723a1d306f02b839e50f2ae7f2baeecb9:DEPLOYMENT.md:internal-hostname:565
+ba4a87b723a1d306f02b839e50f2ae7f2baeecb9:DEPLOYMENT.md:internal-hostname:566
+11a78eaaa4dc44ff3fdf707ce108752811e9e503:docs/monitoring.md:internal-hostname:89
+11a78eaaa4dc44ff3fdf707ce108752811e9e503:packages/feed-providers/src/providers/threads.ts:internal-hostname:51
+11a78eaaa4dc44ff3fdf707ce108752811e9e503:packages/feed-providers/src/providers/threads.ts:internal-hostname:52
+ad75aa5912132efc2d083ada7213eaaef01af097:infra/monitoring/deploy.sh:internal-hostname:8
+ad75aa5912132efc2d083ada7213eaaef01af097:infra/monitoring/prometheus.yml:internal-hostname:32
+ad75aa5912132efc2d083ada7213eaaef01af097:infra/monitoring/README.md:internal-hostname:50
+ad75aa5912132efc2d083ada7213eaaef01af097:infra/monitoring/README.md:internal-hostname:80
+ad75aa5912132efc2d083ada7213eaaef01af097:infra/monitoring/README.md:internal-hostname:81
+ad75aa5912132efc2d083ada7213eaaef01af097:scripts/git/radicle-setup.sh:internal-hostname:3
+27be37aa97c233181474cc8959a7f3559b1d25de:workers/api/wrangler.toml:internal-hostname:81
+27be37aa97c233181474cc8959a7f3559b1d25de:workers/api/wrangler.toml:internal-hostname:82
+3af390925ee0ab0e615ef84507179ac55f63d6d2:workers/api/wrangler.toml:internal-hostname:61
+552fba8ac37e558ac4e99bd651afdd76d902ae3e:packages/feed-providers/src/providers/threads.ts:internal-hostname:11
+552fba8ac37e558ac4e99bd651afdd76d902ae3e:packages/feed-providers/src/providers/threads.ts:internal-hostname:22
+543c6bf53455a7e6c3a7a2956b5c29ad0a313861:GAPS.md:internal-hostname:45
+be3a7ad45aa67d0df57b1756c5f4cdf4a2ad035f:AGENTS.md:internal-hostname:29
+be3a7ad45aa67d0df57b1756c5f4cdf4a2ad035f:AGENTS.md:internal-hostname:30
+be3a7ad45aa67d0df57b1756c5f4cdf4a2ad035f:AGENTS.md:internal-hostname:31
+be3a7ad45aa67d0df57b1756c5f4cdf4a2ad035f:AGENTS.md:internal-hostname:36
+be3a7ad45aa67d0df57b1756c5f4cdf4a2ad035f:AGENTS.md:internal-hostname:36
+be3a7ad45aa67d0df57b1756c5f4cdf4a2ad035f:AGENTS.md:internal-hostname:97
+be3a7ad45aa67d0df57b1756c5f4cdf4a2ad035f:AGENTS.md:internal-hostname:98
+be3a7ad45aa67d0df57b1756c5f4cdf4a2ad035f:AGENTS.md:internal-hostname:100
+be3a7ad45aa67d0df57b1756c5f4cdf4a2ad035f:AGENTS.md:internal-hostname:101
+be3a7ad45aa67d0df57b1756c5f4cdf4a2ad035f:AGENTS.md:internal-hostname:286
+be3a7ad45aa67d0df57b1756c5f4cdf4a2ad035f:AGENTS.md:internal-hostname:286
+be3a7ad45aa67d0df57b1756c5f4cdf4a2ad035f:AGENTS.md:internal-hostname:335
+aeeefd7c83346b40f67d90a20eaa8114c167e307:REMAINING.md:internal-hostname:173
+aeeefd7c83346b40f67d90a20eaa8114c167e307:REMAINING.md:internal-hostname:173
+
+# ── ethereum-private-key: test fixture (not a real key) ────────────────────
+cc6ea5035f5000a775e394dcf4388e70b9412256:workers/api/src/__tests__/integration/publish-all-protocols.test.ts:ethereum-private-key:89

@@ -771,6 +771,7 @@ const server = http.createServer(async (req, res) => {
         'reddit',
         'rss',
         'zora',
+        'threads',
       ];
       if (allowed.includes(proto)) {
         const result = await buildFeed([proto], limit);

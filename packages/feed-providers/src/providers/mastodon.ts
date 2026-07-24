@@ -20,13 +20,13 @@ export {
   getFediverseStats,
   instanceHealth,
   instanceHealthScore,
-  MastodonProviderOptions,
   misskeyNoteToGtS,
   recordInstanceFailure,
   recordInstanceSuccess,
   statusToUnifiedPost,
   stripHtml,
 } from './mastodon-adapter';
+export type { MastodonProviderOptions } from './mastodon-adapter';
 // Re-export types from data
 export type { FediverseInstance, FediverseSoftware } from './mastodon-data';
 // Re-export data (values)

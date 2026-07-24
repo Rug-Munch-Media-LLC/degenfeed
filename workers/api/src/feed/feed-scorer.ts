@@ -32,7 +32,7 @@ import type { StoredUserPreferences } from './feed-cache';
 
 // ─── Preference parsing & merging ──────────────────────────────────
 
-export function parsePrefsFromQuery(params: URLSearchParams): UserAlgorithmPreferences | null {
+export function parsePrefsFromQuery(params: URLSearchParams): Partial<UserAlgorithmPreferences> | null {
   const niches = params.get('niches');
   const platforms = params.get('platforms');
   const recencyWeight = Number(params.get('recencyWeight'));
@@ -40,11 +40,10 @@ export function parsePrefsFromQuery(params: URLSearchParams): UserAlgorithmPrefe
   const diversityBoost = params.get('diversityBoost');
   if (!niches && !platforms && !recencyWeight && !engagementWeight) return null;
   return {
-    preferredNiches: niches ? niches.split(',').filter(Boolean) : [],
-    preferredPlatforms: platforms ? (platforms.split(',').filter(Boolean) as Protocol[]) : [],
-    recencyWeight: recencyWeight || 1,
-    engagementWeight: engagementWeight || 1,
-    diversityBoost: diversityBoost !== 'false',
+    niches: niches ? { active: niches.split(',').filter(Boolean), discoverNew: true } : undefined,
+    protocolWeights: platforms
+      ? Object.fromEntries(platforms.split(',').filter(Boolean).map((p) => [p, 100]))
+      : undefined,
   };
 }
 
@@ -83,45 +82,31 @@ export function countNewSinceLastVisit(cookieHeader: string, posts: UnifiedPost[
  * then authenticated preferences, then cookie preferences.
  */
 export function mergePreferences(
-  queryPrefs: UserAlgorithmPreferences | null,
+  queryPrefs: Partial<UserAlgorithmPreferences> | null,
   storedPrefs: StoredUserPreferences | null,
-  cookiePrefs: UserAlgorithmPreferences | null,
-): UserAlgorithmPreferences {
-  const mergedPrefs: UserAlgorithmPreferences = queryPrefs ?? {
-    preferredNiches: [],
-    preferredPlatforms: [],
-    recencyWeight: 1,
-    engagementWeight: 1,
-    diversityBoost: true,
-  };
+  cookiePrefs: Partial<UserAlgorithmPreferences> | null,
+): Partial<UserAlgorithmPreferences> {
+  const mergedPrefs: Partial<UserAlgorithmPreferences> = queryPrefs ?? {};
   // Anonymous cookie preferences (lowest priority — fill gaps, never override scalars)
-  if (cookiePrefs) {
-    for (const n of cookiePrefs.preferredNiches) {
-      if (!mergedPrefs.preferredNiches.includes(n)) {
-        mergedPrefs.preferredNiches = [...mergedPrefs.preferredNiches, n];
-      }
-    }
-    for (const p of cookiePrefs.preferredPlatforms) {
-      if (!mergedPrefs.preferredPlatforms.includes(p)) {
-        mergedPrefs.preferredPlatforms = [...mergedPrefs.preferredPlatforms, p];
-      }
-    }
+  if (cookiePrefs?.niches?.active && cookiePrefs.niches.active.length > 0) {
+    const existing = mergedPrefs.niches?.active ?? [];
+    mergedPrefs.niches = {
+      active: [...new Set([...existing, ...cookiePrefs.niches.active])],
+      discoverNew: true,
+    };
+  }
+  if (cookiePrefs?.protocolWeights) {
+    mergedPrefs.protocolWeights = { ...cookiePrefs.protocolWeights, ...mergedPrefs.protocolWeights };
   }
   // Stored prefs (highest priority — override cookie + query gaps)
   if (storedPrefs) {
-    for (const n of storedPrefs.preferredNiches) {
-      if (!mergedPrefs.preferredNiches.includes(n)) {
-        mergedPrefs.preferredNiches = [...mergedPrefs.preferredNiches, n];
-      }
+    if (storedPrefs.preferredNiches?.length > 0) {
+      const existing = mergedPrefs.niches?.active ?? [];
+      mergedPrefs.niches = {
+        active: [...new Set([...existing, ...storedPrefs.preferredNiches])],
+        discoverNew: true,
+      };
     }
-    for (const p of storedPrefs.preferredPlatforms) {
-      if (!mergedPrefs.preferredPlatforms.includes(p)) {
-        mergedPrefs.preferredPlatforms = [...mergedPrefs.preferredPlatforms, p];
-      }
-    }
-    if (storedPrefs.recencyWeight) mergedPrefs.recencyWeight = storedPrefs.recencyWeight;
-    if (storedPrefs.engagementWeight) mergedPrefs.engagementWeight = storedPrefs.engagementWeight;
-    if (storedPrefs.diversityBoost === false) mergedPrefs.diversityBoost = false;
   }
   return mergedPrefs;
 }
@@ -130,7 +115,7 @@ export function mergePreferences(
 
 export function buildRankingContext(
   now: number,
-  prefs?: UserAlgorithmPreferences | null,
+  prefs?: Partial<UserAlgorithmPreferences> | null,
   recentAuthors?: Map<string, number>,
   followed?: Set<string>,
   sourceQuality?: Map<string, number>,
@@ -139,8 +124,8 @@ export function buildRankingContext(
     viewer: null,
     recentAuthors: recentAuthors ?? new Map(),
     sourceQuality: sourceQuality ?? new Map(),
-    viewerNiches: new Set(prefs?.preferredNiches ?? []),
-    followed: followed ?? new Set(prefs?.followed ?? []),
+    viewerNiches: new Set(prefs?.niches?.active ?? []),
+    followed: followed ?? new Set(prefs?.followedIds ?? []),
     now,
     preferences: prefs ?? null,
   };

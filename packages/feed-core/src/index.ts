@@ -14,7 +14,6 @@ export type {
   AlgorithmScoreBreakdown,
   AlgorithmTransparency,
   AlgorithmWeights,
-  FeedAlgorithm,
   NicheSelection,
   ProtocolWeights,
   ReasonEntry,
@@ -624,6 +623,187 @@ function jaccardSimilarity(a: Set<string>, b: Set<string>): number {
   return intersection / (a.size + b.size - intersection);
 }
 
+/**
+ * Compute Levenshtein distance between two strings.
+ * Used for short-text near-duplicate detection where Jaccard
+ * similarity on word sets misses subtle near-matches.
+ * O(n*m) time, O(min(n,m)) memory using two-row optimization.
+ */
+function levenshteinDistance(a: string, b: string): number {
+  const an = a.length;
+  const bn = b.length;
+  if (an === 0) return bn;
+  if (bn === 0) return an;
+
+  // Use the shorter string as columns for memory efficiency
+  if (an < bn) return levenshteinDistance(b, a);
+
+  let prev: number[] = new Array(bn + 1);
+  let curr: number[] = new Array(bn + 1);
+
+  for (let j = 0; j <= bn; j++) prev[j] = j;
+
+  for (let i = 1; i <= an; i++) {
+    curr[0] = i;
+    for (let j = 1; j <= bn; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      curr[j] = Math.min(
+        prev[j] + 1,       // deletion
+        curr[j - 1] + 1,   // insertion
+        prev[j - 1] + cost // substitution
+      );
+    }
+    [prev, curr] = [curr, prev];
+  }
+  return prev[bn];
+}
+
+/**
+ * Normalized Levenshtein similarity (0-1).
+ * 1.0 = identical, 0.0 = completely different.
+ * Only computed for strings where it's useful (short texts < 200 chars).
+ */
+function normalizedLevenshtein(a: string, b: string): number {
+  const maxLen = Math.max(a.length, b.length);
+  if (maxLen === 0) return 1.0;
+  const dist = levenshteinDistance(
+    a.toLowerCase().replace(/https?:\/\/\S+/g, '').replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 200),
+    b.toLowerCase().replace(/https?:\/\/\S+/g, '').replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 200)
+  );
+  return 1.0 - dist / Math.max(maxLen, 1);
+}
+
+/**
+ * Perceptual-style image fingerprint using URL structure + metadata.
+ * Real pHash requires image decoding; we use URL path structure,
+ * image dimensions (if available), and file name patterns to
+ * create a stable fingerprint that survives CDN URL differences.
+ */
+function imagePerceptualFingerprint(post: UnifiedPost): string | null {
+  const images = post.embeds.filter((e) => e.kind === 'image');
+  if (images.length === 0) return null;
+
+  const fingerprints: string[] = [];
+  for (const img of images) {
+    try {
+      const u = new URL(img.url);
+      // Strip query params, protocol, and common CDN variations
+      const path = u.pathname.replace(/\/+$/, '');
+      const ext = path.split('.').pop()?.toLowerCase() || '';
+      // Only process image-like extensions
+      if (!['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif', 'svg', 'bmp'].includes(ext)) continue;
+
+      // Use path name (filename without extension) as base fingerprint
+      const name = path.split('/').pop()?.replace(/\.[^.]+$/, '') || '';
+      // Check for resized variants (common CDN pattern: /resize/ or _small, _thumb)
+      const strippedName = name
+        .replace(/[-_]?(small|thumb|tiny|medium|large|original|full|resize|crop)[-_]?/gi, '')
+        .replace(/[_-]?\d+x\d+[_-]?/gi, ''); // Strip dimension suffixes like "300x200"
+
+      if (strippedName && strippedName.length > 3) {
+        // Use the image dimensions from metadata if available
+        const meta = img.meta as Record<string, unknown> | undefined;
+        const dims = meta?.width && meta?.height
+          ? `${meta.width}x${meta.height}`
+          : '';
+        fingerprints.push(`phash:${strippedName.toLowerCase()}|${dims}`);
+      } else {
+        // Fallback: use full path minus query
+        fingerprints.push(`phash:${u.hostname}${path.toLowerCase()}`);
+      }
+    } catch {
+      fingerprints.push(`phash:${img.url}`);
+    }
+  }
+
+  return fingerprints.length > 0 ? fingerprints.sort().join('||') : null;
+}
+
+/**
+ * Cross-poster detection: identify when the same user posts identical
+ * or near-identical content across multiple protocols (our own users
+ * using the DegenFeed cross-poster, or manual cross-posting).
+ */
+const CROSS_POST_PATTERNS = [
+  /^cross.?post(?:ed)?:?/i,
+  /^also (?:posted|shared|published) (?:on|to):?/i,
+  /^re.?post(?:ed)? (?:from|via):?/i,
+  /^syndicated (?:from|to):?/i,
+  /^mirror(?:ed)? (?:from|to):?/i,
+  /^\[cross.?post\]/i,
+  /^📢/i,
+];
+
+function isCrossPost(text: string): boolean {
+  const trimmed = text.trim();
+  return CROSS_POST_PATTERNS.some((p) => p.test(trimmed));
+}
+
+/**
+ * Detect if a post originates from a known aggregator or
+ * republishing source (not the original content).
+ */
+const AGGREGATOR_DOMAINS = [
+  'reddit.com',
+  'redlib.',  // Redlib instances
+  'lemmy',    // Lemmy instances
+  'news.google.com',
+  'news.ycombinator.com',
+  'medium.com',
+  'substack.com',
+  'ghost.org',
+];
+
+function isFromAggregator(post: UnifiedPost): boolean {
+  // Check if the post content references an aggregator
+  const urls = post.text.match(/https?:\/\/[^\s<>"']+/gi) ?? [];
+  for (const url of urls) {
+    try {
+      const u = new URL(url);
+      if (AGGREGATOR_DOMAINS.some((d) => u.hostname.includes(d))) return true;
+    } catch {
+      // ignore bad URLs
+    }
+  }
+  // Check embeds for aggregator signals
+  for (const embed of post.embeds) {
+    try {
+      const u = new URL(embed.url);
+      if (AGGREGATOR_DOMAINS.some((d) => u.hostname.includes(d))) return true;
+    } catch {
+      // ignore
+    }
+  }
+  return false;
+}
+
+/**
+ * Extract the canonical article URL from a post.
+ * Handles Medium, Substack, Reddit, and other platforms
+ * that may have trackable or redirect URLs.
+ */
+function extractCanonicalUrl(post: UnifiedPost): string | null {
+  // First check embeds for explicit URLs
+  const linkEmbeds = post.embeds.filter((e) => e.kind === 'link');
+  for (const embed of linkEmbeds) {
+    if (embed.url && embed.url.length > 5) {
+      return normalizeUrlForDedup(embed.url);
+    }
+  }
+
+  // Then extract first substantial URL from text
+  const urls = post.text.match(/https?:\/\/[^\s<>"']+/gi);
+  if (urls && urls.length > 0) {
+    // Filter out social media URLs (those are the post itself, not a shared article)
+    const socialDomains = ['twitter.com', 'x.com', 'bsky.app', 'warpcast.com', 'nostr.', 'naddr'];
+    const articleUrl = urls.find((u) => !socialDomains.some((d) => u.includes(d)));
+    if (articleUrl) return normalizeUrlForDedup(articleUrl);
+  }
+
+  return null;
+}
+
+
 function primaryUrl(post: UnifiedPost): string | null {
   const urls = post.text.match(URL_RE);
   if (urls && urls.length > 0) return normalizeUrlForDedup(urls[0]);
@@ -730,6 +910,7 @@ export function deduplicatePosts(posts: UnifiedPost[]): UnifiedPost[] {
     fingerprint: new Set<string>(),
     normalized: new Set<string>(),
     url: new Set<string>(),
+    canonicalUrl: new Set<string>(),
     prefix: new Set<string>(),
     shortExact: new Set<string>(),
     authorWindow: new Set<string>(),
@@ -737,48 +918,127 @@ export function deduplicatePosts(posts: UnifiedPost[]): UnifiedPost[] {
     ticker: new Set<string>(),
     embed: new Set<string>(),
     imageFp: new Set<string>(),
+    perceptualHash: new Set<string>(),
+    rssOrigin: new Set<string>(),
   };
   const candidates: { words: Set<string>; index: number }[] = [];
+  const shortTextCandidates: { text: string; index: number }[] = [];
   const out: UnifiedPost[] = [];
 
   for (const p of posts) {
     if (seen.id.has(p.id)) continue;
 
+    // Content fingerprint
     const fp = contentFingerprint(p);
     if (fp && seen.fingerprint.has(fp)) continue;
 
+    // Normalized text
     const norm = normalizeStripped(p.text);
     if (norm.length > 15 && seen.normalized.has(norm)) continue;
 
+    // Primary URL dedup
     const purl = primaryUrl(p);
     if (purl && seen.url.has(purl)) continue;
 
+    // CANONICAL URL dedup: same article shared via different protocols
+    const curl = extractCanonicalUrl(p);
+    if (curl && seen.canonicalUrl.has(curl)) {
+      const matched = out.find((o) => extractCanonicalUrl(o) === curl);
+      if (matched) {
+        const cross = (matched as Record<string, unknown>).crossPostedTo as string[] ?? [];
+        if (!cross.includes(p.protocol)) cross.push(p.protocol);
+        (matched as Record<string, unknown>).crossPostedTo = cross;
+      }
+      continue;
+    }
+
+    // Prefix dedup
     const prefix = p.text.trim().slice(0, 120).toLowerCase();
     if (prefix.length > 12 && seen.prefix.has(prefix)) continue;
 
+    // Short exact match
     if (p.text.trim().length <= 80) {
       const exact = p.text.trim().toLowerCase();
       if (exact.length > 0 && seen.shortExact.has(exact)) continue;
       if (exact.length > 0) seen.shortExact.add(exact);
     }
 
+    // Author + content window
     const windowKey = `${authorKey(p)}|${fp}`;
     if (fp && seen.authorWindow.has(windowKey)) continue;
 
+    // Quoted / repost detection
     const qid = extractQuotedId(p);
     if (qid && seen.quoted.has(qid)) continue;
 
+    // Ticker snapshot
     const ts = tickerSnapshot(p.text);
     if (ts.length > 3 && seen.ticker.has(ts)) continue;
 
+    // Embed fingerprint
     const eid = embedFingerprint(p);
     if (eid && seen.embed.has(eid)) continue;
 
+    // Image URL fingerprint
     const imgFp = imageFingerprint(p);
     if (imgFp && seen.imageFp.has(imgFp)) continue;
 
+    // PERCEPTUAL IMAGE HASH: same image even with different CDN URLs
+    const phash = imagePerceptualFingerprint(p);
+    if (phash && seen.perceptualHash.has(phash)) continue;
+
+    // RSS ORIGIN DEDUP: same article from multiple RSS feeds
+    if (p.protocol === 'rss') {
+      const articleTitle = postTitle(p);
+      const domain = extractDomain(p);
+      if (articleTitle && domain) {
+        const rssKey = `rss:${domain}:${articleTitle.toLowerCase().slice(0, 80)}`;
+        if (seen.rssOrigin.has(rssKey)) {
+          const existing = out.find((o) => {
+            const et = postTitle(o);
+            const ed = extractDomain(o);
+            if (!et || !ed) return false;
+            return `rss:${ed}:${et.toLowerCase().slice(0, 80)}` === rssKey;
+          });
+          if (existing) {
+            const cross = (existing as Record<string, unknown>).crossPostedTo as string[] ?? [];
+            if (!cross.includes(p.protocol)) cross.push(p.protocol);
+            (existing as Record<string, unknown>).crossPostedTo = cross;
+            // Keep the version with more content (likely the original)
+            if ((p.text?.length ?? 0) > (existing.text?.length ?? 0)) {
+              const idx = out.indexOf(existing);
+              if (idx !== -1) out[idx] = p;
+            }
+          }
+          continue;
+        }
+        seen.rssOrigin.add(rssKey);
+      }
+    }
+
+    // AGGREGATOR DEDUP: prefer original source over Redlib/Lemmy aggregator
+    if (isFromAggregator(p)) {
+      const curl2 = extractCanonicalUrl(p);
+      if (curl2) {
+        const normalCurl = normalizeUrlForDedup(curl2);
+        let matchedOriginal = false;
+        for (const existing of out) {
+          const existingUrl = extractCanonicalUrl(existing);
+          if (existingUrl && normalizeUrlForDedup(existingUrl) === normalCurl) {
+            matchedOriginal = true;
+            const cross = (existing as Record<string, unknown>).crossPostedTo as string[] ?? [];
+            if (!cross.includes(p.protocol)) cross.push(p.protocol);
+            (existing as Record<string, unknown>).crossPostedTo = cross;
+            break;
+          }
+        }
+      }
+      if (matchedOriginal) continue;
+    }
+
+    // JACCARD similarity for near-duplicates
     const ws = wordSet(p.text);
-    let matchedProtocol: Protocol | undefined;
+    let matchedProtocol: string | undefined;
     if (!qid && ws.size >= 3 && p.text.length > MIN_TEXT_LENGTH) {
       for (const cand of candidates) {
         const sim = jaccardSimilarity(ws, cand.words);
@@ -786,31 +1046,99 @@ export function deduplicatePosts(posts: UnifiedPost[]): UnifiedPost[] {
           const existing = out[cand.index];
           if (!existing) continue;
           matchedProtocol = existing.protocol;
-          const cross = existing.crossPostedTo ?? [];
+          const cross = (existing as Record<string, unknown>).crossPostedTo as string[] ?? [];
           if (!cross.includes(p.protocol)) cross.push(p.protocol);
-          existing.crossPostedTo = cross;
+          (existing as Record<string, unknown>).crossPostedTo = cross;
           break;
         }
       }
     }
+
+    // LEVENSHTEIN near-duplicate detection for short/medium text
+    if (!matchedProtocol && p.text.length > 15 && p.text.length < 300) {
+      const cleanText = p.text.toLowerCase()
+        .replace(/https?:\/\/\S+/g, '')
+        .replace(/[^a-z0-9\s]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+      if (cleanText.length > 10) {
+        for (const cand of shortTextCandidates) {
+          const levSim = normalizedLevenshtein(cleanText, cand.text);
+          if (levSim >= 0.85) {
+            const existing = out[cand.index];
+            if (!existing) continue;
+            matchedProtocol = existing.protocol;
+            const cross = (existing as Record<string, unknown>).crossPostedTo as string[] ?? [];
+            if (!cross.includes(p.protocol)) cross.push(p.protocol);
+            (existing as Record<string, unknown>).crossPostedTo = cross;
+            break;
+          }
+        }
+      }
+    }
+
     if (matchedProtocol) continue;
 
+    // Record in seen sets and add to output
     seen.id.add(p.id);
     if (fp) seen.fingerprint.add(fp);
     if (norm.length > 15) seen.normalized.add(norm);
     if (purl) seen.url.add(purl);
+    if (curl) seen.canonicalUrl.add(curl);
     if (prefix.length > 12) seen.prefix.add(prefix);
     if (fp) seen.authorWindow.add(windowKey);
     if (qid) seen.quoted.add(qid);
     if (ts.length > 3) seen.ticker.add(ts);
     if (eid) seen.embed.add(eid);
     if (imgFp) seen.imageFp.add(imgFp);
+    if (phash) seen.perceptualHash.add(phash);
     candidates.push({ words: ws, index: out.length });
+    const cleanText = p.text.toLowerCase()
+      .replace(/https?:\/\/\S+/g, '')
+      .replace(/[^a-z0-9\s]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (cleanText.length > 10 && cleanText.length < 300) {
+      shortTextCandidates.push({ text: cleanText, index: out.length });
+    }
     out.push(p);
   }
 
   return out;
 }
+
+/**
+ * Extract the title/headline from a post (for RSS/article dedup).
+ */
+function postTitle(post: UnifiedPost): string | null {
+  for (const embed of post.embeds) {
+    const meta = embed.meta as Record<string, unknown> | undefined;
+    if (meta?.title && typeof meta.title === 'string' && meta.title.length > 5) {
+      return meta.title;
+    }
+  }
+  if (post.protocol === 'rss') {
+    const firstLine = post.text.trim().split('\n')[0]?.trim();
+    if (firstLine && firstLine.length > 5 && firstLine.length < 200) return firstLine;
+    const firstSentence = post.text.trim().split(/[.!?]/)[0]?.trim();
+    if (firstSentence && firstSentence.length > 5 && firstSentence.length < 200) return firstSentence;
+  }
+  return null;
+}
+
+/**
+ * Extract the domain from a post's primary URL.
+ */
+function extractDomain(post: UnifiedPost): string | null {
+  const url = primaryUrl(post);
+  if (!url) return null;
+  try {
+    return new URL(url).hostname.replace(/^www\./, '');
+  } catch {
+    return null;
+  }
+}
+
 
 export function enrichPostNiches(post: UnifiedPost): UnifiedPost {
   const textParts = [post.text, post.html ?? '', post.author.displayName, post.author.bio];
@@ -980,3 +1308,16 @@ export {
   linkIdentities,
   resolveIdentity,
 } from './identity-resolver';
+
+// ─── Enhanced Dedup & Quality Functions ─────────────────────────────────
+export {
+  levenshteinDistance,
+  normalizedLevenshtein,
+  imagePerceptualFingerprint,
+  isCrossPost,
+  isFromAggregator,
+  extractCanonicalUrl,
+  postTitle,
+  extractDomain,
+}
+

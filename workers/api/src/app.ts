@@ -587,7 +587,7 @@ async function withSession(
 // Added before CORS so it's always present.
 app.use('*', async (c, next) => {
   const reqId = crypto.randomUUID().slice(0, 8);
-  c.set('requestId', reqId);
+  (c as unknown as { set: (k: string, v: string) => void }).set('requestId', reqId);
   await next();
   if (c.res) {
     c.res = new Response(c.res.body, {

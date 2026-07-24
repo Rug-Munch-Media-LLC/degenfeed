@@ -56,9 +56,7 @@ export function PostCardSkeleton({ count = 1 }: PostCardSkeletonProps) {
             <div className="skeleton-shimmer h-3 w-3/4 rounded" />
           </div>
           {/* Media skeleton — optional media area */}
-          {i % 3 === 0 && (
-            <div className="mb-3 skeleton-shimmer aspect-video w-full rounded-xl" />
-          )}
+          {i % 3 === 0 && <div className="mb-3 skeleton-shimmer aspect-video w-full rounded-xl" />}
           {/* Engagement bar skeleton — matches PostCardEngagement layout */}
           <div className="mt-1 flex items-center gap-4">
             {[0, 1, 2, 3].map((k) => (
@@ -79,7 +77,13 @@ export function PostCardSkeleton({ count = 1 }: PostCardSkeletonProps) {
  * Minimal shimmer skeleton for inline loading states.
  * Renders a single shimmer line matching the parent width.
  */
-export function InlineSkeleton({ width = '100%', height = 16 }: { width?: string; height?: number }) {
+export function InlineSkeleton({
+  width = '100%',
+  height = 16,
+}: {
+  width?: string;
+  height?: number;
+}) {
   return (
     <div
       className="skeleton-shimmer"

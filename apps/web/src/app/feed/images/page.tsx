@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Script from 'next/script';
-import { ProtocolFeed } from '../../../components/feed/ProtocolFeed';
+import { MediaFeed } from '../../../components/media/MediaFeed';
 
 const imagesBreadcrumb = {
   '@context': 'https://schema.org',
@@ -18,13 +18,20 @@ const imagesBreadcrumb = {
 };
 
 export const metadata: Metadata = {
-  title: 'Image Feed — Pixelfed & Photo Sharing | DegenFeed',
+  title: 'Image Feed — Photos & NFTs | DegenFeed',
   description:
-    'Browse photos and images from Pixelfed and Bluesky. Decentralized image sharing on the fediverse and AT Protocol.',
-  keywords: ['pixelfed feed', 'fediverse photos', 'decentralized images', 'bluesky images'],
+    'Browse photos, NFTs, and images from Pixelfed, Bluesky, Zora, Nostr, and more. Pinterest-style masonry grid with lightbox viewer.',
+  keywords: [
+    'pixelfed feed',
+    'fediverse photos',
+    'decentralized images',
+    'bluesky images',
+    'zora nfts',
+    'nostr images',
+  ],
   openGraph: {
     title: 'Image Feed — DegenFeed',
-    description: 'Photos and images from Pixelfed and the fediverse.',
+    description: 'Photos, NFTs, and images from every protocol.',
   },
   alternates: { canonical: 'https://app.degenfeed.xyz/feed/images' },
 };
@@ -35,7 +42,7 @@ export default function ImagesFeedPage() {
       <Script id="breadcrumb-images-feed" type="application/ld+json">
         {JSON.stringify(imagesBreadcrumb)}
       </Script>
-      <ProtocolFeed source="pixelfed" />
+      <MediaFeed defaultFilter="images" hideHeader={false} />
     </>
   );
 }

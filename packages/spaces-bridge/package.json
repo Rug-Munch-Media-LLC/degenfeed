@@ -1,0 +1,22 @@
+{
+  "name": "@degenfeed/spaces-bridge",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Cross-platform Spaces bridge — Nostr, PeerTube, Owncast, LivePeer, and more",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check src/"
+  },
+  "dependencies": {
+    "@degenfeed/nostr-sdk": "workspace:*",
+    "@degenfeed/peertube-provider": "workspace:*",
+    "@degenfeed/types": "workspace:*",
+    "@degenfeed/token-gate": "workspace:*",
+    "@degenfeed/web3": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0"
+  }
+}

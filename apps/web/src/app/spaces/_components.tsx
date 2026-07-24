@@ -1,7 +1,7 @@
 // === Sub-components ===
 // Auto-extracted from page.tsx
 
-import { getProtocolColor, getProtocolIcon } from '@degenfeed/ui';
+import { getProtocolColor, getProtocolIcon, getProtocolLabel } from '@degenfeed/ui';
 import Image from 'next/image';
 import { useCallback, useState } from 'react';
 import { QuickTipButton } from '../../components/QuickTipButton';
@@ -214,20 +214,23 @@ export function LiveSpaceCard({
           </span>
         )}
       </div>
-      {space.protocols.length > 0 && (
-        <div className="mb-3 flex flex-wrap gap-1">
-          {space.protocols.map((p) => (
-            <span
-              key={p}
-              className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-medium"
-              style={{ backgroundColor: `${getProtocolColor(p)}15`, color: getProtocolColor(p) }}
-            >
-              <span className="text-[0.6em]">{getProtocolIcon(p)}</span>
-              {p}
-            </span>
-          ))}
-        </div>
-      )}
+      {(() => {
+        const platforms = getSpacePlatforms(space);
+        return platforms.length > 0 ? (
+          <div className="mb-3 flex flex-wrap gap-1">
+            {platforms.map((p) => (
+              <span
+                key={p}
+                className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-medium"
+                style={{ backgroundColor: `${getPlatformColor(p)}15`, color: getPlatformColor(p) }}
+              >
+                <span className="text-[0.6em]">{getPlatformIcon(p)}</span>
+                {getPlatformLabel(p)}
+              </span>
+            ))}
+          </div>
+        ) : null;
+      })()}
       <div className="mb-2 flex items-center gap-2">
         <button
           type="button"
@@ -315,20 +318,23 @@ export function UpcomingSpaceCard({
           </span>
         )}
       </div>
-      {space.protocols.length > 0 && (
-        <div className="mb-3 flex flex-wrap gap-1">
-          {space.protocols.map((p) => (
-            <span
-              key={p}
-              className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-medium"
-              style={{ backgroundColor: `${getProtocolColor(p)}15`, color: getProtocolColor(p) }}
-            >
-              <span className="text-[0.6em]">{getProtocolIcon(p)}</span>
-              {p}
-            </span>
-          ))}
-        </div>
-      )}
+      {(() => {
+        const platforms = getSpacePlatforms(space);
+        return platforms.length > 0 ? (
+          <div className="mb-3 flex flex-wrap gap-1">
+            {platforms.map((p) => (
+              <span
+                key={p}
+                className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-medium"
+                style={{ backgroundColor: `${getPlatformColor(p)}15`, color: getPlatformColor(p) }}
+              >
+                <span className="text-[0.6em]">{getPlatformIcon(p)}</span>
+                {getPlatformLabel(p)}
+              </span>
+            ))}
+          </div>
+        ) : null;
+      })()}
       {space.tippingEnabled && (
         <button
           type="button"
@@ -499,4 +505,59 @@ export function GridSkeleton() {
       <div className="h-10 w-full animate-pulse rounded-xl bg-[var(--color-muted)]/10" />
     </div>
   );
+}
+
+// ─── Cross-platform helpers ─────────────────────────────────────────────
+
+/** Map platform ID to display color */
+export function getPlatformColor(platform: string): string {
+  const colors: Record<string, string> = {
+    nostr: '#8b5cf6',
+    peertube: '#f97316',
+    owncast: '#06b6d4',
+    livepeer: '#10b981',
+    farcaster: '#8a63d2',
+    lens: '#42e66d',
+    mastodon: '#6364ff',
+  };
+  return colors[platform] ?? '#888';
+}
+
+/** Map platform ID to display icon */
+export function getPlatformIcon(platform: string): string {
+  const icons: Record<string, string> = {
+    nostr: '⚡',
+    peertube: '📺',
+    owncast: '🔴',
+    livepeer: '🎬',
+    farcaster: '🏎️',
+    lens: '🔮',
+    mastodon: '🐘',
+  };
+  return icons[platform] ?? '🌐';
+}
+
+/** Map platform ID to display label */
+export function getPlatformLabel(platform: string): string {
+  const labels: Record<string, string> = {
+    nostr: 'Nostr',
+    peertube: 'PeerTube',
+    owncast: 'Owncast',
+    livepeer: 'LivePeer',
+    farcaster: 'Farcaster',
+    lens: 'Lens',
+    mastodon: 'Mastodon',
+  };
+  return labels[platform] ?? platform;
+}
+
+/** Get platform identifiers from a space item (handles legacy and new formats) */
+export function getSpacePlatforms(space: {
+  protocols?: string[];
+  platforms?: Array<{ platform: string }>;
+}): string[] {
+  if (space.platforms && space.platforms.length > 0) {
+    return space.platforms.map((p) => p.platform);
+  }
+  return space.protocols ?? [];
 }
