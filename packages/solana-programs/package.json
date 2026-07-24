@@ -6,6 +6,6 @@
   "description": "Solana Anchor programs for DegenFeed (degenfeed-creator-token)",
   "scripts": {
     "build": "cd degenfeed-creator-token && anchor build",
-    "test": "cd degenfeed-creator-token && anchor test"
+    "test": "vitest run"
   }
 }
