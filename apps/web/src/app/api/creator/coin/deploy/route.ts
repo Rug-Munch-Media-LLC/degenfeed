@@ -14,8 +14,10 @@ export async function POST(request: Request): Promise<Response> {
     const body = await request.json();
 
     // Basic server-side validation
-    const { name, symbol, description, supply, creatorAllocation } =
-      body as Record<string, unknown>;
+    const { name, symbol, description, supply, creatorAllocation } = body as Record<
+      string,
+      unknown
+    >;
 
     if (!name || typeof name !== 'string' || name.length < 1 || name.length > 64) {
       return new Response(JSON.stringify({ error: 'Invalid or missing coin name (1–64 chars)' }), {

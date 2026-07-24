@@ -2,8 +2,8 @@
  * @degenfeed/web — User preferences API service
  */
 
-import { api } from './api';
 import type { ApiResponse } from '../types/api';
+import { api } from './api';
 
 export interface UserPreferences {
   hideLowQuality: boolean;

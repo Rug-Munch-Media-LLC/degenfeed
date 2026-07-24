@@ -13,7 +13,8 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'happy-dom',
-    include: ['src/**/*.{test,spec}.{ts,tsx}'],
+    include: ['src/**/*.{test,spec}.{ts,tsx}', '../../tests/**/*.{test,spec}.{ts,tsx}'],
     exclude: ['node_modules', 'dist', '.next', '.turbo'],
+    setupFiles: ['../../tests/vitest.setup.ts'],
   },
 });

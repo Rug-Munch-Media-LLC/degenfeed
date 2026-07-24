@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Script from 'next/script';
+import { FeedShell } from './FeedShell';
 
 const breadcrumbStructuredData = {
   '@context': 'https://schema.org',
@@ -55,7 +56,7 @@ export default function FeedLayout({ children }: { children: React.ReactNode }) 
       <Script id="breadcrumb-feed" type="application/ld+json">
         {JSON.stringify(breadcrumbStructuredData)}
       </Script>
-      {children}
+      <FeedShell>{children}</FeedShell>
     </>
   );
 }

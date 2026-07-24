@@ -56,7 +56,7 @@ interface PeerTubeResponse {
 
 // ─── Helpers ─────────────────────────────────────────────────────────
 
-function guessNiches(text: string, name: string): string[] {
+export function guessNiches(text: string, name: string): string[] {
   const niches: string[] = [];
   const lower = `${text} ${name}`.toLowerCase();
   if (/\b(btc|bitcoin|satoshi|halving)\b/.test(lower)) niches.push('bitcoin');
@@ -77,7 +77,7 @@ function guessNiches(text: string, name: string): string[] {
 
 // ─── Mapping ─────────────────────────────────────────────────────────
 
-function videoToPost(video: PeerTubeVideo): UnifiedPost {
+export function videoToPost(video: PeerTubeVideo): UnifiedPost {
   const account = video.account || video.channel;
   const authorName = account?.displayName || account?.name || 'PeerTube';
   const authorUrl = account?.url || '';

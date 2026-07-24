@@ -140,7 +140,10 @@ export const PROTOCOLS = [
   { id: 'peertube', label: 'PeerTube', icon: '📺', color: '#f1680d' },
 ] as const;
 
-export const CONTENT_TYPE_LABELS: Record<keyof ContentTypeWeights, { label: string; icon: string }> = {
+export const CONTENT_TYPE_LABELS: Record<
+  keyof ContentTypeWeights,
+  { label: string; icon: string }
+> = {
   posts: { label: 'Posts', icon: '📝' },
   images: { label: 'Images', icon: '🖼️' },
   videos: { label: 'Videos', icon: '🎬' },
@@ -176,7 +179,12 @@ export const DEFAULT_WEIGHT = 50;
 export function getDefaultProtocols(): Record<string, ProtocolWeight> {
   const p: Record<string, ProtocolWeight> = {};
   for (const proto of PROTOCOLS) {
-    p[proto.id] = { weight: DEFAULT_WEIGHT, minEngagement: 0, verifiedOnly: false, minContentLength: 0 };
+    p[proto.id] = {
+      weight: DEFAULT_WEIGHT,
+      minEngagement: 0,
+      verifiedOnly: false,
+      minContentLength: 0,
+    };
   }
   return p;
 }
@@ -232,13 +240,19 @@ export function loadFeedMixConfig(): FeedMixConfig {
         qualityThresholds: { ...defaults.qualityThresholds, ...parsed.qualityThresholds },
       };
     }
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
   return getDefaultFeedMixConfig();
 }
 
 export function saveFeedMixConfig(config: FeedMixConfig): void {
   if (typeof window === 'undefined') return;
-  try { localStorage.setItem(LS_FEED_MIX, JSON.stringify(config)); } catch { /* quota */ }
+  try {
+    localStorage.setItem(LS_FEED_MIX, JSON.stringify(config));
+  } catch {
+    /* quota */
+  }
 }
 
 export function loadSavedMixes(): SavedMix[] {
@@ -246,10 +260,16 @@ export function loadSavedMixes(): SavedMix[] {
   try {
     const raw = localStorage.getItem(LS_SAVED_MIXES);
     return raw ? (JSON.parse(raw) as SavedMix[]) : [];
-  } catch { return []; }
+  } catch {
+    return [];
+  }
 }
 
 export function saveSavedMixes(mixes: SavedMix[]): void {
   if (typeof window === 'undefined') return;
-  try { localStorage.setItem(LS_SAVED_MIXES, JSON.stringify(mixes)); } catch { /* quota */ }
+  try {
+    localStorage.setItem(LS_SAVED_MIXES, JSON.stringify(mixes));
+  } catch {
+    /* quota */
+  }
 }

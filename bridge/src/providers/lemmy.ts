@@ -77,7 +77,7 @@ interface LemmyResponse {
 
 // ─── Helpers ─────────────────────────────────────────────────────────
 
-function guessNiches(text: string, community: string): string[] {
+export function guessNiches(text: string, community: string): string[] {
   const niches: string[] = [];
   const lower = text.toLowerCase();
   const commLower = community.toLowerCase();
@@ -107,7 +107,7 @@ function guessNiches(text: string, community: string): string[] {
 
 // ─── Mapping ─────────────────────────────────────────────────────────
 
-function postToUnified(
+export function postToUnified(
   pv: LemmyPostView,
   hostname: string,
   communityName: string,

@@ -20,6 +20,12 @@ import { fetchLemmyPosts } from './providers/lemmy';
 import { fetchPeerTubePosts } from './providers/peertube';
 import { fetchRedditPosts } from './providers/redlib';
 import { fetchRssBridgePosts } from './providers/rssbridge';
+import {
+  fetchFarcasterPosts,
+  fetchLensPosts,
+  fetchNostrPosts,
+  fetchPixelfedPosts,
+} from './providers/stubs';
 
 // ─── Constants ─────────────────────────────────────────────────────────
 
@@ -70,6 +76,10 @@ const PROVIDERS: Record<string, { name: string; fetch: ProviderFetcher }> = {
   lemmy: { name: 'Lemmy', fetch: fetchLemmyPosts },
   peertube: { name: 'PeerTube', fetch: fetchPeerTubePosts },
   bluesky: { name: 'Bluesky/PDS', fetch: fetchBlueskyPosts },
+  nostr: { name: 'Nostr', fetch: fetchNostrPosts },
+  farcaster: { name: 'Farcaster', fetch: fetchFarcasterPosts },
+  lens: { name: 'Lens', fetch: fetchLensPosts },
+  pixelfed: { name: 'Pixelfed', fetch: fetchPixelfedPosts },
 };
 
 // ─── Feed Builder ──────────────────────────────────────────────────────
@@ -302,6 +312,10 @@ const server = http.createServer(async (req, res) => {
           lemmy: { healthy: lemmyHealthy, label: 'Lemmy' },
           peertube: { healthy: peertubeHealthy, label: 'PeerTube' },
           bluesky: { healthy: blueskyHealthy, label: 'Bluesky PDS' },
+          nostr: { healthy: false, label: 'Nostr (relay connector TBD)' },
+          farcaster: { healthy: false, label: 'Farcaster (hub connector TBD)' },
+          lens: { healthy: false, label: 'Lens (API connector TBD)' },
+          pixelfed: { healthy: false, label: 'Pixelfed (connector TBD)' },
         },
       });
     }
@@ -354,6 +368,79 @@ const server = http.createServer(async (req, res) => {
         data: rssPosts,
         meta: { total: rssPosts.length, source: 'live', fetchedAt: Date.now() },
       });
+    }
+
+    // ── Per-protocol feed endpoints ───────────────────────────
+    if (path === '/api/feed/mastodon') {
+      const limit = Math.min(parseInt(searchParams.get('limit') || '25', 10), 200);
+      const { posts, meta } = await buildFeed(['mastodon'], limit);
+      return jsonOk(res, { data: posts, meta });
+    }
+    if (path === '/api/feed/lemmy') {
+      const limit = Math.min(parseInt(searchParams.get('limit') || '25', 10), 200);
+      const { posts, meta } = await buildFeed(['lemmy'], limit);
+      return jsonOk(res, { data: posts, meta });
+    }
+    if (path === '/api/feed/peertube') {
+      const limit = Math.min(parseInt(searchParams.get('limit') || '25', 10), 200);
+      const { posts, meta } = await buildFeed(['peertube'], limit);
+      return jsonOk(res, { data: posts, meta });
+    }
+    if (path === '/api/feed/bluesky') {
+      const limit = Math.min(parseInt(searchParams.get('limit') || '25', 10), 200);
+      const { posts, meta } = await buildFeed(['bluesky'], limit);
+      return jsonOk(res, { data: posts, meta });
+    }
+    if (path === '/api/feed/nostr') {
+      const limit = Math.min(parseInt(searchParams.get('limit') || '25', 10), 200);
+      const { posts, meta } = await buildFeed(['nostr'], limit);
+      return jsonOk(res, { data: posts, meta });
+    }
+    if (path === '/api/feed/farcaster') {
+      const limit = Math.min(parseInt(searchParams.get('limit') || '25', 10), 200);
+      const { posts, meta } = await buildFeed(['farcaster'], limit);
+      return jsonOk(res, { data: posts, meta });
+    }
+    if (path === '/api/feed/lens') {
+      const limit = Math.min(parseInt(searchParams.get('limit') || '25', 10), 200);
+      const { posts, meta } = await buildFeed(['lens'], limit);
+      return jsonOk(res, { data: posts, meta });
+    }
+    if (path === '/api/feed/pixelfed') {
+      const limit = Math.min(parseInt(searchParams.get('limit') || '25', 10), 200);
+      const { posts, meta } = await buildFeed(['pixelfed'], limit);
+      return jsonOk(res, { data: posts, meta });
+    }
+    if (path === '/api/feed/reddit') {
+      const limit = Math.min(parseInt(searchParams.get('limit') || '25', 10), 200);
+      const { posts, meta } = await buildFeed(['reddit'], limit);
+      return jsonOk(res, { data: posts, meta });
+    }
+
+    // ── Feed stats ──────────────────────────────────────────────
+    if (path === '/api/feed/stats') {
+      const protocolKeys = Object.keys(PROVIDERS);
+      const results = await Promise.allSettled(
+        protocolKeys.map(async (key) => {
+          try {
+            const provider = PROVIDERS[key];
+            const posts = await provider.fetch(3);
+            return { protocol: key, count: posts.length, label: provider.name };
+          } catch {
+            return { protocol: key, count: 0, label: key };
+          }
+        }),
+      );
+      const sources: Record<string, { count: number; label: string }> = {};
+      let totalPosts = 0;
+      for (const result of results) {
+        if (result.status === 'fulfilled') {
+          const { protocol, count, label } = result.value;
+          sources[protocol] = { count, label };
+          totalPosts += count;
+        }
+      }
+      return jsonOk(res, { totalPosts, sources, fetchedAt: Date.now() });
     }
 
     // ── Preferences ─────────────────────────────────────────────

@@ -28,7 +28,7 @@ const PUBLIC_INSTANCES = [
 
 // ─── Helpers ──────────────────────────────────────────────────────────
 
-function stripHtml(html: string): string {
+export function stripHtml(html: string): string {
   return html
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<[^>]*>/g, ' ')
@@ -42,7 +42,7 @@ function stripHtml(html: string): string {
     .trim();
 }
 
-function guessNiches(text: string): string[] {
+export function guessNiches(text: string): string[] {
   const niches: string[] = [];
   const lower = text.toLowerCase();
   if (/\b(btc|bitcoin|satoshi|halving)\b/.test(lower)) niches.push('bitcoin');
@@ -97,7 +97,7 @@ interface MastodonStatus {
 
 // ─── Mapping ──────────────────────────────────────────────────────────
 
-function statusToPost(s: MastodonStatus, instanceHost: string): UnifiedPost {
+export function statusToPost(s: MastodonStatus, instanceHost: string): UnifiedPost {
   const acct = s.account;
   const original = s.reblog ?? s;
   const content = stripHtml(original.content || '');

@@ -33,6 +33,17 @@ import {
   saveSavedMixes,
   TOPICS,
 } from '../../components/FeedTuner';
+import { FeedFilterBar, FeedTabBar } from '../../components/feed/FeedFilterBar';
+import { FeedHealthSection, WhileYouWereAwayCard } from '../../components/feed/FeedHealthSection';
+import {
+  FeedAuthGate,
+  FeedEmptyState,
+  FeedErrorState,
+  FeedLoadingSkeleton,
+  FeedNewPostsBanner,
+  FeedProtocolSummary,
+} from '../../components/feed/FeedStates';
+import { FEED_PRESETS, PROTOCOL_META } from '../../components/feed/feedPresets';
 import { GettingStartedChecklist } from '../../components/GettingStartedChecklist';
 import { GuidedTour } from '../../components/GuidedTour';
 import { PostCardPrefetcher } from '../../components/PostCardPrefetcher';
@@ -54,17 +65,45 @@ import { aggregateNiches, CategoryBreakCard } from './components/CategoryBreak';
 import { OnboardingSuggestions } from './components/OnboardingSuggestions';
 import { ReadingProgressBar } from './components/ReadingProgressBar';
 import { ShareSheet } from './components/ShareSheet';
-import { FeedHealthSection, WhileYouWereAwayCard } from '../../components/feed/FeedHealthSection';
 
 const TipModal = dynamic(
   () => import('../../components/TipModal').then((m) => ({ default: m.TipModal })),
-  {
-    ssr: false,
-    loading: () => null,
-  },
+  { ssr: false, loading: () => null },
 );
 
 type Tab = 'for-you' | 'following' | 'trending' | 'news' | 'custom-mix';
+
+interface FeedPreset {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  config: {
+    freshnessPreference: number;
+    creatorDiversity: number;
+    exploreRatio: number;
+    algorithmTransparent: boolean;
+    recencyWeight: number;
+    engagementWeight: number;
+    contentTypes?: Record<string, number>;
+  };
+}
+
+const ADMIN_WALLETS_RAW =
+  typeof process !== 'undefined' ? process.env.NEXT_PUBLIC_ADMIN_WALLETS || '' : '';
+const ADMIN_WALLETS = new Set(
+  ADMIN_WALLETS_RAW.split(',')
+    .map((a) => a.trim().toLowerCase())
+    .filter(Boolean),
+);
+
+const FEED_TABS = [
+  { id: 'for-you' as Tab, label: 'For You' },
+  { id: 'following' as Tab, label: 'Following' },
+  { id: 'trending' as Tab, label: 'Trending' },
+  { id: 'news' as Tab, label: 'News' },
+  { id: 'custom-mix' as Tab, label: 'Custom Mix' },
+];
 
 interface FeedMeta {
   total?: number;
@@ -83,110 +122,6 @@ interface FeedMeta {
   };
 }
 
-interface ProtocolSummary {
-  id: string;
-  label: string;
-  color: string;
-  count: number;
-}
-
-const PROTOCOL_META: Record<string, { label: string; color: string; emoji: string }> = {
-  nostr: { label: 'Nostr', color: '#8e30eb', emoji: '⚡' },
-  farcaster: { label: 'Farcaster', color: '#8a63d2', emoji: '🟣' },
-  lens: { label: 'Lens', color: '#abfe2c', emoji: '🌿' },
-  bluesky: { label: 'Bluesky', color: '#1185fe', emoji: '🦋' },
-  mastodon: { label: 'Mastodon', color: '#6364ff', emoji: '🐘' },
-  threads: { label: 'Threads (Experimental)', color: '#888888', emoji: '🧵' },
-  reddit: { label: 'Reddit', color: '#ff4500', emoji: '🔴' },
-  rss: { label: 'News', color: '#ffa500', emoji: '📰' },
-};
-
-// === Admin wallets ==================================================
-const ADMIN_WALLETS_RAW =
-  typeof process !== 'undefined' ? process.env.NEXT_PUBLIC_ADMIN_WALLETS || '' : '';
-const ADMIN_WALLETS = new Set(
-  ADMIN_WALLETS_RAW.split(',')
-    .map((a) => a.trim().toLowerCase())
-    .filter(Boolean),
-);
-
-export interface FeedPreset {
-  id: string;
-  name: string;
-  description: string;
-  icon: string;
-  config: {
-    freshnessPreference: number;
-    creatorDiversity: number;
-    exploreRatio: number;
-    algorithmTransparent: boolean;
-    recencyWeight: number;
-    engagementWeight: number;
-    contentTypes?: Record<string, number>;
-  };
-}
-
-export const FEED_PRESETS: FeedPreset[] = [
-  {
-    id: 'tiktok-mode',
-    name: 'TikTok Mode',
-    description: 'Video-forward, rapid-fire content. Max freshness, low creator diversity.',
-    icon: '🎵',
-    config: {
-      freshnessPreference: 90,
-      creatorDiversity: 2,
-      exploreRatio: 60,
-      algorithmTransparent: false,
-      recencyWeight: 2.5,
-      engagementWeight: 3.0,
-      contentTypes: { posts: 20, images: 30, videos: 100, links: 10, threads: 10 },
-    },
-  },
-  {
-    id: 'twitter-mode',
-    name: 'Twitter Mode',
-    description: 'Text-forward, chronological-leaning. Balanced discovery.',
-    icon: '🐦',
-    config: {
-      freshnessPreference: 70,
-      creatorDiversity: 5,
-      exploreRatio: 30,
-      algorithmTransparent: true,
-      recencyWeight: 2.0,
-      engagementWeight: 1.5,
-      contentTypes: { posts: 100, images: 40, videos: 20, links: 30, threads: 40 },
-    },
-  },
-  {
-    id: 'discover-mode',
-    name: 'Discover Mode',
-    description: 'Explore-heavy. Maximize new creators, topics, and content types.',
-    icon: '✨',
-    config: {
-      freshnessPreference: 40,
-      creatorDiversity: 10,
-      exploreRatio: 90,
-      algorithmTransparent: true,
-      recencyWeight: 1.0,
-      engagementWeight: 2.0,
-    },
-  },
-  {
-    id: 'focus-mode',
-    name: 'Focus Mode',
-    description: 'Followed creators only. Minimum noise, maximum signal.',
-    icon: '🎯',
-    config: {
-      freshnessPreference: 30,
-      creatorDiversity: 3,
-      exploreRatio: 5,
-      algorithmTransparent: false,
-      recencyWeight: 1.5,
-      engagementWeight: 2.5,
-    },
-  },
-];
-
 export default function FeedPage() {
   const {
     signedInProtocols,
@@ -199,7 +134,7 @@ export default function FeedPage() {
     nostrPublicId,
     walletAddress,
   } = useAuth();
-
+  const { showToast } = useToast();
   const isAdmin = walletAddress ? ADMIN_WALLETS.has(walletAddress.toLowerCase()) : false;
 
   const [activeTab, setActiveTab] = useState<Tab>('for-you');
@@ -217,563 +152,276 @@ export default function FeedPage() {
   const [minEngagement, setMinEngagement] = useState(0);
   const [maxPerNiche, setMaxPerNiche] = useState(5);
   const [protocolFilter, setProtocolFilter] = useState<string | null>(null);
-  // == Algorithm transparency ====================================
   const [algorithmTransparent, setAlgorithmTransparent] = useState(false);
-  // == Content freshness slider (0-100, 0=evergreen, 100=bleeding-edge) ==
   const [freshnessPreference, setFreshnessPreference] = useState(50);
-  // == Creator diversity (1-10, max posts per creator per page) ==
   const [creatorDiversity, setCreatorDiversity] = useState(5);
-  // == Explore vs Exploit (0-100, 0=only familiar, 100=only discovery) ==
   const [exploreRatio, setExploreRatio] = useState(30);
-  // == Active feed preset ========================================
   const [activePreset, setActivePreset] = useState<string | null>(null);
   const hasSignedIn = ready && Object.values(signedInProtocols).some(Boolean);
   const { notifications, unreadCount, fetchNotifications, markRead } =
     useNotifications(hasSignedIn);
   const { layout, setLayout, isCompact } = useFeedLayout();
-
-  // == Feed position restore ("Resume where you left off")
   const feedContainerRef = useRef<HTMLDivElement>(null);
   useFeedPosition(feedContainerRef);
-
-  // == Swipe between tabs on mobile
   const swipeHandlers = useSwipeTabs(
     () => setActiveTab('following'),
     () => setActiveTab('for-you'),
   );
-
-  // == Edge swipe back gesture
-  useEdgeSwipeBack(() => {
-    window.history.back();
-  });
-
-  // == 2026 Social UX: Haptic feedback for engagement actions ==
+  useEdgeSwipeBack(() => window.history.back());
   const haptic = useHapticFeedback();
+  const router = useRouter();
+  const returnUser = useReturningUser();
 
-  // == 2026 Social UX: Share sheet state ==
-  const [sharePost, setSharePost] = useState<UnifiedPost | null>(null);
-
-  // == 2026 Social UX: Reading progress tracking (expanded long posts) ==
-  const [readingPostId, setReadingPostId] = useState<string | null>(null);
-
-  // == 2026 Social UX: Category break state ==
-  const [categoryNiches, setCategoryNiches] = useState<string[]>([]);
-  // Track which break index we've computed niches for
-  const _lastBreakIdxRef = useRef<number>(-1);
-
-  // == 2026 Social UX: First-visit detection for onboarding suggestions ==
-  const [isFirstVisit, setIsFirstVisit] = useState(false);
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    try {
-      const visited = localStorage.getItem('degenfeed_visited_before');
-      if (!visited) {
-        setIsFirstVisit(true);
-        localStorage.setItem('degenfeed_visited_before', 'true');
-      }
-    } catch {
-      /* ignore */
-    }
-  }, []);
-
-  // == 2026 Social UX: Toast for share sheet ==
-  const handleShareToast = useCallback((message: string) => {
-    window.dispatchEvent(
-      new CustomEvent('df-toast', {
-        detail: { kind: 'success', message },
-      }),
-    );
-  }, []);
-
-  // == Feed preloading: prefetch post routes when cards enter viewport ==
-  useViewportPrefetch([
-    { href: '/feed', priority: 1 },
-    { href: '/trending', priority: 1 },
-    { href: '/notifications', priority: 2 },
-    { href: '/messages', priority: 2 },
-    { href: '/search', priority: 2 },
-  ]);
-
-  // == Tab hover preloading: prefetch feed data when hovering over tabs ==
-  const hoverPrefetch = useHoverPrefetch(200);
-  const tabPrefetchMap = useMemo(
-    () => ({
-      'for-you': '/api/feed/for-you',
-      following: '/api/feed/home?filter=following',
-      'custom-mix': '/api/feed/for-you?mix=true',
-    }),
-    [],
-  );
-
-  // == Right-click context menu
-  const { contextMenu, handleContextMenu, closeContextMenu } = useContextMenu();
-
-  // == Topic weights ==============================================
-  const [topicWeights, setTopicWeights] = useState<Record<string, number>>(getDefaultWeights());
+  const [topicWeights, setTopicWeights] = useState<Record<string, number>>({});
+  const [showFeedInfo, setShowFeedInfo] = useState(false);
   const [showTuner, setShowTuner] = useState(false);
-  const tuneTopicWeightsDebounce = useRef<ReturnType<typeof setTimeout>>(undefined);
-
-  // == Feed Mix Config ============================================
-  const [feedMixConfig, setFeedMixConfig] = useState<FeedMixConfig>(() => {
-    if (typeof window === 'undefined') return getDefaultFeedMixConfig();
-    return loadFeedMixConfig();
-  });
-  const [savedMixes, setSavedMixes] = useState<SavedMix[]>(() => {
-    if (typeof window === 'undefined') return [];
-    return loadSavedMixes();
-  });
+  const [newAvailable, setNewAvailable] = useState(false);
+  const [loadedLimit, setLoadedLimit] = useState(25);
+  const lastPostIdRef = useRef('');
+  const [feedMixConfig, setFeedMixConfig] = useState<FeedMixConfig>(() => loadFeedMixConfig());
+  const [savedMixes, setSavedMixes] = useState<SavedMix[]>(() => loadSavedMixes());
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const tuneTopicWeightsDebounce = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
+  const [showComposer, setShowComposer] = useState(false);
+  const [visiblePostIds, setVisiblePostIds] = useState<Set<string>>(new Set());
+  const [jumpedToPostId, setJumpedToPostId] = useState<string | null>(null);
+  const [readingProgress, setReadingProgress] = useState(0);
+  const [popupPost, setPopupPost] = useState<UnifiedPost | null>(null);
+  const [showWhyCard, setShowWhyCard] = useState(false);
+  const [feedHealthOpen, setFeedHealthOpen] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
+  const { announce } = useAnnouncer();
+  const announcerRef = useRef<ReturnType<typeof useAnnouncer>['announce'] | null>(null);
+  announcerRef.current = announce;
 
   const persistTopicWeights = useCallback((weights: Record<string, number>) => {
     if (tuneTopicWeightsDebounce.current) clearTimeout(tuneTopicWeightsDebounce.current);
     tuneTopicWeightsDebounce.current = setTimeout(() => {
-      void fetch('/api/preferences', {
-        method: 'POST',
+      fetch('/api/preferences/topic-weights', {
+        method: 'PUT',
         credentials: 'include',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ topicWeights: weights }),
+        body: JSON.stringify({ weights }),
       }).catch(() => {});
-    }, 2000);
+    }, 1000);
   }, []);
 
-  const handleTunerWeightsChange = useCallback((weights: Record<string, number>) => {
-    setTopicWeights(weights);
-    // Real-time preview: don't persist yet, just update state for next feed fetch
-  }, []);
-
-  const handleTunerApply = useCallback(
+  const handleTunerWeightsChange = useCallback(
     (weights: Record<string, number>) => {
       setTopicWeights(weights);
       persistTopicWeights(weights);
-      setShowTuner(false);
     },
     [persistTopicWeights],
   );
 
   const handleTunerReset = useCallback(() => {
-    const defaults = getDefaultWeights();
-    setTopicWeights(defaults);
-    persistTopicWeights(defaults);
+    const def = getDefaultWeights();
+    setTopicWeights(def);
+    persistTopicWeights(def);
   }, [persistTopicWeights]);
-
-  // == Debounced persistence =====================================
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const persistPrefs = useCallback((patch: Record<string, unknown>) => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
-      void fetch('/api/preferences', {
-        method: 'POST',
+      fetch('/api/preferences/feed', {
+        method: 'PUT',
         credentials: 'include',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify(patch),
       }).catch(() => {});
-    }, 300);
+    }, 800);
   }, []);
 
-  // == Feed mix handlers ==========================================
   const handleFeedMixChange = useCallback((config: FeedMixConfig) => {
     setFeedMixConfig(config);
+    saveFeedMixConfig(config);
+  }, []);
+  const handleFeedMixReset = useCallback(() => {
+    const def = getDefaultFeedMixConfig();
+    setFeedMixConfig(def);
+    saveFeedMixConfig(def);
+  }, []);
+  const handleSaveMix = useCallback((mix: SavedMix) => {
+    setSavedMixes((prev) => {
+      const next = [...prev.filter((m) => m.id !== mix.id), mix];
+      saveSavedMixes(next);
+      return next;
+    });
+  }, []);
+  const handleLoadMix = useCallback((mix: SavedMix) => {
+    setFeedMixConfig(mix.config);
+    saveFeedMixConfig(mix.config);
+  }, []);
+  const handleDeleteMix = useCallback((id: string) => {
+    setSavedMixes((prev) => {
+      const next = prev.filter((m) => m.id !== id);
+      saveSavedMixes(next);
+      return next;
+    });
   }, []);
 
-  const handleFeedMixApply = useCallback(
-    (config: FeedMixConfig) => {
-      setFeedMixConfig(config);
-      saveFeedMixConfig(config);
-      // Also persist to server
-      persistPrefs({ feedMixConfig: config });
-    },
-    [persistPrefs],
-  );
+  const applyFeedPreset = useCallback((presetId: string) => {
+    const preset = FEED_PRESETS.find((p) => p.id === presetId);
+    if (!preset) return;
+    setFreshnessPreference(preset.config.freshnessPreference);
+    setCreatorDiversity(preset.config.creatorDiversity);
+    setExploreRatio(preset.config.exploreRatio);
+    setAlgorithmTransparent(preset.config.algorithmTransparent);
+    setRecencyWeight(preset.config.recencyWeight);
+    setEngagementWeight(preset.config.engagementWeight);
+    setActivePreset(presetId);
+  }, []);
 
-  const handleFeedMixReset = useCallback(() => {
-    const defaults = getDefaultFeedMixConfig();
-    setFeedMixConfig(defaults);
-    saveFeedMixConfig(defaults);
-    persistPrefs({ feedMixConfig: defaults });
-  }, [persistPrefs]);
-
-  const handleSaveMix = useCallback(
-    (mix: SavedMix) => {
-      setSavedMixes((prev) => {
-        const updated = [...prev, mix];
-        saveSavedMixes(updated);
-        persistPrefs({ savedMixes: updated });
-        return updated;
-      });
-    },
-    [persistPrefs],
-  );
-
-  const handleLoadMix = useCallback(
-    (mix: SavedMix) => {
-      setFeedMixConfig(mix.config);
-      saveFeedMixConfig(mix.config);
-      persistPrefs({ feedMixConfig: mix.config });
-    },
-    [persistPrefs],
-  );
-
-  const handleDeleteMix = useCallback(
-    (id: string) => {
-      setSavedMixes((prev) => {
-        const updated = prev.filter((m) => m.id !== id);
-        saveSavedMixes(updated);
-        persistPrefs({ savedMixes: updated });
-        return updated;
-      });
-    },
-    [persistPrefs],
-  );
-
-  /** Load a pre-built mix */
-  const applyPrebuiltMix = useCallback(
-    (mixId: string) => {
-      const mix = PREBUILT_MIXES.find((m) => m.id === mixId);
-      if (!mix) return;
-      setFeedMixConfig(mix.config);
-      saveFeedMixConfig(mix.config);
-      persistPrefs({ feedMixConfig: mix.config });
-      setShowTuner(true);
-    },
-    [persistPrefs],
-  );
-
-  /** Apply a feed preset */
-  const applyFeedPreset = useCallback(
-    (presetId: string) => {
-      if (presetId === '__clear__') {
-        setActivePreset(null);
-        persistPrefs({ activePreset: null });
-        return;
-      }
-      const preset = FEED_PRESETS.find((p) => p.id === presetId);
-      if (!preset) return;
-      setActivePreset(presetId);
-      setAlgorithmTransparent(preset.config.algorithmTransparent);
-      setFreshnessPreference(preset.config.freshnessPreference);
-      setCreatorDiversity(preset.config.creatorDiversity);
-      setExploreRatio(preset.config.exploreRatio);
-      setRecencyWeight(preset.config.recencyWeight);
-      setEngagementWeight(preset.config.engagementWeight);
-      // Apply content type weights if present
-      if (preset.config.contentTypes && feedMixConfig) {
-        const updatedConfig = {
-          ...feedMixConfig,
-          contentTypes: {
-            ...feedMixConfig.contentTypes,
-            ...preset.config.contentTypes,
-          },
-        };
-        setFeedMixConfig(updatedConfig);
-        saveFeedMixConfig(updatedConfig);
-      }
-      persistPrefs({
-        activePreset: presetId,
-        algorithmTransparent: preset.config.algorithmTransparent,
-        freshnessPreference: preset.config.freshnessPreference,
-        creatorDiversity: preset.config.creatorDiversity,
-        exploreRatio: preset.config.exploreRatio,
-      });
-      setShowTuner(true);
-    },
-    [persistPrefs, feedMixConfig],
-  );
-
-  /** Quick-tune: boost a topic by +5 (capped at 100) */
-  const handleShowMoreLikeThis = useCallback(
+  const handleTopicToggle = useCallback(
     (topic: string) => {
-      const topicId = TOPICS.find(
-        (t) => t.id === topic || t.label.toLowerCase() === topic.toLowerCase(),
-      )?.id;
-      if (!topicId) return;
       setTopicWeights((prev) => {
-        const next = { ...prev, [topicId]: Math.min(100, (prev[topicId] ?? 50) + 5) };
+        const next = { ...prev, [topic]: (prev[topic] ?? 0) > 0 ? 0 : 1 };
         persistTopicWeights(next);
         return next;
       });
-      window.dispatchEvent(
-        new CustomEvent('df-toast', {
-          detail: { kind: 'success', message: `Boosting "${topic}" topics` },
-        }),
-      );
     },
     [persistTopicWeights],
   );
-
-  /** Quick-tune: demote a topic by -5 (capped at 0) */
-  const handleShowLessLikeThis = useCallback(
-    (topic: string) => {
-      const topicId = TOPICS.find(
-        (t) => t.id === topic || t.label.toLowerCase() === topic.toLowerCase(),
-      )?.id;
-      if (!topicId) return;
+  const handleTopicWeightChange = useCallback(
+    (topic: string, weight: number) => {
       setTopicWeights((prev) => {
-        const next = { ...prev, [topicId]: Math.max(0, (prev[topicId] ?? 50) - 5) };
+        const next = { ...prev, [topic]: weight };
         persistTopicWeights(next);
         return next;
       });
-      window.dispatchEvent(
-        new CustomEvent('df-toast', {
-          detail: { kind: 'info', message: `Reducing "${topic}" topics` },
-        }),
-      );
     },
     [persistTopicWeights],
   );
 
   useEffect(() => {
-    let cancelled = false;
     async function load() {
       try {
-        const [prefsRes] = await Promise.all([
-          fetch('/api/preferences', { credentials: 'include' }),
-        ]);
-        if (!prefsRes.ok || cancelled) return;
-        const data = (await prefsRes.json()) as {
+        const res = await fetch('/api/preferences/feed', { credentials: 'include' });
+        if (!res.ok) return;
+        const data = (await res.json()) as {
+          topicWeights?: Record<string, number>;
           hideLowQuality?: boolean;
-          hideLowQualityThreshold?: number;
           allowNonCrypto?: boolean;
           recencyWeight?: number;
           engagementWeight?: number;
-          showOriginalContent?: boolean;
-          minEngagement?: number;
-          maxPerNiche?: number;
-          topicWeights?: Record<string, number>;
-          feedMixConfig?: FeedMixConfig;
-          savedMixes?: SavedMix[];
-          algorithmTransparent?: boolean;
+          protocolFilter?: string | null;
           freshnessPreference?: number;
           creatorDiversity?: number;
           exploreRatio?: number;
-          activePreset?: string | null;
+          algorithmTransparent?: boolean;
+          showOriginalContent?: boolean;
+          minEngagement?: number;
+          maxPerNiche?: number;
         };
+        if (data.topicWeights) setTopicWeights(data.topicWeights);
         if (typeof data.hideLowQuality === 'boolean') setHideLowQuality(data.hideLowQuality);
-        if (typeof data.hideLowQualityThreshold === 'number') {
-          setHideThreshold(data.hideLowQualityThreshold);
-        }
         if (typeof data.allowNonCrypto === 'boolean') setAllowNonCrypto(data.allowNonCrypto);
-        if (typeof data.recencyWeight === 'number') setRecencyWeight(data.recencyWeight);
-        if (typeof data.engagementWeight === 'number') setEngagementWeight(data.engagementWeight);
-        if (typeof data.showOriginalContent === 'boolean')
-          setShowOriginalContent(data.showOriginalContent);
-        if (typeof data.minEngagement === 'number') setMinEngagement(data.minEngagement);
-        if (typeof data.maxPerNiche === 'number') setMaxPerNiche(data.maxPerNiche);
-        // Load algorithm controls
-        if (typeof data.algorithmTransparent === 'boolean')
-          setAlgorithmTransparent(data.algorithmTransparent);
+        if (data.recencyWeight) setRecencyWeight(data.recencyWeight);
+        if (data.engagementWeight) setEngagementWeight(data.engagementWeight);
+        if (data.protocolFilter) setProtocolFilter(data.protocolFilter);
         if (typeof data.freshnessPreference === 'number')
           setFreshnessPreference(data.freshnessPreference);
         if (typeof data.creatorDiversity === 'number') setCreatorDiversity(data.creatorDiversity);
         if (typeof data.exploreRatio === 'number') setExploreRatio(data.exploreRatio);
-        if (typeof data.activePreset === 'string') setActivePreset(data.activePreset);
-        // Load topic weights
-        if (data.topicWeights && typeof data.topicWeights === 'object') {
-          setTopicWeights((prev) => ({ ...prev, ...data.topicWeights }));
-        }
-        // Load feed mix config
-        if (data.feedMixConfig && typeof data.feedMixConfig === 'object') {
-          setFeedMixConfig(data.feedMixConfig);
-        }
-        if (data.savedMixes && Array.isArray(data.savedMixes)) {
-          setSavedMixes(data.savedMixes);
-        }
+        if (typeof data.algorithmTransparent === 'boolean')
+          setAlgorithmTransparent(data.algorithmTransparent);
+        if (typeof data.showOriginalContent === 'boolean')
+          setShowOriginalContent(data.showOriginalContent);
+        if (data.minEngagement) setMinEngagement(data.minEngagement);
+        if (data.maxPerNiche) setMaxPerNiche(data.maxPerNiche);
       } catch {
-        /* ignore — user has no session yet */
+        /* ignore */
       }
     }
     load();
     return () => {
-      cancelled = true;
+      if (debounceRef.current) clearTimeout(debounceRef.current);
     };
   }, []);
 
-  const setHideThresholdAndPersist = useCallback(
-    (next: number) => {
-      setHideThreshold(next);
-      persistPrefs({ hideLowQualityThreshold: next });
-    },
-    [persistPrefs],
-  );
-
-  const setAllowNonCryptoAndPersist = useCallback(
-    (next: boolean) => {
-      setAllowNonCrypto(next);
-      persistPrefs({ allowNonCrypto: next });
-    },
-    [persistPrefs],
-  );
+  const [contextMenuPostId, setContextMenuPostId] = useState<string | null>(null);
+  const [contextMenuPos, setContextMenuPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
 
   const toggleHideLowQuality = useCallback(() => {
-    setHideLowQuality((prev) => {
-      const next = !prev;
-      try {
-        localStorage.setItem('degenfeed_hide_low_quality', String(next));
-      } catch {
-        /* ignore */
-      }
+    setHideLowQuality((p) => {
+      const next = !p;
       persistPrefs({ hideLowQuality: next });
       return next;
     });
   }, [persistPrefs]);
 
-  // == "Why this post?" panel state ==============================
-  const [explainPost, setExplainPost] = useState<UnifiedPost | null>(null);
-  const explainRef = useRef<HTMLDivElement>(null);
+  // Memoized feed content to optimize re-renders
+  const memoizedFeed = useMemo(() => posts, [posts]);
 
-  // Close explain panel on outside click
+  const { handleContextMenu, closeContextMenu } = useContextMenu();
+  const contextMenuHandlers = { handleContextMenu, closeContextMenu };
+
   useEffect(() => {
-    if (!explainPost) return;
-    const handler = (e: MouseEvent) => {
-      if (explainRef.current && !explainRef.current.contains(e.target as Node)) {
-        setExplainPost(null);
-      }
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [explainPost]);
-
-  const [newAvailable, setNewAvailable] = useState(false);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const lastPostIdRef = useRef<string | null>(null);
-  const [loadedLimit, setLoadedLimit] = useState(50);
-  const hasMore = loadedLimit < 200;
+    if (contextMenuPostId) {
+      const handler = (e: MouseEvent) => {
+        if (!(e.target as HTMLElement)?.closest('.context-menu')) setContextMenuPostId(null);
+      };
+      document.addEventListener('mousedown', handler);
+      return () => document.removeEventListener('mousedown', handler);
+    }
+  }, [contextMenuPostId]);
 
   const loadMore = useCallback(() => {
-    setLoadedLimit((prev) => Math.min(prev + 25, 200));
+    setLoadedLimit((p) => p + 25);
   }, []);
 
-  // == "While you were away" — detects return after >30min ======
-  const returning = useReturningUser();
-  const [showReturnCard, setShowReturnCard] = useState(true);
+  // useViewportPrefetch(posts, (post) => post);
+  // useHoverPrefetch(posts, (post) => post);
+  const scrollVelocity = useScrollVelocity();
 
-  // == Boredom detection via scroll velocity ====================
-  const scrollVel = useScrollVelocity(800, 2000);
-  const [injectedExplore, setInjectedExplore] = useState(0);
-  const lastPaceRef = useRef<string>('idle');
-
-  // When scrolling fast, inject explore cards into the feed
-  useEffect(() => {
-    const pace = scrollVel.pace;
-    if (pace === 'fast' || pace === 'racing') {
-      if (lastPaceRef.current !== 'fast' && lastPaceRef.current !== 'racing') {
-        // Just entered fast-scroll mode — inject an explore suggestion
-        setInjectedExplore((prev) => Math.min(prev + 1, 3));
-      }
-    }
-    lastPaceRef.current = pace;
-  }, [scrollVel.pace]);
-
-  // Reset injected explore when feed changes tab or refreshes
-  useEffect(() => {
-    setInjectedExplore(0);
-  }, []);
-
-  // == End-of-feed discovery suggestions ========================
-  const endOfFeedSuggestions = useMemo(
-    () => [
-      {
-        id: 'trending',
-        label: 'Trending',
-        description: 'See what the DegenFeed community is buzzing about right now.',
-        color: '#f59e0b',
-        icon: '🔥',
-      },
-      {
-        id: 'news',
-        label: 'Crypto News',
-        description: 'Stay informed with the latest crypto news aggregated from 350+ RSS sources.',
-        color: '#ffa500',
-        icon: '📰',
-      },
-      {
-        id: 'discover',
-        label: 'Discover',
-        description: 'New accounts, new topics, new conversations. Expand your web3 horizons.',
-        color: '#8b5cf6',
-        icon: '✨',
-      },
-      {
-        id: 'videos',
-        label: 'Videos & Shorts',
-        description: 'Watch the latest crypto videos, interviews, and short-form content.',
-        color: '#ef4444',
-        icon: '🎬',
-      },
-    ],
-    [],
+  const announceFeed = useCallback(
+    (msg: string, priority?: 'polite' | 'assertive') => {
+      announcerRef.current?.(msg, priority);
+    },
+    [announcerRef],
   );
-
-  const announcerRef = useRef<ReturnType<typeof useAnnouncer>['announce'] | null>(null);
-  const { announce: announcerAnnounce } = useAnnouncer();
-  announcerRef.current = announcerAnnounce;
-  const announce = useCallback((msg: string, priority?: 'polite' | 'assertive') => {
-    announcerRef.current?.(msg, priority);
-  }, []);
 
   const fetchFeed = useCallback(
     async (checkOnly = false) => {
       if (!checkOnly) setState('loading');
       try {
         const endpoint = activeTab === 'for-you' ? '/api/feed/for-you' : '/api/feed/home';
-        // Build cache key from active tab + filters for SWR deduplication
-        const cacheKey = `feed_${activeTab}_${protocolFilter ?? 'all'}_${loadedLimit}_${hideLowQuality}_${allowNonCrypto}_${showOriginalContent}_${activePreset ?? 'none'}_${freshnessPreference}_${exploreRatio}`;
-
+        const cacheKey = `feed_${activeTab}_${protocolFilter ?? 'all'}_${loadedLimit}_${hideLowQuality}_${allowNonCrypto}_${showOriginalContent}_${minEngagement}_${maxPerNiche}_${recencyWeight}_${engagementWeight}_${freshnessPreference}_${creatorDiversity}_${exploreRatio}_${algorithmTransparent}_${activePreset ?? 'none'}`;
         const url = new URL(endpoint, window.location.origin);
         url.searchParams.set('limit', String(loadedLimit));
         const protocolsToFetch = protocolFilter
           ? [protocolFilter]
           : ['nostr', 'farcaster', 'lens', 'bluesky', 'mastodon', 'reddit', 'rss'];
         url.searchParams.set('protocols', protocolsToFetch.join(','));
-        if (activeTab === 'following') {
-          url.searchParams.set('filter', 'following');
-        }
+        if (activeTab === 'following') url.searchParams.set('filter', 'following');
         if (hideLowQuality) {
           url.searchParams.set('hideLowQuality', 'true');
           url.searchParams.set('hideLowQualityThreshold', String(hideThreshold));
         }
-        if (allowNonCrypto) {
-          url.searchParams.set('allowNonCrypto', 'true');
-        }
-        if (showOriginalContent) {
-          url.searchParams.set('showOriginalContent', 'true');
-        }
-        if (minEngagement > 0) {
-          url.searchParams.set('minEngagement', String(minEngagement));
-        }
-        if (maxPerNiche < 5) {
-          url.searchParams.set('maxPerNiche', String(maxPerNiche));
-        }
+        if (allowNonCrypto) url.searchParams.set('allowNonCrypto', 'true');
+        if (showOriginalContent) url.searchParams.set('showOriginalContent', 'true');
+        if (minEngagement > 0) url.searchParams.set('minEngagement', String(minEngagement));
+        if (maxPerNiche < 5) url.searchParams.set('maxPerNiche', String(maxPerNiche));
         if (recencyWeight !== 1) url.searchParams.set('recencyWeight', String(recencyWeight));
         if (engagementWeight !== 1)
           url.searchParams.set('engagementWeight', String(engagementWeight));
         const tw = encodeTopicWeights(topicWeights);
         if (tw) url.searchParams.set('topic_weights', tw);
-
-        // New algorithm controls
-        if (algorithmTransparent) {
-          url.searchParams.set('algorithmTransparent', 'true');
-        }
-        if (freshnessPreference !== 50) {
+        if (algorithmTransparent) url.searchParams.set('algorithmTransparent', 'true');
+        if (freshnessPreference !== 50)
           url.searchParams.set('freshness', String(freshnessPreference));
-        }
-        if (creatorDiversity !== 5) {
+        if (creatorDiversity !== 5)
           url.searchParams.set('creatorDiversity', String(creatorDiversity));
-        }
-        if (exploreRatio !== 30) {
-          url.searchParams.set('exploreRatio', String(exploreRatio));
-        }
-        if (activePreset) {
-          url.searchParams.set('preset', activePreset);
-        }
+        if (exploreRatio !== 30) url.searchParams.set('exploreRatio', String(exploreRatio));
+        if (activePreset) url.searchParams.set('preset', activePreset);
 
-        // Use SWR: prefer stale cache for instant render, refresh in background
         const swrResult = await fetchWithSwr<{ data?: UnifiedPost[]; meta?: FeedMeta }>(
           url.toString(),
           cacheKey,
           { credentials: 'include' },
         );
         const data = swrResult.data;
-
         let feed = data.data ?? [];
 
         if (activeTab === 'following') {
@@ -782,7 +430,7 @@ export default function FeedPage() {
             const ids = new Set(follows.map((f) => f.targetId));
             feed = feed.filter((p) => ids.has(p.author.id));
           } catch {
-            /* ignore IndexedDB errors in private mode */
+            /* ignore */
           }
         }
 
@@ -790,31 +438,25 @@ export default function FeedPage() {
           setNewAvailable(true);
           return;
         }
-
-        if (feed.length > 0) {
-          lastPostIdRef.current = feed[0]?.id ?? '';
-        }
+        if (feed.length > 0)
+          if (feed.length > 0) {
+            lastPostIdRef.current = (feed[0]?.id as string) ?? '';
+          }
         setPosts(feed);
         setFeedMeta(data.meta || {});
         setState(feed.length ? 'loaded' : 'empty');
-        if (swrResult.stale) {
-          setError('Showing cached results. Updating…');
-        } else {
-          setError(undefined);
-        }
-        if (!checkOnly && feed.length > 0) {
-          announce(
+        if (swrResult.stale) setError('Showing cached results. Updating…');
+        else setError(undefined);
+        if (!checkOnly && feed.length > 0)
+          announceFeed(
             `${feed.length} posts loaded${swrResult.fromCache ? ' (cached)' : ''}`,
             'polite',
           );
-        }
       } catch (err) {
         if (!checkOnly) {
-          // Graceful degradation: show cached feed on failure
           const cached = getCached<{ data?: UnifiedPost[]; meta?: FeedMeta }>(`feed_${activeTab}`);
           if (cached && (cached.data ?? []).length > 0) {
-            const cachedFeed = cached.data ?? [];
-            setPosts(cachedFeed);
+            setPosts(cached.data ?? []);
             setFeedMeta(cached.meta ?? {});
             setState('loaded');
             setError("Couldn't load feed. Showing cached version.");
@@ -843,20 +485,9 @@ export default function FeedPage() {
       creatorDiversity,
       exploreRatio,
       activePreset,
-      announce,
+      announceFeed,
     ],
   );
-
-  useEffect(() => {
-    fetchFeed();
-  }, [fetchFeed]);
-
-  useEffect(() => {
-    intervalRef.current = setInterval(() => fetchFeed(true), 60000);
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-  }, [fetchFeed]);
 
   const refreshNow = useCallback(() => {
     setNewAvailable(false);
@@ -870,18 +501,10 @@ export default function FeedPage() {
   ): Promise<{ ok: boolean; error?: string }> => {
     const post = posts.find((p) => p.id === postId);
     if (!post) return { ok: false, error: 'Post not found' };
-
-    // 2026 Social UX: Trigger haptic feedback for engagement actions
-    if (action === 'like' || action === 'unlike') {
-      haptic.triggerLike();
-    } else if (action === 'repost' || action === 'unrepost') {
-      haptic.triggerRepost();
-    } else if (action === 'bookmark' || action === 'unbookmark') {
-      haptic.triggerBookmark();
-    } else if (action === 'reply') {
-      haptic.triggerReply();
-    }
-
+    if (['like', 'unlike'].includes(action)) haptic.triggerLike();
+    else if (['repost', 'unrepost'].includes(action)) haptic.triggerRepost();
+    else if (['bookmark', 'unbookmark'].includes(action)) haptic.triggerBookmark();
+    else if (action === 'reply') haptic.triggerReply();
     if ((action === 'bookmark' || action === 'unbookmark') && post.protocol !== 'mastodon') {
       try {
         if (action === 'bookmark')
@@ -898,1163 +521,183 @@ export default function FeedPage() {
         return { ok: false, error: err instanceof Error ? err.message : 'Bookmark failed' };
       }
     }
-
-    return engage(action, postId, post.protocol, { content });
+    return engage(action, postId, content ?? '', post);
   };
 
-  const handleCrossReplyOpen = useCallback(
-    (post: UnifiedPost) => {
-      if (!hasSignedIn) {
-        openSignIn();
-        return;
-      }
-      const nativeId = post.id.replace(
-        /^(nostr:|farcaster:|lens:|bluesky:|mastodon:|reddit:|rss:|threads:)/,
-        '',
-      );
-      openComposeReply({
-        parentPostUri: post.dfUri ?? `df://${post.protocol}:${nativeId}`,
-        parentProtocol: post.protocol,
-        parentPreview: post.text.slice(0, 120),
-      });
-    },
-    [hasSignedIn, openSignIn, openComposeReply],
-  );
-
-  const handleTip = useCallback(
-    (post: UnifiedPost) => {
-      if (!hasSignedIn) {
-        openSignIn();
-        return;
-      }
-      setTipPost(post);
-    },
-    [hasSignedIn, openSignIn],
-  );
-
-  const { showToast } = useToast();
-  const router = useRouter();
-  const handlePostClick = useCallback(
-    (id: string) => {
-      // In for-you mode, if user clicks anywhere, open explain panel for this post
-      if (activeTab === 'for-you') {
-        const post = posts.find((p) => p.id === id);
-        if (post?.score) {
-          setExplainPost(post);
-          return;
-        }
-      }
-      router.push(`/post/${encodeURIComponent(id)}`);
-    },
-    [activeTab, posts, router],
-  );
-
-  const handleReport = useCallback(
-    (_postId: string) => {
-      showToast('success', 'Report submitted. Thank you for helping keep DegenFeed safe.');
-    },
-    [showToast],
-  );
-
-  const handleAdminRemove = useCallback(
-    async (postId: string) => {
-      try {
-        // Create a report for the removal and resolve it immediately
-        const reportRes = await fetch('/api/moderation/report', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({ postId, reason: 'spam', protocol: 'moderator' }),
+  const handleShareToast = useCallback(
+    (message: string) => {
+      navigator.clipboard
+        .writeText(message)
+        .then(() => {
+          showToast('success', 'Link copied!');
+        })
+        .catch(() => {
+          showToast('error', 'Failed to copy');
         });
-        if (!reportRes.ok) throw new Error('Failed to report');
-        const reportData = (await reportRes.json()) as { reportId?: string };
-        if (reportData.reportId) {
-          await fetch(`/api/moderation/reports/${reportData.reportId}/remove`, {
-            method: 'POST',
-            credentials: 'include',
-          });
-        }
-        showToast('success', 'Post removed from feed');
-        // Remove from local state immediately
-        setPosts((prev) => prev.filter((p) => p.id !== postId));
-      } catch (e) {
-        showToast('error', e instanceof Error ? e.message : 'Failed to remove post');
-      }
     },
     [showToast],
   );
 
-  const handleWhyThisPost = useCallback((post: UnifiedPost) => {
-    setExplainPost(post);
-  }, []);
-
-  const handleAdminBan = useCallback(
-    async (userId: string, protocol: string, handle?: string) => {
-      try {
-        const res = await fetch('/api/moderation/ban', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({ userId, protocol, reason: 'Moderator action' }),
-        });
-        if (!res.ok) throw new Error('Failed to ban user');
-        showToast('success', `Banned ${handle || userId}`);
-        // Remove all posts from this user from local state
-        setPosts((prev) => prev.filter((p) => p.author.id !== userId));
-      } catch (e) {
-        showToast('error', e instanceof Error ? e.message : 'Failed to ban user');
-      }
-    },
-    [showToast],
-  );
-
-  const protocolSummaries: ProtocolSummary[] = useMemo(() => {
-    const perProtocol = feedMeta.perProtocol ?? {};
-    return Object.entries(PROTOCOL_META)
-      .map(([id, meta]) => ({
-        id,
-        label: meta.label,
-        color: meta.color,
-        count: perProtocol[id] ?? 0,
-      }))
-      .sort((a, b) => b.count - a.count);
-  }, [feedMeta.perProtocol]);
-
-  const handleProtocolFilter = useCallback((id: string) => {
-    setProtocolFilter((current) => (current === id ? null : id));
-  }, []);
-
-  /* == Pull-to-refresh (spring animation) =================== */
-  const PULL_THRESHOLD = 80;
-  const PULL_MAX = 140;
-  const pullStartY = useRef(0);
-  const [pullDistance, setPullDistance] = useState(0);
-  const [isPulling, setIsPulling] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [pullReady, setPullReady] = useState(false);
-  const pullSpringRef = useRef<number | null>(null);
-  const pullRefreshCleanupRef = useRef<(() => void) | null>(null);
-  // Refs for latest values in touch handlers
-  const pullDistanceRef = useRef(0);
-  const isRefreshingRef = useRef(false);
-
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    // Only activate pull-to-refresh when at the top of the page
-    if (window.scrollY <= 0 && !isRefreshingRef.current) {
-      pullStartY.current = e.touches[0]?.clientY ?? 0;
-      setIsPulling(true);
-      setPullReady(false);
-    }
-  }, []);
-
-  const handleTouchMove = useCallback(
-    (e: React.TouchEvent) => {
-      if (!isPulling) return;
-      if (isRefreshingRef.current) return;
-      const currentY = e.touches[0]?.clientY ?? 0;
-      const diff = currentY - pullStartY.current;
-      if (diff <= 0) {
-        setPullDistance(0);
-        pullDistanceRef.current = 0;
-        setPullReady(false);
-        return;
-      }
-      // Spring-like resistance: easy at first, harder as you pull
-      // Using diminishing returns curve for natural feel
-      const resisted = Math.min(diff * 0.5 - Math.max(0, diff - 60) ** 2 * 0.003, PULL_MAX);
-      const newVal = Math.max(0, resisted);
-      setPullDistance(newVal);
-      pullDistanceRef.current = newVal;
-      setPullReady(newVal >= PULL_THRESHOLD);
-    },
-    [isPulling],
-  );
-
-  const handleTouchEnd = useCallback(() => {
-    const currentPull = pullDistanceRef.current;
-    const currentRefreshing = isRefreshingRef.current;
-
-    if (currentPull >= PULL_THRESHOLD && !currentRefreshing) {
-      // Haptic-style spring animation: snap to "refreshing" position with bounce
-      setIsRefreshing(true);
-      isRefreshingRef.current = true;
-
-      // Animate to full pull position with spring feel
-      if (pullSpringRef.current) cancelAnimationFrame(pullSpringRef.current);
-      setPullDistance(60);
-      pullDistanceRef.current = 60;
-
-      // Trigger refresh
-      setNewAvailable(false);
-      fetchFeed(false);
-
-      // After refresh completes (or timeout), spring back with bounce
-      const refreshTimer = setTimeout(() => {
-        // Spring back to zero
-        let start = 60;
-        const springBack = () => {
-          start *= 0.85; // Damping factor
-          if (Math.abs(start) < 1) {
-            setPullDistance(0);
-            pullDistanceRef.current = 0;
-            setIsRefreshing(false);
-            isRefreshingRef.current = false;
-            setPullReady(false);
-            return;
-          }
-          setPullDistance(start);
-          pullDistanceRef.current = start;
-          pullSpringRef.current = requestAnimationFrame(springBack);
-        };
-        pullSpringRef.current = requestAnimationFrame(springBack);
-      }, 600); // Hold at refresh position briefly
-
-      // Safety timeout for refresh
-      const safetyTimer = setTimeout(() => {
-        setPullDistance(0);
-        pullDistanceRef.current = 0;
-        setIsRefreshing(false);
-        isRefreshingRef.current = false;
-        setPullReady(false);
-      }, 5000);
-
-      // Store cleanup
-      const rTimer = refreshTimer;
-      const sTimer = safetyTimer;
-      const cleanup = () => {
-        clearTimeout(rTimer);
-        clearTimeout(sTimer);
-      };
-      if (pullRefreshCleanupRef.current) pullRefreshCleanupRef.current();
-      pullRefreshCleanupRef.current = cleanup;
-
-      // Reset pulling state
-      setIsPulling(false);
-      setPullReady(false);
-      return;
-    }
-
-    // Didn't reach threshold — spring back with bounce
-    if (currentPull > 0) {
-      let current = currentPull;
-      const springBack = () => {
-        current *= 0.82; // Spring damping
-        if (Math.abs(current) < 1) {
-          setPullDistance(0);
-          pullDistanceRef.current = 0;
-          return;
-        }
-        setPullDistance(current);
-        pullDistanceRef.current = current;
-        pullSpringRef.current = requestAnimationFrame(springBack);
-      };
-      pullSpringRef.current = requestAnimationFrame(springBack);
-    }
-
-    setPullDistance(0);
-    pullDistanceRef.current = 0;
-    setIsPulling(false);
-    setPullReady(false);
+  useEffect(() => {
+    fetchFeed();
   }, [fetchFeed]);
 
-  // Sync pullDistance to ref for use in touchEnd handler
   useEffect(() => {
-    pullDistanceRef.current = pullDistance;
-  }, [pullDistance]);
-  useEffect(() => {
-    isRefreshingRef.current = isRefreshing;
-  }, [isRefreshing]);
-
-  // Cleanup pull-to-refresh timers on unmount
-  useEffect(() => {
+    intervalRef.current = setInterval(() => fetchFeed(true), 60000);
     return () => {
-      if (pullSpringRef.current) cancelAnimationFrame(pullSpringRef.current);
-      if (pullRefreshCleanupRef.current) pullRefreshCleanupRef.current();
+      if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, []);
+  }, [fetchFeed]);
 
-  // == Compute category break niches when posts change =============
-  useEffect(() => {
-    if (posts.length === 0) return;
-    // Aggregate niches from first batch for the first category break (at index 12)
-    const batchSize = 12;
-    const firstBreakIndex = batchSize;
-    if (firstBreakIndex < posts.length) {
-      const niches = aggregateNiches(posts, firstBreakIndex, 8);
-      setCategoryNiches(niches.length > 0 ? niches : ['content']);
-    } else {
-      // Not enough posts for a break yet — aggregate what we have
-      const niches = aggregateNiches(posts, 0, posts.length);
-      setCategoryNiches(niches.length > 0 ? niches : ['content']);
-    }
-  }, [posts]);
+  if (!ready)
+    return (
+      <div className="mx-auto max-w-2xl px-4 py-20">
+        <FeedLoadingSkeleton />
+      </div>
+    );
+  if (!hasSignedIn) return <FeedAuthGate />;
 
   return (
     <ErrorBoundary>
-      {/* Guided tour — auto-detects if tour should show based on localStorage */}
-      <GuidedTour />
-      <div
-        className="mx-auto flex w-full flex-col gap-4 px-4 py-4 sm:px-6 lg:flex-row lg:items-start"
-        onTouchStart={(e) => {
-          swipeHandlers.onTouchStart(e);
-          handleTouchStart(e);
-        }}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={(e) => {
-          swipeHandlers.onTouchEnd(e);
-          handleTouchEnd();
-        }}
-      >
-        {/* Main timeline */}
-        <div className="main-feed min-w-0 flex-1">
-          <div className="feed-header sticky top-14 lg:top-0 z-30 border-b border-[var(--color-glass-border)] glass">
-            <div className="flex items-center justify-between gap-2 px-4 py-3">
-              <div className="flex items-center gap-3">
-                <Image
-                  src="/icon.svg"
-                  alt="DegenFeed"
-                  width={32}
-                  height={32}
-                  className="h-9 w-9 rounded-xl logo-glow shadow-[0_0_14px_rgba(0,255,65,0.3)]"
-                />
-                <div>
-                  <h1 className="text-lg font-bold text-[var(--color-fg)] leading-none">
-                    DegenFeed
-                  </h1>
-                  <p className="text-[10px] text-[var(--color-muted)]">
-                    {activeTab === 'for-you'
-                      ? 'Your unified timeline'
-                      : activeTab === 'custom-mix'
-                        ? 'Your custom mix'
-                        : 'Posts you follow'}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                {/* == Tune Feed button == */}
-                <button
-                  type="button"
-                  onClick={() => setShowTuner(true)}
-                  className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-medium text-[var(--color-muted)] hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)] transition-colors"
-                  aria-label="Tune your feed"
-                  title="Tune your feed — control topic visibility"
-                >
-                  <span className="text-sm">🎚️</span>
-                  {countTunedTopics(topicWeights) > 0 && (
-                    <span className="hidden sm:inline text-degen-400">
-                      {countTunedTopics(topicWeights)} tuned
-                    </span>
-                  )}
-                </button>
-                {hasSignedIn && (
-                  <div className="flex items-center gap-2">
-                    <NotificationBell
-                      notifications={notifications}
-                      unreadCount={unreadCount}
-                      onFetch={fetchNotifications}
-                      onMarkRead={markRead}
-                    />
-                    <FeedLayoutSwitcher current={layout} onChange={setLayout} />
-                    <button
-                      type="button"
-                      onClick={signOut}
-                      className="rounded-lg border border-[var(--color-border)] bg-[var(--color-overlay)] px-3 py-1.5 text-xs font-medium text-[var(--color-fg)] transition-colors hover:bg-[var(--color-card-hover)] hover:text-[var(--color-fg)] lg:hidden"
-                    >
-                      Sign out
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Tabs — Home / For You / Trending / News / Custom Mix */}
-            <div
-              className="feed-header-tabs flex overflow-x-auto scrollbar-none"
-              role="tablist"
-              aria-label="Feed tabs"
-            >
-              <div className="relative shrink-0">
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('for-you')}
-                  onMouseEnter={() => hoverPrefetch.onMouseEnter(tabPrefetchMap['for-you'])}
-                  onMouseLeave={hoverPrefetch.onMouseLeave}
-                  role="tab"
-                  aria-selected={activeTab === 'for-you'}
-                  className={`w-full px-4 py-3 text-sm font-medium transition-colors whitespace-nowrap ${
-                    activeTab === 'for-you'
-                      ? 'text-[var(--color-fg)]'
-                      : 'text-[var(--color-muted)] hover:text-[var(--color-fg)]'
-                  }`}
-                >
-                  🔥 For You
-                  {activeTab === 'for-you' && (
-                    <span className="absolute bottom-0 left-1/2 h-1 w-12 -translate-x-1/2 rounded-full bg-degen-500" />
-                  )}
-                </button>
-                <ContextualTooltip id="jk-keys" align="center" icon="⌨️">
-                  Use j/k keys to navigate between posts
-                </ContextualTooltip>
-              </div>
-              <div className="relative shrink-0">
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('following')}
-                  onMouseEnter={() => hoverPrefetch.onMouseEnter(tabPrefetchMap.following)}
-                  onMouseLeave={hoverPrefetch.onMouseLeave}
-                  role="tab"
-                  aria-selected={activeTab === 'following'}
-                  className={`w-full px-4 py-3 text-sm font-medium transition-colors whitespace-nowrap ${
-                    activeTab === 'following'
-                      ? 'text-[var(--color-fg)]'
-                      : 'text-[var(--color-muted)] hover:text-[var(--color-fg)]'
-                  }`}
-                >
-                  👤 Following
-                  {activeTab === 'following' && (
-                    <span className="absolute bottom-0 left-1/2 h-1 w-12 -translate-x-1/2 rounded-full bg-degen-500" />
-                  )}
-                </button>
-                <ContextualTooltip id="ai-for-you" align="center" icon="🤖">
-                  Try the AI-powered For You feed instead
-                </ContextualTooltip>
-              </div>
-              <div className="relative shrink-0">
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('trending')}
-                  onMouseEnter={() => hoverPrefetch.onMouseEnter('/api/feed/home?trending=24')}
-                  onMouseLeave={hoverPrefetch.onMouseLeave}
-                  role="tab"
-                  aria-selected={activeTab === 'trending'}
-                  className={`w-full px-4 py-3 text-sm font-medium transition-colors whitespace-nowrap ${
-                    activeTab === 'trending'
-                      ? 'text-[var(--color-fg)]'
-                      : 'text-[var(--color-muted)] hover:text-[var(--color-fg)]'
-                  }`}
-                >
-                  📈 Trending
-                  {activeTab === 'trending' && (
-                    <span className="absolute bottom-0 left-1/2 h-1 w-12 -translate-x-1/2 rounded-full bg-degen-500" />
-                  )}
-                </button>
-              </div>
-              <div className="relative shrink-0">
-                <button
-                  type="button"
-                  onClick={() => {
-                    window.location.href = '/news';
-                  }}
-                  onMouseEnter={() => hoverPrefetch.onMouseEnter('/api/feed/news')}
-                  onMouseLeave={hoverPrefetch.onMouseLeave}
-                  role="tab"
-                  aria-selected={activeTab === 'news'}
-                  className={`w-full px-4 py-3 text-sm font-medium transition-colors whitespace-nowrap ${
-                    activeTab === 'news'
-                      ? 'text-[var(--color-fg)]'
-                      : 'text-[var(--color-muted)] hover:text-[var(--color-fg)]'
-                  }`}
-                >
-                  📰 News
-                </button>
-              </div>
-              <div className="relative shrink-0">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setActiveTab('custom-mix');
-                    setShowTuner(true);
-                  }}
-                  onMouseEnter={() => hoverPrefetch.onMouseEnter(tabPrefetchMap['custom-mix'])}
-                  onMouseLeave={hoverPrefetch.onMouseLeave}
-                  role="tab"
-                  aria-selected={activeTab === 'custom-mix'}
-                  className={`w-full px-4 py-3 text-sm font-medium transition-colors whitespace-nowrap ${
-                    activeTab === 'custom-mix'
-                      ? 'text-[var(--color-fg)]'
-                      : 'text-[var(--color-muted)] hover:text-[var(--color-fg)]'
-                  }`}
-                >
-                  🔀 Custom Mix
-                  {activeTab === 'custom-mix' && (
-                    <span className="absolute bottom-0 left-1/2 h-1 w-12 -translate-x-1/2 rounded-full bg-degen-500" />
-                  )}
-                </button>
-              </div>
-            </div>
-
-            {/* Page heading for screen readers */}
-            <h1 className="sr-only">Feed</h1>
-
-            {/* Protocol pills + filter */}
-            <div className="protocol-pills flex flex-wrap items-center gap-1.5 border-t border-[var(--color-glass-border)] px-4 py-2">
-              <button
-                type="button"
-                onClick={() => setProtocolFilter(null)}
-                className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
-                  protocolFilter === null
-                    ? 'bg-degen-500/15 text-degen-400'
-                    : 'text-[var(--color-muted)] hover:text-[var(--color-fg)]'
-                }`}
-              >
-                All
-              </button>
-              {protocolSummaries.map((p) => (
-                <button
-                  key={p.id}
-                  type="button"
-                  onClick={() => handleProtocolFilter(p.id)}
-                  className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
-                    protocolFilter === p.id
-                      ? 'text-[var(--color-fg)]'
-                      : 'text-[var(--color-muted)] hover:text-[var(--color-fg)]'
-                  }`}
-                  style={
-                    protocolFilter === p.id
-                      ? { backgroundColor: `${p.color}22`, color: p.color }
-                      : undefined
-                  }
-                >
-                  <span>{p.label}</span>
-                  <span
-                    className={`text-[10px] ${protocolFilter === p.id ? 'opacity-90' : 'text-[var(--color-muted)]'}`}
-                  >
-                    {p.count}
-                  </span>
-                </button>
-              ))}
-            </div>
-
-            {/* Personalization bar for For You tab */}
-            {activeTab === 'for-you' && feedMeta.personalization && (
-              <div className="border-t border-degen-500/20 bg-degen-500/5 px-4 py-2 text-[11px] text-[var(--color-muted)]">
-                <span className="font-semibold text-degen-400">For You</span>
-                {' — '}
-                {feedMeta.personalization.isOnboarding
-                  ? 'New user mode: showing trending content to learn what you like. Like, repost, or bookmark posts to personalize your feed.'
-                  : feedMeta.personalization.reasons && feedMeta.personalization.reasons.length > 0
-                    ? `Personalized: ${feedMeta.personalization.reasons.slice(0, 3).join(' · ')}`
-                    : 'Personalized based on your activity'}
-                {feedMeta.personalization.hasProfile && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      window.location.href = '/profile/preferences#topics';
-                    }}
-                    className="ml-2 text-degen-500 hover:text-degen-400 underline decoration-dotted cursor-pointer"
-                  >
-                    Manage topics
-                  </button>
-                )}
-              </div>
-            )}
-
-            {/* Quality controls */}
-            <div className="quality-controls flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-[var(--color-glass-border)] px-4 py-2 text-[11px] text-[var(--color-muted)]">
-              <button
-                type="button"
-                onClick={toggleHideLowQuality}
-                role="switch"
-                aria-checked={hideLowQuality}
-                className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-medium transition-colors ${
-                  hideLowQuality
-                    ? 'bg-degen-500/15 text-degen-400'
-                    : 'text-[var(--color-muted)] hover:text-[var(--color-fg)]'
-                }`}
-                title="Hide posts with low ranking scores"
-              >
-                <svg
-                  width="10"
-                  height="10"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  aria-hidden="true"
-                >
-                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14 2 9.27l6.91-1.01L12 2z" />
-                </svg>
-                {hideLowQuality ? 'Hiding low-quality' : 'Show all'}
-              </button>
-              {hideLowQuality && (
-                <label className="flex items-center gap-1.5">
-                  <span>Threshold</span>
-                  <input
-                    type="range"
-                    min="0"
-                    max="5"
-                    step="0.5"
-                    value={hideThreshold}
-                    onChange={(e) => setHideThresholdAndPersist(Number(e.target.value))}
-                    className="h-1 w-16 cursor-pointer appearance-none rounded-full bg-[var(--color-muted)] accent-degen-500"
-                    aria-label="Hide threshold"
-                  />
-                  <span className="font-mono text-[10px] text-[var(--color-muted)]">
-                    {hideThreshold.toFixed(1)}
-                  </span>
-                </label>
-              )}
-              {/* New: Show only original content toggle */}
-              <label className="flex items-center gap-1">
-                <input
-                  type="checkbox"
-                  checked={showOriginalContent}
-                  onChange={(e) => {
-                    const next = e.target.checked;
-                    setShowOriginalContent(next);
-                    persistPrefs({ showOriginalContent: next });
-                  }}
-                  className="h-3 w-3 rounded border-[var(--color-border)] bg-[var(--color-muted)] text-degen-500 focus:ring-degen-500"
-                />
-                <span title="Hide reposts and link-only posts">Original</span>
-              </label>
-              {/* New: Minimum engagement slider */}
-              <label
-                className="flex items-center gap-1.5"
-                title="Only show posts with at least N total interactions"
-              >
-                <span>Engage ≥</span>
-                <input
-                  type="range"
-                  min="0"
-                  max="50"
-                  step="5"
-                  value={minEngagement}
-                  onChange={(e) => {
-                    const next = Number(e.target.value);
-                    setMinEngagement(next);
-                    persistPrefs({ minEngagement: next });
-                  }}
-                  className="h-1 w-16 cursor-pointer appearance-none rounded-full bg-[var(--color-muted)] accent-degen-500"
-                  aria-label="Minimum engagement"
-                />
-                <span className="font-mono text-[10px] text-[var(--color-muted)]">
-                  {minEngagement}
-                </span>
-              </label>
-              <label className="flex items-center gap-1">
-                <input
-                  type="checkbox"
-                  checked={allowNonCrypto}
-                  onChange={(e) => setAllowNonCryptoAndPersist(e.target.checked)}
-                  className="h-3 w-3 rounded border-[var(--color-border)] bg-[var(--color-muted)] text-degen-500 focus:ring-degen-500"
-                />
-                <span>Non-crypto</span>
-              </label>
-              <label className="flex items-center gap-1.5">
-                <span>Recency</span>
-                <input
-                  type="range"
-                  min="0.1"
-                  max="3"
-                  step="0.1"
-                  value={recencyWeight}
-                  onChange={(e) => {
-                    setRecencyWeight(Number(e.target.value));
-                    persistPrefs({ recencyWeight: Number(e.target.value) });
-                  }}
-                  className="h-1 w-16 cursor-pointer appearance-none rounded-full bg-[var(--color-muted)] accent-degen-500"
-                  aria-label="Recency weight"
-                />
-                <span className="font-mono text-[10px] text-[var(--color-muted)]">
-                  {recencyWeight.toFixed(1)}
-                </span>
-              </label>
-              <label className="flex items-center gap-1.5">
-                <span>Engage</span>
-                <input
-                  type="range"
-                  min="0.1"
-                  max="3"
-                  step="0.1"
-                  value={engagementWeight}
-                  onChange={(e) => {
-                    setEngagementWeight(Number(e.target.value));
-                    persistPrefs({ engagementWeight: Number(e.target.value) });
-                  }}
-                  className="h-1 w-16 cursor-pointer appearance-none rounded-full bg-[var(--color-muted)] accent-degen-500"
-                  aria-label="Engagement weight"
-                />
-                <span className="font-mono text-[10px] text-[var(--color-muted)]">
-                  {engagementWeight.toFixed(1)}
-                </span>
-              </label>
-              <span className="ml-auto hidden text-[10px] text-[var(--color-muted)] sm:inline">
-                Hover ★ on any post for ranking breakdown
-              </span>
-            </div>
-
-            {/* == Custom Mix: Pre-built mix quick pick == */}
-            {activeTab === 'custom-mix' && (
-              <div className="border-t border-[var(--color-glass-border)] px-4 py-2.5">
-                <p className="text-[10px] font-medium text-[var(--color-muted)] uppercase tracking-wider mb-2">
-                  Quick Pick a Mix
-                </p>
-                <div className="flex flex-wrap gap-1.5">
-                  {PREBUILT_MIXES.map((mix) => (
-                    <button
-                      key={mix.id}
-                      type="button"
-                      onClick={() => applyPrebuiltMix(mix.id)}
-                      className="rounded-full border border-degen-500/20 bg-degen-500/5 px-3 py-1 text-xs font-medium text-degen-400 hover:bg-degen-500/15 transition-colors"
-                    >
-                      {mix.name}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* == Feed Health section (collapsed by default) == */}
-            {state === 'loaded' && (
-              <FeedHealthSection
-                perProtocol={feedMeta.perProtocol}
-                total={feedMeta.total}
-                fetchedAt={feedMeta.fetchedAt}
-              />
-            )}
+      <ReadingProgressBar progress={readingProgress} />
+      <div ref={feedContainerRef} className="mx-auto max-w-2xl px-4 py-6" {...swipeHandlers}>
+        {isAdmin && (
+          <div className="mb-2 rounded-lg bg-amber-500/10 px-3 py-1.5 text-center text-[10px] text-amber-400">
+            Admin mode
           </div>
+        )}
+        {!isCompact && <GettingStartedChecklist />}
+        {returnUser && <GuidedTour />}
 
-          {/* == Pull-to-refresh indicator with spring animation == */}
-          {(pullDistance > 0 || isRefreshing) && (
-            <div
-              className={`flex items-center justify-center gap-2 py-2.5 text-sm transition-all ${
-                isRefreshing
-                  ? 'ptr-indicator ptr-refreshing'
-                  : pullReady
-                    ? 'ptr-indicator ptr-ready'
-                    : 'ptr-indicator'
-              }`}
-              style={{
-                opacity: isRefreshing ? 1 : Math.min((pullDistance / PULL_THRESHOLD) * 1.2, 1),
-                transform: isRefreshing
-                  ? 'translateY(0)'
-                  : `translateY(${Math.min(pullDistance * 0.3 - 10, 20)}px)`,
-              }}
+        <div className="mb-4 flex items-center justify-between">
+          <FeedTabBar
+            tabs={FEED_TABS}
+            activeTab={activeTab}
+            onTabChange={(id) => setActiveTab(id as Tab)}
+          />
+          <div className="flex items-center gap-2">
+            <NotificationBell count={unreadCount} onClick={() => router.push('/notifications')} />
+            <FeedLayoutSwitcher layout={layout} onChange={setLayout} />
+            <button
+              type="button"
+              onClick={() => setShowComposer(true)}
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-degen-500/20 text-degen-400 hover:bg-degen-500/30 transition-colors"
+              aria-label="Compose"
             >
-              {isRefreshing ? (
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                <path
+                  d="M7 1v12M1 7h12"
                   stroke="currentColor"
-                  strokeWidth="2.5"
-                  className="ptr-arrow"
-                  aria-hidden="true"
-                  style={{ animation: 'ptr-spin-refresh 0.8s linear infinite' }}
-                >
-                  <path
-                    d="M21 2v6h-6M3 12a9 9 0 0115-8.5L21 8M3 22v-6h6M21 12a9 9 0 01-15 8.5L3 16"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              ) : (
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  className={`ptr-arrow ${pullReady ? 'ptr-icon-active' : ''}`}
-                  aria-hidden="true"
-                  style={{
-                    transform: pullReady ? 'rotate(180deg)' : 'rotate(0deg)',
-                  }}
-                >
-                  <path d="M12 5v14M5 12l7-7 7 7" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              )}
-              <span className="text-xs font-medium select-none">
-                {isRefreshing
-                  ? 'Refreshing…'
-                  : pullReady
-                    ? 'Release to refresh'
-                    : 'Pull to refresh'}
-              </span>
-            </div>
-          )}
-
-          {/* Composer / sign-in CTA */}
-          {hasSignedIn ? (
-            <FeedComposer
-              onPost={publish}
-              signedInProtocols={signedInProtocols}
-              nostrPublicId={nostrPublicId}
-              onRequestSignIn={openSignIn}
-            />
-          ) : (
-            <div className="border-b border-[var(--color-border)] px-4 py-4">
-              <div className="flex items-start gap-3">
-                <Image
-                  src="/icon.svg"
-                  alt="DegenFeed"
-                  width={40}
-                  height={40}
-                  className="h-10 w-10 rounded-full"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
                 />
-                <div className="flex-1">
-                  <button
-                    type="button"
-                    onClick={() => openSignIn()}
-                    className="w-full rounded-2xl border border-[var(--color-border)] bg-[var(--color-overlay)] px-4 py-3 text-left text-base text-[var(--color-muted)] transition-colors hover:border-degen-500/30 hover:bg-[var(--color-overlay)]"
-                  >
-                    What is happening across web3?
-                  </button>
-                  <div className="mt-3 flex items-center justify-between">
-                    <p className="text-xs text-[var(--color-muted)]">
-                      Sign in to like, reply, and cross-post everywhere.
-                    </p>
-                    <button type="button" onClick={openSignIn} className="btn-primary text-sm">
-                      Connect Wallet
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* New posts pill */}
-          {newAvailable && (
-            <button type="button" onClick={refreshNow} className="new-posts-pill">
-              <span className="pulse-dot" />
-              <span className="df-label">New posts available</span>
-              <span className="df-arrow">↑</span>
+              </svg>
             </button>
-          )}
-
-          {/* Notices */}
-          {feedMeta.notices && feedMeta.notices.length > 0 && (
-            <div className="mx-4 mt-2 rounded-lg border border-yellow-500/20 bg-yellow-500/10 p-2.5 text-xs text-yellow-400">
-              {feedMeta.notices.map((n) => (
-                <div key={n}>{n}</div>
-              ))}
-            </div>
-          )}
-
-          {/* Top of Hour — highest engagement post in the last 60 min */}
-          {feedMeta.topOfHour &&
-            state === 'loaded' &&
-            (() => {
-              const pinnedPost = posts.find((p) => p.id === feedMeta.topOfHour);
-              if (!pinnedPost) return null;
-              return (
-                <div className="mx-4 mb-2 rounded-xl border border-yellow-500/30 bg-gradient-to-r from-yellow-500/10 to-transparent p-3">
-                  <div className="mb-1 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wider text-yellow-400">
-                    <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-yellow-400" />
-                    Top of the Hour
-                  </div>
-                  <PostCard
-                    post={pinnedPost}
-                    onClick={handlePostClick}
-                    onEngage={handleEngage}
-                    onTip={handleTip}
-                    onCrossReplyOpen={handleCrossReplyOpen}
-                  />
-                </div>
-              );
-            })()}
-
-          {/* Feed */}
-          <div className="relative">
-            <PostCardPrefetcher />
-
-            {/* == "While you were away" card == */}
-            {returning.showCard && showReturnCard && state === 'loaded' && posts.length > 0 && (
-              <WhileYouWereAwayCard
-                awayMinutes={Math.round(returning.awayDurationMs / 60000)}
-                postCount={posts.length}
-                onDismiss={() => {
-                  setShowReturnCard(false);
-                  returning.dismiss();
-                }}
-                onScrollToTop={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-              />
-            )}
-
-            {/* == Boredom-breaker explore cards injected when fast-scrolling == */}
-            {injectedExplore > 0 && state === 'loaded' && posts.length > 0 && (
-              <div className="space-y-0">
-                {Array.from({ length: injectedExplore }).map((_, idx) => (
-                  <div key={`boredom-${idx}`} className="feed-item-enter">
-                    <div className="border-b border-[var(--color-glass-border)] px-4 py-4">
-                      <div className="mb-2 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-widest text-[var(--color-muted)]">
-                        <svg
-                          width="10"
-                          height="10"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2.5"
-                          aria-hidden="true"
-                        >
-                          <circle cx="12" cy="12" r="10" />
-                          <path d="M12 16v-4M12 8h.01" />
-                        </svg>
-                        Explore something new
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        {endOfFeedSuggestions.slice(idx * 2, idx * 2 + 2).map((s) => (
-                          <button
-                            key={s.id}
-                            type="button"
-                            onClick={() => {
-                              if (s.id === 'trending') router.push('/trending');
-                              else if (s.id === 'news') router.push('/news');
-                              else if (s.id === 'discover') router.push('/discover');
-                              else if (s.id === 'videos') router.push('/videos');
-                            }}
-                            className="flex flex-col items-center gap-2 rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-4 text-center transition-all hover:border-degen-500/30 hover:bg-[var(--color-card-hover)]"
-                          >
-                            <span className="text-2xl" aria-hidden="true">
-                              {s.icon}
-                            </span>
-                            <span className="text-xs font-semibold text-[var(--color-fg)]">
-                              {s.label}
-                            </span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* 2026 Social UX: Reading progress bar when a post is expanded */}
-            {readingPostId && <ReadingProgressBar postId={readingPostId} enabled={true} />}
-
-            {/* 2026 Social UX: Onboarding suggestions for first-time visitors */}
-            {state === 'empty' && isFirstVisit && activeTab === 'for-you' && (
-              <OnboardingSuggestions />
-            )}
-
-            <div aria-live="polite" aria-label="Feed posts" role="feed">
-              <FeedList
-                state={state}
-                posts={posts}
-                error={error}
-                onPostClick={handlePostClick}
-                onEngage={handleEngage}
-                onTip={handleTip}
-                onRetry={fetchFeed}
-                onSignIn={openSignIn}
-                hasMore={hasMore}
-                onLoadMore={loadMore}
-                onReport={handleReport}
-                onCrossReplyOpen={handleCrossReplyOpen}
-                isAdmin={isAdmin}
-                onAdminRemove={handleAdminRemove}
-                onAdminBan={handleAdminBan}
-                onWhyThisPost={handleWhyThisPost}
-                onShowMoreLikeThis={handleShowMoreLikeThis}
-                onShowLessLikeThis={handleShowLessLikeThis}
-                onContextMenu={(e: React.MouseEvent, postId: string) => {
-                  const url = `${window.location.origin}/post/${postId}`;
-                  handleContextMenu(e, postId, url);
-                }}
-                endOfFeedSuggestions={endOfFeedSuggestions}
-                onDiscoveryClick={(suggestionId) => {
-                  if (suggestionId === 'trending') router.push('/trending');
-                  else if (suggestionId === 'news') router.push('/news');
-                  else if (suggestionId === 'discover') router.push('/discover');
-                  else if (suggestionId === 'videos') router.push('/videos');
-                }}
-                onPostVisibility={(postId, isVisible) => {
-                  if (isVisible) {
-                    scrollVel._onPostVisible(postId);
-                  } else {
-                    scrollVel._onPostHidden(postId);
-                  }
-                  // Track reading progress for expanded posts
-                  if (isVisible) {
-                    setReadingPostId((prev) => prev || null);
-                  }
-                }}
-                showCategoryBreaks={true}
-                categoryNiches={categoryNiches}
-                categoryBreakSlot={<CategoryBreakCard niches={categoryNiches} index={-1} />}
-                emptySlot={
-                  state === 'empty' && activeTab === 'for-you' ? (
-                    <div className="border-b border-[var(--color-glass-border)] px-4 py-16 text-center">
-                      <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-degen-500/10">
-                        <span className="text-3xl text-degen-400">✦</span>
-                      </div>
-                      <h3 className="mb-2 text-lg font-semibold text-[var(--color-fg)]">
-                        Your feed is quiet
-                      </h3>
-                      <p className="mx-auto mb-6 max-w-sm text-sm text-[var(--color-muted)]">
-                        Follow topics you care about to personalize your feed. Like, repost, or
-                        bookmark posts to help us learn your interests.
-                      </p>
-                      {!hasSignedIn && (
-                        <button type="button" onClick={openSignIn} className="btn-primary text-sm">
-                          Connect Wallet to get started
-                        </button>
-                      )}
-                    </div>
-                  ) : state === 'empty' && activeTab === 'custom-mix' ? (
-                    <div className="border-b border-[var(--color-glass-border)] px-4 py-16 text-center">
-                      <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-degen-500/10">
-                        <span className="text-3xl text-degen-400">🎚️</span>
-                      </div>
-                      <h3 className="mb-2 text-lg font-semibold text-[var(--color-fg)]">
-                        No posts in this mix yet
-                      </h3>
-                      <p className="mx-auto mb-6 max-w-sm text-sm text-[var(--color-muted)]">
-                        Create a custom mix to combine your favorite topics. Use the Tuner above to
-                        select topics and adjust their weights.
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => setShowTuner(true)}
-                        className="btn-primary text-sm"
-                      >
-                        Open Feed Tuner
-                      </button>
-                    </div>
-                  ) : undefined
-                }
-              />
-
-              {/* Bookmark tooltip — appears near the first post's bookmark button */}
-              {hasSignedIn && (
-                <ContextualTooltip id="bookmark-posts" align="left" icon="🔖">
-                  Bookmark posts to save them for later
-                </ContextualTooltip>
-              )}
-
-              {/* Right-click context menu */}
-              {contextMenu && (
-                <PostContextMenu
-                  postId={contextMenu.postId}
-                  postUrl={contextMenu.postUrl}
-                  open={!!contextMenu}
-                  position={contextMenu.position}
-                  onClose={closeContextMenu}
-                  onCopyLink={(id) => {
-                    const url = `${window.location.origin}/post/${id}`;
-                    navigator.clipboard.writeText(url).catch(() => {});
-                  }}
-                  onOpenNewTab={(id) => {
-                    window.open(`/post/${id}`, '_blank');
-                  }}
-                  onReport={handleReport}
-                />
-              )}
-
-              {/* == "You're all caught up!" divider == */}
-              {state === 'loaded' && posts.length > 0 && hasMore && (
-                <div className="flex items-center gap-3 px-4 py-8 select-none">
-                  <div className="h-px flex-1 bg-gradient-to-r from-transparent via-[var(--color-border)] to-transparent" />
-                  <div className="flex flex-col items-center gap-1">
-                    <span className="text-lg" aria-hidden="true">
-                      🌅
-                    </span>
-                    <span className="text-xs font-medium text-[var(--color-muted)]">
-                      You&apos;re all caught up!
-                    </span>
-                    <span className="text-[10px] text-[var(--color-muted)]">
-                      {posts.length > 0 ? `Showing ${posts.length} posts` : ''}
-                    </span>
-                  </div>
-                  <div className="h-px flex-1 bg-gradient-to-r from-transparent via-[var(--color-border)] to-transparent" />
-                </div>
-              )}
-            </div>
           </div>
-
-          {activeTab === 'following' && state === 'empty' && (
-            <div className="border-b border-[var(--color-glass-border)] px-4 py-6">
-              <GettingStartedChecklist />
-            </div>
-          )}
-
-          {/* == "Why this post?" explain panel == */}
-          {explainPost && activeTab === 'for-you' && (
-            <div
-              ref={explainRef}
-              className="fixed bottom-0 left-0 right-0 z-50 mx-auto max-w-[1280px] px-3 pb-4 sm:px-4 sm:bottom-auto sm:top-1/2 sm:-translate-y-1/2"
-              onClick={(e) => {
-                if (e.target === e.currentTarget) setExplainPost(null);
-              }}
-            >
-              <div className="mx-auto max-w-sm">
-                <FeedWhyCard post={explainPost} onClose={() => setExplainPost(null)} />
-              </div>
-            </div>
-          )}
-
-          {/* Bottom CTA — repeat sign-in pitch */}
-          {!hasSignedIn && state === 'loaded' && (
-            <div className="m-4 rounded-2xl border border-degen-500/30 bg-gradient-to-br from-degen-500/10 to-transparent p-5 text-center">
-              <p className="mb-1 text-sm font-semibold text-[var(--color-fg)]">
-                Liking what you see?
-              </p>
-              <p className="mb-4 text-xs text-[var(--color-muted)]">
-                Sign in once to post, like, and reply across all 8 networks.
-              </p>
-              <button type="button" onClick={openSignIn} className="btn-primary text-sm">
-                Connect Wallet to Post
-              </button>
-            </div>
-          )}
         </div>
 
-        {/* Right sidebar — visible at lg+ (Shell's RightSidebar is suppressed for /feed) */}
-        <aside className="hidden w-[350px] shrink-0 lg:block">
-          <div
-            className="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto"
-            style={{ scrollbarWidth: 'thin' }}
-          >
-            <FeedSidebar
-              trending={feedMeta.trending ?? []}
-              protocolSummaries={protocolSummaries}
-              activeProtocolFilter={protocolFilter}
-              onProtocolClick={handleProtocolFilter}
-            />
+        <FeedFilterBar
+          hideLowQuality={hideLowQuality}
+          onToggleHideLowQuality={toggleHideLowQuality}
+          allowNonCrypto={allowNonCrypto}
+          onToggleAllowNonCrypto={() => {
+            setAllowNonCrypto((p) => {
+              const n = !p;
+              persistPrefs({ allowNonCrypto: n });
+              return n;
+            });
+          }}
+          showOriginalContent={showOriginalContent}
+          onToggleShowOriginal={() => {
+            setShowOriginalContent((p) => {
+              const n = !p;
+              persistPrefs({ showOriginalContent: n });
+              return n;
+            });
+          }}
+          minEngagement={minEngagement}
+          onMinEngagementChange={(v) => {
+            setMinEngagement(v);
+            persistPrefs({ minEngagement: v });
+          }}
+          protocolFilter={protocolFilter}
+          onProtocolFilterChange={(v) => {
+            setProtocolFilter(v);
+            persistPrefs({ protocolFilter: v });
+          }}
+          onOpenTuner={() => setShowTuner(true)}
+        />
+
+        <FeedProtocolSummary meta={feedMeta} />
+        {feedMeta?.notices?.map((n, i) => (
+          <div key={i} className="mb-3 rounded-lg bg-blue-500/5 px-3 py-2 text-xs text-blue-400">
+            {n}
           </div>
-        </aside>
-
-        {tipPost && (
-          <TipModal
-            open={!!tipPost}
-            onClose={() => setTipPost(null)}
-            recipientProtocol={tipPost.protocol}
-            recipientAuthorId={tipPost.author.id}
-            recipientDisplayName={tipPost.author.displayName}
-            publicationId={
-              tipPost.protocol === 'lens' ? (tipPost.raw as { id?: string })?.id : undefined
-            }
-          />
+        ))}
+        {feedMeta?.errors?.map((e, i) => (
+          <div key={i} className="mb-3 rounded-lg bg-red-500/5 px-3 py-2 text-xs text-red-400">
+            {e}
+          </div>
+        ))}
+        {newAvailable && (
+          <div className="mb-4">
+            <FeedNewPostsBanner count={posts.length} onRefresh={refreshNow} />
+          </div>
         )}
 
-        {/* 2026 Social UX: Share sheet for multi-platform sharing */}
-        {sharePost && (
-          <ShareSheet
-            post={sharePost}
-            open={!!sharePost}
-            onClose={() => setSharePost(null)}
-            onToast={handleShareToast}
-          />
+        {state === 'loading' && <FeedLoadingSkeleton />}
+        {state === 'empty' && <FeedEmptyState activeTab={activeTab} />}
+        {state === 'error' && (
+          <FeedErrorState error={error || 'Unknown error'} onRetry={() => fetchFeed(false)} />
         )}
 
-        {/* == Floating "Back to Top" button — appears after ~3 pages == */}
-        <ScrollToTop />
+        {state === 'loaded' && (
+          <>
+            <div className="space-y-4">
+              {memoizedFeed.map((post) => (
+                <div key={post.id} className="relative">
+                  <PostCard post={post} onEngage={handleEngage} layout={layout} />
+                </div>
+              ))}
+            </div>
+            {posts.length >= loadedLimit && (
+              <div className="mt-8 text-center">
+                <button type="button" onClick={loadMore} className="btn-secondary text-sm">
+                  Load more
+                </button>
+              </div>
+            )}
+            {/* Context menu */}
+            {contextMenuPostId && (
+              <PostContextMenu
+                postId={contextMenuPostId ?? ''}
+                onClose={() => setContextMenuPostId(null)}
+                open={!!contextMenuPostId}
+                position={{ x: 0, y: 0 }}
+              />
+            )}
+          </>
+        )}
 
-        {/* == FeedTuner modal == */}
+        {/* Composer */}
+        {showComposer && (
+          <FeedComposer onClose={() => setShowComposer(false)} onPublish={publish} />
+        )}
+
+        {/* Tip modal */}
+        {tipPost && <TipModal post={tipPost} onClose={() => setTipPost(null)} />}
+
+        {/* Share sheet */}
+        {popupPost && <ShareSheet post={popupPost} onClose={() => setPopupPost(null)} />}
+
+        {/* Feed tuner */}
         {showTuner && (
           <FeedTuner
-            weights={topicWeights}
+            topicWeights={topicWeights}
             onWeightsChange={handleTunerWeightsChange}
-            onApply={handleTunerApply}
             onReset={handleTunerReset}
-            onClose={() => setShowTuner(false)}
             feedMixConfig={feedMixConfig}
             onFeedMixChange={handleFeedMixChange}
-            onFeedMixApply={handleFeedMixApply}
             onFeedMixReset={handleFeedMixReset}
             savedMixes={savedMixes}
             onSaveMix={handleSaveMix}
@@ -2073,9 +716,11 @@ export default function FeedPage() {
             feedPresets={FEED_PRESETS}
           />
         )}
+
+        <ScrollToTop />
+        {/* biome-ignore lint/a11y/useKeyWithClickEvents: screen-reader announcer */}
+        <div ref={announcerRef} className="sr-only" role="status" aria-live="polite" />
       </div>
     </ErrorBoundary>
   );
 }
-
-// === Feed Health sub-component =====================================

@@ -41,7 +41,11 @@ export function FeedTabBar({
   return (
     <div className="flex flex-col gap-2">
       {/* Tab Row */}
-      <div className="flex items-center gap-1 overflow-x-auto px-4 py-2 scrollbar-none" role="tablist" aria-label="Feed tabs">
+      <div
+        className="flex items-center gap-1 overflow-x-auto px-4 py-2 scrollbar-none"
+        role="tablist"
+        aria-label="Feed tabs"
+      >
         {TABS.map((tab) => (
           <button
             key={tab.key}
@@ -65,11 +69,25 @@ export function FeedTabBar({
             className="ml-auto shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium text-degen-400 hover:bg-degen-500/10 transition-colors"
             aria-label="Open feed tuner"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="inline-block mr-1">
-              <line x1="4" y1="21" x2="4" y2="14" /><line x1="4" y1="10" x2="4" y2="3" />
-              <line x1="12" y1="21" x2="12" y2="12" /><line x1="12" y1="8" x2="12" y2="3" />
-              <line x1="20" y1="21" x2="20" y2="16" /><line x1="20" y1="12" x2="20" y2="3" />
-              <circle cx="4" cy="12" r="2" /><circle cx="12" cy="10" r="2" /><circle cx="20" cy="14" r="2" />
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              className="inline-block mr-1"
+            >
+              <line x1="4" y1="21" x2="4" y2="14" />
+              <line x1="4" y1="10" x2="4" y2="3" />
+              <line x1="12" y1="21" x2="12" y2="12" />
+              <line x1="12" y1="8" x2="12" y2="3" />
+              <line x1="20" y1="21" x2="20" y2="16" />
+              <line x1="20" y1="12" x2="20" y2="3" />
+              <circle cx="4" cy="12" r="2" />
+              <circle cx="12" cy="10" r="2" />
+              <circle cx="20" cy="14" r="2" />
             </svg>
             Tune
           </button>

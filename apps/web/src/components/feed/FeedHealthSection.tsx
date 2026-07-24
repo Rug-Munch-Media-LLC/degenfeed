@@ -65,7 +65,14 @@ export function FeedHealthSection({ perProtocol, total, fetchedAt }: FeedHealthS
     >
       <summary className="flex cursor-pointer items-center justify-between px-4 py-2 text-[11px] text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors select-none">
         <span className="flex items-center gap-1.5">
-          <svg width="10" height="10" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0 text-degen-400">
+          <svg
+            width="10"
+            height="10"
+            viewBox="0 0 16 16"
+            fill="none"
+            aria-hidden="true"
+            className="shrink-0 text-degen-400"
+          >
             <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.2" />
             <path d="M8 5v6M5 8h6" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
           </svg>
@@ -75,15 +82,25 @@ export function FeedHealthSection({ perProtocol, total, fetchedAt }: FeedHealthS
       </summary>
       <div className="border-t border-[var(--color-glass-border)] px-4 py-3 text-xs space-y-3">
         <div className="flex items-center gap-2">
-          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500/15 text-[10px] text-emerald-400">✓</span>
+          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500/15 text-[10px] text-emerald-400">
+            ✓
+          </span>
           <span className="text-[var(--color-fg)]">
             Your feed is healthy:{' '}
-            <strong className="text-emerald-400">{protocolBreakdown.length > 1 ? '85%' : '100%'}</strong> high quality,{' '}
-            <strong className="text-degen-400">{protocolBreakdown.length > 1 ? '15%' : '0%'}</strong> discovery
+            <strong className="text-emerald-400">
+              {protocolBreakdown.length > 1 ? '85%' : '100%'}
+            </strong>{' '}
+            high quality,{' '}
+            <strong className="text-degen-400">
+              {protocolBreakdown.length > 1 ? '15%' : '0%'}
+            </strong>{' '}
+            discovery
           </span>
         </div>
         <div>
-          <p className="mb-1.5 text-[10px] font-medium uppercase tracking-wider text-[var(--color-muted)]">From</p>
+          <p className="mb-1.5 text-[10px] font-medium uppercase tracking-wider text-[var(--color-muted)]">
+            From
+          </p>
           <div className="flex flex-wrap gap-x-4 gap-y-1">
             {protocolBreakdown.map((p) => (
               <span key={p.label} className="text-xs text-[var(--color-muted)]">
@@ -93,21 +110,36 @@ export function FeedHealthSection({ perProtocol, total, fetchedAt }: FeedHealthS
           </div>
         </div>
         <div>
-          <p className="mb-1.5 text-[10px] font-medium uppercase tracking-wider text-[var(--color-muted)]">Sources</p>
+          <p className="mb-1.5 text-[10px] font-medium uppercase tracking-wider text-[var(--color-muted)]">
+            Sources
+          </p>
           <div className="flex flex-wrap gap-x-4 gap-y-1">
             <span className="text-xs text-[var(--color-muted)]">
-              Followed (<strong className="text-degen-400">{((composition.followed / total) * 100).toFixed(0)}%</strong>)
+              Followed (
+              <strong className="text-degen-400">
+                {((composition.followed / total) * 100).toFixed(0)}%
+              </strong>
+              )
             </span>
             <span className="text-xs text-[var(--color-muted)]">
-              Suggested (<strong className="text-degen-400">{((composition.suggested / total) * 100).toFixed(0)}%</strong>)
+              Suggested (
+              <strong className="text-degen-400">
+                {((composition.suggested / total) * 100).toFixed(0)}%
+              </strong>
+              )
             </span>
             <span className="text-xs text-[var(--color-muted)]">
-              Explore (<strong className="text-degen-400">{((composition.explore / total) * 100).toFixed(0)}%</strong>)
+              Explore (
+              <strong className="text-degen-400">
+                {((composition.explore / total) * 100).toFixed(0)}%
+              </strong>
+              )
             </span>
           </div>
         </div>
         <p className="text-[10px] text-[var(--color-muted)]">
-          {total} posts loaded · Last fetched {fetchedAt ? new Date(fetchedAt).toLocaleTimeString() : 'just now'}
+          {total} posts loaded · Last fetched{' '}
+          {fetchedAt ? new Date(fetchedAt).toLocaleTimeString() : 'just now'}
         </p>
       </div>
     </details>
@@ -123,7 +155,12 @@ interface WhileYouWereAwayProps {
   onScrollToTop: () => void;
 }
 
-export function WhileYouWereAwayCard({ awayMinutes, postCount, onDismiss, onScrollToTop }: WhileYouWereAwayProps) {
+export function WhileYouWereAwayCard({
+  awayMinutes,
+  postCount,
+  onDismiss,
+  onScrollToTop,
+}: WhileYouWereAwayProps) {
   const hours = Math.floor(awayMinutes / 60);
   const mins = awayMinutes % 60;
   const timeStr = hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
@@ -134,20 +171,54 @@ export function WhileYouWereAwayCard({ awayMinutes, postCount, onDismiss, onScro
         <div className="mb-3 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400/20 to-orange-500/10">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-400" aria-hidden="true">
-                <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="text-amber-400"
+                aria-hidden="true"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="12 6 12 12 16 14" />
               </svg>
             </div>
             <div>
               <p className="text-sm font-bold text-[var(--color-fg)]">While you were away</p>
-              <p className="text-[11px] text-[var(--color-muted)]">{timeStr} · {postCount} new posts</p>
+              <p className="text-[11px] text-[var(--color-muted)]">
+                {timeStr} · {postCount} new posts
+              </p>
             </div>
           </div>
-          <button type="button" onClick={onDismiss} className="flex h-7 w-7 items-center justify-center rounded-full text-[var(--color-muted)] hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)] transition-colors" aria-label="Dismiss">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+          <button
+            type="button"
+            onClick={onDismiss}
+            className="flex h-7 w-7 items-center justify-center rounded-full text-[var(--color-muted)] hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)] transition-colors"
+            aria-label="Dismiss"
+          >
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
           </button>
         </div>
-        <button type="button" onClick={onScrollToTop} className="w-full rounded-xl bg-gradient-to-r from-degen-500/15 to-degen-400/10 px-4 py-2.5 text-sm font-medium text-degen-300 hover:from-degen-500/25 hover:to-degen-400/20 transition-all">
+        <button
+          type="button"
+          onClick={onScrollToTop}
+          className="w-full rounded-xl bg-gradient-to-r from-degen-500/15 to-degen-400/10 px-4 py-2.5 text-sm font-medium text-degen-300 hover:from-degen-500/25 hover:to-degen-400/20 transition-all"
+        >
           See new posts
         </button>
       </div>

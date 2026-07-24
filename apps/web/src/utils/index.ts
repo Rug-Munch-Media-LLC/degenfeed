@@ -3,4 +3,4 @@
  */
 
 export { cn } from './cn';
-export { formatCount, truncate, timeAgo, buildQuery, safeJsonParse } from './format';
+export { buildQuery, formatCount, safeJsonParse, timeAgo, truncate } from './format';

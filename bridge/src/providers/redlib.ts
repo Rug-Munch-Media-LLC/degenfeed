@@ -48,7 +48,7 @@ const SUBREDDITS = [
 
 // ─── Helpers ──────────────────────────────────────────────────────────
 
-function stripHtml(html: string): string {
+export function stripHtml(html: string): string {
   return html
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<[^>]*>/g, ' ')
@@ -62,7 +62,7 @@ function stripHtml(html: string): string {
     .trim();
 }
 
-function guessNiches(text: string, subreddit: string): string[] {
+export function guessNiches(text: string, subreddit: string): string[] {
   const niches: string[] = [];
   const lower = text.toLowerCase();
   const subLower = subreddit.toLowerCase();
@@ -153,7 +153,7 @@ async function fetchFromRedditRss(subreddit: string, limit: number): Promise<Uni
   }
 }
 
-function parseRssXml(xml: string, subreddit: string, limit: number): UnifiedPost[] {
+export function parseRssXml(xml: string, subreddit: string, limit: number): UnifiedPost[] {
   const posts: UnifiedPost[] = [];
   let index = 0;
 
