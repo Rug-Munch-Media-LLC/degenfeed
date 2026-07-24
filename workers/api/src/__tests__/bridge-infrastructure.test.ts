@@ -199,14 +199,8 @@ describe('withRetry', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
-    vi.useFakeTimers();
-    vi.setSystemTime(2000000);
     const mod = await import('../lib/bridge-reliability');
     withRetry = mod.withRetry;
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
   });
 
   it('succeeds on first try', async () => {

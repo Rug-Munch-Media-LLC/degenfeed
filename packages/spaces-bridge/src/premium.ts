@@ -39,12 +39,20 @@ export async function checkTokenGate(
 
   try {
     // Use the existing token-gate package
-    const { checkTokenGate } = await import('@degenfeed/token-gate');
-    const allowed = await checkTokenGate(
+    const { checkTokenGate: checkGate } = await import('@degenfeed/token-gate');
+    const chainMap: Record<string, 'ethereum' | 'base' | 'polygon' | 'solana' | 'arbitrum' | 'optimism'> = {
+      1: 'ethereum',
+      8453: 'base',
+      137: 'polygon',
+      101: 'solana',
+      42161: 'arbitrum',
+      10: 'optimism',
+    };
+    const allowed = await checkGate(
       {
-        chain: gating.chain ?? 'ethereum',
-        type: gating.type ?? 'erc20',
-        contractAddress: gating.tokenAddress,
+        chain: chainMap[gating.chainId ?? 1] ?? 'ethereum',
+        type: 'erc20',
+        contractAddress: gating.tokenAddress!,
         minBalance: Number(gating.minBalance ?? '1'),
       },
       userAddress,
@@ -53,7 +61,7 @@ export async function checkTokenGate(
     return {
       allowed,
       reason: allowed ? undefined : `Need ${gating.minBalance ?? '1'} tokens`,
-      balance: result.balance,
+      balance: '0',
       required: gating.minBalance ?? '1',
     };
   } catch (e) {
