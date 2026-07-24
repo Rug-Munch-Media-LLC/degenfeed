@@ -2,15 +2,20 @@
  * Reddit Provider
  *
  * Fetches Reddit content via multiple strategies:
- * 1. PRIMARY: Direct Reddit JSON API (rate-limited, 800ms delay between requests)
- * 2. FALLBACK: Reddit RSS feeds (works when JSON API is blocked)
- * 3. LAST RESORT: Self-hosted Redlib instance (port 8281, often blocked by Reddit CDN)
+ * 1. PRIMARY: OAuth2-authenticated Reddit JSON API (600 req/10min)
+ * 2. FALLBACK: Direct Reddit JSON API (rate-limited, 800ms delay between requests)
+ * 3. THIRD: Reddit RSS feeds (works when JSON API is blocked)
+ * 4. LAST RESORT: Self-hosted Redlib instance (port 8281, often blocked by Reddit CDN)
  *
- * Reddit aggressively blocks unauthenticated requests at their CDN level.
- * Long-term fix: register Reddit OAuth2 app for authenticated API access.
+ * With OAuth2 configured (REDDIT_CLIENT_ID, REDDIT_CLIENT_SECRET, REDDIT_USERNAME,
+ * REDDIT_PASSWORD) we get 600 requests per 10 minutes vs 60 unauthenticated.
+ * See reddit-auth.ts for OAuth token management.
+ *
+ * To set up: https://www.reddit.com/prefs/apps → Create "script" app
  */
 
 import type { SchemaGuard, UnifiedPost } from '../server/types';
+import { getRedditOAuth } from './reddit-auth';
 
 const REDDIT_RSS = 'https://www.reddit.com';
 
@@ -252,16 +257,85 @@ export function parseRssXml(xml: string, subreddit: string, limit: number): Unif
   return posts;
 }
 
-// ─── Fallback: Direct Reddit JSON API ────────────────────────────────
+// ─── Primary: OAuth2-authenticated Reddit JSON API ───────────────────
+
+async function fetchFromRedditOAuth(subreddit: string, limit: number): Promise<UnifiedPost[]> {
+  try {
+    const path = `/r/${encodeURIComponent(subreddit)}/hot.json?limit=${Math.min(limit, 25)}`;
+    const res = await getRedditOAuth().apiFetch(path, { timeout: 8000 });
+    if (!res || !res.ok) {
+      if (res?.status === 429) {
+        console.log(`[bridge] Reddit OAuth: rate limited on r/${subreddit}`);
+      } else if (res?.status === 403) {
+        console.log(`[bridge] Reddit OAuth: forbidden on r/${subreddit} (private?)`);
+      }
+      return [];
+    }
+    const data = (await res.json()) as {
+      data?: { children?: Array<{ data: Record<string, unknown> }> };
+    };
+    if (!data.data?.children) return [];
+
+    return data.data.children
+      .slice(0, limit)
+      .map((child, i) => {
+        const d = child.data;
+        const title = (d.title as string) || '';
+        const author = (d.author as string) || 'unknown';
+        const score = (d.score as number) || 0;
+        const comments = (d.num_comments as number) || 0;
+        const created = ((d.created_utc as number) || 0) * 1000;
+        const link = (d.url as string) || '';
+        const sub = (d.subreddit as string) || subreddit;
+        const id = (d.id as string) || `oauth_${i}`;
+
+        if (!title) return null;
+
+        return {
+          id: `reddit:${sub}:oauth_${id}`,
+          protocol: 'reddit' as const,
+          author: {
+            id: `reddit:u/${author}`,
+            primary: { protocol: 'reddit' as const, id: author },
+            handles: { reddit: `u/${author}` },
+            displayName: author,
+            bio: `Reddit user on r/${sub}`,
+            avatarUrl: '',
+            followerCount: 0,
+            followingCount: 0,
+            links: [{ label: 'subreddit', url: `https://reddit.com/r/${sub}` }],
+            keys: {},
+          },
+          text: title,
+          embeds: link ? [{ kind: 'link', url: link }] : [],
+          contentType: link ? 'link' : 'text',
+          createdAt: created || Date.now() - i * 600000,
+          metrics: { likes: score, reposts: 0, replies: comments, quotes: 0, views: 0 },
+          engagement: {
+            viewerLiked: false,
+            viewerReposted: false,
+            viewerBookmarked: false,
+            raw: { likes: score, reposts: 0, replies: comments, quotes: 0 },
+          },
+          raw: d,
+          niches: guessNiches(title, sub),
+        };
+      })
+      .filter(Boolean) as UnifiedPost[];
+  } catch (err) {
+    console.error(`[bridge] Reddit OAuth fetch error on r/${subreddit}: ${(err as Error).message}`);
+    return [];
+  }
+}
+
+// ─── Fallback: Direct (unauthenticated) Reddit JSON API ──────────────
 
 async function fetchFromRedditJson(subreddit: string, limit: number): Promise<UnifiedPost[]> {
   try {
     const url = `${REDDIT_RSS}/r/${encodeURIComponent(subreddit)}/hot.json?limit=${Math.min(limit, 25)}`;
+    const headers = await getRedditOAuth().getAuthHeaders();
     const res = await fetch(url, {
-      headers: {
-        'User-Agent': 'web:DegenFeed-Bridge:v0.2.0 (by /u/degenfeed)',
-        Accept: 'application/json',
-      },
+      headers,
       signal: AbortSignal.timeout(8000),
     });
     if (!res.ok) {
@@ -285,7 +359,6 @@ async function fetchFromRedditJson(subreddit: string, limit: number): Promise<Un
         const comments = (d.num_comments as number) || 0;
         const created = ((d.created_utc as number) || 0) * 1000;
         const link = (d.url as string) || '';
-        const _permalink = (d.permalink as string) || '';
         const sub = (d.subreddit as string) || subreddit;
 
         if (!title) return null;
@@ -331,7 +404,7 @@ async function fetchFromRedditJson(subreddit: string, limit: number): Promise<Un
 export const schema: SchemaGuard = {
   id: 'reddit',
   name: 'Reddit/Redlib',
-  description: 'Crypto subreddits — JSON API + RSS fallback',
+  description: 'Crypto subreddits — OAuth2 JSON API + RSS fallback',
   endpoint: '/api/feed/reddit',
   requiresAuth: false,
   contentType: 'mixed',
@@ -340,19 +413,36 @@ export const schema: SchemaGuard = {
 export async function fetchRedditPosts(limit = 20): Promise<UnifiedPost[]> {
   const perSub = Math.max(2, Math.ceil(limit / SUBREDDITS.length));
   const all: UnifiedPost[] = [];
+  let oauthCount = 0;
   let jsonCount = 0;
   let rssCount = 0;
 
-  // PRIMARY: Direct Reddit JSON API (most reliable)
-  for (const sub of SUBREDDITS.slice(0, 5)) {
-    try {
-      await new Promise((r) => setTimeout(r, 800)); // 800ms delay to avoid rate limiting
-      const posts = await fetchFromRedditJson(sub, perSub);
-      all.push(...posts);
-      jsonCount += posts.length;
-      if (all.length >= limit) break;
-    } catch {
-      // continue to next subreddit
+  const hasOAuth = getRedditOAuth().isConfigured;
+
+  // PRIMARY: OAuth2-authenticated JSON API (600 req/10min, no delays needed)
+  if (hasOAuth) {
+    for (const sub of SUBREDDITS.slice(0, 7)) {
+      try {
+        const posts = await fetchFromRedditOAuth(sub, perSub);
+        all.push(...posts);
+        oauthCount += posts.length;
+        if (all.length >= limit) break;
+      } catch {
+        // continue to next subreddit
+      }
+    }
+  } else {
+    // Fallback: Unauthenticated JSON API with 800ms delays
+    for (const sub of SUBREDDITS.slice(0, 5)) {
+      try {
+        await new Promise((r) => setTimeout(r, 800));
+        const posts = await fetchFromRedditJson(sub, perSub);
+        all.push(...posts);
+        jsonCount += posts.length;
+        if (all.length >= limit) break;
+      } catch {
+        // continue to next subreddit
+      }
     }
   }
 
@@ -395,8 +485,9 @@ export async function fetchRedditPosts(limit = 20): Promise<UnifiedPost[]> {
     }
   }
 
+  const authMode = hasOAuth ? 'oauth' : 'unauthenticated';
   console.log(
-    `[bridge] Reddit: ${deduped.length} posts (json: ${jsonCount}, rss: ${rssCount}, total raw: ${all.length})`,
+    `[bridge] Reddit: ${deduped.length} posts [${authMode}] (oauth: ${oauthCount}, json: ${jsonCount}, rss: ${rssCount}, total raw: ${all.length})`,
   );
   return deduped;
 }
