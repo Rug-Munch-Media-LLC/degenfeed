@@ -31,9 +31,9 @@ export interface ProtocolHealthDotsProps {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  up: '#00ff41',
+  up: 'var(--color-accent)',
   degraded: '#facc15',
-  down: '#f4212e',
+  down: 'var(--color-danger)',
 };
 
 const PROTOCOL_DISPLAY_ORDER = [

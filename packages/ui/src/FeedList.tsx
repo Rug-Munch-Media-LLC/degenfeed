@@ -140,7 +140,7 @@ function EmptyState({
   protocolColor?: string;
   onSignIn?: () => void;
 }) {
-  const color = protocolColor || '#00ff41';
+  const color = protocolColor || 'var(--color-accent)';
   return (
     <div className="border-b border-[var(--color-glass-border)] px-4 py-16 text-center">
       <div

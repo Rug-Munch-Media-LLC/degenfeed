@@ -8,7 +8,7 @@
  * Maps NFTs to UnifiedPost format with image previews.
  */
 
-import type { UnifiedPost } from '../server';
+import type { SchemaGuard, UnifiedPost } from '../server';
 
 const ZORA_API = 'https://api.zora.co/graphql';
 
@@ -346,6 +346,7 @@ export function tokenToPost(token: ZoraToken): UnifiedPost {
   return {
     id: `zora:${t.collectionAddress}:${t.mintInfo?.mintContext.blockNumber ?? Date.now()}`,
     protocol: 'zora',
+    contentType: 'image',
     author: {
       id: `zora:${token.creator.address}`,
       primary: { protocol: 'zora', id: token.creator.address },
@@ -416,6 +417,7 @@ export function collectionToPost(collection: ZoraCollection): UnifiedPost {
   return {
     id: `zora:collection:${c.address}`,
     protocol: 'zora',
+    contentType: 'image',
     author: {
       id: `zora:collection:${c.address}`,
       primary: { protocol: 'zora', id: c.address },
@@ -500,6 +502,15 @@ async function fetchRecentDrops(limit: number): Promise<UnifiedPost[]> {
 
 // ─── Main ────────────────────────────────────────────────────────────
 
+export const schema: SchemaGuard = {
+  id: 'zora',
+  name: 'Zora NFT',
+  description: 'NFT minting protocol — trending mints and collections',
+  endpoint: '/api/feed/zora',
+  requiresAuth: false,
+  contentType: 'image',
+};
+
 export async function fetchZoraPosts(limit = 20): Promise<UnifiedPost[]> {
   const all: UnifiedPost[] = [];
 
@@ -533,3 +544,6 @@ export async function fetchZoraPosts(limit = 20): Promise<UnifiedPost[]> {
   console.log(`[bridge] Zora: ${deduped.length} posts (${mints.length} mints)`);
   return deduped;
 }
+
+/** @alias Use `fetch` as the standardized export name */
+export const fetch = fetchZoraPosts;

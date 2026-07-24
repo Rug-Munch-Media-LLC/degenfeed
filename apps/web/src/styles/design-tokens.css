@@ -52,9 +52,9 @@
   /* ═══ Typography ═══════════════════════════════════════════════════════ */
 
   /* Font families (set by next/font) */
-  --font-heading: 'Sora', 'Inter', system-ui, sans-serif;
-  --font-body: 'Inter', system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --font-heading: "Sora", "Inter", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "Fira Code", monospace;
 
   /* Heading sizes */
   --text-h1: 2rem; /* 32px */

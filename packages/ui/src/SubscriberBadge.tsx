@@ -13,7 +13,7 @@ export interface SubscriberBadgeProps {
 }
 
 const TIER_COLORS: Record<string, { bg: string; text: string; label: string }> = {
-  supporter: { bg: '#22c55e22', text: '#22c55e', label: 'Supporter' },
+  supporter: { bg: 'color-mix(in srgb, var(--color-accent) 13%, transparent)', text: 'var(--color-accent)', label: 'Supporter' },
   member: { bg: '#3b82f622', text: '#3b82f6', label: 'Member' },
   patron: { bg: '#a855f722', text: '#a855f7', label: 'Patron' },
 };

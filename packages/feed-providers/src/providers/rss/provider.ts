@@ -8,12 +8,12 @@ import {
   withConcurrencyLimit,
   withTimeout,
 } from '../../utils';
-import type { RssFeedConfig, RssProviderOptions, ScoredRssPost } from './types';
 import { DEFAULT_CRYPTO_FEEDS } from './config';
-import { computeQualityScore } from './quality';
 import { deduplicateRssPosts } from './dedup';
 import { normalizeFeedInput } from './helpers';
 import { feedToUnifiedPosts, parseRss } from './parsers';
+import { computeQualityScore } from './quality';
+import type { RssFeedConfig, RssProviderOptions, ScoredRssPost } from './types';
 
 export class RssProvider implements FeedProvider {
   readonly protocol: Protocol = 'rss';

@@ -614,17 +614,17 @@
 }
 
 .coming-soon-label.q1 {
-  background: rgba(168, 85, 247, 0.15);
+  background: color-mix(in srgb, #a855f7 15%, transparent);
   color: #a855f7;
 }
 
 .coming-soon-label.q2 {
-  background: rgba(0, 255, 65, 0.15);
-  color: #00ff41;
+  background: color-mix(in srgb, var(--color-accent) 15%, transparent);
+  color: var(--color-accent);
 }
 
 .coming-soon-label.q3 {
-  background: rgba(59, 130, 246, 0.15);
+  background: color-mix(in srgb, #3b82f6 15%, transparent);
   color: #3b82f6;
 }
 
@@ -825,7 +825,7 @@
 
 /* == Site Footer ============================================ */
 .site-footer {
-  border-top: 1px solid var(--color-border, #1f2937);
+  border-top: 1px solid var(--color-border);
   padding: 2.5rem 1.5rem 3rem;
   text-align: center;
   background: linear-gradient(to top, rgba(0, 255, 65, 0.02), transparent);

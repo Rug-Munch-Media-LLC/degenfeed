@@ -10,7 +10,7 @@
  * produce JSON output. Fallback to direct RSS feed parsing.
  */
 
-import type { UnifiedPost } from '../server';
+import type { SchemaGuard, UnifiedPost } from '../server';
 
 const RSS_BRIDGE_BASE = 'http://127.0.0.1:8282';
 const USER_AGENT = 'DegenFeed-Bridge/0.1';
@@ -232,6 +232,7 @@ export function parseRssXml(
       },
       text: title,
       embeds: link ? [{ kind: 'link', url: link }] : [],
+      contentType: 'link',
       createdAt: updatedMatch ? new Date(updatedMatch[1]).getTime() : Date.now(),
       metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0, views: 0 },
       engagement: {
@@ -293,6 +294,15 @@ export function parseRssXml(
 
 // ─── Main ────────────────────────────────────────────────────────────
 
+export const schema: SchemaGuard = {
+  id: 'rss',
+  name: 'RSS-Bridge/News',
+  description: 'Aggregated from 350+ crypto news RSS sources',
+  endpoint: '/api/feed/news',
+  requiresAuth: false,
+  contentType: 'link',
+};
+
 export async function fetchRssBridgePosts(limit = 20): Promise<UnifiedPost[]> {
   const all: UnifiedPost[] = [];
 
@@ -345,3 +355,6 @@ export async function fetchRssBridgePosts(limit = 20): Promise<UnifiedPost[]> {
   console.log(`[bridge] RSS-Bridge: ${deduped.length} posts (${all.length} raw)`);
   return deduped;
 }
+
+/** @alias Use `fetch` as the standardized export name */
+export const fetch = fetchRssBridgePosts;

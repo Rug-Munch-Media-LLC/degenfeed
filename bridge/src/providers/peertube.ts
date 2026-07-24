@@ -8,7 +8,7 @@
  * API: GET /api/v1/videos?count=N&sort=-publishedAt
  */
 
-import type { UnifiedPost } from '../server';
+import type { SchemaGuard, UnifiedPost } from '../server';
 
 const PEERTUBE_BASE = 'http://127.0.0.1:9011';
 
@@ -105,6 +105,7 @@ export function videoToPost(video: PeerTubeVideo): UnifiedPost {
       keys: {},
     },
     text,
+    contentType: 'video',
     embeds: [
       { kind: 'video', url: videoUrl, meta: { duration: video.duration, views: video.views } },
     ],
@@ -128,6 +129,15 @@ export function videoToPost(video: PeerTubeVideo): UnifiedPost {
 }
 
 // ─── Main ────────────────────────────────────────────────────────────
+
+export const schema: SchemaGuard = {
+  id: 'peertube',
+  name: 'PeerTube',
+  description: 'Decentralized video platform on ActivityPub — local instance',
+  endpoint: '/api/feed/peertube',
+  requiresAuth: false,
+  contentType: 'video',
+};
 
 export async function fetchPeerTubePosts(limit = 20): Promise<UnifiedPost[]> {
   try {
@@ -156,3 +166,6 @@ export async function fetchPeerTubePosts(limit = 20): Promise<UnifiedPost[]> {
     return [];
   }
 }
+
+/** @alias Use `fetch` as the standardized export name */
+export const fetch = fetchPeerTubePosts;

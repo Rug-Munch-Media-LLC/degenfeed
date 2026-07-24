@@ -68,7 +68,7 @@ export const TIP_PLATFORM_META: Record<
   TipDashboardPlatform,
   { label: string; icon: string; color: string }
 > = {
-  degenfeed: { label: 'DegenFeed', icon: '◆', color: '#22c55e' },
+  degenfeed: { label: 'DegenFeed', icon: '◆', color: 'var(--color-accent)' },
   lemmy: { label: 'Lemmy', icon: 'L', color: '#00bc8c' },
   peertube: { label: 'PeerTube', icon: '▶', color: '#f2690d' },
 };

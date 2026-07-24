@@ -8,7 +8,7 @@
  * events, and merges results.
  */
 
-import type { UnifiedPost } from '../server';
+import type { SchemaGuard, UnifiedPost } from '../server';
 
 /** Our relay + public relays */
 const RELAYS = [
@@ -182,6 +182,7 @@ export function eventToPost(ev: NostrEvent, relayUrl: string, profile?: NostrPro
     },
     text: ev.content,
     embeds: [],
+    contentType: 'text',
     createdAt: ev.created_at * 1000,
     metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0, zaps: 0 },
     engagement: {
@@ -196,6 +197,15 @@ export function eventToPost(ev: NostrEvent, relayUrl: string, profile?: NostrPro
 }
 
 // ─── Main ──────────────────────────────────────────────────────────────
+
+export const schema: SchemaGuard = {
+  id: 'nostr',
+  name: 'Nostr',
+  description: 'Notes and Other Stuff Transmitted by Relays — WebSocket relays',
+  endpoint: '/api/feed/nostr',
+  requiresAuth: false,
+  contentType: 'text',
+};
 
 export async function fetchNostrPosts(limit = 20): Promise<UnifiedPost[]> {
   const perRelay = Math.max(3, Math.ceil(limit / RELAYS.length));
@@ -243,3 +253,6 @@ export async function fetchNostrPosts(limit = 20): Promise<UnifiedPost[]> {
   );
   return posts;
 }
+
+/** @alias Use `fetch` as the standardized export name */
+export const fetch = fetchNostrPosts;

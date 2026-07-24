@@ -117,8 +117,9 @@ export function ProtocolFeed({
       });
       if (!res.ok) throw new Error(`Feed returned ${res.status}`);
 
-      const data = (await res.json()) as { data?: UnifiedPost[]; meta?: FeedMeta };
-      const feed = data.data ?? [];
+      const json = (await res.json()) as { posts?: UnifiedPost[]; meta?: FeedMeta };
+      const data = json as { data?: UnifiedPost[]; meta?: FeedMeta };
+      const feed = json.posts ?? data.data ?? [];
 
       if (feed.length > 0) {
         lastPostIdRef.current = feed[0]?.id ?? '';
@@ -142,8 +143,8 @@ export function ProtocolFeed({
         url.searchParams.set('limit', '1');
         const res = await fetch(url.toString(), { credentials: 'include' });
         if (!res.ok) return;
-        const data = (await res.json()) as { data?: UnifiedPost[] };
-        const first = data.data?.[0];
+        const pollJson = (await res.json()) as { posts?: UnifiedPost[]; data?: UnifiedPost[] };
+        const first = (pollJson.posts ?? pollJson.data ?? [])[0];
         if (first && first.id !== lastPostIdRef.current) {
           setNewPostCount((c) => c + 1);
         }

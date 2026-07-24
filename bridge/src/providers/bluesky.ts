@@ -11,7 +11,7 @@
  *  - Image URL extraction with alt text, dimensions, aspect ratios
  */
 
-import type { UnifiedPost } from '../server';
+import type { SchemaGuard, UnifiedPost } from '../server';
 
 const PDS_BASE = 'http://127.0.0.1:3012';
 const BSKY_PUBLIC = 'https://public.api.bsky.app';
@@ -518,6 +518,15 @@ export async function fetchBlueskyTrending(limit = 20): Promise<UnifiedPost[]> {
 
 // ─── Main ───────────────────────────────────────────────────────────
 
+export const schema: SchemaGuard = {
+  id: 'bluesky',
+  name: 'Bluesky/PDS',
+  description: 'AT Protocol social network — curated actors + search',
+  endpoint: '/api/feed/bluesky',
+  requiresAuth: false,
+  contentType: 'mixed',
+};
+
 export async function fetchBlueskyPosts(limit = 20): Promise<UnifiedPost[]> {
   const all: UnifiedPost[] = [];
 
@@ -560,3 +569,6 @@ export async function fetchBlueskyPosts(limit = 20): Promise<UnifiedPost[]> {
   console.log(`[bridge] Bluesky: ${deduped.length} posts (PDS: ${pdsPosts.length})`);
   return deduped;
 }
+
+/** @alias Use `fetch` as the standardized export name */
+export const fetch = fetchBlueskyPosts;
