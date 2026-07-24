@@ -20,7 +20,9 @@ import type { UnifiedPost } from './server/types';
 // ─── Configuration ─────────────────────────────────────────────────────
 
 const MEILI_URL = process.env.MEILISEARCH_URL || 'http://127.0.0.1:7700';
-const MEILI_KEY = process.env.MEILI_MASTER_KEY || '01b9dbb2adc08f7aba179b30e0f215a76604180a4b736b0899204bf0f6f397fb';
+const MEILI_KEY =
+  process.env.MEILI_MASTER_KEY ||
+  '01b9dbb2adc08f7aba179b30e0f215a76604180a4b736b0899204bf0f6f397fb';
 const INDEX_NAME = 'posts';
 
 const indexedIds = new Set<string>();
@@ -81,40 +83,42 @@ async function ensureIndex(): Promise<void> {
       await meili.createIndex(INDEX_NAME, { primaryKey: 'id' });
     }
 
-    await meili.index(INDEX_NAME).updateFilterableAttributes([
-      'source',
-      'contentType',
-      'niches',
-      'createdAt',
-      'authorId',
-    ]);
+    await meili
+      .index(INDEX_NAME)
+      .updateFilterableAttributes(['source', 'contentType', 'niches', 'createdAt', 'authorId']);
 
     await meili.index(INDEX_NAME).updateSortableAttributes(['createdAt']);
 
-    await meili.index(INDEX_NAME).updateSearchableAttributes([
-      'text',
-      'html',
-      'authorName',
-      'authorHandle',
-      'niches',
-    ]);
+    await meili
+      .index(INDEX_NAME)
+      .updateSearchableAttributes(['text', 'html', 'authorName', 'authorHandle', 'niches']);
 
-    await meili.index(INDEX_NAME).updateDisplayedAttributes([
-      'id', 'source', 'contentType', 'sourceLabel',
-      'text', 'html', 'authorName', 'authorHandle',
-      'authorAvatar', 'authorId', 'authorBio',
-      'createdAt', 'metrics', 'niches', 'url',
-      'imageUrl', 'language', 'metadata',
-    ]);
+    await meili
+      .index(INDEX_NAME)
+      .updateDisplayedAttributes([
+        'id',
+        'source',
+        'contentType',
+        'sourceLabel',
+        'text',
+        'html',
+        'authorName',
+        'authorHandle',
+        'authorAvatar',
+        'authorId',
+        'authorBio',
+        'createdAt',
+        'metrics',
+        'niches',
+        'url',
+        'imageUrl',
+        'language',
+        'metadata',
+      ]);
 
-    await meili.index(INDEX_NAME).updateRankingRules([
-      'words',
-      'typo',
-      'proximity',
-      'attribute',
-      'sort',
-      'exactness',
-    ]);
+    await meili
+      .index(INDEX_NAME)
+      .updateRankingRules(['words', 'typo', 'proximity', 'attribute', 'sort', 'exactness']);
 
     console.log('[indexer] Index configured successfully');
   } catch (err) {
@@ -157,19 +161,26 @@ function postToDocument(post: UnifiedPost): SearchDocument {
     post.author.primary?.id ||
     '';
 
-  const url = post.embeds?.find((e) => e.kind === 'link')?.url ||
+  const url =
+    post.embeds?.find((e) => e.kind === 'link')?.url ||
     ((post.raw as Record<string, unknown>)?.url as string) ||
     '';
 
   const imageUrl = post.embeds?.find((e) => e.kind === 'image')?.url || '';
 
-  const contentType = post.contentType ||
-    (post.protocol === 'peertube' ? 'video' :
-     post.protocol === 'pixelfed' ? 'image' :
-     post.protocol === 'zora' ? 'nft' :
-     post.protocol === 'rss' ? 'article' :
-     post.protocol === 'reddit' || post.protocol === 'lemmy' ? 'community' :
-     'post');
+  const contentType =
+    post.contentType ||
+    (post.protocol === 'peertube'
+      ? 'video'
+      : post.protocol === 'pixelfed'
+        ? 'image'
+        : post.protocol === 'zora'
+          ? 'nft'
+          : post.protocol === 'rss'
+            ? 'article'
+            : post.protocol === 'reddit' || post.protocol === 'lemmy'
+              ? 'community'
+              : 'post');
 
   return {
     id: sanitizeId(post.id),
@@ -360,7 +371,9 @@ async function incrementalIndex(): Promise<{ count: number; errors: number }> {
     return { count: 0, errors: 0 };
   }
 
-  console.log(`[indexer] ${newDocs.length} new documents to index (${documents.length} total fetched)`);
+  console.log(
+    `[indexer] ${newDocs.length} new documents to index (${documents.length} total fetched)`,
+  );
 
   const batchSize = 1000;
   let indexed = 0;
@@ -519,4 +532,4 @@ export function getIndexerStatus(): IndexerStatus {
   };
 }
 
-export { isRunning, lastIndexTime, indexCount, indexErrors };
+export { indexCount, indexErrors, isRunning, lastIndexTime };

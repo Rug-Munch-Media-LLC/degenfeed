@@ -407,9 +407,7 @@ const TRANSFORMS: Record<string, TransformFunction> = {
       : `Photo from ${post.author.displayName} (${post.protocol})`;
 
     // Pixelfed max caption length is 500 chars
-    const caption = attribution.length > 497
-      ? `${attribution.slice(0, 494)}...`
-      : attribution;
+    const caption = attribution.length > 497 ? `${attribution.slice(0, 494)}...` : attribution;
 
     return {
       success: true,
@@ -434,14 +432,11 @@ const TRANSFORMS: Record<string, TransformFunction> = {
     }
 
     const firstLine = text.split('\n')[0] || '';
-    const title = firstLine.length > 0
-      ? firstLine.slice(0, 120)
-      : `Post from ${post.author.displayName}`;
+    const title =
+      firstLine.length > 0 ? firstLine.slice(0, 120) : `Post from ${post.author.displayName}`;
 
     const body = `${text}\n\n— *Originally posted on ${post.protocol} by ${post.author.displayName}*`;
-    const truncatedBody = body.length > 500000
-      ? body.slice(0, 499990) + '\n\n[truncated]'
-      : body;
+    const truncatedBody = body.length > 500000 ? body.slice(0, 499990) + '\n\n[truncated]' : body;
 
     return {
       success: true,
@@ -564,15 +559,13 @@ async function publishToFarcaster(_payload: unknown): Promise<boolean> {
 
   // Farcaster has a 320 character limit per cast
   const truncatedText =
-    payload.text.length > 320
-      ? `${payload.text.slice(0, 317)}...`
-      : payload.text;
+    payload.text.length > 320 ? `${payload.text.slice(0, 317)}...` : payload.text;
 
   try {
     const res = await fetch('https://api.neynar.com/v2/farcaster/cast', {
       method: 'POST',
       headers: {
-        'api_key': apiKey,
+        api_key: apiKey,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -610,9 +603,7 @@ async function publishToLens(_payload: unknown): Promise<boolean> {
 
   // Lens has a 5000 character limit per publication
   const truncatedText =
-    payload.text.length > 5000
-      ? `${payload.text.slice(0, 4997)}...`
-      : payload.text;
+    payload.text.length > 5000 ? `${payload.text.slice(0, 4997)}...` : payload.text;
 
   try {
     const res = await fetch(lensApiUrl, {
@@ -758,13 +749,7 @@ async function publishToWriteFreely(_payload: unknown): Promise<boolean> {
   try {
     const { postToWriteFreely } = await import('./providers/writefreely-write');
 
-    const result = await postToWriteFreely(
-      payload.title,
-      payload.body,
-      token,
-      alias,
-      payload.tags,
-    );
+    const result = await postToWriteFreely(payload.title, payload.body, token, alias, payload.tags);
 
     if (result.ok) {
       console.log(`[crossposter] ✓ WriteFreely: ${result.post?.url || 'ok'}`);
@@ -857,7 +842,7 @@ async function fetchLatestGtsPost(): Promise<UnifiedPost | null> {
       },
       text: s.content.replace(/<[^>]*>/g, '').trim(),
       embeds: (s.media_attachments || []).map((m) => ({
-        kind: m.type === 'video' ? 'video' as const : 'image' as const,
+        kind: m.type === 'video' ? ('video' as const) : ('image' as const),
         url: m.url,
         meta: {},
       })),
@@ -1075,8 +1060,7 @@ const DEFAULT_CONFIG: CrossPairConfig[] = [
     sourceConfig: {},
     targetConfigs: {},
     // Only posts with images
-    contentFilter: (post: UnifiedPost) =>
-      post.embeds.some((e) => e.kind === 'image'),
+    contentFilter: (post: UnifiedPost) => post.embeds.some((e) => e.kind === 'image'),
   },
   {
     id: 'gts-to-writefreely',

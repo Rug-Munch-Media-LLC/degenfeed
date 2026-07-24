@@ -272,5 +272,5 @@ export async function fetchMastodonPosts(limit = 20): Promise<UnifiedPost[]> {
   return deduped;
 }
 
-/** @alias Use `fetch` as the standardized export name */
-export const fetch = fetchMastodonPosts;
+/** @alias Use `fetchPosts` as the standardized export name */
+export const fetchPosts = fetchMastodonPosts;
