@@ -1,81 +1,107 @@
 /* ═══════════════════════════════════════════════════════════════════════════
- * DEGENFEED DESIGN TOKENS v1.1
+ * DEGENFEED DESIGN TOKENS v2.0 — Cyberpunk Web3 Edition
  *
- * CENTRAL source of truth for all CSS custom properties.
- * Import in layout.tsx BEFORE globals.css.
- *
- * Changes: deduplicated from globals.css, fixed light-theme contrast,
- * added missing protocol colors, improved dark glass values.
+ * Dark-first design system with neon accents, glass morphism, and
+ * a distinctive web3 social personality.
  * ═══════════════════════════════════════════════════════════════════════════ */
 
 :root {
-  /* ═══ Color Palette — Light Theme ═════════════════════════════════════ */
+  /* ═══ Core Colors — Dark-First Cyberpunk ═══════════════════════════════ */
 
-  /* Core Background & Text */
-  --color-bg: #ffffff;
-  --color-fg: #171717;
-  --color-accent: #16a34a;
-  --color-accent-glow: rgba(22, 163, 74, 0.12);
-  --color-muted: #737373;
-  --color-muted-bg: #f5f5f5;
-  --color-border: #e5e5e5;
-  --color-card: #ffffff;
-  --color-card-hover: #f9fafb;
-  --color-danger: #dc2626;
-  --color-glass-bg: rgba(255, 255, 255, 0.75);
-  --color-glass-border: rgba(0, 0, 0, 0.08);
-  --color-overlay: rgba(0, 0, 0, 0.05);
+  --color-bg: #000000;
+  --color-bg-secondary: #050505;
+  --color-bg-tertiary: #0a0a0a;
+  --color-fg: #e7e9ea;
+  --color-fg-secondary: #b0b3b8;
+  --color-accent: #00ff41;
+  --color-accent-soft: rgba(0, 255, 65, 0.15);
+  --color-accent-glow: rgba(0, 255, 65, 0.12);
+  --color-accent-glow-strong: rgba(0, 255, 65, 0.25);
+  --color-accent-secondary: #8b5cf6;
+  --color-accent-secondary-glow: rgba(139, 92, 246, 0.15);
+  --color-accent-tertiary: #f59e0b;
+  --color-accent-tertiary-glow: rgba(245, 158, 11, 0.15);
+  --color-muted: #71767b;
+  --color-muted-bg: #141414;
+  --color-border: #2f3336;
+  --color-border-light: rgba(255, 255, 255, 0.06);
+  --color-card: #0a0a0a;
+  --color-card-hover: #111113;
+  --color-card-elevated: #141416;
+  --color-danger: #f4212e;
+  --color-success: #00ff41;
+  --color-warning: #f59e0b;
 
-  /* Message bubble colors */
-  --color-msg-sent: rgba(22, 163, 74, 0.15);
-  --color-msg-received: rgba(255, 255, 255, 0.08);
-  --color-compose-bg: rgba(0, 0, 0, 0.02);
+  /* ═══ Glass & Surface Effects ═══════════════════════════════════════════ */
+
+  --color-glass-bg: rgba(10, 10, 10, 0.78);
+  --color-glass-border: rgba(255, 255, 255, 0.06);
+  --color-glass-highlight: rgba(255, 255, 255, 0.03);
+  --color-glass-bg-heavy: rgba(10, 10, 10, 0.92);
+  --color-overlay: rgba(255, 255, 255, 0.04);
+  --color-overlay-hover: rgba(255, 255, 255, 0.08);
+
+  /* ═══ Message / Social Colors ══════════════════════════════════════════ */
+
+  --color-msg-sent: rgba(0, 255, 65, 0.15);
+  --color-msg-received: rgba(255, 255, 255, 0.06);
+  --color-compose-bg: rgba(255, 255, 255, 0.03);
+  --color-like-active: #f91880;
+  --color-like-glow: rgba(249, 24, 128, 0.2);
+  --color-repost-active: #00ba7c;
+  --color-repost-glow: rgba(0, 186, 124, 0.2);
 
   /* ═══ Typography ═══════════════════════════════════════════════════════ */
 
-  --font-heading: "Sora", "Inter", system-ui, sans-serif;
-  --font-body: "Inter", system-ui, sans-serif;
+  --font-heading: "Syne", "Inter", system-ui, sans-serif;
+  --font-body: "Plus Jakarta Sans", "Inter", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", "Fira Code", monospace;
 
-  /* Heading sizes */
-  --text-h1: 2rem;
-  --text-h2: 1.5rem;
-  --text-h3: 1.25rem;
+  /* Heading sizes — aggressive scale for impact */
+  --text-display: 4.5rem;
+  --text-hero: 3.5rem;
+  --text-h1: 2.5rem;
+  --text-h2: 1.75rem;
+  --text-h3: 1.375rem;
   --text-h4: 1.125rem;
   --text-h5: 1rem;
   --text-h6: 0.875rem;
 
   /* Heading line-height */
-  --leading-h1: 1.2;
-  --leading-h2: 1.25;
-  --leading-h3: 1.3;
+  --leading-display: 1.0;
+  --leading-hero: 1.05;
+  --leading-h1: 1.1;
+  --leading-h2: 1.2;
+  --leading-h3: 1.25;
   --leading-h4: 1.3;
 
-  /* Body line-height */
+  /* Body */
   --leading-body: 1.6;
   --leading-compact: 1.4;
 
   /* Letter spacing */
-  --tracking-heading: -0.02em;
-  --tracking-body: 0;
+  --tracking-heading: -0.03em;
+  --tracking-display: -0.04em;
+  --tracking-wide: 0.05em;
 
-  /* Font size scale (reader settings) */
+  /* Font size scale */
+  --font-size-xs: 0.75rem;
   --font-size-sm: 0.875rem;
   --font-size-base: 1rem;
   --font-size-md: 1.0625rem;
   --font-size-lg: 1.125rem;
 
-  /* Line spacing scale (reader settings) */
+  /* Line spacing scale */
   --line-spacing-compact: 1.4;
   --line-spacing-comfortable: 1.6;
   --line-spacing-relaxed: 1.8;
 
-  /* Active reader values */
   --reader-font-size: var(--font-size-base);
   --reader-line-height: var(--line-spacing-comfortable);
 
-  /* ═══ Spacing Scale (4px Grid) ════════════════════════════════════════ */
+  /* ═══ Spacing (4px Grid) ═══════════════════════════════════════════════ */
 
+  --space-2xs: 0.125rem;
   --space-xs: 0.25rem;
   --space-sm: 0.5rem;
   --space-md: 1rem;
@@ -83,57 +109,67 @@
   --space-xl: 2rem;
   --space-2xl: 3rem;
   --space-3xl: 4rem;
+  --space-4xl: 6rem;
 
-  /* Gap scale */
-  --gap-xs: 0.25rem;
-  --gap-sm: 0.5rem;
-  --gap-md: 1rem;
+  /* ═══ Border Radius ═════════════════════════════════════════════════════ */
 
-  /* ═══ Border Radius ═══════════════════════════════════════════════════ */
-
-  --radius-sm: 0.25rem;
+  --radius-sm: 0.375rem;
   --radius-md: 0.5rem;
   --radius-lg: 0.75rem;
   --radius-xl: 1rem;
   --radius-2xl: 1.5rem;
+  --radius-3xl: 2rem;
   --radius-full: 9999px;
 
-  /* ═══ Shadows ══════════════════════════════════════════════════════════ */
+  /* ═══ Shadows ═══════════════════════════════════════════════════════════ */
 
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
-  --shadow-lg: 0 4px 24px rgba(0, 0, 0, 0.08);
-  --shadow-xl: 0 8px 32px rgba(0, 0, 0, 0.12);
-  --shadow-glow: 0 0 20px var(--color-accent-glow);
-  --shadow-glow-lg: 0 0 24px var(--color-accent-glow);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
+  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.6);
+  --shadow-glow: 0 0 20px rgba(0, 255, 65, 0.12);
+  --shadow-glow-strong: 0 0 30px rgba(0, 255, 65, 0.2);
+  --shadow-glow-violet: 0 0 20px rgba(139, 92, 246, 0.12);
+  --shadow-glow-pink: 0 0 20px rgba(249, 24, 128, 0.12);
 
-  --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.08);
-  --shadow-card-hover: 0 8px 32px rgba(0, 0, 0, 0.12);
-  --shadow-card-glow: 0 0 24px var(--color-accent-glow);
+  --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.4);
+  --shadow-card-hover: 0 8px 32px rgba(0, 0, 0, 0.5);
+  --shadow-card-glow: 0 0 24px rgba(0, 255, 65, 0.08);
 
-  /* ═══ Animation & Duration ════════════════════════════════════════════ */
+  /* ═══ Animation & Duration ═══════════════════════════════════════════════ */
 
+  --duration-instant: 75ms;
   --duration-fast: 150ms;
   --duration-normal: 250ms;
   --duration-slow: 400ms;
+  --duration-glacial: 600ms;
 
-  /* ═══ Button / Touch Targets ══════════════════════════════════════════ */
+  /* ═══ Bezier Curves ════════════════════════════════════════════════════ */
 
-  --btn-min-height: 2.75rem; /* 44px — WCAG touch target */
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-out-expo: cubic-bezier(0.19, 1, 0.22, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 
-  /* ═══ Focus Ring ═══════════════════════════════════════════════════════ */
+  /* ═══ Touch Targets ═════════════════════════════════════════════════════ */
+
+  --btn-min-height: 2.75rem;
+  --btn-min-width: 2.75rem;
+
+  /* ═══ Focus Ring ════════════════════════════════════════════════════════ */
 
   --ring-width: 2px;
   --ring-offset: 2px;
+  --ring-color: var(--color-accent);
 
-  /* ═══ Safe Area Insets ═════════════════════════════════════════════════ */
+  /* ═══ Safe Area ═════════════════════════════════════════════════════════ */
 
   --sat: env(safe-area-inset-top, 0px);
   --sab: env(safe-area-inset-bottom, 0px);
   --sal: env(safe-area-inset-left, 0px);
   --sar: env(safe-area-inset-right, 0px);
 
-  /* ═══ Z-Index Scale ═══════════════════════════════════════════════════ */
+  /* ═══ Z-Index Scale ════════════════════════════════════════════════════ */
 
   --z-base: 1;
   --z-sticky: 10;
@@ -148,8 +184,9 @@
   --z-modal: 70;
   --z-toast: 80;
   --z-loading-bar: 100;
+  --z-hero-particles: -1;
 
-  /* ═══ Protocol Colors (Brand) ════════════════════════════════════════ */
+  /* ═══ Protocol Colors ═══════════════════════════════════════════════════ */
 
   --color-protocol-nostr: #8b5cf6;
   --color-protocol-farcaster: #8a63d2;
@@ -165,38 +202,65 @@
   --color-protocol-youtube: #ff0000;
   --color-protocol-twitch: #9146ff;
 
-  /* ═══ Misc ════════════════════════════════════════════════════════════ */
+  /* ═══ Misc ══════════════════════════════════════════════════════════════ */
 
   --progress-bar-height: 3px;
+  --scrollbar-width: 6px;
 }
 
-/* ═══ Dark Theme — Premium Twitter/X clone ═══════════════════════════════ */
+/* ═══ Light Theme — High-Contrast Social ════════════════════════════════════ */
 
-.dark {
-  --color-bg: #000000;
-  --color-fg: #e7e9ea;
-  --color-accent: #00ff41;
-  --color-accent-glow: rgba(0, 255, 65, 0.15);
+.light,
+:root.light {
+  --color-bg: #ffffff;
+  --color-bg-secondary: #f7f7f7;
+  --color-bg-tertiary: #f0f0f0;
+  --color-fg: #0f1419;
+  --color-fg-secondary: #536471;
+  --color-accent: #16a34a;
+  --color-accent-soft: rgba(22, 163, 74, 0.1);
+  --color-accent-glow: rgba(22, 163, 74, 0.08);
+  --color-accent-glow-strong: rgba(22, 163, 74, 0.15);
+  --color-accent-secondary: #7c3aed;
+  --color-accent-secondary-glow: rgba(124, 58, 237, 0.1);
+  --color-accent-tertiary: #d97706;
+  --color-accent-tertiary-glow: rgba(217, 119, 6, 0.1);
   --color-muted: #71767b;
-  --color-muted-bg: #1a1a1a;
-  --color-border: #2f3336;
-  --color-card: #16181c;
-  --color-card-hover: #1d1f23;
-  --color-danger: #f4212e;
-  --color-glass-bg: rgba(22, 24, 28, 0.78);
-  --color-glass-border: rgba(255, 255, 255, 0.08);
-  --color-overlay: rgba(255, 255, 255, 0.04);
+  --color-muted-bg: #f0f0f0;
+  --color-border: #e1e4e8;
+  --color-border-light: rgba(0, 0, 0, 0.04);
+  --color-card: #ffffff;
+  --color-card-hover: #f7f7f7;
+  --color-card-elevated: #ffffff;
+  --color-danger: #e0245e;
+  --color-success: #16a34a;
+  --color-warning: #d97706;
 
-  /* Messages */
-  --color-msg-sent: rgba(0, 255, 65, 0.15);
-  --color-msg-received: rgba(255, 255, 255, 0.08);
-  --color-compose-bg: rgba(255, 255, 255, 0.04);
+  --color-glass-bg: rgba(255, 255, 255, 0.85);
+  --color-glass-border: rgba(0, 0, 0, 0.06);
+  --color-glass-highlight: rgba(255, 255, 255, 0.9);
+  --color-glass-bg-heavy: rgba(255, 255, 255, 0.95);
+  --color-overlay: rgba(0, 0, 0, 0.03);
+  --color-overlay-hover: rgba(0, 0, 0, 0.06);
 
-  /* Shadows — deeper in dark mode */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.3);
-  --shadow-lg: 0 4px 24px rgba(0, 0, 0, 0.4);
-  --shadow-xl: 0 8px 32px rgba(0, 0, 0, 0.5);
-  --shadow-glow: 0 0 20px rgba(0, 255, 65, 0.15);
-  --shadow-glow-lg: 0 0 24px rgba(0, 255, 65, 0.2);
+  --color-msg-sent: rgba(22, 163, 74, 0.12);
+  --color-msg-received: rgba(0, 0, 0, 0.04);
+  --color-compose-bg: rgba(0, 0, 0, 0.02);
+  --color-like-active: #e0245e;
+  --color-like-glow: rgba(224, 36, 94, 0.12);
+  --color-repost-active: #00ba7c;
+  --color-repost-glow: rgba(0, 186, 124, 0.12);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.08);
+  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.1);
+  --shadow-glow: 0 0 20px rgba(22, 163, 74, 0.08);
+  --shadow-glow-strong: 0 0 30px rgba(22, 163, 74, 0.12);
+  --shadow-glow-violet: 0 0 20px rgba(124, 58, 237, 0.08);
+  --shadow-glow-pink: 0 0 20px rgba(224, 36, 94, 0.08);
+
+  --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.04);
+  --shadow-card-hover: 0 8px 32px rgba(0, 0, 0, 0.06);
+  --shadow-card-glow: 0 0 24px rgba(22, 163, 74, 0.04);
 }

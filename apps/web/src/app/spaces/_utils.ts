@@ -28,6 +28,9 @@ export function formatScheduledDate(iso: string): string {
   if (d.toDateString() === now.toDateString()) return `Today at ${time}`;
   if (d.toDateString() === tomorrow.toDateString()) return `Tomorrow at ${time}`;
   return d.toLocaleDateString('en-US', {
-    month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
   });
 }
