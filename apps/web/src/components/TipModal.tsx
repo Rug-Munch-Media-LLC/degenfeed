@@ -151,6 +151,33 @@ export function TipModal({
     return () => window.removeEventListener('keydown', handleTabTrap);
   }, [open, handleClose]);
 
+  // == Fiat amount equivalents =============================================
+  const fiatEquivalents: Record<string, string> = {
+    '0.001': '≈ $1',
+    '0.005': '≈ $5',
+    '0.01': '≈ $10',
+    '0.05': '≈ $50',
+    '0.1': '≈ $100',
+    '1000': '≈ $0.60',
+    '5000': '≈ $3',
+    '10000': '≈ $6',
+    '50000': '≈ $30',
+    '100000': '≈ $60',
+  };
+
+  const quickAmounts =
+    selectedMethod === 'lightning_zap'
+      ? ['1000', '5000', '10000', '50000', '100000']
+      : ['0.001', '0.005', '0.01', '0.05', '0.1'];
+
+  // == Confetti trigger for large tips =====================================
+  const confettiAmount = useMemo(() => {
+    const fiatValue = fiatEquivalents[amount];
+    if (!fiatValue) return 0;
+    const match = fiatValue.match(/\d+/);
+    return match ? Number.parseInt(match[0], 10) : 0;
+  }, [amount, fiatEquivalents]);
+
   // == handleSend ======================================================
 
   const handleSend = useCallback(async () => {
@@ -208,8 +235,9 @@ export function TipModal({
               method: 'wallet_switchEthereumChain',
               params: [{ chainId: '0x2105' }], // 8453 = Base
             });
-          } catch (e: any) {
-            if (e.code === 4902) {
+          } catch (e: unknown) {
+            const err = e as { code?: number };
+            if (err.code === 4902) {
               await window.ethereum.request({
                 method: 'wallet_addEthereumChain',
                 params: [
@@ -373,33 +401,6 @@ export function TipModal({
     announce,
     confettiAmount,
   ]);
-
-  // == Fiat amount equivalents =============================================
-  const fiatEquivalents: Record<string, string> = {
-    '0.001': '≈ $1',
-    '0.005': '≈ $5',
-    '0.01': '≈ $10',
-    '0.05': '≈ $50',
-    '0.1': '≈ $100',
-    '1000': '≈ $0.60',
-    '5000': '≈ $3',
-    '10000': '≈ $6',
-    '50000': '≈ $30',
-    '100000': '≈ $60',
-  };
-
-  const quickAmounts =
-    selectedMethod === 'lightning_zap'
-      ? ['1000', '5000', '10000', '50000', '100000']
-      : ['0.001', '0.005', '0.01', '0.05', '0.1'];
-
-  // == Confetti trigger for large tips =====================================
-  const confettiAmount = useMemo(() => {
-    const fiatValue = fiatEquivalents[amount];
-    if (!fiatValue) return 0;
-    const match = fiatValue.match(/\d+/);
-    return match ? Number.parseInt(match[0], 10) : 0;
-  }, [amount, fiatEquivalents]);
 
   if (!open) return null;
 

@@ -490,14 +490,14 @@ export const ShortVideoCard = memo(function ShortVideoCard({
   // == Pull-down to dismiss ================================================
   const _handlePullStart = useCallback((e: React.TouchEvent | React.MouseEvent) => {
     if ('touches' in e) {
-      pullStartY.current = e.touches[0]?.clientY;
+      pullStartY.current = e.touches[0]?.clientY ?? 0;
     } else {
       pullStartY.current = e.clientY;
     }
   }, []);
 
   const _handlePullMove = useCallback((e: React.TouchEvent | React.MouseEvent) => {
-    const currentY = 'touches' in e ? e.touches[0]?.clientY : e.clientY;
+    const currentY = 'touches' in e ? (e.touches[0]?.clientY ?? 0) : e.clientY;
     const delta = currentY - pullStartY.current;
     if (delta > 0) {
       const progress = Math.min(delta / 200, 1);
@@ -616,11 +616,11 @@ export const ShortVideoCard = memo(function ShortVideoCard({
   // Track Y start for panel drag
   const panelDragStartRef = useRef(0);
   const handleInfoTouchStart = useCallback((e: React.TouchEvent) => {
-    panelDragStartRef.current = e.touches[0]?.clientY;
+    panelDragStartRef.current = e.touches[0]?.clientY ?? 0;
   }, []);
   const handleInfoTouchEnd = useCallback(
     (e: React.TouchEvent) => {
-      const deltaY = e.changedTouches[0]?.clientY - panelDragStartRef.current;
+      const deltaY = (e.changedTouches[0]?.clientY ?? 0) - panelDragStartRef.current;
       handleInfoDrag(e, deltaY);
     },
     [handleInfoDrag],

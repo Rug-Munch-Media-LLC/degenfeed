@@ -628,8 +628,6 @@ function PostCardComponent({
     ],
   );
 
-  // TS inference issue with UnifiedPost union — safe at runtime
-  // @ts-expect-error TS2322
   const isNostr = post.protocol === 'nostr';
   const nostrBadge: any = isNostr ? <span>Nostr</span> : null;
 

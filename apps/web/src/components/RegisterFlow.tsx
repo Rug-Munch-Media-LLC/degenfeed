@@ -1293,6 +1293,22 @@ export function RegisterFlow({ onComplete, compact = false }: RegisterFlowProps)
     }
   }, [selectedPlan, isPremium, handleGasCost, handleLabel]);
 
+  // == Handle confirm (moves to sign step) =============
+  const handleConfirm = useCallback(
+    async (planOverride?: PlanId) => {
+      const plan = planOverride || selectedPlan;
+      if (!plan) return;
+
+      if (!compact) {
+        setStep(3); // Sign step
+        return;
+      }
+      // In compact mode, skip sign and go straight to processing
+      await executeRegistration(plan, true);
+    },
+    [selectedPlan, compact, executeRegistration],
+  );
+
   // == Handle plan selection ===========================
   const handlePlanSelect = useCallback(
     (id: PlanId) => {
@@ -1410,22 +1426,6 @@ export function RegisterFlow({ onComplete, compact = false }: RegisterFlowProps)
       onComplete,
       compact,
     ],
-  );
-
-  // == Handle confirm (moves to sign step) =============
-  const handleConfirm = useCallback(
-    async (planOverride?: PlanId) => {
-      const plan = planOverride || selectedPlan;
-      if (!plan) return;
-
-      if (!compact) {
-        setStep(3); // Sign step
-        return;
-      }
-      // In compact mode, skip sign and go straight to processing
-      await executeRegistration(plan, true);
-    },
-    [selectedPlan, compact, executeRegistration],
   );
 
   // == Handle overage confirmation =====================

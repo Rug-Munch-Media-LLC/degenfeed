@@ -307,38 +307,7 @@ export function useOfflineQueue<T = unknown>(options: UseOfflineQueueOptions = {
   const handlerRef = useRef(handler);
   handlerRef.current = handler;
 
-  // Track online/offline status
-  useEffect(() => {
-    const handleOnline = () => {
-      setState((prev) => ({ ...prev, isOnline: true }));
-      // Auto-process when coming online
-      if (autoProcess) {
-        processQueue();
-      }
-    };
-
-    const handleOffline = () => {
-      setState((prev) => ({ ...prev, isOnline: false }));
-    };
-
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-      mountedRef.current = false;
-    };
-  }, [autoProcess, processQueue]);
-
-  // Refresh queue size on mount and periodically
-  useEffect(() => {
-    refreshSize();
-
-    // Poll for size changes (in case other tabs add operations)
-    const interval = setInterval(refreshSize, 30_000);
-    return () => clearInterval(interval);
-  }, [refreshSize]);
+  // ── Core helpers (defined before effects that depend on them) ──────
 
   const refreshSize = useCallback(async () => {
     try {
@@ -348,58 +317,6 @@ export function useOfflineQueue<T = unknown>(options: UseOfflineQueueOptions = {
       // IndexedDB may not be available
     }
   }, [dbName, storeName]);
-
-  /**
-   * Enqueue an operation. If online, tries to execute immediately.
-   * Falls back to IndexedDB if the network request fails.
-   */
-  const enqueue = useCallback(
-    async (op: {
-      id: string;
-      name: string;
-      payload: T;
-      priority?: QueuePriority;
-      maxRetries?: number;
-      isMutation?: boolean;
-    }): Promise<{ queued: boolean; executed: boolean }> => {
-      const operation: QueuedOperation<T> = {
-        id: op.id,
-        name: op.name,
-        payload: op.payload,
-        queuedAt: Date.now(),
-        priority: op.priority ?? 'normal',
-        maxRetries: op.maxRetries ?? 3,
-        retryCount: 0,
-        lastError: null,
-        isMutation: op.isMutation ?? true,
-      };
-
-      // If online, try to execute immediately
-      if (navigator.onLine) {
-        try {
-          const success = await handlerRef.current(operation);
-          if (success) {
-            return { queued: false, executed: true };
-          }
-          // Handler failed — fall through to queue
-        } catch {
-          // Fall through to queue
-        }
-      }
-
-      // Persist to IndexedDB
-      try {
-        await addOperation(dbName, storeName, operation);
-        await refreshSize();
-        return { queued: true, executed: false };
-      } catch (err) {
-        const errorMsg = err instanceof Error ? err.message : 'Failed to queue operation';
-        setState((prev) => ({ ...prev, lastError: errorMsg, failedCount: prev.failedCount + 1 }));
-        return { queued: false, executed: false };
-      }
-    },
-    [dbName, storeName, refreshSize],
-  );
 
   /**
    * Process the queue — replay all pending operations.
@@ -505,6 +422,95 @@ export function useOfflineQueue<T = unknown>(options: UseOfflineQueueOptions = {
       processingRef.current = false;
     }
   }, [dbName, storeName, batchSize, batchDelayMs, refreshSize]);
+
+  /**
+   * Enqueue an operation. If online, tries to execute immediately.
+   * Falls back to IndexedDB if the network request fails.
+   */
+  const enqueue = useCallback(
+    async (op: {
+      id: string;
+      name: string;
+      payload: T;
+      priority?: QueuePriority;
+      maxRetries?: number;
+      isMutation?: boolean;
+    }): Promise<{ queued: boolean; executed: boolean }> => {
+      const operation: QueuedOperation<T> = {
+        id: op.id,
+        name: op.name,
+        payload: op.payload,
+        queuedAt: Date.now(),
+        priority: op.priority ?? 'normal',
+        maxRetries: op.maxRetries ?? 3,
+        retryCount: 0,
+        lastError: null,
+        isMutation: op.isMutation ?? true,
+      };
+
+      // If online, try to execute immediately
+      if (navigator.onLine) {
+        try {
+          const success = await handlerRef.current(operation);
+          if (success) {
+            return { queued: false, executed: true };
+          }
+          // Handler failed — fall through to queue
+        } catch {
+          // Fall through to queue
+        }
+      }
+
+      // Persist to IndexedDB
+      try {
+        await addOperation(dbName, storeName, operation);
+        await refreshSize();
+        return { queued: true, executed: false };
+      } catch (err) {
+        const errorMsg = err instanceof Error ? err.message : 'Failed to queue operation';
+        setState((prev) => ({ ...prev, lastError: errorMsg, failedCount: prev.failedCount + 1 }));
+        return { queued: false, executed: false };
+      }
+    },
+    [dbName, storeName, refreshSize],
+  );
+
+  // ── Effects ─────────────────────────────────────────────────────────
+
+  // Track online/offline status
+  useEffect(() => {
+    const handleOnline = () => {
+      setState((prev) => ({ ...prev, isOnline: true }));
+      // Auto-process when coming online
+      if (autoProcess) {
+        processQueue();
+      }
+    };
+
+    const handleOffline = () => {
+      setState((prev) => ({ ...prev, isOnline: false }));
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+      mountedRef.current = false;
+    };
+  }, [autoProcess, processQueue]);
+
+  // Refresh queue size on mount and periodically
+  useEffect(() => {
+    refreshSize();
+
+    // Poll for size changes (in case other tabs add operations)
+    const interval = setInterval(refreshSize, 30_000);
+    return () => clearInterval(interval);
+  }, [refreshSize]);
+
+  // ── Returned API ────────────────────────────────────────────────────
 
   /**
    * Retry all failed (retry-exceeded) operations by re-enqueuing them.
