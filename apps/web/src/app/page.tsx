@@ -1,530 +1,493 @@
-import type { Metadata } from 'next';
+'use client';
+
+/**
+ * DegenFeed Home — Warm welcome landing page.
+ *
+ * Design: Bento-grid layout with time-based greeting, trending content preview,
+ * protocol connection cards, and live feed preview. Warm and inviting.
+ */
+
+import { getProtocolColor, getProtocolLabel } from '@degenfeed/ui';
 import Link from 'next/link';
-import Script from 'next/script';
-import { FAQItem } from '../components/landing/FAQItem';
-import { WaitlistSection } from '../components/landing/WaitlistSection';
-import './landing.css';
+import { useMemo, useState } from 'react';
+import { ProtocolConnectFlow } from '../components/ProtocolConnectFlow';
+import { WelcomeGreeting } from '../components/WelcomeGreeting';
+import { useProtocolConnections } from '../hooks/useProtocolConnections';
 
-export const revalidate = 3600;
+/* ─── "What's Happening" feed preview data ─────────────────── */
 
-export const metadata: Metadata = {
-  title: 'DegenFeed — Web3 Social Media Platform | Cross-Protocol Aggregator & Creator Coins',
-  description:
-    'Aggregate Nostr, Farcaster, Lens, Bluesky, Mastodon & more into one feed. Cross-post across 15+ protocols, launch creator coins on Base & Solana, tip in ETH/SOL/USDC/Lightning, and livestream everywhere — all without platform fees or deplatforming risk.',
-  keywords: [
-    'web3 social media',
-    'decentralized social network',
-    'cross-protocol posting',
-    'creator coin platform',
-    'nostr farcaster lens bluesky aggregator',
-    'multi protocol social feed',
-    'crypto tipping app',
-    'decentralized content creator',
-    'fediverse cross-post',
-    'web3 publishing platform',
-    'self-hosted social media',
-    'cross-chain tipping',
-    'decentralized video platform',
-    'audio spaces crypto',
-  ],
-  alternates: { canonical: 'https://app.degenfeed.xyz' },
-  openGraph: {
-    title: 'DegenFeed — Own Your Social Network | Web3 Cross-Protocol Aggregator',
-    description:
-      'Post once to 15+ protocols. Launch your own creator coin. Stream everywhere. Tip in any currency. No platform fees. No deplatforming. Own your social network.',
-    siteName: 'DegenFeed',
-    type: 'website',
-    url: 'https://app.degenfeed.xyz',
-    locale: 'en_US',
-    images: [
-      {
-        url: 'https://app.degenfeed.xyz/og-image.png',
-        width: 1200,
-        height: 630,
-        alt: 'DegenFeed — Web3 social media aggregator connecting Nostr, Farcaster, Lens, Bluesky, Mastodon',
-      },
-    ],
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'DegenFeed — Web3 Social Media Platform & Cross-Protocol Aggregator',
-    description:
-      'Aggregate 15+ social protocols. Cross-post everywhere. Launch creator coins. Tip in crypto. Stream live. Zero platform fees. Own your network.',
-    images: ['https://app.degenfeed.xyz/og-image.png'],
-  },
-};
-
-/* ─── Feature data ───────────────────────────────────────── */
-
-interface Feature {
-  title: string;
-  desc: string;
-  icon: string;
-  bg: string;
+interface FeedPreviewItem {
+  id: string;
+  protocol: string;
+  text: string;
+  author: string;
+  likes: number;
+  time: string;
 }
 
-const features: Feature[] = [
+const FEED_PREVIEW: FeedPreviewItem[] = [
   {
-    title: 'Universal Cross-Posting',
-    desc: 'Write once, publish to 15+ protocols simultaneously — Nostr, Farcaster, Bluesky, Lens, Mastodon, and more. Replies from any network show up in one thread.',
-    icon: '\u2726',
-    bg: 'rgba(0,255,65,0.12)',
+    id: '1',
+    protocol: 'farcaster',
+    text: 'gm everyone 🌞 just deployed a new creator coin on base. feeling optimistic about on-chain social this cycle.',
+    author: 'alice.eth',
+    likes: 142,
+    time: '12m ago',
   },
   {
-    title: 'Creator Coins',
-    desc: 'Deploy your own token on Base and Solana in one click. Anti-bot, anti-whale, anti-rug. Your community, your economy, your rules.',
-    icon: '\u25CB',
-    bg: 'rgba(168,85,247,0.12)',
+    id: '2',
+    protocol: 'nostr',
+    text: 'nostr relays have been so reliable lately. the decentralized web is real and it works.',
+    author: 'npub1...8xk3',
+    likes: 89,
+    time: '34m ago',
   },
   {
-    title: 'Live Everywhere',
-    desc: 'Stream to 7 protocols at once — solo streams, Spaces-style audio, collaborative broadcasts, and coin-launch events with live minting.',
-    icon: '\u25B6',
-    bg: 'rgba(0,255,65,0.10)',
+    id: '3',
+    protocol: 'bluesky',
+    text: "just hit 10k followers on bsky! really loving the community here. thanks for making this place special y'all",
+    author: 'builder.bsky.social',
+    likes: 234,
+    time: '1h ago',
   },
   {
-    title: 'Cross-Platform Tipping',
-    desc: 'Tip creators in ETH, SOL, USDC, or Lightning. 0% platform fees. Unified leaderboard across every protocol.',
-    icon: '\u26A1',
-    bg: 'rgba(250,204,21,0.12)',
+    id: '4',
+    protocol: 'mastodon',
+    text: 'the fediverse is thriving. migrated my entire blog to activitypub and engagement is up 3x.',
+    author: 'chad@hachyderm.io',
+    likes: 67,
+    time: '2h ago',
   },
   {
-    title: 'Self-Hosted Infrastructure',
-    desc: 'Your accounts, your data, your rules. Self-host relays, indexers, and frontends. No one can deplatform you \u2014 ever.',
-    icon: '\u25C8',
-    bg: 'rgba(59,130,246,0.12)',
-  },
-  {
-    title: 'Content Aggregation',
-    desc: '25+ sources fill your unified feed \u2014 Nostr, Farcaster, Lens, Bluesky, Mastodon, Reddit, RSS, YouTube, PeerTube, and more. All in one timeline.',
-    icon: '\u229E',
-    bg: 'rgba(0,255,65,0.12)',
+    id: '5',
+    protocol: 'lens',
+    text: 'lens v2 is going to change everything. open action framework + momoka = unbeatable combination',
+    author: 'lens/0xdef1',
+    likes: 178,
+    time: '3h ago',
   },
 ];
 
-/* ─── Protocol badge data ─────────────────────────────────── */
+/* ─── Trending topics ──────────────────────────────────────── */
 
-interface ProtocolBadge {
-  name: string;
-  color: string;
-}
-
-const protocols: ProtocolBadge[] = [
-  { name: 'Mastodon', color: '#6364ff' },
-  { name: 'Bluesky', color: '#1185fe' },
-  { name: 'Nostr', color: '#8b5cf6' },
-  { name: 'Farcaster', color: '#8a63d2' },
-  { name: 'Lens', color: '#abfe2c' },
-  { name: 'Mirror', color: '#f97316' },
-  { name: 'Paragraph', color: '#ec4899' },
-  { name: 'PeerTube', color: '#e74c3c' },
-  { name: 'YouTube', color: '#ff0000' },
-  { name: 'Twitch', color: '#9146ff' },
-  { name: 'Lemmy', color: '#00b868' },
-  { name: 'Ghost', color: '#15171a' },
-  { name: 'Forem', color: '#1a1a2e' },
-  { name: 'Zora', color: '#0038ff' },
-  { name: 'Reddit', color: '#ff4500' },
+const TRENDING_TOPICS = [
+  { topic: '#DeFiSummer', posts: '12.4K', protocol: 'farcaster' },
+  { topic: 'Solana Ecosystem', posts: '8.2K', protocol: 'reddit' },
+  { topic: 'Creator Coins', posts: '5.7K', protocol: 'lens' },
+  { topic: 'nostr', posts: '4.1K', protocol: 'nostr' },
+  { topic: 'AT Protocol', posts: '3.9K', protocol: 'bluesky' },
 ];
 
-/* ─── Coming Soon data ────────────────────────────────────── */
+/* ─── Trending Card ─────────────────────────────────────────── */
 
-interface ComingSoonItem {
-  label: string;
-  labelClass: string;
-  title: string;
-  desc: string;
+function TrendingCard({
+  topic,
+  posts,
+  protocol,
+}: {
+  topic: string;
+  posts: string;
+  protocol: string;
+}) {
+  return (
+    <div className="flex items-center justify-between rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] px-4 py-3 transition-all hover:border-degen-500/20 hover:bg-[var(--color-card-hover)]">
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-semibold" style={{ color: 'var(--color-fg)' }}>
+            {topic}
+          </span>
+          <span
+            className="rounded-full px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wider"
+            style={{
+              backgroundColor: `${getProtocolColor(protocol)}15`,
+              color: getProtocolColor(protocol),
+            }}
+          >
+            {protocol}
+          </span>
+        </div>
+        <span className="text-xs" style={{ color: 'var(--color-muted)' }}>
+          {posts} posts
+        </span>
+      </div>
+      <svg
+        width="14"
+        height="14"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        style={{ color: 'var(--color-muted)' }}
+        aria-hidden="true"
+      >
+        <polyline points="9 18 15 12 9 6" />
+      </svg>
+    </div>
+  );
 }
 
-const comingSoon: ComingSoonItem[] = [
-  {
-    label: 'Q3 2026',
-    labelClass: 'q2',
-    title: 'Mobile Apps',
-    desc: 'Native iOS and Android apps with full cross-posting, tipping, and live streaming capabilities.',
-  },
-  {
-    label: 'Q3 2026',
-    labelClass: 'q2',
-    title: 'Creator Coin Launchpad',
-    desc: 'One-click token deployment on Base and Solana with built-in anti-bot and liquidity bootstrapping.',
-  },
-  {
-    label: 'Q4 2026',
-    labelClass: 'q3',
-    title: 'AI Content Assistant',
-    desc: 'Smart compose adapts your tone for each protocol. Auto-tagging, translation, and scheduling.',
-  },
-  {
-    label: 'Q4 2026',
-    labelClass: 'q3',
-    title: 'Federated Communities',
-    desc: 'Cross-protocol communities with token-gating, mod tools, and on-chain governance.',
-  },
-  {
-    label: 'Q1 2027',
-    labelClass: 'q1',
-    title: 'Analytics Dashboard',
-    desc: 'Unified metrics across all protocols. Track reach, engagement, tips, and fan growth.',
-  },
-  {
-    label: 'Q1 2027',
-    labelClass: 'q1',
-    title: 'Self-Hosted DegenFeed',
-    desc: 'One-command deploy of the entire stack \u2014 relays, indexers, frontend, and storage.',
-  },
-];
+/* ─── Feed Preview Card ─────────────────────────────────────── */
 
-/* ─── FAQ data ────────────────────────────────────────────── */
-
-interface FAQEntry {
-  q: string;
-  a: string;
+function FeedPreviewCard({ item }: { item: FeedPreviewItem }) {
+  return (
+    <div className="group rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-4 transition-all hover:border-degen-500/20 hover:shadow-md">
+      <div className="mb-2 flex items-center gap-2">
+        <span
+          className="flex h-6 w-6 items-center justify-center rounded-full text-[9px] font-bold"
+          style={{
+            backgroundColor: `${getProtocolColor(item.protocol)}18`,
+            color: getProtocolColor(item.protocol),
+          }}
+        >
+          {item.protocol.charAt(0).toUpperCase()}
+        </span>
+        <span className="text-xs font-medium" style={{ color: getProtocolColor(item.protocol) }}>
+          {getProtocolLabel(item.protocol)}
+        </span>
+        <span className="text-[10px]" style={{ color: 'var(--color-muted)' }}>
+          {item.time}
+        </span>
+      </div>
+      <p className="mb-2 text-sm leading-relaxed" style={{ color: 'var(--color-fg)' }}>
+        {item.text}
+      </p>
+      <div className="flex items-center gap-3 text-xs" style={{ color: 'var(--color-muted)' }}>
+        <span className="font-medium truncate" style={{ color: 'var(--color-fg)' }}>
+          {item.author}
+        </span>
+        <span className="flex items-center gap-1">
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            aria-hidden="true"
+          >
+            <path d="M14 9V5a3 3 0 00-3-3l-4 9v11h11.28a2 2 0 002-1.7l1.38-9a2 2 0 00-2-2.3H14z" />
+          </svg>
+          {item.likes}
+        </span>
+      </div>
+    </div>
+  );
 }
 
-const faqs: FAQEntry[] = [
-  {
-    q: 'What is DegenFeed?',
-    a: 'DegenFeed is the universal layer for decentralized social media. It aggregates content from 15+ protocols into one feed, lets you cross-post across all of them, and gives you tools to earn \u2014 tips, creator coins, and subscriptions \u2014 without platform fees.',
-  },
-  {
-    q: 'Do I need an account?',
-    a: 'No account required to browse. To post, tip, or create, you connect your wallet (EVM or Solana). No email, no password, no phone number.',
-  },
-  {
-    q: 'Which protocols are supported?',
-    a: 'Currently: Nostr, Farcaster, Lens, Bluesky, Mastodon, Reddit, RSS, YouTube, PeerTube, Threads. Coming: Mirror, Paragraph, Ghost, Forem, Twitch, Zora, Lemmy, and more.',
-  },
-  {
-    q: 'How do Creator Coins work?',
-    a: 'Creator Coins are tokens deployed on Base or Solana that represent your brand. Fans buy, hold, and trade them. You set the rules \u2014 anti-bot filters, supply caps, and revenue splits. No rugging, no exploits.',
-  },
-  {
-    q: 'Is DegenFeed open source?',
-    a: 'Yes. The entire platform is open source under the MIT license. You can inspect, fork, and self-host every line of code.',
-  },
-  {
-    q: 'Can I self-host?',
-    a: 'Yes. DegenFeed is designed to be self-hosted from day one. Run your own relays, indexers, and frontend. Your accounts are yours \u2014 always.',
-  },
-  {
-    q: 'How does tipping work?',
-    a: 'Tipping is peer-to-peer and cross-chain. Send ETH, SOL, USDC, or Lightning payments directly to creators. Zero platform fees. We never touch the money.',
-  },
-];
-
-/* ══════════════════════════════════════════════════════
+/* ══════════════════════════════════════════════════════════════
    PAGE
-   ══════════════════════════════════════════════════════ */
+   ══════════════════════════════════════════════════════════════ */
 
 export default function HomePage() {
+  const { connectedCount, totalCount, connections } = useProtocolConnections();
+  const [connectOpen, setConnectOpen] = useState(false);
+
+  const hasConnections = connectedCount > 0;
+
+  // Randomize feed preview
+  const feedPreview = useMemo(() => FEED_PREVIEW.sort(() => Math.random() - 0.5).slice(0, 3), []);
+
   return (
     <div className="landing-page">
-      {/* JSON-LD Structured Data for rich search results */}
-      <Script
-        id="landing-structured-data"
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            '@context': 'https://schema.org',
-            '@graph': [
-              {
-                '@type': 'WebApplication',
-                '@id': 'https://app.degenfeed.xyz/#webapp',
-                name: 'DegenFeed',
-                url: 'https://app.degenfeed.xyz',
-                description:
-                  'Aggregate Nostr, Farcaster, Lens, Bluesky, Mastodon & more into one feed. Cross-post across 15+ protocols, launch creator coins, tip in crypto, and livestream everywhere.',
-                applicationCategory: 'SocialNetworkingApplication',
-                operatingSystem: 'All',
-                browserRequirements: 'Requires modern browser with JavaScript enabled',
-                offers: [
-                  { '@type': 'Offer', name: 'Free', price: '0', priceCurrency: 'USD' },
-                  { '@type': 'Offer', name: 'Premium', price: '10', priceCurrency: 'USD' },
-                  { '@type': 'Offer', name: 'Creator', price: '25', priceCurrency: 'USD' },
-                ],
-                author: {
-                  '@type': 'Organization',
-                  name: 'Rug Munch Media LLC',
-                  url: 'https://app.degenfeed.xyz',
-                },
-                featureList: [
-                  'Multi-protocol feed aggregation of 15+ decentralized social networks',
-                  'Cross-protocol posting to Nostr, Farcaster, Lens, Bluesky, Mastodon simultaneously',
-                  'Creator coin deployment on Base (ERC-20) and Solana (SPL)',
-                  'Cross-chain tipping in ETH, SOL, USDC, and Lightning Network',
-                  'Multi-protocol livestreaming and audio spaces',
-                  'Self-hosted infrastructure with full data portability',
-                  'Cross-protocol search and content discovery',
-                  'Real-time notifications and unified messaging',
-                ],
-                screenshot: {
-                  '@type': 'ImageObject',
-                  url: 'https://app.degenfeed.xyz/og-image.png',
-                },
-              },
-              {
-                '@type': 'SoftwareSourceCode',
-                '@id': 'https://git.rugmunch.io/RugMunchMedia/degenfeed-web',
-                name: 'DegenFeed',
-                description:
-                  'Open-source multi-protocol social aggregator for web3. Aggregates Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, Reddit, and RSS.',
-                codeRepository: 'https://git.rugmunch.io/RugMunchMedia/degenfeed-web',
-                programmingLanguage: 'TypeScript',
-                license: 'https://www.gnu.org/licenses/agpl-3.0.html',
-                applicationCategory: 'SocialNetworkingApplication',
-                operatingSystem: 'POSIX, macOS, Windows',
-              },
-              {
-                '@type': 'BreadcrumbList',
-                '@id': 'https://app.degenfeed.xyz/#breadcrumb',
-                itemListElement: [
-                  {
-                    '@type': 'ListItem',
-                    position: 1,
-                    name: 'Home',
-                    item: 'https://app.degenfeed.xyz',
-                  },
-                  {
-                    '@type': 'ListItem',
-                    position: 2,
-                    name: 'Features',
-                    item: 'https://app.degenfeed.xyz/features',
-                  },
-                  {
-                    '@type': 'ListItem',
-                    position: 3,
-                    name: 'FAQ',
-                    item: 'https://app.degenfeed.xyz/faq',
-                  },
-                ],
-              },
-              {
-                '@type': 'Organization',
-                '@id': 'https://app.degenfeed.xyz/#organization',
-                name: 'Rug Munch Media LLC',
-                url: 'https://app.degenfeed.xyz',
-                logo: 'https://app.degenfeed.xyz/icon-512.png',
-                sameAs: ['https://git.rugmunch.io/RugMunchMedia', 'https://codeberg.org/degenfeed'],
-              },
-            ],
-          }),
-        }}
-      />
-      {/* Background glows */}
-      <div className="hero-bg-glow" aria-hidden="true" />
-      <div className="hero-glow-secondary" aria-hidden="true" />
+      {/* Background glow */}
+      <div className="home-bg-glow" aria-hidden="true" />
 
-      {/* ── Skip to app (keyboard only) ── */}
-      <a href="#hero-section" className="skip-to-app">
-        Skip to Content
-      </a>
+      <div className="mx-auto max-w-[1000px] px-4 py-8 md:py-16">
+        {/* ══════════════ WELCOME ══════════════ */}
+        <section className="mb-12">
+          <WelcomeGreeting connectedProtocols={connectedCount} totalProtocols={totalCount} />
 
-      <div className="mx-auto max-w-[1200px]">
-        {/* ══════════════ HERO ══════════════ */}
-        <section className="hero-section" id="hero-section" aria-label="Hero">
-          <div className="hero-content">
-            {/* Logo */}
-            <div className="hero-logo">
-              <svg width="48" height="48" viewBox="0 0 48 48" fill="none" aria-hidden="true">
-                <rect width="48" height="48" rx="12" fill="var(--color-accent)" />
-                <text
-                  x="24"
-                  y="32"
-                  textAnchor="middle"
-                  fill="#000000"
-                  fontSize="26"
-                  fontWeight="800"
-                  fontFamily="system-ui"
-                >
-                  D
-                </text>
+          <div className="mt-6 flex flex-wrap items-center gap-3">
+            <Link
+              href="/feed"
+              className="inline-flex items-center gap-2 rounded-2xl bg-[var(--color-accent)] px-6 py-3 text-sm font-bold text-black transition-all hover:bg-[var(--color-accent)]/90 hover:shadow-lg hover:shadow-[var(--color-accent)]/20"
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M5 12h14M12 5l7 7-7 7" />
               </svg>
-            </div>
-
-            <h1 className="hero-headline">
-              <span className="hero-headline-line">Own Your</span>
-              <span className="hero-headline-line gradient-text">Social Network</span>
-            </h1>
-
-            <p className="hero-sub">
-              <span className="hero-highlight">Post once.</span> Reach 15+ protocols.{' '}
-              <span className="hero-highlight">Earn from anywhere.</span> No one can deplatform you.
-            </p>
-
-            <div className="hero-ctas">
-              <Link href="/waitlist" className="cta-primary cta-primary-lg">
-                Join the Waitlist
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden="true"
-                >
-                  <path d="M5 12h14M12 5l7 7-7 7" />
-                </svg>
-              </Link>
-              <Link href="/feed" className="cta-secondary">
-                Explore the Feed
-              </Link>
-            </div>
-
-            <div className="hero-proof">
-              <span className="hero-proof-dot" />
-              <span>
-                <strong>1,247</strong> creators on the waitlist
-              </span>
-              <span aria-hidden="true">&middot;</span>
-              <span>No account needed</span>
-            </div>
+              Browse Your Feed
+            </Link>
+            <button
+              type="button"
+              onClick={() => setConnectOpen(true)}
+              className="inline-flex items-center gap-2 rounded-2xl border border-[var(--color-glass-border)] bg-[var(--color-card)] px-6 py-3 text-sm font-semibold transition-all hover:border-degen-500/30 hover:bg-[var(--color-card-hover)]"
+              style={{ color: 'var(--color-fg)' }}
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              {hasConnections ? 'Manage Protocols' : 'Connect Protocols'}
+            </button>
           </div>
         </section>
 
-        {/* ══════════════ PROTOCOL MARQUEE ══════════════ */}
-        <section className="protocol-marquee-section" aria-label="Supported protocols">
-          <div className="protocol-marquee-fade" aria-hidden="true" />
-          <ul className="protocol-marquee" aria-label="Supported protocols scroll">
-            {[...protocols, ...protocols].map((p, i) => (
-              <li key={`${p.name}-${i}`} className="protocol-badge">
-                <span className="protocol-badge-dot" style={{ backgroundColor: p.color }} />
-                {p.name}
-              </li>
-            ))}
-          </ul>
-        </section>
-
-        {/* ══════════════ FEATURES ══════════════ */}
-        <section className="features-section" id="features" aria-labelledby="features-heading">
-          <h2 id="features-heading" className="section-heading">
-            Everything you need. Nothing you don&apos;t.
-          </h2>
-          <p className="section-sub">
-            DegenFeed is the first platform that truly puts you in control \u2014 of your content,
-            your economy, and your infrastructure.
-          </p>
-
-          <div className="features-grid">
-            {features.map((f) => (
-              <article key={f.title} className="feature-card">
-                <div
-                  className="feature-icon"
-                  style={{ backgroundColor: f.bg, color: 'var(--color-accent)' }}
-                >
-                  {f.icon}
-                </div>
-                <h3 className="feature-title">{f.title}</h3>
-                <p className="feature-desc">{f.desc}</p>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        {/* ══════════════ COMING SOON ══════════════ */}
-        <section className="coming-soon-section" id="coming-soon" aria-labelledby="coming-heading">
-          <h2 id="coming-heading" className="section-heading">
-            What&apos;s next
-          </h2>
-          <p className="section-sub">
-            We&apos;re building the future of decentralized social. Here&apos;s what&apos;s coming.
-          </p>
-
-          <div className="coming-soon-grid">
-            {comingSoon.map((item) => (
-              <article key={item.title} className="coming-soon-item">
-                <span className={`coming-soon-label ${item.labelClass}`}>{item.label}</span>
-                <h4>{item.title}</h4>
-                <p>{item.desc}</p>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        {/* ══════════════ WAITLIST ══════════════ */}
-        <WaitlistSection />
-
-        {/* ══════════════ FAQ ══════════════ */}
-        <section className="faq-section" id="faq" aria-labelledby="faq-heading">
-          <h2 id="faq-heading" className="section-heading">
-            Frequently asked questions
-          </h2>
-
-          <div className="faq-list">
-            {faqs.map((faq, i) => (
-              <FAQItem key={i} question={faq.q} answer={faq.a} />
-            ))}
-          </div>
-        </section>
-
-        {/* ══════════════ FINAL CTA ══════════════ */}
-        <section className="cta-section" aria-labelledby="cta-heading">
-          <div className="cta-inner">
-            <h2 id="cta-heading" className="cta-heading">
-              Ready to own your network?
+        {/* ══════════════ VALUE PROPOSITION ══════════════ */}
+        <section className="mb-12">
+          <div className="rounded-2xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-6 md:p-8">
+            <h2
+              className="mb-2 text-2xl font-bold"
+              style={{ color: 'var(--color-fg)', fontFamily: 'var(--font-heading)' }}
+            >
+              All your decentralized social networks in one place.
             </h2>
-            <p className="cta-sub">
-              No account needed. No platform fees. No one can deplatform you.
+            <p
+              className="max-w-2xl text-sm leading-relaxed"
+              style={{ color: 'var(--color-muted)' }}
+            >
+              DegenFeed brings together Nostr, Farcaster, Lens, Bluesky, Mastodon, Reddit, and RSS
+              into one unified timeline. Post once, reach everywhere. No platform fees. No one can
+              deplatform you.
             </p>
-            <div className="hero-ctas">
-              <Link href="/waitlist" className="cta-primary cta-primary-lg">
-                Join the Waitlist
-              </Link>
-              <Link href="/feed" className="cta-secondary">
-                Browse the Feed
-              </Link>
-            </div>
           </div>
         </section>
-      </div>
-      {/* end max-w-[1200px] */}
 
-      {/* ══════════════ SITE FOOTER ══════════════ */}
-      <footer className="site-footer" role="contentinfo">
-        <div className="site-footer-inner">
-          <nav className="footer-nav" aria-label="Footer">
-            <Link href="/about" className="footer-link">
+        {/* ══════════════ BENTO GRID ══════════════ */}
+        <div className="mb-12 grid gap-4 md:grid-cols-3">
+          {/* Protocol connection status (span 1) */}
+          <div className="rounded-2xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-5">
+            <h3
+              className="mb-3 flex items-center gap-2 text-sm font-bold"
+              style={{ color: 'var(--color-fg)' }}
+            >
+              <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-degen-500/15 text-xs text-degen-400">
+                &#9889;
+              </span>
+              Your Networks
+            </h3>
+            <div className="space-y-2">
+              {Object.entries(connections)
+                .slice(0, 5)
+                .map(([id, conn]) => (
+                  <div key={id} className="flex items-center gap-2">
+                    <span
+                      className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[8px] font-bold ${conn.connected ? '' : 'opacity-40'}`}
+                      style={{ backgroundColor: `${conn.color}18`, color: conn.color }}
+                    >
+                      {conn.icon}
+                    </span>
+                    <span className="flex-1 text-xs" style={{ color: 'var(--color-fg)' }}>
+                      {conn.name}
+                    </span>
+                    <span
+                      className={`h-1.5 w-1.5 rounded-full ${conn.connected ? 'bg-degen-500 shadow-[0_0_6px_rgba(0,255,65,0.5)]' : 'bg-[var(--color-muted)]'}`}
+                    />
+                  </div>
+                ))}
+            </div>
+            <button
+              type="button"
+              onClick={() => setConnectOpen(true)}
+              className="mt-3 w-full rounded-xl border border-dashed border-[var(--color-glass-border)] py-2 text-[11px] font-semibold transition-colors hover:border-degen-500/30 hover:bg-degen-500/5"
+              style={{ color: 'var(--color-muted)' }}
+            >
+              + Connect a protocol
+            </button>
+          </div>
+
+          {/* Trending (span 1) */}
+          <div className="rounded-2xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-5">
+            <h3
+              className="mb-3 flex items-center gap-2 text-sm font-bold"
+              style={{ color: 'var(--color-fg)' }}
+            >
+              <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-orange-500/15 text-xs text-orange-400">
+                &#128293;
+              </span>
+              Trending
+            </h3>
+            <div className="space-y-2">
+              {TRENDING_TOPICS.map((t) => (
+                <TrendingCard key={t.topic} {...t} />
+              ))}
+            </div>
+          </div>
+
+          {/* Stats (span 1) */}
+          <div className="rounded-2xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-5">
+            <h3
+              className="mb-3 flex items-center gap-2 text-sm font-bold"
+              style={{ color: 'var(--color-fg)' }}
+            >
+              <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-blue-500/15 text-xs text-blue-400">
+                &#9776;
+              </span>
+              Platform Stats
+            </h3>
+            <div className="space-y-3">
+              {[
+                { label: 'Protocols Supported', value: '10+' },
+                { label: 'Active Sources', value: '468' },
+                { label: 'Creators Waiting', value: '1,247' },
+                { label: 'Your Protocols', value: `${connectedCount}` },
+              ].map((stat) => (
+                <div
+                  key={stat.label}
+                  className="flex items-center justify-between border-b border-[var(--color-glass-border)] pb-2 last:border-0 last:pb-0"
+                >
+                  <span className="text-xs" style={{ color: 'var(--color-muted)' }}>
+                    {stat.label}
+                  </span>
+                  <span className="text-sm font-bold" style={{ color: 'var(--color-fg)' }}>
+                    {stat.value}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* ══════════════ "WHAT'S HAPPENING" FEED ══════════════ */}
+        <section className="mb-12">
+          <div className="mb-4 flex items-center justify-between">
+            <h2
+              className="text-lg font-bold"
+              style={{ color: 'var(--color-fg)', fontFamily: 'var(--font-heading)' }}
+            >
+              What&apos;s happening
+            </h2>
+            <Link
+              href="/feed"
+              className="text-xs font-semibold transition-colors hover:underline"
+              style={{ color: 'var(--color-accent)' }}
+            >
+              View full feed &rarr;
+            </Link>
+          </div>
+          <div className="grid gap-3 md:grid-cols-3">
+            {feedPreview.map((item) => (
+              <FeedPreviewCard key={item.id} item={item} />
+            ))}
+          </div>
+        </section>
+
+        {/* ══════════════ PROTOCOL ONBOARDING ══════════════ */}
+        <section className="mb-12 rounded-2xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-6 md:p-8">
+          <div className="flex flex-col items-center text-center md:flex-row md:text-left md:gap-8">
+            <div className="mb-4 md:mb-0 md:flex-1">
+              <h2
+                className="mb-2 text-xl font-bold"
+                style={{ color: 'var(--color-fg)', fontFamily: 'var(--font-heading)' }}
+              >
+                Connect your protocols
+              </h2>
+              <p className="mb-4 text-sm leading-relaxed" style={{ color: 'var(--color-muted)' }}>
+                Link your accounts across Nostr, Farcaster, Lens, Bluesky, Mastodon, and more. See
+                everything in one unified feed.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {['mastodon', 'bluesky', 'nostr', 'farcaster'].map((pid) => {
+                  const conn = connections[pid];
+                  if (!conn) return null;
+                  const isConnected = conn.connected;
+                  return (
+                    <button
+                      key={pid}
+                      type="button"
+                      onClick={() => setConnectOpen(true)}
+                      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-semibold transition-all ${isConnected ? 'bg-degen-500/10 text-degen-400' : 'border border-[var(--color-glass-border)] text-[var(--color-muted)] hover:border-degen-500/30'}`}
+                    >
+                      <span className="h-2 w-2 rounded-full ${isConnected ? 'bg-degen-500' : 'bg-[var(--color-muted)]'}" />
+                      {conn.name}
+                      {isConnected && ' ✓'}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setConnectOpen(true)}
+              className="inline-flex shrink-0 items-center gap-2 rounded-2xl bg-[var(--color-accent)] px-6 py-3 text-sm font-bold text-black transition-all hover:bg-[var(--color-accent)]/90 hover:shadow-lg"
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4" />
+                <polyline points="10 17 15 12 10 7" />
+                <line x1="15" y1="12" x2="3" y2="12" />
+              </svg>
+              Get Started
+            </button>
+          </div>
+        </section>
+
+        {/* ══════════════ FOOTER ══════════════ */}
+        <footer
+          className="border-t border-[var(--color-glass-border)] pt-8 text-center text-xs"
+          style={{ color: 'var(--color-muted)' }}
+        >
+          <nav className="mb-3 flex flex-wrap justify-center gap-4">
+            <Link href="/about" className="hover:underline">
               About
             </Link>
-            <Link href="/features" className="footer-link">
+            <Link href="/features" className="hover:underline">
               Features
             </Link>
-            <Link href="/docs" className="footer-link">
+            <Link href="/docs" className="hover:underline">
               Docs
             </Link>
-            <Link href="/api-docs" className="footer-link">
-              API
-            </Link>
-            <Link href="/faq" className="footer-link">
+            <Link href="/faq" className="hover:underline">
               FAQ
             </Link>
-            <Link href="/status" className="footer-link">
-              Status
-            </Link>
-            <Link href="/privacy" className="footer-link">
+            <Link href="/privacy" className="hover:underline">
               Privacy
             </Link>
-            <Link href="/terms" className="footer-link">
+            <Link href="/terms" className="hover:underline">
               Terms
             </Link>
             <a
               href="https://github.com/rugmunchmedia/degenfeed"
               target="_blank"
               rel="noopener noreferrer"
-              className="footer-link"
+              className="hover:underline"
             >
               GitHub
             </a>
           </nav>
-          <p className="footer-copyright">
+          <p>
             &copy; {new Date().getFullYear()} DegenFeed &mdash; a Rug Munch Media LLC product. Open
-            source. Free forever. No account required.
+            source. Free forever.
           </p>
-        </div>
-      </footer>
+        </footer>
+      </div>
+
+      {/* Protocol Connect Flow */}
+      <ProtocolConnectFlow
+        open={connectOpen}
+        protocolId={null}
+        onClose={() => setConnectOpen(false)}
+      />
     </div>
   );
 }

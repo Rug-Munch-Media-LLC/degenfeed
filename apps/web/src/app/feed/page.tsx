@@ -4,37 +4,29 @@ import { addBookmark, getFollows, removeBookmark } from '@degenfeed/storage';
 import type { EngagementAction, UnifiedPost } from '@degenfeed/types';
 import {
   ErrorBoundary,
-  FeedList,
-  FeedWhyCard,
   NotificationBell,
   PostCard,
+  ProtocolBadge,
   ScrollToTop,
 } from '@degenfeed/ui';
 import dynamic from 'next/dynamic';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../../components/AuthProvider';
-import { ContextualTooltip } from '../../components/ContextualTooltip';
 import { FeedComposer } from '../../components/FeedComposer';
 import { FeedLayoutSwitcher } from '../../components/FeedLayoutSwitcher';
-import { FeedSidebar } from '../../components/FeedSidebar';
 import type { FeedMixConfig, SavedMix } from '../../components/FeedTuner';
 import {
-  countTunedTopics,
   encodeTopicWeights,
   FeedTuner,
   getDefaultFeedMixConfig,
   getDefaultWeights,
   loadFeedMixConfig,
   loadSavedMixes,
-  PREBUILT_MIXES,
   saveFeedMixConfig,
   saveSavedMixes,
-  TOPICS,
 } from '../../components/FeedTuner';
 import { FeedFilterBar, FeedTabBar } from '../../components/feed/FeedFilterBar';
-import { FeedHealthSection, WhileYouWereAwayCard } from '../../components/feed/FeedHealthSection';
 import {
   FeedAuthGate,
   FeedEmptyState,
@@ -43,10 +35,12 @@ import {
   FeedNewPostsBanner,
   FeedProtocolSummary,
 } from '../../components/feed/FeedStates';
-import { FEED_PRESETS, PROTOCOL_META } from '../../components/feed/feedPresets';
+import { FEED_PRESETS } from '../../components/feed/feedPresets';
+import { getProtocolTabs, ProtocolFeedTabs } from '../../components/feed/ProtocolFeedTabs';
+import { PullToRefresh } from '../../components/feed/PullToRefresh';
+import { SortSelector } from '../../components/feed/SortSelector';
 import { GettingStartedChecklist } from '../../components/GettingStartedChecklist';
 import { GuidedTour } from '../../components/GuidedTour';
-import { PostCardPrefetcher } from '../../components/PostCardPrefetcher';
 import { PostContextMenu, useContextMenu } from '../../components/PostContextMenu';
 import { useAnnouncer } from '../../components/ScreenReaderAnnouncer';
 import { useToast } from '../../components/Toast';
@@ -54,15 +48,11 @@ import { useEdgeSwipeBack } from '../../hooks/useEdgeSwipeBack';
 import { useFeedLayout } from '../../hooks/useFeedLayout';
 import { useFeedPosition } from '../../hooks/useFeedPosition';
 import { useHapticFeedback } from '../../hooks/useHapticFeedback';
-import { useHoverPrefetch } from '../../hooks/useHoverPrefetch';
 import { useNotifications } from '../../hooks/useNotifications';
 import { useReturningUser } from '../../hooks/useReturningUser';
 import { useScrollVelocity } from '../../hooks/useScrollVelocity';
 import { useSwipeTabs } from '../../hooks/useSwipeTabs';
-import { useViewportPrefetch } from '../../hooks/useViewportPrefetch';
 import { fetchWithSwr, getCached } from '../../lib/fetchWithCache';
-import { aggregateNiches, CategoryBreakCard } from './components/CategoryBreak';
-import { OnboardingSuggestions } from './components/OnboardingSuggestions';
 import { ReadingProgressBar } from './components/ReadingProgressBar';
 import { ShareSheet } from './components/ShareSheet';
 
@@ -72,22 +62,6 @@ const TipModal = dynamic(
 );
 
 type Tab = 'for-you' | 'following' | 'trending' | 'news' | 'custom-mix';
-
-interface FeedPreset {
-  id: string;
-  name: string;
-  description: string;
-  icon: string;
-  config: {
-    freshnessPreference: number;
-    creatorDiversity: number;
-    exploreRatio: number;
-    algorithmTransparent: boolean;
-    recencyWeight: number;
-    engagementWeight: number;
-    contentTypes?: Record<string, number>;
-  };
-}
 
 const ADMIN_WALLETS_RAW =
   typeof process !== 'undefined' ? process.env.NEXT_PUBLIC_ADMIN_WALLETS || '' : '';
@@ -126,12 +100,8 @@ export default function FeedPage() {
   const {
     signedInProtocols,
     engage,
-    openSignIn,
-    openComposeReply,
     publish,
     ready,
-    signOut,
-    nostrPublicId,
     walletAddress,
   } = useAuth();
   const { showToast } = useToast();
@@ -144,7 +114,7 @@ export default function FeedPage() {
   const [tipPost, setTipPost] = useState<UnifiedPost | null>(null);
   const [feedMeta, setFeedMeta] = useState<FeedMeta>({});
   const [hideLowQuality, setHideLowQuality] = useState(false);
-  const [hideThreshold, setHideThreshold] = useState(1.0);
+  const [hideThreshold, _setHideThreshold] = useState(1.0);
   const [allowNonCrypto, setAllowNonCrypto] = useState(false);
   const [recencyWeight, setRecencyWeight] = useState(1.0);
   const [engagementWeight, setEngagementWeight] = useState(1.0);
@@ -158,8 +128,7 @@ export default function FeedPage() {
   const [exploreRatio, setExploreRatio] = useState(30);
   const [activePreset, setActivePreset] = useState<string | null>(null);
   const hasSignedIn = ready && Object.values(signedInProtocols).some(Boolean);
-  const { notifications, unreadCount, fetchNotifications, markRead } =
-    useNotifications(hasSignedIn);
+  const { unreadCount, markRead } = useNotifications(hasSignedIn);
   const { layout, setLayout, isCompact } = useFeedLayout();
   const feedContainerRef = useRef<HTMLDivElement>(null);
   useFeedPosition(feedContainerRef);
@@ -169,11 +138,11 @@ export default function FeedPage() {
   );
   useEdgeSwipeBack(() => window.history.back());
   const haptic = useHapticFeedback();
-  const router = useRouter();
+  const _router = useRouter();
   const returnUser = useReturningUser();
 
   const [topicWeights, setTopicWeights] = useState<Record<string, number>>({});
-  const [showFeedInfo, setShowFeedInfo] = useState(false);
+  const [_showFeedInfo, _setShowFeedInfo] = useState(false);
   const [showTuner, setShowTuner] = useState(false);
   const [newAvailable, setNewAvailable] = useState(false);
   const [loadedLimit, setLoadedLimit] = useState(25);
@@ -184,13 +153,13 @@ export default function FeedPage() {
   const tuneTopicWeightsDebounce = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const intervalRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
   const [showComposer, setShowComposer] = useState(false);
-  const [visiblePostIds, setVisiblePostIds] = useState<Set<string>>(new Set());
-  const [jumpedToPostId, setJumpedToPostId] = useState<string | null>(null);
-  const [readingProgress, setReadingProgress] = useState(0);
+  const [_visiblePostIds, _setVisiblePostIds] = useState<Set<string>>(new Set());
+  const [_jumpedToPostId, _setJumpedToPostId] = useState<string | null>(null);
+  const [readingProgress, _setReadingProgress] = useState(0);
   const [popupPost, setPopupPost] = useState<UnifiedPost | null>(null);
-  const [showWhyCard, setShowWhyCard] = useState(false);
-  const [feedHealthOpen, setFeedHealthOpen] = useState(false);
-  const [isPublishing, setIsPublishing] = useState(false);
+  const [_showWhyCard, _setShowWhyCard] = useState(false);
+  const [_feedHealthOpen, _setFeedHealthOpen] = useState(false);
+  const [_isPublishing, _setIsPublishing] = useState(false);
   const { announce } = useAnnouncer();
   const announcerRef = useRef<ReturnType<typeof useAnnouncer>['announce'] | null>(null);
   announcerRef.current = announce;
@@ -273,7 +242,7 @@ export default function FeedPage() {
     setActivePreset(presetId);
   }, []);
 
-  const handleTopicToggle = useCallback(
+  const _handleTopicToggle = useCallback(
     (topic: string) => {
       setTopicWeights((prev) => {
         const next = { ...prev, [topic]: (prev[topic] ?? 0) > 0 ? 0 : 1 };
@@ -283,7 +252,7 @@ export default function FeedPage() {
     },
     [persistTopicWeights],
   );
-  const handleTopicWeightChange = useCallback(
+  const _handleTopicWeightChange = useCallback(
     (topic: string, weight: number) => {
       setTopicWeights((prev) => {
         const next = { ...prev, [topic]: weight };
@@ -341,7 +310,7 @@ export default function FeedPage() {
   }, []);
 
   const [contextMenuPostId, setContextMenuPostId] = useState<string | null>(null);
-  const [contextMenuPos, setContextMenuPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [_contextMenuPos, _setContextMenuPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
 
   const toggleHideLowQuality = useCallback(() => {
     setHideLowQuality((p) => {
@@ -355,7 +324,7 @@ export default function FeedPage() {
   const memoizedFeed = useMemo(() => posts, [posts]);
 
   const { handleContextMenu, closeContextMenu } = useContextMenu();
-  const contextMenuHandlers = { handleContextMenu, closeContextMenu };
+  const _contextMenuHandlers = { handleContextMenu, closeContextMenu };
 
   useEffect(() => {
     if (contextMenuPostId) {
@@ -373,14 +342,11 @@ export default function FeedPage() {
 
   // useViewportPrefetch(posts, (post) => post);
   // useHoverPrefetch(posts, (post) => post);
-  const scrollVelocity = useScrollVelocity();
+  const _scrollVelocity = useScrollVelocity();
 
-  const announceFeed = useCallback(
-    (msg: string, priority?: 'polite' | 'assertive') => {
-      announcerRef.current?.(msg, priority);
-    },
-    [announcerRef],
-  );
+  const announceFeed = useCallback((msg: string, priority?: 'polite' | 'assertive') => {
+    announcerRef.current?.(msg, priority);
+  }, []);
 
   const fetchFeed = useCallback(
     async (checkOnly = false) => {
@@ -521,10 +487,10 @@ export default function FeedPage() {
         return { ok: false, error: err instanceof Error ? err.message : 'Bookmark failed' };
       }
     }
-    return engage(action, postId, content ?? '', post);
+    return engage(action, postId, post.protocol, { content: content ?? '' });
   };
 
-  const handleShareToast = useCallback(
+  const _handleShareToast = useCallback(
     (message: string) => {
       navigator.clipboard
         .writeText(message)
@@ -560,167 +526,208 @@ export default function FeedPage() {
   return (
     <ErrorBoundary>
       <ReadingProgressBar progress={readingProgress} />
-      <div ref={feedContainerRef} className="mx-auto max-w-2xl px-4 py-6" {...swipeHandlers}>
-        {isAdmin && (
-          <div className="mb-2 rounded-lg bg-amber-500/10 px-3 py-1.5 text-center text-[10px] text-amber-400">
-            Admin mode
-          </div>
-        )}
-        {!isCompact && <GettingStartedChecklist />}
-        {returnUser && <GuidedTour />}
-
-        <div className="mb-4 flex items-center justify-between">
-          <FeedTabBar
-            tabs={FEED_TABS}
-            activeTab={activeTab}
-            onTabChange={(id) => setActiveTab(id as Tab)}
-          />
-          <div className="flex items-center gap-2">
-            <NotificationBell count={unreadCount} onClick={() => router.push('/notifications')} />
-            <FeedLayoutSwitcher layout={layout} onChange={setLayout} />
-            <button
-              type="button"
-              onClick={() => setShowComposer(true)}
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-degen-500/20 text-degen-400 hover:bg-degen-500/30 transition-colors"
-              aria-label="Compose"
-            >
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-                <path
-                  d="M7 1v12M1 7h12"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                />
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        <FeedFilterBar
-          hideLowQuality={hideLowQuality}
-          onToggleHideLowQuality={toggleHideLowQuality}
-          allowNonCrypto={allowNonCrypto}
-          onToggleAllowNonCrypto={() => {
-            setAllowNonCrypto((p) => {
-              const n = !p;
-              persistPrefs({ allowNonCrypto: n });
-              return n;
-            });
-          }}
-          showOriginalContent={showOriginalContent}
-          onToggleShowOriginal={() => {
-            setShowOriginalContent((p) => {
-              const n = !p;
-              persistPrefs({ showOriginalContent: n });
-              return n;
-            });
-          }}
-          minEngagement={minEngagement}
-          onMinEngagementChange={(v) => {
-            setMinEngagement(v);
-            persistPrefs({ minEngagement: v });
-          }}
-          protocolFilter={protocolFilter}
-          onProtocolFilterChange={(v) => {
-            setProtocolFilter(v);
-            persistPrefs({ protocolFilter: v });
-          }}
-          onOpenTuner={() => setShowTuner(true)}
-        />
-
-        <FeedProtocolSummary meta={feedMeta} />
-        {feedMeta?.notices?.map((n, i) => (
-          <div key={i} className="mb-3 rounded-lg bg-blue-500/5 px-3 py-2 text-xs text-blue-400">
-            {n}
-          </div>
-        ))}
-        {feedMeta?.errors?.map((e, i) => (
-          <div key={i} className="mb-3 rounded-lg bg-red-500/5 px-3 py-2 text-xs text-red-400">
-            {e}
-          </div>
-        ))}
-        {newAvailable && (
-          <div className="mb-4">
-            <FeedNewPostsBanner count={posts.length} onRefresh={refreshNow} />
-          </div>
-        )}
-
-        {state === 'loading' && <FeedLoadingSkeleton />}
-        {state === 'empty' && <FeedEmptyState activeTab={activeTab} />}
-        {state === 'error' && (
-          <FeedErrorState error={error || 'Unknown error'} onRetry={() => fetchFeed(false)} />
-        )}
-
-        {state === 'loaded' && (
-          <>
-            <div className="space-y-4">
-              {memoizedFeed.map((post) => (
-                <div key={post.id} className="relative">
-                  <PostCard post={post} onEngage={handleEngage} layout={layout} />
-                </div>
-              ))}
+      <PullToRefresh onRefresh={refreshNow} disabled={state === 'loading'}>
+        <div ref={feedContainerRef} className="mx-auto max-w-2xl px-4 py-6" {...swipeHandlers}>
+          {isAdmin && (
+            <div className="mb-2 rounded-lg bg-amber-500/10 px-3 py-1.5 text-center text-[10px] text-amber-400">
+              Admin mode
             </div>
-            {posts.length >= loadedLimit && (
-              <div className="mt-8 text-center">
-                <button type="button" onClick={loadMore} className="btn-secondary text-sm">
-                  Load more
-                </button>
-              </div>
-            )}
-            {/* Context menu */}
-            {contextMenuPostId && (
-              <PostContextMenu
-                postId={contextMenuPostId ?? ''}
-                onClose={() => setContextMenuPostId(null)}
-                open={!!contextMenuPostId}
-                position={{ x: 0, y: 0 }}
+          )}
+          {!isCompact && <GettingStartedChecklist />}
+          {returnUser && <GuidedTour />}
+
+          {/* Protocol filter tabs */}
+          <div className="mb-4">
+            <ProtocolFeedTabs
+              tabs={getProtocolTabs()}
+              activeTab={protocolFilter}
+              onTabChange={(id) => {
+                setProtocolFilter(id);
+                persistPrefs({ protocolFilter: id });
+              }}
+              showCounts
+            />
+          </div>
+
+          <div className="mb-4 flex items-center justify-between">
+            <FeedTabBar
+              tabs={FEED_TABS}
+              activeTab={activeTab}
+              onTabChange={(id) => setActiveTab(id as Tab)}
+            />
+            <div className="flex items-center gap-2">
+              <SortSelector mode="latest" onChange={() => {}} />
+              <NotificationBell
+                notifications={[]}
+                unreadCount={unreadCount}
+                onFetch={() => {}}
+                onMarkRead={() => {}}
               />
-            )}
-          </>
-        )}
+              <FeedLayoutSwitcher current={layout} onChange={setLayout} />
+              <button
+                type="button"
+                onClick={() => setShowComposer(true)}
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-degen-500/20 text-degen-400 hover:bg-degen-500/30 transition-colors"
+                aria-label="Compose"
+              >
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                  <path
+                    d="M7 1v12M1 7h12"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </button>
+            </div>
+          </div>
 
-        {/* Composer */}
-        {showComposer && (
-          <FeedComposer onClose={() => setShowComposer(false)} onPublish={publish} />
-        )}
-
-        {/* Tip modal */}
-        {tipPost && <TipModal post={tipPost} onClose={() => setTipPost(null)} />}
-
-        {/* Share sheet */}
-        {popupPost && <ShareSheet post={popupPost} onClose={() => setPopupPost(null)} />}
-
-        {/* Feed tuner */}
-        {showTuner && (
-          <FeedTuner
-            topicWeights={topicWeights}
-            onWeightsChange={handleTunerWeightsChange}
-            onReset={handleTunerReset}
-            feedMixConfig={feedMixConfig}
-            onFeedMixChange={handleFeedMixChange}
-            onFeedMixReset={handleFeedMixReset}
-            savedMixes={savedMixes}
-            onSaveMix={handleSaveMix}
-            onLoadMix={handleLoadMix}
-            onDeleteMix={handleDeleteMix}
-            algorithmTransparent={algorithmTransparent}
-            onAlgorithmTransparencyChange={setAlgorithmTransparent}
-            freshnessPreference={freshnessPreference}
-            onFreshnessChange={setFreshnessPreference}
-            creatorDiversity={creatorDiversity}
-            onCreatorDiversityChange={setCreatorDiversity}
-            exploreRatio={exploreRatio}
-            onExploreRatioChange={setExploreRatio}
-            activePreset={activePreset}
-            onApplyPreset={applyFeedPreset}
-            feedPresets={FEED_PRESETS}
+          <FeedFilterBar
+            hideLowQuality={hideLowQuality}
+            onToggleHideLowQuality={toggleHideLowQuality}
+            allowNonCrypto={allowNonCrypto}
+            onToggleAllowNonCrypto={() => {
+              setAllowNonCrypto((p) => {
+                const n = !p;
+                persistPrefs({ allowNonCrypto: n });
+                return n;
+              });
+            }}
+            showOriginalContent={showOriginalContent}
+            onToggleShowOriginal={() => {
+              setShowOriginalContent((p) => {
+                const n = !p;
+                persistPrefs({ showOriginalContent: n });
+                return n;
+              });
+            }}
+            minEngagement={minEngagement}
+            onMinEngagementChange={(v) => {
+              setMinEngagement(v);
+              persistPrefs({ minEngagement: v });
+            }}
+            protocolFilter={protocolFilter}
+            onProtocolFilterChange={(v) => {
+              setProtocolFilter(v);
+              persistPrefs({ protocolFilter: v });
+            }}
+            onOpenTuner={() => setShowTuner(true)}
           />
-        )}
 
-        <ScrollToTop />
-        {/* biome-ignore lint/a11y/useKeyWithClickEvents: screen-reader announcer */}
-        <div ref={announcerRef} className="sr-only" role="status" aria-live="polite" />
-      </div>
+          <FeedProtocolSummary meta={feedMeta} />
+          {feedMeta?.notices?.map((n, i) => (
+            <div key={i} className="mb-3 rounded-lg bg-blue-500/5 px-3 py-2 text-xs text-blue-400">
+              {n}
+            </div>
+          ))}
+          {feedMeta?.errors?.map((e, i) => (
+            <div key={i} className="mb-3 rounded-lg bg-red-500/5 px-3 py-2 text-xs text-red-400">
+              {e}
+            </div>
+          ))}
+          {newAvailable && (
+            <div className="mb-4">
+              <FeedNewPostsBanner count={posts.length} onRefresh={refreshNow} />
+            </div>
+          )}
+
+          {state === 'loading' && <FeedLoadingSkeleton />}
+          {state === 'empty' && <FeedEmptyState activeTab={activeTab} />}
+          {state === 'error' && (
+            <FeedErrorState error={error || 'Unknown error'} onRetry={() => fetchFeed(false)} />
+          )}
+
+          {state === 'loaded' && (
+            <>
+              <div className="space-y-4">
+                {memoizedFeed.map((post) => (
+                  <div key={post.id} className="relative">
+                    {/* Protocol source indicator */}
+                    {post.protocol && (
+                      <div className="mb-1.5 flex items-center gap-2">
+                        <ProtocolBadge protocol={post.protocol} size="sm" showLabel />
+                      </div>
+                    )}
+                    <PostCard post={post} onEngage={handleEngage} />
+                  </div>
+                ))}
+              </div>
+              {posts.length >= loadedLimit && (
+                <div className="mt-8 text-center">
+                  <button type="button" onClick={loadMore} className="btn-secondary text-sm">
+                    Load more
+                  </button>
+                </div>
+              )}
+              {/* Context menu */}
+              {contextMenuPostId && (
+                <PostContextMenu
+                  postId={contextMenuPostId ?? ''}
+                  onClose={() => setContextMenuPostId(null)}
+                  open={!!contextMenuPostId}
+                  position={{ x: 0, y: 0 }}
+                />
+              )}
+            </>
+          )}
+
+          {/* Composer */}
+          {showComposer && <FeedComposer signedInProtocols={{}} onPost={publish} />}
+
+          {/* Tip modal */}
+          {tipPost && (
+            <TipModal
+              open={true}
+              onClose={() => setTipPost(null)}
+              recipientProtocol={tipPost.protocol}
+              recipientAuthorId={tipPost.author.id}
+              recipientDisplayName={tipPost.author.displayName}
+              publicationId={tipPost.id}
+            />
+          )}
+
+          {/* Share sheet */}
+          {popupPost && (
+            <ShareSheet post={popupPost} open={!!popupPost} onClose={() => setPopupPost(null)} />
+          )}
+
+          {/* Feed tuner */}
+          {showTuner && (
+            <FeedTuner
+              topicWeights={topicWeights}
+              onWeightsChange={handleTunerWeightsChange}
+              onReset={handleTunerReset}
+              feedMixConfig={feedMixConfig}
+              onFeedMixChange={handleFeedMixChange}
+              onFeedMixReset={handleFeedMixReset}
+              savedMixes={savedMixes}
+              onSaveMix={handleSaveMix}
+              onLoadMix={handleLoadMix}
+              onDeleteMix={handleDeleteMix}
+              algorithmTransparent={algorithmTransparent}
+              onAlgorithmTransparencyChange={setAlgorithmTransparent}
+              freshnessPreference={freshnessPreference}
+              onFreshnessChange={setFreshnessPreference}
+              creatorDiversity={creatorDiversity}
+              onCreatorDiversityChange={setCreatorDiversity}
+              exploreRatio={exploreRatio}
+              onExploreRatioChange={setExploreRatio}
+              activePreset={activePreset}
+              onApplyPreset={applyFeedPreset}
+              feedPresets={FEED_PRESETS}
+            />
+          )}
+
+          <ScrollToTop />
+          {/* biome-ignore lint/a11y/useKeyWithClickEvents: screen-reader announcer */}
+          <div
+            ref={announcerRef as React.Ref<HTMLDivElement>}
+            className="sr-only"
+            role="status"
+            aria-live="polite"
+          />
+        </div>
+      </PullToRefresh>
     </ErrorBoundary>
   );
 }

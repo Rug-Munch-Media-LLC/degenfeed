@@ -30,7 +30,8 @@ async function dedupedFetch(url: string, init?: RequestInit): Promise<Response> 
   const isGet = !init?.method || init.method === 'GET';
 
   if (isGet && inflightRequests.has(key)) {
-    return inflightRequests.get(key)!.then((r) => r.clone());
+    const pending = inflightRequests.get(key) as Promise<Response> | undefined;
+    if (pending) return pending.then((r) => r.clone());
   }
 
   const promise = retryFetch(url, { fetchOptions: init });
@@ -74,7 +75,7 @@ async function handleResponse<T>(response: Response): Promise<ApiResponse<T>> {
       return data as unknown as ApiResponse<T>;
     }
     return { success: true, data };
-  } catch (err) {
+  } catch (_err) {
     return { success: false, error: 'Failed to parse response JSON' };
   }
 }
