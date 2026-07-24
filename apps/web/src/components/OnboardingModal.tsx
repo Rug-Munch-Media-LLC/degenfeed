@@ -3,7 +3,6 @@
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useOnboarding } from '../hooks/useOnboarding';
-import { CrossPlatformSignup } from './CrossPlatformSignup';
 import { resetTour } from './GuidedTour';
 import { useToast } from './Toast';
 
@@ -628,20 +627,136 @@ export function OnboardingModal() {
                 </div>
               )}
 
-              {/* == Step 4: Create accounts == */}
+              {/* == Step 4: Connect your protocols == */}
               {step === 4 && (
                 <div>
-                  <div className="mb-4 text-center">
+                  <div className="mb-6 text-center">
                     <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-degen-500/20 via-degen-500/10 to-transparent text-3xl shadow-[0_0_20px_rgba(0,255,65,0.12)]">
-                      🔑
+                      🔗
                     </div>
-                    <h2 className="mb-1 text-xl font-bold text-white">Create your accounts</h2>
+                    <h2 className="mb-1 text-xl font-bold text-white">Connect your protocols</h2>
                     <p className="mx-auto max-w-md text-sm text-white/50">
-                      Get portable credentials for every platform. Use them on any app — you own
-                      these accounts.
+                      Link your accounts so you can post and engage across all networks
                     </p>
                   </div>
-                  <CrossPlatformSignup compact />
+
+                  {/* Connection sub-steps with progress */}
+                  <div className="space-y-4">
+                    {/* Mastodon */}
+                    <details className="group rounded-xl border border-white/[0.06] bg-white/[0.02] overflow-hidden transition-all">
+                      <summary className="flex cursor-pointer items-center gap-3 px-4 py-3.5 text-sm font-medium text-white/70 hover:text-white transition-colors">
+                        <span className="flex h-8 w-8 items-center justify-center rounded-lg text-base bg-[#6364ff]/20 text-[#6364ff]">🐘</span>
+                        <span className="flex-1">Connect Mastodon</span>
+                        <span className="rounded-full bg-white/[0.04] px-2 py-0.5 text-[10px] text-white/40">optional</span>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="transition-transform group-open:rotate-180" aria-hidden="true">
+                          <polyline points="6 9 12 15 18 9" />
+                        </svg>
+                      </summary>
+                      <div className="border-t border-white/[0.04] px-4 py-4">
+                        <p className="text-xs text-white/50 mb-3">
+                          Enter your Mastodon instance URL to connect your account.
+                        </p>
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            placeholder="https://mastodon.social"
+                            className="flex-1 rounded-lg border border-white/[0.08] bg-white/[0.02] px-3 py-2 text-xs text-white placeholder-white/30 outline-none focus:border-[#6364ff]/50"
+                          />
+                          <button
+                            type="button"
+                            className="shrink-0 rounded-lg bg-[#6364ff] px-3 py-2 text-xs font-semibold text-white transition-all hover:bg-[#6364ff]/80"
+                          >
+                            Connect
+                          </button>
+                        </div>
+                      </div>
+                    </details>
+
+                    {/* Bluesky */}
+                    <details className="group rounded-xl border border-white/[0.06] bg-white/[0.02] overflow-hidden transition-all">
+                      <summary className="flex cursor-pointer items-center gap-3 px-4 py-3.5 text-sm font-medium text-white/70 hover:text-white transition-colors">
+                        <span className="flex h-8 w-8 items-center justify-center rounded-lg text-base bg-[#1185fe]/20 text-[#1185fe]">🦋</span>
+                        <span className="flex-1">Connect Bluesky</span>
+                        <span className="rounded-full bg-white/[0.04] px-2 py-0.5 text-[10px] text-white/40">optional</span>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="transition-transform group-open:rotate-180" aria-hidden="true">
+                          <polyline points="6 9 12 15 18 9" />
+                        </svg>
+                      </summary>
+                      <div className="border-t border-white/[0.04] px-4 py-4 space-y-3">
+                        <p className="text-xs text-white/50">
+                          Enter your Bluesky handle and an App Password (Settings → App Passwords).
+                        </p>
+                        <input
+                          type="text"
+                          placeholder="yourhandle.bsky.social"
+                          className="w-full rounded-lg border border-white/[0.08] bg-white/[0.02] px-3 py-2 text-xs text-white placeholder-white/30 outline-none focus:border-[#1185fe]/50"
+                        />
+                        <input
+                          type="password"
+                          placeholder="App password (generate in Bluesky settings)"
+                          className="w-full rounded-lg border border-white/[0.08] bg-white/[0.02] px-3 py-2 text-xs text-white placeholder-white/30 outline-none focus:border-[#1185fe]/50"
+                        />
+                        <button
+                          type="button"
+                          className="w-full rounded-lg bg-[#1185fe] px-3 py-2 text-xs font-semibold text-white transition-all hover:bg-[#1185fe]/80"
+                        >
+                          Connect
+                        </button>
+                      </div>
+                    </details>
+
+                    {/* Nostr */}
+                    <details className="group rounded-xl border border-white/[0.06] bg-white/[0.02] overflow-hidden transition-all">
+                      <summary className="flex cursor-pointer items-center gap-3 px-4 py-3.5 text-sm font-medium text-white/70 hover:text-white transition-colors">
+                        <span className="flex h-8 w-8 items-center justify-center rounded-lg text-base bg-[#8e30eb]/20 text-[#8e30eb]">⚡</span>
+                        <span className="flex-1">Create Nostr Keys</span>
+                        <span className="rounded-full bg-white/[0.04] px-2 py-0.5 text-[10px] text-white/40">optional</span>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="transition-transform group-open:rotate-180" aria-hidden="true">
+                          <polyline points="6 9 12 15 18 9" />
+                        </svg>
+                      </summary>
+                      <div className="border-t border-white/[0.04] px-4 py-4 space-y-3">
+                        <p className="text-xs text-white/50">
+                          Generate a Nostr key pair. Your keys never leave this device.
+                        </p>
+                        <div className="rounded-lg bg-white/[0.03] px-3 py-3">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-[10px] font-medium text-white/40 uppercase tracking-wider">Public Key</p>
+                              <p className="mt-0.5 text-xs font-mono text-degen-400 break-all">
+                                npub1...
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              className="shrink-0 rounded-lg bg-white/[0.06] px-3 py-2 text-[10px] font-medium text-white/60 hover:text-white transition-colors"
+                            >
+                              Generate
+                            </button>
+                          </div>
+                        </div>
+                        <p className="text-[10px] text-white/30">
+                          ⚠️ Save your private key securely. It cannot be recovered.
+                        </p>
+                      </div>
+                    </details>
+
+                    {/* Visual progress indicator */}
+                    <div className="mt-4 rounded-xl border border-white/[0.04] bg-white/[0.01] px-4 py-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-[10px] font-medium text-white/40 uppercase tracking-wider">Connection Progress</span>
+                        <span className="text-[10px] font-mono text-white/30">0 / 3</span>
+                      </div>
+                      <div className="flex gap-1.5">
+                        <div className="h-1 flex-1 rounded-full bg-white/[0.06]" />
+                        <div className="h-1 flex-1 rounded-full bg-white/[0.06]" />
+                        <div className="h-1 flex-1 rounded-full bg-white/[0.06]" />
+                      </div>
+                      <p className="mt-2 text-[10px] text-white/30 text-center">
+                        Connect any protocol now or do it later from Settings
+                      </p>
+                    </div>
+                  </div>
                 </div>
               )}
 

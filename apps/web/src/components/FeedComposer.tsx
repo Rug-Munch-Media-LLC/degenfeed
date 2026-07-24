@@ -1,20 +1,34 @@
 'use client';
 
 import { getPrimaryIdentity } from '@degenfeed/storage';
-import { ComposePreview, getProtocolColor, getProtocolIcon } from '@degenfeed/ui';
+import { ComposePreview, getProtocolColor } from '@degenfeed/ui';
 import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { publishNoteToNostr } from '../lib/nostr';
 import { useAnnouncer } from './ScreenReaderAnnouncer';
 import { useToast } from './Toast';
 
-const TARGETS = [
-  { id: 'nostr', label: 'Nostr', charLimit: 50000 },
-  { id: 'farcaster', label: 'Farcaster', charLimit: 320 },
-  { id: 'lens', label: 'Lens', charLimit: 5000 },
-  { id: 'bluesky', label: 'Bluesky', charLimit: 300 },
-  { id: 'threads', label: 'Threads', charLimit: 500 },
-  { id: 'mastodon', label: 'Mastodon', charLimit: 5000 },
+/* ─── Protocol limits & metadata ─────────────────────────────── */
+
+interface ProtocolTarget {
+  id: string;
+  label: string;
+  charLimit: number;
+  color: string;
+  icon: string;
+  /** Max attachments (0 = unsupported) */
+  maxMedia: number;
+  /** Supported media types — empty = any */
+  mediaTypes: string[];
+}
+
+const TARGETS: ProtocolTarget[] = [
+  { id: 'nostr', label: 'Nostr', charLimit: 50000, color: '#8e30eb', icon: '⚡', maxMedia: 10, mediaTypes: ['image/*', 'video/*'] },
+  { id: 'farcaster', label: 'Farcaster', charLimit: 320, color: '#8a63d2', icon: '◈', maxMedia: 4, mediaTypes: ['image/*'] },
+  { id: 'lens', label: 'Lens', charLimit: 5000, color: '#abfe2c', icon: '🌿', maxMedia: 4, mediaTypes: ['image/*', 'video/*'] },
+  { id: 'bluesky', label: 'Bluesky', charLimit: 300, color: '#1185fe', icon: '🦋', maxMedia: 4, mediaTypes: ['image/*'] },
+  { id: 'threads', label: 'Threads', charLimit: 500, color: '#101010', icon: '⊞', maxMedia: 10, mediaTypes: ['image/*', 'video/*'] },
+  { id: 'mastodon', label: 'Mastodon', charLimit: 5000, color: '#6364ff', icon: '🐘', maxMedia: 4, mediaTypes: ['image/*', 'video/*'] },
 ];
 
 /** Convert hex color to comma-separated RGB for CSS rgba() usage */
@@ -50,6 +64,16 @@ function getPostVerb(protocolId: string): string {
   return verbs[protocolId] ?? 'Post';
 }
 
+/* ─── Media attachment type ──────────────────────────────────── */
+
+interface MediaAttachment {
+  file: File;
+  previewUrl: string;
+  id: string;
+}
+
+/* ─── Props ──────────────────────────────────────────────────── */
+
 interface FeedComposerProps {
   signedInProtocols: Record<string, boolean>;
   nostrPublicId?: string;
@@ -59,6 +83,8 @@ interface FeedComposerProps {
   ) => Promise<Record<string, { ok: boolean; error?: string }>>;
   onRequestSignIn?: (protocol: string) => void;
 }
+
+/* ─── Component ──────────────────────────────────────────────── */
 
 export function FeedComposer({
   signedInProtocols,
@@ -76,6 +102,11 @@ export function FeedComposer({
   const [displayName, setDisplayName] = useState<string>();
   const [handle, setHandle] = useState<string>();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // ── Media state ──
+  const [media, setMedia] = useState<MediaAttachment[]>([]);
+  const [mediaError, setMediaError] = useState<string | null>(null);
 
   useEffect(() => {
     setSelected(new Set(TARGETS.filter((t) => signedInProtocols[t.id]).map((t) => t.id)));
@@ -89,6 +120,14 @@ export function FeedComposer({
         setHandle(id?.handle ?? id?.publicId ?? undefined);
       })
       .catch(() => {});
+  }, []);
+
+  // Cleanup media object URLs on unmount
+  useEffect(() => {
+    return () => {
+      for (const m of media) URL.revokeObjectURL(m.previewUrl);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleTextChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -118,6 +157,7 @@ export function FeedComposer({
         }
       }
       setText('');
+      setMedia([]);
       const el = textareaRef.current;
       if (el) {
         el.style.height = 'auto';
@@ -151,6 +191,59 @@ export function FeedComposer({
     [signedInProtocols, onRequestSignIn],
   );
 
+  // ── Media upload handler ──
+  const handleMediaSelect = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const files = e.target.files;
+      if (!files || files.length === 0) return;
+
+      setMediaError(null);
+
+      // Determine max media from selected targets
+      const maxMedia = Math.min(
+        ...TARGETS.filter((t) => selected.has(t.id)).map((t) => t.maxMedia),
+        TARGETS.filter((t) => selected.has(t.id)).length > 0 ? 10 : 4,
+      );
+
+      const remaining = maxMedia - media.length;
+      if (remaining <= 0) {
+        setMediaError(`Maximum ${maxMedia} attachments allowed across selected protocols`);
+        return;
+      }
+
+      const newAttachments: MediaAttachment[] = [];
+      for (let i = 0; i < Math.min(files.length, remaining); i++) {
+        const file = files[i]!;
+        // Validate file size (max 10MB)
+        if (file.size > 10 * 1024 * 1024) {
+          setMediaError('File too large. Max 10MB per file.');
+          continue;
+        }
+        newAttachments.push({
+          file,
+          previewUrl: URL.createObjectURL(file),
+          id: `${Date.now()}-${i}`,
+        });
+      }
+
+      setMedia((prev) => [...prev, ...newAttachments]);
+
+      // Reset input so re-selecting same file triggers change
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    },
+    [media.length, selected],
+  );
+
+  const removeMedia = useCallback((id: string) => {
+    setMedia((prev) => {
+      const item = prev.find((m) => m.id === id);
+      if (item) URL.revokeObjectURL(item.previewUrl);
+      return prev.filter((m) => m.id !== id);
+    });
+    setMediaError(null);
+  }, []);
+
+  // ── Char count & limits ──
   const charCount = text.length;
   const selectedTargets = TARGETS.filter((t) => selected.has(t.id));
   const minCharLimit =
@@ -205,6 +298,7 @@ export function FeedComposer({
               : undefined
           }
         >
+          {/* ── Textarea ── */}
           <textarea
             ref={textareaRef}
             value={text}
@@ -217,6 +311,48 @@ export function FeedComposer({
             aria-label="Compose a new post"
           />
 
+          {/* ── Media preview ── */}
+          {media.length > 0 && (
+            <div className="mb-2 flex flex-wrap gap-2">
+              {media.map((m) => (
+                <div key={m.id} className="group relative h-20 w-20 overflow-hidden rounded-xl border border-[var(--color-border)]">
+                  {m.file.type.startsWith('video/') ? (
+                    <video
+                      src={m.previewUrl}
+                      className="h-full w-full object-cover"
+                      muted
+                    />
+                  ) : (
+                    // biome-ignore lint/performance/noImgElement: blob URL cannot use next/image
+                    <img
+                      src={m.previewUrl}
+                      alt="Attachment preview"
+                      className="h-full w-full object-cover"
+                    />
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => removeMedia(m.id)}
+                    className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition-opacity group-hover:opacity-100"
+                    aria-label="Remove media"
+                  >
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" aria-hidden="true">
+                      <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                  </button>
+                  <span className="absolute bottom-1 left-1 rounded bg-black/60 px-1 text-[8px] text-white">
+                    {m.file.type.startsWith('video/') ? '🎬' : '📷'}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {mediaError && (
+            <p className="mb-1 text-xs text-red-400" role="alert">{mediaError}</p>
+          )}
+
+          {/* ── Protocol target buttons ── */}
           <div className="mt-2 flex flex-wrap items-center gap-2">
             {TARGETS.map((t) => {
               const connected = !!signedInProtocols[t.id];
@@ -232,12 +368,12 @@ export function FeedComposer({
                       : 'border-[var(--color-border)] hover:border-[var(--color-muted)]'
                   } ${connected ? '' : 'opacity-40 hover:opacity-70'}`}
                   style={{
-                    color: active ? getProtocolColor(t.id) : connected ? '#9ca3af' : '#666',
-                    backgroundColor: active ? `${getProtocolColor(t.id)}18` : 'transparent',
+                    color: active ? t.color : connected ? '#9ca3af' : '#666',
+                    backgroundColor: active ? `${t.color}18` : 'transparent',
                   }}
                   title={
                     connected
-                      ? `${t.label} (${t.charLimit} chars)`
+                      ? `${t.label} (${t.charLimit} chars, ${t.maxMedia} media max)`
                       : `Sign in to ${t.label} to publish`
                   }
                 >
@@ -256,13 +392,44 @@ export function FeedComposer({
                       />
                     </svg>
                   ) : (
-                    <span className="text-[0.7em]">{getProtocolIcon(t.id)}</span>
+                    <span className="text-[0.7em]">{t.icon}</span>
                   )}
                   {t.label}
                 </button>
               );
             })}
           </div>
+
+          {/* ── Character limit indicators per protocol ── */}
+          {selected.size > 0 && (
+            <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1">
+              {TARGETS.filter((t) => selected.has(t.id)).map((t) => {
+                const pct = Math.round((charCount / t.charLimit) * 100);
+                const over = charCount > t.charLimit;
+                const near = pct >= 85 && !over;
+                return (
+                  <div key={t.id} className="flex items-center gap-1.5 text-[10px]">
+                    <span className="shrink-0" aria-hidden="true">{t.icon}</span>
+                    <div className="h-1 w-12 overflow-hidden rounded-full bg-[var(--color-overlay)]">
+                      <div
+                        className={`h-full rounded-full transition-all duration-300 ${
+                          over ? 'bg-red-500' : near ? 'bg-yellow-500' : 'bg-degen-500/60'
+                        }`}
+                        style={{ width: `${Math.min(pct, 100)}%` }}
+                      />
+                    </div>
+                    <span
+                      className={`font-mono tabular-nums ${
+                        over ? 'text-red-400' : near ? 'text-yellow-400' : 'text-[var(--color-muted)]'
+                      }`}
+                    >
+                      {charCount}/{t.charLimit.toLocaleString()}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
 
           {selected.has('mastodon') && nostrPublicId && (
             <label className="mt-2 flex items-center gap-2 text-xs text-[var(--color-muted)]">
@@ -281,6 +448,7 @@ export function FeedComposer({
             </label>
           )}
 
+          {/* ── Cross-protocol preview ── */}
           <ComposePreview
             text={text}
             targets={previewTargets}
@@ -289,8 +457,35 @@ export function FeedComposer({
             }
           />
 
+          {/* ── Actions bar ── */}
           <div className="mt-3 flex items-center justify-between border-t border-[var(--color-glass-border)] pt-3">
-            <div className="flex items-center gap-3 text-xs">
+            <div className="flex items-center gap-2">
+              {/* Media upload button */}
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={selected.size === 0}
+                className="flex h-9 w-9 items-center justify-center rounded-full text-[var(--color-muted)] transition-colors hover:bg-[var(--color-overlay)] hover:text-degen-400 disabled:opacity-30"
+                aria-label="Attach media"
+                title="Attach images or video"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                  <circle cx="8.5" cy="8.5" r="1.5" />
+                  <polyline points="21 15 16 10 5 21" />
+                </svg>
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*,video/*"
+                multiple
+                onChange={handleMediaSelect}
+                className="hidden"
+                tabIndex={-1}
+              />
+
+              {/* Char count */}
               <span
                 className={
                   overLimit
