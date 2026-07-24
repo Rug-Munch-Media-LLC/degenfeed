@@ -138,7 +138,7 @@ import {
 } from './routes/farcaster-coin';
 import { handleFarcasterFeed } from './routes/farcaster-feed';
 import { handleFeatures } from './routes/features';
-import feddyCommunities from './routes/feddy-communities';
+import feddyCommunities from './routes/feddy-index';
 import {
   handleFeedCacheInvalidate,
   handleFeedHealth,

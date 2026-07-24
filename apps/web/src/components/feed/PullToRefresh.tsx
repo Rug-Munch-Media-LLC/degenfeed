@@ -1,10 +1,8 @@
 'use client';
 
 /**
- * PullToRefresh — Mobile pull-to-refresh wrapper.
- *
- * Detects pull-down gesture at the top of the feed and triggers onRefresh.
- * Shows a visual indicator during the pull.
+ * PullToRefresh — Premium pull-to-refresh with spring animation,
+ * haptic-like visual feedback, and glowing refresh indicator.
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -15,14 +13,17 @@ export interface PullToRefreshProps {
   disabled?: boolean;
 }
 
-const THRESHOLD = 80; // px
+const THRESHOLD = 80;
+const MAX_PULL = 140;
 
 export function PullToRefresh({ onRefresh, children, disabled }: PullToRefreshProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [pullDistance, setPullDistance] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [phase, setPhase] = useState<'idle' | 'pulling' | 'ready' | 'refreshing'>('idle');
   const startYRef = useRef(0);
   const pullingRef = useRef(false);
+  const refreshTimeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const handleTouchStart = useCallback(
     (e: TouchEvent) => {
@@ -40,8 +41,10 @@ export function PullToRefresh({ onRefresh, children, disabled }: PullToRefreshPr
       const currentY = e.touches[0]?.clientY ?? 0;
       const diff = currentY - startYRef.current;
       if (diff > 0) {
-        // Apply damping
-        setPullDistance(Math.min(diff * 0.5, 120));
+        // Apply damping — feels more natural
+        const damped = Math.min(diff * 0.4, MAX_PULL);
+        setPullDistance(damped);
+        setPhase(damped > THRESHOLD ? 'ready' : 'pulling');
       }
     },
     [isRefreshing],
@@ -54,20 +57,25 @@ export function PullToRefresh({ onRefresh, children, disabled }: PullToRefreshPr
       const diff = (e.changedTouches[0]?.clientY ?? 0) - startYRef.current;
       if (diff > THRESHOLD && !isRefreshing) {
         setIsRefreshing(true);
-        setPullDistance(0);
+        setPhase('refreshing');
+        setPullDistance(48); // Show spinner
         onRefresh();
       } else {
+        setPhase('idle');
         setPullDistance(0);
       }
     },
     [isRefreshing, onRefresh],
   );
 
-  // Reset refresh state after 2s
   useEffect(() => {
     if (!isRefreshing) return;
-    const timeout = setTimeout(() => setIsRefreshing(false), 2000);
-    return () => clearTimeout(timeout);
+    refreshTimeoutRef.current = setTimeout(() => {
+      setIsRefreshing(false);
+      setPhase('idle');
+      setPullDistance(0);
+    }, 2000);
+    return () => clearTimeout(refreshTimeoutRef.current);
   }, [isRefreshing]);
 
   useEffect(() => {
@@ -84,22 +92,56 @@ export function PullToRefresh({ onRefresh, children, disabled }: PullToRefreshPr
   }, [handleTouchStart, handleTouchMove, handleTouchEnd]);
 
   return (
-    <div ref={containerRef} className="relative">
+    <div ref={containerRef} className="relative overflow-hidden">
       {/* Pull indicator */}
-      {(pullDistance > 0 || isRefreshing) && (
+      {(pullDistance > 0 || isRefreshing || phase === 'refreshing') && (
         <div
-          className="flex items-center justify-center transition-all"
+          className="ptr-indicator"
           style={{
-            height: isRefreshing ? 40 : pullDistance,
-            opacity: Math.min(pullDistance / THRESHOLD, 1),
+            height: isRefreshing ? 48 : pullDistance,
+            opacity: phase === 'refreshing' ? 1 : Math.min(pullDistance / THRESHOLD, 1),
+            transform: `scale(${1 + (pullDistance / MAX_PULL) * 0.05})`,
           }}
         >
-          {isRefreshing ? (
-            <span className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-degen-500 border-t-transparent" />
+          {phase === 'refreshing' ? (
+            <div className="flex items-center gap-2">
+              <svg
+                className="ptr-arrow animate-ptr-spin"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+              >
+                <circle cx="12" cy="12" r="10" strokeDasharray="30 70" />
+              </svg>
+              <span>Refreshing feed...</span>
+            </div>
+          ) : phase === 'ready' ? (
+            <div className="flex items-center gap-2">
+              <svg
+                className="ptr-arrow"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+              >
+                <path d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
+              <span>Release to refresh</span>
+            </div>
           ) : (
-            <span className="text-xs font-semibold" style={{ color: 'var(--color-accent)' }}>
-              {pullDistance > THRESHOLD ? 'Release to refresh' : 'Pull to refresh'}
-            </span>
+            <div className="flex items-center gap-2">
+              <svg
+                className="ptr-arrow"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+              >
+                <path d="M12 5v14M5 12l7 7 7-7" />
+              </svg>
+              <span>Pull to refresh</span>
+            </div>
           )}
         </div>
       )}

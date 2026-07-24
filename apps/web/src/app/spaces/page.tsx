@@ -6,13 +6,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../../components/AuthProvider';
 import { ANIM_STYLES, LiveDot, SpacesIcon } from './_animations';
 import {
-  LiveSpaceCard,
-  UpcomingSpaceCard,
-  PastSpaceCard,
   EmptyState,
-  LiveSkeleton,
   GridSkeleton,
+  LiveSkeleton,
+  LiveSpaceCard,
+  PastSpaceCard,
   SectionHeader,
+  UpcomingSpaceCard,
 } from './_components';
 import type { SpaceItem } from './_types';
 
@@ -76,8 +76,13 @@ export default function SpacesPage() {
 
   const handleJoin = useCallback(async (id: string) => {
     try {
-      await fetch(`/api/spaces/${id}/join`, { method: 'POST', headers: { 'content-type': 'application/json' } });
-    } catch { /* non-critical */ }
+      await fetch(`/api/spaces/${id}/join`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+      });
+    } catch {
+      /* non-critical */
+    }
     setActiveSpaceId(id);
   }, []);
 
@@ -131,14 +136,33 @@ export default function SpacesPage() {
               <SpacesIcon />
             </div>
             <div>
-              <h1 className="text-lg font-bold tracking-tight text-[var(--color-fg)]">Audio Spaces</h1>
-              <p className="mt-0.5 text-xs text-[var(--color-muted)]">Live audio rooms across the open social graph</p>
+              <h1 className="text-lg font-bold tracking-tight text-[var(--color-fg)]">
+                Audio Spaces
+              </h1>
+              <p className="mt-0.5 text-xs text-[var(--color-muted)]">
+                Live audio rooms across the open social graph
+              </p>
             </div>
           </div>
-          <button type="button" onClick={() => { if (hasSignedIn) setShowHostModal(true); else openSignIn(); }}
-            className="inline-flex items-center gap-2 rounded-xl bg-degen-500 px-5 py-2.5 text-sm font-bold text-black transition-all duration-200 hover:bg-degen-400 hover:shadow-[0_0_20px_rgba(0,255,65,0.3)] active:scale-[0.97]">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
-              <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+          <button
+            type="button"
+            onClick={() => {
+              if (hasSignedIn) setShowHostModal(true);
+              else openSignIn();
+            }}
+            className="inline-flex items-center gap-2 rounded-xl bg-degen-500 px-5 py-2.5 text-sm font-bold text-black transition-all duration-200 hover:bg-degen-400 hover:shadow-[0_0_20px_rgba(0,255,65,0.3)] active:scale-[0.97]"
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              aria-hidden="true"
+            >
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
             </svg>
             {hasSignedIn ? 'Start a Space' : 'Connect to Host'}
           </button>
@@ -150,13 +174,17 @@ export default function SpacesPage() {
             <section>
               <SectionHeader icon={<LiveDot />} title="Live Now" />
               <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-none">
-                {Array.from({ length: 4 }).map((_, i) => (<LiveSkeleton key={i} />))}
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <LiveSkeleton key={i} />
+                ))}
               </div>
             </section>
             <section>
               <SectionHeader icon={<span className="text-sm">📅</span>} title="Upcoming" />
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {Array.from({ length: 3 }).map((_, i) => (<GridSkeleton key={i} />))}
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <GridSkeleton key={i} />
+                ))}
               </div>
             </section>
           </div>
@@ -166,10 +194,17 @@ export default function SpacesPage() {
         {error && !loading && (
           <div className="mb-6 rounded-2xl border border-red-900/40 bg-red-950/20 px-5 py-4 backdrop-blur-sm">
             <div className="flex items-center gap-3">
-              <span className="text-lg text-red-400" aria-hidden="true">⚠</span>
+              <span className="text-lg text-red-400" aria-hidden="true">
+                ⚠
+              </span>
               <p className="text-sm text-red-400">{error}</p>
-              <button type="button" onClick={fetchSpaces}
-                className="ml-auto rounded-lg border border-red-900/40 px-3 py-1.5 text-xs font-medium text-red-400 transition-colors hover:bg-red-950/30">Retry</button>
+              <button
+                type="button"
+                onClick={fetchSpaces}
+                className="ml-auto rounded-lg border border-red-900/40 px-3 py-1.5 text-xs font-medium text-red-400 transition-colors hover:bg-red-950/30"
+              >
+                Retry
+              </button>
             </div>
           </div>
         )}
@@ -181,49 +216,125 @@ export default function SpacesPage() {
             <section>
               <div className="mb-4 flex items-center gap-2">
                 <LiveDot />
-                <h2 className="text-sm font-bold tracking-tight text-[var(--color-fg)]">Live Now</h2>
+                <h2 className="text-sm font-bold tracking-tight text-[var(--color-fg)]">
+                  Live Now
+                </h2>
                 {liveSpaces.length > 0 && (
                   <>
-                    <span className="rounded-full bg-[var(--color-muted)]/10 px-2 py-0.5 text-[10px] font-medium text-[var(--color-muted)]">{liveSpaces.length}</span>
-                    <span className="ml-auto text-[10px] font-bold uppercase tracking-widest text-degen-500">LIVE</span>
+                    <span className="rounded-full bg-[var(--color-muted)]/10 px-2 py-0.5 text-[10px] font-medium text-[var(--color-muted)]">
+                      {liveSpaces.length}
+                    </span>
+                    <span className="ml-auto text-[10px] font-bold uppercase tracking-widest text-degen-500">
+                      LIVE
+                    </span>
                   </>
                 )}
               </div>
               {liveSpaces.length === 0 ? (
-                <EmptyState icon="🎙️" title="No live spaces right now" subtitle="Start one or check back later. Live audio rooms appear here when hosts go live."
-                  action={hasSignedIn ? { label: 'Start a Space', onClick: () => setShowHostModal(true) } : undefined} />
+                <EmptyState
+                  icon="🎙️"
+                  title="No live spaces right now"
+                  subtitle="Start one or check back later. Live audio rooms appear here when hosts go live."
+                  action={
+                    hasSignedIn
+                      ? { label: 'Start a Space', onClick: () => setShowHostModal(true) }
+                      : undefined
+                  }
+                />
               ) : (
                 <div className="flex gap-4 overflow-x-auto pb-3 scrollbar-none snap-x snap-mandatory">
-                  {liveSpaces.map((space) => (<LiveSpaceCard key={space.id} space={space} onJoin={handleJoin} onTip={setTipSpace} />))}
+                  {liveSpaces.map((space) => (
+                    <LiveSpaceCard
+                      key={space.id}
+                      space={space}
+                      onJoin={handleJoin}
+                      onTip={setTipSpace}
+                    />
+                  ))}
                 </div>
               )}
             </section>
 
             {/* Upcoming */}
             <section>
-              <SectionHeader icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true" className="text-cyan-400">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
-              </svg>} title="Upcoming" count={upcomingSpaces.length} />
+              <SectionHeader
+                icon={
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    aria-hidden="true"
+                    className="text-cyan-400"
+                  >
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                    <line x1="16" y1="2" x2="16" y2="6" />
+                    <line x1="8" y1="2" x2="8" y2="6" />
+                    <line x1="3" y1="10" x2="21" y2="10" />
+                  </svg>
+                }
+                title="Upcoming"
+                count={upcomingSpaces.length}
+              />
               {upcomingSpaces.length === 0 ? (
-                <EmptyState icon="🗓️" title="No upcoming spaces" subtitle="Schedule one to get started."
-                  action={hasSignedIn ? { label: 'Schedule a Space', onClick: () => setShowHostModal(true) } : undefined} />
+                <EmptyState
+                  icon="🗓️"
+                  title="No upcoming spaces"
+                  subtitle="Schedule one to get started."
+                  action={
+                    hasSignedIn
+                      ? { label: 'Schedule a Space', onClick: () => setShowHostModal(true) }
+                      : undefined
+                  }
+                />
               ) : (
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {upcomingSpaces.map((space) => (<UpcomingSpaceCard key={space.id} space={space} onReminder={handleReminder} onTip={setTipSpace} />))}
+                  {upcomingSpaces.map((space) => (
+                    <UpcomingSpaceCard
+                      key={space.id}
+                      space={space}
+                      onReminder={handleReminder}
+                      onTip={setTipSpace}
+                    />
+                  ))}
                 </div>
               )}
             </section>
 
             {/* Recent */}
             <section>
-              <SectionHeader icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true" className="text-[var(--color-muted)]">
-                <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
-              </svg>} title="Recent" count={pastSpaces.length} />
+              <SectionHeader
+                icon={
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    aria-hidden="true"
+                    className="text-[var(--color-muted)]"
+                  >
+                    <circle cx="12" cy="12" r="10" />
+                    <polyline points="12 6 12 12 16 14" />
+                  </svg>
+                }
+                title="Recent"
+                count={pastSpaces.length}
+              />
               {pastSpaces.length === 0 ? (
-                <EmptyState icon="📼" title="No past spaces yet" subtitle="Recording playback will appear here once spaces end." />
+                <EmptyState
+                  icon="📼"
+                  title="No past spaces yet"
+                  subtitle="Recording playback will appear here once spaces end."
+                />
               ) : (
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {pastSpaces.map((space) => (<PastSpaceCard key={space.id} space={space} />))}
+                  {pastSpaces.map((space) => (
+                    <PastSpaceCard key={space.id} space={space} />
+                  ))}
                 </div>
               )}
             </section>
