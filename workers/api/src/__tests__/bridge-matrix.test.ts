@@ -323,15 +323,9 @@ describe('Bridge Matrix — Source Content Fetching', () => {
 describe('Bridge Matrix — Direction Handlers', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.useFakeTimers();
-    vi.setSystemTime(5000000);
     mockFetch.mockResolvedValue(mockJsonResponse({}));
     mockKvPut.mockResolvedValue(undefined);
     mockKvGet.mockResolvedValue(null);
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
   });
 
   const protocols = [
@@ -487,12 +481,6 @@ describe('Bridge Matrix — Direction Handlers', () => {
 describe('Bridge Matrix — Zora Special Handlers', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.useFakeTimers();
-    vi.setSystemTime(7000000);
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
   });
 
   it('bridge Mastodon → Zora generates mint URL', async () => {
@@ -563,12 +551,6 @@ describe('Bridge Matrix — Zora Special Handlers', () => {
 describe('Bridge Matrix — Protocol Reply Fetchers', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.useFakeTimers();
-    vi.setSystemTime(8000000);
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
   });
 
   it('fetchReplies dispatches to correct protocol', async () => {
@@ -608,15 +590,9 @@ describe('Bridge Matrix — Protocol Reply Fetchers', () => {
 describe('Bridge Matrix — bridgeContent Integration', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.useFakeTimers();
-    vi.setSystemTime(9000000);
     mockFetch.mockResolvedValue(mockJsonResponse({}));
     mockKvPut.mockResolvedValue(undefined);
     mockKvGet.mockResolvedValue(null);
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
   });
 
   it('bridges content from one protocol to all others', async () => {
