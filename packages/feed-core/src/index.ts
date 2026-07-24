@@ -924,3 +924,36 @@ export {
   WEIGHTS,
   WEIGHTS_V2,
 } from '@degenfeed/ranking';
+
+// ─── Cross-Protocol Threading ───────────────────────────────────────────
+export type {
+  CrossProtocolLink,
+  CrossProtocolReply,
+  CrossProtocolThread,
+} from './cross-protocol';
+export {
+  assembleCrossProtocolReplies,
+  buildAlsoPostedIndicator,
+  clearThreadStore,
+  getAlsoPostedOn,
+  getCrossPostLinks,
+  getThread,
+  getThreadMeta,
+  pruneThreads,
+  registerCrossPostLink,
+  registerReply,
+} from './cross-protocol';
+
+// ─── Unified Identity Resolver ──────────────────────────────────────────
+export type {
+  IdentityResolutionStrategy,
+  ProtocolHandle,
+  UnifiedProfile,
+} from './identity-resolver';
+export {
+  formatCrossProtocolFollowers,
+  globalIdentityResolver,
+  IdentityResolver,
+  linkIdentities,
+  resolveIdentity,
+} from './identity-resolver';

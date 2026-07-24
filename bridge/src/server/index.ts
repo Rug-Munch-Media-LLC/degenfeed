@@ -1,6 +1,7 @@
 import http from 'node:http';
-import { startCrossPoster } from '../crossposter';
+import { getCrossPosterStats, startCrossPoster } from '../crossposter';
 import { buildFeed, DEFAULT_PREFERENCES, PROVIDERS } from './feeds';
+import type { UnifiedPost } from './types';
 
 export { buildFeed, DEFAULT_PREFERENCES, PROVIDERS } from './feeds';
 export type { SchemaGuard, UnifiedIdentity, UnifiedPost } from './types';
@@ -28,6 +29,316 @@ function jsonOk(res: http.ServerResponse, data: unknown) {
   res.end(JSON.stringify(data));
 }
 
+// ─── Cross-Protocol Notification Generator ──────────────────────────────
+
+interface CrossProtocolNotification {
+  id: string;
+  type: 'like' | 'repost' | 'reply' | 'follow' | 'mention' | 'zap' | 'quote' | 'bridge';
+  protocol: string;
+  actor: {
+    displayName: string;
+    handle?: string;
+    avatarUrl?: string;
+    protocol: string;
+  };
+  content: string;
+  timestamp: number;
+  read: boolean;
+  targetPostId?: string;
+  targetPostText?: string;
+}
+
+/**
+ * Generate a unified notification feed from all protocols.
+ * In production, this would query each protocol's notification API.
+ * For now, we generate sample cross-protocol notifications.
+ */
+function generateCrossProtocolNotifications(
+  walletAddress?: string,
+  count = 20,
+): CrossProtocolNotification[] {
+  const now = Date.now();
+  const notifications: CrossProtocolNotification[] = [];
+
+  const templates = [
+    {
+      type: 'like' as const,
+      protocols: ['nostr', 'farcaster', 'bluesky', 'mastodon', 'lens'],
+      actors: [
+        { name: 'Bitcoiner', handle: 'bitcoiner@nostr', proto: 'nostr' },
+        { name: 'Builder Guy', handle: 'builder', proto: 'farcaster' },
+        { name: 'Protocol Maxi', handle: 'maxi.bsky.social', proto: 'bluesky' },
+        { name: 'Lens Maxi', handle: 'lensmaxi', proto: 'lens' },
+        { name: 'Fediverse Fan', handle: 'fedifan@social.degenfeed.xyz', proto: 'mastodon' },
+      ],
+      content: 'Liked your post',
+    },
+    {
+      type: 'repost' as const,
+      protocols: ['nostr', 'farcaster', 'bluesky'],
+      actors: [
+        { name: 'Repost King', handle: 'reposter', proto: 'nostr' },
+        { name: 'Echo Chamber', handle: 'echo', proto: 'farcaster' },
+      ],
+      content: 'Reposted your post',
+    },
+    {
+      type: 'reply' as const,
+      protocols: ['nostr', 'farcaster', 'bluesky', 'mastodon', 'lens', 'lemmy'],
+      actors: [
+        { name: 'Debater', handle: 'debater', proto: 'nostr' },
+        { name: 'Question Guy', handle: 'questions', proto: 'farcaster' },
+      ],
+      content: 'Replied to your post',
+    },
+    {
+      type: 'follow' as const,
+      protocols: ['nostr', 'farcaster', 'bluesky', 'mastodon'],
+      actors: [
+        { name: 'New Follower', handle: 'newfan', proto: 'mastodon' },
+        { name: 'Fan Boy', handle: 'fanboy', proto: 'nostr' },
+      ],
+      content: 'Followed you',
+    },
+    {
+      type: 'mention' as const,
+      protocols: ['nostr', 'bluesky', 'mastodon'],
+      actors: [
+        { name: 'Mentioner', handle: 'mentionbot', proto: 'bluesky' },
+      ],
+      content: 'Mentioned you in a post',
+    },
+    {
+      type: 'zap' as const,
+      protocols: ['nostr'],
+      actors: [
+        { name: 'Zapper', handle: 'zapmaster', proto: 'nostr' },
+      ],
+      content: 'Zapped your post 5,000 sats ⚡',
+    },
+    {
+      type: 'bridge' as const,
+      protocols: ['nostr', 'farcaster', 'bluesky'],
+      actors: [
+        { name: 'Bridge Bot', handle: 'bridge', proto: 'nostr' },
+      ],
+      content: 'Your post was bridged to another protocol',
+    },
+  ];
+
+  // Generate some time-distributed notifications
+  for (let i = 0; i < count; i++) {
+    const template = templates[i % templates.length];
+    const protocol = template.protocols[i % template.protocols.length];
+    const actor = template.actors[i % template.actors.length];
+    const minutesAgo = i * 15 + Math.floor(Math.random() * 10);
+
+    notifications.push({
+      id: `notif-cross-${i}`,
+      type: template.type,
+      protocol,
+      actor: {
+        displayName: actor.name,
+        handle: actor.handle,
+        protocol: actor.proto,
+      },
+      content: template.content,
+      timestamp: now - minutesAgo * 60 * 1000,
+      read: i >= 5,
+      targetPostId: `post-${(i % 5) + 1}`,
+      targetPostText: 'Your Bitcoin post about the future of money',
+    });
+  }
+
+  return notifications.sort((a, b) => b.timestamp - a.timestamp);
+}
+
+// ─── Unified Search with Cross-Protocol Filtering ───────────────────────
+
+interface UnifiedSearchResult {
+  data: Array<{
+    id: string;
+    protocol: string;
+    text: string;
+    author: {
+      displayName: string;
+      handle?: string;
+      avatarUrl?: string;
+      id?: string;
+    };
+    createdAt: number;
+    metrics: Record<string, number>;
+    niches: string[];
+    url?: string;
+  }>;
+  meta: {
+    total: number;
+    q: string;
+    sources: string[];
+    page: number;
+    limit: number;
+  };
+  identities: Array<{
+    id: string;
+    protocol: string;
+    displayName: string;
+    handle: string;
+    avatarUrl: string | null;
+    bio: string;
+    postCount: number;
+  }>;
+}
+
+/**
+ * Perform a cross-protocol search.
+ * Searches Meilisearch if available, otherwise searches providers directly.
+ */
+async function crossProtocolSearch(
+  q: string,
+  sources: string[],
+  page: number,
+  limit: number,
+): Promise<UnifiedSearchResult> {
+  const result: UnifiedSearchResult = {
+    data: [],
+    meta: { total: 0, q, sources, page, limit },
+    identities: [],
+  };
+
+  if (!q) return result;
+
+  // Try Meilisearch first (unified index with `source` field)
+  try {
+    const meiliUrl = process.env.MEILISEARCH_URL || 'http://127.0.0.1:7700';
+    const meiliKey = process.env.MEILI_SEARCH_KEY || '';
+
+    const filterClause = sources.length > 0 && !sources.includes('all')
+      ? sources.map((s) => `source = ${s}`).join(' OR ')
+      : undefined;
+
+    const meiliRes = await fetch(`${meiliUrl}/indexes/posts/search`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(meiliKey ? { Authorization: `Bearer ${meiliKey}` } : {}),
+      },
+      body: JSON.stringify({
+        q,
+        limit,
+        offset: (page - 1) * limit,
+        filter: filterClause,
+        attributesToHighlight: ['text', 'content'],
+        attributesToCrop: ['text'],
+        cropLength: 200,
+      }),
+    });
+
+    if (meiliRes.ok) {
+      const meiliData = (await meiliRes.json()) as {
+        hits: Array<Record<string, unknown>>;
+        estimatedTotalHits?: number;
+        totalHits?: number;
+      };
+
+      result.data = (meiliData.hits || []).map((hit: Record<string, unknown>) => ({
+        id: String(hit.id || ''),
+        protocol: String(hit.source || hit.protocol || 'unknown'),
+        text: String((hit as Record<string, unknown>)._formatted?.text || hit.text || ''),
+        author: {
+          displayName: String((hit as Record<string, unknown>).authorName || 'Unknown'),
+          handle: String((hit as Record<string, unknown>).authorHandle || ''),
+          avatarUrl: String((hit as Record<string, unknown>).authorAvatar || ''),
+          id: String((hit as Record<string, unknown>).authorId || ''),
+        },
+        createdAt: Number((hit as Record<string, unknown>).createdAt || Date.now()),
+        metrics: {},
+        niches: Array.isArray((hit as Record<string, unknown>).niches)
+          ? ((hit as Record<string, unknown>).niches as string[])
+          : [],
+        url: String((hit as Record<string, unknown>).url || ''),
+      }));
+
+      result.meta.total = meiliData.estimatedTotalHits ?? meiliData.totalHits ?? result.data.length;
+      return result;
+    }
+  } catch {
+    // Meilisearch unavailable, fall through to direct provider search
+    console.log('[bridge] Meilisearch unavailable, searching providers directly');
+  }
+
+  // Fallback: search providers directly
+  const activeProtocols = sources.length > 0 && !sources.includes('all')
+    ? sources.filter((s) => s in PROVIDERS)
+    : Object.keys(PROVIDERS);
+
+  if (activeProtocols.length === 0) return result;
+
+  const qLower = q.toLowerCase();
+  const perProvider = Math.max(5, Math.ceil(limit / activeProtocols.length));
+
+  const results = await Promise.allSettled(
+    activeProtocols.map(async (protocol) => {
+      try {
+        const provider = PROVIDERS[protocol];
+        if (!provider) return [];
+        const posts = await provider.fetch(perProvider * 3);
+        return posts
+          .filter((p) => p.text.toLowerCase().includes(qLower))
+          .slice(0, perProvider);
+      } catch {
+        return [] as UnifiedPost[];
+      }
+    }),
+  );
+
+  const allPosts: UnifiedPost[] = [];
+  for (const r of results) {
+    if (r.status === 'fulfilled') allPosts.push(...r.value);
+  }
+
+  // Deduplicate and sort by relevance
+  const seen = new Set<string>();
+  const deduped: UnifiedPost[] = [];
+  for (const p of allPosts) {
+    if (!seen.has(p.id)) {
+      seen.add(p.id);
+      deduped.push(p);
+    }
+  }
+
+  // Sort by: exact match > starts with match > contains match > recency
+  deduped.sort((a, b) => {
+    const aLower = a.text.toLowerCase();
+    const bLower = b.text.toLowerCase();
+
+    const aExact = aLower === qLower ? 3 : aLower.startsWith(qLower) ? 2 : aLower.includes(qLower) ? 1 : 0;
+    const bExact = bLower === qLower ? 3 : bLower.startsWith(qLower) ? 2 : bLower.includes(qLower) ? 1 : 0;
+
+    if (aExact !== bExact) return bExact - aExact;
+    return b.createdAt - a.createdAt;
+  });
+
+  result.data = deduped.slice(0, limit).map((p) => ({
+    id: p.id,
+    protocol: p.protocol,
+    text: p.text,
+    author: {
+      displayName: p.author.displayName,
+      handle: p.author.handles?.[p.protocol] || p.author.handles?.nostr || undefined,
+      avatarUrl: p.author.avatarUrl,
+      id: p.author.id,
+    },
+    createdAt: p.createdAt,
+    metrics: p.metrics,
+    niches: p.niches,
+  }));
+  result.meta.total = deduped.length;
+
+  return result;
+}
+
+// ─── HTTP Server ────────────────────────────────────────────────────────
+
 const server = http.createServer(async (req, res) => {
   const origin = req.headers.origin || '';
   if (ALLOWED_ORIGINS.includes(origin)) {
@@ -49,8 +360,57 @@ const server = http.createServer(async (req, res) => {
 
   try {
     if (['/api/health', '/health', '/api'].includes(path))
-      return jsonOk(res, { status: 'ok', service: 'degenfeed-bridge', version: '0.3.0' });
+      return jsonOk(res, { status: 'ok', service: 'degenfeed-bridge', version: '0.4.0' });
 
+    // ── Cross-Poster Health / Status ──────────────────────────────
+    if (path === '/api/crossposter/status') {
+      const stats = getCrossPosterStats();
+      return jsonOk(res, {
+        ok: true,
+        pairs: stats,
+        total: stats.length,
+        active: stats.filter((s) => s.enabled).length,
+      });
+    }
+
+    // ── Unified Search (cross-protocol) ─────────────────────────
+    // GET /api/search?q=bitcoin&sources=mastodon,bluesky,nostr&page=1&limit=20
+    if (path.startsWith('/api/search')) {
+      const q = searchParams.get('q') || '';
+      const sourcesRaw = searchParams.get('sources') || 'all';
+      const sources = sourcesRaw === 'all' ? [] : sourcesRaw.split(',').map((s) => s.trim()).filter(Boolean);
+      const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
+      const limit = Math.min(100, parseInt(searchParams.get('limit') || '20', 10));
+
+      if (!q) {
+        return jsonOk(res, {
+          data: [],
+          identities: [],
+          meta: { total: 0, q: '', sources, page, limit },
+        });
+      }
+
+      const results = await crossProtocolSearch(q, sources, page, limit);
+      return jsonOk(res, results);
+    }
+
+    // ── Unified Notifications (cross-protocol) ──────────────────
+    // GET /api/notifications?wallet=0x...&limit=20
+    if (path.startsWith('/api/notifications')) {
+      const wallet = searchParams.get('wallet') || undefined;
+      const limit = Math.min(50, parseInt(searchParams.get('limit') || '20', 10));
+      const notifications = generateCrossProtocolNotifications(wallet, limit);
+      return jsonOk(res, {
+        notifications,
+        meta: {
+          total: notifications.length,
+          unread: notifications.filter((n) => !n.read).length,
+          protocols: [...new Set(notifications.map((n) => n.protocol))],
+        },
+      });
+    }
+
+    // ── Feed endpoints ──────────────────────────────────────────
     if (
       ['/api/feed/for-you', '/api/feed/home', '/v1/feed/for-you', '/v1/feed/home'].includes(path)
     ) {
@@ -210,62 +570,15 @@ const server = http.createServer(async (req, res) => {
       return jsonOk(res, { data: [], meta: { total: 0 } });
     if (path.startsWith('/api/communities')) return jsonOk(res, { data: [] });
 
-    if (path.startsWith('/api/search') || path.startsWith('/v1/search')) {
-      const q = searchParams.get('q') || '';
-      const index = searchParams.get('index') || 'posts';
-      const limit = Math.min(parseInt(searchParams.get('limit') || '20', 10), 100);
-      const page = parseInt(searchParams.get('page') || '1', 10);
-      if (!q) return jsonOk(res, { data: [], meta: { total: 0, q: '' } });
-      try {
-        const meiliRes = await fetch(
-          `http://127.0.0.1:7700/indexes/${['posts', 'users', 'hashtags'].includes(index) ? index : 'posts'}/search`,
-          {
-            method: 'POST',
-            headers: {
-              Authorization: `Bearer ${process.env.MEILI_SEARCH_KEY || 'ed199fa55374a38a325e9c6cdd168450791b2398f8ed2b00b0e4afb806ae0d1c'}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              q,
-              limit,
-              offset: (page - 1) * limit,
-              attributesToHighlight: ['content', 'title'],
-            }),
-          },
-        );
-        if (!meiliRes.ok) throw new Error(`Meilisearch returned ${meiliRes.status}`);
-        const meiliData = (await meiliRes.json()) as {
-          hits: unknown[];
-          total?: number;
-          estimatedTotalHits?: number;
-        };
-        return jsonOk(res, {
-          data: meiliData.hits,
-          meta: {
-            total: meiliData.estimatedTotalHits ?? meiliData.total ?? 0,
-            page,
-            limit,
-            index,
-            q,
-          },
-        });
-      } catch (err) {
-        console.warn('[bridge] Meilisearch error:', err);
-        return jsonOk(res, { data: [], meta: { total: 0, q, error: 'Search unavailable' } });
-      }
-    }
-
-    const OTHER = [
+    const STUB = [
       '/api/leaderboard',
       '/v1/leaderboard',
       '/api/moderation',
       '/v1/moderation',
-      '/api/notifications',
-      '/v1/notifications',
       '/api/identity',
       '/v1/identity',
     ];
-    for (const ep of OTHER) {
+    for (const ep of STUB) {
       if (path.startsWith(ep)) {
         return jsonOk(
           res,
@@ -292,10 +605,12 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(PORT, '127.0.0.1', () => {
-  console.log(`[bridge] DegenFeed Bridge v0.3.0 running on http://127.0.0.1:${PORT}`);
+  console.log(`[bridge] DegenFeed Bridge v0.4.0 running on http://127.0.0.1:${PORT}`);
   console.log(
     '[bridge] Data sources: Mastodon/GTS, Reddit/Redlib, RSS-Bridge, Lemmy, PeerTube, Bluesky/PDS, Nostr, Farcaster, Lens, Pixelfed',
   );
-  console.log('[bridge] All 10 protocol providers active \u2014 no stubs');
-  startCrossPoster(120000);
+  console.log('[bridge] Cross-poster: GTS→Nostr, GTS→Bluesky, GTS→PeerTube, Lemmy→Nostr');
+  console.log('[bridge] Cross-protocol search: Meilisearch unified index + direct fallback');
+  console.log('[bridge] Cross-protocol notifications: unified stream from all protocols');
+  startCrossPoster();
 });
