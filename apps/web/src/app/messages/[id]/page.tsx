@@ -164,15 +164,16 @@ export default function ConversationPage() {
       fromId: string;
       createdAt: number;
       read: boolean;
-    } | null = messages.length > 0
-      ? {
-          id: messages[0]!.id,
-          content: messages[0]!.content ?? '',
-          fromId: messages[0]!.fromId ?? '',
-          createdAt: messages[0]!.createdAt ?? Date.now(),
-          read: true,
-        }
-      : null;
+    } | null =
+      messages.length > 0
+        ? {
+            id: messages[0]?.id ?? '',
+            content: messages[0]?.content ?? '',
+            fromId: messages[0]?.fromId ?? '',
+            createdAt: messages[0]?.createdAt ?? Date.now(),
+            read: true,
+          }
+        : null;
 
     effectiveConv = {
       conversationId,

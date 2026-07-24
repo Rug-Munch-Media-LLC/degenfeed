@@ -54,61 +54,27 @@
   z-index: 1;
 }
 
-/* == Skip to App ============================================ */
+/* == Skip to App (keyboard-only skip link) ================= */
 .skip-to-app {
   position: fixed;
-  top: 0.75rem;
-  right: 0.75rem;
-  z-index: 60;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
+  top: -100%;
+  left: 0;
+  z-index: 100;
   padding: 0.5rem 1rem;
-  border-radius: 9999px;
+  border-radius: 0 0 8px 0;
   font-size: 0.8125rem;
   font-weight: 600;
   color: #000;
   background: var(--color-accent, #00ff41);
   text-decoration: none;
-  transition:
-    transform 0.15s,
-    box-shadow 0.15s;
+  transition: top 0.1s;
 }
-
-.skip-to-app:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 0 20px rgba(0, 255, 65, 0.4);
+.skip-to-app:focus {
+  top: 0;
 }
-
 .skip-to-app:focus-visible {
   outline: 2px solid var(--color-fg, #e7e9ea);
   outline-offset: 2px;
-}
-
-.skip-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--color-bg, #000);
-  animation: pulse-dot 2s ease-in-out infinite;
-}
-
-.skip-arrow {
-  transition: transform 0.15s;
-}
-
-.skip-to-app:hover .skip-arrow {
-  transform: translateX(3px);
-}
-
-@keyframes pulse-dot {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.3;
-  }
 }
 
 /* == Shared ================================================= */
@@ -830,7 +796,7 @@
 
 /* == Final CTA ============================================== */
 .cta-section {
-  padding: 5rem 1.5rem 3rem;
+  padding: 5rem 1.5rem;
   text-align: center;
   border-top: 1px solid var(--color-border, #2f3336);
 }
@@ -857,14 +823,28 @@
   margin: 0 auto 2rem;
 }
 
-/* == Footer Nav ============================================= */
-.cta-footer-nav {
+/* == Site Footer ============================================ */
+.site-footer {
+  border-top: 1px solid var(--color-border, #1f2937);
+  padding: 2.5rem 1.5rem 3rem;
+  text-align: center;
+  background: linear-gradient(to top, rgba(0, 255, 65, 0.02), transparent);
+  position: relative;
+  z-index: 1;
+  margin-top: 0;
+}
+
+.site-footer-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.footer-nav {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
   gap: 0.5rem 1.25rem;
-  margin-top: 3rem;
   margin-bottom: 1.5rem;
 }
 
@@ -874,6 +854,7 @@
   color: var(--color-muted, #53575b);
   text-decoration: none;
   transition: color 0.15s;
+  line-height: 1.5;
 }
 
 .footer-link:hover {
@@ -886,10 +867,11 @@
   border-radius: 2px;
 }
 
-.cta-copyright {
+.footer-copyright {
   font-size: 0.75rem;
   color: var(--color-muted, #3a3c40);
   line-height: 1.5;
+  margin: 0;
 }
 
 /* == Features Page == */

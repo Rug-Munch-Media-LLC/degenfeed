@@ -387,13 +387,15 @@ const server = http.createServer(async (req, res) => {
       const safeIndex = allowedIndexes.includes(index) ? index : 'posts';
 
       const meiliUrl = `http://127.0.0.1:7700/indexes/${safeIndex}/search`;
-      const meiliKey = process.env.MEILI_SEARCH_KEY || 'ed199fa55374a38a325e9c6cdd168450791b2398f8ed2b00b0e4afb806ae0d1c';
+      const meiliKey =
+        process.env.MEILI_SEARCH_KEY ||
+        'ed199fa55374a38a325e9c6cdd168450791b2398f8ed2b00b0e4afb806ae0d1c';
 
       try {
         const msRes = await fetch(meiliUrl, {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${meiliKey}`,
+            Authorization: `Bearer ${meiliKey}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
@@ -404,7 +406,11 @@ const server = http.createServer(async (req, res) => {
           }),
         });
         if (!msRes.ok) throw new Error(`Meilisearch returned ${msRes.status}`);
-        const meiliData = await msRes.json() as { hits: unknown[]; total?: number; estimatedTotalHits?: number };
+        const meiliData = (await msRes.json()) as {
+          hits: unknown[];
+          total?: number;
+          estimatedTotalHits?: number;
+        };
         const totalHits = meiliData.estimatedTotalHits ?? meiliData.total ?? 0;
         return jsonOk(res, {
           data: meiliData.hits,

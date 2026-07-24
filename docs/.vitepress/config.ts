@@ -7,6 +7,7 @@ export default defineConfig({
   base: '/docs/',
   lastUpdated: true,
   cleanUrls: true,
+  ignoreDeadLinks: [/^\.\/LICENSE$/, /^\.\.\//],
 
   head: [
     ['link', { rel: 'icon', href: '/icon.svg' }],

@@ -119,20 +119,14 @@ body { font-family: 'Inter', system-ui, sans-serif; background: #000; color: #ff
 
 <div class="section-title">Social & Code</div>
 
-<a href="https://social.degenfeed.xyz/@cryptorugmunch" class="social-link">
-  <span class="social-icon">🐘</span> @cryptorugmunch@degenfeed.xyz — Fediverse (Mastodon/GotoSocial)
+<a href="https://social.degenfeed.xyz" class="social-link">
+  <span class="social-icon">🐘</span> DegenFeed Mastodon — social.degenfeed.xyz
 </a>
-<a href="https://x.com/cryptorugmunch" class="social-link">
-  <span class="social-icon">𝕏</span> @cryptorugmunch — X / Twitter
-</a>
-<a href="https://t.me/cryptorugmunch" class="social-link">
-  <span class="social-icon">✈</span> @cryptorugmunch — Telegram
-</a>
-<a href="https://git.rugmunch.io" class="social-link">
+<a href="https://git.rugmunch.io/RugMunchMedia" class="social-link">
   <span class="social-icon">⎔</span> git.rugmunch.io — Forgejo (all repos)
 </a>
-<a href="https://gitlab.com/cryptorugmuncher" class="social-link">
-  <span class="social-icon">◈</span> GitLab — Public mirrors & CI
+<a href="https://codeberg.org/degenfeed" class="social-link">
+  <span class="social-icon">◈</span> Codeberg — DegenFeed mirror
 </a>
 
 <div class="section-title">Contact</div>

@@ -233,11 +233,11 @@ export const LANDING_HTML = `<!doctype html>
         <nav class="footer-links footer-social" aria-label="Source code">
           <a href="https://git.rugmunch.io/RugMunchMedia/degenfeed-web" target="_blank" rel="noopener">Forgejo</a>
           <span aria-hidden="true">·</span>
-          <a href="https://gitlab.com/cryptorugmuncher/degenfeed-web" target="_blank" rel="noopener">GitLab</a>
+          <a href="https://git.rugmunch.io/RugMunchMedia/degenfeed-web" target="_blank" rel="noopener">Forgejo</a>
           <span aria-hidden="true">·</span>
-          <a href="https://codeberg.org/cryptorugmunch/degenfeed-web" target="_blank" rel="noopener">Codeberg</a>
+          <a href="https://codeberg.org/degenfeed/degenfeed-web" target="_blank" rel="noopener">Codeberg</a>
           <span aria-hidden="true">·</span>
-          <a href="https://social.degenfeed.xyz" target="_blank" rel="noopener">@cryptorugmunch@degenfeed.xyz</a>
+          <a href="https://social.degenfeed.xyz" target="_blank" rel="noopener">degenfeed@social.degenfeed.xyz</a>
         </nav>
       </div>
     </footer>

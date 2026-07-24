@@ -315,18 +315,14 @@ export default function HomePage() {
       <div className="hero-bg-glow" aria-hidden="true" />
       <div className="hero-glow-secondary" aria-hidden="true" />
 
-      {/* ── Skip to app ── */}
-      <a href="/feed" className="skip-to-app">
-        <span className="skip-dot" />
-        Browse Feed
-        <span className="skip-arrow" aria-hidden="true">
-          &rarr;
-        </span>
+      {/* ── Skip to app (keyboard only) ── */}
+      <a href="#hero-section" className="skip-to-app">
+        Skip to Content
       </a>
 
       <div className="mx-auto max-w-[1200px]">
         {/* ══════════════ HERO ══════════════ */}
-        <section className="hero-section" aria-label="Hero">
+        <section className="hero-section" id="hero-section" aria-label="Hero">
           <div className="hero-content">
             {/* Logo */}
             <div className="hero-logo">
@@ -481,50 +477,54 @@ export default function HomePage() {
                 Browse the Feed
               </Link>
             </div>
-
-            <nav className="cta-footer-nav" aria-label="Footer">
-              <Link href="/about" className="footer-link">
-                About
-              </Link>
-              <Link href="/features" className="footer-link">
-                Features
-              </Link>
-              <Link href="/docs" className="footer-link">
-                Docs
-              </Link>
-              <Link href="/api-docs" className="footer-link">
-                API
-              </Link>
-              <Link href="/faq" className="footer-link">
-                FAQ
-              </Link>
-              <Link href="/status" className="footer-link">
-                Status
-              </Link>
-              <Link href="/privacy" className="footer-link">
-                Privacy
-              </Link>
-              <Link href="/terms" className="footer-link">
-                Terms
-              </Link>
-              <a
-                href="https://github.com/rugmunchmedia/degenfeed"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="footer-link"
-              >
-                GitHub
-              </a>
-            </nav>
-
-            <p className="cta-copyright">
-              &copy; {new Date().getFullYear()} DegenFeed &mdash; a Rug Munch Media LLC product.
-              Open source. Free forever. No account required.
-            </p>
           </div>
         </section>
       </div>
       {/* end max-w-[1200px] */}
+
+      {/* ══════════════ SITE FOOTER ══════════════ */}
+      <footer className="site-footer" role="contentinfo">
+        <div className="site-footer-inner">
+          <nav className="footer-nav" aria-label="Footer">
+            <Link href="/about" className="footer-link">
+              About
+            </Link>
+            <Link href="/features" className="footer-link">
+              Features
+            </Link>
+            <Link href="/docs" className="footer-link">
+              Docs
+            </Link>
+            <Link href="/api-docs" className="footer-link">
+              API
+            </Link>
+            <Link href="/faq" className="footer-link">
+              FAQ
+            </Link>
+            <Link href="/status" className="footer-link">
+              Status
+            </Link>
+            <Link href="/privacy" className="footer-link">
+              Privacy
+            </Link>
+            <Link href="/terms" className="footer-link">
+              Terms
+            </Link>
+            <a
+              href="https://github.com/rugmunchmedia/degenfeed"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="footer-link"
+            >
+              GitHub
+            </a>
+          </nav>
+          <p className="footer-copyright">
+            &copy; {new Date().getFullYear()} DegenFeed &mdash; a Rug Munch Media LLC product. Open
+            source. Free forever. No account required.
+          </p>
+        </div>
+      </footer>
     </div>
   );
 }

@@ -31,6 +31,7 @@ import { requireSession } from '../session';
 
 const INSTANCES = [
   'https://community.degenfeed.xyz',
+  'https://talk.degenfeed.xyz',
   'https://lemmy.ml',
   'https://programming.dev',
   'https://beehaw.org',

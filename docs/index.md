@@ -41,7 +41,7 @@ features:
   - icon: 📄
     title: Full Documentation
     details: |
-      [User Guide](USER_GUIDE.md) — [Creator Guide](CREATOR_GUIDE.md) — [Developer Guide](DEVELOPER_GUIDE.md) — [API Reference](API_REFERENCE.md) — [Integrations](INTEGRATIONS.md) — [Architecture](../ARCHITECTURE.md)
+      [User Guide](USER_GUIDE.md) — [Creator Guide](CREATOR_GUIDE.md) — [Developer Guide](DEVELOPER_GUIDE.md) — [API Reference](API_REFERENCE.md) — [Integrations](INTEGRATIONS.md) — [Architecture](ARCHITECTURE.md)
   - icon: 🧩
     title: Open Source
     details: MIT licensed. Built with Next.js 16, Hono, Cloudflare Workers, Solidity, and Anchor.
@@ -56,8 +56,8 @@ features:
 | [Developer Guide](DEVELOPER_GUIDE.md) | Monorepo structure, adding protocols, testing, deployment |
 | [API Reference](API_REFERENCE.md) | Complete v1 API reference with all endpoints |
 | [Integrations](INTEGRATIONS.md) | Per-protocol integration details for all 15+ protocols |
-| [ARCHITECTURE.md](../ARCHITECTURE.md) | Monorepo structure, protocol integration map, data flows |
-| [DEPLOYMENT.md](../DEPLOYMENT.md) | Cloudflare Pages + Workers deploy guide |
-| [PRODUCT.md](../PRODUCT.md) | Product charter and goals |
+| [ARCHITECTURE.md](./ARCHITECTURE.md) | Monorepo structure, protocol integration map, data flows |
+| [DEPLOYMENT.md](./DEPLOYMENT.md) | Cloudflare Pages + Workers deploy guide |
+| [PRODUCT.md](./PRODUCT.md) | Product charter and goals |
 
 **Live at:** [app.degenfeed.xyz](https://app.degenfeed.xyz)

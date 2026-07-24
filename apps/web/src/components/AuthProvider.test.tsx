@@ -84,6 +84,7 @@ vi.mock('./Toast', () => ({
 
 // === Storage mock helpers ============================================
 
+import type { StoredIdentity } from '@degenfeed/storage';
 import * as storage from '@degenfeed/storage';
 
 interface StubIdentity {
@@ -114,8 +115,10 @@ function makeIdentity(
 }
 
 function mockStorageIdentities(identities: StubIdentity[]) {
-  vi.mocked(storage.getAllIdentities).mockResolvedValue(identities as any);
-  vi.mocked(storage.getPrimaryIdentity).mockResolvedValue((identities[0] ?? undefined) as any);
+  vi.mocked(storage.getAllIdentities).mockResolvedValue(identities as unknown as StoredIdentity[]);
+  vi.mocked(storage.getPrimaryIdentity).mockResolvedValue(
+    (identities[0] ?? undefined) as unknown as StoredIdentity | undefined,
+  );
 }
 
 /** Pre-populate wallet storage in localStorage so walletAddress is non-empty */
