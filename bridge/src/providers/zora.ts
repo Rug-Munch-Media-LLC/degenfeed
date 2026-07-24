@@ -10,7 +10,7 @@
  * The local indexer runs at /srv/degenfeed/zora-indexer/ and polls
  * api.zora.co every 30s, storing results in SQLite.
  *
- * Endpoint: http://127.0.0.1:8090/
+ * Endpoint: http://127.0.0.1:8091/
  *   GET /api/collections  — NFT collections
  *   GET /api/tokens       — NFT tokens
  *   GET /api/mints        — Mint events
@@ -22,7 +22,7 @@ import type { SchemaGuard, UnifiedPost } from '../server';
 // ─── Configuration ────────────────────────────────────────────────────
 
 const ZORA_INDEXER_URL =
-  process.env.ZORA_INDEXER_URL || 'http://127.0.0.1:8090';
+  process.env.ZORA_INDEXER_URL || 'http://127.0.0.1:8091';
 
 // ─── Interfaces ───────────────────────────────────────────────────────
 
