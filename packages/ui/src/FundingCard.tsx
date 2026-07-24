@@ -22,7 +22,7 @@ const STAGE_COLORS: Record<string, string> = {
   'series c': '#1d4ed8',
   strategic: '#f59e0b',
   private: '#10b981',
-  public: '#ef4444',
+  public: 'var(--color-danger)',
   grant: '#6366f1',
   angel: '#ec4899',
 };

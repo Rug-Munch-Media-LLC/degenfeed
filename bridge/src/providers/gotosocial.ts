@@ -9,7 +9,7 @@
  * which serve /api/v1/timelines/public without authentication.
  */
 
-import type { UnifiedPost } from '../server';
+import type { SchemaGuard, UnifiedPost } from '../server';
 
 const GTS_BASE = 'http://127.0.0.1:8082';
 
@@ -123,6 +123,8 @@ export function statusToPost(s: MastodonStatus, instanceHost: string): UnifiedPo
     text,
     html: original.content || '',
     embeds: [],
+    contentType:
+      original.media_attachments?.length > 0 ? 'image' : original.card?.image ? 'link' : 'text',
     createdAt: Number.isNaN(createdAt) ? Date.now() : createdAt,
     metrics: {
       likes: original.favourites_count ?? 0,
@@ -230,6 +232,15 @@ async function fetchFromPublicInstances(limit: number): Promise<UnifiedPost[]> {
 
 // ─── Main ────────────────────────────────────────────────────────────
 
+export const schema: SchemaGuard = {
+  id: 'mastodon',
+  name: 'Mastodon/GoToSocial',
+  description: 'Federated microblogging on ActivityPub — public instances',
+  endpoint: '/api/feed/mastodon',
+  requiresAuth: false,
+  contentType: 'mixed',
+};
+
 export async function fetchMastodonPosts(limit = 20): Promise<UnifiedPost[]> {
   const [gts, publics] = await Promise.all([
     fetchFromGts(Math.ceil(limit / 3)),
@@ -259,3 +270,6 @@ export async function fetchMastodonPosts(limit = 20): Promise<UnifiedPost[]> {
 
   return deduped;
 }
+
+/** @alias Use `fetch` as the standardized export name */
+export const fetch = fetchMastodonPosts;

@@ -93,7 +93,7 @@ const OAUTH_PROTOCOLS: ProtocolOption[] = [
   {
     id: 'email',
     label: 'Email',
-    color: '#22c55e',
+    color: 'var(--color-accent)',
     icon: '✉',
     description: 'Sign in with email and password',
     method: 'password',

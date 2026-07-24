@@ -9,7 +9,7 @@
  * DeFi, NFTs, tech, and web3.
  */
 
-import type { UnifiedPost } from '../server';
+import type { SchemaGuard, UnifiedPost } from '../server';
 
 const LEMMY_LOCAL = 'http://127.0.0.1:8536';
 
@@ -140,6 +140,7 @@ export function postToUnified(
     },
     text,
     embeds: link ? [{ kind: 'link', url: link }] : [],
+    contentType: link ? 'link' : 'text',
     createdAt: Number.isNaN(createdAt) ? Date.now() : createdAt,
     metrics: {
       likes: counts.upvotes,
@@ -187,6 +188,15 @@ async function fetchCommunityPosts(
 
 // ─── Main ────────────────────────────────────────────────────────────
 
+export const schema: SchemaGuard = {
+  id: 'lemmy',
+  name: 'Lemmy',
+  description: 'Link aggregator and community discussions — local + external instances',
+  endpoint: '/api/feed/lemmy',
+  requiresAuth: false,
+  contentType: 'mixed',
+};
+
 export async function fetchLemmyPosts(limit = 20): Promise<UnifiedPost[]> {
   const all: UnifiedPost[] = [];
 
@@ -233,3 +243,6 @@ export async function fetchLemmyPosts(limit = 20): Promise<UnifiedPost[]> {
   console.log(`[bridge] Lemmy: ${deduped.length} posts (local: ${localCount})`);
   return deduped;
 }
+
+/** @alias Use `fetch` as the standardized export name */
+export const fetch = fetchLemmyPosts;

@@ -1,8 +1,7 @@
-import type { Embed } from '@degenfeed/types';
 import { detectNiches } from '@degenfeed/feed-core';
-import type { UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
-import type { RssFeedConfig, RssItem, ScoredRssPost } from './types';
+import type { Embed, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
 import { computeQualityScore } from './quality';
+import type { RssFeedConfig, RssItem, ScoredRssPost } from './types';
 
 function stripHtml(html: string): string {
   return html

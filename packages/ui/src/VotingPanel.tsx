@@ -40,7 +40,7 @@ export interface VotingPanelProps {
 const TYPE_META: Record<ProposalType, { label: string; color: string }> = {
   text: { label: 'Text', color: '#8b5cf6' },
   rule_change: { label: 'Rule Change', color: '#f59e0b' },
-  mod_action: { label: 'Mod Action', color: '#ef4444' },
+  mod_action: { label: 'Mod Action', color: 'var(--color-danger)' },
   treasury: { label: 'Treasury', color: '#10b981' },
 };
 
@@ -207,8 +207,18 @@ export function VotingPanel({
       {/* Vote bars */}
       <div className="space-y-3">
         <VoteBar label="For" count={totals.for} total={totalVotes} color="var(--color-accent)" />
-        <VoteBar label="Against" count={totals.against} total={totalVotes} color="var(--color-danger)" />
-        <VoteBar label="Abstain" count={totals.abstain} total={totalVotes} color="var(--color-muted)" />
+        <VoteBar
+          label="Against"
+          count={totals.against}
+          total={totalVotes}
+          color="var(--color-danger)"
+        />
+        <VoteBar
+          label="Abstain"
+          count={totals.abstain}
+          total={totalVotes}
+          color="var(--color-muted)"
+        />
       </div>
 
       {/* Vote actions */}

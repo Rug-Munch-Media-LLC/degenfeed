@@ -262,8 +262,9 @@ export function ProtocolFeedPage({ protocol }: Props) {
         headers: { 'cache-control': 'no-store' },
       });
       if (!res.ok) throw new Error(`Feed returned ${res.status}`);
-      const data = (await res.json()) as { data?: UnifiedPost[]; meta?: FeedMeta };
-      const feed = data.data ?? [];
+      const json = (await res.json()) as { posts?: UnifiedPost[]; meta?: FeedMeta };
+      const data = json as { data?: UnifiedPost[]; meta?: FeedMeta };
+      const feed = json.posts ?? data.data ?? [];
       if (feed.length > 0) {
         lastPostIdRef.current = feed[0]?.id ?? '';
       }
@@ -292,8 +293,9 @@ export function ProtocolFeedPage({ protocol }: Props) {
         setFeaturedLoading(false);
         return;
       }
-      const data = (await res.json()) as { data?: UnifiedPost[] };
-      if (data.data?.length) setFeaturedPosts(data.data);
+      const featJson = (await res.json()) as { posts?: UnifiedPost[]; data?: UnifiedPost[] };
+      if (featJson.posts?.length) setFeaturedPosts(featJson.posts);
+      else if (featJson.data?.length) setFeaturedPosts(featJson.data);
     } catch {
       // non-critical
     }
@@ -317,8 +319,8 @@ export function ProtocolFeedPage({ protocol }: Props) {
           headers: { 'cache-control': 'no-store' },
         });
         if (!res.ok) return;
-        const data = (await res.json()) as { data?: UnifiedPost[] };
-        const first = data.data?.[0];
+        const pollJson = (await res.json()) as { posts?: UnifiedPost[]; data?: UnifiedPost[] };
+        const first = (pollJson.posts ?? pollJson.data ?? [])[0];
         if (first && first.id !== lastPostIdRef.current) {
           setNewPostCount((c) => c + 1);
         }

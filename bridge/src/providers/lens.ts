@@ -13,7 +13,7 @@
  * Endpoint: http://127.0.0.1:8088/api/publications
  */
 
-import type { UnifiedPost } from '../server';
+import type { SchemaGuard, UnifiedPost } from '../server';
 
 // ─── Configuration ────────────────────────────────────────────────────
 
@@ -123,6 +123,14 @@ function mapPublication(pub: IndexerPublication): UnifiedPost | null {
     },
     text: content,
     embeds,
+    contentType:
+      metadata?.__typename === 'ImageMetadata'
+        ? 'image'
+        : metadata?.__typename === 'VideoMetadata'
+          ? 'video'
+          : metadata?.__typename === 'LinkMetadata'
+            ? 'link'
+            : 'text',
     createdAt: new Date(pub.timestamp).getTime(),
     metrics: {
       likes: pub.stats_reactions ?? 0,
@@ -188,7 +196,19 @@ async function fetchPosts(limit: number): Promise<UnifiedPost[]> {
 
 // ─── Main export ──────────────────────────────────────────────────────
 
+export const schema: SchemaGuard = {
+  id: 'lens',
+  name: 'Lens Protocol',
+  description: 'User-owned social graph on Polygon — Lens v2 GraphQL API',
+  endpoint: '/api/feed/lens',
+  requiresAuth: false,
+  contentType: 'mixed',
+};
+
 export async function fetchLensPosts(limit = 20): Promise<UnifiedPost[]> {
   const posts = await fetchPosts(limit);
   return posts;
 }
+
+/** @alias Use `fetch` as the standardized export name */
+export const fetch = fetchLensPosts;

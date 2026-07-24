@@ -1,8 +1,14 @@
 // ── Thin re-export barrel ──────────────────────────────────────────────
-export type { QualityScore, RssCategory, RssFeedConfig, RssProviderOptions } from './types';
+
 export { DEFAULT_CRYPTO_FEEDS } from './config';
-export { computeQualityScore } from './quality';
 export { deduplicateRssPosts } from './dedup';
-export { normalizeFeedInput, getFeedsByCategory, getFeedCategories, getNewsletterFeeds } from './helpers';
-export { parseRss, feedToUnifiedPosts } from './parsers';
+export {
+  getFeedCategories,
+  getFeedsByCategory,
+  getNewsletterFeeds,
+  normalizeFeedInput,
+} from './helpers';
+export { feedToUnifiedPosts, parseRss } from './parsers';
 export { RssProvider } from './provider';
+export { computeQualityScore } from './quality';
+export type { QualityScore, RssCategory, RssFeedConfig, RssProviderOptions } from './types';

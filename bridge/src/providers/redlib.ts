@@ -10,7 +10,7 @@
  * Long-term fix: register Reddit OAuth2 app for authenticated API access.
  */
 
-import type { UnifiedPost } from '../server';
+import type { SchemaGuard, UnifiedPost } from '../server';
 
 const REDDIT_RSS = 'https://www.reddit.com';
 
@@ -190,6 +190,7 @@ export function parseRssXml(xml: string, subreddit: string, limit: number): Unif
       },
       text: title,
       embeds: link ? [{ kind: 'link', url: link }] : [],
+      contentType: link ? 'link' : 'text',
       createdAt: updatedMatch ? new Date(updatedMatch[1]).getTime() : Date.now() - index * 600000,
       metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0, views: 0 },
       engagement: {
@@ -306,6 +307,7 @@ async function fetchFromRedditJson(subreddit: string, limit: number): Promise<Un
           },
           text: title,
           embeds: link ? [{ kind: 'link', url: link }] : [],
+          contentType: link ? 'link' : 'text',
           createdAt: created || Date.now() - i * 600000,
           metrics: { likes: score, reposts: 0, replies: comments, quotes: 0, views: 0 },
           engagement: {
@@ -325,6 +327,15 @@ async function fetchFromRedditJson(subreddit: string, limit: number): Promise<Un
 }
 
 // ─── Main ────────────────────────────────────────────────────────────
+
+export const schema: SchemaGuard = {
+  id: 'reddit',
+  name: 'Reddit/Redlib',
+  description: 'Crypto subreddits — JSON API + RSS fallback',
+  endpoint: '/api/feed/reddit',
+  requiresAuth: false,
+  contentType: 'mixed',
+};
 
 export async function fetchRedditPosts(limit = 20): Promise<UnifiedPost[]> {
   const perSub = Math.max(2, Math.ceil(limit / SUBREDDITS.length));
@@ -389,3 +400,6 @@ export async function fetchRedditPosts(limit = 20): Promise<UnifiedPost[]> {
   );
   return deduped;
 }
+
+/** @alias Use `fetch` as the standardized export name */
+export const fetch = fetchRedditPosts;

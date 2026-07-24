@@ -15,7 +15,7 @@
  * Without key: returns empty (documented limitation).
  */
 
-import type { UnifiedPost } from '../server';
+import type { SchemaGuard, UnifiedPost } from '../server';
 
 const NEYNAR_BASE = 'https://api.neynar.com';
 const NEYNAR_API_KEY = process.env.NEYNAR_API_KEY || '';
@@ -144,6 +144,7 @@ export function castToUnified(cast: FarcasterCast): UnifiedPost {
     },
     text: cast.text,
     embeds,
+    contentType: embeds.length > 0 ? 'link' : 'text',
     createdAt: new Date(cast.timestamp).getTime(),
     metrics: {
       likes: cast.reactions?.likes || 0,
@@ -168,6 +169,16 @@ export function castToUnified(cast: FarcasterCast): UnifiedPost {
 }
 
 // ─── Main ──────────────────────────────────────────────────────────────
+
+export const schema: SchemaGuard = {
+  id: 'farcaster',
+  name: 'Farcaster/Neynar',
+  description: 'On-chain social network — requires NEYNAR_API_KEY',
+  endpoint: '/api/feed/farcaster',
+  requiresAuth: true,
+  authEnvVar: 'NEYNAR_API_KEY',
+  contentType: 'mixed',
+};
 
 export async function fetchFarcasterPosts(limit = 20): Promise<UnifiedPost[]> {
   if (!NEYNAR_API_KEY) {
@@ -203,3 +214,6 @@ export async function fetchFarcasterPosts(limit = 20): Promise<UnifiedPost[]> {
   console.log(`[bridge] Farcaster: ${deduped.length} posts`);
   return deduped;
 }
+
+/** @alias Use `fetch` as the standardized export name */
+export const fetch = fetchFarcasterPosts;

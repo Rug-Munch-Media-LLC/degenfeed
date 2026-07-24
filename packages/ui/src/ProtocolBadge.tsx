@@ -11,7 +11,7 @@ export const PROTOCOL_COLORS: Record<string, string> = {
   farcaster: '#8a63d2',
   lens: '#abfe2c',
   bluesky: '#1185fe',
-  threads: '#101010',
+  threads: '#888888',
   mastodon: '#6364ff',
   reddit: '#ff4500',
   lemmy: '#00b868',
@@ -88,7 +88,7 @@ export interface ProtocolBadgeProps {
 }
 
 export function getProtocolColor(protocol: string): string {
-  return PROTOCOL_COLORS[protocol] ?? 'var(--color-muted)';
+  return PROTOCOL_COLORS[protocol] ?? '#666';
 }
 
 export function getProtocolLabel(protocol: string): string {
@@ -100,7 +100,7 @@ export function getProtocolIcon(protocol: string): string {
 }
 
 export function ProtocolBadge({ protocol, size = 'sm', showLabel = true }: ProtocolBadgeProps) {
-  const color = PROTOCOL_COLORS[protocol] ?? 'var(--color-muted)';
+  const color = PROTOCOL_COLORS[protocol] ?? '#666';
   const label = PROTOCOL_LABELS[protocol] ?? protocol;
   const icon = PROTOCOL_ICONS[protocol] ?? '?';
   const sizeClass = size === 'sm' ? 'px-2 py-0.5 text-[11px]' : 'px-3 py-1 text-sm';

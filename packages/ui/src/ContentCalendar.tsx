@@ -68,7 +68,9 @@ function alpha(color: string, opacity: number): string {
     return `color-mix(in srgb, ${color} ${opacity * 100}%, transparent)`;
   }
   // Hex: append two-char hex alpha
-  const alphaHex = Math.round(opacity * 255).toString(16).padStart(2, '0');
+  const alphaHex = Math.round(opacity * 255)
+    .toString(16)
+    .padStart(2, '0');
   return `${color}${alphaHex}`;
 }
 
@@ -122,7 +124,7 @@ function PostChip({
   const protocolColor = PROTOCOL_COLORS[primaryProtocol];
   const color = protocolColor || 'var(--color-muted)';
   const icon = PROTOCOL_ICONS[primaryProtocol] || '📝';
-  const statusColor = STATUS_COLORS[post.status || 'scheduled'];
+  const statusColor = STATUS_COLORS[post.status || 'scheduled'] ?? 'var(--color-muted)';
 
   if (compact) {
     return (

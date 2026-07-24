@@ -1,5 +1,5 @@
-import type { RssFeedConfig } from './types';
 import { DEFAULT_CRYPTO_FEEDS } from './config';
+import type { RssFeedConfig } from './types';
 
 export function normalizeFeedInput(feed: string | RssFeedConfig): RssFeedConfig {
   if (typeof feed === 'string') {

@@ -68,11 +68,11 @@ export function RealtimeStatusDot() {
         className="inline-block h-2 w-2 rounded-full"
         style={{
           backgroundColor: connected
-            ? 'var(--color-degen, #22c55e)'
-            : 'var(--color-error, #ef4444)',
+            ? 'var(--color-accent)'
+            : 'var(--color-danger)',
           boxShadow: connected
-            ? '0 0 6px rgba(34, 197, 94, 0.6)'
-            : '0 0 6px rgba(239, 68, 68, 0.4)',
+            ? '0 0 6px color-mix(in srgb, var(--color-accent) 40%, transparent)'
+            : '0 0 6px color-mix(in srgb, var(--color-danger) 40%, transparent)',
         }}
       />
       <span className="hidden sm:inline">{connected ? 'Live' : 'Live'}</span>

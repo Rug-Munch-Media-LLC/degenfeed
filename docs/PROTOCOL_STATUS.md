@@ -1,98 +1,122 @@
 # DegenFeed Protocol Integration Status
 
 **Date:** 2026-07-24  
-**Status:** 🟢 FULLY FUNCTIONAL — 10 protocols, 8 returning real data
+**Status:** 🟢 STANDARDIZED — 11 providers compliant with Protocol Interface v1
 
 ---
 
 ## Executive Summary
 
-All stub providers have been replaced with real implementations.
-The bridge now returns live data from **8 of 10 protocols** (23 posts/request).
+All 11 bridge providers now follow the standardized Provider Interface:
+- ✅ `schema: SchemaGuard` — every provider exports metadata
+- ✅ `fetch: () => Promise<UnifiedPost[]>` — every provider exports the standardized alias
+- ✅ `contentType` — every provider sets this on each post
+- ✅ Error handling — every provider returns `[]` on failure, never throws
+- ✅ API response format — all endpoints return `{posts, meta: {total, page, limit}}`
+- ✅ Frontend registry — all protocols registered in `feed-protocols.ts`
+- ✅ ProtocolFeed — all `/feed/*` pages use `<ProtocolFeed source="x" />`
 
 | Category | Count | Status |
 |----------|-------|--------|
-| **Self-Hosted Services** | 10+ | 🟢 All running |
-| **Protocols with real data** | 8/10 | 🟢 Live content flowing |
-| **Needs API key** | 1 (Farcaster) | 🟡 NEYNAR_API_KEY required |
-| **Blocked by provider** | 1 (Reddit) | 🔴 Reddit CDN blocks all requests |
+| **Bridge Providers** | 11 | 🟢 All with schema + fetch + contentType |
+| **Frontend Protocol Registry** | 11 | 🟢 All bridge protocols present |
+| **Feed Pages using ProtocolFeed** | 8/8 | 🟢 All compliant |
+| **API standardized `{posts, meta}`** | 11 | 🟢 All endpoints conform |
+| **Error handling (return [])** | 11 | 🟢 All catch errors gracefully |
+| **Across the board compliance** | 11/11 | 🟢 **FULLY COMPLIANT** |
 
 ---
 
-## Provider Status Matrix
+## Provider Compliance Report
 
-| # | Provider | Status | Source | Data per req | Notes |
-|---|----------|--------|--------|-------------|-------|
-| 1 | **Nostr** | ✅ **REAL** | 6 relays (WS) | 3 | **New!** Replaced stub with WebSocket relay fetcher |
-| 2 | **Farcaster** | 🟡 Needs key | Neynar API | 0 | Requires NEYNAR_API_KEY env var |
-| 3 | **Lens** | ✅ **REAL** | Lens v2 GraphQL | 3 | **New!** Replaced stub with GraphQL client |
-| 4 | **Pixelfed** | ✅ **REAL** | Atom RSS + API | 3 | **New!** Replaced stub with RSS + Mastodon API |
-| 5 | **GoToSocial** | ✅ Real | Public instances | 3 | Working since last audit |
-| 6 | **Bluesky** | ✅ Real | Public API + PDS | 2 | Working since last audit |
-| 7 | **Lemmy** | ✅ Real | Local + external | 3 | Working since last audit |
-| 8 | **PeerTube** | ✅ Real | Local instance | 3 | Working since last audit |
-| 9 | **Reddit** | 🔴 Blocked | JSON API + RSS | 0 | Reddit CDN blocks all requests |
-| 10 | **RSS-Bridge** | ✅ Real | RSS feeds | 3 | Working since last audit |
+| # | Provider | schema | fetch | contentType | Error handling | Bridge route |
+|---|----------|--------|-------|-------------|----------------|-------------|
+| 1 | **Nostr** | ✅ | ✅ | `'text'` (kind 1 notes) | ✅ returns [] | `/api/feed/nostr` |
+| 2 | **Farcaster** | ✅ | ✅ | dynamic (link/text) | ✅ returns [] | `/api/feed/farcaster` |
+| 3 | **Lens** | ✅ | ✅ | dynamic (image/video/link/text) | ✅ returns [] | `/api/feed/lens` |
+| 4 | **Pixelfed** | ✅ | ✅ | `'image'` / `'video'` | ✅ returns [] | `/api/feed/pixelfed` |
+| 5 | **GoToSocial** | ✅ | ✅ | dynamic (image/link/text) | ✅ returns [] | `/api/feed/mastodon` |
+| 6 | **Bluesky** | ✅ | ✅ | dynamic (image/video/link/text) | ✅ returns [] | `/api/feed/bluesky` |
+| 7 | **Lemmy** | ✅ | ✅ | dynamic (link/text) | ✅ returns [] | `/api/feed/lemmy` |
+| 8 | **PeerTube** | ✅ | ✅ | `'video'` | ✅ returns [] | `/api/feed/peertube` |
+| 9 | **Reddit** | ✅ | ✅ | dynamic (link/text) | ✅ returns [] | `/api/feed/reddit` |
+| 10 | **RSS-Bridge** | ✅ | ✅ | `'link'` | ✅ returns [] | `/api/feed/news` |
+| 11 | **Zora** | ✅ | ✅ | `'image'` | ✅ returns [] | `/api/feed/zora` |
 
 ---
 
-## Bridge Server v0.3.0 (port 8787)
+## API Standardization
 
-**Version:** 0.3.0  
-**All providers:** Imported individually (no stubs)  
-**New providers added:** nostr.ts, farcaster.ts, lens.ts, pixelfed.ts  
-**Cross-poster:** New crossposter.ts module (GTS → Nostr relay)
+All bridge endpoints now return the unified response format:
 
-### Provider Data Flow
-
-```
-                ┌─────────────────────────────────────┐
-                │        DEGENFEED BRIDGE v0.3.0       │
-                │                                      │
-                │  nostr.ts   → WS  → 6 Nostr relays  │ ✅ 3 posts
-                │  lens.ts    → GQL → Lens v2 API     │ ✅ 3 posts  
-                │  pixelfed.ts→ RSS → Pixelfed feeds  │ ✅ 3 posts
-                │  gotosocial.ts→HTTP→ Mastodon insts │ ✅ 3 posts
-                │  bluesky.ts → HTTP→ Bluesky public  │ ✅ 2 posts
-                │  lemmy.ts   → HTTP→ Lemmy instances │ ✅ 3 posts
-                │  peertube.ts→ HTTP→ PeerTube local  │ ✅ 3 posts
-                │  rssbridge.ts→HTTP→ RSS feeds        │ ✅ 3 posts
-                │  redlib.ts  → HTTP→ Reddit (blocked) │ ❌ 0 posts
-                │  farcaster.ts→HTTP→ Neynar (needs)  │ 🟡 0 posts
-                │                                      │
-                │  TOTAL: 23 posts from 8 providers    │ ✅
-                └─────────────────────────────────────┘
+```typescript
+{
+  posts: UnifiedPost[],
+  meta: {
+    total: number,
+    page: number,
+    limit: number,
+    // ... additional fields
+  }
+}
 ```
 
+| Endpoint | Old format | New format | Status |
+|----------|-----------|------------|--------|
+| `/api/feed/for-you` | `{data, meta}` | `{posts, meta}` | ✅ |
+| `/api/feed/home` | `{data, meta}` | `{posts, meta}` | ✅ |
+| `/api/feed/news` | `{data, meta}` | `{posts, meta}` | ✅ |
+| `/api/feed/:protocol` | `{data, meta}` | `{posts, meta}` | ✅ |
+| `/api/feed/trending` | `{topics}` | `{topics}` (not a feed) | ✅ |
+| `/api/feed/health` | `{status, sources}` | `{status, sources}` | ✅ |
+| `/api/feed/stats` | `{totalPosts, sources}` | `{totalPosts, sources}` | ✅ |
+
+## Frontend Compliance
+
+| Feed Page | Uses ProtocolFeed | Status |
+|-----------|-----------------|--------|
+| `/feed/mastodon` | `<ProtocolFeed source="mastodon" />` | ✅ |
+| `/feed/bluesky` | `<ProtocolFeed source="bluesky" />` | ✅ *(was BlueskyMediaView)* |
+| `/feed/nostr` | `<ProtocolFeed source="nostr" />` | ✅ |
+| `/feed/reddit` | `<ProtocolFeed source="reddit" />` | ✅ |
+| `/feed/lemmy` | `<ProtocolFeed source="lemmy" />` | ✅ |
+| `/feed/images` | `<ProtocolFeed source="pixelfed" />` | ✅ |
+| `/feed/videos` | `<ProtocolFeed source="peertube" />` | ✅ |
+| `/feed/news` | `<ProtocolFeed source="rss" />` | ✅ |
+
+## Frontend Protocol Registry (`feed-protocols.ts`)
+
+| Protocol | Registered | icon | color | endpoint | route | status |
+|----------|-----------|------|-------|----------|-------|--------|
+| mastodon | ✅ | 🐘 | #6364ff | `/api/feed/mastodon` | `/feed/mastodon` | ✅ |
+| bluesky | ✅ | 🦋 | #1185fe | `/api/feed/bluesky` | `/feed/bluesky` | ✅ |
+| nostr | ✅ | ⚡ | #8e30eb | `/api/feed/nostr` | `/feed/nostr` | ✅ |
+| farcaster | ✅ | ◈ | #8a63d2 | `/api/feed/farcaster` | `/feed/farcaster` | ✅ |
+| lens | ✅ | 🌿 | #abfe2c | `/api/feed/lens` | `/feed/lens` | ✅ |
+| peertube | ✅ | 🎬 | #f1680d | `/api/feed/peertube` | `/feed/videos` | ✅ |
+| lemmy | ✅ | 🗣️ | #2d9cdb | `/api/feed/lemmy` | `/feed/lemmy` | ✅ |
+| pixelfed | ✅ | 📷 | #f9a825 | `/api/feed/pixelfed` | `/feed/images` | ✅ |
+| zora | ✅ | 🎨 | #6b21a8 | `/api/feed/zora` | `/feed/nfts` | ✅ |
+| rss | ✅ | 📰 | #ffa500 | `/api/feed/news` | `/feed/news` | ✅ |
+| reddit | ✅ | 🔴 | #ff4500 | `/api/feed/reddit` | `/feed/reddit` | ✅ |
+
 ---
 
-## Ownership Verification Results
+## SchemaGuard Reference
 
-| Service | Admin/Owner | Status | Verified |
-|---------|-------------|--------|----------|
-| GoToSocial | `cryptorugmunch` (admin) | ✅ | API confirms admin user |
-| Lemmy | `degenfeed` (admin) | ✅ | Actor ID: talk.degenfeed.xyz/u/degenfeed |
-| PeerTube | Admin account exists | ✅ | 5 videos, API responding |
-| Bluesky PDS | DID: did:web:pds.degenfeed.xyz | ✅ | PDS healthy, domains configured |
-| Nostr | "DegenFeed Nostr Relay" | ✅ | NIP-11 info, relay responding |
-| WriteFreely | "DegenFeed Blog" | ✅ | Instance renders |
-| Activity Relay | Relay actor configured | ✅ | Actor endpoint verified |
-| RSS-Bridge | Our container | ✅ | 1526 bridge defs |
-| Redlib | Our container | ✅ | Health OK (Reddit blocks) |
-| Meilisearch | Our container | ✅ | Health available |
+All 11 providers export a `schema: SchemaGuard` object with this shape:
 
----
-
-## What Changed This Session
-
-1. **Nostr provider** (stub → real): WebSocket connections to 6 Nostr relays
-2. **Farcaster provider** (stub → needs API key): Documented NEYNAR_API_KEY requirement
-3. **Lens provider** (stub → real): GraphQL queries to Lens v2 API
-4. **Pixelfed provider** (stub → real): Atom RSS feeds + Mastodon-compatible API
-5. **Cross-poster**: New `crossposter.ts` module for GTS → Nostr bridging
-6. **Server version**: Updated to v0.3.0 with all providers active
-7. **OWNERSHIP.md**: Created with full admin verification for all services
-8. **stubs.ts**: Deprecated — all 4 stub providers replaced
+```typescript
+export interface SchemaGuard {
+  id: string;           // Protocol identifier (e.g. 'bluesky')
+  name: string;         // Human-readable label
+  description: string;  // Short description
+  endpoint: string;     // API endpoint path
+  requiresAuth: boolean; // Whether an API key is needed
+  authEnvVar?: string;   // Which env var holds the API key
+  contentType: string;   // Default content type ('text' | 'image' | 'video' | 'link' | 'mixed')
+}
+```
 
 ---
 
@@ -113,4 +137,22 @@ Relay running but has no subscriptions. Need to send Follow activities.
 
 ---
 
-*Generated by automated audit. Last updated: 2026-07-24.*
+## Standardization Audit Log
+
+| # | Change | Date |
+|---|--------|------|
+| 1 | Added `SchemaGuard` interface to `server.ts` | 2026-07-24 |
+| 2 | Added `contentType?: string` to bridge `UnifiedPost` | 2026-07-24 |
+| 3 | Added `schema` export to all 11 providers | 2026-07-24 |
+| 4 | Added `fetch` export alias to all 11 providers | 2026-07-24 |
+| 5 | Added `contentType` detection to all 11 providers | 2026-07-24 |
+| 6 | Changed API response from `{data, meta}` to `{posts, meta}` | 2026-07-24 |
+| 7 | Added `page` to all feed endpoint `meta` | 2026-07-24 |
+| 8 | Replaced `BlueskyMediaView` with `<ProtocolFeed source="bluesky" />` | 2026-07-24 |
+| 9 | Updated `ProtocolFeed.tsx` to parse `{posts, meta}` | 2026-07-24 |
+| 10 | Updated `ProtocolFeedPage.tsx` to parse `{posts, meta}` | 2026-07-24 |
+| 11 | Created compliance report in this document | 2026-07-24 |
+
+---
+
+*Generated by standardization audit. Last updated: 2026-07-24.*

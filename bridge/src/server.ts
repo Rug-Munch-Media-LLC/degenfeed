@@ -92,7 +92,6 @@ export interface SchemaGuard {
   contentType?: string;
 }
 
-
 // ─── Protocol -> Provider mapping ─────────────────────────────────────
 
 type ProviderFetcher = (limit: number) => Promise<UnifiedPost[]>;
@@ -443,6 +442,7 @@ const server = http.createServer(async (req, res) => {
     if (path.startsWith('/api/feed/')) {
       const proto = path.replace('/api/feed/', '');
       const limit = Math.min(parseInt(searchParams.get('limit') || '25', 10), 200);
+      const page = parseInt(searchParams.get('page') || '1', 10);
       const allowedProtocols = [
         'mastodon',
         'lemmy',
@@ -457,6 +457,7 @@ const server = http.createServer(async (req, res) => {
       ];
       if (allowedProtocols.includes(proto)) {
         const { posts, meta } = await buildFeed([proto], limit);
+        meta.page = page;
         return jsonOk(res, { posts, meta });
       }
     }

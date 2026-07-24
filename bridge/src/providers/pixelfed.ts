@@ -12,7 +12,7 @@
  * We use user Atom feeds as the primary source since they're publicly accessible.
  */
 
-import type { UnifiedPost } from '../server';
+import type { SchemaGuard, UnifiedPost } from '../server';
 
 const PIXELFED_LOCAL = 'http://127.0.0.1:9090';
 
@@ -132,6 +132,7 @@ function parseAtomFeed(xml: string, label: string, limit: number): UnifiedPost[]
       },
       text,
       embeds,
+      contentType: 'image',
       createdAt: Number.isNaN(createdAt) ? Date.now() : createdAt,
       metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
       engagement: {
@@ -209,6 +210,7 @@ async function fetchFromInstance(baseUrl: string, limit: number): Promise<Unifie
         keys: {},
       },
       text: stripHtml(s.content || ''),
+      contentType: s.media_attachments?.some((m: any) => m.type === 'video') ? 'video' : 'image',
       embeds: (s.media_attachments || []).map((m) => ({
         kind: m.type === 'video' ? ('video' as const) : ('image' as const),
         url: m.url,
@@ -230,6 +232,15 @@ async function fetchFromInstance(baseUrl: string, limit: number): Promise<Unifie
 }
 
 // ─── Main ──────────────────────────────────────────────────────────────
+
+export const schema: SchemaGuard = {
+  id: 'pixelfed',
+  name: 'Pixelfed',
+  description: 'Decentralized image sharing on ActivityPub — Atom feeds + API',
+  endpoint: '/api/feed/pixelfed',
+  requiresAuth: false,
+  contentType: 'image',
+};
 
 export async function fetchPixelfedPosts(limit = 20): Promise<UnifiedPost[]> {
   const all: UnifiedPost[] = [];
@@ -270,3 +281,6 @@ export async function fetchPixelfedPosts(limit = 20): Promise<UnifiedPost[]> {
   console.log(`[bridge] Pixelfed: ${deduped.length} posts (${all.length} raw)`);
   return deduped;
 }
+
+/** @alias Use `fetch` as the standardized export name */
+export const fetch = fetchPixelfedPosts;
