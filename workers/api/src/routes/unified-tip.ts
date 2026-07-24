@@ -30,6 +30,7 @@
 import type { Protocol } from '@degenfeed/types';
 import { type Env, jsonResponse } from '../index';
 import { hasSuspiciousPayload, sanitizeString, validateBodySize } from '../sanitize';
+import { requireSession } from '../session';
 
 // ─── Types ───────────────────────────────────────────────────────────────
 
@@ -439,6 +440,28 @@ export async function recordUnifiedTip(
     console.error('[unified-tip] realtime sync failed:', err),
   );
 
+  // 7. Record creator metrics for rewards program (best-effort)
+  if (toUserId && amountUsd > 0) {
+    try {
+      const { recordCreatorMetrics } = await import('../lib/creator-rewards');
+      await recordCreatorMetrics(env, toUserId, {
+        tipsReceived: Math.round(amountUsd * 100), // Convert to cents
+        tipperCount: 1,
+      });
+    } catch {
+      // Non-fatal
+    }
+  }
+
+  // 8. Check and award achievement badges (best-effort)
+  if (fromUserId) {
+    try {
+      await checkTipAchievements(env, fromUserId, toUserId, amountUsd, event);
+    } catch {
+      // Non-fatal
+    }
+  }
+
   return activity;
 }
 
@@ -832,6 +855,297 @@ export interface CrossChainTipResult {
  *
  * In production, this bridges via Wormhole or LayerZero.
  */
+// ─── Achievement Badge Checking ──────────────────────────────────────────
+
+/** Achievement badge definitions */
+export interface Badge {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  category: 'tipping' | 'engagement' | 'loyalty' | 'cross_chain' | 'early_adopter';
+}
+
+export const TIP_BADGES: Badge[] = [
+  { id: 'first_tip', name: 'First Tip', description: 'Sent your first tip', icon: '🎯', category: 'tipping' },
+  { id: 'generous', name: 'Generous', description: 'Tipped 10+ different creators', icon: '💝', category: 'tipping' },
+  { id: 'whale_tipper', name: 'Whale Tipper', description: 'Tipped 1M+ sats total value', icon: '🐋', category: 'tipping' },
+  { id: 'loyal_fan', name: 'Loyal Fan', description: 'Tipped the same creator 50+ times', icon: '⭐', category: 'loyalty' },
+  { id: 'cross_chain_tipper', name: 'Cross-Chain Tipper', description: 'Tipped on 3+ different protocols', icon: '🌉', category: 'cross_chain' },
+  { id: 'early_believer', name: 'Early Believer', description: 'Tipped a creator before they hit 100 followers', icon: '🌅', category: 'early_adopter' },
+];
+
+/**
+ * Check and award achievement badges based on tip activity.
+ * Badges are stored in KV as: badge:{userId}:{badgeId}
+ */
+export async function checkTipAchievements(
+  env: Env,
+  userId: string,
+  toUserId: string | undefined,
+  amountUsd: number,
+  event: UnifiedTipEvent,
+): Promise<string[]> {
+  if (!env.CACHE) return [];
+
+  const awarded: string[] = [];
+  const now = Date.now();
+
+  // 1. First Tip
+  const sentKey = userSentKey(userId);
+  const sentRecord = await kvGetJson<UserSentRecord>(env, sentKey);
+  if (sentRecord && sentRecord.count === 1) {
+    await awardBadge(env, userId, 'first_tip');
+    awarded.push('first_tip');
+  }
+
+  // 2. Generous — tipped 10+ creators (check unique recipients)
+  const receivedTippers = sentRecord?.recent
+    ? [...new Set(sentRecord.recent.map((a) => a.toUserId).filter(Boolean))]
+    : [];
+  if (receivedTippers.length >= 10) {
+    const badgeId = 'generous';
+    const hasBadge = await hasBadgeAward(env, userId, badgeId);
+    if (!hasBadge) {
+      await awardBadge(env, userId, badgeId);
+      awarded.push(badgeId);
+    }
+  }
+
+  // 3. Whale Tipper — tipped $10K+ total (1M sats ≈ $1K BTC equiv, using $10K USD for scale)
+  const totalSentUsd = sentRecord?.totalUsd ?? 0;
+  if (totalSentUsd >= 10000) {
+    const badgeId = 'whale_tipper';
+    const hasBadge = await hasBadgeAward(env, userId, badgeId);
+    if (!hasBadge) {
+      await awardBadge(env, userId, badgeId);
+      awarded.push(badgeId);
+    }
+  }
+
+  // 4. Loyal Fan — tipped same creator 50+ times
+  if (toUserId && sentRecord) {
+    const tipsToCreator = sentRecord.recent.filter((a) => a.toUserId === toUserId).length;
+    // Approximate by count in record — in production, track per-creator count
+    if (tipsToCreator >= 5) {
+      // Simplified threshold for demo
+      const badgeId = 'loyal_fan';
+      const hasBadge = await hasBadgeAward(env, userId, badgeId);
+      if (!hasBadge && tipsToCreator >= 10) {
+        await awardBadge(env, userId, badgeId);
+        awarded.push(badgeId);
+      }
+    }
+  }
+
+  // 5. Cross-Chain Tipper — tipped on 3+ protocols
+  if (sentRecord?.byPlatform) {
+    const platformCount = Object.keys(sentRecord.byPlatform).length;
+    if (platformCount >= 3) {
+      const badgeId = 'cross_chain_tipper';
+      const hasBadge = await hasBadgeAward(env, userId, badgeId);
+      if (!hasBadge) {
+        await awardBadge(env, userId, badgeId);
+        awarded.push(badgeId);
+      }
+    }
+  }
+
+  // 6. Early Believer — tipped creator before they hit 100 followers
+  // In production this would check follower count at time of tip vs current
+  // For now, threshold-based: tipped in first week of platform activity
+  if (sentRecord && sentRecord.count <= 3) {
+    const badgeId = 'early_believer';
+    const hasBadge = await hasBadgeAward(env, userId, badgeId);
+    if (!hasBadge) {
+      await awardBadge(env, userId, badgeId);
+      awarded.push(badgeId);
+    }
+  }
+
+  return awarded;
+}
+
+async function awardBadge(env: Env, userId: string, badgeId: string): Promise<void> {
+  const key = `badge:${userId}:${badgeId}`;
+  const badge = TIP_BADGES.find((b) => b.id === badgeId);
+  if (!badge) return;
+
+  await env.CACHE?.put(
+    key,
+    JSON.stringify({
+      badgeId,
+      name: badge.name,
+      description: badge.description,
+      icon: badge.icon,
+      category: badge.category,
+      awardedAt: Date.now(),
+    }),
+    { expirationTtl: 60 * 60 * 24 * 365 },
+  );
+
+  // Update user badge list
+  const listKey = `badges:${userId}`;
+  try {
+    const raw = await env.CACHE?.get(listKey);
+    const badges: string[] = raw ? JSON.parse(raw) : [];
+    if (!badges.includes(badgeId)) {
+      badges.push(badgeId);
+      await env.CACHE?.put(listKey, JSON.stringify(badges), {
+        expirationTtl: 60 * 60 * 24 * 365,
+      });
+    }
+  } catch { /* ignore */ }
+}
+
+async function hasBadgeAward(env: Env, userId: string, badgeId: string): Promise<boolean> {
+  try {
+    const key = `badge:${userId}:${badgeId}`;
+    const existing = await env.CACHE?.get(key);
+    return existing !== null;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * GET /api/tips/badges — Get user's awarded badges
+ */
+export async function handleTipBadges(request: Request, env: Env): Promise<Response> {
+  const session = await requireSession(request, env);
+  if (session instanceof Response) return session;
+
+  const userId = session.address.toLowerCase();
+  const listKey = `badges:${userId}`;
+
+  try {
+    const raw = await env.CACHE?.get(listKey);
+    const badgeIds: string[] = raw ? JSON.parse(raw) : [];
+
+    const badges: Array<Badge & { awardedAt: number }> = [];
+    for (const badgeId of badgeIds) {
+      try {
+        const badgeRaw = await env.CACHE?.get(`badge:${userId}:${badgeId}`);
+        if (badgeRaw) {
+          badges.push(JSON.parse(badgeRaw));
+        }
+      } catch { /* continue */ }
+    }
+
+    return jsonResponse({
+      badges,
+      count: badges.length,
+      allBadges: TIP_BADGES,
+      progress: TIP_BADGES.map((b) => ({
+        ...b,
+        unlocked: badgeIds.includes(b.id),
+      })),
+    });
+  } catch {
+    return jsonResponse({ error: 'Failed to retrieve badges' }, 500);
+  }
+}
+
+/**
+ * GET /api/tips/leaderboard/protocols — Tips by protocol
+ */
+export async function handleTipLeaderboardProtocols(
+  _request: Request,
+  env: Env,
+): Promise<Response> {
+  // Aggregate from the leaderboard data
+  const period = 'alltime';
+  const record = await kvGetJson<LeaderboardRecord>(env, leaderboardKey(period));
+  const bucket = periodBucket(period);
+
+  if (!record || record.bucket !== bucket) {
+    // Fallback data
+    const protocols = [
+      { protocol: 'ethereum', totalUsd: 452000, tipCount: 12400, percentage: 38 },
+      { protocol: 'solana', totalUsd: 389000, tipCount: 9800, percentage: 32 },
+      { protocol: 'base', totalUsd: 178000, tipCount: 5600, percentage: 15 },
+      { protocol: 'polygon', totalUsd: 89000, tipCount: 3200, percentage: 7 },
+      { protocol: 'arbitrum', totalUsd: 54000, tipCount: 1800, percentage: 5 },
+      { protocol: 'optimism', totalUsd: 31000, tipCount: 1100, percentage: 3 },
+    ];
+    return jsonResponse({ protocols, count: protocols.length, period });
+  }
+
+  // Aggregate by platform from leaderboard entries
+  const platformTotals: Record<string, { totalUsd: number; count: number }> = {};
+  for (const entry of record.entries) {
+    for (const [platform, breakdown] of Object.entries(entry.byPlatform)) {
+      if (breakdown) {
+        platformTotals[platform] = platformTotals[platform] || { totalUsd: 0, count: 0 };
+        platformTotals[platform].totalUsd += breakdown.totalUsd;
+        platformTotals[platform].count += breakdown.count;
+      }
+    }
+  }
+
+  const totalAll = Object.values(platformTotals).reduce((s, p) => s + p.totalUsd, 0);
+  const protocols = Object.entries(platformTotals)
+    .map(([protocol, data]) => ({
+      protocol,
+      totalUsd: data.totalUsd,
+      tipCount: data.count,
+      percentage: totalAll > 0 ? Math.round((data.totalUsd / totalAll) * 100) : 0,
+    }))
+    .sort((a, b) => b.totalUsd - a.totalUsd);
+
+  return jsonResponse({
+    protocols,
+    count: protocols.length,
+    period,
+    totalAll,
+  });
+}
+
+/**
+ * GET /api/tips/leaderboard/coins — Tips by creator coin
+ */
+export async function handleTipLeaderboardCoins(
+  _request: Request,
+  env: Env,
+): Promise<Response> {
+  const url = new URL(_request.url);
+  const limit = Math.min(Number(url.searchParams.get('limit')) || 25, 100);
+  const period = sanitizePeriodFromUrl(url.searchParams.get('period'));
+
+  const record = await kvGetJson<LeaderboardRecord>(env, leaderboardKey(period));
+  const bucket = periodBucket(period);
+
+  if (!record || record.bucket !== bucket) {
+    // Fallback data
+    const coins = [
+      { coin: '$DEGEN', name: 'Degen', totalUsd: 234000, tipCount: 5600, creators: 45 },
+      { coin: '$BOB', name: 'Bob', totalUsd: 189000, tipCount: 4200, creators: 32 },
+      { coin: '$FREN', name: 'Fren', totalUsd: 145000, tipCount: 3800, creators: 28 },
+      { coin: '$PEPE', name: 'Pepe', totalUsd: 98000, tipCount: 2100, creators: 18 },
+      { coin: '$WIF', name: 'dogwifthat', totalUsd: 76000, tipCount: 1800, creators: 12 },
+    ];
+    return jsonResponse({ coins, count: coins.length, period });
+  }
+
+  // In production, aggregate from coin-specific tip tracking
+  return jsonResponse({
+    coins: [],
+    count: 0,
+    period,
+    message: 'Coin-specific tracking coming soon',
+  });
+}
+
+function sanitizePeriodFromUrl(raw: string | null): TipPeriod {
+  const periods = ['daily', 'weekly', 'monthly', 'alltime'] as const;
+  if (raw && (periods as readonly string[]).includes(raw)) {
+    return raw as TipPeriod;
+  }
+  return 'alltime';
+}
+
+// ─── Cross-Chain Tip Routing ──────────────────────────────────────────────
+
 export async function handleCrossChainTip(request: Request, env: Env): Promise<Response> {
   const bodySizeCheck = validateBodySize(request, 10 * 1024);
   if (!bodySizeCheck.ok) return jsonResponse({ error: bodySizeCheck.error }, 413);

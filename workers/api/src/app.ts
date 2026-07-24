@@ -21,7 +21,7 @@ import {
 } from './api-key';
 import { applyCors, getAllowedOrigin, isAllowedOrigin, parseOriginHeader } from './cors';
 import type { Env } from './index';
-import { jsonResponse, rateLimit } from './index';
+import { jsonResponse, rateLimit, tieredRateLimit, recordBruteForceFailure } from './index';
 import { validateBodySize } from './sanitize';
 import { parseSessionCookie, validateCsrfToken } from './session';
 
@@ -86,6 +86,17 @@ import { creatorVesting } from './routes/creator-vesting';
 import { creatorVideos } from './routes/creator-videos';
 import { handleCrossPostCentralized } from './routes/cross-post-centralized';
 import { crossProtocolCoin } from './routes/cross-protocol-coin';
+import {
+  handleCreatorCoinsList,
+  handleCreatorCoinStats,
+  handleCreatorCoinHolders,
+  handleCreatorCoinTrades,
+  handleCreatorCoinBurn,
+  handleCreatorCoinAirdrop,
+  handleCreatorCoinGatedPost,
+  handleCreatorCoinRevenue,
+  handlePlatformRevenue,
+} from './routes/creator-dashboard';
 import { handleCrossReply } from './routes/cross-reply';
 import { handleAltFeed, handleNewsletterFeed, handleTopFeed } from './routes/curated';
 import {
@@ -113,12 +124,29 @@ import {
 } from './routes/digest';
 // ── New protocol integration route handlers ──────────────────
 import {
+  handleDiscordBridgeEnable,
   handleDiscordBridgeMessage,
   handleDiscordChannelAnnounce,
   handleDiscordChannelsList,
+  handleDiscordCommunityCreate,
+  handleDiscordCommunityInfo,
   handleDiscordConnect,
+  handleDiscordConnectionStatus,
   handleDiscordDisconnect,
+  handleDiscordDisconnectOAuth,
+  handleDiscordGuilds,
+  handleDiscordOAuth,
+  handleDiscordOAuthCallback,
 } from './routes/discord';
+import {
+  handleTelegramBotInfo,
+  handleTelegramGenerateLink,
+  handleTelegramGetLinked,
+  handleTelegramLinkAccount,
+  handleTelegramSend,
+  handleTelegramUnlinkAccount,
+  handleTelegramWebhook,
+} from './routes/telegram';
 import {
   handleDiscover,
   handleDiscoverCommunities,
@@ -489,6 +517,17 @@ import {
   handleSubscriptionTiers,
 } from './routes/subscription';
 import {
+  handleSubscriptionNftActive,
+  handleSubscriptionNftCancel,
+  handleSubscriptionNftCheck,
+  handleSubscriptionNftConfirm,
+  handleSubscriptionNftCreate,
+  handleSubscriptionNftSubscribers,
+  handleSubscriptionNftSubscribe,
+  handleSubscriptionNftTiers,
+  handleSubscriptionNftUpdateTier,
+} from './routes/subscription-nft';
+import {
   handleLightningInvoice,
   handleTipCreate,
   handleTipFrame,
@@ -499,16 +538,42 @@ import {
   handleTipSettingsPost,
 } from './routes/tip';
 import tokenCommunity from './routes/token-community';
-import { handleTokenGateResolve, handleTokenGateVerify } from './routes/token-gate';
+import {
+  handleTokenGateResolve,
+  handleTokenGateVerify,
+  handleTokenGateVerifyMulti,
+  handleTokenGateContent,
+  handleTokenGateGet,
+  handleTokenGateDelete,
+} from './routes/token-gate';
 import { handleTokenSSE, handleTokenWebSocket } from './routes/token-websocket';
 import totpRoutes from './routes/totp';
 import { handleTranslate } from './routes/translate';
 import {
+  handleTipBadges,
+  handleTipLeaderboardCoins,
+  handleTipLeaderboardProtocols,
   handleUnifiedTipActivity,
   handleUnifiedTipCreate,
   handleUnifiedTipLeaderboard,
   handleUnifiedTipStats,
 } from './routes/unified-tip';
+import {
+  handleTradingSignals,
+  handleTradingSignalCreate,
+  handleTradingSignalAction,
+  handleTradingTrending,
+  handleTradingWhales,
+  handleTradingCoinSignals,
+  handleTradingCoinSummary,
+} from './routes/trading-signals';
+import {
+  handleCreatorRewards,
+  handleCreatorRewardsHistory,
+  handleCreatorRewardsClaim,
+  handleCreatorRewardsLeaderboard,
+  handleCreatorRewardsCompute,
+} from './lib/creator-rewards';
 import videoHub from './routes/video-hub';
 import { handleVisualFeed, handleVisualForYou, handleVisualTrending } from './routes/visual-feed';
 import { handleWalletNonce, handleWalletVerify } from './routes/wallet';
@@ -535,6 +600,9 @@ import zoraVideoRoutes from './routes/zora-video';
 
 // ─── App ────────────────────────────────────────────────────
 
+
+import { cspForPath } from './lib/csp';
+import { validateRequest, validateJsonBody } from './lib/input-validator';
 const app = new Hono<{ Bindings: Env }>();
 
 // ─── Global onError handler ─────────────────────────────────
@@ -616,6 +684,87 @@ app.use('*', async (c, next) => {
     });
   }
 });
+// ─── Middleware: Security headers ────────────────────────────
+// Sets security headers on EVERY response:
+//   - Content-Security-Policy (route-aware)
+//   - Strict-Transport-Security (HSTS)
+//   - X-Content-Type-Options (nosniff)
+//   - X-Frame-Options (DENY, SAMEORIGIN for embed)
+//   - Referrer-Policy
+//   - Cross-Origin-Resource-Policy
+//   - Cache-Control for sensitive endpoints
+app.use('*', async (c, next) => {
+  await next();
+  if (!c.res) return;
+
+  const path = c.req.path;
+  const headers = new Headers(c.res.headers);
+
+  // Content-Security-Policy — route-aware
+  const csp = cspForPath(path);
+  if (csp && !headers.has('content-security-policy')) {
+    headers.set('content-security-policy', csp);
+  }
+
+  // Strict-Transport-Security (HSTS) — 2 year max-age
+  if (!headers.has('strict-transport-security')) {
+    headers.set('strict-transport-security', 'max-age=63072000; includeSubDomains; preload');
+  }
+
+  // X-Content-Type-Options — prevent MIME sniffing
+  if (!headers.has('x-content-type-options')) {
+    headers.set('x-content-type-options', 'nosniff');
+  }
+
+  // X-Frame-Options — DENY by default, SAMEORIGIN for embed routes
+  if (!headers.has('x-frame-options')) {
+    if (path.startsWith('/api/embed/')) {
+      headers.set('x-frame-options', 'SAMEORIGIN');
+    } else {
+      headers.set('x-frame-options', 'DENY');
+    }
+  }
+
+  // Referrer-Policy
+  if (!headers.has('referrer-policy')) {
+    headers.set('referrer-policy', 'strict-origin-when-cross-origin');
+  }
+
+  // Cross-Origin-Resource-Policy
+  if (!headers.has('cross-origin-resource-policy')) {
+    if (path.startsWith('/api/admin/')) {
+      headers.set('cross-origin-resource-policy', 'same-origin');
+    } else {
+      headers.set('cross-origin-resource-policy', 'cross-origin');
+    }
+  }
+
+  // Cache-Control for sensitive endpoints (auth, wallet, sessions)
+  if (
+    path.includes('/auth/') ||
+    path.includes('/wallet/') ||
+    path.includes('/session') ||
+    path.includes('/api-key') ||
+    path.startsWith('/api/admin/')
+  ) {
+    if (!headers.has('cache-control')) {
+      headers.set('cache-control', 'no-store, must-revalidate');
+    }
+  }
+
+  // Remove Server header (information disclosure)
+  if (headers.has('server')) {
+    headers.delete('server');
+  }
+
+  c.res = new Response(c.res.body, {
+    status: c.res.status,
+    statusText: c.res.statusText,
+    headers,
+  });
+});
+
+
 
 // ─── Middleware: CORS post-response ──────────────────────────
 // Registered first so it wraps every response with CORS headers.
@@ -633,6 +782,30 @@ app.use('*', async (c, next) => {
   }
   await next();
 });
+
+// ─── Middleware: Input validation ────────────────────────────
+// Runs BEFORE body parsing and CSRF checks.
+// Validates query params, headers, content-type, and body size.
+app.use('*', async (c, next) => {
+  if (c.req.method === 'OPTIONS') return next();
+
+  const validation = validateRequest(c.req.raw, {});
+  if (!validation.valid) {
+    return new Response(
+      JSON.stringify({
+        error: validation.error,
+        code: validation.code || 'DF-400',
+      }),
+      {
+        status: validation.code === 'DF-413' ? 413 : validation.code === 'DF-415' ? 415 : 400,
+        headers: { 'content-type': 'application/json' },
+      },
+    );
+  }
+
+  return next();
+});
+
 
 // ─── Middleware: body size + CSRF for state-changing requests ──
 // Protects POST/PUT/PATCH/DELETE against cross-site request forgery via:
@@ -714,13 +887,23 @@ app.use('*', async (c, next) => {
 // ─── Middleware: API key authentication (v1 routes) ──────────
 app.use('/v1/*', apiKeyMiddleware);
 
-// ─── Middleware: rate limiting ───────────────────────────────
+// ─── Middleware: rate limiting (tiered) ──────────────────────
+// Uses context-aware rate limits:
+//   - Brute force: wallet verify → 5/min → 1/min after 3 failures
+//   - Enumeration: email/username checks → 3/min with exponential backoff
+//   - Scraping: feed endpoints → 30/min anonymous, 120/min authenticated
+//   - Admin: 10/min
+//   - Global: 1000 req/min per IP DDoS protection
 app.use('*', async (c, next) => {
   if (c.req.method === 'OPTIONS') return next();
   const ip = c.req.header('cf-connecting-ip') || c.req.header('x-forwarded-for') || 'unknown';
-  const maxReq = Number(c.env.RATE_MAX_REQ) || DEFAULT_RATE_MAX;
-  const windowMs = Number(c.env.RATE_WINDOW_MS) || DEFAULT_RATE_WINDOW;
-  const rl = await rateLimit(c.env, ip, c.req.path, maxReq, windowMs);
+
+  // Detect if the request is authenticated (has a session or API key)
+  const authHeader = c.req.header('authorization');
+  const cookieHeader = c.req.header('cookie');
+  const isAuthenticated = !!(authHeader?.startsWith('Bearer ') || cookieHeader?.includes('session='));
+
+  const rl = await tieredRateLimit(c.env, ip, c.req.path, isAuthenticated);
   if (!rl.allowed) {
     return new Response(JSON.stringify({ error: 'Rate limit', retryAfterMs: rl.retryAfter }), {
       status: 429,
@@ -1220,6 +1403,50 @@ app.get('/api/account/sovereignty/migration-guide', async (_c) => {
 app.all('/api/publish', async (c) => withSession(c, () => handlePublish(c.req.raw, c.env)));
 app.all('/api/engage', async (c) => withSession(c, () => handleEngage(c.req.raw, c.env)));
 
+// ─── API: Cross-Publish (one-click multi-protocol) ──────────
+app.post('/api/publish/all', async (c) => {
+  const { handlePublishAll } = await import('./routes/publish');
+  return withSession(c, () => handlePublishAll(c.req.raw, c.env));
+});
+app.post('/api/publish/selected', async (c) => {
+  const { handlePublishSelected } = await import('./routes/publish');
+  return withSession(c, () => handlePublishSelected(c.req.raw, c.env));
+});
+app.get('/api/publish/preview', async (c) => {
+  const { handlePreviewPost } = await import('./routes/publish');
+  return handlePreviewPost(c.req.raw, c.env);
+});
+app.post('/api/publish/schedule', async (c) => {
+  const { handleScheduleCrossPost } = await import('./routes/publish');
+  return withSession(c, () => handleScheduleCrossPost(c.req.raw, c.env));
+});
+app.get('/api/publish/scheduled', async (c) => {
+  const { handleListScheduledCrossPosts } = await import('./routes/publish');
+  return withSession(c, () => handleListScheduledCrossPosts(c.req.raw, c.env));
+});
+app.delete('/api/publish/scheduled/:id', async (c) => {
+  const { handleDeleteScheduledCrossPost } = await import('./routes/publish');
+  return withSession(c, () => handleDeleteScheduledCrossPost(c.req.raw, c.env));
+});
+
+// ─── API: Cross-Post History ─────────────────────────────────
+app.get('/api/crosspost/author/:wallet', async (c) => {
+  const { getAuthorCrossPostBatches } = await import('./lib/cross-publish-orchestrator');
+  const wallet = c.req.param('wallet');
+  const batches = await getAuthorCrossPostBatches(wallet, c.env);
+  return jsonResponse({ batches });
+});
+app.all('/api/crosspost/batch/:batchId', async (c) => {
+  const { getCrossPostBatch, deleteCrossPostBatch } = await import('./lib/cross-publish-orchestrator');
+  const batchId = c.req.param('batchId');
+  if (c.req.method === 'DELETE') {
+    const ok = await deleteCrossPostBatch(batchId, c.env);
+    return jsonResponse({ ok });
+  }
+  const batch = await getCrossPostBatch(batchId, c.env);
+  return batch ? jsonResponse(batch) : jsonResponse({ error: 'Batch not found' }, 404);
+});
+
 // ─── API: Tips ───────────────────────────────────────────────
 app.all('/api/tip/lightning/invoice', async (c) => handleLightningInvoice(c.req.raw, c.env));
 app.all('/api/tip/frame/tx/:id', async (c) => handleTipFrameTx(c.req.raw, c.env));
@@ -1242,6 +1469,37 @@ app.post('/api/tip/unified', async (c) =>
 app.get('/api/tip/unified/stats', async (c) => handleUnifiedTipStats(c.req.raw, c.env));
 app.get('/api/tip/unified/leaderboard', async (c) => handleUnifiedTipLeaderboard(c.req.raw, c.env));
 app.get('/api/tip/unified/activity', async (c) => handleUnifiedTipActivity(c.req.raw, c.env));
+
+// ─── API: Tip Badges & Extended Leaderboards (gamification) ──
+app.get('/api/tips/badges', async (c) => handleTipBadges(c.req.raw, c.env));
+app.get('/api/tips/leaderboard/protocols', async (c) => handleTipLeaderboardProtocols(c.req.raw, c.env));
+app.get('/api/tips/leaderboard/coins', async (c) => handleTipLeaderboardCoins(c.req.raw, c.env));
+
+// ─── API: Trading Signals (social trading feed) ──────────────
+app.get('/api/trading/signals', async (c) => handleTradingSignals(c.req.raw, c.env));
+app.post('/api/trading/signals', async (c) =>
+  withSession(c, () => handleTradingSignalCreate(c.req.raw, c.env)),
+);
+app.post('/api/trading/signals/:id/action', async (c) =>
+  withSession(c, () => handleTradingSignalAction(c.req.raw, c.env, c.req.param('id'))),
+);
+app.get('/api/trading/trending', async (c) => handleTradingTrending(c.req.raw, c.env));
+app.get('/api/trading/whales', async (c) => handleTradingWhales(c.req.raw, c.env));
+app.get('/api/trading/coins/:coin', async (c) => handleTradingCoinSignals(c.req.raw, c.env, c.req.param('coin')));
+app.get('/api/trading/coins/:coin/summary', async (c) => handleTradingCoinSummary(c.req.raw, c.env, c.req.param('coin')));
+
+// ─── API: Creator Rewards Program ──────────────────────────
+app.get('/api/creator/rewards', async (c) =>
+  withSession(c, () => handleCreatorRewards(c.req.raw, c.env)),
+);
+app.get('/api/creator/rewards/history', async (c) => handleCreatorRewardsHistory(c.req.raw, c.env));
+app.post('/api/creator/rewards/claim', async (c) =>
+  withSession(c, () => handleCreatorRewardsClaim(c.req.raw, c.env)),
+);
+app.get('/api/creator/rewards/leaderboard', async (c) => handleCreatorRewardsLeaderboard(c.req.raw, c.env));
+app.post('/api/creator/rewards/compute', async (c) =>
+  withSession(c, () => handleCreatorRewardsCompute(c.req.raw, c.env)),
+);
 
 // ─── API: Lemmy Discover ─────────────────────────────────────
 app.get('/api/lemmy/discover', async (c) => handleLemmyDiscover(c.req.raw, c.env));
@@ -1467,6 +1725,33 @@ app.all('/api/subscription/:creator', async (c) =>
   handleSubscriptionTiers(c.req.raw, c.env, c.req.param('creator')),
 );
 
+// ─── API: Subscription NFT (NFT-backed subscriptions) ──────────
+app.post('/api/subscription-nft/create', async (c) =>
+  withSession(c, () => handleSubscriptionNftCreate(c.req.raw, c.env)),
+);
+app.get('/api/subscription-nft/tiers', async (c) => handleSubscriptionNftTiers(c.req.raw, c.env));
+app.put('/api/subscription-nft/tier/:tierId', async (c) =>
+  withSession(c, () => handleSubscriptionNftUpdateTier(c.req.raw, c.env, c.req.param('tierId'))),
+);
+app.get('/api/subscription-nft/subscribers', async (c) =>
+  withSession(c, () => handleSubscriptionNftSubscribers(c.req.raw, c.env)),
+);
+app.post('/api/subscription-nft/subscribe', async (c) =>
+  withSession(c, () => handleSubscriptionNftSubscribe(c.req.raw, c.env)),
+);
+app.post('/api/subscription-nft/confirm', async (c) =>
+  withSession(c, () => handleSubscriptionNftConfirm(c.req.raw, c.env)),
+);
+app.get('/api/subscription-nft/active', async (c) =>
+  withSession(c, () => handleSubscriptionNftActive(c.req.raw, c.env)),
+);
+app.post('/api/subscription-nft/cancel', async (c) =>
+  withSession(c, () => handleSubscriptionNftCancel(c.req.raw, c.env)),
+);
+app.get('/api/subscription-nft/check', async (c) =>
+  handleSubscriptionNftCheck(c.req.raw, c.env),
+);
+
 // ─── API: Tiers ──────────────────────────────────────────────
 import tiers from './routes/tiers';
 
@@ -1486,6 +1771,14 @@ app.all('/api/x402/verify', async (c) => handleX402Verify(c.req.raw, c.env));
 
 // ─── API: Token Gate ─────────────────────────────────────────
 app.post('/api/token-gate/verify', async (c) => handleTokenGateVerify(c.req.raw, c.env));
+app.post('/api/token-gate/verify-multi', async (c) => handleTokenGateVerifyMulti(c.req.raw, c.env));
+app.post('/api/token-gate/gate-content', async (c) => handleTokenGateContent(c.req.raw, c.env));
+app.get('/api/token-gate/gate/:contentType/:contentId', async (c) =>
+  handleTokenGateGet(c.req.raw, c.env, c.req.param('contentType'), c.req.param('contentId')),
+);
+app.delete('/api/token-gate/gate/:contentType/:contentId', async (c) =>
+  handleTokenGateDelete(c.req.raw, c.env, c.req.param('contentType'), c.req.param('contentId')),
+);
 app.post('/api/token-gate/resolve', async (c) => handleTokenGateResolve(c.req.raw, c.env));
 
 // ─── API: Creator Config (vesting, fees, cross-chain) ───────
@@ -1496,6 +1789,19 @@ app.route('/api/creator/vesting', creatorVesting);
 
 // ─── API: Creator Videos (upload, manage, analytics) ───────
 app.route('/api/creator/videos', creatorVideos);
+
+// ─── API: Creator Coin Dashboard (TASK 3) ────────────────────────
+app.get('/api/creator/coins', async (c) => handleCreatorCoinsList(c.req.raw, c.env));
+app.get('/api/creator/coin/:address/stats', async (c) => handleCreatorCoinStats(c.req.raw, c.env));
+app.get('/api/creator/coin/:address/holders', async (c) => handleCreatorCoinHolders(c.req.raw, c.env));
+app.get('/api/creator/coin/:address/trades', async (c) => handleCreatorCoinTrades(c.req.raw, c.env));
+app.post('/api/creator/coin/:address/burn', async (c) => handleCreatorCoinBurn(c.req.raw, c.env));
+app.post('/api/creator/coin/:address/airdrop', async (c) => handleCreatorCoinAirdrop(c.req.raw, c.env));
+app.post('/api/creator/coin/:address/gated-post', async (c) => handleCreatorCoinGatedPost(c.req.raw, c.env));
+app.get('/api/creator/coin/:address/revenue', async (c) => handleCreatorCoinRevenue(c.req.raw, c.env));
+
+// ─── API: Platform Revenue Transparency (public, TASK 4) ─────────
+app.get('/api/platform/revenue', async (c) => handlePlatformRevenue(c.req.raw, c.env));
 
 // ─── API: Token Community (engagement layer) ────────────────
 app.route('/api/token', tokenCommunity);
@@ -1728,6 +2034,35 @@ app.post('/api/discord/channel/announce', async (c) =>
 app.get('/api/discord/channels', async (c) => handleDiscordChannelsList(c.req.raw, c.env));
 app.delete('/api/discord/disconnect', async (c) => handleDiscordDisconnect(c.req.raw, c.env));
 app.post('/api/discord/bridge', async (c) => handleDiscordBridgeMessage(c.req.raw, c.env));
+app.get('/api/discord/oauth', async (c) => handleDiscordOAuth(c.req.raw, c.env));
+app.get('/api/discord/callback', async (c) => handleDiscordOAuthCallback(c.req.raw, c.env));
+app.get('/api/discord/guilds', async (c) => handleDiscordGuilds(c.req.raw, c.env));
+app.post('/api/discord/bridge/enable', async (c) => handleDiscordBridgeEnable(c.req.raw, c.env));
+app.post('/api/discord/community/create', async (c) =>
+  handleDiscordCommunityCreate(c.req.raw, c.env),
+);
+app.get('/api/discord/community/:symbol', async (c) =>
+  handleDiscordCommunityInfo(c.req.raw, c.env),
+);
+app.get('/api/discord/connection', async (c) =>
+  handleDiscordConnectionStatus(c.req.raw, c.env),
+);
+app.delete('/api/discord/connection', async (c) =>
+  handleDiscordDisconnectOAuth(c.req.raw, c.env),
+);
+
+// ─── API: Telegram Bot Integration ────────────────────────
+app.post('/api/telegram/webhook', async (c) => handleTelegramWebhook(c.req.raw, c.env));
+app.get('/api/telegram/link', async (c) => handleTelegramGenerateLink(c.req.raw, c.env));
+app.post('/api/telegram/send', async (c) => handleTelegramSend(c.req.raw, c.env));
+app.get('/api/telegram/bot-info', async (c) => handleTelegramBotInfo(c.req.raw, c.env));
+app.post('/api/telegram/link-account', async (c) =>
+  handleTelegramLinkAccount(c.req.raw, c.env),
+);
+app.get('/api/telegram/linked', async (c) => handleTelegramGetLinked(c.req.raw, c.env));
+app.delete('/api/telegram/link-account', async (c) =>
+  handleTelegramUnlinkAccount(c.req.raw, c.env),
+);
 
 // ─── API: Matrix Integration ───────────────────────────────
 app.post('/api/matrix/connect', async (c) => handleMatrixConnect(c.req.raw, c.env));
@@ -2319,6 +2654,26 @@ app.post('/v1/discord/channel/announce', async (c) =>
 app.get('/v1/discord/channels', async (c) => handleDiscordChannelsList(c.req.raw, c.env));
 app.delete('/v1/discord/disconnect', async (c) => handleDiscordDisconnect(c.req.raw, c.env));
 app.post('/v1/discord/bridge', async (c) => handleDiscordBridgeMessage(c.req.raw, c.env));
+app.get('/v1/discord/oauth', async (c) => handleDiscordOAuth(c.req.raw, c.env));
+app.get('/v1/discord/callback', async (c) => handleDiscordOAuthCallback(c.req.raw, c.env));
+app.get('/v1/discord/guilds', async (c) => handleDiscordGuilds(c.req.raw, c.env));
+app.post('/v1/discord/bridge/enable', async (c) => handleDiscordBridgeEnable(c.req.raw, c.env));
+app.post('/v1/discord/community/create', async (c) =>
+  handleDiscordCommunityCreate(c.req.raw, c.env),
+);
+
+// ─── V1: Telegram Bot Integration ─────────────────────────
+app.post('/v1/telegram/webhook', async (c) => handleTelegramWebhook(c.req.raw, c.env));
+app.get('/v1/telegram/link', async (c) => handleTelegramGenerateLink(c.req.raw, c.env));
+app.post('/v1/telegram/send', async (c) => handleTelegramSend(c.req.raw, c.env));
+app.get('/v1/telegram/bot-info', async (c) => handleTelegramBotInfo(c.req.raw, c.env));
+app.post('/v1/telegram/link-account', async (c) =>
+  handleTelegramLinkAccount(c.req.raw, c.env),
+);
+app.get('/v1/telegram/linked', async (c) => handleTelegramGetLinked(c.req.raw, c.env));
+app.delete('/v1/telegram/link-account', async (c) =>
+  handleTelegramUnlinkAccount(c.req.raw, c.env),
+);
 
 // ─── V1: Matrix Integration ───────────────────────────────
 app.post('/v1/matrix/connect', async (c) => handleMatrixConnect(c.req.raw, c.env));
