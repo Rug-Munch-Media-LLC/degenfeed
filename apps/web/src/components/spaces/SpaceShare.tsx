@@ -9,10 +9,24 @@ interface SpaceShareProps {
   spaceId: string;
   title: string;
   hostName: string;
-  protocols: string[];
+  platforms?: string[];
+  protocols?: string[];
   isLive: boolean;
   scheduledAt?: string;
 }
+
+// === Constants ====================================================
+
+const SHARE_PLATFORMS = [
+  { id: 'nostr', label: 'Nostr', color: '#8b5cf6', icon: '⚡' },
+  { id: 'farcaster', label: 'Farcaster', color: '#8a63d2', icon: '🏎️' },
+  { id: 'lens', label: 'Lens', color: '#abfe2c', icon: '🔮' },
+  { id: 'bluesky', label: 'Bluesky', color: '#1185fe', icon: '🦋' },
+  { id: 'mastodon', label: 'Mastodon', color: '#6364ff', icon: '🐘' },
+  { id: 'discord', label: 'Discord', color: '#5865f2', icon: '💬' },
+  { id: 'telegram', label: 'Telegram', color: '#26a5e4', icon: '✈️' },
+  { id: 'twitter', label: 'X / Twitter', color: '#1da1f2', icon: '𝕏' },
+];
 
 // === Main Component ===============================================
 
@@ -20,13 +34,17 @@ export function SpaceShare({
   spaceId,
   title,
   hostName,
-  protocols,
+  platforms = [],
+  protocols = [],
   isLive,
   scheduledAt,
 }: SpaceShareProps) {
   const [copied, setCopied] = useState(false);
   const [showShareMenu, setShowShareMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  // Merge platforms and protocols into a unique list
+  const allPlatforms = [...new Set([...platforms, ...protocols])];
 
   const spaceUrl =
     typeof window !== 'undefined' ? `${window.location.origin}/spaces/${spaceId}` : '';
@@ -37,7 +55,6 @@ export function SpaceShare({
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // Fallback
       const textArea = document.createElement('textarea');
       textArea.value = spaceUrl;
       document.body.appendChild(textArea);
@@ -55,12 +72,10 @@ export function SpaceShare({
       ? `📅 Upcoming Space: ${title} — hosted by ${hostName} on DegenFeed Spaces`
       : `🎙️ ${title} — hosted by ${hostName} on DegenFeed Spaces`;
 
-  // Open share menu
   const toggleMenu = useCallback(() => {
     setShowShareMenu((prev) => !prev);
   }, []);
 
-  // Share via Web Share API (mobile)
   const handleNativeShare = useCallback(async () => {
     if (navigator.share) {
       try {
@@ -76,7 +91,6 @@ export function SpaceShare({
     setShowShareMenu(false);
   }, [title, shareText, spaceUrl]);
 
-  // Compose cross-platform post
   const handleCrossPost = useCallback(
     (protocol: string) => {
       const postText = encodeURIComponent(`${shareText}\n\n${spaceUrl}`);
@@ -84,24 +98,28 @@ export function SpaceShare({
 
       switch (protocol) {
         case 'nostr':
-          // Opens default Nostr client
           url = `https://snort.social/new?message=${postText}`;
           break;
         case 'farcaster':
           url = `https://warpcast.com/~/compose?text=${postText}`;
           break;
         case 'lens':
-          url = `https://lenster.xyz/?text=${postText}`;
-          break;
-        case 'mastodon':
-          // Opens the Mastodon share dialog (will redirect to user's instance via API)
-          url = `https://social.degenfeed.xyz/share?text=${postText}`;
-          break;
-        case 'twitter':
-          url = `https://twitter.com/intent/tweet?text=${postText}`;
+          url = `https://hey.xyz/?text=${postText}`;
           break;
         case 'bluesky':
           url = `https://bsky.app/intent/compose?text=${postText}`;
+          break;
+        case 'mastodon':
+          url = `https://social.degenfeed.xyz/share?text=${postText}`;
+          break;
+        case 'discord':
+          handleCopyLink();
+          return;
+        case 'telegram':
+          url = `https://t.me/share/url?url=${encodeURIComponent(spaceUrl)}&text=${encodeURIComponent(shareText)}`;
+          break;
+        case 'twitter':
+          url = `https://twitter.com/intent/tweet?text=${postText}`;
           break;
         default:
           handleCopyLink();
@@ -146,9 +164,7 @@ export function SpaceShare({
       {/* Share menu */}
       {showShareMenu && (
         <>
-          {/* Backdrop */}
           <div className="fixed inset-0 z-40" onClick={() => setShowShareMenu(false)} />
-          {/* Menu */}
           <div className="absolute bottom-full right-0 z-50 mb-2 w-64 rounded-2xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-2 shadow-2xl">
             {/* Copy link */}
             <button
@@ -179,56 +195,30 @@ export function SpaceShare({
               </button>
             )}
 
-            {/* Cross-platform posts */}
             <div className="my-1.5 border-t border-[var(--color-glass-border)]" />
             <p className="px-3 py-1 text-[9px] font-bold uppercase tracking-wider text-[var(--color-muted)]">
               Post to
             </p>
 
-            {protocols.length > 0 ? (
-              protocols.map((protocol) => (
-                <button
-                  key={protocol}
-                  type="button"
-                  onClick={() => handleCrossPost(protocol)}
-                  className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-medium text-[var(--color-fg)] transition-all hover:bg-[var(--color-muted)]/10"
+            {SHARE_PLATFORMS.map((platform) => (
+              <button
+                key={platform.id}
+                type="button"
+                onClick={() => handleCrossPost(platform.id)}
+                className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-medium text-[var(--color-fg)] transition-all hover:bg-[var(--color-muted)]/10"
+              >
+                <span
+                  className="flex h-7 w-7 items-center justify-center rounded-lg text-[11px]"
+                  style={{
+                    backgroundColor: `${platform.color}18`,
+                    color: platform.color,
+                  }}
                 >
-                  <span
-                    className="flex h-7 w-7 items-center justify-center rounded-lg text-[11px]"
-                    style={{
-                      backgroundColor: `${getProtocolColor(protocol)}18`,
-                      color: getProtocolColor(protocol),
-                    }}
-                  >
-                    {getProtocolIcon(protocol)}
-                  </span>
-                  {getProtocolLabel(protocol)}
-                </button>
-              ))
-            ) : (
-              <>
-                <button
-                  type="button"
-                  onClick={() => handleCrossPost('twitter')}
-                  className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-medium text-[var(--color-fg)] transition-all hover:bg-[var(--color-muted)]/10"
-                >
-                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-sky-500/10 text-sky-400">
-                    𝕏
-                  </span>
-                  Twitter / X
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleCrossPost('bluesky')}
-                  className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-medium text-[var(--color-fg)] transition-all hover:bg-[var(--color-muted)]/10"
-                >
-                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-500/10 text-blue-400">
-                    🦋
-                  </span>
-                  Bluesky
-                </button>
-              </>
-            )}
+                  {platform.icon}
+                </span>
+                {platform.label}
+              </button>
+            ))}
           </div>
         </>
       )}

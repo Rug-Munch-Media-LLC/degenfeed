@@ -15,13 +15,27 @@ import { getProtocolColor, getProtocolIcon, getProtocolLabel } from './ProtocolB
 // ─── Constants ────────────────────────────────────────────────────
 
 const BROADCAST_PROTOCOLS = [
-  { id: 'nostr', label: 'Nostr', platforms: ['nostr'] },
-  { id: 'farcaster', label: 'Farcaster', platforms: [] },
-  { id: 'lens', label: 'Lens', platforms: [] },
-  { id: 'mastodon', label: 'Mastodon', platforms: [] },
-  { id: 'peertube', label: 'PeerTube', platforms: ['peertube'] },
-  { id: 'owncast', label: 'Owncast', platforms: ['owncast'] },
-  { id: 'livepeer', label: 'LivePeer', platforms: ['livepeer'] },
+  // ── Audio Spaces ──
+  { id: 'nostr', label: 'Nostr', platforms: ['nostr'], group: 'audio' },
+  { id: 'peertube', label: 'PeerTube', platforms: ['peertube'], group: 'audio' },
+  { id: 'owncast', label: 'Owncast', platforms: ['owncast'], group: 'audio' },
+  { id: 'livepeer', label: 'LivePeer', platforms: ['livepeer'], group: 'audio' },
+  // ── Social Announcements ──
+  { id: 'farcaster', label: 'Farcaster', platforms: [], group: 'social' },
+  { id: 'lens', label: 'Lens', platforms: [], group: 'social' },
+  { id: 'bluesky', label: 'Bluesky', platforms: [], group: 'social' },
+  { id: 'mastodon', label: 'Mastodon', platforms: [], group: 'social' },
+  { id: 'discord', label: 'Discord', platforms: [], group: 'social' },
+  { id: 'telegram', label: 'Telegram', platforms: [], group: 'social' },
+  { id: 'twitter', label: 'X / Twitter', platforms: [], group: 'social' },
+  // ── Live Video ──
+  { id: 'youtube', label: 'YouTube Live', platforms: ['youtube'], group: 'video' },
+  { id: 'twitch', label: 'Twitch', platforms: ['twitch'], group: 'video' },
+  { id: 'kick', label: 'Kick', platforms: ['kick'], group: 'video' },
+  // ── Live Photos ──
+  { id: 'nostr-pictures', label: 'Nostr Photos', platforms: ['nostr-pictures'], group: 'photos' },
+  { id: 'bluesky-photos', label: 'Bsky Photos', platforms: ['bluesky-photos'], group: 'photos' },
+  { id: 'pixelfed', label: 'Pixelfed', platforms: ['pixelfed'], group: 'photos' },
 ] as const;
 
 const MAX_TITLE_LENGTH = 100;

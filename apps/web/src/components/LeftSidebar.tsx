@@ -281,6 +281,93 @@ export const LeftSidebar = memo(function LeftSidebar({
           )}
         </button>
 
+        {/* Live */}
+        <Link
+          href="/live"
+          onClick={handleClick}
+          className={`sidebar-nav-item ${isActive('/live') ? 'sidebar-nav-active' : ''} ${collapsed ? 'justify-center px-0' : ''}`}
+          aria-current={isActive('/live') ? 'page' : undefined}
+          title={collapsed ? 'Live' : undefined}
+        >
+          <span className="sidebar-nav-icon">
+            <svg
+              width="22"
+              height="22"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={isActive('/live') ? 2.5 : 1.5}
+              strokeLinecap="round"
+              aria-hidden="true"
+            >
+              <polygon points="5 3 19 12 5 21 5 3" />
+            </svg>
+          </span>
+          {!collapsed && (
+            <>
+              <span className="sidebar-nav-label">Live</span>
+              <span className="ml-auto flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-red-500/15 px-1.5 text-[9px] font-bold text-red-400">
+                12
+              </span>
+            </>
+          )}
+        </Link>
+
+        {/* Creator Studio */}
+        <Link
+          href="/creator"
+          onClick={handleClick}
+          className={`sidebar-nav-item ${isActive('/creator') ? 'sidebar-nav-active' : ''} ${collapsed ? 'justify-center px-0' : ''}`}
+          aria-current={isActive('/creator') ? 'page' : undefined}
+          title={collapsed ? 'Creator' : undefined}
+        >
+          <span className="sidebar-nav-icon">
+            <svg
+              width="22"
+              height="22"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={isActive('/creator') ? 2.5 : 1.5}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+              <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
+            </svg>
+          </span>
+          {!collapsed && <span className="sidebar-nav-label">Creator Studio</span>}
+        </Link>
+
+        {/* Pricing */}
+        <Link
+          href="/pricing"
+          onClick={handleClick}
+          className={`sidebar-nav-item ${isActive('/pricing') ? 'sidebar-nav-active' : ''} ${collapsed ? 'justify-center px-0' : ''}`}
+          aria-current={isActive('/pricing') ? 'page' : undefined}
+          title={collapsed ? 'Pricing' : undefined}
+        >
+          <span className="sidebar-nav-icon">
+            <svg
+              width="22"
+              height="22"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={isActive('/pricing') ? 2.5 : 1.5}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 6v12M9 9.5c-.87-.5-2-.5-2.5-.5s-1.5.5-1.5 1.5.67 1.5 1.5 2 3.5.5 4.5 1 1 1.5 1 2.5-1.5 2-3 2-2.5-.5-3-1" />
+            </svg>
+          </span>
+          {!collapsed && <span className="sidebar-nav-label">Pricing</span>}
+        </Link>
+
         {/* Notifications */}
         <Link
           href="/notifications"

@@ -1,0 +1,32 @@
+{
+  "name": "@degenfeed/monetization",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./tier-manager": "./src/TierManager.ts",
+    "./feature-gate": "./src/FeatureGate.ts",
+    "./stripe": "./src/StripeIntegration.ts",
+    "./types": "./src/types.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "lint": "biome check src/"
+  },
+  "dependencies": {
+    "@degenfeed/auth": "workspace:*",
+    "@degenfeed/storage": "workspace:*",
+    "@degenfeed/types": "workspace:*",
+    "stripe": "^17.0.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.2",
+    "typescript": "^5.5.0",
+    "vitest": "^4.1.10"
+  }
+}

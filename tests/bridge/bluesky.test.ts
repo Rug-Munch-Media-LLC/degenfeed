@@ -38,7 +38,7 @@ function makePost(overrides: Record<string, unknown> = {}) {
 }
 
 // Re-import for fetch-based tests
-const bridgeModule = '../../bridge/src/providers/bluesky';
+const bridgeModule = '../../bridge/src/providers/bluesky.ts';
 
 describe('Bluesky Provider — guessNiches', () => {
   it('should detect bitcoin niche from text', () => {

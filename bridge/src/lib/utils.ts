@@ -17,7 +17,9 @@ export function stripHtml(html: string): string {
     .replace(/&quot;/g, '"')
     .replace(/&#39;/g, "'")
     .replace(/&nbsp;/g, ' ')
-    .replace(/\s+/g, ' ')
+    .replace(/[ \t]+/g, ' ')
+    .replace(/ +\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
     .trim();
 }
 
@@ -35,7 +37,7 @@ export function guessNiches(text: string, extraKeywords?: string[]): string[] {
   if (/\b(nft|art|collectible|punk|bored|ape)\b/.test(lower)) niches.push('nft');
   if (/\b(ai|artificial|intelligence|llm|agent)\b/.test(lower)) niches.push('ai');
   if (/\b(sec|regulation|sec\.|etf|compliance)\b/.test(lower)) niches.push('regulation');
-  if (/\b(meme|pepe|dog|shib|bonk|wif)\b/.test(lower)) niches.push('memecoin');
+  if (/\b(meme|pepe|dog|doge|shib|bonk|wif)\b/.test(lower)) niches.push('memecoin');
   if (/\b(layer2|l2|arbitrum|optimism|base|polygon)\b/.test(lower)) niches.push('layer2');
   if (/\b(security|hack|exploit|audit|bug)\b/.test(lower)) niches.push('security');
   if (/\b(rust|typescript|python|programming|code|dev)\b/.test(lower)) niches.push('tech');

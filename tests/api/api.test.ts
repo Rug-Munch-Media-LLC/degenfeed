@@ -1,36 +1,28 @@
 /**
  * @degenfeed/web — API Client Tests
  *
- * Covers:
- * - api.get constructs correct request
- * - api.post sends JSON body
- * - api.put sends JSON body with correct method
- * - api.del sends DELETE request
- * - handleResponse parses success responses
- * - handleResponse parses error responses
- * - handleResponse handles non-JSON error body
- * - Deduplication for concurrent GET requests
- * - createAsyncState returns correct initial state
+ * Tests the centralized API client with mocked retryFetch.
+ * Covers GET, POST, PUT, DELETE, createAsyncState, and envelope passthrough.
  */
 
 // @vitest-environment happy-dom
 
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock retryFetch to avoid actual network calls
+const mockRetryFetch = vi.fn();
 vi.mock('../../apps/web/src/lib/retryFetch', () => ({
-  retryFetch: vi.fn(),
+  retryFetch: mockRetryFetch,
   retryFetchJson: vi.fn(),
 }));
 
 describe('API Client — api.get', () => {
-  afterEach(() => {
-    vi.restoreAllMocks();
+  beforeEach(() => {
+    mockRetryFetch.mockReset();
   });
 
   it('should make GET request and return parsed data', async () => {
-    const retryFetch = vi.mocked(require('../../apps/web/src/lib/retryFetch').retryFetch);
-    retryFetch.mockResolvedValue(
+    mockRetryFetch.mockResolvedValue(
       new Response(JSON.stringify({ id: 1, name: 'test' }), {
         status: 200,
         headers: { 'content-type': 'application/json' },
@@ -43,12 +35,11 @@ describe('API Client — api.get', () => {
     expect(result.success).toBe(true);
     expect(result.data?.id).toBe(1);
     expect(result.data?.name).toBe('test');
-    expect(retryFetch).toHaveBeenCalledWith('/api/test', { fetchOptions: { method: 'GET' } });
+    expect(mockRetryFetch).toHaveBeenCalledWith('/api/test', { fetchOptions: { method: 'GET' } });
   });
 
   it('should return error response on non-ok status', async () => {
-    const retryFetch = vi.mocked(require('../../apps/web/src/lib/retryFetch').retryFetch);
-    retryFetch.mockResolvedValue(
+    mockRetryFetch.mockResolvedValue(
       new Response(JSON.stringify({ error: 'Not found' }), {
         status: 404,
         headers: { 'content-type': 'application/json' },
@@ -63,8 +54,7 @@ describe('API Client — api.get', () => {
   });
 
   it('should handle non-JSON error response gracefully', async () => {
-    const retryFetch = vi.mocked(require('../../apps/web/src/lib/retryFetch').retryFetch);
-    retryFetch.mockResolvedValue(new Response('Internal Server Error', { status: 500 }));
+    mockRetryFetch.mockResolvedValue(new Response('Internal Server Error', { status: 500 }));
 
     const { api } = await import('../../apps/web/src/services/api');
     const result = await api.get('/api/error');
@@ -73,30 +63,21 @@ describe('API Client — api.get', () => {
     expect(result.error).toContain('HTTP 500');
   });
 
-  it('should handle network errors gracefully', async () => {
-    const retryFetch = vi.mocked(require('../../apps/web/src/lib/retryFetch').retryFetch);
-    retryFetch.mockRejectedValue(new Error('Network error'));
+  it('should throw when retryFetch throws a network error', async () => {
+    mockRetryFetch.mockRejectedValue(new Error('Network error'));
 
     const { api } = await import('../../apps/web/src/services/api');
-    try {
-      await api.get('/api/test');
-      // Should not reach here
-      expect(true).toBe(false);
-    } catch (err) {
-      // retryFetch throws on network errors
-      expect(err).toBeDefined();
-    }
+    await expect(api.get('/api/test')).rejects.toThrow('Network error');
   });
 });
 
 describe('API Client — api.post', () => {
-  afterEach(() => {
-    vi.restoreAllMocks();
+  beforeEach(() => {
+    mockRetryFetch.mockReset();
   });
 
   it('should make POST request with JSON body', async () => {
-    const retryFetch = vi.mocked(require('../../apps/web/src/lib/retryFetch').retryFetch);
-    retryFetch.mockResolvedValue(
+    mockRetryFetch.mockResolvedValue(
       new Response(JSON.stringify({ success: true, id: 'new-123' }), {
         status: 200,
         headers: { 'content-type': 'application/json' },
@@ -108,7 +89,7 @@ describe('API Client — api.post', () => {
 
     expect(result.success).toBe(true);
     expect(result.data?.id).toBe('new-123');
-    expect(retryFetch).toHaveBeenCalledWith('/api/create', {
+    expect(mockRetryFetch).toHaveBeenCalledWith('/api/create', {
       fetchOptions: {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -118,8 +99,7 @@ describe('API Client — api.post', () => {
   });
 
   it('should make POST request without body', async () => {
-    const retryFetch = vi.mocked(require('../../apps/web/src/lib/retryFetch').retryFetch);
-    retryFetch.mockResolvedValue(
+    mockRetryFetch.mockResolvedValue(
       new Response(JSON.stringify({ ok: true }), {
         status: 200,
         headers: { 'content-type': 'application/json' },
@@ -130,7 +110,7 @@ describe('API Client — api.post', () => {
     const result = await api.post('/api/action');
 
     expect(result.success).toBe(true);
-    expect(retryFetch).toHaveBeenCalledWith('/api/action', {
+    expect(mockRetryFetch).toHaveBeenCalledWith('/api/action', {
       fetchOptions: {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -141,13 +121,12 @@ describe('API Client — api.post', () => {
 });
 
 describe('API Client — api.put', () => {
-  afterEach(() => {
-    vi.restoreAllMocks();
+  beforeEach(() => {
+    mockRetryFetch.mockReset();
   });
 
   it('should make PUT request with JSON body', async () => {
-    const retryFetch = vi.mocked(require('../../apps/web/src/lib/retryFetch').retryFetch);
-    retryFetch.mockResolvedValue(
+    mockRetryFetch.mockResolvedValue(
       new Response(JSON.stringify({ success: true }), {
         status: 200,
         headers: { 'content-type': 'application/json' },
@@ -158,7 +137,7 @@ describe('API Client — api.put', () => {
     const result = await api.put('/api/update', { key: 'value' });
 
     expect(result.success).toBe(true);
-    expect(retryFetch).toHaveBeenCalledWith('/api/update', {
+    expect(mockRetryFetch).toHaveBeenCalledWith('/api/update', {
       fetchOptions: {
         method: 'PUT',
         headers: { 'content-type': 'application/json' },
@@ -169,13 +148,12 @@ describe('API Client — api.put', () => {
 });
 
 describe('API Client — api.del', () => {
-  afterEach(() => {
-    vi.restoreAllMocks();
+  beforeEach(() => {
+    mockRetryFetch.mockReset();
   });
 
   it('should make DELETE request', async () => {
-    const retryFetch = vi.mocked(require('../../apps/web/src/lib/retryFetch').retryFetch);
-    retryFetch.mockResolvedValue(
+    mockRetryFetch.mockResolvedValue(
       new Response(JSON.stringify({ success: true }), {
         status: 200,
         headers: { 'content-type': 'application/json' },
@@ -186,17 +164,13 @@ describe('API Client — api.del', () => {
     const result = await api.del('/api/delete/1');
 
     expect(result.success).toBe(true);
-    expect(retryFetch).toHaveBeenCalledWith('/api/delete/1', {
+    expect(mockRetryFetch).toHaveBeenCalledWith('/api/delete/1', {
       fetchOptions: { method: 'DELETE' },
     });
   });
 });
 
 describe('API Client — createAsyncState', () => {
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
   it('should create async state with default idle state', async () => {
     const { api } = await import('../../apps/web/src/services/api');
     const state = api.createAsyncState<string>();
@@ -213,14 +187,12 @@ describe('API Client — createAsyncState', () => {
 });
 
 describe('API Client — response envelope passthrough', () => {
-  afterEach(() => {
-    vi.restoreAllMocks();
+  beforeEach(() => {
+    mockRetryFetch.mockReset();
   });
 
   it('should pass through ApiResponse envelope when already wrapped', async () => {
-    const retryFetch = vi.mocked(require('../../apps/web/src/lib/retryFetch').retryFetch);
-    // API returns already-wrapped response
-    retryFetch.mockResolvedValue(
+    mockRetryFetch.mockResolvedValue(
       new Response(
         JSON.stringify({ success: false, error: 'Rate limited', errors: ['too many requests'] }),
         {

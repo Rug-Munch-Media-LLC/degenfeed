@@ -16,6 +16,7 @@
 
 import type { SchemaGuard, UnifiedPost } from '../server/types';
 import { getRedditOAuth } from './reddit-auth';
+
 const $fetch = globalThis.fetch;
 
 const REDDIT_RSS = 'https://www.reddit.com';
@@ -64,7 +65,9 @@ export function stripHtml(html: string): string {
     .replace(/&quot;/g, '"')
     .replace(/&#39;/g, "'")
     .replace(/&nbsp;/g, ' ')
-    .replace(/\s+/g, ' ')
+    .replace(/[ \t]+/g, ' ')
+    .replace(/ +\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
     .trim();
 }
 
@@ -100,7 +103,7 @@ export function guessNiches(text: string, subreddit: string): string[] {
     subLower === 'localllama'
   )
     niches.push('ai');
-  if (/\b(meme|pepe|dog|shib|bonk|wif)\b/.test(lower)) niches.push('memecoin');
+  if (/\b(meme|pepe|dog|doge|shib|bonk|wif)\b/.test(lower)) niches.push('memecoin');
   if (/\b(layer2|l2|arbitrum|optimism|base|polygon)\b/.test(lower) || subLower === 'layer2')
     niches.push('layer2');
   if (/\b(security|hack|exploit|audit|bug)\b/.test(lower)) niches.push('security');

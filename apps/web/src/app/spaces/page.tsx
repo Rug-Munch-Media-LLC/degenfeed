@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../../components/AuthProvider';
 import { ANIM_STYLES, LiveDot, SpacesIcon } from './_animations';
 import {
+  ContentTypeBadge,
   EmptyState,
   GridSkeleton,
   LiveSkeleton,
@@ -14,7 +15,7 @@ import {
   SectionHeader,
   UpcomingSpaceCard,
 } from './_components';
-import type { SpaceItem } from './_types';
+import type { SpaceContentType, SpaceItem } from './_types';
 
 const TipModal = dynamic(
   () => import('../../components/TipModal').then((m) => ({ default: m.TipModal })),
@@ -33,6 +34,7 @@ export default function SpacesPage() {
   const [showHostModal, setShowHostModal] = useState(false);
   const [activeSpaceId, setActiveSpaceId] = useState<string | null>(null);
   const [tipSpace, setTipSpace] = useState<SpaceItem | null>(null);
+  const [contentTypeFilter, setContentTypeFilter] = useState<SpaceContentType | 'all'>('all');
   const pollRef = useRef<ReturnType<typeof setInterval>>(null);
 
   const activeSpace = useMemo(
@@ -110,6 +112,12 @@ export default function SpacesPage() {
     }
   }, []);
 
+  // Filter live spaces by content type
+  const filteredLiveSpaces = useMemo(() => {
+    if (contentTypeFilter === 'all') return liveSpaces;
+    return liveSpaces.filter((s) => s.contentType === contentTypeFilter);
+  }, [liveSpaces, contentTypeFilter]);
+
   // Live Space Room
   if (activeSpace) {
     return (
@@ -140,49 +148,51 @@ export default function SpacesPage() {
                 Audio Spaces
               </h1>
               <p className="mt-0.5 text-xs text-[var(--color-muted)]">
-                Live audio rooms across the open social graph
+                Live audio, video & photos across the open social graph
               </p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={() => {
-              if (hasSignedIn) setShowHostModal(true);
-              else openSignIn();
-            }}
-            className="inline-flex items-center gap-2 rounded-xl bg-degen-500 px-5 py-2.5 text-sm font-bold text-black transition-all duration-200 hover:bg-degen-400 hover:shadow-[0_0_20px_rgba(0,255,65,0.3)] active:scale-[0.97]"
-          >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              aria-hidden="true"
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                if (hasSignedIn) setShowHostModal(true);
+                else openSignIn();
+              }}
+              className="inline-flex items-center gap-2 rounded-xl bg-degen-500 px-5 py-2.5 text-sm font-bold text-black transition-all duration-200 hover:bg-degen-400 hover:shadow-[0_0_20px_rgba(0,255,65,0.3)] active:scale-[0.97]"
             >
-              <line x1="12" y1="5" x2="12" y2="19" />
-              <line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
-            {hasSignedIn ? 'Start a Space' : 'Connect to Host'}
-          </button>
-          <a
-            href="/spaces/live"
-            className="ml-2 inline-flex items-center gap-2 rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] px-4 py-2.5 text-sm font-medium text-[var(--color-muted)] transition-all hover:border-degen-500/30 hover:text-degen-400"
-          >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              aria-hidden="true"
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                aria-hidden="true"
+              >
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              {hasSignedIn ? 'Go Live' : 'Connect to Host'}
+            </button>
+            <a
+              href="/spaces/live"
+              className="inline-flex items-center gap-2 rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] px-4 py-2.5 text-sm font-medium text-[var(--color-muted)] transition-all hover:border-degen-500/30 hover:text-degen-400"
             >
-              <polygon points="5 3 19 12 5 21 5 3" />
-            </svg>
-            All Live
-          </a>
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                aria-hidden="true"
+              >
+                <polygon points="5 3 19 12 5 21 5 3" />
+              </svg>
+              All Live
+            </a>
+          </div>
         </header>
 
         {/* Loading */}
@@ -236,10 +246,10 @@ export default function SpacesPage() {
                 <h2 className="text-sm font-bold tracking-tight text-[var(--color-fg)]">
                   Live Now
                 </h2>
-                {liveSpaces.length > 0 && (
+                {filteredLiveSpaces.length > 0 && (
                   <>
                     <span className="rounded-full bg-[var(--color-muted)]/10 px-2 py-0.5 text-[10px] font-medium text-[var(--color-muted)]">
-                      {liveSpaces.length}
+                      {filteredLiveSpaces.length}
                     </span>
                     <span className="ml-auto text-[10px] font-bold uppercase tracking-widest text-degen-500">
                       LIVE
@@ -247,20 +257,53 @@ export default function SpacesPage() {
                   </>
                 )}
               </div>
-              {liveSpaces.length === 0 ? (
+
+              {/* Content type filter for live */}
+              <div className="mb-4 flex flex-wrap gap-2">
+                {(['all', 'audio', 'video', 'photos'] as const).map((type) => (
+                  <button
+                    key={type}
+                    type="button"
+                    onClick={() => setContentTypeFilter(type)}
+                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[10px] font-medium transition-all ${
+                      contentTypeFilter === type
+                        ? 'border border-degen-500/40 bg-degen-500/10 text-degen-400'
+                        : 'border border-[var(--color-glass-border)] text-[var(--color-muted)] hover:text-[var(--color-fg)]'
+                    }`}
+                  >
+                    {type === 'all'
+                      ? '🔴 All'
+                      : type === 'audio'
+                        ? '🎙️ Audio'
+                        : type === 'video'
+                          ? '📺 Video'
+                          : '📸 Photos'}
+                  </button>
+                ))}
+              </div>
+
+              {filteredLiveSpaces.length === 0 ? (
                 <EmptyState
                   icon="🎙️"
-                  title="No live spaces right now"
-                  subtitle="Start one or check back later. Live audio rooms appear here when hosts go live."
+                  title={
+                    contentTypeFilter !== 'all'
+                      ? `No live ${contentTypeFilter} right now`
+                      : 'No live content right now'
+                  }
+                  subtitle={
+                    contentTypeFilter !== 'all'
+                      ? 'Try switching to All or check back later'
+                      : 'Start a space, go live on video, or share a live photo!'
+                  }
                   action={
                     hasSignedIn
-                      ? { label: 'Start a Space', onClick: () => setShowHostModal(true) }
+                      ? { label: 'Go Live', onClick: () => setShowHostModal(true) }
                       : undefined
                   }
                 />
               ) : (
                 <div className="flex gap-4 overflow-x-auto pb-3 scrollbar-none snap-x snap-mandatory">
-                  {liveSpaces.map((space) => (
+                  {filteredLiveSpaces.map((space) => (
                     <LiveSpaceCard
                       key={space.id}
                       space={space}
@@ -298,11 +341,11 @@ export default function SpacesPage() {
               {upcomingSpaces.length === 0 ? (
                 <EmptyState
                   icon="🗓️"
-                  title="No upcoming spaces"
-                  subtitle="Schedule one to get started."
+                  title="No upcoming content"
+                  subtitle="Schedule something to get started."
                   action={
                     hasSignedIn
-                      ? { label: 'Schedule a Space', onClick: () => setShowHostModal(true) }
+                      ? { label: 'Schedule', onClick: () => setShowHostModal(true) }
                       : undefined
                   }
                 />
@@ -344,8 +387,8 @@ export default function SpacesPage() {
               {pastSpaces.length === 0 ? (
                 <EmptyState
                   icon="📼"
-                  title="No past spaces yet"
-                  subtitle="Recording playback will appear here once spaces end."
+                  title="No past content yet"
+                  subtitle="Recording playback will appear here once content ends."
                 />
               ) : (
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -376,7 +419,7 @@ export default function SpacesPage() {
           <TipModal
             open={!!tipSpace}
             onClose={() => setTipSpace(null)}
-            recipientProtocol={tipSpace.protocols[0] ?? 'ethereum'}
+            recipientProtocol={tipSpace.protocols?.[0] ?? 'ethereum'}
             recipientAuthorId={tipSpace.hostId}
             recipientDisplayName={tipSpace.hostName}
           />

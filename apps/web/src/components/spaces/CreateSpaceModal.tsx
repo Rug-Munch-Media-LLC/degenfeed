@@ -6,10 +6,27 @@ import { useCallback, useMemo, useState } from 'react';
 // === Constants ====================================================
 
 const BROADCAST_PROTOCOLS = [
-  { id: 'nostr', label: 'Nostr' },
-  { id: 'farcaster', label: 'Farcaster' },
-  { id: 'lens', label: 'Lens' },
-  { id: 'mastodon', label: 'Mastodon' },
+  // Audio
+  { id: 'nostr', label: 'Nostr', group: 'audio' },
+  { id: 'peertube', label: 'PeerTube', group: 'audio' },
+  { id: 'owncast', label: 'Owncast', group: 'audio' },
+  { id: 'livepeer', label: 'LivePeer', group: 'audio' },
+  // Social Announce
+  { id: 'farcaster', label: 'Farcaster', group: 'social' },
+  { id: 'lens', label: 'Lens', group: 'social' },
+  { id: 'bluesky', label: 'Bluesky', group: 'social' },
+  { id: 'mastodon', label: 'Mastodon', group: 'social' },
+  { id: 'discord', label: 'Discord', group: 'social' },
+  { id: 'telegram', label: 'Telegram', group: 'social' },
+  { id: 'twitter', label: 'X / Twitter', group: 'social' },
+  // Video
+  { id: 'youtube', label: 'YouTube Live', group: 'video' },
+  { id: 'twitch', label: 'Twitch', group: 'video' },
+  { id: 'kick', label: 'Kick', group: 'video' },
+  // Photos
+  { id: 'nostr-pictures', label: 'Nostr Photos', group: 'photos' },
+  { id: 'bluesky-photos', label: 'Bsky Photos', group: 'photos' },
+  { id: 'pixelfed', label: 'Pixelfed', group: 'photos' },
 ] as const;
 
 const MAX_TITLE_LENGTH = 100;

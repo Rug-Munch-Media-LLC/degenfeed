@@ -1,5 +1,30 @@
 // === Spaces Types ===
-// Extended for cross-platform support
+// Expanded for ALL content types (Audio, Video, Photos, Announcements)
+
+export type SpaceContentType = 'audio' | 'video' | 'photos' | 'announcement';
+
+export type SpacePlatform =
+  // Audio
+  | 'nostr'
+  | 'peertube'
+  | 'owncast'
+  | 'livepeer'
+  // Social Announce
+  | 'farcaster'
+  | 'lens'
+  | 'bluesky'
+  | 'mastodon'
+  | 'discord'
+  | 'telegram'
+  | 'twitter'
+  // Live Video
+  | 'youtube'
+  | 'twitch'
+  | 'kick'
+  // Live Photos
+  | 'nostr-pictures'
+  | 'bluesky-photos'
+  | 'pixelfed';
 
 export interface SpaceSpeaker {
   id: string;
@@ -18,7 +43,7 @@ export interface SpaceReaction {
 }
 
 export interface SpacePlatformData {
-  platform: 'nostr' | 'peertube' | 'owncast' | 'livepeer';
+  platform: SpacePlatform;
   nativeId: string;
   url?: string;
   streamUrl?: string;
@@ -44,6 +69,8 @@ export interface SpaceItem {
   hostName: string;
   hostAvatarUrl?: string;
   coHosts: string[];
+  /** Content type: audio | video | photos */
+  contentType?: SpaceContentType;
   /** Legacy: protocol name strings */
   protocols?: string[];
   /** New: structured platform data */
@@ -63,4 +90,8 @@ export interface SpaceItem {
   gating?: SpaceGating;
   /** Tags for discoverability */
   tags?: string[];
+  /** Thumbnail / cover image URL for video streams */
+  thumbnailUrl?: string;
+  /** Photo URLs for live photo content */
+  photoUrls?: string[];
 }

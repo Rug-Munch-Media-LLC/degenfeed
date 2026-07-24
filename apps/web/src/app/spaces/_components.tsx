@@ -1,12 +1,12 @@
 // === Sub-components ===
-// Auto-extracted from page.tsx
+// Extended for all content types: Audio, Video, Photos, Announcements
 
 import { getProtocolColor, getProtocolIcon, getProtocolLabel } from '@degenfeed/ui';
 import Image from 'next/image';
 import { useCallback, useState } from 'react';
 import { QuickTipButton } from '../../components/QuickTipButton';
 import { LiveDot, Waveform } from './_animations';
-import type { SpaceItem, SpaceSpeaker } from './_types';
+import type { SpaceItem, SpacePlatform, SpaceSpeaker } from './_types';
 import { formatDuration, formatScheduledDate, timeAgo } from './_utils';
 
 export function AvatarImg({
@@ -118,6 +118,28 @@ export function SpeakerAvatar({
   );
 }
 
+// ─── Content Type Badge ───────────────────────────────────────────────
+
+export function ContentTypeBadge({ type }: { type?: string }) {
+  const meta: Record<string, { icon: string; label: string; color: string }> = {
+    audio: { icon: '🎙️', label: 'Audio', color: '#8b5cf6' },
+    video: { icon: '📺', label: 'Video', color: '#ef4444' },
+    photos: { icon: '📸', label: 'Photos', color: '#f59e0b' },
+    announcement: { icon: '📢', label: 'Announce', color: '#06b6d4' },
+  };
+  const m = meta[type ?? 'audio'] ?? meta.audio;
+  return (
+    <span
+      className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider"
+      style={{ backgroundColor: `${m.color}18`, color: m.color }}
+    >
+      {m.icon} {m.label}
+    </span>
+  );
+}
+
+// ─── Live Space Card ──────────────────────────────────────────────────
+
 export function LiveSpaceCard({
   space,
   onJoin,
@@ -134,18 +156,61 @@ export function LiveSpaceCard({
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
     window.dispatchEvent(
-      new CustomEvent('df-toast', { detail: { kind: 'success', message: 'Space link copied!' } }),
+      new CustomEvent('df-toast', { detail: { kind: 'success', message: 'Link copied!' } }),
     );
   }, [space.id]);
 
   const speakingCount = space.speakers.filter((s) => s.speaking).length;
   const maxVisibleSpeakers = 4;
+  const isVideo = space.contentType === 'video';
+  const isPhotos = space.contentType === 'photos';
 
   return (
     <div
       className="group relative flex w-[300px] shrink-0 snap-start flex-col rounded-2xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-5 transition-all duration-300 hover:border-degen-500/40 hover:shadow-[0_0_24px_rgba(0,255,65,0.06)]"
       style={{ animation: 'slideUp 0.35s ease-out both' }}
     >
+      {/* Thumbnail for video content */}
+      {isVideo && space.thumbnailUrl && (
+        <div className="relative mb-3 overflow-hidden rounded-xl">
+          <Image
+            src={space.thumbnailUrl}
+            alt={space.title}
+            width={300}
+            height={169}
+            className="h-32 w-full object-cover"
+            unoptimized
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+          <span className="absolute bottom-2 left-2 inline-flex items-center gap-1 rounded-full bg-red-600 px-2 py-0.5 text-[9px] font-bold text-white">
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75" />
+              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-white" />
+            </span>
+            LIVE
+          </span>
+        </div>
+      )}
+
+      {/* Photo grid for live photos */}
+      {isPhotos && space.photoUrls && space.photoUrls.length > 0 && (
+        <div className="relative mb-3 overflow-hidden rounded-xl">
+          <Image
+            src={space.photoUrls[0]}
+            alt={space.title}
+            width={300}
+            height={300}
+            className="h-40 w-full object-cover"
+            unoptimized
+          />
+          {space.photoUrls.length > 1 && (
+            <span className="absolute bottom-2 right-2 rounded-full bg-black/60 px-2 py-0.5 text-[10px] text-white">
+              +{space.photoUrls.length - 1}
+            </span>
+          )}
+        </div>
+      )}
+
       <div className="mb-3 flex items-start justify-between">
         <div className="flex items-center gap-2.5">
           <AvatarImg
@@ -160,7 +225,7 @@ export function LiveSpaceCard({
             <div className="mt-0.5 flex items-center gap-1.5">
               <LiveDot />
               <span className="text-[10px] font-bold uppercase tracking-wider text-red-400">
-                LIVE
+                {isPhotos ? 'NEW' : 'LIVE'}
               </span>
               <span className="text-[10px] text-[var(--color-muted)]">
                 · {formatDuration(space.createdAt)}
@@ -181,6 +246,15 @@ export function LiveSpaceCard({
       <h3 className="mb-3 line-clamp-2 text-sm font-bold leading-snug text-[var(--color-fg)]">
         {space.title}
       </h3>
+
+      {/* Content type badge */}
+      <div className="mb-2 flex items-center gap-1.5">
+        <ContentTypeBadge type={space.contentType} />
+        {isVideo && space.listeners > 0 && (
+          <span className="text-[10px] text-[var(--color-muted)]">{space.listeners} watching</span>
+        )}
+      </div>
+
       {space.speakers.length > 0 && (
         <div className="mb-3">
           <div className="flex flex-wrap items-center gap-2.5">
@@ -198,22 +272,24 @@ export function LiveSpaceCard({
           )}
         </div>
       )}
-      <div className="mb-3 flex items-center gap-2">
-        <Waveform className="h-4" />
-        <span className="text-[11px] font-medium text-[var(--color-muted)]">
-          {space.listeners} listening
-        </span>
-        {space.tippingEnabled && (
-          <span className="ml-auto">
-            <QuickTipButton
-              recipientProtocol={space.protocols[0] ?? 'ethereum'}
-              recipientAuthorId={space.hostId}
-              recipientDisplayName={space.hostName}
-              subtle
-            />
+      {!isVideo && !isPhotos && (
+        <div className="mb-3 flex items-center gap-2">
+          <Waveform className="h-4" />
+          <span className="text-[11px] font-medium text-[var(--color-muted)]">
+            {space.listeners} listening
           </span>
-        )}
-      </div>
+          {space.tippingEnabled && (
+            <span className="ml-auto">
+              <QuickTipButton
+                recipientProtocol={space.protocols?.[0] ?? 'ethereum'}
+                recipientAuthorId={space.hostId}
+                recipientDisplayName={space.hostName}
+                subtle
+              />
+            </span>
+          )}
+        </div>
+      )}
       {(() => {
         const platforms = getSpacePlatforms(space);
         return platforms.length > 0 ? (
@@ -236,17 +312,19 @@ export function LiveSpaceCard({
           type="button"
           onClick={handleShare}
           className="flex-1 rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-muted)]/10 px-3 py-2 text-[10px] font-medium text-[var(--color-muted)] transition-all hover:border-degen-500/30 hover:text-degen-400"
-          aria-label="Share space invite link"
+          aria-label="Share link"
         >
           {copied ? '✓ Copied' : '🔗 Share'}
         </button>
-        <button
-          type="button"
-          className="flex-1 rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-muted)]/10 px-3 py-2 text-[10px] font-medium text-[var(--color-muted)] transition-all hover:border-amber-500/30 hover:text-amber-400"
-          aria-label="Request to speak"
-        >
-          ✋ Hand
-        </button>
+        {!isPhotos && (
+          <button
+            type="button"
+            className="flex-1 rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-muted)]/10 px-3 py-2 text-[10px] font-medium text-[var(--color-muted)] transition-all hover:border-amber-500/30 hover:text-amber-400"
+            aria-label="Request to speak"
+          >
+            ✋ Hand
+          </button>
+        )}
         {space.tippingEnabled && (
           <button
             type="button"
@@ -263,7 +341,7 @@ export function LiveSpaceCard({
           onClick={() => onJoin(space.id)}
           className="w-full translate-y-1 rounded-xl border border-transparent bg-degen-500/10 px-4 py-2.5 text-xs font-bold text-degen-400 opacity-0 transition-all duration-200 group-hover:translate-y-0 group-hover:opacity-100 hover:border-degen-500/30 hover:bg-degen-500/20"
         >
-          Join Space
+          {isPhotos ? 'View' : 'Join'}
         </button>
       </div>
     </div>
@@ -291,6 +369,9 @@ export function UpcomingSpaceCard({
           </p>
         </div>
       </div>
+      <div className="mb-2">
+        <ContentTypeBadge type={space.contentType} />
+      </div>
       <div className="mb-3 flex items-center gap-1.5 text-xs font-medium text-cyan-400">
         <svg
           width="14"
@@ -310,7 +391,7 @@ export function UpcomingSpaceCard({
         {space.tippingEnabled && (
           <span className="ml-auto">
             <QuickTipButton
-              recipientProtocol={space.protocols[0] ?? 'ethereum'}
+              recipientProtocol={space.protocols?.[0] ?? 'ethereum'}
               recipientAuthorId={space.hostId}
               recipientDisplayName={space.hostName}
               subtle
@@ -351,7 +432,11 @@ export function UpcomingSpaceCard({
           onReminder(space.id);
         }}
         disabled={reminded}
-        className={`mt-auto w-full rounded-xl px-4 py-2.5 text-xs font-semibold transition-all duration-200 ${reminded ? 'border border-degen-500/30 bg-degen-500/15 text-degen-400' : 'border border-[var(--color-glass-border)] bg-[var(--color-muted)]/10 text-[var(--color-fg)] hover:border-[var(--color-border)] hover:bg-[var(--color-muted)]/20'}`}
+        className={`mt-auto w-full rounded-xl px-4 py-2.5 text-xs font-semibold transition-all duration-200 ${
+          reminded
+            ? 'border border-degen-500/30 bg-degen-500/15 text-degen-400'
+            : 'border border-[var(--color-glass-border)] bg-[var(--color-muted)]/10 text-[var(--color-fg)] hover:border-[var(--color-border)] hover:bg-[var(--color-muted)]/20'
+        }`}
       >
         {reminded ? (
           <span className="flex items-center justify-center gap-1.5">
@@ -405,6 +490,9 @@ export function PastSpaceCard({ space }: { space: SpaceItem }) {
             {space.hostName} · {space.endedAt ? timeAgo(space.endedAt) : timeAgo(space.createdAt)}
           </p>
         </div>
+      </div>
+      <div className="mb-2">
+        <ContentTypeBadge type={space.contentType} />
       </div>
       {space.recordingUrl ? (
         <a
@@ -509,44 +597,86 @@ export function GridSkeleton() {
 
 // ─── Cross-platform helpers ─────────────────────────────────────────────
 
-/** Map platform ID to display color */
+/** Map platform ID to display color — expanded for all platforms */
 export function getPlatformColor(platform: string): string {
   const colors: Record<string, string> = {
+    // Audio
     nostr: '#8b5cf6',
     peertube: '#f97316',
     owncast: '#06b6d4',
     livepeer: '#10b981',
+    // Social
     farcaster: '#8a63d2',
     lens: '#42e66d',
+    bluesky: '#1185fe',
     mastodon: '#6364ff',
+    discord: '#5865f2',
+    telegram: '#26a5e4',
+    twitter: '#1da1f2',
+    // Video
+    youtube: '#ff0000',
+    twitch: '#9146ff',
+    kick: '#53fc18',
+    // Photos
+    'nostr-pictures': '#8b5cf6',
+    'bluesky-photos': '#1185fe',
+    pixelfed: '#ff0066',
   };
   return colors[platform] ?? '#888';
 }
 
-/** Map platform ID to display icon */
+/** Map platform ID to display icon — expanded for all platforms */
 export function getPlatformIcon(platform: string): string {
   const icons: Record<string, string> = {
+    // Audio
     nostr: '⚡',
     peertube: '📺',
     owncast: '🔴',
     livepeer: '🎬',
+    // Social
     farcaster: '🏎️',
     lens: '🔮',
+    bluesky: '🦋',
     mastodon: '🐘',
+    discord: '💬',
+    telegram: '✈️',
+    twitter: '𝕏',
+    // Video
+    youtube: '▶️',
+    twitch: '📡',
+    kick: '⚽',
+    // Photos
+    'nostr-pictures': '📸',
+    'bluesky-photos': '🦋',
+    pixelfed: '📷',
   };
   return icons[platform] ?? '🌐';
 }
 
-/** Map platform ID to display label */
+/** Map platform ID to display label — expanded for all platforms */
 export function getPlatformLabel(platform: string): string {
   const labels: Record<string, string> = {
+    // Audio
     nostr: 'Nostr',
     peertube: 'PeerTube',
     owncast: 'Owncast',
     livepeer: 'LivePeer',
+    // Social
     farcaster: 'Farcaster',
     lens: 'Lens',
+    bluesky: 'Bluesky',
     mastodon: 'Mastodon',
+    discord: 'Discord',
+    telegram: 'Telegram',
+    twitter: 'X',
+    // Video
+    youtube: 'YouTube',
+    twitch: 'Twitch',
+    kick: 'Kick',
+    // Photos
+    'nostr-pictures': 'Nostr Pic',
+    'bluesky-photos': 'Bsky Pic',
+    pixelfed: 'Pixelfed',
   };
   return labels[platform] ?? platform;
 }

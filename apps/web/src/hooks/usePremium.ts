@@ -1,11 +1,27 @@
 'use client';
 
+import {
+  type SubscriptionTier,
+  TIER_CONFIGS,
+  TIER_NAMES,
+  TierManager,
+} from '@degenfeed/monetization';
 import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../components/AuthProvider';
 
 // === Types ===============================================================
 
-export type PremiumTier = 'free' | 'basic' | 'pro' | 'platinum' | 'enterprise' | 'creator';
+export type PremiumTier = 'free' | 'creator' | 'pro' | 'enterprise';
+
+/** Bridge helper: convert legacy tiers to new names */
+export function normalizeTier(tier: string): PremiumTier {
+  const legacy: Record<string, PremiumTier> = {
+    basic: 'free',
+    platinum: 'pro',
+    creator: 'creator',
+  };
+  return legacy[tier] ?? (tier as PremiumTier);
+}
 
 export interface PremiumStatus {
   tier: PremiumTier;

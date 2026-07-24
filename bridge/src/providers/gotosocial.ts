@@ -10,6 +10,9 @@
  */
 
 import { guessNiches, stripHtml } from '../lib/utils';
+
+export { guessNiches, stripHtml };
+
 import type { SchemaGuard, UnifiedPost } from '../server/types';
 
 const $fetch = globalThis.fetch;

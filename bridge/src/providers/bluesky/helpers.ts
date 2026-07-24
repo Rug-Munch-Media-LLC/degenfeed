@@ -11,7 +11,7 @@ export function guessNiches(text: string): string[] {
   if (/\b(nft|art|collectible)\b/.test(lower)) niches.push('nft');
   if (/\b(ai|artificial|intelligence|llm|agent)\b/.test(lower)) niches.push('ai');
   if (/\b(sec|regulation|etf|compliance)\b/.test(lower)) niches.push('regulation');
-  if (/\b(meme|pepe|dog|shib)\b/.test(lower)) niches.push('memecoin');
+  if (/\b(meme|pepe|dog|doge|shib)\b/.test(lower)) niches.push('memecoin');
   if (/\b(layer2|l2|arbitrum|optimism|base)\b/.test(lower)) niches.push('layer2');
   if (/\b(security|hack|exploit|audit)\b/.test(lower)) niches.push('security');
   if (/\b(web3|blockchain|wallet|did)\b/.test(lower)) niches.push('web3');

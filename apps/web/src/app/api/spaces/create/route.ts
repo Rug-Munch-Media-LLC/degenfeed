@@ -1,8 +1,33 @@
 import type { SpacePlatform } from '@degenfeed/spaces-bridge';
-import { createSpace, getBridge } from '@degenfeed/spaces-bridge';
+import { createSpace } from '@degenfeed/spaces-bridge';
 import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
+
+// All supported platforms for validation
+const VALID_PLATFORMS: SpacePlatform[] = [
+  // Audio
+  'nostr',
+  'peertube',
+  'owncast',
+  'livepeer',
+  // Social Announce
+  'farcaster',
+  'lens',
+  'bluesky',
+  'mastodon',
+  'discord',
+  'telegram',
+  'twitter',
+  // Video
+  'youtube',
+  'twitch',
+  'kick',
+  // Photos
+  'nostr-pictures',
+  'bluesky-photos',
+  'pixelfed',
+];
 
 export async function POST(request: Request) {
   try {
@@ -15,12 +40,15 @@ export async function POST(request: Request) {
     // Determine which platforms to create on
     const requestedPlatforms: string[] = body.platforms ?? ['nostr'];
     const platforms: SpacePlatform[] = requestedPlatforms.filter((p): p is SpacePlatform =>
-      ['nostr', 'peertube', 'owncast', 'livepeer'].includes(p),
+      VALID_PLATFORMS.includes(p as SpacePlatform),
     );
 
     if (platforms.length === 0) {
       platforms.push('nostr');
     }
+
+    // Content type
+    const contentType = body.contentType ?? 'audio';
 
     const result = await createSpace({
       title,
@@ -30,6 +58,8 @@ export async function POST(request: Request) {
       hostAvatarUrl: body.hostAvatarUrl,
       coHosts: body.coHosts || [],
       platforms,
+      contentType,
+      photoUrls: body.photoUrls,
       scheduledAt: body.scheduledAt,
       tippingEnabled: body.tippingEnabled ?? true,
       tipTokenAddress: body.tipTokenAddress,
@@ -38,6 +68,9 @@ export async function POST(request: Request) {
       peertubeTokenAddress: body.peertubeTokenAddress,
       peertubeTokenSymbol: body.peertubeTokenSymbol,
       peertubeCreatorAddress: body.peertubeCreatorAddress,
+      youTubePrivacy: body.youTubePrivacy,
+      twitchGame: body.twitchGame,
+      kickCategory: body.kickCategory,
     });
 
     const status: 'live' | 'scheduled' =
@@ -64,6 +97,7 @@ export async function POST(request: Request) {
           coHosts: body.coHosts || [],
           protocols: platforms,
           platforms: speakers,
+          contentType,
           status,
           createdAt: Date.now(),
           scheduledAt: body.scheduledAt,
