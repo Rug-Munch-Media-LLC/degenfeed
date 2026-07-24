@@ -9,7 +9,7 @@
  */
 
 import { getProtocolColor } from '@degenfeed/ui';
-import { useRef, useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 /* ─── Protocol tab config ───────────────────────────────────── */
 
@@ -99,7 +99,8 @@ export function ProtocolFeedTabs({
           backgroundColor: indicatorStyle.color,
           boxShadow: `0 0 8px ${indicatorStyle.color}66`,
           opacity: indicatorStyle.opacity,
-          transition: 'left 0.3s cubic-bezier(0.19, 1, 0.22, 1), width 0.3s cubic-bezier(0.19, 1, 0.22, 1), opacity 0.2s ease-out',
+          transition:
+            'left 0.3s cubic-bezier(0.19, 1, 0.22, 1), width 0.3s cubic-bezier(0.19, 1, 0.22, 1), opacity 0.2s ease-out',
         }}
       />
 

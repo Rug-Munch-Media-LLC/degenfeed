@@ -175,6 +175,20 @@ export const PROTOCOLS: Record<string, ProtocolConfig> = {
       { label: 'marketplaces', value: 'aggregated' },
     ],
   },
+  media: {
+    id: 'media',
+    label: 'Media Hub',
+    color: '#ff6b9d',
+    icon: '🎨',
+    description: 'Images, videos & live streams from every protocol',
+    endpoint: '/api/feed/media',
+    route: '/feed/media',
+    postNoun: 'post',
+    stats: [
+      { label: 'protocols', value: '9+' },
+      { label: 'media types', value: 'image/video/live' },
+    ],
+  },
   rss: {
     id: 'rss',
     label: 'RSS/News',
@@ -220,6 +234,7 @@ export const SIDEBAR_ORDER = [
   'lemmy',
   'pixelfed',
   'zora',
+  'media',
   'rss',
   'reddit',
 ] as const;

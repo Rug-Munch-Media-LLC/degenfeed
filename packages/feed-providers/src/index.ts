@@ -95,7 +95,7 @@ export {
   TILDES_GROUPS,
   TildesProvider,
 } from './providers/tildes';
-export type { FeedProvider, FeedResult, FetchOptions, HealthResult } from './types';
+export type { FeedProvider, FeedResult, FetchOptions, HealthResult, SchemaGuard } from './types';
 export {
   buildUrl,
   DEFAULT_CONCURRENCY,

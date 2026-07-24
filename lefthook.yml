@@ -1,27 +1,52 @@
+# ── Lefthook Git Hooks — Pre-commit & Pre-push Quality Gates ──
+# Pre-commit: fast checks (lint staged files, secrets)
+# Pre-push:   full suite (typecheck, tests, build, security)
+
 pre-commit:
   parallel: true
   commands:
-    envsitter:
-      run: envsitter scan --filePath .env.example
     gitleaks:
       run: gitleaks detect --verbose --redact --no-git
+      skip: false
+    envsitter:
+      run: envsitter scan --filePath .env.example
+      skip: false
     biome:
-      run: npx biome check --write {staged_files}
+      glob: "*.{js,ts,jsx,tsx,json,jsonc,css,md}"
+      run: npx biome check --write --no-errors-on-unmatched {staged_files}
+      stage_fixed: true
+    formatting:
+      glob: "*.{js,ts,jsx,tsx,json,jsonc,css,md,yaml,yml}"
+      run: npx dprint check {staged_files}
+      skip: true  # dprint is optional; biome handles formatting
+
 pre-push:
   parallel: true
   commands:
-    mypy:
-      run: mypy --strict .
-      tags: [python]
-    bandit:
-      run: bandit -r .
-      tags: [python]
-    deptry:
-      run: deptry .
-      tags: [python]
     gitleaks-full:
       run: gitleaks detect --verbose --redact
+      skip: false
+    typecheck:
+      run: pnpm typecheck
+      skip: false
+    test:
+      run: pnpm test
+      skip: false
+    lint:
+      run: pnpm lint
+      skip: false
+    build:
+      run: pnpm build
+      skip: true  # enabled selectively; slow on large monorepos
+    knip:
+      run: npx knip --no-progress
+      skip: false
+    audit:
+      run: pnpm audit --prod --audit-level=high
+      skip: false
+
 commit-msg:
   commands:
     commitlint:
       run: commitlint --edit "$1"
+      skip: false

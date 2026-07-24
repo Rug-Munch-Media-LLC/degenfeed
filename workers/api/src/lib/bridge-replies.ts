@@ -16,15 +16,14 @@ async function reliableBridgePublish<T>(
   const start = performance.now();
   try {
     const result = await withReliability(protocol, operation, { env });
-    recordBridgeOperation(protocol, 'publish', true, performance.now() - start, env);
+    recordBridgeOperation(env, protocol, true, performance.now() - start);
     return result;
   } catch (err) {
     recordBridgeOperation(
+      env,
       protocol,
-      'publish',
       false,
       performance.now() - start,
-      env,
       err instanceof Error ? err.message : String(err),
     );
     return null;

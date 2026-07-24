@@ -57,6 +57,8 @@ export interface ShortsFeedResponse {
 // ─── Aggregator ─────────────────────────────────────────────────────────
 
 export class ShortsAggregator {
+  private env: Env;
+
   constructor(env: Env) {
     this.env = env;
   }

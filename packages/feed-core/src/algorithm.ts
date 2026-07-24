@@ -435,7 +435,7 @@ export function scoreQuality(
   if (textLen < 20) score -= 0.2;
 
   // Penalize spammy content
-  const spamScore = ((post as Record<string, unknown>).spamScore as number) ?? 0;
+  const spamScore = ((post as unknown as Record<string, unknown>).spamScore as number) ?? 0;
   score -= spamScore * 0.5;
 
   score = Math.max(0, Math.min(1, score));

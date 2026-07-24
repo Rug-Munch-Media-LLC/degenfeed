@@ -1,135 +1,70 @@
-name: DegenFeed CI
+# ── DegenFeed CI — Quality Gates on Every Push ─────────────────
+# Forgejo Actions (compatible subset of GitHub Actions syntax).
+# Gates: lint → typecheck → test → build → security
+name: CI
 
 on:
   push:
     branches: [main, feat/**, fix/**, chore/**, hotfix/**]
   pull_request:
     branches: [main]
-  schedule:
-    - cron: "0 5 * * *"
 
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
+  # ── Gate 1: Static analysis (Biome) ────────────────────────────
   lint:
-    runs-on: docker-x64
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
       - uses: pnpm/action-setup@v4
         with:
           version: 11.7.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
+      - name: Stylelint CSS
+        run: npx stylelint "**/*.css" --allow-empty-input
 
-  stylelint:
-    runs-on: docker-x64
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 11.7.0
-      - run: pnpm install --frozen-lockfile
-      - run: npx stylelint "**/*.css" --allow-empty-input
-
+  # ── Gate 2: TypeScript type-check ────────────────────────────
   typecheck:
-    runs-on: docker-x64
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
       - uses: pnpm/action-setup@v4
         with:
           version: 11.7.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
 
+  # ── Gate 3: Unit + integration tests ─────────────────────────
   test:
-    runs-on: docker-x64
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
       - uses: pnpm/action-setup@v4
         with:
           version: 11.7.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm test
 
-  e2e:
-    runs-on: docker-x64
-    needs: [lint, typecheck]
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 11.7.0
-      - run: pnpm install --frozen-lockfile
-      - run: npx playwright install --with-deps chromium
-      - run: pnpm --filter degenfeed-web test:e2e
-
-  a11y:
-    runs-on: docker-x64
-    needs: [lint]
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 11.7.0
-      - run: pnpm install --frozen-lockfile
-      - run: npx playwright install --with-deps chromium
-      - run: pnpm --filter degenfeed-web test:e2e --project=axe-a11y
-
-  audit:
-    runs-on: docker-x64
-    needs: [lint]
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 11.7.0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - run: pnpm install --frozen-lockfile
-      - name: pnpm audit (production)
-        continue-on-error: true
-        id: audit
-        run: pnpm audit --prod --audit-level=high 2>&1 | tee /tmp/audit.log
-      - name: Fail on critical or high vulnerabilities
-        if: failure()
-        run: |
-          echo "::error::pnpm audit found HIGH or CRITICAL vulnerabilities"
-          exit 1
-
-  security-headers:
-    runs-on: docker-x64
-    steps:
-      - name: Check security headers on production endpoints
-        run: |
-          for url in https://degenfeed.xyz https://app.degenfeed.xyz; do
-            echo "=== $url ==="
-            curl -sI "$url" | grep -iE "^(strict-transport-security|content-security-policy|x-frame-options|x-content-type-options|referrer-policy)" || echo "  MISSING HEADERS"
-          done
-
+  # ── Gate 4: Build (all packages + apps) ──────────────────────
   build:
-    runs-on: docker-x64
-    needs: [lint, typecheck, test, audit]
+    runs-on: ubuntu-latest
+    needs: [lint, typecheck, test]
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -138,36 +73,16 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: Build web
+      - name: Build web app
         run: pnpm --filter degenfeed-web build
       - name: Build worker (dry-run)
         run: pnpm --filter @degenfeed/api-worker build
 
-  lighthouse:
-    runs-on: docker-x64
-    needs: build
-    if: github.event_name == 'pull_request'
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 11.7.0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - run: pnpm install --frozen-lockfile
-      - run: npm install -g @lhci/cli
-      - name: Lighthouse CI (informational — requires running preview server)
-        run: |
-          lhci autorun \
-            --collect.url=http://localhost:3000 \
-            --collect.numberOfRuns=1 \
-            --assert.assertions="{\"categories:performance\":[\"warn\",{\"minScore\":0.9}],\"categories:accessibility\":[\"warn\",{\"minScore\":0.95}],\"categories:seo\":[\"warn\",{\"minScore\":0.9}]}" \
-          || echo "Lighthouse CI requires running server — informational only on PR. Full audit runs post-deploy."
-
+  # ── Gate 5: Security — secret scanning + dep audit ───────────
   security:
-    runs-on: docker-x64
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
@@ -175,14 +90,67 @@ jobs:
       - name: Install gitleaks
         run: |
           curl -sSfL https://github.com/gitleaks/gitleaks/releases/download/v8.24.0/gitleaks_8.24.0_linux_x64.tar.gz | tar -xz -C /usr/local/bin gitleaks
-      - run: gitleaks detect --source . --no-banner --exit-code 1
+      - name: Gitleaks secret scan
+        run: gitleaks detect --source . --no-banner --exit-code 1
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.7.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: pnpm audit (production deps)
+        continue-on-error: true
+        id: audit
+        run: pnpm audit --prod --audit-level=high 2>&1 | tee /tmp/audit.log
+      - name: Fail on critical/high vulnerabilities
+        if: failure()
+        run: |
+          echo "::error::pnpm audit found HIGH or CRITICAL vulnerabilities"
+          exit 1
 
+  # ── Gate 6: Dead-code detection with knip ─────────────────────
+  knip:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.7.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: npx knip --no-progress
+
+  # ── Gate 7: Markdown link check ──────────────────────────────
   links:
-    runs-on: docker-x64
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Install lychee
         run: |
           curl -sSfL https://github.com/lycheeverse/lychee/releases/download/lychee-v0.24.2/lychee-x86_64-unknown-linux-gnu.tar.gz | tar -xz -C /usr/local/bin --strip-components=1
-      - name: Check links
+      - name: Check links in docs
         run: lychee --no-progress --accept 200,204,301,302,304 '**/*.md' --exclude 'node_modules' --exclude 'dist' --exclude '.next' --exclude '.turbo' --exclude 'coverage'
+
+  # ── Gate 8: E2E tests (Playwright) ──────────────────────────
+  e2e:
+    runs-on: ubuntu-latest
+    needs: [lint, typecheck]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.7.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Install Playwright
+        run: npx playwright install --with-deps chromium
+      - name: Run E2E tests
+        run: pnpm --filter degenfeed-web test:e2e

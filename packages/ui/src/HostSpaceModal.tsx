@@ -15,10 +15,13 @@ import { getProtocolColor, getProtocolIcon, getProtocolLabel } from './ProtocolB
 // ─── Constants ────────────────────────────────────────────────────
 
 const BROADCAST_PROTOCOLS = [
-  { id: 'nostr', label: 'Nostr' },
-  { id: 'farcaster', label: 'Farcaster' },
-  { id: 'lens', label: 'Lens' },
-  { id: 'mastodon', label: 'Mastodon' },
+  { id: 'nostr', label: 'Nostr', platforms: ['nostr'] },
+  { id: 'farcaster', label: 'Farcaster', platforms: [] },
+  { id: 'lens', label: 'Lens', platforms: [] },
+  { id: 'mastodon', label: 'Mastodon', platforms: [] },
+  { id: 'peertube', label: 'PeerTube', platforms: ['peertube'] },
+  { id: 'owncast', label: 'Owncast', platforms: ['owncast'] },
+  { id: 'livepeer', label: 'LivePeer', platforms: ['livepeer'] },
 ] as const;
 
 const MAX_TITLE_LENGTH = 100;

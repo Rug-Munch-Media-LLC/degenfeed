@@ -50,26 +50,59 @@
     opacity: 1;
   }
 
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     font-family: var(--font-heading);
     letter-spacing: var(--tracking-heading);
     font-weight: 700;
     color: var(--color-fg);
   }
-  h1 { font-size: var(--text-h1); line-height: var(--leading-h1); }
-  h2 { font-size: var(--text-h2); line-height: var(--leading-h2); }
-  h3 { font-size: var(--text-h3); line-height: var(--leading-h3); }
-  h4 { font-size: var(--text-h4); line-height: var(--leading-h4); }
-  h5 { font-size: var(--text-h5); line-height: var(--leading-h4); }
-  h6 { font-size: var(--text-h6); line-height: var(--leading-h4); }
+  h1 {
+    font-size: var(--text-h1);
+    line-height: var(--leading-h1);
+  }
+  h2 {
+    font-size: var(--text-h2);
+    line-height: var(--leading-h2);
+  }
+  h3 {
+    font-size: var(--text-h3);
+    line-height: var(--leading-h3);
+  }
+  h4 {
+    font-size: var(--text-h4);
+    line-height: var(--leading-h4);
+  }
+  h5 {
+    font-size: var(--text-h5);
+    line-height: var(--leading-h4);
+  }
+  h6 {
+    font-size: var(--text-h6);
+    line-height: var(--leading-h4);
+  }
 
-  p, li, blockquote, figcaption, td, th, label {
+  p,
+  li,
+  blockquote,
+  figcaption,
+  td,
+  th,
+  label {
     line-height: var(--leading-body);
   }
 
   @media (prefers-reduced-motion: reduce) {
-    html { scroll-behavior: auto; }
-    *, *::before, *::after {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
       animation-duration: 0.01ms !important;
       animation-iteration-count: 1 !important;
       transition-duration: 0.01ms !important;
@@ -142,7 +175,9 @@
     background: var(--color-card);
     border-radius: var(--radius-xl);
     padding: var(--space-md);
-    transition: border-color var(--duration-fast) ease-out, box-shadow var(--duration-fast) ease-out;
+    transition:
+      border-color var(--duration-fast) ease-out,
+      box-shadow var(--duration-fast) ease-out;
   }
   .card:hover {
     border-color: color-mix(in srgb, var(--color-accent) 25%, var(--color-border));
@@ -156,7 +191,12 @@
   }
 
   .gradient-text {
-    background: linear-gradient(135deg, var(--color-accent), var(--color-accent-secondary), #f91880);
+    background: linear-gradient(
+      135deg,
+      var(--color-accent),
+      var(--color-accent-secondary),
+      #f91880
+    );
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -182,10 +222,14 @@
     font-family: var(--font-body);
     min-height: var(--btn-min-height);
   }
-  .input::placeholder { color: var(--color-muted); }
+  .input::placeholder {
+    color: var(--color-muted);
+  }
   .input:focus {
     border-color: var(--color-accent);
-    box-shadow: 0 0 0 1px var(--color-accent), 0 0 16px var(--color-accent-glow);
+    box-shadow:
+      0 0 0 1px var(--color-accent),
+      0 0 16px var(--color-accent-glow);
   }
 
   .skeleton {
@@ -284,7 +328,7 @@
     font-weight: 600;
   }
   .feed-tab.active::after {
-    content: '';
+    content: "";
     position: absolute;
     bottom: 0;
     left: 50%;
@@ -355,70 +399,127 @@
     animation: shimmer 1.5s ease-in-out infinite;
   }
   @keyframes shimmer {
-    0% { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
+    }
   }
 
   /* ═══ Shimmer for skeletons ═══ */
   /* ═══ Fade In ═══ */
   @keyframes fade-in {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
   }
 
   /* ═══ Notification Pulse ═══ */
   @keyframes notification-pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.5; transform: scale(1.2); }
+    0%,
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.5;
+      transform: scale(1.2);
+    }
   }
 
   /* ═══ Particle Burst ═══ */
   @keyframes particle-burst {
-    0% { opacity: 1; transform: translate(0, 0) scale(1); }
-    100% { opacity: 0; transform: translate(var(--dx, 20px), var(--dy, -20px)) scale(0); }
+    0% {
+      opacity: 1;
+      transform: translate(0, 0) scale(1);
+    }
+    100% {
+      opacity: 0;
+      transform: translate(var(--dx, 20px), var(--dy, -20px)) scale(0);
+    }
   }
 
   /* ═══ PTR Spin ═══ */
   @keyframes ptr-spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
   }
 
   /* ═══ PTR Spring ═══ */
   @keyframes ptr-spring {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-    100% { transform: scale(1); }
+    0% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.05);
+    }
+    100% {
+      transform: scale(1);
+    }
   }
 
   /* ═══ Ticker Scroll ═══ */
   @keyframes ticker-scroll {
-    0% { transform: translateX(0); }
-    100% { transform: translateX(-50%); }
+    0% {
+      transform: translateX(0);
+    }
+    100% {
+      transform: translateX(-50%);
+    }
   }
 
   /* ═══ Slide In Right (toast) ═══ */
   @keyframes slide-in-right {
-    from { opacity: 0; transform: translateX(100%); }
-    to { opacity: 1; transform: translateX(0); }
+    from {
+      opacity: 0;
+      transform: translateX(100%);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
   }
 
   /* ═══ Slide Out Left (toast) ═══ */
   @keyframes slide-out-left {
-    from { opacity: 1; transform: translateX(0); }
-    to { opacity: 0; transform: translateX(-100%); }
+    from {
+      opacity: 1;
+      transform: translateX(0);
+    }
+    to {
+      opacity: 0;
+      transform: translateX(-100%);
+    }
   }
 
   /* ═══ New Posts Slide ═══ */
   @keyframes new-posts-slide {
-    from { opacity: 0; transform: translateY(-100%) scale(0.95); }
-    to { opacity: 1; transform: translateY(0) scale(1); }
+    from {
+      opacity: 0;
+      transform: translateY(-100%) scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
   }
 
   /* ═══ Backdrop In (mobile drawer) ═══ */
   @keyframes backdrop-in {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
   }
   .animate-backdrop-in {
     animation: backdrop-in 0.2s ease-out forwards;
@@ -426,8 +527,12 @@
 
   /* ═══ Slide In Left (mobile drawer) ═══ */
   @keyframes slide-in-left {
-    from { transform: translateX(-100%); }
-    to { transform: translateX(0); }
+    from {
+      transform: translateX(-100%);
+    }
+    to {
+      transform: translateX(0);
+    }
   }
   .animate-slide-in-left {
     animation: slide-in-left 0.25s var(--ease-out-expo) forwards;
@@ -435,8 +540,12 @@
 
   /* ═══ Page Crossfade (template) ═══ */
   @keyframes page-crossfade-in {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
   }
   .animate-page-enter {
     animation: page-enter 0.4s var(--ease-out) forwards;
@@ -444,8 +553,14 @@
 
   /* ═══ Category Break Animation ═══ */
   @keyframes category-break-in {
-    from { opacity: 0; transform: translateY(4px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
   .animate-category-break {
     animation: category-break-in 0.3s ease-out forwards;
@@ -461,7 +576,9 @@
     font-size: 0.8125rem;
     font-weight: 500;
     color: var(--color-accent);
-    transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+    transition:
+      opacity 0.2s ease-out,
+      transform 0.2s ease-out;
     will-change: transform, opacity;
   }
   .ptr-indicator .ptr-arrow {
@@ -498,15 +615,27 @@
 
   /* ═══ Tab Content Enter (ProtocolFeedPage) ═══ */
   @keyframes tab-content-enter {
-    from { opacity: 0; transform: translateY(6px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
   .tab-content-enter {
     animation: tab-content-enter 0.25s var(--ease-out) forwards;
   }
   @keyframes tab-content-exit {
-    from { opacity: 1; transform: translateY(0); }
-    to { opacity: 0; transform: translateY(-4px); }
+    from {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    to {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
   }
   .tab-content-exit {
     animation: tab-content-exit 0.15s ease-in forwards;
@@ -531,7 +660,11 @@
     background: var(--color-card);
   }
   .feed-density-visual .post-card:hover {
-    border-color: color-mix(in srgb, var(--protocol-color, var(--color-accent)) 30%, var(--color-border));
+    border-color: color-mix(
+      in srgb,
+      var(--protocol-color, var(--color-accent)) 30%,
+      var(--color-border)
+    );
     box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
   }
 
@@ -545,7 +678,9 @@
 
   /* ═══ Hover Lift ═══ */
   .hover-lift {
-    transition: transform var(--duration-fast) ease-out, box-shadow var(--duration-fast) ease-out;
+    transition:
+      transform var(--duration-fast) ease-out,
+      box-shadow var(--duration-fast) ease-out;
   }
   .hover-lift:hover {
     transform: translateY(-2px);
@@ -571,8 +706,14 @@
     animation: page-enter 0.4s var(--ease-out) forwards;
   }
   @keyframes page-enter {
-    from { opacity: 0; transform: translateY(12px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   /* ═══ New Notification Dot Pulse ═══ */
@@ -610,7 +751,7 @@
     letter-spacing: 0.05em;
   }
   .live-badge::before {
-    content: '';
+    content: "";
     width: 6px;
     height: 6px;
     border-radius: 50%;
@@ -636,8 +777,12 @@
   animation: protocol-transition-out 0.7s ease-out forwards;
 }
 @keyframes protocol-transition-out {
-  from { opacity: 0.35; }
-  to { opacity: 0; }
+  from {
+    opacity: 0.35;
+  }
+  to {
+    opacity: 0;
+  }
 }
 
 /* ═══ Aurora Background (Shell) ═══ */
@@ -679,7 +824,11 @@
   align-items: center;
   border-radius: var(--radius-full, 9999px);
   border: 1px solid var(--color-accent);
-  background: linear-gradient(135deg, var(--color-accent) 0%, color-mix(in srgb, var(--color-accent) 80%, black) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--color-accent) 0%,
+    color-mix(in srgb, var(--color-accent) 80%, black) 100%
+  );
   padding: 0.5rem 1rem;
   font-size: 0.8125rem;
   font-weight: 600;
@@ -688,7 +837,9 @@
   box-shadow:
     0 0 20px var(--color-accent-glow-strong),
     0 4px 12px rgba(0, 0, 0, 0.3);
-  transition: transform 0.15s ease-out, box-shadow 0.15s ease-out;
+  transition:
+    transform 0.15s ease-out,
+    box-shadow 0.15s ease-out;
   white-space: nowrap;
 }
 
@@ -717,12 +868,24 @@
 }
 
 @keyframes banner-slide-in {
-  from { opacity: 0; transform: translateY(-120%) scale(0.9); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+  from {
+    opacity: 0;
+    transform: translateY(-120%) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 @keyframes banner-slide-out {
-  from { opacity: 1; transform: translateY(0) scale(1); }
-  to { opacity: 0; transform: translateY(-120%) scale(0.9); }
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-120%) scale(0.9);
+  }
 }
 .banner-enter {
   animation: banner-slide-in 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
@@ -733,24 +896,73 @@
 
 /* ═══ Reduced Motion ═════════════════════════════════════════ */
 @media (prefers-reduced-motion: reduce) {
-  .stagger-enter > * { opacity: 1; animation: none !important; }
-  .hover-lift:hover { transform: none !important; box-shadow: none !important; }
-  .press-effect:active { transform: none !important; }
-  .feed-enter { opacity: 1; animation: none !important; }
-  .feed-item-enter { opacity: 1; animation: none !important; }
-  .ptr-indicator.ptr-refreshing { animation: none !important; }
-  .ticker-track { animation: none !important; }
-  .new-posts-banner { animation: none !important; }
-  .banner-enter { opacity: 1; animation: none !important; }
-  .banner-exit { opacity: 0; animation: none !important; }
-  .gradient-text, .gradient-text-green { background: none; -webkit-text-fill-color: var(--color-accent); }
-  .skeleton-shimmer { animation: none !important; background: var(--color-muted-bg); }
-  .animate-backdrop-in { opacity: 1; animation: none !important; }
-  .animate-slide-in-left { transform: none; animation: none !important; }
-  .tab-content-enter { opacity: 1; animation: none !important; }
-  .tab-content-exit { opacity: 0; animation: none !important; }
-  .feed-poller-banner-btn { transition: none; }
-  .feed-poller-banner-btn:hover { transform: none; }
+  .stagger-enter > * {
+    opacity: 1;
+    animation: none !important;
+  }
+  .hover-lift:hover {
+    transform: none !important;
+    box-shadow: none !important;
+  }
+  .press-effect:active {
+    transform: none !important;
+  }
+  .feed-enter {
+    opacity: 1;
+    animation: none !important;
+  }
+  .feed-item-enter {
+    opacity: 1;
+    animation: none !important;
+  }
+  .ptr-indicator.ptr-refreshing {
+    animation: none !important;
+  }
+  .ticker-track {
+    animation: none !important;
+  }
+  .new-posts-banner {
+    animation: none !important;
+  }
+  .banner-enter {
+    opacity: 1;
+    animation: none !important;
+  }
+  .banner-exit {
+    opacity: 0;
+    animation: none !important;
+  }
+  .gradient-text,
+  .gradient-text-green {
+    background: none;
+    -webkit-text-fill-color: var(--color-accent);
+  }
+  .skeleton-shimmer {
+    animation: none !important;
+    background: var(--color-muted-bg);
+  }
+  .animate-backdrop-in {
+    opacity: 1;
+    animation: none !important;
+  }
+  .animate-slide-in-left {
+    transform: none;
+    animation: none !important;
+  }
+  .tab-content-enter {
+    opacity: 1;
+    animation: none !important;
+  }
+  .tab-content-exit {
+    opacity: 0;
+    animation: none !important;
+  }
+  .feed-poller-banner-btn {
+    transition: none;
+  }
+  .feed-poller-banner-btn:hover {
+    transform: none;
+  }
 }
 
 /* ═══ Custom Scrollbar ════════════════════════════════════════ */

@@ -19,11 +19,11 @@ async function reliableFetch<T>(
   const start = performance.now();
   try {
     const result = await withReliability(protocol, operation, { env });
-    recordBridgeOperation(protocol, context, true, performance.now() - start, env);
+    recordBridgeOperation(env, protocol, true, performance.now() - start);
     return result;
   } catch (err) {
     const errorMsg = err instanceof Error ? err.message : String(err);
-    recordBridgeOperation(protocol, context, false, performance.now() - start, env, errorMsg);
+    recordBridgeOperation(env, protocol, false, performance.now() - start, errorMsg);
     return null;
   }
 }

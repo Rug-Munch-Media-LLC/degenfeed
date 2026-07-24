@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Script from 'next/script';
-import { ProtocolFeed } from '../../../components/feed/ProtocolFeed';
+import { MediaFeed } from '../../../components/media/MediaFeed';
 
 const videosBreadcrumb = {
   '@context': 'https://schema.org',
@@ -18,13 +18,21 @@ const videosBreadcrumb = {
 };
 
 export const metadata: Metadata = {
-  title: 'Video Feed — PeerTube & Crypto Videos | DegenFeed',
+  title: 'Video Feed — PeerTube & YouTube Videos | DegenFeed',
   description:
-    'Watch the latest crypto videos from PeerTube and across the fediverse. Decentralized video platform content aggregated in your feed.',
-  keywords: ['peertube feed', 'crypto videos', 'fediverse video', 'decentralized video'],
+    'Watch videos from PeerTube, YouTube, Owncast recordings, and video embeds from every protocol. YouTube-style grid with thumbnails, duration, and channel info.',
+  keywords: [
+    'peertube feed',
+    'crypto videos',
+    'fediverse video',
+    'decentralized video',
+    'youtube videos',
+    'video aggregator',
+    'web3 video feed',
+  ],
   openGraph: {
     title: 'Video Feed — DegenFeed',
-    description: 'PeerTube videos and crypto content from across the fediverse.',
+    description: 'Videos from PeerTube, YouTube, and every protocol.',
   },
   alternates: { canonical: 'https://app.degenfeed.xyz/feed/videos' },
 };
@@ -35,7 +43,7 @@ export default function VideosFeedPage() {
       <Script id="breadcrumb-videos-feed" type="application/ld+json">
         {JSON.stringify(videosBreadcrumb)}
       </Script>
-      <ProtocolFeed source="peertube" />
+      <MediaFeed defaultFilter="videos" hideHeader={false} />
     </>
   );
 }

@@ -1,5 +1,5 @@
-// === Types ===
-// Auto-extracted from page.tsx
+// === Spaces Types ===
+// Extended for cross-platform support
 
 export interface SpaceSpeaker {
   id: string;
@@ -17,6 +17,25 @@ export interface SpaceReaction {
   createdAt: number;
 }
 
+export interface SpacePlatformData {
+  platform: 'nostr' | 'peertube' | 'owncast' | 'livepeer';
+  nativeId: string;
+  url?: string;
+  streamUrl?: string;
+  chatUrl?: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface SpaceGating {
+  type: 'token' | 'subscription' | 'payment' | 'none';
+  tokenAddress?: string;
+  minBalance?: string;
+  chainId?: number;
+  paymentAmount?: string;
+  paymentToken?: string;
+  subscriptionTier?: string;
+}
+
 export interface SpaceItem {
   id: string;
   title: string;
@@ -25,7 +44,10 @@ export interface SpaceItem {
   hostName: string;
   hostAvatarUrl?: string;
   coHosts: string[];
-  protocols: string[];
+  /** Legacy: protocol name strings */
+  protocols?: string[];
+  /** New: structured platform data */
+  platforms?: SpacePlatformData[];
   status: 'live' | 'scheduled' | 'ended';
   createdAt: number;
   scheduledAt?: string;
@@ -35,5 +57,10 @@ export interface SpaceItem {
   tipTokenAddress?: string;
   tippingEnabled: boolean;
   recordingUrl?: string;
+  recordingReady?: boolean;
   endedAt?: number;
+  /** Premium/gating config */
+  gating?: SpaceGating;
+  /** Tags for discoverability */
+  tags?: string[];
 }

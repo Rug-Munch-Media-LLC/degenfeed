@@ -165,9 +165,12 @@ export const atProtoLiveStrategy: ProtocolStrategy = {
       (client as unknown as { accessJwt: string }).accessJwt = accessJwt;
       (client as unknown as { did: string }).did = did;
 
-      // Get post thread to fetch engagement
-      const thread = await client.getPostThread({ uri: protocolId, depth: 0 });
-      const post = thread?.thread?.post as Record<string, unknown> | undefined;
+      // Get post thread to fetch engagement via public API
+      const threadRes = await fetch(
+        `https://public.api.bsky.app/xrpc/app.bsky.feed.getPostThread?uri=${encodeURIComponent(protocolId)}&depth=0`,
+      );
+      const threadData = threadRes.ok ? (await threadRes.json()) as { thread?: { post?: Record<string, unknown> } } : { thread: undefined };
+      const post = threadData.thread?.post;
       const likeCount = (post?.likeCount as number) ?? 0;
       const repostCount = (post?.repostCount as number) ?? 0;
       const replyCount = (post?.replyCount as number) ?? 0;

@@ -53,12 +53,7 @@ export function FeedPollerBanner({ count, onRefresh }: FeedPollerBannerProps) {
   const reducedMotion = prefersReducedMotion.current;
 
   return (
-    <div
-      role="status"
-      aria-live="polite"
-      aria-atomic="true"
-      className="feed-poller-banner"
-    >
+    <div role="status" aria-live="polite" aria-atomic="true" className="feed-poller-banner">
       <button
         type="button"
         onClick={onRefresh}
