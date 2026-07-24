@@ -10,7 +10,7 @@
  * produce JSON output. Fallback to direct RSS feed parsing.
  */
 
-import type { SchemaGuard, UnifiedPost } from '../server';
+import type { SchemaGuard, UnifiedPost } from '../server/types';
 
 const RSS_BRIDGE_BASE = 'http://127.0.0.1:8282';
 const USER_AGENT = 'DegenFeed-Bridge/0.1';

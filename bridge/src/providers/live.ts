@@ -11,7 +11,7 @@
  * and go-live notifications.
  */
 
-import type { SchemaGuard } from '../server';
+import type { SchemaGuard } from '../server/types';
 
 const OWNCAST_BASE = 'http://127.0.0.1:8092';
 const PEERTUBE_BASE = 'http://127.0.0.1:9011';

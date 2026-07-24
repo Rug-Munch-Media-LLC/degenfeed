@@ -9,7 +9,7 @@
  * which serve /api/v1/timelines/public without authentication.
  */
 
-import type { SchemaGuard, UnifiedPost } from '../server';
+import type { SchemaGuard, UnifiedPost } from '../server/types';
 
 const GTS_BASE = 'http://127.0.0.1:8082';
 

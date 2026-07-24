@@ -19,7 +19,7 @@
  * content to target protocols using the configured transforms.
  */
 
-import type { UnifiedPost } from './server';
+import type { UnifiedPost } from './server/types';
 
 // ─── Types ──────────────────────────────────────────────────────────────
 

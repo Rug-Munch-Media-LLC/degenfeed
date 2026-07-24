@@ -15,7 +15,7 @@
  * Without key: returns empty (documented limitation).
  */
 
-import type { SchemaGuard, UnifiedPost } from '../server';
+import type { SchemaGuard, UnifiedPost } from '../server/types';
 
 const NEYNAR_BASE = 'https://api.neynar.com';
 const NEYNAR_API_KEY = process.env.NEYNAR_API_KEY || '';

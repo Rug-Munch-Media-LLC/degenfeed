@@ -439,12 +439,46 @@ const server = http.createServer(async (req, res) => {
       return jsonOk(res, { posts, meta });
     }
 
+    if (path === '/api/rss/sources') {
+      const { FEED_COUNT, ALL_FEEDS } = await import('../providers/rss');
+      const categories: Record<string, number> = {};
+      for (const feed of ALL_FEEDS) {
+        categories[feed.category] = (categories[feed.category] || 0) + 1;
+      }
+      const platforms: Record<string, number> = {};
+      for (const feed of ALL_FEEDS) {
+        const plat = feed.platform || 'rss';
+        platforms[plat] = (platforms[plat] || 0) + 1;
+      }
+      return jsonOk(res, {
+        totalSources: FEED_COUNT,
+        categories,
+        platforms,
+        featuredCount: ALL_FEEDS.filter((f) => f.featured).length,
+        newsletterCount: ALL_FEEDS.filter((f) => f.platform).length,
+      });
+    }
+
+    if (path === '/api/rss/category') {
+      const category = searchParams.get('category') || '';
+      if (!category) {
+        return jsonOk(res, {
+          error: 'Missing category param. Options: crypto-news, crypto-research, vc-investment, dev-technical, security, academic, tech, defi, nft, ai, newsletter, regulation, bitcoin, ethereum, solana',
+        });
+      }
+      const { fetchByCategory } = await import('../providers/rss');
+      const limit = Math.min(parseInt(searchParams.get('limit') || '20', 10), 50);
+      // biome-ignore lint/suspicious/noExplicitAny: runtime dynamic category cast
+      const posts = await fetchByCategory(category as any, limit);
+      return jsonOk(res, { posts, meta: { total: posts.length, category, limit } });
+    }
+
     if (path === '/api/feed/health') {
       const results = await Promise.all(
         [
           'http://127.0.0.1:8082/api/v1/instance',
           'http://127.0.0.1:8281/settings',
-          'http://127.0.0.1:8282/',
+          'https://cointelegraph.com/rss', // RSS direct (no RSS-Bridge)
           'http://127.0.0.1:8536/api/v3/post/list?sort=Hot&limit=1',
           'http://127.0.0.1:9011/api/v1/videos?count=1',
           'http://127.0.0.1:3012/xrpc/com.atproto.server.describeServer',
@@ -533,11 +567,81 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (path === '/api/feed/news') {
-      const { fetchRssBridgePosts } = await import('../providers/rssbridge');
-      const rssPosts = await fetchRssBridgePosts(10);
+      const { fetchRssPosts } = await import('../providers/rss');
+      const limit = Math.min(parseInt(searchParams.get('limit') || '25', 10), 100);
+      const rssPosts = await fetchRssPosts(limit);
       return jsonOk(res, {
         posts: rssPosts,
-        meta: { total: rssPosts.length, page: 1, limit: 10, source: 'live', fetchedAt: Date.now() },
+        meta: {
+          total: rssPosts.length,
+          page: 1,
+          limit,
+          source: 'rss-aggregator',
+          fetchedAt: Date.now(),
+          feedCount: (await import('../providers/rss')).FEED_COUNT,
+        },
+      });
+    }
+
+    // ── Lemmy Community Proxy ───────────────────────────────────
+    // GET /api/feed/lemmy/community/:name?instance=lemmy.world&limit=20
+    if (path.startsWith('/api/feed/lemmy/community/')) {
+      const communityName = path.replace('/api/feed/lemmy/community/', '');
+      if (communityName) {
+        const instance = searchParams.get('instance') || '127.0.0.1:8536';
+        const limit = Math.min(parseInt(searchParams.get('limit') || '25', 10), 50);
+        const { fetchCommunityPosts } = await import('../providers/lemmy');
+        const posts = await fetchCommunityPosts(
+          instance.startsWith('http') ? instance : `http://${instance}`,
+          communityName,
+          limit,
+        );
+        return jsonOk(res, {
+          posts,
+          meta: {
+            total: posts.length,
+            community: communityName,
+            instance,
+            page: 1,
+            limit,
+            fetchedAt: Date.now(),
+          },
+        });
+      }
+    }
+
+    // ── Lemmy Search ─────────────────────────────────────────────
+    // GET /api/feed/lemmy/search?q=bitcoin&instance=lemmy.ml&type=Posts
+    if (path === '/api/feed/lemmy/search') {
+      const q = searchParams.get('q') || '';
+      const searchType = searchParams.get('type') || 'Posts';
+      const instance = searchParams.get('instance') || '127.0.0.1:8536';
+      const limit = Math.min(parseInt(searchParams.get('limit') || '25', 10), 50);
+      const page = parseInt(searchParams.get('page') || '1', 10);
+
+      if (!q) {
+        return jsonOk(res, { data: [], meta: { q: '', total: 0, page, limit } });
+      }
+
+      const { searchLemmy } = await import('../providers/lemmy');
+      const results = await searchLemmy(q, searchType, instance, limit, page);
+      return jsonOk(res, results);
+    }
+
+    if (path === '/api/feed/newsletter') {
+      const { fetchNewsletterPosts, getNewsletterFeeds } = await import('../providers/rss');
+      const limit = Math.min(parseInt(searchParams.get('limit') || '20', 10), 50);
+      const newsletterPosts = await fetchNewsletterPosts(limit);
+      return jsonOk(res, {
+        posts: newsletterPosts,
+        meta: {
+          total: newsletterPosts.length,
+          page: 1,
+          limit,
+          source: 'newsletter-aggregator',
+          fetchedAt: Date.now(),
+          newsletterSources: getNewsletterFeeds().length,
+        },
       });
     }
 

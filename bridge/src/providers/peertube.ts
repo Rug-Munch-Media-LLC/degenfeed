@@ -8,7 +8,7 @@
  * API: GET /api/v1/videos?count=N&sort=-publishedAt
  */
 
-import type { SchemaGuard, UnifiedPost } from '../server';
+import type { SchemaGuard, UnifiedPost } from '../server/types';
 
 const PEERTUBE_BASE = 'http://127.0.0.1:9011';
 

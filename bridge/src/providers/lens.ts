@@ -13,7 +13,7 @@
  * Endpoint: http://127.0.0.1:8088/api/publications
  */
 
-import type { SchemaGuard, UnifiedPost } from '../server';
+import type { SchemaGuard, UnifiedPost } from '../server/types';
 
 // ─── Configuration ────────────────────────────────────────────────────
 
