@@ -3,13 +3,36 @@ import { requireSession } from '../../_auth';
 // TODO: Wire to worker backend
 export const dynamic = 'force-dynamic';
 
+const VALID_PROTOCOLS = [
+  'nostr',
+  'farcaster',
+  'lens',
+  'bluesky',
+  'mastodon',
+  'reddit',
+  'threads',
+  'lemmy',
+  'peertube',
+];
+
 /**
- * Cross-protocol bridge reply endpoint.
- * Accepts a reply composed on one protocol and relays it to the target protocol.
+ * POST /api/bridge/reply
+ *
+ * Send a cross-protocol reply.
+ * The reply is composed on one protocol and bridged to the target protocol.
+ *
+ * Body: {
+ *   parentPostUri: "df://post/...",
+ *   parentProtocol: "nostr",
+ *   replyProtocol: "farcaster",
+ *   content: "Great post!",
+ *   authorId: "npub1..."
+ * }
  */
 export async function POST(request: NextRequest) {
   const session = await requireSession(request);
   if (session instanceof NextResponse) return session;
+
   try {
     const body = await request.json();
     const { parentPostUri, parentProtocol, replyProtocol, content, authorId } = body;
@@ -28,24 +51,41 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const validProtocols = [
-      'nostr',
-      'farcaster',
-      'lens',
-      'bluesky',
-      'mastodon',
-      'reddit',
-      'threads',
-    ];
-    if (!validProtocols.includes(parentProtocol) || !validProtocols.includes(replyProtocol)) {
+    if (!VALID_PROTOCOLS.includes(parentProtocol) || !VALID_PROTOCOLS.includes(replyProtocol)) {
       return NextResponse.json(
-        { error: `Invalid protocol. Must be one of: ${validProtocols.join(', ')}` },
+        { error: `Invalid protocol. Must be one of: ${VALID_PROTOCOLS.join(', ')}` },
         { status: 400 },
       );
     }
 
-    // Generate a bridged reply ID with bridge metadata
+    // Generate a bridged reply ID
     const bridgedId = `${replyProtocol}:${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+
+    // Try to forward to worker/bridge
+    const workerUrl =
+      process.env.WORKER_URL || process.env.NEXT_PUBLIC_WORKER_URL || 'http://localhost:8787';
+
+    try {
+      const bridgeRes = await fetch(`${workerUrl}/api/bridge/reply`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          parentPostUri,
+          parentProtocol,
+          replyProtocol,
+          content,
+          authorId: authorId || session?.address || 'anonymous',
+        }),
+        signal: AbortSignal.timeout(10000),
+      });
+
+      if (bridgeRes.ok) {
+        const data = await bridgeRes.json();
+        return NextResponse.json(data);
+      }
+    } catch {
+      // Fall through to local response
+    }
 
     return NextResponse.json({
       ok: true,

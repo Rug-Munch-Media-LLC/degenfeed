@@ -140,10 +140,7 @@ export function registerCrossPostLink(
  * Get all cross-post links for a given post.
  * Returns which other protocols this post has been cross-posted to.
  */
-export function getCrossPostLinks(
-  protocol: string,
-  postId: string,
-): CrossProtocolLink[] {
+export function getCrossPostLinks(protocol: string, postId: string): CrossProtocolLink[] {
   const results: CrossProtocolLink[] = [];
 
   // Direct lookups
@@ -218,9 +215,7 @@ export function registerReply(
  * Build a CrossProtocolThread from a ThreadRecord.
  */
 function buildThread(record: ThreadRecord): CrossProtocolThread {
-  const sorted = [...record.replies].sort(
-    (a, b) => a.createdAt - b.createdAt,
-  );
+  const sorted = [...record.replies].sort((a, b) => a.createdAt - b.createdAt);
 
   const protocols = new Set<string>();
   const byProtocol: Record<string, number> = {};
@@ -281,10 +276,7 @@ function buildThread(record: ThreadRecord): CrossProtocolThread {
 /**
  * Get a assembled thread for a post.
  */
-export function getThread(
-  protocol: string,
-  postId: string,
-): CrossProtocolThread | null {
+export function getThread(protocol: string, postId: string): CrossProtocolThread | null {
   const record = threadStore.get(`${protocol}:${postId}`);
   if (!record) return null;
   return buildThread(record);

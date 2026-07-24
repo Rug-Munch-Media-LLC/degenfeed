@@ -21,8 +21,7 @@ import type { SchemaGuard, UnifiedPost } from '../server';
 
 // ─── Configuration ────────────────────────────────────────────────────
 
-const ZORA_INDEXER_URL =
-  process.env.ZORA_INDEXER_URL || 'http://127.0.0.1:8091';
+const ZORA_INDEXER_URL = process.env.ZORA_INDEXER_URL || 'http://127.0.0.1:8091';
 
 // ─── Interfaces ───────────────────────────────────────────────────────
 
@@ -99,11 +98,7 @@ const CHAIN_SHORT: Record<number, string> = {
   7777777: 'zora',
 };
 
-export function guessNiches(
-  name: string,
-  description: string,
-  collectionName: string,
-): string[] {
+export function guessNiches(name: string, description: string, collectionName: string): string[] {
   const niches: string[] = [];
   const lower = `${name} ${description} ${collectionName}`.toLowerCase();
 
@@ -111,21 +106,14 @@ export function guessNiches(
   if (/\b(eth|ethereum|vitalik)\b/.test(lower)) niches.push('ethereum');
   if (/\b(sol|solana|spl)\b/.test(lower)) niches.push('solana');
   if (/\b(defi|liquidity|yield|farm|lp)\b/.test(lower)) niches.push('defi');
-  if (/\b(art|artist|gallery|painting|sculpture|digital)\b/.test(lower))
-    niches.push('art');
-  if (/\b(generative|algorithmic|code|gen)\b/.test(lower))
-    niches.push('generative');
-  if (/\b(punk|ape|pengu|mfers|doodles|milady)\b/.test(lower))
-    niches.push('bluechip');
-  if (/\b(meme|pepe|dog|shib|cat|based)\b/.test(lower))
-    niches.push('memecoin');
-  if (/\b(photo|photography|landscape|portrait)\b/.test(lower))
-    niches.push('photography');
+  if (/\b(art|artist|gallery|painting|sculpture|digital)\b/.test(lower)) niches.push('art');
+  if (/\b(generative|algorithmic|code|gen)\b/.test(lower)) niches.push('generative');
+  if (/\b(punk|ape|pengu|mfers|doodles|milady)\b/.test(lower)) niches.push('bluechip');
+  if (/\b(meme|pepe|dog|shib|cat|based)\b/.test(lower)) niches.push('memecoin');
+  if (/\b(photo|photography|landscape|portrait)\b/.test(lower)) niches.push('photography');
   if (/\b(music|song|album|track|audio)\b/.test(lower)) niches.push('music');
-  if (/\b(game|gaming|play|rpg|metaverse)\b/.test(lower))
-    niches.push('gaming');
-  if (/\b(ai|artificial|intelligence|llm|agent|neural)\b/.test(lower))
-    niches.push('ai');
+  if (/\b(game|gaming|play|rpg|metaverse)\b/.test(lower)) niches.push('gaming');
+  if (/\b(ai|artificial|intelligence|llm|agent|neural)\b/.test(lower)) niches.push('ai');
 
   if (niches.length === 0) niches.push('nft');
   return niches;
@@ -136,10 +124,7 @@ function truncate(str: string, maxLen: number): string {
   return str.slice(0, maxLen - 3) + '...';
 }
 
-function formatPrice(
-  ethPrice: number | null,
-  usdcPrice: number | null,
-): string {
+function formatPrice(ethPrice: number | null, usdcPrice: number | null): string {
   if (usdcPrice && usdcPrice > 0) {
     return `$${usdcPrice.toFixed(2)}`;
   }
@@ -153,10 +138,7 @@ function formatPrice(
 
 // ─── Fetch from Local Indexer ─────────────────────────────────────────
 
-async function fetchFromIndexer<T>(
-  path: string,
-  limit: number,
-): Promise<T[]> {
+async function fetchFromIndexer<T>(path: string, limit: number): Promise<T[]> {
   const url = `${ZORA_INDEXER_URL}${path}?limit=${limit}`;
 
   try {
@@ -166,9 +148,7 @@ async function fetchFromIndexer<T>(
     });
 
     if (!res.ok) {
-      console.warn(
-        `[bridge] Zora Indexer: HTTP ${res.status} ${res.statusText}`,
-      );
+      console.warn(`[bridge] Zora Indexer: HTTP ${res.status} ${res.statusText}`);
       return [];
     }
 
@@ -255,10 +235,7 @@ function tokenToPost(token: IndexerToken): UnifiedPost | null {
         id: token.creator_address || token.collection_address,
       },
       handles: {
-        zora:
-          token.creator_username ||
-          token.creator_address?.slice(0, 10) ||
-          'unknown',
+        zora: token.creator_username || token.creator_address?.slice(0, 10) || 'unknown',
         eth: token.creator_address || '',
       },
       displayName: creatorName,
@@ -291,11 +268,7 @@ function tokenToPost(token: IndexerToken): UnifiedPost | null {
       raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
     },
     raw: token,
-    niches: guessNiches(
-      token.name || '',
-      desc,
-      token.collection_name || '',
-    ),
+    niches: guessNiches(token.name || '', desc, token.collection_name || ''),
   };
 }
 
@@ -381,10 +354,7 @@ function collectionToPost(col: IndexerCollection): UnifiedPost {
 // ─── Fetch Functions ──────────────────────────────────────────────────
 
 async function fetchTrendingMints(limit: number): Promise<UnifiedPost[]> {
-  const tokens = await fetchFromIndexer<IndexerToken>(
-    '/api/tokens',
-    Math.min(limit, 20),
-  );
+  const tokens = await fetchFromIndexer<IndexerToken>('/api/tokens', Math.min(limit, 20));
   return tokens.slice(0, limit).map(tokenToPost).filter(Boolean) as UnifiedPost[];
 }
 
@@ -416,9 +386,7 @@ export async function fetchZoraPosts(limit = 20): Promise<UnifiedPost[]> {
 
   // 2. Fetch collections as supplement
   if (all.length < limit) {
-    const collections = await fetchTrendingCollections(
-      Math.ceil((limit - all.length) / 2),
-    );
+    const collections = await fetchTrendingCollections(Math.ceil((limit - all.length) / 2));
     all.push(...collections);
   }
 
@@ -433,9 +401,7 @@ export async function fetchZoraPosts(limit = 20): Promise<UnifiedPost[]> {
     }
   }
 
-  console.log(
-    `[bridge] Zora Indexer: ${deduped.length} posts (${mints.length} mints)`,
-  );
+  console.log(`[bridge] Zora Indexer: ${deduped.length} posts (${mints.length} mints)`);
   return deduped;
 }
 

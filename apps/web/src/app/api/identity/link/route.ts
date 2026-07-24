@@ -13,6 +13,7 @@ const VALID_PROTOCOLS = [
   'lemmy',
   'rss',
   'peertube',
+  'zora',
 ];
 
 export async function GET() {
@@ -22,10 +23,31 @@ export async function GET() {
   );
 }
 
+/**
+ * POST /api/identity/link
+ *
+ * Link two protocol identities together as the same user.
+ * When a user connects their Nostr pubkey AND Mastodon handle,
+ * this endpoint records the link for cross-protocol identity resolution.
+ *
+ * Body: {
+ *   protocol: "nostr",              // protocol to link
+ *   identityData: { npub: "..." },  // protocol-specific identity
+ *   walletAddress: "0x...",         // wallet that owns this identity
+ *   targetProtocol?: "mastodon",    // (optional) second protocol to link
+ *   targetIdentity?: { handle: "..." }  // (optional) second identity data
+ * }
+ */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { protocol, identity: identityData, walletAddress } = body;
+    const {
+      protocol,
+      identity: identityData,
+      walletAddress,
+      targetProtocol,
+      targetIdentity,
+    } = body;
 
     if (!protocol || !VALID_PROTOCOLS.includes(protocol)) {
       return NextResponse.json(
@@ -107,10 +129,35 @@ export async function POST(request: NextRequest) {
           );
         }
         break;
+      case 'zora':
+        if (!identityData.address && !identityData.ens) {
+          return NextResponse.json({ error: 'zora requires address or ens' }, { status: 400 });
+        }
+        break;
     }
 
-    // In production, this stores the linked identity in Postgres/KV
-    return NextResponse.json({ success: true, protocol, linked: true });
+    // If target protocol and identity are provided, link both
+    if (targetProtocol && targetIdentity) {
+      if (!VALID_PROTOCOLS.includes(targetProtocol)) {
+        return NextResponse.json(
+          { error: `Invalid target protocol: ${targetProtocol}` },
+          { status: 400 },
+        );
+      }
+
+      // In production, store the bidirectional link in Postgres/KV
+      return NextResponse.json({
+        success: true,
+        links: [
+          { protocol, identity: identityData, walletAddress },
+          { protocol: targetProtocol, identity: targetIdentity, walletAddress },
+        ],
+        crossProtocol: true,
+      });
+    }
+
+    // Single protocol link
+    return NextResponse.json({ success: true, protocol, linked: true, walletAddress });
   } catch (_error) {
     return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
   }

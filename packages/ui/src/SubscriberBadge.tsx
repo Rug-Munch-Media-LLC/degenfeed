@@ -29,7 +29,8 @@ const TIER_ICONS: Record<string, string> = {
 };
 
 export function SubscriberBadge({ tier, size = 'xs' }: SubscriberBadgeProps) {
-  const config = TIER_COLORS[tier] ?? TIER_COLORS.supporter;
+  const config: { bg: string; text: string; label: string } =
+    TIER_COLORS[tier] ?? TIER_COLORS.supporter;
   const icon = TIER_ICONS[tier] ?? '⭐';
   const sizeClass = size === 'xs' ? 'px-1.5 py-0.5 text-[10px]' : 'px-2 py-0.5 text-xs';
 

@@ -6,10 +6,10 @@
 
 'use client';
 
-import { useEffect } from 'react';
 import type { UnifiedPost } from '@degenfeed/types';
-import type { MediaItem } from './bluesky-media-types';
+import { useEffect } from 'react';
 import { formatCount } from './bluesky-media-helpers';
+import type { MediaItem } from './bluesky-media-types';
 
 interface LightboxProps {
   post: UnifiedPost;
@@ -42,7 +42,9 @@ export function Lightbox({
 
   useEffect(() => {
     document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = ''; };
+    return () => {
+      document.body.style.overflow = '';
+    };
   }, []);
 
   return (
@@ -60,7 +62,15 @@ export function Lightbox({
         style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}
         aria-label="Close lightbox"
       >
-        <svg aria-hidden="true" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2">
+        <svg
+          aria-hidden="true"
+          width="20"
+          height="20"
+          viewBox="0 0 20 20"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+        >
           <path d="M15 5L5 15M5 5l10 10" />
         </svg>
       </button>
@@ -73,7 +83,15 @@ export function Lightbox({
           style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}
           aria-label="Previous image"
         >
-          <svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg
+            aria-hidden="true"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
             <path d="M15 18l-6-6 6-6" />
           </svg>
         </button>
@@ -87,7 +105,15 @@ export function Lightbox({
           style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}
           aria-label="Next image"
         >
-          <svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg
+            aria-hidden="true"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
             <path d="M9 18l6-6-6-6" />
           </svg>
         </button>
@@ -111,7 +137,9 @@ export function Lightbox({
           alt=""
           className="h-8 w-8 rounded-full border"
           style={{ borderColor: 'rgba(255,255,255,0.2)' }}
-          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+          onError={(e) => {
+            (e.target as HTMLImageElement).style.display = 'none';
+          }}
         />
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold text-white">{post.author.displayName}</p>
@@ -119,13 +147,29 @@ export function Lightbox({
         </div>
         <div className="flex items-center gap-4 text-xs text-white/80">
           <span className="flex items-center gap-1">
-            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg
+              aria-hidden="true"
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
               <path d="M20.8 4.6a5.5 5.5 0 00-7.8 0L12 5.7l-1-1a5.5 5.5 0 00-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 000-7.8z" />
             </svg>
             {formatCount(post.metrics.likes)}
           </span>
           <span className="flex items-center gap-1">
-            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg
+              aria-hidden="true"
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
               <path d="M17 1l4 4-4 4" />
               <path d="M3 11V9a4 4 0 014-4h14" />
               <path d="M7 23l-4-4 4-4" />

@@ -63,10 +63,7 @@ export interface UnifiedProfile {
 export interface IdentityResolutionStrategy {
   name: string;
   priority: number;
-  resolve(
-    protocol: string,
-    userId: string,
-  ): Promise<ProtocolHandle[]>;
+  resolve(protocol: string, userId: string): Promise<ProtocolHandle[]>;
 }
 
 // ─── Known Cross-Protocol Mappings ──────────────────────────────────────
@@ -204,8 +201,8 @@ export class IdentityResolver {
     const keyB = `${protocolB}:${userIdB}`;
 
     // Find or create mappings for both keys
-    let mappingA = this.mappings.get(keyA);
-    let mappingB = this.mappings.get(keyB);
+    const mappingA = this.mappings.get(keyA);
+    const mappingB = this.mappings.get(keyB);
 
     if (mappingA && mappingB && mappingA !== mappingB) {
       // Merge mappings
@@ -273,18 +270,17 @@ export class IdentityResolver {
       if (!data.links) return null;
 
       const selfLink = data.links.find((l) => l.rel === 'self');
-      const profileLink = data.links.find(
-        (l) => l.rel === 'http://webfinger.net/rel/profile-page',
-      );
+      const profileLink = data.links.find((l) => l.rel === 'http://webfinger.net/rel/profile-page');
 
       const activityPubId = selfLink?.href || profileLink?.href || '';
       if (!activityPubId) return null;
 
-      const protocol = domain === 'threads.net' || domain.endsWith('.threads.net')
-        ? 'threads'
-        : domain === 'bsky.social'
-          ? 'bluesky'
-          : 'mastodon';
+      const protocol =
+        domain === 'threads.net' || domain.endsWith('.threads.net')
+          ? 'threads'
+          : domain === 'bsky.social'
+            ? 'bluesky'
+            : 'mastodon';
 
       return {
         protocol,
@@ -301,12 +297,11 @@ export class IdentityResolver {
    * Look up a NIP-05 address (user@domain) to find a Nostr pubkey
    * and potentially cross-reference with other protocols.
    */
-  async resolveNip05(
-    nip05: string,
-    fetchFn: typeof fetch = fetch,
-  ): Promise<ProtocolHandle | null> {
+  async resolveNip05(nip05: string, fetchFn: typeof fetch = fetch): Promise<ProtocolHandle | null> {
     try {
-      const [username, domain] = nip05.split('@');
+      const parts = nip05.split('@');
+      const username = parts[0] ?? '';
+      const domain = parts[1] ?? '';
       const url = `https://${domain}/.well-known/nostr.json?name=${encodeURIComponent(username)}`;
       const res = await fetchFn(url, {
         signal: AbortSignal.timeout(5000),
@@ -360,10 +355,7 @@ export class IdentityResolver {
    * Search for an identity by handle across all protocols.
    * Great for the unified search bar.
    */
-  async searchByHandle(
-    query: string,
-    fetchFn: typeof fetch = fetch,
-  ): Promise<UnifiedProfile[]> {
+  async searchByHandle(query: string, fetchFn: typeof fetch = fetch): Promise<UnifiedProfile[]> {
     const results: UnifiedProfile[] = [];
     const seen = new Set<string>();
 
@@ -456,19 +448,13 @@ export class IdentityResolver {
     );
   }
 
-  private getExplicitMappings(
-    _protocol: string,
-    _userId: string,
-  ): ProtocolHandle[] {
+  private getExplicitMappings(_protocol: string, _userId: string): ProtocolHandle[] {
     // In production, query the identity store (Postgres/KV)
     // For now, return empty — explicit links are added via linkIdentities()
     return [];
   }
 
-  private mergeMappings(
-    a: IdentityMapping,
-    b: IdentityMapping,
-  ): IdentityMapping {
+  private mergeMappings(a: IdentityMapping, b: IdentityMapping): IdentityMapping {
     const seen = new Set<string>();
     const mergedHandles: ProtocolHandle[] = [];
 
@@ -495,9 +481,7 @@ export class IdentityResolver {
     userId: string,
     metadata?: Partial<ProtocolHandle>,
   ): void {
-    const exists = mapping.handles.some(
-      (h) => h.protocol === protocol && h.userId === userId,
-    );
+    const exists = mapping.handles.some((h) => h.protocol === protocol && h.userId === userId);
     if (!exists) {
       mapping.handles.push({
         protocol,
@@ -528,17 +512,11 @@ export class IdentityResolver {
     const bestHandle = mapping.handles[0];
     const primary = bestHandle?.protocol || 'nostr';
 
-    const totalFollowers = mapping.handles.reduce(
-      (sum, h) => sum + (h.followerCount || 0),
-      0,
-    );
+    const totalFollowers = mapping.handles.reduce((sum, h) => sum + (h.followerCount || 0), 0);
 
     return {
       profileId: mapping.key,
-      displayName:
-        bestHandle?.displayName ||
-        bestHandle?.handle ||
-        'Unknown',
+      displayName: bestHandle?.displayName || bestHandle?.handle || 'Unknown',
       bio: bestHandle?.bio || '',
       avatarUrl: bestHandle?.avatarUrl || '',
       handles: mapping.handles,
