@@ -1,6 +1,15 @@
 import http from 'node:http';
-import { getCrossPosterStats, startCrossPoster } from '../crossposter';
+import { startCrossPoster } from '../crossposter';
 import { buildFeed, DEFAULT_PREFERENCES, PROVIDERS } from './feeds';
+
+// Catch unhandled rejections to prevent process crashes
+process.on('unhandledRejection', (reason) => {
+  console.error('[bridge] Unhandled rejection:', reason instanceof Error ? reason.message : reason);
+});
+process.on('uncaughtException', (err) => {
+  console.error('[bridge] Uncaught exception:', err.message);
+});
+
 import type { UnifiedPost } from './types';
 
 export { buildFeed, DEFAULT_PREFERENCES, PROVIDERS } from './feeds';
@@ -103,25 +112,19 @@ function generateCrossProtocolNotifications(
     {
       type: 'mention' as const,
       protocols: ['nostr', 'bluesky', 'mastodon'],
-      actors: [
-        { name: 'Mentioner', handle: 'mentionbot', proto: 'bluesky' },
-      ],
+      actors: [{ name: 'Mentioner', handle: 'mentionbot', proto: 'bluesky' }],
       content: 'Mentioned you in a post',
     },
     {
       type: 'zap' as const,
       protocols: ['nostr'],
-      actors: [
-        { name: 'Zapper', handle: 'zapmaster', proto: 'nostr' },
-      ],
+      actors: [{ name: 'Zapper', handle: 'zapmaster', proto: 'nostr' }],
       content: 'Zapped your post 5,000 sats ⚡',
     },
     {
       type: 'bridge' as const,
       protocols: ['nostr', 'farcaster', 'bluesky'],
-      actors: [
-        { name: 'Bridge Bot', handle: 'bridge', proto: 'nostr' },
-      ],
+      actors: [{ name: 'Bridge Bot', handle: 'bridge', proto: 'nostr' }],
       content: 'Your post was bridged to another protocol',
     },
   ];
@@ -212,9 +215,10 @@ async function crossProtocolSearch(
     const meiliUrl = process.env.MEILISEARCH_URL || 'http://127.0.0.1:7700';
     const meiliKey = process.env.MEILI_SEARCH_KEY || '';
 
-    const filterClause = sources.length > 0 && !sources.includes('all')
-      ? sources.map((s) => `source = ${s}`).join(' OR ')
-      : undefined;
+    const filterClause =
+      sources.length > 0 && !sources.includes('all')
+        ? sources.map((s) => `source = ${s}`).join(' OR ')
+        : undefined;
 
     const meiliRes = await fetch(`${meiliUrl}/indexes/posts/search`, {
       method: 'POST',
@@ -267,9 +271,10 @@ async function crossProtocolSearch(
   }
 
   // Fallback: search providers directly
-  const activeProtocols = sources.length > 0 && !sources.includes('all')
-    ? sources.filter((s) => s in PROVIDERS)
-    : Object.keys(PROVIDERS);
+  const activeProtocols =
+    sources.length > 0 && !sources.includes('all')
+      ? sources.filter((s) => s in PROVIDERS)
+      : Object.keys(PROVIDERS);
 
   if (activeProtocols.length === 0) return result;
 
@@ -282,9 +287,7 @@ async function crossProtocolSearch(
         const provider = PROVIDERS[protocol];
         if (!provider) return [];
         const posts = await provider.fetch(perProvider * 3);
-        return posts
-          .filter((p) => p.text.toLowerCase().includes(qLower))
-          .slice(0, perProvider);
+        return posts.filter((p) => p.text.toLowerCase().includes(qLower)).slice(0, perProvider);
       } catch {
         return [] as UnifiedPost[];
       }
@@ -311,8 +314,10 @@ async function crossProtocolSearch(
     const aLower = a.text.toLowerCase();
     const bLower = b.text.toLowerCase();
 
-    const aExact = aLower === qLower ? 3 : aLower.startsWith(qLower) ? 2 : aLower.includes(qLower) ? 1 : 0;
-    const bExact = bLower === qLower ? 3 : bLower.startsWith(qLower) ? 2 : bLower.includes(qLower) ? 1 : 0;
+    const aExact =
+      aLower === qLower ? 3 : aLower.startsWith(qLower) ? 2 : aLower.includes(qLower) ? 1 : 0;
+    const bExact =
+      bLower === qLower ? 3 : bLower.startsWith(qLower) ? 2 : bLower.includes(qLower) ? 1 : 0;
 
     if (aExact !== bExact) return bExact - aExact;
     return b.createdAt - a.createdAt;
@@ -378,7 +383,13 @@ const server = http.createServer(async (req, res) => {
     if (path.startsWith('/api/search')) {
       const q = searchParams.get('q') || '';
       const sourcesRaw = searchParams.get('sources') || 'all';
-      const sources = sourcesRaw === 'all' ? [] : sourcesRaw.split(',').map((s) => s.trim()).filter(Boolean);
+      const sources =
+        sourcesRaw === 'all'
+          ? []
+          : sourcesRaw
+              .split(',')
+              .map((s) => s.trim())
+              .filter(Boolean);
       const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
       const limit = Math.min(100, parseInt(searchParams.get('limit') || '20', 10));
 

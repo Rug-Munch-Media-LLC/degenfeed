@@ -160,7 +160,7 @@ class FailureTracker {
 
     // Exponential backoff: 30s, 1m, 2m, 4m, 8m, 16m, 32m, 1h
     const backoffMs = Math.min(
-      30_000 * Math.pow(2, record.consecutiveFailures - 1),
+      30_000 * 2 ** (record.consecutiveFailures - 1),
       3_600_000, // max 1 hour
     );
     record.backoffUntil = Date.now() + backoffMs;
@@ -244,9 +244,10 @@ class FailureTracker {
 
 // ─── Transform Pipeline ─────────────────────────────────────────────────
 
-interface TransformFunction {
-  (post: UnifiedPost, target: ProtocolName): TransformResult | Promise<TransformResult>;
-}
+type TransformFunction = (
+  post: UnifiedPost,
+  target: ProtocolName,
+) => TransformResult | Promise<TransformResult>;
 
 /**
  * Default transforms per target.
@@ -296,9 +297,7 @@ const TRANSFORMS: Record<string, TransformFunction> = {
             byteStart: 0,
             byteEnd: new TextEncoder().encode(text).byteLength,
           },
-          features: [
-            { $type: 'app.bsky.richtext.facet#link', uri: embed.url },
-          ],
+          features: [{ $type: 'app.bsky.richtext.facet#link', uri: embed.url }],
         });
       }
     }
@@ -341,9 +340,10 @@ const TRANSFORMS: Record<string, TransformFunction> = {
    * Transform for Farcaster: create cast
    */
   farcaster: (post: UnifiedPost): TransformResult => {
-    const text = post.text.length > 320
-      ? `${post.text.slice(0, 300)}...\n\n[Cross-posted from ${post.protocol}]`
-      : `${post.text}\n\n[Cross-posted from ${post.protocol}]`;
+    const text =
+      post.text.length > 320
+        ? `${post.text.slice(0, 300)}...\n\n[Cross-posted from ${post.protocol}]`
+        : `${post.text}\n\n[Cross-posted from ${post.protocol}]`;
 
     return {
       success: true,
@@ -366,9 +366,7 @@ const TRANSFORMS: Record<string, TransformFunction> = {
 
 // ─── Publishers ─────────────────────────────────────────────────────────
 
-async function publishToNostrRelay(
-  _payload: unknown,
-): Promise<boolean> {
+async function publishToNostrRelay(_payload: unknown): Promise<boolean> {
   const relayUrl = process.env.NOSTR_RELAY_URL || 'ws://127.0.0.1:8085';
   try {
     return new Promise((resolve) => {
@@ -414,9 +412,7 @@ async function publishToNostrRelay(
   }
 }
 
-async function publishToBluesky(
-  _payload: unknown,
-): Promise<boolean> {
+async function publishToBluesky(_payload: unknown): Promise<boolean> {
   const pdsUrl = process.env.ATPROTO_PDS_URL || 'https://bsky.social';
   const jwt = process.env.BLUESKY_CROSSPOST_JWT || '';
   const did = process.env.BLUESKY_CROSSPOST_DID || '';
@@ -443,9 +439,7 @@ async function publishToBluesky(
   }
 }
 
-async function publishToPeerTube(
-  payload: unknown,
-): Promise<boolean> {
+async function publishToPeerTube(payload: unknown): Promise<boolean> {
   const ptBase = process.env.PEERTUBE_BASE_URL || 'http://127.0.0.1:9011';
   const token = process.env.PEERTUBE_ACCESS_TOKEN || '';
   const { text, tags } = payload as { text: string; tags: string[] };
@@ -467,9 +461,7 @@ async function publishToPeerTube(
   }
 }
 
-async function publishToFarcaster(
-  _payload: unknown,
-): Promise<boolean> {
+async function publishToFarcaster(_payload: unknown): Promise<boolean> {
   const hubUrl = process.env.FARCASTER_HUB_URL || 'https://hub.farcaster.standardcrypto.vc:2281';
   const payload = _payload as { text: string; embeds: Array<{ url: string }> };
   if (!process.env.FARCASTER_SIGNER_KEY) return false;
@@ -480,9 +472,7 @@ async function publishToFarcaster(
   return true;
 }
 
-async function publishToMastodon(
-  payload: unknown,
-): Promise<boolean> {
+async function publishToMastodon(payload: unknown): Promise<boolean> {
   const instance = process.env.MASTODON_INSTANCE || 'https://social.degenfeed.xyz';
   const token = process.env.MASTODON_ACCESS_TOKEN || '';
   const { status, visibility } = payload as { status: string; visibility: string };
@@ -547,10 +537,9 @@ async function fetchLatestGtsPost(): Promise<UnifiedPost | null> {
     const tokenData = (await tokenRes.json()) as { access_token?: string };
     if (!tokenData.access_token) return null;
 
-    const res = await fetch(
-      `${gtsBase}/api/v1/timelines/public?local=true&limit=1`,
-      { headers: { Authorization: `Bearer ${tokenData.access_token}` } },
-    );
+    const res = await fetch(`${gtsBase}/api/v1/timelines/public?local=true&limit=1`, {
+      headers: { Authorization: `Bearer ${tokenData.access_token}` },
+    });
     if (!res.ok) return null;
 
     const raw = (await res.json()) as Array<{
@@ -601,10 +590,9 @@ async function fetchLatestLemmyPost(): Promise<UnifiedPost | null> {
   const lemmyBase = process.env.LEMMY_BASE_URL || 'http://127.0.0.1:8536';
 
   try {
-    const res = await fetch(
-      `${lemmyBase}/api/v3/post/list?sort=New&limit=1&type_=Local`,
-      { headers: { 'User-Agent': 'DegenFeed-CrossPoster/0.2' } },
-    );
+    const res = await fetch(`${lemmyBase}/api/v3/post/list?sort=New&limit=1&type_=Local`, {
+      headers: { 'User-Agent': 'DegenFeed-CrossPoster/0.2' },
+    });
     if (!res.ok) return null;
 
     const data = (await res.json()) as {
@@ -690,8 +678,7 @@ const DEFAULT_CONFIG: CrossPairConfig[] = [
     sourceConfig: {},
     targetConfigs: {},
     // Only announce posts that contain video embeds
-    contentFilter: (post: UnifiedPost) =>
-      post.embeds.some((e) => e.kind === 'video'),
+    contentFilter: (post: UnifiedPost) => post.embeds.some((e) => e.kind === 'video'),
   },
   {
     id: 'lemmy-to-nostr',
@@ -818,9 +805,7 @@ export async function crossPost(
       if (publishOk) {
         results.push({ success: true, target, latencyMs });
         failureTracker.recordSuccess(config.id, target);
-        console.log(
-          `[crossposter] ✓ ${config.id} → ${target} (${latencyMs}ms): ${post.id}`,
-        );
+        console.log(`[crossposter] ✓ ${config.id} → ${target} (${latencyMs}ms): ${post.id}`);
       } else {
         const result: PublishResult = {
           success: false,
@@ -831,9 +816,7 @@ export async function crossPost(
         };
         results.push(result);
         failureTracker.recordFailure(config.id, target, result.error!);
-        console.log(
-          `[crossposter] ✗ ${config.id} → ${target}: publisher failed`,
-        );
+        console.log(`[crossposter] ✗ ${config.id} → ${target}: publisher failed`);
       }
     } catch (err) {
       const latencyMs = Date.now() - startTime;
@@ -846,9 +829,7 @@ export async function crossPost(
       };
       results.push(result);
       failureTracker.recordFailure(config.id, target, result.error!);
-      console.log(
-        `[crossposter] ✗ ${config.id} → ${target}: ${(err as Error).message}`,
-      );
+      console.log(`[crossposter] ✗ ${config.id} → ${target}: ${(err as Error).message}`);
     }
   }
 
@@ -859,9 +840,7 @@ export async function crossPost(
 /**
  * Poll a single source and cross-post to all configured targets.
  */
-async function pollSource(
-  config: CrossPairConfig,
-): Promise<void> {
+async function pollSource(config: CrossPairConfig): Promise<void> {
   const poller = SOURCE_POLLERS[config.source];
   if (!poller) {
     console.log(`[crossposter] No poller for source: ${config.source}`);
@@ -890,9 +869,7 @@ async function pollSource(
 
     if (success) {
       lastSeenIds.set(config.id, post.id);
-      console.log(
-        `[crossposter] ${config.id}: all targets succeeded (${results.length})`,
-      );
+      console.log(`[crossposter] ${config.id}: all targets succeeded (${results.length})`);
     } else {
       const failures = results.filter((r) => !r.success);
       console.log(
@@ -900,9 +877,7 @@ async function pollSource(
       );
     }
   } catch (err) {
-    console.log(
-      `[crossposter] ${config.id}: poll error - ${(err as Error).message}`,
-    );
+    console.log(`[crossposter] ${config.id}: poll error - ${(err as Error).message}`);
   }
 }
 
@@ -912,9 +887,7 @@ async function pollSource(
  * Start all cross-posting pairs.
  * Each pair runs on its own polling interval.
  */
-export function startCrossPoster(
-  customConfigs?: CrossPairConfig[],
-): Map<string, NodeJS.Timeout> {
+export function startCrossPoster(customConfigs?: CrossPairConfig[]): Map<string, NodeJS.Timeout> {
   const configs = customConfigs || DEFAULT_CONFIG;
   const timers = new Map<string, NodeJS.Timeout>();
 

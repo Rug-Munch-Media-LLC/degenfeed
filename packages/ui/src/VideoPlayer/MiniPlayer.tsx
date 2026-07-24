@@ -11,7 +11,7 @@ interface MiniPlayerProps {
 }
 
 export function MiniPlayer({ title, channelName, onClose, onClick }: MiniPlayerProps) {
-  const playerRef = useRef<HTMLDivElement>(null);
+  const playerRef = useRef<HTMLButtonElement>(null);
   const dragRef = useRef<{ startX: number; startY: number; left: number; top: number } | null>(
     null,
   );
@@ -43,7 +43,13 @@ export function MiniPlayer({ title, channelName, onClose, onClick }: MiniPlayerP
       ref={playerRef}
       type="button"
       className="fixed z-50 rounded-xl overflow-hidden shadow-2xl shadow-black/50 border border-white/10 cursor-pointer bg-black/90 backdrop-blur-sm text-left"
-      style={{ width: MINI_PLAYER_WIDTH, height: MINI_PLAYER_HEIGHT, bottom: 16, right: 16, padding: 0 }}
+      style={{
+        width: MINI_PLAYER_WIDTH,
+        height: MINI_PLAYER_HEIGHT,
+        bottom: 16,
+        right: 16,
+        padding: 0,
+      }}
       onClick={onClick}
       aria-label={`Mini player: ${title ?? 'Video'}`}
     >

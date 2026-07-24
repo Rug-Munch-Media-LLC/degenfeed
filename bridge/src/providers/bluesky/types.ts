@@ -57,4 +57,3 @@ interface BskyPostView {
   replyCount?: number;
   indexedAt: string;
 }
-
