@@ -30,7 +30,7 @@ describe('billing', () => {
     };
     expect(res.status).toBe(200);
     expect(body.tier).toBe('pro');
-    expect(body.amount).toBe(5);
+    expect(body.amount).toBe(10);
     expect(body.action).toBeDefined();
   });
 

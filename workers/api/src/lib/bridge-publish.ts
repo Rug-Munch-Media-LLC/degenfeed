@@ -154,7 +154,7 @@ async function genericBridgePublish(
   targetAuth: Record<string, string>,
   env: Env,
 ): Promise<{ ok: boolean; nativeId?: string; nativeUri?: string; error?: string }> {
-  return reliableBridgePublish(
+  const result = await reliableBridgePublish(
     targetProtocol,
     async () => {
       const { orchestratePublish } = await import('./publish-orchestrator');
@@ -194,6 +194,7 @@ async function genericBridgePublish(
     },
     env,
   );
+  return result ?? { ok: false, error: 'Bridge publish returned null' };
 }
 
 // ─── Zora Special Bridge Handlers ────────────────────────────────────
@@ -335,10 +336,10 @@ export async function bridgeContent(input: BridgeContentInput, env: Env): Promis
       });
       if (!result.ok)
         alertBridgeFailure(
-          input.sourceProtocol,
-          targetProtocol,
-          result.error || 'Unknown error',
           env,
+          input.sourceProtocol,
+          result.error || 'Unknown error',
+          targetProtocol,
         );
     } catch (err) {
       results.push({

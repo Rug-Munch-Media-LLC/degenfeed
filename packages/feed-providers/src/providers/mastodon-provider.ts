@@ -65,7 +65,7 @@ export class MastodonProvider implements FeedProvider {
 
             const isMisskey = inst.software === 'misskey' || inst.software === 'firefish';
             const fetcher = isMisskey
-              ? (typeof fetchMisskeyTrendingNotes !== 'undefined' ? fetchMisskeyTrendingNotes(inst.url, 10) : Promise.resolve([] as GtSStatus[]))
+              ? fetchMisskeyTrendingNotes(inst.url, 10)
               : fetchJson<GtSStatus[]>(
                   `${inst.url}/api/v1/trends/statuses?limit=${Math.ceil(10 * inst.weight)}`,
                   { headers: { 'user-agent': DEFAULT_USER_AGENT } },
@@ -81,8 +81,7 @@ export class MastodonProvider implements FeedProvider {
                 recordInstanceSuccess(inst.url, latency);
                 return result;
               })
-              .catch((err) => {
-                console.error('[trending fail]', inst.label, isMisskey, inst.software, typeof fetchMisskeyTrendingNotes, String(err));
+              .catch(() => {
                 recordInstanceFailure(inst.url);
                 return [] as GtSStatus[];
               });
@@ -93,7 +92,6 @@ export class MastodonProvider implements FeedProvider {
             allStatuses.push(...r.value);
           }
         }
-        console.log('[trending debug]', allStatuses.length, 'statuses from', trendingResults.length, 'instances');
 
         // 1. Misskey/Firefish instances: also try local timeline for fresh content
         const misskeyInstances = TRENDING_INSTANCES.filter(

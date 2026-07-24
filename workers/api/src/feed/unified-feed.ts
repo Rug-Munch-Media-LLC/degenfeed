@@ -48,6 +48,14 @@ export interface UnifiedFeedOptions {
   qualityGate?: QualityPipelineOptions;
   /** Tab name for freshness config selection (hot, trending, top, new). Overrides qualityGate.freshnessConfig. */
   freshnessTab?: 'everything' | 'hot' | 'trending' | 'top' | 'new';
+  /** "Show more from X" — boost a specific protocol weight */
+  showMoreProtocol?: string;
+  /** "Show less from X" — reduce a specific protocol weight */
+  showLessProtocol?: string;
+  /** Exclude specific protocols entirely */
+  excludeProtocols?: string[];
+  /** Minimum posts from each enabled source category */
+  minPerSource?: number;
 }
 
 export interface UnifiedFeedPost extends UnifiedPost {
@@ -167,6 +175,64 @@ function getMixWeights(mix: string): MixWeights {
   }
 }
 
+/**
+ * Adjust mix weights based on showMore/showLess options.
+ */
+function adjustMixForPreference(
+  mix: MixWeights,
+  showMore?: string,
+  showLess?: string,
+  excludeProtocols?: string[],
+): MixWeights {
+  const adjusted = { ...mix };
+
+  // Helper: safely multiply a source weight
+  const boostSource = (sourceKey: keyof MixWeights, factor: number): void => {
+    const current = adjusted[sourceKey];
+    if (current !== undefined) {
+      (adjusted as Record<string, number>)[sourceKey] = Math.min(10, Math.floor(current * factor));
+    }
+  };
+  const reduceSource = (sourceKey: keyof MixWeights, divisor: number): void => {
+    const current = adjusted[sourceKey];
+    if (current !== undefined) {
+      (adjusted as Record<string, number>)[sourceKey] = Math.max(0, Math.floor(current / divisor));
+    }
+  };
+
+  const protocolMap: Record<string, keyof MixWeights> = {
+    nostr: 'social', farcaster: 'social', lens: 'social', bluesky: 'social',
+    threads: 'social', mastodon: 'mastodon', lemmy: 'lemmy',
+    peertube: 'peertube', youtube: 'youtube', rss: 'rss', reddit: 'reddit',
+  };
+
+  // "Show more from X" — triple the weight for that source
+  if (showMore) {
+    const key = showMore.toLowerCase() as keyof MixWeights;
+    if (key in adjusted) boostSource(key, 3);
+    if (key in protocolMap) boostSource(protocolMap[key]!, 3);
+  }
+
+  // "Show less from X" — halve the weight
+  if (showLess) {
+    const key = showLess.toLowerCase() as keyof MixWeights;
+    if (key in adjusted) reduceSource(key, 2);
+    if (key in protocolMap) reduceSource(protocolMap[key]!, 2);
+  }
+
+  // Exclude specific protocols — zero their weights
+  if (excludeProtocols && excludeProtocols.length > 0) {
+    for (const proto of excludeProtocols) {
+      const mapKey = protocolMap[proto.toLowerCase()];
+      if (mapKey) (adjusted as Record<string, number>)[mapKey] = 0;
+      const protoKey = proto.toLowerCase() as keyof MixWeights;
+      if (protoKey in adjusted) (adjusted as Record<string, number>)[protoKey] = 0;
+    }
+  }
+
+  return adjusted;
+}
+
 // ─── Source resolution ─────────────────────────────────────────────
 
 function resolveSources(rawSources?: string): Set<SourceCategory> {
@@ -211,7 +277,8 @@ export async function buildUnifiedFeed(
 }> {
   const startTime = Date.now();
   const sources = resolveSources(opts.sources);
-  const mix = getMixWeights(opts.mix ?? 'balanced');
+  let mix = getMixWeights(opts.mix ?? 'balanced');
+  mix = adjustMixForPreference(mix, opts.showMoreProtocol, opts.showLessProtocol, opts.excludeProtocols);
   const limit = Math.min(opts.limit ?? 100, 200);
   const section = opts.section ?? 'hot';
 
@@ -456,11 +523,13 @@ export async function buildUnifiedFeed(
   const curated = applyCurationPipeline(qualityResult.posts, {
     freshnessBoost: freshnessTab !== 'everything',
     interleaveProtocols: true,
-    maxConsecutiveProtocols: 2,
+    maxConsecutiveProtocols: opts.showMoreProtocol ? 3 : 2,
     contentTypeVariety: true,
     maxConsecutiveContentType: 3,
     categoryRotation: true,
     minCategories: 3,
+    showMoreProtocol: opts.showMoreProtocol,
+    showLessProtocol: opts.showLessProtocol,
   }) as unknown as Array<UnifiedPost & { sourceCategory: SourceCategory }>;
 
   // Limit
@@ -500,12 +569,18 @@ export async function buildUnifiedFeed(
         languageFiltered: qualityResult.meta.language.filtered,
         crossProtocolDeduped: qualityResult.meta.dedup.deduped,
         crossProtocolDedupCount: qualityResult.meta.dedup.crossProtocol,
+        urlDedupCount: qualityResult.meta.dedup.urlDedup,
+        rssDedupCount: qualityResult.meta.dedup.rssDedup,
+        aggregatorDedupCount: qualityResult.meta.dedup.aggregatorDedup,
+        canonicalUrlDedupCount: qualityResult.meta.dedup.canonicalUrlDedup,
         sourceDiverse: qualityResult.meta.diversity.diverse,
         sourceBreakdown: qualityResult.meta.diversity.sourceBreakdown,
         freshnessConfig: freshnessTab,
         totalFiltered: qualityResult.meta.totalFiltered,
         inputPosts: qualityResult.meta.inputCount,
       },
+      showMoreProtocol: opts.showMoreProtocol,
+      showLessProtocol: opts.showLessProtocol,
     },
   };
 }

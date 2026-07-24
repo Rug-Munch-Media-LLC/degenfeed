@@ -367,6 +367,7 @@ export function buildAlsoPostedIndicator(
 ): {
   show: boolean;
   protocols: Array<{ name: string; icon: string; url?: string }>;
+  collapsedText?: string;
 } {
   const alsoPostedOn = getAlsoPostedOn(protocol, postId);
 
@@ -385,14 +386,32 @@ export function buildAlsoPostedIndicator(
     peertube: { name: 'PeerTube', icon: '🎬' },
     reddit: { name: 'Reddit', icon: '🤖' },
     rss: { name: 'RSS', icon: '📡' },
+    twitter: { name: 'Twitter/X', icon: '🐦' },
+    newsletter: { name: 'Newsletter', icon: '📧' },
+    youtube: { name: 'YouTube', icon: '▶️' },
+    github: { name: 'GitHub', icon: '🐙' },
   };
+
+  const protocols = alsoPostedOn.map((p) => ({
+    name: protocolMeta[p]?.name || p,
+    icon: protocolMeta[p]?.icon || '🌐',
+  }));
+
+  // Build collapsed text: "Also on Nostr, Farcaster"
+  const names = protocols.map((p) => p.name);
+  let collapsedText: string;
+  if (names.length === 1) {
+    collapsedText = `Also on ${names[0]}`;
+  } else if (names.length === 2) {
+    collapsedText = `Also on ${names[0]} and ${names[1]}`;
+  } else {
+    collapsedText = `Also on ${names.slice(0, -1).join(', ')}, and ${names[names.length - 1]}`;
+  }
 
   return {
     show: true,
-    protocols: alsoPostedOn.map((p) => ({
-      name: protocolMeta[p]?.name || p,
-      icon: protocolMeta[p]?.icon || '🌐',
-    })),
+    protocols,
+    collapsedText,
   };
 }
 

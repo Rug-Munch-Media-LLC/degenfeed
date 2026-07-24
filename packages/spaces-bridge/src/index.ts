@@ -20,6 +20,11 @@
  *   const result = await spacesAggregator.create({ ... });
  */
 
+import { livepeerBridge } from './livepeer';
+import { nostrBridge } from './nostr';
+import { owncastBridge } from './owncast';
+import { peertubeBridge } from './peertube';
+import { checkAllGates } from './premium';
 import type {
   CreateSpaceOptions,
   CreateSpaceResult,
@@ -27,14 +32,10 @@ import type {
   SpaceItem,
   SpacePlatform,
 } from './types';
-import { livepeerBridge } from './livepeer';
-import { nostrBridge } from './nostr';
-import { owncastBridge } from './owncast';
-import { peertubeBridge } from './peertube';
-import { checkAllGates } from './premium';
 
 // ─── Exports ─────────────────────────────────────────────────────────────
 
+export { checkAllGates, checkTokenGate, getGateLabel } from './premium';
 export type {
   CreateSpaceOptions,
   CreateSpaceResult,
@@ -47,10 +48,7 @@ export type {
   SpaceSpeaker,
   SpaceStatus,
 } from './types';
-
 export { livepeerBridge, nostrBridge, owncastBridge, peertubeBridge };
-
-export { checkAllGates, checkTokenGate, getGateLabel } from './premium';
 
 // ─── Bridge Registry ────────────────────────────────────────────────────
 
@@ -105,7 +103,11 @@ export async function getLiveSpaces(options?: AggregatorOptions): Promise<SpaceI
   const fetches = platforms.map(async (platform) => {
     try {
       const bridge = getBridge(platform);
-      const spaces = await fetchWithTimeout(bridge.getLiveSpaces(), timeout, `getLiveSpaces:${platform}`);
+      const spaces = await fetchWithTimeout(
+        bridge.getLiveSpaces(),
+        timeout,
+        `getLiveSpaces:${platform}`,
+      );
       return spaces;
     } catch (e) {
       console.warn(`[spaces-aggregator] ${platform} failed:`, e);
@@ -220,9 +222,7 @@ export async function getSpaceById(id: string): Promise<SpaceItem | null> {
       const spaces = await bridge.getLiveSpaces();
       const found = spaces.find((s) => s.id === id);
       if (found) return found;
-    } catch {
-      continue;
-    }
+    } catch {}
   }
   return null;
 }

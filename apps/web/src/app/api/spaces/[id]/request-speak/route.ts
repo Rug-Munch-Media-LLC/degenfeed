@@ -5,10 +5,7 @@ export const dynamic = 'force-dynamic';
 /**
  * POST /api/spaces/[id]/request-speak — Request to become a speaker
  */
-export async function POST(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   try {
     const body = await request.json();

@@ -21,10 +21,7 @@ function getLiveKitConfig(): LiveKitConfig {
  * Generates a LiveKit access token for the participant.
  * Body: { userId, displayName, canPublish (optional) }
  */
-export async function POST(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const config = getLiveKitConfig();
 

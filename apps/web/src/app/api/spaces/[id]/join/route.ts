@@ -1,5 +1,5 @@
+import { getBridge, getLiveSpaces } from '@degenfeed/spaces-bridge';
 import { NextResponse } from 'next/server';
-import { getLiveSpaces, getBridge } from '@degenfeed/spaces-bridge';
 
 export const dynamic = 'force-dynamic';
 
@@ -8,10 +8,7 @@ export const dynamic = 'force-dynamic';
  * Records the join across all platforms the space is on.
  * Returns updated space info with new listener count.
  */
-export async function POST(
-  _request: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function POST(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   try {
     // Get current space info

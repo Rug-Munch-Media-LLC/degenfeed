@@ -361,7 +361,7 @@ export class NewsletterEngine {
     );
 
     try {
-      await this.bridge.crossPublish(post.id, protocols);
+      await this.bridge.crossPublish(post.id, protocols as any);
     } catch (err) {
       console.error('[NewsletterEngine] Cross-publish failed:', err);
     }

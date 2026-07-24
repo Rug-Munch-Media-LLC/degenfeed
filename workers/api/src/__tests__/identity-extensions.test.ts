@@ -36,6 +36,15 @@ function makeMockEnv(overrides: Partial<Env> = {}): Env {
         mockKvStore.delete(key);
       }),
     },
+    CONTENT_STORE: {
+      get: vi.fn().mockImplementation(async (key: string) => mockKvStore.get(key) ?? null),
+      put: vi.fn().mockImplementation(async (key: string, value: string) => {
+        mockKvStore.set(key, value);
+      }),
+      delete: vi.fn().mockImplementation(async (key: string) => {
+        mockKvStore.delete(key);
+      }),
+    } as unknown as KVNamespace,
     TELEGRAM_BOT_TOKEN: 'test-bot-token',
     RATE_LIMIT_DISABLED: 'true',
     ...overrides,

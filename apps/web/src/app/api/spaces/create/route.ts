@@ -1,6 +1,6 @@
-import { NextResponse } from 'next/server';
-import { createSpace, getBridge } from '@degenfeed/spaces-bridge';
 import type { SpacePlatform } from '@degenfeed/spaces-bridge';
+import { createSpace, getBridge } from '@degenfeed/spaces-bridge';
+import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,8 +14,8 @@ export async function POST(request: Request) {
 
     // Determine which platforms to create on
     const requestedPlatforms: string[] = body.platforms ?? ['nostr'];
-    const platforms: SpacePlatform[] = requestedPlatforms.filter(
-      (p): p is SpacePlatform => ['nostr', 'peertube', 'owncast', 'livepeer'].includes(p),
+    const platforms: SpacePlatform[] = requestedPlatforms.filter((p): p is SpacePlatform =>
+      ['nostr', 'peertube', 'owncast', 'livepeer'].includes(p),
     );
 
     if (platforms.length === 0) {
@@ -41,9 +41,7 @@ export async function POST(request: Request) {
     });
 
     const status: 'live' | 'scheduled' =
-      body.scheduledAt && new Date(body.scheduledAt).getTime() > Date.now()
-        ? 'scheduled'
-        : 'live';
+      body.scheduledAt && new Date(body.scheduledAt).getTime() > Date.now() ? 'scheduled' : 'live';
 
     const speakers = result.platformResults
       .filter((p) => !p.error)

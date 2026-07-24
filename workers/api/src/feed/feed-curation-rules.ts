@@ -382,6 +382,10 @@ export interface CurationPipelineOptions {
   maxSingleCategoryPct?: number;
   /** Current time for freshness calculation. */
   now?: number;
+  /** Protocol to boost ("show more from X") */
+  showMoreProtocol?: string;
+  /** Protocol to reduce ("show less from X") */
+  showLessProtocol?: string;
 }
 
 /**
@@ -429,6 +433,31 @@ export function applyCurationPipeline(
     categoryRotation: opts.categoryRotation !== false,
     contentTypeVariety: opts.contentTypeVariety !== false,
   });
+
+  // 2b. Apply "show more/less from X" protocol preference bonuses
+  // These are additive score adjustments so they naturally influence the sort
+  if (opts.showMoreProtocol) {
+    const boostedProto = opts.showMoreProtocol.toLowerCase();
+    for (const p of posts) {
+      if (p.protocol?.toLowerCase() === boostedProto) {
+        const existing = scored.get(p.id);
+        if (existing) {
+          existing.total += 2.0; // +2 score boost for "show more" protocol
+        }
+      }
+    }
+  }
+  if (opts.showLessProtocol) {
+    const reducedProto = opts.showLessProtocol.toLowerCase();
+    for (const p of posts) {
+      if (p.protocol?.toLowerCase() === reducedProto) {
+        const existing = scored.get(p.id);
+        if (existing) {
+          existing.total = Math.max(0, existing.total - 1.5); // -1.5 score penalty for "show less"
+        }
+      }
+    }
+  }
 
   // 3. Single sort by (baseScore + diversityBonuses) * freshness descending
   let sorted = [...posts].sort((a, b) => {

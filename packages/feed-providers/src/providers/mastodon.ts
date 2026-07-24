@@ -11,6 +11,7 @@ export type {
   GtSMediaAttachment,
   GtSStatus,
   InstanceHealth,
+  MastodonProviderOptions,
   MisskeyNote,
   MisskeyNotesResponse,
 } from './mastodon-adapter';
@@ -26,7 +27,6 @@ export {
   statusToUnifiedPost,
   stripHtml,
 } from './mastodon-adapter';
-export type { MastodonProviderOptions } from './mastodon-adapter';
 // Re-export types from data
 export type { FediverseInstance, FediverseSoftware } from './mastodon-data';
 // Re-export data (values)

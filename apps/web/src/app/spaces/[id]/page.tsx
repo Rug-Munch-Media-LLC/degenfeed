@@ -2,39 +2,40 @@
 
 import { SpaceRoom } from '@degenfeed/ui';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useAuth } from '../../../components/AuthProvider';
 import { ANIM_STYLES } from '../_animations';
 import type { SpaceItem } from '../_types';
 
 /**
  * Individual space page — shows the SpaceRoom for a specific space.
- * Fetches space details from /api/spaces/all and joins automatically.
+ * Fetches space details from the spaces API and joins automatically.
  */
-export default function SpaceDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { ready, signedInProtocols } = useAuth();
-  const hasSignedIn = ready && Object.values(signedInProtocols).some(Boolean);
+export default function SpaceDetailPage({
+  params: paramsPromise,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const [params, setParams] = useState<{ id: string } | null>(null);
+
+  // Resolve the async params
+  useEffect(() => {
+    paramsPromise.then(setParams).catch(() => {});
+  }, [paramsPromise]);
 
   const [space, setSpace] = useState<SpaceItem | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isJoined, setIsJoined] = useState(false);
 
-  const spaceId = useMemo(() => {
-    let id = '';
-    params.then((p) => { id = p.id; }).catch(() => {});
-    return id;
-  }, [params]);
+  const id = params?.id;
 
   // Fetch space details
   useEffect(() => {
+    if (!id) return;
     let cancelled = false;
 
     async function fetchSpace() {
-      const { id } = await params;
-      if (!id) return;
-
       try {
-        // Try direct lookup first
-        const res = await fetch(`/api/spaces/${id}`);
+        const res = await fetch(`/api/spaces/${encodeURIComponent(id)}`);
         if (res.ok) {
           const data = (await res.json()) as { space: SpaceItem };
           if (!cancelled) setSpace(data.space);
@@ -43,7 +44,7 @@ export default function SpaceDetailPage({ params }: { params: Promise<{ id: stri
           const allRes = await fetch('/api/spaces/all');
           if (allRes.ok) {
             const allData = (await allRes.json()) as { spaces: SpaceItem[] };
-            const found = allData.spaces.find((s) => s.id === id);
+            const found = allData.spaces.find((s) => s.id === id || s.id.endsWith(`:${id}`));
             if (found) {
               if (!cancelled) setSpace(found);
             } else {
@@ -59,22 +60,25 @@ export default function SpaceDetailPage({ params }: { params: Promise<{ id: stri
     }
 
     fetchSpace();
-    return () => { cancelled = true; };
-  }, [params]);
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
 
   // Join the space on load
   useEffect(() => {
-    if (space && space.status === 'live') {
-      fetch(`/api/spaces/${space.id}/join`, {
+    if (space && space.status === 'live' && !isJoined) {
+      setIsJoined(true);
+      fetch(`/api/spaces/${encodeURIComponent(space.id)}/join`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
       }).catch(() => {});
     }
-  }, [space]);
+  }, [space, isJoined]);
 
   const handleLeave = useCallback(() => {
     if (space) {
-      fetch(`/api/spaces/${space.id}/leave`, {
+      fetch(`/api/spaces/${encodeURIComponent(space.id)}/leave`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
       }).catch(() => {});
@@ -83,7 +87,7 @@ export default function SpaceDetailPage({ params }: { params: Promise<{ id: stri
   }, [space]);
 
   // Loading state
-  if (loading) {
+  if (loading || !params) {
     return (
       <div className="mx-auto flex min-h-[50vh] max-w-3xl items-center justify-center px-4">
         <div className="flex flex-col items-center gap-3 text-[var(--color-muted)]">
@@ -99,8 +103,12 @@ export default function SpaceDetailPage({ params }: { params: Promise<{ id: stri
     return (
       <div className="mx-auto flex min-h-[50vh] max-w-3xl items-center justify-center px-4">
         <div className="flex flex-col items-center gap-4 text-center">
-          <span className="text-4xl opacity-30" aria-hidden="true">🎙️</span>
-          <p className="text-sm font-semibold text-[var(--color-fg)]">{error || 'Space not found'}</p>
+          <span className="text-4xl opacity-30" aria-hidden="true">
+            🎙️
+          </span>
+          <p className="text-sm font-semibold text-[var(--color-fg)]">
+            {error || 'Space not found'}
+          </p>
           <p className="text-xs text-[var(--color-muted)]">
             This space may have ended or doesn&apos;t exist.
           </p>
@@ -121,8 +129,8 @@ export default function SpaceDetailPage({ params }: { params: Promise<{ id: stri
       <style>{ANIM_STYLES}</style>
       <SpaceRoom
         space={space}
-        currentUserId={hasSignedIn ? 'current-user' : 'anonymous'}
-        currentUserDisplayName={hasSignedIn ? 'User' : 'Guest'}
+        currentUserId="anonymous"
+        currentUserDisplayName="Guest"
         onLeave={handleLeave}
       />
     </>
