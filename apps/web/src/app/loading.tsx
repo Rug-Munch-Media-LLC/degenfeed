@@ -28,7 +28,7 @@ export default function RootLoading() {
         {/* Stats Bar */}
         <section className="border-t border-[var(--color-border)] py-8">
           <div className="flex flex-wrap items-center justify-center gap-8 text-sm text-[var(--color-muted)]">
-            <span>10+ Protocols</span>
+            <span>101+ Protocols</span>
             <span>319 RSS Sources</span>
             <span>137 Reddit Communities</span>
             <span>68 YouTube Channels</span>
