@@ -9,6 +9,7 @@
 'use client';
 
 import type { VisualPost } from '@degenfeed/types';
+import Image from 'next/image';
 import { useState } from 'react';
 import { formatCount, formatDuration, timeAgo } from './MediaCard';
 import { MEDIA_SOURCES } from './MediaTypes';
@@ -40,9 +41,11 @@ export function VideoGridCard({ post, onClick }: VideoGridCardProps) {
         {!loaded && !error && <div className="absolute inset-0 skeleton-shimmer" />}
 
         {thumbSrc && !error ? (
-          <img
+          <Image
             src={thumbSrc}
             alt={post.text?.slice(0, 80) || 'Video thumbnail'}
+            fill
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
             loading="lazy"
             onLoad={() => setLoaded(true)}
@@ -107,9 +110,11 @@ export function VideoGridCard({ post, onClick }: VideoGridCardProps) {
       <div className="flex gap-3 p-3">
         {/* Channel avatar */}
         {post.author.avatarUrl ? (
-          <img
+          <Image
             src={post.author.avatarUrl}
             alt=""
+            width={32}
+            height={32}
             className="mt-0.5 h-8 w-8 shrink-0 rounded-full"
             onError={(e) => {
               (e.target as HTMLImageElement).style.display = 'none';

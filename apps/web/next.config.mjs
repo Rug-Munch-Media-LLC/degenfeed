@@ -37,37 +37,35 @@ const nextConfig = {
   // ── Monorepo transpilation ──
   transpilePackages: ['@degenfeed/types', '@degenfeed/ui'],
 
-  // ── Headers for caching only (security headers are set in middleware.ts) ──
+  // ── Headers for caching ──
   async headers() {
     return [
+      // Static assets with content hash: 1 year immutable
       {
-        source: '/:path*',
+        source: '/_next/static/:path*',
         headers: [
-          // Cache static assets aggressively
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
-          },
+          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
         ],
       },
+      // Public static assets (fonts, images, icons): 1 year
+      {
+        source: '/:path*.(svg|png|jpg|jpeg|gif|webp|avif|ico|woff2|woff|ttf|eot|css)',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+        ],
+      },
+      // API responses: no browser cache, short CDN TTL
       {
         source: '/api/:path*',
         headers: [
-          // API responses: revalidate often, but allow CDN caching
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=0, s-maxage=60, stale-while-revalidate=120',
-          },
+          { key: 'Cache-Control', value: 'public, max-age=0, s-maxage=60, stale-while-revalidate=120' },
         ],
       },
+      // HTML pages: short cache, revalidate
       {
-        source: '/((?!api|_next/static|favicon|icon|manifest).*)',
+        source: '/((?!api|_next/static|_next/image|favicon|icon|manifest|sw\\.js).*)',
         headers: [
-          // HTML pages: short cache, revalidate
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=0, s-maxage=60, stale-while-revalidate=30',
-          },
+          { key: 'Cache-Control', value: 'public, max-age=0, s-maxage=60, stale-while-revalidate=30' },
         ],
       },
     ];

@@ -10,6 +10,7 @@
 'use client';
 
 import type { VisualPost } from '@degenfeed/types';
+import Image from 'next/image';
 import { useState } from 'react';
 import { MEDIA_SOURCES } from './MediaTypes';
 
@@ -96,9 +97,11 @@ export function MediaCard({ post, onClick }: MediaCardProps) {
         {!loaded && !error && <div className="absolute inset-0 skeleton-shimmer" />}
 
         {imgSrc && !error ? (
-          <img
+          <Image
             src={imgSrc}
             alt={post.text?.slice(0, 80) || `Media from ${post.author.displayName}`}
+            fill
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
             loading="lazy"
             onLoad={() => setLoaded(true)}
@@ -151,20 +154,19 @@ export function MediaCard({ post, onClick }: MediaCardProps) {
         <div className="absolute bottom-0 left-0 right-0 flex translate-y-2 items-end justify-between p-3 transition-transform duration-200 group-hover:translate-y-0">
           <div className="flex items-center gap-2">
             {post.author.avatarUrl ? (
-              <img
+              <Image
                 src={post.author.avatarUrl}
                 alt=""
+                width={24}
+                height={24}
                 className="h-6 w-6 rounded-full border border-white/30"
                 onError={(e) => {
                   (e.target as HTMLImageElement).style.display = 'none';
                 }}
               />
             ) : (
-              <div
-                className="flex h-6 w-6 items-center justify-center rounded-full text-[8px] font-bold text-white"
-                style={{ backgroundColor: sourceColor }}
-              >
-                {post.author.displayName[0]?.toUpperCase() || '?'}
+              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-white/10 text-[9px] font-medium text-white">
+                {post.author.displayName?.charAt(0)?.toUpperCase() || '?'}
               </div>
             )}
             <span className="max-w-[120px] truncate text-xs font-medium text-white drop-shadow-lg">
