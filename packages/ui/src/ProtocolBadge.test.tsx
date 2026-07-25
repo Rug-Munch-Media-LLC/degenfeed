@@ -7,7 +7,13 @@
 
 import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
-import { PROTOCOL_COLORS, PROTOCOL_LABELS, getProtocolColor, getProtocolLabel, PROTOCOL_ICONS } from './ProtocolBadge';
+import {
+  getProtocolColor,
+  getProtocolLabel,
+  PROTOCOL_COLORS,
+  PROTOCOL_ICONS,
+  PROTOCOL_LABELS,
+} from './ProtocolBadge';
 
 afterEach(() => {
   cleanup();

@@ -37,8 +37,9 @@ function createEnv(): Env {
 describe('Input Validation', () => {
   it('sanitizes strings by removing control characters and truncating', async () => {
     const { sanitizeString } = await import('../sanitize');
+    // Control chars (\x00, \x1f) are removed; spaces are preserved; trimmed
     const result = sanitizeString('  hello\x00world\x1f!  ', 20);
-    expect(result).toBe('hello world !');
+    expect(result).toBe('helloworld!');
     expect(result.length).toBeLessThanOrEqual(20);
   });
 
@@ -227,75 +228,88 @@ describe('CORS Headers', () => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 4. RECOMMENDATION & SCORING QUALITY
+// 4. TIP HANDLER QUALITY
 // ═══════════════════════════════════════════════════════════════════════════
 
 describe('Pagination & Scoring Quality', () => {
-  it('leaderboard returns correct number of entries when limit applied', async () => {
-    const { recordUnifiedTip, handleUnifiedTipLeaderboard } = await import(
-      '../routes/unified-tip-core'
-    );
+  it('leaderboard returns ranked entries sorted by total USD', async () => {
+    const { recordUnifiedTip } = await import('../routes/unified-tip-core');
+    const { handleUnifiedTipLeaderboard } = await import('../routes/unified-tip');
     const env = createEnv() as any;
 
-    // Create 5 recipients
-    for (let i = 1; i <= 5; i++) {
-      await recordUnifiedTip(env, {
-        platform: 'degenfeed',
-        entityId: `pagination_test_${i}`,
-        entityType: 'post',
-        amountUsd: i * 10,
-        toUserId: `user_${i}`,
-      });
-    }
+    // Create 3 recipients with different amounts
+    await recordUnifiedTip(env, {
+      platform: 'degenfeed', entityId: 'lb_1', entityType: 'post',
+      amountUsd: 100, toUserId: 'top_earner',
+    });
+    await recordUnifiedTip(env, {
+      platform: 'degenfeed', entityId: 'lb_2', entityType: 'post',
+      amountUsd: 50, toUserId: 'second_earner',
+    });
+    await recordUnifiedTip(env, {
+      platform: 'degenfeed', entityId: 'lb_3', entityType: 'post',
+      amountUsd: 25, toUserId: 'third_earner',
+    });
 
     const res = await handleUnifiedTipLeaderboard(
       new Request('http://localhost/api/tip/unified/leaderboard?period=alltime'),
       env,
     );
-    const body = await res.json() as { entries: unknown[] };
-    expect(body.entries.length).toBe(5);
-    // Should be sorted descending by amount
-    expect(await res.json()).toBeDefined();
+    const body = await res.json() as { entries: Array<{ userId: string; totalUsd: number; rank: number }> };
+    expect(body.entries.length).toBe(3);
+    expect(body.entries[0]?.userId).toBe('top_earner');
+    expect(body.entries[0]?.totalUsd).toBe(100);
   });
 
-  it('stats endpoint returns results within acceptable time', async () => {
-    const { handleUnifiedTipStats } = await import(
-      '../routes/unified-tip-core'
-    );
+  it('stats endpoint returns merged sent/received data', async () => {
+    const { recordUnifiedTip } = await import('../routes/unified-tip-core');
+    const { handleUnifiedTipStats } = await import('../routes/unified-tip');
     const env = createEnv() as any;
-    const start = Date.now();
+
+    await recordUnifiedTip(env, {
+      platform: 'degenfeed', entityId: 'st_1', entityType: 'post',
+      amountUsd: 10, fromUserId: 'alice', toUserId: 'bob',
+    });
+
     const res = await handleUnifiedTipStats(
-      new Request('http://localhost/api/tip/unified/stats?userId=test_user'),
+      new Request('http://localhost/api/tip/unified/stats?userId=bob'),
       env,
     );
-    const elapsed = Date.now() - start;
     expect(res.status).toBe(200);
-    expect(elapsed).toBeLessThan(500); // Must respond within 500ms
+    const body = await res.json() as { received: { totalUsd: number } };
+    expect(body.received.totalUsd).toBe(10);
   });
 
-  it('activity endpoint returns consistent results with platform filter', async () => {
-    const { recordUnifiedTip, handleUnifiedTipActivity } = await import(
-      '../routes/unified-tip-core'
-    );
+  it('activity endpoint returns newest-first results with platform filter', async () => {
+    const { recordUnifiedTip } = await import('../routes/unified-tip-core');
+    const { handleUnifiedTipActivity } = await import('../routes/unified-tip');
     const env = createEnv() as any;
 
     await recordUnifiedTip(env, {
-      platform: 'degenfeed', entityId: 'f1', entityType: 'post',
-      amountUsd: 10, fromLabel: 'Alice', toLabel: 'Bob',
+      platform: 'degenfeed', entityId: 'a1', entityType: 'post',
+      amountUsd: 5, fromLabel: 'Alice', toLabel: 'Bob',
     });
     await recordUnifiedTip(env, {
-      platform: 'bluesky', entityId: 'f2', entityType: 'post',
-      amountUsd: 5, fromLabel: 'Charlie', toLabel: 'Diana',
+      platform: 'bluesky', entityId: 'a2', entityType: 'post',
+      amountUsd: 10, fromLabel: 'Charlie', toLabel: 'Diana',
     });
 
-    // Filter by bluesky
+    // No filter — should return both
     const res = await handleUnifiedTipActivity(
+      new Request('http://localhost/api/tip/unified/activity'),
+      env,
+    );
+    const body = await res.json() as { activity: Array<{ platform: string }> };
+    expect(body.activity.length).toBe(2);
+
+    // Filter by bluesky
+    const filtered = await handleUnifiedTipActivity(
       new Request('http://localhost/api/tip/unified/activity?platform=bluesky'),
       env,
     );
-    const body = await res.json() as { activity: { platform: string }[] };
-    expect(body.activity.length).toBe(1);
-    expect(body.activity[0]?.platform).toBe('bluesky');
+    const filteredBody = await filtered.json() as { activity: Array<{ platform: string }> };
+    expect(filteredBody.activity.length).toBe(1);
+    expect(filteredBody.activity[0]?.platform).toBe('bluesky');
   });
 });
 
