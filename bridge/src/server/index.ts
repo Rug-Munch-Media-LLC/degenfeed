@@ -2,8 +2,8 @@ import http from 'node:http';
 import { getCrossPosterStats, startCrossPoster } from '../crossposter';
 import { getIndexerStatus, reindex, startIndexer } from '../search-indexer';
 import { handleBlueskyRoute } from './bluesky-routes';
-import { buildFeed, DEFAULT_PREFERENCES, PROVIDERS } from './feeds';
 import { handleEventRoute } from './event-routes';
+import { buildFeed, DEFAULT_PREFERENCES, PROVIDERS } from './feeds';
 import { handleGtsRoute } from './gts-routes';
 import { handleNostrRoute } from './nostr-routes';
 
@@ -964,8 +964,12 @@ server.listen(PORT, '127.0.0.1', () => {
   );
   console.log('[bridge] Cross-protocol search: Meilisearch unified index + direct fallback');
   console.log('[bridge] Cross-protocol notifications: unified stream from all protocols');
-  console.log('[bridge] Cross-protocol events: Smoke Signal (ATProto) ↔ Mobilizon (ActivityPub) via Bridgy Fed');
-  console.log('[bridge] Event routes: /api/events, /api/events/atproto, /api/events/create, /api/events/discover');
+  console.log(
+    '[bridge] Cross-protocol events: Smoke Signal (ATProto) ↔ Mobilizon (ActivityPub) via Bridgy Fed',
+  );
+  console.log(
+    '[bridge] Event routes: /api/events, /api/events/atproto, /api/events/create, /api/events/discover',
+  );
   startCrossPoster();
   // Start unified search indexer
   startIndexer()

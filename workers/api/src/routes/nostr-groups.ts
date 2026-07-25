@@ -21,12 +21,12 @@
  * response validation, fallback. No silent failures. No unhandled API changes.
  */
 
+import type { Nip29Group, Nip29GroupSearchResult } from '@degenfeed/nostr-sdk';
+import { CrossProtocolGroupChat, getGroupChat } from '@degenfeed/realtime';
 import { Hono } from 'hono';
 import type { Env } from '../index';
 import { jsonResponse, noCacheJsonResponse } from '../index';
 import { requireSession } from '../session';
-import type { Nip29Group, Nip29GroupSearchResult } from '@degenfeed/nostr-sdk';
-import { getGroupChat, CrossProtocolGroupChat } from '@degenfeed/realtime';
 
 // ─── Router ─────────────────────────────────────────────────────────────────
 
@@ -47,7 +47,10 @@ const DEFAULT_NIP29_RELAYS = [
 function getRelays(env: Env): string[] {
   const envRelays = env.NOSTR_RELAYS || env.RELAY_URLS;
   if (envRelays) {
-    return envRelays.split(',').map((s) => s.trim()).filter(Boolean);
+    return envRelays
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
   }
   return DEFAULT_NIP29_RELAYS;
 }
@@ -71,7 +74,12 @@ nostrGroups.get('/groups', async (c) => {
     const limit = Math.min(Number(c.req.query('limit')) || 20, 100);
     const relayParam = c.req.query('relays');
 
-    const relays = relayParam ? relayParam.split(',').map((s) => s.trim()).filter(Boolean) : getRelays(c.env);
+    const relays = relayParam
+      ? relayParam
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean)
+      : getRelays(c.env);
 
     // Import Nostr SDK dynamically (to handle edge cases)
     const nostr = await import('@degenfeed/nostr-sdk');
@@ -85,7 +93,7 @@ nostrGroups.get('/groups', async (c) => {
       if (cachedRaw) {
         cachedResults = JSON.parse(cachedRaw) as Nip29GroupSearchResult[];
         // Return cached if newer than 5 minutes
-        const isFresh = cachedResults.some((r) => (Date.now() - r.fetchedAt) < 300000);
+        const isFresh = cachedResults.some((r) => Date.now() - r.fetchedAt < 300000);
         if (isFresh) {
           const allGroups = cachedResults.flatMap((r) => r.groups);
           return noCacheJsonResponse({
@@ -96,7 +104,9 @@ nostrGroups.get('/groups', async (c) => {
           });
         }
       }
-    } catch { /* cache miss */ }
+    } catch {
+      /* cache miss */
+    }
 
     // Discover groups from relays
     const results = await nostr.discoverGroups(relays, {
@@ -113,7 +123,9 @@ nostrGroups.get('/groups', async (c) => {
       await c.env.CACHE?.put(cacheKey, JSON.stringify(results), {
         expirationTtl: 300,
       });
-    } catch { /* non-critical */ }
+    } catch {
+      /* non-critical */
+    }
 
     // Store discovered groups in communities KV for discovery
     try {
@@ -141,7 +153,9 @@ nostrGroups.get('/groups', async (c) => {
           }
         }
       }
-    } catch { /* non-critical */ }
+    } catch {
+      /* non-critical */
+    }
 
     // Get per-relay status
     const relayStatus = results.map((r) => ({
@@ -223,7 +237,10 @@ nostrGroups.post('/groups/join', async (c) => {
     // Get the user's Nostr private key
     const nsec = body.privkey || c.env.NOSTR_PRIVATE_KEY || c.env.NOSTR_BOT_NSEC;
     if (!nsec) {
-      return jsonResponse({ error: 'Nostr key not configured. Provide privkey or set NOSTR_PRIVATE_KEY' }, 400);
+      return jsonResponse(
+        { error: 'Nostr key not configured. Provide privkey or set NOSTR_PRIVATE_KEY' },
+        400,
+      );
     }
 
     const nostr = await import('@degenfeed/nostr-sdk');
@@ -257,15 +274,20 @@ nostrGroups.post('/groups/join', async (c) => {
           expirationTtl: 86400 * 90,
         });
       }
-    } catch { /* non-critical */ }
+    } catch {
+      /* non-critical */
+    }
 
     // Cross-protocol bridge: if the group has a cross-protocol room, add member there
     try {
       const groupChat = getGroupChat();
       const bridgeRoomId = `nostr:${body.groupId}@${body.relayUrl}`;
-      await groupChat.addMember(bridgeRoomId, session.address, session.address, c.env)
+      await groupChat
+        .addMember(bridgeRoomId, session.address, session.address, c.env)
         .catch(() => {});
-    } catch { /* non-critical */ }
+    } catch {
+      /* non-critical */
+    }
 
     return jsonResponse({
       ok: true,
@@ -323,7 +345,9 @@ nostrGroups.post('/groups/leave', async (c) => {
           expirationTtl: 86400 * 90,
         });
       }
-    } catch { /* non-critical */ }
+    } catch {
+      /* non-critical */
+    }
 
     if (!published) {
       return jsonResponse({
@@ -385,13 +409,10 @@ nostrGroups.post('/groups/message', async (c) => {
     const nostr = await import('@degenfeed/nostr-sdk');
 
     // Create the message event (kind 9)
-    const msgEvent = nostr.createGroupMessage(
-      body.groupId,
-      body.relayUrl,
-      body.content,
-      nsec,
-      { subject: body.subject, mentions: body.mentions },
-    );
+    const msgEvent = nostr.createGroupMessage(body.groupId, body.relayUrl, body.content, nsec, {
+      subject: body.subject,
+      mentions: body.mentions,
+    });
 
     // Publish to the group relay
     const published = await nostr.publishToGroupRelay(body.relayUrl, msgEvent);
@@ -406,19 +427,14 @@ nostrGroups.post('/groups/message', async (c) => {
       const bridgeRoomId = `nostr:${body.groupId}@${body.relayUrl}`;
 
       // Send message through cross-protocol group chat
-      await groupChat.sendMessage(
-        bridgeRoomId,
-        session.address,
-        body.content,
-        'nostr',
-        c.env,
-        {
-          nativeId: msgEvent.id,
-          nativeUrl: `nostr:${msgEvent.id}`,
-          subject: body.subject,
-        },
-      );
-    } catch { /* bridge is optional */ }
+      await groupChat.sendMessage(bridgeRoomId, session.address, body.content, 'nostr', c.env, {
+        nativeId: msgEvent.id,
+        nativeUrl: `nostr:${msgEvent.id}`,
+        subject: body.subject,
+      });
+    } catch {
+      /* bridge is optional */
+    }
 
     return jsonResponse({
       ok: true,
@@ -477,13 +493,22 @@ nostrGroups.get('/groups/:id/messages', async (c) => {
         // Fetch from relay
         const ws = new WebSocket(relayUrl);
         await new Promise<void>((resolve) => {
-          const to = setTimeout(() => { ws.close(); resolve(); }, 3000);
+          const to = setTimeout(() => {
+            ws.close();
+            resolve();
+          }, 3000);
           ws.onopen = () => {
-            ws.send(JSON.stringify(['REQ', `profile-${pubkey.slice(0, 8)}`, {
-              kinds: [0],
-              authors: [pubkey],
-              limit: 1,
-            }]));
+            ws.send(
+              JSON.stringify([
+                'REQ',
+                `profile-${pubkey.slice(0, 8)}`,
+                {
+                  kinds: [0],
+                  authors: [pubkey],
+                  limit: 1,
+                },
+              ]),
+            );
           };
           ws.onmessage = (event) => {
             try {
@@ -500,19 +525,27 @@ nostrGroups.get('/groups/:id/messages', async (c) => {
                   expirationTtl: 3600,
                 }).catch(() => {});
               }
-            } catch { /* ignore */ }
+            } catch {
+              /* ignore */
+            }
             if (data[0] === 'EOSE') {
               clearTimeout(to);
               ws.close();
               resolve();
             }
           };
-          ws.onerror = () => { clearTimeout(to); ws.close(); resolve(); };
+          ws.onerror = () => {
+            clearTimeout(to);
+            ws.close();
+            resolve();
+          };
         });
       });
 
       await Promise.allSettled(profilePromises);
-    } catch { /* non-critical */ }
+    } catch {
+      /* non-critical */
+    }
 
     // Attach profile info
     const messagesWithProfiles = messages.map((msg) => ({
@@ -597,7 +630,9 @@ nostrGroups.post('/groups/bridge', async (c) => {
         }),
         { expirationTtl: 86400 * 365 },
       );
-    } catch { /* non-critical */ }
+    } catch {
+      /* non-critical */
+    }
 
     return jsonResponse({
       ok: true,

@@ -122,12 +122,15 @@ export interface BridgyHealthStatus {
     statusCode?: number;
     error?: string;
   };
-  instances: Record<string, {
-    configured: boolean;
-    reachable: boolean;
-    bridgeEnabled: boolean;
-    error?: string;
-  }>;
+  instances: Record<
+    string,
+    {
+      configured: boolean;
+      reachable: boolean;
+      bridgeEnabled: boolean;
+      error?: string;
+    }
+  >;
   checkedAt: number;
 }
 
@@ -169,12 +172,15 @@ export class BridgyFedService {
 
     // Get all configured instances
     const instances = await this.getAllConfiguredInstances();
-    const instanceStatuses: Record<string, {
-      configured: boolean;
-      reachable: boolean;
-      bridgeEnabled: boolean;
-      error?: string;
-    }> = {};
+    const instanceStatuses: Record<
+      string,
+      {
+        configured: boolean;
+        reachable: boolean;
+        bridgeEnabled: boolean;
+        error?: string;
+      }
+    > = {};
 
     for (const inst of instances) {
       instanceStatuses[inst.id] = {
@@ -204,11 +210,9 @@ export class BridgyFedService {
     if (this.env.CACHE) {
       (async () => {
         try {
-          await this.env.CACHE.put(
-            KV_BRIDGY_HEALTH_PREFIX + 'overall',
-            JSON.stringify(status),
-            { expirationTtl: 60 },
-          );
+          await this.env.CACHE.put(KV_BRIDGY_HEALTH_PREFIX + 'overall', JSON.stringify(status), {
+            expirationTtl: 60,
+          });
         } catch {
           /* non-critical */
         }
@@ -231,7 +235,10 @@ export class BridgyFedService {
 
     const validProtocols = ['activitypub', 'atproto', 'web'] as const;
     if (!validProtocols.includes(config.protocol)) {
-      return { ok: false, error: `Invalid protocol: ${config.protocol}. Must be: ${validProtocols.join(', ')}` };
+      return {
+        ok: false,
+        error: `Invalid protocol: ${config.protocol}. Must be: ${validProtocols.join(', ')}`,
+      };
     }
 
     // Build Bridgy Fed handle
@@ -333,7 +340,8 @@ export class BridgyFedService {
     const startTime = Date.now();
 
     // Determine target protocols based on source instance
-    const targetProtocols = request.targetProtocols ?? this.getDefaultTargets(request.sourceInstance);
+    const targetProtocols =
+      request.targetProtocols ?? this.getDefaultTargets(request.sourceInstance);
 
     for (const target of targetProtocols) {
       try {
@@ -460,9 +468,7 @@ export class BridgyFedService {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 5000);
 
-      const healthPath = config.protocol === 'atproto'
-        ? '/xrpc/_health'
-        : '/api/v1/instance';
+      const healthPath = config.protocol === 'atproto' ? '/xrpc/_health' : '/api/v1/instance';
 
       const response = await fetch(`${BRIDGY_FED_INTERNAL}${healthPath}`, {
         signal: controller.signal,

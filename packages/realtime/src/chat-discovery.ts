@@ -297,7 +297,10 @@ export class ChatDiscovery {
       try {
         const nostr = await import('@degenfeed/nostr-sdk');
         const relayUrls = (env as any)?.NOSTR_RELAYS
-          ? ((env as any).NOSTR_RELAYS as string).split(',').map((s: string) => s.trim()).filter(Boolean)
+          ? ((env as any).NOSTR_RELAYS as string)
+              .split(',')
+              .map((s: string) => s.trim())
+              .filter(Boolean)
           : DEFAULT_NIP29_RELAYS;
 
         const discoveries = await nostr.discoverGroups(relayUrls, {

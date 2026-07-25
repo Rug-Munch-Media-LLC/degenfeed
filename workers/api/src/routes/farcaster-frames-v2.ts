@@ -33,21 +33,21 @@
  *   GET  /api/frames/manifest          — Frame manifest (.well-known/farcaster.json)
  */
 
-import { Hono } from 'hono';
-import type { Env } from '../index';
-import { jsonResponse, noCacheJsonResponse } from '../index';
-import { requireSession } from '../session';
+import type { FrameResponseButton, FrameState } from '@degenfeed/farcaster-sdk';
 import {
-  FRAME_TEMPLATES,
   buildFrameEmbed,
+  FRAME_TEMPLATES,
   generateFramesV2Html,
   serializeFrameEmbed,
 } from '@degenfeed/farcaster-sdk';
-import type { FrameState, FrameResponseButton } from '@degenfeed/farcaster-sdk';
-import { getFrameBuilder } from '../lib/frame-builder';
-import type { CompiledFrame, FrameBuilderConfig } from '../lib/frame-builder';
+import { Hono } from 'hono';
+import type { Env } from '../index';
+import { jsonResponse, noCacheJsonResponse } from '../index';
 import { getFrameAnalytics } from '../lib/frame-analytics';
+import type { CompiledFrame, FrameBuilderConfig } from '../lib/frame-builder';
+import { getFrameBuilder } from '../lib/frame-builder';
 import { getFrameCrossPoster } from '../lib/frame-crosspost';
+import { requireSession } from '../session';
 
 // ─── Router ─────────────────────────────────────────────────────────────────
 
@@ -104,12 +104,15 @@ framesV2.post('/create', async (c) => {
 
     // Track creation in analytics
     const analytics = getFrameAnalytics();
-    await analytics.trackEvent({
-      frameId: compiled.id,
-      timestamp: Date.now(),
-      eventType: 'view',
-      interactorAddress: session.address,
-    }, c.env);
+    await analytics.trackEvent(
+      {
+        frameId: compiled.id,
+        timestamp: Date.now(),
+        eventType: 'view',
+        interactorAddress: session.address,
+      },
+      c.env,
+    );
 
     return jsonResponse({
       ok: true,
@@ -276,9 +279,7 @@ framesV2.get('/analytics', async (c) => {
   const frames = await builder.getUserFrames(session.address, c.env);
   const analytics = getFrameAnalytics();
 
-  const allSummaries = await Promise.all(
-    frames.map((f) => analytics.getSummary(f.id, c.env)),
-  );
+  const allSummaries = await Promise.all(frames.map((f) => analytics.getSummary(f.id, c.env)));
 
   const summaries = allSummaries.filter(Boolean);
 
@@ -396,11 +397,9 @@ framesV2.post('/notify', async (c) => {
       // If frame-added or frame-removed, update the frame's subscriber count
       if (body.event === 'frame-added' && body.notificationDetails?.url) {
         const tokenKey = `frames-v2:notif-token:${body.fid}`;
-        await c.env.CACHE.put(
-          tokenKey,
-          JSON.stringify(body.notificationDetails),
-          { expirationTtl: 86400 * 365 },
-        );
+        await c.env.CACHE.put(tokenKey, JSON.stringify(body.notificationDetails), {
+          expirationTtl: 86400 * 365,
+        });
       } else if (body.event === 'frame-removed') {
         const tokenKey = `frames-v2:notif-token:${body.fid}`;
         await c.env.CACHE.delete(tokenKey).catch(() => {});
@@ -469,15 +468,17 @@ framesV2.get('/v2/:id', async (c) => {
   const frame = await builder.getFrame(frameId, c.env);
 
   if (!frame) {
-    return c.html(generateFramesV2Html({
-      frameEmbed: buildFrameEmbed({
-        imageUrl: 'https://app.degenfeed.xyz/og/frame-not-found.png',
-        buttonTitle: 'Frame Not Found',
-        appName: 'DegenFeed',
-        launchUrl: 'https://app.degenfeed.xyz',
+    return c.html(
+      generateFramesV2Html({
+        frameEmbed: buildFrameEmbed({
+          imageUrl: 'https://app.degenfeed.xyz/og/frame-not-found.png',
+          buttonTitle: 'Frame Not Found',
+          appName: 'DegenFeed',
+          launchUrl: 'https://app.degenfeed.xyz',
+        }),
+        title: 'Frame Not Found — DegenFeed',
       }),
-      title: 'Frame Not Found — DegenFeed',
-    }));
+    );
   }
 
   // Track view
@@ -508,15 +509,17 @@ framesV2.post('/v2/:id', async (c) => {
   const analytics = getFrameAnalytics();
 
   if (!frame) {
-    return c.html(generateFramesV2Html({
-      frameEmbed: buildFrameEmbed({
-        imageUrl: 'https://app.degenfeed.xyz/og/frame-not-found.png',
-        buttonTitle: 'Frame Not Found',
-        appName: 'DegenFeed',
-        launchUrl: 'https://app.degenfeed.xyz',
+    return c.html(
+      generateFramesV2Html({
+        frameEmbed: buildFrameEmbed({
+          imageUrl: 'https://app.degenfeed.xyz/og/frame-not-found.png',
+          buttonTitle: 'Frame Not Found',
+          appName: 'DegenFeed',
+          launchUrl: 'https://app.degenfeed.xyz',
+        }),
+        title: 'Frame Not Found',
       }),
-      title: 'Frame Not Found',
-    }));
+    );
   }
 
   try {
@@ -531,7 +534,7 @@ framesV2.post('/v2/:id', async (c) => {
     const contentType = c.req.header('content-type') || '';
 
     if (contentType.includes('json')) {
-      const body = await c.req.json() as Record<string, unknown>;
+      const body = (await c.req.json()) as Record<string, unknown>;
       buttonIndex = Number(body.buttonIndex) || 1;
       inputText = body.inputText as string | undefined;
       stateStr = body.state as string | undefined;
@@ -546,22 +549,27 @@ framesV2.post('/v2/:id', async (c) => {
     }
 
     // Track click
-    await analytics.trackEvent({
-      frameId,
-      timestamp: Date.now(),
-      eventType: 'click',
-      buttonIndex,
-      inputText,
-      interactorFid,
-      interactorAddress,
-    }, c.env);
+    await analytics.trackEvent(
+      {
+        frameId,
+        timestamp: Date.now(),
+        eventType: 'click',
+        buttonIndex,
+        inputText,
+        interactorFid,
+        interactorAddress,
+      },
+      c.env,
+    );
 
     // Parse state for multi-step
     let state: FrameState | undefined;
     if (stateStr) {
       try {
         state = JSON.parse(stateStr) as FrameState;
-      } catch { /* ignore invalid state */ }
+      } catch {
+        /* ignore invalid state */
+      }
     }
 
     // Build the response based on button index and template
@@ -569,7 +577,7 @@ framesV2.post('/v2/:id', async (c) => {
     let responseImage = frame.response.image;
     let responseButtons = frame.response.buttons;
     let responseState: string | undefined;
-    let responseTransaction = frame.response.transaction;
+    const responseTransaction = frame.response.transaction;
     let responseLocation: string | undefined;
 
     // Handle multi-step state transitions
@@ -593,25 +601,33 @@ framesV2.post('/v2/:id', async (c) => {
         ];
 
         // Track as conversion
-        await analytics.trackConversion(frameId, frame.template, interactorFid, transactionId, c.env);
+        await analytics.trackConversion(
+          frameId,
+          frame.template,
+          interactorFid,
+          transactionId,
+          c.env,
+        );
       }
     }
 
     // Handle tx action response
     if (button?.action === 'tx' && responseTransaction) {
-      return c.html(generateFramesV2Html({
-        frameEmbed: buildFrameEmbed({
-          imageUrl: responseImage,
-          buttonTitle: button.label.slice(0, 32),
-          appName: 'DegenFeed',
-          launchUrl: `https://app.degenfeed.xyz/api/frames/v2/${frameId}`,
+      return c.html(
+        generateFramesV2Html({
+          frameEmbed: buildFrameEmbed({
+            imageUrl: responseImage,
+            buttonTitle: button.label.slice(0, 32),
+            appName: 'DegenFeed',
+            launchUrl: `https://app.degenfeed.xyz/api/frames/v2/${frameId}`,
+          }),
+          title: 'Confirm Transaction',
+          description: `Execute transaction on ${responseTransaction.chainId}`,
+          postUrl: `https://app.degenfeed.xyz/api/frames/v2/${frameId}`,
+          state: responseState,
+          transaction: responseTransaction,
         }),
-        title: 'Confirm Transaction',
-        description: `Execute transaction on ${responseTransaction.chainId}`,
-        postUrl: `https://app.degenfeed.xyz/api/frames/v2/${frameId}`,
-        state: responseState,
-        transaction: responseTransaction,
-      }));
+      );
     }
 
     // Handle post_redirect
@@ -637,16 +653,18 @@ framesV2.post('/v2/:id', async (c) => {
     return c.html(html);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    return c.html(generateFramesV2Html({
-      frameEmbed: buildFrameEmbed({
-        imageUrl: 'https://app.degenfeed.xyz/og/error.png',
-        buttonTitle: 'Error',
-        appName: 'DegenFeed',
-        launchUrl: 'https://app.degenfeed.xyz',
+    return c.html(
+      generateFramesV2Html({
+        frameEmbed: buildFrameEmbed({
+          imageUrl: 'https://app.degenfeed.xyz/og/error.png',
+          buttonTitle: 'Error',
+          appName: 'DegenFeed',
+          launchUrl: 'https://app.degenfeed.xyz',
+        }),
+        title: 'Frame Error',
+        description: msg,
       }),
-      title: 'Frame Error',
-      description: msg,
-    }));
+    );
   }
 });
 

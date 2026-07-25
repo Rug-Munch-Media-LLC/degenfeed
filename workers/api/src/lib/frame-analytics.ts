@@ -8,8 +8,8 @@
  * response validation, fallback. No silent failures.
  */
 
-import type { Env } from '../index';
 import type { FrameInteractionEvent } from '@degenfeed/farcaster-sdk';
+import type { Env } from '../index';
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -18,7 +18,14 @@ export interface FrameAnalyticsEvent {
   /** Unix timestamp in ms */
   timestamp: number;
   /** Event type */
-  eventType: 'view' | 'click' | 'input' | 'tx_initiated' | 'tx_confirmed' | 'tx_failed' | 'conversion';
+  eventType:
+    | 'view'
+    | 'click'
+    | 'input'
+    | 'tx_initiated'
+    | 'tx_confirmed'
+    | 'tx_failed'
+    | 'conversion';
   /** Interactor FID (if available) */
   interactorFid?: number;
   /** Interactor wallet address */
@@ -111,15 +118,17 @@ export class FrameAnalytics {
       // Update daily stats
       const dailyKey = `${KV_ANALYTICS_DAILY_PREFIX}${frameId}:${today}`;
       const dailyRaw = await env.CACHE.get(dailyKey);
-      const daily: DailyFrameStats = dailyRaw ? JSON.parse(dailyRaw) : {
-        date: today,
-        views: 0,
-        clicks: 0,
-        uniqueInteractors: 0,
-        txInitiated: 0,
-        txConfirmed: 0,
-        conversions: 0,
-      };
+      const daily: DailyFrameStats = dailyRaw
+        ? JSON.parse(dailyRaw)
+        : {
+            date: today,
+            views: 0,
+            clicks: 0,
+            uniqueInteractors: 0,
+            txInitiated: 0,
+            txConfirmed: 0,
+            conversions: 0,
+          };
 
       switch (event.eventType) {
         case 'view':
@@ -274,13 +283,16 @@ export class FrameAnalytics {
    */
   async trackView(frameId: string, interactorFid?: number, ip?: string, env?: Env): Promise<void> {
     if (!env?.CACHE) return;
-    await this.trackEvent({
-      frameId,
-      timestamp: Date.now(),
-      eventType: 'view',
-      interactorFid,
-      ip,
-    }, env);
+    await this.trackEvent(
+      {
+        frameId,
+        timestamp: Date.now(),
+        eventType: 'view',
+        interactorFid,
+        ip,
+      },
+      env,
+    );
   }
 
   /**
@@ -294,20 +306,26 @@ export class FrameAnalytics {
     env?: Env,
   ): Promise<void> {
     if (!env?.CACHE) return;
-    await this.trackEvent({
-      frameId,
-      timestamp: Date.now(),
-      eventType: 'conversion',
-      conversionType,
-      interactorFid,
-      txHash,
-    }, env);
+    await this.trackEvent(
+      {
+        frameId,
+        timestamp: Date.now(),
+        eventType: 'conversion',
+        conversionType,
+        interactorFid,
+        txHash,
+      },
+      env,
+    );
   }
 
   /**
    * Get global frame rankings (by total events).
    */
-  async getGlobalRankings(env: Env, limit = 20): Promise<Array<{ frameId: string; score: number }>> {
+  async getGlobalRankings(
+    env: Env,
+    limit = 20,
+  ): Promise<Array<{ frameId: string; score: number }>> {
     if (!env.CACHE) return [];
     try {
       const raw = await env.CACHE.get(KV_ANALYTICS_GLOBAL_PREFIX);

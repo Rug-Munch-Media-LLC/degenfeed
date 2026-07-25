@@ -36,10 +36,6 @@ export {
   nsecDecode,
   nsecEncode,
 } from './nip19';
-export type { Nip46ConnectOptions } from './nip46';
-export { connectNostrConnect } from './nip46';
-export type { NostrProfileContent } from './profile';
-
 // ─── NIP-29 Group Chat ───────────────────────────────────────────────────
 export type {
   Nip29Group,
@@ -60,6 +56,9 @@ export {
   publishToGroupRelay,
   queryGroupMessages,
 } from './nip29';
+export type { Nip46ConnectOptions } from './nip46';
+export { connectNostrConnect } from './nip46';
+export type { NostrProfileContent } from './profile';
 export {
   createProfileEvent,
   parseProfileContent,

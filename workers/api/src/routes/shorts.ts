@@ -44,8 +44,8 @@ import type { Env } from '../index';
 import { jsonResponse, noCacheJsonResponse } from '../index';
 import { type ShortProtocol, UnifiedShortsPipeline } from '../lib/unified-shorts';
 import { ZoraVideoIntegration } from '../lib/zora-video';
-import { requireSession } from '../session';
 import { methodNotAllowed } from '../response-helpers';
+import { requireSession } from '../session';
 
 // ─── Default user profile for unauthenticated requests ────────────────────
 

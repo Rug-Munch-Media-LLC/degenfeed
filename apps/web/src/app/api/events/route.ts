@@ -20,5 +20,8 @@ export async function GET(request: NextRequest) {
  * POST /api/events — Not supported on the list endpoint
  */
 export async function POST() {
-  return NextResponse.json({ error: 'Use POST /api/events/create instead', status: 405 }, { status: 405 });
+  return NextResponse.json(
+    { error: 'Use POST /api/events/create instead', status: 405 },
+    { status: 405 },
+  );
 }

@@ -86,11 +86,9 @@ export class FrameCrossPoster {
   /**
    * Post a frame to Farcaster as a cast with the frame URL embedded.
    */
-  private async postToFarcaster(
-    payload: CrossPostPayload,
-    env: Env,
-  ): Promise<CrossPostResult> {
-    const text = `🖼️ ${payload.frameTitle}\n\n${payload.description ?? ''}\nby ${payload.creatorHandle}`.trim();
+  private async postToFarcaster(payload: CrossPostPayload, env: Env): Promise<CrossPostResult> {
+    const text =
+      `🖼️ ${payload.frameTitle}\n\n${payload.description ?? ''}\nby ${payload.creatorHandle}`.trim();
 
     const result = await publishCastToFarcaster(
       env as unknown as Record<string, string | undefined>,
@@ -116,10 +114,7 @@ export class FrameCrossPoster {
   /**
    * Post a frame to Nostr as a kind 1 note with the frame URL.
    */
-  private async postToNostr(
-    payload: CrossPostPayload,
-    env: Env,
-  ): Promise<CrossPostResult> {
+  private async postToNostr(payload: CrossPostPayload, env: Env): Promise<CrossPostResult> {
     try {
       const nsec = env.NOSTR_BOT_NSEC || env.NOSTR_PRIVATE_KEY;
       if (!nsec) {
@@ -175,10 +170,7 @@ export class FrameCrossPoster {
   /**
    * Post a frame to Bluesky as a post with the frame URL.
    */
-  private async postToBluesky(
-    payload: CrossPostPayload,
-    env: Env,
-  ): Promise<CrossPostResult> {
+  private async postToBluesky(payload: CrossPostPayload, env: Env): Promise<CrossPostResult> {
     try {
       const accessToken = env.BSKY_ACCESS_TOKEN;
       const senderDid = env.BSKY_DID;
@@ -209,7 +201,12 @@ export class FrameCrossPoster {
                 title: payload.frameTitle,
                 description: payload.description ?? '',
                 thumb: payload.imageUrl
-                  ? { $type: 'blob', ref: { $link: payload.imageUrl }, mimeType: 'image/png', size: 0 }
+                  ? {
+                      $type: 'blob',
+                      ref: { $link: payload.imageUrl },
+                      mimeType: 'image/png',
+                      size: 0,
+                    }
                   : undefined,
               },
             },
@@ -220,7 +217,11 @@ export class FrameCrossPoster {
 
       if (!res.ok) {
         const errText = await res.text().catch(() => '');
-        return { protocol: 'bluesky', ok: false, error: `Bluesky post failed: ${errText.slice(0, 200)}` };
+        return {
+          protocol: 'bluesky',
+          ok: false,
+          error: `Bluesky post failed: ${errText.slice(0, 200)}`,
+        };
       }
 
       const data = (await res.json()) as { uri?: string };
@@ -228,7 +229,9 @@ export class FrameCrossPoster {
         protocol: 'bluesky',
         ok: true,
         nativeId: data.uri,
-        url: data.uri ? `https://bsky.app/profile/${senderDid}/post/${data.uri.split('/').pop()}` : undefined,
+        url: data.uri
+          ? `https://bsky.app/profile/${senderDid}/post/${data.uri.split('/').pop()}`
+          : undefined,
       };
     } catch (err) {
       return {
@@ -242,13 +245,11 @@ export class FrameCrossPoster {
   /**
    * Post a frame to Mastodon as a status with the frame URL.
    */
-  private async postToMastodon(
-    payload: CrossPostPayload,
-    env: Env,
-  ): Promise<CrossPostResult> {
+  private async postToMastodon(payload: CrossPostPayload, env: Env): Promise<CrossPostResult> {
     try {
       const accessToken = env.MASTODON_ACCESS_TOKEN || env.GTS_ACCESS_TOKEN;
-      const instance = env.GTS_INSTANCE_URL || env.MASTODON_INSTANCE_URL || 'https://social.degenfeed.xyz';
+      const instance =
+        env.GTS_INSTANCE_URL || env.MASTODON_INSTANCE_URL || 'https://social.degenfeed.xyz';
 
       if (!accessToken) {
         return { protocol: 'mastodon', ok: false, error: 'Mastodon not configured' };
@@ -271,7 +272,11 @@ export class FrameCrossPoster {
 
       if (!res.ok) {
         const errText = await res.text().catch(() => '');
-        return { protocol: 'mastodon', ok: false, error: `Mastodon post failed: ${errText.slice(0, 200)}` };
+        return {
+          protocol: 'mastodon',
+          ok: false,
+          error: `Mastodon post failed: ${errText.slice(0, 200)}`,
+        };
       }
 
       const data = (await res.json()) as { id?: string; url?: string };

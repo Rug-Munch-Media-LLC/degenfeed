@@ -106,9 +106,7 @@ export function CrossPlatformComments({
 
       const data = (await res.json()) as { comments: CrossPlatformComment[] };
       // Sort: newest first
-      const sorted = (data.comments ?? []).sort(
-        (a, b) => b.createdAt - a.createdAt,
-      );
+      const sorted = (data.comments ?? []).sort((a, b) => b.createdAt - a.createdAt);
       setComments(sorted);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load comments');
@@ -169,9 +167,7 @@ export function CrossPlatformComments({
         <h3 className="text-xs font-semibold text-white/80">
           Comments
           {totalCommentCount != null && (
-            <span className="ml-1.5 text-[10px] text-white/40">
-              · {totalCommentCount} total
-            </span>
+            <span className="ml-1.5 text-[10px] text-white/40">· {totalCommentCount} total</span>
           )}
         </h3>
         <div className="flex items-center gap-1 text-[9px] text-white/40">
@@ -216,9 +212,7 @@ export function CrossPlatformComments({
 
         {!loading && !error && comments.length === 0 && (
           <div className="px-3 py-6 text-center">
-            <p className="text-[11px] text-white/40">
-              No comments yet. Be the first!
-            </p>
+            <p className="text-[11px] text-white/40">No comments yet. Be the first!</p>
           </div>
         )}
 
@@ -272,9 +266,7 @@ export function CrossPlatformComments({
                   </span>
                 </div>
 
-                <p className="mt-0.5 text-[11px] leading-snug text-white/70">
-                  {comment.text}
-                </p>
+                <p className="mt-0.5 text-[11px] leading-snug text-white/70">{comment.text}</p>
 
                 {/* Like button */}
                 <button
@@ -297,9 +289,7 @@ export function CrossPlatformComments({
                       strokeLinejoin="round"
                     />
                   </svg>
-                  {comment.likes > 0 && (
-                    <span>{comment.likes}</span>
-                  )}
+                  {comment.likes > 0 && <span>{comment.likes}</span>}
                 </button>
               </div>
             </div>

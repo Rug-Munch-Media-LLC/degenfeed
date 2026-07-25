@@ -180,11 +180,13 @@ async function discoverGroupsFromRelay(
 
       ws.onopen = () => {
         // Subscribe to group metadata events
-        ws.send(JSON.stringify([
-          'REQ',
-          `discover-${relayUrl.replace(/[^a-zA-Z0-9]/g, '-')}`,
-          { kinds: [39000], limit: Math.min(limit * 2, 100) },
-        ]));
+        ws.send(
+          JSON.stringify([
+            'REQ',
+            `discover-${relayUrl.replace(/[^a-zA-Z0-9]/g, '-')}`,
+            { kinds: [39000], limit: Math.min(limit * 2, 100) },
+          ]),
+        );
       };
 
       ws.onmessage = (event: MessageEvent) => {
@@ -202,13 +204,20 @@ async function discoverGroupsFromRelay(
             if (!content) return;
 
             let meta: Record<string, unknown> = {};
-            try { meta = JSON.parse(content); } catch { /* ignore */ }
+            try {
+              meta = JSON.parse(content);
+            } catch {
+              /* ignore */
+            }
 
             const groupId = (ev.tags as string[][])?.find((t: string[]) => t[0] === 'd')?.[1] ?? '';
             const name = (meta.name as string) || groupId;
             const picture = meta.picture as string | undefined;
             const about = meta.about as string | undefined;
-            const accessType = (meta.access as string || 'public') as 'public' | 'private' | 'closed';
+            const accessType = ((meta.access as string) || 'public') as
+              | 'public'
+              | 'private'
+              | 'closed';
             const nsfw = meta.nsfw === true || meta.nsfw === 'true';
 
             // Extract tags from content or event tags
@@ -231,7 +240,9 @@ async function discoverGroupsFromRelay(
             // Tag filter
             const filterTags = tags ?? [];
             if (filterTags.length > 0) {
-              const hasTag = filterTags.some((t) => groupTags.some((gt) => gt.toLowerCase().includes(t)));
+              const hasTag = filterTags.some((t) =>
+                groupTags.some((gt) => gt.toLowerCase().includes(t)),
+              );
               if (!hasTag) return;
             }
 
@@ -244,7 +255,8 @@ async function discoverGroupsFromRelay(
               accessType,
               moderators: [],
               members: [],
-              memberCount: (ev.tags as string[][])?.filter((t: string[]) => t[0] === 'p').length ?? 0,
+              memberCount:
+                (ev.tags as string[][])?.filter((t: string[]) => t[0] === 'p').length ?? 0,
               createdAt: (ev.created_at as number) ?? 0,
               lastActivity: (ev.created_at as number) ?? 0,
               tags: groupTags,
@@ -286,13 +298,19 @@ export function createGroupJoinRequest(
   relayUrl: string,
   privkey: string,
 ): NostrEvent {
-  return signEvent({
-    pubkey: getPublicKey(privkey),
-    created_at: Math.floor(Date.now() / 1000),
-    kind: 9000,
-    tags: [['h', groupId], ['relay', relayUrl]],
-    content: '',
-  }, privkey);
+  return signEvent(
+    {
+      pubkey: getPublicKey(privkey),
+      created_at: Math.floor(Date.now() / 1000),
+      kind: 9000,
+      tags: [
+        ['h', groupId],
+        ['relay', relayUrl],
+      ],
+      content: '',
+    },
+    privkey,
+  );
 }
 
 /**
@@ -303,13 +321,19 @@ export function createGroupLeaveRequest(
   relayUrl: string,
   privkey: string,
 ): NostrEvent {
-  return signEvent({
-    pubkey: getPublicKey(privkey),
-    created_at: Math.floor(Date.now() / 1000),
-    kind: 9001,
-    tags: [['h', groupId], ['relay', relayUrl]],
-    content: '',
-  }, privkey);
+  return signEvent(
+    {
+      pubkey: getPublicKey(privkey),
+      created_at: Math.floor(Date.now() / 1000),
+      kind: 9001,
+      tags: [
+        ['h', groupId],
+        ['relay', relayUrl],
+      ],
+      content: '',
+    },
+    privkey,
+  );
 }
 
 /**
@@ -321,13 +345,19 @@ export function createGroupMembershipStatement(
   relayUrl: string,
   privkey: string,
 ): NostrEvent {
-  return signEvent({
-    pubkey: getPublicKey(privkey),
-    created_at: Math.floor(Date.now() / 1000),
-    kind: 9021,
-    tags: [['h', groupId], ['relay', relayUrl]],
-    content: '',
-  }, privkey);
+  return signEvent(
+    {
+      pubkey: getPublicKey(privkey),
+      created_at: Math.floor(Date.now() / 1000),
+      kind: 9021,
+      tags: [
+        ['h', groupId],
+        ['relay', relayUrl],
+      ],
+      content: '',
+    },
+    privkey,
+  );
 }
 
 // ─── Group Messaging ─────────────────────────────────────────────────────
@@ -359,13 +389,16 @@ export function createGroupMessage(
     }
   }
 
-  return signEvent({
-    pubkey: getPublicKey(privkey),
-    created_at: Math.floor(Date.now() / 1000),
-    kind: 9,
-    tags,
-    content,
-  }, privkey);
+  return signEvent(
+    {
+      pubkey: getPublicKey(privkey),
+      created_at: Math.floor(Date.now() / 1000),
+      kind: 9,
+      tags,
+      content,
+    },
+    privkey,
+  );
 }
 
 /**
@@ -378,13 +411,20 @@ export function createGroupThread(
   content: string,
   privkey: string,
 ): NostrEvent {
-  return signEvent({
-    pubkey: getPublicKey(privkey),
-    created_at: Math.floor(Date.now() / 1000),
-    kind: 11,
-    tags: [['h', groupId], ['relay', relayUrl], ['subject', subject]],
-    content,
-  }, privkey);
+  return signEvent(
+    {
+      pubkey: getPublicKey(privkey),
+      created_at: Math.floor(Date.now() / 1000),
+      kind: 11,
+      tags: [
+        ['h', groupId],
+        ['relay', relayUrl],
+        ['subject', subject],
+      ],
+      content,
+    },
+    privkey,
+  );
 }
 
 /**
@@ -397,13 +437,20 @@ export function createGroupReply(
   content: string,
   privkey: string,
 ): NostrEvent {
-  return signEvent({
-    pubkey: getPublicKey(privkey),
-    created_at: Math.floor(Date.now() / 1000),
-    kind: 12,
-    tags: [['h', groupId], ['relay', relayUrl], ['e', threadRootEventId]],
-    content,
-  }, privkey);
+  return signEvent(
+    {
+      pubkey: getPublicKey(privkey),
+      created_at: Math.floor(Date.now() / 1000),
+      kind: 12,
+      tags: [
+        ['h', groupId],
+        ['relay', relayUrl],
+        ['e', threadRootEventId],
+      ],
+      content,
+    },
+    privkey,
+  );
 }
 
 // ─── Group Moderation ────────────────────────────────────────────────────
@@ -418,13 +465,20 @@ export function createRemoveUserEvent(
   reason: string,
   privkey: string,
 ): NostrEvent {
-  return signEvent({
-    pubkey: getPublicKey(privkey),
-    created_at: Math.floor(Date.now() / 1000),
-    kind: 9006,
-    tags: [['h', groupId], ['relay', relayUrl], ['p', targetPubkey]],
-    content: reason,
-  }, privkey);
+  return signEvent(
+    {
+      pubkey: getPublicKey(privkey),
+      created_at: Math.floor(Date.now() / 1000),
+      kind: 9006,
+      tags: [
+        ['h', groupId],
+        ['relay', relayUrl],
+        ['p', targetPubkey],
+      ],
+      content: reason,
+    },
+    privkey,
+  );
 }
 
 /**
@@ -442,13 +496,19 @@ export function createGroupMetadataEvent(
   },
   privkey: string,
 ): NostrEvent {
-  return signEvent({
-    pubkey: getPublicKey(privkey),
-    created_at: Math.floor(Date.now() / 1000),
-    kind: 39000,
-    tags: [['d', groupId], ['relay', relayUrl]],
-    content: JSON.stringify(metadata),
-  }, privkey);
+  return signEvent(
+    {
+      pubkey: getPublicKey(privkey),
+      created_at: Math.floor(Date.now() / 1000),
+      kind: 39000,
+      tags: [
+        ['d', groupId],
+        ['relay', relayUrl],
+      ],
+      content: JSON.stringify(metadata),
+    },
+    privkey,
+  );
 }
 
 // ─── Query Groups ─────────────────────────────────────────────────────────
@@ -488,11 +548,7 @@ export async function queryGroupMessages(
         if (options.since) filter.since = options.since;
         if (options.until) filter.until = options.until;
 
-        ws.send(JSON.stringify([
-          'REQ',
-          `msgs-${groupId}-${Date.now()}`,
-          filter,
-        ]));
+        ws.send(JSON.stringify(['REQ', `msgs-${groupId}-${Date.now()}`, filter]));
       };
 
       ws.onmessage = (event: MessageEvent) => {
@@ -516,10 +572,14 @@ export async function queryGroupMessages(
               content: ev.content as string,
               createdAt: ev.created_at as number,
               kind: ev.kind as 9 | 10 | 11 | 12,
-              mentions: tags.filter((t) => t[0] === 'p').map((t) => t[1] ?? '').filter(Boolean),
+              mentions: tags
+                .filter((t) => t[0] === 'p')
+                .map((t) => t[1] ?? '')
+                .filter(Boolean),
               threadId: tags.find((t) => t[0] === 'e' && t[3] === 'reply')?.[1],
-              rootId: tags.find((t) => t[0] === 'e' && t[3] === 'root')?.[1] ??
-                      tags.find((t) => t[0] === 'e')?.[1],
+              rootId:
+                tags.find((t) => t[0] === 'e' && t[3] === 'root')?.[1] ??
+                tags.find((t) => t[0] === 'e')?.[1],
               subject: tags.find((t) => t[0] === 'subject')?.[1],
             };
 
@@ -531,7 +591,9 @@ export async function queryGroupMessages(
             ws.close();
             resolve();
           }
-        } catch { /* ignore */ }
+        } catch {
+          /* ignore */
+        }
       };
 
       ws.onerror = () => {
@@ -578,7 +640,9 @@ export async function publishToGroupRelay(
             ws.close();
             resolve(data[2] === true || (typeof data[2] === 'string' && data[2] === ''));
           }
-        } catch { /* ignore */ }
+        } catch {
+          /* ignore */
+        }
       };
 
       ws.onerror = () => {

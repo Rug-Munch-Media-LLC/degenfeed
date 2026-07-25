@@ -63,16 +63,23 @@ interface SmokeSignalAPIResponse {
 // ─── Helpers ──────────────────────────────────────────────────────────
 
 function stripHtml(html: string): string {
-  return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+  return html
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 function guessEventCategories(title: string, desc: string, tags: string[] = []): string[] {
   const lower = `${title} ${desc} ${tags.join(' ')}`.toLowerCase();
   const cats: string[] = [];
-  if (/\b(crypto|blockchain|web3|bitcoin|ethereum|solana|defi|nft|token)\b/.test(lower)) cats.push('crypto');
-  if (/\b(ai|artificial|intelligence|llm|machine.learning|deep.learning)\b/.test(lower)) cats.push('ai');
-  if (/\b(tech|technology|programming|code|developer|hackathon|software)\b/.test(lower)) cats.push('tech');
-  if (/\b(meetup|conference|workshop|talk|lecture|seminar|panel)\b/.test(lower)) cats.push('conference');
+  if (/\b(crypto|blockchain|web3|bitcoin|ethereum|solana|defi|nft|token)\b/.test(lower))
+    cats.push('crypto');
+  if (/\b(ai|artificial|intelligence|llm|machine.learning|deep.learning)\b/.test(lower))
+    cats.push('ai');
+  if (/\b(tech|technology|programming|code|developer|hackathon|software)\b/.test(lower))
+    cats.push('tech');
+  if (/\b(meetup|conference|workshop|talk|lecture|seminar|panel)\b/.test(lower))
+    cats.push('conference');
   if (/\b(music|concert|festival|performance|dj|live|band)\b/.test(lower)) cats.push('music');
   if (/\b(art|exhibition|gallery|culture|museum|photography)\b/.test(lower)) cats.push('art');
   if (/\b(dao|community|governance|vote|proposal|fundraising)\b/.test(lower)) cats.push('dao');
@@ -130,10 +137,7 @@ async function fetchRecordsFromPDS(
  * Normalize a Smoke Signal AT Protocol record (events.smokesignal.event)
  * to UnifiedEvent.
  */
-function pdsRecordToUnifiedEvent(
-  record: PDSRecord,
-  pdsUrl: string,
-): UnifiedEvent | null {
+function pdsRecordToUnifiedEvent(record: PDSRecord, pdsUrl: string): UnifiedEvent | null {
   try {
     const value = record.value;
     const uriParts = record.uri.split('/');
@@ -145,7 +149,8 @@ function pdsRecordToUnifiedEvent(
     const startsAt = (value.startsAt as string) || (value.startDate as string) || '';
     const endsAt = (value.endsAt as string) || (value.endDate as string) || undefined;
     const location = (value.location as string) || undefined;
-    const imageUrl = (value.image as { url?: string } | undefined)?.url || (value.imageUrl as string) || undefined;
+    const imageUrl =
+      (value.image as { url?: string } | undefined)?.url || (value.imageUrl as string) || undefined;
     const url = (value.url as string) || undefined;
     const maxParticipants = (value.maxParticipants as number) || undefined;
     const rsvpCount = (value.rsvpCount as number) || 0;
@@ -206,9 +211,7 @@ function pdsRecordToUnifiedEvent(
 /**
  * Normalize Smoke Signal API event to UnifiedEvent.
  */
-function apiEventToUnifiedEvent(
-  apiEvent: SmokeSignalAPIEvent,
-): UnifiedEvent | null {
+function apiEventToUnifiedEvent(apiEvent: SmokeSignalAPIEvent): UnifiedEvent | null {
   try {
     const description = apiEvent.description ? stripHtml(apiEvent.description) : '';
     const locationParts: string[] = [];
@@ -221,7 +224,9 @@ function apiEventToUnifiedEvent(
       description: description.slice(0, 2000),
       beginsOn: apiEvent.startsAt,
       endsOn: apiEvent.endsAt,
-      location: apiEvent.location ? { name: apiEvent.location, address: apiEvent.location } : undefined,
+      location: apiEvent.location
+        ? { name: apiEvent.location, address: apiEvent.location }
+        : undefined,
       onlineAddress: apiEvent.url || undefined,
       isOnline: !apiEvent.location,
       organizer: {
@@ -261,7 +266,7 @@ async function fetchFromPDS(limit: number): Promise<UnifiedEvent[]> {
   try {
     const collection = 'events.smokesignal.event';
     const records = await fetchRecordsFromPDS(PDS_URLS[0], collection, limit);
-    
+
     const events: UnifiedEvent[] = [];
     for (const record of records) {
       const event = pdsRecordToUnifiedEvent(record, PDS_URLS[0]);
@@ -299,7 +304,7 @@ async function fetchFromAPI(limit: number): Promise<UnifiedEvent[]> {
 
     const data = (await res.json()) as SmokeSignalAPIResponse;
     const apiEvents = data.events || [];
-    
+
     const events: UnifiedEvent[] = [];
     for (const apiEvent of apiEvents) {
       const event = apiEventToUnifiedEvent(apiEvent);
@@ -326,7 +331,9 @@ async function fetchFromMultiPDS(limit: number): Promise<UnifiedEvent[]> {
     PDS_URLS.map(async (pdsUrl) => {
       try {
         const records = await fetchRecordsFromPDS(pdsUrl, 'events.smokesignal.event', perPDS);
-        return records.map((r) => pdsRecordToUnifiedEvent(r, pdsUrl)).filter(Boolean) as UnifiedEvent[];
+        return records
+          .map((r) => pdsRecordToUnifiedEvent(r, pdsUrl))
+          .filter(Boolean) as UnifiedEvent[];
       } catch {
         return [] as UnifiedEvent[];
       }
@@ -362,7 +369,7 @@ export const schema: SchemaGuard = {
 export async function fetchSmokeSignalEvents(limit = 20): Promise<UnifiedEvent[]> {
   // Try PDS first (fastest, most complete)
   let events = await fetchFromMultiPDS(Math.ceil(limit * 1.5));
-  
+
   // Fall back to API if PDS returns nothing
   if (events.length === 0) {
     events = await fetchFromAPI(limit);

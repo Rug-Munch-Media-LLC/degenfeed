@@ -19,7 +19,7 @@
  *   r     — reference URL
  */
 
-import type { SchemaGuard, UnifiedEvent, NostrCalendarEvent } from '../server/types';
+import type { NostrCalendarEvent, SchemaGuard, UnifiedEvent } from '../server/types';
 
 const $fetch = globalThis.fetch;
 
@@ -94,10 +94,16 @@ function fetchEventsFromRelay(
       ws.addEventListener('open', () => {
         if (!ws) return;
         // Subscribe to NIP-52 calendar events
-        ws.send(JSON.stringify(['REQ', 'degenfeed-calendar', {
-          kinds: [KIND_CALENDAR_EVENT],
-          limit: Math.min(limit, 50),
-        }]));
+        ws.send(
+          JSON.stringify([
+            'REQ',
+            'degenfeed-calendar',
+            {
+              kinds: [KIND_CALENDAR_EVENT],
+              limit: Math.min(limit, 50),
+            },
+          ]),
+        );
       });
 
       ws.addEventListener('message', (event: MessageEvent) => {

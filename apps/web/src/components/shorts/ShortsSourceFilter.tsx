@@ -56,7 +56,12 @@ export const ALL_SOURCE_OPTIONS: SourceOption[] = [
   // Self-hosted
   { key: 'loops', label: 'Loops', group: 'self-hosted', description: 'Our self-hosted shorts' },
   { key: 'peertube', label: 'PeerTube', group: 'self-hosted', description: 'Federated video' },
-  { key: 'pixelfed', label: 'Pixelfed', group: 'self-hosted', description: 'Federated images/video' },
+  {
+    key: 'pixelfed',
+    label: 'Pixelfed',
+    group: 'self-hosted',
+    description: 'Federated images/video',
+  },
   // Protocol
   { key: 'atprotocol', label: 'AT Protocol', group: 'protocol', description: 'Bluesky, Flashes' },
   { key: 'nostr', label: 'Nostr', group: 'protocol', description: 'Snort, Primal' },
@@ -95,9 +100,7 @@ export function ShortsSourceFilter({
   const togglePreferredSource = useCallback(
     (key: string) => {
       const current = preferredSources.enabled;
-      const next = current.includes(key)
-        ? current.filter((k) => k !== key)
-        : [...current, key];
+      const next = current.includes(key) ? current.filter((k) => k !== key) : [...current, key];
 
       onPreferencesChange({
         ...preferredSources,
@@ -168,7 +171,8 @@ export function ShortsSourceFilter({
               <span
                 className="inline-block h-1.5 w-1.5 rounded-full"
                 style={{
-                  backgroundColor: currentMode === 'only-loops' ? '#F1680D' : 'rgba(255,255,255,0.3)',
+                  backgroundColor:
+                    currentMode === 'only-loops' ? '#F1680D' : 'rgba(255,255,255,0.3)',
                 }}
               />
               Loops Only
@@ -220,10 +224,7 @@ export function ShortsSourceFilter({
                 )}
                 <span style={{ opacity: isActive ? 1 : 0.8 }}>{opt.label}</span>
                 {count > 0 && (
-                  <span
-                    className="tabular-nums"
-                    style={{ opacity: isActive ? 1 : 0.5 }}
-                  >
+                  <span className="tabular-nums" style={{ opacity: isActive ? 1 : 0.5 }}>
                     {count}
                   </span>
                 )}
@@ -275,13 +276,7 @@ export function ShortsSourceFilter({
                   title={`${opt.label}: ${opt.description}`}
                 >
                   {isPreferred ? (
-                    <svg
-                      width="10"
-                      height="10"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      aria-hidden="true"
-                    >
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                       <path
                         d="M20 6L9 17l-5-5"
                         stroke="currentColor"

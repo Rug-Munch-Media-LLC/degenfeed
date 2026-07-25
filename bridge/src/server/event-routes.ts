@@ -28,8 +28,12 @@ import {
   runSyncCycle,
   syncRSVP,
 } from '../event-bridge';
-import { fetchSmokeSignalEvents, rsvpToEvent, createSmokeSignalEvent } from '../providers/smokesignal';
 import { fetchMobilizonPosts, mobilizonEventToUnified } from '../providers/mobilizon';
+import {
+  createSmokeSignalEvent,
+  fetchSmokeSignalEvents,
+  rsvpToEvent,
+} from '../providers/smokesignal';
 import type { CreateEventInput, UnifiedEvent } from './types';
 
 // ─── Helpers ──────────────────────────────────────────────────────────
@@ -84,7 +88,12 @@ async function handleGetEvents(url: URL, _req: http.IncomingMessage, res: http.S
   const query = params.query || undefined;
 
   const result = await fetchUnifiedEventsFeed(limit, {
-    protocols, categories, dateFrom, dateTo, location, query,
+    protocols,
+    categories,
+    dateFrom,
+    dateTo,
+    location,
+    query,
   });
 
   jsonOk(res, {
@@ -102,7 +111,11 @@ async function handleGetEvents(url: URL, _req: http.IncomingMessage, res: http.S
 /**
  * GET /api/events/atproto — Smoke Signal (AT Protocol) events.
  */
-async function handleGetAtprotoEvents(url: URL, _req: http.IncomingMessage, res: http.ServerResponse) {
+async function handleGetAtprotoEvents(
+  url: URL,
+  _req: http.IncomingMessage,
+  res: http.ServerResponse,
+) {
   const params = getQueryParams(url);
   const limit = Math.min(Number(params.limit) || 20, 100);
 
@@ -154,8 +167,8 @@ async function handleRsvpAtprotoEvent(
       id: `rsvp:${Date.now()}`,
       eventId,
       attendee: {
-        displayName: body.displayName as string || 'Unknown',
-        handle: body.handle as string || undefined,
+        displayName: (body.displayName as string) || 'Unknown',
+        handle: (body.handle as string) || undefined,
       },
       response: response as 'yes' | 'no' | 'maybe',
       protocol: 'smokesignal',
@@ -176,11 +189,7 @@ async function handleRsvpAtprotoEvent(
 /**
  * POST /api/events/create — Create event, publish to chosen platforms.
  */
-async function handleCreateEvent(
-  _url: URL,
-  req: http.IncomingMessage,
-  res: http.ServerResponse,
-) {
+async function handleCreateEvent(_url: URL, req: http.IncomingMessage, res: http.ServerResponse) {
   try {
     const body = await getBody(req);
     const input = body as Record<string, unknown>;
@@ -209,9 +218,13 @@ async function handleCreateEvent(
           name: title,
           description,
           startsAt: beginsOn,
-          endsAt: input.endsOn as string || undefined,
-          location: input.location ? (typeof input.location === 'object' ? (input.location as Record<string, string>).name || JSON.stringify(input.location) : String(input.location)) : undefined,
-          url: input.onlineAddress as string || undefined,
+          endsAt: (input.endsOn as string) || undefined,
+          location: input.location
+            ? typeof input.location === 'object'
+              ? (input.location as Record<string, string>).name || JSON.stringify(input.location)
+              : String(input.location)
+            : undefined,
+          url: (input.onlineAddress as string) || undefined,
           maxParticipants: input.maxAttendees ? Number(input.maxAttendees) : undefined,
         },
         authToken,
@@ -258,7 +271,7 @@ async function handleCreateEvent(
                 physicalAddress: location?.address
                   ? { description: `${location.name || ''}, ${location.address}` }
                   : undefined,
-                tags: (input.tags as string[] || []).map((t: string) => ({ title: t })),
+                tags: ((input.tags as string[]) || []).map((t: string) => ({ title: t })),
                 visibility: input.visibility || 'public',
               },
             },
@@ -300,12 +313,22 @@ async function handleCreateEvent(
           kind: 31922,
           content: description.slice(0, 500),
           tags: [
-            ['d', title.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase().slice(0, 40)],
+            [
+              'd',
+              title
+                .replace(/[^a-zA-Z0-9]/g, '-')
+                .toLowerCase()
+                .slice(0, 40),
+            ],
             ['title', title],
             ['start', String(Math.floor(new Date(beginsOn).getTime() / 1000))],
-            ...(input.endsOn ? [['end', String(Math.floor(new Date(input.endsOn as string).getTime() / 1000))]] : []),
-            ...(input.location ? [['location', typeof input.location === 'string' ? input.location : '']] : []),
-            ...(input.tags as string[] || []).map((t: string) => ['t', t]),
+            ...(input.endsOn
+              ? [['end', String(Math.floor(new Date(input.endsOn as string).getTime() / 1000))]]
+              : []),
+            ...(input.location
+              ? [['location', typeof input.location === 'string' ? input.location : '']]
+              : []),
+            ...((input.tags as string[]) || []).map((t: string) => ['t', t]),
           ],
           created_at: Math.floor(Date.now() / 1000),
         };
@@ -331,11 +354,11 @@ async function handleCreateEvent(
       title,
       description: description.slice(0, 2000),
       beginsOn,
-      endsOn: input.endsOn as string || undefined,
+      endsOn: (input.endsOn as string) || undefined,
       location: input.location as UnifiedEvent['location'],
-      onlineAddress: input.onlineAddress as string || undefined,
-      isOnline: input.isOnline as boolean || !input.location,
-      tags: input.tags as string[] || [],
+      onlineAddress: (input.onlineAddress as string) || undefined,
+      isOnline: (input.isOnline as boolean) || !input.location,
+      tags: (input.tags as string[]) || [],
       status: 'confirmed',
       visibility: (input.visibility as string) || 'public',
       categories: [],
@@ -358,7 +381,11 @@ async function handleCreateEvent(
 /**
  * GET /api/events/discover — Event discovery with sections.
  */
-async function handleDiscoverEvents(url: URL, _req: http.IncomingMessage, res: http.ServerResponse) {
+async function handleDiscoverEvents(
+  url: URL,
+  _req: http.IncomingMessage,
+  res: http.ServerResponse,
+) {
   const params = getQueryParams(url);
   const limit = Math.min(Number(params.limit) || 10, 50);
   const creatorDid = params.creatorDid || undefined;
@@ -384,7 +411,11 @@ async function handleDiscoverEvents(url: URL, _req: http.IncomingMessage, res: h
 /**
  * GET /api/events/trending — Trending events.
  */
-async function handleTrendingEvents(url: URL, _req: http.IncomingMessage, res: http.ServerResponse) {
+async function handleTrendingEvents(
+  url: URL,
+  _req: http.IncomingMessage,
+  res: http.ServerResponse,
+) {
   const params = getQueryParams(url);
   const limit = Math.min(Number(params.limit) || 20, 100);
 
@@ -419,7 +450,11 @@ async function handleEventsNear(url: URL, _req: http.IncomingMessage, res: http.
 /**
  * GET /api/events/by-creator — Events by creator.
  */
-async function handleEventsByCreator(url: URL, _req: http.IncomingMessage, res: http.ServerResponse) {
+async function handleEventsByCreator(
+  url: URL,
+  _req: http.IncomingMessage,
+  res: http.ServerResponse,
+) {
   const params = getQueryParams(url);
   const creator = params.creator;
 
@@ -439,11 +474,7 @@ async function handleEventsByCreator(url: URL, _req: http.IncomingMessage, res: 
 /**
  * POST /api/events/sync — Trigger Bridgy Fed sync cycle.
  */
-async function handleSyncEvents(
-  _url: URL,
-  req: http.IncomingMessage,
-  res: http.ServerResponse,
-) {
+async function handleSyncEvents(_url: URL, req: http.IncomingMessage, res: http.ServerResponse) {
   const body = await getBody(req);
   const atprotoToken = (body.atprotoToken as string) || process.env.ATPROTO_ADMIN_TOKEN || '';
   const mobilizonToken = (body.mobilizonToken as string) || process.env.MOBILIZON_ADMIN_TOKEN || '';
@@ -463,11 +494,7 @@ async function handleSyncEvents(
 /**
  * GET /api/events/bridge/status — Event bridge health.
  */
-async function handleBridgeStatus(
-  _url: URL,
-  _req: http.IncomingMessage,
-  res: http.ServerResponse,
-) {
+async function handleBridgeStatus(_url: URL, _req: http.IncomingMessage, res: http.ServerResponse) {
   const status = getEventBridgeStatus();
   jsonOk(res, {
     ok: true,
@@ -479,11 +506,7 @@ async function handleBridgeStatus(
 /**
  * GET /api/events/:id — Single event detail.
  */
-async function handleSingleEvent(
-  url: URL,
-  _req: http.IncomingMessage,
-  res: http.ServerResponse,
-) {
+async function handleSingleEvent(url: URL, _req: http.IncomingMessage, res: http.ServerResponse) {
   const params = getQueryParams(url);
   const pathParts = url.pathname.split('/').filter(Boolean);
   const eventId = pathParts[pathParts.length - 1];
@@ -533,7 +556,11 @@ export async function handleEventRoute(
     // GET /api/events/atproto — AT Protocol events
     if (subPath === '/atproto') {
       if (method === 'GET') {
-        await handleGetAtprotoEvents(new URL(path, `http://${req.headers.host || 'localhost'}`), req, res);
+        await handleGetAtprotoEvents(
+          new URL(path, `http://${req.headers.host || 'localhost'}`),
+          req,
+          res,
+        );
         return true;
       }
     }
@@ -541,7 +568,11 @@ export async function handleEventRoute(
     // POST /api/events/atproto/rsvp — RSVP
     if (subPath === '/atproto/rsvp') {
       if (method === 'POST') {
-        await handleRsvpAtprotoEvent(new URL(path, `http://${req.headers.host || 'localhost'}`), req, res);
+        await handleRsvpAtprotoEvent(
+          new URL(path, `http://${req.headers.host || 'localhost'}`),
+          req,
+          res,
+        );
         return true;
       }
     }
@@ -549,7 +580,11 @@ export async function handleEventRoute(
     // POST /api/events/create — Create event
     if (subPath === '/create') {
       if (method === 'POST') {
-        await handleCreateEvent(new URL(path, `http://${req.headers.host || 'localhost'}`), req, res);
+        await handleCreateEvent(
+          new URL(path, `http://${req.headers.host || 'localhost'}`),
+          req,
+          res,
+        );
         return true;
       }
     }
@@ -557,7 +592,11 @@ export async function handleEventRoute(
     // GET /api/events/discover — Discovery
     if (subPath === '/discover') {
       if (method === 'GET') {
-        await handleDiscoverEvents(new URL(path, `http://${req.headers.host || 'localhost'}`), req, res);
+        await handleDiscoverEvents(
+          new URL(path, `http://${req.headers.host || 'localhost'}`),
+          req,
+          res,
+        );
         return true;
       }
     }
@@ -565,7 +604,11 @@ export async function handleEventRoute(
     // GET /api/events/trending — Trending
     if (subPath === '/trending') {
       if (method === 'GET') {
-        await handleTrendingEvents(new URL(path, `http://${req.headers.host || 'localhost'}`), req, res);
+        await handleTrendingEvents(
+          new URL(path, `http://${req.headers.host || 'localhost'}`),
+          req,
+          res,
+        );
         return true;
       }
     }
@@ -573,7 +616,11 @@ export async function handleEventRoute(
     // GET /api/events/near — Near location
     if (subPath === '/near') {
       if (method === 'GET') {
-        await handleEventsNear(new URL(path, `http://${req.headers.host || 'localhost'}`), req, res);
+        await handleEventsNear(
+          new URL(path, `http://${req.headers.host || 'localhost'}`),
+          req,
+          res,
+        );
         return true;
       }
     }
@@ -581,7 +628,11 @@ export async function handleEventRoute(
     // GET /api/events/by-creator — By creator
     if (subPath === '/by-creator') {
       if (method === 'GET') {
-        await handleEventsByCreator(new URL(path, `http://${req.headers.host || 'localhost'}`), req, res);
+        await handleEventsByCreator(
+          new URL(path, `http://${req.headers.host || 'localhost'}`),
+          req,
+          res,
+        );
         return true;
       }
     }
@@ -589,7 +640,11 @@ export async function handleEventRoute(
     // POST /api/events/sync — Trigger sync
     if (subPath === '/sync') {
       if (method === 'POST') {
-        await handleSyncEvents(new URL(path, `http://${req.headers.host || 'localhost'}`), req, res);
+        await handleSyncEvents(
+          new URL(path, `http://${req.headers.host || 'localhost'}`),
+          req,
+          res,
+        );
         return true;
       }
     }
@@ -597,7 +652,11 @@ export async function handleEventRoute(
     // GET /api/events/bridge/status — Bridge status
     if (subPath === '/bridge/status') {
       if (method === 'GET') {
-        await handleBridgeStatus(new URL(path, `http://${req.headers.host || 'localhost'}`), req, res);
+        await handleBridgeStatus(
+          new URL(path, `http://${req.headers.host || 'localhost'}`),
+          req,
+          res,
+        );
         return true;
       }
     }
@@ -605,11 +664,24 @@ export async function handleEventRoute(
     // GET /api/events/:id — Single event
     if (subPath.startsWith('/') && subPath.length > 1) {
       // Check it's not a known sub-path
-      const knownSubs = ['atproto', 'create', 'discover', 'trending', 'near', 'by-creator', 'sync', 'bridge'];
+      const knownSubs = [
+        'atproto',
+        'create',
+        'discover',
+        'trending',
+        'near',
+        'by-creator',
+        'sync',
+        'bridge',
+      ];
       const firstSegment = subPath.split('/')[1];
       if (!knownSubs.includes(firstSegment)) {
         if (method === 'GET') {
-          await handleSingleEvent(new URL(path, `http://${req.headers.host || 'localhost'}`), req, res);
+          await handleSingleEvent(
+            new URL(path, `http://${req.headers.host || 'localhost'}`),
+            req,
+            res,
+          );
           return true;
         }
       }

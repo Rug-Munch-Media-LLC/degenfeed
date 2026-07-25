@@ -8,7 +8,6 @@
  * response validation, fallback. No silent failures.
  */
 
-import type { Env } from '../index';
 import type {
   FrameEmbed,
   FrameResponse,
@@ -19,11 +18,8 @@ import type {
   FrameTemplate,
   FrameTemplateType,
 } from '@degenfeed/farcaster-sdk';
-import {
-  buildFrameEmbed,
-  FRAME_TEMPLATES,
-  generateFramesV2Html,
-} from '@degenfeed/farcaster-sdk';
+import { buildFrameEmbed, FRAME_TEMPLATES, generateFramesV2Html } from '@degenfeed/farcaster-sdk';
+import type { Env } from '../index';
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -97,8 +93,8 @@ export class FrameBuilder {
     const frameId = crypto.randomUUID();
     const now = Date.now();
 
-    const template = FRAME_TEMPLATES.find((t) => t.type === config.templateType)
-                   ?? FRAME_TEMPLATES[5]!; // fallback to custom
+    const template =
+      FRAME_TEMPLATES.find((t) => t.type === config.templateType) ?? FRAME_TEMPLATES[5]!; // fallback to custom
 
     const imageUrl = config.imageUrl || template.defaultImage;
     const buttonLabel = config.buttonLabel || template.defaultButtonLabel;
@@ -149,11 +145,9 @@ export class FrameBuilder {
     };
 
     try {
-      await env.CACHE?.put(
-        `${KV_FRAME_PREFIX}${frameId}`,
-        JSON.stringify(compiled),
-        { expirationTtl: 86400 * 90 },
-      );
+      await env.CACHE?.put(`${KV_FRAME_PREFIX}${frameId}`, JSON.stringify(compiled), {
+        expirationTtl: 86400 * 90,
+      });
 
       // Index by creator
       const userFramesKey = `${KV_FRAME_USER_PREFIX}${config.creatorAddress}`;
@@ -232,11 +226,14 @@ export class FrameBuilder {
   /**
    * List all frames in the system (for discovery).
    */
-  async discoverFrames(env: Env, params: {
-    limit?: number;
-    cursor?: string;
-    template?: string;
-  } = {}): Promise<{ frames: CompiledFrame[]; cursor?: string }> {
+  async discoverFrames(
+    env: Env,
+    params: {
+      limit?: number;
+      cursor?: string;
+      template?: string;
+    } = {},
+  ): Promise<{ frames: CompiledFrame[]; cursor?: string }> {
     const limit = Math.min(params.limit ?? 20, 100);
     try {
       const list = await env.CACHE?.list({
@@ -276,11 +273,9 @@ export class FrameBuilder {
     };
 
     try {
-      await env.CACHE?.put(
-        `${KV_FRAME_SESSION_PREFIX}${session.id}`,
-        JSON.stringify(session),
-        { expirationTtl: 86400 },
-      );
+      await env.CACHE?.put(`${KV_FRAME_SESSION_PREFIX}${session.id}`, JSON.stringify(session), {
+        expirationTtl: 86400,
+      });
     } catch {}
 
     return session;
@@ -307,11 +302,9 @@ export class FrameBuilder {
       if (!session) return;
       session.state = state;
       session.lastActivity = Date.now();
-      await env.CACHE?.put(
-        `${KV_FRAME_SESSION_PREFIX}${sessionId}`,
-        JSON.stringify(session),
-        { expirationTtl: 86400 },
-      );
+      await env.CACHE?.put(`${KV_FRAME_SESSION_PREFIX}${sessionId}`, JSON.stringify(session), {
+        expirationTtl: 86400,
+      });
     } catch {}
   }
 
