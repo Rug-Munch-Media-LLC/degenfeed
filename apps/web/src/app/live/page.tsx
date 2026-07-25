@@ -2,9 +2,9 @@
 
 import { ErrorBoundary } from '@degenfeed/ui';
 import { useCallback, useMemo, useState } from 'react';
+import { GoLiveFlow } from '../../components/live/GoLiveFlow';
 import { StreamCategoriesBar } from '../../components/stream/StreamCategories';
 import type { StreamCategory } from '../../components/stream/types';
-import { GoLiveModal } from '../../components/streams/GoLiveModal';
 import { LiveHeader } from '../../components/streams/LiveHeader';
 import { LiveStreamGrid } from '../../components/streams/LiveStreamGrid';
 import { SpacesHub } from '../../components/streams/SpacesHub';
@@ -299,8 +299,8 @@ export default function LivePage() {
   const counts = useMemo(() => countByType(streams), [streams]);
 
   const handleGoLive = useCallback(() => setGoLiveOpen(true), []);
-  const handleStartStream = useCallback((_data: { title: string; streamType: StreamType }) => {
-    // API call to start stream
+  const handleLiveStarted = useCallback((streamId: string) => {
+    window.location.href = `/live/${streamId}`;
   }, []);
   const handlePlay = useCallback((stream: LiveStream) => {
     window.location.href = `/live/${stream.id}`;
@@ -424,11 +424,11 @@ export default function LivePage() {
           {activeTab === 'all' && <UpcomingStreams isLoading={isLoading} />}
         </div>
 
-        {/* Go Live Modal */}
-        <GoLiveModal
+        {/* Go Live Flow (wizard) */}
+        <GoLiveFlow
           isOpen={goLiveOpen}
           onClose={() => setGoLiveOpen(false)}
-          onStart={handleStartStream}
+          onLiveStarted={handleLiveStarted}
         />
       </div>
     </ErrorBoundary>

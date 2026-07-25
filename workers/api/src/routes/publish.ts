@@ -576,3 +576,378 @@ export async function handleRssToNostrBridge(request: Request, _env: Env): Promi
     return jsonResponse({ error: String(e) }, 500);
   }
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Cross-Publish API — One-Click Multi-Protocol Publishing
+// ═══════════════════════════════════════════════════════════════════════════
+
+import type { MasterPost } from '@degenfeed/cross-protocol-bridge';
+import { adaptForProtocols, previewForProtocols } from '@degenfeed/cross-protocol-bridge';
+import { hasSuspiciousPayload } from '../sanitize';
+
+/**
+ * POST /api/publish/all
+ *
+ * Publish a MasterPost to ALL connected protocols for the user.
+ * Body: { masterPost: MasterPost, auth?: Record<string, string> }
+ */
+export async function handlePublishAll(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+
+  try {
+    const body = (await request.json()) as {
+      masterPost?: MasterPost;
+      protocols?: string[];
+      auth?: Record<string, string>;
+    };
+
+    const masterPost = body.masterPost;
+    if (!masterPost?.text || hasSuspiciousPayload(masterPost.text)) {
+      return jsonResponse({ error: 'Invalid or suspicious post text' }, 400);
+    }
+
+    const auth = body.auth ?? {};
+
+    // Determine protocols: either specified or all connected
+    const protocols = body.protocols ?? ['nostr', 'farcaster', 'bluesky', 'mastodon', 'lens'];
+
+    // Execute cross-publish
+    const { executeCrossPublish } = await import('../lib/cross-publish-orchestrator');
+    const report = await executeCrossPublish(
+      { masterPost, protocols: protocols as Protocol[], auth },
+      env,
+    );
+
+    return jsonResponse(report);
+  } catch (e) {
+    return jsonResponse({ error: String(e) }, 500);
+  }
+}
+
+/**
+ * POST /api/publish/selected
+ *
+ * Publish to selected protocols with preview returned before actual publish.
+ * Body: { masterPost: MasterPost, protocols: string[], dryRun?: boolean }
+ */
+export async function handlePublishSelected(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+
+  try {
+    const body = (await request.json()) as {
+      masterPost?: MasterPost;
+      protocols?: string[];
+      auth?: Record<string, string>;
+      dryRun?: boolean;
+      signedMessage?: string;
+      typedDataId?: string;
+      signature?: string;
+    };
+
+    const masterPost = body.masterPost;
+    if (!masterPost?.text || hasSuspiciousPayload(masterPost.text)) {
+      return jsonResponse({ error: 'Invalid or suspicious post text' }, 400);
+    }
+
+    const protocols = body.protocols ?? [];
+    if (protocols.length === 0) {
+      return jsonResponse({ error: 'At least one protocol required' }, 400);
+    }
+
+    // If dry run, return previews only
+    if (body.dryRun) {
+      const previews = previewForProtocols(masterPost, protocols);
+      const adapted = adaptForProtocols(masterPost, protocols);
+
+      return jsonResponse({
+        previews,
+        adapted: Object.fromEntries(
+          Object.entries(adapted).map(([proto, result]) => [
+            proto,
+            'error' in result
+              ? { error: result.error }
+              : {
+                  charCount: result.params.text.length,
+                  hasMedia: (result.params.mediaUrls?.length ?? 0) > 0,
+                  supportsRichText: result.params.supportsRichText,
+                },
+          ]),
+        ),
+        dryRun: true,
+      });
+    }
+
+    // Execute publish
+    const { executeCrossPublish } = await import('../lib/cross-publish-orchestrator');
+    const report = await executeCrossPublish(
+      {
+        masterPost,
+        protocols: protocols as Protocol[],
+        auth: body.auth,
+        signedMessage: body.signedMessage,
+        typedDataId: body.typedDataId,
+        signature: body.signature,
+      },
+      env,
+    );
+
+    return jsonResponse(report);
+  } catch (e) {
+    return jsonResponse({ error: String(e) }, 500);
+  }
+}
+
+/**
+ * GET /api/publish/preview
+ *
+ * Preview how a post looks on each protocol without publishing.
+ * Query params: text, protocols (comma-separated), title, hashtags (comma-separated)
+ */
+export async function handlePreviewPost(request: Request, _env: Env): Promise<Response> {
+  if (request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+
+  try {
+    const url = new URL(request.url);
+    const text = url.searchParams.get('text') ?? '';
+    const protocols = (url.searchParams.get('protocols') ?? 'nostr,farcaster,bluesky').split(',');
+    const title = url.searchParams.get('title') ?? undefined;
+    const hashtags = (url.searchParams.get('hashtags') ?? '').split(',').filter(Boolean);
+    const linkCardUrl = url.searchParams.get('linkUrl') ?? undefined;
+
+    if (!text || hasSuspiciousPayload(text)) {
+      return jsonResponse({ error: 'Invalid text' }, 400);
+    }
+
+    const masterPost: MasterPost = {
+      text,
+      title,
+      hashtags,
+      linkCard: linkCardUrl ? { url: linkCardUrl } : undefined,
+    };
+
+    const previews = previewForProtocols(masterPost, protocols);
+    const adapted = adaptForProtocols(masterPost, protocols);
+
+    return jsonResponse({
+      previews,
+      details: Object.fromEntries(
+        Object.entries(adapted).map(([proto, result]) => [
+          proto,
+          'error' in result
+            ? { error: result.error }
+            : {
+                charCount: result.params.text.length,
+                charLimit: result.adapter.charLimit,
+                charRemaining: result.adapter.charLimit - result.params.text.length,
+                supportsRichText: result.params.supportsRichText,
+                mediaAttached: (result.params.mediaUrls?.length ?? 0) > 0,
+              },
+        ]),
+      ),
+    });
+  } catch (e) {
+    return jsonResponse({ error: String(e) }, 500);
+  }
+}
+
+/**
+ * POST /api/publish/schedule
+ *
+ * Schedule a cross-post for later publication.
+ * Body: { masterPost: MasterPost, protocols: string[], scheduleAt: string (ISO), auth? }
+ */
+export async function handleScheduleCrossPost(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+
+  try {
+    const body = (await request.json()) as {
+      masterPost?: MasterPost;
+      protocols?: string[];
+      scheduleAt?: string;
+      auth?: Record<string, string>;
+    };
+
+    const masterPost = body.masterPost;
+    if (!masterPost?.text || hasSuspiciousPayload(masterPost.text)) {
+      return jsonResponse({ error: 'Invalid or suspicious post text' }, 400);
+    }
+
+    const protocols = body.protocols ?? [];
+    if (protocols.length === 0) {
+      return jsonResponse({ error: 'At least one protocol required' }, 400);
+    }
+
+    const scheduleAt = body.scheduleAt;
+    if (!scheduleAt) {
+      return jsonResponse({ error: 'scheduleAt (ISO date string) is required' }, 400);
+    }
+
+    const scheduleTime = new Date(scheduleAt).getTime();
+    if (Number.isNaN(scheduleTime)) {
+      return jsonResponse({ error: 'Invalid scheduleAt date' }, 400);
+    }
+
+    // Store in KV for the scheduled executor to pick up
+    const batchId = `cp-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+
+    const scheduledEntry = {
+      batchId,
+      masterPost,
+      protocols: protocols as Protocol[],
+      auth: body.auth ?? {},
+      scheduleAt: scheduleTime,
+      createdAt: Date.now(),
+    };
+
+    if (env.CACHE) {
+      await env.CACHE.put(
+        `scheduled:crosspost:${batchId}`,
+        JSON.stringify(scheduledEntry),
+        { expirationTtl: 86400 * 30 }, // 30 days
+      );
+    }
+
+    return jsonResponse({
+      ok: true,
+      batchId,
+      scheduledAt: new Date(scheduleTime).toISOString(),
+      message: `Post scheduled for ${new Date(scheduleTime).toLocaleString()}`,
+    });
+  } catch (e) {
+    return jsonResponse({ error: String(e) }, 500);
+  }
+}
+
+/**
+ * GET /api/publish/scheduled
+ *
+ * List scheduled cross-posts.
+ */
+export async function handleListScheduledCrossPosts(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+
+  try {
+    if (!env.CACHE) {
+      return jsonResponse({ scheduled: [] });
+    }
+
+    const scheduled: Array<{
+      batchId: string;
+      masterPost: { text: string; title?: string };
+      protocols: string[];
+      scheduleAt: number;
+    }> = [];
+
+    let cursor: string | undefined;
+    do {
+      const page: { keys: { name: string }[]; list_complete: boolean; cursor?: string } =
+        await env.CACHE.list({ prefix: 'scheduled:crosspost:', cursor, limit: 100 });
+      for (const key of page.keys) {
+        const entry = await env.CACHE.get(key.name, 'json');
+        if (entry) scheduled.push(entry as (typeof scheduled)[0]);
+      }
+      cursor = page.list_complete ? undefined : page.cursor;
+    } while (cursor);
+
+    // Sort by schedule time ascending
+    scheduled.sort((a, b) => a.scheduleAt - b.scheduleAt);
+
+    return jsonResponse({
+      scheduled: scheduled.map((s) => ({
+        batchId: s.batchId,
+        text: s.masterPost.text.slice(0, 200),
+        title: s.masterPost.title,
+        protocols: s.protocols,
+        scheduledAt: new Date(s.scheduleAt).toISOString(),
+      })),
+    });
+  } catch (e) {
+    return jsonResponse({ error: String(e) }, 500);
+  }
+}
+
+/**
+ * DELETE /api/publish/scheduled/:id
+ *
+ * Cancel a scheduled cross-post.
+ */
+export async function handleDeleteScheduledCrossPost(
+  request: Request,
+  env: Env,
+): Promise<Response> {
+  if (request.method !== 'DELETE') return jsonResponse({ error: 'Method not allowed' }, 405);
+
+  try {
+    const url = new URL(request.url);
+    const id = url.pathname.split('/').pop();
+
+    if (!id) {
+      return jsonResponse({ error: 'Missing scheduled post ID' }, 400);
+    }
+
+    if (env.CACHE) {
+      await env.CACHE.delete(`scheduled:crosspost:${id}`);
+    }
+
+    return jsonResponse({ ok: true, deletedId: id });
+  } catch (e) {
+    return jsonResponse({ error: String(e) }, 500);
+  }
+}
+
+// ─── Scheduled Post Executor (called by cron) ────────────────────────────
+
+/**
+ * Execute all due scheduled cross-posts. Called by cron every minute.
+ */
+export async function executeDueScheduledCrossPosts(env: Env): Promise<number> {
+  if (!env.CACHE) return 0;
+
+  const now = Date.now();
+  let executed = 0;
+
+  let cursor: string | undefined;
+  do {
+    const page: { keys: { name: string }[]; list_complete: boolean; cursor?: string } =
+      await env.CACHE.list({ prefix: 'scheduled:crosspost:', cursor, limit: 100 });
+
+    for (const key of page.keys) {
+      try {
+        const raw = await env.CACHE.get(key.name, 'json');
+        if (!raw) continue;
+
+        const entry = raw as {
+          batchId: string;
+          masterPost: MasterPost;
+          protocols: Protocol[];
+          auth: Record<string, string>;
+          scheduleAt: number;
+        };
+
+        // Skip future posts
+        if (entry.scheduleAt > now) continue;
+
+        // Execute the publish
+        const { executeCrossPublish } = await import('../lib/cross-publish-orchestrator');
+        await executeCrossPublish(
+          {
+            masterPost: entry.masterPost,
+            protocols: entry.protocols,
+            auth: entry.auth,
+          },
+          env,
+        );
+
+        // Remove the scheduled entry
+        await env.CACHE.delete(key.name);
+        executed++;
+      } catch (err) {
+        console.error(`[scheduled-executor] Failed to execute ${key.name}:`, err);
+      }
+    }
+
+    cursor = page.list_complete ? undefined : page.cursor;
+  } while (cursor);
+
+  return executed;
+}

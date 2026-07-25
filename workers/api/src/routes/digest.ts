@@ -124,8 +124,24 @@ async function fetchMarketPrices(env: Env): Promise<Record<string, MarketPrice>>
 
 // ─── Digest content builders ───────────────────────────────────────────────
 
+export type DigestFormatType =
+  | 'daily-brief'
+  | 'weekly-deep-dive'
+  | 'topic-digest'
+  | 'protocol-digest';
+
 export interface DigestSection {
-  type: 'top-stories' | 'videos' | 'communities' | 'market' | 'trending' | 'for-you' | 'catch-up';
+  type:
+    | 'top-stories'
+    | 'videos'
+    | 'communities'
+    | 'market'
+    | 'trending'
+    | 'for-you'
+    | 'catch-up'
+    | 'deep-dive'
+    | 'on-this-day'
+    | 'community-spotlight';
   title: string;
   items: DigestItem[];
 }
@@ -151,12 +167,324 @@ export interface DigestResponse {
   date: string;
   wallet: string | null;
   sections: DigestSection[];
+  /** Auto-generated subject line */
+  subject: string;
+  /** Featured story at top of digest */
+  featured?: DigestItem | null;
+  /** Digest format */
+  format: DigestFormatType;
+  /** Share link for this digest */
+  shareUrl?: string;
+  /** AI-generated editorial voice content */
+  editorial?: {
+    /** Opening paragraph */
+    opening: string;
+    /** Market overview sentence */
+    marketOverview?: string;
+    /** Closing thought */
+    closing: string;
+  };
+  /** Market summary data */
+  marketSummary?: {
+    coins: Array<{
+      symbol: string;
+      price: number;
+      change24h: number;
+      sentiment: 'bullish' | 'bearish' | 'neutral';
+    }>;
+    totalMarketCap?: number;
+    btcDominance?: number;
+  };
   meta: {
     totalPosts: number;
     totalSections: number;
     fetchedAt: number;
     cachedAt?: number;
+    /** Estimated reading time in minutes */
+    readTimeMinutes?: number;
+    /** Trending topics included */
+    trendingTopics?: Array<{ topic: string; count: number }>;
   };
+}
+
+// ─── Rich HTML Digest Builder ───────────────────────────────────────────
+
+/**
+ * Build a rich HTML newsletter with Web3-native voice, professional tone,
+ * and proper source attribution. Sections with images, quote blocks, and
+ * link cards.
+ */
+export function buildRichDigestHtml(digest: DigestResponse): string {
+  const { subject, sections, featured, editorial, marketSummary, date, format } = digest;
+  const isDark = true; // DegenFeed dark theme
+
+  const style = isDark
+    ? {
+        bg: '#0a0a0a',
+        card: '#111827',
+        text: '#e5e7eb',
+        muted: '#9ca3af',
+        accent: '#10b981',
+        border: '#1f2937',
+        heading: '#ffffff',
+      }
+    : {
+        bg: '#ffffff',
+        card: '#f9fafb',
+        text: '#111827',
+        muted: '#6b7280',
+        accent: '#059669',
+        border: '#e5e7eb',
+        heading: '#111827',
+      };
+
+  // Featured story hero
+  const featuredHtml = featured
+    ? `
+    <div style="background:${style.card};border-radius:12px;overflow:hidden;margin-bottom:24px;border:1px solid ${style.border}">
+      ${featured.image ? `<img src="${escapeHtml(featured.image)}" alt="" style="width:100%;max-height:300px;object-fit:cover"/>` : ''}
+      <div style="padding:20px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+          <span style="background:${style.accent};color:#000;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600">FEATURED</span>
+          <span style="color:${style.muted};font-size:11px">${featured.author.displayName}</span>
+        </div>
+        <h2 style="margin:0 0 8px 0;font-size:20px;line-height:1.3;color:${style.heading}">
+          <a href="${escapeHtml(featured.url)}" style="color:${style.heading};text-decoration:none">${escapeHtml(featured.title)}</a>
+        </h2>
+        <p style="font-size:14px;color:${style.muted};line-height:1.6;margin:0">${escapeHtml(featured.excerpt)}</p>
+      </div>
+    </div>`
+    : '';
+
+  // Market summary section
+  const marketHtml = marketSummary?.coins?.length
+    ? `
+    <div style="background:${style.card};border-radius:12px;padding:16px;margin-bottom:24px;border:1px solid ${style.border}">
+      <h3 style="margin:0 0 12px 0;font-size:14px;color:${style.heading}">💹 Market Summary</h3>
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead>
+          <tr style="color:${style.muted};border-bottom:1px solid ${style.border}">
+            <th style="text-align:left;padding:6px 8px">Asset</th>
+            <th style="text-align:right;padding:6px 8px">Price</th>
+            <th style="text-align:right;padding:6px 8px">24h</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${marketSummary.coins
+            .map((coin) => {
+              const changeColor = coin.change24h >= 0 ? '#22c55e' : '#ef4444';
+              const changeSign = coin.change24h >= 0 ? '+' : '';
+              return `<tr style="border-bottom:1px solid ${style.border}">
+              <td style="padding:6px 8px;color:${style.text}">${coin.symbol}</td>
+              <td style="text-align:right;padding:6px 8px;color:${style.text}">$${coin.price.toLocaleString()}</td>
+              <td style="text-align:right;padding:6px 8px;color:${changeColor}">${changeSign}${coin.change24h.toFixed(1)}%</td>
+            </tr>`;
+            })
+            .join('')}
+        </tbody>
+      </table>
+    </div>`
+    : '';
+
+  // Build sections
+  const sectionsHtml = sections
+    .map((section) => {
+      // Trending topics render as chips
+      if (section.type === 'trending') {
+        const chips = section.items
+          .map(
+            (item) =>
+              `<span style="display:inline-block;background:${style.card};color:${style.accent};padding:4px 12px;border-radius:16px;font-size:11px;margin:3px;border:1px solid ${style.border}">#${escapeHtml(item.title)} <span style="color:${style.muted}">${item.excerpt}</span></span>`,
+          )
+          .join(' ');
+        return chips
+          ? `
+        <div style="margin-bottom:24px">
+          <h3 style="margin:0 0 12px 0;font-size:14px;color:${style.heading}">🔥 ${section.title}</h3>
+          <div>${chips}</div>
+        </div>`
+          : '';
+      }
+
+      // Standard story list
+      const items = section.items
+        .map((item) => {
+          const imgHtml = item.image
+            ? `<img src="${escapeHtml(item.image)}" alt="" style="width:80px;height:80px;object-fit:cover;border-radius:8px;flex-shrink:0"/>`
+            : '';
+          const nicheTags = item.niches
+            .slice(0, 3)
+            .map(
+              (n) =>
+                `<span style="background:${style.accent}15;color:${style.accent};padding:1px 6px;border-radius:4px;font-size:10px;margin-right:4px">#${escapeHtml(n)}</span>`,
+            )
+            .join('');
+
+          return `
+        <div style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid ${style.border}">
+          ${imgHtml}
+          <div style="flex:1;min-width:0">
+            <div style="font-size:11px;color:${style.muted};margin-bottom:2px">
+              ${escapeHtml(item.protocolEmoji)} ${escapeHtml(item.author.displayName)} · ${_formatTime(item.createdAt)}
+            </div>
+            <h4 style="margin:0 0 4px 0;font-size:14px;line-height:1.3">
+              <a href="${escapeHtml(item.url)}" style="color:${style.heading};text-decoration:none">${escapeHtml(item.title)}</a>
+            </h4>
+            <p style="font-size:12px;color:${style.muted};line-height:1.5;margin:0 0 4px 0">${escapeHtml(item.excerpt)}</p>
+            <div>${nicheTags}</div>
+          </div>
+        </div>`;
+        })
+        .join('\n');
+
+      return items
+        ? `
+      <div style="margin-bottom:24px">
+        <h3 style="margin:0 0 8px 0;font-size:16px;color:${style.heading}">${section.title}</h3>
+        ${items}
+      </div>`
+        : '';
+    })
+    .join('\n');
+
+  // Share URL
+  const shareUrl =
+    digest.shareUrl || `https://degenfeed.xyz/news/digest/${encodeURIComponent(date)}`;
+
+  // Full HTML document
+  return `<!doctype html>
+<html><head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>${escapeHtml(subject)}</title>
+</head>
+<body style="background:${style.bg};color:${style.text};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;margin:0;padding:0">
+  <div style="max-width:600px;margin:0 auto;padding:24px 16px">
+
+    <!-- Header -->
+    <div style="text-align:center;margin-bottom:24px">
+      <div style="font-size:28px;margin-bottom:4px">◆</div>
+      <h1 style="margin:0;font-size:22px;color:${style.accent};font-weight:700">DegenFeed ${format === 'daily-brief' ? 'Daily' : format === 'weekly-deep-dive' ? 'Weekly' : format === 'topic-digest' ? 'Topic Digest' : 'Protocol Report'}</h1>
+      <p style="color:${style.muted};font-size:12px;margin:4px 0 0 0">${new Date(date).toDateString()}</p>
+    </div>
+
+    <!-- Editorial voice -->
+    ${
+      editorial
+        ? `
+    <div style="background:${style.card};border-radius:12px;padding:16px;margin-bottom:24px;border-left:3px solid ${style.accent}">
+      <p style="font-size:14px;line-height:1.6;margin:0 0 8px 0;color:${style.text}">${escapeHtml(editorial.opening)}</p>
+      ${editorial.marketOverview ? `<p style="font-size:13px;line-height:1.5;margin:0 0 8px 0;color:${style.muted}">${escapeHtml(editorial.marketOverview)}</p>` : ''}
+      <p style="font-size:13px;line-height:1.5;margin:0;color:${style.muted}">${escapeHtml(editorial.closing)}</p>
+    </div>`
+        : ''
+    }
+
+    ${featuredHtml}
+    ${marketHtml}
+    ${sectionsHtml}
+
+    <!-- Share -->
+    <div style="text-align:center;margin:24px 0;padding:16px;background:${style.card};border-radius:12px;border:1px solid ${style.border}">
+      <p style="font-size:12px;color:${style.muted};margin:0 0 8px 0">Share this digest</p>
+      <a href="https://twitter.com/intent/tweet?text=${encodeURIComponent(subject)}&url=${encodeURIComponent(shareUrl)}" style="display:inline-block;background:#1d9bf0;color:#fff;padding:6px 12px;border-radius:6px;font-size:12px;text-decoration:none;margin:0 4px">𝕏 Twitter</a>
+      <a href="https://warpcast.com/~/compose?text=${encodeURIComponent(`${subject} ${shareUrl}`)}" style="display:inline-block;background:#8a63d2;color:#fff;padding:6px 12px;border-radius:6px;font-size:12px;text-decoration:none;margin:0 4px">🟣 Farcaster</a>
+      <a href="${escapeHtml(shareUrl)}" style="display:inline-block;background:${style.accent};color:#000;padding:6px 12px;border-radius:6px;font-size:12px;text-decoration:none;margin:0 4px">◆ Open in DegenFeed</a>
+    </div>
+
+    <!-- Footer -->
+    <hr style="border:0;border-top:1px solid ${style.border};margin:24px 0"/>
+    <p style="font-size:11px;color:${style.muted};text-align:center;margin:0">
+      You're receiving this because you subscribed at <a href="https://degenfeed.xyz/newsletter" style="color:${style.accent}">degenfeed.xyz/newsletter</a>.<br/>
+      <a href="https://degenfeed.xyz/api/news/digest/unsubscribe?email={{EMAIL}}" style="color:${style.muted}">Unsubscribe</a> ·
+      <a href="https://degenfeed.xyz/api/feed/rss.xml" style="color:${style.muted}">RSS Feed</a> ·
+      <a href="https://degenfeed.xyz" style="color:${style.muted}">Open App</a>
+    </p>
+  </div>
+</body></html>`;
+}
+
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+// ─── AI Voice: Editorial Content Generation ─────────────────────────────
+
+/**
+ * Generate the editorial voice content for a digest.
+ * Professional but not dry, Web3-native, bull/bear-neutral, always attribute sources.
+ */
+function generateEditorial(
+  sections: DigestSection[],
+  marketPrices: Record<string, MarketPrice>,
+  date: string,
+  format: DigestFormatType,
+): {
+  subject: string;
+  opening: string;
+  marketOverview?: string;
+  closing: string;
+} {
+  const topStories = sections.find((s) => s.type === 'top-stories');
+  const marketSection = sections.find((s) => s.type === 'market');
+  const trendingSection = sections.find((s) => s.type === 'trending');
+
+  // Auto-generate subject line based on format and content
+  let subject: string;
+  if (format === 'daily-brief') {
+    const topItem = topStories?.items?.[0];
+    if (topItem) {
+      subject = `${topItem.title.slice(0, 60)} — ${new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+    } else {
+      subject = `DegenFeed Daily Brief — ${new Date(date).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}`;
+    }
+  } else if (format === 'weekly-deep-dive') {
+    subject = `🔬 Deep Dive: ${
+      topStories?.items
+        ?.slice(0, 3)
+        .map((i) => i.title.split(' ').slice(0, 3).join(' '))
+        .join(', ') || 'This Week in Web3'
+    }`;
+  } else if (format === 'topic-digest') {
+    const niches = topStories?.items?.flatMap((i) => i.niches) ?? [];
+    const topNiche = [...new Set(niches)].slice(0, 2).join(' & ') || 'Crypto';
+    subject = `📬 ${topNiche} Weekly — ${new Date(date).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`;
+  } else {
+    subject = `📡 Protocol Report — ${new Date(date).toDateString()}`;
+  }
+
+  // Market overview
+  let marketOverview: string | undefined;
+  if (marketPrices && Object.keys(marketPrices).length > 0) {
+    const entries = Object.entries(marketPrices);
+    const best = entries.sort((a, b) => (b[1].usd_24h_change ?? 0) - (a[1].usd_24h_change ?? 0))[0];
+    const worst = entries.sort(
+      (a, b) => (a[1].usd_24h_change ?? 0) - (b[1].usd_24h_change ?? 0),
+    )[0];
+    if (best && worst) {
+      marketOverview = `${best[0].charAt(0).toUpperCase() + best[0].slice(1)} leads the market at ${best[1].usd_24h_change >= 0 ? '+' : ''}${best[1].usd_24h_change?.toFixed(1)}%, while ${worst[0]} trails at ${worst[1].usd_24h_change?.toFixed(1)}%.`;
+    } else {
+      marketOverview = 'Markets are mixed — no clear directional bias across the top assets.';
+    }
+  }
+
+  // Opening paragraph — Web3-native, neutral, professional
+  const opening =
+    format === 'daily-brief'
+      ? `GM. ${new Date(date).toLocaleDateString('en-US', { weekday: 'long' })} is here, and we've surfaced the ${topStories?.items?.length ?? 'top'} stories shaping crypto, web3, and AI. No fluff, no shills — just the signal from ${(trendingSection?.items?.length ?? 3) > 5 ? 'over 200 ' : ''}sources across RSS, protocols, and on-chain data.`
+      : format === 'weekly-deep-dive'
+        ? `Another week in web3 — and it was anything but quiet. We've analyzed ${topStories?.items?.length ?? 'dozens of'} stories to bring you the developments that actually matter. From protocol upgrades to market shifts, here's what you need to know.`
+        : `Curated intelligence for the ${format === 'topic-digest' ? 'topics you care about' : 'protocols you follow'}. This edition covers the stories, data, and signals that defined the period.`;
+
+  // Closing
+  const closing = `That's your ${format === 'daily-brief' ? 'daily' : format === 'weekly-deep-dive' ? 'weekly' : 'curated'} briefing. Stay sharp, stay degen. — The DegenFeed Team`;
+
+  return { subject, opening, marketOverview, closing };
 }
 
 // ─── Core digest assembly ──────────────────────────────────────────────
@@ -475,6 +803,111 @@ export async function setCachedDigest(
 
 // ─── Route handlers ─────────────────────────────────────────────────────
 
+// ─── Build a full digest response with editorial voice ──────────────────
+
+async function buildDigestResponse(
+  env: Env,
+  wallet: string | null,
+  niches: string[],
+  protocols: Protocol[],
+  preferredNiches: Set<string>,
+  followed: Set<string>,
+  engagedCreators: Set<string>,
+  format: DigestFormatType = 'daily-brief',
+): Promise<DigestResponse> {
+  const today = new Date().toISOString().slice(0, 10);
+  const posts = await gatherDigestPosts(env, protocols, Array.from(preferredNiches), 150);
+  const marketPrices = await fetchMarketPrices(env);
+
+  const sections = buildDigestSections(
+    posts,
+    niches,
+    followed,
+    engagedCreators,
+    preferredNiches,
+    marketPrices,
+  );
+
+  // Generate editorial voice content
+  const editorial = generateEditorial(sections, marketPrices, today, format);
+
+  // Build market summary
+  const marketSummary: DigestResponse['marketSummary'] = {
+    coins: Object.entries(marketPrices).map(([coin, price]) => ({
+      symbol: { bitcoin: 'BTC', ethereum: 'ETH', solana: 'SOL' }[coin] ?? coin.toUpperCase(),
+      price: price.usd,
+      change24h: price.usd_24h_change ?? 0,
+      sentiment:
+        (price.usd_24h_change ?? 0) >= 1
+          ? 'bullish'
+          : (price.usd_24h_change ?? 0) <= -1
+            ? 'bearish'
+            : 'neutral',
+    })),
+  };
+
+  // Find featured story (top-scored post)
+  const allScored = posts.map((p) => {
+    const ageHours = (Date.now() - p.createdAt) / 3600000;
+    return {
+      post: p,
+      score:
+        Math.max(0, 1 - ageHours / 48) * 3 +
+        (p.metrics.likes * 1 + p.metrics.reposts * 2 + p.metrics.replies * 3),
+    };
+  });
+  allScored.sort((a, b) => b.score - a.score);
+  const topScored = allScored[0];
+  const featured = topScored ? toDigestItem(topScored) : null;
+
+  // Calculate read time
+  const totalWords = sections.reduce(
+    (sum, s) => sum + s.items.reduce((s2, i) => s2 + i.excerpt.split(/\s+/).length, 0),
+    0,
+  );
+  const readTimeMinutes = Math.max(1, Math.ceil(totalWords / 200));
+
+  // Trending topics
+  const trendingTopics =
+    sections
+      .find((s) => s.type === 'trending')
+      ?.items.map((i) => ({
+        topic: i.title,
+        count: Number(i.excerpt.match(/\d+/)?.[0] ?? 0),
+      })) ?? [];
+
+  // Share URL
+  const shareParams = new URLSearchParams();
+  if (wallet) shareParams.set('wallet', wallet);
+  for (const niche of niches) shareParams.append('niches', niche);
+  const shareUrl = `https://degenfeed.xyz/news/digest/${encodeURIComponent(today)}?${shareParams.toString()}`;
+
+  const digest: DigestResponse = {
+    date: today,
+    wallet,
+    sections,
+    subject: editorial.subject,
+    featured,
+    format,
+    shareUrl,
+    editorial: {
+      opening: editorial.opening,
+      marketOverview: editorial.marketOverview,
+      closing: editorial.closing,
+    },
+    marketSummary,
+    meta: {
+      totalPosts: posts.length,
+      totalSections: sections.length,
+      fetchedAt: Date.now(),
+      readTimeMinutes,
+      trendingTopics,
+    },
+  };
+
+  return digest;
+}
+
 /**
  * GET /api/digest/today
  * Returns a personalized digest for the authenticated user (or anonymous).
@@ -518,6 +951,16 @@ export async function handleDigestToday(request: Request, env: Env): Promise<Res
     }
   }
 
+  // Parse format
+  const formatParam = (url.searchParams.get('format') || 'daily-brief') as DigestFormatType;
+  const validFormats: DigestFormatType[] = [
+    'daily-brief',
+    'weekly-deep-dive',
+    'topic-digest',
+    'protocol-digest',
+  ];
+  const format = validFormats.includes(formatParam) ? formatParam : 'daily-brief';
+
   // Build the digest
   const nichesParam = url.searchParams.get('niches') ?? '';
   const protocolsParam = url.searchParams.get('protocols') ?? '';
@@ -559,34 +1002,94 @@ export async function handleDigestToday(request: Request, env: Env): Promise<Res
     }
   }
 
-  // Fetch posts
-  const posts = await gatherDigestPosts(env, protocols, Array.from(preferredNiches), 150);
-  const marketPrices = await fetchMarketPrices(env);
-
-  // Build sections
-  const sections = buildDigestSections(
-    posts,
+  // Build enriched digest response with editorial voice
+  const digest = await buildDigestResponse(
+    env,
+    resolvedWallet,
     niches,
+    protocols,
+    preferredNiches,
     followed,
     engagedCreators,
-    preferredNiches,
-    marketPrices,
+    format,
   );
-
-  const digest: DigestResponse = {
-    date: today,
-    wallet: resolvedWallet,
-    sections,
-    meta: {
-      totalPosts: posts.length,
-      totalSections: sections.length,
-      fetchedAt: Date.now(),
-    },
-  };
 
   // Cache in KV (fire-and-forget)
   if (resolvedWallet) {
     void setCachedDigest(env, today, resolvedWallet, digest);
+  }
+
+  // Support HTML output for newsletter rendering
+  const htmlOutput = url.searchParams.get('html') === 'true';
+  if (htmlOutput) {
+    const html = buildRichDigestHtml(digest);
+    return new Response(html, {
+      status: 200,
+      headers: {
+        'content-type': 'text/html; charset=utf-8',
+        'cache-control': 'no-store, must-revalidate',
+      },
+    });
+  }
+
+  return noCacheJsonResponse(digest);
+}
+
+/**
+ * GET /api/digest/format?type=weekly-deep-dive&niches=defi,solana
+ * Returns a digest in the specified format: daily-brief, weekly-deep-dive,
+ * topic-digest, or protocol-digest.
+ */
+export async function handleDigestFormat(request: Request, env: Env): Promise<Response> {
+  const url = new URL(request.url);
+  const formatParam = (url.searchParams.get('type') || 'daily-brief') as DigestFormatType;
+  const validFormats: DigestFormatType[] = [
+    'daily-brief',
+    'weekly-deep-dive',
+    'topic-digest',
+    'protocol-digest',
+  ];
+  const format = validFormats.includes(formatParam) ? formatParam : 'daily-brief';
+  const wallet = url.searchParams.get('wallet') || null;
+  const nichesParam = url.searchParams.get('niches') ?? '';
+  const niches = nichesParam
+    ? nichesParam
+        .split(',')
+        .map((n) => n.trim().toLowerCase())
+        .filter(Boolean)
+    : [];
+  const protocolsParam = url.searchParams.get('protocols') ?? '';
+  const protocols: Protocol[] = protocolsParam
+    ? protocolsParam
+        .split(',')
+        .map((p) => p.trim())
+        .filter((p): p is Protocol => DEFAULT_PROTOCOLS.includes(p as Protocol))
+    : DEFAULT_PROTOCOLS;
+
+  const preferredNiches = new Set(niches);
+
+  const digest = await buildDigestResponse(
+    env,
+    wallet,
+    niches,
+    protocols,
+    preferredNiches,
+    new Set(),
+    new Set(),
+    format,
+  );
+
+  // Support HTML output for newsletter rendering
+  const htmlOutput = url.searchParams.get('html') === 'true';
+  if (htmlOutput) {
+    const html = buildRichDigestHtml(digest);
+    return new Response(html, {
+      status: 200,
+      headers: {
+        'content-type': 'text/html; charset=utf-8',
+        'cache-control': 'no-store, must-revalidate',
+      },
+    });
   }
 
   return noCacheJsonResponse(digest);

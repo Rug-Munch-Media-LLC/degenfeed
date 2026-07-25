@@ -164,6 +164,46 @@ export function reputationKey(userId: string): string {
   return `reputation:${userId}`;
 }
 
+/** DAO badge award record. NS: CACHE. Persistent. */
+export function badgeKey(userId: string, badgeId: string): string {
+  return `badge:${userId}:${badgeId}`;
+}
+
+/** User badge list. NS: CACHE. Persistent. */
+export function userBadgesKey(userId: string): string {
+  return `badges:${userId}`;
+}
+
+/** DAO activity feed. NS: CACHE. TTL: 1 hour. */
+export function daoActivityFeedKey(daoId: string): string {
+  return `dao:activity:${daoId}`;
+}
+
+/** DAO activity stream (WebSocket broadcast buffer). NS: CACHE. TTL: 5 min. */
+export function daoRealtimeKey(daoId: string): string {
+  return `dao:realtime:${daoId}`;
+}
+
+/** Quadratic voting power snapshot. NS: CACHE. TTL: 10 min. */
+export function quadraticVotingKey(userId: string, daoId: string): string {
+  return `quadratic:${daoId}:${userId}`;
+}
+
+/** Quadratic vote tally for a proposal. NS: GOVERNANCE. Persistent. */
+export function quadraticTallyKey(proposalId: string): string {
+  return `quadratic:tally:${proposalId}`;
+}
+
+/** DAO participation challenge state. NS: CACHE. TTL: 7 days. */
+export function daoChallengeKey(userId: string, daoId: string, date: string): string {
+  return `dao:challenge:${daoId}:${userId}:${date}`;
+}
+
+/** DAO participation leaderboard. NS: REPUTATION. TTL: 10 min. */
+export function daoLeaderboardKey(daoId: string, period: string): string {
+  return `dao:leaderboard:${daoId}:${period}`;
+}
+
 /** Reputation leaderboard. NS: REPUTATION. TTL: 10 min. */
 export function reputationLeaderboardKey(): string {
   return 'reputation:leaderboard';
@@ -313,4 +353,195 @@ export function totpSecretKey(address: string): string {
 /** Recovery code SHA-256 hash. NS: CACHE. TTL: indefinite (one-time use). */
 export function recoveryCodeHashKey(address: string, hash: string): string {
   return `totp:recovery:${address.toLowerCase()}:${hash}`;
+}
+
+// ─── Multi-Sig Treasury ──────────────────────────────────────────────
+
+/** Multi-sig transaction record. NS: TREASURY. Persistent. */
+export function multisigTxKey(daoId: string, txId: string): string {
+  return `multisig:tx:${daoId}:${txId}`;
+}
+
+/** Multi-sig signer vote. NS: TREASURY. Persistent. */
+export function multisigSignatureKey(daoId: string, txId: string, signer: string): string {
+  return `multisig:tx:${daoId}:${txId}:signatures:${signer.toLowerCase()}`;
+}
+
+/** Multi-sig index list for a DAO. NS: TREASURY. Persistent. */
+export function multisigIndexKey(daoId: string): string {
+  return `multisig:tx:${daoId}:list`;
+}
+
+/** Multi-sig configuration record. NS: TREASURY. Persistent. */
+export function multisigConfigKey(daoId: string): string {
+  return `multisig:config:${daoId}`;
+}
+
+// ─── Streaming Payments ──────────────────────────────────────────────
+
+/** Streaming payment record. NS: TREASURY. Persistent. */
+export function streamKey(daoId: string, streamId: string): string {
+  return `stream:${daoId}:${streamId}`;
+}
+
+/** Stream index list for a DAO. NS: TREASURY. Persistent. */
+export function streamIndexKey(daoId: string): string {
+  return `stream:${daoId}:list`;
+}
+
+/** Stream payment event. NS: TREASURY. Persistent. */
+export function streamEventKey(daoId: string, streamId: string, eventId: string): string {
+  return `stream:${daoId}:${streamId}:event:${eventId}`;
+}
+
+/** Stream analytics aggregate. NS: TREASURY. TTL: 1 hour. */
+export function streamAnalyticsKey(daoId: string): string {
+  return `stream:${daoId}:analytics`;
+}
+
+// ─── Grant Programs ──────────────────────────────────────────────────
+
+/** Grant program record. NS: TREASURY. Persistent. */
+export function grantProgramKey(daoId: string, grantId: string): string {
+  return `grant:program:${daoId}:${grantId}`;
+}
+
+/** Grant program index for a DAO. NS: TREASURY. Persistent. */
+export function grantProgramIndexKey(daoId: string): string {
+  return `grant:program:${daoId}:list`;
+}
+
+/** Grant application record. NS: TREASURY. Persistent. */
+export function grantApplicationKey(daoId: string, appId: string): string {
+  return `grant:app:${daoId}:${appId}`;
+}
+
+/** Grant application index for a DAO. NS: TREASURY. Persistent. */
+export function grantApplicationIndexKey(daoId: string): string {
+  return `grant:app:${daoId}:list`;
+}
+
+/** Grant vote record. NS: TREASURY. Persistent. */
+export function grantVoteKey(daoId: string, appId: string, voter: string): string {
+  return `grant:vote:${daoId}:${appId}:${voter.toLowerCase()}`;
+}
+
+/** Grant milestone completion record. NS: TREASURY. Persistent. */
+export function grantMilestoneKey(daoId: string, appId: string, milestoneId: string): string {
+  return `grant:milestone:${daoId}:${appId}:${milestoneId}`;
+}
+
+/** Grant analytics aggregate. NS: TREASURY. TTL: 1 hour. */
+export function grantAnalyticsKey(daoId: string): string {
+  return `grant:${daoId}:analytics`;
+}
+
+// ─── Investment Management ───────────────────────────────────────────
+
+/** Investment position record. NS: TREASURY. Persistent. */
+export function investmentKey(daoId: string, investmentId: string): string {
+  return `investment:${daoId}:${investmentId}`;
+}
+
+/** Investment index for a DAO. NS: TREASURY. Persistent. */
+export function investmentIndexKey(daoId: string): string {
+  return `investment:${daoId}:list`;
+}
+
+/** Investment proposal record. NS: TREASURY. Persistent. */
+export function investmentProposalKey(daoId: string, proposalId: string): string {
+  return `investment:proposal:${daoId}:${proposalId}`;
+}
+
+/** Investment proposal index for a DAO. NS: TREASURY. Persistent. */
+export function investmentProposalIndexKey(daoId: string): string {
+  return `investment:proposal:${daoId}:list`;
+}
+
+/** Portfolio snapshot cache. NS: TREASURY. TTL: 5 min (300s). */
+export function portfolioKey(daoId: string): string {
+  return `portfolio:${daoId}`;
+}
+
+/** Yield opportunity cache. NS: TREASURY. TTL: 10 min (600s). */
+export function yieldOpportunitiesKey(): string {
+  return 'yield:opportunities';
+}
+
+// ─── External DAO Tooling Integrations (Snapshot) ──────────────────────
+
+/** Snapshot space link for a DAO. NS: GOVERNANCE. Persistent. */
+export function snapshotLinkedSpaceKey(daoId: string): string {
+  return `snapshot:linked:${daoId}`;
+}
+
+/** Snapshot sync marker for a proposal. NS: GOVERNANCE. TTL: 30 days. */
+export function snapshotSyncMarkerKey(daoId: string, proposalId: string): string {
+  return `snapshot:sync:${daoId}:${proposalId}`;
+}
+
+/** Snapshot delegation record. NS: GOVERNANCE. Persistent. */
+export function snapshotDelegationKey(daoId: string, voter: string): string {
+  return `snapshot:delegation:${daoId}:${voter.toLowerCase()}`;
+}
+
+/** Snapshot strategy cache. NS: GOVERNANCE. TTL: 24h. */
+export function snapshotStrategyCacheKey(daoId: string): string {
+  return `snapshot:strategy:${daoId}`;
+}
+
+/** Snapshot imported votes for analytics. NS: GOVERNANCE. TTL: 30 days. */
+export function snapshotImportedVotesKey(daoId: string, proposalId: string): string {
+  return `snapshot:imported:${daoId}:${proposalId}`;
+}
+
+// ─── External DAO Tooling Integrations (Tally) ─────────────────────────
+
+/** Tally link state for a DAO. NS: GOVERNANCE. Persistent. */
+export function tallyLinkKey(daoId: string): string {
+  return `tally:link:${daoId}`;
+}
+
+/** Tally compliance verification cache. NS: GOVERNANCE. TTL: 24h. */
+export function tallyVerificationKey(daoId: string): string {
+  return `tally:verified:${daoId}`;
+}
+
+// ─── External DAO Tooling Integrations (Defender) ─────────────────────
+
+/** OpenZeppelin Defender integration state. NS: GOVERNANCE. Persistent. */
+export function defenderStateKey(daoId: string): string {
+  return `defender:state:${daoId}`;
+}
+
+/** Defender autotask code reference. NS: GOVERNANCE. TTL: 30 days. */
+export function defenderAutotaskCodeKey(daoId: string): string {
+  return `defender:autotask:${daoId}`;
+}
+
+// ─── External DAO Tooling Integrations (DAO Registry) ─────────────────
+
+/** DAO registry index list. NS: GOVERNANCE. Persistent. */
+export function daoRegistryIndexKey(): string {
+  return 'dao:registry:list';
+}
+
+/** DAO registry entry. NS: GOVERNANCE. Persistent. */
+export function daoRegistryEntryKey(daoId: string): string {
+  return `dao:registry:${daoId}`;
+}
+
+/** Reverse lookup: Snapshot space → DegenFeed DAO ID. NS: GOVERNANCE. Persistent. */
+export function daoSnapshotLookupKey(spaceId: string): string {
+  return `dao:lookup:snapshot:${spaceId}`;
+}
+
+/** Reverse lookup: Tally governor → DegenFeed DAO ID. NS: GOVERNANCE. Persistent. */
+export function daoTallyLookupKey(governorAddress: string): string {
+  return `dao:lookup:tally:${governorAddress.toLowerCase()}`;
+}
+
+/** Reverse lookup: Realms realm → DegenFeed DAO ID. NS: GOVERNANCE. Persistent. */
+export function daoRealmsLookupKey(realmId: string): string {
+  return `dao:lookup:realms:${realmId}`;
 }

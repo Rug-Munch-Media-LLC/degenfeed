@@ -68,6 +68,17 @@ export {
   UNIFIED_MODE_PRESETS,
 } from './unified-scorer';
 
+// ─── Video scoring ─────────────────────────────────────────────────────
+export type {
+  ContentType,
+  VideoForScoring,
+  VideoScoreFactors,
+  VideoScoreOptions,
+  VideoScoreResult,
+  VideoSource,
+} from './video-scorer';
+export { VideoScoreEngine, videoScorer } from './video-scorer';
+
 export const WEIGHTS = {
   w1: 1.0,
   w2: 1.5,

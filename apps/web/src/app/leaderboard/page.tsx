@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { useCallback, useEffect, useState } from 'react';
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
@@ -68,9 +68,18 @@ function formatCount(count: number): string {
 
 function getPlatformIcon(platform?: string): string {
   const icons: Record<string, string> = {
-    degenfeed: '🔄', lemmy: 'L', peertube: '▶', bluesky: '🦋',
-    mastodon: '🐘', farcaster: '⬡', lens: '🔭', solana: '◎',
-    ethereum: '⟠', base: '⬡', polygon: '⬣', arbitrum: '⬡',
+    degenfeed: '🔄',
+    lemmy: 'L',
+    peertube: '▶',
+    bluesky: '🦋',
+    mastodon: '🐘',
+    farcaster: '⬡',
+    lens: '🔭',
+    solana: '◎',
+    ethereum: '⟠',
+    base: '⬡',
+    polygon: '⬣',
+    arbitrum: '⬡',
   };
   return icons[platform?.toLowerCase() ?? ''] || '•';
 }
@@ -86,7 +95,10 @@ function getRankColor(rank: number): string {
 
 function AnimatedRank({ rank }: { rank: number }) {
   return (
-    <span className="font-mono text-base font-bold tabular-nums" style={{ color: getRankColor(rank) }}>
+    <span
+      className="font-mono text-base font-bold tabular-nums"
+      style={{ color: getRankColor(rank) }}
+    >
       #{rank}
     </span>
   );
@@ -135,7 +147,10 @@ function PeriodSelector({
   onPeriodChange: (id: string) => void;
 }) {
   return (
-    <div className="flex gap-1 p-1 rounded-lg border" style={{ borderColor: 'var(--color-glass-border)' }}>
+    <div
+      className="flex gap-1 p-1 rounded-lg border"
+      style={{ borderColor: 'var(--color-glass-border)' }}
+    >
       {periods.map((period) => (
         <button
           key={period.id}
@@ -173,7 +188,13 @@ function LeaderboardTable({
 
         return (
           <div
-            key={type === 'protocols' ? (entry as ProtocolEntry).protocol : type === 'coins' ? (entry as CoinEntry).coin : rank}
+            key={
+              type === 'protocols'
+                ? (entry as ProtocolEntry).protocol
+                : type === 'coins'
+                  ? (entry as CoinEntry).coin
+                  : rank
+            }
             className="flex items-center gap-4 px-4 py-3 transition-colors hover:bg-[var(--color-overlay)]"
           >
             {/* Rank */}
@@ -195,8 +216,13 @@ function LeaderboardTable({
               {isCreator && (
                 <>
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold truncate" style={{ color: 'var(--color-fg)' }}>
-                      {(entry as LeaderboardEntry).name || (entry as LeaderboardEntry).handle || 'Anonymous'}
+                    <span
+                      className="text-sm font-semibold truncate"
+                      style={{ color: 'var(--color-fg)' }}
+                    >
+                      {(entry as LeaderboardEntry).name ||
+                        (entry as LeaderboardEntry).handle ||
+                        'Anonymous'}
                     </span>
                     {(entry as LeaderboardEntry).platform && (
                       <span className="text-xs" title={(entry as LeaderboardEntry).platform}>
@@ -204,18 +230,29 @@ function LeaderboardTable({
                       </span>
                     )}
                   </div>
-                  <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--color-muted)' }}>
+                  <div
+                    className="flex items-center gap-2 text-xs"
+                    style={{ color: 'var(--color-muted)' }}
+                  >
                     <span>{(entry as LeaderboardEntry).handle || 'No handle'}</span>
                     <span>·</span>
                     <span>{formatCount((entry as LeaderboardEntry).count)} tips</span>
-                    {(entry as LeaderboardEntry).change !== undefined && (entry as LeaderboardEntry).change !== 0 && (
-                      <>
-                        <span>·</span>
-                        <span className={(entry as LeaderboardEntry).change! > 0 ? 'text-green-400' : 'text-red-400'}>
-                          {(entry as LeaderboardEntry).change! > 0 ? '↑' : '↓'} {Math.abs((entry as LeaderboardEntry).change!)}
-                        </span>
-                      </>
-                    )}
+                    {(entry as LeaderboardEntry).change !== undefined &&
+                      (entry as LeaderboardEntry).change !== 0 && (
+                        <>
+                          <span>·</span>
+                          <span
+                            className={
+                              (entry as LeaderboardEntry).change! > 0
+                                ? 'text-green-400'
+                                : 'text-red-400'
+                            }
+                          >
+                            {(entry as LeaderboardEntry).change! > 0 ? '↑' : '↓'}{' '}
+                            {Math.abs((entry as LeaderboardEntry).change!)}
+                          </span>
+                        </>
+                      )}
                   </div>
                 </>
               )}
@@ -226,18 +263,23 @@ function LeaderboardTable({
                     {(entry as CoinEntry).coin}
                   </div>
                   <div className="text-xs" style={{ color: 'var(--color-muted)' }}>
-                    {(entry as CoinEntry).name} · {formatCount((entry as CoinEntry).tipCount)} tips · {(entry as CoinEntry).creators} creators
+                    {(entry as CoinEntry).name} · {formatCount((entry as CoinEntry).tipCount)} tips
+                    · {(entry as CoinEntry).creators} creators
                   </div>
                 </>
               )}
 
               {isProtocol && (
                 <>
-                  <div className="text-sm font-semibold capitalize" style={{ color: 'var(--color-fg)' }}>
+                  <div
+                    className="text-sm font-semibold capitalize"
+                    style={{ color: 'var(--color-fg)' }}
+                  >
                     {(entry as ProtocolEntry).protocol}
                   </div>
                   <div className="text-xs" style={{ color: 'var(--color-muted)' }}>
-                    {formatCount((entry as ProtocolEntry).tipCount)} tips · {(entry as ProtocolEntry).percentage}% share
+                    {formatCount((entry as ProtocolEntry).tipCount)} tips ·{' '}
+                    {(entry as ProtocolEntry).percentage}% share
                   </div>
                 </>
               )}
@@ -272,7 +314,9 @@ function EmptyState({ tab }: { tab: LeaderboardTab }) {
   return (
     <div className="text-center py-12">
       <div className="text-3xl mb-3">📊</div>
-      <p className="text-sm" style={{ color: 'var(--color-muted)' }}>{messages[tab]}</p>
+      <p className="text-sm" style={{ color: 'var(--color-muted)' }}>
+        {messages[tab]}
+      </p>
     </div>
   );
 }
@@ -311,23 +355,135 @@ export default function LeaderboardPage() {
       // Fallback data
       if (activeTab === 'creators') {
         setEntries([
-          { rank: 1, name: 'Vitalik Buterin', handle: 'vitalik.eth', totalUsd: 42500, count: 340, platform: 'degenfeed', change: 2 },
-          { rank: 2, name: 'Crypto Whaler', handle: 'whaler@degenfeed.xyz', totalUsd: 31200, count: 280, platform: 'degenfeed', change: 5 },
-          { rank: 3, name: 'DeFi Degen', handle: 'defidegen@degenfeed.xyz', totalUsd: 28750, count: 195, platform: 'degenfeed', change: -1 },
-          { rank: 4, name: 'PeerTube Star', handle: 'starlight@peertube.tv', totalUsd: 15900, count: 167, platform: 'peertube', change: 8 },
-          { rank: 5, name: 'Meme Lord', handle: 'memelord@degenfeed.xyz', totalUsd: 12400, count: 230, platform: 'degenfeed', change: 12 },
-          { rank: 6, name: 'Tech Analyst', handle: 'techanalyst@degenfeed.xyz', totalUsd: 9800, count: 89, platform: 'degenfeed', change: -3 },
-          { rank: 7, name: 'Video Degen', handle: 'videogen@peertube.tv', totalUsd: 7600, count: 45, platform: 'peertube', change: 6 },
-          { rank: 8, name: 'Degen Trader', handle: 'trader@degenfeed.xyz', totalUsd: 3200, count: 156, platform: 'degenfeed', change: -5 },
+          {
+            rank: 1,
+            name: 'Vitalik Buterin',
+            handle: 'vitalik.eth',
+            totalUsd: 42500,
+            count: 340,
+            platform: 'degenfeed',
+            change: 2,
+          },
+          {
+            rank: 2,
+            name: 'Crypto Whaler',
+            handle: 'whaler@degenfeed.xyz',
+            totalUsd: 31200,
+            count: 280,
+            platform: 'degenfeed',
+            change: 5,
+          },
+          {
+            rank: 3,
+            name: 'DeFi Degen',
+            handle: 'defidegen@degenfeed.xyz',
+            totalUsd: 28750,
+            count: 195,
+            platform: 'degenfeed',
+            change: -1,
+          },
+          {
+            rank: 4,
+            name: 'PeerTube Star',
+            handle: 'starlight@peertube.tv',
+            totalUsd: 15900,
+            count: 167,
+            platform: 'peertube',
+            change: 8,
+          },
+          {
+            rank: 5,
+            name: 'Meme Lord',
+            handle: 'memelord@degenfeed.xyz',
+            totalUsd: 12400,
+            count: 230,
+            platform: 'degenfeed',
+            change: 12,
+          },
+          {
+            rank: 6,
+            name: 'Tech Analyst',
+            handle: 'techanalyst@degenfeed.xyz',
+            totalUsd: 9800,
+            count: 89,
+            platform: 'degenfeed',
+            change: -3,
+          },
+          {
+            rank: 7,
+            name: 'Video Degen',
+            handle: 'videogen@peertube.tv',
+            totalUsd: 7600,
+            count: 45,
+            platform: 'peertube',
+            change: 6,
+          },
+          {
+            rank: 8,
+            name: 'Degen Trader',
+            handle: 'trader@degenfeed.xyz',
+            totalUsd: 3200,
+            count: 156,
+            platform: 'degenfeed',
+            change: -5,
+          },
         ] as LeaderboardEntry[]);
       } else if (activeTab === 'tippers') {
         setEntries([
-          { rank: 1, name: 'Generous Whale', handle: 'whale@degenfeed.xyz', totalUsd: 89000, count: 450, platform: 'degenfeed', change: 1 },
-          { rank: 2, name: 'Degen Angel', handle: 'angel@degenfeed.xyz', totalUsd: 65400, count: 320, platform: 'farcaster', change: 4 },
-          { rank: 3, name: 'Tip King', handle: 'tipking@lemmy.world', totalUsd: 52100, count: 280, platform: 'lemmy', change: -2 },
-          { rank: 4, name: 'Generous Soul', handle: 'soul@degenfeed.xyz', totalUsd: 41000, count: 195, platform: 'degenfeed', change: 7 },
-          { rank: 5, name: 'Micro Tipper', handle: 'micro@peertube.tv', totalUsd: 34200, count: 890, platform: 'peertube', change: 11 },
-          { rank: 6, name: 'Crypto Santa', handle: 'santa@degenfeed.xyz', totalUsd: 11200, count: 67, platform: 'degenfeed', change: 2 },
+          {
+            rank: 1,
+            name: 'Generous Whale',
+            handle: 'whale@degenfeed.xyz',
+            totalUsd: 89000,
+            count: 450,
+            platform: 'degenfeed',
+            change: 1,
+          },
+          {
+            rank: 2,
+            name: 'Degen Angel',
+            handle: 'angel@degenfeed.xyz',
+            totalUsd: 65400,
+            count: 320,
+            platform: 'farcaster',
+            change: 4,
+          },
+          {
+            rank: 3,
+            name: 'Tip King',
+            handle: 'tipking@lemmy.world',
+            totalUsd: 52100,
+            count: 280,
+            platform: 'lemmy',
+            change: -2,
+          },
+          {
+            rank: 4,
+            name: 'Generous Soul',
+            handle: 'soul@degenfeed.xyz',
+            totalUsd: 41000,
+            count: 195,
+            platform: 'degenfeed',
+            change: 7,
+          },
+          {
+            rank: 5,
+            name: 'Micro Tipper',
+            handle: 'micro@peertube.tv',
+            totalUsd: 34200,
+            count: 890,
+            platform: 'peertube',
+            change: 11,
+          },
+          {
+            rank: 6,
+            name: 'Crypto Santa',
+            handle: 'santa@degenfeed.xyz',
+            totalUsd: 11200,
+            count: 67,
+            platform: 'degenfeed',
+            change: 2,
+          },
         ] as LeaderboardEntry[]);
       } else if (activeTab === 'protocols') {
         setEntries([
@@ -370,21 +526,34 @@ export default function LeaderboardPage() {
       </div>
 
       {/* Tabs */}
-      <TabNav tabs={TABS} activeTab={activeTab} onTabChange={(id) => setActiveTab(id as LeaderboardTab)} />
+      <TabNav
+        tabs={TABS}
+        activeTab={activeTab}
+        onTabChange={(id) => setActiveTab(id as LeaderboardTab)}
+      />
 
       {/* Period Selector */}
       <div className="flex justify-end my-3">
-        <PeriodSelector periods={PERIODS} activePeriod={period} onPeriodChange={(id) => setPeriod(id as TimePeriod)} />
+        <PeriodSelector
+          periods={PERIODS}
+          activePeriod={period}
+          onPeriodChange={(id) => setPeriod(id as TimePeriod)}
+        />
       </div>
 
       {/* Content */}
       {loading ? (
         <div className="text-center py-12">
           <div className="animate-spin w-8 h-8 border-2 border-degen-500 border-t-transparent rounded-full mx-auto mb-2" />
-          <p className="text-sm" style={{ color: 'var(--color-muted)' }}>Loading leaderboard...</p>
+          <p className="text-sm" style={{ color: 'var(--color-muted)' }}>
+            Loading leaderboard...
+          </p>
         </div>
       ) : entries.length > 0 ? (
-        <div className="rounded-xl border overflow-hidden" style={{ borderColor: 'var(--color-glass-border)' }}>
+        <div
+          className="rounded-xl border overflow-hidden"
+          style={{ borderColor: 'var(--color-glass-border)' }}
+        >
           <LeaderboardTable entries={entries} type={activeTab} />
         </div>
       ) : (
@@ -398,7 +567,14 @@ export default function LeaderboardPage() {
           className="inline-flex items-center gap-1.5 text-xs transition-colors hover:text-degen-400"
           style={{ color: 'var(--color-muted)' }}
         >
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
             <polyline points="23 4 23 10 17 10" />
             <path d="M20.49 15a9 9 0 11-2.12-9.36L23 10" />
           </svg>

@@ -867,12 +867,48 @@ export interface Badge {
 }
 
 export const TIP_BADGES: Badge[] = [
-  { id: 'first_tip', name: 'First Tip', description: 'Sent your first tip', icon: '🎯', category: 'tipping' },
-  { id: 'generous', name: 'Generous', description: 'Tipped 10+ different creators', icon: '💝', category: 'tipping' },
-  { id: 'whale_tipper', name: 'Whale Tipper', description: 'Tipped 1M+ sats total value', icon: '🐋', category: 'tipping' },
-  { id: 'loyal_fan', name: 'Loyal Fan', description: 'Tipped the same creator 50+ times', icon: '⭐', category: 'loyalty' },
-  { id: 'cross_chain_tipper', name: 'Cross-Chain Tipper', description: 'Tipped on 3+ different protocols', icon: '🌉', category: 'cross_chain' },
-  { id: 'early_believer', name: 'Early Believer', description: 'Tipped a creator before they hit 100 followers', icon: '🌅', category: 'early_adopter' },
+  {
+    id: 'first_tip',
+    name: 'First Tip',
+    description: 'Sent your first tip',
+    icon: '🎯',
+    category: 'tipping',
+  },
+  {
+    id: 'generous',
+    name: 'Generous',
+    description: 'Tipped 10+ different creators',
+    icon: '💝',
+    category: 'tipping',
+  },
+  {
+    id: 'whale_tipper',
+    name: 'Whale Tipper',
+    description: 'Tipped 1M+ sats total value',
+    icon: '🐋',
+    category: 'tipping',
+  },
+  {
+    id: 'loyal_fan',
+    name: 'Loyal Fan',
+    description: 'Tipped the same creator 50+ times',
+    icon: '⭐',
+    category: 'loyalty',
+  },
+  {
+    id: 'cross_chain_tipper',
+    name: 'Cross-Chain Tipper',
+    description: 'Tipped on 3+ different protocols',
+    icon: '🌉',
+    category: 'cross_chain',
+  },
+  {
+    id: 'early_believer',
+    name: 'Early Believer',
+    description: 'Tipped a creator before they hit 100 followers',
+    icon: '🌅',
+    category: 'early_adopter',
+  },
 ];
 
 /**
@@ -995,7 +1031,9 @@ async function awardBadge(env: Env, userId: string, badgeId: string): Promise<vo
         expirationTtl: 60 * 60 * 24 * 365,
       });
     }
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 }
 
 async function hasBadgeAward(env: Env, userId: string, badgeId: string): Promise<boolean> {
@@ -1029,7 +1067,9 @@ export async function handleTipBadges(request: Request, env: Env): Promise<Respo
         if (badgeRaw) {
           badges.push(JSON.parse(badgeRaw));
         }
-      } catch { /* continue */ }
+      } catch {
+        /* continue */
+      }
     }
 
     return jsonResponse({
@@ -1104,10 +1144,7 @@ export async function handleTipLeaderboardProtocols(
 /**
  * GET /api/tips/leaderboard/coins — Tips by creator coin
  */
-export async function handleTipLeaderboardCoins(
-  _request: Request,
-  env: Env,
-): Promise<Response> {
+export async function handleTipLeaderboardCoins(_request: Request, env: Env): Promise<Response> {
   const url = new URL(_request.url);
   const limit = Math.min(Number(url.searchParams.get('limit')) || 25, 100);
   const period = sanitizePeriodFromUrl(url.searchParams.get('period'));

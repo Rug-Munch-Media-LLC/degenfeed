@@ -1082,6 +1082,16 @@ function htmlResponse(body: string, cacheSeconds = 300): Response {
     headers: {
       'content-type': 'text/html; charset=utf-8',
       'cache-control': `public, max-age=${cacheSeconds}`,
+      'content-security-policy':
+        "default-src 'self'; " +
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+        'font-src https://fonts.gstatic.com; ' +
+        "script-src 'self' https://plausible.rugmunch.io; " +
+        "img-src 'self' data:; " +
+        "connect-src 'self'; " +
+        "frame-ancestors 'none'; " +
+        "base-uri 'self'; " +
+        "form-action 'none'",
     },
   });
 }
@@ -1092,6 +1102,16 @@ function cssResponse(body: string): Response {
     headers: {
       'content-type': 'text/css; charset=utf-8',
       'cache-control': 'public, max-age=3600',
+      'content-security-policy':
+        "default-src 'self'; " +
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+        'font-src https://fonts.gstatic.com; ' +
+        "script-src 'self' https://plausible.rugmunch.io; " +
+        "img-src 'self' data:; " +
+        "connect-src 'self'; " +
+        "frame-ancestors 'none'; " +
+        "base-uri 'self'; " +
+        "form-action 'none'",
     },
   });
 }
@@ -1102,6 +1122,16 @@ function jsResponse(body: string): Response {
     headers: {
       'content-type': 'application/javascript; charset=utf-8',
       'cache-control': 'public, max-age=3600',
+      'content-security-policy':
+        "default-src 'self'; " +
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+        'font-src https://fonts.gstatic.com; ' +
+        "script-src 'self' https://plausible.rugmunch.io; " +
+        "img-src 'self' data:; " +
+        "connect-src 'self'; " +
+        "frame-ancestors 'none'; " +
+        "base-uri 'self'; " +
+        "form-action 'none'",
     },
   });
 }

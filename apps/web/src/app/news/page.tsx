@@ -1,22 +1,21 @@
 export const runtime = 'edge';
 
-import type { UnifiedPost } from '@degenfeed/types';
 import type { Metadata } from 'next';
 import { headers } from 'next/headers';
 import { Suspense } from 'react';
 import NewsLoading from './loading';
 import NewsClient from './NewsClient';
+import type { NewsMeta, NewsStory, StoryCluster } from './types';
 
-export const revalidate = 600;
+export const revalidate = 300; // 5 min
 
 export const metadata: Metadata = {
   title: 'News',
   description:
-    'Curated crypto, web3, and AI news from RSS feeds, Mastodon, Bluesky, and Reddit. No paywalls.',
+    'Intelligent news aggregation from 50+ sources across RSS, Nostr, Farcaster, Bluesky, Reddit, and newsletters — ranked by quality, recency, sentiment, and your interests.',
   openGraph: {
     title: 'News — DegenFeed',
-    description:
-      'Curated crypto and web3 news from RSS, Mastodon, Bluesky, and Reddit. No paywalls.',
+    description: 'Intelligent crypto, web3, and AI news aggregation from 50+ sources. No paywalls.',
     url: 'https://app.degenfeed.xyz/news',
     images: [
       {
@@ -30,26 +29,10 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'News — DegenFeed',
-    description: 'Curated crypto and web3 news from RSS, Mastodon, Bluesky, and Reddit.',
+    description: 'Intelligent crypto, web3, and AI news aggregation from 50+ sources. No paywalls.',
   },
   alternates: { canonical: 'https://app.degenfeed.xyz/news' },
 };
-
-interface NewsApiResponse {
-  data?: unknown[];
-  meta?: {
-    total: number;
-    limit: number;
-    category: string;
-    query?: string;
-    mustRead: boolean;
-    trending: Array<{ topic: string; count: number; score: number }>;
-    sourceCounts: Record<string, number>;
-    fetchedAt: number;
-    sources: number;
-  };
-  error?: string;
-}
 
 async function getBaseUrl(): Promise<string> {
   const h = await headers();
@@ -59,17 +42,38 @@ async function getBaseUrl(): Promise<string> {
 }
 
 async function NewsData() {
-  const url = `${await getBaseUrl()}/api/feed/news?limit=50`;
+  const url = `${await getBaseUrl()}/api/news/feed?limit=50&sort=score`;
   const res = await fetch(url, {
     credentials: 'include',
     next: { revalidate: 0 },
     cache: 'no-store',
     headers: { 'cache-control': 'no-store' },
   });
-  const json = (await res.json()) as NewsApiResponse;
-  const initialPosts = (json.data || []) as UnifiedPost[];
+  const json = (await res.json()) as {
+    data?: NewsStory[];
+    clusters?: StoryCluster[];
+    meta?: NewsMeta;
+    error?: string;
+  };
 
-  return <NewsClient initialPosts={initialPosts} initialMeta={json.meta || null} />;
+  if (!res.ok || json.error) {
+    return (
+      <div className="mx-auto max-w-7xl px-4 py-6">
+        <div className="rounded-xl border border-red-900/50 bg-red-900/10 py-12 text-center">
+          <div className="mb-2 text-4xl text-red-400">!</div>
+          <p className="text-red-300">{json.error || 'Failed to fetch news'}</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <NewsClient
+      initialStories={json.data || []}
+      initialMeta={json.meta || null}
+      initialClusters={json.clusters || []}
+    />
+  );
 }
 
 export default function NewsPage() {
@@ -79,3 +83,6 @@ export default function NewsPage() {
     </Suspense>
   );
 }
+
+// Re-export types from the client for convenience
+export type { NewsMeta, NewsStory, StoryCluster };

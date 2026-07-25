@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { useCallback, useEffect, useState } from 'react';
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
@@ -68,32 +68,128 @@ function timeAgo(timestamp: number): string {
 // ─── Fallback Data ────────────────────────────────────────────────────────
 
 const FALLBACK_TRENDING: TrendingCoin[] = [
-  { id: '$DEGEN', symbol: 'DEGEN', name: 'Degen', priceUsd: 0.089, change24h: 24.5, socialVolume: 12500, rank: 1 },
-  { id: '$BOB', symbol: 'BOB', name: 'Bob', priceUsd: 0.032, change24h: 15.2, socialVolume: 8900, rank: 2 },
-  { id: '$FREN', symbol: 'FREN', name: 'Fren', priceUsd: 0.0045, change24h: 42.1, socialVolume: 7500, rank: 3 },
-  { id: '$PEPE', symbol: 'PEPE', name: 'Pepe', priceUsd: 0.000012, change24h: 68.3, socialVolume: 32000, rank: 4 },
-  { id: '$WIF', symbol: 'WIF', name: 'dogwifhat', priceUsd: 2.45, change24h: -5.8, socialVolume: 28000, rank: 5 },
+  {
+    id: '$DEGEN',
+    symbol: 'DEGEN',
+    name: 'Degen',
+    priceUsd: 0.089,
+    change24h: 24.5,
+    socialVolume: 12500,
+    rank: 1,
+  },
+  {
+    id: '$BOB',
+    symbol: 'BOB',
+    name: 'Bob',
+    priceUsd: 0.032,
+    change24h: 15.2,
+    socialVolume: 8900,
+    rank: 2,
+  },
+  {
+    id: '$FREN',
+    symbol: 'FREN',
+    name: 'Fren',
+    priceUsd: 0.0045,
+    change24h: 42.1,
+    socialVolume: 7500,
+    rank: 3,
+  },
+  {
+    id: '$PEPE',
+    symbol: 'PEPE',
+    name: 'Pepe',
+    priceUsd: 0.000012,
+    change24h: 68.3,
+    socialVolume: 32000,
+    rank: 4,
+  },
+  {
+    id: '$WIF',
+    symbol: 'WIF',
+    name: 'dogwifhat',
+    priceUsd: 2.45,
+    change24h: -5.8,
+    socialVolume: 28000,
+    rank: 5,
+  },
 ];
 
 const FALLBACK_TIPS: TipActivity[] = [
-  { id: '1', fromLabel: 'Whale', toLabel: 'Vitalik', amountUsd: 2500, platform: 'ethereum', at: Date.now() - 60000 },
-  { id: '2', fromLabel: 'Degen', toLabel: 'MemeLord', amountUsd: 500, platform: 'solana', at: Date.now() - 300000 },
-  { id: '3', fromLabel: 'Trader', toLabel: 'DeFiDegen', amountUsd: 1000, platform: 'base', at: Date.now() - 600000 },
-  { id: '4', fromLabel: 'Fan', toLabel: 'Artist', amountUsd: 150, platform: 'polygon', at: Date.now() - 1200000 },
-  { id: '5', fromLabel: 'Supporter', toLabel: 'Creator', amountUsd: 300, platform: 'ethereum', at: Date.now() - 1800000 },
+  {
+    id: '1',
+    fromLabel: 'Whale',
+    toLabel: 'Vitalik',
+    amountUsd: 2500,
+    platform: 'ethereum',
+    at: Date.now() - 60000,
+  },
+  {
+    id: '2',
+    fromLabel: 'Degen',
+    toLabel: 'MemeLord',
+    amountUsd: 500,
+    platform: 'solana',
+    at: Date.now() - 300000,
+  },
+  {
+    id: '3',
+    fromLabel: 'Trader',
+    toLabel: 'DeFiDegen',
+    amountUsd: 1000,
+    platform: 'base',
+    at: Date.now() - 600000,
+  },
+  {
+    id: '4',
+    fromLabel: 'Fan',
+    toLabel: 'Artist',
+    amountUsd: 150,
+    platform: 'polygon',
+    at: Date.now() - 1200000,
+  },
+  {
+    id: '5',
+    fromLabel: 'Supporter',
+    toLabel: 'Creator',
+    amountUsd: 300,
+    platform: 'ethereum',
+    at: Date.now() - 1800000,
+  },
 ];
 
 const FALLBACK_LAUNCHES: CoinLaunch[] = [
-  { coin: '$FREN', coinName: 'Fren', creator: '@fren', creatorName: 'Fren', timestamp: Date.now() - 3600000 },
-  { coin: '$TOSHI', coinName: 'Toshi', creator: '@toshi', creatorName: 'Toshi Fan', timestamp: Date.now() - 7200000 },
-  { coin: '$MOON', coinName: 'MoonCoin', creator: '@astro', creatorName: 'Astro', timestamp: Date.now() - 14400000 },
+  {
+    coin: '$FREN',
+    coinName: 'Fren',
+    creator: '@fren',
+    creatorName: 'Fren',
+    timestamp: Date.now() - 3600000,
+  },
+  {
+    coin: '$TOSHI',
+    coinName: 'Toshi',
+    creator: '@toshi',
+    creatorName: 'Toshi Fan',
+    timestamp: Date.now() - 7200000,
+  },
+  {
+    coin: '$MOON',
+    coinName: 'MoonCoin',
+    creator: '@astro',
+    creatorName: 'Astro',
+    timestamp: Date.now() - 14400000,
+  },
 ];
 
 // ─── Sub-component: Trending Coins ────────────────────────────────────────
 
 function TrendingCoinsWidget({ coins }: { coins: TrendingCoin[] }) {
   return (
-    <div className="rounded-xl border overflow-hidden" style={{ borderColor: 'var(--color-glass-border)' }}>
+    <div
+      className="rounded-xl border overflow-hidden"
+      style={{ borderColor: 'var(--color-glass-border)' }}
+    >
       <h3 className="px-4 pt-3 pb-2 text-sm font-bold" style={{ color: 'var(--color-fg)' }}>
         Trending Coins
       </h3>
@@ -104,7 +200,10 @@ function TrendingCoinsWidget({ coins }: { coins: TrendingCoin[] }) {
             href={`/search?q=${coin.symbol}`}
             className="flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-[var(--color-overlay)]"
           >
-            <div className="w-5 text-center text-xs font-bold font-mono" style={{ color: 'var(--color-muted)' }}>
+            <div
+              className="w-5 text-center text-xs font-bold font-mono"
+              style={{ color: 'var(--color-muted)' }}
+            >
               #{coin.rank}
             </div>
             <div className="flex-1 min-w-0">
@@ -119,8 +218,11 @@ function TrendingCoinsWidget({ coins }: { coins: TrendingCoin[] }) {
               <div className="text-xs font-medium" style={{ color: 'var(--color-fg)' }}>
                 ${coin.priceUsd < 0.01 ? coin.priceUsd.toFixed(6) : coin.priceUsd.toFixed(3)}
               </div>
-              <div className={`text-[10px] font-medium ${coin.change24h >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                {coin.change24h >= 0 ? '+' : ''}{coin.change24h.toFixed(1)}%
+              <div
+                className={`text-[10px] font-medium ${coin.change24h >= 0 ? 'text-green-400' : 'text-red-400'}`}
+              >
+                {coin.change24h >= 0 ? '+' : ''}
+                {coin.change24h.toFixed(1)}%
               </div>
             </div>
           </Link>
@@ -140,7 +242,10 @@ function TrendingCoinsWidget({ coins }: { coins: TrendingCoin[] }) {
 
 function RecentTipsWidget({ tips, compact }: { tips: TipActivity[]; compact?: boolean }) {
   return (
-    <div className="rounded-xl border overflow-hidden" style={{ borderColor: 'var(--color-glass-border)' }}>
+    <div
+      className="rounded-xl border overflow-hidden"
+      style={{ borderColor: 'var(--color-glass-border)' }}
+    >
       <div className="flex items-center justify-between px-4 pt-3 pb-2">
         <h3 className="text-sm font-bold" style={{ color: 'var(--color-fg)' }}>
           Recent Tips
@@ -150,15 +255,29 @@ function RecentTipsWidget({ tips, compact }: { tips: TipActivity[]; compact?: bo
           <span className="relative inline-flex rounded-full h-2 w-2 bg-degen-500" />
         </span>
       </div>
-      <div className={`divide-y ${compact ? '' : 'max-h-48'} overflow-y-auto`} style={{ borderColor: 'var(--color-glass-border)' }}>
+      <div
+        className={`divide-y ${compact ? '' : 'max-h-48'} overflow-y-auto`}
+        style={{ borderColor: 'var(--color-glass-border)' }}
+      >
         {tips.slice(0, compact ? 3 : 5).map((tip) => (
-          <div key={tip.id} className="flex items-center gap-2 px-4 py-2 transition-colors hover:bg-[var(--color-overlay)]">
+          <div
+            key={tip.id}
+            className="flex items-center gap-2 px-4 py-2 transition-colors hover:bg-[var(--color-overlay)]"
+          >
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1 text-xs">
                 <span className="font-semibold truncate" style={{ color: 'var(--color-fg)' }}>
                   {tip.fromLabel}
                 </span>
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: 'var(--color-muted)' }}>
+                <svg
+                  width="10"
+                  height="10"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  style={{ color: 'var(--color-muted)' }}
+                >
                   <line x1="5" y1="12" x2="19" y2="12" />
                   <polyline points="12 5 19 12 12 19" />
                 </svg>
@@ -166,7 +285,10 @@ function RecentTipsWidget({ tips, compact }: { tips: TipActivity[]; compact?: bo
                   {tip.toLabel}
                 </span>
               </div>
-              <div className="flex items-center gap-2 text-[10px]" style={{ color: 'var(--color-muted)' }}>
+              <div
+                className="flex items-center gap-2 text-[10px]"
+                style={{ color: 'var(--color-muted)' }}
+              >
                 <span>{tip.platform}</span>
                 <span>·</span>
                 <span>{timeAgo(tip.at)}</span>
@@ -186,13 +308,19 @@ function RecentTipsWidget({ tips, compact }: { tips: TipActivity[]; compact?: bo
 
 function CoinLaunchesWidget({ launches }: { launches: CoinLaunch[] }) {
   return (
-    <div className="rounded-xl border overflow-hidden" style={{ borderColor: 'var(--color-glass-border)' }}>
+    <div
+      className="rounded-xl border overflow-hidden"
+      style={{ borderColor: 'var(--color-glass-border)' }}
+    >
       <h3 className="px-4 pt-3 pb-2 text-sm font-bold" style={{ color: 'var(--color-fg)' }}>
         New Launches
       </h3>
       <div className="divide-y" style={{ borderColor: 'var(--color-glass-border)' }}>
         {launches.slice(0, 3).map((launch, i) => (
-          <div key={i} className="flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-[var(--color-overlay)]">
+          <div
+            key={i}
+            className="flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-[var(--color-overlay)]"
+          >
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-purple-500/10 text-sm">
               🚀
             </div>
@@ -223,7 +351,10 @@ function YourSubscriptionsWidget({ subscriptions }: { subscriptions: Subscriptio
   if (subscriptions.length === 0) return null;
 
   return (
-    <div className="rounded-xl border overflow-hidden" style={{ borderColor: 'var(--color-glass-border)' }}>
+    <div
+      className="rounded-xl border overflow-hidden"
+      style={{ borderColor: 'var(--color-glass-border)' }}
+    >
       <h3 className="px-4 pt-3 pb-2 text-sm font-bold" style={{ color: 'var(--color-fg)' }}>
         Your Subscriptions
       </h3>
@@ -237,7 +368,10 @@ function YourSubscriptionsWidget({ subscriptions }: { subscriptions: Subscriptio
               <div className="text-xs font-semibold truncate" style={{ color: 'var(--color-fg)' }}>
                 {sub.creator.slice(0, 8)}...{sub.creator.slice(-4)}
               </div>
-              <div className="flex items-center gap-2 text-[10px]" style={{ color: 'var(--color-muted)' }}>
+              <div
+                className="flex items-center gap-2 text-[10px]"
+                style={{ color: 'var(--color-muted)' }}
+              >
                 <span className="capitalize">{sub.tier}</span>
                 <span>·</span>
                 <span className={sub.daysRemaining <= 3 ? 'text-yellow-400' : ''}>

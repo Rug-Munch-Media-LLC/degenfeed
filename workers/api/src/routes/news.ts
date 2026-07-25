@@ -1,683 +1,104 @@
 /**
- * @degenfeed/api-worker/news
+ * /api/news — Intelligent news endpoints.
  *
- * Top-tier crypto / AI / tech news aggregator.
+ * Endpoints:
+ *   GET  /api/news/feed                   → Personalized news feed
+ *   GET  /api/news/trending               → Trending stories (by velocity)
+ *   GET  /api/news/category/:category     → News by category
+ *   GET  /api/news/story/:storyId         → Story detail with related stories
+ *   GET  /api/news/search                 → Search news archives
+ *   GET  /api/news/sources                → All news sources with credibility ratings
+ *   POST /api/news/preferences            → Update news preferences
+ *   GET  /api/news/digest/preview         → Preview today's digest
+ *   POST /api/news/digest/subscribe       → Subscribe to digest emails
  */
 
-import type { UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
-import { type Env, noCacheJsonResponse } from '../index';
+import type { UnifiedPost } from '@degenfeed/types';
+import { sanitizePosts } from '../feed/feed-enricher';
+import {
+  type AggregatedStory,
+  type AggregationOptions,
+  type AggregationResult,
+  aggregateNews,
+  NEWS_SOURCES,
+} from '../feed/news-aggregator';
+import {
+  DEFAULT_PREFERENCES,
+  inferUserProfile,
+  type NewsPreferences,
+  type PersonalizedStory,
+  personalizeNewsFeed,
+  type ReadHistoryEntry,
+  type UserProfile,
+} from '../feed/personalized-news';
+import { classifyStories, classifyStory, getTopCategories } from '../feed/topic-modeler';
+import { type Env, jsonResponse, noCacheJsonResponse } from '../index';
 
-interface NewsSource {
-  name: string;
-  type: 'rss' | 'reddit' | 'hackernews';
-  url: string;
-  category?: string;
-  tier: 1 | 2 | 3 | 4;
-  mustRead?: boolean;
-  weight: number;
+// ─── Constants ───────────────────────────────────────────────────────────
+
+const NEWS_FEED_CACHE_PREFIX = 'news:feed:v1:';
+const NEWS_FEED_CACHE_TTL = 300; // 5 min
+const NEWS_SOURCES_CACHE_KEY = 'news:sources:v1';
+const NEWS_SOURCES_CACHE_TTL = 3600; // 1 hour
+
+const ALLOWED_NICHES = new Set([
+  'bitcoin',
+  'ethereum',
+  'solana',
+  'defi',
+  'nft',
+  'ai',
+  'regulation',
+  'security',
+  'macro',
+  'memecoin',
+  'layer2',
+  'stablecoin',
+  'etf',
+  'onchain',
+  'crypto',
+  'tech',
+  'finance',
+  'culture',
+]);
+
+// ─── Helpers ─────────────────────────────────────────────────────────────
+
+function isValidEmail(s: string): boolean {
+  if (typeof s !== 'string') return false;
+  if (s.length > 254) return false;
+  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(s);
 }
 
-const NEWS_SOURCES: NewsSource[] = [
-  {
-    name: 'CoinDesk',
-    type: 'rss',
-    url: 'https://www.coindesk.com/arc/outboundfeeds/rss/',
-    tier: 1,
-    mustRead: true,
-    weight: 1.5,
-  },
-  {
-    name: 'CoinTelegraph',
-    type: 'rss',
-    url: 'https://cointelegraph.com/rss',
-    tier: 1,
-    mustRead: true,
-    weight: 1.5,
-  },
-  {
-    name: 'The Block',
-    type: 'rss',
-    url: 'https://www.theblockcrypto.com/rss.xml',
-    tier: 1,
-    mustRead: true,
-    weight: 1.5,
-  },
-  {
-    name: 'Decrypt',
-    type: 'rss',
-    url: 'https://decrypt.co/feed',
-    tier: 1,
-    mustRead: true,
-    weight: 1.4,
-  },
-  {
-    name: 'Blockworks',
-    type: 'rss',
-    url: 'https://blockworks.co/feed',
-    tier: 1,
-    mustRead: true,
-    weight: 1.4,
-  },
-  {
-    name: 'Bitcoin Magazine',
-    type: 'rss',
-    url: 'https://bitcoinmagazine.com/feed',
-    tier: 1,
-    mustRead: true,
-    weight: 1.3,
-  },
-  {
-    name: 'CryptoSlate',
-    type: 'rss',
-    url: 'https://cryptoslate.com/feed/',
-    tier: 1,
-    mustRead: false,
-    weight: 1.1,
-  },
-
-  {
-    name: 'Bankless',
-    type: 'rss',
-    url: 'https://bankless.substack.com/feed',
-    tier: 2,
-    mustRead: true,
-    weight: 1.3,
-  },
-  {
-    name: 'The Defiant',
-    type: 'rss',
-    url: 'https://thedefiant.io/feed',
-    tier: 2,
-    mustRead: true,
-    weight: 1.3,
-  },
-  {
-    name: 'Week in Ethereum',
-    type: 'rss',
-    url: 'https://weekinethereumnews.com/feed',
-    tier: 2,
-    mustRead: true,
-    weight: 1.2,
-  },
-  {
-    name: 'ETH Daily',
-    type: 'rss',
-    url: 'https://ethdaily.substack.com/feed',
-    tier: 2,
-    mustRead: false,
-    weight: 1.1,
-  },
-  {
-    name: 'Messari',
-    type: 'rss',
-    url: 'https://messari.substack.com/feed',
-    tier: 2,
-    mustRead: false,
-    weight: 1.1,
-  },
-  {
-    name: 'Unchained',
-    type: 'rss',
-    url: 'https://unchainedcrypto.com/feed/',
-    tier: 2,
-    mustRead: false,
-    weight: 1.1,
-  },
-  {
-    name: 'Milk Road',
-    type: 'rss',
-    url: 'https://milkroad.substack.com/feed',
-    tier: 2,
-    mustRead: false,
-    weight: 1.0,
-  },
-  {
-    name: 'The DeFi Edge',
-    type: 'rss',
-    url: 'https://thedefiedge.substack.com/feed',
-    tier: 2,
-    mustRead: false,
-    weight: 1.0,
-  },
-
-  {
-    name: 'Dune Analytics',
-    type: 'rss',
-    url: 'https://dune.com/feed',
-    tier: 3,
-    mustRead: false,
-    weight: 1.0,
-  },
-  {
-    name: 'Glassnode',
-    type: 'rss',
-    url: 'https://glassnode.com/blog/feed',
-    tier: 3,
-    mustRead: false,
-    weight: 1.0,
-  },
-  {
-    name: 'Nansen',
-    type: 'rss',
-    url: 'https://nansen.substack.com/feed',
-    tier: 3,
-    mustRead: false,
-    weight: 1.0,
-  },
-  {
-    name: 'Token Terminal',
-    type: 'rss',
-    url: 'https://tokenterminal.com/feed',
-    tier: 3,
-    mustRead: false,
-    weight: 1.0,
-  },
-  {
-    name: 'DeFiLlama',
-    type: 'rss',
-    url: 'https://defillama.com/feed',
-    tier: 3,
-    mustRead: false,
-    weight: 1.0,
-  },
-  {
-    name: 'L2Beat',
-    type: 'rss',
-    url: 'https://l2beat.com/feed.xml',
-    tier: 3,
-    mustRead: false,
-    weight: 1.0,
-  },
-  {
-    name: 'Rekt News',
-    type: 'rss',
-    url: 'https://rekt.news/feed.xml',
-    tier: 3,
-    mustRead: true,
-    weight: 1.2,
-  },
-  {
-    name: 'Immunefi',
-    type: 'rss',
-    url: 'https://medium.com/feed/immunefi',
-    tier: 3,
-    mustRead: false,
-    weight: 1.0,
-  },
-  {
-    name: 'SlowMist',
-    type: 'rss',
-    url: 'https://slowmist.medium.com/feed',
-    tier: 3,
-    mustRead: false,
-    weight: 1.0,
-  },
-
-  {
-    name: 'TechCrunch',
-    type: 'rss',
-    url: 'https://techcrunch.com/feed/',
-    tier: 4,
-    mustRead: false,
-    weight: 0.9,
-  },
-  {
-    name: 'The Verge',
-    type: 'rss',
-    url: 'https://www.theverge.com/rss/index.xml',
-    tier: 4,
-    mustRead: false,
-    weight: 0.9,
-  },
-
-  {
-    name: 'r/CryptoCurrency',
-    type: 'reddit',
-    url: 'https://old.reddit.com/r/CryptoCurrency/hot.rss?limit=25',
-    tier: 3,
-    mustRead: false,
-    weight: 0.8,
-  },
-  {
-    name: 'r/ethfinance',
-    type: 'reddit',
-    url: 'https://old.reddit.com/r/ethfinance/hot.rss?limit=25',
-    tier: 3,
-    mustRead: false,
-    weight: 0.8,
-  },
-  {
-    name: 'r/solana',
-    type: 'reddit',
-    url: 'https://old.reddit.com/r/solana/hot.rss?limit=25',
-    tier: 3,
-    mustRead: false,
-    weight: 0.8,
-  },
-  {
-    name: 'r/ethdev',
-    type: 'reddit',
-    url: 'https://old.reddit.com/r/ethdev/hot.rss?limit=25',
-    tier: 3,
-    mustRead: false,
-    weight: 0.8,
-  },
-
-  {
-    name: 'Hacker News',
-    type: 'hackernews',
-    url: '',
-    tier: 4,
-    mustRead: false,
-    weight: 1.1,
-  },
-];
-
-interface RssItem {
-  title: string;
-  link: string;
-  description: string;
-  pubDate: string;
-  creator?: string;
-  content?: string;
-  image?: string;
-  categories: string[];
+function safeKey(s: string): string {
+  return s.toLowerCase().replace(/[^a-z0-9@._-]/g, '_');
 }
 
-function stripTags(html: string): string {
-  return html
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&nbsp;/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
+function formatTime(ts: number): string {
+  const diff = Date.now() - ts;
+  const mins = Math.floor(diff / 60000);
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  return `${Math.floor(hours / 24)}d ago`;
 }
 
-function decodeXmlEntities(str: string): string {
-  return str
-    .replace(/<!\[CDATA\[(.*?)\]\]>/gs, '$1')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&apos;/g, "'")
-    .replace(/&#(\d+);/g, (_m, d) => String.fromCodePoint(Number(d)))
-    .replace(/&#x([0-9a-fA-F]+);/g, (_m, h) => String.fromCodePoint(Number.parseInt(h, 16)))
-    .trim();
-}
-
-function extractText(tag: string, xml: string): string {
-  const re = new RegExp(`<${tag}(?:[^>]*)>([\\s\\S]*?)<\\/${tag}>`, 'i');
-  const match = xml.match(re);
-  return match ? decodeXmlEntities(match[1] || '') : '';
-}
-
-function extractAll(tag: string, xml: string): string[] {
-  const re = new RegExp(`<${tag}(?:[^>]*)>([\\s\\S]*?)<\\/${tag}>`, 'gi');
-  const out: string[] = [];
-  let m: RegExpExecArray | null = re.exec(xml);
-  while (m !== null) {
-    out.push(decodeXmlEntities(m[1] || ''));
-    m = re.exec(xml);
-  }
-  return out;
-}
-
-function parseRss(xml: string, maxItems = 20): RssItem[] {
-  const items: RssItem[] = [];
-  const itemRe = /<item([^>]*)>([\s\S]*?)<\/item>/gi;
-  let m: RegExpExecArray | null = itemRe.exec(xml);
-
-  while (m !== null && items.length < maxItems) {
-    const itemXml = m[2] || '';
-    const title = extractText('title', itemXml);
-    const link = extractText('link', itemXml) || extractText('guid', itemXml);
-    const description = extractText('description', itemXml);
-    const content = extractText('content:encoded', itemXml) || extractText('content', itemXml);
-    const pubDate =
-      extractText('pubDate', itemXml) ||
-      extractText('dc:date', itemXml) ||
-      extractText('published', itemXml);
-    const creator = extractText('dc:creator', itemXml) || extractText('author', itemXml);
-    const categories = extractAll('category', itemXml);
-
-    let image = '';
-    const media = itemXml.match(/<media:content[^>]+url\s*=\s*["']([^"']+)["']/i);
-    if (media?.[1]) image = media[1];
-    const enclosure = itemXml.match(/<enclosure[^>]+url\s*=\s*["']([^"']+)["']/i);
-    if (!image && enclosure?.[1]) image = enclosure[1];
-    const img = itemXml.match(/<img[^>]+src\s*=\s*["']([^"']+)["']/i);
-    if (!image && img?.[1]) image = img[1];
-
-    if (title && link) {
-      items.push({
-        title,
-        link,
-        description,
-        pubDate,
-        creator,
-        content,
-        image,
-        categories,
-      });
-    }
-    m = itemRe.exec(xml);
-  }
-
-  return items;
-}
-
-function parseAtom(xml: string, maxItems = 20): RssItem[] {
-  const items: RssItem[] = [];
-  const entryRe = /<entry([^>]*)>([\s\S]*?)<\/entry>/gi;
-  let m: RegExpExecArray | null = entryRe.exec(xml);
-
-  while (m !== null && items.length < maxItems) {
-    const entryXml = m[2] || '';
-    const title = extractText('title', entryXml);
-    const linkMatch = entryXml.match(/<link[^>]+href\s*=\s*["']([^"']+)["']/i);
-    const link = linkMatch?.[1] || extractText('id', entryXml);
-    const description = extractText('summary', entryXml);
-    const content = extractText('content', entryXml);
-    const pubDate = extractText('updated', entryXml) || extractText('published', entryXml);
-    const creator = extractText('name', entryXml);
-    const categories = extractAll('category', entryXml);
-
-    let image = '';
-    const img = entryXml.match(/<img[^>]+src\s*=\s*["']([^"']+)["']/i);
-    if (img?.[1]) image = img[1];
-
-    if (title && link) {
-      items.push({
-        title,
-        link,
-        description,
-        pubDate,
-        creator,
-        content,
-        image,
-        categories,
-      });
-    }
-    m = entryRe.exec(xml);
-  }
-
-  return items;
-}
-
-function parseFeed(xml: string): RssItem[] {
-  const trimmed = xml.trim();
-  if (trimmed.includes('<feed')) return parseAtom(trimmed);
-  return parseRss(trimmed);
-}
-
-async function fetchWithTimeout(url: string, timeoutMs = 8000): Promise<Response | null> {
-  if (!url) return null;
-  try {
-    const res = await fetch(url, {
-      signal: AbortSignal.timeout(timeoutMs),
-      headers: {
-        'user-agent': 'DegenFeed/0.1 (news aggregator; +https://degenfeed.xyz)',
-        accept: 'application/rss+xml, application/atom+xml, application/xml, text/xml, */*',
-      },
-    });
-    if (!res.ok) {
-      res.body?.cancel().catch(() => {});
-      return null;
-    }
-    return res;
-  } catch {
-    return null;
-  }
-}
-
-async function fetchRss(source: NewsSource): Promise<RssItem[]> {
-  const res = await fetchWithTimeout(source.url);
-  if (!res?.ok) return [];
-  const xml = await res.text();
-  if (xml.length > 2_000_000) return [];
-  return parseFeed(xml).slice(0, 15);
-}
-
-interface HnHit {
-  title: string;
-  url: string;
-  points: number;
-  num_comments: number;
-  created_at_i: number;
-  author: string;
-  objectID?: string;
-}
-
-async function fetchHackerNews(): Promise<RssItem[]> {
-  const tags = ['crypto', 'bitcoin', 'ethereum', 'web3', 'ai'];
-  const hits: HnHit[] = [];
-
-  for (const tag of tags) {
-    const url = `https://hn.algolia.com/api/v1/search_by_date?tags=${tag}&hitsPerPage=10`;
-    try {
-      const res = await fetchWithTimeout(url, 6000);
-      if (!res?.ok) continue;
-      const data = (await res.json()) as { hits?: HnHit[] };
-      if (data.hits) hits.push(...data.hits);
-    } catch {
-      /* KV operation failed -- non-critical, continue */
-    }
-  }
-
-  return hits.map((h) => ({
-    title: h.title,
-    link: h.url || `https://news.ycombinator.com/item?id=${h.objectID || ''}`,
-    description: `${h.points} points · ${h.num_comments} comments`,
-    pubDate: new Date(h.created_at_i * 1000).toISOString(),
-    creator: h.author,
-    content: '',
-    image: '',
-    categories: ['hackernews'],
-  }));
-}
-
-async function withConcurrencyLimit<T>(
-  items: T[],
-  limit: number,
-  fn: (item: T) => Promise<void>,
-): Promise<void> {
-  const queue = [...items];
-  const runners = new Set<Promise<void>>();
-  while (queue.length > 0 || runners.size > 0) {
-    while (runners.size < limit && queue.length > 0) {
-      const item = queue.shift();
-      if (item === undefined) break;
-      const promise = fn(item)
-        .catch(() => {})
-        .finally(() => {
-          runners.delete(promise);
-        });
-      runners.add(promise);
-    }
-    if (runners.size > 0) await Promise.race(runners);
-  }
-}
-
-async function fetchSource(source: NewsSource): Promise<RssItem[]> {
-  if (source.type === 'rss' || source.type === 'reddit') return fetchRss(source);
-  if (source.type === 'hackernews') return fetchHackerNews();
-  return [];
-}
-
-function normalizeUrl(url: string): string {
-  try {
-    const u = new URL(url);
-    u.hash = '';
-    for (const p of ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'ref', 'source']) {
-      u.searchParams.delete(p);
-    }
-    return u.toString();
-  } catch {
-    return url;
-  }
-}
-
-function toUnifiedPost(item: RssItem, source: NewsSource): UnifiedPost {
-  const canonicalUrl = normalizeUrl(item.link);
-  const text = stripTags(item.content || item.description || item.title).slice(0, 600);
-  const html = item.content || item.description || '';
-  const pubDate = item.pubDate ? new Date(item.pubDate).getTime() : Date.now();
-  const createdAt = Number.isNaN(pubDate) ? Date.now() : pubDate;
-
-  const embeds: { kind: 'image' | 'link' | 'video'; url: string }[] = [];
-  if (item.image) embeds.push({ kind: 'image', url: item.image });
-  embeds.push({ kind: 'link', url: canonicalUrl });
-
-  const authorId = `rss:news:${source.name.replace(/\s+/g, '-').toLowerCase()}`;
-  const author: UnifiedIdentity = {
-    id: authorId,
-    primary: { protocol: 'rss', id: authorId },
-    handles: {
-      nostr: null,
-      farcaster: null,
-      lens: null,
-      bluesky: null,
-      threads: null,
-      rss: null,
-      mastodon: null,
-    },
-    displayName: source.name,
-    bio: '',
-    avatarUrl: '',
-    verified: [],
-    followerCount: 0,
-    followingCount: 0,
-    links: [{ label: 'source', url: source.url }],
-    keys: {},
-  };
-
-  const categories = [
-    ...new Set([...(source.category ? [source.category] : []), ...item.categories]),
-  ];
-  const niches = detectNiches(`${text} ${categories.join(' ')} ${source.name}`);
-
-  return {
-    id: `rss:news:${canonicalUrl.slice(0, 128).replace(/[^a-zA-Z0-9_-]/g, '_')}`,
-    protocol: 'rss',
-    author,
-    text,
-    html,
-    embeds,
-    createdAt,
-    metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
-    engagement: {
-      viewerLiked: false,
-      viewerReposted: false,
-      viewerBookmarked: false,
-      raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
-    },
-    raw: {
-      sourceName: source.name,
-      tier: source.tier,
-      mustRead: source.mustRead,
-    },
-    niches: [...new Set([...niches, ...categories.map((c) => c.toLowerCase())])],
-  };
-}
-
-const NICHE_KEYWORDS: Record<string, string[]> = {
-  bitcoin: ['bitcoin', 'btc', 'satoshi', 'halving'],
-  ethereum: ['ethereum', 'eth', 'vitalik', 'eip-', 'gas fee', 'validator'],
-  solana: ['solana', 'sol ', 'solana-based'],
-  defi: ['defi', 'lending', 'yield', 'liquidity', 'amm', 'dex', 'swap', 'staking', 'restaking'],
-  nft: ['nft', 'nfts', 'collectible', 'punk', 'azuki', 'opensea', 'blur'],
-  ai: [
-    'ai ',
-    'artificial intelligence',
-    'machine learning',
-    'llm',
-    'gpt',
-    'openai',
-    'anthropic',
-    'deepseek',
-  ],
-  regulation: ['sec', 'regulation', 'mica', 'cftc', 'congress', 'senate', 'policy', 'compliance'],
-  security: [
-    'hack',
-    'exploit',
-    'vulnerability',
-    'audit',
-    'phishing',
-    'rug pull',
-    'rekt',
-    'immunefi',
-  ],
-  macro: ['fed', 'fomc', 'inflation', 'interest rate', 'dollar', 'recession', 'nasdaq', 'spx'],
-  stablecoin: ['stablecoin', 'usdt', 'usdc', 'tether', 'circle'],
-  layer2: ['layer 2', 'l2', 'rollup', 'arbitrum', 'optimism', 'base', 'zk-', 'zero knowledge'],
-  memecoin: ['memecoin', 'meme coin', 'dogecoin', 'shiba', 'pepe', 'bonk', 'wif'],
-  etf: ['etf', 'spot bitcoin', 'blackrock', 'grayscale', 'ibit'],
-  onchain: ['onchain', 'on-chain', 'blockchain data', 'whale'],
-};
-
-function detectNiches(text: string): string[] {
-  const lower = text.toLowerCase();
-  const niches: string[] = [];
-  for (const [niche, terms] of Object.entries(NICHE_KEYWORDS)) {
-    if (terms.some((t) => lower.includes(t))) niches.push(niche);
-  }
-  return [...new Set(niches)];
-}
-
-function rankPost(post: UnifiedPost, source: NewsSource, now: number): number {
-  const ageHrs = Math.max(0, (now - post.createdAt) / 3600000);
-  const recency = Math.exp(-ageHrs / 24);
-  const tierBoost = 1 + (4 - source.tier) * 0.15;
-  const mustReadBoost = source.mustRead ? 1.4 : 1.0;
-  return recency * source.weight * tierBoost * mustReadBoost;
-}
-
-interface TrendingTopic {
-  topic: string;
-  count: number;
-  score: number;
-}
-
-function extractTrending(posts: UnifiedPost[], limit = 12): TrendingTopic[] {
-  const counts: Record<string, { count: number; score: number }> = {};
-
-  for (const post of posts.slice(0, 100)) {
-    for (const niche of post.niches) {
-      if (!counts[niche]) counts[niche] = { count: 0, score: 0 };
-      counts[niche].count++;
-      counts[niche].score += 1;
-    }
-    const text = `${post.text} ${post.author.displayName}`.toUpperCase();
-    const tickers = Array.from(text.matchAll(/\$([A-Z]{2,5})\b/g))
-      .map((m) => m[1])
-      .filter((t): t is string => !!t);
-    for (const t of tickers) {
-      if (!counts[t]) counts[t] = { count: 0, score: 0 };
-      counts[t].count++;
-      counts[t].score += 2;
-    }
-  }
-
-  return Object.entries(counts)
-    .sort((a, b) => b[1].score - a[1].score)
-    .slice(0, limit)
-    .map(([topic, v]) => ({ topic, count: v.count, score: v.score }));
-}
+// ─── GET /api/news/feed — Personalized News Feed ────────────────────────
 
 export async function handleNewsFeed(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
   const limit = Math.min(Number(url.searchParams.get('limit')) || 50, 200);
   const category = url.searchParams.get('category') || '';
-  const query = url.searchParams.get('q')?.toLowerCase() || '';
-  const mustRead = url.searchParams.get('mustRead') === 'true';
-  const cacheKey = `news:v1:${category || 'all'}:${query || 'none'}:${mustRead}`;
+  const query = url.searchParams.get('q') || '';
+  const sort = (url.searchParams.get('sort') || 'score') as 'score' | 'newest' | 'trending';
+  const minTier = Number(url.searchParams.get('minTier')) || 0;
+  const wallet = url.searchParams.get('wallet') || '';
+  const sourceIds = url.searchParams.get('sources')?.split(',').filter(Boolean);
 
+  // Build cache key from params
+  const cacheKey = `${NEWS_FEED_CACHE_PREFIX}${category || 'all'}:${query || 'none'}:${sort}:${limit}:${sourceIds?.join(',') || 'all'}`;
+
+  // Check cache
   try {
     const cached = await env.CACHE?.get(cacheKey);
     if (cached) {
@@ -685,87 +106,627 @@ export async function handleNewsFeed(request: Request, env: Env): Promise<Respon
       return noCacheJsonResponse(parsed);
     }
   } catch {
-    /* KV operation failed -- non-critical, continue */
+    /* cache miss */
   }
 
-  const now = Date.now();
-
-  const allItems: { item: RssItem; source: NewsSource }[] = [];
-  await withConcurrencyLimit(NEWS_SOURCES, 3, async (source) => {
-    const items = await fetchSource(source);
-    allItems.push(...items.map((i) => ({ item: i, source })));
-  });
-
-  const seenUrls = new Set<string>();
-  const posts: { post: UnifiedPost; source: NewsSource; score: number }[] = [];
-
-  for (const { item, source } of allItems) {
+  // Fetch user preferences if wallet provided
+  let prefs: NewsPreferences = { ...DEFAULT_PREFERENCES };
+  let profile: UserProfile | null = null;
+  if (wallet && env.CACHE) {
     try {
-      const post = toUnifiedPost(item, source);
-      const canonicalUrl = normalizeUrl(item.link);
-      if (seenUrls.has(canonicalUrl)) continue;
-      seenUrls.add(canonicalUrl);
-
-      if (category) {
-        const cats = post.niches;
-        if (!cats.includes(category.toLowerCase()) && source.category !== category) continue;
+      const prefsRaw = await env.CACHE.get(`user:news_prefs:${wallet.toLowerCase()}`);
+      if (prefsRaw) {
+        const stored = JSON.parse(prefsRaw) as Partial<NewsPreferences>;
+        prefs = { ...prefs, ...stored };
       }
-
-      if (mustRead && !source.mustRead) continue;
-
-      if (query) {
-        const haystack =
-          `${post.text} ${post.author.displayName} ${post.niches.join(' ')}`.toLowerCase();
-        if (!haystack.includes(query)) continue;
+      const historyRaw = await env.CACHE.get(`user:news_history:${wallet.toLowerCase()}`);
+      if (historyRaw) {
+        const history = JSON.parse(historyRaw) as ReadHistoryEntry[];
+        profile = inferUserProfile(history);
       }
-
-      const score = rankPost(post, source, now);
-      posts.push({ post, source, score });
     } catch {
-      /* skip */
+      /* non-critical */
     }
   }
 
-  posts.sort((a, b) => b.score - a.score);
+  // Aggregate news
+  const opts: AggregationOptions = {
+    limit: limit * 2, // fetch extra for personalization filtering
+    category,
+    query,
+    minTier,
+    sourceIds,
+    sort,
+  };
 
-  for (const p of posts) {
-    const raw = p.post.raw as Record<string, unknown>;
-    raw.mustRead = p.source.mustRead;
-    raw.tier = p.source.tier;
-  }
+  const result = await aggregateNews(env, opts);
 
-  const topPosts = posts.slice(0, limit).map((p) => p.post);
-  const trending = extractTrending(posts.map((p) => p.post));
-  const sourceCounts = NEWS_SOURCES.reduce(
-    (acc, s) => {
-      acc[s.name] = posts.filter((p) => p.source.name === s.name).length;
-      return acc;
-    },
-    {} as Record<string, number>,
-  );
+  // Personalize if user has preferences
+  const personalized =
+    wallet || Object.keys(prefs.topicWeights).length > 0
+      ? personalizeNewsFeed(result.stories, prefs, profile)
+      : result.stories.map(
+          (s) =>
+            ({
+              ...s,
+              scoreComponents: {
+                topicalRelevance: 0.5,
+                sourceCredibility: s.credibility,
+                freshness: Math.max(0, 1 - (Date.now() - s.publishedAt) / 259200000),
+                engagementVelocity: Math.min(1, s.velocity / 10),
+                depthMatch: 0.5,
+                sentimentBias:
+                  s.sentiment.label === 'bullish'
+                    ? 1.1
+                    : s.sentiment.label === 'bearish'
+                      ? 0.9
+                      : 1.0,
+                storyImportance:
+                  1 + (s.alsoCoveredBy.length > 3 ? 0.3 : 0) + (s.isBreaking ? 0.5 : 0),
+                total: s.score,
+              },
+              isDiscovery: false,
+              classification: classifyStory(s),
+            }) as PersonalizedStory,
+        );
 
+  // Classify for breadcrumbs
+  const classifications = classifyStories(result.stories);
+
+  // Build response
   const response = {
-    data: topPosts,
+    data: personalized.slice(0, limit).map((s) => ({
+      id: s.id,
+      title: s.title,
+      summary: s.summary,
+      url: s.url,
+      source: s.source,
+      sourceMeta: {
+        id: s.sourceMeta.id,
+        name: s.sourceMeta.name,
+        tier: s.sourceMeta.tier,
+        credibility: s.sourceMeta.credibility,
+      },
+      author: s.author,
+      publishedAt: s.publishedAt,
+      imageUrl: s.imageUrl,
+      categories: s.categories,
+      niches: s.niches,
+      sentiment: s.sentiment,
+      entities: s.entities,
+      alsoCoveredBy: s.alsoCoveredBy,
+      isBreaking: s.isBreaking,
+      velocity: s.velocity,
+      score: s.scoreComponents?.total ?? s.score,
+      scoreComponents: s.scoreComponents,
+      isDiscovery: s.isDiscovery,
+      classification: s.classification,
+    })),
+    clusters: result.clusters.slice(0, 10).map((c) => ({
+      id: c.id,
+      title: c.title,
+      storyCount: c.totalCoverage,
+      topCategories: c.topCategories,
+      topEntities: c.topEntities,
+      aggregateSentiment: c.aggregateSentiment,
+    })),
     meta: {
-      total: posts.length,
+      ...result.meta,
       limit,
       category: category || 'all',
       query: query || undefined,
-      mustRead,
-      trending,
-      sourceCounts,
-      fetchedAt: now,
-      sources: NEWS_SOURCES.length,
+      personalized: !!wallet || Object.keys(prefs.topicWeights).length > 0,
+      topCategories: getTopCategories(classifications, 10),
+    },
+  };
+
+  // Cache
+  try {
+    await env.CACHE?.put(cacheKey, JSON.stringify(response), {
+      expirationTtl: NEWS_FEED_CACHE_TTL,
+    });
+  } catch {
+    /* non-critical */
+  }
+
+  return noCacheJsonResponse(response);
+}
+
+// ─── GET /api/news/trending — Trending Stories ──────────────────────────
+
+export async function handleNewsTrending(request: Request, env: Env): Promise<Response> {
+  const url = new URL(request.url);
+  const limit = Math.min(Number(url.searchParams.get('limit')) || 20, 100);
+
+  const result = await aggregateNews(env, { limit: limit * 2, sort: 'trending' });
+
+  // Re-sort by velocity for trending
+  const trending = result.stories
+    .sort((a, b) => b.velocity - a.velocity)
+    .slice(0, limit)
+    .map((s) => ({
+      id: s.id,
+      title: s.title,
+      summary: s.summary.slice(0, 150),
+      url: s.url,
+      source: s.source,
+      author: s.author,
+      publishedAt: s.publishedAt,
+      velocity: s.velocity,
+      sentiment: s.sentiment,
+      imageUrl: s.imageUrl,
+      niches: s.niches,
+      alsoCoveredBy: s.alsoCoveredBy,
+    }));
+
+  return noCacheJsonResponse({
+    data: trending,
+    meta: {
+      total: trending.length,
+      fetchedAt: Date.now(),
+      trending: result.meta.trending,
+    },
+  });
+}
+
+// ─── GET /api/news/category/:category — News by Category ────────────────
+
+export async function handleNewsCategory(request: Request, env: Env): Promise<Response> {
+  const url = new URL(request.url);
+  const category = url.pathname.split('/').pop() || '';
+  const limit = Math.min(Number(url.searchParams.get('limit')) || 30, 200);
+
+  if (!ALLOWED_NICHES.has(category)) {
+    return jsonResponse({ error: `Unknown category: ${category}` }, 400);
+  }
+
+  const result = await aggregateNews(env, { category, limit });
+  const classifications = classifyStories(result.stories);
+
+  return noCacheJsonResponse({
+    data: result.stories.map((s) => ({
+      id: s.id,
+      title: s.title,
+      summary: s.summary.slice(0, 200),
+      url: s.url,
+      source: s.source,
+      author: s.author,
+      publishedAt: s.publishedAt,
+      sentiment: s.sentiment,
+      entities: s.entities,
+      imageUrl: s.imageUrl,
+      niches: s.niches,
+      categories: s.categories,
+      score: s.score,
+    })),
+    meta: {
+      category,
+      total: result.stories.length,
+      fetchedAt: result.meta.fetchedAt,
+      topCategories: getTopCategories(classifications, 5),
+    },
+  });
+}
+
+// ─── GET /api/news/story/:storyId — Story Detail ────────────────────────
+
+export async function handleNewsStory(request: Request, env: Env): Promise<Response> {
+  const storyId = request.url.split('/').pop() || '';
+  if (!storyId) {
+    return jsonResponse({ error: 'Story ID required' }, 400);
+  }
+
+  // Fetch full aggregation to find the story
+  const result = await aggregateNews(env, { limit: 100 });
+
+  const story = result.stories.find((s) => s.id === storyId);
+  if (!story) {
+    return jsonResponse({ error: 'Story not found' }, 404);
+  }
+
+  // Find related stories (same cluster or same categories)
+  const cluster = result.clusters.find((c) => c.stories.some((s) => s.id === storyId));
+  const relatedStories = cluster
+    ? cluster.stories.filter((s) => s.id !== storyId).slice(0, 5)
+    : result.stories
+        .filter((s) => s.id !== storyId && s.categories.some((c) => story.categories.includes(c)))
+        .slice(0, 5);
+
+  return noCacheJsonResponse({
+    data: {
+      id: story.id,
+      title: story.title,
+      summary: story.summary,
+      body: story.body,
+      url: story.url,
+      source: story.source,
+      sourceMeta: story.sourceMeta,
+      author: story.author,
+      publishedAt: story.publishedAt,
+      imageUrl: story.imageUrl,
+      categories: story.categories,
+      niches: story.niches,
+      sentiment: story.sentiment,
+      entities: story.entities,
+      alsoCoveredBy: story.alsoCoveredBy,
+      allUrls: story.allUrls,
+      isBreaking: story.isBreaking,
+      score: story.score,
+    },
+    related: relatedStories.map((s) => ({
+      id: s.id,
+      title: s.title,
+      url: s.url,
+      source: s.source,
+      publishedAt: s.publishedAt,
+      score: s.score,
+    })),
+    meta: {
+      fetchedAt: Date.now(),
+      totalRelated: relatedStories.length,
+    },
+  });
+}
+
+// ─── GET /api/news/search — Search News Archives ────────────────────────
+
+export async function handleNewsSearch(request: Request, env: Env): Promise<Response> {
+  const url = new URL(request.url);
+  const q = url.searchParams.get('q') || '';
+  const limit = Math.min(Number(url.searchParams.get('limit')) || 30, 100);
+  const category = url.searchParams.get('category') || '';
+
+  if (!q) {
+    return jsonResponse({ error: 'Search query required' }, 400);
+  }
+
+  const result = await aggregateNews(env, { query: q, category, limit });
+
+  return noCacheJsonResponse({
+    data: result.stories.map((s) => ({
+      id: s.id,
+      title: s.title,
+      summary: s.summary.slice(0, 200),
+      url: s.url,
+      source: s.source,
+      author: s.author,
+      publishedAt: s.publishedAt,
+      sentiment: s.sentiment,
+      imageUrl: s.imageUrl,
+      niches: s.niches,
+      score: s.score,
+    })),
+    meta: {
+      query: q,
+      category: category || 'all',
+      total: result.stories.length,
+      fetchedAt: Date.now(),
+    },
+  });
+}
+
+// ─── GET /api/news/sources — All News Sources ───────────────────────────
+
+export async function handleNewsSources(_request: Request, env: Env): Promise<Response> {
+  const sources = NEWS_SOURCES.map((s) => ({
+    id: s.id,
+    name: s.name,
+    category: s.category,
+    tier: s.tier,
+    credibility: s.credibility,
+    weight: s.weight,
+    type: s.type,
+  }));
+
+  // Count stories per source (cached)
+  let sourceCounts: Record<string, number> = {};
+  try {
+    const cached = await env.CACHE?.get(NEWS_SOURCES_CACHE_KEY);
+    if (cached) {
+      sourceCounts = JSON.parse(cached);
+    } else {
+      // Build counts from recent aggregation
+      const result = await aggregateNews(env, { limit: 100 });
+      sourceCounts = {};
+      for (const story of result.stories) {
+        sourceCounts[story.sourceMeta.id] = (sourceCounts[story.sourceMeta.id] ?? 0) + 1;
+      }
+      await env.CACHE?.put(NEWS_SOURCES_CACHE_KEY, JSON.stringify(sourceCounts), {
+        expirationTtl: NEWS_SOURCES_CACHE_TTL,
+      });
+    }
+  } catch {
+    /* non-critical */
+  }
+
+  return noCacheJsonResponse({
+    data: sources.map((s) => ({
+      ...s,
+      recentStoryCount: sourceCounts[s.id] ?? 0,
+    })),
+    meta: {
+      total: sources.length,
+      fetchedAt: Date.now(),
+    },
+  });
+}
+
+// ─── POST /api/news/preferences — Update News Preferences ────────────────
+
+export async function handleNewsPreferences(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'POST') {
+    return jsonResponse({ error: 'Method not allowed' }, 405);
+  }
+
+  let body: {
+    wallet?: string;
+    topicWeights?: Record<string, number>;
+    sourceBoosts?: Record<string, number>;
+    mutedCategories?: string[];
+    mutedSources?: string[];
+    depthPreference?: string;
+    discoveryRatio?: number;
+  } = {};
+  try {
+    body = (await request.json()) as typeof body;
+  } catch {
+    return jsonResponse({ error: 'Invalid JSON' }, 400);
+  }
+
+  const wallet = body.wallet || '';
+  if (!wallet) {
+    return jsonResponse({ error: 'Wallet address required' }, 400);
+  }
+
+  // Load existing prefs, merge, save
+  const key = `user:news_prefs:${wallet.toLowerCase()}`;
+  let existing: Partial<NewsPreferences> = {};
+  try {
+    const raw = await env.CACHE?.get(key);
+    if (raw) existing = JSON.parse(raw);
+  } catch {
+    /* non-critical */
+  }
+
+  const updated: Partial<NewsPreferences> = {
+    ...existing,
+    ...(body.topicWeights
+      ? { topicWeights: { ...existing.topicWeights, ...body.topicWeights } }
+      : {}),
+    ...(body.sourceBoosts
+      ? { sourceBoosts: { ...existing.sourceBoosts, ...body.sourceBoosts } }
+      : {}),
+    ...(body.mutedCategories ? { mutedCategories: body.mutedCategories } : {}),
+    ...(body.mutedSources ? { mutedSources: body.mutedSources } : {}),
+    ...(body.depthPreference
+      ? { depthPreference: body.depthPreference as NewsPreferences['depthPreference'] }
+      : {}),
+    ...(body.discoveryRatio !== undefined ? { discoveryRatio: body.discoveryRatio } : {}),
+  };
+
+  try {
+    await env.CACHE?.put(key, JSON.stringify(updated), {
+      expirationTtl: 60 * 60 * 24 * 400,
+    });
+  } catch {
+    /* non-critical */
+  }
+
+  return jsonResponse({
+    ok: true,
+    wallet,
+    preferences: updated,
+  });
+}
+
+// ─── GET /api/news/digest/preview — Preview Today's Digest ──────────────
+
+export async function handleNewsDigestPreview(request: Request, env: Env): Promise<Response> {
+  const url = new URL(request.url);
+  const format = url.searchParams.get('format') || 'json';
+  const nichesParam = url.searchParams.get('niches') || '';
+  const niches = nichesParam
+    .split(',')
+    .map((n) => n.trim().toLowerCase())
+    .filter(Boolean);
+
+  // Cache per 5-min bucket
+  const fiveMin = Math.floor(Date.now() / 300000);
+  const cacheKey = `news:digest:preview:v1:${niches.join(',') || 'all'}:${fiveMin}`;
+  try {
+    const cached = await env.CACHE?.get(cacheKey);
+    if (cached && format === 'json') {
+      return noCacheJsonResponse(JSON.parse(cached));
+    }
+  } catch {
+    /* cache miss */
+  }
+
+  // Aggregate
+  const result = await aggregateNews(env, { limit: 50, category: niches[0] || '' });
+  const classifications = classifyStories(result.stories);
+
+  // Pick featured story (highest score + breaking)
+  const featured = result.stories.slice(0, 1).map((s) => ({
+    id: s.id,
+    title: s.title,
+    summary: s.summary.slice(0, 200),
+    url: s.url,
+    source: s.source,
+    author: s.author,
+    publishedAt: s.publishedAt,
+    imageUrl: s.imageUrl,
+    sentiment: s.sentiment,
+    niches: s.niches,
+  }));
+
+  // Build digest sections
+  const sections = [
+    {
+      title: 'Market Update',
+      stories: result.stories
+        .filter((s) => s.categories.some((c) => ['markets', 'macro', 'bitcoin'].includes(c)))
+        .slice(0, 3)
+        .map((s) => ({
+          id: s.id,
+          title: s.title,
+          url: s.url,
+          source: s.source,
+          sentiment: s.sentiment.label,
+        })),
+    },
+    {
+      title: 'Top Stories',
+      stories: result.stories.slice(0, 10).map((s) => ({
+        id: s.id,
+        title: s.title,
+        summary: s.summary.slice(0, 120),
+        url: s.url,
+        source: s.source,
+        author: s.author,
+        publishedAt: s.publishedAt,
+        sentiment: s.sentiment,
+        niches: s.niches.slice(0, 3),
+        isBreaking: s.isBreaking,
+      })),
+    },
+    {
+      title: 'Trending Topics',
+      topics: result.meta.trending.slice(0, 8),
+    },
+    {
+      title: 'On This Day',
+      // Placeholder — retroactive lookup would be archival
+      stories: result.stories
+        .filter((s) => s.score > 8)
+        .slice(0, 3)
+        .map((s) => ({
+          id: s.id,
+          title: s.title,
+          url: s.url,
+          source: s.source,
+        })),
+    },
+  ];
+
+  // Generate auto subject line
+  const topCategory = getTopCategories(classifications, 1)[0];
+  const topToken = result.stories[0]?.entities?.tokens?.[0] || '';
+  const subjectLine = topToken
+    ? `${topToken} ${result.meta.sentiment.bullish > result.meta.sentiment.bearish ? 'surges' : 'dips'} — ${new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}`
+    : `DegenFeed Daily — ${new Date().toDateString()}`;
+
+  const response = {
+    subject: subjectLine,
+    featured: featured[0] || null,
+    sections,
+    meta: {
+      ...result.meta,
+      topCategory: topCategory || null,
+      generatedAt: Date.now(),
+      readTimeMinutes: Math.ceil(
+        result.stories
+          .slice(0, 10)
+          .reduce((sum, s) => sum + Math.ceil(s.body.split(/\s+/).length / 200), 0) / 5,
+      ),
     },
   };
 
   try {
-    await env.CACHE?.put(cacheKey, JSON.stringify(response), {
-      expirationTtl: 300,
-    });
+    await env.CACHE?.put(cacheKey, JSON.stringify(response), { expirationTtl: 300 });
   } catch {
-    /* KV operation failed -- non-critical, continue */
+    /* non-critical */
   }
 
   return noCacheJsonResponse(response);
+}
+
+// ─── POST /api/news/digest/subscribe — Subscribe ────────────────────────
+
+export async function handleNewsDigestSubscribe(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'POST') {
+    return jsonResponse({ error: 'Method not allowed' }, 405);
+  }
+
+  let body: { email?: string; niches?: string[]; frequency?: string } = {};
+  try {
+    body = (await request.json()) as typeof body;
+  } catch {
+    return jsonResponse({ error: 'Invalid JSON' }, 400);
+  }
+
+  const email = (body.email ?? '').trim().toLowerCase();
+  if (!isValidEmail(email)) {
+    return jsonResponse({ error: 'Invalid email' }, 400);
+  }
+
+  const niches = Array.isArray(body.niches)
+    ? body.niches.map((n) => n.toLowerCase()).filter((n) => ALLOWED_NICHES.has(n))
+    : [];
+  const frequency = body.frequency || 'daily';
+
+  const record = { email, niches, frequency, subscribedAt: Date.now() };
+  const key = `news:digest:sub:${safeKey(email)}`;
+  const listKey = 'news:digest:subscribers';
+
+  try {
+    await env.CACHE?.put(key, JSON.stringify(record), {
+      expirationTtl: 60 * 60 * 24 * 400,
+    });
+    const idx = (await env.CACHE?.get(listKey)) ?? '';
+    const set = new Set(idx.split('\n').filter(Boolean));
+    set.add(safeKey(email));
+    await env.CACHE?.put(listKey, [...set].join('\n'), {
+      expirationTtl: 60 * 60 * 24 * 400,
+    });
+  } catch {
+    /* non-critical */
+  }
+
+  return jsonResponse({
+    ok: true,
+    email,
+    niches,
+    frequency,
+    action: 'subscribed',
+  });
+}
+
+// ─── Router ───────────────────────────────────────────────────────────────
+
+export async function handleNewsRoute(request: Request, env: Env): Promise<Response> {
+  const url = new URL(request.url);
+  const path = url.pathname;
+
+  // Parse route path
+  if (path === '/api/news/feed' || path === '/api/news') {
+    return handleNewsFeed(request, env);
+  }
+  if (path === '/api/news/trending') {
+    return handleNewsTrending(request, env);
+  }
+  if (path === '/api/news/search') {
+    return handleNewsSearch(request, env);
+  }
+  if (path === '/api/news/sources') {
+    return handleNewsSources(request, env);
+  }
+  if (path === '/api/news/preferences') {
+    return handleNewsPreferences(request, env);
+  }
+  if (path === '/api/news/digest/preview') {
+    return handleNewsDigestPreview(request, env);
+  }
+  if (path === '/api/news/digest/subscribe') {
+    return handleNewsDigestSubscribe(request, env);
+  }
+  if (path.startsWith('/api/news/story/')) {
+    return handleNewsStory(request, env);
+  }
+  if (path.startsWith('/api/news/category/')) {
+    return handleNewsCategory(request, env);
+  }
+
+  // Default: feed
+  return handleNewsFeed(request, env);
 }

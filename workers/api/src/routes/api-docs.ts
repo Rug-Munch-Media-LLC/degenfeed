@@ -133,6 +133,7 @@ export async function handleOpenApiJson(_request: Request, _env: Env): Promise<R
       'content-type': 'application/json',
       'access-control-allow-origin': '*',
       'cache-control': 'public, max-age=3600',
+      'content-security-policy': "default-src 'none'",
     },
   });
 }
@@ -155,6 +156,16 @@ export async function handleApiDocs(request: Request): Promise<Response> {
     headers: {
       'content-type': 'text/html; charset=utf-8',
       'cache-control': 'public, max-age=3600',
+      'content-security-policy':
+        "default-src 'self'; " +
+        "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; " +
+        "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; " +
+        "img-src 'self' data:; " +
+        "connect-src 'self' https:; " +
+        "font-src 'self' https://cdn.jsdelivr.net; " +
+        "frame-ancestors 'none'; " +
+        "base-uri 'self'; " +
+        "form-action 'none'",
     },
   });
 }

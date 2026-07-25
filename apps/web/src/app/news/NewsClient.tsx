@@ -4,32 +4,88 @@ import type { UnifiedPost } from '@degenfeed/types';
 import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-interface NewsMeta {
-  total: number;
-  limit: number;
-  category: string;
-  query?: string;
-  mustRead: boolean;
-  trending: Array<{ topic: string; count: number; score: number }>;
-  sourceCounts: Record<string, number>;
-  fetchedAt: number;
-  sources: number;
-  sentiment?: Record<string, number>;
-  sourceCount?: number;
-  tiers?: string[];
+// ─── Types ────────────────────────────────────────────────────────────────
+
+interface NewsSourceMeta {
+  id: string;
+  name: string;
+  tier: number;
+  credibility: number;
 }
 
-interface NewsRaw {
-  mustRead?: boolean;
-  tier?: number;
-  sourceName?: string;
-  sentiment?: string;
-  sentimentScore?: number;
-  kind?: string;
-  chain?: string;
-  tokenAddress?: string;
-  riskScore?: number;
+interface SentimentResult {
+  label: 'bullish' | 'bearish' | 'neutral';
+  score: number;
+  confidence: number;
+  signals: string[];
 }
+
+interface StoryEntities {
+  tokens: string[];
+  protocols: string[];
+  people: string[];
+  companies: string[];
+  chains: string[];
+  nfts: string[];
+}
+
+interface StoryCluster {
+  id: string;
+  title: string;
+  storyCount: number;
+  topCategories: string[];
+  aggregateSentiment: SentimentResult;
+}
+
+interface NewsStory {
+  id: string;
+  title: string;
+  summary: string;
+  url: string;
+  source: string;
+  sourceMeta: NewsSourceMeta;
+  author: string;
+  publishedAt: number;
+  imageUrl?: string;
+  categories: string[];
+  niches: string[];
+  sentiment: SentimentResult;
+  entities: StoryEntities;
+  alsoCoveredBy: string[];
+  isBreaking: boolean;
+  velocity: number;
+  score: number;
+  isDiscovery?: boolean;
+  scoreComponents?: {
+    topicalRelevance: number;
+    sourceCredibility: number;
+    freshness: number;
+    engagementVelocity: number;
+    depthMatch: number;
+    total: number;
+  };
+}
+
+interface NewsMeta {
+  total: number;
+  sourceCount: number;
+  fetchedAt: number;
+  errors: string[];
+  sentiment: { bullish: number; bearish: number; neutral: number };
+  trending: Array<{ topic: string; count: number; score: number }>;
+  category: string;
+  query?: string;
+  personalized: boolean;
+  topCategories: Array<{
+    categoryId: string;
+    label: string;
+    emoji: string;
+    count: number;
+    avgConfidence: number;
+  }>;
+}
+
+// ─── Constants ────────────────────────────────────────────────────────────
 
 const CATEGORIES = [
   { id: '', label: 'All', emoji: '🌐' },
@@ -40,32 +96,33 @@ const CATEGORIES = [
   { id: 'ai', label: 'AI', emoji: '🤖' },
   { id: 'security', label: 'Security', emoji: '🛡️' },
   { id: 'regulation', label: 'Regulation', emoji: '⚖️' },
+  { id: 'markets', label: 'Markets', emoji: '📈' },
   { id: 'macro', label: 'Macro', emoji: '📊' },
-  { id: 'mining', label: 'Mining', emoji: '⛏️' },
+  { id: 'layer2', label: 'L2', emoji: '⚡' },
+  { id: 'nft', label: 'NFTs', emoji: '🖼️' },
+  { id: 'memes', label: 'Memes', emoji: '🐸' },
+  { id: 'vc', label: 'VC', emoji: '💰' },
+  { id: 'gaming', label: 'Gaming', emoji: '🎮' },
   { id: 'privacy', label: 'Privacy', emoji: '👁️' },
   { id: 'onchain', label: 'On-Chain', emoji: '🔗' },
-  { id: 'vc', label: 'VC', emoji: '💰' },
-  { id: 'nft', label: 'NFTs', emoji: '🖼️' },
-  { id: 'layer2', label: 'L2', emoji: '⚡' },
-  { id: 'memecoin', label: 'Memes', emoji: '🐸' },
   { id: 'stablecoin', label: 'Stablecoins', emoji: '💲' },
-  { id: 'etf', label: 'ETFs', emoji: '📈' },
 ];
 
-const SOURCE_TABS = [
-  { id: 'all', label: 'All Sources' },
-  { id: 'rss', label: 'RSS' },
-  { id: 'reddit', label: 'Reddit' },
-  { id: 'hackernews', label: 'HN' },
+const SORT_OPTIONS = [
+  { id: 'score', label: 'Recommended' },
+  { id: 'newest', label: 'Newest' },
+  { id: 'trending', label: 'Trending' },
 ];
+
+// ─── Helpers ──────────────────────────────────────────────────────────────
 
 function formatTime(ts: number): string {
   const diff = Date.now() - ts;
   const mins = Math.floor(diff / 60000);
-  if (mins < 60) return `${mins}m`;
+  if (mins < 60) return `${mins}m ago`;
   const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h`;
-  return `${Math.floor(hours / 24)}d`;
+  if (hours < 24) return `${hours}h ago`;
+  return `${Math.floor(hours / 24)}d ago`;
 }
 
 function stripTags(html: string): string {
@@ -82,161 +139,322 @@ function stripTags(html: string): string {
     .trim();
 }
 
-function getRaw(post: UnifiedPost): NewsRaw {
-  const raw = post.raw as NewsRaw | undefined;
-  return raw ?? {};
+function sentimentColor(s: SentimentResult | null | undefined): string {
+  if (!s) return 'text-gray-400 bg-gray-500/10 border-gray-500/20';
+  if (s.label === 'bullish') return 'text-green-400 bg-green-500/10 border-green-500/20';
+  if (s.label === 'bearish') return 'text-red-400 bg-red-500/10 border-red-500/20';
+  return 'text-gray-400 bg-gray-500/10 border-gray-500/20';
 }
 
-function sentimentColor(s: string | null | undefined): string {
-  const t = (s ?? '').toLowerCase();
-  if (t.includes('bullish')) return 'text-green-400 bg-green-500/10 border-green-500/20';
-  if (t.includes('bearish')) return 'text-red-400 bg-red-500/10 border-red-500/20';
-  return 'text-[var(--color-muted)] bg-[color-mix(in_srgb,var(--color-muted)_10%,transparent)] border-[color-mix(in_srgb,var(--color-muted)_20%,transparent)]';
-}
-
-function sentimentEmoji(s: string | null | undefined): string {
-  const t = (s ?? '').toLowerCase();
-  if (t.includes('bullish')) return '🟢';
-  if (t.includes('bearish')) return '🔴';
+function sentimentEmoji(s: SentimentResult | null | undefined): string {
+  if (!s) return '⚪';
+  if (s.label === 'bullish') return '🟢';
+  if (s.label === 'bearish') return '🔴';
   return '⚪';
 }
 
-function sourceIcon(kind: string | null | undefined): string {
-  const k = (kind ?? '').toLowerCase();
-  if (k === 'reddit') return '🔴';
-  if (k === 'hackernews') return '🟠';
-  if (k === 'rss') return '📡';
-  return '📰';
+function sourceIcon(source: string): string {
+  const s = source.toLowerCase();
+  if (s.includes('reddit')) return '🔴';
+  if (s.includes('hacker') || s.includes('hn')) return '🟠';
+  if (s.includes('nostr')) return '⚡';
+  if (s.includes('farcaster')) return '🟣';
+  if (s.includes('bluesky')) return '🦋';
+  return '📡';
 }
 
-function NewsCard({ post }: { post: UnifiedPost }) {
-  const raw = getRaw(post);
-  const mustRead = raw.mustRead;
-  const tier = raw.tier;
-  const sentiment = raw.sentiment;
-  const kind = raw.kind;
-  const imageEmbed = post.embeds.find((e) => e.kind === 'image');
-  const linkEmbed = post.embeds.find((e) => e.kind === 'link');
-  const url = linkEmbed?.url || '#';
-  const title =
-    stripTags(post.text).slice(0, 120).split(' ').slice(0, -1).join(' ') || post.text.slice(0, 100);
-  const desc = stripTags(post.html || post.text).slice(0, 200);
+function tierBadge(tier: number): { label: string; color: string } {
+  if (tier === 1)
+    return { label: 'Tier 1', color: 'text-yellow-400 bg-yellow-500/10 ring-yellow-500/20' };
+  if (tier === 2)
+    return { label: 'Tier 2', color: 'text-blue-400 bg-blue-500/10 ring-blue-500/20' };
+  return { label: `Tier ${tier}`, color: 'text-gray-400 bg-gray-500/10 ring-gray-500/20' };
+}
+
+// ─── Hero Card ────────────────────────────────────────────────────────────
+
+function HeroCard({ story }: { story: NewsStory }) {
+  return (
+    <a
+      href={story.url}
+      target="_blank"
+      rel="noopener"
+      className="group relative flex flex-col overflow-hidden rounded-xl border border-degen-500/20 bg-gradient-to-b from-gray-800/90 to-gray-900/90 transition-all duration-300 hover:border-degen-500/40 hover:shadow-[0_0_32px_rgba(34,197,94,0.12)] md:flex-row"
+    >
+      {story.imageUrl && (
+        <div className="relative aspect-video w-full overflow-hidden md:w-2/5 md:aspect-auto">
+          <Image
+            src={story.imageUrl}
+            alt={story.title}
+            fill
+            className="object-cover transition-transform duration-500 group-hover:scale-105"
+            loading="eager"
+          />
+        </div>
+      )}
+      <div className="flex flex-1 flex-col justify-center p-6">
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          {story.isBreaking && (
+            <span className="animate-pulse rounded-md bg-red-500/15 px-2 py-0.5 text-[10px] font-bold text-red-400 ring-1 ring-red-500/30">
+              BREAKING
+            </span>
+          )}
+          <span className="rounded-md bg-degen-500/15 px-2 py-0.5 text-[10px] font-bold text-degen-400 ring-1 ring-degen-500/20">
+            FEATURED
+          </span>
+          <span className="text-xs text-gray-400">
+            {sourceIcon(story.source)} {story.source}
+          </span>
+          <span className="ml-auto text-xs text-gray-400">{formatTime(story.publishedAt)}</span>
+        </div>
+        <h2 className="mb-2 text-xl font-bold leading-tight text-white transition-colors group-hover:text-degen-400 md:text-2xl">
+          {story.title}
+        </h2>
+        <p className="mb-4 text-sm leading-relaxed text-gray-300 line-clamp-2">{story.summary}</p>
+        <div className="flex flex-wrap items-center gap-3">
+          <span
+            className={`rounded-md border px-2 py-0.5 text-xs ${sentimentColor(story.sentiment)}`}
+          >
+            {sentimentEmoji(story.sentiment)} {story.sentiment.label}
+          </span>
+          {story.alsoCoveredBy.length > 1 && (
+            <span className="text-xs text-gray-400">
+              Also covered by{' '}
+              {story.alsoCoveredBy
+                .filter((s) => s !== story.source)
+                .slice(0, 2)
+                .join(', ')}
+              {story.alsoCoveredBy.length > 3 && ` +${story.alsoCoveredBy.length - 2} more`}
+            </span>
+          )}
+          <div className="flex flex-wrap gap-1">
+            {story.niches.slice(0, 3).map((niche) => (
+              <span
+                key={niche}
+                className="rounded-full bg-gray-700/50 px-2 py-0.5 text-[10px] text-gray-400"
+              >
+                #{niche}
+              </span>
+            ))}
+          </div>
+        </div>
+        {/* Token tags */}
+        {story.entities.tokens.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-1">
+            {story.entities.tokens.slice(0, 5).map((token) => (
+              <span
+                key={token}
+                className="rounded-md bg-yellow-500/10 px-2 py-0.5 text-[10px] font-mono text-yellow-400 ring-1 ring-yellow-500/20"
+              >
+                ${token}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+    </a>
+  );
+}
+
+// ─── Story Card ───────────────────────────────────────────────────────────
+
+function StoryCard({ story, compact = false }: { story: NewsStory; compact?: boolean }) {
+  const badge = tierBadge(story.sourceMeta.tier);
 
   return (
-    <article className="card-hover group relative flex flex-col overflow-hidden border border-[var(--color-glass-border)] bg-gradient-to-b from-gray-900/80 to-gray-950/80 transition-all duration-300 hover:border-degen-500/20 hover:shadow-[0_0_24px_rgba(34,197,94,0.08)]">
-      {imageEmbed && (
+    <article className="card-hover group relative flex flex-col overflow-hidden rounded-xl border border-gray-800 bg-gradient-to-b from-gray-900/80 to-gray-950/80 transition-all duration-300 hover:border-degen-500/20 hover:shadow-[0_0_16px_rgba(34,197,94,0.06)]">
+      {story.imageUrl && !compact && (
         <a
-          href={url}
+          href={story.url}
           target="_blank"
-          className="block aspect-video w-full overflow-hidden"
           rel="noopener"
+          className="block aspect-video w-full overflow-hidden"
         >
           <Image
-            src={imageEmbed.url}
-            alt={post.text?.slice(0, 100) || 'News article image'}
-            width={800}
-            height={450}
+            src={story.imageUrl}
+            alt={story.title}
+            width={400}
+            height={225}
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
             loading="lazy"
           />
         </a>
       )}
       <div className="flex flex-1 flex-col p-4">
+        {/* Meta row */}
         <div className="mb-2 flex flex-wrap items-center gap-1.5">
-          <span className="rounded-md bg-[var(--color-muted)] px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-[var(--color-muted)]">
-            {sourceIcon(kind)} {post.author.displayName}
+          <span className="rounded-md bg-gray-700/50 px-1.5 py-0.5 text-[10px] font-medium text-gray-400">
+            {sourceIcon(story.source)} {story.author}
           </span>
-          {mustRead && (
-            <span className="rounded-md bg-degen-500/15 px-1.5 py-0.5 text-[10px] font-medium text-degen-400 ring-1 ring-degen-500/20">
-              Must Read
+          {story.isBreaking && (
+            <span className="rounded-md bg-red-500/15 px-1.5 py-0.5 text-[10px] font-bold text-red-400 ring-1 ring-red-500/30">
+              BREAKING
             </span>
           )}
-          {tier === 1 && !mustRead && (
-            <span className="rounded-md bg-yellow-500/10 px-1.5 py-0.5 text-[10px] font-medium text-yellow-400 ring-1 ring-yellow-500/20">
-              Tier 1
-            </span>
-          )}
-          {sentiment && (
-            <span
-              className={`rounded-md border px-1.5 py-0.5 text-[10px] font-medium ${sentimentColor(sentiment)}`}
-            >
-              {sentimentEmoji(sentiment)} {sentiment}
-            </span>
-          )}
-          <span className="ml-auto text-[10px] text-[var(--color-muted)]">
-            {formatTime(post.createdAt)}
+          <span className={`rounded-md px-1.5 py-0.5 text-[10px] font-medium ${badge.color}`}>
+            {badge.label}
           </span>
+          <span
+            className={`rounded-md border px-1.5 py-0.5 text-[10px] ${sentimentColor(story.sentiment)}`}
+          >
+            {sentimentEmoji(story.sentiment)} {story.sentiment.label}
+          </span>
+          <span className="ml-auto text-[10px] text-gray-500">{formatTime(story.publishedAt)}</span>
         </div>
 
+        {/* Title */}
         <a
-          href={url}
+          href={story.url}
           target="_blank"
-          className="mb-2 block text-sm font-semibold leading-snug text-[var(--color-fg)] transition-colors group-hover:text-degen-400 line-clamp-2"
           rel="noopener"
+          className="mb-2 block text-sm font-semibold leading-snug text-white transition-colors group-hover:text-degen-400 line-clamp-2"
         >
-          {title}
+          {story.title}
         </a>
 
-        <p className="mb-3 text-xs leading-relaxed text-[var(--color-muted)] line-clamp-2">
-          {desc}
-        </p>
+        {/* Summary */}
+        <p className="mb-3 text-xs leading-relaxed text-gray-400 line-clamp-2">{story.summary}</p>
 
-        <div className="mt-auto flex flex-wrap gap-1">
-          {post.niches.slice(0, 4).map((niche) => (
+        {/* Story metadata */}
+        <div className="mt-auto flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap gap-1">
+            {story.niches.slice(0, 3).map((niche) => (
+              <span
+                key={niche}
+                className="rounded-full bg-gray-700/30 px-2 py-0.5 text-[10px] text-gray-400"
+              >
+                #{niche}
+              </span>
+            ))}
+          </div>
+          {story.alsoCoveredBy.length > 1 && (
             <span
-              key={niche}
-              className="rounded-full bg-[var(--color-muted)] px-2 py-0.5 text-[10px] text-[var(--color-muted)]"
+              className="text-[10px] text-gray-500"
+              title={`Also covered by: ${story.alsoCoveredBy.join(', ')}`}
             >
-              #{niche}
+              📰 {story.alsoCoveredBy.length}sources
             </span>
-          ))}
+          )}
         </div>
+
+        {/* Token tags for compact mode */}
+        {compact && story.entities.tokens.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-1">
+            {story.entities.tokens.slice(0, 3).map((token) => (
+              <span
+                key={token}
+                className="rounded bg-yellow-500/10 px-1.5 py-0.5 text-[9px] font-mono text-yellow-400"
+              >
+                ${token}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Score bar */}
+        {story.scoreComponents && (
+          <div className="mt-2 flex items-center gap-2">
+            <div className="flex-1 h-1 rounded-full bg-gray-700">
+              <div
+                className="h-1 rounded-full bg-degen-500 transition-all"
+                style={{ width: `${Math.min(100, story.scoreComponents.topicalRelevance * 100)}%` }}
+              />
+            </div>
+            <span className="text-[10px] text-gray-500">
+              {Math.round(story.scoreComponents.total * 10) / 10}
+            </span>
+          </div>
+        )}
       </div>
     </article>
   );
 }
 
-function SentimentBar({ sentiment }: { sentiment: Record<string, number> | undefined }) {
+// ─── Cluster Card ─────────────────────────────────────────────────────────
+
+function ClusterCard({ cluster, onClick }: { cluster: StoryCluster; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="w-full rounded-xl border border-gray-800 bg-gray-900/50 p-3 text-left transition-all hover:border-degen-500/20 hover:bg-gray-900/80"
+    >
+      <div className="mb-1 flex items-center gap-2">
+        <span className="text-xs font-bold text-degen-400">📊 CLUSTER</span>
+        <span className="text-xs text-gray-500">{cluster.storyCount} stories</span>
+      </div>
+      <p className="text-sm font-medium text-white line-clamp-2">{cluster.title}</p>
+      <div className="mt-1 flex flex-wrap gap-1">
+        {cluster.topCategories.slice(0, 3).map((cat) => (
+          <span
+            key={cat}
+            className="rounded-full bg-gray-700/30 px-2 py-0.5 text-[9px] text-gray-400"
+          >
+            {cat}
+          </span>
+        ))}
+      </div>
+    </button>
+  );
+}
+
+// ─── Sentiment Bar ────────────────────────────────────────────────────────
+
+function SentimentBar({
+  sentiment,
+}: {
+  sentiment: { bullish: number; bearish: number; neutral: number } | undefined;
+}) {
   if (!sentiment || Object.keys(sentiment).length === 0) return null;
-  const total = Object.values(sentiment).reduce((a, b) => a + b, 0);
+  const total = sentiment.bullish + sentiment.bearish + sentiment.neutral;
   if (total === 0) return null;
-  const bullish = ((sentiment.bullish ?? 0) / total) * 100;
-  const bearish = ((sentiment.bearish ?? 0) / total) * 100;
-  const neutral = ((sentiment.neutral ?? 0) / total) * 100;
+  const bullish = (sentiment.bullish / total) * 100;
+  const bearish = (sentiment.bearish / total) * 100;
+  const neutral = (sentiment.neutral / total) * 100;
   return (
     <div className="mb-4">
-      <div className="mb-1 flex items-center justify-between text-[11px] text-[var(--color-muted)]">
+      <div className="mb-1 flex items-center justify-between text-xs text-gray-400">
         <span>Market Sentiment</span>
         <span className="text-green-400">🟢 {Math.round(bullish)}%</span>
-        <span className="text-[var(--color-muted)]">⚪ {Math.round(neutral)}%</span>
+        <span className="text-gray-400">⚪ {Math.round(neutral)}%</span>
         <span className="text-red-400">🔴 {Math.round(bearish)}%</span>
       </div>
-      <div className="flex h-1.5 overflow-hidden rounded-full bg-[var(--color-muted)]">
+      <div className="flex h-2 overflow-hidden rounded-full bg-gray-700/50">
         <div className="bg-green-500 transition-all" style={{ width: `${bullish}%` }} />
-        <div className="bg-[var(--color-muted)] transition-all" style={{ width: `${neutral}%` }} />
+        <div className="bg-gray-500 transition-all" style={{ width: `${neutral}%` }} />
         <div className="bg-red-500 transition-all" style={{ width: `${bearish}%` }} />
       </div>
     </div>
   );
 }
 
+// ─── Main Component ──────────────────────────────────────────────────────
+
 interface NewsClientProps {
-  initialPosts: UnifiedPost[];
-  initialMeta: NewsMeta | null;
+  initialStories?: NewsStory[];
+  initialMeta?: NewsMeta | null;
+  initialClusters?: StoryCluster[];
 }
 
-export default function NewsClient({ initialPosts, initialMeta }: NewsClientProps) {
-  const [posts, setPosts] = useState<UnifiedPost[]>(initialPosts);
+export default function NewsClient({
+  initialStories = [],
+  initialMeta = null,
+  initialClusters = [],
+}: NewsClientProps) {
+  const [stories, setStories] = useState<NewsStory[]>(initialStories);
+  const [clusters, setClusters] = useState<StoryCluster[]>(initialClusters);
   const [meta, setMeta] = useState<NewsMeta | null>(initialMeta);
   const [state, setState] = useState<'loading' | 'loaded' | 'error'>('loaded');
   const [error, setError] = useState<string>();
   const [category, setCategory] = useState('');
   const [query, setQuery] = useState('');
-  const [mustRead, setMustRead] = useState(false);
+  const [sort, setSort] = useState<string>('score');
   const [searchInput, setSearchInput] = useState('');
-  const [sourceTab, setSourceTab] = useState('all');
   const [newAvailable, setNewAvailable] = useState(false);
+  const [showSidebar, setShowSidebar] = useState(true);
+  const [selectedStory, setSelectedStory] = useState<NewsStory | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const feedRef = useRef<HTMLDivElement>(null);
 
   const fetchNews = useCallback(
     async (showIndicator = false) => {
@@ -244,17 +462,18 @@ export default function NewsClient({ initialPosts, initialMeta }: NewsClientProp
       try {
         const params = new URLSearchParams();
         params.set('limit', '50');
+        params.set('sort', sort);
         if (category) params.set('category', category);
         if (query) params.set('q', query);
-        if (mustRead) params.set('mustRead', 'true');
 
-        const res = await fetch(`/api/feed/news?${params.toString()}`, {
+        const res = await fetch(`/api/news/feed?${params.toString()}`, {
           credentials: 'include',
           cache: 'no-store',
           headers: { 'cache-control': 'no-store' },
         });
         const data = (await res.json()) as {
-          data?: UnifiedPost[];
+          data?: NewsStory[];
+          clusters?: StoryCluster[];
           meta?: NewsMeta;
           error?: string;
         };
@@ -265,7 +484,8 @@ export default function NewsClient({ initialPosts, initialMeta }: NewsClientProp
           return;
         }
 
-        setPosts(data.data || []);
+        setStories(data.data || []);
+        setClusters(data.clusters || []);
         setMeta(data.meta || null);
         setState('loaded');
       } catch (err) {
@@ -275,7 +495,7 @@ export default function NewsClient({ initialPosts, initialMeta }: NewsClientProp
         }
       }
     },
-    [category, query, mustRead],
+    [category, query, sort],
   );
 
   const refreshNow = useCallback(() => {
@@ -284,9 +504,8 @@ export default function NewsClient({ initialPosts, initialMeta }: NewsClientProp
   }, [fetchNews]);
 
   useEffect(() => {
-    if (category === '' && query === '' && !mustRead) return;
     fetchNews(false);
-  }, [category, fetchNews, mustRead, query]);
+  }, [category, sort, query, fetchNews]);
 
   useEffect(() => {
     intervalRef.current = setInterval(() => fetchNews(true), 60000);
@@ -300,57 +519,42 @@ export default function NewsClient({ initialPosts, initialMeta }: NewsClientProp
     setQuery(searchInput);
   };
 
-  const filteredPosts =
-    sourceTab === 'all'
-      ? posts
-      : posts.filter((p) => {
-          const raw = getRaw(p);
-          const kind = (raw.kind ?? '').toLowerCase();
-          if (sourceTab === 'rss')
-            return kind === 'rss' && !raw.sourceName?.toLowerCase().includes('reddit');
-          if (sourceTab === 'reddit')
-            return kind === 'reddit' || raw.sourceName?.toLowerCase().includes('reddit');
-          if (sourceTab === 'hackernews') return kind === 'hackernews';
-          return true;
-        });
-
   const sentiment = meta?.sentiment ?? undefined;
-  const sourceCount = meta?.sourceCount ?? meta?.sources ?? 0;
+
+  // Featured story (hero at top)
+  const featuredStory = stories.find((s) => s.isBreaking) || stories[0];
+  const remainingStories = stories.filter((s) => s.id !== featuredStory?.id) || [];
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6">
-      {/* AI Summary Header */}
-      <div className="mb-8">
+      {/* Header */}
+      <div className="mb-6">
         <div className="mb-4 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-          <div className="flex-1">
+          <div>
             <div className="mb-1 flex items-center gap-3">
-              <h1 className="text-3xl font-bold tracking-tight text-[var(--color-fg)]">
-                DegenFeed News
-              </h1>
-              <span className="rounded-full bg-degen-500/10 px-2.5 py-0.5 text-[11px] font-medium text-degen-400 ring-1 ring-degen-500/20">
+              <h1 className="text-3xl font-bold tracking-tight text-white">DegenFeed News</h1>
+              <span className="rounded-full bg-degen-500/10 px-2.5 py-0.5 text-xs font-medium text-degen-400 ring-1 ring-degen-500/20">
                 LIVE
               </span>
+              {meta?.personalized && (
+                <span className="rounded-full bg-blue-500/10 px-2.5 py-0.5 text-xs font-medium text-blue-400 ring-1 ring-blue-500/20">
+                  Personalized
+                </span>
+              )}
             </div>
-            <p className="mt-1 text-sm text-[var(--color-muted)]">
-              Curated intelligence from {sourceCount || '353+'} sources across RSS, Reddit, and
-              Hacker News — ranked by quality, recency, and sentiment.
+            <p className="mt-1 text-sm text-gray-400">
+              Intelligent news from {meta?.sourceCount || '50+'} sources across RSS, Nostr,
+              Farcaster, Bluesky, Reddit, and newsletters
+              {meta?.personalized ? ' — ranked for your interests' : ''}
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-3 text-right">
             {meta && (
-              <p className="text-xs text-[var(--color-muted)]">
-                <span className="text-degen-400">{filteredPosts.length}</span> stories · updated{' '}
+              <p className="text-xs text-gray-400">
+                <span className="text-degen-400">{stories.length}</span> stories · updated{' '}
                 {formatTime(meta.fetchedAt)}
               </p>
             )}
-            <a
-              href="/api/feed/rss.xml?category=news"
-              target="_blank"
-              className="rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-xs text-[var(--color-muted)] transition-colors hover:border-degen-500/30 hover:text-degen-400"
-              rel="noopener"
-            >
-              RSS
-            </a>
           </div>
         </div>
 
@@ -367,7 +571,7 @@ export default function NewsClient({ initialPosts, initialMeta }: NewsClientProp
           </button>
         )}
 
-        {/* Search + Must Read */}
+        {/* Search + Sort */}
         <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center">
           <form onSubmit={handleSearch} className="flex-1">
             <div className="relative">
@@ -376,7 +580,7 @@ export default function NewsClient({ initialPosts, initialMeta }: NewsClientProp
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 placeholder="Search news, tokens, topics..."
-                className="input pr-20"
+                className="w-full rounded-xl border border-gray-700 bg-gray-900/80 px-4 py-2.5 text-sm text-white placeholder-gray-500 outline-none transition-colors focus:border-degen-500/50 focus:ring-1 focus:ring-degen-500/30"
               />
               <button
                 type="submit"
@@ -386,16 +590,31 @@ export default function NewsClient({ initialPosts, initialMeta }: NewsClientProp
               </button>
             </div>
           </form>
+
+          {/* Sort options */}
+          <div className="flex gap-1">
+            {SORT_OPTIONS.map((opt) => (
+              <button
+                key={opt.id}
+                type="button"
+                onClick={() => setSort(opt.id)}
+                className={`rounded-lg px-3 py-2 text-xs font-medium transition-all ${
+                  sort === opt.id
+                    ? 'bg-degen-500/20 text-degen-400 ring-1 ring-degen-500/30'
+                    : 'text-gray-400 hover:text-white'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+
           <button
             type="button"
-            onClick={() => setMustRead((v) => !v)}
-            className={`rounded-xl border px-4 py-2.5 text-xs font-medium transition-colors ${
-              mustRead
-                ? 'border-degen-500 bg-degen-500/20 text-degen-400'
-                : 'card-hover text-[var(--color-muted)]'
-            }`}
+            onClick={() => setShowSidebar(!showSidebar)}
+            className="rounded-lg border border-gray-700 px-3 py-2 text-xs text-gray-400 transition-colors hover:border-gray-600"
           >
-            Must Read
+            {showSidebar ? 'Hide Sidebar' : 'Show Sidebar'}
           </button>
         </div>
 
@@ -409,136 +628,310 @@ export default function NewsClient({ initialPosts, initialMeta }: NewsClientProp
               className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-all ${
                 category === c.id
                   ? 'border-degen-500 bg-degen-500/20 text-degen-400 shadow-[0_0_12px_rgba(34,197,94,0.2)]'
-                  : 'card-hover text-[var(--color-muted)]'
+                  : 'border-gray-700 text-gray-400 hover:border-gray-600 hover:text-white'
               }`}
             >
               {c.emoji} {c.label}
             </button>
           ))}
         </div>
-
-        {/* Source tabs */}
-        <div className="flex gap-1 border-b border-[var(--color-glass-border)] pb-2">
-          {SOURCE_TABS.map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => setSourceTab(tab.id)}
-              className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
-                sourceTab === tab.id
-                  ? 'bg-[var(--color-muted)] text-[var(--color-fg)]'
-                  : 'text-[var(--color-muted)] hover:text-[var(--color-muted)]'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
       </div>
 
-      {/* Main content */}
-      <div className="grid gap-6 lg:grid-cols-4">
-        <div className="lg:col-span-3">
+      {/* Main 3-column layout */}
+      <div className={`grid gap-6 ${showSidebar ? 'lg:grid-cols-4' : 'lg:grid-cols-1'}`}>
+        {/* Left sidebar — categories, sources, preferences */}
+        {showSidebar && (
+          <aside className="space-y-4">
+            {/* Top Categories */}
+            {meta?.topCategories && meta.topCategories.length > 0 && (
+              <div className="rounded-xl border border-gray-800 bg-gray-900/50 p-4">
+                <h3 className="mb-3 text-xs font-semibold uppercase tracking-widest text-gray-400">
+                  Top Categories
+                </h3>
+                <div className="space-y-2">
+                  {meta.topCategories.slice(0, 8).map((cat) => (
+                    <button
+                      key={cat.categoryId}
+                      type="button"
+                      onClick={() => setCategory(cat.categoryId)}
+                      className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-xs transition-all ${
+                        category === cat.categoryId
+                          ? 'bg-degen-500/10 text-degen-400'
+                          : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+                      }`}
+                    >
+                      <span>
+                        {cat.emoji} {cat.label}
+                      </span>
+                      <span className="rounded-full bg-gray-700/50 px-2 py-0.5 text-[10px]">
+                        {cat.count}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Newsletters CTA */}
+            <div className="rounded-xl border border-degen-500/10 bg-gradient-to-br from-degen-500/5 to-gray-900/80 p-4">
+              <h3 className="mb-2 text-xs font-semibold uppercase tracking-widest text-degen-400">
+                Daily Digest
+              </h3>
+              <p className="mb-3 text-xs text-gray-400">
+                The top stories delivered to your inbox every morning — with AI voice summaries,
+                market data, and trending topics.
+              </p>
+              <a
+                href="/newsletter"
+                className="block rounded-lg bg-degen-500 px-3 py-2 text-center text-xs font-medium text-black hover:bg-degen-400"
+              >
+                Subscribe →
+              </a>
+            </div>
+
+            {/* Trending Topics */}
+            {meta?.trending && meta.trending.length > 0 && (
+              <div className="rounded-xl border border-gray-800 bg-gray-900/50 p-4">
+                <h3 className="mb-3 text-xs font-semibold uppercase tracking-widest text-gray-400">
+                  🔥 Trending
+                </h3>
+                <div className="flex flex-wrap gap-1.5">
+                  {meta.trending.map((t) => (
+                    <button
+                      key={t.topic}
+                      type="button"
+                      onClick={() => {
+                        setQuery(t.topic);
+                        setSearchInput(t.topic);
+                      }}
+                      className="rounded-full bg-gray-800 px-2.5 py-1 text-xs text-gray-300 transition-colors hover:bg-gray-700 hover:text-white"
+                    >
+                      #{t.topic}
+                      <span className="ml-1 text-[10px] text-gray-500">{t.count}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Story Clusters */}
+            {clusters.length > 0 && (
+              <div className="rounded-xl border border-gray-800 bg-gray-900/50 p-4">
+                <h3 className="mb-3 text-xs font-semibold uppercase tracking-widest text-gray-400">
+                  📊 Story Clusters
+                </h3>
+                <div className="space-y-2">
+                  {clusters.slice(0, 5).map((cluster) => (
+                    <ClusterCard
+                      key={cluster.id}
+                      cluster={cluster}
+                      onClick={() => {
+                        // Scroll to feed
+                        feedRef.current?.scrollIntoView({ behavior: 'smooth' });
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* How it works */}
+            <div className="rounded-xl border border-gray-800 bg-gray-900/50 p-4">
+              <h3 className="mb-2 text-xs font-semibold uppercase tracking-widest text-gray-400">
+                How it works
+              </h3>
+              <ul className="space-y-1.5 text-xs text-gray-400">
+                <li>• Aggregated from 50+ RSS, Nostr, Farcaster, Bluesky, Reddit sources</li>
+                <li>• Deduplicated by URL + content similarity (Jaccard index)</li>
+                <li>• Categorized by keyword + source + TF-IDF + cross-reference</li>
+                <li>• Entity extraction: tokens, protocols, people, companies</li>
+                <li>• Sentiment-analyzed: bullish / bearish / neutral per story</li>
+                <li>• Breaking news boosted 3× for first hour</li>
+                <li>• Story clusters group related coverage</li>
+                <li>• Credibility-scored by source tier + coverage breadth</li>
+                <li>• Personalized if wallet connected</li>
+              </ul>
+            </div>
+          </aside>
+        )}
+
+        {/* Center: news feed */}
+        <div className={`${showSidebar ? 'lg:col-span-2' : 'lg:col-span-1'}`}>
           {state === 'error' && (
-            <div className="card border-red-900/50 bg-red-900/10 py-12 text-center">
+            <div className="rounded-xl border border-red-900/50 bg-red-900/10 py-12 text-center">
               <div className="mb-2 text-4xl text-red-400">!</div>
-              <p className="text-red-300">{error}</p>
-              <button type="button" onClick={refreshNow} className="btn-primary mt-4 text-sm">
+              <p className="mb-4 text-red-300">{error}</p>
+              <button
+                type="button"
+                onClick={refreshNow}
+                className="rounded-lg bg-degen-500 px-4 py-2 text-sm text-black hover:bg-degen-400"
+              >
                 Retry
               </button>
             </div>
           )}
 
-          {state === 'loaded' && filteredPosts.length === 0 && (
-            <div className="card py-12 text-center">
-              <p className="text-[var(--color-muted)]">No news found for these filters.</p>
+          {state === 'loaded' && stories.length === 0 && (
+            <div className="rounded-xl border border-gray-800 bg-gray-900/50 py-12 text-center">
+              <p className="text-gray-400">No news found for these filters.</p>
+              <button
+                type="button"
+                onClick={() => {
+                  setCategory('');
+                  setQuery('');
+                  setSort('score');
+                }}
+                className="mt-3 text-sm text-degen-400 hover:underline"
+              >
+                Clear filters
+              </button>
             </div>
           )}
 
-          {state === 'loaded' && filteredPosts.length > 0 && (
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {filteredPosts.map((post) => (
-                <NewsCard key={post.id} post={post} />
-              ))}
-            </div>
-          )}
-        </div>
+          {state === 'loaded' && stories.length > 0 && (
+            <div ref={feedRef} className="space-y-6">
+              {/* Hero featured story */}
+              {featuredStory && <HeroCard story={featuredStory} />}
 
-        <aside className="space-y-4">
-          {/* Trending */}
-          {meta?.trending && meta.trending.length > 0 && (
-            <div className="card">
-              <h3 className="mb-3 text-xs font-semibold uppercase tracking-widest text-[var(--color-muted)]">
-                Trending Topics
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {meta.trending.map((t) => (
-                  <button
-                    key={t.topic}
-                    type="button"
-                    onClick={() => {
-                      setQuery(t.topic);
-                      setSearchInput(t.topic);
-                    }}
-                    className="rounded-full bg-[var(--color-muted)] px-3 py-1.5 text-xs text-[var(--color-muted)] transition-colors hover:bg-[var(--color-muted-bg)] hover:text-[var(--color-fg)]"
-                  >
-                    #{t.topic}
-                    <span className="ml-1.5 text-[10px] text-[var(--color-muted)]">{t.count}</span>
-                  </button>
+              {/* Story grid */}
+              <div className="grid gap-4 sm:grid-cols-2">
+                {remainingStories.map((story) => (
+                  <StoryCard key={story.id} story={story} />
                 ))}
               </div>
             </div>
           )}
+        </div>
 
-          {/* Sources */}
-          {meta?.sourceCounts && (
-            <div className="card">
-              <h3 className="mb-3 text-xs font-semibold uppercase tracking-widest text-[var(--color-muted)]">
-                Sources
+        {/* Right sidebar — trending, market data, related */}
+        {showSidebar && (
+          <aside className="space-y-4">
+            {/* Market Sentiment Detail */}
+            <div className="rounded-xl border border-gray-800 bg-gray-900/50 p-4">
+              <h3 className="mb-3 text-xs font-semibold uppercase tracking-widest text-gray-400">
+                Sentiment Breakdown
               </h3>
-              <div className="space-y-1.5">
-                {Object.entries(meta.sourceCounts)
-                  .sort((a, b) => b[1] - a[1])
-                  .slice(0, 12)
-                  .map(([name, count]) => (
-                    <div key={name} className="flex items-center justify-between text-xs">
-                      <span className="text-[var(--color-muted)]">{name}</span>
-                      <span className="rounded-full bg-[var(--color-muted)] px-2 py-0.5 text-[var(--color-muted)]">
-                        {count}
-                      </span>
+              {meta?.sentiment ? (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-green-400">🟢 Bullish</span>
+                    <span className="font-mono text-green-400">{meta.sentiment.bullish}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-gray-400">⚪ Neutral</span>
+                    <span className="font-mono text-gray-400">{meta.sentiment.neutral}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-red-400">🔴 Bearish</span>
+                    <span className="font-mono text-red-400">{meta.sentiment.bearish}</span>
+                  </div>
+                  <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-gray-700/50">
+                    <div className="flex h-full">
+                      <div
+                        className="bg-green-500"
+                        style={{
+                          width: `${(meta.sentiment.bullish / Math.max(1, meta.sentiment.bullish + meta.sentiment.bearish + meta.sentiment.neutral)) * 100}%`,
+                        }}
+                      />
+                      <div
+                        className="bg-gray-500"
+                        style={{
+                          width: `${(meta.sentiment.neutral / Math.max(1, meta.sentiment.bullish + meta.sentiment.bearish + meta.sentiment.neutral)) * 100}%`,
+                        }}
+                      />
+                      <div
+                        className="bg-red-500"
+                        style={{
+                          width: `${(meta.sentiment.bearish / Math.max(1, meta.sentiment.bullish + meta.sentiment.bearish + meta.sentiment.neutral)) * 100}%`,
+                        }}
+                      />
                     </div>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-xs text-gray-500">Loading...</p>
+              )}
+            </div>
+
+            {/* Most Covered Stories */}
+            <div className="rounded-xl border border-gray-800 bg-gray-900/50 p-4">
+              <h3 className="mb-3 text-xs font-semibold uppercase tracking-widest text-gray-400">
+                📰 Most Covered
+              </h3>
+              <div className="space-y-2">
+                {stories
+                  .filter((s) => s.alsoCoveredBy.length > 1)
+                  .sort((a, b) => b.alsoCoveredBy.length - a.alsoCoveredBy.length)
+                  .slice(0, 5)
+                  .map((story) => (
+                    <a
+                      key={story.id}
+                      href={story.url}
+                      target="_blank"
+                      rel="noopener"
+                      className="group block rounded-lg p-2 text-xs transition-colors hover:bg-gray-800"
+                    >
+                      <p className="font-medium text-white group-hover:text-degen-400 line-clamp-2">
+                        {story.title}
+                      </p>
+                      <div className="mt-1 flex items-center gap-2 text-[10px] text-gray-500">
+                        <span>{story.alsoCoveredBy.length} sources</span>
+                        <span>{formatTime(story.publishedAt)}</span>
+                      </div>
+                    </a>
                   ))}
               </div>
             </div>
-          )}
 
-          {/* Newsletter CTA */}
-          <div className="card border-degen-500/10 bg-gradient-to-br from-degen-500/5 to-gray-900/80">
-            <h3 className="mb-2 text-xs font-semibold uppercase tracking-widest text-degen-400">
-              Daily Digest
-            </h3>
-            <p className="mb-3 text-[11px] text-[var(--color-muted)]">
-              Get the top stories delivered to your inbox every morning.
-            </p>
-            <a href="/newsletter" className="btn-primary block text-center text-xs">
-              Subscribe →
-            </a>
-          </div>
+            {/* Token Mentions */}
+            <div className="rounded-xl border border-gray-800 bg-gray-900/50 p-4">
+              <h3 className="mb-3 text-xs font-semibold uppercase tracking-widest text-gray-400">
+                Token Mentions
+              </h3>
+              <div className="flex flex-wrap gap-1.5">
+                {Array.from(
+                  new Map(
+                    stories
+                      .flatMap((s) => s.entities.tokens)
+                      .map((t) => [t, stories.filter((s) => s.entities.tokens.includes(t)).length]),
+                  ).entries(),
+                )
+                  .sort((a, b) => b[1] - a[1])
+                  .slice(0, 10)
+                  .map(([token, count]) => (
+                    <button
+                      key={token}
+                      type="button"
+                      onClick={() => {
+                        setQuery(token);
+                        setSearchInput(token);
+                      }}
+                      className="rounded-lg bg-yellow-500/10 px-2 py-1 text-xs font-mono text-yellow-400 ring-1 ring-yellow-500/20 transition-colors hover:bg-yellow-500/20"
+                    >
+                      ${token}
+                      <span className="ml-1 text-[10px] text-gray-500">{count}</span>
+                    </button>
+                  ))}
+              </div>
+            </div>
 
-          {/* How it works */}
-          <div className="card">
-            <h3 className="mb-2 text-xs font-semibold uppercase tracking-widest text-[var(--color-muted)]">
-              How it works
-            </h3>
-            <ul className="space-y-1.5 text-[11px] text-[var(--color-muted)]">
-              <li>• Stories ranked by source quality + recency</li>
-              <li>• Deduplicated by canonical URL</li>
-              <li>• Categorized by AI keyword extraction</li>
-              <li>• Updated every 15 minutes</li>
-              <li>• Aggregated from RSS, Reddit, and Hacker News</li>
-            </ul>
-          </div>
-        </aside>
+            {/* Newsletter CTA */}
+            <div className="rounded-xl border border-degen-500/10 bg-gradient-to-br from-degen-500/5 to-gray-900/80 p-4">
+              <h3 className="mb-2 text-xs font-semibold uppercase tracking-widest text-degen-400">
+                Daily Digest
+              </h3>
+              <p className="mb-3 text-xs text-gray-400">
+                Get the top stories delivered to your inbox every morning with AI voice summaries.
+              </p>
+              <a
+                href="/newsletter"
+                className="block rounded-lg bg-degen-500 px-3 py-2 text-center text-xs font-medium text-black hover:bg-degen-400"
+              >
+                Subscribe →
+              </a>
+            </div>
+          </aside>
+        )}
       </div>
     </div>
   );

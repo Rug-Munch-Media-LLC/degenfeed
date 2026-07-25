@@ -16,17 +16,17 @@
  */
 
 import {
-  checkTokenGate,
   checkGateConfig,
+  checkTokenGate,
+  type GateCheckResult,
+  type GateConfig,
   resolveTokenGateSymbol,
   type TokenGate,
-  type GateConfig,
-  type GateCheckResult,
 } from '@degenfeed/token-gate';
 import type { Env } from '../index';
 import { jsonResponse, noCacheJsonResponse } from '../index';
-import { requireSession } from '../session';
 import { sanitizeString } from '../sanitize';
+import { requireSession } from '../session';
 
 // ─── KV cache constants ────────────────────────────────────────────────────
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, memo } from 'react';
+import { memo, useCallback, useState } from 'react';
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
@@ -44,12 +44,18 @@ interface GateConfig {
 
 const CHAINS: TokenGateChain[] = ['ethereum', 'base', 'polygon', 'solana', 'arbitrum', 'optimism'];
 const CHAIN_LABELS: Record<TokenGateChain, string> = {
-  ethereum: 'Ethereum', base: 'Base', polygon: 'Polygon',
-  solana: 'Solana', arbitrum: 'Arbitrum', optimism: 'Optimism',
+  ethereum: 'Ethereum',
+  base: 'Base',
+  polygon: 'Polygon',
+  solana: 'Solana',
+  arbitrum: 'Arbitrum',
+  optimism: 'Optimism',
 };
 const TOKEN_TYPES: TokenGateType[] = ['erc20', 'erc721', 'erc1155'];
 const TYPE_LABELS: Record<TokenGateType, string> = {
-  erc20: 'Token (ERC-20)', erc721: 'NFT (ERC-721)', erc1155: 'Multi Token (ERC-1155)',
+  erc20: 'Token (ERC-20)',
+  erc721: 'NFT (ERC-721)',
+  erc1155: 'Multi Token (ERC-1155)',
 };
 const CONTENT_TYPES: Array<{ value: ContentType; label: string }> = [
   { value: 'post', label: 'Individual Post' },
@@ -64,7 +70,13 @@ const CONTENT_TYPES: Array<{ value: ContentType; label: string }> = [
 // ─── Default empty gate ──────────────────────────────────────────────────
 
 function emptyGate(): TokenGate {
-  return { type: 'erc20', chain: 'base', contractAddress: '', minBalance: 1, minBalanceDecimals: 18 };
+  return {
+    type: 'erc20',
+    chain: 'base',
+    contractAddress: '',
+    minBalance: 1,
+    minBalanceDecimals: 18,
+  };
 }
 
 function defaultConfig(): GateConfig {
@@ -115,7 +127,9 @@ function SingleGateEditor({
             style={{ borderColor: 'var(--color-glass-border)', color: 'var(--color-fg)' }}
           >
             {CHAINS.map((c) => (
-              <option key={c} value={c}>{CHAIN_LABELS[c]}</option>
+              <option key={c} value={c}>
+                {CHAIN_LABELS[c]}
+              </option>
             ))}
           </select>
         </div>
@@ -130,7 +144,9 @@ function SingleGateEditor({
             style={{ borderColor: 'var(--color-glass-border)', color: 'var(--color-fg)' }}
           >
             {TOKEN_TYPES.map((t) => (
-              <option key={t} value={t}>{TYPE_LABELS[t]}</option>
+              <option key={t} value={t}>
+                {TYPE_LABELS[t]}
+              </option>
             ))}
           </select>
         </div>
@@ -169,7 +185,10 @@ function SingleGateEditor({
       {gate.type === 'erc20' && (
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs font-medium mb-1" style={{ color: 'var(--color-muted)' }}>
+            <label
+              className="block text-xs font-medium mb-1"
+              style={{ color: 'var(--color-muted)' }}
+            >
               Min Balance
             </label>
             <input
@@ -183,13 +202,18 @@ function SingleGateEditor({
             />
           </div>
           <div>
-            <label className="block text-xs font-medium mb-1" style={{ color: 'var(--color-muted)' }}>
+            <label
+              className="block text-xs font-medium mb-1"
+              style={{ color: 'var(--color-muted)' }}
+            >
               Decimals
             </label>
             <input
               type="number"
               value={gate.minBalanceDecimals ?? 18}
-              onChange={(e) => onChange({ ...gate, minBalanceDecimals: Number(e.target.value) || 0 })}
+              onChange={(e) =>
+                onChange({ ...gate, minBalanceDecimals: Number(e.target.value) || 0 })
+              }
               min={0}
               max={18}
               className="w-full rounded-lg border px-3 py-2 text-sm bg-[var(--color-card)]"
@@ -219,15 +243,21 @@ function CombinedGateEditor({
     onGatesChange([...gates, emptyGate()]);
   }, [gates, onGatesChange]);
 
-  const removeGate = useCallback((index: number) => {
-    onGatesChange(gates.filter((_, i) => i !== index));
-  }, [gates, onGatesChange]);
+  const removeGate = useCallback(
+    (index: number) => {
+      onGatesChange(gates.filter((_, i) => i !== index));
+    },
+    [gates, onGatesChange],
+  );
 
-  const updateGate = useCallback((index: number, gate: TokenGate) => {
-    const updated = [...gates];
-    updated[index] = gate;
-    onGatesChange(updated);
-  }, [gates, onGatesChange]);
+  const updateGate = useCallback(
+    (index: number, gate: TokenGate) => {
+      const updated = [...gates];
+      updated[index] = gate;
+      onGatesChange(updated);
+    },
+    [gates, onGatesChange],
+  );
 
   return (
     <div className="space-y-3">
@@ -247,7 +277,11 @@ function CombinedGateEditor({
       </div>
 
       {gates.map((gate, i) => (
-        <div key={i} className="relative rounded-lg border p-3" style={{ borderColor: 'var(--color-glass-border)' }}>
+        <div
+          key={i}
+          className="relative rounded-lg border p-3"
+          style={{ borderColor: 'var(--color-glass-border)' }}
+        >
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-semibold" style={{ color: 'var(--color-muted)' }}>
               Gate {i + 1}
@@ -302,28 +336,37 @@ function TieredGateEditor({
     ]);
   }, [tiers, onTiersChange]);
 
-  const removeTier = useCallback((index: number) => {
-    onTiersChange(tiers.filter((_, i) => i !== index));
-  }, [tiers, onTiersChange]);
+  const removeTier = useCallback(
+    (index: number) => {
+      onTiersChange(tiers.filter((_, i) => i !== index));
+    },
+    [tiers, onTiersChange],
+  );
 
-  const updateTier = useCallback((index: number, tier: TierConfig) => {
-    const updated = [...tiers];
-    updated[index] = tier;
-    onTiersChange(updated);
-  }, [tiers, onTiersChange]);
+  const updateTier = useCallback(
+    (index: number, tier: TierConfig) => {
+      const updated = [...tiers];
+      updated[index] = tier;
+      onTiersChange(updated);
+    },
+    [tiers, onTiersChange],
+  );
 
   return (
     <div className="space-y-3">
       <p className="text-xs" style={{ color: 'var(--color-muted)' }}>
-        Different access levels based on token holding amounts.
-        Tiers are checked from highest to lowest balance.
+        Different access levels based on token holding amounts. Tiers are checked from highest to
+        lowest balance.
       </p>
 
       {tiers.map((tier, i) => (
         <div
           key={i}
           className="rounded-lg border p-3 space-y-2"
-          style={{ borderColor: tier.color || 'var(--color-glass-border)', borderLeft: `3px solid ${tier.color || 'var(--color-glass-border)'}` }}
+          style={{
+            borderColor: tier.color || 'var(--color-glass-border)',
+            borderLeft: `3px solid ${tier.color || 'var(--color-glass-border)'}`,
+          }}
         >
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold" style={{ color: 'var(--color-muted)' }}>
@@ -411,7 +454,10 @@ function GatePreview({ config }: { config: GateConfig }) {
 
   if (config.accessMode === 'view_anyone_comment_holders') {
     return (
-      <div className="rounded-lg border p-3 text-center" style={{ borderColor: 'var(--color-glass-border)' }}>
+      <div
+        className="rounded-lg border p-3 text-center"
+        style={{ borderColor: 'var(--color-glass-border)' }}
+      >
         <div className="mb-1 text-lg">🔓</div>
         <div className="text-sm font-medium" style={{ color: 'var(--color-fg)' }}>
           Anyone can view, holders can comment
@@ -424,7 +470,10 @@ function GatePreview({ config }: { config: GateConfig }) {
   }
 
   return (
-    <div className="rounded-lg border p-3 text-center" style={{ borderColor: 'var(--color-glass-border)' }}>
+    <div
+      className="rounded-lg border p-3 text-center"
+      style={{ borderColor: 'var(--color-glass-border)' }}
+    >
       <div className="mb-1 text-lg">🔒</div>
       <div className="text-sm font-medium" style={{ color: 'var(--color-fg)' }}>
         Token-Gated Content
@@ -466,13 +515,16 @@ export const TokenGateConfig = memo(function TokenGateConfig({
   const [isOpen, setIsOpen] = useState(mode !== 'inline');
   const [saving, setSaving] = useState(false);
 
-  const updateConfig = useCallback((partial: Partial<GateConfig>) => {
-    setConfig((prev) => {
-      const updated = { ...prev, ...partial };
-      onChange?.(updated);
-      return updated;
-    });
-  }, [onChange]);
+  const updateConfig = useCallback(
+    (partial: Partial<GateConfig>) => {
+      setConfig((prev) => {
+        const updated = { ...prev, ...partial };
+        onChange?.(updated);
+        return updated;
+      });
+    },
+    [onChange],
+  );
 
   const handleSave = useCallback(async () => {
     if (!onSave) return;
@@ -511,7 +563,10 @@ export const TokenGateConfig = memo(function TokenGateConfig({
         <>
           {/* Content Type */}
           <div>
-            <label className="block text-xs font-medium mb-1" style={{ color: 'var(--color-muted)' }}>
+            <label
+              className="block text-xs font-medium mb-1"
+              style={{ color: 'var(--color-muted)' }}
+            >
               Content Type
             </label>
             <select
@@ -521,14 +576,19 @@ export const TokenGateConfig = memo(function TokenGateConfig({
               style={{ borderColor: 'var(--color-glass-border)', color: 'var(--color-fg)' }}
             >
               {CONTENT_TYPES.map((ct) => (
-                <option key={ct.value} value={ct.value}>{ct.label}</option>
+                <option key={ct.value} value={ct.value}>
+                  {ct.label}
+                </option>
               ))}
             </select>
           </div>
 
           {/* Access Mode */}
           <div>
-            <label className="block text-xs font-medium mb-1" style={{ color: 'var(--color-muted)' }}>
+            <label
+              className="block text-xs font-medium mb-1"
+              style={{ color: 'var(--color-muted)' }}
+            >
               Access Mode
             </label>
             <select
@@ -538,13 +598,18 @@ export const TokenGateConfig = memo(function TokenGateConfig({
               style={{ borderColor: 'var(--color-glass-border)', color: 'var(--color-fg)' }}
             >
               <option value="strict">Strict — Must hold to view</option>
-              <option value="view_anyone_comment_holders">Anyone can view, holders can comment</option>
+              <option value="view_anyone_comment_holders">
+                Anyone can view, holders can comment
+              </option>
             </select>
           </div>
 
           {/* Gate Type */}
           <div>
-            <label className="block text-xs font-medium mb-1" style={{ color: 'var(--color-muted)' }}>
+            <label
+              className="block text-xs font-medium mb-1"
+              style={{ color: 'var(--color-muted)' }}
+            >
               Gate Type
             </label>
             <div className="flex gap-2">
@@ -558,7 +623,10 @@ export const TokenGateConfig = memo(function TokenGateConfig({
                       ? 'border-degen-500 bg-degen-500/10 text-degen-400'
                       : 'hover:bg-[var(--color-overlay)]'
                   }`}
-                  style={{ borderColor: config.type === gt ? undefined : 'var(--color-glass-border)', color: config.type === gt ? undefined : 'var(--color-muted)' }}
+                  style={{
+                    borderColor: config.type === gt ? undefined : 'var(--color-glass-border)',
+                    color: config.type === gt ? undefined : 'var(--color-muted)',
+                  }}
                 >
                   {gt === 'single' ? 'Simple' : gt === 'combined' ? 'Combined' : 'Tiered'}
                 </button>
@@ -568,10 +636,7 @@ export const TokenGateConfig = memo(function TokenGateConfig({
 
           {/* Gate Editor */}
           {config.type === 'single' && config.gate && (
-            <SingleGateEditor
-              gate={config.gate}
-              onChange={(g) => updateConfig({ gate: g })}
-            />
+            <SingleGateEditor gate={config.gate} onChange={(g) => updateConfig({ gate: g })} />
           )}
 
           {config.type === 'combined' && (
@@ -592,7 +657,10 @@ export const TokenGateConfig = memo(function TokenGateConfig({
 
           {/* Description */}
           <div>
-            <label className="block text-xs font-medium mb-1" style={{ color: 'var(--color-muted)' }}>
+            <label
+              className="block text-xs font-medium mb-1"
+              style={{ color: 'var(--color-muted)' }}
+            >
               Gate Description (shown to users)
             </label>
             <input
@@ -607,7 +675,10 @@ export const TokenGateConfig = memo(function TokenGateConfig({
 
           {/* Preview */}
           <div>
-            <label className="block text-xs font-medium mb-1" style={{ color: 'var(--color-muted)' }}>
+            <label
+              className="block text-xs font-medium mb-1"
+              style={{ color: 'var(--color-muted)' }}
+            >
               Preview
             </label>
             <GatePreview config={config} />
@@ -638,17 +709,53 @@ export const TokenGateConfig = memo(function TokenGateConfig({
           className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium transition-colors hover:bg-[var(--color-overlay)]"
           style={{ borderColor: 'var(--color-glass-border)', color: 'var(--color-fg)' }}
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+            <path d="M7 11V7a5 5 0 0110 0v4" />
+          </svg>
           {config.enabled ? 'Edit Gate' : 'Gate This Content'}
         </button>
 
         {isOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setIsOpen(false)}>
-            <div className="w-full max-w-lg rounded-2xl border p-6 shadow-2xl max-h-[90vh] overflow-y-auto" style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-glass-border)' }} onClick={(e) => e.stopPropagation()}>
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+            onClick={() => setIsOpen(false)}
+          >
+            <div
+              className="w-full max-w-lg rounded-2xl border p-6 shadow-2xl max-h-[90vh] overflow-y-auto"
+              style={{
+                backgroundColor: 'var(--color-bg)',
+                borderColor: 'var(--color-glass-border)',
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-bold" style={{ color: 'var(--color-fg)' }}>Token Gate Configuration</h2>
-                <button type="button" onClick={() => setIsOpen(false)} className="text-[var(--color-muted)] hover:text-[var(--color-fg)]">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                <h2 className="text-lg font-bold" style={{ color: 'var(--color-fg)' }}>
+                  Token Gate Configuration
+                </h2>
+                <button
+                  type="button"
+                  onClick={() => setIsOpen(false)}
+                  className="text-[var(--color-muted)] hover:text-[var(--color-fg)]"
+                >
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
                 </button>
               </div>
               {content}
@@ -659,5 +766,9 @@ export const TokenGateConfig = memo(function TokenGateConfig({
     );
   }
 
-  return <div className="rounded-xl border p-4" style={{ borderColor: 'var(--color-glass-border)' }}>{content}</div>;
+  return (
+    <div className="rounded-xl border p-4" style={{ borderColor: 'var(--color-glass-border)' }}>
+      {content}
+    </div>
+  );
 });
