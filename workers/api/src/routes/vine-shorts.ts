@@ -378,7 +378,7 @@ async function fetchRedditVideos(env: Env, limit: number): Promise<AggregatedSho
 
       // If we have Reddit OAuth, use it
       if (redditClientId && redditSecret) {
-        const auth = Buffer.from(`${redditClientId}:${redditSecret}`).toString('base64');
+        const auth = btoa(`${redditClientId}:${redditSecret}`);
         headers.authorization = `Basic ${auth}`;
       }
 
