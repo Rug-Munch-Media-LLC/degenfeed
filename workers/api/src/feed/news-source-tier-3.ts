@@ -1,7 +1,7 @@
 import type { NewsSourceMeta } from "./news-types";
 
 export const TIER_3_SOURCES: NewsSourceMeta[] = [
-  //──Tier3:On-chaindata/security/research──{
+  {
     id: 'dune',
     name: 'Dune Analytics',
     category: 'onchain',
@@ -81,7 +81,8 @@ export const TIER_3_SOURCES: NewsSourceMeta[] = [
     url: 'https://medium.com/feed/immunefi',
     type: 'rss',
   },
-  //──RedditviaRSS──{
+  //──RedditviaRSS──
+  {
     id: 'reddit-cc',
     name: 'r/CryptoCurrency',
     category: 'crypto',
@@ -181,7 +182,8 @@ export const TIER_3_SOURCES: NewsSourceMeta[] = [
     nicheTags: ['gaming', 'web3-gaming', 'ronin', 'mmo'],
     imageSupport: true,
   },
-  //──Additionalcomprehensivesources──{
+  //──Additionalcomprehensivesources──
+  {
     id: 'hackernoon',
     name: 'HackerNoon',
     category: 'tech',
@@ -445,7 +447,8 @@ export const TIER_3_SOURCES: NewsSourceMeta[] = [
     nicheTags: ['markets', 'social', 'sentiment', 'trading'],
     imageSupport: true,
   },
-  //──NFT/Gaming/Metaverse(10)──{
+  //──NFT/Gaming/Metaverse(10)──
+  {
     id: 'nft-evening',
     name: 'NFT Evening',
     category: 'nft',

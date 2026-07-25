@@ -1,7 +1,7 @@
 import type { NewsSourceMeta } from "./news-types";
 
 export const TIER_1_SOURCES: NewsSourceMeta[] = [
-  //──Tier1:Institutionalcryptomedia──{
+  {
     id: 'coindesk',
     name: 'CoinDesk',
     category: 'crypto',
@@ -203,7 +203,8 @@ export const TIER_1_SOURCES: NewsSourceMeta[] = [
     nicheTags: ['onchain', 'research', 'smart-money', 'analytics'],
     imageSupport: true,
   },
-  //──DeFi&Protocols(10sources)──{
+  //──DeFi&Protocols(10sources)──
+  {
     id: 'uniswap',
     name: 'Uniswap',
     category: 'defi',
@@ -323,7 +324,8 @@ export const TIER_1_SOURCES: NewsSourceMeta[] = [
     nicheTags: ['layer2', 'ethereum', 'zk', 'scaling'],
     imageSupport: true,
   },
-  //──Privacy&Security(5sources)──{
+  //──Privacy&Security(5sources)──
+  {
     id: 'tor',
     name: 'Tor Blog',
     category: 'privacy',
@@ -383,7 +385,8 @@ export const TIER_1_SOURCES: NewsSourceMeta[] = [
     nicheTags: ['security', 'audit', 'skynet', 'blockchain-security'],
     imageSupport: true,
   },
-  //──Macro&Finance(5sources)──{
+  //──Macro&Finance(5sources)──
+  {
     id: 'federalreserve',
     name: 'Federal Reserve',
     category: 'macro',
@@ -719,7 +722,8 @@ export const TIER_1_SOURCES: NewsSourceMeta[] = [
     nicheTags: ['crypto', 'research', 'data', 'pro'],
     imageSupport: true,
   },
-  //──Macro/TradFi(15)──{
+  //──Macro/TradFi(15)──
+  {
     id: 'cnbc-crypto',
     name: 'CNBC Crypto',
     category: 'macro',
@@ -779,7 +783,8 @@ export const TIER_1_SOURCES: NewsSourceMeta[] = [
     nicheTags: ['markets', 'prices', 'trading', 'analysis'],
     imageSupport: true,
   },
-  //──Regulation/Legal(10)──{
+  //──Regulation/Legal(10)──
+  {
     id: 'coincenter',
     name: 'CoinCenter',
     category: 'regulation',
