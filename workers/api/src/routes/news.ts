@@ -13,12 +13,8 @@
  *   POST /api/news/digest/subscribe       → Subscribe to digest emails
  */
 
-import type { UnifiedPost } from '@degenfeed/types';
-import { sanitizePosts } from '../feed/feed-enricher';
 import {
-  type AggregatedStory,
   type AggregationOptions,
-  type AggregationResult,
   aggregateNews,
   NEWS_SOURCES,
 } from '../feed/news-aggregator';
@@ -74,7 +70,7 @@ function safeKey(s: string): string {
   return s.toLowerCase().replace(/[^a-z0-9@._-]/g, '_');
 }
 
-function formatTime(ts: number): string {
+function _formatTime(ts: number): string {
   const diff = Date.now() - ts;
   const mins = Math.floor(diff / 60000);
   if (mins < 60) return `${mins}m ago`;
@@ -701,7 +697,7 @@ export async function handleNewsForYou(request: Request, env: Env): Promise<Resp
 
   // Load reading history for personalization
   let profile: UserProfile | null = null;
-  let prefs: NewsPreferences = { ...DEFAULT_PREFERENCES };
+  const prefs: NewsPreferences = { ...DEFAULT_PREFERENCES };
   if (wallet && env.CACHE) {
     try {
       const historyRaw = await env.CACHE.get(`user:news_history:${wallet.toLowerCase()}`);
@@ -715,7 +711,9 @@ export async function handleNewsForYou(request: Request, env: Env): Promise<Resp
           }
         }
       }
-    } catch { /* non-critical */ }
+    } catch {
+      /* non-critical */
+    }
   }
 
   const result = await aggregateNews(env, { limit: limit * 2 });
@@ -723,12 +721,24 @@ export async function handleNewsForYou(request: Request, env: Env): Promise<Resp
 
   return noCacheJsonResponse({
     data: personalized.slice(0, limit).map((s) => ({
-      id: s.id, title: s.title, summary: s.summary, url: s.url,
-      source: s.source, author: s.authorName || s.author, publishedAt: s.publishedAt,
-      imageUrl: s.imageUrl, heroImage: s.heroImage, categories: s.categories,
-      niches: s.niches, sentiment: s.sentiment, entities: s.entities,
-      alsoCoveredBy: s.alsoCoveredBy, isBreaking: s.isBreaking, score: s.score,
-      readingTime: s.readingTime, scoreComponents: s.scoreComponents,
+      id: s.id,
+      title: s.title,
+      summary: s.summary,
+      url: s.url,
+      source: s.source,
+      author: s.authorName || s.author,
+      publishedAt: s.publishedAt,
+      imageUrl: s.imageUrl,
+      heroImage: s.heroImage,
+      categories: s.categories,
+      niches: s.niches,
+      sentiment: s.sentiment,
+      entities: s.entities,
+      alsoCoveredBy: s.alsoCoveredBy,
+      isBreaking: s.isBreaking,
+      score: s.score,
+      readingTime: s.readingTime,
+      scoreComponents: s.scoreComponents,
     })),
     meta: { total: personalized.length, personalized: true, fetchedAt: Date.now() },
   });
@@ -745,10 +755,19 @@ export async function handleNewsHot(request: Request, env: Env): Promise<Respons
     .filter((s) => s.isBreaking || s.velocity > 1.5)
     .slice(0, limit)
     .map((s) => ({
-      id: s.id, title: s.title, summary: s.summary.slice(0, 150), url: s.url,
-      source: s.source, publishedAt: s.publishedAt, velocity: s.velocity,
-      imageUrl: s.imageUrl, heroImage: s.heroImage, isBreaking: s.isBreaking,
-      alsoCoveredBy: s.alsoCoveredBy, sentiment: s.sentiment, readingTime: s.readingTime,
+      id: s.id,
+      title: s.title,
+      summary: s.summary.slice(0, 150),
+      url: s.url,
+      source: s.source,
+      publishedAt: s.publishedAt,
+      velocity: s.velocity,
+      imageUrl: s.imageUrl,
+      heroImage: s.heroImage,
+      isBreaking: s.isBreaking,
+      alsoCoveredBy: s.alsoCoveredBy,
+      sentiment: s.sentiment,
+      readingTime: s.readingTime,
     }));
 
   return noCacheJsonResponse({
@@ -769,11 +788,21 @@ export async function handleNewsDeepDives(request: Request, env: Env): Promise<R
     .filter((s) => (s.body?.split(/\s+/).length ?? 0) > 2000)
     .slice(0, limit)
     .map((s) => ({
-      id: s.id, title: s.title, summary: s.summary.slice(0, 300), url: s.url,
-      source: s.source, author: s.authorName || s.author, publishedAt: s.publishedAt,
-      imageUrl: s.imageUrl, heroImage: s.heroImage, readingTime: s.readingTime,
-      wordCount: s.body?.split(/\s+/).length ?? 0, entities: s.entities,
-      sentiment: s.sentiment, categories: s.categories, niches: s.niches,
+      id: s.id,
+      title: s.title,
+      summary: s.summary.slice(0, 300),
+      url: s.url,
+      source: s.source,
+      author: s.authorName || s.author,
+      publishedAt: s.publishedAt,
+      imageUrl: s.imageUrl,
+      heroImage: s.heroImage,
+      readingTime: s.readingTime,
+      wordCount: s.body?.split(/\s+/).length ?? 0,
+      entities: s.entities,
+      sentiment: s.sentiment,
+      categories: s.categories,
+      niches: s.niches,
     }));
 
   return noCacheJsonResponse({
@@ -793,9 +822,16 @@ export async function handleNewsQuickReads(request: Request, env: Env): Promise<
     .filter((s) => (s.body?.split(/\s+/).length ?? 0) < 500)
     .slice(0, limit)
     .map((s) => ({
-      id: s.id, title: s.title, summary: s.summary.slice(0, 150), url: s.url,
-      source: s.source, author: s.authorName || s.author, publishedAt: s.publishedAt,
-      imageUrl: s.imageUrl, readingTime: s.readingTime, sentiment: s.sentiment,
+      id: s.id,
+      title: s.title,
+      summary: s.summary.slice(0, 150),
+      url: s.url,
+      source: s.source,
+      author: s.authorName || s.author,
+      publishedAt: s.publishedAt,
+      imageUrl: s.imageUrl,
+      readingTime: s.readingTime,
+      sentiment: s.sentiment,
       niches: s.niches,
     }));
 
@@ -821,9 +857,15 @@ export async function handleNewsProtocol(request: Request, env: Env): Promise<Re
     )
     .slice(0, limit)
     .map((s) => ({
-      id: s.id, title: s.title, url: s.url, source: s.source,
-      publishedAt: s.publishedAt, summary: s.summary.slice(0, 200),
-      imageUrl: s.imageUrl, sentiment: s.sentiment, entities: s.entities,
+      id: s.id,
+      title: s.title,
+      url: s.url,
+      source: s.source,
+      publishedAt: s.publishedAt,
+      summary: s.summary.slice(0, 200),
+      imageUrl: s.imageUrl,
+      sentiment: s.sentiment,
+      entities: s.entities,
       score: s.score,
     }));
 
@@ -849,9 +891,15 @@ export async function handleNewsToken(request: Request, env: Env): Promise<Respo
     .filter((s) => s.entities.tokens.includes(token))
     .slice(0, limit)
     .map((s) => ({
-      id: s.id, title: s.title, url: s.url, source: s.source,
-      publishedAt: s.publishedAt, summary: s.summary.slice(0, 200),
-      imageUrl: s.imageUrl, sentiment: s.sentiment, entities: s.entities,
+      id: s.id,
+      title: s.title,
+      url: s.url,
+      source: s.source,
+      publishedAt: s.publishedAt,
+      summary: s.summary.slice(0, 200),
+      imageUrl: s.imageUrl,
+      sentiment: s.sentiment,
+      entities: s.entities,
       score: s.score,
     }));
 
@@ -881,16 +929,323 @@ export async function handleNewsAuthor(request: Request, env: Env): Promise<Resp
     )
     .slice(0, limit)
     .map((s) => ({
-      id: s.id, title: s.title, url: s.url, source: s.source,
-      author: s.authorName || s.author, publishedAt: s.publishedAt,
-      summary: s.summary.slice(0, 200), imageUrl: s.imageUrl,
-      sentiment: s.sentiment, score: s.score,
+      id: s.id,
+      title: s.title,
+      url: s.url,
+      source: s.source,
+      author: s.authorName || s.author,
+      publishedAt: s.publishedAt,
+      summary: s.summary.slice(0, 200),
+      imageUrl: s.imageUrl,
+      sentiment: s.sentiment,
+      score: s.score,
     }));
 
   return noCacheJsonResponse({
     data: authorStories,
     meta: { author: authorSlug, total: authorStories.length, fetchedAt: Date.now() },
   });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// TASK 5: Newsletter Creator Integration
+// ═══════════════════════════════════════════════════════════════════════════
+
+// ─── POST /api/news/newsletter/create — Creator creates newsletter on DegenFeed ──
+
+export async function handleNewsletterCreatorCreate(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'POST') {
+    return jsonResponse({ error: 'Method not allowed' }, 405);
+  }
+  let body: {
+    wallet?: string;
+    name?: string;
+    description?: string;
+    slug?: string;
+    niche?: string;
+  } = {};
+  try {
+    body = (await request.json()) as typeof body;
+  } catch {
+    return jsonResponse({ error: 'Invalid JSON' }, 400);
+  }
+
+  const { wallet, name, description, slug, niche } = body;
+  if (!wallet || !name) {
+    return jsonResponse({ error: 'Wallet and newsletter name required' }, 400);
+  }
+
+  const newsletterId = `nl:${slug || safeKey(name)}:${wallet.toLowerCase().slice(0, 8)}`;
+  const newsletter = {
+    id: newsletterId,
+    wallet: wallet.toLowerCase(),
+    name,
+    description: description || '',
+    slug: slug || safeKey(name),
+    niche: niche || 'crypto',
+    createdAt: Date.now(),
+    issueCount: 0,
+    subscriberCount: 0,
+    lastIssueAt: 0,
+  };
+
+  try {
+    await env.CACHE?.put(
+      `newsletter:creator:${wallet.toLowerCase()}:${newsletterId}`,
+      JSON.stringify(newsletter),
+      { expirationTtl: 60 * 60 * 24 * 400 },
+    );
+    // Index by creator
+    const indexKey = `newsletter:creator:index:${wallet.toLowerCase()}`;
+    const existing = (await env.CACHE?.get(indexKey)) || '[]';
+    const list = JSON.parse(existing) as string[];
+    list.push(newsletterId);
+    await env.CACHE?.put(indexKey, JSON.stringify(list), {
+      expirationTtl: 60 * 60 * 24 * 400,
+    });
+    // Global index
+    const globalIndex = (await env.CACHE?.get('newsletter:creator:all')) || '[]';
+    const globalList = JSON.parse(globalIndex) as string[];
+    globalList.push(newsletterId);
+    await env.CACHE?.put('newsletter:creator:all', JSON.stringify([...new Set(globalList)]), {
+      expirationTtl: 60 * 60 * 24 * 400,
+    });
+  } catch {
+    return jsonResponse({ error: 'Failed to create newsletter' }, 500);
+  }
+
+  return jsonResponse({ ok: true, newsletterId, newsletter });
+}
+
+// ─── GET /api/news/newsletter/mine — My newsletters ──
+
+export async function handleNewsletterCreatorMine(request: Request, env: Env): Promise<Response> {
+  const url = new URL(request.url);
+  const wallet = url.searchParams.get('wallet') || '';
+  if (!wallet) {
+    return jsonResponse({ error: 'Wallet address required' }, 400);
+  }
+
+  const indexKey = `newsletter:creator:index:${wallet.toLowerCase()}`;
+  try {
+    const raw = await env.CACHE?.get(indexKey);
+    const ids: string[] = raw ? JSON.parse(raw) : [];
+    const newsletters = [];
+    for (const id of ids) {
+      const nl = await env.CACHE?.get(`newsletter:creator:${wallet.toLowerCase()}:${id}`);
+      if (nl) newsletters.push(JSON.parse(nl));
+    }
+    return noCacheJsonResponse({ data: newsletters, total: newsletters.length });
+  } catch {
+    return jsonResponse({ error: 'Failed to load newsletters' }, 500);
+  }
+}
+
+// ─── POST /api/news/newsletter/:id/issue — Publish issue ──
+
+export async function handleNewsletterCreatorIssue(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'POST') {
+    return jsonResponse({ error: 'Method not allowed' }, 405);
+  }
+
+  const url = new URL(request.url);
+  const pathParts = url.pathname.split('/');
+  const idx = pathParts.indexOf('newsletter');
+  const newsletterId = pathParts[idx + 1] || '';
+  const wallet = url.searchParams.get('wallet') || '';
+
+  if (!newsletterId || !wallet) {
+    return jsonResponse({ error: 'Newsletter ID and wallet required' }, 400);
+  }
+
+  let body: { title?: string; content?: string; excerpt?: string } = {};
+  try {
+    body = (await request.json()) as typeof body;
+  } catch {
+    return jsonResponse({ error: 'Invalid JSON' }, 400);
+  }
+
+  const { title, content, excerpt } = body;
+  if (!title || !content) {
+    return jsonResponse({ error: 'Title and content required' }, 400);
+  }
+
+  const issueId = `issue:${newsletterId}:${Date.now()}`;
+  const issue = {
+    id: issueId,
+    newsletterId,
+    wallet: wallet.toLowerCase(),
+    title,
+    content,
+    excerpt: excerpt || content.slice(0, 300),
+    publishedAt: Date.now(),
+    wordCount: content.split(/\s+/).length,
+    readCount: 0,
+  };
+
+  try {
+    await env.CACHE?.put(`newsletter:issue:${issueId}`, JSON.stringify(issue), {
+      expirationTtl: 60 * 60 * 24 * 400,
+    });
+    // Index issues by newsletter
+    const issueIndexKey = `newsletter:issue:index:${newsletterId}`;
+    const existing = (await env.CACHE?.get(issueIndexKey)) || '[]';
+    const list = JSON.parse(existing) as string[];
+    list.push(issueId);
+    await env.CACHE?.put(issueIndexKey, JSON.stringify(list), {
+      expirationTtl: 60 * 60 * 24 * 400,
+    });
+
+    // Update newsletter issue count
+    const nlKey = `newsletter:creator:${wallet.toLowerCase()}:${newsletterId}`;
+    const nlRaw = await env.CACHE?.get(nlKey);
+    if (nlRaw) {
+      const nl = JSON.parse(nlRaw);
+      nl.issueCount = (nl.issueCount || 0) + 1;
+      nl.lastIssueAt = Date.now();
+      await env.CACHE?.put(nlKey, JSON.stringify(nl), {
+        expirationTtl: 60 * 60 * 24 * 400,
+      });
+    }
+  } catch {
+    return jsonResponse({ error: 'Failed to publish issue' }, 500);
+  }
+
+  return jsonResponse({ ok: true, issueId, issue });
+}
+
+// ─── GET /api/news/newsletter/issues — Browse newsletter issues ──
+
+export async function handleNewsletterCreatorIssues(request: Request, env: Env): Promise<Response> {
+  const url = new URL(request.url);
+  const newsletterId = url.searchParams.get('newsletterId') || '';
+  const limit = Math.min(Number(url.searchParams.get('limit')) || 20, 100);
+  const offset = Number(url.searchParams.get('offset')) || 0;
+
+  if (!newsletterId) {
+    // Return all recent issues across newsletters
+    try {
+      const allNewslettersRaw = await env.CACHE?.get('newsletter:creator:all');
+      const allNlIds: string[] = allNewslettersRaw ? JSON.parse(allNewslettersRaw) : [];
+      const allIssues: Array<{
+        id: string;
+        newsletterId: string;
+        title: string;
+        excerpt: string;
+        publishedAt: number;
+      }> = [];
+
+      for (const nlId of allNlIds.slice(0, 20)) {
+        const issueIndexRaw = await env.CACHE?.get(`newsletter:issue:index:${nlId}`);
+        if (issueIndexRaw) {
+          const issueIds: string[] = JSON.parse(issueIndexRaw);
+          for (const iid of issueIds.slice(-5)) {
+            const issueRaw = await env.CACHE?.get(`newsletter:issue:${iid}`);
+            if (issueRaw) {
+              const issue = JSON.parse(issueRaw);
+              allIssues.push({
+                id: issue.id,
+                newsletterId: issue.newsletterId,
+                title: issue.title,
+                excerpt: issue.excerpt,
+                publishedAt: issue.publishedAt,
+              });
+            }
+          }
+        }
+      }
+
+      allIssues.sort((a, b) => b.publishedAt - a.publishedAt);
+      return noCacheJsonResponse({
+        data: allIssues.slice(offset, offset + limit),
+        meta: { total: allIssues.length, offset, limit },
+      });
+    } catch {
+      return jsonResponse({ error: 'Failed to load issues' }, 500);
+    }
+  }
+
+  // Issues for specific newsletter
+  try {
+    const issueIndexRaw = await env.CACHE?.get(`newsletter:issue:index:${newsletterId}`);
+    const issueIds: string[] = issueIndexRaw ? JSON.parse(issueIndexRaw) : [];
+    const issues = [];
+    for (const iid of issueIds.slice(-limit)) {
+      const issueRaw = await env.CACHE?.get(`newsletter:issue:${iid}`);
+      if (issueRaw) issues.push(JSON.parse(issueRaw));
+    }
+    issues.sort((a, b) => b.publishedAt - a.publishedAt);
+    return noCacheJsonResponse({
+      data: issues.slice(offset, offset + limit),
+      meta: { total: issues.length, newsletterId, offset, limit },
+    });
+  } catch {
+    return jsonResponse({ error: 'Failed to load issues' }, 500);
+  }
+}
+
+// ─── POST /api/news/newsletter/subscribe — Subscribe to creator newsletter ──
+
+export async function handleNewsletterCreatorSubscribe(
+  request: Request,
+  env: Env,
+): Promise<Response> {
+  if (request.method !== 'POST') {
+    return jsonResponse({ error: 'Method not allowed' }, 405);
+  }
+
+  let body: { newsletterId?: string; wallet?: string; email?: string } = {};
+  try {
+    body = (await request.json()) as typeof body;
+  } catch {
+    return jsonResponse({ error: 'Invalid JSON' }, 400);
+  }
+
+  const { newsletterId, wallet, email } = body;
+  if (!newsletterId || (!wallet && !email)) {
+    return jsonResponse({ error: 'Newsletter ID and wallet or email required' }, 400);
+  }
+
+  const subscriberId = wallet ? wallet.toLowerCase() : safeKey(email || '');
+  const subscriber = {
+    subscriberId,
+    newsletterId,
+    wallet: wallet?.toLowerCase() || '',
+    email: email?.toLowerCase() || '',
+    subscribedAt: Date.now(),
+    active: true,
+  };
+
+  try {
+    const subKey = `newsletter:sub:${newsletterId}:${subscriberId}`;
+    await env.CACHE?.put(subKey, JSON.stringify(subscriber), {
+      expirationTtl: 60 * 60 * 24 * 400,
+    });
+    // Index subscribers by newsletter
+    const subIndexKey = `newsletter:sub:index:${newsletterId}`;
+    const existing = (await env.CACHE?.get(subIndexKey)) || '[]';
+    const list = JSON.parse(existing) as string[];
+    list.push(subscriberId);
+    await env.CACHE?.put(subIndexKey, JSON.stringify([...new Set(list)]), {
+      expirationTtl: 60 * 60 * 24 * 400,
+    });
+
+    // Update subscriber count
+    const walletPart = newsletterId.split(':').pop() || '';
+    const nlKey = `newsletter:creator:${subscriber.wallet || walletPart}:${newsletterId}`;
+    const nlRaw = await env.CACHE?.get(nlKey);
+    if (nlRaw) {
+      const nl = JSON.parse(nlRaw);
+      nl.subscriberCount = (nl.subscriberCount || 0) + 1;
+      await env.CACHE?.put(nlKey, JSON.stringify(nl), {
+        expirationTtl: 60 * 60 * 24 * 400,
+      });
+    }
+  } catch {
+    return jsonResponse({ error: 'Failed to subscribe' }, 500);
+  }
+
+  return jsonResponse({ ok: true, newsletterId, subscriberId, action: 'subscribed' });
 }
 
 // ─── POST /api/news/mark-read — Mark Article as Read ────────────────────
@@ -932,7 +1287,9 @@ export async function handleNewsMarkRead(request: Request, env: Env): Promise<Re
     await env.CACHE?.put(historyKey, JSON.stringify(trimmed), {
       expirationTtl: 60 * 60 * 24 * 90,
     });
-  } catch { /* non-critical */ }
+  } catch {
+    /* non-critical */
+  }
 
   return jsonResponse({ ok: true, storyId, action: 'marked_read' });
 }
@@ -960,10 +1317,19 @@ export async function handleReadingList(request: Request, env: Env): Promise<Res
     const savedStories = result.stories
       .filter((s) => storyIds.includes(s.id))
       .map((s) => ({
-        id: s.id, title: s.title, summary: s.summary.slice(0, 200), url: s.url,
-        source: s.source, author: s.authorName || s.author, publishedAt: s.publishedAt,
-        imageUrl: s.imageUrl, heroImage: s.heroImage, readingTime: s.readingTime,
-        sentiment: s.sentiment, entities: s.entities, score: s.score,
+        id: s.id,
+        title: s.title,
+        summary: s.summary.slice(0, 200),
+        url: s.url,
+        source: s.source,
+        author: s.authorName || s.author,
+        publishedAt: s.publishedAt,
+        imageUrl: s.imageUrl,
+        heroImage: s.heroImage,
+        readingTime: s.readingTime,
+        sentiment: s.sentiment,
+        entities: s.entities,
+        score: s.score,
       }));
 
     return noCacheJsonResponse({
@@ -989,7 +1355,9 @@ export async function handleReadingListToggle(request: Request, env: Env): Promi
     try {
       const body = (await request.json()) as { wallet?: string };
       bodyWallet = body.wallet || '';
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }
 
   const effectiveWallet = wallet || bodyWallet;
@@ -1054,6 +1422,27 @@ export async function handleNewsRoute(request: Request, env: Env): Promise<Respo
   }
   if (path === '/api/news/digest/subscribe') {
     return handleNewsDigestSubscribe(request, env);
+  }
+
+  // ── Newsletter Creator endpoints ──
+  if (path === '/api/news/newsletter/create' && request.method === 'POST') {
+    return handleNewsletterCreatorCreate(request, env);
+  }
+  if (path === '/api/news/newsletter/mine') {
+    return handleNewsletterCreatorMine(request, env);
+  }
+  if (
+    path.startsWith('/api/news/newsletter/') &&
+    path.endsWith('/issue') &&
+    request.method === 'POST'
+  ) {
+    return handleNewsletterCreatorIssue(request, env);
+  }
+  if (path === '/api/news/newsletter/issues') {
+    return handleNewsletterCreatorIssues(request, env);
+  }
+  if (path === '/api/news/newsletter/subscribe' && request.method === 'POST') {
+    return handleNewsletterCreatorSubscribe(request, env);
   }
 
   // ── New personalized endpoints ──
