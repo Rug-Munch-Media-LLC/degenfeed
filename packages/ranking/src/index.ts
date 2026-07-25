@@ -1,23 +1,68 @@
 /**
- * @degenfeed/ranking v2
+ * @degenfeed/ranking v3 — Feed Algorithm V2
  *
- * A transparent, configurable ranking engine for the unified web3 feed.
- * Each component is exposed for inspection in the UI.
+ * ## Architecture
  *
- * Score = (recency + engagement + relevance + quality + reputation +
- *          velocity + diversity + source) * freshness * (1 - spam)
+ * The scoring pipeline (V2) integrates SIX layers:
  *
- * - recency: 12h half-life (younger = better)
- * - engagement: log(1 + likes + 2×reposts + 3×replies + 4×quotes) with
- *   velocity boost (recently-trending posts get a boost)
- * - relevance: keyword + niche overlap with viewer's preferences
- * - quality: original content (+3), media (+1), length penalty (-2)
- * - reputation: verified (+1), established (+0.5), source quality
- * - velocity: KV-based delta tracking + engagement-rate blend
- * - diversity: penalize repeat authors (anti-feed-spam)
- * - source: protocol tier weight (Nostr > Threads, etc.)
- * - spam: multiplicative penalty (1 - spamScore) — >0.7 demoted, >0.9 dropped
+ * 1. **Base Scoring** (unified-scorer.ts)
+ *    - 8-factor weighted sum: recency, engagement, relevance, quality,
+ *      reputation, diversity, source, velocity
+ *    - Mode presets (standard, morning-digest, breaking-news, deep-dive,
+ *      quick-scroll, for-you)
+ *    - Freshness/recency decay, engagement log-scaling
+ *
+ * 2. **Content Quality V2** (quality-v2.ts) — NEW
+ *    - Engagement rate (normalized to followers)
+ *    - Text quality (grammar, readability, originality)
+ *    - Media quality (image resolution, video production value)
+ *    - Source freshness (posting cadence)
+ *    - Reply quality (meaningful vs spam)
+ *    - Share velocity (engagement growth rate)
+ *    - Creator reputation (historical quality score)
+ *
+ * 3. **User Algo V2** (user-algo-v2.ts) — NEW
+ *    - Interest learning from engagement patterns
+ *    - Temporal preferences (time-of-day content matching)
+ *    - Format preferences (text/image/video/audio)
+ *    - Creator loyalty scoring
+ *    - 15% minimum discovery injection
+ *    - Feedback loop (show more/less like this)
+ *
+ * 4. **Protocol Algo** (protocol-algo.ts) — NEW
+ *    - Nostr: Relay quality, zaps, NIP-05
+ *    - Farcaster: FID age, followers, frame engagement
+ *    - Bluesky: DID age, post quality, community reputation
+ *    - Mastodon: Instance reputation, boosts, favorite ratio
+ *    - PeerTube: Resolution, subscribers, federation
+ *
+ * 5. **Anti-Gaming** (anti-gaming.ts) — NEW
+ *    - Engagement farm detection (coordinated patterns)
+ *    - Bot detection (behavioral analysis)
+ *    - Spam detection (repetitive content, link dumps)
+ *    - Sybil resistance (multi-account detection)
+ *
+ * 6. **Transparency** (transparency.ts) — NEW
+ *    - "Why This Post?" explanations per post
+ *    - Full score breakdown with weights
+ *    - "Tune Your Feed" suggestions
+ *    - A/B testing framework
+ *
+ * ## Quick Start
+ *
+ * ```ts
+ * // Full V2 scoring pipeline
+ * import { scorePostV2, rankV2 } from '@degenfeed/ranking';
+ *
+ * const result = scorePostV2(post, {
+ *   userAlgoContext: createUserAlgoV2Context(profile, v2Profile, follows),
+ *   antiGamingContext: { botDetection: { accountAgeDays: 30, postsPerDay: 5 } },
+ * });
+ *
+ * console.log(result.explanation.summary); // "Why this post?"
+ * ```
  */
+
 import {
   BOOST_TERMS,
   buildQualityAuthorProfile,
@@ -77,6 +122,101 @@ export type {
   VideoSource,
 } from './video-scorer';
 export { VideoScoreEngine, videoScorer } from './video-scorer';
+
+// ═════════════════════════════════════════════════════════════════════
+// NEW: V2 Feed Algorithm Modules
+// ═════════════════════════════════════════════════════════════════════
+
+// ─── TASK 1: Content Quality Scoring V2 ─────────────────────────────
+export type {
+  QualitySignalsV2,
+  QualityScorerContext,
+} from './quality-v2';
+export {
+  scoreQualityV2,
+  enrichWithQualityV2,
+} from './quality-v2';
+
+// ─── TASK 2: User Algo V2 ──────────────────────────────────────────
+export type {
+  FeedbackSignal,
+  FormatPreferences,
+  TemporalSlot,
+  UserAlgoV2Context,
+  UserAlgoV2Profile,
+  UserAlgoV2Result,
+} from './user-algo-v2';
+export {
+  emptyUserAlgoV2Profile,
+  isMutedByFeedback,
+  learnInterests,
+  learnTemporalPrefs,
+  processFeedback,
+  scoreUserAlgoV2,
+  shouldInjectDiscovery,
+} from './user-algo-v2';
+
+// ─── TASK 3: Protocol-Level Algo ───────────────────────────────────
+export type {
+  BlueskySignals,
+  FarcasterSignals,
+  MastodonSignals,
+  NostrSignals,
+  PeerTubeSignals,
+  ProtocolAlgoResult,
+  ProtocolScoringContext,
+} from './protocol-algo';
+export {
+  extractProtocolSignalsFromPost,
+  scoreProtocolAlgo,
+} from './protocol-algo';
+
+// ─── TASK 4: Anti-Gaming Protection ────────────────────────────────
+export type {
+  AntiGamingContext,
+  AntiGamingResult,
+  BotDetectionSignals,
+  EngagementFarmSignals,
+  SpamDetectionSignals,
+  SybilDetectionSignals,
+} from './anti-gaming';
+export {
+  analyzeTextSpam,
+  extractSpamSignalsFromPost,
+  scoreAntiGaming,
+} from './anti-gaming';
+
+// ─── TASK 5: Algorithm Transparency ────────────────────────────────
+export type {
+  ABTestConfig,
+  ABTestVariant,
+  AuditEntry,
+  FactorExplanation,
+  ScoreBreakdownUI,
+  TuneYourFeedOption,
+  WhyThisPost,
+} from './transparency';
+export {
+  assignABTest,
+  buildScoreBreakdownUI,
+  createAuditEntry,
+  getActiveVariants,
+  suggestTuning,
+  whyThisPost,
+} from './transparency';
+
+// ─── V2 Orchestrator (combines all 5 tasks) ────────────────────────
+export type {
+  FeedAlgorithmV2Options,
+  FeedAlgorithmV2Result,
+  FeedRankingV2Options,
+} from './feed-algorithm-v2';
+export {
+  createUserAlgoV2Context,
+  getTuningSuggestions,
+  rankV2 as rankV2Full,
+  scorePostV2,
+} from './feed-algorithm-v2';
 
 export const WEIGHTS = {
   w1: 1.0,
@@ -417,8 +557,12 @@ export interface TrendingTopic {
 }
 
 export function extractTickers(text: string): string[] {
-  return Array.from(new Set(Array.from(text.matchAll(/\$[A-Z]{2,5}\b/g)).map((m) => m[1]))).filter(
-    (t): t is string => typeof t === 'string',
+  return Array.from(
+    new Set(
+      Array.from(text.matchAll(/\$[A-Z]{2,5}\b/g))
+        .map((m) => m[0]?.replace(/^\$/, '') ?? '')
+        .filter(Boolean),
+    ),
   );
 }
 
