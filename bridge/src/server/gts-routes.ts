@@ -20,14 +20,8 @@
  *   GET  /api/gts/webringer    - Resolve a fediverse identity via WebFinger
  */
 
-import http from 'node:http';
+import type http from 'node:http';
 import { GtSClient } from '@degenfeed/mastodon-sdk';
-import {
-  authenticateUser,
-  getClientCredentialsToken,
-  registerGtsApp,
-  verifyToken,
-} from './gts-oauth';
 import { federationHub } from './federation-hub';
 import {
   discoverPopularCommunities,
@@ -37,6 +31,12 @@ import {
   lookupFediverseAccount,
   searchFediverseAccounts,
 } from './fediverse-discovery';
+import {
+  authenticateUser,
+  getClientCredentialsToken,
+  registerGtsApp,
+  verifyToken,
+} from './gts-oauth';
 
 // ─── Config ─────────────────────────────────────────────────────────
 
@@ -105,7 +105,12 @@ async function handleFullRegister(
 
     // Validate username format (alphanumeric + underscore, 1-64 chars)
     if (!/^[a-zA-Z0-9_]{1,64}$/.test(username)) {
-      return jsonError(res, 400, 'VALIDATION_ERROR', 'Username must be 1-64 alphanumeric characters or underscores');
+      return jsonError(
+        res,
+        400,
+        'VALIDATION_ERROR',
+        'Username must be 1-64 alphanumeric characters or underscores',
+      );
     }
 
     // Validate email format
@@ -121,7 +126,12 @@ async function handleFullRegister(
     // Step 1: Create GTS account
     const gtsAccount = await createGtsAccount(username, email, password, reason);
     if (!gtsAccount) {
-      return jsonError(res, 409, 'ACCOUNT_CREATION_FAILED', 'Could not create GTS account. Username may already be taken.');
+      return jsonError(
+        res,
+        409,
+        'ACCOUNT_CREATION_FAILED',
+        'Could not create GTS account. Username may already be taken.',
+      );
     }
 
     // Step 2: Get OAuth token for the new account
@@ -207,13 +217,23 @@ async function handleGtsRegister(
 
     const account = await createGtsAccount(username, email, password, reason);
     if (!account) {
-      return jsonError(res, 409, 'ACCOUNT_CREATION_FAILED', 'Could not create account. Username/email may already be taken.');
+      return jsonError(
+        res,
+        409,
+        'ACCOUNT_CREATION_FAILED',
+        'Could not create account. Username/email may already be taken.',
+      );
     }
 
     // Auto-authenticate after registration
     let accessToken: string | null = null;
     try {
-      const authResult = await authenticateUser(GTS_CLIENT_ID, GTS_CLIENT_SECRET, username, password);
+      const authResult = await authenticateUser(
+        GTS_CLIENT_ID,
+        GTS_CLIENT_SECRET,
+        username,
+        password,
+      );
       accessToken = authResult.access_token;
     } catch {
       // email confirmation may be pending
@@ -241,10 +261,7 @@ async function handleGtsRegister(
  *
  * Body: { username, password }
  */
-async function handleGtsAuth(
-  req: http.IncomingMessage,
-  res: http.ServerResponse,
-): Promise<void> {
+async function handleGtsAuth(req: http.IncomingMessage, res: http.ServerResponse): Promise<void> {
   try {
     const body = await readBody(req);
     const { username, password } = body;
@@ -353,10 +370,7 @@ async function handleGetFederation(
  * Follow an ActivityPub user from any instance.
  * Body: { account_id: string } or { acct: string }
  */
-async function handleFollow(
-  req: http.IncomingMessage,
-  res: http.ServerResponse,
-): Promise<void> {
+async function handleFollow(req: http.IncomingMessage, res: http.ServerResponse): Promise<void> {
   const token = extractBearerToken(req);
   if (!token) {
     return jsonError(res, 401, 'AUTH_REQUIRED', 'Authorization header required');
@@ -393,10 +407,7 @@ async function handleFollow(
  * Trending content from the fediverse.
  * Query params: limit (default 20), type (hashtags|posts)
  */
-async function handleTrending(
-  req: http.IncomingMessage,
-  res: http.ServerResponse,
-): Promise<void> {
+async function handleTrending(req: http.IncomingMessage, res: http.ServerResponse): Promise<void> {
   const url = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
   const limit = Math.min(50, parseInt(url.searchParams.get('limit') || '20', 10));
   const type = url.searchParams.get('type') || 'posts';
@@ -440,10 +451,7 @@ async function handleCommunities(
  * Search fediverse accounts.
  * Query params: q (query string), limit (default 10)
  */
-async function handleSearch(
-  req: http.IncomingMessage,
-  res: http.ServerResponse,
-): Promise<void> {
+async function handleSearch(req: http.IncomingMessage, res: http.ServerResponse): Promise<void> {
   const url = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
   const q = url.searchParams.get('q') || '';
   const limit = Math.min(50, parseInt(url.searchParams.get('limit') || '10', 10));
@@ -467,18 +475,17 @@ async function handleSearch(
  * Export GTS data (ActivityPub standard — follows, blocks, etc.)
  * Requires Authorization header.
  */
-async function handleExport(
-  req: http.IncomingMessage,
-  res: http.ServerResponse,
-): Promise<void> {
+async function handleExport(req: http.IncomingMessage, res: http.ServerResponse): Promise<void> {
   const token = extractBearerToken(req);
   if (!token) {
     return jsonError(res, 401, 'AUTH_REQUIRED', 'Authorization header required');
   }
 
   try {
-    const type = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`)
-      .searchParams.get('type') || 'all';
+    const type =
+      new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`).searchParams.get(
+        'type',
+      ) || 'all';
 
     const results: Record<string, unknown> = {};
 
@@ -518,10 +525,7 @@ async function handleExport(
  * Body: { target_account_uri: string, target_account_password: string }
  * GTS supports the standard Mastodon migration flow.
  */
-async function handleMigrate(
-  req: http.IncomingMessage,
-  res: http.ServerResponse,
-): Promise<void> {
+async function handleMigrate(req: http.IncomingMessage, res: http.ServerResponse): Promise<void> {
   const token = extractBearerToken(req);
   if (!token) {
     return jsonError(res, 401, 'AUTH_REQUIRED', 'Authorization header required');
@@ -571,21 +575,26 @@ async function handleMigrate(
  * Resolve a fediverse identity via WebFinger.
  * Query: resource=acct:user@domain.com
  */
-async function handleWebfinger(
-  req: http.IncomingMessage,
-  res: http.ServerResponse,
-): Promise<void> {
+async function handleWebfinger(req: http.IncomingMessage, res: http.ServerResponse): Promise<void> {
   const url = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
   const resource = url.searchParams.get('resource') || '';
 
   if (!resource) {
-    return jsonError(res, 400, 'VALIDATION_ERROR', 'resource parameter required (e.g., acct:user@domain.com)');
+    return jsonError(
+      res,
+      400,
+      'VALIDATION_ERROR',
+      'resource parameter required (e.g., acct:user@domain.com)',
+    );
   }
 
   try {
-    const wfRes = await fetch(`${GTS_BASE}/.well-known/webfinger?resource=${encodeURIComponent(resource)}`, {
-      signal: AbortSignal.timeout(5000),
-    });
+    const wfRes = await fetch(
+      `${GTS_BASE}/.well-known/webfinger?resource=${encodeURIComponent(resource)}`,
+      {
+        signal: AbortSignal.timeout(5000),
+      },
+    );
 
     if (!wfRes.ok) {
       return jsonError(res, 404, 'NOT_FOUND', `WebFinger lookup failed for ${resource}`);
@@ -602,15 +611,17 @@ async function handleWebfinger(
  * Lookup an ActivityPub account on the fediverse.
  * GET /api/gts/lookup?acct=user@instance.com
  */
-async function handleLookup(
-  req: http.IncomingMessage,
-  res: http.ServerResponse,
-): Promise<void> {
+async function handleLookup(req: http.IncomingMessage, res: http.ServerResponse): Promise<void> {
   const url = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
   const acct = url.searchParams.get('acct') || '';
 
   if (!acct) {
-    return jsonError(res, 400, 'VALIDATION_ERROR', 'acct parameter required (e.g., user@instance.com)');
+    return jsonError(
+      res,
+      400,
+      'VALIDATION_ERROR',
+      'acct parameter required (e.g., user@instance.com)',
+    );
   }
 
   const token = extractBearerToken(req);

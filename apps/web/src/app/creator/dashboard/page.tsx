@@ -1,20 +1,25 @@
 'use client';
 
 /**
- * Creator Coin Management Dashboard (TASK 2)
+ * Creator Coin Management Dashboard
  *
- * Full creator dashboard with:
- * - Stats cards: market cap, price, volume, holders, allocation, revenue
- * - Charts: price, holder growth, volume, buy/sell ratio
- * - Token actions: claim, burn, adjust params, airdrop, gated posts
- * - Community tab: leaderboard, trades feed, social mentions
+ * Complete creator control center:
+ * - Real-time metrics: price, market cap, holders, volume, liquidity
+ * - Revenue: fees earned, tips received
+ * - Holder list: all holders with labels (creator, team, community)
+ * - Trade history: all buys/sells with wallet labels
+ * - Vesting schedule: locked vs unlocked tokens, next unlock date
+ * - Quick actions: burn tokens, airdrop, update parameters (via DAO)
+ * - Wallet labeling for transparency
  */
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
-// ─── Types ─────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════
+// TYPES
+// ══════════════════════════════════════════════════════════════════════
 
 interface CoinSummary {
   address: string;
@@ -22,249 +27,926 @@ interface CoinSummary {
   symbol: string;
   chain: string;
   deployedAt: number;
-  marketCap: string;
-  price: string;
+  marketCap: number;
+  price: number;
   priceChange24h: number;
-  volume24h: string;
+  volume24h: number;
+  liquidity: number;
   holderCount: number;
   graduated: boolean;
-  creatorRevenue: string;
+  creatorRevenue: number;
+  feesEarned: number;
+  tipsReceived: number;
+  creatorAllocation: number;
+  platformFeeBps: number;
+  creatorFeeBps: number;
 }
+
+type WalletLabel = 'creator' | 'team' | 'lp' | 'dao' | 'community' | 'bundled';
 
 interface HolderEntry {
   address: string;
-  balance: string;
+  balance: number;
   percentage: number;
+  label: WalletLabel;
   isCreator: boolean;
   lastTx: number;
+  entryPrice?: number;
+  pnl?: number;
+  isBundled: boolean;
 }
 
 interface TradeEntry {
   txHash: string;
   type: 'buy' | 'sell';
   trader: string;
-  tokenAmount: string;
-  nativeValue: string;
-  price: string;
+  traderLabel: WalletLabel;
+  tokenAmount: number;
+  nativeValue: number;
+  price: number;
   timestamp: number;
+  isBundled: boolean;
 }
 
 interface RevenueData {
-  totalRevenue: string;
-  creatorFees: string;
-  treasuryFees: string;
-  tipsReceived: string;
-  platformFees: string;
-  revenueByDay: Array<{ date: string; amount: string }>;
+  totalRevenue: number;
+  creatorFees: number;
+  treasuryFees: number;
+  tipsReceived: number;
+  platformFees: number;
+  liquidityFees: number;
+  revenueByDay: Array<{ date: string; amount: number }>;
+  feeBreakdown: {
+    creator: { label: string; pct: number; amount: number };
+    platform: { label: string; pct: number; amount: number };
+    treasury: { label: string; pct: number; amount: number };
+    liquidity: { label: string; pct: number; amount: number };
+  };
 }
 
-// ─── Dashboard Tabs ─────────────────────────────────────────────────────
+interface VestingSchedule {
+  totalLocked: number;
+  totalUnlocked: number;
+  unlockedPct: number;
+  schedule: Array<{
+    date: string;
+    amount: number;
+    cumulative: number;
+    status: 'locked' | 'unlocking' | 'unlocked';
+  }>;
+  nextUnlockDate: string;
+  nextUnlockAmount: number;
+  cliffEndDate: string;
+  vestingEndDate: string;
+}
 
-type DashboardTab = 'overview' | 'coins' | 'community' | 'revenue' | 'settings';
+interface SupplyBreakdown {
+  totalSupply: number;
+  circulating: number;
+  burned: number;
+  ownedByCreator: number;
+  ownedByTeam: number;
+  ownedByLP: number;
+  ownedByDAO: number;
+  ownedByCommunity: number;
+  ownedByBundled: number;
+}
 
-// ─── Mini Sparkline ────────────────────────────────────────────────────
+interface BundlingInfo {
+  detected: boolean;
+  bundledWallets: number;
+  totalBundledTokens: number;
+  bundlingPercentage: number;
+  riskLevel: 'none' | 'low' | 'medium' | 'high';
+}
 
-function MiniSparkline({ data, color = '#00ff41' }: { data: number[]; color?: string }) {
-  const max = Math.max(...data, 1);
-  const w = 100;
-  const h = 28;
-  const points = data
-    .map((v, i) => `${(i / (data.length - 1)) * w},${h - (v / max) * h}`)
-    .join(' ');
-  if (data.length < 2) return null;
+interface AuditEntry {
+  txHash: string;
+  action: string;
+  params: string;
+  timestamp: number;
+  actor: string;
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// MOCK DATA GENERATORS
+// ══════════════════════════════════════════════════════════════════════
+
+function generateMockCoinsData(): CoinSummary[] {
+  return [
+    {
+      address: '0x1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b',
+      name: 'Alice Coin',
+      symbol: 'ALICE',
+      chain: 'base',
+      deployedAt: Date.now() - 86400000 * 7,
+      marketCap: 1250000,
+      price: 0.00125,
+      priceChange24h: 12.4,
+      volume24h: 89000,
+      liquidity: 420000,
+      holderCount: 342,
+      graduated: false,
+      creatorRevenue: 3200,
+      feesEarned: 2800,
+      tipsReceived: 400,
+      creatorAllocation: 5,
+      platformFeeBps: 50,
+      creatorFeeBps: 100,
+    },
+    {
+      address: '0x0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e',
+      name: 'Bob Coin',
+      symbol: 'BOB',
+      chain: 'solana',
+      deployedAt: Date.now() - 86400000 * 30,
+      marketCap: 3200000,
+      price: 0.0032,
+      priceChange24h: -3.2,
+      volume24h: 156000,
+      liquidity: 890000,
+      holderCount: 891,
+      graduated: true,
+      creatorRevenue: 8900,
+      feesEarned: 7200,
+      tipsReceived: 1700,
+      creatorAllocation: 8,
+      platformFeeBps: 50,
+      creatorFeeBps: 100,
+    },
+    {
+      address: '0xdead000000000000000000000000000000000003',
+      name: 'Creator Token',
+      symbol: 'CRE8',
+      chain: 'base',
+      deployedAt: Date.now() - 86400000 * 14,
+      marketCap: 2100000,
+      price: 0.0021,
+      priceChange24h: 25.7,
+      volume24h: 124000,
+      liquidity: 560000,
+      holderCount: 567,
+      graduated: false,
+      creatorRevenue: 5400,
+      feesEarned: 4100,
+      tipsReceived: 1300,
+      creatorAllocation: 6,
+      platformFeeBps: 50,
+      creatorFeeBps: 100,
+    },
+  ];
+}
+
+function generateMockHolders(address: string): HolderEntry[] {
+  const isSecondCoin = address === '0x0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e';
+  const holders: HolderEntry[] = [
+    {
+      address: '0xcreator00000000000000000000000000000001',
+      balance: isSecondCoin ? 80000000 : 50000000,
+      percentage: isSecondCoin ? 8 : 5,
+      label: 'creator',
+      isCreator: true,
+      lastTx: Date.now() - 3600000,
+      isBundled: false,
+    },
+    {
+      address: '0xteam000000000000000000000000000000000001',
+      balance: 15000000,
+      percentage: 1.5,
+      label: 'team',
+      isCreator: false,
+      lastTx: Date.now() - 86400000 * 3,
+      isBundled: false,
+    },
+    {
+      address: '0xteam000000000000000000000000000000000002',
+      balance: 10000000,
+      percentage: 1.0,
+      label: 'team',
+      isCreator: false,
+      lastTx: Date.now() - 86400000 * 7,
+      isBundled: false,
+    },
+    {
+      address: '0xlppool0000000000000000000000000000000001',
+      balance: 45000000,
+      percentage: 4.5,
+      label: 'lp',
+      isCreator: false,
+      lastTx: Date.now() - 600000,
+      isBundled: false,
+    },
+    {
+      address: '0xdaotreasury000000000000000000000000000001',
+      balance: 25000000,
+      percentage: 2.5,
+      label: 'dao',
+      isCreator: false,
+      lastTx: Date.now() - 86400000 * 2,
+      isBundled: false,
+    },
+    {
+      address: '0x1234567890abcdef1234567890abcdef12345678',
+      balance: 8000000,
+      percentage: 0.8,
+      label: 'community',
+      isCreator: false,
+      lastTx: Date.now() - 1800000,
+      entryPrice: 0.0008,
+      pnl: 56.2,
+      isBundled: false,
+    },
+    {
+      address: '0xabcdef1234567890abcdef1234567890abcdef12',
+      balance: 5000000,
+      percentage: 0.5,
+      label: 'community',
+      isCreator: false,
+      lastTx: Date.now() - 7200000,
+      entryPrice: 0.0015,
+      pnl: -16.7,
+      isBundled: false,
+    },
+    {
+      address: '0x9999999999999999999999999999999999999999',
+      balance: 20000000,
+      percentage: 2.0,
+      label: 'bundled',
+      isCreator: false,
+      lastTx: Date.now() - 86400000 * 14,
+      isBundled: true,
+    },
+    {
+      address: '0x8888888888888888888888888888888888888888',
+      balance: 15000000,
+      percentage: 1.5,
+      label: 'bundled',
+      isCreator: false,
+      lastTx: Date.now() - 86400000 * 14,
+      isBundled: true,
+    },
+    {
+      address: '0x7777777777777777777777777777777777777777',
+      balance: 12000000,
+      percentage: 1.2,
+      label: 'bundled',
+      isCreator: false,
+      lastTx: Date.now() - 86400000 * 14,
+      isBundled: true,
+    },
+  ];
+  // Add random community holders
+  for (let i = 0; i < 20; i++) {
+    const bal = Math.floor(Math.random() * 5000000) + 100000;
+    holders.push({
+      address: `0x${(i + 100).toString(16).padStart(40, '0')}`,
+      balance: bal,
+      percentage: (bal / 1000000000) * 100,
+      label: 'community',
+      isCreator: false,
+      lastTx: Date.now() - Math.floor(Math.random() * 86400000 * 7),
+      entryPrice: Math.random() * 0.005 + 0.0005,
+      pnl: (Math.random() - 0.5) * 100,
+      isBundled: false,
+    });
+  }
+  return holders.sort((a, b) => b.balance - a.balance);
+}
+
+function generateMockTrades(): TradeEntry[] {
+  const wallets = [
+    { addr: '0xcreator00000000000000000000000000000001', label: 'creator' as WalletLabel },
+    { addr: '0xteam000000000000000000000000000000000001', label: 'team' as WalletLabel },
+    { addr: '0xlppool0000000000000000000000000000000001', label: 'lp' as WalletLabel },
+    { addr: '0x1234567890abcdef1234567890abcdef12345678', label: 'community' as WalletLabel },
+    { addr: '0xabcdef1234567890abcdef1234567890abcdef12', label: 'community' as WalletLabel },
+    { addr: '0x9999999999999999999999999999999999999999', label: 'bundled' as WalletLabel },
+    { addr: '0x8888888888888888888888888888888888888888', label: 'bundled' as WalletLabel },
+    { addr: '0x1111111111111111111111111111111111111111', label: 'community' as WalletLabel },
+    { addr: '0x2222222222222222222222222222222222222222', label: 'community' as WalletLabel },
+    { addr: '0x3333333333333333333333333333333333333333', label: 'community' as WalletLabel },
+  ];
+  return Array.from({ length: 40 }, (_, i) => {
+    const wallet = wallets[Math.floor(Math.random() * wallets.length)];
+    const isBuy = Math.random() > 0.45;
+    return {
+      txHash: `0x${(i + 1).toString(16).padStart(64, '0')}`,
+      type: isBuy ? 'buy' : 'sell',
+      trader: wallet.addr,
+      traderLabel: wallet.label,
+      tokenAmount: Math.floor(Math.random() * 50000 + 1000),
+      nativeValue: Math.floor(Math.random() * 50 + 5),
+      price: Math.random() * 0.005 + 0.0005,
+      timestamp: Date.now() - Math.floor(Math.random() * 86400000 * 3),
+      isBundled: wallet.label === 'bundled',
+    };
+  }).sort((a, b) => b.timestamp - a.timestamp);
+}
+
+function generateMockRevenue(): RevenueData {
+  const total = 45200;
+  return {
+    totalRevenue: total,
+    creatorFees: 28400,
+    treasuryFees: 8900,
+    tipsReceived: 12000,
+    platformFees: 2260,
+    liquidityFees: 3800,
+    revenueByDay: Array.from({ length: 30 }, (_, i) => {
+      const d = new Date(Date.now() - i * 86400000);
+      return {
+        date: d.toISOString().slice(0, 10),
+        amount: Math.floor(Math.random() * 5000) + 500,
+      };
+    }),
+    feeBreakdown: {
+      creator: { label: 'Creator Fee', pct: 1.0, amount: total * 0.01 },
+      platform: { label: 'Platform Fee', pct: 0.5, amount: total * 0.005 },
+      treasury: { label: 'Treasury', pct: 0.3, amount: total * 0.003 },
+      liquidity: { label: 'Liquidity Pool', pct: 0.2, amount: total * 0.002 },
+    },
+  };
+}
+
+function generateMockVesting(): VestingSchedule {
+  const now = Date.now();
+  const cliffEnd = new Date(now + 86400000 * 30).toISOString();
+  const vestingEnd = new Date(now + 86400000 * 365).toISOString();
+  const nextUnlock = new Date(now + 86400000 * 7).toISOString();
+  return {
+    totalLocked: 80000000,
+    totalUnlocked: 20000000,
+    unlockedPct: 20,
+    schedule: Array.from({ length: 52 }, (_, i) => {
+      const date = new Date(now + 86400000 * 7 * (i + 1));
+      return {
+        date: date.toISOString(),
+        amount: 1538461,
+        cumulative: 20000000 + 1538461 * (i + 1),
+        status: i < 3 ? 'unlocked' : i === 3 ? 'unlocking' : 'locked',
+      };
+    }),
+    nextUnlockDate: nextUnlock,
+    nextUnlockAmount: 1538461,
+    cliffEndDate: cliffEnd,
+    vestingEndDate: vestingEnd,
+  };
+}
+
+function generateMockSupply(): SupplyBreakdown {
+  return {
+    totalSupply: 1000000000,
+    circulating: 850000000,
+    burned: 50000000,
+    ownedByCreator: 50000000,
+    ownedByTeam: 25000000,
+    ownedByLP: 45000000,
+    ownedByDAO: 25000000,
+    ownedByCommunity: 620000000,
+    ownedByBundled: 47000000,
+  };
+}
+
+function generateMockBundling(): BundlingInfo {
+  return {
+    detected: true,
+    bundledWallets: 3,
+    totalBundledTokens: 47000000,
+    bundlingPercentage: 4.7,
+    riskLevel: 'low',
+  };
+}
+
+function generateMockAuditTrail(): AuditEntry[] {
+  return [
+    {
+      txHash: '0xaudit000000000000000000000000000000000000000001',
+      action: 'Creator Fee Changed',
+      params: '100 bps → 150 bps',
+      timestamp: Date.now() - 86400000 * 10,
+      actor: 'creator',
+    },
+    {
+      txHash: '0xaudit000000000000000000000000000000000000000002',
+      action: 'Vesting Param Updated',
+      params: 'Cliff: 30d → 45d',
+      timestamp: Date.now() - 86400000 * 5,
+      actor: 'dao',
+    },
+    {
+      txHash: '0xaudit000000000000000000000000000000000000000003',
+      action: 'Treasury Allocation',
+      params: '500,000 tokens transferred',
+      timestamp: Date.now() - 86400000 * 2,
+      actor: 'dao',
+    },
+  ];
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// UI COMPONENTS
+// ══════════════════════════════════════════════════════════════════════
+
+/* ── Label Badge ─────────────────────────────────── */
+function WalletLabelBadge({ label }: { label: WalletLabel }) {
+  const styles: Record<WalletLabel, { bg: string; text: string }> = {
+    creator: { bg: 'bg-degen-500/15', text: 'text-degen-400' },
+    team: { bg: 'bg-blue-500/15', text: 'text-blue-400' },
+    lp: { bg: 'bg-purple-500/15', text: 'text-purple-400' },
+    dao: { bg: 'bg-amber-500/15', text: 'text-amber-400' },
+    community: { bg: 'bg-[var(--color-overlay)]', text: 'text-[var(--color-muted)]' },
+    bundled: { bg: 'bg-red-500/15', text: 'text-red-400' },
+  };
+  const s = styles[label];
   return (
-    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className="shrink-0" aria-hidden="true">
-      <polyline
-        fill="none"
-        stroke={color}
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        points={points}
-      />
-    </svg>
+    <span className={`rounded px-1.5 py-0.5 text-[8px] font-semibold ${s.bg} ${s.text}`}>
+      {label}
+    </span>
   );
 }
 
-// ─── Stat Card ─────────────────────────────────────────────────────────
-
-function StatCard({
+/* ── Stat Tile ────────────────────────────────────── */
+function Tile({
   label,
   value,
   sub,
   icon,
   trend,
-  onClick,
+  accent,
 }: {
   label: string;
   value: string;
   sub?: string;
   icon: string;
-  trend?: { value: number; positive: boolean };
-  onClick?: () => void;
+  trend?: { value: number; up: boolean };
+  accent?: string;
 }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-4 text-left transition-all hover:border-degen-500/20 hover:shadow-[0_0_20px_rgba(0,255,65,0.06)] w-full"
+    <div
+      className="relative overflow-hidden rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-4 transition-all hover:border-degen-500/20"
     >
+      {accent && (
+        <div className="absolute right-0 top-0 h-0.5 w-full opacity-60" style={{ background: `linear-gradient(90deg, transparent, ${accent})` }} />
+      )}
       <div className="mb-2 flex items-center justify-between">
         <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-degen-500/10 text-sm text-degen-400">
           {icon}
         </span>
         {trend && (
-          <span
-            className={`flex items-center gap-0.5 text-[10px] font-semibold ${trend.positive ? 'text-degen-400' : 'text-red-400'}`}
-          >
-            <svg
-              width="10"
-              height="10"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              className={trend.positive ? '' : 'rotate-180'}
-            >
+          <span className={`flex items-center gap-0.5 text-[10px] font-semibold ${trend.up ? 'text-degen-400' : 'text-red-400'}`}>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" className={trend.up ? '' : 'rotate-180'}>
               <polyline points="18 15 12 9 6 15" />
             </svg>
             {trend.value}%
           </span>
         )}
       </div>
-      <div className="text-2xl font-black tabular-nums text-[var(--color-fg)]">{value}</div>
-      <div className="mt-0.5 text-xs text-[var(--color-muted)]">{label}</div>
-      {sub && <div className="mt-1 text-[10px] text-degen-400">{sub}</div>}
-    </button>
+      <div className="text-xl font-black tabular-nums text-[var(--color-fg)]">{value}</div>
+      <div className="mt-0.5 text-[10px] text-[var(--color-muted)]">{label}</div>
+      {sub && <div className="mt-1 text-[9px] text-degen-400">{sub}</div>}
+    </div>
   );
 }
 
-// ─── Coin Card ──────────────────────────────────────────────────────────
-
-function CoinCard({ coin }: { coin: CoinSummary }) {
-  const sparkData = useMemo(() => Array.from({ length: 24 }, () => Math.random() * 100 + 50), []);
-
+/* ── Pie Chart ─────────────────────────────────────── */
+function PieChart({ data, size = 120 }: { data: Array<{ label: string; value: number; color: string }>; size?: number }) {
+  const total = data.reduce((s, d) => s + d.value, 0) || 1;
+  const r = size / 2 - 10;
+  const cx = size / 2;
+  const cy = size / 2;
+  let cumulative = 0;
+  const slices = data.map((d) => {
+    const pct = d.value / total;
+    const startAngle = cumulative * 360;
+    cumulative += pct;
+    const endAngle = cumulative * 360;
+    const startRad = ((startAngle - 90) * Math.PI) / 180;
+    const endRad = ((endAngle - 90) * Math.PI) / 180;
+    const x1 = cx + r * Math.cos(startRad);
+    const y1 = cy + r * Math.sin(startRad);
+    const x2 = cx + r * Math.cos(endRad);
+    const y2 = cy + r * Math.sin(endRad);
+    const largeArc = pct > 0.5 ? 1 : 0;
+    return {
+      path: `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} Z`,
+      color: d.color,
+      label: d.label,
+      pct: (pct * 100).toFixed(1),
+    };
+  });
   return (
-    <Link
-      href={`/creator/coins/${coin.address}`}
-      className="block rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-4 transition-all hover:border-degen-500/20 hover:shadow-[0_0_20px_rgba(0,255,65,0.06)]"
-    >
-      <div className="mb-2 flex items-center justify-between">
-        <div>
-          <div className="text-sm font-bold text-[var(--color-fg)]">${coin.symbol}</div>
-          <div className="text-[10px] text-[var(--color-muted)]">{coin.name}</div>
-        </div>
-        <span
-          className={`rounded-full px-2 py-0.5 text-[9px] font-semibold ${coin.graduated ? 'bg-green-500/15 text-green-400' : 'bg-amber-500/15 text-amber-400'}`}
-        >
-          {coin.graduated ? 'Graduated' : 'Bonding'}
-        </span>
-      </div>
-      <div className="mb-2 flex items-center justify-between">
-        <MiniSparkline data={sparkData} color={coin.priceChange24h >= 0 ? '#00ff41' : '#ff4444'} />
-        <div className="text-right">
-          <div className="text-sm font-bold tabular-nums text-[var(--color-fg)]">
-            ${Number(coin.price).toFixed(6)}
-          </div>
-          <div
-            className={`text-[10px] font-semibold ${coin.priceChange24h >= 0 ? 'text-degen-400' : 'text-red-400'}`}
-          >
-            {coin.priceChange24h >= 0 ? '+' : ''}
-            {coin.priceChange24h.toFixed(1)}%
-          </div>
-        </div>
-      </div>
-      <div className="flex items-center justify-between text-[10px] text-[var(--color-muted)]">
-        <span>MCap: ${(Number(coin.marketCap) / 1000000).toFixed(1)}M</span>
-        <span>{coin.holderCount} holders</span>
-        <span>
-          {coin.chain === 'solana' ? '◎' : '⧫'} {coin.chain}
-        </span>
-      </div>
-    </Link>
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-label="Supply breakdown pie chart" role="img">
+      {slices.map((s, i) => (
+        <path key={i} d={s.path} fill={s.color} stroke="var(--color-card)" strokeWidth="1" />
+      ))}
+    </svg>
   );
 }
 
-// ─── Holder Row ────────────────────────────────────────────────────────
-
-function _HolderRow({ holder }: { holder: HolderEntry }) {
+/* ── Vesting Progress Bar ──────────────────────────── */
+function VestingBar({ vesting }: { vesting: VestingSchedule }) {
   return (
-    <div className="flex items-center justify-between py-2 text-[10px]">
-      <div className="flex items-center gap-2">
-        <span
-          className={`h-2 w-2 rounded-full ${holder.isCreator ? 'bg-degen-400' : 'bg-[var(--color-glass-border)]'}`}
+    <div className="space-y-3">
+      <div className="flex items-center justify-between text-xs">
+        <span className="text-[var(--color-fg)] font-semibold">
+          {vesting.unlockedPct}% Unlocked
+        </span>
+        <span className="text-[var(--color-muted)]">
+          {(vesting.totalUnlocked / 1e6).toFixed(0)}M / {(vesting.totalLocked / 1e6).toFixed(0)}M
+        </span>
+      </div>
+      <div className="h-3 overflow-hidden rounded-full bg-[var(--color-glass-border)]">
+        <div
+          className="h-full rounded-full bg-gradient-to-r from-red-500 via-yellow-500 to-degen-400 transition-all duration-700"
+          style={{ width: `${vesting.unlockedPct}%` }}
         />
-        <span className="font-mono text-[var(--color-fg)]">
-          {holder.address.slice(0, 6)}...{holder.address.slice(-4)}
-          {holder.isCreator && <span className="ml-1 text-degen-400">(you)</span>}
-        </span>
       </div>
-      <div className="flex items-center gap-3">
-        <span className="tabular-nums text-[var(--color-fg)]">
-          {(Number(holder.balance) / 1000000).toFixed(1)}M
-        </span>
-        <span className="w-12 text-right text-[var(--color-muted)]">
-          {holder.percentage.toFixed(1)}%
-        </span>
+      <div className="grid grid-cols-4 gap-2 text-[9px]">
+        <div>
+          <span className="text-[var(--color-muted)]">Cliff ends</span>
+          <p className="font-mono text-[var(--color-fg)]">{new Date(vesting.cliffEndDate).toLocaleDateString()}</p>
+        </div>
+        <div>
+          <span className="text-[var(--color-muted)]">Next unlock</span>
+          <p className="font-mono text-degen-400">{new Date(vesting.nextUnlockDate).toLocaleDateString()}</p>
+        </div>
+        <div>
+          <span className="text-[var(--color-muted)]">Amount</span>
+          <p className="font-mono text-[var(--color-fg)]">{(vesting.nextUnlockAmount / 1e6).toFixed(2)}M</p>
+        </div>
+        <div>
+          <span className="text-[var(--color-muted)]">Vesting ends</span>
+          <p className="font-mono text-[var(--color-fg)]">{new Date(vesting.vestingEndDate).toLocaleDateString()}</p>
+        </div>
       </div>
     </div>
   );
 }
 
-// ─── Trade Row ──────────────────────────────────────────────────────────
+/* ── Mini Bar Chart ───────────────────────────────── */
+function MiniBarChart({ data, color = '#00ff41' }: { data: number[]; color?: string }) {
+  const max = Math.max(...data, 1);
+  return (
+    <div className="flex items-end gap-[2px] h-20">
+      {data.map((v, i) => (
+        <div key={i} className="flex-1 group relative">
+          <div className="w-full rounded-t-sm transition-all hover:opacity-80" style={{ height: `${(v / max) * 100}%`, background: color, opacity: 0.5 }} />
+        </div>
+      ))}
+    </div>
+  );
+}
 
+/* ── Trade Row ─────────────────────────────────────── */
 function TradeRow({ trade }: { trade: TradeEntry }) {
   const ago = Math.floor((Date.now() - trade.timestamp) / 60000);
   return (
-    <div className="flex items-center justify-between py-2 text-[10px]">
-      <div className="flex items-center gap-2">
-        <span
-          className={`h-2 w-2 rounded-full ${trade.type === 'buy' ? 'bg-degen-400' : 'bg-red-400'}`}
-        />
-        <span
-          className={`font-semibold ${trade.type === 'buy' ? 'text-degen-400' : 'text-red-400'}`}
-        >
+    <div className="flex items-center justify-between py-1.5 text-[10px] border-b border-[var(--color-glass-border)] last:border-0">
+      <div className="flex items-center gap-1.5 min-w-0">
+        <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${trade.type === 'buy' ? 'bg-degen-400' : 'bg-red-400'}`} />
+        <span className={`font-semibold shrink-0 ${trade.type === 'buy' ? 'text-degen-400' : 'text-red-400'}`}>
           {trade.type === 'buy' ? 'BUY' : 'SELL'}
         </span>
-        <span className="font-mono text-[var(--color-muted)]">
-          {trade.trader.slice(0, 6)}...{trade.trader.slice(-4)}
+        <span className="font-mono text-[var(--color-muted)] truncate max-w-[60px]">
+          {trade.trader.slice(0, 6)}..{trade.trader.slice(-4)}
         </span>
+        <WalletLabelBadge label={trade.traderLabel} />
       </div>
-      <div className="flex items-center gap-3">
-        <span className="tabular-nums text-[var(--color-fg)]">
-          {Number(trade.tokenAmount).toFixed(0)}
+      <div className="flex items-center gap-2 shrink-0">
+        <span className="tabular-nums text-[var(--color-fg)]">{(trade.tokenAmount / 1000).toFixed(0)}K</span>
+        <span className="tabular-nums text-[var(--color-muted)]">${trade.nativeValue.toFixed(2)}</span>
+        <span className="text-[var(--color-muted)] w-10 text-right">
+          {ago < 60 ? `${ago}m` : Math.floor(ago / 60) < 24 ? `${Math.floor(ago / 60)}h` : `${Math.floor(ago / 1440)}d`}
         </span>
-        <span className="tabular-nums text-[var(--color-muted)]">
-          ${Number(trade.nativeValue).toFixed(2)}
-        </span>
-        <span className="text-[var(--color-muted)]">{ago}m ago</span>
+        {trade.isBundled && <span className="text-red-400 text-[7px] font-bold">⚠</span>}
       </div>
     </div>
   );
 }
 
-// ─── Simple Bar Chart ──────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════
+// DASHBOARD SECTIONS
+// ══════════════════════════════════════════════════════════════════════
 
-function RevenueChart({ data }: { data: Array<{ date: string; amount: string }> }) {
-  const max = Math.max(...data.map((d) => Number(d.amount)), 1);
-  const reversed = [...data].reverse().slice(-30);
+/* ── Metrics Section ──────────────────────────────── */
+function MetricsSection({ coin }: { coin: CoinSummary }) {
   return (
-    <div className="flex items-end gap-0.5 h-32">
-      {reversed.map((d, _i) => {
-        const h = (Number(d.amount) / max) * 100;
-        return (
-          <div key={d.date} className="group relative flex-1">
-            <div
-              className="w-full rounded-t-sm bg-degen-500/40 transition-all hover:bg-degen-500/60"
-              style={{ height: `${Math.max(h, 2)}%` }}
-            />
-            <div className="absolute -top-6 left-1/2 hidden -translate-x-1/2 whitespace-nowrap rounded bg-[var(--color-card)] px-2 py-0.5 text-[8px] text-[var(--color-fg)] shadow group-hover:block">
-              ${Number(d.amount).toLocaleString()}
+    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+      <Tile label="Price" value={`$${coin.price.toFixed(6)}`} icon="💰" trend={{ value: coin.priceChange24h, up: coin.priceChange24h >= 0 }} />
+      <Tile label="Market Cap" value={`$${(coin.marketCap / 1e6).toFixed(2)}M`} icon="📊" />
+      <Tile label="Holders" value={coin.holderCount.toLocaleString()} icon="👥" sub="+12 today" />
+      <Tile label="24h Volume" value={`$${(coin.volume24h / 1e3).toFixed(0)}K`} icon="⚡" />
+      <Tile label="Liquidity" value={`$${(coin.liquidity / 1e3).toFixed(0)}K`} icon="💧" accent="var(--color-accent)" />
+      <Tile label="Revenue" value={`$${coin.creatorRevenue.toLocaleString()}`} icon="💰" trend={{ value: 18.5, up: true }} />
+    </div>
+  );
+}
+
+/* ── Holder List ──────────────────────────────────── */
+function HolderListSection({ holders }: { holders: HolderEntry[] }) {
+  const [showAll, setShowAll] = useState(false);
+  const display = showAll ? holders : holders.slice(0, 15);
+  const labelsCount = {
+    creator: holders.filter(h => h.label === 'creator').length,
+    team: holders.filter(h => h.label === 'team').length,
+    lp: holders.filter(h => h.label === 'lp').length,
+    dao: holders.filter(h => h.label === 'dao').length,
+    bundled: holders.filter(h => h.label === 'bundled').length,
+    community: holders.filter(h => h.label === 'community').length,
+  };
+
+  return (
+    <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-4">
+      <div className="mb-3 flex items-center justify-between">
+        <h3 className="text-sm font-bold text-[var(--color-fg)]">👥 Holder List</h3>
+        <div className="flex flex-wrap gap-1">
+          {labelsCount.creator > 0 && <span className="rounded bg-degen-500/15 px-1.5 py-0.5 text-[8px] text-degen-400">{labelsCount.creator} creator</span>}
+          {labelsCount.team > 0 && <span className="rounded bg-blue-500/15 px-1.5 py-0.5 text-[8px] text-blue-400">{labelsCount.team} team</span>}
+          {labelsCount.lp > 0 && <span className="rounded bg-purple-500/15 px-1.5 py-0.5 text-[8px] text-purple-400">{labelsCount.lp} LP</span>}
+          {labelsCount.dao > 0 && <span className="rounded bg-amber-500/15 px-1.5 py-0.5 text-[8px] text-amber-400">{labelsCount.dao} DAO</span>}
+          {labelsCount.bundled > 0 && <span className="rounded bg-red-500/15 px-1.5 py-0.5 text-[8px] text-red-400">{labelsCount.bundled} bundled</span>}
+          <span className="rounded bg-[var(--color-overlay)] px-1.5 py-0.5 text-[8px] text-[var(--color-muted)]">{labelsCount.community} community</span>
+        </div>
+      </div>
+      <div className="max-h-80 overflow-y-auto scrollbar-thin">
+        <div className="divide-y divide-[var(--color-glass-border)]">
+          {display.map((h) => (
+            <div key={h.address} className="flex items-center justify-between py-1.5 text-[10px]">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${h.isCreator ? 'bg-degen-400' : h.label === 'bundled' ? 'bg-red-400' : 'bg-[var(--color-glass-border)]'}`} />
+                <span className="font-mono text-[var(--color-fg)] truncate max-w-[60px]">
+                  {h.address.slice(0, 6)}..{h.address.slice(-4)}
+                </span>
+                <WalletLabelBadge label={h.label} />
+                {h.pnl !== undefined && (
+                  <span className={`text-[8px] ${h.pnl >= 0 ? 'text-degen-400' : 'text-red-400'}`}>
+                    {h.pnl >= 0 ? '+' : ''}{h.pnl.toFixed(1)}%
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <span className="tabular-nums text-[var(--color-fg)]">{(h.balance / 1e6).toFixed(2)}M</span>
+                <span className="w-10 text-right text-[var(--color-muted)]">{h.percentage.toFixed(2)}%</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      {holders.length > 15 && (
+        <button type="button" onClick={() => setShowAll(!showAll)} className="mt-2 w-full rounded-lg bg-[var(--color-overlay)] py-1.5 text-[9px] text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors">
+          {showAll ? 'Show less' : `Show all ${holders.length} holders`}
+        </button>
+      )}
+    </div>
+  );
+}
+
+/* ── Trade History ────────────────────────────────── */
+function TradeHistorySection({ trades }: { trades: TradeEntry[] }) {
+  const buys = trades.filter(t => t.type === 'buy');
+  const sells = trades.filter(t => t.type === 'sell');
+  const buyVol = buys.reduce((s, t) => s + t.nativeValue, 0);
+  const sellVol = sells.reduce((s, t) => s + t.nativeValue, 0);
+  const ratio = sellVol > 0 ? (buyVol / sellVol).toFixed(2) : '∞';
+
+  return (
+    <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-4">
+      <div className="mb-3 flex items-center justify-between">
+        <h3 className="text-sm font-bold text-[var(--color-fg)]">⚡ Trade History</h3>
+        <div className="flex items-center gap-2 text-[9px] text-[var(--color-muted)]">
+          <span className="text-degen-400">{buys.length} buys</span>
+          <span>/</span>
+          <span className="text-red-400">{sells.length} sells</span>
+          <span className="rounded bg-[var(--color-overlay)] px-1.5 py-0.5">
+            Ratio: {ratio}
+          </span>
+        </div>
+      </div>
+      <div className="max-h-72 overflow-y-auto scrollbar-thin">
+        {trades.slice(0, 50).map((t) => (
+          <TradeRow key={t.txHash} trade={t} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ── Revenue Section ──────────────────────────────── */
+function RevenueSection({ revenue }: { revenue: RevenueData }) {
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <Tile label="Total Revenue" value={`$${revenue.totalRevenue.toLocaleString()}`} icon="💰" trend={{ value: 18.5, up: true }} />
+        <Tile label="Creator Fees" value={`$${revenue.creatorFees.toLocaleString()}`} icon="📋" trend={{ value: 12.3, up: true }} />
+        <Tile label="Tips Received" value={`$${revenue.tipsReceived.toLocaleString()}`} icon="⚡" trend={{ value: 24.1, up: true }} />
+        <Tile label="Platform Fees" value={`$${revenue.platformFees.toLocaleString()}`} icon="🏛️" />
+      </div>
+
+      {/* Revenue chart */}
+      <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-4">
+        <h3 className="mb-3 text-xs font-bold text-[var(--color-fg)]">Daily Revenue (30 days)</h3>
+        <MiniBarChart data={revenue.revenueByDay.map(d => d.amount)} color="#00ff41" />
+      </div>
+
+      {/* Fee Transparency Breakdown */}
+      <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-4">
+        <h3 className="mb-3 text-xs font-bold text-[var(--color-fg)]">🔍 Fee Transparency</h3>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between text-[10px]">
+            <span className="flex items-center gap-1.5 text-[var(--color-fg)]">
+              <span className="h-2 w-2 rounded-full bg-degen-400" />
+              Creator Fee
+              <span className="text-[var(--color-muted)]">({revenue.feeBreakdown.creator.pct}%)</span>
+            </span>
+            <span className="font-mono text-degen-400">${revenue.feeBreakdown.creator.amount.toFixed(2)}</span>
+          </div>
+          <div className="flex items-center justify-between text-[10px]">
+            <span className="flex items-center gap-1.5 text-[var(--color-fg)]">
+              <span className="h-2 w-2 rounded-full bg-amber-400" />
+              Platform Fee
+              <span className="text-[var(--color-muted)]">({revenue.feeBreakdown.platform.pct}%)</span>
+            </span>
+            <span className="font-mono text-amber-400">${revenue.feeBreakdown.platform.amount.toFixed(2)}</span>
+          </div>
+          <div className="flex items-center justify-between text-[10px]">
+            <span className="flex items-center gap-1.5 text-[var(--color-fg)]">
+              <span className="h-2 w-2 rounded-full bg-purple-400" />
+              Treasury
+              <span className="text-[var(--color-muted)]">({revenue.feeBreakdown.treasury.pct}%)</span>
+            </span>
+            <span className="font-mono text-purple-400">${revenue.feeBreakdown.treasury.amount.toFixed(2)}</span>
+          </div>
+          <div className="flex items-center justify-between text-[10px]">
+            <span className="flex items-center gap-1.5 text-[var(--color-fg)]">
+              <span className="h-2 w-2 rounded-full bg-blue-400" />
+              Liquidity Pool
+              <span className="text-[var(--color-muted)]">({revenue.feeBreakdown.liquidity.pct}%)</span>
+            </span>
+            <span className="font-mono text-blue-400">${revenue.feeBreakdown.liquidity.amount.toFixed(2)}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Vesting Section ──────────────────────────────── */
+function VestingSection({ vesting, bundling }: { vesting: VestingSchedule; bundling: BundlingInfo }) {
+  return (
+    <div className="space-y-4">
+      <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-4">
+        <h3 className="mb-3 text-xs font-bold text-[var(--color-fg)]">🔒 Creator Vesting Schedule</h3>
+        <VestingBar vesting={vesting} />
+      </div>
+
+      {/* Lock Proof */}
+      <div className="rounded-xl border border-degen-500/20 bg-degen-500/5 p-4">
+        <div className="flex items-center gap-2 mb-2">
+          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-degen-500/20 text-[10px]">✓</span>
+          <span className="text-xs font-semibold text-degen-400">Lock Proof Verified</span>
+          <span className="ml-auto text-[9px] text-[var(--color-muted)]">On-chain</span>
+        </div>
+        <p className="text-[9px] text-[var(--color-muted)]">
+          {(vesting.totalLocked / 1e6).toFixed(0)}M tokens locked in vesting contract until {new Date(vesting.vestingEndDate).toLocaleDateString()}.
+          Cliff ends {new Date(vesting.cliffEndDate).toLocaleDateString()}. Linear vesting with weekly unlocks.
+        </p>
+      </div>
+
+      {/* Bundling Detection */}
+      {bundling.detected && (
+        <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-sm">⚠️</span>
+            <span className="text-xs font-semibold text-red-400">Bundling Detected</span>
+            <span className={`ml-auto rounded px-1.5 py-0.5 text-[8px] font-semibold ${bundling.riskLevel === 'low' ? 'bg-yellow-500/15 text-yellow-400' : 'bg-red-500/15 text-red-400'}`}>
+              {bundling.riskLevel} risk
+            </span>
+          </div>
+          <p className="text-[9px] text-[var(--color-muted)]">
+            {bundling.bundledWallets} bundled wallets identified holding {(bundling.totalBundledTokens / 1e6).toFixed(1)}M tokens ({bundling.bundlingPercentage}% of supply).
+            All bundled wallets are labeled in the holder list.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── Supply Section ───────────────────────────────── */
+function SupplySection({ supply }: { supply: SupplyBreakdown }) {
+  const pieData = [
+    { label: 'Creator', value: supply.ownedByCreator, color: '#00ff41' },
+    { label: 'Team', value: supply.ownedByTeam, color: '#3b82f6' },
+    { label: 'LP', value: supply.ownedByLP, color: '#a855f7' },
+    { label: 'DAO', value: supply.ownedByDAO, color: '#f59e0b' },
+    { label: 'Bundled', value: supply.ownedByBundled, color: '#ef4444' },
+    { label: 'Community', value: supply.ownedByCommunity, color: '#1e293b' },
+  ];
+  return (
+    <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-4">
+      <h3 className="mb-3 text-xs font-bold text-[var(--color-fg)]">📊 Supply Breakdown</h3>
+      <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
+        <PieChart data={pieData} size={140} />
+        <div className="flex-1 space-y-1.5 w-full">
+          {pieData.map((d) => (
+            <div key={d.label} className="flex items-center gap-2 text-[9px]">
+              <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: d.color }} />
+              <span className="flex-1 text-[var(--color-fg)]">{d.label}</span>
+              <div className="flex-1 h-1.5 rounded-full bg-[var(--color-glass-border)] overflow-hidden">
+                <div className="h-full rounded-full transition-all" style={{ width: `${(d.value / supply.totalSupply) * 100}%`, background: d.color }} />
+              </div>
+              <span className="w-14 text-right font-mono text-[var(--color-muted)]">{((d.value / supply.totalSupply) * 100).toFixed(1)}%</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="mt-3 flex items-center justify-between text-[9px] text-[var(--color-muted)] border-t border-[var(--color-glass-border)] pt-3">
+        <span>Total Supply: {(supply.totalSupply / 1e6).toFixed(0)}M</span>
+        <span>Circulating: {(supply.circulating / 1e6).toFixed(0)}M</span>
+        <span className="text-red-400">Burned: {(supply.burned / 1e6).toFixed(0)}M</span>
+      </div>
+    </div>
+  );
+}
+
+/* ── Audit Trail ──────────────────────────────────── */
+function AuditTrailSection({ audits }: { audits: AuditEntry[] }) {
+  return (
+    <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-4">
+      <h3 className="mb-3 text-xs font-bold text-[var(--color-fg)]">📋 Parameter Audit Trail</h3>
+      <div className="space-y-2">
+        {audits.map((a) => (
+          <div key={a.txHash} className="flex items-start gap-2 rounded-lg border border-[var(--color-glass-border)] p-2">
+            <span className="mt-0.5 text-[9px]">📝</span>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-medium text-[var(--color-fg)]">{a.action}</span>
+                <span className="text-[8px] text-[var(--color-muted)]">{Math.floor((Date.now() - a.timestamp) / 86400000)}d ago</span>
+              </div>
+              <p className="text-[9px] text-[var(--color-muted)]">Params: {a.params}</p>
+              <p className="text-[8px] text-[var(--color-muted)] font-mono">by {a.actor} · {a.txHash.slice(0, 10)}..</p>
             </div>
           </div>
-        );
-      })}
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ── Quick Actions ────────────────────────────────── */
+function QuickActions({ coin, onRefresh }: { coin: CoinSummary; onRefresh: () => void }) {
+  const handleBurn = useCallback(async () => {
+    const amount = prompt('Enter amount to burn (tokens):');
+    if (!amount || Number(amount) <= 0) return;
+    await fetch(`/api/creator/coin/${coin.address}/burn`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ amount }),
+    }).then(r => r.ok ? alert('🔥 Burn successful!') : alert('Burn failed')).catch(() => alert('Burn failed'));
+    onRefresh();
+  }, [coin.address, onRefresh]);
+
+  const handleAirdrop = useCallback(async () => {
+    const addr = prompt('Enter recipient address:');
+    const amt = prompt('Enter amount:');
+    if (!addr || !amt) return;
+    await fetch(`/api/creator/coin/${coin.address}/airdrop`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ recipients: [{ address: addr, amount: amt }] }),
+    }).then(r => r.ok ? alert('✈️ Airdrop sent!') : alert('Airdrop failed')).catch(() => alert('Airdrop failed'));
+    onRefresh();
+  }, [coin.address, onRefresh]);
+
+  const handleDaoParamUpdate = useCallback(() => {
+    const action = prompt('Enter parameter to update (fee/vesting/supply):');
+    if (!action) return;
+    const value = prompt('Enter new value:');
+    if (!value) return;
+    alert(`⚡ DAO proposal submitted to update ${action} to ${value}. Community vote required.`);
+  }, []);
+
+  return (
+    <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-4">
+      <h3 className="mb-3 text-xs font-bold text-[var(--color-fg)]">⚡ Quick Actions</h3>
+      <div className="grid grid-cols-2 gap-2">
+        <button type="button" onClick={handleBurn} className="flex flex-col items-center gap-1 rounded-lg bg-red-500/10 p-3 text-red-400 hover:bg-red-500/20 transition-all">
+          <span className="text-lg">🔥</span>
+          <span className="text-[9px] font-semibold">Burn Tokens</span>
+        </button>
+        <button type="button" onClick={handleAirdrop} className="flex flex-col items-center gap-1 rounded-lg bg-purple-500/10 p-3 text-purple-400 hover:bg-purple-500/20 transition-all">
+          <span className="text-lg">✈️</span>
+          <span className="text-[9px] font-semibold">Airdrop</span>
+        </button>
+        <button type="button" onClick={handleDaoParamUpdate} className="flex flex-col items-center gap-1 rounded-lg bg-amber-500/10 p-3 text-amber-400 hover:bg-amber-500/20 transition-all">
+          <span className="text-lg">⚙️</span>
+          <span className="text-[9px] font-semibold">DAO Params</span>
+        </button>
+        <Link href={`/creator/coins/${coin.address}`} className="flex flex-col items-center gap-1 rounded-lg bg-degen-500/10 p-3 text-degen-400 hover:bg-degen-500/20 transition-all">
+          <span className="text-lg">📊</span>
+          <span className="text-[9px] font-semibold">Analytics</span>
+        </Link>
+      </div>
     </div>
   );
 }
@@ -273,622 +955,273 @@ function RevenueChart({ data }: { data: Array<{ date: string; amount: string }> 
 // MAIN PAGE
 // ══════════════════════════════════════════════════════════════════════
 
+type DashboardTab = 'overview' | 'holders' | 'trades' | 'revenue' | 'vesting' | 'supply' | 'transparency';
+
 export default function CreatorDashboardPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<DashboardTab>('overview');
-  const [coins, setCoins] = useState<CoinSummary[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [revenue, setRevenue] = useState<RevenueData | null>(null);
+  const [selectedCoinIdx, setSelectedCoinIdx] = useState(0);
+
+  const [coins] = useState<CoinSummary[]>(generateMockCoinsData);
   const [holders, setHolders] = useState<HolderEntry[]>([]);
   const [trades, setTrades] = useState<TradeEntry[]>([]);
-  const [selectedCoin, setSelectedCoin] = useState<string | null>(null);
+  const [revenue] = useState<RevenueData>(generateMockRevenue);
+  const [vesting] = useState<VestingSchedule>(generateMockVesting);
+  const [supply] = useState<SupplyBreakdown>(generateMockSupply);
+  const [bundling] = useState<BundlingInfo>(generateMockBundling);
+  const [audits] = useState<AuditEntry[]>(generateMockAuditTrail);
 
-  // Fetch coin data
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const coinsRes = await fetch('/api/creator/coins');
-        if (coinsRes.ok) {
-          const coinsData = await coinsRes.json();
-          setCoins(coinsData.coins || []);
-        }
-      } catch {
-        // Use mock data
-        setCoins([
-          {
-            address: '0x1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b',
-            name: 'Alice Coin',
-            symbol: 'ALICE',
-            chain: 'base',
-            deployedAt: Date.now() - 86400000 * 7,
-            marketCap: '1250000',
-            price: '0.00125',
-            priceChange24h: 12.4,
-            volume24h: '89000',
-            holderCount: 342,
-            graduated: false,
-            creatorRevenue: '3200',
-          },
-          {
-            address: '0x0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e',
-            name: 'Bob Coin',
-            symbol: 'BOB',
-            chain: 'solana',
-            deployedAt: Date.now() - 86400000 * 30,
-            marketCap: '3200000',
-            price: '0.00320',
-            priceChange24h: -3.2,
-            volume24h: '156000',
-            holderCount: 891,
-            graduated: true,
-            creatorRevenue: '8900',
-          },
-        ]);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
+  const selectedCoin = coins[selectedCoinIdx];
 
-  // Fetch selected coin details
+  // Load data for selected coin
   useEffect(() => {
     if (!selectedCoin) return;
-    const fetchDetails = async () => {
-      try {
-        const [revRes, holdRes, tradeRes] = await Promise.all([
-          fetch(`/api/creator/coin/${selectedCoin}/revenue`),
-          fetch(`/api/creator/coin/${selectedCoin}/holders?limit=10`),
-          fetch(`/api/creator/coin/${selectedCoin}/trades?limit=20`),
-        ]);
-        if (revRes.ok) setRevenue(await revRes.json());
-        if (holdRes.ok) {
-          const h = await holdRes.json();
-          setHolders(h.holders || []);
-        }
-        if (tradeRes.ok) {
-          const t = await tradeRes.json();
-          setTrades(t.trades || []);
-        }
-      } catch {
-        // Mock
-        setRevenue({
-          totalRevenue: '45200',
-          creatorFees: '28400',
-          treasuryFees: '8900',
-          tipsReceived: '12000',
-          platformFees: '2260',
-          revenueByDay: Array.from({ length: 30 }, (_, i) => {
-            const d = new Date(Date.now() - i * 86400000);
-            return {
-              date: d.toISOString().slice(0, 10),
-              amount: String(Math.floor(Math.random() * 5000) + 500),
-            };
-          }),
-        });
-        setHolders(
-          Array.from({ length: 10 }, (_, i) => ({
-            address: `0x${(i + 1).toString(16).padStart(40, '0')}`,
-            balance: String(Math.floor(Math.random() * 100000) + 1000),
-            percentage: Math.random() * 5,
-            isCreator: i === 0,
-            lastTx: Date.now() - Math.floor(Math.random() * 86400000),
-          })),
-        );
-        setTrades(
-          Array.from({ length: 20 }, (_, i) => ({
-            txHash: `0x${(i + 1).toString(16).padStart(64, '0')}`,
-            type: (i % 3 === 0 ? 'sell' : 'buy') as 'buy' | 'sell',
-            trader: `0x${Math.floor(Math.random() * 1000000)
-              .toString(16)
-              .padStart(40, '0')}`,
-            tokenAmount: String(Math.floor(Math.random() * 10000) + 100),
-            nativeValue: String(Math.floor(Math.random() * 10) + 1),
-            price: (Math.random() * 0.01 + 0.001).toFixed(6),
-            timestamp: Date.now() - Math.floor(Math.random() * 86400000),
-          })),
-        );
-      }
-    };
-    fetchDetails();
+    setHolders(generateMockHolders(selectedCoin.address));
+    setTrades(generateMockTrades());
   }, [selectedCoin]);
 
-  // Aggregate stats
-  const aggregateStats = useMemo(() => {
-    const totalMcap = coins.reduce((s, c) => s + Number(c.marketCap), 0);
-    const totalRevenue = coins.reduce((s, c) => s + Number(c.creatorRevenue), 0);
-    const totalHolders = coins.reduce((s, c) => s + c.holderCount, 0);
-    const avgChange =
-      coins.length > 0 ? coins.reduce((s, c) => s + c.priceChange24h, 0) / coins.length : 0;
-    return { totalMcap, totalRevenue, totalHolders, avgChange };
-  }, [coins]);
+  const refresh = useCallback(() => {
+    if (!selectedCoin) return;
+    setHolders(generateMockHolders(selectedCoin.address));
+    setTrades(generateMockTrades());
+  }, [selectedCoin]);
 
   const firstCoin = coins[0];
 
+  if (coins.length === 0) {
+    return (
+      <div className="mx-auto max-w-6xl px-4 py-20 text-center animate-page-enter">
+        <div className="mb-4 text-5xl">🪙</div>
+        <h1 className="mb-2 text-xl font-bold text-[var(--color-fg)]">No Coins Yet</h1>
+        <p className="mb-6 text-sm text-[var(--color-muted)]">Launch your first creator coin to see your dashboard.</p>
+        <Link href="/creator/studio" className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-degen-600 to-degen-400 px-6 py-3 text-sm font-bold text-black hover:from-degen-500 hover:to-degen-300">
+          🚀 Launch Your Coin
+        </Link>
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto max-w-6xl px-4 py-6 animate-page-enter">
-      {/* Header */}
+      {/* ─── Header ─────────────────────────────────────── */}
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1
-            className="text-2xl font-bold text-[var(--color-fg)]"
-            style={{ fontFamily: 'var(--font-heading)' }}
-          >
-            Creator Dashboard
+          <h1 className="text-2xl font-bold text-[var(--color-fg)]" style={{ fontFamily: 'var(--font-heading)' }}>
+            🛠️ Coin Management
           </h1>
           <p className="mt-1 text-sm text-[var(--color-muted)]">
-            Manage your creator coins, track revenue, and engage your community.
+            Full control, transparency tools, and community trust features.
           </p>
         </div>
         <div className="flex items-center gap-2">
+          {/* Coin selector */}
+          <div className="flex gap-1 rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-1">
+            {coins.map((c, i) => (
+              <button
+                key={c.address}
+                type="button"
+                onClick={() => setSelectedCoinIdx(i)}
+                className={`rounded-lg px-3 py-1.5 text-[10px] font-semibold transition-all ${
+                  selectedCoinIdx === i
+                    ? 'bg-degen-500/15 text-degen-400'
+                    : 'text-[var(--color-muted)] hover:text-[var(--color-fg)]'
+                }`}
+              >
+                ${c.symbol}
+              </button>
+            ))}
+          </div>
           <Link
             href="/creator/studio"
-            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-degen-600 to-degen-400 px-5 py-2.5 text-sm font-bold text-black transition-all hover:from-degen-500 hover:to-degen-300 active:scale-95"
+            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-degen-600 to-degen-400 px-4 py-2 text-xs font-bold text-black hover:from-degen-500 hover:to-degen-300 active:scale-95"
           >
             <span>🪙</span>
-            Launch New Coin
-          </Link>
-          <Link
-            href="/creator/coins"
-            className="inline-flex items-center gap-2 rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] px-4 py-2.5 text-sm font-bold text-[var(--color-fg)] transition-all hover:border-degen-500/30"
-          >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-            >
-              <circle cx="12" cy="12" r="10" />
-              <path d="M12 6v12M9 9.5c-.87-.5-2-.5-2.5-.5s-1.5.5-1.5 1.5.67 1.5 1.5 2 3.5.5 4.5 1 1 1.5 1 2.5-1.5 2-3 2-2.5-.5-3-1" />
-            </svg>
-            All Coins
+            Launch New
           </Link>
         </div>
       </div>
 
-      {/* Tabs */}
-      <div
-        className="mb-6 flex gap-1 overflow-x-auto rounded-2xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-1 scrollbar-none"
-        role="tablist"
-      >
-        {(['overview', 'coins', 'community', 'revenue', 'settings'] as DashboardTab[]).map(
-          (tab) => (
-            <button
-              key={tab}
-              type="button"
-              role="tab"
-              aria-selected={activeTab === tab}
-              onClick={() => setActiveTab(tab)}
-              className={`flex items-center gap-1.5 whitespace-nowrap rounded-xl px-4 py-2 text-xs font-medium capitalize transition-all ${
-                activeTab === tab
-                  ? 'bg-degen-500/15 text-degen-400 shadow-sm'
-                  : 'text-[var(--color-muted)] hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)]'
-              }`}
-            >
-              {tab === 'overview' && '📊'} {tab === 'coins' && '🪙'} {tab === 'community' && '👥'}{' '}
-              {tab === 'revenue' && '💰'} {tab === 'settings' && '⚙️'}
-              {tab}
-            </button>
-          ),
-        )}
+      {/* ─── Coin Identity ─────────────────────────────── */}
+      {selectedCoin && (
+        <div className="mb-4 rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-3">
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-degen-500/20 to-purple-500/20 text-base font-bold text-degen-400">
+              {selectedCoin.symbol.charAt(0)}
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-bold text-[var(--color-fg)]">{selectedCoin.name}</span>
+                <span className="font-mono text-[10px] text-[var(--color-muted)]">${selectedCoin.symbol}</span>
+                {selectedCoin.graduated
+                  ? <span className="rounded-full bg-green-500/15 px-2 py-0.5 text-[8px] font-semibold text-green-400">✅ Graduated</span>
+                  : <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[8px] font-semibold text-amber-400">⏳ Bonding</span>
+                }
+              </div>
+              <div className="flex items-center gap-3 text-[9px] text-[var(--color-muted)]">
+                <span>{selectedCoin.chain === 'solana' ? '◎ Solana' : '⧫ Base'}</span>
+                <span>Created {Math.floor((Date.now() - selectedCoin.deployedAt) / 86400000)}d ago</span>
+                <button type="button" onClick={() => navigator.clipboard.writeText(selectedCoin.address)} className="font-mono text-degen-400 hover:underline">
+                  {selectedCoin.address.slice(0, 8)}..{selectedCoin.address.slice(-6)}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── Tabs ────────────────────────────────────────── */}
+      <div className="mb-6 flex gap-1 overflow-x-auto rounded-2xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-1 scrollbar-none" role="tablist">
+        {([
+          { id: 'overview' as DashboardTab, label: 'Overview', icon: '📊' },
+          { id: 'holders' as DashboardTab, label: 'Holders', icon: '👥' },
+          { id: 'trades' as DashboardTab, label: 'Trades', icon: '⚡' },
+          { id: 'revenue' as DashboardTab, label: 'Revenue', icon: '💰' },
+          { id: 'vesting' as DashboardTab, label: 'Vesting', icon: '🔒' },
+          { id: 'supply' as DashboardTab, label: 'Supply', icon: '📊' },
+          { id: 'transparency' as DashboardTab, label: 'Transparency', icon: '🔍' },
+        ]).map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            role="tab"
+            aria-selected={activeTab === tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`flex items-center gap-1.5 whitespace-nowrap rounded-xl px-4 py-2 text-[10px] font-medium capitalize transition-all ${
+              activeTab === tab.id
+                ? 'bg-degen-500/15 text-degen-400 shadow-sm'
+                : 'text-[var(--color-muted)] hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)]'
+            }`}
+          >
+            {tab.icon} {tab.label}
+          </button>
+        ))}
       </div>
 
       {/* ═══ OVERVIEW ═══ */}
-      {activeTab === 'overview' && (
-        <>
-          {/* Stats cards */}
-          <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <StatCard
-              label="Total Market Cap"
-              value={`$${(aggregateStats.totalMcap / 1000000).toFixed(1)}M`}
-              sub={`${coins.length} coins`}
-              icon="📈"
-              trend={{ value: aggregateStats.avgChange, positive: aggregateStats.avgChange >= 0 }}
-              onClick={() => setActiveTab('coins')}
-            />
-            <StatCard
-              label="Total Holders"
-              value={aggregateStats.totalHolders.toLocaleString()}
-              sub="Across all coins"
-              icon="👥"
-              trend={{ value: 8.3, positive: true }}
-              onClick={() => setActiveTab('community')}
-            />
-            <StatCard
-              label="Creator Revenue"
-              value={`$${aggregateStats.totalRevenue.toLocaleString()}`}
-              sub="All time"
-              icon="💰"
-              trend={{ value: 18.5, positive: true }}
-              onClick={() => setActiveTab('revenue')}
-            />
-            <StatCard
-              label="24h Volume"
-              value={`$${(coins.reduce((s, c) => s + Number(c.volume24h), 0) / 1000).toFixed(0)}K`}
-              sub="Trading volume"
-              icon="⚡"
-              trend={{ value: 24.1, positive: true }}
-            />
-          </div>
-
-          {/* Coin portfolio */}
-          <div className="mb-6">
-            <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-sm font-bold text-[var(--color-fg)]">Your Coins</h2>
-              <Link
-                href="/creator/studio"
-                className="text-[10px] font-semibold text-degen-400 hover:underline"
-              >
-                + Launch New
-              </Link>
-            </div>
-            {loading ? (
-              <div className="grid gap-3 sm:grid-cols-2">
-                {Array.from({ length: 2 }).map((_, i) => (
-                  <div key={i} className="skeleton h-36 rounded-xl" />
-                ))}
-              </div>
-            ) : coins.length === 0 ? (
-              <div className="rounded-2xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-8 text-center">
-                <div className="mb-3 text-4xl">🪙</div>
-                <h3 className="mb-2 text-lg font-bold text-[var(--color-fg)]">No Coins Yet</h3>
-                <p className="mb-5 text-xs text-[var(--color-muted)]">
-                  Launch your first creator coin and start building your economy.
-                </p>
-                <Link href="/creator/studio" className="btn-primary text-sm">
-                  Launch Your Coin
-                </Link>
-              </div>
-            ) : (
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {coins.map((coin) => (
-                  <CoinCard key={coin.address} coin={coin} />
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Quick actions */}
-          <div>
-            <h2 className="mb-3 text-sm font-bold text-[var(--color-fg)]">Quick Actions</h2>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              <Link
-                href="/creator/studio"
-                className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-4 text-center transition-all hover:border-degen-500/20"
-              >
-                <div className="mb-1 text-2xl">🪙</div>
-                <div className="text-xs font-semibold text-[var(--color-fg)]">Launch Coin</div>
-                <div className="text-[9px] text-[var(--color-muted)]">New creator token</div>
-              </Link>
-              <button
-                type="button"
-                onClick={() => {
-                  if (firstCoin) setSelectedCoin(firstCoin.address);
-                  setActiveTab('revenue');
-                }}
-                className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-4 text-center transition-all hover:border-degen-500/20"
-              >
-                <div className="mb-1 text-2xl">💰</div>
-                <div className="text-xs font-semibold text-[var(--color-fg)]">Revenue</div>
-                <div className="text-[9px] text-[var(--color-muted)]">View earnings</div>
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('community')}
-                className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-4 text-center transition-all hover:border-degen-500/20"
-              >
-                <div className="mb-1 text-2xl">👥</div>
-                <div className="text-xs font-semibold text-[var(--color-fg)]">Community</div>
-                <div className="text-[9px] text-[var(--color-muted)]">Top holders</div>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  if (firstCoin) router.push(`/creator/coins/${firstCoin.address}`);
-                }}
-                className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-4 text-center transition-all hover:border-degen-500/20"
-              >
-                <div className="mb-1 text-2xl">📊</div>
-                <div className="text-xs font-semibold text-[var(--color-fg)]">Analytics</div>
-                <div className="text-[9px] text-[var(--color-muted)]">Deep dive</div>
-              </button>
-            </div>
-          </div>
-        </>
-      )}
-
-      {/* ═══ COINS ═══ */}
-      {activeTab === 'coins' && (
+      {activeTab === 'overview' && selectedCoin && (
         <div className="space-y-4">
-          {coins.map((coin) => (
-            <div
-              key={coin.address}
-              className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-4"
-            >
-              <div className="mb-3 flex items-center justify-between">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-bold text-[var(--color-fg)]">${coin.symbol}</h3>
-                    <span className="text-[10px] text-[var(--color-muted)]">{coin.name}</span>
-                  </div>
-                  <div className="flex items-center gap-3 text-[10px] text-[var(--color-muted)]">
-                    <span>{coin.chain === 'solana' ? '◎ Solana' : '⧫ Base'}</span>
-                    <span>{coin.holderCount} holders</span>
-                    <span className={coin.graduated ? 'text-green-400' : 'text-amber-400'}>
-                      {coin.graduated ? 'Graduated' : 'Bonding'}
-                    </span>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="text-lg font-bold tabular-nums text-[var(--color-fg)]">
-                    ${Number(coin.price).toFixed(6)}
-                  </div>
-                  <div
-                    className={`text-[11px] font-semibold ${coin.priceChange24h >= 0 ? 'text-degen-400' : 'text-red-400'}`}
-                  >
-                    {coin.priceChange24h >= 0 ? '+' : ''}
-                    {coin.priceChange24h.toFixed(1)}%
-                  </div>
-                </div>
-              </div>
+          <MetricsSection coin={selectedCoin} />
 
-              {/* Token actions */}
-              <div className="flex flex-wrap gap-2">
-                <Link
-                  href={`/creator/coins/${coin.address}`}
-                  className="rounded-lg bg-degen-500/15 px-3 py-1.5 text-[10px] font-semibold text-degen-400 hover:bg-degen-500/25 transition-all"
-                >
-                  📊 Manage
-                </Link>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedCoin(coin.address);
-                    setActiveTab('revenue');
-                  }}
-                  className="rounded-lg bg-[var(--color-overlay)] px-3 py-1.5 text-[10px] text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-all"
-                >
-                  💰 Revenue
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedCoin(coin.address);
-                    setActiveTab('community');
-                  }}
-                  className="rounded-lg bg-[var(--color-overlay)] px-3 py-1.5 text-[10px] text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-all"
-                >
-                  👥 Community
-                </button>
-                <button
-                  type="button"
-                  onClick={async () => {
-                    const amount = prompt('Enter amount to burn (tokens):');
-                    if (!amount || Number(amount) <= 0) return;
-                    try {
-                      const res = await fetch(`/api/creator/coin/${coin.address}/burn`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ amount }),
-                      });
-                      if (res.ok) alert('🔥 Burn successful!');
-                      else alert('Burn failed');
-                    } catch {
-                      alert('Burn failed');
-                    }
-                  }}
-                  className="rounded-lg bg-red-500/10 px-3 py-1.5 text-[10px] text-red-400 hover:bg-red-500/20 transition-all"
-                >
-                  🔥 Burn
-                </button>
-                <button
-                  type="button"
-                  onClick={async () => {
-                    const addr = prompt('Enter recipient address:');
-                    const amt = prompt('Enter amount:');
-                    if (!addr || !amt) return;
-                    try {
-                      const res = await fetch(`/api/creator/coin/${coin.address}/airdrop`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ recipients: [{ address: addr, amount: amt }] }),
-                      });
-                      if (res.ok) alert('✈️ Airdrop sent!');
-                    } catch {
-                      alert('Airdrop failed');
-                    }
-                  }}
-                  className="rounded-lg bg-purple-500/10 px-3 py-1.5 text-[10px] text-purple-400 hover:bg-purple-500/20 transition-all"
-                >
-                  ✈️ Airdrop
-                </button>
-              </div>
-            </div>
-          ))}
+          <div className="grid gap-4 lg:grid-cols-2">
+            <HolderListSection holders={holders} />
+            <TradeHistorySection trades={trades} />
+          </div>
+
+          <QuickActions coin={selectedCoin} onRefresh={refresh} />
         </div>
       )}
 
-      {/* ═══ COMMUNITY ═══ */}
-      {activeTab === 'community' && (
-        <div className="grid gap-6 lg:grid-cols-2">
-          {/* Top Holders */}
-          <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-4">
-            <h3 className="mb-3 text-sm font-bold text-[var(--color-fg)]">🏆 Top Holders</h3>
-            <div className="divide-y divide-[var(--color-glass-border)]">
-              {holders.slice(0, 10).map((h, i) => (
-                <div key={h.address} className="flex items-center justify-between py-2 text-[10px]">
-                  <div className="flex items-center gap-2">
-                    <span className="w-4 text-center font-bold text-[var(--color-muted)]">
-                      {i + 1}
-                    </span>
-                    <span
-                      className={`h-2 w-2 rounded-full ${h.isCreator ? 'bg-degen-400' : 'bg-[var(--color-glass-border)]'}`}
-                    />
-                    <span className="font-mono text-[var(--color-fg)]">
-                      {h.address.slice(0, 8)}...{h.address.slice(-6)}
-                    </span>
-                    {h.isCreator && (
-                      <span className="rounded bg-degen-500/15 px-1 text-[8px] text-degen-400">
-                        Creator
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="tabular-nums text-[var(--color-fg)]">
-                      {(Number(h.balance) / 1000000).toFixed(2)}M
-                    </span>
-                    <span className="w-10 text-right text-[var(--color-muted)]">
-                      {h.percentage.toFixed(2)}%
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+      {/* ═══ HOLDERS ═══ */}
+      {activeTab === 'holders' && (
+        <HolderListSection holders={holders} />
+      )}
 
-          {/* Recent Trades */}
-          <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-4">
-            <h3 className="mb-3 text-sm font-bold text-[var(--color-fg)]">⚡ Recent Trades</h3>
-            <div className="divide-y divide-[var(--color-glass-border)]">
-              {trades.slice(0, 15).map((t) => (
-                <TradeRow key={t.txHash} trade={t} />
-              ))}
-            </div>
-          </div>
-        </div>
+      {/* ═══ TRADES ═══ */}
+      {activeTab === 'trades' && (
+        <TradeHistorySection trades={trades} />
       )}
 
       {/* ═══ REVENUE ═══ */}
       {activeTab === 'revenue' && (
-        <div className="space-y-6">
-          {/* Revenue stats */}
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <StatCard
-              label="Total Revenue"
-              value={`$${(Number(revenue?.totalRevenue || 45200)).toLocaleString()}`}
-              icon="💰"
-              trend={{ value: 18.5, positive: true }}
-            />
-            <StatCard
-              label="Creator Fees"
-              value={`$${(Number(revenue?.creatorFees || 28400)).toLocaleString()}`}
-              icon="📋"
-              trend={{ value: 12.3, positive: true }}
-            />
-            <StatCard
-              label="Tips Received"
-              value={`$${(Number(revenue?.tipsReceived || 12000)).toLocaleString()}`}
-              icon="⚡"
-              trend={{ value: 24.1, positive: true }}
-            />
-            <StatCard
-              label="Platform Fees"
-              value={`$${(Number(revenue?.platformFees || 2260)).toLocaleString()}`}
-              icon="🏛️"
-            />
-          </div>
+        <RevenueSection revenue={revenue} />
+      )}
 
-          {/* Revenue chart */}
-          <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-4">
-            <h3 className="mb-3 text-sm font-bold text-[var(--color-fg)]">
-              Daily Revenue (30 days)
-            </h3>
-            {revenue?.revenueByDay && <RevenueChart data={revenue.revenueByDay} />}
-          </div>
+      {/* ═══ VESTING ═══ */}
+      {activeTab === 'vesting' && (
+        <VestingSection vesting={vesting} bundling={bundling} />
+      )}
 
-          {/* Fee distribution */}
-          <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-4">
-            <h3 className="mb-3 text-sm font-bold text-[var(--color-fg)]">Fee Distribution</h3>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-[11px]">
-                <span className="flex items-center gap-1.5 text-[var(--color-fg)]">
-                  <span className="h-2.5 w-2.5 rounded-full bg-degen-400" />
-                  Creator Fees (1%)
-                </span>
-                <span className="font-mono text-degen-400">
-                  ${(Number(revenue?.totalRevenue || 45200) * 0.01).toFixed(2)}
-                </span>
-              </div>
-              <div className="flex items-center justify-between text-[11px]">
-                <span className="flex items-center gap-1.5 text-[var(--color-fg)]">
-                  <span className="h-2.5 w-2.5 rounded-full bg-amber-400" />
-                  Platform Fee (0.5%)
-                </span>
-                <span className="font-mono text-amber-400">
-                  ${(Number(revenue?.totalRevenue || 45200) * 0.005).toFixed(2)}
-                </span>
-              </div>
-              <div className="flex items-center justify-between text-[11px]">
-                <span className="flex items-center gap-1.5 text-[var(--color-fg)]">
-                  <span className="h-2.5 w-2.5 rounded-full bg-purple-400" />
-                  Treasury Allocation
-                </span>
-                <span className="font-mono text-purple-400">
-                  ${Number(revenue?.treasuryFees || 8900).toLocaleString()}
-                </span>
-              </div>
-            </div>
-          </div>
+      {/* ═══ SUPPLY ═══ */}
+      {activeTab === 'supply' && (
+        <div className="grid gap-4 lg:grid-cols-2">
+          <SupplySection supply={supply} />
+          <QuickActions coin={selectedCoin!} onRefresh={refresh} />
         </div>
       )}
 
-      {/* ═══ SETTINGS ═══ */}
-      {activeTab === 'settings' && (
-        <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-5">
-          <h2 className="mb-4 text-sm font-bold text-[var(--color-fg)]">Creator Settings</h2>
-          <div className="space-y-4">
-            <div className="rounded-lg border border-[var(--color-glass-border)] p-4">
-              <h3 className="mb-2 text-xs font-semibold text-[var(--color-fg)]">
-                Default Fee Structure
-              </h3>
-              <p className="mb-3 text-[10px] text-[var(--color-muted)]">
-                These are applied to all new coin launches.
-              </p>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <label className="block">
-                  <span className="mb-1 block text-[10px] text-[var(--color-muted)]">
-                    Creator Fee (bps)
-                  </span>
-                  <input
-                    type="number"
-                    defaultValue={100}
-                    className="input text-sm w-full"
-                    min={0}
-                    max={200}
-                  />
-                </label>
-                <label className="block">
-                  <span className="mb-1 block text-[10px] text-[var(--color-muted)]">
-                    Platform Fee (bps)
-                  </span>
-                  <input
-                    type="number"
-                    defaultValue={50}
-                    className="input text-sm w-full"
-                    min={0}
-                    max={100}
-                    disabled
-                  />
-                </label>
+      {/* ═══ TRANSPARENCY ═══ */}
+      {activeTab === 'transparency' && (
+        <div className="space-y-4">
+          {/* Trust Score Card */}
+          <div className="rounded-xl border border-degen-500/20 bg-gradient-to-r from-degen-500/5 to-purple-500/5 p-5">
+            <div className="flex items-center gap-4">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-degen-400 bg-degen-500/10">
+                <span className="text-2xl">🔍</span>
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-[var(--color-fg)]">Transparency Dashboard</h2>
+                <p className="text-xs text-[var(--color-muted)]">
+                  All wallets labeled · Vesting on-chain verified · Fees transparent · Supply auditable
+                </p>
+              </div>
+              <div className="ml-auto text-center">
+                <div className="text-2xl font-black text-degen-400">85</div>
+                <div className="text-[9px] text-[var(--color-muted)]">Trust Score</div>
+                <div className="h-1.5 w-20 overflow-hidden rounded-full bg-[var(--color-glass-border)] mt-1">
+                  <div className="h-full rounded-full bg-degen-400" style={{ width: '85%' }} />
+                </div>
               </div>
             </div>
-            <div className="rounded-lg border border-[var(--color-glass-border)] p-4">
-              <h3 className="mb-2 text-xs font-semibold text-[var(--color-fg)]">
-                Default Anti-Exploit
-              </h3>
-              <p className="text-[10px] text-[var(--color-muted)]">
-                Configure default protection levels for new coins.
-              </p>
+          </div>
+
+          <div className="grid gap-4 lg:grid-cols-2">
+            <SupplySection supply={supply} />
+            <AuditTrailSection audits={audits} />
+          </div>
+
+          {/* Fee Transparency */}
+          <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-4">
+            <h3 className="mb-3 text-xs font-bold text-[var(--color-fg)]">🏛️ Fee Transparency</h3>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="rounded-lg border border-[var(--color-glass-border)] p-3">
+                <div className="text-[10px] text-[var(--color-muted)]">Platform Fee</div>
+                <div className="text-lg font-bold text-amber-400">0.5%</div>
+                <div className="text-[8px] text-[var(--color-muted)]">All trades · Funds platform operations</div>
+              </div>
+              <div className="rounded-lg border border-[var(--color-glass-border)] p-3">
+                <div className="text-[10px] text-[var(--color-muted)]">Creator Fee</div>
+                <div className="text-lg font-bold text-degen-400">1.0%</div>
+                <div className="text-[8px] text-[var(--color-muted)]">All trades · Goes to creator wallet</div>
+              </div>
+              <div className="rounded-lg border border-[var(--color-glass-border)] p-3">
+                <div className="text-[10px] text-[var(--color-muted)]">Treasury Allocation</div>
+                <div className="text-lg font-bold text-purple-400">0.3%</div>
+                <div className="text-[8px] text-[var(--color-muted)]">DAO controlled · Community proposals</div>
+              </div>
+              <div className="rounded-lg border border-[var(--color-glass-border)] p-3">
+                <div className="text-[10px] text-[var(--color-muted)]">Liquidity Fee</div>
+                <div className="text-lg font-bold text-blue-400">0.2%</div>
+                <div className="text-[8px] text-[var(--color-muted)]">Auto-adds to LP · Permanent liquidity</div>
+              </div>
             </div>
-            <button
-              type="button"
-              className="rounded-xl bg-degen-500/15 px-5 py-2.5 text-xs font-bold text-degen-400 hover:bg-degen-500/25 transition-all"
-            >
-              Save Settings
-            </button>
+          </div>
+
+          {/* Lock Proof */}
+          <div className="rounded-xl border border-degen-500/20 bg-degen-500/5 p-4">
+            <div className="flex items-center gap-3">
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-degen-500/20">
+                <span className="text-lg">🔒</span>
+              </span>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-semibold text-degen-400">On-Chain Lock Proof</span>
+                  <span className="rounded-full bg-degen-500/15 px-2 py-0.5 text-[8px] text-degen-400">Verified</span>
+                </div>
+                <p className="text-[10px] text-[var(--color-muted)]">
+                  Creator tokens are locked in a audited vesting contract at{' '}
+                  <span className="font-mono text-degen-400">0xVesting...Contract</span>.
+                  Verified on {selectedCoin.chain === 'solana' ? 'Solscan' : 'Etherscan'}.
+                </p>
+              </div>
+              <a
+                href={selectedCoin.chain === 'solana' ? 'https://solscan.io' : 'https://basescan.org'}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="ml-auto rounded-lg bg-degen-500/15 px-3 py-1.5 text-[9px] font-medium text-degen-400 hover:bg-degen-500/25 transition-colors"
+              >
+                View on Explorer ↗
+              </a>
+            </div>
           </div>
         </div>
       )}

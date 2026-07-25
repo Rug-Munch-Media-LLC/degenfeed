@@ -5,14 +5,14 @@
  *
  * ## Core Features
  * - **Anti-Exploit**: anti-whale, anti-sniper, anti-bot, anti-VC, anti-MEV, bundler detection
- * - **Creator Controls**: vesting, allocation splits, transfer restrictions, burn mechanism
+ * - **Creator Controls**: vesting, allocation splits, fee structure, DAO setup, protocol selection
  * - **Bonding Curve 2.0**: 5 phases (Steal Deal → Early Bird → Cruise Control → Final Call → Moonshot)
  * - **Cross-Chain**: Base ETH/Solana with Wormhole bridge
  * - **Post-Bonding**: graduation party, AMA, LP lock, token page, leaderboard
  *
  * ## Quick Start
  * ```ts
- * import { CreatorCoinClient, AntiExploitEngine, CreatorControls } from '@degenfeed/creator-coin';
+ * import { CreatorCoinClient, AntiExploitEngine, buildCreatorConfig } from '@degenfeed/creator-coin';
  *
  * // Create anti-exploit engine
  * const antiExploit = new AntiExploitEngine({ maxBuyBps: 100 });
@@ -61,31 +61,45 @@ export type {
   EnforcementResult,
 } from './types';
 
-// ─── Creator Controls ────────────────────────────────────────────────────
+// ─── Creator Controls 2.0 — Full Options ──────────────────────────────────
 
 export {
   areTransfersAllowed,
   buildCreatorConfig,
+  buildDAOConfig,
   calculateAllocations,
   calculateBurn,
   calculateClaimableAmount,
+  calculateFeeDistribution,
   calculatePlatformFee,
   calculateVestingSchedule,
+  creatorOptionsToConfig,
+  CREATOR_CONTROL_CONSTANTS,
   generateOnChainCreatorControlsCode,
+  getFeeBreakdown,
   validateCreatorControls,
+  validateProtocolSelection,
 } from './creator-controls';
 export type {
   AllocationBreakdown,
   BurnResult,
-  CreatorControlConfig,
+  FeeBreakdown,
   TransferRestrictionLevel,
   ValidationError,
   ValidationResult,
-  VestingConfig,
   VestingSchedule,
   VestingStage,
+} from './creator-controls';
+export {
+  DEFAULT_CREATOR_CONTROLS,
+  DEFAULT_VESTING_CONFIG,
+  DEFAULT_PROTOCOL_SELECTION,
+  DEFAULT_DAO_CONFIG,
+  DEFAULT_DAO_VOTING_PARAMS,
+  VESTING_CONSTANTS,
+  CHAIN_CONFIG,
+  createFeeConfig,
 } from './types';
-export { DEFAULT_CREATOR_CONTROLS, DEFAULT_VESTING_CONFIG } from './types';
 
 // ─── Bonding Curve 2.0 ──────────────────────────────────────────────────
 
@@ -94,7 +108,9 @@ export {
   CURVE_ERAS,
   calculateMarketCap,
   calculateNativeOut,
+  calculateNativeOutWithFees,
   calculateTokensOut,
+  calculateTokensOutWithFees,
   estimateTimeToNextPhase,
   formatPrice,
   GRADUATION_SUPPLY,
@@ -171,10 +187,14 @@ export {
 
 export {
   calculateFeeSplit,
+  calculateFeeSplitFromConfig,
+  calculateNetProceeds,
   DEFAULT_FEES,
   formatFee,
   getDeploymentCost,
   getFeeSummary,
+  getFeeSummaryFromConfig,
+  TOKEN_GENERATION_FEE,
 } from './fees';
 
 // ─── Free / Gasless Posting ──────────────────────────────────────────────
@@ -215,9 +235,42 @@ export {
 
 // ─── Bonding Phases (display constants) ──────────────────────────────────
 
-export type { BondingPhase, BondingPhaseInfo, VisualProgress } from './types';
 export { BONDING_PHASES } from './types';
 
-// ─── All Types ───────────────────────────────────────────────────────────
+// ─── Shared Types ────────────────────────────────────────────────────────
 
-export type * from './types';
+export type {
+  Badge,
+  BadgeType,
+  BondingPhase,
+  BondingPhaseInfo,
+  ChainInfo,
+  CoinCreatedEvent,
+  CreatorChain,
+  CreatorCoinConfig,
+  CreatorControlConfig,
+  CreatorOptions,
+  CrossChainMapping,
+  CrossChainPrice,
+  CurveState,
+  DAODeploymentConfig,
+  DAOVotingParams,
+  DAOTemplateType,
+  EarlyUnlockPenalty,
+  FeeConfig,
+  FeeRecipientType,
+  FeeRecipientSplit,
+  LabeledAllocation,
+  LabeledWalletOnChain,
+  LiveStreamInfo,
+  PostBondingConfig,
+  PostBondingStatus,
+  ProtocolSelection,
+  TokenInfo,
+  TradeEvent,
+  TradeResult,
+  VestingConfig,
+  VestingStart,
+  VisualProgress,
+  WalletLabel,
+} from './types';

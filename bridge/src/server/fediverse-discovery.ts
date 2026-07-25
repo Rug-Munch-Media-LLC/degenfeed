@@ -58,7 +58,10 @@ interface MastodonTrend {
 export async function fetchTrendingHashtags(): Promise<
   Array<{ name: string; url: string; score: number; instances: string[] }>
 > {
-  const tagMap = new Map<string, { name: string; url: string; score: number; instances: string[] }>();
+  const tagMap = new Map<
+    string,
+    { name: string; url: string; score: number; instances: string[] }
+  >();
 
   // Try GTS first
   try {
@@ -120,9 +123,7 @@ export async function fetchTrendingHashtags(): Promise<
   }
 
   // Sort by score descending
-  return [...tagMap.values()]
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 30);
+  return [...tagMap.values()].sort((a, b) => b.score - a.score).slice(0, 30);
 }
 
 /**
@@ -164,10 +165,10 @@ export async function fetchTrendingPosts(
   const perInstance = Math.max(2, Math.ceil((limit - posts.length) / TRENDING_INSTANCES.length));
   const fetches = TRENDING_INSTANCES.map(async (instance) => {
     try {
-      const res = await fetch(
-        `${instance}/api/v1/trends/statuses?limit=${perInstance}`,
-        { headers: { 'User-Agent': 'DegenFeed/0.1' }, signal: AbortSignal.timeout(5000) },
-      );
+      const res = await fetch(`${instance}/api/v1/trends/statuses?limit=${perInstance}`, {
+        headers: { 'User-Agent': 'DegenFeed/0.1' },
+        signal: AbortSignal.timeout(5000),
+      });
       if (!res.ok) return [];
       const { statusToPost } = await import('../providers/gotosocial');
       const raw = (await res.json()) as any[];
@@ -228,7 +229,14 @@ export async function discoverPopularCommunities(): Promise<
     if (res.ok) {
       const data = (await res.json()) as {
         communities?: Array<{
-          community: { id: number; name: string; title: string; description?: string; icon?: string; banner?: string };
+          community: {
+            id: number;
+            name: string;
+            title: string;
+            description?: string;
+            icon?: string;
+            banner?: string;
+          };
           counts: { subscribers: number; posts: number };
         }>;
       };
@@ -252,22 +260,24 @@ export async function discoverPopularCommunities(): Promise<
   }
 
   // Try popular external instances
-  const externalInstances = [
-    'https://lemmy.world',
-    'https://lemmy.ml',
-    'https://sh.itjust.works',
-  ];
+  const externalInstances = ['https://lemmy.world', 'https://lemmy.ml', 'https://sh.itjust.works'];
 
   const fetches = externalInstances.map(async (instance) => {
     try {
-      const res = await fetch(
-        `${instance}/api/v3/community/list?limit=10&sort=Hot&type_=All`,
-        { headers: { 'User-Agent': 'DegenFeed/0.1' }, signal: AbortSignal.timeout(5000) },
-      );
+      const res = await fetch(`${instance}/api/v3/community/list?limit=10&sort=Hot&type_=All`, {
+        headers: { 'User-Agent': 'DegenFeed/0.1' },
+        signal: AbortSignal.timeout(5000),
+      });
       if (!res.ok) return [];
       const data = (await res.json()) as {
         communities?: Array<{
-          community: { id: number; name: string; title: string; description?: string; icon?: string };
+          community: {
+            id: number;
+            name: string;
+            title: string;
+            description?: string;
+            icon?: string;
+          };
           counts: { subscribers: number; posts: number };
         }>;
       };
@@ -381,10 +391,10 @@ export async function lookupFediverseAccount(
   if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
 
   try {
-    const res = await fetch(
-      `${GTS_BASE}/api/v1/accounts/lookup?acct=${encodeURIComponent(acct)}`,
-      { headers, signal: AbortSignal.timeout(10_000) },
-    );
+    const res = await fetch(`${GTS_BASE}/api/v1/accounts/lookup?acct=${encodeURIComponent(acct)}`, {
+      headers,
+      signal: AbortSignal.timeout(10_000),
+    });
     if (!res.ok) return null;
     return res.json();
   } catch {

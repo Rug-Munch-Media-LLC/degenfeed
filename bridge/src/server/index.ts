@@ -2,8 +2,9 @@ import http from 'node:http';
 import { getCrossPosterStats, startCrossPoster } from '../crossposter';
 import { getIndexerStatus, reindex, startIndexer } from '../search-indexer';
 import { handleBlueskyRoute } from './bluesky-routes';
-import { handleNostrRoute } from './nostr-routes';
 import { buildFeed, DEFAULT_PREFERENCES, PROVIDERS } from './feeds';
+import { handleGtsRoute } from './gts-routes';
+import { handleNostrRoute } from './nostr-routes';
 
 // Catch unhandled rejections to prevent process crashes
 process.on('unhandledRejection', (reason) => {
@@ -431,6 +432,12 @@ const server = http.createServer(async (req, res) => {
     if (['/api/health', '/health', '/api'].includes(path))
       return jsonOk(res, { status: 'ok', service: 'degenfeed-bridge', version: '0.4.0' });
 
+    // ═══════════════════════════════════════════════════════════════════
+    // GTS Identity Routes — PRIMARY SIGN-UP
+    // ═══════════════════════════════════════════════════════════════════
+    const gtsHandled = await handleGtsRoute(path, req.method || 'GET', req, res);
+    if (gtsHandled) return;
+
     // ── Cross-Poster Health / Status ──────────────────────────────
     if (path === '/api/crossposter/status') {
       const stats = getCrossPosterStats();
@@ -626,7 +633,13 @@ const server = http.createServer(async (req, res) => {
       return jsonOk(res, {
         status: results.some(Boolean) ? 'ok' : 'degraded',
         sources: {
-          mastodon: { healthy: mastodonHealthy },
+          mastodon: { healthy: mastodonHealthy, oauth: Boolean(process.env.GTS_CLIENT_ID) },
+          gotosocial: {
+            healthy: mastodonHealthy,
+            oauth_ready: Boolean(process.env.GTS_CLIENT_ID && process.env.GTS_CLIENT_SECRET),
+            registration_open: true,
+            fediverse_hub: true,
+          },
           reddit: { healthy: redditHealthy },
           rss: { healthy: rssHealthy },
           lemmy: { healthy: lemmyHealthy },

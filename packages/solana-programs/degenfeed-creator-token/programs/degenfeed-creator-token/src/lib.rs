@@ -141,7 +141,7 @@ pub mod degenfeed_creator_token {
             vesting_vault.total_claimed = 0;
             vesting_vault.vesting_start = clock.unix_timestamp;
             vesting_vault.vesting_end = vesting_end;
-            vesting_vault.vesting_config = vesting_config;
+            vesting_vault.vesting_config = vesting_config.clone();
             vesting_vault.bump = ctx.bumps.vesting_vault;
             let authority_bump = ctx.bumps.mint_authority;
             let mint_key = ctx.accounts.mint.to_account_info().key;

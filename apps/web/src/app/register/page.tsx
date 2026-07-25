@@ -21,17 +21,19 @@ export default function RegisterPage() {
         <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
           <div className="text-center">
             <h1 className="mb-3 text-3xl font-black tracking-tight text-[var(--color-fg)] sm:text-4xl">
-              Create Your{' '}
+              Your{' '}
               <span className="bg-gradient-to-r from-degen-400 to-purple-400 bg-clip-text text-transparent">
-                Universal Social Identity
-              </span>
+                One Account
+              </span>{' '}
+              for the Entire Fediverse
             </h1>
             <p className="mx-auto mb-6 max-w-2xl text-base text-[var(--color-muted)]">
-              One registration. All protocols. We handle the gas, you get the keys.
+              <strong className="text-degen-400">@you@social.degenfeed.xyz</strong> — One GoToSocial
+              account unlocks every ActivityPub service on the planet.
               <br />
               <span className="text-sm opacity-80">
-                GoToSocial &middot; Bluesky PDS &middot; Nostr &middot; RSS &middot; Farcaster
-                &middot; Lens &middot; ENS
+                Mastodon · PeerTube · Lemmy · Pixelfed · WriteFreely · BookWyrm · Mobilizon ·
+                Funkwhale · Castopod · Owncast
               </span>
             </p>
 
@@ -60,21 +62,46 @@ export default function RegisterPage() {
           <h2 className="mb-8 text-center text-xl font-bold text-[var(--color-fg)]">
             What You Get
           </h2>
-          <div className="grid gap-6 sm:grid-cols-3">
-            <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-5">
-              <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-degen-500/10 text-lg text-degen-400">
-                🐘
-              </div>
-              <h3 className="mb-1.5 text-sm font-bold text-[var(--color-fg)]">
-                GoToSocial (Fediverse)
-              </h3>
-              <p className="text-xs text-[var(--color-muted)]">
-                Your own Fediverse presence at{' '}
-                <code className="text-degen-400">@you@social.degenfeed.xyz</code>. Follow anyone on
-                Mastodon, Pixelfed, PeerTube, and more. Free forever.
-              </p>
+          {/* PRIMARY: GoToSocial / ActivityPub Federation Hub */}
+          <div className="mb-8 rounded-2xl border-2 border-degen-500/30 bg-gradient-to-br from-degen-500/10 via-transparent to-purple-500/10 p-6">
+            <div className="mb-2 flex items-center gap-2">
+              <span className="inline-flex items-center rounded-full bg-degen-500/20 px-3 py-1 text-xs font-semibold text-degen-400">
+                PRIMARY IDENTITY
+              </span>
             </div>
+            <h3 className="mb-3 text-lg font-bold text-[var(--color-fg)]">
+              🐘 @you@social.degenfeed.xyz — One Account, Everywhere
+            </h3>
+            <p className="mb-4 text-sm text-[var(--color-muted)]">
+              Your GoToSocial (Mastodon-compatible) account is your universal identity across the
+              entire fediverse. One sign-up, zero additional registrations.
+            </p>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+              {[
+                { icon: '🎬', name: 'PeerTube', desc: 'Comment on videos, subscribe to channels' },
+                { icon: '🗳️', name: 'Lemmy', desc: 'Post in communities, comment on threads' },
+                { icon: '📸', name: 'Pixelfed', desc: 'Share images, follow photographers' },
+                { icon: '✍️', name: 'WriteFreely', desc: 'Publish blogs, write articles' },
+                { icon: '📚', name: 'BookWyrm', desc: 'Review books, track your reading' },
+                { icon: '📅', name: 'Mobilizon', desc: 'Create and join events' },
+                { icon: '🎵', name: 'Funkwhale', desc: 'Listen to music, make playlists' },
+                { icon: '🎙️', name: 'Castopod', desc: 'Subscribe to podcasts' },
+                { icon: '📺', name: 'Owncast', desc: 'Chat in live streams' },
+                { icon: '🐘', name: 'Mastodon', desc: 'Every Mastodon instance on the planet' },
+              ].map((s) => (
+                <div
+                  key={s.name}
+                  className="rounded-lg border border-[var(--color-glass-border)] bg-[var(--color-card)] p-3 text-center"
+                >
+                  <div className="mb-1 text-xl">{s.icon}</div>
+                  <div className="text-xs font-bold text-[var(--color-fg)]">{s.name}</div>
+                  <div className="text-[10px] text-[var(--color-muted)]">{s.desc}</div>
+                </div>
+              ))}
+            </div>
+          </div>
 
+          <div className="grid gap-6 sm:grid-cols-3">
             <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-5">
               <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-degen-500/10 text-lg text-degen-400">
                 ☁️
@@ -101,34 +128,12 @@ export default function RegisterPage() {
 
             <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-5">
               <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-degen-500/10 text-lg text-degen-400">
-                🔗
+                <span className="text-base font-bold text-degen-400">🔗</span>
               </div>
-              <h3 className="mb-1.5 text-sm font-bold text-[var(--color-fg)]">Farcaster ID</h3>
+              <h3 className="mb-1.5 text-sm font-bold text-[var(--color-fg)]">Farcaster + Lens</h3>
               <p className="text-xs text-[var(--color-muted)]">
-                On-chain Farcaster identity registered on Base. Your FID is yours. We pay the $5 gas
-                fee. Standard plan or Premium.
-              </p>
-            </div>
-
-            <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-5">
-              <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-degen-500/10 text-lg text-degen-400">
-                ◎
-              </div>
-              <h3 className="mb-1.5 text-sm font-bold text-[var(--color-fg)]">Lens Profile</h3>
-              <p className="text-xs text-[var(--color-muted)]">
-                Decentralized Lens Protocol profile on Polygon. Your handle is your NFT. We pay the
-                $2 gas. Standard plan or Premium.
-              </p>
-            </div>
-
-            <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-5">
-              <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-degen-500/10 text-lg text-degen-400">
-                📡
-              </div>
-              <h3 className="mb-1.5 text-sm font-bold text-[var(--color-fg)]">RSS Feed + ENS</h3>
-              <p className="text-xs text-[var(--color-muted)]">
-                Auto-generated RSS feed for your content. Complete plan adds an ENS domain so your
-                identity is a name you own.
+                On-chain Farcaster FID on Base + Lens Profile on Polygon. We pay the gas on paid
+                plans.
               </p>
             </div>
           </div>
@@ -142,11 +147,15 @@ export default function RegisterPage() {
             Want to Start Free? No Problem.
           </h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-4">
+            <div className="rounded-xl border-2 border-degen-500/30 bg-degen-500/5 p-4">
               <div className="mb-2 text-2xl">🐘</div>
-              <h3 className="mb-1 text-sm font-bold text-[var(--color-fg)]">Fediverse</h3>
+              <h3 className="mb-1 text-sm font-bold text-[var(--color-fg)]">
+                GoToSocial — PRIMARY
+              </h3>
               <p className="text-xs text-[var(--color-muted)]">
-                Get @yourname@social.degenfeed.xyz free, instantly. No gas, no fees.
+                <strong>@you@social.degenfeed.xyz</strong> — Your master identity for every
+                ActivityPub service. Mastodon, PeerTube, Lemmy, Pixelfed, and more. Free. Instant.
+                No gas.
               </p>
             </div>
             <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-4">
@@ -177,6 +186,44 @@ export default function RegisterPage() {
                   Warpcast
                 </a>{' '}
                 redirect — sign in with us after.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Fediverse Account Portability section */}
+      <div className="border-t border-[var(--color-border)]">
+        <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
+          <h2 className="mb-6 text-center text-xl font-bold text-[var(--color-fg)]">
+            Your Account Is Portable. Always.
+          </h2>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-5">
+              <h3 className="mb-1.5 text-sm font-bold text-[var(--color-fg)]">
+                📤 Export Your Data
+              </h3>
+              <p className="text-xs text-[var(--color-muted)]">
+                Download your follows, blocks, mutes, and bookmarks at any time. Standard
+                ActivityPub format — importable into any Mastodon instance.
+              </p>
+            </div>
+            <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-5">
+              <h3 className="mb-1.5 text-sm font-bold text-[var(--color-fg)]">
+                🔄 Migrate Anywhere
+              </h3>
+              <p className="text-xs text-[var(--color-muted)]">
+                Move to another Mastodon/GTS instance with zero follower loss. Your old profile
+                redirects followers automatically. Standard ActivityPub migration.
+              </p>
+            </div>
+            <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-5">
+              <h3 className="mb-1.5 text-sm font-bold text-[var(--color-fg)]">
+                📥 Import from Anywhere
+              </h3>
+              <p className="text-xs text-[var(--color-muted)]">
+                Coming from another Mastodon instance? Import your data here. Your content and
+                followers stay with you.
               </p>
             </div>
           </div>

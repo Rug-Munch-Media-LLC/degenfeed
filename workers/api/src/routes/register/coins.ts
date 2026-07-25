@@ -37,6 +37,8 @@ import {
 } from '../../routes/creator-dashboard';
 import { creatorVideos } from '../../routes/creator-videos';
 import { crossProtocolCoin } from '../../routes/cross-protocol-coin';
+import { coinDiscovery } from '../../routes/coin-discovery';
+import { crossProtocolIdentity } from '../../routes/cross-protocol-identity';
 import {
   handleFarcasterCoinDeploy,
   handleFarcasterCoinGet,
@@ -146,6 +148,12 @@ export function registerCoinsRoutes(app: Hono<{ Bindings: Env }>): void {
 
   // --- API: Cross-Protocol Creator Coins ---
   app.route('/api/coin', crossProtocolCoin);
+
+  // --- API: Per-Protocol Coin Discovery ---
+  app.route('/api/coin', coinDiscovery);
+
+  // --- API: Cross-Protocol Holder Identity ---
+  app.route('/api/identity', crossProtocolIdentity);
 
   // --- API: Token Gate ---
   app.post('/api/token-gate/verify', async (c) => {

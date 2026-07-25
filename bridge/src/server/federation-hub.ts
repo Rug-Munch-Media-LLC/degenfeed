@@ -13,8 +13,6 @@
  *   BookWyrm, Mobilizon, Funkwhale, Castopod, Owncast
  */
 
-import { GtSClient } from '@degenfeed/mastodon-sdk';
-
 export interface FediverseIdentity {
   /** Primary GTS handle: @username@social.degenfeed.xyz */
   gtsHandle: string;
