@@ -22,7 +22,22 @@ interface ShortVideoItem {
   authorAvatar?: string;
   views: number;
   likes: number;
-  source: 'peertube' | 'youtube' | 'tiktok_rss' | 'instagram' | 'twitter' | 'direct';
+  source:
+    | 'loops'
+    | 'peertube'
+    | 'youtube'
+    | 'tiktok_rss'
+    | 'tiktok'
+    | 'instagram'
+    | 'twitter'
+    | 'owncast'
+    | 'rss_bridge'
+    | 'lemmy'
+    | 'pixelfed'
+    | 'atprotocol'
+    | 'zora'
+    | 'farcaster'
+    | 'direct';
   sourceUrl: string;
   sourceColor?: string;
   sourceLabel: string;

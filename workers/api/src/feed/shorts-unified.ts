@@ -34,6 +34,7 @@ import { PROTOCOL_META, type ShortProtocol, type ShortVideo } from '../lib/unifi
 // ─── Types ────────────────────────────────────────────────────────────────
 
 export type FeedSource =
+  | 'loops'
   | 'activitypub'
   | 'atproto'
   | 'nostr'
@@ -44,6 +45,7 @@ export type FeedSource =
   | 'youtube'
   | 'tiktok'
   | 'instagram'
+  | 'pixelfed'
   | 'degenfeed';
 
 export interface UnifiedFeedOptions {
@@ -69,11 +71,16 @@ export interface UserPreferences {
   followedCreators: string[];
   likedTopics: string[];
   preferredProtocols: ShortProtocol[];
+  /** User's preferred content sources (enabled/disabled) */
+  enabledSources?: string[];
+  /** Whether to show only Loops content */
+  loopsOnly?: boolean;
 }
 
 // ─── Source Protocol Color Map (for frontend badges) ─────────────────────
 
 export const FEED_SOURCE_COLORS: Record<string, string> = {
+  loops: PROTOCOL_META.activitypub.color,
   activitypub: PROTOCOL_META.activitypub.color,
   atproto: PROTOCOL_META.atproto.color,
   nostr: PROTOCOL_META.nostr.color,
@@ -84,10 +91,12 @@ export const FEED_SOURCE_COLORS: Record<string, string> = {
   youtube: '#ff0000',
   tiktok: '#010101',
   instagram: '#e1306c',
+  pixelfed: '#FF4500',
   degenfeed: PROTOCOL_META.degenfeed.color,
 };
 
 export const FEED_SOURCE_LABELS: Record<string, string> = {
+  loops: 'Loops',
   activitypub: 'ActivityPub',
   atproto: 'AT Protocol',
   nostr: 'Nostr',
@@ -98,6 +107,7 @@ export const FEED_SOURCE_LABELS: Record<string, string> = {
   youtube: 'YouTube',
   tiktok: 'TikTok',
   instagram: 'Instagram',
+  pixelfed: 'Pixelfed',
   degenfeed: 'DegenFeed',
 };
 
@@ -118,6 +128,7 @@ export class UnifiedShortsFeed {
   async getFeed(opts: UnifiedFeedOptions): Promise<UnifiedShortFeed> {
     const {
       sources = [
+        'loops',
         'activitypub',
         'atproto',
         'nostr',
@@ -207,6 +218,8 @@ export class UnifiedShortsFeed {
    */
   async fetchSource(source: FeedSource, limit: number): Promise<ShortVideo[]> {
     switch (source) {
+      case 'loops':
+        return this.fetchActivityPubShorts(limit); // Loops is ActivityPub-based
       case 'activitypub':
         return this.fetchActivityPubShorts(limit);
       case 'atproto':

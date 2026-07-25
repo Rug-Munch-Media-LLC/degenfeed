@@ -14,6 +14,7 @@ import useSWRInfinite from 'swr/infinite';
 // === Types =================================================================
 
 export type ShortSource =
+  | 'loops'
   | 'activitypub'
   | 'atprotocol'
   | 'nostr'
@@ -21,6 +22,11 @@ export type ShortSource =
   | 'lens'
   | 'zora'
   | 'peertube'
+  | 'youtube'
+  | 'tiktok'
+  | 'tiktok_rss'
+  | 'instagram'
+  | 'pixelfed'
   | 'degenfeed';
 
 export interface ZoraNftInfo {
@@ -71,11 +77,16 @@ export interface UnifiedShortsResponse {
   nextCursor: string | null;
   hasMore: boolean;
   aggregatedAt: number;
+  /** Feed type returned */
+  feedType?: UnifiedFeedType;
 }
+
+export type UnifiedFeedType = 'for-you' | 'trending' | 'following' | 'loops-only';
 
 export interface UseUnifiedShortsOptions {
   source?: ShortSource;
   category?: string;
+  feedType?: UnifiedFeedType;
   limit?: number;
 }
 
@@ -109,7 +120,7 @@ const fetcher = async (url: string): Promise<UnifiedShortsResponse> => {
 // === Hook ==================================================================
 
 export function useUnifiedShorts(opts: UseUnifiedShortsOptions = {}): UseUnifiedShortsResult {
-  const { source, category, limit = 20 } = opts;
+  const { source, category, feedType = 'for-you', limit = 20 } = opts;
 
   const getKey = useCallback(
     (pageIndex: number, previousPageData: UnifiedShortsResponse | null) => {
@@ -124,9 +135,27 @@ export function useUnifiedShorts(opts: UseUnifiedShortsOptions = {}): UseUnified
       if (source) params.set('source', source);
       if (category) params.set('category', category);
 
-      return `/api/shorts/unified/feed?${params.toString()}`;
+      // Route to the correct endpoint based on feed type
+      let endpoint: string;
+      switch (feedType) {
+        case 'trending':
+          endpoint = '/api/shorts/unified/trending';
+          break;
+        case 'following':
+          endpoint = '/api/shorts/unified/following';
+          break;
+        case 'loops-only':
+          endpoint = '/api/shorts/unified/loops';
+          break;
+        case 'for-you':
+        default:
+          endpoint = '/api/shorts/unified/feed';
+          break;
+      }
+
+      return `${endpoint}?${params.toString()}`;
     },
-    [source, category, limit],
+    [source, category, feedType, limit],
   );
 
   const { data, error, size, setSize, isValidating, mutate } =

@@ -15,7 +15,8 @@
     "./nip53": "./src/nip53.ts",
     "./nip71": "./src/nip71.ts",
     "./profile": "./src/profile.ts",
-    "./relay-metadata": "./src/relay-metadata.ts"
+    "./relay-metadata": "./src/relay-metadata.ts",
+    "./nip29": "./src/nip29.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

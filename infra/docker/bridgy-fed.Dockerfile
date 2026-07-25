@@ -14,29 +14,28 @@ WORKDIR /app
 RUN uv pip install --system --no-cache --no-sources .[app]
 
 # Remove PyPI problem packages and install snarfed forks
-RUN pip uninstall -y negotiator httpsig 2>/dev/null || true
+RUN pip uninstall -y negotiator httpsig granary 2>/dev/null || true
 RUN pip install --no-cache-dir setuptools==75.8.2
 RUN pip install --no-cache-dir git+https://github.com/snarfed/negotiator.git
 RUN pip install --no-cache-dir git+https://github.com/snarfed/httpsig.git
+RUN pip install --no-cache-dir git+https://github.com/snarfed/granary.git
 
 # Patch httpsig to avoid pkg_resources issue
-RUN python3 -c "
-import re
+RUN python3 << 'PYEOF'
 with open('/usr/local/lib/python3.12/site-packages/httpsig/__init__.py') as f:
     content = f.read()
-# Replace pkg_resources with importlib.metadata
 content = content.replace(
     'from pkg_resources import get_distribution, DistributionNotFound',
     'from importlib.metadata import version as get_distribution, PackageNotFoundError as DistributionNotFound'
 )
 content = content.replace(
-    \"get_distribution('httpsig').version\",
-    \"get_distribution('httpsig')\"
+    "__version__ = get_distribution(__name__).version",
+    '__version__ = "0.9.3"',
 )
 with open('/usr/local/lib/python3.12/site-packages/httpsig/__init__.py', 'w') as f:
     f.write(content)
 print('httpsig patched')
-"
+PYEOF
 
 RUN python3 -c "from negotiator import ContentNegotiator; print('negotiator OK')"
 RUN python3 -c "from httpsig import HeaderSigner; print('httpsig OK')"

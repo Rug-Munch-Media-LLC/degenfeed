@@ -12,6 +12,7 @@ import { fetchArenaPosts } from '../providers/arena';
 import { fetchArweavePosts } from '../providers/arweave';
 import { fetchAtprotoPosts } from '../providers/atproto';
 import { fetchBlueskyPosts } from '../providers/bluesky';
+import { fetchEvents as fetchSmokeSignalEvents } from '../providers/smokesignal';
 import { fetchBonfirePosts } from '../providers/bonfire';
 import { fetchBookWyrmPosts } from '../providers/bookwyrm';
 import { fetchCastopodPosts } from '../providers/castopod';
@@ -361,6 +362,12 @@ export const PROVIDERS: Record<string, ProviderEntry> = {
     rateLimit: { maxRequests: 60, windowMs: 60_000 },
     category: 'content',
   },
+  smokesignal: {
+    name: 'Smoke Signal (AT Protocol Events)',
+    fetch: fetchSmokeSignalEvents,
+    rateLimit: { maxRequests: 30, windowMs: 60_000 },
+    category: 'content',
+  },
   strfry: {
     name: 'strfry (Nostr Search Relay)',
     fetch: fetchStrfryPosts,
@@ -689,6 +696,7 @@ export const DEFAULT_PREFERENCES = {
       'bluesky',
       'reddit',
       'rss',
+      'smokesignal',
       'lemmy',
       'peertube',
       'pixelfed',

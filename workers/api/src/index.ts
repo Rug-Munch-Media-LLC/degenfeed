@@ -154,6 +154,8 @@ export interface Env {
   TWITCH_CLIENT_ID?: string;
   /** Twitch Client Secret for Helix API */
   TWITCH_CLIENT_SECRET?: string;
+  /** Loops instance URL for self-hosted shorts (default: https://loops.video) */
+  LOOPS_INSTANCE_URL?: string;
   /** Comma-separated list of extra PeerTube instance URLs to fetch live from */
   PEERTUBE_EXTRA_INSTANCES?: string;
 

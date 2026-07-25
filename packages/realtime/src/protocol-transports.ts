@@ -22,6 +22,7 @@ import { getDeliveryProtocols, type ResolvedIdentity, resolveIdentity } from './
 
 export type TransportProtocol =
   | 'nostr'
+  | 'nostr-group'
   | 'farcaster'
   | 'bluesky'
   | 'mastodon'

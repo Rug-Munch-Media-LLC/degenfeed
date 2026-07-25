@@ -94,6 +94,7 @@ export const PROTOCOL_BADGES: Record<string, ProtocolBadge> = {
   'direct-ws': { id: 'direct-ws', label: 'Direct', color: '#22c55e', icon: 'wifi' },
   wallet: { id: 'wallet', label: 'Wallet', color: '#f59e0b', icon: 'wallet' },
   xmtp: { id: 'xmtp', label: 'XMTP', color: '#FF6B00', icon: 'x' },
+  'nostr-group': { id: 'nostr-group', label: 'Nostr Group', color: '#7c3aed', icon: 'users' },
 };
 
 export function getProtocolBadge(protocol: string): ProtocolBadge {

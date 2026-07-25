@@ -395,6 +395,7 @@ export async function handleUnifiedFeedBySource(request: Request, env: Env): Pro
   const excludeIds = url.searchParams.get('exclude')?.split(',').filter(Boolean) || [];
 
   const validSources = [
+    'loops',
     'activitypub',
     'atproto',
     'nostr',
@@ -405,6 +406,7 @@ export async function handleUnifiedFeedBySource(request: Request, env: Env): Pro
     'youtube',
     'tiktok',
     'instagram',
+    'pixelfed',
     'degenfeed',
   ];
 
@@ -422,6 +424,104 @@ export async function handleUnifiedFeedBySource(request: Request, env: Env): Pro
   });
 
   return noCacheJsonResponse(result);
+}
+
+// ─── GET /api/shorts/unified/trending — Trending across all platforms ───
+
+export async function handleUnifiedTrending(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
+
+  const url = new URL(request.url);
+  const limit = Math.min(Math.max(1, Number(url.searchParams.get('limit')) || 20), 50);
+  const cursor = url.searchParams.get('cursor') || undefined;
+
+  const feed = new UnifiedShortsFeed(env);
+  const result = await feed.getFeed({
+    sort: 'trending',
+    limit,
+    cursor,
+  });
+
+  return noCacheJsonResponse({
+    ...result,
+    feedType: 'trending',
+  });
+}
+
+// ─── GET /api/shorts/unified/following — Only followed creators ────────
+
+export async function handleUnifiedFollowing(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
+
+  const url = new URL(request.url);
+  const limit = Math.min(Math.max(1, Number(url.searchParams.get('limit')) || 20), 50);
+  const cursor = url.searchParams.get('cursor') || undefined;
+
+  // Get the current user's followed creators from the session
+  const session = await requireSession(request, env);
+  const followedCreators: string[] = [];
+  if (!(session instanceof Response)) {
+    // Extract followed creators from user profile
+    try {
+      const profileKey = `profile:${session.address}`;
+      const profileRaw = await env.DEGENFEED?.get(profileKey);
+      if (profileRaw) {
+        const profile = JSON.parse(profileRaw) as { followedCreators?: string[] };
+        if (profile.followedCreators) {
+          followedCreators.push(...profile.followedCreators);
+        }
+      }
+    } catch {
+      // Silently fail — return empty if no follows
+    }
+  }
+
+  if (followedCreators.length === 0) {
+    return noCacheJsonResponse({
+      shorts: [],
+      sources: {},
+      nextCursor: null,
+      hasMore: false,
+      aggregatedAt: Date.now(),
+      feedType: 'following',
+    });
+  }
+
+  const feed = new UnifiedShortsFeed(env);
+  const result = await feed.getFeed({
+    creatorFilter: followedCreators,
+    sort: 'newest',
+    limit,
+    cursor,
+  });
+
+  return noCacheJsonResponse({
+    ...result,
+    feedType: 'following',
+  });
+}
+
+// ─── GET /api/shorts/unified/loops — Only Loops content ───────────────
+
+export async function handleUnifiedLoopsOnly(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
+
+  const url = new URL(request.url);
+  const limit = Math.min(Math.max(1, Number(url.searchParams.get('limit')) || 20), 50);
+  const cursor = url.searchParams.get('cursor') || undefined;
+
+  const feed = new UnifiedShortsFeed(env);
+  const result = await feed.getFeed({
+    sources: ['activitypub' as any], // Loops is ActivityPub-based
+    sort: 'newest',
+    limit,
+    cursor,
+  });
+
+  return noCacheJsonResponse({
+    ...result,
+    feedType: 'loops-only',
+  });
 }
 
 // ─── POST /api/shorts/:id/tip — Tip a short ───────────────────────────────
@@ -970,6 +1070,7 @@ function parseSessionCookie(request: Request): { address: string } | null {
 
 function getFeedSources(raw: string): string[] {
   const validSources = [
+    'loops',
     'activitypub',
     'atproto',
     'nostr',
@@ -980,6 +1081,7 @@ function getFeedSources(raw: string): string[] {
     'youtube',
     'tiktok',
     'instagram',
+    'pixelfed',
     'degenfeed',
   ];
   return raw.split(',').filter((s) => validSources.includes(s.trim()));
