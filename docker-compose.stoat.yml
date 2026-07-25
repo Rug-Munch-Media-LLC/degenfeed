@@ -1,0 +1,201 @@
+# Stoat Nostr NIP-29 Group Chat — Self-Hosted Deployment
+#
+# Stoat is an open-source Nostr chat client with NIP-29 group support.
+# This compose file deploys the full Stoat stack:
+#   - stoat-api: Backend API server (Nostr relay client)
+#   - stoat-web: Web frontend (chat UI)
+#   - stoat-files: File upload server
+#   - stoat-meta: Metadata/image proxy
+#
+# Usage:
+#   docker compose -f docker-compose.stoat.yml up -d
+#   Access: https://stoat.degenfeed.xyz
+#
+# See: https://github.com/stoatchat/self-hosted
+#
+# Requirements:
+#   - 2 vCPUs, 2 GB RAM minimum
+#   - Docker & Docker Compose v2
+#   - Domain with DNS pointing to host (e.g., stoat.degenfeed.xyz)
+#   - Postgres database (or use the included postgres service)
+#
+# Networks:
+#   stoat_network — internal communication between Stoat services
+#   degenfeed_network — shared with DegenFeed for unified chat bridging
+
+services:
+  # ─── Postgres (Stoat Backend DB) ───────────────────────────────────────
+  stoat-db:
+    image: postgres:16-alpine
+    container_name: stoat-db
+    restart: unless-stopped
+    volumes:
+      - stoat_pgdata:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: stoat
+      POSTGRES_USER: stoat
+      POSTGRES_PASSWORD: ${STOAT_DB_PASSWORD:-stoat_changeme}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U stoat"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - stoat_network
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  # ─── Stoat API (Backend) ──────────────────────────────────────────────
+  stoat-api:
+    image: ghcr.io/stoatchat/backend:latest
+    container_name: stoat-api
+    restart: unless-stopped
+    depends_on:
+      stoat-db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://stoat:${STOAT_DB_PASSWORD:-stoat_changeme}@stoat-db:5432/stoat
+      SECRET_KEY: ${STOAT_SECRET_KEY:-stoat_secret_key_change_in_production}
+      NOSTR_RELAYS: ${NOSTR_RELAYS:-wss://relay.damus.io,wss://nos.lol,wss://relay.primal.net,wss://relay.groups.nip29.com}
+      # NIP-29 Group relay for group chat
+      NIP29_RELAY: ${NIP29_RELAY:-wss://relay.groups.nip29.com}
+      # CORS for web frontend
+      CORS_ORIGIN: ${STOAT_WEB_URL:-https://stoat.degenfeed.xyz}
+      # File server URL
+      FILE_SERVER_URL: ${STOAT_FILE_SERVER_URL:-http://stoat-files:4001}
+      # Enable NIP-29 group chat
+      FEATURE_NIP29_GROUPS: "true"
+      # Log level
+      RUST_LOG: ${STOAT_LOG_LEVEL:-info}
+      # External API for DegenFeed bridge integration
+      DEGENFEED_API_URL: https://degenfeed.xyz
+      DEGENFEED_API_KEY: ${DEGENFEED_API_KEY:-}
+    ports:
+      - "127.0.0.1:4000:4000"
+    networks:
+      - stoat_network
+      - degenfeed_network
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  # ─── Stoat Web (Frontend) ─────────────────────────────────────────────
+  stoat-web:
+    image: ghcr.io/stoatchat/web:latest
+    container_name: stoat-web
+    restart: unless-stopped
+    depends_on:
+      - stoat-api
+    environment:
+      API_URL: ${STOAT_API_URL:-http://stoat-api:4000}
+      PUBLIC_URL: ${STOAT_WEB_URL:-https://stoat.degenfeed.xyz}
+      # NIP-29 group relay for embedding
+      NEXT_PUBLIC_NIP29_RELAY_URL: ${NIP29_RELAY:-wss://relay.groups.nip29.com}
+      # App name
+      NEXT_PUBLIC_APP_NAME: "DegenFeed Chat"
+      # DegenFeed API integration
+      NEXT_PUBLIC_DEGENFEED_URL: https://app.degenfeed.xyz
+    ports:
+      - "127.0.0.1:4002:3000"
+    networks:
+      - stoat_network
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  # ─── Stoat File Server ────────────────────────────────────────────────
+  stoat-files:
+    image: ghcr.io/stoatchat/fileserver:latest
+    container_name: stoat-files
+    restart: unless-stopped
+    volumes:
+      - stoat_files:/data/files
+    environment:
+      # Where uploaded files are stored
+      STORAGE_DIR: /data/files
+      MAX_FILE_SIZE: ${STOAT_MAX_FILE_SIZE:-10485760}
+    ports:
+      - "127.0.0.1:4001:4001"
+    networks:
+      - stoat_network
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+
+  # ─── Stoat Metadata Proxy ─────────────────────────────────────────────
+  stoat-meta:
+    image: ghcr.io/stoatchat/metadata-proxy:latest
+    container_name: stoat-meta
+    restart: unless-stopped
+    environment:
+      # Cache directory for proxied metadata
+      CACHE_DIR: /data/cache
+      # Max cache size
+      MAX_CACHE_SIZE: ${STOAT_META_CACHE_SIZE:-500000000}
+    volumes:
+      - stoat_meta_cache:/data/cache
+    ports:
+      - "127.0.0.1:4003:4003"
+    networks:
+      - stoat_network
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+
+  # ─── NIP-29 Group Relay (optional, self-hosted) ───────────────────────
+  # Self-hosted NIP-29 relay for private group chat.
+  # Alternative: use public relays like relay.groups.nip29.com
+  # Uncomment if you want complete control over group data.
+  # stoat-relay:
+  #   image: ghcr.io/max21dev/groups-relay:latest
+  #   container_name: stoat-nip29-relay
+  #   restart: unless-stopped
+  #   environment:
+  #     RELAY_PORT: 7777
+  #     RELAY_NAME: "DegenFeed Groups"
+  #     RELAY_DESCRIPTION: "NIP-29 group chat relay for DegenFeed"
+  #     RELAY_PUBKEY: ${STOAT_RELAY_PUBKEY:-}
+  #   ports:
+  #     - "127.0.0.1:7777:7777"
+  #   networks:
+  #     - stoat_network
+
+  # ─── DegenFeed Bridge (optional) ───────────────────────────────────────
+  # Bridges Stoat chat to DegenFeed's unified messaging system.
+  # stoat-bridge:
+  #   build:
+  #     context: ./packages/realtime
+  #     dockerfile: Dockerfile
+  #   container_name: stoat-bridge
+  #   restart: unless-stopped
+  #   depends_on:
+  #     - stoat-api
+  #   environment:
+  #     STOAT_API_URL: http://stoat-api:4000
+  #     NOSTR_PRIVATE_KEY: ${NOSTR_BOT_NSEC:-}
+  #     NIP29_RELAY: ${NIP29_RELAY:-wss://relay.groups.nip29.com}
+  #   networks:
+  #     - stoat_network
+  #     - degenfeed_network
+
+volumes:
+  stoat_pgdata:
+    driver: local
+  stoat_files:
+    driver: local
+  stoat_meta_cache:
+    driver: local
+
+networks:
+  stoat_network:
+    driver: bridge
+    name: stoat_network
+  degenfeed_network:
+    external: true
+    name: degenfeed_default

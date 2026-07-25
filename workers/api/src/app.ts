@@ -38,6 +38,10 @@ import { registerLiveRoutes } from './routes/register/live';
 import { registerMediaRoutes } from './routes/register/media';
 import { registerMessagingRoutes } from './routes/register/messaging';
 import { registerPremiumRoutes } from './routes/register/premium';
+
+// ─── Farcaster Frames v2 + Nostr NIP-29 Groups ─────────────────────────
+import { registerFramesRoutes } from './routes/register/frames';
+import { registerNostrGroupRoutes } from './routes/register/nostr-groups';
 import { registerSocialRoutes } from './routes/register/social';
 
 // ─── Additional dependencies ─────────────────────────────────
@@ -340,6 +344,8 @@ registerMediaRoutes(app);
 registerMessagingRoutes(app);
 registerLiveRoutes(app);
 registerPremiumRoutes(app);
+registerFramesRoutes(app);
+registerNostrGroupRoutes(app);
 
 // ─── External platform routes (DegenFeed Connect) ────────────────
 import {

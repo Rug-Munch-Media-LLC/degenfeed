@@ -214,7 +214,7 @@ function eventToPost(event: MobilizonEvent, source: MobilizonSource): UnifiedPos
       viewerBookmarked: false,
       raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
     },
-    raw: event,
+    raw: { ...event, _instanceUrl: source.instance },
     niches: guessEventNiches(event.title, desc, tags),
   };
 }
@@ -282,6 +282,65 @@ export async function fetchMobilizonPosts(limit = 20): Promise<UnifiedPost[]> {
 
   console.log(`[bridge] Mobilizon: ${deduped.length} events`);
   return deduped;
+}
+
+// ─── UnifiedEvent Conversion ─────────────────────────────────────────────
+
+/**
+ * Convert a UnifiedPost (from Mobilizon) to a UnifiedEvent for the event bridge.
+ */
+export function mobilizonEventToUnified(post: UnifiedPost): import('../server/types').UnifiedEvent | null {
+  try {
+    const lines = post.text?.split('\n') || [];
+    const title = lines[0]?.replace(/^[📅🎉]\s*/, '').trim() || 'Untitled Event';
+    const desc = lines.slice(2).filter(l => !l.startsWith('📍') && !l.startsWith('🌐') && !l.startsWith('🏷️')).join('\n').trim();
+    const locationLine = lines.find(l => l.startsWith('📍'))?.replace('📍 ', '') || '';
+    const onlineLine = lines.find(l => l.startsWith('🌐'))?.replace('🌐 Online: ', '') || '';
+    const isOnline = !!onlineLine;
+    const tagLine = lines.find(l => l.startsWith('🏷️'))?.replace('🏷️ ', '') || '';
+    const tags = tagLine ? tagLine.split(',').map((t: string) => t.trim()) : [];
+    
+    const raw = (post.raw || {}) as Record<string, unknown>;
+    const beginsOn = (raw.beginsOn as string) || new Date(post.createdAt).toISOString();
+    const endsOn = raw.endsOn as string | undefined;
+    const physicalAddress = raw.physicalAddress as Record<string, string> | undefined;
+    const picture = raw.picture as { url: string; name?: string } | undefined;
+
+    return {
+      id: post.id,
+      protocol: 'mobilizon',
+      title,
+      description: desc.slice(0, 2000),
+      beginsOn,
+      endsOn,
+      location: physicalAddress
+        ? {
+            name: physicalAddress.description || '',
+            address: physicalAddress.streetAddress || '',
+            locality: physicalAddress.locality || '',
+            region: physicalAddress.region || '',
+            country: physicalAddress.country || '',
+          }
+        : locationLine
+          ? { name: locationLine, address: locationLine }
+          : undefined,
+      onlineAddress: onlineLine || undefined,
+      isOnline,
+      organizer: post.author,
+      tags,
+      picture: picture ? { url: picture.url, name: picture.name } : undefined,
+      url: (raw.uuid ? `${(raw as any)._instanceUrl || ''}/events/${raw.uuid}` : undefined) || (post.embeds?.find(e => e.kind === 'link')?.url) || '',
+      rsvpCount: 0,
+      maxAttendees: (raw.options as Record<string, unknown>)?.maximumAttendeeCapacity as number | undefined,
+      status: raw.status === 'cancelled' ? 'cancelled' : 'confirmed',
+      visibility: (raw.visibility as string) === 'private' ? 'private' : 'public',
+      categories: guessEventNiches(title, desc, tags),
+      createdAt: post.createdAt,
+      raw: post,
+    };
+  } catch {
+    return null;
+  }
 }
 
 export const fetch = fetchMobilizonPosts;

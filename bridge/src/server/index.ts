@@ -3,6 +3,7 @@ import { getCrossPosterStats, startCrossPoster } from '../crossposter';
 import { getIndexerStatus, reindex, startIndexer } from '../search-indexer';
 import { handleBlueskyRoute } from './bluesky-routes';
 import { buildFeed, DEFAULT_PREFERENCES, PROVIDERS } from './feeds';
+import { handleEventRoute } from './event-routes';
 import { handleGtsRoute } from './gts-routes';
 import { handleNostrRoute } from './nostr-routes';
 
@@ -431,6 +432,24 @@ const server = http.createServer(async (req, res) => {
   try {
     if (['/api/health', '/health', '/api'].includes(path))
       return jsonOk(res, { status: 'ok', service: 'degenfeed-bridge', version: '0.4.0' });
+
+    // ═══════════════════════════════════════════════════════════════════
+    // Cross-Protocol Event Routes
+    // ═══════════════════════════════════════════════════════════════════
+    // GET    /api/events                    — Unified events feed
+    // GET    /api/events/atproto           — AT Protocol events
+    // POST   /api/events/atproto/rsvp      — RSVP to AT Protocol event
+    // POST   /api/events/create            — Create event, publish to platforms
+    // GET    /api/events/discover          — Event discovery
+    // GET    /api/events/trending          — Trending events
+    // GET    /api/events/near              — Events near location
+    // GET    /api/events/by-creator        — Events by creator
+    // POST   /api/events/sync              — Trigger Bridgy Fed sync
+    // GET    /api/events/bridge/status     — Event bridge health
+    if (path.startsWith('/api/events')) {
+      const eventHandled = await handleEventRoute(path, req.method || 'GET', req, res);
+      if (eventHandled) return;
+    }
 
     // ═══════════════════════════════════════════════════════════════════
     // GTS Identity Routes — PRIMARY SIGN-UP
@@ -945,6 +964,8 @@ server.listen(PORT, '127.0.0.1', () => {
   );
   console.log('[bridge] Cross-protocol search: Meilisearch unified index + direct fallback');
   console.log('[bridge] Cross-protocol notifications: unified stream from all protocols');
+  console.log('[bridge] Cross-protocol events: Smoke Signal (ATProto) ↔ Mobilizon (ActivityPub) via Bridgy Fed');
+  console.log('[bridge] Event routes: /api/events, /api/events/atproto, /api/events/create, /api/events/discover');
   startCrossPoster();
   // Start unified search indexer
   startIndexer()

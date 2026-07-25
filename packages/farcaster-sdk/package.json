@@ -8,7 +8,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./video": "./src/video.ts",
-    "./engage": "./src/engage.ts"
+    "./engage": "./src/engage.ts",
+    "./frames-v2": "./src/frames-v2.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

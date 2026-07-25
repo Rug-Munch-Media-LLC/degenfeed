@@ -39,6 +39,27 @@ export {
 export type { Nip46ConnectOptions } from './nip46';
 export { connectNostrConnect } from './nip46';
 export type { NostrProfileContent } from './profile';
+
+// ─── NIP-29 Group Chat ───────────────────────────────────────────────────
+export type {
+  Nip29Group,
+  Nip29GroupMember,
+  Nip29GroupSearchResult,
+  Nip29Message,
+} from './nip29';
+export {
+  createGroupJoinRequest,
+  createGroupLeaveRequest,
+  createGroupMembershipStatement,
+  createGroupMessage,
+  createGroupMetadataEvent,
+  createGroupReply,
+  createGroupThread,
+  createRemoveUserEvent,
+  discoverGroups,
+  publishToGroupRelay,
+  queryGroupMessages,
+} from './nip29';
 export {
   createProfileEvent,
   parseProfileContent,

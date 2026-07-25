@@ -185,8 +185,11 @@ import {
   handleShortsWatch,
   handleUnifiedFeed,
   handleUnifiedFeedBySource,
+  handleUnifiedFollowing,
+  handleUnifiedLoopsOnly,
   handleUnifiedMint,
   handleUnifiedPublish,
+  handleUnifiedTrending,
   handleZoraCreator,
   handleZoraTrending,
 } from '../../routes/shorts';
@@ -299,6 +302,32 @@ export function registerFeedRoutes(app: Hono<{ Bindings: Env }>): void {
   app.get('/api/shorts/unified/:source', async (c) => {
     try {
       const result = await handleUnifiedFeedBySource(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+
+  // --- New unified feed types ---
+  app.get('/api/shorts/unified/trending', async (c) => {
+    try {
+      const result = await handleUnifiedTrending(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/shorts/unified/following', async (c) => {
+    try {
+      const result = await handleUnifiedFollowing(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/shorts/unified/loops', async (c) => {
+    try {
+      const result = await handleUnifiedLoopsOnly(c.req.raw, c.env);
       return ok(result);
     } catch (err) {
       return serverError(err instanceof Error ? err.message : 'Unknown error');

@@ -9,6 +9,7 @@
  */
 
 export type ShortProtocol =
+  | 'loops'
   | 'activitypub'
   | 'atproto'
   | 'nostr'
@@ -16,12 +17,22 @@ export type ShortProtocol =
   | 'lens'
   | 'zora'
   | 'peertube'
+  | 'youtube'
+  | 'tiktok'
+  | 'instagram'
+  | 'pixelfed'
   | 'degenfeed';
 
 export const PROTOCOL_META: Record<
   ShortProtocol,
   { label: string; color: string; icon: string; shortLabel: string }
 > = {
+  loops: {
+    label: 'Loops',
+    color: '#F1680D',
+    icon: 'Loops',
+    shortLabel: 'Loops',
+  },
   activitypub: {
     label: 'ActivityPub',
     color: '#6364ff',
@@ -64,6 +75,30 @@ export const PROTOCOL_META: Record<
     icon: 'PeerTube',
     shortLabel: 'PT',
   },
+  youtube: {
+    label: 'YouTube',
+    color: '#FF0000',
+    icon: 'YouTube',
+    shortLabel: 'YT',
+  },
+  tiktok: {
+    label: 'TikTok',
+    color: '#010101',
+    icon: 'TikTok',
+    shortLabel: 'TT',
+  },
+  instagram: {
+    label: 'Instagram',
+    color: '#E1306C',
+    icon: 'Instagram',
+    shortLabel: 'IG',
+  },
+  pixelfed: {
+    label: 'Pixelfed',
+    color: '#FF4500',
+    icon: 'Pixelfed',
+    shortLabel: 'PF',
+  },
   degenfeed: {
     label: 'DegenFeed',
     color: '#00ff41',
@@ -79,6 +114,8 @@ export function buildShareUrl(protocol: ShortProtocol, shortId: string, title: s
   const encodedTitle = encodeURIComponent(title);
 
   switch (protocol) {
+    case 'loops':
+      return appUrl; // Loops handles sharing internally
     case 'activitypub':
       // Mastodon share intent
       return `https://mastodon.social/share?text=${encodedTitle}%20${encodedUrl}`;
@@ -93,6 +130,14 @@ export function buildShareUrl(protocol: ShortProtocol, shortId: string, title: s
     case 'zora':
       return appUrl; // Zora has its own collect URL
     case 'peertube':
+      return appUrl;
+    case 'youtube':
+      return `https://www.youtube.com/shorts/${shortId}`;
+    case 'tiktok':
+      return `https://www.tiktok.com/@degenfeed/video/${shortId}`;
+    case 'instagram':
+      return `https://www.instagram.com/reel/${shortId}`;
+    case 'pixelfed':
       return appUrl;
     case 'degenfeed':
       return appUrl;

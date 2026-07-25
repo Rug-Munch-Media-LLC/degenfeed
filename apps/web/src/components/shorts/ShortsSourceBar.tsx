@@ -27,13 +27,20 @@ interface ShortsSourceBarProps {
 
 // Human-readable labels for each protocol
 const SOURCE_LABELS: Partial<Record<ShortSource, string>> = {
+  loops: 'Loops',
   activitypub: 'Loops',
   atprotocol: 'Flashes',
+  flashes: 'Flashes',
   nostr: 'Nostr',
   farcaster: 'Farcaster',
   lens: 'Lens',
   zora: 'Zora',
   peertube: 'PeerTube',
+  youtube: 'YouTube',
+  tiktok: 'TikTok',
+  tiktok_rss: 'TikTok',
+  instagram: 'Instagram',
+  pixelfed: 'Pixelfed',
   degenfeed: 'DegenFeed',
 };
 

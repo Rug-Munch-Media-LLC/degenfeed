@@ -13,6 +13,15 @@
 
 import type { Env } from './protocol-transports';
 
+// ─── NIP-29 Relay URLs for group discovery ─────────────────────────────────
+
+const DEFAULT_NIP29_RELAYS = [
+  'wss://relay.groups.nip29.com',
+  'wss://groups.nostr.com',
+  'wss://nos.lol',
+  'wss://relay.damus.io',
+];
+
 // ─── Types ──────────────────────────────────────────────────────────────────
 
 export interface DiscoveredCommunity {
@@ -282,6 +291,46 @@ export class ChatDiscovery {
 
     // Start with curated communities
     let results = [...CURATED_COMMUNITIES];
+
+    // Also try to discover NIP-29 groups from Nostr relays
+    if (!protocols.length || protocols.includes('nostr')) {
+      try {
+        const nostr = await import('@degenfeed/nostr-sdk');
+        const relayUrls = (env as any)?.NOSTR_RELAYS
+          ? ((env as any).NOSTR_RELAYS as string).split(',').map((s: string) => s.trim()).filter(Boolean)
+          : DEFAULT_NIP29_RELAYS;
+
+        const discoveries = await nostr.discoverGroups(relayUrls, {
+          search: query || undefined,
+          tags: tags.length > 0 ? tags : undefined,
+          limit,
+        });
+
+        for (const discovery of discoveries) {
+          for (const group of discovery.groups) {
+            if (!results.some((r) => r.id === `nostr-group:${group.id}`)) {
+              results.push({
+                id: `nostr-group:${group.id}`,
+                name: group.name || group.id,
+                description: group.about || `Nostr NIP-29 group: ${group.id}`,
+                protocol: 'nostr',
+                network: group.relayUrl,
+                identifier: group.id,
+                memberCount: group.memberCount || 0,
+                activityScore: 50,
+                tags: group.tags,
+                iconUrl: group.picture,
+                curated: group.curated || false,
+                language: undefined,
+                nsfw: group.nsfw || false,
+              });
+            }
+          }
+        }
+      } catch {
+        // Non-critical — Nostr group discovery failed
+      }
+    }
 
     // Also try to discover rooms from KV (cross-protocol rooms)
     try {
