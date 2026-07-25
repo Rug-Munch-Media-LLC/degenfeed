@@ -1,0 +1,45 @@
+# Conduit Configuration — DegenFeed Matrix Homeserver
+# ====================================================
+# See: https://gitlab.com/famedly/conduit
+
+[global]
+# The server name to use for this homeserver
+server_name = "degenfeed.xyz"
+
+# The port to listen on
+port = 8448
+
+# Database backend: "rocksdb" (recommended) or "sqlite"
+database_backend = "rocksdb"
+
+# Path to the database
+database_path = "/var/lib/conduit/db"
+
+# Maximum request size in bytes (20MB)
+max_request_size = 20000000
+
+# Enable federation with other Matrix servers
+allow_federation = true
+
+# Allow new user registration
+allow_registration = true
+
+# Allow registration without email verification
+allow_unverified_email_registration = true
+
+# Trusted servers for federation
+trusted_servers = ["matrix.org"]
+
+# Enable the admin API on port 4433
+[admin]
+enabled = true
+port = 4433
+bind = "0.0.0.0"
+
+# Logging configuration
+[logging]
+level = "info"
+targets = [
+    { name = "rocket", level = "info" },
+    { name = "conduit_core", level = "info" },
+]
