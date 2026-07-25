@@ -43,12 +43,6 @@ export function registerCoreRoutes(app: Hono<{ Bindings: Env }>): void {
     return handleFullHealth(c.env);
   });
 
-  // ─── Bridge health ────────────────────────────────────
-  app.get('/api/bridge/health', async (c) => {
-    const { handleBridgeHealth } = await import('../bridge-health');
-    return handleBridgeHealth(c.req.raw, c.env);
-  });
-
   // ─── Deploy ──────────────────────────────────────────
   app.all('/api/deploy/request', async (c) => {
     const { handleDeployRequest } = await import('../deploy');

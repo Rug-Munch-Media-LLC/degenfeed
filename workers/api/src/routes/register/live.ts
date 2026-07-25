@@ -9,11 +9,7 @@ import type { Env } from '../../index';
 
 import { jsonResponse } from '../../index';
 import peertubeRouter from '../../routes/peertube';
-import {
-  handlePeerTubeLeaderboard,
-  handlePeerTubeTipCreate,
-  handlePeerTubeTipStats,
-} from '../../routes/peertube-tip';
+
 import podcastRouter from '../../routes/podcast';
 import { withSession } from '../../routes/route-registry';
 import streams from '../../routes/streams';
@@ -42,15 +38,6 @@ import { handleRealtimeWebSocket } from '../../routes/realtime';
 export function registerLiveRoutes(app: Hono<{ Bindings: Env }>): void {
   // --- API: YouTube ---
   app.route('/api/youtube', youtubeRoutes);
-
-  // --- API: PeerTube Tips ---
-  app.post('/api/peertube/tip', async (c) =>
-    withSession(c, () => handlePeerTubeTipCreate(c.req.raw, c.env)),
-  );
-  app.get('/api/peertube/tip/stats', async (c) => handlePeerTubeTipStats(c.req.raw, c.env));
-  app.get('/api/peertube/tip/leaderboard', async (c) =>
-    handlePeerTubeLeaderboard(c.req.raw, c.env),
-  );
 
   // --- API: PeerTube Video Platform (upload, list, live, federation) ---
   app.route('/api/peertube', peertubeRouter);
@@ -129,9 +116,9 @@ export function registerLiveRoutes(app: Hono<{ Bindings: Env }>): void {
   app.get('/api/live/now', async (c) => handleLiveNow(c.req.raw, c.env));
   app.get('/api/live/upcoming', async (c) => handleLiveUpcoming(c.req.raw, c.env));
   app.get('/api/live/sources', async (c) => handleLiveSources(c.req.raw, c.env));
-  app.post('/api/live/go-live', async (c) => handleGoLive(c.req.raw, c.env));
-  app.post('/api/live/stop', async (c) => handleStopLive(c.req.raw, c.env));
-  app.post('/api/live/schedule', async (c) => handleScheduleStream(c.req.raw, c.env));
+  app.post('/api/live/go-live', async (c) => withSession(c, () => handleGoLive(c.req.raw, c.env)));
+  app.post('/api/live/stop', async (c) => withSession(c, () => handleStopLive(c.req.raw, c.env)));
+  app.post('/api/live/schedule', async (c) => withSession(c, () => handleScheduleStream(c.req.raw, c.env)));
   app.get('/api/live/chat/:id/messages', async (c) =>
     handleLiveChatMessages(c.req.raw, c.env, c.req.param('id')),
   );
@@ -146,13 +133,13 @@ export function registerLiveRoutes(app: Hono<{ Bindings: Env }>): void {
   );
 
   // --- Notification Routes ---
-  app.post('/api/live/watch', async (c) => handleWatchCreator(c.req.raw, c.env));
+  app.post('/api/live/watch', async (c) => withSession(c, () => handleWatchCreator(c.req.raw, c.env)));
   app.post('/api/live/unwatch', async (c) => handleUnwatchCreator(c.req.raw, c.env));
   app.get('/api/live/watched', async (c) => handleGetWatchedCreators(c.req.raw, c.env));
   app.get('/api/live/watched/live', async (c) => handleWatchedLive(c.req.raw, c.env));
   app.get('/api/live/notifications', async (c) => handleGetNotifications(c.req.raw, c.env));
   app.post('/api/live/notifications/settings', async (c) =>
-    handleNotificationSettings(c.req.raw, c.env),
+    withSession(c, () => handleNotificationSettings(c.req.raw, c.env)),
   );
 
   // --- Source-specific Routes ---
@@ -167,7 +154,7 @@ export function registerLiveRoutes(app: Hono<{ Bindings: Env }>): void {
   app.post('/api/live/:id/tip', async (c) => handleLiveTip(c.req.raw, c.env, c.req.param('id')));
 
   // --- WebRTC P2P Streaming ---
-  app.post('/api/live/webrtc/offer', async (c) => handleWebRTCOffer(c.req.raw, c.env));
+  app.post('/api/live/webrtc/offer', async (c) => withSession(c, () => handleWebRTCOffer(c.req.raw, c.env)));
   app.post('/api/live/webrtc/answer', async (c) => handleWebRTCAnswer(c.req.raw, c.env));
   app.post('/api/live/webrtc/ice', async (c) => handleWebRTCIce(c.req.raw, c.env));
   app.get('/api/live/webrtc/offer/:sessionId', async (c) =>
@@ -179,7 +166,7 @@ export function registerLiveRoutes(app: Hono<{ Bindings: Env }>): void {
   );
 
   // --- Video Call (WebRTC P2P) ---
-  app.post('/api/calls/create', async (c) => handleCallCreate(c.req.raw, c.env));
+  app.post('/api/calls/create', async (c) => withSession(c, () => handleCallCreate(c.req.raw, c.env)));
   app.post('/api/calls/:id/join', async (c) => handleCallJoin(c.req.raw, c.env, c.req.param('id')));
   app.post('/api/calls/:id/leave', async (c) =>
     handleCallLeave(c.req.raw, c.env, c.req.param('id')),
@@ -199,7 +186,7 @@ export function registerLiveRoutes(app: Hono<{ Bindings: Env }>): void {
   app.get('/api/calls/history', async (c) => handleCallHistory(c.req.raw, c.env));
 
   // --- Persistent Call Rooms ---
-  app.post('/api/rooms/create', async (c) => handleRoomCreate(c.req.raw, c.env));
+  app.post('/api/rooms/create', async (c) => withSession(c, () => handleRoomCreate(c.req.raw, c.env)));
   app.get('/api/rooms/active', async (c) => handleRoomsActive(c.req.raw, c.env));
   app.get('/api/rooms/:id', async (c) => handleRoomInfo(c.req.raw, c.env, c.req.param('id')));
   app.post('/api/rooms/:id/join', async (c) => handleRoomJoin(c.req.raw, c.env, c.req.param('id')));
@@ -223,9 +210,9 @@ export function registerLiveRoutes(app: Hono<{ Bindings: Env }>): void {
 
   // --- Private / Token-Gated Streaming ---
   app.post('/api/live/private/configure', async (c) =>
-    handlePrivateStreamConfigure(c.req.raw, c.env),
+    withSession(c, () => handlePrivateStreamConfigure(c.req.raw, c.env)),
   );
-  app.post('/api/live/private/join', async (c) => handlePrivateStreamJoin(c.req.raw, c.env));
+  app.post('/api/live/private/join', async (c) => withSession(c, () => handlePrivateStreamJoin(c.req.raw, c.env)));
   app.get('/api/live/private/config/:streamId', async (c) =>
     handlePrivateStreamConfig(c.req.raw, c.env, c.req.param('streamId')),
   );
@@ -239,7 +226,7 @@ export function registerLiveRoutes(app: Hono<{ Bindings: Env }>): void {
     handlePrivateStreamViewers(c.req.raw, c.env, c.req.param('streamId')),
   );
   app.post('/api/live/private/allowlist', async (c) =>
-    handlePrivateStreamAllowlist(c.req.raw, c.env),
+    withSession(c, () => handlePrivateStreamAllowlist(c.req.raw, c.env)),
   );
 
   // --- API: DegenFeed Multi-type Streaming (solo, spaces, collab, coin-launch) ---
@@ -261,12 +248,12 @@ export function registerLiveRoutes(app: Hono<{ Bindings: Env }>): void {
   app.get('/api/spaces/upcoming', async (c) => handleSpacesUpcoming(c.req.raw, c.env));
   app.get('/api/spaces/past', async (c) => handleSpacesPast(c.req.raw, c.env));
   app.get('/api/spaces/trending', async (c) => handleSpacesTrending(c.req.raw, c.env));
-  app.post('/api/spaces/create', async (c) => handleSpaceCreate(c.req.raw, c.env));
+  app.post('/api/spaces/create', async (c) => withSession(c, () => handleSpaceCreate(c.req.raw, c.env)));
   app.get('/api/spaces/:id', async (c) => handleSpaceDetails(c.req.raw, c.env, c.req.param('id')));
   app.post('/api/spaces/:id/start', async (c) =>
-    handleSpaceStart(c.req.raw, c.env, c.req.param('id')),
+    withSession(c, () => handleSpaceStart(c.req.raw, c.env, c.req.param('id'))),
   );
-  app.post('/api/spaces/:id/end', async (c) => handleSpaceEnd(c.req.raw, c.env, c.req.param('id')));
+  app.post('/api/spaces/:id/end', async (c) => withSession(c, () => handleSpaceEnd(c.req.raw, c.env, c.req.param('id'))));
   app.post('/api/spaces/:id/join', async (c) =>
     handleSpaceJoin(c.req.raw, c.env, c.req.param('id')),
   );

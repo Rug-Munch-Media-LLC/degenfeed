@@ -572,15 +572,15 @@ export function registerFeedRoutes(app: Hono<{ Bindings: Env }>): void {
   // --- V1: Source Discovery ---
   app.get('/api/sources/discover', async (c) => handleSourcesDiscover(c.req.raw, c.env));
   app.get('/api/sources/pending', async (c) => handleSourcesPending(c.req.raw, c.env));
-  app.post('/api/sources/approve', async (c) => handleSourcesApprove(c.req.raw, c.env));
-  app.post('/api/sources/reject', async (c) => handleSourcesReject(c.req.raw, c.env));
+  app.post('/api/sources/approve', async (c) => withSession(c, () => handleSourcesApprove(c.req.raw, c.env)));
+  app.post('/api/sources/reject', async (c) => withSession(c, () => handleSourcesReject(c.req.raw, c.env)));
   app.get('/api/sources/health', async (c) => handleSourcesHealth(c.req.raw, c.env));
   app.get('/api/sources/trending', async (c) => handleSourcesTrending(c.req.raw, c.env));
   app.get('/api/sources/stale', async (c) => handleSourcesStale(c.req.raw, c.env));
   app.get('/api/sources/new-this-week', async (c) => handleSourcesNewThisWeek(c.req.raw, c.env));
   app.get('/api/sources/stats', async (c) => handleSourcesStats(c.req.raw, c.env));
-  app.post('/api/sources/health-check', async (c) => handleSourcesHealthCheck(c.req.raw, c.env));
-  app.post('/api/sources/record-engagement', async (c) => handleRecordEngagement(c.req.raw, c.env));
+  app.post('/api/sources/health-check', async (c) => withSession(c, () => handleSourcesHealthCheck(c.req.raw, c.env)));
+  app.post('/api/sources/record-engagement', async (c) => withSession(c, () => handleRecordEngagement(c.req.raw, c.env)));
 
   // --- Feed cache management ---
   app.post('/api/feed/cache/invalidate', async (c) =>

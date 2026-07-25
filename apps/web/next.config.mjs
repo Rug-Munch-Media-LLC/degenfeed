@@ -6,7 +6,7 @@ const nextConfig = {
   compress: true,
   generateEtags: true,
 
-  // ── Security headers ──
+  // ── Security headers are set in middleware.ts (per-request, with nonces) ──
   poweredByHeader: false,
 
   // ── HTTP keep-alive for faster connection reuse ──
@@ -37,7 +37,7 @@ const nextConfig = {
   // ── Monorepo transpilation ──
   transpilePackages: ['@degenfeed/types', '@degenfeed/ui'],
 
-  // ── Headers for caching & security ──
+  // ── Headers for caching only (security headers are set in middleware.ts) ──
   async headers() {
     return [
       {
@@ -67,25 +67,6 @@ const nextConfig = {
           {
             key: 'Cache-Control',
             value: 'public, max-age=0, s-maxage=60, stale-while-revalidate=30',
-          },
-          // Security headers
-          { key: 'X-Frame-Options', value: 'DENY' },
-          { key: 'X-Content-Type-Options', value: 'nosniff' },
-          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
-          { key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains' },
-          {
-            key: 'Content-Security-Policy',
-            value:
-              "default-src 'self'; " +
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
-              "style-src 'self' 'unsafe-inline'; " +
-              "img-src 'self' data: https: blob:; " +
-              "connect-src 'self' https: wss:; " +
-              "frame-src 'self' https:; " +
-              "font-src 'self'; " +
-              "object-src 'none'; " +
-              "base-uri 'self'; " +
-              "form-action 'self'",
           },
         ],
       },
