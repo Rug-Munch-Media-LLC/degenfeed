@@ -1982,3 +1982,113 @@
   background: var(--color-accent);
   color: #000;
 }
+
+/* ═══ Onboarding Animations (TASK 1) ════════════════════════ */
+@keyframes slide-in-right {
+  from { opacity: 0; transform: translateX(24px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes slide-in-left {
+  from { opacity: 0; transform: translateX(-24px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(0,255,65,0.1); }
+  50% { box-shadow: 0 0 40px rgba(0,255,65,0.2); }
+}
+@keyframes celebration-pulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 40px rgba(0,255,65,0.2); }
+  50% { transform: scale(1.05); box-shadow: 0 0 60px rgba(0,255,65,0.3); }
+}
+@keyframes confetti-fall {
+  0% { transform: translateY(-10px) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+}
+@keyframes scan-move {
+  0%, 100% { top: 0; opacity: 0.3; }
+  50% { top: 100%; opacity: 1; }
+}
+@keyframes pulse-scan {
+  0%, 100% { opacity: 0.4; transform: scale(0.95); }
+  50% { opacity: 1; transform: scale(1.05); }
+}
+@keyframes onboarding-enter {
+  from { opacity: 0; transform: scale(0.96) translateY(12px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.animate-slide-in-left {
+  animation: slide-in-left 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+.animate-celebration-pulse {
+  animation: celebration-pulse 1.5s ease-in-out infinite;
+}
+.animate-confetti {
+  animation: confetti-fall 1.5s ease-out forwards;
+}
+.animate-pulse-scan {
+  animation: pulse-scan 1.5s ease-in-out infinite;
+}
+
+/* ═══ Onboarding/onboarding-enter already defined inline via style injection ═══ */
+
+/* ═══ Touch targets — enforce 44x44 minimum for interactive elements ═══ */
+.touch-target {
+  min-height: var(--touch-target-min);
+  min-width: var(--touch-target-min);
+}
+.touch-target-comfortable {
+  min-height: var(--touch-target-comfortable);
+  min-width: var(--touch-target-comfortable);
+}
+
+/* ═══ Bottom Nav — always visible on mobile, fixed below 768px ═══ */
+@media (max-width: 767px) {
+  .bottom-nav-visible {
+    display: flex !important;
+  }
+}
+
+/* ═══ Skip link visible on focus ═══ */
+.skip-link:not(:focus) {
+  position: absolute;
+  top: -100%;
+}
+.skip-link:focus {
+  top: 0;
+  outline: 2px solid #fff;
+  outline-offset: -2px;
+}
+
+/* ═══ Extended Reduced Motion ════════════════════════════════════ */
+@media (prefers-reduced-motion: reduce) {
+  .animate-slide-in-right,
+  .animate-slide-in-left,
+  .animate-pulse-glow,
+  .animate-celebration-pulse,
+  .animate-confetti,
+  .animate-pulse-scan {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .scan-line {
+    animation: none !important;
+    display: none;
+  }
+  .slider-input,
+  .slider-input::-webkit-slider-thumb,
+  .slider-input::-moz-range-thumb {
+    transition: none !important;
+  }
+  .toggle-track,
+  .toggle-thumb {
+    transition: none !important;
+  }
+}

@@ -213,7 +213,47 @@ export interface StreamExtended {
   isSubscribed: boolean;
   streamKey?: string;
   latency?: 'low' | 'normal';
+  /** HLS playback URL for Livepeer / ABR streams */
+  hlsUrl?: string;
+  /** Livepeer playback ID for ABR multi-quality */
+  playbackId?: string;
+  /** Available video/audio tracks for ABR */
+  tracks?: Array<{
+    id: string;
+    type: 'video' | 'audio' | 'text';
+    codec: string;
+    bitrate: number;
+    width?: number;
+    height?: number;
+    label: string;
+  }>;
+  /** Supports LL-HLS (sub-second latency) */
+  lowLatency?: boolean;
+  /** Supports audio-only mode */
+  audioOnly?: boolean;
+  /** Supports background audio playback on mobile */
+  backgroundPlay?: boolean;
+  /** Is a VOD (recorded stream), not live */
+  isVOD?: boolean;
+  /** Download URL for offline viewing (premium feature) */
+  downloadUrl?: string;
+  /** Whether download is available (premium check) */
+  downloadEnabled?: boolean;
 }
+
+/* === Playback Settings ======================================= */
+
+export type PlaybackMode = 'video' | 'audio-only';
+
+export interface PlaybackSettings {
+  mode: PlaybackMode;
+  quality: StreamQuality;
+  volume: number;
+  muted: boolean;
+  speed: number;
+  lowLatency: boolean;
+  bandwidthSaver: boolean;
+} 
 
 /* === VOD / Clip Types ========================================= */
 

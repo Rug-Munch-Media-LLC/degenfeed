@@ -11,6 +11,14 @@ import { fetch as fetchRssPosts } from '../providers/rss';
 import { fetchRssBridgePosts } from '../providers/rssbridge';
 import { fetchThreadsPosts } from '../providers/threads';
 import { fetchZoraPosts } from '../providers/zora';
+import { fetchDTubePosts } from '../providers/dtube';
+import { fetchLBRYPosts } from '../providers/lbry';
+import { fetchGabPosts } from '../providers/gab';
+import { fetchMindsPosts } from '../providers/minds';
+import { fetchAetherPosts } from '../providers/aether';
+import { fetchScuttlebuttPosts } from '../providers/scuttlebutt';
+import { fetchHivePosts } from '../providers/hive';
+import { fetchMirrorPosts } from '../providers/mirror';
 import type { UnifiedPost } from './types';
 
 type ProviderFetcher = (limit: number) => Promise<UnifiedPost[]>;
@@ -36,6 +44,14 @@ export const PROVIDERS: Record<string, { name: string; fetch: ProviderFetcher }>
   pixelfed: { name: 'Pixelfed', fetch: fetchPixelfedPosts },
   threads: { name: 'Threads (Meta)', fetch: fetchThreadsPosts },
   zora: { name: 'Zora (NFT)', fetch: fetchZoraPosts },
+  dtube: { name: 'DTube (Hive Video)', fetch: fetchDTubePosts },
+  lbry: { name: 'Odysee/LBRY (Video)', fetch: fetchLBRYPosts },
+  gab: { name: 'Gab / Dissenter', fetch: fetchGabPosts },
+  minds: { name: 'Minds (Crypto Social)', fetch: fetchMindsPosts },
+  aether: { name: 'Aether (P2P Communities)', fetch: fetchAetherPosts },
+  scuttlebutt: { name: 'Scuttlebutt/SSB', fetch: fetchScuttlebuttPosts },
+  hive: { name: 'Hive Blog', fetch: fetchHivePosts },
+  mirror: { name: 'Mirror.xyz (Articles)', fetch: fetchMirrorPosts },
 };
 
 /** Build a deduplicated feed from multiple protocols */
@@ -163,9 +179,17 @@ export const DEFAULT_PREFERENCES = {
       'bluesky',
       'nostr',
       'farcaster',
-      'lens',
-      'pixelfed',
-    ],
+        'lens',
+        'pixelfed',
+        'dtube',
+        'lbry',
+        'gab',
+        'minds',
+        'aether',
+        'scuttlebutt',
+        'hive',
+        'mirror',
+      ],
     contentTypes: { posts: 100, images: 40, videos: 20, links: 30, threads: 40 },
     recencyWeight: 1.0,
     engagementWeight: 1.0,

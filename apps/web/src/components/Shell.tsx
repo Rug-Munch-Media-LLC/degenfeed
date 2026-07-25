@@ -577,18 +577,31 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
 
       {/* Three-column layout */}
       <div className="container-safe flex flex-1 pt-0 lg:pt-14">
-        {/* Left Sidebar (desktop, hide on landing) */}
+        {/* Left Sidebar (desktop + tablet collapsed) */}
         {pathname !== '/' && (
-          <div
-            className={`hidden lg:block sticky top-14 h-[calc(100dvh-3.5rem)] shrink-0 overflow-y-auto scrollbar-none border-r border-[var(--color-glass-border)] transition-[width] duration-200 ease-in-out ${sidebarWidth}`}
-          >
-            <LeftSidebar
-              collapsed={sidebarCollapsed}
-              onCollapseToggle={() => setSidebarCollapsed((v) => !v)}
-              onQuickSwitcherOpen={() => setQuickSwitcherOpen(true)}
-              onProtocolConnectOpen={() => setProtocolConnectOpen(true)}
-            />
-          </div>
+          <>
+            {/* Tablet: always collapsed icon sidebar */}
+            <div
+              className="hidden md:block lg:hidden sticky top-14 h-[calc(100dvh-3.5rem)] w-[72px] shrink-0 overflow-y-auto scrollbar-none border-r border-[var(--color-glass-border)]"
+            >
+              <LeftSidebar
+                collapsed={true}
+                onQuickSwitcherOpen={() => setQuickSwitcherOpen(true)}
+                onProtocolConnectOpen={() => setProtocolConnectOpen(true)}
+              />
+            </div>
+            {/* Desktop: configurable sidebar */}
+            <div
+              className={`hidden lg:block sticky top-14 h-[calc(100dvh-3.5rem)] shrink-0 overflow-y-auto scrollbar-none border-r border-[var(--color-glass-border)] transition-[width] duration-200 ease-in-out ${sidebarWidth}`}
+            >
+              <LeftSidebar
+                collapsed={sidebarCollapsed}
+                onCollapseToggle={() => setSidebarCollapsed((v) => !v)}
+                onQuickSwitcherOpen={() => setQuickSwitcherOpen(true)}
+                onProtocolConnectOpen={() => setProtocolConnectOpen(true)}
+              />
+            </div>
+          </>
         )}
 
         {/* Center: Main content */}

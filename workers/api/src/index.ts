@@ -309,6 +309,14 @@ export interface Env {
   ZORA_VIDEO_CONTRACT?: string;
   /** CDN base URL for short video content */
   DEGENFEED_CDN_URL?: string;
+
+  // ─── Video Platform Wrappers ────────────────────────────────────────
+  /** Zora API relayer for on-chain operations */
+  ZORA_RELAYER_URL?: string;
+  /** x402 relayer for payment-gated content */
+  X402_RELAYER_URL?: string;
+  /** Farcaster watchlist for live activity monitoring */
+  FARCASTER_WATCHLIST?: string;
 }
 
 // ─── Shared constants ────────────────────────────────────────────────

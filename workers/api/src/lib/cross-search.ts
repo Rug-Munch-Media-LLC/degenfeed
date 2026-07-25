@@ -100,7 +100,7 @@ const USER_AGENT = 'DegenFeed/0.1 (+https://degenfeed.xyz)';
 
 const LEMMY_OWN_URL = 'https://community.degenfeed.xyz';
 const PEERTUBE_OWN_URL = 'https://video.degenfeed.xyz';
-const GTS_OWN_URL = 'https://social.degenfeed.xyz';
+const GOTOSOCIAL_INSTANCE_URL = 'https://social.degenfeed.xyz';
 
 // ─── Helpers ────────────────────────────────────────────────────────
 
@@ -282,7 +282,7 @@ export class CrossNetworkSearch {
         media_attachments?: Array<{ type: string; preview_url?: string }>;
       }>;
     }>(
-      `${GTS_OWN_URL}/api/v2/search?q=${encodeURIComponent(query)}&type=statuses&limit=20&resolve=true`,
+      `${GOTOSOCIAL_INSTANCE_URL}/api/v2/search?q=${encodeURIComponent(query)}&type=statuses&limit=20&resolve=true`,
     );
     return (data?.statuses ?? []).slice(0, 10).map((s) => {
       const text = stripHtml(s.content ?? '');
@@ -834,7 +834,7 @@ export class CrossNetworkSearch {
         reblogs_count?: number;
         account?: { display_name?: string; avatar?: string };
       }>;
-    }>(`${GTS_OWN_URL}/api/v1/trends/statuses?limit=10`);
+    }>(`${GOTOSOCIAL_INSTANCE_URL}/api/v1/trends/statuses?limit=10`);
     return (data?.trending ?? []).map((s) => {
       const text = stripHtml(s.content);
       return {

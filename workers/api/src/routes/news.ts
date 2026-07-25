@@ -692,6 +692,341 @@ export async function handleNewsDigestSubscribe(request: Request, env: Env): Pro
   });
 }
 
+// ─── GET /api/news/for-you — Ultra-Personalized Feed ─────────────────────
+
+export async function handleNewsForYou(request: Request, env: Env): Promise<Response> {
+  const url = new URL(request.url);
+  const limit = Math.min(Number(url.searchParams.get('limit')) || 50, 200);
+  const wallet = url.searchParams.get('wallet') || '';
+
+  // Load reading history for personalization
+  let profile: UserProfile | null = null;
+  let prefs: NewsPreferences = { ...DEFAULT_PREFERENCES };
+  if (wallet && env.CACHE) {
+    try {
+      const historyRaw = await env.CACHE.get(`user:news_history:${wallet.toLowerCase()}`);
+      if (historyRaw) {
+        const history = JSON.parse(historyRaw) as ReadHistoryEntry[];
+        profile = inferUserProfile(history);
+        // Boost history-weighted topics
+        for (const [catId, weight] of Object.entries(profile.topicWeights)) {
+          if (prefs.topicWeights[catId] !== undefined) {
+            prefs.topicWeights[catId] = Math.min(100, prefs.topicWeights[catId] + weight * 0.5);
+          }
+        }
+      }
+    } catch { /* non-critical */ }
+  }
+
+  const result = await aggregateNews(env, { limit: limit * 2 });
+  const personalized = personalizeNewsFeed(result.stories, prefs, profile);
+
+  return noCacheJsonResponse({
+    data: personalized.slice(0, limit).map((s) => ({
+      id: s.id, title: s.title, summary: s.summary, url: s.url,
+      source: s.source, author: s.authorName || s.author, publishedAt: s.publishedAt,
+      imageUrl: s.imageUrl, heroImage: s.heroImage, categories: s.categories,
+      niches: s.niches, sentiment: s.sentiment, entities: s.entities,
+      alsoCoveredBy: s.alsoCoveredBy, isBreaking: s.isBreaking, score: s.score,
+      readingTime: s.readingTime, scoreComponents: s.scoreComponents,
+    })),
+    meta: { total: personalized.length, personalized: true, fetchedAt: Date.now() },
+  });
+}
+
+// ─── GET /api/news/hot — Breaking/Trending (velocity > threshold) ────────
+
+export async function handleNewsHot(request: Request, env: Env): Promise<Response> {
+  const url = new URL(request.url);
+  const limit = Math.min(Number(url.searchParams.get('limit')) || 20, 100);
+
+  const result = await aggregateNews(env, { limit: 100, sort: 'trending' });
+  const hot = result.stories
+    .filter((s) => s.isBreaking || s.velocity > 1.5)
+    .slice(0, limit)
+    .map((s) => ({
+      id: s.id, title: s.title, summary: s.summary.slice(0, 150), url: s.url,
+      source: s.source, publishedAt: s.publishedAt, velocity: s.velocity,
+      imageUrl: s.imageUrl, heroImage: s.heroImage, isBreaking: s.isBreaking,
+      alsoCoveredBy: s.alsoCoveredBy, sentiment: s.sentiment, readingTime: s.readingTime,
+    }));
+
+  return noCacheJsonResponse({
+    data: hot,
+    meta: { total: hot.length, fetchedAt: Date.now(), threshold: 'velocity > 1.5' },
+  });
+}
+
+// ─── GET /api/news/deep-dives — Long-Form Analysis (> 2000 words) ────────
+
+export async function handleNewsDeepDives(request: Request, env: Env): Promise<Response> {
+  const url = new URL(request.url);
+  const limit = Math.min(Number(url.searchParams.get('limit')) || 20, 100);
+  const category = url.searchParams.get('category') || '';
+
+  const result = await aggregateNews(env, { limit: 100, category });
+  const deepDives = result.stories
+    .filter((s) => (s.body?.split(/\s+/).length ?? 0) > 2000)
+    .slice(0, limit)
+    .map((s) => ({
+      id: s.id, title: s.title, summary: s.summary.slice(0, 300), url: s.url,
+      source: s.source, author: s.authorName || s.author, publishedAt: s.publishedAt,
+      imageUrl: s.imageUrl, heroImage: s.heroImage, readingTime: s.readingTime,
+      wordCount: s.body?.split(/\s+/).length ?? 0, entities: s.entities,
+      sentiment: s.sentiment, categories: s.categories, niches: s.niches,
+    }));
+
+  return noCacheJsonResponse({
+    data: deepDives,
+    meta: { total: deepDives.length, category: category || 'all', fetchedAt: Date.now() },
+  });
+}
+
+// ─── GET /api/news/quick-reads — Short News (< 500 words) ────────────────
+
+export async function handleNewsQuickReads(request: Request, env: Env): Promise<Response> {
+  const url = new URL(request.url);
+  const limit = Math.min(Number(url.searchParams.get('limit')) || 20, 100);
+
+  const result = await aggregateNews(env, { limit: 100 });
+  const quickReads = result.stories
+    .filter((s) => (s.body?.split(/\s+/).length ?? 0) < 500)
+    .slice(0, limit)
+    .map((s) => ({
+      id: s.id, title: s.title, summary: s.summary.slice(0, 150), url: s.url,
+      source: s.source, author: s.authorName || s.author, publishedAt: s.publishedAt,
+      imageUrl: s.imageUrl, readingTime: s.readingTime, sentiment: s.sentiment,
+      niches: s.niches,
+    }));
+
+  return noCacheJsonResponse({
+    data: quickReads,
+    meta: { total: quickReads.length, fetchedAt: Date.now() },
+  });
+}
+
+// ─── GET /api/news/protocol/:protocol — Protocol-Specific News ──────────
+
+export async function handleNewsProtocol(request: Request, env: Env): Promise<Response> {
+  const url = new URL(request.url);
+  const protocol = url.pathname.split('/').pop() || '';
+  const limit = Math.min(Number(url.searchParams.get('limit')) || 30, 100);
+
+  const result = await aggregateNews(env, { limit: 100 });
+  const protocolStories = result.stories
+    .filter(
+      (s) =>
+        s.entities.protocols.includes(protocol.toLowerCase()) ||
+        s.categories.includes(protocol.toLowerCase()),
+    )
+    .slice(0, limit)
+    .map((s) => ({
+      id: s.id, title: s.title, url: s.url, source: s.source,
+      publishedAt: s.publishedAt, summary: s.summary.slice(0, 200),
+      imageUrl: s.imageUrl, sentiment: s.sentiment, entities: s.entities,
+      score: s.score,
+    }));
+
+  return noCacheJsonResponse({
+    data: protocolStories,
+    meta: { protocol, total: protocolStories.length, fetchedAt: Date.now() },
+  });
+}
+
+// ─── GET /api/news/token/:token — Token-Specific News ($BTC, $ETH) ─────
+
+export async function handleNewsToken(request: Request, env: Env): Promise<Response> {
+  const url = new URL(request.url);
+  const token = url.pathname.split('/').pop()?.toUpperCase() || '';
+  const limit = Math.min(Number(url.searchParams.get('limit')) || 30, 100);
+
+  if (!token) {
+    return jsonResponse({ error: 'Token symbol required' }, 400);
+  }
+
+  const result = await aggregateNews(env, { limit: 100 });
+  const tokenStories = result.stories
+    .filter((s) => s.entities.tokens.includes(token))
+    .slice(0, limit)
+    .map((s) => ({
+      id: s.id, title: s.title, url: s.url, source: s.source,
+      publishedAt: s.publishedAt, summary: s.summary.slice(0, 200),
+      imageUrl: s.imageUrl, sentiment: s.sentiment, entities: s.entities,
+      score: s.score,
+    }));
+
+  return noCacheJsonResponse({
+    data: tokenStories,
+    meta: { token, total: tokenStories.length, fetchedAt: Date.now() },
+  });
+}
+
+// ─── GET /api/news/author/:author — Articles by Author ──────────────────
+
+export async function handleNewsAuthor(request: Request, env: Env): Promise<Response> {
+  const authorSlug = request.url.split('/').pop() || '';
+  const limit = Math.min(Number(new URL(request.url).searchParams.get('limit')) || 20, 100);
+
+  if (!authorSlug) {
+    return jsonResponse({ error: 'Author name required' }, 400);
+  }
+
+  const result = await aggregateNews(env, { limit: 100 });
+  const authorLower = authorSlug.replace(/-/g, ' ').toLowerCase();
+  const authorStories = result.stories
+    .filter(
+      (s) =>
+        s.authorName?.toLowerCase().includes(authorLower) ||
+        s.author?.toLowerCase().includes(authorLower),
+    )
+    .slice(0, limit)
+    .map((s) => ({
+      id: s.id, title: s.title, url: s.url, source: s.source,
+      author: s.authorName || s.author, publishedAt: s.publishedAt,
+      summary: s.summary.slice(0, 200), imageUrl: s.imageUrl,
+      sentiment: s.sentiment, score: s.score,
+    }));
+
+  return noCacheJsonResponse({
+    data: authorStories,
+    meta: { author: authorSlug, total: authorStories.length, fetchedAt: Date.now() },
+  });
+}
+
+// ─── POST /api/news/mark-read — Mark Article as Read ────────────────────
+
+export async function handleNewsMarkRead(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'POST') {
+    return jsonResponse({ error: 'Method not allowed' }, 405);
+  }
+
+  let body: { wallet?: string; storyId?: string; dwellTimeMs?: number; engaged?: boolean } = {};
+  try {
+    body = (await request.json()) as typeof body;
+  } catch {
+    return jsonResponse({ error: 'Invalid JSON' }, 400);
+  }
+
+  const wallet = body.wallet || '';
+  const storyId = body.storyId || '';
+  if (!wallet || !storyId) {
+    return jsonResponse({ error: 'Wallet and storyId required' }, 400);
+  }
+
+  const entry: ReadHistoryEntry = {
+    storyId,
+    categoryId: 'crypto',
+    sourceId: '',
+    readAt: Date.now(),
+    dwellTimeMs: body.dwellTimeMs ?? 30000,
+    engaged: body.engaged ?? false,
+  };
+
+  const historyKey = `user:news_history:${wallet.toLowerCase()}`;
+  try {
+    const existing = await env.CACHE?.get(historyKey);
+    const history: ReadHistoryEntry[] = existing ? JSON.parse(existing) : [];
+    history.push(entry);
+    // Keep last 500 entries
+    const trimmed = history.slice(-500);
+    await env.CACHE?.put(historyKey, JSON.stringify(trimmed), {
+      expirationTtl: 60 * 60 * 24 * 90,
+    });
+  } catch { /* non-critical */ }
+
+  return jsonResponse({ ok: true, storyId, action: 'marked_read' });
+}
+
+// ─── GET /api/news/reading-list — User's Reading List ───────────────────
+
+export async function handleReadingList(request: Request, env: Env): Promise<Response> {
+  const url = new URL(request.url);
+  const wallet = url.searchParams.get('wallet') || '';
+
+  if (!wallet) {
+    return jsonResponse({ error: 'Wallet address required' }, 400);
+  }
+
+  try {
+    const raw = await env.CACHE?.get(`user:reading_list:${wallet.toLowerCase()}`);
+    const storyIds: string[] = raw ? JSON.parse(raw) : [];
+
+    if (storyIds.length === 0) {
+      return noCacheJsonResponse({ data: [], meta: { total: 0, fetchedAt: Date.now() } });
+    }
+
+    // Fetch full aggregation to find saved stories
+    const result = await aggregateNews(env, { limit: 100 });
+    const savedStories = result.stories
+      .filter((s) => storyIds.includes(s.id))
+      .map((s) => ({
+        id: s.id, title: s.title, summary: s.summary.slice(0, 200), url: s.url,
+        source: s.source, author: s.authorName || s.author, publishedAt: s.publishedAt,
+        imageUrl: s.imageUrl, heroImage: s.heroImage, readingTime: s.readingTime,
+        sentiment: s.sentiment, entities: s.entities, score: s.score,
+      }));
+
+    return noCacheJsonResponse({
+      data: savedStories,
+      meta: { total: savedStories.length, fetchedAt: Date.now() },
+    });
+  } catch {
+    return jsonResponse({ error: 'Failed to load reading list' }, 500);
+  }
+}
+
+// ─── POST /api/news/reading-list/:id — Add/Remove from Reading List ─────
+
+export async function handleReadingListToggle(request: Request, env: Env): Promise<Response> {
+  const url = new URL(request.url);
+  const pathParts = url.pathname.split('/');
+  const storyId = pathParts[pathParts.length - 1] || '';
+  const wallet = url.searchParams.get('wallet') || '';
+
+  // Also allow POST body
+  let bodyWallet = '';
+  if (request.method === 'POST') {
+    try {
+      const body = (await request.json()) as { wallet?: string };
+      bodyWallet = body.wallet || '';
+    } catch { /* ignore */ }
+  }
+
+  const effectiveWallet = wallet || bodyWallet;
+  if (!effectiveWallet || !storyId) {
+    return jsonResponse({ error: 'Wallet and story ID required' }, 400);
+  }
+
+  const listKey = `user:reading_list:${effectiveWallet.toLowerCase()}`;
+  try {
+    const raw = await env.CACHE?.get(listKey);
+    const list: string[] = raw ? JSON.parse(raw) : [];
+    const idx = list.indexOf(storyId);
+    let action: 'added' | 'removed';
+
+    if (idx >= 0) {
+      list.splice(idx, 1);
+      action = 'removed';
+    } else {
+      list.push(storyId);
+      action = 'added';
+    }
+
+    await env.CACHE?.put(listKey, JSON.stringify(list), {
+      expirationTtl: 60 * 60 * 24 * 400,
+    });
+
+    return jsonResponse({
+      ok: true,
+      storyId,
+      action,
+      totalItems: list.length,
+    });
+  } catch {
+    return jsonResponse({ error: 'Failed to update reading list' }, 500);
+  }
+}
+
 // ─── Router ───────────────────────────────────────────────────────────────
 
 export async function handleNewsRoute(request: Request, env: Env): Promise<Response> {
@@ -720,6 +1055,45 @@ export async function handleNewsRoute(request: Request, env: Env): Promise<Respo
   if (path === '/api/news/digest/subscribe') {
     return handleNewsDigestSubscribe(request, env);
   }
+
+  // ── New personalized endpoints ──
+  if (path === '/api/news/for-you') {
+    return handleNewsForYou(request, env);
+  }
+  if (path === '/api/news/hot') {
+    return handleNewsHot(request, env);
+  }
+  if (path === '/api/news/deep-dives') {
+    return handleNewsDeepDives(request, env);
+  }
+  if (path === '/api/news/quick-reads') {
+    return handleNewsQuickReads(request, env);
+  }
+  if (path === '/api/news/mark-read') {
+    return handleNewsMarkRead(request, env);
+  }
+  if (path === '/api/news/reading-list') {
+    if (request.method === 'POST') {
+      // POST to /api/news/reading-list without trailing ID — fallback
+      return handleReadingList(request, env);
+    }
+    return handleReadingList(request, env);
+  }
+  if (path.startsWith('/api/news/reading-list/')) {
+    return handleReadingListToggle(request, env);
+  }
+
+  // Protocol/token/author-specific
+  if (path.startsWith('/api/news/protocol/')) {
+    return handleNewsProtocol(request, env);
+  }
+  if (path.startsWith('/api/news/token/')) {
+    return handleNewsToken(request, env);
+  }
+  if (path.startsWith('/api/news/author/')) {
+    return handleNewsAuthor(request, env);
+  }
+
   if (path.startsWith('/api/news/story/')) {
     return handleNewsStory(request, env);
   }

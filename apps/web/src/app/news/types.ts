@@ -52,6 +52,10 @@ export interface NewsStory {
   isBreaking: boolean;
   velocity: number;
   score: number;
+  readingTime?: number;
+  heroImage?: string;
+  authorName?: string;
+  metaDescription?: string;
   isDiscovery?: boolean;
   scoreComponents?: {
     topicalRelevance: number;
