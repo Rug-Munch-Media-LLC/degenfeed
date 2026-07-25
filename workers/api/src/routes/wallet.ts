@@ -6,6 +6,7 @@ import { type Env, jsonResponse, log, rateLimit, recordBruteForceFailure } from 
 import { extractRequestMetadata, logSecurityEvent } from '../lib/security-log';
 import { createSession, generateCsrfToken, parseSessionCookie, storeCsrfToken } from '../session';
 import { storeSessionMeta } from './sessions';
+import { rateLimitResponse } from '../response-helpers';
 
 const GTS_SCOPES = 'read write follow push';
 const BASE58_ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
@@ -68,15 +69,7 @@ export async function handleWalletNonce(request: Request, env: Env): Promise<Res
   const ip =
     request.headers.get('cf-connecting-ip') || request.headers.get('x-forwarded-for') || 'unknown';
   const rl = await rateLimit(env, ip, 'wallet:nonce', 20, 60_000);
-  if (!rl.allowed) {
-    return new Response(JSON.stringify({ error: 'Rate limit', retryAfterMs: rl.retryAfter }), {
-      status: 429,
-      headers: {
-        'content-type': 'application/json',
-        'retry-after': String(Math.ceil(rl.retryAfter / 1000)),
-      },
-    });
-  }
+  if (!rl.allowed) return rateLimitResponse(rl.retryAfter);
 
   const nonce = generateNonce();
   try {
@@ -199,15 +192,7 @@ export async function handleWalletVerify(request: Request, env: Env): Promise<Re
       5,
       60_000,
     );
-    if (!rl.allowed) {
-      return new Response(JSON.stringify({ error: 'Rate limit', retryAfterMs: rl.retryAfter }), {
-        status: 429,
-        headers: {
-          'content-type': 'application/json',
-          'retry-after': String(Math.ceil(rl.retryAfter / 1000)),
-        },
-      });
-    }
+    if (!rl.allowed) return rateLimitResponse(rl.retryAfter);
 
     // Verify nonce from KV
     let storedNonce: string | null = null;

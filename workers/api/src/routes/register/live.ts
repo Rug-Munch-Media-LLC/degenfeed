@@ -7,6 +7,7 @@
 import type { Hono } from 'hono';
 import type { Env } from '../../index';
 
+import { jsonResponse } from '../../index';
 import peertubeRouter from '../../routes/peertube';
 import {
   handlePeerTubeLeaderboard,
@@ -30,6 +31,13 @@ import {
   handleUnifiedRoomUnread,
 } from '../../routes/unified-room-routes';
 import youtubeRoutes from '../../routes/youtube';
+import liveShorts from '../../routes/live-shorts-index';
+import { handleCreateRoom, handleGetActiveRooms, handleJoinRoom, handleLeaveRoom, handleUpdateState, handleGetParticipants, handleGenerateInvite, handleResolveInvite, handleSendSignal, handleGetSignals } from '../../routes/voice-rooms';
+import { handleLiveNow, handleLiveUpcoming, handleLiveSources, handleLiveDetails, handleCreatorLiveProfile, handleGoLive, handleStopLive, handleScheduleStream, handleLiveChatMessages, handleLiveChatSend, handleLiveTip, handleLiveViewersSSE, handleWatchCreator, handleUnwatchCreator, handleGetWatchedCreators, handleGetNotifications, handleNotificationSettings, handleWatchedLive, handlePeerTubeInstances, handleTwitchCurated, handleKickChannelStatus, handleWebRTCOffer, handleWebRTCAnswer, handleWebRTCIce, handleWebRTCGetOffer, handleWebRTCViewers, handleWebRTCEnd, handleStreamRouteStatus, handleRouteEstimate, handleRouteSwitch, handlePrivateStreamConfigure, handlePrivateStreamJoin, handlePrivateStreamConfig, handlePrivateStreamRevoke, handlePrivateStreamRotate, handlePrivateStreamViewers, handlePrivateStreamAllowlist } from '../../routes/live';
+import { handleCallCreate, handleCallJoin, handleCallLeave, handleCallStatus, handleCallSignal, handleCallSignalPoll, handleCallKick, handleCallMute, handleCallEnd, handleCallHistory } from '../../lib/video-call';
+import { handleRoomCreate, handleRoomsActive, handleRoomInfo, handleRoomJoin, handleRoomLeave, handleRoomInvite, handleRoomDelete, handleRoomMute } from '../../routes/call-rooms';
+import { handleSpacesLive, handleSpacesUpcoming, handleSpacesPast, handleSpacesTrending, handleSpaceCreate, handleSpaceDetails, handleSpaceStart, handleSpaceEnd, handleSpaceJoin, handleSpaceLeave, handleSpaceRequestSpeak, handleSpaceInviteSpeaker, handleSpaceAcceptSpeaker, handleSpaceRemoveSpeaker, handleSpaceMuteSpeaker, handleSpaceRaiseHand, handleSpaceReact, handleSpaceRecording, handleSpaceTranscript } from '../../routes/spaces';
+import { handleRealtimeWebSocket } from '../../routes/realtime';
 
 export function registerLiveRoutes(app: Hono<{ Bindings: Env }>): void {
   // --- API: YouTube ---

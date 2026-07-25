@@ -200,7 +200,7 @@ RSS_BRIDGE_URL = "https://rss-bridge.degenfeed.xyz"
 FEATURE_FLAGS_DEFAULT = "reply-composer,dark-mode-only,farcaster-frames"
 # Postiz cross-posting API — for scheduled social media publishing
 POSTIZ_BASE_URL = "http://127.0.0.1:3105"
-POSTIZ_API_KEY = "CHANGEME"
+POSTIZ_API_KEY = "99ed6bd43ed1c2a5c498a4b6ae9214f13c9ff4256f40a01e"
 POSTIZ_INTEGRATIONS = ""
 
 # PeerTube — self-hosted video + livestream platform

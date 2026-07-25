@@ -26,13 +26,17 @@ import { parseSessionCookie, validateCsrfToken } from './session';
 
 import { requireAdminFromSession } from './lib/admin-guard';
 
-// ─── Route registration modules ─────────────────────────────
-// Note: Modular route registration via register/ sub-modules was
-// only partially implemented (core.ts). Other domain registrations
-// (feed, social, dao, etc.) never had their files created.
-// All route registration is done inline below.
+// ─── Route registration ─────────────────────────────────────
+// Delegated to register/ sub-modules under ./routes/register/
 
 import { registerCoreRoutes } from './routes/register/core';
+import { registerFeedRoutes } from './routes/register/feed';
+import { registerSocialRoutes } from './routes/register/social';
+import { registerDaoRoutes } from './routes/register/dao';
+import { registerCoinsRoutes } from './routes/register/coins';
+import { registerMediaRoutes } from './routes/register/media';
+import { registerMessagingRoutes } from './routes/register/messaging';
+import { registerLiveRoutes } from './routes/register/live';
 
 // ─── Additional dependencies ─────────────────────────────────
 
@@ -292,16 +296,12 @@ app.use('/v1/*', apiKeyMiddleware);
 // ─── Middleware: rate limiting (tiered) ──────────────────────
 app.use('*', async (c, next) => {
   // Public API: 20 req/5s
-  const isAdmin = c.req.path.startsWith('/api/admin/');
-  const isV1 = c.req.path.startsWith('/v1/');
+  const ip = c.req.header('cf-connecting-ip') || c.req.header('x-forwarded-for') || 'unknown';
+  const authHeader = c.req.header('authorization');
+  const cookieHeader = c.req.header('cookie');
+  const isAuthenticated = !!(authHeader?.startsWith('Bearer ') || cookieHeader?.includes('session='));
 
-  if (isAdmin) {
-    await tieredRateLimit(c, 10, 10_000);
-  } else if (isV1) {
-    await tieredRateLimit(c, 60, 10_000);
-  } else {
-    await tieredRateLimit(c);
-  }
+  await tieredRateLimit(c.env, ip, c.req.path, isAuthenticated);
 
   await next();
 });
@@ -325,8 +325,12 @@ app.use('/api/*', async (c, next) => {
 
 // ─── Middleware: Admin wallet guard ─────────────────────────
 app.use('/api/admin/*', async (c, next) => {
-  const result = await requireAdminFromSession(c.req.raw, c.env);
-  if (result instanceof Response) return result;
+  try {
+    await requireAdminFromSession(c.req.raw, c.env);
+  } catch (err) {
+    const { handleError } = await import('./lib/errors');
+    return handleError(err, c.env, { route: c.req.path, method: c.req.method });
+  }
   await next();
 });
 
@@ -335,6 +339,54 @@ app.use('/api/admin/*', async (c, next) => {
 // ═══════════════════════════════════════════════════════════════
 
 registerCoreRoutes(app);
+registerFeedRoutes(app);
+registerSocialRoutes(app);
+registerDaoRoutes(app);
+registerCoinsRoutes(app);
+registerMediaRoutes(app);
+registerMessagingRoutes(app);
+registerLiveRoutes(app);
+
+// ─── External platform routes (DegenFeed Connect) ────────────────
+import {
+  handleConnectExternalPlatform,
+  handleConnectCallback,
+  handleListAccounts,
+  handleExternalPost,
+  handleExternalSchedule,
+  handleExternalGoLive,
+  handleExternalAnalytics,
+  handleDisconnectPlatform,
+  handleExternalWebhook,
+  handleListPlatforms,
+  handleExternalStatus,
+  handleStandaloneSubscribe,
+} from './routes/external-platforms';
+
+// POST /api/external/connect — Initiate OAuth connection to external platform
+app.post('/api/external/connect', async (c) => handleConnectExternalPlatform(c.req.raw, c.env));
+// GET /api/external/connect/callback — Handle OAuth callback from Postiz
+app.get('/api/external/connect/callback', async (c) => handleConnectCallback(c.req.raw, c.env));
+// GET /api/external/accounts — List connected external accounts
+app.get('/api/external/accounts', async (c) => handleListAccounts(c.req.raw, c.env));
+// POST /api/external/post — Post to external platforms
+app.post('/api/external/post', async (c) => handleExternalPost(c.req.raw, c.env));
+// POST /api/external/schedule — Schedule post for later
+app.post('/api/external/schedule', async (c) => handleExternalSchedule(c.req.raw, c.env));
+// POST /api/external/go-live — Go live on external platform
+app.post('/api/external/go-live', async (c) => handleExternalGoLive(c.req.raw, c.env));
+// GET /api/external/analytics — Pull analytics from external platforms
+app.get('/api/external/analytics', async (c) => handleExternalAnalytics(c.req.raw, c.env));
+// DELETE /api/external/disconnect — Disconnect platform
+app.delete('/api/external/disconnect', async (c) => handleDisconnectPlatform(c.req.raw, c.env));
+// POST /api/external/webhook — Postiz webhook receiver
+app.post('/api/external/webhook', async (c) => handleExternalWebhook(c.req.raw, c.env));
+// GET /api/external/platforms — List available platforms
+app.get('/api/external/platforms', async (c) => handleListPlatforms(c.req.raw, c.env));
+// GET /api/external/status — Get external platform status
+app.get('/api/external/status', async (c) => handleExternalStatus(c.req.raw, c.env));
+// POST /api/external/standalone/subscribe — Purchase standalone add-on
+app.post('/api/external/standalone/subscribe', async (c) => handleStandaloneSubscribe(c.req.raw, c.env));
 
 // ═══════════════════════════════════════════════════════════════
 // POST-ROUTE REGISTRATIONS (catch-all, static redirects, etc.)
@@ -344,7 +396,7 @@ registerCoreRoutes(app);
 app.all('/*', async (c, next) => {
   const path = c.req.path;
   if (path in STATIC_REDIRECTS) {
-    return Response.redirect(STATIC_REDIRECTS[path], 301);
+    return Response.redirect(STATIC_REDIRECTS[path] as string, 301);
   }
   await next();
 });

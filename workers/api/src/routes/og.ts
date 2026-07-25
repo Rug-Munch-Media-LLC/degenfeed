@@ -8,6 +8,8 @@
 import type { UnifiedPost } from '@degenfeed/types';
 import type { Env } from '../index';
 
+const JSON_HEADERS = { 'content-type': 'application/json' as const };
+
 export async function handlePostOg(_request: Request, env: Env, postId: string): Promise<Response> {
   const decoded = decodeURIComponent(postId);
 
@@ -78,10 +80,7 @@ export async function handleOgFetch(request: Request): Promise<Response> {
   const url = new URL(request.url);
   const targetUrl = url.searchParams.get('url');
   if (!targetUrl) {
-    return new Response(JSON.stringify({ error: 'Missing url parameter' }), {
-      status: 400,
-      headers: { 'content-type': 'application/json' },
-    });
+    return new Response(JSON.stringify({ error: 'Missing url parameter' }), { status: 400, headers: JSON_HEADERS });
   }
 
   // Validate URL
@@ -92,10 +91,7 @@ export async function handleOgFetch(request: Request): Promise<Response> {
       throw new Error('Invalid protocol');
     }
   } catch {
-    return new Response(JSON.stringify({ error: 'Invalid URL' }), {
-      status: 400,
-      headers: { 'content-type': 'application/json' },
-    });
+    return new Response(JSON.stringify({ error: 'Invalid URL' }), { status: 400, headers: JSON_HEADERS });
   }
 
   try {

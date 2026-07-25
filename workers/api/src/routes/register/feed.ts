@@ -6,6 +6,7 @@
 
 import type { Hono } from 'hono';
 import type { Env } from '../../index';
+import { jsonResponse } from '../../index';
 import blueskyFeedGen from '../../routes/bluesky-feed-generator';
 
 import { handleCommunities } from '../../routes/communities';
@@ -547,10 +548,26 @@ export function registerFeedRoutes(app: Hono<{ Bindings: Env }>): void {
   app.get('/api/trending/sidebar', async (c) => handleTrendingSidebar(c.req.raw, c.env));
 
   // --- API: Trending Scraper & Aggregation ---
-  app.get('/api/trending/aggregated', async (c) => handleTrendingAggregated(c.req.raw, c.env));
-  app.get('/api/trending/per-platform', async (c) => handleTrendingPerPlatform(c.req.raw, c.env));
-  app.get('/api/trending/now', async (c) => handleTrendingNow(c.req.raw, c.env));
-  app.get('/api/trending/cross-network', async (c) => handleCrossTrending(c.req.raw, c.env));
+  app.get('/api/trending/aggregated', async (c) => {
+    const m = await import('../../routes/trending-scraper');
+    const data = await m.scrapeTrendingContent(c.env);
+    return jsonResponse({ items: m.mergeTrendingItems(data), generatedAt: Date.now() });
+  });
+  app.get('/api/trending/per-platform', async (c) => {
+    const { scrapeTrendingContent } = await import('../../routes/trending-scraper');
+    const data = await scrapeTrendingContent(c.env);
+    return jsonResponse(data.platforms);
+  });
+  app.get('/api/trending/now', async (c) => {
+    const m = await import('../../routes/trending-scraper');
+    const data = await m.scrapeTrendingContent(c.env);
+    return jsonResponse({ items: m.mergeTrendingItems(data), generatedAt: Date.now() });
+  });
+  app.get('/api/trending/cross-network', async (c) => {
+    const { scrapeTrendingContent } = await import('../../routes/trending-scraper');
+    const data = await scrapeTrendingContent(c.env);
+    return jsonResponse(data);
+  });
 
   // --- V1: Source Discovery ---
   app.get('/api/sources/discover', async (c) => handleSourcesDiscover(c.req.raw, c.env));
@@ -571,10 +588,4 @@ export function registerFeedRoutes(app: Hono<{ Bindings: Env }>): void {
   );
 }
 
-import {
-  handleCrossTrending,
-  handleTrendingAggregated,
-  handleTrendingNow,
-  handleTrendingPerPlatform,
-} from '../../routes/trending-scraper';
 import { handleTrendingSidebar } from '../../routes/trending-sidebar';

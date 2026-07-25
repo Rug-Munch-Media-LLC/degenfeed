@@ -32,6 +32,7 @@ import {
   handleUpdateContentLibraryItem,
 } from '../../routes/content-library-routes';
 import {
+  handleCanSyndicate,
   handleExecuteSyndication,
   handleGetSyndicationHistory,
   handleGetSyndicationRules,

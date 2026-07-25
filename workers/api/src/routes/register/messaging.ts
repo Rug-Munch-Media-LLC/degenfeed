@@ -12,6 +12,7 @@ import {
   handleInboxActivity,
   handleInboxComments,
   handleInboxDms,
+  handleInboxMarkRead as handleInboxMarkReadHandler,
   handleInboxReply,
   handleInboxShare,
   handleInboxStatus,

@@ -106,6 +106,37 @@ const features: FeatureDetail[] = [
     ],
   },
   {
+    id: 'connect',
+    title: 'DegenFeed Connect — Post Everywhere',
+    lead: 'Post, schedule, and go live on YouTube, Twitch, Kick, TikTok, Instagram, and LinkedIn — all from one dashboard. Powered by Postiz. Enterprise-grade OAuth.',
+    details: [
+      {
+        title: 'YouTube Integration',
+        desc: 'Post videos, schedule uploads, go live, and pull subscriber analytics. OAuth handled by Postiz — no API keys needed.',
+      },
+      {
+        title: 'Twitch & Kick',
+        desc: 'Go live notifications, clip sharing, channel management. Set your stream title and category from DegenFeed.',
+      },
+      {
+        title: 'TikTok & Instagram',
+        desc: 'Post short-form videos and images, schedule content for peak times, and track engagement across both platforms.',
+      },
+      {
+        title: 'LinkedIn Publishing',
+        desc: 'Post articles and professional updates to LinkedIn. Reach your business audience alongside your decentralized followers.',
+      },
+      {
+        title: 'Cross-Platform + Cross-Protocol',
+        desc: 'Combine external platforms with decentralized protocols in one post. Write once, publish to YouTube, Nostr, Lens, Twitter, and LinkedIn simultaneously.',
+      },
+      {
+        title: 'Unified Analytics',
+        desc: 'Track engagement, views, and follower growth across all external platforms and decentralized protocols in one dashboard.',
+      },
+    ],
+  },
+  {
     id: 'live-streaming',
     title: 'Live Streaming',
     lead: 'Stream to 7 protocols simultaneously. Solo streams, Spaces-style audio, collaborative broadcasts, and coin-launch events with live minting.',
