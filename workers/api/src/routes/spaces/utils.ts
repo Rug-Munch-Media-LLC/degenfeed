@@ -5,9 +5,10 @@
 import type { Env } from '../index';
 import { liveIndexKey, spaceKey, upcomingIndexKey } from '../kv-helpers';
 import { requireSession } from '../session';
-import type { SpaceRecord } from './types';
+import type { SpaceRecord, SpaceChatMessage } from './types';
 
 function pastIndexKey(): string { return 'spaces:past'; }
+function chatIndexKey(spaceId: string): string { return `spaces:chat:${spaceId}`; }
 
 async function getLiveIds(env: Env): Promise<string[]> {
   try { const raw = await env.SPACES?.get(liveIndexKey()); return raw ? (JSON.parse(raw) as string[]) : []; }
@@ -64,6 +65,50 @@ export function generateId(): string {
   crypto.getRandomValues(arr);
   for (let i = 0; i < 16; i++) result += chars[(arr[i] ?? 0) % chars.length];
   return result;
+}
+
+/**
+ * Push a chat message to the KV-backed chat log for a space.
+ * Stores in a separate KV key to avoid bloating the main space record.
+ */
+export async function pushChatMessage(env: Env, spaceId: string, msg: SpaceChatMessage): Promise<void> {
+  const key = chatIndexKey(spaceId);
+  let messages: SpaceChatMessage[] = [];
+  try {
+    const raw = await env.SPACES?.get(key);
+    if (raw) messages = JSON.parse(raw) as SpaceChatMessage[];
+  } catch { /* start fresh */ }
+  messages.push(msg);
+  // Keep max 500 messages in KV
+  if (messages.length > 500) messages = messages.slice(-500);
+  await env.SPACES?.put(key, JSON.stringify(messages), { expirationTtl: 604800 });
+}
+
+/**
+ * Get all chat messages for a space from KV.
+ */
+export async function getChatMessages(env: Env, spaceId: string): Promise<SpaceChatMessage[]> {
+  try {
+    const key = chatIndexKey(spaceId);
+    const raw = await env.SPACES?.get(key);
+    return raw ? (JSON.parse(raw) as SpaceChatMessage[]) : [];
+  } catch { return []; }
+}
+
+/**
+ * Update a specific chat message in place (for pinning, reactions, deletion, editing).
+ */
+export async function updateChatMessage(
+  env: Env, spaceId: string, messageId: string,
+  updater: (msg: SpaceChatMessage) => SpaceChatMessage,
+): Promise<SpaceChatMessage | null> {
+  const messages = await getChatMessages(env, spaceId);
+  const idx = messages.findIndex((m) => m.id === messageId);
+  if (idx === -1) return null;
+  messages[idx] = updater(messages[idx]);
+  const key = chatIndexKey(spaceId);
+  await env.SPACES?.put(key, JSON.stringify(messages), { expirationTtl: 604800 });
+  return messages[idx];
 }
 
 export { getLiveIds, setLiveIds, getUpcomingIds, setUpcomingIds, getPastIds, setPastIds };
