@@ -608,9 +608,8 @@ contract DegenFeedCoinV2 {
         (uint256 currentPhase,) = getCurrentPhase();
         if (currentPhase != lastPhaseIndex) {
             lastPhaseIndex = currentPhase;
-            string memory phaseName;
-            (uint256 idx, string memory name) = getCurrentPhase();
-            emit PhaseChanged(idx, name, _totalSupply);
+            (uint256 idx, string memory phaseName) = getCurrentPhase();
+            emit PhaseChanged(idx, phaseName, _totalSupply);
 
             // Anti-whale limits increase as coin matures
             if (idx >= 3) {
@@ -652,11 +651,11 @@ contract DegenFeedCoinV2 {
     function _encodePhaseHistory() internal view returns (string memory) {
         uint256 progress = getProgressBps();
         string memory result = "";
-        if (progress >= 0) result = string.concat(result, "🔥Steal Deal,");
-        if (progress >= ERA_0_END) result = string.concat(result, "🐦Early Bird,");
-        if (progress >= ERA_1_END) result = string.concat(result, "🚗Cruise Control,");
-        if (progress >= ERA_2_END) result = string.concat(result, "📢Final Call,");
-        if (progress >= ERA_3_END) result = string.concat(result, "🚀Moonshot");
+        if (progress >= 0) result = string.concat(result, unicode"🔥Steal Deal,");
+        if (progress >= ERA_0_END) result = string.concat(result, unicode"🐦Early Bird,");
+        if (progress >= ERA_1_END) result = string.concat(result, unicode"🚗Cruise Control,");
+        if (progress >= ERA_2_END) result = string.concat(result, unicode"📢Final Call,");
+        if (progress >= ERA_3_END) result = string.concat(result, unicode"🚀Moonshot");
         return result;
     }
 

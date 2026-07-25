@@ -18,8 +18,10 @@
 
 import {
   BONDING_PHASES,
+  FIXED_PLATFORM_FEE_BPS,
   type BondingPhase,
   type BondingPhaseInfo,
+  type FeeConfig,
   type VisualProgress,
 } from './types';
 
@@ -134,6 +136,10 @@ export function calculateTokensOut(amountNative: bigint, price: bigint): bigint 
   return (amountNative * PRICE_DECIMALS) / price;
 }
 
+/**
+ * Calculate the output when selling tokens (single fee percentage).
+ * Legacy interface — uses a single feeBps for combined fee.
+ */
 export function calculateNativeOut(
   tokensIn: bigint,
   price: bigint,
@@ -143,6 +149,80 @@ export function calculateNativeOut(
   const gross = (tokensIn * price) / PRICE_DECIMALS;
   const fee = (gross * BigInt(feeBps)) / 10_000n;
   return { gross, fee, net: gross - fee };
+}
+
+/**
+ * Calculate the output when selling tokens with full multi-fee breakdown.
+ * Uses the FeeConfig to split between platform and creator fees.
+ * 
+ * @returns Breakdown including platform fee, creator fee, and net amounts
+ */
+export function calculateNativeOutWithFees(
+  tokensIn: bigint,
+  price: bigint,
+  feeConfig: FeeConfig,
+): {
+  gross: bigint;
+  platformFee: bigint;
+  creatorFee: bigint;
+  totalFee: bigint;
+  net: bigint;
+  totalFeePercent: string;
+} {
+  if (price === 0n) {
+    return { gross: 0n, platformFee: 0n, creatorFee: 0n, totalFee: 0n, net: 0n, totalFeePercent: '0%' };
+  }
+
+  const gross = (tokensIn * price) / PRICE_DECIMALS;
+  const platformFee = (gross * BigInt(feeConfig.platformFeeBps)) / 10_000n;
+  const creatorFee = (gross * BigInt(feeConfig.creatorFeeBps)) / 10_000n;
+  const totalFee = platformFee + creatorFee;
+  const net = gross - totalFee;
+
+  return {
+    gross,
+    platformFee,
+    creatorFee,
+    totalFee,
+    net,
+    totalFeePercent: `${(feeConfig.totalFeeBps / 100).toFixed(2)}%`,
+  };
+}
+
+/**
+ * Calculate tokens out for a buy, accounting for fees.
+ * Buy fees are subtracted from the native amount before calculating tokens.
+ */
+export function calculateTokensOutWithFees(
+  amountNative: bigint,
+  price: bigint,
+  feeConfig: FeeConfig,
+): {
+  grossTokens: bigint;
+  platformFee: bigint;
+  creatorFee: bigint;
+  totalFee: bigint;
+  netAmount: bigint;
+  netTokens: bigint;
+} {
+  if (price === 0n) {
+    return { grossTokens: 0n, platformFee: 0n, creatorFee: 0n, totalFee: 0n, netAmount: 0n, netTokens: 0n };
+  }
+
+  const platformFee = (amountNative * BigInt(feeConfig.platformFeeBps)) / 10_000n;
+  const creatorFee = (amountNative * BigInt(feeConfig.creatorFeeBps)) / 10_000n;
+  const totalFee = platformFee + creatorFee;
+  const netAmount = amountNative - totalFee;
+  const netTokens = (netAmount * PRICE_DECIMALS) / price;
+
+  return {
+    grossTokens: (amountNative * PRICE_DECIMALS) / price,
+    platformFee,
+    creatorFee,
+    totalFee,
+    netAmount,
+    netTokens,
+  };
 }
 
 // ─── Live Stream Boost ───────────────────────────────────────────────────

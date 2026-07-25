@@ -592,15 +592,23 @@ contract DegenFeedGovernorV2 is
         return super.proposalNeedsQueuing(proposalId);
     }
 
+    function proposalDeadline(uint256 proposalId) public view override(Governor, GovernorPreventLateQuorum) returns (uint256) {
+        return super.proposalDeadline(proposalId);
+    }
+
+    function _tallyUpdated(uint256 proposalId) internal override(Governor, GovernorPreventLateQuorum) {
+        super._tallyUpdated(proposalId);
+    }
+
     function supportsInterface(bytes4 interfaceId) public view override(Governor, AccessControl) returns (bool) {
         return super.supportsInterface(interfaceId);
     }
 
     /// @notice Override _countVote to call GovernorPreventLateQuorum
     function _countVote(uint256 proposalId, address account, uint8 support, uint256 totalWeight, bytes memory params)
-        internal override(Governor, GovernorCountingSimple)
+        internal override(Governor, GovernorCountingSimple) returns (uint256)
     {
-        super._countVote(proposalId, account, support, totalWeight, params);
+        return super._countVote(proposalId, account, support, totalWeight, params);
     }
 
     // ── View helpers ──

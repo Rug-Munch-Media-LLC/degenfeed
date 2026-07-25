@@ -220,6 +220,282 @@ export class GtSClient {
   async unfollow(accountId: string): Promise<GtSAccount> {
     return this.post<GtSAccount>(`/api/v1/accounts/${encodeURIComponent(accountId)}/unfollow`);
   }
+
+  // ─── Registration & Auth ──────────────────────────────────────────
+
+  /**
+   * Register a new account on the GTS instance.
+   * Requires accounts-registration-open: true on the server.
+   */
+  async register(registration: {
+    username: string;
+    email: string;
+    password: string;
+    agreement: boolean;
+    locale?: string;
+    reason?: string;
+  }): Promise<GtSAccount> {
+    return this.post<GtSAccount>(
+      '/api/v1/accounts',
+      registration as unknown as Record<string, unknown>,
+    );
+  }
+
+  /**
+   * Register a new OAuth application.
+   */
+  async registerApp(appConfig: {
+    client_name: string;
+    redirect_uris: string;
+    scopes: string;
+    website?: string;
+  }): Promise<{
+    id: string;
+    client_id: string;
+    client_secret: string;
+    name: string;
+    website: string | null;
+    redirect_uri: string;
+    vapid_key: string;
+  }> {
+    return this.post<any>('/api/v1/apps', appConfig as unknown as Record<string, unknown>);
+  }
+
+  /**
+   * Authenticate with username/password (OAuth password grant).
+   */
+  async authenticateWithPassword(
+    clientId: string,
+    clientSecret: string,
+    username: string,
+    password: string,
+    scopes: string = 'read write follow push',
+  ): Promise<{
+    access_token: string;
+    token_type: string;
+    scope: string;
+    created_at: number;
+  }> {
+    const url = `${this.instanceUrl}/oauth/token`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        client_id: clientId,
+        client_secret: clientSecret,
+        grant_type: 'password',
+        username,
+        password,
+        scope: scopes,
+      }),
+    });
+    if (!res.ok) {
+      throw new Error(`GTS auth failed: ${res.status} ${res.statusText}`);
+    }
+    return res.json();
+  }
+
+  /**
+   * Get OAuth token via client_credentials grant (app-level).
+   */
+  async getAppToken(
+    clientId: string,
+    clientSecret: string,
+    scopes: string = 'read write follow admin:read admin:write',
+  ): Promise<{
+    access_token: string;
+    token_type: string;
+    scope: string;
+    created_at: number;
+  }> {
+    return this.post<any>('/oauth/token', {
+      client_id: clientId,
+      client_secret: clientSecret,
+      grant_type: 'client_credentials',
+      redirect_uri: 'urn:ietf:wg:oauth:2.0:oob',
+      scope: scopes,
+    });
+  }
+
+  // ─── Account Management ───────────────────────────────────────────
+
+  /**
+   * Update profile information.
+   */
+  async updateCredentials(updates: {
+    display_name?: string;
+    note?: string;
+    avatar?: string;
+    header?: string;
+    locked?: boolean;
+    bot?: boolean;
+    discoverable?: boolean;
+    fields_attributes?: Array<{ name: string; value: string }>;
+    source?: { privacy?: string; sensitive?: boolean; language?: string };
+  }): Promise<GtSAccount> {
+    return this.api<GtSAccount>(
+      'PATCH',
+      '/api/v1/accounts/update_credentials',
+      updates as unknown as Record<string, unknown>,
+    );
+  }
+
+  /**
+   * Get account relationships (follows, followed_by, blocking, etc.)
+   */
+  async getRelationships(accountIds: string[]): Promise<
+    Array<{
+      id: string;
+      following: boolean;
+      followed_by: boolean;
+      blocking: boolean;
+      muting: boolean;
+      requested: boolean;
+      domain_blocking: boolean;
+      endorsed: boolean;
+    }>
+  > {
+    return this.get<any>(
+      `/api/v1/accounts/relationships?id[]=${accountIds.map(encodeURIComponent).join('&id[]=')}`,
+    );
+  }
+
+  /**
+   * Get followers for an account.
+   */
+  async getFollowers(accountId: string, limit: number = 40): Promise<GtSAccount[]> {
+    return this.get<GtSAccount[]>(`/api/v1/accounts/${encodeURIComponent(accountId)}/followers`, {
+      limit,
+    });
+  }
+
+  /**
+   * Get accounts this user is following.
+   */
+  async getFollowing(accountId: string, limit: number = 40): Promise<GtSAccount[]> {
+    return this.get<GtSAccount[]>(`/api/v1/accounts/${encodeURIComponent(accountId)}/following`, {
+      limit,
+    });
+  }
+
+  // ─── Federation & Discovery ──────────────────────────────────────
+
+  /**
+   * Search for accounts across the fediverse.
+   */
+  async searchAccounts(
+    query: string,
+    limit: number = 10,
+    resolve: boolean = true,
+  ): Promise<GtSAccount[]> {
+    return this.get<GtSAccount[]>('/api/v1/accounts/search', {
+      q: query,
+      limit,
+      resolve: resolve.toString(),
+    });
+  }
+
+  /**
+   * Lookup an account by Webfinger address (e.g., user@instance.com).
+   */
+  async lookupAccountByAcct(acct: string): Promise<GtSAccount | null> {
+    try {
+      return await this.get<GtSAccount>('/api/v1/accounts/lookup', { acct });
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Get trending hashtags from the fediverse.
+   */
+  async getTrendingHashtags(limit: number = 10): Promise<
+    Array<{
+      name: string;
+      url: string;
+      history: Array<{ day: string; uses: string; accounts: string }>;
+    }>
+  > {
+    return this.get<any>('/api/v1/trends/tags', { limit });
+  }
+
+  /**
+   * Get trending statuses from the fediverse.
+   */
+  async getTrendingStatuses(limit: number = 20): Promise<GtSStatus[]> {
+    return this.get<GtSStatus[]>('/api/v1/trends/statuses', { limit });
+  }
+
+  // ─── Data Portability ────────────────────────────────────────────
+
+  /**
+   * Export all follows.
+   */
+  async exportFollows(): Promise<
+    Array<{ id: string; username: string; acct: string; url: string }>
+  > {
+    return this.get<any>('/api/v1/accounts/relationships');
+  }
+
+  /**
+   * Export all blocks.
+   */
+  async exportBlocks(): Promise<GtSAccount[]> {
+    return this.get<GtSAccount[]>('/api/v1/blocks');
+  }
+
+  /**
+   * Export all mutes.
+   */
+  async exportMutes(): Promise<GtSAccount[]> {
+    return this.get<GtSAccount[]>('/api/v1/mutes');
+  }
+
+  /**
+   * Export all bookmarks.
+   */
+  async exportBookmarks(limit: number = 40): Promise<GtSStatus[]> {
+    return this.get<GtSStatus[]>('/api/v1/bookmarks', { limit });
+  }
+
+  /**
+   * Initiate account migration to another Mastodon/GTS instance.
+   */
+  async migrateAccount(
+    targetUri: string,
+  ): Promise<{ id: string; target_uri: string; acct: string }> {
+    return this.post<any>('/api/v1/migration', { target_uri: targetUri });
+  }
+
+  // ─── Admin Operations ────────────────────────────────────────────
+
+  /**
+   * Get admin-level account details (requires admin:read scope).
+   */
+  async adminGetAccount(
+    accountId: string,
+  ): Promise<GtSAccount & { role: { id: number; name: string; permissions: string } }> {
+    return this.get<any>(`/api/v1/admin/accounts/${encodeURIComponent(accountId)}`);
+  }
+
+  /**
+   * Moderate an account: suspend, silence, enable, approve, reject.
+   */
+  async adminModerateAccount(
+    accountId: string,
+    action: 'suspend' | 'silence' | 'unsuspend' | 'unsilence' | 'approve' | 'reject',
+    reportId?: string,
+    text?: string,
+  ): Promise<void> {
+    await this.api<any>(
+      'POST',
+      `/api/v1/admin/accounts/${encodeURIComponent(accountId)}/${action}`,
+      {
+        report_id: reportId,
+        text,
+      } as any,
+    );
+  }
 }
 
 export function statusToUnifiedPost(

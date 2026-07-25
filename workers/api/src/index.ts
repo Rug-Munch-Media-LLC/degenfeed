@@ -404,6 +404,22 @@ export interface Env {
   IMMICH_URL?: string;
   /** Immich API key */
   IMMICH_API_KEY?: string;
+
+  // ─── Multi-Protocol Coin Announcement ───────────────────────────────
+  /** Bluesky app password for bot posting (not the main password) */
+  BSKY_APP_PASSWORD?: string;
+  /** Mastodon/GTS access token for bot tooting */
+  MASTODON_ACCESS_TOKEN?: string;
+  /** Telegram chat ID for coin launch announcements */
+  TELEGRAM_ANNOUNCEMENT_CHAT_ID?: string;
+  /** Telegram coin announcement chat ID (overrides TELEGRAM_ANNOUNCEMENT_CHAT_ID) */
+  TELEGRAM_COIN_ANNOUNCEMENT_CHAT_ID?: string;
+  /** Discord webhook URL for coin launch announcements */
+  DISCORD_WEBHOOK_URL?: string;
+  /** Discord coin announcement webhook URL (overrides DISCORD_WEBHOOK_URL) */
+  DISCORD_COIN_WEBHOOK_URL?: string;
+  /** Coingecko API key (free tier) for price feeds */
+  COINGECKO_API_KEY?: string;
 }
 
 // ─── Shared constants ────────────────────────────────────────────────

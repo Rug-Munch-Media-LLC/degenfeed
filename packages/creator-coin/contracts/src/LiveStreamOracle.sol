@@ -67,7 +67,7 @@ contract LiveStreamOracle {
         bool isLive,
         uint256 boostBps,
         string platform,
-        string timestamp
+        uint256 timestamp
     );
 
     event AuthorizedUpdaterAdded(address indexed updater);

@@ -48,7 +48,7 @@ interface CrossProtocolCoinRecord {
   metadataUri: string;
   zoraUrl: string;
   degenfeedUrl: string;
-  announcementResult?: Record<string, unknown>;
+  announcements?: Record<string, unknown>[];
   totalSupply: string;
   price: string;
   supporters: number;
@@ -280,24 +280,50 @@ crossProtocolCoin.post('/launch', async (c) => {
     console.warn('[cross-protocol-coin] Zora wrap warning:', String(err));
   }
 
-  // 10. Announce on origin protocol
+  // 10. Announce on ALL connected protocols (multi-protocol)
   const degenfeedUrl = `${env.APP_BASE_URL || 'https://app.degenfeed.xyz'}/launch/${symbol}`;
-  const zoraUrl = `https://zora.co/collect/base:${ZORA_WRAPPER_FACTORY}/${zoraWrapper.tokenId}`;
+  const explorerUrl = chain === 'solana' || chain === 'solana_devnet'
+    ? `https://solscan.io/token/${deployResult.coinAddress}`
+    : `https://basescan.org/token/${deployResult.coinAddress}`;
 
-  let announcementResult: Record<string, unknown> | null = null;
+  const announcementResults: Record<string, unknown>[] = [];
   try {
-    announcementResult = await announceCoinLaunch({
-      protocol: originProtocol,
-      creator: walletAddress,
-      coinSymbol: symbol,
-      coinAddress: deployResult.coinAddress,
-      zoraUrl,
-      degenfeedUrl,
-      env,
-      creatorId,
-    });
+    const { announceOnAllProtocols, resolveAnnouncementTargets } = await import(
+      '../lib/cross-protocol-announcer'
+    );
+
+    // Resolve all protocol identities linked to this wallet
+    const targets = await resolveAnnouncementTargets(walletAddress, env);
+
+    // Always include the origin protocol if we have its identity
+    const hasOrigin = targets.some((t) => t.protocol === originProtocol);
+    if (!hasOrigin && creatorId) {
+      targets.push({ protocol: originProtocol, identity: creatorId });
+    }
+
+    if (targets.length > 0) {
+      const allResults = await announceOnAllProtocols(
+        {
+          symbol,
+          name,
+          coinAddress: deployResult.coinAddress,
+          chain: chain,
+          degenfeedUrl,
+          explorerUrl,
+          price: 'TBD', // updated post-deployment
+          marketCap: 'TBD',
+          creatorName: walletAddress.slice(0, 6) + '...' + walletAddress.slice(-4),
+        },
+        targets,
+        env,
+      );
+
+      for (const r of allResults) {
+        announcementResults.push(r as unknown as Record<string, unknown>);
+      }
+    }
   } catch (err) {
-    console.warn('[cross-protocol-coin] Announcement warning:', String(err));
+    console.warn('[cross-protocol-coin] Multi-protocol announcement warning:', String(err));
   }
 
   // 11. Store coin record in KV
@@ -316,7 +342,7 @@ crossProtocolCoin.post('/launch', async (c) => {
     metadataUri: `degenfeed://coin/${symbol}`,
     zoraUrl,
     degenfeedUrl,
-    announcementResult: announcementResult || undefined,
+    announcements: announcementResults,
     totalSupply: '0',
     price: '0',
     supporters: 0,
@@ -340,13 +366,13 @@ crossProtocolCoin.post('/launch', async (c) => {
       chain,
       symbol,
       name,
-      zoraUrl,
-      degenfeedUrl,
-      announcement: announcementResult,
-      crossChain: {
-        registered: true,
-        visibleOn: ['base', 'solana', 'zora', originProtocol],
-      },
+    zoraUrl,
+    degenfeedUrl,
+    announcements: announcementResults,
+    crossChain: {
+      registered: true,
+      visibleOn: ['base', 'solana', 'zora', originProtocol],
+    },
     },
     201,
   );
