@@ -80,7 +80,7 @@ async function getUserFromRequest(
     const { requireSession } = await import('../session');
     const session = await requireSession(req, env);
     if (session instanceof Response) return session;
-    const wallet = (session as unknown as Record<string, string>)?.walletAddress ?? '';
+    const wallet = session.address ?? '';
     return { userId: wallet.toLowerCase() };
   } catch {
     return err('Authentication required', 401, 'AUTH_REQUIRED');

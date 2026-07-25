@@ -24,7 +24,7 @@ const $fetch = globalThis.fetch;
 const OWNCAST_INSTANCES = [
   { url: 'http://127.0.0.1:8081', name: 'DegenFeed Live' },
   { url: 'https://watch.owncast.online', name: 'Owncast Directory' },
-  { url: 'https://live.andy.gg', name: 'Andy's Live' },
+  { url: 'https://live.andy.gg', name: "Andy's Live" },
 ];
 
 // ─── Types ─────────────────────────────────────────────────────────────

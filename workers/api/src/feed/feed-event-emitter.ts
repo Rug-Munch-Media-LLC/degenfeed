@@ -192,7 +192,7 @@ function flushBatch(): void {
       }
     }
     for (const evt of unique) {
-      broadcastToTopic(CHANNELS.FEED_NEW_POST as string, {
+      broadcastToTopic(CHANNELS.FEED_NEW_POST, {
         type: 'feed:new-post',
         post: evt.post,
         protocol: evt.protocol,
@@ -205,7 +205,7 @@ function flushBatch(): void {
 
   // Flush trending update (latest only)
   if (batchState.pendingTrending) {
-    broadcastToTopic(CHANNELS.FEED_TRENDING_UPDATE as string, {
+    broadcastToTopic(CHANNELS.FEED_TRENDING_UPDATE , {
       type: 'feed:trending-update',
       topics: batchState.pendingTrending.topics,
       timestamp: batchState.pendingTrending.timestamp,
@@ -219,7 +219,7 @@ function flushBatch(): void {
     for (const evt of batchState.pendingEngagement) {
       if (!seen.has(evt.postId)) {
         seen.add(evt.postId);
-        broadcastToTopic(CHANNELS.FEED_ENGAGEMENT_UPDATE as string, {
+        broadcastToTopic(CHANNELS.FEED_ENGAGEMENT_UPDATE , {
           type: 'feed:engagement-update',
           postId: evt.postId,
           metrics: evt.metrics,
@@ -233,7 +233,7 @@ function flushBatch(): void {
   // Flush protocol status events (one per protocol)
   if (batchState.pendingProtocolStatus.length > 0) {
     for (const evt of batchState.pendingProtocolStatus) {
-      broadcastToTopic(CHANNELS.FEED_PROTOCOL_STATUS as string, {
+      broadcastToTopic(CHANNELS.FEED_PROTOCOL_STATUS , {
         type: 'feed:protocol-status',
         protocol: evt.protocol,
         status: evt.status,

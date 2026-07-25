@@ -367,14 +367,7 @@ export function getProvider(protocol: Protocol, env: Env): FeedProvider {
  */
 export class BridgeFeedProvider implements FeedProvider {
   readonly protocol: Protocol;
-  schema = {
-    id: '' as string,
-    name: '',
-    description: '',
-    endpoint: '',
-    requiresAuth: false,
-    contentType: 'mixed' as const,
-  };
+  readonly schema: import('@degenfeed/feed-providers').SchemaGuard = (): boolean => true;
   private readonly bridgeUrl: string;
 
   constructor(protocol: Protocol, env: Env) {

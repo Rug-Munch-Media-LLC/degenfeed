@@ -303,7 +303,14 @@ async function countMessagesSince(env: Env, userId: string, since: number): Prom
  * Remove duplicate messages by content+fromId within a 5-second window.
  */
 function resolveDuplicates(
-  messages: Array<{ id: string; fromId: string; content: string; createdAt: number }>,
+  messages: Array<{
+    id: string;
+    fromId: string;
+    content: string;
+    createdAt: number;
+    conversationId: string;
+    protocol: string;
+  }>,
 ): Array<{
   id: string;
   fromId: string;
@@ -313,7 +320,7 @@ function resolveDuplicates(
   protocol: string;
 }> {
   const seen = new Map<string, { id: string; createdAt: number }>();
-  const resolved: Array<(typeof messages)[0] & { conversationId: string; protocol: string }> = [];
+  const resolved: typeof messages = [];
 
   for (const msg of messages) {
     const key = `${msg.fromId}:${msg.content}`;
@@ -332,7 +339,7 @@ function resolveDuplicates(
       seen.set(key, { id: msg.id, createdAt: msg.createdAt });
     }
 
-    resolved.push(msg as any);
+    resolved.push(msg);
   }
 
   return resolved;

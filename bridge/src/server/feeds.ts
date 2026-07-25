@@ -72,6 +72,12 @@ import { fetchThreadsPosts } from '../providers/threads';
 import { fetchWriteFreelyPosts } from '../providers/writefreely';
 import { fetchXmtpPosts } from '../providers/xmtp';
 import { fetchYggdrasilPosts } from '../providers/yggdrasil';
+import { fetchPlumePosts } from "'../providers/plume'";
+import { fetchKnownPosts } from "'../providers/known'";
+import { fetchIpfsClusterPosts } from "'../providers/ipfs-cluster'";
+import { fetchArweavePosts } from "'../providers/arweave'";
+import { fetchStrfryPosts } from "'../providers/strfry'";
+import { fetchPubliiPosts } from "'../providers/publii'";
 import { fetchZoraPosts } from '../providers/zora';
 import type { UnifiedPost } from './types';
 
@@ -186,6 +192,14 @@ export const PROVIDERS: Record<string, { name: string; fetch: ProviderFetcher }>
   iceshrimp: { name: 'Iceshrimp (Misskey Fork)', fetch: fetchIceshrimpPosts },
   sharkey: { name: 'Sharkey (Misskey + Mastodon API)', fetch: fetchSharkeyPosts },
   akkoma: { name: 'Akkoma (Pleroma Fork)', fetch: fetchAkkomaPosts },
+
+  // ─── FINAL PUSH: New Protocols (2026-07-27) ─────────────────────────
+  plume: { name: "'Plume (Federated Blogging)'", fetch: fetchPlumePosts },
+  known: { name: "'Known (IndieWeb Publishing)'", fetch: fetchKnownPosts },
+  ipfsCluster: { name: "'IPFS Cluster (Decentralized Pinning)'", fetch: fetchIpfsClusterPosts },
+  arweave: { name: "'Arweave (Permaweb Gateway)'", fetch: fetchArweavePosts },
+  strfry: { name: "'strfry (Nostr Search Relay)'", fetch: fetchStrfryPosts },
+  publii: { name: "'Publii (Desktop Static CMS)'", fetch: fetchPubliiPosts },
   mbin: { name: 'Mbin (Active Kbin Fork)', fetch: fetchMbinPosts },
   immich: { name: 'Immich (Self-Hosted Photos)', fetch: fetchImmichPosts },
   discourse: { name: 'Discourse (Forum + ActivityPub)', fetch: fetchDiscoursePosts },

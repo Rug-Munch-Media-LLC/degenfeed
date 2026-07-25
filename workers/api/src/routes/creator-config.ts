@@ -129,7 +129,7 @@ async function requireCreatorAuth(c: any, env: Env): Promise<{ address: string }
   const session = await requireSession(req, env);
   if (session instanceof Response) return session;
 
-  const address = (session as any).walletAddress as string;
+  const address = session.address;
   if (!address) {
     return jsonResponse({ error: 'Wallet address not found in session' }, 401);
   }

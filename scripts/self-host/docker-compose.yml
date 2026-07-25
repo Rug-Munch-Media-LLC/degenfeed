@@ -28,7 +28,7 @@ services:
   # ── Reverse Proxy (Caddy) ────────────────────────────────────────────
   # Automatic TLS via Let's Encrypt. Handles routing to all sub-services.
   caddy:
-    image: caddy:2-alpine
+    image: caddy:2.11.4-alpine
     restart: unless-stopped
     ports:
       - "80:80"
@@ -101,7 +101,7 @@ services:
 
   # ── Redis (Caching & Queues) ────────────────────────────────────────
   redis:
-    image: redis:7-alpine
+    image: redis:7.2.15-alpine
     restart: unless-stopped
     expose:
       - "6379"
@@ -118,7 +118,7 @@ services:
 
   # ── Ghost Blog (Long-form publishing) ──────────────────────────────
   ghost:
-    image: ghost:5-alpine
+    image: ghost:6.54.0-alpine
     restart: unless-stopped
     expose:
       - "2368"
@@ -148,7 +148,7 @@ services:
 
   # ── GoToSocial (ActivityPub / Fediverse) ──────────────────────────
   gotosocial:
-    image: superseriousbusiness/gotosocial:latest
+    image: superseriousbusiness/gotosocial:0.22.1
     restart: unless-stopped
     expose:
       - "8080"

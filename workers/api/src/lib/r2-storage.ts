@@ -158,7 +158,7 @@ export async function uploadToR2(
   metadata?: Record<string, string>,
   tier?: StorageTier,
 ): Promise<R2UploadResult> {
-  const bucket = (env as any).VIDEO_STORAGE_BINDING as R2Bucket | undefined;
+  const bucket = env.VIDEO_STORAGE_BINDING as R2Bucket | undefined;
 
   if (!bucket) {
     throw new Error('R2 not configured — set VIDEO_STORAGE_BINDING in wrangler.toml');
@@ -233,7 +233,7 @@ export async function getR2ObjectInfo(env: Env, key: string): Promise<R2ObjectIn
   }
 
   // Fall back to direct R2 head request
-  const bucket = (env as any).VIDEO_STORAGE_BINDING as R2Bucket | undefined;
+  const bucket = env.VIDEO_STORAGE_BINDING as R2Bucket | undefined;
   if (!bucket) return null;
 
   try {
@@ -279,7 +279,7 @@ export async function isR2ObjectValid(env: Env, key: string): Promise<boolean> {
  * Delete an object from R2, including its KV metadata.
  */
 export async function deleteFromR2(env: Env, key: string): Promise<boolean> {
-  const bucket = (env as any).VIDEO_STORAGE_BINDING as R2Bucket | undefined;
+  const bucket = env.VIDEO_STORAGE_BINDING as R2Bucket | undefined;
   if (!bucket) return false;
 
   try {
@@ -353,7 +353,7 @@ export async function listR2Objects(
   prefix: string,
   limit = 100,
 ): Promise<R2ObjectInfo[]> {
-  const bucket = (env as any).VIDEO_STORAGE_BINDING as R2Bucket | undefined;
+  const bucket = env.VIDEO_STORAGE_BINDING as R2Bucket | undefined;
   if (!bucket) return [];
 
   try {
@@ -426,7 +426,7 @@ export interface StorageUsage {
  * Expensive operation — use sparingly or cache results.
  */
 export async function getStorageUsage(env: Env, prefix = 'videos/'): Promise<StorageUsage> {
-  const bucket = (env as any).VIDEO_STORAGE_BINDING as R2Bucket | undefined;
+  const bucket = env.VIDEO_STORAGE_BINDING as R2Bucket | undefined;
   if (!bucket) {
     return { totalBytes: 0, byTier: {} as Record<StorageTier, number>, byType: {}, objectCount: 0 };
   }

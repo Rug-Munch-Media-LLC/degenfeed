@@ -54,7 +54,7 @@ services:
   # TLS termination via Let's Encrypt (Certbot) or Cloudflare.
   # Routes traffic to internal services by path prefix.
   nginx:
-    image: nginx:1.27-alpine
+    image: nginx:1.30.4-alpine
     restart: unless-stopped
     ports:
       - "80:80"
@@ -155,7 +155,7 @@ services:
 
   # ── Redis (Caching & Queues) ────────────────────────────────────────
   redis:
-    image: redis:7-alpine
+    image: redis:7.2.15-alpine
     restart: unless-stopped
     expose:
       - "6379"
@@ -180,7 +180,7 @@ services:
 
   # ── Ghost Blog (Long-form publishing) ──────────────────────────────
   ghost:
-    image: ghost:5-alpine
+    image: ghost:6.54.0-alpine
     restart: unless-stopped
     expose:
       - "2368"
@@ -212,7 +212,7 @@ services:
 
   # ── GoToSocial (ActivityPub / Fediverse) ──────────────────────────
   gotosocial:
-    image: superseriousbusiness/gotosocial:latest
+    image: superseriousbusiness/gotosocial:0.22.1
     restart: unless-stopped
     expose:
       - "8080"
@@ -248,7 +248,7 @@ services:
   # Exposes services without opening ports 80/443.
   # See: deploy/cloudflared-setup.sh for setup instructions.
   cloudflared:
-    image: cloudflare/cloudflared:latest
+    image: cloudflare/cloudflared:2025.9.0
     restart: unless-stopped
     profiles:
       - tunnel

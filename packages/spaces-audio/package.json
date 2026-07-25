@@ -10,9 +10,9 @@
     "lint": "biome check src/"
   },
   "dependencies": {
-    "livekit-client": "^2.0.0"
+    "livekit-client": "^2.21.0"
   },
   "devDependencies": {
-    "typescript": "^5.5.0"
+    "typescript": "^5.9.3"
   }
 }

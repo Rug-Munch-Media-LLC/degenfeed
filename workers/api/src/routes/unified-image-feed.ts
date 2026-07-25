@@ -570,7 +570,7 @@ async function fetchBlueskyImages(env: Env, limit: number): Promise<UnifiedImage
     for (const entry of json?.feed ?? []) {
       const p = entry.post;
       if (!p) continue;
-      const embedImages = p.embed?.images ?? (p.record?.embed as any)?.images ?? [];
+      const embedImages = p.embed?.images ?? (p.record?.embed as { images?: Array<Record<string, unknown>> } | undefined)?.images ?? [];
       if (!embedImages.length) continue;
       const img = embedImages[0]!;
       results.push({
@@ -777,11 +777,12 @@ async function fetchRedditImages(_env: Env, limit: number): Promise<UnifiedImage
             sourceLabel: meta.label,
             category: guessCategory(d.title as string, [sub], 'reddit'),
             createdAt: (d.created_utc as number) * 1000,
-            aspectRatio: (d.preview as Record<string, unknown> | undefined)?.images?.[0]?.source
-              ?.width
-              ? (d.preview as any).images[0].source.width /
-                (d.preview as any).images[0].source.height
-              : 4 / 3,
+            aspectRatio: (() => {
+              const preview = d.preview as Record<string, unknown> | undefined;
+              const images = preview?.images as Array<Record<string, unknown>> | undefined;
+              const source = images?.[0]?.source as Record<string, number> | undefined;
+              return source?.width ? source.width / source.height : 4 / 3;
+            })(),
             likes: (d.ups as number) ?? 0,
             shares: 0,
             comments: (d.num_comments as number) ?? 0,

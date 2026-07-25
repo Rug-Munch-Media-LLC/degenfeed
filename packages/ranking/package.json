@@ -15,8 +15,8 @@
     "@degenfeed/types": "workspace:*"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.5.2",
-    "typescript": "^5.5.0",
+    "@biomejs/biome": "^2.5.5",
+    "typescript": "^5.9.3",
     "vitest": "^4.1.10"
   }
 }

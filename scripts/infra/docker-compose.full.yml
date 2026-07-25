@@ -38,7 +38,7 @@ services:
   # REVERSE PROXY — Caddy (auto TLS, single entry point)
   # ═══════════════════════════════════════════════════════════════
   caddy:
-    image: caddy:2-alpine
+    image: caddy:2.11.4-alpine
     restart: unless-stopped
     ports:
       - "80:80"
@@ -67,7 +67,7 @@ services:
   # server. Users get @user@social.degenfeed.xyz handles.
   # ═══════════════════════════════════════════════════════════════
   gotosocial:
-    image: superseriousbusiness/gotosocial:latest
+    image: superseriousbusiness/gotosocial:0.22.1
     restart: unless-stopped
     expose:
       - "8080"
@@ -163,7 +163,7 @@ services:
   # Users get @user@video.degenfeed.xyz for their channel.
   # ═══════════════════════════════════════════════════════════════
   peertube:
-    image: chocobozzz/peertube:production-bullseye
+    image: chocobozzz/peertube:v8.2.3
     restart: unless-stopped
     expose:
       - "9000"
@@ -207,7 +207,7 @@ services:
   # decentralized communication.
   # ═══════════════════════════════════════════════════════════════
   synapse:
-    image: matrixdotorg/synapse:latest
+    image: matrixdotorg/synapse:v1.157.1
     restart: unless-stopped
     expose:
       - "8008"
@@ -241,7 +241,7 @@ services:
   # Users get their own corner of the web.
   # ═══════════════════════════════════════════════════════════════
   ghost:
-    image: ghost:5-alpine
+    image: ghost:6.54.0-alpine
     restart: unless-stopped
     expose:
       - "2368"
@@ -308,7 +308,7 @@ services:
   # Users can go live without Twitch/YouTube dependency.
   # ═══════════════════════════════════════════════════════════════
   owncast:
-    image: gabekangas/owncast:latest
+    image: gabekangas/owncast:0.2.5
     restart: unless-stopped
     expose:
       - "8080"
@@ -371,7 +371,7 @@ services:
 
   # ── PostgreSQL (shared database) ────────────────────────────
   postgres:
-    image: postgres:16-alpine
+    image: postgres:17.4-alpine
     restart: unless-stopped
     expose:
       - "5432"
@@ -394,7 +394,7 @@ services:
 
   # ── Redis (caching, queues, pub/sub) ────────────────────────
   redis:
-    image: redis:7-alpine
+    image: redis:7.2.15-alpine
     restart: unless-stopped
     expose:
       - "6379"
@@ -413,7 +413,7 @@ services:
 
   # ── MinIO (S3-compatible object storage) ────────────────────
   minio:
-    image: minio/minio:latest
+    image: minio/minio:RELEASE.2025-09-07T16-13-09Z
     restart: unless-stopped
     expose:
       - "9000"
@@ -440,7 +440,7 @@ services:
 
   # ── Prometheus ──────────────────────────────────────────────
   prometheus:
-    image: prom/prometheus:latest
+    image: prom/prometheus:v3.13.1
     restart: unless-stopped
     expose:
       - "9090"
@@ -459,7 +459,7 @@ services:
 
   # ── Grafana ─────────────────────────────────────────────────
   grafana:
-    image: grafana/grafana:latest
+    image: grafana/grafana:13.1.1
     restart: unless-stopped
     expose:
       - "3000"
