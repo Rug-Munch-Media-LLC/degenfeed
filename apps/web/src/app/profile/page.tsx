@@ -10,6 +10,7 @@ import {
 } from '../../components/CredentialsDisplay';
 import { EditProfileModal } from '../../components/EditProfileModal';
 import { IdentityLinker } from '../../components/IdentityLinker';
+import { ProtocolStatusSection } from '../../components/onboarding/ProtocolStatusSection';
 import { PremiumPaymentModal } from '../../components/PremiumPaymentModal';
 import { GoLiveModal } from '../../components/streams/GoLiveModal';
 import {
@@ -112,6 +113,12 @@ function SignedInView({ p }: { p: ReturnType<typeof useProfile> }) {
       <div className="mb-6">
         <ProtocolBadgesRow identities={p.identities} />
       </div>
+
+      {/* Protocol Accounts Status Section */}
+      <ProtocolStatusSection
+        walletAddress={p.walletAddress ?? ''}
+        isOwnProfile={true}
+      />
 
       {p.showCrossPlatformSetup && (
         <div className="mb-6" id="cross-platform-setup">

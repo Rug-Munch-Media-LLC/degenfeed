@@ -17,6 +17,7 @@ import {
   sanitizePosts,
   writeCachedHealth,
   writeJsonCache,
+  BridgeFeedProvider,
 } from '../feed';
 import { type Env, jsonResponse } from '../index';
 
@@ -65,9 +66,31 @@ export async function handleProviderFeed(
   env: Env,
   provider: string,
 ): Promise<Response> {
+  // Accept ANY protocol — falls through to BridgeFeedProvider for unregistered ones
   const valid = new Set<Protocol>(DEFAULT_PROTOCOLS);
   if (!valid.has(provider as Protocol)) {
-    return jsonResponse({ error: 'Unknown provider' }, 400);
+    // If not in DEFAULT_PROTOCOLS, try BridgeFeedProvider anyway
+    const { BridgeFeedProvider } = await import('../feed/feed-fetcher');
+    const bridgeProvider = new BridgeFeedProvider(provider as Protocol, env);
+    const params = new URL(request.url).searchParams;
+    const limit = Math.min(Number(params.get('limit')) || 50, 200);
+    try {
+      const result = await bridgeProvider.fetchFeed({ timeoutMs: 6000 });
+      if (result.posts.length === 0) {
+        return jsonResponse({
+          data: [],
+          meta: { total: 0, limit, protocol: provider, notice: result.notice, fetchedAt: Date.now() },
+        });
+      }
+      return jsonResponse({
+        data: result.posts.slice(0, limit),
+        meta: { total: result.posts.length, limit, protocol: provider, fetchedAt: Date.now() },
+      });
+    } catch (err) {
+      return jsonResponse({
+        error: `Bridge provider failed for ${provider}: ${err instanceof Error ? err.message : 'unknown'}`,
+      }, 502);
+    }
   }
   const protocol = provider as Protocol;
   const params = new URL(request.url).searchParams;

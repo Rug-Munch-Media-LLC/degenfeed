@@ -46,7 +46,22 @@ export interface ProtocolSectionsResponse {
   fetchedAt: number;
 }
 
-const SUPPORTED = new Set(['farcaster', 'lens', 'bluesky', 'nostr', 'mastodon']);
+const SUPPORTED = new Set([
+  'farcaster', 'lens', 'bluesky', 'nostr', 'mastodon',
+  'pixelfed', 'lemmy', 'peertube', 'threads', 'zora',
+  'reddit', 'rss', 'mirror', 'hive', 'dtube', 'lbry',
+  'pleroma', 'misskey', 'writefreely', 'funkwhale', 'castopod',
+  'subsocial', 'steem', 'telegram',
+  'diaspora', 'friendica', 'mediagoblin',
+  'bookwyrm', 'mobilizon', 'bonfire', 'mitra', 'takahe',
+  'forgejo', 'owncast', 'faircamp',
+  'gab', 'minds', 'aether', 'scuttlebutt', 'deso', 'session',
+  'cyberconnect', 'arena', 'microblog',
+  'orbis', 'ceramic', 'audius', 'rarible',
+  'xmtp', 'push', 'huddle01', 'tableland',
+  'ponder', 'ethereum', 'solana', 'kbin', 'tildes',
+  'discord', 'matrix', 'github',
+]);
 const CACHE_TTL = 300; // 5 minutes
 const API_TIMEOUT_MS = 3000;
 const MAX_ITEMS = 6;

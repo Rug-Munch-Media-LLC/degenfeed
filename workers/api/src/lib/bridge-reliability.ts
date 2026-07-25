@@ -690,6 +690,7 @@ const PROTOCOL_HEALTH_CHECKS: Record<
   string,
   (env: Env) => Promise<{ reachable: boolean; latencyMs: number; error?: string }>
 > = {
+  // ── Tier 1: Core Social ──────────────────────────────────────
   mastodon: async (env) => {
     const instance = env.GOTOSOCIAL_INSTANCE_URL || 'https://social.degenfeed.xyz';
     return pingUrl(`${instance}/api/v1/instance`);
@@ -706,14 +707,7 @@ const PROTOCOL_HEALTH_CHECKS: Record<
     const url = env.BSKY_SOCIAL_URL || 'https://bsky.social';
     return pingUrl(`${url}/xrpc/com.atproto.server.describeServer`);
   },
-  nostr: async (env) => {
-    // Check multiple relays, first one that responds wins
-    const _relays = (env.RELAY_URLS || 'wss://relay.damus.io,wss://nos.lol,wss://relay.primal.net')
-      .split(',')
-      .map((u) => u.trim())
-      .filter(Boolean);
-    // For relays (WebSocket), we can't easily ping via HTTP
-    // Fall back to checking nostr.band API as a proxy
+  nostr: async () => {
     return pingUrl('https://api.nostr.band/');
   },
   farcaster: async (env) => {
@@ -726,24 +720,83 @@ const PROTOCOL_HEALTH_CHECKS: Record<
   },
   telegram: async (env) => {
     if (!env.TELEGRAM_BOT_TOKEN) {
-      return {
-        reachable: false,
-        latencyMs: 0,
-        error: 'TELEGRAM_BOT_TOKEN not configured',
-      };
+      return { reachable: false, latencyMs: 0, error: 'TELEGRAM_BOT_TOKEN not configured' };
     }
     return pingUrl(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/getMe`);
   },
-  rss: async () => {
-    // RSS is always "reachable" — individual feeds may fail
-    return { reachable: true, latencyMs: 0 };
+  rss: async () => ({ reachable: true, latencyMs: 0 }),
+  zora: async () => pingUrl('https://api.zora.co/'),
+  threads: async () => pingUrl('https://graph.threads.net/v1.0/me?fields=id&access_token=health'),
+
+  // ── Tier 2: Established Federated ────────────────────────────
+  lemmy: async () => pingUrl('https://lemmy.ml/api/v3/site'),
+  pixelfed: async () => pingUrl('https://pixelfed.social/api/v1/instance'),
+  peertube: async () => pingUrl('https://peertube.tv/api/v1/instance'),
+  reddit: async (env) => {
+    const redlib = env.REDLIB_URL || 'https://redlib.degenfeed.xyz';
+    return pingUrl(`${redlib}/settings`);
   },
-  zora: async () => {
-    return pingUrl('https://api.zora.co/');
+  mirror: async () => pingUrl('https://mirror.xyz/'),
+  hive: async () => pingUrl('https://api.hive.blog/'),
+  dtube: async () => pingUrl('https://api.d.tube/'),
+  lbry: async () => pingUrl('https://api.lbry.tv/lbry/api/v1/proxy?m=version'),
+  pleroma: async () => pingUrl('https://pleroma.site/api/v1/instance'),
+  misskey: async () => pingUrl('https://misskey.io/api/instance'),
+  writefreely: async () => pingUrl('https://write.as/api/instance'),
+  funkwhale: async () => pingUrl('https://open.audio/api/v1/instance'),
+  castopod: async () => pingUrl('https://castopod.org/api/v1/instance'),
+  subsocial: async () => pingUrl('https://squid.subsquid.io/subsocial/graphql'),
+  steem: async () => pingUrl('https://api.steemit.com/'),
+
+  // ── Tier 3: ActivityPub Ecosystem ────────────────────────────
+  diaspora: async () => pingUrl('https://diasp.org/'),
+  friendica: async () => pingUrl('https://friendi.ca/'),
+  mediagoblin: async () => pingUrl('https://mediagoblin.org/'),
+  bookwyrm: async () => pingUrl('https://bookwyrm.social/'),
+  mobilizon: async () => pingUrl('https://mobilizon.org/'),
+  bonfire: async () => pingUrl('https://bonfirenetworks.org/'),
+  mitra: async () => pingUrl('https://mitra.social/'),
+  takahe: async () => pingUrl('https://takahe.org.nz/'),
+  forgejo: async () => pingUrl('https://forgejo.org/'),
+  owncast: async () => pingUrl('https://owncast.online/'),
+  faircamp: async () => pingUrl('https://listen.merveilles.town/feed.xml'),
+
+  // ── Tier 4: Experimental / Blockchain ────────────────────────
+  gab: async () => pingUrl('https://gab.com/'),
+  minds: async () => pingUrl('https://www.minds.com/'),
+  aether: async () => pingUrl('https://getaether.net/'),
+  scuttlebutt: async () => pingUrl('https://scuttlebutt.nz/'),
+  deso: async () => pingUrl('https://api.deso.org/api/v0/get-hot-feed'),
+  session: async () => pingUrl('https://sogs.session.foundation/room/about'),
+  cyberconnect: async () => pingUrl('https://api.cyberconnect.dev/'),
+  arena: async () => pingUrl('https://api.arena.social/'),
+  microblog: async () => pingUrl('https://micro.blog/posts/discover'),
+  orbis: async () => pingUrl('https://ceramic.orbis.club/'),
+  ceramic: async () => pingUrl('https://ceramic.network/'),
+  audius: async () => pingUrl('https://api.audius.co/'),
+  rarible: async () => pingUrl('https://api.rarible.org/v0.1/'),
+
+  // ── Tier 5: Infrastructure / Web3 ────────────────────────────
+  xmtp: async () => pingUrl('https://api.xmtp.org/'),
+  push: async () => pingUrl('https://backend.epns.io/apis/'),
+  huddle01: async () => pingUrl('https://api.huddle01.com/'),
+  tableland: async () => pingUrl('https://tableland.network/'),
+
+  // ── Legacy / Infra ───────────────────────────────────────────
+  ponder: async () => pingUrl('https://ponder.sh/'),
+  ethereum: async (env) => {
+    const rpc = env.ETH_RPC_URL || 'https://ethereum-rpc.publicnode.com';
+    return pingUrl(rpc);
   },
-  threads: async (_env) => {
-    return pingUrl('https://graph.threads.net/v1.0/me?fields=id&access_token=health');
+  solana: async (env) => {
+    const rpc = env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
+    return pingUrl(rpc);
   },
+  kbin: async () => pingUrl('https://kbin.social/'),
+  tildes: async () => pingUrl('https://tildes.net/'),
+  discord: async () => pingUrl('https://discord.com/api/v10/gateway'),
+  matrix: async () => pingUrl('https://matrix.org/'),
+  github: async () => pingUrl('https://api.github.com/'),
 };
 
 /**
@@ -869,15 +922,26 @@ export class BridgeHealthMonitor {
   async getOverallHealth(env: Env): Promise<BridgeHealthReport> {
     const start = performance.now();
     const allProtocols = [
-      'nostr',
-      'farcaster',
-      'bluesky',
-      'mastodon',
-      'lens',
-      'telegram',
-      'rss',
-      'zora',
-      'threads',
+      // Tier 1: Core Social
+      'nostr', 'farcaster', 'lens', 'bluesky', 'mastodon',
+      // Tier 2: Established
+      'lemmy', 'pixelfed', 'peertube', 'threads', 'zora',
+      'reddit', 'rss', 'mirror', 'hive', 'dtube', 'lbry',
+      'pleroma', 'misskey', 'writefreely', 'funkwhale', 'castopod',
+      'subsocial', 'steem', 'telegram',
+      // Tier 3: ActivityPub Ecosystem
+      'diaspora', 'friendica', 'mediagoblin',
+      'bookwyrm', 'mobilizon', 'bonfire', 'mitra', 'takahe',
+      'forgejo', 'owncast', 'faircamp',
+      // Tier 4: Experimental
+      'gab', 'minds', 'aether', 'scuttlebutt', 'deso', 'session',
+      'cyberconnect', 'arena', 'microblog', 'orbis', 'ceramic',
+      'audius', 'rarible',
+      // Tier 5: Infrastructure
+      'xmtp', 'push', 'huddle01', 'tableland',
+      // Legacy
+      'ponder', 'ethereum', 'solana', 'kbin', 'tildes',
+      'discord', 'matrix', 'github',
     ];
 
     // Check all protocols in parallel
@@ -1037,15 +1101,20 @@ export async function getProtocolStats(env: Env, protocol: string): Promise<Prot
  */
 export async function getAllBridgeStats(env: Env): Promise<BridgeStats> {
   const protocols = [
-    'nostr',
-    'farcaster',
-    'bluesky',
-    'mastodon',
-    'lens',
-    'telegram',
-    'rss',
-    'zora',
-    'threads',
+    'nostr', 'farcaster', 'lens', 'bluesky', 'mastodon',
+    'lemmy', 'pixelfed', 'peertube', 'threads', 'zora',
+    'reddit', 'rss', 'mirror', 'hive', 'dtube', 'lbry',
+    'pleroma', 'misskey', 'writefreely', 'funkwhale', 'castopod',
+    'subsocial', 'steem', 'telegram',
+    'diaspora', 'friendica', 'mediagoblin',
+    'bookwyrm', 'mobilizon', 'bonfire', 'mitra', 'takahe',
+    'forgejo', 'owncast', 'faircamp',
+    'gab', 'minds', 'aether', 'scuttlebutt', 'deso', 'session',
+    'cyberconnect', 'arena', 'microblog', 'orbis', 'ceramic',
+    'audius', 'rarible',
+    'xmtp', 'push', 'huddle01', 'tableland',
+    'ponder', 'ethereum', 'solana', 'kbin', 'tildes',
+    'discord', 'matrix', 'github',
   ];
   const byProtocol: Record<string, ProtocolStats> = {};
   let totalOps = 0;

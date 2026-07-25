@@ -171,6 +171,70 @@ export const PROTOCOL_CONFIGS: Record<
     contentFormat: 'plaintext',
     maxMediaSizeMB: 0,
   },
+
+  ion: {
+    maxChars: 5000,
+    supportsMedia: false,
+    supportsEncryption: false,
+    contentFormat: 'plaintext',
+    maxMediaSizeMB: 0,
+  },
+  keri: {
+    maxChars: 50000,
+    supportsMedia: false,
+    supportsEncryption: false,
+    contentFormat: 'plaintext',
+    maxMediaSizeMB: 0,
+  },
+  veramo: {
+    maxChars: 5000,
+    supportsMedia: false,
+    supportsEncryption: false,
+    contentFormat: 'plaintext',
+    maxMediaSizeMB: 0,
+  },
+  storj: {
+    maxChars: 5000,
+    supportsMedia: false,
+    supportsEncryption: false,
+    contentFormat: 'plaintext',
+    maxMediaSizeMB: 0,
+  },
+  sia: {
+    maxChars: 5000,
+    supportsMedia: false,
+    supportsEncryption: false,
+    contentFormat: 'plaintext',
+    maxMediaSizeMB: 0,
+  },
+  filecoin: {
+    maxChars: 5000,
+    supportsMedia: false,
+    supportsEncryption: false,
+    contentFormat: 'plaintext',
+    maxMediaSizeMB: 0,
+  },
+  'swarm-eth': {
+    maxChars: 5000,
+    supportsMedia: false,
+    supportsEncryption: false,
+    contentFormat: 'plaintext',
+    maxMediaSizeMB: 0,
+  },
+  syndicate: {
+    maxChars: 5000,
+    supportsMedia: false,
+    supportsEncryption: false,
+    contentFormat: 'plaintext',
+    maxMediaSizeMB: 0,
+  },
+  mintgate: {
+    maxChars: 5000,
+    supportsMedia: false,
+    supportsEncryption: false,
+    contentFormat: 'plaintext',
+    maxMediaSizeMB: 0,
+  },
 };
 
 // ─── Unbreakable Content Types ────────────────────────────────────────────

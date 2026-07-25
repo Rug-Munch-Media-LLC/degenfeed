@@ -113,7 +113,152 @@
   --protocol-bg: rgba(20, 241, 149, 0.04);
 }
 
-/* ... 36 protocol pages total — the [protocol] dynamic route handles all ════ */
+/* ... 68+ protocol pages total — the [protocol] dynamic route handles all ════ */
+
+/* ═══ Extended Protocol Color Tokens (2026-07-25) ════════════════════════════ */
+
+/* Nostr — purple */
+.protocol-page-nostr { --protocol-accent: #8b5cf6; --protocol-bg: rgba(139, 92, 246, 0.04); }
+/* Farcaster — blue/purple gradient */
+.protocol-page-farcaster { --protocol-accent: #8a63d2; --protocol-bg: rgba(138, 99, 210, 0.04); }
+/* Bluesky — sky blue */
+.protocol-page-bluesky { --protocol-accent: #1185fe; --protocol-bg: rgba(17, 133, 254, 0.03); }
+/* Lens — green */
+.protocol-page-lens { --protocol-accent: #abfe2c; --protocol-bg: rgba(171, 254, 44, 0.03); }
+/* Mastodon — blue */
+.protocol-page-mastodon { --protocol-accent: #6364ff; --protocol-bg: rgba(99, 100, 255, 0.04); }
+/* PeerTube — purple/orange */
+.protocol-page-peertube { --protocol-accent: #f1680d; --protocol-bg: rgba(241, 104, 13, 0.04); }
+/* Reddit — orange */
+.protocol-page-reddit { --protocol-accent: #ff4500; --protocol-bg: rgba(255, 69, 0, 0.04); }
+/* Lemmy — blue-green */
+.protocol-page-lemmy { --protocol-accent: #2d9cdb; --protocol-bg: rgba(45, 156, 219, 0.04); }
+/* Pixelfed — yellow/rose */
+.protocol-page-pixelfed { --protocol-accent: #f9a825; --protocol-bg: rgba(249, 168, 37, 0.04); }
+/* RSS — orange */
+.protocol-page-rss { --protocol-accent: #ffa500; --protocol-bg: rgba(255, 165, 0, 0.04); }
+/* Threads — gray */
+.protocol-page-threads { --protocol-accent: #888; --protocol-bg: rgba(136, 136, 136, 0.03); }
+/* YouTube — red */
+.protocol-page-youtube { --protocol-accent: #ff0000; --protocol-bg: rgba(255, 0, 0, 0.04); }
+/* Zora — deep purple */
+.protocol-page-zora { --protocol-accent: #6b21a8; --protocol-bg: rgba(107, 33, 168, 0.04); }
+/* Audius — magenta */
+.protocol-page-audius { --protocol-accent: #cc0fe0; --protocol-bg: rgba(204, 15, 224, 0.04); }
+/* Rarible — yellow */
+.protocol-page-rarible { --protocol-accent: #feda02; --protocol-bg: rgba(254, 218, 2, 0.04); }
+/* GitHub — purple */
+.protocol-page-github { --protocol-accent: #6e40c9; --protocol-bg: rgba(110, 64, 201, 0.04); }
+/* Telegram — blue */
+.protocol-page-telegram { --protocol-accent: #26a5e4; --protocol-bg: rgba(38, 165, 228, 0.04); }
+/* Discord — blurple */
+.protocol-page-discord { --protocol-accent: #5865f2; --protocol-bg: rgba(88, 101, 242, 0.04); }
+/* Hive — red */
+.protocol-page-hive { --protocol-accent: #e31337; --protocol-bg: rgba(227, 19, 55, 0.04); }
+/* Misskey — lime */
+.protocol-page-misskey { --protocol-accent: #86b300; --protocol-bg: rgba(134, 179, 0, 0.04); }
+/* Pleroma — orange */
+.protocol-page-pleroma { --protocol-accent: #fba740; --protocol-bg: rgba(251, 167, 64, 0.04); }
+/* Mirror — dark */
+.protocol-page-mirror { --protocol-accent: #222; --protocol-bg: rgba(34, 34, 34, 0.04); }
+/* Paragraph — violet */
+.protocol-page-paragraph { --protocol-accent: #6c5ce7; --protocol-bg: rgba(108, 92, 231, 0.04); }
+/* Ethereum — blue */
+.protocol-page-ethereum { --protocol-accent: #627eea; --protocol-bg: rgba(98, 126, 234, 0.04); }
+/* Solana — green */
+.protocol-page-solana { --protocol-accent: #14f195; --protocol-bg: rgba(20, 241, 149, 0.04); }
+
+/* ═══ ActivityPub Ecosystem Colors ════════════════════════════════════════════ */
+
+/* BookWyrm — warm amber */
+.protocol-page-bookwyrm { --protocol-accent: #d97706; --protocol-bg: rgba(217, 119, 6, 0.04); }
+/* Mobilizon — coral */
+.protocol-page-mobilizon { --protocol-accent: #f97316; --protocol-bg: rgba(249, 115, 22, 0.04); }
+/* Bonfire — rust */
+.protocol-page-bonfire { --protocol-accent: #c2410c; --protocol-bg: rgba(194, 65, 12, 0.04); }
+/* Mitra — teal */
+.protocol-page-mitra { --protocol-accent: #0d9488; --protocol-bg: rgba(13, 148, 136, 0.04); }
+/* Takahē — emerald */
+.protocol-page-takahe { --protocol-accent: #059669; --protocol-bg: rgba(5, 150, 105, 0.04); }
+/* Forgejo — light blue */
+.protocol-page-forgejo { --protocol-accent: #3b82f6; --protocol-bg: rgba(59, 130, 246, 0.04); }
+/* Owncast — pink */
+.protocol-page-owncast { --protocol-accent: #ec4899; --protocol-bg: rgba(236, 72, 153, 0.04); }
+/* Faircamp — cyan */
+.protocol-page-faircamp { --protocol-accent: #06b6d4; --protocol-bg: rgba(6, 182, 212, 0.04); }
+
+/* ═══ Federated Microblogging Colors ══════════════════════════════════════════ */
+
+/* Diaspora* — indigo */
+.protocol-page-diaspora { --protocol-accent: #4f46e5; --protocol-bg: rgba(79, 70, 229, 0.04); }
+/* Friendica — yellow */
+.protocol-page-friendica { --protocol-accent: #eab308; --protocol-bg: rgba(234, 179, 8, 0.04); }
+/* WriteFreely — muted blue */
+.protocol-page-writefreely { --protocol-accent: #60a5fa; --protocol-bg: rgba(96, 165, 250, 0.04); }
+/* Funkwhale — purple music */
+.protocol-page-funkwhale { --protocol-accent: #a855f7; --protocol-bg: rgba(168, 85, 247, 0.04); }
+/* Castopod — orange podcast */
+.protocol-page-castopod { --protocol-accent: #f97316; --protocol-bg: rgba(249, 115, 22, 0.04); }
+/* MediaGoblin — red */
+.protocol-page-mediagoblin { --protocol-accent: #dc2626; --protocol-bg: rgba(220, 38, 38, 0.04); }
+
+/* ═══ Blockchain Social Colors ════════════════════════════════════════════════ */
+
+/* DeSo — gold */
+.protocol-page-deso { --protocol-accent: #f59e0b; --protocol-bg: rgba(245, 158, 11, 0.04); }
+/* Steem — blue */
+.protocol-page-steem { --protocol-accent: #3b82f6; --protocol-bg: rgba(59, 130, 246, 0.04); }
+/* Subsocial — polkadot pink */
+.protocol-page-subsocial { --protocol-accent: #e6007a; --protocol-bg: rgba(230, 0, 122, 0.04); }
+/* Minds — blue */
+.protocol-page-minds { --protocol-accent: #3b82f6; --protocol-bg: rgba(59, 130, 246, 0.04); }
+/* Gab — dark */
+.protocol-page-gab { --protocol-accent: #333; --protocol-bg: rgba(51, 51, 51, 0.04); }
+/* CyberConnect — cyan */
+.protocol-page-cyberconnect { --protocol-accent: #22d3ee; --protocol-bg: rgba(34, 211, 238, 0.04); }
+/* Arena — avalanche red */
+.protocol-page-arena { --protocol-accent: #e84142; --protocol-bg: rgba(232, 65, 66, 0.04); }
+/* Orbis — purple */
+.protocol-page-orbis { --protocol-accent: #7c3aed; --protocol-bg: rgba(124, 58, 237, 0.04); }
+/* XMTP — indigo */
+.protocol-page-xmtp { --protocol-accent: #4338ca; --protocol-bg: rgba(67, 56, 202, 0.04); }
+/* Push — red */
+.protocol-page-push { --protocol-accent: #ef4444; --protocol-bg: rgba(239, 68, 68, 0.04); }
+/* Huddle01 — blue */
+.protocol-page-huddle01 { --protocol-accent: #2563eb; --protocol-bg: rgba(37, 99, 235, 0.04); }
+
+/* ═══ P2P / Privacy Colors ════════════════════════════════════════════════════ */
+
+/* Aether — teal */
+.protocol-page-aether { --protocol-accent: #14b8a6; --protocol-bg: rgba(20, 184, 166, 0.04); }
+/* Scuttlebutt — green */
+.protocol-page-scuttlebutt { --protocol-accent: #22c55e; --protocol-bg: rgba(34, 197, 94, 0.04); }
+/* Session — orange */
+.protocol-page-session { --protocol-accent: #f97316; --protocol-bg: rgba(249, 115, 22, 0.04); }
+/* Micro.blog — charcoal */
+.protocol-page-microblog { --protocol-accent: #374151; --protocol-bg: rgba(55, 65, 81, 0.04); }
+
+/* ═══ Data / Storage Colors ════════════════════════════════════════════════════ */
+
+/* Ceramic — blue gray */
+.protocol-page-ceramic { --protocol-accent: #64748b; --protocol-bg: rgba(100, 116, 139, 0.04); }
+/* Tableland — slate */
+.protocol-page-tableland { --protocol-accent: #475569; --protocol-bg: rgba(71, 85, 105, 0.04); }
+
+/* ═══ Legacy / Infra Colors ════════════════════════════════════════════════════ */
+
+/* DTube — red */
+.protocol-page-dtube { --protocol-accent: #e31337; --protocol-bg: rgba(227, 19, 55, 0.04); }
+/* LBRY/Odysee — gray */
+.protocol-page-lbry { --protocol-accent: #6b7280; --protocol-bg: rgba(107, 114, 128, 0.04); }
+/* Kbin — green */
+.protocol-page-kbin { --protocol-accent: #10b981; --protocol-bg: rgba(16, 185, 129, 0.04); }
+/* Tildes — blue */
+.protocol-page-tildes { --protocol-accent: #60a5fa; --protocol-bg: rgba(96, 165, 250, 0.04); }
+/* Ponder — slate */
+.protocol-page-ponder { --protocol-accent: #334155; --protocol-bg: rgba(51, 65, 85, 0.04); }
+/* Matrix — green */
+.protocol-page-matrix { --protocol-accent: #00c853; --protocol-bg: rgba(0, 200, 83, 0.04); }
 
 /* ═══ Protocol Feed Page Layout ═════════════════════════════════════════════ */
 

@@ -34,17 +34,43 @@ import { type Env, log } from '../index';
 import { readProviderCache, writeProviderCache } from './feed-cache';
 import { sanitizePosts } from './feed-enricher';
 
-export const DEFAULT_PROTOCOLS: Protocol[] = [
-  'rss',
-  'reddit',
-  'nostr',
-  'farcaster',
-  'lens',
-  'bluesky',
-  'mastodon',
-  'lemmy',
-  'ponder',
+// ─── Feed quality monitoring (dynamic import to avoid circular deps) ───
+let _qualityModule: typeof import('./feed-quality-monitor') | null = null;
+async function recordFetchQuality(env: Env, protocol: string, count: number): Promise<void> {
+  if (!_qualityModule) {
+    try { _qualityModule = await import('./feed-quality-monitor'); } catch { return; }
+  }
+  if (_qualityModule?.recordProtocolFetch) {
+    await _qualityModule.recordProtocolFetch(env, protocol, count).catch(() => {});
+  }
+}
+
+/**
+ * All 68+ supported protocols — the full canonical list used when
+ * no explicit protocol filter is specified.
+ */
+export const ALL_PROTOCOLS: Protocol[] = [
+  // ── Tier 1: Core Social ────────────────────────────────────
+  'nostr', 'farcaster', 'lens', 'bluesky', 'mastodon',
+  // ── Tier 2: Established ────────────────────────────────────
+  'lemmy', 'pixelfed', 'peertube', 'threads', 'zora',
+  'reddit', 'rss', 'mirror',
+  'hive', 'dtube', 'lbry', 'pleroma', 'misskey',
+  'writefreely', 'funkwhale', 'castopod', 'subsocial', 'steem',
+  // ── Tier 3: Niche / ActivityPub ────────────────────────────
+  'diaspora', 'friendica', 'mediagoblin',
+  'bookwyrm', 'mobilizon', 'bonfire', 'mitra', 'takahe', 'forgejo',
+  'owncast', 'minds', 'scuttlebutt', 'deso', 'session',
+  'cyberconnect', 'arena', 'microblog',
+  // ── Tier 4: Experimental ──────────────────────────────────
+  'gab', 'aether', 'faircamp', 'orbis', 'ceramic',
+  'audius', 'rarible',
+  // ── Tier 5: Infrastructure ────────────────────────────────
+  'xmtp', 'push', 'huddle01', 'tableland',
 ];
+
+/** Default protocols used when no explicit filter is provided */
+export const DEFAULT_PROTOCOLS: Protocol[] = ALL_PROTOCOLS;
 
 export const DEFAULT_TIMEOUT_MS = 6000;
 export const FEED_GENERATION_TIMEOUT_MS = 8000;
@@ -53,25 +79,70 @@ export const FEED_GENERATION_TIMEOUT_MS = 8000;
 // Aggressive timeouts for slow providers. RSS and ponder are the
 // worst offenders — they get 3s. Social protocols get more slack.
 export const PROVIDER_TIMEOUTS: Record<Protocol, number> = {
+  // ── Tier 1: Core Social (generous — API can be slow) ─────
   nostr: 8000,
   farcaster: 8000,
   lens: 8000,
   bluesky: 8000,
   mastodon: 6000,
+  // ── Tier 2: Established ──────────────────────────────────
   reddit: 5000,
   lemmy: 5000,
-  atproto: 8000,
-  zora: 8000,
-  telegram: 5000,
+  pixelfed: 5000,
   peertube: 5000,
-  rss: 3000, // RSS is slow — aggressive timeout
-  threads: 2000, // Threads is scraping — aggressive timeout (experimental)
+  threads: 2000, // Scraping-based — aggressive
+  zora: 8000,
+  rss: 3000, // Slow feed parser — aggressive
+  mirror: 5000,
+  hive: 5000,
+  dtube: 5000,
+  lbry: 5000,
+  pleroma: 4000,
+  misskey: 4000,
+  writefreely: 4000,
+  funkwhale: 4000,
+  castopod: 4000,
+  subsocial: 5000,
+  steem: 5000,
+  // ── ActivityPub + Niche ──────────────────────────────────
+  diaspora: 5000,
+  friendica: 5000,
+  mediagoblin: 5000,
+  bookwyrm: 5000,
+  mobilizon: 5000,
+  bonfire: 4000,
+  mitra: 4000,
+  takahe: 4000,
+  forgejo: 5000,
+  owncast: 4000,
+  minds: 5000,
+  scuttlebutt: 5000,
+  deso: 6000,
+  session: 5000,
+  cyberconnect: 5000,
+  arena: 5000,
+  microblog: 4000,
+  // ── Experimental ─────────────────────────────────────────
+  gab: 5000,
+  aether: 5000,
+  faircamp: 4000,
+  orbis: 5000,
+  ceramic: 5000,
+  audius: 5000,
+  rarible: 5000,
+  // ── Infrastructure ───────────────────────────────────────
+  xmtp: 4000,
+  push: 4000,
+  huddle01: 4000,
+  tableland: 4000,
+  // ── Legacy aliases ───────────────────────────────────────
+  atproto: 8000,
   youtube: 5000,
-  ponder: 3000, // Ponder is slow — aggressive timeout
-  ethereum: 8000, // On-chain data fetch
-  solana: 8000, // On-chain data fetch
-  kbin: 5000, // Fediverse — moderate timeout
-  tildes: 5000, // Link aggregator — moderate timeout
+  ponder: 3000,
+  ethereum: 8000,
+  solana: 8000,
+  kbin: 5000,
+  tildes: 5000,
   discord: 5000,
   matrix: 5000,
   webhook: 3000,
@@ -80,7 +151,6 @@ export const PROVIDER_TIMEOUTS: Record<Protocol, number> = {
   email: 5000,
   google: 5000,
   twitter: 5000,
-  mirror: 5000,
   paragraph: 5000,
 };
 
