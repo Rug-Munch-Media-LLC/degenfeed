@@ -12,6 +12,7 @@ import { RealtimeClientProvider } from '../components/RealtimeClientProvider';
 import { SolanaProvider } from '../components/SolanaProvider';
 import { ToastProvider } from '../components/Toast';
 import { Web3Provider } from '../components/Web3Provider';
+import { TelegramProvider } from '../lib/telegram-provider';
 
 const plusJakarta = Plus_Jakarta_Sans({
   subsets: ['latin'],
@@ -217,11 +218,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <ToastProvider>
               <AuthProvider>
                 <RealtimeClientProvider>
-                  <GlobalErrorBoundary>
-                    <main id="main-content">
-                      <ConditionalShell>{children}</ConditionalShell>
-                    </main>
-                  </GlobalErrorBoundary>
+                  <TelegramProvider>
+                    <GlobalErrorBoundary>
+                      <main id="main-content">
+                        <ConditionalShell>{children}</ConditionalShell>
+                      </main>
+                    </GlobalErrorBoundary>
+                  </TelegramProvider>
                 </RealtimeClientProvider>
               </AuthProvider>
             </ToastProvider>
