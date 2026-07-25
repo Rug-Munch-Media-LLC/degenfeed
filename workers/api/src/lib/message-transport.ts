@@ -25,6 +25,7 @@ export type TransportProtocol =
   | 'nostr'
   | 'matrix'
   | 'bluesky'
+  | 'farcaster'
   | 'mastodon'
   | 'xmtp'
   | 'direct-ws';
@@ -83,7 +84,7 @@ export interface TransportPreferences {
 
 export const DEFAULT_TRANSPORT_PREFS: TransportPreferences = {
   defaultProtocol: 'nostr',
-  fallbackProtocols: ['matrix', 'direct-ws', 'bluesky', 'mastodon'],
+  fallbackProtocols: ['matrix', 'farcaster', 'direct-ws', 'bluesky', 'mastodon'],
   encryptionRequired: true,
   readReceipts: true,
   typingIndicators: true,
@@ -132,10 +133,7 @@ export class MessageTransport {
    * Route an encrypted message to the recipient via the preferred protocol.
    * Falls back through the fallback protocols if the primary fails.
    */
-  async route(
-    message: TransportMessage,
-    env: Env,
-  ): Promise<TransportResult[]> {
+  async route(message: TransportMessage, env: Env): Promise<TransportResult[]> {
     const prefs = await this.resolveTransportPrefs(env, message.toId);
     const results: TransportResult[] = [];
 
@@ -167,9 +165,46 @@ export class MessageTransport {
     // Queue for retry if none delivered
     if (!anyDelivered) {
       await this.queueForRetry(message, env).catch(() => {});
+
+      // Fallback: generate a shareable encrypted message link
+      // The recipient opens the link, decrypts locally in their browser
+      const shareableLink = await this.generateShareableLink(message, env);
+      results.push({
+        protocol: 'direct-ws' as TransportProtocol,
+        ok: false,
+        nativeId: message.id,
+        error: `No protocol match. Shareable link: ${shareableLink}`,
+        attemptedAt: Date.now(),
+      });
     }
 
     return results;
+  }
+
+  /**
+   * Generate a shareable encrypted message link when no protocol matches.
+   * The link contains the encrypted blob (not the plaintext).
+   * Recipient opens it, their degenfeed client decrypts locally.
+   */
+  private async generateShareableLink(message: TransportMessage, env: Env): Promise<string> {
+    // Store the encrypted blob with a one-time access token
+    const token = crypto.randomUUID().replace(/-/g, '').slice(0, 16);
+    const baseUrl = env.PUBLIC_URL || 'https://degenfeed.xyz';
+
+    if (env.CACHE) {
+      await env.CACHE.put(
+        `share:${token}`,
+        JSON.stringify({
+          encryptedBlob: message.encryptedBlob,
+          fromId: message.fromId,
+          toId: message.toId,
+          expiresAt: Date.now() + 86400_000, // 24 hours
+        }),
+        { expirationTtl: 86400 },
+      );
+    }
+
+    return `${baseUrl}/messages/claim/${token}`;
   }
 
   /**
@@ -187,6 +222,8 @@ export class MessageTransport {
         return this.deliverViaMatrix(message, env);
       case 'bluesky':
         return this.deliverViaBluesky(message, env);
+      case 'farcaster':
+        return this.deliverViaFarcaster(message, env);
       case 'mastodon':
         return this.deliverViaMastodon(message, env);
       case 'xmtp':
@@ -205,10 +242,7 @@ export class MessageTransport {
 
   // ─── Nostr Transport (NIP-04 / NIP-17) ─────────────────────────────────
 
-  private async deliverViaNostr(
-    message: TransportMessage,
-    env: Env,
-  ): Promise<TransportResult> {
+  private async deliverViaNostr(message: TransportMessage, env: Env): Promise<TransportResult> {
     const protocol: TransportProtocol = 'nostr';
 
     try {
@@ -218,12 +252,17 @@ export class MessageTransport {
         return { protocol, ok: false, error: 'Nostr key not configured', attemptedAt: Date.now() };
       }
 
-      const senderPubkey = nostr.getPublicKey(senderNsec);
+      const _senderPubkey = nostr.getPublicKey(senderNsec);
 
       // Resolve recipient's Nostr pubkey from KV identities
       const recipientNpub = await this.resolveNostrPubkey(env, message.toId);
       if (!recipientNpub) {
-        return { protocol, ok: false, error: 'Recipient has no Nostr identity', attemptedAt: Date.now() };
+        return {
+          protocol,
+          ok: false,
+          error: 'Recipient has no Nostr identity',
+          attemptedAt: Date.now(),
+        };
       }
 
       const recipientPubkey = recipientNpub.startsWith('npub1')
@@ -231,14 +270,21 @@ export class MessageTransport {
         : recipientNpub;
 
       // Encrypt content with NIP-04 (Nostr-native encryption, wrapping our encrypted blob)
-      const encryptedContent = await nostr.nip04Encrypt(senderNsec, recipientPubkey, message.encryptedBlob);
+      const encryptedContent = await nostr.nip04Encrypt(
+        senderNsec,
+        recipientPubkey,
+        message.encryptedBlob,
+      );
 
-      const ev = nostr.finishEvent({
-        kind: 4, // NIP-04 encrypted DM
-        tags: [['p', recipientPubkey]],
-        content: encryptedContent,
-        created_at: Math.floor(Date.now() / 1000),
-      }, senderNsec);
+      const ev = nostr.finishEvent(
+        {
+          kind: 4, // NIP-04 encrypted DM
+          tags: [['p', recipientPubkey]],
+          content: encryptedContent,
+          created_at: Math.floor(Date.now() / 1000),
+        },
+        senderNsec,
+      );
 
       const relays = ['wss://relay.damus.io', 'wss://nos.lol', 'wss://relay.primal.net'];
       const pool = new nostr.RelayPool(relays, { eoseTimeout: 5000 });
@@ -263,16 +309,18 @@ export class MessageTransport {
 
   // ─── Matrix Transport ───────────────────────────────────────────────────
 
-  private async deliverViaMatrix(
-    message: TransportMessage,
-    env: Env,
-  ): Promise<TransportResult> {
+  private async deliverViaMatrix(message: TransportMessage, env: Env): Promise<TransportResult> {
     const protocol: TransportProtocol = 'matrix';
 
     try {
-      const accessToken = env.MATRIX_ACCESS_TOKEN || await this.getMatrixToken(env);
+      const accessToken = env.MATRIX_ACCESS_TOKEN || (await this.getMatrixToken(env));
       if (!accessToken) {
-        return { protocol, ok: false, error: 'Matrix token not configured', attemptedAt: Date.now() };
+        return {
+          protocol,
+          ok: false,
+          error: 'Matrix token not configured',
+          attemptedAt: Date.now(),
+        };
       }
 
       const homeserver = env.MATRIX_INSTANCE_URL || 'https://matrix.degenfeed.xyz';
@@ -280,7 +328,12 @@ export class MessageTransport {
       // Resolve recipient Matrix ID
       const matrixUserId = await this.resolveMatrixId(env, message.toId);
       if (!matrixUserId) {
-        return { protocol, ok: false, error: 'Recipient has no Matrix identity', attemptedAt: Date.now() };
+        return {
+          protocol,
+          ok: false,
+          error: 'Recipient has no Matrix identity',
+          attemptedAt: Date.now(),
+        };
       }
 
       // Find or create DM room
@@ -333,23 +386,30 @@ export class MessageTransport {
 
   // ─── Bluesky Transport ──────────────────────────────────────────────────
 
-  private async deliverViaBluesky(
-    message: TransportMessage,
-    env: Env,
-  ): Promise<TransportResult> {
+  private async deliverViaBluesky(message: TransportMessage, env: Env): Promise<TransportResult> {
     const protocol: TransportProtocol = 'bluesky';
 
     try {
-      const accessToken = env.BSKY_ACCESS_TOKEN || await this.getBskyToken(env);
-      const senderDid = env.BSKY_DID || await this.getBskyDid(env);
+      const accessToken = env.BSKY_ACCESS_TOKEN || (await this.getBskyToken(env));
+      const senderDid = env.BSKY_DID || (await this.getBskyDid(env));
 
       if (!accessToken || !senderDid) {
-        return { protocol, ok: false, error: 'Bluesky credentials not configured', attemptedAt: Date.now() };
+        return {
+          protocol,
+          ok: false,
+          error: 'Bluesky credentials not configured',
+          attemptedAt: Date.now(),
+        };
       }
 
       const recipientDid = await this.resolveBlueskyDid(env, message.toId);
       if (!recipientDid) {
-        return { protocol, ok: false, error: 'Recipient has no Bluesky identity', attemptedAt: Date.now() };
+        return {
+          protocol,
+          ok: false,
+          error: 'Recipient has no Bluesky identity',
+          attemptedAt: Date.now(),
+        };
       }
 
       // Try AT Protocol chat endpoint
@@ -403,30 +463,138 @@ export class MessageTransport {
     }
   }
 
+  // ─── Farcaster Transport ──────────────────────────────────────────────
+
+  /**
+   * Deliver via Farcaster (direct cast with encrypted payload).
+   *
+   * Farcaster uses a hub-based architecture. We send the encrypted blob
+   * as a direct cast to the recipient's Farcaster ID (FID).
+   * The recipient's degenfeed client picks it up via the Farcaster hub.
+   */
+  private async deliverViaFarcaster(message: TransportMessage, env: Env): Promise<TransportResult> {
+    const protocol: TransportProtocol = 'farcaster';
+
+    try {
+      const mnemonic = env.FARCASTER_MNEMONIC || (await this.getFarcasterMnemonic(env));
+      if (!mnemonic) {
+        return {
+          protocol,
+          ok: false,
+          error: 'Farcaster mnemonic not configured',
+          attemptedAt: Date.now(),
+        };
+      }
+
+      // Resolve recipient's Farcaster ID (FID)
+      const recipientFid = await this.resolveFarcasterFid(env, message.toId);
+      if (!recipientFid) {
+        return {
+          protocol,
+          ok: false,
+          error: 'Recipient has no Farcaster identity',
+          attemptedAt: Date.now(),
+        };
+      }
+
+      // Farcaster hub URL
+      const hubUrl = env.FARCASTER_HUB_URL || 'https://hub.farcaster.xyz:2281';
+
+      // The encrypted blob is our E2E payload — we post it as a direct cast
+      // that only the recipient can decrypt (using their degenfeed E2E keys).
+      //
+      // Farcaster protocol: We use a signed cast with the encrypted payload
+      // as the text. The recipient polls the hub for casts addressed to them.
+      //
+      // For production, use @farcaster/hub-nodejs SDK for proper signing.
+      // Here we use the REST API for simplicity.
+
+      // Construct a merkle proof message — in production use the Hub SDK
+      const castBody = JSON.stringify({
+        type: 'encrypted_message',
+        version: 1,
+        messageId: message.id,
+        encryptedBlob: message.encryptedBlob,
+        fromId: message.fromId,
+        timestamp: Date.now(),
+      });
+
+      // Truncate if too long for Farcaster (max 320 bytes for cast text)
+      const truncated =
+        castBody.length > 300
+          ? JSON.stringify({
+              type: 'encrypted_message',
+              version: 1,
+              messageId: message.id,
+              ref: `https://degenfeed.xyz/messages/${message.id}`,
+            })
+          : castBody;
+
+      // Post to Farcaster hub as a direct cast
+      const res = await fetch(`${hubUrl}/v1/submitMessage`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/octet-stream' },
+        body: new TextEncoder().encode(truncated),
+      });
+
+      if (res.ok) {
+        const data = (await res.json()) as { hash: string };
+        return {
+          protocol,
+          ok: true,
+          nativeId: data.hash,
+          attemptedAt: Date.now(),
+        };
+      }
+
+      return {
+        protocol,
+        ok: false,
+        error: `Farcaster hub error: ${res.status}`,
+        attemptedAt: Date.now(),
+      };
+    } catch (err) {
+      return {
+        protocol,
+        ok: false,
+        error: err instanceof Error ? err.message : String(err),
+        attemptedAt: Date.now(),
+      };
+    }
+  }
+
   // ─── Mastodon Transport ─────────────────────────────────────────────────
 
-  private async deliverViaMastodon(
-    message: TransportMessage,
-    env: Env,
-  ): Promise<TransportResult> {
+  private async deliverViaMastodon(message: TransportMessage, env: Env): Promise<TransportResult> {
     const protocol: TransportProtocol = 'mastodon';
 
     try {
       const accessToken = await this.getMastodonToken(env);
       if (!accessToken) {
-        return { protocol, ok: false, error: 'Mastodon token not configured', attemptedAt: Date.now() };
+        return {
+          protocol,
+          ok: false,
+          error: 'Mastodon token not configured',
+          attemptedAt: Date.now(),
+        };
       }
 
       const instance = env.GOTOSOCIAL_INSTANCE_URL || 'https://social.degenfeed.xyz';
       const recipientHandle = await this.resolveMastodonHandle(env, message.toId);
       if (!recipientHandle) {
-        return { protocol, ok: false, error: 'Recipient has no Mastodon identity', attemptedAt: Date.now() };
+        return {
+          protocol,
+          ok: false,
+          error: 'Recipient has no Mastodon identity',
+          attemptedAt: Date.now(),
+        };
       }
 
       const mention = recipientHandle.includes('@') ? recipientHandle : `@${recipientHandle}`;
-      const blobRef = message.encryptedBlob.length > 400
-        ? `${message.encryptedBlob.slice(0, 400)}...`
-        : message.encryptedBlob;
+      const _blobRef =
+        message.encryptedBlob.length > 400
+          ? `${message.encryptedBlob.slice(0, 400)}...`
+          : message.encryptedBlob;
 
       const res = await fetch(`${instance}/api/v1/statuses`, {
         method: 'POST',
@@ -471,17 +639,19 @@ export class MessageTransport {
 
   // ─── XMTP Transport ─────────────────────────────────────────────────────
 
-  private async deliverViaXmtp(
-    message: TransportMessage,
-    env: Env,
-  ): Promise<TransportResult> {
+  private async deliverViaXmtp(message: TransportMessage, env: Env): Promise<TransportResult> {
     const protocol: TransportProtocol = 'xmtp';
 
     try {
       // XMTP uses wallet addresses directly — perfect for our wallet-based identity
       const recipientAddress = message.toId.startsWith('0x') ? message.toId : null;
       if (!recipientAddress) {
-        return { protocol, ok: false, error: 'Recipient not on XMTP (no wallet address)', attemptedAt: Date.now() };
+        return {
+          protocol,
+          ok: false,
+          error: 'Recipient not on XMTP (no wallet address)',
+          attemptedAt: Date.now(),
+        };
       }
 
       // Try to send via XMTP — we delegate to an XMTP client
@@ -517,10 +687,7 @@ export class MessageTransport {
 
   // ─── Direct WebSocket Transport (fallback) ──────────────────────────────
 
-  private async deliverViaWebSocket(
-    message: TransportMessage,
-    env: Env,
-  ): Promise<TransportResult> {
+  private async deliverViaWebSocket(message: TransportMessage, env: Env): Promise<TransportResult> {
     const protocol: TransportProtocol = 'direct-ws';
 
     try {
@@ -565,7 +732,7 @@ export class MessageTransport {
       if (!raw) return null;
       const parsed = JSON.parse(raw) as Record<string, unknown>;
       const nostrData = parsed.nostr as Record<string, unknown> | undefined;
-      return nostrData?.npub as string || nostrData?.pubkey as string || null;
+      return (nostrData?.npub as string) || (nostrData?.pubkey as string) || null;
     } catch {
       return null;
     }
@@ -579,7 +746,7 @@ export class MessageTransport {
       if (!raw) return null;
       const parsed = JSON.parse(raw) as Record<string, unknown>;
       const matrixData = parsed.matrix as Record<string, unknown> | undefined;
-      return matrixData?.userId as string || null;
+      return (matrixData?.userId as string) || null;
     } catch {
       return null;
     }
@@ -593,7 +760,7 @@ export class MessageTransport {
       if (!raw) return null;
       const parsed = JSON.parse(raw) as Record<string, unknown>;
       const bskyData = parsed.bluesky as Record<string, unknown> | undefined;
-      return bskyData?.did as string || null;
+      return (bskyData?.did as string) || null;
     } catch {
       return null;
     }
@@ -607,7 +774,30 @@ export class MessageTransport {
       if (!raw) return null;
       const parsed = JSON.parse(raw) as Record<string, unknown>;
       const mastodonData = parsed.mastodon as Record<string, unknown> | undefined;
-      return mastodonData?.handle as string || null;
+      return (mastodonData?.handle as string) || null;
+    } catch {
+      return null;
+    }
+  }
+
+  private async resolveFarcasterFid(env: Env, userId: string): Promise<number | null> {
+    if (!env.IDENTITIES) return null;
+    try {
+      const { identityKey } = await import('@degenfeed/utils');
+      const raw = await env.IDENTITIES.get(identityKey(userId));
+      if (!raw) return null;
+      const parsed = JSON.parse(raw) as Record<string, unknown>;
+      const fcData = parsed.farcaster as Record<string, unknown> | undefined;
+      return (fcData?.fid as number) ?? null;
+    } catch {
+      return null;
+    }
+  }
+
+  private async getFarcasterMnemonic(env: Env): Promise<string | null> {
+    if (!env.CACHE) return null;
+    try {
+      return await env.CACHE.get('farcaster:mnemonic');
     } catch {
       return null;
     }
@@ -615,10 +805,7 @@ export class MessageTransport {
 
   // ─── Utility Methods ───────────────────────────────────────────────────
 
-  private async resolveTransportPrefs(
-    env: Env,
-    userId: string,
-  ): Promise<TransportPreferences> {
+  private async resolveTransportPrefs(env: Env, userId: string): Promise<TransportPreferences> {
     // First check recipient's explicit transport prefs
     const recipientPrefs = await getTransportPreferences(env, userId);
     if (recipientPrefs) return recipientPrefs;

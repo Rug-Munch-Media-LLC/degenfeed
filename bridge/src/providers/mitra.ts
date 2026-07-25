@@ -13,12 +13,9 @@
 
 import type { SchemaGuard, UnifiedPost } from '../server/types';
 
-const $fetch = globalThis.fetch;
+const _$fetch = globalThis.fetch;
 
-const MITRA_INSTANCES = [
-  'http://127.0.0.1:8100',
-  'https://public.mitra.social',
-];
+const MITRA_INSTANCES = ['http://127.0.0.1:8100', 'https://public.mitra.social'];
 
 interface MitraStatus {
   id: string;
@@ -39,7 +36,10 @@ interface MitraStatus {
 }
 
 function stripHtml(html: string): string {
-  return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+  return html
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 function guessMicropostNiches(text: string): string[] {
@@ -54,7 +54,7 @@ function guessMicropostNiches(text: string): string[] {
   return n;
 }
 
-function mitraStatusToPost(s: MitraStatus, instance: string): UnifiedPost {
+function mitraStatusToPost(s: MitraStatus, _instance: string): UnifiedPost {
   const text = stripHtml(s.content).slice(0, 2000);
   const tags = (s.tags || []).map((t) => t.name);
   return {
@@ -67,19 +67,37 @@ function mitraStatusToPost(s: MitraStatus, instance: string): UnifiedPost {
       displayName: s.account.display_name || s.account.username,
       bio: s.account.note ? stripHtml(s.account.note) : '',
       avatarUrl: s.account.avatar || '',
-      followerCount: 0, followingCount: 0, links: [], keys: {},
+      followerCount: 0,
+      followingCount: 0,
+      links: [],
+      keys: {},
     },
     text,
-    embeds: (s.media_attachments || []).map((m) => ({ kind: m.type as 'image' | 'video', url: m.url })),
+    embeds: (s.media_attachments || []).map((m) => ({
+      kind: m.type as 'image' | 'video',
+      url: m.url,
+    })),
     contentType: text.length > 500 ? 'article' : 'text',
     createdAt: new Date(s.created_at).getTime(),
-    metrics: { likes: s.favourites_count || 0, reposts: s.reblogs_count || 0, replies: s.replies_count || 0, quotes: 0 },
+    metrics: {
+      likes: s.favourites_count || 0,
+      reposts: s.reblogs_count || 0,
+      replies: s.replies_count || 0,
+      quotes: 0,
+    },
     engagement: {
-      viewerLiked: false, viewerReposted: false, viewerBookmarked: false,
-      raw: { likes: s.favourites_count || 0, reposts: s.reblogs_count || 0, replies: s.replies_count || 0, quotes: 0 },
+      viewerLiked: false,
+      viewerReposted: false,
+      viewerBookmarked: false,
+      raw: {
+        likes: s.favourites_count || 0,
+        reposts: s.reblogs_count || 0,
+        replies: s.replies_count || 0,
+        quotes: 0,
+      },
     },
     raw: s,
-    niches: guessMicropostNiches(text + ' ' + tags.join(' ')),
+    niches: guessMicropostNiches(`${text} ${tags.join(' ')}`),
   };
 }
 
@@ -90,7 +108,7 @@ async function fetchFromInstance(instance: string, limit: number): Promise<Unifi
       signal: AbortSignal.timeout(8000),
     });
     if (!res.ok) return [];
-    const data = await res.json() as MitraStatus[];
+    const data = (await res.json()) as MitraStatus[];
     if (!Array.isArray(data)) return [];
     return data.slice(0, limit).map((s) => mitraStatusToPost(s, instance));
   } catch {
@@ -114,7 +132,11 @@ export async function fetchMitraPosts(limit = 20): Promise<UnifiedPost[]> {
   for (const r of results) if (r.status === 'fulfilled') all.push(...r.value);
   const seen = new Set<string>();
   const deduped: UnifiedPost[] = [];
-  for (const p of all) if (!seen.has(p.id) && deduped.length < limit) { seen.add(p.id); deduped.push(p); }
+  for (const p of all)
+    if (!seen.has(p.id) && deduped.length < limit) {
+      seen.add(p.id);
+      deduped.push(p);
+    }
   console.log(`[bridge] Mitra: ${deduped.length} posts`);
   return deduped;
 }

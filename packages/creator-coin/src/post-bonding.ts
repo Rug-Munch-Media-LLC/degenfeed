@@ -9,14 +9,13 @@
  * - Leaderboard: top buyers, earliest buyers, biggest holders
  */
 
-import {
-  type Badge,
-  type BadgeType,
-  BONDING_PHASES,
-  type BondingPhaseInfo,
-  type LeaderboardEntry,
-  type PostBondingConfig,
-  type PostBondingStatus,
+import type {
+  Badge,
+  BadgeType,
+  BondingPhaseInfo,
+  LeaderboardEntry,
+  PostBondingConfig,
+  PostBondingStatus,
 } from './types';
 
 // ─── Constants ───────────────────────────────────────────────────────────
@@ -292,8 +291,8 @@ export interface TokenPageSection {
  */
 export function buildTokenPage(
   coinAddress: string,
-  coinName: string,
-  coinSymbol: string,
+  _coinName: string,
+  _coinSymbol: string,
   customUrl?: string,
 ): TokenPage {
   const baseUrl = customUrl ?? `${DEFAULT_TOKEN_PAGE_BASE}/${coinAddress}`;
@@ -379,7 +378,7 @@ export function calculateLeaderboard(
   });
 }
 
-function getLeaderboardBadge(rank: number, firstBuyTime: number): BadgeType | undefined {
+function getLeaderboardBadge(rank: number, _firstBuyTime: number): BadgeType | undefined {
   if (rank === 1) return 'legendary_whale';
   if (rank <= 3) return 'whale';
   if (rank <= 10) return 'top_10';
@@ -475,7 +474,7 @@ export function generateGraduationCertificate(
 export function determineBadges(
   isFirstBuyer: boolean,
   buyStreak: number,
-  tokensHeld: bigint,
+  _tokensHeld: bigint,
   rank: number,
   boughtEarly: boolean,
   heldThroughGraduation: boolean,

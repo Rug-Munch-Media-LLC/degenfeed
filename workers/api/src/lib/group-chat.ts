@@ -96,14 +96,14 @@ export interface GroupSummary {
 
 const GROUP_PREFIX = 'group:';
 const GROUP_META_PREFIX = 'group:meta:';
-const GROUP_MEMBER_PREFIX = 'group:members:';
+const _GROUP_MEMBER_PREFIX = 'group:members:';
 const GROUP_MESSAGES_PREFIX = 'group:messages:';
-const GROUP_SENDERKEY_PREFIX = 'group:sk:';
+const _GROUP_SENDERKEY_PREFIX = 'group:sk:';
 const GROUP_USER_INDEX_PREFIX = 'group:user:';
 
 const MAX_GROUP_SIZE = 100;
 const MAX_MESSAGE_HISTORY = 500;
-const GROUP_SENDER_KEY_BYTES = 32;
+const _GROUP_SENDER_KEY_BYTES = 32;
 
 // ─── Encryption Helpers ─────────────────────────────────────────────────────
 
@@ -131,11 +131,7 @@ function fromBase64Url(str: string): Uint8Array {
  * Generate a random sender key for a group.
  */
 async function generateSenderKey(): Promise<CryptoKey> {
-  return crypto.subtle.generateKey(
-    { name: 'AES-GCM', length: 256 },
-    true,
-    ['encrypt', 'decrypt'],
-  );
+  return crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt']);
 }
 
 /**
@@ -152,17 +148,15 @@ async function exportSenderKey(key: CryptoKey): Promise<string> {
 async function importSenderKey(keyStr: string): Promise<CryptoKey> {
   const raw = fromBase64Url(keyStr);
   return crypto.subtle.importKey('raw', raw, { name: 'AES-GCM', length: 256 }, false, [
-    'encrypt', 'decrypt',
+    'encrypt',
+    'decrypt',
   ]);
 }
 
 /**
  * Encrypt group content (name, description) using the group's AES key.
  */
-async function encryptGroupContent(
-  plaintext: string,
-  key: CryptoKey,
-): Promise<string> {
+async function encryptGroupContent(plaintext: string, key: CryptoKey): Promise<string> {
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const encoded = new TextEncoder().encode(plaintext);
   const encrypted = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, encoded);
@@ -175,10 +169,7 @@ async function encryptGroupContent(
 /**
  * Decrypt group content.
  */
-async function decryptGroupContent(
-  ciphertext: string,
-  key: CryptoKey,
-): Promise<string> {
+async function decryptGroupContent(ciphertext: string, key: CryptoKey): Promise<string> {
   const data = fromBase64Url(ciphertext);
   const iv = data.slice(0, 12);
   const encrypted = data.slice(12);
@@ -220,7 +211,7 @@ export async function createGroup(
   const encryptedDescription = await encryptGroupContent(description, contentKey);
 
   // Build member list with roles
-  const members: GroupMember[] = allMembers.map((addr, i) => ({
+  const members: GroupMember[] = allMembers.map((addr, _i) => ({
     walletAddress: addr.toLowerCase(),
     displayName: addr.slice(0, 10),
     joinedAt: Date.now(),
@@ -237,7 +228,12 @@ export async function createGroup(
   // Encrypt sender key for each member using their individual E2E session
   const senderKeys: Record<string, string> = {};
   for (const member of members) {
-    const encryptedKey = await encryptSenderKeyForMember(env, member.walletAddress, groupId, senderKeyStr);
+    const encryptedKey = await encryptSenderKeyForMember(
+      env,
+      member.walletAddress,
+      groupId,
+      senderKeyStr,
+    );
     if (encryptedKey) {
       senderKeys[member.walletAddress] = encryptedKey;
     }
@@ -269,7 +265,11 @@ export async function createGroup(
   });
 
   // Store content key for admin (encrypted with AUTH_SECRET)
-  const contentKeyEncrypted = await seal(env, await exportSenderKey(contentKey), `group-content:${groupId}`);
+  const contentKeyEncrypted = await seal(
+    env,
+    await exportSenderKey(contentKey),
+    `group-content:${groupId}`,
+  );
   await env.CACHE.put(`${GROUP_META_PREFIX}${groupId}:contentkey`, contentKeyEncrypted, {
     expirationTtl: 86400 * 365,
   });
@@ -288,7 +288,7 @@ export async function createGroup(
 export async function decryptGroupInfo(
   env: Env,
   groupId: string,
-  userId: string,
+  _userId: string,
 ): Promise<{
   name: string;
   description: string;
@@ -330,7 +330,7 @@ export async function decryptGroupInfo(
  */
 async function encryptSenderKeyForMember(
   env: Env,
-  memberId: string,
+  _memberId: string,
   groupId: string,
   senderKeyStr: string,
 ): Promise<string | null> {
@@ -375,7 +375,7 @@ export async function getGroupSenderKey(
 export async function rotateSenderKey(
   env: Env,
   groupId: string,
-  initiatedBy: string,
+  _initiatedBy: string,
 ): Promise<void> {
   if (!env.CACHE) return;
 
@@ -402,7 +402,12 @@ export async function rotateSenderKey(
   // Re-encrypt for each remaining member
   const newSenderKeys: Record<string, string> = {};
   for (const member of members) {
-    const encryptedKey = await encryptSenderKeyForMember(env, member.walletAddress, groupId, newKeyStr);
+    const encryptedKey = await encryptSenderKeyForMember(
+      env,
+      member.walletAddress,
+      groupId,
+      newKeyStr,
+    );
     if (encryptedKey) {
       newSenderKeys[member.walletAddress] = encryptedKey;
       member.senderKeyDelivered = false;
@@ -716,11 +721,7 @@ export async function getUserGroups(env: Env, userId: string): Promise<GroupSumm
 /**
  * Check if a user is a member of a group.
  */
-export async function isGroupMember(
-  env: Env,
-  groupId: string,
-  userId: string,
-): Promise<boolean> {
+export async function isGroupMember(env: Env, groupId: string, userId: string): Promise<boolean> {
   if (!env.CACHE) return false;
 
   try {
@@ -764,4 +765,4 @@ export async function markGroupRead(
   }
 }
 
-export { MAX_GROUP_SIZE, GROUP_PREFIX, GROUP_MESSAGES_PREFIX };
+export { GROUP_MESSAGES_PREFIX, GROUP_PREFIX, MAX_GROUP_SIZE };

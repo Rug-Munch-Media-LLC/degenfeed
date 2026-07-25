@@ -1,7 +1,5 @@
 'use client';
 
-import { getProtocolColor } from '@degenfeed/ui';
-
 export type SearchTab = 'top' | 'latest' | 'people' | 'communities' | 'videos';
 const PROTOCOL_FILTERS = [
   { id: 'nostr', label: 'Nostr', color: '#8e30eb' },
@@ -58,13 +56,10 @@ export function SearchFilters({
           <button
             key={pf.id}
             type="button"
-            onClick={() =>
-              onProtocolFilterChange(protocolFilter === pf.id ? null : pf.id)
-            }
+            onClick={() => onProtocolFilterChange(protocolFilter === pf.id ? null : pf.id)}
             className="rounded-full px-3 py-1 text-xs font-medium transition-colors"
             style={{
-              backgroundColor:
-                protocolFilter === pf.id ? `${pf.color}22` : 'var(--color-card)',
+              backgroundColor: protocolFilter === pf.id ? `${pf.color}22` : 'var(--color-card)',
               color: protocolFilter === pf.id ? pf.color : 'rgb(156,163,175)',
             }}
           >
@@ -75,13 +70,13 @@ export function SearchFilters({
 
       {/* Tabs */}
       <div className="mb-6 flex gap-1 rounded-xl bg-[var(--color-card)] p-1">
-        {([
+        {[
           { id: 'top' as const, label: 'Top' },
           { id: 'latest' as const, label: 'Latest' },
           { id: 'people' as const, label: 'People' },
           { id: 'communities' as const, label: 'Communities' },
           { id: 'videos' as const, label: 'Videos' },
-        ]).map((t) => (
+        ].map((t) => (
           <button
             key={t.id}
             type="button"

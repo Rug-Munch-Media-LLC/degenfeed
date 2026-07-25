@@ -35,9 +35,7 @@ unifiedVideoFeed.get('/', async (c) => {
     const sources = await getAvailableSources(c.env);
 
     // Filter by source if specified
-    const filteredSources = source !== 'all'
-      ? sources.filter((s) => s.id === source)
-      : sources;
+    const filteredSources = source !== 'all' ? sources.filter((s) => s.id === source) : sources;
 
     // Gather video items from all sources (parallel)
     const allItems = await gatherVideos(filteredSources, category, limit, cursor);
@@ -178,7 +176,7 @@ async function gatherVideos(
     // Import the video aggregator dynamically
     const { VideoAggregator } = await import('../feed/video-aggregator');
     // Temp env stub for type checking
-    const aggregator = new VideoAggregator({} as any);
+    const _aggregator = new VideoAggregator({} as any);
 
     const allVideos: FeedItem[] = [];
     const perSourceLimit = Math.max(3, Math.ceil(limit / sources.length));
@@ -452,24 +450,42 @@ function timeAgoLabel(timestamp: number): string {
 
 function getSourceLabel(sourceId: string): string {
   const labels: Record<string, string> = {
-    youtube: 'YouTube', twitch: 'Twitch', rumble: 'Rumble',
-    odysee: 'Odysee', dtube: 'DTube', peertube: 'PeerTube',
-    bitchute: 'BitChute', dailymotion: 'Dailymotion', vimeo: 'Vimeo',
-    kick: 'Kick', livetube: 'LiveTube',
-    nostr: 'Nostr Video', farcaster: 'Farcaster Video',
-    ipfs: 'IPFS Video', arweave: 'Arweave Video',
+    youtube: 'YouTube',
+    twitch: 'Twitch',
+    rumble: 'Rumble',
+    odysee: 'Odysee',
+    dtube: 'DTube',
+    peertube: 'PeerTube',
+    bitchute: 'BitChute',
+    dailymotion: 'Dailymotion',
+    vimeo: 'Vimeo',
+    kick: 'Kick',
+    livetube: 'LiveTube',
+    nostr: 'Nostr Video',
+    farcaster: 'Farcaster Video',
+    ipfs: 'IPFS Video',
+    arweave: 'Arweave Video',
   };
   return labels[sourceId] ?? sourceId;
 }
 
 function getSourceColor(sourceId: string): string {
   const colors: Record<string, string> = {
-    youtube: '#FF0000', twitch: '#9146FF', rumble: '#85C742',
-    odysee: '#FF6A00', dtube: '#FF0000', peertube: '#F1680D',
-    bitchute: '#8B0000', dailymotion: '#0066FF', vimeo: '#1AB7EA',
-    kick: '#53FC18', livetube: '#FF4500',
-    nostr: '#8B5CF6', farcaster: '#8A63D2',
-    ipfs: '#4FC3F7', arweave: '#9C27B0',
+    youtube: '#FF0000',
+    twitch: '#9146FF',
+    rumble: '#85C742',
+    odysee: '#FF6A00',
+    dtube: '#FF0000',
+    peertube: '#F1680D',
+    bitchute: '#8B0000',
+    dailymotion: '#0066FF',
+    vimeo: '#1AB7EA',
+    kick: '#53FC18',
+    livetube: '#FF4500',
+    nostr: '#8B5CF6',
+    farcaster: '#8A63D2',
+    ipfs: '#4FC3F7',
+    arweave: '#9C27B0',
   };
   return colors[sourceId] ?? '#888888';
 }

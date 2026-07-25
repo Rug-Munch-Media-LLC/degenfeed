@@ -27,7 +27,6 @@
  *  15. RSS GUID dedup (RSS standard)
  */
 
-import type { UnifiedPost } from '@degenfeed/types';
 import type { Env } from '../index';
 
 // ─── Types ────────────────────────────────────────────────────────────────
@@ -114,10 +113,10 @@ export interface SeenContentEntry {
 // ─── Constants ────────────────────────────────────────────────────────────
 
 const LEVENSHTEIN_SIMILARITY_THRESHOLD = 0.85;
-const FIRST_200_SIMILARITY_THRESHOLD = 0.8;
+const _FIRST_200_SIMILARITY_THRESHOLD = 0.8;
 const TIMESTAMP_PROXIMITY_MS = 5 * 60 * 1000; // 5 minutes
 const BLOOM_FILTER_KEY = 'dedup:bloom:v1';
-const CLUSTER_INDEX_KEY = 'dedup:clusters:index';
+const _CLUSTER_INDEX_KEY = 'dedup:clusters:index';
 const FINGERPRINT_PREFIX = 'dedup:fp:';
 const CLUSTER_PREFIX = 'dedup:cluster:';
 const CROSS_MAP_PREFIX = 'dedup:xmap:';
@@ -149,8 +148,18 @@ function normalizeUrl(url: string): string {
     const u = new URL(url.toLowerCase());
     // Remove tracking params
     const trackParams = [
-      'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content',
-      'fbclid', 'gclid', 'ref', 'source', 'si', 'mc_cid', 'mc_eid',
+      'utm_source',
+      'utm_medium',
+      'utm_campaign',
+      'utm_term',
+      'utm_content',
+      'fbclid',
+      'gclid',
+      'ref',
+      'source',
+      'si',
+      'mc_cid',
+      'mc_eid',
     ];
     for (const p of trackParams) u.searchParams.delete(p);
     // Normalize path
@@ -182,7 +191,10 @@ function levenshteinDistance(a: string, b: string): number {
 
   const prev: number[] = new Array(bn + 1);
   const curr: number[] = new Array(bn + 1);
-  for (let j = 0; j <= bn; j++) { prev[j] = j; curr[j] = 0; }
+  for (let j = 0; j <= bn; j++) {
+    prev[j] = j;
+    curr[j] = 0;
+  }
 
   for (let i = 1; i <= an; i++) {
     curr[0] = i;
@@ -209,7 +221,7 @@ function normalizedLevenshteinSim(a: string, b: string): number {
 
 // ─── Jaccard similarity for word-set comparison ──────────────────────────
 
-function wordSet(text: string): Set<string> {
+function _wordSet(text: string): Set<string> {
   return new Set(
     normalizeText(text)
       .split(/\s+/)
@@ -217,7 +229,7 @@ function wordSet(text: string): Set<string> {
   );
 }
 
-function jaccardSimilarity(a: Set<string>, b: Set<string>): number {
+function _jaccardSimilarity(a: Set<string>, b: Set<string>): number {
   if (a.size === 0 || b.size === 0) return 0;
   let intersection = 0;
   const smaller = a.size < b.size ? a : b;
@@ -243,14 +255,20 @@ function imagePerceptualFingerprint(embedUrls: string[]): string | null {
       const ext = path.split('.').pop()?.toLowerCase() || '';
       if (!imageExts.has(ext)) continue;
 
-      const name = path.split('/').pop()?.replace(/\.[^.]+$/, '') || '';
+      const name =
+        path
+          .split('/')
+          .pop()
+          ?.replace(/\.[^.]+$/, '') || '';
       const strippedName = name
         .replace(/[-_]?(small|thumb|tiny|medium|large|original|full|resize|crop)[-_]?/gi, '')
         .replace(/[_-]?\d+x\d+[_-]?/gi, '');
 
-      fingerprints.push(strippedName.length > 3
-        ? `phash:${strippedName.toLowerCase()}`
-        : `phash:${u.hostname}${path.toLowerCase()}`);
+      fingerprints.push(
+        strippedName.length > 3
+          ? `phash:${strippedName.toLowerCase()}`
+          : `phash:${u.hostname}${path.toLowerCase()}`,
+      );
     } catch {
       fingerprints.push(`phash:${url}`);
     }
@@ -313,7 +331,7 @@ interface CrossProtocolMap {
 }
 
 function inferCrossProtocolId(
-  protocol: string,
+  _protocol: string,
   text: string,
 ): Array<{ targetProtocol: string; targetId: string; confidence: number }> {
   const results: Array<{ targetProtocol: string; targetId: string; confidence: number }> = [];
@@ -349,7 +367,11 @@ function inferCrossProtocolId(
       if (u.hostname.includes('mastodon') || u.hostname.includes('social')) {
         const statusMatch = u.pathname.match(/\/@\w+\/(\d+)/);
         if (statusMatch) {
-          results.push({ targetProtocol: 'mastodon', targetId: statusMatch[1] ?? '', confidence: 0.8 });
+          results.push({
+            targetProtocol: 'mastodon',
+            targetId: statusMatch[1] ?? '',
+            confidence: 0.8,
+          });
         }
       }
       // YouTube video links
@@ -361,7 +383,11 @@ function inferCrossProtocolId(
       if (u.hostname.includes('peertube') || u.hostname.includes('video.degenfeed')) {
         const watchMatch = u.pathname.match(/\/w\/(\w+)/);
         if (watchMatch) {
-          results.push({ targetProtocol: 'peertube', targetId: watchMatch[1] ?? '', confidence: 0.8 });
+          results.push({
+            targetProtocol: 'peertube',
+            targetId: watchMatch[1] ?? '',
+            confidence: 0.8,
+          });
         }
       }
     } catch {
@@ -548,7 +574,7 @@ export class GlobalDedupRegistry {
   private async layerOgMetadata(
     ogTitle?: string,
     ogDescription?: string,
-    ogImage?: string,
+    _ogImage?: string,
   ): Promise<DedupResult | null> {
     const metaText = [ogTitle, ogDescription].filter(Boolean).join(' ').trim();
     if (metaText.length < 10) return null;
@@ -608,7 +634,7 @@ export class GlobalDedupRegistry {
    */
   private async layerThreadDetection(
     rootId?: string,
-    parentId?: string,
+    _parentId?: string,
   ): Promise<DedupResult | null> {
     // If this is part of a thread, flag as dupe of the thread root
     if (rootId) {
@@ -685,10 +711,7 @@ export class GlobalDedupRegistry {
   /**
    * Look up a fingerprint by its dedup hash.
    */
-  private async lookupByHash(
-    hash: string,
-    method: string,
-  ): Promise<DedupResult | null> {
+  private async lookupByHash(hash: string, method: string): Promise<DedupResult | null> {
     if (!this.env.DEDUP) return null;
 
     try {
@@ -707,8 +730,8 @@ export class GlobalDedupRegistry {
             copyCount: cluster.copyCount,
             protocols: cluster.protocols,
             canonicalReference: {
-              protocol: cluster.copies[0]!.sourceProtocol,
-              id: cluster.copies[0]!.sourceId,
+              protocol: cluster.copies[0]?.sourceProtocol,
+              id: cluster.copies[0]?.sourceId,
             },
           };
         }
@@ -730,15 +753,20 @@ export class GlobalDedupRegistry {
   /**
    * Look up a cross-protocol mapping.
    */
-  private async lookupCrossProtocolMap(
-    key: string,
-  ): Promise<{ clusterId: string; copyCount: number; protocols: string[]; canonicalReference: { protocol: string; id: string } } | null> {
+  private async lookupCrossProtocolMap(key: string): Promise<{
+    clusterId: string;
+    copyCount: number;
+    protocols: string[];
+    canonicalReference: { protocol: string; id: string };
+  } | null> {
     if (!this.env.DEDUP) return null;
     try {
       const raw = await this.env.DEDUP.get(`${CROSS_MAP_PREFIX}${key}`);
       if (raw) {
         const map = JSON.parse(raw) as CrossProtocolMap;
-        const clusterRaw = await this.env.DEDUP.get(`${CLUSTER_PREFIX}${map.targetProtocol}:${map.targetId}`);
+        const clusterRaw = await this.env.DEDUP.get(
+          `${CLUSTER_PREFIX}${map.targetProtocol}:${map.targetId}`,
+        );
         if (clusterRaw) {
           const cluster = JSON.parse(clusterRaw) as DedupCluster;
           return {
@@ -746,8 +774,8 @@ export class GlobalDedupRegistry {
             copyCount: cluster.copyCount,
             protocols: cluster.protocols,
             canonicalReference: {
-              protocol: cluster.copies[0]!.sourceProtocol,
-              id: cluster.copies[0]!.sourceId,
+              protocol: cluster.copies[0]?.sourceProtocol,
+              id: cluster.copies[0]?.sourceId,
             },
           };
         }
@@ -808,7 +836,10 @@ export class GlobalDedupRegistry {
 
     const urls = req.url
       ? [normalizeUrl(req.url)]
-      : extractEmbedUrls(req.text ?? '', req.embedUrls?.map((u) => ({ url: u })));
+      : extractEmbedUrls(
+          req.text ?? '',
+          req.embedUrls?.map((u) => ({ url: u })),
+        );
 
     // Run all layers in parallel, return first positive hit
     const layers: Array<Promise<DedupResult | null>> = [
@@ -845,7 +876,7 @@ export class GlobalDedupRegistry {
 
     const results = await Promise.all(layers);
     for (const result of results) {
-      if (result && result.isDuplicate) {
+      if (result?.isDuplicate) {
         this.requestCache.set(cacheKey, result);
         return result;
       }
@@ -874,7 +905,10 @@ export class GlobalDedupRegistry {
     const titleHash = req.title ? await sha256Hex(`title:${normalizeTitle(req.title)}`) : '';
     const urls = req.url
       ? [normalizeUrl(req.url)]
-      : extractEmbedUrls(text, req.embedUrls?.map((u) => ({ url: u })));
+      : extractEmbedUrls(
+          text,
+          req.embedUrls?.map((u) => ({ url: u })),
+        );
 
     const urlHashes: string[] = [];
     for (const url of urls) {
@@ -886,7 +920,14 @@ export class GlobalDedupRegistry {
       .map((u) => {
         try {
           const parsed = new URL(u);
-          const socialDomains = ['twitter.com', 'x.com', 'bsky.app', 'warpcast.com', 'nostr.', 't.co'];
+          const socialDomains = [
+            'twitter.com',
+            'x.com',
+            'bsky.app',
+            'warpcast.com',
+            'nostr.',
+            't.co',
+          ];
           if (socialDomains.some((d) => parsed.hostname.includes(d))) return null;
           return parsed.origin + parsed.pathname.replace(/\/$/, '');
         } catch {
@@ -895,9 +936,10 @@ export class GlobalDedupRegistry {
       })
       .find(Boolean);
     const uniqueComponents = [contentHash, titleHash, canonicalUrl].filter(Boolean);
-    const uniqueHash = uniqueComponents.length > 0
-      ? await sha256Hex(uniqueComponents.join('|'))
-      : await sha256Hex(`${req.protocol}:${req.sourceId}`);
+    const uniqueHash =
+      uniqueComponents.length > 0
+        ? await sha256Hex(uniqueComponents.join('|'))
+        : await sha256Hex(`${req.protocol}:${req.sourceId}`);
 
     if (!this.env.DEDUP) {
       return { clusterId: uniqueHash, isNew: true };
@@ -972,11 +1014,9 @@ export class GlobalDedupRegistry {
       );
 
       // Store cluster
-      await this.env.DEDUP.put(
-        `${CLUSTER_PREFIX}${clusterId}`,
-        JSON.stringify(cluster),
-        { expirationTtl: 60 * 60 * 24 * 90 },
-      );
+      await this.env.DEDUP.put(`${CLUSTER_PREFIX}${clusterId}`, JSON.stringify(cluster), {
+        expirationTtl: 60 * 60 * 24 * 90,
+      });
 
       // Store cross-protocol mappings
       if (text) {
@@ -1032,9 +1072,7 @@ export class GlobalDedupRegistry {
       // Update author's recent entries
       if (req.authorId) {
         const authorRaw = await this.env.DEDUP.get(`dedup:author:${req.authorId}`);
-        const authorEntries: DedupFingerprint[] = authorRaw
-          ? JSON.parse(authorRaw)
-          : [];
+        const authorEntries: DedupFingerprint[] = authorRaw ? JSON.parse(authorRaw) : [];
         authorEntries.push(fingerprint);
         // Keep last 100
         while (authorEntries.length > 100) authorEntries.shift();

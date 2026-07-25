@@ -63,7 +63,7 @@ export const RATE_LIMIT = {
 export const FEED = {
   DEFAULT_LIMIT: 50,
   MAX_LIMIT: 200,
-  CACHE_TTL_SECONDS: 300,      // 5 min default
+  CACHE_TTL_SECONDS: 300, // 5 min default
   TRENDING_CACHE_TTL_SECONDS: 15,
   FEED_GENERATION_TIMEOUT_MS: 15_000,
   MAX_POST_BODY_BYTES: 1_048_576, // 1MB
@@ -204,11 +204,7 @@ export const CATEGORIES = [
 
 // ─── CSRF Exempt Paths (prefixes) ─────────────────────────────────
 
-export const CSRF_EXEMPT_PATHS = [
-  '/api/tip/frame/',
-  '/api/blink/tip',
-  '/api/x402/verify',
-] as const;
+export const CSRF_EXEMPT_PATHS = ['/api/tip/frame/', '/api/blink/tip', '/api/x402/verify'] as const;
 
 // ─── CSRF Skip Prefixes (auth routes use their own nonce-based protection) ─
 

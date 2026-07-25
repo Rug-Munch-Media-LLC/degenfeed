@@ -11,7 +11,7 @@
  *   - Analytics: plays, subscribers, tips
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../../../components/AuthProvider';
 import { useWeb3 } from '../../../components/Web3Provider';
 
@@ -236,7 +236,14 @@ export default function CreatorPodcastPage() {
       const data = (await res.json()) as { episode: PodcastEpisode };
       setEpisodes((prev) => [data.episode, ...prev]);
       setShowAddEpisode(false);
-      setNewEpisode({ title: '', description: '', audioUrl: '', duration: 0, episodeNumber: undefined, status: 'draft' });
+      setNewEpisode({
+        title: '',
+        description: '',
+        audioUrl: '',
+        duration: 0,
+        episodeNumber: undefined,
+        status: 'draft',
+      });
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to add episode');
     }
@@ -272,9 +279,7 @@ export default function CreatorPodcastPage() {
       if (!res.ok) throw new Error('Failed to publish episode');
       setEpisodes((prev) =>
         prev.map((ep) =>
-          ep.id === episodeId
-            ? { ...ep, status: 'published', publishedAt: Date.now() }
-            : ep,
+          ep.id === episodeId ? { ...ep, status: 'published', publishedAt: Date.now() } : ep,
         ),
       );
     } catch (err) {
@@ -413,8 +418,10 @@ export default function CreatorPodcastPage() {
                   <div>
                     <h2 className="text-lg font-bold">{selectedPodcast.title}</h2>
                     <p className="text-xs text-[var(--color-text-tertiary)]">
-                      {selectedPodcast.episodeCount} episodes · {formatPlays(selectedPodcast.totalPlays)} total plays
-                      {selectedPodcast.subscriberCount > 0 && ` · ${selectedPodcast.subscriberCount} subscribers`}
+                      {selectedPodcast.episodeCount} episodes ·{' '}
+                      {formatPlays(selectedPodcast.totalPlays)} total plays
+                      {selectedPodcast.subscriberCount > 0 &&
+                        ` · ${selectedPodcast.subscriberCount} subscribers`}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -441,7 +448,9 @@ export default function CreatorPodcastPage() {
                 <div className="mb-4 grid grid-cols-3 gap-3">
                   <div className="rounded-xl border border-[var(--color-border)] p-3">
                     <p className="text-xs text-[var(--color-text-tertiary)]">Total Plays</p>
-                    <p className="mt-1 text-2xl font-bold">{formatPlays(selectedPodcast.totalPlays)}</p>
+                    <p className="mt-1 text-2xl font-bold">
+                      {formatPlays(selectedPodcast.totalPlays)}
+                    </p>
                   </div>
                   <div className="rounded-xl border border-[var(--color-border)] p-3">
                     <p className="text-xs text-[var(--color-text-tertiary)]">Subscribers</p>
@@ -686,7 +695,9 @@ export default function CreatorPodcastPage() {
                   <input
                     type="number"
                     value={newEpisode.duration || ''}
-                    onChange={(e) => setNewEpisode((ep) => ({ ...ep, duration: Number(e.target.value) }))}
+                    onChange={(e) =>
+                      setNewEpisode((ep) => ({ ...ep, duration: Number(e.target.value) }))
+                    }
                     placeholder="3600"
                     className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-secondary)] px-4 py-3 text-sm outline-none focus:border-[var(--color-accent)]"
                   />
@@ -698,7 +709,12 @@ export default function CreatorPodcastPage() {
                   <input
                     type="number"
                     value={newEpisode.episodeNumber || ''}
-                    onChange={(e) => setNewEpisode((ep) => ({ ...ep, episodeNumber: Number(e.target.value) || undefined }))}
+                    onChange={(e) =>
+                      setNewEpisode((ep) => ({
+                        ...ep,
+                        episodeNumber: Number(e.target.value) || undefined,
+                      }))
+                    }
                     placeholder="1"
                     className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-secondary)] px-4 py-3 text-sm outline-none focus:border-[var(--color-accent)]"
                   />
@@ -767,7 +783,9 @@ export default function CreatorPodcastPage() {
                 <div>
                   <p className="font-semibold">{showEditEpisode.title}</p>
                   <p className="text-xs text-[var(--color-text-tertiary)]">
-                    {showEditEpisode.status.toUpperCase()} · {formatDuration(showEditEpisode.duration)} · {formatPlays(showEditEpisode.plays)} plays
+                    {showEditEpisode.status.toUpperCase()} ·{' '}
+                    {formatDuration(showEditEpisode.duration)} ·{' '}
+                    {formatPlays(showEditEpisode.plays)} plays
                   </p>
                 </div>
               </div>
@@ -790,7 +808,9 @@ export default function CreatorPodcastPage() {
                 </div>
                 <div className="rounded-xl border border-[var(--color-border)] p-3 text-center">
                   <p className="text-xs text-[var(--color-text-tertiary)]">Unique Listeners</p>
-                  <p className="text-lg font-bold">{formatPlays(showEditEpisode.uniqueListeners)}</p>
+                  <p className="text-lg font-bold">
+                    {formatPlays(showEditEpisode.uniqueListeners)}
+                  </p>
                 </div>
                 <div className="rounded-xl border border-[var(--color-border)] p-3 text-center">
                   <p className="text-xs text-[var(--color-text-tertiary)]">Tips Received</p>

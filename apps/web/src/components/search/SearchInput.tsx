@@ -1,7 +1,7 @@
 'use client';
 
 import { getProtocolColor } from '@degenfeed/ui';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 
 export interface AutocompleteSuggestion {
   text: string;
@@ -78,7 +78,9 @@ export function SearchInput({
 
   return (
     <div className="relative">
-      <label htmlFor="search-input" className="sr-only">Search</label>
+      <label htmlFor="search-input" className="sr-only">
+        Search
+      </label>
       <input
         ref={inputRef}
         id="search-input"

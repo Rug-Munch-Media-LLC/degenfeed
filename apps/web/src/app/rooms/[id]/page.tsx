@@ -88,12 +88,17 @@ function formatTime(ts: number): string {
   if (sameDay) {
     return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   }
-  return d.toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  return d.toLocaleDateString([], {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 }
 
 function shortId(id: string): string {
-  if (id.startsWith('0x')) return id.slice(0, 6) + '…' + id.slice(-4);
-  if (id.length > 12) return id.slice(0, 6) + '…';
+  if (id.startsWith('0x')) return `${id.slice(0, 6)}…${id.slice(-4)}`;
+  if (id.length > 12) return `${id.slice(0, 6)}…`;
   return id;
 }
 
@@ -136,13 +141,7 @@ function ProtocolIcon({ protocol }: { protocol: string }) {
 
 // ─── Member Row ─────────────────────────────────────────────────────────────
 
-function MemberRow({
-  member,
-  isMe,
-}: {
-  member: RoomMember;
-  isMe: boolean;
-}) {
+function MemberRow({ member, isMe }: { member: RoomMember; isMe: boolean }) {
   const transportConfig = TRANSPORT_CONFIG[member.transport] || TRANSPORT_CONFIG.web;
   const joinedDate = new Date(member.joinedAt).toLocaleDateString();
 
@@ -166,15 +165,11 @@ function MemberRow({
               you
             </span>
           )}
-          {member.role === 'admin' && (
-            <span className="text-[9px] text-yellow-400">&#9733;</span>
-          )}
+          {member.role === 'admin' && <span className="text-[9px] text-yellow-400">&#9733;</span>}
         </div>
         <div className="flex items-center gap-2 mt-0.5">
           <TransportBadge transport={member.transport} />
-          <span className="text-[9px] text-degen-400/50">
-            Joined {joinedDate}
-          </span>
+          <span className="text-[9px] text-degen-400/50">Joined {joinedDate}</span>
         </div>
       </div>
     </div>
@@ -183,19 +178,11 @@ function MemberRow({
 
 // ─── Message Bubble ─────────────────────────────────────────────────────────
 
-function MessageBubble({
-  message,
-  isMe,
-}: {
-  message: RoomMessage;
-  isMe: boolean;
-}) {
+function MessageBubble({ message, isMe }: { message: RoomMessage; isMe: boolean }) {
   const sourceConfig = TRANSPORT_CONFIG[message.sourceTransport] || TRANSPORT_CONFIG.web;
 
   // Check delivery status
-  const deliveryInfo = message.deliveryStatus
-    ? Object.values(message.deliveryStatus)
-    : [];
+  const deliveryInfo = message.deliveryStatus ? Object.values(message.deliveryStatus) : [];
 
   const failedCount = deliveryInfo.filter((d) => !d.ok && d.error !== 'pending').length;
 
@@ -203,9 +190,7 @@ function MessageBubble({
     <div className={`flex ${isMe ? 'justify-end' : 'justify-start'} mb-3`}>
       <div
         className={`max-w-[80%] min-w-[120px] rounded-2xl px-3 py-2 ${
-          isMe
-            ? 'bg-degen-500/15 rounded-br-sm'
-            : 'bg-degen-600/10 rounded-bl-sm'
+          isMe ? 'bg-degen-500/15 rounded-br-sm' : 'bg-degen-600/10 rounded-bl-sm'
         }`}
       >
         {/* Sender name (not me) */}
@@ -219,9 +204,7 @@ function MessageBubble({
         )}
 
         {/* Message content */}
-        <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
-          {message.content}
-        </p>
+        <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{message.content}</p>
 
         {/* Delivery status and time */}
         <div className="flex items-center justify-end gap-1.5 mt-1">
@@ -234,9 +217,7 @@ function MessageBubble({
           </span>
 
           {/* Time */}
-          <span className="text-[9px] text-degen-400/40">
-            {formatTime(message.createdAt)}
-          </span>
+          <span className="text-[9px] text-degen-400/40">{formatTime(message.createdAt)}</span>
 
           {/* Delivery status */}
           {isMe && failedCount > 0 && (
@@ -318,9 +299,7 @@ function InviteModal({
           onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
         />
 
-        {error && (
-          <p className="text-[11px] text-red-400 mt-2">{error}</p>
-        )}
+        {error && <p className="text-[11px] text-red-400 mt-2">{error}</p>}
 
         <div className="flex gap-2 mt-4">
           <button
@@ -458,7 +437,7 @@ export default function RoomPage() {
   // ── Scroll to bottom on new messages ──────────────────────────
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, []);
 
   // ── Poll for new messages ─────────────────────────────────────
   useEffect(() => {
@@ -503,7 +482,16 @@ export default function RoomPage() {
         throw new Error(err.error || 'Send failed');
       }
 
-      const data = (await res.json()) as { messageId: string; createdAt: number; deliveryStatus: Array<{ memberId: string; transport: RoomTransport; ok: boolean; error?: string }> };
+      const data = (await res.json()) as {
+        messageId: string;
+        createdAt: number;
+        deliveryStatus: Array<{
+          memberId: string;
+          transport: RoomTransport;
+          ok: boolean;
+          error?: string;
+        }>;
+      };
 
       // Build delivery status map
       const deliveryStatus: Record<string, MemberDeliveryStatus> = {};
@@ -539,37 +527,43 @@ export default function RoomPage() {
   }, [composeText, sending, roomId, myTransport, myId, room]);
 
   // ── Invite ───────────────────────────────────────────────────
-  const handleInvite = useCallback(async (target: string) => {
-    setInviting(true);
-    try {
-      const res = await fetch(`/api/rooms/unified/${roomId}/invite`, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ target }),
-      });
+  const handleInvite = useCallback(
+    async (target: string) => {
+      setInviting(true);
+      try {
+        const res = await fetch(`/api/rooms/unified/${roomId}/invite`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ target }),
+        });
 
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: 'Invite failed' }));
-        throw new Error(err.error || 'Invite failed');
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({ error: 'Invite failed' }));
+          throw new Error(err.error || 'Invite failed');
+        }
+      } finally {
+        setInviting(false);
       }
-    } finally {
-      setInviting(false);
-    }
-  }, [roomId]);
+    },
+    [roomId],
+  );
 
   // ── Update transport ─────────────────────────────────────────
-  const handleTransportChange = useCallback(async (transport: RoomTransport) => {
-    setMyTransport(transport);
-    try {
-      await fetch(`/api/rooms/unified/${roomId}/transport`, {
-        method: 'PUT',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ transport }),
-      });
-    } catch {
-      // Best-effort
-    }
-  }, [roomId]);
+  const handleTransportChange = useCallback(
+    async (transport: RoomTransport) => {
+      setMyTransport(transport);
+      try {
+        await fetch(`/api/rooms/unified/${roomId}/transport`, {
+          method: 'PUT',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ transport }),
+        });
+      } catch {
+        // Best-effort
+      }
+    },
+    [roomId],
+  );
 
   // ── Leave room ──────────────────────────────────────────────
   const handleLeave = useCallback(async () => {
@@ -634,7 +628,13 @@ export default function RoomPage() {
             aria-label="Back to messages"
           >
             <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
-              <path d="M12 4l-6 6 6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              <path
+                d="M12 4l-6 6 6 6"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
           </button>
 
@@ -656,8 +656,18 @@ export default function RoomPage() {
             <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
               <circle cx="7" cy="6" r="2.5" stroke="currentColor" strokeWidth="1.3" />
               <circle cx="14" cy="6" r="2.5" stroke="currentColor" strokeWidth="1.3" />
-              <path d="M2 16c0-2.5 2-4.5 5-4.5s5 2 5 4.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-              <path d="M12 16c0-2.5 2-4.5 5-4.5s5 2 5 4.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+              <path
+                d="M2 16c0-2.5 2-4.5 5-4.5s5 2 5 4.5"
+                stroke="currentColor"
+                strokeWidth="1.3"
+                strokeLinecap="round"
+              />
+              <path
+                d="M12 16c0-2.5 2-4.5 5-4.5s5 2 5 4.5"
+                stroke="currentColor"
+                strokeWidth="1.3"
+                strokeLinecap="round"
+              />
             </svg>
             {room.memberCount > 0 && (
               <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-degen-400 text-black text-[7px] font-bold flex items-center justify-center">
@@ -674,7 +684,12 @@ export default function RoomPage() {
           >
             <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
               <circle cx="10" cy="10" r="7.5" stroke="currentColor" strokeWidth="1.3" />
-              <path d="M10 6.5v7M6.5 10h7" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+              <path
+                d="M10 6.5v7M6.5 10h7"
+                stroke="currentColor"
+                strokeWidth="1.3"
+                strokeLinecap="round"
+              />
             </svg>
           </button>
 
@@ -685,8 +700,19 @@ export default function RoomPage() {
             aria-label="Leave room"
           >
             <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
-              <path d="M8 3h8a1 1 0 011 1v12a1 1 0 01-1 1H8" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-              <path d="M12 10H3m0 0l3-3m-3 3l3 3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+              <path
+                d="M8 3h8a1 1 0 011 1v12a1 1 0 01-1 1H8"
+                stroke="currentColor"
+                strokeWidth="1.3"
+                strokeLinecap="round"
+              />
+              <path
+                d="M12 10H3m0 0l3-3m-3 3l3 3"
+                stroke="currentColor"
+                strokeWidth="1.3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
           </button>
         </div>
@@ -717,11 +743,7 @@ export default function RoomPage() {
               </div>
             ) : (
               messages.map((msg) => (
-                <MessageBubble
-                  key={msg.id}
-                  message={msg}
-                  isMe={msg.fromId === myId}
-                />
+                <MessageBubble key={msg.id} message={msg} isMe={msg.fromId === myId} />
               ))
             )}
             <div ref={messagesEndRef} />
@@ -776,11 +798,7 @@ export default function RoomPage() {
 
               <div className="space-y-1">
                 {room.members.map((member) => (
-                  <MemberRow
-                    key={member.id}
-                    member={member}
-                    isMe={member.id === myId}
-                  />
+                  <MemberRow key={member.id} member={member} isMe={member.id === myId} />
                 ))}
               </div>
             </div>
@@ -816,17 +834,18 @@ export default function RoomPage() {
                   className="p-1 rounded hover:bg-degen-800"
                 >
                   <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
-                    <path d="M5 5l10 10M15 5l-10 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                    <path
+                      d="M5 5l10 10M15 5l-10 10"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                    />
                   </svg>
                 </button>
               </div>
               <div className="space-y-1">
                 {room.members.map((member) => (
-                  <MemberRow
-                    key={member.id}
-                    member={member}
-                    isMe={member.id === myId}
-                  />
+                  <MemberRow key={member.id} member={member} isMe={member.id === myId} />
                 ))}
               </div>
             </div>

@@ -27,12 +27,9 @@ export function EmptyFeed({ onFollow, onFilter, className = '' }: EmptyFeedProps
       <h3 className="mb-1.5 text-lg font-semibold" style={{ color: 'var(--color-fg)' }}>
         Nothing here yet
       </h3>
-      <p
-        className="mb-6 max-w-xs text-sm leading-relaxed"
-        style={{ color: 'var(--color-muted)' }}
-      >
-        This feed is as empty as a memecoin&apos;s roadmap. Try following some creators or
-        expanding your filters to discover content from across the decentralized web.
+      <p className="mb-6 max-w-xs text-sm leading-relaxed" style={{ color: 'var(--color-muted)' }}>
+        This feed is as empty as a memecoin&apos;s roadmap. Try following some creators or expanding
+        your filters to discover content from across the decentralized web.
       </p>
       <div className="flex flex-wrap items-center justify-center gap-3">
         {onFollow && (
@@ -105,11 +102,7 @@ function StatusDot({ status }: { status: ProtocolStatus['status'] }) {
   );
 }
 
-export function NetworkError({
-  onRetry,
-  protocols,
-  className = '',
-}: NetworkErrorProps) {
+export function NetworkError({ onRetry, protocols, className = '' }: NetworkErrorProps) {
   const items = protocols ?? DEFAULT_PROTOCOLS;
   return (
     <div
@@ -133,12 +126,9 @@ export function NetworkError({
       <p className="mb-1 text-sm" style={{ color: 'var(--color-muted)' }}>
         Your decentralized feed is reconnecting...
       </p>
-      <p
-        className="mb-6 max-w-xs text-xs leading-relaxed"
-        style={{ color: 'var(--color-muted)' }}
-      >
-        The web3 social graph is peer-to-peer, but sometimes relays need a nudge. Hang tight
-        while we re-establish your connections.
+      <p className="mb-6 max-w-xs text-xs leading-relaxed" style={{ color: 'var(--color-muted)' }}>
+        The web3 social graph is peer-to-peer, but sometimes relays need a nudge. Hang tight while
+        we re-establish your connections.
       </p>
 
       {/* Protocol status indicators */}
@@ -146,7 +136,10 @@ export function NetworkError({
         className="mb-6 w-full max-w-xs rounded-xl border p-3"
         style={{ borderColor: 'var(--color-glass-border)', backgroundColor: 'var(--color-card)' }}
       >
-        <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--color-muted)' }}>
+        <p
+          className="mb-2 text-[10px] font-semibold uppercase tracking-wider"
+          style={{ color: 'var(--color-muted)' }}
+        >
           Protocol Status
         </p>
         <div className="space-y-1.5">
@@ -191,8 +184,7 @@ export function NotFound({ onGoHome, className = '' }: NotFoundProps) {
       <div
         className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full"
         style={{
-          background:
-            'linear-gradient(135deg, var(--color-accent-secondary-glow), transparent)',
+          background: 'linear-gradient(135deg, var(--color-accent-secondary-glow), transparent)',
         }}
       >
         <span className="text-4xl" aria-hidden="true">
@@ -208,12 +200,8 @@ export function NotFound({ onGoHome, className = '' }: NotFoundProps) {
       <h2 className="mb-2 text-lg font-semibold" style={{ color: 'var(--color-fg)' }}>
         This page doesn&apos;t exist... yet.
       </h2>
-      <p
-        className="mb-6 max-w-sm text-sm leading-relaxed"
-        style={{ color: 'var(--color-muted)' }}
-      >
-        Maybe it&apos;s being decentralized on-chain right now?{' '}
-        <span aria-hidden="true">⛓️✨</span>
+      <p className="mb-6 max-w-sm text-sm leading-relaxed" style={{ color: 'var(--color-muted)' }}>
+        Maybe it&apos;s being decentralized on-chain right now? <span aria-hidden="true">⛓️✨</span>
         <br />
         Try checking the IPFS hash or coming back after the next block.
       </p>
@@ -227,17 +215,11 @@ export function NotFound({ onGoHome, className = '' }: NotFoundProps) {
             ← Back to Feed
           </Link>
         )}
-        <Link
-          href="/search"
-          className="btn-secondary text-sm"
-        >
+        <Link href="/search" className="btn-secondary text-sm">
           🔍 Search
         </Link>
       </div>
-      <p
-        className="mt-6 text-[10px]"
-        style={{ color: 'var(--color-muted)' }}
-      >
+      <p className="mt-6 text-[10px]" style={{ color: 'var(--color-muted)' }}>
         Error code: 0x{Math.random().toString(16).slice(2, 10)}
       </p>
     </div>
@@ -252,11 +234,7 @@ export interface UnauthorizedProps {
   className?: string;
 }
 
-export function Unauthorized({
-  onConnect,
-  userName,
-  className = '',
-}: UnauthorizedProps) {
+export function Unauthorized({ onConnect, userName, className = '' }: UnauthorizedProps) {
   return (
     <div
       className={`flex flex-col items-center justify-center px-6 py-16 text-center ${className}`}
@@ -279,8 +257,8 @@ export function Unauthorized({
             Hey {userName}, sign in to continue
           </h3>
           <p className="mb-6 max-w-xs text-sm" style={{ color: 'var(--color-muted)' }}>
-            Connect a protocol to access this feature. We support Nostr, Farcaster, Lens,
-            Bluesky, and more.
+            Connect a protocol to access this feature. We support Nostr, Farcaster, Lens, Bluesky,
+            and more.
           </p>
         </>
       ) : (
@@ -288,15 +266,18 @@ export function Unauthorized({
           <h3 className="mb-1 text-lg font-semibold" style={{ color: 'var(--color-fg)' }}>
             Connect your wallet
           </h3>
-          <p className="mb-2 max-w-xs text-sm leading-relaxed" style={{ color: 'var(--color-muted)' }}>
+          <p
+            className="mb-2 max-w-xs text-sm leading-relaxed"
+            style={{ color: 'var(--color-muted)' }}
+          >
             No email. No password. Just crypto.
           </p>
           <p
             className="mb-6 max-w-xs text-xs leading-relaxed"
             style={{ color: 'var(--color-muted)' }}
           >
-            Your wallet is your identity here. Sign with one click — no personal info
-            required, no data harvested, no tracking.
+            Your wallet is your identity here. Sign with one click — no personal info required, no
+            data harvested, no tracking.
           </p>
         </>
       )}

@@ -53,7 +53,7 @@ function signatureKey(address: string): string {
   return `delete:signature:${address.toLowerCase()}`;
 }
 
-function notifyPrefsKey(address: string): string {
+function _notifyPrefsKey(address: string): string {
   return `notify:prefs:${address.toLowerCase()}`;
 }
 
@@ -228,7 +228,8 @@ export async function handleAccountDelete(request: Request, env: Env): Promise<R
   return noCacheJsonResponse({
     deleted: false,
     pending: true,
-    message: 'Your account deletion has been scheduled. You have 30 days to cancel or reactivate. A wallet signature confirmation is required before final deletion.',
+    message:
+      'Your account deletion has been scheduled. You have 30 days to cancel or reactivate. A wallet signature confirmation is required before final deletion.',
     recoverableUntil,
     cancelEndpoint: 'POST /api/account/delete/cancel',
     reactivateEndpoint: 'POST /api/account/delete/reactivate',
@@ -484,7 +485,9 @@ export async function processPendingDeletions(
               expirationTtl: 365 * 24 * 60 * 60,
             });
             log('info', 'Deletion certificate issued', { certId });
-          } catch { /* non-critical */ }
+          } catch {
+            /* non-critical */
+          }
           // Remove the pending marker
           await env.CACHE.delete(key.name).catch(() => {});
           // Remove rate limit
@@ -706,7 +709,6 @@ async function extractWalletFromApiKey(request: Request, _env: Env): Promise<str
   return null;
 }
 
-
 // ─── POST /api/account/delete/reactivate — Reactivate account ─────
 
 export async function handleReactivateAccount(request: Request, env: Env): Promise<Response> {
@@ -765,8 +767,7 @@ export async function handleReactivateAccount(request: Request, env: Env): Promi
 
   return noCacheJsonResponse({
     reactivated: true,
-    message:
-      'Your account has been reactivated. All data has been preserved. Welcome back!',
+    message: 'Your account has been reactivated. All data has been preserved. Welcome back!',
     recoveredWithDaysRemaining: Math.ceil((pending.expiresAt - now) / (24 * 60 * 60 * 1000)),
   });
 }
@@ -792,7 +793,7 @@ export async function handleConfirmDeleteSignature(request: Request, env: Env): 
 
   let body: { signature?: string; message?: string; chain?: string };
   try {
-    body = await request.json() as { signature?: string; message?: string; chain?: string };
+    body = (await request.json()) as { signature?: string; message?: string; chain?: string };
   } catch {
     return jsonResponse({ error: 'Invalid JSON body. Required: signature, message' }, 400);
   }
@@ -827,7 +828,10 @@ export async function handleConfirmDeleteSignature(request: Request, env: Env): 
     await storeAuditLog(walletAddress, Date.now(), auditRecord, env);
 
     return jsonResponse(
-      { error: 'Signature verification failed. You must sign with the wallet that owns this account.' },
+      {
+        error:
+          'Signature verification failed. You must sign with the wallet that owns this account.',
+      },
       401,
     );
   }
@@ -884,7 +888,14 @@ export async function handleDeleteChecklist(request: Request, env: Env): Promise
     },
     {
       category: 'Platform Accounts',
-      keys: ['account:{wallet}', 'nostr:{wallet}', 'farcaster:{wallet}', 'lens:{wallet}', 'bluesky:{wallet}', 'mastodon:{wallet}'],
+      keys: [
+        'account:{wallet}',
+        'nostr:{wallet}',
+        'farcaster:{wallet}',
+        'lens:{wallet}',
+        'bluesky:{wallet}',
+        'mastodon:{wallet}',
+      ],
       description: 'All connected protocol account records',
       willBeRemoved: !!env.PLATFORM_ACCOUNTS,
     },

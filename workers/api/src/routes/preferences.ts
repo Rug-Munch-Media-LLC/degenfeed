@@ -192,20 +192,20 @@ function sanitizeMessagingPrefs(input: unknown): StoredPreferences['messaging'] 
   if (typeof input !== 'object' || input === null) return { ...def };
   const raw = input as Record<string, unknown>;
   return {
-    defaultProtocol: typeof raw.defaultProtocol === 'string' ? raw.defaultProtocol : def.defaultProtocol,
+    defaultProtocol:
+      typeof raw.defaultProtocol === 'string' ? raw.defaultProtocol : def.defaultProtocol,
     fallbackProtocols: Array.isArray(raw.fallbackProtocols)
       ? raw.fallbackProtocols.filter((p): p is string => typeof p === 'string')
       : def.fallbackProtocols,
-    encryptionRequired: typeof raw.encryptionRequired === 'boolean'
-      ? raw.encryptionRequired
-      : def.encryptionRequired,
+    encryptionRequired:
+      typeof raw.encryptionRequired === 'boolean' ? raw.encryptionRequired : def.encryptionRequired,
     readReceipts: typeof raw.readReceipts === 'boolean' ? raw.readReceipts : def.readReceipts,
-    typingIndicators: typeof raw.typingIndicators === 'boolean'
-      ? raw.typingIndicators
-      : def.typingIndicators,
-    disappearingTimer: typeof raw.disappearingTimer === 'number'
-      ? Math.max(0, Math.min(10080, raw.disappearingTimer))
-      : def.disappearingTimer,
+    typingIndicators:
+      typeof raw.typingIndicators === 'boolean' ? raw.typingIndicators : def.typingIndicators,
+    disappearingTimer:
+      typeof raw.disappearingTimer === 'number'
+        ? Math.max(0, Math.min(10080, raw.disappearingTimer))
+        : def.disappearingTimer,
   };
 }
 

@@ -25,8 +25,8 @@ const COIN_HOLDERS_PREFIX = 'coin:holders:';
 const COIN_TRADES_PREFIX = 'coin:trades:';
 const COIN_REVENUE_PREFIX = 'coin:revenue:';
 const COIN_GATED_POSTS_PREFIX = 'coin:gated-posts:';
-const TTL_1H = 3600;
-const TTL_24H = 86400;
+const _TTL_1H = 3600;
+const _TTL_24H = 86400;
 
 // ─── Helpers ─────────────────────────────────────────────────────────────
 

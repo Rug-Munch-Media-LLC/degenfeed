@@ -13,7 +13,7 @@
  */
 
 import { NICHE_KEYWORDS } from '@degenfeed/feed-core';
-import type { AggregatedStory, StoryCluster } from './news-aggregator';
+import type { AggregatedStory } from './news-aggregator';
 
 // ─── Category Hierarchy ──────────────────────────────────────────────────
 
@@ -483,7 +483,7 @@ export interface ClassificationResult {
 
 // ─── TF-IDF-like Term Frequency Scoring ───────────────────────────────
 
-const TERM_FREQUENCY_CACHE = new Map<string, Map<string, number>>();
+const _TERM_FREQUENCY_CACHE = new Map<string, Map<string, number>>();
 
 function buildTermFrequency(text: string): Map<string, number> {
   const lower = text.toLowerCase();

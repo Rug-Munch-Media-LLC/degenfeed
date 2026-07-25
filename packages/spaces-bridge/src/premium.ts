@@ -40,7 +40,10 @@ export async function checkTokenGate(
   try {
     // Use the existing token-gate package
     const { checkTokenGate: checkGate } = await import('@degenfeed/token-gate');
-    const chainMap: Record<string, 'ethereum' | 'base' | 'polygon' | 'solana' | 'arbitrum' | 'optimism'> = {
+    const chainMap: Record<
+      string,
+      'ethereum' | 'base' | 'polygon' | 'solana' | 'arbitrum' | 'optimism'
+    > = {
       1: 'ethereum',
       8453: 'base',
       137: 'polygon',

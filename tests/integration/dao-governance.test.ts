@@ -7,13 +7,15 @@
  *
  * Pure functions tested directly. KV-dependent functions tested with mocks.
  */
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 // ─── Quadratic Voting (pure math) ─────────────────────────────────────
 
 describe('DAO Governance — Quadratic Voting Engine', () => {
   it('calculates voting power as floor(sqrt(balance))', async () => {
-    const { calculateQuadraticVotingPower } = await import('../../workers/api/src/lib/quadratic-voting');
+    const { calculateQuadraticVotingPower } = await import(
+      '../../workers/api/src/lib/quadratic-voting'
+    );
 
     // sqrt(0) = 0 → returns 0 (zero balance = no power)
     expect(calculateQuadraticVotingPower(0)).toBe(0);
@@ -30,7 +32,9 @@ describe('DAO Governance — Quadratic Voting Engine', () => {
   });
 
   it('calculates relative voting power when totalSupply is provided', async () => {
-    const { calculateQuadraticVotingPower } = await import('../../workers/api/src/lib/quadratic-voting');
+    const { calculateQuadraticVotingPower } = await import(
+      '../../workers/api/src/lib/quadratic-voting'
+    );
 
     // 1000 out of 10000 → 10% → relative = 1000 → sqrt = 31
     const power = calculateQuadraticVotingPower(1000, 10000);
@@ -38,7 +42,9 @@ describe('DAO Governance — Quadratic Voting Engine', () => {
   });
 
   it('calculates quadratic vote cost: cost = votes² * creditPerToken', async () => {
-    const { calculateQuadraticVoteCost } = await import('../../workers/api/src/lib/quadratic-voting');
+    const { calculateQuadraticVoteCost } = await import(
+      '../../workers/api/src/lib/quadratic-voting'
+    );
 
     expect(calculateQuadraticVoteCost(0)).toBe(0);
     expect(calculateQuadraticVoteCost(1)).toBe(1); // 1² × 1
@@ -67,7 +73,7 @@ describe('DAO Governance — Quadratic Voting Engine', () => {
 
     expect(allocations).toHaveLength(2);
     // Option A gets more votes than B
-    expect(allocations[0]!.votes).toBeGreaterThanOrEqual(allocations[1]!.votes);
+    expect(allocations[0]?.votes).toBeGreaterThanOrEqual(allocations[1]?.votes);
     // Total cost should not exceed credits
     const totalCost = allocations.reduce((s, a) => s + a.cost, 0);
     expect(totalCost).toBeLessThanOrEqual(100);
@@ -89,10 +95,10 @@ describe('DAO Governance — Quadratic Voting Engine', () => {
 
     const { results, ranked } = tallyQuadraticVotes(allocations);
     // opt_a: sqrt(10+5) = sqrt(15) = 3, opt_b: sqrt(3) = 1
-    expect(results['opt_a']).toBe(3);
-    expect(results['opt_b']).toBe(1);
-    expect(ranked[0]!.optionId).toBe('opt_a');
-    expect(ranked[0]!.isWinner).toBe(true);
+    expect(results.opt_a).toBe(3);
+    expect(results.opt_b).toBe(1);
+    expect(ranked[0]?.optionId).toBe('opt_a');
+    expect(ranked[0]?.isWinner).toBe(true);
   });
 
   it('previews vote distribution without recording', async () => {
@@ -135,7 +141,9 @@ describe('DAO Governance — Participation Reputation', () => {
   });
 
   it('calculates inactivity decay (5% per full month)', async () => {
-    const { computeDecay, MONTH_MS } = await import('../../workers/api/src/lib/participation-reputation');
+    const { computeDecay, MONTH_MS } = await import(
+      '../../workers/api/src/lib/participation-reputation'
+    );
 
     const now = Date.now();
     const record = {
@@ -156,7 +164,9 @@ describe('DAO Governance — Participation Reputation', () => {
   });
 
   it('returns zero decay for recent activity', async () => {
-    const { computeDecay, MONTH_MS } = await import('../../workers/api/src/lib/participation-reputation');
+    const { computeDecay, MONTH_MS } = await import(
+      '../../workers/api/src/lib/participation-reputation'
+    );
 
     const record = {
       total: 500,
@@ -202,14 +212,16 @@ describe('DAO Governance — Participation Reputation', () => {
 
     const result = await awardReputation(env, 'user_0x123', 'vote_cast', 'dao_abc');
     expect(result).not.toBeNull();
-    expect(result!.total).toBeGreaterThan(0);
-    expect(result!.level).toBeDefined();
-    expect(result!.history.length).toBe(1);
-    expect(result!.history[0]!.action).toBe('vote_cast');
+    expect(result?.total).toBeGreaterThan(0);
+    expect(result?.level).toBeDefined();
+    expect(result?.history.length).toBe(1);
+    expect(result?.history[0]?.action).toBe('vote_cast');
   });
 
   it('applies consecutive vote bonus after 5+ votes', async () => {
-    const { awardReputation, CONSECUTIVE_PROPOSAL_THRESHOLD } = await import('../../workers/api/src/lib/participation-reputation');
+    const { awardReputation, CONSECUTIVE_PROPOSAL_THRESHOLD } = await import(
+      '../../workers/api/src/lib/participation-reputation'
+    );
 
     const kvStore = new Map<string, string>();
     const env = {
@@ -242,7 +254,7 @@ describe('DAO Governance — Participation Reputation', () => {
 describe('DAO Governance — Proposal Lifecycle', () => {
   it('computes failed status when quorum not met', async () => {
     const kvStore = new Map<string, string>();
-    const mockEnv = {
+    const _mockEnv = {
       GOVERNANCE: {
         get: vi.fn(async (key: string) => {
           const val = kvStore.get(key);
@@ -274,7 +286,11 @@ describe('DAO Governance — Proposal Lifecycle', () => {
     // Import and call computeFinalStatus indirectly
     // We test the logic directly instead: quorum = 10% of 100 = 10 voters needed
     // 0 votes → quorum not met → failed
-    const voteRecord = { votes: [], totals: { for: 0, against: 0, abstain: 0 }, totalPowerParticipated: 0 };
+    const voteRecord = {
+      votes: [],
+      totals: { for: 0, against: 0, abstain: 0 },
+      totalPowerParticipated: 0,
+    };
     const memberCount = 100;
     const quorumPercent = 10;
     const quorumThreshold = Math.ceil((memberCount * quorumPercent) / 100);
@@ -378,7 +394,7 @@ describe('DAO Governance — Member Management', () => {
 
   it('tracks member leave correctly', () => {
     const members = ['0xalice', '0xbob', '0xcharlie'];
-    const updated = members.filter(m => m !== '0xbob');
+    const updated = members.filter((m) => m !== '0xbob');
     expect(updated).toEqual(['0xalice', '0xcharlie']);
   });
 
@@ -391,7 +407,7 @@ describe('DAO Governance — Member Management', () => {
 
   it('prevents creator from leaving', () => {
     const creator = '0xcreator';
-    const members = [creator, '0xbob'];
+    const _members = [creator, '0xbob'];
     const leaving = creator;
     const isCreator = creator === leaving;
     expect(isCreator).toBe(true);
@@ -413,7 +429,8 @@ describe('DAO Governance — Proposal Validation', () => {
 
   it('accepts valid proposal', () => {
     const title = 'Valid Proposal Title';
-    const description = 'A sufficiently long description that meets the minimum length requirement.';
+    const description =
+      'A sufficiently long description that meets the minimum length requirement.';
     expect(title.length >= 4).toBe(true);
     expect(description.length >= 20).toBe(true);
   });

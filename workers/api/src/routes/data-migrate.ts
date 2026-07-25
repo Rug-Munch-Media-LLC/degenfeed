@@ -22,9 +22,9 @@
  */
 
 import type { Env } from '../index';
-import { requireSession } from '../session';
-import { ok, badRequest, notFound, serverError, conflict } from '../response-helpers';
 import { log } from '../index';
+import { badRequest, conflict, ok, serverError } from '../response-helpers';
+import { requireSession } from '../session';
 
 // ─── Types ────────────────────────────────────────────────────
 
@@ -82,7 +82,9 @@ async function storeJob(env: Env, job: MigrationJob): Promise<void> {
     await store.put(migrationIndexKey(job.wallet), JSON.stringify(idx.slice(0, 50)), {
       expirationTtl: 7 * 86400,
     });
-  } catch { /* non-critical */ }
+  } catch {
+    /* non-critical */
+  }
 }
 
 async function getJob(env: Env, wallet: string, jobId: string): Promise<MigrationJob | null> {
@@ -90,7 +92,9 @@ async function getJob(env: Env, wallet: string, jobId: string): Promise<Migratio
   try {
     const raw = await env.CACHE.get(migrationKey(wallet, jobId));
     return raw ? (JSON.parse(raw) as MigrationJob) : null;
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 }
 
 async function listJobs(env: Env, wallet: string): Promise<MigrationJob[]> {
@@ -105,7 +109,9 @@ async function listJobs(env: Env, wallet: string): Promise<MigrationJob[]> {
       if (job) jobs.push(job);
     }
     return jobs;
-  } catch { return []; }
+  } catch {
+    return [];
+  }
 }
 
 async function acquireLock(env: Env, wallet: string, platform: string): Promise<boolean> {
@@ -115,12 +121,18 @@ async function acquireLock(env: Env, wallet: string, platform: string): Promise<
     if (existing) return false;
     await env.CACHE.put(migrationLockKey(wallet, platform), '1', { expirationTtl: 300 }); // 5 min lock
     return true;
-  } catch { return true; }
+  } catch {
+    return true;
+  }
 }
 
 async function releaseLock(env: Env, wallet: string, platform: string): Promise<void> {
   if (!env.CACHE) return;
-  try { await env.CACHE.delete(migrationLockKey(wallet, platform)); } catch { /* ignore */ }
+  try {
+    await env.CACHE.delete(migrationLockKey(wallet, platform));
+  } catch {
+    /* ignore */
+  }
 }
 
 // ─── Import Handlers ──────────────────────────────────────────
@@ -139,7 +151,10 @@ export async function handleImportTwitter(request: Request, env: Env): Promise<R
         full_text?: string;
         text?: string;
         created_at?: string;
-        entities?: { hashtags?: Array<{ text: string }>; urls?: Array<{ url: string; expanded_url?: string }> };
+        entities?: {
+          hashtags?: Array<{ text: string }>;
+          urls?: Array<{ url: string; expanded_url?: string }>;
+        };
         extended_entities?: { media?: Array<{ media_url_https?: string; type?: string }> };
       }>;
       archive?: Array<Record<string, unknown>>;
@@ -155,15 +170,24 @@ export async function handleImportTwitter(request: Request, env: Env): Promise<R
     for (const tweetRaw of tweets.slice(0, 500)) {
       try {
         const tweet = tweetRaw as Record<string, unknown>;
-        const tweetId = (tweet.id as string) || (tweet.tweet_id as string) || `twitter-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+        const tweetId =
+          (tweet.id as string) ||
+          (tweet.tweet_id as string) ||
+          `twitter-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
         const text = (tweet.full_text as string) || (tweet.text as string) || '';
         if (!text) continue;
 
-        const createdAt = tweet.created_at ? new Date(tweet.created_at as string).getTime() : Date.now();
+        const createdAt = tweet.created_at
+          ? new Date(tweet.created_at as string).getTime()
+          : Date.now();
         const entities = tweet.entities as Record<string, unknown> | undefined;
-        const hashtags = (entities?.hashtags as Array<{ text: string }> | undefined)?.map((h) => h.text) || [];
+        const hashtags =
+          (entities?.hashtags as Array<{ text: string }> | undefined)?.map((h) => h.text) || [];
         const extEntities = tweet.extended_entities as Record<string, unknown> | undefined;
-        const mediaUrls = (extEntities?.media as Array<{ media_url_https?: string }> | undefined)?.map((m) => m.media_url_https).filter(Boolean) || [];
+        const mediaUrls =
+          (extEntities?.media as Array<{ media_url_https?: string }> | undefined)
+            ?.map((m) => m.media_url_https)
+            .filter(Boolean) || [];
 
         const contentId = `import-tw-${tweetId}`;
         const record = {
@@ -171,11 +195,13 @@ export async function handleImportTwitter(request: Request, env: Env): Promise<R
           creatorWallet: walletLower,
           type: 'post',
           body: text,
-          media: mediaUrls.filter((u): u is string => !!u).map((url) => ({
-            url,
-            mimeType: 'image/jpeg',
-            alt: '',
-          })),
+          media: mediaUrls
+            .filter((u): u is string => !!u)
+            .map((url) => ({
+              url,
+              mimeType: 'image/jpeg',
+              alt: '',
+            })),
           protocols: {},
           tags: hashtags,
           niches: [],
@@ -194,7 +220,9 @@ export async function handleImportTwitter(request: Request, env: Env): Promise<R
         await store.put(`cl:${walletLower}:${contentId}`, JSON.stringify(record));
         imported.push(contentId);
       } catch (e) {
-        errors.push(`tweet ${(tweetRaw as Record<string, unknown>).id || (tweetRaw as Record<string, unknown>).tweet_id || 'unknown'}: ${(e as Error).message}`);
+        errors.push(
+          `tweet ${(tweetRaw as Record<string, unknown>).id || (tweetRaw as Record<string, unknown>).tweet_id || 'unknown'}: ${(e as Error).message}`,
+        );
       }
     }
 
@@ -228,7 +256,11 @@ export async function handleImportMastodon(request: Request, env: Env): Promise<
         const content = String(object.content || '') || String(item.content || '');
         if (!content || content === 'undefined') continue;
 
-        const id = String(object.id || item.id || `mastodon-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`);
+        const id = String(
+          object.id ||
+            item.id ||
+            `mastodon-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        );
         const createdAt = object.published
           ? new Date(String(object.published)).getTime()
           : item.created_at
@@ -278,7 +310,9 @@ export async function handleImportMastodon(request: Request, env: Env): Promise<
  */
 export async function handleImportNostr(request: Request, env: Env): Promise<Response> {
   return handleGenericImport(request, env, 'nostr', async (body, walletLower) => {
-    const events = Array.isArray(body) ? body : (body as { events?: Array<Record<string, unknown>> }).events || [];
+    const events = Array.isArray(body)
+      ? body
+      : (body as { events?: Array<Record<string, unknown>> }).events || [];
     const imported: string[] = [];
     const errors: string[] = [];
 
@@ -287,7 +321,13 @@ export async function handleImportNostr(request: Request, env: Env): Promise<Res
 
     for (const event of events.slice(0, 500)) {
       try {
-        const ev = event as { id?: string; content?: string; created_at?: number; tags?: string[][]; kind?: number };
+        const ev = event as {
+          id?: string;
+          content?: string;
+          created_at?: number;
+          tags?: string[][];
+          kind?: number;
+        };
         // Only import kind 1 (text note) events
         if (ev.kind !== undefined && ev.kind !== 1) continue;
         if (!ev.content) continue;
@@ -336,7 +376,12 @@ export async function handleImportNostr(request: Request, env: Env): Promise<Res
 export async function handleImportBluesky(request: Request, env: Env): Promise<Response> {
   return handleGenericImport(request, env, 'bluesky', async (body, walletLower) => {
     const atData = body as {
-      posts?: Array<{ uri?: string; cid?: string; record?: { text?: string; createdAt?: string }; indexedAt?: string }>;
+      posts?: Array<{
+        uri?: string;
+        cid?: string;
+        record?: { text?: string; createdAt?: string };
+        indexedAt?: string;
+      }>;
       repo?: Array<Record<string, unknown>>;
     };
 
@@ -399,7 +444,9 @@ export async function handleImportBluesky(request: Request, env: Env): Promise<R
  */
 export async function handleImportFarcaster(request: Request, env: Env): Promise<Response> {
   return handleGenericImport(request, env, 'farcaster', async (body, walletLower) => {
-    const casts = Array.isArray(body) ? body : (body as { casts?: Array<Record<string, unknown>> }).casts || [];
+    const casts = Array.isArray(body)
+      ? body
+      : (body as { casts?: Array<Record<string, unknown>> }).casts || [];
     const imported: string[] = [];
     const errors: string[] = [];
 
@@ -418,7 +465,8 @@ export async function handleImportFarcaster(request: Request, env: Env): Promise
         const text = c.text || c.cast?.text || '';
         if (!text) continue;
 
-        const hash = c.hash || c.cast?.hash || `fc-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+        const hash =
+          c.hash || c.cast?.hash || `fc-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
         const ts = c.timestamp || c.createdAt || Date.now();
 
         const contentId = `import-fc-${hash.slice(0, 16)}`;
@@ -457,7 +505,10 @@ export async function handleImportFarcaster(request: Request, env: Env): Promise
 
 // ─── Generic Import Handler ───────────────────────────────────
 
-type ImportProcessor = (body: Record<string, unknown>, walletLower: string) => Promise<{
+type ImportProcessor = (
+  body: Record<string, unknown>,
+  walletLower: string,
+) => Promise<{
   imported: string[];
   errors: string[];
   total: number;
@@ -478,7 +529,7 @@ async function handleGenericImport(
   // Parse body
   let body: Record<string, unknown>;
   try {
-    body = await request.json() as Record<string, unknown>;
+    body = (await request.json()) as Record<string, unknown>;
   } catch {
     return badRequest('Invalid JSON body. See /docs/migration for format requirements.');
   }
@@ -486,7 +537,9 @@ async function handleGenericImport(
   // Check for concurrent migration on same platform
   const locked = await acquireLock(env, walletLower, platform);
   if (!locked) {
-    return conflict(`A migration from ${platform} is already in progress. Wait for it to complete.`);
+    return conflict(
+      `A migration from ${platform} is already in progress. Wait for it to complete.`,
+    );
   }
 
   const job: MigrationJob = {
@@ -566,7 +619,7 @@ export async function handleExportToMastodon(request: Request, env: Env): Promis
     includeMedia?: boolean;
   };
   try {
-    body = await request.json() as {
+    body = (await request.json()) as {
       instanceUrl?: string;
       accessToken?: string;
       contentIds?: string[];
@@ -619,7 +672,11 @@ export async function handleExportToMastodon(request: Request, env: Env): Promis
         const raw = store ? await store.get(`cl:${walletLower}:${contentId}`) : null;
         if (!raw) continue;
 
-        const record = JSON.parse(raw) as { body?: string; type?: string; media?: Array<{ url: string }> };
+        const record = JSON.parse(raw) as {
+          body?: string;
+          type?: string;
+          media?: Array<{ url: string }>;
+        };
         const statusBody: Record<string, unknown> = {
           status: record.body || '',
           visibility: 'public',
@@ -697,16 +754,19 @@ export async function handleExportToNostr(request: Request, env: Env): Promise<R
     nsec?: string;
   };
   try {
-    body = await request.json() as { relays?: string[]; contentIds?: string[]; nsec?: string };
+    body = (await request.json()) as { relays?: string[]; contentIds?: string[]; nsec?: string };
   } catch {
     return badRequest('Invalid JSON body.');
   }
 
   if (!body.nsec && !env.NOSTR_PRIVATE_KEY) {
-    return badRequest('Nostr private key (nsec) is required. Provide in body or configure NOSTR_PRIVATE_KEY.');
+    return badRequest(
+      'Nostr private key (nsec) is required. Provide in body or configure NOSTR_PRIVATE_KEY.',
+    );
   }
 
-  const relays = body.relays || (env.RELAY_URLS || 'wss://relay.damus.io').split(',').map((r) => r.trim());
+  const relays =
+    body.relays || (env.RELAY_URLS || 'wss://relay.damus.io').split(',').map((r) => r.trim());
 
   const jobId = generateJobId();
   const job: MigrationJob = {
@@ -759,14 +819,20 @@ export async function handleExportToNostr(request: Request, env: Env): Promise<R
           kind: 1,
           content: record.body || '',
           tags,
-          created_at: record.createdAt ? Math.floor(record.createdAt / 1000) : Math.floor(Date.now() / 1000),
+          created_at: record.createdAt
+            ? Math.floor(record.createdAt / 1000)
+            : Math.floor(Date.now() / 1000),
         };
 
         // Due to the complexity of Nostr event signing without requiring the nsec
         // in the worker, we store the event data for the client to sign & publish
-        await store?.put(`migration:nostr:event:${walletLower}:${contentId}`, JSON.stringify(event), {
-          expirationTtl: 86400,
-        });
+        await store?.put(
+          `migration:nostr:event:${walletLower}:${contentId}`,
+          JSON.stringify(event),
+          {
+            expirationTtl: 86400,
+          },
+        );
         published++;
       } catch (e) {
         errors.push(`${contentId}: ${(e as Error).message}`);
@@ -791,9 +857,10 @@ export async function handleExportToNostr(request: Request, env: Env): Promise<R
       prepared: published,
       total: contentIds.length,
       relays,
-      note: published > 0
-        ? `Prepared ${published} events. Sign and publish with your nsec client using nostr:${walletLower.slice(0, 8)} keys.`
-        : 'No content to export.',
+      note:
+        published > 0
+          ? `Prepared ${published} events. Sign and publish with your nsec client using nostr:${walletLower.slice(0, 8)} keys.`
+          : 'No content to export.',
       errors: errors.length > 0 ? errors.slice(0, 10) : undefined,
     });
   } catch (err) {
@@ -822,7 +889,12 @@ export async function handleExportToBluesky(request: Request, env: Env): Promise
     contentIds?: string[];
   };
   try {
-    body = await request.json() as { pdsUrl?: string; accessJwt?: string; did?: string; contentIds?: string[] };
+    body = (await request.json()) as {
+      pdsUrl?: string;
+      accessJwt?: string;
+      did?: string;
+      contentIds?: string[];
+    };
   } catch {
     return badRequest('Invalid JSON body. Required: pdsUrl, accessJwt, did');
   }
@@ -877,7 +949,9 @@ export async function handleExportToBluesky(request: Request, env: Env): Promise
           record: {
             $type: collection,
             text: record.body || '',
-            createdAt: record.createdAt ? new Date(record.createdAt).toISOString() : new Date().toISOString(),
+            createdAt: record.createdAt
+              ? new Date(record.createdAt).toISOString()
+              : new Date().toISOString(),
           },
         };
 

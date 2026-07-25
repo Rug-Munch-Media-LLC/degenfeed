@@ -206,7 +206,10 @@ export function FeedShell({ children }: FeedShellProps) {
                     : undefined
                 }
               >
-                <span className="flex h-5 w-5 items-center justify-center text-xs" aria-hidden="true">
+                <span
+                  className="flex h-5 w-5 items-center justify-center text-xs"
+                  aria-hidden="true"
+                >
                   {p.icon}
                 </span>
                 <span className="flex-1 truncate">{p.label}</span>

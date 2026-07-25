@@ -34,7 +34,7 @@ const SNAPSHOT_API_KEY = process.env.SNAPSHOT_API_KEY || '';
  * Format: degenfeed-{template}-{creatorShort}.eth
  */
 export function generateSpaceEns(
-  coinAddress: string,
+  _coinAddress: string,
   template: DAOTemplateType,
   creator: string,
 ): string {
@@ -259,7 +259,7 @@ export class SnapshotClient {
     };
     if (this.apiKey) headers['x-api-key'] = this.apiKey;
 
-    const response = await fetch(this.hubUrl + '/graphql', {
+    const response = await fetch(`${this.hubUrl}/graphql`, {
       method: 'POST',
       headers,
       body: JSON.stringify({ query, variables }),
@@ -385,7 +385,7 @@ export class SnapshotClient {
   buildSpacePayload(
     spaceId: string,
     settingsJson: string,
-    creator: string,
+    _creator: string,
   ): { space: string; settings: string; timestamp: number } {
     return {
       space: spaceId,

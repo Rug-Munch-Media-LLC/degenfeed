@@ -17,12 +17,8 @@
 
 import type { Env } from '../index';
 import { jsonResponse } from '../index';
-import { requirePremiumTier, type PremiumTier, TIER_LIMITS } from '../premium';
-import {
-  shouldUsePostiz,
-  createPostizSchedule,
-  getSchedulingEngine,
-} from './postiz-bridge';
+import { type PremiumTier, requirePremiumTier, TIER_LIMITS } from '../premium';
+import { createPostizSchedule, getSchedulingEngine, shouldUsePostiz } from './postiz-bridge';
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
@@ -75,10 +71,7 @@ export const FREE_MAX_SCHEDULED = 10;
  * Get current usage counts for a wallet.
  * Reads from SUBSCRIPTIONS KV prefixed counters.
  */
-export async function getPremiumUsage(
-  walletAddress: string,
-  env: Env,
-): Promise<PremiumUsage> {
+export async function getPremiumUsage(walletAddress: string, env: Env): Promise<PremiumUsage> {
   const address = walletAddress.toLowerCase();
   const defaults: PremiumUsage = {
     scheduledPosts: 0,
@@ -114,10 +107,7 @@ export async function incrementPremiumUsage(
   const usage = await getPremiumUsage(walletAddress, env);
   (usage[field] as number) += delta;
   if (env.SUBSCRIPTIONS) {
-    await env.SUBSCRIPTIONS.put(
-      `usage:${walletAddress.toLowerCase()}`,
-      JSON.stringify(usage),
-    );
+    await env.SUBSCRIPTIONS.put(`usage:${walletAddress.toLowerCase()}`, JSON.stringify(usage));
   }
   return usage;
 }
@@ -350,7 +340,17 @@ async function checkPremiumStatusInternal(
  */
 export async function routeScheduleThroughPostiz(
   walletAddress: string,
-  masterPost: { text: string; title?: string; hashtags?: string[]; media?: Array<{ url: string }>; linkCard?: { url: string }; contentWarning?: string; isSensitive?: boolean; mentions?: string[]; lang?: string },
+  masterPost: {
+    text: string;
+    title?: string;
+    hashtags?: string[];
+    media?: Array<{ url: string }>;
+    linkCard?: { url: string };
+    contentWarning?: string;
+    isSensitive?: boolean;
+    mentions?: string[];
+    lang?: string;
+  },
   protocols: string[],
   scheduledAt: string | null,
   env: Env,
@@ -404,7 +404,7 @@ export function getEngineLabel(tier: string): string {
 export function addPremiumUsageHeaders(
   response: Response,
   usage: PremiumUsage,
-  limits: typeof TIER_LIMITS[string],
+  limits: (typeof TIER_LIMITS)[string],
 ): Response {
   const headers = new Headers(response.headers);
   headers.set('X-Premium-Scheduled-Used', String(usage.scheduledPosts));

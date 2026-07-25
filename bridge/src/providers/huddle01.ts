@@ -58,7 +58,9 @@ function huddleRoomToPost(room: HuddleRoom): UnifiedPost {
     `👥 ${room.participantCount || 0}/${room.maxParticipants || '∞'} participants`,
     room.status ? `Status: ${room.status}` : '',
     `Room ID: ${room.roomId}`,
-  ].filter(Boolean).join('\n');
+  ]
+    .filter(Boolean)
+    .join('\n');
 
   return {
     id: `huddle01:room:${room.roomId}`,
@@ -67,18 +69,25 @@ function huddleRoomToPost(room: HuddleRoom): UnifiedPost {
       id: `huddle01:host:${room.hostAddress || 'system'}`,
       primary: { protocol: 'huddle01', id: room.hostAddress || 'system' },
       handles: { huddle01: room.hostAddress?.slice(0, 10) || null },
-      displayName: room.hostAddress ? `${room.hostAddress.slice(0, 6)}...${room.hostAddress.slice(-4)}` : 'Huddle01 System',
-      bio: '', avatarUrl: '', followerCount: 0, followingCount: 0, links: [], keys: {},
+      displayName: room.hostAddress
+        ? `${room.hostAddress.slice(0, 6)}...${room.hostAddress.slice(-4)}`
+        : 'Huddle01 System',
+      bio: '',
+      avatarUrl: '',
+      followerCount: 0,
+      followingCount: 0,
+      links: [],
+      keys: {},
     },
     text,
-    embeds: [
-      ...(room.recordingUrl ? [{ kind: 'video' as const, url: room.recordingUrl }] : []),
-    ],
+    embeds: [...(room.recordingUrl ? [{ kind: 'video' as const, url: room.recordingUrl }] : [])],
     contentType: room.status === 'active' ? 'live' : 'scheduled',
     createdAt: room.createdAt ? new Date(room.createdAt).getTime() : Date.now(),
     metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0, views: room.participantCount || 0 },
     engagement: {
-      viewerLiked: false, viewerReposted: false, viewerBookmarked: false,
+      viewerLiked: false,
+      viewerReposted: false,
+      viewerBookmarked: false,
       raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
     },
     raw: room,
@@ -91,29 +100,37 @@ function huddleRoomToPost(room: HuddleRoom): UnifiedPost {
 async function fetchActiveRooms(limit: number): Promise<UnifiedPost[]> {
   if (!HUDDLE_PROJECT_ID) {
     // Return demo room if no API key configured
-    return [{
-      id: `huddle01:demo:${Date.now()}`,
-      protocol: 'huddle01',
-      author: {
-        id: 'huddle01:system',
-        primary: { protocol: 'huddle01', id: 'system' },
-        handles: {},
-        displayName: 'DegenFeed Video',
-        bio: 'Decentralized video calls powered by Huddle01',
-        avatarUrl: '', followerCount: 0, followingCount: 0, links: [], keys: {},
+    return [
+      {
+        id: `huddle01:demo:${Date.now()}`,
+        protocol: 'huddle01',
+        author: {
+          id: 'huddle01:system',
+          primary: { protocol: 'huddle01', id: 'system' },
+          handles: {},
+          displayName: 'DegenFeed Video',
+          bio: 'Decentralized video calls powered by Huddle01',
+          avatarUrl: '',
+          followerCount: 0,
+          followingCount: 0,
+          links: [],
+          keys: {},
+        },
+        text: '📹 DegenFeed Video Calls ready. Configure HUDDLE_PROJECT_ID to enable.',
+        embeds: [],
+        contentType: 'status',
+        createdAt: Date.now(),
+        metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
+        engagement: {
+          viewerLiked: false,
+          viewerReposted: false,
+          viewerBookmarked: false,
+          raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
+        },
+        raw: { status: 'awaiting_config' },
+        niches: ['video', 'communication'],
       },
-      text: '📹 DegenFeed Video Calls ready. Configure HUDDLE_PROJECT_ID to enable.',
-      embeds: [],
-      contentType: 'status',
-      createdAt: Date.now(),
-      metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
-      engagement: {
-        viewerLiked: false, viewerReposted: false, viewerBookmarked: false,
-        raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
-      },
-      raw: { status: 'awaiting_config' },
-      niches: ['video', 'communication'],
-    }];
+    ];
   }
 
   try {
@@ -125,7 +142,7 @@ async function fetchActiveRooms(limit: number): Promise<UnifiedPost[]> {
       signal: AbortSignal.timeout(8000),
     });
     if (!res.ok) return [];
-    const data = await res.json() as HuddleRoomResponse;
+    const data = (await res.json()) as HuddleRoomResponse;
     const rooms = data.rooms || data.data || [];
     if (!Array.isArray(rooms)) return [];
     return rooms.slice(0, limit).map(huddleRoomToPost);

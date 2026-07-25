@@ -21,7 +21,9 @@ export function DangerZone({
           <div className="flex items-center justify-between rounded-lg border border-red-500/10 p-3">
             <div>
               <div className="text-xs font-semibold text-[var(--color-fg)]">Pause DAO</div>
-              <p className="text-[9px] text-[var(--color-muted)]">Temporarily pause all proposals and voting</p>
+              <p className="text-[9px] text-[var(--color-muted)]">
+                Temporarily pause all proposals and voting
+              </p>
             </div>
             <button
               type="button"
@@ -34,7 +36,9 @@ export function DangerZone({
           <div className="flex items-center justify-between rounded-lg border border-red-500/10 p-3">
             <div>
               <div className="text-xs font-semibold text-[var(--color-fg)]">Transfer Ownership</div>
-              <p className="text-[9px] text-[var(--color-muted)]">Transfer DAO ownership to another address</p>
+              <p className="text-[9px] text-[var(--color-muted)]">
+                Transfer DAO ownership to another address
+              </p>
             </div>
             <button
               type="button"
@@ -47,7 +51,9 @@ export function DangerZone({
           <div className="flex items-center justify-between rounded-lg border border-red-500/20 bg-red-500/10 p-3">
             <div>
               <div className="text-xs font-semibold text-red-400">Emergency Shutdown</div>
-              <p className="text-[9px] text-[var(--color-muted)]">Irreversibly shutdown the DAO and return all treasury funds</p>
+              <p className="text-[9px] text-[var(--color-muted)]">
+                Irreversibly shutdown the DAO and return all treasury funds
+              </p>
             </div>
             <button
               type="button"
@@ -60,31 +66,36 @@ export function DangerZone({
         </div>
       </SettingsSection>
 
-      {showDangerConfirm && <DangerConfirmModal
-        action={showDangerConfirm}
-        onClose={() => setShowDangerConfirm(null)}
-      />}
+      {showDangerConfirm && (
+        <DangerConfirmModal action={showDangerConfirm} onClose={() => setShowDangerConfirm(null)} />
+      )}
     </>
   );
 }
 
 function DangerConfirmModal({ action, onClose }: { action: string; onClose: () => void }) {
-  const DANGER_ACTIONS: Record<string, { title: string; description: string; confirmText: string; isSevere: boolean }> = {
+  const DANGER_ACTIONS: Record<
+    string,
+    { title: string; description: string; confirmText: string; isSevere: boolean }
+  > = {
     pause: {
       title: 'Pause DAO',
-      description: 'This will pause all proposals and voting. Active proposals will be frozen. You can resume later.',
+      description:
+        'This will pause all proposals and voting. Active proposals will be frozen. You can resume later.',
       confirmText: 'Type "PAUSE" to confirm',
       isSevere: false,
     },
     transfer: {
       title: 'Transfer Ownership',
-      description: 'This will transfer DAO ownership to another address. This action cannot be undone.',
+      description:
+        'This will transfer DAO ownership to another address. This action cannot be undone.',
       confirmText: 'Type the new owner address to confirm',
       isSevere: true,
     },
     shutdown: {
       title: 'Emergency Shutdown',
-      description: 'This will irreversibly shutdown the DAO. All treasury funds will be returned to members proportionally. THIS CANNOT BE UNDONE.',
+      description:
+        'This will irreversibly shutdown the DAO. All treasury funds will be returned to members proportionally. THIS CANNOT BE UNDONE.',
       confirmText: 'Type "SHUTDOWN" to confirm',
       isSevere: true,
     },
@@ -97,7 +108,9 @@ function DangerConfirmModal({ action, onClose }: { action: string; onClose: () =
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
-      role="dialog" aria-modal="true" aria-label={d.title}
+      role="dialog"
+      aria-modal="true"
+      aria-label={d.title}
     >
       <div className="mx-4 w-full max-w-md rounded-2xl border border-[var(--color-glass-border)] bg-[var(--color-card-elevated)] p-6 shadow-xl">
         <div className={`mb-2 text-2xl ${d.isSevere ? 'text-red-400' : 'text-amber-400'}`}>
@@ -110,14 +123,16 @@ function DangerConfirmModal({ action, onClose }: { action: string; onClose: () =
             {d.confirmText}
           </label>
           <input
-            type="text" value={confirmInput}
+            type="text"
+            value={confirmInput}
             onChange={(e) => setConfirmInput(e.target.value)}
             className="w-full rounded-xl border border-red-500/30 bg-[var(--color-bg-tertiary)] px-4 py-2.5 text-sm font-mono text-[var(--color-fg)] outline-none focus:border-red-500 transition-colors"
           />
         </div>
         <div className="flex gap-3">
           <button
-            type="button" onClick={onClose}
+            type="button"
+            onClick={onClose}
             className="flex-1 rounded-xl border border-[var(--color-glass-border)] px-4 py-2.5 text-xs font-semibold text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
           >
             Cancel

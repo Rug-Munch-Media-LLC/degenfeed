@@ -187,7 +187,7 @@ const PROTOCOL_SERVICE_TYPES: Record<string, string> = {
  */
 export async function createDid(
   request: DidCreateRequest,
-  session: SessionPayload,
+  _session: SessionPayload,
   env: Env,
 ): Promise<DidRecord> {
   const wallet = request.wallet.toLowerCase();
@@ -195,7 +195,7 @@ export async function createDid(
 
   // Check if DID already exists
   const existing = await getDidRecord(wallet, env);
-  if (existing && existing.active) {
+  if (existing?.active) {
     throw new Error(`DID already exists for wallet ${wallet}: ${existing.did}`);
   }
 
@@ -232,10 +232,7 @@ export async function createDid(
     await env.IDENTITIES?.put(`did:${wallet}`, JSON.stringify(record));
     // Also cache the well-known document for did:web
     if (method === 'web') {
-      await env.IDENTITIES?.put(
-        `did:well-known:${wallet}`,
-        JSON.stringify(document),
-      );
+      await env.IDENTITIES?.put(`did:well-known:${wallet}`, JSON.stringify(document));
     }
   } catch (err) {
     throw new Error(`Failed to store DID: ${String(err)}`);
@@ -315,7 +312,7 @@ function buildKeyDidDocument(
 function buildWebDidDocument(
   did: string,
   wallet: string,
-  handle: string,
+  _handle: string,
   protocolLinks: ProtocolLink[],
 ): DidDocument {
   const vmId = `${did}#key-1`;
@@ -386,10 +383,7 @@ function buildWebDidDocument(
 /**
  * Get the DID record for a wallet.
  */
-export async function getDidRecord(
-  wallet: string,
-  env: Env,
-): Promise<DidRecord | null> {
+export async function getDidRecord(wallet: string, env: Env): Promise<DidRecord | null> {
   try {
     const raw = await env.IDENTITIES?.get(`did:${wallet.toLowerCase()}`);
     if (!raw) return null;
@@ -402,10 +396,7 @@ export async function getDidRecord(
 /**
  * Get the DID Document for a wallet.
  */
-export async function getDidDocument(
-  wallet: string,
-  env: Env,
-): Promise<DidDocument | null> {
+export async function getDidDocument(wallet: string, env: Env): Promise<DidDocument | null> {
   const record = await getDidRecord(wallet, env);
   return record?.document || null;
 }
@@ -413,10 +404,7 @@ export async function getDidDocument(
 /**
  * Get the DID for a wallet (just the DID string).
  */
-export async function getDid(
-  wallet: string,
-  env: Env,
-): Promise<string | null> {
+export async function getDid(wallet: string, env: Env): Promise<string | null> {
   const record = await getDidRecord(wallet, env);
   return record?.did || null;
 }
@@ -431,7 +419,7 @@ export async function serveWellKnownDid(
 ): Promise<DidDocument | null> {
   // Try direct wallet lookup first
   const wallet = handleOrWallet.toLowerCase();
-  let doc = await getDidDocument(wallet, env);
+  const doc = await getDidDocument(wallet, env);
   if (doc) return doc;
 
   // Try well-known cache
@@ -467,10 +455,7 @@ export async function updateDidDocument(
     ...existing,
     document: {
       ...existing.document,
-      alsoKnownAs: [
-        ...existing.document.alsoKnownAs,
-        ...(request.alsoKnownAs || []),
-      ],
+      alsoKnownAs: [...existing.document.alsoKnownAs, ...(request.alsoKnownAs || [])],
       service: [
         ...existing.document.service,
         ...(request.services || []),
@@ -571,9 +556,7 @@ export async function rotateDid(
   // Store ceremony record
   try {
     const existingCeremonies = await env.IDENTITIES?.get(`did:recovery:${normalizedWallet}`);
-    const ceremonies: RecoveryCeremony[] = existingCeremonies
-      ? JSON.parse(existingCeremonies)
-      : [];
+    const ceremonies: RecoveryCeremony[] = existingCeremonies ? JSON.parse(existingCeremonies) : [];
     ceremonies.push(ceremony);
     await env.IDENTITIES?.put(`did:recovery:${normalizedWallet}`, JSON.stringify(ceremonies));
   } catch (err) {
@@ -586,10 +569,7 @@ export async function rotateDid(
 /**
  * Get recovery history for a wallet.
  */
-export async function getRecoveryHistory(
-  wallet: string,
-  env: Env,
-): Promise<RecoveryCeremony[]> {
+export async function getRecoveryHistory(wallet: string, env: Env): Promise<RecoveryCeremony[]> {
   try {
     const raw = await env.IDENTITIES?.get(`did:recovery:${wallet.toLowerCase()}`);
     if (!raw) return [];
@@ -642,10 +622,7 @@ export async function generatePortableBundle(
 
   // Store the bundle
   try {
-    await env.IDENTITIES?.put(
-      `did:portable:${normalizedWallet}`,
-      JSON.stringify(bundle),
-    );
+    await env.IDENTITIES?.put(`did:portable:${normalizedWallet}`, JSON.stringify(bundle));
   } catch {
     // Non-fatal — bundle is generated even if store fails
   }
@@ -678,8 +655,8 @@ export async function verifyPortableBundle(
   }
 
   // Check blockchain account ID matches wallet
-  const hasMatchingWallet = bundle.didDocument.verificationMethod.some(
-    (vm) => vm.blockchainAccountId?.includes(bundle.walletAddress),
+  const hasMatchingWallet = bundle.didDocument.verificationMethod.some((vm) =>
+    vm.blockchainAccountId?.includes(bundle.walletAddress),
   );
   if (!hasMatchingWallet) {
     errors.push('No verification method references the wallet address');
@@ -718,9 +695,7 @@ export async function importPortableIdentity(
   // Check if wallet already has a DID
   const existing = await getDidRecord(normalizedWallet, env);
   if (existing) {
-    throw new Error(
-      `Wallet already has DID: ${existing.did}. Use rotateDid() to migrate.`,
-    );
+    throw new Error(`Wallet already has DID: ${existing.did}. Use rotateDid() to migrate.`);
   }
 
   const now = Date.now();
@@ -767,10 +742,7 @@ function extractProtocolLinks(document: DidDocument): ProtocolLink[] {
 
   for (const service of document.service) {
     // Skip non-protocol services
-    if (
-      service.type === 'DegenFeedIdentityHub' ||
-      service.type === 'DegenFeedAttestationService'
-    ) {
+    if (service.type === 'DegenFeedIdentityHub' || service.type === 'DegenFeedAttestationService') {
       continue;
     }
 
@@ -831,10 +803,7 @@ async function listIdentityData(
  * Resolve a DID string to its DID Document.
  * Supports did:key (local) and did:web (via fetch).
  */
-export async function resolveDid(
-  did: string,
-  env: Env,
-): Promise<DidDocument | null> {
+export async function resolveDid(did: string, env: Env): Promise<DidDocument | null> {
   if (did.startsWith('did:key:')) {
     // Local resolution: find the wallet that owns this DID
     // For now, we scan known DIDs (in production, use a reverse index)

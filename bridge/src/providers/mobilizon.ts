@@ -122,7 +122,10 @@ interface MobilizonSearchResponse {
 // ─── Helpers ──────────────────────────────────────────────────────────
 
 function stripHtml(html: string): string {
-  return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+  return html
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 function formatAddress(addr?: MobilizonAddress): string {
@@ -134,7 +137,8 @@ function formatAddress(addr?: MobilizonAddress): string {
 function guessEventNiches(title: string, desc: string, tags: string[] = []): string[] {
   const lower = `${title} ${desc} ${tags.join(' ')}`.toLowerCase();
   const niches: string[] = [];
-  if (/\b(crypto|blockchain|web3|bitcoin|ethereum|solana|defi|nft)\b/.test(lower)) niches.push('crypto');
+  if (/\b(crypto|blockchain|web3|bitcoin|ethereum|solana|defi|nft)\b/.test(lower))
+    niches.push('crypto');
   if (/\b(ai|artificial|intelligence|llm|machine.learning)\b/.test(lower)) niches.push('ai');
   if (/\b(tech|technology|programming|code|developer|hackathon)\b/.test(lower)) niches.push('tech');
   if (/\b(meetup|conference|workshop|talk|lecture|seminar)\b/.test(lower)) niches.push('events');
@@ -156,20 +160,27 @@ function eventToPost(event: MobilizonEvent, source: MobilizonSource): UnifiedPos
   const text = [
     `📅 ${event.title}`,
     `📆 ${new Date(event.beginsOn).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`,
-    event.endsOn ? `  → ${new Date(event.endsOn).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}` : '',
+    event.endsOn
+      ? `  → ${new Date(event.endsOn).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`
+      : '',
     isOnline ? `🌐 Online: ${event.onlineAddress || 'Virtual event'}` : '',
     location ? `📍 ${location}` : '',
     '',
     desc,
     tags.length > 0 ? `\n🏷️ ${tags.join(', ')}` : '',
-  ].filter(Boolean).join('\n');
+  ]
+    .filter(Boolean)
+    .join('\n');
 
   return {
     id: `mobilizon:${event.uuid}@${source.instance}`,
     protocol: 'mobilizon',
     author: {
       id: `mobilizon:${event.organizerActor?.id || event.attributedTo?.id || 'unknown'}`,
-      primary: { protocol: 'mobilizon', id: event.organizerActor?.preferredUsername || 'organizer' },
+      primary: {
+        protocol: 'mobilizon',
+        id: event.organizerActor?.preferredUsername || 'organizer',
+      },
       handles: { mobilizon: event.organizerActor?.preferredUsername || null },
       displayName: event.organizerActor?.name || event.attributedTo?.name || 'Event Organizer',
       bio: event.organizerActor?.summary ? stripHtml(event.organizerActor.summary) : '',
@@ -182,16 +193,25 @@ function eventToPost(event: MobilizonEvent, source: MobilizonSource): UnifiedPos
     text,
     embeds: [
       ...(event.picture?.url ? [{ kind: 'image' as const, url: event.picture.url }] : []),
-      { kind: 'link', url: `${source.instance}/events/${event.uuid}`, meta: { title: event.title } },
+      {
+        kind: 'link',
+        url: `${source.instance}/events/${event.uuid}`,
+        meta: { title: event.title },
+      },
     ],
     contentType: 'event',
     createdAt: new Date(event.beginsOn).getTime(),
     metrics: {
-      likes: 0, reposts: 0, replies: 0, quotes: 0,
+      likes: 0,
+      reposts: 0,
+      replies: 0,
+      quotes: 0,
       views: event.options?.maximumAttendeeCapacity || undefined,
     },
     engagement: {
-      viewerLiked: false, viewerReposted: false, viewerBookmarked: false,
+      viewerLiked: false,
+      viewerReposted: false,
+      viewerBookmarked: false,
       raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
     },
     raw: event,
@@ -214,7 +234,7 @@ async function fetchFromInstance(source: MobilizonSource, limit: number): Promis
     });
     if (!res.ok) return [];
 
-    const data = await res.json() as MobilizonSearchResponse;
+    const data = (await res.json()) as MobilizonSearchResponse;
     const elements = data?.data?.searchEvents?.elements || [];
     if (!Array.isArray(elements)) return [];
 

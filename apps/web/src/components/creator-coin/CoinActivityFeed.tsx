@@ -49,13 +49,13 @@ interface CoinActivityFeedProps {
 // ─── Icon Map ──────────────────────────────────────────────────────────────
 
 const ACTIVITY_META: Record<ActivityType, { icon: string; color: string }> = {
-  buy:           { icon: '🟢', color: 'text-degen-400' },
-  sell:          { icon: '🔴', color: 'text-red-400' },
-  claim_vested:  { icon: '💎', color: 'text-blue-400' },
-  new_holder:    { icon: '🆕', color: 'text-purple-400' },
-  phase_change:  { icon: '📈', color: 'text-yellow-400' },
-  badge_earned:  { icon: '🎉', color: 'text-amber-400' },
-  tip_creator:   { icon: '💬', color: 'text-pink-400' },
+  buy: { icon: '🟢', color: 'text-degen-400' },
+  sell: { icon: '🔴', color: 'text-red-400' },
+  claim_vested: { icon: '💎', color: 'text-blue-400' },
+  new_holder: { icon: '🆕', color: 'text-purple-400' },
+  phase_change: { icon: '📈', color: 'text-yellow-400' },
+  badge_earned: { icon: '🎉', color: 'text-amber-400' },
+  tip_creator: { icon: '💬', color: 'text-pink-400' },
 };
 
 // ─── Format Helpers ────────────────────────────────────────────────────────
@@ -86,8 +86,8 @@ function ActivityRow({ event, isNew }: { event: ActivityEvent; isNew?: boolean }
       case 'buy':
         return (
           <>
-            <span className="font-semibold text-degen-400">{displayName}</span>{' '}
-            bought <span className="font-semibold text-[var(--color-fg)]">{event.amount}</span> $
+            <span className="font-semibold text-degen-400">{displayName}</span> bought{' '}
+            <span className="font-semibold text-[var(--color-fg)]">{event.amount}</span> $
             {event.symbol}
             {event.nativeAmount && (
               <span className="text-[var(--color-muted)]"> for {event.nativeAmount} ETH</span>
@@ -97,16 +97,16 @@ function ActivityRow({ event, isNew }: { event: ActivityEvent; isNew?: boolean }
       case 'sell':
         return (
           <>
-            <span className="font-semibold text-red-400">{displayName}</span>{' '}
-            sold <span className="font-semibold text-[var(--color-fg)]">{event.amount}</span> $
+            <span className="font-semibold text-red-400">{displayName}</span> sold{' '}
+            <span className="font-semibold text-[var(--color-fg)]">{event.amount}</span> $
             {event.symbol}
           </>
         );
       case 'claim_vested':
         return (
           <>
-            <span className="font-semibold text-blue-400">{displayName}</span>{' '}
-            claimed <span className="font-semibold text-[var(--color-fg)]">{event.amount}</span> vested $
+            <span className="font-semibold text-blue-400">{displayName}</span> claimed{' '}
+            <span className="font-semibold text-[var(--color-fg)]">{event.amount}</span> vested $
             {event.symbol}
           </>
         );
@@ -122,8 +122,8 @@ function ActivityRow({ event, isNew }: { event: ActivityEvent; isNew?: boolean }
       case 'phase_change':
         return (
           <>
-            <span className="font-semibold text-yellow-400">${event.symbol}</span>{' '}
-            hit <span className="font-semibold">{event.phaseName}</span>
+            <span className="font-semibold text-yellow-400">${event.symbol}</span> hit{' '}
+            <span className="font-semibold">{event.phaseName}</span>
             {event.price && (
               <span className="text-[var(--color-muted)]"> — price now ${event.price}</span>
             )}
@@ -132,16 +132,15 @@ function ActivityRow({ event, isNew }: { event: ActivityEvent; isNew?: boolean }
       case 'badge_earned':
         return (
           <>
-            <span className="font-semibold text-amber-400">{displayName}</span>{' '}
-            earned <span className="font-semibold">'{event.badgeName}'</span> badge
+            <span className="font-semibold text-amber-400">{displayName}</span> earned{' '}
+            <span className="font-semibold">'{event.badgeName}'</span> badge
             {event.badgeIcon && <span className="ml-1">{event.badgeIcon}</span>}
           </>
         );
       case 'tip_creator':
         return (
           <>
-            <span className="font-semibold text-pink-400">{displayName}</span>{' '}
-            tipped creator{' '}
+            <span className="font-semibold text-pink-400">{displayName}</span> tipped creator{' '}
             {event.tipAmount && <span className="font-semibold">{event.tipAmount} sats</span>}
           </>
         );
@@ -165,7 +164,9 @@ function ActivityRow({ event, isNew }: { event: ActivityEvent; isNew?: boolean }
       <span className="mt-0.5 shrink-0 text-xs leading-none">{meta.icon}</span>
       <div className="min-w-0 flex-1">
         <p className="text-[11px] leading-relaxed text-[var(--color-fg)]">{description}</p>
-        <p className="mt-0.5 text-[9px] text-[var(--color-muted)]">{formatTimeAgo(event.timestamp)}</p>
+        <p className="mt-0.5 text-[9px] text-[var(--color-muted)]">
+          {formatTimeAgo(event.timestamp)}
+        </p>
       </div>
     </div>
   );
@@ -185,11 +186,26 @@ const FILTER_TABS: Array<{ type: ActivityType | 'all'; label: string }> = [
 
 function generateMockActivity(symbol: string, count = 20): ActivityEvent[] {
   const now = Date.now();
-  const types: ActivityType[] = ['buy', 'sell', 'claim_vested', 'new_holder', 'phase_change', 'badge_earned', 'tip_creator'];
+  const types: ActivityType[] = [
+    'buy',
+    'sell',
+    'claim_vested',
+    'new_holder',
+    'phase_change',
+    'badge_earned',
+    'tip_creator',
+  ];
   const actors = [
-    '0x1a2b...3c4d', '0x5e6f...7a8b', '0x9c0d...1e2f',
-    '0x3a4b...5c6d', '0x7e8f...9a0b', 'cryptoking.eth',
-    'degensniper.eth', 'moonboi.eth', 'whalealert.eth', 'yolo_trader',
+    '0x1a2b...3c4d',
+    '0x5e6f...7a8b',
+    '0x9c0d...1e2f',
+    '0x3a4b...5c6d',
+    '0x7e8f...9a0b',
+    'cryptoking.eth',
+    'degensniper.eth',
+    'moonboi.eth',
+    'whalealert.eth',
+    'yolo_trader',
   ];
 
   const mockEvents: ActivityEvent[] = [];
@@ -220,12 +236,16 @@ function generateMockActivity(symbol: string, count = 20): ActivityEvent[] {
         base.holderCount = Math.floor(Math.random() * 100) + 50;
         break;
       case 'phase_change':
-        base.phaseName = ['Steal Deal', 'Early Bird', 'Cruise Control', 'Final Call', 'Moonshot'][Math.floor(Math.random() * 5)];
+        base.phaseName = ['Steal Deal', 'Early Bird', 'Cruise Control', 'Final Call', 'Moonshot'][
+          Math.floor(Math.random() * 5)
+        ];
         base.phaseIndex = Math.floor(Math.random() * 5);
         base.price = (Math.random() * 0.05 + 0.001).toFixed(6);
         break;
       case 'badge_earned':
-        base.badgeName = ['Early Army', 'Diamond Fingers', 'Dip Buyer', 'Super Fan', 'OG Holder'][Math.floor(Math.random() * 5)];
+        base.badgeName = ['Early Army', 'Diamond Fingers', 'Dip Buyer', 'Super Fan', 'OG Holder'][
+          Math.floor(Math.random() * 5)
+        ];
         base.badgeIcon = ['🪖', '💎', '📉', '⭐', '👑'][Math.floor(Math.random() * 5)];
         break;
       case 'tip_creator':
@@ -255,62 +275,65 @@ export function CoinActivityFeed({
   const containerRef = useRef<HTMLDivElement>(null);
   const prevEventIdsRef = useRef<Set<string>>(new Set());
 
-  const fetchActivity = useCallback(async (pageNum: number, append = false) => {
-    try {
-      const params = new URLSearchParams({
-        page: String(pageNum),
-        pageSize: '20',
-      });
-      if (filter !== 'all') params.set('type', filter);
+  const fetchActivity = useCallback(
+    async (pageNum: number, append = false) => {
+      try {
+        const params = new URLSearchParams({
+          page: String(pageNum),
+          pageSize: '20',
+        });
+        if (filter !== 'all') params.set('type', filter);
 
-      const res = await fetch(`/api/coin/${symbol.toLowerCase()}/activity?${params}`);
-      if (res.ok) {
-        const data = await res.json() as {
-          events: ActivityEvent[];
-          hasMore: boolean;
-        };
+        const res = await fetch(`/api/coin/${symbol.toLowerCase()}/activity?${params}`);
+        if (res.ok) {
+          const data = (await res.json()) as {
+            events: ActivityEvent[];
+            hasMore: boolean;
+          };
 
-        // Track new events for animation
-        const prevIds = prevEventIdsRef.current;
-        const incomingIds = new Set(data.events.map((e) => e.id));
-        if (!append && pageNum === 1 && prevIds.size > 0) {
-          const brandNew: string[] = [];
-          for (const e of data.events) {
-            if (!prevIds.has(e.id)) brandNew.push(e.id);
+          // Track new events for animation
+          const prevIds = prevEventIdsRef.current;
+          const incomingIds = new Set(data.events.map((e) => e.id));
+          if (!append && pageNum === 1 && prevIds.size > 0) {
+            const brandNew: string[] = [];
+            for (const e of data.events) {
+              if (!prevIds.has(e.id)) brandNew.push(e.id);
+            }
+            if (brandNew.length > 0) {
+              setNewEventIds(new Set(brandNew));
+              setTimeout(() => setNewEventIds(new Set()), 3000);
+            }
           }
-          if (brandNew.length > 0) {
-            setNewEventIds(new Set(brandNew));
-            setTimeout(() => setNewEventIds(new Set()), 3000);
-          }
-        }
-        prevEventIdsRef.current = incomingIds;
+          prevEventIdsRef.current = incomingIds;
 
-        if (append) {
-          setEvents((prev) => [...prev, ...data.events]);
+          if (append) {
+            setEvents((prev) => [...prev, ...data.events]);
+          } else {
+            setEvents(data.events);
+          }
+          setHasMore(data.hasMore);
+          setUsedMock(false);
         } else {
-          setEvents(data.events);
+          // API failed — use mock fallback
+          if (!append) {
+            setEvents(generateMockActivity(symbol));
+            setHasMore(false);
+            setUsedMock(true);
+          }
         }
-        setHasMore(data.hasMore);
-        setUsedMock(false);
-      } else {
-        // API failed — use mock fallback
+      } catch {
+        // Network error — use mock fallback
         if (!append) {
           setEvents(generateMockActivity(symbol));
           setHasMore(false);
           setUsedMock(true);
         }
+      } finally {
+        setLoading(false);
       }
-    } catch {
-      // Network error — use mock fallback
-      if (!append) {
-        setEvents(generateMockActivity(symbol));
-        setHasMore(false);
-        setUsedMock(true);
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, [symbol, filter]);
+    },
+    [symbol, filter],
+  );
 
   // Initial fetch
   useEffect(() => {
@@ -340,17 +363,15 @@ export function CoinActivityFeed({
     setPage(1);
   }, []);
 
-  const filtered = filter === 'all'
-    ? events
-    : events.filter((e) => e.type === filter);
+  const filtered = filter === 'all' ? events : events.filter((e) => e.type === filter);
 
   return (
-    <div className={`rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] ${className}`}>
+    <div
+      className={`rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] ${className}`}
+    >
       {/* Header */}
       <div className="flex items-center justify-between border-b border-[var(--color-glass-border)] px-4 py-3">
-        <h3 className="text-xs font-bold text-[var(--color-fg)]">
-          ⚡ Live Activity
-        </h3>
+        <h3 className="text-xs font-bold text-[var(--color-fg)]">⚡ Live Activity</h3>
         <div className="flex items-center gap-1.5">
           {!usedMock && (
             <span className="flex h-2 w-2 rounded-full bg-degen-400">
@@ -382,11 +403,7 @@ export function CoinActivityFeed({
       </div>
 
       {/* Activity List */}
-      <div
-        ref={containerRef}
-        className="overflow-y-auto scrollbar-thin"
-        style={{ maxHeight }}
-      >
+      <div ref={containerRef} className="overflow-y-auto scrollbar-thin" style={{ maxHeight }}>
         {loading ? (
           <div className="space-y-2 p-4">
             {Array.from({ length: 5 }).map((_, i) => (
@@ -404,11 +421,7 @@ export function CoinActivityFeed({
         ) : (
           <div className="space-y-1.5 p-3">
             {filtered.map((event) => (
-              <ActivityRow
-                key={event.id}
-                event={event}
-                isNew={newEventIds.has(event.id)}
-              />
+              <ActivityRow key={event.id} event={event} isNew={newEventIds.has(event.id)} />
             ))}
           </div>
         )}

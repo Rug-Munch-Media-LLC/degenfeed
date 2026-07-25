@@ -19,7 +19,6 @@ import { beforeEach, describe, expect, it } from 'vitest';
 
 import {
   generateBridgeNotifications,
-  getCrossProtocolDisplay,
   linkIdentity,
   resolveByHandle,
   resolveByWallet,
@@ -111,7 +110,7 @@ describe('Tipping: Nostr → Farcaster', () => {
     // Verify recipient can be found via either protocol
     const byFc = resolveByHandle('farcaster', 'recipient_fc');
     expect(byFc).toBeDefined();
-    expect(byFc!.dfId).toBe('df:recipient1');
+    expect(byFc?.dfId).toBe('df:recipient1');
 
     const recipientTips = getTipsByUser('df:recipient1');
     expect(recipientTips.length).toBeGreaterThanOrEqual(1);
@@ -147,8 +146,8 @@ describe('Tipping: Solana → EVM Cross-Chain', () => {
     // Creator's identity resolves across chains
     const resolved = resolveByWallet('0xbase_wallet');
     expect(resolved).toBeDefined();
-    expect(resolved!.protocols.some((p) => p.protocol === 'ethereum')).toBe(true);
-    expect(resolved!.protocols.some((p) => p.protocol === 'solana')).toBe(true);
+    expect(resolved?.protocols.some((p) => p.protocol === 'ethereum')).toBe(true);
+    expect(resolved?.protocols.some((p) => p.protocol === 'solana')).toBe(true);
     console.log('[PASS] Solana → EVM cross-chain tip with unified identity');
   });
 });

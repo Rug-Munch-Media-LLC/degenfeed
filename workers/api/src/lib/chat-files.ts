@@ -18,8 +18,8 @@
 
 import type { Env } from '../index';
 import { log } from '../index';
-import { uploadToR2, getR2Object, deleteFromR2 } from './r2-storage';
-import { uploadBufferToIPFS, getIPFSGatewayUrl } from './ipfs-storage';
+import { getIPFSGatewayUrl, uploadBufferToIPFS } from './ipfs-storage';
+import { deleteFromR2, getR2Object, uploadToR2 } from './r2-storage';
 
 // ─── KV Prefixes ──────────────────────────────────────────────────────────
 
@@ -77,14 +77,7 @@ export interface ChatFile {
   lastAccessedAt: number;
 }
 
-export type FileCategory =
-  | 'image'
-  | 'video'
-  | 'audio'
-  | 'document'
-  | 'archive'
-  | 'code'
-  | 'other';
+export type FileCategory = 'image' | 'video' | 'audio' | 'document' | 'archive' | 'code' | 'other';
 
 /** File type icons for unsupported previews */
 export const FILE_ICONS: Record<FileCategory, string> = {
@@ -166,9 +159,37 @@ export function getFileCategory(mimeType: string, fileName?: string): FileCatego
 
   const ext = fileName?.toLowerCase().split('.').pop() ?? '';
 
-  const documentExts = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'rtf', 'csv', 'md'];
+  const documentExts = [
+    'pdf',
+    'doc',
+    'docx',
+    'xls',
+    'xlsx',
+    'ppt',
+    'pptx',
+    'txt',
+    'rtf',
+    'csv',
+    'md',
+  ];
   const archiveExts = ['zip', 'tar', 'gz', 'bz2', '7z', 'rar'];
-  const codeExts = ['js', 'ts', 'py', 'java', 'go', 'rs', 'c', 'cpp', 'h', 'sol', 'css', 'html', 'json', 'yaml', 'xml'];
+  const codeExts = [
+    'js',
+    'ts',
+    'py',
+    'java',
+    'go',
+    'rs',
+    'c',
+    'cpp',
+    'h',
+    'sol',
+    'css',
+    'html',
+    'json',
+    'yaml',
+    'xml',
+  ];
 
   if (documentExts.includes(ext)) return 'document';
   if (archiveExts.includes(ext)) return 'archive';
@@ -203,15 +224,16 @@ export async function uploadChatFile(
   const size = buffer.byteLength;
   const category = getFileCategory(mimeType, fileName);
   const isPremium = options?.isPremium ?? false;
-  const expiryDays = options?.expiryDays ?? (isPremium ? PREMIUM_FILE_EXPIRY_DAYS : DEFAULT_FILE_EXPIRY_DAYS);
+  const expiryDays =
+    options?.expiryDays ?? (isPremium ? PREMIUM_FILE_EXPIRY_DAYS : DEFAULT_FILE_EXPIRY_DAYS);
 
   // Validate file size
   const maxSize = isPremium ? MAX_FILE_SIZE_PREMIUM : MAX_FILE_SIZE_FREE;
   if (size > maxSize) {
     throw new Error(
       `File too large (${formatSize(size)}). ` +
-      `Maximum: ${isPremium ? '2GB' : '100MB'}. ` +
-      `${isPremium ? '' : 'Upgrade to premium for 2GB uploads.'}`,
+        `Maximum: ${isPremium ? '2GB' : '100MB'}. ` +
+        `${isPremium ? '' : 'Upgrade to premium for 2GB uploads.'}`,
     );
   }
 
@@ -221,7 +243,7 @@ export async function uploadChatFile(
   if (quota.totalBytes + size > quotaLimit) {
     throw new Error(
       `Storage quota exceeded (${formatSize(quota.totalBytes)} / ${formatSize(quotaLimit)}). ` +
-      `Free up space or upgrade to premium for more storage.`,
+        `Free up space or upgrade to premium for more storage.`,
     );
   }
 
@@ -256,9 +278,7 @@ export async function uploadChatFile(
       }
     } else {
       // Large/premium files: R2
-      const ext = fileName.includes('.')
-        ? fileName.substring(fileName.lastIndexOf('.'))
-        : '.bin';
+      const ext = fileName.includes('.') ? fileName.substring(fileName.lastIndexOf('.')) : '.bin';
       const storageKey = `${STORAGE_KEY_PREFIX}${conversationId}/${fileId}${ext}`;
 
       const r2Result = await uploadToR2(
@@ -285,13 +305,10 @@ export async function uploadChatFile(
     // Generate preview/thumbnail
     if ((category === 'image' || category === 'video') && options?.thumbnailBuffer) {
       const thumbKey = `${STORAGE_KEY_PREFIX}${conversationId}/${fileId}_thumb.jpg`;
-      const thumbResult = await uploadToR2(
-        thumbKey,
-        options.thumbnailBuffer,
-        'image/jpeg',
-        env,
-        { 'file-id': fileId, type: 'thumbnail' },
-      );
+      const thumbResult = await uploadToR2(thumbKey, options.thumbnailBuffer, 'image/jpeg', env, {
+        'file-id': fileId,
+        type: 'thumbnail',
+      });
       file.thumbnailUrl = thumbResult.cdnUrl;
     }
 
@@ -311,18 +328,22 @@ export async function uploadChatFile(
       ? Math.ceil((file.expiresAt - Date.now()) / 1000) + 86400
       : 86400 * 365;
 
-    await kv.put(`${FILE_PREFIX}${fileId}`, JSON.stringify(file), {
-      expirationTtl: Math.max(3600, ttl),
-    }).catch(() => {});
+    await kv
+      .put(`${FILE_PREFIX}${fileId}`, JSON.stringify(file), {
+        expirationTtl: Math.max(3600, ttl),
+      })
+      .catch(() => {});
 
     // Index by conversation
     const indexKey = `${FILE_INDEX_PREFIX}${conversationId}`;
     const existingRaw = await kv.get(indexKey).catch(() => null);
     const existing: string[] = existingRaw ? JSON.parse(existingRaw) : [];
     existing.push(fileId);
-    await kv.put(indexKey, JSON.stringify(existing.slice(-500)), {
-      expirationTtl: 86400 * 90,
-    }).catch(() => {});
+    await kv
+      .put(indexKey, JSON.stringify(existing.slice(-500)), {
+        expirationTtl: 86400 * 90,
+      })
+      .catch(() => {});
 
     // Update quota
     await updateStorageQuota(env, senderId, size);
@@ -355,9 +376,7 @@ export async function getFileDownloadUrl(
   }
 
   // For R2 files, use the direct URL for Range header support
-  const url = options?.range && file.directUrl
-    ? file.directUrl
-    : file.url;
+  const url = options?.range && file.directUrl ? file.directUrl : file.url;
 
   return { url, file };
 }
@@ -371,7 +390,7 @@ export async function streamFileDownload(
   rangeHeader?: string,
 ): Promise<Response | null> {
   const file = await getFile(env, fileId);
-  if (!file || !file.r2Key) return null;
+  if (!file?.r2Key) return null;
 
   try {
     // Get the R2 object
@@ -437,11 +456,13 @@ export async function getFile(env: Env, fileId: string): Promise<ChatFile | null
 async function saveFile(env: Env, file: ChatFile): Promise<void> {
   const kv = env.CACHE ?? env.CONTENT_LIBRARY;
   if (!kv) return;
-  await kv.put(`${FILE_PREFIX}${file.id}`, JSON.stringify(file), {
-    expirationTtl: file.expiresAt
-      ? Math.ceil((file.expiresAt - Date.now()) / 1000) + 86400
-      : 86400 * 365,
-  }).catch(() => {});
+  await kv
+    .put(`${FILE_PREFIX}${file.id}`, JSON.stringify(file), {
+      expirationTtl: file.expiresAt
+        ? Math.ceil((file.expiresAt - Date.now()) / 1000) + 86400
+        : 86400 * 365,
+    })
+    .catch(() => {});
 }
 
 /**
@@ -506,7 +527,12 @@ export async function getStorageQuota(env: Env, userId: string): Promise<Storage
     if (!raw) return defaultQuota;
 
     const quota = JSON.parse(raw) as StorageQuota;
-    quota.usagePercent = Math.min(100, Math.round((quota.totalBytes / (quota.isPremium ? PREMIUM_TIER_BYTES : FREE_TIER_BYTES)) * 100));
+    quota.usagePercent = Math.min(
+      100,
+      Math.round(
+        (quota.totalBytes / (quota.isPremium ? PREMIUM_TIER_BYTES : FREE_TIER_BYTES)) * 100,
+      ),
+    );
     quota.totalReadable = formatSize(quota.totalBytes);
     return quota;
   } catch {
@@ -522,12 +548,19 @@ async function updateStorageQuota(env: Env, userId: string, bytesAdded: number):
     const quota = await getStorageQuota(env, userId);
     quota.totalBytes += bytesAdded;
     quota.totalReadable = formatSize(quota.totalBytes);
-    quota.usagePercent = Math.min(100, Math.round((quota.totalBytes / (quota.isPremium ? PREMIUM_TIER_BYTES : FREE_TIER_BYTES)) * 100));
+    quota.usagePercent = Math.min(
+      100,
+      Math.round(
+        (quota.totalBytes / (quota.isPremium ? PREMIUM_TIER_BYTES : FREE_TIER_BYTES)) * 100,
+      ),
+    );
     quota.updatedAt = Date.now();
 
-    await kv.put(`${QUOTA_PREFIX}${userId.toLowerCase()}`, JSON.stringify(quota), {
-      expirationTtl: 86400 * 365,
-    }).catch(() => {});
+    await kv
+      .put(`${QUOTA_PREFIX}${userId.toLowerCase()}`, JSON.stringify(quota), {
+        expirationTtl: 86400 * 365,
+      })
+      .catch(() => {});
   } catch {
     // Non-critical
   }
@@ -561,9 +594,11 @@ export async function deleteChatFile(env: Env, fileId: string, userId: string): 
       quota.totalBytes = Math.max(0, quota.totalBytes - file.size);
       quota.totalReadable = formatSize(quota.totalBytes);
       quota.updatedAt = Date.now();
-      await kv.put(`${QUOTA_PREFIX}${userId.toLowerCase()}`, JSON.stringify(quota), {
-        expirationTtl: 86400 * 365,
-      }).catch(() => {});
+      await kv
+        .put(`${QUOTA_PREFIX}${userId.toLowerCase()}`, JSON.stringify(quota), {
+          expirationTtl: 86400 * 365,
+        })
+        .catch(() => {});
     } catch {
       // Non-critical
     }
@@ -594,9 +629,11 @@ export async function createUploadProgress(
 
   const kv = env.CACHE ?? env.CONTENT_LIBRARY;
   if (kv) {
-    await kv.put(`${UPLOAD_TOKEN_PREFIX}${token}`, JSON.stringify(progress), {
-      expirationTtl: UPLOAD_TOKEN_TTL,
-    }).catch(() => {});
+    await kv
+      .put(`${UPLOAD_TOKEN_PREFIX}${token}`, JSON.stringify(progress), {
+        expirationTtl: UPLOAD_TOKEN_TTL,
+      })
+      .catch(() => {});
   }
 
   return progress;
@@ -625,9 +662,11 @@ export async function updateUploadProgress(
     if (phase) progress.phase = phase;
     if (error) progress.error = error;
 
-    await kv.put(`${UPLOAD_TOKEN_PREFIX}${token}`, JSON.stringify(progress), {
-      expirationTtl: UPLOAD_TOKEN_TTL,
-    }).catch(() => {});
+    await kv
+      .put(`${UPLOAD_TOKEN_PREFIX}${token}`, JSON.stringify(progress), {
+        expirationTtl: UPLOAD_TOKEN_TTL,
+      })
+      .catch(() => {});
 
     return progress;
   } catch {
@@ -686,9 +725,7 @@ export async function cleanupExpiredFiles(env: Env): Promise<number> {
           await kv.delete(key.name).catch(() => {});
           cleaned++;
         }
-      } catch {
-        continue;
-      }
+      } catch {}
     }
   } catch (err) {
     log('error', '[chat-files] cleanup expired failed', err);
@@ -710,7 +747,7 @@ function formatSize(bytes: number): string {
   if (bytes === 0) return '0 B';
   const units = ['B', 'KB', 'MB', 'GB', 'TB'];
   const i = Math.floor(Math.log(bytes) / Math.log(1024));
-  const size = bytes / Math.pow(1024, i);
+  const size = bytes / 1024 ** i;
   return `${size.toFixed(i === 0 ? 0 : 1)} ${units[i]}`;
 }
 

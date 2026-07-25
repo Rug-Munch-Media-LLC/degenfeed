@@ -107,16 +107,24 @@ function detectSource(url: string, explicitSource?: EmbedSource): SourceDetectio
     const vid = match?.[1];
     return {
       source: 'youtube',
-      embedUrl: vid ? `https://www.youtube.com/embed/${vid}?autoplay=1&rel=0&modestbranding=1` : undefined,
+      embedUrl: vid
+        ? `https://www.youtube.com/embed/${vid}?autoplay=1&rel=0&modestbranding=1`
+        : undefined,
       videoUrl: url,
     };
   }
 
   // PeerTube
-  if (url.includes('peertube') || url.includes('/videos/embed/') || url.includes('video.degenfeed.xyz')) {
+  if (
+    url.includes('peertube') ||
+    url.includes('/videos/embed/') ||
+    url.includes('video.degenfeed.xyz')
+  ) {
     // Extract video UUID from various PeerTube URL formats
     const uuidMatch = url.match(/\/videos\/(?:embed|watch)\/([a-zA-Z0-9-]+)/);
-    const instance = url.includes('video.degenfeed.xyz') ? 'https://video.degenfeed.xyz' : new URL(url).origin;
+    const instance = url.includes('video.degenfeed.xyz')
+      ? 'https://video.degenfeed.xyz'
+      : new URL(url).origin;
     return {
       source: 'peertube',
       embedUrl: uuidMatch
@@ -226,12 +234,19 @@ function detectSource(url: string, explicitSource?: EmbedSource): SourceDetectio
 // ─── IPFS/Arweave Gateway Resolver ──────────────────────────────────────
 
 function resolveIPFS(url: string, preferredGateway = 'https://ipfs.degenfeed.xyz'): string {
-  const cid = url.replace('ipfs://', '').replace(/^\/ipfs\//, '').split('?')[0]!;
+  const cid = url
+    .replace('ipfs://', '')
+    .replace(/^\/ipfs\//, '')
+    .split('?')[0]!;
   return `${preferredGateway}/ipfs/${cid}`;
 }
 
 function resolveArweave(url: string, preferredGateway = 'https://arweave.degenfeed.xyz'): string {
-  const id = url.replace('ar://', '').replace('https://arweave.net/', '').replace('https://arweave.live/', '').split('?')[0]!;
+  const id = url
+    .replace('ar://', '')
+    .replace('https://arweave.net/', '')
+    .replace('https://arweave.live/', '')
+    .split('?')[0]!;
   return `${preferredGateway}/${id}`;
 }
 
@@ -284,11 +299,12 @@ export function UnifiedVideoEmbed({
   const [hlsSupported, setHlsSupported] = useState(true);
 
   // Resolve IPFS/Arweave URLs
-  const resolvedUrl = source === 'ipfs'
-    ? resolveIPFS(videoUrl, ipfsGateway)
-    : source === 'arweave'
-      ? resolveArweave(videoUrl, arweaveGateway)
-      : videoUrl;
+  const resolvedUrl =
+    source === 'ipfs'
+      ? resolveIPFS(videoUrl, ipfsGateway)
+      : source === 'arweave'
+        ? resolveArweave(videoUrl, arweaveGateway)
+        : videoUrl;
 
   // HLS.js setup for HLS streams
   useEffect(() => {
@@ -300,7 +316,7 @@ export function UnifiedVideoEmbed({
 
     (async () => {
       const Hls = await loadHls();
-      if (!Hls || !Hls.isSupported()) {
+      if (!Hls?.isSupported()) {
         setHlsSupported(false);
         return;
       }
@@ -501,7 +517,14 @@ export function UnifiedVideoEmbed({
                 onClick={onTip}
                 className="absolute bottom-3 right-3 z-10 flex items-center gap-1.5 rounded-lg bg-blue-500 px-3 py-1.5 text-xs font-medium text-white shadow-lg hover:bg-blue-600 transition-colors"
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
                   <path d="M12 2v20M2 12h20" />
                 </svg>
                 Collect
@@ -534,9 +557,7 @@ export function UnifiedVideoEmbed({
       // ── DTube: external embed ──
       case 'dtube': {
         const dtubeId = url.match(/d-tube\.com\/v\/([a-zA-Z0-9]+)/)?.[1];
-        const dtubeEmbedSrc = dtubeId
-          ? `https://d-tube.com/embed/video/${dtubeId}`
-          : url;
+        const dtubeEmbedSrc = dtubeId ? `https://d-tube.com/embed/video/${dtubeId}` : url;
         return (
           <iframe
             src={dtubeEmbedSrc}
@@ -629,13 +650,13 @@ export function UnifiedVideoEmbed({
           />
         );
       }
-
-      // ── Direct video URL: HTML5 player ──
-      case 'direct':
       default: {
         // Determine MIME type from extension
         const mimeType = url.match(/\.(mp4|webm|ogg|mov)(\?|$)/i)
-          ? `video/${url.match(/\.(mp4|webm|ogg|mov)/i)![0]!.replace('.', '').replace('mov', 'mp4')}`
+          ? `video/${url
+              .match(/\.(mp4|webm|ogg|mov)/i)?.[0]
+              ?.replace('.', '')
+              .replace('mov', 'mp4')}`
           : 'video/mp4';
 
         return (
@@ -675,7 +696,14 @@ export function UnifiedVideoEmbed({
             className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
             aria-label="Exit theater mode"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
               <line x1="18" y1="6" x2="6" y2="18" />
               <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
@@ -684,7 +712,9 @@ export function UnifiedVideoEmbed({
       )}
 
       {/* Player container */}
-      <div className={`relative ${!theaterActive ? 'aspect-video overflow-hidden rounded-xl bg-black' : 'flex-1'}`}>
+      <div
+        className={`relative ${!theaterActive ? 'aspect-video overflow-hidden rounded-xl bg-black' : 'flex-1'}`}
+      >
         {/* Video embed */}
         {renderEmbed()}
 
@@ -702,7 +732,14 @@ export function UnifiedVideoEmbed({
             onClick={onTip}
             className="absolute bottom-14 right-3 z-10 flex items-center gap-1.5 rounded-lg bg-degen-500 px-3 py-1.5 text-xs font-medium text-black shadow-lg hover:bg-degen-400 transition-colors"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
               <path d="M12 2v20M2 12h20" />
             </svg>
             Tip
@@ -716,7 +753,16 @@ export function UnifiedVideoEmbed({
             onClick={handleShare}
             className="absolute bottom-3 right-3 z-10 flex items-center gap-1.5 rounded-lg bg-black/60 px-2.5 py-1.5 text-[11px] font-medium text-white/80 backdrop-blur-sm hover:bg-black/80 hover:text-white transition-colors"
           >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <circle cx="18" cy="5" r="3" />
               <circle cx="6" cy="12" r="3" />
               <circle cx="18" cy="19" r="3" />
@@ -739,125 +785,177 @@ export function UnifiedVideoEmbed({
       </div>
 
       {/* Controls bar (only for HTML5 video sources) */}
-      {(source === 'direct' || source === 'ipfs' || source === 'arweave' || source === 'hls' || source === 'bittube') && !theaterActive && (
-        <div className="mt-2 flex items-center gap-2">
-          {/* Play/Pause */}
-          <button
-            type="button"
-            onClick={togglePlay}
-            className="flex items-center gap-1.5 rounded-lg bg-[var(--color-card)] px-3 py-1.5 text-[11px] font-medium text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
-            title={isPlaying ? 'Pause' : 'Play'}
-          >
-            {isPlaying ? (
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                <rect x="6" y="4" width="4" height="16" />
-                <rect x="14" y="4" width="4" height="16" />
-              </svg>
-            ) : (
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                <polygon points="5 3 19 12 5 21 5 3" />
-              </svg>
-            )}
-            {isPlaying ? 'Pause' : 'Play'}
-          </button>
-
-          {/* Volume */}
-          <button
-            type="button"
-            onClick={toggleMute}
-            className="flex items-center rounded-lg bg-[var(--color-card)] p-1.5 text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
-            title={isMuted ? 'Unmute' : 'Mute'}
-          >
-            {isMuted || volume === 0 ? (
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-                <line x1="23" y1="9" x2="17" y2="15" />
-                <line x1="17" y1="9" x2="23" y2="15" />
-              </svg>
-            ) : (
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-                <path d="M19.07 4.93a10 10 0 010 14.14M15.54 8.46a5 5 0 010 7.07" />
-              </svg>
-            )}
-          </button>
-
-          {/* Volume slider */}
-          <input
-            type="range"
-            min="0"
-            max="1"
-            step="0.01"
-            value={volume}
-            onChange={handleVolumeChange}
-            className="h-1 w-20 cursor-pointer appearance-none rounded-full bg-[var(--color-card)] accent-degen-500"
-            aria-label="Volume"
-          />
-
-          <div className="flex-1" />
-
-          {/* Theater mode */}
-          {enableTheater && (
+      {(source === 'direct' ||
+        source === 'ipfs' ||
+        source === 'arweave' ||
+        source === 'hls' ||
+        source === 'bittube') &&
+        !theaterActive && (
+          <div className="mt-2 flex items-center gap-2">
+            {/* Play/Pause */}
             <button
               type="button"
-              onClick={toggleTheater}
-              className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-medium transition-colors ${
-                theaterActive
-                  ? 'bg-degen-500/10 text-degen-500'
-                  : 'bg-[var(--color-card)] text-[var(--color-muted)] hover:text-[var(--color-fg)]'
-              }`}
-              title="Theater mode"
+              onClick={togglePlay}
+              className="flex items-center gap-1.5 rounded-lg bg-[var(--color-card)] px-3 py-1.5 text-[11px] font-medium text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
+              title={isPlaying ? 'Pause' : 'Play'}
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <polyline points="4 14 10 14 10 20" />
-                <polyline points="20 10 14 10 14 4" />
-                <line x1="14" y1="10" x2="21" y2="3" />
-                <line x1="3" y1="21" x2="10" y2="14" />
-              </svg>
-              Theater
+              {isPlaying ? (
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                  <rect x="6" y="4" width="4" height="16" />
+                  <rect x="14" y="4" width="4" height="16" />
+                </svg>
+              ) : (
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                  <polygon points="5 3 19 12 5 21 5 3" />
+                </svg>
+              )}
+              {isPlaying ? 'Pause' : 'Play'}
             </button>
-          )}
 
-          {/* Fullscreen */}
-          <button
-            type="button"
-            onClick={toggleFullscreen}
-            className="flex items-center rounded-lg bg-[var(--color-card)] p-1.5 text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
-            title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
-          >
-            {isFullscreen ? (
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <polyline points="4 14 10 14 10 20" />
-                <polyline points="20 10 14 10 14 4" />
-                <line x1="14" y1="10" x2="21" y2="3" />
-                <line x1="3" y1="21" x2="10" y2="14" />
-              </svg>
-            ) : (
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3" />
-              </svg>
+            {/* Volume */}
+            <button
+              type="button"
+              onClick={toggleMute}
+              className="flex items-center rounded-lg bg-[var(--color-card)] p-1.5 text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
+              title={isMuted ? 'Unmute' : 'Mute'}
+            >
+              {isMuted || volume === 0 ? (
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                  <line x1="23" y1="9" x2="17" y2="15" />
+                  <line x1="17" y1="9" x2="23" y2="15" />
+                </svg>
+              ) : (
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                  <path d="M19.07 4.93a10 10 0 010 14.14M15.54 8.46a5 5 0 010 7.07" />
+                </svg>
+              )}
+            </button>
+
+            {/* Volume slider */}
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.01"
+              value={volume}
+              onChange={handleVolumeChange}
+              className="h-1 w-20 cursor-pointer appearance-none rounded-full bg-[var(--color-card)] accent-degen-500"
+              aria-label="Volume"
+            />
+
+            <div className="flex-1" />
+
+            {/* Theater mode */}
+            {enableTheater && (
+              <button
+                type="button"
+                onClick={toggleTheater}
+                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-medium transition-colors ${
+                  theaterActive
+                    ? 'bg-degen-500/10 text-degen-500'
+                    : 'bg-[var(--color-card)] text-[var(--color-muted)] hover:text-[var(--color-fg)]'
+                }`}
+                title="Theater mode"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <polyline points="4 14 10 14 10 20" />
+                  <polyline points="20 10 14 10 14 4" />
+                  <line x1="14" y1="10" x2="21" y2="3" />
+                  <line x1="3" y1="21" x2="10" y2="14" />
+                </svg>
+                Theater
+              </button>
             )}
-          </button>
-        </div>
-      )}
+
+            {/* Fullscreen */}
+            <button
+              type="button"
+              onClick={toggleFullscreen}
+              className="flex items-center rounded-lg bg-[var(--color-card)] p-1.5 text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
+              title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+            >
+              {isFullscreen ? (
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <polyline points="4 14 10 14 10 20" />
+                  <polyline points="20 10 14 10 14 4" />
+                  <line x1="14" y1="10" x2="21" y2="3" />
+                  <line x1="3" y1="21" x2="10" y2="14" />
+                </svg>
+              ) : (
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3" />
+                </svg>
+              )}
+            </button>
+          </div>
+        )}
     </div>
   );
 }
 
 // ─── Helper: map embed source to VideoSourceBadge source ────────────────
 
-function sourceToBadgeSource(source: EmbedSource): Parameters<typeof VideoSourceBadge>[0]['source'] {
+function sourceToBadgeSource(
+  source: EmbedSource,
+): Parameters<typeof VideoSourceBadge>[0]['source'] {
   switch (source) {
-    case 'youtube': return 'youtube';
-    case 'peertube': return 'peertube';
-    case 'zora': return 'zora';
-    case 'odysee': return 'odysee';
-    case 'dtube': return 'dtube';
-    case 'rumble': return 'rumble';
-    case 'bittube': return 'bitchute';
-    case 'vimeo': return 'vimeo';
-    case 'dailymotion': return 'dailymotion';
-    case 'twitch': return 'twitch';
+    case 'youtube':
+      return 'youtube';
+    case 'peertube':
+      return 'peertube';
+    case 'zora':
+      return 'zora';
+    case 'odysee':
+      return 'odysee';
+    case 'dtube':
+      return 'dtube';
+    case 'rumble':
+      return 'rumble';
+    case 'bittube':
+      return 'bitchute';
+    case 'vimeo':
+      return 'vimeo';
+    case 'dailymotion':
+      return 'dailymotion';
+    case 'twitch':
+      return 'twitch';
     case 'ipfs':
     case 'arweave':
     case 'hls':

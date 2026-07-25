@@ -15,7 +15,6 @@
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Sparkline } from '../../../components/creator-coin/Sparkline';
 
 // ─── Types ─────────────────────────────────────────────────────────────
 
@@ -344,7 +343,7 @@ function TradeConfirmModal({
 
 export default function CoinDetailPage() {
   const params = useParams();
-  const router = useRouter();
+  const _router = useRouter();
   const symbol = typeof params.symbol === 'string' ? params.symbol.toUpperCase() : '';
 
   const [detail, setDetail] = useState<CoinDetail | null>(null);

@@ -15,14 +15,14 @@
 import type { Env } from '../index';
 import { jsonResponse, noCacheJsonResponse } from '../index';
 import { requireSession } from '../session';
-import { CHANNELS } from '../ws-channels';
 import { broadcastToUser } from '../ws-broadcast';
+import { CHANNELS } from '../ws-channels';
 
 // ─── Types ──────────────────────────────────────────────────────────────
 
 export interface VideoCall {
   callId: string;
-  host: string;          // wallet who created the call
+  host: string; // wallet who created the call
   participants: string[]; // wallet addresses of all participants
   type: 'audio' | 'video';
   status: 'ringing' | 'active' | 'ended';
@@ -190,7 +190,7 @@ export class VideoCallManager {
    */
   async addParticipant(callId: string, wallet: string): Promise<VideoCall | null> {
     const call = await this.getCall(callId);
-    if (!call || call.status !== 'ringing') return null;
+    if (call?.status !== 'ringing') return null;
 
     if (!call.participants.includes(wallet)) {
       call.participants.push(wallet);
@@ -243,11 +243,7 @@ export class VideoCallManager {
   /**
    * Store SDP signal (offer/answer) for a peer.
    */
-  async storeSignal(
-    callId: string,
-    peerId: string,
-    signal: SignalData,
-  ): Promise<boolean> {
+  async storeSignal(callId: string, peerId: string, signal: SignalData): Promise<boolean> {
     try {
       const key = signalKey(callId, peerId);
       const raw = await this.env.CACHE?.get(key);
@@ -316,11 +312,7 @@ export class VideoCallManager {
   /**
    * Poll for ICE candidates intended for a specific link.
    */
-  async pollIceCandidates(
-    callId: string,
-    from: string,
-    to: string,
-  ): Promise<IceCandidateData[]> {
+  async pollIceCandidates(callId: string, from: string, to: string): Promise<IceCandidateData[]> {
     try {
       const raw = await this.env.CACHE?.get(iceKey(callId, from, to));
       if (!raw) return [];
@@ -374,9 +366,8 @@ export class VideoCallManager {
 
       // Determine the "peer" — the other person in 1-on-1, or "Group Call"
       const otherParticipants = call.participants.filter((p) => p !== wallet);
-      const peer: string = otherParticipants.length === 1
-        ? (otherParticipants[0] ?? 'Unknown')
-        : 'Group Call';
+      const peer: string =
+        otherParticipants.length === 1 ? (otherParticipants[0] ?? 'Unknown') : 'Group Call';
 
       const duration = call.endedAt ? call.endedAt - call.startedAt : 0;
 
@@ -530,9 +521,7 @@ export async function handleCallJoin(
       ok: true,
       call: updated,
       signaling: {
-        peers: updated.participants.filter(
-          (p) => p !== session.address && p !== call.host,
-        ),
+        peers: updated.participants.filter((p) => p !== session.address && p !== call.host),
         host: call.host,
         groupMode: updated.groupMode || 'p2p',
       },
@@ -834,11 +823,7 @@ export async function handleCallMute(
 /**
  * POST /api/calls/:id/end — End a call (host only)
  */
-export async function handleCallEnd(
-  request: Request,
-  env: Env,
-  callId: string,
-): Promise<Response> {
+export async function handleCallEnd(request: Request, env: Env, callId: string): Promise<Response> {
   if (request.method !== 'POST') {
     return jsonResponse({ error: 'Method not allowed' }, 405);
   }
@@ -899,10 +884,7 @@ export async function handleCallEnd(
 /**
  * GET /api/calls/history — Call history for current user
  */
-export async function handleCallHistory(
-  request: Request,
-  env: Env,
-): Promise<Response> {
+export async function handleCallHistory(request: Request, env: Env): Promise<Response> {
   if (request.method !== 'GET') {
     return jsonResponse({ error: 'Method not allowed' }, 405);
   }

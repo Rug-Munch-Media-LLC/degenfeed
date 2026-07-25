@@ -33,12 +33,12 @@ export const lensAdapter: PlatformAdapter = {
     // Mentions
     const mentions = master.mentions ?? [];
     if (mentions.length > 0) {
-      content += '\n\n' + mentions.map((m) => `@lens:${m}`).join(' ');
+      content += `\n\n${mentions.map((m) => `@lens:${m}`).join(' ')}`;
     }
 
     // Hashtags
     if (hashtags.length > 0) {
-      content += '\n\n' + hashtags.map((h) => `#${h}`).join(' ');
+      content += `\n\n${hashtags.map((h) => `#${h}`).join(' ')}`;
     }
 
     // Truncate if needed (unlikely given 5000 limit)
@@ -81,7 +81,7 @@ export const lensAdapter: PlatformAdapter = {
 
   preview(master: MasterPost): string {
     let preview = '[Lens Protocol]';
-    preview += '\n' + master.text.slice(0, 500);
+    preview += `\n${master.text.slice(0, 500)}`;
 
     if (master.text.length > 500) {
       preview += '...';
@@ -92,7 +92,7 @@ export const lensAdapter: PlatformAdapter = {
     }
 
     if (master.hashtags && master.hashtags.length > 0) {
-      preview += '\n🏷️ ' + master.hashtags.map((h) => `#${h}`).join(' ');
+      preview += `\n🏷️ ${master.hashtags.map((h) => `#${h}`).join(' ')}`;
     }
 
     preview += '\n💎 Publication is collectible';

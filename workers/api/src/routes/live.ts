@@ -32,20 +32,18 @@ import {
   startLiveStream,
   stopLiveStream,
   type UnifiedLiveStream,
-  type UpcomingStream,
 } from '../feed/live-aggregator';
+import { isKickChannelLive } from '../feed/live-sources/kick';
 import {
-  watchCreator,
-  unwatchCreator,
-  getWatchedCreators,
-  getPendingNotifications,
   detectLiveWatchedCreators,
-  upsertWatcherProfile,
+  getPendingNotifications,
+  getWatchedCreators,
   getWatcherProfile,
+  unwatchCreator,
+  upsertWatcherProfile,
+  watchCreator,
 } from '../feed/live-sources/notifications';
-import { fetchAllPeerTubeStreams, getPeerTubeInstanceHealth } from '../feed/live-sources/peertube';
-import { fetchKickLiveStreams, isKickChannelLive } from '../feed/live-sources/kick';
-import { fetchCuratedTwitchStreams } from '../feed/live-sources/twitch';
+import { getPeerTubeInstanceHealth } from '../feed/live-sources/peertube';
 import type { Env } from '../index';
 import { jsonResponse, noCacheJsonResponse } from '../index';
 import { handleChatMessages, handleSendChat } from '../lib/stream-chat';
@@ -84,7 +82,6 @@ export async function handleLiveNow(request: Request, env: Env): Promise<Respons
       case 'category':
         streams.sort((a, b) => a.category.localeCompare(b.category));
         break;
-      case 'viewers':
       default:
         streams.sort((a, b) => b.viewerCount - a.viewerCount);
         break;
@@ -768,7 +765,10 @@ export async function handleTwitchCurated(request: Request, _env: Env): Promise<
 
   try {
     const { CURATED_TWITCH_CHANNELS } = await import('../feed/live-sources/twitch');
-    return noCacheJsonResponse({ channels: CURATED_TWITCH_CHANNELS, total: CURATED_TWITCH_CHANNELS.length });
+    return noCacheJsonResponse({
+      channels: CURATED_TWITCH_CHANNELS,
+      total: CURATED_TWITCH_CHANNELS.length,
+    });
   } catch (e) {
     return jsonResponse({ error: String(e) }, 500);
   }
@@ -1196,4 +1196,283 @@ function aggregateSourceCounts(streams: UnifiedLiveStream[]): SourceCount[] {
     count: info.count,
     label: info.label,
   }));
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// Simulcast Routes
+// ═══════════════════════════════════════════════════════════════════════
+
+/**
+ * POST /api/live/simulcast/start — Start simulcast to multiple platforms
+ */
+export async function handleSimulcastStart(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+  try {
+    const { handleSimulcastStart: handler } = await import('../lib/simulcast');
+    return handler(request, env);
+  } catch (e) {
+    return jsonResponse({ error: String(e) }, 500);
+  }
+}
+
+/**
+ * POST /api/live/simulcast/end — End simulcast
+ */
+export async function handleSimulcastEnd(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+  try {
+    const { handleSimulcastEnd: handler } = await import('../lib/simulcast');
+    return handler(request, env);
+  } catch (e) {
+    return jsonResponse({ error: String(e) }, 500);
+  }
+}
+
+/**
+ * GET /api/live/simulcast/status/:sessionId — Simulcast status
+ */
+export async function handleSimulcastStatus(
+  request: Request,
+  env: Env,
+  sessionId: string,
+): Promise<Response> {
+  if (request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+  try {
+    const { handleSimulcastStatus: handler } = await import('../lib/simulcast');
+    return handler(request, env, sessionId);
+  } catch (e) {
+    return jsonResponse({ error: String(e) }, 500);
+  }
+}
+
+/**
+ * GET /api/live/simulcast/list — List active simulcasts
+ */
+export async function handleSimulcastList(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+  try {
+    const { handleSimulcastList: handler } = await import('../lib/simulcast');
+    return handler(request, env);
+  } catch (e) {
+    return jsonResponse({ error: String(e) }, 500);
+  }
+}
+
+/**
+ * POST /api/live/simulcast/keys — Store stream key
+ */
+export async function handleSimulcastStoreKey(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+  try {
+    const { handleSimulcastStoreKey: handler } = await import('../lib/simulcast');
+    return handler(request, env);
+  } catch (e) {
+    return jsonResponse({ error: String(e) }, 500);
+  }
+}
+
+/**
+ * DELETE /api/live/simulcast/keys — Delete stream key
+ */
+export async function handleSimulcastDeleteKey(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'DELETE') return jsonResponse({ error: 'Method not allowed' }, 405);
+  try {
+    const { handleSimulcastDeleteKey: handler } = await import('../lib/simulcast');
+    return handler(request, env);
+  } catch (e) {
+    return jsonResponse({ error: String(e) }, 500);
+  }
+}
+
+/**
+ * GET /api/live/simulcast/platforms — Available platforms
+ */
+export async function handleSimulcastPlatforms(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+  try {
+    const { handleSimulcastPlatforms: handler } = await import('../lib/simulcast');
+    return handler(request, env);
+  } catch (e) {
+    return jsonResponse({ error: String(e) }, 500);
+  }
+}
+
+/**
+ * GET /api/live/simulcast/configured — Configured platforms for creator
+ */
+export async function handleSimulcastConfigured(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+  try {
+    const { handleSimulcastConfigured: handler } = await import('../lib/simulcast');
+    return handler(request, env);
+  } catch (e) {
+    return jsonResponse({ error: String(e) }, 500);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// Bandwidth Monitoring Routes
+// ═══════════════════════════════════════════════════════════════════════
+
+/**
+ * GET /api/live/bandwidth/:streamId — Bandwidth report for a stream
+ */
+export async function handleBandwidthReport(
+  request: Request,
+  env: Env,
+  streamId: string,
+): Promise<Response> {
+  if (request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+  try {
+    const { handleBandwidthReport: handler } = await import('../lib/streaming-router');
+    return handler(request, env, streamId);
+  } catch (e) {
+    return jsonResponse({ error: String(e) }, 500);
+  }
+}
+
+/**
+ * GET /api/live/bandwidth/summary — Aggregate bandwidth summary
+ */
+export async function handleBandwidthSummary(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+  try {
+    const { handleBandwidthSummary: handler } = await import('../lib/streaming-router');
+    return handler(request, env);
+  } catch (e) {
+    return jsonResponse({ error: String(e) }, 500);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// Unified Chat Routes
+// ═══════════════════════════════════════════════════════════════════════
+
+/**
+ * GET /api/live/chat/unified — Unified chat across platforms
+ */
+export async function handleUnifiedChatMessages(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+  try {
+    const { handleUnifiedChatMessages: handler } = await import('../lib/stream-chat');
+    return handler(request, env);
+  } catch (e) {
+    return jsonResponse({ error: String(e) }, 500);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// Stream Configuration Wizard Routes
+// ═══════════════════════════════════════════════════════════════════════
+
+/**
+ * POST /api/live/wizard/start — Start stream config wizard
+ */
+export async function handleWizardStart(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+  try {
+    const { handleWizardStart: handler } = await import('../lib/stream-wizard');
+    return handler(request, env);
+  } catch (e) {
+    return jsonResponse({ error: String(e) }, 500);
+  }
+}
+
+/**
+ * POST /api/live/wizard/step1 — Stream setup
+ */
+export async function handleWizardStep1(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+  try {
+    const { handleWizardStep1: handler } = await import('../lib/stream-wizard');
+    return handler(request, env);
+  } catch (e) {
+    return jsonResponse({ error: String(e) }, 500);
+  }
+}
+
+/**
+ * POST /api/live/wizard/step2 — Audience estimation
+ */
+export async function handleWizardStep2(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+  try {
+    const { handleWizardStep2: handler } = await import('../lib/stream-wizard');
+    return handler(request, env);
+  } catch (e) {
+    return jsonResponse({ error: String(e) }, 500);
+  }
+}
+
+/**
+ * POST /api/live/wizard/step3 — Broadcast targets
+ */
+export async function handleWizardStep3(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+  try {
+    const { handleWizardStep3: handler } = await import('../lib/stream-wizard');
+    return handler(request, env);
+  } catch (e) {
+    return jsonResponse({ error: String(e) }, 500);
+  }
+}
+
+/**
+ * POST /api/live/wizard/step4 — Monetization
+ */
+export async function handleWizardStep4(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+  try {
+    const { handleWizardStep4: handler } = await import('../lib/stream-wizard');
+    return handler(request, env);
+  } catch (e) {
+    return jsonResponse({ error: String(e) }, 500);
+  }
+}
+
+/**
+ * POST /api/live/wizard/step5 — Go Live!
+ */
+export async function handleWizardGoLive(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+  try {
+    const { handleWizardGoLive: handler } = await import('../lib/stream-wizard');
+    return handler(request, env);
+  } catch (e) {
+    return jsonResponse({ error: String(e) }, 500);
+  }
+}
+
+/**
+ * GET /api/live/wizard/status/:sessionId — Wizard status
+ */
+export async function handleWizardStatus(
+  request: Request,
+  env: Env,
+  sessionId: string,
+): Promise<Response> {
+  if (request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+  try {
+    const { handleWizardStatus: handler } = await import('../lib/stream-wizard');
+    return handler(request, env, sessionId);
+  } catch (e) {
+    return jsonResponse({ error: String(e) }, 500);
+  }
+}
+
+/**
+ * DELETE /api/live/wizard/cancel/:sessionId — Cancel wizard
+ */
+export async function handleWizardCancel(
+  request: Request,
+  env: Env,
+  sessionId: string,
+): Promise<Response> {
+  if (request.method !== 'DELETE') return jsonResponse({ error: 'Method not allowed' }, 405);
+  try {
+    const { handleWizardCancel: handler } = await import('../lib/stream-wizard');
+    return handler(request, env, sessionId);
+  } catch (e) {
+    return jsonResponse({ error: String(e) }, 500);
+  }
 }

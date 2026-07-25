@@ -18,8 +18,8 @@
 
 import type { Env } from '../index';
 import { log } from '../index';
-import { uploadToIPFS } from './ipfs-storage';
 import type { IPFSUploadResult } from './ipfs-storage';
+import { uploadToIPFS } from './ipfs-storage';
 
 // ─── Constants ──────────────────────────────────────────────────────────
 
@@ -60,13 +60,16 @@ export interface ImageUploadResult {
   /** IPFS gateway URL (CDN-backed) */
   url: string;
   /** URLs for each generated size variant */
-  sizes: Record<ImageSizeName, {
-    cid: string;
-    url: string;
-    width: number;
-    height?: number;
-    size: number;
-  }>;
+  sizes: Record<
+    ImageSizeName,
+    {
+      cid: string;
+      url: string;
+      width: number;
+      height?: number;
+      size: number;
+    }
+  >;
   /** Original file metadata */
   metadata: ImageMetadata;
   /** Available gateway URLs */
@@ -326,8 +329,11 @@ function parseWebPDimensions(bytes: Uint8Array): { width: number; height: number
   const riffSize = ((bytes[4]! << 24) | (bytes[5]! << 16) | (bytes[6]! << 8) | bytes[7]!) >>> 0;
   if (riffSize < 10) return { width: 0, height: 0 };
 
-  const webpType = String.fromCharCode(bytes[8]!) + String.fromCharCode(bytes[9]!) +
-    String.fromCharCode(bytes[10]!) + String.fromCharCode(bytes[11]!);
+  const webpType =
+    String.fromCharCode(bytes[8]!) +
+    String.fromCharCode(bytes[9]!) +
+    String.fromCharCode(bytes[10]!) +
+    String.fromCharCode(bytes[11]!);
 
   if (webpType === 'VP8X') {
     const w = (bytes[24]! | (bytes[25]! << 8) | (bytes[26]! << 16)) + 1;
@@ -372,7 +378,10 @@ export async function uploadImageToIPFS(
   const originalSize = buffer.byteLength;
 
   // Process the image (EXIF strip, dimension parse)
-  const { processed, width, height, exifStripped, isAnimated } = await processImage(buffer, mimeType);
+  const { processed, width, height, exifStripped, isAnimated } = await processImage(
+    buffer,
+    mimeType,
+  );
 
   // Compute content hash for deduplication
   const contentHash = await hashContent(processed);
@@ -474,11 +483,7 @@ export async function uploadImageToIPFS(
 /**
  * Store image metadata in KV for fast retrieval.
  */
-async function storeImageMetadata(
-  env: Env,
-  cid: string,
-  metadata: ImageMetadata,
-): Promise<void> {
+async function storeImageMetadata(env: Env, cid: string, metadata: ImageMetadata): Promise<void> {
   const kv = env.CACHE ?? env.CONTENT_LIBRARY;
   if (!kv) return;
 
@@ -494,11 +499,7 @@ async function storeImageMetadata(
 /**
  * Store content hash → CID mapping for deduplication.
  */
-async function storeContentHash(
-  env: Env,
-  hash: string,
-  cid: string,
-): Promise<void> {
+async function storeContentHash(env: Env, hash: string, cid: string): Promise<void> {
   const kv = env.CACHE ?? env.CONTENT_LIBRARY;
   if (!kv) return;
 
@@ -514,10 +515,7 @@ async function storeContentHash(
 /**
  * Find an existing image by content hash.
  */
-async function findExistingByHash(
-  env: Env,
-  hash: string,
-): Promise<ImageUploadResult | null> {
+async function findExistingByHash(env: Env, hash: string): Promise<ImageUploadResult | null> {
   const kv = env.CACHE ?? env.CONTENT_LIBRARY;
   if (!kv) return null;
 
@@ -568,10 +566,7 @@ async function findExistingByHash(
 /**
  * Get image metadata by CID from KV.
  */
-export async function getImageMetadataByCid(
-  env: Env,
-  cid: string,
-): Promise<ImageMetadata | null> {
+export async function getImageMetadataByCid(env: Env, cid: string): Promise<ImageMetadata | null> {
   const kv = env.CACHE ?? env.CONTENT_LIBRARY;
   if (!kv) return null;
 
@@ -586,11 +581,7 @@ export async function getImageMetadataByCid(
 /**
  * Store image-to-creator mapping for dashboard queries.
  */
-export async function linkImageToCreator(
-  env: Env,
-  cid: string,
-  wallet: string,
-): Promise<void> {
+export async function linkImageToCreator(env: Env, cid: string, wallet: string): Promise<void> {
   const kv = env.CACHE ?? env.CONTENT_LIBRARY;
   if (!kv) return;
 
@@ -647,10 +638,7 @@ export async function getCreatorImages(
  *
  * If Cloudflare Image Resizing is not available, falls back to the IPFS gateway.
  */
-export function getOptimizedImageUrl(
-  cid: string,
-  params: ImageQueryParams,
-): string {
+export function getOptimizedImageUrl(cid: string, params: ImageQueryParams): string {
   const { size, width, format = 'webp', quality = 80 } = params;
 
   // Determine target width
@@ -742,5 +730,5 @@ function formatBytes(bytes: number): string {
   if (bytes === 0) return '0 B';
   const units = ['B', 'KB', 'MB', 'GB'];
   const i = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
-  return `${(bytes / Math.pow(1024, i)).toFixed(1)} ${units[i]}`;
+  return `${(bytes / 1024 ** i).toFixed(1)} ${units[i]}`;
 }

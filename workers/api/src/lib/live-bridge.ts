@@ -10,18 +10,21 @@
  * Every bridge operation uses: reliability layer, KV state tracking, structured errors.
  */
 
+import type { LiveSource } from '../feed/live-aggregator';
 import type { Env } from '../index';
 import { jsonResponse, noCacheJsonResponse } from '../index';
 import { broadcastToAll } from '../ws-broadcast';
 import { CHANNELS } from '../ws-channels';
-import { recordBridgeOperation, withReliability } from './bridge-reliability';
+import { recordBridgeOperation } from './bridge-reliability';
 import { NostrLiveBridge } from './nostr-live-bridge';
-import { LivepeerService } from './livepeer-service';
-import type { UnifiedLiveStream, LiveSource } from '../feed/live-aggregator';
 
 // ─── Types ──────────────────────────────────────────────────────────────
 
-export type BridgeDirection = 'nostr-to-peertube' | 'peertube-to-nostr' | 'farcaster-to-owncast' | 'youtube-to-peertube';
+export type BridgeDirection =
+  | 'nostr-to-peertube'
+  | 'peertube-to-nostr'
+  | 'farcaster-to-owncast'
+  | 'youtube-to-peertube';
 
 export type BridgeProtocol = 'nostr' | 'peertube' | 'farcaster' | 'owncast' | 'youtube' | 'all';
 
@@ -89,7 +92,7 @@ function bridgeConfigKey(streamId: string): string {
   return `bridge:config:${streamId}`;
 }
 
-function bridgeStatusKey(streamId: string): string {
+function _bridgeStatusKey(streamId: string): string {
   return `bridge:status:${streamId}`;
 }
 
@@ -165,11 +168,13 @@ export class LiveBridge {
             const client = new PeerTubeClient({ accessToken: gtsToken, instanceUrl: peertubeUrl });
 
             // Find or create a channel for the streamer
-            const channels = await client.channels.list({ namePattern: announce.streamerAddress.slice(0, 20) });
+            const channels = await client.channels.list({
+              namePattern: announce.streamerAddress.slice(0, 20),
+            });
             let channelId: number;
 
             if (channels.data.length > 0) {
-              channelId = channels.data[0]!.id;
+              channelId = channels.data[0]?.id;
             } else {
               const newChannel = await client.channels.create({
                 name: `streamer-${announce.streamerAddress.slice(0, 8)}`,
@@ -629,9 +634,7 @@ export async function handleBridgeList(request: Request, env: Env): Promise<Resp
     const activeStreams = await bridge.listActiveBridges();
 
     // Fetch statuses in parallel
-    const statuses = await Promise.all(
-      activeStreams.map((id) => bridge.getStatus(id)),
-    );
+    const statuses = await Promise.all(activeStreams.map((id) => bridge.getStatus(id)));
 
     return noCacheJsonResponse({
       bridges: statuses.filter(Boolean),

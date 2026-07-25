@@ -95,7 +95,7 @@ export function useOfflineQueue() {
       replayAll();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOnline]);
+  }, [isOnline, replayAll, queue.length]);
 
   /** Add an action to the queue */
   const enqueue = useCallback((action: Omit<ActionQueueItem, 'id' | 'timestamp' | 'retries'>) => {
@@ -115,7 +115,7 @@ export function useOfflineQueue() {
 
     const items = [...queue];
     const remaining: ActionQueueItem[] = [];
-    let replayed = 0;
+    let _replayed = 0;
 
     for (const item of items) {
       if (!navigator.onLine) {
@@ -132,7 +132,7 @@ export function useOfflineQueue() {
         });
 
         if (response.ok) {
-          replayed++;
+          _replayed++;
         } else if (item.retries < MAX_RETRIES) {
           remaining.push({ ...item, retries: item.retries + 1 });
         }

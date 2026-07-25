@@ -11,7 +11,6 @@
  */
 
 import type { Env } from '../index';
-import { recordBridgeOperation, withReliability } from './bridge-reliability';
 
 // ─── Types ──────────────────────────────────────────────────────────────
 
@@ -78,7 +77,7 @@ function detectStorageBackend(env: Env): StorageBackend {
 
 // ─── Key Helpers ────────────────────────────────────────────────────────
 
-function videoKey(prefix: string, uuid: string): string {
+function _videoKey(prefix: string, uuid: string): string {
   return `${prefix.replace(/^\/+|\/+$/g, '')}/${uuid}`;
 }
 
@@ -103,11 +102,7 @@ function generateCDNUrl(env: Env, key: string): string {
 
 // ─── S3 API Helpers (fetch-based, no SDK dependency) ────────────────────
 
-function s3AuthHeaders(
-  method: string,
-  path: string,
-  body?: ArrayBuffer | null,
-): HeadersInit {
+function s3AuthHeaders(_method: string, _path: string, body?: ArrayBuffer | null): HeadersInit {
   // For Cloudflare Workers, R2 binding is preferred.
   // For external S3, we use basic auth or env-configured headers.
   // Full AWS SigV4 is available via env.S3_USE_SIGV4 flag.
@@ -159,7 +154,9 @@ export class VideoStorageService {
     if (this.backend === 's3') {
       return this.uploadToS3(key, body, contentType, metadata);
     }
-    throw new Error('No video storage backend configured. Set VIDEO_STORAGE_BINDING or S3_* env vars.');
+    throw new Error(
+      'No video storage backend configured. Set VIDEO_STORAGE_BINDING or S3_* env vars.',
+    );
   }
 
   private async uploadToR2(
@@ -170,10 +167,21 @@ export class VideoStorageService {
   ): Promise<UploadResult> {
     // R2 binding: env.VIDEO_STORAGE_BINDING is an R2Bucket
     const bucket = this.env.VIDEO_STORAGE_BINDING as unknown as {
-      put(key: string, value: ArrayBuffer, options?: { httpMetadata?: Record<string, string>; customMetadata?: Record<string, string> }): Promise<void>;
+      put(
+        key: string,
+        value: ArrayBuffer,
+        options?: {
+          httpMetadata?: Record<string, string>;
+          customMetadata?: Record<string, string>;
+        },
+      ): Promise<void>;
       get(key: string): Promise<{ body: ReadableStream; size: number } | null>;
       delete(key: string): Promise<void>;
-      list(options?: { prefix?: string; limit?: number; cursor?: string }): Promise<{ objects: Array<{ key: string; size: number }>; cursor?: string }>;
+      list(options?: {
+        prefix?: string;
+        limit?: number;
+        cursor?: string;
+      }): Promise<{ objects: Array<{ key: string; size: number }>; cursor?: string }>;
     };
 
     await bucket.put(key, body, {
@@ -195,7 +203,7 @@ export class VideoStorageService {
     contentType: string,
     _metadata?: Record<string, string>,
   ): Promise<UploadResult> {
-    const endpoint = this.env.S3_ENDPOINT!.replace(/\/$/, '');
+    const endpoint = this.env.S3_ENDPOINT?.replace(/\/$/, '');
     const bucket = this.env.S3_BUCKET ?? 'degenfeed-videos';
     const url = `${endpoint}/${bucket}/${key}`;
 
@@ -249,7 +257,7 @@ export class VideoStorageService {
    * Get a thumbnail URL for a video.
    */
   getThumbnailUrl(key: string): string {
-    const thumbKey = key.replace(/\.[^.]+$/, '.jpg');
+    const _thumbKey = key.replace(/\.[^.]+$/, '.jpg');
     // Try thumbnail variant first, fall back to generic thumbnail
     const variant = variantKey(key, 'thumbnail.jpg');
     return generateCDNUrl(this.env, variant);
@@ -276,9 +284,9 @@ export class VideoStorageService {
       // Delete original
       await bucket.delete(key);
     } else if (this.backend === 's3') {
-      const endpoint = this.env.S3_ENDPOINT!.replace(/\/$/, '');
+      const endpoint = this.env.S3_ENDPOINT?.replace(/\/$/, '');
       const bucket = this.env.S3_BUCKET ?? 'degenfeed-videos';
-      const prefix = key.replace(/\.[^.]+$/, '');
+      const _prefix = key.replace(/\.[^.]+$/, '');
 
       // For S3, delete the key directly
       await fetch(`${endpoint}/${bucket}/${key}`, {
@@ -294,10 +302,16 @@ export class VideoStorageService {
   /**
    * List stored videos with optional prefix filtering.
    */
-  async listVideos(prefix = 'videos/', limit = 50): Promise<Array<{ key: string; size: number; cdnUrl: string }>> {
+  async listVideos(
+    prefix = 'videos/',
+    limit = 50,
+  ): Promise<Array<{ key: string; size: number; cdnUrl: string }>> {
     if (this.backend === 'r2') {
       const bucket = this.env.VIDEO_STORAGE_BINDING as unknown as {
-        list(options: { prefix: string; limit: number }): Promise<{ objects: Array<{ key: string; size: number }> }>;
+        list(options: {
+          prefix: string;
+          limit: number;
+        }): Promise<{ objects: Array<{ key: string; size: number }> }>;
       };
       const result = await bucket.list({ prefix, limit });
       return result.objects.map((obj) => ({
@@ -307,7 +321,7 @@ export class VideoStorageService {
       }));
     }
     if (this.backend === 's3') {
-      const endpoint = this.env.S3_ENDPOINT!.replace(/\/$/, '');
+      const endpoint = this.env.S3_ENDPOINT?.replace(/\/$/, '');
       const bucket = this.env.S3_BUCKET ?? 'degenfeed-videos';
       const url = `${endpoint}/${bucket}/?prefix=${encodeURIComponent(prefix)}&max-keys=${limit}`;
       const response = await fetch(url, {
@@ -362,11 +376,9 @@ export class VideoStorageService {
 
     // Store transcode job in KV for tracking
     try {
-      await this.env.CACHE?.put(
-        `transcode:job:${job.jobId}`,
-        JSON.stringify(job),
-        { expirationTtl: 86400 },
-      );
+      await this.env.CACHE?.put(`transcode:job:${job.jobId}`, JSON.stringify(job), {
+        expirationTtl: 86400,
+      });
     } catch {
       // Non-critical
     }

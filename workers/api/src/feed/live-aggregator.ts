@@ -9,14 +9,12 @@
  */
 
 import type { Env } from '../index';
-import { jsonResponse, noCacheJsonResponse } from '../index';
 import { readStringArray, writeStringArray } from '../routes/live-shorts-engine';
 import { broadcastToAll } from '../ws-broadcast';
 import { CHANNELS } from '../ws-channels';
-import { fetchCuratedTwitchStreams } from './live-sources/twitch';
 import { fetchKickLiveStreams } from './live-sources/kick';
-import { fetchAllPeerTubeStreams } from './live-sources/peertube';
 import { processLiveNotifications } from './live-sources/notifications';
+import { fetchCuratedTwitchStreams } from './live-sources/twitch';
 
 // ─── Normalized Unified Stream Type ─────────────────────────────────────
 
@@ -29,7 +27,18 @@ export interface UnifiedIdentity {
   followers?: number;
 }
 
-export type LiveSource = 'owncast' | 'peertube' | 'youtube' | 'twitch' | 'kick' | 'spaces' | 'degenfeed' | 'farcaster' | 'nostr' | 'lens' | 'zora';
+export type LiveSource =
+  | 'owncast'
+  | 'peertube'
+  | 'youtube'
+  | 'twitch'
+  | 'kick'
+  | 'spaces'
+  | 'degenfeed'
+  | 'farcaster'
+  | 'nostr'
+  | 'lens'
+  | 'zora';
 
 export interface UnifiedLiveStream {
   id: string;
@@ -832,9 +841,8 @@ async function fetchFarcasterLiveStreams(env: Env): Promise<UnifiedLiveStream[]>
   const startTime = Date.now();
 
   try {
-    const { detectFarcasterLives, getActiveFarcasterLives, farcasterToUnifiedStream } = await import(
-      '../lib/farcaster-live-wrapper'
-    );
+    const { detectFarcasterLives, getActiveFarcasterLives, farcasterToUnifiedStream } =
+      await import('../lib/farcaster-live-wrapper');
 
     // Get active sessions being restreamed through PeerTube
     const activeSessions = await getActiveFarcasterLives(env);
@@ -973,11 +981,11 @@ export async function aggregateAllStreams(
   // Fetch all sources in parallel — each is independent
   const results = await Promise.allSettled([
     fetchOwncastStreams(env),
-    fetchPeerTubeStreams(env),      // ← uses new multi-instance fetcher
+    fetchPeerTubeStreams(env), // ← uses new multi-instance fetcher
     fetchYouTubeLiveStreams(env),
     fetchTwitchStreams(env),
     fetchCuratedTwitchStreams(env), // ← new: curated crypto/tech/gaming channels
-    fetchKickLiveStreams(env),      // ← new: Kick.com live streams
+    fetchKickLiveStreams(env), // ← new: Kick.com live streams
     fetchDegenFeedSpaces(env),
     fetchFarcasterLiveStreams(env),
     fetchNostrLiveStreams(env),

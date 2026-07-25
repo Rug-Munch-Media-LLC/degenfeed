@@ -8,7 +8,7 @@
  * AntiExploitEngine tested with custom data fetchers to control edge cases.
  * CoinDeployer tested with mocked env to verify validation and feature gates.
  */
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 // ─── Bonding Curve (pure functions) ──────────────────────────────────
 
@@ -36,13 +36,13 @@ describe('Creator Coin — Bonding Curve Math', () => {
 
   it('returns increasing prices across phases', () => {
     const priceEarly = bc.getDynamicPrice(bc.GRADUATION_SUPPLY / 10n);
-    const priceLate = bc.getDynamicPrice(bc.GRADUATION_SUPPLY * 9n / 10n);
+    const priceLate = bc.getDynamicPrice((bc.GRADUATION_SUPPLY * 9n) / 10n);
     expect(priceLate).toBeGreaterThan(priceEarly);
   });
 
   it('returns higher price in Phase 4 than Phase 1', () => {
-    const phase1 = bc.GRADUATION_SUPPLY * 30n / 100n;
-    const phase4 = bc.GRADUATION_SUPPLY * 90n / 100n;
+    const phase1 = (bc.GRADUATION_SUPPLY * 30n) / 100n;
+    const phase4 = (bc.GRADUATION_SUPPLY * 90n) / 100n;
     const p1 = bc.getDynamicPrice(phase1);
     const p4 = bc.getDynamicPrice(phase4);
     expect(p4).toBeGreaterThan(p1);
@@ -50,11 +50,11 @@ describe('Creator Coin — Bonding Curve Math', () => {
 
   it('calculates phase index correctly across all 5 phases', () => {
     expect(bc.getCurrentEra(0n)).toBe(0);
-    expect(bc.getCurrentEra(bc.GRADUATION_SUPPLY * 10n / 100n)).toBe(0);
-    expect(bc.getCurrentEra(bc.GRADUATION_SUPPLY * 30n / 100n)).toBe(1);
-    expect(bc.getCurrentEra(bc.GRADUATION_SUPPLY * 50n / 100n)).toBe(2);
-    expect(bc.getCurrentEra(bc.GRADUATION_SUPPLY * 70n / 100n)).toBe(3);
-    expect(bc.getCurrentEra(bc.GRADUATION_SUPPLY * 90n / 100n)).toBe(4);
+    expect(bc.getCurrentEra((bc.GRADUATION_SUPPLY * 10n) / 100n)).toBe(0);
+    expect(bc.getCurrentEra((bc.GRADUATION_SUPPLY * 30n) / 100n)).toBe(1);
+    expect(bc.getCurrentEra((bc.GRADUATION_SUPPLY * 50n) / 100n)).toBe(2);
+    expect(bc.getCurrentEra((bc.GRADUATION_SUPPLY * 70n) / 100n)).toBe(3);
+    expect(bc.getCurrentEra((bc.GRADUATION_SUPPLY * 90n) / 100n)).toBe(4);
   });
 
   it('calculates tokens out from native amount and price', () => {
@@ -117,8 +117,10 @@ describe('Creator Coin — Bonding Curve Math', () => {
   });
 
   it('returns bonding phase info for display', () => {
-    const info = bc.getBondingPhaseInfo(bc.GRADUATION_SUPPLY * 10n / 100n);
-    expect(['Steal Deal', 'Early Bird', 'Cruise Control', 'Final Call', 'Moonshot']).toContain(info.name);
+    const info = bc.getBondingPhaseInfo((bc.GRADUATION_SUPPLY * 10n) / 100n);
+    expect(['Steal Deal', 'Early Bird', 'Cruise Control', 'Final Call', 'Moonshot']).toContain(
+      info.name,
+    );
     expect(info.progress).toBeGreaterThanOrEqual(0);
   });
 
@@ -151,21 +153,35 @@ describe('Creator Coin — Anti-Exploit', () => {
     // implied = (1e14 * 1e18) / 1e12 = 1e20 = 100 tokens
     // max = 1% of 1e24 = 1e22. Allowed: 100 < 1e22 ✓
     const allowed = await engine.checkAntiWhale(BigInt(1e14), {
-      address: '0xcoin', name: 'Test', symbol: 'TST',
+      address: '0xcoin',
+      name: 'Test',
+      symbol: 'TST',
       price: (1000n * BigInt(1e9)).toString(),
       totalSupply: '1000000000000000000000000',
-      totalRaised: '0', uniqueBuyers: 0, graduated: false, decimals: 18,
-      chain: 'base', createdAt: Date.now(), creator: '0xcreator',
+      totalRaised: '0',
+      uniqueBuyers: 0,
+      graduated: false,
+      decimals: 18,
+      chain: 'base',
+      createdAt: Date.now(),
+      creator: '0xcreator',
     });
     expect(allowed.allowed).toBe(true);
 
     // Massive buy — should be blocked
     const blocked = await engine.checkAntiWhale(BigInt(1e23), {
-      address: '0xcoin', name: 'Test', symbol: 'TST',
+      address: '0xcoin',
+      name: 'Test',
+      symbol: 'TST',
       price: BigInt(1e9).toString(),
       totalSupply: '1000000000000000000000000',
-      totalRaised: '0', uniqueBuyers: 0, graduated: false, decimals: 18,
-      chain: 'base', createdAt: Date.now(), creator: '0xcreator',
+      totalRaised: '0',
+      uniqueBuyers: 0,
+      graduated: false,
+      decimals: 18,
+      chain: 'base',
+      createdAt: Date.now(),
+      creator: '0xcreator',
     });
     expect(blocked.allowed).toBe(false);
     expect(blocked.reason).toContain('Anti-whale');
@@ -191,7 +207,10 @@ describe('Creator Coin — Anti-Exploit', () => {
   });
 
   it('blocks wallet too young (anti-bot)', async () => {
-    const engine = new ae.AntiExploitEngine({ minWalletAgeSeconds: 7 * 86400, minTransactionCount: 1 });
+    const engine = new ae.AntiExploitEngine({
+      minWalletAgeSeconds: 7 * 86400,
+      minTransactionCount: 1,
+    });
     engine.setDataFetchers({
       walletAge: async () => 3600,
       txCount: async () => 0,
@@ -235,12 +254,24 @@ describe('Creator Coin — Anti-Exploit', () => {
       txCount: async () => 10,
     });
 
-    const status = await engine.getStatus('0xwallet', {
-      address: '0xcoin', name: 'Test', symbol: 'TST',
-      price: '1000000000000', totalSupply: '1000000000000000000000',
-      totalRaised: '0', uniqueBuyers: 0, graduated: false, decimals: 18,
-      chain: 'base', createdAt: Date.now(), creator: '0xcreator',
-    }, 'base');
+    const status = await engine.getStatus(
+      '0xwallet',
+      {
+        address: '0xcoin',
+        name: 'Test',
+        symbol: 'TST',
+        price: '1000000000000',
+        totalSupply: '1000000000000000000000',
+        totalRaised: '0',
+        uniqueBuyers: 0,
+        graduated: false,
+        decimals: 18,
+        chain: 'base',
+        createdAt: Date.now(),
+        creator: '0xcreator',
+      },
+      'base',
+    );
 
     expect(typeof status.whaleLimited).toBe('boolean');
     expect(typeof status.cooldownActive).toBe('boolean');
@@ -276,36 +307,69 @@ describe('Creator Coin — Coin Deployer', () => {
   it('rejects deployment when feature flag is disabled', async () => {
     const env = { ENABLE_REAL_DEPLOYMENTS: 'false', PREMIUM_WALLET_KEY: '0xabc' } as any;
 
-    await expect(deployer.deployCoin({
-      creator: '0xcreator', name: 'Test Coin', symbol: 'TST',
-      chain: 'base', protocol: 'farcaster',
-    }, env)).rejects.toThrow('deployments coming soon');
+    await expect(
+      deployer.deployCoin(
+        {
+          creator: '0xcreator',
+          name: 'Test Coin',
+          symbol: 'TST',
+          chain: 'base',
+          protocol: 'farcaster',
+        },
+        env,
+      ),
+    ).rejects.toThrow('deployments coming soon');
   });
 
   it('rejects deployment with missing required fields', async () => {
     const env = { ENABLE_REAL_DEPLOYMENTS: 'true', PREMIUM_WALLET_KEY: '0xabc' } as any;
 
-    await expect(deployer.deployCoin({
-      creator: '', name: '', symbol: '', chain: 'base', protocol: 'farcaster',
-    }, env)).rejects.toThrow(deployer.DeployerConfigError);
+    await expect(
+      deployer.deployCoin(
+        {
+          creator: '',
+          name: '',
+          symbol: '',
+          chain: 'base',
+          protocol: 'farcaster',
+        },
+        env,
+      ),
+    ).rejects.toThrow(deployer.DeployerConfigError);
   });
 
   it('rejects unsupported chain', async () => {
     const env = { ENABLE_REAL_DEPLOYMENTS: 'true', PREMIUM_WALLET_KEY: '0xabc' } as any;
 
-    await expect(deployer.deployCoin({
-      creator: '0xcreator', name: 'Test', symbol: 'TST',
-      chain: 'invalid' as any, protocol: 'farcaster',
-    }, env)).rejects.toThrow('Unsupported chain');
+    await expect(
+      deployer.deployCoin(
+        {
+          creator: '0xcreator',
+          name: 'Test',
+          symbol: 'TST',
+          chain: 'invalid' as any,
+          protocol: 'farcaster',
+        },
+        env,
+      ),
+    ).rejects.toThrow('Unsupported chain');
   });
 
   it('rejects deployment without wallet key', async () => {
     const env = { ENABLE_REAL_DEPLOYMENTS: 'true' } as any;
 
-    await expect(deployer.deployCoin({
-      creator: '0xcreator', name: 'Test', symbol: 'TST',
-      chain: 'base', protocol: 'farcaster',
-    }, env)).rejects.toThrow(deployer.DeployerConfigError);
+    await expect(
+      deployer.deployCoin(
+        {
+          creator: '0xcreator',
+          name: 'Test',
+          symbol: 'TST',
+          chain: 'base',
+          protocol: 'farcaster',
+        },
+        env,
+      ),
+    ).rejects.toThrow(deployer.DeployerConfigError);
   });
 
   it('computes creator and platform fees correctly', () => {

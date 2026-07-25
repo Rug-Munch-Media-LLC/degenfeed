@@ -8,7 +8,7 @@
  *
  * Pure functions tested directly. KV interactions mocked.
  */
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 // ─── Mock KV ───────────────────────────────────────────────────────
 
@@ -16,8 +16,14 @@ function createMockKV(): Record<string, any> {
   const store = new Map<string, string>();
   return {
     get: vi.fn((key: string) => Promise.resolve(store.get(key) ?? null)),
-    put: vi.fn((key: string, value: string) => { store.set(key, value); return Promise.resolve(); }),
-    delete: vi.fn((key: string) => { store.delete(key); return Promise.resolve(); }),
+    put: vi.fn((key: string, value: string) => {
+      store.set(key, value);
+      return Promise.resolve();
+    }),
+    delete: vi.fn((key: string) => {
+      store.delete(key);
+      return Promise.resolve();
+    }),
     getWithMetadata: vi.fn(),
     list: vi.fn((opts?: any) => {
       const prefix = opts?.prefix ?? '';
@@ -69,7 +75,9 @@ describe('News Dedup — Core Normalization', () => {
   it('normalizes URLs by removing tracking parameters', async () => {
     const { normalizeUrl } = await import('../../workers/api/src/lib/global-dedup');
 
-    const cleanUrl = normalizeUrl('https://example.com/article?utm_source=twitter&utm_medium=social&id=123');
+    const cleanUrl = normalizeUrl(
+      'https://example.com/article?utm_source=twitter&utm_medium=social&id=123',
+    );
     expect(cleanUrl).not.toContain('utm_source');
     expect(cleanUrl).not.toContain('utm_medium');
     expect(cleanUrl).toContain('id=123'); // non-tracking params kept
@@ -139,7 +147,7 @@ describe('News Dedup — Title Levenshtein Similarity', () => {
     };
 
     await registry.register(req1);
-    const dup = await registry.checkDuplicate(req2);
+    const _dup = await registry.checkDuplicate(req2);
     // Title similarity should catch this — punctuation-only difference
     // This may not trigger if the content hash doesn't match
     // The key test is that it does NOT falsely flag completely different titles
@@ -196,8 +204,8 @@ describe('News Dedup — Cross-Protocol ID Mapping', () => {
 
     const nostr = mappings.find((m) => m.targetProtocol === 'nostr');
     expect(nostr).toBeDefined();
-    expect(nostr!.targetId).toContain('note1');
-    expect(nostr!.confidence).toBeGreaterThan(0.8);
+    expect(nostr?.targetId).toContain('note1');
+    expect(nostr?.confidence).toBeGreaterThan(0.8);
   });
 
   it('infers Farcaster cast links from Warpcast URLs', async () => {
@@ -208,8 +216,8 @@ describe('News Dedup — Cross-Protocol ID Mapping', () => {
 
     const fc = mappings.find((m) => m.targetProtocol === 'farcaster');
     expect(fc).toBeDefined();
-    expect(fc!.targetId).toContain('0x');
-    expect(fc!.confidence).toBeGreaterThan(0.8);
+    expect(fc?.targetId).toContain('0x');
+    expect(fc?.confidence).toBeGreaterThan(0.8);
   });
 
   it('infers YouTube video links', async () => {
@@ -220,7 +228,7 @@ describe('News Dedup — Cross-Protocol ID Mapping', () => {
 
     const yt = mappings.find((m) => m.targetProtocol === 'youtube');
     expect(yt).toBeDefined();
-    expect(yt!.targetId).toBe('dQw4w9WgXcQ');
+    expect(yt?.targetId).toBe('dQw4w9WgXcQ');
   });
 });
 
@@ -393,7 +401,9 @@ describe('News Dedup — RSS GUID & OG Metadata', () => {
 
 describe('News Dedup — News Source Registry', () => {
   it('has categorized news sources with metadata', async () => {
-    const { NEWS_SOURCES, NEWS_SOURCE_COUNT } = await import('../../workers/api/src/feed/news-aggregator');
+    const { NEWS_SOURCES, NEWS_SOURCE_COUNT } = await import(
+      '../../workers/api/src/feed/news-aggregator'
+    );
 
     expect(Array.isArray(NEWS_SOURCES)).toBe(true);
     expect(NEWS_SOURCES.length).toBeGreaterThan(100); // 100+ sources defined
@@ -428,7 +438,7 @@ describe('News Dedup — News Source Registry', () => {
     // AI sources should have niche tags
     for (const source of aiSources) {
       expect(source.nicheTags).toBeDefined();
-      expect(source.nicheTags!.length).toBeGreaterThan(0);
+      expect(source.nicheTags?.length).toBeGreaterThan(0);
     }
   });
 });

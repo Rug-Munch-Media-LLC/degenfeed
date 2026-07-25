@@ -42,7 +42,13 @@ export type NetworkProtocol =
   | 'solana';
 
 export type MembershipStatus = 'active' | 'inactive' | 'suspended' | 'exited';
-export type RightType = 'membership' | 'contribution' | 'achievement' | 'governance' | 'content' | 'reputation';
+export type RightType =
+  | 'membership'
+  | 'contribution'
+  | 'achievement'
+  | 'governance'
+  | 'content'
+  | 'reputation';
 
 export interface ProtocolMembership {
   /** Wallet address */
@@ -203,9 +209,21 @@ export interface RightsIndexEntry {
 // ─── Constants ────────────────────────────────────────────────────────
 
 const ALL_NETWORKS: NetworkProtocol[] = [
-  'nostr', 'farcaster', 'lens', 'bluesky', 'mastodon',
-  'reddit', 'threads', 'lemmy', 'peertube', 'atproto',
-  'zora', 'telegram', 'rss', 'ethereum', 'solana',
+  'nostr',
+  'farcaster',
+  'lens',
+  'bluesky',
+  'mastodon',
+  'reddit',
+  'threads',
+  'lemmy',
+  'peertube',
+  'atproto',
+  'zora',
+  'telegram',
+  'rss',
+  'ethereum',
+  'solana',
 ];
 
 // ─── KV Key Helpers ───────────────────────────────────────────────────
@@ -304,7 +322,13 @@ export async function registerMembership(
   }
 
   // Append to immutable history log
-  await appendHistory(normalizedWallet, protocol, 'joined', `Joined ${protocol} as ${identifier}`, env);
+  await appendHistory(
+    normalizedWallet,
+    protocol,
+    'joined',
+    `Joined ${protocol} as ${identifier}`,
+    env,
+  );
 
   // Update network index
   await updateNetworkIndex(protocol, normalizedWallet, identifier, now, env);
@@ -381,10 +405,7 @@ export async function grantRight(
     );
 
     // Store immutable record separately
-    await env.IDENTITIES?.put(
-      immutableKey(rightId),
-      JSON.stringify(immutable),
-    );
+    await env.IDENTITIES?.put(immutableKey(rightId), JSON.stringify(immutable));
 
     // Append to global rights list
     const existingRights = await env.IDENTITIES?.get(rightsKey(normalizedWallet));
@@ -396,7 +417,13 @@ export async function grantRight(
   }
 
   // Append to immutable history
-  await appendHistory(normalizedWallet, protocol, 'right_granted', `${type}: ${name} — ${reason}`, env);
+  await appendHistory(
+    normalizedWallet,
+    protocol,
+    'right_granted',
+    `${type}: ${name} — ${reason}`,
+    env,
+  );
 
   // Update network index & stats
   await bumpNetworkStats(protocol, 'right_granted', env);
@@ -429,10 +456,7 @@ export async function getMembership(
 /**
  * Get ALL memberships for a wallet across all networks.
  */
-export async function getAllMemberships(
-  wallet: string,
-  env: Env,
-): Promise<ProtocolMembership[]> {
+export async function getAllMemberships(wallet: string, env: Env): Promise<ProtocolMembership[]> {
   const memberships: ProtocolMembership[] = [];
 
   for (const protocol of ALL_NETWORKS) {
@@ -450,10 +474,7 @@ export async function getAllMemberships(
 /**
  * Get ALL rights ever granted to a wallet (across all networks).
  */
-export async function getAllRights(
-  wallet: string,
-  env: Env,
-): Promise<NetworkRight[]> {
+export async function getAllRights(wallet: string, env: Env): Promise<NetworkRight[]> {
   try {
     const raw = await env.IDENTITIES?.get(rightsKey(wallet.toLowerCase()));
     if (!raw) return [];
@@ -469,10 +490,7 @@ export async function getAllRights(
  * Generate a complete rights manifest for a wallet.
  * This is the canonical document proving all memberships and rights.
  */
-export async function generateManifest(
-  wallet: string,
-  env: Env,
-): Promise<RightsManifest> {
+export async function generateManifest(wallet: string, env: Env): Promise<RightsManifest> {
   const normalizedWallet = wallet.toLowerCase();
   const memberships = await getAllMemberships(normalizedWallet, env);
 
@@ -522,10 +540,7 @@ export async function generateManifest(
 /**
  * Get the cached rights manifest for a wallet.
  */
-export async function getCachedManifest(
-  wallet: string,
-  env: Env,
-): Promise<RightsManifest | null> {
+export async function getCachedManifest(wallet: string, env: Env): Promise<RightsManifest | null> {
   try {
     const raw = await env.IDENTITIES?.get(manifestKey(wallet.toLowerCase()));
     if (!raw) return null;
@@ -618,12 +633,15 @@ export async function changeStatus(
   membership.statusHistory.push(statusChange);
   membership.updatedAt = now;
 
-  await env.IDENTITIES?.put(
-    membershipKey(normalizedWallet, protocol),
-    JSON.stringify(membership),
-  );
+  await env.IDENTITIES?.put(membershipKey(normalizedWallet, protocol), JSON.stringify(membership));
 
-  await appendHistory(normalizedWallet, protocol, 'status_changed', `${membership.status} → ${newStatus}: ${reason}`, env);
+  await appendHistory(
+    normalizedWallet,
+    protocol,
+    'status_changed',
+    `${membership.status} → ${newStatus}: ${reason}`,
+    env,
+  );
 
   return membership;
 }
@@ -667,7 +685,13 @@ export async function recordExit(
   const result = await changeStatus(wallet, protocol, 'exited', reason, 'user', env);
 
   if (result) {
-    await appendHistory(wallet.toLowerCase(), protocol, 'exited', `Exited ${protocol}: ${reason}`, env);
+    await appendHistory(
+      wallet.toLowerCase(),
+      protocol,
+      'exited',
+      `Exited ${protocol}: ${reason}`,
+      env,
+    );
   }
 
   return result;
@@ -769,24 +793,16 @@ export async function computeSovereigntyScore(
   const rightScore = (rightCount / 30) * 25;
 
   // Membership depth (how long they've been members): up to 20 points
-  const oldestMembership = memberships.reduce(
-    (min, m) => Math.min(min, m.joinedAt),
-    now,
-  );
+  const oldestMembership = memberships.reduce((min, m) => Math.min(min, m.joinedAt), now);
   const membershipAgeDays = (now - oldestMembership) / (1000 * 60 * 60 * 24);
   const membershipDepth = Math.min(membershipAgeDays / 365, 1) * 20;
 
   // Verification level: up to 15 points
   const verifiedCount = memberships.filter((m) => m.verified).length;
-  const verificationLevel = memberships.length > 0
-    ? (verifiedCount / memberships.length) * 15
-    : 0;
+  const verificationLevel = memberships.length > 0 ? (verifiedCount / memberships.length) * 15 : 0;
 
   // Longevity (how many rights are old): up to 15 points
-  const oldestRight = allRights.reduce(
-    (min, r) => Math.min(min, r.grantedAt),
-    now,
-  );
+  const oldestRight = allRights.reduce((min, r) => Math.min(min, r.grantedAt), now);
   const rightAgeDays = (now - oldestRight) / (1000 * 60 * 60 * 24);
   const longevity = Math.min(rightAgeDays / 180, 1) * 15;
 
@@ -919,7 +935,7 @@ async function bumpNetworkStats(
 /**
  * Hex to bytes helper.
  */
-function hexToBytes(hex: string): Uint8Array {
+function _hexToBytes(hex: string): Uint8Array {
   const bytes = new Uint8Array(hex.length / 2);
   for (let i = 0; i < hex.length; i += 2) {
     bytes[i / 2] = Number.parseInt(hex.substring(i, i + 2), 16);

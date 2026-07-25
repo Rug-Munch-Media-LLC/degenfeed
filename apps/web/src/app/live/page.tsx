@@ -1,18 +1,17 @@
 'use client';
 
 import { ErrorBoundary } from '@degenfeed/ui';
-import { useCallback, useMemo, useState, useEffect } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { GoLiveFlow } from '../../components/live/GoLiveFlow';
 import { StreamCategoriesBar } from '../../components/stream/StreamCategories';
 import type { StreamCategory } from '../../components/stream/types';
 import { LiveHeader } from '../../components/streams/LiveHeader';
 import { LiveStreamGrid } from '../../components/streams/LiveStreamGrid';
-import { LiveStreamCard } from '../../components/streams/LiveStreamCard';
 import { SpacesHub } from '../../components/streams/SpacesHub';
 import { UpcomingStreams } from '../../components/streams/UpcomingStreams';
 import {
-  SOURCE_CONFIG,
   type LiveStream,
+  SOURCE_CONFIG,
   type StreamSource,
   type StreamType,
   useLiveStreams,
@@ -53,7 +52,13 @@ type PlatformFilter = StreamSource | 'all';
    Live Now Banner — "X creators are live" aggregate
    ═══════════════════════════════════════════════════════════════ */
 
-function LiveNowBanner({ total, sourceCounts }: { total: number; sourceCounts: Record<string, number> }) {
+function LiveNowBanner({
+  total,
+  sourceCounts,
+}: {
+  total: number;
+  sourceCounts: Record<string, number>;
+}) {
   if (total === 0) return null;
 
   const sourceLabels = Object.entries(sourceCounts)
@@ -81,7 +86,8 @@ function LiveNowBanner({ total, sourceCounts }: { total: number; sourceCounts: R
             </p>
             <p className="text-xs text-[var(--color-muted)]">
               Across {sourceLabels.join(', ')}
-              {Object.keys(sourceCounts).length > 4 && ` +${Object.keys(sourceCounts).length - 4} more`}
+              {Object.keys(sourceCounts).length > 4 &&
+                ` +${Object.keys(sourceCounts).length - 4} more`}
             </p>
           </div>
         </div>
@@ -158,7 +164,16 @@ function FeaturedCreatorSection({ stream }: { stream: LiveStream }) {
 
             {/* Viewer count */}
             <div className="absolute bottom-2 left-2 z-10 flex items-center gap-1 rounded-md bg-black/60 px-2 py-1 text-xs font-medium text-white/90 backdrop-blur-sm">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
                 <circle cx="12" cy="12" r="3" />
               </svg>
@@ -185,7 +200,11 @@ function FeaturedCreatorSection({ stream }: { stream: LiveStream }) {
             <div className="flex items-center gap-2 mb-3">
               <div className="flex h-6 w-6 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-degen-500/30 to-purple-500/30 text-[8px] font-bold text-degen-400">
                 {stream.creatorAvatar ? (
-                  <img src={stream.creatorAvatar} alt="" className="h-full w-full rounded-full object-cover" />
+                  <img
+                    src={stream.creatorAvatar}
+                    alt=""
+                    className="h-full w-full rounded-full object-cover"
+                  />
                 ) : (
                   stream.creatorHandle[0]?.toUpperCase() || '?'
                 )}
@@ -198,12 +217,13 @@ function FeaturedCreatorSection({ stream }: { stream: LiveStream }) {
               </span>
             </div>
             <p className="text-sm text-[var(--color-muted)] line-clamp-2 mb-4">
-              Streaming in <strong>{stream.sourceLabel}</strong> &bull; {stream.tags?.slice(0, 3).join(', ')}
+              Streaming in <strong>{stream.sourceLabel}</strong> &bull;{' '}
+              {stream.tags?.slice(0, 3).join(', ')}
             </p>
             <div className="flex items-center gap-3">
               <button
                 type="button"
-                onClick={() => window.location.href = `/live/${stream.id}`}
+                onClick={() => (window.location.href = `/live/${stream.id}`)}
                 className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-degen-500 to-emerald-500 px-5 py-2.5 text-sm font-bold text-black shadow-lg shadow-degen-500/20 transition-all hover:from-degen-400 hover:to-emerald-400 active:scale-[0.97]"
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
@@ -245,7 +265,15 @@ function FilterBar({
     ...Object.entries(SOURCE_CONFIG)
       .filter(([key]) => {
         const source = key as StreamSource;
-        return streamsBySource[source] > 0 || source === 'twitch' || source === 'kick' || source === 'peertube' || source === 'youtube' || source === 'owncast' || source === 'spaces';
+        return (
+          streamsBySource[source] > 0 ||
+          source === 'twitch' ||
+          source === 'kick' ||
+          source === 'peertube' ||
+          source === 'youtube' ||
+          source === 'owncast' ||
+          source === 'spaces'
+        );
       })
       .map(([key, cfg]) => ({
         id: key as PlatformFilter,
@@ -293,9 +321,10 @@ function FilterBar({
         aria-label="Platform"
       >
         {platformTabs.map((f) => {
-          const count = f.id === 'all'
-            ? Object.values(streamsBySource).reduce((a, b) => a + b, 0)
-            : streamsBySource[f.id] ?? 0;
+          const count =
+            f.id === 'all'
+              ? Object.values(streamsBySource).reduce((a, b) => a + b, 0)
+              : (streamsBySource[f.id] ?? 0);
           return (
             <button
               key={f.id}
@@ -308,7 +337,11 @@ function FilterBar({
                   ? 'bg-degen-500/15 text-degen-400 shadow-sm'
                   : 'text-[var(--color-muted)] hover:text-[var(--color-fg)]'
               }`}
-              style={activePlatform === f.id && f.color ? { backgroundColor: `${f.color}20`, color: f.color } : {}}
+              style={
+                activePlatform === f.id && f.color
+                  ? { backgroundColor: `${f.color}20`, color: f.color }
+                  : {}
+              }
             >
               <span>{f.icon}</span>
               <span>{f.label}</span>
@@ -467,7 +500,7 @@ export default function LivePage() {
   const spaces = useMemo(() => streams.filter((s) => s.streamType === 'spaces'), [streams]);
   const counts = useMemo(() => countByType(streams), [streams]);
   const streamsBySource = useMemo(() => countBySource(streams), [streams]);
-  const streamsByCategory = useMemo(() => countByCategory(streams), [streams]);
+  const _streamsByCategory = useMemo(() => countByCategory(streams), [streams]);
 
   // Auto-rotate featured every 15 seconds
   const [featuredIndex, setFeaturedIndex] = useState(0);
@@ -531,9 +564,10 @@ export default function LivePage() {
 
         <div className="space-y-8">
           {/* Featured Creator Spotlight (only on "All" tab, no category filter) */}
-          {activeTab === 'all' && activeCategory === 'all' && activePlatform === 'all' && topStream && (
-            <FeaturedCreatorSection stream={topStream} />
-          )}
+          {activeTab === 'all' &&
+            activeCategory === 'all' &&
+            activePlatform === 'all' &&
+            topStream && <FeaturedCreatorSection stream={topStream} />}
 
           {/* Hero featured carousel (only on "All" tab) */}
           {activeTab === 'all' && activeCategory === 'all' && (
@@ -555,7 +589,17 @@ export default function LivePage() {
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-degen-500/[0.03] to-transparent" />
                 <div className="relative z-10">
                   <span className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-degen-500/20 to-emerald-500/20 mb-4">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-degen-400">
+                    <svg
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="text-degen-400"
+                    >
                       <polygon points="5 3 19 12 5 21 5 3" />
                     </svg>
                   </span>
@@ -563,8 +607,8 @@ export default function LivePage() {
                     Ready to Go Live?
                   </h2>
                   <p className="text-sm text-[var(--color-muted)] max-w-md mx-auto mb-5">
-                    Start streaming to your audience across Owncast, PeerTube, or both.
-                    No platform lock-in. Your stream, your rules.
+                    Start streaming to your audience across Owncast, PeerTube, or both. No platform
+                    lock-in. Your stream, your rules.
                   </p>
                   <div className="flex items-center justify-center gap-3 flex-wrap">
                     <button
@@ -756,7 +800,16 @@ function HeroFeaturedSection({
               className="flex h-7 w-7 items-center justify-center rounded-lg border border-white/10 text-white/40 hover:text-white"
               aria-label="Previous featured"
             >
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <polyline points="15 18 9 12 15 6" />
               </svg>
             </button>
@@ -766,7 +819,16 @@ function HeroFeaturedSection({
               className="flex h-7 w-7 items-center justify-center rounded-lg border border-white/10 text-white/40 hover:text-white"
               aria-label="Next featured"
             >
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <polyline points="9 18 15 12 9 6" />
               </svg>
             </button>
@@ -824,7 +886,11 @@ function HeroFeaturedSection({
             <div className="flex items-center gap-2">
               <div className="flex h-7 w-7 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-degen-500/30 to-purple-500/30 text-[7px] font-bold text-degen-400">
                 {featured.creatorAvatar ? (
-                  <img src={featured.creatorAvatar} alt="" className="h-full w-full rounded-full object-cover" />
+                  <img
+                    src={featured.creatorAvatar}
+                    alt=""
+                    className="h-full w-full rounded-full object-cover"
+                  />
                 ) : (
                   featured.creatorHandle[0]?.toUpperCase() || '?'
                 )}

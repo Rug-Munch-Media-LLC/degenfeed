@@ -175,7 +175,9 @@ export async function unwatchCreator(
       const watchList: string[] = JSON.parse(watchListRaw);
       const filtered = watchList.filter((id) => id !== creatorId);
       if (filtered.length > 0) {
-        await env.CACHE?.put(watchListKey, JSON.stringify(filtered), { expirationTtl: 86400 * 365 });
+        await env.CACHE?.put(watchListKey, JSON.stringify(filtered), {
+          expirationTtl: 86400 * 365,
+        });
       } else {
         await env.CACHE?.delete(watchListKey);
       }
@@ -280,7 +282,10 @@ export async function detectLiveWatchedCreators(
         const live = liveCreatorMap.get(entry.creatorId);
         if (live && live.length > 0) {
           const stream = live[0]!;
-          if (entry.preferences.minViewers === 0 || stream.viewerCount >= entry.preferences.minViewers) {
+          if (
+            entry.preferences.minViewers === 0 ||
+            stream.viewerCount >= entry.preferences.minViewers
+          ) {
             result.push({ entry, stream });
           }
         }
@@ -295,7 +300,7 @@ export async function detectLiveWatchedCreators(
         if (!watchersRaw) continue;
 
         const watchers: string[] = JSON.parse(watchersRaw);
-        const stream = liveCreatorMap.get(creatorId)![0]!;
+        const stream = liveCreatorMap.get(creatorId)?.[0]!;
 
         for (const watcherAddr of watchers) {
           const entryKey = watchKey(watcherAddr, creatorId);
@@ -304,7 +309,10 @@ export async function detectLiveWatchedCreators(
 
           try {
             const entry = JSON.parse(entryRaw) as CreatorWatchEntry;
-            if (entry.preferences.minViewers === 0 || stream.viewerCount >= entry.preferences.minViewers) {
+            if (
+              entry.preferences.minViewers === 0 ||
+              stream.viewerCount >= entry.preferences.minViewers
+            ) {
               result.push({ entry, stream });
             }
           } catch {
@@ -393,7 +401,7 @@ export async function dispatchAggregateNotification(
     // Aggregate dedup: 1 hour
     await env.CACHE?.put(dKey, '1', { expirationTtl: 3600 });
 
-    const topStream = liveEntries[0]!.stream;
+    const topStream = liveEntries[0]?.stream;
     const notification: LiveNotification = {
       id: `notif:aggregate:${Date.now()}:${watcherAddress.slice(0, 8)}`,
       type: 'aggregate_live',
@@ -428,10 +436,7 @@ export async function dispatchAggregateNotification(
  * Dispatch a notification via the user's configured channels.
  * Currently supports: push (web), email (via Postmark env).
  */
-async function dispatchNotification(
-  env: Env,
-  notification: LiveNotification,
-): Promise<void> {
+async function dispatchNotification(env: Env, notification: LiveNotification): Promise<void> {
   // Load watcher profile
   const profileRaw = await env.CACHE?.get(profileKey(notification.watcherAddress));
   if (!profileRaw) return;
@@ -496,11 +501,7 @@ interface WebPushPayload {
   url?: string;
 }
 
-async function sendWebPush(
-  env: Env,
-  pushToken: string,
-  payload: WebPushPayload,
-): Promise<void> {
+async function sendWebPush(env: Env, pushToken: string, payload: WebPushPayload): Promise<void> {
   const vapidPublicKey = env.VAPID_PUBLIC_KEY;
   const vapidPrivateKey = env.VAPID_PRIVATE_KEY;
 
@@ -590,10 +591,7 @@ export async function upsertWatcherProfile(
   }
 }
 
-export async function getWatcherProfile(
-  env: Env,
-  address: string,
-): Promise<WatcherProfile | null> {
+export async function getWatcherProfile(env: Env, address: string): Promise<WatcherProfile | null> {
   try {
     const raw = await env.CACHE?.get(profileKey(address));
     return raw ? (JSON.parse(raw) as WatcherProfile) : null;
@@ -681,8 +679,8 @@ export async function processLiveNotifications(
         const notif = await dispatchWentLiveNotification(
           env,
           watcherAddr,
-          entries[0]!.entry.creatorName,
-          entries[0]!.stream,
+          entries[0]?.entry.creatorName,
+          entries[0]?.stream,
         );
         if (notif) notificationsSent++;
       } else if (entries.length >= 2) {

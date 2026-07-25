@@ -13,12 +13,9 @@
 
 import type { SchemaGuard, UnifiedPost } from '../server/types';
 
-const $fetch = globalThis.fetch;
+const _$fetch = globalThis.fetch;
 
-const TAKAHE_INSTANCES = [
-  'http://127.0.0.1:8101',
-  'https://takahe.social',
-];
+const TAKAHE_INSTANCES = ['http://127.0.0.1:8101', 'https://takahe.social'];
 
 interface TakaheStatus {
   id: string;
@@ -42,7 +39,10 @@ interface TakaheStatus {
 }
 
 function stripHtml(html: string): string {
-  return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+  return html
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 function guessNiches(text: string): string[] {
@@ -57,7 +57,7 @@ function guessNiches(text: string): string[] {
   return n;
 }
 
-function takaheStatusToPost(s: TakaheStatus, instance: string): UnifiedPost {
+function takaheStatusToPost(s: TakaheStatus, _instance: string): UnifiedPost {
   const text = stripHtml(s.content).slice(0, 2000);
   return {
     id: `takahe:${s.id}`,
@@ -70,16 +70,33 @@ function takaheStatusToPost(s: TakaheStatus, instance: string): UnifiedPost {
       bio: s.account.note ? stripHtml(s.account.note) : '',
       avatarUrl: s.account.avatar || '',
       followerCount: s.account.followers_count || 0,
-      followingCount: s.account.following_count || 0, links: [], keys: {},
+      followingCount: s.account.following_count || 0,
+      links: [],
+      keys: {},
     },
     text,
-    embeds: (s.media_attachments || []).map((m) => ({ kind: m.type as 'image' | 'video', url: m.url })),
+    embeds: (s.media_attachments || []).map((m) => ({
+      kind: m.type as 'image' | 'video',
+      url: m.url,
+    })),
     contentType: text.length > 500 ? 'article' : 'text',
     createdAt: new Date(s.created_at).getTime(),
-    metrics: { likes: s.favourites_count || 0, reposts: s.reblogs_count || 0, replies: s.replies_count || 0, quotes: 0 },
+    metrics: {
+      likes: s.favourites_count || 0,
+      reposts: s.reblogs_count || 0,
+      replies: s.replies_count || 0,
+      quotes: 0,
+    },
     engagement: {
-      viewerLiked: false, viewerReposted: false, viewerBookmarked: false,
-      raw: { likes: s.favourites_count || 0, reposts: s.reblogs_count || 0, replies: s.replies_count || 0, quotes: 0 },
+      viewerLiked: false,
+      viewerReposted: false,
+      viewerBookmarked: false,
+      raw: {
+        likes: s.favourites_count || 0,
+        reposts: s.reblogs_count || 0,
+        replies: s.replies_count || 0,
+        quotes: 0,
+      },
     },
     raw: s,
     niches: guessNiches(text),
@@ -93,7 +110,7 @@ async function fetchFromInstance(instance: string, limit: number): Promise<Unifi
       signal: AbortSignal.timeout(8000),
     });
     if (!res.ok) return [];
-    const data = await res.json() as TakaheStatus[];
+    const data = (await res.json()) as TakaheStatus[];
     if (!Array.isArray(data)) return [];
     return data.slice(0, limit).map((s) => takaheStatusToPost(s, instance));
   } catch {
@@ -117,7 +134,11 @@ export async function fetchTakahePosts(limit = 20): Promise<UnifiedPost[]> {
   for (const r of results) if (r.status === 'fulfilled') all.push(...r.value);
   const seen = new Set<string>();
   const deduped: UnifiedPost[] = [];
-  for (const p of all) if (!seen.has(p.id) && deduped.length < limit) { seen.add(p.id); deduped.push(p); }
+  for (const p of all)
+    if (!seen.has(p.id) && deduped.length < limit) {
+      seen.add(p.id);
+      deduped.push(p);
+    }
   console.log(`[bridge] Takahē: ${deduped.length} posts`);
   return deduped;
 }

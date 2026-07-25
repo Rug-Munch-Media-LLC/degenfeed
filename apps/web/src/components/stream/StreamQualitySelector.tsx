@@ -1,9 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import type { StreamQuality } from './types';
-import { IconSettings, IconWifi } from './StreamIcons';
 import { getAdaptiveQuality } from './hooks';
+import { IconSettings, IconWifi } from './StreamIcons';
+import type { StreamQuality } from './types';
 
 const QUALITY_OPTIONS = [
   { id: 'auto' as const, label: 'Auto (Adaptive)', bitrate: '' },
@@ -45,7 +45,10 @@ export function StreamQualitySelector({
               <button
                 key={opt.id}
                 type="button"
-                onClick={() => { onSelect(opt.id); setOpen(false); }}
+                onClick={() => {
+                  onSelect(opt.id);
+                  setOpen(false);
+                }}
                 className={`flex w-full items-center justify-between px-3 py-2 text-xs transition-colors hover:bg-white/5 ${
                   quality === opt.id ? 'text-degen-400 bg-degen-500/10' : 'text-white/70'
                 }`}
@@ -53,7 +56,9 @@ export function StreamQualitySelector({
                 <span className="flex items-center gap-2">
                   {opt.label}
                   {isAdaptive && (
-                    <span className="rounded bg-degen-500/20 px-1 text-[8px] text-degen-400">BEST</span>
+                    <span className="rounded bg-degen-500/20 px-1 text-[8px] text-degen-400">
+                      BEST
+                    </span>
                   )}
                 </span>
                 <span className="text-[9px] text-white/40">{opt.bitrate}</span>

@@ -115,10 +115,7 @@ function SignedInView({ p }: { p: ReturnType<typeof useProfile> }) {
       </div>
 
       {/* Protocol Accounts Status Section */}
-      <ProtocolStatusSection
-        walletAddress={p.walletAddress ?? ''}
-        isOwnProfile={true}
-      />
+      <ProtocolStatusSection walletAddress={p.walletAddress ?? ''} isOwnProfile={true} />
 
       {p.showCrossPlatformSetup && (
         <div className="mb-6" id="cross-platform-setup">

@@ -225,7 +225,7 @@ async function generateForYouFeed(
   const filtered = filterSuppressedPosts(relevant, feedbackProfile);
 
   // 6. Compute trending
-  const trending = await computeTrending(filtered, Number(params.get('trending')) || 24);
+  const _trending = await computeTrending(filtered, Number(params.get('trending')) || 24);
 
   // 7. Cold start: if onboarding, mix high-engagement across all categories
   let coldStartPosts: UnifiedPost[] = [];

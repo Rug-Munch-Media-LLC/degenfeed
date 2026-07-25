@@ -1985,36 +1985,86 @@
 
 /* ═══ Onboarding Animations (TASK 1) ════════════════════════ */
 @keyframes slide-in-right {
-  from { opacity: 0; transform: translateX(24px); }
-  to { opacity: 1; transform: translateX(0); }
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 @keyframes slide-in-left {
-  from { opacity: 0; transform: translateX(-24px); }
-  to { opacity: 1; transform: translateX(0); }
+  from {
+    opacity: 0;
+    transform: translateX(-24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 @keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 20px rgba(0,255,65,0.1); }
-  50% { box-shadow: 0 0 40px rgba(0,255,65,0.2); }
+  0%,
+  100% {
+    box-shadow: 0 0 20px rgba(0, 255, 65, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(0, 255, 65, 0.2);
+  }
 }
 @keyframes celebration-pulse {
-  0%, 100% { transform: scale(1); box-shadow: 0 0 40px rgba(0,255,65,0.2); }
-  50% { transform: scale(1.05); box-shadow: 0 0 60px rgba(0,255,65,0.3); }
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 40px rgba(0, 255, 65, 0.2);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 0 60px rgba(0, 255, 65, 0.3);
+  }
 }
 @keyframes confetti-fall {
-  0% { transform: translateY(-10px) rotate(0deg); opacity: 1; }
-  100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+  0% {
+    transform: translateY(-10px) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) rotate(720deg);
+    opacity: 0;
+  }
 }
 @keyframes scan-move {
-  0%, 100% { top: 0; opacity: 0.3; }
-  50% { top: 100%; opacity: 1; }
+  0%,
+  100% {
+    top: 0;
+    opacity: 0.3;
+  }
+  50% {
+    top: 100%;
+    opacity: 1;
+  }
 }
 @keyframes pulse-scan {
-  0%, 100% { opacity: 0.4; transform: scale(0.95); }
-  50% { opacity: 1; transform: scale(1.05); }
+  0%,
+  100% {
+    opacity: 0.4;
+    transform: scale(0.95);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
 }
 @keyframes onboarding-enter {
-  from { opacity: 0; transform: scale(0.96) translateY(12px); }
-  to { opacity: 1; transform: scale(1) translateY(0); }
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
 .animate-slide-in-right {

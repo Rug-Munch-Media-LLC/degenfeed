@@ -132,7 +132,7 @@ function useShortsV2Feed() {
   useEffect(() => {
     void fetchShorts(false);
     return () => abortRef.current?.abort();
-  }, [category]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [fetchShorts]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return {
     shorts,
@@ -166,7 +166,7 @@ export default function ShortsPage() {
     changeCategory,
   } = useShortsV2Feed();
 
-  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [_showCreateModal, setShowCreateModal] = useState(false);
   const [showCategories, setShowCategories] = useState(true);
 
   // ── Categories ──────────────────────────────────────────────────────

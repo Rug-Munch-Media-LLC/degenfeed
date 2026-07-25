@@ -54,7 +54,7 @@ export const ShareSheet = memo(function ShareSheet({
       // Fallback: copy to clipboard
       await handleCopy();
     }
-  }, [url, title, text, onClose]);
+  }, [url, title, text, onClose, handleCopy]);
 
   const handleCopy = useCallback(async () => {
     try {

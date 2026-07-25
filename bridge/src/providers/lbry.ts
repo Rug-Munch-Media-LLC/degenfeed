@@ -16,7 +16,7 @@ import type { SchemaGuard, UnifiedPost } from '../server/types';
 const $fetch = globalThis.fetch;
 
 const LBRY_API = 'https://api.lbry.tv/api/v1/proxy';
-const LBRY_OMBERR = 'https://api.lbry.tv/api/v1/omber';
+const _LBRY_OMBERR = 'https://api.lbry.tv/api/v1/omber';
 
 // ─── Types ─────────────────────────────────────────────────────────────
 
@@ -100,7 +100,8 @@ export function guessNiches(text: string, title: string, tags: string[] = []): s
   if (/\b(crypto|blockchain|web3|lbry|odysee)\b/.test(lower)) niches.push('crypto');
   if (/\b(music|song|artist|album|concert|podcast)\b/.test(lower)) niches.push('music');
   if (/\b(gaming|game|stream|playthrough|walkthrough)\b/.test(lower)) niches.push('gaming');
-  if (/\b(tech|technology|programming|code|software|open source)\b/.test(lower)) niches.push('tech');
+  if (/\b(tech|technology|programming|code|software|open source)\b/.test(lower))
+    niches.push('tech');
   if (/\b(news|breaking|report|update)\b/.test(lower)) niches.push('news');
   if (niches.length === 0) niches.push('crypto');
   return niches;
@@ -129,10 +130,11 @@ function claimToPost(claim: LBRYClaim): UnifiedPost {
   const text = `${title}\n\n${stripHtml(description)}`.trim();
   const tags = val.tags || [];
   const thumbnailUrl = val.thumbnail?.url || channel?.value?.thumbnail?.url || '';
-  const contentType = val.streamType === 'video' ? 'video' : val.streamType === 'audio' ? 'video' : 'video';
+  const contentType =
+    val.streamType === 'video' ? 'video' : val.streamType === 'audio' ? 'video' : 'video';
 
   const lbryUrl = `https://odysee.com/${claim.name}:${claim.claimId}`;
-  const embedUrl = thumbnailUrl || lbryUrl;
+  const _embedUrl = thumbnailUrl || lbryUrl;
 
   return {
     id: `lbry:${claim.claimId}`,

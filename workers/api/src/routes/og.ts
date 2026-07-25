@@ -117,33 +117,37 @@ export async function handleOgFetch(request: Request): Promise<Response> {
     const html = await res.text();
 
     // Extract OG metadata with regex (fast, no parser dependency)
-    const ogTitle = html.match(/<meta[^>]*property=["']og:title["'][^>]*content=["'](.*?)["'][^>]*\/?>/i)
-      || html.match(/<meta[^>]*content=["'](.*?)["'][^>]*property=["']og:title["'][^>]*\/?>/i);
-    const title = ogTitle?.[1]
-      || html.match(/<title>([^<]*)<\/title>/i)?.[1]
-      || targetUrl;
+    const ogTitle =
+      html.match(/<meta[^>]*property=["']og:title["'][^>]*content=["'](.*?)["'][^>]*\/?>/i) ||
+      html.match(/<meta[^>]*content=["'](.*?)["'][^>]*property=["']og:title["'][^>]*\/?>/i);
+    const title = ogTitle?.[1] || html.match(/<title>([^<]*)<\/title>/i)?.[1] || targetUrl;
 
-    const ogDesc = html.match(/<meta[^>]*property=["']og:description["'][^>]*content=["'](.*?)["'][^>]*\/?>/i)
-      || html.match(/<meta[^>]*content=["'](.*?)["'][^>]*property=["']og:description["'][^>]*\/?>/i);
+    const ogDesc =
+      html.match(/<meta[^>]*property=["']og:description["'][^>]*content=["'](.*?)["'][^>]*\/?>/i) ||
+      html.match(/<meta[^>]*content=["'](.*?)["'][^>]*property=["']og:description["'][^>]*\/?>/i);
     const description = ogDesc?.[1];
 
-    const ogImage = html.match(/<meta[^>]*property=["']og:image["'][^>]*content=["'](.*?)["'][^>]*\/?>/i)
-      || html.match(/<meta[^>]*content=["'](.*?)["'][^>]*property=["']og:image["'][^>]*\/?>/i);
+    const ogImage =
+      html.match(/<meta[^>]*property=["']og:image["'][^>]*content=["'](.*?)["'][^>]*\/?>/i) ||
+      html.match(/<meta[^>]*content=["'](.*?)["'][^>]*property=["']og:image["'][^>]*\/?>/i);
     let image = ogImage?.[1];
 
     // Resolve relative image URL
-    if (image && image.startsWith('/')) {
+    if (image?.startsWith('/')) {
       image = `${parsed.origin}${image}`;
     }
 
-    const ogSiteName = html.match(/<meta[^>]*property=["']og:site_name["'][^>]*content=["'](.*?)["'][^>]*\/?>/i)
-      || html.match(/<meta[^>]*content=["'](.*?)["'][^>]*property=["']og:site_name["'][^>]*\/?>/i);
+    const ogSiteName =
+      html.match(/<meta[^>]*property=["']og:site_name["'][^>]*content=["'](.*?)["'][^>]*\/?>/i) ||
+      html.match(/<meta[^>]*content=["'](.*?)["'][^>]*property=["']og:site_name["'][^>]*\/?>/i);
     const siteName = ogSiteName?.[1];
 
     // Favicon
-    const faviconLink = html.match(/<link[^>]*rel=["'](?:shortcut )?icon["'][^>]*href=["'](.*?)["'][^>]*\/?>/i);
+    const faviconLink = html.match(
+      /<link[^>]*rel=["'](?:shortcut )?icon["'][^>]*href=["'](.*?)["'][^>]*\/?>/i,
+    );
     let favicon = faviconLink?.[1];
-    if (favicon && favicon.startsWith('/')) {
+    if (favicon?.startsWith('/')) {
       favicon = `${parsed.origin}${favicon}`;
     }
     if (!favicon) {

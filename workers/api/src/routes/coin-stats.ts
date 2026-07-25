@@ -113,7 +113,10 @@ function generateOverview(): CoinStatsOverview {
   };
 }
 
-function sortAndRank(coins: CoinStatsItem[], sortFn: (a: CoinStatsItem, b: CoinStatsItem) => number): CoinStatsItem[] {
+function sortAndRank(
+  coins: CoinStatsItem[],
+  sortFn: (a: CoinStatsItem, b: CoinStatsItem) => number,
+): CoinStatsItem[] {
   return [...coins]
     .sort(sortFn)
     .slice(0, 50)
@@ -125,7 +128,7 @@ function sortAndRank(coins: CoinStatsItem[], sortFn: (a: CoinStatsItem, b: CoinS
 /**
  * GET /api/coins/stats/overview — Platform aggregate stats
  */
-export async function handleCoinStatsOverview(request: Request, env: Env): Promise<Response> {
+export async function handleCoinStatsOverview(_request: Request, env: Env): Promise<Response> {
   try {
     // Try real data from CACHE first
     const raw = await env.CACHE?.get('coins:stats:overview');
@@ -142,7 +145,7 @@ export async function handleCoinStatsOverview(request: Request, env: Env): Promi
  * GET /api/coins/stats/top — Top coins sorted by query param `by`
  * Query: ?by=marketCap|volume24h|holders|gain24h|gain7d
  */
-export async function handleCoinStatsTop(request: Request, env: Env): Promise<Response> {
+export async function handleCoinStatsTop(request: Request, _env: Env): Promise<Response> {
   const url = new URL(request.url);
   const by = url.searchParams.get('by') || 'marketCap';
 
@@ -252,7 +255,10 @@ export async function handleCoinStatsMostHolders(_request: Request, _env: Env): 
 /**
  * GET /api/coins/stats/highest-volume — Highest 24h trading volume
  */
-export async function handleCoinStatsHighestVolume(_request: Request, _env: Env): Promise<Response> {
+export async function handleCoinStatsHighestVolume(
+  _request: Request,
+  _env: Env,
+): Promise<Response> {
   const coins = generateMockCoins(50);
   return noCacheJsonResponse({
     coins: sortAndRank(coins, (a, b) => b.volume24h - a.volume24h),

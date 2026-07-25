@@ -307,7 +307,6 @@ const MOCK_YIELD_OPPORTUNITIES: YieldOpportunity[] = [
 // ─── Service ──────────────────────────────────────────────────────────────
 
 export class InvestmentService {
-  private env: Env;
   private kv: KVNamespace;
 
   constructor(env: Env) {
@@ -602,7 +601,7 @@ export class InvestmentService {
   async voteOnProposal(
     daoId: string,
     proposalId: string,
-    voter: Address,
+    _voter: Address,
     choice: 'for' | 'against' | 'abstain',
   ): Promise<InvestmentProposal> {
     const proposal = await this.#getProposal(daoId, proposalId);

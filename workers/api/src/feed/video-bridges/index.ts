@@ -15,18 +15,21 @@
 // ─── Bridge exports ────────────────────────────────────────────────────────
 
 export * from './bitchute';
+export * from './bluesky-video';
 export * from './dailymotion';
 export * from './dtube';
+export * from './farcaster-frame-video';
+export * from './ipfs-arweave-video';
+export * from './kick';
+export * from './lens-video';
+export * from './live-tube';
+export * from './nip71-video';
+export * from './nostr-video';
 export * from './odysee';
 export * from './peertube';
 export * from './rumble';
 export * from './twitch';
 export * from './vimeo';
-export * from './kick';
-export * from './live-tube';
-export * from './nostr-video';
-export * from './farcaster-frame-video';
-export * from './ipfs-arweave-video';
 
 // ─── Source registry ───────────────────────────────────────────────────────
 
@@ -46,11 +49,14 @@ export const BRIDGE_SOURCES = [
   'dailymotion',
   'vimeo',
   'zora',
+  'lens',
+  'bluesky',
   'tiktok',
   'instagram',
   'kick',
   'livetube',
   'nostr',
+  'nip71',
   'farcaster',
   'ipfs',
   'arweave',
@@ -72,11 +78,14 @@ export const BRIDGE_SOURCE_META: Record<string, { label: string; color: string; 
   dailymotion: { label: 'Dailymotion', color: '#0066FF' },
   vimeo: { label: 'Vimeo', color: '#1AB7EA' },
   zora: { label: 'Zora', color: '#0052FF' },
+  lens: { label: 'Lens Video', color: '#00501e' },
+  bluesky: { label: 'Bluesky Video', color: '#1185fe' },
   tiktok: { label: 'TikTok', color: '#010101' },
   instagram: { label: 'Instagram', color: '#E1306C' },
   kick: { label: 'Kick', color: '#53FC18' },
   livetube: { label: 'LiveTube', color: '#FF4500' },
   nostr: { label: 'Nostr Video', color: '#8B5CF6' },
+  nip71: { label: 'NIP-71 Video', color: '#7C3AED' },
   farcaster: { label: 'Farcaster Video', color: '#8A63D2' },
   ipfs: { label: 'IPFS Video', color: '#4FC3F7' },
   arweave: { label: 'Arweave Video', color: '#9C27B0' },

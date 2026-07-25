@@ -16,7 +16,6 @@ import type {
   DAOTemplateType,
   Proposal,
   Vote,
-  VotingConfig,
   VotingType,
 } from './types';
 
@@ -24,7 +23,6 @@ export class DAOClient {
   public factory: DAOFactory;
   public snapshot: SnapshotClient;
   public treasury: TreasuryTracker;
-  private config: DAOClientConfig;
 
   constructor(config: DAOClientConfig = {}) {
     this.config = config;

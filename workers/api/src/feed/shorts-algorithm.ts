@@ -92,14 +92,12 @@ const WATCH_HISTORY_MAX = 200;
 const RECENT_CREATORS_MAX = 10;
 const EXPLORATION_RATIO = 0.15;
 const FRESHNESS_BOOST_DURATION_MS = 3600000; // 1 hour
-const SIMILAR_USERS_KEY = 'shorts:algorithm:similar_users';
-const COLLAB_FILTER_KEY = 'shorts:algorithm:collaborative';
+const _SIMILAR_USERS_KEY = 'shorts:algorithm:similar_users';
+const _COLLAB_FILTER_KEY = 'shorts:algorithm:collaborative';
 
 // ─── Algorithm Engine ───────────────────────────────────────────────────
 
 export class ShortsAlgorithm {
-  constructor() {}
-
   /**
    * Determine algorithm phase based on user watch count.
    */
@@ -227,7 +225,7 @@ export class ShortsAlgorithm {
    * 30% trending, 30% high engagement, 20% diverse categories, 20% popular creators
    */
   private coldStartScore(short: AggregatedShort, pool?: AggregatedShort[]): number {
-    const rand = Math.random();
+    const _rand = Math.random();
 
     // Trending factor (30% weight)
     const trendingFactor = this.computeTrendingFactor(short) * 0.3;
@@ -399,7 +397,7 @@ export class ShortsAlgorithm {
   /**
    * Extra freshness boost for very new content (< 1 hour = 2x).
    */
-  private computeSessionFreshnessBoost(short: AggregatedShort, sessionStartedAt: number): number {
+  private computeSessionFreshnessBoost(short: AggregatedShort, _sessionStartedAt: number): number {
     const ageMs = Date.now() - short.publishedAt;
     if (ageMs < FRESHNESS_BOOST_DURATION_MS) return 2.0;
     if (ageMs < FRESHNESS_BOOST_DURATION_MS * 4) return 1.5;
@@ -663,7 +661,7 @@ export class ShortsAlgorithm {
   /**
    * Create a fresh default profile.
    */
-  createDefaultProfile(address?: string): UserShortsProfile {
+  createDefaultProfile(_address?: string): UserShortsProfile {
     return {
       totalWatches: 0,
       tagAffinities: {},

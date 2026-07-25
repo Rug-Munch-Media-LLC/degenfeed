@@ -236,7 +236,8 @@ async function publishToActivityPub(
 ): Promise<PublishResult> {
   const { GtSClient } = await import('@degenfeed/mastodon-sdk');
 
-  const instance = auth.mastodon_instance || env.GOTOSOCIAL_INSTANCE_URL || 'https://social.degenfeed.xyz';
+  const instance =
+    auth.mastodon_instance || env.GOTOSOCIAL_INSTANCE_URL || 'https://social.degenfeed.xyz';
   const accessToken = auth.mastodon || auth.mastodon_token;
 
   if (!accessToken) {

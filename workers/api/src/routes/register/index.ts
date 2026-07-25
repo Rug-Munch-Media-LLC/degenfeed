@@ -10,22 +10,22 @@
 
 import type { Hono } from 'hono';
 import type { Env } from '../../index';
+import { registerCoinsRoutes } from './coins';
 import { registerCoreRoutes } from './core';
+import { registerDaoRoutes } from './dao';
 import { registerFeedRoutes } from './feed';
-import { registerContentRoutes } from './content';
-import { registerSocialRoutes } from './social';
-import { registerDAORoutes } from './dao';
-import { registerV1Routes } from './v1';
-import { registerIntegrationRoutes } from './integrations';
 import { registerLiveRoutes } from './live';
+import { registerMediaRoutes } from './media';
+import { registerMessagingRoutes } from './messaging';
+import { registerSocialRoutes } from './social';
 
 export function registerRoutes(app: Hono<{ Bindings: Env }>): void {
   registerCoreRoutes(app);
   registerFeedRoutes(app);
-  registerContentRoutes(app);
   registerSocialRoutes(app);
-  registerDAORoutes(app);
-  registerIntegrationRoutes(app);
+  registerDaoRoutes(app);
+  registerCoinsRoutes(app);
+  registerMediaRoutes(app);
+  registerMessagingRoutes(app);
   registerLiveRoutes(app);
-  registerV1Routes(app);
 }

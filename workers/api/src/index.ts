@@ -51,6 +51,8 @@ export interface Env {
   ALLOWED_ORIGINS?: string;
   SOLANA_RPC_URL?: string;
   /** Base URL of the rmi-backend (default: http://127.0.0.1:8000) */
+  /** Ethereum RPC URL for transaction simulation */
+  ETH_RPC_URL?: string;
   RMI_BACKEND_URL?: string;
   /** Bridge service internal URL for protocol feed fetching */
   BRIDGE_INTERNAL_URL?: string;
@@ -372,6 +374,16 @@ export interface Env {
   IPFS_GATEWAY_URL?: string;
   /** Media transformation service URL (e.g. Cloudflare Image Resizing) */
   IMAGE_TRANSFORM_URL?: string;
+
+  // ─── SSO (Single Sign-On) Infrastructure ──────────────────────────────
+  /** KV namespace for SSO session data and wallet state (aliases to IDENTITIES) */
+  SSO_STATE?: KVNamespace;
+
+  // ─── Self-hosted image galleries (Immich/Lychee) ─────────────────────
+  /** Immich server URL (e.g. https://photos.example.com) */
+  IMMICH_URL?: string;
+  /** Immich API key */
+  IMMICH_API_KEY?: string;
 }
 
 // ─── Shared constants ────────────────────────────────────────────────

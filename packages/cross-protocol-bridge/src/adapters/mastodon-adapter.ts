@@ -33,12 +33,12 @@ export const mastodonAdapter: PlatformAdapter = {
     // Mentions
     const mentions = master.mentions ?? [];
     if (mentions.length > 0) {
-      tootText += '\n\n' + mentions.map((m) => `@${m}`).join(' ');
+      tootText += `\n\n${mentions.map((m) => `@${m}`).join(' ')}`;
     }
 
     // Hashtags at the end
     if (hashtags.length > 0) {
-      tootText += '\n\n' + hashtags.join(' ');
+      tootText += `\n\n${hashtags.join(' ')}`;
     }
 
     // Truncate if needed
@@ -77,16 +77,16 @@ export const mastodonAdapter: PlatformAdapter = {
       preview += `\n⚠️ CW: ${master.contentWarning}`;
     }
 
-    preview += '\n' + master.text.slice(0, 480);
+    preview += `\n${master.text.slice(0, 480)}`;
 
     const remaining = MASTODON_CHAR_LIMIT - master.text.length;
 
     if (master.mentions && master.mentions.length > 0) {
-      preview += '\n👤 Mentions: ' + master.mentions.join(', ');
+      preview += `\n👤 Mentions: ${master.mentions.join(', ')}`;
     }
 
     if (master.hashtags && master.hashtags.length > 0) {
-      preview += '\n🏷️ ' + master.hashtags.map((h) => `#${h}`).join(' ');
+      preview += `\n🏷️ ${master.hashtags.map((h) => `#${h}`).join(' ')}`;
     }
 
     if (master.text.length > MASTODON_CHAR_LIMIT) {

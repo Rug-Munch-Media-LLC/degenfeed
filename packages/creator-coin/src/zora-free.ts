@@ -43,7 +43,7 @@ import { base, baseSepolia } from 'viem/chains';
 // ─── Constants ─────────────────────────────────────────────────────────────
 
 /** ZoraFactory address on Base mainnet (chain 8453). */
-const ZORA_FACTORY_MAINNET = '0x777777751622c0d3258f214F9DF38E35BF45baF3' as const;
+const _ZORA_FACTORY_MAINNET = '0x777777751622c0d3258f214F9DF38E35BF45baF3' as const;
 
 /** Base chain ID. */
 const BASE_CHAIN_ID = 8453;

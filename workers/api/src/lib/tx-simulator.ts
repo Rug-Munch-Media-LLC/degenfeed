@@ -136,7 +136,7 @@ async function simulateEvm(
       error?: { message?: string };
     };
 
-    const gasEstimate = gasBody.result ? Number.parseInt(gasBody.result, 16) : undefined;
+    const gasEstimate = gasBody.result ? parseInt(gasBody.result, 16) : undefined;
 
     // Step 3: Check for mempool congestion / MEV risk via gas price
     const gasPriceResult = await fetch(rpcUrl, {
@@ -151,7 +151,7 @@ async function simulateEvm(
     });
 
     const gasPriceBody = (await gasPriceResult.json()) as { result?: string };
-    const gasPriceWei = gasPriceBody.result ? Number.parseInt(gasPriceBody.result, 16) : undefined;
+    const gasPriceWei = gasPriceBody.result ? parseInt(gasPriceBody.result, 16) : undefined;
 
     // Assess MEV risk (crude heuristic based on gas price)
     let mevRisk: 'low' | 'medium' | 'high' | 'critical' = 'medium';

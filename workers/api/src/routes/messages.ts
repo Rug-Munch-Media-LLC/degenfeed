@@ -26,8 +26,8 @@ import { broadcastToUser } from '../ws-broadcast';
 const DM_KEY_PREFIX = 'dm:';
 const DM_LIST_PREFIX = 'dm:list:';
 const DM_INBOX_PREFIX = 'dm:inbox:';
-const DM_THREAD_PREFIX = 'dm:thread:';
-const DM_READ_PREFIX = 'dm:read:';
+const _DM_THREAD_PREFIX = 'dm:thread:';
+const _DM_READ_PREFIX = 'dm:read:';
 
 export type DmProtocol =
   | 'nostr'
@@ -104,7 +104,7 @@ function buildConversationId(fromId: string, toId: string): string {
   return sorted.join(':');
 }
 
-function generateId(): string {
+function _generateId(): string {
   return crypto.randomUUID();
 }
 
@@ -123,7 +123,7 @@ const supportedProtocols = new Set<DmProtocol>([
   'telegram',
 ]);
 
-function isSupportedProtocol(p: string): p is DmProtocol {
+function _isSupportedProtocol(p: string): p is DmProtocol {
   return supportedProtocols.has(p as DmProtocol);
 }
 
@@ -719,7 +719,9 @@ export async function handleDeleteMessage(
           const accessToken = auth.mastodon || auth.accessJwt;
           if (accessToken) {
             const instance =
-              auth.mastodon_instance || env.GOTOSOCIAL_INSTANCE_URL || 'https://social.degenfeed.xyz';
+              auth.mastodon_instance ||
+              env.GOTOSOCIAL_INSTANCE_URL ||
+              'https://social.degenfeed.xyz';
             const deleteUrl = `${instance}/api/v1/statuses/${encodeURIComponent(deletedMsg.nativeId)}`;
             await fetch(deleteUrl, {
               method: 'DELETE',

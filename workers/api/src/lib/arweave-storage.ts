@@ -11,7 +11,6 @@
  * Uses the same Irys gateway as permanence.ts but adapted for video files.
  */
 
-import type { Env } from '../index';
 import { log } from '../index';
 
 // ─── Constants ──────────────────────────────────────────────────────────
@@ -102,12 +101,7 @@ export async function storeVideoOnArweave(
   mimeType: string,
   options?: ArweaveUploadOptions,
 ): Promise<ArweaveUploadResult> {
-  const {
-    title,
-    tags: extraTags = [],
-    contentType = mimeType,
-    currency = 'matic',
-  } = options ?? {};
+  const { title, tags: extraTags = [], contentType = mimeType, currency = 'matic' } = options ?? {};
 
   const size = buffer.byteLength;
   const costUsd = estimateArweaveCost(size);
@@ -122,7 +116,10 @@ export async function storeVideoOnArweave(
     ...extraTags.map((t) => ({ name: 'Tag', value: t.substring(0, 128) })),
   ];
 
-  log('info', `[arweave-storage] Uploading ${size} bytes to Arweave via Irys (est. $${costUsd.toFixed(4)})`);
+  log(
+    'info',
+    `[arweave-storage] Uploading ${size} bytes to Arweave via Irys (est. $${costUsd.toFixed(4)})`,
+  );
 
   // Upload via Irys HTTP API
   // For large files, the client should use Irys SDK directly.
@@ -185,9 +182,7 @@ export async function verifyArweaveContent(txId: string): Promise<boolean> {
           signal: AbortSignal.timeout(10_000),
         });
         if (res.ok) return true;
-      } catch {
-        continue;
-      }
+      } catch {}
     }
     return false;
   }
@@ -200,10 +195,9 @@ export async function getArweaveTxStatus(
   txId: string,
 ): Promise<{ confirmed: boolean; blockHeight?: number } | null> {
   try {
-    const response = await fetch(
-      `${IRYS_NODE}/tx/${txId}/status`,
-      { signal: AbortSignal.timeout(10_000) },
-    );
+    const response = await fetch(`${IRYS_NODE}/tx/${txId}/status`, {
+      signal: AbortSignal.timeout(10_000),
+    });
     if (!response.ok) return null;
     const data = (await response.json()) as { confirmed?: boolean; blockHeight?: number };
     return {

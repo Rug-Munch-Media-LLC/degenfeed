@@ -21,7 +21,7 @@ type SortMode = 'trending' | 'newest' | 'gainers' | 'marketcap' | 'volume';
 
 // ─── Mock Data Generator ──────────────────────────────────────────────
 
-function generateMockCoins(count = 20): CoinDisplayData[] {
+function generateMockCoins(_count = 20): CoinDisplayData[] {
   const names = [
     { name: 'Degen Alice', symbol: 'ALICE' },
     { name: 'Bob Protocol', symbol: 'BOB' },

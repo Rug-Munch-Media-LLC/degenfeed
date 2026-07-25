@@ -150,7 +150,9 @@ export async function fetchKickPopularChannels(limit: number = 20): Promise<Unif
     });
     if (!res.ok) return [];
 
-    const data = (await res.json()) as { data: Array<{ livestream: KickLivestream; user: KickVideo['user'] }> };
+    const data = (await res.json()) as {
+      data: Array<{ livestream: KickLivestream; user: KickVideo['user'] }>;
+    };
     return (data.data ?? []).map((d) => ({
       id: `kick-${d.livestream?.id ?? Date.now()}`,
       title: d.livestream?.session_title ?? 'Untitled Kick Stream',

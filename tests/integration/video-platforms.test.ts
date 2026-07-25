@@ -7,7 +7,7 @@
  *
  * Pure functions tested directly. External APIs mocked.
  */
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 // ─── Mock YouTube provider ─────────────────────────────────────────
 
@@ -29,7 +29,7 @@ vi.mock('@degenfeed/youtube-provider', () => ({
     },
     {
       id: 'vid_2',
-      title: '😱 YOU WON\'T BELIEVE WHAT BITCOIN DID!!! 🚀🚀🚀',
+      title: "😱 YOU WON'T BELIEVE WHAT BITCOIN DID!!! 🚀🚀🚀",
       description: 'CLICK HERE TO FIND OUT THE SHOCKING TRUTH',
       channelName: 'ClickBait King',
       channelId: 'UC_clickbait',
@@ -66,7 +66,15 @@ describe('Video Platforms — YouTube Algorithm', () => {
       followedCreators: ['Crypto Analyst'],
       watchedVideoIds: ['vid_1'],
       watchedCreatorIds: ['Crypto Analyst'],
-      watchHistory: [{ videoId: 'vid_1', creatorId: 'Crypto Analyst', completionRatio: 0.9, watchDurationMs: 800000, timestamp: Date.now() }],
+      watchHistory: [
+        {
+          videoId: 'vid_1',
+          creatorId: 'Crypto Analyst',
+          completionRatio: 0.9,
+          watchDurationMs: 800000,
+          timestamp: Date.now(),
+        },
+      ],
       niches: ['bitcoin', 'crypto'],
       categories: ['crypto'],
     });
@@ -78,10 +86,12 @@ describe('Video Platforms — YouTube Algorithm', () => {
   });
 
   it('applies anti-clickbait penalty to sensational titles', async () => {
-    const { YouTubeAlgorithm, buildUserProfile } = await import('../../workers/api/src/feed/youtube-algorithm');
+    const { YouTubeAlgorithm, buildUserProfile } = await import(
+      '../../workers/api/src/feed/youtube-algorithm'
+    );
     const env = createMockEnv();
 
-    const algo = new YouTubeAlgorithm(env, { antiClickbait: 1.0 });
+    const _algo = new YouTubeAlgorithm(env, { antiClickbait: 1.0 });
     const profile = buildUserProfile({
       followedCreators: [],
       watchedVideoIds: [],
@@ -92,42 +102,58 @@ describe('Video Platforms — YouTube Algorithm', () => {
     });
 
     // Mock fetchYouTubeFeed to return our clickbait video
-    const mockFetchYouTubeFeed = vi.fn().mockResolvedValue([{
-      id: 'click_1',
-      title: '😱 YOU WON\'T BELIEVE WHAT HAPPENED!!! 🚀🚀🚀',
-      description: 'SHOCKING truth revealed',
-      channelName: 'ClickBait King',
-      channelId: 'UC_clickbait',
-      channelCategory: 'entertainment',
-      publishedMs: Date.now() - 3600000,
-      duration: '8:00',
-      viewCount: 999999,
-      niches: ['bitcoin'],
-      qualityScore: { overall: 0.3, clickbaitPenalty: 0.18 },
-      thumbnailUrl: '',
-    }]);
+    const _mockFetchYouTubeFeed = vi.fn().mockResolvedValue([
+      {
+        id: 'click_1',
+        title: "😱 YOU WON'T BELIEVE WHAT HAPPENED!!! 🚀🚀🚀",
+        description: 'SHOCKING truth revealed',
+        channelName: 'ClickBait King',
+        channelId: 'UC_clickbait',
+        channelCategory: 'entertainment',
+        publishedMs: Date.now() - 3600000,
+        duration: '8:00',
+        viewCount: 999999,
+        niches: ['bitcoin'],
+        qualityScore: { overall: 0.3, clickbaitPenalty: 0.18 },
+        thumbnailUrl: '',
+      },
+    ]);
 
     // We test the scoring function directly through internal methods
     // The scoreVideo method is private, but we can test through the class behavior
-    const { YouTubeAlgorithm: AlgoClass } = await import('../../workers/api/src/feed/youtube-algorithm');
-    const algo2 = new AlgoClass(env, { antiClickbait: 1.0, contentBased: 0, creatorBased: 0, collaborative: 0, freshness: 0, diversity: 0, watchTime: 0 });
+    const { YouTubeAlgorithm: AlgoClass } = await import(
+      '../../workers/api/src/feed/youtube-algorithm'
+    );
+    const algo2 = new AlgoClass(env, {
+      antiClickbait: 1.0,
+      contentBased: 0,
+      creatorBased: 0,
+      collaborative: 0,
+      freshness: 0,
+      diversity: 0,
+      watchTime: 0,
+    });
 
     // Access private method through prototype (for testing only)
     const scoreVideo = (AlgoClass as any).prototype.scoreVideo;
-    const result = scoreVideo.call(algo2, {
-      id: 'click_1',
-      title: '😱 YOU WON\'T BELIEVE WHAT HAPPENED!!! 🚀🚀🚀',
-      description: 'SHOCKING truth revealed',
-      channelName: 'ClickBait King',
-      channelId: 'UC_clickbait',
-      channelCategory: 'entertainment',
-      publishedMs: Date.now() - 3600000,
-      duration: '8:00',
-      viewCount: 999999,
-      niches: ['bitcoin'],
-      qualityScore: { overall: 0.3, clickbaitPenalty: 0.18 },
-      thumbnailUrl: '',
-    }, profile);
+    const result = scoreVideo.call(
+      algo2,
+      {
+        id: 'click_1',
+        title: "😱 YOU WON'T BELIEVE WHAT HAPPENED!!! 🚀🚀🚀",
+        description: 'SHOCKING truth revealed',
+        channelName: 'ClickBait King',
+        channelId: 'UC_clickbait',
+        channelCategory: 'entertainment',
+        publishedMs: Date.now() - 3600000,
+        duration: '8:00',
+        viewCount: 999999,
+        niches: ['bitcoin'],
+        qualityScore: { overall: 0.3, clickbaitPenalty: 0.18 },
+        thumbnailUrl: '',
+      },
+      profile,
+    );
 
     // Note: anti-clickbait score is 1 - clickbaitPenalty = 0.82, weighted by 1.0
     expect(result.breakdown.antiClickbait).toBeLessThan(1.0);
@@ -136,41 +162,65 @@ describe('Video Platforms — YouTube Algorithm', () => {
 
   it('boosts content from followed creators', async () => {
     const { buildUserProfile } = await import('../../workers/api/src/feed/youtube-algorithm');
-    const { YouTubeAlgorithm: AlgoClass } = await import('../../workers/api/src/feed/youtube-algorithm');
+    const { YouTubeAlgorithm: AlgoClass } = await import(
+      '../../workers/api/src/feed/youtube-algorithm'
+    );
     const env = createMockEnv();
 
     const profile = buildUserProfile({
       followedCreators: ['Crypto Analyst'],
       watchedVideoIds: ['vid_1'],
       watchedCreatorIds: ['Crypto Analyst'],
-      watchHistory: [{ videoId: 'vid_1', creatorId: 'Crypto Analyst', completionRatio: 0.9, watchDurationMs: 800000, timestamp: Date.now() }],
+      watchHistory: [
+        {
+          videoId: 'vid_1',
+          creatorId: 'Crypto Analyst',
+          completionRatio: 0.9,
+          watchDurationMs: 800000,
+          timestamp: Date.now(),
+        },
+      ],
       niches: ['bitcoin'],
       categories: ['crypto'],
     });
 
-    const algo = new AlgoClass(env, { creatorBased: 1.0, contentBased: 0, collaborative: 0, freshness: 0, diversity: 0, watchTime: 0, antiClickbait: 0 });
+    const algo = new AlgoClass(env, {
+      creatorBased: 1.0,
+      contentBased: 0,
+      collaborative: 0,
+      freshness: 0,
+      diversity: 0,
+      watchTime: 0,
+      antiClickbait: 0,
+    });
 
     const scoreVideo = (AlgoClass as any).prototype.scoreVideo;
-    const result = scoreVideo.call(algo, {
-      id: 'vid_followed',
-      title: 'Bitcoin Analysis',
-      description: 'Detailed analysis',
-      channelName: 'Crypto Analyst',
-      channelId: 'UC_analyst',
-      channelCategory: 'crypto',
-      publishedMs: Date.now() - 3600000,
-      duration: '10:00',
-      viewCount: 1000,
-      niches: ['bitcoin'],
-      thumbnailUrl: '',
-    }, profile);
+    const result = scoreVideo.call(
+      algo,
+      {
+        id: 'vid_followed',
+        title: 'Bitcoin Analysis',
+        description: 'Detailed analysis',
+        channelName: 'Crypto Analyst',
+        channelId: 'UC_analyst',
+        channelCategory: 'crypto',
+        publishedMs: Date.now() - 3600000,
+        duration: '10:00',
+        viewCount: 1000,
+        niches: ['bitcoin'],
+        thumbnailUrl: '',
+      },
+      profile,
+    );
 
     expect(result.breakdown.creatorBased).toBe(1.0);
     expect(result.reasons).toContain('from a creator you follow');
   });
 
   it('computes collaborative hash from watched IDs', async () => {
-    const { computeCollaborativeHash } = await import('../../workers/api/src/feed/youtube-algorithm');
+    const { computeCollaborativeHash } = await import(
+      '../../workers/api/src/feed/youtube-algorithm'
+    );
 
     const hash1 = computeCollaborativeHash(['a', 'b', 'c']);
     const hash2 = computeCollaborativeHash(['a', 'b', 'c']); // same
@@ -184,31 +234,41 @@ describe('Video Platforms — YouTube Algorithm', () => {
 
 describe('Video Platforms — IPFS/Arweave Detection', () => {
   it('detects IPFS content from ipfs:// protocol', async () => {
-    const { detectDecentralizedVideo } = await import('../../workers/api/src/feed/video-bridges/ipfs-arweave-video');
+    const { detectDecentralizedVideo } = await import(
+      '../../workers/api/src/feed/video-bridges/ipfs-arweave-video'
+    );
 
-    const result = detectDecentralizedVideo('ipfs://QmXoypizjW3WknFiJnKLwHCnL72vedxjQkDDP1mXWo6uco');
+    const result = detectDecentralizedVideo(
+      'ipfs://QmXoypizjW3WknFiJnKLwHCnL72vedxjQkDDP1mXWo6uco',
+    );
     expect(result).not.toBeNull();
-    expect(result!.type).toBe('ipfs');
-    expect(result!.cid).toBe('QmXoypizjW3WknFiJnKLwHCnL72vedxjQkDDP1mXWo6uco');
-    expect(result!.gatewayUrl).toContain('ipfs');
+    expect(result?.type).toBe('ipfs');
+    expect(result?.cid).toBe('QmXoypizjW3WknFiJnKLwHCnL72vedxjQkDDP1mXWo6uco');
+    expect(result?.gatewayUrl).toContain('ipfs');
   });
 
   it('detects IPFS from gateway URL path', async () => {
-    const { detectDecentralizedVideo } = await import('../../workers/api/src/feed/video-bridges/ipfs-arweave-video');
+    const { detectDecentralizedVideo } = await import(
+      '../../workers/api/src/feed/video-bridges/ipfs-arweave-video'
+    );
 
-    const result = detectDecentralizedVideo('https://cloudflare-ipfs.com/ipfs/QmXoypizjW3WknFiJnKLwHCnL72vedxjQkDDP1mXWo6uco');
+    const result = detectDecentralizedVideo(
+      'https://cloudflare-ipfs.com/ipfs/QmXoypizjW3WknFiJnKLwHCnL72vedxjQkDDP1mXWo6uco',
+    );
     expect(result).not.toBeNull();
-    expect(result!.type).toBe('ipfs');
-    expect(result!.cid).toBe('QmXoypizjW3WknFiJnKLwHCnL72vedxjQkDDP1mXWo6uco');
+    expect(result?.type).toBe('ipfs');
+    expect(result?.cid).toBe('QmXoypizjW3WknFiJnKLwHCnL72vedxjQkDDP1mXWo6uco');
   });
 
   it('detects Arweave content from ar:// protocol', async () => {
-    const { detectDecentralizedVideo, resolveArweaveUrl } = await import('../../workers/api/src/feed/video-bridges/ipfs-arweave-video');
+    const { detectDecentralizedVideo, resolveArweaveUrl } = await import(
+      '../../workers/api/src/feed/video-bridges/ipfs-arweave-video'
+    );
 
     const result = detectDecentralizedVideo('ar://abc123def456ghi789jkl');
     expect(result).not.toBeNull();
-    expect(result!.type).toBe('arweave');
-    expect(result!.cid).toBe('abc123def456ghi789jkl');
+    expect(result?.type).toBe('arweave');
+    expect(result?.cid).toBe('abc123def456ghi789jkl');
 
     const url = resolveArweaveUrl('abc123');
     expect(url).toContain('arweave.net');
@@ -216,7 +276,9 @@ describe('Video Platforms — IPFS/Arweave Detection', () => {
   });
 
   it('returns null for non-decentralized URLs', async () => {
-    const { detectDecentralizedVideo } = await import('../../workers/api/src/feed/video-bridges/ipfs-arweave-video');
+    const { detectDecentralizedVideo } = await import(
+      '../../workers/api/src/feed/video-bridges/ipfs-arweave-video'
+    );
 
     const result = detectDecentralizedVideo('https://youtube.com/watch?v=abc123');
     expect(result).toBeNull();
@@ -283,14 +345,16 @@ describe('Video Platforms — Storage Tier Routing', () => {
   it('classifies content by duration', async () => {
     const { classifyContentType } = await import('../../workers/api/src/lib/video-storage-router');
 
-    expect(classifyContentType(30)).toBe('short');       // <60s
-    expect(classifyContentType(120)).toBe('longform');    // 1-10min
-    expect(classifyContentType(600)).toBe('podcast');     // 10-60min
+    expect(classifyContentType(30)).toBe('short'); // <60s
+    expect(classifyContentType(120)).toBe('longform'); // 1-10min
+    expect(classifyContentType(600)).toBe('podcast'); // 10-60min
     expect(classifyContentType(3600)).toBe('livestream'); // 60+ min
   });
 
   it('maps bridge sources with metadata', async () => {
-    const { BRIDGE_SOURCES, BRIDGE_SOURCE_META } = await import('../../workers/api/src/feed/video-bridges/index');
+    const { BRIDGE_SOURCES, BRIDGE_SOURCE_META } = await import(
+      '../../workers/api/src/feed/video-bridges/index'
+    );
 
     expect(Array.isArray(BRIDGE_SOURCES)).toBe(true);
     expect(BRIDGE_SOURCES.length).toBeGreaterThan(10);

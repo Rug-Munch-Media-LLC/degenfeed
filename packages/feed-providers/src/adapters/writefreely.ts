@@ -15,22 +15,35 @@ const CURATED_BLOGS = [
 ];
 
 function stripHtml(html: string): string {
-  return html.replace(/<[^>]*>/g, ' ').replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim();
+  return html
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 function guessNiches(text: string, title: string): string[] {
   const lower = `${text} ${title}`.toLowerCase();
   const n: string[] = [];
-  if (/\b(btc|bitcoin|crypto|blockchain|web3|defi|nft|eth|solana|token)\b/.test(lower)) n.push('crypto');
+  if (/\b(btc|bitcoin|crypto|blockchain|web3|defi|nft|eth|solana|token)\b/.test(lower))
+    n.push('crypto');
   if (/\b(tech|programming|code|software|startup|saas|developer)\b/.test(lower)) n.push('tech');
   if (/\b(ai |artificial|intelligence|llm|machine learning|gpt|openai)\b/.test(lower)) n.push('ai');
-  if (/\b(privacy|surveillance|encryption|security|decentralized|federation)\b/.test(lower)) n.push('privacy');
+  if (/\b(privacy|surveillance|encryption|security|decentralized|federation)\b/.test(lower))
+    n.push('privacy');
   if (/\b(writing|blog|publishing|writer|poetry|essay|journalism)\b/.test(lower)) n.push('writing');
   if (n.length === 0) n.push('article');
   return n;
 }
 
-function parseRssItems(xml: string): Array<{ title?: string; link?: string; guid?: string; description?: string; author?: string; pubDate?: string }> {
+function parseRssItems(xml: string): Array<{
+  title?: string;
+  link?: string;
+  guid?: string;
+  description?: string;
+  author?: string;
+  pubDate?: string;
+}> {
   const items: Array<Record<string, string>> = [];
   const itemRe = /<item>([\s\S]*?)<\/item>/gi;
   let m: RegExpExecArray | null;
@@ -63,13 +76,18 @@ export async function fetchWriteFreelyPosts(limit = 10): Promise<UnifiedPost[]> 
         signal: AbortSignal.timeout(5000),
       });
       if (res.ok) {
-        const data = await res.json() as { data?: Array<Record<string, unknown>>; items?: Array<Record<string, unknown>> };
+        const data = (await res.json()) as {
+          data?: Array<Record<string, unknown>>;
+          items?: Array<Record<string, unknown>>;
+        };
         const items = (data?.data || data?.items || []) as Array<Record<string, unknown>>;
         for (const item of items.slice(0, perBlog)) {
           const title = String(item.title || '');
           const body = String(item.body || item.content || '');
           const slug = String(item.slug || item.id || '');
-          const text = title ? `${title}\n\n${stripHtml(body).slice(0, 500)}` : stripHtml(body).slice(0, 500);
+          const text = title
+            ? `${title}\n\n${stripHtml(body).slice(0, 500)}`
+            : stripHtml(body).slice(0, 500);
           posts.push({
             id: `writefreely:${slug}@${blog.alias}`,
             protocol: 'writefreely' as Protocol,
@@ -91,7 +109,12 @@ export async function fetchWriteFreelyPosts(limit = 10): Promise<UnifiedPost[]> 
             embeds: [{ kind: 'link' as const, url: `${blog.instance}/${blog.alias}/${slug}` }],
             createdAt: item.created ? new Date(String(item.created)).getTime() : Date.now(),
             metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
-            engagement: { viewerLiked: false, viewerReposted: false, viewerBookmarked: false, raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 } },
+            engagement: {
+              viewerLiked: false,
+              viewerReposted: false,
+              viewerBookmarked: false,
+              raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
+            },
             raw: item,
             niches: guessNiches(text, title),
           });
@@ -132,7 +155,12 @@ export async function fetchWriteFreelyPosts(limit = 10): Promise<UnifiedPost[]> 
             embeds: item.link ? [{ kind: 'link' as const, url: item.link }] : [],
             createdAt: item.pubDate ? new Date(item.pubDate).getTime() : Date.now(),
             metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
-            engagement: { viewerLiked: false, viewerReposted: false, viewerBookmarked: false, raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 } },
+            engagement: {
+              viewerLiked: false,
+              viewerReposted: false,
+              viewerBookmarked: false,
+              raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
+            },
             raw: item,
             niches: guessNiches(text, title),
           });

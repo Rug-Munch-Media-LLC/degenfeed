@@ -75,33 +75,34 @@ const KV_PREFIX = 'coin:challenges:';
 const MAX_CHALLENGES = 50;
 const CACHE_TTL = 60; // 1 minute
 
-const CHALLENGE_TYPES: Record<ChallengeType, { label: string; icon: string; description: string }> = {
-  holder_milestone: {
-    label: 'Holder Milestone',
-    icon: '👥',
-    description: 'Reach a target number of holders',
-  },
-  buy_pressure: {
-    label: 'Buy Pressure',
-    icon: '📈',
-    description: 'Buy a target amount of tokens within a time window',
-  },
-  community_vote: {
-    label: 'Community Vote',
-    icon: '🗳️',
-    description: 'Vote on the next feature or decision',
-  },
-  referral_race: {
-    label: 'Referral Race',
-    icon: '🏁',
-    description: 'Invite the most new holders to win',
-  },
-  content_contest: {
-    label: 'Content Contest',
-    icon: '🎨',
-    description: 'Best meme or video about the coin wins',
-  },
-};
+const CHALLENGE_TYPES: Record<ChallengeType, { label: string; icon: string; description: string }> =
+  {
+    holder_milestone: {
+      label: 'Holder Milestone',
+      icon: '👥',
+      description: 'Reach a target number of holders',
+    },
+    buy_pressure: {
+      label: 'Buy Pressure',
+      icon: '📈',
+      description: 'Buy a target amount of tokens within a time window',
+    },
+    community_vote: {
+      label: 'Community Vote',
+      icon: '🗳️',
+      description: 'Vote on the next feature or decision',
+    },
+    referral_race: {
+      label: 'Referral Race',
+      icon: '🏁',
+      description: 'Invite the most new holders to win',
+    },
+    content_contest: {
+      label: 'Content Contest',
+      icon: '🎨',
+      description: 'Best meme or video about the coin wins',
+    },
+  };
 
 // ─── KV Helpers ────────────────────────────────────────────────────────────
 
@@ -204,11 +205,19 @@ export async function handleCoinChallengeCreate(request: Request, env: Env): Pro
   }
 
   if (!body.type || !body.title || !body.target || !body.reward || !body.durationHours) {
-    return jsonResponse({ error: 'type, title, target, reward, and durationHours are required' }, 400);
+    return jsonResponse(
+      { error: 'type, title, target, reward, and durationHours are required' },
+      400,
+    );
   }
 
   if (!CHALLENGE_TYPES[body.type]) {
-    return jsonResponse({ error: `Invalid challenge type. Must be one of: ${Object.keys(CHALLENGE_TYPES).join(', ')}` }, 400);
+    return jsonResponse(
+      {
+        error: `Invalid challenge type. Must be one of: ${Object.keys(CHALLENGE_TYPES).join(', ')}`,
+      },
+      400,
+    );
   }
 
   const now = Date.now();
@@ -225,7 +234,7 @@ export async function handleCoinChallengeCreate(request: Request, env: Env): Pro
     startsAt: now,
     endsAt: now + body.durationHours * 3600_000,
     createdBy: session.address,
-    createdByLabel: session.address.slice(0, 6) + '...' + session.address.slice(-4),
+    createdByLabel: `${session.address.slice(0, 6)}...${session.address.slice(-4)}`,
     participants: 0,
   };
 
@@ -238,7 +247,7 @@ export async function handleCoinChallengeCreate(request: Request, env: Env): Pro
 
 // ─── POST /api/coin/:symbol/challenges/:id/progress ──────────────────────
 
-const VALID_CHALLENGE_PROGRESS_BODIES = new Set(['increment']);
+const _VALID_CHALLENGE_PROGRESS_BODIES = new Set(['increment']);
 
 export async function handleCoinChallengeProgress(request: Request, env: Env): Promise<Response> {
   const session = await requireSession(request, env);
@@ -329,8 +338,10 @@ export async function handleCoinChallengeUpdate(request: Request, env: Env): Pro
     return jsonResponse({ error: 'Challenge not found' }, 404);
   }
 
-  if (body.title !== undefined) challenge.title = sanitizeString(body.title, 200) || challenge.title;
-  if (body.description !== undefined) challenge.description = sanitizeString(body.description, 1000) || challenge.description;
+  if (body.title !== undefined)
+    challenge.title = sanitizeString(body.title, 200) || challenge.title;
+  if (body.description !== undefined)
+    challenge.description = sanitizeString(body.description, 1000) || challenge.description;
   if (body.status !== undefined && ['active', 'completed', 'expired'].includes(body.status)) {
     challenge.status = body.status;
   }
@@ -408,7 +419,8 @@ function generateMockChallenges(symbol: string): Challenge[] {
       coinSymbol: symbol,
       type: 'community_vote',
       title: 'Choose the Next Feature',
-      description: 'Vote on what feature we build next: NFT integration, DAO governance, or cross-chain bridge?',
+      description:
+        'Vote on what feature we build next: NFT integration, DAO governance, or cross-chain bridge?',
       target: 1000,
       current: 1000,
       status: 'completed',

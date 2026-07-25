@@ -20,7 +20,7 @@ import { streamAnalyticsKey, streamEventKey, streamIndexKey, streamKey } from '.
 // ─── Constants ────────────────────────────────────────────────────────────
 
 const DEFAULT_TTL = 365 * 86400; // 1 year
-const SECONDS_IN_DAY = 86400;
+const _SECONDS_IN_DAY = 86400;
 const SECONDS_IN_MONTH = 2_592_000; // 30 days
 const SECONDS_IN_YEAR = 31_536_000;
 
@@ -142,7 +142,6 @@ export interface StreamFilter {
 // ─── Service ──────────────────────────────────────────────────────────────
 
 export class StreamingPaymentsService {
-  private env: Env;
   private kv: KVNamespace;
 
   constructor(env: Env) {

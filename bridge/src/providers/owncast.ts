@@ -55,7 +55,8 @@ interface OwncastServerInfo {
 function guessStreamNiches(title: string, desc: string): string[] {
   const lower = `${title} ${desc}`.toLowerCase();
   const n: string[] = [];
-  if (/\b(crypto|blockchain|web3|bitcoin|ethereum|solana|defi|nft|trading)\b/.test(lower)) n.push('crypto');
+  if (/\b(crypto|blockchain|web3|bitcoin|ethereum|solana|defi|nft|trading)\b/.test(lower))
+    n.push('crypto');
   if (/\b(ai|llm|artificial|intelligence|machine|deep)\b/.test(lower)) n.push('ai');
   if (/\b(code|programming|dev|hackathon|opensource|github)\b/.test(lower)) n.push('coding');
   if (/\b(gaming|game|play|stream|esports|twitch)\b/.test(lower)) n.push('gaming');
@@ -69,7 +70,11 @@ function guessStreamNiches(title: string, desc: string): string[] {
 
 // ─── Mapping ──────────────────────────────────────────────────────────
 
-function owncastStatusToPost(status: OwncastStatus, info: OwncastServerInfo, instance: { url: string; name: string }): UnifiedPost {
+function owncastStatusToPost(
+  status: OwncastStatus,
+  info: OwncastServerInfo,
+  instance: { url: string; name: string },
+): UnifiedPost {
   const title = status.streamTitle || (status.online ? '🔴 Live!' : '📡 Offline');
   const viewerCount = status.viewerCount || 0;
   const instanceName = info.name || instance.name;
@@ -80,7 +85,9 @@ function owncastStatusToPost(status: OwncastStatus, info: OwncastServerInfo, ins
         status.streamDescription || '',
         `👁️ ${viewerCount} watching`,
         `📺 ${instanceName}`,
-      ].filter(Boolean).join('\n')
+      ]
+        .filter(Boolean)
+        .join('\n')
     : `📡 ${instanceName} is offline.\nLast stream: ${status.lastConnectTime || 'N/A'}`;
 
   return {
@@ -92,7 +99,9 @@ function owncastStatusToPost(status: OwncastStatus, info: OwncastServerInfo, ins
       handles: { owncast: instanceName },
       displayName: instanceName,
       bio: info.summary || '',
-      avatarUrl: '', followerCount: 0, followingCount: 0,
+      avatarUrl: '',
+      followerCount: 0,
+      followingCount: 0,
       links: (info.socialHandles || []).map((h) => ({ label: h.platform, url: h.url })),
       keys: {},
     },
@@ -102,7 +111,9 @@ function owncastStatusToPost(status: OwncastStatus, info: OwncastServerInfo, ins
     createdAt: status.startTime ? new Date(status.startTime).getTime() : Date.now(),
     metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0, views: viewerCount },
     engagement: {
-      viewerLiked: false, viewerReposted: false, viewerBookmarked: false,
+      viewerLiked: false,
+      viewerReposted: false,
+      viewerBookmarked: false,
       raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
     },
     raw: { status, info },
@@ -112,7 +123,10 @@ function owncastStatusToPost(status: OwncastStatus, info: OwncastServerInfo, ins
 
 // ─── Fetch Logic ──────────────────────────────────────────────────────
 
-async function fetchFromInstance(instance: { url: string; name: string }): Promise<UnifiedPost | null> {
+async function fetchFromInstance(instance: {
+  url: string;
+  name: string;
+}): Promise<UnifiedPost | null> {
   try {
     const [statusRes, infoRes] = await Promise.allSettled([
       $fetch(`${instance.url}/api/status`, {
@@ -126,10 +140,10 @@ async function fetchFromInstance(instance: { url: string; name: string }): Promi
     ]);
 
     if (statusRes.status !== 'fulfilled' || !statusRes.value.ok) return null;
-    const status = await statusRes.value.json() as OwncastStatus;
+    const status = (await statusRes.value.json()) as OwncastStatus;
     let info: OwncastServerInfo = { name: instance.name, summary: '' };
     if (infoRes.status === 'fulfilled' && infoRes.value.ok) {
-      info = { ...info, ...await infoRes.value.json() as OwncastServerInfo };
+      info = { ...info, ...((await infoRes.value.json()) as OwncastServerInfo) };
     }
 
     return owncastStatusToPost(status, info, instance);
@@ -173,7 +187,12 @@ export async function fetchOwncastPosts(limit = 20): Promise<UnifiedPost[]> {
             primary: { protocol: 'owncast', id: s.name || 'streamer' },
             handles: { owncast: s.name || null },
             displayName: s.name || 'Live Streamer',
-            bio: '', avatarUrl: s.thumbnail || '', followerCount: 0, followingCount: 0, links: [], keys: {},
+            bio: '',
+            avatarUrl: s.thumbnail || '',
+            followerCount: 0,
+            followingCount: 0,
+            links: [],
+            keys: {},
           },
           text: `🔴 ${s.name || 'Streamer'} is live!\n${s.title || ''}`,
           embeds: s.url ? [{ kind: 'link', url: s.url }] : [],
@@ -181,7 +200,9 @@ export async function fetchOwncastPosts(limit = 20): Promise<UnifiedPost[]> {
           createdAt: Date.now(),
           metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0, views: s.viewers || 0 },
           engagement: {
-            viewerLiked: false, viewerReposted: false, viewerBookmarked: false,
+            viewerLiked: false,
+            viewerReposted: false,
+            viewerBookmarked: false,
             raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
           },
           raw: s,

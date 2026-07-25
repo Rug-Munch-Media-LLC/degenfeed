@@ -11,14 +11,14 @@
 import { describe, expect, it } from 'vitest';
 import {
   FEATURE_TIER_MAP,
+  type FeatureFlag,
+  type SubscriptionTier,
   TIER_CONFIGS,
   TIER_LIMITS,
   TIER_NAMES,
   TIER_PRICES_CENTS,
   TIER_PRICES_CENTS_YEARLY,
   TIER_RANK,
-  type FeatureFlag,
-  type SubscriptionTier,
 } from '../types';
 
 const ALL_TIERS: SubscriptionTier[] = ['free', 'creator', 'pro', 'enterprise'];
@@ -51,7 +51,8 @@ describe('Tier configuration consistency', () => {
 
   it('all tiers have a config entry', () => {
     for (const tier of ALL_TIERS) {
-      expect(TIER_CONFIGS[tier]).toBeDefined();
+      const config = TIER_CONFIGS.find((c) => c.id === tier);
+      expect(config).toBeDefined();
     }
   });
 

@@ -9,19 +9,32 @@ import type { Protocol, UnifiedPost } from '@degenfeed/types';
 
 const $fetch = globalThis.fetch;
 
-const MISSKEY_INSTANCES = [
-  'https://misskey.io',
-  'https://misskey.cloud',
-  'https://sushi.ski',
-];
+const MISSKEY_INSTANCES = ['https://misskey.io', 'https://misskey.cloud', 'https://sushi.ski'];
 
 type MisskeyNote = Record<string, unknown> & {
   id: string;
   text: string | null;
   cw: string | null;
   userId: string;
-  user: Record<string, unknown> & { id: string; username: string; name: string | null; avatarUrl: string; host: string | null; followersCount: number; followingCount: number; description: string | null };
-  files: Array<{ id: string; name: string; type: string; url: string; thumbnailUrl: string; width?: number; height?: number }>;
+  user: Record<string, unknown> & {
+    id: string;
+    username: string;
+    name: string | null;
+    avatarUrl: string;
+    host: string | null;
+    followersCount: number;
+    followingCount: number;
+    description: string | null;
+  };
+  files: Array<{
+    id: string;
+    name: string;
+    type: string;
+    url: string;
+    thumbnailUrl: string;
+    width?: number;
+    height?: number;
+  }>;
   tags: string[];
   createdAt: string;
   renoteCount: number;
@@ -33,15 +46,21 @@ function guessNiches(text: string, tags: string[]): string[] {
   const lower = `${text} ${tags.join(' ')}`.toLowerCase();
   const n: string[] = [];
   if (/\b(btc|bitcoin|crypto|blockchain|web3|defi|nft|eth|solana)\b/.test(lower)) n.push('crypto');
-  if (/\b(tech|programming|code|software|javascript|typescript|webdev)\b/.test(lower)) n.push('tech');
-  if (/\b(ai |artificial|intelligence|llm|machine learning|stable diffusion)\b/.test(lower)) n.push('ai');
+  if (/\b(tech|programming|code|software|javascript|typescript|webdev)\b/.test(lower))
+    n.push('tech');
+  if (/\b(ai |artificial|intelligence|llm|machine learning|stable diffusion)\b/.test(lower))
+    n.push('ai');
   if (/\b(art|illustration|drawing|manga|anime|music|creative)\b/.test(lower)) n.push('art');
   if (/\b(gaming|game|vtuber|stream)\b/.test(lower)) n.push('gaming');
   if (n.length === 0) n.push('social');
   return n;
 }
 
-async function fetchTimeline(inst: string, endpoint: string, limit: number): Promise<MisskeyNote[]> {
+async function fetchTimeline(
+  inst: string,
+  endpoint: string,
+  limit: number,
+): Promise<MisskeyNote[]> {
   try {
     const res = await $fetch(`${inst}/api/${endpoint}`, {
       method: 'POST',
@@ -50,7 +69,7 @@ async function fetchTimeline(inst: string, endpoint: string, limit: number): Pro
       signal: AbortSignal.timeout(5000),
     });
     if (!res.ok) return [];
-    return await res.json() as MisskeyNote[];
+    return (await res.json()) as MisskeyNote[];
   } catch {
     return [];
   }
@@ -70,7 +89,7 @@ export async function fetchMisskeyPosts(limit = 10): Promise<UnifiedPost[]> {
     const notes = [...globalTL, ...featured];
     for (const note of notes.slice(0, perInst)) {
       if (!note.text && (!note.files || note.files.length === 0)) continue;
-      const text = note.cw ? `[CW: ${note.cw}]\n\n${note.text || ''}` : (note.text || '');
+      const text = note.cw ? `[CW: ${note.cw}]\n\n${note.text || ''}` : note.text || '';
       const user = note.user;
 
       posts.push({
@@ -96,10 +115,22 @@ export async function fetchMisskeyPosts(limit = 10): Promise<UnifiedPost[]> {
           meta: { thumbnailUrl: f.thumbnailUrl, width: f.width, height: f.height },
         })),
         createdAt: new Date(note.createdAt).getTime(),
-        metrics: { likes: note.reactionCount || 0, reposts: note.renoteCount || 0, replies: note.repliesCount || 0, quotes: 0 },
+        metrics: {
+          likes: note.reactionCount || 0,
+          reposts: note.renoteCount || 0,
+          replies: note.repliesCount || 0,
+          quotes: 0,
+        },
         engagement: {
-          viewerLiked: false, viewerReposted: false, viewerBookmarked: false,
-          raw: { likes: note.reactionCount || 0, reposts: note.renoteCount || 0, replies: note.repliesCount || 0, quotes: 0 },
+          viewerLiked: false,
+          viewerReposted: false,
+          viewerBookmarked: false,
+          raw: {
+            likes: note.reactionCount || 0,
+            reposts: note.renoteCount || 0,
+            replies: note.repliesCount || 0,
+            quotes: 0,
+          },
         },
         raw: note,
         niches: guessNiches(text, note.tags || []),

@@ -101,7 +101,7 @@ interface KickDiscoverResponse {
 }
 
 const KICK_API_BASE = 'https://kick.com/api/v2';
-const KICK_SOURCES: LiveSource = 'kick';
+const _KICK_SOURCES: LiveSource = 'kick';
 
 // ─── Source Health Tracking ─────────────────────────────────────────────
 
@@ -114,16 +114,19 @@ async function trackKickHealth(
   try {
     const key = 'live:source-health';
     const raw = await env.CACHE?.get(key);
-    const health: Record<string, {
-      source: LiveSource;
-      healthy: boolean;
-      lastChecked: number;
-      error?: string;
-      streamCount: number;
-      latencyMs: number;
-    }> = raw ? JSON.parse(raw) : {};
+    const health: Record<
+      string,
+      {
+        source: LiveSource;
+        healthy: boolean;
+        lastChecked: number;
+        error?: string;
+        streamCount: number;
+        latencyMs: number;
+      }
+    > = raw ? JSON.parse(raw) : {};
 
-    health['kick'] = {
+    health.kick = {
       source: 'kick',
       healthy: !error,
       lastChecked: Date.now(),
@@ -141,19 +144,19 @@ async function trackKickHealth(
 // ─── Category Map ───────────────────────────────────────────────────────
 
 const KICK_CATEGORY_MAP: Record<string, string> = {
-  'gaming': 'gaming',
-  'irl': 'irl',
-  'music': 'music',
+  gaming: 'gaming',
+  irl: 'irl',
+  music: 'music',
   'just chatting': 'talk',
   'talk shows & podcasts': 'talk',
-  'crypto': 'crypto',
-  'trading': 'trading',
-  'sports': 'sports',
-  'art': 'art',
-  'education': 'education',
-  'tech': 'tech',
-  'slots': 'trading',
-  'casino': 'trading',
+  crypto: 'crypto',
+  trading: 'trading',
+  sports: 'sports',
+  art: 'art',
+  education: 'education',
+  tech: 'tech',
+  slots: 'trading',
+  casino: 'trading',
 };
 
 function mapKickCategory(categoryName: string | undefined, fallback: string): string {
@@ -168,7 +171,7 @@ function mapKickCategory(categoryName: string | undefined, fallback: string): st
  * This returns the top live streams on the platform.
  */
 async function fetchKickDiscoverLive(
-  env: Env,
+  _env: Env,
   page: number = 1,
   perPage: number = 25,
 ): Promise<KickDiscoverResponse['data']> {
@@ -192,9 +195,11 @@ async function fetchKickDiscoverLive(
 /**
  * Fetch a single Kick channel and check if it's live.
  */
-async function checkKickChannel(
-  slug: string,
-): Promise<{ channel: KickChannelResponse; isLive: boolean; livestream: KickLivestream | null } | null> {
+async function checkKickChannel(slug: string): Promise<{
+  channel: KickChannelResponse;
+  isLive: boolean;
+  livestream: KickLivestream | null;
+} | null> {
   const url = `${KICK_API_BASE}/channels/${encodeURIComponent(slug)}`;
   const resp = await fetch(url, {
     headers: {
@@ -225,11 +230,7 @@ function convertKickToUnified(
     ? mapKickCategory(livestream.category?.name, curatedInfo.category)
     : mapKickCategory(livestream.category?.name, 'gaming');
 
-  const tags = curatedInfo?.tags ?? [
-    'kick',
-    'live',
-    livestream.category?.slug || 'gaming',
-  ];
+  const tags = curatedInfo?.tags ?? ['kick', 'live', livestream.category?.slug || 'gaming'];
 
   return {
     id: `kick:${user.slug}`,
@@ -263,9 +264,7 @@ function convertKickToUnified(
  * Fetch live Kick streams.
  * Combines curated channel checks + discover/live feed for variety.
  */
-export async function fetchKickLiveStreams(
-  env: Env,
-): Promise<UnifiedLiveStream[]> {
+export async function fetchKickLiveStreams(env: Env): Promise<UnifiedLiveStream[]> {
   const streams: UnifiedLiveStream[] = [];
   const seenSlugs = new Set<string>();
   const startTime = Date.now();
@@ -279,17 +278,19 @@ export async function fetchKickLiveStreams(
     for (const result of channelResults) {
       if (result.status !== 'fulfilled') continue;
       const checked = result.value;
-      if (!checked || !checked.isLive || !checked.livestream) continue;
+      if (!checked?.isLive || !checked.livestream) continue;
 
       const ch = CURATED_KICK_CHANNELS.find((c) => c.slug === checked.channel.slug);
       const user = checked.channel.user;
 
       seenSlugs.add(user.slug);
-      streams.push(convertKickToUnified(
-        checked.livestream,
-        { id: user.id, username: user.username, slug: user.slug, profile_pic: user.profile_pic },
-        ch,
-      ));
+      streams.push(
+        convertKickToUnified(
+          checked.livestream,
+          { id: user.id, username: user.username, slug: user.slug, profile_pic: user.profile_pic },
+          ch,
+        ),
+      );
     }
 
     // Strategy 2: Discover/live feed for additional streams
@@ -321,7 +322,7 @@ export async function isKickChannelLive(
 ): Promise<{ isLive: boolean; stream?: UnifiedLiveStream }> {
   try {
     const checked = await checkKickChannel(slug);
-    if (!checked || !checked.isLive || !checked.livestream) {
+    if (!checked?.isLive || !checked.livestream) {
       return { isLive: false };
     }
 

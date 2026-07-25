@@ -17,8 +17,8 @@
 import type { Env } from '../index';
 import { jsonResponse, noCacheJsonResponse } from '../index';
 import { requireSession } from '../session';
-import { CHANNELS } from '../ws-channels';
 import { broadcastToUser } from '../ws-broadcast';
+import { CHANNELS } from '../ws-channels';
 
 // ─── Types ──────────────────────────────────────────────────────────────
 
@@ -585,10 +585,7 @@ export async function handleRoomDelete(
     const deleted = await manager.deleteRoom(roomId, session.address);
 
     if (!deleted) {
-      return jsonResponse(
-        { error: 'Room not found or you are not the creator' },
-        403,
-      );
+      return jsonResponse({ error: 'Room not found or you are not the creator' }, 403);
     }
 
     return jsonResponse({ ok: true });

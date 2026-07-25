@@ -64,7 +64,11 @@ export function formatDate(ts: number): string {
 
 export function getTransactionIcon(type: string): string {
   const icons: Record<string, string> = {
-    transfer: '↗️', stream: '🌊', grant: '🎁', swap: '🔄', investment: '📈',
+    transfer: '↗️',
+    stream: '🌊',
+    grant: '🎁',
+    swap: '🔄',
+    investment: '📈',
   };
   return icons[type] || '💳';
 }
@@ -91,8 +95,22 @@ export function MiniBarChart({ data, height = 40 }: { data: IncomeExpense[]; hei
     <div className="flex items-end gap-1.5" style={{ height }}>
       {data.map((d) => (
         <div key={d.month} className="flex flex-1 flex-col items-center gap-0.5">
-          <div className="w-full rounded-t-sm" style={{ height: `${(d.income / max) * 100}%`, backgroundColor: 'var(--color-accent)', opacity: 0.8 }} />
-          <div className="w-full rounded-t-sm" style={{ height: `${(d.expenses / max) * 100}%`, backgroundColor: 'var(--color-error)', opacity: 0.7 }} />
+          <div
+            className="w-full rounded-t-sm"
+            style={{
+              height: `${(d.income / max) * 100}%`,
+              backgroundColor: 'var(--color-accent)',
+              opacity: 0.8,
+            }}
+          />
+          <div
+            className="w-full rounded-t-sm"
+            style={{
+              height: `${(d.expenses / max) * 100}%`,
+              backgroundColor: 'var(--color-error)',
+              opacity: 0.7,
+            }}
+          />
         </div>
       ))}
     </div>
@@ -108,19 +126,25 @@ export function TokenDonut({ tokens }: { tokens: TokenBalance[] }) {
     cumulativePercent += percent;
     return { ...t, percent, startPercent };
   });
-  const gradientParts = segs.filter((s) => s.percent > 0.5).map((s) => {
-    const start = (s.startPercent / 100) * 360;
-    const end = ((s.startPercent + s.percent) / 100) * 360;
-    return `${s.color} ${start}deg ${end}deg`;
-  });
-  const gradient = gradientParts.length > 0 ? `conic-gradient(${gradientParts.join(', ')})` : 'var(--color-muted)';
+  const gradientParts = segs
+    .filter((s) => s.percent > 0.5)
+    .map((s) => {
+      const start = (s.startPercent / 100) * 360;
+      const end = ((s.startPercent + s.percent) / 100) * 360;
+      return `${s.color} ${start}deg ${end}deg`;
+    });
+  const gradient =
+    gradientParts.length > 0 ? `conic-gradient(${gradientParts.join(', ')})` : 'var(--color-muted)';
   return (
     <div className="flex items-center gap-4">
       <div className="h-24 w-24 shrink-0 rounded-full" style={{ background: gradient }} />
       <div className="space-y-1.5">
         {segs.map((t) => (
           <div key={t.symbol} className="flex items-center gap-2 text-xs">
-            <span className="inline-block h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: t.color }} />
+            <span
+              className="inline-block h-2.5 w-2.5 rounded-full shrink-0"
+              style={{ backgroundColor: t.color }}
+            />
             <span className="text-[var(--color-muted)]">{t.symbol}</span>
             <span className="font-medium">{t.percent.toFixed(1)}%</span>
           </div>
@@ -130,13 +154,26 @@ export function TokenDonut({ tokens }: { tokens: TokenBalance[] }) {
   );
 }
 
-export function FilterBar({ options, selected, onSelect }: { options: string[]; selected: string; onSelect: (v: string) => void }) {
+export function FilterBar({
+  options,
+  selected,
+  onSelect,
+}: {
+  options: string[];
+  selected: string;
+  onSelect: (v: string) => void;
+}) {
   return (
     <div className="flex flex-wrap gap-1.5">
       {options.map((opt) => (
-        <button key={opt} type="button" onClick={() => onSelect(opt)}
+        <button
+          key={opt}
+          type="button"
+          onClick={() => onSelect(opt)}
           className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
-            selected === opt ? 'bg-degen-500/20 text-degen-400' : 'text-[var(--color-muted)] hover:bg-[var(--color-muted)] hover:text-[var(--color-fg)]'
+            selected === opt
+              ? 'bg-degen-500/20 text-degen-400'
+              : 'text-[var(--color-muted)] hover:bg-[var(--color-muted)] hover:text-[var(--color-fg)]'
           }`}
         >
           {opt}
@@ -146,11 +183,23 @@ export function FilterBar({ options, selected, onSelect }: { options: string[]; 
   );
 }
 
-export function StatCard({ label, value, sub, color }: { label: string; value: string; sub?: string; color?: string }) {
+export function StatCard({
+  label,
+  value,
+  sub,
+  color,
+}: {
+  label: string;
+  value: string;
+  sub?: string;
+  color?: string;
+}) {
   return (
     <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-4">
       <div className="mb-1 text-xs font-medium text-[var(--color-muted)]">{label}</div>
-      <div className="text-xl font-black tabular-nums" style={color ? { color } : undefined}>{value}</div>
+      <div className="text-xl font-black tabular-nums" style={color ? { color } : undefined}>
+        {value}
+      </div>
       {sub && <div className="mt-1 text-[10px] text-[var(--color-muted)]">{sub}</div>}
     </div>
   );

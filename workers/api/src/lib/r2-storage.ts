@@ -158,14 +158,10 @@ export async function uploadToR2(
   metadata?: Record<string, string>,
   tier?: StorageTier,
 ): Promise<R2UploadResult> {
-  const bucket = (env as any).VIDEO_STORAGE_BINDING as
-    | R2Bucket
-    | undefined;
+  const bucket = (env as any).VIDEO_STORAGE_BINDING as R2Bucket | undefined;
 
   if (!bucket) {
-    throw new Error(
-      'R2 not configured — set VIDEO_STORAGE_BINDING in wrangler.toml',
-    );
+    throw new Error('R2 not configured — set VIDEO_STORAGE_BINDING in wrangler.toml');
   }
 
   const resolvedTier = tier ?? tierFromKey(key);
@@ -211,13 +207,9 @@ export async function uploadToR2(
     };
     await kv
       .put(`${KV_PREFIX}${key}`, JSON.stringify(info), {
-        expirationTtl: expiresAt
-          ? Math.ceil((expiresAt - now) / 1000)
-          : undefined,
+        expirationTtl: expiresAt ? Math.ceil((expiresAt - now) / 1000) : undefined,
       })
-      .catch((err: unknown) =>
-        log('warn', `[r2-storage] KV put failed: ${key}`, err),
-      );
+      .catch((err: unknown) => log('warn', `[r2-storage] KV put failed: ${key}`, err));
   }
 
   return result;
@@ -228,10 +220,7 @@ export async function uploadToR2(
 /**
  * Get metadata for a stored R2 object.
  */
-export async function getR2ObjectInfo(
-  env: Env,
-  key: string,
-): Promise<R2ObjectInfo | null> {
+export async function getR2ObjectInfo(env: Env, key: string): Promise<R2ObjectInfo | null> {
   // Try KV first for fast metadata
   const kv = env.CACHE ?? env.CONTENT_LIBRARY;
   if (kv) {
@@ -254,8 +243,7 @@ export async function getR2ObjectInfo(
     const uploadedAt = head.customMetadata?.['uploaded-at']
       ? Number(head.customMetadata['uploaded-at'])
       : Date.now();
-    const tier = (head.customMetadata?.['storage-tier'] as StorageTier) ??
-      tierFromKey(key);
+    const tier = (head.customMetadata?.['storage-tier'] as StorageTier) ?? tierFromKey(key);
     const expiresAt = head.customMetadata?.['expires-at']
       ? Number(head.customMetadata['expires-at'])
       : computeExpiry(key, uploadedAt);
@@ -278,10 +266,7 @@ export async function getR2ObjectInfo(
 /**
  * Check if an R2 object exists and has not expired.
  */
-export async function isR2ObjectValid(
-  env: Env,
-  key: string,
-): Promise<boolean> {
+export async function isR2ObjectValid(env: Env, key: string): Promise<boolean> {
   const info = await getR2ObjectInfo(env, key);
   if (!info) return false;
   if (info.expiresAt && info.expiresAt < Date.now()) return false;
@@ -334,7 +319,7 @@ export async function getPresignedUploadUrl(
     try {
       const endpoint = env.S3_ENDPOINT.replace(/\/$/, '');
       const bucket = env.S3_BUCKET ?? 'degenfeed-videos';
-      const expires = Math.floor(Date.now() / 1000) + expiresInSeconds;
+      const _expires = Math.floor(Date.now() / 1000) + expiresInSeconds;
 
       // Simple presigned URL for PUT
       const url = new URL(`${endpoint}/${bucket}/${key}`);
@@ -440,10 +425,7 @@ export interface StorageUsage {
  * Calculate storage usage across the R2 bucket.
  * Expensive operation — use sparingly or cache results.
  */
-export async function getStorageUsage(
-  env: Env,
-  prefix = 'videos/',
-): Promise<StorageUsage> {
+export async function getStorageUsage(env: Env, prefix = 'videos/'): Promise<StorageUsage> {
   const bucket = (env as any).VIDEO_STORAGE_BINDING as R2Bucket | undefined;
   if (!bucket) {
     return { totalBytes: 0, byTier: {} as Record<StorageTier, number>, byType: {}, objectCount: 0 };
@@ -500,11 +482,7 @@ interface R2Bucket {
     customMetadata?: Record<string, string>;
   } | null>;
   delete(key: string): Promise<void>;
-  list(options?: {
-    prefix?: string;
-    limit?: number;
-    cursor?: string;
-  }): Promise<{
+  list(options?: { prefix?: string; limit?: number; cursor?: string }): Promise<{
     objects: Array<{
       key: string;
       size: number;

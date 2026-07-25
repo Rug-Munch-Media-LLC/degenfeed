@@ -17,14 +17,14 @@ describe('TIP_CHAIN_CONFIG', () => {
   });
 
   it('has correct chain IDs', () => {
-    expect(TIP_CHAIN_CONFIG.base.chainId).toBe('0x2105');
-    expect(TIP_CHAIN_CONFIG.base.chainIdDecimal).toBe(8453);
-    expect(TIP_CHAIN_CONFIG.optimism.chainIdDecimal).toBe(10);
-    expect(TIP_CHAIN_CONFIG.arbitrum.chainIdDecimal).toBe(42161);
+    expect(TIP_CHAIN_CONFIG.base?.chainId).toBe('0x2105');
+    expect(TIP_CHAIN_CONFIG.base?.chainIdDecimal).toBe(8453);
+    expect(TIP_CHAIN_CONFIG.optimism?.chainIdDecimal).toBe(10);
+    expect(TIP_CHAIN_CONFIG.arbitrum?.chainIdDecimal).toBe(42161);
   });
 
   it('has RPC URLs and explorers for all chains', () => {
-    for (const [chain, config] of Object.entries(TIP_CHAIN_CONFIG)) {
+    for (const [_chain, config] of Object.entries(TIP_CHAIN_CONFIG)) {
       expect(config.rpc).toMatch(/^https?:\/\//);
       expect(config.explorer).toMatch(/^https?:\/\//);
       expect(config.name).toBeTruthy();

@@ -11,7 +11,7 @@
  * secondary signals, score breakdown, and actionable links to settings.
  */
 
-import { scorePost, type ScoringWeights } from '@degenfeed/ranking';
+import { type ScoringWeights, scorePost } from '@degenfeed/ranking';
 import type { UnifiedPost } from '@degenfeed/types';
 
 // ─── Types ──────────────────────────────────────────────────────────────
@@ -87,10 +87,7 @@ export interface PostExplanation {
 
 // ─── Signal metadata ────────────────────────────────────────────────────
 
-const SIGNAL_META: Record<
-  string,
-  { icon: string; label: string; settingLink: string }
-> = {
+const SIGNAL_META: Record<string, { icon: string; label: string; settingLink: string }> = {
   recency: {
     icon: '🕐',
     label: 'Recency',
@@ -187,10 +184,7 @@ function describeRelevance(
  * @param ctx - User context (niches, follows, weights, etc.)
  * @returns A structured PostExplanation ready for the API response
  */
-export function explainPost(
-  post: UnifiedPost,
-  ctx: ExplainerContext,
-): PostExplanation {
+export function explainPost(post: UnifiedPost, ctx: ExplainerContext): PostExplanation {
   const now = ctx.now ?? Date.now();
   const userNiches = ctx.userNiches ?? new Set<string>();
   const followedCreators = ctx.followedCreators ?? new Set<string>();
@@ -198,13 +192,22 @@ export function explainPost(
 
   // 1. Score the post using the unified scorer
   const { total, breakdown, transparency } = scorePost(post, {
-    mode: (ctx.mode as 'standard' | 'for-you' | 'breaking-news' | 'morning-digest' | 'deep-dive' | 'quick-scroll') ?? 'standard',
+    mode:
+      (ctx.mode as
+        | 'standard'
+        | 'for-you'
+        | 'breaking-news'
+        | 'morning-digest'
+        | 'deep-dive'
+        | 'quick-scroll') ?? 'standard',
     userWeights: ctx.weights,
     userNiches,
     followedCreators,
     mutedNiches,
     recentAuthors: ctx.recentAuthors,
-    previousEngagement: ctx.previousEngagement as Map<string, { likes: number; reposts: number; replies: number; at: number }> | undefined,
+    previousEngagement: ctx.previousEngagement as
+      | Map<string, { likes: number; reposts: number; replies: number; at: number }>
+      | undefined,
     sourceQuality: ctx.sourceQuality,
     now,
   });
@@ -218,7 +221,7 @@ export function explainPost(
     label: SIGNAL_META.recency.label,
     detail: describeRecency(post.createdAt, now),
     score: breakdown.recency,
-    contribution: breakdown.recency * (ctx.weights?.recency ?? 60) / 100,
+    contribution: (breakdown.recency * (ctx.weights?.recency ?? 60)) / 100,
     adjustable: true,
     settingLink: SIGNAL_META.recency.settingLink,
   });
@@ -229,7 +232,7 @@ export function explainPost(
     label: SIGNAL_META.engagement.label,
     detail: describeEngagement(post),
     score: breakdown.engagement,
-    contribution: breakdown.engagement * (ctx.weights?.engagement ?? 70) / 100,
+    contribution: (breakdown.engagement * (ctx.weights?.engagement ?? 70)) / 100,
     adjustable: true,
     settingLink: SIGNAL_META.engagement.settingLink,
   });
@@ -240,7 +243,7 @@ export function explainPost(
     label: SIGNAL_META.relevance.label,
     detail: describeRelevance(post, userNiches, followedCreators),
     score: breakdown.relevance,
-    contribution: breakdown.relevance * (ctx.weights?.relevance ?? 50) / 100,
+    contribution: (breakdown.relevance * (ctx.weights?.relevance ?? 50)) / 100,
     adjustable: true,
     settingLink: SIGNAL_META.relevance.settingLink,
   });
@@ -249,13 +252,14 @@ export function explainPost(
   signals.push({
     icon: SIGNAL_META.quality.icon,
     label: SIGNAL_META.quality.label,
-    detail: breakdown.quality > 0.7
-      ? 'High-quality content (original, substantial, or has media)'
-      : breakdown.quality > 0.4
-        ? 'Standard quality content'
-        : 'Low-quality signal (short or minimal content)',
+    detail:
+      breakdown.quality > 0.7
+        ? 'High-quality content (original, substantial, or has media)'
+        : breakdown.quality > 0.4
+          ? 'Standard quality content'
+          : 'Low-quality signal (short or minimal content)',
     score: breakdown.quality,
-    contribution: breakdown.quality * (ctx.weights?.quality ?? 40) / 100,
+    contribution: (breakdown.quality * (ctx.weights?.quality ?? 40)) / 100,
     adjustable: true,
     settingLink: SIGNAL_META.quality.settingLink,
   });
@@ -264,13 +268,14 @@ export function explainPost(
   signals.push({
     icon: SIGNAL_META.reputation.icon,
     label: SIGNAL_META.reputation.label,
-    detail: breakdown.reputation > 0.7
-      ? 'From a reputable/verified creator'
-      : breakdown.reputation > 0.4
-        ? 'From an established creator'
-        : 'From a newer or unverified account',
+    detail:
+      breakdown.reputation > 0.7
+        ? 'From a reputable/verified creator'
+        : breakdown.reputation > 0.4
+          ? 'From an established creator'
+          : 'From a newer or unverified account',
     score: breakdown.reputation,
-    contribution: breakdown.reputation * (ctx.weights?.reputation ?? 30) / 100,
+    contribution: (breakdown.reputation * (ctx.weights?.reputation ?? 30)) / 100,
     adjustable: true,
     settingLink: SIGNAL_META.reputation.settingLink,
   });
@@ -279,13 +284,14 @@ export function explainPost(
   signals.push({
     icon: SIGNAL_META.diversity.icon,
     label: SIGNAL_META.diversity.label,
-    detail: breakdown.diversity > 0.8
-      ? 'Fresh author — helps keep feed diverse'
-      : breakdown.diversity > 0.5
-        ? 'Moderate author frequency in feed'
-        : 'You\'ve seen this author recently — shown less for diversity',
+    detail:
+      breakdown.diversity > 0.8
+        ? 'Fresh author — helps keep feed diverse'
+        : breakdown.diversity > 0.5
+          ? 'Moderate author frequency in feed'
+          : "You've seen this author recently — shown less for diversity",
     score: breakdown.diversity,
-    contribution: breakdown.diversity * (ctx.weights?.diversity ?? 30) / 100,
+    contribution: (breakdown.diversity * (ctx.weights?.diversity ?? 30)) / 100,
     adjustable: true,
     settingLink: SIGNAL_META.diversity.settingLink,
   });
@@ -296,7 +302,7 @@ export function explainPost(
     label: SIGNAL_META.source.label,
     detail: `From ${post.protocol}${breakdown.source > 0.7 ? ' (high-quality source)' : breakdown.source > 0.4 ? '' : ' (lower-tier source)'}`,
     score: breakdown.source,
-    contribution: breakdown.source * (ctx.weights?.source ?? 20) / 100,
+    contribution: (breakdown.source * (ctx.weights?.source ?? 20)) / 100,
     adjustable: true,
     settingLink: SIGNAL_META.source.settingLink,
   });
@@ -305,15 +311,15 @@ export function explainPost(
   signals.push({
     icon: SIGNAL_META.velocity.icon,
     label: SIGNAL_META.velocity.label,
-    detail: breakdown.velocity > 1.3
-      ? 'Gaining engagement rapidly right now'
-      : breakdown.velocity > 1.0
-        ? 'Steady engagement'
-        : 'Normal engagement velocity',
+    detail:
+      breakdown.velocity > 1.3
+        ? 'Gaining engagement rapidly right now'
+        : breakdown.velocity > 1.0
+          ? 'Steady engagement'
+          : 'Normal engagement velocity',
     score: breakdown.velocity,
-    contribution: breakdown.velocity > 1
-      ? (breakdown.velocity - 1) * (ctx.weights?.velocity ?? 40) / 100
-      : 0,
+    contribution:
+      breakdown.velocity > 1 ? ((breakdown.velocity - 1) * (ctx.weights?.velocity ?? 40)) / 100 : 0,
     adjustable: true,
     settingLink: SIGNAL_META.velocity.settingLink,
   });
@@ -355,7 +361,12 @@ export function explainPost(
     }
 
     if (effect) {
-      customRuleEffects.push({ ruleId: rule.id, description: rule.description, effect, scoreDelta });
+      customRuleEffects.push({
+        ruleId: rule.id,
+        description: rule.description,
+        effect,
+        scoreDelta,
+      });
     }
   }
 
@@ -390,9 +401,7 @@ export function explainPost(
  * tooltips, or accessibility announcements.
  */
 export function explainerToText(explanation: PostExplanation): string {
-  const lines: string[] = [
-    `This post scored ${explanation.normalizedScore}/100 because:`,
-  ];
+  const lines: string[] = [`This post scored ${explanation.normalizedScore}/100 because:`];
   for (const s of explanation.signals.slice(0, 4)) {
     if (s.contribution > 0.01) {
       const pct = Math.round(s.contribution * 100);
@@ -402,7 +411,9 @@ export function explainerToText(explanation: PostExplanation): string {
   if (explanation.customRuleEffects.length > 0) {
     for (const rule of explanation.customRuleEffects) {
       const sign = rule.scoreDelta >= 0 ? '+' : '';
-      lines.push(`• Custom rule: ${rule.description} (${sign}${Math.round(rule.scoreDelta * 100)}%)`);
+      lines.push(
+        `• Custom rule: ${rule.description} (${sign}${Math.round(rule.scoreDelta * 100)}%)`,
+      );
     }
   }
   lines.push('You can adjust your algorithm settings at /feed/tune');

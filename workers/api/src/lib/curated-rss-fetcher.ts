@@ -16,8 +16,8 @@
  *   podcast:curated:last-fetch          → ISO timestamp
  */
 
-import { ALL_CURATED_PODCASTS, CURATED_PODCASTS_BY_CATEGORY, getCuratedPodcastById } from '../feed/podcast-curation';
 import type { CuratedPodcast, UnifiedPodcastEpisode } from '../feed/podcast-curation';
+import { ALL_CURATED_PODCASTS, CURATED_PODCASTS_BY_CATEGORY } from '../feed/podcast-curation';
 
 // ─── Constants ───────────────────────────────────────────────────────────
 
@@ -78,11 +78,14 @@ function parseRssXml(xml: string): RawRssFeed {
   const feed: RawRssFeed = { items: [] };
 
   // Extract channel title
-  const titleMatch = xml.match(/<title><!\[CDATA\[(.+?)\]\]><\/title>/s) || xml.match(/<title>([^<]+)<\/title>/);
+  const titleMatch =
+    xml.match(/<title><!\[CDATA\[(.+?)\]\]><\/title>/s) || xml.match(/<title>([^<]+)<\/title>/);
   if (titleMatch && titleMatch[1] !== undefined) feed.title = titleMatch[1].trim();
 
   // Extract channel description
-  const descMatch = xml.match(/<description><!\[CDATA\[(.+?)\]\]><\/description>/s) || xml.match(/<description>([^<]*)<\/description>/);
+  const descMatch =
+    xml.match(/<description><!\[CDATA\[(.+?)\]\]><\/description>/s) ||
+    xml.match(/<description>([^<]*)<\/description>/);
   if (descMatch && descMatch[1] !== undefined) feed.description = descMatch[1].trim();
 
   // Extract channel link
@@ -111,11 +114,15 @@ function parseRssItem(itemXml: string): RawRssItem {
   const item: RawRssItem = {};
 
   // Title
-  const titleMatch = itemXml.match(/<title><!\[CDATA\[(.+?)\]\]><\/title>/s) || itemXml.match(/<title>([^<]*)<\/title>/);
+  const titleMatch =
+    itemXml.match(/<title><!\[CDATA\[(.+?)\]\]><\/title>/s) ||
+    itemXml.match(/<title>([^<]*)<\/title>/);
   if (titleMatch && titleMatch[1] !== undefined) item.title = titleMatch[1].trim();
 
   // Description
-  const descMatch = itemXml.match(/<description><!\[CDATA\[(.+?)\]\]><\/description>/s) || itemXml.match(/<description>([^<]*)<\/description>/);
+  const descMatch =
+    itemXml.match(/<description><!\[CDATA\[(.+?)\]\]><\/description>/s) ||
+    itemXml.match(/<description>([^<]*)<\/description>/);
   if (descMatch && descMatch[1] !== undefined) item.description = descMatch[1].trim();
 
   // Link
@@ -143,11 +150,13 @@ function parseRssItem(itemXml: string): RawRssItem {
 
   // iTunes duration
   const durationMatch = itemXml.match(/<itunes:duration>([^<]+)<\/itunes:duration>/);
-  if (durationMatch && durationMatch[1] !== undefined) item['itunes:duration'] = durationMatch[1].trim();
+  if (durationMatch && durationMatch[1] !== undefined)
+    item['itunes:duration'] = durationMatch[1].trim();
 
   // iTunes episode number
   const episodeMatch = itemXml.match(/<itunes:episode>([^<]+)<\/itunes:episode>/);
-  if (episodeMatch && episodeMatch[1] !== undefined) item['itunes:episode'] = episodeMatch[1].trim();
+  if (episodeMatch && episodeMatch[1] !== undefined)
+    item['itunes:episode'] = episodeMatch[1].trim();
 
   // iTunes season number
   const seasonMatch = itemXml.match(/<itunes:season>([^<]+)<\/itunes:season>/);
@@ -201,7 +210,7 @@ function parseDuration(duration: string): number {
 function parseDate(pubDate: string): number {
   if (!pubDate) return Date.now();
   const ts = Date.parse(pubDate);
-  return isNaN(ts) ? Date.now() : ts;
+  return Number.isNaN(ts) ? Date.now() : ts;
 }
 
 function generateEpisodeId(podcastId: string, guid: string): string {
@@ -210,20 +219,19 @@ function generateEpisodeId(podcastId: string, guid: string): string {
   let hash = 0;
   for (let i = 0; i < input.length; i++) {
     const char = input.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
+    hash = (hash << 5) - hash + char;
     hash = hash & hash; // Convert to 32-bit integer
   }
   const bytes = new Uint8Array(8);
   for (let i = 0; i < 8; i++) {
     bytes[i] = (hash >> (i * 4)) & 0xff;
   }
-  return Array.from(bytes).map((b) => b.toString(16).padStart(2, '0')).join('');
+  return Array.from(bytes)
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
 }
 
-function normalizeEpisode(
-  raw: RawRssItem,
-  podcast: CuratedPodcast,
-): UnifiedPodcastEpisode | null {
+function normalizeEpisode(raw: RawRssItem, podcast: CuratedPodcast): UnifiedPodcastEpisode | null {
   if (!raw.title && !raw.guid) return null;
 
   const guid = raw.guid || raw.link || raw.title || '';
@@ -293,7 +301,7 @@ export async function fetchPodcastEpisodes(
 
   for (const raw of feed.items.slice(0, MAX_EPISODES_PER_FETCH)) {
     const normalized = normalizeEpisode(raw, podcast);
-    if (normalized && normalized.audioUrl) {
+    if (normalized?.audioUrl) {
       episodes.push(normalized);
     }
   }
@@ -305,9 +313,7 @@ export async function fetchPodcastEpisodes(
  * Fetch latest episodes from ALL curated podcasts.
  * Respects per-podcast TTL to avoid hammering feeds.
  */
-export async function fetchAllCuratedEpisodes(
-  kv: KVNamespace,
-): Promise<UnifiedPodcastEpisode[]> {
+export async function fetchAllCuratedEpisodes(kv: KVNamespace): Promise<UnifiedPodcastEpisode[]> {
   const allEpisodes: UnifiedPodcastEpisode[] = [];
   const now = Date.now();
   const fetchIntervalMs = 10 * 60 * 1000; // 10 min between fetches per podcast
@@ -388,7 +394,10 @@ async function storeEpisodesInKv(
   await updateCategoryIndex(kv, podcast.category, podcast.id);
 }
 
-async function updateLatestIndex(kv: KVNamespace, newEpisodes: UnifiedPodcastEpisode[]): Promise<void> {
+async function updateLatestIndex(
+  kv: KVNamespace,
+  newEpisodes: UnifiedPodcastEpisode[],
+): Promise<void> {
   const raw = await kv.get(CURATED_LATEST_KEY);
   const latest: UnifiedPodcastEpisode[] = raw ? JSON.parse(raw) : [];
 
@@ -400,7 +409,11 @@ async function updateLatestIndex(kv: KVNamespace, newEpisodes: UnifiedPodcastEpi
   await kv.put(CURATED_LATEST_KEY, JSON.stringify(merged), { expirationTtl: 86400 });
 }
 
-async function updateCategoryIndex(kv: KVNamespace, category: string, podcastId: string): Promise<void> {
+async function updateCategoryIndex(
+  kv: KVNamespace,
+  category: string,
+  podcastId: string,
+): Promise<void> {
   const indexKey = `podcast:curated:index:${category}`;
   const raw = await kv.get(indexKey);
   const ids: string[] = raw ? JSON.parse(raw) : [];
@@ -420,7 +433,9 @@ export async function seedCuratedPodcasts(kv: KVNamespace): Promise<void> {
   const indexAll: string[] = [];
 
   for (const podcast of ALL_CURATED_PODCASTS) {
-    await kv.put(curatedPodcastKey(podcast.id), JSON.stringify(podcast), { expirationTtl: 86400 * 365 });
+    await kv.put(curatedPodcastKey(podcast.id), JSON.stringify(podcast), {
+      expirationTtl: 86400 * 365,
+    });
     indexAll.push(podcast.id);
   }
 
@@ -429,10 +444,7 @@ export async function seedCuratedPodcasts(kv: KVNamespace): Promise<void> {
 
   // Store category indices
   for (const [category, podcasts] of Object.entries(CURATED_PODCASTS_BY_CATEGORY)) {
-    await kv.put(
-      `podcast:curated:index:${category}`,
-      JSON.stringify(podcasts.map((p) => p.id)),
-    );
+    await kv.put(`podcast:curated:index:${category}`, JSON.stringify(podcasts.map((p) => p.id)));
   }
 
   console.log(`[curated-rss] Seeded ${indexAll.length} curated podcasts into KV`);
@@ -448,9 +460,7 @@ export async function recalculateTrending(kv: KVNamespace): Promise<void> {
   if (!raw) return;
 
   const episodes: UnifiedPodcastEpisode[] = JSON.parse(raw);
-  const trending = episodes
-    .sort((a, b) => b.plays - a.plays)
-    .slice(0, 50);
+  const trending = episodes.sort((a, b) => b.plays - a.plays).slice(0, 50);
 
   await kv.put(CURATED_TRENDING_KEY, JSON.stringify(trending), { expirationTtl: 86400 });
 }

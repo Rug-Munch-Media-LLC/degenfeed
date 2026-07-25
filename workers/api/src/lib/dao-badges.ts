@@ -205,7 +205,7 @@ function badgeKey(userId: string, badgeId: string): string {
   return `badge:${userId}:${badgeId}`;
 }
 
-async function kvGet<T>(env: Env, key: string): Promise<T | null> {
+async function _kvGet<T>(env: Env, key: string): Promise<T | null> {
   try {
     const raw = await env.CACHE?.get(key);
     if (raw) return JSON.parse(raw) as T;
@@ -215,7 +215,7 @@ async function kvGet<T>(env: Env, key: string): Promise<T | null> {
   return null;
 }
 
-async function kvPut(env: Env, key: string, value: unknown, ttl = 0): Promise<void> {
+async function _kvPut(env: Env, key: string, value: unknown, ttl = 0): Promise<void> {
   try {
     await env.CACHE?.put(key, JSON.stringify(value), ttl > 0 ? { expirationTtl: ttl } : undefined);
   } catch {

@@ -58,25 +58,115 @@ const DEFAULT_WEIGHTS: AlgorithmWeights = {
 };
 
 const PRESETS: WeightPreset[] = [
-  { name: 'Latest First', slug: 'latest-first', icon: '📰', description: 'Newest posts at the top', weights: { recency: 90, relevance: 40, popularity: 40, creatorAffinity: 30, diversity: 30, sourceQuality: 30, interactionHistory: 30 } },
-  { name: "What's Hot", slug: 'whats-hot', icon: '🔥', description: 'Trending and viral content', weights: { recency: 50, relevance: 40, popularity: 80, creatorAffinity: 40, diversity: 30, sourceQuality: 40, interactionHistory: 50 } },
-  { name: 'For You', slug: 'for-you', icon: '🎯', description: 'Personalized to your interests', weights: { recency: 50, relevance: 70, popularity: 50, creatorAffinity: 60, diversity: 30, sourceQuality: 40, interactionHistory: 70 } },
-  { name: 'Discovery Mode', slug: 'discovery', icon: '🌈', description: 'Explore new topics and creators', weights: { recency: 40, relevance: 40, popularity: 40, creatorAffinity: 30, diversity: 80, sourceQuality: 50, interactionHistory: 20 } },
-  { name: 'Balanced', slug: 'balanced', icon: '⚖️', description: 'A fair mix of everything', weights: { recency: 50, relevance: 50, popularity: 50, creatorAffinity: 50, diversity: 50, sourceQuality: 50, interactionHistory: 50 } },
+  {
+    name: 'Latest First',
+    slug: 'latest-first',
+    icon: '📰',
+    description: 'Newest posts at the top',
+    weights: {
+      recency: 90,
+      relevance: 40,
+      popularity: 40,
+      creatorAffinity: 30,
+      diversity: 30,
+      sourceQuality: 30,
+      interactionHistory: 30,
+    },
+  },
+  {
+    name: "What's Hot",
+    slug: 'whats-hot',
+    icon: '🔥',
+    description: 'Trending and viral content',
+    weights: {
+      recency: 50,
+      relevance: 40,
+      popularity: 80,
+      creatorAffinity: 40,
+      diversity: 30,
+      sourceQuality: 40,
+      interactionHistory: 50,
+    },
+  },
+  {
+    name: 'For You',
+    slug: 'for-you',
+    icon: '🎯',
+    description: 'Personalized to your interests',
+    weights: {
+      recency: 50,
+      relevance: 70,
+      popularity: 50,
+      creatorAffinity: 60,
+      diversity: 30,
+      sourceQuality: 40,
+      interactionHistory: 70,
+    },
+  },
+  {
+    name: 'Discovery Mode',
+    slug: 'discovery',
+    icon: '🌈',
+    description: 'Explore new topics and creators',
+    weights: {
+      recency: 40,
+      relevance: 40,
+      popularity: 40,
+      creatorAffinity: 30,
+      diversity: 80,
+      sourceQuality: 50,
+      interactionHistory: 20,
+    },
+  },
+  {
+    name: 'Balanced',
+    slug: 'balanced',
+    icon: '⚖️',
+    description: 'A fair mix of everything',
+    weights: {
+      recency: 50,
+      relevance: 50,
+      popularity: 50,
+      creatorAffinity: 50,
+      diversity: 50,
+      sourceQuality: 50,
+      interactionHistory: 50,
+    },
+  },
 ];
 
-const WEIGHT_LABELS: Record<keyof AlgorithmWeights, { label: string; icon: string; desc: string }> = {
-  recency: { label: 'Recency', icon: '🕐', desc: 'How recent the post is' },
-  relevance: { label: 'Relevance', icon: '🎯', desc: 'Match to your interests and topics' },
-  popularity: { label: 'Popularity', icon: '🔥', desc: 'Engagement: likes, reposts, replies' },
-  creatorAffinity: { label: 'Creator Affinity', icon: '👤', desc: 'Accounts you follow and interact with' },
-  diversity: { label: 'Diversity', icon: '🌈', desc: 'Mix of different authors and topics' },
-  sourceQuality: { label: 'Source Quality', icon: '📡', desc: 'Trust and quality of the source protocol' },
-  interactionHistory: { label: 'Your History', icon: '🔄', desc: 'Your past interactions with similar content' },
-};
+const WEIGHT_LABELS: Record<keyof AlgorithmWeights, { label: string; icon: string; desc: string }> =
+  {
+    recency: { label: 'Recency', icon: '🕐', desc: 'How recent the post is' },
+    relevance: { label: 'Relevance', icon: '🎯', desc: 'Match to your interests and topics' },
+    popularity: { label: 'Popularity', icon: '🔥', desc: 'Engagement: likes, reposts, replies' },
+    creatorAffinity: {
+      label: 'Creator Affinity',
+      icon: '👤',
+      desc: 'Accounts you follow and interact with',
+    },
+    diversity: { label: 'Diversity', icon: '🌈', desc: 'Mix of different authors and topics' },
+    sourceQuality: {
+      label: 'Source Quality',
+      icon: '📡',
+      desc: 'Trust and quality of the source protocol',
+    },
+    interactionHistory: {
+      label: 'Your History',
+      icon: '🔄',
+      desc: 'Your past interactions with similar content',
+    },
+  };
 
-const RULE_TYPE_LABELS: Record<CustomRule['type'], { label: string; icon: string; fields: string[] }> = {
-  'boost-creator': { label: 'Boost Creator', icon: '⭐', fields: ['creatorId', 'creatorName', 'adjustment'] },
+const RULE_TYPE_LABELS: Record<
+  CustomRule['type'],
+  { label: string; icon: string; fields: string[] }
+> = {
+  'boost-creator': {
+    label: 'Boost Creator',
+    icon: '⭐',
+    fields: ['creatorId', 'creatorName', 'adjustment'],
+  },
   'mute-hashtag': { label: 'Mute Hashtag', icon: '🚫', fields: ['hashtag'] },
   'min-engagement': { label: 'Min Engagement', icon: '📊', fields: ['minLikes'] },
   'content-type': { label: 'Content Type', icon: '📋', fields: ['contentType'] },
@@ -84,7 +174,15 @@ const RULE_TYPE_LABELS: Record<CustomRule['type'], { label: string; icon: string
 
 /* ─── Toggle Switch ─────────────────────────────────────────── */
 
-function Toggle({ checked, onChange, id }: { checked: boolean; onChange: (v: boolean) => void; id: string }) {
+function Toggle({
+  checked,
+  onChange,
+  id,
+}: {
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  id: string;
+}) {
   return (
     <button
       type="button"
@@ -114,13 +212,22 @@ function WeightSlider({
   return (
     <div className="group">
       <div className="mb-1.5 flex items-center justify-between">
-        <label htmlFor={`weight-${weightKey}`} className="flex items-center gap-2 text-xs font-medium" style={{ color: 'var(--color-fg)' }}>
+        <label
+          htmlFor={`weight-${weightKey}`}
+          className="flex items-center gap-2 text-xs font-medium"
+          style={{ color: 'var(--color-fg)' }}
+        >
           <span className="text-sm">{meta.icon}</span>
           <span>{meta.label}</span>
         </label>
         <div className="flex items-center gap-2">
-          <span className="text-[10px]" style={{ color: 'var(--color-muted)' }}>{meta.desc}</span>
-          <span className="w-10 text-right text-xs font-mono font-semibold" style={{ color: 'var(--color-accent)' }}>
+          <span className="text-[10px]" style={{ color: 'var(--color-muted)' }}>
+            {meta.desc}
+          </span>
+          <span
+            className="w-10 text-right text-xs font-mono font-semibold"
+            style={{ color: 'var(--color-accent)' }}
+          >
             {value}%
           </span>
         </div>
@@ -168,28 +275,38 @@ function PresetCard({
       }`}
     >
       <div className="mb-2 flex items-center justify-between">
-        <span className="text-2xl" aria-hidden="true">{preset.icon}</span>
+        <span className="text-2xl" aria-hidden="true">
+          {preset.icon}
+        </span>
         {active && (
           <span className="rounded-full bg-degen-500/15 px-2 py-0.5 text-[9px] font-semibold text-degen-400">
             Active
           </span>
         )}
       </div>
-      <h3 className="mb-1 text-sm font-bold" style={{ color: 'var(--color-fg)' }}>{preset.name}</h3>
-      <p className="mb-3 text-[11px]" style={{ color: 'var(--color-muted)' }}>{preset.description}</p>
+      <h3 className="mb-1 text-sm font-bold" style={{ color: 'var(--color-fg)' }}>
+        {preset.name}
+      </h3>
+      <p className="mb-3 text-[11px]" style={{ color: 'var(--color-muted)' }}>
+        {preset.description}
+      </p>
 
       {/* Mini weight bars */}
       <div className="space-y-1">
         {(Object.keys(preset.weights) as Array<keyof AlgorithmWeights>).slice(0, 4).map((k) => (
           <div key={k} className="flex items-center gap-2">
-            <span className="w-16 text-[9px]" style={{ color: 'var(--color-muted)' }}>{WEIGHT_LABELS[k].label}</span>
+            <span className="w-16 text-[9px]" style={{ color: 'var(--color-muted)' }}>
+              {WEIGHT_LABELS[k].label}
+            </span>
             <div className="h-1 flex-1 overflow-hidden rounded-full bg-[var(--color-bg-tertiary)]">
               <div
                 className="h-full rounded-full bg-degen-500/60 transition-all"
                 style={{ width: `${preset.weights[k]}%` }}
               />
             </div>
-            <span className="w-6 text-right text-[9px] font-mono text-[var(--color-muted)]">{preset.weights[k]}%</span>
+            <span className="w-6 text-right text-[9px] font-mono text-[var(--color-muted)]">
+              {preset.weights[k]}%
+            </span>
           </div>
         ))}
       </div>
@@ -255,26 +372,34 @@ function RuleBuilder({
   const typeMeta = RULE_TYPE_LABELS[type];
 
   return (
-    <form onSubmit={handleSubmit} className="rounded-xl border p-4" style={{ borderColor: 'var(--color-glass-border)', backgroundColor: 'var(--color-card)' }}>
-      <h4 className="mb-3 text-xs font-semibold" style={{ color: 'var(--color-fg)' }}>Add a Custom Rule</h4>
+    <form
+      onSubmit={handleSubmit}
+      className="rounded-xl border p-4"
+      style={{ borderColor: 'var(--color-glass-border)', backgroundColor: 'var(--color-card)' }}
+    >
+      <h4 className="mb-3 text-xs font-semibold" style={{ color: 'var(--color-fg)' }}>
+        Add a Custom Rule
+      </h4>
 
       {/* Rule type selector */}
       <div className="mb-3 grid grid-cols-2 gap-1.5">
-        {(Object.entries(RULE_TYPE_LABELS) as Array<[CustomRule['type'], typeof typeMeta]>).map(([key, meta]) => (
-          <button
-            key={key}
-            type="button"
-            onClick={() => setType(key)}
-            className={`flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-[10px] font-medium transition-all ${
-              type === key
-                ? 'bg-degen-500/15 text-degen-400'
-                : 'bg-[var(--color-bg-tertiary)] text-[var(--color-muted)] hover:text-[var(--color-fg)]'
-            }`}
-          >
-            <span>{meta.icon}</span>
-            <span>{meta.label}</span>
-          </button>
-        ))}
+        {(Object.entries(RULE_TYPE_LABELS) as Array<[CustomRule['type'], typeof typeMeta]>).map(
+          ([key, meta]) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setType(key)}
+              className={`flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-[10px] font-medium transition-all ${
+                type === key
+                  ? 'bg-degen-500/15 text-degen-400'
+                  : 'bg-[var(--color-bg-tertiary)] text-[var(--color-muted)] hover:text-[var(--color-fg)]'
+              }`}
+            >
+              <span>{meta.icon}</span>
+              <span>{meta.label}</span>
+            </button>
+          ),
+        )}
       </div>
 
       {/* Dynamic fields based on rule type */}
@@ -282,7 +407,11 @@ function RuleBuilder({
         {type === 'boost-creator' && (
           <>
             <div>
-              <label htmlFor="rule-creator-id" className="mb-1 block text-[10px] font-medium" style={{ color: 'var(--color-fg)' }}>
+              <label
+                htmlFor="rule-creator-id"
+                className="mb-1 block text-[10px] font-medium"
+                style={{ color: 'var(--color-fg)' }}
+              >
                 Creator ID (wallet address or protocol ID)
               </label>
               <input
@@ -296,7 +425,11 @@ function RuleBuilder({
               />
             </div>
             <div>
-              <label htmlFor="rule-creator-name" className="mb-1 block text-[10px] font-medium" style={{ color: 'var(--color-fg)' }}>
+              <label
+                htmlFor="rule-creator-name"
+                className="mb-1 block text-[10px] font-medium"
+                style={{ color: 'var(--color-fg)' }}
+              >
                 Display name (optional)
               </label>
               <input
@@ -309,7 +442,11 @@ function RuleBuilder({
               />
             </div>
             <div>
-              <label htmlFor="rule-adjustment" className="mb-1 block text-[10px] font-medium" style={{ color: 'var(--color-fg)' }}>
+              <label
+                htmlFor="rule-adjustment"
+                className="mb-1 block text-[10px] font-medium"
+                style={{ color: 'var(--color-fg)' }}
+              >
                 Score boost: +{adjustment}%
               </label>
               <input
@@ -328,7 +465,11 @@ function RuleBuilder({
 
         {type === 'mute-hashtag' && (
           <div>
-            <label htmlFor="rule-hashtag" className="mb-1 block text-[10px] font-medium" style={{ color: 'var(--color-fg)' }}>
+            <label
+              htmlFor="rule-hashtag"
+              className="mb-1 block text-[10px] font-medium"
+              style={{ color: 'var(--color-fg)' }}
+            >
               Hashtag to mute
             </label>
             <input
@@ -345,7 +486,11 @@ function RuleBuilder({
 
         {type === 'min-engagement' && (
           <div>
-            <label htmlFor="rule-min-likes" className="mb-1 block text-[10px] font-medium" style={{ color: 'var(--color-fg)' }}>
+            <label
+              htmlFor="rule-min-likes"
+              className="mb-1 block text-[10px] font-medium"
+              style={{ color: 'var(--color-fg)' }}
+            >
               Minimum likes: {minLikes}
             </label>
             <input
@@ -363,7 +508,11 @@ function RuleBuilder({
 
         {type === 'content-type' && (
           <div>
-            <label htmlFor="rule-content-type" className="mb-1 block text-[10px] font-medium" style={{ color: 'var(--color-fg)' }}>
+            <label
+              htmlFor="rule-content-type"
+              className="mb-1 block text-[10px] font-medium"
+              style={{ color: 'var(--color-fg)' }}
+            >
               Content type to show
             </label>
             <select
@@ -394,14 +543,34 @@ function RuleBuilder({
 
 /* ─── Rule Item ─────────────────────────────────────────────── */
 
-function RuleItem({ rule, onToggle, onDelete }: { rule: CustomRule; onToggle: () => void; onDelete: () => void }) {
+function RuleItem({
+  rule,
+  onToggle,
+  onDelete,
+}: {
+  rule: CustomRule;
+  onToggle: () => void;
+  onDelete: () => void;
+}) {
   const meta = RULE_TYPE_LABELS[rule.type];
   return (
-    <div className="flex items-center gap-3 rounded-lg border p-3" style={{ borderColor: 'var(--color-glass-border)', backgroundColor: 'var(--color-bg-secondary)' }}>
-      <span className="text-base shrink-0" aria-hidden="true">{meta.icon}</span>
+    <div
+      className="flex items-center gap-3 rounded-lg border p-3"
+      style={{
+        borderColor: 'var(--color-glass-border)',
+        backgroundColor: 'var(--color-bg-secondary)',
+      }}
+    >
+      <span className="text-base shrink-0" aria-hidden="true">
+        {meta.icon}
+      </span>
       <div className="flex-1 min-w-0">
-        <p className="text-xs font-medium truncate" style={{ color: 'var(--color-fg)' }}>{rule.description}</p>
-        <p className="text-[10px]" style={{ color: 'var(--color-muted)' }}>{meta.label}</p>
+        <p className="text-xs font-medium truncate" style={{ color: 'var(--color-fg)' }}>
+          {rule.description}
+        </p>
+        <p className="text-[10px]" style={{ color: 'var(--color-muted)' }}>
+          {meta.label}
+        </p>
       </div>
       <div className="flex items-center gap-1.5 shrink-0">
         <Toggle id={`rule-${rule.id}`} checked={rule.enabled} onChange={onToggle} />
@@ -412,7 +581,13 @@ function RuleItem({ rule, onToggle, onDelete }: { rule: CustomRule; onToggle: ()
           aria-label="Delete rule"
         >
           <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-            <path d="M2 4h12M5 4V2.5a.5.5 0 01.5-.5h3a.5.5 0 01.5.5V4M4 4v9a1 1 0 001 1h4a1 1 0 001-1V4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <path
+              d="M2 4h12M5 4V2.5a.5.5 0 01.5-.5h3a.5.5 0 01.5.5V4M4 4v9a1 1 0 001 1h4a1 1 0 001-1V4"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
           </svg>
         </button>
       </div>
@@ -424,11 +599,23 @@ function RuleItem({ rule, onToggle, onDelete }: { rule: CustomRule; onToggle: ()
 
 function SignalToggle({ signal, onToggle }: { signal: SignalSource; onToggle: () => void }) {
   return (
-    <div className="flex items-center gap-3 rounded-lg border p-2.5" style={{ borderColor: 'var(--color-glass-border)', backgroundColor: 'var(--color-bg-secondary)' }}>
-      <span className="text-base shrink-0" aria-hidden="true">{signal.icon}</span>
+    <div
+      className="flex items-center gap-3 rounded-lg border p-2.5"
+      style={{
+        borderColor: 'var(--color-glass-border)',
+        backgroundColor: 'var(--color-bg-secondary)',
+      }}
+    >
+      <span className="text-base shrink-0" aria-hidden="true">
+        {signal.icon}
+      </span>
       <div className="flex-1 min-w-0">
-        <p className="text-xs font-medium" style={{ color: 'var(--color-fg)' }}>{signal.label}</p>
-        <p className="text-[10px] truncate" style={{ color: 'var(--color-muted)' }}>{signal.description}</p>
+        <p className="text-xs font-medium" style={{ color: 'var(--color-fg)' }}>
+          {signal.label}
+        </p>
+        <p className="text-[10px] truncate" style={{ color: 'var(--color-muted)' }}>
+          {signal.description}
+        </p>
       </div>
       <Toggle id={`signal-${signal.id}`} checked={signal.enabled} onChange={onToggle} />
     </div>
@@ -437,10 +624,23 @@ function SignalToggle({ signal, onToggle }: { signal: SignalSource; onToggle: ()
 
 /* ─── Preview Panel ─────────────────────────────────────────── */
 
-function PreviewPanel({ currentWeights, proposedWeights }: { currentWeights: AlgorithmWeights; proposedWeights: AlgorithmWeights }) {
+function PreviewPanel({
+  currentWeights,
+  proposedWeights,
+}: {
+  currentWeights: AlgorithmWeights;
+  proposedWeights: AlgorithmWeights;
+}) {
   // Show the diff between current and proposed weights
   const diffs = useMemo(() => {
-    const result: Array<{ key: keyof AlgorithmWeights; label: string; icon: string; current: number; proposed: number; diff: number }> = [];
+    const result: Array<{
+      key: keyof AlgorithmWeights;
+      label: string;
+      icon: string;
+      current: number;
+      proposed: number;
+      diff: number;
+    }> = [];
     for (const key of Object.keys(currentWeights) as Array<keyof AlgorithmWeights>) {
       const diff = proposedWeights[key] - currentWeights[key];
       if (diff !== 0 || proposedWeights[key] !== 50) {
@@ -458,15 +658,23 @@ function PreviewPanel({ currentWeights, proposedWeights }: { currentWeights: Alg
   }, [currentWeights, proposedWeights]);
 
   return (
-    <div className="rounded-xl border p-4" style={{ borderColor: 'var(--color-glass-border)', backgroundColor: 'var(--color-card)' }}>
-      <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold" style={{ color: 'var(--color-fg)' }}>
+    <div
+      className="rounded-xl border p-4"
+      style={{ borderColor: 'var(--color-glass-border)', backgroundColor: 'var(--color-card)' }}
+    >
+      <h3
+        className="mb-3 flex items-center gap-2 text-sm font-semibold"
+        style={{ color: 'var(--color-fg)' }}
+      >
         <span>📊</span> Feed Preview
       </h3>
       <p className="mb-3 text-[11px]" style={{ color: 'var(--color-muted)' }}>
         How your feed would change with these weights:
       </p>
       {diffs.length === 0 ? (
-        <p className="text-[11px]" style={{ color: 'var(--color-muted)' }}>No changes yet. Adjust some weights above to see a preview.</p>
+        <p className="text-[11px]" style={{ color: 'var(--color-muted)' }}>
+          No changes yet. Adjust some weights above to see a preview.
+        </p>
       ) : (
         <div className="space-y-2">
           {diffs.slice(0, 6).map((d) => {
@@ -475,21 +683,34 @@ function PreviewPanel({ currentWeights, proposedWeights }: { currentWeights: Alg
             return (
               <div key={d.key} className="flex items-center gap-2">
                 <span className="text-sm shrink-0">{d.icon}</span>
-                <span className="flex-1 text-xs" style={{ color: 'var(--color-fg)' }}>{d.label}</span>
+                <span className="flex-1 text-xs" style={{ color: 'var(--color-fg)' }}>
+                  {d.label}
+                </span>
                 <div className="flex items-center gap-1.5">
                   <div className="h-1.5 w-20 overflow-hidden rounded-full bg-[var(--color-bg-tertiary)]">
                     <div
                       className="h-full rounded-full transition-all"
                       style={{
                         width: `${Math.abs(d.proposed)}%`,
-                        backgroundColor: isPositive ? 'var(--color-accent)' : isNeutral ? 'var(--color-muted)' : '#ef4444',
+                        backgroundColor: isPositive
+                          ? 'var(--color-accent)'
+                          : isNeutral
+                            ? 'var(--color-muted)'
+                            : '#ef4444',
                       }}
                     />
                   </div>
-                  <span className={`text-[10px] font-mono font-medium ${
-                    isPositive ? 'text-degen-400' : isNeutral ? 'text-[var(--color-muted)]' : 'text-red-400'
-                  }`}>
-                    {isPositive ? '+' : ''}{d.diff}%
+                  <span
+                    className={`text-[10px] font-mono font-medium ${
+                      isPositive
+                        ? 'text-degen-400'
+                        : isNeutral
+                          ? 'text-[var(--color-muted)]'
+                          : 'text-red-400'
+                    }`}
+                  >
+                    {isPositive ? '+' : ''}
+                    {d.diff}%
                   </span>
                 </div>
               </div>
@@ -500,11 +721,19 @@ function PreviewPanel({ currentWeights, proposedWeights }: { currentWeights: Alg
       {diffs.length > 0 && (
         <p className="mt-3 text-[10px]" style={{ color: 'var(--color-muted)' }}>
           {diffs.filter((d) => d.diff > 0).length > 0
-            ? '🟢 More weight on: ' + diffs.filter((d) => d.diff > 0).map((d) => d.label).join(', ')
+            ? `🟢 More weight on: ${diffs
+                .filter((d) => d.diff > 0)
+                .map((d) => d.label)
+                .join(', ')}`
             : ''}
-          {diffs.filter((d) => d.diff > 0).length > 0 && diffs.filter((d) => d.diff < 0).length > 0 ? ' | ' : ''}
+          {diffs.filter((d) => d.diff > 0).length > 0 && diffs.filter((d) => d.diff < 0).length > 0
+            ? ' | '
+            : ''}
           {diffs.filter((d) => d.diff < 0).length > 0
-            ? '🔴 Less weight on: ' + diffs.filter((d) => d.diff < 0).map((d) => d.label).join(', ')
+            ? `🔴 Less weight on: ${diffs
+                .filter((d) => d.diff < 0)
+                .map((d) => d.label)
+                .join(', ')}`
             : ''}
         </p>
       )}
@@ -527,7 +756,7 @@ export default function FeedTunePage() {
   const [saved, setSaved] = useState(false);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [showRuleBuilder, setShowRuleBuilder] = useState(false);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const _debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   // Load saved preferences on mount
   useEffect(() => {
@@ -573,7 +802,7 @@ export default function FeedTunePage() {
 
     // Persist immediately
     try {
-      await fetch('/api/algo/weights/preset/' + preset.slug, {
+      await fetch(`/api/algo/weights/preset/${preset.slug}`, {
         method: 'POST',
         credentials: 'include',
       });
@@ -619,45 +848,51 @@ export default function FeedTunePage() {
     }
   }, []);
 
-  const handleAddRule = useCallback(async (rule: Omit<CustomRule, 'id' | 'createdAt' | 'enabled'>) => {
-    const newRule: CustomRule = {
-      ...rule,
-      id: crypto.randomUUID(),
-      enabled: true,
-      createdAt: Date.now(),
-    };
+  const handleAddRule = useCallback(
+    async (rule: Omit<CustomRule, 'id' | 'createdAt' | 'enabled'>) => {
+      const newRule: CustomRule = {
+        ...rule,
+        id: crypto.randomUUID(),
+        enabled: true,
+        createdAt: Date.now(),
+      };
 
-    // Optimistic update
-    setRules((prev) => [...prev, newRule]);
-    setShowRuleBuilder(false);
+      // Optimistic update
+      setRules((prev) => [...prev, newRule]);
+      setShowRuleBuilder(false);
 
-    try {
-      await fetch('/api/algo/rules', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(newRule),
-      });
-    } catch {
-      setRules((prev) => prev.filter((r) => r.id !== newRule.id));
-    }
-  }, []);
+      try {
+        await fetch('/api/algo/rules', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(newRule),
+        });
+      } catch {
+        setRules((prev) => prev.filter((r) => r.id !== newRule.id));
+      }
+    },
+    [],
+  );
 
-  const handleToggleRule = useCallback(async (ruleId: string) => {
-    setRules((prev) => prev.map((r) => (r.id === ruleId ? { ...r, enabled: !r.enabled } : r)));
-    // Note: proper toggle would need a PATCH endpoint; for now we re-save all rules
-    const updated = rules.map((r) => (r.id === ruleId ? { ...r, enabled: !r.enabled } : r));
-    try {
-      await fetch('/api/algo/rules', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(updated.find((r) => r.id === ruleId)),
-      });
-    } catch {
-      /* ignore */
-    }
-  }, [rules]);
+  const handleToggleRule = useCallback(
+    async (ruleId: string) => {
+      setRules((prev) => prev.map((r) => (r.id === ruleId ? { ...r, enabled: !r.enabled } : r)));
+      // Note: proper toggle would need a PATCH endpoint; for now we re-save all rules
+      const updated = rules.map((r) => (r.id === ruleId ? { ...r, enabled: !r.enabled } : r));
+      try {
+        await fetch('/api/algo/rules', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(updated.find((r) => r.id === ruleId)),
+        });
+      } catch {
+        /* ignore */
+      }
+    },
+    [rules],
+  );
 
   const handleDeleteRule = useCallback(async (ruleId: string) => {
     setRules((prev) => prev.filter((r) => r.id !== ruleId));
@@ -676,22 +911,23 @@ export default function FeedTunePage() {
     }
   }, []);
 
-  const handleToggleSignal = useCallback(async (signalId: string) => {
-    const updated = signals.map((s) =>
-      s.id === signalId ? { ...s, enabled: !s.enabled } : s,
-    );
-    setSignals(updated);
-    try {
-      await fetch('/api/algo/signals', {
-        method: 'PUT',
-        credentials: 'include',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ signals: updated.map((s) => ({ id: s.id, enabled: s.enabled })) }),
-      });
-    } catch {
-      setSignals(signals);
-    }
-  }, [signals]);
+  const handleToggleSignal = useCallback(
+    async (signalId: string) => {
+      const updated = signals.map((s) => (s.id === signalId ? { ...s, enabled: !s.enabled } : s));
+      setSignals(updated);
+      try {
+        await fetch('/api/algo/signals', {
+          method: 'PUT',
+          credentials: 'include',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ signals: updated.map((s) => ({ id: s.id, enabled: s.enabled })) }),
+        });
+      } catch {
+        setSignals(signals);
+      }
+    },
+    [signals],
+  );
 
   const handleShare = useCallback(async (slug: string) => {
     try {
@@ -735,32 +971,59 @@ export default function FeedTunePage() {
           href="/settings/personalization"
           className="mb-3 inline-flex items-center gap-1 text-xs font-medium text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            aria-hidden="true"
+          >
             <path d="M19 12H5M12 19l-7-7 7-7" />
           </svg>
           Back to Personalization
         </Link>
-        <h1 className="text-2xl font-black" style={{ color: 'var(--color-fg)', fontFamily: 'var(--font-heading)' }}>
+        <h1
+          className="text-2xl font-black"
+          style={{ color: 'var(--color-fg)', fontFamily: 'var(--font-heading)' }}
+        >
           Feed Algorithm Tuner
         </h1>
         <p className="mt-1 text-sm" style={{ color: 'var(--color-muted)' }}>
-          Take total control of your feed. Adjust weights, apply presets, and create custom rules to shape exactly what you see.
+          Take total control of your feed. Adjust weights, apply presets, and create custom rules to
+          shape exactly what you see.
         </p>
       </div>
 
       {/* Save bar */}
-      <div className="sticky top-0 z-10 mb-6 flex items-center justify-between rounded-xl border p-3 backdrop-blur-xl" style={{ borderColor: 'var(--color-glass-border)', backgroundColor: 'var(--color-card)' }}>
+      <div
+        className="sticky top-0 z-10 mb-6 flex items-center justify-between rounded-xl border p-3 backdrop-blur-xl"
+        style={{ borderColor: 'var(--color-glass-border)', backgroundColor: 'var(--color-card)' }}
+      >
         <div>
           {saved ? (
             <span className="flex items-center gap-1.5 text-xs text-degen-400">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                aria-hidden="true"
+              >
                 <polyline points="20 6 9 17 4 12" />
               </svg>
               Saved!
             </span>
           ) : (
             <span className="text-xs" style={{ color: 'var(--color-muted)' }}>
-              {activePreset ? `Preset: ${PRESETS.find((p) => p.slug === activePreset)?.name ?? activePreset}` : 'Custom weights'}
+              {activePreset
+                ? `Preset: ${PRESETS.find((p) => p.slug === activePreset)?.name ?? activePreset}`
+                : 'Custom weights'}
             </span>
           )}
         </div>
@@ -788,8 +1051,13 @@ export default function FeedTunePage() {
         {/* ═══ 1. Presets ═══ */}
         <section>
           <div className="mb-4 flex items-center gap-2">
-            <span className="text-lg" aria-hidden="true">🏷️</span>
-            <h2 className="text-lg font-bold" style={{ color: 'var(--color-fg)', fontFamily: 'var(--font-heading)' }}>
+            <span className="text-lg" aria-hidden="true">
+              🏷️
+            </span>
+            <h2
+              className="text-lg font-bold"
+              style={{ color: 'var(--color-fg)', fontFamily: 'var(--font-heading)' }}
+            >
               Presets
             </h2>
           </div>
@@ -809,18 +1077,34 @@ export default function FeedTunePage() {
         {/* ═══ 2. Weight Sliders ═══ */}
         <section>
           <div className="mb-4 flex items-center gap-2">
-            <span className="text-lg" aria-hidden="true">🎛️</span>
-            <h2 className="text-lg font-bold" style={{ color: 'var(--color-fg)', fontFamily: 'var(--font-heading)' }}>
+            <span className="text-lg" aria-hidden="true">
+              🎛️
+            </span>
+            <h2
+              className="text-lg font-bold"
+              style={{ color: 'var(--color-fg)', fontFamily: 'var(--font-heading)' }}
+            >
               Manual Weights
             </h2>
           </div>
           <p className="mb-4 text-xs" style={{ color: 'var(--color-muted)' }}>
             Fine-tune each factor individually. Higher weight = more influence on your feed.
           </p>
-          <div className="rounded-xl border p-5" style={{ borderColor: 'var(--color-glass-border)', backgroundColor: 'var(--color-card)' }}>
+          <div
+            className="rounded-xl border p-5"
+            style={{
+              borderColor: 'var(--color-glass-border)',
+              backgroundColor: 'var(--color-card)',
+            }}
+          >
             <div className="space-y-5">
               {(Object.keys(WEIGHT_LABELS) as Array<keyof AlgorithmWeights>).map((key) => (
-                <WeightSlider key={key} weightKey={key} value={weights[key]} onChange={handleWeightChange} />
+                <WeightSlider
+                  key={key}
+                  weightKey={key}
+                  value={weights[key]}
+                  onChange={handleWeightChange}
+                />
               ))}
             </div>
           </div>
@@ -829,8 +1113,17 @@ export default function FeedTunePage() {
         {/* ═══ 3. Preview + Custom Share ═══ */}
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           <PreviewPanel currentWeights={initialWeights} proposedWeights={weights} />
-          <div className="rounded-xl border p-4" style={{ borderColor: 'var(--color-glass-border)', backgroundColor: 'var(--color-card)' }}>
-            <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold" style={{ color: 'var(--color-fg)' }}>
+          <div
+            className="rounded-xl border p-4"
+            style={{
+              borderColor: 'var(--color-glass-border)',
+              backgroundColor: 'var(--color-card)',
+            }}
+          >
+            <h3
+              className="mb-3 flex items-center gap-2 text-sm font-semibold"
+              style={{ color: 'var(--color-fg)' }}
+            >
               <span>🔗</span> Share Your Algorithm
             </h3>
             <p className="mb-3 text-[11px]" style={{ color: 'var(--color-muted)' }}>
@@ -856,8 +1149,13 @@ export default function FeedTunePage() {
         <section>
           <div className="mb-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="text-lg" aria-hidden="true">⚙️</span>
-              <h2 className="text-lg font-bold" style={{ color: 'var(--color-fg)', fontFamily: 'var(--font-heading)' }}>
+              <span className="text-lg" aria-hidden="true">
+                ⚙️
+              </span>
+              <h2
+                className="text-lg font-bold"
+                style={{ color: 'var(--color-fg)', fontFamily: 'var(--font-heading)' }}
+              >
                 Custom Rules
               </h2>
             </div>
@@ -870,7 +1168,8 @@ export default function FeedTunePage() {
             </button>
           </div>
           <p className="mb-4 text-xs" style={{ color: 'var(--color-muted)' }}>
-            Create IF/THEN rules like &quot;Boost posts from @alice&quot; or &quot;Mute #politics&quot;
+            Create IF/THEN rules like &quot;Boost posts from @alice&quot; or &quot;Mute
+            #politics&quot;
           </p>
 
           {showRuleBuilder && (
@@ -880,8 +1179,16 @@ export default function FeedTunePage() {
           )}
 
           {rules.length === 0 && !showRuleBuilder ? (
-            <div className="rounded-xl border p-8 text-center" style={{ borderColor: 'var(--color-glass-border)', backgroundColor: 'var(--color-card)' }}>
-              <p className="text-sm" style={{ color: 'var(--color-muted)' }}>No custom rules yet.</p>
+            <div
+              className="rounded-xl border p-8 text-center"
+              style={{
+                borderColor: 'var(--color-glass-border)',
+                backgroundColor: 'var(--color-card)',
+              }}
+            >
+              <p className="text-sm" style={{ color: 'var(--color-muted)' }}>
+                No custom rules yet.
+              </p>
               <p className="mt-1 text-xs" style={{ color: 'var(--color-muted)' }}>
                 Create rules to boost specific creators, mute topics, or filter by engagement.
               </p>
@@ -903,8 +1210,13 @@ export default function FeedTunePage() {
         {/* ═══ 5. Signal Sources ═══ */}
         <section>
           <div className="mb-4 flex items-center gap-2">
-            <span className="text-lg" aria-hidden="true">📡</span>
-            <h2 className="text-lg font-bold" style={{ color: 'var(--color-fg)', fontFamily: 'var(--font-heading)' }}>
+            <span className="text-lg" aria-hidden="true">
+              📡
+            </span>
+            <h2
+              className="text-lg font-bold"
+              style={{ color: 'var(--color-fg)', fontFamily: 'var(--font-heading)' }}
+            >
               Signal Sources
             </h2>
           </div>
@@ -913,22 +1225,34 @@ export default function FeedTunePage() {
           </p>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             {signals.map((signal) => (
-              <SignalToggle key={signal.id} signal={signal} onToggle={() => handleToggleSignal(signal.id)} />
+              <SignalToggle
+                key={signal.id}
+                signal={signal}
+                onToggle={() => handleToggleSignal(signal.id)}
+              />
             ))}
           </div>
         </section>
       </div>
 
       {/* Footer */}
-      <div className="mt-10 rounded-xl border p-4" style={{ borderColor: 'var(--color-glass-border)', backgroundColor: 'var(--color-card)' }}>
+      <div
+        className="mt-10 rounded-xl border p-4"
+        style={{ borderColor: 'var(--color-glass-border)', backgroundColor: 'var(--color-card)' }}
+      >
         <div className="flex items-start gap-3">
-          <span className="text-lg" aria-hidden="true">💡</span>
+          <span className="text-lg" aria-hidden="true">
+            💡
+          </span>
           <div>
-            <p className="text-xs font-medium" style={{ color: 'var(--color-fg)' }}>How it works</p>
+            <p className="text-xs font-medium" style={{ color: 'var(--color-fg)' }}>
+              How it works
+            </p>
             <p className="mt-1 text-[11px]" style={{ color: 'var(--color-muted)' }}>
-              Your feed algorithm scores every post using weighted signals. Higher weights give that signal more influence.
-              Presets are a quick way to get a specific feed mood. Custom rules let you hard-code preferences.
-              Changes apply to new feed loads — refresh your feed to see the effect.
+              Your feed algorithm scores every post using weighted signals. Higher weights give that
+              signal more influence. Presets are a quick way to get a specific feed mood. Custom
+              rules let you hard-code preferences. Changes apply to new feed loads — refresh your
+              feed to see the effect.
             </p>
           </div>
         </div>

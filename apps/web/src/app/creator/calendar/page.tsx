@@ -1,21 +1,5 @@
 'use client';
-
-/**
- * DegenFeed Premium — Content Calendar
- *
- * Visual calendar for scheduling and managing cross-posts.
- * Features:
- *   - Month / Week / Day views
- *   - Drag-and-drop post scheduling
- *   - Color-coded by protocol
- *   - AI gap-filling suggestions
- *   - Premium-gated (Pro tier required)
- *
- * Uses the premium publishing queue API (premium-publish.ts).
- */
-
-import Link from 'next/link';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../../../components/AuthProvider';
 import { useToast } from '../../../components/Toast';
 
@@ -161,7 +145,7 @@ export default function CalendarPage() {
       }
 
       if (timesRes.ok) {
-        const timesData = await timesRes.json() as { bestTimes: TimeSuggestion[] };
+        const timesData = (await timesRes.json()) as { bestTimes: TimeSuggestion[] };
         setAiSuggestions(timesData.bestTimes ?? []);
       }
     } catch {
@@ -278,9 +262,7 @@ export default function CalendarPage() {
     if (!calendarData) return [];
 
     const gaps: string[] = [];
-    const entriesByDate = new Map(
-      calendarData.calendar.map((d) => [d.date, d.entries]),
-    );
+    const entriesByDate = new Map(calendarData.calendar.map((d) => [d.date, d.entries]));
 
     let streak = 0;
     for (const day of calendarData.calendar) {
@@ -301,8 +283,12 @@ export default function CalendarPage() {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
         <div className="text-center">
-          <p className="text-lg text-[var(--color-muted)]">Connect your wallet to access the Content Calendar</p>
-          <p className="mt-2 text-sm text-[var(--color-muted)]">Premium feature requires Pro tier or higher</p>
+          <p className="text-lg text-[var(--color-muted)]">
+            Connect your wallet to access the Content Calendar
+          </p>
+          <p className="mt-2 text-sm text-[var(--color-muted)]">
+            Premium feature requires Pro tier or higher
+          </p>
         </div>
       </div>
     );
@@ -383,33 +369,38 @@ export default function CalendarPage() {
         <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4">
           <h3 className="mb-2 text-sm font-medium text-amber-400">AI Gap Fill Suggestions</h3>
           <p className="mb-3 text-xs text-[var(--color-muted)]">
-            You have {getGapDays().length} gap{getGapDays().length > 1 ? 's' : ''} where no content is scheduled for 3+ days.
-            Consider scheduling posts on these dates:
+            You have {getGapDays().length} gap{getGapDays().length > 1 ? 's' : ''} where no content
+            is scheduled for 3+ days. Consider scheduling posts on these dates:
           </p>
           <div className="flex flex-wrap gap-2">
-            {getGapDays().slice(0, 5).map((date) => (
-              <button
-                key={date}
-                type="button"
-                onClick={() => {
-                  setCurrentDate(new Date(`${date}T12:00:00Z`));
-                  setView('day');
-                  setShowAIGapFill(false);
-                }}
-                className="rounded-lg border border-amber-500/20 bg-amber-500/10 px-3 py-1.5 text-xs text-amber-400 transition-colors hover:bg-amber-500/20"
-              >
-                📅 {new Date(`${date}T12:00:00Z`).toLocaleDateString('en-US', {
-                  month: 'short',
-                  day: 'numeric',
-                })}
-              </button>
-            ))}
+            {getGapDays()
+              .slice(0, 5)
+              .map((date) => (
+                <button
+                  key={date}
+                  type="button"
+                  onClick={() => {
+                    setCurrentDate(new Date(`${date}T12:00:00Z`));
+                    setView('day');
+                    setShowAIGapFill(false);
+                  }}
+                  className="rounded-lg border border-amber-500/20 bg-amber-500/10 px-3 py-1.5 text-xs text-amber-400 transition-colors hover:bg-amber-500/20"
+                >
+                  📅{' '}
+                  {new Date(`${date}T12:00:00Z`).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                  })}
+                </button>
+              ))}
           </div>
 
           {/* AI Time Suggestions */}
           {aiSuggestions.length > 0 && (
             <div className="mt-3 border-t border-amber-500/10 pt-3">
-              <p className="mb-2 text-xs font-medium text-amber-400">Best Posting Times (AI-optimized)</p>
+              <p className="mb-2 text-xs font-medium text-amber-400">
+                Best Posting Times (AI-optimized)
+              </p>
               <div className="flex flex-wrap gap-2">
                 {aiSuggestions.map((suggestion, i) => (
                   <span
@@ -564,7 +555,7 @@ function MonthView({
 
   const weeks = useMemo(() => {
     const rows: Array<{ date: string; day: number; isCurrentMonth: boolean }[]> = [];
-    let cells: typeof rows[0] = [];
+    let cells: (typeof rows)[0] = [];
 
     // Previous month padding
     for (let i = firstDay - 1; i >= 0; i--) {
@@ -604,7 +595,10 @@ function MonthView({
       {/* Day headers */}
       <div className="grid grid-cols-7 border-b border-[var(--color-border)]">
         {dayNames.map((name) => (
-          <div key={name} className="px-2 py-2 text-center text-[10px] font-medium uppercase tracking-wider text-[var(--color-muted)]">
+          <div
+            key={name}
+            className="px-2 py-2 text-center text-[10px] font-medium uppercase tracking-wider text-[var(--color-muted)]"
+          >
             {name}
           </div>
         ))}
@@ -612,7 +606,10 @@ function MonthView({
 
       {/* Week rows */}
       {weeks.map((week, wi) => (
-        <div key={wi} className="grid grid-cols-7 border-b border-[var(--color-border)] last:border-b-0">
+        <div
+          key={wi}
+          className="grid grid-cols-7 border-b border-[var(--color-border)] last:border-b-0"
+        >
           {week.map((cell) => {
             const entries = getEntriesForDate(cell.date);
             const isToday = cell.date === today;
@@ -621,13 +618,17 @@ function MonthView({
               <div
                 key={cell.date}
                 className={`min-h-[100px] border-r border-[var(--color-border)] last:border-r-0 p-1.5 transition-colors ${
-                  cell.isCurrentMonth ? 'bg-[var(--color-card)]' : 'bg-[var(--color-overlay)] opacity-50'
+                  cell.isCurrentMonth
+                    ? 'bg-[var(--color-card)]'
+                    : 'bg-[var(--color-overlay)] opacity-50'
                 } ${isToday ? 'ring-1 ring-degen-500/30 ring-inset' : ''}`}
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={() => onDrop(cell.date)}
                 onClick={() => onDateClick(cell.date)}
               >
-                <div className={`mb-1 text-[11px] font-medium ${isToday ? 'text-degen-400' : 'text-[var(--color-muted)]'}`}>
+                <div
+                  className={`mb-1 text-[11px] font-medium ${isToday ? 'text-degen-400' : 'text-[var(--color-muted)]'}`}
+                >
                   {cell.day}
                 </div>
 
@@ -645,7 +646,8 @@ function MonthView({
                         }}
                         title={entry.masterPost.text.slice(0, 100)}
                       >
-                        {entry.masterPost.text.slice(0, 20)}{entry.masterPost.text.length > 20 ? '…' : ''}
+                        {entry.masterPost.text.slice(0, 20)}
+                        {entry.masterPost.text.length > 20 ? '…' : ''}
                         {entry.aiOptimized && ' ✨'}
                       </div>
                     ))}
@@ -709,7 +711,9 @@ function WeekView({
               <div className="text-[10px] font-medium uppercase">
                 {day.toLocaleDateString('en-US', { weekday: 'short' })}
               </div>
-              <div className={`text-sm font-bold ${isToday ? 'text-degen-400' : 'text-[var(--color-fg)]'}`}>
+              <div
+                className={`text-sm font-bold ${isToday ? 'text-degen-400' : 'text-[var(--color-fg)]'}`}
+              >
                 {day.getDate()}
               </div>
             </div>
@@ -777,7 +781,7 @@ function DayView({
   entries: CalendarEntry[];
   onDragStart: (entry: CalendarEntry) => void;
 }) {
-  const dateStr = date.toISOString().split('T')[0];
+  const _dateStr = date.toISOString().split('T')[0];
 
   // Group entries by status
   const scheduled = entries.filter((e) => e.status === 'scheduled');

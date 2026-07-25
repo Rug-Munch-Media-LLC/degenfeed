@@ -146,14 +146,17 @@ async function trackPeerTubeHealth(
   try {
     const key = 'live:source-health';
     const raw = await env.CACHE?.get(key);
-    const health: Record<string, {
-      source: LiveSource;
-      healthy: boolean;
-      lastChecked: number;
-      error?: string;
-      streamCount: number;
-      latencyMs: number;
-    }> = raw ? JSON.parse(raw) : {};
+    const health: Record<
+      string,
+      {
+        source: LiveSource;
+        healthy: boolean;
+        lastChecked: number;
+        error?: string;
+        streamCount: number;
+        latencyMs: number;
+      }
+    > = raw ? JSON.parse(raw) : {};
     const instanceLabel = `peertube:${instanceUrl.replace(/https?:\/\//, '')}`;
 
     health[instanceLabel] = {
@@ -173,19 +176,47 @@ async function trackPeerTubeHealth(
 
 // ─── Category Overrides by Instance ─────────────────────────────────────
 
-function getInstanceCategory(instance: PeerTubeInstance, apiCategory?: { id: number; label: string }): string {
+function getInstanceCategory(
+  instance: PeerTubeInstance,
+  apiCategory?: { id: number; label: string },
+): string {
   if (apiCategory?.label) {
     const normalized = apiCategory.label.toLowerCase();
     if (normalized.includes('gaming') || normalized.includes('game')) return 'gaming';
     if (normalized.includes('music')) return 'music';
     if (normalized.includes('art') || normalized.includes('creative')) return 'art';
-    if (normalized.includes('tech') || normalized.includes('science') || normalized.includes('code')) return 'tech';
-    if (normalized.includes('crypto') || normalized.includes('blockchain') || normalized.includes('web3')) return 'crypto';
-    if (normalized.includes('education') || normalized.includes('tutorial') || normalized.includes('howto')) return 'education';
-    if (normalized.includes('talk') || normalized.includes('podcast') || normalized.includes('interview')) return 'talk';
+    if (
+      normalized.includes('tech') ||
+      normalized.includes('science') ||
+      normalized.includes('code')
+    )
+      return 'tech';
+    if (
+      normalized.includes('crypto') ||
+      normalized.includes('blockchain') ||
+      normalized.includes('web3')
+    )
+      return 'crypto';
+    if (
+      normalized.includes('education') ||
+      normalized.includes('tutorial') ||
+      normalized.includes('howto')
+    )
+      return 'education';
+    if (
+      normalized.includes('talk') ||
+      normalized.includes('podcast') ||
+      normalized.includes('interview')
+    )
+      return 'talk';
     if (normalized.includes('sport') || normalized.includes('fitness')) return 'sports';
     if (normalized.includes('irl') || normalized.includes('lifestyle')) return 'irl';
-    if (normalized.includes('trading') || normalized.includes('finance') || normalized.includes('invest')) return 'trading';
+    if (
+      normalized.includes('trading') ||
+      normalized.includes('finance') ||
+      normalized.includes('invest')
+    )
+      return 'trading';
   }
   return instance.category;
 }
@@ -209,13 +240,10 @@ async function fetchPeerTubeInstance(
       count: '30',
     });
 
-    const response = await fetch(
-      `${instance.url}/api/v1/videos?${params.toString()}`,
-      {
-        headers: { accept: 'application/json' },
-        signal: AbortSignal.timeout(8000),
-      },
-    );
+    const response = await fetch(`${instance.url}/api/v1/videos?${params.toString()}`, {
+      headers: { accept: 'application/json' },
+      signal: AbortSignal.timeout(8000),
+    });
 
     if (!response.ok) {
       throw new Error(`PeerTube ${instance.url} returned ${response.status}`);
@@ -278,10 +306,8 @@ async function fetchPeerTubeInstance(
  * Each instance is fetched independently — one failure never blocks others.
  * Primary instance (video.degenfeed.xyz) uses full 50 count; others use 20.
  */
-export async function fetchAllPeerTubeStreams(
-  env: Env,
-): Promise<UnifiedLiveStream[]> {
-  const startTime = Date.now();
+export async function fetchAllPeerTubeStreams(env: Env): Promise<UnifiedLiveStream[]> {
+  const _startTime = Date.now();
 
   // Build instance list: env overrides + defaults
   const instances = [...DEFAULT_INSTANCES];
@@ -289,7 +315,10 @@ export async function fetchAllPeerTubeStreams(
   // Allow additional instances from env
   const extraInstances = env.PEERTUBE_EXTRA_INSTANCES;
   if (extraInstances) {
-    const extras = extraInstances.split(',').map((s) => s.trim()).filter(Boolean);
+    const extras = extraInstances
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
     for (const extra of extras) {
       // Avoid duplicates
       if (!instances.find((i) => i.url === extra)) {
@@ -340,19 +369,30 @@ export async function getPeerTubeLiveCount(env: Env): Promise<number> {
  */
 export async function getPeerTubeInstanceHealth(
   env: Env,
-): Promise<Array<{ url: string; label: string; healthy: boolean; streamCount: number; error?: string }>> {
+): Promise<
+  Array<{ url: string; label: string; healthy: boolean; streamCount: number; error?: string }>
+> {
   const instances = [...DEFAULT_INSTANCES];
-  const health: Array<{ url: string; label: string; healthy: boolean; streamCount: number; error?: string }> = [];
+  const health: Array<{
+    url: string;
+    label: string;
+    healthy: boolean;
+    streamCount: number;
+    error?: string;
+  }> = [];
 
   try {
     const key = 'live:source-health';
     const raw = await env.CACHE?.get(key);
-    const storedHealth: Record<string, {
-      source: string;
-      healthy: boolean;
-      error?: string;
-      streamCount: number;
-    }> = raw ? JSON.parse(raw) : {};
+    const storedHealth: Record<
+      string,
+      {
+        source: string;
+        healthy: boolean;
+        error?: string;
+        streamCount: number;
+      }
+    > = raw ? JSON.parse(raw) : {};
 
     for (const instance of instances) {
       const instanceLabel = `peertube:${instance.url.replace(/https?:\/\//, '')}`;

@@ -142,9 +142,7 @@ async function fetchFromDTubeAPI(limit: number): Promise<UnifiedPost[]> {
 
     return data.results.map((v) => {
       const text = `${v.title}\n\n${v.description || ''}`.trim();
-      const videoUrl = v.video?.startsWith('http')
-        ? v.video
-        : `https://ipfs.io/ipfs/${v.video}`;
+      const videoUrl = v.video?.startsWith('http') ? v.video : `https://ipfs.io/ipfs/${v.video}`;
       const thumbnail = v.thumbnail?.startsWith('http')
         ? v.thumbnail
         : v.thumbnail
@@ -248,7 +246,7 @@ async function fetchHiveDTubePosts(limit: number): Promise<UnifiedPost[]> {
         return (
           meta?.video?.content?.videohash ||
           meta?.video?.info?.title ||
-          (meta?.tags && meta.tags.includes('dtube'))
+          meta?.tags?.includes('dtube')
         );
       })
       .slice(0, limit)
@@ -260,8 +258,7 @@ async function fetchHiveDTubePosts(limit: number): Promise<UnifiedPost[]> {
         const text = `${title}\n\n${stripHtml(p.body || description).slice(0, 500)}`.trim();
         const videoHash = videoMeta?.videohash || '';
         const videoUrl = videoHash ? `https://ipfs.io/ipfs/${videoHash}` : '';
-        const thumbnailUrl =
-          videoMeta?.thumbnail || meta?.image?.[0] || '';
+        const thumbnailUrl = videoMeta?.thumbnail || meta?.image?.[0] || '';
 
         return {
           id: `dtube:hive:${p.author}/${p.permlink}`,
@@ -353,7 +350,9 @@ export async function fetchDTubePosts(limit = 20): Promise<UnifiedPost[]> {
     }
   }
 
-  console.log(`[bridge] DTube: ${deduped.length} posts (API: ${apiPosts.length}, Hive: ${hivePosts.length})`);
+  console.log(
+    `[bridge] DTube: ${deduped.length} posts (API: ${apiPosts.length}, Hive: ${hivePosts.length})`,
+  );
   return deduped;
 }
 

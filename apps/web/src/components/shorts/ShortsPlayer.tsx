@@ -88,7 +88,7 @@ export interface ShortsPlayerProps {
 
 // ─── Default Categories ─────────────────────────────────────────────────
 
-const DEFAULT_CATEGORIES = [
+const _DEFAULT_CATEGORIES = [
   { id: 'all', label: 'All' },
   { id: 'music', label: 'Music' },
   { id: 'gaming', label: 'Gaming' },
@@ -129,12 +129,12 @@ export function ShortsPlayer({
   const [likedSet, setLikedSet] = useState<Set<string>>(new Set());
   const [expandedCaptions, setExpandedCaptions] = useState<Set<string>>(new Set());
   const [showOverlay, setShowOverlay] = useState(true);
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [_isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [swipeDirection, setSwipeDirection] = useState<'up' | 'down' | null>(null);
-  const [showTipModal, setShowTipModal] = useState(false);
-  const [showComments, setShowComments] = useState(false);
+  const [_showTipModal, setShowTipModal] = useState(false);
+  const [_showComments, setShowComments] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -183,7 +183,7 @@ export function ShortsPlayer({
       video.src = '';
       stopWatchTimer();
     };
-  }, [currentIndex, currentShort?.videoUrl]);
+  }, [currentShort?.videoUrl, currentShort, stopWatchTimer, startWatchTimer, muted]);
 
   useEffect(() => {
     if (videoRef.current) {
@@ -218,7 +218,7 @@ export function ShortsPlayer({
         });
       }
     }, 500);
-  }, [currentShort?.id, likedSet]);
+  }, [currentShort?.id, likedSet, trackWatchEvent, stopWatchTimer, currentShort]);
 
   const stopWatchTimer = useCallback(() => {
     if (watchTimerRef.current) {

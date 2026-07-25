@@ -10,8 +10,8 @@
  *
  * run: npx playwright test tests/e2e/mobile-ux.test.ts
  */
+
 import { expect, test } from '@playwright/test';
-import type { Page } from '@playwright/test';
 
 const MOBILE_VIEWPORT = { width: 375, height: 667 }; // iPhone SE
 const TABLET_VIEWPORT = { width: 768, height: 1024 };

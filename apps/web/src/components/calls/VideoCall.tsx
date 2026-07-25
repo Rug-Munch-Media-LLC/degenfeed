@@ -59,7 +59,7 @@ interface PeerConnection {
   stream: MediaStream;
 }
 
-function createPeerConnection(
+function _createPeerConnection(
   stunServers: string[],
   onIceCandidate: (candidate: RTCIceCandidateInit, peerId: string) => void,
   onTrack: (stream: MediaStream, peerId: string) => void,
@@ -96,9 +96,10 @@ function useUserMedia(type: 'audio' | 'video') {
     try {
       const constraints: MediaStreamConstraints = {
         audio: true,
-        video: type === 'video'
-          ? { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' }
-          : false,
+        video:
+          type === 'video'
+            ? { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' }
+            : false,
       };
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       setLocalStream(stream);
@@ -172,7 +173,7 @@ function useUserMedia(type: 'audio' | 'video') {
 
 // ─── Signaling Hook ─────────────────────────────────────────────────────
 
-function useSignaling(callId: string | null, wallet: string | null) {
+function useSignaling(callId: string | null, _wallet: string | null) {
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const sendSignal = useCallback(
@@ -297,7 +298,16 @@ function ControlsBar({
         title={audioMuted ? 'Unmute microphone' : 'Mute microphone'}
         aria-label={audioMuted ? 'Unmute microphone' : 'Mute microphone'}
       >
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
           {audioMuted ? (
             <>
               <line x1="1" y1="1" x2="23" y2="23" />
@@ -329,7 +339,16 @@ function ControlsBar({
         title={videoMuted ? 'Turn on camera' : 'Turn off camera'}
         aria-label={videoMuted ? 'Turn on camera' : 'Turn off camera'}
       >
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
           {videoMuted ? (
             <>
               <line x1="1" y1="1" x2="23" y2="23" />
@@ -356,7 +375,16 @@ function ControlsBar({
         title={isScreenSharing ? 'Stop sharing screen' : 'Share screen'}
         aria-label={isScreenSharing ? 'Stop sharing screen' : 'Share screen'}
       >
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
           <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
           <line x1="8" y1="21" x2="16" y2="21" />
           <line x1="12" y1="17" x2="12" y2="21" />
@@ -371,7 +399,16 @@ function ControlsBar({
         title="Flip camera"
         aria-label="Flip camera"
       >
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
           <polygon points="23 7 16 12 23 17 23 7" />
           <path d="M1 5h8l2 3h4v8H3a2 2 0 01-2-2V5z" />
           <path d="M7 15l-3-3 3-3" />
@@ -386,7 +423,16 @@ function ControlsBar({
         title="Picture-in-Picture"
         aria-label="Picture-in-Picture"
       >
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
           <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
           <rect x="11" y="9" width="8" height="6" rx="1" ry="1" />
         </svg>
@@ -400,7 +446,16 @@ function ControlsBar({
         title="End call"
         aria-label="End call"
       >
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <svg
+          width="22"
+          height="22"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
           <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z" />
         </svg>
       </button>
@@ -503,7 +558,15 @@ function VideoGrid({
         </div>
         {mutedState.get(myWallet)?.video && type === 'video' && localStream && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/60">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-red-400">
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              className="text-red-400"
+            >
               <line x1="1" y1="1" x2="23" y2="23" />
               <path d="M21 7v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h14a2 2 0 012 2z" />
             </svg>
@@ -524,7 +587,7 @@ function VideoGrid({
               key={peer}
               className="relative rounded-xl overflow-hidden bg-black/40 border border-white/10"
             >
-              {(type === 'video' && stream) ? (
+              {type === 'video' && stream ? (
                 <video
                   ref={setRemoteRef(peer)}
                   autoPlay
@@ -545,7 +608,15 @@ function VideoGrid({
               </div>
               {muted?.video && type === 'video' && stream && (
                 <div className="absolute inset-0 flex items-center justify-center bg-black/60">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-red-400">
+                  <svg
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    className="text-red-400"
+                  >
                     <line x1="1" y1="1" x2="23" y2="23" />
                     <path d="M21 7v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h14a2 2 0 012 2z" />
                   </svg>
@@ -588,7 +659,15 @@ function CallingScreen({ callee, type, onCancel }: CallingScreenProps) {
         className="mt-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-600 transition-all shadow-lg"
         aria-label="Cancel call"
       >
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+        <svg
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+        >
           <line x1="18" y1="6" x2="6" y2="18" />
           <line x1="6" y1="6" x2="18" y2="18" />
         </svg>
@@ -631,7 +710,16 @@ export function IncomingCallBanner({ call, onAccept, onDecline }: IncomingCallBa
               title="Accept call"
               aria-label="Accept call"
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z" />
               </svg>
             </button>
@@ -642,7 +730,15 @@ export function IncomingCallBanner({ call, onAccept, onDecline }: IncomingCallBa
               title="Decline call"
               aria-label="Decline call"
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              >
                 <line x1="18" y1="6" x2="6" y2="18" />
                 <line x1="6" y1="6" x2="18" y2="18" />
               </svg>
@@ -675,7 +771,10 @@ export function CallHistoryList({ history, onClose }: CallHistoryProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+      onClick={onClose}
+    >
       <div
         className="mx-4 w-full max-w-sm rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] shadow-2xl"
         onClick={(e) => e.stopPropagation()}
@@ -688,8 +787,17 @@ export function CallHistoryList({ history, onClose }: CallHistoryProps) {
             className="rounded-lg p-1 text-[var(--color-muted)] hover:bg-[var(--color-overlay)] transition-colors"
             aria-label="Close"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
           </button>
         </div>
@@ -704,25 +812,36 @@ export function CallHistoryList({ history, onClose }: CallHistoryProps) {
                 className="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-[var(--color-overlay)] transition-colors"
               >
                 <span className="text-lg shrink-0">
-                  {entry.status === 'missed' ? '\u{274C}' : entry.type === 'audio' ? '\u{1F3A4}' : '\u{1F4F9}'}
+                  {entry.status === 'missed'
+                    ? '\u{274C}'
+                    : entry.type === 'audio'
+                      ? '\u{1F3A4}'
+                      : '\u{1F4F9}'}
                 </span>
                 <div className="flex-1 min-w-0">
-                  <p className={`text-xs font-medium text-[var(--color-fg)] truncate ${
-                    entry.status === 'missed' ? 'opacity-60' : ''
-                  }`}>
+                  <p
+                    className={`text-xs font-medium text-[var(--color-fg)] truncate ${
+                      entry.status === 'missed' ? 'opacity-60' : ''
+                    }`}
+                  >
                     {entry.peer === 'Group Call' ? 'Group Call' : shortAddr(entry.peer)}
                   </p>
                   <p className="text-[10px] text-[var(--color-muted)]">
                     {entry.status === 'missed' ? 'Missed call' : formatDuration(entry.duration)}
                     {' \u00B7 '}
                     {new Date(entry.timestamp).toLocaleDateString(undefined, {
-                      month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
+                      month: 'short',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
                     })}
                   </p>
                 </div>
-                <span className={`text-[10px] font-medium ${
-                  entry.status === 'missed' ? 'text-red-400' : 'text-green-400'
-                }`}>
+                <span
+                  className={`text-[10px] font-medium ${
+                    entry.status === 'missed' ? 'text-red-400' : 'text-green-400'
+                  }`}
+                >
                   {entry.status === 'missed' ? 'Missed' : 'Completed'}
                 </span>
               </div>
@@ -752,7 +871,16 @@ export function CallButtons({ peerId, peerDisplayName, onStartCall }: CallButton
         title={`Audio call ${peerDisplayName || peerId}`}
         aria-label={`Start audio call with ${peerDisplayName || peerId}`}
       >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
           <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z" />
         </svg>
         <span>Audio</span>
@@ -764,7 +892,16 @@ export function CallButtons({ peerId, peerDisplayName, onStartCall }: CallButton
         title={`Video call ${peerDisplayName || peerId}`}
         aria-label={`Start video call with ${peerDisplayName || peerId}`}
       >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
           <polygon points="23 7 16 12 23 17 23 7" />
           <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
         </svg>
@@ -813,7 +950,9 @@ function PiPOverlay({ localStream, duration, onExpand, onEndCall }: PiPOverlayPr
         {localStream ? (
           <video ref={videoRef} autoPlay playsInline muted className="h-full w-full object-cover" />
         ) : (
-          <div className="flex h-full items-center justify-center text-white/40 text-xs">No video</div>
+          <div className="flex h-full items-center justify-center text-white/40 text-xs">
+            No video
+          </div>
         )}
       </div>
 
@@ -829,7 +968,15 @@ function PiPOverlay({ localStream, duration, onExpand, onEndCall }: PiPOverlayPr
           className="flex h-7 w-7 items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors"
           aria-label="End call"
         >
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+          >
             <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z" />
           </svg>
         </button>
@@ -840,7 +987,7 @@ function PiPOverlay({ localStream, duration, onExpand, onEndCall }: PiPOverlayPr
 
 // ─── Main VideoCall Component ───────────────────────────────────────────
 
-const DEFAULT_STUN_SERVERS = [
+const _DEFAULT_STUN_SERVERS = [
   'stun:stun.l.google.com:19302',
   'stun:stun1.l.google.com:19302',
   'stun:stun2.l.google.com:19302',
@@ -886,13 +1033,15 @@ export function VideoCall({
   const [viewState, setViewState] = useState<CallViewState>('idle');
   const [callInfo, setCallInfo] = useState<CallInfo | null>(null);
   const [remoteStreams, setRemoteStreams] = useState<Map<string, MediaStream>>(new Map());
-  const [displayNames, setDisplayNames] = useState<Map<string, string>>(new Map());
-  const [mutedState, setMutedState] = useState<Map<string, { audio: boolean; video: boolean }>>(new Map());
+  const [displayNames, _setDisplayNames] = useState<Map<string, string>>(new Map());
+  const [mutedState, _setMutedState] = useState<Map<string, { audio: boolean; video: boolean }>>(
+    new Map(),
+  );
   const [isScreenSharing, setIsScreenSharing] = useState(false);
   const [isPiP, setIsPiP] = useState(false);
   const [callDuration, setCallDuration] = useState(0);
-  const [showHistory, setShowHistory] = useState(false);
-  const [history, setHistory] = useState<CallHistoryEntry[]>(externalHistory || []);
+  const [_showHistory, _setShowHistory] = useState(false);
+  const [_history, setHistory] = useState<CallHistoryEntry[]>(externalHistory || []);
 
   const durationRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const peerConnections = useRef<Map<string, RTCPeerConnection>>(new Map());
@@ -913,7 +1062,7 @@ export function VideoCall({
 
   // ─── Create call ──────────────────────────────────────────────
 
-  const createCall = useCallback(
+  const _createCall = useCallback(
     async (type: 'audio' | 'video', peer: string) => {
       if (!wallet) return;
 
@@ -976,7 +1125,7 @@ export function VideoCall({
     } catch {
       setViewState('idle');
     }
-  }, [incomingCall, wallet, startMedia, onAcceptIncoming]);
+  }, [incomingCall, wallet, startMedia, onAcceptIncoming, setupPeerConnections]);
 
   // ─── Decline incoming call ────────────────────────────────────
 
@@ -994,7 +1143,11 @@ export function VideoCall({
   // ─── Setup Peer Connections ───────────────────────────────────
 
   const setupPeerConnections = useCallback(
-    async (stream: MediaStream, call: CallInfo, signalingData: { peers: string[]; host: string; groupMode: string }) => {
+    async (
+      _stream: MediaStream,
+      _call: CallInfo,
+      _signalingData: { peers: string[]; host: string; groupMode: string },
+    ) => {
       // In a real implementation, each peer connection would:
       // 1. Create RTCPeerConnection
       // 2. Add local tracks
@@ -1006,10 +1159,10 @@ export function VideoCall({
       // For now, the signaling is set up and polling starts
       signaling.startPolling((signals, iceCandidates) => {
         // Process incoming signals
-        for (const signal of signals) {
+        for (const _signal of signals) {
           // Handle offers/answers
         }
-        for (const candidate of iceCandidates) {
+        for (const _candidate of iceCandidates) {
           // Handle ICE candidates
         }
       });
@@ -1146,7 +1299,7 @@ export function VideoCall({
   useEffect(() => {
     if (!externalHistory && wallet) {
       fetch('/api/calls/history', { credentials: 'include' })
-        .then((res) => res.ok ? res.json() : null)
+        .then((res) => (res.ok ? res.json() : null))
         .then((data) => {
           if (data?.history) setHistory(data.history);
         })
@@ -1160,13 +1313,7 @@ export function VideoCall({
 
   // Incoming call banner (shown on top of everything)
   if (incomingCall && viewState === 'idle') {
-    return (
-      <IncomingCallBanner
-        call={incomingCall}
-        onAccept={acceptCall}
-        onDecline={declineCall}
-      />
-    );
+    return <IncomingCallBanner call={incomingCall} onAccept={acceptCall} onDecline={declineCall} />;
   }
 
   // PiP mode
@@ -1193,8 +1340,7 @@ export function VideoCall({
             </span>
             {viewState === 'active' && (
               <span className="text-xs text-white/50 font-mono">
-                {Math.floor(callDuration / 60)}:
-                {(callDuration % 60).toString().padStart(2, '0')}
+                {Math.floor(callDuration / 60)}:{(callDuration % 60).toString().padStart(2, '0')}
               </span>
             )}
           </div>
@@ -1206,7 +1352,8 @@ export function VideoCall({
               </span>
             )}
             <span className="text-[10px] text-white/40">
-              {callInfo?.participants.length || 1} participant{callInfo?.participants.length !== 1 ? 's' : ''}
+              {callInfo?.participants.length || 1} participant
+              {callInfo?.participants.length !== 1 ? 's' : ''}
             </span>
           </div>
         </div>
@@ -1224,7 +1371,7 @@ export function VideoCall({
               <p className="text-lg text-white/60 font-medium">Call ended</p>
               {callDuration > 0 && (
                 <p className="text-sm text-white/40 mt-1">
-                  Duration: {Math.floor(callDuration / 60)}m {(callDuration % 60)}s
+                  Duration: {Math.floor(callDuration / 60)}m {callDuration % 60}s
                 </p>
               )}
             </div>
@@ -1290,14 +1437,11 @@ export function useVideoCall() {
   }, []);
 
   // Start a call
-  const startCall = useCallback(
-    (type: 'audio' | 'video', peerId: string) => {
-      setCallType(type);
-      setTargetPeer(peerId);
-      setActiveCallId('new'); // Signal to VideoCall that we want a new call
-    },
-    [],
-  );
+  const startCall = useCallback((type: 'audio' | 'video', peerId: string) => {
+    setCallType(type);
+    setTargetPeer(peerId);
+    setActiveCallId('new'); // Signal to VideoCall that we want a new call
+  }, []);
 
   const handleCallEnd = useCallback(() => {
     setActiveCallId(undefined);

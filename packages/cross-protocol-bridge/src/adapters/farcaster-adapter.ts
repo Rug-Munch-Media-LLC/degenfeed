@@ -31,7 +31,7 @@ export const farcasterAdapter: PlatformAdapter = {
 
     // Append hashtags inline (Farcaster renders them)
     if (hashtags.length > 0) {
-      castText += '\n\n' + hashtags.join(' ');
+      castText += `\n\n${hashtags.join(' ')}`;
     }
 
     // Truncate with read more link if over limit
@@ -70,7 +70,7 @@ export const farcasterAdapter: PlatformAdapter = {
 
   preview(master: MasterPost): string {
     let preview = '[Farcaster — 320 char limit]';
-    preview += '\n' + master.text.slice(0, 300);
+    preview += `\n${master.text.slice(0, 300)}`;
 
     const remaining = FARCASTER_CHAR_LIMIT - master.text.length;
     if (remaining < 0) {

@@ -27,8 +27,13 @@ export function AppearanceSection({
           </div>
         </div>
         <div>
-          <label className="mb-1.5 block text-[10px] font-medium text-[var(--color-muted)]">Preview</label>
-          <div className="h-10 rounded-lg border border-[var(--color-glass-border)]" style={{ backgroundColor: `${bannerColor}20`, borderColor: `${bannerColor}40` }}>
+          <label className="mb-1.5 block text-[10px] font-medium text-[var(--color-muted)]">
+            Preview
+          </label>
+          <div
+            className="h-10 rounded-lg border border-[var(--color-glass-border)]"
+            style={{ backgroundColor: `${bannerColor}20`, borderColor: `${bannerColor}40` }}
+          >
             <div className="h-full w-1/3 rounded-lg" style={{ backgroundColor: bannerColor }} />
           </div>
         </div>

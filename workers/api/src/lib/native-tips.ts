@@ -661,7 +661,7 @@ async function sendGitHubTip(env: Env, req: NativeTipRequest): Promise<NativeTip
 async function sendTelegramTip(env: Env, req: NativeTipRequest): Promise<NativeTipResult> {
   try {
     const botToken = env.TELEGRAM_BOT_TOKEN;
-    const botName = env.TELEGRAM_BOT_NAME ?? 'DegenFeedBot';
+    const _botName = env.TELEGRAM_BOT_NAME ?? 'DegenFeedBot';
 
     if (botToken) {
       try {

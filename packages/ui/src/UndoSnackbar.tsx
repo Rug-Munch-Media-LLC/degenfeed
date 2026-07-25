@@ -70,7 +70,7 @@ export interface UndoItem {
 
 export function useUndoStack() {
   const [current, setCurrent] = useState<UndoItem | null>(null);
-  const [queue, setQueue] = useState<UndoItem[]>([]);
+  const [_queue, setQueue] = useState<UndoItem[]>([]);
 
   const push = useCallback((item: UndoItem) => {
     setCurrent(item);

@@ -103,7 +103,8 @@ async function fetchFromInstance(instance: string, limit: number): Promise<Unifi
           handles: { funkwhale: artistName },
           displayName: artistName,
           bio: track.artist?.content_category || '',
-          avatarUrl: track.artist?.cover?.urls?.original || track.album?.cover?.urls?.original || '',
+          avatarUrl:
+            track.artist?.cover?.urls?.original || track.album?.cover?.urls?.original || '',
           followerCount: 0,
           followingCount: 0,
           links: [],
@@ -112,7 +113,13 @@ async function fetchFromInstance(instance: string, limit: number): Promise<Unifi
         text,
         embeds: [
           ...(upload?.audio_file
-            ? [{ kind: 'video' as const, url: upload.audio_file, meta: { duration: upload.duration } }]
+            ? [
+                {
+                  kind: 'video' as const,
+                  url: upload.audio_file,
+                  meta: { duration: upload.duration },
+                },
+              ]
             : []),
           ...(track.album?.cover?.urls?.original
             ? [{ kind: 'image' as const, url: track.album.cover.urls.original }]

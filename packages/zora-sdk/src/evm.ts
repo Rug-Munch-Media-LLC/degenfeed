@@ -511,6 +511,9 @@ export class ZoraCreatorCoinClient {
  * This client works with older Zora v1 creator coin contracts.
  */
 export class EvmCreatorTokenClient {
+  walletClient: any;
+  publicClient: any;
+
   constructor(walletClient: any, publicClient: any) {
     this.walletClient = walletClient;
     this.publicClient = publicClient;

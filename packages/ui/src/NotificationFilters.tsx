@@ -8,7 +8,7 @@
  */
 
 import { memo } from 'react';
-import { getProtocolColor, getProtocolLabel } from './ProtocolBadge';
+import { getProtocolColor } from './ProtocolBadge';
 
 /* ─── Types ────────────────────────────────────────────────── */
 

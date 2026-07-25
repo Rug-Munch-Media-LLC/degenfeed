@@ -277,7 +277,7 @@ export function applyGlobalDedupRegistry(
 
   // Lazy-import to avoid circular deps at module level
   const { GlobalDedupRegistry } = require('../lib/global-dedup');
-  const registry = new GlobalDedupRegistry(env as unknown as Record<string, unknown>);
+  const _registry = new GlobalDedupRegistry(env as unknown as Record<string, unknown>);
 
   // We can't await in a sync pipeline function, so this is a best-effort
   // sync filter. The full async pipeline is in the orchestrator (see below).
@@ -299,7 +299,12 @@ export function applyGlobalDedupRegistry(
     let textPrefix: string | undefined;
     if (post.text && post.text.length > 20) {
       // Simple text prefix as dedup key
-      textPrefix = post.text.toLowerCase().replace(/https?:\/\/\S+/g, '').replace(/[^a-z0-9]/g, ' ').trim().slice(0, 50);
+      textPrefix = post.text
+        .toLowerCase()
+        .replace(/https?:\/\/\S+/g, '')
+        .replace(/[^a-z0-9]/g, ' ')
+        .trim()
+        .slice(0, 50);
       if (textPrefix.length > 10) {
         dedupKey = `prefix:${textPrefix}`;
       }
@@ -310,12 +315,18 @@ export function applyGlobalDedupRegistry(
       removed++;
       // Track cross-protocol sources
       const existingPost = kept.find((p) => {
-        const existingPrefix = p.text?.toLowerCase().replace(/https?:\/\/\S+/g, '').replace(/[^a-z0-9]/g, ' ').trim().slice(0, 50);
+        const existingPrefix = p.text
+          ?.toLowerCase()
+          .replace(/https?:\/\/\S+/g, '')
+          .replace(/[^a-z0-9]/g, ' ')
+          .trim()
+          .slice(0, 50);
         return existingPrefix && textPrefix && existingPrefix === textPrefix;
       });
       if (existingPost && existingPost.protocol !== post.protocol) {
         const sources = new Set([
-          ...(((existingPost as unknown as Record<string, unknown>).crossProtocolSources as string[]) ?? []),
+          ...(((existingPost as unknown as Record<string, unknown>)
+            .crossProtocolSources as string[]) ?? []),
           post.protocol,
         ]);
         (existingPost as unknown as Record<string, unknown>).crossProtocolSources = [...sources];
@@ -780,7 +791,10 @@ export function applyQualityPipeline(
 
     for (const post of output) {
       const primaryKey = `${post.protocol}:${post.id}`;
-      if (seenKeys.has(primaryKey)) { removed++; continue; }
+      if (seenKeys.has(primaryKey)) {
+        removed++;
+        continue;
+      }
 
       // Content prefix dedup
       const prefix = post.text
@@ -801,21 +815,29 @@ export function applyQualityPipeline(
       let urlMatch = false;
       for (const url of urls) {
         const normUrl = url.replace(/\/$/, '').split('?')[0] ?? url;
-        if (seenKeys.has(`url:${normUrl}`)) { urlMatch = true; removed++; break; }
+        if (seenKeys.has(`url:${normUrl}`)) {
+          urlMatch = true;
+          removed++;
+          break;
+        }
       }
       if (urlMatch) continue;
 
       // Register with KV-backed dedup registry (fire-and-forget)
       if (opts.env?.DEDUP) {
-        registry.register({
-          text: post.text,
-          protocol: post.protocol,
-          sourceId: post.id,
-          authorId: post.author.id,
-          authorName: post.author.displayName,
-          createdAt: post.createdAt,
-          embedUrls: post.embeds.map((e) => e.url),
-        }).catch(() => { /* fire-and-forget */ });
+        registry
+          .register({
+            text: post.text,
+            protocol: post.protocol,
+            sourceId: post.id,
+            authorId: post.author.id,
+            authorName: post.author.displayName,
+            createdAt: post.createdAt,
+            embedUrls: post.embeds.map((e) => e.url),
+          })
+          .catch(() => {
+            /* fire-and-forget */
+          });
       }
 
       seenKeys.add(primaryKey);

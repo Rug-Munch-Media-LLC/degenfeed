@@ -348,8 +348,8 @@ export function normalizePixelfedPost(
   const text = stripHtml(html);
 
   const embeds: Embed[] = [];
-  let hasVideo = false;
-  let hasImage = false;
+  let _hasVideo = false;
+  let _hasImage = false;
 
   for (const media of original.media_attachments) {
     if (media.type === 'image' || media.type === 'gifv') {
@@ -363,7 +363,7 @@ export function normalizePixelfedPost(
           height: (media.meta?.original as Record<string, unknown>)?.height,
         },
       });
-      hasImage = true;
+      _hasImage = true;
     } else if (media.type === 'video') {
       embeds.push({
         kind: 'video',
@@ -374,7 +374,7 @@ export function normalizePixelfedPost(
           duration: (media.meta?.original as Record<string, unknown>)?.duration,
         },
       });
-      hasVideo = true;
+      _hasVideo = true;
     }
   }
 
@@ -646,7 +646,7 @@ export class PixelfedClient {
       : filename.endsWith('.gif')
         ? 'image/gif'
         : 'image/jpeg';
-    const blob = new Blob([imageBuffer], { type: mimeType });
+    const blob = new Blob([imageBuffer as BlobPart], { type: mimeType });
     formData.append('file', blob, filename);
     if (description) formData.append('description', description);
 

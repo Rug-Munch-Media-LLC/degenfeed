@@ -48,7 +48,7 @@ export const mobilizonAdapter: PlatformAdapter = {
     // Media
     let mediaUrls: string[] = [];
     if (master.media && master.media.length > 0) {
-      mediaUrls = [master.media[0].url];
+      mediaUrls = [master.media[0]?.url];
     }
 
     return {

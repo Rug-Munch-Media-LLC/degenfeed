@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { formatTimeAgo, shortAddr } from '../../layout';
 
 // ─── Types ─────────────────────────────────────────────────────────────
@@ -416,7 +416,7 @@ export default function ProposalDetailPage({
 
   // User's own voting power (mock)
   const myVotingPower = 12_500;
-  const canVote = proposal.status === 'active' && !voteSubmitted;
+  const _canVote = proposal.status === 'active' && !voteSubmitted;
   const needsQuorum = total < proposal.quorum;
 
   return (

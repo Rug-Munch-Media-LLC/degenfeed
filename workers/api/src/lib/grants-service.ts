@@ -251,7 +251,6 @@ export interface GrantFilter {
 // ─── Service ──────────────────────────────────────────────────────────────
 
 export class GrantsService {
-  private env: Env;
   private kv: KVNamespace;
 
   constructor(env: Env) {
@@ -718,7 +717,7 @@ export class GrantsService {
     milestoneId: string,
     approved: boolean,
     feedback: string,
-    reviewer: Address,
+    _reviewer: Address,
   ): Promise<GrantApplication> {
     const app = await this.getApplication(daoId, appId);
     if (!app) {
@@ -852,7 +851,7 @@ export class GrantsService {
 
   // ─── Private Helpers ─────────────────────────────────────────────
 
-  #validateBudget(totalBudget: string, maxPerGrant: string, decimals: number): void {
+  #validateBudget(totalBudget: string, maxPerGrant: string, _decimals: number): void {
     const total = BigInt(totalBudget);
     const max = BigInt(maxPerGrant);
 

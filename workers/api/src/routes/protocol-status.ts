@@ -283,9 +283,10 @@ async function checkProtocol(name: string, env: Env): Promise<ProtocolHealth> {
 
   // Smooth uptime: blend with previous value
   const prevUptime = cached?.uptime ?? 99.0;
-  const uptime = status === 'healthy'
-    ? Math.min(100, prevUptime * 0.9 + 100 * 0.1)
-    : prevUptime * 0.9 + (status === 'degraded' ? 70 : 30) * 0.1;
+  const uptime =
+    status === 'healthy'
+      ? Math.min(100, prevUptime * 0.9 + 100 * 0.1)
+      : prevUptime * 0.9 + (status === 'degraded' ? 70 : 30) * 0.1;
 
   const health: ProtocolHealth = {
     status,

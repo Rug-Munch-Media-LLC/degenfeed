@@ -209,9 +209,14 @@ export class LivepeerService {
    * Returns RTMP ingest URL, stream key, and HLS playback URL.
    * If no API key is configured, returns a simulated response for local dev.
    */
-  async createStream(name: string, options?: Partial<LivepeerStreamOptions>): Promise<LivepeerStream> {
+  async createStream(
+    name: string,
+    options?: Partial<LivepeerStreamOptions>,
+  ): Promise<LivepeerStream> {
     if (!this.apiKey) {
-      console.warn('[livepeer-service] No LIVEPEER_API_KEY configured — returning simulated stream');
+      console.warn(
+        '[livepeer-service] No LIVEPEER_API_KEY configured — returning simulated stream',
+      );
       return this.simulateStream(name);
     }
 
@@ -306,9 +311,7 @@ export class LivepeerService {
 
         // Count active sessions (seen within last 30 seconds)
         const now = Date.now();
-        const activeSessions = sessions.filter(
-          (s) => s.isActive && now - s.lastSeen < 30000,
-        );
+        const activeSessions = sessions.filter((s) => s.isActive && now - s.lastSeen < 30000);
 
         return {
           viewerCount: activeSessions.length,
@@ -351,14 +354,11 @@ export class LivepeerService {
     await withReliability(
       'livepeer',
       async () => {
-        const response = await fetch(
-          `${this.baseUrl}/stream/${encodeURIComponent(streamId)}`,
-          {
-            method: 'DELETE',
-            headers: this.getHeaders(),
-            signal: AbortSignal.timeout(5000),
-          },
-        );
+        const response = await fetch(`${this.baseUrl}/stream/${encodeURIComponent(streamId)}`, {
+          method: 'DELETE',
+          headers: this.getHeaders(),
+          signal: AbortSignal.timeout(5000),
+        });
 
         if (!response.ok && response.status !== 404) {
           const text = await response.text().catch(() => 'unknown');
@@ -378,15 +378,12 @@ export class LivepeerService {
     await withReliability(
       'livepeer',
       async () => {
-        const response = await fetch(
-          `${this.baseUrl}/stream/${encodeURIComponent(streamId)}`,
-          {
-            method: 'PATCH',
-            headers: this.getHeaders(),
-            body: JSON.stringify({ record: enabled }),
-            signal: AbortSignal.timeout(5000),
-          },
-        );
+        const response = await fetch(`${this.baseUrl}/stream/${encodeURIComponent(streamId)}`, {
+          method: 'PATCH',
+          headers: this.getHeaders(),
+          body: JSON.stringify({ record: enabled }),
+          signal: AbortSignal.timeout(5000),
+        });
         if (!response.ok) {
           const text = await response.text().catch(() => 'unknown');
           throw new Error(`Livepeer setRecording failed (${response.status}): ${text}`);
@@ -405,15 +402,12 @@ export class LivepeerService {
     await withReliability(
       'livepeer',
       async () => {
-        const response = await fetch(
-          `${this.baseUrl}/stream/${encodeURIComponent(streamId)}`,
-          {
-            method: 'PATCH',
-            headers: this.getHeaders(),
-            body: JSON.stringify({ lowLatency: enabled }),
-            signal: AbortSignal.timeout(5000),
-          },
-        );
+        const response = await fetch(`${this.baseUrl}/stream/${encodeURIComponent(streamId)}`, {
+          method: 'PATCH',
+          headers: this.getHeaders(),
+          body: JSON.stringify({ lowLatency: enabled }),
+          signal: AbortSignal.timeout(5000),
+        });
         if (!response.ok) {
           const text = await response.text().catch(() => 'unknown');
           throw new Error(`Livepeer setLowLatency failed (${response.status}): ${text}`);
@@ -491,7 +485,8 @@ export class LivepeerService {
    * Simulate a Livepeer stream for local development when no API key is set.
    */
   private simulateStream(name: string): LivepeerStream {
-    const id = crypto.randomUUID?.() ?? `sim-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+    const id =
+      crypto.randomUUID?.() ?? `sim-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
     const playbackId = `sim-${Math.random().toString(36).slice(2, 14)}`;
     return {
       id,

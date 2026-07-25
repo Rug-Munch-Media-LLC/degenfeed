@@ -37,16 +37,146 @@ interface SearchResult {
 // ─── Mock Data ──────────────────────────────────────────────────────────
 
 const MOCK_ALL_COINS: CoinCompareData[] = [
-  { address: '0x0000000000000000000000000000000000000001', name: 'Degen Alice', symbol: 'ALICE', chain: 'base', price: 0.0123, marketCap: 1250000, volume24h: 89000, holders: 342, priceChange24h: 12.4, priceChange7d: 28.1, bondingCurvePhase: 2, createdAt: Date.now() - 86400000 * 3 },
-  { address: '0x0000000000000000000000000000000000000002', name: 'Bob Protocol', symbol: 'BOB', chain: 'solana', price: 0.0089, marketCap: 890000, volume24h: 65000, holders: 198, priceChange24h: -5.2, priceChange7d: 15.3, bondingCurvePhase: 1, createdAt: Date.now() - 86400000 * 7 },
-  { address: '0x0000000000000000000000000000000000000003', name: 'Charlie Coin', symbol: 'CHAR', chain: 'base', price: 0.0456, marketCap: 3200000, volume24h: 210000, holders: 567, priceChange24h: 25.8, priceChange7d: 42.0, bondingCurvePhase: 3, createdAt: Date.now() - 86400000 * 14 },
-  { address: '0x0000000000000000000000000000000000000004', name: 'Diana Token', symbol: 'DIA', chain: 'solana', price: 0.0021, marketCap: 420000, volume24h: 31000, holders: 89, priceChange24h: -8.4, priceChange7d: -12.6, bondingCurvePhase: 0, createdAt: Date.now() - 86400000 * 1 },
-  { address: '0x0000000000000000000000000000000000000005', name: 'Eve Finance', symbol: 'EVE', chain: 'base', price: 0.0312, marketCap: 2100000, volume24h: 145000, holders: 423, priceChange24h: 6.7, priceChange7d: -3.2, bondingCurvePhase: 2, createdAt: Date.now() - 86400000 * 10 },
-  { address: '0x0000000000000000000000000000000000000006', name: 'Frank DeFi', symbol: 'FRANK', chain: 'solana', price: 0.0015, marketCap: 180000, volume24h: 12000, holders: 45, priceChange24h: 45.2, priceChange7d: 80.1, bondingCurvePhase: 0, createdAt: Date.now() - 86400000 * 2 },
-  { address: '0x0000000000000000000000000000000000000007', name: 'Grace Swap', symbol: 'GRACE', chain: 'base', price: 0.0189, marketCap: 1560000, volume24h: 98000, holders: 278, priceChange24h: -2.1, priceChange7d: 5.6, bondingCurvePhase: 1, createdAt: Date.now() - 86400000 * 5 },
-  { address: '0x0000000000000000000000000000000000000008', name: 'Harry Hedge', symbol: 'HARRY', chain: 'solana', price: 0.0056, marketCap: 890000, volume24h: 42000, holders: 156, priceChange24h: 18.3, priceChange7d: 33.7, bondingCurvePhase: 2, createdAt: Date.now() - 86400000 * 8 },
-  { address: '0x0000000000000000000000000000000000000009', name: 'Ivy Invest', symbol: 'IVY', chain: 'base', price: 0.0678, marketCap: 5100000, volume24h: 380000, holders: 891, priceChange24h: 32.1, priceChange7d: 55.4, bondingCurvePhase: 4, createdAt: Date.now() - 86400000 * 30 },
-  { address: '0x000000000000000000000000000000000000000a', name: 'Jack Jump', symbol: 'JUMP', chain: 'solana', price: 0.0034, marketCap: 670000, volume24h: 53000, holders: 134, priceChange24h: -12.8, priceChange7d: -22.4, bondingCurvePhase: 1, createdAt: Date.now() - 86400000 * 4 },
+  {
+    address: '0x0000000000000000000000000000000000000001',
+    name: 'Degen Alice',
+    symbol: 'ALICE',
+    chain: 'base',
+    price: 0.0123,
+    marketCap: 1250000,
+    volume24h: 89000,
+    holders: 342,
+    priceChange24h: 12.4,
+    priceChange7d: 28.1,
+    bondingCurvePhase: 2,
+    createdAt: Date.now() - 86400000 * 3,
+  },
+  {
+    address: '0x0000000000000000000000000000000000000002',
+    name: 'Bob Protocol',
+    symbol: 'BOB',
+    chain: 'solana',
+    price: 0.0089,
+    marketCap: 890000,
+    volume24h: 65000,
+    holders: 198,
+    priceChange24h: -5.2,
+    priceChange7d: 15.3,
+    bondingCurvePhase: 1,
+    createdAt: Date.now() - 86400000 * 7,
+  },
+  {
+    address: '0x0000000000000000000000000000000000000003',
+    name: 'Charlie Coin',
+    symbol: 'CHAR',
+    chain: 'base',
+    price: 0.0456,
+    marketCap: 3200000,
+    volume24h: 210000,
+    holders: 567,
+    priceChange24h: 25.8,
+    priceChange7d: 42.0,
+    bondingCurvePhase: 3,
+    createdAt: Date.now() - 86400000 * 14,
+  },
+  {
+    address: '0x0000000000000000000000000000000000000004',
+    name: 'Diana Token',
+    symbol: 'DIA',
+    chain: 'solana',
+    price: 0.0021,
+    marketCap: 420000,
+    volume24h: 31000,
+    holders: 89,
+    priceChange24h: -8.4,
+    priceChange7d: -12.6,
+    bondingCurvePhase: 0,
+    createdAt: Date.now() - 86400000 * 1,
+  },
+  {
+    address: '0x0000000000000000000000000000000000000005',
+    name: 'Eve Finance',
+    symbol: 'EVE',
+    chain: 'base',
+    price: 0.0312,
+    marketCap: 2100000,
+    volume24h: 145000,
+    holders: 423,
+    priceChange24h: 6.7,
+    priceChange7d: -3.2,
+    bondingCurvePhase: 2,
+    createdAt: Date.now() - 86400000 * 10,
+  },
+  {
+    address: '0x0000000000000000000000000000000000000006',
+    name: 'Frank DeFi',
+    symbol: 'FRANK',
+    chain: 'solana',
+    price: 0.0015,
+    marketCap: 180000,
+    volume24h: 12000,
+    holders: 45,
+    priceChange24h: 45.2,
+    priceChange7d: 80.1,
+    bondingCurvePhase: 0,
+    createdAt: Date.now() - 86400000 * 2,
+  },
+  {
+    address: '0x0000000000000000000000000000000000000007',
+    name: 'Grace Swap',
+    symbol: 'GRACE',
+    chain: 'base',
+    price: 0.0189,
+    marketCap: 1560000,
+    volume24h: 98000,
+    holders: 278,
+    priceChange24h: -2.1,
+    priceChange7d: 5.6,
+    bondingCurvePhase: 1,
+    createdAt: Date.now() - 86400000 * 5,
+  },
+  {
+    address: '0x0000000000000000000000000000000000000008',
+    name: 'Harry Hedge',
+    symbol: 'HARRY',
+    chain: 'solana',
+    price: 0.0056,
+    marketCap: 890000,
+    volume24h: 42000,
+    holders: 156,
+    priceChange24h: 18.3,
+    priceChange7d: 33.7,
+    bondingCurvePhase: 2,
+    createdAt: Date.now() - 86400000 * 8,
+  },
+  {
+    address: '0x0000000000000000000000000000000000000009',
+    name: 'Ivy Invest',
+    symbol: 'IVY',
+    chain: 'base',
+    price: 0.0678,
+    marketCap: 5100000,
+    volume24h: 380000,
+    holders: 891,
+    priceChange24h: 32.1,
+    priceChange7d: 55.4,
+    bondingCurvePhase: 4,
+    createdAt: Date.now() - 86400000 * 30,
+  },
+  {
+    address: '0x000000000000000000000000000000000000000a',
+    name: 'Jack Jump',
+    symbol: 'JUMP',
+    chain: 'solana',
+    price: 0.0034,
+    marketCap: 670000,
+    volume24h: 53000,
+    holders: 134,
+    priceChange24h: -12.8,
+    priceChange7d: -22.4,
+    bondingCurvePhase: 1,
+    createdAt: Date.now() - 86400000 * 4,
+  },
 ];
 
 // ─── Helpers ──────────────────────────────────────────────────────────
@@ -90,9 +220,23 @@ function MiniPriceChart({ data }: { data: number[] }) {
     .join(' ');
 
   return (
-    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className="w-full" preserveAspectRatio="none" aria-hidden="true">
+    <svg
+      width={w}
+      height={h}
+      viewBox={`0 0 ${w} ${h}`}
+      className="w-full"
+      preserveAspectRatio="none"
+      aria-hidden="true"
+    >
       <polygon points={`${points} ${w},${h} 0,${h}`} fill={color} opacity="0.06" />
-      <polyline fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" points={points} />
+      <polyline
+        fill="none"
+        stroke={color}
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        points={points}
+      />
     </svg>
   );
 }
@@ -198,7 +342,10 @@ export default function CoinComparePage() {
       <div className="mb-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-[var(--color-fg)]" style={{ fontFamily: 'var(--font-heading)' }}>
+            <h1
+              className="text-2xl font-bold text-[var(--color-fg)]"
+              style={{ fontFamily: 'var(--font-heading)' }}
+            >
               ⚖️ Coin Comparison
             </h1>
             <p className="mt-1 text-sm text-[var(--color-muted)]">
@@ -219,14 +366,26 @@ export default function CoinComparePage() {
         <div className="relative">
           <input
             type="text"
-            placeholder={selectedCoins.length >= 5 ? 'Max 5 coins selected' : 'Search coins to compare...'}
+            placeholder={
+              selectedCoins.length >= 5 ? 'Max 5 coins selected' : 'Search coins to compare...'
+            }
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             disabled={selectedCoins.length >= 5}
             className="input w-full pl-9 pr-4 py-3 text-sm"
           />
-          <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--color-muted)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          <svg
+            className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--color-muted)]"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
           </svg>
         </div>
 
@@ -245,7 +404,9 @@ export default function CoinComparePage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="font-semibold text-[var(--color-fg)]">{coin.name}</div>
-                  <div className="text-[9px] text-[var(--color-muted)] font-mono">${coin.symbol}</div>
+                  <div className="text-[9px] text-[var(--color-muted)] font-mono">
+                    ${coin.symbol}
+                  </div>
                 </div>
                 <span className="text-[9px] text-[var(--color-muted)]">
                   {formatPrice(coin.price)}
@@ -302,7 +463,12 @@ export default function CoinComparePage() {
                 className="flex items-center gap-1.5 rounded-lg border border-[var(--color-glass-border)] px-3 py-1.5 text-[9px] font-medium text-[var(--color-muted)] hover:text-degen-400 hover:border-degen-500/30 transition-all"
               >
                 <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
+                  />
                 </svg>
                 Share Comparison
               </button>
@@ -347,7 +513,10 @@ export default function CoinComparePage() {
                 <tr className="bg-[var(--color-card)]">
                   <td className="px-3 py-3 font-medium text-[var(--color-muted)]">Price</td>
                   {selectedCoins.map((coin) => (
-                    <td key={coin.address} className="px-3 py-3 text-center font-mono tabular-nums text-[var(--color-fg)] font-bold">
+                    <td
+                      key={coin.address}
+                      className="px-3 py-3 text-center font-mono tabular-nums text-[var(--color-fg)] font-bold"
+                    >
                       {formatPrice(coin.price)}
                     </td>
                   ))}
@@ -389,7 +558,10 @@ export default function CoinComparePage() {
                 <tr className="bg-[var(--color-card)]">
                   <td className="px-3 py-3 font-medium text-[var(--color-muted)]">Market Cap</td>
                   {selectedCoins.map((coin) => (
-                    <td key={coin.address} className="px-3 py-3 text-center font-mono tabular-nums text-[var(--color-fg)]">
+                    <td
+                      key={coin.address}
+                      className="px-3 py-3 text-center font-mono tabular-nums text-[var(--color-fg)]"
+                    >
                       {formatCompact(coin.marketCap)}
                     </td>
                   ))}
@@ -399,7 +571,10 @@ export default function CoinComparePage() {
                 <tr className="bg-[var(--color-card)]">
                   <td className="px-3 py-3 font-medium text-[var(--color-muted)]">Volume 24h</td>
                   {selectedCoins.map((coin) => (
-                    <td key={coin.address} className="px-3 py-3 text-center font-mono tabular-nums text-[var(--color-fg)]">
+                    <td
+                      key={coin.address}
+                      className="px-3 py-3 text-center font-mono tabular-nums text-[var(--color-fg)]"
+                    >
                       {formatCompact(coin.volume24h)}
                     </td>
                   ))}
@@ -409,7 +584,10 @@ export default function CoinComparePage() {
                 <tr className="bg-[var(--color-card)]">
                   <td className="px-3 py-3 font-medium text-[var(--color-muted)]">Holders</td>
                   {selectedCoins.map((coin) => (
-                    <td key={coin.address} className="px-3 py-3 text-center font-mono tabular-nums text-[var(--color-fg)]">
+                    <td
+                      key={coin.address}
+                      className="px-3 py-3 text-center font-mono tabular-nums text-[var(--color-fg)]"
+                    >
                       {coin.holders.toLocaleString()}
                     </td>
                   ))}
@@ -420,9 +598,13 @@ export default function CoinComparePage() {
                   <td className="px-3 py-3 font-medium text-[var(--color-muted)]">Chain</td>
                   {selectedCoins.map((coin) => (
                     <td key={coin.address} className="px-3 py-3 text-center">
-                      <span className={`rounded-full px-2 py-0.5 text-[9px] font-semibold ${
-                        coin.chain === 'solana' ? 'bg-purple-500/15 text-purple-400' : 'bg-blue-500/15 text-blue-400'
-                      }`}>
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-[9px] font-semibold ${
+                          coin.chain === 'solana'
+                            ? 'bg-purple-500/15 text-purple-400'
+                            : 'bg-blue-500/15 text-blue-400'
+                        }`}
+                      >
                         {coin.chain === 'solana' ? '◎ Solana' : '⧫ Base'}
                       </span>
                     </td>
@@ -433,7 +615,10 @@ export default function CoinComparePage() {
                 <tr className="bg-[var(--color-card)]">
                   <td className="px-3 py-3 font-medium text-[var(--color-muted)]">Phase</td>
                   {selectedCoins.map((coin) => (
-                    <td key={coin.address} className="px-3 py-3 text-center font-mono tabular-nums text-[var(--color-fg)]">
+                    <td
+                      key={coin.address}
+                      className="px-3 py-3 text-center font-mono tabular-nums text-[var(--color-fg)]"
+                    >
                       <PhaseLabel phase={coin.bondingCurvePhase} />
                     </td>
                   ))}

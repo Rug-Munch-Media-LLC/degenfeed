@@ -31,6 +31,13 @@ export {
   isBlocklisted,
   SEARCH_KEYWORDS,
 } from '@degenfeed/source-discovery';
+export {
+  fetchDiasporaPosts,
+  fetchFriendicaPosts,
+  fetchMisskeyPosts,
+  fetchPleromaPosts,
+  fetchWriteFreelyPosts,
+} from './adapters';
 export { BlueskyProvider, CURATED_BSKY_ACTORS } from './providers/bluesky';
 export { CURATED_FARCASTER_FIDS, DEFAULT_HUB_URL, FarcasterProvider } from './providers/farcaster';
 export {
@@ -97,13 +104,6 @@ export {
   TildesProvider,
 } from './providers/tildes';
 export type { FeedProvider, FeedResult, FetchOptions, HealthResult, SchemaGuard } from './types';
-export {
-  fetchDiasporaPosts,
-  fetchFriendicaPosts,
-  fetchPleromaPosts,
-  fetchMisskeyPosts,
-  fetchWriteFreelyPosts,
-} from './adapters';
 export {
   buildUrl,
   DEFAULT_CONCURRENCY,

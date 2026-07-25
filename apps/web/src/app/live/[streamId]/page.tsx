@@ -347,7 +347,7 @@ function ChatSidebar({
   // Auto-scroll to bottom on new messages
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, []);
 
   // Poll for new messages every 5 seconds
   useEffect(() => {

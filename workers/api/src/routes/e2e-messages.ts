@@ -35,7 +35,7 @@ export async function handleKeyExchange(request: Request, env: Env): Promise<Res
 
   // Check if we have a key bundle
   const { hasKeyBundle, generateKeyBundle } = await import('@degenfeed/crypto');
-  if (!await hasKeyBundle(env, userId)) {
+  if (!(await hasKeyBundle(env, userId))) {
     await generateKeyBundle(env, userId);
   }
 
@@ -62,16 +62,19 @@ export async function handleKeyExchange(request: Request, env: Env): Promise<Res
       safetyNumbers,
     });
   } catch (err) {
-    return jsonResponse({
-      error: err instanceof Error ? err.message : 'Key exchange failed',
-    }, 500);
+    return jsonResponse(
+      {
+        error: err instanceof Error ? err.message : 'Key exchange failed',
+      },
+      500,
+    );
   }
 }
 
 // ─── GET /api/messages/keys/public/:userId — Get Public Key Bundle ──────
 
 export async function handleGetPublicKeys(
-  request: Request,
+  _request: Request,
   env: Env,
   targetUserId: string,
 ): Promise<Response> {
@@ -103,9 +106,12 @@ export async function handleRotateKeys(request: Request, env: Env): Promise<Resp
       identityKey: bundle.identityKey,
     });
   } catch (err) {
-    return jsonResponse({
-      error: err instanceof Error ? err.message : 'Key rotation failed',
-    }, 500);
+    return jsonResponse(
+      {
+        error: err instanceof Error ? err.message : 'Key rotation failed',
+      },
+      500,
+    );
   }
 }
 
@@ -174,13 +180,13 @@ export async function handleSendEncrypted(request: Request, env: Env): Promise<R
     const { encryptMessage, hasKeyBundle, generateKeyBundle } = await import('@degenfeed/crypto');
 
     // Ensure we have keys
-    if (!await hasKeyBundle(env, userId)) {
+    if (!(await hasKeyBundle(env, userId))) {
       await generateKeyBundle(env, userId);
     }
 
     // Check if session exists, if not initiate key exchange
     const { loadSession, initiateConversation } = await import('@degenfeed/crypto');
-    let sessionState = await loadSession(env, userId, body.to);
+    const sessionState = await loadSession(env, userId, body.to);
 
     if (!sessionState) {
       // Auto-initiate key exchange
@@ -213,7 +219,7 @@ export async function handleSendEncrypted(request: Request, env: Env): Promise<R
 
     // 4. Also save to KV conversation history (encrypted form for persistence)
     const { seal } = await import('../lib/crypto-seal');
-    const sealed = await seal(env, body.body, `e2e-msg:${userId}:${body.to}`);
+    const _sealed = await seal(env, body.body, `e2e-msg:${userId}:${body.to}`);
 
     return noCacheJsonResponse({
       ok: true,
@@ -224,9 +230,12 @@ export async function handleSendEncrypted(request: Request, env: Env): Promise<R
       deliveredTo: transportResults.filter((r) => r.ok).map((r) => r.protocol),
     });
   } catch (err) {
-    return jsonResponse({
-      error: err instanceof Error ? err.message : 'Encrypted send failed',
-    }, 500);
+    return jsonResponse(
+      {
+        error: err instanceof Error ? err.message : 'Encrypted send failed',
+      },
+      500,
+    );
   }
 }
 
@@ -270,9 +279,12 @@ export async function handleReceiveEncrypted(request: Request, env: Env): Promis
       fromSkipped: decrypted.fromSkipped,
     });
   } catch (err) {
-    return jsonResponse({
-      error: err instanceof Error ? err.message : 'Decryption failed',
-    }, 500);
+    return jsonResponse(
+      {
+        error: err instanceof Error ? err.message : 'Decryption failed',
+      },
+      500,
+    );
   }
 }
 
@@ -333,13 +345,20 @@ export async function handleCreateGroup(request: Request, env: Env): Promise<Res
       createdAt: group.createdAt,
     });
   } catch (err) {
-    return jsonResponse({
-      error: err instanceof Error ? err.message : 'Group creation failed',
-    }, 500);
+    return jsonResponse(
+      {
+        error: err instanceof Error ? err.message : 'Group creation failed',
+      },
+      500,
+    );
   }
 }
 
-export async function handleGroupInfo(request: Request, env: Env, groupId: string): Promise<Response> {
+export async function handleGroupInfo(
+  request: Request,
+  env: Env,
+  groupId: string,
+): Promise<Response> {
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
 
@@ -347,7 +366,7 @@ export async function handleGroupInfo(request: Request, env: Env, groupId: strin
 
   const { decryptGroupInfo, isGroupMember } = await import('../lib/group-chat');
 
-  if (!await isGroupMember(env, groupId, userId)) {
+  if (!(await isGroupMember(env, groupId, userId))) {
     return jsonResponse({ error: 'Not a group member' }, 403);
   }
 
@@ -365,7 +384,11 @@ export async function handleGroupInfo(request: Request, env: Env, groupId: strin
   });
 }
 
-export async function handleGroupSend(request: Request, env: Env, groupId: string): Promise<Response> {
+export async function handleGroupSend(
+  request: Request,
+  env: Env,
+  groupId: string,
+): Promise<Response> {
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
 
@@ -392,9 +415,12 @@ export async function handleGroupSend(request: Request, env: Env, groupId: strin
       createdAt: msg.createdAt,
     });
   } catch (err) {
-    return jsonResponse({
-      error: err instanceof Error ? err.message : 'Failed to send group message',
-    }, 500);
+    return jsonResponse(
+      {
+        error: err instanceof Error ? err.message : 'Failed to send group message',
+      },
+      500,
+    );
   }
 }
 
@@ -408,9 +434,11 @@ export async function handleGroupMessages(
 
   const userId = session.address.toLowerCase();
 
-  const { getGroupMessages, isGroupMember, decryptGroupMessage } = await import('../lib/group-chat');
+  const { getGroupMessages, isGroupMember, decryptGroupMessage } = await import(
+    '../lib/group-chat'
+  );
 
-  if (!await isGroupMember(env, groupId, userId)) {
+  if (!(await isGroupMember(env, groupId, userId))) {
     return jsonResponse({ error: 'Not a group member' }, 403);
   }
 
@@ -469,9 +497,12 @@ export async function handleGroupAddMember(
 
     return noCacheJsonResponse({ ok: true, memberAdded: body.memberId });
   } catch (err) {
-    return jsonResponse({
-      error: err instanceof Error ? err.message : 'Failed to add member',
-    }, 500);
+    return jsonResponse(
+      {
+        error: err instanceof Error ? err.message : 'Failed to add member',
+      },
+      500,
+    );
   }
 }
 
@@ -502,9 +533,12 @@ export async function handleGroupRemoveMember(
 
     return noCacheJsonResponse({ ok: true, memberRemoved: body.memberId });
   } catch (err) {
-    return jsonResponse({
-      error: err instanceof Error ? err.message : 'Failed to remove member',
-    }, 500);
+    return jsonResponse(
+      {
+        error: err instanceof Error ? err.message : 'Failed to remove member',
+      },
+      500,
+    );
   }
 }
 

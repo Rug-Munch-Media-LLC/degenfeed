@@ -24,10 +24,7 @@ const $fetch = globalThis.fetch;
 // ─── Constants ─────────────────────────────────────────────────────────
 
 const TABLELAND_NODE = process.env.TABLELAND_NODE_URL || 'http://127.0.0.1:8103';
-const PUBLIC_GATEWAYS = [
-  'https://testnets.tableland.network',
-  'https://tableland.network',
-];
+const PUBLIC_GATEWAYS = ['https://testnets.tableland.network', 'https://tableland.network'];
 
 // ─── Types ─────────────────────────────────────────────────────────────
 
@@ -47,7 +44,7 @@ interface TablelandHealthResponse {
 
 // ─── Helpers ──────────────────────────────────────────────────────────
 
-function guessTablelandNiches(content: string): string[] {
+function _guessTablelandNiches(content: string): string[] {
   const lower = content.toLowerCase();
   const n: string[] = [];
   if (/\b(crypto|web3|blockchain|nft|defi|dao)\b/.test(lower)) n.push('crypto');
@@ -67,34 +64,42 @@ async function fetchNodeHealth(nodeUrl: string): Promise<UnifiedPost[]> {
       signal: AbortSignal.timeout(5000),
     });
     if (!res.ok) return [];
-    const data = await res.json() as TablelandHealthResponse;
+    const data = (await res.json()) as TablelandHealthResponse;
     const healthy = data.healthy !== false;
 
-    return [{
-      id: `tableland:node:${nodeUrl}:${Date.now()}`,
-      protocol: 'tableland',
-      author: {
-        id: `tableland:node:${nodeUrl}`,
-        primary: { protocol: 'tableland', id: 'tableland-node' },
-        handles: {},
-        displayName: `Tableland ${data.nodeId ? `Node ${data.nodeId.slice(0, 8)}` : 'Node'}`,
-        bio: 'Decentralized database network — SQLite on chain',
-        avatarUrl: '', followerCount: 0, followingCount: 0, links: [], keys: {},
+    return [
+      {
+        id: `tableland:node:${nodeUrl}:${Date.now()}`,
+        protocol: 'tableland',
+        author: {
+          id: `tableland:node:${nodeUrl}`,
+          primary: { protocol: 'tableland', id: 'tableland-node' },
+          handles: {},
+          displayName: `Tableland ${data.nodeId ? `Node ${data.nodeId.slice(0, 8)}` : 'Node'}`,
+          bio: 'Decentralized database network — SQLite on chain',
+          avatarUrl: '',
+          followerCount: 0,
+          followingCount: 0,
+          links: [],
+          keys: {},
+        },
+        text: healthy
+          ? `✅ Tableland Node Healthy\nChain: ${data.chainId || 'N/A'}\nNode: ${data.nodeId || 'N/A'}`
+          : '❌ Tableland Node Unhealthy',
+        embeds: [{ kind: 'link', url: `${nodeUrl}/api/v1/query?statement=SELECT+1` }],
+        contentType: 'status',
+        createdAt: Date.now(),
+        metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
+        engagement: {
+          viewerLiked: false,
+          viewerReposted: false,
+          viewerBookmarked: false,
+          raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
+        },
+        raw: data,
+        niches: ['database', 'infrastructure'],
       },
-      text: healthy
-        ? `✅ Tableland Node Healthy\nChain: ${data.chainId || 'N/A'}\nNode: ${data.nodeId || 'N/A'}`
-        : '❌ Tableland Node Unhealthy',
-      embeds: [{ kind: 'link', url: `${nodeUrl}/api/v1/query?statement=SELECT+1` }],
-      contentType: 'status',
-      createdAt: Date.now(),
-      metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
-      engagement: {
-        viewerLiked: false, viewerReposted: false, viewerBookmarked: false,
-        raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
-      },
-      raw: data,
-      niches: ['database', 'infrastructure'],
-    }];
+    ];
   } catch (err) {
     console.log(`[bridge] Tableland health error (${nodeUrl}): ${(err as Error).message}`);
     return [];
@@ -113,7 +118,7 @@ async function fetchQueryResults(nodeUrl: string): Promise<UnifiedPost[]> {
     );
     if (!res.ok) return [];
 
-    const result = await res.json() as TablelandQueryResult;
+    const result = (await res.json()) as TablelandQueryResult;
     const rows = result.rows || result.data || [];
     if (!Array.isArray(rows) || rows.length === 0) return [];
 
@@ -125,7 +130,12 @@ async function fetchQueryResults(nodeUrl: string): Promise<UnifiedPost[]> {
         primary: { protocol: 'tableland', id: 'tableland' },
         handles: {},
         displayName: 'Tableland Query',
-        bio: '', avatarUrl: '', followerCount: 0, followingCount: 0, links: [], keys: {},
+        bio: '',
+        avatarUrl: '',
+        followerCount: 0,
+        followingCount: 0,
+        links: [],
+        keys: {},
       },
       text: `📊 Tableland Query Result\n\`\`\`json\n${JSON.stringify(row, null, 2)}\n\`\`\``,
       embeds: [],
@@ -133,7 +143,9 @@ async function fetchQueryResults(nodeUrl: string): Promise<UnifiedPost[]> {
       createdAt: Date.now(),
       metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
       engagement: {
-        viewerLiked: false, viewerReposted: false, viewerBookmarked: false,
+        viewerLiked: false,
+        viewerReposted: false,
+        viewerBookmarked: false,
         raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
       },
       raw: row,
@@ -157,9 +169,7 @@ export const schema: SchemaGuard = {
 
 export async function fetchTablelandPosts(limit = 20): Promise<UnifiedPost[]> {
   const allNodes = [TABLELAND_NODE, ...PUBLIC_GATEWAYS];
-  const healthResults = await Promise.allSettled(
-    allNodes.map((node) => fetchNodeHealth(node)),
-  );
+  const healthResults = await Promise.allSettled(allNodes.map((node) => fetchNodeHealth(node)));
 
   const all: UnifiedPost[] = [];
   for (const r of healthResults) if (r.status === 'fulfilled') all.push(...r.value);

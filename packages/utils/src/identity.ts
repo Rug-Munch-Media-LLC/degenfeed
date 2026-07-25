@@ -51,6 +51,7 @@ export interface HandleResolution {
   protocol: Protocol;
   id: string;
   handle: string;
+  walletAddress?: string;
 }
 
 /**

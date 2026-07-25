@@ -53,13 +53,13 @@ export const telegramAdapter: PlatformAdapter = {
     const mentions = master.mentions ?? [];
     if (mentions.length > 0) {
       htmlParts.push(
-        '\n\n' + mentions.map((m) => `<a href="tg://resolve?domain=${m}">@${m}</a>`).join(' '),
+        `\n\n${mentions.map((m) => `<a href="tg://resolve?domain=${m}">@${m}</a>`).join(' ')}`,
       );
     }
 
     // Hashtags
     if (hashtags.length > 0) {
-      htmlParts.push('\n\n' + hashtags.join(' '));
+      htmlParts.push(`\n\n${hashtags.join(' ')}`);
     }
 
     let htmlContent = htmlParts.join('');
@@ -83,7 +83,7 @@ export const telegramAdapter: PlatformAdapter = {
 
   preview(master: MasterPost): string {
     let preview = '[Telegram — HTML formatted]';
-    preview += '\n' + master.text.slice(0, 300);
+    preview += `\n${master.text.slice(0, 300)}`;
 
     if (master.text.length > 300) {
       preview += '...';
@@ -94,7 +94,7 @@ export const telegramAdapter: PlatformAdapter = {
     }
 
     if (master.hashtags && master.hashtags.length > 0) {
-      preview += '\n🏷️ ' + master.hashtags.join(' ');
+      preview += `\n🏷️ ${master.hashtags.join(' ')}`;
     }
 
     preview += '\n📐 HTML formatting applied';

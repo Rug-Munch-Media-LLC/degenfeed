@@ -205,7 +205,7 @@ function MilestoneEditor({
 // ══════════════════════════════════════════════════════════════════════
 
 export default function CreateProposalPage({ params }: { params: { id: string } }) {
-  const router = useRouter();
+  const _router = useRouter();
   const [step, setStep] = useState<'type' | 'content' | 'preview'>('type');
 
   // Form state

@@ -14,8 +14,8 @@
  */
 
 import { type Env, jsonResponse, noCacheJsonResponse } from '../index';
-import { requireSession } from '../session';
 import type { RoomTransport } from '../lib/unified-room';
+import { requireSession } from '../session';
 
 // ─── POST /api/rooms/unified/create — Create Room ─────────────────────────
 
@@ -65,15 +65,22 @@ export async function handleUnifiedRoomCreate(request: Request, env: Env): Promi
       createdAt: room.createdAt,
     });
   } catch (err) {
-    return jsonResponse({
-      error: err instanceof Error ? err.message : 'Room creation failed',
-    }, 500);
+    return jsonResponse(
+      {
+        error: err instanceof Error ? err.message : 'Room creation failed',
+      },
+      500,
+    );
   }
 }
 
 // ─── POST /api/rooms/unified/:id/join — Join Room ─────────────────────────
 
-export async function handleUnifiedRoomJoin(request: Request, env: Env, roomId: string): Promise<Response> {
+export async function handleUnifiedRoomJoin(
+  request: Request,
+  env: Env,
+  roomId: string,
+): Promise<Response> {
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
 
@@ -95,19 +102,13 @@ export async function handleUnifiedRoomJoin(request: Request, env: Env, roomId: 
 
   try {
     const { joinUnifiedRoom } = await import('../lib/unified-room');
-    const room = await joinUnifiedRoom(
-      env,
-      roomId,
-      userId,
-      body.transport || 'web',
-      {
-        ...(body.nostr ? { nostr: body.nostr } : {}),
-        ...(body.matrix ? { matrix: body.matrix } : {}),
-        ...(body.farcaster ? { farcaster: body.farcaster } : {}),
-        ...(body.bluesky ? { bluesky: body.bluesky } : {}),
-        ...(body.telegram ? { telegram: body.telegram } : {}),
-      },
-    );
+    const room = await joinUnifiedRoom(env, roomId, userId, body.transport || 'web', {
+      ...(body.nostr ? { nostr: body.nostr } : {}),
+      ...(body.matrix ? { matrix: body.matrix } : {}),
+      ...(body.farcaster ? { farcaster: body.farcaster } : {}),
+      ...(body.bluesky ? { bluesky: body.bluesky } : {}),
+      ...(body.telegram ? { telegram: body.telegram } : {}),
+    });
 
     return noCacheJsonResponse({
       ok: true,
@@ -116,15 +117,22 @@ export async function handleUnifiedRoomJoin(request: Request, env: Env, roomId: 
       joinedVia: body.transport || 'web',
     });
   } catch (err) {
-    return jsonResponse({
-      error: err instanceof Error ? err.message : 'Failed to join room',
-    }, 500);
+    return jsonResponse(
+      {
+        error: err instanceof Error ? err.message : 'Failed to join room',
+      },
+      500,
+    );
   }
 }
 
 // ─── POST /api/rooms/unified/:id/leave — Leave Room ───────────────────────
 
-export async function handleUnifiedRoomLeave(request: Request, env: Env, roomId: string): Promise<Response> {
+export async function handleUnifiedRoomLeave(
+  request: Request,
+  env: Env,
+  roomId: string,
+): Promise<Response> {
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
 
@@ -136,15 +144,22 @@ export async function handleUnifiedRoomLeave(request: Request, env: Env, roomId:
 
     return noCacheJsonResponse({ ok: true, left: true });
   } catch (err) {
-    return jsonResponse({
-      error: err instanceof Error ? err.message : 'Failed to leave room',
-    }, 500);
+    return jsonResponse(
+      {
+        error: err instanceof Error ? err.message : 'Failed to leave room',
+      },
+      500,
+    );
   }
 }
 
 // ─── POST /api/rooms/unified/:id/message — Send Message ───────────────────
 
-export async function handleUnifiedRoomMessage(request: Request, env: Env, roomId: string): Promise<Response> {
+export async function handleUnifiedRoomMessage(
+  request: Request,
+  env: Env,
+  roomId: string,
+): Promise<Response> {
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
 
@@ -194,15 +209,22 @@ export async function handleUnifiedRoomMessage(request: Request, env: Env, roomI
       deliveryStatus: deliverySummary,
     });
   } catch (err) {
-    return jsonResponse({
-      error: err instanceof Error ? err.message : 'Failed to send message',
-    }, 500);
+    return jsonResponse(
+      {
+        error: err instanceof Error ? err.message : 'Failed to send message',
+      },
+      500,
+    );
   }
 }
 
 // ─── GET /api/rooms/unified/:id/messages — Get Messages ────────────────────
 
-export async function handleUnifiedRoomMessages(request: Request, env: Env, roomId: string): Promise<Response> {
+export async function handleUnifiedRoomMessages(
+  request: Request,
+  env: Env,
+  roomId: string,
+): Promise<Response> {
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
 
@@ -211,7 +233,7 @@ export async function handleUnifiedRoomMessages(request: Request, env: Env, room
   try {
     const { getRoomMessages, isRoomMember } = await import('../lib/unified-room');
 
-    if (!await isRoomMember(env, roomId, userId)) {
+    if (!(await isRoomMember(env, roomId, userId))) {
       return jsonResponse({ error: 'Not a room member' }, 403);
     }
 
@@ -228,15 +250,22 @@ export async function handleUnifiedRoomMessages(request: Request, env: Env, room
       total: messages.length,
     });
   } catch (err) {
-    return jsonResponse({
-      error: err instanceof Error ? err.message : 'Failed to get messages',
-    }, 500);
+    return jsonResponse(
+      {
+        error: err instanceof Error ? err.message : 'Failed to get messages',
+      },
+      500,
+    );
   }
 }
 
 // ─── POST /api/rooms/unified/:id/invite — Invite Someone ──────────────────
 
-export async function handleUnifiedRoomInvite(request: Request, env: Env, roomId: string): Promise<Response> {
+export async function handleUnifiedRoomInvite(
+  request: Request,
+  env: Env,
+  roomId: string,
+): Promise<Response> {
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
 
@@ -264,15 +293,22 @@ export async function handleUnifiedRoomInvite(request: Request, env: Env, roomId
       expiresAt: invite.expiresAt,
     });
   } catch (err) {
-    return jsonResponse({
-      error: err instanceof Error ? err.message : 'Failed to create invite',
-    }, 500);
+    return jsonResponse(
+      {
+        error: err instanceof Error ? err.message : 'Failed to create invite',
+      },
+      500,
+    );
   }
 }
 
 // ─── PUT /api/rooms/unified/:id/transport — Update Transport ──────────────
 
-export async function handleUnifiedRoomTransport(request: Request, env: Env, roomId: string): Promise<Response> {
+export async function handleUnifiedRoomTransport(
+  request: Request,
+  env: Env,
+  roomId: string,
+): Promise<Response> {
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
 
@@ -291,7 +327,10 @@ export async function handleUnifiedRoomTransport(request: Request, env: Env, roo
 
   const validTransports = ['nostr', 'matrix', 'farcaster', 'bluesky', 'telegram', 'web'];
   if (!validTransports.includes(body.transport)) {
-    return jsonResponse({ error: `Invalid transport. Must be one of: ${validTransports.join(', ')}` }, 400);
+    return jsonResponse(
+      { error: `Invalid transport. Must be one of: ${validTransports.join(', ')}` },
+      400,
+    );
   }
 
   try {
@@ -304,9 +343,12 @@ export async function handleUnifiedRoomTransport(request: Request, env: Env, roo
       roomTransports: room.transports,
     });
   } catch (err) {
-    return jsonResponse({
-      error: err instanceof Error ? err.message : 'Failed to update transport',
-    }, 500);
+    return jsonResponse(
+      {
+        error: err instanceof Error ? err.message : 'Failed to update transport',
+      },
+      500,
+    );
   }
 }
 
@@ -350,15 +392,22 @@ export async function handleUnifiedRoomMine(request: Request, env: Env): Promise
       total: roomList.length,
     });
   } catch (err) {
-    return jsonResponse({
-      error: err instanceof Error ? err.message : 'Failed to get rooms',
-    }, 500);
+    return jsonResponse(
+      {
+        error: err instanceof Error ? err.message : 'Failed to get rooms',
+      },
+      500,
+    );
   }
 }
 
 // ─── GET /api/rooms/unified/:id — Get Room Info ───────────────────────────
 
-export async function handleUnifiedRoomInfo(request: Request, env: Env, roomId: string): Promise<Response> {
+export async function handleUnifiedRoomInfo(
+  request: Request,
+  env: Env,
+  roomId: string,
+): Promise<Response> {
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
 
@@ -367,7 +416,7 @@ export async function handleUnifiedRoomInfo(request: Request, env: Env, roomId: 
   try {
     const { getUnifiedRoom, isRoomMember } = await import('../lib/unified-room');
 
-    if (!await isRoomMember(env, roomId, userId)) {
+    if (!(await isRoomMember(env, roomId, userId))) {
       return jsonResponse({ error: 'Not a room member' }, 403);
     }
 
@@ -387,7 +436,9 @@ export async function handleUnifiedRoomInfo(request: Request, env: Env, roomId: 
       identity: {
         nostr: m.identity.nostr ? { npub: m.identity.nostr.npub } : undefined,
         matrix: m.identity.matrix ? { userId: m.identity.matrix.userId } : undefined,
-        farcaster: m.identity.farcaster ? { fid: m.identity.farcaster.fid, username: m.identity.farcaster.username } : undefined,
+        farcaster: m.identity.farcaster
+          ? { fid: m.identity.farcaster.fid, username: m.identity.farcaster.username }
+          : undefined,
         bluesky: m.identity.bluesky ? { handle: m.identity.bluesky.handle } : undefined,
         telegram: m.identity.telegram ? { chatId: m.identity.telegram.chatId } : undefined,
       },
@@ -408,15 +459,22 @@ export async function handleUnifiedRoomInfo(request: Request, env: Env, roomId: 
       iconUrl: room.iconUrl,
     });
   } catch (err) {
-    return jsonResponse({
-      error: err instanceof Error ? err.message : 'Failed to get room info',
-    }, 500);
+    return jsonResponse(
+      {
+        error: err instanceof Error ? err.message : 'Failed to get room info',
+      },
+      500,
+    );
   }
 }
 
 // ─── GET /api/rooms/unified/:id/unread — Unread Count ─────────────────────
 
-export async function handleUnifiedRoomUnread(request: Request, env: Env, roomId: string): Promise<Response> {
+export async function handleUnifiedRoomUnread(
+  request: Request,
+  env: Env,
+  roomId: string,
+): Promise<Response> {
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
 
@@ -425,7 +483,7 @@ export async function handleUnifiedRoomUnread(request: Request, env: Env, roomId
   try {
     const { getRoomMessages, isRoomMember } = await import('../lib/unified-room');
 
-    if (!await isRoomMember(env, roomId, userId)) {
+    if (!(await isRoomMember(env, roomId, userId))) {
       return jsonResponse({ error: 'Not a room member' }, 403);
     }
 
@@ -440,8 +498,11 @@ export async function handleUnifiedRoomUnread(request: Request, env: Env, roomId
       lastMessageAt: lastMsg?.createdAt || null,
     });
   } catch (err) {
-    return jsonResponse({
-      error: err instanceof Error ? err.message : 'Failed to get unread count',
-    }, 500);
+    return jsonResponse(
+      {
+        error: err instanceof Error ? err.message : 'Failed to get unread count',
+      },
+      500,
+    );
   }
 }

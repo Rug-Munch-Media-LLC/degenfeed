@@ -38,14 +38,7 @@ interface OverviewData {
   bondingCount: number;
 }
 
-type TabKey =
-  | 'top'
-  | 'trending'
-  | 'new'
-  | 'gainers'
-  | 'losers'
-  | 'most-holders'
-  | 'highest-volume';
+type TabKey = 'top' | 'trending' | 'new' | 'gainers' | 'losers' | 'most-holders' | 'highest-volume';
 
 type GainerPeriod = '24h' | '7d' | '30d';
 
@@ -71,7 +64,7 @@ function formatCompactNum(n: number): string {
   return String(n);
 }
 
-function shortenAddress(addr: string): string {
+function _shortenAddress(addr: string): string {
   if (!addr || addr.length < 10) return addr;
   return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
 }
@@ -143,7 +136,14 @@ function MiniSparkline({
   if (data.length < 2) {
     return (
       <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} aria-hidden="true">
-        <line x1={0} y1={height / 2} x2={width} y2={height / 2} stroke="var(--color-glass-border)" strokeWidth="1" />
+        <line
+          x1={0}
+          y1={height / 2}
+          x2={width}
+          y2={height / 2}
+          stroke="var(--color-glass-border)"
+          strokeWidth="1"
+        />
       </svg>
     );
   }
@@ -163,7 +163,14 @@ function MiniSparkline({
   return (
     <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} aria-hidden="true">
       <polygon points={fillPoints} fill={color} opacity="0.08" />
-      <polyline fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" points={points} />
+      <polyline
+        fill="none"
+        stroke={color}
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        points={points}
+      />
       <circle cx={width} cy={lastY} r="1.5" fill={color} />
     </svg>
   );
@@ -188,8 +195,12 @@ function OverviewCard({
 }) {
   return (
     <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-4 transition-all hover:border-degen-500/20">
-      <div className="text-[10px] font-medium text-[var(--color-muted)] uppercase tracking-wider">{label}</div>
-      <div className={`mt-1 text-xl font-black ${accent ? 'text-degen-400' : 'text-[var(--color-fg)]'}`}>
+      <div className="text-[10px] font-medium text-[var(--color-muted)] uppercase tracking-wider">
+        {label}
+      </div>
+      <div
+        className={`mt-1 text-xl font-black ${accent ? 'text-degen-400' : 'text-[var(--color-fg)]'}`}
+      >
         {prefix}
         <AnimatedCounter value={value} decimals={decimals} />
         {suffix}
@@ -210,7 +221,9 @@ function PhaseBadge({ phase }: { phase: number }) {
     'bg-degen-500/15 text-degen-400',
   ];
   return (
-    <span className={`rounded-full px-2 py-0.5 text-[9px] font-semibold ${colors[phase] || colors[0]}`}>
+    <span
+      className={`rounded-full px-2 py-0.5 text-[9px] font-semibold ${colors[phase] || colors[0]}`}
+    >
       {labels[phase] || `Phase ${phase + 1}`}
     </span>
   );
@@ -235,12 +248,28 @@ function MarketOverviewChart({ data }: { data: number[] }) {
       <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-44" preserveAspectRatio="none">
         {/* Grid */}
         {[0, 0.25, 0.5, 0.75, 1].map((y) => (
-          <line key={y} x1={0} y1={h - y * h} x2={w} y2={h - y * h} stroke="var(--color-glass-border)" strokeWidth="0.5" opacity="0.4" />
+          <line
+            key={y}
+            x1={0}
+            y1={h - y * h}
+            x2={w}
+            y2={h - y * h}
+            stroke="var(--color-glass-border)"
+            strokeWidth="0.5"
+            opacity="0.4"
+          />
         ))}
         {/* Fill */}
         <polygon points={`${points} ${w},${h} 0,${h}`} fill="#00ff41" opacity="0.06" />
         {/* Line */}
-        <polyline fill="none" stroke="#00ff41" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" points={points} />
+        <polyline
+          fill="none"
+          stroke="#00ff41"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          points={points}
+        />
       </svg>
     </div>
   );
@@ -252,7 +281,9 @@ function VolumeBarChart({ items }: { items: { label: string; value: number; colo
   const maxVal = Math.max(...items.map((i) => i.value), 1);
   return (
     <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-4">
-      <h3 className="mb-3 text-xs font-bold text-[var(--color-fg)]">24h Volume per Coin (Top 10)</h3>
+      <h3 className="mb-3 text-xs font-bold text-[var(--color-fg)]">
+        24h Volume per Coin (Top 10)
+      </h3>
       <div className="space-y-2">
         {items.map((item) => (
           <div key={item.label} className="flex items-center gap-2">
@@ -362,7 +393,9 @@ export default function CoinStatsPage() {
       try {
         const [overviewRes, coinsRes] = await Promise.all([
           fetch('/api/coins/stats/overview'),
-          fetch(`/api/coins/stats/${activeTab}${activeTab === 'gainers' || activeTab === 'losers' ? `?period=${gainersPeriod}` : ''}`),
+          fetch(
+            `/api/coins/stats/${activeTab}${activeTab === 'gainers' || activeTab === 'losers' ? `?period=${gainersPeriod}` : ''}`,
+          ),
         ]);
 
         if (overviewRes.ok) {
@@ -466,7 +499,10 @@ export default function CoinStatsPage() {
       <div className="mb-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-[var(--color-fg)]" style={{ fontFamily: 'var(--font-heading)' }}>
+            <h1
+              className="text-2xl font-bold text-[var(--color-fg)]"
+              style={{ fontFamily: 'var(--font-heading)' }}
+            >
               Coin Statistics
             </h1>
             <p className="mt-1 text-sm text-[var(--color-muted)]">
@@ -493,9 +529,18 @@ export default function CoinStatsPage() {
       {/* ─── Overview Cards ─────────────────────────────────── */}
       <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <OverviewCard label="Total Coins" value={overviewData.totalCoins} />
-        <OverviewCard label="Total Volume" value={Math.round(overviewData.totalVolume)} prefix="$" />
+        <OverviewCard
+          label="Total Volume"
+          value={Math.round(overviewData.totalVolume)}
+          prefix="$"
+        />
         <OverviewCard label="Total Holders" value={overviewData.totalHolders} />
-        <OverviewCard label="Total Market Cap" value={Math.round(overviewData.totalMarketCap)} prefix="$" accent />
+        <OverviewCard
+          label="Total Market Cap"
+          value={Math.round(overviewData.totalMarketCap)}
+          prefix="$"
+          accent
+        />
       </div>
 
       {/* Additional mini stat row */}
@@ -555,10 +600,7 @@ export default function CoinStatsPage() {
           {/* Holder distribution pie */}
           <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-4">
             <h3 className="mb-3 text-xs font-bold text-[var(--color-fg)]">Holder Distribution</h3>
-            <PieChart
-              size={140}
-              segments={holderDist}
-            />
+            <PieChart size={140} segments={holderDist} />
           </div>
         </div>
       </div>
@@ -612,9 +654,7 @@ export default function CoinStatsPage() {
         <div className="rounded-2xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-12 text-center">
           <div className="mb-3 text-5xl">📊</div>
           <h3 className="mb-2 text-lg font-bold text-[var(--color-fg)]">No coins yet</h3>
-          <p className="text-xs text-[var(--color-muted)]">
-            Be the first to launch!
-          </p>
+          <p className="text-xs text-[var(--color-muted)]">Be the first to launch!</p>
           <Link
             href="/coins"
             className="mt-4 inline-block rounded-xl bg-gradient-to-r from-degen-600 to-degen-400 px-5 py-2.5 text-xs font-bold text-white transition-all hover:from-degen-500 hover:to-degen-300"
@@ -628,15 +668,31 @@ export default function CoinStatsPage() {
             <thead>
               <tr className="border-b border-[var(--color-glass-border)] bg-[var(--color-card)]">
                 <th className="px-3 py-3 text-left font-semibold text-[var(--color-muted)]">#</th>
-                <th className="px-3 py-3 text-left font-semibold text-[var(--color-muted)]">Coin</th>
-                <th className="px-3 py-3 text-right font-semibold text-[var(--color-muted)]">Price</th>
-                <th className="px-3 py-3 text-right font-semibold text-[var(--color-muted)]">24h</th>
+                <th className="px-3 py-3 text-left font-semibold text-[var(--color-muted)]">
+                  Coin
+                </th>
+                <th className="px-3 py-3 text-right font-semibold text-[var(--color-muted)]">
+                  Price
+                </th>
+                <th className="px-3 py-3 text-right font-semibold text-[var(--color-muted)]">
+                  24h
+                </th>
                 <th className="px-3 py-3 text-right font-semibold text-[var(--color-muted)]">7d</th>
-                <th className="px-3 py-3 text-right font-semibold text-[var(--color-muted)]">Market Cap</th>
-                <th className="px-3 py-3 text-right font-semibold text-[var(--color-muted)]">Volume 24h</th>
-                <th className="px-3 py-3 text-right font-semibold text-[var(--color-muted)]">Holders</th>
-                <th className="px-3 py-3 text-center font-semibold text-[var(--color-muted)]">Phase</th>
-                <th className="px-3 py-3 text-center font-semibold text-[var(--color-muted)]">7d Trend</th>
+                <th className="px-3 py-3 text-right font-semibold text-[var(--color-muted)]">
+                  Market Cap
+                </th>
+                <th className="px-3 py-3 text-right font-semibold text-[var(--color-muted)]">
+                  Volume 24h
+                </th>
+                <th className="px-3 py-3 text-right font-semibold text-[var(--color-muted)]">
+                  Holders
+                </th>
+                <th className="px-3 py-3 text-center font-semibold text-[var(--color-muted)]">
+                  Phase
+                </th>
+                <th className="px-3 py-3 text-center font-semibold text-[var(--color-muted)]">
+                  7d Trend
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--color-glass-border)]">
@@ -670,7 +726,9 @@ export default function CoinStatsPage() {
                             ${coin.symbol}
                           </div>
                         </div>
-                        <span className={`ml-1 rounded px-1 py-0.5 text-[8px] font-medium ${coin.chain === 'solana' ? 'bg-purple-500/10 text-purple-400' : 'bg-blue-500/10 text-blue-400'}`}>
+                        <span
+                          className={`ml-1 rounded px-1 py-0.5 text-[8px] font-medium ${coin.chain === 'solana' ? 'bg-purple-500/10 text-purple-400' : 'bg-blue-500/10 text-blue-400'}`}
+                        >
                           {coin.chain === 'solana' ? '◎' : '⧫'}
                         </span>
                       </div>
@@ -678,11 +736,17 @@ export default function CoinStatsPage() {
                     <td className="px-3 py-3 text-right font-mono tabular-nums text-[var(--color-fg)] font-medium">
                       {formatPrice(coin.price)}
                     </td>
-                    <td className={`px-3 py-3 text-right font-mono tabular-nums font-semibold ${isUp24 ? 'text-degen-400' : 'text-red-400'}`}>
-                      {isUp24 ? '+' : ''}{coin.priceChange24h.toFixed(2)}%
+                    <td
+                      className={`px-3 py-3 text-right font-mono tabular-nums font-semibold ${isUp24 ? 'text-degen-400' : 'text-red-400'}`}
+                    >
+                      {isUp24 ? '+' : ''}
+                      {coin.priceChange24h.toFixed(2)}%
                     </td>
-                    <td className={`px-3 py-3 text-right font-mono tabular-nums font-semibold ${isUp7d ? 'text-degen-400' : 'text-red-400'}`}>
-                      {isUp7d ? '+' : ''}{coin.priceChange7d.toFixed(2)}%
+                    <td
+                      className={`px-3 py-3 text-right font-mono tabular-nums font-semibold ${isUp7d ? 'text-degen-400' : 'text-red-400'}`}
+                    >
+                      {isUp7d ? '+' : ''}
+                      {coin.priceChange7d.toFixed(2)}%
                     </td>
                     <td className="px-3 py-3 text-right font-mono tabular-nums text-[var(--color-fg)]">
                       {formatCompact(coin.marketCap)}

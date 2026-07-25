@@ -190,7 +190,7 @@ const DEFAULT_ROUTING_RULES: RoutingRule[] = [
   },
   // DTube/IPFS: route through gateway
   {
-    urlPattern: /dtube\.|d\-tube\./i,
+    urlPattern: /dtube\.|d-tube\./i,
     cdnHost: 'ipfs.degenfeed.xyz',
     proxyThroughCdn: false,
     cacheTtl: 3600,
@@ -313,7 +313,7 @@ export class ContentRouter {
     const protocol = detectProtocol(contentUrl);
 
     // Build source list
-    const sources = this.buildSourceList(contentUrl, protocol, options);
+    const _sources = this.buildSourceList(contentUrl, protocol, options);
 
     // Apply routing rules
     const rule = this.findMatchingRule(contentUrl, options?.platform);
@@ -372,11 +372,9 @@ export class ContentRouter {
     // Cache the result
     this.cache.set(contentUrl, result);
     try {
-      await this.env.CACHE?.put(
-        `route:${hashUrl(contentUrl)}`,
-        JSON.stringify(result),
-        { expirationTtl: Math.min(cacheTtl, 86400) },
-      );
+      await this.env.CACHE?.put(`route:${hashUrl(contentUrl)}`, JSON.stringify(result), {
+        expirationTtl: Math.min(cacheTtl, 86400),
+      });
     } catch {
       // Non-critical
     }
@@ -388,7 +386,10 @@ export class ContentRouter {
    * Route a live stream URL (handles HLS, RTMP, WebRTC specially).
    * Live streams should never be proxied through CDN (adds latency).
    */
-  async routeLiveStream(liveUrl: string, protocol: 'hls' | 'rtmp' | 'webrtc'): Promise<RoutedContent> {
+  async routeLiveStream(
+    liveUrl: string,
+    protocol: 'hls' | 'rtmp' | 'webrtc',
+  ): Promise<RoutedContent> {
     const startTime = Date.now();
 
     return {
@@ -437,14 +438,14 @@ export class ContentRouter {
    * Resolve IPFS CID through the fastest available gateway.
    */
   private resolveIPFS(cid: string): string {
-    return IPFS_GATEWAYS[0]!.url.replace('{cid}', cid);
+    return IPFS_GATEWAYS[0]?.url.replace('{cid}', cid);
   }
 
   /**
    * Resolve Arweave transaction ID through the fastest available gateway.
    */
   private resolveArweave(txId: string): string {
-    return ARWEAVE_GATEWAYS[0]!.url.replace('{id}', txId);
+    return ARWEAVE_GATEWAYS[0]?.url.replace('{id}', txId);
   }
 
   /**
@@ -473,11 +474,11 @@ export class ContentRouter {
       for (let i = 1; i < IPFS_GATEWAYS.length; i++) {
         sources.push({
           protocol: 'https',
-          url: IPFS_GATEWAYS[i]!.url.replace('{cid}', options.contentHash),
+          url: IPFS_GATEWAYS[i]?.url.replace('{cid}', options.contentHash),
           mirrors: [],
           contentHash: options.contentHash,
           platform: 'ipfs',
-          region: IPFS_GATEWAYS[i]!.region,
+          region: IPFS_GATEWAYS[i]?.region,
         });
       }
     }
@@ -512,7 +513,11 @@ export class ContentRouter {
     url: string,
     protocol: ContentProtocol,
     platform?: string,
-  ): { type: 'iframe' | 'html5' | 'hls' | 'dash' | 'custom'; url: string; options?: Record<string, unknown> } {
+  ): {
+    type: 'iframe' | 'html5' | 'hls' | 'dash' | 'custom';
+    url: string;
+    options?: Record<string, unknown>;
+  } {
     // Known embeddable platforms
     if (url.includes('youtube.com/embed') || url.includes('youtu.be')) {
       return {
@@ -572,7 +577,11 @@ export class ContentRouter {
     }
 
     // PeerTube: embed via PeerTube player
-    if (platform === 'peertube' || url.includes('peertube') || url.includes('video.degenfeed.xyz')) {
+    if (
+      platform === 'peertube' ||
+      url.includes('peertube') ||
+      url.includes('video.degenfeed.xyz')
+    ) {
       return {
         type: 'iframe',
         url,
@@ -587,20 +596,24 @@ export class ContentRouter {
   /**
    * Build a fallback URL chain for resiliency.
    */
-  private buildFallbackChain(url: string, protocol: ContentProtocol, contentHash?: string): string[] {
+  private buildFallbackChain(
+    _url: string,
+    protocol: ContentProtocol,
+    contentHash?: string,
+  ): string[] {
     const fallbacks: string[] = [];
 
     // IPFS content: multiple gateway fallbacks
     if (protocol === 'ipfs' && contentHash) {
       for (let i = 1; i < IPFS_GATEWAYS.length; i++) {
-        fallbacks.push(IPFS_GATEWAYS[i]!.url.replace('{cid}', contentHash));
+        fallbacks.push(IPFS_GATEWAYS[i]?.url.replace('{cid}', contentHash));
       }
     }
 
     // Arweave content: multiple gateway fallbacks
     if (protocol === 'arweave' && contentHash) {
       for (let i = 1; i < ARWEAVE_GATEWAYS.length; i++) {
-        fallbacks.push(ARWEAVE_GATEWAYS[i]!.url.replace('{id}', contentHash));
+        fallbacks.push(ARWEAVE_GATEWAYS[i]?.url.replace('{id}', contentHash));
       }
     }
 
@@ -641,7 +654,7 @@ function hashUrl(url: string): string {
   let hash = 0;
   for (let i = 0; i < url.length; i++) {
     const char = url.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
+    hash = (hash << 5) - hash + char;
     hash |= 0; // Convert to 32bit integer
   }
   return `url:${Math.abs(hash).toString(36)}`;
@@ -654,7 +667,7 @@ function simpleHash(str: string): string {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
     const char = str.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
+    hash = (hash << 5) - hash + char;
     hash |= 0;
   }
   return Math.abs(hash).toString(36);
@@ -682,21 +695,33 @@ export async function checkContentReachable(url: string, timeoutMs = 3000): Prom
  */
 export function getIPFSGatewayUrl(cid: string, preferDegenFeed = true): string {
   const gateways = preferDegenFeed ? IPFS_GATEWAYS : IPFS_GATEWAYS.slice(1);
-  return gateways[0]!.url.replace('{cid}', cid);
+  return gateways[0]?.url.replace('{cid}', cid);
 }
 
 /**
  * Get the best Arweave gateway URL for a transaction ID.
  */
 export function getArweaveGatewayUrl(txId: string): string {
-  return ARWEAVE_GATEWAYS[0]!.url.replace('{id}', txId);
+  return ARWEAVE_GATEWAYS[0]?.url.replace('{id}', txId);
 }
 
 /**
  * Extract video source type from a URL for embed component selection.
  */
 export function classifyVideoUrl(url: string): {
-  source: 'youtube' | 'twitch' | 'rumble' | 'odysee' | 'vimeo' | 'dailymotion' | 'peertube' | 'zora' | 'ipfs' | 'arweave' | 'direct' | 'hls';
+  source:
+    | 'youtube'
+    | 'twitch'
+    | 'rumble'
+    | 'odysee'
+    | 'vimeo'
+    | 'dailymotion'
+    | 'peertube'
+    | 'zora'
+    | 'ipfs'
+    | 'arweave'
+    | 'direct'
+    | 'hls';
   embedUrl?: string;
 } {
   if (url.includes('youtube.com') || url.includes('youtu.be')) {
@@ -711,7 +736,9 @@ export function classifyVideoUrl(url: string): {
     const match = url.match(/twitch\.tv\/(\w+)/);
     return {
       source: 'twitch',
-      embedUrl: match ? `https://player.twitch.tv/?channel=${match[1]}&parent=degenfeed.xyz` : undefined,
+      embedUrl: match
+        ? `https://player.twitch.tv/?channel=${match[1]}&parent=degenfeed.xyz`
+        : undefined,
     };
   }
   if (url.includes('rumble.com')) {
@@ -726,7 +753,11 @@ export function classifyVideoUrl(url: string): {
   if (url.includes('dailymotion.com')) {
     return { source: 'dailymotion' };
   }
-  if (url.includes('peertube') || url.includes('/videos/embed/') || url.includes('video.degenfeed.xyz')) {
+  if (
+    url.includes('peertube') ||
+    url.includes('/videos/embed/') ||
+    url.includes('video.degenfeed.xyz')
+  ) {
     return { source: 'peertube' };
   }
   if (url.includes('zora.co')) {

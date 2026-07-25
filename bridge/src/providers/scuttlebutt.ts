@@ -21,10 +21,7 @@ import type { SchemaGuard, UnifiedPost } from '../server/types';
 const $fetch = globalThis.fetch;
 
 const SSB_LOCAL = process.env.SSB_LOCAL_URL || 'http://127.0.0.1:8989';
-const SSB_PUBS = [
-  'https://ssb.pub.planetary.social',
-  'https://pub.scuttlebutt.nz',
-];
+const SSB_PUBS = ['https://ssb.pub.planetary.social', 'https://pub.scuttlebutt.nz'];
 
 // ─── Types ─────────────────────────────────────────────────────────────
 
@@ -88,7 +85,7 @@ function extractNameFromAuthor(author: string): string {
   // Author format: @<base64>.ed25519
   const match = author.match(/@([A-Za-z0-9+/]+)/);
   if (!match) return 'SSB User';
-  return match[1].slice(0, 12) + '...';
+  return `${match[1].slice(0, 12)}...`;
 }
 
 export function guessNiches(text: string, channel: string): string[] {
@@ -170,9 +167,7 @@ function ssbMessageToPost(msg: SSBMessage, sourcePub: string): UnifiedPost | nul
     text,
     embeds,
     contentType: text.length > 500 ? 'article' : 'text',
-    createdAt: content.type === 'post' && msg.value.timestamp
-      ? msg.value.timestamp
-      : msg.timestamp,
+    createdAt: content.type === 'post' && msg.value.timestamp ? msg.value.timestamp : msg.timestamp,
     metrics: {
       likes: 0,
       reposts: 0,
@@ -219,13 +214,10 @@ async function fetchFromSSBLocal(limit: number): Promise<UnifiedPost[]> {
 
 async function fetchFromPub(pubUrl: string, limit: number): Promise<UnifiedPost[]> {
   try {
-    const res = await $fetch(
-      `${pubUrl}/api/public/posts?limit=${Math.min(limit, 30)}`,
-      {
-        headers: { 'User-Agent': 'DegenFeed-Bridge/0.1 (SSB)' },
-        signal: AbortSignal.timeout(8000),
-      },
-    );
+    const res = await $fetch(`${pubUrl}/api/public/posts?limit=${Math.min(limit, 30)}`, {
+      headers: { 'User-Agent': 'DegenFeed-Bridge/0.1 (SSB)' },
+      signal: AbortSignal.timeout(8000),
+    });
     if (!res.ok) return [];
     const data = (await res.json()) as { messages?: SSBMessage[] };
     if (!data.messages) return [];
@@ -241,9 +233,7 @@ async function fetchFromPub(pubUrl: string, limit: number): Promise<UnifiedPost[
 async function fetchTrendingChannels(limit: number): Promise<UnifiedPost[]> {
   try {
     // Fetch channel posts from pubs
-    const results = await Promise.allSettled(
-      SSB_PUBS.map((pub) => fetchFromPub(pub, limit)),
-    );
+    const results = await Promise.allSettled(SSB_PUBS.map((pub) => fetchFromPub(pub, limit)));
 
     const all: UnifiedPost[] = [];
     for (const r of results) {
@@ -284,7 +274,9 @@ export async function fetchScuttlebuttPosts(limit = 20): Promise<UnifiedPost[]> 
     }
   }
 
-  console.log(`[bridge] Scuttlebutt: ${deduped.length} posts (local: ${local.length}, pub: ${pubPosts.length})`);
+  console.log(
+    `[bridge] Scuttlebutt: ${deduped.length} posts (local: ${local.length}, pub: ${pubPosts.length})`,
+  );
   return deduped;
 }
 

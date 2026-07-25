@@ -13,12 +13,11 @@
  * All routes are premium-gated via premium-gate.ts / requirePremiumTier.
  */
 
+import type { MasterPost } from '@degenfeed/cross-protocol-bridge';
 import type { Env } from '../index';
 import { jsonResponse } from '../index';
-import { sanitizeString, sanitizeStringArray } from '../sanitize';
-import { requireSession } from '../session';
 import { requirePremiumTier } from '../premium';
-import type { MasterPost } from '@degenfeed/cross-protocol-bridge';
+import { requireSession } from '../session';
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
@@ -42,15 +41,18 @@ export interface PostAnalytics {
     bookmarks: number;
   };
   /** Per-protocol breakdown */
-  perProtocol: Record<string, {
-    likes: number;
-    reposts: number;
-    replies: number;
-    quotes: number;
-    bookmarks: number;
-    reach?: number;
-    error?: string;
-  }>;
+  perProtocol: Record<
+    string,
+    {
+      likes: number;
+      reposts: number;
+      replies: number;
+      quotes: number;
+      bookmarks: number;
+      reach?: number;
+      error?: string;
+    }
+  >;
   /** Content type classification */
   contentType: 'text' | 'image' | 'video' | 'link' | 'thread' | 'poll';
   /** Hashtags used */
@@ -67,11 +69,14 @@ export interface AnalyticsSummary {
   bestPostingTime: string | null;
   topHashtags: Array<{ tag: string; count: number; engagement: number }>;
   contentTypeBreakdown: Record<string, number>;
-  protocolBreakdown: Record<string, {
-    posts: number;
-    engagement: number;
-    successRate: number;
-  }>;
+  protocolBreakdown: Record<
+    string,
+    {
+      posts: number;
+      engagement: number;
+      successRate: number;
+    }
+  >;
   recentTrend: 'up' | 'down' | 'stable';
   followerGrowth: {
     total: number;
@@ -216,7 +221,15 @@ export async function handleTopPosts(request: Request, env: Env): Promise<Respon
     const range = getTimeRange(url.searchParams.get('range') || 'all');
 
     const address = session.address.toLowerCase();
-    const posts = await listPostAnalytics(address, range, limit, undefined, 'engagement', 'desc', env);
+    const posts = await listPostAnalytics(
+      address,
+      range,
+      limit,
+      undefined,
+      'engagement',
+      'desc',
+      env,
+    );
 
     return jsonResponse({
       topPosts: posts.posts.slice(0, limit),
@@ -372,7 +385,11 @@ export async function recordPostAnalytics(
   // Mark protocol success/failure
   for (const protocol of protocols) {
     analytics.perProtocol[protocol] = {
-      likes: 0, reposts: 0, replies: 0, quotes: 0, bookmarks: 0,
+      likes: 0,
+      reposts: 0,
+      replies: 0,
+      quotes: 0,
+      bookmarks: 0,
       ...(results[protocol]?.success ? {} : { error: results[protocol]?.error }),
     };
   }
@@ -403,7 +420,13 @@ export async function updatePostEngagement(
   walletAddress: string,
   postId: string,
   protocol: string,
-  engagement: { likes?: number; reposts?: number; replies?: number; quotes?: number; bookmarks?: number },
+  engagement: {
+    likes?: number;
+    reposts?: number;
+    replies?: number;
+    quotes?: number;
+    bookmarks?: number;
+  },
 ): Promise<void> {
   if (!env.CACHE) return;
 
@@ -477,7 +500,10 @@ async function computeAnalyticsSummary(
 
   // Aggregate totals
   let totalEngagement = 0;
-  const protocolStats: Record<string, { posts: number; engagement: number; successes: number; failures: number }> = {};
+  const protocolStats: Record<
+    string,
+    { posts: number; engagement: number; successes: number; failures: number }
+  > = {};
   const contentTypeCounts: Record<string, number> = {};
   const hashtagStats: Map<string, { count: number; engagement: number }> = new Map();
   const hourlyEngagement: Record<number, { count: number; total: number }> = {};
@@ -489,7 +515,8 @@ async function computeAnalyticsSummary(
 
     // Protocol breakdown
     for (const [proto, pEng] of Object.entries(post.perProtocol)) {
-      if (!protocolStats[proto]) protocolStats[proto] = { posts: 0, engagement: 0, successes: 0, failures: 0 };
+      if (!protocolStats[proto])
+        protocolStats[proto] = { posts: 0, engagement: 0, successes: 0, failures: 0 };
       protocolStats[proto].posts++;
       protocolStats[proto].engagement += pEng.likes + pEng.reposts + pEng.replies;
       if (pEng.error) protocolStats[proto].failures++;
@@ -543,7 +570,10 @@ async function computeAnalyticsSummary(
     .slice(0, 20);
 
   // Protocol breakdown for response
-  const protocolBreakdown: Record<string, { posts: number; engagement: number; successRate: number }> = {};
+  const protocolBreakdown: Record<
+    string,
+    { posts: number; engagement: number; successRate: number }
+  > = {};
   for (const [proto, stats] of Object.entries(protocolStats)) {
     protocolBreakdown[proto] = {
       posts: stats.posts,
@@ -559,12 +589,16 @@ async function computeAnalyticsSummary(
   const midPoint = rangeStart + (rangeEnd - rangeStart) / 2;
   const firstHalf = filtered.filter((p) => new Date(p.publishedAt).getTime() < midPoint);
   const secondHalf = filtered.filter((p) => new Date(p.publishedAt).getTime() >= midPoint);
-  const firstAvg = firstHalf.length > 0
-    ? firstHalf.reduce((sum, p) => sum + getTotalEngagement(p.totalEngagement), 0) / firstHalf.length
-    : 0;
-  const secondAvg = secondHalf.length > 0
-    ? secondHalf.reduce((sum, p) => sum + getTotalEngagement(p.totalEngagement), 0) / secondHalf.length
-    : 0;
+  const firstAvg =
+    firstHalf.length > 0
+      ? firstHalf.reduce((sum, p) => sum + getTotalEngagement(p.totalEngagement), 0) /
+        firstHalf.length
+      : 0;
+  const secondAvg =
+    secondHalf.length > 0
+      ? secondHalf.reduce((sum, p) => sum + getTotalEngagement(p.totalEngagement), 0) /
+        secondHalf.length
+      : 0;
   const recentTrend: 'up' | 'down' | 'stable' =
     secondAvg > firstAvg * 1.1 ? 'up' : secondAvg < firstAvg * 0.9 ? 'down' : 'stable';
 
@@ -596,10 +630,7 @@ async function getPostAnalytics(
   }
 }
 
-async function getAllPostAnalytics(
-  address: string,
-  env: Env,
-): Promise<PostAnalytics[]> {
+async function getAllPostAnalytics(address: string, env: Env): Promise<PostAnalytics[]> {
   const posts: PostAnalytics[] = [];
   if (!env.CACHE) return posts;
 
@@ -770,7 +801,12 @@ async function computeContentTypeBreakdown(
 async function computeFollowerGrowth(
   address: string,
   env: Env,
-): Promise<{ total: number; change7d: number; change30d: number; byProtocol: Record<string, { total: number; change7d: number; change30d: number }> }> {
+): Promise<{
+  total: number;
+  change7d: number;
+  change30d: number;
+  byProtocol: Record<string, { total: number; change7d: number; change30d: number }>;
+}> {
   const defaults = { total: 0, change7d: 0, change30d: 0, byProtocol: {} };
 
   if (!env.SUBSCRIPTIONS) return defaults;
@@ -790,7 +826,13 @@ async function computeFollowerGrowth(
 // ─── Helpers ──────────────────────────────────────────────────────────────
 
 function getTotalEngagement(engagement: PostAnalytics['totalEngagement']): number {
-  return engagement.likes + engagement.reposts + engagement.replies + engagement.quotes + engagement.bookmarks;
+  return (
+    engagement.likes +
+    engagement.reposts +
+    engagement.replies +
+    engagement.quotes +
+    engagement.bookmarks
+  );
 }
 
 function computeEngagementScore(engagement: PostAnalytics['totalEngagement']): number {
@@ -825,7 +867,6 @@ function getTimeRange(rangeParam: string): AnalyticsTimeRange {
       const start = new Date(now.getTime() - 90 * 86400_000);
       return { start: start.toISOString(), end, label: '90d' };
     }
-    case 'all':
     default:
       return { start: new Date(0).toISOString(), end, label: 'all' };
   }

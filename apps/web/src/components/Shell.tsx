@@ -581,9 +581,7 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
         {pathname !== '/' && (
           <>
             {/* Tablet: always collapsed icon sidebar */}
-            <div
-              className="hidden md:block lg:hidden sticky top-14 h-[calc(100dvh-3.5rem)] w-[72px] shrink-0 overflow-y-auto scrollbar-none border-r border-[var(--color-glass-border)]"
-            >
+            <div className="hidden md:block lg:hidden sticky top-14 h-[calc(100dvh-3.5rem)] w-[72px] shrink-0 overflow-y-auto scrollbar-none border-r border-[var(--color-glass-border)]">
               <LeftSidebar
                 collapsed={true}
                 onQuickSwitcherOpen={() => setQuickSwitcherOpen(true)}

@@ -20,13 +20,7 @@ import { seal, unseal } from './crypto-seal';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
-export type RoomTransport =
-  | 'nostr'
-  | 'matrix'
-  | 'farcaster'
-  | 'bluesky'
-  | 'telegram'
-  | 'web';
+export type RoomTransport = 'nostr' | 'matrix' | 'farcaster' | 'bluesky' | 'telegram' | 'web';
 
 export interface RoomMember {
   /** Canonical user ID (wallet address) */
@@ -164,11 +158,16 @@ const KV_MENTION_INDEX_PREFIX = 'uroom:mention:';
 
 const MAX_ROOM_SIZE = 250;
 const MAX_MESSAGE_HISTORY = 1000;
-const KEY_BYTE_LENGTH = 32;
+const _KEY_BYTE_LENGTH = 32;
 const INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 const ALL_TRANSPORTS: RoomTransport[] = [
-  'nostr', 'matrix', 'farcaster', 'bluesky', 'telegram', 'web',
+  'nostr',
+  'matrix',
+  'farcaster',
+  'bluesky',
+  'telegram',
+  'web',
 ];
 
 // ─── Base64 Helpers ─────────────────────────────────────────────────────────
@@ -220,7 +219,13 @@ function normalizeMention(text: string): string {
 }
 
 function computeTransportState(members: RoomMember[]): RoomTransportState {
-  const state: RoomTransportState = { nostr: false, matrix: false, farcaster: false, bluesky: false, telegram: false };
+  const state: RoomTransportState = {
+    nostr: false,
+    matrix: false,
+    farcaster: false,
+    bluesky: false,
+    telegram: false,
+  };
   for (const m of members) {
     if (m.transport === 'nostr') state.nostr = true;
     else if (m.transport === 'matrix') state.matrix = true;
@@ -234,11 +239,7 @@ function computeTransportState(members: RoomMember[]): RoomTransportState {
 // ─── Encryption ─────────────────────────────────────────────────────────────
 
 async function generateRoomKey(): Promise<CryptoKey> {
-  return crypto.subtle.generateKey(
-    { name: 'AES-GCM', length: 256 },
-    true,
-    ['encrypt', 'decrypt'],
-  );
+  return crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt']);
 }
 
 async function exportRoomKey(key: CryptoKey): Promise<string> {
@@ -249,7 +250,8 @@ async function exportRoomKey(key: CryptoKey): Promise<string> {
 async function importRoomKey(keyStr: string): Promise<CryptoKey> {
   const raw = fromBase64Url(keyStr);
   return crypto.subtle.importKey('raw', raw, { name: 'AES-GCM', length: 256 }, false, [
-    'encrypt', 'decrypt',
+    'encrypt',
+    'decrypt',
   ]);
 }
 
@@ -266,7 +268,7 @@ async function encryptMessageContent(
   };
 }
 
-async function decryptMessageContent(
+async function _decryptMessageContent(
   encryptedContent: string,
   iv: string,
   key: CryptoKey,
@@ -314,7 +316,7 @@ export async function createUnifiedRoom(
 
   const now = Date.now();
 
-  const roomMembers: RoomMember[] = allMemberIds.map((id, i) => {
+  const roomMembers: RoomMember[] = allMemberIds.map((id, _i) => {
     const m = members.find((x) => x.id === id);
     const defaultIdentity: RoomMember['identity'] = {};
     return {
@@ -365,10 +367,7 @@ export async function createUnifiedRoom(
 /**
  * Get a unified room by ID.
  */
-export async function getUnifiedRoom(
-  env: Env,
-  roomId: string,
-): Promise<UnifiedRoom | null> {
+export async function getUnifiedRoom(env: Env, roomId: string): Promise<UnifiedRoom | null> {
   if (!env.CACHE) return null;
   try {
     const raw = await env.CACHE.get(roomKey(roomId));
@@ -458,11 +457,7 @@ export async function joinUnifiedRoom(
 /**
  * Leave a unified room. Triggers key rotation for remaining members.
  */
-export async function leaveUnifiedRoom(
-  env: Env,
-  roomId: string,
-  userId: string,
-): Promise<void> {
+export async function leaveUnifiedRoom(env: Env, roomId: string, userId: string): Promise<void> {
   if (!env.CACHE) throw new Error('[uroom] KV not available');
 
   const room = await getUnifiedRoom(env, roomId);
@@ -534,7 +529,7 @@ export async function inviteToRoom(
     expiresAt: Date.now() + INVITE_TTL_MS,
   };
 
-  await env.CACHE!.put(inviteKey(roomId, invite.id), JSON.stringify(invite), {
+  await env.CACHE?.put(inviteKey(roomId, invite.id), JSON.stringify(invite), {
     expirationTtl: Math.ceil(INVITE_TTL_MS / 1000),
   });
 
@@ -575,10 +570,7 @@ export async function acceptInvite(
  * Rotate the room encryption key. Call after member add/remove.
  * Re-encrypts the key for all remaining members and stores in KV.
  */
-export async function rotateRoomKey(
-  env: Env,
-  roomId: string,
-): Promise<void> {
+export async function rotateRoomKey(env: Env, roomId: string): Promise<void> {
   if (!env.CACHE) return;
 
   const room = await getUnifiedRoom(env, roomId);
@@ -599,11 +591,7 @@ export async function rotateRoomKey(
 /**
  * Get the room encryption key for a member.
  */
-export async function getRoomKey(
-  env: Env,
-  roomId: string,
-  userId: string,
-): Promise<string | null> {
+export async function getRoomKey(env: Env, roomId: string, userId: string): Promise<string | null> {
   if (!env.CACHE) return null;
 
   try {
@@ -721,11 +709,7 @@ export async function sendRoomMessage(
  * Fan-out a message to all room members via their preferred transport.
  * Delivers in parallel, updates delivery status in KV.
  */
-async function fanOutMessage(
-  env: Env,
-  room: UnifiedRoom,
-  message: RoomMessage,
-): Promise<void> {
+async function fanOutMessage(env: Env, room: UnifiedRoom, message: RoomMessage): Promise<void> {
   const deliverableMembers = room.members.filter(
     (m) => m.id !== message.fromId && m.transport !== 'web',
   );
@@ -796,7 +780,7 @@ async function deliverToMember(
           break;
       }
 
-      if (result && result.ok) return result;
+      if (result?.ok) return result;
     } catch (err) {
       // Continue to fallback
       console.error(`[uroom] ${transport} delivery failed for ${member.id}:`, err);
@@ -830,24 +814,29 @@ async function deliverViaNostr(
     const senderNsec = await env.CACHE?.get('nostr:sender:nsec');
     if (!senderNsec) return null;
 
-    const senderPubkey = nostr.getPublicKey(senderNsec);
+    const _senderPubkey = nostr.getPublicKey(senderNsec);
     const recipientPubkey = member.identity.nostr.pubkey;
     const relays = member.identity.nostr.relays ?? [
-      'wss://relay.damus.io', 'wss://nos.lol', 'wss://relay.primal.net',
+      'wss://relay.damus.io',
+      'wss://nos.lol',
+      'wss://relay.primal.net',
     ];
 
     const roomContext = `[${room.name}] ${message.fromName}: `;
     const displayText = roomContext + message.content;
-    const truncatedText = displayText.length > 200 ? displayText.slice(0, 200) + '…' : displayText;
+    const truncatedText = displayText.length > 200 ? `${displayText.slice(0, 200)}…` : displayText;
 
     const encryptedContent = await nostr.nip04Encrypt(senderNsec, recipientPubkey, truncatedText);
 
-    const ev = nostr.finishEvent({
-      kind: 4,
-      tags: [['p', recipientPubkey]],
-      content: encryptedContent,
-      created_at: Math.floor(Date.now() / 1000),
-    }, senderNsec);
+    const ev = nostr.finishEvent(
+      {
+        kind: 4,
+        tags: [['p', recipientPubkey]],
+        content: encryptedContent,
+        created_at: Math.floor(Date.now() / 1000),
+      },
+      senderNsec,
+    );
 
     const pool = new nostr.RelayPool(relays, { eoseTimeout: 5000 });
     await pool.publish(ev);
@@ -882,8 +871,11 @@ async function deliverViaMatrix(
   if (!member.identity.matrix?.userId) return null;
 
   try {
-    const accessToken = env.MATRIX_ACCESS_TOKEN || await env.CACHE?.get('matrix:access_token');
-    const homeserver = member.identity.matrix.homeserver || env.MATRIX_INSTANCE_URL || 'https://matrix.degenfeed.xyz';
+    const accessToken = env.MATRIX_ACCESS_TOKEN || (await env.CACHE?.get('matrix:access_token'));
+    const homeserver =
+      member.identity.matrix.homeserver ||
+      env.MATRIX_INSTANCE_URL ||
+      'https://matrix.degenfeed.xyz';
     if (!accessToken) return null;
 
     const roomRef = `[${room.name}]`; // Will be used in message display
@@ -914,8 +906,11 @@ async function deliverViaMatrix(
       if (!sendRes.ok) return null;
       const data = (await sendRes.json()) as { event_id: string };
       return {
-        transport: 'matrix', ok: true, nativeId: data.event_id,
-        attemptedAt: Date.now(), deliveredAt: Date.now(),
+        transport: 'matrix',
+        ok: true,
+        nativeId: data.event_id,
+        attemptedAt: Date.now(),
+        deliveredAt: Date.now(),
       };
     }
 
@@ -934,12 +929,16 @@ async function deliverViaMatrix(
     if (!sendRes.ok) return null;
     const data = (await sendRes.json()) as { event_id: string };
     return {
-      transport: 'matrix', ok: true, nativeId: data.event_id,
-      attemptedAt: Date.now(), deliveredAt: Date.now(),
+      transport: 'matrix',
+      ok: true,
+      nativeId: data.event_id,
+      attemptedAt: Date.now(),
+      deliveredAt: Date.now(),
     };
   } catch (err) {
     return {
-      transport: 'matrix', ok: false,
+      transport: 'matrix',
+      ok: false,
       error: err instanceof Error ? err.message : String(err),
       attemptedAt: Date.now(),
     };
@@ -958,21 +957,21 @@ async function deliverViaFarcaster(
   if (!member.identity.farcaster?.fid) return null;
 
   try {
-    const signerKey = env.FARCASTER_SIGNER_KEY || await env.CACHE?.get('farcaster:signer_key');
+    const signerKey = env.FARCASTER_SIGNER_KEY || (await env.CACHE?.get('farcaster:signer_key'));
     if (!signerKey) return null;
 
-    const fid = env.FARCASTER_FID || await env.CACHE?.get('farcaster:bot_fid') || '1';
+    const _fid = env.FARCASTER_FID || (await env.CACHE?.get('farcaster:bot_fid')) || '1';
 
     // Construct a direct cast via Neynar or Hub
     const neynarKey = env.NEYNAR_API_KEY;
     const displayText = `[${room.name}] ${message.fromName}: ${message.content}`;
-    const truncatedText = displayText.length > 280 ? displayText.slice(0, 277) + '…' : displayText;
+    const truncatedText = displayText.length > 280 ? `${displayText.slice(0, 277)}…` : displayText;
 
     if (neynarKey) {
       const res = await fetch('https://api.neynar.com/v2/farcaster/cast', {
         method: 'POST',
         headers: {
-          'api_key': neynarKey,
+          api_key: neynarKey,
           'content-type': 'application/json',
         },
         body: JSON.stringify({
@@ -988,8 +987,11 @@ async function deliverViaFarcaster(
       if (res.ok) {
         const data = (await res.json()) as { cast: { hash: string } };
         return {
-          transport: 'farcaster', ok: true, nativeId: data.cast.hash,
-          attemptedAt: Date.now(), deliveredAt: Date.now(),
+          transport: 'farcaster',
+          ok: true,
+          nativeId: data.cast.hash,
+          attemptedAt: Date.now(),
+          deliveredAt: Date.now(),
         };
       }
     }
@@ -1004,18 +1006,23 @@ async function deliverViaFarcaster(
 
     if (hubRes.ok) {
       return {
-        transport: 'farcaster', ok: true,
-        attemptedAt: Date.now(), deliveredAt: Date.now(),
+        transport: 'farcaster',
+        ok: true,
+        attemptedAt: Date.now(),
+        deliveredAt: Date.now(),
       };
     }
 
     return {
-      transport: 'farcaster', ok: false, error: 'Farcaster delivery failed',
+      transport: 'farcaster',
+      ok: false,
+      error: 'Farcaster delivery failed',
       attemptedAt: Date.now(),
     };
   } catch (err) {
     return {
-      transport: 'farcaster', ok: false,
+      transport: 'farcaster',
+      ok: false,
       error: err instanceof Error ? err.message : String(err),
       attemptedAt: Date.now(),
     };
@@ -1034,12 +1041,12 @@ async function deliverViaBluesky(
   if (!member.identity.bluesky?.did) return null;
 
   try {
-    const accessToken = env.BSKY_ACCESS_TOKEN || await env.CACHE?.get('bluesky:access_jwt');
-    const senderDid = env.BSKY_DID || await env.CACHE?.get('bluesky:did');
+    const accessToken = env.BSKY_ACCESS_TOKEN || (await env.CACHE?.get('bluesky:access_jwt'));
+    const senderDid = env.BSKY_DID || (await env.CACHE?.get('bluesky:did'));
     if (!accessToken || !senderDid) return null;
 
     const displayText = `🏠 ${room.name} — ${message.fromName}: ${message.content}`;
-    const truncatedText = displayText.length > 280 ? displayText.slice(0, 277) + '…' : displayText;
+    const truncatedText = displayText.length > 280 ? `${displayText.slice(0, 277)}…` : displayText;
 
     const res = await fetch('https://bsky.social/xrpc/chat.bsky.conversation.sendMessage', {
       method: 'POST',
@@ -1056,8 +1063,11 @@ async function deliverViaBluesky(
     if (res.ok) {
       const data = (await res.json()) as { id: string };
       return {
-        transport: 'bluesky', ok: true, nativeId: data.id,
-        attemptedAt: Date.now(), deliveredAt: Date.now(),
+        transport: 'bluesky',
+        ok: true,
+        nativeId: data.id,
+        attemptedAt: Date.now(),
+        deliveredAt: Date.now(),
       };
     }
 
@@ -1080,12 +1090,16 @@ async function deliverViaBluesky(
     if (!postRes.ok) return null;
     const postData = (await postRes.json()) as { uri: string };
     return {
-      transport: 'bluesky', ok: true, nativeId: postData.uri,
-      attemptedAt: Date.now(), deliveredAt: Date.now(),
+      transport: 'bluesky',
+      ok: true,
+      nativeId: postData.uri,
+      attemptedAt: Date.now(),
+      deliveredAt: Date.now(),
     };
   } catch (err) {
     return {
-      transport: 'bluesky', ok: false,
+      transport: 'bluesky',
+      ok: false,
       error: err instanceof Error ? err.message : String(err),
       attemptedAt: Date.now(),
     };
@@ -1122,7 +1136,8 @@ async function deliverViaTelegram(
 
     if (!res.ok) {
       return {
-        transport: 'telegram', ok: false,
+        transport: 'telegram',
+        ok: false,
         error: `Telegram API error: ${res.status}`,
         attemptedAt: Date.now(),
       };
@@ -1130,12 +1145,16 @@ async function deliverViaTelegram(
 
     const data = (await res.json()) as { result: { message_id: number } };
     return {
-      transport: 'telegram', ok: true, nativeId: String(data.result.message_id),
-      attemptedAt: Date.now(), deliveredAt: Date.now(),
+      transport: 'telegram',
+      ok: true,
+      nativeId: String(data.result.message_id),
+      attemptedAt: Date.now(),
+      deliveredAt: Date.now(),
     };
   } catch (err) {
     return {
-      transport: 'telegram', ok: false,
+      transport: 'telegram',
+      ok: false,
       error: err instanceof Error ? err.message : String(err),
       attemptedAt: Date.now(),
     };
@@ -1146,7 +1165,7 @@ async function deliverViaTelegram(
  * Deliver via WebSocket (fallback / web users).
  */
 async function deliverViaWebSocket(
-  env: Env,
+  _env: Env,
   member: RoomMember,
   message: RoomMessage,
 ): Promise<MemberDeliveryStatus | null> {
@@ -1167,18 +1186,24 @@ async function deliverViaWebSocket(
 
     if (delivered) {
       return {
-        transport: 'web', ok: true, nativeId: message.id,
-        attemptedAt: Date.now(), deliveredAt: Date.now(),
+        transport: 'web',
+        ok: true,
+        nativeId: message.id,
+        attemptedAt: Date.now(),
+        deliveredAt: Date.now(),
       };
     }
 
     return {
-      transport: 'web', ok: false, error: 'WebSocket user offline',
+      transport: 'web',
+      ok: false,
+      error: 'WebSocket user offline',
       attemptedAt: Date.now(),
     };
   } catch (err) {
     return {
-      transport: 'web', ok: false,
+      transport: 'web',
+      ok: false,
       error: err instanceof Error ? err.message : String(err),
       attemptedAt: Date.now(),
     };
@@ -1196,10 +1221,7 @@ async function deliverViaWebSocket(
  *   - @12345         → resolved against Farcaster FID (if numeric)
  *   - @handle.bsky.social → resolved against Bluesky handle
  */
-export function resolveMentions(
-  content: string,
-  members: RoomMember[],
-): MentionResolution[] {
+export function resolveMentions(content: string, members: RoomMember[]): MentionResolution[] {
   const mentionPattern = /@(\S+)/g;
   const resolutions: MentionResolution[] = [];
   let match: RegExpExecArray | null;
@@ -1223,12 +1245,11 @@ export function resolveMentions(
     }
 
     // Try matching by npub
-    const byNpub = members.find(
-      (m) => m.identity.nostr?.npub?.toLowerCase() === normalized,
-    );
+    const byNpub = members.find((m) => m.identity.nostr?.npub?.toLowerCase() === normalized);
     if (byNpub) {
       resolutions.push({
-        raw, memberId: byNpub.id,
+        raw,
+        memberId: byNpub.id,
         displayName: byNpub.displayName || byNpub.id,
         resolvedVia: 'npub',
       });
@@ -1241,7 +1262,8 @@ export function resolveMentions(
       const byFid = members.find((m) => m.identity.farcaster?.fid === fid);
       if (byFid) {
         resolutions.push({
-          raw, memberId: byFid.id,
+          raw,
+          memberId: byFid.id,
           displayName: byFid.displayName || byFid.id,
           resolvedVia: 'fid',
         });
@@ -1254,7 +1276,8 @@ export function resolveMentions(
       const byWallet = members.find((m) => m.id === normalized);
       if (byWallet) {
         resolutions.push({
-          raw, memberId: byWallet.id,
+          raw,
+          memberId: byWallet.id,
           displayName: byWallet.displayName || byWallet.id,
           resolvedVia: 'wallet',
         });
@@ -1264,12 +1287,11 @@ export function resolveMentions(
 
     // Try Bluesky handle
     if (normalized.endsWith('.bsky.social')) {
-      const byBsky = members.find(
-        (m) => m.identity.bluesky?.handle?.toLowerCase() === normalized,
-      );
+      const byBsky = members.find((m) => m.identity.bluesky?.handle?.toLowerCase() === normalized);
       if (byBsky) {
         resolutions.push({
-          raw, memberId: byBsky.id,
+          raw,
+          memberId: byBsky.id,
           displayName: byBsky.displayName || byBsky.id,
           resolvedVia: 'bsky-handle',
         });
@@ -1279,7 +1301,10 @@ export function resolveMentions(
 
     // Unresolved mention
     resolutions.push({
-      raw, memberId: null, displayName: null, resolvedVia: 'unknown',
+      raw,
+      memberId: null,
+      displayName: null,
+      resolvedVia: 'unknown',
     });
   }
 
@@ -1349,10 +1374,7 @@ async function removeRoomFromUserIndex(env: Env, userId: string, roomId: string)
 /**
  * Get all rooms for a user.
  */
-export async function getUserRooms(
-  env: Env,
-  userId: string,
-): Promise<UnifiedRoom[]> {
+export async function getUserRooms(env: Env, userId: string): Promise<UnifiedRoom[]> {
   if (!env.CACHE) return [];
 
   try {
@@ -1377,10 +1399,7 @@ export async function getUserRooms(
 /**
  * Get unread counts for all rooms a user is in.
  */
-export async function getUnreadCounts(
-  env: Env,
-  userId: string,
-): Promise<UnreadCount[]> {
+export async function getUnreadCounts(env: Env, userId: string): Promise<UnreadCount[]> {
   const rooms = await getUserRooms(env, userId);
   const counts: UnreadCount[] = [];
 
@@ -1403,19 +1422,10 @@ export async function getUnreadCounts(
 /**
  * Check if a user is a member of a room.
  */
-export async function isRoomMember(
-  env: Env,
-  roomId: string,
-  userId: string,
-): Promise<boolean> {
+export async function isRoomMember(env: Env, roomId: string, userId: string): Promise<boolean> {
   const room = await getUnifiedRoom(env, roomId);
   if (!room) return false;
   return room.members.some((m) => m.id === userId.toLowerCase());
 }
 
-export {
-  ALL_TRANSPORTS,
-  KV_ROOM_PREFIX,
-  KV_ROOM_MESSAGES_PREFIX,
-  KV_USER_ROOMS_PREFIX,
-};
+export { ALL_TRANSPORTS, KV_ROOM_MESSAGES_PREFIX, KV_ROOM_PREFIX, KV_USER_ROOMS_PREFIX };

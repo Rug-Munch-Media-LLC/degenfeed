@@ -7,15 +7,15 @@
  *   GET  /api/news/sources/stats       — Stats: total articles, by source, by category
  */
 
-import { NEWS_SOURCES, aggregateNews } from '../feed/news-aggregator';
-import { type Env, jsonResponse, noCacheJsonResponse, log } from '../index';
+import { aggregateNews, NEWS_SOURCES } from '../feed/news-aggregator';
+import { type Env, jsonResponse, log, noCacheJsonResponse } from '../index';
 
 // ─── KV Keys ──────────────────────────────────────────────────────────────
 
 const SOURCE_HEALTH_PREFIX = 'news:source:health:';
-const SOURCE_COUNTS_PREFIX = 'news:source:counts:';
+const _SOURCE_COUNTS_PREFIX = 'news:source:counts:';
 const CACHE_TTL_LONG = 86400; // 24 hours
-const CACHE_TTL_SHORT = 300;  // 5 min
+const _CACHE_TTL_SHORT = 300; // 5 min
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
@@ -60,7 +60,9 @@ export async function handleSourcesHealth(_request: Request, env: Env): Promise<
     try {
       const raw = await env.CACHE?.get(`${SOURCE_HEALTH_PREFIX}${source.id}`);
       if (raw) health = JSON.parse(raw);
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
 
     const fetchCount = (health.fetchCount as number) ?? 0;
     const errorCount = (health.errorCount as number) ?? 0;
@@ -154,11 +156,16 @@ export async function handleSourcesRefresh(request: Request, env: Env): Promise<
         await env.CACHE?.put(`${SOURCE_HEALTH_PREFIX}${source.id}`, JSON.stringify(update), {
           expirationTtl: CACHE_TTL_LONG,
         });
-      } catch { /* non-critical */ }
+      } catch {
+        /* non-critical */
+      }
     }
 
     const elapsed = Date.now() - startTime;
-    log('info', `[news-sources] refresh complete: ${result.stories.length} stories in ${elapsed}ms`);
+    log(
+      'info',
+      `[news-sources] refresh complete: ${result.stories.length} stories in ${elapsed}ms`,
+    );
 
     return jsonResponse({
       ok: true,
@@ -167,8 +174,14 @@ export async function handleSourcesRefresh(request: Request, env: Env): Promise<
       elapsedMs: elapsed,
     });
   } catch (err) {
-    log('error', `[news-sources] refresh failed: ${err instanceof Error ? err.message : 'unknown'}`);
-    return jsonResponse({ error: 'Refresh failed', details: err instanceof Error ? err.message : 'unknown' }, 500);
+    log(
+      'error',
+      `[news-sources] refresh failed: ${err instanceof Error ? err.message : 'unknown'}`,
+    );
+    return jsonResponse(
+      { error: 'Refresh failed', details: err instanceof Error ? err.message : 'unknown' },
+      500,
+    );
   }
 }
 
@@ -231,7 +244,8 @@ export async function handleSourcesStats(_request: Request, env: Env): Promise<R
     .map(([_, cs]) => ({
       ...cs,
       totalArticles: categoryArticleCounts.get(cs.category) ?? 0,
-      avgCredibility: cs.sourceCount > 0 ? Math.round((cs.avgCredibility / cs.sourceCount) * 100) / 100 : 0,
+      avgCredibility:
+        cs.sourceCount > 0 ? Math.round((cs.avgCredibility / cs.sourceCount) * 100) / 100 : 0,
     }))
     .sort((a, b) => b.totalArticles - a.totalArticles);
 

@@ -21,22 +21,21 @@
 
 import type { Env } from '../index';
 import { log } from '../index';
-import { uploadToR2 } from './r2-storage';
-import { uploadBufferToIPFS } from './ipfs-storage';
-import { getIPFSGatewayUrl } from './ipfs-storage';
-import type { R2UploadResult } from './r2-storage';
 import type { IPFSUploadResult } from './ipfs-storage';
+import { getIPFSGatewayUrl, uploadBufferToIPFS } from './ipfs-storage';
+import type { R2UploadResult } from './r2-storage';
+import { uploadToR2 } from './r2-storage';
 
 // ─── Types ──────────────────────────────────────────────────────────────
 
 /** Content categories for storage routing decisions */
 export type VideoContentType =
-  | 'short'          // <60s short-form video
-  | 'longform'       // >=60s VOD
-  | 'podcast'        // Audio / podcast episode
-  | 'livestream'     // Live stream recording (VOD)
-  | 'premium'        // Creator-gated premium content
-  | 'temporary';     // Temp upload (auto-delete)
+  | 'short' // <60s short-form video
+  | 'longform' // >=60s VOD
+  | 'podcast' // Audio / podcast episode
+  | 'livestream' // Live stream recording (VOD)
+  | 'premium' // Creator-gated premium content
+  | 'temporary'; // Temp upload (auto-delete)
 
 /** Storage backend for a given piece of content */
 export type StorageBackend =
@@ -50,8 +49,8 @@ export type StorageBackend =
   | 'ipfs'
   | 'r2'
   | 'arweave'
-  | 'r2+ipfs'        // R2 primary + IPFS mirror
-  | 'r2+arweave';    // R2 primary + Arweave permanent copy
+  | 'r2+ipfs' // R2 primary + IPFS mirror
+  | 'r2+arweave'; // R2 primary + Arweave permanent copy
 
 /** Result of routing analysis */
 export interface RoutingDecision {
@@ -205,7 +204,10 @@ export function analyzeStorageRoute(params: {
         externalUrl,
       };
     }
-    if (ZERO_COST_PLATFORMS.ODYSEE.test(externalUrl) || ZERO_COST_PLATFORMS.LBRY.test(externalUrl)) {
+    if (
+      ZERO_COST_PLATFORMS.ODYSEE.test(externalUrl) ||
+      ZERO_COST_PLATFORMS.LBRY.test(externalUrl)
+    ) {
       return {
         backend: 'odysee-lbry',
         contentType: classifyContentType(duration, format),
@@ -251,7 +253,7 @@ export function analyzeStorageRoute(params: {
 
   if (nativeUpload) {
     // Determine best native storage
-    if (isPremium || fileSize && fileSize < 5 * 1024 * 1024) {
+    if (isPremium || (fileSize && fileSize < 5 * 1024 * 1024)) {
       // Premium or small files → Arweave
       return {
         backend: 'arweave',
@@ -335,10 +337,7 @@ export function analyzeStorageRoute(params: {
 
 // ─── Classify video content type ──────────────────────────────────────
 
-export function classifyContentType(
-  duration: number,
-  _format?: string,
-): VideoContentType {
+export function classifyContentType(duration: number, _format?: string): VideoContentType {
   if (duration < 60) return 'short';
   if (duration < 600) return 'longform'; // 1-10 min
   if (duration < 3600) return 'podcast'; // 10-60 min
@@ -361,7 +360,17 @@ export async function storeVideo(
     format?: string;
   },
 ): Promise<StorageResult> {
-  const { contentId, buffer, externalUrl, duration, fileSize, nativeUpload, isPremium, isTemporary, format } = params;
+  const {
+    contentId,
+    buffer,
+    externalUrl,
+    duration,
+    fileSize,
+    nativeUpload,
+    isPremium,
+    isTemporary,
+    format,
+  } = params;
 
   const route = analyzeStorageRoute({
     externalUrl,
@@ -420,7 +429,11 @@ export async function storeVideo(
   }
 
   // Upload to R2 (fallback or primary)
-  if (route.backend === 'r2' || route.backend === 'r2+ipfs' || (!primaryUrl && route.backend !== 'arweave')) {
+  if (
+    route.backend === 'r2' ||
+    route.backend === 'r2+ipfs' ||
+    (!primaryUrl && route.backend !== 'arweave')
+  ) {
     try {
       const r2Result: R2UploadResult = await uploadToR2(env, contentId, buffer, {
         contentType: format ? `video/${format}` : 'video/mp4',

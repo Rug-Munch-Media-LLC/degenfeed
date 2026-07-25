@@ -256,7 +256,7 @@ export class VideoScoreEngine {
     if (scores.size === 0) return 'other';
 
     const sorted = [...scores.entries()].sort((a, b) => b[1] - a[1]);
-    return sorted[0][0];
+    return sorted[0]?.[0] ?? 'other';
   }
 
   /**
@@ -323,7 +323,7 @@ export class VideoScoreEngine {
     if (scores.size === 0) return 'unknown';
 
     const sorted = [...scores.entries()].sort((a, b) => b[1] - a[1]);
-    return sorted[0][0];
+    return sorted[0]?.[0] ?? 'unknown';
   }
 
   /**
@@ -652,15 +652,15 @@ export class VideoScoreEngine {
       const contentType = this.detectContentType(video);
 
       // Update diversity trackers for this position
-      mergedOptions.creatorCounts!.set(
+      mergedOptions.creatorCounts?.set(
         video.creator.id,
-        (mergedOptions.creatorCounts!.get(video.creator.id) ?? 0) + 1,
+        (mergedOptions.creatorCounts?.get(video.creator.id) ?? 0) + 1,
       );
-      mergedOptions.categoryCounts!.set(
+      mergedOptions.categoryCounts?.set(
         contentType,
-        (mergedOptions.categoryCounts!.get(contentType) ?? 0) + 1,
+        (mergedOptions.categoryCounts?.get(contentType) ?? 0) + 1,
       );
-      mergedOptions.seenCategories!.add(contentType);
+      mergedOptions.seenCategories?.add(contentType);
 
       const result = this.score(video, mergedOptions);
 

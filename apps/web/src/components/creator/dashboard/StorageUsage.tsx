@@ -23,7 +23,7 @@ function formatSize(bytes: number): string {
   if (bytes === 0) return '0 B';
   const units = ['B', 'KB', 'MB', 'GB', 'TB'];
   const i = Math.floor(Math.log(bytes) / Math.log(1024));
-  const size = bytes / Math.pow(1024, i);
+  const size = bytes / 1024 ** i;
   return `${size.toFixed(i === 0 ? 0 : 1)} ${units[i]}`;
 }
 
@@ -366,17 +366,8 @@ function ExpiryWarning({
 
 // ─── Usage Gauge ────────────────────────────────────────────────────────
 
-function UsageGauge({
-  used,
-  total,
-  percent,
-}: {
-  used: string;
-  total: string;
-  percent: number;
-}) {
-  const color =
-    percent >= 90 ? '#ff4444' : percent >= 75 ? '#ffaa00' : '#00ff41';
+function UsageGauge({ used, total, percent }: { used: string; total: string; percent: number }) {
+  const color = percent >= 90 ? '#ff4444' : percent >= 75 ? '#ffaa00' : '#00ff41';
 
   const radius = 54;
   const circumference = 2 * Math.PI * radius;
@@ -414,9 +405,7 @@ function UsageGauge({
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-xl font-black tabular-nums text-[var(--color-fg)]">
-            {percent}%
-          </span>
+          <span className="text-xl font-black tabular-nums text-[var(--color-fg)]">{percent}%</span>
           <span className="text-[9px] text-[var(--color-muted)]">used</span>
         </div>
       </div>
@@ -430,13 +419,7 @@ function UsageGauge({
 
 // ─── Cost Breakdown ─────────────────────────────────────────────────────
 
-function CostBreakdown({
-  breakdown,
-  total,
-}: {
-  breakdown: Record<string, number>;
-  total: number;
-}) {
+function CostBreakdown({ breakdown, total }: { breakdown: Record<string, number>; total: number }) {
   if (Object.keys(breakdown).length === 0) {
     return (
       <div className="text-[10px] text-[var(--color-muted)] text-center py-2">
@@ -481,9 +464,7 @@ function StoragePrediction({ forecast }: { forecast: StorageForecast }) {
 
   return (
     <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-4">
-      <h4 className="mb-3 text-xs font-semibold text-[var(--color-fg)]">
-        📈 Storage Prediction
-      </h4>
+      <h4 className="mb-3 text-xs font-semibold text-[var(--color-fg)]">📈 Storage Prediction</h4>
 
       {/* Progress bar for projection */}
       <div className="space-y-2">
@@ -560,7 +541,8 @@ function OptimizeSection({
             🚀 Storage Optimization Available
           </h4>
           <p className="mt-1 text-[10px] text-[var(--color-muted)]">
-            {migrationCount} file{migrationCount !== 1 ? 's' : ''} can be migrated to cheaper storage.
+            {migrationCount} file{migrationCount !== 1 ? 's' : ''} can be migrated to cheaper
+            storage.
           </p>
           {potentialSavings > 0 && (
             <p className="text-[10px] text-green-400 tabular-nums mt-0.5">
@@ -605,9 +587,7 @@ function TierBadge({ tier }: { tier: string }) {
 function UpgradeSection({ currentPlan }: { currentPlan: string }) {
   return (
     <div>
-      <h3 className="mb-4 text-sm font-bold text-[var(--color-fg)]">
-        Upgrade Storage
-      </h3>
+      <h3 className="mb-4 text-sm font-bold text-[var(--color-fg)]">Upgrade Storage</h3>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {STORAGE_TIERS.map((tier) => {
           const isCurrent = tier.id === currentPlan;
@@ -648,7 +628,10 @@ function UpgradeSection({ currentPlan }: { currentPlan: string }) {
 
               <ul className="mb-4 space-y-1.5">
                 {tier.features.map((f) => (
-                  <li key={f} className="flex items-start gap-1.5 text-[10px] text-[var(--color-muted)]">
+                  <li
+                    key={f}
+                    className="flex items-start gap-1.5 text-[10px] text-[var(--color-muted)]"
+                  >
                     <span className="text-degen-400 mt-0.5">✓</span>
                     {f}
                   </li>
@@ -707,18 +690,88 @@ export default function StorageUsage() {
             freeLimit: 5_368_709_120,
             usagePercent: 43,
             byBackend: {
-              ipfs_storacha: { bytes: 500_000_000, readable: '500 MB', count: 20, costPerMo: 0, label: 'IPFS via Storacha', emoji: '🌐' },
-              ipfs_pinata: { bytes: 300_000_000, readable: '300 MB', count: 4, costPerMo: 0, label: 'IPFS via Pinata', emoji: '📌' },
-              r2_standard: { bytes: 1_000_000_000, readable: '1.0 GB', count: 8, costPerMo: 0.015, label: 'Cloudflare R2', emoji: '☁️' },
-              r2_infrequent_access: { bytes: 400_000_000, readable: '400 MB', count: 4, costPerMo: 0.004, label: 'R2 Infrequent Access', emoji: '❄️' },
-              arweave: { bytes: 100_000_000, readable: '100 MB', count: 3, costPerMo: 0.00006, label: 'Arweave (Irys)', emoji: '⛓️' },
+              ipfs_storacha: {
+                bytes: 500_000_000,
+                readable: '500 MB',
+                count: 20,
+                costPerMo: 0,
+                label: 'IPFS via Storacha',
+                emoji: '🌐',
+              },
+              ipfs_pinata: {
+                bytes: 300_000_000,
+                readable: '300 MB',
+                count: 4,
+                costPerMo: 0,
+                label: 'IPFS via Pinata',
+                emoji: '📌',
+              },
+              r2_standard: {
+                bytes: 1_000_000_000,
+                readable: '1.0 GB',
+                count: 8,
+                costPerMo: 0.015,
+                label: 'Cloudflare R2',
+                emoji: '☁️',
+              },
+              r2_infrequent_access: {
+                bytes: 400_000_000,
+                readable: '400 MB',
+                count: 4,
+                costPerMo: 0.004,
+                label: 'R2 Infrequent Access',
+                emoji: '❄️',
+              },
+              arweave: {
+                bytes: 100_000_000,
+                readable: '100 MB',
+                count: 3,
+                costPerMo: 0.00006,
+                label: 'Arweave (Irys)',
+                emoji: '⛓️',
+              },
             },
             byType: {
-              short: { bytes: 600_000_000, readable: '600 MB', count: 20, backend: 'ipfs_storacha', tier: 'tier1_free', costPerMo: 0 },
-              longform: { bytes: 1_000_000_000, readable: '1.0 GB', count: 8, backend: 'r2_standard', tier: 'tier2_cheap', costPerMo: 0.015 },
-              podcast: { bytes: 200_000_000, readable: '200 MB', count: 4, backend: 'ipfs_storacha', tier: 'tier1_free', costPerMo: 0 },
-              livestream: { bytes: 400_000_000, readable: '400 MB', count: 4, backend: 'r2_infrequent_access', tier: 'tier2_cheap', costPerMo: 0.004 },
-              premium: { bytes: 100_000_000, readable: '100 MB', count: 3, backend: 'arweave', tier: 'tier3_premium', costPerMo: 0.00006 },
+              short: {
+                bytes: 600_000_000,
+                readable: '600 MB',
+                count: 20,
+                backend: 'ipfs_storacha',
+                tier: 'tier1_free',
+                costPerMo: 0,
+              },
+              longform: {
+                bytes: 1_000_000_000,
+                readable: '1.0 GB',
+                count: 8,
+                backend: 'r2_standard',
+                tier: 'tier2_cheap',
+                costPerMo: 0.015,
+              },
+              podcast: {
+                bytes: 200_000_000,
+                readable: '200 MB',
+                count: 4,
+                backend: 'ipfs_storacha',
+                tier: 'tier1_free',
+                costPerMo: 0,
+              },
+              livestream: {
+                bytes: 400_000_000,
+                readable: '400 MB',
+                count: 4,
+                backend: 'r2_infrequent_access',
+                tier: 'tier2_cheap',
+                costPerMo: 0.004,
+              },
+              premium: {
+                bytes: 100_000_000,
+                readable: '100 MB',
+                count: 3,
+                backend: 'arweave',
+                tier: 'tier3_premium',
+                costPerMo: 0.00006,
+              },
             },
             plan: 'free',
             expiringSoon: [
@@ -762,7 +815,8 @@ export default function StorageUsage() {
               projectedMonthlyCost30d: 0.025,
               projectedMonthlyCost90d: 0.035,
               daysUntilFull: 87,
-              recommendation: '📈 At your current rate, you\'ll use 4.5 GB in 3 months. You\'re still within the free tier, but consider cleaning up old content.'
+              recommendation:
+                "📈 At your current rate, you'll use 4.5 GB in 3 months. You're still within the free tier, but consider cleaning up old content.",
             },
             migrationCandidates: 4,
             potentialSavings: 0.008,
@@ -830,10 +884,7 @@ export default function StorageUsage() {
     );
   }
 
-  const maxBackendBytes = Math.max(
-    ...Object.values(data.byBackend).map((b) => b.bytes),
-    1,
-  );
+  const maxBackendBytes = Math.max(...Object.values(data.byBackend).map((b) => b.bytes), 1);
 
   const costTotal = Object.values(data.costBreakdown ?? {}).reduce((a, b) => a + b, 0);
 
@@ -844,7 +895,8 @@ export default function StorageUsage() {
         <div>
           <h2 className="text-lg font-bold text-[var(--color-fg)]">Storage Usage</h2>
           <p className="text-xs text-[var(--color-muted)]">
-            Your videos are stored across Tier 1 (Free IPFS), Tier 2 (Cheap R2/B2), and Tier 3 (Premium Arweave)
+            Your videos are stored across Tier 1 (Free IPFS), Tier 2 (Cheap R2/B2), and Tier 3
+            (Premium Arweave)
           </p>
         </div>
         <div className="flex gap-2">
@@ -877,9 +929,7 @@ export default function StorageUsage() {
         />
 
         <div className="space-y-3">
-          <h3 className="text-xs font-semibold text-[var(--color-fg)]">
-            Storage by Backend
-          </h3>
+          <h3 className="text-xs font-semibold text-[var(--color-fg)]">Storage by Backend</h3>
           {Object.entries(data.byBackend).map(([backend, usage]) => (
             <MiniUsageBar
               key={backend}
@@ -889,9 +939,10 @@ export default function StorageUsage() {
               color={BACKEND_COLORS[backend] ?? '#888'}
               sub={usage.readable}
               count={usage.count}
-              cost={usage.costPerMo !== undefined && usage.costPerMo > 0
-                ? `$${usage.costPerMo.toFixed(4)}/mo`
-                : 'free'
+              cost={
+                usage.costPerMo !== undefined && usage.costPerMo > 0
+                  ? `$${usage.costPerMo.toFixed(4)}/mo`
+                  : 'free'
               }
             />
           ))}
@@ -902,13 +953,8 @@ export default function StorageUsage() {
       <div className="grid gap-4 sm:grid-cols-2">
         {/* Cost Breakdown */}
         <div className="card border-[var(--color-border)] bg-[var(--color-overlay)] p-4 backdrop-blur-xl">
-          <h3 className="mb-3 text-xs font-semibold text-[var(--color-fg)]">
-            💰 Cost Breakdown
-          </h3>
-          <CostBreakdown
-            breakdown={data.costBreakdown ?? {}}
-            total={costTotal}
-          />
+          <h3 className="mb-3 text-xs font-semibold text-[var(--color-fg)]">💰 Cost Breakdown</h3>
+          <CostBreakdown breakdown={data.costBreakdown ?? {}} total={costTotal} />
           {data.totalMonthlyCost !== undefined && data.totalMonthlyCost > 0 && (
             <div className="mt-3 pt-3 border-t border-[var(--color-glass-border)]">
               <div className="flex justify-between text-[10px]">
@@ -956,10 +1002,13 @@ export default function StorageUsage() {
                 {usage.readable}
               </div>
               <div className="flex justify-between text-[10px] text-[var(--color-muted)] mt-1">
-                <span>{usage.count} file{usage.count !== 1 ? 's' : ''}</span>
+                <span>
+                  {usage.count} file{usage.count !== 1 ? 's' : ''}
+                </span>
                 {usage.backend && (
                   <span>
-                    {BACKEND_EMOJIS[usage.backend] ?? '📁'} {BACKEND_LABELS[usage.backend] ?? usage.backend}
+                    {BACKEND_EMOJIS[usage.backend] ?? '📁'}{' '}
+                    {BACKEND_LABELS[usage.backend] ?? usage.backend}
                   </span>
                 )}
               </div>
@@ -980,9 +1029,7 @@ export default function StorageUsage() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           label="Total Files"
-          value={String(
-            Object.values(data.byBackend).reduce((s, b) => s + b.count, 0),
-          )}
+          value={String(Object.values(data.byBackend).reduce((s, b) => s + b.count, 0))}
           sub="Across all storage tiers"
           icon="📁"
         />
@@ -995,7 +1042,7 @@ export default function StorageUsage() {
         <StatCard
           label="VODs (R2/B2 — $0.006-0.015/GB)"
           value={data.byType.longform?.readable ?? '0 B'}
-          sub={`${data.byType.longform?.count ?? 0} files • ~$${((data.byType.longform?.costPerMo ?? 0)).toFixed(4)}/mo`}
+          sub={`${data.byType.longform?.count ?? 0} files • ~$${(data.byType.longform?.costPerMo ?? 0).toFixed(4)}/mo`}
           icon="📺"
         />
         <StatCard
@@ -1010,8 +1057,8 @@ export default function StorageUsage() {
       {(data.potentialSavings ?? 0) > 0 && (
         <div className="rounded-xl border border-green-500/10 bg-green-500/5 p-3">
           <p className="text-[10px] text-green-400 text-center">
-            💰 You could save ~${data.potentialSavings!.toFixed(4)}/mo by optimizing your storage layout.
-            {' '}
+            💰 You could save ~${data.potentialSavings?.toFixed(4)}/mo by optimizing your storage
+            layout.{' '}
             <button
               type="button"
               onClick={handleOptimize}
@@ -1032,9 +1079,7 @@ export default function StorageUsage() {
         <div className="flex items-start gap-3">
           <span className="text-lg text-degen-400 mt-0.5">💡</span>
           <div>
-            <h4 className="text-xs font-semibold text-[var(--color-fg)]">
-              How Storage Tiers Work
-            </h4>
+            <h4 className="text-xs font-semibold text-[var(--color-fg)]">How Storage Tiers Work</h4>
             <ul className="mt-2 space-y-1 text-[10px] text-[var(--color-muted)]">
               <li>
                 <strong className="text-green-400">Tier 1 (Free):</strong> Shorts &amp; podcasts on

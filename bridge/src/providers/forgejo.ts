@@ -73,9 +73,11 @@ function guessRepoNiches(repo: ForgejoRepo): string[] {
   const all = `${desc} ${topics.join(' ')} ${lang}`;
   const niches: string[] = [];
 
-  if (/\b(crypto|blockchain|web3|bitcoin|ethereum|solana|defi|nft)\b/.test(all)) niches.push('crypto');
+  if (/\b(crypto|blockchain|web3|bitcoin|ethereum|solana|defi|nft)\b/.test(all))
+    niches.push('crypto');
   if (/\b(ai|artificial|intelligence|llm|machine.learning|agent)\b/.test(all)) niches.push('ai');
-  if (/\b(rust|go|python|typescript|javascript|solidity|wasm)\b/.test(all)) niches.push('programming');
+  if (/\b(rust|go|python|typescript|javascript|solidity|wasm)\b/.test(all))
+    niches.push('programming');
   if (/\b(activitypub|fediverse|mastodon|federation|social)\b/.test(all)) niches.push('fediverse');
   if (/\b(games|gaming|engine|3d|graphics)\b/.test(all)) niches.push('gaming');
   if (/\b(data|database|sql|analytics|big.data|etl)\b/.test(all)) niches.push('data');
@@ -85,7 +87,7 @@ function guessRepoNiches(repo: ForgejoRepo): string[] {
   return niches;
 }
 
-function repoActivityToPost(activity: ForgejoActivity): UnifiedPost {
+function _repoActivityToPost(activity: ForgejoActivity): UnifiedPost {
   const repo = activity.repo;
   const repoUrl = repo.html_url;
   const actorName = activity.actor?.login || 'someone';
@@ -93,15 +95,26 @@ function repoActivityToPost(activity: ForgejoActivity): UnifiedPost {
 
   const activityText = (() => {
     switch (type.toLowerCase()) {
-      case 'star': case 'starrepo': return `⭐ ${actorName} starred ${repo.full_name}`;
-      case 'fork': return `🔀 ${actorName} forked ${repo.full_name}`;
-      case 'create': return `📦 ${actorName} created ${repo.full_name}`;
-      case 'push': return `📤 ${actorName} pushed to ${repo.full_name}:${activity.ref || repo.default_branch}`;
-      case 'release': return `🏷️ ${actorName} released ${repo.full_name} — ${activity.content || ''}`;
-      case 'issue': return `🐛 ${actorName} opened issue in ${repo.full_name}`;
-      case 'pull_request': case 'pr': return `🔀 ${actorName} opened PR in ${repo.full_name}`;
-      case 'delete': return `🗑️ ${actorName} deleted branch in ${repo.full_name}`;
-      default: return `📌 ${actorName} ${type} — ${repo.full_name}`;
+      case 'star':
+      case 'starrepo':
+        return `⭐ ${actorName} starred ${repo.full_name}`;
+      case 'fork':
+        return `🔀 ${actorName} forked ${repo.full_name}`;
+      case 'create':
+        return `📦 ${actorName} created ${repo.full_name}`;
+      case 'push':
+        return `📤 ${actorName} pushed to ${repo.full_name}:${activity.ref || repo.default_branch}`;
+      case 'release':
+        return `🏷️ ${actorName} released ${repo.full_name} — ${activity.content || ''}`;
+      case 'issue':
+        return `🐛 ${actorName} opened issue in ${repo.full_name}`;
+      case 'pull_request':
+      case 'pr':
+        return `🔀 ${actorName} opened PR in ${repo.full_name}`;
+      case 'delete':
+        return `🗑️ ${actorName} deleted branch in ${repo.full_name}`;
+      default:
+        return `📌 ${actorName} ${type} — ${repo.full_name}`;
     }
   })();
 
@@ -129,13 +142,19 @@ function repoActivityToPost(activity: ForgejoActivity): UnifiedPost {
     },
     text,
     embeds: [
-      { kind: 'link', url: repoUrl, meta: { title: repo.full_name, description: repo.description } },
+      {
+        kind: 'link',
+        url: repoUrl,
+        meta: { title: repo.full_name, description: repo.description },
+      },
     ],
     contentType: 'code',
     createdAt: new Date(activity.created_at || repo.updated_at).getTime(),
     metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
     engagement: {
-      viewerLiked: false, viewerReposted: false, viewerBookmarked: false,
+      viewerLiked: false,
+      viewerReposted: false,
+      viewerBookmarked: false,
       raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
     },
     raw: activity,
@@ -147,13 +166,16 @@ function repoActivityToPost(activity: ForgejoActivity): UnifiedPost {
 
 async function fetchExploreRepos(source: ForgejoSource, limit: number): Promise<UnifiedPost[]> {
   try {
-    const res = await $fetch(`${source.instance}/api/${source.apiVersion}/explore/repos?sort=updated&limit=${limit}`, {
-      headers: { 'User-Agent': 'DegenFeed-Bridge/0.1 (Forgejo)' },
-      signal: AbortSignal.timeout(8000),
-    });
+    const res = await $fetch(
+      `${source.instance}/api/${source.apiVersion}/explore/repos?sort=updated&limit=${limit}`,
+      {
+        headers: { 'User-Agent': 'DegenFeed-Bridge/0.1 (Forgejo)' },
+        signal: AbortSignal.timeout(8000),
+      },
+    );
     if (!res.ok) return [];
 
-    const repos = await res.json() as ForgejoRepo[];
+    const repos = (await res.json()) as ForgejoRepo[];
     if (!Array.isArray(repos)) return [];
 
     return repos.slice(0, limit).map((repo) => {
@@ -162,7 +184,9 @@ async function fetchExploreRepos(source: ForgejoSource, limit: number): Promise<
         repo.description || '',
         `\n⭐ ${repo.stars_count} · 🍴 ${repo.forks_count} · 🐛 ${repo.open_issues_count}`,
         `🖥️ ${repo.language || 'N/A'}`,
-      ].filter(Boolean).join('\n');
+      ]
+        .filter(Boolean)
+        .join('\n');
 
       return {
         id: `forgejo:repo:${repo.full_name}`,
@@ -174,19 +198,26 @@ async function fetchExploreRepos(source: ForgejoSource, limit: number): Promise<
           displayName: repo.owner?.login || 'Developer',
           bio: '',
           avatarUrl: repo.owner?.avatar_url || '',
-          followerCount: 0, followingCount: 0,
+          followerCount: 0,
+          followingCount: 0,
           links: [{ label: 'profile', url: repo.owner?.html_url || '' }],
           keys: {},
         },
         text,
         embeds: [
-          { kind: 'link', url: repo.html_url, meta: { title: repo.full_name, description: repo.description } },
+          {
+            kind: 'link',
+            url: repo.html_url,
+            meta: { title: repo.full_name, description: repo.description },
+          },
         ],
         contentType: 'code',
         createdAt: new Date(repo.updated_at || repo.created_at).getTime(),
         metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
         engagement: {
-          viewerLiked: false, viewerReposted: false, viewerBookmarked: false,
+          viewerLiked: false,
+          viewerReposted: false,
+          viewerBookmarked: false,
           raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
         },
         raw: repo,

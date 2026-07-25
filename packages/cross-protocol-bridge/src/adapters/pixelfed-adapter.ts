@@ -34,12 +34,12 @@ export const pixelfedAdapter: PlatformAdapter = {
     // Mentions
     const mentions = master.mentions ?? [];
     if (mentions.length > 0) {
-      caption += '\n\n' + mentions.map((m) => `@${m}`).join(' ');
+      caption += `\n\n${mentions.map((m) => `@${m}`).join(' ')}`;
     }
 
     // Hashtags at the end (Pixelfed standard)
     if (hashtags.length > 0) {
-      caption += '\n\n' + hashtags.join(' ');
+      caption += `\n\n${hashtags.join(' ')}`;
     }
 
     caption = truncateText(caption, PIXELFED_CHAR_LIMIT);
@@ -85,11 +85,11 @@ export const pixelfedAdapter: PlatformAdapter = {
       preview += '\n⚠️ Over 20 images — will be truncated';
     }
 
-    preview += '\n' + master.text.slice(0, 300);
+    preview += `\n${master.text.slice(0, 300)}`;
     if (master.text.length > 300) preview += '...';
 
     if (master.hashtags && master.hashtags.length > 0) {
-      preview += '\n🏷️ ' + master.hashtags.map((h) => `#${h}`).join(' ');
+      preview += `\n🏷️ ${master.hashtags.map((h) => `#${h}`).join(' ')}`;
     }
 
     if (master.contentWarning) {

@@ -26,12 +26,12 @@ export const nostrAdapter: PlatformAdapter = {
     // Append mentions as npub-style references (adapter hints)
     const mentions = master.mentions ?? [];
     if (mentions.length > 0) {
-      content += '\n\n' + mentions.map((m) => `nostr:${m}`).join(' ');
+      content += `\n\n${mentions.map((m) => `nostr:${m}`).join(' ')}`;
     }
 
     // Append hashtags
     if (hashtags.length > 0) {
-      content += '\n\n' + hashtags.map((h) => `#${h}`).join(' ');
+      content += `\n\n${hashtags.map((h) => `#${h}`).join(' ')}`;
     }
 
     // Truncate if needed
@@ -78,10 +78,10 @@ export const nostrAdapter: PlatformAdapter = {
       preview += `\n📄 ${master.title}`;
     }
 
-    preview += '\n' + master.text.slice(0, 300) + (master.text.length > 300 ? '...' : '');
+    preview += `\n${master.text.slice(0, 300)}${master.text.length > 300 ? '...' : ''}`;
 
     if (master.hashtags && master.hashtags.length > 0) {
-      preview += '\n🏷️ ' + master.hashtags.map((h) => `#${h}`).join(' ');
+      preview += `\n🏷️ ${master.hashtags.map((h) => `#${h}`).join(' ')}`;
     }
 
     if (master.linkCard) {

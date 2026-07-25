@@ -10,6 +10,7 @@
 
 // ─── Types ───────────────────────────────────────────────────────────────
 
+export type { FeatureCheckResult } from './FeatureGate';
 export type {
   FeatureFlag,
   RevenueEvent,
@@ -18,7 +19,6 @@ export type {
   TierConfig,
   TierLimits,
 } from './types';
-export type { FeatureCheckResult } from './FeatureGate';
 
 export {
   FEATURE_LABELS,

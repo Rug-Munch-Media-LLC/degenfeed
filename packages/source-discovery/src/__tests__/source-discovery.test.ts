@@ -237,7 +237,7 @@ describe('detectStaleSources', () => {
     ];
     const stale = detectStaleSources(sources, 14);
     expect(stale).toHaveLength(1);
-    expect(stale[0].sourceId).toBe('stale');
+    expect(stale[0]?.sourceId).toBe('stale');
   });
 
   it('returns empty array when all sources are active', () => {
@@ -331,7 +331,7 @@ describe('getNewThisWeek', () => {
     ];
     const recent = getNewThisWeek(sources, now, 7);
     expect(recent).toHaveLength(1);
-    expect(recent[0].id).toBe('new');
+    expect(recent[0]?.id).toBe('new');
   });
 });
 
@@ -373,6 +373,6 @@ describe('aggregateStats', () => {
     expect(stats.totalDiscovered).toBe(2);
     expect(stats.totalApproved).toBe(1);
     expect(stats.pendingCount).toBe(1);
-    expect(stats.perPlatform.reddit.discovered).toBe(2);
+    expect(stats.perPlatform.reddit?.discovered).toBe(2);
   });
 });

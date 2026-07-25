@@ -1,6 +1,6 @@
 'use client';
 
-import type { EcoPreset, CoinFormState } from './types';
+import type { CoinFormState, EcoPreset } from './types';
 
 export const ECO_PRESETS: Record<
   EcoPreset,
@@ -29,7 +29,17 @@ export const ECO_PRESETS: Record<
   },
 };
 
-export const CATEGORY_TAGS = ['meme', 'defi', 'nft', 'gaming', 'social', 'creator', 'music', 'art', 'sports'];
+export const CATEGORY_TAGS = [
+  'meme',
+  'defi',
+  'nft',
+  'gaming',
+  'social',
+  'creator',
+  'music',
+  'art',
+  'sports',
+];
 
 export const BONDING_PHASES_DISPLAY = [
   { name: 'Steal Deal', range: '0-20%', color: '#00ff41', desc: 'Lowest price entry' },
@@ -40,14 +50,47 @@ export const BONDING_PHASES_DISPLAY = [
 ];
 
 export const INITIAL_STATE: CoinFormState = {
-  name: '', symbol: '', description: '', imagePreview: '', tags: [],
-  ecoPreset: 'standard', treasuryAllocation: 5, creatorAllocation: 10,
-  antiSniper: true, antiWhale: true, cooldownPeriod: 30, bundlerDetection: true, mevProtection: true,
-  tokenGatedContent: false, minTokensForAccess: '1000', revenueShare: false, revenueSharePercent: 5,
-  governanceEnabled: false, communityAccess: false, communityLink: '', amaScheduling: false,
-  deployTarget: 'base', deploying: false, deployProgress: 0, deployed: false, deployedAddress: '', txHash: '',
-  daoEnabled: false, daoVotingModel: 'token', daoProposalThreshold: 0.5, daoQuorumPercent: 15,
-  daoVotingPeriodDays: 7, daoTimelockDelayHours: 24, daoSingerCount: 3, daoThreshold: 2,
-  daoStreamingEnabled: false, daoGrantProgramEnabled: false,
-  daoDeploying: false, daoDeployProgress: 0, daoDeployed: false, daoAddress: '', daoTxHash: '', daoSkipped: false,
+  name: '',
+  symbol: '',
+  description: '',
+  imagePreview: '',
+  tags: [],
+  ecoPreset: 'standard',
+  treasuryAllocation: 5,
+  creatorAllocation: 10,
+  antiSniper: true,
+  antiWhale: true,
+  cooldownPeriod: 30,
+  bundlerDetection: true,
+  mevProtection: true,
+  tokenGatedContent: false,
+  minTokensForAccess: '1000',
+  revenueShare: false,
+  revenueSharePercent: 5,
+  governanceEnabled: false,
+  communityAccess: false,
+  communityLink: '',
+  amaScheduling: false,
+  deployTarget: 'base',
+  deploying: false,
+  deployProgress: 0,
+  deployed: false,
+  deployedAddress: '',
+  txHash: '',
+  daoEnabled: false,
+  daoVotingModel: 'token',
+  daoProposalThreshold: 0.5,
+  daoQuorumPercent: 15,
+  daoVotingPeriodDays: 7,
+  daoTimelockDelayHours: 24,
+  daoSingerCount: 3,
+  daoThreshold: 2,
+  daoStreamingEnabled: false,
+  daoGrantProgramEnabled: false,
+  daoDeploying: false,
+  daoDeployProgress: 0,
+  daoDeployed: false,
+  daoAddress: '',
+  daoTxHash: '',
+  daoSkipped: false,
 };

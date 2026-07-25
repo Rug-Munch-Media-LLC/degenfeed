@@ -62,13 +62,18 @@ describe('Live Streaming — Aggregator', () => {
     // Owncast status endpoint: online
     mockFetch.mockImplementation((url: string) => {
       if (url.includes('/api/status')) {
-        return Promise.resolve(new Response(JSON.stringify({
-          online: true,
-          streamTitle: 'Test Stream',
-          viewerCount: 10,
-          name: 'DegenFeed',
-          lastConnectTime: new Date().toISOString(),
-        }), { status: 200 }));
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              online: true,
+              streamTitle: 'Test Stream',
+              viewerCount: 10,
+              name: 'DegenFeed',
+              lastConnectTime: new Date().toISOString(),
+            }),
+            { status: 200 },
+          ),
+        );
       }
       return Promise.resolve(new Response(JSON.stringify({}), { status: 200 }));
     });
@@ -84,7 +89,7 @@ describe('Live Streaming — Aggregator', () => {
     const { aggregateAllStreams } = await import('../../workers/api/src/feed/live-aggregator');
 
     // With cache empty and forceRefresh, it should fetch from sources
-    const streams = await aggregateAllStreams(env, true);
+    const _streams = await aggregateAllStreams(env, true);
 
     // Since we mock all fetchers heavily and Owncast returns data:
     // The Owncast fetcher should have been called and returned a stream
@@ -124,7 +129,9 @@ describe('Live Streaming — Aggregator', () => {
   });
 
   it('normalizes streams to UnifiedLiveStream format', async () => {
-    const { formatViewerSSE, generateLiveId } = await import('../../workers/api/src/feed/live-aggregator');
+    const { formatViewerSSE, generateLiveId } = await import(
+      '../../workers/api/src/feed/live-aggregator'
+    );
 
     const stream = {
       id: `peertube:${generateLiveId()}`,
@@ -161,19 +168,21 @@ describe('Live Streaming — Aggregator', () => {
     const env = {
       CACHE: {
         get: vi.fn(async (key: string) => store.get(key) ?? null),
-        put: vi.fn(async (key: string, value: string, opts?: any) => {
+        put: vi.fn(async (key: string, value: string, _opts?: any) => {
           store.set(key, value);
         }),
       },
       CONTENT_STORE: {
         get: vi.fn(async (key: string) => store.get(key) ?? null),
-        put: vi.fn(async (key: string, value: string, opts?: any) => {
+        put: vi.fn(async (key: string, value: string, _opts?: any) => {
           store.set(key, value);
         }),
       },
     } as any;
 
-    const { createSchedule, getCreatorSchedules } = await import('../../workers/api/src/feed/live-aggregator');
+    const { createSchedule, getCreatorSchedules } = await import(
+      '../../workers/api/src/feed/live-aggregator'
+    );
 
     const futureTime = Date.now() + 86400000; // 1 day from now
 
@@ -197,7 +206,7 @@ describe('Live Streaming — Aggregator', () => {
 
     const schedules = await getCreatorSchedules(env, '0xcreator');
     expect(schedules.length).toBeGreaterThanOrEqual(1);
-    expect(schedules[0]!.title).toBe('Scheduled Stream');
+    expect(schedules[0]?.title).toBe('Scheduled Stream');
   });
 });
 
@@ -344,14 +353,17 @@ describe('Live Streaming — Source Health', () => {
     const counts: Record<string, { count: number; label: string }> = {};
     for (const s of streams) {
       if (!counts[s.source]) {
-        counts[s.source] = { count: 0, label: s.source.charAt(0).toUpperCase() + s.source.slice(1) };
+        counts[s.source] = {
+          count: 0,
+          label: s.source.charAt(0).toUpperCase() + s.source.slice(1),
+        };
       }
       counts[s.source]!.count++;
     }
 
-    expect(counts['owncast']!.count).toBe(2);
-    expect(counts['peertube']!.count).toBe(1);
-    expect(counts['youtube']!.count).toBe(1);
+    expect(counts.owncast?.count).toBe(2);
+    expect(counts.peertube?.count).toBe(1);
+    expect(counts.youtube?.count).toBe(1);
     expect(Object.keys(counts).length).toBe(3);
   });
 });

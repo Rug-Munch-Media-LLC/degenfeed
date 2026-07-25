@@ -115,7 +115,7 @@ function arenaThreadToPost(t: ArenaThread): UnifiedPost {
     },
     text,
     embeds: (t.mediaUrls || []).map((url: string) => ({
-      kind: url.match(/\.(mp4|webm|mov)$/i) ? 'video' as const : 'image' as const,
+      kind: url.match(/\.(mp4|webm|mov)$/i) ? ('video' as const) : ('image' as const),
       url,
     })),
     contentType: text.length > 500 ? 'article' : 'text',
@@ -139,9 +139,7 @@ function arenaThreadToPost(t: ArenaThread): UnifiedPost {
     },
     raw: t,
     niches: guessNiches(text, t.tags),
-    community: t.communityName
-      ? { name: t.communityName, title: t.communityName }
-      : undefined,
+    community: t.communityName ? { name: t.communityName, title: t.communityName } : undefined,
   };
 }
 
@@ -152,14 +150,14 @@ async function fetchTrending(limit: number): Promise<UnifiedPost[]> {
     const headers: Record<string, string> = {
       'User-Agent': 'DegenFeed-Bridge/0.1 (Arena)',
     };
-    if (ARENA_TOKEN) headers['Authorization'] = `Bearer ${ARENA_TOKEN}`;
+    if (ARENA_TOKEN) headers.Authorization = `Bearer ${ARENA_TOKEN}`;
 
     const res = await $fetch(`${ARENA_API}/threads/feed/trending?limit=${limit}`, {
       headers,
       signal: AbortSignal.timeout(10000),
     });
     if (!res.ok) return [];
-    const data = await res.json() as ArenaFeedResponse;
+    const data = (await res.json()) as ArenaFeedResponse;
     const threads = data.threads || data.data || data.posts || data.items || [];
     if (!Array.isArray(threads)) return [];
     return threads.slice(0, limit).map(arenaThreadToPost);
@@ -179,7 +177,7 @@ async function fetchFromAgentAPI(limit: number): Promise<UnifiedPost[]> {
       signal: AbortSignal.timeout(10000),
     });
     if (!res.ok) return [];
-    const data = await res.json() as ArenaFeedResponse;
+    const data = (await res.json()) as ArenaFeedResponse;
     const threads = data.threads || data.data || data.posts || [];
     if (!Array.isArray(threads)) return [];
     return threads.slice(0, limit).map(arenaThreadToPost);
@@ -194,14 +192,14 @@ async function fetchRecent(limit: number): Promise<UnifiedPost[]> {
     const headers: Record<string, string> = {
       'User-Agent': 'DegenFeed-Bridge/0.1 (Arena)',
     };
-    if (ARENA_TOKEN) headers['Authorization'] = `Bearer ${ARENA_TOKEN}`;
+    if (ARENA_TOKEN) headers.Authorization = `Bearer ${ARENA_TOKEN}`;
 
     const res = await $fetch(`${ARENA_API}/threads?limit=${limit}&sort=new`, {
       headers,
       signal: AbortSignal.timeout(10000),
     });
     if (!res.ok) return [];
-    const data = await res.json() as ArenaFeedResponse;
+    const data = (await res.json()) as ArenaFeedResponse;
     const threads = data.threads || data.data || data.posts || [];
     if (!Array.isArray(threads)) return [];
     return threads.slice(0, limit).map(arenaThreadToPost);

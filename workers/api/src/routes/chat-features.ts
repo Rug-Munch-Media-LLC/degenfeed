@@ -32,9 +32,8 @@
  */
 
 import type { Env } from '../index';
-import { jsonResponse, noCacheJsonResponse } from '../index';
+import { jsonResponse, log, noCacheJsonResponse } from '../index';
 import { requireSession } from '../session';
-import { log } from '../index';
 
 // ─── Feature libraries ─────────────────────────────────────────────────────
 
@@ -97,13 +96,23 @@ export async function handleToggleReaction(request: Request, env: Env): Promise<
       } else {
         await kv.put(reactionKey, JSON.stringify(voters), { expirationTtl: 86400 * 90 });
       }
-      return noCacheJsonResponse({ ok: true, reaction: body.emoji, active: false, count: voters.length });
+      return noCacheJsonResponse({
+        ok: true,
+        reaction: body.emoji,
+        active: false,
+        count: voters.length,
+      });
     } else {
       voters.push(userId); // Add reaction
       await kv.put(reactionKey, JSON.stringify(voters), { expirationTtl: 86400 * 90 });
-      return noCacheJsonResponse({ ok: true, reaction: body.emoji, active: true, count: voters.length });
+      return noCacheJsonResponse({
+        ok: true,
+        reaction: body.emoji,
+        active: true,
+        count: voters.length,
+      });
     }
-  } catch (err) {
+  } catch (_err) {
     return jsonResponse({ error: 'Failed to toggle reaction' }, 500);
   }
 }
@@ -161,7 +170,13 @@ export async function handleUnsendMessage(request: Request, env: Env): Promise<R
 
   try {
     const { unsendMessage } = await getChatTimers();
-    const result = await unsendMessage(env, body.messageId, userId, body.conversationId, body.createdAt ?? Date.now());
+    const result = await unsendMessage(
+      env,
+      body.messageId,
+      userId,
+      body.conversationId,
+      body.createdAt ?? Date.now(),
+    );
     if (!result) {
       return jsonResponse({ error: 'Failed to unsend message' }, 500);
     }
@@ -195,7 +210,7 @@ export async function handleDeleteForMe(request: Request, env: Env): Promise<Res
     const { deleteForMe } = await getChatTimers();
     await deleteForMe(env, body.messageId, userId, body.conversationId);
     return noCacheJsonResponse({ ok: true });
-  } catch (err) {
+  } catch (_err) {
     return jsonResponse({ error: 'Failed to delete message' }, 500);
   }
 }
@@ -221,7 +236,13 @@ export async function handleMarkMessageRead(
   try {
     const { handleDisappearingMessage } = await getChatTimers();
     if (body.timerSeconds) {
-      await handleDisappearingMessage(env, messageId, body.conversationId, Date.now(), body.timerSeconds);
+      await handleDisappearingMessage(
+        env,
+        messageId,
+        body.conversationId,
+        Date.now(),
+        body.timerSeconds,
+      );
     }
     return noCacheJsonResponse({ ok: true });
   } catch {
@@ -276,7 +297,10 @@ export async function handleSetTimer(
 
   const validDurations = [0, 5, 60, 300, 3600, 86400, 604800, 2592000];
   if (!validDurations.includes(body.durationSeconds)) {
-    return jsonResponse({ error: 'Invalid duration. Valid: 0, 5, 60, 300, 3600, 86400, 604800, 2592000' }, 400);
+    return jsonResponse(
+      { error: 'Invalid duration. Valid: 0, 5, 60, 300, 3600, 86400, 604800, 2592000' },
+      400,
+    );
   }
 
   try {
@@ -347,9 +371,12 @@ export async function handleUploadMedia(request: Request, env: Env): Promise<Res
     return noCacheJsonResponse({ ok: true, media });
   } catch (err) {
     log('error', '[chat-features] media upload failed', err);
-    return jsonResponse({
-      error: err instanceof Error ? err.message : 'Media upload failed',
-    }, 500);
+    return jsonResponse(
+      {
+        error: err instanceof Error ? err.message : 'Media upload failed',
+      },
+      500,
+    );
   }
 }
 
@@ -357,7 +384,7 @@ export async function handleUploadMedia(request: Request, env: Env): Promise<Res
  * GET /api/chat/media/:mediaId — Get media metadata.
  */
 export async function handleGetMedia(
-  request: Request,
+  _request: Request,
   env: Env,
   mediaId: string,
 ): Promise<Response> {
@@ -407,7 +434,13 @@ export async function handleCreatePoll(request: Request, env: Env): Promise<Resp
   if (session instanceof Response) return session;
   const userId = session.address.toLowerCase();
 
-  let body: { conversationId: string; question: string; options: string[]; multipleChoice?: boolean; endsAt?: number };
+  let body: {
+    conversationId: string;
+    question: string;
+    options: string[];
+    multipleChoice?: boolean;
+    endsAt?: number;
+  };
   try {
     body = (await request.json()) as typeof body;
   } catch {
@@ -432,7 +465,10 @@ export async function handleCreatePoll(request: Request, env: Env): Promise<Resp
     );
     return noCacheJsonResponse({ ok: true, poll });
   } catch (err) {
-    return jsonResponse({ error: err instanceof Error ? err.message : 'Poll creation failed' }, 400);
+    return jsonResponse(
+      { error: err instanceof Error ? err.message : 'Poll creation failed' },
+      400,
+    );
   }
 }
 
@@ -469,7 +505,7 @@ export async function handleVotePoll(request: Request, env: Env): Promise<Respon
  * GET /api/chat/polls/:pollId — Get poll.
  */
 export async function handleGetPoll(
-  request: Request,
+  _request: Request,
   env: Env,
   pollId: string,
 ): Promise<Response> {
@@ -567,13 +603,23 @@ export async function handleUploadFile(request: Request, env: Env): Promise<Resp
 
     const buffer = await file.arrayBuffer();
     const { uploadChatFile } = await getChatFiles();
-    const chatFile = await uploadChatFile(buffer, file.name, file.type, conversationId, userId, env);
+    const chatFile = await uploadChatFile(
+      buffer,
+      file.name,
+      file.type,
+      conversationId,
+      userId,
+      env,
+    );
 
     return noCacheJsonResponse({ ok: true, file: chatFile });
   } catch (err) {
-    return jsonResponse({
-      error: err instanceof Error ? err.message : 'File upload failed',
-    }, err instanceof Error && err.message.includes('quota') ? 413 : 500);
+    return jsonResponse(
+      {
+        error: err instanceof Error ? err.message : 'File upload failed',
+      },
+      err instanceof Error && err.message.includes('quota') ? 413 : 500,
+    );
   }
 }
 
@@ -581,7 +627,7 @@ export async function handleUploadFile(request: Request, env: Env): Promise<Resp
  * GET /api/chat/files/:fileId — Get file metadata.
  */
 export async function handleGetFile(
-  request: Request,
+  _request: Request,
   env: Env,
   fileId: string,
 ): Promise<Response> {
@@ -608,7 +654,11 @@ export async function handleDownloadFile(
 
   try {
     const { streamFileDownload } = await getChatFiles();
-    const response = await streamFileDownload(env, fileId, request.headers.get('range') ?? undefined);
+    const response = await streamFileDownload(
+      env,
+      fileId,
+      request.headers.get('range') ?? undefined,
+    );
     if (!response) return jsonResponse({ error: 'File not found' }, 404);
     return response;
   } catch {
@@ -737,7 +787,7 @@ export async function handleGetStickerPacks(request: Request, env: Env): Promise
  * GET /api/chat/stickers/pack/:packId — Get sticker pack.
  */
 export async function handleGetStickerPack(
-  request: Request,
+  _request: Request,
   env: Env,
   packId: string,
 ): Promise<Response> {
@@ -767,7 +817,7 @@ export async function handleUploadVoiceNote(request: Request, env: Env): Promise
     const formData = await request.formData();
     const audioFile = formData.get('audio') as File | null;
     const conversationId = formData.get('conversationId') as string | null;
-    const duration = parseFloat(formData.get('duration') as string || '0');
+    const duration = parseFloat((formData.get('duration') as string) || '0');
     const waveformStr = formData.get('waveform') as string | null;
     const transcript = formData.get('transcript') as string | null;
 
@@ -830,7 +880,9 @@ export async function handleUploadVoiceNote(request: Request, env: Env): Promise
  * Run cleanup of expired messages and files.
  * Called by cron every minute.
  */
-export async function handleCleanupCron(env: Env): Promise<{ cleanedMessages: number; cleanedFiles: number }> {
+export async function handleCleanupCron(
+  env: Env,
+): Promise<{ cleanedMessages: number; cleanedFiles: number }> {
   const { cleanupExpiredMessages } = await getChatTimers();
   const { cleanupExpiredFiles } = await getChatFiles();
 
@@ -840,4 +892,199 @@ export async function handleCleanupCron(env: Env): Promise<{ cleanedMessages: nu
   ]);
 
   return { cleanedMessages, cleanedFiles };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// DELIVERY STATUS
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * POST /api/messages/delivery/status — Get delivery status for one or more messages.
+ */
+export async function handleDeliveryStatus(request: Request, env: Env): Promise<Response> {
+  const session = await requireSession(request, env);
+  if (session instanceof Response) return session;
+
+  let body: { conversationId: string; messageIds: string[] };
+  try {
+    body = (await request.json()) as typeof body;
+  } catch {
+    return jsonResponse({ error: 'Invalid JSON body' }, 400);
+  }
+
+  if (!body.conversationId || !body.messageIds?.length) {
+    return jsonResponse({ error: 'conversationId and messageIds required' }, 400);
+  }
+
+  try {
+    const { getConversationDeliveryStatus } = await import('../lib/message-delivery');
+    const statuses = await getConversationDeliveryStatus(env, body.conversationId, body.messageIds);
+    return noCacheJsonResponse({ statuses });
+  } catch {
+    return jsonResponse({ error: 'Failed to get delivery status' }, 500);
+  }
+}
+
+/**
+ * POST /api/messages/delivery/read — Mark a message as read.
+ */
+export async function handleMarkRead(request: Request, env: Env): Promise<Response> {
+  const session = await requireSession(request, env);
+  if (session instanceof Response) return session;
+  const userId = session.address.toLowerCase();
+
+  let body: { messageId: string; conversationId: string };
+  try {
+    body = (await request.json()) as typeof body;
+  } catch {
+    return jsonResponse({ error: 'Invalid JSON body' }, 400);
+  }
+
+  if (!body.messageId || !body.conversationId) {
+    return jsonResponse({ error: 'messageId and conversationId required' }, 400);
+  }
+
+  try {
+    const { markMessageRead, notifyDeliveryWebhook, getDeliveryRecord } = await import(
+      '../lib/message-delivery'
+    );
+    const record = await markMessageRead(env, body.messageId, userId);
+    if (record) {
+      await notifyDeliveryWebhook(env, record);
+    }
+    return noCacheJsonResponse({ ok: true, status: record?.status ?? 'unknown' });
+  } catch {
+    return jsonResponse({ error: 'Failed to mark as read' }, 500);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// DEVICE MANAGEMENT
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * POST /api/messages/devices/register — Register a device for multi-device sync.
+ */
+export async function handleRegisterDevice(request: Request, env: Env): Promise<Response> {
+  const session = await requireSession(request, env);
+  if (session instanceof Response) return session;
+  const userId = session.address.toLowerCase();
+
+  let body: {
+    deviceId: string;
+    name: string;
+    type: 'web' | 'mobile' | 'desktop' | 'api';
+    pushToken?: string;
+    devicePublicKey?: string;
+  };
+  try {
+    body = (await request.json()) as typeof body;
+  } catch {
+    return jsonResponse({ error: 'Invalid JSON body' }, 400);
+  }
+
+  if (!body.deviceId || !body.name) {
+    return jsonResponse({ error: 'deviceId and name required' }, 400);
+  }
+
+  try {
+    const { registerDevice } = await import('../lib/message-delivery');
+    const device = await registerDevice(env, userId, {
+      deviceId: body.deviceId,
+      name: body.name,
+      type: body.type || 'web',
+      lastSeenAt: Date.now(),
+      online: true,
+      pushToken: body.pushToken,
+      devicePublicKey: body.devicePublicKey,
+    });
+    return noCacheJsonResponse({ ok: true, device });
+  } catch (err) {
+    return jsonResponse({ error: err instanceof Error ? err.message : 'Registration failed' }, 500);
+  }
+}
+
+/**
+ * GET /api/messages/devices — Get all devices for current user.
+ */
+export async function handleGetDevices(request: Request, env: Env): Promise<Response> {
+  const session = await requireSession(request, env);
+  if (session instanceof Response) return session;
+  const userId = session.address.toLowerCase();
+
+  try {
+    const { getUserDevices } = await import('../lib/message-delivery');
+    const devices = await getUserDevices(env, userId);
+    return noCacheJsonResponse({ devices });
+  } catch {
+    return jsonResponse({ error: 'Failed to get devices' }, 500);
+  }
+}
+
+/**
+ * DELETE /api/messages/devices/:deviceId — Remove a device.
+ */
+export async function handleRemoveDevice(
+  _request: Request,
+  env: Env,
+  deviceId: string,
+): Promise<Response> {
+  const session = await requireSession(_request, env);
+  if (session instanceof Response) return session;
+
+  try {
+    const { removeDevice } = await import('../lib/message-delivery');
+    await removeDevice(env, deviceId);
+    return noCacheJsonResponse({ ok: true });
+  } catch {
+    return jsonResponse({ error: 'Failed to remove device' }, 500);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// STORAGE TIER MANAGEMENT
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * GET /api/chat/quota/tiered — Get tiered storage quota.
+ */
+export async function handleGetTieredQuota(request: Request, env: Env): Promise<Response> {
+  const session = await requireSession(request, env);
+  if (session instanceof Response) return session;
+  const userId = session.address.toLowerCase();
+
+  try {
+    const { getTieredStorageQuota } = await import('../lib/chat-files-enhanced');
+    const quota = await getTieredStorageQuota(env, userId);
+    return noCacheJsonResponse({ quota });
+  } catch {
+    return jsonResponse({ error: 'Failed to get quota' }, 500);
+  }
+}
+
+/**
+ * GET /api/chat/files/downloads/:fileId — Get download history for a file.
+ */
+export async function handleGetDownloadHistory(
+  _request: Request,
+  env: Env,
+  fileId: string,
+): Promise<Response> {
+  try {
+    const { getDownloadHistory, getDownloadCount } = await import('../lib/chat-files-enhanced');
+    const [history, count] = await Promise.all([
+      getDownloadHistory(env, fileId),
+      getDownloadCount(env, fileId),
+    ]);
+    return noCacheJsonResponse({
+      downloads: history.map((d) => ({
+        downloadedBy: d.downloadedBy,
+        downloadedAt: d.downloadedAt,
+        bytesTransferred: d.bytesTransferred,
+      })),
+      totalDownloads: count,
+    });
+  } catch {
+    return jsonResponse({ error: 'Failed to get download history' }, 500);
+  }
 }

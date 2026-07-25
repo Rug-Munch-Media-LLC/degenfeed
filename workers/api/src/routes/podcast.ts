@@ -36,9 +36,9 @@
 import { Hono } from 'hono';
 import type { Env } from '../index';
 import { jsonResponse, noCacheJsonResponse } from '../index';
-import { requireSession } from '../session';
+import type { PodcastEpisodeEntry, PodcastFeedMeta } from '../lib/podcast-rss';
 import { generatePodcastRss } from '../lib/podcast-rss';
-import type { PodcastFeedMeta, PodcastEpisodeEntry } from '../lib/podcast-rss';
+import { requireSession } from '../session';
 import { broadcastToAll } from '../ws-broadcast';
 import { CHANNELS } from '../ws-channels';
 
@@ -139,15 +139,25 @@ function toRFC2822(ts: number): string {
 function detectMimeType(filename: string): string {
   const ext = filename.split('.').pop()?.toLowerCase();
   switch (ext) {
-    case 'mp3': return 'audio/mpeg';
-    case 'ogg': return 'audio/ogg';
-    case 'wav': return 'audio/wav';
-    case 'aac': return 'audio/aac';
-    case 'm4a': case 'mp4': return 'audio/mp4';
-    case 'flac': return 'audio/flac';
-    case 'opus': return 'audio/opus';
-    case 'wma': return 'audio/x-ms-wma';
-    default: return 'audio/mpeg';
+    case 'mp3':
+      return 'audio/mpeg';
+    case 'ogg':
+      return 'audio/ogg';
+    case 'wav':
+      return 'audio/wav';
+    case 'aac':
+      return 'audio/aac';
+    case 'm4a':
+    case 'mp4':
+      return 'audio/mp4';
+    case 'flac':
+      return 'audio/flac';
+    case 'opus':
+      return 'audio/opus';
+    case 'wma':
+      return 'audio/x-ms-wma';
+    default:
+      return 'audio/mpeg';
   }
 }
 
@@ -183,11 +193,7 @@ function castopodUrl(env: Env): string {
 /**
  * Proxy an authenticated request to Castopod REST API.
  */
-async function castopodFetch(
-  env: Env,
-  path: string,
-  options: RequestInit = {},
-): Promise<Response> {
+async function castopodFetch(env: Env, path: string, options: RequestInit = {}): Promise<Response> {
   const base = castopodUrl(env).replace(/\/$/, '');
   const apiToken = env.CASTOPOD_API_TOKEN;
   const headers = new Headers(options.headers);
@@ -234,14 +240,15 @@ podcastRouter.post('/create', async (c) => {
 
     const podcastId = generateId();
     const now = Date.now();
-    const category = body.category && PODCAST_CATEGORIES.some((c) => c.id === body.category)
-      ? body.category
-      : 'crypto';
+    const category =
+      body.category && PODCAST_CATEGORIES.some((c) => c.id === body.category)
+        ? body.category
+        : 'crypto';
 
     const podcast: Podcast = {
       id: podcastId,
-      title: body.title!.trim(),
-      description: body.description!.trim(),
+      title: body.title?.trim(),
+      description: body.description?.trim(),
       category,
       coverUrl: body.coverUrl,
       hostName: session.displayName || session.address.slice(0, 10),
@@ -280,17 +287,19 @@ podcastRouter.post('/create', async (c) => {
     const castopodToken = c.env.CASTOPOD_API_TOKEN;
     if (castopodToken) {
       c.executionCtx?.waitUntil?.(
-        createCastopodPodcast(c.env, podcast).then((result) => {
-          if (result) {
-            podcast.castopodPodcastId = result.id;
-            podcast.activityPubId = result.activityPubId;
-            podcast.feedUrl = result.feedUrl;
-            // Update KV with Castopod IDs
-            return c.env.CACHE?.put(podcastKey(podcastId), JSON.stringify(podcast));
-          }
-        }).catch((err) => {
-          console.error('[podcast] Castopod creation error:', String(err));
-        }),
+        createCastopodPodcast(c.env, podcast)
+          .then((result) => {
+            if (result) {
+              podcast.castopodPodcastId = result.id;
+              podcast.activityPubId = result.activityPubId;
+              podcast.feedUrl = result.feedUrl;
+              // Update KV with Castopod IDs
+              return c.env.CACHE?.put(podcastKey(podcastId), JSON.stringify(podcast));
+            }
+          })
+          .catch((err) => {
+            console.error('[podcast] Castopod creation error:', String(err));
+          }),
       );
     }
 
@@ -360,7 +369,7 @@ podcastRouter.post('/:id/episode', async (c) => {
     const episode: PodcastEpisode = {
       id: episodeId,
       podcastId,
-      title: body.title!.trim(),
+      title: body.title?.trim(),
       description: body.description?.trim() ?? '',
       htmlDescription: body.htmlDescription,
       audioUrl: body.audioUrl!,
@@ -391,10 +400,7 @@ podcastRouter.post('/:id/episode', async (c) => {
     const episodesRaw = await c.env.CACHE?.get(podcastEpisodesKey(podcastId));
     const episodes: string[] = episodesRaw ? JSON.parse(episodesRaw) : [];
     episodes.unshift(episodeId);
-    await c.env.CACHE?.put(
-      podcastEpisodesKey(podcastId),
-      JSON.stringify(episodes.slice(0, 500)),
-    );
+    await c.env.CACHE?.put(podcastEpisodesKey(podcastId), JSON.stringify(episodes.slice(0, 500)));
 
     // Update podcast metadata (increment episode count)
     podcast.episodeCount = episodes.length + 1; // +1 since we already computed
@@ -409,15 +415,17 @@ podcastRouter.post('/:id/episode', async (c) => {
       const castopodToken = c.env.CASTOPOD_API_TOKEN;
       if (castopodToken && podcast.castopodPodcastId) {
         c.executionCtx?.waitUntil?.(
-          createCastopodEpisode(c.env, podcast, episode).then((result) => {
-            if (result) {
-              episode.castopodEpisodeId = result.id;
-              episode.activityPubId = result.activityPubId;
-              return c.env.CACHE?.put(episodeKey(episodeId), JSON.stringify(episode));
-            }
-          }).catch((err) => {
-            console.error('[podcast] Castopod episode creation error:', String(err));
-          }),
+          createCastopodEpisode(c.env, podcast, episode)
+            .then((result) => {
+              if (result) {
+                episode.castopodEpisodeId = result.id;
+                episode.activityPubId = result.activityPubId;
+                return c.env.CACHE?.put(episodeKey(episodeId), JSON.stringify(episode));
+              }
+            })
+            .catch((err) => {
+              console.error('[podcast] Castopod episode creation error:', String(err));
+            }),
         );
       }
     }
@@ -458,9 +466,7 @@ podcastRouter.get('/:id', async (c) => {
 
     // If we have a Castopod ID, fetch additional stats
     if (podcast.castopodPodcastId) {
-      c.executionCtx?.waitUntil?.(
-        fetchCastopodStats(c.env, podcast, podcastId).catch(() => {}),
-      );
+      c.executionCtx?.waitUntil?.(fetchCastopodStats(c.env, podcast, podcastId).catch(() => {}));
     }
 
     return noCacheJsonResponse({ podcast });
@@ -621,10 +627,7 @@ podcastRouter.delete('/episode/:id', async (c) => {
     const episodesRaw = await c.env.CACHE?.get(podcastEpisodesKey(episode.podcastId));
     const episodes: string[] = episodesRaw ? JSON.parse(episodesRaw) : [];
     const filtered = episodes.filter((eid) => eid !== episodeId);
-    await c.env.CACHE?.put(
-      podcastEpisodesKey(episode.podcastId),
-      JSON.stringify(filtered),
-    );
+    await c.env.CACHE?.put(podcastEpisodesKey(episode.podcastId), JSON.stringify(filtered));
 
     // Update episode count
     podcast.episodeCount = filtered.length;
@@ -634,8 +637,11 @@ podcastRouter.delete('/episode/:id', async (c) => {
     // Delete episode from Castopod if it was published
     if (episode.castopodEpisodeId && c.env.CASTOPOD_API_TOKEN) {
       c.executionCtx?.waitUntil?.(
-        castopodFetch(c.env, `/api/episodes/${episode.castopodEpisodeId}`, { method: 'DELETE' })
-          .catch((err) => console.error('[podcast] Failed to delete Castopod episode:', String(err))),
+        castopodFetch(c.env, `/api/episodes/${episode.castopodEpisodeId}`, {
+          method: 'DELETE',
+        }).catch((err) =>
+          console.error('[podcast] Failed to delete Castopod episode:', String(err)),
+        ),
       );
     }
 
@@ -699,15 +705,17 @@ podcastRouter.post('/episode/:id/publish', async (c) => {
     const castopodToken = c.env.CASTOPOD_API_TOKEN;
     if (castopodToken && podcast.castopodPodcastId) {
       c.executionCtx?.waitUntil?.(
-        createCastopodEpisode(c.env, podcast, episode).then((result) => {
-          if (result) {
-            episode.castopodEpisodeId = result.id;
-            episode.activityPubId = result.activityPubId;
-            return c.env.CACHE?.put(episodeKey(episodeId), JSON.stringify(episode));
-          }
-        }).catch((err) => {
-          console.error('[podcast] Castopod publish error:', String(err));
-        }),
+        createCastopodEpisode(c.env, podcast, episode)
+          .then((result) => {
+            if (result) {
+              episode.castopodEpisodeId = result.id;
+              episode.activityPubId = result.activityPubId;
+              return c.env.CACHE?.put(episodeKey(episodeId), JSON.stringify(episode));
+            }
+          })
+          .catch((err) => {
+            console.error('[podcast] Castopod publish error:', String(err));
+          }),
       );
     }
 
@@ -745,8 +753,8 @@ podcastRouter.get('/discover', async (c) => {
     const limit = Math.min(Math.max(Number(c.req.query('limit')) || 20, 1), 100);
 
     // Check cache first
-    const cached = await c.env.CACHE?.get(DISCOVER_CACHE_KEY);
-    const cacheTtl = 300; // 5 min cache
+    const _cached = await c.env.CACHE?.get(DISCOVER_CACHE_KEY);
+    const _cacheTtl = 300; // 5 min cache
 
     // For simplicity, we iterate through creator podcast lists
     // In production, this would use an index or Castopod API
@@ -862,7 +870,7 @@ podcastRouter.post('/episode/:id/tip', async (c) => {
       tokenAddress?: string; // ERC-20 / SPL token
     };
 
-    if (!body.amount || isNaN(Number(body.amount)) || Number(body.amount) <= 0) {
+    if (!body.amount || Number.isNaN(Number(body.amount)) || Number(body.amount) <= 0) {
       return jsonResponse({ error: 'Valid amount required' }, 400);
     }
     if (!body.chain || !['ethereum', 'solana'].includes(body.chain)) {
@@ -930,14 +938,33 @@ function mapCastopodToPodcast(cp: CastopodPodcastData): Podcast {
   };
 }
 
-function mapCastopodEpToPodcastEp(ep: CastopodEpisodeData): { episode: PodcastEpisode; podcast: Podcast } {
+function mapCastopodEpToPodcastEp(ep: CastopodEpisodeData): {
+  episode: PodcastEpisode;
+  podcast: Podcast;
+} {
   const fallbackPodcast: Podcast = {
-    id: '', title: '', description: '', category: 'crypto',
-    hostName: 'Host', hostAddress: '', createdAt: 0, updatedAt: 0,
-    episodeCount: 0, totalPlays: 0, subscriberCount: 0, keywords: [],
-    language: 'en', explicit: false, coverUrl: undefined, website: undefined,
-    email: undefined, fundingUrl: undefined, hostAvatarUrl: undefined,
-    activityPubId: undefined, feedUrl: undefined, castopodPodcastId: undefined,
+    id: '',
+    title: '',
+    description: '',
+    category: 'crypto',
+    hostName: 'Host',
+    hostAddress: '',
+    createdAt: 0,
+    updatedAt: 0,
+    episodeCount: 0,
+    totalPlays: 0,
+    subscriberCount: 0,
+    keywords: [],
+    language: 'en',
+    explicit: false,
+    coverUrl: undefined,
+    website: undefined,
+    email: undefined,
+    fundingUrl: undefined,
+    hostAvatarUrl: undefined,
+    activityPubId: undefined,
+    feedUrl: undefined,
+    castopodPodcastId: undefined,
   };
   return {
     episode: {
@@ -1016,11 +1043,7 @@ interface CastopodEpisodeData {
   podcast?: CastopodPodcastData;
 }
 
-async function fetchCastopodStats(
-  env: Env,
-  podcast: Podcast,
-  podcastId: string,
-): Promise<void> {
+async function fetchCastopodStats(env: Env, podcast: Podcast, podcastId: string): Promise<void> {
   try {
     const res = await castopodFetch(env, `/api/podcasts/${podcast.castopodPodcastId}`);
     if (res.ok) {
@@ -1029,7 +1052,9 @@ async function fetchCastopodStats(
       if (cpData.subscribers !== undefined) podcast.subscriberCount = cpData.subscribers;
       await env.CACHE?.put(podcastKey(podcastId), JSON.stringify(podcast));
     }
-  } catch { /* non-critical */ }
+  } catch {
+    /* non-critical */
+  }
 }
 
 async function createCastopodPodcast(
@@ -1101,11 +1126,10 @@ async function createCastopodEpisode(
         : new Date().toISOString(),
     };
 
-    const res = await castopodFetch(
-      env,
-      `/api/podcasts/${podcast.castopodPodcastId}/episodes`,
-      { method: 'POST', body: JSON.stringify(body) },
-    );
+    const res = await castopodFetch(env, `/api/podcasts/${podcast.castopodPodcastId}/episodes`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
 
     if (!res.ok) {
       const errBody = await res.text().catch(() => 'unknown');
@@ -1210,17 +1234,16 @@ async function regenerateRssFeed(env: Env, podcast: Podcast): Promise<void> {
 //   POST /api/podcast/curated/seed                 — Seed/refresh KV (admin)
 //   GET /api/podcast/curated/stats                 — Podcast count stats
 
+import type { UnifiedPodcastEpisode } from '../feed/podcast-curation';
 import {
   ALL_CURATED_PODCASTS,
   CURATED_PODCASTS_BY_CATEGORY,
-  getCuratedPodcastById,
   getCuratedPodcastStats,
 } from '../feed/podcast-curation';
-import type { UnifiedPodcastEpisode } from '../feed/podcast-curation';
 import {
+  CURATED_INDEX_KEY_ALL,
   CURATED_LATEST_KEY,
   CURATED_TRENDING_KEY,
-  CURATED_INDEX_KEY_ALL,
   seedCuratedPodcasts,
 } from '../lib/curated-rss-fetcher';
 import { handleFullPodcastRefresh } from '../routes/podcast-cron';
@@ -1231,7 +1254,7 @@ import { handleFullPodcastRefresh } from '../routes/podcast-cron';
 // ═════════════════════════════════════════════════════════════════════════
 
 // GET /api/podcast/curated/stats — Podcast count stats
-podcastRouter.get('/curated/stats', async (c) => {
+podcastRouter.get('/curated/stats', async (_c) => {
   try {
     return noCacheJsonResponse({ stats: getCuratedPodcastStats() });
   } catch (e) {
@@ -1311,14 +1334,16 @@ podcastRouter.get('/curated/trending', async (c) => {
       const latestRaw = await c.env.CACHE?.get(CURATED_LATEST_KEY);
       if (latestRaw) {
         let episodes: UnifiedPodcastEpisode[] = JSON.parse(latestRaw);
-        if (category && category !== 'all') episodes = episodes.filter((ep) => ep.category === category);
+        if (category && category !== 'all')
+          episodes = episodes.filter((ep) => ep.category === category);
         return noCacheJsonResponse({ episodes: episodes.slice(0, limit), total: episodes.length });
       }
       return noCacheJsonResponse({ episodes: [], total: 0 });
     }
 
     let episodes: UnifiedPodcastEpisode[] = JSON.parse(raw);
-    if (category && category !== 'all') episodes = episodes.filter((ep) => ep.category === category);
+    if (category && category !== 'all')
+      episodes = episodes.filter((ep) => ep.category === category);
 
     return noCacheJsonResponse({
       episodes: episodes.slice(0, limit),
@@ -1340,7 +1365,8 @@ podcastRouter.get('/curated/latest', async (c) => {
     if (!raw) return noCacheJsonResponse({ episodes: [], total: 0 });
 
     let episodes: UnifiedPodcastEpisode[] = JSON.parse(raw);
-    if (category && category !== 'all') episodes = episodes.filter((ep) => ep.category === category);
+    if (category && category !== 'all')
+      episodes = episodes.filter((ep) => ep.category === category);
 
     return noCacheJsonResponse({
       episodes: episodes.slice(0, limit),
@@ -1373,7 +1399,8 @@ podcastRouter.get('/search', async (c) => {
         p.host.toLowerCase().includes(q) ||
         p.description.toLowerCase().includes(q),
     );
-    if (category && category !== 'all') curatedResults = curatedResults.filter((p) => p.category === category);
+    if (category && category !== 'all')
+      curatedResults = curatedResults.filter((p) => p.category === category);
 
     // Search curated episodes
     let curatedEpisodes: UnifiedPodcastEpisode[] = [];
@@ -1387,12 +1414,15 @@ podcastRouter.get('/search', async (c) => {
             ep.description.toLowerCase().includes(q) ||
             ep.podcastTitle.toLowerCase().includes(q),
         );
-        if (category && category !== 'all') curatedEpisodes = curatedEpisodes.filter((ep) => ep.category === category);
+        if (category && category !== 'all')
+          curatedEpisodes = curatedEpisodes.filter((ep) => ep.category === category);
       }
-    } catch { /* non-critical */ }
+    } catch {
+      /* non-critical */
+    }
 
     // Search creator podcasts from KV
-    let creatorPodcasts: Array<Record<string, unknown>> = [];
+    const creatorPodcasts: Array<Record<string, unknown>> = [];
     try {
       const allIndexRaw = await c.env.CACHE?.get(CURATED_INDEX_KEY_ALL);
       if (allIndexRaw) {
@@ -1401,13 +1431,22 @@ podcastRouter.get('/search', async (c) => {
           const pRaw = await c.env.CACHE?.get(`podcast:curated:${pid}`);
           if (pRaw) {
             const p = JSON.parse(pRaw) as Record<string, unknown>;
-            if (String(p.title || '').toLowerCase().includes(q) || String(p.host || '').toLowerCase().includes(q)) {
+            if (
+              String(p.title || '')
+                .toLowerCase()
+                .includes(q) ||
+              String(p.host || '')
+                .toLowerCase()
+                .includes(q)
+            ) {
               creatorPodcasts.push(p);
             }
           }
         }
       }
-    } catch { /* non-critical */ }
+    } catch {
+      /* non-critical */
+    }
 
     return noCacheJsonResponse({
       query: q,
@@ -1437,11 +1476,15 @@ podcastRouter.get('/curated/:category', async (c) => {
       return jsonResponse({ error: 'Invalid category. Must be: crypto, tech, ai, or all' }, 400);
     }
 
-    let podcasts = category === 'all' ? ALL_CURATED_PODCASTS : (CURATED_PODCASTS_BY_CATEGORY[category] ?? []);
+    let podcasts =
+      category === 'all' ? ALL_CURATED_PODCASTS : (CURATED_PODCASTS_BY_CATEGORY[category] ?? []);
 
     if (search) {
       podcasts = podcasts.filter(
-        (p) => p.title.toLowerCase().includes(search) || p.host.toLowerCase().includes(search) || p.description.toLowerCase().includes(search),
+        (p) =>
+          p.title.toLowerCase().includes(search) ||
+          p.host.toLowerCase().includes(search) ||
+          p.description.toLowerCase().includes(search),
       );
     }
 

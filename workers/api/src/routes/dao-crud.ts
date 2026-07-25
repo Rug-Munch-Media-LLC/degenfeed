@@ -296,7 +296,11 @@ export async function getProposalOr404(
   return proposal;
 }
 
-export async function checkDaoMember(env: Env, daoId: string, wallet: string): Promise<Response | null> {
+export async function checkDaoMember(
+  env: Env,
+  daoId: string,
+  wallet: string,
+): Promise<Response | null> {
   const kv = env.GOVERNANCE;
   if (!kv) return jsonResponse({ error: 'Governance KV not configured' }, 500);
   const members = await kvGetList<string>(kv, KV.daoMembers(daoId));
@@ -357,44 +361,107 @@ export async function handleDaoCreate(request: Request, env: Env): Promise<Respo
   if (!sizeCheck.ok) return jsonResponse({ error: sizeCheck.error }, 413);
 
   let body: Record<string, unknown>;
-  try { body = (await request.json()) as Record<string, unknown>; } catch { return jsonResponse({ error: 'Invalid JSON body' }, 400); }
+  try {
+    body = (await request.json()) as Record<string, unknown>;
+  } catch {
+    return jsonResponse({ error: 'Invalid JSON body' }, 400);
+  }
 
   const name = sanitizeString(body.name, 64);
   const displayName = sanitizeString(body.displayName, 128) || name;
   const description = sanitizeString(body.description, 5000);
   const chain = typeof body.chain === 'string' ? body.chain : 'ethereum';
-  const contractAddress = typeof body.contractAddress === 'string' ? body.contractAddress.trim() : undefined;
+  const contractAddress =
+    typeof body.contractAddress === 'string' ? body.contractAddress.trim() : undefined;
   const tokenAddress = typeof body.tokenAddress === 'string' ? body.tokenAddress.trim() : undefined;
   const tokenSymbol = sanitizeString(body.tokenSymbol, 16);
-  const visibility = typeof body.visibility === 'string' && ['public', 'private', 'unlisted'].includes(body.visibility) ? (body.visibility as DaoVisibility) : 'public';
-  const tags = Array.isArray(body.tags) ? (body.tags as string[]).filter((t): t is string => typeof t === 'string').map((t) => t.toLowerCase().trim()).slice(0, 20) : undefined;
+  const visibility =
+    typeof body.visibility === 'string' &&
+    ['public', 'private', 'unlisted'].includes(body.visibility)
+      ? (body.visibility as DaoVisibility)
+      : 'public';
+  const tags = Array.isArray(body.tags)
+    ? (body.tags as string[])
+        .filter((t): t is string => typeof t === 'string')
+        .map((t) => t.toLowerCase().trim())
+        .slice(0, 20)
+    : undefined;
   const website = typeof body.website === 'string' ? body.website.trim() : undefined;
   const discord = typeof body.discord === 'string' ? body.discord.trim() : undefined;
   const twitter = typeof body.twitter === 'string' ? body.twitter.trim() : undefined;
 
-  if (!name || name.length < 2) return jsonResponse({ error: 'DAO name must be at least 2 characters' }, 400);
-  if (!description || description.length < 20) return jsonResponse({ error: 'Description must be at least 20 characters' }, 400);
-  if (!['ethereum', 'solana', 'base', 'polygon'].includes(chain)) return jsonResponse({ error: 'Invalid chain' }, 400);
-  if (hasSuspiciousPayload(description) || hasSuspiciousPayload(name)) return jsonResponse({ error: 'Invalid characters in name or description' }, 400);
+  if (!name || name.length < 2)
+    return jsonResponse({ error: 'DAO name must be at least 2 characters' }, 400);
+  if (!description || description.length < 20)
+    return jsonResponse({ error: 'Description must be at least 20 characters' }, 400);
+  if (!['ethereum', 'solana', 'base', 'polygon'].includes(chain))
+    return jsonResponse({ error: 'Invalid chain' }, 400);
+  if (hasSuspiciousPayload(description) || hasSuspiciousPayload(name))
+    return jsonResponse({ error: 'Invalid characters in name or description' }, 400);
 
-  const governanceDefaults = { votingPeriod: 3 * 86400 * 1000, quorumPercent: 10, minDelay: 2 * 86400 * 1000, executeWindow: 7 * 86400 * 1000, proposalThreshold: 0, votingDelay: 0 };
+  const governanceDefaults = {
+    votingPeriod: 3 * 86400 * 1000,
+    quorumPercent: 10,
+    minDelay: 2 * 86400 * 1000,
+    executeWindow: 7 * 86400 * 1000,
+    proposalThreshold: 0,
+    votingDelay: 0,
+  };
   const govRaw = body.governance as Record<string, unknown> | undefined;
   const governance = {
-    votingPeriod: typeof govRaw?.votingPeriod === 'number' ? govRaw.votingPeriod : governanceDefaults.votingPeriod,
-    quorumPercent: typeof govRaw?.quorumPercent === 'number' ? Math.min(100, Math.max(1, govRaw.quorumPercent)) : governanceDefaults.quorumPercent,
+    votingPeriod:
+      typeof govRaw?.votingPeriod === 'number'
+        ? govRaw.votingPeriod
+        : governanceDefaults.votingPeriod,
+    quorumPercent:
+      typeof govRaw?.quorumPercent === 'number'
+        ? Math.min(100, Math.max(1, govRaw.quorumPercent))
+        : governanceDefaults.quorumPercent,
     minDelay: typeof govRaw?.minDelay === 'number' ? govRaw.minDelay : governanceDefaults.minDelay,
-    executeWindow: typeof govRaw?.executeWindow === 'number' ? govRaw.executeWindow : governanceDefaults.executeWindow,
-    proposalThreshold: typeof govRaw?.proposalThreshold === 'number' ? govRaw.proposalThreshold : governanceDefaults.proposalThreshold,
-    votingDelay: typeof govRaw?.votingDelay === 'number' ? govRaw.votingDelay : governanceDefaults.votingDelay,
+    executeWindow:
+      typeof govRaw?.executeWindow === 'number'
+        ? govRaw.executeWindow
+        : governanceDefaults.executeWindow,
+    proposalThreshold:
+      typeof govRaw?.proposalThreshold === 'number'
+        ? govRaw.proposalThreshold
+        : governanceDefaults.proposalThreshold,
+    votingDelay:
+      typeof govRaw?.votingDelay === 'number' ? govRaw.votingDelay : governanceDefaults.votingDelay,
   };
 
   const daoId = generateId('dao');
   const wallet = session.address.toLowerCase();
   const now = Date.now();
-  const dao: Dao = { id: daoId, name, displayName, description, icon: typeof body.icon === 'string' ? body.icon : undefined, banner: typeof body.banner === 'string' ? body.banner : undefined, creator: wallet, createdAt: now, chain: chain as Dao['chain'], contractAddress, tokenAddress, tokenSymbol, visibility, memberCount: 1, proposalCount: 0, tags, website, discord, twitter, governance };
+  const dao: Dao = {
+    id: daoId,
+    name,
+    displayName,
+    description,
+    icon: typeof body.icon === 'string' ? body.icon : undefined,
+    banner: typeof body.banner === 'string' ? body.banner : undefined,
+    creator: wallet,
+    createdAt: now,
+    chain: chain as Dao['chain'],
+    contractAddress,
+    tokenAddress,
+    tokenSymbol,
+    visibility,
+    memberCount: 1,
+    proposalCount: 0,
+    tags,
+    website,
+    discord,
+    twitter,
+    governance,
+  };
   const kv = env.GOVERNANCE;
   if (!kv) return jsonResponse({ error: 'Governance KV not configured' }, 500);
-  await Promise.all([kvPut(kv, KV.dao(daoId), dao), kvAppendToList(kv, KV.daoIdx, daoId), kvPut(kv, KV.daoMembers(daoId), [wallet])]);
+  await Promise.all([
+    kvPut(kv, KV.dao(daoId), dao),
+    kvAppendToList(kv, KV.daoIdx, daoId),
+    kvPut(kv, KV.daoMembers(daoId), [wallet]),
+  ]);
   await recordActivity(env, daoId, 'member_joined', wallet, { role: 'creator' });
   return jsonResponse({ success: true, dao }, 201);
 }
@@ -405,21 +472,67 @@ export async function handleDaoGet(_request: Request, env: Env, daoId: string): 
   return jsonResponse({ dao: daoResult as Dao });
 }
 
-export async function handleDaoUpdate(request: Request, env: Env, daoId: string): Promise<Response> {
+export async function handleDaoUpdate(
+  request: Request,
+  env: Env,
+  daoId: string,
+): Promise<Response> {
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
   const daoResult = await getDaoOr404(env, daoId);
   if (daoResult instanceof Response) return daoResult;
   const dao = daoResult as Dao;
   const wallet = session.address.toLowerCase();
-  if (dao.creator !== wallet) return jsonResponse({ error: 'Only the DAO creator can update config' }, 403);
+  if (dao.creator !== wallet)
+    return jsonResponse({ error: 'Only the DAO creator can update config' }, 403);
   const sizeCheck = validateBodySize(request, 100 * 1024);
   if (!sizeCheck.ok) return jsonResponse({ error: sizeCheck.error }, 413);
   let body: Record<string, unknown>;
-  try { body = (await request.json()) as Record<string, unknown>; } catch { return jsonResponse({ error: 'Invalid JSON body' }, 400); }
-  const updated: Dao = { ...dao, displayName: sanitizeString(body.displayName, 128) || dao.displayName, description: sanitizeString(body.description, 5000) || dao.description, icon: typeof body.icon === 'string' ? body.icon : dao.icon, banner: typeof body.banner === 'string' ? body.banner : dao.banner, visibility: typeof body.visibility === 'string' && ['public', 'private', 'unlisted'].includes(body.visibility) ? (body.visibility as DaoVisibility) : dao.visibility, website: typeof body.website === 'string' ? body.website.trim() : dao.website, discord: typeof body.discord === 'string' ? body.discord.trim() : dao.discord, twitter: typeof body.twitter === 'string' ? body.twitter.trim() : dao.twitter, tags: Array.isArray(body.tags) ? (body.tags as string[]).filter((t): t is string => typeof t === 'string').slice(0, 20) : dao.tags };
+  try {
+    body = (await request.json()) as Record<string, unknown>;
+  } catch {
+    return jsonResponse({ error: 'Invalid JSON body' }, 400);
+  }
+  const updated: Dao = {
+    ...dao,
+    displayName: sanitizeString(body.displayName, 128) || dao.displayName,
+    description: sanitizeString(body.description, 5000) || dao.description,
+    icon: typeof body.icon === 'string' ? body.icon : dao.icon,
+    banner: typeof body.banner === 'string' ? body.banner : dao.banner,
+    visibility:
+      typeof body.visibility === 'string' &&
+      ['public', 'private', 'unlisted'].includes(body.visibility)
+        ? (body.visibility as DaoVisibility)
+        : dao.visibility,
+    website: typeof body.website === 'string' ? body.website.trim() : dao.website,
+    discord: typeof body.discord === 'string' ? body.discord.trim() : dao.discord,
+    twitter: typeof body.twitter === 'string' ? body.twitter.trim() : dao.twitter,
+    tags: Array.isArray(body.tags)
+      ? (body.tags as string[]).filter((t): t is string => typeof t === 'string').slice(0, 20)
+      : dao.tags,
+  };
   const govRaw = body.governance as Record<string, unknown> | undefined;
-  if (govRaw) { updated.governance = { votingPeriod: typeof govRaw.votingPeriod === 'number' ? govRaw.votingPeriod : dao.governance.votingPeriod, quorumPercent: typeof govRaw.quorumPercent === 'number' ? Math.min(100, Math.max(1, govRaw.quorumPercent)) : dao.governance.quorumPercent, minDelay: typeof govRaw.minDelay === 'number' ? govRaw.minDelay : dao.governance.minDelay, executeWindow: typeof govRaw.executeWindow === 'number' ? govRaw.executeWindow : dao.governance.executeWindow, proposalThreshold: typeof govRaw.proposalThreshold === 'number' ? govRaw.proposalThreshold : dao.governance.proposalThreshold, votingDelay: typeof govRaw.votingDelay === 'number' ? govRaw.votingDelay : dao.governance.votingDelay }; }
+  if (govRaw) {
+    updated.governance = {
+      votingPeriod:
+        typeof govRaw.votingPeriod === 'number' ? govRaw.votingPeriod : dao.governance.votingPeriod,
+      quorumPercent:
+        typeof govRaw.quorumPercent === 'number'
+          ? Math.min(100, Math.max(1, govRaw.quorumPercent))
+          : dao.governance.quorumPercent,
+      minDelay: typeof govRaw.minDelay === 'number' ? govRaw.minDelay : dao.governance.minDelay,
+      executeWindow:
+        typeof govRaw.executeWindow === 'number'
+          ? govRaw.executeWindow
+          : dao.governance.executeWindow,
+      proposalThreshold:
+        typeof govRaw.proposalThreshold === 'number'
+          ? govRaw.proposalThreshold
+          : dao.governance.proposalThreshold,
+      votingDelay:
+        typeof govRaw.votingDelay === 'number' ? govRaw.votingDelay : dao.governance.votingDelay,
+    };
+  }
   const kv = env.GOVERNANCE;
   if (!kv) return jsonResponse({ error: 'Governance KV not configured' }, 500);
   await kvPut(kv, KV.dao(daoId), updated);
@@ -434,8 +547,16 @@ export async function handleDaoMine(request: Request, env: Env): Promise<Respons
   const wallet = session.address.toLowerCase();
   const allDaoIds = await kvGetList<string>(kv, KV.daoIdx);
   const daos: Dao[] = [];
-  const memberChecks = await Promise.all(allDaoIds.map(async (daoId) => { const members = await kvGetList<string>(kv, KV.daoMembers(daoId)); if (members.includes(wallet)) return kvGet<Dao>(kv, KV.dao(daoId)); return null; }));
-  for (const dao of memberChecks) { if (dao) daos.push(dao); }
+  const memberChecks = await Promise.all(
+    allDaoIds.map(async (daoId) => {
+      const members = await kvGetList<string>(kv, KV.daoMembers(daoId));
+      if (members.includes(wallet)) return kvGet<Dao>(kv, KV.dao(daoId));
+      return null;
+    }),
+  );
+  for (const dao of memberChecks) {
+    if (dao) daos.push(dao);
+  }
   return jsonResponse({ data: daos, meta: { total: daos.length } });
 }
 
@@ -452,7 +573,13 @@ export async function handleDaoDiscover(request: Request, env: Env): Promise<Res
   const allDaoIds = await kvGetList<string>(kv, KV.daoIdx);
   const daosRaw = await Promise.all(allDaoIds.map((daoId) => kvGet<Dao>(kv, KV.dao(daoId))));
   let filtered = daosRaw.filter((d): d is Dao => d !== null && d.visibility === 'public');
-  if (search) filtered = filtered.filter((d) => d.name.toLowerCase().includes(search) || d.displayName.toLowerCase().includes(search) || d.description.toLowerCase().includes(search));
+  if (search)
+    filtered = filtered.filter(
+      (d) =>
+        d.name.toLowerCase().includes(search) ||
+        d.displayName.toLowerCase().includes(search) ||
+        d.description.toLowerCase().includes(search),
+    );
   if (tag) filtered = filtered.filter((d) => d.tags?.includes(tag));
   if (chain) filtered = filtered.filter((d) => d.chain === chain);
   if (sort === 'newest') filtered.sort((a, b) => b.createdAt - a.createdAt);
@@ -460,11 +587,16 @@ export async function handleDaoDiscover(request: Request, env: Env): Promise<Res
   else filtered.sort((a, b) => b.memberCount - a.memberCount);
   const startIdx = cursor ? Math.max(0, allDaoIds.indexOf(cursor)) : 0;
   const paginated = filtered.slice(startIdx, startIdx + limit);
-  const nextCursor = filtered.length > startIdx + limit ? filtered[startIdx + limit]?.id : undefined;
+  const nextCursor =
+    filtered.length > startIdx + limit ? filtered[startIdx + limit]?.id : undefined;
   return jsonResponse({ data: paginated, meta: { total: filtered.length, limit, nextCursor } });
 }
 
-export async function handleDaoStats(_request: Request, env: Env, daoId: string): Promise<Response> {
+export async function handleDaoStats(
+  _request: Request,
+  env: Env,
+  daoId: string,
+): Promise<Response> {
   const daoResult = await getDaoOr404(env, daoId);
   if (daoResult instanceof Response) return daoResult;
   const dao = daoResult as Dao;
@@ -473,10 +605,32 @@ export async function handleDaoStats(_request: Request, env: Env, daoId: string)
   const members = await kvGetList<string>(kv, KV.daoMembers(daoId));
   const proposalIds = await kvGetList<string>(kv, KV.proposalIdx(daoId));
   const treasury = await kvGet<TreasuryOverview>(kv, KV.treasury(daoId));
-  let activeProposals = 0, passedProposals = 0, totalVotes = 0;
-  const proposals = await Promise.all(proposalIds.map((pid) => kvGet<Proposal>(kv, KV.proposal(daoId, pid))));
-  for (const p of proposals) { if (!p) continue; if (p.status === 'active') activeProposals++; if (p.status === 'passed' || p.status === 'executed') passedProposals++; if (p.voteSummary) totalVotes += p.voteSummary.for + p.voteSummary.against + p.voteSummary.abstain; }
-  return jsonResponse({ daoId: dao.id, displayName: dao.displayName, members: members.length, proposals: proposalIds.length, activeProposals, passedProposals, totalVotes, treasuryValue: treasury?.totalBalance ?? '0', treasuryTokens: treasury?.tokenCount ?? 0, treasuryNativeValue: treasury?.nativeValueUsd ?? 0, createdAt: dao.createdAt });
+  let activeProposals = 0,
+    passedProposals = 0,
+    totalVotes = 0;
+  const proposals = await Promise.all(
+    proposalIds.map((pid) => kvGet<Proposal>(kv, KV.proposal(daoId, pid))),
+  );
+  for (const p of proposals) {
+    if (!p) continue;
+    if (p.status === 'active') activeProposals++;
+    if (p.status === 'passed' || p.status === 'executed') passedProposals++;
+    if (p.voteSummary)
+      totalVotes += p.voteSummary.for + p.voteSummary.against + p.voteSummary.abstain;
+  }
+  return jsonResponse({
+    daoId: dao.id,
+    displayName: dao.displayName,
+    members: members.length,
+    proposals: proposalIds.length,
+    activeProposals,
+    passedProposals,
+    totalVotes,
+    treasuryValue: treasury?.totalBalance ?? '0',
+    treasuryTokens: treasury?.tokenCount ?? 0,
+    treasuryNativeValue: treasury?.nativeValueUsd ?? 0,
+    createdAt: dao.createdAt,
+  });
 }
 
 export async function handleDaoJoin(request: Request, env: Env, daoId: string): Promise<Response> {
@@ -506,12 +660,19 @@ export async function handleDaoLeave(request: Request, env: Env, daoId: string):
   const kv = env.GOVERNANCE;
   if (!kv) return jsonResponse({ error: 'Governance KV not configured' }, 500);
   const wallet = session.address.toLowerCase();
-  if (dao.creator === wallet) return jsonResponse({ error: 'DAO creator cannot leave. Transfer ownership or delete the DAO.' }, 403);
+  if (dao.creator === wallet)
+    return jsonResponse(
+      { error: 'DAO creator cannot leave. Transfer ownership or delete the DAO.' },
+      403,
+    );
   const members = await kvGetList<string>(kv, KV.daoMembers(daoId));
   if (!members.includes(wallet)) return jsonResponse({ error: 'Not a member' }, 404);
   const updatedMembers = members.filter((m) => m !== wallet);
   dao.memberCount = updatedMembers.length;
-  await Promise.all([kvPut(kv, KV.daoMembers(daoId), updatedMembers), kvPut(kv, KV.dao(daoId), dao)]);
+  await Promise.all([
+    kvPut(kv, KV.daoMembers(daoId), updatedMembers),
+    kvPut(kv, KV.dao(daoId), dao),
+  ]);
   await recordActivity(env, daoId, 'member_left', wallet);
   return jsonResponse({ success: true, memberCount: dao.memberCount });
 }

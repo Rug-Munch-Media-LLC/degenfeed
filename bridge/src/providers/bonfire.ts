@@ -20,10 +20,7 @@ const $fetch = globalThis.fetch;
 
 // ─── Constants ─────────────────────────────────────────────────────────
 
-const BONFIRE_INSTANCES = [
-  'http://127.0.0.1:8099',
-  'https://social.bonfirenetworks.org',
-];
+const BONFIRE_INSTANCES = ['http://127.0.0.1:8099', 'https://social.bonfirenetworks.org'];
 
 // ─── Types ─────────────────────────────────────────────────────────────
 
@@ -63,15 +60,20 @@ interface BonfireTimelineResponse {
 // ─── Helpers ──────────────────────────────────────────────────────────
 
 function stripHtml(html: string): string {
-  return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+  return html
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 function guessNiches(text: string): string[] {
   const lower = text.toLowerCase();
   const niches: string[] = [];
-  if (/\b(crypto|blockchain|web3|bitcoin|ethereum|solana|defi)\b/.test(lower)) niches.push('crypto');
+  if (/\b(crypto|blockchain|web3|bitcoin|ethereum|solana|defi)\b/.test(lower))
+    niches.push('crypto');
   if (/\b(ai|artificial|intelligence|llm|machine)\b/.test(lower)) niches.push('ai');
-  if (/\b(fediverse|activitypub|bonfire|federation|decentralized)\b/.test(lower)) niches.push('fediverse');
+  if (/\b(fediverse|activitypub|bonfire|federation|decentralized)\b/.test(lower))
+    niches.push('fediverse');
   if (/\b(community|group|cooperative|commons|p2p|peer)\b/.test(lower)) niches.push('community');
   if (/\b(tech|programming|code|software|opensource)\b/.test(lower)) niches.push('tech');
   if (niches.length === 0) niches.push('social');
@@ -80,7 +82,7 @@ function guessNiches(text: string): string[] {
 
 // ─── Mapping ──────────────────────────────────────────────────────────
 
-function bonfireStatusToPost(status: BonfireStatus, instance: string): UnifiedPost {
+function bonfireStatusToPost(status: BonfireStatus, _instance: string): UnifiedPost {
   const text = stripHtml(status.content).slice(0, 2000);
   const tags = (status.tags || []).map((t) => t.name);
 
@@ -114,11 +116,18 @@ function bonfireStatusToPost(status: BonfireStatus, instance: string): UnifiedPo
       quotes: 0,
     },
     engagement: {
-      viewerLiked: false, viewerReposted: false, viewerBookmarked: false,
-      raw: { likes: status.favourites_count || 0, reposts: status.reblogs_count || 0, replies: status.replies_count || 0, quotes: 0 },
+      viewerLiked: false,
+      viewerReposted: false,
+      viewerBookmarked: false,
+      raw: {
+        likes: status.favourites_count || 0,
+        reposts: status.reblogs_count || 0,
+        replies: status.replies_count || 0,
+        quotes: 0,
+      },
     },
     raw: status,
-    niches: guessNiches(text + ' ' + tags.join(' ')),
+    niches: guessNiches(`${text} ${tags.join(' ')}`),
   };
 }
 
@@ -132,7 +141,7 @@ async function fetchFromInstance(instance: string, limit: number): Promise<Unifi
     });
     if (!res.ok) return [];
 
-    const data = await res.json() as BonfireStatus[] | BonfireTimelineResponse;
+    const data = (await res.json()) as BonfireStatus[] | BonfireTimelineResponse;
     const statuses = Array.isArray(data) ? data : (data as BonfireTimelineResponse).data || [];
     if (!Array.isArray(statuses)) return [];
 

@@ -35,9 +35,7 @@ afterEach(() => {
 
 describe('Zora Gasless Mint', () => {
   it('requests a gasless mint via Zora API', async () => {
-    mockFetch.mockResolvedValue(
-      mockJsonResponse({ mintTx: '0xabc', status: 'submitted' }),
-    );
+    mockFetch.mockResolvedValue(mockJsonResponse({ mintTx: '0xabc', status: 'submitted' }));
     const res = await fetch('https://api.zora.co/gasless/mint', {
       method: 'POST',
       body: JSON.stringify({ token: '0x123', recipient: '0xabc', quantity: 1 }),
@@ -72,9 +70,7 @@ describe('Zora Gasless Mint', () => {
 
 describe('Lens Momoka Posting', () => {
   it('posts content via Momoka (free L2 posting)', async () => {
-    mockFetch.mockResolvedValue(
-      mockJsonResponse({ momokaId: '0xmomoka123', status: 'success' }),
-    );
+    mockFetch.mockResolvedValue(mockJsonResponse({ momokaId: '0xmomoka123', status: 'success' }));
     const res = await fetch('https://momoka.lens.xyz/api/post', {
       method: 'POST',
       body: JSON.stringify({
@@ -121,9 +117,7 @@ describe('Lens Momoka Posting', () => {
 
 describe('Farcaster Free Posting', () => {
   it('submits a signed cast to Farcaster Hub', async () => {
-    mockFetch.mockResolvedValue(
-      mockJsonResponse({ hash: '0xcast123', status: 'submitted' }),
-    );
+    mockFetch.mockResolvedValue(mockJsonResponse({ hash: '0xcast123', status: 'submitted' }));
     const res = await fetch('https://hub.farcaster.xyz/v1/submitMessage', {
       method: 'POST',
       body: JSON.stringify({
@@ -159,9 +153,7 @@ describe('Farcaster Free Posting', () => {
   });
 
   it('accepts cast with all optional fields', async () => {
-    mockFetch.mockResolvedValue(
-      mockJsonResponse({ hash: '0xcast456', status: 'submitted' }),
-    );
+    mockFetch.mockResolvedValue(mockJsonResponse({ hash: '0xcast456', status: 'submitted' }));
     const res = await fetch('https://hub.farcaster.xyz/v1/submitMessage', {
       method: 'POST',
       body: JSON.stringify({

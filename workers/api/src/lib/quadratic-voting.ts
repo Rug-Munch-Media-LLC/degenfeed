@@ -380,7 +380,7 @@ export async function castQuadraticVotes(
       (a) => a.voterId === voterId && a.optionId === alloc.optionId,
     );
     if (prevIdx >= 0) {
-      tally.totalCreditsSpent -= tally.allocations[prevIdx]!.cost ?? 0;
+      tally.totalCreditsSpent -= tally.allocations[prevIdx]?.cost ?? 0;
       tally.allocations.splice(prevIdx, 1);
     }
 

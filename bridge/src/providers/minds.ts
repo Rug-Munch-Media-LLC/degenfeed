@@ -147,10 +147,9 @@ function mindsPostToPost(post: MindsPost): UnifiedPost {
   const owner = post.ownerObj;
   const isRemind = post.activity_type === 'remind';
   const original = isRemind && post.remind_object ? post.remind_object : post;
-  const text =
-    original.title
-      ? `${original.title}\n\n${stripHtml(original.message || original.description || original.blurb || '')}`
-      : stripHtml(original.message || original.description || original.blurb || '');
+  const text = original.title
+    ? `${original.title}\n\n${stripHtml(original.message || original.description || original.blurb || '')}`
+    : stripHtml(original.message || original.description || original.blurb || '');
 
   const tags = original.tags || [];
   const contentSrcs: Array<{ kind: 'image' | 'video'; url: string }> = [];
@@ -161,7 +160,10 @@ function mindsPostToPost(post: MindsPost): UnifiedPost {
   if (original.custom_data) {
     for (const cd of original.custom_data) {
       if (cd.src) {
-        contentSrcs.push({ kind: original.custom_type === 'video' ? 'video' : 'image', url: cd.src });
+        contentSrcs.push({
+          kind: original.custom_type === 'video' ? 'video' : 'image',
+          url: cd.src,
+        });
       }
     }
   }
@@ -182,7 +184,10 @@ function mindsPostToPost(post: MindsPost): UnifiedPost {
     rewardsMeta.wireThreshold = post.wire_threshold;
   }
   if (post.boosts && post.boosts.length > 0) {
-    rewardsMeta.totalBoostAmount = post.boosts.reduce((sum, b) => sum + parseFloat(b.amount || '0'), 0);
+    rewardsMeta.totalBoostAmount = post.boosts.reduce(
+      (sum, b) => sum + parseFloat(b.amount || '0'),
+      0,
+    );
   }
 
   return {
@@ -194,9 +199,9 @@ function mindsPostToPost(post: MindsPost): UnifiedPost {
       handles: { minds: owner.username },
       displayName: owner.name || owner.username || 'Minds User',
       bio: owner.briefdescription || '',
-      avatarUrl: owner.avatar_url || (owner.icontime
-        ? `${MINDS_FRONT}/icon/${owner.guid}/${owner.icontime}/xlarge`
-        : ''),
+      avatarUrl:
+        owner.avatar_url ||
+        (owner.icontime ? `${MINDS_FRONT}/icon/${owner.guid}/${owner.icontime}/xlarge` : ''),
       followerCount: owner.subscribers_count || 0,
       followingCount: 0,
       links: [],
@@ -243,7 +248,9 @@ function mindsPostToPost(post: MindsPost): UnifiedPost {
     },
     raw: post,
     niches: guessNiches(text, original.title || '', tags),
-    ...(Object.keys(rewardsMeta).length > 0 ? { meta: rewardsMeta } as unknown as Record<string, unknown> : {}),
+    ...(Object.keys(rewardsMeta).length > 0
+      ? ({ meta: rewardsMeta } as unknown as Record<string, unknown>)
+      : {}),
   } as UnifiedPost;
 }
 
@@ -251,13 +258,10 @@ function mindsPostToPost(post: MindsPost): UnifiedPost {
 
 async function fetchNewsfeed(limit: number): Promise<UnifiedPost[]> {
   try {
-    const res = await $fetch(
-      `${MINDS_API}/newsfeed?limit=${Math.min(limit, 50)}&sync=1`,
-      {
-        headers: { 'User-Agent': 'DegenFeed-Bridge/0.1 (Minds)' },
-        signal: AbortSignal.timeout(8000),
-      },
-    );
+    const res = await $fetch(`${MINDS_API}/newsfeed?limit=${Math.min(limit, 50)}&sync=1`, {
+      headers: { 'User-Agent': 'DegenFeed-Bridge/0.1 (Minds)' },
+      signal: AbortSignal.timeout(8000),
+    });
     if (!res.ok) return [];
     const data = (await res.json()) as MindsFeedResponse;
     if (!data.entities) return [];
@@ -275,13 +279,10 @@ async function fetchNewsfeed(limit: number): Promise<UnifiedPost[]> {
 
 async function fetchTrending(limit: number): Promise<UnifiedPost[]> {
   try {
-    const res = await $fetch(
-      `${MINDS_API}/newsfeed/trending?limit=${Math.min(limit, 30)}`,
-      {
-        headers: { 'User-Agent': 'DegenFeed-Bridge/0.1 (Minds)' },
-        signal: AbortSignal.timeout(8000),
-      },
-    );
+    const res = await $fetch(`${MINDS_API}/newsfeed/trending?limit=${Math.min(limit, 30)}`, {
+      headers: { 'User-Agent': 'DegenFeed-Bridge/0.1 (Minds)' },
+      signal: AbortSignal.timeout(8000),
+    });
     if (!res.ok) return [];
     const data = (await res.json()) as MindsFeedResponse;
     if (!data.entities) return [];
@@ -352,7 +353,9 @@ export async function fetchMindsPosts(limit = 20): Promise<UnifiedPost[]> {
     }
   }
 
-  console.log(`[bridge] Minds: ${deduped.length} posts (newsfeed: ${newsfeed.length}, trending: ${trending.length}, tags: ${tagFeeds.length} feeds)`);
+  console.log(
+    `[bridge] Minds: ${deduped.length} posts (newsfeed: ${newsfeed.length}, trending: ${trending.length}, tags: ${tagFeeds.length} feeds)`,
+  );
   return deduped;
 }
 

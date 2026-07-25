@@ -84,14 +84,12 @@ export async function fetchNostrVideos(
 async function fetchFromRelay(
   relayUrl: string,
   opts: { limit: number },
-  signal?: AbortSignal,
-  timeoutMs: number = 5000,
+  _signal?: AbortSignal,
+  _timeoutMs: number = 5000,
 ): Promise<UnifiedVideo[]> {
   try {
     // Use a Nostr REST bridge for HTTP access (nostr.band API is HTTP-accessible)
-    const httpRelay = relayUrl
-      .replace('wss://', 'https://')
-      .replace('ws://', 'http://');
+    const _httpRelay = relayUrl.replace('wss://', 'https://').replace('ws://', 'http://');
 
     // Try nostr.band API first (it has a public HTTP API)
     if (relayUrl.includes('nostr.band')) {
@@ -144,7 +142,7 @@ async function fetchFromPrismicRelay(limit: number): Promise<UnifiedVideo[]> {
 // ─── Convert Nostr events to UnifiedVideo ────────────────────────────
 
 function convertNostrEvents(events: NostrEvent[]): UnifiedVideo[] {
-  const pubkeys = new Set(events.map((e) => e.pubkey));
+  const _pubkeys = new Set(events.map((e) => e.pubkey));
 
   return events.map((event) => {
     // Parse NIP-71 tags:
@@ -178,7 +176,7 @@ function convertNostrEvents(events: NostrEvent[]): UnifiedVideo[] {
       platform: PLATFORM,
       platformLabel: PLATFORM_LABEL,
       platformColor: PLATFORM_COLOR,
-      creatorName: event.pubkey.slice(0, 8) + '...',
+      creatorName: `${event.pubkey.slice(0, 8)}...`,
       creatorId: `nostr:${event.pubkey}`,
       creatorAvatar: '',
       creatorUrl: `https://njump.me/${event.pubkey}`,

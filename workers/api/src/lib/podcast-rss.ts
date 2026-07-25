@@ -72,13 +72,11 @@ export interface PodcastEpisodeEntry {
 /**
  * Build a complete iTunes-compatible podcast RSS 2.0 feed.
  */
-export function generatePodcastRss(
-  meta: PodcastFeedMeta,
-  episodes: PodcastEpisodeEntry[],
-): string {
+export function generatePodcastRss(meta: PodcastFeedMeta, episodes: PodcastEpisodeEntry[]): string {
   const now = new Date().toUTCString();
   const itunesNs = 'xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd"';
-  const podcastNs = 'xmlns:podcast="https://github.com/Podcastindex-org/podcast-namespace/blob/main/docs/1.0.md"';
+  const podcastNs =
+    'xmlns:podcast="https://github.com/Podcastindex-org/podcast-namespace/blob/main/docs/1.0.md"';
   const contentNs = 'xmlns:content="http://purl.org/rss/1.0/modules/content/"';
   const apNs = 'xmlns:activitypub="https://www.w3.org/ns/activitystreams#"';
 
@@ -128,7 +126,9 @@ export function generatePodcastRss(
 
   // Funding / ActivityPub
   if (meta.fundingUrl) {
-    channel.push(`<podcast:funding url="${escapeXml(meta.fundingUrl)}"><![CDATA[Support the show]]></podcast:funding>`);
+    channel.push(
+      `<podcast:funding url="${escapeXml(meta.fundingUrl)}"><![CDATA[Support the show]]></podcast:funding>`,
+    );
   }
   if (meta.activityPubId) {
     channel.push(`<activitypub:actor>${escapeXml(meta.activityPubId)}</activitypub:actor>`);
@@ -175,7 +175,9 @@ function generateEpisodeItem(ep: PodcastEpisodeEntry): string {
   }
 
   // GUID
-  lines.push(`      <guid isPermaLink="${ep.link ? 'true' : 'false'}">${escapeXml(ep.guid)}</guid>`);
+  lines.push(
+    `      <guid isPermaLink="${ep.link ? 'true' : 'false'}">${escapeXml(ep.guid)}</guid>`,
+  );
 
   // Publication date (RFC 2822)
   lines.push(`      <pubDate>${ep.pubDate}</pubDate>`);
@@ -215,7 +217,9 @@ function generateEpisodeItem(ep: PodcastEpisodeEntry): string {
       })),
     );
     const chaptersBase64 = Buffer.from(chaptersJson).toString('base64');
-    lines.push(`      <podcast:chapters url="${escapeXml(ep.link || ep.enclosure.url)}/chapters.json" type="application/json+chapters"/>`);
+    lines.push(
+      `      <podcast:chapters url="${escapeXml(ep.link || ep.enclosure.url)}/chapters.json" type="application/json+chapters"/>`,
+    );
     lines.push(`      <podcast:chapters><![CDATA[${chaptersBase64}]]></podcast:chapters>`);
   }
 
@@ -264,7 +268,9 @@ export function chapterFileUrl(feedUrl: string, episodeGuid: string): string {
 /**
  * Generate an OPML subscription file for a list of podcast feeds.
  */
-export function generateOpml(feeds: Array<{ title: string; feedUrl: string; imageUrl?: string }>): string {
+export function generateOpml(
+  feeds: Array<{ title: string; feedUrl: string; imageUrl?: string }>,
+): string {
   const outlines = feeds
     .map(
       (f) =>

@@ -104,18 +104,62 @@ export type Protocol =
   // ─── Data / Storage ────────────────────────────────────────
   | 'ceramic'
   | 'tableland'
-;
+  | 'mbin'
+  | 'sublinks'
+  | 'firefish'
+  | 'iceshrimp'
+  | 'sharkey'
+  | 'akkoma'
+  | 'immich'
+  | 'discourse'
+  | 'ghost'
+  | 'headscale'
+  | 'yggdrasil';
 
 /** All protocol identifiers as a const array */
 export const PROTOCOLS = [
-  'nostr', 'farcaster', 'lens', 'bluesky', 'threads', 'rss',
-  'mastodon', 'lemmy', 'reddit', 'ethereum', 'ponder', 'solana',
-  'peertube', 'youtube', 'kbin', 'tildes', 'atproto', 'zora',
-  'telegram', 'discord', 'matrix', 'webhook', 'github',
-  'newsletter-bridge', 'mirror', 'paragraph', 'email', 'google',
-  'twitter', 'pixelfed', 'dtube', 'lbry', 'gab', 'minds',
-  'aether', 'scuttlebutt', 'hive', 'diaspora', 'friendica',
-  'pleroma', 'misskey', 'writefreely',
+  'nostr',
+  'farcaster',
+  'lens',
+  'bluesky',
+  'threads',
+  'rss',
+  'mastodon',
+  'lemmy',
+  'reddit',
+  'ethereum',
+  'ponder',
+  'solana',
+  'peertube',
+  'youtube',
+  'kbin',
+  'tildes',
+  'atproto',
+  'zora',
+  'telegram',
+  'discord',
+  'matrix',
+  'webhook',
+  'github',
+  'newsletter-bridge',
+  'mirror',
+  'paragraph',
+  'email',
+  'google',
+  'twitter',
+  'pixelfed',
+  'dtube',
+  'lbry',
+  'gab',
+  'minds',
+  'aether',
+  'scuttlebutt',
+  'hive',
+  'diaspora',
+  'friendica',
+  'pleroma',
+  'misskey',
+  'writefreely',
   'deso',
   'rarible',
   'audius',
@@ -151,12 +195,33 @@ export const PROTOCOLS = [
   'mintgate',
   'bonfida',
   // ActivityPub Ecosystem
-  'bookwyrm', 'mobilizon', 'bonfire', 'mitra', 'takahe',
-  'forgejo', 'owncast', 'faircamp',
+  'bookwyrm',
+  'mobilizon',
+  'bonfire',
+  'mitra',
+  'takahe',
+  'forgejo',
+  'owncast',
+  'faircamp',
   // Blockchain Social
-  'orbis', 'xmtp', 'push', 'huddle01',
+  'orbis',
+  'xmtp',
+  'push',
+  'huddle01',
   // Data / Storage
-  'ceramic', 'tableland',
+  'ceramic',
+  'tableland',
+  'mbin',
+  'sublinks',
+  'firefish',
+  'iceshrimp',
+  'sharkey',
+  'akkoma',
+  'immich',
+  'discourse',
+  'ghost',
+  'headscale',
+  'yggdrasil',
 ] as const satisfies Protocol[];
 
 // ─── Chain Definitions ────────────────────────────────────────────
@@ -175,21 +240,57 @@ export const CHAINS: Record<Chain, string> = {
 // ─── Content Categories ──────────────────────────────────────────
 
 export type ContentCategory =
-  | 'crypto' | 'defi' | 'nft' | 'ai' | 'oss' | 'security'
-  | 'gaming' | 'music' | 'art' | 'social' | 'news' | 'memes'
-  | 'trading' | 'governance' | 'dao' | 'infra' | 'privacy' | 'identity';
+  | 'crypto'
+  | 'defi'
+  | 'nft'
+  | 'ai'
+  | 'oss'
+  | 'security'
+  | 'gaming'
+  | 'music'
+  | 'art'
+  | 'social'
+  | 'news'
+  | 'memes'
+  | 'trading'
+  | 'governance'
+  | 'dao'
+  | 'infra'
+  | 'privacy'
+  | 'identity';
 
 export const CONTENT_CATEGORIES: ContentCategory[] = [
-  'crypto', 'defi', 'nft', 'ai', 'oss', 'security',
-  'gaming', 'music', 'art', 'social', 'news', 'memes',
-  'trading', 'governance', 'dao', 'infra', 'privacy', 'identity',
+  'crypto',
+  'defi',
+  'nft',
+  'ai',
+  'oss',
+  'security',
+  'gaming',
+  'music',
+  'art',
+  'social',
+  'news',
+  'memes',
+  'trading',
+  'governance',
+  'dao',
+  'infra',
+  'privacy',
+  'identity',
 ];
 
 // ─── Engagement Types ────────────────────────────────────────────
 
 export type EngagementAction =
-  | 'like' | 'unlike' | 'repost' | 'unrepost'
-  | 'bookmark' | 'unbookmark' | 'reply' | 'react';
+  | 'like'
+  | 'unlike'
+  | 'repost'
+  | 'unrepost'
+  | 'bookmark'
+  | 'unbookmark'
+  | 'reply'
+  | 'react';
 
 // ─── Space Status ────────────────────────────────────────────────
 
@@ -198,8 +299,14 @@ export type SpaceStatus = 'live' | 'scheduled' | 'ended';
 // ─── Visual Source ──────────────────────────────────────────────
 
 export type VisualSource =
-  | 'pixelfed' | 'zora' | 'bluesky' | 'nostr' | 'farcaster'
-  | 'gotosocial' | 'mastodon' | 'all';
+  | 'pixelfed'
+  | 'zora'
+  | 'bluesky'
+  | 'nostr'
+  | 'farcaster'
+  | 'gotosocial'
+  | 'mastodon'
+  | 'all';
 
 // ─── Scoring Weights (defaults) ──────────────────────────────────
 
@@ -328,5 +435,16 @@ export const PLATFORM_TIER_WEIGHTS: Record<string, number> = {
   huddle01: 0.4,
   // Data / Storage
   ceramic: 0.5,
+  mbin: 0.5,
+  sublinks: 0.5,
+  firefish: 0.5,
+  iceshrimp: 0.5,
+  sharkey: 0.5,
+  akkoma: 0.5,
+  immich: 0.5,
+  discourse: 0.5,
+  ghost: 0.5,
+  headscale: 0.5,
+  yggdrasil: 0.5,
   tableland: 0.4,
 };

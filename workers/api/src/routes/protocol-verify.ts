@@ -545,7 +545,7 @@ async function checkExternalVisibility(
 
 // ─── GET /api/protocol/verify/health ──────────────────────────────────
 
-export async function handleVerifyHealth(_request: Request, env: Env): Promise<Response> {
+export async function handleVerifyHealth(_request: Request, _env: Env): Promise<Response> {
   const checks = [
     { name: 'DegenFeed API', url: 'https://degenfeed.xyz/api/health' },
     { name: 'DegenFeed Search', url: 'https://degenfeed.xyz/api/feed/health' },

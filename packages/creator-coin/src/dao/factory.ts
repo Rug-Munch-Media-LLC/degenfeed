@@ -26,7 +26,6 @@ import type {
   DAOCreationInput,
   DAOState,
   DAOStatus,
-  DAOTemplateType,
   GovernorDeploymentParams,
   GovernorDeploymentResult,
 } from './types';
@@ -176,10 +175,10 @@ export class DAOFactory {
    */
   async deployGovernor(
     coinAddress: string,
-    params?: Partial<GovernorDeploymentParams>,
+    _params?: Partial<GovernorDeploymentParams>,
   ): Promise<GovernorDeploymentResult | null> {
     const dao = await this.getDAOByCoin(coinAddress);
-    if (!dao || dao.chain !== 'base') {
+    if (dao?.chain !== 'base') {
       return null; // Only available on Base/EVM chains
     }
 
@@ -194,7 +193,7 @@ export class DAOFactory {
 
     // Deployment is handled by the contract deployment script
     // This method returns the params needed for deployment
-    const deploymentParams: GovernorDeploymentParams = {
+    const _deploymentParams: GovernorDeploymentParams = {
       tokenAddress: dao.tokenAddress as `0x${string}`,
       name: dao.name,
       votingDelay: Math.floor(dao.votingConfig.votingDelay / 12), // Convert seconds to blocks
@@ -285,7 +284,7 @@ export class DAOFactory {
   /**
    * Freeze a DAO in case of emergency. Only callable by multisig.
    */
-  async freezeDAO(daoId: string, caller: string): Promise<DAOState> {
+  async freezeDAO(daoId: string, _caller: string): Promise<DAOState> {
     const dao = await this.getDAO(daoId);
     if (!dao) throw new Error(`DAO not found: ${daoId}`);
 

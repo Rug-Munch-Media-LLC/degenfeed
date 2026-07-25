@@ -22,7 +22,7 @@ const $fetch = globalThis.fetch;
 // ─── Constants ─────────────────────────────────────────────────────────
 
 const PUSH_API = 'https://backend.epns.io/api';
-const PUSH_DELIVERY_NODE = process.env.PUSH_DELIVERY_NODE_URL || 'http://127.0.0.1:8102';
+const _PUSH_DELIVERY_NODE = process.env.PUSH_DELIVERY_NODE_URL || 'http://127.0.0.1:8102';
 
 const PUBLIC_CHANNELS = [
   { address: 'eip155:1:0x35B84d6848D16415177c64D64504663b998A6ab4', name: 'Push Protocol' },
@@ -85,7 +85,12 @@ function pushNotifToPost(notif: PushNotification): UnifiedPost {
       primary: { protocol: 'push', id: notif.app || 'push-protocol' },
       handles: { push: notif.app || null },
       displayName: notif.app || 'Push Notification',
-      bio: '', avatarUrl: '', followerCount: 0, followingCount: 0, links: [], keys: {},
+      bio: '',
+      avatarUrl: '',
+      followerCount: 0,
+      followingCount: 0,
+      links: [],
+      keys: {},
     },
     text: text.slice(0, 2000),
     embeds: notif.cta ? [{ kind: 'link', url: notif.cta }] : [],
@@ -93,7 +98,9 @@ function pushNotifToPost(notif: PushNotification): UnifiedPost {
     createdAt: (notif.epoch || Date.now()) * 1000,
     metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
     engagement: {
-      viewerLiked: false, viewerReposted: false, viewerBookmarked: false,
+      viewerLiked: false,
+      viewerReposted: false,
+      viewerBookmarked: false,
       raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
     },
     raw: notif,
@@ -110,10 +117,13 @@ async function fetchPublicNotifications(limit: number): Promise<UnifiedPost[]> {
       PUBLIC_CHANNELS.map(async (channel) => {
         const res = await $fetch(
           `${PUSH_API}/v1/payloads?channel=${channel.address}&limit=${Math.ceil(limit / PUBLIC_CHANNELS.length)}`,
-          { headers: { 'User-Agent': 'DegenFeed-Bridge/0.1 (Push)' }, signal: AbortSignal.timeout(8000) },
+          {
+            headers: { 'User-Agent': 'DegenFeed-Bridge/0.1 (Push)' },
+            signal: AbortSignal.timeout(8000),
+          },
         );
         if (!res.ok) return [];
-        const data = await res.json() as PushFeedResponse;
+        const data = (await res.json()) as PushFeedResponse;
         const feeds = data.feeds || data.data || [];
         return Array.isArray(feeds) ? feeds.map(pushNotifToPost) : [];
       }),

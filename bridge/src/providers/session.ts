@@ -26,10 +26,7 @@ const $fetch = globalThis.fetch;
 
 // ─── Known public SOGS instances ──────────────────────────────────────
 // Session open group servers are self-hosted; these are well-known public ones.
-const SOGS_INSTANCES = [
-  'https://sogs.session.foundation',
-  'https://discuss.oxen.io',
-];
+const _SOGS_INSTANCES = ['https://sogs.session.foundation', 'https://discuss.oxen.io'];
 
 // ─── Crypto/tech focused open rooms on public SOGS ────────────────────
 interface RoomConfig {
@@ -109,7 +106,8 @@ function guessNiches(text: string, roomName: string): string[] {
   if (/\b(nft|art|collectible|mint)\b/.test(lower)) niches.push('nft');
   if (/\b(ai |artificial|intelligence|llm|agent|machine learning)\b/.test(lower)) niches.push('ai');
   if (/\b(session|oxen|sogs|onion|service.node)\b/.test(lower)) niches.push('privacy');
-  if (/\b(privacy|anonymity|surveillance|censorship|encryption|secure)\b/.test(lower)) niches.push('privacy');
+  if (/\b(privacy|anonymity|surveillance|censorship|encryption|secure)\b/.test(lower))
+    niches.push('privacy');
   if (/\b(sec|regulation|etf|congress)\b/.test(lower)) niches.push('regulation');
   if (/\b(security|hack|exploit|audit|scam|phishing)\b/.test(lower)) niches.push('security');
   if (/\b(crypto|blockchain|web3|token)\b/.test(lower)) niches.push('crypto');
@@ -156,7 +154,9 @@ function sogsMessageToPost(
     contentType: content.length > 500 ? 'article' : 'text',
     createdAt: msg.posted_at * 1000, // convert to ms
     metrics: {
-      likes: msg.reactions ? Object.values(msg.reactions).reduce((a: number, b: number) => a + b, 0) : 0,
+      likes: msg.reactions
+        ? Object.values(msg.reactions).reduce((a: number, b: number) => a + b, 0)
+        : 0,
       reposts: 0,
       replies: 0,
       quotes: 0,
@@ -166,7 +166,9 @@ function sogsMessageToPost(
       viewerReposted: false,
       viewerBookmarked: false,
       raw: {
-        likes: msg.reactions ? Object.values(msg.reactions).reduce((a: number, b: number) => a + b, 0) : 0,
+        likes: msg.reactions
+          ? Object.values(msg.reactions).reduce((a: number, b: number) => a + b, 0)
+          : 0,
         reposts: 0,
         replies: 0,
         quotes: 0,
@@ -191,7 +193,7 @@ async function fetchRoomMessages(room: RoomConfig, limit: number): Promise<Unifi
     });
     if (!res.ok) return [];
 
-    const data = await res.json() as SOGSRecentMessagesResponse;
+    const data = (await res.json()) as SOGSRecentMessagesResponse;
     const messages = data.messages || [];
     const roomInfo = data.room;
 
@@ -200,7 +202,9 @@ async function fetchRoomMessages(room: RoomConfig, limit: number): Promise<Unifi
       .filter((p: UnifiedPost | null): p is UnifiedPost => p !== null)
       .slice(0, limit);
   } catch (err) {
-    console.log(`[bridge] Session room error (${room.room}@${room.instance}): ${(err as Error).message}`);
+    console.log(
+      `[bridge] Session room error (${room.room}@${room.instance}): ${(err as Error).message}`,
+    );
     return [];
   }
 }
@@ -213,40 +217,42 @@ async function fetchRoomInfo(room: RoomConfig): Promise<UnifiedPost[]> {
     });
     if (!res.ok) return [];
 
-    const roomInfo = await res.json() as SOGSRoom;
+    const roomInfo = (await res.json()) as SOGSRoom;
     if (!roomInfo) return [];
 
     // Create a system post about the room (useful for feed discovery)
-    return [{
-      id: `session:room:${room.room}`,
-      protocol: 'session',
-      author: {
+    return [
+      {
         id: `session:room:${room.room}`,
-        primary: { protocol: 'session', id: room.room },
-        handles: {},
-        displayName: roomInfo.name || room.room,
-        bio: roomInfo.description || '',
-        avatarUrl: roomInfo.image_url || '',
-        followerCount: roomInfo.active_users || 0,
-        followingCount: 0,
-        links: [],
-        keys: {},
+        protocol: 'session',
+        author: {
+          id: `session:room:${room.room}`,
+          primary: { protocol: 'session', id: room.room },
+          handles: {},
+          displayName: roomInfo.name || room.room,
+          bio: roomInfo.description || '',
+          avatarUrl: roomInfo.image_url || '',
+          followerCount: roomInfo.active_users || 0,
+          followingCount: 0,
+          links: [],
+          keys: {},
+        },
+        text: roomInfo.description || `Session open group: ${roomInfo.name || room.room}`,
+        embeds: [],
+        contentType: 'text',
+        createdAt: Date.now(),
+        metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
+        engagement: {
+          viewerLiked: false,
+          viewerReposted: false,
+          viewerBookmarked: false,
+          raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
+        },
+        raw: roomInfo,
+        niches: guessNiches(roomInfo.description || roomInfo.name || '', room.room),
+        community: { name: roomInfo.name || room.room, title: roomInfo.name || room.room },
       },
-      text: roomInfo.description || `Session open group: ${roomInfo.name || room.room}`,
-      embeds: [],
-      contentType: 'text',
-      createdAt: Date.now(),
-      metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
-      engagement: {
-        viewerLiked: false,
-        viewerReposted: false,
-        viewerBookmarked: false,
-        raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
-      },
-      raw: roomInfo,
-      niches: guessNiches(roomInfo.description || roomInfo.name || '', room.room),
-      community: { name: roomInfo.name || room.room, title: roomInfo.name || room.room },
-    }];
+    ];
   } catch {
     return [];
   }
@@ -265,7 +271,7 @@ export const schema: SchemaGuard = {
 
 export async function fetchSessionPosts(limit = 20): Promise<UnifiedPost[]> {
   const perRoom = Math.max(3, Math.ceil(limit / CURATED_ROOMS.length));
-  const roomLimit = Math.max(1, Math.ceil(perRoom * 0.3));
+  const _roomLimit = Math.max(1, Math.ceil(perRoom * 0.3));
 
   const results = await Promise.allSettled(
     CURATED_ROOMS.map(async (room) => {

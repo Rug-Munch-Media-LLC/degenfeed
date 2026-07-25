@@ -22,7 +22,7 @@ const $fetch = globalThis.fetch;
 // ─── Constants ─────────────────────────────────────────────────────────
 
 const ORBIS_API = 'https://orbis.club/api';
-const CERAMIC_NODE = process.env.CERAMIC_NODE_URL || 'http://127.0.0.1:5102';
+const _CERAMIC_NODE = process.env.CERAMIC_NODE_URL || 'http://127.0.0.1:5102';
 
 // ─── Types ─────────────────────────────────────────────────────────────
 
@@ -76,7 +76,8 @@ function guessOrbisNiches(text: string): string[] {
   if (/\b(orbis|ceramic|composedb|did|verifiable)\b/.test(lower)) n.push('decentralized identity');
   if (/\b(ai|artificial|intelligence|llm)\b/.test(lower)) n.push('ai');
   if (/\b(dao|governance|community|vote|proposal)\b/.test(lower)) n.push('dao');
-  if (/\b(social|decentralized|fediverse|activitypub)\b/.test(lower)) n.push('decentralized social');
+  if (/\b(social|decentralized|fediverse|activitypub)\b/.test(lower))
+    n.push('decentralized social');
   if (n.length === 0) n.push('web3');
   return n;
 }
@@ -88,8 +89,13 @@ function orbisPostToUnified(post: OrbisPost): UnifiedPost {
   const title = post.content?.title || '';
   const text = title ? `${title}\n\n${body}` : body;
   const creator = post.creator_details?.profile || post.creator_details?.metadata;
-  const displayName = creator?.displayName || creator?.username || post.creator_details?.did?.slice(0, 10) || 'Orbis User';
-  const handle = creator?.username || post.creator_details?.metadata?.ensName || post.creator_details?.did || '';
+  const displayName =
+    creator?.displayName ||
+    creator?.username ||
+    post.creator_details?.did?.slice(0, 10) ||
+    'Orbis User';
+  const handle =
+    creator?.username || post.creator_details?.metadata?.ensName || post.creator_details?.did || '';
   const avatar = creator?.pfp || '';
   const contextName = post.context_details?.name || '';
 
@@ -103,7 +109,10 @@ function orbisPostToUnified(post: OrbisPost): UnifiedPost {
       displayName,
       bio: creator?.description || '',
       avatarUrl: avatar || '',
-      followerCount: 0, followingCount: 0, links: [], keys: { did: post.creator_details?.did || '' },
+      followerCount: 0,
+      followingCount: 0,
+      links: [],
+      keys: { did: post.creator_details?.did || '' },
     },
     text: text.slice(0, 2000),
     embeds: [],
@@ -116,11 +125,18 @@ function orbisPostToUnified(post: OrbisPost): UnifiedPost {
       quotes: 0,
     },
     engagement: {
-      viewerLiked: false, viewerReposted: false, viewerBookmarked: false,
-      raw: { likes: post.count_likes || 0, reposts: 0, replies: post.count_replies || 0, quotes: 0 },
+      viewerLiked: false,
+      viewerReposted: false,
+      viewerBookmarked: false,
+      raw: {
+        likes: post.count_likes || 0,
+        reposts: 0,
+        replies: post.count_replies || 0,
+        quotes: 0,
+      },
     },
     raw: post,
-    niches: guessOrbisNiches(text + ' ' + contextName),
+    niches: guessOrbisNiches(`${text} ${contextName}`),
   };
 }
 
@@ -133,7 +149,7 @@ async function fetchFromOrbisApi(limit: number): Promise<UnifiedPost[]> {
       signal: AbortSignal.timeout(8000),
     });
     if (!res.ok) return [];
-    const data = await res.json() as OrbisFeedResponse;
+    const data = (await res.json()) as OrbisFeedResponse;
     if (data.error) return [];
     const posts = data.data || [];
     if (!Array.isArray(posts)) return [];

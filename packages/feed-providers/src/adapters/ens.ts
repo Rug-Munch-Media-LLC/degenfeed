@@ -26,7 +26,7 @@ function namehash(name: string): string {
   let node = '0000000000000000000000000000000000000000000000000000000000000000';
   const labels = name.toLowerCase().split('.');
   for (let i = labels.length - 1; i >= 0; i--) {
-    const labelHash = keccak256(labels[i]);
+    const labelHash = keccak256(labels[i]!);
     node = keccak256(node + labelHash);
   }
   return node;

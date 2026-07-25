@@ -136,7 +136,7 @@ export function useRealtimeFeed(
       }
     }, 1_000);
     return () => clearInterval(interval);
-  }, []);
+  }, [connected]);
 
   // ── Subscribe to feed events ──
   const subscribeToFeed = useCallback((ws: WebSocket) => {
@@ -264,7 +264,7 @@ export function useRealtimeFeed(
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       subscribeToFeed(wsRef.current);
     }
-  }, [feedScope, protocolFilter, subscribeToFeed]);
+  }, [subscribeToFeed]);
 
   return {
     connected: connectionState === 'connected',

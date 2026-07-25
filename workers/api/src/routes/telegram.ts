@@ -52,7 +52,7 @@ function telegramGroupFeedKey(groupId: string): string {
   return `telegram:group:feed:${groupId}`;
 }
 
-function telegramGroupTipKey(groupId: string): string {
+function _telegramGroupTipKey(groupId: string): string {
   return `telegram:group:tip:${groupId}`;
 }
 
@@ -602,8 +602,12 @@ async function cmdAlert(
 
   // Validate target price
   const target = Number(targetPrice);
-  if (isNaN(target) || target <= 0) {
-    return sendTelegramMessage(botToken, chatId, '❌ Invalid target price. Enter a positive number.');
+  if (Number.isNaN(target) || target <= 0) {
+    return sendTelegramMessage(
+      botToken,
+      chatId,
+      '❌ Invalid target price. Enter a positive number.',
+    );
   }
 
   // Store the alert in KV
@@ -642,7 +646,7 @@ async function cmdBuy(
   botToken: string,
   chatId: number,
   args: string[],
-  env: Env,
+  _env: Env,
 ): Promise<Response> {
   const symbol = args[0]?.toUpperCase();
   const amount = args[1];
@@ -685,7 +689,7 @@ async function cmdSell(
   botToken: string,
   chatId: number,
   args: string[],
-  env: Env,
+  _env: Env,
 ): Promise<Response> {
   const symbol = args[0]?.toUpperCase();
   const amount = args[1];
@@ -717,7 +721,7 @@ async function cmdFeed(
   botToken: string,
   chatId: number,
   args: string[],
-  env: Env,
+  _env: Env,
   _userId: number,
 ): Promise<Response> {
   const protocol = args[0]?.toLowerCase();
@@ -746,7 +750,7 @@ async function cmdPost(
   chatId: number,
   _userId: number,
   args: string[],
-  env: Env,
+  _env: Env,
 ): Promise<Response> {
   const text = args.join(' ');
   if (!text || text.length < 1) {
@@ -934,7 +938,7 @@ async function cmdTip(
   chatId: number,
   _userId: number,
   args: string[],
-  env: Env,
+  _env: Env,
 ): Promise<Response> {
   const targetUser = args[0]?.replace('@', '');
   const amount = args[1];
@@ -1301,7 +1305,7 @@ export async function handleTelegramUnlinkAccount(request: Request, env: Env): P
  * @param botToken - Telegram bot token
  * @returns Whether the data is authentic
  */
-function validateTelegramInitData(initData: string, botToken: string): boolean {
+function _validateTelegramInitData(initData: string, botToken: string): boolean {
   try {
     const params = new URLSearchParams(initData);
     const hash = params.get('hash');
@@ -1317,7 +1321,7 @@ function validateTelegramInitData(initData: string, botToken: string): boolean {
       .join('\n');
 
     // Compute secret key: HMAC-SHA256 of "WebAppData" with bot_token
-    const webAppKey = crypto.subtle
+    const _webAppKey = crypto.subtle
       ? crypto.subtle.importKey(
           'raw',
           new TextEncoder().encode('WebAppData'),
@@ -1339,9 +1343,9 @@ function validateTelegramInitData(initData: string, botToken: string): boolean {
   }
 }
 
-function hmacSha256(key: Uint8Array, message: Uint8Array): Uint8Array {
+function hmacSha256(key: Uint8Array, _message: Uint8Array): Uint8Array {
   // Simple HMAC-SHA256 using Web Crypto API
-  const keyPromise = crypto.subtle.importKey(
+  const _keyPromise = crypto.subtle.importKey(
     'raw',
     key,
     { name: 'HMAC', hash: 'SHA-256' },
@@ -1353,10 +1357,7 @@ function hmacSha256(key: Uint8Array, message: Uint8Array): Uint8Array {
   throw new Error('Use validateTelegramInitDataAsync for async validation');
 }
 
-async function validateTelegramInitDataAsync(
-  initData: string,
-  botToken: string,
-): Promise<boolean> {
+async function validateTelegramInitDataAsync(initData: string, botToken: string): Promise<boolean> {
   try {
     const params = new URLSearchParams(initData);
     const hash = params.get('hash');
@@ -1553,9 +1554,18 @@ export async function handleTelegramChats(request: Request, env: Env): Promise<R
       if (tgId) {
         const userRaw = await env.CACHE?.get(telegramUserKey(tgId));
         if (userRaw) {
-          const user = JSON.parse(userRaw) as TelegramLinkedUser;
+          const _user = JSON.parse(userRaw) as TelegramLinkedUser;
           // Check common coin groups
-          for (const coinSymbol of ['DEGEN', 'PEPE', 'MOCHI', 'RUG', 'WAGMI', 'GM', 'LFG', 'MOON']) {
+          for (const coinSymbol of [
+            'DEGEN',
+            'PEPE',
+            'MOCHI',
+            'RUG',
+            'WAGMI',
+            'GM',
+            'LFG',
+            'MOON',
+          ]) {
             const cgKey = telegramCoinGroupKey(coinSymbol);
             const cgRaw = await env.CACHE?.get(cgKey);
             if (cgRaw) {
@@ -1701,14 +1711,11 @@ export async function handleTelegramGetGroups(request: Request, env: Env): Promi
     const botToken = env.TELEGRAM_BOT_TOKEN;
     if (botToken) {
       try {
-        const mcRes = await fetch(
-          `https://api.telegram.org/bot${botToken}/getChatMemberCount`,
-          {
-            method: 'POST',
-            headers: { 'content-type': 'application/json' },
-            body: JSON.stringify({ chat_id: config.groupId }),
-          },
-        );
+        const mcRes = await fetch(`https://api.telegram.org/bot${botToken}/getChatMemberCount`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ chat_id: config.groupId }),
+        });
         if (mcRes.ok) {
           const mcData = (await mcRes.json()) as { ok: boolean; result?: number };
           if (mcData.ok && mcData.result) {

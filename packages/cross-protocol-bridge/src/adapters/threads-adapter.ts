@@ -31,12 +31,12 @@ export const threadsAdapter: PlatformAdapter = {
     // Mentions use @handle format on Threads
     const mentions = master.mentions ?? [];
     if (mentions.length > 0) {
-      text += '\n\n' + mentions.map((m) => `@${m}`).join(' ');
+      text += `\n\n${mentions.map((m) => `@${m}`).join(' ')}`;
     }
 
     // Hashtags
     if (hashtags.length > 0) {
-      text += '\n\n' + hashtags.join(' ');
+      text += `\n\n${hashtags.join(' ')}`;
     }
 
     text = truncateText(text, THREADS_CHAR_LIMIT);
@@ -64,7 +64,7 @@ export const threadsAdapter: PlatformAdapter = {
 
   preview(master: MasterPost): string {
     let preview = '[Threads — 500 char limit]';
-    preview += '\n' + master.text.slice(0, 480);
+    preview += `\n${master.text.slice(0, 480)}`;
 
     const remaining = THREADS_CHAR_LIMIT - master.text.length;
     if (master.text.length > THREADS_CHAR_LIMIT) {

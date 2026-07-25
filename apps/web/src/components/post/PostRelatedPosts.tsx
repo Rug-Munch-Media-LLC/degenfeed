@@ -1,1 +1,3 @@
-export function PostRelatedPosts() { return null; }
+export function PostRelatedPosts() {
+  return null;
+}

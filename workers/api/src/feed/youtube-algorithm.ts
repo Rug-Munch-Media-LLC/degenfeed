@@ -15,19 +15,23 @@
  */
 
 import type { YouTubeVideoItem } from '@degenfeed/youtube-provider';
-import { fetchYouTubeFeed, fetchTrendingByCategory, discoverCreators } from '@degenfeed/youtube-provider';
+import {
+  discoverCreators,
+  fetchTrendingByCategory,
+  fetchYouTubeFeed,
+} from '@degenfeed/youtube-provider';
 import type { Env } from '../index';
 
 // ─── Constants ────────────────────────────────────────────────────────────
 
 const DEFAULT_WEIGHTS = {
   contentBased: 0.25,
-  creatorBased: 0.20,
-  collaborative: 0.10,
+  creatorBased: 0.2,
+  collaborative: 0.1,
   freshness: 0.15,
-  diversity: 0.10,
-  watchTime: 0.10,
-  antiClickbait: 0.10,
+  diversity: 0.1,
+  watchTime: 0.1,
+  antiClickbait: 0.1,
 };
 
 const FRESHNESS_BOOST_HOURS = 48; // 2 days of fresh boost
@@ -83,7 +87,6 @@ export interface YouTubeRecommendation {
 // ─── Main recommendation engine ─────────────────────────────────────────
 
 export class YouTubeAlgorithm {
-  private env: Env;
   private weights: YouTubeAlgorithmWeights;
 
   constructor(env: Env, weights?: Partial<YouTubeAlgorithmWeights>) {
@@ -201,10 +204,7 @@ export class YouTubeAlgorithm {
 
   // ─── Score a single video ──────────────────────────────────────────
 
-  private scoreVideo(
-    video: YouTubeVideoItem,
-    profile: UserInterestProfile,
-  ): YouTubeRecommendation {
+  private scoreVideo(video: YouTubeVideoItem, profile: UserInterestProfile): YouTubeRecommendation {
     const text = `${video.title} ${video.description ?? ''}`.toLowerCase();
     const reasons: string[] = [];
 
@@ -213,7 +213,7 @@ export class YouTubeAlgorithm {
     const nicheHits = profile.niches.filter((n) => text.includes(n)).length;
     const catHits = profile.categories.filter((c) => text.includes(c)).length;
     if (nicheHits > 0 || catHits > 0) {
-      contentBased = Math.min(1, (nicheHits * 0.3 + catHits * 0.2));
+      contentBased = Math.min(1, nicheHits * 0.3 + catHits * 0.2);
       if (contentBased > 0.3) reasons.push('matches your interests');
     }
 
@@ -233,12 +233,10 @@ export class YouTubeAlgorithm {
       reasons.push('from a creator you watch');
     } else {
       // Check if they've watched videos from this channel
-      const channelWatches = profile.watchHistory.filter(
-        (w) => w.creatorId === video.channelName,
-      );
+      const channelWatches = profile.watchHistory.filter((w) => w.creatorId === video.channelName);
       if (channelWatches.length > 0) {
-        const avgCompletion = channelWatches.reduce((s, w) => s + w.completionRatio, 0) /
-          channelWatches.length;
+        const avgCompletion =
+          channelWatches.reduce((s, w) => s + w.completionRatio, 0) / channelWatches.length;
         creatorBased = Math.min(0.8, avgCompletion * 0.8);
         if (avgCompletion > MIN_WATCH_TIME_RATIO) {
           reasons.push('you finish their videos');
@@ -250,7 +248,7 @@ export class YouTubeAlgorithm {
     let collaborative = 0;
     if (video.niches && profile.niches.length > 0) {
       const overlap = video.niches.filter((n) => profile.niches.includes(n)).length;
-      collaborative = Math.min(1, overlap / Math.max(1, video.niches.length) * 0.5);
+      collaborative = Math.min(1, (overlap / Math.max(1, video.niches.length)) * 0.5);
     }
     if (collaborative > 0.2) reasons.push('popular in your niche');
 
@@ -270,21 +268,20 @@ export class YouTubeAlgorithm {
 
     // 6. Watch time score
     let watchTime = 0.5; // default neutral
-    const watchHistory = profile.watchHistory.filter(
-      (w) => w.creatorId === video.channelName,
-    );
+    const watchHistory = profile.watchHistory.filter((w) => w.creatorId === video.channelName);
     if (watchHistory.length > 0) {
-      const avgCompletion = watchHistory.reduce((s, w) => s + w.completionRatio, 0) /
-        watchHistory.length;
+      const avgCompletion =
+        watchHistory.reduce((s, w) => s + w.completionRatio, 0) / watchHistory.length;
       watchTime = Math.min(1, avgCompletion * 1.2); // reward high completion
     }
 
     // Predicted watch time based on video duration and channel
     if (video.duration) {
       const durationParts = video.duration.split(':').map(Number);
-      const totalSec = durationParts.length === 3
-        ? durationParts[0]! * 3600 + durationParts[1]! * 60 + (durationParts[2] ?? 0)
-        : durationParts[0]! * 60 + (durationParts[1] ?? 0);
+      const totalSec =
+        durationParts.length === 3
+          ? durationParts[0]! * 3600 + durationParts[1]! * 60 + (durationParts[2] ?? 0)
+          : durationParts[0]! * 60 + (durationParts[1] ?? 0);
 
       // Videos 5-20 minutes have highest completion
       if (totalSec >= 300 && totalSec <= 1200) watchTime += 0.2;
@@ -298,8 +295,12 @@ export class YouTubeAlgorithm {
     } else {
       // Basic clickbait detection fallback
       const clickbaitPatterns = [
-        /you won't believe/i, /shocked?ing/i, /mind[ -]?blowing/i,
-        /gone wrong/i, /will surprise you/i, /can't handle/i,
+        /you won't believe/i,
+        /shocked?ing/i,
+        /mind[ -]?blowing/i,
+        /gone wrong/i,
+        /will surprise you/i,
+        /can't handle/i,
         /😱|🤯|💥|🚀|💯|🔥/i,
       ];
       for (const pattern of clickbaitPatterns) {
@@ -310,7 +311,8 @@ export class YouTubeAlgorithm {
         }
       }
       // ALL CAPS penalty
-      const capsRatio = [...video.title].filter((c) => c >= 'A' && c <= 'Z').length /
+      const capsRatio =
+        [...video.title].filter((c) => c >= 'A' && c <= 'Z').length /
         Math.max(1, video.title.length);
       if (capsRatio > 0.6) antiClickbait -= 0.2;
     }
@@ -364,7 +366,9 @@ export class YouTubeAlgorithm {
       seenVideos.add(rec.video.id);
 
       // Avoid saturating with one creator
-      const creatorDupes = result.filter((r) => r.video.channelName === rec.video.channelName).length;
+      const creatorDupes = result.filter(
+        (r) => r.video.channelName === rec.video.channelName,
+      ).length;
       if (creatorDupes >= 2) continue;
 
       result.push(rec);
@@ -375,7 +379,8 @@ export class YouTubeAlgorithm {
     const watchedCreators = new Set(profile.watchedCreatorIds);
     const followedCreators = new Set(profile.followedCreators);
     const newCreatorsCount = result.filter(
-      (r) => !watchedCreators.has(r.video.channelName) && !followedCreators.has(r.video.channelName),
+      (r) =>
+        !watchedCreators.has(r.video.channelName) && !followedCreators.has(r.video.channelName),
     ).length;
 
     if (newCreatorsCount / Math.max(1, result.length) < DIVERSITY_INJECTION_RATE) {
@@ -383,7 +388,11 @@ export class YouTubeAlgorithm {
       for (const rec of scored) {
         if (result.length >= limit) break;
         if (seenVideos.has(rec.video.id)) continue;
-        if (watchedCreators.has(rec.video.channelName) || followedCreators.has(rec.video.channelName)) continue;
+        if (
+          watchedCreators.has(rec.video.channelName) ||
+          followedCreators.has(rec.video.channelName)
+        )
+          continue;
 
         seenVideos.add(rec.video.id);
         result.push({

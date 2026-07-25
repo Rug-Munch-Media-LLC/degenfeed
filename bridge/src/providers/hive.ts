@@ -22,7 +22,7 @@ import type { SchemaGuard, UnifiedPost } from '../server/types';
 const $fetch = globalThis.fetch;
 
 const HIVE_API = process.env.HIVE_API_URL || 'https://api.hive.blog';
-const HIVE_ENGINE_API = 'https://api.hive-engine.com/rpc/contracts';
+const _HIVE_ENGINE_API = 'https://api.hive-engine.com/rpc/contracts';
 
 // ─── Types ─────────────────────────────────────────────────────────────
 
@@ -149,7 +149,12 @@ function parseReputation(rep: number): number {
   return Math.floor(level * 9 + 25);
 }
 
-export function guessNiches(text: string, title: string, tags: string[] = [], community: string = ''): string[] {
+export function guessNiches(
+  text: string,
+  title: string,
+  tags: string[] = [],
+  community: string = '',
+): string[] {
   const niches: string[] = [];
   const lower = `${text} ${title} ${tags.join(' ')} ${community}`.toLowerCase();
 
@@ -194,13 +199,16 @@ function hivePostToPost(post: HivePost): UnifiedPost {
   const tags = meta.tags || [];
   const images = meta.image || [];
   const communityName = post.community_title || post.community || post.category || 'hive';
-  const text = post.title ? `${post.title}\n\n${stripHtml(post.body).slice(0, 1000)}`.trim() : stripHtml(post.body).slice(0, 1000).trim();
+  const text = post.title
+    ? `${post.title}\n\n${stripHtml(post.body).slice(0, 1000)}`.trim()
+    : stripHtml(post.body).slice(0, 1000).trim();
   const reputation = parseReputation(post.author_reputation);
 
   // Parse payout
-  let payoutValue = 0;
+  let _payoutValue = 0;
   try {
-    payoutValue = parseFloat(post.total_payout_value || '0') + parseFloat(post.curator_payout_value || '0');
+    _payoutValue =
+      parseFloat(post.total_payout_value || '0') + parseFloat(post.curator_payout_value || '0');
   } catch {
     // ignore
   }
@@ -273,9 +281,10 @@ function hivePostToPost(post: HivePost): UnifiedPost {
       title: communityName,
       actorId: post.community || post.category,
       instance: 'hive.blog',
-      niche: tags.includes('crypto') || communityName?.toLowerCase().includes('crypto')
-        ? 'crypto'
-        : undefined,
+      niche:
+        tags.includes('crypto') || communityName?.toLowerCase().includes('crypto')
+          ? 'crypto'
+          : undefined,
     },
   } as UnifiedPost;
 }
@@ -298,7 +307,7 @@ async function hiveRpcCall(method: string, params: unknown[]): Promise<unknown> 
     signal: AbortSignal.timeout(10000),
   });
   if (!res.ok) throw new Error(`Hive RPC HTTP ${res.status}`);
-  const data = await res.json() as { result?: unknown; error?: { message: string } };
+  const data = (await res.json()) as { result?: unknown; error?: { message: string } };
   if (data.error) throw new Error(data.error.message);
   return data.result;
 }

@@ -60,13 +60,21 @@ interface FloatingEmoji {
 
 /* ─── Helpers ───────────────────────────────────────────────────────── */
 
-function shortAddr(addr: string): string {
+function _shortAddr(addr: string): string {
   if (!addr) return 'Unknown';
   return addr.length > 12 ? `${addr.slice(0, 6)}…${addr.slice(-4)}` : addr;
 }
 
 function getInitials(name: string): string {
-  return name.split(/[\s:@]+/).map((s) => s[0]).filter(Boolean).slice(0, 2).join('').toUpperCase() || '?';
+  return (
+    name
+      .split(/[\s:@]+/)
+      .map((s) => s[0])
+      .filter(Boolean)
+      .slice(0, 2)
+      .join('')
+      .toUpperCase() || '?'
+  );
 }
 
 function timeAgo(ts: number): string {
@@ -106,14 +114,27 @@ function VideoTile({
       {/* Placeholder avatar when video is off */}
       {(participant.videoMuted || !participant.connected) && (
         <div className="flex flex-col items-center gap-2">
-          <span className={`flex h-16 w-16 items-center justify-center rounded-full text-xl font-bold ${
-            speaking ? 'bg-degen-500 text-black' : 'bg-[var(--color-overlay)] text-[var(--color-fg)]'
-          }`}>
+          <span
+            className={`flex h-16 w-16 items-center justify-center rounded-full text-xl font-bold ${
+              speaking
+                ? 'bg-degen-500 text-black'
+                : 'bg-[var(--color-overlay)] text-[var(--color-fg)]'
+            }`}
+          >
             {getInitials(participant.displayName)}
           </span>
           {participant.videoMuted && (
             <span className="text-[10px] text-[var(--color-muted)] flex items-center gap-1">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                aria-hidden="true"
+              >
                 <path d="M23 7l-7 5 7 5V7z" />
                 <line x1="1" y1="1" x2="23" y2="23" />
               </svg>
@@ -127,7 +148,17 @@ function VideoTile({
       {isScreenShare && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/40">
           <div className="text-center">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="mx-auto mb-2 text-degen-400" aria-hidden="true">
+            <svg
+              width="32"
+              height="32"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              className="mx-auto mb-2 text-degen-400"
+              aria-hidden="true"
+            >
               <rect x="2" y="3" width="20" height="14" rx="2" />
               <line x1="8" y1="21" x2="16" y2="21" />
               <line x1="12" y1="17" x2="12" y2="21" />
@@ -141,16 +172,31 @@ function VideoTile({
       <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between">
         <div className="flex items-center gap-1.5 rounded-lg bg-black/60 px-2 py-1 backdrop-blur-sm">
           <span className={`text-[9px] font-medium ${isMe ? 'text-degen-400' : 'text-white'}`}>
-            {participant.displayName}{isMe ? ' (you)' : ''}
+            {participant.displayName}
+            {isMe ? ' (you)' : ''}
           </span>
           {participant.muted && (
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="text-red-400" aria-hidden="true">
+            <svg
+              width="10"
+              height="10"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              className="text-red-400"
+              aria-hidden="true"
+            >
               <path d="M11 5L6 9H2v6h4l5 4V5z" />
               <line x1="23" y1="9" x2="17" y2="15" />
               <line x1="17" y1="9" x2="23" y2="15" />
             </svg>
           )}
-          {participant.handRaised && <span className="text-[12px]" aria-label="Hand raised">✋</span>}
+          {participant.handRaised && (
+            <span className="text-[12px]" aria-label="Hand raised">
+              ✋
+            </span>
+          )}
         </div>
       </div>
 
@@ -197,22 +243,22 @@ function CreateVideoRoomModal({
   const { announce } = useAnnouncer();
 
   const handleCreate = useCallback(async () => {
-    if (!name.trim()) { setError('Room name is required'); return; }
+    if (!name.trim()) {
+      setError('Room name is required');
+      return;
+    }
     setCreating(true);
     setError(null);
     try {
-      const data = await retryFetchJson<{ ok: boolean; room: VideoRoom }>(
-        '/api/voice/create',
-        {
-          maxRetries: 1,
-          fetchOptions: {
-            method: 'POST',
-            headers: { 'content-type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({ name: name.trim(), type: 'video' }),
-          },
+      const data = await retryFetchJson<{ ok: boolean; room: VideoRoom }>('/api/voice/create', {
+        maxRetries: 1,
+        fetchOptions: {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ name: name.trim(), type: 'video' }),
         },
-      );
+      });
       if (data.ok && data.room) {
         announce(`Video room "${name}" created`, 'polite');
         onCreated(data.room.id);
@@ -229,17 +275,25 @@ function CreateVideoRoomModal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+      onClick={onClose}
+    >
       <div
         className="mx-4 w-full max-w-md rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] p-6 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-labelledby="create-video-title"
       >
-        <h2 id="create-video-title" className="text-lg font-bold text-[var(--color-fg)] mb-5">Start Video Room</h2>
+        <h2 id="create-video-title" className="text-lg font-bold text-[var(--color-fg)] mb-5">
+          Start Video Room
+        </h2>
 
         <div className="mb-4">
-          <label htmlFor="video-room-name" className="block text-[11px] font-medium text-[var(--color-muted)] uppercase tracking-wider mb-1.5">
+          <label
+            htmlFor="video-room-name"
+            className="block text-[11px] font-medium text-[var(--color-muted)] uppercase tracking-wider mb-1.5"
+          >
             Room Name
           </label>
           <input
@@ -250,14 +304,21 @@ function CreateVideoRoomModal({
             placeholder="e.g. Standup Meeting"
             maxLength={100}
             className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-3.5 py-2.5 text-sm text-[var(--color-fg)] placeholder:text-[var(--color-muted)] focus:border-degen-500/30 focus:ring-1 focus:ring-degen-500/30 transition-shadow"
-            autoFocus
           />
         </div>
 
-        {error && <p className="mb-4 text-xs text-red-400" role="alert">{error}</p>}
+        {error && (
+          <p className="mb-4 text-xs text-red-400" role="alert">
+            {error}
+          </p>
+        )}
 
         <div className="flex gap-3 mt-6">
-          <button type="button" onClick={onClose} className="flex-1 rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] py-2.5 text-sm font-medium text-[var(--color-fg)] hover:bg-[var(--color-overlay)] transition-colors">
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex-1 rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] py-2.5 text-sm font-medium text-[var(--color-fg)] hover:bg-[var(--color-overlay)] transition-colors"
+          >
             Cancel
           </button>
           <button
@@ -276,13 +337,7 @@ function CreateVideoRoomModal({
 
 /* ─── Video Room View ──────────────────────────────────────────────── */
 
-function VideoRoomView({
-  roomId,
-  onLeave,
-}: {
-  roomId: string;
-  onLeave: () => void;
-}) {
+function VideoRoomView({ roomId, onLeave }: { roomId: string; onLeave: () => void }) {
   const { tokens } = useAuth();
   const userId = tokens.evmAddress?.toLowerCase() ?? '';
   const { announce } = useAnnouncer();
@@ -291,13 +346,15 @@ function VideoRoomView({
   const [loading, setLoading] = useState(true);
   const [showChat, setShowChat] = useState(false);
   const [floatingEmojis, setFloatingEmojis] = useState<FloatingEmoji[]>([]);
-  const [chatMessages, setChatMessages] = useState<Array<{ from: string; text: string; ts: number }>>([]);
+  const [chatMessages, setChatMessages] = useState<
+    Array<{ from: string; text: string; ts: number }>
+  >([]);
   const [chatInput, setChatInput] = useState('');
   const [speakerView, setSpeakerView] = useState(false);
   const [copied, setCopied] = useState(false);
   const emojiIdRef = useRef(0);
   const chatEndRef = useRef<HTMLDivElement>(null);
-  const [speakingUser, setSpeakingUser] = useState<string | null>(null);
+  const [speakingUser, _setSpeakingUser] = useState<string | null>(null);
 
   // Fetch room
   const fetchRoom = useCallback(async () => {
@@ -332,7 +389,7 @@ function VideoRoomView({
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [chatMessages]);
+  }, []);
 
   const me = useMemo(
     () => room?.participants.find((p) => p.walletAddress === userId),
@@ -340,27 +397,34 @@ function VideoRoomView({
   );
 
   // Update state
-  const updateState = useCallback(async (updates: Partial<VideoParticipant>) => {
-    try {
-      await retryFetchJson(`/api/voice/${roomId}/update`, {
-        fetchOptions: {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify(updates),
-        },
-      });
-      fetchRoom();
-    } catch {
-      // Handle silently
-    }
-  }, [roomId, fetchRoom]);
+  const updateState = useCallback(
+    async (updates: Partial<VideoParticipant>) => {
+      try {
+        await retryFetchJson(`/api/voice/${roomId}/update`, {
+          fetchOptions: {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(updates),
+          },
+        });
+        fetchRoom();
+      } catch {
+        // Handle silently
+      }
+    },
+    [roomId, fetchRoom],
+  );
 
   // Leave
   const handleLeave = useCallback(async () => {
     try {
       await retryFetchJson(`/api/voice/${roomId}/leave`, {
-        fetchOptions: { method: 'POST', headers: { 'content-type': 'application/json' }, credentials: 'include' },
+        fetchOptions: {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          credentials: 'include',
+        },
       });
       announce('Left video room', 'polite');
     } catch {
@@ -415,14 +479,17 @@ function VideoRoomView({
   }, [roomId, announce]);
 
   // Speaker view: show the active speaker large
-  const mainSpeaker = speakerView && speakingUser
-    ? room?.participants.find((p) => p.walletAddress === speakingUser)
-    : null;
+  const mainSpeaker =
+    speakerView && speakingUser
+      ? room?.participants.find((p) => p.walletAddress === speakingUser)
+      : null;
 
   const otherParticipants = useMemo(() => {
     if (!room) return [];
     if (mainSpeaker) {
-      return room.participants.filter((p) => p.walletAddress !== mainSpeaker.walletAddress && p.walletAddress !== userId);
+      return room.participants.filter(
+        (p) => p.walletAddress !== mainSpeaker.walletAddress && p.walletAddress !== userId,
+      );
     }
     return room.participants;
   }, [room, mainSpeaker, userId]);
@@ -447,15 +514,22 @@ function VideoRoomView({
           <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-degen-500" />
         </span>
         <span className="text-xs font-medium text-degen-400">Video Room</span>
-        <span className="text-[10px] text-[var(--color-muted)]">&middot; {room?.name ?? 'Video Room'}</span>
-        <span className="text-[10px] text-[var(--color-muted)]">&middot; {room?.participants.length ?? 0} participant{(room?.participants.length ?? 0) !== 1 ? 's' : ''}</span>
+        <span className="text-[10px] text-[var(--color-muted)]">
+          &middot; {room?.name ?? 'Video Room'}
+        </span>
+        <span className="text-[10px] text-[var(--color-muted)]">
+          &middot; {room?.participants.length ?? 0} participant
+          {(room?.participants.length ?? 0) !== 1 ? 's' : ''}
+        </span>
 
         <div className="ml-auto flex items-center gap-2">
           <button
             type="button"
             onClick={() => setSpeakerView(!speakerView)}
             className={`rounded-lg px-2 py-1 text-[10px] transition-colors ${
-              speakerView ? 'bg-degen-500/15 text-degen-400' : 'text-[var(--color-muted)] hover:bg-[var(--color-overlay)]'
+              speakerView
+                ? 'bg-degen-500/15 text-degen-400'
+                : 'text-[var(--color-muted)] hover:bg-[var(--color-overlay)]'
             }`}
           >
             {speakerView ? 'Grid View' : 'Speaker View'}
@@ -471,7 +545,9 @@ function VideoRoomView({
             type="button"
             onClick={() => setShowChat(!showChat)}
             className={`rounded-lg px-2 py-1 text-[10px] transition-colors ${
-              showChat ? 'bg-degen-500/15 text-degen-400' : 'text-[var(--color-muted)] hover:bg-[var(--color-overlay)]'
+              showChat
+                ? 'bg-degen-500/15 text-degen-400'
+                : 'text-[var(--color-muted)] hover:bg-[var(--color-overlay)]'
             }`}
           >
             Chat {chatMessages.length > 0 && `(${chatMessages.length})`}
@@ -548,7 +624,9 @@ function VideoRoomView({
 
             <div className="flex-1 overflow-y-auto p-3 space-y-2">
               {chatMessages.length === 0 && (
-                <p className="text-[10px] text-[var(--color-muted)] text-center py-8">No messages yet</p>
+                <p className="text-[10px] text-[var(--color-muted)] text-center py-8">
+                  No messages yet
+                </p>
               )}
               {chatMessages.map((msg, i) => (
                 <div key={i} className="text-xs">
@@ -564,7 +642,9 @@ function VideoRoomView({
                 type="text"
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter') sendChat(); }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') sendChat();
+                }}
                 placeholder="Chat..."
                 className="flex-1 rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] px-2.5 py-1.5 text-xs text-[var(--color-fg)] placeholder:text-[var(--color-muted)] focus:border-degen-500/30 focus:ring-1 focus:ring-degen-500/30 transition-shadow"
               />
@@ -611,13 +691,31 @@ function VideoRoomView({
               title={me?.muted ? 'Unmute' : 'Mute'}
             >
               {me?.muted ? (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  aria-hidden="true"
+                >
                   <path d="M11 5L6 9H2v6h4l5 4V5z" />
                   <line x1="23" y1="9" x2="17" y2="15" />
                   <line x1="17" y1="9" x2="23" y2="15" />
                 </svg>
               ) : (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  aria-hidden="true"
+                >
                   <path d="M11 5L6 9H2v6h4l5 4V5z" />
                   <path d="M15.54 8.46a5 5 0 010 7.07" />
                   <path d="M19.07 4.93a10 10 0 010 14.14" />
@@ -633,12 +731,30 @@ function VideoRoomView({
               title={me?.videoMuted ? 'Turn on camera' : 'Turn off camera'}
             >
               {me?.videoMuted ? (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  aria-hidden="true"
+                >
                   <path d="M23 7l-7 5 7 5V7z" />
                   <line x1="1" y1="1" x2="23" y2="23" />
                 </svg>
               ) : (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  aria-hidden="true"
+                >
                   <path d="M23 7l-7 5 7 5V7z" />
                   <rect x="1" y="5" width="15" height="14" rx="2" />
                 </svg>
@@ -652,7 +768,16 @@ function VideoRoomView({
               aria-label="Share screen"
               title="Share screen"
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                aria-hidden="true"
+              >
                 <rect x="2" y="3" width="20" height="14" rx="2" />
                 <line x1="8" y1="21" x2="16" y2="21" />
                 <line x1="12" y1="17" x2="12" y2="21" />
@@ -675,7 +800,16 @@ function VideoRoomView({
             onClick={handleLeave}
             className="flex items-center gap-1.5 rounded-xl bg-red-500/20 px-3 py-1.5 text-xs text-red-400 hover:bg-red-500/30 transition-all"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              aria-hidden="true"
+            >
               <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
               <polyline points="16 17 21 12 16 7" />
               <line x1="21" y1="12" x2="9" y2="12" />
@@ -715,7 +849,9 @@ export default function VideoPage() {
     }
   }, [hasSignedIn]);
 
-  useEffect(() => { fetchRooms(); }, [fetchRooms]);
+  useEffect(() => {
+    fetchRooms();
+  }, [fetchRooms]);
 
   useEffect(() => {
     if (!selectedRoomId) {
@@ -727,9 +863,16 @@ export default function VideoPage() {
   if (!hasSignedIn) {
     return (
       <div className="mx-auto flex h-[calc(100dvh-8rem)] flex-col items-center justify-center p-6 lg:h-[calc(100dvh-4rem)]">
-        <span className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-2xl text-3xl bg-[var(--color-overlay)] text-[var(--color-muted)]" aria-hidden="true">📹</span>
+        <span
+          className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-2xl text-3xl bg-[var(--color-overlay)] text-[var(--color-muted)]"
+          aria-hidden="true"
+        >
+          📹
+        </span>
         <p className="text-base font-semibold text-[var(--color-fg)]">Sign in to use Video Rooms</p>
-        <p className="mt-1.5 text-sm text-[var(--color-muted)]">Real-time video chat with your community.</p>
+        <p className="mt-1.5 text-sm text-[var(--color-muted)]">
+          Real-time video chat with your community.
+        </p>
       </div>
     );
   }
@@ -746,9 +889,13 @@ export default function VideoPage() {
     <div className="mx-auto flex h-[calc(100dvh-8rem)] flex-col lg:h-[calc(100dvh-4rem)]">
       <header className="flex items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-glass-bg)] px-4 py-2.5 shrink-0">
         <div className="flex items-center gap-3">
-          <span className="text-xl" aria-hidden="true">📹</span>
+          <span className="text-xl" aria-hidden="true">
+            📹
+          </span>
           <div>
-            <h1 className="text-base font-bold text-[var(--color-fg)] leading-tight">Video Rooms</h1>
+            <h1 className="text-base font-bold text-[var(--color-fg)] leading-tight">
+              Video Rooms
+            </h1>
             <p className="text-[10px] text-[var(--color-muted)]">
               {rooms.length} active room{rooms.length !== 1 ? 's' : ''}
             </p>
@@ -759,7 +906,16 @@ export default function VideoPage() {
           onClick={() => setShowCreate(true)}
           className="flex items-center gap-1.5 rounded-xl bg-degen-500 px-3 py-2 text-xs font-bold text-black hover:bg-degen-400 transition-all"
         >
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            aria-hidden="true"
+          >
             <line x1="12" y1="5" x2="12" y2="19" />
             <line x1="5" y1="12" x2="19" y2="12" />
           </svg>
@@ -776,9 +932,13 @@ export default function VideoPage() {
 
         {!loading && rooms.length === 0 && (
           <div className="flex flex-col items-center justify-center py-20 px-4 text-center">
-            <span className="mb-4 text-4xl opacity-30" aria-hidden="true">📹</span>
+            <span className="mb-4 text-4xl opacity-30" aria-hidden="true">
+              📹
+            </span>
             <p className="text-sm font-medium text-[var(--color-fg)]">No active video rooms</p>
-            <p className="mt-1 text-xs text-[var(--color-muted)]">Start a video room and invite others to join.</p>
+            <p className="mt-1 text-xs text-[var(--color-muted)]">
+              Start a video room and invite others to join.
+            </p>
             <button
               type="button"
               onClick={() => setShowCreate(true)}
@@ -795,15 +955,23 @@ export default function VideoPage() {
             type="button"
             onClick={() => {
               retryFetchJson(`/api/voice/${room.id}/join`, {
-                fetchOptions: { method: 'POST', headers: { 'content-type': 'application/json' }, credentials: 'include' },
-              }).then(() => setSelectedRoomId(room.id)).catch(() => {});
+                fetchOptions: {
+                  method: 'POST',
+                  headers: { 'content-type': 'application/json' },
+                  credentials: 'include',
+                },
+              })
+                .then(() => setSelectedRoomId(room.id))
+                .catch(() => {});
             }}
             className="flex w-full items-center gap-3 border-b border-[var(--color-border)] px-4 py-3.5 text-left hover:bg-[var(--color-overlay)] transition-colors"
           >
             <div className="relative shrink-0">
-              <span className={`flex h-10 w-10 items-center justify-center rounded-xl text-lg ${
-                room.participantCount > 0 ? 'bg-degen-500/15' : 'bg-[var(--color-overlay)]'
-              }`}>
+              <span
+                className={`flex h-10 w-10 items-center justify-center rounded-xl text-lg ${
+                  room.participantCount > 0 ? 'bg-degen-500/15' : 'bg-[var(--color-overlay)]'
+                }`}
+              >
                 📹
               </span>
               {room.participantCount > 0 && (
@@ -820,11 +988,15 @@ export default function VideoPage() {
                   {room.participantCount} participant{room.participantCount !== 1 ? 's' : ''}
                 </span>
                 <span className="text-[var(--color-muted)]">·</span>
-                <span className="text-[10px] text-[var(--color-muted)]">{timeAgo(room.lastActivity)}</span>
+                <span className="text-[10px] text-[var(--color-muted)]">
+                  {timeAgo(room.lastActivity)}
+                </span>
               </div>
             </div>
             <div className="shrink-0">
-              <span className="rounded-lg bg-degen-500/10 px-2 py-1 text-[10px] font-medium text-degen-400">Join</span>
+              <span className="rounded-lg bg-degen-500/10 px-2 py-1 text-[10px] font-medium text-degen-400">
+                Join
+              </span>
             </div>
           </button>
         ))}

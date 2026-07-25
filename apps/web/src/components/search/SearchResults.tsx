@@ -149,23 +149,48 @@ function LoadMoreButton({ loading, hasMore, onClick }: LoadMoreProps) {
 
 // ─── Identity Results ─────────────────────────────────────────
 
-function IdentityResults({ identities, showAll }: { identities: IdentityResult[]; showAll: boolean }) {
+function IdentityResults({
+  identities,
+  showAll,
+}: {
+  identities: IdentityResult[];
+  showAll: boolean;
+}) {
   if (identities.length === 0) return null;
   return (
     <div className="mb-8">
       {showAll && (
-        <h2 className="mb-3 text-xs font-medium uppercase tracking-widest text-[var(--color-muted)]">People</h2>
+        <h2 className="mb-3 text-xs font-medium uppercase tracking-widest text-[var(--color-muted)]">
+          People
+        </h2>
       )}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {identities.map((identity) => (
-          <div key={identity.id} className="card-hover flex items-start gap-4 p-4 transition-colors">
-            <a href={getProfileUrl(identity)} target="_blank" rel="noopener noreferrer" className="shrink-0">
+          <div
+            key={identity.id}
+            className="card-hover flex items-start gap-4 p-4 transition-colors"
+          >
+            <a
+              href={getProfileUrl(identity)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="shrink-0"
+            >
               <div
                 className="flex h-12 w-12 items-center justify-center rounded-full text-base font-bold overflow-hidden"
-                style={{ backgroundColor: `${getProtocolColor(identity.protocol)}22`, color: getProtocolColor(identity.protocol) }}
+                style={{
+                  backgroundColor: `${getProtocolColor(identity.protocol)}22`,
+                  color: getProtocolColor(identity.protocol),
+                }}
               >
                 {identity.avatarUrl ? (
-                  <Image src={identity.avatarUrl} alt={identity.displayName} width={48} height={48} className="h-12 w-12 rounded-full object-cover" />
+                  <Image
+                    src={identity.avatarUrl}
+                    alt={identity.displayName}
+                    width={48}
+                    height={48}
+                    className="h-12 w-12 rounded-full object-cover"
+                  />
                 ) : (
                   identity.displayName[0]?.toUpperCase() || getProtocolIcon(identity.protocol)
                 )}
@@ -173,20 +198,46 @@ function IdentityResults({ identities, showAll }: { identities: IdentityResult[]
             </a>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
-                <a href={getProfileUrl(identity)} target="_blank" rel="noopener noreferrer" className="truncate text-sm font-semibold text-[var(--color-fg)] hover:underline">
+                <a
+                  href={getProfileUrl(identity)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="truncate text-sm font-semibold text-[var(--color-fg)] hover:underline"
+                >
                   {identity.displayName}
                 </a>
-                <span className="shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium"
-                  style={{ backgroundColor: `${getProtocolColor(identity.protocol)}22`, color: getProtocolColor(identity.protocol) }}>
+                <span
+                  className="shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium"
+                  style={{
+                    backgroundColor: `${getProtocolColor(identity.protocol)}22`,
+                    color: getProtocolColor(identity.protocol),
+                  }}
+                >
                   {identity.protocol}
                 </span>
               </div>
-              {identity.handle && <div className="text-xs text-[var(--color-muted)] truncate mt-0.5">{identity.handle}</div>}
-              {identity.bio && <div className="mt-1 text-xs text-[var(--color-muted)] line-clamp-2">{identity.bio}</div>}
+              {identity.handle && (
+                <div className="text-xs text-[var(--color-muted)] truncate mt-0.5">
+                  {identity.handle}
+                </div>
+              )}
+              {identity.bio && (
+                <div className="mt-1 text-xs text-[var(--color-muted)] line-clamp-2">
+                  {identity.bio}
+                </div>
+              )}
               <div className="mt-2 flex items-center gap-3">
-                {identity.postCount > 0 && <span className="text-[10px] text-[var(--color-muted)]">{formatCount(identity.postCount)} posts</span>}
-                <a href={getProfileUrl(identity)} target="_blank" rel="noopener noreferrer"
-                  className="ml-auto rounded-lg border border-[var(--color-border)] px-2.5 py-1 text-xs text-[var(--color-muted)] hover:border-degen-500/30 hover:text-degen-400 transition-colors">
+                {identity.postCount > 0 && (
+                  <span className="text-[10px] text-[var(--color-muted)]">
+                    {formatCount(identity.postCount)} posts
+                  </span>
+                )}
+                <a
+                  href={getProfileUrl(identity)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="ml-auto rounded-lg border border-[var(--color-border)] px-2.5 py-1 text-xs text-[var(--color-muted)] hover:border-degen-500/30 hover:text-degen-400 transition-colors"
+                >
                   View Profile →
                 </a>
               </div>
@@ -200,35 +251,74 @@ function IdentityResults({ identities, showAll }: { identities: IdentityResult[]
 
 // ─── Community Results ────────────────────────────────────────
 
-function CommunityResults({ communities, showAll }: { communities: CommunityResult[]; showAll: boolean }) {
+function CommunityResults({
+  communities,
+  showAll,
+}: {
+  communities: CommunityResult[];
+  showAll: boolean;
+}) {
   if (communities.length === 0) return null;
   return (
     <div className="mb-8">
       {showAll && (
-        <h2 className="mb-3 text-xs font-medium uppercase tracking-widest text-[var(--color-muted)]">Communities</h2>
+        <h2 className="mb-3 text-xs font-medium uppercase tracking-widest text-[var(--color-muted)]">
+          Communities
+        </h2>
       )}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {communities.map((community) => (
-          <a key={community.id} href={community.url} target="_blank" rel="noopener noreferrer"
-            className="card-hover flex items-start gap-4 p-4 transition-colors">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-base font-bold overflow-hidden"
-              style={{ backgroundColor: `${getProtocolColor(community.protocol)}22`, color: getProtocolColor(community.protocol) }}>
+          <a
+            key={community.id}
+            href={community.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="card-hover flex items-start gap-4 p-4 transition-colors"
+          >
+            <div
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-base font-bold overflow-hidden"
+              style={{
+                backgroundColor: `${getProtocolColor(community.protocol)}22`,
+                color: getProtocolColor(community.protocol),
+              }}
+            >
               {community.icon ? (
-                <Image src={community.icon} alt={community.name} width={48} height={48} className="h-12 w-12 rounded-xl object-cover" />
+                <Image
+                  src={community.icon}
+                  alt={community.name}
+                  width={48}
+                  height={48}
+                  className="h-12 w-12 rounded-xl object-cover"
+                />
               ) : (
                 community.name[0]?.toUpperCase() || getProtocolIcon(community.protocol)
               )}
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
-                <span className="truncate text-sm font-semibold text-[var(--color-fg)]">{community.name}</span>
-                <span className="shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium"
-                  style={{ backgroundColor: `${getProtocolColor(community.protocol)}22`, color: getProtocolColor(community.protocol) }}>
+                <span className="truncate text-sm font-semibold text-[var(--color-fg)]">
+                  {community.name}
+                </span>
+                <span
+                  className="shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium"
+                  style={{
+                    backgroundColor: `${getProtocolColor(community.protocol)}22`,
+                    color: getProtocolColor(community.protocol),
+                  }}
+                >
                   {community.protocol}
                 </span>
               </div>
-              {community.description && <div className="mt-1 text-xs text-[var(--color-muted)] line-clamp-2">{community.description}</div>}
-              {community.memberCount > 0 && <div className="mt-1 text-[10px] text-[var(--color-muted)]">{formatCount(community.memberCount)} members</div>}
+              {community.description && (
+                <div className="mt-1 text-xs text-[var(--color-muted)] line-clamp-2">
+                  {community.description}
+                </div>
+              )}
+              {community.memberCount > 0 && (
+                <div className="mt-1 text-[10px] text-[var(--color-muted)]">
+                  {formatCount(community.memberCount)} members
+                </div>
+              )}
             </div>
           </a>
         ))}
@@ -244,18 +334,33 @@ function VideoResults({ videos, showAll }: { videos: VideoResult[]; showAll: boo
   return (
     <div className="mb-8">
       {showAll && (
-        <h2 className="mb-3 text-xs font-medium uppercase tracking-widest text-[var(--color-muted)]">Videos</h2>
+        <h2 className="mb-3 text-xs font-medium uppercase tracking-widest text-[var(--color-muted)]">
+          Videos
+        </h2>
       )}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {videos.map((video) => (
-          <a key={video.id} href={video.url} target="_blank" rel="noopener noreferrer"
-            className="card-hover flex items-start gap-4 p-4 transition-colors">
+          <a
+            key={video.id}
+            href={video.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="card-hover flex items-start gap-4 p-4 transition-colors"
+          >
             <div className="relative h-16 w-28 shrink-0 overflow-hidden rounded-lg bg-[var(--color-card)]">
               {video.thumbnailUrl ? (
-                <Image src={video.thumbnailUrl} alt={video.title} width={112} height={64}
-                  className="h-16 w-28 object-cover" loading="lazy" />
+                <Image
+                  src={video.thumbnailUrl}
+                  alt={video.title}
+                  width={112}
+                  height={64}
+                  className="h-16 w-28 object-cover"
+                  loading="lazy"
+                />
               ) : (
-                <div className="flex h-full w-full items-center justify-center text-lg text-[var(--color-muted)]">▶</div>
+                <div className="flex h-full w-full items-center justify-center text-lg text-[var(--color-muted)]">
+                  ▶
+                </div>
               )}
               {video.durationSeconds > 0 && (
                 <span className="absolute bottom-1 right-1 rounded bg-black/70 px-1 text-[9px] text-[var(--color-fg)]">
@@ -265,10 +370,18 @@ function VideoResults({ videos, showAll }: { videos: VideoResult[]; showAll: boo
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
-                <span className="truncate text-sm font-medium text-[var(--color-fg)]">{video.title}</span>
-                <span className="shrink-0 rounded-full bg-orange-500/20 px-1.5 py-0.5 text-[10px] font-medium text-orange-400">{video.source}</span>
+                <span className="truncate text-sm font-medium text-[var(--color-fg)]">
+                  {video.title}
+                </span>
+                <span className="shrink-0 rounded-full bg-orange-500/20 px-1.5 py-0.5 text-[10px] font-medium text-orange-400">
+                  {video.source}
+                </span>
               </div>
-              {video.channelName && <div className="mt-0.5 text-xs text-[var(--color-muted)] truncate">{video.channelName}</div>}
+              {video.channelName && (
+                <div className="mt-0.5 text-xs text-[var(--color-muted)] truncate">
+                  {video.channelName}
+                </div>
+              )}
               <div className="mt-1 flex gap-3 text-[10px] text-[var(--color-muted)]">
                 {video.views > 0 && <span>{formatCount(video.views)} views</span>}
                 {video.publishedAt > 0 && <span>{formatTime(video.publishedAt)}</span>}
@@ -283,30 +396,62 @@ function VideoResults({ videos, showAll }: { videos: VideoResult[]; showAll: boo
 
 // ─── Post Results ─────────────────────────────────────────────
 
-function PostResults({ posts, showAll, identities }: { posts: SearchResult[]; showAll: boolean; identities: IdentityResult[] }) {
+function PostResults({
+  posts,
+  showAll,
+  identities,
+}: {
+  posts: SearchResult[];
+  showAll: boolean;
+  identities: IdentityResult[];
+}) {
   const router = useRouter();
   if (posts.length === 0) return null;
   return (
     <div>
       {showAll && identities.length > 0 && (
-        <h2 className="mb-3 text-xs font-medium uppercase tracking-widest text-[var(--color-muted)]">Posts</h2>
+        <h2 className="mb-3 text-xs font-medium uppercase tracking-widest text-[var(--color-muted)]">
+          Posts
+        </h2>
       )}
       <div className="space-y-2">
         {posts.map((r) => (
-          <button key={r.id} type="button" onClick={() => router.push(`/post/${encodeURIComponent(r.id)}`)}
-            className="card-hover flex w-full items-start gap-4 p-4 text-left">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xs font-bold overflow-hidden"
-              style={{ backgroundColor: `${getProtocolColor(r.protocol)}22`, color: getProtocolColor(r.protocol) }}>
+          <button
+            key={r.id}
+            type="button"
+            onClick={() => router.push(`/post/${encodeURIComponent(r.id)}`)}
+            className="card-hover flex w-full items-start gap-4 p-4 text-left"
+          >
+            <div
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xs font-bold overflow-hidden"
+              style={{
+                backgroundColor: `${getProtocolColor(r.protocol)}22`,
+                color: getProtocolColor(r.protocol),
+              }}
+            >
               {r.author.avatarUrl ? (
-                <Image src={r.author.avatarUrl} alt={r.author.displayName} width={40} height={40} className="h-10 w-10 rounded-full object-cover" />
+                <Image
+                  src={r.author.avatarUrl}
+                  alt={r.author.displayName}
+                  width={40}
+                  height={40}
+                  className="h-10 w-10 rounded-full object-cover"
+                />
               ) : (
                 r.author.displayName[0]?.toUpperCase() || '?'
               )}
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 text-xs">
-                <span className="font-medium text-[var(--color-fg)] truncate">{r.author.displayName}</span>
-                <span className="text-[var(--color-muted)]" style={{ color: getProtocolColor(r.protocol) }}>{r.protocol}</span>
+                <span className="font-medium text-[var(--color-fg)] truncate">
+                  {r.author.displayName}
+                </span>
+                <span
+                  className="text-[var(--color-muted)]"
+                  style={{ color: getProtocolColor(r.protocol) }}
+                >
+                  {r.protocol}
+                </span>
                 <span className="ml-auto text-[var(--color-muted)]">{formatTime(r.createdAt)}</span>
               </div>
               <p className="mt-0.5 text-sm text-[var(--color-muted)] line-clamp-2">{r.text}</p>
@@ -317,15 +462,26 @@ function PostResults({ posts, showAll, identities }: { posts: SearchResult[]; sh
                 {r.niches.length > 0 && (
                   <div className="ml-auto flex gap-1">
                     {r.niches.slice(0, 2).map((n) => (
-                      <span key={n} className="rounded-full bg-[var(--color-card)] px-1.5 py-0.5 text-[10px] text-[var(--color-muted)]">{n}</span>
+                      <span
+                        key={n}
+                        className="rounded-full bg-[var(--color-card)] px-1.5 py-0.5 text-[10px] text-[var(--color-muted)]"
+                      >
+                        {n}
+                      </span>
                     ))}
                   </div>
                 )}
               </div>
             </div>
             {r.image && (
-              <Image src={r.image} alt="Search result image" width={64} height={64}
-                className="h-16 w-16 shrink-0 rounded-lg object-cover" loading="lazy" />
+              <Image
+                src={r.image}
+                alt="Search result image"
+                width={64}
+                height={64}
+                className="h-16 w-16 shrink-0 rounded-lg object-cover"
+                loading="lazy"
+              />
             )}
           </button>
         ))}
@@ -342,7 +498,11 @@ interface ProtocolBreakdownProps {
   onProtocolFilterChange: (id: string | null) => void;
 }
 
-function ProtocolBreakdown({ posts, protocolFilter, onProtocolFilterChange }: ProtocolBreakdownProps) {
+function ProtocolBreakdown({
+  posts,
+  protocolFilter,
+  onProtocolFilterChange,
+}: ProtocolBreakdownProps) {
   if (posts.length === 0) return null;
   const breakdown = posts.reduce<Record<string, number>>((acc, p) => {
     acc[p.protocol] = (acc[p.protocol] || 0) + 1;
@@ -350,19 +510,33 @@ function ProtocolBreakdown({ posts, protocolFilter, onProtocolFilterChange }: Pr
   }, {});
   return (
     <div className="mb-8">
-      <h2 className="mb-3 text-xs font-medium uppercase tracking-widest text-[var(--color-muted)]">Results by Protocol</h2>
+      <h2 className="mb-3 text-xs font-medium uppercase tracking-widest text-[var(--color-muted)]">
+        Results by Protocol
+      </h2>
       <div className="flex flex-wrap gap-1.5 mb-4">
         {Object.entries(breakdown).map(([proto, count]) => (
-          <button key={proto} type="button"
+          <button
+            key={proto}
+            type="button"
             onClick={() => onProtocolFilterChange(protocolFilter === proto ? null : proto)}
             className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-medium transition-all ${
               protocolFilter === proto
                 ? 'text-degen-400 shadow-sm'
                 : 'bg-[var(--color-card)] text-[var(--color-muted)] hover:text-[var(--color-fg)]'
             }`}
-            style={protocolFilter === proto ? { backgroundColor: `${getProtocolColor(proto)}22`, color: getProtocolColor(proto) } : undefined}
+            style={
+              protocolFilter === proto
+                ? {
+                    backgroundColor: `${getProtocolColor(proto)}22`,
+                    color: getProtocolColor(proto),
+                  }
+                : undefined
+            }
           >
-            <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: getProtocolColor(proto) }} />
+            <span
+              className="h-1.5 w-1.5 rounded-full"
+              style={{ backgroundColor: getProtocolColor(proto) }}
+            />
             {proto}
             <span className="font-mono">({count})</span>
           </button>
@@ -417,8 +591,11 @@ export function SearchResults({
     return (
       <div className="card border-red-900/50 bg-red-900/10 py-6 text-center">
         <p className="text-sm text-red-400 mb-2">{error}</p>
-        <button type="button" onClick={onRetry}
-          className="rounded-lg bg-red-500/20 px-4 py-1.5 text-xs font-medium text-red-400 hover:bg-red-500/30 transition-colors">
+        <button
+          type="button"
+          onClick={onRetry}
+          className="rounded-lg bg-red-500/20 px-4 py-1.5 text-xs font-medium text-red-400 hover:bg-red-500/30 transition-colors"
+        >
           Retry
         </button>
       </div>
@@ -426,12 +603,21 @@ export function SearchResults({
   }
 
   // Empty
-  if (searched && !error && posts.length === 0 && identities.length === 0 && communities.length === 0 && videos.length === 0) {
+  if (
+    searched &&
+    !error &&
+    posts.length === 0 &&
+    identities.length === 0 &&
+    communities.length === 0 &&
+    videos.length === 0
+  ) {
     return (
       <div className="card py-12 text-center">
         <div className="mb-3 text-3xl text-[var(--color-muted)]">⌕</div>
         <p className="text-sm text-[var(--color-muted)]">No results for &ldquo;{query}&rdquo;</p>
-        {protocolFilter && <p className="mt-1 text-xs text-[var(--color-muted)]">Try removing the protocol filter</p>}
+        {protocolFilter && (
+          <p className="mt-1 text-xs text-[var(--color-muted)]">Try removing the protocol filter</p>
+        )}
       </div>
     );
   }
@@ -442,7 +628,11 @@ export function SearchResults({
     <>
       {/* Protocol Breakdown */}
       {showAll && posts.length > 0 && (
-        <ProtocolBreakdown posts={posts} protocolFilter={protocolFilter} onProtocolFilterChange={onProtocolFilterChange} />
+        <ProtocolBreakdown
+          posts={posts}
+          protocolFilter={protocolFilter}
+          onProtocolFilterChange={onProtocolFilterChange}
+        />
       )}
 
       {/* People */}
@@ -458,7 +648,10 @@ export function SearchResults({
       <PostResults posts={posts} showAll={showAll} identities={identities} />
 
       {/* Load More */}
-      {(posts.length > 0 || identities.length > 0 || communities.length > 0 || videos.length > 0) && (
+      {(posts.length > 0 ||
+        identities.length > 0 ||
+        communities.length > 0 ||
+        videos.length > 0) && (
         <LoadMoreButton loading={loadingMore} hasMore={hasMore} onClick={onLoadMore} />
       )}
     </>

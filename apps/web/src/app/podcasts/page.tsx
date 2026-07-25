@@ -155,9 +155,7 @@ function PodcastCard({ podcast }: { podcast: Podcast }) {
         {/* Source Badge */}
         <span
           className={`absolute right-2 top-2 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
-            isCurated
-              ? 'bg-purple-500/90 text-white'
-              : 'bg-[var(--color-accent)]/90 text-black'
+            isCurated ? 'bg-purple-500/90 text-white' : 'bg-[var(--color-accent)]/90 text-black'
           }`}
         >
           {isCurated ? 'Curated' : 'Creator'}
@@ -272,7 +270,9 @@ export default function PodcastHubPage() {
         const data = (await res.json()) as { podcasts: Podcast[]; total: number };
         return data.podcasts || [];
       }
-    } catch { /* non-critical */ }
+    } catch {
+      /* non-critical */
+    }
     return [];
   }, []);
 
@@ -292,7 +292,9 @@ export default function PodcastHubPage() {
         const data = (await res.json()) as { podcasts: Podcast[]; total: number };
         return (data.podcasts || []).map((p) => ({ ...p, source: 'creator' as const }));
       }
-    } catch { /* non-critical */ }
+    } catch {
+      /* non-critical */
+    }
     return [];
   }, []);
 
@@ -305,7 +307,9 @@ export default function PodcastHubPage() {
         const data = (await res.json()) as { stats: Record<string, number> };
         setCuratedStats(data.stats);
       }
-    } catch { /* non-critical */ }
+    } catch {
+      /* non-critical */
+    }
   }, []);
 
   // ─── Fetch trending episodes ────────────────────────────────────
@@ -317,7 +321,9 @@ export default function PodcastHubPage() {
         const data = (await res.json()) as { episodes: PodcastEpisode[] };
         setTrending(data.episodes || []);
       }
-    } catch { /* non-critical */ }
+    } catch {
+      /* non-critical */
+    }
   }, []);
 
   // ─── Fetch curated latest ──────────────────────────────────────
@@ -335,7 +341,9 @@ export default function PodcastHubPage() {
         const data = (await res.json()) as { episodes: PodcastEpisode[]; total: number };
         setCuratedLatest(data.episodes || []);
       }
-    } catch { /* non-critical */ }
+    } catch {
+      /* non-critical */
+    }
   }, []);
 
   // ─── Search (combined) ──────────────────────────────────────────
@@ -360,7 +368,9 @@ export default function PodcastHubPage() {
           (data.creatorPodcasts || []).map((p) => ({ ...p, source: 'creator' as const })),
         );
       }
-    } catch { /* non-critical */ }
+    } catch {
+      /* non-critical */
+    }
     setLoading(false);
   }, []);
 
@@ -387,7 +397,16 @@ export default function PodcastHubPage() {
       })
       .catch(() => setError('Failed to load podcasts'))
       .finally(() => setLoading(false));
-  }, [activeCategory, fetchCurated, fetchCreators, fetchStats, fetchTrending, fetchCuratedLatest, handleSearch, searchQuery]);
+  }, [
+    activeCategory,
+    fetchCurated,
+    fetchCreators,
+    fetchStats,
+    fetchTrending,
+    fetchCuratedLatest,
+    handleSearch,
+    searchQuery,
+  ]);
 
   // ─── Filter by tab + category + search ─────────────────────────
 
@@ -592,9 +611,7 @@ export default function PodcastHubPage() {
                     : '🎧 All Podcasts'}
                 {activeCategory !== 'all' && (
                   <span className="ml-2 text-sm font-normal text-[var(--color-text-tertiary)]">
-                    —{' '}
-                    {CATEGORIES.find((c) => c.id === activeCategory)?.label ||
-                      activeCategory}
+                    — {CATEGORIES.find((c) => c.id === activeCategory)?.label || activeCategory}
                   </span>
                 )}
                 <span className="ml-2 text-sm font-normal text-[var(--color-text-tertiary)]">
@@ -604,7 +621,10 @@ export default function PodcastHubPage() {
             </div>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {displayedPodcasts.map((podcast) => (
-                <PodcastCard key={`${podcast.source || 'creator'}-${podcast.id}`} podcast={podcast} />
+                <PodcastCard
+                  key={`${podcast.source || 'creator'}-${podcast.id}`}
+                  podcast={podcast}
+                />
               ))}
             </div>
           </>

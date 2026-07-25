@@ -1,11 +1,11 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { PlaybackSettings, StreamQuality, StreamExtended } from './types';
-import { useBandwidthDetect, useBackgroundAudio, usePictureInPicture } from './hooks';
-import { VideoDisplay } from './VideoDisplay';
+import { useBackgroundAudio, useBandwidthDetect, usePictureInPicture } from './hooks';
 import { StreamControls } from './StreamControls';
 import { StreamOverlay } from './StreamOverlay';
+import type { PlaybackSettings, StreamExtended, StreamQuality } from './types';
+import { VideoDisplay } from './VideoDisplay';
 
 interface StreamPlayerProps {
   stream: StreamExtended;
@@ -18,8 +18,13 @@ interface StreamPlayerProps {
 }
 
 export function StreamPlayer({
-  stream, onClose, onTheaterToggle, isTheater = false,
-  defaultSettings, onDownload, isPremium = false,
+  stream,
+  onClose,
+  onTheaterToggle,
+  isTheater = false,
+  defaultSettings,
+  onDownload,
+  isPremium = false,
 }: StreamPlayerProps) {
   const [settings, setSettings] = useState<PlaybackSettings>({
     mode: defaultSettings?.mode ?? 'video',
@@ -63,25 +68,46 @@ export function StreamPlayer({
 
   const togglePlay = useCallback(() => setIsPlaying((v) => !v), []);
   const toggleMute = useCallback(() => setSettings((s) => ({ ...s, muted: !s.muted })), []);
-  const toggleAudioOnly = useCallback(() => setSettings((s) => ({ ...s, mode: s.mode === 'video' ? 'audio-only' : 'video' })), []);
-  const toggleLowLatency = useCallback(() => setSettings((s) => ({ ...s, lowLatency: !s.lowLatency })), []);
-  const toggleBandwidthSaver = useCallback(() => setSettings((s) => ({ ...s, bandwidthSaver: !s.bandwidthSaver })), []);
+  const toggleAudioOnly = useCallback(
+    () => setSettings((s) => ({ ...s, mode: s.mode === 'video' ? 'audio-only' : 'video' })),
+    [],
+  );
+  const toggleLowLatency = useCallback(
+    () => setSettings((s) => ({ ...s, lowLatency: !s.lowLatency })),
+    [],
+  );
+  const toggleBandwidthSaver = useCallback(
+    () => setSettings((s) => ({ ...s, bandwidthSaver: !s.bandwidthSaver })),
+    [],
+  );
   const handleVolumeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const v = parseFloat(e.target.value);
     setSettings((s) => ({ ...s, volume: v, muted: v === 0 }));
   }, []);
-  const handleQualitySelect = useCallback((q: StreamQuality) => setSettings((s) => ({ ...s, quality: q })), []);
+  const handleQualitySelect = useCallback(
+    (q: StreamQuality) => setSettings((s) => ({ ...s, quality: q })),
+    [],
+  );
 
-  const cycleSpeed = useCallback(() => setSettings((s) => {
-    const speeds = [0.5, 0.75, 1, 1.25, 1.5, 2];
-    const idx = speeds.indexOf(s.speed);
-    return { ...s, speed: speeds[(idx + 1) % speeds.length]! };
-  }), []);
+  const cycleSpeed = useCallback(
+    () =>
+      setSettings((s) => {
+        const speeds = [0.5, 0.75, 1, 1.25, 1.5, 2];
+        const idx = speeds.indexOf(s.speed);
+        return { ...s, speed: speeds[(idx + 1) % speeds.length]! };
+      }),
+    [],
+  );
 
   const handleFullscreen = useCallback(() => {
     if (!playerRef.current) return;
-    if (document.fullscreenElement) { document.exitFullscreen(); setIsFullscreen(false); }
-    else { playerRef.current.requestFullscreen(); setIsFullscreen(true); }
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
+      setIsFullscreen(false);
+    } else {
+      playerRef.current.requestFullscreen();
+      setIsFullscreen(true);
+    }
   }, []);
 
   const handleDownload = useCallback(() => {
@@ -97,19 +123,36 @@ export function StreamPlayer({
   }, []);
 
   useEffect(() => {
-    return () => { if (controlsTimeout.current) clearTimeout(controlsTimeout.current); };
+    return () => {
+      if (controlsTimeout.current) clearTimeout(controlsTimeout.current);
+    };
   }, []);
 
   // Keyboard shortcuts
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       switch (e.key) {
-        case ' ': case 'k': e.preventDefault(); togglePlay(); break;
-        case 'm': toggleMute(); break;
-        case 'f': handleFullscreen(); break;
-        case 'a': toggleAudioOnly(); break;
-        case '>': case '.': if (e.shiftKey) cycleSpeed(); break;
-        case 'p': enterPiP(); break;
+        case ' ':
+        case 'k':
+          e.preventDefault();
+          togglePlay();
+          break;
+        case 'm':
+          toggleMute();
+          break;
+        case 'f':
+          handleFullscreen();
+          break;
+        case 'a':
+          toggleAudioOnly();
+          break;
+        case '>':
+        case '.':
+          if (e.shiftKey) cycleSpeed();
+          break;
+        case 'p':
+          enterPiP();
+          break;
       }
     };
     window.addEventListener('keydown', handleKey);

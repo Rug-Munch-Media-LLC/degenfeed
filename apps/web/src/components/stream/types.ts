@@ -253,7 +253,7 @@ export interface PlaybackSettings {
   speed: number;
   lowLatency: boolean;
   bandwidthSaver: boolean;
-} 
+}
 
 /* === VOD / Clip Types ========================================= */
 

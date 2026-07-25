@@ -579,6 +579,15 @@ export async function recordUnifiedTip(
       /* non-fatal */
     }
   }
+  // Fire-and-forget tip incentives — streaks, revenue goals, post leaderboards
+  if (activity) {
+    try {
+      const { handleTipIncentives } = await import('./tip-streaks');
+      await handleTipIncentives(env, event);
+    } catch {
+      /* non-fatal */
+    }
+  }
   // Fire-and-forget tip notification — enhances the basic KV notification with
   // push, email digest, WebSocket broadcast, and protocol-specific notifications
   if (toUserId && fromUserId && activity) {
@@ -880,8 +889,8 @@ export async function checkTipAchievements(
   env: Env,
   userId: string,
   toUserId: string | undefined,
-  amountUsd: number,
-  event: UnifiedTipEvent,
+  _amountUsd: number,
+  _event: UnifiedTipEvent,
 ): Promise<string[]> {
   if (!env.CACHE) return [];
   const awarded: string[] = [];

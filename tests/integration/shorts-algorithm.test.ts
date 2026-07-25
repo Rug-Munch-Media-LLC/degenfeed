@@ -5,7 +5,7 @@
  * phase transitions, personalization, creator diversity, and
  * the ShortsAggregatorV2 dedup & quality scoring pipeline.
  */
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 // ─── Mock external deps ───────────────────────────────────────────────
 
@@ -36,7 +36,9 @@ vi.mock('@degenfeed/shorts-provider', () => ({
 
 import type { AggregatedShort } from '../../workers/api/src/feed/shorts-aggregator-v2';
 
-function makeShort(overrides: Partial<AggregatedShort> & { id: string; creatorName: string }): AggregatedShort {
+function makeShort(
+  overrides: Partial<AggregatedShort> & { id: string; creatorName: string },
+): AggregatedShort {
   return {
     source: 'peertube',
     sourceLabel: 'PeerTube',
@@ -123,7 +125,7 @@ describe('Shorts Algorithm — Cold Start', () => {
 
     const result = algo.recommend(pool, { limit: 10, seenIds: new Set(['s1']) });
     expect(result.shorts.length).toBe(1);
-    expect(result.shorts[0]!.id).toBe('s2');
+    expect(result.shorts[0]?.id).toBe('s2');
   });
 
   it('filters by category', async () => {
@@ -133,12 +135,17 @@ describe('Shorts Algorithm — Cold Start', () => {
     const pool = [
       makeShort({ id: 's1', creatorName: 'Alice', tags: ['crypto'], categories: ['crypto'] }),
       makeShort({ id: 's2', creatorName: 'Bob', tags: ['gaming'], categories: ['gaming'] }),
-      makeShort({ id: 's3', creatorName: 'Charlie', tags: ['crypto', 'defi'], categories: ['crypto'] }),
+      makeShort({
+        id: 's3',
+        creatorName: 'Charlie',
+        tags: ['crypto', 'defi'],
+        categories: ['crypto'],
+      }),
     ];
 
     const result = algo.recommend(pool, { limit: 10, category: 'gaming' });
     expect(result.shorts.length).toBe(1);
-    expect(result.shorts[0]!.id).toBe('s2');
+    expect(result.shorts[0]?.id).toBe('s2');
   });
 
   it('returns empty result when no shorts available', async () => {
@@ -182,8 +189,8 @@ describe('Shorts Algorithm — Learning Phase', () => {
     expect(result.phase).toBe('learning');
 
     // Crypto should be ranked higher due to tag affinity
-    const cryptoIndex = result.shorts.findIndex(s => s.id === 's1');
-    const gamingIndex = result.shorts.findIndex(s => s.id === 's3');
+    const cryptoIndex = result.shorts.findIndex((s) => s.id === 's1');
+    const gamingIndex = result.shorts.findIndex((s) => s.id === 's3');
     expect(cryptoIndex).toBeLessThan(gamingIndex);
   });
 });
@@ -218,7 +225,7 @@ describe('Shorts Algorithm — Personalized Phase', () => {
     expect(result.phase).toBe('personalized');
 
     // Alice with high creator affinity + crypto = should be first
-    expect(result.shorts[0]!.id).toBe('s1');
+    expect(result.shorts[0]?.id).toBe('s1');
   });
 });
 
@@ -232,20 +239,24 @@ describe('Shorts Algorithm — Watch Event Processing', () => {
 
     const short = makeShort({ id: 'watch-1', creatorName: 'Alice', tags: ['crypto', 'defi'] });
 
-    const updated = algo.updateProfile(profile, {
-      shortId: 'watch-1',
-      watchPercent: 0.9,
-      liked: true,
-      shared: false,
-      watchedFull: true,
-      skipped: false,
-      watchDurationMs: 25000,
-      timestamp: Date.now(),
-    }, short);
+    const updated = algo.updateProfile(
+      profile,
+      {
+        shortId: 'watch-1',
+        watchPercent: 0.9,
+        liked: true,
+        shared: false,
+        watchedFull: true,
+        skipped: false,
+        watchDurationMs: 25000,
+        timestamp: Date.now(),
+      },
+      short,
+    );
 
     expect(updated.totalWatches).toBe(1);
-    expect(updated.tagAffinities['crypto']).toBeGreaterThan(0.1);
-    expect(updated.creatorAffinities['Alice']).toBeGreaterThan(0.1);
+    expect(updated.tagAffinities.crypto).toBeGreaterThan(0.1);
+    expect(updated.creatorAffinities.Alice).toBeGreaterThan(0.1);
     expect(updated.recentShorts).toContain('watch-1');
   });
 
@@ -255,24 +266,28 @@ describe('Shorts Algorithm — Watch Event Processing', () => {
 
     const profile = algo.createDefaultProfile();
     // Pre-establish some affinity
-    profile.tagAffinities['crypto'] = 0.5;
-    profile.creatorAffinities['Bob'] = 0.5;
+    profile.tagAffinities.crypto = 0.5;
+    profile.creatorAffinities.Bob = 0.5;
 
     const short = makeShort({ id: 'skip-1', creatorName: 'Bob', tags: ['crypto'] });
 
-    const updated = algo.updateProfile(profile, {
-      shortId: 'skip-1',
-      watchPercent: 0.1,
-      liked: false,
-      shared: false,
-      watchedFull: false,
-      skipped: true,
-      watchDurationMs: 2000,
-      timestamp: Date.now(),
-    }, short);
+    const updated = algo.updateProfile(
+      profile,
+      {
+        shortId: 'skip-1',
+        watchPercent: 0.1,
+        liked: false,
+        shared: false,
+        watchedFull: false,
+        skipped: true,
+        watchDurationMs: 2000,
+        timestamp: Date.now(),
+      },
+      short,
+    );
 
-    expect(updated.tagAffinities['crypto']).toBeLessThan(0.5);
-    expect(updated.creatorAffinities['Bob']).toBeLessThan(0.5);
+    expect(updated.tagAffinities.crypto).toBeLessThan(0.5);
+    expect(updated.creatorAffinities.Bob).toBeLessThan(0.5);
   });
 });
 
@@ -295,7 +310,7 @@ describe('Shorts Algorithm — Creator Diversity', () => {
     // (with enough diverse creators, the algorithm tries to avoid)
     let consecutivePairs = 0;
     for (let i = 1; i < result.shorts.length; i++) {
-      if (result.shorts[i]!.creatorName === result.shorts[i - 1]!.creatorName) {
+      if (result.shorts[i]?.creatorName === result.shorts[i - 1]?.creatorName) {
         consecutivePairs++;
       }
     }
@@ -310,12 +325,22 @@ describe('Shorts Algorithm — Freshness Boost', () => {
 
     const now = Date.now();
     const pool = [
-      makeShort({ id: 'fresh', creatorName: 'Alice', tags: ['crypto'], publishedAt: now - 30 * 60 * 1000 }),
-      makeShort({ id: 'old', creatorName: 'Bob', tags: ['crypto'], publishedAt: now - 48 * 3600 * 1000 }),
+      makeShort({
+        id: 'fresh',
+        creatorName: 'Alice',
+        tags: ['crypto'],
+        publishedAt: now - 30 * 60 * 1000,
+      }),
+      makeShort({
+        id: 'old',
+        creatorName: 'Bob',
+        tags: ['crypto'],
+        publishedAt: now - 48 * 3600 * 1000,
+      }),
     ];
 
     const result = algo.recommend(pool, { limit: 2, sessionStartedAt: now });
-    expect(result.shorts[0]!.id).toBe('fresh');
+    expect(result.shorts[0]?.id).toBe('fresh');
   });
 });
 
@@ -326,15 +351,39 @@ describe('Shorts Algorithm — Trending Categories', () => {
 
     const now = Date.now();
     const pool = [
-      makeShort({ id: 's1', creatorName: 'A', tags: ['crypto'], categories: ['crypto'], publishedAt: now - 1000 }),
-      makeShort({ id: 's2', creatorName: 'B', tags: ['crypto'], categories: ['crypto'], publishedAt: now - 2000 }),
-      makeShort({ id: 's3', creatorName: 'C', tags: ['memecoin'], categories: ['memecoin'], publishedAt: now - 3000 }),
-      makeShort({ id: 's4', creatorName: 'D', tags: ['ai'], categories: ['ai'], publishedAt: now - 10000 }),
+      makeShort({
+        id: 's1',
+        creatorName: 'A',
+        tags: ['crypto'],
+        categories: ['crypto'],
+        publishedAt: now - 1000,
+      }),
+      makeShort({
+        id: 's2',
+        creatorName: 'B',
+        tags: ['crypto'],
+        categories: ['crypto'],
+        publishedAt: now - 2000,
+      }),
+      makeShort({
+        id: 's3',
+        creatorName: 'C',
+        tags: ['memecoin'],
+        categories: ['memecoin'],
+        publishedAt: now - 3000,
+      }),
+      makeShort({
+        id: 's4',
+        creatorName: 'D',
+        tags: ['ai'],
+        categories: ['ai'],
+        publishedAt: now - 10000,
+      }),
     ];
 
     const trending = algo.getTrendingCategories(pool, 24);
     expect(trending.length).toBeGreaterThan(0);
-    expect(trending[0]!.category).toBe('crypto');
+    expect(trending[0]?.category).toBe('crypto');
   });
 });
 
@@ -374,7 +423,7 @@ describe('Shorts Aggregator — Source Health', () => {
     const health = await agg.checkSourcesHealth();
     expect(health.length).toBeGreaterThanOrEqual(6);
 
-    const owncastHealth = health.find(h => h.source === 'owncast');
+    const owncastHealth = health.find((h) => h.source === 'owncast');
     expect(owncastHealth).toBeDefined();
 
     vi.stubGlobal('fetch', undefined);

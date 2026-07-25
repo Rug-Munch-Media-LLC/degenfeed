@@ -14,7 +14,7 @@ const scrollPositions = new Map<string, number>();
 
 export function useScrollPosition(
   activeKey: string,
-  containerRef: React.RefObject<HTMLElement | null>,
+  _containerRef: React.RefObject<HTMLElement | null>,
 ) {
   const prevKeyRef = useRef(activeKey);
 

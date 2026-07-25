@@ -33,7 +33,7 @@ export function CoinCardWithSparkline({ coin }: { coin: CoinDisplayData }) {
     const trend = coin.priceChange24h >= 0 ? 1 : -1;
     const volatility = Math.abs(coin.priceChange24h) / 100;
     let price = 50;
-    return Array.from({ length: 24 }, (_, i) => {
+    return Array.from({ length: 24 }, (_, _i) => {
       const drift = trend * volatility * 10 + (Math.random() - 0.5) * volatility * 20;
       price = Math.max(5, Math.min(95, price + drift));
       return price;

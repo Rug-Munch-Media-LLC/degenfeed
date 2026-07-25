@@ -44,7 +44,7 @@ interface MicroblogItem {
     is_repost?: boolean;
     is_bookmark?: boolean;
     conversation_id?: string;
-   拍摄?: string;
+    拍摄?: string;
   };
 }
 
@@ -61,11 +61,11 @@ interface MicroblogFeed {
 // ─── Constants ─────────────────────────────────────────────────────────
 
 const CURATED_USERS = [
-  'manton',  // Manton Reece — Micro.blog founder
+  'manton', // Manton Reece — Micro.blog founder
   'jsonfeed', // JSON Feed updates
   'indieweb', // IndieWeb news
   'davewiner', // Dave Winer — blogging pioneer
-  'gruber',   // John Gruber — Daring Fireball
+  'gruber', // John Gruber — Daring Fireball
   'macgenie', // Mac-related
 ];
 
@@ -83,8 +83,10 @@ function guessNiches(text: string, tags: string[] = []): string[] {
   if (/\b(ai |artificial|intelligence|llm|agent|machine learning)\b/.test(lower)) niches.push('ai');
   if (/\b(microblog|indieweb|webmention|micropub|websub)\b/.test(lower)) niches.push('indieweb');
   if (/\b(blog|writing|publishing|journalism|writer|author)\b/.test(lower)) niches.push('writing');
-  if (/\b(tech|technology|programming|code|software|startup|saas)\b/.test(lower)) niches.push('tech');
-  if (/\b(privacy|security|encryption|censorship|surveillance)\b/.test(lower)) niches.push('privacy');
+  if (/\b(tech|technology|programming|code|software|startup|saas)\b/.test(lower))
+    niches.push('tech');
+  if (/\b(privacy|security|encryption|censorship|surveillance)\b/.test(lower))
+    niches.push('privacy');
   if (/\b(podcast|podcasting|audio|show|episode)\b/.test(lower)) niches.push('podcasting');
   if (/\b(photo|photography|camera|picture|image)\b/.test(lower)) niches.push('photography');
   if (/\b(news|breaking|update|announcement|release)\b/.test(lower)) niches.push('news');
@@ -97,7 +99,8 @@ function guessNiches(text: string, tags: string[] = []): string[] {
 // ─── Mapping ──────────────────────────────────────────────────────────
 
 function stripHtml(html: string): string {
-  return html.replace(/<br\s*\/?>/gi, '\n')
+  return html
+    .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<[^>]*>/g, ' ')
     .replace(/&amp;/g, '&')
     .replace(/&lt;/g, '<')
@@ -109,7 +112,7 @@ function stripHtml(html: string): string {
     .trim();
 }
 
-function microblogItemToPost(item: MicroblogItem, source: string): UnifiedPost {
+function microblogItemToPost(item: MicroblogItem, _source: string): UnifiedPost {
   const text = item.content_text || stripHtml(item.content_html || '') || item.summary || '';
   const authorName = item.author?.name || 'Micro.blog User';
 
@@ -129,9 +132,7 @@ function microblogItemToPost(item: MicroblogItem, source: string): UnifiedPost {
       keys: {},
     },
     text: text.slice(0, 2000),
-    embeds: item.external_url
-      ? [{ kind: 'link' as const, url: item.external_url }]
-      : [],
+    embeds: item.external_url ? [{ kind: 'link' as const, url: item.external_url }] : [],
     contentType: text.length > 300 ? 'article' : 'text',
     createdAt: item.date_published ? new Date(item.date_published).getTime() : Date.now(),
     metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
@@ -151,11 +152,11 @@ function microblogItemToPost(item: MicroblogItem, source: string): UnifiedPost {
 async function fetchDiscoverFeed(limit: number): Promise<UnifiedPost[]> {
   try {
     const res = await $fetch(`${MICROBLOG_API}/posts/discover`, {
-      headers: { 'Accept': 'application/json', 'User-Agent': 'DegenFeed-Bridge/0.1' },
+      headers: { Accept: 'application/json', 'User-Agent': 'DegenFeed-Bridge/0.1' },
       signal: AbortSignal.timeout(8000),
     });
     if (!res.ok) return [];
-    const feed = await res.json() as MicroblogFeed;
+    const feed = (await res.json()) as MicroblogFeed;
     const items = feed.items || [];
     return items.slice(0, limit).map((i) => microblogItemToPost(i, 'discover'));
   } catch (err) {
@@ -167,11 +168,11 @@ async function fetchDiscoverFeed(limit: number): Promise<UnifiedPost[]> {
 async function fetchUserFeed(username: string, limit: number): Promise<UnifiedPost[]> {
   try {
     const res = await $fetch(`${MICROBLOG_API}/feeds/${username}.json`, {
-      headers: { 'Accept': 'application/json', 'User-Agent': 'DegenFeed-Bridge/0.1' },
+      headers: { Accept: 'application/json', 'User-Agent': 'DegenFeed-Bridge/0.1' },
       signal: AbortSignal.timeout(8000),
     });
     if (!res.ok) return [];
-    const feed = await res.json() as MicroblogFeed;
+    const feed = (await res.json()) as MicroblogFeed;
     const items = feed.items || [];
     return items.slice(0, limit).map((i) => microblogItemToPost(i, `user:${username}`));
   } catch {
@@ -182,11 +183,11 @@ async function fetchUserFeed(username: string, limit: number): Promise<UnifiedPo
 async function fetchPhotosFeed(limit: number): Promise<UnifiedPost[]> {
   try {
     const res = await $fetch(`${MICROBLOG_API}/feeds/photos.json`, {
-      headers: { 'Accept': 'application/json', 'User-Agent': 'DegenFeed-Bridge/0.1' },
+      headers: { Accept: 'application/json', 'User-Agent': 'DegenFeed-Bridge/0.1' },
       signal: AbortSignal.timeout(8000),
     });
     if (!res.ok) return [];
-    const feed = await res.json() as MicroblogFeed;
+    const feed = (await res.json()) as MicroblogFeed;
     const items = feed.items || [];
     return items.slice(0, limit).map((i) => microblogItemToPost(i, 'photos'));
   } catch {

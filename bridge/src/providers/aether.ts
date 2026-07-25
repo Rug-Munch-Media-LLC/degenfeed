@@ -22,10 +22,7 @@ import type { SchemaGuard, UnifiedPost } from '../server/types';
 const $fetch = globalThis.fetch;
 
 const AETHER_LOCAL = process.env.AETHER_LOCAL_URL || 'http://127.0.0.1:9001';
-const AETHER_RELAYS = [
-  'https://relay.aether.app',
-  'https://aether-relay.fly.dev',
-];
+const AETHER_RELAYS = ['https://relay.aether.app', 'https://aether-relay.fly.dev'];
 
 // ─── Types ─────────────────────────────────────────────────────────────
 
@@ -93,7 +90,12 @@ export function stripHtml(html: string): string {
     .trim();
 }
 
-export function guessNiches(text: string, title: string, community: string, tags: string[] = []): string[] {
+export function guessNiches(
+  text: string,
+  title: string,
+  community: string,
+  tags: string[] = [],
+): string[] {
   const niches: string[] = [];
   const lower = `${text} ${title} ${community} ${tags.join(' ')}`.toLowerCase();
 
@@ -110,8 +112,7 @@ export function guessNiches(text: string, title: string, community: string, tags
   if (/\b(crypto|blockchain|web3)\b/.test(lower)) niches.push('crypto');
   if (/\b(tech|technology|programming|code|software|dev|engineering)\b/.test(lower))
     niches.push('tech');
-  if (/\b(news|breaking|discussion|debate|opinion|analysis)\b/.test(lower))
-    niches.push('news');
+  if (/\b(news|breaking|discussion|debate|opinion|analysis)\b/.test(lower)) niches.push('news');
   if (/\b(science|research|study|paper|discovery|biology|physics)\b/.test(lower))
     niches.push('science');
   if (/\b(governance|dao|voting|proposal|consensus|moderation)\b/.test(lower))
@@ -133,7 +134,9 @@ export function guessNiches(text: string, title: string, community: string, tags
 // ─── Map Aether post to UnifiedPost ────────────────────────────────────
 
 function aetherPostToPost(post: AetherPost, relaySource: string): UnifiedPost {
-  const text = post.title ? `${post.title}\n\n${stripHtml(post.body || '')}`.trim() : stripHtml(post.body || '').trim();
+  const text = post.title
+    ? `${post.title}\n\n${stripHtml(post.body || '')}`.trim()
+    : stripHtml(post.body || '').trim();
   const communityName = post.communityName || `aether-${post.communityId?.slice(0, 8)}`;
 
   return {
