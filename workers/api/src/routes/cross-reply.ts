@@ -26,8 +26,8 @@
  */
 
 import { type Env, jsonResponse, noCacheJsonResponse } from '../index';
-import { ALLOWED_PROTOCOLS, hasSuspiciousPayload, sanitizeString } from '../sanitize';
 import { methodNotAllowed } from '../response-helpers';
+import { ALLOWED_PROTOCOLS, hasSuspiciousPayload, sanitizeString } from '../sanitize';
 
 interface CrossReplyRequest {
   parentPostUri: string;
@@ -649,7 +649,7 @@ async function publishCrossReply(
               'Farcaster cast limited to 320 characters. Reduce your reply content and try again.',
           };
         }
-        const hubUrl = env.FARCASTER_HUB_URL || 'https://hub.farcaster.standardcrypto.vc:2281';
+        const hubUrl = env.FARCASTER_HUB_URL || 'http://127.0.0.1:2281';
         const signedMessage = body.signedMessage || auth.farcaster_message;
         if (!signedMessage) {
           return {

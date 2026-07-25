@@ -11,8 +11,8 @@
 import type { ContentProof } from '@degenfeed/types';
 import type { Env } from '../index';
 import { jsonResponse, noCacheJsonResponse } from '../index';
-import { requireSession } from '../session';
 import { methodNotAllowed } from '../response-helpers';
+import { requireSession } from '../session';
 
 // ─── Irys / Arweave constants ────────────────────────────────────────
 
@@ -114,20 +114,17 @@ async function storeOnIPFS(content: string, env: Env): Promise<string | null> {
     }
   }
 
-  // Fall back to public IPFS API (no pinning guarantee)
+  // Fall back to web3.storage (free tier, no API key required for small uploads)
   try {
-    const res = await fetch('https://ipfs.infura.io:5001/api/v0/add', {
+    const fd = new FormData();
+    fd.append('file', new Blob([content], { type: 'text/plain' }), 'post.txt');
+    const res = await fetch('https://api.web3.storage/upload', {
       method: 'POST',
-      body: (() => {
-        const fd = new FormData();
-        fd.append('file', new Blob([content], { type: 'text/plain' }), 'post.txt');
-        return fd;
-      })(),
+      body: fd,
     });
-
     if (res.ok) {
-      const data = (await res.json()) as { Hash?: string };
-      if (data.Hash) return data.Hash;
+      const data = (await res.json()) as { cid?: string };
+      if (data.cid) return data.cid;
     }
   } catch {
     // Silent

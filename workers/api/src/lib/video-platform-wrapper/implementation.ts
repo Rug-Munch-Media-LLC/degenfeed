@@ -180,7 +180,7 @@ export const farcasterPlatformWrapper: VideoPlatformWrapper = {
 
     try {
       // Check Hubble for casts with fc:live meta tags or frame embeds
-      const hubUrl = env.FARCASTER_HUB_URL ?? 'https://hub.farcaster.standardcrypto.vc:2281';
+      const hubUrl = env.FARCASTER_HUB_URL ?? 'http://127.0.0.1:2281';
       const fid = Number(env.FARCASTER_FID ?? '');
       if (!fid) return [];
 
@@ -304,7 +304,7 @@ export const farcasterPlatformWrapper: VideoPlatformWrapper = {
   async getVideos(env: Env, options: VideoQueryOptions): Promise<UnifiedVideo[]> {
     const videos: UnifiedVideo[] = [];
     try {
-      const hubUrl = env.FARCASTER_HUB_URL ?? 'https://hub.farcaster.standardcrypto.vc:2281';
+      const hubUrl = env.FARCASTER_HUB_URL ?? 'http://127.0.0.1:2281';
       const limit = options.limit ?? 20;
 
       // Fetch casts with video embeds from Hubble
@@ -402,7 +402,7 @@ export const farcasterPlatformWrapper: VideoPlatformWrapper = {
   async healthCheck(env: Env): Promise<PlatformHealth> {
     const start = Date.now();
     try {
-      const hubUrl = env.FARCASTER_HUB_URL ?? 'https://hub.farcaster.standardcrypto.vc:2281';
+      const hubUrl = env.FARCASTER_HUB_URL ?? 'http://127.0.0.1:2281';
       const resp = await fetch(`${hubUrl}/v1/info`, { signal: AbortSignal.timeout(5000) });
       return {
         healthy: resp.ok,

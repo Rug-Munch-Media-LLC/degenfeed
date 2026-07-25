@@ -139,15 +139,21 @@ export const TYPE_LABELS: Record<TokenGateType, string> = {
   erc1155: 'Multi Token (ERC-1155)',
 };
 
-// ─── RPC Configuration ────────────────────────────────────────────────────
+// ─── RPC Configuration (free public RPCs, zero paid providers) ─────────────
+
+import {
+  callWithFallback,
+  RPC_FALLBACKS,
+  solanaGetTokenAccounts as routerSolanaGetTokenAccounts,
+} from '@degenfeed/web3/rpc-router';
 
 const RPC_URLS: Record<TokenGateChain, string> = {
-  ethereum: 'https://eth-mainnet.g.alchemy.com/v2/demo',
-  base: 'https://base-mainnet.g.alchemy.com/v2/demo',
-  polygon: 'https://polygon-mainnet.g.alchemy.com/v2/demo',
-  arbitrum: 'https://arb-mainnet.g.alchemy.com/v2/demo',
-  optimism: 'https://opt-mainnet.g.alchemy.com/v2/demo',
-  solana: 'https://api.mainnet-beta.solana.com',
+  ethereum: RPC_FALLBACKS.ethereum[0],
+  base: RPC_FALLBACKS.base[0],
+  polygon: RPC_FALLBACKS.polygon[0],
+  arbitrum: RPC_FALLBACKS.arbitrum[0],
+  optimism: RPC_FALLBACKS.optimism[0],
+  solana: RPC_FALLBACKS.solana[0],
 };
 
 function getRpcUrl(chain: TokenGateChain): string {
@@ -158,16 +164,13 @@ function getRpcUrl(chain: TokenGateChain): string {
   return RPC_URLS[chain];
 }
 
-// ─── EVM helpers ──────────────────────────────────────────────────────────
-
-const ERC20_BALANCE_OF = '0x70a08231';
-const ERC721_OWNER_OF = '0x6352211e';
-const ERC1155_BALANCE_OF = '0x00fdd58e';
-const ERC20_SYMBOL = '0x95d89b41';
-const ERC721_TOKEN_URI = '0xc87b56dd';
-const ERC1155_URI = '0x0e89341c';
-
-async function ethCall(chain: TokenGateChain, to: string, data: string): Promise<string | null> {
+/** EVM eth_call with multi-RPC fallback */
+async function ethCallFree(
+  chain: TokenGateChain,
+  to: string,
+  data: string,
+): Promise<string | null> {
+  // First try env-override or primary RPC (fast path)
   const url = getRpcUrl(chain);
   try {
     const res = await fetch(url, {
@@ -180,12 +183,34 @@ async function ethCall(chain: TokenGateChain, to: string, data: string): Promise
         params: [{ to, data }, 'latest'],
       }),
     });
-    if (!res.ok) return null;
-    const json = (await res.json()) as { result?: string; error?: unknown };
-    return json.result ?? null;
+    if (res.ok) {
+      const json = (await res.json()) as { result?: string; error?: unknown };
+      if (json.result) return json.result;
+    }
+  } catch {
+    // Fall through to fallback chain
+  }
+
+  // Fallback: try all free RPCs
+  try {
+    const res = await callWithFallback<string>(chain as any, 'eth_call', [{ to, data }, 'latest']);
+    return res.result ?? null;
   } catch {
     return null;
   }
+}
+
+// ─── EVM helpers ──────────────────────────────────────────────────────────
+
+const ERC20_BALANCE_OF = '0x70a08231';
+const ERC721_OWNER_OF = '0x6352211e';
+const ERC1155_BALANCE_OF = '0x00fdd58e';
+const ERC20_SYMBOL = '0x95d89b41';
+const ERC721_TOKEN_URI = '0xc87b56dd';
+const ERC1155_URI = '0x0e89341c';
+
+async function ethCall(chain: TokenGateChain, to: string, data: string): Promise<string | null> {
+  return ethCallFree(chain, to, data);
 }
 
 function decodeUint256(hex: string): bigint {
@@ -215,12 +240,12 @@ async function solanaGetTokenAccounts(
   owner: string,
   mint?: string,
 ): Promise<Array<{ mint: string; amount: bigint }>> {
-  const url = getRpcUrl('solana');
+  // First try primary Solana RPC (fast path)
   try {
+    const url = getRpcUrl('solana');
     const params: Record<string, unknown> = mint
       ? { owner, mint }
       : { owner, programId: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' };
-
     const res = await fetch(url, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -231,24 +256,28 @@ async function solanaGetTokenAccounts(
         params: [owner, params, { encoding: 'jsonParsed' }],
       }),
     });
-    if (!res.ok) return [];
-    const json = (await res.json()) as {
-      result?: {
-        value?: Array<{
-          account: {
-            data: { parsed: { info: { mint: string; tokenAmount: { amount: string } } } };
-          };
-        }>;
+    if (res.ok) {
+      const json = (await res.json()) as {
+        result?: {
+          value?: Array<{
+            account: {
+              data: { parsed: { info: { mint: string; tokenAmount: { amount: string } } } };
+            };
+          }>;
+        };
       };
-    };
-    if (!json.result?.value) return [];
-    return json.result.value.map((v) => ({
-      mint: v.account.data.parsed.info.mint,
-      amount: BigInt(v.account.data.parsed.info.tokenAmount.amount),
-    }));
+      if (json.result?.value)
+        return json.result.value.map((v) => ({
+          mint: v.account.data.parsed.info.mint,
+          amount: BigInt(v.account.data.parsed.info.tokenAmount.amount),
+        }));
+    }
   } catch {
-    return [];
+    // Fall through to fallback
   }
+
+  // Fallback: try all free Solana RPCs via router
+  return routerSolanaGetTokenAccounts(owner, mint);
 }
 
 // ─── Core verification ─────────────────────────────────────────────────────

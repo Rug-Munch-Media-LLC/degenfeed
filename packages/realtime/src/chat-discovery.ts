@@ -375,7 +375,11 @@ export class ChatDiscovery {
   /**
    * Get recommended communities based on interest tags.
    */
-  async getRecommended(interestTags: string[], env?: Env, limit = 10): Promise<DiscoveredCommunity[]> {
+  async getRecommended(
+    interestTags: string[],
+    env?: Env,
+    limit = 10,
+  ): Promise<DiscoveredCommunity[]> {
     const result = await this.search({ tags: interestTags, limit }, env);
     return result.communities;
   }

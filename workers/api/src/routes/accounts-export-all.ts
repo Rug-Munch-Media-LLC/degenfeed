@@ -32,12 +32,15 @@ interface ExportManifest {
   wallet: string;
   exportedAt: string;
   totalSize: number;
-  protocols: Record<string, {
-    available: boolean;
-    format: string;
-    estimatedItems: number;
-    estimatedSize: number;
-  }>;
+  protocols: Record<
+    string,
+    {
+      available: boolean;
+      format: string;
+      estimatedItems: number;
+      estimatedSize: number;
+    }
+  >;
   availableFormats: string[];
 }
 
@@ -75,9 +78,20 @@ export async function handleExportAll(request: Request, env: Env): Promise<Respo
   }
 
   const requestedProtocols = body.protocols || [
-    'bluesky', 'mastodon', 'farcaster', 'lens', 'nostr',
-    'peertube', 'lemmy', 'pixelfed', 'writefreely', 'bookwyrm',
-    'funkwhale', 'mobilizon', 'owncast', 'castopod',
+    'bluesky',
+    'mastodon',
+    'farcaster',
+    'lens',
+    'nostr',
+    'peertube',
+    'lemmy',
+    'pixelfed',
+    'writefreely',
+    'bookwyrm',
+    'funkwhale',
+    'mobilizon',
+    'owncast',
+    'castopod',
   ];
   const format = body.format || 'json';
 
@@ -98,7 +112,11 @@ export async function handleExportAll(request: Request, env: Env): Promise<Respo
   const tasks = requestedProtocols.map((protocol) =>
     gatherProtocolExport(wallet, walletLower, protocol, env)
       .then((data) => ({ protocol, data, error: null }))
-      .catch((err) => ({ protocol, data: null, error: err instanceof Error ? err.message : String(err) })),
+      .catch((err) => ({
+        protocol,
+        data: null,
+        error: err instanceof Error ? err.message : String(err),
+      })),
   );
 
   const results = await Promise.all(tasks);
@@ -156,18 +174,21 @@ export async function handleExportAll(request: Request, env: Env): Promise<Respo
     size: job.totalSize,
   });
 
-  return jsonResponse({
-    success: true,
-    wallet,
-    jobId,
-    status: job.status,
-    completedProtocols: job.completedProtocols,
-    failedProtocols: job.errors.map((e) => e.split(':')[0]).filter(Boolean),
-    totalSize: job.totalSize,
-    downloadUrl: job.downloadUrl,
-    errors: job.errors.length > 0 ? job.errors : undefined,
-    note: 'Export data is available for 24 hours. Download via the downloadUrl.',
-  }, job.errors.length > 0 && job.completedProtocols.length === 0 ? 200 : 201);
+  return jsonResponse(
+    {
+      success: true,
+      wallet,
+      jobId,
+      status: job.status,
+      completedProtocols: job.completedProtocols,
+      failedProtocols: job.errors.map((e) => e.split(':')[0]).filter(Boolean),
+      totalSize: job.totalSize,
+      downloadUrl: job.downloadUrl,
+      errors: job.errors.length > 0 ? job.errors : undefined,
+      note: 'Export data is available for 24 hours. Download via the downloadUrl.',
+    },
+    job.errors.length > 0 && job.completedProtocols.length === 0 ? 200 : 201,
+  );
 }
 
 // ─── GET /api/accounts/export-all/status ─────────────────────────────────
@@ -300,7 +321,9 @@ async function gatherProtocolExport(
 }
 
 async function exportBlueskyData(
-  _wallet: string, walletLower: string, env: Env,
+  _wallet: string,
+  walletLower: string,
+  env: Env,
 ): Promise<Record<string, unknown>> {
   const result: Record<string, unknown> = {
     protocol: 'bluesky',
@@ -341,7 +364,9 @@ async function exportBlueskyData(
 }
 
 async function exportMastodonData(
-  _wallet: string, walletLower: string, env: Env,
+  _wallet: string,
+  walletLower: string,
+  env: Env,
 ): Promise<Record<string, unknown>> {
   const result: Record<string, unknown> = {
     protocol: 'mastodon',
@@ -378,7 +403,9 @@ async function exportMastodonData(
 }
 
 async function exportFarcasterData(
-  _wallet: string, walletLower: string, env: Env,
+  _wallet: string,
+  walletLower: string,
+  env: Env,
 ): Promise<Record<string, unknown>> {
   const result: Record<string, unknown> = {
     protocol: 'farcaster',
@@ -414,7 +441,9 @@ async function exportFarcasterData(
 }
 
 async function exportLensData(
-  _wallet: string, walletLower: string, env: Env,
+  _wallet: string,
+  walletLower: string,
+  env: Env,
 ): Promise<Record<string, unknown>> {
   const result: Record<string, unknown> = {
     protocol: 'lens',
@@ -448,7 +477,9 @@ async function exportLensData(
 }
 
 async function exportNostrData(
-  _wallet: string, walletLower: string, env: Env,
+  _wallet: string,
+  walletLower: string,
+  env: Env,
 ): Promise<Record<string, unknown>> {
   const result: Record<string, unknown> = {
     protocol: 'nostr',
@@ -482,49 +513,65 @@ async function exportNostrData(
 }
 
 async function exportPeerTubeData(
-  _wallet: string, walletLower: string, env: Env,
+  _wallet: string,
+  walletLower: string,
+  env: Env,
 ): Promise<Record<string, unknown>> {
   return exportGenericProtocolData('peertube', _wallet, walletLower, env);
 }
 
 async function exportLemmyData(
-  _wallet: string, walletLower: string, env: Env,
+  _wallet: string,
+  walletLower: string,
+  env: Env,
 ): Promise<Record<string, unknown>> {
   return exportGenericProtocolData('lemmy', _wallet, walletLower, env);
 }
 
 async function exportPixelfedData(
-  _wallet: string, walletLower: string, env: Env,
+  _wallet: string,
+  walletLower: string,
+  env: Env,
 ): Promise<Record<string, unknown>> {
   return exportGenericProtocolData('pixelfed', _wallet, walletLower, env);
 }
 
 async function exportWriteFreelyData(
-  _wallet: string, walletLower: string, env: Env,
+  _wallet: string,
+  walletLower: string,
+  env: Env,
 ): Promise<Record<string, unknown>> {
   return exportGenericProtocolData('writefreely', _wallet, walletLower, env);
 }
 
 async function exportBookWyrmData(
-  _wallet: string, walletLower: string, env: Env,
+  _wallet: string,
+  walletLower: string,
+  env: Env,
 ): Promise<Record<string, unknown>> {
   return exportGenericProtocolData('bookwyrm', _wallet, walletLower, env);
 }
 
 async function exportFunkwhaleData(
-  _wallet: string, walletLower: string, env: Env,
+  _wallet: string,
+  walletLower: string,
+  env: Env,
 ): Promise<Record<string, unknown>> {
   return exportGenericProtocolData('funkwhale', _wallet, walletLower, env);
 }
 
 async function exportMobilizonData(
-  _wallet: string, walletLower: string, env: Env,
+  _wallet: string,
+  walletLower: string,
+  env: Env,
 ): Promise<Record<string, unknown>> {
   return exportGenericProtocolData('mobilizon', _wallet, walletLower, env);
 }
 
 async function exportOwncastData(
-  _wallet: string, walletLower: string, env: Env,
+  _wallet: string,
+  walletLower: string,
+  env: Env,
 ): Promise<Record<string, unknown>> {
   const result: Record<string, unknown> = {
     protocol: 'owncast',
@@ -547,12 +594,15 @@ async function exportOwncastData(
     }
   }
 
-  result.note = 'Owncast data is primarily streaming metadata. Full video archives must be downloaded separately from the instance.';
+  result.note =
+    'Owncast data is primarily streaming metadata. Full video archives must be downloaded separately from the instance.';
   return result;
 }
 
 async function exportCastopodData(
-  _wallet: string, walletLower: string, env: Env,
+  _wallet: string,
+  walletLower: string,
+  env: Env,
 ): Promise<Record<string, unknown>> {
   const result: Record<string, unknown> = {
     protocol: 'castopod',
@@ -663,7 +713,9 @@ async function getContentByProtocol(
             body: String(record.body || ''),
             createdAt: Number(record.createdAt || Date.now()),
             tags: Array.isArray(record.tags) ? record.tags.map(String) : undefined,
-            media: Array.isArray(record.media) ? record.media.map((m: unknown) => String((m as Record<string, unknown>).url || m)) : undefined,
+            media: Array.isArray(record.media)
+              ? record.media.map((m: unknown) => String((m as Record<string, unknown>).url || m))
+              : undefined,
           });
         }
       }
@@ -678,14 +730,33 @@ async function getContentByProtocol(
 async function getProtocolDataAvailability(
   walletLower: string,
   env: Env,
-): Promise<Record<string, { available: boolean; format: string; estimatedItems: number; estimatedSize: number }>> {
+): Promise<
+  Record<
+    string,
+    { available: boolean; format: string; estimatedItems: number; estimatedSize: number }
+  >
+> {
   const protocols = [
-    'bluesky', 'mastodon', 'farcaster', 'lens', 'nostr',
-    'peertube', 'lemmy', 'pixelfed', 'writefreely', 'bookwyrm',
-    'funkwhale', 'mobilizon', 'owncast', 'castopod',
+    'bluesky',
+    'mastodon',
+    'farcaster',
+    'lens',
+    'nostr',
+    'peertube',
+    'lemmy',
+    'pixelfed',
+    'writefreely',
+    'bookwyrm',
+    'funkwhale',
+    'mobilizon',
+    'owncast',
+    'castopod',
   ];
 
-  const result: Record<string, { available: boolean; format: string; estimatedItems: number; estimatedSize: number }> = {};
+  const result: Record<
+    string,
+    { available: boolean; format: string; estimatedItems: number; estimatedSize: number }
+  > = {};
 
   for (const protocol of protocols) {
     let available = false;
@@ -753,7 +824,11 @@ async function persistExportJob(env: Env, walletLower: string, job: ExportJob): 
   }
 }
 
-async function getExportJob(env: Env, walletLower: string, jobId: string): Promise<ExportJob | null> {
+async function getExportJob(
+  env: Env,
+  walletLower: string,
+  jobId: string,
+): Promise<ExportJob | null> {
   const store = env.CACHE || env.PLATFORM_ACCOUNTS;
   if (!store) return null;
   try {
@@ -783,4 +858,13 @@ async function listExportJobs(env: Env, walletLower: string): Promise<ExportJob[
 }
 
 /** Re-export the existing data-export handlers at /api/accounts/export/manifest etc. */
-export { handleExportManifest, handleExportJson, handleExportCsv, handleExportHtml, handleExportActivityPub, handleExportNostr, handleExportAtProto, handleExportSolid } from './data-export';
+export {
+  handleExportActivityPub,
+  handleExportAtProto,
+  handleExportCsv,
+  handleExportHtml,
+  handleExportJson,
+  handleExportManifest,
+  handleExportNostr,
+  handleExportSolid,
+} from './data-export';

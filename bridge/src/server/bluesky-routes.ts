@@ -56,11 +56,16 @@
  * All endpoints return { ok: boolean, data?, error?, meta? }
  */
 
-import { PdsAccountClient, generateRecoveryKey, checkPasswordStrength, PdsAccountError } from '@degenfeed/bluesky-sdk/pds-account';
+import type http from 'node:http';
+import { PdsClient } from '@degenfeed/bluesky-sdk';
+import {
+  checkPasswordStrength,
+  generateRecoveryKey,
+  PdsAccountClient,
+  PdsAccountError,
+} from '@degenfeed/bluesky-sdk/pds-account';
 import { PdsMigrationClient } from '@degenfeed/bluesky-sdk/pds-migration';
 import { PdsSocialClient } from '@degenfeed/bluesky-sdk/pds-social';
-import { PdsClient } from '@degenfeed/bluesky-sdk';
-import type http from 'node:http';
 
 // ─── Config ──────────────────────────────────────────────────────────
 
@@ -154,13 +159,23 @@ export async function handleBlueskyRoute(
       const inviteCode = body.inviteCode as string | undefined;
 
       if (!handle || !email || !password) {
-        return jsonError(res, 400, 'MISSING_FIELDS', 'handle, email, and password are required'), true;
+        return (
+          jsonError(res, 400, 'MISSING_FIELDS', 'handle, email, and password are required'), true
+        );
       }
 
       // Check password strength
       const strength = checkPasswordStrength(password);
       if (strength.score < 2) {
-        return jsonError(res, 400, 'WEAK_PASSWORD', `Password too weak: ${strength.feedback.join(', ')}`), true;
+        return (
+          jsonError(
+            res,
+            400,
+            'WEAK_PASSWORD',
+            `Password too weak: ${strength.feedback.join(', ')}`,
+          ),
+          true
+        );
       }
 
       const client = new PdsAccountClient(PDS_URL);
@@ -182,20 +197,23 @@ export async function handleBlueskyRoute(
         createdAt: new Date().toISOString(),
       });
 
-      return jsonCreated(res, {
-        ok: true,
-        data: {
-          did: result.did,
-          handle: result.handle,
-          accessJwt: result.accessJwt,
-          refreshJwt: result.refreshJwt,
-          recoveryKey: result.recoveryKey,
-        },
-        meta: {
-          message: 'IMPORTANT: Save your recovery key. It cannot be retrieved later.',
-          passwordStrength: strength,
-        },
-      }), true;
+      return (
+        jsonCreated(res, {
+          ok: true,
+          data: {
+            did: result.did,
+            handle: result.handle,
+            accessJwt: result.accessJwt,
+            refreshJwt: result.refreshJwt,
+            recoveryKey: result.recoveryKey,
+          },
+          meta: {
+            message: 'IMPORTANT: Save your recovery key. It cannot be retrieved later.',
+            passwordStrength: strength,
+          },
+        }),
+        true
+      );
     }
 
     // POST /api/bluesky/auth — Authenticate existing user
@@ -211,15 +229,18 @@ export async function handleBlueskyRoute(
       const client = new PdsAccountClient(PDS_URL);
       const session = await client.createSession(identifier, password);
 
-      return jsonOk(res, {
-        ok: true,
-        data: {
-          did: session.did,
-          handle: session.handle,
-          accessJwt: session.accessJwt,
-          refreshJwt: session.refreshJwt,
-        },
-      }), true;
+      return (
+        jsonOk(res, {
+          ok: true,
+          data: {
+            did: session.did,
+            handle: session.handle,
+            accessJwt: session.accessJwt,
+            refreshJwt: session.refreshJwt,
+          },
+        }),
+        true
+      );
     }
 
     // POST /api/bluesky/migrate — Migrate account to our PDS
@@ -233,8 +254,15 @@ export async function handleBlueskyRoute(
       const email = body.email as string;
 
       if (!sourceIdentifier || !sourcePassword || !targetPassword || !handle || !email) {
-        return jsonError(res, 400, 'MISSING_FIELDS',
-          'sourceIdentifier, sourcePassword, targetPassword, handle, and email are required'), true;
+        return (
+          jsonError(
+            res,
+            400,
+            'MISSING_FIELDS',
+            'sourceIdentifier, sourcePassword, targetPassword, handle, and email are required',
+          ),
+          true
+        );
       }
 
       // Step 1: Create account on our PDS
@@ -260,24 +288,27 @@ export async function handleBlueskyRoute(
         setupRedirect: true,
       });
 
-      return jsonCreated(res, {
-        ok: true,
-        data: {
-          did: account.did,
-          handle: account.handle,
-          accessJwt: account.accessJwt,
-          refreshJwt: account.refreshJwt,
-          recoveryKey,
-          migration: {
-            recordsMigrated: migrationResult.recordsMigrated,
-            blobsMigrated: migrationResult.blobsMigrated,
-            didUpdated: migrationResult.didUpdated,
+      return (
+        jsonCreated(res, {
+          ok: true,
+          data: {
+            did: account.did,
+            handle: account.handle,
+            accessJwt: account.accessJwt,
+            refreshJwt: account.refreshJwt,
+            recoveryKey,
+            migration: {
+              recordsMigrated: migrationResult.recordsMigrated,
+              blobsMigrated: migrationResult.blobsMigrated,
+              didUpdated: migrationResult.didUpdated,
+            },
           },
-        },
-        meta: {
-          message: 'Account migrated successfully. Your data is now on the DegenFeed PDS.',
-        },
-      }), true;
+          meta: {
+            message: 'Account migrated successfully. Your data is now on the DegenFeed PDS.',
+          },
+        }),
+        true
+      );
     }
 
     // GET /api/bluesky/export — Export CAR file (requires auth)
@@ -342,7 +373,15 @@ export async function handleBlueskyRoute(
 
     const jwt = extractJwt(req);
     if (!jwt) {
-      return jsonError(res, 401, 'AUTH_REQUIRED', 'Authorization: Bearer <token> header required for this endpoint'), true;
+      return (
+        jsonError(
+          res,
+          401,
+          'AUTH_REQUIRED',
+          'Authorization: Bearer <token> header required for this endpoint',
+        ),
+        true
+      );
     }
 
     // Helper: create authenticated clients
@@ -364,13 +403,16 @@ export async function handleBlueskyRoute(
     // POST /api/bluesky/refresh — Refresh session
     if (route === '/refresh' && method === 'POST') {
       await accountClient.refreshSession();
-      return jsonOk(res, {
-        ok: true,
-        data: {
-          accessJwt: (accountClient as unknown as { accessJwt: string }).accessJwt,
-          refreshJwt: (accountClient as unknown as { refreshJwt: string }).refreshJwt,
-        },
-      }), true;
+      return (
+        jsonOk(res, {
+          ok: true,
+          data: {
+            accessJwt: (accountClient as unknown as { accessJwt: string }).accessJwt,
+            refreshJwt: (accountClient as unknown as { refreshJwt: string }).refreshJwt,
+          },
+        }),
+        true
+      );
     }
 
     // POST /api/bluesky/logout — Delete session
@@ -464,7 +506,11 @@ export async function handleBlueskyRoute(
       const actor = getQParam(url, 'actor');
       const limit = getNumParam(url, 'limit', 50);
       const cursor = getQParam(url, 'cursor');
-      const filter = getQParam(url, 'filter') as 'posts_with_replies' | 'posts_no_replies' | 'posts_and_author_threads' | undefined;
+      const filter = getQParam(url, 'filter') as
+        | 'posts_with_replies'
+        | 'posts_no_replies'
+        | 'posts_and_author_threads'
+        | undefined;
 
       if (!actor) {
         return jsonError(res, 400, 'MISSING_ACTOR', 'actor query parameter is required'), true;
@@ -578,7 +624,9 @@ export async function handleBlueskyRoute(
       const rootCid = body.rootCid as string | undefined;
 
       if (!parentUri || !parentCid || !text) {
-        return jsonError(res, 400, 'MISSING_FIELDS', 'parentUri, parentCid, and text are required'), true;
+        return (
+          jsonError(res, 400, 'MISSING_FIELDS', 'parentUri, parentCid, and text are required'), true
+        );
       }
 
       try {
@@ -597,7 +645,9 @@ export async function handleBlueskyRoute(
       const quoteCid = body.quoteCid as string;
 
       if (!text || !quoteUri || !quoteCid) {
-        return jsonError(res, 400, 'MISSING_FIELDS', 'text, quoteUri, and quoteCid are required'), true;
+        return (
+          jsonError(res, 400, 'MISSING_FIELDS', 'text, quoteUri, and quoteCid are required'), true
+        );
       }
 
       try {
@@ -974,8 +1024,15 @@ export async function handleBlueskyRoute(
         'app.bsky.graph.defs#referencelist',
       ];
       if (!validPurposes.includes(purpose)) {
-        return jsonError(res, 400, 'INVALID_PURPOSE',
-          `purpose must be one of: ${validPurposes.join(', ')}`), true;
+        return (
+          jsonError(
+            res,
+            400,
+            'INVALID_PURPOSE',
+            `purpose must be one of: ${validPurposes.join(', ')}`,
+          ),
+          true
+        );
       }
 
       try {
@@ -1027,7 +1084,6 @@ export async function handleBlueskyRoute(
 
     // ── Fallback for unrecognized bluesky routes ────────────────
     return jsonError(res, 404, 'NOT_FOUND', `Unknown bluesky route: ${method} ${route}`), true;
-
   } catch (err) {
     if (err instanceof PdsAccountError) {
       return jsonError(res, err.statusCode, err.code, err.message), true;

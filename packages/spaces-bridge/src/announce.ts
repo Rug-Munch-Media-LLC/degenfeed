@@ -26,7 +26,11 @@ const farcasterBridge: AnnounceBridge = {
       const fid = process.env.FARCASTER_BOT_FID;
       const signerKey = process.env.FARCASTER_BOT_SIGNER_KEY;
       const hubUrl = process.env.FARCASTER_BOT_HUB_URL || 'http://127.0.0.1:2281';
-      if (!fid || !signerKey) return { ok: false, error: 'Farcaster bot not configured (FARCASTER_BOT_FID / FARCASTER_BOT_SIGNER_KEY)' };
+      if (!fid || !signerKey)
+        return {
+          ok: false,
+          error: 'Farcaster bot not configured (FARCASTER_BOT_FID / FARCASTER_BOT_SIGNER_KEY)',
+        };
 
       const text =
         announcement.text.length > 280

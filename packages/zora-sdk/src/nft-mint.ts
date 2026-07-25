@@ -146,11 +146,13 @@ export interface UploadMetadataResult {
 // Constants
 // ═════════════════════════════════════════════════════════════════════════
 
+import { RPC_FALLBACKS } from '@degenfeed/web3/rpc-router';
+
 const CHAIN_CONFIGS: Record<string, { chainId: number; rpc: string }> = {
-  base: { chainId: 8453, rpc: 'https://mainnet.base.org' },
-  zora: { chainId: 7777777, rpc: 'https://rpc.zora.energy' },
-  optimism: { chainId: 10, rpc: 'https://mainnet.optimism.io' },
-  ethereum: { chainId: 1, rpc: 'https://eth-mainnet.g.alchemy.com/v2/demo' },
+  base: { chainId: 8453, rpc: RPC_FALLBACKS.base[0] },
+  zora: { chainId: 7777777, rpc: RPC_FALLBACKS.zora[0] },
+  optimism: { chainId: 10, rpc: RPC_FALLBACKS.optimism[0] },
+  ethereum: { chainId: 1, rpc: RPC_FALLBACKS.ethereum[0] },
 };
 
 /** Zora Creator contract address on Base (ERC-1155 edition minter). */
@@ -360,7 +362,14 @@ export class ZoraNFTMinter {
         },
       ],
       functionName: 'mint',
-      args: [mintArgs.to, mintArgs.tokenId, mintArgs.quantity, mintArgs.mintReferral, mintArgs.comment, '0x'],
+      args: [
+        mintArgs.to,
+        mintArgs.tokenId,
+        mintArgs.quantity,
+        mintArgs.mintReferral,
+        mintArgs.comment,
+        '0x',
+      ],
     });
 
     const hash = await this.walletClient.sendTransaction({
@@ -491,13 +500,8 @@ export class ZoraNFTMinter {
    * Upload metadata JSON to IPFS via Pinata.
    * Falls back to a simulated response if no Pinata credentials.
    */
-  async uploadToIpfs(
-    metadata: Record<string, unknown>,
-    pinataJwt?: string,
-  ): Promise<string> {
-    const jwt = pinataJwt || this.account
-      ? 'simulated'
-      : '';
+  async uploadToIpfs(metadata: Record<string, unknown>, pinataJwt?: string): Promise<string> {
+    const jwt = pinataJwt || this.account ? 'simulated' : '';
 
     if (!jwt || jwt === 'simulated') {
       // Return a deterministic mock URI for development
@@ -547,7 +551,7 @@ export class ZoraNFTMinter {
         { signal: AbortSignal.timeout(5000) },
       );
       if (!res.ok) return null;
-      const data = await res.json() as { data?: Record<string, unknown>[] };
+      const data = (await res.json()) as { data?: Record<string, unknown>[] };
       return data.data?.[0] ?? null;
     } catch {
       return null;

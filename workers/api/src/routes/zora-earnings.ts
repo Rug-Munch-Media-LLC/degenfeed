@@ -158,16 +158,18 @@ zoraEarnings.get('/:address/tips', async (c) => {
   }
 
   try {
-    const res = await fetch(
-      `${INDEXER_URL}/api/tips?creator=${creatorAddress}&limit=${limit}`,
-      { signal: AbortSignal.timeout(5000) },
-    );
+    const res = await fetch(`${INDEXER_URL}/api/tips?creator=${creatorAddress}&limit=${limit}`, {
+      signal: AbortSignal.timeout(5000),
+    });
 
     if (!res.ok) {
       return noCacheJsonResponse({ tips: [], total: 0 });
     }
 
-    const data = await res.json() as { data?: Record<string, unknown>[]; meta?: Record<string, unknown> };
+    const data = (await res.json()) as {
+      data?: Record<string, unknown>[];
+      meta?: Record<string, unknown>;
+    };
     return noCacheJsonResponse({
       tips: data.data ?? [],
       total: data.data?.length ?? 0,
@@ -282,11 +284,20 @@ zoraEarnings.post('/record', async (c) => {
       return jsonResponse({ error: 'creatorAddress, source, and amountWei required' }, 400);
     }
 
-    const VALID_SOURCES = ['primary_sale', 'secondary_royalty', 'protocol_reward', 'tip', 'referral'];
+    const VALID_SOURCES = [
+      'primary_sale',
+      'secondary_royalty',
+      'protocol_reward',
+      'tip',
+      'referral',
+    ];
     if (!VALID_SOURCES.includes(body.source as string)) {
-      return jsonResponse({
-        error: `Invalid source. Must be one of: ${VALID_SOURCES.join(', ')}`,
-      }, 400);
+      return jsonResponse(
+        {
+          error: `Invalid source. Must be one of: ${VALID_SOURCES.join(', ')}`,
+        },
+        400,
+      );
     }
 
     const res = await fetch(`${INDEXER_URL}/api/earnings`, {

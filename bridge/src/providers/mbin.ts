@@ -46,7 +46,7 @@ export async function fetchMbinPosts(limit = 20): Promise<UnifiedPost[]> {
           signal: AbortSignal.timeout(8000),
         },
       );
-      const entries: MbinEntry[] = entriesRes.ok ? (await entriesRes.json()) : [];
+      const entries: MbinEntry[] = entriesRes.ok ? await entriesRes.json() : [];
       if (!Array.isArray(entries) || entries.length === 0) return [] as UnifiedPost[];
 
       return entries.slice(0, perInstance).map((entry) => {
@@ -76,12 +76,22 @@ export async function fetchMbinPosts(limit = 20): Promise<UnifiedPost[]> {
               : [],
           contentType: entry.image ? 'image' : 'text',
           createdAt: Number.isNaN(createdAt) ? Date.now() : createdAt,
-          metrics: { likes: entry.favouriteCount || 0, reposts: 0, replies: entry.comments || 0, quotes: 0 },
+          metrics: {
+            likes: entry.favouriteCount || 0,
+            reposts: 0,
+            replies: entry.comments || 0,
+            quotes: 0,
+          },
           engagement: {
             viewerLiked: false,
             viewerReposted: false,
             viewerBookmarked: false,
-            raw: { likes: entry.favouriteCount || 0, reposts: 0, replies: entry.comments || 0, quotes: 0 },
+            raw: {
+              likes: entry.favouriteCount || 0,
+              reposts: 0,
+              replies: entry.comments || 0,
+              quotes: 0,
+            },
           },
           raw: entry,
           niches: guessNiches(text, [...(entry.tags || []), entry.magazine?.name].filter(Boolean)),

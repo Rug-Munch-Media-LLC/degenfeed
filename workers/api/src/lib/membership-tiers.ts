@@ -335,6 +335,387 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
   },
 ];
 
+// ─── Protocol Access Definitions ────────────────────────────────────────────
+
+export type ProtocolId =
+  | 'gts' // GoToSocial — ActivityPub social
+  | 'mastodon' // Alias for gts
+  | 'peertube' // ActivityPub video
+  | 'pixelfed' // ActivityPub images
+  | 'writefreely' // ActivityPub blogging
+  | 'bookwyrm' // ActivityPub book reviews
+  | 'mobilizon' // ActivityPub events
+  | 'funkwhale' // ActivityPub music
+  | 'owncast' // ActivityPub live streaming
+  | 'castopod' // ActivityPub podcasts
+  | 'nostr' // Nostr relay
+  | 'bluesky' // AT Protocol PDS
+  | 'lemmy' // ActivityPub communities (gated behind Creator despite being AP)
+  | 'farcaster' // Farcaster Hubble
+  | 'lens' // Lens Protocol
+  | 'zora'; // Zora minting
+
+export interface ProtocolDef {
+  id: ProtocolId;
+  label: string;
+  description: string;
+  shortDescription: string;
+  minTier: Tier;
+  federated: boolean;
+  icon?: string;
+  benefits: string[];
+  upgradeCta?: string; // Upgrade call-to-action if locked
+}
+
+/**
+ * Every protocol, the minimum tier required for registration.
+ * Free tier gets all ActivityPub services (massive value at $0).
+ * Pro adds Nostr. Creator adds Bluesky + Lemmy. Enterprise adds Farcaster + Lens + Zora.
+ */
+export const PROTOCOL_ACCESS: Record<ProtocolId, ProtocolDef> = {
+  // ── Free Tier — All ActivityPub services ─────────────────────────────
+  gts: {
+    id: 'gts',
+    label: 'GoToSocial (Mastodon API)',
+    description: 'Full ActivityPub social networking — follow, post, boost across the fediverse',
+    shortDescription: 'Microblogging across 10,000+ instances',
+    minTier: 'free',
+    federated: true,
+    icon: '🐘',
+    benefits: [
+      'Decentralized microblogging',
+      'Follow users on Mastodon, Pleroma, Akkoma',
+      'Cross-instance federation',
+      'Post to 12+ ActivityPub services from one account',
+    ],
+  },
+  mastodon: {
+    id: 'mastodon',
+    label: 'Mastodon (via GoToSocial)',
+    description: 'Mastodon-compatible ActivityPub identity with full federation',
+    shortDescription: 'Fediverse social identity',
+    minTier: 'free',
+    federated: true,
+    icon: '🐘',
+    benefits: [
+      'Mastodon API compatibility',
+      'Follow any fediverse user',
+      'Posts reach 10,000+ instances',
+    ],
+  },
+  peertube: {
+    id: 'peertube',
+    label: 'PeerTube',
+    description: 'Federated video hosting — upload, livestream, and discover videos',
+    shortDescription: 'Decentralized video platform',
+    minTier: 'free',
+    federated: true,
+    icon: '▶️',
+    benefits: [
+      'Upload and share videos',
+      'Live streaming support',
+      'No algorithm manipulation',
+      'Monetize through tips',
+    ],
+  },
+  pixelfed: {
+    id: 'pixelfed',
+    label: 'Pixelfed',
+    description: 'Federated image sharing — Instagram alternative without the ads',
+    shortDescription: 'Photo sharing without tracking',
+    minTier: 'free',
+    federated: true,
+    icon: '📷',
+    benefits: [
+      'Unlimited photo uploads',
+      'No ads, no algorithm',
+      'Federated with ActivityPub',
+      'Stories and albums',
+    ],
+  },
+  writefreely: {
+    id: 'writefreely',
+    label: 'WriteFreely',
+    description: 'Minimalist federated blogging platform',
+    shortDescription: 'Distraction-free blogging',
+    minTier: 'free',
+    federated: true,
+    icon: '✍️',
+    benefits: [
+      'Clean writing experience',
+      'Federated blog posts',
+      'Custom domain support',
+      'Newsletter integration',
+    ],
+  },
+  bookwyrm: {
+    id: 'bookwyrm',
+    label: 'BookWyrm',
+    description: 'Federated social book reviews and reading tracking',
+    shortDescription: 'Social reading & reviews',
+    minTier: 'free',
+    federated: true,
+    icon: '📚',
+    benefits: [
+      'Track reading progress',
+      'Write book reviews',
+      'Follow friends\' reading',
+      'Discover new books',
+    ],
+  },
+  mobilizon: {
+    id: 'mobilizon',
+    label: 'Mobilizon',
+    description: 'Federated events platform — create and discover events',
+    shortDescription: 'Event management without Facebook',
+    minTier: 'free',
+    federated: true,
+    icon: '📅',
+    benefits: [
+      'Create and manage events',
+      'RSVP and ticketing',
+      'Federated event discovery',
+      'No vendor lock-in',
+    ],
+  },
+  funkwhale: {
+    id: 'funkwhale',
+    label: 'Funkwhale',
+    description: 'Federated music streaming and sharing',
+    shortDescription: 'Decentralized music platform',
+    minTier: 'free',
+    federated: true,
+    icon: '🎵',
+    benefits: [
+      'Stream and upload music',
+      'Create playlists',
+      'Follow artists',
+      'Federated with ActivityPub',
+    ],
+  },
+  owncast: {
+    id: 'owncast',
+    label: 'Owncast',
+    description: 'Self-hosted live streaming — own your stream',
+    shortDescription: 'Independent live streaming',
+    minTier: 'free',
+    federated: true,
+    icon: '🔴',
+    benefits: [
+      'Live streaming to your audience',
+      'Complete ownership',
+      'No platform fees',
+      'Federated with ActivityPub',
+    ],
+  },
+  castopod: {
+    id: 'castopod',
+    label: 'Castopod',
+    description: 'Federated podcast hosting platform',
+    shortDescription: 'Decentralized podcasting',
+    minTier: 'free',
+    federated: true,
+    icon: '🎙️',
+    benefits: [
+      'Host and distribute podcasts',
+      'ActivityPub federation',
+      'Podcast analytics',
+      'Monetization options',
+    ],
+  },
+
+  // ── Pro Tier ($5/mo) — Add Nostr ────────────────────────────────────
+  nostr: {
+    id: 'nostr',
+    label: 'Nostr',
+    description: 'Decentralized relay-based social network with keypair identity',
+    shortDescription: 'Censorship-resistant social',
+    minTier: 'pro',
+    federated: false,
+    icon: '⚡',
+    benefits: [
+      'Self-custodial keypair identity',
+      'Relay-based messaging',
+      'NIP-05 verification',
+      'Zap lightning tips',
+      'Cross-post between Nostr relays',
+    ],
+    upgradeCta: 'Get Nostr access — upgrade to Pro ($5/mo)',
+  },
+
+  // ── Creator Tier ($10/mo) — Add Bluesky + Lemmy ─────────────────────
+  bluesky: {
+    id: 'bluesky',
+    label: 'Bluesky (AT Protocol)',
+    description: 'AT Protocol PDS account — Bluesky social network with federation',
+    shortDescription: 'AT Protocol social identity',
+    minTier: 'creator',
+    federated: true,
+    icon: '☁️',
+    benefits: [
+      'AT Protocol PDS account',
+      'Federated via AT Protocol',
+      'Custom domain handles',
+      'Bluesky feed generator access',
+      'Cross-posting to Bluesky',
+    ],
+    upgradeCta: 'Get Bluesky access — upgrade to Creator ($10/mo)',
+  },
+  lemmy: {
+    id: 'lemmy',
+    label: 'Lemmy',
+    description: 'Federated community platform — Reddit alternative on ActivityPub',
+    shortDescription: 'Community discussions & forums',
+    minTier: 'creator',
+    federated: true,
+    icon: '🔮',
+    benefits: [
+      'Join and create communities',
+      'Federated with ActivityPub',
+      'Vote and comment system',
+      'Moderation tools',
+    ],
+    upgradeCta: 'Get Lemmy access — upgrade to Creator ($10/mo)',
+  },
+
+  // ── Enterprise Tier ($20/mo) — Add Farcaster + Lens + Zora ──────────
+  farcaster: {
+    id: 'farcaster',
+    label: 'Farcaster',
+    description: 'On-chain social network with Hubble protocol',
+    shortDescription: 'On-chain social identity',
+    minTier: 'enterprise',
+    federated: false,
+    icon: '🏰',
+    benefits: [
+      'Farcaster ID (FID) registration',
+      'Post casts to Hubble',
+      'On-chain identity',
+      'Farcaster frames access',
+      'Channel participation',
+    ],
+    upgradeCta: 'Get Farcaster access — upgrade to Enterprise ($20/mo)',
+  },
+  lens: {
+    id: 'lens',
+    label: 'Lens Protocol',
+    description: 'Decentralized social graph on Polygon — own your connections',
+    shortDescription: 'Owned social graph identity',
+    minTier: 'enterprise',
+    federated: false,
+    icon: '👁️',
+    benefits: [
+      'Lens profile creation',
+      'Own your follower graph',
+      'Post publications on-chain',
+      'Lens API access',
+      'Mint collectible posts',
+    ],
+    upgradeCta: 'Get Lens access — upgrade to Enterprise ($20/mo)',
+  },
+  zora: {
+    id: 'zora',
+    label: 'Zora',
+    description: 'NFT minting and digital asset marketplace on Zora Protocol',
+    shortDescription: 'NFT minting & digital assets',
+    minTier: 'enterprise',
+    federated: false,
+    icon: '🎨',
+    benefits: [
+      'Mint NFTs on Zora',
+      'Create NFT collections',
+      'Gasless minting',
+      'Protocol Rewards',
+      'Marketplace access',
+    ],
+    upgradeCta: 'Unlock Zora minting — upgrade to Enterprise ($20/mo)',
+  },
+};
+
+/** ActivityPub service IDs (all free-tier) */
+export const ACTIVITYPUB_PROTOCOLS: ProtocolId[] = [
+  'gts', 'mastodon', 'peertube', 'pixelfed', 'writefreely',
+  'bookwyrm', 'mobilizon', 'funkwhale', 'owncast', 'castopod',
+];
+
+/** Paid protocol IDs that require a subscription (not $0) */
+export const PAID_PROTOCOLS: ProtocolId[] = [
+  'nostr', 'bluesky', 'lemmy', 'farcaster', 'lens', 'zora',
+];
+
+/**
+ * Get all protocols accessible by a given tier.
+ */
+export function getProtocolsForTier(tier: Tier): ProtocolDef[] {
+  return (Object.values(PROTOCOL_ACCESS) as ProtocolDef[]).filter((p) =>
+    hasTierAccess(tier, p.minTier),
+  );
+}
+
+/**
+ * Get protocols locked for a given tier (not accessible without upgrade).
+ */
+export function getLockedProtocols(tier: Tier): ProtocolDef[] {
+  return (Object.values(PROTOCOL_ACCESS) as ProtocolDef[]).filter(
+    (p) => !hasTierAccess(tier, p.minTier),
+  );
+}
+
+/**
+ * Check if a specific protocol is accessible by a user's tier.
+ */
+export function checkProtocolAccess(tier: Tier, protocol: ProtocolId): boolean {
+  const def = PROTOCOL_ACCESS[protocol];
+  if (!def) return false;
+  return hasTierAccess(tier, def.minTier);
+}
+
+/**
+ * Get the minimum tier required to access a protocol.
+ */
+export function getRequiredTierForProtocol(protocol: ProtocolId): Tier | null {
+  return PROTOCOL_ACCESS[protocol]?.minTier ?? null;
+}
+
+/**
+ * Get an upgrade CTA for a locked protocol.
+ * Returns null if protocol is accessible or not found.
+ */
+export function getProtocolUpgradeCta(tier: Tier, protocol: ProtocolId): string | null {
+  const def = PROTOCOL_ACCESS[protocol];
+  if (!def || hasTierAccess(tier, def.minTier)) return null;
+  return def.upgradeCta ?? `Upgrade to ${def.minTier} tier for ${def.label} access`;
+}
+
+/**
+ * Group protocols by their minimum tier (for dashboard display).
+ */
+export function getProtocolsByTier(): Record<Tier, ProtocolDef[]> {
+  const grouped: Record<Tier, ProtocolDef[]> = {
+    free: [],
+    pro: [],
+    creator: [],
+    enterprise: [],
+  };
+  for (const def of Object.values(PROTOCOL_ACCESS) as ProtocolDef[]) {
+    grouped[def.minTier].push(def);
+  }
+  return grouped;
+}
+
+/**
+ * Count unlocked vs total protocols for a tier.
+ */
+export function getProtocolAccessSummary(tier: Tier): {
+  unlocked: number;
+  locked: number;
+  total: number;
+} {
+  const all = Object.keys(PROTOCOL_ACCESS).length;
+  const unlocked = getProtocolsForTier(tier).length;
+  return { unlocked, locked: all - unlocked, total: all };
+}
+
 // ─── Tier Limits ────────────────────────────────────────────────────────────
 
 export interface TierLimits {

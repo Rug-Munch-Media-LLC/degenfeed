@@ -26,6 +26,16 @@ import {
   upgradeTier,
 } from '../lib/membership-tiers';
 import { requireSession } from '../session';
+import {
+  checkProtocolAccess,
+  getLockedProtocols,
+  getProtocolAccessSummary,
+  getProtocolsByTier,
+  getProtocolsForTier,
+  getProtocolUpgradeCta,
+  PROTOCOL_ACCESS,
+  type ProtocolId,
+} from '../lib/membership-tiers';
 
 // ─── Hono Router ────────────────────────────────────────────────────────────
 
@@ -271,5 +281,141 @@ membership.post('/verify-payment', async (c) => {
     tier: targetTier,
   });
 });
+
+// ════════════════════════════════════════════════════════════════════════════
+// PROTOCOL ACCESS DASHBOARD
+// ════════════════════════════════════════════════════════════════════════════
+
+// ─── GET /api/membership/protocols ────────────────────────────────────────────
+// Returns ALL protocols organized by tier, so users can see what they get.
+// No auth required — this is a catalog endpoint.
+
+membership.get('/protocols', async (c) => {
+  const protocolsByTier = getProtocolsByTier();
+
+  // Build a catalog: each tier's protocols + upgrade info
+  const catalog = (Object.entries(protocolsByTier) as [Tier, typeof protocolsByTier['free']][]).map(
+    ([tier, protocols]) => ({
+      tier,
+      tierInfo: TIER_INFO[tier],
+      protocols: protocols.map((p) => ({
+        id: p.id,
+        label: p.label,
+        description: p.shortDescription,
+        icon: p.icon,
+        federated: p.federated,
+        benefits: p.benefits,
+      })),
+    }),
+  );
+
+  return noCacheJsonResponse({
+    catalog,
+    totalProtocols: Object.keys(PROTOCOL_ACCESS).length,
+    activityPubCount: catalog[0]?.protocols.length ?? 0, // Free tier = all AP
+    freeLabel: 'One account = ActivityPub across 10+ services',
+  });
+});
+
+// ─── GET /api/membership/protocols/status ─────────────────────────────────────
+// Returns the user's personal protocol dashboard: which are unlocked/locked.
+
+membership.get('/protocols/status', async (c) => {
+  const session = await requireSession(c.req.raw, c.env);
+  if (session instanceof Response) return session;
+
+  const tier = await getUserTier(session.address, c.env);
+  const allProtocols = Object.values(PROTOCOL_ACCESS);
+  const summary = getProtocolAccessSummary(tier);
+
+  const protocols = allProtocols.map((def) => {
+    const unlocked = checkProtocolAccess(tier, def.id);
+    const upgradeCta = unlocked ? null : getProtocolUpgradeCta(tier, def.id);
+    return {
+      id: def.id,
+      label: def.label,
+      description: def.shortDescription,
+      icon: def.icon,
+      federated: def.federated,
+      benefits: def.benefits,
+      minTier: def.minTier,
+      unlocked,
+      locked: !unlocked,
+      upgradeCta,
+    };
+  });
+
+  return noCacheJsonResponse({
+    tier,
+    tierInfo: TIER_INFO[tier],
+    protocols,
+    summary,
+    canUpgrade: tier !== 'enterprise',
+    nextTier: getNextTier(tier),
+  });
+});
+
+// ─── GET /api/membership/protocols/:id ────────────────────────────────────────
+// Returns detail about a specific protocol + whether it's unlocked for the user.
+
+import type { Tier as TierType } from '../lib/membership-tiers';
+
+membership.get('/protocols/:id', async (c) => {
+  const protocolId = c.req.param('id') as ProtocolId;
+  const def = PROTOCOL_ACCESS[protocolId];
+
+  if (!def) {
+    return jsonResponse({ error: `Unknown protocol: ${protocolId}` }, 404);
+  }
+
+  // Auth optional — show catalog info without session
+  let unlocked = false;
+  let userTier: TierType = 'free';
+  let upgradeCta: string | null = null;
+
+  try {
+    const session = await requireSession(c.req.raw, c.env);
+    if (!(session instanceof Response)) {
+      userTier = await getUserTier(session.address, c.env);
+      unlocked = checkProtocolAccess(userTier, protocolId);
+      upgradeCta = getProtocolUpgradeCta(userTier, protocolId);
+    }
+  } catch {
+    // No session — show as locked with generic upgrade info
+  }
+
+  return noCacheJsonResponse({
+    protocol: {
+      id: def.id,
+      label: def.label,
+      description: def.description,
+      shortDescription: def.shortDescription,
+      icon: def.icon,
+      federated: def.federated,
+      benefits: def.benefits,
+      minTier: def.minTier,
+      tierInfo: TIER_INFO[def.minTier],
+    },
+    unlocked,
+    userTier,
+    ...(upgradeCta ? { upgradeCta } : {}),
+    ...(!unlocked
+      ? {
+          upgradeUrl: '/api/membership/upgrade',
+          upgradeTo: getNextTier(userTier === 'free' ? 'free' : userTier),
+        }
+      : {}),
+  });
+});
+
+// ─── API reference: protocol registration routes ───────────────────────────
+// Registration is handled by protocol-register-gated.ts
+// POST /api/gts/register       — Free
+// POST /api/nostr/register     — Pro+
+// POST /api/bluesky/register   — Creator+
+// POST /api/lemmy/register     — Creator+
+// POST /api/farcaster/register — Enterprise
+// POST /api/lens/register      — Enterprise
+// POST /api/zora/mint          — Enterprise
 
 export default membership;

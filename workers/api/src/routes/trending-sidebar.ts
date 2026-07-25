@@ -323,21 +323,30 @@ async function fetchFarcasterTrending(env: Env): Promise<TrendingFarcasterCast[]
 
     for (const fid of curatedFids) {
       try {
-        const res = await fetch(
-          `${hubUrl}/v1/castsByFid?fid=${fid}&pageSize=1`,
-          {
-            signal: AbortSignal.timeout(API_TIMEOUT_MS),
-            headers: { accept: 'application/json' },
-          },
-        );
+        const res = await fetch(`${hubUrl}/v1/castsByFid?fid=${fid}&pageSize=1`, {
+          signal: AbortSignal.timeout(API_TIMEOUT_MS),
+          headers: { accept: 'application/json' },
+        });
         if (!res.ok) continue;
-        const data = (await res.json()) as { messages?: Array<{ hash: string; data: { castAddBody: { text: string }; fid: number; timestamp: number } }> };
+        const data = (await res.json()) as {
+          messages?: Array<{
+            hash: string;
+            data: { castAddBody: { text: string }; fid: number; timestamp: number };
+          }>;
+        };
         for (const msg of data.messages ?? []) {
           const text = msg.data?.castAddBody?.text;
           if (!text) continue;
-          casts.push({ hash: msg.hash, text: text.slice(0, 200), author: { username: `fid:${msg.data.fid}` }, reactions: { likes_count: 0, recasts_count: 0 } } as TrendingFarcasterCast);
+          casts.push({
+            hash: msg.hash,
+            text: text.slice(0, 200),
+            author: { username: `fid:${msg.data.fid}` },
+            reactions: { likes_count: 0, recasts_count: 0 },
+          } as TrendingFarcasterCast);
         }
-      } catch { continue; }
+      } catch {
+        continue;
+      }
       if (casts.length >= 3) break;
     }
 

@@ -124,7 +124,7 @@ async function fetchUserData(env: Env, fid: number): Promise<HubUserData> {
   const cached = USERNAME_CACHE.get(fid);
   if (cached && Date.now() - 0 < 300_000) return cached; // 5 min cache
 
-  const hubUrl = env.FARCASTER_HUB_URL ?? 'https://hub.farcaster.standardcrypto.vc:2281';
+  const hubUrl = env.FARCASTER_HUB_URL ?? 'http://127.0.0.1:2281';
   const fallback: HubUserData = { fid, username: `fid:${fid}`, displayName: `User ${fid}` };
 
   try {
@@ -201,7 +201,7 @@ export async function detectFarcasterLives(env: Env): Promise<FarcasterLiveDetec
     const watchlistRaw = await env.CACHE?.get(vidIndexKey());
     if (watchlistRaw) {
       const watchlist = JSON.parse(watchlistRaw) as number[];
-      const hubUrl = env.FARCASTER_HUB_URL ?? 'https://hub.farcaster.standardcrypto.vc:2281';
+      const hubUrl = env.FARCASTER_HUB_URL ?? 'http://127.0.0.1:2281';
 
       // Check a subset of watched FIDs each poll cycle (max 10 per check)
       const toCheck = watchlist.slice(0, 10);
@@ -593,7 +593,7 @@ export async function sendFarcasterChat(
             parentHashHex: session.castHash,
           });
           if (signed.ok && signed.messageHex) {
-            const hubUrl = env.FARCASTER_HUB_URL ?? 'https://hub.farcaster.standardcrypto.vc:2281';
+            const hubUrl = env.FARCASTER_HUB_URL ?? 'http://127.0.0.1:2281';
             const client = new HubClient(hubUrl);
             await client.submitMessage(signed.messageHex);
           }

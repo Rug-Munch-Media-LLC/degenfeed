@@ -97,11 +97,14 @@ export const PROTOCOL_BADGES: Record<string, ProtocolBadge> = {
 };
 
 export function getProtocolBadge(protocol: string): ProtocolBadge {
-  return PROTOCOL_BADGES[protocol] ?? {
-    id: protocol as TransportProtocol,
-    label: protocol.charAt(0).toUpperCase() + protocol.slice(1),
-    color: '#6b7280', icon: 'message-circle',
-  };
+  return (
+    PROTOCOL_BADGES[protocol] ?? {
+      id: protocol as TransportProtocol,
+      label: protocol.charAt(0).toUpperCase() + protocol.slice(1),
+      color: '#6b7280',
+      icon: 'message-circle',
+    }
+  );
 }
 
 export class UnifiedInbox {
@@ -113,7 +116,9 @@ export class UnifiedInbox {
       const inbox: InboxMessage[] = raw ? JSON.parse(raw) : [];
       if (!inbox.some((m) => m.id === message.id)) {
         inbox.push(message);
-        await env.CACHE.put(inboxKey, JSON.stringify(inbox.slice(-1000)), { expirationTtl: 86400 * 90 });
+        await env.CACHE.put(inboxKey, JSON.stringify(inbox.slice(-1000)), {
+          expirationTtl: 86400 * 90,
+        });
       }
       const convId = this.buildConversationId(message.fromId, message.toId);
       const convKey = `unified-conv:${convId}`;
@@ -121,12 +126,19 @@ export class UnifiedInbox {
       const conv: InboxMessage[] = convRaw ? JSON.parse(convRaw) : [];
       if (!conv.some((m) => m.id === message.id)) {
         conv.push(message);
-        await env.CACHE.put(convKey, JSON.stringify(conv.slice(-2000)), { expirationTtl: 86400 * 90 });
+        await env.CACHE.put(convKey, JSON.stringify(conv.slice(-2000)), {
+          expirationTtl: 86400 * 90,
+        });
       }
     } catch {}
   }
 
-  async markAsRead(env: { CACHE?: any }, userId: string, conversationId: string, messageIds?: string[]): Promise<void> {
+  async markAsRead(
+    env: { CACHE?: any },
+    userId: string,
+    conversationId: string,
+    messageIds?: string[],
+  ): Promise<void> {
     if (!env.CACHE) return;
     try {
       const convKey = `unified-conv:${conversationId}`;
@@ -137,8 +149,15 @@ export class UnifiedInbox {
       for (const msg of conv) {
         if (msg.toId !== userId) continue;
         if (messageIds && !messageIds.includes(msg.id)) continue;
-        if (!msg.read) { msg.read = true; msg.readAt = Date.now(); updated = true; }
-        if (!msg.readBy.includes(userId)) { msg.readBy.push(userId); updated = true; }
+        if (!msg.read) {
+          msg.read = true;
+          msg.readAt = Date.now();
+          updated = true;
+        }
+        if (!msg.readBy.includes(userId)) {
+          msg.readBy.push(userId);
+          updated = true;
+        }
       }
       if (updated) {
         await env.CACHE.put(convKey, JSON.stringify(conv), { expirationTtl: 86400 * 90 });
@@ -148,7 +167,10 @@ export class UnifiedInbox {
           const inbox: InboxMessage[] = JSON.parse(inboxRaw);
           for (const msg of inbox) {
             if (messageIds && !messageIds.includes(msg.id)) continue;
-            if (msg.toId === userId && !msg.read) { msg.read = true; msg.readAt = Date.now(); }
+            if (msg.toId === userId && !msg.read) {
+              msg.read = true;
+              msg.readAt = Date.now();
+            }
           }
           await env.CACHE.put(inboxKey, JSON.stringify(inbox), { expirationTtl: 86400 * 90 });
         }
@@ -156,23 +178,36 @@ export class UnifiedInbox {
     } catch {}
   }
 
-  async getUnreadCount(env: { CACHE?: any }, userId: string, conversationId?: string): Promise<number> {
+  async getUnreadCount(
+    env: { CACHE?: any },
+    userId: string,
+    conversationId?: string,
+  ): Promise<number> {
     if (!env.CACHE) return 0;
     try {
       if (conversationId) {
         const convKey = `unified-conv:${conversationId}`;
         const raw = await env.CACHE.get(convKey);
         if (!raw) return 0;
-        return (JSON.parse(raw) as InboxMessage[]).filter((m) => m.toId === userId && !m.read).length;
+        return (JSON.parse(raw) as InboxMessage[]).filter((m) => m.toId === userId && !m.read)
+          .length;
       }
       const inboxKey = `unified-inbox:${userId}`;
       const raw = await env.CACHE.get(inboxKey);
       if (!raw) return 0;
       return (JSON.parse(raw) as InboxMessage[]).filter((m) => m.toId === userId && !m.read).length;
-    } catch { return 0; }
+    } catch {
+      return 0;
+    }
   }
 
-  async toggleReaction(env: { CACHE?: any }, conversationId: string, messageId: string, userId: string, emoji: string): Promise<InboxReaction[] | null> {
+  async toggleReaction(
+    env: { CACHE?: any },
+    conversationId: string,
+    messageId: string,
+    userId: string,
+    emoji: string,
+  ): Promise<InboxReaction[] | null> {
     if (!env.CACHE) return null;
     try {
       const convKey = `unified-conv:${conversationId}`;
@@ -196,10 +231,18 @@ export class UnifiedInbox {
         }
       }
       return msg.reactions;
-    } catch { return null; }
+    } catch {
+      return null;
+    }
   }
 
-  async updateDeliveryStatus(env: { CACHE?: any }, conversationId: string, messageId: string, protocol: string, status: 'sent' | 'delivered' | 'read' | 'failed'): Promise<void> {
+  async updateDeliveryStatus(
+    env: { CACHE?: any },
+    conversationId: string,
+    messageId: string,
+    protocol: string,
+    status: 'sent' | 'delivered' | 'read' | 'failed',
+  ): Promise<void> {
     if (!env.CACHE) return;
     try {
       const convKey = `unified-conv:${conversationId}`;
@@ -213,7 +256,11 @@ export class UnifiedInbox {
     } catch {}
   }
 
-  async getThread(env: { CACHE?: any }, conversationId: string, rootMessageId: string): Promise<InboxMessage[]> {
+  async getThread(
+    env: { CACHE?: any },
+    conversationId: string,
+    rootMessageId: string,
+  ): Promise<InboxMessage[]> {
     if (!env.CACHE) return [];
     try {
       const convKey = `unified-conv:${conversationId}`;
@@ -222,7 +269,9 @@ export class UnifiedInbox {
       return (JSON.parse(raw) as InboxMessage[])
         .filter((m) => m.id === rootMessageId || m.threadRootId === rootMessageId)
         .sort((a, b) => a.createdAt - b.createdAt);
-    } catch { return []; }
+    } catch {
+      return [];
+    }
   }
 
   async getConversations(env: { CACHE?: any }, userId: string): Promise<InboxSummary[]> {
@@ -246,8 +295,11 @@ export class UnifiedInbox {
         const otherUserId = partyA === userId ? partyB : partyA;
         const lastMessage = messages[0];
         summaries.push({
-          conversationId: convId, otherUserId, otherUserName: lastMessage?.fromName,
-          otherUserAvatar: lastMessage?.fromAvatar, lastMessage,
+          conversationId: convId,
+          otherUserId,
+          otherUserName: lastMessage?.fromName,
+          otherUserAvatar: lastMessage?.fromAvatar,
+          lastMessage,
           unreadCount: messages.filter((m) => m.toId === userId && !m.read).length,
           activeProtocols: [...new Set(messages.map((m) => m.protocol))],
           lastActivity: lastMessage?.createdAt ?? 0,
@@ -255,10 +307,17 @@ export class UnifiedInbox {
         });
       }
       return summaries.sort((a, b) => b.lastActivity - a.lastActivity);
-    } catch { return []; }
+    } catch {
+      return [];
+    }
   }
 
-  async getConversation(env: { CACHE?: any }, conversationId: string, limit = 50, before?: number): Promise<InboxMessage[]> {
+  async getConversation(
+    env: { CACHE?: any },
+    conversationId: string,
+    limit = 50,
+    before?: number,
+  ): Promise<InboxMessage[]> {
     if (!env.CACHE) return [];
     try {
       const convKey = `unified-conv:${conversationId}`;
@@ -267,20 +326,33 @@ export class UnifiedInbox {
       let conv: InboxMessage[] = JSON.parse(raw);
       if (before) conv = conv.filter((m) => m.createdAt < before);
       return conv.slice(-limit);
-    } catch { return []; }
+    } catch {
+      return [];
+    }
   }
 
-  async getMessage(env: { CACHE?: any }, conversationId: string, messageId: string): Promise<InboxMessage | null> {
+  async getMessage(
+    env: { CACHE?: any },
+    conversationId: string,
+    messageId: string,
+  ): Promise<InboxMessage | null> {
     if (!env.CACHE) return null;
     try {
       const convKey = `unified-conv:${conversationId}`;
       const raw = await env.CACHE.get(convKey);
       if (!raw) return null;
       return (JSON.parse(raw) as InboxMessage[]).find((m) => m.id === messageId) ?? null;
-    } catch { return null; }
+    } catch {
+      return null;
+    }
   }
 
-  async deleteMessage(env: { CACHE?: any }, conversationId: string, messageId: string, userId: string): Promise<boolean> {
+  async deleteMessage(
+    env: { CACHE?: any },
+    conversationId: string,
+    messageId: string,
+    userId: string,
+  ): Promise<boolean> {
     if (!env.CACHE) return false;
     try {
       const convKey = `unified-conv:${conversationId}`;
@@ -293,27 +365,51 @@ export class UnifiedInbox {
       msg.body = '[deleted]';
       await env.CACHE.put(convKey, JSON.stringify(conv), { expirationTtl: 86400 * 90 });
       return true;
-    } catch { return false; }
+    } catch {
+      return false;
+    }
   }
 
   createInboxMessage(params: {
-    id: string; fromId: string; fromName?: string; fromAvatar?: string;
-    toId: string; body: string; encryptedBlob?: string; encrypted?: boolean;
-    protocol: TransportProtocol; createdAt?: number; replyTo?: string;
-    threadRootId?: string; contentType?: 'text' | 'image' | 'link' | 'audio' | 'video' | 'file';
+    id: string;
+    fromId: string;
+    fromName?: string;
+    fromAvatar?: string;
+    toId: string;
+    body: string;
+    encryptedBlob?: string;
+    encrypted?: boolean;
+    protocol: TransportProtocol;
+    createdAt?: number;
+    replyTo?: string;
+    threadRootId?: string;
+    contentType?: 'text' | 'image' | 'link' | 'audio' | 'video' | 'file';
     mediaUrl?: string;
   }): InboxMessage {
     const badge = getProtocolBadge(params.protocol);
     const now = params.createdAt ?? Date.now();
     return {
-      id: params.id, fromId: params.fromId, fromName: params.fromName, fromAvatar: params.fromAvatar,
+      id: params.id,
+      fromId: params.fromId,
+      fromName: params.fromName,
+      fromAvatar: params.fromAvatar,
       fromHandle: badge.label === 'Wallet' ? params.fromId.slice(0, 10) : undefined,
-      protocol: params.protocol, protocolBadge: badge, toId: params.toId,
-      body: params.body, encryptedBlob: params.encryptedBlob,
+      protocol: params.protocol,
+      protocolBadge: badge,
+      toId: params.toId,
+      body: params.body,
+      encryptedBlob: params.encryptedBlob,
       encrypted: params.encrypted ?? !!params.encryptedBlob,
-      createdAt: now, deliveryStatus: {}, read: false, readBy: [], reactions: [],
-      deleted: false, replyTo: params.replyTo, threadRootId: params.threadRootId,
-      contentType: params.contentType, mediaUrl: params.mediaUrl,
+      createdAt: now,
+      deliveryStatus: {},
+      read: false,
+      readBy: [],
+      reactions: [],
+      deleted: false,
+      replyTo: params.replyTo,
+      threadRootId: params.threadRootId,
+      contentType: params.contentType,
+      mediaUrl: params.mediaUrl,
     };
   }
 

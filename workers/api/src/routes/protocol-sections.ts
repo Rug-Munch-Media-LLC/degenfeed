@@ -190,7 +190,7 @@ async function farcasterSections(env: Env, posts: UnifiedPost[]): Promise<Protoc
     if (channels.length === 0) channels = topHashtags(posts, 'casts');
   }
             id: `channel:${c.channel?.id}`,
-            label: `/${c.channel?.id}`,
+            label: `/$c.channel?.id`,
             sublabel: c.channel?.name,
             value: c.cast_count_24h ?? c.channel?.follower_count ?? 0,
             unit: 'casts 24h',

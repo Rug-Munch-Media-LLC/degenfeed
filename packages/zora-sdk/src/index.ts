@@ -104,6 +104,16 @@ export {
   getDualChainPrice,
   registerForZoraVisibility,
 } from './cross-network';
+export type {
+  ClaimRewardsResult,
+  CreatorEarningsSummary,
+  EarningsSource,
+  NFTSalesHistory,
+  ProtocolRewardsInfo,
+  TipEvent,
+  ZoraEarnings,
+} from './earnings';
+export { ZoraEarnings } from './earnings';
 // ─── Zora 2026 Coins Protocol (ETH pair — ZORA token stripped) ─────────────
 // ─── EVM exports (legacy) ───────────────────────────────────────────────────
 export {
@@ -112,6 +122,29 @@ export {
   ZORA_FACTORY_ADDRESS,
   ZoraCreatorCoinClient,
 } from './evm';
+export type {
+  BuyNowParams,
+  CollectionFloorInfo,
+  MakeOfferParams,
+  MarketplaceBid,
+  MarketplaceListing,
+  PlaceBidParams,
+  PricePoint,
+  TradeResult,
+  TrendingQuery,
+  ZoraMarketplace,
+} from './marketplace';
+export { ZoraMarketplace } from './marketplace';
+export type {
+  CreateCollectionResult,
+  GaslessMintConfig,
+  MintNFTResult,
+  UploadMetadataResult,
+  ZoraCollectionConfig,
+  ZoraNFTMintConfig,
+  ZoraNFTMinter,
+} from './nft-mint';
+export { ZoraNFTMinter } from './nft-mint';
 export type { FeeSplit } from './platform-fees';
 // ─── Platform Fee Collection (all fees in ETH, never ZORA) ─────────────────
 export {
@@ -160,45 +193,6 @@ export type {
   DualChainPrice,
   FeePaymentStatus,
 } from './types';
-export type {
-  CreateCollectionResult,
-  GaslessMintConfig,
-  MintNFTResult,
-  UploadMetadataResult,
-  ZoraCollectionConfig,
-  ZoraNFTMintConfig,
-  ZoraNFTMinter,
-} from './nft-mint';
-export {
-  ZoraNFTMinter,
-} from './nft-mint';
-export type {
-  BuyNowParams,
-  CollectionFloorInfo,
-  MakeOfferParams,
-  MarketplaceBid,
-  MarketplaceListing,
-  PlaceBidParams,
-  PricePoint,
-  TradeResult,
-  TrendingQuery,
-  ZoraMarketplace,
-} from './marketplace';
-export {
-  ZoraMarketplace,
-} from './marketplace';
-export type {
-  ClaimRewardsResult,
-  CreatorEarningsSummary,
-  EarningsSource,
-  NFTSalesHistory,
-  ProtocolRewardsInfo,
-  TipEvent,
-  ZoraEarnings,
-} from './earnings';
-export {
-  ZoraEarnings,
-} from './earnings';
 export type {
   VestingConfig,
   VestingPreset,

@@ -1,8 +1,9 @@
 import http from 'node:http';
 import { getCrossPosterStats, startCrossPoster } from '../crossposter';
 import { getIndexerStatus, reindex, startIndexer } from '../search-indexer';
-import { buildFeed, DEFAULT_PREFERENCES, PROVIDERS } from './feeds';
 import { handleBlueskyRoute } from './bluesky-routes';
+import { handleNostrRoute } from './nostr-routes';
+import { buildFeed, DEFAULT_PREFERENCES, PROVIDERS } from './feeds';
 
 // Catch unhandled rejections to prevent process crashes
 process.on('unhandledRejection', (reason) => {
@@ -567,6 +568,13 @@ const server = http.createServer(async (req, res) => {
       // biome-ignore lint/suspicious/noExplicitAny: runtime dynamic category cast
       const posts = await fetchByCategory(category as any, limit);
       return jsonOk(res, { posts, meta: { total: posts.length, category, limit } });
+    }
+
+    // ── Nostr Routes ───────────────────────────────────────────
+    // Route: /api/nostr/* (registration, auth, publish, relay management, health)
+    if (path.startsWith('/api/nostr/')) {
+      const nostrHandled = await handleNostrRoute(path, req, res);
+      if (nostrHandled) return;
     }
 
     // ── Bluesky/AT Protocol Routes ──────────────────────────────

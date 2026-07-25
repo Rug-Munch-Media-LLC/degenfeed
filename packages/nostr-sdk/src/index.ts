@@ -38,6 +38,12 @@ export {
 } from './nip19';
 export type { Nip46ConnectOptions } from './nip46';
 export { connectNostrConnect } from './nip46';
+export type { NostrProfileContent } from './profile';
+export {
+  createProfileEvent,
+  parseProfileContent,
+  validateProfileFields,
+} from './profile';
 export type {
   NostrFilter,
   RelayEvent,
@@ -46,6 +52,13 @@ export type {
   RelaySubscription,
 } from './relay';
 export { RelayPool } from './relay';
+export type { RelayListItem, RelayUsage } from './relay-metadata';
+export {
+  createRelayListEvent,
+  getDefaultRelayList,
+  isValidRelayUrl,
+  parseRelayListEvent,
+} from './relay-metadata';
 
 // ─── Normalizers ───────────────────────────────────────────────────────
 

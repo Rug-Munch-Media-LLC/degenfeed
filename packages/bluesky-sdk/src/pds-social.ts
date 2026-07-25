@@ -8,7 +8,7 @@
  * @module @degenfeed/bluesky-sdk/social
  */
 
-import { PDS_DEGENFEED_URL, DEFAULT_USER_AGENT } from './index';
+import { DEFAULT_USER_AGENT, PDS_DEGENFEED_URL } from './index';
 import { PdsAccountError } from './pds-account';
 
 // ─── Types ────────────────────────────────────────────────────────────
@@ -60,7 +60,10 @@ export interface ListView {
   cid: string;
   name: string;
   description?: string;
-  purpose: 'app.bsky.graph.defs#modlist' | 'app.bsky.graph.defs#curatelist' | 'app.bsky.graph.defs#referencelist';
+  purpose:
+    | 'app.bsky.graph.defs#modlist'
+    | 'app.bsky.graph.defs#curatelist'
+    | 'app.bsky.graph.defs#referencelist';
   createdAt: string;
   indexedAt: string;
   listItemCount?: number;
@@ -113,10 +116,7 @@ export class PdsSocialClient {
   private did: string | null = null;
   private userAgent: string;
 
-  constructor(
-    pdsUrl: string = PDS_DEGENFEED_URL,
-    userAgent: string = DEFAULT_USER_AGENT,
-  ) {
+  constructor(pdsUrl: string = PDS_DEGENFEED_URL, userAgent: string = DEFAULT_USER_AGENT) {
     this.pdsUrl = pdsUrl;
     this.userAgent = userAgent;
   }
@@ -146,9 +146,7 @@ export class PdsSocialClient {
   }
 
   private authHeaders(): Record<string, string> {
-    return this.accessJwt
-      ? { authorization: `Bearer ${this.accessJwt}` }
-      : {};
+    return this.accessJwt ? { authorization: `Bearer ${this.accessJwt}` } : {};
   }
 
   // ── Content Interactions ───────────────────────────────────────
@@ -328,7 +326,11 @@ export class PdsSocialClient {
     });
     if (!res.ok) {
       const err = await res.text().catch(() => '');
-      throw new PdsAccountError(`Quote post failed: ${err.slice(0, 200)}`, 'QUOTE_FAILED', res.status);
+      throw new PdsAccountError(
+        `Quote post failed: ${err.slice(0, 200)}`,
+        'QUOTE_FAILED',
+        res.status,
+      );
     }
     return res.json() as Promise<{ uri: string; cid: string }>;
   }
@@ -430,15 +432,12 @@ export class PdsSocialClient {
     });
     if (cursor) params.set('cursor', cursor);
 
-    const res = await fetch(
-      `${this.pdsUrl}/xrpc/app.bsky.graph.getFollows?${params.toString()}`,
-      {
-        headers: {
-          'user-agent': this.userAgent,
-          ...this.authHeaders(),
-        },
+    const res = await fetch(`${this.pdsUrl}/xrpc/app.bsky.graph.getFollows?${params.toString()}`, {
+      headers: {
+        'user-agent': this.userAgent,
+        ...this.authHeaders(),
       },
-    );
+    });
     if (!res.ok) {
       throw new PdsAccountError('Failed to get follows', 'GET_FOLLOWS_FAILED', res.status);
     }
@@ -559,15 +558,12 @@ export class PdsSocialClient {
     });
     if (cursor) params.set('cursor', cursor);
 
-    const res = await fetch(
-      `${this.pdsUrl}/xrpc/app.bsky.graph.getBlocks?${params.toString()}`,
-      {
-        headers: {
-          'user-agent': this.userAgent,
-          ...this.authHeaders(),
-        },
+    const res = await fetch(`${this.pdsUrl}/xrpc/app.bsky.graph.getBlocks?${params.toString()}`, {
+      headers: {
+        'user-agent': this.userAgent,
+        ...this.authHeaders(),
       },
-    );
+    });
     if (!res.ok) {
       throw new PdsAccountError('Failed to get blocks', 'GET_BLOCKS_FAILED', res.status);
     }
@@ -644,15 +640,12 @@ export class PdsSocialClient {
     });
     if (cursor) params.set('cursor', cursor);
 
-    const res = await fetch(
-      `${this.pdsUrl}/xrpc/app.bsky.graph.getMutes?${params.toString()}`,
-      {
-        headers: {
-          'user-agent': this.userAgent,
-          ...this.authHeaders(),
-        },
+    const res = await fetch(`${this.pdsUrl}/xrpc/app.bsky.graph.getMutes?${params.toString()}`, {
+      headers: {
+        'user-agent': this.userAgent,
+        ...this.authHeaders(),
       },
-    );
+    });
     if (!res.ok) {
       throw new PdsAccountError('Failed to get mutes', 'GET_MUTES_FAILED', res.status);
     }
@@ -722,7 +715,11 @@ export class PdsSocialClient {
     });
     if (!res.ok) {
       const err = await res.text().catch(() => '');
-      throw new PdsAccountError(`Create list failed: ${err.slice(0, 200)}`, 'LIST_CREATE_FAILED', res.status);
+      throw new PdsAccountError(
+        `Create list failed: ${err.slice(0, 200)}`,
+        'LIST_CREATE_FAILED',
+        res.status,
+      );
     }
     return res.json() as Promise<{ uri: string; cid: string }>;
   }
@@ -751,7 +748,11 @@ export class PdsSocialClient {
     });
     if (!res.ok) {
       const err = await res.text().catch(() => '');
-      throw new PdsAccountError(`Add to list failed: ${err.slice(0, 200)}`, 'LIST_ADD_FAILED', res.status);
+      throw new PdsAccountError(
+        `Add to list failed: ${err.slice(0, 200)}`,
+        'LIST_ADD_FAILED',
+        res.status,
+      );
     }
     return res.json() as Promise<{ uri: string; cid: string }>;
   }
@@ -788,17 +789,18 @@ export class PdsSocialClient {
    */
   async getUnreadNotificationCount(): Promise<{ count: number }> {
     this.ensureAuth();
-    const res = await fetch(
-      `${this.pdsUrl}/xrpc/app.bsky.notification.getUnreadCount`,
-      {
-        headers: {
-          'user-agent': this.userAgent,
-          ...this.authHeaders(),
-        },
+    const res = await fetch(`${this.pdsUrl}/xrpc/app.bsky.notification.getUnreadCount`, {
+      headers: {
+        'user-agent': this.userAgent,
+        ...this.authHeaders(),
       },
-    );
+    });
     if (!res.ok) {
-      throw new PdsAccountError('Failed to get unread count', 'NOTIFICATION_COUNT_FAILED', res.status);
+      throw new PdsAccountError(
+        'Failed to get unread count',
+        'NOTIFICATION_COUNT_FAILED',
+        res.status,
+      );
     }
     return res.json() as Promise<{ count: number }>;
   }
@@ -860,9 +862,7 @@ export class PdsSocialClient {
   /**
    * Get the authenticated user's home timeline.
    */
-  async getTimeline(
-    opts: GetTimelineOpts = {},
-  ): Promise<{
+  async getTimeline(opts: GetTimelineOpts = {}): Promise<{
     feed: Array<{ post: Record<string, unknown>; reply?: Record<string, unknown> }>;
     cursor?: string;
   }> {
@@ -873,15 +873,12 @@ export class PdsSocialClient {
     if (opts.algorithm) params.set('algorithm', opts.algorithm);
     if (opts.cursor) params.set('cursor', opts.cursor);
 
-    const res = await fetch(
-      `${this.pdsUrl}/xrpc/app.bsky.feed.getTimeline?${params.toString()}`,
-      {
-        headers: {
-          'user-agent': this.userAgent,
-          ...this.authHeaders(),
-        },
+    const res = await fetch(`${this.pdsUrl}/xrpc/app.bsky.feed.getTimeline?${params.toString()}`, {
+      headers: {
+        'user-agent': this.userAgent,
+        ...this.authHeaders(),
       },
-    );
+    });
     if (!res.ok) {
       throw new PdsAccountError('Failed to get timeline', 'TIMELINE_FAILED', res.status);
     }
@@ -965,15 +962,12 @@ export class PdsSocialClient {
     });
     if (cursor) params.set('cursor', cursor);
 
-    const res = await fetch(
-      `${this.pdsUrl}/xrpc/app.bsky.feed.searchPosts?${params.toString()}`,
-      {
-        headers: {
-          'user-agent': this.userAgent,
-          ...this.authHeaders(),
-        },
+    const res = await fetch(`${this.pdsUrl}/xrpc/app.bsky.feed.searchPosts?${params.toString()}`, {
+      headers: {
+        'user-agent': this.userAgent,
+        ...this.authHeaders(),
       },
-    );
+    });
     if (!res.ok) {
       throw new PdsAccountError('Search failed', 'SEARCH_FAILED', res.status);
     }
@@ -1042,15 +1036,12 @@ export class PdsSocialClient {
     });
     if (opts.cursor) params.set('cursor', opts.cursor);
 
-    const res = await fetch(
-      `${this.pdsUrl}/xrpc/app.bsky.feed.getListFeed?${params.toString()}`,
-      {
-        headers: {
-          'user-agent': this.userAgent,
-          ...this.authHeaders(),
-        },
+    const res = await fetch(`${this.pdsUrl}/xrpc/app.bsky.feed.getListFeed?${params.toString()}`, {
+      headers: {
+        'user-agent': this.userAgent,
+        ...this.authHeaders(),
       },
-    );
+    });
     if (!res.ok) {
       throw new PdsAccountError('Failed to get list feed', 'LIST_FEED_FAILED', res.status);
     }

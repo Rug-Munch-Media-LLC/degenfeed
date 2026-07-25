@@ -132,16 +132,15 @@ export function buildLensProfileCreateCalldata(opts: {
   const handleLenHex = encodeUint256(handleLen);
   const paddedHandle = handleHex.padEnd(Math.ceil(handleLen / 32) * 64, '0');
 
-  const calldata = `${
-    selector
-  }0000000000000000000000000000000000000000000000000000000000000020` + // offset to tuple
+  const calldata =
+    `${selector}0000000000000000000000000000000000000000000000000000000000000020` + // offset to tuple
     `0000000000000000000000000000000000000000000000000000000000000080` + // offset to handle string (128 = 32*4)
-    `000000000000000000000000${followModule.slice(2).padStart(40, '0')}` +  // followModule address
-    `0000000000000000000000000000000000000000000000000000000000000000` +  // followModuleReturnData (0x0)
-    `0000000000000000000000000000000000000000000000000000000000000100` +  // offset to followModuleData bytes (256)
-    `${handleLenHex}` +                                                      // handle string length
-    `${paddedHandle}` +                                                      // handle string data (padded)
-    `0000000000000000000000000000000000000000000000000000000000000000`;    // followModuleData length (0)
+    `000000000000000000000000${followModule.slice(2).padStart(40, '0')}` + // followModule address
+    `0000000000000000000000000000000000000000000000000000000000000000` + // followModuleReturnData (0x0)
+    `0000000000000000000000000000000000000000000000000000000000000100` + // offset to followModuleData bytes (256)
+    `${handleLenHex}` + // handle string length
+    `${paddedHandle}` + // handle string data (padded)
+    `0000000000000000000000000000000000000000000000000000000000000000`; // followModuleData length (0)
 
   return {
     to: LENS_HUB_ADDRESS,

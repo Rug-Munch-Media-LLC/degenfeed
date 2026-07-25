@@ -481,10 +481,9 @@ export class UnifiedShortsFeed {
       const curatedFids = [3, 2, 1, 228, 239, 354, 5650, 602, 7771];
       for (const fid of curatedFids) {
         if (fcShorts.length >= limit) break;
-        const res = await fetch(
-          `${hubUrl}/v1/castsByFid?fid=${fid}&pageSize=10`,
-          { headers: { accept: 'application/json' } },
-        );
+        const res = await fetch(`${hubUrl}/v1/castsByFid?fid=${fid}&pageSize=10`, {
+          headers: { accept: 'application/json' },
+        });
         if (!res.ok) continue;
         const data = (await res.json()) as {
           messages?: Array<{

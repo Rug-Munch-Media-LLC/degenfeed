@@ -117,7 +117,10 @@ async function getFarcasterProfile(fid: number): Promise<{
     const res = await fetch(`${hubUrl}/v1/userDataByFid?fid=${fid}`, {
       headers: { 'user-agent': 'DegenFeed/0.1' },
     });
-    if (!res.ok) { const _throwErr = new Error(`Hub returned ${res.status}`); throw _throwErr; }
+    if (!res.ok) {
+      const _throwErr = new Error(`Hub returned ${res.status}`);
+      throw _throwErr;
+    }
 
     const messages = (await res.json()) as Array<{
       data: {
@@ -173,7 +176,8 @@ async function deployCreatorCoin(opts: {
   env?: Env;
 }): Promise<{ coinAddress: string; tokenId: string; signature: string }> {
   if (!opts.env) {
-    const _throwErr = new Error('Environment required for deployment'); throw _throwErr;
+    const _throwErr = new Error('Environment required for deployment');
+    throw _throwErr;
   }
   const { deployCoin } = await import('../lib/coin-deployer');
 

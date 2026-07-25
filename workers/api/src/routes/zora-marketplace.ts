@@ -41,7 +41,7 @@ zoraMarketplace.get('/trending', async (c) => {
       return jsonResponse({ error: 'Indexer unavailable' }, 502);
     }
 
-    const data = await res.json() as {
+    const data = (await res.json()) as {
       data?: Array<Record<string, unknown>>;
       meta?: Record<string, unknown>;
     };
@@ -96,7 +96,7 @@ zoraMarketplace.get('/collection/:address', async (c) => {
       return jsonResponse({ error: 'Collection not found' }, 404);
     }
 
-    const data = await res.json() as { data?: Record<string, unknown> };
+    const data = (await res.json()) as { data?: Record<string, unknown> };
 
     if (!data.data) {
       return jsonResponse({ error: 'Collection not found' }, 404);
@@ -148,7 +148,7 @@ zoraMarketplace.get('/nft/:address/sales', async (c) => {
       return jsonResponse({ data: [], sales: [] });
     }
 
-    const data = await res.json() as { data?: Array<Record<string, unknown>> };
+    const data = (await res.json()) as { data?: Array<Record<string, unknown>> };
     return noCacheJsonResponse({
       sales: data.data ?? [],
       total: data.data?.length ?? 0,
@@ -318,9 +318,9 @@ zoraMarketplace.get('/analytics', async (c) => {
       signal: AbortSignal.timeout(5000),
     });
 
-    const stats = statsRes.ok ? (await statsRes.json()) as Record<string, unknown> : {};
+    const stats = statsRes.ok ? ((await statsRes.json()) as Record<string, unknown>) : {};
     const topCollections = topRes.ok
-      ? ((await topRes.json()) as { data?: Record<string, unknown>[] }).data ?? []
+      ? (((await topRes.json()) as { data?: Record<string, unknown>[] }).data ?? [])
       : [];
 
     // Build analytics summary

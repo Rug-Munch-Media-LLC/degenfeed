@@ -498,7 +498,7 @@ export class MessageTransport {
       }
 
       // Farcaster hub URL
-      const hubUrl = env.FARCASTER_HUB_URL || 'https://hub.farcaster.xyz:2281';
+      const hubUrl = env.FARCASTER_HUB_URL || 'http://127.0.0.1:2281';
 
       // The encrypted blob is our E2E payload — we post it as a direct cast
       // that only the recipient can decrypt (using their degenfeed E2E keys).

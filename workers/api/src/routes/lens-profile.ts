@@ -15,12 +15,12 @@
  * No paid API dependency.
  */
 
-import { LensClient, LENS_API_URL } from '@degenfeed/lens-sdk';
+import { LENS_API_URL, LensClient } from '@degenfeed/lens-sdk';
 import { LensDataExportService } from '@degenfeed/lens-sdk/data-export';
 import type { Env } from '../index';
 import { jsonResponse, log, noCacheJsonResponse } from '../index';
+import { sanitizeString, validateBodySize } from '../sanitize';
 import { requireSession } from '../session';
-import { validateBodySize, sanitizeString } from '../sanitize';
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
@@ -319,9 +319,11 @@ export async function handleLensFollow(request: Request, env: Env): Promise<Resp
       }`,
       {
         request: {
-          follow: [{
-            profileId: body.profileId,
-          }],
+          follow: [
+            {
+              profileId: body.profileId,
+            },
+          ],
         },
       },
     );
@@ -417,10 +419,13 @@ export async function handleLensExport(request: Request, env: Env): Promise<Resp
 
     return jsonResponse(exportData);
   } catch (err) {
-    return jsonResponse({
-      error: 'Export failed',
-      detail: err instanceof Error ? err.message : String(err),
-    }, 500);
+    return jsonResponse(
+      {
+        error: 'Export failed',
+        detail: err instanceof Error ? err.message : String(err),
+      },
+      500,
+    );
   }
 }
 
@@ -463,9 +468,12 @@ export async function handleLensExportDownload(request: Request, env: Env): Prom
       },
     });
   } catch (err) {
-    return jsonResponse({
-      error: 'Export failed',
-      detail: err instanceof Error ? err.message : String(err),
-    }, 500);
+    return jsonResponse(
+      {
+        error: 'Export failed',
+        detail: err instanceof Error ? err.message : String(err),
+      },
+      500,
+    );
   }
 }

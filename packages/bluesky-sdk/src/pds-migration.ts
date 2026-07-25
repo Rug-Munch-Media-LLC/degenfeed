@@ -12,7 +12,7 @@
  * @module @degenfeed/bluesky-sdk/migration
  */
 
-import { PDS_DEGENFEED_URL, DEFAULT_USER_AGENT } from './index';
+import { DEFAULT_USER_AGENT, PDS_DEGENFEED_URL } from './index';
 import { PdsAccountError } from './pds-account';
 
 // ─── Types ────────────────────────────────────────────────────────────
@@ -120,10 +120,7 @@ export class PdsMigrationClient {
   private accessJwt: string | null = null;
   private userAgent: string;
 
-  constructor(
-    pdsUrl: string = PDS_DEGENFEED_URL,
-    userAgent: string = DEFAULT_USER_AGENT,
-  ) {
+  constructor(pdsUrl: string = PDS_DEGENFEED_URL, userAgent: string = DEFAULT_USER_AGENT) {
     this.pdsUrl = pdsUrl;
     this.userAgent = userAgent;
   }
@@ -142,10 +139,7 @@ export class PdsMigrationClient {
    *
    * CAR files follow the IPLD CARv1 specification.
    */
-  async exportRepo(
-    did: string,
-    sourcePdsUrl?: string,
-  ): Promise<CarExportResult> {
+  async exportRepo(did: string, sourcePdsUrl?: string): Promise<CarExportResult> {
     const base = sourcePdsUrl || 'https://bsky.social';
 
     // Get the repo export from the source PDS
@@ -182,11 +176,7 @@ export class PdsMigrationClient {
   /**
    * Export a specific blob by CID.
    */
-  async exportBlob(
-    did: string,
-    cid: string,
-    sourcePdsUrl?: string,
-  ): Promise<BlobExportResult> {
+  async exportBlob(did: string, cid: string, sourcePdsUrl?: string): Promise<BlobExportResult> {
     const base = sourcePdsUrl || 'https://bsky.social';
 
     const res = await fetch(
@@ -229,20 +219,13 @@ export class PdsMigrationClient {
     const params = new URLSearchParams({ did });
     if (cursor) params.set('cursor', cursor);
 
-    const res = await fetch(
-      `${base}/xrpc/com.atproto.sync.listBlobs?${params.toString()}`,
-      {
-        headers: { 'user-agent': this.userAgent },
-        signal: AbortSignal.timeout(30000),
-      },
-    );
+    const res = await fetch(`${base}/xrpc/com.atproto.sync.listBlobs?${params.toString()}`, {
+      headers: { 'user-agent': this.userAgent },
+      signal: AbortSignal.timeout(30000),
+    });
 
     if (!res.ok) {
-      throw new PdsAccountError(
-        'Failed to list blobs',
-        'LIST_BLOBS_FAILED',
-        res.status,
-      );
+      throw new PdsAccountError('Failed to list blobs', 'LIST_BLOBS_FAILED', res.status);
     }
 
     return res.json() as Promise<{ cids: string[]; cursor?: string }>;
@@ -256,10 +239,7 @@ export class PdsMigrationClient {
    * This writes all records from the CAR file into the target PDS's
    * repository, making the data available on our instance.
    */
-  async importRepo(
-    did: string,
-    carData: Uint8Array,
-  ): Promise<{ recordsImported: number }> {
+  async importRepo(did: string, carData: Uint8Array): Promise<{ recordsImported: number }> {
     this.ensureAuthenticated();
 
     const res = await fetch(`${this.pdsUrl}/xrpc/com.atproto.repo.importRepo`, {
@@ -360,13 +340,10 @@ export class PdsMigrationClient {
    * standard resolution endpoint.
    */
   async resolveDid(did: string): Promise<DidDocument> {
-    const res = await fetch(
-      `https://plc.directory/${encodeURIComponent(did)}`,
-      {
-        headers: { 'user-agent': this.userAgent },
-        signal: AbortSignal.timeout(10000),
-      },
-    );
+    const res = await fetch(`https://plc.directory/${encodeURIComponent(did)}`, {
+      headers: { 'user-agent': this.userAgent },
+      signal: AbortSignal.timeout(10000),
+    });
 
     if (!res.ok) {
       throw new PdsAccountError(
@@ -467,9 +444,7 @@ export class PdsMigrationClient {
       try {
         // Get existing DID doc to extract keys
         const didDoc = await this.getDidDocument(did);
-        const pdsService = didDoc.service?.find(
-          (s) => s.type === 'AtprotoPersonalDataServer',
-        );
+        const pdsService = didDoc.service?.find((s) => s.type === 'AtprotoPersonalDataServer');
 
         if (pdsService) {
           // Update the endpoint
@@ -525,11 +500,7 @@ export class PdsMigrationClient {
     const baseUrl = opts.pdsUrl || 'https://bsky.social';
 
     // Authenticate to get the DID
-    const session = await this.createSourceSession(
-      baseUrl,
-      opts.identifier,
-      opts.password,
-    );
+    const session = await this.createSourceSession(baseUrl, opts.identifier, opts.password);
     const did = session.did;
 
     // Export the full repo
@@ -601,18 +572,15 @@ export class PdsMigrationClient {
   ): Promise<{ accessJwt: string; did: string; handle: string }> {
     const sessionUrl = pdsUrl.replace(/\/$/, '');
 
-    const res = await fetch(
-      `${sessionUrl}/xrpc/com.atproto.server.createSession`,
-      {
-        method: 'POST',
-        headers: {
-          'content-type': 'application/json',
-          'user-agent': this.userAgent,
-        },
-        body: JSON.stringify({ identifier, password }),
-        signal: AbortSignal.timeout(15000),
+    const res = await fetch(`${sessionUrl}/xrpc/com.atproto.server.createSession`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'user-agent': this.userAgent,
       },
-    );
+      body: JSON.stringify({ identifier, password }),
+      signal: AbortSignal.timeout(15000),
+    });
 
     if (!res.ok) {
       throw new PdsAccountError(
@@ -633,11 +601,7 @@ export class PdsMigrationClient {
 
   private ensureAuthenticated(): void {
     if (!this.accessJwt) {
-      throw new PdsAccountError(
-        'Not authenticated to target PDS',
-        'NOT_AUTHENTICATED',
-        401,
-      );
+      throw new PdsAccountError('Not authenticated to target PDS', 'NOT_AUTHENTICATED', 401);
     }
   }
 }
@@ -671,10 +635,9 @@ export async function listRepoRecords(
   };
   if (accessJwt) headers.authorization = `Bearer ${accessJwt}`;
 
-  const res = await fetch(
-    `${pdsUrl}/xrpc/com.atproto.repo.listRecords?${params.toString()}`,
-    { headers },
-  );
+  const res = await fetch(`${pdsUrl}/xrpc/com.atproto.repo.listRecords?${params.toString()}`, {
+    headers,
+  });
 
   if (!res.ok) {
     throw new PdsAccountError(
@@ -709,11 +672,7 @@ export async function getRepoStatus(
   );
 
   if (!res.ok) {
-    throw new PdsAccountError(
-      'Failed to get repo status',
-      'REPO_STATUS_FAILED',
-      res.status,
-    );
+    throw new PdsAccountError('Failed to get repo status', 'REPO_STATUS_FAILED', res.status);
   }
 
   return res.json() as Promise<{ root: string; rev: string }>;

@@ -2,7 +2,7 @@
  * @degenfeed/api-worker — Hubble Cast Publisher
  *
  * Signs and submits Farcaster casts to our self-hosted Hubble.
- * Replaces all Neynar API publishing paths.
+ * Self-hosted Farcaster publishing — no external API dependency.
  *
  * Uses the DegenFeed bot signer key for automated publishing.
  * The bot must have a registered signer on Farcaster.
@@ -70,9 +70,10 @@ export async function publishCastToFarcaster(
         'content-type': 'application/octet-stream',
         'user-agent': 'DegenFeed/1.0',
       },
-      body: bodyBytes.buffer instanceof ArrayBuffer
-        ? bodyBytes.buffer
-        : (bodyBytes as unknown as ArrayBuffer),
+      body:
+        bodyBytes.buffer instanceof ArrayBuffer
+          ? bodyBytes.buffer
+          : (bodyBytes as unknown as ArrayBuffer),
     });
 
     if (!res.ok) {

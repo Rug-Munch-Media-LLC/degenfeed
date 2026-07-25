@@ -59,21 +59,28 @@ interface ProfileSyncResult {
 }
 
 const PROTOCOLS_WITH_PROFILE_API = [
-  'bluesky',    // com.atproto.repo.putRecord (app.bsky.actor.profile)
-  'mastodon',   // PATCH /api/v1/accounts/update_credentials
-  'farcaster',  // Signed data message
-  'lens',       // Profile metadata via Lens API
-  'peertube',   // PUT /api/v1/accounts/{id}
-  'pixelfed',   // PATCH /api/v1/accounts/update_credentials (Mastodon-compat)
+  'bluesky', // com.atproto.repo.putRecord (app.bsky.actor.profile)
+  'mastodon', // PATCH /api/v1/accounts/update_credentials
+  'farcaster', // Signed data message
+  'lens', // Profile metadata via Lens API
+  'peertube', // PUT /api/v1/accounts/{id}
+  'pixelfed', // PATCH /api/v1/accounts/update_credentials (Mastodon-compat)
   'writefreely', // POST /api/collections/{alias}/meta
-  'bookwyrm',   // PATCH /api/auth/profile
-  'funkwhale',  // PATCH /api/v1/users/me
-  'mobilizon',  // PATCH /api/profile
-  'owncast',    // PUT /api/admin/name
-  'castopod',   // PATCH /api/users/me
+  'bookwyrm', // PATCH /api/auth/profile
+  'funkwhale', // PATCH /api/v1/users/me
+  'mobilizon', // PATCH /api/profile
+  'owncast', // PUT /api/admin/name
+  'castopod', // PATCH /api/users/me
 ];
 
-const SYNCABLE_FIELDS = ['displayName', 'bio', 'avatarUrl', 'bannerUrl', 'website', 'location'] as const;
+const SYNCABLE_FIELDS = [
+  'displayName',
+  'bio',
+  'avatarUrl',
+  'bannerUrl',
+  'website',
+  'location',
+] as const;
 
 // ─── GET /api/accounts/profile/status — Sync status per protocol ─────────
 
@@ -88,13 +95,16 @@ export async function handleProfileSyncStatus(request: Request, env: Env): Promi
   const visibility = await getVisibilitySettings(wallet, env);
 
   // Check sync status per protocol
-  const protocolStatus: Record<string, {
-    connected: boolean;
-    synced: boolean;
-    lastSync?: number;
-    syncedFields?: string[];
-    visibilityOverrides?: Record<string, boolean>;
-  }> = {};
+  const protocolStatus: Record<
+    string,
+    {
+      connected: boolean;
+      synced: boolean;
+      lastSync?: number;
+      syncedFields?: string[];
+      visibilityOverrides?: Record<string, boolean>;
+    }
+  > = {};
 
   for (const protocol of PROTOCOLS_WITH_PROFILE_API) {
     const hasAccount = await hasProtocolAccount(wallet, protocol, env);
@@ -216,10 +226,13 @@ export async function handleProfileSync(request: Request, env: Env): Promise<Res
 
   // Check if profile exists
   if (!profile || Object.keys(profile).length === 0) {
-    return jsonResponse({
-      error: 'No profile found. Update your profile first via PUT /api/accounts/profile/update',
-      updateUrl: '/api/accounts/profile/update',
-    }, 404);
+    return jsonResponse(
+      {
+        error: 'No profile found. Update your profile first via PUT /api/accounts/profile/update',
+        updateUrl: '/api/accounts/profile/update',
+      },
+      404,
+    );
   }
 
   const results = await syncProfileToAll(wallet, walletLower, profile, env);
@@ -234,16 +247,19 @@ export async function handleProfileSync(request: Request, env: Env): Promise<Res
     total: results.length,
   });
 
-  return jsonResponse({
-    success: true,
-    results,
-    stats: {
-      synced: successCount,
-      failed: failCount,
-      total: results.length,
+  return jsonResponse(
+    {
+      success: true,
+      results,
+      stats: {
+        synced: successCount,
+        failed: failCount,
+        total: results.length,
+      },
+      syncedFields: Object.keys(profile),
     },
-    syncedFields: Object.keys(profile),
-  }, failCount > 0 && successCount === 0 ? 200 : 201);
+    failCount > 0 && successCount === 0 ? 200 : 201,
+  );
 }
 
 // ─── POST /api/accounts/profile/sync/:protocol — Sync to specific protocol ─
@@ -261,10 +277,13 @@ export async function handleProfileSyncProtocol(request: Request, env: Env): Pro
   const protocol = pathParts[4];
 
   if (!protocol || !PROTOCOLS_WITH_PROFILE_API.includes(protocol)) {
-    return jsonResponse({
-      error: `Unsupported protocol: ${protocol}`,
-      supported: PROTOCOLS_WITH_PROFILE_API,
-    }, 400);
+    return jsonResponse(
+      {
+        error: `Unsupported protocol: ${protocol}`,
+        supported: PROTOCOLS_WITH_PROFILE_API,
+      },
+      400,
+    );
   }
 
   const profile = await getProfile(walletLower, env);
@@ -274,11 +293,14 @@ export async function handleProfileSyncProtocol(request: Request, env: Env): Pro
 
   const result = await syncProfileToProtocol(wallet, walletLower, protocol, profile, env);
 
-  return jsonResponse({
-    success: result.ok,
-    protocol,
-    result,
-  }, result.ok ? 201 : 200);
+  return jsonResponse(
+    {
+      success: result.ok,
+      protocol,
+      result,
+    },
+    result.ok ? 201 : 200,
+  );
 }
 
 // ─── PUT /api/accounts/profile/visibility — Per-protocol visibility ──────
@@ -301,7 +323,14 @@ export async function handleProfileVisibility(request: Request, env: Env): Promi
   }
 
   // Validate and save visibility settings per protocol
-  const validFields = ['syncDisplayName', 'syncBio', 'syncAvatar', 'syncBanner', 'syncWebsite', 'syncLocation'];
+  const validFields = [
+    'syncDisplayName',
+    'syncBio',
+    'syncAvatar',
+    'syncBanner',
+    'syncWebsite',
+    'syncLocation',
+  ];
   const visibility: VisibilitySettings = {};
 
   for (const [protocol, settings] of Object.entries(body.visibility)) {
@@ -354,7 +383,8 @@ async function syncProfileToAll(
     for (const field of SYNCABLE_FIELDS) {
       if (profile[field] === undefined) continue;
       if (protoVisibility) {
-        const visKey = `sync${field.charAt(0).toUpperCase() + field.slice(1)}` as keyof typeof protoVisibility;
+        const visKey =
+          `sync${field.charAt(0).toUpperCase() + field.slice(1)}` as keyof typeof protoVisibility;
         if (protoVisibility[visKey] === false) continue;
       }
       filteredProfile[field] = profile[field];
@@ -362,7 +392,12 @@ async function syncProfileToAll(
     }
 
     if (Object.keys(filteredProfile).length === 0) {
-      results.push({ protocol, ok: true, syncedFields: [], error: 'All fields hidden by visibility settings' });
+      results.push({
+        protocol,
+        ok: true,
+        syncedFields: [],
+        error: 'All fields hidden by visibility settings',
+      });
       continue;
     }
 
@@ -426,7 +461,9 @@ async function syncProfileToProtocol(
 // ─── Protocol-specific sync implementations ───────────────────────────────
 
 async function syncBlueskyProfile(
-  creds: ProtocolCreds, profile: ProfileData, _env: Env,
+  creds: ProtocolCreds,
+  profile: ProfileData,
+  _env: Env,
 ): Promise<ProfileSyncResult> {
   const pdsUrl = creds.instanceUrl || 'https://pds.degenfeed.xyz';
   const did = creds.did || creds.username;
@@ -436,8 +473,10 @@ async function syncBlueskyProfile(
   };
   if (profile.displayName) recordBody.displayName = profile.displayName;
   if (profile.bio) recordBody.description = profile.bio;
-  if (profile.avatarUrl) recordBody.avatar = { $type: 'blob', ref: { $link: '' }, mimeType: 'image/jpeg', size: 0 };
-  if (profile.bannerUrl) recordBody.banner = { $type: 'blob', ref: { $link: '' }, mimeType: 'image/jpeg', size: 0 };
+  if (profile.avatarUrl)
+    recordBody.avatar = { $type: 'blob', ref: { $link: '' }, mimeType: 'image/jpeg', size: 0 };
+  if (profile.bannerUrl)
+    recordBody.banner = { $type: 'blob', ref: { $link: '' }, mimeType: 'image/jpeg', size: 0 };
   // Note: full avatar upload requires blob upload first; here we set metadata
 
   const res = await fetch(`${pdsUrl}/xrpc/com.atproto.repo.putRecord`, {
@@ -462,7 +501,9 @@ async function syncBlueskyProfile(
 }
 
 async function syncMastodonProfile(
-  creds: ProtocolCreds, profile: ProfileData, _env: Env,
+  creds: ProtocolCreds,
+  profile: ProfileData,
+  _env: Env,
 ): Promise<ProfileSyncResult> {
   const instanceUrl = creds.instanceUrl || 'https://social.degenfeed.xyz';
   const apiBase = `${instanceUrl.replace(/\/$/, '')}/api/v1`;
@@ -483,14 +524,20 @@ async function syncMastodonProfile(
   });
 
   if (!res.ok) {
-    return { protocol: 'mastodon', ok: false, error: `Mastodon profile sync failed: ${res.status}` };
+    return {
+      protocol: 'mastodon',
+      ok: false,
+      error: `Mastodon profile sync failed: ${res.status}`,
+    };
   }
 
   return { protocol: 'mastodon', ok: true, syncedFields: Object.keys(profile) };
 }
 
 async function syncFarcasterProfile(
-  creds: ProtocolCreds, profile: ProfileData, _env: Env,
+  creds: ProtocolCreds,
+  profile: ProfileData,
+  _env: Env,
 ): Promise<ProfileSyncResult> {
   // Farcaster profile sync requires signing a message with the custody address
   const hubUrl = creds.instanceUrl || 'https://hub.degenfeed.xyz';
@@ -511,14 +558,20 @@ async function syncFarcasterProfile(
   });
 
   if (!res.ok) {
-    return { protocol: 'farcaster', ok: false, error: `Farcaster profile sync failed: ${res.status}` };
+    return {
+      protocol: 'farcaster',
+      ok: false,
+      error: `Farcaster profile sync failed: ${res.status}`,
+    };
   }
 
   return { protocol: 'farcaster', ok: true, syncedFields: Object.keys(profile) };
 }
 
 async function syncLensProfile(
-  creds: ProtocolCreds, profile: ProfileData, _env: Env,
+  creds: ProtocolCreds,
+  profile: ProfileData,
+  _env: Env,
 ): Promise<ProfileSyncResult> {
   const lensApi = creds.instanceUrl || 'https://api-v2.lens.dev';
 
@@ -556,7 +609,9 @@ async function syncLensProfile(
 }
 
 async function syncPeerTubeProfile(
-  creds: ProtocolCreds, profile: ProfileData, _env: Env,
+  creds: ProtocolCreds,
+  profile: ProfileData,
+  _env: Env,
 ): Promise<ProfileSyncResult> {
   const instanceUrl = creds.instanceUrl || 'https://video.degenfeed.xyz';
   const apiBase = `${instanceUrl.replace(/\/$/, '')}/api/v1`;
@@ -574,21 +629,29 @@ async function syncPeerTubeProfile(
   });
 
   if (!res.ok) {
-    return { protocol: 'peertube', ok: false, error: `PeerTube profile sync failed: ${res.status}` };
+    return {
+      protocol: 'peertube',
+      ok: false,
+      error: `PeerTube profile sync failed: ${res.status}`,
+    };
   }
 
   return { protocol: 'peertube', ok: true, syncedFields: Object.keys(profile) };
 }
 
 async function syncPixelfedProfile(
-  creds: ProtocolCreds, profile: ProfileData, _env: Env,
+  creds: ProtocolCreds,
+  profile: ProfileData,
+  _env: Env,
 ): Promise<ProfileSyncResult> {
   // Pixelfed uses Mastodon-compatible API
   return syncMastodonProfile(creds, profile, _env);
 }
 
 async function syncWriteFreelyProfile(
-  creds: ProtocolCreds, profile: ProfileData, _env: Env,
+  creds: ProtocolCreds,
+  profile: ProfileData,
+  _env: Env,
 ): Promise<ProfileSyncResult> {
   const instanceUrl = creds.instanceUrl || 'https://blog.degenfeed.xyz';
   const apiBase = `${instanceUrl.replace(/\/$/, '')}/api`;
@@ -606,14 +669,20 @@ async function syncWriteFreelyProfile(
   });
 
   if (!res.ok) {
-    return { protocol: 'writefreely', ok: false, error: `WriteFreely profile sync failed: ${res.status}` };
+    return {
+      protocol: 'writefreely',
+      ok: false,
+      error: `WriteFreely profile sync failed: ${res.status}`,
+    };
   }
 
   return { protocol: 'writefreely', ok: true, syncedFields: Object.keys(profile) };
 }
 
 async function syncBookWyrmProfile(
-  creds: ProtocolCreds, profile: ProfileData, _env: Env,
+  creds: ProtocolCreds,
+  profile: ProfileData,
+  _env: Env,
 ): Promise<ProfileSyncResult> {
   const instanceUrl = creds.instanceUrl || 'https://books.degenfeed.xyz';
   const apiBase = `${instanceUrl.replace(/\/$/, '')}/api`;
@@ -632,14 +701,20 @@ async function syncBookWyrmProfile(
   });
 
   if (!res.ok) {
-    return { protocol: 'bookwyrm', ok: false, error: `BookWyrm profile sync failed: ${res.status}` };
+    return {
+      protocol: 'bookwyrm',
+      ok: false,
+      error: `BookWyrm profile sync failed: ${res.status}`,
+    };
   }
 
   return { protocol: 'bookwyrm', ok: true, syncedFields: Object.keys(profile) };
 }
 
 async function syncFunkwhaleProfile(
-  creds: ProtocolCreds, profile: ProfileData, _env: Env,
+  creds: ProtocolCreds,
+  profile: ProfileData,
+  _env: Env,
 ): Promise<ProfileSyncResult> {
   const instanceUrl = creds.instanceUrl || 'https://music.degenfeed.xyz';
   const apiBase = `${instanceUrl.replace(/\/$/, '')}/api/v1`;
@@ -658,14 +733,20 @@ async function syncFunkwhaleProfile(
   });
 
   if (!res.ok) {
-    return { protocol: 'funkwhale', ok: false, error: `Funkwhale profile sync failed: ${res.status}` };
+    return {
+      protocol: 'funkwhale',
+      ok: false,
+      error: `Funkwhale profile sync failed: ${res.status}`,
+    };
   }
 
   return { protocol: 'funkwhale', ok: true, syncedFields: Object.keys(profile) };
 }
 
 async function syncMobilizonProfile(
-  creds: ProtocolCreds, profile: ProfileData, _env: Env,
+  creds: ProtocolCreds,
+  profile: ProfileData,
+  _env: Env,
 ): Promise<ProfileSyncResult> {
   const instanceUrl = creds.instanceUrl || 'https://events.degenfeed.xyz';
   const apiBase = `${instanceUrl.replace(/\/$/, '')}/api`;
@@ -686,14 +767,20 @@ async function syncMobilizonProfile(
   });
 
   if (!res.ok) {
-    return { protocol: 'mobilizon', ok: false, error: `Mobilizon profile sync failed: ${res.status}` };
+    return {
+      protocol: 'mobilizon',
+      ok: false,
+      error: `Mobilizon profile sync failed: ${res.status}`,
+    };
   }
 
   return { protocol: 'mobilizon', ok: true, syncedFields: Object.keys(profile) };
 }
 
 async function syncOwncastProfile(
-  creds: ProtocolCreds, profile: ProfileData, _env: Env,
+  creds: ProtocolCreds,
+  profile: ProfileData,
+  _env: Env,
 ): Promise<ProfileSyncResult> {
   const instanceUrl = creds.instanceUrl || 'https://live.degenfeed.xyz';
   const apiBase = `${instanceUrl.replace(/\/$/, '')}/api/admin`;
@@ -724,7 +811,9 @@ async function syncOwncastProfile(
 }
 
 async function syncCastopodProfile(
-  creds: ProtocolCreds, profile: ProfileData, _env: Env,
+  creds: ProtocolCreds,
+  profile: ProfileData,
+  _env: Env,
 ): Promise<ProfileSyncResult> {
   const instanceUrl = creds.instanceUrl || 'https://podcasts.degenfeed.xyz';
   const apiBase = `${instanceUrl.replace(/\/$/, '')}/api`;
@@ -745,7 +834,11 @@ async function syncCastopodProfile(
   });
 
   if (!res.ok) {
-    return { protocol: 'castopod', ok: false, error: `Castopod profile sync failed: ${res.status}` };
+    return {
+      protocol: 'castopod',
+      ok: false,
+      error: `Castopod profile sync failed: ${res.status}`,
+    };
   }
 
   return { protocol: 'castopod', ok: true, syncedFields: Object.keys(profile) };
@@ -805,7 +898,11 @@ async function getProtocolCredentials(
   return null;
 }
 
-async function hasProtocolAccount(walletLower: string, protocol: string, env: Env): Promise<boolean> {
+async function hasProtocolAccount(
+  walletLower: string,
+  protocol: string,
+  env: Env,
+): Promise<boolean> {
   const creds = await getProtocolCredentials(walletLower, protocol, env);
   return creds !== null;
 }
@@ -851,7 +948,11 @@ async function getVisibilitySettings(walletLower: string, env: Env): Promise<Vis
   }
 }
 
-async function saveVisibilitySettings(walletLower: string, visibility: VisibilitySettings, env: Env): Promise<void> {
+async function saveVisibilitySettings(
+  walletLower: string,
+  visibility: VisibilitySettings,
+  env: Env,
+): Promise<void> {
   if (!env.CACHE) return;
   try {
     await env.CACHE.put(`user:profile_visibility:${walletLower}`, JSON.stringify(visibility));
@@ -860,7 +961,11 @@ async function saveVisibilitySettings(walletLower: string, visibility: Visibilit
   }
 }
 
-async function getLastSyncTime(walletLower: string, protocol: string, env: Env): Promise<number | null> {
+async function getLastSyncTime(
+  walletLower: string,
+  protocol: string,
+  env: Env,
+): Promise<number | null> {
   if (!env.CACHE) return null;
   try {
     const raw = await env.CACHE.get(`user:profile_sync:${walletLower}:${protocol}`);

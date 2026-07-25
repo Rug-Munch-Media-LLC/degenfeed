@@ -191,12 +191,15 @@ export async function postToFarcasterChannel(
   embedUrl: string,
   parentUrl: string,
 ): Promise<ChannelAnnouncement> {
-  const result = await publishCastToFarcaster(env as unknown as Record<string, string | undefined>, {
-    text,
-    embeds: [embedUrl],
-    channelId,
-    parentUrl,
-  });
+  const result = await publishCastToFarcaster(
+    env as unknown as Record<string, string | undefined>,
+    {
+      text,
+      embeds: [embedUrl],
+      channelId,
+      parentUrl,
+    },
+  );
 
   return {
     channelId,
@@ -240,7 +243,7 @@ export async function announceToRelevantChannels(
   });
 }
 
-// ─── Hubble Cast Publishing (replaces Neynar) ──────────────────────────────
+// ─── Hubble Cast Publishing ────────────────────────────────────────────────
 
 /**
  * Post a cast to Farcaster via our self-hosted Hubble.
@@ -262,11 +265,14 @@ export async function postCastToFarcaster(
   embedUrls: string[] = [],
   channelId?: string,
 ): Promise<{ hash?: string; error?: string }> {
-  const result = await publishCastToFarcaster(env as unknown as Record<string, string | undefined>, {
-    text,
-    embeds: embedUrls,
-    channelId,
-  });
+  const result = await publishCastToFarcaster(
+    env as unknown as Record<string, string | undefined>,
+    {
+      text,
+      embeds: embedUrls,
+      channelId,
+    },
+  );
 
   return { hash: result.hash, error: result.error };
 }

@@ -12,8 +12,8 @@
 
 import type { Env } from '../index';
 import { jsonResponse, noCacheJsonResponse } from '../index';
-import { requireSession } from '../session';
 import { methodNotAllowed } from '../response-helpers';
+import { requireSession } from '../session';
 
 // ─── GET /api/chat/discover ─────────────────────────────────────────────────
 
@@ -93,9 +93,21 @@ export async function handleDiscoveryByProtocol(
   const url = new URL(request.url);
   const limit = Math.min(Number(url.searchParams.get('limit')) || 20, 100);
 
-  const validProtocols = ['irc', 'matrix', 'nostr', 'farcaster', 'bluesky', 'xmpp', 'telegram', 'discord'];
+  const validProtocols = [
+    'irc',
+    'matrix',
+    'nostr',
+    'farcaster',
+    'bluesky',
+    'xmpp',
+    'telegram',
+    'discord',
+  ];
   if (!validProtocols.includes(protocol)) {
-    return jsonResponse({ error: `Invalid protocol. Must be one of: ${validProtocols.join(', ')}` }, 400);
+    return jsonResponse(
+      { error: `Invalid protocol. Must be one of: ${validProtocols.join(', ')}` },
+      400,
+    );
   }
 
   try {
@@ -128,7 +140,11 @@ export async function handleDiscoveryRecommended(request: Request, env: Env): Pr
   if (session instanceof Response) return session;
 
   const url = new URL(request.url);
-  const tags = url.searchParams.get('tags')?.split(',').filter(Boolean) ?? ['bitcoin', 'crypto', 'defi'];
+  const tags = url.searchParams.get('tags')?.split(',').filter(Boolean) ?? [
+    'bitcoin',
+    'crypto',
+    'defi',
+  ];
   const limit = Math.min(Number(url.searchParams.get('limit')) || 10, 50);
 
   try {

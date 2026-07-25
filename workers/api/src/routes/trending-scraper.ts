@@ -283,17 +283,15 @@ export async function scrapeFarcasterTrending(_env: Env): Promise<PlatformTrendi
     // Fetch from curated FIDs that consistently post quality content
     const curatedFids = [3, 2, 1, 228, 239, 354, 5650, 602, 615, 910, 3621];
     const now = Date.now();
-    const allCasts: Array<{ hash: string; text: string; fid: number; author: string; ts: number }> = [];
+    const allCasts: Array<{ hash: string; text: string; fid: number; author: string; ts: number }> =
+      [];
 
     for (const fid of curatedFids) {
       try {
-        const res = await fetch(
-          `${HUBBLE_URL}/v1/castsByFid?fid=${fid}&pageSize=5`,
-          {
-            signal: AbortSignal.timeout(FETCH_TIMEOUT),
-            headers: { accept: 'application/json' },
-          },
-        );
+        const res = await fetch(`${HUBBLE_URL}/v1/castsByFid?fid=${fid}&pageSize=5`, {
+          signal: AbortSignal.timeout(FETCH_TIMEOUT),
+          headers: { accept: 'application/json' },
+        });
         if (!res.ok) continue;
         const data = (await res.json()) as { messages?: HubbleCast[] };
         for (const msg of data.messages ?? []) {
@@ -308,9 +306,7 @@ export async function scrapeFarcasterTrending(_env: Env): Promise<PlatformTrendi
             ts,
           });
         }
-      } catch {
-        continue;
-      }
+      } catch {}
     }
 
     // Sort by recency and take top

@@ -19,7 +19,6 @@
  */
 
 import { registerOnPlatform } from '@degenfeed/crossplatform-register';
-import type { CrossProtocolIdentity } from '@degenfeed/utils';
 import { identityKey } from '@degenfeed/utils';
 import type { Env } from '../index';
 import { jsonResponse, log, noCacheJsonResponse } from '../index';
@@ -30,20 +29,20 @@ import { requireSession } from '../session';
 // ─── All protocols in registration order ─────────────────────────────────
 
 const ALL_PROTOCOLS = [
-  'mastodon',    // GoToSocial — ActivityPub social
-  'bluesky',     // AT Protocol PDS
-  'nostr',       // Nostr relay
-  'lemmy',       // Lemmy — federated communities
-  'peertube',    // PeerTube — federated video
-  'pixelfed',    // Pixelfed — federated images
+  'mastodon', // GoToSocial — ActivityPub social
+  'bluesky', // AT Protocol PDS
+  'nostr', // Nostr relay
+  'lemmy', // Lemmy — federated communities
+  'peertube', // PeerTube — federated video
+  'pixelfed', // Pixelfed — federated images
   'writefreely', // WriteFreely — federated blogging
-  'bookwyrm',    // BookWyrm — federated book reviews
-  'funkwhale',   // Funkwhale — federated music
-  'mobilizon',   // Mobilizon — federated events
-  'owncast',     // Owncast — live streaming
-  'castopod',    // Castopod — federated podcasts
-  'farcaster',   // Farcaster — on-chain social (Premium)
-  'lens',        // Lens — on-chain social (Premium)
+  'bookwyrm', // BookWyrm — federated book reviews
+  'funkwhale', // Funkwhale — federated music
+  'mobilizon', // Mobilizon — federated events
+  'owncast', // Owncast — live streaming
+  'castopod', // Castopod — federated podcasts
+  'farcaster', // Farcaster — on-chain social (Premium)
+  'lens', // Lens — on-chain social (Premium)
 ] as const;
 
 const PREMIUM_PROTOCOLS = new Set(['farcaster', 'lens']);
@@ -169,7 +168,8 @@ export async function handleJoinAll(request: Request, env: Env): Promise<Respons
       const result = await registerOnPlatform(protocol, desiredUsername, walletAddress, {
         storage: env.PLATFORM_ACCOUNTS,
         walletAddress,
-        sealSecret: (plaintext: string) => sealForWallet(env, plaintext, walletAddress, 'protocol-key'),
+        sealSecret: (plaintext: string) =>
+          sealForWallet(env, plaintext, walletAddress, 'protocol-key'),
         baseRpcUrl: env.BASE_RPC_URL,
         premiumWalletPrivateKey: env.PREMIUM_WALLET_KEY,
         polygonRpcUrl: env.POLYGON_RPC_URL,
@@ -237,19 +237,23 @@ export async function handleJoinAll(request: Request, env: Env): Promise<Respons
     total: ALL_PROTOCOLS.length,
   });
 
-  return jsonResponse({
-    success: true,
-    wallet: walletAddress,
-    results,
-    connectedCount,
-    totalProtocols: ALL_PROTOCOLS.length,
-    failedCount,
-    ssoSessionToken,
-    recoveryInfo: {
-      warning: 'Save your recovery keys for each protocol. Some platforms (Farcaster, Lens) require wallet signatures.',
-      action: 'Visit /api/sso/recovery/generate to create a master recovery code.',
+  return jsonResponse(
+    {
+      success: true,
+      wallet: walletAddress,
+      results,
+      connectedCount,
+      totalProtocols: ALL_PROTOCOLS.length,
+      failedCount,
+      ssoSessionToken,
+      recoveryInfo: {
+        warning:
+          'Save your recovery keys for each protocol. Some platforms (Farcaster, Lens) require wallet signatures.',
+        action: 'Visit /api/sso/recovery/generate to create a master recovery code.',
+      },
     },
-  }, connectedCount > 0 ? 201 : 200);
+    connectedCount > 0 ? 201 : 200,
+  );
 }
 
 // ─── GET /api/accounts/join-all/status ──────────────────────────────────
@@ -261,13 +265,16 @@ export async function handleJoinAllStatus(request: Request, env: Env): Promise<R
   const walletAddress = session.address;
 
   // Get all registered accounts from platform accounts KV
-  const accounts: Record<string, {
-    registered: boolean;
-    username?: string;
-    identifier?: string;
-    failed?: boolean;
-    error?: string;
-  }> = {};
+  const accounts: Record<
+    string,
+    {
+      registered: boolean;
+      username?: string;
+      identifier?: string;
+      failed?: boolean;
+      error?: string;
+    }
+  > = {};
 
   for (const protocol of ALL_PROTOCOLS) {
     accounts[protocol] = { registered: false };
@@ -379,19 +386,19 @@ async function storeAllIdentities(
   try {
     const identKey = identityKey(walletAddress);
     const existingRaw = await env.IDENTITIES?.get(identKey);
-    const existing: CrossProtocolIdentity = existingRaw
-      ? JSON.parse(existingRaw)
+    const existing: Record<string, unknown> = existingRaw
+      ? (JSON.parse(existingRaw) as Record<string, unknown>)
       : { walletAddress, linkedAt: Date.now(), lastVerified: Date.now() };
 
     const now = Date.now();
     for (const result of results) {
       if (result.ok && result.status === 'created') {
-        existing[result.protocol as keyof CrossProtocolIdentity] = {
+        existing[result.protocol] = {
           verified: false,
           username: result.username,
           identifier: result.identifier,
           profileUrl: result.profileUrl,
-        } as unknown as CrossProtocolIdentity[keyof CrossProtocolIdentity];
+        };
       }
     }
     existing.lastVerified = now;
@@ -401,10 +408,7 @@ async function storeAllIdentities(
   }
 }
 
-function deriveUsernames(
-  baseUsername: string,
-  walletAddress: string,
-): Record<string, string> {
+function deriveUsernames(baseUsername: string, walletAddress: string): Record<string, string> {
   const short = walletAddress.slice(2, 10).toLowerCase();
   return {
     mastodon: baseUsername,
