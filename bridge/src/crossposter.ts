@@ -35,7 +35,8 @@ export type ProtocolName =
   | 'farcaster'
   | 'lens'
   | 'pixelfed'
-  | 'writefreely';
+  | 'writefreely'
+  | 'podcast-episode'; // Podcast-to-protocol bridge
 
 export interface CrossPairConfig {
   /** Unique pair ID */
@@ -446,6 +447,101 @@ const TRANSFORMS: Record<string, TransformFunction> = {
         tags: [...post.niches, post.protocol, 'degenfeed', 'crosspost'],
         protocol: post.protocol,
       },
+    };
+  },
+
+  /**
+   * Podcast-to-Nostr transform: creates a kind 1 event with audio link
+   */
+  'podcast-nostr': (post: UnifiedPost): TransformResult => {
+    const audioEmbed = post.embeds.find((e) => e.kind === 'audio' || e.kind === 'video');
+    const audioUrl = audioEmbed?.url || '';
+    const duration = audioEmbed?.meta?.duration || 0;
+    const durStr = duration > 0 ? ` (${Math.floor(Number(duration) / 60)}m)` : '';
+
+    const episodeUrl = post.embeds.find((e) => e.meta?.type === 'episode')?.url || '';
+
+    const content = `${post.text}${durStr}\n\n${audioUrl ? `🎧 ${audioUrl}` : ''}`;
+
+    return {
+      success: true,
+      payload: {
+        kind: 1,
+        content,
+        created_at: Math.floor(post.createdAt / 1000) || Math.floor(Date.now() / 1000),
+        tags: [
+          ['t', 'podcast'],
+          ['r', audioUrl],
+          ...(episodeUrl ? [['r', episodeUrl] as [string, string]] : []),
+          ['proxy', post.id, 'degenfeed-podcast'],
+          ['m', 'audio/mpeg'],
+        ],
+      },
+    };
+  },
+
+  /**
+   * Podcast-to-Farcaster transform: creates a cast with audio embed
+   */
+  'podcast-farcaster': (post: UnifiedPost): TransformResult => {
+    const text = post.text.length > 300 ? `${post.text.slice(0, 297)}...` : post.text;
+
+    const embeds = post.embeds
+      .filter((e) => e.kind === 'audio' || e.kind === 'video' || e.meta?.type === 'episode')
+      .map((e) => ({ url: e.url }));
+
+    return {
+      success: true,
+      payload: { text, embeds },
+    };
+  },
+
+  /**
+   * Podcast-to-Bluesky transform: creates post with audio link
+   */
+  'podcast-bluesky': (post: UnifiedPost): TransformResult => {
+    const audioEmbed = post.embeds.find((e) => e.kind === 'audio' || e.kind === 'video');
+    const audioUrl = audioEmbed?.url || '';
+    const episodeUrl = post.embeds.find((e) => e.meta?.type === 'episode')?.url || '';
+
+    const text = `${post.text}\n\n🎧 ${audioUrl}${episodeUrl ? `\n🔗 ${episodeUrl}` : ''}`;
+
+    const facets: Array<{
+      index: { byteStart: number; byteEnd: number };
+      features: Array<{ $type: string; uri?: string }>;
+    }> = [];
+
+    if (audioUrl) {
+      facets.push({
+        index: { byteStart: 0, byteEnd: new TextEncoder().encode(text).byteLength },
+        features: [{ $type: 'app.bsky.richtext.facet#link', uri: audioUrl }],
+      });
+    }
+
+    return {
+      success: true,
+      payload: {
+        $type: 'app.bsky.feed.post',
+        text,
+        createdAt: new Date().toISOString(),
+        facets: facets.length > 0 ? facets : undefined,
+      },
+    };
+  },
+
+  /**
+   * Podcast-to-Mastodon transform: creates toot with audio link
+   */
+  'podcast-mastodon': (post: UnifiedPost): TransformResult => {
+    const audioEmbed = post.embeds.find((e) => e.kind === 'audio' || e.kind === 'video');
+    const audioUrl = audioEmbed?.url || '';
+    const episodeUrl = post.embeds.find((e) => e.meta?.type === 'episode')?.url || '';
+
+    const status = `${post.text}\n\n🎧 ${audioUrl}${episodeUrl ? `\n🔗 ${episodeUrl}` : ''}`;
+
+    return {
+      success: true,
+      payload: { status, visibility: 'public' },
     };
   },
 };
@@ -1109,6 +1205,32 @@ const DEFAULT_CONFIG: CrossPairConfig[] = [
     sourceConfig: {},
     targetConfigs: {},
   },
+
+  // ─── Podcast-to-Protocol Bridge ──────────────────────────────
+  {
+    id: 'podcast-to-all',
+    source: 'podcast-episode',
+    targets: ['nostr', 'farcaster', 'bluesky', 'mastodon'],
+    enabled: true,
+    pollIntervalMs: 30000, // Poll every 30s for new episodes
+    rateLimit: { maxPosts: 20, windowMs: 3600000 },
+    sourceConfig: {},
+    targetConfigs: {
+      nostr: { relayUrl: process.env.NOSTR_RELAY_URL || 'ws://127.0.0.1:32768' },
+      farcaster: {
+        hubUrl: process.env.FARCASTER_BOT_HUB_URL || 'http://127.0.0.1:2281',
+        fid: process.env.FARCASTER_BOT_FID || '',
+      },
+      bluesky: {
+        pdsUrl: process.env.ATPROTO_PDS_URL || 'https://bsky.social',
+        jwt: process.env.BLUESKY_CROSSPOST_JWT || '',
+      },
+      mastodon: {
+        instance: process.env.MASTODON_INSTANCE || 'https://social.degenfeed.xyz',
+        token: process.env.MASTODON_ACCESS_TOKEN || '',
+      },
+    },
+  },
 ];
 
 // ─── Core Engine ────────────────────────────────────────────────────────
@@ -1116,11 +1238,100 @@ const DEFAULT_CONFIG: CrossPairConfig[] = [
 const rateLimiter = new RateLimiter();
 const failureTracker = new FailureTracker();
 
+/**
+ * Podcast episode poller: fetches latest published episodes from our store
+ * and returns them as UnifiedPost for cross-posting.
+ */
+async function fetchLatestPodcastEpisode(): Promise<UnifiedPost | null> {
+  try {
+    // Try to fetch from the bridge's podcast store via API
+    const res = await fetch('http://127.0.0.1:8787/api/podcast/trending?limit=5', {
+      signal: AbortSignal.timeout(5000),
+    });
+    if (res.ok) {
+      const data = (await res.json()) as {
+        episodes: Array<{
+          id: string;
+          title: string;
+          description: string;
+          audioUrl: string;
+          duration: number;
+          publishedAt?: number;
+          podcast?: {
+            id: string;
+            title: string;
+            hostName: string;
+            hostAddress: string;
+            coverUrl?: string;
+          };
+        }>;
+      };
+
+      if (!data.episodes?.length) return null;
+
+      // Get the most recently published episode we haven't seen
+      const sorted = data.episodes.sort((a, b) => (b.publishedAt || 0) - (a.publishedAt || 0));
+      const latest = sorted[0];
+      if (!latest) return null;
+
+      const lastId = lastSeenIds.get('podcast-to-all');
+      if (latest.id === lastId) return null;
+
+      return {
+        id: `podcast:${latest.id}`,
+        protocol: 'castopod',
+        author: {
+          id: `podcast:${latest.podcast?.hostAddress || 'host'}`,
+          primary: {
+            protocol: 'castopod',
+            id: latest.podcast?.hostAddress || latest.podcast?.hostName || 'host',
+          },
+          handles: { castopod: latest.podcast?.hostName || null },
+          displayName: latest.podcast?.hostName || 'Podcast Host',
+          bio: '',
+          avatarUrl: latest.podcast?.coverUrl || '',
+          followerCount: 0,
+          followingCount: 0,
+          links: [],
+          keys: {},
+        },
+        text: `🎙 ${latest.title}\n\n${latest.description?.slice(0, 300) || ''}`,
+        embeds: [
+          {
+            kind: 'audio',
+            url: latest.audioUrl,
+            meta: { duration: latest.duration, type: 'episode' },
+          },
+          {
+            kind: 'link',
+            url: `https://app.degenfeed.xyz/podcasts/${latest.podcast?.id || latest.id}`,
+            meta: { type: 'episode', podcastTitle: latest.podcast?.title || '' },
+          },
+        ],
+        createdAt: latest.publishedAt || Date.now(),
+        metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
+        engagement: {
+          viewerLiked: false,
+          viewerReposted: false,
+          viewerBookmarked: false,
+          raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
+        },
+        raw: latest,
+        niches: ['podcast', 'audio'],
+      };
+    }
+  } catch {
+    // Podcast API unavailable — nothing to cross-post
+  }
+  return null;
+}
+
 /** Source pollers by protocol */
 const SOURCE_POLLERS: Record<string, () => Promise<UnifiedPost | null>> = {
   mastodon: fetchLatestGtsPost,
   lemmy: fetchLatestLemmyPost,
   pixelfed: fetchLatestPixelfedPost,
+  'podcast-episode': fetchLatestPodcastEpisode,
 };
 
 /** Last seen post ID per source */
@@ -1166,8 +1377,11 @@ export async function crossPost(
       continue;
     }
 
-    // Get transform
-    const transform = TRANSFORMS[target];
+    // Get transform — check for podcast-specific transform first
+    const isPodcast = config.source === 'podcast-episode';
+    const podcastKey = `podcast-${target}`;
+    const transform =
+      isPodcast && TRANSFORMS[podcastKey] ? TRANSFORMS[podcastKey] : TRANSFORMS[target];
     if (!transform) {
       results.push({
         success: false,

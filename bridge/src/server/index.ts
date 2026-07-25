@@ -589,6 +589,26 @@ const server = http.createServer(async (req, res) => {
     const handled = await handleBlueskyRoute(path, req.method || 'GET', req, res, url);
     if (handled) return;
 
+    // ── Podcast Routes ───────────────────────────────────────────
+    // Routes:
+    //   GET  /api/podcast/discover     — Discovery feed
+    //   GET  /api/podcast/trending     — Trending episodes
+    //   GET  /api/podcast/categories   — Categories
+    //   GET  /api/podcast/search       — Search
+    //   GET  /api/podcast/mine         — My podcasts
+    //   POST /api/podcast/create       — Create podcast
+    //   POST /api/podcast/episode      — Create episode
+    //   GET  /api/podcast/:id           — Podcast detail
+    //   GET  /api/podcast/:id/episodes  — Episodes list
+    //   POST /api/podcast/episode/:id/publish — Publish episode
+    //   POST /api/podcast/episode/:id/tip     — Tip episode
+    //   DELETE /api/podcast/episode/:id       — Delete episode
+    if (path.startsWith('/api/podcast/')) {
+      const { handlePodcastRoute } = await import('./podcast-routes');
+      const podcastHandled = await handlePodcastRoute(path, req.method || 'GET', req, res);
+      if (podcastHandled) return;
+    }
+
     if (path === '/api/feed/health') {
       const results = await Promise.all(
         [

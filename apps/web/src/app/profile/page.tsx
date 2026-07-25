@@ -13,15 +13,23 @@ import { IdentityLinker } from '../../components/IdentityLinker';
 import { ProtocolStatusSection } from '../../components/onboarding/ProtocolStatusSection';
 import { PremiumPaymentModal } from '../../components/PremiumPaymentModal';
 import { GoLiveModal } from '../../components/streams/GoLiveModal';
+import { UnifiedComposerButton } from '../../components/UnifiedComposerButton';
 import {
   AchievementBadges,
-  ProfileHeader,
+  ContentPerformanceWidget,
+  CreatorToolsQuickActions,
+  CrossProtocolActivityFeed,
+  ProfileContentTabs,
+  ProfileSearchBar,
+  ProfileSearchResults,
   ProfileSkeleton,
-  ProfileTabs,
-  ProtocolBadgesRow,
-  StatsBar,
-  TabEmptyState,
+  RevenueWidget,
+  TabContent,
+  TrendingCreators,
+  UnifiedProfileHeader,
+  WhoToFollow,
 } from './components';
+import { PROTOCOL_COLORS } from './constants';
 import { useProfile } from './use-profile';
 
 export const dynamic = 'force-dynamic';
@@ -33,7 +41,7 @@ export default function ProfilePage() {
 
   return (
     <ErrorBoundary>
-      <div className="mx-auto max-w-2xl px-4 py-6 animate-page-enter">
+      <div className="mx-auto max-w-5xl px-4 py-6 animate-page-enter">
         {!p.hasSignedIn ? <GuestView onOpenSignIn={p.openSignIn} /> : <SignedInView p={p} />}
       </div>
     </ErrorBoundary>
@@ -82,137 +90,268 @@ function GuestView({ onOpenSignIn }: { onOpenSignIn: () => void }) {
 
 function SignedInView({ p }: { p: ReturnType<typeof useProfile> }) {
   return (
-    <>
-      <ProfileHeader
-        displayName={p.displayName}
-        handle={p.handle}
-        joinDate={p.joinDate}
-        avatarUrl={p.avatarUrl}
-        bio={(p.primaryIdentity as { bio?: string })?.bio}
-      />
+    <div className="flex flex-col lg:flex-row gap-6">
+      {/* ─── Main Content ─────────────────────────────────────────── */}
+      <div className="flex-1 min-w-0">
+        {/* Unified Profile Header — Identity across ALL protocols */}
+        <UnifiedProfileHeader
+          displayName={p.displayName}
+          handle={p.handle}
+          joinDate={p.joinDate}
+          avatarUrl={p.avatarUrl}
+          bio={(p.primaryIdentity as { bio?: string })?.bio}
+          identities={p.identities}
+          stats={p.profileStats}
+          creatorCoin={p.creatorCoin}
+          daoMemberships={p.daoMemberships}
+          isOwnProfile={true}
+          onEdit={() => p.setShowEditModal(true)}
+          onFollow={p.handleFollow}
+          onSubscribe={p.handleSubscribe}
+          onTip={p.handleTip}
+          onMessage={p.handleMessage}
+          onShare={p.handleShare}
+        />
 
-      {p.repScore && !p.repLoading && (
-        <div className="mt-3 flex justify-center">
-          <div className="inline-flex items-center gap-2 rounded-full border border-degen-500/20 bg-degen-500/10 px-4 py-1.5">
-            <ReputationBadge
-              score={p.repScore}
-              progress={p.repProgress}
-              size="sm"
-              showIcon
-              showLabel
-              showTooltip={false}
-              showProgress={false}
+        {/* Reputation Badge */}
+        {p.repScore && !p.repLoading && (
+          <div className="mt-4 flex justify-center">
+            <div className="inline-flex items-center gap-2 rounded-full border border-degen-500/20 bg-degen-500/10 px-4 py-1.5">
+              <ReputationBadge
+                score={p.repScore}
+                progress={p.repProgress}
+                size="sm"
+                showIcon
+                showLabel
+                showTooltip={false}
+                showProgress={false}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Action Buttons Bar (own profile) */}
+        <div className="mt-4 mb-4">
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            <button
+              type="button"
+              onClick={() => p.setShowEditModal(true)}
+              className="btn-secondary text-xs"
+            >
+              Edit Profile
+            </button>
+            <button
+              type="button"
+              onClick={() => p.setShowCrossPlatformSetup(true)}
+              className="btn-secondary text-xs"
+            >
+              Create Accounts
+            </button>
+            <button
+              type="button"
+              onClick={() => p.setShowGoLiveModal(true)}
+              className="btn-secondary text-xs"
+            >
+              Go Live
+            </button>
+            <button
+              type="button"
+              onClick={() => p.setShowUpgradeModal(true)}
+              className="btn-primary text-xs"
+            >
+              Upgrade
+            </button>
+          </div>
+        </div>
+
+        {/* Creator Hub Navigation */}
+        <div className="mb-6">
+          <h2 className="mb-3 text-xs font-bold uppercase tracking-widest text-[var(--color-muted)]">
+            Creator Hub
+          </h2>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <a
+              href="/profile/earnings"
+              className="flex flex-col items-center gap-1.5 rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] px-3 py-3 text-center transition-all hover:border-amber-500/30 hover:bg-amber-500/[0.03]"
+            >
+              <span className="text-xl">💰</span>
+              <span className="text-[11px] font-medium text-[var(--color-fg)]">Earnings</span>
+              <span className="text-[9px] text-[var(--color-muted)]">Revenue & payouts</span>
+            </a>
+            <a
+              href="/profile/content-library"
+              className="flex flex-col items-center gap-1.5 rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] px-3 py-3 text-center transition-all hover:border-blue-500/30 hover:bg-blue-500/[0.03]"
+            >
+              <span className="text-xl">📚</span>
+              <span className="text-[11px] font-medium text-[var(--color-fg)]">Content</span>
+              <span className="text-[9px] text-[var(--color-muted)]">All posts & media</span>
+            </a>
+            <a
+              href="/profile/audience"
+              className="flex flex-col items-center gap-1.5 rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] px-3 py-3 text-center transition-all hover:border-pink-500/30 hover:bg-pink-500/[0.03]"
+            >
+              <span className="text-xl">👥</span>
+              <span className="text-[11px] font-medium text-[var(--color-fg)]">Audience</span>
+              <span className="text-[9px] text-[var(--color-muted)]">Followers & growth</span>
+            </a>
+            <a
+              href="/profile/settings"
+              className="flex flex-col items-center gap-1.5 rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] px-3 py-3 text-center transition-all hover:border-slate-500/30 hover:bg-slate-500/[0.03]"
+            >
+              <span className="text-xl">⚙️</span>
+              <span className="text-[11px] font-medium text-[var(--color-fg)]">Settings</span>
+              <span className="text-[9px] text-[var(--color-muted)]">Configuration</span>
+            </a>
+          </div>
+        </div>
+
+        {/* Protocol Accounts Status */}
+        <div className="mb-6">
+          <ProtocolStatusSection walletAddress={p.walletAddress ?? ''} isOwnProfile={true} />
+        </div>
+
+        {p.showCrossPlatformSetup && (
+          <div className="mb-6" id="cross-platform-setup">
+            <CrossPlatformSetup
+              key={p.crossPlatformKey}
+              walletAddress={p.walletAddress ?? ''}
+              onRegistered={(result: PlatformAccount) => p.handleRegistered(result)}
+            />
+          </div>
+        )}
+
+        {/* Achievement Badges */}
+        <div className="mb-6">
+          <AchievementBadges earned={p.earnedAchievements} />
+        </div>
+
+        {/* ─── Creator Tools (own profile) ─────────────────────── */}
+        <div className="mb-6 space-y-3">
+          <CreatorToolsQuickActions
+            onCompose={() => p.setShowComposeModal(true)}
+            onGoLive={() => p.setShowGoLiveModal(true)}
+            onCreatePodcast={() => {
+              p.showToast('info', 'Podcast creation coming soon');
+            }}
+            onLaunchCoin={() => {
+              p.showToast('info', 'Coin launch coming soon');
+            }}
+          />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <ContentPerformanceWidget performance={p.contentPerformance} loading={p.perfLoading} />
+            <RevenueWidget revenue={p.revenueStats} loading={p.revLoading} />
+          </div>
+        </div>
+
+        {/* ─── Portable Credentials ──────────────────────────────── */}
+        <div className="mb-6">
+          <h2 className="mb-3 text-xs font-bold uppercase tracking-widest text-[var(--color-muted)]">
+            Portable Credentials
+          </h2>
+          <p className="mb-3 text-xs text-[var(--color-muted)]">
+            Use these credentials to login on any Mastodon/Lemmy/PeerTube app. You own this account.
+          </p>
+          <CredentialsProgressBanner connectedCount={p.identities.length} totalPlatforms={5} />
+          <div className="mt-3 space-y-3">
+            {p.identities.map((id) => {
+              const card = registrationToCredential({
+                platform: id.protocol,
+                status: 'created',
+                username: id.handle ?? id.displayName,
+                accountInfo: { username: id.handle ?? '' },
+              });
+              return card ? <CredentialCard key={id.id} credential={card} /> : null;
+            })}
+          </div>
+          <div className="mt-3">
+            <CredentialSecurityNote />
+          </div>
+        </div>
+
+        {/* Identity Linker */}
+        <div className="mb-6">
+          <IdentityLinker />
+        </div>
+
+        {/* ─── Tabs (17 content sources) ─────────────────────────── */}
+        <ProfileContentTabs active={p.activeTab} onTabChange={p.setActiveTab} />
+        <div className="py-6">
+          <TabContent tab={p.activeTab} items={p.tabContent} loading={p.tabLoading} />
+        </div>
+
+        {/* ─── Modals ───────────────────────────────────────────── */}
+        {p.showEditModal && <EditProfileModal open onClose={() => p.setShowEditModal(false)} />}
+        {p.showGoLiveModal && <GoLiveModal isOpen onClose={() => p.setShowGoLiveModal(false)} />}
+        {p.showComposeModal && <UnifiedComposerButton />}
+        {p.showUpgradeModal && (
+          <PremiumPaymentModal
+            open
+            onClose={() => p.setShowUpgradeModal(false)}
+            onSuccess={() => {
+              p.refreshPremium();
+              p.setShowUpgradeModal(false);
+            }}
+          />
+        )}
+      </div>
+
+      {/* ─── Sidebar ──────────────────────────────────────────────── */}
+      <aside className="w-full lg:w-80 shrink-0 space-y-4">
+        {/* Profile Discovery — Search */}
+        <div>
+          <ProfileSearchBar
+            value={p.searchQuery}
+            onChange={p.handleSearch}
+            onClear={() => {
+              p.setSearchQuery('');
+              p.handleSearch('');
+            }}
+          />
+          <div className="mt-2">
+            <ProfileSearchResults
+              results={p.searchResults}
+              loading={p.searchLoading}
+              onSelect={(profile) => {
+                window.location.href = `/profile/${profile.handle ?? profile.id}`;
+              }}
             />
           </div>
         </div>
-      )}
 
-      <div className="mb-6">
-        <StatsBar stats={p.profileStats} />
-      </div>
-      <div className="mb-6">
-        <ProtocolBadgesRow identities={p.identities} />
-      </div>
+        {/* Cross-Protocol Activity Feed */}
+        <CrossProtocolActivityFeed activities={p.activities} loading={p.activitiesLoading} />
 
-      {/* Protocol Accounts Status Section */}
-      <ProtocolStatusSection walletAddress={p.walletAddress ?? ''} isOwnProfile={true} />
+        {/* Trending Creators */}
+        <TrendingCreators profiles={p.trendingCreators} loading={p.trendingLoading} />
 
-      {p.showCrossPlatformSetup && (
-        <div className="mb-6" id="cross-platform-setup">
-          <CrossPlatformSetup
-            key={p.crossPlatformKey}
-            walletAddress={p.walletAddress ?? ''}
-            onRegistered={(result: PlatformAccount) => p.handleRegistered(result)}
-          />
+        {/* Who to Follow */}
+        <WhoToFollow profiles={p.whoToFollow} loading={p.whoToFollowLoading} />
+
+        {/* Quick Stats */}
+        <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-3">
+          <h4 className="mb-2 text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)]">
+            Connected Networks
+          </h4>
+          <div className="space-y-1.5">
+            {p.connectedProtocols.length > 0 ? (
+              p.connectedProtocols.map((protocol) => (
+                <div key={protocol} className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <span
+                      className="inline-block h-2 w-2 rounded-full"
+                      style={{ backgroundColor: PROTOCOL_COLORS[protocol] ?? '#666' }}
+                    />
+                    <span className="text-xs text-[var(--color-fg)] capitalize">{protocol}</span>
+                  </div>
+                  <span className="text-[10px] text-[var(--color-muted)]">Connected</span>
+                </div>
+              ))
+            ) : (
+              <p className="text-[10px] text-[var(--color-muted)]">No protocols connected</p>
+            )}
+          </div>
         </div>
-      )}
-
-      <div className="mb-6">
-        <div className="flex flex-wrap items-center justify-center gap-2">
-          <button
-            type="button"
-            onClick={() => p.setShowEditModal(true)}
-            className="btn-secondary text-xs"
-          >
-            Edit Profile
-          </button>
-          <button
-            type="button"
-            onClick={() => p.setShowCrossPlatformSetup(true)}
-            className="btn-secondary text-xs"
-          >
-            Create Accounts
-          </button>
-          <button
-            type="button"
-            onClick={() => p.setShowGoLiveModal(true)}
-            className="btn-secondary text-xs"
-          >
-            Go Live
-          </button>
-          <button
-            type="button"
-            onClick={() => p.setShowUpgradeModal(true)}
-            className="btn-primary text-xs"
-          >
-            Upgrade
-          </button>
-        </div>
-      </div>
-
-      <div className="mb-6">
-        <AchievementBadges earned={p.earnedAchievements} />
-      </div>
-
-      <div className="mb-6">
-        <h2 className="mb-3 text-xs font-bold uppercase tracking-widest text-[var(--color-muted)]">
-          Portable Credentials
-        </h2>
-        <p className="mb-3 text-xs text-[var(--color-muted)]">
-          Use these credentials to login on any Mastodon/Lemmy/PeerTube app. You own this account.
-        </p>
-        <CredentialsProgressBanner connectedCount={p.identities.length} totalPlatforms={5} />
-        <div className="mt-3 space-y-3">
-          {p.identities.map((id) => {
-            const result: Parameters<typeof registrationToCredential>[0] = {
-              platform: id.protocol,
-              status: 'created',
-              username: id.handle ?? id.displayName,
-              accountInfo: { username: id.handle ?? '' },
-            };
-            const card = registrationToCredential(result);
-            return card ? <CredentialCard key={id.id} credential={card} /> : null;
-          })}
-        </div>
-        <div className="mt-3">
-          <CredentialSecurityNote />
-        </div>
-      </div>
-
-      {/* Identity Linker */}
-      <div className="mb-6">
-        <IdentityLinker />
-      </div>
-
-      {/* Tabs */}
-      <ProfileTabs active={p.activeTab} onTabChange={p.setActiveTab} />
-      <div className="py-6">
-        <TabEmptyState tab={p.activeTab} />
-      </div>
-
-      {/* Modals */}
-      {p.showEditModal && <EditProfileModal open onClose={() => p.setShowEditModal(false)} />}
-      {p.showGoLiveModal && <GoLiveModal isOpen onClose={() => p.setShowGoLiveModal(false)} />}
-      {p.showUpgradeModal && (
-        <PremiumPaymentModal
-          open
-          onClose={() => p.setShowUpgradeModal(false)}
-          onSuccess={() => {
-            p.refreshPremium();
-            p.setShowUpgradeModal(false);
-          }}
-        />
-      )}
-    </>
+      </aside>
+    </div>
   );
 }

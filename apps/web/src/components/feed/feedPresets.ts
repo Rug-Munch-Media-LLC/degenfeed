@@ -84,4 +84,7 @@ export const PROTOCOL_META: Record<string, { label: string; color: string; emoji
   threads: { label: 'Threads (Experimental)', color: '#888888', emoji: '🧵' },
   reddit: { label: 'Reddit', color: '#ff4500', emoji: '🔴' },
   rss: { label: 'News', color: '#ffa500', emoji: '📰' },
+  mirror: { label: 'Mirror.xyz', color: '#0a0a0a', emoji: '🪞' },
+  arena: { label: 'Arena.social', color: '#e84142', emoji: '🏟️' },
+  paragraph: { label: 'Paragraph.xyz', color: '#6b21a8', emoji: '📝' },
 };
