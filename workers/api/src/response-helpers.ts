@@ -46,6 +46,43 @@ export interface RateLimitResult {
   retryAfter: number;
 }
 
+// ─── Status-specific response helpers ───────────────────────
+
+export function ok(data: unknown): Response {
+  return new Response(JSON.stringify(data), {
+    status: 200,
+    headers: { 'content-type': 'application/json' },
+  });
+}
+
+export function created(data: unknown): Response {
+  return new Response(JSON.stringify(data), {
+    status: 201,
+    headers: { 'content-type': 'application/json' },
+  });
+}
+
+export function badRequest(message = 'Bad request'): Response {
+  return new Response(JSON.stringify({ error: message }), {
+    status: 400,
+    headers: { 'content-type': 'application/json' },
+  });
+}
+
+export function notFound(message = 'Not found'): Response {
+  return new Response(JSON.stringify({ error: message }), {
+    status: 404,
+    headers: { 'content-type': 'application/json' },
+  });
+}
+
+export function serverError(message = 'Internal server error'): Response {
+  return new Response(JSON.stringify({ error: message }), {
+    status: 500,
+    headers: { 'content-type': 'application/json' },
+  });
+}
+
 export function rateLimitResponse(retryAfterMs: number): Response {
   return new Response(JSON.stringify({ error: 'Rate limit exceeded', retryAfterMs }), {
     status: 429,

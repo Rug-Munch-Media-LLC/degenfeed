@@ -1,52 +1,34 @@
-'use client';
-
 /**
- * Shared page loading skeleton — used by route loading.tsx files
- * and as fallback for dynamic() imports.
- *
- * Variants:
- *   - `type="page"` (default): full page skeleton with header + grid
- *   - `type="card"`: single card skeleton (for dynamic() fallback)
- *   - `type="list"`: list-style skeleton
+ * PageSkeleton — Generic loading skeleton for page transitions
  */
 
-export function PageSkeleton({ variant = 'page' }: { variant?: 'page' | 'card' | 'list' }) {
-  if (variant === 'card') {
-    return (
-      <div
-        className="h-48 animate-pulse rounded-xl"
-        style={{ backgroundColor: 'var(--color-card)' }}
-      />
-    );
-  }
-
-  if (variant === 'list') {
-    return (
-      <div className="animate-pulse space-y-3 p-6" role="status" aria-label="Loading">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <div
-            key={i}
-            className="h-16 rounded-xl"
-            style={{ backgroundColor: 'var(--color-card)' }}
-          />
+export function PageSkeleton() {
+  return (
+    <div className="mx-auto max-w-2xl px-4 py-6 animate-pulse">
+      <div className="mb-6 flex flex-col items-center">
+        <div className="mb-4 h-24 w-24 rounded-full skeleton" />
+        <div className="mb-2 h-7 w-48 skeleton rounded-lg" />
+        <div className="mb-1 h-4 w-32 skeleton rounded-lg" />
+        <div className="h-4 w-64 skeleton rounded-lg" />
+      </div>
+      <div className="mb-6 flex justify-center gap-8">
+        {[1, 2, 3, 4].map((i) => (
+          <div key={i} className="h-12 w-20 skeleton rounded-xl" />
         ))}
       </div>
-    );
-  }
-
-  return (
-    <div className="animate-pulse space-y-4 p-6" role="status" aria-label="Loading">
-      <div className="h-8 w-48 rounded-lg" style={{ backgroundColor: 'var(--color-card)' }} />
-      <div className="h-4 w-96 rounded" style={{ backgroundColor: 'var(--color-card)' }} />
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <div
-            key={i}
-            className="h-48 rounded-xl"
-            style={{ backgroundColor: 'var(--color-card)' }}
-          />
+      <div className="mb-6 flex justify-center gap-2">
+        {[1, 2, 3, 4, 5].map((i) => (
+          <div key={i} className="h-8 w-8 skeleton rounded-full" />
+        ))}
+      </div>
+      <div className="mb-6 h-10 skeleton rounded-xl" />
+      <div className="mb-6 flex justify-center gap-3">
+        {[1, 2, 3, 4].map((i) => (
+          <div key={i} className="h-10 w-20 skeleton rounded-lg" />
         ))}
       </div>
     </div>
   );
 }
+
+export default PageSkeleton;

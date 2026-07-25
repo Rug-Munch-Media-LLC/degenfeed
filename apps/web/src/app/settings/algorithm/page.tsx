@@ -23,7 +23,7 @@ import {
   type ProtocolWeights,
 } from '@degenfeed/feed-core';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import PageHeader from '../../../../components/ui/PageHeader';
+import PageHeader from '../../../components/ui/PageHeader';
 
 // ─── Constants ──────────────────────────────────────────────────────────
 

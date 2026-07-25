@@ -23,10 +23,10 @@ import { deleteFromR2, getR2Object, uploadToR2 } from './r2-storage';
 
 // ─── KV Prefixes ──────────────────────────────────────────────────────────
 
-const FILE_PREFIX = 'chat:file:';
-const FILE_INDEX_PREFIX = 'chat:file:index:';
-const QUOTA_PREFIX = 'chat:file:quota:';
-const UPLOAD_TOKEN_PREFIX = 'chat:file:token:';
+export const FILE_PREFIX = 'chat:file:';
+export const FILE_INDEX_PREFIX = 'chat:file:index:';
+export const QUOTA_PREFIX = 'chat:file:quota:';
+export const UPLOAD_TOKEN_PREFIX = 'chat:file:token:';
 
 // ─── Types ────────────────────────────────────────────────────────────────
 

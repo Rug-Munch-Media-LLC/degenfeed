@@ -2,6 +2,7 @@ import { fetchAetherPosts } from '../providers/aether';
 import { fetchAkkomaPosts } from '../providers/akkoma';
 // Bridge providers that exist but were never registered
 import { fetchArenaPosts } from '../providers/arena';
+import { fetchArweavePosts } from '../providers/arweave';
 import { fetchBlueskyPosts } from '../providers/bluesky';
 import { fetchBonfirePosts } from '../providers/bonfire';
 // NEW PROTOCOL IMPORTS - 2026-07-26
@@ -34,7 +35,9 @@ import { fetchHubzillaPosts } from '../providers/hubzilla';
 import { fetchHuddle01Posts } from '../providers/huddle01';
 import { fetchIceshrimpPosts } from '../providers/iceshrimp';
 import { fetchImmichPosts } from '../providers/immich';
+import { fetchIpfsClusterPosts } from '../providers/ipfs-cluster';
 import { fetchKbinPosts } from '../providers/kbin';
+import { fetchKnownPosts } from '../providers/known';
 import { fetchLBRYPosts } from '../providers/lbry';
 import { fetchLemmyPosts } from '../providers/lemmy';
 import { fetchLensPosts } from '../providers/lens';
@@ -53,6 +56,8 @@ import { fetchOwncastPosts } from '../providers/owncast';
 import { fetchPeerTubePosts } from '../providers/peertube';
 import { fetchPixelfedPosts } from '../providers/pixelfed';
 import { fetchPleromaPosts } from '../providers/pleroma';
+import { fetchPlumePosts } from '../providers/plume';
+import { fetchPubliiPosts } from '../providers/publii';
 import { fetchPushPosts } from '../providers/push';
 import { fetchRedditPosts } from '../providers/redlib';
 import { fetch as fetchRssPosts } from '../providers/rss';
@@ -62,6 +67,7 @@ import { fetchSessionPosts } from '../providers/session';
 import { fetchSharkeyPosts } from '../providers/sharkey';
 import { fetchSteemPosts } from '../providers/steem';
 import { fetchStreamsPosts } from '../providers/streams';
+import { fetchStrfryPosts } from '../providers/strfry';
 import { fetchSublinksPosts } from '../providers/sublinks';
 import { fetchSubsocialPosts } from '../providers/subsocial';
 import { fetchTablelandPosts } from '../providers/tableland';
@@ -72,12 +78,6 @@ import { fetchThreadsPosts } from '../providers/threads';
 import { fetchWriteFreelyPosts } from '../providers/writefreely';
 import { fetchXmtpPosts } from '../providers/xmtp';
 import { fetchYggdrasilPosts } from '../providers/yggdrasil';
-import { fetchPlumePosts } from "'../providers/plume'";
-import { fetchKnownPosts } from "'../providers/known'";
-import { fetchIpfsClusterPosts } from "'../providers/ipfs-cluster'";
-import { fetchArweavePosts } from "'../providers/arweave'";
-import { fetchStrfryPosts } from "'../providers/strfry'";
-import { fetchPubliiPosts } from "'../providers/publii'";
 import { fetchZoraPosts } from '../providers/zora';
 import type { UnifiedPost } from './types';
 
@@ -208,6 +208,16 @@ export const PROVIDERS: Record<string, { name: string; fetch: ProviderFetcher }>
   yggdrasil: { name: 'Yggdrasil (Decentralized Mesh)', fetch: fetchYggdrasilPosts },
 };
 
+/** Race a promise against a timeout (milliseconds) */
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error(`[bridge] ${label} timed out after ${ms}ms`)), ms),
+    ),
+  ]);
+}
+
 /** Build a deduplicated feed from multiple protocols */
 export async function buildFeed(
   protocols: string[],
@@ -234,12 +244,17 @@ export async function buildFeed(
     );
 
   const perProviderLimit = Math.max(5, Math.ceil((limit * 1.5) / activeProtocols.length));
+  const FETCH_TIMEOUT_MS = 10000; // 10s per-provider timeout
   const results = await Promise.allSettled(
     activeProtocols.map(async (protocol) => {
       const provider = PROVIDERS[protocol];
       if (!provider) return { protocol, posts: [] as UnifiedPost[] };
       try {
-        const posts = await provider.fetch(perProviderLimit);
+        const posts = await withTimeout(
+          provider.fetch(perProviderLimit),
+          FETCH_TIMEOUT_MS,
+          `provider:${protocol}`,
+        );
         return { protocol, posts };
       } catch (err) {
         return {

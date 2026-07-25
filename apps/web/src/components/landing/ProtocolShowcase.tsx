@@ -71,8 +71,8 @@ export function ProtocolShowcase() {
           className="mx-auto max-w-xl text-sm leading-relaxed"
           style={{ color: 'var(--color-fg-secondary)' }}
         >
-          44 decentralized networks. One unified timeline. The social graph belongs to the protocols
-          — the window belongs to you.
+          101+ decentralized networks. One unified timeline. The social graph belongs to the
+          protocols — the window belongs to you.
         </p>
       </div>
 

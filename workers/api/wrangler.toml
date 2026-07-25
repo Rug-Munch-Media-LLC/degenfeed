@@ -113,7 +113,7 @@ binding = "FEDDY"
 id = "ab47c4c4222f4529b36c62bd801750ef"
 preview_id = "4e693a3fa9da4deba435f217c3d275ca"
 
-# Routes — main app + api on degenfeed.xyz domain
+# ──────────────── Routes ────────────────────────────────
 routes = [
   { pattern = "degenfeed.xyz/api/*", zone_id = "116a9676c3358def6796910ccb96f1fc" },
   { pattern = "app.degenfeed.xyz/api/*", zone_id = "116a9676c3358def6796910ccb96f1fc" },
@@ -196,6 +196,8 @@ REDLIB_URL = "https://redlib.degenfeed.xyz"
 FLARESOLVERR_URL = "http://100.104.130.92:8191"
 RMI_BACKEND_URL = "http://100.104.130.92:8000"
 RSS_BRIDGE_URL = "https://rss-bridge.degenfeed.xyz"
+# Bridge service URL for protocol feed fetching
+BRIDGE_INTERNAL_URL = "https://bridge.degenfeed.xyz"
 # Feature flags — comma-separated list of flags that should default to enabled
 FEATURE_FLAGS_DEFAULT = "reply-composer,dark-mode-only,farcaster-frames"
 # Postiz cross-posting API — for scheduled social media publishing
@@ -217,6 +219,7 @@ POLYGON_RPC_URL = "https://polygon-rpc.com"
 
 # Mastodon instance for account creation (defaults to GoToSocial)
 MASTODON_INSTANCE_URL = "https://social.degenfeed.xyz"
+GOTOSOCIAL_INSTANCE_URL = "https://social.degenfeed.xyz"
 
 # Lemmy instance for account creation
 LEMMY_INSTANCE_URL = "https://community.degenfeed.xyz"
@@ -274,6 +277,13 @@ routes = [
 ]
 [env.canary.vars]
 ALLOWED_ORIGINS = "https://canary.degenfeed.xyz,http://localhost:3000"
+
+# Package aliases — resolves monorepo workspace packages for esbuild
+[alias]
+"@degenfeed/cross-protocol-bridge" = "../../packages/cross-protocol-bridge/src/index.ts"
+"@degenfeed/crypto" = "../../packages/crypto/src/e2e-messaging.ts"
+"@degenfeed/realtime" = "../../packages/realtime/src/index.ts"
+"@degenfeed/realtime/message-bridge" = "../../packages/realtime/src/message-bridge.ts"
 
 # Cron triggers — scheduled Worker invocations.
 # Every minute:   scheduled post executor

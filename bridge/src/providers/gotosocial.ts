@@ -144,6 +144,7 @@ async function fetchFromGts(limit: number): Promise<UnifiedPost[]> {
         redirect_uri: 'urn:ietf:wg:oauth:2.0:oob',
         scope: 'read:statuses read:accounts read:timelines',
       }),
+      signal: AbortSignal.timeout(5000),
     });
 
     if (!tokenRes.ok) {
@@ -163,7 +164,9 @@ async function fetchFromGts(limit: number): Promise<UnifiedPost[]> {
     }
 
     // Try without auth (some instances allow it)
-    const res = await $fetch(`${GTS_BASE}/api/v1/timelines/public?local=true&limit=${limit}`);
+    const res = await $fetch(`${GTS_BASE}/api/v1/timelines/public?local=true&limit=${limit}`, {
+      signal: AbortSignal.timeout(8000),
+    });
     if (res.ok) {
       const raw = (await res.json()) as MastodonStatus[];
       return raw.map((s) => statusToPost(s, 'social.degenfeed.xyz'));
@@ -186,7 +189,10 @@ async function fetchFromPublicInstances(limit: number): Promise<UnifiedPost[]> {
       const hostname = new URL(baseUrl).hostname;
       const res = await $fetch(
         `${baseUrl}/api/v1/timelines/public?local=true&limit=${perInstance}`,
-        { headers: { 'User-Agent': 'DegenFeed-Bridge/0.1' } },
+        {
+          headers: { 'User-Agent': 'DegenFeed-Bridge/0.1' },
+          signal: AbortSignal.timeout(8000),
+        },
       );
       if (!res.ok) return [];
       const raw = (await res.json()) as MastodonStatus[];

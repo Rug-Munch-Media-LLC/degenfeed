@@ -376,7 +376,7 @@ export default function NewsletterPage() {
               <ul className="space-y-2 text-xs text-[var(--color-muted)]">
                 <li className="flex items-start gap-2">
                   <span className="mt-0.5 text-degen-400">◆</span>
-                  <span>Top 15 stories from all protocols, ranked by quality</span>
+                  <span>Top stories from all 101+ protocols, ranked by quality</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="mt-0.5 text-degen-400">◆</span>

@@ -19,7 +19,7 @@ const FEATURES = [
     icon: '📡',
     title: 'Unified Feed',
     description:
-      'No more checking 44 silos. See every post from every protocol in one timeline. 15-layer smart deduplication means zero repeats.',
+      'No more checking 101+ silos. See every post from every protocol in one timeline. 15-layer smart deduplication means zero repeats.',
     gradient: 'linear-gradient(135deg, rgba(0,255,65,0.15), rgba(17,133,254,0.05))',
     border: 'rgba(0,255,65,0.2)',
     accent: 'var(--color-accent)',
@@ -37,7 +37,7 @@ const FEATURES = [
     icon: '🔒',
     title: 'Data Sovereignty',
     description:
-      'We self-host 42 nodes: Farcaster Hubble, Nostr relays, PeerTube, GoToSocial, and more. Your data lives on your terms with our infrastructure.',
+      'We self-host 50+ services: Farcaster Hubble, Nostr relays, PeerTube, GoToSocial, and more. Your data lives on your terms with our infrastructure.',
     gradient: 'linear-gradient(135deg, rgba(0,186,124,0.15), rgba(139,92,246,0.05))',
     border: 'rgba(0,186,124,0.2)',
     accent: 'var(--color-repost-active)',
@@ -46,7 +46,7 @@ const FEATURES = [
     icon: '🌉',
     title: 'Protocol Bridging',
     description:
-      'Post once, publish everywhere with 12 protocol adapters. Reply to a Farcaster cast from Nostr. DM a Bluesky user from Matrix. The bridges work.',
+      'Post once, publish everywhere with 101+ protocol adapters. Reply to a Farcaster cast from Nostr. DM a Bluesky user from Matrix. The bridges work.',
     gradient: 'linear-gradient(135deg, rgba(99,100,255,0.15), rgba(0,255,65,0.05))',
     border: 'rgba(99,100,255,0.2)',
     accent: 'var(--color-protocol-mastodon)',
@@ -77,8 +77,8 @@ export function FeatureGrid() {
           className="mx-auto max-w-xl text-sm leading-relaxed"
           style={{ color: 'var(--color-fg-secondary)' }}
         >
-          One protocol is limiting. Forty-four is liberation. Every network, every identity, every
-          post — in one place.
+          One protocol is limiting. 101 is liberation. Every network, every identity, every post —
+          in one place.
         </p>
       </div>
 
