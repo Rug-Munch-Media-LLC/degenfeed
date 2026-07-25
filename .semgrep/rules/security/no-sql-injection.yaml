@@ -1,0 +1,34 @@
+rules:
+  - id: no-sql-string-concatenation
+    patterns:
+      - pattern-either:
+          - pattern: "SELECT ..." + $VAR + "..."
+          - pattern: `SELECT ... ${$VAR} ...`
+          - pattern: 'SELECT ... " . $VAR . " ...'
+      - metavariable-regex:
+          metavariable: $VAR
+          regex: ^(?![A-Z_]+$)  # Allow SQL keywords in uppercase
+    message: >-
+      SQL query built with string concatenation. Use parameterized queries
+      or an ORM to prevent SQL injection attacks.
+    languages:
+      - javascript
+      - typescript
+      - python
+      - go
+      - java
+    severity: ERROR
+
+  - id: no-nosql-injection
+    patterns:
+      - pattern-either:
+          - pattern: "... $where: ..."
+          - pattern: "... $regex: ..."
+      - pattern-not: "... $regex: '^...'"
+    message: >-
+      NoSQL injection risk: $where and $regex operators should use
+      sanitized or constant input, never raw user data.
+    languages:
+      - javascript
+      - typescript
+    severity: WARNING
