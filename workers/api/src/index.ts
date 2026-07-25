@@ -91,6 +91,46 @@ export interface Env {
   /** Bluesky access token for AT Protocol chat */
   BSKY_ACCESS_TOKEN?: string;
 
+  // ─── Matrix / Conduit Chat Hub ────────────────────────────────────────
+  /** Conduit admin token for bridge bot registration */
+  MATRIX_ADMIN_TOKEN?: string;
+  /** Matrix sender key for E2EE */
+  MATRIX_SENDER_KEY?: string;
+  /** Matrix room ID for bridge fabric */
+  MATRIX_ROOM_ID?: string;
+
+  // ─── Protocol Bridge Credentials ──────────────────────────────────────
+  /** Nostr nsec for NIP-17 encrypted DMs */
+  NOSTR_NSEC?: string;
+  /** Lens access token */
+  LENS_ACCESS_TOKEN?: string;
+  /** Neynar API key for Farcaster */
+  NEYNAR_API_KEY?: string;
+  /** Farcaster signer UUID */
+  FARCASTER_SIGNER_UUID?: string;
+  /** Mastodon/ActivityPub access token */
+  MASTODON_ACCESS_TOKEN?: string;
+  /** ActivityPub instance URL */
+  AP_INSTANCE_URL?: string;
+  /** Discord bot token */
+  DISCORD_BOT_TOKEN?: string;
+  /** IRC bridge URL */
+  IRC_BRIDGE_URL?: string;
+  /** XMPP bridge URL */
+  XMPP_BRIDGE_URL?: string;
+  /** Signal API URL */
+  SIGNAL_API_URL?: string;
+  /** Signal phone number */
+  SIGNAL_NUMBER?: string;
+
+  // ─── LiveKit / WebRTC Calling ────────────────────────────────────────
+  /** LiveKit API key */
+  LIVEKIT_API_KEY?: string;
+  /** LiveKit API secret */
+  LIVEKIT_API_SECRET?: string;
+  /** LiveKit server host */
+  LIVEKIT_HOST?: string;
+
   // ─── Castopod (Podcast Hosting) ──────────────────────────────────────
   /** Castopod instance URL (default: http://127.0.0.1:8088) */
   CASTOPOD_INSTANCE_URL?: string;
