@@ -110,7 +110,32 @@ export async function handleProviderFeed(
       timeoutMs: DEFAULT_TIMEOUT_MS,
       concurrency: 4,
     });
-    const posts = sanitizePosts(result.posts).slice(0, limit);
+    let posts = sanitizePosts(result.posts).slice(0, limit);
+
+    // Fallback: if primary provider returned 0, try BridgeFeedProvider
+    if (posts.length === 0) {
+      const { BridgeFeedProvider } = await import('../feed/feed-fetcher');
+      const bridgeProvider = new BridgeFeedProvider(protocol, env);
+      try {
+        const bridgeResult = await bridgeProvider.fetchFeed({ timeoutMs: 6000 });
+        posts = sanitizePosts(bridgeResult.posts).slice(0, limit);
+        if (posts.length > 0) {
+          return jsonResponse({
+            data: posts,
+            meta: {
+              total: posts.length,
+              limit,
+              protocol,
+              source: 'bridge-fallback',
+              fetchedAt: Date.now(),
+            },
+          });
+        }
+      } catch {
+        /* bridge also unavailable */
+      }
+    }
+
     return jsonResponse({
       data: posts,
       meta: {
@@ -122,6 +147,27 @@ export async function handleProviderFeed(
       },
     });
   } catch (err) {
+    // Final fallback: try bridge
+    try {
+      const { BridgeFeedProvider } = await import('../feed/feed-fetcher');
+      const bridgeProvider = new BridgeFeedProvider(protocol, env);
+      const bridgeResult = await bridgeProvider.fetchFeed({ timeoutMs: 6000 });
+      const posts = sanitizePosts(bridgeResult.posts).slice(0, limit);
+      if (posts.length > 0) {
+        return jsonResponse({
+          data: posts,
+          meta: {
+            total: posts.length,
+            limit,
+            protocol,
+            source: 'bridge-fallback',
+            fetchedAt: Date.now(),
+          },
+        });
+      }
+    } catch {
+      /* bridge unavailable */
+    }
     const message = err instanceof Error ? err.message : 'Provider fetch failed';
     console.error('[feed] provider feed fetch failed:', err instanceof Error ? err.message : err);
     return jsonResponse({ error: message }, 502);
