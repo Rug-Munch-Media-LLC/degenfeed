@@ -68,6 +68,40 @@ import {
   handleSearchSuggestions,
 } from '../../routes/chat-search';
 import {
+  handleBridgeStatus as handleBridgeV2Status,
+  handleEnableBridge,
+  handleDisableBridge,
+  handleProtocolHealth,
+  handleBridgeSend as handleBridgeV2Send,
+} from '../../routes/chat-bridge';
+import {
+  handleCallAccept,
+  handleCallActive,
+  handleCallCamera,
+  handleCallEnd,
+  handleCallHistory,
+  handleCallMute,
+  handleCallShare,
+  handleCallStart,
+  handleCallVoicemail,
+} from '../../routes/chat-call';
+import {
+  handleCheckVerification,
+  handleGetOwnFingerprint,
+  handleGetUserFingerprint,
+  handleGetVerifiedPeers,
+  handleKeyVerify,
+} from '../../routes/chat-keys';
+import {
+  handleDisableTimer as handleDisableTimerV2,
+  handleGetTimer as handleGetTimerV2,
+  handleMediaViewed,
+  handleSetTimer as handleSetTimerV2,
+  handleScreenshotDetected,
+  handleTimerDisplay,
+  handleViewOnce,
+} from '../../routes/chat-timer';
+import {
   handleCreateGroup,
   handleGetOfflineMessages,
   handleGetPublicKeys,
@@ -417,5 +451,101 @@ export function registerMessagingRoutes(app: Hono<{ Bindings: Env }>): void {
   );
   app.get('/api/chat/discover/recommended', async (c) =>
     withSession(c, () => handleDiscoveryRecommended(c.req.raw, c.env)),
+  );
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // SUPREME CHAT APP — Matrix Hub Bridges
+  // ═══════════════════════════════════════════════════════════════════════
+  app.post('/api/chat/bridge/:protocol/enable', async (c) =>
+    withSession(c, () => handleEnableBridge(c.req.raw, c.env, c.req.param('protocol'))),
+  );
+  app.post('/api/chat/bridge/:protocol/disable', async (c) =>
+    withSession(c, () => handleDisableBridge(c.req.raw, c.env, c.req.param('protocol'))),
+  );
+  app.get('/api/chat/bridge/status', async (c) => handleBridgeV2Status(c.req.raw, c.env));
+  app.get('/api/chat/bridge/:protocol/health', async (c) =>
+    handleProtocolHealth(c.req.raw, c.env, c.req.param('protocol')),
+  );
+  app.post('/api/chat/bridge/:protocol/send', async (c) =>
+    withSession(c, () => handleBridgeV2Send(c.req.raw, c.env, c.req.param('protocol'))),
+  );
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // LIVE AUDIO/VIDEO CALLING
+  // ═══════════════════════════════════════════════════════════════════════
+  app.post('/api/chat/call/start', async (c) =>
+    withSession(c, () => handleCallStart(c.req.raw, c.env)),
+  );
+  app.post('/api/chat/call/accept', async (c) =>
+    withSession(c, () => handleCallAccept(c.req.raw, c.env)),
+  );
+  app.post('/api/chat/call/end', async (c) =>
+    withSession(c, () => handleCallEnd(c.req.raw, c.env)),
+  );
+  app.post('/api/chat/call/mute', async (c) =>
+    withSession(c, () => handleCallMute(c.req.raw, c.env)),
+  );
+  app.post('/api/chat/call/camera', async (c) =>
+    withSession(c, () => handleCallCamera(c.req.raw, c.env)),
+  );
+  app.post('/api/chat/call/share', async (c) =>
+    withSession(c, () => handleCallShare(c.req.raw, c.env)),
+  );
+  app.get('/api/chat/call/active', async (c) =>
+    withSession(c, () => handleCallActive(c.req.raw, c.env)),
+  );
+  app.get('/api/chat/call/history', async (c) =>
+    withSession(c, () => handleCallHistory(c.req.raw, c.env)),
+  );
+  app.post('/api/chat/call/voicemail', async (c) =>
+    withSession(c, () => handleCallVoicemail(c.req.raw, c.env)),
+  );
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // KEY VERIFICATION
+  // ═══════════════════════════════════════════════════════════════════════
+  app.post('/api/chat/keys/verify', async (c) =>
+    withSession(c, () => handleKeyVerify(c.req.raw, c.env)),
+  );
+  app.get('/api/chat/keys/fingerprint', async (c) =>
+    withSession(c, () => handleGetOwnFingerprint(c.req.raw, c.env)),
+  );
+  app.get('/api/chat/keys/fingerprint/:userId/:protocol', async (c) =>
+    handleGetUserFingerprint(c.req.raw, c.env, c.req.param('userId'), c.req.param('protocol')),
+  );
+  app.get('/api/chat/keys/verified', async (c) =>
+    withSession(c, () => handleGetVerifiedPeers(c.req.raw, c.env)),
+  );
+  app.get('/api/chat/keys/check/:peerId', async (c) =>
+    withSession(c, () => handleCheckVerification(c.req.raw, c.env, c.req.param('peerId'))),
+  );
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // SELF-DESTRUCT TIMERS (V2 — PUT semantics)
+  // ═══════════════════════════════════════════════════════════════════════
+  app.put('/api/chat/timer/:conversationId', async (c) =>
+    withSession(c, () => handleSetTimerV2(c.req.raw, c.env, c.req.param('conversationId'))),
+  );
+  app.get('/api/chat/timer/:conversationId', async (c) =>
+    withSession(c, () => handleGetTimerV2(c.req.raw, c.env, c.req.param('conversationId'))),
+  );
+  app.delete('/api/chat/timer/:conversationId', async (c) =>
+    withSession(c, () => handleDisableTimerV2(c.req.raw, c.env, c.req.param('conversationId'))),
+  );
+  app.get('/api/chat/timer/:conversationId/display', async (c) =>
+    handleTimerDisplay(c.req.raw, c.env, c.req.param('conversationId')),
+  );
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // VIEW-ONCE MEDIA & SELF-DESTRUCT
+  // ═══════════════════════════════════════════════════════════════════════
+  app.post('/api/chat/:conversationId/view-once', async (c) =>
+    withSession(c, () => handleViewOnce(c.req.raw, c.env, c.req.param('conversationId'))),
+  );
+  app.post('/api/chat/media/viewed', async (c) =>
+    withSession(c, () => handleMediaViewed(c.req.raw, c.env)),
+  );
+  app.post('/api/chat/screenshot', async (c) =>
+    withSession(c, () => handleScreenshotDetected(c.req.raw, c.env)),
   );
 }

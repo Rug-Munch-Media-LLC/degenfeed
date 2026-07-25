@@ -1,0 +1,226 @@
+# Conduit Matrix Homeserver — DegenFeed Chat Bridge Fabric
+# =========================================================
+# Conduit is a lightweight, self-hosted Matrix homeserver compatible with
+# the Matrix spec. It serves as the central bridge fabric for ALL chat
+# protocols in DegenFeed.
+#
+# Architecture:
+#   Conduit (port 8448) ←→ Matrix Appservice Bridges ←→ Protocol APIs
+#       │
+#       └── DegenFeed Chat App (WebSocket + REST API)
+#
+# Ports:
+#   - 8448: Matrix Client-Server API + Federation
+#   - 4433: Conduit Web admin / health
+#
+# Deploy:
+#   docker compose -f docker-compose.conduit.yml up -d
+#
+# First-time setup:
+#   1. Create admin user: docker compose exec conduit conduit register-user <user> <pass> --admin
+#   2. Update .env with MATRIX_ADMIN_TOKEN and MATRIX_ACCESS_TOKEN
+# =========================================================
+
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  # ── Conduit Matrix Homeserver ────────────────────────────────────────
+  conduit:
+    image: conduit:latest
+    build:
+      context: ../bridge/conduit
+      dockerfile: Dockerfile
+    container_name: degenfeed-conduit
+    restart: unless-stopped
+    ports:
+      - "8448:8448"    # Matrix Client-Server API + Federation
+      - "4433:4433"    # Admin API
+    environment:
+      CONDUIT_SERVER_NAME: "${CONDUIT_SERVER_NAME:-degenfeed.xyz}"
+      CONDUIT_PORT: 8448
+      CONDUIT_DATABASE_BACKEND: "${CONDUIT_DB_BACKEND:-rocksdb}"
+      CONDUIT_DATABASE_PATH: /var/lib/conduit/db
+      CONDUIT_MAX_REQUEST_SIZE: 20_000_000
+      CONDUIT_ALLOW_FEDERATION: "${CONDUIT_ALLOW_FEDERATION:-true}"
+      CONDUIT_ALLOW_REGISTRATION: "${CONDUIT_ALLOW_REGISTRATION:-true}"
+      CONDUIT_ALLOW_UNVERIFIED_EMAIL_REGISTRATION: "true"
+      CONDUIT_TRUSTED_SERVERS: "matrix.org"
+      CONDUIT_LOG: "info,rocket=info,conduit_core=info"
+      RUST_LOG: "info"
+    volumes:
+      - conduit_data:/var/lib/conduit
+      - ../bridge/conduit/config:/etc/conduit:ro
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 512M
+        reservations:
+          cpus: "0.25"
+          memory: 256M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8448/_matrix/client/v3/versions"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - degenfeed_chat
+
+  # ── Matrix Appservice IRC Bridge ─────────────────────────────────────
+  matrix-appservice-irc:
+    image: matrixdotorg/matrix-appservice-irc:latest
+    container_name: degenfeed-irc-bridge
+    restart: unless-stopped
+    depends_on:
+      conduit:
+        condition: service_healthy
+    environment:
+      APPSERVICE_IRC_REGISTRATION: /data/irc-registration.yaml
+      APPSERVICE_IRC_CONDUIT_URL: "http://conduit:8448"
+    volumes:
+      - ../bridge/config/irc-config.yaml:/data/config.yaml:ro
+      - ../bridge/config/irc-registration.yaml:/data/irc-registration.yaml:ro
+      - irc_bridge_data:/data
+    logging: *default-logging
+    networks:
+      - degenfeed_chat
+
+  # ── Matrix Bifrost (XMPP Bridge) ─────────────────────────────────────
+  matrix-bifrost:
+    image: matrixdotorg/matrix-bifrost:latest
+    container_name: degenfeed-xmpp-bridge
+    restart: unless-stopped
+    depends_on:
+      conduit:
+        condition: service_healthy
+    environment:
+      BIFROST_CONDUIT_URL: "http://conduit:8448"
+      BIFROST_CONDUIT_TOKEN: "${MATRIX_ACCESS_TOKEN}"
+    volumes:
+      - bifrost_data:/data
+    logging: *default-logging
+    networks:
+      - degenfeed_chat
+
+  # ── Matrix Appservice Discord Bridge ──────────────────────────────────
+  matrix-appservice-discord:
+    image: halfshot/matrix-appservice-discord:latest
+    container_name: degenfeed-discord-bridge
+    restart: unless-stopped
+    depends_on:
+      conduit:
+        condition: service_healthy
+    environment:
+      DISCORD_BOT_TOKEN: "${DISCORD_BOT_TOKEN}"
+      CONDUIT_URL: "http://conduit:8448"
+    volumes:
+      - discord_bridge_data:/data
+    logging: *default-logging
+    networks:
+      - degenfeed_chat
+
+  # ── Matrix Appservice Telegram Bridge ────────────────────────────────
+  matrix-appservice-telegram:
+    image: halfshot/mautrix-telegram:latest
+    container_name: degenfeed-telegram-bridge
+    restart: unless-stopped
+    depends_on:
+      conduit:
+        condition: service_healthy
+    environment:
+      TELEGRAM_API_ID: "${TELEGRAM_API_ID}"
+      TELEGRAM_API_HASH: "${TELEGRAM_API_HASH}"
+      TELEGRAM_BOT_TOKEN: "${TELEGRAM_BOT_TOKEN}"
+      CONDUIT_URL: "http://conduit:8448"
+    volumes:
+      - telegram_bridge_data:/data
+    logging: *default-logging
+    networks:
+      - degenfeed_chat
+
+  # ── Matrix Appservice Slack Bridge ───────────────────────────────────
+  matrix-appservice-slack:
+    image: halfshot/matrix-appservice-slack:latest
+    container_name: degenfeed-slack-bridge
+    restart: unless-stopped
+    depends_on:
+      conduit:
+        condition: service_healthy
+    environment:
+      SLACK_CLIENT_ID: "${SLACK_CLIENT_ID}"
+      SLACK_CLIENT_SECRET: "${SLACK_CLIENT_SECRET}"
+      CONDUIT_URL: "http://conduit:8448"
+    volumes:
+      - slack_bridge_data:/data
+    logging: *default-logging
+    networks:
+      - degenfeed_chat
+
+  # ── LiveKit — WebRTC SFU for Group Calls ────────────────────────────
+  livekit-server:
+    image: livekit/livekit-server:latest
+    container_name: degenfeed-livekit
+    restart: unless-stopped
+    ports:
+      - "7880:7880"  # HTTP API
+      - "7881:7881"  # WebRTC (TCP)
+      - "7882-7900:7882-7900/udp"  # WebRTC (UDP)
+    environment:
+      LIVEKIT_KEYS: "${LIVEKIT_API_KEY}:${LIVEKIT_API_SECRET}"
+      LIVEKIT_RTC_PORT_RANGE: "7882-7900"
+    command:
+      - --config=/etc/livekit.yaml
+    volumes:
+      - ../bridge/livekit/livekit.yaml:/etc/livekit.yaml:ro
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 1GB
+    networks:
+      - degenfeed_chat
+
+  # ── STUN/TURN Server (for WebRTC) ───────────────────────────────────
+  coturn:
+    image: instrumentisto/coturn:latest
+    container_name: degenfeed-coturn
+    restart: unless-stopped
+    ports:
+      - "3478:3478"       # STUN/TURN
+      - "3478:3478/udp"   # STUN/TURN UDP
+      - "5349:5349"       # TURN TLS
+    environment:
+      TURN_SERVER_NAME: "${TURN_SERVER_NAME:-turn.degenfeed.xyz}"
+      TURN_REALM: "${TURN_REALM:-degenfeed.xyz}"
+      TURN_USER: "${TURN_USERNAME}:${TURN_CREDENTIAL}"
+    volumes:
+      - ../bridge/coturn/turnserver.conf:/etc/coturn/turnserver.conf:ro
+    logging: *default-logging
+    networks:
+      - degenfeed_chat
+
+networks:
+  degenfeed_chat:
+    name: degenfeed_chat
+    driver: bridge
+
+volumes:
+  conduit_data:
+    driver: local
+  irc_bridge_data:
+    driver: local
+  bifrost_data:
+    driver: local
+  discord_bridge_data:
+    driver: local
+  telegram_bridge_data:
+    driver: local
+  slack_bridge_data:
+    driver: local
