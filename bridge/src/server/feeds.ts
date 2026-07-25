@@ -118,10 +118,9 @@ export const PROVIDERS: Record<string, ProviderEntry> = {
     category: 'content',
   },
   farcaster: {
-    name: 'Farcaster',
+    name: 'Farcaster (Self-Hosted Hubble)',
     fetch: fetchFarcasterPosts,
-    rateLimit: { maxRequests: 60, windowMs: 60_000 },
-    category: 'content',
+    rateLimit: { maxRequests: 120, windowMs: 60_000 },
   },
   lens: {
     name: 'Lens',
