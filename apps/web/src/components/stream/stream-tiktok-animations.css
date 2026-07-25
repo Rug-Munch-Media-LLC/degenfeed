@@ -8,56 +8,138 @@
 /* ─── EMOJI ANIMATIONS ──────────────────────────────────────────────────── */
 
 @keyframes emoji-burst {
-  0% { transform: scale(0) rotate(-180deg); opacity: 0; }
-  30% { transform: scale(2) rotate(0deg); opacity: 1; }
-  60% { transform: scale(1.2) rotate(10deg); opacity: 1; }
-  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  0% {
+    transform: scale(0) rotate(-180deg);
+    opacity: 0;
+  }
+  30% {
+    transform: scale(2) rotate(0deg);
+    opacity: 1;
+  }
+  60% {
+    transform: scale(1.2) rotate(10deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
 }
 
 @keyframes emoji-launch {
-  0% { transform: translateY(100px) scale(0.3); opacity: 0; }
-  40% { transform: translateY(-20px) scale(1.5); opacity: 1; }
-  70% { transform: translateY(5px) scale(1); opacity: 1; }
-  100% { transform: translateY(0) scale(1); opacity: 1; }
+  0% {
+    transform: translateY(100px) scale(0.3);
+    opacity: 0;
+  }
+  40% {
+    transform: translateY(-20px) scale(1.5);
+    opacity: 1;
+  }
+  70% {
+    transform: translateY(5px) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
 }
 
 @keyframes emoji-wobble {
-  0%, 100% { transform: rotate(0deg); }
-  15% { transform: rotate(-15deg) scale(1.3); }
-  30% { transform: rotate(10deg) scale(1.4); }
-  45% { transform: rotate(-5deg) scale(1.2); }
-  60% { transform: rotate(5deg) scale(1); }
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  15% {
+    transform: rotate(-15deg) scale(1.3);
+  }
+  30% {
+    transform: rotate(10deg) scale(1.4);
+  }
+  45% {
+    transform: rotate(-5deg) scale(1.2);
+  }
+  60% {
+    transform: rotate(5deg) scale(1);
+  }
 }
 
 @keyframes emoji-rain {
-  0% { transform: translateY(-50px) rotate(0deg); opacity: 0; }
-  10% { opacity: 1; }
-  100% { transform: translateY(50px) rotate(360deg); opacity: 0; }
+  0% {
+    transform: translateY(-50px) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(50px) rotate(360deg);
+    opacity: 0;
+  }
 }
 
 @keyframes emoji-sparkle {
-  0%, 100% { transform: scale(1) rotate(0deg); filter: brightness(1); }
-  25% { transform: scale(1.8) rotate(15deg); filter: brightness(1.5); }
-  50% { transform: scale(0.9) rotate(-10deg); filter: brightness(2); }
-  75% { transform: scale(1.3) rotate(5deg); filter: brightness(1.3); }
+  0%,
+  100% {
+    transform: scale(1) rotate(0deg);
+    filter: brightness(1);
+  }
+  25% {
+    transform: scale(1.8) rotate(15deg);
+    filter: brightness(1.5);
+  }
+  50% {
+    transform: scale(0.9) rotate(-10deg);
+    filter: brightness(2);
+  }
+  75% {
+    transform: scale(1.3) rotate(5deg);
+    filter: brightness(1.3);
+  }
 }
 
 @keyframes emoji-bounce {
-  0%, 100% { transform: translateY(0); }
-  30% { transform: translateY(-25px) scale(1.2); }
-  50% { transform: translateY(-10px) scale(1.1); }
-  70% { transform: translateY(-18px) scale(1.15); }
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-25px) scale(1.2);
+  }
+  50% {
+    transform: translateY(-10px) scale(1.1);
+  }
+  70% {
+    transform: translateY(-18px) scale(1.15);
+  }
 }
 
 @keyframes emoji-shake {
-  0%, 100% { transform: translateX(0); }
-  10% { transform: translateX(-8px) rotate(-5deg); }
-  20% { transform: translateX(8px) rotate(5deg); }
-  30% { transform: translateX(-6px) rotate(-3deg); }
-  40% { transform: translateX(6px) rotate(3deg); }
-  50% { transform: translateX(-3px) rotate(-1deg); }
-  60% { transform: translateX(3px) rotate(1deg); }
-  70% { transform: translateX(-1px); }
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  10% {
+    transform: translateX(-8px) rotate(-5deg);
+  }
+  20% {
+    transform: translateX(8px) rotate(5deg);
+  }
+  30% {
+    transform: translateX(-6px) rotate(-3deg);
+  }
+  40% {
+    transform: translateX(6px) rotate(3deg);
+  }
+  50% {
+    transform: translateX(-3px) rotate(-1deg);
+  }
+  60% {
+    transform: translateX(3px) rotate(1deg);
+  }
+  70% {
+    transform: translateX(-1px);
+  }
 }
 
 .emoji-chat-burst {
@@ -93,74 +175,189 @@
 /* ─── CUSTOM GIFT ANIMATIONS ────────────────────────────────────────────── */
 
 @keyframes custom-gift-common {
-  0% { transform: scale(0) translateY(40px); opacity: 0; }
-  60% { transform: scale(1.3) translateY(-10px); opacity: 1; }
-  100% { transform: scale(1) translateY(0); opacity: 1; }
+  0% {
+    transform: scale(0) translateY(40px);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.3) translateY(-10px);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
 }
 
 @keyframes custom-gift-rare {
-  0% { transform: scale(0) rotate(-180deg); opacity: 0; }
-  50% { transform: scale(1.5) rotate(10deg); opacity: 1; }
-  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  0% {
+    transform: scale(0) rotate(-180deg);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.5) rotate(10deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
 }
 
 @keyframes custom-gift-epic {
-  0% { transform: scale(0) translateY(60px); opacity: 0; filter: blur(10px); }
-  40% { transform: scale(1.8) translateY(-20px); opacity: 1; filter: blur(0); }
-  70% { transform: scale(1.1) translateY(5px); }
-  100% { transform: scale(1) translateY(0); filter: blur(0); }
+  0% {
+    transform: scale(0) translateY(60px);
+    opacity: 0;
+    filter: blur(10px);
+  }
+  40% {
+    transform: scale(1.8) translateY(-20px);
+    opacity: 1;
+    filter: blur(0);
+  }
+  70% {
+    transform: scale(1.1) translateY(5px);
+  }
+  100% {
+    transform: scale(1) translateY(0);
+    filter: blur(0);
+  }
 }
 
 @keyframes custom-gift-legendary {
-  0% { transform: scale(0) rotateY(0deg); opacity: 0; }
-  30% { transform: scale(2) rotateY(180deg); opacity: 1; }
-  60% { transform: scale(0.9) rotateY(360deg); }
-  100% { transform: scale(1) rotateY(360deg); opacity: 1; }
+  0% {
+    transform: scale(0) rotateY(0deg);
+    opacity: 0;
+  }
+  30% {
+    transform: scale(2) rotateY(180deg);
+    opacity: 1;
+  }
+  60% {
+    transform: scale(0.9) rotateY(360deg);
+  }
+  100% {
+    transform: scale(1) rotateY(360deg);
+    opacity: 1;
+  }
 }
 
 @keyframes custom-gift-exclusive {
-  0% { transform: scale(0) rotateZ(0deg) translateX(0); opacity: 0; }
-  20% { transform: scale(2.5) rotateZ(720deg) translateX(0); opacity: 1; }
-  50% { transform: scale(1) rotateZ(360deg) translateX(0); }
-  75% { transform: scale(1.2) rotateZ(180deg) translateX(10px); }
-  100% { transform: scale(1) rotateZ(360deg) translateX(0); }
+  0% {
+    transform: scale(0) rotateZ(0deg) translateX(0);
+    opacity: 0;
+  }
+  20% {
+    transform: scale(2.5) rotateZ(720deg) translateX(0);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1) rotateZ(360deg) translateX(0);
+  }
+  75% {
+    transform: scale(1.2) rotateZ(180deg) translateX(10px);
+  }
+  100% {
+    transform: scale(1) rotateZ(360deg) translateX(0);
+  }
 }
 
-.custom-gift-enter-common { animation: custom-gift-common 0.5s ease-out both; }
-.custom-gift-enter-rare { animation: custom-gift-rare 0.6s ease-out both; }
-.custom-gift-enter-epic { animation: custom-gift-epic 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275) both; }
-.custom-gift-enter-legendary { animation: custom-gift-legendary 0.8s ease-out both; }
-.custom-gift-enter-exclusive { animation: custom-gift-exclusive 1s ease-out both; }
+.custom-gift-enter-common {
+  animation: custom-gift-common 0.5s ease-out both;
+}
+.custom-gift-enter-rare {
+  animation: custom-gift-rare 0.6s ease-out both;
+}
+.custom-gift-enter-epic {
+  animation: custom-gift-epic 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+}
+.custom-gift-enter-legendary {
+  animation: custom-gift-legendary 0.8s ease-out both;
+}
+.custom-gift-enter-exclusive {
+  animation: custom-gift-exclusive 1s ease-out both;
+}
 
 /* ─── STICKER FLOAT ANIMATIONS ──────────────────────────────────────────── */
 
 @keyframes sticker-float-up {
-  0% { transform: translateY(100%) scale(0.5); opacity: 0; }
-  15% { transform: translateY(0) scale(1.2); opacity: 1; }
-  30% { transform: translateY(-30%) scale(1); opacity: 1; }
-  100% { transform: translateY(-120%) scale(0.8); opacity: 0; }
+  0% {
+    transform: translateY(100%) scale(0.5);
+    opacity: 0;
+  }
+  15% {
+    transform: translateY(0) scale(1.2);
+    opacity: 1;
+  }
+  30% {
+    transform: translateY(-30%) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-120%) scale(0.8);
+    opacity: 0;
+  }
 }
 
 @keyframes sticker-float-diagonal {
-  0% { transform: translate(0, 0) scale(0.3); opacity: 0; }
-  20% { transform: translate(50px, -80px) scale(1.3); opacity: 1; }
-  60% { transform: translate(120px, -200px) scale(1); opacity: 0.8; }
-  100% { transform: translate(200px, -400px) scale(0.6); opacity: 0; }
+  0% {
+    transform: translate(0, 0) scale(0.3);
+    opacity: 0;
+  }
+  20% {
+    transform: translate(50px, -80px) scale(1.3);
+    opacity: 1;
+  }
+  60% {
+    transform: translate(120px, -200px) scale(1);
+    opacity: 0.8;
+  }
+  100% {
+    transform: translate(200px, -400px) scale(0.6);
+    opacity: 0;
+  }
 }
 
 @keyframes sticker-rain {
-  0% { transform: translateY(-50px) translateX(0) rotate(0deg); opacity: 1; }
-  25% { transform: translateY(100px) translateX(30px) rotate(90deg); opacity: 0.8; }
-  50% { transform: translateY(250px) translateX(-20px) rotate(180deg); opacity: 0.6; }
-  75% { transform: translateY(400px) translateX(40px) rotate(270deg); opacity: 0.3; }
-  100% { transform: translateY(550px) translateX(0) rotate(360deg); opacity: 0; }
+  0% {
+    transform: translateY(-50px) translateX(0) rotate(0deg);
+    opacity: 1;
+  }
+  25% {
+    transform: translateY(100px) translateX(30px) rotate(90deg);
+    opacity: 0.8;
+  }
+  50% {
+    transform: translateY(250px) translateX(-20px) rotate(180deg);
+    opacity: 0.6;
+  }
+  75% {
+    transform: translateY(400px) translateX(40px) rotate(270deg);
+    opacity: 0.3;
+  }
+  100% {
+    transform: translateY(550px) translateX(0) rotate(360deg);
+    opacity: 0;
+  }
 }
 
 @keyframes sticker-explode {
-  0% { transform: scale(0); opacity: 0; }
-  30% { transform: scale(2.5) rotate(180deg); opacity: 1; }
-  60% { transform: scale(0.8) rotate(360deg); opacity: 0.8; }
-  100% { transform: scale(1.5) rotate(540deg) translateY(-60px); opacity: 0; }
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  30% {
+    transform: scale(2.5) rotate(180deg);
+    opacity: 1;
+  }
+  60% {
+    transform: scale(0.8) rotate(360deg);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1.5) rotate(540deg) translateY(-60px);
+    opacity: 0;
+  }
 }
 
 .sticker-float-up {
@@ -194,55 +391,117 @@
 /* ─── FILTER TRANSITIONS ────────────────────────────────────────────────── */
 
 @keyframes filter-slide-in {
-  0% { transform: translateX(100%) scale(0.8); opacity: 0; }
-  100% { transform: translateX(0) scale(1); opacity: 1; }
+  0% {
+    transform: translateX(100%) scale(0.8);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0) scale(1);
+    opacity: 1;
+  }
 }
 
 @keyframes filter-slide-out {
-  0% { transform: translateX(0) scale(1); opacity: 1; }
-  100% { transform: translateX(-100%) scale(0.8); opacity: 0; }
+  0% {
+    transform: translateX(0) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(-100%) scale(0.8);
+    opacity: 0;
+  }
 }
 
-.filter-enter { animation: filter-slide-in 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) both; }
-.filter-exit { animation: filter-slide-out 0.2s ease-in both; }
+.filter-enter {
+  animation: filter-slide-in 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+}
+.filter-exit {
+  animation: filter-slide-out 0.2s ease-in both;
+}
 
 /* ─── RARITY GLOW EFFECTS ───────────────────────────────────────────────── */
 
 @keyframes rarity-glow-common {
-  0%, 100% { box-shadow: 0 0 5px rgba(156, 163, 175, 0.3); }
+  0%,
+  100% {
+    box-shadow: 0 0 5px rgba(156, 163, 175, 0.3);
+  }
 }
 
 @keyframes rarity-glow-rare {
-  0%, 100% { box-shadow: 0 0 8px rgba(59, 130, 246, 0.4); }
-  50% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.6); }
+  0%,
+  100% {
+    box-shadow: 0 0 8px rgba(59, 130, 246, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.6);
+  }
 }
 
 @keyframes rarity-glow-epic {
-  0%, 100% { box-shadow: 0 0 10px rgba(139, 92, 246, 0.5); }
-  50% { box-shadow: 0 0 30px rgba(139, 92, 246, 0.8); }
+  0%,
+  100% {
+    box-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(139, 92, 246, 0.8);
+  }
 }
 
 @keyframes rarity-glow-legendary {
-  0%, 100% { box-shadow: 0 0 15px rgba(245, 158, 11, 0.5), 0 0 30px rgba(245, 158, 11, 0.3); }
-  50% { box-shadow: 0 0 30px rgba(245, 158, 11, 0.8), 0 0 60px rgba(245, 158, 11, 0.4); }
+  0%,
+  100% {
+    box-shadow:
+      0 0 15px rgba(245, 158, 11, 0.5),
+      0 0 30px rgba(245, 158, 11, 0.3);
+  }
+  50% {
+    box-shadow:
+      0 0 30px rgba(245, 158, 11, 0.8),
+      0 0 60px rgba(245, 158, 11, 0.4);
+  }
 }
 
 @keyframes rarity-glow-exclusive {
-  0%, 100% { box-shadow: 0 0 20px rgba(236, 72, 153, 0.5), 0 0 40px rgba(236, 72, 153, 0.3); }
-  50% { box-shadow: 0 0 40px rgba(236, 72, 153, 0.8), 0 0 80px rgba(236, 72, 153, 0.5); }
+  0%,
+  100% {
+    box-shadow:
+      0 0 20px rgba(236, 72, 153, 0.5),
+      0 0 40px rgba(236, 72, 153, 0.3);
+  }
+  50% {
+    box-shadow:
+      0 0 40px rgba(236, 72, 153, 0.8),
+      0 0 80px rgba(236, 72, 153, 0.5);
+  }
 }
 
-.rarity-glow-common { animation: rarity-glow-common 2s ease-in-out infinite; }
-.rarity-glow-rare { animation: rarity-glow-rare 2s ease-in-out infinite; }
-.rarity-glow-epic { animation: rarity-glow-epic 1.5s ease-in-out infinite; }
-.rarity-glow-legendary { animation: rarity-glow-legendary 1.5s ease-in-out infinite; }
-.rarity-glow-exclusive { animation: rarity-glow-exclusive 1s ease-in-out infinite; }
+.rarity-glow-common {
+  animation: rarity-glow-common 2s ease-in-out infinite;
+}
+.rarity-glow-rare {
+  animation: rarity-glow-rare 2s ease-in-out infinite;
+}
+.rarity-glow-epic {
+  animation: rarity-glow-epic 1.5s ease-in-out infinite;
+}
+.rarity-glow-legendary {
+  animation: rarity-glow-legendary 1.5s ease-in-out infinite;
+}
+.rarity-glow-exclusive {
+  animation: rarity-glow-exclusive 1s ease-in-out infinite;
+}
 
 /* ─── MARKETPLACE CARDS ─────────────────────────────────────────────────── */
 
 @keyframes card-hover-lift {
-  0%, 100% { transform: translateY(0) scale(1); }
-  50% { transform: translateY(-4px) scale(1.02); }
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-4px) scale(1.02);
+  }
 }
 
 .marketplace-card {
@@ -256,17 +515,31 @@
 /* ─── TOAST NOTIFICATION ────────────────────────────────────────────────── */
 
 @keyframes toast-slide-in {
-  0% { transform: translateX(100%); opacity: 0; }
-  100% { transform: translateX(0); opacity: 1; }
+  0% {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 
 @keyframes toast-fade-out {
-  0% { opacity: 1; }
-  100% { opacity: 0; }
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
 }
 
-.toast-enter { animation: toast-slide-in 0.3s ease-out both; }
-.toast-exit { animation: toast-fade-out 0.3s ease-in both; }
+.toast-enter {
+  animation: toast-slide-in 0.3s ease-out both;
+}
+.toast-exit {
+  animation: toast-fade-out 0.3s ease-in both;
+}
 
 /* ─── REDUCED MOTION ────────────────────────────────────────────────────── */
 

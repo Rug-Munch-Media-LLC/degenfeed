@@ -55,9 +55,9 @@ export {
   DEFAULT_CREATOR_EMOJIS,
   DEFAULT_FILTERS,
   DEFAULT_STICKERS,
+  GIFT_RARITY_CONFIG,
   generateId,
   generateTokenId,
-  GIFT_RARITY_CONFIG,
 } from './live-tiktok-core';
 
 export {
@@ -76,6 +76,6 @@ export {
   handleMyEmojis,
   handleMyFilters,
   handleStickerBuy,
-  handleStickerTrigger,
   handleStickersList,
+  handleStickerTrigger,
 } from './live-tiktok-handlers';

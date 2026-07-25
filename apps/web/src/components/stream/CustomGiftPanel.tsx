@@ -9,7 +9,7 @@
  * Fans purchase custom gifts as NFTs → creator earns royalties.
  */
 
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import useSWR from 'swr';
 import './stream-tiktok-animations.css';
 
@@ -42,12 +42,40 @@ interface DefaultGift {
   tier: number;
 }
 
-const RARITY_CONFIG: Record<string, { label: string; color: string; glowClass: string; borderColor: string }> = {
-  common: { label: 'Common', color: '#9CA3AF', glowClass: 'rarity-glow-common', borderColor: 'border-gray-500/30' },
-  rare: { label: 'Rare', color: '#3B82F6', glowClass: 'rarity-glow-rare', borderColor: 'border-blue-500/30' },
-  epic: { label: 'Epic', color: '#8B5CF6', glowClass: 'rarity-glow-epic', borderColor: 'border-purple-500/30' },
-  legendary: { label: 'Legendary', color: '#F59E0B', glowClass: 'rarity-glow-legendary', borderColor: 'border-yellow-500/30' },
-  creator_exclusive: { label: 'Exclusive', color: '#EC4899', glowClass: 'rarity-glow-exclusive', borderColor: 'border-pink-500/30' },
+const RARITY_CONFIG: Record<
+  string,
+  { label: string; color: string; glowClass: string; borderColor: string }
+> = {
+  common: {
+    label: 'Common',
+    color: '#9CA3AF',
+    glowClass: 'rarity-glow-common',
+    borderColor: 'border-gray-500/30',
+  },
+  rare: {
+    label: 'Rare',
+    color: '#3B82F6',
+    glowClass: 'rarity-glow-rare',
+    borderColor: 'border-blue-500/30',
+  },
+  epic: {
+    label: 'Epic',
+    color: '#8B5CF6',
+    glowClass: 'rarity-glow-epic',
+    borderColor: 'border-purple-500/30',
+  },
+  legendary: {
+    label: 'Legendary',
+    color: '#F59E0B',
+    glowClass: 'rarity-glow-legendary',
+    borderColor: 'border-yellow-500/30',
+  },
+  creator_exclusive: {
+    label: 'Exclusive',
+    color: '#EC4899',
+    glowClass: 'rarity-glow-exclusive',
+    borderColor: 'border-pink-500/30',
+  },
 };
 
 const fetcher = async (url: string) => {
@@ -73,10 +101,10 @@ interface CustomGiftPanelProps {
 const DEFAULT_GIFTS: DefaultGift[] = [
   { id: 'rose', name: 'Rose', icon: '🌹', sats: 100, usd: 0.03, tier: 1 },
   { id: 'balloon', name: 'Balloon', icon: '🎈', sats: 500, usd: 0.15, tier: 2 },
-  { id: 'diamond', name: 'Diamond', icon: '💎', sats: 5_000, usd: 1.50, tier: 3 },
-  { id: 'rocket', name: 'Rocket', icon: '🚀', sats: 10_000, usd: 3.00, tier: 4 },
-  { id: 'crown', name: 'Crown', icon: '👑', sats: 50_000, usd: 15.00, tier: 5 },
-  { id: 'whale', name: 'Whale', icon: '🐳', sats: 100_000, usd: 30.00, tier: 6 },
+  { id: 'diamond', name: 'Diamond', icon: '💎', sats: 5_000, usd: 1.5, tier: 3 },
+  { id: 'rocket', name: 'Rocket', icon: '🚀', sats: 10_000, usd: 3.0, tier: 4 },
+  { id: 'crown', name: 'Crown', icon: '👑', sats: 50_000, usd: 15.0, tier: 5 },
+  { id: 'whale', name: 'Whale', icon: '🐳', sats: 100_000, usd: 30.0, tier: 6 },
 ];
 
 // ─── Component ───────────────────────────────────────────────────────────
@@ -94,10 +122,12 @@ export function CustomGiftPanel({
   const [sendingId, setSendingId] = useState<string | null>(null);
 
   // Fetch creator's custom gifts
-  const { data: customData, error: customError, mutate: refreshCustom } = useSWR<CustomGiftsResponse>(
-    activeTab === 'custom' || activeTab === 'market'
-      ? `/api/live/gifts/custom/${creatorId}`
-      : null,
+  const {
+    data: customData,
+    error: customError,
+    mutate: refreshCustom,
+  } = useSWR<CustomGiftsResponse>(
+    activeTab === 'custom' || activeTab === 'market' ? `/api/live/gifts/custom/${creatorId}` : null,
     fetcher,
     { revalidateOnFocus: false },
   );
@@ -134,7 +164,7 @@ export function CustomGiftPanel({
           });
 
           if (!res.ok) throw new Error('Send failed');
-          onGiftSent?.({ ...gift as CustomGiftItem, isCustom: true });
+          onGiftSent?.({ ...(gift as CustomGiftItem), isCustom: true });
         } else {
           // Use existing gift send endpoint
           const body = {
@@ -178,7 +208,9 @@ export function CustomGiftPanel({
             <span className="text-lg">🎁</span>
             <span className="text-sm font-bold text-white">Gifts</span>
             {walletAddress && (
-              <span className="text-[9px] text-white/40">⚡ {balanceSats.toLocaleString()} sats</span>
+              <span className="text-[9px] text-white/40">
+                ⚡ {balanceSats.toLocaleString()} sats
+              </span>
             )}
           </div>
           {onClose && (
@@ -188,8 +220,16 @@ export function CustomGiftPanel({
               className="flex h-7 w-7 items-center justify-center rounded-lg text-white/40 hover:text-white hover:bg-white/10 transition-colors"
               aria-label="Close"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
               </svg>
             </button>
           )}
@@ -273,7 +313,9 @@ export function CustomGiftPanel({
               </div>
             )}
             {customError && (
-              <p className="text-[9px] text-red-400 text-center py-4">Failed to load custom gifts</p>
+              <p className="text-[9px] text-red-400 text-center py-4">
+                Failed to load custom gifts
+              </p>
             )}
             {customGifts.map((gift) => {
               const rarity = RARITY_CONFIG[gift.rarity] ?? RARITY_CONFIG.common!;
@@ -307,7 +349,9 @@ export function CustomGiftPanel({
                     </div>
                     <p className="text-[9px] text-white/40 mt-0.5 truncate">{gift.description}</p>
                     <div className="flex items-center gap-2 mt-1">
-                      <span className="text-[9px] font-medium text-white/60">${gift.usd.toFixed(2)}</span>
+                      <span className="text-[9px] font-medium text-white/60">
+                        ${gift.usd.toFixed(2)}
+                      </span>
                       <span className="text-[8px] text-white/30">by {gift.creatorLabel}</span>
                     </div>
                   </div>
@@ -335,7 +379,9 @@ export function CustomGiftPanel({
             {marketGifts.length === 0 && (
               <div className="py-8 text-center">
                 <p className="text-xs text-white/30">No custom gifts in marketplace yet</p>
-                <p className="text-[9px] text-white/20 mt-1">Creators haven&apos;t designed any yet</p>
+                <p className="text-[9px] text-white/20 mt-1">
+                  Creators haven&apos;t designed any yet
+                </p>
               </div>
             )}
             {marketGifts.map((gift) => {
@@ -350,12 +396,19 @@ export function CustomGiftPanel({
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-medium text-white/80 truncate">{gift.name}</span>
-                      <span className="rounded-full px-1.5 py-0.5 text-[7px] font-semibold uppercase" style={{ backgroundColor: `${rarity.color}20`, color: rarity.color }}>
+                      <span className="text-xs font-medium text-white/80 truncate">
+                        {gift.name}
+                      </span>
+                      <span
+                        className="rounded-full px-1.5 py-0.5 text-[7px] font-semibold uppercase"
+                        style={{ backgroundColor: `${rarity.color}20`, color: rarity.color }}
+                      >
                         {rarity.label}
                       </span>
                     </div>
-                    <p className="text-[9px] text-white/40 truncate">by {gift.creatorLabel} • {gift.soldCount} sold</p>
+                    <p className="text-[9px] text-white/40 truncate">
+                      by {gift.creatorLabel} • {gift.soldCount} sold
+                    </p>
                   </div>
                   <button
                     type="button"
@@ -368,7 +421,9 @@ export function CustomGiftPanel({
                           body: JSON.stringify({ chain: 'ethereum' }),
                         });
                         refreshCustom();
-                      } catch { /* handled */ }
+                      } catch {
+                        /* handled */
+                      }
                     }}
                   >
                     ${gift.usd.toFixed(2)}

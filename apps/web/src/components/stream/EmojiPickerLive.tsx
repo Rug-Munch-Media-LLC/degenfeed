@@ -88,11 +88,9 @@ export function EmojiPickerLive({ onSelect, onClose }: EmojiPickerLiveProps) {
   const pickerRef = useRef<HTMLDivElement>(null);
 
   // Fetch user's emojis (defaults + purchased)
-  const { data, error, mutate } = useSWR<EmojisResponse>(
-    '/api/live/emojis/my-purchases',
-    fetcher,
-    { revalidateOnFocus: false },
-  );
+  const { data, error, mutate } = useSWR<EmojisResponse>('/api/live/emojis/my-purchases', fetcher, {
+    revalidateOnFocus: false,
+  });
 
   const emojis = data?.emojis ?? [];
   const purchasedEmojis = emojis.filter((e) => e.owned);
@@ -100,7 +98,9 @@ export function EmojiPickerLive({ onSelect, onClose }: EmojiPickerLiveProps) {
   // Get categories from available emojis
   const categories = useMemo(() => {
     const cats = new Set(purchasedEmojis.map((e) => e.category));
-    return ['reactions', 'faces', 'greetings', 'crypto', 'meme', 'custom'].filter((c) => cats.has(c));
+    return ['reactions', 'faces', 'greetings', 'crypto', 'meme', 'custom'].filter((c) =>
+      cats.has(c),
+    );
   }, [purchasedEmojis]);
 
   // Filtered emojis
@@ -178,8 +178,16 @@ export function EmojiPickerLive({ onSelect, onClose }: EmojiPickerLiveProps) {
             className="flex h-6 w-6 items-center justify-center rounded-lg text-white/40 hover:text-white/70 hover:bg-white/10 transition-colors"
             aria-label="Close emoji picker"
           >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
           </button>
         </div>
@@ -235,8 +243,10 @@ export function EmojiPickerLive({ onSelect, onClose }: EmojiPickerLiveProps) {
                 {emoji.tier === 'premium' && (
                   <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-gradient-to-br from-purple-400 to-pink-500" />
                 )}
-                <span className={`${emoji.isDefault ? '' : 'drop-shadow-[0_0_8px_rgba(0,255,65,0.3)]'}`}>
-                  {emoji.imageUrl.match(/[😊🔥🚀😂👋❤️😎🙏👏💀☕🐂🐻💎👀💰🐸⚔️]/) ? (
+                <span
+                  className={`${emoji.isDefault ? '' : 'drop-shadow-[0_0_8px_rgba(0,255,65,0.3)]'}`}
+                >
+                  {emoji.imageUrl.match(/[😊🔥🚀😂👋❤️😎🙏👏💀☕🐂🐻💎👀💰🐸⚔️]/u) ? (
                     <span className="text-xl">{emoji.imageUrl}</span>
                   ) : (
                     <img
@@ -252,7 +262,9 @@ export function EmojiPickerLive({ onSelect, onClose }: EmojiPickerLiveProps) {
             {filteredEmojis.length === 0 && (
               <div className="col-span-6 py-6 text-center">
                 <p className="text-[10px] text-white/30">No emojis found</p>
-                <p className="mt-1 text-[9px] text-white/20">Visit the market to buy creator emojis</p>
+                <p className="mt-1 text-[9px] text-white/20">
+                  Visit the market to buy creator emojis
+                </p>
               </div>
             )}
           </div>
@@ -282,11 +294,9 @@ export function EmojiPickerLive({ onSelect, onClose }: EmojiPickerLiveProps) {
 // ─── Marketplace Sub-Component ───────────────────────────────────────────
 
 function MarketplaceView({ onBuy }: { onBuy: () => void }) {
-  const { data, error } = useSWR<EmojisResponse>(
-    '/api/live/emojis/marketplace',
-    fetcher,
-    { revalidateOnFocus: false },
-  );
+  const { data, error } = useSWR<EmojisResponse>('/api/live/emojis/marketplace', fetcher, {
+    revalidateOnFocus: false,
+  });
 
   const marketplaceEmojis = (data?.emojis ?? []).filter((e) => !e.isDefault && e.purchaseSats > 0);
   const [buyingId, setBuyingId] = useState<string | null>(null);
@@ -317,9 +327,7 @@ function MarketplaceView({ onBuy }: { onBuy: () => void }) {
         Creator Emojis — Buy & Use in Chat
       </p>
 
-      {error && (
-        <p className="text-[9px] text-red-400">Failed to load marketplace</p>
-      )}
+      {error && <p className="text-[9px] text-red-400">Failed to load marketplace</p>}
 
       {marketplaceEmojis.length === 0 && !error && (
         <div className="py-6 text-center">
@@ -336,22 +344,32 @@ function MarketplaceView({ onBuy }: { onBuy: () => void }) {
           >
             {/* Emoji preview */}
             <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-white/5 text-2xl">
-              {emoji.imageUrl.match(/[😊🔥🚀😂👋❤️😎🙏👏💀☕🐂🐻💎👀💰🐸⚔️]/) ? (
+              {emoji.imageUrl.match(/[😊🔥🚀😂👋❤️😎🙏👏💀☕🐂🐻💎👀💰🐸⚔️]/u) ? (
                 <span>{emoji.imageUrl}</span>
               ) : (
-                <img src={emoji.imageUrl} alt={emoji.shortcode} className="h-7 w-7 object-contain" />
+                <img
+                  src={emoji.imageUrl}
+                  alt={emoji.shortcode}
+                  className="h-7 w-7 object-contain"
+                />
               )}
             </div>
 
             {/* Info */}
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1.5">
-                <span className="text-xs font-medium text-white/80 truncate">{emoji.shortcode}</span>
-                <span className={`rounded-full px-1.5 py-0.5 text-[7px] font-semibold uppercase ${
-                  emoji.tier === 'legendary' ? 'bg-yellow-500/20 text-yellow-400' :
-                  emoji.tier === 'premium' ? 'bg-purple-500/20 text-purple-400' :
-                  'bg-gray-500/20 text-gray-400'
-                }`}>
+                <span className="text-xs font-medium text-white/80 truncate">
+                  {emoji.shortcode}
+                </span>
+                <span
+                  className={`rounded-full px-1.5 py-0.5 text-[7px] font-semibold uppercase ${
+                    emoji.tier === 'legendary'
+                      ? 'bg-yellow-500/20 text-yellow-400'
+                      : emoji.tier === 'premium'
+                        ? 'bg-purple-500/20 text-purple-400'
+                        : 'bg-gray-500/20 text-gray-400'
+                  }`}
+                >
                   {emoji.tier}
                 </span>
               </div>

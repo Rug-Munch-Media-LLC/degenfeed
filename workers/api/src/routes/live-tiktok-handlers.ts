@@ -32,36 +32,36 @@ import {
   type CreatorEmoji,
   type CustomGift,
   type CustomGiftPurchase,
-  type EmojiPurchase,
-  type FaceFilter,
-  type FilterPurchase,
-  type LiveSticker,
-  type StickerTrigger,
+  calculateCreatorNet,
+  calculateFee,
   DEFAULT_CREATOR_EMOJIS,
   DEFAULT_FILTERS,
   DEFAULT_STICKERS,
+  EARNINGS_PREFIX,
+  EMOJI_CREATOR_PREFIX,
+  EMOJI_KEY,
+  EMOJI_MARKETPLACE_KEY,
+  EMOJI_PURCHASE_PREFIX,
+  type EmojiPurchase,
+  type FaceFilter,
+  FILTER_PURCHASE_PREFIX,
+  FILTER_USER_PREFIX,
+  FILTERS_KEY,
+  type FilterPurchase,
   GIFT_RARITY_CONFIG,
-  calculateCreatorNet,
-  calculateFee,
+  GIFTS_CREATOR_PREFIX,
+  GIFTS_CUSTOM_KEY,
+  GIFTS_PURCHASE_PREFIX,
   generateId,
   generateTokenId,
   kvDelete,
   kvGetJson,
   kvListByPrefix,
   kvPutJson,
-  EARNINGS_PREFIX,
-  EMOJI_CREATOR_PREFIX,
-  EMOJI_KEY,
-  EMOJI_MARKETPLACE_KEY,
-  EMOJI_PURCHASE_PREFIX,
-  FILTERS_KEY,
-  FILTER_PURCHASE_PREFIX,
-  FILTER_USER_PREFIX,
-  GIFTS_CREATOR_PREFIX,
-  GIFTS_CUSTOM_KEY,
-  GIFTS_PURCHASE_PREFIX,
-  STICKERS_KEY,
+  type LiveSticker,
   STICKER_TRIGGER_PREFIX,
+  STICKERS_KEY,
+  type StickerTrigger,
 } from './live-tiktok-core';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────
@@ -89,7 +89,7 @@ export async function handleEmojiCreate(request: Request, env: Env): Promise<Res
   if (session instanceof Response) return session;
 
   try {
-    const body = await request.json() as Record<string, unknown>;
+    const body = (await request.json()) as Record<string, unknown>;
     const shortcode = safeString(body.shortcode, 32);
     const imageUrl = safeString(body.imageUrl, 512);
     const category = safeString(body.category, 32) || 'custom';
@@ -123,17 +123,19 @@ export async function handleEmojiCreate(request: Request, env: Env): Promise<Res
       effectClass: safeString(body.effectClass, 32) || undefined,
       createdAt: Date.now(),
       approved: true, // Auto-approve; could add moderation later
-      tags: Array.isArray(body.tags) ? body.tags.slice(0, 10).map((t: unknown) => safeString(t, 32)) : [],
+      tags: Array.isArray(body.tags)
+        ? body.tags.slice(0, 10).map((t: unknown) => safeString(t, 32))
+        : [],
     };
 
     // Store emoji
     const key = `${EMOJI_CREATOR_PREFIX}${session.address}`;
-    const existing = await kvGetJson<CreatorEmoji[]>(env, key) ?? [];
+    const existing = (await kvGetJson<CreatorEmoji[]>(env, key)) ?? [];
     existing.push(emoji);
     await kvPutJson(env, key, existing);
 
     // Add to marketplace index
-    const marketplace = await kvGetJson<CreatorEmoji[]>(env, EMOJI_MARKETPLACE_KEY) ?? [];
+    const marketplace = (await kvGetJson<CreatorEmoji[]>(env, EMOJI_MARKETPLACE_KEY)) ?? [];
     marketplace.push(emoji);
     await kvPutJson(env, EMOJI_MARKETPLACE_KEY, marketplace);
 
@@ -147,7 +149,7 @@ export async function handleEmojiCreate(request: Request, env: Env): Promise<Res
  * GET /api/live/emojis/marketplace — Browse all emojis
  */
 export async function handleEmojiMarketplace(_request: Request, env: Env): Promise<Response> {
-  const marketplace = await kvGetJson<CreatorEmoji[]>(env, EMOJI_MARKETPLACE_KEY) ?? [];
+  const marketplace = (await kvGetJson<CreatorEmoji[]>(env, EMOJI_MARKETPLACE_KEY)) ?? [];
 
   // Combine with default emojis
   const allEmojis = [...DEFAULT_CREATOR_EMOJIS, ...marketplace];
@@ -176,18 +178,22 @@ export async function handleEmojiMarketplace(_request: Request, env: Env): Promi
 /**
  * POST /api/live/emojis/:id/buy — Purchase emoji NFT
  */
-export async function handleEmojiBuy(request: Request, env: Env, emojiId: string): Promise<Response> {
+export async function handleEmojiBuy(
+  request: Request,
+  env: Env,
+  emojiId: string,
+): Promise<Response> {
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
 
   try {
-    const marketplace = await kvGetJson<CreatorEmoji[]>(env, EMOJI_MARKETPLACE_KEY) ?? [];
+    const marketplace = (await kvGetJson<CreatorEmoji[]>(env, EMOJI_MARKETPLACE_KEY)) ?? [];
     const emoji = marketplace.find((e) => e.id === emojiId);
     if (!emoji) return badRequest('Emoji not found');
     if (emoji.isDefault) return badRequest('Cannot purchase default emojis');
     if (emoji.purchaseSats === 0) return badRequest('This emoji is free');
 
-    const body = await request.json().catch(() => ({})) as Record<string, unknown>;
+    const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
     const chain = safeString(body.chain, 16) || 'ethereum';
 
     const purchase: EmojiPurchase = {
@@ -205,7 +211,8 @@ export async function handleEmojiBuy(request: Request, env: Env, emojiId: string
     };
 
     // Record purchase
-    const purchases = await kvGetJson<EmojiPurchase[]>(env, `${EMOJI_PURCHASE_PREFIX}${session.address}`) ?? [];
+    const purchases =
+      (await kvGetJson<EmojiPurchase[]>(env, `${EMOJI_PURCHASE_PREFIX}${session.address}`)) ?? [];
     purchases.push(purchase);
     await kvPutJson(env, `${EMOJI_PURCHASE_PREFIX}${session.address}`, purchases);
 
@@ -216,7 +223,13 @@ export async function handleEmojiBuy(request: Request, env: Env, emojiId: string
     await kvPutJson(env, EMOJI_MARKETPLACE_KEY, marketplace);
 
     // Update creator earnings
-    await updateCreatorEarnings(env, emoji.creatorId, 'emoji', emoji.purchaseSats, emoji.purchaseUsd);
+    await updateCreatorEarnings(
+      env,
+      emoji.creatorId,
+      'emoji',
+      emoji.purchaseSats,
+      emoji.purchaseUsd,
+    );
 
     return ok({ success: true, purchase });
   } catch (err) {
@@ -231,8 +244,9 @@ export async function handleMyEmojis(request: Request, env: Env): Promise<Respon
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
 
-  const purchases = await kvGetJson<EmojiPurchase[]>(env, `${EMOJI_PURCHASE_PREFIX}${session.address}`) ?? [];
-  const marketplace = await kvGetJson<CreatorEmoji[]>(env, EMOJI_MARKETPLACE_KEY) ?? [];
+  const purchases =
+    (await kvGetJson<EmojiPurchase[]>(env, `${EMOJI_PURCHASE_PREFIX}${session.address}`)) ?? [];
+  const marketplace = (await kvGetJson<CreatorEmoji[]>(env, EMOJI_MARKETPLACE_KEY)) ?? [];
 
   const purchasedEmojis = purchases
     .map((p) => marketplace.find((e) => e.id === p.emojiId))
@@ -250,9 +264,13 @@ export async function handleMyEmojis(request: Request, env: Env): Promise<Respon
 /**
  * GET /api/live/emojis/creator/:creatorId — Creator's custom emojis
  */
-export async function handleCreatorEmojis(_request: Request, env: Env, creatorId: string): Promise<Response> {
+export async function handleCreatorEmojis(
+  _request: Request,
+  env: Env,
+  creatorId: string,
+): Promise<Response> {
   const key = `${EMOJI_CREATOR_PREFIX}${creatorId}`;
-  const emojis = await kvGetJson<CreatorEmoji[]>(env, key) ?? [];
+  const emojis = (await kvGetJson<CreatorEmoji[]>(env, key)) ?? [];
   return ok({ creatorId, emojis });
 }
 
@@ -268,7 +286,7 @@ export async function handleCustomGiftCreate(request: Request, env: Env): Promis
   if (session instanceof Response) return session;
 
   try {
-    const body = await request.json() as Record<string, unknown>;
+    const body = (await request.json()) as Record<string, unknown>;
     const name = safeString(body.name, 64);
     const icon = safeString(body.icon, 8);
     const rarity = (safeString(body.rarity, 20) || 'common') as CustomGift['rarity'];
@@ -303,16 +321,19 @@ export async function handleCustomGiftCreate(request: Request, env: Env): Promis
       active: true,
       createdAt: Date.now(),
       description,
-      tags: Array.isArray(body.tags) ? body.tags.slice(0, 10).map((t: unknown) => safeString(t, 32)) : [],
+      tags: Array.isArray(body.tags)
+        ? body.tags.slice(0, 10).map((t: unknown) => safeString(t, 32))
+        : [],
     };
 
     // Store
-    const creatorGifts = await kvGetJson<CustomGift[]>(env, `${GIFTS_CREATOR_PREFIX}${session.address}`) ?? [];
+    const creatorGifts =
+      (await kvGetJson<CustomGift[]>(env, `${GIFTS_CREATOR_PREFIX}${session.address}`)) ?? [];
     creatorGifts.push(gift);
     await kvPutJson(env, `${GIFTS_CREATOR_PREFIX}${session.address}`, creatorGifts);
 
     // Add to global list
-    const allGifts = await kvGetJson<CustomGift[]>(env, GIFTS_CUSTOM_KEY) ?? [];
+    const allGifts = (await kvGetJson<CustomGift[]>(env, GIFTS_CUSTOM_KEY)) ?? [];
     allGifts.push(gift);
     await kvPutJson(env, GIFTS_CUSTOM_KEY, allGifts);
 
@@ -325,9 +346,13 @@ export async function handleCustomGiftCreate(request: Request, env: Env): Promis
 /**
  * GET /api/live/gifts/custom/:creatorId — View creator's custom gifts
  */
-export async function handleCreatorCustomGifts(_request: Request, env: Env, creatorId: string): Promise<Response> {
+export async function handleCreatorCustomGifts(
+  _request: Request,
+  env: Env,
+  creatorId: string,
+): Promise<Response> {
   const key = `${GIFTS_CREATOR_PREFIX}${creatorId}`;
-  const gifts = await kvGetJson<CustomGift[]>(env, key) ?? [];
+  const gifts = (await kvGetJson<CustomGift[]>(env, key)) ?? [];
   return ok({
     creatorId,
     gifts: gifts.filter((g) => g.active),
@@ -337,17 +362,21 @@ export async function handleCreatorCustomGifts(_request: Request, env: Env, crea
 /**
  * POST /api/live/gifts/custom/:id/buy — Purchase custom gift NFT
  */
-export async function handleCustomGiftBuy(request: Request, env: Env, giftId: string): Promise<Response> {
+export async function handleCustomGiftBuy(
+  request: Request,
+  env: Env,
+  giftId: string,
+): Promise<Response> {
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
 
   try {
-    const allGifts = await kvGetJson<CustomGift[]>(env, GIFTS_CUSTOM_KEY) ?? [];
+    const allGifts = (await kvGetJson<CustomGift[]>(env, GIFTS_CUSTOM_KEY)) ?? [];
     const gift = allGifts.find((g) => g.id === giftId);
     if (!gift) return badRequest('Gift not found');
     if (!gift.active) return badRequest('Gift is no longer available');
 
-    const body = await request.json().catch(() => ({})) as Record<string, unknown>;
+    const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
     const chain = safeString(body.chain, 16) || 'ethereum';
 
     const purchase: CustomGiftPurchase = {
@@ -364,7 +393,9 @@ export async function handleCustomGiftBuy(request: Request, env: Env, giftId: st
       timestamp: Date.now(),
     };
 
-    const buyerPurchases = await kvGetJson<CustomGiftPurchase[]>(env, `${GIFTS_PURCHASE_PREFIX}${session.address}`) ?? [];
+    const buyerPurchases =
+      (await kvGetJson<CustomGiftPurchase[]>(env, `${GIFTS_PURCHASE_PREFIX}${session.address}`)) ??
+      [];
     buyerPurchases.push(purchase);
     await kvPutJson(env, `${GIFTS_PURCHASE_PREFIX}${session.address}`, buyerPurchases);
 
@@ -387,7 +418,7 @@ export async function handleCustomGiftBuy(request: Request, env: Env, giftId: st
  * GET /api/live/gifts/custom/marketplace — Browse all custom gifts
  */
 export async function handleCustomGiftMarketplace(_request: Request, env: Env): Promise<Response> {
-  const allGifts = await kvGetJson<CustomGift[]>(env, GIFTS_CUSTOM_KEY) ?? [];
+  const allGifts = (await kvGetJson<CustomGift[]>(env, GIFTS_CUSTOM_KEY)) ?? [];
   return ok({
     gifts: allGifts
       .filter((g) => g.active)
@@ -438,7 +469,11 @@ export async function handleFiltersList(_request: Request, env: Env): Promise<Re
 /**
  * POST /api/live/filters/:id/buy — Purchase filter
  */
-export async function handleFilterBuy(request: Request, env: Env, filterId: string): Promise<Response> {
+export async function handleFilterBuy(
+  request: Request,
+  env: Env,
+  filterId: string,
+): Promise<Response> {
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
 
@@ -447,7 +482,7 @@ export async function handleFilterBuy(request: Request, env: Env, filterId: stri
   if (filter.access === 'free') return badRequest('This filter is free');
   if (filter.access === 'creator_only') return badRequest('This filter is creator-only');
 
-  const body = await request.json().catch(() => ({})) as Record<string, unknown>;
+  const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
   const chain = safeString(body.chain, 16) || 'ethereum';
 
   const purchase: FilterPurchase = {
@@ -461,7 +496,8 @@ export async function handleFilterBuy(request: Request, env: Env, filterId: stri
     timestamp: Date.now(),
   };
 
-  const userFilters = await kvGetJson<FilterPurchase[]>(env, `${FILTER_PURCHASE_PREFIX}${session.address}`) ?? [];
+  const userFilters =
+    (await kvGetJson<FilterPurchase[]>(env, `${FILTER_PURCHASE_PREFIX}${session.address}`)) ?? [];
   userFilters.push(purchase);
   await kvPutJson(env, `${FILTER_PURCHASE_PREFIX}${session.address}`, userFilters);
 
@@ -475,7 +511,8 @@ export async function handleMyFilters(request: Request, env: Env): Promise<Respo
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
 
-  const purchases = await kvGetJson<FilterPurchase[]>(env, `${FILTER_PURCHASE_PREFIX}${session.address}`) ?? [];
+  const purchases =
+    (await kvGetJson<FilterPurchase[]>(env, `${FILTER_PURCHASE_PREFIX}${session.address}`)) ?? [];
   const purchasedIds = new Set(purchases.map((p) => p.filterId));
 
   const filters = DEFAULT_FILTERS.map((f) => ({
@@ -516,7 +553,11 @@ export async function handleStickersList(_request: Request, env: Env): Promise<R
 /**
  * POST /api/live/stickers/:id/buy — Purchase sticker
  */
-export async function handleStickerBuy(request: Request, env: Env, stickerId: string): Promise<Response> {
+export async function handleStickerBuy(
+  request: Request,
+  env: Env,
+  stickerId: string,
+): Promise<Response> {
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
 
@@ -524,7 +565,7 @@ export async function handleStickerBuy(request: Request, env: Env, stickerId: st
   if (!sticker) return badRequest('Sticker not found');
   if (sticker.isFree) return badRequest('This sticker is free');
 
-  const body = await request.json().catch(() => ({})) as Record<string, unknown>;
+  const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
   const chain = safeString(body.chain, 16) || 'ethereum';
 
   const purchase = {
@@ -538,7 +579,8 @@ export async function handleStickerBuy(request: Request, env: Env, stickerId: st
     timestamp: Date.now(),
   };
 
-  const userStickers = await kvGetJson<unknown[]>(env, `${FILTER_PURCHASE_PREFIX}stickers:${session.address}`) ?? [];
+  const userStickers =
+    (await kvGetJson<unknown[]>(env, `${FILTER_PURCHASE_PREFIX}stickers:${session.address}`)) ?? [];
   userStickers.push(purchase);
   await kvPutJson(env, `${FILTER_PURCHASE_PREFIX}stickers:${session.address}`, userStickers);
 
@@ -548,14 +590,18 @@ export async function handleStickerBuy(request: Request, env: Env, stickerId: st
 /**
  * POST /api/live/stickers/:id/trigger — Trigger sticker on stream
  */
-export async function handleStickerTrigger(request: Request, env: Env, stickerId: string): Promise<Response> {
+export async function handleStickerTrigger(
+  request: Request,
+  env: Env,
+  stickerId: string,
+): Promise<Response> {
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
 
   const sticker = DEFAULT_STICKERS.find((s) => s.id === stickerId);
   if (!sticker) return badRequest('Sticker not found');
 
-  const body = await request.json().catch(() => ({})) as Record<string, unknown>;
+  const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
   const streamId = safeString(body.streamId, 64);
   if (!streamId) return badRequest('streamId is required');
 
@@ -573,7 +619,8 @@ export async function handleStickerTrigger(request: Request, env: Env, stickerId
     timestamp: Date.now(),
   };
 
-  const triggers = await kvGetJson<StickerTrigger[]>(env, `${STICKER_TRIGGER_PREFIX}${streamId}`) ?? [];
+  const triggers =
+    (await kvGetJson<StickerTrigger[]>(env, `${STICKER_TRIGGER_PREFIX}${streamId}`)) ?? [];
   triggers.push(trigger);
   // Keep only last 50
   if (triggers.length > 50) triggers.splice(0, triggers.length - 50);
@@ -585,8 +632,13 @@ export async function handleStickerTrigger(request: Request, env: Env, stickerId
 /**
  * GET /api/live/stickers/active/:streamId — Active sticker triggers for stream
  */
-export async function handleActiveStickers(_request: Request, env: Env, streamId: string): Promise<Response> {
-  const triggers = await kvGetJson<StickerTrigger[]>(env, `${STICKER_TRIGGER_PREFIX}${streamId}`) ?? [];
+export async function handleActiveStickers(
+  _request: Request,
+  env: Env,
+  streamId: string,
+): Promise<Response> {
+  const triggers =
+    (await kvGetJson<StickerTrigger[]>(env, `${STICKER_TRIGGER_PREFIX}${streamId}`)) ?? [];
   return ok({
     streamId,
     triggers: triggers.slice(-20), // Last 20 triggers
@@ -604,14 +656,27 @@ export async function handleCreatorContentEarnings(request: Request, env: Env): 
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
 
-  const earnings = await kvGetJson<CreatorContentEarnings>(env, `${EARNINGS_PREFIX}${session.address}`) ?? {
+  const earnings = (await kvGetJson<CreatorContentEarnings>(
+    env,
+    `${EARNINGS_PREFIX}${session.address}`,
+  )) ?? {
     creatorId: session.address,
-    emojiSalesSats: 0, emojiSalesUsd: 0, emojiSoldCount: 0,
-    giftSalesSats: 0, giftSalesUsd: 0, giftSoldCount: 0,
-    filterSalesSats: 0, filterSalesUsd: 0, filterSoldCount: 0,
-    stickerSalesSats: 0, stickerSalesUsd: 0, stickerSoldCount: 0,
-    totalSalesSats: 0, totalSalesUsd: 0,
-    platformFeesSats: 0, platformFeesUsd: 0,
+    emojiSalesSats: 0,
+    emojiSalesUsd: 0,
+    emojiSoldCount: 0,
+    giftSalesSats: 0,
+    giftSalesUsd: 0,
+    giftSoldCount: 0,
+    filterSalesSats: 0,
+    filterSalesUsd: 0,
+    filterSoldCount: 0,
+    stickerSalesSats: 0,
+    stickerSalesUsd: 0,
+    stickerSoldCount: 0,
+    totalSalesSats: 0,
+    totalSalesUsd: 0,
+    platformFeesSats: 0,
+    platformFeesUsd: 0,
     lastUpdated: Date.now(),
   };
 
@@ -630,14 +695,24 @@ async function updateCreatorEarnings(
   usd: number,
 ): Promise<void> {
   const key = `${EARNINGS_PREFIX}${creatorId}`;
-  const earnings = await kvGetJson<CreatorContentEarnings>(env, key) ?? {
+  const earnings = (await kvGetJson<CreatorContentEarnings>(env, key)) ?? {
     creatorId,
-    emojiSalesSats: 0, emojiSalesUsd: 0, emojiSoldCount: 0,
-    giftSalesSats: 0, giftSalesUsd: 0, giftSoldCount: 0,
-    filterSalesSats: 0, filterSalesUsd: 0, filterSoldCount: 0,
-    stickerSalesSats: 0, stickerSalesUsd: 0, stickerSoldCount: 0,
-    totalSalesSats: 0, totalSalesUsd: 0,
-    platformFeesSats: 0, platformFeesUsd: 0,
+    emojiSalesSats: 0,
+    emojiSalesUsd: 0,
+    emojiSoldCount: 0,
+    giftSalesSats: 0,
+    giftSalesUsd: 0,
+    giftSoldCount: 0,
+    filterSalesSats: 0,
+    filterSalesUsd: 0,
+    filterSoldCount: 0,
+    stickerSalesSats: 0,
+    stickerSalesUsd: 0,
+    stickerSoldCount: 0,
+    totalSalesSats: 0,
+    totalSalesUsd: 0,
+    platformFeesSats: 0,
+    platformFeesUsd: 0,
     lastUpdated: Date.now(),
   };
 
@@ -669,8 +744,19 @@ async function updateCreatorEarnings(
       break;
   }
 
-  earnings.totalSalesSats = earnings.emojiSalesSats + earnings.giftSalesSats + earnings.filterSalesSats + earnings.stickerSalesSats;
-  earnings.totalSalesUsd = Math.round((earnings.emojiSalesUsd + earnings.giftSalesUsd + earnings.filterSalesUsd + earnings.stickerSalesUsd) * 100) / 100;
+  earnings.totalSalesSats =
+    earnings.emojiSalesSats +
+    earnings.giftSalesSats +
+    earnings.filterSalesSats +
+    earnings.stickerSalesSats;
+  earnings.totalSalesUsd =
+    Math.round(
+      (earnings.emojiSalesUsd +
+        earnings.giftSalesUsd +
+        earnings.filterSalesUsd +
+        earnings.stickerSalesUsd) *
+        100,
+    ) / 100;
   earnings.platformFeesSats += feeSats;
   earnings.platformFeesUsd = Math.round((earnings.platformFeesUsd + feeUsd) * 100) / 100;
   earnings.lastUpdated = Date.now();

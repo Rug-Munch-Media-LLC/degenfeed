@@ -90,7 +90,44 @@ import {
   handleWebRTCOffer,
   handleWebRTCViewers,
 } from '../../routes/live';
+import {
+  handleGiftEarnings,
+  handleGiftHistory,
+  handleGiftLeaderboard,
+  handleGiftPackages,
+  handleGiftPayout,
+  handleGiftSend,
+  handleGiftTypes,
+} from '../../routes/live-gifts';
 import liveShorts from '../../routes/live-shorts-index';
+import {
+  handleActiveStickers,
+  handleCreatorContentEarnings,
+  handleCreatorCustomGifts,
+  handleCreatorEmojis,
+  handleCustomGiftBuy,
+  handleCustomGiftCreate,
+  handleCustomGiftMarketplace,
+  handleEmojiBuy,
+  handleEmojiCreate,
+  handleEmojiMarketplace,
+  handleFilterBuy,
+  handleFiltersList,
+  handleMyEmojis,
+  handleMyFilters,
+  handleStickerBuy,
+  handleStickersList,
+  handleStickerTrigger,
+} from '../../routes/live-tiktok';
+import {
+  handleLoopsActive,
+  handleLoopsBroadcast,
+  handleLoopsBroadcastStatus,
+  handleLoopsGoLive,
+  handleLoopsHealth,
+  handleLoopsPlatforms,
+  handleLoopsStopLive,
+} from '../../routes/loops-live';
 import peertubeRouter from '../../routes/peertube';
 import podcastRouter from '../../routes/podcast';
 import { handleRealtimeWebSocket } from '../../routes/realtime';
@@ -161,43 +198,6 @@ import {
   handleUpdateState,
 } from '../../routes/voice-rooms';
 import youtubeRoutes from '../../routes/youtube';
-import {
-  handleLoopsActive,
-  handleLoopsBroadcast,
-  handleLoopsBroadcastStatus,
-  handleLoopsGoLive,
-  handleLoopsHealth,
-  handleLoopsPlatforms,
-  handleLoopsStopLive,
-} from '../../routes/loops-live';
-import {
-  handleGiftEarnings,
-  handleGiftHistory,
-  handleGiftLeaderboard,
-  handleGiftPackages,
-  handleGiftPayout,
-  handleGiftSend,
-  handleGiftTypes,
-} from '../../routes/live-gifts';
-import {
-  handleActiveStickers,
-  handleCreatorContentEarnings,
-  handleCreatorCustomGifts,
-  handleCreatorEmojis,
-  handleCustomGiftBuy,
-  handleCustomGiftCreate,
-  handleCustomGiftMarketplace,
-  handleEmojiBuy,
-  handleEmojiCreate,
-  handleEmojiMarketplace,
-  handleFilterBuy,
-  handleFiltersList,
-  handleMyEmojis,
-  handleMyFilters,
-  handleStickerBuy,
-  handleStickerTrigger,
-  handleStickersList,
-} from '../../routes/live-tiktok';
 export function registerLiveRoutes(app: Hono<{ Bindings: Env }>): void {
   // --- API: YouTube ---
   app.route('/api/youtube', youtubeRoutes);

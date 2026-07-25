@@ -76,11 +76,9 @@ export function FaceFilterOverlay({
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Fetch user's filters
-  const { data, error, mutate } = useSWR<FiltersResponse>(
-    '/api/live/filters/my-filters',
-    fetcher,
-    { revalidateOnFocus: false },
-  );
+  const { data, error, mutate } = useSWR<FiltersResponse>('/api/live/filters/my-filters', fetcher, {
+    revalidateOnFocus: false,
+  });
 
   const allFilters = useMemo(() => {
     const filters = data?.filters ?? [];
@@ -126,7 +124,9 @@ export function FaceFilterOverlay({
   // Scroll active category into view
   useEffect(() => {
     if (scrollRef.current && visible) {
-      const btn = scrollRef.current.querySelector(`[data-category="${activeCategory}"]`) as HTMLElement;
+      const btn = scrollRef.current.querySelector(
+        `[data-category="${activeCategory}"]`,
+      ) as HTMLElement;
       btn?.scrollIntoView({ behavior: 'smooth', inline: 'center' });
     }
   }, [activeCategory, visible]);
@@ -137,7 +137,9 @@ export function FaceFilterOverlay({
 
   const categoryFilters = useMemo(() => {
     const owned = allFilters.owned.filter((f) => f.category === activeCategory);
-    const unowned = allFilters.unowned.filter((f) => f.category === activeCategory && f.purchaseSats > 0);
+    const unowned = allFilters.unowned.filter(
+      (f) => f.category === activeCategory && f.purchaseSats > 0,
+    );
     return { owned, unowned };
   }, [allFilters, activeCategory]);
 
@@ -154,10 +156,7 @@ export function FaceFilterOverlay({
       {/* Content */}
       <div className="relative z-10 pb-4">
         {/* Category tabs */}
-        <div
-          ref={scrollRef}
-          className="flex gap-2 px-4 py-3 overflow-x-auto scrollbar-none"
-        >
+        <div ref={scrollRef} className="flex gap-2 px-4 py-3 overflow-x-auto scrollbar-none">
           {CATEGORY_ORDER.map((cat) => (
             <button
               key={cat}
@@ -186,9 +185,13 @@ export function FaceFilterOverlay({
                 !activeFilterId ? 'opacity-100 scale-105' : 'opacity-60 hover:opacity-80'
               }`}
             >
-              <div className={`h-20 w-20 rounded-2xl border-2 flex items-center justify-center ${
-                !activeFilterId ? 'border-degen-500 bg-degen-500/20' : 'border-white/20 bg-white/10'
-              }`}>
+              <div
+                className={`h-20 w-20 rounded-2xl border-2 flex items-center justify-center ${
+                  !activeFilterId
+                    ? 'border-degen-500 bg-degen-500/20'
+                    : 'border-white/20 bg-white/10'
+                }`}
+              >
                 <span className="text-3xl">🚫</span>
               </div>
               <span className="text-[9px] font-medium text-white/60">None</span>
@@ -206,12 +209,14 @@ export function FaceFilterOverlay({
                     isActive ? 'opacity-100 scale-105' : 'opacity-70 hover:opacity-90'
                   }`}
                 >
-                  <div className={`h-20 w-20 rounded-2xl border-2 overflow-hidden flex items-center justify-center text-3xl ${
-                    isActive
-                      ? 'border-degen-500 bg-degen-500/20 shadow-[0_0_15px_rgba(0,255,65,0.3)]'
-                      : 'border-white/15 bg-white/10'
-                  }`}>
-                    {filter.thumbnailUrl.match(/[🤠👑🧙🎩🎉🐱🐶🤖👽💀✨🌟🌸🌫️🌌🌃😎🧐]/) ? (
+                  <div
+                    className={`h-20 w-20 rounded-2xl border-2 overflow-hidden flex items-center justify-center text-3xl ${
+                      isActive
+                        ? 'border-degen-500 bg-degen-500/20 shadow-[0_0_15px_rgba(0,255,65,0.3)]'
+                        : 'border-white/15 bg-white/10'
+                    }`}
+                  >
+                    {filter.thumbnailUrl.match(/[🤠👑🧙🎩🎉🐱🐶🤖👽💀✨🌟🌸🌫️🌌🌃😎🧐]/u) ? (
                       <span className="text-3xl filter-effect-hover">{filter.thumbnailUrl}</span>
                     ) : (
                       <span className="text-xl">{filter.thumbnailUrl}</span>
@@ -253,9 +258,13 @@ export function FaceFilterOverlay({
                 <span className="text-[9px] font-medium text-white/50 truncate max-w-full">
                   {filter.name}
                 </span>
-                <span className={`rounded px-1.5 py-0.5 text-[7px] font-semibold ${
-                  filter.access === 'nft' ? 'bg-yellow-500/20 text-yellow-400' : 'bg-blue-500/20 text-blue-400'
-                }`}>
+                <span
+                  className={`rounded px-1.5 py-0.5 text-[7px] font-semibold ${
+                    filter.access === 'nft'
+                      ? 'bg-yellow-500/20 text-yellow-400'
+                      : 'bg-blue-500/20 text-blue-400'
+                  }`}
+                >
                   {filter.access === 'nft' ? 'NFT' : 'Buy'}
                 </span>
               </button>
