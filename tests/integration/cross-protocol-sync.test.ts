@@ -22,7 +22,7 @@ import {
   getCrossProtocolDisplay,
   getLinkedProtocols,
 } from '../../packages/cross-protocol-bridge/src/identity-linking';
-import { aggregateEngagement, syncEngagementAcrossProtocols, type EngagementEvent } from '../../packages/cross-protocol-bridge/src/engagement-sync';
+import { aggregateEngagement } from '../../packages/cross-protocol-bridge/src/engagement-sync';
 import { extractHashtags, extractMentions, normalizePost } from '../../packages/cross-protocol-bridge/src/normalization';
 
 // ─── Helper: create mock UnifiedPost ──────────────────────────────────────
