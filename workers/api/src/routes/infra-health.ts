@@ -97,7 +97,7 @@ const SERVICES: ServiceDef[] = [
     name: 'GoToSocial',
     subdomain: 'social',
     protocol: 'ActivityPub',
-    getUrl: (env) => env.GTS_INSTANCE_URL || 'https://social.degenfeed.xyz',
+    getUrl: (env) => env.GOTOSOCIAL_INSTANCE_URL || 'https://social.degenfeed.xyz',
     healthEndpoint: '/api/v1/instance',
     healthCheck: async (url) => {
       const start = performance.now();

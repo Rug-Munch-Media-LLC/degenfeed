@@ -52,7 +52,7 @@ export async function fetchFromActivityPub(
   auth: Record<string, string>,
   env: Env,
 ): Promise<SourceContent | null> {
-  const instance = auth.mastodon_instance || env.GTS_INSTANCE_URL || 'https://social.degenfeed.xyz';
+  const instance = auth.mastodon_instance || env.GOTOSOCIAL_INSTANCE_URL || 'https://social.degenfeed.xyz';
   const accessToken = auth.mastodon || auth.mastodon_token;
   if (!accessToken) return null;
 

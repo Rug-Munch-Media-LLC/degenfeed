@@ -87,7 +87,7 @@ async function fetchPixelfedContent(env: Env, limit: number): Promise<VisualPost
 
   // Option A: GtS public timeline filtered to media-only posts
   try {
-    const gtsUrl = env.GTS_INSTANCE_URL || 'https://social.degenfeed.xyz';
+    const gtsUrl = env.GOTOSOCIAL_INSTANCE_URL || 'https://social.degenfeed.xyz';
     const gts = new GtSClient(gtsUrl);
     const timeline = await gts.get<GtSStatus[]>('/api/v1/timelines/public', {
       limit: Math.min(limit, 40),
@@ -450,7 +450,7 @@ async function fetchBlueskyMedia(env: Env, _limit: number): Promise<VisualPost[]
 
 async function fetchGoToSocialMedia(env: Env, limit: number): Promise<VisualPost[]> {
   const results: VisualPost[] = [];
-  const instanceUrl = env.GTS_INSTANCE_URL || 'https://social.degenfeed.xyz';
+  const instanceUrl = env.GOTOSOCIAL_INSTANCE_URL || 'https://social.degenfeed.xyz';
 
   try {
     const gts = new GtSClient(instanceUrl);

@@ -13,7 +13,7 @@ DegenFeed is the unification layer. One ranked feed that reads from every open p
 ## What It Does
 
 ### Unified Feed
-Browse content from 25+ protocols in a single, ranked timeline. Nostr kind 1 notes, Farcaster casts, Lens publications, Bluesky posts, Mastodon toots, Threads threads, Reddit discussions, RSS feeds, YouTube videos, PeerTube streams — all normalized, deduplicated, and surfaced by a transparent 7-factor ranking algorithm that shows you *why* each post appears.
+Browse content from 44+ protocols and services in a single, ranked timeline. Nostr kind 1 notes, Farcaster casts, Lens publications, Bluesky posts, Mastodon toots, Threads threads, Reddit discussions, RSS feeds, YouTube videos, PeerTube streams, Pixelfed images, Zora NFTs — all normalized, deduplicated, and surfaced by a transparent 7-factor ranking algorithm that shows you *why* each post appears.
 
 No account needed. Open [app.degenfeed.xyz](https://app.degenfeed.xyz) and start browsing.
 
@@ -49,7 +49,7 @@ We built the tool we wanted: one that reads everything, posts everywhere, and ow
 DegenFeed is a **Turborepo monorepo** with three layers:
 
 1. **Edge Layer** — Cloudflare Workers (API + landing) + Cloudflare Pages (Next.js 16 client). 19 KV namespaces for cache, identity, coins, subscriptions, and cross-chain registry.
-2. **Package Layer** — 30+ shared TypeScript packages. One SDK per protocol (nostr-sdk, farcaster-sdk, lens-sdk, bluesky-sdk, mastodon-sdk, threads-sdk, rss-sdk, etc.). Shared engines for feed normalization, ranking, identity resolution, tipping, creator coins, and real-time sync.
+2. **Package Layer** — 43+ shared TypeScript packages. One SDK per protocol (nostr-sdk, farcaster-sdk, lens-sdk, bluesky-sdk, mastodon-sdk, threads-sdk, rss-sdk, pixelfed-sdk, lemmy-sdk, telegram-sdk, discord-sdk, matrix-sdk, zora-sdk, etc.). Shared engines for feed normalization, ranking, identity resolution, tipping, creator coins, and real-time sync.
 3. **Self-Hosted Layer** — GoToSocial (ActivityPub), AT Protocol PDS (Bluesky), PeerTube (video/streaming), Prosody XMPP (chat), MeiliSearch (search), all running on dedicated hardware.
 
 ### Protocol SDK Architecture
@@ -102,8 +102,8 @@ All ranking code is open source and inspectable.
 ## Roadmap
 
 ### Q3 2026 (Now)
-- ✅ Unified feed with 25+ protocols
-- ✅ Cross-protocol composer (post to 15+ protocols simultaneously)
+- ✅ Unified feed with 44+ protocols and services
+- ✅ Cross-protocol composer (post to 15+ protocols simultaneously, read from 44+)
 - ✅ Creator coins on Base and Solana
 - ✅ Cross-chain tipping (ETH, SOL, USDC, Lightning)
 - ✅ Livestreaming + Audio Spaces

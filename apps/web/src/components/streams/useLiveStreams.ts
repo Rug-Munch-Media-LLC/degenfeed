@@ -6,6 +6,21 @@ import useSWR from 'swr';
 
 export type StreamType = 'solo' | 'spaces' | 'collab' | 'launch';
 
+/** Live stream source name matching backend LiveSource */
+export type StreamSource =
+  | 'owncast'
+  | 'peertube'
+  | 'youtube'
+  | 'twitch'
+  | 'kick'
+  | 'spaces'
+  | 'farcaster'
+  | 'nostr'
+  | 'degenfeed'
+  | 'lens'
+  | 'zora';
+
+/** Frontend-optimized live stream type with source info */
 export interface LiveStream {
   id: string;
   title: string;
@@ -13,6 +28,12 @@ export interface LiveStream {
   creatorHandle: string;
   creatorAvatar?: string;
   streamType: StreamType;
+  /** Source platform (maps to backend LiveSource) */
+  source: StreamSource;
+  /** Human-readable source label */
+  sourceLabel: string;
+  /** Source brand color */
+  sourceColor: string;
   viewerCount: number;
   thumbnailUrl?: string;
   isLive: boolean;
@@ -31,13 +52,109 @@ export interface LiveStream {
     }>;
     listenerCount: number;
   };
+  /** Platform-specific metadata */
+  platformMeta?: Record<string, unknown>;
 }
 
 export interface LiveStreamsResponse {
   streams: LiveStream[];
   featured: LiveStream[];
   total: number;
+  /** Aggregated source counts */
+  sourceCounts: Record<string, number>;
+  /** Category counts */
+  categoryCounts: Record<string, number>;
 }
+
+/* === Source Config ============================================ */
+
+export const SOURCE_CONFIG: Record<
+  StreamSource,
+  { label: string; color: string; icon: string; bgClass: string }
+> = {
+  twitch: {
+    label: 'Twitch',
+    color: '#9146FF',
+    icon: '📺',
+    bgClass: 'bg-purple-500/15 text-purple-400',
+  },
+  kick: {
+    label: 'Kick',
+    color: '#53FC18',
+    icon: '🎲',
+    bgClass: 'bg-green-500/15 text-green-400',
+  },
+  peertube: {
+    label: 'PeerTube',
+    color: '#F1684B',
+    icon: '🎥',
+    bgClass: 'bg-orange-500/15 text-orange-400',
+  },
+  owncast: {
+    label: 'Owncast',
+    color: '#00ff41',
+    icon: '📡',
+    bgClass: 'bg-green-500/15 text-green-400',
+  },
+  youtube: {
+    label: 'YouTube',
+    color: '#FF0000',
+    icon: '▶️',
+    bgClass: 'bg-red-500/15 text-red-400',
+  },
+  spaces: {
+    label: 'Spaces',
+    color: '#00BCD4',
+    icon: '🎙️',
+    bgClass: 'bg-cyan-500/15 text-cyan-400',
+  },
+  farcaster: {
+    label: 'Farcaster',
+    color: '#8A63D2',
+    icon: '📱',
+    bgClass: 'bg-indigo-500/15 text-indigo-400',
+  },
+  nostr: {
+    label: 'Nostr',
+    color: '#E87928',
+    icon: '⚡',
+    bgClass: 'bg-amber-500/15 text-amber-400',
+  },
+  degenfeed: {
+    label: 'DegenFeed',
+    color: '#00ff41',
+    icon: '🔴',
+    bgClass: 'bg-green-500/15 text-green-400',
+  },
+  lens: {
+    label: 'Lens',
+    color: '#ABFE2C',
+    icon: '👁️',
+    bgClass: 'bg-lime-500/15 text-lime-400',
+  },
+  zora: {
+    label: 'Zora',
+    color: '#2D7FE5',
+    icon: '💎',
+    bgClass: 'bg-blue-500/15 text-blue-400',
+  },
+};
+
+/* === Source-to-StreamType mapping ============================= */
+
+const SOURCE_TO_STREAM_TYPE: Record<string, StreamType> = {
+  twitch: 'solo',
+  kick: 'solo',
+  peertube: 'solo',
+  owncast: 'solo',
+  youtube: 'solo',
+  spaces: 'spaces',
+  farcaster: 'solo',
+  nostr: 'solo',
+  degenfeed: 'solo',
+  lens: 'solo',
+  zora: 'solo',
+};
 
 /* === Fetcher ================================================== */
 
@@ -47,108 +164,133 @@ const fetcher = async (url: string): Promise<LiveStreamsResponse> => {
   return res.json() as Promise<LiveStreamsResponse>;
 };
 
-/* === Fallback mock data ======================================= */
+/* === API-to-Frontend Converter ================================ */
+
+function convertApiStream(apiStream: any): LiveStream {
+  const source: StreamSource = apiStream.source || 'twitch';
+  const sourceConfig = SOURCE_CONFIG[source] ?? SOURCE_CONFIG.twitch;
+
+  // Map backend category to stream type
+  const category = (apiStream.category || '').toLowerCase();
+  let streamType: StreamType = SOURCE_TO_STREAM_TYPE[source] ?? 'solo';
+  if (category.includes('spaces') || category.includes('talk') || category.includes('podcast')) {
+    streamType = 'spaces';
+  } else if (category.includes('launch') || category.includes('token') || category.includes('coin')) {
+    streamType = 'launch';
+  } else if (category.includes('collab') || category.includes('panel') || category.includes('interview')) {
+    streamType = 'collab';
+  }
+
+  return {
+    id: apiStream.id,
+    title: apiStream.title,
+    creatorId: apiStream.streamer?.id ?? apiStream.id,
+    creatorHandle: apiStream.streamer?.handle ?? apiStream.streamer?.displayName ?? 'unknown',
+    creatorAvatar: apiStream.streamer?.avatarUrl,
+    streamType,
+    source,
+    sourceLabel: sourceConfig.label,
+    sourceColor: sourceConfig.color,
+    viewerCount: apiStream.viewerCount ?? 0,
+    thumbnailUrl: apiStream.thumbnailUrl,
+    isLive: apiStream.isLive ?? true,
+    startedAt: apiStream.startedAt ?? Date.now(),
+    tags: apiStream.tags ?? [],
+    platformMeta: apiStream.platformMeta,
+  };
+}
+
+/* === Mock Data (Fallback when API unavailable) ================ */
+
+const MOCK_LIVE_TITLES = [
+  '🚀 Solana Ecosystem Deep Dive — L2 Summer is Here!',
+  'BTC Post-Halving Analysis — What\'s Next?',
+  'DeFi Yield Strategies — Q3 Outlook',
+  'Building on Base — Live Coding Session',
+  'Meme Coin Watch Party 🐸',
+  'AI × Crypto Panel Discussion',
+  'Wallet Security Best Practices',
+  'Trading Room: BTC / ETH Technicals',
+  'Web3 Gaming Roundup — New Releases',
+  'On-Chain Analytics Masterclass',
+  'Validator Operations Chat',
+  'NFT Market Analysis — Buy the Dip?',
+  'Cross-Chain Bridge Deep Dive',
+  'DePIN Projects to Watch in 2026',
+  'The Future of Decentralized Social',
+  'ZK-Proofs Explained Simply',
+];
+
+const MOCK_CREATORS = [
+  { id: 'c1', handle: 'defi_degen', display: 'DeFi Degen' },
+  { id: 'c2', handle: 'sol_whale', display: 'Sol Whale' },
+  { id: 'c3', handle: 'nft_collector', display: 'NFT Collector' },
+  { id: 'c4', handle: 'crypto_analyst', display: 'Crypto Analyst' },
+  { id: 'c5', handle: 'base_builder', display: 'Base Builder' },
+  { id: 'c6', handle: 'meme_lord', display: 'Meme Lord' },
+  { id: 'c7', handle: 'ai_researcher', display: 'AI Researcher' },
+  { id: 'c8', handle: 'yield_farmer', display: 'Yield Farmer' },
+  { id: 'c9', handle: 'code_ninja', display: 'Code Ninja' },
+  { id: 'c10', handle: 'pixel_wizard', display: 'Pixel Wizard' },
+  { id: 'c11', handle: 'beats_degen', display: 'Beats Degen' },
+  { id: 'c12', handle: 'trade_master', display: 'Trade Master' },
+];
+
+const MOCK_SOURCES: StreamSource[] = [
+  'twitch', 'kick', 'peertube', 'youtube', 'owncast', 'spaces',
+];
 
 function generateMockStreams(): LiveStreamsResponse {
   const now = Date.now();
-  const types: StreamType[] = ['solo', 'spaces', 'collab', 'launch'];
-  const titles = [
-    'DeFi Alpha Call — L2 Summer is Here!',
-    'Solana Ecosystem Deep Dive 🚀',
-    'NFT Market Analysis — Buy the Dip?',
-    'Trading Room: BTC / ETH Technicals',
-    'Building on Base — Live Coding',
-    'Meme Coin Watch Party 🐸',
-    'AI × Crypto Panel Discussion',
-    'Yield Farming Strategies 2026',
-    'Wallet Security Best Practices',
-    'DePIN Projects to Watch',
-    'On-Chain Analytics Masterclass',
-    'Validator Operations Chat',
-  ];
-  const creators = [
-    { id: 'c1', handle: 'defi_degen', avatar: '' },
-    { id: 'c2', handle: 'sol_whale', avatar: '' },
-    { id: 'c3', handle: 'nft_collector', avatar: '' },
-    { id: 'c4', handle: 'crypto_analyst', avatar: '' },
-    { id: 'c5', handle: 'base_builder', avatar: '' },
-    { id: 'c6', handle: 'meme_lord', avatar: '' },
-    { id: 'c7', handle: 'ai_researcher', avatar: '' },
-    { id: 'c8', handle: 'yield_farmer', avatar: '' },
-  ];
+  const sourceCounts: Record<string, number> = {};
+  const categoryCounts: Record<string, number> = {};
 
-  const featured: LiveStream[] = [];
-  const streams: LiveStream[] = [];
+  const streams: LiveStream[] = MOCK_LIVE_TITLES.map((title, i) => {
+    const creator = MOCK_CREATORS[i % MOCK_CREATORS.length]!;
+    const source = MOCK_SOURCES[i % MOCK_SOURCES.length]!;
+    const sourceConfig = SOURCE_CONFIG[source]!;
 
-  for (let i = 0; i < 12; i++) {
-    const creator = creators[i % creators.length]!;
-    const type = types[i % types.length]!;
-    const isFeatured = i < 4;
+    // Determine stream type from source
+    let streamType: StreamType = SOURCE_TO_STREAM_TYPE[source] ?? 'solo';
+    if (i % 5 === 0) streamType = 'spaces';
+    else if (i % 7 === 0) streamType = 'launch';
+    else if (i % 9 === 0) streamType = 'collab';
 
-    const stream: LiveStream = {
-      id: `stream-${i + 1}`,
-      title: titles[i % titles.length]!,
+    const category = streamType === 'spaces' ? 'talk' : streamType === 'launch' ? 'crypto' : 'gaming';
+    categoryCounts[category] = (categoryCounts[category] ?? 0) + 1;
+    sourceCounts[source] = (sourceCounts[source] ?? 0) + 1;
+
+    return {
+      id: `live-${i + 1}`,
+      title,
       creatorId: creator.id,
       creatorHandle: creator.handle,
-      creatorAvatar: creator.avatar,
-      streamType: type,
-      viewerCount: Math.floor(Math.random() * 2500) + 12,
+      creatorAvatar: undefined,
+      streamType,
+      source,
+      sourceLabel: sourceConfig.label,
+      sourceColor: sourceConfig.color,
+      viewerCount: Math.floor(Math.random() * 8500) + 12,
       thumbnailUrl: undefined,
       isLive: true,
       startedAt: now - Math.floor(Math.random() * 7200000),
-      tokenAddress: type === 'launch' ? `0x${Math.random().toString(16).slice(2, 42)}` : undefined,
-      tokenSymbol:
-        type === 'launch'
-          ? (['DEGEN', 'MEME', 'SOL', 'PEPE', 'DOGE', 'BONK'][i % 6] ?? 'DEGEN')
-          : undefined,
-      bondingCurveProgress: type === 'launch' ? Math.floor(Math.random() * 100) : undefined,
-      tags: ['crypto', 'defi', type],
+      tags: ['live', source, category],
     };
+  });
 
-    if (type === 'spaces') {
-      stream.space = {
-        speakers: [
-          {
-            userId: creator.id,
-            displayName: creator.handle,
-            avatarUrl: creator.avatar,
-            isMuted: false,
-            isHost: true,
-          },
-          {
-            userId: `sp${i}`,
-            displayName: `Speaker ${i + 1}`,
-            avatarUrl: undefined,
-            isMuted: Math.random() > 0.5,
-            isHost: false,
-          },
-          {
-            userId: `sp${i + 1}`,
-            displayName: `Speaker ${i + 2}`,
-            avatarUrl: undefined,
-            isMuted: Math.random() > 0.5,
-            isHost: false,
-          },
-        ],
-        listenerCount: Math.floor(Math.random() * 800) + 20,
-      };
-    }
+  // Sort by viewer count desc for featured
+  const sorted = [...streams].sort((a, b) => b.viewerCount - a.viewerCount);
+  const featured = sorted.slice(0, 5);
+  // Shuffle the rest for variety
+  const remaining = sorted.slice(5).sort(() => Math.random() - 0.5);
 
-    if (isFeatured) {
-      featured.push(stream);
-    }
-    streams.push(stream);
-  }
-
-  // Shuffle streams for variety
-  for (let i = streams.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    const tmp = streams[i] as LiveStream;
-    streams[i] = streams[j] as LiveStream;
-    streams[j] = tmp;
-  }
-
-  return { streams, featured, total: streams.length };
+  return {
+    streams: [...featured, ...remaining],
+    featured,
+    total: streams.length,
+    sourceCounts,
+    categoryCounts,
+  };
 }
 
 /* === Hook ===================================================== */
@@ -172,6 +314,8 @@ export function useLiveStreams() {
     streams: data?.streams ?? [],
     featured: data?.featured ?? [],
     total: data?.total ?? 0,
+    sourceCounts: data?.sourceCounts ?? {},
+    categoryCounts: data?.categoryCounts ?? {},
     isLoading,
     isValidating,
     isError: !!error,

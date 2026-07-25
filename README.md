@@ -19,15 +19,15 @@
 
 ## What is DegenFeed?
 
-**DegenFeed** is the Web3 Social Universe — an open-source, multi-protocol aggregator that unifies **25+ decentralized social protocols** into one app. Nostr, Farcaster, Lens, Bluesky, Mastodon, Reddit, RSS, YouTube, PeerTube, Telegram, Discord, and more — all in a single ranked feed. Cross-post to every protocol simultaneously. Launch your own creator coin on Base or Solana. Tip creators in ETH, SOL, USDC, or Lightning with zero platform fees. Livestream to 7 platforms at once.
+**DegenFeed** is the Web3 Social Universe — an open-source, multi-protocol aggregator that unifies **44+ decentralized social protocols and services** into one app. Nostr, Farcaster, Lens, Bluesky, Mastodon, PeerTube, Telegram, Discord, Matrix, Reddit, RSS, YouTube, Pixelfed, Zora, and more — all in a single ranked feed. Cross-post to multiple protocols simultaneously. Launch your own creator coin on Base or Solana. Tip creators in ETH, SOL, USDC, or Lightning with zero platform fees. Livestream, host audio spaces, publish short-form video, and manage cross-protocol communities — all from one interface.
 
 | You can | Without |
 |---------|---------|
-| Browse Nostr, Farcaster, Bluesky, Lens, Mastodon in one feed | Creating an account |
-| Cross-post to 15+ protocols simultaneously | Copy-pasting |
+| Browse 44+ protocols in one unified feed | Creating an account |
+| Cross-post to 15+ protocols simultaneously | Copy-pasting between platforms |
 | Launch your own ERC-20 / SPL token | Coding or paying audit fees |
-| Tip creators in ETH, SOL, USDC, or Lightning | Platform fees |
-| Stream live to 7 platforms at once | Multiple streaming setups |
+| Tip creators in ETH, SOL, USDC, or Lightning | Paying platform fees |
+| Stream live to 7+ platforms at once | Multiple streaming setups |
 | Self-host the entire stack | Losing your data or identity |
 
 > **Post once. Reach everywhere. Earn from anywhere. No one can deplatform you.**
@@ -37,14 +37,14 @@
 ## Features
 
 ### 🗞️ Unified Feed
-- Ranked, aggregated timeline from every connected protocol
-- Per-protocol filters (Nostr, Farcaster, Lens, Bluesky, Mastodon, Reddit, RSS, YouTube)
+- Ranked, aggregated timeline from 44+ connected protocols and services
+- Per-protocol filters (Nostr, Farcaster, Lens, Bluesky, Mastodon, Reddit, RSS, YouTube, Pixelfed, Zora, and more)
 - Trending, News, For You, Following tabs with smart ranking
 - Real-time updates via Server-Sent Events
 - 353+ curated RSS news sources with category filtering (DeFi, AI, Bitcoin, Ethereum, Security, Macro)
 
 ### ✍️ Cross-Platform Composer
-- Write once, publish to Nostr + Farcaster + Bluesky + Mastodon + Lens + Threads simultaneously
+- Write once, publish to Nostr + Farcaster + Bluesky + Mastodon + Lens + Threads + Telegram + Matrix + Discord + GitHub simultaneously
 - Free tier: 3 protocols per post | Premium: unlimited
 - Image/video attachments, rich media, and poll support
 - Scheduled posting with timezone-aware composer
@@ -111,7 +111,7 @@
 
 ---
 
-## Integrated Protocols (25+)
+## Integrated Protocols (44+)
 
 | Protocol | Feed | Post | Tip | Creator Coin | Livestream | Spaces |
 |----------|------|------|-----|-------------|------------|--------|
@@ -133,12 +133,16 @@
 | GitHub | ✅ | ✅ | — | — | — | — |
 | Substack / Ghost | ✅ | ✅ | — | — | — | — |
 | Webhooks | ✅ | ✅ | — | — | — | — |
-| Zora | — | — | ✅ | ✅ (Wrap) | — | — |
+| Zora | ✅ | — | ✅ | ✅ (Wrap) | — | — |
 | Solana | — | — | ✅ | ✅ (SPL) | — | — |
-| **Pixelfed** | ✅ | ✅ | — | — | — | — |
-| **Odysee / LBRY** | ✅ | — | — | — | — | — |
-| **Hacker News** | ✅ | — | — | — | — | — |
-| **Mirror.xyz** | ✅ | — | — | — | — | — |
+| Pixelfed | ✅ | ✅ | — | — | — | — |
+| Odysee / LBRY | ✅ | — | — | — | — | — |
+| Hacker News | ✅ | — | — | — | — | — |
+| Mirror.xyz | ✅ | — | — | — | — | — |
+| Paragraph.xyz | ✅ | ✅ | — | — | — | — |
+| Livepeer | ✅ | — | — | — | ✅ | — |
+| **Matrix Bridge Hub** | ✅ | ✅ | — | — | — | — |
+| *(WhatsApp, Signal, Slack, IRC, WeChat, Google Chat, and 20+ more via Matrix mautrix bridges)* | | | | | | |
 
 ---
 
@@ -157,11 +161,12 @@
 │  app.degenfeed.xyz (Pages — Next.js 16)                              │
 │  19 KV namespaces for cache, identity, coins, communities, etc.     │
 ├─────────────────────────────────────────────────────────────────────┤
-│                      PACKAGES LAYER (30+)                            │
+│                      PACKAGES LAYER (43+)                            │
 │  Protocol SDKs   │  Feed Pipeline  │  Identity     │  Auth           │
 │  Creator Coins   │  Tip Engine     │  Ranking      │  Web3           │
 │  Reputation      │  Storage        │  Realtime     │  UI Components  │
 │  Smart Contracts │  Token SDK      │  Video        │  Shorts         │
+│  Bridge SDKs     │  Matrix Bridge  │  Spaces       │  Monetization   │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -201,18 +206,18 @@ apps/
   web/                     Next.js 16 aggregator client (87+ SSR pages)
     src/
       app/                 60+ route groups (feed, profile, discover, etc.)
-      components/          16+ component directories
+      components/          16+ component directories, ~160 components
       lib/                 Client-side utilities
       middleware.ts        Auth + rate limiting middleware
 
 workers/
-  api/                     Cloudflare Worker: edge API (500+ routes)
+  api/                     Cloudflare Worker: edge API (500+ routes, 200+ route modules)
     src/
       routes/              ~100 route modules
-      feed/                Feed pipeline (scorer, curator, freshness)
-      lib/                 Shared libraries (bridge engine, community store, etc.)
+      feed/                Feed pipeline (scorer, curator, freshness, aggregators)
+      lib/                 40+ shared libraries (bridge engine, community store, etc.)
 
-packages/                  30+ shared packages
+packages/                  43+ shared packages
   types/                   Unified protocol types
   feed-core/               Feed normalization + deduplication
   ranking/                 Transparent feed scoring algorithms
@@ -220,9 +225,12 @@ packages/                  30+ shared packages
   identity/ + identity-hub/ Identity resolution
   auth/                    Wallet sign-in + sessions
   web3/                    Web3 utilities
+  crypto/                  Cryptographic utilities
   storage/                 Client + edge storage helpers
   realtime/                WebSocket + SSE real-time sync
   reputation/              Reputation scoring + tiers
+
+  # Protocol SDKs
   nostr-sdk/               Nostr protocol adapter
   farcaster-sdk/           Farcaster protocol adapter
   lens-sdk/                Lens protocol adapter
@@ -231,25 +239,50 @@ packages/                  30+ shared packages
   threads-sdk/             Threads protocol adapter
   rss-sdk/                 RSS/Atom feed adapter
   peertube-provider/       PeerTube video + stream adapter
+  peertube-sdk/            PeerTube API SDK
   telegram-sdk/            Telegram Bot API client
   discord-sdk/             Discord Bot API & webhook client
   matrix-sdk/              Matrix homeserver client
   github-sdk/              GitHub API client
-  newsletter-bridge-sdk/   Substack/Ghost RSS bridge
+  pixelfed-sdk/            Pixelfed API adapter
+  lemmy-sdk/               Lemmy protocol adapter
+  youtube-provider/        YouTube data provider
   zora-sdk/                Creator coin SDK (bonding curve, anti-exploit)
+  solana-programs/         Anchor Rust programs for Solana
+  ghost-bridge/            Ghost CMS publisher bridge
+  mirror-bridge/           Mirror.xyz publisher bridge
+  paragraph-bridge/        Paragraph.xyz publisher bridge
+  newsletter-bridge-sdk/   Substack/Ghost RSS bridge
+  livepeer-provider/       Livepeer streaming provider
+
+  # Feature packages
   shorts-provider/         Short-form video provider
-  tip-contract/            Solidity + Anchor (Solana) smart contracts
   spaces-audio/            Audio Spaces engine
+  spaces-bridge/           Cross-protocol spaces bridge
   token-gate/              Token-gated content access
+  cross-protocol-bridge/   Cross-protocol content bridging
+  crossplatform-register/  Cross-platform registration
+  feed-providers/          Feed provider adapters
+  source-discovery/        Content source discovery
+  creator-coin/            Creator coin management
+  creator-rewards/         Creator rewards engine
+  monetization/            Monetization and subscription logic
+  tip-contract/            Solidity + Anchor (Solana) smart contracts
+  utils/                   Shared utilities
 
 infra/
   cloudflare/              Wrangler configs, Pages setup
   monitoring/              GlitchTip, Grafana, Prometheus
   deploy-templates/        Docker Compose templates
+  docker/                  Docker configurations
+  nginx/                   Nginx configurations
 
 mobile/                    Capacitor mobile shell (iOS + Android)
 docs/                      VitePress documentation site
 scripts/                   Deploy, rollback, migration scripts
+design/                    Design tokens and Style Dictionary config
+bridge/                    Local HTTP bridge server (port 8787, 11 providers)
+tests/                     Integration and E2E tests
 ```
 
 ---
@@ -287,10 +320,12 @@ DegenFeed is open source. You can inspect, fork, and self-host every line of cod
 |----------|-------------|
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Monorepo structure, protocol integration map, data flows, security model |
 | [docs/API_REFERENCE.md](docs/API_REFERENCE.md) | Complete v1 API reference with all endpoints |
+| [docs/ONBOARDING.md](docs/ONBOARDING.md) | User onboarding guide from wallet connect to advanced features |
 | [docs/USER_GUIDE.md](docs/USER_GUIDE.md) | End-user step-by-step guide from account creation to advanced features |
 | [docs/CREATOR_GUIDE.md](docs/CREATOR_GUIDE.md) | Creator monetization: coins, tips, livestreaming, and growth strategies |
 | [docs/DEVELOPER_GUIDE.md](docs/DEVELOPER_GUIDE.md) | How to add protocols, contribute features, and extend the platform |
 | [docs/INTEGRATIONS.md](docs/INTEGRATIONS.md) | Per-protocol integration details and API references |
+| [docs/PLATFORM_UNIVERSE.md](docs/PLATFORM_UNIVERSE.md) | Complete catalog of every platform and integration pathway |
 | [docs/BLOG.md](docs/BLOG.md) | Launch announcement — why we built it, technical deep dive, roadmap |
 | [docs/PRESS.md](docs/PRESS.md) | Press kit — logos, metrics, founder info, contact |
 | [docs/README.md](docs/README.md) | Full documentation index with links to every doc |

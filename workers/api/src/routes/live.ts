@@ -34,6 +34,18 @@ import {
   type UnifiedLiveStream,
   type UpcomingStream,
 } from '../feed/live-aggregator';
+import {
+  watchCreator,
+  unwatchCreator,
+  getWatchedCreators,
+  getPendingNotifications,
+  detectLiveWatchedCreators,
+  upsertWatcherProfile,
+  getWatcherProfile,
+} from '../feed/live-sources/notifications';
+import { fetchAllPeerTubeStreams, getPeerTubeInstanceHealth } from '../feed/live-sources/peertube';
+import { fetchKickLiveStreams, isKickChannelLive } from '../feed/live-sources/kick';
+import { fetchCuratedTwitchStreams } from '../feed/live-sources/twitch';
 import type { Env } from '../index';
 import { jsonResponse, noCacheJsonResponse } from '../index';
 import { handleChatMessages, handleSendChat } from '../lib/stream-chat';
@@ -145,7 +157,7 @@ const SOURCE_CONFIGS = [
   {
     id: 'peertube' as const,
     name: 'PeerTube',
-    description: 'Federated video platform',
+    description: 'Federated video platform (10+ instances)',
     icon: '🎥',
     color: '#F1684B',
     enabled: true,
@@ -161,9 +173,17 @@ const SOURCE_CONFIGS = [
   {
     id: 'twitch' as const,
     name: 'Twitch',
-    description: 'Twitch interactive streaming',
+    description: 'Twitch interactive streaming (curated)',
     icon: '📺',
     color: '#9146FF',
+    enabled: true,
+  },
+  {
+    id: 'kick' as const,
+    name: 'Kick',
+    description: 'Kick.com live streaming',
+    icon: '🎲',
+    color: '#53FC18',
     enabled: true,
   },
   {
@@ -555,12 +575,493 @@ export async function handleLiveViewersSSE(
   });
 }
 
+// ═══════════════════════════════════════════════════════════════════════
+// Stream Notification Routes
+// ═══════════════════════════════════════════════════════════════════════
+
+/**
+ * POST /api/live/watch — Watch a creator for live notifications
+ */
+export async function handleWatchCreator(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+
+  const session = await requireSession(request, env);
+  if (session instanceof Response) return session;
+
+  try {
+    const body = (await request.json()) as {
+      creatorId?: string;
+      creatorName?: string;
+      email?: boolean;
+      push?: boolean;
+      minViewers?: number;
+    };
+
+    if (!body.creatorId?.trim()) {
+      return jsonResponse({ error: 'creatorId is required' }, 400);
+    }
+
+    const result = await watchCreator(
+      env,
+      session.address,
+      body.creatorId.trim(),
+      body.creatorName || body.creatorId.trim(),
+      {
+        email: body.email ?? true,
+        push: body.push ?? true,
+        minViewers: body.minViewers ?? 0,
+      },
+    );
+
+    return jsonResponse(result, result.ok ? 200 : 400);
+  } catch (e) {
+    return jsonResponse({ error: String(e) }, 500);
+  }
+}
+
+/**
+ * POST /api/live/unwatch — Stop watching a creator
+ */
+export async function handleUnwatchCreator(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+
+  const session = await requireSession(request, env);
+  if (session instanceof Response) return session;
+
+  try {
+    const body = (await request.json()) as { creatorId?: string };
+
+    if (!body.creatorId?.trim()) {
+      return jsonResponse({ error: 'creatorId is required' }, 400);
+    }
+
+    const result = await unwatchCreator(env, session.address, body.creatorId.trim());
+    return jsonResponse(result);
+  } catch (e) {
+    return jsonResponse({ error: String(e) }, 500);
+  }
+}
+
+/**
+ * GET /api/live/watched — Get all watched creators for current user
+ */
+export async function handleGetWatchedCreators(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+
+  const session = await requireSession(request, env);
+  if (session instanceof Response) return session;
+
+  try {
+    const entries = await getWatchedCreators(env, session.address);
+    return noCacheJsonResponse({ watchedCreators: entries, total: entries.length });
+  } catch (e) {
+    return jsonResponse({ error: String(e) }, 500);
+  }
+}
+
+/**
+ * GET /api/live/notifications — Get pending notifications for current user
+ */
+export async function handleGetNotifications(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+
+  const session = await requireSession(request, env);
+  if (session instanceof Response) return session;
+
+  try {
+    const url = new URL(request.url);
+    const limit = Math.min(Number(url.searchParams.get('limit')) || 20, 50);
+    const notifications = await getPendingNotifications(env, session.address, limit);
+    return noCacheJsonResponse({ notifications, total: notifications.length });
+  } catch (e) {
+    return jsonResponse({ error: String(e) }, 500);
+  }
+}
+
+/**
+ * POST /api/live/notifications/settings — Update notification preferences
+ */
+export async function handleNotificationSettings(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+
+  const session = await requireSession(request, env);
+  if (session instanceof Response) return session;
+
+  try {
+    const body = (await request.json()) as {
+      email?: string;
+      pushToken?: string;
+      pushPlatform?: 'web' | 'mobile';
+      notificationsEnabled?: boolean;
+    };
+
+    const existing = await getWatcherProfile(env, session.address);
+    const profile = {
+      address: session.address,
+      email: body.email ?? existing?.email,
+      pushToken: body.pushToken ?? existing?.pushToken,
+      pushPlatform: body.pushPlatform ?? existing?.pushPlatform,
+      notificationsEnabled: body.notificationsEnabled ?? existing?.notificationsEnabled ?? true,
+      createdAt: existing?.createdAt ?? Date.now(),
+    };
+
+    const result = await upsertWatcherProfile(env, profile);
+    return jsonResponse(result);
+  } catch (e) {
+    return jsonResponse({ error: String(e) }, 500);
+  }
+}
+
+/**
+ * GET /api/live/watched/live — Check which watched creators are currently live
+ */
+export async function handleWatchedLive(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+
+  const session = await requireSession(request, env);
+  if (session instanceof Response) return session;
+
+  try {
+    const streams = await aggregateAllStreams(env);
+    const liveWatched = await detectLiveWatchedCreators(env, streams, session.address);
+
+    return noCacheJsonResponse({
+      liveCreators: liveWatched.map((lw) => ({
+        creatorId: lw.entry.creatorId,
+        creatorName: lw.entry.creatorName,
+        stream: {
+          id: lw.stream.id,
+          title: lw.stream.title,
+          source: lw.stream.source,
+          viewerCount: lw.stream.viewerCount,
+          thumbnailUrl: lw.stream.thumbnailUrl,
+          embedUrl: lw.stream.embedUrl,
+          startedAt: lw.stream.startedAt,
+        },
+      })),
+      total: liveWatched.length,
+    });
+  } catch (e) {
+    return jsonResponse({ error: String(e) }, 500);
+  }
+}
+
+/**
+ * GET /api/live/sources/peertube/instances — PeerTube instance health
+ */
+export async function handlePeerTubeInstances(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+
+  try {
+    const instances = await getPeerTubeInstanceHealth(env);
+    return noCacheJsonResponse({ instances });
+  } catch (e) {
+    return jsonResponse({ error: String(e) }, 500);
+  }
+}
+
+/**
+ * GET /api/live/sources/twitch/curated — Curated Twitch channels list
+ */
+export async function handleTwitchCurated(request: Request, _env: Env): Promise<Response> {
+  if (request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+
+  try {
+    const { CURATED_TWITCH_CHANNELS } = await import('../feed/live-sources/twitch');
+    return noCacheJsonResponse({ channels: CURATED_TWITCH_CHANNELS, total: CURATED_TWITCH_CHANNELS.length });
+  } catch (e) {
+    return jsonResponse({ error: String(e) }, 500);
+  }
+}
+
+/**
+ * GET /api/live/kick/status/:channel — Check if a Kick channel is live
+ */
+export async function handleKickChannelStatus(
+  request: Request,
+  _env: Env,
+  channel: string,
+): Promise<Response> {
+  if (request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+
+  try {
+    const result = await isKickChannelLive(channel);
+    return noCacheJsonResponse(result);
+  } catch (e) {
+    return jsonResponse({ error: String(e) }, 500);
+  }
+}
+
 // ─── Helpers ─────────────────────────────────────────────────────────
 
 interface SourceCount {
   source: string;
   count: number;
   label: string;
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// WebRTC P2P Live Routes
+// ═══════════════════════════════════════════════════════════════════════
+
+/**
+ * POST /api/live/webrtc/offer — Broadcaster creates WebRTC session
+ */
+export async function handleWebRTCOffer(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+
+  try {
+    const { handleWebRTCOffer: handler } = await import('../lib/webrtc-streaming');
+    return handler(request, env);
+  } catch (e) {
+    return jsonResponse({ error: String(e) }, 500);
+  }
+}
+
+/**
+ * POST /api/live/webrtc/answer — Viewer submits SDP answer
+ */
+export async function handleWebRTCAnswer(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+
+  try {
+    const { handleWebRTCAnswer: handler } = await import('../lib/webrtc-streaming');
+    return handler(request, env);
+  } catch (e) {
+    return jsonResponse({ error: String(e) }, 500);
+  }
+}
+
+/**
+ * POST /api/live/webrtc/ice — ICE candidate exchange
+ */
+export async function handleWebRTCIce(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+
+  try {
+    const { handleWebRTCIce: handler } = await import('../lib/webrtc-streaming');
+    return handler(request, env);
+  } catch (e) {
+    return jsonResponse({ error: String(e) }, 500);
+  }
+}
+
+/**
+ * GET /api/live/webrtc/offer/:sessionId — Viewer polls for offer
+ */
+export async function handleWebRTCGetOffer(
+  request: Request,
+  env: Env,
+  sessionId: string,
+): Promise<Response> {
+  if (request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+
+  try {
+    const { handleWebRTCGetOffer: handler } = await import('../lib/webrtc-streaming');
+    return handler(request, env, sessionId);
+  } catch (e) {
+    return jsonResponse({ error: String(e) }, 500);
+  }
+}
+
+/**
+ * GET /api/live/webrtc/viewers — Viewer count for WebRTC sessions
+ */
+export async function handleWebRTCViewers(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+
+  try {
+    const { handleWebRTCViewers: handler } = await import('../lib/webrtc-streaming');
+    return handler(request, env);
+  } catch (e) {
+    return jsonResponse({ error: String(e) }, 500);
+  }
+}
+
+/**
+ * DELETE /api/live/webrtc/session/:sessionId — End WebRTC session
+ */
+export async function handleWebRTCEnd(
+  request: Request,
+  env: Env,
+  sessionId: string,
+): Promise<Response> {
+  if (request.method !== 'DELETE') return jsonResponse({ error: 'Method not allowed' }, 405);
+
+  try {
+    const { handleWebRTCEnd: handler } = await import('../lib/webrtc-streaming');
+    return handler(request, env, sessionId);
+  } catch (e) {
+    return jsonResponse({ error: String(e) }, 500);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// Adaptive Streaming Router Routes
+// ═══════════════════════════════════════════════════════════════════════
+
+/**
+ * GET /api/live/route/status/:streamId — Get routing status
+ */
+export async function handleStreamRouteStatus(
+  request: Request,
+  env: Env,
+  streamId: string,
+): Promise<Response> {
+  if (request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+
+  try {
+    const { handleStreamRouteStatus: handler } = await import('../lib/streaming-router');
+    return handler(request, env, streamId);
+  } catch (e) {
+    return jsonResponse({ error: String(e) }, 500);
+  }
+}
+
+/**
+ * GET /api/live/route/estimate — Cost estimation
+ */
+export async function handleRouteEstimate(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+
+  try {
+    const { handleRouteEstimate: handler } = await import('../lib/streaming-router');
+    return handler(request, env);
+  } catch (e) {
+    return jsonResponse({ error: String(e) }, 500);
+  }
+}
+
+/**
+ * POST /api/live/route/switch — Manually switch streaming mode
+ */
+export async function handleRouteSwitch(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+
+  try {
+    const { handleRouteSwitch: handler } = await import('../lib/streaming-router');
+    return handler(request, env);
+  } catch (e) {
+    return jsonResponse({ error: String(e) }, 500);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// Private / Token-Gated Stream Routes
+// ═══════════════════════════════════════════════════════════════════════
+
+/**
+ * POST /api/live/private/configure — Configure private stream
+ */
+export async function handlePrivateStreamConfigure(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+
+  try {
+    const { handlePrivateStreamConfigure: handler } = await import('../lib/private-stream');
+    return handler(request, env);
+  } catch (e) {
+    return jsonResponse({ error: String(e) }, 500);
+  }
+}
+
+/**
+ * POST /api/live/private/join — Viewer requests access to private stream
+ */
+export async function handlePrivateStreamJoin(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+
+  try {
+    const { handlePrivateStreamJoin: handler } = await import('../lib/private-stream');
+    return handler(request, env);
+  } catch (e) {
+    return jsonResponse({ error: String(e) }, 500);
+  }
+}
+
+/**
+ * GET /api/live/private/config/:streamId — Get private stream config
+ */
+export async function handlePrivateStreamConfig(
+  request: Request,
+  env: Env,
+  streamId: string,
+): Promise<Response> {
+  if (request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+
+  try {
+    const { handlePrivateStreamConfig: handler } = await import('../lib/private-stream');
+    return handler(request, env, streamId);
+  } catch (e) {
+    return jsonResponse({ error: String(e) }, 500);
+  }
+}
+
+/**
+ * DELETE /api/live/private/revoke/:streamId — Revoke all viewer access
+ */
+export async function handlePrivateStreamRevoke(
+  request: Request,
+  env: Env,
+  streamId: string,
+): Promise<Response> {
+  if (request.method !== 'DELETE') return jsonResponse({ error: 'Method not allowed' }, 405);
+
+  try {
+    const { handlePrivateStreamRevoke: handler } = await import('../lib/private-stream');
+    return handler(request, env, streamId);
+  } catch (e) {
+    return jsonResponse({ error: String(e) }, 500);
+  }
+}
+
+/**
+ * POST /api/live/private/rotate/:streamId — Rotate encryption key
+ */
+export async function handlePrivateStreamRotate(
+  request: Request,
+  env: Env,
+  streamId: string,
+): Promise<Response> {
+  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+
+  try {
+    const { handlePrivateStreamRotate: handler } = await import('../lib/private-stream');
+    return handler(request, env, streamId);
+  } catch (e) {
+    return jsonResponse({ error: String(e) }, 500);
+  }
+}
+
+/**
+ * GET /api/live/private/viewers/:streamId — List viewers with access
+ */
+export async function handlePrivateStreamViewers(
+  request: Request,
+  env: Env,
+  streamId: string,
+): Promise<Response> {
+  if (request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+
+  try {
+    const { handlePrivateStreamViewers: handler } = await import('../lib/private-stream');
+    return handler(request, env, streamId);
+  } catch (e) {
+    return jsonResponse({ error: String(e) }, 500);
+  }
+}
+
+/**
+ * POST /api/live/private/allowlist — Add address to allowlist
+ */
+export async function handlePrivateStreamAllowlist(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+
+  try {
+    const { handlePrivateStreamAllowlist: handler } = await import('../lib/private-stream');
+    return handler(request, env);
+  } catch (e) {
+    return jsonResponse({ error: String(e) }, 500);
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════

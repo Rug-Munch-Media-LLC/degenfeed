@@ -28,12 +28,10 @@ function getProvider(env: Env): PixelfedProvider {
  *
  * Query params:
  *   limit (number) — max posts to return (default: 20, max: 50)
- *   cursor (string) — pagination cursor (not yet implemented — placeholder)
  */
 export async function handlePixelfedFeed(request: Request, env: Env): Promise<Response> {
   const params = new URL(request.url).searchParams;
   const limit = Math.min(Number(params.get('limit')) || 20, 50);
-  const _cursor = params.get('cursor') ?? undefined;
 
   try {
     const provider = getProvider(env);

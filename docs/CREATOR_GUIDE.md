@@ -1,6 +1,6 @@
 # DegenFeed Creator Guide
 
-**Monetize your content, grow your audience, and build your brand across 15+ open social protocols — all from one platform.**  
+**Monetize your content, grow your audience, and build your brand across 44+ open social protocols and services — all from one platform.**  
 Launch your own creator coin, earn tips across 4 chains, livestream to 7 platforms, and keep every penny.
 
 > **No platform fees. No lock-in. No one can deplatform you.**

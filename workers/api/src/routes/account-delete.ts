@@ -27,7 +27,7 @@ import { requireSession, revokeAllSessionsForAddress } from '../session';
 
 // ─── Constants ──────────────────────────────────────────────────────
 
-const GRACE_PERIOD_MS = 24 * 60 * 60 * 1000; // 24 hours
+const GRACE_PERIOD_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 const RATE_LIMIT_TTL_SECONDS = 24 * 60 * 60; // 24 hours
 const PENDING_TTL_SECONDS = 48 * 60 * 60; // 48h — covers grace + buffer
 const SECURITY_AUDIT_PREFIX = 'security:audit:';
@@ -47,6 +47,14 @@ function pendingKey(address: string): string {
 /** Security audit trail entry */
 function auditKey(address: string, timestamp: number): string {
   return `${SECURITY_AUDIT_PREFIX}${address.toLowerCase()}:${timestamp}`;
+}
+
+function signatureKey(address: string): string {
+  return `delete:signature:${address.toLowerCase()}`;
+}
+
+function notifyPrefsKey(address: string): string {
+  return `notify:prefs:${address.toLowerCase()}`;
 }
 
 /** Identity key for the IDENTITIES KV */
@@ -102,6 +110,12 @@ interface PendingDeletion {
   expiresAt: number;
   initiatedBy: string; // 'session' | 'api_key'
   userAgent?: string;
+  /** Whether wallet signature has been confirmed */
+  signatureConfirmed: boolean;
+  /** The message that was signed */
+  signedMessage?: string;
+  /** Wallet chain (ethereum | solana) */
+  chain?: string;
 }
 
 interface DeletionResult {
@@ -171,6 +185,8 @@ export async function handleAccountDelete(request: Request, env: Env): Promise<R
     expiresAt: now + GRACE_PERIOD_MS,
     initiatedBy: 'session',
     userAgent: request.headers.get('user-agent') || undefined,
+    signatureConfirmed: false,
+    chain: session.chain,
   };
 
   if (env.CACHE) {
@@ -212,9 +228,12 @@ export async function handleAccountDelete(request: Request, env: Env): Promise<R
   return noCacheJsonResponse({
     deleted: false,
     pending: true,
-    message: 'Your account deletion has been scheduled. You have 24 hours to cancel this request.',
+    message: 'Your account deletion has been scheduled. You have 30 days to cancel or reactivate. A wallet signature confirmation is required before final deletion.',
     recoverableUntil,
     cancelEndpoint: 'POST /api/account/delete/cancel',
+    reactivateEndpoint: 'POST /api/account/delete/reactivate',
+    confirmSignatureEndpoint: 'POST /api/account/delete/confirm-signature',
+    checklistEndpoint: 'GET /api/account/delete/checklist',
     itemsToBeRemoved: [
       'identities',
       'platform_accounts',
@@ -224,6 +243,12 @@ export async function handleAccountDelete(request: Request, env: Env): Promise<R
       'behavior_profiles',
       'subscriptions',
       'sessions',
+      'content_library',
+    ],
+    nextSteps: [
+      'Sign a wallet confirmation message to authorize final deletion',
+      'Export your data before the grace period expires',
+      'Cancel or reactivate anytime within 30 days',
     ],
   });
 }
@@ -294,6 +319,7 @@ export async function handleAccountDeleteV1(request: Request, env: Env): Promise
     expiresAt: now + GRACE_PERIOD_MS,
     initiatedBy: 'api_key',
     userAgent: request.headers.get('user-agent') || undefined,
+    signatureConfirmed: false,
   };
 
   if (env.CACHE) {
@@ -334,7 +360,7 @@ export async function handleAccountDeleteV1(request: Request, env: Env): Promise
   return noCacheJsonResponse({
     deleted: false,
     pending: true,
-    message: 'Account deletion scheduled. 24-hour grace period started.',
+    message: 'Account deletion scheduled. 30-day grace period started.',
     recoverableUntil,
     itemsToBeRemoved: [
       'identities',
@@ -420,10 +446,45 @@ export async function processPendingDeletions(
         // Only process if grace period has expired
         if (pending.expiresAt > now) continue;
 
+        // Only proceed if signature is confirmed (for session-initiated)
+        if (pending.initiatedBy === 'session' && !pending.signatureConfirmed) {
+          // Signature not confirmed within grace period — cancel automatically
+          log('info', 'Pending deletion auto-cancelled — signature not confirmed', {
+            address: pending.address,
+          });
+          await env.CACHE.delete(key.name).catch(() => {});
+          await env.CACHE.delete(rateLimitKey(pending.address)).catch(() => {});
+          continue;
+        }
+
         // Perform the actual deletion
         const result = await executeDeletion(pending.address, env);
         if (result.deleted) {
           processed++;
+
+          // Issue deletion certificate
+          try {
+            const certId = `cert-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+            const hashInput = `${pending.address}:${Date.now()}:${result.itemsRemoved.sort().join(',')}`;
+            const encoder = new TextEncoder();
+            const hashBuffer = await crypto.subtle.digest('SHA-256', encoder.encode(hashInput));
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            const deletionHash = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+
+            const cert = {
+              id: certId,
+              wallet: pending.address.toLowerCase(),
+              deletedAt: Date.now(),
+              itemsRemoved: [...result.itemsRemoved],
+              verifiedBy: pending.signatureConfirmed ? 'signature' : 'api_key',
+              deletionHash,
+              issuedAt: Date.now(),
+            };
+            await env.CACHE.put(`delete:cert:${certId}`, JSON.stringify(cert), {
+              expirationTtl: 365 * 24 * 60 * 60,
+            });
+            log('info', 'Deletion certificate issued', { certId });
+          } catch { /* non-critical */ }
           // Remove the pending marker
           await env.CACHE.delete(key.name).catch(() => {});
           // Remove rate limit
@@ -465,6 +526,24 @@ async function executeDeletion(address: string, env: Env): Promise<DeletionResul
     } catch {
       // Non-critical — log and continue
       log('warn', 'Failed to delete identity', { address: walletAddress });
+    }
+  }
+
+  // 0. Delete content library entries
+  const store = env.CONTENT_LIBRARY || env.CACHE;
+  if (store) {
+    try {
+      const indexRaw = await store.get(`cl:idx:${walletAddress}`);
+      if (indexRaw) {
+        const index = JSON.parse(indexRaw) as Array<{ id: string }>;
+        for (const entry of index) {
+          await store.delete(`cl:${walletAddress}:${entry.id}`).catch(() => {});
+        }
+        await store.delete(`cl:idx:${walletAddress}`).catch(() => {});
+        itemsRemoved.push('content_library');
+      }
+    } catch {
+      log('warn', 'Failed to delete content library', { address: walletAddress });
     }
   }
 
@@ -625,4 +704,310 @@ async function extractWalletFromApiKey(request: Request, _env: Env): Promise<str
   }
 
   return null;
+}
+
+
+// ─── POST /api/account/delete/reactivate — Reactivate account ─────
+
+export async function handleReactivateAccount(request: Request, env: Env): Promise<Response> {
+  const session = await requireSession(request, env);
+  if (session instanceof Response) return session;
+
+  const walletAddress = session.address;
+
+  if (!env.CACHE) {
+    return jsonResponse({ error: 'KV namespace not available' }, 500);
+  }
+
+  const raw = await env.CACHE.get(pendingKey(walletAddress)).catch(() => null);
+  if (!raw) {
+    return jsonResponse(
+      { error: 'No pending deletion request found. Your account is fully active.' },
+      404,
+    );
+  }
+
+  const pending = JSON.parse(raw) as PendingDeletion;
+  const now = Date.now();
+
+  // Check if grace period has expired
+  if (pending.expiresAt <= now) {
+    return jsonResponse(
+      {
+        error:
+          'The 30-day grace period has expired. Your data has been permanently deleted and cannot be recovered.',
+        code: 'DF-GRACE-EXPIRED',
+      },
+      410, // Gone
+    );
+  }
+
+  // Reactivate: remove pending marker and rate limit
+  await env.CACHE.delete(pendingKey(walletAddress)).catch(() => {});
+  await env.CACHE.delete(rateLimitKey(walletAddress)).catch(() => {});
+  await env.CACHE.delete(signatureKey(walletAddress)).catch(() => {});
+
+  // ── Log security event ──────────────────────────────────────────
+  const auditRecord = {
+    event: 'account_reactivated',
+    address: walletAddress,
+    timestamp: now,
+    wasPendingSince: new Date(pending.requestedAt).toISOString(),
+    recoveredWithDaysRemaining: Math.ceil((pending.expiresAt - now) / (24 * 60 * 60 * 1000)),
+    userAgent: request.headers.get('user-agent'),
+    ip:
+      request.headers.get('cf-connecting-ip') ||
+      request.headers.get('x-forwarded-for') ||
+      'unknown',
+  };
+  log('info', 'Account reactivated within grace period', auditRecord);
+  await storeAuditLog(walletAddress, now, auditRecord, env);
+
+  return noCacheJsonResponse({
+    reactivated: true,
+    message:
+      'Your account has been reactivated. All data has been preserved. Welcome back!',
+    recoveredWithDaysRemaining: Math.ceil((pending.expiresAt - now) / (24 * 60 * 60 * 1000)),
+  });
+}
+
+// ─── POST /api/account/delete/confirm-signature — Wallet signature ─
+
+export async function handleConfirmDeleteSignature(request: Request, env: Env): Promise<Response> {
+  const session = await requireSession(request, env);
+  if (session instanceof Response) return session;
+
+  const walletAddress = session.address;
+
+  if (!env.CACHE) {
+    return jsonResponse({ error: 'KV namespace not available' }, 500);
+  }
+
+  const raw = await env.CACHE.get(pendingKey(walletAddress)).catch(() => null);
+  if (!raw) {
+    return jsonResponse({ error: 'No pending deletion request found.' }, 404);
+  }
+
+  const pending = JSON.parse(raw) as PendingDeletion;
+
+  let body: { signature?: string; message?: string; chain?: string };
+  try {
+    body = await request.json() as { signature?: string; message?: string; chain?: string };
+  } catch {
+    return jsonResponse({ error: 'Invalid JSON body. Required: signature, message' }, 400);
+  }
+
+  if (!body.signature || !body.message) {
+    return jsonResponse({ error: 'Signature and message are required.' }, 400);
+  }
+
+  const chain = body.chain || session.chain || 'ethereum';
+
+  // Verify the signature
+  let isValid = false;
+  if (chain === 'ethereum') {
+    // Use the noble-based signature verification
+    const { verifyEthereumSignature } = await import('../lib/signature-verify');
+    isValid = verifyEthereumSignature(body.message, body.signature, walletAddress);
+  } else if (chain === 'solana') {
+    const { verifySolanaSignature } = await import('../lib/signature-verify');
+    isValid = verifySolanaSignature(body.message, body.signature, walletAddress);
+  } else {
+    return jsonResponse({ error: 'Unsupported chain. Must be ethereum or solana.' }, 400);
+  }
+
+  if (!isValid) {
+    const auditRecord = {
+      event: 'deletion_signature_failed',
+      address: walletAddress,
+      timestamp: Date.now(),
+      chain,
+    };
+    log('warn', 'Wallet signature verification failed for deletion', auditRecord);
+    await storeAuditLog(walletAddress, Date.now(), auditRecord, env);
+
+    return jsonResponse(
+      { error: 'Signature verification failed. You must sign with the wallet that owns this account.' },
+      401,
+    );
+  }
+
+  // Mark signature as confirmed
+  pending.signatureConfirmed = true;
+  pending.signedMessage = body.message;
+  await env.CACHE.put(pendingKey(walletAddress), JSON.stringify(pending), {
+    expirationTtl: PENDING_TTL_SECONDS,
+  });
+
+  await env.CACHE.put(signatureKey(walletAddress), body.signature, {
+    expirationTtl: PENDING_TTL_SECONDS,
+  });
+
+  const auditRecord = {
+    event: 'deletion_signature_confirmed',
+    address: walletAddress,
+    timestamp: Date.now(),
+    chain,
+  };
+  log('info', 'Wallet signature confirmed for deletion', auditRecord);
+  await storeAuditLog(walletAddress, Date.now(), auditRecord, env);
+
+  return noCacheJsonResponse({
+    confirmed: true,
+    message:
+      'Wallet signature confirmed. Your deletion request is now authorized. The deletion will proceed at the end of the 30-day grace period.',
+    gracePeriodEnds: new Date(pending.expiresAt).toISOString(),
+  });
+}
+
+// ─── GET /api/account/delete/checklist — Data wipe checklist ──────
+
+export async function handleDeleteChecklist(request: Request, env: Env): Promise<Response> {
+  const session = await requireSession(request, env);
+  if (session instanceof Response) return session;
+
+  const walletLower = session.address.toLowerCase();
+
+  interface WipeChecklistItem {
+    category: string;
+    keys: string[];
+    description: string;
+    willBeRemoved: boolean;
+  }
+
+  const checklist: WipeChecklistItem[] = [
+    {
+      category: 'Identity',
+      keys: [identityKey(walletLower)],
+      description: 'Your cross-protocol identity record (wallet to Farcaster, Lens, Nostr, etc.)',
+      willBeRemoved: !!env.IDENTITIES,
+    },
+    {
+      category: 'Platform Accounts',
+      keys: ['account:{wallet}', 'nostr:{wallet}', 'farcaster:{wallet}', 'lens:{wallet}', 'bluesky:{wallet}', 'mastodon:{wallet}'],
+      description: 'All connected protocol account records',
+      willBeRemoved: !!env.PLATFORM_ACCOUNTS,
+    },
+    {
+      category: 'Preferences',
+      keys: [prefsKey(walletLower)],
+      description: 'Theme, font size, layout, notification prefs, privacy settings',
+      willBeRemoved: !!env.CACHE,
+    },
+    {
+      category: 'Follows',
+      keys: [followsKey(walletLower)],
+      description: 'Who you follow',
+      willBeRemoved: !!env.CACHE,
+    },
+    {
+      category: 'Muted Content',
+      keys: [mutedAuthorsKey(walletLower), mutedWordsKey(walletLower)],
+      description: 'Muted authors and muted words',
+      willBeRemoved: !!env.CACHE,
+    },
+    {
+      category: 'Behavior Profile',
+      keys: [dwellKey(walletLower)],
+      description: 'Dwell time, scroll depth, engagement patterns (anonymized)',
+      willBeRemoved: !!env.CACHE,
+    },
+    {
+      category: 'Topic Preferences',
+      keys: [topicsKey(walletLower)],
+      description: 'Your selected topics and niche interests',
+      willBeRemoved: !!env.CACHE,
+    },
+    {
+      category: 'Bookmarks',
+      keys: [bookmarksKey(walletLower)],
+      description: 'All saved bookmarks',
+      willBeRemoved: !!env.BOOKMARKS,
+    },
+    {
+      category: 'Custom Feeds',
+      keys: [userCustomFeedsKey(walletLower)],
+      description: 'Custom feed definitions and subscriptions',
+      willBeRemoved: !!env.CUSTOM_FEEDS,
+    },
+    {
+      category: 'Subscriptions',
+      keys: ['newsletter:sub:{wallet}', 'notify:sub:{wallet}'],
+      description: 'Newsletter and notification subscriptions',
+      willBeRemoved: !!env.SUBSCRIPTIONS,
+    },
+    {
+      category: 'Content Library',
+      keys: ['cl:idx:{wallet}', 'cl:{wallet}:*'],
+      description: 'All published posts, videos, shorts — your creative work',
+      willBeRemoved: !!(env.CONTENT_LIBRARY || env.CACHE),
+    },
+    {
+      category: 'Sessions',
+      keys: ['revoked:session:*'],
+      description: 'All active sessions — you will be signed out everywhere',
+      willBeRemoved: true,
+    },
+    {
+      category: 'Security Audit Log',
+      keys: ['security:audit:{wallet}:*'],
+      description: 'Security event history (retained for 90 days by policy per GDPR Article 30)',
+      willBeRemoved: false,
+    },
+  ];
+
+  return noCacheJsonResponse({
+    wallet: session.address,
+    checklist,
+    summary: {
+      categories: checklist.length,
+      willBeRemoved: checklist.filter((i) => i.willBeRemoved).length,
+      retainedForCompliance: checklist.filter((i) => !i.willBeRemoved).length,
+    },
+    note: 'Data from external protocols (Farcaster, Lens, Nostr, Bluesky) may remain on their networks. This only removes DegenFeed records.',
+  });
+}
+
+// ─── GET /api/account/delete/certificate/:id — Get certificate ─────
+
+export async function handleDeletionCertificate(request: Request, env: Env): Promise<Response> {
+  const session = await requireSession(request, env);
+  if (session instanceof Response) return session;
+
+  const url = new URL(request.url);
+  const pathParts = url.pathname.split('/');
+  const certId = pathParts[pathParts.length - 1];
+
+  if (!certId || certId === 'certificate') {
+    return jsonResponse({ error: 'Certificate ID is required.' }, 404);
+  }
+
+  if (!env.CACHE) {
+    return jsonResponse({ error: 'KV namespace not available' }, 500);
+  }
+
+  try {
+    const raw = await env.CACHE.get(`delete:cert:${certId}`);
+    if (!raw) {
+      return jsonResponse({ error: 'Deletion certificate not found or has expired.' }, 404);
+    }
+
+    const cert = JSON.parse(raw);
+
+    // Verify ownership
+    if ((cert as Record<string, string>).wallet?.toLowerCase() !== session.address.toLowerCase()) {
+      return jsonResponse({ error: 'This certificate belongs to a different account.' }, 401);
+    }
+
+    return new Response(JSON.stringify(cert, null, 2), {
+      status: 200,
+      headers: {
+        'content-type': 'application/json; charset=utf-8',
+        'content-disposition': `attachment; filename="deletion-certificate-${certId}.json"`,
+        'cache-control': 'public, max-age=3600',
+      },
+    });
+  } catch {
+    return jsonResponse({ error: 'Failed to retrieve certificate' }, 500);
+  }
 }

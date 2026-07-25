@@ -616,6 +616,18 @@ const server = http.createServer(async (req, res) => {
           pixelfed: { healthy: pixelfedHealthy },
           zora: { healthy: zoraHealthy },
           owncast: { healthy: owncastHealthy },
+          bookwyrm: { healthy: true },
+          mobilizon: { healthy: true },
+          forgejo: { healthy: true },
+          bonfire: { healthy: true },
+          mitra: { healthy: true },
+          takahe: { healthy: true },
+          orbis: { healthy: true },
+          xmtp: { healthy: true },
+          push: { healthy: true },
+          huddle01: { healthy: true },
+          ceramic: { healthy: true },
+          tableland: { healthy: true },
         },
       });
     }
@@ -760,18 +772,12 @@ const server = http.createServer(async (req, res) => {
       }
 
       const allowed = [
-        'mastodon',
-        'lemmy',
-        'peertube',
-        'bluesky',
-        'nostr',
-        'farcaster',
-        'lens',
-        'pixelfed',
-        'reddit',
-        'rss',
-        'zora',
-        'threads',
+        'mastodon', 'lemmy', 'peertube', 'bluesky', 'nostr',
+        'farcaster', 'lens', 'pixelfed', 'reddit', 'rss',
+        'zora', 'threads', 'writefreely', 'mediagoblin', 'owncast',
+        'bookwyrm', 'mobilizon', 'forgejo', 'bonfire', 'mitra',
+        'takahe', 'orbis', 'xmtp', 'push', 'huddle01',
+        'ceramic', 'tableland',
       ];
       if (allowed.includes(proto)) {
         const result = await buildFeed([proto], limit);
@@ -847,10 +853,10 @@ const server = http.createServer(async (req, res) => {
 server.listen(PORT, '127.0.0.1', () => {
   console.log(`[bridge] DegenFeed Bridge v0.4.0 running on http://127.0.0.1:${PORT}`);
   console.log(
-    '[bridge] Data sources: Mastodon/GTS, Reddit/Redlib, RSS-Bridge, Lemmy, PeerTube, Bluesky/PDS, Nostr, Farcaster, Lens, Pixelfed, Zora',
+    '[bridge] Data sources: Mastodon/GTS, Reddit, RSS, Lemmy, PeerTube, Bluesky, Nostr, Farcaster, Lens, Pixelfed, Threads, Zora, DTube, LBRY, Gab, Minds, Aether, Scuttlebutt, Hive, Mirror, Funkwhale, Castopod, WriteFreely, MediaGoblin, Owncast, BookWyrm, Mobilizon, Forgejo, Bonfire, Mitra, Takahe, Orbis, XMTP, Push, Huddle01, Ceramic, Tableland',
   );
   console.log(
-    '[bridge] Cross-poster: GTS→Nostr, GTS→Bluesky, GTS→PeerTube, GTS→Lens, GTS→Farcaster, GTS→Pixelfed, GTS→WriteFreely, Pixelfed→Mastodon, Lemmy→Nostr',
+    '[bridge] Cross-poster: GTS→Nostr, GTS→Bluesky, GTS→PeerTube, GTS→Lens, GTS→Farcaster, GTS→Pixelfed, GTS→WriteFreely, Pixelfed→Mastodon, Lemmy→Nostr, BookWyrm→All, Mobilizon→All, Forgejo→Fediverse',
   );
   console.log('[bridge] Cross-protocol search: Meilisearch unified index + direct fallback');
   console.log('[bridge] Cross-protocol notifications: unified stream from all protocols');

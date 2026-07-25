@@ -2,6 +2,7 @@
 
 import { LiveStreamCard } from './LiveStreamCard';
 import type { LiveStream } from './useLiveStreams';
+import { SOURCE_CONFIG } from './useLiveStreams';
 
 /* === Types ==================================================== */
 
@@ -10,6 +11,8 @@ interface LiveStreamGridProps {
   isLoading?: boolean;
   emptyMessage?: string;
   onPlay?: (stream: LiveStream) => void;
+  /** When true, renders larger cards */
+  large?: boolean;
 }
 
 /* === Skeleton card ============================================ */
@@ -64,6 +67,7 @@ export function LiveStreamGrid({
   isLoading = false,
   emptyMessage = 'No active streams right now. Check back later or start one!',
   onPlay,
+  large = false,
 }: LiveStreamGridProps) {
   // Loading state
   if (isLoading) {
@@ -83,17 +87,39 @@ export function LiveStreamGrid({
     return <EmptyState message={emptyMessage} />;
   }
 
+  // Show "no source" message when platform filtered but none found
+  const allSources = new Set(streams.map((s) => s.source));
+  const gridClass = large
+    ? 'grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3'
+    : 'grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4';
+
   // Grid
   return (
     <section aria-label="Live streams">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      {allSources.size === 1 && (
+        <div className="mb-3 flex items-center gap-2">
+          {(() => {
+            const src = [...allSources][0]!;
+            const cfg = SOURCE_CONFIG[src];
+            return cfg ? (
+              <span
+                className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium"
+                style={{ backgroundColor: `${cfg.color}15`, color: cfg.color }}
+              >
+                {cfg.icon} {cfg.label}
+              </span>
+            ) : null;
+          })()}
+        </div>
+      )}
+      <div className={gridClass}>
         {streams.map((stream, index) => (
           <div
             key={stream.id}
             className="animate-fade-in"
             style={{ animationDelay: `${index * 50}ms` }}
           >
-            <LiveStreamCard stream={stream} onPlay={onPlay} />
+            <LiveStreamCard stream={stream} onPlay={onPlay} large={large} />
           </div>
         ))}
       </div>

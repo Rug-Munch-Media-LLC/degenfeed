@@ -2,11 +2,12 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import type { LiveStream } from './useLiveStreams';
+import { SOURCE_CONFIG, type LiveStream } from './useLiveStreams';
 
 /* === Helpers ================================================== */
 
 function formatViewers(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
   if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
   return String(n);
 }
@@ -54,6 +55,7 @@ const STREAM_TYPE_CONFIG: Record<
 
 function StreamThumbnail({ stream }: { stream: LiveStream }) {
   const config = (STREAM_TYPE_CONFIG[stream.streamType] ?? STREAM_TYPE_CONFIG.solo)!;
+  const sourceConfig = SOURCE_CONFIG[stream.source] ?? SOURCE_CONFIG.twitch;
 
   // Gradient backgrounds per type
   const gradients: Record<string, string> = {
@@ -82,13 +84,27 @@ function StreamThumbnail({ stream }: { stream: LiveStream }) {
         </span>
       </div>
 
-      {/* LIVE badge */}
-      <div className="absolute left-2 top-2 z-10 flex items-center gap-1.5 rounded-md bg-red-600 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-lg">
-        <span className="relative flex h-1.5 w-1.5">
-          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75" />
-          <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-white" />
+      {/* Top row: Live badge + Source badge */}
+      <div className="absolute left-2 top-2 z-10 flex items-center gap-1.5">
+        {/* LIVE badge */}
+        <span className="flex items-center gap-1 rounded-md bg-red-600 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-lg">
+          <span className="relative flex h-1.5 w-1.5">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75" />
+            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-white" />
+          </span>
+          LIVE
         </span>
-        LIVE
+
+        {/* Source badge */}
+        <span
+          className="rounded-md px-1.5 py-0.5 text-[9px] font-semibold shadow-lg backdrop-blur-sm"
+          style={{
+            backgroundColor: `${sourceConfig.color}20`,
+            color: sourceConfig.color,
+          }}
+        >
+          {sourceConfig.icon} {sourceConfig.label}
+        </span>
       </div>
 
       {/* Duration */}
@@ -96,9 +112,28 @@ function StreamThumbnail({ stream }: { stream: LiveStream }) {
         {formatDuration(stream.startedAt)}
       </div>
 
+      {/* Viewer count */}
+      <div className="absolute bottom-2 left-2 z-10 flex items-center gap-1 rounded-md bg-black/60 px-1.5 py-0.5 text-[10px] font-medium text-white/90 backdrop-blur-sm">
+        <svg
+          width="10"
+          height="10"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+          <circle cx="12" cy="12" r="3" />
+        </svg>
+        {formatViewers(stream.viewerCount)}
+      </div>
+
       {/* Type badge */}
       <div
-        className={`absolute right-2 top-2 z-10 rounded-md px-1.5 py-0.5 text-[9px] font-semibold ${config.bgClass} backdrop-blur-sm`}
+        className={`absolute right-2 top-2 z-10 rounded-md px-1.5 py-0.5 text-[9px] font-semibold backdrop-blur-sm ${config.bgClass}`}
       >
         {config.emoji} {config.label}
       </div>
@@ -131,9 +166,13 @@ interface LiveStreamCardProps {
   stream: LiveStream;
   featured?: boolean;
   onPlay?: (stream: LiveStream) => void;
+  /** When true, shows larger card with more detail */
+  large?: boolean;
 }
 
-export function LiveStreamCard({ stream, featured = false, onPlay }: LiveStreamCardProps) {
+export function LiveStreamCard({ stream, featured = false, onPlay, large = false }: LiveStreamCardProps) {
+  const sourceConfig = SOURCE_CONFIG[stream.source] ?? SOURCE_CONFIG.twitch;
+
   return (
     <article
       className={`group relative overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] transition-all hover:border-degen-500/30 hover:shadow-[0_0_24px_var(--color-accent-glow)] ${
@@ -152,7 +191,7 @@ export function LiveStreamCard({ stream, featured = false, onPlay }: LiveStreamC
         }}
       >
         {stream.thumbnailUrl ? (
-          <div className="relative aspect-video w-full overflow-hidden">
+          <div className={`relative ${large ? 'aspect-video' : 'aspect-video'} w-full overflow-hidden`}>
             <Image
               src={stream.thumbnailUrl}
               alt={`${stream.title} thumbnail`}
@@ -162,6 +201,50 @@ export function LiveStreamCard({ stream, featured = false, onPlay }: LiveStreamC
             />
             {/* Gradient overlay for text readability */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+
+            {/* Live badge + Source badge overlay on real thumbnails */}
+            <div className="absolute left-2 top-2 z-10 flex items-center gap-1.5">
+              <span className="flex items-center gap-1 rounded-md bg-red-600 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-lg">
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75" />
+                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-white" />
+                </span>
+                LIVE
+              </span>
+              <span
+                className="rounded-md px-1.5 py-0.5 text-[9px] font-semibold shadow-lg backdrop-blur-sm"
+                style={{
+                  backgroundColor: `${sourceConfig.color}20`,
+                  color: sourceConfig.color,
+                }}
+              >
+                {sourceConfig.icon} {sourceConfig.label}
+              </span>
+            </div>
+
+            {/* Viewer count */}
+            <div className="absolute bottom-2 left-2 z-10 flex items-center gap-1 rounded-md bg-black/60 px-1.5 py-0.5 text-[10px] font-medium text-white/90 backdrop-blur-sm">
+              <svg
+                width="10"
+                height="10"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+              {formatViewers(stream.viewerCount)}
+            </div>
+
+            {/* Duration */}
+            <div className="absolute bottom-2 right-2 z-10 rounded-md bg-black/60 px-1.5 py-0.5 text-[10px] font-medium text-white/90 backdrop-blur-sm">
+              {formatDuration(stream.startedAt)}
+            </div>
           </div>
         ) : (
           <StreamThumbnail stream={stream} />
@@ -181,7 +264,9 @@ export function LiveStreamCard({ stream, featured = false, onPlay }: LiveStreamC
             }
           }}
         >
-          <h3 className="truncate text-sm font-semibold text-[var(--color-fg)] transition-colors group-hover:text-degen-400">
+          <h3 className={`truncate font-semibold text-[var(--color-fg)] transition-colors group-hover:text-degen-400 ${
+            large ? 'text-base' : 'text-sm'
+          }`}>
             {stream.title}
           </h3>
         </Link>
@@ -205,25 +290,35 @@ export function LiveStreamCard({ stream, featured = false, onPlay }: LiveStreamC
             @{stream.creatorHandle}
           </span>
 
-          {/* Viewer count */}
-          <span className="ml-auto flex shrink-0 items-center gap-1 text-[10px] tabular-nums text-[var(--color-muted)]">
-            <svg
-              width="12"
-              height="12"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-              <circle cx="12" cy="12" r="3" />
-            </svg>
-            {formatViewers(stream.viewerCount)}
+          {/* Source label */}
+          <span
+            className="ml-auto flex shrink-0 items-center gap-1 rounded-full px-1.5 py-0.5 text-[8px] font-medium"
+            style={{
+              backgroundColor: `${sourceConfig.color}15`,
+              color: sourceConfig.color,
+            }}
+          >
+            {sourceConfig.icon} {sourceConfig.label}
           </span>
         </div>
+
+        {/* Viewer count bar */}
+        {stream.viewerCount > 0 && (
+          <div className="mt-2 flex items-center gap-1.5">
+            <div className="flex-1 h-1 overflow-hidden rounded-full bg-[var(--color-overlay)]">
+              <div
+                className="h-full rounded-full transition-all duration-500"
+                style={{
+                  width: `${Math.min(100, Math.log10(stream.viewerCount + 1) * 25)}%`,
+                  backgroundColor: stream.sourceColor,
+                }}
+              />
+            </div>
+            <span className="text-[10px] font-medium tabular-nums" style={{ color: stream.sourceColor }}>
+              {formatViewers(stream.viewerCount)}
+            </span>
+          </div>
+        )}
 
         {/* Bonding curve for launches */}
         {stream.streamType === 'launch' && stream.bondingCurveProgress !== undefined && (

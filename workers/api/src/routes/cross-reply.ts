@@ -428,7 +428,7 @@ async function echoReplyToParentProtocol(
         const instance =
           mastodonIdent?.auth?.mastodon_instance ??
           mastodonIdent?.keys?.instanceUrl ??
-          env.GTS_INSTANCE_URL ??
+          env.GOTOSOCIAL_INSTANCE_URL ??
           'https://social.degenfeed.xyz';
         const { GtSClient } = await import('@degenfeed/mastodon-sdk');
         const client = new GtSClient(instance, accessToken);
@@ -594,7 +594,7 @@ async function publishCrossReply(
       case 'mastodon': {
         const { GtSClient } = await import('@degenfeed/mastodon-sdk');
         const instance =
-          auth.mastodon_instance || env.GTS_INSTANCE_URL || 'https://social.degenfeed.xyz';
+          auth.mastodon_instance || env.GOTOSOCIAL_INSTANCE_URL || 'https://social.degenfeed.xyz';
         const accessToken = auth.mastodon || auth.accessJwt || body.auth?.mastodon;
         if (!accessToken) {
           return { ok: false, error: 'Not signed into Mastodon' };

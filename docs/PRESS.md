@@ -12,7 +12,7 @@
 | **Tagline** | The Web3 Social Universe |
 | **Mission** | Unify the fragmented decentralized social web. Give creators tools to own their content, identity, and revenue. |
 | **Launched** | Q2 2026 |
-| **Protocols** | 25+ (Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, Reddit, RSS, YouTube, PeerTube, Lemmy, Telegram, Discord, Matrix, GitHub, Substack/Ghost, Zora, and more) |
+| **Protocols** | 44+ (Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, Reddit, RSS, YouTube, PeerTube, Lemmy, Telegram, Discord, Matrix, GitHub, Pixelfed, Substack/Ghost, Mirror.xyz, Paragraph.xyz, Zora, Solana, and more via Matrix bridge hub) |
 | **Blockchains** | Ethereum, Base, Optimism, Arbitrum, Solana, Lightning Network |
 | **License** | AGPL-3.0 (Open Source) |
 | **Company** | Rug Munch Media LLC (Wyoming, USA) |
@@ -27,10 +27,10 @@
 ## Description
 
 ### One-Liner
-DegenFeed is an open-source, multi-protocol social aggregator that unifies 25+ decentralized social protocols into one app — Nostr, Farcaster, Lens, Bluesky, Mastodon, and more — with cross-protocol posting, creator coins, cross-chain tipping, and livestreaming. No account required to browse. Your data is never sold.
+DegenFeed is an open-source, multi-protocol social aggregator that unifies 44+ decentralized social protocols and services into one app — Nostr, Farcaster, Lens, Bluesky, Mastodon, PeerTube, Pixelfed, Zora, and more — with cross-protocol posting, creator coins, cross-chain tipping, and livestreaming. No account required to browse. Your data is never sold.
 
 ### Short Description (2–3 sentences)
-DegenFeed brings the entire decentralized social web into one unified feed. Browse content from Nostr, Farcaster, Lens, Bluesky, Mastodon, Reddit, RSS, YouTube, and 25+ other sources without creating an account. Post once and reach every protocol simultaneously, launch your own creator coin on Base or Solana, tip creators in ETH/SOL/USDC/Lightning with zero platform fees, and livestream to 7 platforms at once — all from one app.
+DegenFeed brings the entire decentralized social web into one unified feed. Browse content from Nostr, Farcaster, Lens, Bluesky, Mastodon, Reddit, RSS, YouTube, PeerTube, Pixelfed, Zora, and 44+ other sources without creating an account. Post once and reach every protocol simultaneously, launch your own creator coin on Base or Solana, tip creators in ETH/SOL/USDC/Lightning with zero platform fees, and livestream to 7 platforms at once — all from one app.
 
 ### Long Description (paragraph)
 DegenFeed is the unification layer for decentralized social media. It solves the fragmentation problem of the open social web: every protocol (Nostr, Farcaster, Lens, Bluesky, Mastodon, etc.) has its own community, its own app, and its own workflow — but creators and users shouldn't have to manage a dozen apps to participate in all of them. DegenFeed aggregates everything into one ranked feed with transparent open-source ranking. The composer lets you write once and publish to every protocol simultaneously. Creator coins let any creator deploy their own ERC-20 or SPL token with built-in anti-exploit protection and locked liquidity. Tipping works cross-chain via audited smart contracts with zero platform fees. The entire stack is self-hostable with one Docker Compose command. DegenFeed is built on a belief: your content, your identity, and your data belong to you — not to a corporation, not to an algorithm, not to us.
@@ -41,7 +41,7 @@ DegenFeed is the unification layer for decentralized social media. It solves the
 
 | Feature | Description |
 |---------|-------------|
-| **Unified Feed** | Ranked timeline from 25+ protocols. No account needed to browse. |
+| **Unified Feed** | Ranked timeline from 44+ protocols. No account needed to browse. |
 | **Cross-Protocol Posting** | Write once, publish to Nostr + Farcaster + Lens + Bluesky + Mastodon + more simultaneously. |
 | **Creator Coins** | Deploy ERC-20 (Base) or SPL (Solana) tokens with sigmoid bonding curves, anti-bot protection, locked liquidity. |
 | **Cross-Chain Tipping** | Tip in ETH, SOL, USDC, Lightning. Zero platform fees. Batch tipping, streaming payments. |
@@ -85,9 +85,9 @@ DegenFeed is built by **Rug Munch Media LLC**, a Wyoming limited liability compa
 
 | Metric | Value |
 |--------|-------|
-| Protocols Supported | 25+ |
+| Protocols Supported | 44+ |
 | RSS News Sources | 353+ |
-| SDK Packages | 30+ |
+| SDK Packages | 43+ |
 | Smart Contracts Deployed | 6 (Base + Solana) |
 | Blockchain Networks | 5 (Ethereum, Base, Optimism, Arbitrum, Solana) |
 | Cloudflare KV Namespaces | 19 |

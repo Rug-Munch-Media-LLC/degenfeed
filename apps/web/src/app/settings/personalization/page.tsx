@@ -546,9 +546,17 @@ export default function PersonalizationPage() {
             className="mb-6 rounded-xl border p-5"
             style={{ borderColor: 'var(--color-glass-border)', backgroundColor: 'var(--color-card)' }}
           >
-            <h3 className="mb-3 text-sm font-semibold" style={{ color: 'var(--color-fg)' }}>
-              Algorithm Tuner
-            </h3>
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="text-sm font-semibold" style={{ color: 'var(--color-fg)' }}>
+                Algorithm Tuner
+              </h3>
+              <Link
+                href="/feed/tune"
+                className="rounded-lg bg-degen-500/15 px-2.5 py-1 text-[10px] font-semibold text-degen-400 hover:bg-degen-500/25 transition-colors"
+              >
+                Full Tuner →
+              </Link>
+            </div>
             <p className="mb-4 text-[11px]" style={{ color: 'var(--color-muted)' }}>
               Adjust how the feed algorithm scores content
             </p>

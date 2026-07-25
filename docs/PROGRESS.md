@@ -1,5 +1,7 @@
 # Build Progress
 
+> **Note:** This document is historical. DegenFeed now integrates **44+ protocols and services** with **43+ shared packages**, **48+ Docker services**, and **~500+ API routes**. See [ARCHITECTURE.md](ARCHITECTURE.md) and [docs/PLATFORM_UNIVERSE.md](docs/PLATFORM_UNIVERSE.md) for current state.
+
 ## 2026-07-02 — Day 1: Pivot + foundation
 
 ### Done

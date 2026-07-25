@@ -308,7 +308,7 @@ async function deployToBase(input: DeployCoinInput, env: Env): Promise<DeployCoi
         creator: input.creator as Address,
         name: input.name,
         symbol: input.symbol,
-        uri: input.metadataUri || `https://app.degenfeed.xyz/coin/${input.symbol.toLowerCase()}`,
+        uri: input.metadataUri || `${env.APP_BASE_URL || 'https://app.degenfeed.xyz'}/coin/${input.symbol.toLowerCase()}`,
         creatorAllocationBps,
         creatorFeeBps,
         platformFeeBps,
@@ -414,7 +414,7 @@ async function deployToSolana(input: DeployCoinInput, env: Env): Promise<DeployC
     const sig = await client.deployCoin({
       name: input.name,
       symbol: input.symbol,
-      uri: input.metadataUri || `https://app.degenfeed.xyz/coin/${input.symbol.toLowerCase()}`,
+      uri: input.metadataUri || `${env.APP_BASE_URL || 'https://app.degenfeed.xyz'}/coin/${input.symbol.toLowerCase()}`,
       creator: keypair.publicKey.toBase58(),
       chain: 'solana',
       creatorAllocationBps: input.vestingConfig?.creatorAllocationBps ?? 500,

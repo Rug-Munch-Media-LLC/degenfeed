@@ -279,7 +279,7 @@ crossProtocolCoin.post('/launch', async (c) => {
   }
 
   // 10. Announce on origin protocol
-  const degenfeedUrl = `https://app.degenfeed.xyz/launch/${symbol}`;
+  const degenfeedUrl = `${env.APP_BASE_URL || 'https://app.degenfeed.xyz'}/launch/${symbol}`;
   const zoraUrl = `https://zora.co/collect/base:${ZORA_WRAPPER_FACTORY}/${zoraWrapper.tokenId}`;
 
   let announcementResult: Record<string, unknown> | null = null;
@@ -536,7 +536,7 @@ async function deployBaseCoin(
       symbol,
       chain: 'base',
       protocol: 'universal',
-      metadataUri: `https://app.degenfeed.xyz/coin/${symbol.toLowerCase()}`,
+      metadataUri: `${env.APP_BASE_URL || 'https://app.degenfeed.xyz'}/coin/${symbol.toLowerCase()}`,
       vestingConfig,
       feeConfig,
     },
@@ -572,7 +572,7 @@ async function deploySolanaToken(
       symbol,
       chain: 'solana',
       protocol: 'universal',
-      metadataUri: `https://app.degenfeed.xyz/coin/${symbol.toLowerCase()}`,
+      metadataUri: `${env.APP_BASE_URL || 'https://app.degenfeed.xyz'}/coin/${symbol.toLowerCase()}`,
       vestingConfig,
       feeConfig,
     },
@@ -991,7 +991,7 @@ async function postActivityPub(
 ): Promise<Record<string, unknown> | null> {
   // Try GotoSocial instance first (our managed Mastodon-compatible server)
   const instanceUrl =
-    env.GOTOSOCIAL_INSTANCE_URL || env.GTS_API_BASE || 'https://social.degenfeed.xyz';
+    env.GOTOSOCIAL_INSTANCE_URL || 'https://social.degenfeed.xyz';
   const accessToken = env.PREMIUM_WALLET_KEY;
   if (!accessToken) return null;
 

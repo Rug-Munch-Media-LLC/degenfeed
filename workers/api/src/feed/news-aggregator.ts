@@ -9,9 +9,7 @@
  * Layer in the feed stack: fetch → enrich → dedup → cluster → score → rank
  */
 
-import {
-  detectNiches,
-} from '@degenfeed/feed-core';
+import { detectNiches } from '@degenfeed/feed-core';
 import type { Protocol } from '@degenfeed/types';
 import { type Env, log } from '../index';
 

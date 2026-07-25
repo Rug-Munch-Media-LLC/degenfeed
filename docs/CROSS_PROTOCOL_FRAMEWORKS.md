@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-DegenFeed aggregates from 15+ protocols. The bridge system at `bridge/src/crossposter.ts`
+DegenFeed aggregates from 44+ protocols and services. The bridge system at `bridge/src/crossposter.ts`
 was 963 lines of custom code handling polling, transform, and publish logic. We evaluated
 7 open-source cross-protocol frameworks to determine which could replace our custom code.
 

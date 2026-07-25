@@ -691,11 +691,11 @@ const PROTOCOL_HEALTH_CHECKS: Record<
   (env: Env) => Promise<{ reachable: boolean; latencyMs: number; error?: string }>
 > = {
   mastodon: async (env) => {
-    const instance = env.GTS_INSTANCE_URL || 'https://social.degenfeed.xyz';
+    const instance = env.GOTOSOCIAL_INSTANCE_URL || 'https://social.degenfeed.xyz';
     return pingUrl(`${instance}/api/v1/instance`);
   },
   activitypub: async (env) => {
-    const instance = env.GTS_INSTANCE_URL || 'https://social.degenfeed.xyz';
+    const instance = env.GOTOSOCIAL_INSTANCE_URL || 'https://social.degenfeed.xyz';
     return pingUrl(`${instance}/api/v1/instance`);
   },
   bluesky: async (env) => {

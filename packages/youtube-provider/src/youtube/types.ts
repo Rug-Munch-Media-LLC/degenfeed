@@ -6,7 +6,11 @@ export type ChannelCategory =
   | 'trading'
   | 'nft_gaming'
   | 'macro_bitcoin'
-  | 'security_tech';
+  | 'security_tech'
+  | 'ai_ml'
+  | 'general_tech'
+  | 'science'
+  | 'startups';
 
 export type ChannelSubcategory =
   | 'daily-news'
@@ -54,7 +58,69 @@ export type ChannelSubcategory =
   | 'cybersecurity'
   | 'smart-contracts'
   | 'blockchain-dev'
-  | 'web3-dev';
+  | 'web3-dev'
+  // ── New subcategories ─────────────────────────────────────
+  | 'ai-research'
+  | 'ai-tools'
+  | 'llm-benchmarks'
+  | 'agent-dev'
+  | 'startup-fundraising'
+  | 'startup-interviews'
+  | 'science-breakthroughs'
+  | 'devops'
+  | 'opensource-dev';
+
+/** Content type classification — auto-detected from metadata */
+export type VideoContentType =
+  | 'tutorial'
+  | 'review'
+  | 'news'
+  | 'interview'
+  | 'vlog'
+  | 'short'
+  | 'livestream'
+  | 'podcast'
+  | 'educational'
+  | 'entertainment'
+  | 'unboxing'
+  | 'commentary'
+  | 'analysis'
+  | 'unknown';
+
+/** Engagement signal enrichment */
+export interface EngagementSignals {
+  viewCount: number;
+  likeCount: number;
+  commentCount: number;
+  estimatedEngagementRate: number; // (likes+comments)/views as ratio
+  growthVelocity: number; // views per hour since publish
+  momentum: 'viral' | 'trending' | 'steady' | 'stale';
+}
+
+/** Quality assessment */
+export interface QualityScore {
+  overall: number; // 0-1 composite
+  productionQuality: number; // 0-1 — based on resolution, editing markers
+  engagementRateScore: number; // 0-1
+  recencyScore: number; // 0-1
+  completeness: number; // 0-1 — has description, tags, chapters
+  clickbaitPenalty: number; // 0-1, higher = more clickbaity
+  confidence: number; // 0-1 how confident we are in this score
+}
+
+/** Trending by category — YouTube category IDs used by Invidious API */
+export type TrendingCategory =
+  | 'all'
+  | 'crypto'
+  | 'tech'
+  | 'ai'
+  | 'gaming'
+  | 'music'
+  | 'news'
+  | 'science'
+  | 'education'
+  | 'entertainment'
+  | 'sports';
 
 export interface YouTubeVideoItem {
   id: string;
@@ -67,6 +133,8 @@ export interface YouTubeVideoItem {
   publishedMs: number;
   duration?: string;
   views?: number;
+  likes?: number;
+  comments?: number;
   description?: string;
   category?: string;
   channelCategory?: ChannelCategory;
@@ -74,6 +142,11 @@ export interface YouTubeVideoItem {
   channelWeight?: number;
   niches?: string[];
   source: string;
+  /** Enhanced fields */
+  contentType?: VideoContentType;
+  engagement?: EngagementSignals;
+  qualityScore?: QualityScore;
+  tags?: string[];
 }
 
 export interface YouTubeChannel {
@@ -85,6 +158,13 @@ export interface YouTubeChannel {
   niches: string[];
   livestream?: boolean;
   feed?: string;
+  /** Creator discovery fields */
+  subscriberCount?: number;
+  totalVideos?: number;
+  avgViews?: number;
+  growthRate?: number; // weekly subscriber growth
+  lastActive?: string; // date of last upload
+  topics?: string[];
 }
 
 export interface FetchYouTubeOptions {
@@ -94,9 +174,17 @@ export interface FetchYouTubeOptions {
   channelCategories?: ChannelCategory[];
   channelSubcategories?: ChannelSubcategory[];
   signal?: AbortSignal;
-  sort?: 'recent' | 'popular' | 'trending';
+  sort?: 'recent' | 'popular' | 'trending' | 'engagement';
   maxAgeDays?: number;
   disableQualityFilter?: boolean;
+  /** Enable creator discovery mode — fetches from non-curated sources */
+  enableDiscovery?: boolean;
+  /** Min engagement rate threshold (0-1) */
+  minEngagementRate?: number;
+  /** Content type filter */
+  contentType?: VideoContentType | VideoContentType[];
+  /** Don't enrich with engagement/quality data */
+  skipEnrichment?: boolean;
 }
 
 export interface RSSEntry {
@@ -111,4 +199,23 @@ export interface RSSEntry {
   thumbnail?: string;
   duration?: number;
   views?: number;
+  /** Enhanced RSS fields */
+  likes?: number;
+  comments?: number;
+  tags?: string[];
+}
+
+/** Creator discovery result */
+export interface DiscoveredCreator {
+  name: string;
+  channelId: string;
+  category: ChannelCategory;
+  subcategory: ChannelSubcategory;
+  weight: number;
+  niches: string[];
+  subscriberCount?: number;
+  totalVideos?: number;
+  avgViews?: number;
+  relevanceScore: number; // 0-1 how relevant to our niches
+  discoverySource: 'invidious' | 'rss' | 'youtube-api' | 'community';
 }

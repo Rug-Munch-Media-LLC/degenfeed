@@ -5,7 +5,7 @@ import { useMemo, useState } from 'react';
 const faqs = [
   {
     q: 'What is DegenFeed?',
-    a: "DegenFeed is the Web3 Social Universe — an open-source, multi-protocol aggregator that unifies 25+ decentralized social protocols into one app. Nostr, Farcaster, Lens, Bluesky, Mastodon, Reddit, RSS, YouTube, and more, all in a single ranked feed. No account needed to browse. Connect a wallet to post, tip, launch creator coins, and engage across every protocol at once. We don't own your content — we give you the tools to own it yourself.",
+    a: "DegenFeed is the Web3 Social Universe — an open-source, multi-protocol aggregator that unifies 44 decentralized social protocols into one app. Nostr, Farcaster, Lens, Bluesky, Mastodon, Reddit, RSS, YouTube, and more, all in a single ranked feed. No account needed to browse. Connect a wallet to post, tip, launch creator coins, and engage across every protocol at once. We don't own your content — we give you the tools to own it yourself.",
   },
   {
     q: 'How is DegenFeed different from Twitter/X, Bluesky, and Mastodon?',
@@ -109,7 +109,7 @@ const faqs = [
   },
   {
     q: 'How do I get started?',
-    a: 'Open app.degenfeed.xyz and start browsing — no account required. To post, cross-post, tip, and engage, click "Sign In" and connect an EVM wallet (MetaMask, Rainbow, WalletConnect) or Solana wallet (Phantom, Backpack, Solflare). Once signed in, go to Settings → Connected Accounts to link your Nostr, Farcaster, Lens, Bluesky, or Mastodon handles. Then use the composer to write a post and select which protocols to publish to. Browse the Feed, Trending, and News tabs to discover content across all 25+ protocols. For full docs, visit docs.degenfeed.xyz.',
+    a: 'Open app.degenfeed.xyz and start browsing — no account required. To post, cross-post, tip, and engage, click "Sign In" and connect an EVM wallet (MetaMask, Rainbow, WalletConnect) or Solana wallet (Phantom, Backpack, Solflare). Once signed in, go to Settings → Connected Accounts to link your Nostr, Farcaster, Lens, Bluesky, or Mastodon handles. Then use the composer to write a post and select which protocols to publish to. Browse the Feed, Trending, and News tabs to discover content across all 44 protocols. For full docs, visit docs.degenfeed.xyz.',
   },
 ];
 

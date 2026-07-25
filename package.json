@@ -39,6 +39,7 @@
     "@degenfeed/creator-coin": "workspace:*",
     "@degenfeed/monetization": "workspace:*",
     "@degenfeed/spaces-bridge": "workspace:*",
+    "@telegram-apps/sdk": "^3.11.8",
     "swr": "^2.4.2"
   }
 }

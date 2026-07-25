@@ -190,6 +190,12 @@ export default function VideoHubPage() {
           </Link>
           <span>/</span>
           <span className="text-[var(--color-fg)]">Video Hub</span>
+          <Link
+            href="/video/all"
+            className="ml-2 rounded-full border border-current/20 px-2.5 py-0.5 text-[10px] text-blue-400 hover:text-blue-300 transition-colors"
+          >
+            🌐 All Platforms
+          </Link>
           <span className="ml-auto text-[10px]">
             {filteredVideos.length > 0 && `${filteredVideos.length} videos`}
           </span>
@@ -209,6 +215,11 @@ export default function VideoHubPage() {
             />
           </div>
         )}
+
+        {/* Zero-cost hosting indicator */}
+        <div className="mb-4 rounded-lg border border-green-500/10 bg-green-500/[0.03] px-3 py-1.5 text-[11px] text-green-400/70">
+          All external video content is served directly from source platforms — DegenFeed pays <strong className="text-green-300">$0 hosting costs</strong> for embedded content.
+        </div>
 
         <VideoHubLayout
           feed={feed}

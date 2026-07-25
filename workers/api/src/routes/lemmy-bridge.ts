@@ -291,7 +291,7 @@ export async function handleLemmyBridgeShare(request: Request, env: Env): Promis
             }
             const { GtSClient } = await import('@degenfeed/mastodon-sdk');
             const gts = new GtSClient(
-              env.GTS_INSTANCE_URL || 'https://social.degenfeed.xyz',
+              env.GOTOSOCIAL_INSTANCE_URL || 'https://social.degenfeed.xyz',
               mastodonToken,
             );
             const status = await gts.publish(shareText, { visibility: 'public' });
@@ -450,7 +450,7 @@ export async function handleLemmyBridgeStatus(_request: Request, env: Env): Prom
     lemmyBotJwt: { configured: !!env.LEMMY_BOT_JWT, instance: BRIDGE_INSTANCE },
     mastodonBot: {
       configured: !!env.GTS_BOT_TOKEN,
-      instance: env.GTS_INSTANCE_URL || 'https://social.degenfeed.xyz',
+      instance: env.GOTOSOCIAL_INSTANCE_URL || 'https://social.degenfeed.xyz',
     },
     nostrBot: {
       configured: !!env.NOSTR_BOT_NSEC,

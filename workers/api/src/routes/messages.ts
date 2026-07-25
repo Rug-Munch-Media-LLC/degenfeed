@@ -719,7 +719,7 @@ export async function handleDeleteMessage(
           const accessToken = auth.mastodon || auth.accessJwt;
           if (accessToken) {
             const instance =
-              auth.mastodon_instance || env.GTS_INSTANCE_URL || 'https://social.degenfeed.xyz';
+              auth.mastodon_instance || env.GOTOSOCIAL_INSTANCE_URL || 'https://social.degenfeed.xyz';
             const deleteUrl = `${instance}/api/v1/statuses/${encodeURIComponent(deletedMsg.nativeId)}`;
             await fetch(deleteUrl, {
               method: 'DELETE',

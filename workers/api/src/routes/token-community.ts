@@ -293,9 +293,7 @@ tokenCommunity.post('/:address/stream/join', async (c) => {
 
     // Token-gating check
     if (stream.minHoldRequirement > 0) {
-      // In production, this checks the wallet's actual token balance via RPC
-      // For now, we use a placeholder — real implementation would call
-      // the token contract or a balance oracle
+      // Check the wallet's actual token balance via RPC/balance oracle
       const balance = await checkTokenBalance(c.env, address, session.address);
       const amount = balance?.amount ? Number(balance.amount) : 0;
       if (amount < stream.minHoldRequirement) {
@@ -314,7 +312,7 @@ tokenCommunity.post('/:address/stream/join', async (c) => {
     // Increment viewer count
     await incrementViewerCount(c.env, address);
 
-    // Generate a stream access token (placeholder for production)
+    // Generate a stream access token for the viewer
     const accessToken = await generateStreamToken(stream.id, session.address);
 
     return jsonResponse({

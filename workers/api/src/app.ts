@@ -76,11 +76,11 @@ import {
 } from './routes/account-delete';
 import {
   handleAddRule,
+  handleGetSignals as handleAlgoGetSignals,
   handleApplyPreset,
   handleDeleteRule,
   handleExplainPost,
   handleGetPresets,
-  handleGetSignals as handleAlgoGetSignals,
   handleGetWeights,
   handleListRules,
   handleResetWeights,
@@ -189,6 +189,16 @@ import {
   handlePlatformRevenue,
 } from './routes/creator-dashboard';
 import { handleCreatorStorage } from './routes/creator-storage';
+import {
+  handleImageUpload,
+  handleMediaUpload,
+  handleGetImage,
+  handleGetImageMetadata,
+  handleMediaGateway,
+  handleMediaHealth,
+  handleMakePermanent,
+  handleCreatorMediaDashboard,
+} from './routes/media';
 import { creatorVesting } from './routes/creator-vesting';
 import { creatorVideos } from './routes/creator-videos';
 import { handleCrossPostCentralized } from './routes/cross-post-centralized';
@@ -619,10 +629,7 @@ import {
   handleNewsletterSubscriberRemove,
   handleNewsletterSubscribersList,
 } from './routes/newsletter-send';
-import {
-  handleMarkAllRead,
-  handleNotifications,
-} from './routes/notifications';
+import { handleMarkAllRead, handleNotifications } from './routes/notifications';
 import { handleNotify } from './routes/notify';
 import {
   handleDiscordAuthorize,
@@ -2466,6 +2473,27 @@ app.route('/api/creator/videos', creatorVideos);
 // ─── API: Creator Storage Usage ──────────────────────────
 app.get('/api/creator/storage', async (c) => handleCreatorStorage(c.req.raw, c.env));
 
+// ─── API: Decentralized Media Storage (IPFS + Arweave) ────────
+// Upload routes (require authentication)
+app.post('/api/media/upload/image', async (c) => handleImageUpload(c.req.raw, c.env));
+app.post('/api/media/upload', async (c) => handleMediaUpload(c.req.raw, c.env));
+
+// Image routes — CDN-backed IPFS URLs with on-the-fly transformation
+app.get('/api/media/image/:cid', async (c) => handleGetImage(c.req.raw, c.env, c.req.param('cid')));
+app.get('/api/media/image/:cid/metadata', async (c) => handleGetImageMetadata(c.req.raw, c.env, c.req.param('cid')));
+
+// Unified media gateway proxy — fallback chain: IPFS → Arweave → R2
+app.get('/api/media/gateway/:type/:id', async (c) => handleMediaGateway(c.req.raw, c.env, c.req.param('type'), c.req.param('id')));
+
+// Media service health check
+app.get('/api/media/health', async (c) => handleMediaHealth(c.req.raw, c.env));
+
+// Make media permanent on Arweave (requires funded Irys node)
+app.post('/api/media/make-permanent', async (c) => handleMakePermanent(c.req.raw, c.env));
+
+// Creator media dashboard — shows uploaded images, storage stats, CDN status
+app.get('/api/creator/media', async (c) => handleCreatorMediaDashboard(c.req.raw, c.env));
+
 // ─── API: Creator Coin Dashboard (TASK 3) ────────────────────────
 app.get('/api/creator/coins', async (c) => handleCreatorCoinsList(c.req.raw, c.env));
 app.get('/api/creator/coin/:address/stats', async (c) => handleCreatorCoinStats(c.req.raw, c.env));
@@ -2567,6 +2595,15 @@ import {
   handleWebRTCIce,
   handleWebRTCOffer,
   handleWebRTCViewers,
+  handleWatchCreator,
+  handleUnwatchCreator,
+  handleGetWatchedCreators,
+  handleGetNotifications,
+  handleNotificationSettings,
+  handleWatchedLive,
+  handlePeerTubeInstances,
+  handleTwitchCurated,
+  handleKickChannelStatus,
 } from './routes/live';
 
 // Static routes (no path params) — must be before parameterized :id routes
@@ -2593,6 +2630,21 @@ app.get('/api/live/creators/:id', async (c) =>
 // Viewer count (SSE)
 app.get('/api/live/viewers/:id', async (c) =>
   handleLiveViewersSSE(c.req.raw, c.env, c.req.param('id')),
+);
+
+// ─── Notification Routes ────────────────────────────────────────────
+app.post('/api/live/watch', async (c) => handleWatchCreator(c.req.raw, c.env));
+app.post('/api/live/unwatch', async (c) => handleUnwatchCreator(c.req.raw, c.env));
+app.get('/api/live/watched', async (c) => handleGetWatchedCreators(c.req.raw, c.env));
+app.get('/api/live/watched/live', async (c) => handleWatchedLive(c.req.raw, c.env));
+app.get('/api/live/notifications', async (c) => handleGetNotifications(c.req.raw, c.env));
+app.post('/api/live/notifications/settings', async (c) => handleNotificationSettings(c.req.raw, c.env));
+
+// ─── Source-specific Routes ─────────────────────────────────────────
+app.get('/api/live/sources/peertube/instances', async (c) => handlePeerTubeInstances(c.req.raw, c.env));
+app.get('/api/live/sources/twitch/curated', async (c) => handleTwitchCurated(c.req.raw, c.env));
+app.get('/api/live/kick/status/:channel', async (c) =>
+  handleKickChannelStatus(c.req.raw, c.env, c.req.param('channel')),
 );
 
 // Stream details + tipping (must be last to avoid conflicting with above)
@@ -2768,6 +2820,7 @@ app.route('/api/video/bridges', videoBridges);
 
 // ─── API: Unified Video Feed (all platforms, zero-cost hosting) ──────────
 import unifiedVideoFeed from './routes/unified-video-feed';
+
 app.route('/api/video/unified-feed', unifiedVideoFeed);
 
 // ─── API: Video Hub (categorized video discovery across all sources) ───
@@ -3201,6 +3254,7 @@ app.all('/api/content/library/:contentId', async (c) => {
 
 // ─── API: Content Import/Export ──────────────────────────────
 import {
+  handleImportTwitter as handleContentImportTwitter,
   handleExportContentJson,
   handleExportContentMarkdown,
   handleExportContentOpml,
@@ -3208,7 +3262,6 @@ import {
   handleImportRss,
   handleImportStatus,
   handleImportSubstack,
-  handleImportTwitter as handleContentImportTwitter,
   handleImportYouTube,
 } from './routes/content-import';
 
@@ -3433,9 +3486,6 @@ app.get('/api/dao/:daoId/treasury/transactions', async (c) =>
 app.post('/api/dao/:daoId/treasury/transfer', async (c) =>
   withSession(c, () => handleDaoTreasuryTransfer(c.req.raw, c.env, c.req.param('daoId'))),
 );
-app.post('/api/dao/:daoId/treasury/stream', async (c) =>
-  withSession(c, () => handleDaoTreasuryStreamCreate(c.req.raw, c.env, c.req.param('daoId'))),
-);
 app.get('/api/dao/:daoId/treasury/streams', async (c) =>
   handleDaoTreasuryStreams(c.req.raw, c.env, c.req.param('daoId')),
 );
@@ -3443,9 +3493,6 @@ app.delete('/api/dao/:daoId/treasury/streams/:streamId', async (c) =>
   withSession(c, () =>
     handleDaoTreasuryStreamDelete(c.req.raw, c.env, c.req.param('daoId'), c.req.param('streamId')),
   ),
-);
-app.post('/api/dao/:daoId/treasury/grant', async (c) =>
-  withSession(c, () => handleDaoTreasuryGrantCreate(c.req.raw, c.env, c.req.param('daoId'))),
 );
 app.get('/api/dao/:daoId/treasury/grants', async (c) =>
   handleDaoTreasuryGrants(c.req.raw, c.env, c.req.param('daoId')),
@@ -3887,8 +3934,6 @@ app.all('/v1/engage', async (c) => withSession(c, () => handleEngage(c.req.raw, 
 app.all('/v1/analytics', (c) => handleAnalytics(c.req.raw, c.env));
 app.all('/v1/notifications', async (c) => handleNotifications(c.req.raw, c.env));
 app.post('/v1/notifications/mark-all-read', async (c) => handleMarkAllRead(c.req.raw, c.env));
-app.all('/v1/discover', async (c) => handleDiscover(c.req.raw, c.env));
-app.all('/v1/discover/people', async (c) => handleDiscoverPeople(c.req.raw, c.env));
 app.all('/v1/prices', async (c) => handlePrices(c.req.raw, c.env));
 app.all('/v1/embed/resolve', async (c) => handleEmbedResolve(c.req.raw, c.env));
 app.all('/v1/frame/resolve', async (c) => handleFrameResolve(c.req.raw, c.env));
@@ -4477,7 +4522,9 @@ app.post('/api/dao/:daoId/treasury/multisig/:txId/cancel', async (c) =>
 
 // Streaming payments
 app.get('/api/dao/:daoId/treasury/stream', async (c) => handleStreamList(c.req.raw, c.env));
-app.post('/api/dao/:daoId/treasury/stream', async (c) => handleStreamCreate(c.req.raw, c.env));
+app.post('/api/dao/:daoId/treasury/stream', async (c) =>
+  withSession(c, () => handleStreamCreate(c.req.raw, c.env)),
+);
 app.get('/api/dao/:daoId/treasury/stream/analytics', async (c) =>
   handleStreamAnalytics(c.req.raw, c.env),
 );
@@ -4502,7 +4549,9 @@ app.get('/api/dao/:daoId/treasury/stream/:streamId/history', async (c) =>
 
 // Grants
 app.get('/api/dao/:daoId/treasury/grant', async (c) => handleGrantListPrograms(c.req.raw, c.env));
-app.post('/api/dao/:daoId/treasury/grant', async (c) => handleGrantCreateProgram(c.req.raw, c.env));
+app.post('/api/dao/:daoId/treasury/grant', async (c) =>
+  withSession(c, () => handleGrantCreateProgram(c.req.raw, c.env)),
+);
 app.get('/api/dao/:daoId/treasury/grant/applications', async (c) =>
   handleGrantListApplications(c.req.raw, c.env),
 );

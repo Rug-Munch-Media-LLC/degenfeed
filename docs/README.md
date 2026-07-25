@@ -77,7 +77,7 @@ Welcome to the DegenFeed documentation hub. This index links every document in t
 
 | Document | Description |
 |----------|-------------|
-| [Integrations](INTEGRATIONS.md) | Per-protocol details for all 25+ protocols |
+| [Integrations](INTEGRATIONS.md) | Per-protocol details for all 44+ protocols and services |
 | [Protocol Universe](PLATFORM_UNIVERSE.md) | Full protocol landscape map |
 | [Protocol Status](PROTOCOL_STATUS.md) | Which protocols support read, post, tip, stream |
 | [Protocol Audit](PROTOCOL_AUDIT.md) | Protocol integration audit and quality assessment |

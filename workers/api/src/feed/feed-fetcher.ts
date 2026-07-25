@@ -192,7 +192,7 @@ export function getProvider(protocol: Protocol, env: Env): FeedProvider {
     case 'bluesky':
       return new BlueskyProvider({ baseUrl: env.BSKY_PUBLIC_URL });
     case 'mastodon':
-      return new MastodonProvider({ instanceUrl: env.GTS_INSTANCE_URL });
+      return new MastodonProvider({ instanceUrl: env.GOTOSOCIAL_INSTANCE_URL });
     case 'lemmy':
       return new LemmyProvider();
     case 'threads':

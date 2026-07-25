@@ -1,5 +1,19 @@
 import type { Protocol } from '@degenfeed/types';
 
+export interface Preferences {
+  theme: string;
+  fontSize: string;
+  layoutDensity: string;
+  notifications: Record<string, Record<string, boolean>>;
+  privacy: { publicProfile: boolean; showTipsReceived: boolean; showFollowers: boolean };
+  content: {
+    defaultFeed: string;
+    mutedWords: string[];
+    mutedUsers: string[];
+    blockedUsers: string[];
+  };
+}
+
 export type Section =
   | 'account'
   | 'appearance'

@@ -162,7 +162,59 @@ export function FeedShell({ children }: FeedShellProps) {
             )}
           </Link>
 
-          {/* ── Media hub shortcuts ── */}
+          {/* ── Protocols section (quick links to top protocols) ── */}
+          <div className="h-px bg-[var(--color-glass-border)] my-2" />
+
+          <div className="px-3 py-1">
+            <span
+              className="text-[9px] font-semibold uppercase tracking-widest"
+              style={{ color: 'var(--color-muted)' }}
+            >
+              Protocols
+            </span>
+          </div>
+
+          {/* Top popular protocols as quick links */}
+          {[
+            { id: 'discord', label: 'Discord', icon: '💬', color: '#5865f2' },
+            { id: 'telegram', label: 'Telegram', icon: '✈', color: '#26a5e4' },
+            { id: 'youtube', label: 'YouTube', icon: '▶', color: '#ff0000' },
+            { id: 'github', label: 'GitHub', icon: '◉', color: '#6e40c9' },
+            { id: 'zora', label: 'Zora', icon: '🎨', color: '#6b21a8' },
+            { id: 'peertube', label: 'PeerTube', icon: '🎬', color: '#f1680d' },
+            { id: 'pixelfed', label: 'Pixelfed', icon: '📷', color: '#f9a825' },
+            { id: 'audius', label: 'Audius', icon: '🎵', color: '#cc0fe0' },
+            { id: 'hive', label: 'Hive', icon: '◆', color: '#e31337' },
+            { id: 'rarible', label: 'NFT Markets', icon: '🖼', color: '#feda02' },
+          ].map((p) => {
+            const isActive = pathname === `/feed/${p.id}`;
+            return (
+              <Link
+                key={p.id}
+                href={`/feed/${p.id}`}
+                className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                  isActive
+                    ? 'bg-[var(--color-overlay)] text-[var(--color-fg)]'
+                    : 'text-[var(--color-muted)] hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)]'
+                }`}
+                style={
+                  isActive
+                    ? {
+                        borderLeft: `3px solid ${p.color}`,
+                        marginLeft: '-3px',
+                      }
+                    : undefined
+                }
+              >
+                <span className="flex h-5 w-5 items-center justify-center text-xs" aria-hidden="true">
+                  {p.icon}
+                </span>
+                <span className="flex-1 truncate">{p.label}</span>
+              </Link>
+            );
+          })}
+
+          {/* Separator between protocols and media hub */}
           <div className="h-px bg-[var(--color-glass-border)] my-2" />
 
           <Link
@@ -330,6 +382,31 @@ export function FeedShell({ children }: FeedShellProps) {
               >
                 <span aria-hidden="true">{meta.icon}</span>
                 <span>{meta.label}</span>
+              </Link>
+            );
+          })}
+          {/* Extra protocol quick links on mobile */}
+          {[
+            { id: 'discord', label: 'Discord', icon: '💬', c: '#5865f2' },
+            { id: 'telegram', label: 'Telegram', icon: '✈', c: '#26a5e4' },
+            { id: 'youtube', label: 'YouTube', icon: '▶', c: '#ff0000' },
+            { id: 'github', label: 'GitHub', icon: '◉', c: '#6e40c9' },
+            { id: 'zora', label: 'Zora', icon: '🎨', c: '#6b21a8' },
+          ].map((p) => {
+            const isActive = pathname === `/feed/${p.id}`;
+            return (
+              <Link
+                key={p.id}
+                href={`/feed/${p.id}`}
+                data-active={isActive ? 'true' : undefined}
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-colors"
+                style={{
+                  backgroundColor: isActive ? `${p.c}18` : 'var(--color-overlay)',
+                  color: isActive ? p.c : 'var(--color-muted)',
+                }}
+              >
+                <span aria-hidden="true">{p.icon}</span>
+                <span>{p.label}</span>
               </Link>
             );
           })}

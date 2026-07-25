@@ -7,9 +7,10 @@ import { useEffect, useState } from 'react';
  */
 
 const MILESTONES = [
-  { label: 'Tweets Posted', value: 10427, suffix: '+', icon: '✧' },
-  { label: 'Protocols Bridged', value: 18, suffix: '', icon: '⬡' },
-  { label: 'Identities Linked', value: 2847, suffix: '+', icon: '◈' },
+  { label: 'Posts Published', value: 10427, suffix: '+', icon: '✧' },
+  { label: 'Protocols Bridged', value: 44, suffix: '', icon: '⬡' },
+  { label: 'Identities Linked', value: 2500, suffix: '+', icon: '◈' },
+  { label: 'Creator Coins Launched', value: 250, suffix: '+', icon: '💰' },
 ] as const;
 
 function AnimatedCounter({ target, suffix }: { target: number; suffix: string }) {
@@ -47,7 +48,7 @@ export function StatsBar() {
       style={{ borderColor: 'var(--color-border)' }}
     >
       <div className="mx-auto max-w-5xl">
-        <div className="mb-8 grid gap-6 sm:grid-cols-3">
+        <div className="mb-8 grid gap-6 sm:grid-cols-2 md:grid-cols-4">
           {MILESTONES.map((m) => (
             <div key={m.label} className="text-center">
               <div className="mb-2 text-2xl" aria-hidden="true">

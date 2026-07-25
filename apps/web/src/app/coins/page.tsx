@@ -153,15 +153,33 @@ export default function CoinsPage() {
     <div className="mx-auto max-w-6xl px-4 py-6 animate-page-enter">
       {/* Header */}
       <div className="mb-6">
-        <h1
-          className="text-2xl font-bold text-[var(--color-fg)]"
-          style={{ fontFamily: 'var(--font-heading)' }}
-        >
-          Coin Discovery
-        </h1>
-        <p className="mt-1 text-sm text-[var(--color-muted)]">
-          Discover and trade creator coins. Trending, new launches, top gainers.
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1
+              className="text-2xl font-bold text-[var(--color-fg)]"
+              style={{ fontFamily: 'var(--font-heading)' }}
+            >
+              Coin Discovery
+            </h1>
+            <p className="mt-1 text-sm text-[var(--color-muted)]">
+              Discover and trade creator coins. Trending, new launches, top gainers.
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Link
+              href="/coins/compare"
+              className="rounded-xl border border-[var(--color-glass-border)] px-3 py-2 text-[10px] font-medium text-[var(--color-muted)] hover:text-degen-400 hover:border-degen-500/30 transition-all"
+            >
+              ⚖️ Compare
+            </Link>
+            <Link
+              href="/coins/stats"
+              className="rounded-xl border border-[var(--color-glass-border)] px-3 py-2 text-[10px] font-medium text-[var(--color-muted)] hover:text-degen-400 hover:border-degen-500/30 transition-all"
+            >
+              📊 Stats
+            </Link>
+          </div>
+        </div>
       </div>
 
       {/* Stats bar */}

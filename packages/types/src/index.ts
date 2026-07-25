@@ -46,7 +46,9 @@ export type Protocol =
   | 'friendica'
   | 'pleroma'
   | 'misskey'
-  | 'writefreely';
+  | 'writefreely'
+  | 'funkwhale'
+  | 'castopod';
 
 export interface UnifiedIdentity {
   /** Stable canonical identifier: `${protocol}:${id}` */

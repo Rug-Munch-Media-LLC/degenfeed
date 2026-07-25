@@ -365,7 +365,7 @@ async function resolveIdentity(env: Env, creator: string): Promise<ResolvedCreat
       identifier: apInfo.identifier || '',
       displayName: apInfo.displayName,
       credential: creds?.encrypted ?? undefined,
-      instanceUrl: env.GTS_INSTANCE_URL || 'https://social.degenfeed.xyz',
+      instanceUrl: env.GOTOSOCIAL_INSTANCE_URL || 'https://social.degenfeed.xyz',
     };
   }
 
@@ -569,7 +569,7 @@ async function announceToActivityPub(
   const { GtSClient } = await import('@degenfeed/mastodon-sdk');
 
   const instanceUrl =
-    identity.instanceUrl || env.GTS_INSTANCE_URL || 'https://social.degenfeed.xyz';
+    identity.instanceUrl || env.GOTOSOCIAL_INSTANCE_URL || 'https://social.degenfeed.xyz';
   const accessToken = identity.credential;
 
   if (!accessToken) {
@@ -1038,7 +1038,7 @@ async function announceToThreads(
   const { GtSClient } = await import('@degenfeed/mastodon-sdk');
 
   const instanceUrl =
-    identity.instanceUrl || env.GTS_INSTANCE_URL || 'https://social.degenfeed.xyz';
+    identity.instanceUrl || env.GOTOSOCIAL_INSTANCE_URL || 'https://social.degenfeed.xyz';
   const accessToken =
     identity.credential || (env as Record<string, string | undefined>).GTS_ACCESS_TOKEN;
 

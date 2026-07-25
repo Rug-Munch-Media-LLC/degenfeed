@@ -49,6 +49,9 @@ export interface FullHealthReport {
   rss: IntegrationHealth;
   threads: IntegrationHealth;
   mastodon: IntegrationHealth;
+  funkwhale: IntegrationHealth;
+  castopod: IntegrationHealth;
+  rssbridge: IntegrationHealth;
   summary: {
     total: number;
     ok: number;
@@ -169,7 +172,7 @@ async function pingJsonRpc(
 // ─── Check Functions ───────────────────────────────────────────────────────
 
 async function checkActivityPub(env: Env): Promise<IntegrationHealth> {
-  const instance = env.GTS_INSTANCE_URL || 'https://social.degenfeed.xyz';
+  const instance = env.GOTOSOCIAL_INSTANCE_URL || 'https://social.degenfeed.xyz';
   return pingUrl(`${instance}/api/v1/instance`);
 }
 
@@ -284,6 +287,39 @@ async function checkRss(): Promise<IntegrationHealth> {
   return { status: 'ok', latency: 0, lastChecked: Date.now() };
 }
 
+async function checkFunkwhale(): Promise<IntegrationHealth> {
+  const instances = ['https://open.audio', 'https://funkwhale.audio'];
+  // Try instances in order — first to respond wins
+  for (const instance of instances) {
+    const result = await pingUrl(`${instance}/api/v1/tracks/?page_size=1`);
+    if (result.status === 'ok') return result;
+  }
+  return {
+    status: 'degraded',
+    latency: 0,
+    lastChecked: Date.now(),
+    error: 'No Funkwhale instance reachable',
+  };
+}
+
+async function checkCastopod(): Promise<IntegrationHealth> {
+  const instances = ['https://castopod.org', 'https://podlibre.org'];
+  for (const instance of instances) {
+    const result = await pingUrl(`${instance}/api/episodes?limit=1`);
+    if (result.status === 'ok') return result;
+  }
+  return {
+    status: 'degraded',
+    latency: 0,
+    lastChecked: Date.now(),
+    error: 'No Castopod instance reachable',
+  };
+}
+
+async function checkRssBridge(): Promise<IntegrationHealth> {
+  return pingUrl('http://127.0.0.1:8282/');
+}
+
 async function checkThreads(env: Env): Promise<IntegrationHealth> {
   if (!env.THREADS_APP_ID) {
     return {
@@ -297,7 +333,7 @@ async function checkThreads(env: Env): Promise<IntegrationHealth> {
 }
 
 async function checkMastodon(env: Env): Promise<IntegrationHealth> {
-  const instance = env.GTS_INSTANCE_URL || 'https://social.degenfeed.xyz';
+  const instance = env.GOTOSOCIAL_INSTANCE_URL || 'https://social.degenfeed.xyz';
   return pingUrl(`${instance}/api/v1/instance`);
 }
 
@@ -333,6 +369,9 @@ export async function getFullHealthReport(env: Env): Promise<FullHealthReport> {
     rss,
     threads,
     mastodon,
+    funkwhale,
+    castopod,
+    rssbridge,
   ] = await Promise.allSettled([
     checkActivityPub(env),
     checkAtproto(env),
@@ -350,6 +389,9 @@ export async function getFullHealthReport(env: Env): Promise<FullHealthReport> {
     checkRss(),
     checkThreads(env),
     checkMastodon(env),
+    checkFunkwhale(),
+    checkCastopod(),
+    checkRssBridge(),
   ]);
 
   const toHealth = (
@@ -384,6 +426,9 @@ export async function getFullHealthReport(env: Env): Promise<FullHealthReport> {
     rss: toHealth(rss, 'rss'),
     threads: toHealth(threads, 'threads'),
     mastodon: toHealth(mastodon, 'mastodon'),
+    funkwhale: toHealth(funkwhale, 'funkwhale'),
+    castopod: toHealth(castopod, 'castopod'),
+    rssbridge: toHealth(rssbridge, 'rssbridge'),
     summary: { total: 0, ok: 0, degraded: 0, down: 0 },
     checkedAt: Date.now(),
     totalLatency: Math.round(performance.now() - start),
@@ -405,6 +450,9 @@ export async function getFullHealthReport(env: Env): Promise<FullHealthReport> {
     report.rss,
     report.threads,
     report.mastodon,
+    report.funkwhale,
+    report.castopod,
+    report.rssbridge,
   ];
 
   report.summary = {

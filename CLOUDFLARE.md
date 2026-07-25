@@ -209,7 +209,7 @@ When a tunnel was created via the Cloudflare Dashboard (Zero Trust UI), the ingr
 }"
 ```
 
-The local `config.yml` has 30+ hostnames. The API-pushed config has only 3.
+The local `config.yml` has 30+ hostnames (covering 44+ protocol services). The API-pushed config has only 3.
 
 ### What changed to cause this
 

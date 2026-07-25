@@ -47,6 +47,15 @@ interface PreferencesBody {
   interleaveProtocols?: boolean;
   /** Notification preferences — per-protocol type toggles */
   notifications?: NotificationProtocolPrefs;
+  // ── Messaging preferences ─────────────────────────────────────
+  messaging?: {
+    defaultProtocol?: string;
+    fallbackProtocols?: string[];
+    encryptionRequired?: boolean;
+    readReceipts?: boolean;
+    typingIndicators?: boolean;
+    disappearingTimer?: number;
+  };
 }
 
 interface StoredPreferences {
@@ -66,6 +75,15 @@ interface StoredPreferences {
   interleaveProtocols: boolean;
   /** Notification preferences — users can toggle like/repost/reply/follow per protocol */
   notifications: NotificationProtocolPrefs;
+  /** Messaging preferences */
+  messaging: {
+    defaultProtocol: string;
+    fallbackProtocols: string[];
+    encryptionRequired: boolean;
+    readReceipts: boolean;
+    typingIndicators: boolean;
+    disappearingTimer: number;
+  };
   updatedAt: number;
 }
 
@@ -123,6 +141,14 @@ const DEFAULT_PREFS: StoredPreferences = {
   maxPerNiche: 5,
   interleaveProtocols: true,
   notifications: DEFAULT_NOTIF_PREFS,
+  messaging: {
+    defaultProtocol: 'nostr',
+    fallbackProtocols: ['matrix', 'direct-ws', 'bluesky', 'mastodon'],
+    encryptionRequired: true,
+    readReceipts: true,
+    typingIndicators: true,
+    disappearingTimer: 0,
+  },
   updatedAt: 0,
 };
 
@@ -157,6 +183,29 @@ export function sanitizePrefs(body: PreferencesBody): StoredPreferences {
       typeof body.interleaveProtocols === 'boolean' ? body.interleaveProtocols : true,
     notifications: sanitizeNotifPrefs(body.notifications),
     updatedAt: Date.now(),
+    messaging: sanitizeMessagingPrefs(body.messaging),
+  };
+}
+
+function sanitizeMessagingPrefs(input: unknown): StoredPreferences['messaging'] {
+  const def = DEFAULT_PREFS.messaging;
+  if (typeof input !== 'object' || input === null) return { ...def };
+  const raw = input as Record<string, unknown>;
+  return {
+    defaultProtocol: typeof raw.defaultProtocol === 'string' ? raw.defaultProtocol : def.defaultProtocol,
+    fallbackProtocols: Array.isArray(raw.fallbackProtocols)
+      ? raw.fallbackProtocols.filter((p): p is string => typeof p === 'string')
+      : def.fallbackProtocols,
+    encryptionRequired: typeof raw.encryptionRequired === 'boolean'
+      ? raw.encryptionRequired
+      : def.encryptionRequired,
+    readReceipts: typeof raw.readReceipts === 'boolean' ? raw.readReceipts : def.readReceipts,
+    typingIndicators: typeof raw.typingIndicators === 'boolean'
+      ? raw.typingIndicators
+      : def.typingIndicators,
+    disappearingTimer: typeof raw.disappearingTimer === 'number'
+      ? Math.max(0, Math.min(10080, raw.disappearingTimer))
+      : def.disappearingTimer,
   };
 }
 

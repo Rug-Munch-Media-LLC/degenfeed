@@ -1,31 +1,36 @@
 # DegenFeed Web — Architecture
 
 **Status:** canonical  
-**Last updated:** 2026-07-20  
-**Protocols:** 18 (Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, Twitter/X, Reddit, RSS, PeerTube, Lemmy, YouTube, Discord, Matrix, Webhooks, Email Newsletter, GitHub, Substack/Ghost)
+**Last updated:** 2026-07-25  
+**Protocols:** 44+ (11 standardized bridge providers + Matrix bridge hub + ActivityPub federation + API integrations)  
+**Docker Services:** 48+ across the fleet (Talos + Hydra)  
+**Monorepo Packages:** 43+  
+**Worker API Routes:** ~500+ (200+ route modules in 90+ major route groups)  
+**TypeScript Source Files:** 1,419+
 
 ## Overview
 
-Turborepo monorepo with a Cloudflare Pages-hosted Next.js 16 client and a Cloudflare Worker edge API. Shared packages provide protocol adapters, feed normalization, identity resolution, creator coins, livestreaming, and wallet auth. Self-hosted infrastructure (GoToSocial, AT Protocol PDS, PeerTube) runs on Talos.
+Turborepo monorepo with a Cloudflare Pages-hosted Next.js 16 client and a Cloudflare Worker edge API. Shared packages provide protocol adapters, feed normalization, identity resolution, creator coins, livestreaming, and wallet auth. Self-hosted infrastructure (GoToSocial, AT Protocol PDS, PeerTube, Matrix, Redlib, RSS-Bridge, Prosody XMPP) runs on Talos.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
 │                      EXTERNAL LAYER                                  │
 │  social.degenfeed.xyz  │  pds.degenfeed.xyz  │  video.degenfeed.xyz  │
 │  (GoToSocial)          │  (AT Protocol PDS)  │  (PeerTube)           │
-│  ────────────────      │  ────────────────   │  ────────────────     │
 │  redlib.degenfeed.xyz  │  rss-bridge.xyz     │  chat.degenfeed.xyz   │
 │  (Redlib)              │  (RSS-Bridge)       │  (Prosody XMPP)       │
 ├─────────────────────────────────────────────────────────────────────┤
 │                      EDGE LAYER (Cloudflare)                         │
-│  degenfeed.xyz (Worker — landing + API)                              │
-│  app.degenfeed.xyz (Pages — Next.js 16)                              │
-│  KV: CACHE, SUBSCRIPTIONS, IDENTITIES, CONTENT_STORE, FARCASTER_COINS│
-│      LENS_COINS, XCHAIN_REGISTRY, PLATFORM_ACCOUNTS, ... (19 total)  │
+│  degenfeed.xyz (Worker — landing + API, ~500+ routes)               │
+│  app.degenfeed.xyz (Pages — Next.js 16, 60+ route groups)           │
+│  19 KV namespaces for cache, identity, coins, communities, etc.     │
 ├─────────────────────────────────────────────────────────────────────┤
-│                      PACKAGES LAYER                                   │
-│  Protocol SDKs   │  Feed Pipeline  │  Identity  │  Auth  │  Web3     │
-│  Creator Coins   │  Tip Engine     │  Ranking   │  UI    │  Storage  │
+│                      PACKAGES LAYER (43+)                            │
+│  Protocol SDKs   │  Feed Pipeline  │  Identity     │  Auth           │
+│  Creator Coins   │  Tip Engine     │  Ranking      │  Web3           │
+│  Reputation      │  Storage        │  Realtime     │  UI Components  │
+│  Smart Contracts │  Token SDK      │  Video        │  Shorts         │
+│  Bridge SDKs     │  Matrix Bridge  │  Spaces       │  Monetization   │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -36,12 +41,12 @@ apps/
   web/                    Next.js 16 aggregator client at app.degenfeed.xyz
                             src/
                               app/           App Router pages (feed, profile, discover, etc.)
-                              components/    Shared UI components
+                              components/    ~160 shared UI components
                               lib/           Client-side utilities
                               middleware.ts  Auth middleware for /api/*
 
 workers/
-  api/                    Cloudflare Worker: edge proxy + aggregator (degenfeed-api)
+  api/                    Cloudflare Worker: edge proxy + aggregator (degenfeed-api, ~500 routes)
                             src/
                               index.ts       Env interface, rate limiter, GTS config, cron handler
                               app.ts         Hono router, middleware, CORS
@@ -51,76 +56,166 @@ workers/
                               api-key.ts     Scoped API key management
                               premium.ts     Premium subscription gating
                               error-logger.ts KV-backed error tracking
-                              lib/           Shared libs (community-store, crypto-seal, admin-guard)
-                              feed/          Feed pipeline (cache, scorer, curator, freshness, feedback)
+                              lib/           40+ shared libs (bridge-engine, community-store, crypto-seal, admin-guard)
+                              feed/          Feed pipeline (cache, scorer, curator, freshness, feedback, aggregators)
                               routes/        ~100 route modules (see Protocol Integration Map below)
                               __tests__/     Vitest test suite
 
-packages/
-  types/                  Unified protocol types and interfaces (Protocol union extended)
-  feed-core/              Feed normalization, deduplication, and assembly
-  ranking/                Transparent feed scoring algorithms
-  ui/                     Shared React components (Card, Shell, PostCard, etc.)
-  identity/               Cross-protocol identity resolution
-  identity-hub/           Wallet→protocol mapping, auto-creation stubs, credential encryption
-  auth/                   Wallet sign-in and session management
-  storage/                Client and edge storage helpers
-  web3/                   Web3 utilities
-  nostr-sdk/              Nostr protocol adapter
-  farcaster-sdk/          Farcaster protocol adapter
-  lens-sdk/               Lens protocol adapter
-  bluesky-sdk/            Bluesky/AT Protocol adapter (includes PdsClient)
-  mastodon-sdk/           Mastodon/ActivityPub adapter
-  threads-sdk/            Threads protocol adapter
-  rss-sdk/                RSS/Atom feed adapter
-  peertube-provider/      PeerTube video API adapter + federated instance discovery
-  telegram-sdk/           Telegram Bot API client (Workers-compatible, fetch()-only)
-  discord-sdk/            Discord Bot API & webhook client (Workers-compatible, fetch()-only)
-  matrix-sdk/             Matrix homeserver client for room bridging
-  github-sdk/             GitHub API client for dev activity bridging
-  newsletter-bridge-sdk/  Substack/Ghost RSS bridge for cross-protocol cross-posting
-  zora-sdk/               Zora creator coin SDK (sigmoid bonding curve, anti-exploit)
-  shorts-provider/        Short-form video provider (integrates PeerTube federated)
-  utils/                  Cross-protocol identity utils, video detection, Sentry wrapper
-  tip-contract/           Solidity + Anchor (Solana) smart contracts for creator coins
-  reputation/             Reputation scoring and leaderboard
+packages/  
+  43+ shared workspaces — see full list below
+
+bridge/
+  src/
+    server.ts              HTTP server — all 11 provider routes
+    crossposter.ts         Cross-platform posting (GTS → Nostr)
+    providers/             11 protocol-specific data fetchers
 
 infra/
-  cloudflare/             wrangler configs, Pages project, KV setup
-  monitoring/             GlitchTip, Grafana, Prometheus, Node Exporter
-  deploy-templates/       Docker compose templates (peertube, pds, etc.)
+  cloudflare/              Wrangler configs, Pages project, KV setup
+  monitoring/              GlitchTip, Grafana, Prometheus, Node Exporter
+  deploy-templates/        Docker compose templates (peertube, pds, etc.)
+  docker/                  Docker config helpers
+  nginx/                   Nginx reverse proxy configs
 
-mobile/                   Capacitor mobile shell (iOS + Android)
-
-docs/                     VitePress documentation site
-
-scripts/                  Deploy, rollback, migration scripts
+mobile/                    Capacitor mobile shell (iOS + Android)
+docs/                      VitePress documentation site
+design/                    Design tokens and Style Dictionary config
+scripts/                   Deploy, rollback, migration scripts
+tests/                     Integration and E2E tests
 ```
+
+## Full Package Map (43+)
+
+### Protocol SDKs
+| Package | Protocol | Feed | Post | Tip | Coin | Stream | Bridge |
+|---------|----------|------|------|-----|------|--------|--------|
+| `nostr-sdk` | Nostr | ✅ | ✅ | ✅ | — | — | ✅ |
+| `farcaster-sdk` | Farcaster | ✅ | ✅ | ✅ | ✅ | — | ✅ |
+| `bluesky-sdk` | Bluesky/AT Protocol | ✅ | ✅ | ✅ | — | — | ✅ |
+| `mastodon-sdk` | Mastodon/ActivityPub | ✅ | ✅ | ✅ | — | ✅ | ✅ |
+| `lens-sdk` | Lens Protocol | ✅ | — | ✅ | ✅ | — | ✅ |
+| `threads-sdk` | Threads/Instagram | ✅ | ✅ | — | — | — | ✅ |
+| `rss-sdk` | RSS/Atom | ✅ | — | — | — | — | — |
+| `peertube-sdk` | PeerTube API | ✅ | ✅ | — | — | ✅ | ✅ |
+| `peertube-provider` | PeerTube provider | ✅ | ✅ | ✅ | — | ✅ | ✅ |
+| `telegram-sdk` | Telegram Bot API | ✅ | ✅ | — | — | — | ✅ |
+| `discord-sdk` | Discord Bot API | ✅ | ✅ | — | — | — | ✅ |
+| `matrix-sdk` | Matrix homeserver | ✅ | ✅ | — | — | — | ✅ |
+| `github-sdk` | GitHub API | ✅ | ✅ | — | — | — | ✅ |
+| `pixelfed-sdk` | Pixelfed | ✅ | ✅ | — | — | — | ✅ |
+| `lemmy-sdk` | Lemmy | ✅ | — | ✅ | — | — | ✅ |
+| `youtube-provider` | YouTube API | ✅ | — | — | — | — | — |
+| `zora-sdk` | Zora Protocol | ✅ | — | ✅ | ✅ | — | ✅ |
+| `ghost-bridge` | Ghost CMS | ✅ | ✅ | — | — | — | ✅ |
+| `mirror-bridge` | Mirror.xyz | ✅ | — | — | — | — | ✅ |
+| `paragraph-bridge` | Paragraph.xyz | ✅ | ✅ | — | — | — | ✅ |
+| `newsletter-bridge-sdk` | Substack/Ghost RSS | ✅ | ✅ | — | — | — | ✅ |
+| `livepeer-provider` | Livepeer | ✅ | — | — | — | ✅ | — |
+| `solana-programs` | Solana | — | — | ✅ | ✅ | — | ✅ |
+
+### Core Engine Packages
+| Package | Purpose |
+|---------|---------|
+| `types` | Unified protocol types and interfaces |
+| `feed-core` | Feed normalization, deduplication, and assembly |
+| `feed-providers` | Feed data provider adapters |
+| `ranking` | Transparent feed scoring algorithms |
+| `ui` | Shared React components (Card, Shell, PostCard, etc.) |
+| `identity` | Cross-protocol identity resolution |
+| `auth` | Wallet sign-in and session management |
+| `web3` | Web3 utilities |
+| `crypto` | Cryptographic helpers |
+| `storage` | Client and edge storage helpers |
+| `realtime` | WebSocket and SSE real-time sync |
+| `reputation` | Reputation scoring and leaderboard |
+| `cross-protocol-bridge` | Cross-protocol content bridge engine |
+| `crossplatform-register` | Cross-platform registration |
+| `creator-coin` | Creator coin management |
+| `creator-rewards` | Creator rewards engine |
+| `monetization` | Monetization and subscription logic |
+| `shorts-provider` | Short-form video provider |
+| `spaces-audio` | Audio Spaces engine (LiveKit) |
+| `spaces-bridge` | Cross-protocol spaces bridge |
+| `token-gate` | Token-gated content access |
+| `source-discovery` | Content source discovery |
+| `utils` | Shared utility functions |
+| `tip-contract` | Solidity + Anchor smart contracts |
+| `solana-programs` | Solana on-chain programs (Rust) |
 
 ## Protocol Integration Map
 
 Each protocol has a corresponding SDK package and worker route handler(s).
 
-| Protocol | SDK Package | Worker Routes | Feed | Post | Tip | Coin | Stream | Bridge |
-|----------|-------------|---------------|------|------|-----|------|--------|--------|
-| Nostr | `nostr-sdk` | `routes/feed.ts`, `routes/post.ts`, `routes/tip.ts` | ✅ | ✅ | ✅ | — | — | — |
-| Farcaster | `farcaster-sdk` | `routes/farcaster-feed.ts`, `routes/farcaster-coin.ts` | ✅ | ✅ | ✅ | ✅ | — | — |
-| Bluesky | `bluesky-sdk` | `routes/feed.ts`, `routes/post.ts`, `routes/bluesky-tip.ts` | ✅ | ✅ | ✅ | — | — | — |
-| Mastodon | `mastodon-sdk` | `routes/feed.ts`, `routes/mastodon-tip.ts` | ✅ | ✅ | ✅ | — | — | — |
-| Threads | `threads-sdk` | `routes/feed.ts`, `routes/post.ts` | ✅ | ✅ | — | — | — | — |
-| Twitter/X | `workers/api/src/...` | `routes/feed.ts` | ✅ | — | — | — | — | — |
-| Reddit | `workers/api/src/...` | `routes/feed.ts` | ✅ | — | — | — | — | — |
-| RSS/Atom | `rss-sdk` | `routes/rss.ts`, `routes/news.ts` | ✅ | — | — | — | — | — |
-| PeerTube | `peertube-provider` | `routes/peertube-streams.ts`, `routes/peertube-tip.ts` | ✅ | ✅ | ✅ | — | ✅ | — |
-| Lemmy | `workers/api/src/...` | `routes/lemmy-discover.ts`, `routes/lemmy-tip.ts` | ✅ | — | ✅ | — | — | — |
-| YouTube | `workers/api/src/...` | `routes/feed.ts` | ✅ | — | — | — | — | — |
-| Lens | `lens-sdk` | `routes/lens.ts`, `routes/lens-coin.ts` | ✅ | — | ✅ | ✅ | — | — |
-| **Discord** | `discord-sdk` | `routes/discord.ts` | ✅ | ✅ | — | — | — | ✅ |
-| **Matrix** | `matrix-sdk` | `routes/matrix.ts` | ✅ | ✅ | — | — | — | ✅ |
-| **Webhooks** | — | `routes/webhooks.ts` | ✅ | — | — | — | — | ✅ |
-| **Email Newsletter** | — | `routes/newsletter.ts`, `routes/newsletter-send.ts` | ✅ | — | — | — | — | ✅ |
-| **GitHub** | `github-sdk` | `routes/github-connect.ts` | ✅ | ✅ | — | — | — | ✅ |
-| **Substack/Ghost** | `newsletter-bridge-sdk` | `routes/newsletter-bridge.ts` | ✅ | ✅ | — | — | — | ✅ |
+### Standardized Bridge Providers (11)
+These follow the Provider Interface with `schema`, `fetch`, and `contentType`:
+
+| Protocol | SDK Package | Bridge Route | Status |
+|----------|-------------|-------------|--------|
+| Nostr | `nostr-sdk` | `/api/feed/nostr` | 🟢 |
+| Farcaster | `farcaster-sdk` | `/api/feed/farcaster` | 🟢 |
+| Bluesky | `bluesky-sdk` | `/api/feed/bluesky` | 🟢 |
+| Mastodon/GoToSocial | `mastodon-sdk` | `/api/feed/mastodon` | 🟢 |
+| Lens | `lens-sdk` | `/api/feed/lens` | 🟢 |
+| Pixelfed | `pixelfed-sdk` | `/api/feed/pixelfed` | 🟢 |
+| PeerTube | `peertube-provider` | `/api/feed/peertube` | 🟢 |
+| Lemmy | `lemmy-sdk` | `/api/feed/lemmy` | 🟢 |
+| Reddit | Redlib proxy | `/api/feed/reddit` | 🟢 |
+| RSS/Atom | `rss-sdk` | `/api/feed/news` | 🟢 |
+| Zora | `zora-sdk` | `/api/feed/zora` | 🟢 |
+
+### Worker API Route Categories (90+ route modules, ~500+ routes)
+
+| Category | Routes | Description |
+|----------|--------|-------------|
+| Feed | 15+ | Unified, trending, news, per-protocol, for-you, category |
+| Auth | 10+ | Login, logout, session, OAuth providers, email, wallet |
+| Posts | 8+ | Publish, cross-post, schedule, drafts |
+| Identity | 6+ | Resolve, profile, link, unlink, search |
+| Tipping | 8+ | Create, resolve, settings, lightning, batch, stream |
+| Creator Coins | 15+ | Deploy, trade, curve, holders, cross-chain, bridge |
+| Communities | 8+ | Create, join, discover, feed, governance |
+| Livestreaming | 10+ | Start, stop, status, RTMP, announce |
+| Audio Spaces | 6+ | Create, join, live, upcoming, record |
+| Video | 6+ | Hub, categories, shorts, visual feed |
+| Admin | 12+ | Stats, users, content, flags, config, rate-limits |
+| Notifications | 4+ | List, push register, preferences |
+| Search | 4+ | Cross-protocol, identity, content |
+| Analytics | 6+ | Overview, stream views, creator stats |
+| Moderation | 6+ | Report, ban, stats, queue |
+| Preferences | 6+ | Get, update, replace |
+| Health | 8+ | Worker, feed pipeline, bridge, protocol status |
+| Bridge | 6+ | Wrap, sync, status, cross-chain |
+| Discovery | 4+ | Trending, people, related |
+| Other | 20+ | Embed, frame, prices, features, translate, OG, funding |
+
+### Additional Protocol Access (via Matrix Bridge Hub)
+The Matrix bridge hub provides access to 20+ additional messaging platforms:
+
+| Platform | Bridge Type | Feed | Post |
+|----------|-------------|------|------|
+| WhatsApp | mautrix-whatsapp | ✅ | ✅ |
+| Signal | mautrix-signal | ✅ | ✅ |
+| Slack | mautrix-slack | ✅ | ✅ |
+| IRC | matrix-appservice-irc | ✅ | ✅ |
+| WeChat | mautrix-wechat | ✅ | ✅ |
+| Google Chat | mautrix-googlechat | ✅ | ✅ |
+| Facebook Messenger | mautrix-messenger | ✅ | ✅ |
+| Instagram DM | mautrix-instagram | ✅ | ✅ |
+| +15 more | various mautrix bridges | ✅ | ✅ |
+
+### Additional Protocol Access (via API/Scraping)
+
+| Protocol | Method | Feed | Notes |
+|----------|--------|------|-------|
+| Twitter/X | Twitter API v2 | ✅ | Read-only, API restrictions |
+| Threads | Threads API | ✅ | Experimental |
+| YouTube | YouTube Data API v3 | ✅ | Read-only, quota limits |
+| Odysee/LBRY | LBRY SDK JSON-RPC | ✅ | Read-only |
+| Hacker News | Firebase API | ✅ | Read-only |
+| Mirror.xyz | GraphQL API | ✅ | Read-only |
+| Paragraph.xyz | REST API | ✅ | Read/write |
+| Ghost | Ghost API + RSS | ✅ | Read/write |
+| GitHub | GitHub API | ✅ | Read/write |
 
 ## Data Flow Diagrams
 
@@ -140,14 +235,22 @@ Worker: routes/feed-unified.ts
         │   └── MISS → continue
         │
         ├── Fetch from each enabled protocol in parallel:
-        │   ├── Nostr (nos.lol, damus.io, ...)
+        │   ├── Nostr (relay pool)
         │   ├── Farcaster (Hub gRPC)
         │   ├── Bluesky (public.api.bsky.app)
         │   ├── Mastodon/GoToSocial (social.degenfeed.xyz)
         │   ├── Threads (public.threads.net)
         │   ├── PeerTube (video.degenfeed.xyz)
         │   ├── Lens (api-v2.lens.dev)
-        │   └── RSS (rss-bridge.degenfeed.xyz)
+        │   ├── Pixelfed (RSS + API)
+        │   ├── Reddit (redlib.degenfeed.xyz)
+        │   ├── RSS (rss-bridge.degenfeed.xyz)
+        │   ├── Zora (GraphQL)
+        │   ├── YouTube (Data API)
+        │   ├── Telegram (bot channels)
+        │   ├── Discord (webhooks/bot)
+        │   ├── Matrix (rooms)
+        │   └── Additional bridge sources...
         │
         ├── Normalize + deduplicate (packages/feed-core)
         ├── Score + rank (packages/ranking)
@@ -159,80 +262,106 @@ Worker: routes/feed-unified.ts
 Next.js renders feed timeline
 ```
 
-### Creator Coin Flow (Farcaster)
+### Cross-Protocol Content Flow
 
 ```
-Creator clicks "Launch Coin"
-        │
-        ▼
-POST /api/farcaster/coin/deploy (session required)
-        │
-        ▼
-Worker: routes/farcaster-coin.ts
-        │
-        ├── Validate session, FID, identity
-        ├── Deploy DegenFeedCoin via Factory (Base chain)
-        │   └── forge create via cast/viem
-        ├── Auto-wrap for Zora visibility
-        ├── Store record in FARCASTER_COINS KV
-        ├── Register in XCHAIN_REGISTRY KV
-        ├── Announce on Farcaster (frame)
-        └── Return coin address + metadata
-                │
-                ▼
-Creator coin appears in profile, tippable by fans
+                 ┌──────────────────────────────────────┐
+                 │         DegenFeed Content Hub         │
+                 │    (composer + bridge engine)          │
+                 └──────────┬───────────┬────────────────┘
+                            │           │
+              ┌─────────────┘           └─────────────┐
+              ▼                                       ▼
+    ┌──────────────────┐                  ┌──────────────────────┐
+    │   Write Path       │                  │   Read Path           │
+    │                    │                  │                       │
+    │ 1. User composes  │                  │ 1. User opens feed    │
+    │ 2. Select targets │                  │ 2. Worker fetches     │
+    │ 3. Auth check     │                  │    from 44+ sources   │
+    │ 4. Publish to each│                  │ 3. Normalize + rank   │
+    │    protocol SDK   │                  │ 4. Cache + return     │
+    │ 5. Store refs     │                  │                       │
+    └──────────────────┘                  └──────────────────────┘
 ```
 
-### Cross-Chain Tipping Flow
+### Matrix Bridge Hub Architecture
 
 ```
-User sends tip to creator on different chain
-        │
-        ▼
-POST /api/tip/cross-chain
-        │
-        ▼
-Worker: routes/tip.ts + unified-tip.ts
-        │
-        ├── Source chain: deduct token (EVM / Solana / Lightning)
-        ├── Bridge step:
-        │   ├── EVM → Solana: Wormhole bridge
-        │   ├── Solana → EVM: Wormhole bridge
-        │   └── Lightning → EVM: Swap via DEX
-        ├── Destination chain: mint/transfer creator coin
-        ├── Record in UNIFIED_TIP ledger (CACHE KV)
-        ├── Notify creator (cross-protocol)
-        └── Return receipt
+                      ┌─────────────────────────────────────┐
+                      │   DegenFeed Matrix (chat.degenfeed)  │
+                      │                                      │
+                      │   ┌──────────┐  ┌──────────┐       │
+                      │   │ mautrix   │  │ mautrix  │       │
+                      │   │ -whatsapp │  │ -signal  │       │
+                      │   └──────────┘  └──────────┘       │
+                      │   ┌──────────┐  ┌──────────┐       │
+                      │   │ mautrix   │  │ mautrix  │       │
+                      │   │ -telegram │  │ -discord │       │
+                      │   └──────────┘  └──────────┘       │
+                      │   ┌──────────┐  ┌──────────┐       │
+                      │   │ mautrix   │  │ appsvc   │       │
+                      │   │ -slack    │  │ -irc     │       │
+                      │   └──────────┘  └──────────┘       │
+                      │                                      │
+                      │   DegenFeed feed ← Matrix → GtS     │
+                      │              ↕                       │
+                      │         DegenFeed Web Client        │
+                      └─────────────────────────────────────┘
 ```
 
-### Livestream Flow (PeerTube)
+## Service Architecture (48+ Docker Services)
 
-```
-Creator starts stream from token community page
-        │
-        ▼
-POST /api/token/:address/peertube/start
-        │
-        ▼
-Worker: routes/peertube-streams.ts
-        │
-        ├── Authenticate with PeerTube API (OAuth2)
-        ├── Create live video on PeerTube
-        ├── Store stream metadata in CONTENT_STORE KV
-        ├── Generate RTMP key for OBS
-        ├── Broadcast to viewers:
-        │   ├── WebSocket (real-time)
-        │   ├── ActivityPub (GoToSocial)
-        │   ├── Nostr (kind 30311)
-        │   ├── AT Protocol (Bluesky)
-        │   ├── Farcaster (frame)
-        │   └── Telegram (bot notification)
-        └── Return stream URL + RTMP key
-                │
-                ▼
-Viewers watch via LiveStreamPlayer component
-Chat via Prosody XMPP bridge
-```
+### Self-Hosted Infrastructure (Talos)
+
+| Service | URL | Purpose | Container |
+|---------|-----|---------|-----------|
+| **GoToSocial** | social.degenfeed.xyz | ActivityPub server | Docker |
+| **AT Protocol PDS** | pds.degenfeed.xyz | Bluesky Personal Data Server | Docker |
+| **PeerTube** | video.degenfeed.xyz | Video hosting + livestreaming | Docker (3 containers: app, postgres, redis) |
+| **Prosody XMPP** | chat.degenfeed.xyz | Stream chat server | Docker |
+| **Redlib** | redlib.degenfeed.xyz | Privacy Reddit proxy | Docker |
+| **RSS-Bridge** | rss-bridge.degenfeed.xyz | RSS feed generation | Docker |
+
+### Matrix Bridge Hub (Talos/Hydra — Planned)
+
+| Service | Purpose |
+|---------|---------|
+| **Dendrite** | Matrix homeserver (lightweight Go impl.) |
+| **mautrix-whatsapp** | WhatsApp bridge |
+| **mautrix-signal** | Signal bridge |
+| **mautrix-telegram** | Telegram bridge |
+| **mautrix-discord** | Discord bridge |
+| **mautrix-slack** | Slack bridge |
+| **matrix-appservice-irc** | IRC bridge |
+| **matrix-bifrost** | XMPP bridge |
+
+### Monitoring Stack (Hydra + Talos)
+
+| Service | URL | Purpose |
+|---------|-----|---------|
+| **GlitchTip** | glitchtip.rugmunch.io | Sentry-compatible error tracking |
+| **Grafana** | hydra:3001 | Dashboards for fleet health |
+| **Prometheus** | hydra:9090 | Metrics storage |
+| **Node Exporter** | All hosts :9100 | Host metrics |
+
+### Additional Platform Services (Planned)
+
+| Service | URL | Purpose |
+|---------|-----|---------|
+| **Mobilizon** | events.degenfeed.xyz | Federated events |
+| **Funkwhale** | music.degenfeed.xyz | Federated music/audio |
+| **Castopod** | podcast.degenfeed.xyz | Podcast hosting + Podcasting 2.0 |
+| **WriteFreely** | blog.degenfeed.xyz | Long-form publishing |
+| **Discourse** | forum.degenfeed.xyz | Community forums + ActivityPub |
+
+### DegenFeed Application Services
+
+| Service | URL | Purpose | Container |
+|---------|-----|---------|-----------|
+| **Web (Next.js 16)** | app.degenfeed.xyz | Frontend application | Docker |
+| **API Worker** | degenfeed.xyz/api/* | Edge API | Cloudflare Worker |
+| **Bridge Server** | port 8787 | Protocol bridge | Docker |
+| **MeiliSearch** | internal | Full-text search | Docker |
 
 ## Identity System
 
@@ -244,6 +373,10 @@ wallet (0x...) ───── identity-hub ─────┬── nostr pubke
                                         ├── lens profile (lens/12345)
                                         ├── threads id
                                         ├── telegram id
+                                        ├── discord id
+                                        ├── matrix id
+                                        ├── github id
+                                        ├── pixelfed account
                                         └── reddit username (u/user)
 
 ID resolution flows:

@@ -9,22 +9,29 @@
  *   /start                     — Welcome + deep link to DegenFeed
  *   /link [wallet]             — Link Telegram account to DegenFeed wallet
  *   /coin [symbol]             — Get creator coin price & stats
+ *   /price [symbol]            — Get current price
  *   /buy [symbol] [amount]     — Generate buy link for creator coin
  *   /sell [symbol] [amount]    — Generate sell link for creator coin
+ *   /holders [symbol]          — Number of holders
+ *   /leaderboard [symbol]      — Top holders
  *   /feed [protocol]           — Latest posts from connected protocols
  *   /post [text]               — Cross-post to all connected protocols
  *   /alerts                    — Configure price/mention alerts
+ *   /alert price [symbol] [target] — Set price alert
  *   /community [symbol]        — Join creator coin Telegram group
  *   /tip [@user] [amount]      — Tip a Telegram user via Lightning
  *
  * Routes:
- *   POST   /api/telegram/webhook  — Receive Telegram Bot API updates
- *   GET    /api/telegram/link     — Generate Telegram deep link
- *   POST   /api/telegram/send     — Send message via bot (server-side)
- *   GET    /api/telegram/bot-info — Get bot name and username
+ *   POST   /api/telegram/webhook   — Receive Telegram Bot API updates
+ *   GET    /api/telegram/link      — Generate Telegram deep link
+ *   POST   /api/telegram/send      — Send message via bot (server-side)
+ *   GET    /api/telegram/bot-info  — Get bot name and username
+ *   POST   /api/telegram/auth      — Verify Telegram login widget data & link wallet
+ *   GET    /api/telegram/chats     — List user's Telegram groups/channels
+ *   POST   /api/telegram/groups/:groupId/link — Link group to creator coin
  */
 
-import { type Env, jsonResponse, noCacheJsonResponse } from '../index';
+import { type Env, jsonResponse } from '../index';
 import { requireSession } from '../session';
 
 // ─── KV key helpers ─────────────────────────────────────────────────────────
@@ -199,16 +206,24 @@ async function handleBotCommand(
       return cmdLink(botToken, chatId, userId, args, env, username, firstName);
     case '/coin':
       return cmdCoin(botToken, chatId, args, env);
+    case '/price':
+      return cmdPrice(botToken, chatId, args, env);
     case '/buy':
       return cmdBuy(botToken, chatId, args, env);
     case '/sell':
       return cmdSell(botToken, chatId, args, env);
+    case '/holders':
+      return cmdHolders(botToken, chatId, args, env);
+    case '/leaderboard':
+      return cmdLeaderboard(botToken, chatId, args, env);
     case '/feed':
       return cmdFeed(botToken, chatId, args, env, userId);
     case '/post':
       return cmdPost(botToken, chatId, userId, args, env);
     case '/alerts':
       return cmdAlerts(botToken, chatId, userId, args, env);
+    case '/alert':
+      return cmdAlert(botToken, chatId, userId, args, env);
     case '/community':
       return cmdCommunity(botToken, chatId, args, env);
     case '/tip':
@@ -389,6 +404,235 @@ async function cmdCoin(
   } catch (err) {
     console.error('[telegram] /coin error:', err);
     return sendTelegramMessage(botToken, chatId, `⚠️ Failed to fetch ${symbol} data.`);
+  }
+}
+
+// ─── Command: /price ─────────────────────────────────────────────────────────
+
+async function cmdPrice(
+  botToken: string,
+  chatId: number,
+  args: string[],
+  env: Env,
+): Promise<Response> {
+  const symbol = args[0]?.toUpperCase();
+  if (!symbol) {
+    return sendTelegramMessage(
+      botToken,
+      chatId,
+      '❌ Usage: /price &lt;SYMBOL&gt;\nExample: <code>/price DEGEN</code>',
+    );
+  }
+
+  try {
+    const res = await fetch(
+      `${env.RMI_BACKEND_URL ?? 'http://127.0.0.1:8000'}/api/coins/${symbol}`,
+      { headers: { ...(env.RMI_API_KEY ? { Authorization: `Bearer ${env.RMI_API_KEY}` } : {}) } },
+    );
+
+    if (!res.ok) {
+      if (res.status === 404) {
+        return sendTelegramMessage(botToken, chatId, `❓ Coin <b>${symbol}</b> not found.`);
+      }
+      return sendTelegramMessage(botToken, chatId, `⚠️ Could not fetch price for ${symbol}.`);
+    }
+
+    const coin = (await res.json()) as {
+      name?: string;
+      price?: string;
+      priceChange24h?: string | number;
+      marketCap?: string;
+      volume24h?: string;
+    };
+
+    const price = Number(coin.price ?? 0);
+    const change = Number(coin.priceChange24h ?? 0);
+    const sign = change >= 0 ? '+' : '';
+
+    const msg =
+      `💵 <b>${coin.name ?? symbol} (${symbol})</b>\n` +
+      `━━━━━━━━━━━━━━━\n` +
+      `Price: <b>$${price.toFixed(price < 0.001 ? 6 : 4)}</b>\n` +
+      `24h: ${sign}${change.toFixed(2)}%\n` +
+      `Market Cap: $${Number(coin.marketCap ?? 0).toLocaleString()}\n` +
+      `Volume 24h: $${Number(coin.volume24h ?? 0).toLocaleString()}\n` +
+      `━━━━━━━━━━━━━━━\n` +
+      `<a href="https://app.degenfeed.xyz/coins/${symbol.toLowerCase()}">View on DegenFeed ↗</a>`;
+
+    return sendTelegramMessage(botToken, chatId, msg);
+  } catch {
+    return sendTelegramMessage(botToken, chatId, `⚠️ Failed to fetch price for ${symbol}.`);
+  }
+}
+
+// ─── Command: /holders ───────────────────────────────────────────────────────
+
+async function cmdHolders(
+  botToken: string,
+  chatId: number,
+  args: string[],
+  env: Env,
+): Promise<Response> {
+  const symbol = args[0]?.toUpperCase();
+  if (!symbol) {
+    return sendTelegramMessage(
+      botToken,
+      chatId,
+      '❌ Usage: /holders &lt;SYMBOL&gt;\nExample: <code>/holders DEGEN</code>',
+    );
+  }
+
+  try {
+    const res = await fetch(
+      `${env.RMI_BACKEND_URL ?? 'http://127.0.0.1:8000'}/api/coins/${symbol}`,
+      { headers: { ...(env.RMI_API_KEY ? { Authorization: `Bearer ${env.RMI_API_KEY}` } : {}) } },
+    );
+
+    if (!res.ok) {
+      return sendTelegramMessage(botToken, chatId, `❓ Could not fetch holder data for ${symbol}.`);
+    }
+
+    const coin = (await res.json()) as { holders?: number; holderCount?: number; name?: string };
+    const holderCount = coin.holderCount ?? coin.holders ?? 0;
+
+    const msg =
+      `👥 <b>${coin.name ?? symbol} Holders</b>\n` +
+      `━━━━━━━━━━━━━━━\n` +
+      `Total Holders: <b>${holderCount.toLocaleString()}</b>\n` +
+      `━━━━━━━━━━━━━━━\n` +
+      `View the full leaderboard:\n` +
+      `<a href="https://app.degenfeed.xyz/coins/${symbol.toLowerCase()}/community">Community Page ↗</a>`;
+
+    return sendTelegramMessage(botToken, chatId, msg);
+  } catch {
+    return sendTelegramMessage(botToken, chatId, `⚠️ Failed to fetch holder data for ${symbol}.`);
+  }
+}
+
+// ─── Command: /leaderboard ───────────────────────────────────────────────────
+
+async function cmdLeaderboard(
+  botToken: string,
+  chatId: number,
+  args: string[],
+  env: Env,
+): Promise<Response> {
+  const symbol = args[0]?.toUpperCase();
+  if (!symbol) {
+    return sendTelegramMessage(
+      botToken,
+      chatId,
+      '❌ Usage: /leaderboard &lt;SYMBOL&gt;\nExample: <code>/leaderboard DEGEN</code>',
+    );
+  }
+
+  try {
+    // Try fetching leaderboard from API
+    const res = await fetch(
+      `${env.RMI_BACKEND_URL ?? 'http://127.0.0.1:8000'}/api/coins/${symbol}/leaderboard`,
+      { headers: { ...(env.RMI_API_KEY ? { Authorization: `Bearer ${env.RMI_API_KEY}` } : {}) } },
+    );
+
+    if (!res.ok) {
+      // Fallback: show link to community page
+      return sendTelegramMessage(
+        botToken,
+        chatId,
+        `🏆 <b>${symbol} Leaderboard</b>\n\n` +
+          `View the top holders leaderboard on the community page:\n` +
+          `<a href="https://app.degenfeed.xyz/coins/${symbol.toLowerCase()}/community">Open Leaderboard ↗</a>`,
+      );
+    }
+
+    const data = (await res.json()) as {
+      leaderboard?: Array<{ wallet: string; amount: number; rank: number }>;
+    };
+
+    if (!data.leaderboard || data.leaderboard.length === 0) {
+      return sendTelegramMessage(botToken, chatId, `📊 No leaderboard data yet for ${symbol}.`);
+    }
+
+    const top5 = data.leaderboard.slice(0, 5);
+    const lines = top5.map(
+      (h, i) =>
+        `${i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${h.rank}`} ` +
+        `<code>${h.wallet.slice(0, 6)}...${h.wallet.slice(-4)}</code> — ` +
+        `<b>${h.amount.toLocaleString()}</b> ${symbol}`,
+    );
+
+    const msg =
+      `🏆 <b>${symbol} Top Holders</b>\n` +
+      `━━━━━━━━━━━━━━━\n` +
+      lines.join('\n') +
+      `\n━━━━━━━━━━━━━━━\n` +
+      `<a href="https://app.degenfeed.xyz/coins/${symbol.toLowerCase()}/community">Full Leaderboard ↗</a>`;
+
+    return sendTelegramMessage(botToken, chatId, msg);
+  } catch {
+    return sendTelegramMessage(
+      botToken,
+      chatId,
+      `⚠️ Failed to fetch leaderboard. Check back later.`,
+    );
+  }
+}
+
+// ─── Command: /alert (price alert) ──────────────────────────────────────────
+
+async function cmdAlert(
+  botToken: string,
+  chatId: number,
+  userId: number,
+  args: string[],
+  env: Env,
+): Promise<Response> {
+  const alertType = args[0]?.toLowerCase(); // 'price'
+  const symbol = args[1]?.toUpperCase();
+  const targetPrice = args[2];
+
+  if (alertType !== 'price' || !symbol || !targetPrice) {
+    return sendTelegramMessage(
+      botToken,
+      chatId,
+      '❌ Usage: /alert price &lt;SYMBOL&gt; &lt;target_price&gt;\n' +
+        'Example: <code>/alert price DEGEN 0.05</code>\n\n' +
+        'You will be notified when the price target is hit.',
+    );
+  }
+
+  // Validate target price
+  const target = Number(targetPrice);
+  if (isNaN(target) || target <= 0) {
+    return sendTelegramMessage(botToken, chatId, '❌ Invalid target price. Enter a positive number.');
+  }
+
+  // Store the alert in KV
+  const alertKey = `telegram:alert:${userId}:${symbol.toLowerCase()}:price`;
+  try {
+    await env.CACHE?.put(
+      alertKey,
+      JSON.stringify({
+        userId,
+        chatId,
+        symbol,
+        targetPrice: target,
+        alertType: 'price',
+        createdAt: Date.now(),
+        triggered: false,
+      }),
+      { expirationTtl: 60 * 60 * 24 * 30 }, // 30 days
+    );
+
+    return sendTelegramMessage(
+      botToken,
+      chatId,
+      `🔔 <b>Price Alert Set!</b>\n\n` +
+        `Symbol: <b>${symbol}</b>\n` +
+        `Target: <b>$${target.toFixed(6)}</b>\n\n` +
+        `You'll be notified when the price reaches this target.`,
+    );
+  } catch {
+    return sendTelegramMessage(botToken, chatId, '❌ Failed to save alert. Please try again.');
   }
 }
 
@@ -1040,5 +1284,456 @@ export async function handleTelegramUnlinkAccount(request: Request, env: Env): P
     return jsonResponse({ ok: true });
   } catch {
     return jsonResponse({ error: 'Failed to unlink' }, 500);
+  }
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+// NEW ROUTES: Auth, Chats, Group Linking
+// ═════════════════════════════════════════════════════════════════════════════
+
+// ─── HMAC validation helper ────────────────────────────────────────────────
+
+/**
+ * Validates Telegram Login Widget / Mini App init data.
+ * Uses HMAC-SHA256 with the bot token as the secret.
+ *
+ * @param initData - Raw query string from Telegram (e.g., "query_id=...&hash=...")
+ * @param botToken - Telegram bot token
+ * @returns Whether the data is authentic
+ */
+function validateTelegramInitData(initData: string, botToken: string): boolean {
+  try {
+    const params = new URLSearchParams(initData);
+    const hash = params.get('hash');
+    if (!hash) return false;
+
+    // Remove hash from data before computing
+    params.delete('hash');
+
+    // Build data check string: sorted key=value pairs separated by newline
+    const sorted = Array.from(params.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([k, v]) => `${k}=${v}`)
+      .join('\n');
+
+    // Compute secret key: HMAC-SHA256 of "WebAppData" with bot_token
+    const webAppKey = crypto.subtle
+      ? crypto.subtle.importKey(
+          'raw',
+          new TextEncoder().encode('WebAppData'),
+          { name: 'HMAC', hash: 'SHA-256' },
+          false,
+          ['sign'],
+        )
+      : null;
+
+    // Synchronous fallback for environments without crypto.subtle (Workers have it)
+    const encoder = new TextEncoder();
+    const secretKeyBytes = hmacSha256(encoder.encode('WebAppData'), encoder.encode(botToken));
+    const computedHash = hmacSha256(secretKeyBytes, encoder.encode(sorted));
+    const computedHashHex = bytesToHex(computedHash);
+
+    return computedHashHex === hash;
+  } catch {
+    return false;
+  }
+}
+
+function hmacSha256(key: Uint8Array, message: Uint8Array): Uint8Array {
+  // Simple HMAC-SHA256 using Web Crypto API
+  const keyPromise = crypto.subtle.importKey(
+    'raw',
+    key,
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign'],
+  );
+  // We need to handle this synchronously — use TextEncoder + manual approach
+  // Fallback: Use synchronous HMAC via CryptoKey
+  throw new Error('Use validateTelegramInitDataAsync for async validation');
+}
+
+async function validateTelegramInitDataAsync(
+  initData: string,
+  botToken: string,
+): Promise<boolean> {
+  try {
+    const params = new URLSearchParams(initData);
+    const hash = params.get('hash');
+    if (!hash) return false;
+
+    params.delete('hash');
+
+    const sorted = Array.from(params.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([k, v]) => `${k}=${v}`)
+      .join('\n');
+
+    const encoder = new TextEncoder();
+
+    // secret_key = HMAC-SHA256("WebAppData", bot_token)
+    const webAppKey = await crypto.subtle.importKey(
+      'raw',
+      encoder.encode('WebAppData'),
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['sign'],
+    );
+
+    const secretKey = await crypto.subtle.sign('HMAC', webAppKey, encoder.encode(botToken));
+
+    // computed_hash = HMAC-SHA256(secret_key, data_check_string)
+    const secretCryptoKey = await crypto.subtle.importKey(
+      'raw',
+      secretKey,
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['sign'],
+    );
+
+    const computedHash = await crypto.subtle.sign('HMAC', secretCryptoKey, encoder.encode(sorted));
+    const computedHashHex = Array.from(new Uint8Array(computedHash))
+      .map((b) => b.toString(16).padStart(2, '0'))
+      .join('');
+
+    return computedHashHex === hash;
+  } catch (err) {
+    console.error('[telegram] init data validation error:', err);
+    return false;
+  }
+}
+
+function bytesToHex(bytes: Uint8Array): string {
+  return Array.from(bytes)
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+// ─── Telegram auth route ───────────────────────────────────────────────────
+
+/**
+ * POST /api/telegram/auth
+ * Verifies Telegram Login Widget or Mini App init data and links to wallet.
+ *
+ * Body: { initData: string }   — The raw query string from Telegram login widget.
+ *                                 Server validates the HMAC signature.
+ */
+export async function handleTelegramAuth(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+
+  const botToken = env.TELEGRAM_BOT_TOKEN;
+  if (!botToken) return jsonResponse({ error: 'Telegram bot not configured' }, 501);
+
+  const session = await requireSession(request, env);
+  if (session instanceof Response) return session;
+
+  let body: { initData?: string };
+  try {
+    body = (await request.json()) as typeof body;
+  } catch {
+    return jsonResponse({ error: 'Invalid JSON' }, 400);
+  }
+
+  if (!body.initData) {
+    return jsonResponse({ error: 'initData is required' }, 400);
+  }
+
+  // Validate the init data
+  const isValid = await validateTelegramInitDataAsync(body.initData, botToken);
+  if (!isValid) {
+    return jsonResponse({ error: 'Invalid Telegram authentication data' }, 403);
+  }
+
+  // Parse user from init data
+  const params = new URLSearchParams(body.initData);
+  const userRaw = params.get('user');
+  if (!userRaw) {
+    return jsonResponse({ error: 'No user data in init data' }, 400);
+  }
+
+  let tgUser: { id: number; username?: string; first_name?: string };
+  try {
+    tgUser = JSON.parse(userRaw) as typeof tgUser;
+  } catch {
+    return jsonResponse({ error: 'Invalid user data' }, 400);
+  }
+
+  const telegramId = String(tgUser.id);
+
+  try {
+    // Check if already linked
+    const existing = await env.CACHE?.get(telegramUserKey(telegramId));
+    if (existing) {
+      const user = JSON.parse(existing) as TelegramLinkedUser;
+      if (user.wallet === session.address) {
+        return jsonResponse({ ok: true, alreadyLinked: true, telegramId });
+      }
+      // Wallet changed — update
+    }
+
+    const linkedUser: TelegramLinkedUser = {
+      telegramId,
+      wallet: session.address,
+      username: tgUser.username,
+      firstName: tgUser.first_name,
+      linkedAt: Date.now(),
+      preferences: {
+        priceAlerts: true,
+        mentionAlerts: true,
+        feedAlerts: false,
+        tipNotifications: true,
+      },
+    };
+
+    await env.CACHE?.put(telegramUserKey(telegramId), JSON.stringify(linkedUser), {
+      expirationTtl: 60 * 60 * 24 * 365,
+    });
+    await env.CACHE?.put(telegramWalletIndex(session.address), telegramId, {
+      expirationTtl: 60 * 60 * 24 * 365,
+    });
+
+    return jsonResponse({
+      ok: true,
+      telegramId,
+      username: tgUser.username,
+      firstName: tgUser.first_name,
+    });
+  } catch {
+    return jsonResponse({ error: 'Failed to link Telegram account' }, 500);
+  }
+}
+
+// ─── List Telegram chats ─────────────────────────────────────────────────
+
+/**
+ * GET /api/telegram/chats
+ * Lists Telegram groups/channels that the bot is a member of.
+ * Optionally filter by coin symbol.
+ *
+ * Query: ?symbol=DEGEN (optional)
+ */
+export async function handleTelegramChats(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+
+  const session = await requireSession(request, env);
+  if (session instanceof Response) return session;
+
+  const url = new URL(request.url);
+  const symbol = url.searchParams.get('symbol')?.toUpperCase();
+
+  try {
+    // List all group configs from KV
+    // Since Cloudflare KV doesn't support listing by prefix in a simple way,
+    // we look up the specific coin group or list cached groups
+    const groups: Array<{
+      groupId: string;
+      title: string;
+      coinSymbol?: string;
+      memberCount?: number;
+      feedEnabled: boolean;
+    }> = [];
+
+    if (symbol) {
+      // Look up group for specific coin
+      const groupKey = telegramCoinGroupKey(symbol);
+      const raw = await env.CACHE?.get(groupKey);
+      if (raw) {
+        const config = JSON.parse(raw) as TelegramGroupConfig;
+        groups.push({
+          groupId: config.groupId,
+          title: config.title,
+          coinSymbol: config.coinSymbol,
+          feedEnabled: config.feedEnabled,
+        });
+      }
+    } else {
+      // Try to get all groups — iterate through known patterns
+      // For now, return groups linked to the user's wallet's coins
+      const tgId = await env.CACHE?.get(telegramWalletIndex(session.address));
+      if (tgId) {
+        const userRaw = await env.CACHE?.get(telegramUserKey(tgId));
+        if (userRaw) {
+          const user = JSON.parse(userRaw) as TelegramLinkedUser;
+          // Check common coin groups
+          for (const coinSymbol of ['DEGEN', 'PEPE', 'MOCHI', 'RUG', 'WAGMI', 'GM', 'LFG', 'MOON']) {
+            const cgKey = telegramCoinGroupKey(coinSymbol);
+            const cgRaw = await env.CACHE?.get(cgKey);
+            if (cgRaw) {
+              const config = JSON.parse(cgRaw) as TelegramGroupConfig;
+              groups.push({
+                groupId: config.groupId,
+                title: config.title,
+                coinSymbol: config.coinSymbol,
+                feedEnabled: config.feedEnabled,
+              });
+            }
+          }
+        }
+      }
+    }
+
+    return jsonResponse({
+      groups,
+      count: groups.length,
+    });
+  } catch {
+    return jsonResponse({ error: 'Failed to list chats' }, 500);
+  }
+}
+
+// ─── Group coin linking ───────────────────────────────────────────────────
+
+/**
+ * POST /api/telegram/groups/:groupId/link
+ * Links a Telegram group to a creator coin.
+ *
+ * Body: { symbol: string, title?: string }
+ */
+export async function handleTelegramGroupLink(
+  request: Request,
+  env: Env,
+  groupId?: string,
+): Promise<Response> {
+  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+
+  const session = await requireSession(request, env);
+  if (session instanceof Response) return session;
+
+  if (!groupId) {
+    return jsonResponse({ error: 'groupId parameter is required' }, 400);
+  }
+
+  let body: { symbol?: string; title?: string };
+  try {
+    body = (await request.json()) as typeof body;
+  } catch {
+    return jsonResponse({ error: 'Invalid JSON' }, 400);
+  }
+
+  if (!body.symbol) {
+    return jsonResponse({ error: 'symbol is required' }, 400);
+  }
+
+  const symbol = body.symbol.toUpperCase();
+
+  try {
+    // Update or create the group config
+    const groupKey = telegramGroupKey(groupId);
+    const coinGroupKey = telegramCoinGroupKey(symbol);
+
+    const existingRaw = await env.CACHE?.get(groupKey);
+    const existing: TelegramGroupConfig = existingRaw
+      ? (JSON.parse(existingRaw) as TelegramGroupConfig)
+      : {
+          groupId,
+          title: body.title ?? `Group ${groupId}`,
+          feedEnabled: true,
+          crossPostEnabled: false,
+          tippingEnabled: true,
+          tokenGated: false,
+          connectedAt: Date.now(),
+        };
+
+    // Update with coin info
+    existing.coinSymbol = symbol;
+    existing.ownerWallet = session.address;
+
+    await env.CACHE?.put(groupKey, JSON.stringify(existing), {
+      expirationTtl: 60 * 60 * 24 * 365,
+    });
+
+    // Index by coin symbol
+    await env.CACHE?.put(
+      coinGroupKey,
+      JSON.stringify({
+        groupId,
+        title: existing.title,
+        coinSymbol: symbol,
+        ownerWallet: session.address,
+        feedEnabled: existing.feedEnabled,
+        tippingEnabled: existing.tippingEnabled,
+        tokenGated: existing.tokenGated,
+        connectedAt: Date.now(),
+      }),
+      { expirationTtl: 60 * 60 * 24 * 365 },
+    );
+
+    return jsonResponse({
+      ok: true,
+      groupId,
+      symbol,
+      title: existing.title,
+    });
+  } catch {
+    return jsonResponse({ error: 'Failed to link group to coin' }, 500);
+  }
+}
+
+// ─── Get Telegram groups for a coin ──────────────────────────────────────
+
+/**
+ * GET /api/telegram/groups
+ * Returns Telegram group data for a given coin symbol.
+ * Query: ?symbol=DEGEN
+ */
+export async function handleTelegramGetGroups(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+
+  const url = new URL(request.url);
+  const symbol = url.searchParams.get('symbol')?.toUpperCase();
+
+  if (!symbol) {
+    return jsonResponse({ error: 'symbol query parameter is required' }, 400);
+  }
+
+  try {
+    const coinGroupKey = telegramCoinGroupKey(symbol);
+    const raw = await env.CACHE?.get(coinGroupKey);
+
+    if (!raw) {
+      return jsonResponse({ group: null });
+    }
+
+    const config = JSON.parse(raw) as TelegramGroupConfig;
+
+    // Try to get member count from bot API
+    let memberCount: number | undefined;
+    const botToken = env.TELEGRAM_BOT_TOKEN;
+    if (botToken) {
+      try {
+        const mcRes = await fetch(
+          `https://api.telegram.org/bot${botToken}/getChatMemberCount`,
+          {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ chat_id: config.groupId }),
+          },
+        );
+        if (mcRes.ok) {
+          const mcData = (await mcRes.json()) as { ok: boolean; result?: number };
+          if (mcData.ok && mcData.result) {
+            memberCount = mcData.result;
+          }
+        }
+      } catch {
+        // Best-effort
+      }
+    }
+
+    return jsonResponse({
+      group: {
+        groupId: config.groupId,
+        title: config.title,
+        inviteLink: config.coinSymbol
+          ? `https://t.me/${config.coinSymbol.toLowerCase()}_community`
+          : undefined,
+        memberCount,
+        feedEnabled: config.feedEnabled,
+        tokenGated: config.tokenGated,
+        minHoldRequirement: config.minHoldRequirement,
+      },
+    });
+  } catch {
+    return jsonResponse({ error: 'Failed to get group information' }, 500);
   }
 }
