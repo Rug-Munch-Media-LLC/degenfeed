@@ -18,6 +18,9 @@ import type {
   ParsedRssItem,
   StoryCluster,
 } from './news-types';
+
+// Re-export types for consumers still importing from this file
+export type { AggregatedStory, AggregationOptions, AggregationResult } from './news-types';
 import {
   analyzeSentiment,
   computeCredibility,
