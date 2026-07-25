@@ -37,6 +37,21 @@ import { fetchPushPosts } from '../providers/push';
 import { fetchHuddle01Posts } from '../providers/huddle01';
 import { fetchCeramicPosts } from '../providers/ceramic';
 import { fetchTablelandPosts } from '../providers/tableland';
+// Bridge providers that exist but were never registered
+import { fetchArenaPosts } from '../providers/arena';
+import { fetchDeSoPosts } from '../providers/deso';
+import { fetchMicroblogPosts } from '../providers/microblog';
+import { fetchSessionPosts } from '../providers/session';
+import { fetchSteemPosts } from '../providers/steem';
+import { fetchSubsocialPosts } from '../providers/subsocial';
+import { fetchCyberConnectPosts } from '../providers/cyberconnect';
+// Adapter-based protocols — now have bridge wrappers
+import { fetchDiasporaPosts } from '../providers/diaspora';
+import { fetchFriendicaPosts } from '../providers/friendica';
+import { fetchPleromaPosts } from '../providers/pleroma';
+import { fetchMisskeyPosts } from '../providers/misskey';
+// New 2026-07-25: Faircamp
+import { fetchFaircampPosts } from '../providers/faircamp';
 import type { UnifiedPost } from './types';
 
 type ProviderFetcher = (limit: number) => Promise<UnifiedPost[]>;
@@ -94,6 +109,44 @@ export const PROVIDERS: Record<string, { name: string; fetch: ProviderFetcher }>
   // ─── Data/Storage (NEW) ─────────────────────────────────────────
   ceramic: { name: 'Ceramic/ComposeDB', fetch: fetchCeramicPosts },
   tableland: { name: 'Tableland (Decentralized DB)', fetch: fetchTablelandPosts },
+
+  // ─── Unregistered Providers (existing files, newly bound) ─────────
+  arena: { name: 'Arena.social (Social Trading on Avalanche)', fetch: fetchArenaPosts },
+  deso: { name: 'DeSo / Bitclout (Layer-1 Social Blockchain)', fetch: fetchDeSoPosts },
+  microblog: { name: 'Micro.blog (IndieWeb Microblogging)', fetch: fetchMicroblogPosts },
+  session: { name: 'Session / SOGS (Privacy Messenger)', fetch: fetchSessionPosts },
+  steem: { name: 'Steem (Blockchain Social Rewards)', fetch: fetchSteemPosts },
+  subsocial: { name: 'Subsocial (Polkadot Social)', fetch: fetchSubsocialPosts },
+  cyberconnect: { name: 'CyberConnect (Web3 Social Graph)', fetch: fetchCyberConnectPosts },
+
+  // ─── Adapter-based Protocols (now bridged) ───────────────────────
+  diaspora: { name: 'Diaspora* (Federated Social)', fetch: fetchDiasporaPosts },
+  friendica: { name: 'Friendica (Fediverse Compatible)', fetch: fetchFriendicaPosts },
+  pleroma: { name: 'Pleroma / Akkoma (Lightweight Fedi)', fetch: fetchPleromaPosts },
+  misskey: { name: 'Misskey / Firefish (Rich Media Fedi)', fetch: fetchMisskeyPosts },
+
+  // ─── Class-based providers (audius, rarible) ─────────────────────
+  audius: {
+    name: 'Audius (Decentralized Music)',
+    fetch: async (limit: number) => {
+      const { AudiusProvider } = await import('../providers/audius');
+      const p = new AudiusProvider();
+      const raw = await p.fetch({ limit } as any);
+      return (raw || []).slice(0, limit).map((r: any) => p.normalize(r));
+    },
+  },
+  rarible: {
+    name: 'Rarible Protocol (NFT Market Activity)',
+    fetch: async (limit: number) => {
+      const { RaribleProvider } = await import('../providers/rarible');
+      const p = new RaribleProvider();
+      const raw = await p.fetch({ limit } as any);
+      return (raw || []).slice(0, limit).map((r: any) => p.normalize(r));
+    },
+  },
+
+  // ─── New Headless Protocol: Faircamp ─────────────────────────────
+  faircamp: { name: 'Faircamp (Self-Hosted Music Sites)', fetch: fetchFaircampPosts },
 };
 
 /** Build a deduplicated feed from multiple protocols */
@@ -202,14 +255,24 @@ export const DEFAULT_PREFERENCES = {
   activePreset: null,
   feedMixConfig: {
     sources: [
-      'mastodon', 'reddit', 'rss', 'lemmy', 'peertube',
-      'bluesky', 'nostr', 'farcaster', 'lens', 'pixelfed',
-      'dtube', 'lbry', 'gab', 'minds', 'aether',
-      'scuttlebutt', 'hive', 'mirror', 'funkwhale', 'castopod',
-      'writefreely', 'mediagoblin', 'owncast',
-      // NEW SOURCES
+      // ── Tier 1: Core Social ──────────────────────────────
+      'mastodon', 'nostr', 'farcaster', 'lens', 'bluesky',
+      // ── Tier 2: Established ──────────────────────────────
+      'reddit', 'rss', 'lemmy', 'peertube', 'pixelfed',
+      'dtube', 'lbry', 'hive', 'mirror', 'funkwhale', 'castopod',
+      'writefreely', 'pleroma', 'misskey', 'subsocial', 'steem',
+      // ── Tier 3: ActivityPub Ecosystem ────────────────────
+      'diaspora', 'friendica', 'mediagoblin',
       'bookwyrm', 'mobilizon', 'forgejo', 'bonfire', 'mitra', 'takahe',
-      'orbis', 'xmtp', 'push', 'huddle01', 'ceramic', 'tableland',
+      'owncast',
+      // ── Tier 4: Experimental ─────────────────────────────
+      'gab', 'minds', 'aether', 'scuttlebutt', 'deso', 'session',
+      'cyberconnect', 'arena', 'microblog',
+      'faircamp', 'orbis', 'ceramic',
+      // ── Tier 5: Infrastructure ───────────────────────────
+      'xmtp', 'push', 'huddle01', 'tableland',
+      // ── NFT / Music ──────────────────────────────────────
+      'audius', 'rarible',
     ],
     contentTypes: {
       posts: 100, images: 40, videos: 20, links: 30,

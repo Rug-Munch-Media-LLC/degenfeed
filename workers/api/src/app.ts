@@ -1280,6 +1280,10 @@ app.post('/api/protocol/:protocol/register', async (c) => handleProtocolRegister
 app.get('/api/protocol/status', async (c) => handleProtocolSignupStatus(c.req.raw, c.env));
 app.post('/api/protocol/join-all', async (c) => handleJoinAll(c.req.raw, c.env));
 
+// ─── API: Protocol Content Visibility Verification ───────────
+app.post('/api/protocol/verify/post', async (c) => handleVerifyPost(c.req.raw, c.env));
+app.get('/api/protocol/verify/health', async (c) => handleVerifyHealth(c.req.raw, c.env));
+
 // ─── API: Health ────────────────────────────────────────────
 app.all('/api/health', async (c) => {
   // Base relay health

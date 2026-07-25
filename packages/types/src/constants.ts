@@ -65,7 +65,30 @@ export type Protocol =
   | 'audius'
   | 'rarible'
   | 'deso'
-  | 'writefreely';
+  | 'writefreely'
+  | 'hubzilla'
+  | 'streams'
+  | 'guppe'
+  | 'epicyon'
+  | 'ens'
+  | 'unstoppable'
+  | 'ion'
+  | 'keri'
+  | 'veramo'
+  | 'storj'
+  | 'sia'
+  | 'filecoin'
+  | 'swarm-eth'
+  | 'orbis'
+  | 'snapshot'
+  | 'tally'
+  | 'syndicate'
+  | 'juicebox'
+  | 'coinvise'
+  | 'unlock'
+  | 'mintgate'
+  | 'bonfida'
+;
 
 /** All protocol identifiers as a const array */
 export const PROTOCOLS = [
@@ -191,26 +214,80 @@ export const HTTP = {
 // ─── Tier Weights (for ranking) ──────────────────────────────────
 
 export const PLATFORM_TIER_WEIGHTS: Record<string, number> = {
-  nostr: 1, farcaster: 1, lens: 1, bluesky: 1, mastodon: 1,
-  lemmy: 1, pixelfed: 1, peertube: 0.9, youtube: 0.9,
-  threads: 0.7, zora: 0.8, reddit: 0.8, rss: 0.8, ponder: 0.8,
-  kbin: 0.7, tildes: 0.7, discord: 0.6, matrix: 0.6,
-  telegram: 0.6, ethereum: 0.6, solana: 0.6, github: 0.6,
-  'newsletter-bridge': 0.5, mirror: 0.8, paragraph: 0.8,
-  email: 0.5, google: 0.5, twitter: 0.5, webhook: 0.5,
-  dtube: 0.7, lbry: 0.7, gab: 0.5, minds: 0.6, aether: 0.5,
-  scuttlebutt: 0.6, hive: 0.7, diaspora: 0.6, friendica: 0.6,
-  pleroma: 0.7, misskey: 0.7, writefreely: 0.7,
-  deso: 0.6,
-  rarible: 0.7,
-  audius: 0.7,
-  mediagoblin: 0.6,
-  castopod: 0.6,
-  funkwhale: 0.6,
-  subsocial: 0.7,
-  steem: 0.7,
-  session: 0.6,
-  microblog: 0.7,
-  cyberconnect: 0.6,
+  aether: 0.5,
   arena: 0.7,
+  atproto: 0.8,
+  audius: 0.7,
+  bluesky: 1.0,
+  bonfida: 0.6,
+  castopod: 0.6,
+  coinvise: 0.6,
+  cyberconnect: 0.6,
+  deso: 0.6,
+  diaspora: 0.6,
+  discord: 0.6,
+  dtube: 0.7,
+  email: 0.5,
+  ens: 0.7,
+  epicyon: 0.5,
+  ethereum: 0.6,
+  farcaster: 1.0,
+  filecoin: 0.6,
+  friendica: 0.6,
+  funkwhale: 0.6,
+  gab: 0.5,
+  github: 0.6,
+  google: 0.5,
+  guppe: 0.6,
+  hive: 0.7,
+  hubzilla: 0.6,
+  ion: 0.5,
+  juicebox: 0.6,
+  kbin: 0.7,
+  keri: 0.4,
+  lbry: 0.7,
+  lemmy: 1.0,
+  lens: 1.0,
+  mastodon: 1.0,
+  matrix: 0.6,
+  mediagoblin: 0.6,
+  microblog: 0.7,
+  minds: 0.6,
+  mintgate: 0.6,
+  mirror: 0.8,
+  misskey: 0.7,
+  'newsletter-bridge': 0.5,
+  nostr: 1.0,
+  orbis: 0.7,
+  paragraph: 0.8,
+  peertube: 0.9,
+  pixelfed: 1.0,
+  pleroma: 0.7,
+  ponder: 0.8,
+  rarible: 0.7,
+  reddit: 0.8,
+  rss: 0.8,
+  scuttlebutt: 0.6,
+  session: 0.6,
+  sia: 0.5,
+  snapshot: 0.7,
+  solana: 0.6,
+  steem: 0.7,
+  storj: 0.5,
+  streams: 0.6,
+  subsocial: 0.7,
+  'swarm-eth': 0.5,
+  syndicate: 0.6,
+  tally: 0.6,
+  telegram: 0.6,
+  threads: 0.7,
+  tildes: 0.7,
+  twitter: 0.5,
+  unlock: 0.7,
+  unstoppable: 0.6,
+  veramo: 0.5,
+  webhook: 0.5,
+  writefreely: 0.7,
+  youtube: 0.9,
+  zora: 0.8,
 };
