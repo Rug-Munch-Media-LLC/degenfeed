@@ -680,13 +680,13 @@ import { handleFeedPresets } from './routes/presets';
 import { handlePrices } from './routes/prices';
 import { handleIdentityProfile } from './routes/profile';
 import { handleProtocolSections } from './routes/protocol-sections';
-import { handleActivityPubFeed, handleThreadsFeed } from './routes/protocols';
 import {
   handleJoinAll,
   handleProtocolRegister,
   handleProtocolStatus as handleProtocolSignupStatus,
 } from './routes/protocol-signup';
 import { handleVerifyHealth, handleVerifyPost } from './routes/protocol-verify';
+import { handleActivityPubFeed, handleThreadsFeed } from './routes/protocols';
 import { handlePublish } from './routes/publish';
 import { handlePushSend, handlePushSubscribe } from './routes/push';
 import {
@@ -2432,6 +2432,11 @@ app.get('/api/subscription-nft/check', async (c) => handleSubscriptionNftCheck(c
 import tiers from './routes/tiers';
 
 app.route('/api/tiers', tiers);
+
+// ─── API: Membership (Premium Strategy — $5/$10/$20) ─────────
+import membership from './routes/membership';
+
+app.route('/api/membership', membership);
 
 // ─── API: Preferences ───────────────────────────────────────
 app.all('/api/preferences', async (c) => handlePreferences(c.req.raw, c.env));

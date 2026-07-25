@@ -26,17 +26,22 @@ export { ALL_PLATFORMS, formatHashtags, truncateText } from './types';
 // ─── Import all adapters ──────────────────────────────────────────────────
 
 import { blueskyAdapter } from './bluesky-adapter';
+import { bookwyrmAdapter } from './bookwyrm-adapter';
+import { castopodAdapter } from './castopod-adapter';
 import { discordAdapter } from './discord-adapter';
 import { farcasterAdapter } from './farcaster-adapter';
+import { funkwhaleAdapter } from './funkwhale-adapter';
 import { lemmyAdapter } from './lemmy-adapter';
 import { lensAdapter } from './lens-adapter';
 import { mastodonAdapter } from './mastodon-adapter';
+import { mobilizonAdapter } from './mobilizon-adapter';
 import { nostrAdapter } from './nostr-adapter';
 import { peertubeAdapter } from './peertube-adapter';
 import { pixelfedAdapter } from './pixelfed-adapter';
 import { redditAdapter } from './reddit-adapter';
 import { telegramAdapter } from './telegram-adapter';
 import { threadsAdapter } from './threads-adapter';
+import { writefreelyAdapter } from './writefreely-adapter';
 
 // ─── Registry ─────────────────────────────────────────────────────────────
 
@@ -73,6 +78,11 @@ export function registerAllAdapters(): void {
   registerAdapter(lemmyAdapter);
   registerAdapter(peertubeAdapter);
   registerAdapter(pixelfedAdapter);
+  registerAdapter(bookwyrmAdapter);
+  registerAdapter(castopodAdapter);
+  registerAdapter(funkwhaleAdapter);
+  registerAdapter(mobilizonAdapter);
+  registerAdapter(writefreelyAdapter);
 }
 
 // Auto-register on import

@@ -17,7 +17,7 @@
 import type { Env } from './index';
 import { jsonResponse } from './index';
 
-export type PremiumTier = 'basic' | 'pro' | 'platinum' | 'enterprise';
+export type PremiumTier = 'basic' | 'pro' | 'creator' | 'platinum' | 'enterprise';
 
 export interface PremiumStatus {
   tier: PremiumTier;
@@ -28,13 +28,15 @@ export interface PremiumStatus {
 export const TIER_RANK: Record<string, number> = {
   basic: 0,
   pro: 1,
-  platinum: 2,
-  enterprise: 3,
+  creator: 2,
+  platinum: 3,
+  enterprise: 4,
 };
 
 export const TIER_NAMES: Record<PremiumTier, string> = {
   basic: 'Basic',
   pro: 'Pro',
+  creator: 'Creator',
   platinum: 'Platinum',
   enterprise: 'Enterprise',
 };
@@ -44,31 +46,50 @@ export const TIER_NAMES: Record<PremiumTier, string> = {
  * Each feature key requires the listed tier or higher.
  */
 export const FEATURE_TIER_REQUIREMENTS: Record<string, PremiumTier> = {
-  post_all_protocols: 'pro',
-  creator_coins: 'pro',
-  live_streaming: 'pro',
-  analytics_basic: 'pro',
-  scheduled_posts: 'pro',
-  create_communities: 'pro',
-  token_gated_content: 'pro',
-  custom_profile: 'pro',
-  unlimited_creator_coins: 'platinum',
-  multi_creator_collab: 'platinum',
-  analytics_advanced: 'platinum',
-  cross_network_posting: 'platinum',
-  buffer_scheduling: 'platinum',
-  telegram_discord_integration: 'platinum',
-  unlimited_communities: 'platinum',
-  custom_domain: 'platinum',
-  priority_support: 'platinum',
-  api_access: 'platinum',
-  early_protocol_access: 'platinum',
+  // Free features
+  browse_all_feeds: 'basic',
+  connect_1_protocol: 'basic',
+  post_3_protocols: 'basic',
+  scheduled_posts_10: 'basic',
+  analytics_basic: 'basic',
+
+  // Pro ($5) features
+  connect_all_protocols: 'pro',
+  post_10_protocols: 'pro',
+  scheduled_posts_100: 'pro',
+  verified_badge: 'pro',
+  cross_network_messaging: 'pro',
+
+  // Creator ($10) features
+  post_all_protocols: 'creator',
+  creator_coins: 'creator',
+  create_coin: 'creator',
+  live_streaming: 'creator',
+  scheduled_posts_unlimited: 'creator',
+  ai_optimized_times: 'creator',
+  analytics_advanced: 'creator',
+  newsletter_creation: 'creator',
+  newsletter_monetization: 'creator',
+  creator_dashboard: 'creator',
+  revenue_tracking: 'creator',
+
+  // Enterprise ($20) features
+  unlimited_creator_coins: 'enterprise',
+  external_platforms: 'enterprise',
   self_host: 'enterprise',
   white_label: 'enterprise',
+  custom_domain: 'enterprise',
+  api_access: 'enterprise',
+  team_management: 'enterprise',
+  priority_support: 'enterprise',
+  early_feature_access: 'enterprise',
+  multi_creator_collab: 'enterprise',
+  telegram_discord_integration: 'enterprise',
+  unlimited_communities: 'enterprise',
+  early_protocol_access: 'enterprise',
   custom_integrations: 'enterprise',
   dedicated_infra: 'enterprise',
   sla_guarantee: 'enterprise',
-  team_management: 'enterprise',
   sso_saml: 'enterprise',
   custom_contract: 'enterprise',
 };
@@ -78,10 +99,11 @@ export const TIER_LIMITS: Record<
   string,
   { protocols: number; creatorCoins: number; communities: number; scheduledPosts: number }
 > = {
-  basic: { protocols: 3, creatorCoins: 0, communities: 0, scheduledPosts: 0 },
-  pro: { protocols: 999, creatorCoins: 1, communities: 3, scheduledPosts: 50 },
+  basic: { protocols: 3, creatorCoins: 0, communities: 0, scheduledPosts: 10 },
+  pro: { protocols: 10, creatorCoins: 0, communities: 3, scheduledPosts: 100 },
+  creator: { protocols: 999, creatorCoins: 50, communities: 999, scheduledPosts: 9999 },
   platinum: { protocols: 999, creatorCoins: 999, communities: 999, scheduledPosts: 999 },
-  enterprise: { protocols: 999, creatorCoins: 999, communities: 999, scheduledPosts: 999 },
+  enterprise: { protocols: 999, creatorCoins: 999, communities: 999, scheduledPosts: 99999 },
 };
 
 /** One-time fee per additional creator coin on Pro tier (USD). Covers gas + platform costs. */
@@ -100,9 +122,24 @@ export function getTierName(tier: string): string {
 }
 
 /**
+ * Map legacy tier names (from old billing system) to the current tier model.
+ * Old: basic → free, pro ($10) → creator, platinum ($25) → enterprise
+ */
+function mapTier(tier: string): PremiumTier {
+  const tierMap: Record<string, PremiumTier> = {
+    basic: 'basic',
+    pro: 'creator', // Old $10 pro → new $10 creator
+    creator: 'creator',
+    platinum: 'enterprise', // Old $25 platinum → new $20 enterprise
+    enterprise: 'enterprise',
+  };
+  return tierMap[tier] ?? 'basic';
+}
+
+/**
  * Look up the premium subscription status for a wallet address.
  * Checks both legacy (solana:/ethereum: prefix) and current (premium: prefix)
- * SUBSCRIPTIONS KV schemas. Supports all 4 tiers.
+ * SUBSCRIPTIONS KV schemas. Supports all 5 tiers (basic, pro, creator, platinum, enterprise).
  *
  * Returns null when the user has no active subscription.
  */
@@ -122,7 +159,7 @@ export async function checkPremiumStatus(
       if (raw) {
         const record = JSON.parse(raw) as { tier: string; expiresAt: number };
         if (record.expiresAt > now) {
-          return { tier: record.tier as PremiumTier, expiresAt: record.expiresAt };
+          return { tier: mapTier(record.tier), expiresAt: record.expiresAt };
         }
       }
     }
@@ -136,7 +173,7 @@ export async function checkPremiumStatus(
         status?: string;
       };
       if (record.status !== 'cancelled' && record.expiresAt > now) {
-        return { tier: record.tier as PremiumTier, expiresAt: record.expiresAt };
+        return { tier: mapTier(record.tier), expiresAt: record.expiresAt };
       }
     }
   } catch {

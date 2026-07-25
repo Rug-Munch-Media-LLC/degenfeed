@@ -149,6 +149,10 @@ export const PLATFORM_TIER: Record<Protocol, number> = {
   pleroma: 0.7,
   misskey: 0.7,
   writefreely: 0.7,
+  funkwhale: 0.6,
+  castopod: 0.6,
+  bookwyrm: 0.7,
+  mobilizon: 0.6,
 };
 
 export interface UserAlgorithmPreferences {

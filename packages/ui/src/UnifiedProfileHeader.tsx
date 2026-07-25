@@ -9,6 +9,8 @@
  */
 
 import { memo, useCallback, useState } from 'react';
+import type { ProtocolStatusItem } from './ProtocolStatusSection';
+import { ProtocolStatusSection } from './ProtocolStatusSection';
 
 export interface ProfileHandle {
   protocol: string;
@@ -27,6 +29,12 @@ export interface UnifiedProfileHeaderProps {
   networkCount: number;
   primaryProtocol: string;
   dfUri: string;
+  /** Per-protocol status items for the ProtocolStatusSection */
+  protocolStatuses?: ProtocolStatusItem[];
+  /** Called when user wants to disconnect a protocol */
+  onDisconnectProtocol?: (protocol: string) => void;
+  /** Called when user wants to reconnect/reauthorize */
+  onReconnectProtocol?: (protocol: string) => void;
   onFollowAll?: (handles: ProfileHandle[]) => void;
   onShareProfile?: (dfUri: string) => void;
   onCopyDfUri?: (dfUri: string) => void;
@@ -44,6 +52,9 @@ export const UnifiedProfileHeader = memo(function UnifiedProfileHeader({
   totalFollowerCount,
   networkCount,
   dfUri,
+  protocolStatuses,
+  onDisconnectProtocol,
+  onReconnectProtocol,
   onFollowAll,
   onShareProfile,
   onCopyDfUri,
@@ -147,6 +158,17 @@ export const UnifiedProfileHeader = memo(function UnifiedProfileHeader({
           ))}
         </div>
       </div>
+
+      {/* ── Protocol Status ── */}
+      {protocolStatuses && protocolStatuses.length > 0 && (
+        <div className="mb-4">
+          <ProtocolStatusSection
+            protocols={protocolStatuses}
+            onDisconnect={onDisconnectProtocol}
+            onReconnect={onReconnectProtocol}
+          />
+        </div>
+      )}
 
       {/* ── Actions ── */}
       {handles.length > 0 && (

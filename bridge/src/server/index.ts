@@ -583,6 +583,10 @@ const server = http.createServer(async (req, res) => {
           'http://127.0.0.1:8092/api/status',
           'http://127.0.0.1:2281/v1/info',
           'http://127.0.0.1:8099/health',
+          'https://api.telegram.org/', // Telegram
+          'https://discord.com/api/v10/gateway', // Discord
+          'https://matrix.org/', // Matrix
+          'https://api.github.com/', // GitHub
         ].map(checkSourceHealth),
       );
       const [
@@ -599,6 +603,10 @@ const server = http.createServer(async (req, res) => {
         owncastHealthy,
         farcasterHealthy,
         lensHealthy,
+        telegramHealthy,
+        discordHealthy,
+        matrixHealthy,
+        githubHealthy,
       ] = results;
       return jsonOk(res, {
         status: results.some(Boolean) ? 'ok' : 'degraded',
@@ -628,6 +636,10 @@ const server = http.createServer(async (req, res) => {
           huddle01: { healthy: true },
           ceramic: { healthy: true },
           tableland: { healthy: true },
+          telegram: { healthy: telegramHealthy },
+          discord: { healthy: discordHealthy },
+          matrix: { healthy: matrixHealthy },
+          github: { healthy: githubHealthy },
         },
       });
     }
@@ -772,12 +784,37 @@ const server = http.createServer(async (req, res) => {
       }
 
       const allowed = [
-        'mastodon', 'lemmy', 'peertube', 'bluesky', 'nostr',
-        'farcaster', 'lens', 'pixelfed', 'reddit', 'rss',
-        'zora', 'threads', 'writefreely', 'mediagoblin', 'owncast',
-        'bookwyrm', 'mobilizon', 'forgejo', 'bonfire', 'mitra',
-        'takahe', 'orbis', 'xmtp', 'push', 'huddle01',
-        'ceramic', 'tableland',
+        'mastodon',
+        'lemmy',
+        'peertube',
+        'bluesky',
+        'nostr',
+        'farcaster',
+        'lens',
+        'pixelfed',
+        'reddit',
+        'rss',
+        'zora',
+        'threads',
+        'writefreely',
+        'mediagoblin',
+        'owncast',
+        'bookwyrm',
+        'mobilizon',
+        'forgejo',
+        'bonfire',
+        'mitra',
+        'takahe',
+        'orbis',
+        'xmtp',
+        'push',
+        'huddle01',
+        'ceramic',
+        'tableland',
+        'telegram',
+        'discord',
+        'matrix',
+        'github',
       ];
       if (allowed.includes(proto)) {
         const result = await buildFeed([proto], limit);
@@ -853,7 +890,7 @@ const server = http.createServer(async (req, res) => {
 server.listen(PORT, '127.0.0.1', () => {
   console.log(`[bridge] DegenFeed Bridge v0.4.0 running on http://127.0.0.1:${PORT}`);
   console.log(
-    '[bridge] Data sources: Mastodon/GTS, Reddit, RSS, Lemmy, PeerTube, Bluesky, Nostr, Farcaster, Lens, Pixelfed, Threads, Zora, DTube, LBRY, Gab, Minds, Aether, Scuttlebutt, Hive, Mirror, Funkwhale, Castopod, WriteFreely, MediaGoblin, Owncast, BookWyrm, Mobilizon, Forgejo, Bonfire, Mitra, Takahe, Orbis, XMTP, Push, Huddle01, Ceramic, Tableland',
+    '[bridge] Data sources: Mastodon/GTS, Reddit, RSS, Lemmy, PeerTube, Bluesky, Nostr, Farcaster, Lens, Pixelfed, Threads, Zora, DTube, LBRY, Gab, Minds, Aether, Scuttlebutt, Hive, Mirror, Funkwhale, Castopod, WriteFreely, MediaGoblin, Owncast, BookWyrm, Mobilizon, Forgejo, Bonfire, Mitra, Takahe, Orbis, XMTP, Push, Huddle01, Ceramic, Tableland, Telegram, Discord, Matrix, GitHub',
   );
   console.log(
     '[bridge] Cross-poster: GTS→Nostr, GTS→Bluesky, GTS→PeerTube, GTS→Lens, GTS→Farcaster, GTS→Pixelfed, GTS→WriteFreely, Pixelfed→Mastodon, Lemmy→Nostr, BookWyrm→All, Mobilizon→All, Forgejo→Fediverse',

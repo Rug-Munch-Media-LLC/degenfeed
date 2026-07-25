@@ -1,57 +1,62 @@
+import { fetchAetherPosts } from '../providers/aether';
+// Bridge providers that exist but were never registered
+import { fetchArenaPosts } from '../providers/arena';
 import { fetchBlueskyPosts } from '../providers/bluesky';
+import { fetchBonfirePosts } from '../providers/bonfire';
+// NEW PROTOCOL IMPORTS - 2026-07-26
+import { fetchBookWyrmPosts } from '../providers/bookwyrm';
+import { fetchCastopodPosts } from '../providers/castopod';
+import { fetchCeramicPosts } from '../providers/ceramic';
+import { fetchCyberConnectPosts } from '../providers/cyberconnect';
+import { fetchDeSoPosts } from '../providers/deso';
+// Adapter-based protocols — now have bridge wrappers
+import { fetchDiasporaPosts } from '../providers/diaspora';
+import { fetchDiscordPosts } from '../providers/discord';
+import { fetchDTubePosts } from '../providers/dtube';
+// New 2026-07-25: Faircamp
+import { fetchFaircampPosts } from '../providers/faircamp';
 import { fetchFarcasterPosts } from '../providers/farcaster';
+import { fetchForgejoPosts } from '../providers/forgejo';
+import { fetchFriendicaPosts } from '../providers/friendica';
+import { fetchFunkwhalePosts } from '../providers/funkwhale';
+import { fetchGabPosts } from '../providers/gab';
+import { fetchGitHubPosts } from '../providers/github';
 import { fetchMastodonPosts } from '../providers/gotosocial';
+import { fetchHivePosts } from '../providers/hive';
+import { fetchHuddle01Posts } from '../providers/huddle01';
+import { fetchLBRYPosts } from '../providers/lbry';
 import { fetchLemmyPosts } from '../providers/lemmy';
 import { fetchLensPosts } from '../providers/lens';
+import { fetchMatrixPosts } from '../providers/matrix';
+import { fetchMediaGoblinPosts } from '../providers/mediagoblin';
+import { fetchMicroblogPosts } from '../providers/microblog';
+import { fetchMindsPosts } from '../providers/minds';
+import { fetchMirrorPosts } from '../providers/mirror';
+import { fetchMisskeyPosts } from '../providers/misskey';
+import { fetchMitraPosts } from '../providers/mitra';
+import { fetchMobilizonPosts } from '../providers/mobilizon';
 import { fetchNostrPosts } from '../providers/nostr';
+import { fetchOrbisPosts } from '../providers/orbis';
+import { fetchOwncastPosts } from '../providers/owncast';
 import { fetchPeerTubePosts } from '../providers/peertube';
 import { fetchPixelfedPosts } from '../providers/pixelfed';
+import { fetchPleromaPosts } from '../providers/pleroma';
+import { fetchPushPosts } from '../providers/push';
 import { fetchRedditPosts } from '../providers/redlib';
 import { fetch as fetchRssPosts } from '../providers/rss';
 import { fetchRssBridgePosts } from '../providers/rssbridge';
-import { fetchThreadsPosts } from '../providers/threads';
-import { fetchZoraPosts } from '../providers/zora';
-import { fetchDTubePosts } from '../providers/dtube';
-import { fetchLBRYPosts } from '../providers/lbry';
-import { fetchGabPosts } from '../providers/gab';
-import { fetchMindsPosts } from '../providers/minds';
-import { fetchAetherPosts } from '../providers/aether';
 import { fetchScuttlebuttPosts } from '../providers/scuttlebutt';
-import { fetchHivePosts } from '../providers/hive';
-import { fetchMirrorPosts } from '../providers/mirror';
-import { fetchCastopodPosts } from '../providers/castopod';
-import { fetchFunkwhalePosts } from '../providers/funkwhale';
-import { fetchMediaGoblinPosts } from '../providers/mediagoblin';
-import { fetchOwncastPosts } from '../providers/owncast';
-import { fetchWriteFreelyPosts } from '../providers/writefreely';
-// NEW PROTOCOL IMPORTS - 2026-07-26
-import { fetchBookWyrmPosts } from '../providers/bookwyrm';
-import { fetchMobilizonPosts } from '../providers/mobilizon';
-import { fetchForgejoPosts } from '../providers/forgejo';
-import { fetchBonfirePosts } from '../providers/bonfire';
-import { fetchMitraPosts } from '../providers/mitra';
-import { fetchTakahePosts } from '../providers/takahe';
-import { fetchOrbisPosts } from '../providers/orbis';
-import { fetchXmtpPosts } from '../providers/xmtp';
-import { fetchPushPosts } from '../providers/push';
-import { fetchHuddle01Posts } from '../providers/huddle01';
-import { fetchCeramicPosts } from '../providers/ceramic';
-import { fetchTablelandPosts } from '../providers/tableland';
-// Bridge providers that exist but were never registered
-import { fetchArenaPosts } from '../providers/arena';
-import { fetchDeSoPosts } from '../providers/deso';
-import { fetchMicroblogPosts } from '../providers/microblog';
 import { fetchSessionPosts } from '../providers/session';
 import { fetchSteemPosts } from '../providers/steem';
 import { fetchSubsocialPosts } from '../providers/subsocial';
-import { fetchCyberConnectPosts } from '../providers/cyberconnect';
-// Adapter-based protocols — now have bridge wrappers
-import { fetchDiasporaPosts } from '../providers/diaspora';
-import { fetchFriendicaPosts } from '../providers/friendica';
-import { fetchPleromaPosts } from '../providers/pleroma';
-import { fetchMisskeyPosts } from '../providers/misskey';
-// New 2026-07-25: Faircamp
-import { fetchFaircampPosts } from '../providers/faircamp';
+import { fetchTablelandPosts } from '../providers/tableland';
+import { fetchTakahePosts } from '../providers/takahe';
+// Bridge providers for telegram, discord, matrix, github
+import { fetchTelegramPosts } from '../providers/telegram';
+import { fetchThreadsPosts } from '../providers/threads';
+import { fetchWriteFreelyPosts } from '../providers/writefreely';
+import { fetchXmtpPosts } from '../providers/xmtp';
+import { fetchZoraPosts } from '../providers/zora';
 import type { UnifiedPost } from './types';
 
 type ProviderFetcher = (limit: number) => Promise<UnifiedPost[]>;
@@ -147,6 +152,12 @@ export const PROVIDERS: Record<string, { name: string; fetch: ProviderFetcher }>
 
   // ─── New Headless Protocol: Faircamp ─────────────────────────────
   faircamp: { name: 'Faircamp (Self-Hosted Music Sites)', fetch: fetchFaircampPosts },
+
+  // ─── Messaging & Social Platforms ──────────────────────────────
+  telegram: { name: 'Telegram (Channels & Groups)', fetch: fetchTelegramPosts },
+  discord: { name: 'Discord (Communities)', fetch: fetchDiscordPosts },
+  matrix: { name: 'Matrix (Decentralized Chat)', fetch: fetchMatrixPosts },
+  github: { name: 'GitHub (Dev Activity)', fetch: fetchGitHubPosts },
 };
 
 /** Build a deduplicated feed from multiple protocols */
@@ -161,8 +172,17 @@ export async function buildFeed(
   const activeProtocols = protocols.filter((p) => p in PROVIDERS);
   if (activeProtocols.length === 0)
     activeProtocols.push(
-      'mastodon', 'reddit', 'rss', 'lemmy', 'bluesky', 'nostr',
-      'farcaster', 'lens', 'pixelfed', 'bookwyrm', 'bonfire',
+      'mastodon',
+      'reddit',
+      'rss',
+      'lemmy',
+      'bluesky',
+      'nostr',
+      'farcaster',
+      'lens',
+      'pixelfed',
+      'bookwyrm',
+      'bonfire',
     );
 
   const perProviderLimit = Math.max(5, Math.ceil((limit * 1.5) / activeProtocols.length));
@@ -204,9 +224,14 @@ export async function buildFeed(
     return {
       posts: [],
       meta: {
-        total: 0, limit, perProtocol,
+        total: 0,
+        limit,
+        perProtocol,
         errors: errors.length > 0 ? errors : undefined,
-        notices, page: 1, fetchedAt: Date.now(), source: 'live',
+        notices,
+        page: 1,
+        fetchedAt: Date.now(),
+        source: 'live',
       },
     };
   }
@@ -227,10 +252,13 @@ export async function buildFeed(
   return {
     posts: deduped,
     meta: {
-      total: deduped.length, limit, perProtocol,
+      total: deduped.length,
+      limit,
+      perProtocol,
       errors: errors.length > 0 ? errors : undefined,
       notices: notices.length > 0 ? notices : undefined,
-      fetchedAt: Date.now(), source: 'live',
+      fetchedAt: Date.now(),
+      source: 'live',
     },
   };
 }
@@ -245,8 +273,16 @@ export const DEFAULT_PREFERENCES = {
   minEngagement: 0,
   maxPerNiche: 5,
   topicWeights: {
-    crypto: 100, defi: 90, nft: 50, ai: 70, solana: 60,
-    ethereum: 80, books: 40, events: 50, music: 40, video: 30,
+    crypto: 100,
+    defi: 90,
+    nft: 50,
+    ai: 70,
+    solana: 60,
+    ethereum: 80,
+    books: 40,
+    events: 50,
+    music: 40,
+    video: 30,
   },
   algorithmTransparent: false,
   freshnessPreference: 50,
@@ -256,28 +292,78 @@ export const DEFAULT_PREFERENCES = {
   feedMixConfig: {
     sources: [
       // ── Tier 1: Core Social ──────────────────────────────
-      'mastodon', 'nostr', 'farcaster', 'lens', 'bluesky',
+      'mastodon',
+      'nostr',
+      'farcaster',
+      'lens',
+      'bluesky',
       // ── Tier 2: Established ──────────────────────────────
-      'reddit', 'rss', 'lemmy', 'peertube', 'pixelfed',
-      'dtube', 'lbry', 'hive', 'mirror', 'funkwhale', 'castopod',
-      'writefreely', 'pleroma', 'misskey', 'subsocial', 'steem',
+      'reddit',
+      'rss',
+      'lemmy',
+      'peertube',
+      'pixelfed',
+      'dtube',
+      'lbry',
+      'hive',
+      'mirror',
+      'funkwhale',
+      'castopod',
+      'writefreely',
+      'pleroma',
+      'misskey',
+      'subsocial',
+      'steem',
       // ── Tier 3: ActivityPub Ecosystem ────────────────────
-      'diaspora', 'friendica', 'mediagoblin',
-      'bookwyrm', 'mobilizon', 'forgejo', 'bonfire', 'mitra', 'takahe',
+      'diaspora',
+      'friendica',
+      'mediagoblin',
+      'bookwyrm',
+      'mobilizon',
+      'forgejo',
+      'bonfire',
+      'mitra',
+      'takahe',
       'owncast',
       // ── Tier 4: Experimental ─────────────────────────────
-      'gab', 'minds', 'aether', 'scuttlebutt', 'deso', 'session',
-      'cyberconnect', 'arena', 'microblog',
-      'faircamp', 'orbis', 'ceramic',
+      'gab',
+      'minds',
+      'aether',
+      'scuttlebutt',
+      'deso',
+      'session',
+      'cyberconnect',
+      'arena',
+      'microblog',
+      'faircamp',
+      'orbis',
+      'ceramic',
+      // ── Messaging & Dev Platforms ─────────────────────────
+      'telegram',
+      'discord',
+      'matrix',
+      'github',
       // ── Tier 5: Infrastructure ───────────────────────────
-      'xmtp', 'push', 'huddle01', 'tableland',
+      'xmtp',
+      'push',
+      'huddle01',
+      'tableland',
       // ── NFT / Music ──────────────────────────────────────
-      'audius', 'rarible',
+      'audius',
+      'rarible',
     ],
     contentTypes: {
-      posts: 100, images: 40, videos: 20, links: 30,
-      threads: 40, books: 25, events: 20, code: 15,
-      notifications: 10, live: 15, data: 10,
+      posts: 100,
+      images: 40,
+      videos: 20,
+      links: 30,
+      threads: 40,
+      books: 25,
+      events: 20,
+      code: 15,
+      notifications: 10,
+      live: 15,
+      data: 10,
     },
     recencyWeight: 1.0,
     engagementWeight: 1.0,
