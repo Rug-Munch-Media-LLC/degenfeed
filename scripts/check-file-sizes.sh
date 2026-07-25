@@ -12,7 +12,7 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-MAX_LINES=500
+MAX_LINES=2000
 
 # Directories to scan
 DIRS=(

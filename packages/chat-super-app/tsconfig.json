@@ -1,0 +1,20 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "composite": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "inlineSources": true
+  },
+  "include": ["src/**/*.ts"],
+  "references": [
+    { "path": "../types" },
+    { "path": "../crypto" },
+    { "path": "../realtime" },
+    { "path": "../nostr-sdk" },
+    { "path": "../web3" }
+  ]
+}
