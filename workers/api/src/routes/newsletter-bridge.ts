@@ -15,6 +15,7 @@
 
 import type { Env } from '../index';
 import { jsonResponse, noCacheJsonResponse } from '../index';
+import { methodNotAllowed } from '../response-helpers';
 
 function safeKey(s: string): string {
   return s.replace(/[^a-zA-Z0-9_@./-]/g, '_').toLowerCase();
@@ -44,7 +45,7 @@ const VALID_TARGETS = new Set([
 // ─── POST /api/newsletter/bridge/connect ───────────────────
 
 export async function handleNewsletterBridgeConnect(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
   const userId = getUserId(request, env);
   if (!userId) return jsonResponse({ error: 'Session required' }, 401);
 
@@ -127,7 +128,7 @@ export async function handleNewsletterBridgeDisconnect(
   request: Request,
   env: Env,
 ): Promise<Response> {
-  if (request.method !== 'DELETE') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'DELETE') return methodNotAllowed(['DELETE']);
   const userId = getUserId(request, env);
   if (!userId) return jsonResponse({ error: 'Session required' }, 401);
 
@@ -166,7 +167,7 @@ export async function handleNewsletterBridgeDisconnect(
 // ─── GET /api/newsletter/bridge/list ───────────────────────
 
 export async function handleNewsletterBridgeList(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
   const userId = getUserId(request, env);
   if (!userId) return jsonResponse({ error: 'Session required' }, 401);
 
@@ -191,7 +192,7 @@ export async function handleNewsletterBridgeList(request: Request, env: Env): Pr
 // ─── POST /api/newsletter/bridge/poll ──────────────────────
 
 export async function handleNewsletterBridgePoll(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
   const userId = getUserId(request, env);
   if (!userId) return jsonResponse({ error: 'Session required' }, 401);
 
@@ -282,7 +283,7 @@ export async function handleNewsletterBridgeAutoPoll(
   request: Request,
   env: Env,
 ): Promise<Response> {
-  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   // API key auth only (for cron)
   const auth = request.headers.get('authorization') ?? '';
@@ -333,7 +334,7 @@ export async function handleNewsletterBridgeAutoPoll(
 // ─── GET /api/newsletter/bridge/stats ──────────────────────
 
 export async function handleNewsletterBridgeStats(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
 
   const globalKey = 'newsletter:bridge:all';
   try {

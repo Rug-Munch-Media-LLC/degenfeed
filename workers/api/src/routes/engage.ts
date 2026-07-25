@@ -10,6 +10,7 @@ import { GtSClient } from '@degenfeed/mastodon-sdk';
 import type { EngagementAction, Protocol } from '@degenfeed/types';
 import { BSKY_SOCIAL, type Env, FARCASTER_HUBS, jsonResponse, LENS_APIS } from '../index';
 import { hasSuspiciousPayload, isAllowedProtocol, sanitizeString } from '../sanitize';
+import { methodNotAllowed } from '../response-helpers';
 
 const ALLOWED_ACTIONS = new Set<EngagementAction>([
   'like',
@@ -115,9 +116,7 @@ async function trackBehavior(
 // ─── Main handler ──────────────────────────────────────────────────
 
 export async function handleEngage(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   try {
     const body: EngageRequest = (await request.json()) as EngageRequest;

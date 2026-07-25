@@ -80,28 +80,37 @@ import { fetchXmtpPosts } from '../providers/xmtp';
 import { fetchYggdrasilPosts } from '../providers/yggdrasil';
 import { fetchZoraPosts } from '../providers/zora';
 import type { UnifiedPost } from './types';
+import { checkRateLimit } from '../rate-limiter';
+import type { RateLimitConfig } from '../rate-limiter';
+
+interface ProviderEntry {
+  name: string;
+  fetch: ProviderFetcher;
+  rateLimit?: RateLimitConfig;
+}
 
 type ProviderFetcher = (limit: number) => Promise<UnifiedPost[]>;
 
-export const PROVIDERS: Record<string, { name: string; fetch: ProviderFetcher }> = {
+export const PROVIDERS: Record<string, ProviderEntry> = {
   // ─── Original Providers ─────────────────────────────────────────
-  mastodon: { name: 'Mastodon/GTS', fetch: fetchMastodonPosts },
-  reddit: { name: 'Reddit/Redlib', fetch: fetchRedditPosts },
-  rss: { name: 'RSS+Newsletter (100+ sources)', fetch: fetchRssPosts },
+  mastodon: { name: 'Mastodon/GTS', fetch: fetchMastodonPosts, rateLimit: { maxRequests: 300, windowMs: 300_000 } },
+  reddit: { name: 'Reddit/Redlib', fetch: fetchRedditPosts, rateLimit: { maxRequests: 600, windowMs: 600_000 } },
+  rss: { name: 'RSS+Newsletter (100+ sources)', fetch: fetchRssPosts, rateLimit: { maxRequests: 60, windowMs: 60_000 } },
   newsletter: {
     name: 'Newsletters (Substack/Medium/Mirror/Paragraph/Ghost/Beehiiv)',
+    rateLimit: { maxRequests: 60, windowMs: 60_000 },
     fetch: async (limit) => {
       const { fetchNewsletterPosts } = await import('../providers/rss');
       return fetchNewsletterPosts(limit);
     },
   },
-  rssbridge: { name: 'RSS-Bridge (legacy)', fetch: fetchRssBridgePosts },
-  lemmy: { name: 'Lemmy', fetch: fetchLemmyPosts },
-  peertube: { name: 'PeerTube', fetch: fetchPeerTubePosts },
-  bluesky: { name: 'Bluesky/PDS', fetch: fetchBlueskyPosts },
-  nostr: { name: 'Nostr', fetch: fetchNostrPosts },
-  farcaster: { name: 'Farcaster', fetch: fetchFarcasterPosts },
-  lens: { name: 'Lens', fetch: fetchLensPosts },
+  rssbridge: { name: 'RSS-Bridge (legacy)', fetch: fetchRssBridgePosts, rateLimit: { maxRequests: 60, windowMs: 60_000 } },
+  lemmy: { name: 'Lemmy', fetch: fetchLemmyPosts, rateLimit: { maxRequests: 60, windowMs: 60_000 } },
+  peertube: { name: 'PeerTube', fetch: fetchPeerTubePosts, rateLimit: { maxRequests: 50, windowMs: 60_000 } },
+  bluesky: { name: 'Bluesky/PDS', fetch: fetchBlueskyPosts, rateLimit: { maxRequests: 3000, windowMs: 300_000 } },
+  nostr: { name: 'Nostr', fetch: fetchNostrPosts, rateLimit: { maxRequests: 30, windowMs: 60_000 } },
+  farcaster: { name: 'Farcaster', fetch: fetchFarcasterPosts, rateLimit: { maxRequests: 60, windowMs: 60_000 } },
+  lens: { name: 'Lens', fetch: fetchLensPosts, rateLimit: { maxRequests: 50, windowMs: 60_000 } },
   pixelfed: { name: 'Pixelfed', fetch: fetchPixelfedPosts },
   threads: { name: 'Threads (Meta)', fetch: fetchThreadsPosts },
   zora: { name: 'Zora (NFT)', fetch: fetchZoraPosts },
@@ -179,7 +188,7 @@ export const PROVIDERS: Record<string, { name: string; fetch: ProviderFetcher }>
   telegram: { name: 'Telegram (Channels & Groups)', fetch: fetchTelegramPosts },
   discord: { name: 'Discord (Communities)', fetch: fetchDiscordPosts },
   matrix: { name: 'Matrix (Decentralized Chat)', fetch: fetchMatrixPosts },
-  github: { name: 'GitHub (Dev Activity)', fetch: fetchGitHubPosts },
+  github: { name: 'GitHub (Dev Activity)', fetch: fetchGitHubPosts, rateLimit: { maxRequests: 60, windowMs: 3_600_000 } },
 
   // ─── ActivityPub Extras (moved from DEFAULT_PREFERENCES) ──────────
   kbin: { name: 'Kbin / Mbin (Federated Hybrid)', fetch: fetchKbinPosts },
@@ -249,6 +258,16 @@ export async function buildFeed(
     activeProtocols.map(async (protocol) => {
       const provider = PROVIDERS[protocol];
       if (!provider) return { protocol, posts: [] as UnifiedPost[] };
+
+      // Check rate limit before fetching
+      if (provider.rateLimit) {
+        const key = `provider:${protocol}`;
+        if (!checkRateLimit(key, provider.rateLimit)) {
+          console.log(`[bridge] Rate limit hit for ${protocol}, skipping`);
+          return { protocol, posts: [] as UnifiedPost[], notice: 'rate-limited' };
+        }
+      }
+
       try {
         const posts = await withTimeout(
           provider.fetch(perProviderLimit),
@@ -269,10 +288,16 @@ export async function buildFeed(
   const allPosts: UnifiedPost[] = [];
   for (const result of results) {
     if (result.status === 'fulfilled') {
-      const { protocol, posts, error } = result.value;
+      const { protocol, posts, error, notice } = result.value as {
+        protocol: string;
+        posts: UnifiedPost[];
+        error?: string;
+        notice?: string;
+      };
       perProtocol[protocol] = posts.length;
       allPosts.push(...posts);
       if (error) errors.push(`${protocol}: ${error}`);
+      if (notice) notices.push(`${protocol}: ${notice}`);
     } else
       errors.push(
         `provider: ${result.reason instanceof Error ? result.reason.message : 'unknown'}`,

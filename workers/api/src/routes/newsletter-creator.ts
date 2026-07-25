@@ -18,6 +18,7 @@
 import type { Env } from '../index';
 import { jsonResponse, noCacheJsonResponse } from '../index';
 import { EmailEngine, type EmailEngineConfig } from '../lib/email-engine';
+import { methodNotAllowed } from '../response-helpers';
 
 // ─── Helpers ─────────────────────────────────────────────────
 
@@ -94,9 +95,7 @@ function createEngine(env: Env): EmailEngine | null {
 // ─── POST /api/newsletter/creator/send ──────────────────────
 
 export async function handleCreatorNewsletterSend(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   const creatorId = getCreatorId(request, env);
   if (!creatorId && !isAdmin(request, env)) {
@@ -172,9 +171,7 @@ export async function handleCreatorNewsletterSubscribers(
   request: Request,
   env: Env,
 ): Promise<Response> {
-  if (request.method !== 'GET') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
 
   const creatorId = getCreatorId(request, env);
   if (!creatorId) {
@@ -221,9 +218,7 @@ export async function handleCreatorNewsletterSubscribe(
   request: Request,
   env: Env,
 ): Promise<Response> {
-  if (request.method !== 'POST') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   let body: { email: string; creatorId?: string; tier?: string };
   try {
@@ -292,9 +287,7 @@ export async function handleCreatorNewsletterUnsubscribe(
   request: Request,
   env: Env,
 ): Promise<Response> {
-  if (request.method !== 'DELETE') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'DELETE') return methodNotAllowed(['DELETE']);
 
   let body: { email: string; creatorId?: string };
   try {
@@ -332,9 +325,7 @@ export async function handleCreatorNewsletterUnsubscribe(
 // ─── GET /api/newsletter/creator/count ──────────────────────
 
 export async function handleCreatorNewsletterCount(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'GET') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
 
   const creatorId = getCreatorId(request, env);
   if (!creatorId) {
@@ -361,9 +352,7 @@ export async function handleCreatorNewsletterCount(request: Request, env: Env): 
 // ─── GET /api/newsletter/creator/stats/:postId ──────────────
 
 export async function handleCreatorNewsletterStats(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'GET') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
 
   const url = new URL(request.url);
   const postId = url.pathname.split('/').pop();
@@ -388,9 +377,7 @@ export async function handleCreatorNewsletterStats(request: Request, env: Env): 
 // ─── POST /api/newsletter/creator/webhook/mailgun ──────────
 
 export async function handleMailgunWebhook(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   const engine = createEngine(env);
   if (!engine) {
@@ -447,9 +434,7 @@ export async function handleMailgunWebhook(request: Request, env: Env): Promise<
 // ─── GET /api/newsletter/creator/health ─────────────────────
 
 export async function handleCreatorNewsletterHealth(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'GET') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
 
   const engine = createEngine(env);
   const status = engine

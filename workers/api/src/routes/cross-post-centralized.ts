@@ -16,6 +16,7 @@
 import { type Env, jsonResponse } from '../index';
 import { requireSession } from '../session';
 import { getConnectedAccount } from './connected-accounts';
+import { methodNotAllowed } from '../response-helpers';
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
@@ -55,9 +56,7 @@ export async function handleCrossPostCentralized(
   env: Env,
   platform: string,
 ): Promise<Response> {
-  if (request.method !== 'POST') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;

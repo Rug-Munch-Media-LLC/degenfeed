@@ -7,6 +7,7 @@
 
 import { type Env, jsonResponse, noCacheJsonResponse } from '../index';
 import { requireSession } from '../session';
+import { methodNotAllowed } from '../response-helpers';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -167,9 +168,7 @@ function generateComposeUrl(id: string): string {
 // ── Handlers ───────────────────────────────────────────────────────────────
 
 export async function handleDeployRequest(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
@@ -228,9 +227,7 @@ export async function handleDeployRequest(request: Request, env: Env): Promise<R
 }
 
 export async function handleDeployStatus(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'GET') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
 
   const url = new URL(request.url);
   const id = url.searchParams.get('id');

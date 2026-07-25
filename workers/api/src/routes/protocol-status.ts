@@ -25,6 +25,7 @@
 
 import type { Env } from '../index';
 import { jsonResponse, noCacheJsonResponse } from '../index';
+import { methodNotAllowed } from '../response-helpers';
 
 // ─── Types ─────────────────────────────────────────────────────────────
 
@@ -355,7 +356,7 @@ async function setCached(env: Env, data: ProtocolStatusResponse): Promise<void> 
  */
 export async function handleProtocolsStatus(request: Request, env: Env): Promise<Response> {
   if (request.method !== 'GET') {
-    return jsonResponse({ error: 'Method not allowed — use GET' }, 405);
+    return methodNotAllowed(['GET']);
   }
 
   // Check KV cache
@@ -417,7 +418,7 @@ export async function handleProtocolsStatus(request: Request, env: Env): Promise
  */
 export async function handleProtocolStatus(request: Request, env: Env): Promise<Response> {
   if (request.method !== 'GET') {
-    return jsonResponse({ error: 'Method not allowed — use GET' }, 405);
+    return methodNotAllowed(['GET']);
   }
 
   const url = new URL(request.url);

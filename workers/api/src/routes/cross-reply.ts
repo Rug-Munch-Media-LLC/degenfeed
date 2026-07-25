@@ -27,6 +27,7 @@
 
 import { type Env, jsonResponse, noCacheJsonResponse } from '../index';
 import { ALLOWED_PROTOCOLS, hasSuspiciousPayload, sanitizeString } from '../sanitize';
+import { methodNotAllowed } from '../response-helpers';
 
 interface CrossReplyRequest {
   parentPostUri: string;
@@ -106,7 +107,7 @@ function formatProtocolLabel(p: string): string {
  */
 export async function handleCrossReplyStatus(request: Request, env: Env): Promise<Response> {
   if (request.method !== 'GET') {
-    return jsonResponse({ error: 'Method not allowed — use GET' }, 405);
+    return methodNotAllowed(['GET']);
   }
   const url = new URL(request.url);
   const parentPostUri = sanitizeString(url.searchParams.get('parentPostUri'), 1024);
@@ -150,7 +151,7 @@ export async function handleCrossReplyStatus(request: Request, env: Env): Promis
 
 export async function handleCrossReply(request: Request, env: Env): Promise<Response> {
   if (request.method !== 'POST') {
-    return jsonResponse({ error: 'Method not allowed — use POST' }, 405);
+    return methodNotAllowed(['POST']);
   }
 
   let body: CrossReplyRequest;

@@ -18,6 +18,7 @@ import {
 } from '../feed/shorts-aggregator-v2';
 import type { Env } from '../index';
 import { jsonResponse, noCacheJsonResponse } from '../index';
+import { methodNotAllowed } from '../response-helpers';
 
 // ─── Types ───────────────────────────────────────────────────────────────
 
@@ -109,9 +110,7 @@ export async function handleListSources(_request: Request, env: Env): Promise<Re
 // ─── Handler: Add a new source ─────────────────────────────────────────
 
 export async function handleAddSource(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   try {
     const body = (await request.json()) as {
@@ -159,9 +158,7 @@ export async function handleAddSource(request: Request, env: Env): Promise<Respo
 // ─── Handler: Remove a source ──────────────────────────────────────────
 
 export async function handleRemoveSource(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'DELETE') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'DELETE') return methodNotAllowed(['DELETE']);
 
   try {
     const url = new URL(request.url);
@@ -191,9 +188,7 @@ export async function handleRemoveSource(request: Request, env: Env): Promise<Re
 // ─── Handler: Force refresh source ─────────────────────────────────────
 
 export async function handleRefreshSource(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   try {
     const url = new URL(request.url);

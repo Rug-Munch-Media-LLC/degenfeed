@@ -7,9 +7,10 @@ import { jsonResponse, noCacheJsonResponse } from '../index';
 import { broadcastToAll } from '../ws-broadcast';
 import type { SpaceRecord } from './types';
 import { getSpace, saveSpace, generateId, requireSessionAddr, getLiveIds, setLiveIds, getUpcomingIds, setUpcomingIds, getPastIds, setPastIds } from './utils';
+import { methodNotAllowed } from '../response-helpers';
 
 export async function handleSpaceCreate(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
   const sessionAddr = await requireSessionAddr(request, env);
   if (sessionAddr instanceof Response) return sessionAddr;
   try {
@@ -43,7 +44,7 @@ export async function handleSpaceCreate(request: Request, env: Env): Promise<Res
 }
 
 export async function handleSpaceStart(request: Request, env: Env, spaceId: string): Promise<Response> {
-  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
   const sessionAddr = await requireSessionAddr(request, env);
   if (sessionAddr instanceof Response) return sessionAddr;
   try {
@@ -63,7 +64,7 @@ export async function handleSpaceStart(request: Request, env: Env, spaceId: stri
 }
 
 export async function handleSpaceEnd(request: Request, env: Env, spaceId: string): Promise<Response> {
-  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
   const sessionAddr = await requireSessionAddr(request, env);
   if (sessionAddr instanceof Response) return sessionAddr;
   try {
@@ -82,13 +83,13 @@ export async function handleSpaceEnd(request: Request, env: Env, spaceId: string
 }
 
 export async function handleSpaceDetails(request: Request, env: Env, spaceId: string): Promise<Response> {
-  if (request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
   try { const space = await getSpace(env, spaceId); if (!space) return jsonResponse({ error: 'Space not found' }, 404); return noCacheJsonResponse({ space }); }
   catch (e) { return jsonResponse({ error: String(e) }, 500); }
 }
 
 export async function handleSpacesLive(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
   try {
     const liveIds = await getLiveIds(env);
     if (liveIds.length === 0) return noCacheJsonResponse({ spaces: [] });
@@ -100,7 +101,7 @@ export async function handleSpacesLive(request: Request, env: Env): Promise<Resp
 }
 
 export async function handleSpacesUpcoming(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
   try {
     const upcomingIds = await getUpcomingIds(env);
     if (upcomingIds.length === 0) return noCacheJsonResponse({ spaces: [] });
@@ -113,7 +114,7 @@ export async function handleSpacesUpcoming(request: Request, env: Env): Promise<
 }
 
 export async function handleSpacesPast(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
   try {
     const pastIds = await getPastIds(env);
     if (pastIds.length === 0) return noCacheJsonResponse({ spaces: [] });
@@ -126,7 +127,7 @@ export async function handleSpacesPast(request: Request, env: Env): Promise<Resp
 }
 
 export async function handleSpacesTrending(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
   try {
     const liveIds = await getLiveIds(env);
     if (liveIds.length === 0) return noCacheJsonResponse({ spaces: [] });

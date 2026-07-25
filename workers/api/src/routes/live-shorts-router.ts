@@ -8,6 +8,7 @@ import { Hono } from 'hono';
 import type { Env } from '../index';
 import { jsonResponse, noCacheJsonResponse } from '../index';
 import { requireSession } from '../session';
+import { DEFAULT_PROTOCOLS } from './feed';
 import {
   activeIndexKey,
   broadcastTipToStream,
@@ -20,7 +21,8 @@ import {
   readStringArray,
   startLiveShort,
 } from './live-shorts-engine';
-import type { LiveShortRecord, Protocol } from './live-shorts-types';
+import type { LiveShortRecord, Protocol, ActiveLiveShortResponse } from './live-shorts-types';
+import { MAX_LIVE_SHORT_DURATION_SECONDS } from './live-shorts-types';
 
 const liveShorts = new Hono<{ Bindings: Env }>();
 // ═════════════════════════════════════════════════════════════════════════

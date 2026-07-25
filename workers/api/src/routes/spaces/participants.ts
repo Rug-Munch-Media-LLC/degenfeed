@@ -8,9 +8,10 @@ import type { Env } from '../index';
 import { jsonResponse } from '../index';
 import { broadcastToAll } from '../ws-broadcast';
 import { getSpace, saveSpace, requireSessionAddr, isHostOrCoHost } from './utils';
+import { methodNotAllowed } from '../response-helpers';
 
 export async function handleSpaceJoin(request: Request, env: Env, spaceId: string): Promise<Response> {
-  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
   const sessionAddr = await requireSessionAddr(request, env);
   if (sessionAddr instanceof Response) return sessionAddr;
   try {
@@ -26,7 +27,7 @@ export async function handleSpaceJoin(request: Request, env: Env, spaceId: strin
 }
 
 export async function handleSpaceLeave(request: Request, env: Env, spaceId: string): Promise<Response> {
-  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
   const sessionAddr = await requireSessionAddr(request, env);
   if (sessionAddr instanceof Response) return sessionAddr;
   try {
@@ -44,7 +45,7 @@ export async function handleSpaceLeave(request: Request, env: Env, spaceId: stri
 }
 
 export async function handleSpaceRaiseHand(request: Request, env: Env, spaceId: string): Promise<Response> {
-  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
   const sessionAddr = await requireSessionAddr(request, env);
   if (sessionAddr instanceof Response) return sessionAddr;
   try {
@@ -63,7 +64,7 @@ export async function handleSpaceRaiseHand(request: Request, env: Env, spaceId: 
 }
 
 export async function handleSpaceRequestSpeak(request: Request, env: Env, spaceId: string): Promise<Response> {
-  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
   const sessionAddr = await requireSessionAddr(request, env);
   if (sessionAddr instanceof Response) return sessionAddr;
   try {
@@ -83,7 +84,7 @@ export async function handleSpaceRequestSpeak(request: Request, env: Env, spaceI
 }
 
 export async function handleSpaceInviteSpeaker(request: Request, env: Env, spaceId: string): Promise<Response> {
-  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
   const sessionAddr = await requireSessionAddr(request, env);
   if (sessionAddr instanceof Response) return sessionAddr;
   try {
@@ -105,7 +106,7 @@ export async function handleSpaceInviteSpeaker(request: Request, env: Env, space
 }
 
 export async function handleSpaceAcceptSpeaker(request: Request, env: Env, spaceId: string): Promise<Response> {
-  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
   const sessionAddr = await requireSessionAddr(request, env);
   if (sessionAddr instanceof Response) return sessionAddr;
   try {
@@ -131,7 +132,7 @@ export async function handleSpaceAcceptSpeaker(request: Request, env: Env, space
 }
 
 export async function handleSpaceRemoveSpeaker(request: Request, env: Env, spaceId: string): Promise<Response> {
-  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
   const sessionAddr = await requireSessionAddr(request, env);
   if (sessionAddr instanceof Response) return sessionAddr;
   try {
@@ -152,7 +153,7 @@ export async function handleSpaceRemoveSpeaker(request: Request, env: Env, space
 }
 
 export async function handleSpaceMuteSpeaker(request: Request, env: Env, spaceId: string): Promise<Response> {
-  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
   const sessionAddr = await requireSessionAddr(request, env);
   if (sessionAddr instanceof Response) return sessionAddr;
   try {

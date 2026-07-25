@@ -8,9 +8,10 @@ import type { Env } from '../index';
 import { jsonResponse, noCacheJsonResponse } from '../index';
 import { broadcastToAll } from '../ws-broadcast';
 import { getSpace, saveSpace, requireSessionAddr, isHostOrCoHost } from './utils';
+import { methodNotAllowed } from '../response-helpers';
 
 export async function handleSpaceReact(request: Request, env: Env, spaceId: string): Promise<Response> {
-  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
   const sessionAddr = await requireSessionAddr(request, env);
   if (sessionAddr instanceof Response) return sessionAddr;
   try {
@@ -28,7 +29,7 @@ export async function handleSpaceReact(request: Request, env: Env, spaceId: stri
 }
 
 export async function handleSpaceRecording(request: Request, env: Env, spaceId: string): Promise<Response> {
-  if (request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
   try {
     const space = await getSpace(env, spaceId);
     if (!space) return jsonResponse({ error: 'Space not found' }, 404);
@@ -41,7 +42,7 @@ export async function handleSpaceRecording(request: Request, env: Env, spaceId: 
 }
 
 export async function handleSpaceTranscript(request: Request, env: Env, spaceId: string): Promise<Response> {
-  if (request.method !== 'POST' && request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'POST' && request.method !== 'GET') return methodNotAllowed(['GET', 'POST']);
   try {
     const space = await getSpace(env, spaceId);
     if (!space) return jsonResponse({ error: 'Space not found' }, 404);

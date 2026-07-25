@@ -1,6 +1,8 @@
 /**
  * PeerTube Provider
  *
+ * Rate Limit: 50 requests/minute
+ *
  * Fetches videos from the self-hosted PeerTube instance (port 9011).
  * PeerTube is a federated video platform (ActivityPub). The local instance
  * has crypto security, tech explainer, and tutorial videos.
@@ -8,6 +10,7 @@
  * API: GET /api/v1/videos?count=N&sort=-publishedAt
  */
 
+import { checkRateLimit } from '../rate-limiter';
 import type { SchemaGuard, UnifiedPost } from '../server/types';
 
 const $fetch = globalThis.fetch;
@@ -142,6 +145,11 @@ export const schema: SchemaGuard = {
 };
 
 export async function fetchPeerTubePosts(limit = 20): Promise<UnifiedPost[]> {
+  // Rate limit: 50 requests/minute
+  if (!checkRateLimit('peertube', { maxRequests: 50, windowMs: 60_000 })) {
+    console.log('[peertube] Rate limited, skipping fetch');
+    return [];
+  }
   try {
     const url = `${PEERTUBE_BASE}/api/v1/videos?count=${Math.min(limit, 50)}&sort=-publishedAt`;
     const res = await $fetch(url, {

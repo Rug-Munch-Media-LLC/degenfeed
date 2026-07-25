@@ -38,12 +38,13 @@ import {
   setMonetization,
 } from '../lib/rights-manager';
 import { requireSession } from '../session';
+import { methodNotAllowed } from '../response-helpers';
 /**
  * GET /api/content/library
  * List all content for the authenticated user.
  */
 export async function handleListContentLibrary(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
 
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
@@ -81,7 +82,7 @@ export async function handleListContentLibrary(request: Request, env: Env): Prom
  * Get a single content record with full detail.
  */
 export async function handleGetContentLibraryItem(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
 
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
@@ -111,7 +112,7 @@ export async function handleUpdateContentLibraryItem(
   request: Request,
   env: Env,
 ): Promise<Response> {
-  if (request.method !== 'PUT') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'PUT') return methodNotAllowed(['PUT']);
 
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
@@ -145,7 +146,7 @@ export async function handleDeleteContentLibraryItem(
   request: Request,
   env: Env,
 ): Promise<Response> {
-  if (request.method !== 'DELETE') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'DELETE') return methodNotAllowed(['DELETE']);
 
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
@@ -171,7 +172,7 @@ export async function handleDeleteContentLibraryItem(
  * Sync engagement metrics from all protocols.
  */
 export async function handleSyncContentEngagement(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
@@ -194,7 +195,7 @@ export async function handleSyncContentEngagement(request: Request, env: Env): P
  * Set license for content.
  */
 export async function handleSetContentLicense(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
@@ -232,7 +233,7 @@ export async function handleSetContentLicense(request: Request, env: Env): Promi
  * Get license for content.
  */
 export async function handleGetContentLicense(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
 
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
@@ -255,7 +256,7 @@ export async function handleGetContentLicense(request: Request, env: Env): Promi
  * Set monetization configuration.
  */
 export async function handleSetContentMonetization(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
@@ -304,7 +305,7 @@ export async function handleSetContentMonetization(request: Request, env: Env): 
  * Get monetization configuration.
  */
 export async function handleGetContentMonetization(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
 
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
@@ -328,7 +329,7 @@ export async function handleGetContentMonetization(request: Request, env: Env): 
  * Get usage/repost history for content.
  */
 export async function handleGetContentUsage(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
 
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
@@ -352,7 +353,7 @@ export async function handleSyncAllContentEngagement(
   request: Request,
   env: Env,
 ): Promise<Response> {
-  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;

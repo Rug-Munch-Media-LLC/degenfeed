@@ -1,3 +1,4 @@
+import { methodNotAllowed } from '../response-helpers';
 import {
   Connection,
   LAMPORTS_PER_SOL,
@@ -34,7 +35,7 @@ export async function handleBlinkTip(request: Request, env: Env): Promise<Respon
   if (request.method === 'POST') {
     return handleBlinkTipPost(request, env, url);
   }
-  return jsonResponse({ error: 'Method not allowed' }, 405);
+  return methodNotAllowed(['POST']);
 }
 
 function buildBlinkAction(url: URL): BlinkAction {

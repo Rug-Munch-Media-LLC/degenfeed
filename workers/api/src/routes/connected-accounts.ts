@@ -15,6 +15,7 @@
  * User index: connected:user:{wallet} → platform[]
  */
 
+import { methodNotAllowed } from '../response-helpers';
 import { type Env, jsonResponse } from '../index';
 import { requireSession } from '../session';
 import {
@@ -176,9 +177,7 @@ export async function handleConnectPlatform(
   env: Env,
   platform: string,
 ): Promise<Response> {
-  if (request.method !== 'POST') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
@@ -896,9 +895,7 @@ export async function handleDisconnectPlatform(
   env: Env,
   platform: string,
 ): Promise<Response> {
-  if (request.method !== 'DELETE') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'DELETE') return methodNotAllowed(['DELETE']);
 
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;

@@ -18,6 +18,7 @@ import { getCreatorImageStats } from '../lib/image-storage';
 import type { CreatorStorageUsage } from '../lib/video-storage-router';
 import { getCreatorStorageUsage } from '../lib/video-storage-router';
 import { requireSession } from '../session';
+import { methodNotAllowed } from '../response-helpers';
 
 const CF_IPFS_GATEWAY = 'https://cloudflare-ipfs.com/ipfs';
 
@@ -30,7 +31,7 @@ const CF_IPFS_GATEWAY = 'https://cloudflare-ipfs.com/ipfs';
  */
 export async function handleCreatorStorage(request: Request, env: Env): Promise<Response> {
   if (request.method !== 'GET') {
-    return jsonResponse({ error: 'Method not allowed — use GET' }, 405);
+    return methodNotAllowed(['GET']);
   }
 
   const session = await requireSession(request, env);

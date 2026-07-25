@@ -17,6 +17,7 @@ import { broadcastToAll } from '../ws-broadcast';
 import { CHANNELS } from '../ws-channels';
 import { recordBridgeOperation } from './bridge-reliability';
 import { NostrLiveBridge } from './nostr-live-bridge';
+import { methodNotAllowed } from '../response-helpers';
 
 // ─── Types ──────────────────────────────────────────────────────────────
 
@@ -525,7 +526,7 @@ export class LiveBridge {
  * Body: AnnounceRequest
  */
 export async function handleBridgeAnnounce(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   try {
     const body = (await request.json()) as AnnounceRequest;
@@ -550,7 +551,7 @@ export async function handleBridgeAnnounce(request: Request, env: Env): Promise<
  * Body: BridgeEnableRequest
  */
 export async function handleBridgeEnable(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   try {
     const body = (await request.json()) as BridgeEnableRequest;
@@ -574,7 +575,7 @@ export async function handleBridgeEnable(request: Request, env: Env): Promise<Re
  * Disable cross-protocol live bridging for a stream.
  */
 export async function handleBridgeDisable(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   try {
     const body = (await request.json()) as { streamId?: string };
@@ -598,7 +599,7 @@ export async function handleBridgeDisable(request: Request, env: Env): Promise<R
  * Query params: streamId (required)
  */
 export async function handleBridgeStatus(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
 
   try {
     const url = new URL(request.url);
@@ -627,7 +628,7 @@ export async function handleBridgeStatus(request: Request, env: Env): Promise<Re
  * List all active bridge streams.
  */
 export async function handleBridgeList(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
 
   try {
     const bridge = new LiveBridge(env);

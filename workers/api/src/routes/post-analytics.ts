@@ -18,6 +18,7 @@ import type { Env } from '../index';
 import { jsonResponse } from '../index';
 import { requirePremiumTier } from '../premium';
 import { requireSession } from '../session';
+import { methodNotAllowed } from '../response-helpers';
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
@@ -106,7 +107,7 @@ const PREFIX_FOLLOWERS = 'premium:analytics:followers:';
  * Query: ?range=7d|30d|90d|all
  */
 export async function handleAnalyticsSummary(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
 
   try {
     const session = await requireSession(request, env);
@@ -146,7 +147,7 @@ export async function handleAnalyticsSummary(request: Request, env: Env): Promis
  * Query: ?limit=20&cursor=abc&sort=engagement|date&order=desc
  */
 export async function handlePostAnalyticsList(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
 
   try {
     const session = await requireSession(request, env);
@@ -177,7 +178,7 @@ export async function handlePostAnalyticsList(request: Request, env: Env): Promi
  * Get detailed analytics for a single post.
  */
 export async function handlePostAnalyticsDetail(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
 
   try {
     const session = await requireSession(request, env);
@@ -207,7 +208,7 @@ export async function handlePostAnalyticsDetail(request: Request, env: Env): Pro
  * Query: ?limit=10&range=30d
  */
 export async function handleTopPosts(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
 
   try {
     const session = await requireSession(request, env);
@@ -247,7 +248,7 @@ export async function handleTopPosts(request: Request, env: Env): Promise<Respon
  * Get best posting times based on historical engagement data.
  */
 export async function handleBestTimesAnalytics(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
 
   try {
     const session = await requireSession(request, env);
@@ -274,7 +275,7 @@ export async function handleBestTimesAnalytics(request: Request, env: Env): Prom
  * Get top performing hashtags with engagement metrics.
  */
 export async function handleHashtagAnalytics(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
 
   try {
     const session = await requireSession(request, env);
@@ -302,7 +303,7 @@ export async function handleHashtagAnalytics(request: Request, env: Env): Promis
  * Get content type performance breakdown.
  */
 export async function handleContentTypeAnalytics(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
 
   try {
     const session = await requireSession(request, env);
@@ -329,7 +330,7 @@ export async function handleContentTypeAnalytics(request: Request, env: Env): Pr
  * Get follower growth data.
  */
 export async function handleFollowerAnalytics(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
 
   try {
     const session = await requireSession(request, env);

@@ -788,9 +788,7 @@ export function parseEmotes(message: string): string {
  * Query: streamIds=id1,id2,id3&limit=50
  */
 export async function handleUnifiedChatMessages(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'GET') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405 });
-  }
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
 
   try {
     const url = new URL(request.url);

@@ -1,6 +1,8 @@
 /**
  * RSS & Newsletter Aggregation Provider
  *
+ * Rate Limit: 60 requests/minute (RSS feeds + newsletter APIs)
+ *
  * Fetches content from 100+ RSS feeds and newsletter platforms:
  * - Direct RSS/Atom feeds (crypto news, research, dev, security, academic, tech)
  * - Newsletter platforms: Substack, Medium, Mirror.xyz, Paragraph.xyz, Ghost blogs, Beehiiv
@@ -13,6 +15,7 @@
  * - Respects TTL/update frequency hints from feeds
  */
 
+import { checkRateLimit } from '../rate-limiter';
 import type { SchemaGuard, UnifiedPost } from '../server/types';
 
 const USER_AGENT = 'DegenFeed-Bridge/0.2 (RSS Aggregator)';
@@ -1695,6 +1698,11 @@ export function deduplicatePosts(posts: UnifiedPost[], limit: number): UnifiedPo
  * Respects per-source limits to ensure diversity.
  */
 export async function fetchRssPosts(limit = 50): Promise<UnifiedPost[]> {
+  // Rate limit: 60 requests/minute
+  if (!checkRateLimit('rss', { maxRequests: 60, windowMs: 60_000 })) {
+    console.log('[rss] Rate limited, skipping fetch');
+    return [];
+  }
   const all: UnifiedPost[] = [];
 
   // Determine how many items to fetch per feed based on total feeds and desired limit

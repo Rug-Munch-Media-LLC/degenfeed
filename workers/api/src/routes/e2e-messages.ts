@@ -13,6 +13,7 @@
 
 import { type Env, jsonResponse, noCacheJsonResponse } from '../index';
 import { requireSession } from '../session';
+import { methodNotAllowed } from '../response-helpers';
 
 // ─── POST /api/messages/keys/exchange — X3DH Key Exchange ───────────────
 
@@ -582,7 +583,7 @@ export async function handleTransportPrefs(request: Request, env: Env): Promise<
     return noCacheJsonResponse({ ok: true, preferences: merged });
   }
 
-  return jsonResponse({ error: 'Method not allowed' }, 405);
+  return methodNotAllowed(['GET', 'POST']);
 }
 
 export async function handleGetOfflineMessages(request: Request, env: Env): Promise<Response> {

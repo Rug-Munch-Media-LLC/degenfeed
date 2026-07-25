@@ -13,6 +13,7 @@
 
 import { type Env, jsonResponse, noCacheJsonResponse } from '../index';
 import { requireSession } from '../session';
+import { methodNotAllowed } from '../response-helpers';
 
 // ─── KV key helpers ───────────────────────────────────────────────────
 
@@ -207,9 +208,7 @@ export async function handleListReports(request: Request, env: Env): Promise<Res
 // ─── POST /api/moderation/report — Submit a report ───────────────────
 
 export async function handleSubmitReport(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
@@ -266,9 +265,7 @@ export async function handleSubmitReport(request: Request, env: Env): Promise<Re
 export async function handleResolveReport(request: Request, env: Env): Promise<Response> {
   const admin = await requireAdmin(request, env);
   if (admin instanceof Response) return admin;
-  if (request.method !== 'POST') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   const url = new URL(request.url);
   const pathParts = url.pathname.split('/');
@@ -300,9 +297,7 @@ export async function handleResolveReport(request: Request, env: Env): Promise<R
 export async function handleRemovePost(request: Request, env: Env): Promise<Response> {
   const admin = await requireAdmin(request, env);
   if (admin instanceof Response) return admin;
-  if (request.method !== 'POST') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   const url = new URL(request.url);
   const pathParts = url.pathname.split('/');
@@ -352,9 +347,7 @@ export async function handleRemovePost(request: Request, env: Env): Promise<Resp
 export async function handleBanUser(request: Request, env: Env): Promise<Response> {
   const admin = await requireAdmin(request, env);
   if (admin instanceof Response) return admin;
-  if (request.method !== 'POST') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   let body: {
     userId?: string;
@@ -606,9 +599,7 @@ export async function handleBlockSync(request: Request, env: Env): Promise<Respo
   }
 
   // ── POST: sync a moderation action from the client ──
-  if (request.method !== 'POST') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   const session = await requireSession(request, env);
   const address = session instanceof Response ? 'anonymous' : session.address;

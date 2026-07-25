@@ -14,6 +14,7 @@
 
 import type { Env } from '../index';
 import { jsonResponse, noCacheJsonResponse } from '../index';
+import { methodNotAllowed } from '../response-helpers';
 
 function safeKey(s: string): string {
   return s.replace(/[^a-zA-Z0-9_@./-]/g, '_').toLowerCase();
@@ -33,7 +34,7 @@ function getUserId(request: Request, env: Env): string | null {
 // ─── POST /api/github/connect ──────────────────────────────
 
 export async function handleGitHubConnect(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
   const userId = getUserId(request, env);
   if (!userId) return jsonResponse({ error: 'Session required' }, 401);
 
@@ -77,7 +78,7 @@ export async function handleGitHubConnect(request: Request, env: Env): Promise<R
 // ─── POST /api/github/repo-activity ─────────────────────────
 
 export async function handleGitHubRepoActivity(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
   const userId = getUserId(request, env);
   if (!userId) return jsonResponse({ error: 'Session required' }, 401);
 
@@ -140,7 +141,7 @@ export async function handleGitHubRepoActivity(request: Request, env: Env): Prom
 // ─── DELETE /api/github/disconnect ─────────────────────────
 
 export async function handleGitHubDisconnect(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'DELETE') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'DELETE') return methodNotAllowed(['DELETE']);
   const userId = getUserId(request, env);
   if (!userId) return jsonResponse({ error: 'Session required' }, 401);
 
@@ -180,7 +181,7 @@ export async function handleGitHubDisconnect(request: Request, env: Env): Promis
 // ─── GET /api/github/accounts ──────────────────────────────
 
 export async function handleGitHubConnectedAccounts(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
   const userId = getUserId(request, env);
   if (!userId) return jsonResponse({ error: 'Session required' }, 401);
 
@@ -211,7 +212,7 @@ export async function handleGitHubConnectedAccounts(request: Request, env: Env):
 // ─── POST /api/github/bridge ───────────────────────────────
 
 export async function handleGitHubBridgeActivity(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
   const userId = getUserId(request, env);
   if (!userId) return jsonResponse({ error: 'Session required' }, 401);
 

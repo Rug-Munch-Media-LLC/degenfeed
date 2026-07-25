@@ -212,6 +212,7 @@ import {
   handleWebhookTrigger,
 } from '../../routes/webhooks';
 import { handleX402Paywall, handleX402Verify } from '../../routes/x402';
+import { methodNotAllowed } from '../response-helpers';
 
 export function registerSocialRoutes(app: Hono<{ Bindings: Env }>): void {
   // --- API: Bridge Health ---
@@ -385,7 +386,7 @@ export function registerSocialRoutes(app: Hono<{ Bindings: Env }>): void {
     if (c.req.method === 'GET') return handleTipSettingsGet(c.req.raw, c.env);
     if (c.req.method === 'POST')
       return withSession(c, () => handleTipSettingsPost(c.req.raw, c.env));
-    return jsonResponse({ error: 'Method not allowed' }, 405);
+    return methodNotAllowed(['GET', 'POST']);
   });
 
   // --- API: Tip Notification Preferences ---

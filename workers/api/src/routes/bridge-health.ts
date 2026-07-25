@@ -15,6 +15,7 @@
 import type { Env } from '../index';
 import { jsonResponse, noCacheJsonResponse } from '../index';
 import { requireAdminFromSession } from '../lib/admin-guard';
+import { methodNotAllowed } from '../response-helpers';
 
 // ─── Health Endpoints ──────────────────────────────────────────────────────
 
@@ -27,7 +28,7 @@ import { requireAdminFromSession } from '../lib/admin-guard';
  */
 export async function handleBridgeHealth(request: Request, env: Env): Promise<Response> {
   if (request.method !== 'GET') {
-    return jsonResponse({ error: 'Method not allowed — use GET' }, 405);
+    return methodNotAllowed(['GET']);
   }
 
   // Check KV cache (15-second TTL)
@@ -85,7 +86,7 @@ export async function handleBridgeHealth(request: Request, env: Env): Promise<Re
  */
 export async function handleProtocolHealth(request: Request, env: Env): Promise<Response> {
   if (request.method !== 'GET') {
-    return jsonResponse({ error: 'Method not allowed — use GET' }, 405);
+    return methodNotAllowed(['GET']);
   }
 
   const url = new URL(request.url);
@@ -130,7 +131,7 @@ export async function handleProtocolHealth(request: Request, env: Env): Promise<
  */
 export async function handleCircuitReset(request: Request, env: Env): Promise<Response> {
   if (request.method !== 'POST') {
-    return jsonResponse({ error: 'Method not allowed — use POST' }, 405);
+    return methodNotAllowed(['POST']);
   }
 
   // Require admin
@@ -196,7 +197,7 @@ export async function handleCircuitReset(request: Request, env: Env): Promise<Re
  */
 export async function handleBridgeStats(request: Request, env: Env): Promise<Response> {
   if (request.method !== 'GET') {
-    return jsonResponse({ error: 'Method not allowed — use GET' }, 405);
+    return methodNotAllowed(['GET']);
   }
 
   try {
@@ -225,7 +226,7 @@ export async function handleBridgeStats(request: Request, env: Env): Promise<Res
  */
 export async function handleProtocolStats(request: Request, env: Env): Promise<Response> {
   if (request.method !== 'GET') {
-    return jsonResponse({ error: 'Method not allowed — use GET' }, 405);
+    return methodNotAllowed(['GET']);
   }
 
   const url = new URL(request.url);
@@ -278,7 +279,7 @@ export async function handleProtocolStats(request: Request, env: Env): Promise<R
  */
 export async function handleFeedQualityReport(request: Request, env: Env): Promise<Response> {
   if (request.method !== 'GET') {
-    return jsonResponse({ error: 'Method not allowed — use GET' }, 405);
+    return methodNotAllowed(['GET']);
   }
 
   try {

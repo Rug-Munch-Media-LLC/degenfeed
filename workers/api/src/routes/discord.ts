@@ -21,6 +21,7 @@ import type { Env } from '../index';
 import { jsonResponse, noCacheJsonResponse } from '../index';
 import { requireSession } from '../session';
 import { consumeState, DISCORD_STATE_PREFIX, generateOAuthState, storeState } from './oauth-state';
+import { methodNotAllowed } from '../response-helpers';
 
 function safeKey(s: string): string {
   return s.replace(/[^a-zA-Z0-9:_-]/g, '_').toLowerCase();
@@ -37,7 +38,7 @@ function getUserId(request: Request, env: Env): string | null {
 // ─── POST /api/discord/connect ────────────────────────────────
 
 export async function handleDiscordConnect(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
   const userId = getUserId(request, env);
   if (!userId) return jsonResponse({ error: 'Session required' }, 401);
 
@@ -92,7 +93,7 @@ export async function handleDiscordConnect(request: Request, env: Env): Promise<
 // ─── POST /api/discord/channel/announce ──────────────────────
 
 export async function handleDiscordChannelAnnounce(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
   const userId = getUserId(request, env);
   if (!userId) return jsonResponse({ error: 'Session required' }, 401);
 
@@ -151,7 +152,7 @@ export async function handleDiscordChannelAnnounce(request: Request, env: Env): 
 // ─── GET /api/discord/channels ────────────────────────────────
 
 export async function handleDiscordChannelsList(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
   const userId = getUserId(request, env);
   if (!userId) return jsonResponse({ error: 'Session required' }, 401);
 
@@ -176,7 +177,7 @@ export async function handleDiscordChannelsList(request: Request, env: Env): Pro
 // ─── DELETE /api/discord/disconnect ──────────────────────────
 
 export async function handleDiscordDisconnect(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'DELETE') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'DELETE') return methodNotAllowed(['DELETE']);
   const userId = getUserId(request, env);
   if (!userId) return jsonResponse({ error: 'Session required' }, 401);
 
@@ -227,7 +228,7 @@ export async function handleDiscordDisconnect(request: Request, env: Env): Promi
 // ─── POST /api/discord/bridge ────────────────────────────────
 
 export async function handleDiscordBridgeMessage(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
   const userId = getUserId(request, env);
   if (!userId) return jsonResponse({ error: 'Session required' }, 401);
 
@@ -739,7 +740,7 @@ export async function handleDiscordConnectionStatus(request: Request, env: Env):
  * Disconnects Discord OAuth connection.
  */
 export async function handleDiscordDisconnectOAuth(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'DELETE') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'DELETE') return methodNotAllowed(['DELETE']);
 
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;

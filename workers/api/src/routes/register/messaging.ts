@@ -82,6 +82,7 @@ import {
   handleUnreadCount,
 } from '../../routes/messages';
 import { withSession } from '../../routes/route-registry';
+import { methodNotAllowed } from '../response-helpers';
 
 export function registerMessagingRoutes(app: Hono<{ Bindings: Env }>): void {
   // --- API: Messages (DM) ---
@@ -104,7 +105,7 @@ export function registerMessagingRoutes(app: Hono<{ Bindings: Env }>): void {
     if (c.req.method === 'DELETE') {
       return handleDeleteMessage(c.req.raw, c.env, c.req.param('id'));
     }
-    return jsonResponse({ error: 'Method not allowed' }, 405);
+    return methodNotAllowed(['DELETE']);
   });
 
   // --- API: E2E Encryption & Secure Messaging ---

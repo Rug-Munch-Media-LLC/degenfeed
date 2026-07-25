@@ -27,12 +27,13 @@ import {
   updateProtocolSyndicationRule,
 } from '../lib/content-syndication';
 import { requireSession } from '../session';
+import { methodNotAllowed } from '../response-helpers';
 
 /**
  * POST /api/content/syndication/rules — Set syndication rules.
  */
 export async function handleSetSyndicationRules(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
@@ -75,7 +76,7 @@ export async function handleSetSyndicationRules(request: Request, env: Env): Pro
  * GET /api/content/syndication/rules — Get syndication rules.
  */
 export async function handleGetSyndicationRules(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
 
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
@@ -92,7 +93,7 @@ export async function handleGetSyndicationRules(request: Request, env: Env): Pro
  * PUT /api/content/syndication/rules/:protocol — Update per-protocol rule.
  */
 export async function handleUpdateProtocolRule(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'PUT') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'PUT') return methodNotAllowed(['PUT']);
 
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
@@ -126,7 +127,7 @@ export async function handleUpdateProtocolRule(request: Request, env: Env): Prom
  * POST /api/content/syndication/queue — Queue content for syndication.
  */
 export async function handleQueueSyndication(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
@@ -195,7 +196,7 @@ export async function handleQueueSyndication(request: Request, env: Env): Promis
  * GET /api/content/syndication/queue — List queued syndications.
  */
 export async function handleListSyndicationQueue(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
 
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
@@ -260,7 +261,7 @@ export async function handleListSyndicationQueue(request: Request, env: Env): Pr
  * POST /api/content/syndication/queue/:queueId — Execute a queued syndication.
  */
 export async function handleExecuteSyndication(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
@@ -290,7 +291,7 @@ export async function handleExecuteSyndication(request: Request, env: Env): Prom
  * GET /api/content/syndication/history — Get syndication history.
  */
 export async function handleGetSyndicationHistory(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
 
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
@@ -311,7 +312,7 @@ export async function handleGetSyndicationHistory(request: Request, env: Env): P
  * GET /api/content/syndication/can/:protocol — Check if can syndicate to protocol.
  */
 export async function handleCanSyndicate(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
 
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;

@@ -810,9 +810,7 @@ export class SimulcastEngine {
  * Start simulcasting to multiple platforms.
  */
 export async function handleSimulcastStart(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405 });
-  }
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   try {
     const body = (await request.json()) as SimulcastConfig;
@@ -860,9 +858,7 @@ export async function handleSimulcastStart(request: Request, env: Env): Promise<
  * End a simulcast session.
  */
 export async function handleSimulcastEnd(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405 });
-  }
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   try {
     const body = (await request.json()) as { sessionId?: string };
@@ -894,9 +890,7 @@ export async function handleSimulcastStatus(
   env: Env,
   sessionId: string,
 ): Promise<Response> {
-  if (request.method !== 'GET') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405 });
-  }
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
 
   try {
     const engine = new SimulcastEngine(env);
@@ -948,9 +942,7 @@ export async function handleSimulcastStatus(
  * List all active simulcast sessions.
  */
 export async function handleSimulcastList(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'GET') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405 });
-  }
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
 
   try {
     const engine = new SimulcastEngine(env);
@@ -992,9 +984,7 @@ export async function handleSimulcastList(request: Request, env: Env): Promise<R
  * Store a stream key for a platform.
  */
 export async function handleSimulcastStoreKey(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405 });
-  }
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   try {
     const body = (await request.json()) as {
@@ -1030,9 +1020,7 @@ export async function handleSimulcastStoreKey(request: Request, env: Env): Promi
  * Delete a stored stream key.
  */
 export async function handleSimulcastDeleteKey(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'DELETE') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405 });
-  }
+  if (request.method !== 'DELETE') return methodNotAllowed(['DELETE']);
 
   try {
     const url = new URL(request.url);
@@ -1065,9 +1053,7 @@ export async function handleSimulcastDeleteKey(request: Request, env: Env): Prom
  * Get available simulcast platforms.
  */
 export async function handleSimulcastPlatforms(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'GET') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405 });
-  }
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
 
   try {
     const engine = new SimulcastEngine(env);
@@ -1096,9 +1082,7 @@ export async function handleSimulcastPlatforms(request: Request, env: Env): Prom
  * Get configured platforms for a creator.
  */
 export async function handleSimulcastConfigured(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'GET') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405 });
-  }
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
 
   try {
     const url = new URL(request.url);

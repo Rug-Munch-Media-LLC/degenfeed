@@ -14,6 +14,7 @@
 
 import type { Env } from '../index';
 import { jsonResponse, noCacheJsonResponse } from '../index';
+import { methodNotAllowed } from '../response-helpers';
 
 const VALID_TRIGGERS = new Set([
   'new_post',
@@ -57,7 +58,7 @@ function isValidUrl(s: string): boolean {
 // ─── POST /api/webhooks/create ──────────────────────────────
 
 export async function handleWebhookCreate(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
   const userId = getUserId(request, env);
   if (!userId) return jsonResponse({ error: 'Session required' }, 401);
 
@@ -128,7 +129,7 @@ export async function handleWebhookCreate(request: Request, env: Env): Promise<R
 // ─── POST /api/webhooks/test ────────────────────────────────
 
 export async function handleWebhookTest(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   let body: { id: string };
   try {
@@ -192,7 +193,7 @@ export async function handleWebhookTest(request: Request, env: Env): Promise<Res
 // ─── GET /api/webhooks ─────────────────────────────────────
 
 export async function handleWebhookList(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
   const userId = getUserId(request, env);
   if (!userId) return jsonResponse({ error: 'Session required' }, 401);
 
@@ -226,7 +227,7 @@ export async function handleWebhookList(request: Request, env: Env): Promise<Res
 // ─── DELETE /api/webhooks ──────────────────────────────────
 
 export async function handleWebhookDelete(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'DELETE') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'DELETE') return methodNotAllowed(['DELETE']);
   const userId = getUserId(request, env);
   if (!userId) return jsonResponse({ error: 'Session required' }, 401);
 
@@ -273,7 +274,7 @@ export async function handleWebhookDelete(request: Request, env: Env): Promise<R
 // ─── POST /api/webhooks/trigger (internal) ──────────────────
 
 export async function handleWebhookTrigger(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   let body: { trigger: string; payload: Record<string, unknown> };
   try {

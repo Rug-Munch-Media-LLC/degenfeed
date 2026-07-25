@@ -15,6 +15,7 @@
 import { type Env, jsonResponse } from '../index';
 import { requirePremiumTier } from '../premium';
 import { requireSession } from '../session';
+import { methodNotAllowed } from '../response-helpers';
 
 /** Scheduled post KV prefix */
 const SCHEDULED_PREFIX = 'scheduled:';
@@ -40,9 +41,7 @@ export interface ScheduledEntry {
 }
 
 export async function handleSchedulePost(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   // ── Require authentication ──────────────────────────────────────
   const session = await requireSession(request, env);
@@ -115,9 +114,7 @@ export async function handleUpdateScheduledPost(
   env: Env,
   postId: string,
 ): Promise<Response> {
-  if (request.method !== 'PUT') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'PUT') return methodNotAllowed(['PUT']);
 
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
@@ -182,9 +179,7 @@ export async function handleDeleteScheduledPost(
   env: Env,
   postId: string,
 ): Promise<Response> {
-  if (request.method !== 'DELETE') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'DELETE') return methodNotAllowed(['DELETE']);
 
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
@@ -218,9 +213,7 @@ export async function handlePublishNow(
   env: Env,
   postId: string,
 ): Promise<Response> {
-  if (request.method !== 'POST') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;

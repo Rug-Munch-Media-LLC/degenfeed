@@ -15,6 +15,7 @@ import type { Env } from '../index';
 import { jsonResponse, noCacheJsonResponse } from '../index';
 import { hasSuspiciousPayload, sanitizeString } from '../sanitize';
 import { requireSession } from '../session';
+import { methodNotAllowed } from '../response-helpers';
 
 // ─── Supported protocol keys for translation ────────────────────────
 
@@ -39,7 +40,7 @@ interface TranslateRequest {
 
 export async function handleTranslate(request: Request, env: Env): Promise<Response> {
   if (request.method !== 'POST') {
-    return jsonResponse({ error: 'Method not allowed — use POST' }, 405);
+    return methodNotAllowed(['POST']);
   }
 
   const session = await requireSession(request, env);

@@ -17,6 +17,7 @@ import { jsonResponse, noCacheJsonResponse } from '../index';
 import { requireSession } from '../session';
 import { broadcastToUser } from '../ws-broadcast';
 import { CHANNELS } from '../ws-channels';
+import { methodNotAllowed } from '../response-helpers';
 
 // ─── Types ──────────────────────────────────────────────────────────────
 
@@ -428,9 +429,7 @@ export class VideoCallManager {
  * POST /api/calls/create — Create a call (1-on-1 or group)
  */
 export async function handleCallCreate(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
@@ -487,9 +486,7 @@ export async function handleCallJoin(
   env: Env,
   callId: string,
 ): Promise<Response> {
-  if (request.method !== 'POST') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
@@ -541,9 +538,7 @@ export async function handleCallLeave(
   env: Env,
   callId: string,
 ): Promise<Response> {
-  if (request.method !== 'POST') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
@@ -581,9 +576,7 @@ export async function handleCallStatus(
   env: Env,
   callId: string,
 ): Promise<Response> {
-  if (request.method !== 'GET') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
 
   try {
     const manager = new VideoCallManager(env);
@@ -609,9 +602,7 @@ export async function handleCallSignal(
   env: Env,
   callId: string,
 ): Promise<Response> {
-  if (request.method !== 'POST') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
@@ -675,9 +666,7 @@ export async function handleCallSignalPoll(
   env: Env,
   callId: string,
 ): Promise<Response> {
-  if (request.method !== 'GET') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
 
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
@@ -728,9 +717,7 @@ export async function handleCallKick(
   env: Env,
   callId: string,
 ): Promise<Response> {
-  if (request.method !== 'POST') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
@@ -779,9 +766,7 @@ export async function handleCallMute(
   env: Env,
   callId: string,
 ): Promise<Response> {
-  if (request.method !== 'POST') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
@@ -824,9 +809,7 @@ export async function handleCallMute(
  * POST /api/calls/:id/end — End a call (host only)
  */
 export async function handleCallEnd(request: Request, env: Env, callId: string): Promise<Response> {
-  if (request.method !== 'POST') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
@@ -885,9 +868,7 @@ export async function handleCallEnd(request: Request, env: Env, callId: string):
  * GET /api/calls/history — Call history for current user
  */
 export async function handleCallHistory(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'GET') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
 
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;

@@ -40,7 +40,7 @@ const POSTIZ_PLATFORMS = new Set([
  *   3. Otherwise → use existing per-protocol logic
  */
 export async function handlePublish(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   try {
     interface PublishRequest {
@@ -584,6 +584,7 @@ export async function handleRssToNostrBridge(request: Request, _env: Env): Promi
 import type { MasterPost } from '@degenfeed/cross-protocol-bridge';
 import { adaptForProtocols, previewForProtocols } from '@degenfeed/cross-protocol-bridge';
 import { hasSuspiciousPayload } from '../sanitize';
+import { methodNotAllowed } from '../response-helpers';
 
 /**
  * POST /api/publish/all
@@ -592,7 +593,7 @@ import { hasSuspiciousPayload } from '../sanitize';
  * Body: { masterPost: MasterPost, auth?: Record<string, string> }
  */
 export async function handlePublishAll(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   try {
     const body = (await request.json()) as {
@@ -631,7 +632,7 @@ export async function handlePublishAll(request: Request, env: Env): Promise<Resp
  * Body: { masterPost: MasterPost, protocols: string[], dryRun?: boolean }
  */
 export async function handlePublishSelected(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   try {
     const body = (await request.json()) as {
@@ -704,7 +705,7 @@ export async function handlePublishSelected(request: Request, env: Env): Promise
  * Query params: text, protocols (comma-separated), title, hashtags (comma-separated)
  */
 export async function handlePreviewPost(request: Request, _env: Env): Promise<Response> {
-  if (request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
 
   try {
     const url = new URL(request.url);
@@ -757,7 +758,7 @@ export async function handlePreviewPost(request: Request, _env: Env): Promise<Re
  * Body: { masterPost: MasterPost, protocols: string[], scheduleAt: string (ISO), auth? }
  */
 export async function handleScheduleCrossPost(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   try {
     const body = (await request.json()) as {
@@ -824,7 +825,7 @@ export async function handleScheduleCrossPost(request: Request, env: Env): Promi
  * List scheduled cross-posts.
  */
 export async function handleListScheduledCrossPosts(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
 
   try {
     if (!env.CACHE) {
@@ -875,7 +876,7 @@ export async function handleDeleteScheduledCrossPost(
   request: Request,
   env: Env,
 ): Promise<Response> {
-  if (request.method !== 'DELETE') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'DELETE') return methodNotAllowed(['DELETE']);
 
   try {
     const url = new URL(request.url);

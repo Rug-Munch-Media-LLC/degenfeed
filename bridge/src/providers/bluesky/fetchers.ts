@@ -1,3 +1,11 @@
+/**
+ * Bluesky Fetchers
+ *
+ * Rate Limit: 3000 requests/5 minutes (public API - app.bsky.app)
+ * Rate Limit: self-hosted PDS is local, effectively unlimited
+ */
+
+import { checkRateLimit } from '../../../rate-limiter';
 import type { UnifiedPost } from '../../../server';
 import { postToUnified } from './mapper';
 import type { BskyFeedResponse } from './types';
@@ -173,6 +181,11 @@ export async function fetchBlueskyTrending(limit = 20): Promise<UnifiedPost[]> {
 }
 
 export async function fetchBlueskyPosts(limit = 20): Promise<UnifiedPost[]> {
+  // Rate limit: 3000 requests/5 minutes (public API)
+  if (!checkRateLimit('bluesky', { maxRequests: 3000, windowMs: 300_000 })) {
+    console.log('[bluesky] Rate limited, skipping fetch');
+    return [];
+  }
   const all: UnifiedPost[] = [];
   const pdsPosts = await fetchFromPds(Math.ceil(limit / 4));
   all.push(...pdsPosts);
