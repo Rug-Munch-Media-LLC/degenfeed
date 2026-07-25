@@ -27,6 +27,7 @@
 
 import type { Env } from '../index';
 import { getOnlineCount, updateOnlineHeartbeat } from '../lib/community-store';
+import { badRequest, forbidden, serverError, upgradeRequired, rateLimitResponse } from '../response-helpers';
 
 // ─── In-memory subscription registry ───────────────────────────────────
 // Tracks active WebSocket connections per token address so we can
@@ -233,44 +234,29 @@ export async function handleTokenWebSocket(request: Request, env: Env): Promise<
   const tokenAddress = pathParts[pathParts.length - 1] ?? '';
 
   if (!tokenAddress || tokenAddress.length < 32) {
-    return new Response(JSON.stringify({ error: 'Invalid token address' }), {
-      status: 400,
-      headers: { 'content-type': 'application/json' },
-    });
+    return badRequest('Invalid token address');
   }
 
   // Check for WebSocket upgrade header
   const upgradeHeader = request.headers.get('upgrade');
   if (upgradeHeader?.toLowerCase() !== 'websocket') {
-    return new Response(JSON.stringify({ error: 'Expected WebSocket upgrade' }), {
-      status: 426,
-      headers: { 'content-type': 'application/json' },
-    });
+    return upgradeRequired('Expected WebSocket upgrade');
   }
 
   // Origin validation
   if (!isValidWsOrigin(request)) {
-    return new Response(JSON.stringify({ error: 'Origin not allowed' }), {
-      status: 403,
-      headers: { 'content-type': 'application/json' },
-    });
+    return forbidden('Origin not allowed');
   }
 
   // IP rate limiting
   const clientIp = getClientIp(request);
   if (shouldRateLimitIp(clientIp)) {
-    return new Response(JSON.stringify({ error: 'Too many WebSocket connections from this IP' }), {
-      status: 429,
-      headers: { 'content-type': 'application/json' },
-    });
+    return rateLimitResponse(IP_RATE_WINDOW_MS);
   }
 
   // Max connections per token
   if (countTokenConns(tokenAddress) >= MAX_CONNS_PER_TOKEN) {
-    return new Response(JSON.stringify({ error: 'Too many connections for this token' }), {
-      status: 429,
-      headers: { 'content-type': 'application/json' },
-    });
+    return rateLimitResponse(IP_RATE_WINDOW_MS);
   }
 
   try {
@@ -280,10 +266,7 @@ export async function handleTokenWebSocket(request: Request, env: Env): Promise<
     const server = values[1] as WebSocket | undefined;
 
     if (!server || !client) {
-      return new Response(JSON.stringify({ error: 'Failed to create WebSocket pair' }), {
-        status: 500,
-        headers: { 'content-type': 'application/json' },
-      });
+      return serverError('Failed to create WebSocket pair');
     }
 
     // Accept the connection
@@ -342,10 +325,7 @@ export async function handleTokenWebSocket(request: Request, env: Env): Promise<
       webSocket: client,
     });
   } catch (e) {
-    return new Response(JSON.stringify({ error: `WebSocket upgrade failed: ${String(e)}` }), {
-      status: 500,
-      headers: { 'content-type': 'application/json' },
-    });
+    return serverError(`WebSocket upgrade failed: ${String(e)}`);
   }
 }
 
@@ -364,10 +344,7 @@ export async function handleTokenSSE(request: Request, env: Env): Promise<Respon
   const tokenAddress = pathParts[pathParts.length - 1] ?? '';
 
   if (!tokenAddress || tokenAddress.length < 32) {
-    return new Response(JSON.stringify({ error: 'Invalid token address' }), {
-      status: 400,
-      headers: { 'content-type': 'application/json' },
-    });
+    return badRequest('Invalid token address');
   }
 
   const { readable, writable } = new TransformStream();

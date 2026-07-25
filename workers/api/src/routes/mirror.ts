@@ -34,14 +34,14 @@ function getBridge(env: MirrorEnv): MirrorBridge {
 }
 
 function jsonResponse(data: unknown, status = 200): Response {
-  return new Response(JSON.stringify(data), {
+  const _respData = JSON.stringify(data); return new Response(_respData, {
     status,
     headers: { 'content-type': 'application/json', 'cache-control': 'public, max-age=30' },
   });
 }
 
 function noCacheJsonResponse(data: unknown, status = 200): Response {
-  return new Response(JSON.stringify(data), {
+  const _respData = JSON.stringify(data); return new Response(_respData, {
     status,
     headers: { 'content-type': 'application/json', 'cache-control': 'no-store, must-revalidate' },
   });

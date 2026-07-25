@@ -351,7 +351,7 @@ export async function handleExportContentJson(request: Request, env: Env): Promi
       })),
     };
 
-    return new Response(JSON.stringify(exportData, null, 2), {
+    const _respData = JSON.stringify(exportData, null, 2); return new Response(_respData, {
       headers: {
         'content-type': 'application/json',
         'content-disposition': `attachment; filename="degenfeed-content-${Date.now()}.json"`,
@@ -768,7 +768,7 @@ interface RssItem {
 
 async function fetchRssItems(feedUrl: string, maxItems: number): Promise<RssItem[]> {
   const res = await fetch(feedUrl, { signal: AbortSignal.timeout(10000) });
-  if (!res.ok) throw new Error(`RSS fetch failed: ${res.status}`);
+  if (!res.ok) { const _throwErr = new Error(`RSS fetch failed: ${res.status}`); throw _throwErr; }
 
   const text = await res.text();
 

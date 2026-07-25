@@ -257,8 +257,12 @@ zoraVideo.get('/:id', async (c) => {
         ? `${c.env.PINATA_API_KEY}:${c.env.PINATA_SECRET_KEY ?? ''}`
         : '';
 
+      if (!pinataJwt) {
+        return jsonResponse({ error: 'PINATA_API_KEY not configured — set env var for on-chain video lookup' }, 501);
+      }
+
       const sdk = new ZoraVideoSDK({
-        pinataJwt: pinataJwt || 'placeholder',
+        pinataJwt,
         defaultChain: chain as 'base' | 'ethereum' | 'zora',
       });
 
@@ -289,8 +293,12 @@ zoraVideo.get('/trending', async (c) => {
       ? `${c.env.PINATA_API_KEY}:${c.env.PINATA_SECRET_KEY ?? ''}`
       : '';
 
+    if (!pinataJwt) {
+      return jsonResponse({ error: 'PINATA_API_KEY not configured — set env var to fetch trending NFTs' }, 501);
+    }
+
     const sdk = new ZoraVideoSDK({
-      pinataJwt: pinataJwt || 'placeholder',
+      pinataJwt,
       defaultChain: chain as 'base' | 'ethereum' | 'zora',
     });
 
@@ -333,8 +341,12 @@ zoraVideo.get('/creator/:address', async (c) => {
       ? `${c.env.PINATA_API_KEY}:${c.env.PINATA_SECRET_KEY ?? ''}`
       : '';
 
+    if (!pinataJwt) {
+      return jsonResponse({ error: 'PINATA_API_KEY not configured — set env var to fetch creator NFTs' }, 501);
+    }
+
     const sdk = new ZoraVideoSDK({
-      pinataJwt: pinataJwt || 'placeholder',
+      pinataJwt,
     });
 
     const videos = await sdk.getCreatorVideoNFTs(creatorAddress as `0x${string}`, {
@@ -403,8 +415,12 @@ zoraVideo.post('/:id/collect', async (c) => {
       ? `${c.env.PINATA_API_KEY}:${c.env.PINATA_SECRET_KEY ?? ''}`
       : '';
 
+    if (!pinataJwt) {
+      return jsonResponse({ error: 'PINATA_API_KEY not configured — set env var to collect' }, 501);
+    }
+
     const sdk = new ZoraVideoSDK({
-      pinataJwt: pinataJwt || 'placeholder',
+      pinataJwt,
       defaultChain: chain as 'base' | 'ethereum' | 'zora',
     });
 
@@ -459,8 +475,12 @@ zoraVideo.post('/:id/tip', async (c) => {
       ? `${c.env.PINATA_API_KEY}:${c.env.PINATA_SECRET_KEY ?? ''}`
       : '';
 
+    if (!pinataJwt) {
+      return jsonResponse({ error: 'PINATA_API_KEY not configured — set env var to tip' }, 501);
+    }
+
     const sdk = new ZoraVideoSDK({
-      pinataJwt: pinataJwt || 'placeholder',
+      pinataJwt,
       defaultChain: chain as 'base' | 'ethereum' | 'zora',
     });
 
@@ -511,8 +531,12 @@ zoraVideo.post('/:id/announce', async (c) => {
       ? `${c.env.PINATA_API_KEY}:${c.env.PINATA_SECRET_KEY ?? ''}`
       : '';
 
+    if (!pinataJwt) {
+      return jsonResponse({ error: 'PINATA_API_KEY not configured — set env var to announce' }, 501);
+    }
+
     const sdk = new ZoraVideoSDK({
-      pinataJwt: pinataJwt || 'placeholder',
+      pinataJwt,
       defaultChain: chain as 'base' | 'ethereum' | 'zora',
     });
 

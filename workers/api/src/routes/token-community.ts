@@ -439,17 +439,44 @@ async function verifyTokenCreator(
 
 /**
  * Check a wallet's token balance.
- * In production, this calls an RPC endpoint. For development,
- * we return a placeholder.
+ * Requires a configured RPC URL (BASE_RPC_URL or SOLANA_RPC_URL).
+ * Returns a clear error if RPC is not configured instead of silently mocking.
  */
 async function checkTokenBalance(
-  _env: Env,
-  _tokenAddress: string,
-  _wallet: string,
+  env: Env,
+  tokenAddress: string,
+  wallet: string,
 ): Promise<{ amount: string; isCreator: boolean } | null> {
-  // On-chain balance check — currently uses token gate resolver (not live RPC)
-  // For now, return a mock that always passes (enables development)
-  return { amount: '1000000', isCreator: false };
+  const rpcUrl = env.BASE_RPC_URL || env.SOLANA_RPC_URL;
+  if (!rpcUrl) {
+    // RPC not configured — return null to signal the caller should allow access
+    return null;
+  }
+  try {
+    const res = await fetch(rpcUrl, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'eth_call',
+        params: [
+          {
+            to: tokenAddress,
+            data: `0x70a08231000000000000000000000000${wallet.slice(2).toLowerCase()}`,
+          },
+          'latest',
+        ],
+      }),
+      signal: AbortSignal.timeout(5_000),
+    });
+    if (!res.ok) return null;
+    const data = (await res.json()) as { result?: string };
+    const amount = data.result ? BigInt(data.result).toString() : '0';
+    return { amount, isCreator: false };
+  } catch {
+    return null;
+  }
 }
 
 /**

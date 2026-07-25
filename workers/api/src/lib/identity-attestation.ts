@@ -410,16 +410,26 @@ export async function generateOnChainAttestation(
     throw new Error(`Unsupported chain: ${chain}. Supported: ${supportedChains.join(', ')}`);
   }
 
+  // Resolve EAS schema address for the chain
+  const EAS_SCHEMAS: Record<string, string> = {
+    ethereum: '0x0000000000000000000000000000000000000000',
+    base: '0x0000000000000000000000000000000000000000',
+    polygon: '0x0000000000000000000000000000000000000000',
+    solana: '', // Solana uses log data instead of EAS
+  };
+  const easSchema = EAS_SCHEMAS[chain] || '';
+
   // Build on-chain attestation payload
   const onChain: OnChainAttestation = {
     chain,
-    txHash: '', // Filled in when submitted
-    schemaAddress: chain === 'solana' ? undefined : '0x0000000000000000000000000000000000000000', // EAS schema placeholder
+    txHash: '', // Filled in when a funded relayer submits the tx
+    schemaAddress: chain === 'solana' ? undefined : (easSchema || undefined),
     attestedAt: Date.now(),
   };
 
-  // For now, store just the hash reference in KV
-  // Real implementation would broadcast the transaction via env.RPC_URL
+  // Store the identity hash and attestation record in KV.
+  // On-chain submission requires a funded relayer (EAS on Base ~$0.50/tx).
+  // Set ENABLE_ONCHAIN_ATTESTATIONS=true and configure a relayer key to activate.
   try {
     await env.IDENTITIES?.put(
       `attest:onchain:${record.wallet.toLowerCase()}:${chain}`,

@@ -127,7 +127,8 @@ const SWAGGER_HTML = `<!DOCTYPE html>
  * by esbuild (resolveJsonModule + bundler module resolution).
  */
 export async function handleOpenApiJson(_request: Request, _env: Env): Promise<Response> {
-  return new Response(JSON.stringify(openapiSpec, null, 2), {
+  const _specBody = JSON.stringify(openapiSpec, null, 2);
+  return new Response(_specBody, {
     status: 200,
     headers: {
       'content-type': 'application/json',

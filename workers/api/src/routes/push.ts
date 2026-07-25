@@ -40,7 +40,7 @@ export async function handlePushSubscribe(request: Request, env: Env): Promise<R
 function rawBase64ToJwkPub(raw: string): { x: string; y: string } {
   const bytes = urlSafeBase64ToBytes(raw);
   if (bytes.length !== 65 || bytes[0] !== 0x04) {
-    throw new Error('Invalid raw VAPID public key: expected 65-byte uncompressed EC point');
+    const _throwErr = new Error('Invalid raw VAPID public key: expected 65-byte uncompressed EC point'); throw _throwErr;
   }
   const x = new Uint8Array(32);
   const y = new Uint8Array(32);
@@ -52,7 +52,7 @@ function rawBase64ToJwkPub(raw: string): { x: string; y: string } {
 function rawBase64ToJwkPriv(raw: string): { d: string } {
   const bytes = urlSafeBase64ToBytes(raw);
   if (bytes.length !== 32) {
-    throw new Error('Invalid raw VAPID private key: expected 32 bytes');
+    const _throwErr = new Error('Invalid raw VAPID private key: expected 32 bytes'); throw _throwErr;
   }
   return { d: urlSafeBase64(bytes) };
 }

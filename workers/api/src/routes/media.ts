@@ -404,18 +404,54 @@ export async function handleMakePermanent(request: Request, env: Env): Promise<R
     const estimatedBytes = meta?.processedSize ?? 0;
     const estimatedCost = ((estimatedBytes / 1_000_000) * 0.01).toFixed(4);
 
-    // For now, this is a planned feature that requires a funded Irys node.
-    // Return informative response about the feature.
+    // Arweave permanence requires a funded Irys node.
+    // Check if the ARWEAVE_WALLET env var is configured to determine availability.
+    const arweaveConfigured = !!env.ARWEAVE_WALLET || !!env.IRYS_NODE_URL;
+    const backend = arweaveConfigured ? 'arweave' : 'ipfs';
+
+    if (arweaveConfigured) {
+      // Arweave is configured — attempt the upload
+      const { uploadToArweave } = await import('../lib/arweave-storage');
+      try {
+        const result = await uploadToArweave(cid, env);
+        return jsonResponse(
+          {
+            success: true,
+            cid,
+            txId: result.txId,
+            arweaveUrl: `https://arweave.net/${result.txId}`,
+            cost: `${estimatedCost} USD`,
+            status: 'confirmed',
+          },
+          200,
+        );
+      } catch (arErr) {
+        return jsonResponse(
+          {
+            success: false,
+            cid,
+            message: `Arweave upload attempted but failed: ${arErr instanceof Error ? arErr.message : String(arErr)}`,
+            estimatedCost: `${estimatedCost} USD`,
+            status: 'failed',
+            backend,
+          },
+          202,
+        );
+      }
+    }
+
     return jsonResponse(
       {
         success: false,
         cid,
         message:
-          'Arweave permanence coming soon. ' +
-          'This will archive your media permanently on Arweave for ~$0.01/MB (one-time fee). ' +
-          'Your media is currently stored on IPFS (decentralized, pinned).',
+          'Arweave permanence not configured. Set ARWEAVE_WALLET or IRYS_NODE_URL env var to enable. ' +
+          'Your media is currently stored on IPFS (decentralized, pinned). ' +
+          'To enable Arweave: deploy a funded Irys node or configure an Arweave wallet key.',
         estimatedCost: `${estimatedCost} USD`,
-        status: 'pending',
+        status: 'unavailable',
+        backend,
+        docs: 'https://docs.degenfeed.xyz/guides/arweave-permanence',
       },
       202,
     );

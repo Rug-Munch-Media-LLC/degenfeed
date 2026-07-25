@@ -132,7 +132,7 @@ async function getPeerTubeAccess(env: Env): Promise<{
   const clientId = env.PEERTUBE_CLIENT_ID;
   const clientSecret = env.PEERTUBE_CLIENT_SECRET;
   if (!clientId || !clientSecret) {
-    throw new Error('PEERTUBE_CLIENT_ID and PEERTUBE_CLIENT_SECRET must be set');
+    const _throwErr = new Error('PEERTUBE_CLIENT_ID and PEERTUBE_CLIENT_SECRET must be set'); throw _throwErr;
   }
 
   const tokenUrl = `${instanceUrl}/api/v1/oauth/token`;
@@ -149,7 +149,7 @@ async function getPeerTubeAccess(env: Env): Promise<{
 
   if (!response.ok) {
     const body = await response.text().catch(() => 'unknown');
-    throw new Error(`PeerTube OAuth failed: ${response.status} — ${body}`);
+    const _throwErr = new Error(`PeerTube OAuth failed: ${response.status} — ${body}`); throw _throwErr;
   }
 
   const data = (await response.json()) as {

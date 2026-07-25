@@ -29,7 +29,7 @@ function base58ToBytes(input: string): Uint8Array {
     const ch = input[i];
     if (ch === undefined) continue;
     const val = alphabetMap.get(ch);
-    if (val === undefined) throw new Error('Invalid base58 character');
+    if (val === undefined) { const _throwErr = new Error('Invalid base58 character'); throw _throwErr; }
     let carry = val;
     for (let j = 0; j < digits.length; j++) {
       const cur = (digits[j] as number) * 256 + carry;

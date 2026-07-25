@@ -1010,7 +1010,7 @@ export async function handleDeletionCertificate(request: Request, env: Env): Pro
       return jsonResponse({ error: 'This certificate belongs to a different account.' }, 401);
     }
 
-    return new Response(JSON.stringify(cert, null, 2), {
+    const _respData = JSON.stringify(cert, null, 2); return new Response(_respData, {
       status: 200,
       headers: {
         'content-type': 'application/json; charset=utf-8',

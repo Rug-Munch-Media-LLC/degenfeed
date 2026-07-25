@@ -1,6 +1,7 @@
 /** Shared utilities for the Telegram bot module. */
 
 import type { Env } from '../../index';
+import { badGateway } from '../../response-helpers';
 
 export async function sendTelegramMessage(
   botToken: string, chatId: number, text: string,
@@ -21,7 +22,7 @@ export async function sendTelegramMessage(
     return res;
   } catch (err) {
     console.error('[telegram] sendMessage error:', err);
-    return new Response(JSON.stringify({ error: 'Failed' }), { status: 502 });
+    return badGateway('Failed');
   }
 }
 

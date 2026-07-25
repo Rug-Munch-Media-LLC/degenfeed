@@ -41,7 +41,7 @@ function getBridge(env: GhostEnv): GhostBridge {
   const ghostContentKey = env.GHOST_CONTENT_KEY;
 
   if (!ghostUrl || !ghostAdminKey) {
-    throw new Error('GHOST_URL and GHOST_ADMIN_KEY must be configured');
+    const _throwErr = new Error('GHOST_URL and GHOST_ADMIN_KEY must be configured'); throw _throwErr;
   }
 
   return new GhostBridge({
@@ -52,14 +52,14 @@ function getBridge(env: GhostEnv): GhostBridge {
 }
 
 function jsonResponse(data: unknown, status = 200): Response {
-  return new Response(JSON.stringify(data), {
+  const _respData = JSON.stringify(data); return new Response(_respData, {
     status,
     headers: { 'content-type': 'application/json', 'cache-control': 'public, max-age=30' },
   });
 }
 
 function noCacheJsonResponse(data: unknown, status = 200): Response {
-  return new Response(JSON.stringify(data), {
+  const _respData = JSON.stringify(data); return new Response(_respData, {
     status,
     headers: { 'content-type': 'application/json', 'cache-control': 'no-store, must-revalidate' },
   });

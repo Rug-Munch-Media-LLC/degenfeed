@@ -1,5 +1,6 @@
 import { Transaction } from '@solana/web3.js';
 import { type Env, jsonResponse } from '../index';
+import { paymentRequired } from '../response-helpers';
 import {
   hasSuspiciousPayload,
   isValidAmount,
@@ -28,13 +29,7 @@ export async function handleX402Paywall(request: Request, _env: Env): Promise<Re
   }
 
   const blinkUrl = `https://app.degenfeed.xyz/api/blink/tip?recipient=${encodeURIComponent(creator)}&amount=${encodeURIComponent(amount)}`;
-  return new Response(JSON.stringify({ error: 'Payment required' }), {
-    status: 402,
-    headers: {
-      'content-type': 'application/json',
-      'X-Payment-Required': `solana:${blinkUrl}`,
-    },
-  });
+  return paymentRequired('Payment required', { 'X-Payment-Required': `solana:${blinkUrl}` });
 }
 
 export async function handleX402Verify(request: Request, _env: Env): Promise<Response> {

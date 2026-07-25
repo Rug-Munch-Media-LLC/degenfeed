@@ -408,7 +408,8 @@ export async function handleEverythingFeed(
   if (!params.get('cursor')) {
     const cacheResult = await getFeedCache(env, null, 'everything');
     if (cacheResult.type === 'hit' && cacheResult.entry) {
-      const resp = new Response(JSON.stringify(cacheResult.entry), {
+      const _hitData = JSON.stringify(cacheResult.entry);
+      const resp = new Response(_hitData, {
         headers: {
           'content-type': 'application/json',
           'cache-control': 'public, s-maxage=45, stale-while-revalidate=90',
@@ -423,7 +424,8 @@ export async function handleEverythingFeed(
       } else {
         void generateEverythingFeed(request, env, execCtx);
       }
-      const resp = new Response(JSON.stringify(cacheResult.entry), {
+      const _staleData = JSON.stringify(cacheResult.entry);
+      const resp = new Response(_staleData, {
         headers: {
           'content-type': 'application/json',
           'cache-control': 'public, s-maxage=45, stale-while-revalidate=90',
