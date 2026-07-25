@@ -441,17 +441,29 @@ import {
   handleSubmitReport,
 } from './routes/moderation';
 import {
+  handleNewsAuthor,
   handleNewsCategory,
+  handleNewsDeepDives,
   handleNewsDigestPreview,
   handleNewsDigestSubscribe,
   handleNewsFeed,
-  handleNewsFeed,
+  handleNewsForYou,
+  handleNewsHot,
+  handleNewsMarkRead,
   handleNewsPreferences,
+  handleNewsProtocol,
+  handleNewsQuickReads,
   handleNewsSearch,
   handleNewsSources,
   handleNewsStory,
+  handleNewsToken,
   handleNewsTrending,
+  handleReadingList,
+  handleReadingListToggle,
 } from './routes/news';
+import {
+  handleNewsSourcesRoute,
+} from './routes/news-sources';
 import {
   handleNewsletterDigest,
   handleNewsletterStatus,
@@ -1099,6 +1111,10 @@ app.post('/api/bridge/circuit/reset', async (c) => handleCircuitReset(c.req.raw,
 app.get('/api/bridge/stats', async (c) => handleBridgeStats(c.req.raw, c.env));
 app.get('/api/bridge/stats/:protocol', async (c) => handleProtocolStats(c.req.raw, c.env));
 
+// ─── API: Protocol Status Dashboard ─────────────────────────
+app.get('/api/protocols/status', async (c) => handleProtocolsStatus(c.req.raw, c.env));
+app.get('/api/protocols/status/:name', async (c) => handleProtocolStatus(c.req.raw, c.env));
+
 // ─── API: Health ────────────────────────────────────────────
 app.all('/api/health', async (c) => {
   // Base relay health
@@ -1131,7 +1147,6 @@ app.get('/api/health/full', async (c) => handleFullHealth(c.env));
 app.get('/api/analytics', (c) => handleAnalytics(c.req.raw, c.env));
 
 // ─── API: Shorts ─────────────────────────────────────────
-app.get('/api/shorts', async (c) => handleShortsFeed(c.req.raw, c.env));
 app.get('/api/shorts/feed', async (c) => handleShortsFeed(c.req.raw, c.env));
 app.get('/api/shorts/trending', async (c) => handleShortsTrending(c.req.raw, c.env));
 app.get('/api/shorts/for-you', async (c) => handleShortsForYou(c.req.raw, c.env));
@@ -1476,6 +1491,10 @@ import {
   handleProtocolHealth,
   handleProtocolStats,
 } from './routes/bridge-health';
+import {
+  handleProtocolsStatus,
+  handleProtocolStatus,
+} from './routes/protocol-status';
 import {
   handleFollowAdd,
   handleFollowCheck,
@@ -2318,10 +2337,24 @@ app.all('/api/news/trending', async (c) => handleNewsTrending(c.req.raw, c.env))
 app.all('/api/news/category/:category', async (c) => handleNewsCategory(c.req.raw, c.env));
 app.all('/api/news/story/:storyId', async (c) => handleNewsStory(c.req.raw, c.env));
 app.all('/api/news/search', async (c) => handleNewsSearch(c.req.raw, c.env));
-app.all('/api/news/sources', async (c) => handleNewsSources(c.req.raw, c.env));
+app.all('/api/news/sources', async (c) => handleNewsSourcesRoute(c.req.raw, c.env));
+app.all('/api/news/sources/health', async (c) => handleNewsSourcesRoute(c.req.raw, c.env));
+app.all('/api/news/sources/refresh', async (c) => handleNewsSourcesRoute(c.req.raw, c.env));
+app.all('/api/news/sources/stats', async (c) => handleNewsSourcesRoute(c.req.raw, c.env));
 app.all('/api/news/preferences', async (c) => handleNewsPreferences(c.req.raw, c.env));
 app.all('/api/news/digest/preview', async (c) => handleNewsDigestPreview(c.req.raw, c.env));
 app.all('/api/news/digest/subscribe', async (c) => handleNewsDigestSubscribe(c.req.raw, c.env));
+// ── New personalized/digest endpoints ──
+app.all('/api/news/for-you', async (c) => handleNewsForYou(c.req.raw, c.env));
+app.all('/api/news/hot', async (c) => handleNewsHot(c.req.raw, c.env));
+app.all('/api/news/deep-dives', async (c) => handleNewsDeepDives(c.req.raw, c.env));
+app.all('/api/news/quick-reads', async (c) => handleNewsQuickReads(c.req.raw, c.env));
+app.all('/api/news/protocol/:protocol', async (c) => handleNewsProtocol(c.req.raw, c.env));
+app.all('/api/news/token/:token', async (c) => handleNewsToken(c.req.raw, c.env));
+app.all('/api/news/author/:author', async (c) => handleNewsAuthor(c.req.raw, c.env));
+app.all('/api/news/mark-read', async (c) => handleNewsMarkRead(c.req.raw, c.env));
+app.all('/api/news/reading-list', async (c) => handleReadingList(c.req.raw, c.env));
+app.all('/api/news/reading-list/:id', async (c) => handleReadingListToggle(c.req.raw, c.env));
 
 // ─── API: Gamification (Streaks / Achievements / XP / Social Proof) ──
 app.all('/api/gamification/streak', async (c) => handleStreakCheck(c.req.raw, c.env));

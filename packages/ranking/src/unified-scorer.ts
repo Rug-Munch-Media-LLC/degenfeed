@@ -196,6 +196,19 @@ const PLATFORM_TIER: Record<string, number> = {
   email: 0.5,
   google: 0.5,
   twitter: 0.5,
+  // ─── New Protocol Integrations ──────────────────────────────────
+  dtube: 0.7,
+  lbry: 0.7,
+  gab: 0.5,
+  minds: 0.6,
+  aether: 0.5,
+  scuttlebutt: 0.6,
+  hive: 0.7,
+  diaspora: 0.6,
+  friendica: 0.6,
+  pleroma: 0.7,
+  misskey: 0.7,
+  writefreely: 0.7,
 };
 
 // ─── Recency half-life by mode ─────────────────────────────────────────

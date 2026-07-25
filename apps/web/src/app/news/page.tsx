@@ -10,26 +10,28 @@ import type { NewsMeta, NewsStory, StoryCluster } from './types';
 export const revalidate = 300; // 5 min
 
 export const metadata: Metadata = {
-  title: 'News',
+  title: 'News — 100+ Sources, No Paywalls',
   description:
-    'Intelligent news aggregation from 50+ sources across RSS, Nostr, Farcaster, Bluesky, Reddit, and newsletters — ranked by quality, recency, sentiment, and your interests.',
+    'Intelligent news aggregation from 100+ sources across RSS, Nostr, Farcaster, Bluesky, Reddit, newsletters, research feeds — ranked by quality, recency, sentiment, and your interests. Free, no paywalls, always updated.',
   openGraph: {
-    title: 'News — DegenFeed',
-    description: 'Intelligent crypto, web3, and AI news aggregation from 50+ sources. No paywalls.',
+    title: 'News — DegenFeed (100+ Sources)',
+    description:
+      'Beat CryptoPanic. Intelligent crypto, web3, DeFi, AI, and tech news aggregation from 100+ sources. No paywalls, never.',
     url: 'https://app.degenfeed.xyz/news',
     images: [
       {
         url: 'https://app.degenfeed.xyz/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'DegenFeed News',
+        alt: 'DegenFeed News — 100+ Sources',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'News — DegenFeed',
-    description: 'Intelligent crypto, web3, and AI news aggregation from 50+ sources. No paywalls.',
+    title: 'News — DegenFeed (100+ Sources)',
+    description:
+      'Intelligent crypto, web3, and AI news aggregation from 100+ sources. No paywalls, always free.',
   },
   alternates: { canonical: 'https://app.degenfeed.xyz/news' },
 };

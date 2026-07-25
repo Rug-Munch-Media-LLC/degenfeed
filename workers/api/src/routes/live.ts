@@ -174,6 +174,22 @@ const SOURCE_CONFIGS = [
     color: '#00BCD4',
     enabled: true,
   },
+  {
+    id: 'farcaster' as const,
+    name: 'Farcaster Live',
+    description: 'Farcaster Frame live streams',
+    icon: '📱',
+    color: '#8A63D2',
+    enabled: true,
+  },
+  {
+    id: 'nostr' as const,
+    name: 'Nostr Live',
+    description: 'Nostr NIP-53 live events',
+    icon: '⚡',
+    color: '#E87928',
+    enabled: true,
+  },
 ];
 
 // ─── GET /api/live/:id ──────────────────────────────────────────────
@@ -545,6 +561,125 @@ interface SourceCount {
   source: string;
   count: number;
   label: string;
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// Farcaster Live Routes
+// ═══════════════════════════════════════════════════════════════════════
+
+/**
+ * POST /api/live/farcaster/start — Start restreaming a Farcaster live
+ */
+export async function handleFarcasterLiveStart(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+
+  const session = await requireSession(request, env);
+  if (session instanceof Response) return session;
+
+  try {
+    const body = (await request.json()) as { fid?: number; username?: string; title?: string };
+
+    if (!body.fid) {
+      return jsonResponse({ error: 'fid is required' }, 400);
+    }
+
+    const { detectFarcasterLives, startFarcasterRestream } = await import(
+      '../lib/farcaster-live-wrapper'
+    );
+
+    // Detect the live stream
+    const detected = await detectFarcasterLives(env);
+    const live = detected.find((l) => l.fid === body.fid);
+
+    if (!live) {
+      return jsonResponse({ error: 'No active Farcaster live found for this FID' }, 404);
+    }
+
+    // Start restreaming through PeerTube
+    const result = await startFarcasterRestream(env, live);
+
+    return jsonResponse(
+      {
+        ok: true,
+        session: {
+          id: result.session.id,
+          fid: result.session.fid,
+          username: result.session.username,
+          title: result.session.title,
+          embedUrl: result.session.peerTubeEmbedUrl || result.session.activityUrl,
+          viewerCount: result.session.viewerCount,
+          startedAt: result.session.startedAt,
+        },
+        peertube: result.peerTubeResult,
+      },
+      201,
+    );
+  } catch (e) {
+    return jsonResponse({ error: String(e) }, 500);
+  }
+}
+
+/**
+ * GET /api/live/farcaster/active — Active Farcaster lives being restreamed
+ */
+export async function handleFarcasterLiveActive(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+
+  try {
+    const { getActiveFarcasterLives } = await import('../lib/farcaster-live-wrapper');
+    const sessions = await getActiveFarcasterLives(env);
+
+    return noCacheJsonResponse({
+      sessions: sessions.map((s) => ({
+        id: s.id,
+        fid: s.fid,
+        username: s.username,
+        displayName: s.displayName,
+        title: s.title,
+        thumbnailUrl: s.avatarUrl,
+        embedUrl: s.peerTubeEmbedUrl || s.activityUrl,
+        viewerCount: s.viewerCount,
+        startedAt: s.startedAt,
+        isRestreaming: s.isRestreaming,
+      })),
+      total: sessions.length,
+    });
+  } catch (e) {
+    return jsonResponse({ error: String(e) }, 500);
+  }
+}
+
+/**
+ * POST /api/live/farcaster/chat — Send chat to Farcaster live
+ */
+export async function handleFarcasterLiveChatSend(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+
+  const session = await requireSession(request, env);
+  if (session instanceof Response) return session;
+
+  try {
+    const body = (await request.json()) as { sessionId?: string; message?: string };
+    const sessionId = body.sessionId || request.url.split('/').pop() || '';
+
+    if (!body.message?.trim()) {
+      return jsonResponse({ error: 'Message is required' }, 400);
+    }
+
+    const { sendFarcasterChat } = await import('../lib/farcaster-live-wrapper');
+    const chatMsg = await sendFarcasterChat(
+      env,
+      sessionId,
+      session.address,
+      body.message.trim(),
+      session.displayName || session.address.slice(0, 8),
+      session.avatarUrl,
+    );
+
+    return jsonResponse({ message: chatMsg, ok: true });
+  } catch (e) {
+    return jsonResponse({ error: String(e) }, 500);
+  }
 }
 
 function aggregateSourceCounts(streams: UnifiedLiveStream[]): SourceCount[] {

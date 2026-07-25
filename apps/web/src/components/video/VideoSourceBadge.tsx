@@ -23,7 +23,14 @@ interface VideoSourceBadgeProps {
     | 'bitchute'
     | 'dailymotion'
     | 'vimeo'
-    | 'lbry';
+    | 'lbry'
+    | 'farcaster-frame'
+    | 'farcaster'
+    | 'lens'
+    | 'nostr'
+    | 'ipfs'
+    | 'arweave'
+    | 'hls';
   label?: string;
   size?: 'sm' | 'md' | 'lg';
   showLabel?: boolean;
@@ -116,6 +123,48 @@ const SOURCE_STYLES: Record<string, { label: string; bg: string; text: string; b
     text: 'text-orange-400',
     border: 'border-orange-600/30',
   },
+  'farcaster-frame': {
+    label: 'Farcaster',
+    bg: 'bg-purple-500/15',
+    text: 'text-purple-400',
+    border: 'border-purple-500/30',
+  },
+  farcaster: {
+    label: 'Farcaster',
+    bg: 'bg-purple-500/15',
+    text: 'text-purple-400',
+    border: 'border-purple-500/30',
+  },
+  lens: {
+    label: 'Lens',
+    bg: 'bg-green-500/15',
+    text: 'text-green-400',
+    border: 'border-green-500/30',
+  },
+  nostr: {
+    label: 'Nostr',
+    bg: 'bg-orange-500/15',
+    text: 'text-orange-400',
+    border: 'border-orange-500/30',
+  },
+  ipfs: {
+    label: 'IPFS',
+    bg: 'bg-blue-500/15',
+    text: 'text-blue-300',
+    border: 'border-blue-500/30',
+  },
+  arweave: {
+    label: 'Arweave',
+    bg: 'bg-red-500/15',
+    text: 'text-red-400',
+    border: 'border-red-500/30',
+  },
+  hls: {
+    label: 'HLS Stream',
+    bg: 'bg-teal-500/15',
+    text: 'text-teal-400',
+    border: 'border-teal-500/30',
+  },
 };
 
 export function VideoSourceBadge({
@@ -189,4 +238,11 @@ export const PLATFORM_ICONS: Record<string, string> = {
   vimeo:
     '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M22.396 7.164c-.093 2.026-1.508 4.8-4.245 8.32C15.322 19.08 12.988 21 11.037 21c-1.128 0-2.084-1.043-2.867-3.128l-1.58-5.796C5.86 10.038 5.04 9 3.92 9c-.12 0-.567.265-1.34.788l-.798-.642c.428-.377.85-.754 1.267-1.13C4.06 7.347 5.305 6.588 6.7 6.407c1.416-.194 2.287.425 2.613 1.856.35 1.54.56 2.5.63 2.88.35 1.584.734 2.376 1.152 2.376.324 0 .812-.512 1.463-1.536.65-1.024.998-1.805 1.045-2.34.093-1.03-.296-1.545-1.168-1.545-.416 0-.845.095-1.287.285.854-2.795 2.488-4.153 4.9-4.076 1.787.046 2.63 1.208 2.527 3.488z"/></svg>',
   lbry: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15l-5-3 5-3v6zm6-3l-5 3v-6l5 3z"/></svg>',
+  'farcaster-frame': '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M4 4h16v16H4V4zm2 2v12h12V6H6zm2 2h8v2H8V8zm0 4h8v2H8v-2zm0 4h5v2H8v-2z"/></svg>',
+  farcaster: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M4 4h16v16H4V4zm2 2v12h12V6H6zm2 2h8v2H8V8zm0 4h8v2H8v-2zm0 4h5v2H8v-2z"/></svg>',
+  lens: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/></svg>',
+  nostr: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 7v10l10 5 10-5V7L12 2zm0 2.18l7 3.5v7l-7 3.5-7-3.5v-7l7-3.5z"/></svg>',
+  ipfs: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v12M6 12h12"/></svg>',
+  arweave: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15l-4-4 4-4v8zm6-4l-4 4v-8l4 4z"/></svg>',
+  hls: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 13.5v-7l6 3.5-6 3.5z"/></svg>',
 };

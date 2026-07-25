@@ -98,6 +98,13 @@ export {
 } from './providers/tildes';
 export type { FeedProvider, FeedResult, FetchOptions, HealthResult, SchemaGuard } from './types';
 export {
+  fetchDiasporaPosts,
+  fetchFriendicaPosts,
+  fetchPleromaPosts,
+  fetchMisskeyPosts,
+  fetchWriteFreelyPosts,
+} from './adapters';
+export {
   buildUrl,
   DEFAULT_CONCURRENCY,
   DEFAULT_RETRIES,

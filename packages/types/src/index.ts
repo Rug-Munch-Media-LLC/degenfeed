@@ -34,7 +34,19 @@ export type Protocol =
   | 'email'
   | 'google'
   | 'twitter'
-  | 'pixelfed';
+  | 'pixelfed'
+  | 'dtube'
+  | 'lbry'
+  | 'gab'
+  | 'minds'
+  | 'aether'
+  | 'scuttlebutt'
+  | 'hive'
+  | 'diaspora'
+  | 'friendica'
+  | 'pleroma'
+  | 'misskey'
+  | 'writefreely';
 
 export interface UnifiedIdentity {
   /** Stable canonical identifier: `${protocol}:${id}` */
@@ -86,6 +98,28 @@ export interface UnifiedIdentity {
     substackUrl?: string;
     /** Ghost blog API URL */
     ghostUrl?: string;
+    /** DTube username */
+    dtubeUsername?: string;
+    /** LBRY claim ID */
+    lbryClaimId?: string;
+    /** Gab user ID */
+    gabUserId?: string;
+    /** Minds GUID */
+    mindsGuid?: string;
+    /** Minds rewards enabled flag */
+    mindsRewardsEnabled?: string;
+    /** Aether public key */
+    aetherPubkey?: string;
+    /** SSB feed ID */
+    ssbFeedId?: string;
+    /** Hive username */
+    hiveUsername?: string;
+    /** Hive reputation */
+    hiveReputation?: string;
+    /** Arweave transaction ID */
+    arweaveTxId?: string;
+    /** ENS name */
+    ens?: string;
   };
 }
 
@@ -297,6 +331,10 @@ export type VisualSource =
   | 'farcaster'
   | 'gotosocial'
   | 'mastodon'
+  | 'dtube'
+  | 'lbry'
+  | 'hive'
+  | 'aether'
   | 'all';
 
 export interface VisualPost {
