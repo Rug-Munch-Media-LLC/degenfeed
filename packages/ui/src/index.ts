@@ -137,6 +137,8 @@ export {
 } from './ProtocolBadge';
 export type { ProtocolHealth, ProtocolHealthDotsProps } from './ProtocolHealthDots';
 export { ProtocolHealthDots } from './ProtocolHealthDots';
+export type { ProtocolStatusItem, ProtocolStatusSectionProps } from './ProtocolStatusSection';
+export { ProtocolStatusSection } from './ProtocolStatusSection';
 export { QuickTipButton } from './QuickTipButton';
 export type { ReportModalProps } from './ReportModal';
 export { ReportModal } from './ReportModal';

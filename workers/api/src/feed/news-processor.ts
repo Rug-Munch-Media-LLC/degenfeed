@@ -242,7 +242,7 @@ const KNOWN_NFT_COLLECTIONS = [
   'runes',
 ];
 
-function _extractEntities(text: string): StoryEntities {
+export function extractEntities(text: string): StoryEntities {
   const lower = text.toLowerCase();
   const tokens: string[] = [];
   const protocols: string[] = [];
@@ -287,7 +287,7 @@ function _extractEntities(text: string): StoryEntities {
 
 // ─── Credibility Scoring ────────────────────────────────────────────────
 
-function _computeCredibility(source: NewsSourceMeta, story: AggregatedStory): number {
+export function computeCredibility(source: NewsSourceMeta, story: AggregatedStory): number {
   let score = source.credibility;
 
   // Boost: multiple sources cover the same story
@@ -305,7 +305,7 @@ function _computeCredibility(source: NewsSourceMeta, story: AggregatedStory): nu
 
 // ─── Freshness / Breaking News ─────────────────────────────────────────
 
-function _computeFreshness(
+export function computeFreshness(
   publishedAt: number,
   now: number,
 ): { freshScore: number; isBreaking: boolean } {
@@ -450,7 +450,7 @@ async function _enrichArticle(url: string, timeoutMs = 3000): Promise<ArticleEnr
 
 // ─── Text Similarity (Jaccard) for Dedup ────────────────────────────────
 
-function jaccardSimilarity(a: string, b: string): number {
+export function jaccardSimilarity(a: string, b: string): number {
   const setA = new Set(a.toLowerCase().split(/\W+/).filter(Boolean));
   const setB = new Set(b.toLowerCase().split(/\W+/).filter(Boolean));
   if (setA.size === 0 || setB.size === 0) return 0;
@@ -746,7 +746,7 @@ const BEARISH_TERMS = [
   'freeze',
 ];
 
-function _analyzeSentiment(text: string): SentimentResult {
+export function analyzeSentiment(text: string): SentimentResult {
   const lower = text.toLowerCase();
   let bullishScore = 0;
   let bearishScore = 0;
@@ -780,231 +780,8 @@ function _analyzeSentiment(text: string): SentimentResult {
   return { label, score: netScore, confidence, signals };
 }
 
-// ─── Entity Extraction ──────────────────────────────────────────────────
-
-const _TOKEN_PATTERNS = /\$([A-Z]{2,8})\b/g;
-const _KNOWN_TOKENS = new Set([
-  'BTC',
-  'ETH',
-  'SOL',
-  'USDT',
-  'USDC',
-  'BNB',
-  'XRP',
-  'ADA',
-  'AVAX',
-  'DOT',
-  'LINK',
-  'MATIC',
-  'POL',
-  'UNI',
-  'AAVE',
-  'COMP',
-  'MKR',
-  'CRV',
-  'PEPE',
-  'DOGE',
-  'SHIB',
-  'BONK',
-  'WIF',
-  'JUP',
-  'RAY',
-  'ORCA',
-  'RUNE',
-  'ATOM',
-  'OSMO',
-  'ARB',
-  'OP',
-  'STRK',
-  'ZK',
-  'BLAST',
-  'BASE',
-  'APT',
-  'SUI',
-  'SEI',
-  'INJ',
-  'STX',
-  'FET',
-  'AGIX',
-  'OCEAN',
-  'RNDR',
-  'NEAR',
-  'FIL',
-  'ICP',
-  'SAND',
-  'MANA',
-  'APE',
-  'BLUR',
-  'LOOKS',
-  'GMX',
-  'GNS',
-  'ALICE',
-  'YGG',
-]);
-
-const _KNOWN_PROTOCOLS = [
-  'uniswap',
-  'aave',
-  'compound',
-  'makerdao',
-  'lido',
-  'rocketpool',
-  'curve',
-  'balancer',
-  'pancakeswap',
-  'jupiter',
-  'raydium',
-  'orca',
-  'meteora',
-  'opensea',
-  'blur',
-  'magiceden',
-  'tensor',
-  'sudoswap',
-  'arbitrum',
-  'optimism',
-  'base',
-  'polygon',
-  'avalanche',
-  'solana',
-  'ethereum',
-  'bitcoin',
-  'cosmos',
-  'near',
-  'celestia',
-  'chainlink',
-  'thegraph',
-  'arweave',
-  'ipfs',
-  'filecoin',
-  'zksync',
-  'scroll',
-  'linea',
-  'blast',
-  'mantle',
-  'mode',
-];
-
-const _KNOWN_PEOPLE = [
-  'vitalik buterin',
-  'vitalik',
-  'cz binance',
-  'changpeng zhao',
-  'brian armstrong',
-  'sam bankman-fried',
-  'sbf',
-  'michael saylor',
-  'barry silbert',
-  'anatoly yakovenko',
-  'raj gokal',
-  'ryan selkis',
-  'chris dixon',
-  'gavin wood',
-  'charles hoskinson',
-  'justin sun',
-  'andrew kang',
-  'hayden adams',
-  'stani kulechov',
-  'sanderc botberg',
-  'tim draper',
-  'naval ravikant',
-  'balaji srinivasan',
-  'jack dorsey',
-];
-
-const _KNOWN_COMPANIES = [
-  'coinbase',
-  'binance',
-  'kraken',
-  'gemini',
-  'bitfinex',
-  'okx',
-  'bybit',
-  'kucoin',
-  'crypto.com',
-  'robinhood',
-  'paypal',
-  'stripe',
-  'visa',
-  'mastercard',
-  'blackrock',
-  'fidelity',
-  'grayscale',
-  'microstrategy',
-  'tesla',
-  'a16z',
-  'paradigm',
-  'multicoin',
-  'dragonfly',
-  'pantera',
-  'polychain',
-  'sequoia',
-  'union square',
-  'electric capital',
-  'variant',
-  'circle',
-  'tether',
-  'ripple',
-  'consensys',
-  'opensea',
-  'alchemy',
-  'infura',
-  'quicknode',
-  'etherscan',
-  'solscan',
-  'dune analytics',
-  'nansen',
-  'glassnode',
-  'chainalysis',
-  'elliptic',
-  'trmlabs',
-];
-
-const _KNOWN_CHAINS = [
-  'ethereum',
-  'bitcoin',
-  'solana',
-  'avalanche',
-  'polygon',
-  'arbitrum',
-  'optimism',
-  'base',
-  'bnb chain',
-  'cosmos',
-  'near',
-  'aptos',
-  'sui',
-  'ton',
-  'tron',
-  'ripple',
-  'cardano',
-  'polkadot',
-  'zksync',
-  'scroll',
-  'linea',
-  'blast',
-  'mantle',
-  'celestia',
-  'injective',
-  'sei',
-];
-
-const _KNOWN_NFT_COLLECTIONS = [
-  'bored ape',
-  'cryptopunk',
-  'pudgy penguin',
-  'milady',
-  'azuki',
-  'deGods',
-  'mad lad',
-  'nouns',
-  'art blocks',
-  'chromie squiggle',
-  'doodles',
-  'clone x',
-  'otherdeed',
-  'proof collective',
-  'bitcoin ordinals',
-  'inscriptions',
-  'runes',
-];
+// ═══════════════════════════════════════════════════════════════════════════
+// Note: TOKEN_PATTERNS, KNOWN_TOKENS, KNOWN_PROTOCOLS, KNOWN_PEOPLE,
+// KNOWN_COMPANIES, KNOWN_CHAINS, and KNOWN_NFT_COLLECTIONS are defined
+// above (lines 18-243). The duplicate definitions below have been removed.
+// ═══════════════════════════════════════════════════════════════════════════

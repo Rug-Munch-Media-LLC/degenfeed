@@ -8,7 +8,11 @@ export type RegistrationPlatform =
   | 'nostr'
   | 'lemmy'
   | 'peertube'
-  | 'pixelfed';
+  | 'pixelfed'
+  | 'bookwyrm'
+  | 'funkwhale'
+  | 'mobilizon'
+  | 'writefreely';
 
 export type RegistrationStatus = 'pending' | 'created' | 'failed';
 
@@ -40,4 +44,12 @@ export interface RegisterOptions {
   peertubeInstanceUrl?: string;
   /** Pixelfed instance URL (default: https://pixelfed.social) */
   pixelfedInstanceUrl?: string;
+  /** BookWyrm instance URL (default: https://books.degenfeed.xyz) */
+  bookwyrmInstanceUrl?: string;
+  /** Funkwhale instance URL (default: https://music.degenfeed.xyz) */
+  funkwhaleInstanceUrl?: string;
+  /** Mobilizon instance URL (default: https://events.degenfeed.xyz) */
+  mobilizonInstanceUrl?: string;
+  /** WriteFreely instance URL (default: https://blog.degenfeed.xyz) */
+  writefreelyInstanceUrl?: string;
 }

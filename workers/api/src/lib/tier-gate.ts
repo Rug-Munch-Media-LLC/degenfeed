@@ -92,13 +92,64 @@ export async function incrementCoinDeployCount(env: Env, walletAddress: string):
  * Recommend a tier upgrade based on current usage patterns.
  */
 export function getRecommendedTier(usage: TierUsage): PremiumTier {
-  if (usage.creatorCoinsDeployed > 1 || usage.communitiesCreated >= 3) {
-    return 'platinum';
+  if (usage.creatorCoinsDeployed > 0) {
+    return 'creator';
   }
-  if (usage.creatorCoinsDeployed > 0 || usage.communitiesCreated > 0) {
+  if (usage.communitiesCreated >= 3 || usage.scheduledPostsUsed >= 50) {
+    return 'pro';
+  }
+  if (usage.communitiesCreated > 0 || usage.scheduledPostsUsed > 10) {
     return 'pro';
   }
   return 'basic';
+}
+
+// ─── New Membership Feature Constants ──────────────────────────────────────
+
+/**
+ * Canonical feature-to-tier mapping for the $5/$10/$20 premium strategy.
+ * These keys are used by requireFeature() middleware.
+ * Maps feature keys from membership-tiers.ts to the PremiumTier type.
+ */
+export const MEMBERSHIP_FEATURE_MAP: Record<string, PremiumTier> = {
+  BROWSE_ALL_FEEDS: 'basic',
+  CONNECT_1_PROTOCOL: 'basic',
+  POST_3_PROTOCOLS: 'basic',
+  SCHEDULED_POSTS_10: 'basic',
+  BASIC_ANALYTICS: 'basic',
+
+  CONNECT_ALL_PROTOCOLS: 'pro',
+  POST_10_PROTOCOLS: 'pro',
+  SCHEDULED_POSTS_100: 'pro',
+  PROFILE_VERIFICATION_BADGE: 'pro',
+  CROSS_NETWORK_MESSAGING: 'pro',
+
+  CROSS_POST_ALL: 'creator',
+  SCHEDULED_POSTS_UNLIMITED: 'creator',
+  CREATE_COIN: 'creator',
+  AI_OPTIMIZED_TIMES: 'creator',
+  FULL_ANALYTICS: 'creator',
+  NEWSLETTER_CREATION: 'creator',
+  NEWSLETTER_MONETIZATION: 'creator',
+  CREATOR_DASHBOARD: 'creator',
+  REVENUE_TRACKING: 'creator',
+
+  EXTERNAL_PLATFORMS: 'enterprise',
+  SELF_HOSTED_CUSTOM_DOMAIN: 'enterprise',
+  WHITE_LABEL_REPORTS: 'enterprise',
+  API_ACCESS: 'enterprise',
+  TEAM_ACCOUNTS: 'enterprise',
+  PRIORITY_SUPPORT: 'enterprise',
+  EARLY_ACCESS: 'enterprise',
+};
+
+/**
+ * Check if a feature is accessible for a given tier using the membership map.
+ */
+export function hasMembershipFeature(userTier: string, featureKey: string): boolean {
+  const requiredTier = MEMBERSHIP_FEATURE_MAP[featureKey];
+  if (!requiredTier) return false; // Unknown feature = not accessible
+  return hasTierAccess(userTier as PremiumTier, requiredTier);
 }
 
 // ─── Hono middleware ────────────────────────────────────────────────────────

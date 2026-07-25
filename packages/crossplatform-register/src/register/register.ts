@@ -1,12 +1,16 @@
 import { registerBluesky } from './bluesky';
+import { registerBookWyrm } from './bookwyrm';
 import { registerFarcaster } from './farcaster';
+import { registerFunkwhale } from './funkwhale';
 import { registerLemmy } from './lemmy';
 import { registerLens } from './lens';
 import { registerMastodon } from './mastodon';
+import { registerMobilizon } from './mobilizon';
 import { registerNostr } from './nostr';
 import { registerPeerTube } from './peertube';
 import { registerPixelfed } from './pixelfed';
 import type { PlatformRegistration, RegisterOptions, RegistrationPlatform } from './types';
+import { registerWriteFreely } from './writefreely';
 
 const REGISTRABLE_PLATFORMS: RegistrationPlatform[] = [
   'farcaster',
@@ -17,6 +21,10 @@ const REGISTRABLE_PLATFORMS: RegistrationPlatform[] = [
   'lemmy',
   'peertube',
   'pixelfed',
+  'bookwyrm',
+  'funkwhale',
+  'mobilizon',
+  'writefreely',
 ];
 
 /**
@@ -51,6 +59,14 @@ export async function registerOnPlatform(
       return registerPeerTube(desiredUsername, walletAddress, opts);
     case 'pixelfed':
       return registerPixelfed(desiredUsername, walletAddress, opts);
+    case 'bookwyrm':
+      return registerBookWyrm(desiredUsername, walletAddress, opts);
+    case 'funkwhale':
+      return registerFunkwhale(desiredUsername, walletAddress, opts);
+    case 'mobilizon':
+      return registerMobilizon(desiredUsername, walletAddress, opts);
+    case 'writefreely':
+      return registerWriteFreely(desiredUsername, walletAddress, opts);
     default:
       return {
         platform: platform as RegistrationPlatform,
