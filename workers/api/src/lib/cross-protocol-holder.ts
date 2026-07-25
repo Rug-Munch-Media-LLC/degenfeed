@@ -331,10 +331,7 @@ interface RawHolderEntry {
   firstPurchaseAt?: number;
 }
 
-async function fetchCoinHolders(
-  coinAddress: string,
-  env: Env,
-): Promise<RawHolderEntry[]> {
+async function fetchCoinHolders(coinAddress: string, env: Env): Promise<RawHolderEntry[]> {
   if (!env.CACHE) return [];
 
   try {

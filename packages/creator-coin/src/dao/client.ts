@@ -25,7 +25,6 @@ export class DAOClient {
   public treasury: TreasuryTracker;
 
   constructor(config: DAOClientConfig = {}) {
-    this.config = config;
     this.snapshot = new SnapshotClient({
       hubUrl: config.snapshotHubUrl,
       sequencerUrl: config.snapshotSequencerUrl,

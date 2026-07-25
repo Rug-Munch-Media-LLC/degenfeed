@@ -18,7 +18,6 @@
 
 import {
   BONDING_PHASES,
-  FIXED_PLATFORM_FEE_BPS,
   type BondingPhase,
   type BondingPhaseInfo,
   type FeeConfig,
@@ -46,7 +45,6 @@ export interface CurveEra {
 }
 
 export const CURVE_ERAS: CurveEra[] = BONDING_PHASES.map((phase) => {
-  const _startSupply = (GRADUATION_SUPPLY * BigInt(phase.startPercent)) / 100n;
   const endSupply = (GRADUATION_SUPPLY * BigInt(phase.endPercent)) / 100n;
 
   // Different exponents for each phase to create the desired feel:
@@ -154,7 +152,7 @@ export function calculateNativeOut(
 /**
  * Calculate the output when selling tokens with full multi-fee breakdown.
  * Uses the FeeConfig to split between platform and creator fees.
- * 
+ *
  * @returns Breakdown including platform fee, creator fee, and net amounts
  */
 export function calculateNativeOutWithFees(
@@ -170,7 +168,14 @@ export function calculateNativeOutWithFees(
   totalFeePercent: string;
 } {
   if (price === 0n) {
-    return { gross: 0n, platformFee: 0n, creatorFee: 0n, totalFee: 0n, net: 0n, totalFeePercent: '0%' };
+    return {
+      gross: 0n,
+      platformFee: 0n,
+      creatorFee: 0n,
+      totalFee: 0n,
+      net: 0n,
+      totalFeePercent: '0%',
+    };
   }
 
   const gross = (tokensIn * price) / PRICE_DECIMALS;
@@ -206,7 +211,14 @@ export function calculateTokensOutWithFees(
   netTokens: bigint;
 } {
   if (price === 0n) {
-    return { grossTokens: 0n, platformFee: 0n, creatorFee: 0n, totalFee: 0n, netAmount: 0n, netTokens: 0n };
+    return {
+      grossTokens: 0n,
+      platformFee: 0n,
+      creatorFee: 0n,
+      totalFee: 0n,
+      netAmount: 0n,
+      netTokens: 0n,
+    };
   }
 
   const platformFee = (amountNative * BigInt(feeConfig.platformFeeBps)) / 10_000n;

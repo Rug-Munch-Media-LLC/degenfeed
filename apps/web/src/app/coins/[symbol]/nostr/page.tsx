@@ -97,9 +97,13 @@ export default function NostrCoinPage() {
     <div className="mx-auto max-w-4xl px-4 py-6 animate-page-enter">
       {/* Breadcrumb */}
       <nav className="mb-4 flex items-center gap-2 text-xs text-[var(--color-muted)]">
-        <Link href="/coins" className="hover:text-degen-400 transition-colors">Coins</Link>
+        <Link href="/coins" className="hover:text-degen-400 transition-colors">
+          Coins
+        </Link>
         <span>/</span>
-        <Link href={`/coins/${symbol}`} className="hover:text-degen-400 transition-colors">${symbol}</Link>
+        <Link href={`/coins/${symbol}`} className="hover:text-degen-400 transition-colors">
+          ${symbol}
+        </Link>
         <span>/</span>
         <span className="font-medium text-purple-400">Nostr</span>
       </nav>
@@ -109,9 +113,7 @@ export default function NostrCoinPage() {
         <div className="flex items-center gap-3">
           <span className="text-2xl">{PROTOCOL_META.icon}</span>
           <div>
-            <h1 className="text-lg font-bold text-[var(--color-fg)]">
-              ${coin.symbol} on Nostr
-            </h1>
+            <h1 className="text-lg font-bold text-[var(--color-fg)]">${coin.symbol} on Nostr</h1>
             <p className="text-xs text-[var(--color-muted)]">{PROTOCOL_META.description}</p>
           </div>
           <span className="ml-auto rounded-full bg-purple-500/15 px-3 py-1 text-xs font-semibold text-purple-400">
@@ -152,8 +154,8 @@ export default function NostrCoinPage() {
           <div className="rounded-xl border border-purple-500/20 bg-gradient-to-br from-purple-500/5 to-violet-500/5 p-4">
             <h2 className="mb-3 text-sm font-bold text-[var(--color-fg)]">⚡ Buy via Nostr Zap</h2>
             <p className="mb-4 text-xs text-[var(--color-muted)]">
-              Send a NIP-57 zap with $SYMBOL in the note content to buy this coin.
-              Your zap amount is converted to a coin purchase automatically.
+              Send a NIP-57 zap with $SYMBOL in the note content to buy this coin. Your zap amount
+              is converted to a coin purchase automatically.
             </p>
             <div className="rounded-lg bg-[var(--color-overlay)] p-3 font-mono text-xs text-[var(--color-muted)]">
               Send zap to nostr:note...

@@ -14,15 +14,15 @@
 
 import { Hono } from 'hono';
 import type { Env } from '../index';
-import { noCacheJsonResponse, jsonResponse } from '../index';
-import { sanitizeString } from '../sanitize';
+import { jsonResponse, noCacheJsonResponse } from '../index';
 import {
-  getHolderIdentities,
   getCrossProtocolLeaderboard,
   getHolderBadges,
-  resolveWalletFromProtocol,
+  getHolderIdentities,
   resolveCommonWallet,
+  resolveWalletFromProtocol,
 } from '../lib/cross-protocol-holder';
+import { sanitizeString } from '../sanitize';
 
 // ─── Router ─────────────────────────────────────────────────────────────
 

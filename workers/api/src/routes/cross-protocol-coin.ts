@@ -282,9 +282,10 @@ crossProtocolCoin.post('/launch', async (c) => {
 
   // 10. Announce on ALL connected protocols (multi-protocol)
   const degenfeedUrl = `${env.APP_BASE_URL || 'https://app.degenfeed.xyz'}/launch/${symbol}`;
-  const explorerUrl = chain === 'solana' || chain === 'solana_devnet'
-    ? `https://solscan.io/token/${deployResult.coinAddress}`
-    : `https://basescan.org/token/${deployResult.coinAddress}`;
+  const explorerUrl =
+    chain === 'solana' || chain === 'solana_devnet'
+      ? `https://solscan.io/token/${deployResult.coinAddress}`
+      : `https://basescan.org/token/${deployResult.coinAddress}`;
 
   const announcementResults: Record<string, unknown>[] = [];
   try {
@@ -366,13 +367,13 @@ crossProtocolCoin.post('/launch', async (c) => {
       chain,
       symbol,
       name,
-    zoraUrl,
-    degenfeedUrl,
-    announcements: announcementResults,
-    crossChain: {
-      registered: true,
-      visibleOn: ['base', 'solana', 'zora', originProtocol],
-    },
+      zoraUrl,
+      degenfeedUrl,
+      announcements: announcementResults,
+      crossChain: {
+        registered: true,
+        visibleOn: ['base', 'solana', 'zora', originProtocol],
+      },
     },
     201,
   );

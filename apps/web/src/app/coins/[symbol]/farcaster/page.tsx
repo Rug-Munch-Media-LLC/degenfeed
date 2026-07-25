@@ -82,7 +82,9 @@ export default function FarcasterCoinPage() {
     return (
       <div className="mx-auto max-w-4xl px-4 py-8 text-center">
         <div className="text-4xl mb-4">⬡</div>
-        <h1 className="text-xl font-bold text-[var(--color-fg)] mb-2">Coin not found on Farcaster</h1>
+        <h1 className="text-xl font-bold text-[var(--color-fg)] mb-2">
+          Coin not found on Farcaster
+        </h1>
         <p className="text-sm text-[var(--color-muted)] mb-4">
           This coin hasn't been announced on Farcaster yet.
         </p>
@@ -97,9 +99,13 @@ export default function FarcasterCoinPage() {
     <div className="mx-auto max-w-4xl px-4 py-6 animate-page-enter">
       {/* Breadcrumb */}
       <nav className="mb-4 flex items-center gap-2 text-xs text-[var(--color-muted)]">
-        <Link href="/coins" className="hover:text-degen-400 transition-colors">Coins</Link>
+        <Link href="/coins" className="hover:text-degen-400 transition-colors">
+          Coins
+        </Link>
         <span>/</span>
-        <Link href={`/coins/${symbol}`} className="hover:text-degen-400 transition-colors">${symbol}</Link>
+        <Link href={`/coins/${symbol}`} className="hover:text-degen-400 transition-colors">
+          ${symbol}
+        </Link>
         <span>/</span>
         <span className="font-medium text-indigo-400">Farcaster</span>
       </nav>
@@ -152,7 +158,9 @@ export default function FarcasterCoinPage() {
 
           {/* Farcaster Engagement */}
           <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-4">
-            <h2 className="mb-3 text-sm font-bold text-[var(--color-fg)]">⬡ Farcaster Engagement</h2>
+            <h2 className="mb-3 text-sm font-bold text-[var(--color-fg)]">
+              ⬡ Farcaster Engagement
+            </h2>
             <div className="grid grid-cols-3 gap-4">
               <div className="text-center">
                 <div className="text-2xl font-black text-indigo-400 tabular-nums">

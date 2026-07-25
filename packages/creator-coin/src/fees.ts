@@ -16,7 +16,7 @@
 import type { FeeConfig, FeeStructure } from './types';
 import { DEFAULT_FEES, FIXED_PLATFORM_FEE_BPS } from './types';
 
-export type { FeeStructure, FeeConfig };
+export type { FeeConfig, FeeStructure };
 export { DEFAULT_FEES, FIXED_PLATFORM_FEE_BPS };
 
 // ─── Fee Calculation ─────────────────────────────────────────────────────────

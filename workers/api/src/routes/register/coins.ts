@@ -15,6 +15,7 @@ import {
   handleCreatorRewardsLeaderboard,
 } from '../../lib/creator-rewards';
 import { ok, serverError } from '../../response-helpers';
+import { coinDiscovery } from '../../routes/coin-discovery';
 import {
   handleCoinStatsGainers,
   handleCoinStatsHighestVolume,
@@ -37,7 +38,6 @@ import {
 } from '../../routes/creator-dashboard';
 import { creatorVideos } from '../../routes/creator-videos';
 import { crossProtocolCoin } from '../../routes/cross-protocol-coin';
-import { coinDiscovery } from '../../routes/coin-discovery';
 import { crossProtocolIdentity } from '../../routes/cross-protocol-identity';
 import {
   handleFarcasterCoinDeploy,

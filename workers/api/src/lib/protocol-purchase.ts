@@ -76,7 +76,7 @@ export async function processProtocolPurchase(
     }
 
     // 2. Resolve buyer wallet from protocol identity
-    let buyerWallet = await resolveWalletFromProtocol(req.buyerProtocol, req.buyerIdentity, env);
+    const buyerWallet = await resolveWalletFromProtocol(req.buyerProtocol, req.buyerIdentity, env);
     if (!buyerWallet) {
       return { ok: false, error: `No wallet linked to ${req.buyerProtocol}:${req.buyerIdentity}` };
     }
@@ -145,13 +145,16 @@ export async function processNostrZapPurchase(
   // Convert millisats to appropriate chain units
   const amountIn = String(Math.floor(zapInvoice.amount * 1000)); // convert to smallest unit approximation
 
-  return processProtocolPurchase({
-    coinId: symbol,
-    amountIn,
-    buyerProtocol: 'nostr',
-    buyerIdentity: zapInvoice.zapRequest.pubkey,
-    chain: 'base',
-  }, env);
+  return processProtocolPurchase(
+    {
+      coinId: symbol,
+      amountIn,
+      buyerProtocol: 'nostr',
+      buyerIdentity: zapInvoice.zapRequest.pubkey,
+      chain: 'base',
+    },
+    env,
+  );
 }
 
 // ─── Farcaster Frame Purchase ──────────────────────────────────────────
@@ -180,13 +183,16 @@ export async function processFarcasterFramePurchase(
   // Default amount: $1 worth
   const amountIn = state.amountIn || '1000000000000000000'; // 1 ETH in wei
 
-  return processProtocolPurchase({
-    coinId: symbol,
-    amountIn,
-    buyerProtocol: 'farcaster',
-    buyerIdentity: String(frameData.fid),
-    chain: 'base',
-  }, env);
+  return processProtocolPurchase(
+    {
+      coinId: symbol,
+      amountIn,
+      buyerProtocol: 'farcaster',
+      buyerIdentity: String(frameData.fid),
+      chain: 'base',
+    },
+    env,
+  );
 }
 
 // ─── Telegram Bot Purchase ─────────────────────────────────────────────
@@ -203,13 +209,16 @@ export async function processTelegramPurchase(
 ): Promise<PurchaseResult> {
   if (!env) return { ok: false, error: 'Environment not available' };
 
-  return processProtocolPurchase({
-    coinId: symbol.toUpperCase(),
-    amountIn: amountIn || '1000000000000000000', // default $1
-    buyerProtocol: 'telegram',
-    buyerIdentity: userId,
-    chain: 'base',
-  }, env);
+  return processProtocolPurchase(
+    {
+      coinId: symbol.toUpperCase(),
+      amountIn: amountIn || '1000000000000000000', // default $1
+      buyerProtocol: 'telegram',
+      buyerIdentity: userId,
+      chain: 'base',
+    },
+    env,
+  );
 }
 
 // ─── Price Quotes ──────────────────────────────────────────────────────
@@ -242,7 +251,7 @@ export async function getProtocolPurchaseQuote(
     );
 
     const platformFeeBps = 50; // 0.5%
-    const platformFee = String(BigInt(amountIn) * BigInt(platformFeeBps) / BigInt(10000));
+    const platformFee = String((BigInt(amountIn) * BigInt(platformFeeBps)) / BigInt(10000));
 
     return {
       coinAddress: coinAddress,
@@ -251,7 +260,7 @@ export async function getProtocolPurchaseQuote(
       amountIn,
       estimatedTokensOut: String(estimatedTokens),
       price: String(coin.price || '0'),
-      totalUsd: Number(coin.priceUsd || 0) * Number(amountIn) / 1e18,
+      totalUsd: (Number(coin.priceUsd || 0) * Number(amountIn)) / 1e18,
       platformFee,
       chain,
       expiresAt: Date.now() + 30_000, // 30 second quote
@@ -307,10 +316,7 @@ async function executeTrade(input: TradeInput): Promise<PurchaseResult> {
 
 // ─── Helpers ───────────────────────────────────────────────────────────
 
-async function resolveCoinAddress(
-  coinId: string,
-  env: Env,
-): Promise<string | null> {
+async function resolveCoinAddress(coinId: string, env: Env): Promise<string | null> {
   if (!env.CACHE) return null;
 
   // If it looks like an address, return it directly

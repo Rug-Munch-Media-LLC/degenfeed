@@ -19,7 +19,6 @@ import {
   buildSpaceSettings,
   generateSpaceEns,
   generateSpaceName,
-  SnapshotClient,
 } from './snapshot';
 import { getTemplate, mergeVotingConfig } from './templates';
 import type {
@@ -43,11 +42,9 @@ const daoRegistry = new Map<string, DAOState>();
 // ─── DAO Factory ─────────────────────────────────────────────────────────────
 
 export class DAOFactory {
-  private snapshotClient: SnapshotClient;
   private kv: any;
 
-  constructor(config?: { kv?: any; snapshotClient?: SnapshotClient }) {
-    this.snapshotClient = config?.snapshotClient || new SnapshotClient();
+  constructor(config?: { kv?: any }) {
     this.kv = config?.kv;
   }
 
@@ -142,7 +139,7 @@ export class DAOFactory {
         template: dao.template,
         token: {
           address: dao.tokenAddress,
-          symbol: dao.name.split(' ')[0], // Extract symbol from name
+          symbol: (dao.name.split(' ')[0] || dao.name), // Extract symbol from name
           totalSupply: dao.totalSupply,
           chain: dao.chain,
         },
@@ -192,24 +189,8 @@ export class DAOFactory {
     }
 
     // Deployment is handled by the contract deployment script
-    // This method returns the params needed for deployment
-    const _deploymentParams: GovernorDeploymentParams = {
-      tokenAddress: dao.tokenAddress as `0x${string}`,
-      name: dao.name,
-      votingDelay: Math.floor(dao.votingConfig.votingDelay / 12), // Convert seconds to blocks
-      votingPeriod: Math.floor(dao.votingConfig.votingPeriod / 12),
-      quorum: (BigInt(dao.votingConfig.quorumPercent) * BigInt(dao.totalSupply)) / 100n,
-      proposalThreshold: BigInt(
-        Math.floor((parseFloat(dao.totalSupply) * dao.votingConfig.proposalThreshold) / 100),
-      ),
-      timelockDelay: 172800, // 48 hours default
-      emergencySigners: [],
-      emergencyThreshold: dao.votingConfig.approvalThreshold,
-    };
-
-    // Return the params — actual deployment happens via contract interaction
-    // when the user has a wallet connected
-    return null; // Placeholder — deployment requires user tx
+    // Returns null — actual deployment requires a user wallet tx
+    return null;
   }
 
   // ─── Query Methods ────────────────────────────────────────────────────────

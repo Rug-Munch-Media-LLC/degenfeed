@@ -63,23 +63,6 @@ export type {
 
 // ─── Creator Controls 2.0 — Full Options ──────────────────────────────────
 
-export {
-  areTransfersAllowed,
-  buildCreatorConfig,
-  buildDAOConfig,
-  calculateAllocations,
-  calculateBurn,
-  calculateClaimableAmount,
-  calculateFeeDistribution,
-  calculatePlatformFee,
-  calculateVestingSchedule,
-  creatorOptionsToConfig,
-  CREATOR_CONTROL_CONSTANTS,
-  generateOnChainCreatorControlsCode,
-  getFeeBreakdown,
-  validateCreatorControls,
-  validateProtocolSelection,
-} from './creator-controls';
 export type {
   AllocationBreakdown,
   BurnResult,
@@ -91,14 +74,31 @@ export type {
   VestingStage,
 } from './creator-controls';
 export {
-  DEFAULT_CREATOR_CONTROLS,
-  DEFAULT_VESTING_CONFIG,
-  DEFAULT_PROTOCOL_SELECTION,
-  DEFAULT_DAO_CONFIG,
-  DEFAULT_DAO_VOTING_PARAMS,
-  VESTING_CONSTANTS,
+  areTransfersAllowed,
+  buildCreatorConfig,
+  buildDAOConfig,
+  CREATOR_CONTROL_CONSTANTS,
+  calculateAllocations,
+  calculateBurn,
+  calculateClaimableAmount,
+  calculateFeeDistribution,
+  calculatePlatformFee,
+  calculateVestingSchedule,
+  creatorOptionsToConfig,
+  generateOnChainCreatorControlsCode,
+  getFeeBreakdown,
+  validateCreatorControls,
+  validateProtocolSelection,
+} from './creator-controls';
+export {
   CHAIN_CONFIG,
   createFeeConfig,
+  DEFAULT_CREATOR_CONTROLS,
+  DEFAULT_DAO_CONFIG,
+  DEFAULT_DAO_VOTING_PARAMS,
+  DEFAULT_PROTOCOL_SELECTION,
+  DEFAULT_VESTING_CONFIG,
+  VESTING_CONSTANTS,
 } from './types';
 
 // ─── Bonding Curve 2.0 ──────────────────────────────────────────────────
@@ -254,12 +254,12 @@ export type {
   CrossChainPrice,
   CurveState,
   DAODeploymentConfig,
-  DAOVotingParams,
   DAOTemplateType,
+  DAOVotingParams,
   EarlyUnlockPenalty,
   FeeConfig,
-  FeeRecipientType,
   FeeRecipientSplit,
+  FeeRecipientType,
   LabeledAllocation,
   LabeledWalletOnChain,
   LiveStreamInfo,

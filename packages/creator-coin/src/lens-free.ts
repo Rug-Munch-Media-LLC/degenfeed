@@ -48,9 +48,6 @@ const LENS_API_URL = 'https://api-v2.lens.dev/graphql';
 /** Lens Momoka explorer base URL. */
 const MOMOKA_EXPLORER_URL = 'https://momoka.lens.xyz/tx';
 
-/** Lens Hub URL for profile lookups. */
-const _LENS_HUB_URL = 'https://hub.lens.xyz';
-
 // ─── Types ─────────────────────────────────────────────────────────────────
 
 export interface LensFreePostConfig {

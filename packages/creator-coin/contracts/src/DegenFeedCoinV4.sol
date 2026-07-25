@@ -1159,7 +1159,7 @@ contract DegenFeedCoinV4 is ReentrancyGuard {
         uint256 vestingRemaining,
         bool hasDAO
     ) {
-        uint256 creatorBalance = _balances[creator];
+        creatorAddress = creator;
         allocationPct = params.creatorAllocationBps;
         feePct = params.feeBps;
         vestingPct = params.vestingPercentageBps;

@@ -80,7 +80,9 @@ export default function MastodonCoinPage() {
     return (
       <div className="mx-auto max-w-4xl px-4 py-8 text-center">
         <div className="text-4xl mb-4">🐘</div>
-        <h1 className="text-xl font-bold text-[var(--color-fg)] mb-2">Coin not found on Mastodon</h1>
+        <h1 className="text-xl font-bold text-[var(--color-fg)] mb-2">
+          Coin not found on Mastodon
+        </h1>
         <p className="text-sm text-[var(--color-muted)] mb-4">
           This coin hasn't been announced on Mastodon yet.
         </p>
@@ -94,9 +96,13 @@ export default function MastodonCoinPage() {
   return (
     <div className="mx-auto max-w-4xl px-4 py-6 animate-page-enter">
       <nav className="mb-4 flex items-center gap-2 text-xs text-[var(--color-muted)]">
-        <Link href="/coins" className="hover:text-degen-400 transition-colors">Coins</Link>
+        <Link href="/coins" className="hover:text-degen-400 transition-colors">
+          Coins
+        </Link>
         <span>/</span>
-        <Link href={`/coins/${symbol}`} className="hover:text-degen-400 transition-colors">${symbol}</Link>
+        <Link href={`/coins/${symbol}`} className="hover:text-degen-400 transition-colors">
+          ${symbol}
+        </Link>
         <span>/</span>
         <span className="font-medium text-indigo-400">Mastodon</span>
       </nav>
@@ -105,9 +111,7 @@ export default function MastodonCoinPage() {
         <div className="flex items-center gap-3">
           <span className="text-2xl">{PROTOCOL_META.icon}</span>
           <div>
-            <h1 className="text-lg font-bold text-[var(--color-fg)]">
-              ${coin.symbol} on Mastodon
-            </h1>
+            <h1 className="text-lg font-bold text-[var(--color-fg)]">${coin.symbol} on Mastodon</h1>
             <p className="text-xs text-[var(--color-muted)]">{PROTOCOL_META.description}</p>
           </div>
           <span className="ml-auto rounded-full bg-indigo-500/15 px-3 py-1 text-xs font-semibold text-indigo-400">
@@ -182,8 +186,8 @@ export default function MastodonCoinPage() {
           <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-3">
             <div className="mb-2 text-xs font-semibold text-[var(--color-fg)]">About Mastodon</div>
             <p className="text-[10px] text-[var(--color-muted)] leading-relaxed">
-              Mastodon is a federated social network using the ActivityPub protocol.
-              Join the fediverse and trade creator coins across instances.
+              Mastodon is a federated social network using the ActivityPub protocol. Join the
+              fediverse and trade creator coins across instances.
             </p>
           </div>
         </div>
