@@ -118,13 +118,16 @@ describe('SignInModal', () => {
   it('shows back button to return to protocol list', () => {
     renderSignInModal({ open: true });
     fireEvent.click(screen.getByText('Nostr'));
-    expect(screen.getByText('Back')).toBeDefined();
+    // NostrSignIn uses "← Back" (arrow + space + text)
+    const backBtn = screen.getByText(/Back/);
+    expect(backBtn).toBeDefined();
   });
 
   it('returns to protocol list when back is clicked', () => {
     renderSignInModal({ open: true });
     fireEvent.click(screen.getByText('Nostr'));
-    fireEvent.click(screen.getByText('Back'));
+    const backBtn = screen.getByText(/Back/);
+    fireEvent.click(backBtn);
     expect(screen.getByText('Sign in to DegenFeed')).toBeDefined();
   });
 

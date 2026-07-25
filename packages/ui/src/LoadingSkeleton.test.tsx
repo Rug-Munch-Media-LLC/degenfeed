@@ -6,8 +6,8 @@
 
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { CardSkeleton } from './LoadingSkeleton';
 import { ErrorState } from './ErrorState';
+import { CardSkeleton } from './LoadingSkeleton';
 
 afterEach(() => {
   cleanup();

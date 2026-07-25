@@ -7,7 +7,7 @@
 
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { NotificationBell, type Notification } from './NotificationBell';
+import { type Notification, NotificationBell } from './NotificationBell';
 
 afterEach(() => {
   cleanup();
@@ -137,12 +137,14 @@ describe('NotificationBell', () => {
   it('shows protocol icon with correct title for each notification', () => {
     render(
       <NotificationBell
-        notifications={[makeNotification({
-          id: 'n1',
-          type: 'like',
-          actorName: 'Alice',
-          protocol: 'farcaster',
-        })]}
+        notifications={[
+          makeNotification({
+            id: 'n1',
+            type: 'like',
+            actorName: 'Alice',
+            protocol: 'farcaster',
+          }),
+        ]}
         unreadCount={0}
         onFetch={vi.fn()}
         onMarkRead={vi.fn()}
@@ -188,11 +190,13 @@ describe('NotificationBell', () => {
   it('shows post text in notification when available', () => {
     render(
       <NotificationBell
-        notifications={[makeNotification({
-          type: 'reply',
-          actorName: 'Alice',
-          postText: 'Hello world!',
-        })]}
+        notifications={[
+          makeNotification({
+            type: 'reply',
+            actorName: 'Alice',
+            postText: 'Hello world!',
+          }),
+        ]}
         unreadCount={0}
         onFetch={vi.fn()}
         onMarkRead={vi.fn()}
