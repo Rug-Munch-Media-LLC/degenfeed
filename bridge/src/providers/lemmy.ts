@@ -250,6 +250,163 @@ export async function fetchCommunityPosts(
   }
 }
 
+// ─── RSS Feed Fallback ────────────────────────────────────────────────
+
+/**
+ * Fetch posts from a Lemmy instance's RSS feed.
+ * Lemmy exposes RSS at /feeds/{community}.xml or /feeds/{community}.atom
+ */
+async function fetchRssFromInstance(
+  baseUrl: string,
+  community: string,
+  limit: number,
+): Promise<UnifiedPost[]> {
+  try {
+    const hostname = new URL(baseUrl).hostname;
+    // Try RSS first, then Atom
+    const feedUrls = [`${baseUrl}/feeds/${community}.xml`, `${baseUrl}/feeds/${community}.atom`];
+
+    let xmlText: string | null = null;
+    let usedUrl = '';
+    for (const url of feedUrls) {
+      try {
+        const res = await globalThis.fetch(url, {
+          headers: { 'User-Agent': 'DegenFeed-Bridge/0.1' },
+          signal: AbortSignal.timeout(5000),
+        });
+        if (res.ok) {
+          xmlText = await res.text();
+          usedUrl = url;
+          break;
+        }
+      } catch {}
+    }
+
+    if (!xmlText) return [];
+
+    // Parse RSS items using simple regex (predictable Lemmy RSS format)
+    const posts: UnifiedPost[] = [];
+    const isAtom = usedUrl.endsWith('.atom');
+
+    if (isAtom) {
+      // Atom format
+      const entryRegex = /<entry>([\s\S]*?)<\/entry>/g;
+      let match: RegExpExecArray | null;
+      // biome-ignore lint/suspicious/noAssignInExpressions: standard regex loop pattern
+      while ((match = entryRegex.exec(xmlText)) !== null && posts.length < limit) {
+        const entry = match[1];
+        const title = extractXmlValue(entry, 'title');
+        const link = extractXmlAttr(entry, 'link', 'href') || extractXmlValue(entry, 'id');
+        const published = extractXmlValue(entry, 'published') || extractXmlValue(entry, 'updated');
+        const summary = extractXmlValue(entry, 'summary') || extractXmlValue(entry, 'content');
+        const authorName = extractXmlValue(entry, 'name') || 'unknown';
+
+        if (title) {
+          const createdAt = published ? new Date(published).getTime() : Date.now();
+          posts.push({
+            id: `lemmy-rss:${Buffer.from(title).toString('base64').slice(0, 20)}@${hostname}`,
+            protocol: 'lemmy',
+            author: {
+              id: `lemmy:rss@${hostname}`,
+              primary: { protocol: 'lemmy', id: `rss@${hostname}` },
+              handles: { lemmy: `${authorName}@${hostname}` },
+              displayName: authorName,
+              bio: '',
+              avatarUrl: '',
+              followerCount: 0,
+              followingCount: 0,
+              links: [{ label: 'community', url: `https://${hostname}/c/${community}` }],
+              keys: {},
+            },
+            text: summary ? `${title}\n\n${summary}` : title,
+            embeds: link ? [{ kind: 'link', url: link }] : [],
+            contentType: link ? 'link' : 'text',
+            createdAt: Number.isNaN(createdAt) ? Date.now() : createdAt,
+            metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
+            engagement: {
+              viewerLiked: false,
+              viewerReposted: false,
+              viewerBookmarked: false,
+              raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
+            },
+            raw: { source: 'rss', url: usedUrl },
+            niches: guessNiches(title + (summary || ''), community),
+          });
+        }
+      }
+    } else {
+      // RSS 2.0 format
+      const itemRegex = /<item>([\s\S]*?)<\/item>/g;
+      let match: RegExpExecArray | null;
+      // biome-ignore lint/suspicious/noAssignInExpressions: standard regex loop pattern
+      while ((match = itemRegex.exec(xmlText)) !== null && posts.length < limit) {
+        const item = match[1];
+        const title = extractXmlValue(item, 'title');
+        const link = extractXmlValue(item, 'link');
+        const pubDate = extractXmlValue(item, 'pubDate');
+        const description = extractXmlValue(item, 'description');
+        const author =
+          extractXmlValue(item, 'author') || extractXmlValue(item, 'dc:creator') || 'unknown';
+
+        if (title) {
+          const createdAt = pubDate ? new Date(pubDate).getTime() : Date.now();
+          posts.push({
+            id: `lemmy-rss:${Buffer.from(title).toString('base64').slice(0, 20)}@${hostname}`,
+            protocol: 'lemmy',
+            author: {
+              id: `lemmy:rss@${hostname}`,
+              primary: { protocol: 'lemmy', id: `rss@${hostname}` },
+              handles: { lemmy: `${author}@${hostname}` },
+              displayName: author,
+              bio: '',
+              avatarUrl: '',
+              followerCount: 0,
+              followingCount: 0,
+              links: [{ label: 'community', url: `https://${hostname}/c/${community}` }],
+              keys: {},
+            },
+            text: description
+              ? `${title}\n\n${description.replace(/<[^>]*>/g, '').slice(0, 500)}`
+              : title,
+            embeds: link ? [{ kind: 'link', url: link }] : [],
+            contentType: link ? 'link' : 'text',
+            createdAt: Number.isNaN(createdAt) ? Date.now() : createdAt,
+            metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
+            engagement: {
+              viewerLiked: false,
+              viewerReposted: false,
+              viewerBookmarked: false,
+              raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
+            },
+            raw: { source: 'rss', url: usedUrl },
+            niches: guessNiches(title + (description || ''), community),
+          });
+        }
+      }
+    }
+
+    return posts;
+  } catch {
+    return [];
+  }
+}
+
+/** Extract XML tag inner text */
+function extractXmlValue(xml: string, tag: string): string {
+  const regex = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, 'i');
+  const match = regex.exec(xml);
+  if (!match) return '';
+  // Strip CDATA
+  return match[1].replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1').trim();
+}
+
+/** Extract XML attribute value */
+function extractXmlAttr(xml: string, tag: string, attr: string): string {
+  const regex = new RegExp(`<${tag}[^>]*${attr}=["']([^"']*)["']`, 'i');
+  const match = regex.exec(xml);
+  return match ? match[1].trim() : '';
+}
+
 // ─── Main ────────────────────────────────────────────────────────────
 
 export const schema: SchemaGuard = {
@@ -264,7 +421,7 @@ export const schema: SchemaGuard = {
 export async function fetchLemmyPosts(limit = 20): Promise<UnifiedPost[]> {
   const all: UnifiedPost[] = [];
 
-  // Fetch from local Lemmy communities
+  // Fetch from local Lemmy communities via API
   const localPromises = LOCAL_COMMUNITIES.map((comm) =>
     fetchCommunityPosts(LEMMY_LOCAL, comm, Math.ceil(limit / LOCAL_COMMUNITIES.length)),
   );
@@ -278,7 +435,20 @@ export async function fetchLemmyPosts(limit = 20): Promise<UnifiedPost[]> {
     }
   }
 
-  // If local gave us little, try external instances
+  // Also fetch from local RSS feeds (complementary to API)
+  if (all.length < limit) {
+    const rssPromises = LOCAL_COMMUNITIES.map((comm) =>
+      fetchRssFromInstance(LEMMY_LOCAL, comm, Math.ceil(limit / LOCAL_COMMUNITIES.length)),
+    );
+    const rssResults = await Promise.allSettled(rssPromises);
+    for (const r of rssResults) {
+      if (r.status === 'fulfilled') {
+        all.push(...r.value);
+      }
+    }
+  }
+
+  // If local gave us little, try external instances via API
   if (all.length < 5) {
     const externalTasks: Array<{ url: string; community: string }> = [];
     for (const inst of EXTERNAL_INSTANCES.slice(0, 3)) {
@@ -291,9 +461,20 @@ export async function fetchLemmyPosts(limit = 20): Promise<UnifiedPost[]> {
     for (const r of externalResults) {
       if (r.status === 'fulfilled') all.push(...r.value);
     }
+
+    // Also try external RSS feeds
+    if (all.length < 5) {
+      const externalRssPromises = externalTasks.map((t) =>
+        fetchRssFromInstance(t.url, t.community, 3),
+      );
+      const externalRssResults = await Promise.allSettled(externalRssPromises);
+      for (const r of externalRssResults) {
+        if (r.status === 'fulfilled') all.push(...r.value);
+      }
+    }
   }
 
-  // Deduplicate
+  // Deduplicate by content hash
   const seen = new Set<string>();
   const deduped: UnifiedPost[] = [];
   for (const p of all) {
@@ -304,7 +485,9 @@ export async function fetchLemmyPosts(limit = 20): Promise<UnifiedPost[]> {
     }
   }
 
-  console.log(`[bridge] Lemmy: ${deduped.length} posts (local: ${localCount})`);
+  console.log(
+    `[bridge] Lemmy: ${deduped.length} posts (API: ${localCount}, RSS fallback: ${all.length - localCount})`,
+  );
   return deduped;
 }
 

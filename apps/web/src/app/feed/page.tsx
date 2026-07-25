@@ -123,7 +123,7 @@ export default function FeedPage() {
   const [exploreRatio, setExploreRatio] = useState(30);
   const [activePreset, setActivePreset] = useState<string | null>(null);
   const hasSignedIn = ready && Object.values(signedInProtocols).some(Boolean);
-  const { unreadCount, markRead } = useNotifications(hasSignedIn);
+  const { unreadCount } = useNotifications(hasSignedIn);
   const { layout, setLayout, isCompact } = useFeedLayout();
   const feedContainerRef = useRef<HTMLDivElement>(null);
   useFeedPosition(feedContainerRef);
@@ -397,7 +397,17 @@ export default function FeedPage() {
         url.searchParams.set('limit', String(loadedLimit));
         const protocolsToFetch = protocolFilter
           ? [protocolFilter]
-          : ['nostr', 'farcaster', 'lens', 'bluesky', 'mastodon', 'reddit', 'rss'];
+          : [
+              'nostr',
+              'farcaster',
+              'lens',
+              'bluesky',
+              'mastodon',
+              'lemmy',
+              'peertube',
+              'reddit',
+              'rss',
+            ];
         url.searchParams.set('protocols', protocolsToFetch.join(','));
         if (activeTab === 'following') url.searchParams.set('filter', 'following');
         if (hideLowQuality) {

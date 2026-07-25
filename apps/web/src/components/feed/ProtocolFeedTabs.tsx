@@ -30,13 +30,15 @@ export interface ProtocolFeedTabsProps {
 
 const DEFAULT_TABS: ProtocolTab[] = [
   { id: null, label: 'All', icon: '\u2606', color: '#00ff41' },
-  { id: 'nostr', label: 'Nostr', icon: '\u2630', color: getProtocolColor('nostr') },
+  { id: 'nostr', label: 'Nostr', icon: '\u26A1', color: getProtocolColor('nostr') },
   { id: 'farcaster', label: 'Farcaster', icon: '\u25C8', color: getProtocolColor('farcaster') },
   { id: 'lens', label: 'Lens', icon: '\u25CE', color: getProtocolColor('lens') },
   { id: 'bluesky', label: 'Bluesky', icon: '\u2601', color: getProtocolColor('bluesky') },
-  { id: 'mastodon', label: 'Mastodon', icon: 'M', color: getProtocolColor('mastodon') },
-  { id: 'reddit', label: 'Reddit', icon: 'R', color: getProtocolColor('reddit') },
-  { id: 'rss', label: 'RSS', icon: 'A', color: getProtocolColor('rss') },
+  { id: 'mastodon', label: 'Mastodon', icon: '\u2B50', color: getProtocolColor('mastodon') },
+  { id: 'lemmy', label: 'Lemmy', icon: '\uD83D\uDDE3', color: getProtocolColor('lemmy') },
+  { id: 'peertube', label: 'PeerTube', icon: '\uD83C\uDFAC', color: getProtocolColor('peertube') },
+  { id: 'reddit', label: 'Reddit', icon: '\uD83D\uDD34', color: getProtocolColor('reddit') },
+  { id: 'rss', label: 'RSS', icon: '\uD83D\uDCF0', color: getProtocolColor('rss') },
 ];
 
 export function getProtocolTabs(): ProtocolTab[] {
