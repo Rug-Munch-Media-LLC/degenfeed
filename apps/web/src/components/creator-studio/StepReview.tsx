@@ -11,6 +11,36 @@ interface StepReviewProps {
   onContinue: () => void;
 }
 
+function getExplorerUrl(deployTarget: string, hash: string): string {
+  switch (deployTarget) {
+    case 'base':
+      return `https://basescan.org/tx/${hash}`;
+    case 'base_sepolia':
+      return `https://sepolia.basescan.org/tx/${hash}`;
+    case 'solana':
+      return `https://solscan.io/tx/${hash}`;
+    case 'solana_devnet':
+      return `https://solscan.io/tx/${hash}?cluster=devnet`;
+    default:
+      return `https://basescan.org/tx/${hash}`;
+  }
+}
+
+function getCoinExplorerUrl(deployTarget: string, address: string): string {
+  switch (deployTarget) {
+    case 'base':
+      return `https://basescan.org/address/${address}`;
+    case 'base_sepolia':
+      return `https://sepolia.basescan.org/address/${address}`;
+    case 'solana':
+      return `https://solscan.io/token/${address}`;
+    case 'solana_devnet':
+      return `https://solscan.io/token/${address}?cluster=devnet`;
+    default:
+      return `https://basescan.org/address/${address}`;
+  }
+}
+
 export default function StepReview({ form, update, simulateDeploy }: StepReviewProps) {
   return (
     <div className="space-y-5">
@@ -150,9 +180,14 @@ export default function StepReview({ form, update, simulateDeploy }: StepReviewP
             <div className="space-y-1 text-[10px] font-mono">
               <div className="flex items-center gap-2">
                 <span className="text-[var(--color-muted)]">Contract:</span>
-                <span className="text-[var(--color-fg)]">
-                  {form.deployedAddress.slice(0, 20)}...{form.deployedAddress.slice(-8)}
-                </span>
+                <a
+                  href={getCoinExplorerUrl(form.deployTarget, form.deployedAddress)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-degen-400 hover:text-degen-300 underline underline-offset-2"
+                >
+                  {form.deployedAddress.slice(0, 16)}...{form.deployedAddress.slice(-8)}
+                </a>
                 <button
                   onClick={() => navigator.clipboard.writeText(form.deployedAddress)}
                   className="text-degen-400 hover:text-degen-300"
@@ -160,11 +195,34 @@ export default function StepReview({ form, update, simulateDeploy }: StepReviewP
                   📋
                 </button>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-[var(--color-muted)]">Tx:</span>
-                <span className="text-[var(--color-fg)]">
-                  {form.txHash.slice(0, 20)}...{form.txHash.slice(-8)}
-                </span>
+              {form.txHash && (
+                <div className="flex items-center gap-2">
+                  <span className="text-[var(--color-muted)]">Tx:</span>
+                  <a
+                    href={getExplorerUrl(form.deployTarget, form.txHash)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-degen-400 hover:text-degen-300 underline underline-offset-2"
+                  >
+                    {form.txHash.slice(0, 20)}...{form.txHash.slice(-8)}
+                  </a>
+                  <span className="text-[9px] text-[var(--color-muted)]">
+                    ↗{' '}
+                    {form.deployTarget === 'solana' || form.deployTarget === 'solana_devnet'
+                      ? 'Solscan'
+                      : 'BaseScan'}
+                  </span>
+                </div>
+              )}
+              <div className="mt-2 text-[9px] text-[var(--color-muted)]">
+                Chain:{' '}
+                {form.deployTarget === 'base'
+                  ? 'Base Mainnet'
+                  : form.deployTarget === 'base_sepolia'
+                    ? 'Base Sepolia'
+                    : form.deployTarget === 'solana'
+                      ? 'Solana Mainnet'
+                      : 'Solana Devnet'}
               </div>
             </div>
           </div>
@@ -178,6 +236,14 @@ export default function StepReview({ form, update, simulateDeploy }: StepReviewP
             >
               🪙 View Coin Page
             </Link>
+            <a
+              href={getCoinExplorerUrl(form.deployTarget, form.deployedAddress)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--color-glass-border)] px-4 py-2 text-[11px] font-semibold text-[var(--color-fg)] hover:border-degen-500/30 transition-all"
+            >
+              🔍 View on Explorer
+            </a>
             <Link
               href="/creator/dashboard"
               className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--color-glass-border)] px-4 py-2 text-[11px] font-semibold text-[var(--color-fg)] hover:border-degen-500/30 transition-all"

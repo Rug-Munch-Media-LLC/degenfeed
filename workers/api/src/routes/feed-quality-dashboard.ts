@@ -10,14 +10,14 @@
  */
 
 import { Hono } from 'hono';
-import type { Env } from '../index';
-import { jsonResponse } from '../index';
 import {
   buildQualityDashboard,
   loadDashboardHistory,
   loadLatestDashboardSnapshot,
   storeDashboardSnapshot,
 } from '../feed/feed-quality-dashboard';
+import type { Env } from '../index';
+import { jsonResponse } from '../index';
 
 const QUALITY_DASHBOARD_PREFIX = '/api/admin/feed-quality';
 
@@ -44,8 +44,11 @@ qualityDashboardRoutes.get('/dashboard', async (c) => {
 
   if (postsParam) {
     try {
-      const posts = JSON.parse(postsParam) as any[];
-      const metrics = buildQualityDashboard(posts as any, Date.now());
+      const posts = JSON.parse(postsParam) as Record<string, unknown>[];
+      const metrics = buildQualityDashboard(
+        posts as unknown as import('./post').UnifiedPost[],
+        Date.now(),
+      );
       return jsonResponse(metrics);
     } catch (err) {
       return jsonResponse({ error: 'Invalid posts payload' }, 400);
@@ -74,7 +77,7 @@ qualityDashboardRoutes.post('/snapshot', async (c) => {
   }
 
   try {
-    const body = await c.req.json() as { posts?: any[] };
+    const body = (await c.req.json()) as { posts?: Record<string, unknown>[] };
     if (!body.posts || !Array.isArray(body.posts)) {
       return jsonResponse({ error: 'Body must contain { posts: UnifiedPost[] }' }, 400);
     }
@@ -112,20 +115,27 @@ qualityDashboardRoutes.get('/history', async (c) => {
 
 // ─── Auth Helper ───────────────────────────────────────────────────────
 
-async function authenticateAdmin(
-  c: { req: { header: (name: string) => string | null }; env: Env },
-): Promise<{ authorized: boolean }> {
+async function authenticateAdmin(c: {
+  req: { header: (name: string) => string | null };
+  env: Env;
+}): Promise<{ authorized: boolean }> {
   // Check for admin session cookie
   const cookie = c.req.header('cookie') ?? '';
-  const sessionMatch = cookie.split(';').map((s) => s.trim()).find((s) => s.startsWith('__Host-dfid='));
+  const sessionMatch = cookie
+    .split(';')
+    .map((s) => s.trim())
+    .find((s) => s.startsWith('__Host-dfid='));
 
   if (sessionMatch && c.env.AUTH_SECRET) {
     try {
       const { verifySessionCookie } = await import('../session');
-      const payload = await verifySessionCookie(sessionMatch.slice('__Host-dfid='.length), c.env.AUTH_SECRET);
+      const payload = await verifySessionCookie(
+        sessionMatch.slice('__Host-dfid='.length),
+        c.env.AUTH_SECRET,
+      );
       if (payload?.address) {
         // Check if the address has admin role
-        const adminAddresses = (c.env as any).ADMIN_ADDRESSES as string ?? '';
+        const adminAddresses = ((c.env as any).ADMIN_ADDRESSES as string) ?? '';
         const admins = adminAddresses.split(',').map((a) => a.trim().toLowerCase());
         if (admins.includes(payload.address.toLowerCase())) {
           return { authorized: true };

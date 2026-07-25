@@ -124,7 +124,10 @@ const creatorConfig = new Hono<{ Bindings: Env }>();
 
 // ─── Middleware ──────────────────────────────────────────────────────────────
 
-async function requireCreatorAuth(c: any, env: Env): Promise<{ address: string } | Response> {
+async function requireCreatorAuth(
+  c: { req: { raw: Request } },
+  env: Env,
+): Promise<{ address: string } | Response> {
   const req = c.req.raw;
   const session = await requireSession(req, env);
   if (session instanceof Response) return session;

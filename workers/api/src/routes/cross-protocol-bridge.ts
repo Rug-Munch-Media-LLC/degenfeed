@@ -14,8 +14,8 @@
 import type { Protocol } from '@degenfeed/types';
 import { type Env, jsonResponse, noCacheJsonResponse } from '../index';
 import type { PublishInput } from '../lib/publish-orchestrator';
-import { ALLOWED_PROTOCOLS, hasSuspiciousPayload, sanitizeString } from '../sanitize';
 import { methodNotAllowed } from '../response-helpers';
+import { ALLOWED_PROTOCOLS, hasSuspiciousPayload, sanitizeString } from '../sanitize';
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
@@ -392,9 +392,7 @@ export async function handleSyncEdit(request: Request, env: Env): Promise<Respon
   }
 
   // Find the sibling map
-  const { getSiblingUris, recordEditSync, updateEditSyncStatus } = await import(
-    '../lib/cross-post-store'
-  );
+  const { recordEditSync, updateEditSyncStatus } = await import('../lib/cross-post-store');
 
   // Parse the df:// URI to get the source protocol
   const parsed = parseDfUri(postUri);

@@ -10,7 +10,10 @@
     "./channels": "./src/channels.ts",
     "./context": "./src/websocket-context.tsx",
     "./useRealtime": "./src/useRealtime.ts",
-    "./message-bridge": "./src/message-bridge.ts"
+    "./message-bridge": "./src/message-bridge.ts",
+    "./identity-resolver": "./src/identity-resolver.ts",
+    "./protocol-transports": "./src/protocol-transports.ts",
+    "./nip17-transport": "./src/nip17-transport.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

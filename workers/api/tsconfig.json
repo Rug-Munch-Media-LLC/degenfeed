@@ -38,7 +38,12 @@
       "@degenfeed/ghost-bridge": ["packages/ghost-bridge/src"],
       "@degenfeed/lemmy-sdk": ["packages/lemmy-sdk/src"],
       "@degenfeed/mirror-bridge": ["packages/mirror-bridge/src"],
-      "@degenfeed/paragraph-bridge": ["packages/paragraph-bridge/src"]
+      "@degenfeed/paragraph-bridge": ["packages/paragraph-bridge/src"],
+      "@degenfeed/crypto": ["packages/crypto/src"],
+      "@degenfeed/cross-protocol-bridge": ["packages/cross-protocol-bridge/src"],
+      "@degenfeed/realtime": ["packages/realtime/src"],
+      "@degenfeed/realtime/*": ["packages/realtime/src/*"],
+      "@degenfeed/pixelfed-sdk": ["packages/pixelfed-sdk/src"]
     }
   },
   "include": ["src"],

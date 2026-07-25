@@ -28,6 +28,10 @@ export interface PremiumUsage {
   queuedPosts: number;
   batchSize: number;
   teamMembers: number;
+  composerPosts: number;
+  analyticsPosts: number;
+  /** AI-optimized scheduling usage count */
+  aiOptimizations: number;
 }
 
 export interface FeatureAccess {
@@ -79,6 +83,9 @@ export async function getPremiumUsage(walletAddress: string, env: Env): Promise<
     queuedPosts: 0,
     batchSize: 0,
     teamMembers: 0,
+    composerPosts: 0,
+    analyticsPosts: 0,
+    aiOptimizations: 0,
   };
 
   if (!env.SUBSCRIPTIONS) return defaults;

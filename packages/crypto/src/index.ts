@@ -1,0 +1,40 @@
+/**
+ * @degenfeed/crypto — Bundle exports
+ *
+ * Re-exports all crypto modules for easy import.
+ */
+export {
+  consumeOneTimePreKey,
+  type DecryptedMessage,
+  decryptMessage,
+  type EncryptedPayload,
+  encryptMessage,
+  generateKeyBundle,
+  generateKyberKeys,
+  generateSafetyNumbers,
+  getFromSecureEnclave,
+  getIdentityKey,
+  getKeyBundle,
+  getKyberPublicKey,
+  hasKeyBundle,
+  hybridX3dhInitiate,
+  initiateConversation,
+  initSession,
+  type KeyBundle,
+  loadSession,
+  MAX_SKIP,
+  type PQKeyBundle,
+  PREKEY_POOL_SIZE,
+  ratchetDecrypt,
+  ratchetEncrypt,
+  receiveKeyExchange,
+  rotateKeys,
+  type SafetyNumbers,
+  type SessionState,
+  SIGNED_PREKEY_ROTATION_MS,
+  saveSession,
+  sessionKey,
+  storeInSecureEnclave,
+  x3dhInitiate,
+  x3dhReceive,
+} from './e2e-messaging';

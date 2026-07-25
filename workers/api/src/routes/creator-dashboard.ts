@@ -14,6 +14,12 @@
 
 import type { Env } from '../index';
 import { jsonResponse, log, noCacheJsonResponse } from '../index';
+import {
+  getCoinHolders,
+  getCoinRevenue,
+  getCoinStats,
+  getCoinTrades,
+} from '../lib/coin-onchain-data';
 import { hasSuspiciousPayload, sanitizeString, validateBodySize } from '../sanitize';
 import { requireSession } from '../session';
 
@@ -83,24 +89,22 @@ export async function handleCreatorCoinStats(request: Request, env: Env): Promis
     return jsonResponse({ error: 'Invalid coin address' }, 400);
   }
 
-  const stats = await kvGet<{
-    marketCap: string;
-    fdv: string;
-    price: string;
-    priceChange24h: number;
-    volume24h: string;
-    holderCount: number;
-    creatorAllocationVested: string;
-    creatorAllocationUnvested: string;
-    creatorRevenue: string;
-    totalSupply: string;
-    graduated: boolean;
-    bondingPhase: number;
-  }>(env.CACHE, COIN_DATA_PREFIX + address.toLowerCase());
+  // Try KV cache first
+  const cached = await kvGet<Record<string, unknown>>(
+    env.CACHE,
+    COIN_DATA_PREFIX + address.toLowerCase(),
+  );
+  if (cached) {
+    return noCacheJsonResponse(cached);
+  }
+
+  // Try on-chain query — infer chain from address format
+  const chain = address.startsWith('0x') ? 'base' : 'solana';
+  const stats = await getCoinStats(address, chain, env);
 
   if (!stats) {
-    // Return live-calculated mock data for demo
-    return noCacheJsonResponse({
+    // Fallback: return live-calculated mock data for demo
+    const mockStats = {
       marketCap: '1250000',
       fdv: '5000000',
       price: '0.00125',
@@ -113,8 +117,20 @@ export async function handleCreatorCoinStats(request: Request, env: Env): Promis
       totalSupply: '1000000000',
       graduated: false,
       bondingPhase: 2,
-    });
+      bondingPhaseName: 'Cruise Control',
+      name: 'Unknown',
+      symbol: 'N/A',
+    };
+
+    // Cache the mock data briefly
+    await kvPut(env.CACHE, COIN_DATA_PREFIX + address.toLowerCase(), mockStats, _TTL_1H).catch(
+      () => {},
+    );
+    return noCacheJsonResponse(mockStats);
   }
+
+  // Cache on-chain data for 1 hour
+  await kvPut(env.CACHE, COIN_DATA_PREFIX + address.toLowerCase(), stats, _TTL_1H).catch(() => {});
 
   return noCacheJsonResponse(stats);
 }
@@ -133,7 +149,8 @@ export async function handleCreatorCoinHolders(request: Request, env: Env): Prom
   const limit = Math.min(Number(url.searchParams.get('limit')) || 50, 200);
   const offset = Number(url.searchParams.get('offset')) || 0;
 
-  const holders = await kvGet<
+  // Try KV cache first
+  const cached = await kvGet<
     Array<{
       address: string;
       balance: string;
@@ -143,23 +160,36 @@ export async function handleCreatorCoinHolders(request: Request, env: Env): Prom
     }>
   >(env.CACHE, COIN_HOLDERS_PREFIX + address.toLowerCase());
 
-  if (!holders) {
-    // Mock data for demo
-    const mockHolders = Array.from({ length: 20 }, (_, i) => ({
-      address: `0x${(i + 1).toString(16).padStart(40, '0')}`,
-      balance: String(Math.floor(Math.random() * 100000) + 1000),
-      percentage: Math.random() * 5,
-      isCreator: i === 0,
-      lastTx: Date.now() - Math.floor(Math.random() * 86400000),
-    }));
-    mockHolders[0].percentage = 12.5;
-    mockHolders[0].balance = '125000000';
-    const paginated = mockHolders.slice(offset, offset + limit);
-    return noCacheJsonResponse({ holders: paginated, total: mockHolders.length, offset, limit });
+  if (cached) {
+    const paginated = cached.slice(offset, offset + limit);
+    return noCacheJsonResponse({ holders: paginated, total: cached.length, offset, limit });
   }
 
-  const paginated = holders.slice(offset, offset + limit);
-  return noCacheJsonResponse({ holders: paginated, total: holders.length, offset, limit });
+  // Try on-chain query
+  const chain = address.startsWith('0x') ? 'base' : 'solana';
+  const onChainHolders = await getCoinHolders(address, chain, env);
+
+  if (onChainHolders.length > 0) {
+    // Cache for 5 minutes
+    await kvPut(env.CACHE, COIN_HOLDERS_PREFIX + address.toLowerCase(), onChainHolders, 300).catch(
+      () => {},
+    );
+    const paginated = onChainHolders.slice(offset, offset + limit);
+    return noCacheJsonResponse({ holders: paginated, total: onChainHolders.length, offset, limit });
+  }
+
+  // Fallback: mock data for demo
+  const mockHolders = Array.from({ length: 20 }, (_, i) => ({
+    address: `0x${(i + 1).toString(16).padStart(40, '0')}`,
+    balance: String(Math.floor(Math.random() * 100000) + 1000),
+    percentage: Math.random() * 5,
+    isCreator: i === 0,
+    lastTx: Date.now() - Math.floor(Math.random() * 86400000),
+  }));
+  mockHolders[0].percentage = 12.5;
+  mockHolders[0].balance = '125000000';
+  const paginated = mockHolders.slice(offset, offset + limit);
+  return noCacheJsonResponse({ holders: paginated, total: mockHolders.length, offset, limit });
 }
 
 // ─── GET /api/creator/coin/:address/trades ─────────────────────────────
@@ -175,7 +205,8 @@ export async function handleCreatorCoinTrades(request: Request, env: Env): Promi
 
   const limit = Math.min(Number(url.searchParams.get('limit')) || 50, 200);
 
-  const trades = await kvGet<
+  // Try KV cache first
+  const cached = await kvGet<
     Array<{
       txHash: string;
       type: 'buy' | 'sell';
@@ -187,23 +218,35 @@ export async function handleCreatorCoinTrades(request: Request, env: Env): Promi
     }>
   >(env.CACHE, COIN_TRADES_PREFIX + address.toLowerCase());
 
-  if (!trades) {
-    // Mock data
-    const mockTrades = Array.from({ length: 25 }, (_, i) => ({
-      txHash: `0x${(i + 1).toString(16).padStart(64, '0')}`,
-      type: (i % 3 === 0 ? 'sell' : 'buy') as 'buy' | 'sell',
-      trader: `0x${Math.floor(Math.random() * 1000000)
-        .toString(16)
-        .padStart(40, '0')}`,
-      tokenAmount: String(Math.floor(Math.random() * 10000) + 100),
-      nativeValue: String(Math.floor(Math.random() * 10) + 1),
-      price: (Math.random() * 0.01 + 0.001).toFixed(6),
-      timestamp: Date.now() - Math.floor(Math.random() * 86400000),
-    }));
-    return noCacheJsonResponse({ trades: mockTrades.slice(0, limit) });
+  if (cached) {
+    return noCacheJsonResponse({ trades: cached.slice(0, limit) });
   }
 
-  return noCacheJsonResponse({ trades: trades.slice(0, limit) });
+  // Try on-chain query
+  const chain = address.startsWith('0x') ? 'base' : 'solana';
+  const onChainTrades = await getCoinTrades(address, chain, env, limit);
+
+  if (onChainTrades.length > 0) {
+    // Cache for 1 minute
+    await kvPut(env.CACHE, COIN_TRADES_PREFIX + address.toLowerCase(), onChainTrades, 60).catch(
+      () => {},
+    );
+    return noCacheJsonResponse({ trades: onChainTrades });
+  }
+
+  // Fallback: mock data for demo
+  const mockTrades = Array.from({ length: 25 }, (_, i) => ({
+    txHash: `0x${(i + 1).toString(16).padStart(64, '0')}`,
+    type: (i % 3 === 0 ? 'sell' : 'buy') as 'buy' | 'sell',
+    trader: `0x${Math.floor(Math.random() * 1000000)
+      .toString(16)
+      .padStart(40, '0')}`,
+    tokenAmount: String(Math.floor(Math.random() * 10000) + 100),
+    nativeValue: String(Math.floor(Math.random() * 10) + 1),
+    price: (Math.random() * 0.01 + 0.001).toFixed(6),
+    timestamp: Date.now() - Math.floor(Math.random() * 86400000),
+  }));
+  return noCacheJsonResponse({ trades: mockTrades.slice(0, limit) });
 }
 
 // ─── POST /api/creator/coin/:address/burn ──────────────────────────────
@@ -371,7 +414,8 @@ export async function handleCreatorCoinRevenue(request: Request, env: Env): Prom
     return jsonResponse({ error: 'Invalid coin address' }, 400);
   }
 
-  const revenue = await kvGet<{
+  // Try KV cache first
+  const cached = await kvGet<{
     totalRevenue: string;
     creatorFees: string;
     treasuryFees: string;
@@ -380,26 +424,38 @@ export async function handleCreatorCoinRevenue(request: Request, env: Env): Prom
     revenueByDay: Array<{ date: string; amount: string }>;
   }>(env.CACHE, COIN_REVENUE_PREFIX + address.toLowerCase());
 
-  if (!revenue) {
-    // Mock data for demo
-    const days = Array.from({ length: 30 }, (_, i) => {
-      const d = new Date(Date.now() - i * 86400000);
-      return {
-        date: d.toISOString().slice(0, 10),
-        amount: String(Math.floor(Math.random() * 5000) + 500),
-      };
-    });
-    return noCacheJsonResponse({
-      totalRevenue: '45200',
-      creatorFees: '28400',
-      treasuryFees: '8900',
-      tipsReceived: '12000',
-      platformFees: '2260',
-      revenueByDay: days,
-    });
+  if (cached) {
+    return noCacheJsonResponse(cached);
   }
 
-  return noCacheJsonResponse(revenue);
+  // Try on-chain query
+  const chain = address.startsWith('0x') ? 'base' : 'solana';
+  const onChainRevenue = await getCoinRevenue(address, chain, env);
+
+  if (onChainRevenue) {
+    // Cache for 5 minutes
+    await kvPut(env.CACHE, COIN_REVENUE_PREFIX + address.toLowerCase(), onChainRevenue, 300).catch(
+      () => {},
+    );
+    return noCacheJsonResponse(onChainRevenue);
+  }
+
+  // Fallback: mock data for demo
+  const days = Array.from({ length: 30 }, (_, i) => {
+    const d = new Date(Date.now() - i * 86400000);
+    return {
+      date: d.toISOString().slice(0, 10),
+      amount: String(Math.floor(Math.random() * 5000) + 500),
+    };
+  });
+  return noCacheJsonResponse({
+    totalRevenue: '45200',
+    creatorFees: '28400',
+    treasuryFees: '8900',
+    tipsReceived: '12000',
+    platformFees: '2260',
+    revenueByDay: days,
+  });
 }
 
 // ─── GET /api/platform/revenue (public) ────────────────────────────────

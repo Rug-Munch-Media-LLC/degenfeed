@@ -541,7 +541,7 @@ export async function handleSearchGifs(request: Request, env: Env): Promise<Resp
 
   try {
     const { searchGifs } = await getChatMedia();
-    const results = await searchGifs(env, query, { limit, provider: provider ?? undefined });
+    const results = await searchGifs(query, env, { limit, provider: provider ?? undefined });
     return noCacheJsonResponse({ results });
   } catch {
     return jsonResponse({ error: 'GIF search failed' }, 500);
@@ -829,14 +829,14 @@ export async function handleUploadVoiceNote(request: Request, env: Env): Promise
 
     // Store via video-storage-router as audio content
     const { storeVideo } = await import('../lib/video-storage-router');
-    const storageResult = await storeVideo(buffer, audioFile.name, audioFile.type, duration, env, {
-      creatorWallet: userId,
-      title: `Voice note - ${new Date().toISOString()}`,
-      explicitType: 'podcast',
+    const storageResult = await storeVideo(env, {
+      contentId: `voice-${conversationId}-${Date.now()}`,
+      buffer,
+      duration,
+      fileSize: audioFile.size,
+      format: audioFile.type,
+      isTemporary: true,
     });
-
-    // Index for search
-    const { indexMessageForSearch } = await import('./chat-search');
 
     // Store voice note metadata
     const kv = env.CACHE ?? env.CONTENT_LIBRARY;
@@ -851,7 +851,7 @@ export async function handleUploadVoiceNote(request: Request, env: Env): Promise
           senderId: userId,
           duration,
           waveform,
-          url: storageResult.primaryUrl,
+          url: storageResult.url,
           transcript: transcript ?? null,
           played: false,
           createdAt: Date.now(),
@@ -863,7 +863,7 @@ export async function handleUploadVoiceNote(request: Request, env: Env): Promise
     return noCacheJsonResponse({
       ok: true,
       mediaId: storageResult.contentId,
-      url: storageResult.primaryUrl,
+      url: storageResult.url,
       duration,
     });
   } catch (err) {
@@ -945,9 +945,7 @@ export async function handleMarkRead(request: Request, env: Env): Promise<Respon
   }
 
   try {
-    const { markMessageRead, notifyDeliveryWebhook, getDeliveryRecord } = await import(
-      '../lib/message-delivery'
-    );
+    const { markMessageRead, notifyDeliveryWebhook } = await import('../lib/message-delivery');
     const record = await markMessageRead(env, body.messageId, userId);
     if (record) {
       await notifyDeliveryWebhook(env, record);

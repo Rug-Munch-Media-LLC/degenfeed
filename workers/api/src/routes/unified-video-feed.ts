@@ -41,7 +41,7 @@ unifiedVideoFeed.get('/', async (c) => {
     const allItems = await gatherVideos(filteredSources, category, limit, cursor);
 
     // Compute per-source counts
-    const sourceCounts = allItems.reduce<Record<string, number>>((acc, item) => {
+    const sourceCounts = allItems.items.reduce<Record<string, number>>((acc, item) => {
       acc[item.source] = (acc[item.source] || 0) + 1;
       return acc;
     }, {});
@@ -173,18 +173,13 @@ async function gatherVideos(
   _cursor?: string,
 ): Promise<GatherResult> {
   try {
-    // Import the video aggregator dynamically
-    const { VideoAggregator } = await import('../feed/video-aggregator');
-    // Temp env stub for type checking
-    const _aggregator = new VideoAggregator({} as any);
-
     const allVideos: FeedItem[] = [];
     const perSourceLimit = Math.max(3, Math.ceil(limit / sources.length));
 
     // Fetch from each source in parallel
     const promises = sources.map(async (source) => {
       try {
-        let items: any[] = [];
+        const items: FeedItem[] = [];
 
         // Call the appropriate bridge based on source
         switch (source.id) {
@@ -194,7 +189,7 @@ async function gatherVideos(
               limit: perSourceLimit,
               sort: 'trending',
             });
-            items = videos.map((v: any) => ({
+            items = (videos as Record<string, unknown>[]).map((v) => ({
               id: `yt-${v.id}`,
               title: v.title,
               description: v.description ?? '',
@@ -223,7 +218,7 @@ async function gatherVideos(
           case 'peertube': {
             const { fetchPeerTubeTrending } = await import('../feed/video-bridges/peertube');
             const ptVideos = await fetchPeerTubeTrending('', perSourceLimit);
-            items = ptVideos.map((v: any) => ({
+            items = (ptVideos as Record<string, unknown>[]).map((v) => ({
               id: `pt-${v.id}`,
               title: v.title,
               description: v.description ?? '',
@@ -252,7 +247,7 @@ async function gatherVideos(
           case 'rumble': {
             const { fetchRumbleTrending } = await import('../feed/video-bridges/rumble');
             const rbVideos = await fetchRumbleTrending('', perSourceLimit);
-            items = rbVideos.map((v: any) => ({
+            items = (rbVideos as Record<string, unknown>[]).map((v) => ({
               id: `rb-${v.id}`,
               title: v.title,
               description: v.description ?? '',
@@ -281,7 +276,7 @@ async function gatherVideos(
           case 'odysee': {
             const { fetchOdyseeTrending } = await import('../feed/video-bridges/odysee');
             const odVideos = await fetchOdyseeTrending('', perSourceLimit);
-            items = odVideos.map((v: any) => ({
+            items = (odVideos as Record<string, unknown>[]).map((v) => ({
               id: `od-${v.id}`,
               title: v.title,
               description: v.description ?? '',
@@ -310,7 +305,7 @@ async function gatherVideos(
           case 'dtube': {
             const { fetchDTubeTrending } = await import('../feed/video-bridges/dtube');
             const dtVideos = await fetchDTubeTrending('', perSourceLimit);
-            items = dtVideos.map((v: any) => ({
+            items = (dtVideos as Record<string, unknown>[]).map((v) => ({
               id: `dt-${v.id}`,
               title: v.title,
               description: v.description ?? '',
@@ -367,7 +362,7 @@ async function gatherVideos(
                 if (typeof fetcher === 'function') {
                   const bridgeItems = await fetcher(source.id, perSourceLimit);
                   if (Array.isArray(bridgeItems) && bridgeItems.length > 0) {
-                    items = bridgeItems.map((v: any) => ({
+                    items = (bridgeItems as Record<string, unknown>[]).map((v) => ({
                       id: `${source.id}-${v.id || crypto.randomUUID().slice(0, 8)}`,
                       title: v.title || `Video from ${source.label}`,
                       description: v.description || '',
@@ -383,7 +378,9 @@ async function gatherVideos(
                       channelAvatar: v.channelAvatar || v.creatorAvatar || '',
                       channelUrl: v.channelUrl || v.creatorUrl || '',
                       publishedAt: v.publishedAt ? new Date(v.publishedAt).getTime() : Date.now(),
-                      publishedLabel: v.publishedAt ? timeAgoLabel(new Date(v.publishedAt).getTime()) : '',
+                      publishedLabel: v.publishedAt
+                        ? timeAgoLabel(new Date(v.publishedAt).getTime())
+                        : '',
                       views: v.views || v.viewCount || 0,
                       likes: v.likes || v.likeCount || 0,
                       category: v.category || 'general',
@@ -394,12 +391,17 @@ async function gatherVideos(
                   }
                 }
               } catch (err) {
-                console.warn(`[unified-video-feed] Bridge ${source.id} not available:`, String(err));
+                console.warn(
+                  `[unified-video-feed] Bridge ${source.id} not available:`,
+                  String(err),
+                );
               }
             }
             // If bridge returned no items, return empty rather than placeholder data
             if (items.length === 0) {
-              console.info(`[unified-video-feed] No items from ${source.id} — bridge may need configuration`);
+              console.info(
+                `[unified-video-feed] No items from ${source.id} — bridge may need configuration`,
+              );
             }
             break;
           }

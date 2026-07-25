@@ -128,6 +128,8 @@ export interface Env {
   ENABLE_REAL_DEPLOYMENTS?: string;
   /** Factory contract address for creator coin deployments on Base (Zora or DegenFeed factory) */
   COIN_FACTORY_ADDRESS?: string;
+  /** Factory contract address for creator coin deployments on Base Sepolia testnet */
+  COIN_FACTORY_ADDRESS_TESTNET?: string;
   /** Comma-separated admin wallet addresses (lowercase) for moderation dashboard access */
   ADMIN_WALLETS?: string;
   /** PeerTube instance URL for livestreams (default: https://video.degenfeed.xyz) */
@@ -234,6 +236,10 @@ export interface Env {
   BLUESKY_INVITE_POOL?: KVNamespace;
   /** Base chain (Farcaster) RPC URL */
   BASE_RPC_URL?: string;
+  /** Base Sepolia testnet RPC URL (default: https://sepolia.base.org) */
+  BASE_SEPOLIA_RPC_URL?: string;
+  /** Solana devnet RPC URL (default: https://api.devnet.solana.com) */
+  SOLANA_DEVNET_RPC_URL?: string;
   /** Polygon chain (Lens) RPC URL */
   POLYGON_RPC_URL?: string;
   /** Private key of the premium wallet for paying on-chain registration fees */
@@ -860,6 +866,16 @@ export async function scheduled(
     });
     if (executed > 0) {
       log('info', `[scheduled] executed ${executed} scheduled cross-posts`);
+    }
+
+    // Execute premium scheduled posts (Buffer-style scheduling)
+    const { executeDuePremiumPosts } = await import('./routes/premium-publish');
+    const premiumExecuted = await executeDuePremiumPosts(env).catch((err) => {
+      log('warn', '[scheduled] premium executor failed', err);
+      return 0;
+    });
+    if (premiumExecuted > 0) {
+      log('info', `[scheduled] executed ${premiumExecuted} premium scheduled posts`);
     }
 
     // Process realtime sync queue (every 30s effectively, since cron fires every min)

@@ -474,7 +474,7 @@ export async function handleSignal(request: Request, env: Env, callId: string): 
   if (session instanceof Response) return session;
   const userId = session.address.toLowerCase();
 
-  let body: { toUserId: string; signal: any };
+  let body: { toUserId: string; signal: Record<string, unknown> };
   try {
     body = (await request.json()) as typeof body;
   } catch {

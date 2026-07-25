@@ -29,14 +29,15 @@ import { requireAdminFromSession } from './lib/admin-guard';
 // ─── Route registration ─────────────────────────────────────
 // Delegated to register/ sub-modules under ./routes/register/
 
-import { registerCoreRoutes } from './routes/register/core';
-import { registerFeedRoutes } from './routes/register/feed';
-import { registerSocialRoutes } from './routes/register/social';
-import { registerDaoRoutes } from './routes/register/dao';
 import { registerCoinsRoutes } from './routes/register/coins';
+import { registerCoreRoutes } from './routes/register/core';
+import { registerDaoRoutes } from './routes/register/dao';
+import { registerFeedRoutes } from './routes/register/feed';
+import { registerLiveRoutes } from './routes/register/live';
 import { registerMediaRoutes } from './routes/register/media';
 import { registerMessagingRoutes } from './routes/register/messaging';
-import { registerLiveRoutes } from './routes/register/live';
+import { registerPremiumRoutes } from './routes/register/premium';
+import { registerSocialRoutes } from './routes/register/social';
 
 // ─── Additional dependencies ─────────────────────────────────
 
@@ -287,7 +288,9 @@ app.use('*', async (c, next) => {
   const ip = c.req.header('cf-connecting-ip') || c.req.header('x-forwarded-for') || 'unknown';
   const authHeader = c.req.header('authorization');
   const cookieHeader = c.req.header('cookie');
-  const isAuthenticated = !!(authHeader?.startsWith('Bearer ') || cookieHeader?.includes('session='));
+  const isAuthenticated = !!(
+    authHeader?.startsWith('Bearer ') || cookieHeader?.includes('session=')
+  );
 
   await tieredRateLimit(c.env, ip, c.req.path, isAuthenticated);
 
@@ -334,20 +337,21 @@ registerCoinsRoutes(app);
 registerMediaRoutes(app);
 registerMessagingRoutes(app);
 registerLiveRoutes(app);
+registerPremiumRoutes(app);
 
 // ─── External platform routes (DegenFeed Connect) ────────────────
 import {
-  handleConnectExternalPlatform,
   handleConnectCallback,
-  handleListAccounts,
+  handleConnectExternalPlatform,
+  handleDisconnectPlatform,
+  handleExternalAnalytics,
+  handleExternalGoLive,
   handleExternalPost,
   handleExternalSchedule,
-  handleExternalGoLive,
-  handleExternalAnalytics,
-  handleDisconnectPlatform,
-  handleExternalWebhook,
-  handleListPlatforms,
   handleExternalStatus,
+  handleExternalWebhook,
+  handleListAccounts,
+  handleListPlatforms,
   handleStandaloneSubscribe,
 } from './routes/external-platforms';
 
@@ -374,7 +378,9 @@ app.get('/api/external/platforms', async (c) => handleListPlatforms(c.req.raw, c
 // GET /api/external/status — Get external platform status
 app.get('/api/external/status', async (c) => handleExternalStatus(c.req.raw, c.env));
 // POST /api/external/standalone/subscribe — Purchase standalone add-on
-app.post('/api/external/standalone/subscribe', async (c) => handleStandaloneSubscribe(c.req.raw, c.env));
+app.post('/api/external/standalone/subscribe', async (c) =>
+  handleStandaloneSubscribe(c.req.raw, c.env),
+);
 
 // ═══════════════════════════════════════════════════════════════
 // POST-ROUTE REGISTRATIONS (catch-all, static redirects, etc.)

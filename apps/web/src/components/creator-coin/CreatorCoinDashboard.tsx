@@ -3,7 +3,7 @@
 import type { CreatorChain, DeployResult, TokenInfo } from '@degenfeed/creator-coin/types';
 import { useCallback, useEffect, useState } from 'react';
 import { BondingCurveChart } from './BondingCurveChart';
-import { CoinCard } from './CoinCard';
+import { CoinCardSimple, type CoinDisplayData } from './CoinCard';
 import { DeployCoinDialog } from './DeployCoinDialog';
 import { TradePanel } from './TradePanel';
 
@@ -177,14 +177,34 @@ export function CreatorCoinDashboard({
           </div>
         )}
 
-        {tokens.map((token) => (
-          <CoinCard
-            key={token.address}
-            token={token}
-            isLive={liveTokens.has(token.address)}
-            onClick={() => setSelectedToken(token)}
-          />
-        ))}
+        {tokens.map((token) => {
+          const priceNum = Number(token.price) / 1e18;
+          const supplyNum = Number(token.totalSupply) / 1e18;
+          const coinData: CoinDisplayData = {
+            address: token.address,
+            name: token.name,
+            symbol: token.symbol,
+            chain: token.chain,
+            price: priceNum,
+            priceChange24h: 0,
+            marketCap: priceNum * supplyNum,
+            volume24h: 0,
+            holderCount: token.uniqueBuyers,
+            totalSupply: supplyNum,
+            graduated: token.graduated,
+            bondingPhase: 0,
+            createdAt: token.createdAt,
+            creator: token.creator,
+            isLive: liveTokens.has(token.address),
+          };
+          return (
+            <CoinCardSimple
+              key={token.address}
+              coin={coinData}
+              onClick={() => setSelectedToken(token)}
+            />
+          );
+        })}
       </div>
 
       {/* Selected Token Detail */}
