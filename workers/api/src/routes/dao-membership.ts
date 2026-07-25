@@ -1,12 +1,94 @@
 /**
- * @degenfeed/api-worker — DAO Membership (join, leave)
+ * @degenfeed/api-worker — DAO Membership (join, leave, list, get)
  */
 
 import type { Env } from '../index';
 import { jsonResponse } from '../index';
 import { requireSession } from '../session';
-import { getDaoOr404, KV, kvGetList, kvPut, recordActivity } from './dao-core';
-import type { Dao } from './dao-types';
+import {
+  getDaoOr404,
+  getVotingPower,
+  KV,
+  kvGet,
+  kvGetList,
+  kvPut,
+  recordActivity,
+} from './dao-core';
+import type { Dao, Delegation } from './dao-types';
+
+export interface MemberInfo {
+  address: string;
+  votingPower: number;
+  delegation: Delegation | null;
+  joinedAt?: number;
+  isCreator: boolean;
+}
+
+export async function handleDaoMembersList(
+  _request: Request,
+  env: Env,
+  daoId: string,
+): Promise<Response> {
+  const daoResult = await getDaoOr404(env, daoId);
+  if (daoResult instanceof Response) return daoResult;
+  const dao = daoResult as Dao;
+  const kv = env.GOVERNANCE;
+  if (!kv) return jsonResponse({ error: 'Governance KV not configured' }, 500);
+
+  const memberAddresses = await kvGetList<string>(kv, KV.daoMembers(daoId));
+  const members: MemberInfo[] = [];
+  for (const addr of memberAddresses) {
+    const votingPower = await getVotingPower(env, daoId, addr);
+    const delegation = await kvGet<Delegation>(kv, KV.delegation(daoId, addr));
+    members.push({
+      address: addr,
+      votingPower,
+      delegation,
+      isCreator: addr === dao.creator,
+    });
+  }
+  members.sort((a, b) => b.votingPower - a.votingPower);
+
+  return jsonResponse({
+    data: members,
+    meta: {
+      total: members.length,
+      daoId,
+      totalVotingPower: members.reduce((s, m) => s + m.votingPower, 0),
+    },
+  });
+}
+
+export async function handleDaoMemberGet(
+  _request: Request,
+  env: Env,
+  daoId: string,
+  address: string,
+): Promise<Response> {
+  const daoResult = await getDaoOr404(env, daoId);
+  if (daoResult instanceof Response) return daoResult;
+  const dao = daoResult as Dao;
+  const kv = env.GOVERNANCE;
+  if (!kv) return jsonResponse({ error: 'Governance KV not configured' }, 500);
+
+  const normalizedAddr = address.toLowerCase();
+  const members = await kvGetList<string>(kv, KV.daoMembers(daoId));
+  if (!members.includes(normalizedAddr)) {
+    return jsonResponse({ error: 'Address is not a member of this DAO' }, 404);
+  }
+
+  const votingPower = await getVotingPower(env, daoId, normalizedAddr);
+  const delegation = await kvGet<Delegation>(kv, KV.delegation(daoId, normalizedAddr));
+
+  return jsonResponse({
+    data: {
+      address: normalizedAddr,
+      votingPower,
+      delegation,
+      isCreator: normalizedAddr === dao.creator,
+    },
+  });
+}
 
 export async function handleDaoJoin(request: Request, env: Env, daoId: string): Promise<Response> {
   const session = await requireSession(request, env);

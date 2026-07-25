@@ -167,7 +167,7 @@ async function fetchLiveStreamsForFeed(env: Env): Promise<StreamFeedEntry[]> {
             viewerCount: (parsed.viewerCount as number) ?? 0,
             startedAt: (parsed.startedAt as number) ?? Date.now(),
             type: (parsed.type as StreamFeedEntry['type']) || 'solo',
-          } satisfies StreamFeedEntry;
+          } as StreamFeedEntry;
         } catch {
           return null;
         }
@@ -175,9 +175,8 @@ async function fetchLiveStreamsForFeed(env: Env): Promise<StreamFeedEntry[]> {
     );
 
     // Filter out nulls and sort by startedAt descending
-    return streams
-      .filter((s): s is StreamFeedEntry => s !== null)
-      .sort((a, b) => b.startedAt - a.startedAt);
+    const validStreams = streams.filter((s): s is NonNullable<typeof s> => s !== null);
+    return validStreams.sort((a, b) => b.startedAt - a.startedAt);
   } catch {
     return [];
   }

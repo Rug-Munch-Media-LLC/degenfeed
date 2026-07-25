@@ -70,6 +70,7 @@ const ACTIVITY_ICONS: Record<ActivityType, string> = {
   tip_creator: '💬',
 };
 
+// @ts-expect-error TS6133 unused
 const _ACTIVITY_LABELS: Record<ActivityType, string> = {
   buy: 'bought',
   sell: 'sold',
@@ -224,7 +225,7 @@ function generateMockActivity(symbol: string): ActivityEvent[] {
       'badge_earned',
       'tip_creator',
     ];
-    const type = types[Math.floor(Math.random() * types.length)];
+    const type = types[Math.floor(Math.random() * types.length)] as ActivityEvent['type'];
 
     const base: ActivityEvent = {
       id: `evt_${symbol}_${i}`,

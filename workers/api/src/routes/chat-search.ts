@@ -100,7 +100,7 @@ export async function indexMessageForSearch(
   mediaUrl?: string,
   createdAt?: number,
 ): Promise<void> {
-  const kv = env.CACHE ?? env.SEARCH_RESULTS_CACHE ?? env.CONTENT_LIBRARY;
+  const kv = env.CACHE ?? env.CONTENT_LIBRARY;
   if (!kv) return;
 
   const timestamp = createdAt ?? Date.now();
@@ -285,7 +285,7 @@ export async function searchMessages(
     offset?: number;
   },
 ): Promise<{ results: SearchResult[]; total: number }> {
-  const kv = env.CACHE ?? env.SEARCH_RESULTS_CACHE ?? env.CONTENT_LIBRARY;
+  const kv = env.CACHE ?? env.CONTENT_LIBRARY;
   if (!kv) return { results: [], total: 0 };
 
   const limit = Math.min(options?.limit ?? DEFAULT_RESULTS, MAX_RESULTS);
@@ -444,7 +444,7 @@ export async function searchByMediaType(
   mediaType: SearchResult['mediaType'],
   options?: { limit?: number; offset?: number },
 ): Promise<{ results: SearchResult[]; total: number }> {
-  const kv = env.CACHE ?? env.SEARCH_RESULTS_CACHE ?? env.CONTENT_LIBRARY;
+  const kv = env.CACHE ?? env.CONTENT_LIBRARY;
   if (!kv) return { results: [], total: 0 };
 
   const limit = Math.min(options?.limit ?? DEFAULT_RESULTS, MAX_RESULTS);
@@ -484,7 +484,7 @@ async function getIndexedMessage(
   conversationId: string,
   messageId: string,
 ): Promise<SearchResult | null> {
-  const kv = env.CACHE ?? env.SEARCH_RESULTS_CACHE ?? env.CONTENT_LIBRARY;
+  const kv = env.CACHE ?? env.CONTENT_LIBRARY;
   if (!kv) return null;
 
   try {
@@ -563,8 +563,9 @@ function highlightMatches(content: string, terms: string[]): string {
   const merged = [ranges[0]!];
   for (let i = 1; i < ranges.length; i++) {
     const last = merged[merged.length - 1]!;
-    if (ranges[i]?.start <= last.end) {
-      last.end = Math.max(last.end, ranges[i]?.end);
+    const current = ranges[i]!;
+    if (current.start <= last.end) {
+      last.end = Math.max(last.end, current.end);
     } else {
       merged.push(ranges[i]!);
     }

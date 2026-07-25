@@ -1,7 +1,6 @@
-import { DEFAULT_RELAYS, type Env } from '../index';
+import { DEFAULT_RELAYS, type Env, jsonResponse } from '../index';
 import { getQueueStats } from '../lib/offline-queue';
 import { getTxMonitorStats } from '../lib/transaction-monitor';
-import { ok } from '../response-helpers';
 
 /**
  * GET /api/health — Legacy relay health
@@ -295,7 +294,7 @@ export async function handleFullHealth(env: Env): Promise<Response> {
     overallLatency: Math.round(performance.now() - start),
   };
 
-  return ok(body, { 'cache-control': 'no-store, must-revalidate' });
+  return jsonResponse(body, 200, { 'cache-control': 'no-store, must-revalidate' });
 }
 
 // Import getErrorCounts lazily — depends on error-logger module

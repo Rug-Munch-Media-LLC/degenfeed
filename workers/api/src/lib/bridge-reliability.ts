@@ -772,15 +772,111 @@ const PROTOCOL_HEALTH_CHECKS: Record<
   arena: async () => pingUrl('https://api.arena.social/'),
   microblog: async () => pingUrl('https://micro.blog/posts/discover'),
   orbis: async () => pingUrl('https://ceramic.orbis.club/'),
-  ceramic: async () => pingUrl('https://ceramic.network/'),
+  ceramic: async () => {
+    // Fetch actual streams from Ceramic using ComposeDB API
+    const start = performance.now();
+    try {
+      const res = await fetch('https://ceramic.orbis.club/api/v1/streams', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          query: `query { streamsConnection(first: 1) { edges { node { streamId } } } }`,
+        }),
+        signal: AbortSignal.timeout(5_000),
+      });
+      const latency = Math.round(performance.now() - start);
+      const data = (await res.json()) as {
+        data?: { streamsConnection?: { edges?: unknown[] } };
+        errors?: unknown[];
+      };
+      const streamCount = data?.data?.streamsConnection?.edges?.length ?? 0;
+      return {
+        reachable: res.ok && !data.errors,
+        latencyMs: latency,
+        details: { streamCount, endpoint: 'ceramic-orbis' },
+      };
+    } catch (err) {
+      const latency = Math.round(performance.now() - start);
+      return {
+        reachable: false,
+        latencyMs: latency,
+        error: err instanceof Error ? err.message : String(err),
+      };
+    }
+  },
   audius: async () => pingUrl('https://api.audius.co/'),
   rarible: async () => pingUrl('https://api.rarible.org/v0.1/'),
 
   // ── Tier 5: Infrastructure / Web3 ────────────────────────────
-  xmtp: async () => pingUrl('https://api.xmtp.org/'),
+  xmtp: async () => {
+    // Check XMTP network via the production API for real message state
+    const start = performance.now();
+    try {
+      // XMTP provides a health endpoint that reports network stats
+      const res = await fetch('https://api.xmtp.org/v1/health', {
+        method: 'GET',
+        signal: AbortSignal.timeout(5_000),
+      });
+      const latency = Math.round(performance.now() - start);
+      // Check XMTP network status — also try the inbox endpoint
+      const inboxRes = await fetch('https://api.xmtp.org/v1/inbox/status', {
+        method: 'GET',
+        signal: AbortSignal.timeout(3_000),
+      }).catch(() => null);
+      const inboxStatus = inboxRes?.ok ? await inboxRes.json().catch(() => null) : null;
+      return {
+        reachable: res.ok || (inboxRes?.ok ?? false),
+        latencyMs: latency,
+        details: {
+          apiStatus: res.ok ? 'operational' : 'degraded',
+          network: inboxStatus,
+        },
+      };
+    } catch (err) {
+      const latency = Math.round(performance.now() - start);
+      return {
+        reachable: false,
+        latencyMs: latency,
+        error: err instanceof Error ? err.message : String(err),
+      };
+    }
+  },
   push: async () => pingUrl('https://backend.epns.io/apis/'),
   huddle01: async () => pingUrl('https://api.huddle01.com/'),
-  tableland: async () => pingUrl('https://tableland.network/'),
+  tableland: async () => {
+    // Fetch real table data from Tableland network
+    const start = performance.now();
+    try {
+      // Query a known public table to check network health
+      const res = await fetch(
+        'https://tableland.network/api/v1/query?statement=SELECT+COUNT(*)+as+total+FROM+health_checks_11155111_1',
+        {
+          method: 'GET',
+          signal: AbortSignal.timeout(5_000),
+        },
+      );
+      const latency = Math.round(performance.now() - start);
+      const data = (await res.json()) as { total?: number }[] | { error?: string };
+      const rows = Array.isArray(data) ? data : [];
+      const totalRows = rows.length > 0 ? ((rows[0] as Record<string, unknown>)?.total ?? 0) : 0;
+      return {
+        reachable: res.ok && !('error' in data),
+        latencyMs: latency,
+        details: { queryResult: totalRows, network: 'mainnet' },
+      };
+    } catch (err) {
+      const latency = Math.round(performance.now() - start);
+      // Fallback: check if gateway is reachable at all
+      const fallbackRes = await fetch('https://tableland.network/', {
+        signal: AbortSignal.timeout(3_000),
+      }).catch(() => null);
+      return {
+        reachable: fallbackRes?.ok ?? false,
+        latencyMs: latency,
+        error: err instanceof Error ? err.message : String(err),
+      };
+    }
+  },
 
   // ── Legacy / Infra ───────────────────────────────────────────
   ponder: async () => pingUrl('https://ponder.sh/'),

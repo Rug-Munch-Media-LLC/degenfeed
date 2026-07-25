@@ -183,24 +183,4 @@ export function FilterBar({
   );
 }
 
-export function StatCard({
-  label,
-  value,
-  sub,
-  color,
-}: {
-  label: string;
-  value: string;
-  sub?: string;
-  color?: string;
-}) {
-  return (
-    <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-4">
-      <div className="mb-1 text-xs font-medium text-[var(--color-muted)]">{label}</div>
-      <div className="text-xl font-black tabular-nums" style={color ? { color } : undefined}>
-        {value}
-      </div>
-      {sub && <div className="mt-1 text-[10px] text-[var(--color-muted)]">{sub}</div>}
-    </div>
-  );
-}
+export { StatCard } from '../ui/StatCard';

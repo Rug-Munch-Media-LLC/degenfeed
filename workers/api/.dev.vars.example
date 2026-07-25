@@ -31,6 +31,24 @@ RMI_API_KEY=
 # Optional: Solana RPC URL override
 SOLANA_RPC_URL=
 
+# Solana devnet RPC URL
+SOLANA_DEVNET_RPC_URL=https://api.devnet.solana.com
+
+# Base Sepolia RPC URL
+BASE_SEPOLIA_RPC_URL=https://sepolia.base.org
+
+# Premium wallet private key (used for gas on deployments)
+# PREMIUM_WALLET_KEY=0x...
+
+# Enable real deployments (set to "true" to enable on-chain deployment)
+ENABLE_REAL_DEPLOYMENTS=false
+
+# Factory contract address for creator coin deployments on Base
+# COIN_FACTORY_ADDRESS=0x777777751622c0d3258f214F9DF38E35BF45baF3
+
+# Factory contract address for creator coin deployments on Base Sepolia testnet
+# COIN_FACTORY_ADDRESS_TESTNET=0x7691e6E14fF349B854738C8A8Aac2314558125B6
+
 # Optional: Sentry DSN for error reporting
 SENTRY_DSN=
 

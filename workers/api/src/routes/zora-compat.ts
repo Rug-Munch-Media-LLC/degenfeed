@@ -119,6 +119,7 @@ export interface CompatApp {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const COIN_PREFIX = 'coin:';
+// @ts-expect-error TS6133 unused
 const _SYMBOL_INDEX_PREFIX = 'coin:symbol:';
 const COMPAT_CACHE_PREFIX = 'zora:compat:coin:';
 const TRENDING_CACHE_KEY = 'zora:compat:trending';

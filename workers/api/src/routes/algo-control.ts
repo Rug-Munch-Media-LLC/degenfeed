@@ -586,7 +586,11 @@ export async function handleAddRule(request: Request, env: Env): Promise<Respons
   }
 
   const existing = await getRules(env, session.address);
-  existing.push(rules[0]);
+  const rule = rules[0];
+  if (!rule) {
+    return jsonResponse({ error: 'Rule is required' }, 400);
+  }
+  existing.push(rule);
   await setRules(env, session.address, existing);
 
   return noCacheJsonResponse({ ok: true, rule: rules[0] }, 201);

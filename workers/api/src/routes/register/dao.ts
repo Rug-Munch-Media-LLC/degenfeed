@@ -42,6 +42,8 @@ import {
   handleDaoGet,
   handleDaoJoin,
   handleDaoLeave,
+  handleDaoMemberGet,
+  handleDaoMembersList,
   handleDaoMine,
   handleDaoProposalCreate,
   handleDaoProposalDelete,
@@ -160,6 +162,27 @@ export function registerDaoRoutes(app: Hono<{ Bindings: Env }>): void {
   app.post('/api/dao/:daoId/leave', async (c) => {
     try {
       return await withSession(c, () => handleDaoLeave(c.req.raw, c.env, c.req.param('daoId')));
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/dao/:daoId/members', async (c) => {
+    try {
+      const result = await handleDaoMembersList(c.req.raw, c.env, c.req.param('daoId'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/dao/:daoId/members/:address', async (c) => {
+    try {
+      const result = await handleDaoMemberGet(
+        c.req.raw,
+        c.env,
+        c.req.param('daoId'),
+        c.req.param('address'),
+      );
+      return ok(result);
     } catch (err) {
       return serverError(err instanceof Error ? err.message : 'Unknown error');
     }

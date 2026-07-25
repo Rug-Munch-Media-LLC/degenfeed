@@ -16,9 +16,17 @@
  * Feature flag: ENABLE_REAL_DEPLOYMENTS=true  → deploys real contracts
  */
 
-import { type Address, createPublicClient, createWalletClient, http, parseEther } from 'viem';
+import {
+  type Address,
+  createPublicClient,
+  createWalletClient,
+  http,
+  type PublicClient,
+  parseEther,
+  type WalletClient,
+} from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
-import { base } from 'viem/chains';
+import { base, baseSepolia } from 'viem/chains';
 import type { Env } from '../index';
 
 // ─── Types ─────────────────────────────────────────────────────────────────
@@ -31,7 +39,7 @@ export interface DeployCoinInput {
   /** Token symbol */
   symbol: string;
   /** Target chain */
-  chain: 'base' | 'solana';
+  chain: 'base' | 'base_sepolia' | 'solana' | 'solana_devnet';
   /** Origin protocol (farcaster, lens, nostr, etc.) */
   protocol: 'farcaster' | 'lens' | 'universal';
   /** Metadata URI (IPFS or HTTP) */
@@ -146,8 +154,10 @@ export async function deployCoin(input: DeployCoinInput, env: Env): Promise<Depl
     throw new DeployerConfigError('creator, name, and symbol are required');
   }
 
-  if (input.chain !== 'base' && input.chain !== 'solana') {
-    throw new DeployerConfigError(`Unsupported chain: ${input.chain}. Must be 'base' or 'solana'`);
+  if (!['base', 'base_sepolia', 'solana', 'solana_devnet'].includes(input.chain)) {
+    throw new DeployerConfigError(
+      `Unsupported chain: ${input.chain}. Must be 'base', 'base_sepolia', 'solana', or 'solana_devnet'`,
+    );
   }
 
   if (!env.PREMIUM_WALLET_KEY) {
@@ -178,7 +188,7 @@ export async function deployCoin(input: DeployCoinInput, env: Env): Promise<Depl
     // ── Route to chain-specific deployer ────────────────────────────────
     let result: DeployCoinResult;
 
-    if (input.chain === 'base') {
+    if (input.chain === 'base' || input.chain === 'base_sepolia') {
       result = await deployToBase(input, env);
     } else {
       result = await deployToSolana(input, env);
@@ -242,35 +252,62 @@ export async function deployCoin(input: DeployCoinInput, env: Env): Promise<Depl
 
 // ─── Base/EVM Deployer ─────────────────────────────────────────────────────
 
+/** Resolve the viem chain config + RPC URL + explorer for Base or Base Sepolia */
+function resolveBaseConfig(
+  input: DeployCoinInput,
+  env: Env,
+): {
+  chain: typeof base | typeof baseSepolia;
+  rpcUrl: string;
+  isTestnet: boolean;
+} {
+  const isTestnet = input.chain === 'base_sepolia';
+  return {
+    chain: isTestnet ? baseSepolia : base,
+    rpcUrl: isTestnet
+      ? env.BASE_SEPOLIA_RPC_URL || 'https://sepolia.base.org'
+      : env.BASE_RPC_URL || 'https://mainnet.base.org',
+    isTestnet,
+  };
+}
+
 async function deployToBase(input: DeployCoinInput, env: Env): Promise<DeployCoinResult> {
   const privateKey = env.PREMIUM_WALLET_KEY as `0x${string}`;
   const account = privateKeyToAccount(privateKey);
 
-  const rpcUrl = env.BASE_RPC_URL || 'https://mainnet.base.org';
+  const { chain: chainConfig, rpcUrl, isTestnet } = resolveBaseConfig(input, env);
 
   const publicClient = createPublicClient({
-    chain: base,
+    chain: chainConfig,
     transport: http(rpcUrl),
   });
 
   const walletClient = createWalletClient({
     account,
-    chain: base,
+    chain: chainConfig,
     transport: http(rpcUrl),
   });
 
   // Resolve factory address: env var > our constants
-  const factoryAddress = (env.COIN_FACTORY_ADDRESS || ZORA_FACTORY_ADDRESS) as Address;
+  // On testnet, use the testnet factory if configured
+  const factoryAddress = isTestnet
+    ? ((env.COIN_FACTORY_ADDRESS_TESTNET ||
+        '0x7691e6E14fF349B854738C8A8Aac2314558125B6') as Address)
+    : ((env.COIN_FACTORY_ADDRESS || ZORA_FACTORY_ADDRESS) as Address);
 
   const creatorAllocationBps = BigInt(input.vestingConfig?.creatorAllocationBps ?? 500);
   const creatorFeeBps = BigInt(input.feeConfig?.creatorFeeBps ?? 100);
   const platformFeeBps = BigInt(input.feeConfig?.platformFeeBps ?? 50);
 
+  // Testnet deployments need far less ETH for gas
+  const deployValue = isTestnet ? parseEther('0.001') : parseEther('0.05');
+
   console.log(
-    `[coin-deployer] Deploying to Base via factory ${factoryAddress}...`,
+    `[coin-deployer] Deploying to ${isTestnet ? 'Base Sepolia' : 'Base'} via factory ${factoryAddress}...`,
     JSON.stringify({
       name: input.name,
       symbol: input.symbol,
+      chain: input.chain,
       creatorAllocationBps: creatorAllocationBps.toString(),
       creatorFeeBps: creatorFeeBps.toString(),
       platformFeeBps: platformFeeBps.toString(),
@@ -322,7 +359,7 @@ async function deployToBase(input: DeployCoinInput, env: Env): Promise<DeployCoi
         referrer: '0x0000000000000000000000000000000000000000' as Address,
       },
     ],
-    value: parseEther('0.05'),
+    value: deployValue,
     account: account.address,
   });
 
@@ -338,7 +375,10 @@ async function deployToBase(input: DeployCoinInput, env: Env): Promise<DeployCoi
   });
 
   if (receipt.status === 'reverted') {
-    throw new DeployerChainError('base', `Transaction reverted. Hash: ${hash}`);
+    throw new DeployerChainError(
+      isTestnet ? 'base_sepolia' : 'base',
+      `Transaction reverted. Hash: ${hash}`,
+    );
   }
 
   // Extract the deployed contract address from the logs
@@ -347,17 +387,21 @@ async function deployToBase(input: DeployCoinInput, env: Env): Promise<DeployCoi
   const coinAddress = receipt.logs[0]?.address ?? '0x0000000000000000000000000000000000000000';
 
   if (coinAddress === '0x0000000000000000000000000000000000000000') {
-    throw new DeployerChainError('base', 'Could not determine deployed coin address from receipt');
+    throw new DeployerChainError(
+      isTestnet ? 'base_sepolia' : 'base',
+      'Could not determine deployed coin address from receipt',
+    );
   }
 
+  const explorerBaseUrl = isTestnet ? 'https://sepolia.basescan.org' : 'https://basescan.org';
   console.log(`[coin-deployer] ✅ Deployed at ${coinAddress} (tx: ${hash})`);
 
   return {
     txHash: hash,
     coinAddress: coinAddress.toLowerCase(),
     tokenId: '1', // First token for this creator on Zora
-    chain: 'base',
-    explorerUrl: `https://basescan.org/tx/${hash}`,
+    chain: input.chain,
+    explorerUrl: `${explorerBaseUrl}/tx/${hash}`,
     status: 'confirmed',
   };
 }
@@ -383,7 +427,11 @@ async function deployToSolana(input: DeployCoinInput, env: Env): Promise<DeployC
     );
   }
 
-  const rpcUrl = env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
+  const isDevnet = input.chain === 'solana_devnet';
+  const rpcUrl = isDevnet
+    ? env.SOLANA_DEVNET_RPC_URL || 'https://api.devnet.solana.com'
+    : env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
+  const explorerBaseUrl = isDevnet ? 'https://solscan.io/?cluster=devnet' : 'https://solscan.io';
   const privateKeyBytes = extractSolanaPrivateKey(env.PREMIUM_WALLET_KEY || '');
 
   const connection = new solanaWeb3.Connection(rpcUrl, 'confirmed');
@@ -435,8 +483,8 @@ async function deployToSolana(input: DeployCoinInput, env: Env): Promise<DeployC
       txHash: sig.txHash,
       coinAddress: sig.primaryAddress,
       tokenId: '1',
-      chain: 'solana',
-      explorerUrl: `https://solscan.io/tx/${sig.txHash}`,
+      chain: input.chain,
+      explorerUrl: `${explorerBaseUrl}/tx/${sig.txHash}`,
       status: 'confirmed',
     };
   } catch (err) {

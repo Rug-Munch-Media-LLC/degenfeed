@@ -12,8 +12,8 @@
  */
 
 import { type Env, jsonResponse, noCacheJsonResponse } from '../index';
-import { requireSession } from '../session';
 import { methodNotAllowed } from '../response-helpers';
+import { requireSession } from '../session';
 
 // ─── POST /api/messages/keys/exchange — X3DH Key Exchange ───────────────
 
@@ -209,7 +209,12 @@ export async function handleSendEncrypted(request: Request, env: Env): Promise<R
         fromId: userId,
         toId: body.to,
         encryptedBlob,
-        preferredProtocol: body.preferredProtocol || 'nostr',
+        preferredProtocol: (body.preferredProtocol || 'nostr') as
+          | 'nostr'
+          | 'xmtp'
+          | 'farcaster'
+          | 'bluesky'
+          | undefined,
         metadata: {
           sourceProtocol: 'wallet',
           contentType: 'application/vnd.degenfeed.e2e-msg',
@@ -220,7 +225,7 @@ export async function handleSendEncrypted(request: Request, env: Env): Promise<R
 
     // 4. Also save to KV conversation history (encrypted form for persistence)
     const { seal } = await import('../lib/crypto-seal');
-    const _sealed = await seal(env, body.body, `e2e-msg:${userId}:${body.to}`);
+    await seal(env, body.body, `e2e-msg:${userId}:${body.to}`);
 
     return noCacheJsonResponse({
       ok: true,

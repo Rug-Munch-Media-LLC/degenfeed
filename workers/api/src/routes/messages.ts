@@ -128,15 +128,49 @@ function _isSupportedProtocol(p: string): p is DmProtocol {
 }
 
 /**
- * Resolve an identifier (wallet, handle, npub, DID) to a wallet address
- * by looking up the IDENTITIES KV or using the handle resolution system.
+ * Resolve an identifier (wallet, handle, npub, FID, DID, handle, Matrix ID)
+ * to a wallet address by looking up the IDENTITIES KV or using the
+ * identity resolution system.
+ *
+ * Accepts:
+ *   - Wallet address (0x...)
+ *   - Nostr npub (npub1...)
+ *   - Farcaster FID (fid:12345 or numeric)
+ *   - Bluesky DID (did:plc:...)
+ *   - Mastodon handle (@user@instance)
+ *   - Matrix ID (@user:homeserver)
+ *   - Telegram ID (numeric)
+ *   - Lens handle (*.lens)
+ *   - ENS name (*.eth)
  */
 async function resolveToWallet(identifier: string, env: Env): Promise<string | null> {
   const id = identifier.toLowerCase().trim();
   if (!env.IDENTITIES) return id.startsWith('0x') ? id : null;
 
+  // Fast path for wallet addresses
+  if (/^0x[a-f0-9]{40}$/.test(id)) return id;
+
   try {
-    // Try direct identity lookup
+    // Try direct identity lookup via identity resolver (handles ALL formats)
+    const { resolveIdentity } = await import('@degenfeed/realtime/identity-resolver');
+    const identity = await resolveIdentity(id, {
+      IDENTITIES: env.IDENTITIES,
+      allowNetworkLookup: true,
+    });
+
+    if (identity?.walletAddress) return identity.walletAddress;
+
+    // Fall back to any resolved protocol identity
+    if (identity && Object.keys(identity.protocols).length > 0) {
+      const firstProto = Object.values(identity.protocols)[0];
+      if (firstProto?.id) return firstProto.id;
+    }
+  } catch {
+    // Resolver unavailable — try legacy methods
+  }
+
+  try {
+    // Legacy: Try direct identity lookup
     const { identityKey: ikFn } = await import('@degenfeed/utils');
     const raw = await env.IDENTITIES.get(ikFn(id));
     if (raw) {
@@ -144,7 +178,7 @@ async function resolveToWallet(identifier: string, env: Env): Promise<string | n
       return (parsed.walletAddress as string) || id;
     }
 
-    // Try handle resolution
+    // Legacy: Try handle resolution
     const { resolveHandle } = await import('@degenfeed/utils');
     const resolved = await resolveHandle(id);
     if (resolved?.walletAddress) return resolved.walletAddress;
@@ -153,7 +187,14 @@ async function resolveToWallet(identifier: string, env: Env): Promise<string | n
   }
 
   // If it matches a standard format, use it directly
-  if (id.startsWith('0x') || id.startsWith('npub1') || id.startsWith('did:')) {
+  if (
+    id.startsWith('0x') ||
+    id.startsWith('npub1') ||
+    id.startsWith('did:') ||
+    /^@?\w+@[\w.-]+\.[a-z]{2,}$/.test(id) ||
+    /^@[\w\-./]+:[\w\-./]+$/.test(id) ||
+    /^\d{5,}$/.test(id)
+  ) {
     return id;
   }
 
@@ -189,7 +230,7 @@ async function saveMessages(
   }
 }
 
-async function getConversationList(env: Env, userId: string): Promise<Conversation[]> {
+export async function getConversationList(env: Env, userId: string): Promise<Conversation[]> {
   if (!env.CACHE) return [];
   try {
     const raw = await env.CACHE.get(`${DM_LIST_PREFIX}${userId}`);
@@ -570,12 +611,32 @@ export async function handleSendMessage(request: Request, env: Env): Promise<Res
     console.error('[messages] Failed to create DM notification:', err);
   }
 
+  // Build protocol badges for the UI
+  const PROTOCOL_LABELS: Record<string, string> = {
+    nostr: 'Nostr',
+    farcaster: 'Farcaster',
+    bluesky: 'Bluesky',
+    mastodon: 'Mastodon',
+    matrix: 'Matrix',
+    telegram: 'Telegram',
+    lens: 'Lens',
+    discord: 'Discord',
+    'direct-ws': 'Direct',
+  };
+  const protocolBadges = bridgeResult.deliveryStatus.map((s) => ({
+    protocol: s.protocol,
+    label: PROTOCOL_LABELS[s.protocol] ?? s.protocol,
+    delivered: s.ok,
+    nativeUrl: undefined as string | undefined,
+  }));
+
   return noCacheJsonResponse({
     ok: true,
     sent: true,
     messageId: dm.id,
     deliveredTo: bridgeResult.deliveredTo,
     deliveryStatus: bridgeResult.deliveryStatus,
+    protocolBadges,
     message: dm,
   });
 }

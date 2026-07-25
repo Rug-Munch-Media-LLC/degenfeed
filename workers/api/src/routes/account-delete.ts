@@ -53,6 +53,7 @@ function signatureKey(address: string): string {
   return `delete:signature:${address.toLowerCase()}`;
 }
 
+// @ts-expect-error TS6133 unused
 function _notifyPrefsKey(address: string): string {
   return `notify:prefs:${address.toLowerCase()}`;
 }
@@ -1010,7 +1011,8 @@ export async function handleDeletionCertificate(request: Request, env: Env): Pro
       return jsonResponse({ error: 'This certificate belongs to a different account.' }, 401);
     }
 
-    const _respData = JSON.stringify(cert, null, 2); return new Response(_respData, {
+    const _respData = JSON.stringify(cert, null, 2);
+    return new Response(_respData, {
       status: 200,
       headers: {
         'content-type': 'application/json; charset=utf-8',

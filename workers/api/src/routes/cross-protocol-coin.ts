@@ -59,7 +59,7 @@ interface CrossProtocolCoinRecord {
 interface LaunchCoinBody {
   name?: string;
   symbol?: string;
-  chain?: 'base' | 'solana';
+  chain?: 'base' | 'base_sepolia' | 'solana' | 'solana_devnet';
   originProtocol?: string;
   vestingConfig?: {
     vestingDurationDays?: number;
@@ -127,7 +127,7 @@ crossProtocolCoin.post('/launch', async (c) => {
 
   const name = sanitizeString(body.name, 64) || '';
   const symbol = sanitizeString(body.symbol, 10) || '';
-  const chain = body.chain === 'solana' ? 'solana' : 'base';
+  const chain = body.chain ?? 'base';
   const originProtocol = sanitizeString(body.originProtocol, 32) || '';
 
   if (!name || !symbol) {
@@ -196,11 +196,12 @@ crossProtocolCoin.post('/launch', async (c) => {
   let deployResult: { coinAddress: string; tokenId: string };
   try {
     deployResult =
-      chain === 'solana'
+      chain === 'solana' || chain === 'solana_devnet'
         ? await deploySolanaToken(
             walletAddress,
             name,
             symbol,
+            chain,
             { vestingDurationDays, creatorAllocationBps, cliffDays },
             { creatorFeeBps, platformFeeBps },
             env,
@@ -209,6 +210,7 @@ crossProtocolCoin.post('/launch', async (c) => {
             walletAddress,
             name,
             symbol,
+            chain,
             { vestingDurationDays, creatorAllocationBps, cliffDays },
             { creatorFeeBps, platformFeeBps },
             env,
@@ -217,7 +219,7 @@ crossProtocolCoin.post('/launch', async (c) => {
     return jsonResponse({ error: `Deployment failed: ${String(err)}` }, 500);
   }
 
-  const chainId = chain === 'solana' ? SOLANA_CHAIN_ID : BASE_CHAIN_ID;
+  const chainId = chain === 'solana' || chain === 'solana_devnet' ? SOLANA_CHAIN_ID : BASE_CHAIN_ID;
 
   // 8. Register cross-chain mapping via the CrossChainRegistry
   try {
@@ -453,6 +455,93 @@ crossProtocolCoin.get('/deploy/status', async (c) => {
   }
 });
 
+// ─── GET /api/coin/deploy/monitor ──────────────────────────────────────────
+// Poll this endpoint to get real-time deployment status with tx confirmations.
+
+crossProtocolCoin.get('/deploy/monitor', async (c) => {
+  const env = c.env;
+  const txHash = c.req.query('txHash');
+  const chain = c.req.query('chain') || 'base';
+
+  if (!txHash) {
+    return jsonResponse({ error: 'txHash query parameter is required' }, 400);
+  }
+
+  try {
+    let confirmations = 0;
+    let status: 'pending' | 'confirmed' | 'failed' = 'pending';
+
+    if (chain === 'base' || chain === 'base_sepolia') {
+      const { createPublicClient, http } = await import('viem');
+      const { base, baseSepolia } = await import('viem/chains');
+      const isTestnet = chain === 'base_sepolia';
+      const rpcUrl = isTestnet
+        ? env.BASE_SEPOLIA_RPC_URL || 'https://sepolia.base.org'
+        : env.BASE_RPC_URL || 'https://mainnet.base.org';
+
+      const publicClient = createPublicClient({
+        chain: isTestnet ? baseSepolia : base,
+        transport: http(rpcUrl),
+      });
+
+      try {
+        const receipt = await publicClient.getTransactionReceipt({
+          hash: txHash as `0x${string}`,
+        });
+
+        confirmations = receipt.blockNumber
+          ? Number((await publicClient.getBlockNumber()) - receipt.blockNumber)
+          : 0;
+
+        if (receipt.status === 'reverted') {
+          status = 'failed';
+        } else if (confirmations >= 1) {
+          status = 'confirmed';
+        }
+      } catch {
+        // Transaction not yet mined — still pending
+        status = 'pending';
+      }
+    } else if (chain === 'solana' || chain === 'solana_devnet') {
+      try {
+        const solanaWeb3 = await import('@solana/web3.js');
+        const isDevnet = chain === 'solana_devnet';
+        const rpcUrl = isDevnet
+          ? env.SOLANA_DEVNET_RPC_URL || 'https://api.devnet.solana.com'
+          : env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
+
+        const connection = new solanaWeb3.Connection(rpcUrl, 'confirmed');
+        const sig = await connection.getSignatureStatus(txHash);
+
+        if (sig?.value) {
+          confirmations = sig.value.confirmations ?? 0;
+          if (sig.value.err) {
+            status = 'failed';
+          } else if (
+            sig.value.confirmationStatus === 'finalized' ||
+            sig.value.confirmationStatus === 'confirmed'
+          ) {
+            status = 'confirmed';
+          }
+        }
+      } catch {
+        status = 'pending';
+      }
+    }
+
+    return noCacheJsonResponse({
+      txHash,
+      chain,
+      status,
+      confirmations,
+      timestamp: Date.now(),
+    });
+  } catch (err) {
+    console.warn('[cross-protocol-coin] Deploy monitor failed:', String(err));
+    return jsonResponse({ error: 'Failed to check deployment status' }, 500);
+  }
+});
+
 // ─── GET /api/coin/protocol/:protocol/:creatorId ───────────────────────────
 
 crossProtocolCoin.get('/protocol/:protocol/:creatorId', async (c) => {
@@ -519,6 +608,7 @@ async function deployBaseCoin(
   creator: string,
   name: string,
   symbol: string,
+  chain: 'base' | 'base_sepolia',
   vestingConfig: {
     vestingDurationDays: number;
     creatorAllocationBps: number;
@@ -534,7 +624,7 @@ async function deployBaseCoin(
       creator,
       name,
       symbol,
-      chain: 'base',
+      chain,
       protocol: 'universal',
       metadataUri: `${env.APP_BASE_URL || 'https://app.degenfeed.xyz'}/coin/${symbol.toLowerCase()}`,
       vestingConfig,
@@ -555,6 +645,7 @@ async function deploySolanaToken(
   creator: string,
   name: string,
   symbol: string,
+  chain: 'solana' | 'solana_devnet',
   vestingConfig: {
     vestingDurationDays: number;
     creatorAllocationBps: number;
@@ -570,7 +661,7 @@ async function deploySolanaToken(
       creator,
       name,
       symbol,
-      chain: 'solana',
+      chain,
       protocol: 'universal',
       metadataUri: `${env.APP_BASE_URL || 'https://app.degenfeed.xyz'}/coin/${symbol.toLowerCase()}`,
       vestingConfig,

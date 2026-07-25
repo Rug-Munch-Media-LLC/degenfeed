@@ -215,6 +215,7 @@ TELEGRAM_BOT_NAME = ""
 
 # EVM RPC endpoints for on-chain operations
 BASE_RPC_URL = "https://mainnet.base.org"
+BASE_SEPOLIA_RPC_URL = "https://sepolia.base.org"
 POLYGON_RPC_URL = "https://polygon-rpc.com"
 
 # Mastodon instance for account creation (defaults to GoToSocial)
@@ -244,6 +245,10 @@ YOUTUBE_API_KEY = ""
 
 # Solana — RPC URL for wallet verification, Blinks, and billing
 SOLANA_RPC_URL = "https://api.mainnet-beta.solana.com"
+SOLANA_DEVNET_RPC_URL = "https://api.devnet.solana.com"
+
+# Creator coin factory contract addresses
+# COIN_FACTORY_ADDRESS_TESTNET = "0x7691e6E14fF349B854738C8A8Aac2314558125B6"
 
 # OAuth provider client IDs (non-secret — set corresponding _SECRET as wrangler secret)
 GOOGLE_CLIENT_ID = ""

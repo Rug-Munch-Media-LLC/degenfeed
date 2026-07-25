@@ -3,219 +3,18 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-
-// ─── Types ─────────────────────────────────────────────────────────────
-
-type ProposalType = 'standard' | 'treasury' | 'constitutional' | 'signaling';
-
-interface Milestone {
-  id: string;
-  description: string;
-  amount: string;
-  token: string;
-}
-
-interface ConstitutionalParam {
-  key: string;
-  label: string;
-  currentValue: string;
-  description: string;
-  unit: string;
-}
-
-// ─── Mock Data ─────────────────────────────────────────────────────────
-
-const PROPOSAL_TYPES: { value: ProposalType; label: string; description: string; icon: string }[] =
-  [
-    {
-      value: 'standard',
-      label: 'Standard',
-      description: 'Simple majority vote for general decisions',
-      icon: '📋',
-    },
-    {
-      value: 'treasury',
-      label: 'Treasury',
-      description: 'Spending proposal with amount and recipient',
-      icon: '💰',
-    },
-    {
-      value: 'constitutional',
-      label: 'Constitutional',
-      description: 'Parameter changes to DAO governance',
-      icon: '⚖️',
-    },
-    {
-      value: 'signaling',
-      label: 'Signaling',
-      description: 'Non-binding temperature check',
-      icon: '📡',
-    },
-  ];
-
-const CONSTITUTIONAL_PARAMS: ConstitutionalParam[] = [
-  {
-    key: 'quorum',
-    label: 'Quorum Threshold',
-    currentValue: '10%',
-    description: 'Minimum voting power required for a valid vote',
-    unit: '%',
-  },
-  {
-    key: 'threshold',
-    label: 'Approval Threshold',
-    currentValue: '60%',
-    description: 'Percentage of FOR votes required to pass',
-    unit: '%',
-  },
-  {
-    key: 'votingPeriod',
-    label: 'Voting Period',
-    currentValue: '7 days',
-    description: 'Duration of the voting window',
-    unit: 'days',
-  },
-  {
-    key: 'timelock',
-    label: 'Timelock Duration',
-    currentValue: '48 hours',
-    description: 'Delay before execution after passing',
-    unit: 'hours',
-  },
-  {
-    key: 'delegation',
-    label: 'Delegation Enabled',
-    currentValue: 'Yes',
-    description: 'Allow voting power delegation',
-    unit: '',
-  },
-];
-
-const MOCK_TOKENS = ['ETH', 'USDC', 'DEGEN', 'SOL', 'ARB', 'OP'];
-
-// ─── Milestone Editor ──────────────────────────────────────────────────
-
-function MilestoneEditor({
-  milestones,
-  onChange,
-}: {
-  milestones: Milestone[];
-  onChange: (ms: Milestone[]) => void;
-}) {
-  const addMilestone = () => {
-    const newMs: Milestone = {
-      id: crypto.randomUUID?.() || String(Date.now()),
-      description: '',
-      amount: '',
-      token: 'USDC',
-    };
-    onChange([...milestones, newMs]);
-  };
-
-  const removeMilestone = (id: string) => {
-    onChange(milestones.filter((m) => m.id !== id));
-  };
-
-  const updateMilestone = (id: string, field: keyof Milestone, value: string) => {
-    onChange(milestones.map((m) => (m.id === id ? { ...m, [field]: value } : m)));
-  };
-
-  return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-semibold text-[var(--color-fg)]">Milestones</span>
-        <button
-          type="button"
-          onClick={addMilestone}
-          className="rounded-lg bg-degen-500/15 px-2.5 py-1 text-[10px] font-semibold text-degen-400 hover:bg-degen-500/25 transition-colors"
-        >
-          + Add Milestone
-        </button>
-      </div>
-
-      {milestones.length === 0 && (
-        <p className="text-[10px] text-[var(--color-muted)]">
-          No milestones added. Add at least one milestone to proceed.
-        </p>
-      )}
-
-      {milestones.map((ms, i) => (
-        <div
-          key={ms.id}
-          className="relative rounded-lg border border-[var(--color-glass-border)] bg-[var(--color-bg-tertiary)] p-3"
-        >
-          <div className="mb-2 flex items-center justify-between">
-            <span className="text-[10px] font-semibold text-[var(--color-muted)]">
-              Milestone {i + 1}
-            </span>
-            <button
-              type="button"
-              onClick={() => removeMilestone(ms.id)}
-              className="text-[9px] text-red-400 hover:text-red-300 transition-colors"
-            >
-              Remove
-            </button>
-          </div>
-
-          <div className="mb-2">
-            <label className="mb-1 block text-[9px] text-[var(--color-muted)]">Description</label>
-            <input
-              type="text"
-              value={ms.description}
-              onChange={(e) => updateMilestone(ms.id, 'description', e.target.value)}
-              placeholder="What gets delivered at this milestone?"
-              className="w-full rounded-lg border border-[var(--color-glass-border)] bg-[var(--color-card)] px-3 py-2 text-xs text-[var(--color-fg)] placeholder:text-[var(--color-muted)]/50 outline-none focus:border-degen-500 transition-colors"
-            />
-          </div>
-
-          <div className="flex items-center gap-2">
-            <div className="flex-1">
-              <label className="mb-1 block text-[9px] text-[var(--color-muted)]">Amount</label>
-              <input
-                type="text"
-                value={ms.amount}
-                onChange={(e) => updateMilestone(ms.id, 'amount', e.target.value)}
-                placeholder="0.00"
-                className="w-full rounded-lg border border-[var(--color-glass-border)] bg-[var(--color-card)] px-3 py-2 text-xs text-[var(--color-fg)] placeholder:text-[var(--color-muted)]/50 outline-none focus:border-degen-500 transition-colors font-mono"
-              />
-            </div>
-            <div className="w-24">
-              <label className="mb-1 block text-[9px] text-[var(--color-muted)]">Token</label>
-              <select
-                value={ms.token}
-                onChange={(e) => updateMilestone(ms.id, 'token', e.target.value)}
-                className="w-full rounded-lg border border-[var(--color-glass-border)] bg-[var(--color-card)] px-3 py-2 text-xs text-[var(--color-fg)] outline-none focus:border-degen-500 transition-colors"
-              >
-                {MOCK_TOKENS.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// ══════════════════════════════════════════════════════════════════════
-// MAIN PAGE — Proposal Creation
-// ══════════════════════════════════════════════════════════════════════
+import { MilestoneEditor } from './_components/MilestoneEditor';
+import { CONSTITUTIONAL_PARAMS, MOCK_TOKENS, PROPOSAL_TYPES } from './constants';
+import type { ConstitutionalParam, Milestone, ProposalType } from './types';
 
 export default function CreateProposalPage({ params }: { params: { id: string } }) {
   const _router = useRouter();
   const [step, setStep] = useState<'type' | 'content' | 'preview'>('type');
-
-  // Form state
   const [proposalType, setProposalType] = useState<ProposalType | null>(null);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [discussionLink, setDiscussionLink] = useState('');
   const [attachments, setAttachments] = useState<string[]>([]);
-
-  // Treasury-specific
   const [recipientAddress, setRecipientAddress] = useState('');
   const [amount, setAmount] = useState('');
   const [token, setToken] = useState('USDC');
@@ -223,42 +22,111 @@ export default function CreateProposalPage({ params }: { params: { id: string } 
     'one-time',
   );
   const [milestones, setMilestones] = useState<Milestone[]>([]);
-
-  // Constitutional-specific
   const [selectedParam, setSelectedParam] = useState<ConstitutionalParam | null>(null);
   const [newValue, setNewValue] = useState('');
-
-  // Submit state
   const [submitting, setSubmitting] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [proposalId, setProposalId] = useState('');
 
-  // ─── Select type ──────────────────────────────────────────────────
+  if (submitted) {
+    return (
+      <div className="mx-auto flex min-h-[50vh] max-w-lg items-center justify-center px-4 py-6 animate-page-enter">
+        <div className="text-center">
+          <div className="mb-4 text-6xl">🎉</div>
+          <h1
+            className="mb-2 text-2xl font-black text-[var(--color-fg)]"
+            style={{ fontFamily: 'var(--font-heading)' }}
+          >
+            Proposal Submitted!
+          </h1>
+          <p className="mb-6 text-sm text-[var(--color-muted)]">
+            Your proposal is now live for DAO members to review and vote.
+          </p>
+          <div className="mb-6 rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-4">
+            <div className="mb-2 flex items-center gap-2">
+              <span className="rounded-md bg-degen-500/15 px-2 py-0.5 text-[9px] font-semibold text-degen-400">
+                {PROPOSAL_TYPES.find((t) => t.value === proposalType)?.label}
+              </span>
+              <span className="rounded-md bg-blue-500/15 px-2 py-0.5 text-[9px] font-semibold text-blue-400">
+                Active
+              </span>
+            </div>
+            <h2 className="mb-1 text-sm font-bold text-[var(--color-fg)]">{title}</h2>
+          </div>
+          <div className="flex flex-col items-center gap-3">
+            <button
+              type="button"
+              onClick={() =>
+                navigator.clipboard.writeText(
+                  `${window.location.origin}/dao/${params.id}/proposals/${proposalId}`,
+                )
+              }
+              className="inline-flex items-center gap-2 rounded-xl bg-[var(--color-glass-border)] px-5 py-2.5 text-xs font-semibold text-[var(--color-fg)] hover:bg-[var(--color-overlay-hover)] transition-colors"
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                aria-hidden="true"
+              >
+                <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" />
+                <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" />
+              </svg>
+              Copy Share Link
+            </button>
+            <Link
+              href={`/dao/${params.id}/proposals/${proposalId}`}
+              className="text-xs text-degen-400 hover:underline"
+            >
+              View Proposal →
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const Breadcrumb = ({ items }: { items: { label: string; href?: string }[] }) => (
+    <div className="mb-6 flex items-center gap-2 text-xs text-[var(--color-muted)]">
+      {items.map((item, i) => (
+        <span key={i} className="flex items-center gap-2">
+          {i > 0 && (
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              aria-hidden="true"
+            >
+              <path d="M9 18l6-6-6-6" />
+            </svg>
+          )}
+          {item.href ? (
+            <Link href={item.href} className="hover:text-degen-400 transition-colors">
+              {item.label}
+            </Link>
+          ) : (
+            <span className="text-[var(--color-fg)]">{item.label}</span>
+          )}
+        </span>
+      ))}
+    </div>
+  );
 
   if (step === 'type') {
     return (
       <div className="mx-auto max-w-3xl px-4 py-6 animate-page-enter">
-        {/* Breadcrumb */}
-        <div className="mb-6 flex items-center gap-2 text-xs text-[var(--color-muted)]">
-          <Link href={`/dao/${params.id}`} className="hover:text-degen-400 transition-colors">
-            DAO
-          </Link>
-          <svg
-            width="12"
-            height="12"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            aria-hidden="true"
-          >
-            <path d="M9 18l6-6-6-6" />
-          </svg>
-          <span className="text-[var(--color-fg)]">Create Proposal</span>
-        </div>
-
+        <Breadcrumb
+          items={[{ label: 'DAO', href: `/dao/${params.id}` }, { label: 'Create Proposal' }]}
+        />
         <h1
           className="mb-2 text-[28px] font-black text-[var(--color-fg)]"
           style={{ fontFamily: 'var(--font-heading)' }}
@@ -268,7 +136,6 @@ export default function CreateProposalPage({ params }: { params: { id: string } 
         <p className="mb-8 text-sm text-[var(--color-muted)]">
           Choose the type of proposal you want to create.
         </p>
-
         <div className="grid gap-4 sm:grid-cols-2">
           {PROPOSAL_TYPES.map((pt) => (
             <button
@@ -292,49 +159,16 @@ export default function CreateProposalPage({ params }: { params: { id: string } 
     );
   }
 
-  // ─── Content builder ──────────────────────────────────────────────
-
   if (step === 'content') {
     return (
       <div className="mx-auto max-w-3xl px-4 py-6 animate-page-enter">
-        {/* Breadcrumb */}
-        <div className="mb-6 flex items-center gap-2 text-xs text-[var(--color-muted)]">
-          <Link href={`/dao/${params.id}`} className="hover:text-degen-400 transition-colors">
-            DAO
-          </Link>
-          <svg
-            width="12"
-            height="12"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            aria-hidden="true"
-          >
-            <path d="M9 18l6-6-6-6" />
-          </svg>
-          <Link
-            href={`/dao/${params.id}/proposals/create`}
-            className="hover:text-degen-400 transition-colors"
-          >
-            Create
-          </Link>
-          <svg
-            width="12"
-            height="12"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            aria-hidden="true"
-          >
-            <path d="M9 18l6-6-6-6" />
-          </svg>
-          <span className="text-[var(--color-fg)]">Content</span>
-        </div>
-
+        <Breadcrumb
+          items={[
+            { label: 'DAO', href: `/dao/${params.id}` },
+            { label: 'Create', href: `/dao/${params.id}/proposals/create` },
+            { label: 'Content' },
+          ]}
+        />
         <div className="mb-6 flex items-center justify-between">
           <div>
             <h1
@@ -358,7 +192,6 @@ export default function CreateProposalPage({ params }: { params: { id: string } 
         </div>
 
         <div className="space-y-6">
-          {/* Title */}
           <div>
             <label
               htmlFor="prop-title"
@@ -375,8 +208,6 @@ export default function CreateProposalPage({ params }: { params: { id: string } 
               className="w-full rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-fg)] placeholder:text-[var(--color-muted)]/50 outline-none focus:border-degen-500 transition-colors"
             />
           </div>
-
-          {/* Description */}
           <div>
             <label
               htmlFor="prop-desc"
@@ -397,8 +228,6 @@ export default function CreateProposalPage({ params }: { params: { id: string } 
               headings.
             </p>
           </div>
-
-          {/* Discussion Link */}
           <div>
             <label
               htmlFor="prop-discuss"
@@ -415,8 +244,6 @@ export default function CreateProposalPage({ params }: { params: { id: string } 
               className="w-full rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-fg)] placeholder:text-[var(--color-muted)]/50 outline-none focus:border-degen-500 transition-colors font-mono"
             />
           </div>
-
-          {/* Attachments */}
           <div>
             <label className="mb-1.5 block text-xs font-semibold text-[var(--color-fg)]">
               Attachments
@@ -462,11 +289,9 @@ export default function CreateProposalPage({ params }: { params: { id: string } 
             </div>
           </div>
 
-          {/* ─── Treasury-specific fields ─── */}
           {proposalType === 'treasury' && (
             <div className="rounded-xl border border-degen-500/10 bg-degen-500/5 p-5 space-y-4">
               <h3 className="text-xs font-bold text-degen-400">💰 Treasury Proposal Details</h3>
-
               <div>
                 <label
                   htmlFor="recipient"
@@ -483,7 +308,6 @@ export default function CreateProposalPage({ params }: { params: { id: string } 
                   className="w-full rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] px-4 py-3 text-sm font-mono text-[var(--color-fg)] placeholder:text-[var(--color-muted)]/50 outline-none focus:border-degen-500 transition-colors"
                 />
               </div>
-
               <div className="flex items-center gap-3">
                 <div className="flex-1">
                   <label
@@ -522,7 +346,6 @@ export default function CreateProposalPage({ params }: { params: { id: string } 
                   </select>
                 </div>
               </div>
-
               <div>
                 <label className="mb-1.5 block text-xs font-semibold text-[var(--color-fg)]">
                   Payment Type
@@ -533,11 +356,7 @@ export default function CreateProposalPage({ params }: { params: { id: string } 
                       key={pt}
                       type="button"
                       onClick={() => setPaymentType(pt)}
-                      className={`flex-1 rounded-lg border px-3 py-2 text-[10px] font-medium transition-all ${
-                        paymentType === pt
-                          ? 'border-degen-500/30 bg-degen-500/15 text-degen-400'
-                          : 'border-[var(--color-glass-border)] text-[var(--color-muted)] hover:text-[var(--color-fg)]'
-                      }`}
+                      className={`flex-1 rounded-lg border px-3 py-2 text-[10px] font-medium transition-all ${paymentType === pt ? 'border-degen-500/30 bg-degen-500/15 text-degen-400' : 'border-[var(--color-glass-border)] text-[var(--color-muted)] hover:text-[var(--color-fg)]'}`}
                     >
                       {pt === 'one-time'
                         ? 'One-Time'
@@ -548,20 +367,17 @@ export default function CreateProposalPage({ params }: { params: { id: string } 
                   ))}
                 </div>
               </div>
-
               {paymentType === 'milestone' && (
                 <MilestoneEditor milestones={milestones} onChange={setMilestones} />
               )}
             </div>
           )}
 
-          {/* ─── Constitutional-specific fields ─── */}
           {proposalType === 'constitutional' && (
             <div className="rounded-xl border border-purple-500/10 bg-purple-500/5 p-5 space-y-4">
               <h3 className="text-xs font-bold text-purple-400">
                 ⚖️ Constitutional Proposal Details
               </h3>
-
               <div>
                 <label className="mb-1.5 block text-xs font-semibold text-[var(--color-fg)]">
                   Parameter to Change <span className="text-red-400">*</span>
@@ -575,11 +391,7 @@ export default function CreateProposalPage({ params }: { params: { id: string } 
                         setSelectedParam(param);
                         setNewValue('');
                       }}
-                      className={`rounded-lg border p-3 text-left transition-all ${
-                        selectedParam?.key === param.key
-                          ? 'border-purple-500/30 bg-purple-500/15'
-                          : 'border-[var(--color-glass-border)] hover:border-purple-500/20'
-                      }`}
+                      className={`rounded-lg border p-3 text-left transition-all ${selectedParam?.key === param.key ? 'border-purple-500/30 bg-purple-500/15' : 'border-[var(--color-glass-border)] hover:border-purple-500/20'}`}
                     >
                       <div className="text-[11px] font-semibold text-[var(--color-fg)]">
                         {param.label}
@@ -594,7 +406,6 @@ export default function CreateProposalPage({ params }: { params: { id: string } 
                   ))}
                 </div>
               </div>
-
               {selectedParam && (
                 <>
                   <div>
@@ -620,8 +431,6 @@ export default function CreateProposalPage({ params }: { params: { id: string } 
                       )}
                     </div>
                   </div>
-
-                  {/* Impact preview */}
                   <div className="rounded-lg border border-amber-500/10 bg-amber-500/5 p-3">
                     <div className="mb-1 text-[10px] font-semibold text-amber-400">
                       ⚠️ Impact Preview
@@ -643,7 +452,6 @@ export default function CreateProposalPage({ params }: { params: { id: string } 
             </div>
           )}
 
-          {/* Navigation buttons */}
           <div className="flex items-center justify-between pt-4">
             <button
               type="button"
@@ -666,113 +474,17 @@ export default function CreateProposalPage({ params }: { params: { id: string } 
     );
   }
 
-  // ─── Preview & Submit ──────────────────────────────────────────────
-
-  if (submitted) {
-    return (
-      <div className="mx-auto flex min-h-[50vh] max-w-lg items-center justify-center px-4 py-6 animate-page-enter">
-        <div className="text-center">
-          <div className="mb-4 text-6xl">🎉</div>
-          <h1
-            className="mb-2 text-2xl font-black text-[var(--color-fg)]"
-            style={{ fontFamily: 'var(--font-heading)' }}
-          >
-            Proposal Submitted!
-          </h1>
-          <p className="mb-6 text-sm text-[var(--color-muted)]">
-            Your proposal is now live for DAO members to review and vote.
-          </p>
-
-          <div className="mb-6 rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-4">
-            <div className="mb-2 flex items-center gap-2">
-              <span className="rounded-md bg-degen-500/15 px-2 py-0.5 text-[9px] font-semibold text-degen-400">
-                {PROPOSAL_TYPES.find((t) => t.value === proposalType)?.label}
-              </span>
-              <span className="rounded-md bg-blue-500/15 px-2 py-0.5 text-[9px] font-semibold text-blue-400">
-                Active
-              </span>
-            </div>
-            <h2 className="mb-1 text-sm font-bold text-[var(--color-fg)]">{title}</h2>
-          </div>
-
-          <div className="flex flex-col items-center gap-3">
-            <button
-              type="button"
-              onClick={() => {
-                navigator.clipboard.writeText(
-                  `${window.location.origin}/dao/${params.id}/proposals/${proposalId}`,
-                );
-              }}
-              className="inline-flex items-center gap-2 rounded-xl bg-[var(--color-glass-border)] px-5 py-2.5 text-xs font-semibold text-[var(--color-fg)] hover:bg-[var(--color-overlay-hover)] transition-colors"
-            >
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                aria-hidden="true"
-              >
-                <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" />
-                <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" />
-              </svg>
-              Copy Share Link
-            </button>
-            <Link
-              href={`/dao/${params.id}/proposals/${proposalId}`}
-              className="text-xs text-degen-400 hover:underline"
-            >
-              View Proposal →
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Preview step
+  // Preview & Submit step
+  const ptInfo = PROPOSAL_TYPES.find((t) => t.value === proposalType);
   return (
     <div className="mx-auto max-w-3xl px-4 py-6 animate-page-enter">
-      {/* Breadcrumb */}
-      <div className="mb-6 flex items-center gap-2 text-xs text-[var(--color-muted)]">
-        <Link href={`/dao/${params.id}`} className="hover:text-degen-400 transition-colors">
-          DAO
-        </Link>
-        <svg
-          width="12"
-          height="12"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          aria-hidden="true"
-        >
-          <path d="M9 18l6-6-6-6" />
-        </svg>
-        <Link
-          href={`/dao/${params.id}/proposals/create`}
-          className="hover:text-degen-400 transition-colors"
-        >
-          Create
-        </Link>
-        <svg
-          width="12"
-          height="12"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          aria-hidden="true"
-        >
-          <path d="M9 18l6-6-6-6" />
-        </svg>
-        <span className="text-[var(--color-fg)]">Preview</span>
-      </div>
-
+      <Breadcrumb
+        items={[
+          { label: 'DAO', href: `/dao/${params.id}` },
+          { label: 'Create', href: `/dao/${params.id}/proposals/create` },
+          { label: 'Preview' },
+        ]}
+      />
       <h1
         className="mb-6 text-2xl font-black text-[var(--color-fg)]"
         style={{ fontFamily: 'var(--font-heading)' }}
@@ -780,25 +492,21 @@ export default function CreateProposalPage({ params }: { params: { id: string } 
         Preview Proposal
       </h1>
 
-      {/* Proposal Preview Card */}
       <div className="mb-8 rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-6">
         <div className="mb-4 flex items-center gap-2">
           <span className="rounded-md bg-degen-500/15 px-2 py-0.5 text-[9px] font-semibold text-degen-400">
-            {PROPOSAL_TYPES.find((t) => t.value === proposalType)?.label}
+            {ptInfo?.label}
           </span>
           <span className="rounded-md bg-blue-500/15 px-2 py-0.5 text-[9px] font-semibold text-blue-400">
             Preview
           </span>
         </div>
-
         <h2 className="mb-2 text-lg font-bold text-[var(--color-fg)]">
           {title || 'Untitled Proposal'}
         </h2>
-
         <div className="mb-4 text-sm leading-relaxed text-[var(--color-muted)] whitespace-pre-wrap">
           {description || 'No description provided.'}
         </div>
-
         {discussionLink && (
           <div className="mb-3 text-xs">
             <span className="text-[var(--color-muted)]">Discussion: </span>
@@ -812,7 +520,6 @@ export default function CreateProposalPage({ params }: { params: { id: string } 
             </a>
           </div>
         )}
-
         {attachments.length > 0 && (
           <div className="mb-3 flex flex-wrap gap-2">
             {attachments.map((att, i) => (
@@ -825,8 +532,6 @@ export default function CreateProposalPage({ params }: { params: { id: string } 
             ))}
           </div>
         )}
-
-        {/* Treasury preview */}
         {proposalType === 'treasury' && (
           <div className="mt-4 rounded-lg border border-degen-500/10 bg-degen-500/5 p-3">
             <div className="grid gap-2 text-[10px]">
@@ -866,8 +571,6 @@ export default function CreateProposalPage({ params }: { params: { id: string } 
             </div>
           </div>
         )}
-
-        {/* Constitutional preview */}
         {proposalType === 'constitutional' && selectedParam && (
           <div className="mt-4 rounded-lg border border-purple-500/10 bg-purple-500/5 p-3">
             <div className="grid gap-2 text-[10px]">
@@ -889,8 +592,6 @@ export default function CreateProposalPage({ params }: { params: { id: string } 
             </div>
           </div>
         )}
-
-        {/* Voting period preview */}
         <div className="mt-4 flex items-center gap-4 rounded-lg bg-[var(--color-glass-border)] p-3 text-[10px]">
           <span className="text-[var(--color-muted)]">
             ⏱️ Voting Period: <strong className="text-[var(--color-fg)]">7 days</strong>
@@ -904,7 +605,6 @@ export default function CreateProposalPage({ params }: { params: { id: string } 
         </div>
       </div>
 
-      {/* Confirm Modal */}
       {showConfirm && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
@@ -915,10 +615,9 @@ export default function CreateProposalPage({ params }: { params: { id: string } 
           <div className="mx-4 w-full max-w-md rounded-2xl border border-[var(--color-glass-border)] bg-[var(--color-card-elevated)] p-6 shadow-xl">
             <h3 className="mb-2 text-base font-bold text-[var(--color-fg)]">Confirm Submission</h3>
             <p className="mb-4 text-xs text-[var(--color-muted)]">
-              This will create an on-chain proposal. A gas fee ({'~'}0.003 ETH ≈ $8) will be
-              required to submit.
+              This will create an on-chain proposal. A gas fee (~0.003 ETH ≈ $8) will be required to
+              submit.
             </p>
-
             <div className="mb-4 rounded-lg bg-[var(--color-glass-border)] p-3 text-[10px]">
               <div className="flex justify-between mb-1">
                 <span className="text-[var(--color-muted)]">Estimated Gas</span>
@@ -929,7 +628,6 @@ export default function CreateProposalPage({ params }: { params: { id: string } 
                 <span className="font-mono text-[var(--color-fg)]">~$8.00</span>
               </div>
             </div>
-
             <div className="flex gap-3">
               <button
                 type="button"
@@ -943,7 +641,6 @@ export default function CreateProposalPage({ params }: { params: { id: string } 
                 disabled={submitting}
                 onClick={() => {
                   setSubmitting(true);
-                  // Simulate submission
                   setTimeout(() => {
                     setSubmitting(false);
                     setShowConfirm(false);
@@ -987,7 +684,6 @@ export default function CreateProposalPage({ params }: { params: { id: string } 
         </div>
       )}
 
-      {/* Bottom actions */}
       <div className="flex items-center justify-between">
         <button
           type="button"

@@ -90,6 +90,7 @@ const CHAIN_FEE_PRIORITY: Array<{
 
 // ─── Fee estimates per chain in USD ─────────────────────────────────────
 
+// @ts-expect-error TS6133 unused
 const _CHAIN_FEES: Record<string, number> = {
   lightning: 0.001,
   solana: 0.002,

@@ -53,10 +53,11 @@ export async function handleBridgeHealth(request: Request, env: Env): Promise<Re
     const report = await monitor.getOverallHealth(env);
 
     // Cache for 15 seconds
-    if (env.CACHE) {
+    const cache = env.CACHE;
+    if (cache) {
       (async () => {
         try {
-          await env.CACHE.put(cacheKey, JSON.stringify(report), {
+          await cache.put(cacheKey, JSON.stringify(report), {
             expirationTtl: 30,
           });
         } catch {

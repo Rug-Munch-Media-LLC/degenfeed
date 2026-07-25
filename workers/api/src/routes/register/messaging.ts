@@ -18,6 +18,15 @@ import {
 } from '../../lib/universal-inbox';
 import { methodNotAllowed } from '../../response-helpers';
 import {
+  handleBridgeConversation,
+  handleBridgeInbox,
+  handleBridgeMarkRead,
+  handleBridgeResolve,
+  handleBridgeSend,
+  handleBridgeStatus,
+  handleBridgeUnread,
+} from '../../routes/bridge';
+import {
   handleCreatePoll,
   handleCreateStickerPack,
   handleDeleteFile,
@@ -291,5 +300,28 @@ export function registerMessagingRoutes(app: Hono<{ Bindings: Env }>): void {
   );
   app.post('/api/inbox/share', async (c) =>
     withSession(c, () => handleInboxShare(c.req.raw, c.env)),
+  );
+
+  // --- API: Cross-Protocol DM Bridge (Universal DM + INBOX) ---
+  app.post('/api/bridge/send', async (c) =>
+    withSession(c, () => handleBridgeSend(c.req.raw, c.env)),
+  );
+  app.get('/api/bridge/inbox', async (c) =>
+    withSession(c, () => handleBridgeInbox(c.req.raw, c.env)),
+  );
+  app.get('/api/bridge/inbox/:peerId', async (c) =>
+    withSession(c, () => handleBridgeConversation(c.req.raw, c.env, c.req.param('peerId'))),
+  );
+  app.post('/api/bridge/read', async (c) =>
+    withSession(c, () => handleBridgeMarkRead(c.req.raw, c.env)),
+  );
+  app.get('/api/bridge/status', async (c) =>
+    withSession(c, () => handleBridgeStatus(c.req.raw, c.env)),
+  );
+  app.get('/api/bridge/unread', async (c) =>
+    withSession(c, () => handleBridgeUnread(c.req.raw, c.env)),
+  );
+  app.get('/api/bridge/resolve/:identifier', async (c) =>
+    withSession(c, () => handleBridgeResolve(c.req.raw, c.env, c.req.param('identifier'))),
   );
 }

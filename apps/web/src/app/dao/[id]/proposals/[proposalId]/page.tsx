@@ -3,47 +3,12 @@
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { formatTimeAgo, shortAddr } from '../../layout';
-
-// ─── Types ─────────────────────────────────────────────────────────────
-
-type VoteChoice = 'for' | 'against' | 'abstain';
-
-interface VoteEntry {
-  voter: string;
-  voterAvatar: string;
-  choice: VoteChoice;
-  votingPower: number;
-  reason?: string;
-  timestamp: number;
-  delegated: boolean;
-}
-
-interface ProposalDetail {
-  id: string;
-  title: string;
-  type: 'standard' | 'treasury' | 'constitutional' | 'signaling';
-  status: 'active' | 'passed' | 'failed' | 'executed';
-  forVotes: number;
-  againstVotes: number;
-  abstainVotes: number;
-  quorum: number;
-  totalVotingPower: number;
-  endTime: number;
-  createdTime: number;
-  proposer: string;
-  proposerAvatar: string;
-  description: string;
-  discussionLink?: string;
-  // Treasury specific
-  recipient?: string;
-  amount?: string;
-  token?: string;
-  paymentType?: string;
-  // Execution
-  queuedTime?: number;
-  executeTime?: number;
-  txHash?: string;
-}
+import { HorizontalVoteBar } from './_components/VoteBar';
+import { VoteCard } from './_components/VoteCard';
+import { VotePieChart } from './_components/VotePieChart';
+import { VoteTally } from './_components/VoteTally';
+import { formatCountdown, getStatusBadge, getTypeBadge } from './helpers';
+import type { ProposalDetail, VoteChoice, VoteEntry } from './types';
 
 // ─── Mock Data ─────────────────────────────────────────────────────────
 
@@ -164,227 +129,6 @@ const MOCK_VOTES: VoteEntry[] = [
   },
 ];
 
-// ─── Helpers ───────────────────────────────────────────────────────────
-
-function getStatusBadge(status: ProposalDetail['status']): { label: string; color: string } {
-  const map: Record<string, { label: string; color: string }> = {
-    active: { label: 'Active', color: 'text-blue-400 bg-blue-500/15' },
-    passed: { label: 'Passed', color: 'text-degen-400 bg-degen-500/15' },
-    failed: { label: 'Failed', color: 'text-red-400 bg-red-500/15' },
-    executed: { label: 'Executed', color: 'text-purple-400 bg-purple-500/15' },
-  };
-  return map[status] ?? { label: 'Active', color: 'text-blue-400 bg-blue-500/15' };
-}
-
-function getTypeBadge(type: ProposalDetail['type']): { label: string; color: string } {
-  const map: Record<string, { label: string; color: string }> = {
-    standard: { label: 'Standard', color: 'text-blue-400 bg-blue-500/15' },
-    treasury: { label: 'Treasury', color: 'text-degen-400 bg-degen-500/15' },
-    constitutional: { label: 'Constitutional', color: 'text-purple-400 bg-purple-500/15' },
-    signaling: { label: 'Signaling', color: 'text-amber-400 bg-amber-500/15' },
-  };
-  return map[type] ?? { label: 'Standard', color: 'text-blue-400 bg-blue-500/15' };
-}
-
-function formatCountdown(ts: number): string {
-  const diff = ts - Date.now();
-  if (diff <= 0) return 'Ended';
-  const days = Math.floor(diff / 86400000);
-  const hours = Math.floor((diff % 86400000) / 3600000);
-  const mins = Math.floor((diff % 3600000) / 60000);
-  if (days > 0) return `${days}d ${hours}h ${mins}m left`;
-  if (hours > 0) return `${hours}h ${mins}m left`;
-  return `${mins}m left`;
-}
-
-// ─── Vote Bar (Horizontal) ────────────────────────────────────────────
-
-function HorizontalVoteBar({
-  forVotes,
-  againstVotes,
-  abstainVotes,
-}: {
-  forVotes: number;
-  againstVotes: number;
-  abstainVotes: number;
-}) {
-  const total = forVotes + againstVotes + abstainVotes || 1;
-  const f = (forVotes / total) * 100;
-  const a = (againstVotes / total) * 100;
-  const ab = (abstainVotes / total) * 100;
-
-  return (
-    <div
-      className="flex h-8 w-full overflow-hidden rounded-lg bg-[var(--color-muted-bg)]"
-      role="progressbar"
-      aria-valuenow={forVotes}
-      aria-valuemin={0}
-      aria-valuemax={total}
-    >
-      <div
-        className="flex h-full items-center justify-center bg-degen-500 text-[9px] font-bold text-black transition-all duration-700"
-        style={{ width: `${f}%` }}
-      >
-        {f > 8 ? `${f.toFixed(0)}%` : ''}
-      </div>
-      <div
-        className="flex h-full items-center justify-center bg-red-500/80 text-[9px] font-bold text-white transition-all duration-700"
-        style={{ width: `${a}%` }}
-      >
-        {a > 8 ? `${a.toFixed(0)}%` : ''}
-      </div>
-      <div
-        className="flex h-full items-center justify-center bg-[var(--color-muted)]/40 text-[9px] font-bold text-[var(--color-muted)] transition-all duration-700"
-        style={{ width: `${ab}%` }}
-      >
-        {ab > 8 ? `${ab.toFixed(0)}%` : ''}
-      </div>
-    </div>
-  );
-}
-
-// ─── Vote Bar Tally ────────────────────────────────────────────────────
-
-function VoteTally({
-  label,
-  value,
-  pct,
-  color,
-  bg,
-}: {
-  label: string;
-  value: number;
-  pct: number;
-  color: string;
-  bg: string;
-}) {
-  return (
-    <div className="flex items-center gap-3">
-      <div className={`h-3 w-3 rounded-full ${bg}`} />
-      <span className="w-16 text-xs font-medium text-[var(--color-fg)]">{label}</span>
-      <div className="flex-1">
-        <div className="h-3 overflow-hidden rounded-full bg-[var(--color-muted-bg)]">
-          <div
-            className={`h-full rounded-full transition-all duration-700 ${bg}`}
-            style={{ width: `${pct}%` }}
-          />
-        </div>
-      </div>
-      <span className="w-20 text-right text-xs font-medium tabular-nums text-[var(--color-fg)]">
-        {value.toLocaleString()}
-      </span>
-      <span className="w-12 text-right text-[10px] text-[var(--color-muted)]">
-        {pct.toFixed(1)}%
-      </span>
-    </div>
-  );
-}
-
-// ─── Simple Pie Chart ──────────────────────────────────────────────────
-
-function VotePieChart({
-  forVotes,
-  againstVotes,
-  abstainVotes,
-}: {
-  forVotes: number;
-  againstVotes: number;
-  abstainVotes: number;
-}) {
-  const total = forVotes + againstVotes + abstainVotes || 1;
-  const r = 36;
-  const cx = 40;
-  const cy = 40;
-  const circumference = 2 * Math.PI * r;
-
-  const segments = [
-    { value: forVotes, color: 'var(--color-accent)' },
-    { value: againstVotes, color: '#ef4444' },
-    { value: abstainVotes, color: 'var(--color-muted)' },
-  ];
-
-  let offset = 0;
-  const paths = segments.map((seg, i) => {
-    const pct = seg.value / total;
-    const length = pct * circumference;
-    const path = (
-      <circle
-        key={i}
-        cx={cx}
-        cy={cy}
-        r={r}
-        fill="none"
-        stroke={seg.color}
-        strokeWidth="12"
-        strokeDasharray={`${length} ${circumference - length}`}
-        strokeDashoffset={-offset}
-        transform={`rotate(-90 ${cx} ${cy})`}
-        className="transition-all duration-700"
-      />
-    );
-    offset += length;
-    return path;
-  });
-
-  return (
-    <svg
-      viewBox="0 0 80 80"
-      className="h-full w-full"
-      role="img"
-      aria-label="Vote distribution pie chart"
-    >
-      {paths}
-    </svg>
-  );
-}
-
-// ─── Vote Reason Card ──────────────────────────────────────────────────
-
-function VoteCard({ vote }: { vote: VoteEntry }) {
-  const choiceColors: Record<VoteChoice, { label: string; color: string; bg: string }> = {
-    for: { label: 'FOR', color: 'text-degen-400', bg: 'bg-degen-500/15' },
-    against: { label: 'AGAINST', color: 'text-red-400', bg: 'bg-red-500/15' },
-    abstain: {
-      label: 'ABSTAIN',
-      color: 'text-[var(--color-muted)]',
-      bg: 'bg-[var(--color-glass-border)]',
-    },
-  };
-  const cc = choiceColors[vote.choice];
-
-  return (
-    <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-4">
-      <div className="mb-2 flex items-start justify-between">
-        <div className="flex items-center gap-2">
-          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-glass-border)] text-sm">
-            {vote.voterAvatar}
-          </span>
-          <div>
-            <div className="text-xs font-semibold text-[var(--color-fg)]">{vote.voter}</div>
-            <div className="flex items-center gap-1.5 text-[9px] text-[var(--color-muted)]">
-              <span>{vote.votingPower.toLocaleString()} votes</span>
-              {vote.delegated && (
-                <span className="rounded bg-amber-500/10 px-1 text-[8px] text-amber-400">
-                  Delegated
-                </span>
-              )}
-            </div>
-          </div>
-        </div>
-        <span className={`rounded-md px-2.5 py-1 text-[9px] font-bold ${cc.bg} ${cc.color}`}>
-          {cc.label}
-        </span>
-      </div>
-      {vote.reason && (
-        <p className="text-[11px] leading-relaxed text-[var(--color-muted)]">{vote.reason}</p>
-      )}
-      <div className="mt-2 text-[9px] font-mono text-[var(--color-muted)]">
-        {formatTimeAgo(vote.timestamp)}
-      </div>
-    </div>
-  );
-}
-
 // ══════════════════════════════════════════════════════════════════════
 // MAIN PAGE — Proposal Detail & Voting
 // ══════════════════════════════════════════════════════════════════════
@@ -414,7 +158,6 @@ export default function ProposalDetailPage({
     return sorted;
   }, [votes, sortBy]);
 
-  // User's own voting power (mock)
   const myVotingPower = 12_500;
   const _canVote = proposal.status === 'active' && !voteSubmitted;
   const needsQuorum = total < proposal.quorum;
@@ -442,7 +185,7 @@ export default function ProposalDetailPage({
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        {/* ═══ Main Content (spans 2 cols) ═══ */}
+        {/* Main Content (spans 2 cols) */}
         <div className="lg:col-span-2 space-y-6">
           {/* Header */}
           <section
@@ -466,14 +209,12 @@ export default function ProposalDetailPage({
                 </span>
               )}
             </div>
-
             <h1
               className="mb-4 text-xl font-black text-[var(--color-fg)]"
               style={{ fontFamily: 'var(--font-heading)' }}
             >
               {proposal.title}
             </h1>
-
             <div className="mb-4 flex items-center gap-3 text-[10px] text-[var(--color-muted)]">
               <div className="flex items-center gap-1.5">
                 <span className="text-sm">{proposal.proposerAvatar}</span>
@@ -495,8 +236,6 @@ export default function ProposalDetailPage({
                 </>
               )}
             </div>
-
-            {/* Treasury details */}
             {proposal.type === 'treasury' && proposal.recipient && (
               <div className="mb-4 rounded-lg border border-degen-500/10 bg-degen-500/5 p-3">
                 <div className="grid grid-cols-3 gap-3 text-[10px]">
@@ -519,32 +258,27 @@ export default function ProposalDetailPage({
                 </div>
               </div>
             )}
-
-            {/* Description (rendered as markdown-like) */}
             <div className="prose prose-invert max-w-none">
               {proposal.description.split('\n').map((line, i) => {
-                if (line.startsWith('## ')) {
+                if (line.startsWith('## '))
                   return (
                     <h2 key={i} className="mt-6 mb-3 text-sm font-bold text-[var(--color-fg)]">
                       {line.slice(3)}
                     </h2>
                   );
-                }
-                if (line.startsWith('### ')) {
+                if (line.startsWith('### '))
                   return (
                     <h3 key={i} className="mt-4 mb-2 text-xs font-bold text-[var(--color-fg)]">
                       {line.slice(4)}
                     </h3>
                   );
-                }
-                if (line.startsWith('- ')) {
+                if (line.startsWith('- '))
                   return (
                     <li key={i} className="text-xs text-[var(--color-muted)] ml-4">
                       {line.slice(2)}
                     </li>
                   );
-                }
-                if (line.startsWith('| ') && line.includes('|---')) return null; // skip markdown table header separator
+                if (line.startsWith('| ') && line.includes('|---')) return null;
                 if (line.startsWith('| ')) {
                   const cells = line
                     .split('|')
@@ -573,14 +307,13 @@ export default function ProposalDetailPage({
             </div>
           </section>
 
-          {/* ═══ Voting Section ═══ */}
+          {/* Voting Section */}
           {proposal.status === 'active' && (
             <section
               aria-label="Voting"
               className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-6"
             >
               <h2 className="mb-4 text-sm font-bold text-[var(--color-fg)]">Cast Your Vote</h2>
-
               {voteSubmitted ? (
                 <div className="rounded-lg bg-degen-500/10 border border-degen-500/20 p-4 text-center">
                   <div className="mb-1 text-2xl">🗳️</div>
@@ -604,7 +337,6 @@ export default function ProposalDetailPage({
                 </div>
               ) : (
                 <>
-                  {/* Vote buttons */}
                   <div className="mb-4 grid grid-cols-3 gap-3">
                     {(['for', 'against', 'abstain'] as VoteChoice[]).map((choice) => {
                       const isSelected = userVote === choice;
@@ -633,15 +365,12 @@ export default function ProposalDetailPage({
                         },
                       };
                       const s = styles[choice];
-
                       return (
                         <button
                           key={choice}
                           type="button"
                           onClick={() => setUserVote(choice)}
-                          className={`flex flex-col items-center gap-1.5 rounded-xl border-2 py-4 text-sm font-bold transition-all active:scale-95 ${
-                            isSelected ? s.activeClass : s.inactiveClass
-                          }`}
+                          className={`flex flex-col items-center gap-1.5 rounded-xl border-2 py-4 text-sm font-bold transition-all active:scale-95 ${isSelected ? s.activeClass : s.inactiveClass}`}
                         >
                           <span className="text-base">{s.label}</span>
                           <span className="text-[9px] font-normal opacity-70">
@@ -655,8 +384,6 @@ export default function ProposalDetailPage({
                       );
                     })}
                   </div>
-
-                  {/* Vote reason */}
                   <div className="mb-4">
                     <label
                       htmlFor="vote-reason"
@@ -673,7 +400,6 @@ export default function ProposalDetailPage({
                       className="w-full rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-bg-tertiary)] px-4 py-2.5 text-xs text-[var(--color-fg)] placeholder:text-[var(--color-muted)]/50 outline-none focus:border-degen-500 transition-colors resize-none"
                     />
                   </div>
-
                   <div className="flex items-center justify-between">
                     <div className="text-xs text-[var(--color-muted)]">
                       Your voting power:{' '}
@@ -696,7 +422,7 @@ export default function ProposalDetailPage({
             </section>
           )}
 
-          {/* ═══ Execution (for passed proposals) ═══ */}
+          {/* Execution section */}
           {(proposal.status === 'passed' || proposal.status === 'executed') && (
             <section
               aria-label="Execution"
@@ -705,7 +431,6 @@ export default function ProposalDetailPage({
               <h2 className="mb-4 text-sm font-bold text-[var(--color-fg)]">
                 {proposal.status === 'passed' ? '⏳ Queue & Execute' : '✅ Execution Complete'}
               </h2>
-
               {proposal.status === 'passed' ? (
                 <div className="space-y-3">
                   <div className="rounded-lg border border-amber-500/10 bg-amber-500/5 p-3">
@@ -721,7 +446,6 @@ export default function ProposalDetailPage({
                       timelock expires.
                     </p>
                   </div>
-
                   <button
                     type="button"
                     disabled
@@ -748,7 +472,7 @@ export default function ProposalDetailPage({
             </section>
           )}
 
-          {/* ═══ Discussion / Votes ═══ */}
+          {/* Votes & Discussion */}
           <section
             aria-label="Votes and discussion"
             className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-6"
@@ -763,18 +487,13 @@ export default function ProposalDetailPage({
                     key={s}
                     type="button"
                     onClick={() => setSortBy(s)}
-                    className={`rounded-md px-2.5 py-1 text-[9px] font-medium transition-colors ${
-                      sortBy === s
-                        ? 'bg-degen-500/15 text-degen-400'
-                        : 'text-[var(--color-muted)] hover:text-[var(--color-fg)]'
-                    }`}
+                    className={`rounded-md px-2.5 py-1 text-[9px] font-medium transition-colors ${sortBy === s ? 'bg-degen-500/15 text-degen-400' : 'text-[var(--color-muted)] hover:text-[var(--color-fg)]'}`}
                   >
                     {s === 'newest' ? 'Newest' : 'Top'}
                   </button>
                 ))}
               </div>
             </div>
-
             <div className="space-y-3">
               {sortedVotes.map((vote, i) => (
                 <VoteCard key={i} vote={vote} />
@@ -783,16 +502,13 @@ export default function ProposalDetailPage({
           </section>
         </div>
 
-        {/* ═══ Right Sidebar: Voting Analytics ═══ */}
+        {/* Right Sidebar: Analytics */}
         <div className="space-y-6">
-          {/* Vote breakdown */}
           <section
             aria-label="Vote breakdown"
             className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-5"
           >
             <h2 className="mb-3 text-sm font-bold text-[var(--color-fg)]">Vote Breakdown</h2>
-
-            {/* Horizontal bar */}
             <div className="mb-4">
               <HorizontalVoteBar
                 forVotes={proposal.forVotes}
@@ -800,7 +516,6 @@ export default function ProposalDetailPage({
                 abstainVotes={proposal.abstainVotes}
               />
             </div>
-
             <div className="space-y-2.5">
               <VoteTally
                 label="For"
@@ -824,8 +539,6 @@ export default function ProposalDetailPage({
                 bg="bg-[var(--color-muted)]"
               />
             </div>
-
-            {/* Quorum */}
             <div className="mt-4 rounded-lg bg-[var(--color-glass-border)] p-3">
               <div className="flex items-center justify-between text-[10px]">
                 <span className="text-[var(--color-muted)]">Total Votes</span>
@@ -851,7 +564,6 @@ export default function ProposalDetailPage({
             </div>
           </section>
 
-          {/* Pie chart */}
           <section
             aria-label="Vote distribution"
             className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-5"
@@ -866,32 +578,25 @@ export default function ProposalDetailPage({
                 />
               </div>
               <div className="flex-1 space-y-2">
-                <div className="flex items-center gap-2 text-[9px]">
-                  <span className="h-2 w-2 rounded-full bg-degen-500" />
-                  <span className="text-[var(--color-fg)]">For</span>
-                  <span className="ml-auto font-mono text-[var(--color-muted)]">
-                    {((proposal.forVotes / total) * 100).toFixed(1)}%
-                  </span>
-                </div>
-                <div className="flex items-center gap-2 text-[9px]">
-                  <span className="h-2 w-2 rounded-full bg-red-500" />
-                  <span className="text-[var(--color-fg)]">Against</span>
-                  <span className="ml-auto font-mono text-[var(--color-muted)]">
-                    {((proposal.againstVotes / total) * 100).toFixed(1)}%
-                  </span>
-                </div>
-                <div className="flex items-center gap-2 text-[9px]">
-                  <span className="h-2 w-2 rounded-full bg-[var(--color-muted)]" />
-                  <span className="text-[var(--color-fg)]">Abstain</span>
-                  <span className="ml-auto font-mono text-[var(--color-muted)]">
-                    {((proposal.abstainVotes / total) * 100).toFixed(1)}%
-                  </span>
-                </div>
+                {[
+                  ['For', 'bg-degen-500', ((proposal.forVotes / total) * 100).toFixed(1)],
+                  ['Against', 'bg-red-500', ((proposal.againstVotes / total) * 100).toFixed(1)],
+                  [
+                    'Abstain',
+                    'bg-[var(--color-muted)]',
+                    ((proposal.abstainVotes / total) * 100).toFixed(1),
+                  ],
+                ].map(([label, bg, pct]) => (
+                  <div key={label} className="flex items-center gap-2 text-[9px]">
+                    <span className={`h-2 w-2 rounded-full ${bg}`} />
+                    <span className="text-[var(--color-fg)]">{label}</span>
+                    <span className="ml-auto font-mono text-[var(--color-muted)]">{pct}%</span>
+                  </div>
+                ))}
               </div>
             </div>
           </section>
 
-          {/* Top voters */}
           <section
             aria-label="Top voters"
             className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-5"
@@ -908,20 +613,14 @@ export default function ProposalDetailPage({
                         {i + 1}
                       </span>
                       <span className="text-sm">{v.voterAvatar}</span>
-                      <span className="font-mono text-[var(--color-fg)]">{v.voter}</span>
+                      <span className="font-mono text-[var(--color-fg)]">{shortAddr(v.voter)}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="font-mono tabular-nums text-[var(--color-fg)]">
                         {v.votingPower.toLocaleString()}
                       </span>
                       <span
-                        className={`rounded px-1 text-[8px] font-semibold ${
-                          v.choice === 'for'
-                            ? 'bg-degen-500/15 text-degen-400'
-                            : v.choice === 'against'
-                              ? 'bg-red-500/15 text-red-400'
-                              : 'bg-[var(--color-glass-border)] text-[var(--color-muted)]'
-                        }`}
+                        className={`rounded px-1 text-[8px] font-semibold ${v.choice === 'for' ? 'bg-degen-500/15 text-degen-400' : v.choice === 'against' ? 'bg-red-500/15 text-red-400' : 'bg-[var(--color-glass-border)] text-[var(--color-muted)]'}`}
                       >
                         {v.choice === 'for' ? 'FOR' : v.choice === 'against' ? 'AGN' : 'ABS'}
                       </span>
@@ -931,7 +630,6 @@ export default function ProposalDetailPage({
             </div>
           </section>
 
-          {/* Delegation breakdown */}
           <section
             aria-label="Delegation breakdown"
             className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-5"
@@ -969,7 +667,7 @@ export default function ProposalDetailPage({
         </div>
       </div>
 
-      {/* ═══ Vote Confirm Modal ═══ */}
+      {/* Vote Confirm Modal */}
       {showVoteConfirm && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
@@ -983,7 +681,6 @@ export default function ProposalDetailPage({
               You are voting <strong className="uppercase">{userVote}</strong> with{' '}
               <strong>{myVotingPower.toLocaleString()}</strong> voting power.
             </p>
-
             <div className="mb-4 rounded-lg bg-[var(--color-glass-border)] p-3 text-[10px]">
               <div className="flex justify-between mb-1">
                 <span className="text-[var(--color-muted)]">Gas fee</span>
@@ -996,7 +693,6 @@ export default function ProposalDetailPage({
                 <span className="text-amber-400">⚠️</span>
               </div>
             </div>
-
             <div className="flex gap-3">
               <button
                 type="button"
