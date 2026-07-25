@@ -362,6 +362,8 @@ export interface Env {
   // ─── Decentralized Media Storage (Images, Audio, Documents) ────────────
   /** R2 bucket binding for media storage fallback */
   MEDIA_STORAGE_BINDING?: R2Bucket;
+  /** R2 bucket binding for video storage (used by video-storage.ts) */
+  VIDEO_STORAGE_BINDING?: R2Bucket;
   /** KV namespace for media metadata (image dimensions, creator links, storage stats) */
   MEDIA_METADATA?: KVNamespace;
   /** Irys node URL for Arweave uploads (default: https://node1.irys.xyz) */

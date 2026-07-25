@@ -30,13 +30,13 @@
     "@degenfeed/farcaster-sdk": "workspace:*",
     "@degenfeed/lens-sdk": "workspace:*",
     "@degenfeed/zora-sdk": "workspace:*",
-    "@solana/spl-token": "^0.4.9",
-    "@solana/web3.js": "^1.98.0",
+    "@solana/spl-token": "^0.4.15",
+    "@solana/web3.js": "^1.98.4",
     "@zoralabs/coins-sdk": "^0.8.0",
-    "viem": "^2.55.0",
-    "zod": "^3.23.0"
+    "viem": "^2.55.8",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
-    "typescript": "^5.5.0"
+    "typescript": "^5.9.3"
   }
 }

@@ -42,7 +42,7 @@ export async function handleCreatorStorage(request: Request, env: Env): Promise<
   }
 
   // Check if storage router is configured
-  const isR2Configured = !!(env as any).VIDEO_STORAGE_BINDING;
+  const isR2Configured = !!env.VIDEO_STORAGE_BINDING;
   const isIPFSConfigured = !!env.PINATA_API_KEY || !!env.WEB3_STORAGE_API_KEY;
   const isArweaveConfigured = false; // Arweave requires funded Irys node
   const isMediaStorageConfigured = isIPFSConfigured;

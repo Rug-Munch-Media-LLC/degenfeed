@@ -258,7 +258,7 @@ export async function fetchFromR2(
   key: string,
   _options?: MediaGatewayOptions,
 ): Promise<MediaGatewayResult> {
-  const bucket = (env as any).VIDEO_STORAGE_BINDING as
+  const bucket = env.VIDEO_STORAGE_BINDING as
     | {
         get(key: string): Promise<{
           body: ReadableStream;

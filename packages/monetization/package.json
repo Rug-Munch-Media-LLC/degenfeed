@@ -21,13 +21,13 @@
     "@degenfeed/auth": "workspace:*",
     "@degenfeed/storage": "workspace:*",
     "@degenfeed/types": "workspace:*",
-    "stripe": "^17.0.0",
-    "zod": "^3.23.0"
+    "stripe": "^17.7.0",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.5.2",
-    "@types/react": "^19.0.0",
-    "typescript": "^5.5.0",
+    "@biomejs/biome": "^2.5.5",
+    "@types/react": "^19.2.17",
+    "typescript": "^5.9.3",
     "vitest": "^4.1.10"
   }
 }

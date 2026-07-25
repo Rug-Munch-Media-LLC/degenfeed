@@ -124,6 +124,8 @@ async function checkEmptyFeedAlert(
 ): Promise<void> {
   // Only check if we have enough samples
   if (samples.length < 3) return;
+  // Skip if no cache available (local dev)
+  if (!env.CACHE) return;
 
   const recentSamples = samples.slice(-5);
   const _emptySamples = recentSamples.filter((s) => s.postCount === 0);

@@ -100,7 +100,11 @@ export type Protocol =
   | 'coinvise'
   | 'unlock'
   | 'mintgate'
-  | 'bonfida';
+  | 'bonfida'
+  | 'mediagoblin'
+  | 'deso'
+  | 'audius'
+  | 'rarible';
 
 export interface UnifiedIdentity {
   /** Stable canonical identifier: `${protocol}:${id}` */

@@ -17,17 +17,17 @@
   "dependencies": {
     "@degenfeed/bluesky-sdk": "workspace:*",
     "@degenfeed/farcaster-sdk": "workspace:*",
+    "@degenfeed/identity": "workspace:*",
     "@degenfeed/lens-sdk": "workspace:*",
     "@degenfeed/mastodon-sdk": "workspace:*",
     "@degenfeed/nostr-sdk": "workspace:*",
     "@degenfeed/types": "workspace:*",
-    "@degenfeed/identity": "workspace:*",
-    "@noble/curves": "^1.6.0",
-    "@noble/hashes": "^1.5.0"
+    "@noble/curves": "^1.9.7",
+    "@noble/hashes": "^1.8.0"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.5.2",
-    "typescript": "^5.5.0",
+    "@biomejs/biome": "^2.5.5",
+    "typescript": "^5.9.3",
     "vitest": "^4.1.10"
   }
 }

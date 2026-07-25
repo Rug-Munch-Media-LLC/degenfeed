@@ -365,7 +365,7 @@ export async function handleMediaHealth(_request: Request, env: Env): Promise<Re
     storage: {
       ipfs: !!(env.WEB3_STORAGE_API_KEY || env.PINATA_API_KEY),
       arweave: false, // Arweave requires funded node
-      r2: !!(env as any).VIDEO_STORAGE_BINDING,
+      r2: !!env.VIDEO_STORAGE_BINDING,
     },
     checkedAt: Date.now(),
   });

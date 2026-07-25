@@ -208,7 +208,7 @@ export async function handleSendEncrypted(request: Request, env: Env): Promise<R
         fromId: userId,
         toId: body.to,
         encryptedBlob,
-        preferredProtocol: (body.preferredProtocol || 'nostr') as any,
+        preferredProtocol: body.preferredProtocol || 'nostr',
         metadata: {
           sourceProtocol: 'wallet',
           contentType: 'application/vnd.degenfeed.e2e-msg',

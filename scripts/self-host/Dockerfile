@@ -8,7 +8,7 @@
 FROM node:22-alpine AS base
 RUN apk add --no-cache libc6-compat && \
     corepack enable && \
-    corepack prepare pnpm@11.7.0 --activate
+    corepack prepare pnpm@11.17.0 --activate
 
 # ── Stage 2: Dependencies ──
 FROM base AS deps
