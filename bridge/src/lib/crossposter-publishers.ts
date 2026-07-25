@@ -100,12 +100,13 @@ async function publishToPeerTube(payload: unknown): Promise<boolean> {
 }
 
 async function publishToFarcaster(_payload: unknown): Promise<boolean> {
-  const apiKey = process.env.NEYNAR_API_KEY;
-  const signerUuid = process.env.FARCASTER_SIGNER_UUID;
+  const fid = process.env.FARCASTER_BOT_FID;
+  const signerKey = process.env.FARCASTER_BOT_SIGNER_KEY;
+  const hubUrl = process.env.FARCASTER_BOT_HUB_URL || 'http://127.0.0.1:2281';
   const payload = _payload as { text: string; embeds?: Array<{ url: string }> };
 
-  if (!apiKey || !signerUuid) {
-    console.log('[crossposter] Farcaster: missing NEYNAR_API_KEY or FARCASTER_SIGNER_UUID');
+  if (!fid || !signerKey) {
+    console.log('[crossposter] Farcaster: missing FARCASTER_BOT_FID or FARCASTER_BOT_SIGNER_KEY');
     return false;
   }
 
@@ -113,22 +114,32 @@ async function publishToFarcaster(_payload: unknown): Promise<boolean> {
     payload.text.length > 320 ? `${payload.text.slice(0, 317)}...` : payload.text;
 
   try {
-    const res = await fetch('https://api.neynar.com/v2/farcaster/cast', {
-      method: 'POST',
+    const { buildFarcasterCastMessage } = await import('@degenfeed/farcaster-sdk');
+    const castResult = buildFarcasterCastMessage({
+      signerKeyHex: signerKey,
+      fid: Number(fid),
+      text: truncatedText,
+    });
+
+    if (!castResult.ok || !castResult.messageHex) {
+      console.log(`[crossposter] ✗ Failed to build Farcaster cast: ${castResult.error}`);
+      return false;
+    }
+
+    const bodyBytes = new Uint8Array(
+      castResult.messageHex.match(/.{1,2}/g)?.map((b: string) => parseInt(b, 16)) ?? [],
+    );
+    const res = await fetch(`${hubUrl}/v1/submitMessage`, {
+      method: 'PUT',
       headers: {
-        api_key: apiKey,
-        'Content-Type': 'application/json',
+        'content-type': 'application/octet-stream',
+        'user-agent': 'DegenFeed/1.0',
       },
-      body: JSON.stringify({
-        signer_uuid: signerUuid,
-        text: truncatedText,
-        embeds: payload.embeds || [],
-      }),
+      body: bodyBytes,
     });
 
     if (res.ok) {
-      const data = (await res.json()) as { cast?: { hash?: string } };
-      console.log(`[crossposter] ✓ Farcaster cast: ${data.cast?.hash || 'ok'}`);
+      console.log(`[crossposter] ✓ Farcaster cast submitted to Hubble`);
       return true;
     }
 

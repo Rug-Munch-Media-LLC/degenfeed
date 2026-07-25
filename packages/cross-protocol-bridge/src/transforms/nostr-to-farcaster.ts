@@ -1,10 +1,9 @@
-import { getEnv } from '../env';
 /**
  * @degenfeed/cross-protocol-bridge — Nostr → Farcaster Bridge
  *
  * Converts Nostr events (kind 1) to Farcaster casts.
  * Maps Nostr tags to Farcaster embeds and mentions.
- * Uses Neynar API or Farcaster Hub for publishing.
+ * Uses self-hosted Hubble for publishing.
  */
 
 import type { BridgeAdapter, NormalizedContent } from '../types';
@@ -71,13 +70,14 @@ export const nostrToFarcaster: BridgeAdapter = {
   },
 
   async publish(payload: unknown, config?: Record<string, string>) {
-    const apiKey = config?.neynarApiKey ?? getEnv('NEYNAR_API_KEY') ?? '';
-    const signerUuid = config?.signerUuid ?? getEnv('FARCASTER_SIGNER_UUID') ?? '';
+    const fid = config?.farcasterBotFid ?? process.env.FARCASTER_BOT_FID ?? '';
+    const signerKey = config?.farcasterBotSignerKey ?? process.env.FARCASTER_BOT_SIGNER_KEY ?? '';
+    const hubUrl = process.env.FARCASTER_BOT_HUB_URL || 'http://127.0.0.1:2281';
 
-    if (!apiKey || !signerUuid) {
+    if (!fid || !signerKey) {
       // Fallback: log and simulate (for development)
       const cast = payload as { text: string; embeds: Array<{ url: string }> };
-      console.log(`[bridge] Would cast to Farcaster: "${cast.text.slice(0, 50)}..."`);
+      console.log(`[bridge] Would cast to Farcaster via Hubble: "${cast.text.slice(0, 50)}..."`);
       return {
         success: true,
         nativeId: `farcaster:sim:${Date.now()}`,
@@ -87,34 +87,47 @@ export const nostrToFarcaster: BridgeAdapter = {
 
     try {
       const cast = payload as { text: string; embeds: Array<{ url: string }> };
-      const res = await fetch('https://api.neynar.com/v2/farcaster/cast', {
-        method: 'POST',
+      const { buildFarcasterCastMessage } = await import('@degenfeed/farcaster-sdk');
+      const castResult = buildFarcasterCastMessage({
+        signerKeyHex: signerKey,
+        fid: Number(fid),
+        text: cast.text,
+      });
+
+      if (!castResult.ok || !castResult.messageHex) {
+        return {
+          success: false,
+          error: `Failed to build cast message: ${castResult.error}`,
+          retryable: false,
+        };
+      }
+
+      const bodyBytes = new Uint8Array(
+        castResult.messageHex.match(/.{1,2}/g)?.map((b: string) => parseInt(b, 16)) ?? [],
+      );
+      const res = await fetch(`${hubUrl}/v1/submitMessage`, {
+        method: 'PUT',
         headers: {
-          'Content-Type': 'application/json',
-          api_key: apiKey,
+          'content-type': 'application/octet-stream',
+          'user-agent': 'DegenFeed/1.0',
         },
-        body: JSON.stringify({
-          signer_uuid: signerUuid,
-          text: cast.text,
-          embeds: cast.embeds,
-        }),
-        signal: AbortSignal.timeout(10_000),
+        body: bodyBytes,
       });
 
       if (!res.ok) {
         const errText = await res.text().catch(() => 'unknown');
         return {
           success: false,
-          error: `Farcaster publish failed: ${res.status} ${errText}`,
+          error: `Hubble rejected cast: ${res.status} ${errText}`,
           retryable: res.status >= 500,
         };
       }
 
-      const data = (await res.json()) as { cast?: { hash?: string } };
+      const data = (await res.json()) as { hash?: string };
       return {
         success: true,
-        nativeId: data.cast?.hash ?? `fc:${Date.now()}`,
-        url: data.cast?.hash ? `https://warpcast.com/0x/${data.cast.hash}` : undefined,
+        nativeId: data?.hash ?? `fc:${Date.now()}`,
+        url: data?.hash ? `https://warpcast.com/0x/${data.hash}` : undefined,
       };
     } catch (err) {
       return {
@@ -127,10 +140,11 @@ export const nostrToFarcaster: BridgeAdapter = {
 
   async healthCheck() {
     try {
-      const res = await fetch('https://api.neynar.com/v2/farcaster/feed', {
+      const hubUrl = process.env.FARCASTER_BOT_HUB_URL || 'http://127.0.0.1:2281';
+      const res = await fetch(`${hubUrl}/v1/info`, {
         signal: AbortSignal.timeout(5000),
       });
-      return res.ok || res.status === 401; // 401 = up but needs auth
+      return res.ok;
     } catch {
       return false;
     }

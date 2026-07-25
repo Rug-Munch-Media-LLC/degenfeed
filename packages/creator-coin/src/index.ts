@@ -185,7 +185,7 @@ export type {
   FarcasterPostMode,
   FreeCastResult,
 } from './farcaster-free';
-export { FarcasterFreePostClient, getNeynarFreeTierInfo } from './farcaster-free';
+export { FarcasterFreePostClient } from './farcaster-free';
 export type {
   CreatorCoinPost,
   LensFreePostConfig,

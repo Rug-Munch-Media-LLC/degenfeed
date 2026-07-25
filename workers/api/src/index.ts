@@ -25,12 +25,16 @@ export interface Env {
   RELAY_URLS?: string;
   FARCASTER_HUB_URL?: string;
   LENS_API_URL?: string;
+  /** Self-hosted Lens indexer URL (default: http://127.0.0.1:8099) */
+  LENS_INDEXER_URL?: string;
   BSKY_PUBLIC_URL?: string;
   BSKY_SOCIAL_URL?: string;
   THREADS_PDS_URL?: string;
   THREADS_APP_ID?: string;
   THREADS_APP_SECRET?: string;
-  FARCASTER_CLIENT_ID?: string;
+  FARCASTER_BOT_FID?: string;
+  FARCASTER_BOT_SIGNER_KEY?: string;
+  FARCASTER_BOT_HUB_URL?: string;
   REDDIT_CLIENT_ID?: string;
   REDDIT_CLIENT_SECRET?: string;
   GOOGLE_CLIENT_ID?: string;
@@ -70,8 +74,10 @@ export interface Env {
   RMI_API_KEY?: string;
   /** Optional Sentry DSN for error reporting */
   SENTRY_DSN?: string;
-  /** Neynar API key for Farcaster follower counts */
-  NEYNAR_API_KEY?: string;
+  /** Farcaster bot FID for publishing casts via Hubble */
+  FARCASTER_BOT_FID?: string;
+  /** Farcaster bot signer private key hex for publishing casts via Hubble */
+  FARCASTER_BOT_SIGNER_KEY?: string;
   /** API key for MeiliSearch (production requires Authorization: Bearer <key>) */
   MEILI_SEARCH_KEY?: string;
   /** Optional Postmark server token for transactional email delivery */
@@ -270,6 +276,12 @@ export interface Env {
   OWNCAST_INSTANCE_URL?: string;
   /** Mobilizon instance URL — events.degenfeed.xyz */
   MOBILIZON_INSTANCE_URL?: string;
+  /** BookWyrm instance URL — books.degenfeed.xyz */
+  BOOKWYRM_INSTANCE_URL?: string;
+  /** Funkwhale instance URL — music.degenfeed.xyz */
+  FUNKWHALE_INSTANCE_URL?: string;
+  /** Owncast admin API key for user creation */
+  OWNCAST_ADMIN_KEY?: string;
 
   // ─── Content permanence (Pinata IPFS) ────────────────────────────────
   /** web3.storage API key for IPFS uploads (free tier: 1TB, works without key) */
@@ -415,8 +427,9 @@ export const DEFAULT_RELAYS = [
   'wss://nostr.wine',
 ];
 export const FARCASTER_HUBS = [
+  'http://127.0.0.1:2281',
+  'https://hubble.degenfeed.xyz',
   'https://hub.farcaster.standardcrypto.vc:2281',
-  'https://hub-grpc.pinata.cloud',
 ];
 export const LENS_APIS = ['https://api.lens.xyz/graphql', 'https://api-v2.lens.dev/graphql'];
 export const BSKY_PUBLIC = 'https://public.api.bsky.app';

@@ -161,6 +161,45 @@ export type {
   FeePaymentStatus,
 } from './types';
 export type {
+  CreateCollectionResult,
+  GaslessMintConfig,
+  MintNFTResult,
+  UploadMetadataResult,
+  ZoraCollectionConfig,
+  ZoraNFTMintConfig,
+  ZoraNFTMinter,
+} from './nft-mint';
+export {
+  ZoraNFTMinter,
+} from './nft-mint';
+export type {
+  BuyNowParams,
+  CollectionFloorInfo,
+  MakeOfferParams,
+  MarketplaceBid,
+  MarketplaceListing,
+  PlaceBidParams,
+  PricePoint,
+  TradeResult,
+  TrendingQuery,
+  ZoraMarketplace,
+} from './marketplace';
+export {
+  ZoraMarketplace,
+} from './marketplace';
+export type {
+  ClaimRewardsResult,
+  CreatorEarningsSummary,
+  EarningsSource,
+  NFTSalesHistory,
+  ProtocolRewardsInfo,
+  TipEvent,
+  ZoraEarnings,
+} from './earnings';
+export {
+  ZoraEarnings,
+} from './earnings';
+export type {
   VestingConfig,
   VestingPreset,
   VestingSchedulePoint,

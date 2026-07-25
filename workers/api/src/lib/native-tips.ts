@@ -231,25 +231,13 @@ async function sendFarcasterTip(env: Env, req: NativeTipRequest): Promise<Native
     const recipient = req.recipientId;
     const actionUrl = `${env.GOTOSOCIAL_INSTANCE_URL ?? 'https://degenfeed.xyz'}/api/tip/frame/${encodeURIComponent(recipient)}?amount=${amount}`;
 
-    // If we have Farcaster bot credentials, publish a cast mentioning the tip
-    if (env.FARCASTER_BOT_MNEMONIC && req.sender) {
+    // If we have Farcaster bot credentials, publish a cast via Hubble
+    if (env.FARCASTER_BOT_FID && env.FARCASTER_BOT_SIGNER_KEY && req.sender) {
       try {
-        // Publish a cast announcing the tip using Neynar API directly
-        const neynarKey = env.NEYNAR_API_KEY;
-        if (neynarKey && env.FARCASTER_FID) {
-          await fetch('https://api.neynar.com/v2/farcaster/cast', {
-            method: 'POST',
-            headers: {
-              'content-type': 'application/json',
-              'x-api-key': neynarKey,
-            },
-            body: JSON.stringify({
-              signer_uuid: env.FARCASTER_SIGNER_KEY,
-              text: `⚡ ${req.senderProfile?.displayName ?? req.sender ?? 'Someone'} tipped ${req.recipientName ?? recipient} ${amount} USDC!`,
-            }),
-            signal: AbortSignal.timeout(5000),
-          });
-        }
+        const { publishCastToFarcaster } = await import('../lib/hubble-publisher');
+        await publishCastToFarcaster(env as unknown as Record<string, string | undefined>, {
+          text: `⚡ ${req.senderProfile?.displayName ?? req.sender ?? 'Someone'} tipped ${req.recipientName ?? recipient} ${amount} USDC!`,
+        });
       } catch {
         // Cast publishing is best-effort
       }

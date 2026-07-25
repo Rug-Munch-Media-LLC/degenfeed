@@ -8,7 +8,10 @@
   "exports": {
     ".": "./src/index.ts",
     "./formatter": "./src/atproto-formatter.ts",
-    "./feed-generator": "./src/feed-generator.ts"
+    "./feed-generator": "./src/feed-generator.ts",
+    "./pds-account": "./src/pds-account.ts",
+    "./pds-migration": "./src/pds-migration.ts",
+    "./pds-social": "./src/pds-social.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

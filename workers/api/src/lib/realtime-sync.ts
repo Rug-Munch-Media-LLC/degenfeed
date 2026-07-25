@@ -15,7 +15,7 @@
  * Inbound subscriptions:
  *   - Nostr: WebSocket REQ to relay + webhook receiver
  *   - AT Protocol: Firehose via JetStream webhook
- *   - Farcaster: Webhook receiver (Hub + Neynar)
+ *   - Farcaster: Webhook receiver (Hubble)
  *   - ActivityPub: Streaming API EventSource (polled) + webhook
  *
  * Latency target: <2s source-to-sibling for likes, tips, replies.
@@ -677,7 +677,7 @@ export async function handleAtProtocolWebhook(
 
 /**
  * Process an incoming webhook from Farcaster.
- * Called when a new cast/reaction is received via Neynar webhook or Hub.
+ * Called when a new cast/reaction is received via Hubble webhook.
  */
 export async function handleFarcasterWebhook(
   hash: string,

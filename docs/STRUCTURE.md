@@ -83,7 +83,7 @@ degenfeed-web/
 │   │   ├── crossposter.ts            # Cross-platform posting (GTS → Nostr)
 │   │   └── providers/               # Protocol-specific data fetchers
 │   │       ├── bluesky.ts            # Bluesky AT Protocol (PDS + public)
-│   │       ├── farcaster.ts          # Farcaster (Neynar API)
+│   │       ├── farcaster.ts          # Farcaster (Hubble self-hosted)
 │   │       ├── gotosocial.ts         # GoToSocial / Mastodon API
 │   │       ├── lemmy.ts              # Lemmy (ActivityPub)
 │   │       ├── lens.ts               # Lens v2 GraphQL
@@ -379,7 +379,7 @@ degenfeed-web/
                     │                   SOURCE LAYER                             │
                     │  ┌─────────┐  ┌──────────┐  ┌──────────┐  ┌───────────┐  │
                     │  │ Nostr   │  │ Farcaster│  │  Lens    │  │  Zora     │  │
-                    │  │ (6 WS)  │  │ (Neynar) │  │ (GQL v2) │  │ (GraphQL) │  │
+                    │  │ (6 WS)  │  │ (Hubble) │  │ (GQL v2) │  │ (GraphQL) │  │
                     │  └────┬────┘  └────┬─────┘  └────┬─────┘  └─────┬─────┘  │
                     │  ┌─────────┐  ┌──────────┐  ┌──────────┐  ┌───────────┐  │
                     │  │Bluesky  │  │ GoToSocial│  │  Lemmy   │  │ PeerTube  │  │

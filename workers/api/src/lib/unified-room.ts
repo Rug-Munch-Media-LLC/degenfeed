@@ -962,36 +962,23 @@ async function deliverViaFarcaster(
 
     const _fid = env.FARCASTER_FID || (await env.CACHE?.get('farcaster:bot_fid')) || '1';
 
-    // Construct a direct cast via Neynar or Hub
-    const neynarKey = env.NEYNAR_API_KEY;
+    // Construct a direct cast via Hubble
+    const { publishCastToFarcaster } = await import('../lib/hubble-publisher');
     const displayText = `[${room.name}] ${message.fromName}: ${message.content}`;
     const truncatedText = displayText.length > 280 ? `${displayText.slice(0, 277)}…` : displayText;
 
-    if (neynarKey) {
-      const res = await fetch('https://api.neynar.com/v2/farcaster/cast', {
-        method: 'POST',
-        headers: {
-          api_key: neynarKey,
-          'content-type': 'application/json',
-        },
-        body: JSON.stringify({
-          signer_uuid: signerKey,
-          text: truncatedText,
-          parent: undefined,
-          parent_author_fid: undefined,
-          embeds: [],
-          channel_id: undefined,
-        }),
-      });
+    const result = await publishCastToFarcaster(
+      env as unknown as Record<string, string | undefined>,
+      { text: truncatedText },
+    );
 
-      if (res.ok) {
-        const data = (await res.json()) as { cast: { hash: string } };
-        return {
-          transport: 'farcaster',
-          ok: true,
-          nativeId: data.cast.hash,
-          attemptedAt: Date.now(),
-          deliveredAt: Date.now(),
+    if (result.hash) {
+      return {
+        transport: 'farcaster',
+        ok: true,
+        nativeId: result.hash,
+        attemptedAt: Date.now(),
+        deliveredAt: Date.now(),
         };
       }
     }

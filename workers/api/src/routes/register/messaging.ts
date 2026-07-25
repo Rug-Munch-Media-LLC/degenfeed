@@ -90,6 +90,34 @@ import {
   handleUnreadCount,
 } from '../../routes/messages';
 import { withSession } from '../../routes/route-registry';
+import {
+  handleUnifiedConversation,
+  handleUnifiedConversations,
+  handleUnifiedDelete,
+  handleUnifiedDevices,
+  handleUnifiedInbox,
+  handleUnifiedReact,
+  handleUnifiedRead,
+  handleUnifiedReceive,
+  handleUnifiedRegisterDevice,
+  handleUnifiedSend,
+  handleUnifiedTyping,
+} from '../../routes/unified-chat';
+import {
+  handleDiscoveryByProtocol,
+  handleDiscoveryRecommended,
+  handleDiscoverySearch,
+  handleDiscoveryTrending,
+} from '../../routes/chat-discovery-routes';
+import {
+  handleIrcChannels,
+  handleIrcCurated,
+  handleIrcHealth,
+  handleIrcJoin,
+  handleIrcLeave,
+  handleIrcSend,
+  handleRocketChatConnect,
+} from '../../routes/irc-bridge-routes';
 
 export function registerMessagingRoutes(app: Hono<{ Bindings: Env }>): void {
   // --- API: Messages (DM) ---
@@ -323,5 +351,71 @@ export function registerMessagingRoutes(app: Hono<{ Bindings: Env }>): void {
   );
   app.get('/api/bridge/resolve/:identifier', async (c) =>
     withSession(c, () => handleBridgeResolve(c.req.raw, c.env, c.req.param('identifier'))),
+  );
+
+  // --- API: UNIFIED CROSS-PROTOCOL CHAT (v2 — upgraded router + inbox) ---
+  app.post('/api/chat/unified/send', async (c) =>
+    withSession(c, () => handleUnifiedSend(c.req.raw, c.env)),
+  );
+  app.post('/api/chat/unified/receive', async (c) => handleUnifiedReceive(c.req.raw, c.env));
+  app.get('/api/chat/unified/inbox', async (c) =>
+    withSession(c, () => handleUnifiedInbox(c.req.raw, c.env)),
+  );
+  app.get('/api/chat/unified/conversations', async (c) =>
+    withSession(c, () => handleUnifiedConversations(c.req.raw, c.env)),
+  );
+  app.get('/api/chat/unified/conv/:peerId', async (c) =>
+    withSession(c, () => handleUnifiedConversation(c.req.raw, c.env, c.req.param('peerId'))),
+  );
+  app.post('/api/chat/unified/read', async (c) =>
+    withSession(c, () => handleUnifiedRead(c.req.raw, c.env)),
+  );
+  app.post('/api/chat/unified/typing', async (c) =>
+    withSession(c, () => handleUnifiedTyping(c.req.raw, c.env)),
+  );
+  app.post('/api/chat/unified/react', async (c) =>
+    withSession(c, () => handleUnifiedReact(c.req.raw, c.env)),
+  );
+  app.post('/api/chat/unified/delete', async (c) =>
+    withSession(c, () => handleUnifiedDelete(c.req.raw, c.env)),
+  );
+  app.get('/api/chat/unified/devices', async (c) =>
+    withSession(c, () => handleUnifiedDevices(c.req.raw, c.env)),
+  );
+  app.post('/api/chat/unified/register-device', async (c) =>
+    withSession(c, () => handleUnifiedRegisterDevice(c.req.raw, c.env)),
+  );
+
+  // --- API: IRC Bridge ---
+  app.get('/api/irc/bridge/health', async (c) => handleIrcHealth(c.req.raw, c.env));
+  app.get('/api/irc/bridge/channels', async (c) => handleIrcChannels(c.req.raw, c.env));
+  app.post('/api/irc/bridge/join', async (c) =>
+    withSession(c, () => handleIrcJoin(c.req.raw, c.env)),
+  );
+  app.post('/api/irc/bridge/leave', async (c) =>
+    withSession(c, () => handleIrcLeave(c.req.raw, c.env)),
+  );
+  app.post('/api/irc/bridge/send', async (c) =>
+    withSession(c, () => handleIrcSend(c.req.raw, c.env)),
+  );
+  app.get('/api/irc/bridge/curated', async (c) => handleIrcCurated(c.req.raw, c.env));
+
+  // --- API: Rocket.Chat Federation ---
+  app.post('/api/rocketchat/connect', async (c) =>
+    withSession(c, () => handleRocketChatConnect(c.req.raw, c.env)),
+  );
+
+  // --- API: Chat Discovery ---
+  app.get('/api/chat/discover', async (c) =>
+    withSession(c, () => handleDiscoverySearch(c.req.raw, c.env)),
+  );
+  app.get('/api/chat/discover/trending', async (c) =>
+    withSession(c, () => handleDiscoveryTrending(c.req.raw, c.env)),
+  );
+  app.get('/api/chat/discover/protocol/:protocol', async (c) =>
+    withSession(c, () => handleDiscoveryByProtocol(c.req.raw, c.env, c.req.param('protocol'))),
+  );
+  app.get('/api/chat/discover/recommended', async (c) =>
+    withSession(c, () => handleDiscoveryRecommended(c.req.raw, c.env)),
   );
 }

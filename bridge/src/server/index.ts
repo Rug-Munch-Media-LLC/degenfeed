@@ -2,6 +2,7 @@ import http from 'node:http';
 import { getCrossPosterStats, startCrossPoster } from '../crossposter';
 import { getIndexerStatus, reindex, startIndexer } from '../search-indexer';
 import { buildFeed, DEFAULT_PREFERENCES, PROVIDERS } from './feeds';
+import { handleBlueskyRoute } from './bluesky-routes';
 
 // Catch unhandled rejections to prevent process crashes
 process.on('unhandledRejection', (reason) => {
@@ -567,6 +568,11 @@ const server = http.createServer(async (req, res) => {
       const posts = await fetchByCategory(category as any, limit);
       return jsonOk(res, { posts, meta: { total: posts.length, category, limit } });
     }
+
+    // ── Bluesky/AT Protocol Routes ──────────────────────────────
+    // Route: /api/bluesky/* (all bluesky operations through our PDS)
+    const handled = await handleBlueskyRoute(path, req.method || 'GET', req, res, url);
+    if (handled) return;
 
     if (path === '/api/feed/health') {
       const results = await Promise.all(

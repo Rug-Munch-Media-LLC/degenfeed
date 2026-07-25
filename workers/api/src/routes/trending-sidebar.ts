@@ -317,25 +317,31 @@ async function fetchNostrTrending(): Promise<TrendingNostrNote[]> {
 
 async function fetchFarcasterTrending(env: Env): Promise<TrendingFarcasterCast[]> {
   try {
-    const apiKey = env.NEYNAR_API_KEY;
-    if (!apiKey) return [];
-    const res = await fetch(
-      'https://api.neynar.com/v2/farcaster/feed/trending?limit=3&feed_type=filter&filter_type=global',
-      {
-        headers: { api_key: apiKey, 'user-agent': 'DegenFeed/0.1' },
-        signal: AbortSignal.timeout(API_TIMEOUT_MS),
-      },
-    );
-    if (!res.ok) return [];
-    const body = (await res.json()) as {
-      casts?: Array<{
-        hash: string;
-        text: string;
-        author: { display_name?: string; username?: string; pfp_url?: string };
-        reactions?: { likes_count?: number; recasts_count?: number };
-      }>;
-    };
-    return (body.casts ?? []).slice(0, 3).map((c) => ({
+    const hubUrl = env.FARCASTER_BOT_HUB_URL || 'http://127.0.0.1:2281';
+    const curatedFids = [3, 2, 1, 228, 239, 5650, 602];
+    const casts: TrendingFarcasterCast[] = [];
+
+    for (const fid of curatedFids) {
+      try {
+        const res = await fetch(
+          `${hubUrl}/v1/castsByFid?fid=${fid}&pageSize=1`,
+          {
+            signal: AbortSignal.timeout(API_TIMEOUT_MS),
+            headers: { accept: 'application/json' },
+          },
+        );
+        if (!res.ok) continue;
+        const data = (await res.json()) as { messages?: Array<{ hash: string; data: { castAddBody: { text: string }; fid: number; timestamp: number } }> };
+        for (const msg of data.messages ?? []) {
+          const text = msg.data?.castAddBody?.text;
+          if (!text) continue;
+          casts.push({ hash: msg.hash, text: text.slice(0, 200), author: { username: `fid:${msg.data.fid}` }, reactions: { likes_count: 0, recasts_count: 0 } } as TrendingFarcasterCast);
+        }
+      } catch { continue; }
+      if (casts.length >= 3) break;
+    }
+
+    return casts.slice(0, 3).map((c) => ({
       hash: c.hash,
       text: c.text.slice(0, 120),
       authorName: c.author.display_name ?? c.author.username ?? 'Unknown',

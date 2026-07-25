@@ -166,37 +166,29 @@ function topHashtags(posts: UnifiedPost[], unit: string): SectionItem[] {
 // ─── Farcaster: Trending Channels + Popular Frames ────────────────────────
 
 async function farcasterSections(env: Env, posts: UnifiedPost[]): Promise<ProtocolSection[]> {
-  // Trending channels: Neynar API when a key exists, else aggregate
-  // channel refs (parent_url / warpcast channel links / hashtags).
+  // Aggregate channels from cast data (parent_url / warpcast channel links / hashtags).
+  // We use Hubble to scan casts for channel references.
+  // Instead, scan casts for parent_url references and channel tags.
   let channels: SectionItem[] = [];
-  if (env.NEYNAR_API_KEY) {
-    try {
-      const res = await fetch(
-        'https://api.neynar.com/v2/farcaster/channel/trending?time_window=24h&limit=6',
-        {
-          headers: {
-            api_key: env.NEYNAR_API_KEY,
-            'user-agent': 'DegenFeed/0.1',
-          },
-          signal: AbortSignal.timeout(API_TIMEOUT_MS),
-        },
-      );
-      if (res.ok) {
-        const body = (await res.json()) as {
-          channels?: Array<{
-            channel?: {
-              id?: string;
-              name?: string;
-              image_url?: string;
-              follower_count?: number;
-            };
-            cast_count_24h?: number;
-          }>;
-        };
-        channels = (body.channels ?? [])
-          .filter((c) => c.channel?.id)
-          .slice(0, MAX_ITEMS)
-          .map((c) => ({
+  if (posts.length > 0) {
+    const counts = new Map<string, number>();
+    for (const p of posts) {
+      const text = p.text || '';
+      const channelMatch = text.match(/\/([a-z0-9-]{2,})/i)?.[1] || null;
+      if (channelMatch) counts.set(channelMatch, (counts.get(channelMatch) ?? 0) + 1);
+    }
+    channels = [...counts.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, MAX_ITEMS)
+      .map(([id, count]) => ({
+        id: `channel:${id}`,
+        label: `/${id}`,
+        value: count,
+        unit: 'casts',
+        url: `https://warpcast.com/~/channel/${id}`,
+      }));
+    if (channels.length === 0) channels = topHashtags(posts, 'casts');
+  }
             id: `channel:${c.channel?.id}`,
             label: `/${c.channel?.id}`,
             sublabel: c.channel?.name,

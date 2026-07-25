@@ -300,27 +300,10 @@ async function sendProtocolNotification(env: Env, event: TipNotificationEvent): 
     }
 
     case 'farcaster': {
-      // Send Farcaster notification via Neynar
-      if (env.NEYNAR_API_KEY) {
-        try {
-          await fetch('https://api.neynar.com/v2/farcaster/notifications', {
-            method: 'POST',
-            headers: {
-              'content-type': 'application/json',
-              'x-api-key': env.NEYNAR_API_KEY,
-            },
-            body: JSON.stringify({
-              fid: Number(event.actorHandle),
-              title: 'Tip Received!',
-              body: message,
-              targetUrl: `https://degenfeed.xyz/notifications?tip=${event.id}`,
-            }),
-            signal: AbortSignal.timeout(3000),
-          });
-        } catch {
-          // Best-effort
-        }
-      }
+      // Farcaster push notifications require Onchain/Frame-based delivery.
+      // Hubble does not provide push notifications — users check DegenFeed.
+      // We log the notification for now; Frame-based delivery is planned.
+      console.log('[tip-notifications] Farcaster notification pending (Frame-based delivery planned)');
       break;
     }
 

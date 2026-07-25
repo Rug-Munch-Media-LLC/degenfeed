@@ -498,17 +498,34 @@ export class ZoraVideoSDK {
     }
     if (opts.farcaster) {
       try {
-        const fcRes = await fetch('https://api.neynar.com/v2/farcaster/cast', {
-          method: 'POST',
-          headers: { 'content-type': 'application/json', api_key: opts.farcaster.fid.toString() },
-          body: JSON.stringify({
-            signer_uuid: opts.farcaster.mnemonic,
+        const hubUrl = process.env.FARCASTER_BOT_HUB_URL || 'http://127.0.0.1:2281';
+        const fid = process.env.FARCASTER_BOT_FID;
+        const signerKey = process.env.FARCASTER_BOT_SIGNER_KEY;
+        if (fid && signerKey) {
+          const { buildFarcasterCastMessage } = await import('@degenfeed/farcaster-sdk');
+          const castResult = buildFarcasterCastMessage({
+            signerKeyHex: signerKey,
+            fid: Number(fid),
             text: announcement,
             embeds: [{ url: videoUrl }],
-          }),
-        });
-        if (fcRes.ok) result.farcaster = true;
-        else result.errors.push(`Farcaster: ${fcRes.status}`);
+          });
+          if (castResult.ok && castResult.messageHex) {
+            const bodyBytes = new Uint8Array(
+              castResult.messageHex.match(/.{1,2}/g)?.map((b: string) => parseInt(b, 16)) ?? [],
+            );
+            const fcRes = await fetch(`${hubUrl}/v1/submitMessage`, {
+              method: 'PUT',
+              headers: { 'content-type': 'application/octet-stream' },
+              body: bodyBytes,
+            });
+            if (fcRes.ok) result.farcaster = true;
+            else result.errors.push(`Farcaster: ${fcRes.status}`);
+          } else {
+            result.errors.push(`Farcaster: ${castResult.error}`);
+          }
+        } else {
+          result.errors.push('Farcaster: bot not configured');
+        }
       } catch (e: unknown) {
         result.errors.push(`Farcaster: ${e instanceof Error ? e.message : String(e)}`);
       }

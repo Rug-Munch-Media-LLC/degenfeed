@@ -420,7 +420,7 @@ startCrossPoster(60000);
 | Protocol | Status | File | Type | Notes |
 |----------|--------|------|------|-------|
 | **Nostr** | ✅ Real data | `nostr.ts` | WebSocket | 6 relays, kind:1 events |
-| **Farcaster** | ⚠️ Needs API key | `farcaster.ts` | HTTP API | Requires `NEYNAR_API_KEY` |
+| **Farcaster** | ✅ Self-hosted Hubble | `farcaster.ts` | Hubble REST | No external API needed |
 | **Lens** | ✅ Real data | `lens.ts` | GraphQL | Lens v2 API, explore + search |
 | **Pixelfed** | ✅ Real data | `pixelfed.ts` | Atom RSS | User feeds + Mastodon API fallback |
 | **GoToSocial** | ✅ Real data | `gotosocial.ts` | HTTP API | 9 public Mastodon instances |

@@ -22,7 +22,7 @@ import { checkPremiumStatus } from '../premium';
 const MEILISEARCH_URL = 'https://search.degenfeed.xyz';
 const ANALYTICS_CACHE_TTL = 120; // 2 minutes for freshness
 const GTS_INSTANCE = 'https://social.degenfeed.xyz';
-const FARCASTER_DEFAULT_HUB = 'https://hub.farcaster.standardcrypto.vc:2281';
+const FARCASTER_DEFAULT_HUB = 'http://127.0.0.1:2281';
 const LENS_DEFAULT_API = 'https://api-v2.lens.dev/graphql';
 const BSKY_PUBLIC_API = 'https://public.api.bsky.app';
 
@@ -186,46 +186,45 @@ async function fetchMastodonFollowers(
 
 async function fetchFarcasterProfile(
   fid: number,
-  neynarApiKey?: string,
+  _hubUrl?: string,
 ): Promise<{
   followers: number;
   displayName: string;
   username: string;
 } | null> {
-  // Primary: Neynar API v2 (requires API key)
-  if (neynarApiKey) {
-    try {
-      const res = await fetch(`https://api.neynar.com/v2/farcaster/user/bulk?fids=${fid}`, {
-        headers: {
-          accept: 'application/json',
-          'user-agent': 'DegenFeed/0.1',
-          'x-api-key': neynarApiKey,
-        },
-        signal: AbortSignal.timeout(5000),
-      });
-      if (res.ok) {
-        const data = (await res.json()) as {
-          users?: Array<{
-            username?: string;
-            display_name?: string;
-            follower_count?: number;
-          }>;
-        };
-        const user = data?.users?.[0];
-        if (user) {
-          return {
-            followers: user.follower_count ?? 0,
-            displayName: user.display_name ?? user.username ?? '',
-            username: user.username ?? '',
-          };
-        }
+  // Primary: Hubble for user data
+  const hubUrl = 'http://127.0.0.1:2281';
+  try {
+    const res = await fetch(`${hubUrl}/v1/userDataByFid?fid=${fid}`, {
+      headers: {
+        accept: 'application/json',
+        'user-agent': 'DegenFeed/0.1',
+      },
+      signal: AbortSignal.timeout(5000),
+    });
+    if (res.ok) {
+      const messages = (await res.json()) as {
+        messages?: Array<{ data: { userDataBody: { type: string; value: string } } }>;
+      };
+      let username = '';
+      let displayName = '';
+      for (const msg of messages?.messages ?? []) {
+        const body = msg.data?.userDataBody;
+        if (!body) continue;
+        if (body.type === 'USER_DATA_TYPE_USERNAME') username = body.value;
+        else if (body.type === 'USER_DATA_TYPE_DISPLAY') displayName = body.value;
       }
-    } catch {
-      // fallback to Hub
+      return {
+        followers: 0, // Hubble doesn't expose follower counts directly
+        displayName: displayName || username || '',
+        username: username || '',
+      };
     }
+  } catch {
+    // fallback
   }
 
-  // Fallback: Hub for user data, but Hub doesn't expose follower counts directly
+  // Fallback: read from hub directly
   try {
     const hubUrl = FARCASTER_DEFAULT_HUB;
     const res = await fetch(`${hubUrl}/v1/userDataByFid?fid=${fid}`, {
@@ -549,7 +548,7 @@ export async function handleAnalytics(request: Request, env: Env): Promise<Respo
       case 'farcaster':
         if (p.fid) {
           protocolFetchPromises.push(
-            fetchFarcasterProfile(p.fid, env.NEYNAR_API_KEY).then((r) => {
+            fetchFarcasterProfile(p.fid).then((r) => {
               if (r) followersByProtocol.farcaster = r.followers;
             }),
           );

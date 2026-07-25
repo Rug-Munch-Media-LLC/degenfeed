@@ -126,8 +126,7 @@ export interface SchemaGuard {
 Reddit CDN blocks all unauthenticated requests. Need Reddit OAuth2 app.
 
 ### 🟡 Farcaster Needs API Key
-Neynar public API now requires x402 payment or API key.
-Sign up at neynar.com for free tier key.
+Farcaster uses our self-hosted Hubble. No external API needed.
 
 ### 🟡 WriteFreely JSON API
 WriteFreely returns HTML instead of JSON. Needs config modification.

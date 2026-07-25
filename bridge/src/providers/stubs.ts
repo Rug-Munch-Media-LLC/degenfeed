@@ -4,7 +4,7 @@
  * Old stubs: fetchNostrPosts, fetchFarcasterPosts, fetchLensPosts, fetchPixelfedPosts
  * New providers:
  *   - ./nostr.ts   — connects to self-hosted relay + public relays via WebSocket
- *   - ./farcaster.ts — uses Neynar API + public Farcaster hubs
+ *   - ./farcaster.ts — uses self-hosted Hubble REST API
  *   - ./lens.ts    — uses Lens v2 GraphQL API
  *   - ./pixelfed.ts — uses public Pixelfed instances via Mastodon-compatible API
  *

@@ -346,7 +346,7 @@ Set these in `.env` to enable cross-posting.
 | Variable | Service |
 |----------|---------|
 | `NOSTR_PRIVATE_KEY` | Nostr (hex private key) |
-| `NEYNAR_API_KEY` | Farcaster (Neynar API key) |
+| `FARCASTER_BOT_FID` | Farcaster bot FID for Hubble publishing |
 | `BSKY_DID` | Bluesky AT Protocol (e.g., `did:plc:abc123`) |
 | `GTS_CLIENT_ID` | GoToSocial OAuth client ID |
 | `GTS_CLIENT_SECRET` | GoToSocial OAuth client secret |

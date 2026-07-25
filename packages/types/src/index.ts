@@ -21,16 +21,9 @@ export type Protocol =
   | 'youtube'
   | 'kbin'
   | 'tildes'
-  | 'yggdrasil'
-  | 'headscale'
   | 'ghost'
   | 'discourse'
   | 'immich'
-  | 'akkoma'
-  | 'sharkey'
-  | 'iceshrimp'
-  | 'firefish'
-  | 'sublinks'
   | 'mbin'
   | 'atproto'
   | 'zora'
@@ -80,10 +73,6 @@ export type Protocol =
   | 'microblog'
   | 'cyberconnect'
   | 'arena'
-  | 'hubzilla'
-  | 'streams'
-  | 'guppe'
-  | 'epicyon'
   | 'ens'
   | 'unstoppable'
   | 'ion'
@@ -104,7 +93,7 @@ export type Protocol =
   | 'mediagoblin'
   | 'deso'
   | 'audius'
-  | 'rarible';
+  | 'rarible' | 'flarum' | 'arweave' | 'infra';
 
 export interface UnifiedIdentity {
   /** Stable canonical identifier: `${protocol}:${id}` */
