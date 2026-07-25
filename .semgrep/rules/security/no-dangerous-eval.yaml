@@ -1,0 +1,43 @@
+rules:
+  - id: no-eval
+    pattern-either:
+      - pattern: eval(...)
+      - pattern: Function(...)
+      - pattern: setTimeout("...", ...)
+      - pattern: setInterval("...", ...)
+    message: >-
+      Use of eval(), Function constructor, or string-based setTimeout/setInterval
+      can lead to code injection vulnerabilities. Use safe alternatives instead.
+    languages:
+      - javascript
+      - typescript
+    severity: ERROR
+
+  - id: no-dangerous-unsafe-innerhtml
+    patterns:
+      - pattern-either:
+          - pattern: dangerouslySetInnerHTML
+          - pattern: innerHTML = "..."
+      - pattern-not: innerHTML = ""  # clearing is safe
+    message: >-
+      Setting HTML from user-controlled input can lead to XSS.
+      Sanitize with DOMPurify or use safe rendering methods.
+    languages:
+      - javascript
+      - typescript
+      - tsx
+    severity: WARNING
+
+  - id: no-unsafe-dynamic-require
+    patterns:
+      - pattern: require($VAR)
+      - metavariable-regex:
+          metavariable: $VAR
+          regex: ^(?!['"]\.\/)
+    message: >-
+      Dynamic require() with non-constant argument can lead to
+      arbitrary file inclusion or code execution.
+    languages:
+      - javascript
+      - typescript
+    severity: ERROR

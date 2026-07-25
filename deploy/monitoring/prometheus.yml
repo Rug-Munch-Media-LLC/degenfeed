@@ -1,0 +1,40 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# DegenFeed — Prometheus Scrape Configuration (Template)
+# ──────────────────────────────────────────────────────────────────────────────
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  scrape_timeout: 10s
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - localhost:9093
+
+rule_files:
+  - "alerts/*.yml"
+
+scrape_configs:
+  - job_name: "degenfeed-web"
+    static_configs:
+      - targets: ["localhost:3000"]
+    metrics_path: "/api/metrics"
+    scheme: http
+    scrape_interval: 15s
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: "degenfeed-web"
+
+  - job_name: "degenfeed-api"
+    static_configs:
+      - targets: ["localhost:4000"]
+    metrics_path: "/health"
+    scheme: http
+    scrape_interval: 15s
+
+  - job_name: "node"
+    static_configs:
+      - targets: ["localhost:9100"]
+    scrape_interval: 30s
