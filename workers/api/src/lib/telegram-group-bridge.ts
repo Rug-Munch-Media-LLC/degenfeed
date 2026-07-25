@@ -100,7 +100,7 @@ function gateKey(groupId: string, userId: number): string {
   return `telegram:gatelist:${groupId}:${userId}`;
 }
 
-function gateIndexKey(groupId: string): string {
+function _gateIndexKey(groupId: string): string {
   return `telegram:gatelist:${groupId}:index`;
 }
 

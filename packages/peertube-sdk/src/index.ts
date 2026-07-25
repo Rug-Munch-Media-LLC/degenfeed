@@ -585,7 +585,7 @@ export class PeerTubeClient {
   videos = {
     list: (params?: VideoListParams): Promise<PaginatedResponse<PeerTubeVideo>> =>
       this.fetch('/api/v1/videos', {
-        params: params as Record<string, string | number | boolean | undefined>,
+        params: params as unknown as Record<string, string | number | boolean | undefined>,
       }).then((r) => r.json()),
 
     get: (id: string): Promise<PeerTubeVideo> =>
@@ -667,14 +667,14 @@ export class PeerTubeClient {
       params?: PaginationParams & { namePattern?: string },
     ): Promise<PaginatedResponse<PeerTubeChannel>> =>
       this.fetch('/api/v1/video-channels', {
-        params: params as Record<string, string | number | boolean | undefined>,
+        params: params as unknown as Record<string, string | number | boolean | undefined>,
       }).then((r) => r.json()),
 
     get: (name: string): Promise<PeerTubeChannel> =>
       this.fetch(`/api/v1/video-channels/${name}`).then((r) => r.json()),
 
     create: async (opts: ChannelCreateOptions): Promise<PeerTubeChannel> => {
-      const body: Record<string, string | undefined> = {
+      const _body: Record<string, string | undefined> = {
         name: opts.name,
         displayName: opts.displayName,
         description: opts.description,
@@ -713,7 +713,7 @@ export class PeerTubeClient {
 
     videos: (name: string, params?: PaginationParams): Promise<PaginatedResponse<PeerTubeVideo>> =>
       this.fetch(`/api/v1/video-channels/${name}/videos`, {
-        params: params as Record<string, string | number | boolean | undefined>,
+        params: params as unknown as Record<string, string | number | boolean | undefined>,
       }).then((r) => r.json()),
   };
 
@@ -724,7 +724,7 @@ export class PeerTubeClient {
   playlists = {
     list: (params?: PaginationParams): Promise<PaginatedResponse<PeerTubePlaylist>> =>
       this.fetch('/api/v1/video-playlists', {
-        params: params as Record<string, string | number | boolean | undefined>,
+        params: params as unknown as Record<string, string | number | boolean | undefined>,
       }).then((r) => r.json()),
 
     get: (id: string): Promise<PeerTubePlaylist> =>
@@ -758,7 +758,7 @@ export class PeerTubeClient {
 
     videos: (id: string, params?: PaginationParams): Promise<PaginatedResponse<PeerTubeVideo>> =>
       this.fetch(`/api/v1/video-playlists/${id}/videos`, {
-        params: params as Record<string, string | number | boolean | undefined>,
+        params: params as unknown as Record<string, string | number | boolean | undefined>,
       }).then((r) => r.json()),
   };
 
@@ -834,7 +834,7 @@ export class PeerTubeClient {
       params?: PaginationParams,
     ): Promise<PaginatedResponse<PeerTubeComment>> =>
       this.fetch(`/api/v1/videos/${videoId}/comments`, {
-        params: params as Record<string, string | number | boolean | undefined>,
+        params: params as unknown as Record<string, string | number | boolean | undefined>,
       }).then((r) => r.json()),
 
     replies: (
@@ -843,7 +843,7 @@ export class PeerTubeClient {
       params?: PaginationParams,
     ): Promise<PaginatedResponse<PeerTubeComment>> =>
       this.fetch(`/api/v1/videos/${videoId}/comments/${commentId}`, {
-        params: params as Record<string, string | number | boolean | undefined>,
+        params: params as unknown as Record<string, string | number | boolean | undefined>,
       }).then((r) => r.json()),
 
     create: (videoId: string, opts: CommentCreateOptions): Promise<PeerTubeComment> =>
@@ -884,7 +884,7 @@ export class PeerTubeClient {
 
     videos: (name: string, params?: PaginationParams): Promise<PaginatedResponse<PeerTubeVideo>> =>
       this.fetch(`/api/v1/accounts/${name}/videos`, {
-        params: params as Record<string, string | number | boolean | undefined>,
+        params: params as unknown as Record<string, string | number | boolean | undefined>,
       }).then((r) => r.json()),
 
     channels: (
@@ -892,7 +892,7 @@ export class PeerTubeClient {
       params?: PaginationParams,
     ): Promise<PaginatedResponse<PeerTubeChannel>> =>
       this.fetch(`/api/v1/accounts/${name}/video-channels`, {
-        params: params as Record<string, string | number | boolean | undefined>,
+        params: params as unknown as Record<string, string | number | boolean | undefined>,
       }).then((r) => r.json()),
 
     ratings: (
@@ -900,7 +900,7 @@ export class PeerTubeClient {
       params?: PaginationParams & { rating?: 'like' | 'dislike' },
     ): Promise<PaginatedResponse<PeerTubeVideo>> =>
       this.fetch(`/api/v1/accounts/${name}/ratings`, {
-        params: params as Record<string, string | number | boolean | undefined>,
+        params: params as unknown as Record<string, string | number | boolean | undefined>,
       }).then((r) => r.json()),
   };
 
@@ -911,19 +911,19 @@ export class PeerTubeClient {
   search = {
     all: async (params: SearchParams): Promise<SearchResults> => {
       const response = await this.fetch('/api/v1/search/videos', {
-        params: params as Record<string, string | number | boolean | undefined>,
+        params: params as unknown as Record<string, string | number | boolean | undefined>,
       });
       const videos = (await response.json()) as PaginatedResponse<PeerTubeVideo>;
 
       // Also search channels and playlists in parallel
       const [channels, playlists] = await Promise.all([
         this.fetch('/api/v1/search/video-channels', {
-          params: params as Record<string, string | number | boolean | undefined>,
+          params: params as unknown as Record<string, string | number | boolean | undefined>,
         })
           .then((r) => r.json() as Promise<PaginatedResponse<PeerTubeChannel>>)
           .catch(() => ({ total: 0, data: [] })),
         this.fetch('/api/v1/search/video-playlists', {
-          params: params as Record<string, string | number | boolean | undefined>,
+          params: params as unknown as Record<string, string | number | boolean | undefined>,
         })
           .then((r) => r.json() as Promise<PaginatedResponse<PeerTubePlaylist>>)
           .catch(() => ({ total: 0, data: [] })),
@@ -934,17 +934,17 @@ export class PeerTubeClient {
 
     videos: (params: SearchParams): Promise<PaginatedResponse<PeerTubeVideo>> =>
       this.fetch('/api/v1/search/videos', {
-        params: params as Record<string, string | number | boolean | undefined>,
+        params: params as unknown as Record<string, string | number | boolean | undefined>,
       }).then((r) => r.json()),
 
     channels: (params: SearchParams): Promise<PaginatedResponse<PeerTubeChannel>> =>
       this.fetch('/api/v1/search/video-channels', {
-        params: params as Record<string, string | number | boolean | undefined>,
+        params: params as unknown as Record<string, string | number | boolean | undefined>,
       }).then((r) => r.json()),
 
     playlists: (params: SearchParams): Promise<PaginatedResponse<PeerTubePlaylist>> =>
       this.fetch('/api/v1/search/video-playlists', {
-        params: params as Record<string, string | number | boolean | undefined>,
+        params: params as unknown as Record<string, string | number | boolean | undefined>,
       }).then((r) => r.json()),
   };
 
@@ -955,12 +955,12 @@ export class PeerTubeClient {
   federation = {
     following: (params?: PaginationParams): Promise<PaginatedResponse<PeerTubeFollowing>> =>
       this.fetch('/api/v1/server/following', {
-        params: params as Record<string, string | number | boolean | undefined>,
+        params: params as unknown as Record<string, string | number | boolean | undefined>,
       }).then((r) => r.json()),
 
     followers: (params?: PaginationParams): Promise<PaginatedResponse<PeerTubeFollower>> =>
       this.fetch('/api/v1/server/followers', {
-        params: params as Record<string, string | number | boolean | undefined>,
+        params: params as unknown as Record<string, string | number | boolean | undefined>,
       }).then((r) => r.json()),
 
     acceptFollower: (followerId: number): Promise<void> =>
@@ -989,7 +989,7 @@ export class PeerTubeClient {
       params?: PaginationParams,
     ): Promise<PaginatedResponse<{ id: number; host: string; createdAt: string }>> =>
       this.fetch('/api/v1/server/blocklist', {
-        params: params as Record<string, string | number | boolean | undefined>,
+        params: params as unknown as Record<string, string | number | boolean | undefined>,
       }).then((r) => r.json()),
 
     blockInstance: (host: string): Promise<void> =>
@@ -1083,7 +1083,7 @@ export class PeerTubeClient {
         params?: PaginationParams & { blocked?: boolean },
       ): Promise<PaginatedResponse<PeerTubeUser>> =>
         this.fetch('/api/v1/users', {
-          params: params as Record<string, string | number | boolean | undefined>,
+          params: params as unknown as Record<string, string | number | boolean | undefined>,
         }).then((r) => r.json()),
 
       get: (id: number): Promise<PeerTubeUser> =>
@@ -1104,7 +1104,7 @@ export class PeerTubeClient {
         params?: PaginationParams & { state?: 'pending' | 'resolved' | 'rejected' },
       ): Promise<PaginatedResponse<AbuseReport>> =>
         this.fetch('/api/v1/abuses', {
-          params: params as Record<string, string | number | boolean | undefined>,
+          params: params as unknown as Record<string, string | number | boolean | undefined>,
         }).then((r) => r.json()),
 
       get: (id: number): Promise<AbuseReport> =>
@@ -1129,7 +1129,7 @@ export class PeerTubeClient {
       PaginatedResponse<{ id: number; level: string; message: string; createdAt: string }>
     > =>
       this.fetch('/api/v1/server/logs', {
-        params: params as Record<string, string | number | boolean | undefined>,
+        params: params as unknown as Record<string, string | number | boolean | undefined>,
       }).then((r) => r.json()),
   };
 }

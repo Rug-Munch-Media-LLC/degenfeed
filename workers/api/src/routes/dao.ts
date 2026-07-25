@@ -12,32 +12,58 @@
  */
 
 export type {
-  Dao, DaoVisibility, Proposal, ProposalStatus, VoteChoice, VoteRecord,
-  Delegation, TreasuryOverview, TreasuryTransaction, TreasuryStream,
-  GrantProgram, ActivityType,
+  ActivityType,
+  Dao,
+  DaoVisibility,
+  Delegation,
+  GrantProgram,
+  Proposal,
+  ProposalStatus,
+  TreasuryOverview,
+  TreasuryStream,
+  TreasuryTransaction,
+  VoteChoice,
+  VoteRecord,
 } from './dao-crud';
 
 export {
-  handleDaoCreate, handleDaoGet, handleDaoUpdate, handleDaoMine,
-  handleDaoDiscover, handleDaoStats, handleDaoJoin, handleDaoLeave,
+  handleDaoCreate,
+  handleDaoDiscover,
+  handleDaoGet,
+  handleDaoJoin,
+  handleDaoLeave,
+  handleDaoMine,
+  handleDaoStats,
+  handleDaoUpdate,
 } from './dao-crud';
-
 export {
-  handleDaoProposalCreate, handleDaoProposalsList, handleDaoProposalGet,
-  handleDaoProposalUpdate, handleDaoProposalDelete, handleDaoProposalVote,
-  handleDaoProposalVotes, handleDaoProposalMyVote, handleDaoProposalQueue,
+  handleDaoDelegate,
+  handleDaoDelegatesTop,
+  handleDaoDelegationMine,
+  handleDaoDelegationStatus,
+  handleDaoRevokeDelegation,
+} from './dao-delegation';
+export {
+  handleDaoProposalCreate,
+  handleDaoProposalDelete,
   handleDaoProposalExecute,
+  handleDaoProposalGet,
+  handleDaoProposalMyVote,
+  handleDaoProposalQueue,
+  handleDaoProposalsList,
+  handleDaoProposalUpdate,
+  handleDaoProposalVote,
+  handleDaoProposalVotes,
 } from './dao-proposals';
 
 export {
-  handleDaoDelegate, handleDaoRevokeDelegation, handleDaoDelegationMine,
-  handleDaoDelegationStatus, handleDaoDelegatesTop,
-} from './dao-delegation';
-
-export {
-  handleDaoTreasuryOverview, handleDaoTreasuryTransactions,
-  handleDaoTreasuryTransfer, handleDaoTreasuryStreamCreate,
-  handleDaoTreasuryStreams, handleDaoTreasuryStreamDelete,
-  handleDaoTreasuryGrantCreate, handleDaoTreasuryGrants,
+  handleDaoTreasuryGrantCreate,
   handleDaoTreasuryGrantMilestone,
+  handleDaoTreasuryGrants,
+  handleDaoTreasuryOverview,
+  handleDaoTreasuryStreamCreate,
+  handleDaoTreasuryStreamDelete,
+  handleDaoTreasuryStreams,
+  handleDaoTreasuryTransactions,
+  handleDaoTreasuryTransfer,
 } from './dao-treasury-inline';

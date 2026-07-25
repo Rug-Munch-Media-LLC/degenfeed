@@ -22,7 +22,15 @@ export function registerCoreRoutes(app: Hono<{ Bindings: Env }>): void {
       version: '0.2.0',
       relays: (relayBody as Record<string, unknown>).relays,
       healthy: (relayBody as Record<string, unknown>).healthy,
-      ...(errorCounts ? { errors: { total: errorCounts.total, byRoute: errorCounts.byRoute, since: errorCounts.since } } : {}),
+      ...(errorCounts
+        ? {
+            errors: {
+              total: errorCounts.total,
+              byRoute: errorCounts.byRoute,
+              since: errorCounts.since,
+            },
+          }
+        : {}),
       checkedAt: Date.now(),
     });
   });

@@ -1,9 +1,9 @@
 import type {
-  RSSEntry,
-  YouTubeChannel,
-  VideoContentType,
   EngagementSignals,
   QualityScore,
+  RSSEntry,
+  VideoContentType,
+  YouTubeChannel,
 } from './types';
 
 export const QUALITY_FILTERS = {
@@ -34,60 +34,207 @@ export const QUALITY_FILTERS = {
 
 export const CATEGORY_KEYWORDS: Record<string, string[]> = {
   crypto: [
-    'bitcoin', 'btc', 'crypto', 'ethereum', 'eth', 'blockchain', 'coin',
-    'token', 'digital asset', 'bear market', 'bull run', 'altcoin',
-    'cryptocurrency', 'halving', 'satoshi',
+    'bitcoin',
+    'btc',
+    'crypto',
+    'ethereum',
+    'eth',
+    'blockchain',
+    'coin',
+    'token',
+    'digital asset',
+    'bear market',
+    'bull run',
+    'altcoin',
+    'cryptocurrency',
+    'halving',
+    'satoshi',
   ],
   defi: [
-    'defi', 'decentralized finance', 'liquidity', 'yield', 'staking',
-    'lending', 'borrowing', 'amm', 'dex', 'swap', 'pool', 'farm',
-    'restaking', 'vault', 'curve', 'aave', 'compound', 'pendle',
+    'defi',
+    'decentralized finance',
+    'liquidity',
+    'yield',
+    'staking',
+    'lending',
+    'borrowing',
+    'amm',
+    'dex',
+    'swap',
+    'pool',
+    'farm',
+    'restaking',
+    'vault',
+    'curve',
+    'aave',
+    'compound',
+    'pendle',
   ],
   nft: [
-    'nft', 'nfts', 'collectible', 'digital art', 'marketplace', 'blue chip',
-    'ape', 'pixel', 'mint', 'metadata', 'opensea', 'blur', 'punk',
+    'nft',
+    'nfts',
+    'collectible',
+    'digital art',
+    'marketplace',
+    'blue chip',
+    'ape',
+    'pixel',
+    'mint',
+    'metadata',
+    'opensea',
+    'blur',
+    'punk',
   ],
   tutorial: [
-    'tutorial', 'guide', 'how to', 'learn', 'beginner', 'explained',
-    'walkthrough', 'setup', 'step by step', 'getting started', 'crash course',
-    '101', 'masterclass', 'workshop',
+    'tutorial',
+    'guide',
+    'how to',
+    'learn',
+    'beginner',
+    'explained',
+    'walkthrough',
+    'setup',
+    'step by step',
+    'getting started',
+    'crash course',
+    '101',
+    'masterclass',
+    'workshop',
   ],
   news: [
-    'news', 'update', 'latest', 'breaking', 'report', 'analysis', 'recap',
-    'weekly', 'daily', 'roundup', 'headlines', 'this week in', 'today in',
+    'news',
+    'update',
+    'latest',
+    'breaking',
+    'report',
+    'analysis',
+    'recap',
+    'weekly',
+    'daily',
+    'roundup',
+    'headlines',
+    'this week in',
+    'today in',
   ],
   entertainment: [
-    'entertainment', 'podcast', 'interview', 'discussion', 'debate', 'funny',
-    'meme', 'reaction', 'vlog', 'comedy', 'skit', 'prank',
+    'entertainment',
+    'podcast',
+    'interview',
+    'discussion',
+    'debate',
+    'funny',
+    'meme',
+    'reaction',
+    'vlog',
+    'comedy',
+    'skit',
+    'prank',
   ],
   trading: [
-    'trade', 'trading', 'chart', 'technical analysis', 'support', 'resistance',
-    'entry', 'exit', 'swing', 'scalp', 'futures', 'perpetual', 'leverage',
-    'long', 'short', 'position',
+    'trade',
+    'trading',
+    'chart',
+    'technical analysis',
+    'support',
+    'resistance',
+    'entry',
+    'exit',
+    'swing',
+    'scalp',
+    'futures',
+    'perpetual',
+    'leverage',
+    'long',
+    'short',
+    'position',
   ],
   macro: [
-    'macro', 'fed', 'federal reserve', 'inflation', 'interest rate', 'gdp',
-    'recession', 'monetary policy', 'qe', 'dollar', 'fomc', 'cpi', 'ppc',
+    'macro',
+    'fed',
+    'federal reserve',
+    'inflation',
+    'interest rate',
+    'gdp',
+    'recession',
+    'monetary policy',
+    'qe',
+    'dollar',
+    'fomc',
+    'cpi',
+    'ppc',
   ],
   ai: [
-    'ai', 'artificial intelligence', 'machine learning', 'llm', 'gpt',
-    'openai', 'anthropic', 'claude', 'gemini', 'deepseek', 'neural network',
-    'transformer', 'diffusion', 'agent', 'copilot', 'rag', 'fine tuning',
+    'ai',
+    'artificial intelligence',
+    'machine learning',
+    'llm',
+    'gpt',
+    'openai',
+    'anthropic',
+    'claude',
+    'gemini',
+    'deepseek',
+    'neural network',
+    'transformer',
+    'diffusion',
+    'agent',
+    'copilot',
+    'rag',
+    'fine tuning',
   ],
   tech: [
-    'programming', 'developer', 'coding', 'github', 'open source', 'saas',
-    'cloud', 'api', 'linux', 'rust', 'golang', 'python', 'typescript',
-    'docker', 'kubernetes', 'devops', 'backend', 'frontend',
+    'programming',
+    'developer',
+    'coding',
+    'github',
+    'open source',
+    'saas',
+    'cloud',
+    'api',
+    'linux',
+    'rust',
+    'golang',
+    'python',
+    'typescript',
+    'docker',
+    'kubernetes',
+    'devops',
+    'backend',
+    'frontend',
   ],
   science: [
-    'science', 'research', 'discovery', 'nasa', 'space', 'physics',
-    'biology', 'quantum', 'genetics', 'dna', 'climate', 'energy',
-    'nuclear', 'fusion', 'particle',
+    'science',
+    'research',
+    'discovery',
+    'nasa',
+    'space',
+    'physics',
+    'biology',
+    'quantum',
+    'genetics',
+    'dna',
+    'climate',
+    'energy',
+    'nuclear',
+    'fusion',
+    'particle',
   ],
   startups: [
-    'startup', 'venture capital', 'vc', 'funding', 'seed', 'series a',
-    'series b', 'ipo', 'unicorn', 'y combinator', 'accelerator', 'pitch',
-    'founder', 'saas', 'scale',
+    'startup',
+    'venture capital',
+    'vc',
+    'funding',
+    'seed',
+    'series a',
+    'series b',
+    'ipo',
+    'unicorn',
+    'y combinator',
+    'accelerator',
+    'pitch',
+    'founder',
+    'saas',
+    'scale',
   ],
 };
 
@@ -164,7 +311,10 @@ export function computeEngagementSignals(entry: RSSEntry): EngagementSignals | u
   const growthVelocity = views / hoursSincePublish;
 
   let momentum: 'viral' | 'trending' | 'steady' | 'stale';
-  if (growthVelocity >= QUALITY_FILTERS.VIRAL_VELOCITY || estimatedEngagementRate >= QUALITY_FILTERS.VIRAL_ENGAGEMENT_RATE) {
+  if (
+    growthVelocity >= QUALITY_FILTERS.VIRAL_VELOCITY ||
+    estimatedEngagementRate >= QUALITY_FILTERS.VIRAL_ENGAGEMENT_RATE
+  ) {
     momentum = 'viral';
   } else if (growthVelocity >= QUALITY_FILTERS.TRENDING_VELOCITY) {
     momentum = 'trending';
@@ -207,7 +357,7 @@ export function computeQualityScore(
   // Engagement rate scoring
   if (engagement) {
     const er = engagement.estimatedEngagementRate;
-    if (er >= 0.10) engagementRateScore = 1.0;
+    if (er >= 0.1) engagementRateScore = 1.0;
     else if (er >= 0.05) engagementRateScore = 0.8;
     else if (er >= 0.02) engagementRateScore = 0.6;
     else if (er >= 0.01) engagementRateScore = 0.4;
@@ -218,18 +368,30 @@ export function computeQualityScore(
   const title = entry.title;
   if (title) {
     const clickbaitPatterns = [
-      /you won't believe/i, /shocked?ing/i, /mind[ -]?blowing/i,
-      /gone wrong/i, /gone sexual/i, /(one|1) trick/i, /doctors hate/i,
-      /what happened next/i, /will surprise you/i, /this is why/i,
-      /number \d+ will/i, /can't handle/i, /you need to see/i,
-      /99%\s+of/i, /100%\s+/i, /😱|🤯|💥|🚀|💯|🔥/i,
+      /you won't believe/i,
+      /shocked?ing/i,
+      /mind[ -]?blowing/i,
+      /gone wrong/i,
+      /gone sexual/i,
+      /(one|1) trick/i,
+      /doctors hate/i,
+      /what happened next/i,
+      /will surprise you/i,
+      /this is why/i,
+      /number \d+ will/i,
+      /can't handle/i,
+      /you need to see/i,
+      /99%\s+of/i,
+      /100%\s+/i,
+      /😱|🤯|💥|🚀|💯|🔥/i,
       /\$[A-Z]{2,10}\s+(to|will|could|moon|pump)/i, // ticker price predictions
     ];
     for (const pattern of clickbaitPatterns) {
       if (pattern.test(title)) clickbaitPenalty += 0.15;
     }
     // ALL CAPS title = clickbait signal
-    const capsRatio = [...title].filter((c) => c >= 'A' && c <= 'Z').length / Math.max(1, title.length);
+    const capsRatio =
+      [...title].filter((c) => c >= 'A' && c <= 'Z').length / Math.max(1, title.length);
     if (capsRatio > 0.6) clickbaitPenalty += 0.2;
     // Excessive exclamation marks
     const exclaimCount = (title.match(/!/g) || []).length;
@@ -252,12 +414,13 @@ export function computeQualityScore(
   if (entry.thumbnail) completeness += 0.15;
 
   // Composite score (weighted)
-  const overall = Math.min(1,
-    productionQuality * 0.30 +
-    engagementRateScore * 0.25 +
-    recencyScore * 0.15 +
-    completeness * 0.10 +
-    (1 - clickbaitPenalty) * 0.20
+  const overall = Math.min(
+    1,
+    productionQuality * 0.3 +
+      engagementRateScore * 0.25 +
+      recencyScore * 0.15 +
+      completeness * 0.1 +
+      (1 - clickbaitPenalty) * 0.2,
   );
 
   return {
@@ -291,8 +454,12 @@ export function isLowQualityVideo(
   // Very short duration = likely Short or irrelevant
   if (entry.duration !== undefined && entry.duration < 60) {
     const exempt = [
-      'Bankless', 'Coin Bureau', 'a16z Crypto', 'Andrei Jikh',
-      'Benjamin Cowen', 'InvestAnswers',
+      'Bankless',
+      'Coin Bureau',
+      'a16z Crypto',
+      'Andrei Jikh',
+      'Benjamin Cowen',
+      'InvestAnswers',
     ];
     if (!exempt.includes(channel.name)) {
       return true;
@@ -324,9 +491,7 @@ export function scoreCreatorRelevance(
   channelDescription: string,
   recentVideoTitles: string[],
 ): number {
-  const text = [channelName, channelDescription, ...recentVideoTitles]
-    .join(' ')
-    .toLowerCase();
+  const text = [channelName, channelDescription, ...recentVideoTitles].join(' ').toLowerCase();
 
   let score = 0;
   let matchedNiches = 0;

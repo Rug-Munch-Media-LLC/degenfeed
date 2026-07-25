@@ -8,7 +8,7 @@
  * duplicates the internal algorithm logic for functions that are
  * not exported (sentiment, entity extraction, RSS parsing).
  */
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 // ─── Mock external deps ───────────────────────────────────────────────
 
@@ -20,7 +20,8 @@ vi.mock('@degenfeed/feed-core', () => ({
     if (/\b(bitcoin|btc|satoshi|halving)\b/.test(t)) found.push('bitcoin');
     if (/\b(ethereum|eth|vitalik|eip-|solidity)\b/.test(t)) found.push('ethereum');
     if (/\b(defi|lending|yield|amm|dex|swap|staking)\b/.test(t)) found.push('defi');
-    if (/\b(ai|artificial intelligence|machine learning|llm|gpt|openai)\b/.test(t)) found.push('ai');
+    if (/\b(ai|artificial intelligence|machine learning|llm|gpt|openai)\b/.test(t))
+      found.push('ai');
     if (/\b(nft|nfts|collectible|opensea)\b/.test(t)) found.push('nft');
     if (/\b(solana|sol)\b/.test(t)) found.push('solana');
     if (/\b(sec|regulation|mica|cftc)\b/.test(t)) found.push('regulation');
@@ -29,7 +30,7 @@ vi.mock('@degenfeed/feed-core', () => ({
     if (/\b(memecoin|meme coin|dogecoin|pepe|bonk)\b/.test(t)) found.push('memecoin');
     return found;
   },
-  isEnglishPost: (text: string) => true,
+  isEnglishPost: (_text: string) => true,
   isRelevantPost: () => true,
   NICHE_KEYWORDS: {
     bitcoin: ['bitcoin', 'btc', 'satoshi', 'halving'],
@@ -55,17 +56,62 @@ vi.mock('@degenfeed/feed-providers', () => ({
 // ─── Internal Algorithm Implementations (match source) ─────────────────
 
 const BULLISH_TERMS = [
-  'bullish', 'surge', 'soar', 'rally', 'breakthrough', 'upgrade', 'launch',
-  'partnership', 'adoption', 'institutional', 'approval', 'etf', 'all-time high',
-  'ath', 'breakout', 'moon', 'pump', 'green', 'profit', 'growth', 'positive',
-  'mainnet', 'integration', 'listing', 'accumulation', 'whale buying',
+  'bullish',
+  'surge',
+  'soar',
+  'rally',
+  'breakthrough',
+  'upgrade',
+  'launch',
+  'partnership',
+  'adoption',
+  'institutional',
+  'approval',
+  'etf',
+  'all-time high',
+  'ath',
+  'breakout',
+  'moon',
+  'pump',
+  'green',
+  'profit',
+  'growth',
+  'positive',
+  'mainnet',
+  'integration',
+  'listing',
+  'accumulation',
+  'whale buying',
 ];
 
 const BEARISH_TERMS = [
-  'bearish', 'crash', 'dump', 'hack', 'exploit', 'vulnerability', 'rug',
-  'scam', 'fraud', 'decline', 'plunge', 'drop', 'sell-off', 'liquidation',
-  'ban', 'crackdown', 'regulation', 'fud', 'fear', 'uncertainty', 'red',
-  'loss', 'bankrupt', 'attack', 'sanctions', 'withdrawal halt', 'freeze',
+  'bearish',
+  'crash',
+  'dump',
+  'hack',
+  'exploit',
+  'vulnerability',
+  'rug',
+  'scam',
+  'fraud',
+  'decline',
+  'plunge',
+  'drop',
+  'sell-off',
+  'liquidation',
+  'ban',
+  'crackdown',
+  'regulation',
+  'fud',
+  'fear',
+  'uncertainty',
+  'red',
+  'loss',
+  'bankrupt',
+  'attack',
+  'sanctions',
+  'withdrawal halt',
+  'freeze',
 ];
 
 interface SentimentResult {
@@ -101,15 +147,44 @@ function analyzeSentiment(text: string): SentimentResult {
 
   const netScore = (bullishScore - bearishScore) / (total + 1);
   const confidence = Math.min(1, total / 5);
-  const label: SentimentResult['label'] = netScore > 0.2 ? 'bullish' : netScore < -0.2 ? 'bearish' : 'neutral';
+  const label: SentimentResult['label'] =
+    netScore > 0.2 ? 'bullish' : netScore < -0.2 ? 'bearish' : 'neutral';
 
   return { label, score: netScore, confidence, signals };
 }
 
 const KNOWN_TOKENS = new Set([
-  'BTC', 'ETH', 'SOL', 'USDT', 'USDC', 'BNB', 'XRP', 'ADA', 'AVAX', 'DOT',
-  'LINK', 'MATIC', 'UNI', 'AAVE', 'COMP', 'MKR', 'CRV', 'PEPE', 'DOGE', 'SHIB',
-  'BONK', 'WIF', 'JUP', 'RAY', 'RUNE', 'ATOM', 'ARB', 'OP', 'SUI', 'APT', 'SEI',
+  'BTC',
+  'ETH',
+  'SOL',
+  'USDT',
+  'USDC',
+  'BNB',
+  'XRP',
+  'ADA',
+  'AVAX',
+  'DOT',
+  'LINK',
+  'MATIC',
+  'UNI',
+  'AAVE',
+  'COMP',
+  'MKR',
+  'CRV',
+  'PEPE',
+  'DOGE',
+  'SHIB',
+  'BONK',
+  'WIF',
+  'JUP',
+  'RAY',
+  'RUNE',
+  'ATOM',
+  'ARB',
+  'OP',
+  'SUI',
+  'APT',
+  'SEI',
 ]);
 
 const KNOWN_PROTOCOLS = ['uniswap', 'aave', 'compound', 'makerdao', 'lido', 'curve', 'jupiter'];
@@ -134,10 +209,10 @@ function extractEntities(text: string): StoryEntities {
     if (m[1] && KNOWN_TOKENS.has(m[1].toUpperCase())) tokens.push(m[1].toUpperCase());
   }
 
-  const protocols = KNOWN_PROTOCOLS.filter(p => lower.includes(p));
-  const people = KNOWN_PEOPLE.filter(p => lower.includes(p));
-  const companies = KNOWN_COMPANIES.filter(c => lower.includes(c));
-  const chains = KNOWN_CHAINS.filter(c => lower.includes(c));
+  const protocols = KNOWN_PROTOCOLS.filter((p) => lower.includes(p));
+  const people = KNOWN_PEOPLE.filter((p) => lower.includes(p));
+  const companies = KNOWN_COMPANIES.filter((c) => lower.includes(c));
+  const chains = KNOWN_CHAINS.filter((c) => lower.includes(c));
 
   return {
     tokens: [...new Set(tokens)],
@@ -150,7 +225,13 @@ function extractEntities(text: string): StoryEntities {
 }
 
 function parseFeedXml(xml: string, maxItems = 20) {
-  const items: Array<{ title: string; link: string; description: string; pubDate: string; content: string }> = [];
+  const items: Array<{
+    title: string;
+    link: string;
+    description: string;
+    pubDate: string;
+    content: string;
+  }> = [];
 
   // RSS 2.0
   const itemRe = /<item([^>]*)>([\s\S]*?)<\/item>/gi;
@@ -193,12 +274,22 @@ function extractText(tag: string, xml: string): string {
   const re = new RegExp(`<${tag}(?:[^>]*)>([\\s\\S]*?)<\\/${tag}>`, 'i');
   const match = xml.match(re);
   if (!match) return '';
-  return match[1]?.replace(/<!\[CDATA\[(.*?)\]\]>/gs, '$1')
-    .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"').replace(/&apos;/g, "'").trim() || '';
+  return (
+    match[1]
+      ?.replace(/<!\[CDATA\[(.*?)\]\]>/gs, '$1')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&apos;/g, "'")
+      .trim() || ''
+  );
 }
 
-function computeFreshness(publishedAt: number, now: number): { freshScore: number; isBreaking: boolean } {
+function computeFreshness(
+  publishedAt: number,
+  now: number,
+): { freshScore: number; isBreaking: boolean } {
   const ageMs = now - publishedAt;
   const ageMin = ageMs / 60000;
   const ageHrs = ageMin / 60;
@@ -214,7 +305,12 @@ function computeFreshness(publishedAt: number, now: number): { freshScore: numbe
   return { freshScore, isBreaking };
 }
 
-function computeCredibility(sourceWeight: number, alsoCoveredCount: number, entityCount: number, sentimentConfidence: number): number {
+function computeCredibility(
+  sourceWeight: number,
+  alsoCoveredCount: number,
+  entityCount: number,
+  sentimentConfidence: number,
+): number {
   let score = sourceWeight;
   if (alsoCoveredCount >= 3) score += 0.05;
   if (alsoCoveredCount >= 5) score += 0.05;
@@ -230,17 +326,21 @@ describe('News Aggregation — Sentiment Analysis (algorithm test)', () => {
     const result = analyzeSentiment('Bitcoin surges to all-time high! Bullish breakout confirmed.');
     expect(result.label).toBe('bullish');
     expect(result.signals.length).toBeGreaterThanOrEqual(2);
-    expect(result.signals.some(s => s.includes('surge'))).toBe(true);
+    expect(result.signals.some((s) => s.includes('surge'))).toBe(true);
   });
 
   it('detects bearish sentiment from keywords', () => {
-    const result = analyzeSentiment('Market crash! Bearish dump underway, massive liquidation event.');
+    const result = analyzeSentiment(
+      'Market crash! Bearish dump underway, massive liquidation event.',
+    );
     expect(result.label).toBe('bearish');
-    expect(result.signals.some(s => s.includes('crash'))).toBe(true);
+    expect(result.signals.some((s) => s.includes('crash'))).toBe(true);
   });
 
   it('returns neutral for mixed signals', () => {
-    const result = analyzeSentiment('ETF approval is bullish but new regulation causes uncertainty.');
+    const result = analyzeSentiment(
+      'ETF approval is bullish but new regulation causes uncertainty.',
+    );
     expect(result.label).toBe('neutral');
   });
 
@@ -253,7 +353,9 @@ describe('News Aggregation — Sentiment Analysis (algorithm test)', () => {
 
   it('increases confidence proportionally to signal density', () => {
     const sparse = analyzeSentiment('Bitcoin is up.');
-    const dense = analyzeSentiment('Bitcoin surges in massive rally! Bullish breakout to all-time high!');
+    const dense = analyzeSentiment(
+      'Bitcoin surges in massive rally! Bullish breakout to all-time high!',
+    );
     expect(dense.confidence).toBeGreaterThan(sparse.confidence);
   });
 });
@@ -273,9 +375,13 @@ describe('News Aggregation — Entity Extraction (algorithm test)', () => {
   });
 
   it('extracts people from text', () => {
-    const result = extractEntities('Vitalik Buterin proposed a new EIP, while Michael Saylor bought more Bitcoin');
+    const result = extractEntities(
+      'Vitalik Buterin proposed a new EIP, while Michael Saylor bought more Bitcoin',
+    );
     expect(result.people.length).toBeGreaterThan(0);
-    expect([...result.people].some(p => p.includes('vitalik') || p.includes('michael'))).toBe(true);
+    expect([...result.people].some((p) => p.includes('vitalik') || p.includes('michael'))).toBe(
+      true,
+    );
   });
 
   it('extracts companies from text', () => {
@@ -291,7 +397,7 @@ describe('News Aggregation — Entity Extraction (algorithm test)', () => {
 
   it('deduplicates entities', () => {
     const result = extractEntities('Ethereum and ethereum are the same chain');
-    expect(result.chains.filter(c => c === 'ethereum').length).toBe(1);
+    expect(result.chains.filter((c) => c === 'ethereum').length).toBe(1);
   });
 });
 
@@ -315,8 +421,8 @@ describe('News Aggregation — RSS Parsing (algorithm test)', () => {
 
     const items = parseFeedXml(rss);
     expect(items).toHaveLength(2);
-    expect(items[0]!.title).toBe('Bitcoin Hits New All-Time High');
-    expect(items[1]!.link).toBe('https://example.com/eth-upgrade');
+    expect(items[0]?.title).toBe('Bitcoin Hits New All-Time High');
+    expect(items[1]?.link).toBe('https://example.com/eth-upgrade');
   });
 
   it('parses Atom feed into stories', () => {
@@ -332,7 +438,7 @@ describe('News Aggregation — RSS Parsing (algorithm test)', () => {
 
     const items = parseFeedXml(atom);
     expect(items).toHaveLength(1);
-    expect(items[0]!.title).toBe('DeFi TVL Surpasses $100B');
+    expect(items[0]?.title).toBe('DeFi TVL Surpasses $100B');
   });
 
   it('respects maxItems limit', () => {
@@ -354,7 +460,7 @@ describe('News Aggregation — RSS Parsing (algorithm test)', () => {
       </item>
     </channel></rss>`;
     const items = parseFeedXml(rss);
-    expect(items[0]!.title).toBe('Bitcoin & Ethereum Rally');
+    expect(items[0]?.title).toBe('Bitcoin & Ethereum Rally');
   });
 
   it('returns empty array for invalid XML', () => {
@@ -373,14 +479,14 @@ describe('News Aggregation — Deduplication (algorithm test)', () => {
 
     // Dedup by URL
     const seen = new Set<string>();
-    const deduped = stories.filter(s => {
+    const deduped = stories.filter((s) => {
       if (seen.has(s.url)) return false;
       seen.add(s.url);
       return true;
     });
 
     expect(deduped).toHaveLength(1);
-    expect(deduped[0]!.source).toBe('CoinDesk');
+    expect(deduped[0]?.source).toBe('CoinDesk');
   });
 
   it('keeps distinct stories separate', () => {
@@ -391,7 +497,7 @@ describe('News Aggregation — Deduplication (algorithm test)', () => {
     ];
 
     const seen = new Set<string>();
-    const deduped = stories.filter(s => {
+    const deduped = stories.filter((s) => {
       if (seen.has(s.url)) return false;
       seen.add(s.url);
       return true;
@@ -447,7 +553,14 @@ describe('News Aggregation — Topic Classification (via topic-modeler)', () => 
       allUrls: [],
       alsoCoveredBy: [],
       categories: ['crypto'],
-      entities: { tokens: ['BTC'], protocols: [], people: [], companies: [], chains: ['bitcoin'], nfts: [] },
+      entities: {
+        tokens: ['BTC'],
+        protocols: [],
+        people: [],
+        companies: [],
+        chains: ['bitcoin'],
+        nfts: [],
+      },
       sentiment: { label: 'bullish', score: 0.5, confidence: 0.6, signals: ['+approval'] },
       credibility: 0.9,
       score: 0,
@@ -480,7 +593,14 @@ describe('News Aggregation — Topic Classification (via topic-modeler)', () => 
       allUrls: [],
       alsoCoveredBy: [],
       categories: ['defi'],
-      entities: { tokens: ['UNI'], protocols: ['uniswap'], people: [], companies: [], chains: ['ethereum'], nfts: [] },
+      entities: {
+        tokens: ['UNI'],
+        protocols: ['uniswap'],
+        people: [],
+        companies: [],
+        chains: ['ethereum'],
+        nfts: [],
+      },
       sentiment: { label: 'bullish', score: 0.3, confidence: 0.4, signals: ['+launch'] },
       credibility: 0.91,
       score: 0,
@@ -497,24 +617,73 @@ describe('News Aggregation — Topic Classification (via topic-modeler)', () => 
   });
 
   it('classifies multiple stories and returns top categories', async () => {
-    const { classifyStories, getTopCategories } = await import('../../workers/api/src/feed/topic-modeler');
+    const { classifyStories, getTopCategories } = await import(
+      '../../workers/api/src/feed/topic-modeler'
+    );
 
-    const makeStory = (id: string, title: string, body: string, token: string, protocol: string[]) => ({
-      id, title, summary: '', body, url: 'https://example.com', source: 'coindesk',
+    const makeStory = (
+      id: string,
+      title: string,
+      body: string,
+      token: string,
+      protocol: string[],
+    ) => ({
+      id,
+      title,
+      summary: '',
+      body,
+      url: 'https://example.com',
+      source: 'coindesk',
       sourceMeta: { id: 'coindesk', category: 'crypto', credibility: 0.9, weight: 1.5 },
-      protocol: 'rss' as const, allUrls: [], alsoCoveredBy: [], categories: [],
-      entities: { tokens: [token], protocols: protocol, people: [], companies: [], chains: [], nfts: [] },
+      protocol: 'rss' as const,
+      allUrls: [],
+      alsoCoveredBy: [],
+      categories: [],
+      entities: {
+        tokens: [token],
+        protocols: protocol,
+        people: [],
+        companies: [],
+        chains: [],
+        nfts: [],
+      },
       sentiment: { label: 'neutral', score: 0, confidence: 0, signals: [] },
-      credibility: 0.9, score: 0, publishedAt: Date.now(), fetchedAt: Date.now(),
-      author: 'Test', niches: [], velocity: 0, isBreaking: false,
+      credibility: 0.9,
+      score: 0,
+      publishedAt: Date.now(),
+      fetchedAt: Date.now(),
+      author: 'Test',
+      niches: [],
+      velocity: 0,
+      isBreaking: false,
     });
 
     const stories = [
-      makeStory('s1', 'Bitcoin ETF Approved!', 'bitcoin etf approved by sec bulls are in control', 'BTC', []),
-      makeStory('s2', 'Ethereum Staking Boom', 'ethereum staking eth defi lending onchain', 'ETH', ['lido']),
-      makeStory('s3', 'Solana Developer Growth', 'solana developers building new defi protocols', 'SOL', ['jupiter']),
+      makeStory(
+        's1',
+        'Bitcoin ETF Approved!',
+        'bitcoin etf approved by sec bulls are in control',
+        'BTC',
+        [],
+      ),
+      makeStory('s2', 'Ethereum Staking Boom', 'ethereum staking eth defi lending onchain', 'ETH', [
+        'lido',
+      ]),
+      makeStory(
+        's3',
+        'Solana Developer Growth',
+        'solana developers building new defi protocols',
+        'SOL',
+        ['jupiter'],
+      ),
       makeStory('s4', 'More Bitcoin Rally', 'bitcoin btc price soaring to new highs', 'BTC', []),
-      makeStory('s5', 'Another DeFi Summer', 'defi lending yields farming liquidity provides strong returns', 'ETH', ['aave', 'uniswap']),
+      makeStory(
+        's5',
+        'Another DeFi Summer',
+        'defi lending yields farming liquidity provides strong returns',
+        'ETH',
+        ['aave', 'uniswap'],
+      ),
     ];
 
     const classifications = classifyStories(stories);
@@ -527,7 +696,9 @@ describe('News Aggregation — Topic Classification (via topic-modeler)', () => 
 
 describe('News Aggregation — Personalization (via personalized-news)', () => {
   it('computes a personalized score for a story', async () => {
-    const { computePersonalizedScore, DEFAULT_PREFERENCES } = await import('../../workers/api/src/feed/personalized-news');
+    const { computePersonalizedScore, DEFAULT_PREFERENCES } = await import(
+      '../../workers/api/src/feed/personalized-news'
+    );
 
     const story = {
       id: 'ps-1',
@@ -536,13 +707,31 @@ describe('News Aggregation — Personalization (via personalized-news)', () => {
       body: 'The SEC has approved the first spot Bitcoin ETF in a landmark decision.',
       url: 'https://example.com/btc-etf',
       source: 'coindesk',
-      sourceMeta: { id: 'coindesk', name: 'CoinDesk', category: 'crypto', tier: 1 as const, credibility: 0.92, weight: 1.5, url: 'https://coindesk.com/rss', type: 'rss' as const },
+      sourceMeta: {
+        id: 'coindesk',
+        name: 'CoinDesk',
+        category: 'crypto',
+        tier: 1 as const,
+        credibility: 0.92,
+        weight: 1.5,
+        url: 'https://coindesk.com/rss',
+        type: 'rss' as const,
+      },
       protocol: 'rss' as const,
-      allUrls: [], alsoCoveredBy: ['cointelegraph', 'theblock'],
+      allUrls: [],
+      alsoCoveredBy: ['cointelegraph', 'theblock'],
       categories: ['crypto'],
-      entities: { tokens: ['BTC'], protocols: [], people: [], companies: ['blackrock'], chains: ['bitcoin'], nfts: [] },
+      entities: {
+        tokens: ['BTC'],
+        protocols: [],
+        people: [],
+        companies: ['blackrock'],
+        chains: ['bitcoin'],
+        nfts: [],
+      },
       sentiment: { label: 'bullish', score: 0.5, confidence: 0.6, signals: ['+approval'] },
-      credibility: 0.92, score: 0,
+      credibility: 0.92,
+      score: 0,
       publishedAt: Date.now() - 30 * 60 * 1000,
       fetchedAt: Date.now(),
       author: 'Test Author',
@@ -559,17 +748,55 @@ describe('News Aggregation — Personalization (via personalized-news)', () => {
   });
 
   it('personalizes a full feed ranking', async () => {
-    const { personalizeNewsFeed, DEFAULT_PREFERENCES } = await import('../../workers/api/src/feed/personalized-news');
+    const { personalizeNewsFeed, DEFAULT_PREFERENCES } = await import(
+      '../../workers/api/src/feed/personalized-news'
+    );
 
-    const makeStory = (id: string, title: string, body: string, source: string, cat: string, token: string) => ({
-      id, title, summary: '', body, url: `https://example.com/${id}`, source,
-      sourceMeta: { id: source, name: source, category: cat, tier: 1 as const, credibility: 0.8, weight: 1.0, url: '', type: 'rss' as const },
-      protocol: 'rss' as const, allUrls: [], alsoCoveredBy: [],
+    const makeStory = (
+      id: string,
+      title: string,
+      body: string,
+      source: string,
+      cat: string,
+      token: string,
+    ) => ({
+      id,
+      title,
+      summary: '',
+      body,
+      url: `https://example.com/${id}`,
+      source,
+      sourceMeta: {
+        id: source,
+        name: source,
+        category: cat,
+        tier: 1 as const,
+        credibility: 0.8,
+        weight: 1.0,
+        url: '',
+        type: 'rss' as const,
+      },
+      protocol: 'rss' as const,
+      allUrls: [],
+      alsoCoveredBy: [],
       categories: [cat],
-      entities: { tokens: token ? [token] : [], protocols: [], people: [], companies: [], chains: [], nfts: [] },
+      entities: {
+        tokens: token ? [token] : [],
+        protocols: [],
+        people: [],
+        companies: [],
+        chains: [],
+        nfts: [],
+      },
       sentiment: { label: 'neutral', score: 0, confidence: 0, signals: [] },
-      credibility: 0.8, score: 0, publishedAt: Date.now() - 3600000, fetchedAt: Date.now(),
-      author: 'Test', niches: [], velocity: 1, isBreaking: false,
+      credibility: 0.8,
+      score: 0,
+      publishedAt: Date.now() - 3600000,
+      fetchedAt: Date.now(),
+      author: 'Test',
+      niches: [],
+      velocity: 1,
+      isBreaking: false,
     });
 
     const stories = [
@@ -579,12 +806,21 @@ describe('News Aggregation — Personalization (via personalized-news)', () => {
       makeStory('d', 'New Memecoin', 'pepe memecoin doge', 'decrypt', 'crypto', 'PEPE'),
     ];
 
-    const prefs = { ...DEFAULT_PREFERENCES, topicWeights: { ...DEFAULT_PREFERENCES.topicWeights, bitcoin: 90, ethereum: 80, defi: 70, ai: 30 } };
+    const prefs = {
+      ...DEFAULT_PREFERENCES,
+      topicWeights: {
+        ...DEFAULT_PREFERENCES.topicWeights,
+        bitcoin: 90,
+        ethereum: 80,
+        defi: 70,
+        ai: 30,
+      },
+    };
     const result = personalizeNewsFeed(stories, prefs, null, Date.now());
 
     expect(result.length).toBe(4);
     // Preferred topics (bitcoin, defi) should come first
-    const firstIds = result.slice(0, 2).map(s => s.id);
+    const firstIds = result.slice(0, 2).map((s) => s.id);
     expect(firstIds).toContain('a'); // bitcoin
     expect(firstIds).toContain('c'); // defi
   });
@@ -593,17 +829,52 @@ describe('News Aggregation — Personalization (via personalized-news)', () => {
     const { inferUserProfile } = await import('../../workers/api/src/feed/personalized-news');
 
     const history = [
-      { storyId: 'a', categoryId: 'bitcoin', sourceId: 'coindesk', readAt: Date.now() - 3600000, dwellTimeMs: 30000, engaged: true },
-      { storyId: 'b', categoryId: 'bitcoin', sourceId: 'cointelegraph', readAt: Date.now() - 7200000, dwellTimeMs: 45000, engaged: true },
-      { storyId: 'c', categoryId: 'defi', sourceId: 'bankless', readAt: Date.now() - 10800000, dwellTimeMs: 15000, engaged: false },
-      { storyId: 'd', categoryId: 'ethereum', sourceId: 'theblock', readAt: Date.now() - 14400000, dwellTimeMs: 60000, engaged: true },
-      { storyId: 'e', categoryId: 'bitcoin', sourceId: 'coindesk', readAt: Date.now() - 18000000, dwellTimeMs: 20000, engaged: true },
+      {
+        storyId: 'a',
+        categoryId: 'bitcoin',
+        sourceId: 'coindesk',
+        readAt: Date.now() - 3600000,
+        dwellTimeMs: 30000,
+        engaged: true,
+      },
+      {
+        storyId: 'b',
+        categoryId: 'bitcoin',
+        sourceId: 'cointelegraph',
+        readAt: Date.now() - 7200000,
+        dwellTimeMs: 45000,
+        engaged: true,
+      },
+      {
+        storyId: 'c',
+        categoryId: 'defi',
+        sourceId: 'bankless',
+        readAt: Date.now() - 10800000,
+        dwellTimeMs: 15000,
+        engaged: false,
+      },
+      {
+        storyId: 'd',
+        categoryId: 'ethereum',
+        sourceId: 'theblock',
+        readAt: Date.now() - 14400000,
+        dwellTimeMs: 60000,
+        engaged: true,
+      },
+      {
+        storyId: 'e',
+        categoryId: 'bitcoin',
+        sourceId: 'coindesk',
+        readAt: Date.now() - 18000000,
+        dwellTimeMs: 20000,
+        engaged: true,
+      },
     ];
 
     const profile = inferUserProfile(history);
     expect(profile.totalRead).toBe(5);
-    expect(profile.topicWeights['bitcoin']).toBeDefined();
-    expect(profile.topicWeights['bitcoin']).toBeGreaterThan(0);
+    expect(profile.topicWeights.bitcoin).toBeDefined();
+    expect(profile.topicWeights.bitcoin).toBeGreaterThan(0);
     expect(profile.preferredSources.length).toBeGreaterThan(0);
     expect(profile.preferredSources).toContain('coindesk');
     expect(profile.avgDwellTimeMs).toBeGreaterThan(0);
@@ -618,20 +889,55 @@ describe('News Aggregation — Personalization (via personalized-news)', () => {
   });
 
   it('mutes categories that user has disabled', async () => {
-    const { computePersonalizedScore, DEFAULT_PREFERENCES } = await import('../../workers/api/src/feed/personalized-news');
+    const { computePersonalizedScore, DEFAULT_PREFERENCES } = await import(
+      '../../workers/api/src/feed/personalized-news'
+    );
 
     const story = {
-      id: 'muted-1', title: 'Memecoin Madness', summary: '', body: 'pepe doge memecoin',
-      url: 'https://example.com/meme', source: 'decrypt',
-      sourceMeta: { id: 'decrypt', name: 'Decrypt', category: 'crypto', tier: 1 as const, credibility: 0.88, weight: 1.4, url: '', type: 'rss' as const },
-      protocol: 'rss' as const, allUrls: [], alsoCoveredBy: [], categories: [],
-      entities: { tokens: ['PEPE'], protocols: [], people: [], companies: [], chains: [], nfts: [] },
+      id: 'muted-1',
+      title: 'Memecoin Madness',
+      summary: '',
+      body: 'pepe doge memecoin',
+      url: 'https://example.com/meme',
+      source: 'decrypt',
+      sourceMeta: {
+        id: 'decrypt',
+        name: 'Decrypt',
+        category: 'crypto',
+        tier: 1 as const,
+        credibility: 0.88,
+        weight: 1.4,
+        url: '',
+        type: 'rss' as const,
+      },
+      protocol: 'rss' as const,
+      allUrls: [],
+      alsoCoveredBy: [],
+      categories: [],
+      entities: {
+        tokens: ['PEPE'],
+        protocols: [],
+        people: [],
+        companies: [],
+        chains: [],
+        nfts: [],
+      },
       sentiment: { label: 'neutral', score: 0, confidence: 0, signals: [] },
-      credibility: 0.88, score: 0, publishedAt: Date.now(), fetchedAt: Date.now(),
-      author: 'Test', niches: [], velocity: 100, isBreaking: true,
+      credibility: 0.88,
+      score: 0,
+      publishedAt: Date.now(),
+      fetchedAt: Date.now(),
+      author: 'Test',
+      niches: [],
+      velocity: 100,
+      isBreaking: true,
     };
 
-    const prefs = { ...DEFAULT_PREFERENCES, mutedCategories: ['memes'], mutedSources: ['coindesk'] };
+    const prefs = {
+      ...DEFAULT_PREFERENCES,
+      mutedCategories: ['memes'],
+      mutedSources: ['coindesk'],
+    };
     const result = computePersonalizedScore(story, prefs, null, Date.now());
     expect(result.topicalRelevance).toBe(0); // muted category
   });

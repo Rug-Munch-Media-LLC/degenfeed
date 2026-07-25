@@ -7,7 +7,7 @@
  *
  * Pure functions tested directly. External APIs mocked with KV.
  */
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 // ─── Mock KV + Broadcast ───────────────────────────────────────────
 
@@ -23,8 +23,14 @@ function createMockKV(): Record<string, any> {
   const store = new Map<string, string>();
   return {
     get: vi.fn((key: string) => Promise.resolve(store.get(key) ?? null)),
-    put: vi.fn((key: string, value: string) => { store.set(key, value); return Promise.resolve(); }),
-    delete: vi.fn((key: string) => { store.delete(key); return Promise.resolve(); }),
+    put: vi.fn((key: string, value: string) => {
+      store.set(key, value);
+      return Promise.resolve();
+    }),
+    delete: vi.fn((key: string) => {
+      store.delete(key);
+      return Promise.resolve();
+    }),
     list: vi.fn((opts?: any) => {
       const prefix = opts?.prefix ?? '';
       const keys = Array.from(store.keys())
@@ -54,11 +60,10 @@ describe('Live Platforms — WebRTC Session Manager', () => {
     const env = createMockEnv();
 
     const manager = new WebRTCSessionManager(env);
-    const session = await manager.createSession(
-      '0xabc',
-      'Test Stream',
-      { type: 'offer', sdp: 'v=0\no=test 0 0 IN IP4 127.0.0.1\n...' },
-    );
+    const session = await manager.createSession('0xabc', 'Test Stream', {
+      type: 'offer',
+      sdp: 'v=0\no=test 0 0 IN IP4 127.0.0.1\n...',
+    });
 
     expect(session.sessionId).toBeTruthy();
     expect(session.broadcasterAddress).toBe('0xabc');
@@ -80,7 +85,7 @@ describe('Live Platforms — WebRTC Session Manager', () => {
 
     const offer = await manager.getOffer(session.sessionId);
     expect(offer).not.toBeNull();
-    expect(offer!.type).toBe('offer');
+    expect(offer?.type).toBe('offer');
   });
 
   it('accepts viewer answers and tracks them', async () => {
@@ -123,7 +128,7 @@ describe('Live Platforms — WebRTC Session Manager', () => {
 
     const candidates = await manager.getIceCandidates(session.sessionId, 'viewer_1');
     expect(candidates).toHaveLength(1);
-    expect(candidates[0]!.candidate).toContain('192.168.1.1');
+    expect(candidates[0]?.candidate).toContain('192.168.1.1');
   });
 
   it('gets viewer count and IDs for a session', async () => {
@@ -161,7 +166,7 @@ describe('Live Platforms — WebRTC Session Manager', () => {
 
     const ended = await manager.getSession(session.sessionId);
     expect(ended).not.toBeNull();
-    expect(ended!.active).toBe(false);
+    expect(ended?.active).toBe(false);
   });
 });
 
@@ -213,7 +218,9 @@ describe('Live Platforms — Streaming Router (Mode Selection)', () => {
   });
 
   it('computes estimated cost per mode', async () => {
-    const { StreamingRouter, COST_PER_MODE } = await import('../../workers/api/src/lib/streaming-router');
+    const { StreamingRouter, COST_PER_MODE } = await import(
+      '../../workers/api/src/lib/streaming-router'
+    );
     const env = createMockEnv();
 
     const router = new StreamingRouter(env);
@@ -268,21 +275,29 @@ describe('Live Platforms — Streaming Router (Mode Selection)', () => {
 
 describe('Live Platforms — Live Aggregator', () => {
   it('aggregates Owncast streams when API returns online status', async () => {
-    vi.stubGlobal('fetch', vi.fn((url: string) => {
-      if (url.includes('/api/status')) {
-        return Promise.resolve(new Response(JSON.stringify({
-          online: true,
-          streamTitle: 'Live Now',
-          viewerCount: 15,
-          name: 'DegenFeed',
-          lastConnectTime: new Date().toISOString(),
-        }), { status: 200 }));
-      }
-      if (url.includes('/api/streams')) {
-        return Promise.resolve(new Response(JSON.stringify([]), { status: 200 }));
-      }
-      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
-    }));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((url: string) => {
+        if (url.includes('/api/status')) {
+          return Promise.resolve(
+            new Response(
+              JSON.stringify({
+                online: true,
+                streamTitle: 'Live Now',
+                viewerCount: 15,
+                name: 'DegenFeed',
+                lastConnectTime: new Date().toISOString(),
+              }),
+              { status: 200 },
+            ),
+          );
+        }
+        if (url.includes('/api/streams')) {
+          return Promise.resolve(new Response(JSON.stringify([]), { status: 200 }));
+        }
+        return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+      }),
+    );
 
     const { aggregateAllStreams } = await import('../../workers/api/src/feed/live-aggregator');
     const env = createMockEnv();
@@ -290,38 +305,48 @@ describe('Live Platforms — Live Aggregator', () => {
     const streams = await aggregateAllStreams(env, true);
     const owncastStreams = streams.filter((s: any) => s.source === 'owncast');
     expect(owncastStreams.length).toBeGreaterThanOrEqual(1);
-    expect(owncastStreams[0]!.title).toBe('Live Now');
+    expect(owncastStreams[0]?.title).toBe('Live Now');
 
     vi.unstubAllGlobals();
   });
 
   it('aggregates PeerTube live streams when available', async () => {
-    vi.stubGlobal('fetch', vi.fn((url: string) => {
-      if (url.includes('/api/v1/videos')) {
-        return Promise.resolve(new Response(JSON.stringify({
-          total: 1,
-          data: [{
-            uuid: 'abc-123',
-            name: 'PeerTube Live',
-            isLive: true,
-            viewers: 42,
-            publishedAt: new Date().toISOString(),
-            thumbnailPath: '/thumb.jpg',
-            embedPath: '/videos/embed/abc-123',
-            channel: {
-              id: 1,
-              name: 'testchannel',
-              displayName: 'Test Channel',
-              avatar: { path: '/avatar.jpg' },
-            },
-            category: { id: 1, label: 'Tech' },
-            tags: ['live', 'tech'],
-          }],
-        }), { status: 200 }));
-      }
-      // For Owncast and other endpoints, return no content
-      return Promise.resolve(new Response(JSON.stringify({ online: false }), { status: 200 }));
-    }));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((url: string) => {
+        if (url.includes('/api/v1/videos')) {
+          return Promise.resolve(
+            new Response(
+              JSON.stringify({
+                total: 1,
+                data: [
+                  {
+                    uuid: 'abc-123',
+                    name: 'PeerTube Live',
+                    isLive: true,
+                    viewers: 42,
+                    publishedAt: new Date().toISOString(),
+                    thumbnailPath: '/thumb.jpg',
+                    embedPath: '/videos/embed/abc-123',
+                    channel: {
+                      id: 1,
+                      name: 'testchannel',
+                      displayName: 'Test Channel',
+                      avatar: { path: '/avatar.jpg' },
+                    },
+                    category: { id: 1, label: 'Tech' },
+                    tags: ['live', 'tech'],
+                  },
+                ],
+              }),
+              { status: 200 },
+            ),
+          );
+        }
+        // For Owncast and other endpoints, return no content
+        return Promise.resolve(new Response(JSON.stringify({ online: false }), { status: 200 }));
+      }),
+    );
 
     const { aggregateAllStreams } = await import('../../workers/api/src/feed/live-aggregator');
     const env = createMockEnv();

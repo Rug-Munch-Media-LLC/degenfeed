@@ -28,7 +28,6 @@ import type { FeedProvider, FeedResult, FetchOptions, HealthResult, SchemaGuard 
 import {
   buildUrl,
   DEFAULT_TIMEOUT_MS,
-  DEFAULT_USER_AGENT,
   fetchJson,
   withConcurrencyLimit,
   withTimeout,
@@ -158,7 +157,7 @@ export class PixelfedProvider implements FeedProvider {
         }
 
         // ── 2. Federated Pixelfed instances public timelines ──
-        const fedStart = performance.now();
+        const _fedStart = performance.now();
         const fedResults = await Promise.allSettled(
           this.fallbackUrls.map(async (url) => {
             try {

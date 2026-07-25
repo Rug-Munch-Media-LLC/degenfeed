@@ -10,22 +10,22 @@
 export { CHANNEL_BY_NAME, CRYPTO_CHANNELS } from './youtube/config';
 export {
   CATEGORY_KEYWORDS,
-  isLowQualityVideo,
-  QUALITY_FILTERS,
   computeEngagementSignals,
   computeQualityScore,
   detectContentType,
+  isLowQualityVideo,
+  QUALITY_FILTERS,
   scoreCreatorRelevance,
 } from './youtube/filters';
 export {
+  autoDiscoverAndIntegrate,
+  discoverCreators,
+  fetchTrendingByCategory,
   fetchYouTubeFeed,
   getChannelStats,
   getChannelsByCategory,
   getChannelsBySubcategory,
   getYouTubeVideoInfo,
-  fetchTrendingByCategory,
-  discoverCreators,
-  autoDiscoverAndIntegrate,
 } from './youtube/index';
 export { fetchChannelFeed } from './youtube/parser';
 export type {

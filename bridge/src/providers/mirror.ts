@@ -149,8 +149,13 @@ export function guessNiches(text: string, title: string, tags: string[] = []): s
 
 function mirrorPostToPost(post: MirrorPost): UnifiedPost {
   const authorAddr = post.author || post.authorDetails?.address || '';
-  const authorName = post.authorDetails?.displayName || post.authorDetails?.ens || `${authorAddr.slice(0, 6)}...${authorAddr.slice(-4)}`;
-  const text = post.title ? `${post.title}\n\n${stripHtml(post.body || post.excerpt || '')}`.trim() : stripHtml(post.body || '').trim();
+  const authorName =
+    post.authorDetails?.displayName ||
+    post.authorDetails?.ens ||
+    `${authorAddr.slice(0, 6)}...${authorAddr.slice(-4)}`;
+  const text = post.title
+    ? `${post.title}\n\n${stripHtml(post.body || post.excerpt || '')}`.trim()
+    : stripHtml(post.body || '').trim();
   const url = post.url || `${MIRROR_FRONT}/${authorAddr}/${post.digest}`;
 
   const embeds: Array<{ kind: string; url: string; meta?: Record<string, unknown> }> = [];
@@ -185,9 +190,7 @@ function mirrorPostToPost(post: MirrorPost): UnifiedPost {
       avatarUrl: post.authorDetails?.avatar || '',
       followerCount: 0,
       followingCount: 0,
-      links: authorAddr
-        ? [{ label: 'mirror-writer', url: `${MIRROR_FRONT}/${authorAddr}` }]
-        : [],
+      links: authorAddr ? [{ label: 'mirror-writer', url: `${MIRROR_FRONT}/${authorAddr}` }] : [],
       keys: {
         evmAddress: authorAddr,
         ...(post.arweaveTxId ? { arweaveTxId: post.arweaveTxId } : {}),

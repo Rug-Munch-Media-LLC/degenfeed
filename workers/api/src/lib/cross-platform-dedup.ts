@@ -16,7 +16,7 @@
  */
 
 import type { UnifiedPost } from '@degenfeed/types';
-import { GlobalDedupRegistry } from './global-dedup';
+import type { GlobalDedupRegistry } from './global-dedup';
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
@@ -147,7 +147,6 @@ function jaccardSimilarity(a: Set<string>, b: Set<string>): number {
 // ─── Cross-Platform Link Detection Engine ────────────────────────────────
 
 export class CrossPlatformDedup {
-  private dedupRegistry: GlobalDedupRegistry;
   private groups: Map<string, CrossPlatformPostGroup>;
 
   constructor(dedupRegistry: GlobalDedupRegistry) {
@@ -236,7 +235,9 @@ export class CrossPlatformDedup {
     const matches: CrossPlatformLink[] = [];
     const text = post.text || '';
     const urls = extractUrls(text);
-    const embedUrls = post.embeds.filter((e) => e.kind === 'link' || e.kind === 'image').map((e) => e.url);
+    const embedUrls = post.embeds
+      .filter((e) => e.kind === 'link' || e.kind === 'image')
+      .map((e) => e.url);
     const now = Date.now();
 
     for (const other of allPosts) {
@@ -249,7 +250,10 @@ export class CrossPlatformDedup {
       const otherText = other.text || '';
       const otherUrls = extractUrls(otherText);
 
-      const otherEngagement = (other.metrics.likes ?? 0) + (other.metrics.reposts ?? 0) * 2 + (other.metrics.replies ?? 0) * 3;
+      const otherEngagement =
+        (other.metrics.likes ?? 0) +
+        (other.metrics.reposts ?? 0) * 2 +
+        (other.metrics.replies ?? 0) * 3;
 
       // ── Method 1: Same URL across protocols ──
       const commonUrls = urls.filter((u) => otherUrls.includes(u));
@@ -367,7 +371,6 @@ export class CrossPlatformDedup {
             matchedCreatedAt: other.createdAt,
             matchedEngagement: otherEngagement,
           });
-          continue;
         }
       }
     }
@@ -404,9 +407,7 @@ export class CrossPlatformDedup {
    * Deduplicate a set of posts, keeping only the canonical version.
    * Returns posts with cross-protocol metadata attached.
    */
-  async deduplicateAcrossProtocols(
-    posts: UnifiedPost[],
-  ): Promise<{
+  async deduplicateAcrossProtocols(posts: UnifiedPost[]): Promise<{
     posts: UnifiedPost[];
     dedupedCount: number;
     groups: CrossPlatformPostGroup[];
@@ -419,7 +420,7 @@ export class CrossPlatformDedup {
     for (const group of groups) {
       if (group.posts.length === 1) {
         // Solo post — keep it
-        keptPostIds.add(`${group.posts[0]!.protocol}:${group.posts[0]!.id}`);
+        keptPostIds.add(`${group.posts[0]?.protocol}:${group.posts[0]?.id}`);
         continue;
       }
 
@@ -435,18 +436,17 @@ export class CrossPlatformDedup {
           .filter((p) => `${p.protocol}:${p.id}` !== canonicalKey)
           .map((p) => p.protocol);
         const canonicalPost = posts.find(
-          (p) => p.protocol === group.canonicalPost!.protocol && p.id === group.canonicalPost!.id,
+          (p) => p.protocol === group.canonicalPost?.protocol && p.id === group.canonicalPost?.id,
         );
         if (canonicalPost) {
           (canonicalPost as unknown as Record<string, unknown>).crossPostedTo = otherProtocols;
-          (canonicalPost as unknown as Record<string, unknown>).crossPlatformGroupId = group.groupId;
+          (canonicalPost as unknown as Record<string, unknown>).crossPlatformGroupId =
+            group.groupId;
         }
       }
     }
 
-    const dedupedPosts = posts.filter(
-      (p) => keptPostIds.has(`${p.protocol}:${p.id}`),
-    );
+    const dedupedPosts = posts.filter((p) => keptPostIds.has(`${p.protocol}:${p.id}`));
 
     return {
       posts: dedupedPosts,

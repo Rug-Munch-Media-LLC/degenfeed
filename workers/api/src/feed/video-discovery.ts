@@ -14,7 +14,7 @@
  *   - video-hub.ts for data sources
  */
 
-import { type VideoForScoring, VideoScoreEngine, type VideoScoreResult } from '@degenfeed/ranking';
+import { type VideoForScoring, VideoScoreEngine } from '@degenfeed/ranking';
 import type { ContinueWatchingItem } from '../lib/watch-history';
 import type { UnifiedVideo } from '../routes/video-hub';
 
@@ -244,7 +244,7 @@ export class BecauseYouWatchedStrategy implements DiscoveryStrategy {
 
     const referenceTitle = referenceVideos[0]?.title ?? '';
     const truncatedTitle =
-      referenceTitle.length > 40 ? referenceTitle.slice(0, 40) + '…' : referenceTitle;
+      referenceTitle.length > 40 ? `${referenceTitle.slice(0, 40)}…` : referenceTitle;
 
     return {
       id: this.name,
@@ -494,7 +494,6 @@ const DEFAULT_STRATEGIES: DiscoveryStrategy[] = [
 
 export class VideoDiscoveryEngine {
   private strategies: DiscoveryStrategy[];
-  private scoreEngine: VideoScoreEngine;
 
   constructor(config?: VideoDiscoveryConfig) {
     this.strategies = config?.strategies ?? DEFAULT_STRATEGIES;
@@ -609,7 +608,7 @@ export class VideoDiscoveryEngine {
 
     if (options.category && options.category !== 'all') {
       candidates = candidates.filter(
-        (v) => v.category.toLowerCase() === options.category!.toLowerCase(),
+        (v) => v.category.toLowerCase() === options.category?.toLowerCase(),
       );
     }
 

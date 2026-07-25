@@ -10,7 +10,7 @@
  *   <JoinAllProtocols username="myhandle" onComplete={...} />
  */
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 
 // ─── Types ───────────────────────────────────────────────────────────────
 
@@ -45,14 +45,70 @@ interface Props {
 // ─── Protocol Data ────────────────────────────────────────────────────────
 
 const ALL_PROTOCOLS: ProtocolOption[] = [
-  { id: 'mastodon', name: 'GoToSocial (Mastodon)', icon: '🐘', color: '#6364ff', desc: 'Short-form microblogging on the Fediverse', url: 'https://social.degenfeed.xyz' },
-  { id: 'peertube', name: 'PeerTube', icon: '▶️', color: '#f2691d', desc: 'Federated video hosting & sharing', url: 'https://video.degenfeed.xyz' },
-  { id: 'lemmy', name: 'Lemmy', icon: '🔮', color: '#4a8c6f', desc: 'Federated link aggregator & discussion', url: 'https://community.degenfeed.xyz' },
-  { id: 'pixelfed', name: 'Pixelfed', icon: '📷', color: '#f5a623', desc: 'Federated image sharing platform', url: 'https://pixelfed.social' },
-  { id: 'writefreely', name: 'WriteFreely', icon: '✍️', color: '#2eaadc', desc: 'Federated long-form blogging', url: 'https://blog.degenfeed.xyz' },
-  { id: 'bookwyrm', name: 'BookWyrm', icon: '📚', color: '#4a8c6f', desc: 'Social reading & book tracking', url: 'https://books.degenfeed.xyz' },
-  { id: 'mobilizon', name: 'Mobilizon', icon: '📅', color: '#f15a22', desc: 'Federated events management', url: 'https://events.degenfeed.xyz' },
-  { id: 'funkwhale', name: 'Funkwhale', icon: '🎵', color: '#a855f7', desc: 'Federated music & audio sharing', url: 'https://music.degenfeed.xyz' },
+  {
+    id: 'mastodon',
+    name: 'GoToSocial (Mastodon)',
+    icon: '🐘',
+    color: '#6364ff',
+    desc: 'Short-form microblogging on the Fediverse',
+    url: 'https://social.degenfeed.xyz',
+  },
+  {
+    id: 'peertube',
+    name: 'PeerTube',
+    icon: '▶️',
+    color: '#f2691d',
+    desc: 'Federated video hosting & sharing',
+    url: 'https://video.degenfeed.xyz',
+  },
+  {
+    id: 'lemmy',
+    name: 'Lemmy',
+    icon: '🔮',
+    color: '#4a8c6f',
+    desc: 'Federated link aggregator & discussion',
+    url: 'https://community.degenfeed.xyz',
+  },
+  {
+    id: 'pixelfed',
+    name: 'Pixelfed',
+    icon: '📷',
+    color: '#f5a623',
+    desc: 'Federated image sharing platform',
+    url: 'https://pixelfed.social',
+  },
+  {
+    id: 'writefreely',
+    name: 'WriteFreely',
+    icon: '✍️',
+    color: '#2eaadc',
+    desc: 'Federated long-form blogging',
+    url: 'https://blog.degenfeed.xyz',
+  },
+  {
+    id: 'bookwyrm',
+    name: 'BookWyrm',
+    icon: '📚',
+    color: '#4a8c6f',
+    desc: 'Social reading & book tracking',
+    url: 'https://books.degenfeed.xyz',
+  },
+  {
+    id: 'mobilizon',
+    name: 'Mobilizon',
+    icon: '📅',
+    color: '#f15a22',
+    desc: 'Federated events management',
+    url: 'https://events.degenfeed.xyz',
+  },
+  {
+    id: 'funkwhale',
+    name: 'Funkwhale',
+    icon: '🎵',
+    color: '#a855f7',
+    desc: 'Federated music & audio sharing',
+    url: 'https://music.degenfeed.xyz',
+  },
 ];
 
 // ─── Component ───────────────────────────────────────────────────────────
@@ -60,7 +116,7 @@ const ALL_PROTOCOLS: ProtocolOption[] = [
 export function JoinAllProtocols({ username, onComplete, onSkip, initialProcessing }: Props) {
   const [selected, setSelected] = useState<Set<string>>(new Set(ALL_PROTOCOLS.map((p) => p.id)));
   const [results, setResults] = useState<JoinResult[]>([]);
-  const [processing, setProcessing] = useState(initialProcessing ?? false);
+  const [_processing, setProcessing] = useState(initialProcessing ?? false);
   const [phase, setPhase] = useState<'select' | 'creating' | 'done'>('select');
 
   const toggleProtocol = useCallback((id: string) => {
@@ -91,7 +147,7 @@ export function JoinAllProtocols({ username, onComplete, onSkip, initialProcessi
     // Create accounts sequentially to avoid rate limits
     for (const protocol of selectedProtocols) {
       try {
-        const res = await fetch('/api/protocol/' + protocol + '/register', {
+        const res = await fetch(`/api/protocol/${protocol}/register`, {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({ username }),
@@ -162,9 +218,17 @@ export function JoinAllProtocols({ username, onComplete, onSkip, initialProcessi
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-[var(--color-fg)]">{proto.name}</span>
+                    <span className="text-sm font-semibold text-[var(--color-fg)]">
+                      {proto.name}
+                    </span>
                     {isChecked && (
-                      <svg className="h-4 w-4 shrink-0 text-degen-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <svg
+                        className="h-4 w-4 shrink-0 text-degen-400"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                      >
                         <path d="M20 6L9 17l-5-5" />
                       </svg>
                     )}
@@ -272,7 +336,7 @@ export function JoinAllProtocols({ username, onComplete, onSkip, initialProcessi
   const created = results.filter((r) => r.status === 'created').length;
   const failed = results.filter((r) => r.status === 'failed').length;
   const pending = results.filter((r) => r.status === 'pending').length;
-  const succeededResults = results.filter((r) => r.status === 'created');
+  const _succeededResults = results.filter((r) => r.status === 'created');
 
   return (
     <div className="rounded-2xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-6">
@@ -326,9 +390,7 @@ export function JoinAllProtocols({ username, onComplete, onSkip, initialProcessi
                 {result.username && (
                   <p className="text-[11px] text-[var(--color-muted)]">{result.username}</p>
                 )}
-                {result.error && (
-                  <p className="text-[11px] text-red-400">{result.error}</p>
-                )}
+                {result.error && <p className="text-[11px] text-red-400">{result.error}</p>}
               </div>
               {result.accountInfo?.profileUrl && (
                 <a
@@ -369,15 +431,37 @@ export function JoinAllProtocols({ username, onComplete, onSkip, initialProcessi
  * Returns the status of all self-hosted protocols.
  */
 export async function fetchProtocolStatus(): Promise<{
-  protocols: Record<string, { registered: boolean; username: string | null; profileUrl: string | null; label: string; icon: string; color: string }>;
+  protocols: Record<
+    string,
+    {
+      registered: boolean;
+      username: string | null;
+      profileUrl: string | null;
+      label: string;
+      icon: string;
+      color: string;
+    }
+  >;
   connectedCount: number;
   totalPlatforms: number;
 }> {
   const res = await fetch('/api/protocol/status');
   if (!res.ok) throw new Error(`Failed to fetch protocol status: HTTP ${res.status}`);
-  const json = (await res.json()) as { data: { protocols: Record<string, unknown>; connectedCount: number; totalPlatforms: number } };
+  const json = (await res.json()) as {
+    data: { protocols: Record<string, unknown>; connectedCount: number; totalPlatforms: number };
+  };
   return json.data as {
-    protocols: Record<string, { registered: boolean; username: string | null; profileUrl: string | null; label: string; icon: string; color: string }>;
+    protocols: Record<
+      string,
+      {
+        registered: boolean;
+        username: string | null;
+        profileUrl: string | null;
+        label: string;
+        icon: string;
+        color: string;
+      }
+    >;
     connectedCount: number;
     totalPlatforms: number;
   };

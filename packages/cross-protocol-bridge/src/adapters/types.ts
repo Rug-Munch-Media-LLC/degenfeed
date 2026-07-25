@@ -326,7 +326,6 @@ export function formatHashtags(
         const clean = h.replace(/^#/, '');
         return clean.charAt(0).toUpperCase() + clean.slice(1);
       });
-    case 'hash':
     default:
       return hashtags.map((h) => (h.startsWith('#') ? h : `#${h}`));
   }

@@ -422,7 +422,6 @@ export async function handleCustomFeedExecute(
       // Top = highest engagement, treated as trending but without freshness boost
       pipelineSort = 'trending';
       break;
-    case 'trending':
     default:
       pipelineSort = 'trending';
       break;
@@ -562,7 +561,7 @@ async function refreshExecuteCache(
   env: Env,
   feed: CustomFeed,
   cacheKey: string,
-  sort: string,
+  _sort: string,
   pipelineSort: 'trending' | 'newest' | 'curated' | 'for-you',
   limit: number,
 ): Promise<void> {

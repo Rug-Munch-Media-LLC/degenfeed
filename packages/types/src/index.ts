@@ -21,6 +21,17 @@ export type Protocol =
   | 'youtube'
   | 'kbin'
   | 'tildes'
+  | 'yggdrasil'
+  | 'headscale'
+  | 'ghost'
+  | 'discourse'
+  | 'immich'
+  | 'akkoma'
+  | 'sharkey'
+  | 'iceshrimp'
+  | 'firefish'
+  | 'sublinks'
+  | 'mbin'
   | 'atproto'
   | 'zora'
   | 'telegram'
@@ -605,6 +616,62 @@ export interface StoredIdentity {
   links?: Array<{ label: string; url: string }>;
   /** Creation timestamp */
   createdAt?: number;
+}
+
+// ─── Unified Image Feed types ─────────────────────────────────────────
+
+export type ImageSource =
+  | 'pixelfed'
+  | 'zora'
+  | 'mastodon'
+  | 'nostr'
+  | 'bluesky'
+  | 'lens'
+  | 'ipfs'
+  | 'arweave'
+  | 'reddit'
+  | 'immich'
+  | 'lychee';
+
+export type ImageCategory = 'art' | 'photography' | 'memes' | 'nft' | 'general' | 'ai';
+
+export interface UnifiedImage {
+  id: string;
+  source: ImageSource;
+  protocol: string;
+  imageUrl: string;
+  fullImageUrl?: string;
+  thumbnailUrl?: string;
+  title: string;
+  author: {
+    id: string;
+    displayName: string;
+    avatarUrl?: string;
+    handle?: string;
+    walletAddress?: string;
+  };
+  sourceBadge: string;
+  sourceColor: string;
+  sourceLabel: string;
+  category: ImageCategory;
+  createdAt: number;
+  width?: number;
+  height?: number;
+  aspectRatio: number;
+  likes: number;
+  shares: number;
+  comments: number;
+  isNFT: boolean;
+  nftContract?: string;
+  nftTokenId?: string;
+  collectionName?: string;
+  creatorAddress?: string;
+  mintUrl?: string;
+  collectUrl?: string;
+  url?: string;
+  blurHash?: string;
+  tags: string[];
+  meta?: Record<string, unknown>;
 }
 
 /** In-memory active session holding a decrypted identity. */

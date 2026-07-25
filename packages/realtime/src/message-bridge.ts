@@ -67,10 +67,10 @@ export interface BridgeResult {
 const KV_MESSAGES_SENT_PREFIX = 'messages:sent:';
 const KV_MESSAGES_RECEIVED_PREFIX = 'messages:received:';
 const KV_MESSAGES_CONV_PREFIX = 'messages:conv:';
-const KV_THREAD_PREFIX = 'messages:thread:';
+const _KV_THREAD_PREFIX = 'messages:thread:';
 const DEFAULT_RELAYS = ['wss://relay.damus.io', 'wss://nos.lol', 'wss://relay.primal.net'];
 
-const PROTOCOL_ORDER: DmProtocol[] = [
+const _PROTOCOL_ORDER: DmProtocol[] = [
   'nostr',
   'matrix',
   'bluesky',
@@ -99,7 +99,7 @@ export class MessageBridge {
 
     // Resolve recipient identities
     const identities = await this.resolveRecipientIdentities(message.to, env);
-    message.resolvedRecipient = identities;
+    message.resolvedRecipient = identities ?? undefined;
 
     if (!identities || Object.keys(identities).length === 0) {
       return {
@@ -227,8 +227,9 @@ export class MessageBridge {
       try {
         const { resolveHandle } = await import('@degenfeed/utils');
         const resolved = await resolveHandle(id);
-        if (resolved?.walletAddress) {
-          const walletKey = identityKey(resolved.walletAddress);
+        const addr = (resolved as { walletAddress?: string } | null)?.walletAddress;
+        if (addr) {
+          const walletKey = identityKey(addr);
           raw = await env.IDENTITIES.get(walletKey);
         }
       } catch {
@@ -905,7 +906,7 @@ export class MessageBridge {
     if (res.ok) {
       const data = (await res.json()) as { rooms: Array<{ room_id: string }> };
       if (data.rooms?.length > 0) {
-        return data.rooms[0].room_id;
+        return data.rooms[0]?.room_id;
       }
     }
 

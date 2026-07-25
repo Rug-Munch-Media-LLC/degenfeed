@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { ClusterCard } from './NewsMasonryGrid';
 import type { NewsMeta, NewsStory, StoryCluster } from './types';
-import { copyToClipboard, formatTime, sentimentColor, sentimentEmoji } from './types';
+import { copyToClipboard, formatTime } from './types';
 
 export function ShareModal({ story, onClose }: { story: NewsStory; onClose: () => void }) {
   const [copied, setCopied] = useState(false);

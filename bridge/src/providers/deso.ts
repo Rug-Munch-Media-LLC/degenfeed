@@ -191,10 +191,7 @@ export const schema: SchemaGuard = {
 export async function fetchDeSoPosts(limit = 20): Promise<UnifiedPost[]> {
   const perSource = Math.max(5, Math.ceil(limit / 2));
 
-  const [hot, global] = await Promise.all([
-    fetchHotFeed(perSource),
-    fetchGlobalFeed(perSource),
-  ]);
+  const [hot, global] = await Promise.all([fetchHotFeed(perSource), fetchGlobalFeed(perSource)]);
 
   const all = [...hot, ...global];
 

@@ -16,7 +16,7 @@ export function useBandwidthDetect(settings: PlaybackSettings) {
     setDetecting(true);
     const start = performance.now();
     try {
-      const probeUrl = 'https://cdn.degenfeed.xyz/probe/1MB.bin?t=' + Date.now();
+      const probeUrl = `https://cdn.degenfeed.xyz/probe/1MB.bin?t=${Date.now()}`;
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 5000);
       const resp = await fetch(probeUrl, { signal: controller.signal, cache: 'no-store' });
@@ -55,7 +55,9 @@ export function useBackgroundAudio(isPlaying: boolean, mode: string) {
         const ctx = new AudioContext();
         audioCtxRef.current = ctx;
         if (ctx.state === 'suspended') ctx.resume();
-      } catch { /* AudioContext not available */ }
+      } catch {
+        /* AudioContext not available */
+      }
     }
     return () => {
       if (audioCtxRef.current) {
@@ -84,7 +86,9 @@ export function usePictureInPicture(playerRef: React.RefObject<HTMLDivElement | 
         await (videoEl as HTMLVideoElement).requestPictureInPicture();
         setPipActive(true);
       }
-    } catch { setPipActive(false); }
+    } catch {
+      setPipActive(false);
+    }
   }, [playerRef]);
 
   useEffect(() => {
@@ -103,7 +107,11 @@ export function usePictureInPicture(playerRef: React.RefObject<HTMLDivElement | 
 /**
  * Adaptive quality selector based on bandwidth.
  */
-export function useAdaptiveQuality(estimatedMbps: number | null, quality: StreamQuality, bandwidthSaver: boolean) {
+export function useAdaptiveQuality(
+  estimatedMbps: number | null,
+  quality: StreamQuality,
+  bandwidthSaver: boolean,
+) {
   useEffect(() => {
     if (!bandwidthSaver || !estimatedMbps || quality !== 'auto') return;
     // handled by callback in player

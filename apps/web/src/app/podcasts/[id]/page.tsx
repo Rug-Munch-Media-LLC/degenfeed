@@ -14,7 +14,7 @@
 
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 // ─── Types ──────────────────────────────────────────────────────────────
 
@@ -117,13 +117,16 @@ function MiniAudioPlayer({
     audio.addEventListener('timeupdate', () => setCurrentTime(audio.currentTime));
     audio.addEventListener('ended', () => setPlaying(false));
 
-    audio.play().then(() => setPlaying(true)).catch(() => setPlaying(false));
+    audio
+      .play()
+      .then(() => setPlaying(true))
+      .catch(() => setPlaying(false));
 
     return () => {
       audio.pause();
       audio.src = '';
     };
-  }, [episode?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [episode?.id, episode.audioUrl, episode]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const togglePlay = () => {
     if (!audioRef.current) return;
@@ -152,14 +155,17 @@ function MiniAudioPlayer({
         {/* Cover */}
         <div
           className="h-12 w-12 shrink-0 rounded-lg bg-cover bg-center"
-          style={{ backgroundImage: `url(${episode.coverUrl || '/podcast-cover-placeholder.svg'})` }}
+          style={{
+            backgroundImage: `url(${episode.coverUrl || '/podcast-cover-placeholder.svg'})`,
+          }}
         />
 
         {/* Info */}
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold">{episode.title}</p>
           <p className="truncate text-xs text-[var(--color-text-tertiary)]">
-            {formatDuration(Math.floor(currentTime))} / {formatDuration(Math.floor(duration || episode.duration))}
+            {formatDuration(Math.floor(currentTime))} /{' '}
+            {formatDuration(Math.floor(duration || episode.duration))}
           </p>
         </div>
 
@@ -239,7 +245,9 @@ export default function PodcastDetailPage() {
         const data = (await res.json()) as { episodes: PodcastEpisode[]; total: number };
         setEpisodes(data.episodes || []);
       }
-    } catch { /* non-critical */ }
+    } catch {
+      /* non-critical */
+    }
   }, [podcastId]);
 
   useEffect(() => {
@@ -408,7 +416,8 @@ export default function PodcastDetailPage() {
                   <p className="text-sm font-semibold">{podcast.hostName}</p>
                   <p className="text-xs text-[var(--color-text-tertiary)]">
                     {podcast.episodeCount} episodes · {formatPlays(podcast.totalPlays)} total plays
-                    {podcast.subscriberCount > 0 && ` · ${formatPlays(podcast.subscriberCount)} subscribers`}
+                    {podcast.subscriberCount > 0 &&
+                      ` · ${formatPlays(podcast.subscriberCount)} subscribers`}
                   </p>
                 </div>
               </div>
@@ -484,19 +493,17 @@ export default function PodcastDetailPage() {
               <div
                 key={ep.id}
                 className={`group flex items-center gap-4 rounded-xl border border-[var(--color-border)] p-4 transition-all hover:border-[var(--color-accent)] hover:bg-[var(--color-bg-secondary)] ${
-                  playingEpisode?.id === ep.id ? 'border-[var(--color-accent)] bg-[var(--color-bg-secondary)]' : ''
+                  playingEpisode?.id === ep.id
+                    ? 'border-[var(--color-accent)] bg-[var(--color-bg-secondary)]'
+                    : ''
                 }`}
               >
                 {/* Play Button */}
                 <button
-                  onClick={() =>
-                    setPlayingEpisode(playingEpisode?.id === ep.id ? null : ep)
-                  }
+                  onClick={() => setPlayingEpisode(playingEpisode?.id === ep.id ? null : ep)}
                   className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[var(--color-accent)] text-black transition-all hover:brightness-110"
                 >
-                  <span className="text-xl">
-                    {playingEpisode?.id === ep.id ? '⏸' : '▶'}
-                  </span>
+                  <span className="text-xl">{playingEpisode?.id === ep.id ? '⏸' : '▶'}</span>
                 </button>
 
                 {/* Episode Info */}
@@ -515,14 +522,8 @@ export default function PodcastDetailPage() {
                   <div className="mt-1 flex items-center gap-3 text-xs text-[var(--color-text-tertiary)]">
                     <span>🎧 {formatPlays(ep.plays)}</span>
                     <span>⏱ {formatDuration(ep.duration)}</span>
-                    {ep.publishedAt && (
-                      <>
-                        <span>📅 {timeAgo(ep.publishedAt)}</span>
-                      </>
-                    )}
-                    {Number(ep.tipsReceived) > 0 && (
-                      <span>💜 {ep.tipsReceived} tipped</span>
-                    )}
+                    {ep.publishedAt && <span>📅 {timeAgo(ep.publishedAt)}</span>}
+                    {Number(ep.tipsReceived) > 0 && <span>💜 {ep.tipsReceived} tipped</span>}
                   </div>
                 </div>
 
@@ -550,10 +551,7 @@ export default function PodcastDetailPage() {
       </div>
 
       {/* ─── Mini Audio Player ─────────────────────────────────── */}
-      <MiniAudioPlayer
-        episode={playingEpisode}
-        onClose={() => setPlayingEpisode(null)}
-      />
+      <MiniAudioPlayer episode={playingEpisode} onClose={() => setPlayingEpisode(null)} />
 
       {/* ─── Tip Modal ─────────────────────────────────────────── */}
       {showTipModal && (
@@ -562,7 +560,10 @@ export default function PodcastDetailPage() {
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-lg font-bold">💜 Tip the Host</h3>
               <button
-                onClick={() => { setShowTipModal(false); setTipStatus({ sending: false }); }}
+                onClick={() => {
+                  setShowTipModal(false);
+                  setTipStatus({ sending: false });
+                }}
                 className="text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)]"
               >
                 ✕
@@ -603,20 +604,22 @@ export default function PodcastDetailPage() {
               className="mb-4 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-secondary)] px-4 py-3 text-sm outline-none focus:border-[var(--color-accent)]"
             />
 
-            {tipStatus.error && (
-              <p className="mb-3 text-sm text-red-400">{tipStatus.error}</p>
-            )}
+            {tipStatus.error && <p className="mb-3 text-sm text-red-400">{tipStatus.error}</p>}
 
             <button
               onClick={handleTip}
               disabled={tipStatus.sending}
               className="w-full rounded-xl bg-[var(--color-accent)] py-3 text-sm font-semibold text-black transition-all hover:brightness-110 disabled:opacity-50"
             >
-              {tipStatus.sending ? 'Sending…' : `Send ${tipAmount} ${tipChain === 'ethereum' ? 'ETH' : 'SOL'}`}
+              {tipStatus.sending
+                ? 'Sending…'
+                : `Send ${tipAmount} ${tipChain === 'ethereum' ? 'ETH' : 'SOL'}`}
             </button>
 
             {tipStatus.success && (
-              <p className="mt-3 text-center text-sm text-green-400">✅ Tip sent! Thank you for supporting creators.</p>
+              <p className="mt-3 text-center text-sm text-green-400">
+                ✅ Tip sent! Thank you for supporting creators.
+              </p>
             )}
           </div>
         </div>

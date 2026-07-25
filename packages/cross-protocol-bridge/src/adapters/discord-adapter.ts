@@ -31,13 +31,13 @@ export const discordAdapter: PlatformAdapter = {
 
     // Append hashtags
     if (hashtags.length > 0) {
-      content += '\n' + hashtags.join(' ');
+      content += `\n${hashtags.join(' ')}`;
     }
 
     // Append mentions
     const mentions = master.mentions ?? [];
     if (mentions.length > 0) {
-      content += '\n' + mentions.map((m) => `@${m}`).join(' ');
+      content += `\n${mentions.map((m) => `@${m}`).join(' ')}`;
     }
 
     content = truncateText(content, DISCORD_CHAR_LIMIT);
@@ -101,7 +101,7 @@ export const discordAdapter: PlatformAdapter = {
       preview += `\n📦 Embed: ${master.linkCard.title ?? master.linkCard.url}`;
     }
 
-    preview += '\n' + master.text.slice(0, 300);
+    preview += `\n${master.text.slice(0, 300)}`;
 
     if (master.text.length > 300) {
       preview += '...';

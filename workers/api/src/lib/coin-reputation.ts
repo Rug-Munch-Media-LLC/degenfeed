@@ -14,12 +14,7 @@ import type { Env } from '../index';
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
-export type HolderTier =
-  | 'supporter'
-  | 'believer'
-  | 'diamond_hands'
-  | 'og'
-  | 'whale';
+export type HolderTier = 'supporter' | 'believer' | 'diamond_hands' | 'og' | 'whale';
 
 export interface HolderReputation {
   address: string;
@@ -29,11 +24,11 @@ export interface HolderReputation {
   tierLabel: string;
   tierIcon: string;
   breakdown: {
-    holdingDuration: number;   // +10/day, max 300
-    buyLoyalty: number;        // +100 if never sold
-    buyTheDip: number;         // +50 if bought after ≥15% price drop
+    holdingDuration: number; // +10/day, max 300
+    buyLoyalty: number; // +100 if never sold
+    buyTheDip: number; // +50 if bought after ≥15% price drop
     communityParticipation: number; // +25 per action (vote, tip)
-    referralScore: number;     // +50 per referred holder
+    referralScore: number; // +50 per referred holder
     creatorInteraction: number; // +75 per creator tip
   };
   badges: string[];
@@ -60,11 +55,11 @@ const KV_PREFIX = 'reputation:coin:';
 const CACHE_TTL = 300; // 5 min
 
 const TIER_THRESHOLDS: Record<HolderTier, { minScore: number; label: string; icon: string }> = {
-  supporter:      { minScore: 0,   label: 'Supporter',     icon: '🥉' },
-  believer:       { minScore: 100, label: 'Believer',      icon: '🥈' },
-  diamond_hands:  { minScore: 250, label: 'Diamond Hands', icon: '🥇' },
-  og:             { minScore: 400, label: 'OG',            icon: '💎' },
-  whale:          { minScore: 600, label: 'Whale',         icon: '👑' },
+  supporter: { minScore: 0, label: 'Supporter', icon: '🥉' },
+  believer: { minScore: 100, label: 'Believer', icon: '🥈' },
+  diamond_hands: { minScore: 250, label: 'Diamond Hands', icon: '🥇' },
+  og: { minScore: 400, label: 'OG', icon: '💎' },
+  whale: { minScore: 600, label: 'Whale', icon: '👑' },
 };
 
 const TIER_ORDER: HolderTier[] = ['supporter', 'believer', 'diamond_hands', 'og', 'whale'];
@@ -109,7 +104,13 @@ export function computeReputation(params: {
   const referralScore = Math.min(params.referralCount * 50, 250);
   const creatorInteraction = Math.min(params.creatorTips * 75, 300);
 
-  let score = holdingDuration + buyLoyalty + buyTheDip + communityParticipation + referralScore + creatorInteraction;
+  let score =
+    holdingDuration +
+    buyLoyalty +
+    buyTheDip +
+    communityParticipation +
+    referralScore +
+    creatorInteraction;
 
   // Bonus for OG status
   if (params.boughtInPhaseOne && params.neverSold) {
@@ -162,10 +163,7 @@ export async function getHolderReputation(
   return null; // Let caller recompute if stale
 }
 
-export async function setHolderReputation(
-  env: Env,
-  reputation: HolderReputation,
-): Promise<void> {
+export async function setHolderReputation(env: Env, reputation: HolderReputation): Promise<void> {
   const key = `${KV_PREFIX}${reputation.coinSymbol.toLowerCase()}:${reputation.address.toLowerCase()}`;
   await kvPut(env, key, reputation, CACHE_TTL);
 }
@@ -173,7 +171,7 @@ export async function setHolderReputation(
 // ─── Compute From Raw Data ────────────────────────────────────────────────
 
 export async function computeHolderReputation(
-  env: Env,
+  _env: Env,
   address: string,
   coinSymbol: string,
   data: {
@@ -192,9 +190,10 @@ export async function computeHolderReputation(
   },
 ): Promise<HolderReputation> {
   const now = Date.now();
-  const holdingDays = data.firstBuyTimestamp > 0
-    ? Math.max(0, Math.floor((now - data.firstBuyTimestamp) / 86400000))
-    : 0;
+  const holdingDays =
+    data.firstBuyTimestamp > 0
+      ? Math.max(0, Math.floor((now - data.firstBuyTimestamp) / 86400000))
+      : 0;
 
   const { score, tier, breakdown } = computeReputation({
     holdingDays,
@@ -248,16 +247,15 @@ const DEFAULT_BREAKDOWN: HolderReputation['breakdown'] = {
   creatorInteraction: 0,
 };
 
-function ensureBreakdown(
-  raw: unknown,
-): HolderReputation['breakdown'] {
+function ensureBreakdown(raw: unknown): HolderReputation['breakdown'] {
   if (raw && typeof raw === 'object') {
     const b = raw as Record<string, unknown>;
     return {
       holdingDuration: typeof b.holdingDuration === 'number' ? b.holdingDuration : 0,
       buyLoyalty: typeof b.buyLoyalty === 'number' ? b.buyLoyalty : 0,
       buyTheDip: typeof b.buyTheDip === 'number' ? b.buyTheDip : 0,
-      communityParticipation: typeof b.communityParticipation === 'number' ? b.communityParticipation : 0,
+      communityParticipation:
+        typeof b.communityParticipation === 'number' ? b.communityParticipation : 0,
       referralScore: typeof b.referralScore === 'number' ? b.referralScore : 0,
       creatorInteraction: typeof b.creatorInteraction === 'number' ? b.creatorInteraction : 0,
     };
@@ -366,9 +364,7 @@ export async function getCoinReputationLeaderboard(
       }
     }
 
-    return reps
-      .sort((a, b) => b.score - a.score)
-      .slice(0, limit);
+    return reps.sort((a, b) => b.score - a.score).slice(0, limit);
   } catch {
     return [];
   }

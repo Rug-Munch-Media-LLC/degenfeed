@@ -11,7 +11,7 @@ const $fetch = globalThis.fetch;
 
 export async function fetchCoinviseCreators(limit = 5): Promise<any[]> {
   try {
-    const res = await $fetch('https://api.coinvise.co/v1/creators?limit=' + limit, {
+    const res = await $fetch(`https://api.coinvise.co/v1/creators?limit=${limit}`, {
       headers: { 'User-Agent': 'DegenFeed/0.1' },
       signal: AbortSignal.timeout(5000),
     });

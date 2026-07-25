@@ -58,7 +58,7 @@ function TelegramSection() {
   const { showToast } = useToast();
   const [telegram, setTelegram] = useState<TelegramLinkedUser | null>(null);
   const [loading, setLoading] = useState(true);
-  const [bridgedGroups, setBridgedGroups] = useState<
+  const [_bridgedGroups, _setBridgedGroups] = useState<
     Array<{
       groupId: string;
       title: string;

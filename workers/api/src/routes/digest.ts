@@ -431,7 +431,7 @@ function generateEditorial(
   closing: string;
 } {
   const topStories = sections.find((s) => s.type === 'top-stories');
-  const marketSection = sections.find((s) => s.type === 'market');
+  const _marketSection = sections.find((s) => s.type === 'market');
   const trendingSection = sections.find((s) => s.type === 'trending');
 
   // Auto-generate subject line based on format and content

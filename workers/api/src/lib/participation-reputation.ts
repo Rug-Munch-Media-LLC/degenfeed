@@ -265,10 +265,10 @@ export async function awardReputation(
         ? Date.now() - hasRecentBonus.timestamp < MONTH_MS
         : false;
       if (!bonusCooldown) {
-        newTotal += ACTION_POINTS.consistent_voter!.points;
+        newTotal += ACTION_POINTS.consistent_voter?.points;
         record.history.push({
           action: 'consistent_voter',
-          points: ACTION_POINTS.consistent_voter!.points,
+          points: ACTION_POINTS.consistent_voter?.points,
           timestamp: Date.now(),
           daoId,
         });

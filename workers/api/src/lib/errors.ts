@@ -24,8 +24,8 @@
  *   }
  */
 
-import type { Env } from '../index';
 import { logError } from '../error-logger';
+import type { Env } from '../index';
 
 // ─── Base Error Class ────────────────────────────────────────────────
 
@@ -213,11 +213,7 @@ export interface ErrorHandlerOptions {
  *     return handleError(err, env, { route: '/api/post', method: 'GET' });
  *   }
  */
-export function handleError(
-  error: unknown,
-  env: Env,
-  options: ErrorHandlerOptions = {},
-): Response {
+export function handleError(error: unknown, env: Env, options: ErrorHandlerOptions = {}): Response {
   const { route, method, requestId } = options;
 
   // Determine error properties

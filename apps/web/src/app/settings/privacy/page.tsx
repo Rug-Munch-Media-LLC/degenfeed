@@ -15,9 +15,9 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../../../components/AuthProvider';
-import { usePreferences } from '../../../hooks/usePreferences';
-import PageHeader from '../../../components/ui/PageHeader';
 import { useToast } from '../../../components/Toast';
+import PageHeader from '../../../components/ui/PageHeader';
+import { usePreferences } from '../../../hooks/usePreferences';
 
 // ─── Types ──────────────────────────────────────────────────────────
 
@@ -253,7 +253,11 @@ function CollapsibleSection({
           <path d="M6 9l6 6 6-6" />
         </svg>
       </button>
-      {open && <div className="border-t border-[var(--color-glass-border)] px-5 py-4 space-y-3">{children}</div>}
+      {open && (
+        <div className="border-t border-[var(--color-glass-border)] px-5 py-4 space-y-3">
+          {children}
+        </div>
+      )}
     </div>
   );
 }
@@ -290,7 +294,13 @@ function DataInventoryRow({ item }: { item: DataInventoryItem }) {
   );
 }
 
-function ExportButton({ format, walletAddress }: { format: ExportFormat; walletAddress: string | null }) {
+function ExportButton({
+  format,
+  walletAddress,
+}: {
+  format: ExportFormat;
+  walletAddress: string | null;
+}) {
   const { showToast } = useToast();
   const [exporting, setExporting] = useState(false);
   const [lastExported, setLastExported] = useState<string | null>(null);
@@ -345,7 +355,15 @@ function ExportButton({ format, walletAddress }: { format: ExportFormat; walletA
         {exporting ? (
           <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
         ) : (
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+          >
             <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
             <polyline points="7 10 12 15 17 10" />
             <line x1="12" y1="15" x2="12" y2="3" />
@@ -361,7 +379,7 @@ function MigrationCard({
   walletAddress,
   onStatusChange,
 }: {
-  platform: typeof MIGRATION_PLATFORMS[0];
+  platform: (typeof MIGRATION_PLATFORMS)[0];
   walletAddress: string | null;
   onStatusChange: () => void;
 }) {
@@ -395,7 +413,7 @@ function MigrationCard({
         throw new Error(err.error || 'Import failed');
       }
 
-      const result = await res.json() as { imported?: number; total?: number; errors?: string[] };
+      const result = (await res.json()) as { imported?: number; total?: number; errors?: string[] };
       showToast(
         'success',
         `✓ Imported ${result.imported || 0}/${result.total || 0} items from ${platform.label}`,
@@ -417,7 +435,9 @@ function MigrationCard({
         <div className="flex-1 min-w-0">
           <div className="text-sm font-medium text-[var(--color-fg)]">{platform.label}</div>
           <p className="text-xs text-[var(--color-muted)]">
-            {platform.direction === 'both' ? 'Import & Export' : `${platform.direction === 'import' ? 'Import from' : 'Export to'} ${platform.label}`}
+            {platform.direction === 'both'
+              ? 'Import & Export'
+              : `${platform.direction === 'import' ? 'Import from' : 'Export to'} ${platform.label}`}
           </p>
         </div>
         <button
@@ -518,7 +538,14 @@ export default function PrivacySettingsPage() {
       try {
         const res = await fetch('/api/accounts/connected', { credentials: 'include' });
         if (res.ok) {
-          const data = await res.json() as { accounts?: Array<{ platform: string; username?: string; connected: boolean; lastSync?: string }> };
+          const data = (await res.json()) as {
+            accounts?: Array<{
+              platform: string;
+              username?: string;
+              connected: boolean;
+              lastSync?: string;
+            }>;
+          };
           const accounts = (data.accounts || []).map((a) => ({
             protocol: a.platform,
             connected: a.connected,
@@ -534,11 +561,18 @@ export default function PrivacySettingsPage() {
           });
           // Assign icons
           const icons: Record<string, string> = {
-            nostr: '⚡', farcaster: '🏠', lens: '🌿', bluesky: '☁️', mastodon: '🐘', activitypub: '🔄',
+            nostr: '⚡',
+            farcaster: '🏠',
+            lens: '🌿',
+            bluesky: '☁️',
+            mastodon: '🐘',
+            activitypub: '🔄',
           };
           setConnectedAccounts(result.map((r) => ({ ...r, icon: icons[r.protocol] || '🔗' })));
         }
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
       setLoadingAccounts(false);
     };
     fetchAccounts();
@@ -555,14 +589,20 @@ export default function PrivacySettingsPage() {
           body: JSON.stringify({ check: true }),
         });
         if (res.status === 409) {
-          const data = await res.json() as { pendingSince?: string; recoverableUntil?: string; message?: string };
+          const data = (await res.json()) as {
+            pendingSince?: string;
+            recoverableUntil?: string;
+            message?: string;
+          };
           setDeleteStatus({
             pending: true,
             recoverableUntil: data.recoverableUntil,
             message: data.message,
           });
         }
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     };
     fetchDeleteStatus();
   }, []);
@@ -589,7 +629,12 @@ export default function PrivacySettingsPage() {
         method: 'POST',
         credentials: 'include',
       });
-      const data = await res.json() as { pending?: boolean; message?: string; recoverableUntil?: string; error?: string };
+      const data = (await res.json()) as {
+        pending?: boolean;
+        message?: string;
+        recoverableUntil?: string;
+        error?: string;
+      };
       if (res.ok || res.status === 409) {
         if (data.pending || res.status === 409) {
           setDeleteStatus({
@@ -638,7 +683,7 @@ export default function PrivacySettingsPage() {
         setDeleteStatus(null);
         showToast('success', '✓ Account reactivated! Welcome back.');
       } else {
-        const data = await res.json() as { error?: string };
+        const data = (await res.json()) as { error?: string };
         showToast('error', data.error || 'Failed to reactivate');
       }
     } catch {
@@ -665,7 +710,7 @@ export default function PrivacySettingsPage() {
         setShowSignatureModal(false);
         setSignatureInput('');
       } else {
-        const data = await res.json() as { error?: string };
+        const data = (await res.json()) as { error?: string };
         showToast('error', data.error || 'Signature verification failed');
       }
     } catch {
@@ -682,13 +727,22 @@ export default function PrivacySettingsPage() {
   }, [walletAddress]);
 
   // Connected protocols
-  const connectedProtocols = linkedIdentities
+  const _connectedProtocols = linkedIdentities
     .map((i) => i.protocol)
     .filter(Boolean)
     .concat(primaryIdentity?.protocol || []);
 
   const shieldIcon = (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true">
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      aria-hidden="true"
+    >
       <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
       <path d="M9 12l2 2 4-4" />
     </svg>
@@ -721,7 +775,8 @@ export default function PrivacySettingsPage() {
           </div>
           <div className="rounded-xl border border-degen-500/20 bg-degen-500/5 px-4 py-3">
             <p className="text-xs text-degen-400">
-              <strong>Your data, your rules.</strong> We store only what's needed to provide the service.
+              <strong>Your data, your rules.</strong> We store only what's needed to provide the
+              service.
               {totalDeletable < totalDataItems
                 ? ' Some data is retained for legal compliance (GDPR Article 30).'
                 : ' All stored data can be deleted on request.'}
@@ -786,8 +841,8 @@ export default function PrivacySettingsPage() {
           defaultOpen={true}
         >
           <p className="text-xs text-[var(--color-muted)] mb-3">
-            Export all your data in any format. JSON for developers, CSV for spreadsheets,
-            HTML for browsing, or protocol-specific formats for migration.
+            Export all your data in any format. JSON for developers, CSV for spreadsheets, HTML for
+            browsing, or protocol-specific formats for migration.
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {EXPORT_FORMATS.map((fmt) => (
@@ -796,8 +851,8 @@ export default function PrivacySettingsPage() {
           </div>
           <div className="rounded-xl border border-degen-500/20 bg-degen-500/5 px-4 py-3">
             <p className="text-xs text-degen-400">
-              🔒 All exports are generated on-the-fly from your live data.
-              No copies are retained by us after download.
+              🔒 All exports are generated on-the-fly from your live data. No copies are retained by
+              us after download.
             </p>
           </div>
         </CollapsibleSection>
@@ -898,7 +953,11 @@ export default function PrivacySettingsPage() {
       <section aria-labelledby="heading-requests">
         <CollapsibleSection
           title="Delete Account & Data"
-          description={deleteStatus?.pending ? '⏳ Deletion pending — grace period active' : 'Permanently delete your account and all data'}
+          description={
+            deleteStatus?.pending
+              ? '⏳ Deletion pending — grace period active'
+              : 'Permanently delete your account and all data'
+          }
           icon="🗑️"
           defaultOpen={!!deleteStatus?.pending}
         >
@@ -947,8 +1006,8 @@ export default function PrivacySettingsPage() {
               </div>
 
               <p className="text-[10px] text-[var(--color-muted)]">
-                Wallet signature confirmation is required before deletion can be finalized.
-                This prevents unauthorized deletion if your session is compromised.
+                Wallet signature confirmation is required before deletion can be finalized. This
+                prevents unauthorized deletion if your session is compromised.
               </p>
             </div>
           ) : (
@@ -969,8 +1028,8 @@ export default function PrivacySettingsPage() {
                     External protocols (Farcaster, Nostr, Lens) retain your data on their networks
                   </li>
                   <li className="flex items-start gap-2 text-xs text-[var(--color-muted)]">
-                    <span className="text-red-400 mt-1">•</span>
-                    A deletion certificate is issued for your records
+                    <span className="text-red-400 mt-1">•</span>A deletion certificate is issued for
+                    your records
                   </li>
                   <li className="flex items-start gap-2 text-xs text-[var(--color-muted)]">
                     <span className="text-red-400 mt-1">•</span>
@@ -981,8 +1040,8 @@ export default function PrivacySettingsPage() {
 
               <div className="rounded-xl border border-degen-500/20 bg-degen-500/5 px-4 py-3">
                 <p className="text-xs text-degen-400">
-                  💡 Before deleting, we recommend exporting your data first.
-                  Use the export section above to download your data in any format.
+                  💡 Before deleting, we recommend exporting your data first. Use the export section
+                  above to download your data in any format.
                 </p>
               </div>
 

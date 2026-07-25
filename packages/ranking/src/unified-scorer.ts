@@ -38,7 +38,6 @@ import type { AlgorithmMode, UserBehaviorProfile } from '@degenfeed/feed-core';
 import {
   buildQualityAuthorProfile,
   computeQualityScore,
-  MODE_PRESETS,
   personalizeScore,
 } from '@degenfeed/feed-core';
 import type { UnifiedPost } from '@degenfeed/types';

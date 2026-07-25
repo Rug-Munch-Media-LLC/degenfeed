@@ -11,10 +11,7 @@ import type { SchemaGuard, UnifiedPost } from '../server/types';
 
 const $fetch = globalThis.fetch;
 
-const GOBLIN_INSTANCES = [
-  'https://mediagoblin.org',
-  'https://goblin.hell.sh',
-];
+const GOBLIN_INSTANCES = ['https://mediagoblin.org', 'https://goblin.hell.sh'];
 
 // ─── Types ─────────────────────────────────────────────────────────────
 
@@ -53,8 +50,7 @@ function guessNiches(text: string, tags: string[] = []): string[] {
     niches.push('art');
   if (/\b(video|film|movie|cinema|animation)\b/.test(lower)) niches.push('video');
   if (/\b(music|audio|song|sound|recording)\b/.test(lower)) niches.push('music');
-  if (/\b(creative|commons|free culture|open source|gnu|fsf)\b/.test(lower))
-    niches.push('culture');
+  if (/\b(creative|commons|free culture|open source|gnu|fsf)\b/.test(lower)) niches.push('culture');
   if (/\b(tech|technology|software|programming|3d|modeling)\b/.test(lower)) niches.push('tech');
   if (niches.length === 0) niches.push('art');
   return niches;
@@ -71,48 +67,55 @@ async function fetchFromInstance(instance: string, limit: number): Promise<Unifi
     const entries = data.media_entries || data.entries || [];
     if (!Array.isArray(entries)) return [];
 
-    return entries.filter((e) => e.state !== 'disabled').slice(0, limit).map((entry) => {
-      const text = entry.title ? `${entry.title}\n\n${entry.description || ''}`.trim() : (entry.description || '');
-      const mediaUrl = entry.media_files?.original || entry.media_files?.medium || '';
-      const thumbUrl = entry.media_files?.thumb || entry.media_files?.medium || '';
-      const isVideo = entry.media_type?.startsWith('video') || false;
-      const isImage = entry.media_type?.startsWith('image') || false;
+    return entries
+      .filter((e) => e.state !== 'disabled')
+      .slice(0, limit)
+      .map((entry) => {
+        const text = entry.title
+          ? `${entry.title}\n\n${entry.description || ''}`.trim()
+          : entry.description || '';
+        const mediaUrl = entry.media_files?.original || entry.media_files?.medium || '';
+        const thumbUrl = entry.media_files?.thumb || entry.media_files?.medium || '';
+        const isVideo = entry.media_type?.startsWith('video') || false;
+        const isImage = entry.media_type?.startsWith('image') || false;
 
-      return {
-        id: `mediagoblin:${entry.id}`,
-        protocol: 'mediagoblin',
-        author: {
-          id: `mediagoblin:${entry.author}`,
-          primary: { protocol: 'mediagoblin', id: entry.author },
-          handles: { mediagoblin: entry.author },
-          displayName: entry.author,
-          bio: '',
-          avatarUrl: '',
-          followerCount: 0,
-          followingCount: 0,
-          links: [],
-          keys: {},
-        },
-        text,
-        embeds: [
-          ...(mediaUrl ? [{ kind: (isVideo ? 'video' : 'image') as 'image' | 'video', url: mediaUrl }] : []),
-          ...(thumbUrl && thumbUrl !== mediaUrl
-            ? [{ kind: 'image' as const, url: thumbUrl }]
-            : []),
-        ],
-        contentType: isVideo ? 'video' : isImage ? 'image' : 'text',
-        createdAt: new Date(entry.created).getTime(),
-        metrics: { likes: entry.likes || 0, reposts: 0, replies: 0, quotes: 0 },
-        engagement: {
-          viewerLiked: false,
-          viewerReposted: false,
-          viewerBookmarked: false,
-          raw: { likes: entry.likes || 0, reposts: 0, replies: 0, quotes: 0 },
-        },
-        raw: entry,
-        niches: guessNiches(text, entry.tags_raw),
-      };
-    });
+        return {
+          id: `mediagoblin:${entry.id}`,
+          protocol: 'mediagoblin',
+          author: {
+            id: `mediagoblin:${entry.author}`,
+            primary: { protocol: 'mediagoblin', id: entry.author },
+            handles: { mediagoblin: entry.author },
+            displayName: entry.author,
+            bio: '',
+            avatarUrl: '',
+            followerCount: 0,
+            followingCount: 0,
+            links: [],
+            keys: {},
+          },
+          text,
+          embeds: [
+            ...(mediaUrl
+              ? [{ kind: (isVideo ? 'video' : 'image') as 'image' | 'video', url: mediaUrl }]
+              : []),
+            ...(thumbUrl && thumbUrl !== mediaUrl
+              ? [{ kind: 'image' as const, url: thumbUrl }]
+              : []),
+          ],
+          contentType: isVideo ? 'video' : isImage ? 'image' : 'text',
+          createdAt: new Date(entry.created).getTime(),
+          metrics: { likes: entry.likes || 0, reposts: 0, replies: 0, quotes: 0 },
+          engagement: {
+            viewerLiked: false,
+            viewerReposted: false,
+            viewerBookmarked: false,
+            raw: { likes: entry.likes || 0, reposts: 0, replies: 0, quotes: 0 },
+          },
+          raw: entry,
+          niches: guessNiches(text, entry.tags_raw),
+        };
+      });
   } catch (err) {
     console.log(`[bridge] MediaGoblin error (${instance}): ${(err as Error).message}`);
     return [];

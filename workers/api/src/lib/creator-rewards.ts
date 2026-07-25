@@ -18,7 +18,6 @@
  */
 
 import { type Env, jsonResponse } from '../index';
-import { sanitizeString } from '../sanitize';
 import { requireSession } from '../session';
 
 // ─── Types ────────────────────────────────────────────────────────────────

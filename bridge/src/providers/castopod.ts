@@ -65,7 +65,8 @@ function guessNiches(text: string, tags: string[] = []): string[] {
   if (/\b(crypto|bitcoin|eth|defi|nft|blockchain|web3)\b/.test(lower)) niches.push('crypto');
   if (/\b(ai |artificial|intelligence|llm|agent|machine learning|data science)\b/.test(lower))
     niches.push('ai');
-  if (/\b(tech|technology|startup|software|programming|developer)\b/.test(lower)) niches.push('tech');
+  if (/\b(tech|technology|startup|software|programming|developer)\b/.test(lower))
+    niches.push('tech');
   if (/\b(news|current events|politics|world|report)\b/.test(lower)) niches.push('news');
   if (/\b(science|research|study|discovery|biology|physics|space)\b/.test(lower))
     niches.push('science');
@@ -77,13 +78,10 @@ function guessNiches(text: string, tags: string[] = []): string[] {
 async function fetchFromInstance(instance: string, limit: number): Promise<UnifiedPost[]> {
   try {
     // Try the episodes API endpoint
-    const res = await $fetch(
-      `${instance}/api/episodes?limit=${Math.min(limit, 20)}`,
-      {
-        headers: { 'User-Agent': 'DegenFeed-Bridge/0.1', Accept: 'application/json' },
-        signal: AbortSignal.timeout(8000),
-      },
-    );
+    const res = await $fetch(`${instance}/api/episodes?limit=${Math.min(limit, 20)}`, {
+      headers: { 'User-Agent': 'DegenFeed-Bridge/0.1', Accept: 'application/json' },
+      signal: AbortSignal.timeout(8000),
+    });
     if (!res.ok) return [];
     const data = (await res.json()) as CastopodResponse;
     const episodes = data.episodes || data.data || [];
@@ -113,7 +111,7 @@ async function fetchFromInstance(instance: string, limit: number): Promise<Unifi
         embeds: [
           { kind: 'video' as const, url: ep.audio_url, meta: { duration: ep.duration } },
           ...(ep.cover_url || ep.cover?.url
-            ? [{ kind: 'image' as const, url: ep.cover_url || ep.cover!.url }]
+            ? [{ kind: 'image' as const, url: ep.cover_url || ep.cover?.url }]
             : []),
         ],
         contentType: 'video',
@@ -128,10 +126,18 @@ async function fetchFromInstance(instance: string, limit: number): Promise<Unifi
           viewerLiked: false,
           viewerReposted: false,
           viewerBookmarked: false,
-          raw: { likes: ep.total_plays || 0, reposts: ep.unique_listeners || 0, replies: 0, quotes: 0 },
+          raw: {
+            likes: ep.total_plays || 0,
+            reposts: ep.unique_listeners || 0,
+            replies: 0,
+            quotes: 0,
+          },
         },
         raw: ep,
-        niches: guessNiches(text, ep.hashtags?.map((h) => h.name)),
+        niches: guessNiches(
+          text,
+          ep.hashtags?.map((h) => h.name),
+        ),
       };
     });
   } catch (err) {

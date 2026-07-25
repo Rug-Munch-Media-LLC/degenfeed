@@ -867,10 +867,10 @@ export class ContentPipeline {
 
     // Filter by preferred niches (topic relevance)
     if (opts.niches && opts.niches.length > 0) {
-      const targetNiches = new Set(opts.niches.map((n) => n.toLowerCase()));
+      const _targetNiches = new Set(opts.niches.map((n) => n.toLowerCase()));
       filtered = filtered.filter((p) => {
         const postText = `${p.text} ${p.niches.join(' ')}`.toLowerCase();
-        return opts.niches!.some((n) => postText.includes(n.toLowerCase()));
+        return opts.niches?.some((n) => postText.includes(n.toLowerCase()));
       });
     }
 
@@ -904,13 +904,13 @@ export class ContentPipeline {
     if (opts.excludeWords && opts.excludeWords.length > 0) {
       filtered = filtered.filter((p) => {
         const text = p.text.toLowerCase();
-        return !opts.excludeWords!.some((word) => text.includes(word.toLowerCase()));
+        return !opts.excludeWords?.some((word) => text.includes(word.toLowerCase()));
       });
     }
 
     // Filter by language
     if (opts.language) {
-      const lang = opts.language.toLowerCase();
+      const _lang = opts.language.toLowerCase();
       filtered = filtered.filter((p) => {
         // Use the language from the post's niche detection or a heuristic
         // For now, check if the language field matches

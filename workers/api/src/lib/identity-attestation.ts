@@ -221,11 +221,7 @@ export async function generateAttestation(
         ['sign'],
       );
 
-      const sigBytes = await crypto.subtle.sign(
-        'HMAC',
-        cryptoKey,
-        encoder.encode(payload),
-      );
+      const sigBytes = await crypto.subtle.sign('HMAC', cryptoKey, encoder.encode(payload));
       signature = bytesToHex(new Uint8Array(sigBytes));
     } catch {
       // Signature generation non-fatal for local dev
@@ -418,9 +414,7 @@ export async function generateOnChainAttestation(
   const onChain: OnChainAttestation = {
     chain,
     txHash: '', // Filled in when submitted
-    schemaAddress: chain === 'solana'
-      ? undefined
-      : '0x0000000000000000000000000000000000000000', // EAS schema placeholder
+    schemaAddress: chain === 'solana' ? undefined : '0x0000000000000000000000000000000000000000', // EAS schema placeholder
     attestedAt: Date.now(),
   };
 
@@ -472,7 +466,7 @@ export async function generateCrossProtocolProof(
   env: Env,
 ): Promise<CrossProtocolProof> {
   // Verify the wallet signature links both identities
-  const messageToVerify = `I confirm that I control both:\nProtocol: ${sourceProtocol}\nID: ${sourceId}\nAND\nProtocol: ${targetProtocol}\nID: ${targetId}\n\nWallet: ${wallet.toLowerCase()}\nTimestamp: ${Date.now()}`;
+  const _messageToVerify = `I confirm that I control both:\nProtocol: ${sourceProtocol}\nID: ${sourceId}\nAND\nProtocol: ${targetProtocol}\nID: ${targetId}\n\nWallet: ${wallet.toLowerCase()}\nTimestamp: ${Date.now()}`;
 
   // In production, verify the EIP-191 or Solana signature here
   // For now, we store the proof as-is and let the verification endpoint validate it
@@ -509,7 +503,7 @@ export async function verifyCrossProtocolProof(
   proof: CrossProtocolProof,
 ): Promise<{ valid: boolean; message: string }> {
   // Verify the signature links both identities
-  const messageToVerify = `I confirm that I control both:\nProtocol: ${proof.sourceProtocol}\nID: ${proof.sourceId}\nAND\nProtocol: ${proof.targetProtocol}\nID: ${proof.targetId}\n\nWallet: ${proof.wallet}\nTimestamp: ${proof.createdAt}`;
+  const _messageToVerify = `I confirm that I control both:\nProtocol: ${proof.sourceProtocol}\nID: ${proof.sourceId}\nAND\nProtocol: ${proof.targetProtocol}\nID: ${proof.targetId}\n\nWallet: ${proof.wallet}\nTimestamp: ${proof.createdAt}`;
 
   // For wallet signatures (EIP-191 / Solana), use ecrecover / ed25519
   // For NIP-05 proofs, verify the Nostr event
@@ -588,10 +582,7 @@ export async function recordFirstSeen(
   };
 
   try {
-    await env.IDENTITIES?.put(
-      `attest:timestamp:${wallet.toLowerCase()}`,
-      JSON.stringify(merged),
-    );
+    await env.IDENTITIES?.put(`attest:timestamp:${wallet.toLowerCase()}`, JSON.stringify(merged));
   } catch (err) {
     throw new Error(`Failed to record first-seen: ${String(err)}`);
   }

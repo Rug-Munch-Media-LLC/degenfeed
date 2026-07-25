@@ -43,16 +43,19 @@ export interface EmptyFeedAlert {
 }
 
 export interface FeedQualityReport {
-  protocols: Record<string, {
-    totalPosts: number;
-    avgPostsPerFetch: number;
-    lastFetchCount: number;
-    lastFetchedAt: number | null;
-    isEmpty: boolean;
-    emptySinceMs: number | null;
-    alertActive: boolean;
-    sampleCount: number;
-  }>;
+  protocols: Record<
+    string,
+    {
+      totalPosts: number;
+      avgPostsPerFetch: number;
+      lastFetchCount: number;
+      lastFetchedAt: number | null;
+      isEmpty: boolean;
+      emptySinceMs: number | null;
+      alertActive: boolean;
+      sampleCount: number;
+    }
+  >;
   activeAlerts: EmptyFeedAlert[];
   summary: {
     total: number;
@@ -91,9 +94,7 @@ export async function recordProtocolFetch(
 
   try {
     const raw = await env.CACHE.get(key);
-    const samples: ProtocolCountSample[] = raw
-      ? JSON.parse(raw)
-      : [];
+    const samples: ProtocolCountSample[] = raw ? JSON.parse(raw) : [];
 
     samples.push({
       protocol,
@@ -125,7 +126,7 @@ async function checkEmptyFeedAlert(
   if (samples.length < 3) return;
 
   const recentSamples = samples.slice(-5);
-  const emptySamples = recentSamples.filter((s) => s.postCount === 0);
+  const _emptySamples = recentSamples.filter((s) => s.postCount === 0);
   const consecutiveEmpty = getConsecutiveEmpty(samples);
 
   // Get the last time this protocol had content
@@ -143,9 +144,10 @@ async function checkEmptyFeedAlert(
   }
 
   // Determine if we should alert
-  const shouldAlert = consecutiveEmpty >= 3 && lastContentAt !== null
-    ? (now - lastContentAt) > ALERT_THRESHOLD_MS
-    : consecutiveEmpty >= 5; // No history — 5 consecutive empty fetches
+  const shouldAlert =
+    consecutiveEmpty >= 3 && lastContentAt !== null
+      ? now - lastContentAt > ALERT_THRESHOLD_MS
+      : consecutiveEmpty >= 5; // No history — 5 consecutive empty fetches
 
   if (shouldAlert && !existingAlert?.resolved) {
     const alert: EmptyFeedAlert = {
@@ -159,7 +161,9 @@ async function checkEmptyFeedAlert(
     };
 
     await env.CACHE.put(alertKey2, JSON.stringify(alert), { expirationTtl: 86400 * 3 });
-    console.warn(`[feed-monitor] ALERT: ${protocol} feed empty for ${Math.round((now - (lastContentAt ?? now)) / 60000)} minutes`);
+    console.warn(
+      `[feed-monitor] ALERT: ${protocol} feed empty for ${Math.round((now - (lastContentAt ?? now)) / 60000)} minutes`,
+    );
   }
 
   // Resolve alert if content returned
@@ -220,20 +224,66 @@ export async function getFeedQualityReport(env: Env): Promise<FeedQualityReport>
 
   // Protocol list — same as bridge-reliability
   const protocols = [
-    'nostr', 'farcaster', 'lens', 'bluesky', 'mastodon',
-    'lemmy', 'pixelfed', 'peertube', 'threads', 'zora',
-    'reddit', 'rss', 'mirror', 'hive', 'dtube', 'lbry',
-    'pleroma', 'misskey', 'writefreely', 'funkwhale', 'castopod',
-    'subsocial', 'steem', 'telegram',
-    'diaspora', 'friendica', 'mediagoblin',
-    'bookwyrm', 'mobilizon', 'bonfire', 'mitra', 'takahe',
-    'forgejo', 'owncast', 'faircamp',
-    'gab', 'minds', 'aether', 'scuttlebutt', 'deso', 'session',
-    'cyberconnect', 'arena', 'microblog', 'orbis', 'ceramic',
-    'audius', 'rarible',
-    'xmtp', 'push', 'huddle01', 'tableland',
-    'ponder', 'ethereum', 'solana', 'kbin', 'tildes',
-    'discord', 'matrix', 'github',
+    'nostr',
+    'farcaster',
+    'lens',
+    'bluesky',
+    'mastodon',
+    'lemmy',
+    'pixelfed',
+    'peertube',
+    'threads',
+    'zora',
+    'reddit',
+    'rss',
+    'mirror',
+    'hive',
+    'dtube',
+    'lbry',
+    'pleroma',
+    'misskey',
+    'writefreely',
+    'funkwhale',
+    'castopod',
+    'subsocial',
+    'steem',
+    'telegram',
+    'diaspora',
+    'friendica',
+    'mediagoblin',
+    'bookwyrm',
+    'mobilizon',
+    'bonfire',
+    'mitra',
+    'takahe',
+    'forgejo',
+    'owncast',
+    'faircamp',
+    'gab',
+    'minds',
+    'aether',
+    'scuttlebutt',
+    'deso',
+    'session',
+    'cyberconnect',
+    'arena',
+    'microblog',
+    'orbis',
+    'ceramic',
+    'audius',
+    'rarible',
+    'xmtp',
+    'push',
+    'huddle01',
+    'tableland',
+    'ponder',
+    'ethereum',
+    'solana',
+    'kbin',
+    'tildes',
+    'discord',
+    'matrix',
+    'github',
   ];
 
   for (const protocol of protocols) {
@@ -241,9 +291,14 @@ export async function getFeedQualityReport(env: Env): Promise<FeedQualityReport>
       const raw = await env.CACHE.get(protocolCountKey(protocol));
       if (!raw) {
         report.protocols[protocol] = {
-          totalPosts: 0, avgPostsPerFetch: 0, lastFetchCount: 0,
-          lastFetchedAt: null, isEmpty: true, emptySinceMs: null,
-          alertActive: false, sampleCount: 0,
+          totalPosts: 0,
+          avgPostsPerFetch: 0,
+          lastFetchCount: 0,
+          lastFetchedAt: null,
+          isEmpty: true,
+          emptySinceMs: null,
+          alertActive: false,
+          sampleCount: 0,
         };
         continue;
       }
@@ -295,10 +350,7 @@ export async function getFeedQualityReport(env: Env): Promise<FeedQualityReport>
 
 // ─── KV-backed Webhook for empty feed alerts ───────────────────────
 
-export async function notifyEmptyFeedAlert(
-  env: Env,
-  alert: EmptyFeedAlert,
-): Promise<void> {
+export async function notifyEmptyFeedAlert(env: Env, alert: EmptyFeedAlert): Promise<void> {
   // Write to KV for the monitoring dashboard
   const key = monitorKey(alert.protocol);
   try {
@@ -310,7 +362,7 @@ export async function notifyEmptyFeedAlert(
   // Log to console — production would send via webhook
   console.warn(
     `[feed-monitor] ${alert.severity.toUpperCase()}: ${alert.protocol} feed empty ` +
-    `(${alert.consecutiveEmptyFetches} consecutive empty fetches, ` +
-    `last content ${alert.lastContentAt ? new Date(alert.lastContentAt).toISOString() : 'never'})`,
+      `(${alert.consecutiveEmptyFetches} consecutive empty fetches, ` +
+      `last content ${alert.lastContentAt ? new Date(alert.lastContentAt).toISOString() : 'never'})`,
   );
 }

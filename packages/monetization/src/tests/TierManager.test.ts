@@ -5,7 +5,7 @@
  * trial management, billing logic, and edge cases.
  */
 import { describe, expect, it } from 'vitest';
-import { TierError, TierManager } from '../TierManager';
+import { TierManager } from '../TierManager';
 import type { FeatureFlag, SubscriptionTier } from '../types';
 
 describe('TierManager.canAccess', () => {
@@ -34,45 +34,31 @@ describe('TierManager.canAccess', () => {
   });
 });
 
-describe('TierManager.getSubscription', () => {
-  it('errors on missing subscription', async () => {
-    await expect(TierManager.getSubscription('nonexistent-user', {} as never)).rejects.toThrow(
-      TierError,
-    );
+describe('TierManager.compareTiers', () => {
+  it('returns negative when first tier is lower', () => {
+    expect(TierManager.compareTiers('free', 'pro')).toBeLessThan(0);
+  });
+
+  it('returns positive when first tier is higher', () => {
+    expect(TierManager.compareTiers('enterprise', 'creator')).toBeGreaterThan(0);
+  });
+
+  it('returns zero for same tier', () => {
+    expect(TierManager.compareTiers('pro', 'pro')).toBe(0);
   });
 });
 
-describe('TierManager.listSubscriptions', () => {
-  it('returns an empty array for no subscriptions', async () => {
-    const subs = await TierManager.listSubscriptions('user-with-none', {} as never);
-    expect(Array.isArray(subs)).toBe(true);
+describe('TierManager.canUpgrade', () => {
+  it('allows upgrade to higher tier', () => {
+    expect(TierManager.canUpgrade('free', 'creator')).toBe(true);
   });
-});
 
-describe('TierManager.upgrade', () => {
-  it('rejects downgrade when option not set', async () => {
-    await expect(
-      TierManager.upgrade(
-        'user-1',
-        'free',
-        'free' as never,
-        false,
-      ),
-    ).rejects.toThrow(TierError);
+  it('rejects downgrade', () => {
+    expect(TierManager.canUpgrade('pro', 'free')).toBe(false);
   });
-});
 
-describe('TierManager.createCheckoutSession', () => {
-  it('rejects invalid tier', async () => {
-    await expect(
-      TierManager.createCheckoutSession('user-1', 'nonexistent' as SubscriptionTier, {} as never),
-    ).rejects.toThrow(TierError);
-  });
-});
-
-describe('TierManager.cancel', () => {
-  it('rejects cancel for user with no subscription', async () => {
-    await expect(TierManager.cancel('unknown-user', {} as never)).rejects.toThrow(TierError);
+  it('rejects same tier', () => {
+    expect(TierManager.canUpgrade('creator', 'creator')).toBe(false);
   });
 });
 
@@ -82,23 +68,101 @@ describe('TierManager.getLimits', () => {
     for (const tier of tiers) {
       const limits = TierManager.getLimits(tier);
       expect(limits).toBeDefined();
-      expect(typeof limits.maxProtocols).toBe('number');
+      expect(typeof limits.connectedProtocols).toBe('number');
     }
   });
 });
 
-describe('TierManager.getPlanDetails', () => {
-  it('returns details for valid tier', () => {
-    const details = TierManager.getPlanDetails('creator');
-    expect(details.tier).toBe('creator');
-    expect(details.name).toBeDefined();
-    expect(details.priceCents).toBeGreaterThan(0);
-    expect(Array.isArray(details.features)).toBe(true);
+describe('TierManager.isSubscriptionActive', () => {
+  it('returns false for null or undefined', () => {
+    expect(TierManager.isSubscriptionActive(null)).toBe(false);
+    expect(TierManager.isSubscriptionActive(undefined)).toBe(false);
+  });
+});
+
+describe('TierManager.getEffectiveTier', () => {
+  it('returns free for null record', () => {
+    expect(TierManager.getEffectiveTier(null)).toBe('free');
   });
 
-  it('returns details for free tier', () => {
-    const details = TierManager.getPlanDetails('free');
-    expect(details.tier).toBe('free');
-    expect(details.priceCents).toBe(0);
+  it('returns the record tier for active subscription', () => {
+    const record = {
+      identityId: 'test',
+      tier: 'pro' as SubscriptionTier,
+      status: 'active' as const,
+      startedAt: Date.now(),
+      expiresAt: Date.now() + 86400000,
+      isYearly: false,
+      nextBillingAmount: 0,
+    };
+    expect(TierManager.getEffectiveTier(record)).toBe('pro');
+  });
+});
+
+describe('TierManager.getTierName', () => {
+  it('returns display name for each tier', () => {
+    expect(typeof TierManager.getTierName('free')).toBe('string');
+    expect(typeof TierManager.getTierName('enterprise')).toBe('string');
+  });
+});
+
+describe('TierManager.getPriceCents', () => {
+  it('returns positive number for known tiers', () => {
+    expect(TierManager.getPriceCents('pro')).toBeGreaterThan(0);
+    expect(TierManager.getPriceCents('free')).toBe(0);
+  });
+
+  it('returns yearly price', () => {
+    const monthly = TierManager.getPriceCents('pro', false);
+    const yearly = TierManager.getPriceCents('pro', true);
+    // Yearly should be less than 12x monthly
+    expect(yearly).toBeLessThan(monthly * 12);
+  });
+});
+
+describe('TierManager.requiredTierFor', () => {
+  it('returns a valid tier for all known features', () => {
+    const features: FeatureFlag[] = ['tipping', 'creator_coins', 'api_access', 'custom_algorithms'];
+    for (const feature of features) {
+      const tier = TierManager.requiredTierFor(feature);
+      expect(tier).toBeDefined();
+    }
+  });
+});
+
+describe('TierManager.checkLimit', () => {
+  it('returns true when under limit', () => {
+    expect(TierManager.checkLimit('free', 'connectedProtocols', 3)).toBe(true);
+  });
+
+  it('returns false when over limit', () => {
+    expect(TierManager.checkLimit('free', 'connectedProtocols', 10)).toBe(false);
+  });
+});
+
+describe('TierManager.getTrialDays', () => {
+  it('returns non-negative number for each tier', () => {
+    const tiers: SubscriptionTier[] = ['free', 'creator', 'pro', 'enterprise'];
+    for (const tier of tiers) {
+      expect(TierManager.getTrialDays(tier)).toBeGreaterThanOrEqual(0);
+    }
+  });
+});
+
+describe('TierManager.buildSubscription', () => {
+  it('builds a valid subscription record', () => {
+    const record = TierManager.buildSubscription('user-1', 'pro', false);
+    expect(record.identityId).toBe('user-1');
+    expect(record.isYearly).toBe(false);
+    expect(record.tier).toBe('pro');
+    expect(record.status).toBe('active');
+    expect(record.startedAt).toBeGreaterThan(0);
+    expect(record.expiresAt).toBeGreaterThan(record.startedAt);
+  });
+});
+
+describe('TierManager.getNextBillingAmount', () => {
+  it('returns positive number', () => {
+    expect(TierManager.getNextBillingAmount('pro', false)).toBeGreaterThan(0);
   });
 });

@@ -105,7 +105,7 @@ export const ImageBlurUp = memo(function ImageBlurUp({
     // Reset state when src changes
     setLoaded(false);
     setError(false);
-  }, [src]);
+  }, []);
 
   return (
     <div

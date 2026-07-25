@@ -88,7 +88,16 @@ export function ConversationList({
           onClick={onNewMessage}
           className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-[var(--color-border)] bg-[var(--color-card)] px-3 py-2 text-xs font-medium text-[var(--color-muted)] hover:border-degen-500/30 hover:text-degen-400 hover:bg-degen-500/5 transition-all"
         >
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            aria-hidden="true"
+          >
             <line x1="12" y1="5" x2="12" y2="19" />
             <line x1="5" y1="12" x2="19" y2="12" />
           </svg>
@@ -112,7 +121,9 @@ export function ConversationList({
 
         {!loading && error && conversations.length === 0 && (
           <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
-            <span className="mb-2 text-lg opacity-40" aria-hidden="true">{'⚠\uFE0F'}</span>
+            <span className="mb-2 text-lg opacity-40" aria-hidden="true">
+              {'⚠\uFE0F'}
+            </span>
             <p className="text-xs text-[var(--color-muted)] mb-3">{error}</p>
             <button
               type="button"
@@ -126,7 +137,9 @@ export function ConversationList({
 
         {!loading && !error && conversations.length === 0 && (
           <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
-            <span className="mb-3 text-3xl opacity-30" aria-hidden="true">{'\u{1F4AC}'}</span>
+            <span className="mb-3 text-3xl opacity-30" aria-hidden="true">
+              {'\u{1F4AC}'}
+            </span>
             <p className="text-sm text-[var(--color-muted)]">
               {searchQuery ? 'No conversations found' : 'No conversations yet'}
             </p>
@@ -194,8 +207,21 @@ export function ConversationList({
                     aria-label="End-to-end encrypted"
                   >
                     <svg width="6" height="6" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                      <rect x="3" y="7" width="10" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
-                      <path d="M5 7V4a3 3 0 016 0v3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                      <rect
+                        x="3"
+                        y="7"
+                        width="10"
+                        height="7"
+                        rx="1.5"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                      />
+                      <path
+                        d="M5 7V4a3 3 0 016 0v3"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                      />
                     </svg>
                   </span>
                 )}
@@ -204,7 +230,9 @@ export function ConversationList({
               {/* Content */}
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-2">
-                  <span className={`truncate text-sm ${hasUnread ? 'font-bold text-[var(--color-fg)]' : 'font-medium text-[var(--color-fg)]'}`}>
+                  <span
+                    className={`truncate text-sm ${hasUnread ? 'font-bold text-[var(--color-fg)]' : 'font-medium text-[var(--color-fg)]'}`}
+                  >
                     {otherDisplay}
                   </span>
                   {conv.lastMessage && (
@@ -217,12 +245,34 @@ export function ConversationList({
                 <div className="flex items-center gap-2 mt-0.5">
                   {/* E2E lock on preview */}
                   {isE2E && (
-                    <svg width="6" height="6" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0 text-degen-400">
-                      <rect x="3" y="7" width="10" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.2" />
-                      <path d="M5 7V4a3 3 0 016 0v3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+                    <svg
+                      width="6"
+                      height="6"
+                      viewBox="0 0 16 16"
+                      fill="none"
+                      aria-hidden="true"
+                      className="shrink-0 text-degen-400"
+                    >
+                      <rect
+                        x="3"
+                        y="7"
+                        width="10"
+                        height="7"
+                        rx="1.5"
+                        stroke="currentColor"
+                        strokeWidth="1.2"
+                      />
+                      <path
+                        d="M5 7V4a3 3 0 016 0v3"
+                        stroke="currentColor"
+                        strokeWidth="1.2"
+                        strokeLinecap="round"
+                      />
                     </svg>
                   )}
-                  <span className={`line-clamp-1 text-xs ${hasUnread ? 'text-[var(--color-fg)] font-medium' : 'text-[var(--color-muted)]'}`}>
+                  <span
+                    className={`line-clamp-1 text-xs ${hasUnread ? 'text-[var(--color-fg)] font-medium' : 'text-[var(--color-muted)]'}`}
+                  >
                     {lastMessageText || '\u2014'}
                   </span>
                 </div>

@@ -106,9 +106,7 @@ export async function createRoom(
   }
 
   const roomId = crypto.randomUUID();
-  const passwordHash = options?.password
-    ? await hashPassword(options.password)
-    : '';
+  const passwordHash = options?.password ? await hashPassword(options.password) : '';
 
   const room: VoiceRoom = {
     id: roomId,
@@ -173,9 +171,7 @@ export async function joinRoom(
   }
 
   // Check if already in room
-  const existing = room.participants.find(
-    (p) => p.walletAddress === userId.toLowerCase(),
-  );
+  const existing = room.participants.find((p) => p.walletAddress === userId.toLowerCase());
   if (existing) {
     existing.connected = true;
     existing.joinedAt = Date.now();
@@ -220,9 +216,7 @@ export async function leaveRoom(
   const room = await getRoom(env, roomId);
   if (!room) return null;
 
-  const idx = room.participants.findIndex(
-    (p) => p.walletAddress === userId.toLowerCase(),
-  );
+  const idx = room.participants.findIndex((p) => p.walletAddress === userId.toLowerCase());
   if (idx >= 0) {
     room.participants.splice(idx, 1);
   }
@@ -265,9 +259,7 @@ export async function updateParticipantState(
   const room = await getRoom(env, roomId);
   if (!room) return null;
 
-  const participant = room.participants.find(
-    (p) => p.walletAddress === userId.toLowerCase(),
-  );
+  const participant = room.participants.find((p) => p.walletAddress === userId.toLowerCase());
   if (!participant) return null;
 
   Object.assign(participant, updates);
@@ -296,10 +288,7 @@ export async function getRoom(env: Env, roomId: string): Promise<VoiceRoom | nul
 /**
  * Get active voice rooms (summaries).
  */
-export async function getActiveRooms(
-  env: Env,
-  type?: RoomType,
-): Promise<VoiceRoomSummary[]> {
+export async function getActiveRooms(env: Env, type?: RoomType): Promise<VoiceRoomSummary[]> {
   if (!env.CACHE) return [];
 
   try {
@@ -311,7 +300,7 @@ export async function getActiveRooms(
 
     for (const roomId of roomIds) {
       const room = await getRoom(env, roomId);
-      if (!room || !room.active) continue;
+      if (!room?.active) continue;
       if (type && room.type !== type) continue;
 
       // Skip stale rooms
@@ -344,10 +333,7 @@ export async function getActiveRooms(
 /**
  * Get all active rooms a user is in.
  */
-export async function getUserActiveRooms(
-  env: Env,
-  userId: string,
-): Promise<VoiceRoomSummary[]> {
+export async function getUserActiveRooms(env: Env, userId: string): Promise<VoiceRoomSummary[]> {
   if (!env.CACHE) return [];
 
   try {
@@ -360,7 +346,7 @@ export async function getUserActiveRooms(
 
     for (const roomId of roomIds) {
       const room = await getRoom(env, roomId);
-      if (!room || !room.active) continue;
+      if (!room?.active) continue;
       summaries.push({
         id: room.id,
         name: room.name,
@@ -399,11 +385,7 @@ export async function getRoomParticipants(
 /**
  * Generate an invite link for a room.
  */
-export async function generateInvite(
-  env: Env,
-  roomId: string,
-  createdBy: string,
-): Promise<string> {
+export async function generateInvite(env: Env, roomId: string, createdBy: string): Promise<string> {
   if (!env.CACHE) throw new Error('[voice] KV not available');
 
   const room = await getRoom(env, roomId);
@@ -418,11 +400,9 @@ export async function generateInvite(
     expiresAt: Date.now() + 86400000, // 24h
   };
 
-  await env.CACHE.put(
-    `${VOICE_ROOM_INVITE_PREFIX}${code}`,
-    JSON.stringify(inviteData),
-    { expirationTtl: 86400 },
-  );
+  await env.CACHE.put(`${VOICE_ROOM_INVITE_PREFIX}${code}`, JSON.stringify(inviteData), {
+    expirationTtl: 86400,
+  });
 
   return code;
 }
@@ -430,10 +410,7 @@ export async function generateInvite(
 /**
  * Resolve an invite code to a room.
  */
-export async function resolveInvite(
-  env: Env,
-  code: string,
-): Promise<VoiceRoom | null> {
+export async function resolveInvite(env: Env, code: string): Promise<VoiceRoom | null> {
   if (!env.CACHE) return null;
   try {
     const raw = await env.CACHE.get(`${VOICE_ROOM_INVITE_PREFIX}${code}`);
@@ -465,8 +442,9 @@ export async function storeSignal(
   if (!env.CACHE) return;
   const key = `${VOICE_ROOM_PREFIX}signal:${roomId}:${toId}`;
   const raw = await env.CACHE.get(key);
-  const signals: Array<{ fromId: string; signal: unknown; timestamp: number }> =
-    raw ? JSON.parse(raw) : [];
+  const signals: Array<{ fromId: string; signal: unknown; timestamp: number }> = raw
+    ? JSON.parse(raw)
+    : [];
   signals.push({ fromId, signal, timestamp: Date.now() });
   // Keep last 50 signals
   await env.CACHE.put(key, JSON.stringify(signals.slice(-50)), {
@@ -526,11 +504,7 @@ async function removeFromActiveSet(env: Env, roomId: string): Promise<void> {
   }
 }
 
-async function addRoomToUserIndex(
-  env: Env,
-  userId: string,
-  roomId: string,
-): Promise<void> {
+async function addRoomToUserIndex(env: Env, userId: string, roomId: string): Promise<void> {
   const key = `${VOICE_ROOM_PREFIX}user:${userId.toLowerCase()}`;
   const raw = await env.CACHE.get(key);
   const ids: string[] = raw ? JSON.parse(raw) : [];
@@ -542,11 +516,7 @@ async function addRoomToUserIndex(
   }
 }
 
-async function removeRoomFromUserIndex(
-  env: Env,
-  userId: string,
-  roomId: string,
-): Promise<void> {
+async function removeRoomFromUserIndex(env: Env, userId: string, roomId: string): Promise<void> {
   const key = `${VOICE_ROOM_PREFIX}user:${userId.toLowerCase()}`;
   const raw = await env.CACHE.get(key);
   if (!raw) return;
@@ -564,15 +534,12 @@ async function removeRoomFromUserIndex(
 
 async function hashPassword(password: string): Promise<string> {
   const encoder = new TextEncoder();
-  const data = encoder.encode(password + 'degenfeed-voice-salt');
+  const data = encoder.encode(`${password}degenfeed-voice-salt`);
   const hash = await crypto.subtle.digest('SHA-256', data);
   return btoa(String.fromCharCode(...new Uint8Array(hash)));
 }
 
-async function verifyPassword(
-  password: string,
-  hash: string,
-): Promise<boolean> {
+async function verifyPassword(password: string, hash: string): Promise<boolean> {
   const computed = await hashPassword(password);
   return computed === hash;
 }

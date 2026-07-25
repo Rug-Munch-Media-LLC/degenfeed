@@ -678,42 +678,40 @@ export default function PeerTubeExplorerPage() {
         )}
 
         {/* Video grid */}
-        {!loading && !error && (
-          <>
-            {onDemandVideos.length > 0 ? (
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-                {onDemandVideos.map((video) => (
-                  <VideoCard key={video.id} video={video} />
-                ))}
+        {!loading &&
+          !error &&
+          (onDemandVideos.length > 0 ? (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+              {onDemandVideos.map((video) => (
+                <VideoCard key={video.id} video={video} />
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[var(--color-card)]">
+                <svg
+                  width="28"
+                  height="28"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  className="text-[var(--color-muted)]"
+                >
+                  <polygon points="23 7 16 12 23 17 23 7" />
+                  <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+                </svg>
               </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center py-16 text-center">
-                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[var(--color-card)]">
-                  <svg
-                    width="28"
-                    height="28"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    className="text-[var(--color-muted)]"
-                  >
-                    <polygon points="23 7 16 12 23 17 23 7" />
-                    <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
-                  </svg>
-                </div>
-                <p className="text-sm font-medium text-[var(--color-muted)]">
-                  {searchQuery.trim() ? 'No videos match your search' : 'No videos found'}
-                </p>
-                <p className="mt-1 text-xs text-[var(--color-muted)]/60">
-                  {searchQuery.trim()
-                    ? 'Try different keywords or browse all categories'
-                    : 'Upload a video to get started'}
-                </p>
-              </div>
-            )}
-          </>
-        )}
+              <p className="text-sm font-medium text-[var(--color-muted)]">
+                {searchQuery.trim() ? 'No videos match your search' : 'No videos found'}
+              </p>
+              <p className="mt-1 text-xs text-[var(--color-muted)]/60">
+                {searchQuery.trim()
+                  ? 'Try different keywords or browse all categories'
+                  : 'Upload a video to get started'}
+              </p>
+            </div>
+          ))}
 
         {/* Upload modal */}
         {showUpload && (

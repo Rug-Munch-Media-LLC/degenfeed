@@ -599,3 +599,45 @@ export function seenBloomKey(wallet: string): string {
 export function seenDailyKey(wallet: string, dateStr: string): string {
   return `seen:daily:${wallet.toLowerCase()}:${dateStr}`;
 }
+
+// ─── SSO (Single Sign-On) ─────────────────────────────────────────────
+
+/** SSO wallet state: all linked protocol accounts. NS: IDENTITIES. Persistent. */
+export function ssoWalletStateKey(wallet: string): string {
+  return `sso:wallet:${wallet.toLowerCase()}`;
+}
+
+/** SSO cross-network session record. NS: IDENTITIES. TTL: 7 days. */
+export function ssoSessionKey(wallet: string, sessionId: string): string {
+  return `sso:session:${wallet.toLowerCase()}:${sessionId}`;
+}
+
+/** SSO session revocation blocklist. NS: IDENTITIES. TTL: 7 days. */
+export function ssoRevokedKey(sessionId: string): string {
+  return `sso:revoked:${sessionId}`;
+}
+
+/** Encrypted protocol credentials. NS: PLATFORM_ACCOUNTS. Persistent. */
+export function ssoCredsKey(wallet: string, protocol: string): string {
+  return `sso:creds:${wallet.toLowerCase()}:${protocol}`;
+}
+
+/** SSO identity export bundle. NS: IDENTITIES. TTL: 30 days. */
+export function ssoExportKey(wallet: string): string {
+  return `sso:export:${wallet.toLowerCase()}`;
+}
+
+/** SSO last-active timestamp. NS: IDENTITIES. TTL: tracked perpetually. */
+export function ssoLastActiveKey(wallet: string): string {
+  return `sso:last-active:${wallet.toLowerCase()}`;
+}
+
+/** SSO activity feed for a wallet. NS: IDENTITIES. TTL: 7 days. */
+export function ssoActivityFeedKey(wallet: string): string {
+  return `sso:activity:${wallet.toLowerCase()}`;
+}
+
+/** SSO recovery marker. NS: IDENTITIES. Persistent. */
+export function ssoRecoveryKey(wallet: string): string {
+  return `sso:recovery:${wallet.toLowerCase()}`;
+}

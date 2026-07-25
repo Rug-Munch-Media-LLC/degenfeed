@@ -33,12 +33,12 @@ export const blueskyAdapter: PlatformAdapter = {
     // Mentions on Bluesky need at:// DIDs; we keep handles for client-side resolution
     const mentions = master.mentions ?? [];
     if (mentions.length > 0) {
-      skeetText += '\n\n' + mentions.map((m) => `@${m}`).join(' ');
+      skeetText += `\n\n${mentions.map((m) => `@${m}`).join(' ')}`;
     }
 
     // Add hashtags
     if (hashtags.length > 0) {
-      skeetText += '\n\n' + hashtags.map((h) => `#${h}`).join(' ');
+      skeetText += `\n\n${hashtags.map((h) => `#${h}`).join(' ')}`;
     }
 
     // Truncate with read more link
@@ -83,7 +83,7 @@ export const blueskyAdapter: PlatformAdapter = {
 
   preview(master: MasterPost): string {
     let preview = '[Bluesky — 300 char limit]';
-    preview += '\n' + master.text.slice(0, 280);
+    preview += `\n${master.text.slice(0, 280)}`;
 
     const remaining = BSKY_CHAR_LIMIT - master.text.length;
     if (remaining < 0) {

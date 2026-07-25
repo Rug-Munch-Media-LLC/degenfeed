@@ -4,8 +4,14 @@ import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import DAOPreview from '../../../components/dao/DAOPreview';
 import DAOTemplates, { type TemplateConfig } from '../../../components/dao/DAOTemplates';
-import { StepBasics, StepGovernance, StepTreasury, StepReview, INITIAL_STATE } from '../../../components/dao-wizard';
 import type { DAOFormState, SignerEntry } from '../../../components/dao-wizard';
+import {
+  INITIAL_STATE,
+  StepBasics,
+  StepGovernance,
+  StepReview,
+  StepTreasury,
+} from '../../../components/dao-wizard';
 
 export default function CreateDAOPage() {
   const [step, setStep] = useState(0);
@@ -68,18 +74,30 @@ export default function CreateDAOPage() {
 
   const canProceed = useMemo(() => {
     switch (step) {
-      case 0: return form.name.length >= 2;
-      case 1: return true;
-      case 2: return form.signers.some((s) => s.address.length >= 10);
-      case 3: return true;
-      default: return false;
+      case 0:
+        return form.name.length >= 2;
+      case 1:
+        return true;
+      case 2:
+        return form.signers.some((s) => s.address.length >= 10);
+      case 3:
+        return true;
+      default:
+        return false;
     }
   }, [step, form]);
 
   const simulateDeploy = async () => {
     update('deploying', true);
     update('deployProgress', 0);
-    const stages = ['Creating Snapshot space...', 'Deploying governance token...', 'Setting up treasury multi-sig...', 'Configuring voting parameters...', 'Deploying DAO contracts...', 'Verifying deployment...'];
+    const stages = [
+      'Creating Snapshot space...',
+      'Deploying governance token...',
+      'Setting up treasury multi-sig...',
+      'Configuring voting parameters...',
+      'Deploying DAO contracts...',
+      'Verifying deployment...',
+    ];
     for (let i = 0; i < stages.length; i++) {
       await new Promise((r) => setTimeout(r, 1200));
       update('deployProgress', ((i + 1) / stages.length) * 100);
@@ -93,38 +111,80 @@ export default function CreateDAOPage() {
 
   const totalSteps = 4;
 
-  const previewState = useMemo(() => ({
-    name: form.name, description: form.description,
-    avatarUrl: form.avatarUrl, tags: form.tags, category: form.tags[0] || 'general',
-    votingModel: form.votingModel, proposalThreshold: form.proposalThreshold,
-    quorumPercent: form.quorumPercent, votingPeriodDays: form.votingPeriodDays,
-    timelockDelayHours: form.timelockDelayHours, signerCount: form.signers.length,
-    threshold: Math.min(form.threshold, form.signers.length),
-    twitter: form.twitter, discord: form.discord, telegram: form.telegram, website: form.website,
-  }), [form]);
+  const previewState = useMemo(
+    () => ({
+      name: form.name,
+      description: form.description,
+      avatarUrl: form.avatarUrl,
+      tags: form.tags,
+      category: form.tags[0] || 'general',
+      votingModel: form.votingModel,
+      proposalThreshold: form.proposalThreshold,
+      quorumPercent: form.quorumPercent,
+      votingPeriodDays: form.votingPeriodDays,
+      timelockDelayHours: form.timelockDelayHours,
+      signerCount: form.signers.length,
+      threshold: Math.min(form.threshold, form.signers.length),
+      twitter: form.twitter,
+      discord: form.discord,
+      telegram: form.telegram,
+      website: form.website,
+    }),
+    [form],
+  );
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-6 animate-page-enter">
       <div className="mb-6">
-        <Link href="/dao" className="mb-2 inline-flex items-center gap-1 text-[10px] text-[var(--color-muted)] hover:text-[var(--color-accent)] transition-colors">← Back to DAOs</Link>
-        <h1 className="text-2xl font-bold text-[var(--color-fg)]" style={{ fontFamily: 'var(--font-heading)' }}>Create a DAO</h1>
-        <p className="mt-1 text-sm text-[var(--color-muted)]">Launch a decentralized autonomous organization on Base or Solana.</p>
+        <Link
+          href="/dao"
+          className="mb-2 inline-flex items-center gap-1 text-[10px] text-[var(--color-muted)] hover:text-[var(--color-accent)] transition-colors"
+        >
+          ← Back to DAOs
+        </Link>
+        <h1
+          className="text-2xl font-bold text-[var(--color-fg)]"
+          style={{ fontFamily: 'var(--font-heading)' }}
+        >
+          Create a DAO
+        </h1>
+        <p className="mt-1 text-sm text-[var(--color-muted)]">
+          Launch a decentralized autonomous organization on Base or Solana.
+        </p>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
         <div>
           {step === 0 && (
             <div className="space-y-5">
-              <DAOTemplates selectedTemplate={form.selectedTemplate} onSelectTemplate={handleTemplateSelect} compact={false} />
+              <DAOTemplates
+                selectedTemplate={form.selectedTemplate}
+                onSelectTemplate={handleTemplateSelect}
+                compact={false}
+              />
               <div className="relative">
-                <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-[var(--color-glass-border)]" /></div>
-                <div className="relative flex justify-center"><span className="bg-[var(--color-bg)] px-2 text-[10px] text-[var(--color-muted)]">OR customize from scratch</span></div>
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-[var(--color-glass-border)]" />
+                </div>
+                <div className="relative flex justify-center">
+                  <span className="bg-[var(--color-bg)] px-2 text-[10px] text-[var(--color-muted)]">
+                    OR customize from scratch
+                  </span>
+                </div>
               </div>
               <StepBasics form={form} update={update} toggleTag={toggleTag} />
             </div>
           )}
           {step === 1 && <StepGovernance form={form} update={update} />}
-          {step === 2 && <StepTreasury form={form} update={update} updateSigner={updateSigner} addSigner={addSigner} removeSigner={removeSigner} />}
+          {step === 2 && (
+            <StepTreasury
+              form={form}
+              update={update}
+              updateSigner={updateSigner}
+              addSigner={addSigner}
+              removeSigner={removeSigner}
+            />
+          )}
           {step === 3 && (
             <StepReview
               form={form}
@@ -139,23 +199,40 @@ export default function CreateDAOPage() {
         </div>
 
         <div className="hidden lg:block">
-          <div className="sticky top-6"><DAOPreview state={previewState} sidebar /></div>
+          <div className="sticky top-6">
+            <DAOPreview state={previewState} sidebar />
+          </div>
         </div>
       </div>
 
       <div className="mt-8 flex items-center justify-between">
-        <button type="button" onClick={() => setStep(Math.max(0, step - 1))} disabled={step === 0}
+        <button
+          type="button"
+          onClick={() => setStep(Math.max(0, step - 1))}
+          disabled={step === 0}
           className="rounded-xl border border-[var(--color-glass-border)] px-5 py-2.5 text-xs font-semibold text-[var(--color-fg)] transition-all hover:border-[var(--color-accent)]/30 disabled:opacity-30"
-        >Back</button>
+        >
+          Back
+        </button>
         <div className="flex items-center gap-2">
           {step < totalSteps - 1 ? (
-            <button type="button" onClick={() => setStep(Math.min(totalSteps - 1, step + 1))} disabled={!canProceed}
+            <button
+              type="button"
+              onClick={() => setStep(Math.min(totalSteps - 1, step + 1))}
+              disabled={!canProceed}
               className="rounded-xl bg-[var(--color-accent-soft)] px-5 py-2.5 text-xs font-bold text-[var(--color-accent)] transition-all hover:bg-[var(--color-accent)]/25 disabled:opacity-30"
-            >Continue</button>
+            >
+              Continue
+            </button>
           ) : (
-            <button type="button" onClick={simulateDeploy} disabled={form.deploying || form.deployed}
+            <button
+              type="button"
+              onClick={simulateDeploy}
+              disabled={form.deploying || form.deployed}
               className="rounded-xl bg-gradient-to-r from-[var(--color-accent)] to-[var(--color-accent-secondary)] px-6 py-2.5 text-xs font-bold text-black transition-all hover:from-[var(--color-accent)] hover:to-[var(--color-accent-secondary)] disabled:opacity-30 active:scale-[0.98]"
-            >{form.deploying ? 'Deploying...' : form.deployed ? 'Deployed ✓' : '🚀 Deploy DAO'}</button>
+            >
+              {form.deploying ? 'Deploying...' : form.deployed ? 'Deployed ✓' : '🚀 Deploy DAO'}
+            </button>
           )}
         </div>
       </div>

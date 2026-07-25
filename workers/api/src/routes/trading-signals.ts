@@ -112,14 +112,14 @@ export interface WhaleWatchEntry {
 
 const MAX_SIGNALS = 500;
 const MAX_SIGNALS_PER_COIN = 100;
-const MAX_COINS = 50;
-const MAX_WHALES = 100;
+const _MAX_COINS = 50;
+const _MAX_WHALES = 100;
 const KV_TTL_SEC = 60 * 60; // 1 hour
 
 const SIGNALS_KEY = 'trading:signals';
 const TRENDING_KEY = 'trading:trending';
 const WHALES_KEY = 'trading:whales';
-const LAST_UPDATED_KEY = 'trading:last-updated:signals';
+const _LAST_UPDATED_KEY = 'trading:last-updated:signals';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────
 

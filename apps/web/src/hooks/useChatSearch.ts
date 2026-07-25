@@ -54,9 +54,11 @@ export interface SearchSuggestion {
  * Render content with search highlight markers.
  * Markers: <<hl>>text<</hl>>
  */
-export function renderHighlightedContent(content: string): Array<{ text: string; highlighted: boolean }> {
+export function renderHighlightedContent(
+  content: string,
+): Array<{ text: string; highlighted: boolean }> {
   const parts: Array<{ text: string; highlighted: boolean }> = [];
-  const regex = /<<hl>>(.*?)<</hl>>/g;
+  const regex = /<<hl>>(.*?)<</hl >> /;g;
   let lastIndex = 0;
   let match: RegExpExecArray | null;
 
@@ -142,44 +144,41 @@ export function useChatSearch(conversationId?: string) {
 
   // ── Advanced search ─────────────────────────────────────────────────
 
-  const advancedSearch = useCallback(
-    async (params: AdvancedSearchParams) => {
-      abortRef.current?.abort();
-      const abort = new AbortController();
-      abortRef.current = abort;
+  const advancedSearch = useCallback(async (params: AdvancedSearchParams) => {
+    abortRef.current?.abort();
+    const abort = new AbortController();
+    abortRef.current = abort;
 
-      setSearching(true);
-      setError(null);
+    setSearching(true);
+    setError(null);
 
-      try {
-        const searchParams = new URLSearchParams();
-        if (params.query) searchParams.set('q', params.query);
-        if (params.conversationId) searchParams.set('conversationId', params.conversationId);
-        if (params.senderId) searchParams.set('sender', params.senderId);
-        if (params.dateFrom) searchParams.set('dateFrom', String(params.dateFrom));
-        if (params.dateTo) searchParams.set('dateTo', String(params.dateTo));
-        if (params.mediaType) searchParams.set('mediaType', params.mediaType);
-        if (params.limit) searchParams.set('limit', String(params.limit));
-        if (params.offset) searchParams.set('offset', String(params.offset));
+    try {
+      const searchParams = new URLSearchParams();
+      if (params.query) searchParams.set('q', params.query);
+      if (params.conversationId) searchParams.set('conversationId', params.conversationId);
+      if (params.senderId) searchParams.set('sender', params.senderId);
+      if (params.dateFrom) searchParams.set('dateFrom', String(params.dateFrom));
+      if (params.dateTo) searchParams.set('dateTo', String(params.dateTo));
+      if (params.mediaType) searchParams.set('mediaType', params.mediaType);
+      if (params.limit) searchParams.set('limit', String(params.limit));
+      if (params.offset) searchParams.set('offset', String(params.offset));
 
-        const data = await retryFetchJson<{ results: SearchResult[]; total: number }>(
-          `/api/messages/search/advanced?${searchParams.toString()}`,
-          { maxRetries: 1, fetchOptions: { signal: abort.signal } },
-        );
+      const data = await retryFetchJson<{ results: SearchResult[]; total: number }>(
+        `/api/messages/search/advanced?${searchParams.toString()}`,
+        { maxRetries: 1, fetchOptions: { signal: abort.signal } },
+      );
 
-        if (!abort.signal.aborted) {
-          setResults(data.results ?? []);
-          setTotal(data.total ?? 0);
-        }
-      } catch (err: any) {
-        if (err?.name === 'AbortError') return;
-        setError(err instanceof Error ? err.message : 'Advanced search failed');
-      } finally {
-        if (!abort.signal.aborted) setSearching(false);
+      if (!abort.signal.aborted) {
+        setResults(data.results ?? []);
+        setTotal(data.total ?? 0);
       }
-    },
-    [],
-  );
+    } catch (err: any) {
+      if (err?.name === 'AbortError') return;
+      setError(err instanceof Error ? err.message : 'Advanced search failed');
+    } finally {
+      if (!abort.signal.aborted) setSearching(false);
+    }
+  }, []);
 
   // ── Search by media type ────────────────────────────────────────────
 
@@ -216,25 +215,22 @@ export function useChatSearch(conversationId?: string) {
 
   // ── Get suggestions ─────────────────────────────────────────────────
 
-  const getSuggestions = useCallback(
-    async (partial: string) => {
-      if (!partial.trim()) {
-        setSuggestions([]);
-        return;
-      }
+  const getSuggestions = useCallback(async (partial: string) => {
+    if (!partial.trim()) {
+      setSuggestions([]);
+      return;
+    }
 
-      try {
-        const data = await retryFetchJson<{ suggestions: SearchSuggestion[] }>(
-          `/api/messages/search/suggestions?q=${encodeURIComponent(partial)}`,
-          { maxRetries: 1 },
-        );
-        setSuggestions(data.suggestions ?? []);
-      } catch {
-        setSuggestions([]);
-      }
-    },
-    [],
-  );
+    try {
+      const data = await retryFetchJson<{ suggestions: SearchSuggestion[] }>(
+        `/api/messages/search/suggestions?q=${encodeURIComponent(partial)}`,
+        { maxRetries: 1 },
+      );
+      setSuggestions(data.suggestions ?? []);
+    } catch {
+      setSuggestions([]);
+    }
+  }, []);
 
   // ── Jump to message ─────────────────────────────────────────────────
 

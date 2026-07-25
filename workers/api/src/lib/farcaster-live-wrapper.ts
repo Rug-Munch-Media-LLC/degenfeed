@@ -20,8 +20,8 @@
  * No silent failures. No unhandled API changes.
  */
 
+import type { GoLiveResult, UnifiedLiveStream } from '../feed/live-aggregator';
 import type { Env } from '../index';
-import type { UnifiedLiveStream, GoLiveResult } from '../feed/live-aggregator';
 
 // ─── Types ───────────────────────────────────────────────────────────────
 
@@ -782,10 +782,7 @@ export async function isFidWatched(env: Env, fid: number): Promise<boolean> {
 /**
  * Add a wallet/FID to the live detection watchlist.
  */
-export async function watchFarcasterLiveActivity(
-  env: Env,
-  fid: number,
-): Promise<void> {
+export async function watchFarcasterLiveActivity(env: Env, fid: number): Promise<void> {
   await addFidToWatchlist(env, fid);
 }
 
@@ -823,7 +820,10 @@ export async function pollFarcasterLives(env: Env): Promise<{
           await startFarcasterRestream(env, live);
           started++;
         } catch (err) {
-          console.error(`[farcaster-live-wrapper] Failed to start restream for FID ${live.fid}:`, err);
+          console.error(
+            `[farcaster-live-wrapper] Failed to start restream for FID ${live.fid}:`,
+            err,
+          );
         }
       }
     }

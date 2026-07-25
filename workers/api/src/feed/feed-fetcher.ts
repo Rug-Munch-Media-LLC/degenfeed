@@ -38,7 +38,11 @@ import { sanitizePosts } from './feed-enricher';
 let _qualityModule: typeof import('./feed-quality-monitor') | null = null;
 async function recordFetchQuality(env: Env, protocol: string, count: number): Promise<void> {
   if (!_qualityModule) {
-    try { _qualityModule = await import('./feed-quality-monitor'); } catch { return; }
+    try {
+      _qualityModule = await import('./feed-quality-monitor');
+    } catch {
+      return;
+    }
   }
   if (_qualityModule?.recordProtocolFetch) {
     await _qualityModule.recordProtocolFetch(env, protocol, count).catch(() => {});
@@ -51,22 +55,78 @@ async function recordFetchQuality(env: Env, protocol: string, count: number): Pr
  */
 export const ALL_PROTOCOLS: Protocol[] = [
   // ── Tier 1: Core Social ────────────────────────────────────
-  'nostr', 'farcaster', 'lens', 'bluesky', 'mastodon',
+  'nostr',
+  'farcaster',
+  'lens',
+  'bluesky',
+  'mastodon',
   // ── Tier 2: Established ────────────────────────────────────
-  'lemmy', 'pixelfed', 'peertube', 'threads', 'zora',
-  'reddit', 'rss', 'mirror',
-  'hive', 'dtube', 'lbry', 'pleroma', 'misskey',
-  'writefreely', 'funkwhale', 'castopod', 'subsocial', 'steem',
+  'lemmy',
+  'pixelfed',
+  'peertube',
+  'threads',
+  'zora',
+  'reddit',
+  'rss',
+  'mirror',
+  'hive',
+  'dtube',
+  'lbry',
+  'pleroma',
+  'misskey',
+  'writefreely',
+  'funkwhale',
+  'castopod',
+  'subsocial',
+  'steem',
   // ── Tier 3: Niche / ActivityPub ────────────────────────────
-  'diaspora', 'friendica', 'mediagoblin',
-  'bookwyrm', 'mobilizon', 'bonfire', 'mitra', 'takahe', 'forgejo',
-  'owncast', 'minds', 'scuttlebutt', 'deso', 'session',
-  'cyberconnect', 'arena', 'microblog',
+  'diaspora',
+  'friendica',
+  'mediagoblin',
+  'bookwyrm',
+  'mobilizon',
+  'bonfire',
+  'mitra',
+  'takahe',
+  'forgejo',
+  'owncast',
+  'minds',
+  'scuttlebutt',
+  'deso',
+  'session',
+  'cyberconnect',
+  'arena',
+  'microblog',
   // ── Tier 4: Experimental ──────────────────────────────────
-  'gab', 'aether', 'faircamp', 'orbis', 'ceramic',
-  'audius', 'rarible',
+  'gab',
+  'aether',
+  'faircamp',
+  'orbis',
+  'ceramic',
+  'audius',
+  'rarible',
   // ── Tier 5: Infrastructure ────────────────────────────────
-  'xmtp', 'push', 'huddle01', 'tableland',
+  'xmtp',
+  'push',
+  'huddle01',
+  'tableland',
+  // ── Fediverse Forks (NEW 2026-07-27) ────────────────────
+  'mbin',
+  'sublinks',
+  'firefish',
+  'iceshrimp',
+  'sharkey',
+  'akkoma',
+  'immich',
+  'discourse',
+  'ghost',
+  'headscale',
+  'yggdrasil',
+  'kbin',
+  'hubzilla',
+  'streams',
+  'guppe',
+  'epicyon',
 ];
 
 /** Default protocols used when no explicit filter is provided */
@@ -147,6 +207,21 @@ export const PROVIDER_TIMEOUTS: Record<Protocol, number> = {
   matrix: 5000,
   webhook: 3000,
   github: 5000,
+  mbin: 5000,
+  sublinks: 5000,
+  firefish: 5000,
+  iceshrimp: 5000,
+  sharkey: 5000,
+  akkoma: 5000,
+  immich: 5000,
+  discourse: 5000,
+  ghost: 5000,
+  headscale: 5000,
+  yggdrasil: 5000,
+  hubzilla: 5000,
+  streams: 5000,
+  guppe: 5000,
+  epicyon: 5000,
   'newsletter-bridge': 5000,
   email: 5000,
   google: 5000,

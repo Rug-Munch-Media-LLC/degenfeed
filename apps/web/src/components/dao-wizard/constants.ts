@@ -1,12 +1,34 @@
 'use client';
 
-import type { DAOFormState, VotingModel, VotingPeriod, TimelockDelay } from './types';
+import type { DAOFormState, TimelockDelay, VotingModel, VotingPeriod } from './types';
 
-export const CATEGORY_TAGS = ['defi', 'nft', 'social', 'gaming', 'grant', 'investment', 'protocol', 'creator', 'music', 'art'];
+export const CATEGORY_TAGS = [
+  'defi',
+  'nft',
+  'social',
+  'gaming',
+  'grant',
+  'investment',
+  'protocol',
+  'creator',
+  'music',
+  'art',
+];
 
-export const VOTING_MODEL_DESCRIPTIONS: Record<VotingModel, { label: string; description: string; bestFor: string }> = {
-  token: { label: '1 Token = 1 Vote', description: 'Standard weighted voting. More tokens = more voting power.', bestFor: 'Treasury management, parameter changes, investment decisions' },
-  quadratic: { label: 'Quadratic Voting', description: 'Voting power = sqrt(tokens). Reduces whale dominance.', bestFor: 'Community grants, content decisions, social proposals' },
+export const VOTING_MODEL_DESCRIPTIONS: Record<
+  VotingModel,
+  { label: string; description: string; bestFor: string }
+> = {
+  token: {
+    label: '1 Token = 1 Vote',
+    description: 'Standard weighted voting. More tokens = more voting power.',
+    bestFor: 'Treasury management, parameter changes, investment decisions',
+  },
+  quadratic: {
+    label: 'Quadratic Voting',
+    description: 'Voting power = sqrt(tokens). Reduces whale dominance.',
+    bestFor: 'Community grants, content decisions, social proposals',
+  },
 };
 
 export const TIMELOCK_OPTIONS: { value: TimelockDelay; label: string }[] = [
@@ -30,13 +52,37 @@ export const MOCK_USER_COINS: { id: string; name: string; symbol: string; balanc
 ];
 
 export const INITIAL_STATE: DAOFormState = {
-  name: '', description: '', avatarUrl: '', tags: [],
-  twitter: '', discord: '', telegram: '', website: '',
-  votingTokenType: 'existing', existingCoinId: '', newTokenName: '', newTokenSymbol: '', newTokenSupply: '1000000',
-  votingModel: 'token', proposalThreshold: 1, quorumPercent: 15, votingPeriodDays: 7, timelockDelayHours: 24,
-  initialFunding: '0.1', signers: [{ address: '', label: '' }], threshold: 1,
-  opsPercent: 50, grantsPercent: 30, reservePercent: 20,
-  streamingEnabled: false, grantProgramEnabled: false,
-  deploying: false, deployProgress: 0, deployed: false, deployedAddress: '', txHash: '', snapshotSpaceId: '',
+  name: '',
+  description: '',
+  avatarUrl: '',
+  tags: [],
+  twitter: '',
+  discord: '',
+  telegram: '',
+  website: '',
+  votingTokenType: 'existing',
+  existingCoinId: '',
+  newTokenName: '',
+  newTokenSymbol: '',
+  newTokenSupply: '1000000',
+  votingModel: 'token',
+  proposalThreshold: 1,
+  quorumPercent: 15,
+  votingPeriodDays: 7,
+  timelockDelayHours: 24,
+  initialFunding: '0.1',
+  signers: [{ address: '', label: '' }],
+  threshold: 1,
+  opsPercent: 50,
+  grantsPercent: 30,
+  reservePercent: 20,
+  streamingEnabled: false,
+  grantProgramEnabled: false,
+  deploying: false,
+  deployProgress: 0,
+  deployed: false,
+  deployedAddress: '',
+  txHash: '',
+  snapshotSpaceId: '',
   selectedTemplate: null,
 };

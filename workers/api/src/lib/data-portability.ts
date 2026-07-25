@@ -7,8 +7,6 @@
  * "Your data, your rules, forever."
  */
 
-import type { Env } from '../index';
-
 // ─── Types ──────────────────────────────────────────────────────────────
 
 export interface UserExportManifest {
@@ -151,25 +149,20 @@ export function buildExportManifest(
  * Export user data in ActivityPub Actor format (compatible with Mastodon/Pleroma).
  */
 export function buildActivityPubProfile(
-  wallet: string,
+  _wallet: string,
   handle: string,
   profile?: { displayName?: string; summary?: string; avatarUrl?: string },
   publicKeyPem?: string,
 ): ActivityPubExport {
   const baseId = `https://degenfeed.xyz/users/${handle}`;
   return {
-    '@context': [
-      'https://www.w3.org/ns/activitystreams',
-      'https://w3id.org/security/v1',
-    ],
+    '@context': ['https://www.w3.org/ns/activitystreams', 'https://w3id.org/security/v1'],
     type: 'Person',
     id: baseId,
     preferredUsername: handle,
     name: profile?.displayName,
     summary: profile?.summary,
-    icon: profile?.avatarUrl
-      ? { type: 'Image', url: profile.avatarUrl }
-      : undefined,
+    icon: profile?.avatarUrl ? { type: 'Image', url: profile.avatarUrl } : undefined,
     inbox: `${baseId}/inbox`,
     outbox: `${baseId}/outbox`,
     followers: `${baseId}/followers`,

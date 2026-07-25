@@ -25,7 +25,6 @@ import {
   type PublicActions,
   parseEther,
   publicActions,
-  type WalletActions,
 } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import { base, baseSepolia } from 'viem/chains';

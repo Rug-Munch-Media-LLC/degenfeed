@@ -6,10 +6,10 @@
  *
  * API: https://syndicate.io/api
  */
-import type { Protocol, UnifiedPost } from '@degenfeed/types';
+import type { UnifiedPost } from '@degenfeed/types';
 
-const $fetch = globalThis.fetch;
+const _$fetch = globalThis.fetch;
 
-export async function fetchSyndicatePosts(limit = 10): Promise<UnifiedPost[]> {
+export async function fetchSyndicatePosts(_limit = 10): Promise<UnifiedPost[]> {
   return []; // DAO infrastructure — no public social feed
 }

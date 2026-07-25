@@ -215,10 +215,7 @@ export function detectItemContentType(
   }
 
   // Check content for image markers
-  if (
-    /<img[\s>]/i.test(contentHtml) ||
-    /\.(jpg|jpeg|png|gif|webp)(\s|"|\)|$)/i.test(contentHtml)
-  ) {
+  if (/<img[\s>]/i.test(contentHtml) || /\.(jpg|jpeg|png|gif|webp)(\s|"|\)|$)/i.test(contentHtml)) {
     return 'image';
   }
 
@@ -311,10 +308,7 @@ export function parseBridgeJson(
   const items = (data.items || []) as Array<Record<string, unknown>>;
   if (items.length === 0) return [];
 
-  const resolvedBaseNiches = guessNiches(
-    (data.title as string) || label,
-    baseNiches,
-  );
+  const resolvedBaseNiches = guessNiches((data.title as string) || label, baseNiches);
 
   return items.slice(0, limit).map((item, i) => {
     const itemTitle = (item.title || '') as string;
@@ -350,7 +344,7 @@ export function parseBridgeJson(
         handles: { rss: label },
         displayName: (data.title as string) || label,
         bio: '',
-        avatarUrl: item.avatar as string || '',
+        avatarUrl: (item.avatar as string) || '',
         followerCount: 0,
         followingCount: 0,
         links: link ? [{ label: 'source', url: link }] : [],

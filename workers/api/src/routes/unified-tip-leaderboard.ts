@@ -12,7 +12,6 @@ import {
   isPeriod,
   isPlatform,
   kvGetJson,
-  kvPutJson,
   type LeaderboardRecord,
   leaderboardKey,
   MAX_ACTIVITY,
@@ -89,8 +88,8 @@ export async function checkTipAchievements(
   env: Env,
   userId: string,
   toUserId: string | undefined,
-  amountUsd: number,
-  event: UnifiedTipEvent,
+  _amountUsd: number,
+  _event: UnifiedTipEvent,
 ): Promise<string[]> {
   if (!env.CACHE) return [];
   const awarded: string[] = [];
@@ -340,7 +339,10 @@ export async function handleTipLeaderboardCoins(_request: Request, env: Env): Pr
     return jsonResponse({ coins: [], count: 0, period });
   }
   // Group tip entries by coin symbol, then sum and sort
-  const coinGroups = new Map<string, { coin: string; name: string; totalUsd: number; tipCount: number; creators: Set<string> }>();
+  const coinGroups = new Map<
+    string,
+    { coin: string; name: string; totalUsd: number; tipCount: number; creators: Set<string> }
+  >();
   for (const entry of record.entries) {
     const coinSymbol = entry.entityLabel || entry.entityId;
     if (!coinSymbol) continue;
@@ -357,7 +359,13 @@ export async function handleTipLeaderboardCoins(_request: Request, env: Env): Pr
     coinGroups.set(coinSymbol, group);
   }
   const coins = [...coinGroups.values()]
-    .map((g) => ({ coin: g.coin, name: g.name, totalUsd: g.totalUsd, tipCount: g.tipCount, creators: g.creators.size }))
+    .map((g) => ({
+      coin: g.coin,
+      name: g.name,
+      totalUsd: g.totalUsd,
+      tipCount: g.tipCount,
+      creators: g.creators.size,
+    }))
     .sort((a, b) => b.totalUsd - a.totalUsd)
     .slice(0, Math.min(Number(url.searchParams.get('limit')) || 25, 100));
   return jsonResponse({ coins, count: coins.length, period });
@@ -507,11 +515,11 @@ export async function handleTipAnalytics(request: Request, env: Env): Promise<Re
     // Round protocol/chain breakdowns
     for (const key of Object.keys(protocolBreakdown)) {
       if (protocolBreakdown[key])
-        protocolBreakdown[key]!.totalUsd = round2(protocolBreakdown[key]!.totalUsd);
+        protocolBreakdown[key]!.totalUsd = round2(protocolBreakdown[key]?.totalUsd);
     }
     for (const key of Object.keys(chainBreakdown)) {
       if (chainBreakdown[key])
-        chainBreakdown[key]!.totalUsd = round2(chainBreakdown[key]!.totalUsd);
+        chainBreakdown[key]!.totalUsd = round2(chainBreakdown[key]?.totalUsd);
     }
 
     // Top tippers sorted by amount
@@ -571,7 +579,7 @@ export async function handleTopTippers(request: Request, env: Env): Promise<Resp
     byPlatform: Object.fromEntries(
       Object.entries(e.byPlatform).map(([p, b]) => [
         p,
-        { totalUsd: Math.round(b!.totalUsd * 100) / 100, count: b!.count },
+        { totalUsd: Math.round(b?.totalUsd * 100) / 100, count: b?.count },
       ]),
     ),
   }));

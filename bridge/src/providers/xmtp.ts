@@ -64,7 +64,7 @@ function guessXmtpNiches(text: string): string[] {
 
 // ─── Mapping ──────────────────────────────────────────────────────────
 
-function xmtpMessageToPost(msg: XMTPMessage): UnifiedPost {
+function _xmtpMessageToPost(msg: XMTPMessage): UnifiedPost {
   const text = msg.content?.slice(0, 2000) || '';
   return {
     id: `xmtp:${msg.id}`,
@@ -74,15 +74,24 @@ function xmtpMessageToPost(msg: XMTPMessage): UnifiedPost {
       primary: { protocol: 'xmtp', id: msg.sender_address },
       handles: { xmtp: msg.sender_address?.slice(0, 10) },
       displayName: `${msg.sender_address?.slice(0, 6)}...${msg.sender_address?.slice(-4)}`,
-      bio: '', avatarUrl: '', followerCount: 0, followingCount: 0, links: [], keys: {},
+      bio: '',
+      avatarUrl: '',
+      followerCount: 0,
+      followingCount: 0,
+      links: [],
+      keys: {},
     },
     text,
-    embeds: [{ kind: 'link', url: `https://xmtp.org/chat/${msg.topic}`, meta: { topic: msg.topic } }],
+    embeds: [
+      { kind: 'link', url: `https://xmtp.org/chat/${msg.topic}`, meta: { topic: msg.topic } },
+    ],
     contentType: 'message',
     createdAt: new Date(msg.sent_at).getTime(),
     metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
     engagement: {
-      viewerLiked: false, viewerReposted: false, viewerBookmarked: false,
+      viewerLiked: false,
+      viewerReposted: false,
+      viewerBookmarked: false,
       raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
     },
     raw: msg,
@@ -100,29 +109,37 @@ async function fetchGatewayStatus(): Promise<UnifiedPost[]> {
     if (!res.ok) return [];
 
     // Return gateway info as a status update
-    return [{
-      id: `xmtp:gateway:${Date.now()}`,
-      protocol: 'xmtp',
-      author: {
-        id: 'xmtp:gateway',
-        primary: { protocol: 'xmtp', id: 'gateway' },
-        handles: { xmtp: 'gateway' },
-        displayName: 'XMTP Gateway',
-        bio: 'XMTP messaging gateway for DegenFeed',
-        avatarUrl: '', followerCount: 0, followingCount: 0, links: [], keys: {},
+    return [
+      {
+        id: `xmtp:gateway:${Date.now()}`,
+        protocol: 'xmtp',
+        author: {
+          id: 'xmtp:gateway',
+          primary: { protocol: 'xmtp', id: 'gateway' },
+          handles: { xmtp: 'gateway' },
+          displayName: 'XMTP Gateway',
+          bio: 'XMTP messaging gateway for DegenFeed',
+          avatarUrl: '',
+          followerCount: 0,
+          followingCount: 0,
+          links: [],
+          keys: {},
+        },
+        text: `🔐 XMTP Gateway active on ${XMTP_NETWORK}. Secure decentralized messaging ready.`,
+        embeds: [],
+        contentType: 'status',
+        createdAt: Date.now(),
+        metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
+        engagement: {
+          viewerLiked: false,
+          viewerReposted: false,
+          viewerBookmarked: false,
+          raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
+        },
+        raw: { network: XMTP_NETWORK, gateway: XMTP_GATEWAY },
+        niches: ['messaging', 'web3'],
       },
-      text: `🔐 XMTP Gateway active on ${XMTP_NETWORK}. Secure decentralized messaging ready.`,
-      embeds: [],
-      contentType: 'status',
-      createdAt: Date.now(),
-      metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
-      engagement: {
-        viewerLiked: false, viewerReposted: false, viewerBookmarked: false,
-        raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
-      },
-      raw: { network: XMTP_NETWORK, gateway: XMTP_GATEWAY },
-      niches: ['messaging', 'web3'],
-    }];
+    ];
   } catch {
     return [];
   }
@@ -140,7 +157,7 @@ export const schema: SchemaGuard = {
   contentType: 'message',
 };
 
-export async function fetchXmtpPosts(limit = 20): Promise<UnifiedPost[]> {
+export async function fetchXmtpPosts(_limit = 20): Promise<UnifiedPost[]> {
   const posts = await fetchGatewayStatus();
   console.log(`[bridge] XMTP: ${posts.length} gateway status`);
   return posts;

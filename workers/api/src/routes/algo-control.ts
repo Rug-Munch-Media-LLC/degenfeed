@@ -11,17 +11,17 @@
 
 import type { UnifiedPost } from '@degenfeed/types';
 import { type Env, jsonResponse, noCacheJsonResponse } from '../index';
+import { type ExplainerContext, explainPost } from '../lib/feed-explainer';
 import { requireSession } from '../session';
-import { explainPost, type FeedRule, type ExplainerContext } from '../lib/feed-explainer';
 
 // ─── Types ──────────────────────────────────────────────────────────────
 
 export interface AlgorithmWeights {
-  recency: number;       // 0-100
-  relevance: number;     // 0-100
-  popularity: number;    // 0-100
+  recency: number; // 0-100
+  relevance: number; // 0-100
+  popularity: number; // 0-100
   creatorAffinity: number; // 0-100
-  diversity: number;     // 0-100
+  diversity: number; // 0-100
   sourceQuality: number; // 0-100
   interactionHistory: number; // 0-100
 }
@@ -79,53 +79,191 @@ export const PRESETS: WeightPreset[] = [
     slug: 'latest-first',
     icon: '📰',
     description: 'Newest posts at the top — never miss breaking updates',
-    weights: { recency: 90, relevance: 40, popularity: 40, creatorAffinity: 30, diversity: 30, sourceQuality: 30, interactionHistory: 30 },
+    weights: {
+      recency: 90,
+      relevance: 40,
+      popularity: 40,
+      creatorAffinity: 30,
+      diversity: 30,
+      sourceQuality: 30,
+      interactionHistory: 30,
+    },
   },
   {
     name: "What's Hot",
     slug: 'whats-hot',
     icon: '🔥',
     description: 'Trending and viral content from across the network',
-    weights: { recency: 50, relevance: 40, popularity: 80, creatorAffinity: 40, diversity: 30, sourceQuality: 40, interactionHistory: 50 },
+    weights: {
+      recency: 50,
+      relevance: 40,
+      popularity: 80,
+      creatorAffinity: 40,
+      diversity: 30,
+      sourceQuality: 40,
+      interactionHistory: 50,
+    },
   },
   {
     name: 'For You',
     slug: 'for-you',
     icon: '🎯',
     description: 'Personalized content based on your interests and activity',
-    weights: { recency: 50, relevance: 70, popularity: 50, creatorAffinity: 60, diversity: 30, sourceQuality: 40, interactionHistory: 70 },
+    weights: {
+      recency: 50,
+      relevance: 70,
+      popularity: 50,
+      creatorAffinity: 60,
+      diversity: 30,
+      sourceQuality: 40,
+      interactionHistory: 70,
+    },
   },
   {
     name: 'Discovery Mode',
     slug: 'discovery',
     icon: '🌈',
     description: 'Explore new topics and creators outside your bubble',
-    weights: { recency: 40, relevance: 40, popularity: 40, creatorAffinity: 30, diversity: 80, sourceQuality: 50, interactionHistory: 20 },
+    weights: {
+      recency: 40,
+      relevance: 40,
+      popularity: 40,
+      creatorAffinity: 30,
+      diversity: 80,
+      sourceQuality: 50,
+      interactionHistory: 20,
+    },
   },
   {
     name: 'Balanced',
     slug: 'balanced',
     icon: '⚖️',
     description: 'A fair mix of recency, popularity, and relevance',
-    weights: { recency: 50, relevance: 50, popularity: 50, creatorAffinity: 50, diversity: 50, sourceQuality: 50, interactionHistory: 50 },
+    weights: {
+      recency: 50,
+      relevance: 50,
+      popularity: 50,
+      creatorAffinity: 50,
+      diversity: 50,
+      sourceQuality: 50,
+      interactionHistory: 50,
+    },
   },
 ];
 
 export const DEFAULT_SIGNALS: SignalSource[] = [
-  { id: 'recency', label: 'Recency', icon: '🕐', description: 'How recently the post was published', enabled: true, category: 'engagement' },
-  { id: 'likes', label: 'Likes', icon: '👍', description: 'Total likes on the post', enabled: true, category: 'engagement' },
-  { id: 'reposts', label: 'Reposts', icon: '🔄', description: 'How many times the post was shared', enabled: true, category: 'engagement' },
-  { id: 'replies', label: 'Replies', icon: '💬', description: 'Discussion activity on the post', enabled: true, category: 'engagement' },
-  { id: 'niche-match', label: 'Niche Match', icon: '🎯', description: 'How well the post matches your selected topics', enabled: true, category: 'content' },
-  { id: 'creator-affinity', label: 'Creator Affinity', icon: '👤', description: 'Your history with the post author', enabled: true, category: 'social' },
-  { id: 'followed-creators', label: 'Followed Creators', icon: '⭐', description: 'Posts from people you follow', enabled: true, category: 'social' },
-  { id: 'content-quality', label: 'Content Quality', icon: '💎', description: 'Quality signals like length, media, originality', enabled: true, category: 'quality' },
-  { id: 'source-trust', label: 'Source Trust', icon: '📡', description: 'Trust level of the source protocol', enabled: true, category: 'quality' },
-  { id: 'diversity', label: 'Diversity', icon: '🌈', description: 'Mix of different authors and topics', enabled: true, category: 'discovery' },
-  { id: 'velocity', label: 'Trending Velocity', icon: '📈', description: 'How fast the post is gaining engagement', enabled: true, category: 'engagement' },
-  { id: 'reputation', label: 'Author Reputation', icon: '⭐', description: 'Reputation score of the post author', enabled: true, category: 'quality' },
-  { id: 'dwell-time', label: 'Dwell Time', icon: '⏱️', description: 'How long users spend viewing similar content', enabled: true, category: 'engagement' },
-  { id: 'feedback', label: 'Your Feedback', icon: '✋', description: '"Show more/less like this" signals', enabled: true, category: 'social' },
+  {
+    id: 'recency',
+    label: 'Recency',
+    icon: '🕐',
+    description: 'How recently the post was published',
+    enabled: true,
+    category: 'engagement',
+  },
+  {
+    id: 'likes',
+    label: 'Likes',
+    icon: '👍',
+    description: 'Total likes on the post',
+    enabled: true,
+    category: 'engagement',
+  },
+  {
+    id: 'reposts',
+    label: 'Reposts',
+    icon: '🔄',
+    description: 'How many times the post was shared',
+    enabled: true,
+    category: 'engagement',
+  },
+  {
+    id: 'replies',
+    label: 'Replies',
+    icon: '💬',
+    description: 'Discussion activity on the post',
+    enabled: true,
+    category: 'engagement',
+  },
+  {
+    id: 'niche-match',
+    label: 'Niche Match',
+    icon: '🎯',
+    description: 'How well the post matches your selected topics',
+    enabled: true,
+    category: 'content',
+  },
+  {
+    id: 'creator-affinity',
+    label: 'Creator Affinity',
+    icon: '👤',
+    description: 'Your history with the post author',
+    enabled: true,
+    category: 'social',
+  },
+  {
+    id: 'followed-creators',
+    label: 'Followed Creators',
+    icon: '⭐',
+    description: 'Posts from people you follow',
+    enabled: true,
+    category: 'social',
+  },
+  {
+    id: 'content-quality',
+    label: 'Content Quality',
+    icon: '💎',
+    description: 'Quality signals like length, media, originality',
+    enabled: true,
+    category: 'quality',
+  },
+  {
+    id: 'source-trust',
+    label: 'Source Trust',
+    icon: '📡',
+    description: 'Trust level of the source protocol',
+    enabled: true,
+    category: 'quality',
+  },
+  {
+    id: 'diversity',
+    label: 'Diversity',
+    icon: '🌈',
+    description: 'Mix of different authors and topics',
+    enabled: true,
+    category: 'discovery',
+  },
+  {
+    id: 'velocity',
+    label: 'Trending Velocity',
+    icon: '📈',
+    description: 'How fast the post is gaining engagement',
+    enabled: true,
+    category: 'engagement',
+  },
+  {
+    id: 'reputation',
+    label: 'Author Reputation',
+    icon: '⭐',
+    description: 'Reputation score of the post author',
+    enabled: true,
+    category: 'quality',
+  },
+  {
+    id: 'dwell-time',
+    label: 'Dwell Time',
+    icon: '⏱️',
+    description: 'How long users spend viewing similar content',
+    enabled: true,
+    category: 'engagement',
+  },
+  {
+    id: 'feedback',
+    label: 'Your Feedback',
+    icon: '✋',
+    description: '"Show more/less like this" signals',
+    enabled: true,
+    category: 'social',
+  },
 ];
 
 // ─── KV key helpers ─────────────────────────────────────────────────────
@@ -279,7 +417,10 @@ export async function handleUpdateWeights(request: Request, env: Env): Promise<R
 
   const weights = validateWeights(body);
   if (!weights) {
-    return jsonResponse({ error: 'Invalid weights format. Each weight must be a number 0-100.' }, 400);
+    return jsonResponse(
+      { error: 'Invalid weights format. Each weight must be a number 0-100.' },
+      400,
+    );
   }
 
   await setWeights(env, session.address, weights);
@@ -305,13 +446,20 @@ export async function handleGetPresets(_request: Request, _env: Env): Promise<Re
 
 // ─── POST /api/algo/weights/preset/:name — Apply a preset ─────────────
 
-export async function handleApplyPreset(request: Request, env: Env, name: string): Promise<Response> {
+export async function handleApplyPreset(
+  request: Request,
+  env: Env,
+  name: string,
+): Promise<Response> {
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
 
   const preset = PRESETS.find((p) => p.slug === name);
   if (!preset) {
-    return jsonResponse({ error: `Preset "${name}" not found. Available: ${PRESETS.map((p) => p.slug).join(', ')}` }, 404);
+    return jsonResponse(
+      { error: `Preset "${name}" not found. Available: ${PRESETS.map((p) => p.slug).join(', ')}` },
+      404,
+    );
   }
 
   await setWeights(env, session.address, { ...preset.weights });
@@ -339,13 +487,19 @@ export async function handleExplainPost(
   // Build the explainer context
   const ctx: ExplainerContext = {
     userNiches: new Set(
-      params.get('niches')?.split(',').map((n) => n.trim().toLowerCase()).filter(Boolean) ?? [],
+      params
+        .get('niches')
+        ?.split(',')
+        .map((n) => n.trim().toLowerCase())
+        .filter(Boolean) ?? [],
     ),
-    followedCreators: new Set(
-      params.get('followed')?.split(',') ?? [],
-    ),
+    followedCreators: new Set(params.get('followed')?.split(',') ?? []),
     mutedNiches: new Set(
-      params.get('mutedNiches')?.split(',').map((n) => n.trim().toLowerCase()).filter(Boolean) ?? [],
+      params
+        .get('mutedNiches')
+        ?.split(',')
+        .map((n) => n.trim().toLowerCase())
+        .filter(Boolean) ?? [],
     ),
     weights: {
       recency: weights.recency,
@@ -422,9 +576,13 @@ export async function handleAddRule(request: Request, env: Env): Promise<Respons
 
   const rules = sanitizeRules([body.rule ?? body]);
   if (!rules || rules.length === 0) {
-    return jsonResponse({
-      error: 'Invalid rule. Must include type (boost-creator, mute-hashtag, min-engagement, or content-type) and required fields.',
-    }, 400);
+    return jsonResponse(
+      {
+        error:
+          'Invalid rule. Must include type (boost-creator, mute-hashtag, min-engagement, or content-type) and required fields.',
+      },
+      400,
+    );
   }
 
   const existing = await getRules(env, session.address);
@@ -436,7 +594,11 @@ export async function handleAddRule(request: Request, env: Env): Promise<Respons
 
 // ─── DELETE /api/algo/rules/:ruleId — Remove a custom rule ────────────
 
-export async function handleDeleteRule(request: Request, env: Env, ruleId: string): Promise<Response> {
+export async function handleDeleteRule(
+  request: Request,
+  env: Env,
+  ruleId: string,
+): Promise<Response> {
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
 
@@ -476,7 +638,9 @@ export async function handleUpdateSignals(request: Request, env: Env): Promise<R
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
 
-  const { data: body, error } = await parseBody<{ signals?: Array<{ id: string; enabled: boolean }> }>(request);
+  const { data: body, error } = await parseBody<{
+    signals?: Array<{ id: string; enabled: boolean }>;
+  }>(request);
   if (error) return error;
 
   if (!Array.isArray(body.signals)) {
@@ -497,7 +661,11 @@ export async function handleUpdateSignals(request: Request, env: Env): Promise<R
 
 // ─── GET /api/algo/presets/share/:name — Generate a shareable preset link ──
 
-export async function handleSharePreset(request: Request, _env: Env, name: string): Promise<Response> {
+export async function handleSharePreset(
+  request: Request,
+  _env: Env,
+  name: string,
+): Promise<Response> {
   const preset = PRESETS.find((p) => p.slug === name);
   if (!preset) {
     return jsonResponse({ error: `Preset "${name}" not found` }, 404);

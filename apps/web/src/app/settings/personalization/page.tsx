@@ -84,7 +84,10 @@ function Slider({
         className="slider-input"
         aria-label={label}
       />
-      <span className="w-8 text-right text-xs font-mono font-medium" style={{ color: 'var(--color-fg)' }}>
+      <span
+        className="w-8 text-right text-xs font-mono font-medium"
+        style={{ color: 'var(--color-fg)' }}
+      >
         {value}%
       </span>
     </div>
@@ -93,19 +96,13 @@ function Slider({
 
 /* ─── Section Heading ────────────────────────────────────────── */
 
-function SectionHeading({
-  icon,
-  title,
-  desc,
-}: {
-  icon: string;
-  title: string;
-  desc?: string;
-}) {
+function SectionHeading({ icon, title, desc }: { icon: string; title: string; desc?: string }) {
   return (
     <div className="mb-5">
       <div className="flex items-center gap-2.5 mb-1">
-        <span className="text-lg" aria-hidden="true">{icon}</span>
+        <span className="text-lg" aria-hidden="true">
+          {icon}
+        </span>
         <h2
           className="text-lg font-bold"
           style={{ color: 'var(--color-fg)', fontFamily: 'var(--font-heading)' }}
@@ -138,7 +135,10 @@ function OptionGroup<T extends string>({
   return (
     <fieldset>
       <legend className="sr-only">{label}</legend>
-      <div className="flex gap-1.5 rounded-xl p-1" style={{ backgroundColor: 'var(--color-bg-tertiary)' }}>
+      <div
+        className="flex gap-1.5 rounded-xl p-1"
+        style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+      >
         {options.map((opt) => (
           <button
             key={opt.value}
@@ -225,9 +225,7 @@ export default function PersonalizationPage() {
   const [dataSharing, setDataSharing] = useState(true);
 
   const updateTopicWeight = useCallback((id: string, weight: number) => {
-    setTopicWeights((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, weight } : t)),
-    );
+    setTopicWeights((prev) => prev.map((t) => (t.id === id ? { ...t, weight } : t)));
   }, []);
 
   const toggleContentType = useCallback((id: string) => {
@@ -264,7 +262,16 @@ export default function PersonalizationPage() {
           href="/settings"
           className="mb-3 inline-flex items-center gap-1 text-xs font-medium text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            aria-hidden="true"
+          >
             <path d="M19 12H5M12 19l-7-7 7-7" />
           </svg>
           Back to Settings
@@ -292,7 +299,10 @@ export default function PersonalizationPage() {
           {/* Topic sliders */}
           <div
             className="mb-6 rounded-xl border p-5"
-            style={{ borderColor: 'var(--color-glass-border)', backgroundColor: 'var(--color-card)' }}
+            style={{
+              borderColor: 'var(--color-glass-border)',
+              backgroundColor: 'var(--color-card)',
+            }}
           >
             <h3 className="mb-3 text-sm font-semibold" style={{ color: 'var(--color-fg)' }}>
               Topic Interest Weights
@@ -304,7 +314,11 @@ export default function PersonalizationPage() {
               {topicWeights.map((topic) => (
                 <div key={topic.id}>
                   <div className="mb-1 flex items-center justify-between">
-                    <label htmlFor={`topic-${topic.id}`} className="text-xs font-medium" style={{ color: 'var(--color-fg)' }}>
+                    <label
+                      htmlFor={`topic-${topic.id}`}
+                      className="text-xs font-medium"
+                      style={{ color: 'var(--color-fg)' }}
+                    >
                       {topic.label}
                     </label>
                   </div>
@@ -322,7 +336,10 @@ export default function PersonalizationPage() {
           {/* Content type toggles */}
           <div
             className="mb-6 rounded-xl border p-5"
-            style={{ borderColor: 'var(--color-glass-border)', backgroundColor: 'var(--color-card)' }}
+            style={{
+              borderColor: 'var(--color-glass-border)',
+              backgroundColor: 'var(--color-card)',
+            }}
           >
             <h3 className="mb-3 text-sm font-semibold" style={{ color: 'var(--color-fg)' }}>
               Content Types
@@ -369,11 +386,17 @@ export default function PersonalizationPage() {
           {/* Post length + NSFW */}
           <div
             className="mb-6 rounded-xl border p-5"
-            style={{ borderColor: 'var(--color-glass-border)', backgroundColor: 'var(--color-card)' }}
+            style={{
+              borderColor: 'var(--color-glass-border)',
+              backgroundColor: 'var(--color-card)',
+            }}
           >
             <div className="space-y-4">
               <div>
-                <span className="mb-2 block text-xs font-medium" style={{ color: 'var(--color-fg)' }}>
+                <span
+                  className="mb-2 block text-xs font-medium"
+                  style={{ color: 'var(--color-fg)' }}
+                >
                   Post Length Preference
                 </span>
                 <OptionGroup
@@ -413,7 +436,10 @@ export default function PersonalizationPage() {
               </div>
 
               <div>
-                <span className="mb-2 block text-xs font-medium" style={{ color: 'var(--color-fg)' }}>
+                <span
+                  className="mb-2 block text-xs font-medium"
+                  style={{ color: 'var(--color-fg)' }}
+                >
                   Language Preferences
                 </span>
                 <div className="flex flex-wrap gap-1.5">
@@ -425,9 +451,7 @@ export default function PersonalizationPage() {
                         type="button"
                         onClick={() =>
                           setLanguagePrefs((prev) =>
-                            prev.includes(lang)
-                              ? prev.filter((l) => l !== lang)
-                              : [...prev, lang],
+                            prev.includes(lang) ? prev.filter((l) => l !== lang) : [...prev, lang],
                           )
                         }
                         className={`rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider transition-all ${
@@ -467,7 +491,10 @@ export default function PersonalizationPage() {
           {/* Default feed mode */}
           <div
             className="mb-6 rounded-xl border p-5"
-            style={{ borderColor: 'var(--color-glass-border)', backgroundColor: 'var(--color-card)' }}
+            style={{
+              borderColor: 'var(--color-glass-border)',
+              backgroundColor: 'var(--color-card)',
+            }}
           >
             <span className="mb-2 block text-xs font-medium" style={{ color: 'var(--color-fg)' }}>
               Default Feed
@@ -487,7 +514,10 @@ export default function PersonalizationPage() {
           {/* Protocol drag-to-reorder */}
           <div
             className="mb-6 rounded-xl border p-5"
-            style={{ borderColor: 'var(--color-glass-border)', backgroundColor: 'var(--color-card)' }}
+            style={{
+              borderColor: 'var(--color-glass-border)',
+              backgroundColor: 'var(--color-card)',
+            }}
           >
             <h3 className="mb-3 text-sm font-semibold" style={{ color: 'var(--color-fg)' }}>
               Protocol Priority Order
@@ -500,7 +530,10 @@ export default function PersonalizationPage() {
                 <div
                   key={p.id}
                   className="flex items-center gap-3 rounded-lg border p-2.5"
-                  style={{ borderColor: 'var(--color-glass-border)', backgroundColor: 'var(--color-bg-secondary)' }}
+                  style={{
+                    borderColor: 'var(--color-glass-border)',
+                    backgroundColor: 'var(--color-bg-secondary)',
+                  }}
                 >
                   <span
                     className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[10px] font-bold"
@@ -520,7 +553,16 @@ export default function PersonalizationPage() {
                       className="flex h-7 w-7 items-center justify-center rounded-md text-[var(--color-muted)] transition-colors hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)] disabled:opacity-30"
                       aria-label={`Move ${p.name} up`}
                     >
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        aria-hidden="true"
+                      >
                         <path d="M18 15l-6-6-6 6" />
                       </svg>
                     </button>
@@ -531,7 +573,16 @@ export default function PersonalizationPage() {
                       className="flex h-7 w-7 items-center justify-center rounded-md text-[var(--color-muted)] transition-colors hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)] disabled:opacity-30"
                       aria-label={`Move ${p.name} down`}
                     >
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        aria-hidden="true"
+                      >
                         <path d="M6 9l6 6 6-6" />
                       </svg>
                     </button>
@@ -544,7 +595,10 @@ export default function PersonalizationPage() {
           {/* Algorithm tuner */}
           <div
             className="mb-6 rounded-xl border p-5"
-            style={{ borderColor: 'var(--color-glass-border)', backgroundColor: 'var(--color-card)' }}
+            style={{
+              borderColor: 'var(--color-glass-border)',
+              backgroundColor: 'var(--color-card)',
+            }}
           >
             <div className="mb-3 flex items-center justify-between">
               <h3 className="text-sm font-semibold" style={{ color: 'var(--color-fg)' }}>
@@ -569,7 +623,11 @@ export default function PersonalizationPage() {
               ].map((w) => (
                 <div key={w.id}>
                   <div className="mb-0.5 flex items-center justify-between">
-                    <label htmlFor={`weight-${w.id}`} className="text-xs font-medium" style={{ color: 'var(--color-fg)' }}>
+                    <label
+                      htmlFor={`weight-${w.id}`}
+                      className="text-xs font-medium"
+                      style={{ color: 'var(--color-fg)' }}
+                    >
                       {w.label}
                     </label>
                     <span className="text-[10px]" style={{ color: 'var(--color-muted)' }}>
@@ -590,11 +648,16 @@ export default function PersonalizationPage() {
           {/* Boredom breaker */}
           <div
             className="rounded-xl border p-5"
-            style={{ borderColor: 'var(--color-glass-border)', backgroundColor: 'var(--color-card)' }}
+            style={{
+              borderColor: 'var(--color-glass-border)',
+              backgroundColor: 'var(--color-card)',
+            }}
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <span className="text-lg" aria-hidden="true">🎲</span>
+                <span className="text-lg" aria-hidden="true">
+                  🎲
+                </span>
                 <div>
                   <span className="text-xs font-medium" style={{ color: 'var(--color-fg)' }}>
                     Boredom Breaker
@@ -619,7 +682,10 @@ export default function PersonalizationPage() {
 
           <div
             className="mb-6 rounded-xl border p-5"
-            style={{ borderColor: 'var(--color-glass-border)', backgroundColor: 'var(--color-card)' }}
+            style={{
+              borderColor: 'var(--color-glass-border)',
+              backgroundColor: 'var(--color-card)',
+            }}
           >
             <h3 className="mb-3 text-sm font-semibold" style={{ color: 'var(--color-fg)' }}>
               Per-Protocol Notifications
@@ -636,9 +702,7 @@ export default function PersonalizationPage() {
                   <Toggle
                     id={`notif-${protocol}`}
                     checked={enabled}
-                    onChange={(v) =>
-                      setNotifPerProtocol((prev) => ({ ...prev, [protocol]: v }))
-                    }
+                    onChange={(v) => setNotifPerProtocol((prev) => ({ ...prev, [protocol]: v }))}
                   />
                 </div>
               ))}
@@ -647,7 +711,10 @@ export default function PersonalizationPage() {
 
           <div
             className="mb-6 rounded-xl border p-5"
-            style={{ borderColor: 'var(--color-glass-border)', backgroundColor: 'var(--color-card)' }}
+            style={{
+              borderColor: 'var(--color-glass-border)',
+              backgroundColor: 'var(--color-card)',
+            }}
           >
             <span className="mb-2 block text-xs font-medium" style={{ color: 'var(--color-fg)' }}>
               Digest Frequency
@@ -667,7 +734,10 @@ export default function PersonalizationPage() {
 
           <div
             className="mb-6 rounded-xl border p-5"
-            style={{ borderColor: 'var(--color-glass-border)', backgroundColor: 'var(--color-card)' }}
+            style={{
+              borderColor: 'var(--color-glass-border)',
+              backgroundColor: 'var(--color-card)',
+            }}
           >
             <div className="space-y-4">
               <div className="flex items-center justify-between">
@@ -684,7 +754,10 @@ export default function PersonalizationPage() {
               {quietHours && (
                 <div className="flex items-center gap-3">
                   <div>
-                    <label htmlFor="quiet-start" className="block text-[10px] text-[var(--color-muted)] mb-1">
+                    <label
+                      htmlFor="quiet-start"
+                      className="block text-[10px] text-[var(--color-muted)] mb-1"
+                    >
                       From
                     </label>
                     <input
@@ -697,7 +770,10 @@ export default function PersonalizationPage() {
                   </div>
                   <span className="text-xs text-[var(--color-muted)] mt-5">→</span>
                   <div>
-                    <label htmlFor="quiet-end" className="block text-[10px] text-[var(--color-muted)] mb-1">
+                    <label
+                      htmlFor="quiet-end"
+                      className="block text-[10px] text-[var(--color-muted)] mb-1"
+                    >
                       To
                     </label>
                     <input
@@ -728,15 +804,14 @@ export default function PersonalizationPage() {
 
         {/* ═══ 4. Privacy ═══ */}
         <section>
-          <SectionHeading
-            icon="🛡️"
-            title="Privacy"
-            desc="Control your visibility and data"
-          />
+          <SectionHeading icon="🛡️" title="Privacy" desc="Control your visibility and data" />
 
           <div
             className="mb-6 rounded-xl border p-5"
-            style={{ borderColor: 'var(--color-glass-border)', backgroundColor: 'var(--color-card)' }}
+            style={{
+              borderColor: 'var(--color-glass-border)',
+              backgroundColor: 'var(--color-card)',
+            }}
           >
             <span className="mb-2 block text-xs font-medium" style={{ color: 'var(--color-fg)' }}>
               Profile Visibility
@@ -755,7 +830,10 @@ export default function PersonalizationPage() {
 
           <div
             className="mb-6 rounded-xl border p-5"
-            style={{ borderColor: 'var(--color-glass-border)', backgroundColor: 'var(--color-card)' }}
+            style={{
+              borderColor: 'var(--color-glass-border)',
+              backgroundColor: 'var(--color-card)',
+            }}
           >
             <div className="space-y-4">
               <div className="flex items-center justify-between">

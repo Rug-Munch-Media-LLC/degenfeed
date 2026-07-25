@@ -159,11 +159,7 @@ function steemPostToPost(p: SteemPost): UnifiedPost {
 
 // ─── RPC call ──────────────────────────────────────────────────────────
 
-async function callSteemAPI(
-  node: string,
-  method: string,
-  params: unknown[],
-): Promise<SteemPost[]> {
+async function callSteemAPI(node: string, method: string, params: unknown[]): Promise<SteemPost[]> {
   try {
     const res = await $fetch(node, {
       method: 'POST',

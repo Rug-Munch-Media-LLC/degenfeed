@@ -28,9 +28,7 @@ import {
   interleaveByProtocol,
   PLATFORM_TIER,
   rankDiverse,
-  scoreBreakdownV2,
   sourceWeight,
-  WEIGHTS_V2,
 } from '../../packages/ranking';
 
 // ─── Factory: build minimal UnifiedPost-like objects ────────────────────

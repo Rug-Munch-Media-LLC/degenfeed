@@ -161,7 +161,7 @@ const REQUIRED_GOVERNOR_EVENTS: string[] = [
  * interface specification.
  */
 export function checkGovernorCompliance(
-  governorAddress: string,
+  _governorAddress: string,
   abiFunctions?: string[],
   abiEvents?: string[],
 ): OZInterfaceCompliance {

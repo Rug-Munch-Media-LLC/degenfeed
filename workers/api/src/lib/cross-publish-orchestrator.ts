@@ -9,11 +9,11 @@
  * and on @degenfeed/cross-protocol-bridge for content adaptation.
  */
 
-import type { MasterPost, ProtocolPublishParams } from '@degenfeed/cross-protocol-bridge';
+import type { MasterPost } from '@degenfeed/cross-protocol-bridge';
 import { adaptForProtocols } from '@degenfeed/cross-protocol-bridge';
 import type { Protocol } from '@degenfeed/types';
 import type { Env } from '../index';
-import type { PublishInput, PublishResult } from './publish-orchestrator';
+import type { PublishInput } from './publish-orchestrator';
 import { orchestratePublish } from './publish-orchestrator';
 
 // ─── Types ────────────────────────────────────────────────────────────────
@@ -256,7 +256,7 @@ async function storeCrossPostLink(
       publishedAt: r.publishedAt,
     })),
     createdAt: Date.now(),
-    author: request.auth?.['wallet'] ?? 'anonymous',
+    author: request.auth?.wallet ?? 'anonymous',
   };
 
   // Store by batch ID

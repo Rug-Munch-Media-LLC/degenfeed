@@ -33,10 +33,7 @@ const IPFS_GATEWAYS = [
 ];
 
 // Public Arweave gateways
-const ARWEAVE_GATEWAYS = [
-  'https://arweave.net/',
-  'https://gateway.arweave.xyz/',
-];
+const ARWEAVE_GATEWAYS = ['https://arweave.net/', 'https://gateway.arweave.xyz/'];
 
 // ─── Types ─────────────────────────────────────────────────────────────
 
@@ -99,6 +96,60 @@ export function detectDecentralizedVideo(url: string): DetectedDecentralizedVide
   }
 
   return null;
+}
+
+// ─── Standard bridge interface ─────────────────────────────────────────────
+
+/**
+ * Fetch IPFS channel videos (by CID — best effort).
+ */
+export async function fetchIPFSChannelVideos(
+  _channelId: string,
+  _limit = 10,
+): Promise<UnifiedVideo[]> {
+  // IPFS doesn't have channels — delegate to trending
+  return fetchIPFSVideoList(_limit);
+}
+
+/**
+ * Fetch IPFS trending videos.
+ */
+export async function fetchIPFSTrending(_category = 'all', _limit = 10): Promise<UnifiedVideo[]> {
+  return fetchIPFSVideoList(_limit);
+}
+
+/**
+ * Search IPFS for videos (best effort).
+ */
+export async function searchIPFSVideos(_query: string): Promise<UnifiedVideo[]> {
+  return [];
+}
+
+/**
+ * Fetch Arweave channel videos (by creator — best effort via tags).
+ */
+export async function fetchArweaveChannelVideos(
+  _creatorId: string,
+  _limit = 10,
+): Promise<UnifiedVideo[]> {
+  return fetchArweaveVideoList(_limit);
+}
+
+/**
+ * Fetch Arweave trending videos.
+ */
+export async function fetchArweaveTrending(
+  _category = 'all',
+  _limit = 10,
+): Promise<UnifiedVideo[]> {
+  return fetchArweaveVideoList(_limit);
+}
+
+/**
+ * Search Arweave for videos.
+ */
+export async function searchArweaveVideos(_query: string): Promise<UnifiedVideo[]> {
+  return [];
 }
 
 // ─── Fetch from web3.storage public listings (demo) ────────────────────

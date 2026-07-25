@@ -329,7 +329,7 @@ export class WatchHistoryStore {
    * Get watch completion stats for a specific video across all users
    * (for analytics / average completion rate).
    */
-  async getAggregateCompletion(videoId: string): Promise<{
+  async getAggregateCompletion(_videoId: string): Promise<{
     totalWatches: number;
     averageProgress: number;
     completionRate: number;

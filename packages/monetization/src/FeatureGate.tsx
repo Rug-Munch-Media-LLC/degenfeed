@@ -18,7 +18,7 @@
  *   </PremiumGate>
  */
 
-import React from 'react';
+import type React from 'react';
 import { TierManager } from './TierManager';
 import {
   FEATURE_LABELS,
@@ -225,9 +225,7 @@ export function PremiumGate({
   if (blur) {
     return (
       <div className="relative group">
-        <div className="pointer-events-none select-none blur-sm opacity-40">
-          {children}
-        </div>
+        <div className="pointer-events-none select-none blur-sm opacity-40">{children}</div>
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="rounded-2xl border border-amber-500/20 bg-[var(--color-card)]/95 backdrop-blur-sm p-5 text-center mx-4 max-w-xs shadow-xl">
             <div className="mb-2 text-2xl">⭐</div>

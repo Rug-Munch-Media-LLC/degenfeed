@@ -142,7 +142,7 @@ export function checkSPLGovernanceCompatibility(config: {
     passed: /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(config.tokenMint),
     detail: `Token mint: ${config.tokenMint}`,
   });
-  if (!checks[0]!.passed) {
+  if (!checks[0]?.passed) {
     recommendations.push('Use a valid SPL token mint address as the community mint');
   }
 
@@ -152,7 +152,7 @@ export function checkSPLGovernanceCompatibility(config: {
     passed: config.tokenDecimals >= 0 && config.tokenDecimals <= 9,
     detail: `Decimals: ${config.tokenDecimals}`,
   });
-  if (!checks[1]!.passed) {
+  if (!checks[1]?.passed) {
     recommendations.push('SPL Governance works best with 0-9 decimal tokens');
   }
 
@@ -162,7 +162,7 @@ export function checkSPLGovernanceCompatibility(config: {
     passed: config.tokenSupply >= 1000,
     detail: `Supply: ${config.tokenSupply}`,
   });
-  if (!checks[2]!.passed) {
+  if (!checks[2]?.passed) {
     recommendations.push('Consider a larger token supply for governance');
   }
 
@@ -175,7 +175,7 @@ export function checkSPLGovernanceCompatibility(config: {
     passed: isKnownProgram,
     detail: `Program ID: ${config.governanceProgramId ?? SPL_GOVERNANCE_PROGRAM_IDS['mainnet-beta']}`,
   });
-  if (!checks[3]!.passed) {
+  if (!checks[3]?.passed) {
     recommendations.push('Use the official SPL Governance program ID');
   }
 

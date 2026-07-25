@@ -59,7 +59,7 @@ interface CCGraphQLResponse {
 
 // ─── Helpers ──────────────────────────────────────────────────────────
 
-function guessNiches(text: string): string[] {
+function _guessNiches(text: string): string[] {
   const niches: string[] = [];
   const lower = text.toLowerCase();
   if (/\b(btc|bitcoin|eth|ethereum|sol|solana|crypto|defi|nft|web3|blockchain)\b/.test(lower))
@@ -144,8 +144,15 @@ async function fetchProfilePosts(handle: string): Promise<UnifiedPost[]> {
 // ─── Main ──────────────────────────────────────────────────────────────
 
 const CURATED_HANDLES = [
-  'cyberlab', 'cyberconnect', 'vitalik', 'brianzhao', 'spruceid',
-  'chainlink', 'aave', 'ens', 'lensprotocol',
+  'cyberlab',
+  'cyberconnect',
+  'vitalik',
+  'brianzhao',
+  'spruceid',
+  'chainlink',
+  'aave',
+  'ens',
+  'lensprotocol',
 ];
 
 export const schema: SchemaGuard = {
@@ -160,9 +167,7 @@ export const schema: SchemaGuard = {
 export async function fetchCyberConnectPosts(limit = 20): Promise<UnifiedPost[]> {
   const handles = CURATED_HANDLES.slice(0, Math.max(5, Math.ceil(limit / 3)));
 
-  const results = await Promise.allSettled(
-    handles.map((h) => fetchProfilePosts(h)),
-  );
+  const results = await Promise.allSettled(handles.map((h) => fetchProfilePosts(h)));
 
   const all: UnifiedPost[] = [];
   for (const r of results) {

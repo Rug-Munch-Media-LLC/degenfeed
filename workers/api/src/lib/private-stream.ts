@@ -22,7 +22,7 @@
  */
 
 import type { Env } from '../index';
-import { jsonResponse, noCacheJsonResponse, log } from '../index';
+import { jsonResponse, log, noCacheJsonResponse } from '../index';
 
 // ─── Types ──────────────────────────────────────────────────────────────
 
@@ -156,18 +156,14 @@ export class PrivateStreamService {
     };
 
     // Store encryption key in KV
-    await this.env.CACHE?.put(
-      streamEncryptionKeyKey(streamId),
-      JSON.stringify(streamKey),
-      { expirationTtl: KEY_EXPIRY_HOURS * 3600 },
-    );
+    await this.env.CACHE?.put(streamEncryptionKeyKey(streamId), JSON.stringify(streamKey), {
+      expirationTtl: KEY_EXPIRY_HOURS * 3600,
+    });
 
     // Store token gate config separately
-    await this.env.CACHE?.put(
-      streamKeyConfigKey(streamId),
-      JSON.stringify(tokenGate),
-      { expirationTtl: KEY_EXPIRY_HOURS * 3600 },
-    );
+    await this.env.CACHE?.put(streamKeyConfigKey(streamId), JSON.stringify(tokenGate), {
+      expirationTtl: KEY_EXPIRY_HOURS * 3600,
+    });
 
     log('info', '[private-stream] Encryption key generated', {
       streamId,
@@ -188,9 +184,7 @@ export class PrivateStreamService {
    *   3. Delegated verification via rmi-backend token gate service
    *   4. Allowlisted addresses bypass check
    */
-  async verifyAndGrantAccess(
-    request: ViewerAccessRequest,
-  ): Promise<ViewerAccessGrant> {
+  async verifyAndGrantAccess(request: ViewerAccessRequest): Promise<ViewerAccessGrant> {
     const streamId = request.streamId;
     const viewerAddress = request.viewerAddress.toLowerCase();
 
@@ -269,7 +263,7 @@ export class PrivateStreamService {
   async verifyTokenOwnership(
     viewerAddress: string,
     tokenGate: TokenGateConfig,
-    signature?: string,
+    _signature?: string,
     _signedMessage?: string,
   ): Promise<{ verified: boolean; reason?: string }> {
     if (!tokenGate.enabled) {
@@ -278,30 +272,24 @@ export class PrivateStreamService {
 
     try {
       // For EVM chains, verify via rmi-backend token gate service if available
-      const rmiBackendUrl =
-        this.env.RMI_BACKEND_URL ?? 'http://127.0.0.1:8000';
+      const rmiBackendUrl = this.env.RMI_BACKEND_URL ?? 'http://127.0.0.1:8000';
 
-      const verifyResponse = await fetch(
-        `${rmiBackendUrl}/api/token-gate/verify`,
-        {
-          method: 'POST',
-          headers: {
-            'content-type': 'application/json',
-            ...(this.env.RMI_API_KEY
-              ? { authorization: `Bearer ${this.env.RMI_API_KEY}` }
-              : {}),
-          },
-          body: JSON.stringify({
-            wallet_address: viewerAddress,
-            token_address: tokenGate.tokenAddress,
-            chain_id: tokenGate.chainId,
-            standard: tokenGate.standard,
-            min_balance: tokenGate.minBalance,
-            token_id: tokenGate.tokenId,
-          }),
-          signal: AbortSignal.timeout(10000),
+      const verifyResponse = await fetch(`${rmiBackendUrl}/api/token-gate/verify`, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          ...(this.env.RMI_API_KEY ? { authorization: `Bearer ${this.env.RMI_API_KEY}` } : {}),
         },
-      );
+        body: JSON.stringify({
+          wallet_address: viewerAddress,
+          token_address: tokenGate.tokenAddress,
+          chain_id: tokenGate.chainId,
+          standard: tokenGate.standard,
+          min_balance: tokenGate.minBalance,
+          token_id: tokenGate.tokenId,
+        }),
+        signal: AbortSignal.timeout(10000),
+      });
 
       if (verifyResponse.ok) {
         const result = (await verifyResponse.json()) as { verified?: boolean };
@@ -323,8 +311,7 @@ export class PrivateStreamService {
         });
         return {
           verified: false,
-          reason:
-            'Token verification service temporarily unavailable. Please try again.',
+          reason: 'Token verification service temporarily unavailable. Please try again.',
         };
       }
 
@@ -341,8 +328,7 @@ export class PrivateStreamService {
       // Network error — deny access
       return {
         verified: false,
-        reason:
-          'Unable to verify token ownership. Please check your connection and try again.',
+        reason: 'Unable to verify token ownership. Please check your connection and try again.',
       };
     }
   }
@@ -356,11 +342,9 @@ export class PrivateStreamService {
       if (!streamKey) return false;
 
       streamKey.revoked = true;
-      await this.env.CACHE?.put(
-        streamEncryptionKeyKey(streamId),
-        JSON.stringify(streamKey),
-        { expirationTtl: KEY_EXPIRY_HOURS * 3600 },
-      );
+      await this.env.CACHE?.put(streamEncryptionKeyKey(streamId), JSON.stringify(streamKey), {
+        expirationTtl: KEY_EXPIRY_HOURS * 3600,
+      });
 
       // Clear all viewer access grants
       await this.clearViewerAccess(streamId);
@@ -386,11 +370,7 @@ export class PrivateStreamService {
       await this.clearViewerAccess(streamId);
 
       // Generate new key
-      const newKey = await this.generateStreamKey(
-        streamId,
-        creatorAddress,
-        tokenGate,
-      );
+      const newKey = await this.generateStreamKey(streamId, creatorAddress, tokenGate);
 
       log('info', '[private-stream] Stream key rotated', { streamId });
       return newKey;
@@ -440,10 +420,7 @@ export class PrivateStreamService {
   /**
    * Create an allowlist bypass for specific addresses (for testing/creators).
    */
-  async addToAllowlist(
-    streamId: string,
-    viewerAddress: string,
-  ): Promise<ViewerAccessGrant> {
+  async addToAllowlist(streamId: string, viewerAddress: string): Promise<ViewerAccessGrant> {
     const streamKey = await this.getStreamKey(streamId);
     if (!streamKey) {
       return { granted: false, reason: 'Stream key not found.' };
@@ -470,18 +447,14 @@ export class PrivateStreamService {
     viewerAddress: string,
   ): Promise<ViewerAccessGrant | null> {
     try {
-      const raw = await this.env.CACHE?.get(
-        viewerAccessKey(streamId, viewerAddress),
-      );
+      const raw = await this.env.CACHE?.get(viewerAccessKey(streamId, viewerAddress));
       if (!raw) return null;
 
       const grant = JSON.parse(raw) as ViewerAccessGrant;
 
       // Check if grant is still valid
       if (grant.expiresAt && Date.now() > grant.expiresAt) {
-        await this.env.CACHE?.delete(
-          viewerAccessKey(streamId, viewerAddress),
-        );
+        await this.env.CACHE?.delete(viewerAccessKey(streamId, viewerAddress));
         return null;
       }
 
@@ -496,27 +469,20 @@ export class PrivateStreamService {
     viewerAddress: string,
     grant: ViewerAccessGrant,
   ): Promise<void> {
-    await this.env.CACHE?.put(
-      viewerAccessKey(streamId, viewerAddress),
-      JSON.stringify(grant),
-      { expirationTtl: ACCESS_GRANT_TTL },
-    );
+    await this.env.CACHE?.put(viewerAccessKey(streamId, viewerAddress), JSON.stringify(grant), {
+      expirationTtl: ACCESS_GRANT_TTL,
+    });
   }
 
-  private async addToViewerIndex(
-    streamId: string,
-    viewerAddress: string,
-  ): Promise<void> {
+  private async addToViewerIndex(streamId: string, viewerAddress: string): Promise<void> {
     try {
       const raw = await this.env.CACHE?.get(viewerAccessIndexKey(streamId));
       const viewers: string[] = raw ? JSON.parse(raw) : [];
       if (!viewers.includes(viewerAddress)) {
         viewers.push(viewerAddress);
-        await this.env.CACHE?.put(
-          viewerAccessIndexKey(streamId),
-          JSON.stringify(viewers),
-          { expirationTtl: KEY_EXPIRY_HOURS * 3600 },
-        );
+        await this.env.CACHE?.put(viewerAccessIndexKey(streamId), JSON.stringify(viewers), {
+          expirationTtl: KEY_EXPIRY_HOURS * 3600,
+        });
       }
     } catch {
       // Non-critical
@@ -542,10 +508,7 @@ export class PrivateStreamService {
  * POST /api/live/private/configure
  * Creator configures a private/token-gated stream.
  */
-export async function handlePrivateStreamConfigure(
-  request: Request,
-  env: Env,
-): Promise<Response> {
+export async function handlePrivateStreamConfigure(request: Request, env: Env): Promise<Response> {
   if (request.method !== 'POST') {
     return jsonResponse({ error: 'Method not allowed' }, 405);
   }
@@ -560,8 +523,7 @@ export async function handlePrivateStreamConfigure(
     if (!body.streamId || !body.creatorAddress || !body.tokenGate) {
       return jsonResponse(
         {
-          error:
-            'streamId, creatorAddress, and tokenGate config are required',
+          error: 'streamId, creatorAddress, and tokenGate config are required',
         },
         400,
       );
@@ -597,10 +559,7 @@ export async function handlePrivateStreamConfigure(
  * POST /api/live/private/join
  * Viewer requests access to a private stream.
  */
-export async function handlePrivateStreamJoin(
-  request: Request,
-  env: Env,
-): Promise<Response> {
+export async function handlePrivateStreamJoin(request: Request, env: Env): Promise<Response> {
   if (request.method !== 'POST') {
     return jsonResponse({ error: 'Method not allowed' }, 405);
   }
@@ -609,10 +568,7 @@ export async function handlePrivateStreamJoin(
     const body = (await request.json()) as ViewerAccessRequest;
 
     if (!body.streamId || !body.viewerAddress) {
-      return jsonResponse(
-        { error: 'streamId and viewerAddress are required' },
-        400,
-      );
+      return jsonResponse({ error: 'streamId and viewerAddress are required' }, 400);
     }
 
     const service = new PrivateStreamService(env);
@@ -683,10 +639,7 @@ export async function handlePrivateStreamConfig(
     });
   } catch (e) {
     const error = e instanceof Error ? e.message : String(e);
-    return jsonResponse(
-      { error: `Failed to get private stream config: ${error}` },
-      500,
-    );
+    return jsonResponse({ error: `Failed to get private stream config: ${error}` }, 500);
   }
 }
 
@@ -708,10 +661,7 @@ export async function handlePrivateStreamRevoke(
     const revoked = await service.revokeStreamKey(streamId);
 
     if (!revoked) {
-      return jsonResponse(
-        { error: 'Failed to revoke stream key. Stream not found.' },
-        404,
-      );
+      return jsonResponse({ error: 'Failed to revoke stream key. Stream not found.' }, 404);
     }
 
     return jsonResponse({
@@ -721,10 +671,7 @@ export async function handlePrivateStreamRevoke(
     });
   } catch (e) {
     const error = e instanceof Error ? e.message : String(e);
-    return jsonResponse(
-      { error: `Failed to revoke stream key: ${error}` },
-      500,
-    );
+    return jsonResponse({ error: `Failed to revoke stream key: ${error}` }, 500);
   }
 }
 
@@ -748,24 +695,14 @@ export async function handlePrivateStreamRotate(
     };
 
     if (!body.creatorAddress || !body.tokenGate) {
-      return jsonResponse(
-        { error: 'creatorAddress and tokenGate config are required' },
-        400,
-      );
+      return jsonResponse({ error: 'creatorAddress and tokenGate config are required' }, 400);
     }
 
     const service = new PrivateStreamService(env);
-    const newKey = await service.rotateStreamKey(
-      streamId,
-      body.creatorAddress,
-      body.tokenGate,
-    );
+    const newKey = await service.rotateStreamKey(streamId, body.creatorAddress, body.tokenGate);
 
     if (!newKey) {
-      return jsonResponse(
-        { error: 'Failed to rotate stream key.' },
-        500,
-      );
+      return jsonResponse({ error: 'Failed to rotate stream key.' }, 500);
     }
 
     return jsonResponse({
@@ -778,10 +715,7 @@ export async function handlePrivateStreamRotate(
     });
   } catch (e) {
     const error = e instanceof Error ? e.message : String(e);
-    return jsonResponse(
-      { error: `Failed to rotate stream key: ${error}` },
-      500,
-    );
+    return jsonResponse({ error: `Failed to rotate stream key: ${error}` }, 500);
   }
 }
 
@@ -809,10 +743,7 @@ export async function handlePrivateStreamViewers(
     });
   } catch (e) {
     const error = e instanceof Error ? e.message : String(e);
-    return jsonResponse(
-      { error: `Failed to list viewers: ${error}` },
-      500,
-    );
+    return jsonResponse({ error: `Failed to list viewers: ${error}` }, 500);
   }
 }
 
@@ -820,10 +751,7 @@ export async function handlePrivateStreamViewers(
  * POST /api/live/private/allowlist
  * Creator adds an address to the allowlist (bypasses token check).
  */
-export async function handlePrivateStreamAllowlist(
-  request: Request,
-  env: Env,
-): Promise<Response> {
+export async function handlePrivateStreamAllowlist(request: Request, env: Env): Promise<Response> {
   if (request.method !== 'POST') {
     return jsonResponse({ error: 'Method not allowed' }, 405);
   }
@@ -835,23 +763,14 @@ export async function handlePrivateStreamAllowlist(
     };
 
     if (!body.streamId || !body.viewerAddress) {
-      return jsonResponse(
-        { error: 'streamId and viewerAddress are required' },
-        400,
-      );
+      return jsonResponse({ error: 'streamId and viewerAddress are required' }, 400);
     }
 
     const service = new PrivateStreamService(env);
-    const grant = await service.addToAllowlist(
-      body.streamId,
-      body.viewerAddress,
-    );
+    const grant = await service.addToAllowlist(body.streamId, body.viewerAddress);
 
     if (!grant.granted) {
-      return jsonResponse(
-        { error: grant.reason || 'Failed to add to allowlist' },
-        500,
-      );
+      return jsonResponse({ error: grant.reason || 'Failed to add to allowlist' }, 500);
     }
 
     return jsonResponse({
@@ -862,9 +781,6 @@ export async function handlePrivateStreamAllowlist(
     });
   } catch (e) {
     const error = e instanceof Error ? e.message : String(e);
-    return jsonResponse(
-      { error: `Failed to add to allowlist: ${error}` },
-      500,
-    );
+    return jsonResponse({ error: `Failed to add to allowlist: ${error}` }, 500);
   }
 }

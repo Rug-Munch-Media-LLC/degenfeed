@@ -18,8 +18,8 @@
  * No silent failures. No unhandled API changes. Every provider gets a health check.
  */
 
+import type { UnifiedLiveStream } from '../feed/live-aggregator';
 import type { Env } from '../index';
-import type { UnifiedLiveStream, SourceHealth } from '../feed/live-aggregator';
 
 // ─── Unified Video Types ─────────────────────────────────────────────────
 
@@ -176,7 +176,7 @@ export const farcasterPlatformWrapper: VideoPlatformWrapper = {
 
   async detectLiveStreams(env: Env): Promise<UnifiedLiveStream[]> {
     const streams: UnifiedLiveStream[] = [];
-    const startTime = Date.now();
+    const _startTime = Date.now();
 
     try {
       // Check Hubble for casts with fc:live meta tags or frame embeds
@@ -231,7 +231,9 @@ export const farcasterPlatformWrapper: VideoPlatformWrapper = {
           signal: AbortSignal.timeout(5000),
         });
         if (resp.ok) {
-          const data = (await resp.json()) as { messages?: Array<{ data?: { userDataBody?: { type: string; value: string } } }> };
+          const data = (await resp.json()) as {
+            messages?: Array<{ data?: { userDataBody?: { type: string; value: string } } }>;
+          };
           // Check if user has USER_DATA_TYPE_LIVE_AT set
           if (data.messages) {
             for (const msg of data.messages) {
@@ -247,10 +249,10 @@ export const farcasterPlatformWrapper: VideoPlatformWrapper = {
                     if (pageText.includes('fc:live') && pageText.includes('fc:frame:video')) {
                       // Extract HLS URL from meta tags
                       const hlsMatch = pageText.match(
-                        /<meta\s+property="fc:frame:video"\s+content="([^"]+)"/
+                        /<meta\s+property="fc:frame:video"\s+content="([^"]+)"/,
                       );
                       const titleMatch = pageText.match(
-                        /<meta\s+property="og:title"\s+content="([^"]+)"/
+                        /<meta\s+property="og:title"\s+content="([^"]+)"/,
                       );
                       const hlsUrl = hlsMatch?.[1] || '';
                       const title = titleMatch?.[1] || 'Farcaster Live Stream';
@@ -473,7 +475,21 @@ export const zoraPlatformWrapper: VideoPlatformWrapper = {
 
       if (res.ok) {
         const data = (await res.json()) as {
-          data?: { tokens?: { nodes?: Array<{ token?: { tokenId: string; name: string; description: string; image?: { url: string }; content?: { url: string; mimeType: string }; owner: string; collection?: { address: string; name: string } } }> } };
+          data?: {
+            tokens?: {
+              nodes?: Array<{
+                token?: {
+                  tokenId: string;
+                  name: string;
+                  description: string;
+                  image?: { url: string };
+                  content?: { url: string; mimeType: string };
+                  owner: string;
+                  collection?: { address: string; name: string };
+                };
+              }>;
+            };
+          };
         };
 
         for (const node of data?.data?.tokens?.nodes ?? []) {
@@ -536,7 +552,7 @@ export const zoraPlatformWrapper: VideoPlatformWrapper = {
     }));
   },
 
-  async healthCheck(env: Env): Promise<PlatformHealth> {
+  async healthCheck(_env: Env): Promise<PlatformHealth> {
     const start = Date.now();
     try {
       const res = await fetch('https://api.zora.co/graphql', {
@@ -647,16 +663,18 @@ export const lensPlatformWrapper: VideoPlatformWrapper = {
             title: (meta?.title as string) || 'Lens Video',
             description: (meta?.content as string) || '',
             duration: (meta?.duration as number) || 0,
-            thumbnailUrl: (cover?.original as Record<string, unknown> | undefined)?.url as string || '',
+            thumbnailUrl:
+              ((cover?.original as Record<string, unknown> | undefined)?.url as string) || '',
             videoUrl,
-            views: (item.stats as Record<string, unknown>)?.views as number || 0,
+            views: ((item.stats as Record<string, unknown>)?.views as number) || 0,
             likes: 0,
             createdAt: new Date(item.createdAt as string).getTime() || Date.now(),
             creator: {
               id: `lens:profile:${profile?.id as string}`,
-              handle: profile?.handle as string || 'unknown',
-              displayName: (profileMeta?.displayName as string) || (profile?.handle as string) || 'Lens User',
-              avatarUrl: imgSet?.uri as string || '',
+              handle: (profile?.handle as string) || 'unknown',
+              displayName:
+                (profileMeta?.displayName as string) || (profile?.handle as string) || 'Lens User',
+              avatarUrl: (imgSet?.uri as string) || '',
               walletAddress: profile?.ownedBy as string,
             },
             tags: ['lens', 'video'],
@@ -731,7 +749,9 @@ export const nostrPlatformWrapper: VideoPlatformWrapper = {
   async detectLiveStreams(env: Env): Promise<UnifiedLiveStream[]> {
     const streams: UnifiedLiveStream[] = [];
     try {
-      const relays = (env.NOSTR_RELAYS ?? 'wss://relay.damus.io,wss://nos.lol,wss://relay.primal.net')
+      const relays = (
+        env.NOSTR_RELAYS ?? 'wss://relay.damus.io,wss://nos.lol,wss://relay.primal.net'
+      )
         .split(',')
         .map((r) => r.trim())
         .filter(Boolean);
@@ -746,8 +766,11 @@ export const nostrPlatformWrapper: VideoPlatformWrapper = {
         const image = tags.find((t: string[]) => t[0] === 'image')?.[1] || '';
         const streaming = tags.find((t: string[]) => t[0] === 'streaming')?.[1] || '';
         const status = tags.find((t: string[]) => t[0] === 'status')?.[1] || 'live';
-        const currentParticipants = parseInt(tags.find((t: string[]) => t[0] === 'current_participants')?.[1] || '0', 10);
-        const host = tags.find((t: string[]) => t[0] === 'host')?.[1] || event.pubkey;
+        const currentParticipants = parseInt(
+          tags.find((t: string[]) => t[0] === 'current_participants')?.[1] || '0',
+          10,
+        );
+        const _host = tags.find((t: string[]) => t[0] === 'host')?.[1] || event.pubkey;
 
         if (status !== 'live') continue;
 
@@ -758,7 +781,8 @@ export const nostrPlatformWrapper: VideoPlatformWrapper = {
           streamer: {
             id: `nostr:pubkey:${event.pubkey}`,
             handle: event.pubkey.slice(0, 8),
-            displayName: tags.find((t: string[]) => t[0] === 'user_name')?.[1] || event.pubkey.slice(0, 8),
+            displayName:
+              tags.find((t: string[]) => t[0] === 'user_name')?.[1] || event.pubkey.slice(0, 8),
           },
           thumbnailUrl: image,
           viewerCount: currentParticipants,
@@ -818,7 +842,8 @@ export const nostrPlatformWrapper: VideoPlatformWrapper = {
           creator: {
             id: `nostr:pubkey:${event.pubkey}`,
             handle: event.pubkey.slice(0, 8),
-            displayName: tags.find((t: string[]) => t[0] === 'user_name')?.[1] || event.pubkey.slice(0, 8),
+            displayName:
+              tags.find((t: string[]) => t[0] === 'user_name')?.[1] || event.pubkey.slice(0, 8),
             walletAddress: event.pubkey,
           },
           tags: ['nostr', 'video', 'nip71'],
@@ -864,13 +889,21 @@ export const nostrPlatformWrapper: VideoPlatformWrapper = {
   async healthCheck(env: Env): Promise<PlatformHealth> {
     const start = Date.now();
     try {
-      const relay = (env.NOSTR_RELAYS ?? 'wss://relay.damus.io').split(',')[0]?.trim() || 'wss://relay.damus.io';
+      const relay =
+        (env.NOSTR_RELAYS ?? 'wss://relay.damus.io').split(',')[0]?.trim() ||
+        'wss://relay.damus.io';
       // WebSocket connection check
       const ws = new WebSocket(relay);
       await new Promise<void>((resolve, reject) => {
-        ws.onopen = () => { ws.close(); resolve(); };
+        ws.onopen = () => {
+          ws.close();
+          resolve();
+        };
         ws.onerror = () => reject(new Error('WebSocket connection failed'));
-        setTimeout(() => { ws.close(); reject(new Error('Timeout')); }, 5000);
+        setTimeout(() => {
+          ws.close();
+          reject(new Error('Timeout'));
+        }, 5000);
       });
       return {
         healthy: true,
@@ -918,15 +951,12 @@ export const dtubePlatformWrapper: VideoPlatformWrapper = {
         id: 1,
       };
 
-      const resp = await fetch(
-        hiveRpcUrl.replace('ethereum', 'hive').replace('base', 'hive'),
-        {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify(query),
-          signal: AbortSignal.timeout(8000),
-        },
-      );
+      const resp = await fetch(hiveRpcUrl.replace('ethereum', 'hive').replace('base', 'hive'), {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(query),
+        signal: AbortSignal.timeout(8000),
+      });
 
       if (resp.ok) {
         const data = (await resp.json()) as {
@@ -948,15 +978,20 @@ export const dtubePlatformWrapper: VideoPlatformWrapper = {
           let jsonMeta: Record<string, unknown> = {};
           try {
             jsonMeta = JSON.parse(post.json_metadata || '{}') as Record<string, unknown>;
-          } catch {/* ignore */}
+          } catch {
+            /* ignore */
+          }
           const videoMeta = jsonMeta.video as Record<string, unknown> | undefined;
           const content = videoMeta?.content as Record<string, unknown> | undefined;
-          const videoUrl = content?.video_url as string || (videoMeta?.video_url as string) || '';
+          const videoUrl = (content?.video_url as string) || (videoMeta?.video_url as string) || '';
 
           if (!videoUrl) continue;
 
           const info = videoMeta?.info as Record<string, unknown> | undefined;
-          const thumb = (info?.snapshot as Record<string, unknown> | undefined)?.url as string || post.image || '';
+          const thumb =
+            ((info?.snapshot as Record<string, unknown> | undefined)?.url as string) ||
+            post.image ||
+            '';
 
           videos.push({
             id: `dtube:${post.post_id}`,
@@ -1053,7 +1088,7 @@ export const odyseePlatformWrapper: VideoPlatformWrapper = {
     return [];
   },
 
-  async getVideos(env: Env, options: VideoQueryOptions): Promise<UnifiedVideo[]> {
+  async getVideos(_env: Env, options: VideoQueryOptions): Promise<UnifiedVideo[]> {
     const videos: UnifiedVideo[] = [];
     try {
       const limit = options.limit ?? 20;
@@ -1087,17 +1122,17 @@ export const odyseePlatformWrapper: VideoPlatformWrapper = {
         for (const item of data?.result?.items ?? []) {
           const value = item.value as Record<string, unknown> | undefined;
           const source = value?.source as Record<string, unknown> | undefined;
-          const videoUrl = source?.media_url as string || source?.sd_hash as string || '';
+          const videoUrl = (source?.media_url as string) || (source?.sd_hash as string) || '';
           const thumbObj = value?.thumbnail as { url?: string } | string | undefined;
-          const thumbnail = typeof thumbObj === 'string' ? thumbObj : thumbObj?.url ?? '';
-          const author = item.author as string || 'unknown';
+          const thumbnail = typeof thumbObj === 'string' ? thumbObj : (thumbObj?.url ?? '');
+          const author = (item.author as string) || 'unknown';
 
           if (!videoUrl) continue;
 
           videos.push({
             id: `odysee:${item.claim_id as string}`,
             source: 'odysee',
-            title: value?.title as string || 'Odysee Video',
+            title: (value?.title as string) || 'Odysee Video',
             description: (value?.description as string) || '',
             duration: (value?.duration as number) || 0,
             thumbnailUrl: thumbnail,
@@ -1145,7 +1180,7 @@ export const odyseePlatformWrapper: VideoPlatformWrapper = {
       }));
   },
 
-  async healthCheck(env: Env): Promise<PlatformHealth> {
+  async healthCheck(_env: Env): Promise<PlatformHealth> {
     const start = Date.now();
     try {
       const resp = await fetch('https://api.lbry.tv/api/v1/proxy', {
@@ -1334,9 +1369,12 @@ export const bittubePlatformWrapper: VideoPlatformWrapper = {
       const ipfsGateway = env.DEGENFEED_CDN_URL || 'https://ipfs.io';
       const apiUrl = 'https://api.bittube.app';
 
-      const resp = await fetch(`${apiUrl}/video/list?limit=${limit}&sort=${options.sort || 'trending'}`, {
-        signal: AbortSignal.timeout(8000),
-      });
+      const resp = await fetch(
+        `${apiUrl}/video/list?limit=${limit}&sort=${options.sort || 'trending'}`,
+        {
+          signal: AbortSignal.timeout(8000),
+        },
+      );
 
       if (resp.ok) {
         const data = (await resp.json()) as {
@@ -1362,9 +1400,7 @@ export const bittubePlatformWrapper: VideoPlatformWrapper = {
             title: video.title || 'BitTube Video',
             description: video.description || '',
             duration: video.duration || 0,
-            thumbnailUrl: video.thumbnailHash
-              ? `${ipfsGateway}/ipfs/${video.thumbnailHash}`
-              : '',
+            thumbnailUrl: video.thumbnailHash ? `${ipfsGateway}/ipfs/${video.thumbnailHash}` : '',
             videoUrl: `${ipfsGateway}/ipfs/${video.ipfsHash}`,
             views: 0,
             likes: 0,
@@ -1458,7 +1494,7 @@ async function fetchNostrEvents(
   for (const relayUrl of relayUrls) {
     try {
       const ws = new WebSocket(relayUrl);
-      const events = await new Promise<NostrEvent[]>((resolve, reject) => {
+      const events = await new Promise<NostrEvent[]>((resolve, _reject) => {
         const results: NostrEvent[] = [];
         const timeout = setTimeout(() => {
           ws.close();
@@ -1480,7 +1516,9 @@ async function fetchNostrEvents(
               ws.close();
               resolve(results);
             }
-          } catch {/* ignore */}
+          } catch {
+            /* ignore */
+          }
         };
 
         ws.onerror = () => {
@@ -1520,9 +1558,7 @@ export async function aggregateAllVideos(
   options: VideoQueryOptions = {},
 ): Promise<UnifiedVideo[]> {
   const wrappers = getAllWrappers();
-  const results = await Promise.allSettled(
-    wrappers.map((w) => w.getVideos(env, options)),
-  );
+  const results = await Promise.allSettled(wrappers.map((w) => w.getVideos(env, options)));
 
   const allVideos: UnifiedVideo[] = [];
   for (const result of results) {
@@ -1548,9 +1584,7 @@ export async function aggregateAllShorts(
   options: ShortsQueryOptions = {},
 ): Promise<AggregatedShort[]> {
   const wrappers = getAllWrappers();
-  const results = await Promise.allSettled(
-    wrappers.map((w) => w.getShorts(env, options)),
-  );
+  const results = await Promise.allSettled(wrappers.map((w) => w.getShorts(env, options)));
 
   const allShorts: AggregatedShort[] = [];
   for (const result of results) {
@@ -1569,9 +1603,7 @@ export async function aggregateAllShorts(
  */
 export async function aggregateAllLiveStreams(env: Env): Promise<UnifiedLiveStream[]> {
   const wrappers = getAllWrappers();
-  const results = await Promise.allSettled(
-    wrappers.map((w) => w.detectLiveStreams(env)),
-  );
+  const results = await Promise.allSettled(wrappers.map((w) => w.detectLiveStreams(env)));
 
   const allStreams: UnifiedLiveStream[] = [];
   for (const result of results) {

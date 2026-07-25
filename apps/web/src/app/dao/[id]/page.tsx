@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { formatTimeAgo, MOCK_DAO, shortAddr } from './layout';
 
 // ─── Types ─────────────────────────────────────────────────────────────
@@ -178,7 +178,7 @@ function getProposalStatusInfo(
   status: Proposal['status'],
   forVotes: number,
   againstVotes: number,
-  endTime: number,
+  _endTime: number,
 ) {
   if (status === 'passed')
     return { label: 'Passed', color: 'text-degen-400', bg: 'bg-degen-500/15' };
@@ -314,9 +314,9 @@ function ProposalCard({ proposal }: { proposal: Proposal }) {
   );
   const typeBadge = getTypeBadge(proposal.type);
   const total = proposal.forVotes + proposal.againstVotes + proposal.abstainVotes;
-  const forPct = (proposal.forVotes / total) * 100;
-  const againstPct = (proposal.againstVotes / total) * 100;
-  const abstainPct = (proposal.abstainVotes / total) * 100;
+  const _forPct = (proposal.forVotes / total) * 100;
+  const _againstPct = (proposal.againstVotes / total) * 100;
+  const _abstainPct = (proposal.abstainVotes / total) * 100;
 
   return (
     <Link

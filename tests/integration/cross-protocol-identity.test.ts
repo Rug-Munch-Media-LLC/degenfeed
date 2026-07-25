@@ -169,7 +169,7 @@ describe('Cross-Protocol Identity: Resolution Chain', () => {
 
     const resolved = resolveByWallet('0x1234...dead');
     expect(resolved).toBeDefined();
-    expect(resolved!.dfId).toBe('df:vitalik');
+    expect(resolved?.dfId).toBe('df:vitalik');
 
     const protocols = getLinkedProtocols('df:vitalik');
     expect(protocols).toContain('farcaster');
@@ -211,10 +211,10 @@ describe('Cross-Protocol Identity: ENS → Nostr → Lightning', () => {
     const resolver = new IdentityResolver();
     const handle = await resolver.resolveNip05('vitalik@vitalik.btc', mockFetch);
     expect(handle).not.toBeNull();
-    expect(handle!.protocol).toBe('nostr');
-    expect(handle!.userId).toBe('npub1vitalikabc123def456');
-    expect(handle!.verified).toBe(true);
-    console.log('[PASS] NIP-05 resolved to Nostr pubkey:', handle!.userId);
+    expect(handle?.protocol).toBe('nostr');
+    expect(handle?.userId).toBe('npub1vitalikabc123def456');
+    expect(handle?.verified).toBe(true);
+    console.log('[PASS] NIP-05 resolved to Nostr pubkey:', handle?.userId);
   });
 
   it('falls back gracefully for unresolved NIP-05 addresses', async () => {
@@ -244,10 +244,10 @@ describe('Cross-Protocol Identity: Conflict Detection', () => {
     expect(resolved2).toBeDefined();
     // Same dfId keeps original display info — the identity store
     // updates protocol entries but keeps the top-level displayName
-    expect(resolved2!.dfId).toBe('df:user1');
-    const fcEntry = resolved2!.protocols.find((p) => p.protocol === 'farcaster');
+    expect(resolved2?.dfId).toBe('df:user1');
+    const fcEntry = resolved2?.protocols.find((p) => p.protocol === 'farcaster');
     expect(fcEntry).toBeDefined();
-    expect(fcEntry!.handle).toBe('user2_fc'); // handle was updated
+    expect(fcEntry?.handle).toBe('user2_fc'); // handle was updated
 
     // Conflict identified: same FID now has a different handle than originally set
     // (handle changed from user1_fc to user2_fc)
@@ -260,7 +260,7 @@ describe('Cross-Protocol Identity: Conflict Detection', () => {
     linkIdentity('df:userA', '0xabc', 'nostr', 'npub_userA', 'userA_nostr');
     const first = resolveByWallet('0xabc');
     expect(first).toBeDefined();
-    expect(first!.dfId).toBe('df:userA');
+    expect(first?.dfId).toBe('df:userA');
 
     // Different wallet -> no conflict
     const second = resolveByWallet('0xnonexistent');

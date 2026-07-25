@@ -59,103 +59,109 @@ const TIERS = [
 const FEATURES: Feature[] = [
   {
     category: 'Core',
-    name: 'Browse all protocols',
+    name: 'Browse all public feeds',
     free: true,
-    creator: true,
     pro: true,
+    creator: true,
     enterprise: true,
   },
-  { name: 'Join communities', free: true, creator: true, pro: true, enterprise: true },
-  { name: 'Verified badge', free: true, creator: true, pro: true, enterprise: true },
-  { name: '0% platform fees on tips', free: true, creator: true, pro: true, enterprise: true },
+  { name: 'Connect 1 protocol identity', free: true, pro: true, creator: true, enterprise: true },
+  {
+    name: 'Connect ALL protocol identities',
+    free: false,
+    pro: true,
+    creator: true,
+    enterprise: true,
+  },
+  { name: 'Verified badge', free: false, pro: true, creator: true, enterprise: true },
+  { name: '0% platform fees on tips', free: true, pro: true, creator: true, enterprise: true },
   {
     category: 'Publishing',
-    name: 'Post to 3 protocols',
+    name: 'Basic posts on 3 protocols',
     free: true,
-    creator: true,
     pro: true,
+    creator: true,
     enterprise: true,
   },
-  { name: 'Post to ALL protocols', free: false, creator: true, pro: true, enterprise: true },
-  { name: 'Scheduled posts', free: false, creator: true, pro: true, enterprise: true },
+  { name: 'Cross-post to 10 protocols', free: false, pro: true, creator: true, enterprise: true },
+  { name: 'Cross-post to ALL protocols', free: false, pro: false, creator: true, enterprise: true },
+  { name: '10 scheduled posts', free: true, pro: true, creator: true, enterprise: true },
+  { name: '100 scheduled posts', free: false, pro: true, creator: true, enterprise: true },
   {
-    name: 'Cross-network (X, YouTube, Reddit)',
+    name: 'Unlimited scheduling + Buffer calendar',
     free: false,
+    pro: false,
+    creator: true,
+    enterprise: true,
+  },
+  { name: 'AI-optimized posting times', free: false, pro: false, creator: true, enterprise: true },
+  {
+    name: 'External platforms (LinkedIn, FB, X)',
+    free: false,
+    pro: false,
     creator: false,
-    pro: true,
     enterprise: true,
   },
   {
     category: 'Monetization',
-    name: 'Creator coins (deploy)',
+    name: 'Creator coin creation',
     free: false,
-    creator: '1 free',
-    pro: '5 free',
-    enterprise: 'Unlimited',
-  },
-  { name: 'Token-gated content', free: false, creator: true, pro: true, enterprise: true },
-  { name: 'Subscription tiers', free: false, creator: true, pro: true, enterprise: true },
-  {
-    category: 'Live',
-    name: 'Live streaming (solo)',
-    free: false,
+    pro: false,
     creator: true,
-    pro: true,
     enterprise: true,
   },
-  { name: 'Spaces (audio)', free: false, creator: true, pro: true, enterprise: true },
-  { name: 'Multi-creator collab', free: false, creator: false, pro: true, enterprise: true },
-  { name: 'Simulcast to 7 platforms', free: false, creator: false, pro: true, enterprise: true },
+  { name: 'Newsletter creation', free: false, pro: false, creator: true, enterprise: true },
+  { name: 'Newsletter monetization', free: false, pro: false, creator: true, enterprise: true },
+  { name: 'Revenue tracking', free: false, pro: false, creator: true, enterprise: true },
+  {
+    category: 'Messaging',
+    name: 'Cross-network messaging (DMs)',
+    free: false,
+    pro: true,
+    creator: true,
+    enterprise: true,
+  },
   {
     category: 'Analytics',
     name: 'Basic analytics',
-    free: false,
-    creator: true,
-    pro: true,
-    enterprise: true,
-  },
-  { name: 'Advanced dashboard', free: false, creator: false, pro: true, enterprise: true },
-  {
-    name: 'Cross-protocol audience graph',
-    free: false,
-    creator: false,
-    pro: false,
-    enterprise: true,
-  },
-  {
-    category: 'Support',
-    name: 'Community support',
     free: true,
-    creator: true,
     pro: true,
+    creator: true,
     enterprise: true,
   },
-  { name: 'Email support', free: false, creator: false, pro: true, enterprise: true },
-  { name: 'Priority support', free: false, creator: false, pro: false, enterprise: true },
+  { name: 'Full analytics suite', free: false, pro: false, creator: true, enterprise: true },
+  { name: 'Creator dashboard + revenue', free: false, pro: false, creator: true, enterprise: true },
+  {
+    name: 'White-label analytics reports',
+    free: false,
+    pro: false,
+    creator: false,
+    enterprise: true,
+  },
   {
     category: 'Enterprise',
-    name: 'Self-host option',
+    name: 'Self-hosted creator page (custom domain)',
     free: false,
-    creator: false,
     pro: false,
+    creator: false,
+    enterprise: true,
+  },
+  { name: 'API access', free: false, pro: false, creator: false, enterprise: true },
+  { name: 'Team accounts (up to 5)', free: false, pro: false, creator: false, enterprise: true },
+  {
+    name: 'Priority support (4h response)',
+    free: false,
+    pro: false,
+    creator: false,
     enterprise: true,
   },
   {
-    name: 'White-label / custom domain',
+    name: 'Early access to new features',
     free: false,
-    creator: false,
     pro: false,
+    creator: false,
     enterprise: true,
   },
-  { name: 'Dedicated infrastructure', free: false, creator: false, pro: false, enterprise: true },
-  {
-    name: 'SSO / SAML / team management',
-    free: false,
-    creator: false,
-    pro: false,
-    enterprise: true,
-  },
-  { name: 'Custom contract & SLA', free: false, creator: false, pro: false, enterprise: true },
 ];
 
 const FAQS = [
@@ -362,7 +368,7 @@ function ComparisonTable({ billing }: { billing: BillingPeriod }) {
     return g;
   }, []);
 
-  const tiers: Tier[] = ['free', 'creator', 'pro', 'enterprise'];
+  const tiers: Tier[] = ['free', 'pro', 'creator', 'enterprise'];
 
   return (
     <div className="overflow-hidden rounded-2xl border border-[var(--color-glass-border)]">
@@ -372,7 +378,7 @@ function ComparisonTable({ billing }: { billing: BillingPeriod }) {
             <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
               Feature
             </th>
-            {['Free', 'Creator', 'Pro', 'Enterprise'].map((l, i) => (
+            {['Free', 'Pro', 'Creator', 'Enterprise'].map((l, i) => (
               <th
                 key={l}
                 className={`px-4 py-3 text-center text-xs font-semibold ${i === 2 ? 'text-degen-400' : 'text-[var(--color-muted)]'}`}

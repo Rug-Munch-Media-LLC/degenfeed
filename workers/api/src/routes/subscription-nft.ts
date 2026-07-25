@@ -177,7 +177,7 @@ export async function handleSubscriptionNftCreate(request: Request, env: Env): P
   const durationDays =
     typeof body.durationDays === 'number'
       ? body.durationDays
-      : Number.parseInt(sanitizeString(String(body.durationDays), 16));
+      : Number.parseInt(sanitizeString(String(body.durationDays), 16), 10);
   const chain = sanitizeString(body.chain, 32) || 'base';
   const benefits = Array.isArray(body.benefits)
     ? body.benefits.map((b: string) => sanitizeString(b, 200)).filter(Boolean)

@@ -35,7 +35,7 @@ export const peertubeAdapter: PlatformAdapter = {
 
     const hashtags = formatHashtags(master.hashtags ?? [], 'bare');
     if (hashtags.length > 0) {
-      description += '\n\nTags: ' + hashtags.map((h) => `#${h}`).join(', ');
+      description += `\n\nTags: ${hashtags.map((h) => `#${h}`).join(', ')}`;
     }
 
     if (master.linkCard) {
@@ -91,11 +91,11 @@ export const peertubeAdapter: PlatformAdapter = {
       preview += '\n⚠️ No video media found — will fail without a video file';
     }
 
-    preview += '\n' + master.text.slice(0, 300);
+    preview += `\n${master.text.slice(0, 300)}`;
     if (master.text.length > 300) preview += '...';
 
     if (master.hashtags && master.hashtags.length > 0) {
-      preview += '\n🏷️ Tags: ' + master.hashtags.join(', ');
+      preview += `\n🏷️ Tags: ${master.hashtags.join(', ')}`;
     }
 
     return preview;

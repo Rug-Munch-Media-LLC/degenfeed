@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import type { CreatorEvent, FlashSale } from '../bonding-curve';
 import {
   applyCreatorEventDiscount,
@@ -541,7 +541,7 @@ describe('Milestones', () => {
   it('getNextMilestone returns the next un-reached milestone', () => {
     const next = getNextMilestone(30);
     expect(next).not.toBeNull();
-    expect(next!.percent).toBe(50);
+    expect(next?.percent).toBe(50);
   });
 
   it('getNextMilestone returns null at 100%', () => {

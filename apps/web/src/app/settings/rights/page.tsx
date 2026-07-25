@@ -160,7 +160,10 @@ function ScoreGauge({ score, maxScore, breakdown }: SovereigntyScore) {
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-2xl font-bold text-[var(--color-fg)]" style={{ color: strokeColor }}>
+          <span
+            className="text-2xl font-bold text-[var(--color-fg)]"
+            style={{ color: strokeColor }}
+          >
             {score}
           </span>
           <span className="text-[10px] text-[var(--color-muted)]">/ {maxScore}</span>
@@ -172,13 +175,13 @@ function ScoreGauge({ score, maxScore, breakdown }: SovereigntyScore) {
         <div className="flex items-center justify-between text-xs">
           <span className="text-[var(--color-muted)]">Network diversity</span>
           <span className="font-medium text-[var(--color-fg)]">
-            {(breakdown.networkCount / 15 * 25).toFixed(0)} / 25
+            {((breakdown.networkCount / 15) * 25).toFixed(0)} / 25
           </span>
         </div>
         <div className="flex items-center justify-between text-xs">
           <span className="text-[var(--color-muted)]">Rights &amp; achievements</span>
           <span className="font-medium text-[var(--color-fg)]">
-            {(breakdown.rightCount / 30 * 25).toFixed(0)} / 25
+            {((breakdown.rightCount / 30) * 25).toFixed(0)} / 25
           </span>
         </div>
         <div className="flex items-center justify-between text-xs">
@@ -206,11 +209,7 @@ function ScoreGauge({ score, maxScore, breakdown }: SovereigntyScore) {
 
 // ─── Network Badge ────────────────────────────────────────────────────
 
-function NetworkBadge({
-  network,
-}: {
-  network: NetworkMembership;
-}) {
+function NetworkBadge({ network }: { network: NetworkMembership }) {
   const statusColors: Record<string, string> = {
     active: 'bg-degen-500/15 text-degen-400',
     inactive: 'bg-[var(--color-overlay)] text-[var(--color-muted)]',
@@ -236,15 +235,16 @@ function NetworkBadge({
     solana: '#9945ff',
   };
 
-  const daysAgo = Math.floor(
-    (Date.now() - network.joinedAt) / (1000 * 60 * 60 * 24),
-  );
+  const daysAgo = Math.floor((Date.now() - network.joinedAt) / (1000 * 60 * 60 * 24));
 
   return (
     <div className="flex items-center gap-3 rounded-lg border border-[var(--color-glass-border)] px-4 py-3">
       <div
         className="flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold"
-        style={{ backgroundColor: `${protocolColors[network.protocol] || '#666'}20`, color: protocolColors[network.protocol] || '#666' }}
+        style={{
+          backgroundColor: `${protocolColors[network.protocol] || '#666'}20`,
+          color: protocolColors[network.protocol] || '#666',
+        }}
       >
         {network.protocol.charAt(0).toUpperCase()}
       </div>
@@ -253,7 +253,9 @@ function NetworkBadge({
           <span className="text-sm font-medium text-[var(--color-fg)] capitalize">
             {network.protocol}
           </span>
-          <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${statusColors[network.status] || 'bg-[var(--color-overlay)] text-[var(--color-muted)]'}`}>
+          <span
+            className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${statusColors[network.status] || 'bg-[var(--color-overlay)] text-[var(--color-muted)]'}`}
+          >
             {network.status}
           </span>
           {network.verified && (
@@ -273,11 +275,10 @@ function NetworkBadge({
             </svg>
           )}
         </div>
-        <p className="truncate text-xs text-[var(--color-muted)]">
-          {network.identifier}
-        </p>
+        <p className="truncate text-xs text-[var(--color-muted)]">{network.identifier}</p>
         <p className="text-[10px] text-[var(--color-muted)]">
-          Joined {daysAgo > 0 ? `${daysAgo} days ago` : 'today'} · {network.rightCount} right{network.rightCount !== 1 ? 's' : ''}
+          Joined {daysAgo > 0 ? `${daysAgo} days ago` : 'today'} · {network.rightCount} right
+          {network.rightCount !== 1 ? 's' : ''}
         </p>
       </div>
     </div>
@@ -296,34 +297,26 @@ function RightCard({ right }: { right: NetworkRight }) {
     reputation: '⭐',
   };
 
-  const daysAgo = Math.floor(
-    (Date.now() - right.grantedAt) / (1000 * 60 * 60 * 24),
-  );
+  const daysAgo = Math.floor((Date.now() - right.grantedAt) / (1000 * 60 * 60 * 24));
 
   return (
     <div
       className={`rounded-lg border px-4 py-3 transition-colors ${
-        right.active
-          ? 'border-[var(--color-glass-border)]'
-          : 'border-red-500/10 opacity-60'
+        right.active ? 'border-[var(--color-glass-border)]' : 'border-red-500/10 opacity-60'
       }`}
     >
       <div className="flex items-start gap-3">
         <span className="text-lg">{typeIcons[right.type] || '📋'}</span>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-[var(--color-fg)]">
-              {right.name}
-            </span>
+            <span className="text-sm font-medium text-[var(--color-fg)]">{right.name}</span>
             {!right.active && (
               <span className="rounded-full bg-red-500/15 px-2 py-0.5 text-[10px] font-medium text-red-400">
                 Inactive
               </span>
             )}
           </div>
-          <p className="text-xs text-[var(--color-muted)] line-clamp-2">
-            {right.description}
-          </p>
+          <p className="text-xs text-[var(--color-muted)] line-clamp-2">{right.description}</p>
           <div className="mt-1 flex items-center gap-2 text-[10px] text-[var(--color-muted)]">
             <span className="capitalize">{right.protocol}</span>
             <span>·</span>
@@ -340,9 +333,7 @@ function RightCard({ right }: { right: NetworkRight }) {
 // ─── Attestation Card ─────────────────────────────────────────────────
 
 function AttestationCard({ att }: { att: AttestationRecord }) {
-  const daysAgo = Math.floor(
-    (Date.now() - att.createdAt) / (1000 * 60 * 60 * 24),
-  );
+  const daysAgo = Math.floor((Date.now() - att.createdAt) / (1000 * 60 * 60 * 24));
 
   return (
     <div className="rounded-lg border border-[var(--color-glass-border)] px-4 py-3">
@@ -354,9 +345,7 @@ function AttestationCard({ att }: { att: AttestationRecord }) {
             </span>
             <span
               className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
-                att.active
-                  ? 'bg-degen-500/15 text-degen-400'
-                  : 'bg-red-500/15 text-red-400'
+                att.active ? 'bg-degen-500/15 text-degen-400' : 'bg-red-500/15 text-red-400'
               }`}
             >
               {att.active ? 'Active' : 'Revoked'}
@@ -448,30 +437,31 @@ export default function DigitalRightsPage() {
   const [attestations, setAttestations] = useState<AttestationRecord[]>([]);
   const [didDocument, setDidDocument] = useState<DidDocument | null>(null);
   const [portableBundle, setPortableBundle] = useState<PortableBundle | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'rights' | 'attestations' | 'identity'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'rights' | 'attestations' | 'identity'>(
+    'overview',
+  );
   const [exporting, setExporting] = useState(false);
 
   const fetchAllData = useCallback(async () => {
     if (!walletAddress) return;
 
     try {
-      const [scoreRes, manifestRes, rightsRes, attestRes, didRes, bundleRes] =
-        await Promise.all([
-          fetch('/api/rights/sovereignty-score', { credentials: 'include' }),
-          fetch('/api/rights/manifest', { credentials: 'include' }),
-          fetch('/api/identity/rights', { credentials: 'include' }),
-          fetch('/api/identity/attestations', { credentials: 'include' }),
-          fetch('/api/identity/did', { credentials: 'include' }),
-          fetch('/api/identity/portable-bundle', { credentials: 'include' }),
-        ]);
+      const [scoreRes, manifestRes, rightsRes, attestRes, didRes, bundleRes] = await Promise.all([
+        fetch('/api/rights/sovereignty-score', { credentials: 'include' }),
+        fetch('/api/rights/manifest', { credentials: 'include' }),
+        fetch('/api/identity/rights', { credentials: 'include' }),
+        fetch('/api/identity/attestations', { credentials: 'include' }),
+        fetch('/api/identity/did', { credentials: 'include' }),
+        fetch('/api/identity/portable-bundle', { credentials: 'include' }),
+      ]);
 
       if (scoreRes.ok) {
         const data = (await scoreRes.json()) as { data: SovereigntyScore };
-        setSovereignty(data.data ?? data as unknown as SovereigntyScore);
+        setSovereignty(data.data ?? (data as unknown as SovereigntyScore));
       }
       if (manifestRes.ok) {
         const data = (await manifestRes.json()) as { data: RightsManifest };
-        setManifest(data.data ?? data as unknown as RightsManifest);
+        setManifest(data.data ?? (data as unknown as RightsManifest));
       }
       if (rightsRes.ok) {
         const data = (await rightsRes.json()) as { data: NetworkRight[] };
@@ -489,7 +479,7 @@ export default function DigitalRightsPage() {
         const data = (await bundleRes.json()) as { data: PortableBundle };
         setPortableBundle(data.data ?? null);
       }
-    } catch (err) {
+    } catch (_err) {
       showToast('error', 'Failed to load rights data');
     } finally {
       setLoading(false);
@@ -610,7 +600,10 @@ export default function DigitalRightsPage() {
 
       {/* === Sovereignty Score Section ============================ */}
       <section className="mb-8" aria-labelledby="heading-sovereignty">
-        <h2 id="heading-sovereignty" className="mb-3 text-base font-semibold text-[var(--color-fg)]">
+        <h2
+          id="heading-sovereignty"
+          className="mb-3 text-base font-semibold text-[var(--color-fg)]"
+        >
           Sovereignty Score
         </h2>
         <div className="overflow-hidden rounded-2xl border border-[var(--color-glass-border)] bg-[var(--color-card)]">
@@ -619,7 +612,8 @@ export default function DigitalRightsPage() {
               <ScoreGauge {...sovereignty} />
             ) : (
               <p className="text-sm text-[var(--color-muted)]">
-                No score yet. Link your first network identity to start building your sovereignty score.
+                No score yet. Link your first network identity to start building your sovereignty
+                score.
               </p>
             )}
           </div>
@@ -663,11 +657,15 @@ export default function DigitalRightsPage() {
             <div className="space-y-2">
               {manifest && manifest.networks.length > 0 ? (
                 manifest.networks.map((network) => (
-                  <NetworkBadge key={`${network.protocol}-${network.identifier}`} network={network} />
+                  <NetworkBadge
+                    key={`${network.protocol}-${network.identifier}`}
+                    network={network}
+                  />
                 ))
               ) : (
                 <p className="text-sm text-[var(--color-muted)] py-4">
-                  No network memberships yet. Link your first identity in Settings {'>'} Connected Accounts.
+                  No network memberships yet. Link your first identity in Settings {'>'} Connected
+                  Accounts.
                 </p>
               )}
             </div>
@@ -684,11 +682,15 @@ export default function DigitalRightsPage() {
                 <p className="text-xs text-[var(--color-muted)]">Networks</p>
               </div>
               <div className="rounded-lg border border-[var(--color-glass-border)] px-4 py-3">
-                <p className="text-2xl font-bold text-[var(--color-fg)]">{manifest?.totalRights || 0}</p>
+                <p className="text-2xl font-bold text-[var(--color-fg)]">
+                  {manifest?.totalRights || 0}
+                </p>
                 <p className="text-xs text-[var(--color-muted)]">Total Rights</p>
               </div>
               <div className="rounded-lg border border-[var(--color-glass-border)] px-4 py-3">
-                <p className="text-2xl font-bold text-degen-400">{manifest?.activeMemberships || 0}</p>
+                <p className="text-2xl font-bold text-degen-400">
+                  {manifest?.activeMemberships || 0}
+                </p>
                 <p className="text-xs text-[var(--color-muted)]">Active</p>
               </div>
               <div className="rounded-lg border border-[var(--color-glass-border)] px-4 py-3">
@@ -701,7 +703,10 @@ export default function DigitalRightsPage() {
           {/* Manifest hash for verification */}
           {manifest && (
             <section aria-labelledby="heading-manifest">
-              <h3 id="heading-manifest" className="mb-3 text-sm font-semibold text-[var(--color-fg)]">
+              <h3
+                id="heading-manifest"
+                className="mb-3 text-sm font-semibold text-[var(--color-fg)]"
+              >
                 Verification
               </h3>
               <div className="rounded-lg border border-[var(--color-glass-border)] bg-[var(--color-card)] px-4 py-3">
@@ -710,8 +715,8 @@ export default function DigitalRightsPage() {
                   {manifest.manifestHash}
                 </code>
                 <p className="mt-2 text-[10px] text-[var(--color-muted)]">
-                  This hash cryptographically verifies your rights manifest. Share it with anyone who
-                  needs to verify your network membership.
+                  This hash cryptographically verifies your rights manifest. Share it with anyone
+                  who needs to verify your network membership.
                 </p>
               </div>
             </section>
@@ -726,9 +731,7 @@ export default function DigitalRightsPage() {
             Rights are granted permanently and cannot be revoked. Inactive rights are shown dimmed.
           </p>
           {rights.length > 0 ? (
-            rights.map((right) => (
-              <RightCard key={right.id} right={right} />
-            ))
+            rights.map((right) => <RightCard key={right.id} right={right} />)
           ) : (
             <p className="rounded-lg border border-[var(--color-glass-border)] px-4 py-6 text-center text-sm text-[var(--color-muted)]">
               No rights have been granted yet. Rights are earned through network participation,
@@ -761,12 +764,24 @@ export default function DigitalRightsPage() {
                 <strong className="text-[var(--color-fg)]">Right Types:</strong>
               </p>
               <ul className="list-inside list-disc space-y-1">
-                <li><strong>Membership</strong> — Network membership and identity</li>
-                <li><strong>Contribution</strong> — Content contributions and community engagement</li>
-                <li><strong>Achievement</strong> — Milestones and earned achievements</li>
-                <li><strong>Governance</strong> — DAO participation and voting rights</li>
-                <li><strong>Content</strong> — Content licensing and usage rights</li>
-                <li><strong>Reputation</strong> — Reputation scores and trust signals</li>
+                <li>
+                  <strong>Membership</strong> — Network membership and identity
+                </li>
+                <li>
+                  <strong>Contribution</strong> — Content contributions and community engagement
+                </li>
+                <li>
+                  <strong>Achievement</strong> — Milestones and earned achievements
+                </li>
+                <li>
+                  <strong>Governance</strong> — DAO participation and voting rights
+                </li>
+                <li>
+                  <strong>Content</strong> — Content licensing and usage rights
+                </li>
+                <li>
+                  <strong>Reputation</strong> — Reputation scores and trust signals
+                </li>
               </ul>
             </div>
           </details>
@@ -777,17 +792,15 @@ export default function DigitalRightsPage() {
       {activeTab === 'attestations' && (
         <div className="space-y-4">
           <p className="text-xs text-[var(--color-muted)]">
-            W3C Verifiable Credentials cryptographically prove your identity on each protocol.
-            Each attestation is independently verifiable without DegenFeed.
+            W3C Verifiable Credentials cryptographically prove your identity on each protocol. Each
+            attestation is independently verifiable without DegenFeed.
           </p>
           {attestations.length > 0 ? (
-            attestations.map((att) => (
-              <AttestationCard key={att.id} att={att} />
-            ))
+            attestations.map((att) => <AttestationCard key={att.id} att={att} />)
           ) : (
             <p className="rounded-lg border border-[var(--color-glass-border)] px-4 py-6 text-center text-sm text-[var(--color-muted)]">
-              No attestations created yet. Attestations are automatically created when you link
-              your first identity.
+              No attestations created yet. Attestations are automatically created when you link your
+              first identity.
             </p>
           )}
         </div>
@@ -816,9 +829,7 @@ export default function DigitalRightsPage() {
                       <ul className="mt-0.5 space-y-1">
                         {didDocument.alsoKnownAs.map((aka) => (
                           <li key={aka}>
-                            <code className="text-xs text-[var(--color-fg)] break-all">
-                              {aka}
-                            </code>
+                            <code className="text-xs text-[var(--color-fg)] break-all">{aka}</code>
                           </li>
                         ))}
                       </ul>
@@ -833,7 +844,9 @@ export default function DigitalRightsPage() {
                         <li key={vm.id}>
                           <code className="text-xs text-[var(--color-fg)]">
                             {vm.type}
-                            {vm.blockchainAccountId ? ` · ${vm.blockchainAccountId.slice(0, 14)}...` : ''}
+                            {vm.blockchainAccountId
+                              ? ` · ${vm.blockchainAccountId.slice(0, 14)}...`
+                              : ''}
                           </code>
                         </li>
                       ))}
@@ -881,9 +894,8 @@ export default function DigitalRightsPage() {
                     your DID Document, protocol identities, and attestation references.
                   </p>
                   <p className="text-xs text-[var(--color-muted)]">
-                    Connected protocols: {
-                      portableBundle.protocols.map((p) => p.protocol).join(', ') || 'None'
-                    }
+                    Connected protocols:{' '}
+                    {portableBundle.protocols.map((p) => p.protocol).join(', ') || 'None'}
                   </p>
                   <button
                     type="button"
@@ -897,8 +909,8 @@ export default function DigitalRightsPage() {
               ) : (
                 <div className="space-y-3">
                   <p className="text-sm text-[var(--color-muted)]">
-                    No portable identity bundle yet. Bundles are generated when you have at least one
-                    linked identity and attestation.
+                    No portable identity bundle yet. Bundles are generated when you have at least
+                    one linked identity and attestation.
                   </p>
                 </div>
               )}
@@ -918,8 +930,8 @@ export default function DigitalRightsPage() {
                     You are never locked in
                   </p>
                   <p className="mt-1 text-xs text-[var(--color-muted)]">
-                    Your identity, content, followers, and coins travel with you. If you ever want to
-                    leave DegenFeed, you keep everything.
+                    Your identity, content, followers, and coins travel with you. If you ever want
+                    to leave DegenFeed, you keep everything.
                   </p>
                   <div className="mt-3 flex gap-2">
                     <a

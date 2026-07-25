@@ -15,22 +15,9 @@
 import type { Address } from 'viem';
 import type { Env } from '../index';
 import { jsonResponse } from '../index';
-import {
-  GrantsService,
-  getApplicationStatusLabel,
-  getMilestoneProgress,
-} from '../lib/grants-service';
-import {
-  formatUsd,
-  getInvestmentTypeLabel,
-  getRiskColor,
-  InvestmentService,
-} from '../lib/investment-service';
-import {
-  formatSignatureProgress,
-  getTransactionTypeName,
-  MultiSigService,
-} from '../lib/multisig-service';
+import { GrantsService } from '../lib/grants-service';
+import { InvestmentService } from '../lib/investment-service';
+import { formatSignatureProgress, MultiSigService } from '../lib/multisig-service';
 import {
   flowRateToMonthly,
   formatFlowRate,
@@ -145,7 +132,7 @@ export async function handleMultisigSign(request: Request, env: Env): Promise<Re
   if (!txId) return jsonResponse({ error: 'Missing transaction ID' }, 400);
 
   const body = await parseBody(request);
-  if (!body || !body.signer) {
+  if (!body?.signer) {
     return jsonResponse({ error: 'Missing signer address' }, 400);
   }
 
@@ -204,7 +191,7 @@ export async function handleMultisigCancel(request: Request, env: Env): Promise<
   if (!txId) return jsonResponse({ error: 'Missing transaction ID' }, 400);
 
   const body = await parseBody(request);
-  if (!body || !body.cancelledBy) {
+  if (!body?.cancelledBy) {
     return jsonResponse({ error: 'Missing cancelledBy address' }, 400);
   }
 
@@ -371,7 +358,7 @@ export async function handleStreamModify(request: Request, env: Env): Promise<Re
   if (!streamId) return jsonResponse({ error: 'Missing stream ID' }, 400);
 
   const body = await parseBody(request);
-  if (!body || !body.modifiedBy) {
+  if (!body?.modifiedBy) {
     return jsonResponse({ error: 'Missing modifiedBy address' }, 400);
   }
 
@@ -396,7 +383,7 @@ export async function handleStreamCancel(request: Request, env: Env): Promise<Re
   if (!streamId) return jsonResponse({ error: 'Missing stream ID' }, 400);
 
   const body = await parseBody(request);
-  if (!body || !body.cancelledBy) {
+  if (!body?.cancelledBy) {
     return jsonResponse({ error: 'Missing cancelledBy address' }, 400);
   }
 
@@ -421,7 +408,7 @@ export async function handleStreamPause(request: Request, env: Env): Promise<Res
   if (!streamId) return jsonResponse({ error: 'Missing stream ID' }, 400);
 
   const body = await parseBody(request);
-  if (!body || !body.pausedBy) {
+  if (!body?.pausedBy) {
     return jsonResponse({ error: 'Missing pausedBy address' }, 400);
   }
 
@@ -446,7 +433,7 @@ export async function handleStreamResume(request: Request, env: Env): Promise<Re
   if (!streamId) return jsonResponse({ error: 'Missing stream ID' }, 400);
 
   const body = await parseBody(request);
-  if (!body || !body.resumedBy) {
+  if (!body?.resumedBy) {
     return jsonResponse({ error: 'Missing resumedBy address' }, 400);
   }
 
@@ -591,7 +578,7 @@ export async function handleGrantReview(request: Request, env: Env): Promise<Res
   if (!appId) return jsonResponse({ error: 'Missing application ID' }, 400);
 
   const body = await parseBody(request);
-  if (!body || !body.reviewer || !body.comment) {
+  if (!body?.reviewer || !body.comment) {
     return jsonResponse({ error: 'Missing reviewer or comment' }, 400);
   }
 
@@ -622,7 +609,7 @@ export async function handleGrantVote(request: Request, env: Env): Promise<Respo
   if (!appId) return jsonResponse({ error: 'Missing application ID' }, 400);
 
   const body = await parseBody(request);
-  if (!body || !body.voter || !body.choice) {
+  if (!body?.voter || !body.choice) {
     return jsonResponse({ error: 'Missing voter or choice' }, 400);
   }
 
@@ -653,7 +640,7 @@ export async function handleGrantFinalize(request: Request, env: Env): Promise<R
   if (!appId) return jsonResponse({ error: 'Missing application ID' }, 400);
 
   const body = await parseBody(request);
-  if (!body || !body.decision || !body.finalizedBy) {
+  if (!body?.decision || !body.finalizedBy) {
     return jsonResponse({ error: 'Missing decision or finalizedBy' }, 400);
   }
 
@@ -686,7 +673,7 @@ export async function handleGrantSubmitMilestone(request: Request, env: Env): Pr
     return jsonResponse({ error: 'Missing milestone or application ID' }, 400);
 
   const body = await parseBody(request);
-  if (!body || !body.proof) {
+  if (!body?.proof) {
     return jsonResponse({ error: 'Missing proof' }, 400);
   }
 
@@ -755,7 +742,10 @@ export async function handleInvestmentYields(request: Request, env: Env): Promis
     const opportunities = await service.getYieldOpportunities({ type, maxRisk, minApy, limit });
     return jsonResponse({ data: opportunities });
   } catch (err: unknown) {
-    return jsonResponse({ error: (err as Error).message || 'Failed to get yield opportunities' }, 400);
+    return jsonResponse(
+      { error: (err as Error).message || 'Failed to get yield opportunities' },
+      400,
+    );
   }
 }
 
@@ -831,7 +821,7 @@ export async function handleInvestmentVote(request: Request, env: Env): Promise<
   if (!proposalId) return jsonResponse({ error: 'Missing proposal ID' }, 400);
 
   const body = await parseBody(request);
-  if (!body || !body.voter || !body.choice) {
+  if (!body?.voter || !body.choice) {
     return jsonResponse({ error: 'Missing voter or choice' }, 400);
   }
 

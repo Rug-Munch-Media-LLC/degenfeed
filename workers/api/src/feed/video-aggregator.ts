@@ -24,17 +24,22 @@ import { VIDEO_PLATFORM_COLORS, VIDEO_PLATFORM_LABELS } from '../lib/creator-res
 
 // ─── Video bridge imports ─────────────────────────────────────────────────
 
+import { fetchZoraTrendingVideos } from '../lib/zora-deep';
 import {
   fetchBitchuteChannelVideos,
   fetchBitchuteTrending,
   searchBitchute,
 } from './video-bridges/bitchute';
+import { fetchBlueskyVideoFeed } from './video-bridges/bluesky-video';
 import {
   fetchDailymotionChannelVideos,
   fetchDailymotionTrending,
   searchDailymotion,
 } from './video-bridges/dailymotion';
 import { fetchDTubeChannelVideos, fetchDTubeTrending, searchDTube } from './video-bridges/dtube';
+import { fetchArweaveTrending, fetchIPFSTrending } from './video-bridges/ipfs-arweave-video';
+import { fetchLensTrendingVideos } from './video-bridges/lens-video';
+import { fetchNip71Videos } from './video-bridges/nip71-video';
 import {
   fetchOdyseeChannelVideos,
   fetchOdyseeTrending,
@@ -233,6 +238,55 @@ export class VideoAggregator {
     }
     if (!opts.platforms || opts.platforms.includes('twitch')) {
       fetchers.push(fetchTwitchTrending(category));
+    }
+    // ── New sources: Lens, Bluesky, NIP-71, Zora Video NFTs ────────────
+    if (!opts.platforms || opts.platforms.includes('lens')) {
+      fetchers.push(fetchLensTrendingVideos(category));
+    }
+    if (!opts.platforms || opts.platforms.includes('bluesky')) {
+      fetchers.push(fetchBlueskyVideoFeed());
+    }
+    if (!opts.platforms || opts.platforms.includes('nip71') || opts.platforms.includes('nostr')) {
+      const relayUrls = (this.env.RELAY_URLS ?? '').split(',').filter(Boolean);
+      fetchers.push(fetchNip71Videos(relayUrls, 20));
+    }
+    if (!opts.platforms || opts.platforms.includes('ipfs')) {
+      fetchers.push(fetchIPFSTrending(category, 10));
+    }
+    if (!opts.platforms || opts.platforms.includes('arweave')) {
+      fetchers.push(fetchArweaveTrending(category, 10));
+    }
+    if (!opts.platforms || opts.platforms.includes('zora')) {
+      fetchers.push(
+        fetchZoraTrendingVideos(this.env, { limit: 20, chain: 'BASE' }).then((tokens) =>
+          tokens.map(
+            (t): UnifiedVideo => ({
+              id: `zora-video:${t.contractAddress}:${t.tokenId}`,
+              title: t.name,
+              description: t.description,
+              thumbnail: t.imageUrl ?? '',
+              url: t.videoUrl ?? t.imageUrl ?? '',
+              duration: 0,
+              platform: 'zora' as const,
+              platformLabel: 'Zora',
+              platformColor: '#0052FF',
+              creatorName: t.collectionName,
+              creatorId: t.creator,
+              creatorAvatar: '',
+              creatorUrl: t.zoraUrl,
+              viewCount: 0,
+              likeCount: 0,
+              publishedAt: t.createdAt,
+              publishedMs: new Date(t.createdAt).getTime(),
+              category: 'art',
+              tags: ['nft', 'zora', 'video'],
+              isShort: true,
+              isLive: false,
+              qualityScore: 40,
+            }),
+          ),
+        ),
+      );
     }
 
     const results = await Promise.allSettled(fetchers);

@@ -12,16 +12,14 @@
  * Can also be triggered via POST /api/podcast/curated/refresh (admin).
  */
 
+import { ALL_CURATED_PODCASTS } from '../feed/podcast-curation';
 import type { Env } from '../index';
 import {
   CURATED_LAST_FETCH_KEY,
-  CURATED_LATEST_KEY,
-  CURATED_TRENDING_KEY,
   fetchAllCuratedEpisodes,
   recalculateTrending,
   seedCuratedPodcasts,
 } from '../lib/curated-rss-fetcher';
-import { ALL_CURATED_PODCASTS } from '../feed/podcast-curation';
 
 /**
  * Main entry point: fetch + store + re-rank.
@@ -63,7 +61,9 @@ export async function handlePodcastAggregation(env: Env): Promise<{
   try {
     const episodes = await fetchAllCuratedEpisodes(env.CACHE);
     newEpisodes = episodes.length;
-    console.log(`[podcast-cron] Fetched ${newEpisodes} new episodes from ${ALL_CURATED_PODCASTS.length} feeds`);
+    console.log(
+      `[podcast-cron] Fetched ${newEpisodes} new episodes from ${ALL_CURATED_PODCASTS.length} feeds`,
+    );
   } catch (err) {
     errors.push(`Fetch failed: ${String(err)}`);
   }
@@ -78,7 +78,9 @@ export async function handlePodcastAggregation(env: Env): Promise<{
   // Step 4: Record last fetch timestamp
   try {
     await env.CACHE.put(CURATED_LAST_FETCH_KEY, new Date().toISOString());
-  } catch { /* non-critical */ }
+  } catch {
+    /* non-critical */
+  }
 
   const durationMs = Date.now() - start;
 

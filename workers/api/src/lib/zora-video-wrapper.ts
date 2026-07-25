@@ -225,7 +225,9 @@ export class ZoraVideoWrapper {
             // Apply filters
             const creatorFilter = options.creator;
             if (creatorFilter) {
-              videos = videos.filter((v) => v.creator.toLowerCase() === creatorFilter.toLowerCase());
+              videos = videos.filter(
+                (v) => v.creator.toLowerCase() === creatorFilter.toLowerCase(),
+              );
             }
             if (options.minDuration && options.minDuration > 0) {
               videos = videos.filter((v) => v.duration >= options.minDuration!);
@@ -245,9 +247,7 @@ export class ZoraVideoWrapper {
 
     // Fetch from Zora API
     try {
-      const contracts = this.env.ZORA_VIDEO_CONTRACT
-        ? `["${this.env.ZORA_VIDEO_CONTRACT}"]`
-        : '[]';
+      const contracts = this.env.ZORA_VIDEO_CONTRACT ? `["${this.env.ZORA_VIDEO_CONTRACT}"]` : '[]';
       const chainConfig = CHAIN_CONFIG[chain];
 
       const variables: Record<string, unknown> = {
@@ -351,11 +351,9 @@ export class ZoraVideoWrapper {
 
       // Cache the full result (no cursor = first page = cacheable)
       if (!options.cursor) {
-        await this.env.CACHE?.put(
-          cacheKey,
-          JSON.stringify({ videos, timestamp: Date.now() }),
-          { expirationTtl: 300 },
-        ).catch(() => {});
+        await this.env.CACHE?.put(cacheKey, JSON.stringify({ videos, timestamp: Date.now() }), {
+          expirationTtl: 300,
+        }).catch(() => {});
       }
 
       return {
@@ -385,16 +383,12 @@ export class ZoraVideoWrapper {
 
     // Fetch from trending results (single video query through Zora is expensive)
     const { videos } = await this.getTrendingVideos({ chain, limit: 50 });
-    const video = videos.find(
-      (v) => v.tokenId === tokenId || v.contractAddress === tokenId,
-    );
+    const video = videos.find((v) => v.tokenId === tokenId || v.contractAddress === tokenId);
 
     if (video) {
-      await this.env.CACHE?.put(
-        videoLookupKey(chain, tokenId),
-        JSON.stringify(video),
-        { expirationTtl: 3600 },
-      ).catch(() => {});
+      await this.env.CACHE?.put(videoLookupKey(chain, tokenId), JSON.stringify(video), {
+        expirationTtl: 3600,
+      }).catch(() => {});
     }
 
     return video ?? null;
@@ -459,8 +453,8 @@ export class ZoraVideoWrapper {
 
       const nodes = data?.data?.tokens?.nodes ?? [];
       const coinLink = await this.getLinkedCoin(addr);
-      let totalVolume = 0;
-      let uniqueCollectors = new Set<string>();
+      const totalVolume = 0;
+      const uniqueCollectors = new Set<string>();
 
       const videos: ZoraVideoItem[] = [];
       for (const node of nodes) {
@@ -509,11 +503,9 @@ export class ZoraVideoWrapper {
       };
 
       // Cache for 5 minutes
-      await this.env.CACHE?.put(
-        cacheKey,
-        JSON.stringify({ catalog, timestamp: Date.now() }),
-        { expirationTtl: 300 },
-      ).catch(() => {});
+      await this.env.CACHE?.put(cacheKey, JSON.stringify({ catalog, timestamp: Date.now() }), {
+        expirationTtl: 300,
+      }).catch(() => {});
 
       return catalog;
     } catch (err) {
@@ -577,9 +569,7 @@ export class ZoraVideoWrapper {
   /**
    * Check if a creator has a linked DegenFeed creator coin.
    */
-  async getLinkedCoin(
-    creatorAddress: string,
-  ): Promise<{ exists: boolean; address?: string }> {
+  async getLinkedCoin(creatorAddress: string): Promise<{ exists: boolean; address?: string }> {
     try {
       const raw = await this.env.CACHE?.get(coinLinkKey(creatorAddress.toLowerCase()));
       if (raw) {
@@ -595,10 +585,7 @@ export class ZoraVideoWrapper {
   /**
    * Link a DegenFeed creator coin to a Zora creator address.
    */
-  async linkCreatorCoin(
-    creatorAddress: string,
-    coinAddress: string,
-  ): Promise<void> {
+  async linkCreatorCoin(creatorAddress: string, coinAddress: string): Promise<void> {
     await this.env.CACHE?.put(
       coinLinkKey(creatorAddress.toLowerCase()),
       JSON.stringify({ coinAddress: coinAddress.toLowerCase(), linkedAt: Date.now() }),

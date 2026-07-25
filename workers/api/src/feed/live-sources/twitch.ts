@@ -126,14 +126,14 @@ interface TwitchTokenResponse {
 
 const CATEGORY_GAME_MAP: Record<string, string> = {
   'Just Chatting': 'talk',
-  'Music': 'music',
-  'Art': 'art',
+  Music: 'music',
+  Art: 'art',
   'Science & Technology': 'tech',
   'Software and Game Development': 'tech',
-  'Chess': 'gaming',
-  'Minecraft': 'gaming',
-  'Fortnite': 'gaming',
-  'Valorant': 'gaming',
+  Chess: 'gaming',
+  Minecraft: 'gaming',
+  Fortnite: 'gaming',
+  Valorant: 'gaming',
   'Counter-Strike': 'gaming',
   'Grand Theft Auto V': 'gaming',
   'League of Legends': 'gaming',
@@ -143,12 +143,12 @@ const CATEGORY_GAME_MAP: Record<string, string> = {
   'Apex Legends': 'gaming',
   'Call of Duty': 'gaming',
   'Rocket League': 'gaming',
-  'Pokémon': 'gaming',
+  Pokémon: 'gaming',
   'Virtual Casino': 'gaming',
-  'Slots': 'gaming',
-  'Poker': 'gaming',
-  'Sports': 'sports',
-  'IRL': 'irl',
+  Slots: 'gaming',
+  Poker: 'gaming',
+  Sports: 'sports',
+  IRL: 'irl',
   'Talk Shows & Podcasts': 'talk',
 };
 
@@ -204,11 +204,9 @@ async function getTwitchAppToken(env: Env): Promise<string | null> {
     const expiresAt = Date.now() + (data.expires_in - 60) * 1000; // 60s buffer
 
     cachedToken = { token, expiresAt };
-    await env.CACHE?.put(
-      'twitch:app_token',
-      JSON.stringify({ token, expiresAt }),
-      { expirationTtl: data.expires_in - 60 },
-    );
+    await env.CACHE?.put('twitch:app_token', JSON.stringify({ token, expiresAt }), {
+      expirationTtl: data.expires_in - 60,
+    });
 
     return token;
   } catch {
@@ -218,9 +216,7 @@ async function getTwitchAppToken(env: Env): Promise<string | null> {
 
 // ─── Fetch Live Streams ────────────────────────────────────────────────
 
-export async function fetchCuratedTwitchStreams(
-  env: Env,
-): Promise<UnifiedLiveStream[]> {
+export async function fetchCuratedTwitchStreams(env: Env): Promise<UnifiedLiveStream[]> {
   const streams: UnifiedLiveStream[] = [];
   const startTime = Date.now();
 
@@ -248,10 +244,10 @@ export async function fetchCuratedTwitchStreams(
         const userParams = slugs.map((s) => `login=${encodeURIComponent(s)}`).join('&');
 
         // Step 1: Resolve slugs to user IDs
-        const usersResp = await fetch(
-          `https://api.twitch.tv/helix/users?${userParams}`,
-          { headers, signal: AbortSignal.timeout(5000) },
-        );
+        const usersResp = await fetch(`https://api.twitch.tv/helix/users?${userParams}`, {
+          headers,
+          signal: AbortSignal.timeout(5000),
+        });
 
         if (!usersResp.ok) continue;
         const usersData = (await usersResp.json()) as { data: TwitchUser[] };
@@ -280,13 +276,13 @@ export async function fetchCuratedTwitchStreams(
         // Step 3: Fetch profile images for live streamers
         const liveUserIds = userIds.filter((id) => streamerIds.has(id));
         const liveParams = liveUserIds.map((id) => `id=${encodeURIComponent(id)}`).join('&');
-        let profileImages = new Map<string, string>();
+        const profileImages = new Map<string, string>();
 
         if (liveUserIds.length > 0) {
-          const profilesResp = await fetch(
-            `https://api.twitch.tv/helix/users?${liveParams}`,
-            { headers, signal: AbortSignal.timeout(4000) },
-          );
+          const profilesResp = await fetch(`https://api.twitch.tv/helix/users?${liveParams}`, {
+            headers,
+            signal: AbortSignal.timeout(4000),
+          });
           if (profilesResp.ok) {
             const profilesData = (await profilesResp.json()) as { data: TwitchUser[] };
             for (const u of profilesData.data ?? []) {
@@ -421,10 +417,10 @@ export async function fetchTwitchByCategory(
 
     // Default game IDs for crypto/gaming/tech
     const gameCategories = gameIds ?? [
-      '509658',  // Just Chatting (talk)
-      '509670',  // Science & Technology (tech)
+      '509658', // Just Chatting (talk)
+      '509670', // Science & Technology (tech)
       '1469313456', // Software and Game Development (tech)
-      '27471',   // Retro (gaming)
+      '27471', // Retro (gaming)
     ];
 
     for (const gameId of gameCategories) {
@@ -434,10 +430,10 @@ export async function fetchTwitchByCategory(
         language: 'en',
       });
 
-      const resp = await fetch(
-        `https://api.twitch.tv/helix/streams?${params.toString()}`,
-        { headers, signal: AbortSignal.timeout(5000) },
-      );
+      const resp = await fetch(`https://api.twitch.tv/helix/streams?${params.toString()}`, {
+        headers,
+        signal: AbortSignal.timeout(5000),
+      });
 
       if (!resp.ok) continue;
 
@@ -455,9 +451,7 @@ export async function fetchTwitchByCategory(
             handle: s.user_login,
             displayName: s.user_name,
           },
-          thumbnailUrl: s.thumbnail_url
-            .replace('{width}', '640')
-            .replace('{height}', '360'),
+          thumbnailUrl: s.thumbnail_url.replace('{width}', '640').replace('{height}', '360'),
           viewerCount: s.viewer_count,
           startedAt: new Date(s.started_at).getTime(),
           category: mapGameToCategory(s.game_name, 'gaming'),
@@ -495,7 +489,17 @@ async function trackSourceHealth(
   try {
     const key = 'live:source-health';
     const raw = await env.CACHE?.get(key);
-    const health: Record<string, { source: LiveSource; healthy: boolean; lastChecked: number; error?: string; streamCount: number; latencyMs: number }> = raw ? JSON.parse(raw) : {};
+    const health: Record<
+      string,
+      {
+        source: LiveSource;
+        healthy: boolean;
+        lastChecked: number;
+        error?: string;
+        streamCount: number;
+        latencyMs: number;
+      }
+    > = raw ? JSON.parse(raw) : {};
 
     health[source] = {
       source,

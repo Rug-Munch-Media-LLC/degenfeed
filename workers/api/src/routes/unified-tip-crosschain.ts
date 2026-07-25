@@ -12,7 +12,7 @@
 
 import type { Env } from '../index';
 import { jsonResponse } from '../index';
-import { sanitizeString, validateBodySize } from '../sanitize';
+import { validateBodySize } from '../sanitize';
 import {
   CHAIN_ROUTES,
   recordUnifiedTip,
@@ -271,7 +271,7 @@ export async function fetch0xQuote(params: {
       8453: 'base',
       42161: 'arbitrum',
     };
-    const chainName = chainNames[params.chainId] ?? 'ethereum';
+    const _chainName = chainNames[params.chainId] ?? 'ethereum';
 
     const url =
       `https://api.0x.org/swap/v1/quote?` +

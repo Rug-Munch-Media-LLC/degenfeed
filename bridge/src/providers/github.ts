@@ -198,7 +198,7 @@ function guessGitHubNiches(text: string, repoName?: string, lang?: string): stri
   return niches;
 }
 
-function formatRelativeTime(dateStr: string): string {
+function _formatRelativeTime(dateStr: string): string {
   const date = new Date(dateStr).getTime();
   const now = Date.now();
   const diff = now - date;
@@ -214,7 +214,7 @@ function formatRelativeTime(dateStr: string): string {
 
 function eventToPost(event: GitHubEvent): UnifiedPost | null {
   const repoFullName = event.repo.name;
-  const [owner] = repoFullName.split('/');
+  const [_owner] = repoFullName.split('/');
   const actorName = event.actor.display_login || event.actor.login;
   const time = new Date(event.created_at).getTime();
 

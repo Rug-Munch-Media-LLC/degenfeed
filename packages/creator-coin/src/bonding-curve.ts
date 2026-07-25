@@ -44,7 +44,7 @@ export interface CurveEra {
 }
 
 export const CURVE_ERAS: CurveEra[] = BONDING_PHASES.map((phase) => {
-  const startSupply = (GRADUATION_SUPPLY * BigInt(phase.startPercent)) / 100n;
+  const _startSupply = (GRADUATION_SUPPLY * BigInt(phase.startPercent)) / 100n;
   const endSupply = (GRADUATION_SUPPLY * BigInt(phase.endPercent)) / 100n;
 
   // Different exponents for each phase to create the desired feel:
@@ -305,7 +305,11 @@ export function estimateTimeToNextPhase(
 /**
  * Generate the animated SVG path for the bonding curve visualization.
  */
-export function generateCurveSvgPath(width: number, height: number, currentSupply: bigint): string {
+export function generateCurveSvgPath(
+  width: number,
+  height: number,
+  _currentSupply: bigint,
+): string {
   const points: string[] = [];
   const totalPoints = 100; // resolution
 

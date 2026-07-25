@@ -193,7 +193,7 @@ export class WebRTCSessionManager {
   ): Promise<boolean> {
     try {
       const session = await this.getSession(sessionId);
-      if (!session || !session.active) return false;
+      if (!session?.active) return false;
 
       session.answers.set(viewerId, answer);
       session.viewers.add(viewerId);
@@ -256,10 +256,7 @@ export class WebRTCSessionManager {
   /**
    * Get ICE candidates for a peer (polling mechanism).
    */
-  async getIceCandidates(
-    sessionId: string,
-    peerId: string,
-  ): Promise<RTCIceCandidateInit[]> {
+  async getIceCandidates(sessionId: string, peerId: string): Promise<RTCIceCandidateInit[]> {
     try {
       const raw = await this.env.CACHE?.get(iceKey(sessionId, peerId));
       if (!raw) return [];
@@ -272,9 +269,7 @@ export class WebRTCSessionManager {
   /**
    * Broadcaster polls for all viewer answers and ICE candidates.
    */
-  async pollViewerData(
-    sessionId: string,
-  ): Promise<{
+  async pollViewerData(sessionId: string): Promise<{
     answers: Array<{ viewerId: string; answer: RTCSessionDescriptionInit }>;
     iceCandidates: Array<{ viewerId: string; candidates: RTCIceCandidateInit[] }>;
   }> {
@@ -402,7 +397,7 @@ export class WebRTCSessionManager {
 
       for (const id of sessionIds.slice(0, limit)) {
         const session = await this.getSession(id);
-        if (session && session.active) {
+        if (session?.active) {
           sessions.push(session);
         }
       }
@@ -454,20 +449,16 @@ export class WebRTCSessionManager {
 
     const answers = new Map<string, RTCSessionDescriptionInit>();
     if (data.answers && typeof data.answers === 'object') {
-      Object.entries(data.answers as Record<string, unknown>).forEach(
-        ([key, val]) => {
-          answers.set(key, val as RTCSessionDescriptionInit);
-        },
-      );
+      Object.entries(data.answers as Record<string, unknown>).forEach(([key, val]) => {
+        answers.set(key, val as RTCSessionDescriptionInit);
+      });
     }
 
     const iceCandidates = new Map<string, RTCIceCandidateInit[]>();
     if (data.iceCandidates && typeof data.iceCandidates === 'object') {
-      Object.entries(data.iceCandidates as Record<string, unknown>).forEach(
-        ([key, val]) => {
-          iceCandidates.set(key, val as RTCIceCandidateInit[]);
-        },
-      );
+      Object.entries(data.iceCandidates as Record<string, unknown>).forEach(([key, val]) => {
+        iceCandidates.set(key, val as RTCIceCandidateInit[]);
+      });
     }
 
     return {
@@ -508,9 +499,7 @@ export class WebRTCSessionManager {
     try {
       const raw = await this.env.CACHE?.get(sessionIndexKey());
       if (!raw) return;
-      const ids: string[] = JSON.parse(raw).filter(
-        (id: string) => id !== sessionId,
-      );
+      const ids: string[] = JSON.parse(raw).filter((id: string) => id !== sessionId);
       await this.env.CACHE?.put(sessionIndexKey(), JSON.stringify(ids), {
         expirationTtl: SESSION_TTL,
       });
@@ -526,10 +515,7 @@ export class WebRTCSessionManager {
  * POST /api/live/webrtc/offer
  * Broadcaster creates a WebRTC session with SDP offer.
  */
-export async function handleWebRTCOffer(
-  request: Request,
-  env: Env,
-): Promise<Response> {
+export async function handleWebRTCOffer(request: Request, env: Env): Promise<Response> {
   if (request.method !== 'POST') {
     return jsonResponse({ error: 'Method not allowed' }, 405);
   }
@@ -538,22 +524,14 @@ export async function handleWebRTCOffer(
     const body = (await request.json()) as WebRTCOfferRequest;
 
     if (!body.offer || !body.title) {
-      return jsonResponse(
-        { error: 'SDP offer and title are required' },
-        400,
-      );
+      return jsonResponse({ error: 'SDP offer and title are required' }, 400);
     }
 
     // Extract broadcaster identity from session or header
-    const broadcasterAddress =
-      request.headers.get('x-wallet-address') || 'anonymous';
+    const broadcasterAddress = request.headers.get('x-wallet-address') || 'anonymous';
 
     const manager = new WebRTCSessionManager(env);
-    const session = await manager.createSession(
-      broadcasterAddress,
-      body.title,
-      body.offer,
-    );
+    const session = await manager.createSession(broadcasterAddress, body.title, body.offer);
 
     return jsonResponse(
       {
@@ -561,8 +539,7 @@ export async function handleWebRTCOffer(
         sessionId: session.sessionId,
         mode: 'p2p',
         viewerCount: 0,
-        message:
-          'WebRTC P2P session created. Viewers can now connect via /api/live/webrtc/answer.',
+        message: 'WebRTC P2P session created. Viewers can now connect via /api/live/webrtc/answer.',
       },
       201,
     );
@@ -577,10 +554,7 @@ export async function handleWebRTCOffer(
  * POST /api/live/webrtc/answer
  * Viewer submits SDP answer to connect to broadcaster.
  */
-export async function handleWebRTCAnswer(
-  request: Request,
-  env: Env,
-): Promise<Response> {
+export async function handleWebRTCAnswer(request: Request, env: Env): Promise<Response> {
   if (request.method !== 'POST') {
     return jsonResponse({ error: 'Method not allowed' }, 405);
   }
@@ -589,10 +563,7 @@ export async function handleWebRTCAnswer(
     const body = (await request.json()) as WebRTCAnswerRequest;
 
     if (!body.sessionId || !body.viewerId || !body.answer) {
-      return jsonResponse(
-        { error: 'sessionId, viewerId, and answer are required' },
-        400,
-      );
+      return jsonResponse({ error: 'sessionId, viewerId, and answer are required' }, 400);
     }
 
     const manager = new WebRTCSessionManager(env);
@@ -612,16 +583,11 @@ export async function handleWebRTCAnswer(
         ok: true,
         mode: 'livepeer_fallback',
         playbackUrl: session.livepeerPlaybackUrl,
-        message:
-          'This stream has switched to Livepeer transcoding. Use the playback URL.',
+        message: 'This stream has switched to Livepeer transcoding. Use the playback URL.',
       });
     }
 
-    const success = await manager.submitAnswer(
-      body.sessionId,
-      body.viewerId,
-      body.answer,
-    );
+    const success = await manager.submitAnswer(body.sessionId, body.viewerId, body.answer);
 
     if (!success) {
       return jsonResponse({ error: 'Failed to submit answer' }, 500);
@@ -645,10 +611,7 @@ export async function handleWebRTCAnswer(
  * POST /api/live/webrtc/ice
  * Exchange ICE candidates between peers.
  */
-export async function handleWebRTCIce(
-  request: Request,
-  env: Env,
-): Promise<Response> {
+export async function handleWebRTCIce(request: Request, env: Env): Promise<Response> {
   if (request.method !== 'POST') {
     return jsonResponse({ error: 'Method not allowed' }, 405);
   }
@@ -657,18 +620,11 @@ export async function handleWebRTCIce(
     const body = (await request.json()) as WebRTCIceRequest;
 
     if (!body.sessionId || !body.viewerId || !body.candidate) {
-      return jsonResponse(
-        { error: 'sessionId, viewerId, and candidate are required' },
-        400,
-      );
+      return jsonResponse({ error: 'sessionId, viewerId, and candidate are required' }, 400);
     }
 
     const manager = new WebRTCSessionManager(env);
-    const success = await manager.submitIceCandidate(
-      body.sessionId,
-      body.viewerId,
-      body.candidate,
-    );
+    const success = await manager.submitIceCandidate(body.sessionId, body.viewerId, body.candidate);
 
     if (!success) {
       return jsonResponse({ error: 'Failed to submit ICE candidate' }, 500);
@@ -681,10 +637,7 @@ export async function handleWebRTCIce(
   } catch (e) {
     const error = e instanceof Error ? e.message : String(e);
     console.error('[webrtc] ice failed:', error);
-    return jsonResponse(
-      { error: `Failed to submit ICE candidate: ${error}` },
-      500,
-    );
+    return jsonResponse({ error: `Failed to submit ICE candidate: ${error}` }, 500);
   }
 }
 
@@ -734,10 +687,7 @@ export async function handleWebRTCGetOffer(
  * GET /api/live/webrtc/viewers
  * Get connected viewer count for a WebRTC session.
  */
-export async function handleWebRTCViewers(
-  request: Request,
-  env: Env,
-): Promise<Response> {
+export async function handleWebRTCViewers(request: Request, env: Env): Promise<Response> {
   if (request.method !== 'GET') {
     return jsonResponse({ error: 'Method not allowed' }, 405);
   }
@@ -762,10 +712,7 @@ export async function handleWebRTCViewers(
           startedAt: s.startedAt,
           active: s.active,
         })),
-        totalViewers: sessions.reduce(
-          (sum, s) => sum + s.viewers.size,
-          0,
-        ),
+        totalViewers: sessions.reduce((sum, s) => sum + s.viewers.size, 0),
       });
     }
 

@@ -15,17 +15,7 @@
  * ═════════════════════════════════════════════════════════════════════════════
  */
 
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-
-import {
-  computeRelevanceScore,
-  registerSearchProviderFromPosts,
-} from '../../packages/cross-protocol-bridge/src';
-import {
-  buildQualityAuthorProfile,
-  computeQualityScore,
-  detectNiches,
-} from '../../packages/feed-core/src';
+import { describe, expect, it } from 'vitest';
 import { computeTrendingTopics } from '../../packages/ranking';
 
 // ─── Digest data types ─────────────────────────────────────────────────
@@ -127,7 +117,7 @@ function generateDigest(
 
   // Filter by allowed protocols
   if (options.allowedProtocols && options.allowedProtocols.length > 0) {
-    filtered = filtered.filter((p: any) => options.allowedProtocols!.includes(p.protocol));
+    filtered = filtered.filter((p: any) => options.allowedProtocols?.includes(p.protocol));
   }
 
   filtered.sort((a: any, b: any) => {

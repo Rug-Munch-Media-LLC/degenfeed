@@ -6,10 +6,10 @@
  *
  * API: https://app.mintgate.io/api
  */
-import type { Protocol, UnifiedPost } from '@degenfeed/types';
+import type { UnifiedPost } from '@degenfeed/types';
 
-const $fetch = globalThis.fetch;
+const _$fetch = globalThis.fetch;
 
-export async function fetchMintGatePosts(limit = 10): Promise<UnifiedPost[]> {
+export async function fetchMintGatePosts(_limit = 10): Promise<UnifiedPost[]> {
   return [];
 }

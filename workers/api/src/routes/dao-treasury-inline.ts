@@ -7,12 +7,25 @@
 
 import type { Env } from '../index';
 import { jsonResponse } from '../index';
-import { hasSuspiciousPayload, sanitizeString, validateBodySize } from '../sanitize';
+import { sanitizeString } from '../sanitize';
 import { requireSession } from '../session';
-import {
-  getDaoOr404, checkDaoMember, kvGet, kvPut, kvGetList, kvAppendToList, KV, generateId, recordActivity,
+import type {
+  GrantProgram,
+  TreasuryOverview,
+  TreasuryStream,
+  TreasuryTransaction,
 } from './dao-crud';
-import type { Dao, TreasuryOverview, TreasuryTransaction, TreasuryStream, GrantProgram, ActivityType } from './dao-crud';
+import {
+  checkDaoMember,
+  generateId,
+  getDaoOr404,
+  KV,
+  kvAppendToList,
+  kvGet,
+  kvGetList,
+  kvPut,
+  recordActivity,
+} from './dao-crud';
 
 // ─── GET /api/dao/:daoId/treasury — Treasury overview ───────────────
 
@@ -28,7 +41,16 @@ export async function handleDaoTreasuryOverview(
   if (!kv) return jsonResponse({ error: 'Governance KV not configured' }, 500);
 
   const treasury = await kvGet<TreasuryOverview>(kv, KV.treasury(daoId));
-  return jsonResponse({ data: treasury ?? { totalBalance: '0', tokenCount: 0, tokens: [], nativeBalance: '0', nativeValueUsd: 0, updatedAt: Date.now() } });
+  return jsonResponse({
+    data: treasury ?? {
+      totalBalance: '0',
+      tokenCount: 0,
+      tokens: [],
+      nativeBalance: '0',
+      nativeValueUsd: 0,
+      updatedAt: Date.now(),
+    },
+  });
 }
 
 // ─── GET /api/dao/:daoId/treasury/transactions — List transactions ──
@@ -45,7 +67,9 @@ export async function handleDaoTreasuryTransactions(
   if (!kv) return jsonResponse({ error: 'Governance KV not configured' }, 500);
 
   const txIds = await kvGetList<string>(kv, KV.treasuryTxIdx(daoId));
-  const txs = await Promise.all(txIds.map((txId) => kvGet<TreasuryTransaction>(kv, KV.treasuryTx(txId))));
+  const txs = await Promise.all(
+    txIds.map((txId) => kvGet<TreasuryTransaction>(kv, KV.treasuryTx(txId))),
+  );
   const validTxs = txs.filter((tx): tx is TreasuryTransaction => tx !== null);
   validTxs.sort((a, b) => b.timestamp - a.timestamp);
 
@@ -73,7 +97,11 @@ export async function handleDaoTreasuryTransfer(
   if (membershipError) return membershipError;
 
   let body: Record<string, unknown>;
-  try { body = (await request.json()) as Record<string, unknown>; } catch { return jsonResponse({ error: 'Invalid JSON body' }, 400); }
+  try {
+    body = (await request.json()) as Record<string, unknown>;
+  } catch {
+    return jsonResponse({ error: 'Invalid JSON body' }, 400);
+  }
 
   const to = typeof body.to === 'string' ? body.to.trim().toLowerCase() : '';
   const amount = typeof body.amount === 'string' ? body.amount : '';
@@ -85,11 +113,23 @@ export async function handleDaoTreasuryTransfer(
 
   const txId = generateId('tx');
   const tx: TreasuryTransaction = {
-    id: txId, daoId, type: 'transfer', from: wallet, to, tokenAddress, tokenSymbol, amount,
-    valueUsd: 0, timestamp: Date.now(), status: 'pending',
+    id: txId,
+    daoId,
+    type: 'transfer',
+    from: wallet,
+    to,
+    tokenAddress,
+    tokenSymbol,
+    amount,
+    valueUsd: 0,
+    timestamp: Date.now(),
+    status: 'pending',
   };
 
-  await Promise.all([kvPut(kv, KV.treasuryTx(txId), tx), kvAppendToList(kv, KV.treasuryTxIdx(daoId), txId)]);
+  await Promise.all([
+    kvPut(kv, KV.treasuryTx(txId), tx),
+    kvAppendToList(kv, KV.treasuryTxIdx(daoId), txId),
+  ]);
   await recordActivity(env, daoId, 'treasury_transfer', wallet, { txId, to, amount, tokenSymbol });
 
   return jsonResponse({ success: true, transaction: tx }, 201);
@@ -116,7 +156,11 @@ export async function handleDaoTreasuryStreamCreate(
   if (membershipError) return membershipError;
 
   let body: Record<string, unknown>;
-  try { body = (await request.json()) as Record<string, unknown>; } catch { return jsonResponse({ error: 'Invalid JSON body' }, 400); }
+  try {
+    body = (await request.json()) as Record<string, unknown>;
+  } catch {
+    return jsonResponse({ error: 'Invalid JSON body' }, 400);
+  }
 
   const recipient = typeof body.recipient === 'string' ? body.recipient.trim().toLowerCase() : '';
   const totalAmount = typeof body.totalAmount === 'string' ? body.totalAmount : '';
@@ -130,14 +174,35 @@ export async function handleDaoTreasuryStreamCreate(
   if (!totalAmount) return jsonResponse({ error: 'totalAmount is required' }, 400);
 
   const streamId = generateId('stream');
-  const amountPerInterval = (Number.parseFloat(totalAmount) / Math.ceil((endTime - startTime) / interval)).toFixed(6);
+  const amountPerInterval = (
+    Number.parseFloat(totalAmount) / Math.ceil((endTime - startTime) / interval)
+  ).toFixed(6);
   const stream: TreasuryStream = {
-    id: streamId, daoId, recipient, tokenAddress, tokenSymbol, totalAmount, releasedAmount: '0',
-    startTime, endTime, interval, amountPerInterval, status: 'active', createdBy: wallet, createdAt: Date.now(),
+    id: streamId,
+    daoId,
+    recipient,
+    tokenAddress,
+    tokenSymbol,
+    totalAmount,
+    releasedAmount: '0',
+    startTime,
+    endTime,
+    interval,
+    amountPerInterval,
+    status: 'active',
+    createdBy: wallet,
+    createdAt: Date.now(),
   };
 
-  await Promise.all([kvPut(kv, KV.treasuryStream(streamId), stream), kvAppendToList(kv, KV.treasuryStreamIdx(daoId), streamId)]);
-  await recordActivity(env, daoId, 'treasury_stream_started', wallet, { streamId, recipient, totalAmount });
+  await Promise.all([
+    kvPut(kv, KV.treasuryStream(streamId), stream),
+    kvAppendToList(kv, KV.treasuryStreamIdx(daoId), streamId),
+  ]);
+  await recordActivity(env, daoId, 'treasury_stream_started', wallet, {
+    streamId,
+    recipient,
+    totalAmount,
+  });
 
   return jsonResponse({ success: true, stream }, 201);
 }
@@ -156,7 +221,9 @@ export async function handleDaoTreasuryStreams(
   if (!kv) return jsonResponse({ error: 'Governance KV not configured' }, 500);
 
   const streamIds = await kvGetList<string>(kv, KV.treasuryStreamIdx(daoId));
-  const streams = await Promise.all(streamIds.map((sid) => kvGet<TreasuryStream>(kv, KV.treasuryStream(sid))));
+  const streams = await Promise.all(
+    streamIds.map((sid) => kvGet<TreasuryStream>(kv, KV.treasuryStream(sid))),
+  );
   const validStreams = streams.filter((s): s is TreasuryStream => s !== null);
   validStreams.sort((a, b) => b.createdAt - a.createdAt);
 
@@ -182,10 +249,12 @@ export async function handleDaoTreasuryStreamDelete(
 
   const stream = await kvGet<TreasuryStream>(kv, KV.treasuryStream(streamId));
   if (!stream) return jsonResponse({ error: 'Stream not found' }, 404);
-  if (stream.daoId !== daoId) return jsonResponse({ error: 'Stream does not belong to this DAO' }, 404);
+  if (stream.daoId !== daoId)
+    return jsonResponse({ error: 'Stream does not belong to this DAO' }, 404);
 
   const wallet = session.address.toLowerCase();
-  if (stream.createdBy !== wallet) return jsonResponse({ error: 'Only the stream creator can cancel' }, 403);
+  if (stream.createdBy !== wallet)
+    return jsonResponse({ error: 'Only the stream creator can cancel' }, 403);
 
   stream.status = 'cancelled';
   stream.cancelledAt = Date.now();
@@ -215,7 +284,11 @@ export async function handleDaoTreasuryGrantCreate(
   if (membershipError) return membershipError;
 
   let body: Record<string, unknown>;
-  try { body = (await request.json()) as Record<string, unknown>; } catch { return jsonResponse({ error: 'Invalid JSON body' }, 400); }
+  try {
+    body = (await request.json()) as Record<string, unknown>;
+  } catch {
+    return jsonResponse({ error: 'Invalid JSON body' }, 400);
+  }
 
   const title = sanitizeString(body.title, 200);
   const description = sanitizeString(body.description, 5000);
@@ -223,18 +296,44 @@ export async function handleDaoTreasuryGrantCreate(
   const tokenAddress = typeof body.tokenAddress === 'string' ? body.tokenAddress.trim() : '';
   const tokenSymbol = sanitizeString(body.tokenSymbol, 16) || 'ETH';
   const recipient = typeof body.recipient === 'string' ? body.recipient.trim().toLowerCase() : '';
-  const milestonesRaw = Array.isArray(body.milestones) ? (body.milestones as Array<Record<string, unknown>>) : [];
+  const milestonesRaw = Array.isArray(body.milestones)
+    ? (body.milestones as Array<Record<string, unknown>>)
+    : [];
 
-  if (!title || title.length < 4) return jsonResponse({ error: 'Title must be at least 4 characters' }, 400);
+  if (!title || title.length < 4)
+    return jsonResponse({ error: 'Title must be at least 4 characters' }, 400);
   if (!totalBudget) return jsonResponse({ error: 'totalBudget is required' }, 400);
   if (!recipient) return jsonResponse({ error: 'recipient is required' }, 400);
 
-  const milestones = milestonesRaw.map((m) => ({ id: generateId('ms'), title: sanitizeString(m.title, 200) || 'Milestone', description: sanitizeString(m.description, 2000) || '', amount: typeof m.amount === 'string' ? m.amount : '0', status: 'pending' as const }));
+  const milestones = milestonesRaw.map((m) => ({
+    id: generateId('ms'),
+    title: sanitizeString(m.title, 200) || 'Milestone',
+    description: sanitizeString(m.description, 2000) || '',
+    amount: typeof m.amount === 'string' ? m.amount : '0',
+    status: 'pending' as const,
+  }));
 
   const grantId = generateId('grant');
-  const grant: GrantProgram = { id: grantId, daoId, title, description, totalBudget, remainingBudget: totalBudget, tokenAddress, tokenSymbol, milestones, recipient, status: 'active', createdBy: wallet, createdAt: Date.now() };
+  const grant: GrantProgram = {
+    id: grantId,
+    daoId,
+    title,
+    description,
+    totalBudget,
+    remainingBudget: totalBudget,
+    tokenAddress,
+    tokenSymbol,
+    milestones,
+    recipient,
+    status: 'active',
+    createdBy: wallet,
+    createdAt: Date.now(),
+  };
 
-  await Promise.all([kvPut(kv, KV.treasuryGrant(grantId), grant), kvAppendToList(kv, KV.treasuryGrantIdx(daoId), grantId)]);
+  await Promise.all([
+    kvPut(kv, KV.treasuryGrant(grantId), grant),
+    kvAppendToList(kv, KV.treasuryGrantIdx(daoId), grantId),
+  ]);
   await recordActivity(env, daoId, 'grant_created', wallet, { grantId, title, totalBudget });
 
   return jsonResponse({ success: true, grant }, 201);
@@ -254,7 +353,9 @@ export async function handleDaoTreasuryGrants(
   if (!kv) return jsonResponse({ error: 'Governance KV not configured' }, 500);
 
   const grantIds = await kvGetList<string>(kv, KV.treasuryGrantIdx(daoId));
-  const grants = await Promise.all(grantIds.map((gid) => kvGet<GrantProgram>(kv, KV.treasuryGrant(gid))));
+  const grants = await Promise.all(
+    grantIds.map((gid) => kvGet<GrantProgram>(kv, KV.treasuryGrant(gid))),
+  );
   const validGrants = grants.filter((g): g is GrantProgram => g !== null);
   validGrants.sort((a, b) => b.createdAt - a.createdAt);
 
@@ -280,17 +381,23 @@ export async function handleDaoTreasuryGrantMilestone(
 
   const grant = await kvGet<GrantProgram>(kv, KV.treasuryGrant(grantId));
   if (!grant) return jsonResponse({ error: 'Grant not found' }, 404);
-  if (grant.daoId !== daoId) return jsonResponse({ error: 'Grant does not belong to this DAO' }, 404);
+  if (grant.daoId !== daoId)
+    return jsonResponse({ error: 'Grant does not belong to this DAO' }, 404);
 
   let body: Record<string, unknown>;
-  try { body = (await request.json()) as Record<string, unknown>; } catch { return jsonResponse({ error: 'Invalid JSON body' }, 400); }
+  try {
+    body = (await request.json()) as Record<string, unknown>;
+  } catch {
+    return jsonResponse({ error: 'Invalid JSON body' }, 400);
+  }
 
   const milestoneId = typeof body.milestoneId === 'string' ? body.milestoneId : '';
   if (!milestoneId) return jsonResponse({ error: 'milestoneId is required' }, 400);
 
   const milestone = grant.milestones.find((m) => m.id === milestoneId);
   if (!milestone) return jsonResponse({ error: 'Milestone not found' }, 404);
-  if (milestone.status === 'completed') return jsonResponse({ error: 'Milestone already completed' }, 400);
+  if (milestone.status === 'completed')
+    return jsonResponse({ error: 'Milestone already completed' }, 400);
 
   milestone.status = 'completed';
   milestone.completedAt = Date.now();
@@ -303,7 +410,11 @@ export async function handleDaoTreasuryGrantMilestone(
   if (allCompleted) grant.status = 'completed';
 
   await kvPut(kv, KV.treasuryGrant(grantId), grant);
-  await recordActivity(env, daoId, 'grant_milestone_completed', session.address.toLowerCase(), { grantId, milestoneId: milestone.id, title: milestone.title });
+  await recordActivity(env, daoId, 'grant_milestone_completed', session.address.toLowerCase(), {
+    grantId,
+    milestoneId: milestone.id,
+    title: milestone.title,
+  });
 
   return jsonResponse({ success: true, grant });
 }

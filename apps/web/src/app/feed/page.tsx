@@ -178,7 +178,7 @@ export default function FeedPage() {
   // Reset the insertion flag when posts change (e.g., tab switch)
   useEffect(() => {
     realtimeInsertedRef.current = false;
-  }, [activeTab, protocolFilter]);
+  }, []);
 
   const [topicWeights, setTopicWeights] = useState<Record<string, number>>({});
   const [_showFeedInfo, _setShowFeedInfo] = useState(false);

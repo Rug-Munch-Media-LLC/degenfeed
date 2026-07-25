@@ -292,11 +292,11 @@ async function enrichArticle(url: string, timeoutMs = 3000): Promise<ArticleEnri
   } catch {
     return { heroImage: '', metaDescription: '', authorName: '', readingTime: 0 };
   }
-}
+} */
 
 // ─── Protocol Source Fetching ──────────────────────────────────────────
 
-async function fetchProtocolSources(
+async function _fetchProtocolSources(
   env: Env,
 ): Promise<Array<{ item: ParsedRssItem; source: NewsSourceMeta }>> {
   const results: Array<{ item: ParsedRssItem; source: NewsSourceMeta }> = [];
@@ -363,7 +363,7 @@ async function fetchProtocolSources(
 
 // ─── Concurrency Limit Helper ──────────────────────────────────────────
 
-async function withConcurrencyLimit<T>(
+async function _withConcurrencyLimit<T>(
   items: T[],
   limit: number,
   fn: (item: T) => Promise<void>,

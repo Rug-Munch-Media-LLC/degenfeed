@@ -14,7 +14,8 @@
     "./token-fees": "./src/token-fees.ts",
     "./platform-fees": "./src/platform-fees.ts",
     "./video": "./src/video.ts",
-    "./zora-api": "./src/zora-api.ts"
+    "./zora-api": "./src/zora-api.ts",
+    "./live-mint": "./src/live-mint.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

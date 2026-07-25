@@ -1,7 +1,7 @@
 'use client';
 
 /** Mini sparkline SVG */
-function Sparkline({ data, color }: { data: number[]; color: string }) {
+function _Sparkline({ data, color }: { data: number[]; color: string }) {
   if (!data.length) return null;
   const w = 60;
   const h = 20;

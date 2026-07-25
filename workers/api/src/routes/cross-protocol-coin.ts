@@ -990,8 +990,7 @@ async function postActivityPub(
   env: Env,
 ): Promise<Record<string, unknown> | null> {
   // Try GotoSocial instance first (our managed Mastodon-compatible server)
-  const instanceUrl =
-    env.GOTOSOCIAL_INSTANCE_URL || 'https://social.degenfeed.xyz';
+  const instanceUrl = env.GOTOSOCIAL_INSTANCE_URL || 'https://social.degenfeed.xyz';
   const accessToken = env.PREMIUM_WALLET_KEY;
   if (!accessToken) return null;
 

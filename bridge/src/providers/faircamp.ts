@@ -295,7 +295,7 @@ export const schema: SchemaGuard = {
 };
 
 export async function fetchFaircampPosts(limit = 20): Promise<UnifiedPost[]> {
-  const perInstance = Math.max(3, Math.ceil(limit / FAIRCAMP_INSTANCES.length));
+  const _perInstance = Math.max(3, Math.ceil(limit / FAIRCAMP_INSTANCES.length));
 
   const results = await Promise.allSettled(
     FAIRCAMP_INSTANCES.map((instance) => fetchInstanceFeed(instance)),

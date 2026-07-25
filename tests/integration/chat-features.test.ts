@@ -7,7 +7,7 @@
  *
  * Pure functions tested directly. KV-dependent paths tested with mocks.
  */
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 // ─── Mock KV storage ───────────────────────────────────────────────
 
@@ -85,8 +85,9 @@ describe('Chat Features — Reactions', () => {
 describe('Chat Features — Edit Message', () => {
   it('edits a message and marks it as edited', async () => {
     const { handleEditMessage } = await import('../../workers/api/src/routes/chat-features');
-    const { createMessageMetadata, storeMessageMetadata, getMessageMetadata } =
-      await import('../../workers/api/src/lib/chat-timers');
+    const { createMessageMetadata, storeMessageMetadata, getMessageMetadata } = await import(
+      '../../workers/api/src/lib/chat-timers'
+    );
     const env = createMockEnv();
 
     // Store original message metadata first
@@ -97,7 +98,11 @@ describe('Chat Features — Edit Message', () => {
     const req = new Request('http://localhost/api/messages/edit', {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'x-wallet-address': '0xabc' },
-      body: JSON.stringify({ conversationId: 'conv_1', messageId: 'msg_1', content: 'Hello updated!' }),
+      body: JSON.stringify({
+        conversationId: 'conv_1',
+        messageId: 'msg_1',
+        content: 'Hello updated!',
+      }),
     });
     const res = await handleEditMessage(req, env);
     expect(res.status).toBe(200);
@@ -109,15 +114,16 @@ describe('Chat Features — Edit Message', () => {
     // Verify edit persisted
     const updated = await getMessageMetadata(env, 'msg_1');
     expect(updated).not.toBeNull();
-    expect(updated!.currentContent).toBe('Hello updated!');
-    expect(updated!.edited).toBe(true);
-    expect(updated!.editHistory.length).toBe(1);
+    expect(updated?.currentContent).toBe('Hello updated!');
+    expect(updated?.edited).toBe(true);
+    expect(updated?.editHistory.length).toBe(1);
   });
 
   it('rejects edit from non-owner', async () => {
     const { handleEditMessage } = await import('../../workers/api/src/routes/chat-features');
-    const { createMessageMetadata, storeMessageMetadata } =
-      await import('../../workers/api/src/lib/chat-timers');
+    const { createMessageMetadata, storeMessageMetadata } = await import(
+      '../../workers/api/src/lib/chat-timers'
+    );
     const env = createMockEnv();
 
     const meta = createMessageMetadata('msg_2', 'conv_1', '0xabc', 'Original');
@@ -179,7 +185,9 @@ describe('Chat Features — Unsend (5s window)', () => {
 
 describe('Chat Features — Delete for Me / Everyone', () => {
   it('deletes a message for me', async () => {
-    const { deleteForMe, getDeletedMessageIds } = await import('../../workers/api/src/lib/chat-timers');
+    const { deleteForMe, getDeletedMessageIds } = await import(
+      '../../workers/api/src/lib/chat-timers'
+    );
     const env = createMockEnv();
 
     const result = await deleteForMe(env, 'msg_1', '0xabc', 'conv_1');
@@ -205,8 +213,9 @@ describe('Chat Features — Delete for Me / Everyone', () => {
   });
 
   it('rejects delete-for-everyone after 24h', async () => {
-    const { deleteForEveryone, createMessageMetadata, storeMessageMetadata } =
-      await import('../../workers/api/src/lib/chat-timers');
+    const { deleteForEveryone, createMessageMetadata, storeMessageMetadata } = await import(
+      '../../workers/api/src/lib/chat-timers'
+    );
     const env = createMockEnv();
 
     const meta = createMessageMetadata('msg_old', 'conv_1', '0xabc', 'Old message');
@@ -214,15 +223,15 @@ describe('Chat Features — Delete for Me / Everyone', () => {
     const oldMeta = { ...meta, createdAt: Date.now() - 25 * 60 * 60 * 1000 };
     await storeMessageMetadata(env, oldMeta);
 
-    await expect(deleteForEveryone(env, 'msg_old', '0xabc', 'conv_1'))
-      .rejects.toThrow('expired');
+    await expect(deleteForEveryone(env, 'msg_old', '0xabc', 'conv_1')).rejects.toThrow('expired');
   });
 });
 
 describe('Chat Features — Auto-Delete Timer', () => {
   it('sets and retrieves a conversation timer', async () => {
-    const { setConversationTimer, getConversationTimer, getTimerDisplayLabel } =
-      await import('../../workers/api/src/lib/chat-timers');
+    const { setConversationTimer, getConversationTimer, getTimerDisplayLabel } = await import(
+      '../../workers/api/src/lib/chat-timers'
+    );
     const env = createMockEnv();
 
     const timer = await setConversationTimer(env, 'conv_1', 3600, '0xabc');
@@ -231,15 +240,16 @@ describe('Chat Features — Auto-Delete Timer', () => {
 
     const retrieved = await getConversationTimer(env, 'conv_1');
     expect(retrieved).not.toBeNull();
-    expect(retrieved!.durationSeconds).toBe(3600);
+    expect(retrieved?.durationSeconds).toBe(3600);
 
     const label = await getTimerDisplayLabel(env, 'conv_1');
     expect(label).toContain('1 hr');
   });
 
   it('removes a conversation timer', async () => {
-    const { setConversationTimer, removeConversationTimer, getConversationTimer } =
-      await import('../../workers/api/src/lib/chat-timers');
+    const { setConversationTimer, removeConversationTimer, getConversationTimer } = await import(
+      '../../workers/api/src/lib/chat-timers'
+    );
     const env = createMockEnv();
 
     await setConversationTimer(env, 'conv_1', 300, '0xabc');
@@ -252,8 +262,9 @@ describe('Chat Features — Auto-Delete Timer', () => {
 
 describe('Chat Features — Disappearing Messages', () => {
   it('marks a message as disappearing after read', async () => {
-    const { markDisappearing, createMessageMetadata } =
-      await import('../../workers/api/src/lib/chat-timers');
+    const { markDisappearing, createMessageMetadata } = await import(
+      '../../workers/api/src/lib/chat-timers'
+    );
 
     const meta = createMessageMetadata('msg_1', 'conv_1', '0xabc', 'Secret');
     const readAt = Date.now();
@@ -270,7 +281,15 @@ describe('Chat Features — Polls', () => {
     const { createPoll, getPoll } = await import('../../workers/api/src/lib/chat-media');
     const env = createMockEnv();
 
-    const poll = await createPoll(env, 'conv_1', '0xabc', 'Best crypto?', ['BTC', 'ETH', 'SOL'], false, 60);
+    const poll = await createPoll(
+      env,
+      'conv_1',
+      '0xabc',
+      'Best crypto?',
+      ['BTC', 'ETH', 'SOL'],
+      false,
+      60,
+    );
     expect(poll.question).toBe('Best crypto?');
     expect(poll.options).toHaveLength(3);
     expect(poll.multipleChoice).toBe(false);
@@ -278,31 +297,40 @@ describe('Chat Features — Polls', () => {
 
     const retrieved = await getPoll(env, poll.id);
     expect(retrieved).not.toBeNull();
-    expect(retrieved!.totalVotes).toBe(0);
+    expect(retrieved?.totalVotes).toBe(0);
   });
 
   it('rejects poll with fewer than 2 options', async () => {
     const { createPoll } = await import('../../workers/api/src/lib/chat-media');
     const env = createMockEnv();
 
-    await expect(createPoll(env, 'conv_1', '0xabc', 'Bad poll?', ['Only one'], false))
-      .rejects.toThrow('2-10');
+    await expect(
+      createPoll(env, 'conv_1', '0xabc', 'Bad poll?', ['Only one'], false),
+    ).rejects.toThrow('2-10');
   });
 
   it('votes on a poll and tracks results', async () => {
     const { createPoll, votePoll, getPoll } = await import('../../workers/api/src/lib/chat-media');
     const env = createMockEnv();
 
-    const poll = await createPoll(env, 'conv_1', '0xabc', 'Best chain?', ['Solana', 'Ethereum'], false, 60);
-    const optionId = poll.options[0]!.id;
+    const poll = await createPoll(
+      env,
+      'conv_1',
+      '0xabc',
+      'Best chain?',
+      ['Solana', 'Ethereum'],
+      false,
+      60,
+    );
+    const optionId = poll.options[0]?.id;
 
     const updated = await votePoll(env, poll.id, '0xuser1', [optionId]);
     expect(updated).not.toBeNull();
-    expect(updated!.options[0]!.votes).toBe(1);
+    expect(updated?.options[0]?.votes).toBe(1);
 
     // Verify persisted
     const retrieved = await getPoll(env, poll.id);
-    expect(retrieved!.options[0]!.voters).toContain('0xuser1');
+    expect(retrieved?.options[0]?.voters).toContain('0xuser1');
   });
 });
 
@@ -345,19 +373,24 @@ describe('Chat Features — Link Preview Extraction', () => {
       <title>Test Article</title>
     </head></html>`;
 
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
-      new Response(html, { status: 200, headers: { 'content-type': 'text/html' } }),
-    ));
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValue(
+          new Response(html, { status: 200, headers: { 'content-type': 'text/html' } }),
+        ),
+    );
 
     const { generateLinkPreview } = await import('../../workers/api/src/lib/chat-media');
     const env = createMockEnv();
 
     const preview = await generateLinkPreview('https://example.com/article', env);
     expect(preview).not.toBeNull();
-    expect(preview!.title).toBe('Test Article');
-    expect(preview!.description).toBe('A test article description');
-    expect(preview!.imageUrl).toBe('https://example.com/image.jpg');
-    expect(preview!.siteName).toBe('Example');
+    expect(preview?.title).toBe('Test Article');
+    expect(preview?.description).toBe('A test article description');
+    expect(preview?.imageUrl).toBe('https://example.com/image.jpg');
+    expect(preview?.siteName).toBe('Example');
 
     vi.unstubAllGlobals();
   });
@@ -365,16 +398,21 @@ describe('Chat Features — Link Preview Extraction', () => {
   it('extracts title when OG meta is missing', async () => {
     const html = '<html><head><title>Simple Title</title></head><body>Content</body></html>';
 
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
-      new Response(html, { status: 200, headers: { 'content-type': 'text/html' } }),
-    ));
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValue(
+          new Response(html, { status: 200, headers: { 'content-type': 'text/html' } }),
+        ),
+    );
 
     const { generateLinkPreview } = await import('../../workers/api/src/lib/chat-media');
     const env = createMockEnv();
 
     const preview = await generateLinkPreview('https://example.com/page', env);
     expect(preview).not.toBeNull();
-    expect(preview!.title).toBe('Simple Title');
+    expect(preview?.title).toBe('Simple Title');
 
     vi.unstubAllGlobals();
   });

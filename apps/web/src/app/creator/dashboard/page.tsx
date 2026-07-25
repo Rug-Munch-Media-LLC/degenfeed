@@ -188,7 +188,7 @@ function CoinCard({ coin }: { coin: CoinSummary }) {
 
 // ─── Holder Row ────────────────────────────────────────────────────────
 
-function HolderRow({ holder }: { holder: HolderEntry }) {
+function _HolderRow({ holder }: { holder: HolderEntry }) {
   return (
     <div className="flex items-center justify-between py-2 text-[10px]">
       <div className="flex items-center gap-2">
@@ -251,7 +251,7 @@ function RevenueChart({ data }: { data: Array<{ date: string; amount: string }> 
   const reversed = [...data].reverse().slice(-30);
   return (
     <div className="flex items-end gap-0.5 h-32">
-      {reversed.map((d, i) => {
+      {reversed.map((d, _i) => {
         const h = (Number(d.amount) / max) * 100;
         return (
           <div key={d.date} className="group relative flex-1">

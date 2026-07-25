@@ -10,8 +10,8 @@ import { BarChart } from './BarChart';
 import { MiniBar } from './MiniBar';
 import { PieChart } from './PieChart';
 import { StatCard } from './StatCard';
-import type { CreatorStats, TabId } from './types';
 import StorageUsage from './StorageUsage';
+import type { CreatorStats, TabId } from './types';
 import {
   formatCompact,
   formatDate,
@@ -851,9 +851,7 @@ export default function CreatorDashboard() {
       )}
 
       {/* STORAGE */}
-      {activeTab === 'storage' && (
-        <StorageUsage />
-      )}
+      {activeTab === 'storage' && <StorageUsage />}
     </div>
   );
 }

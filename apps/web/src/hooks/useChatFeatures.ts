@@ -4,7 +4,7 @@
  * useChatFeatures — Rich message composable for reactions, editing, search, etc.
  */
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { retryFetch, retryFetchJson } from '../lib/retryFetch';
 
 /* ─── Types ─────────────────────────────────────────────────────────── */
@@ -73,7 +73,7 @@ export function useChatFeatures(conversationId?: string) {
   // ── Reply ──────────────────────────────────────────────────────
 
   const replyToMessage = useCallback(
-    async (messageId: string, content: string, replyToId: string) => {
+    async (_messageId: string, content: string, replyToId: string) => {
       if (!conversationId) return null;
       try {
         const res = await retryFetch('/api/messages/send', {
@@ -194,7 +194,12 @@ export function useChatFeatures(conversationId?: string) {
   // ── Polls ───────────────────────────────────────────────────────
 
   const createPoll = useCallback(
-    async (question: string, options: string[], multipleChoice: boolean, endsInMinutes?: number) => {
+    async (
+      question: string,
+      options: string[],
+      multipleChoice: boolean,
+      endsInMinutes?: number,
+    ) => {
       if (!conversationId) return null;
       try {
         const data = await retryFetchJson<{ ok: boolean; poll: Poll }>(
@@ -229,17 +234,14 @@ export function useChatFeatures(conversationId?: string) {
     async (pollId: string, optionIds: string[]) => {
       if (!conversationId) return false;
       try {
-        const data = await retryFetchJson<{ ok: boolean; poll: Poll }>(
-          `/api/messages/polls/vote`,
-          {
-            fetchOptions: {
-              method: 'POST',
-              headers: { 'content-type': 'application/json' },
-              credentials: 'include',
-              body: JSON.stringify({ conversationId, pollId, optionIds }),
-            },
+        const data = await retryFetchJson<{ ok: boolean; poll: Poll }>(`/api/messages/polls/vote`, {
+          fetchOptions: {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ conversationId, pollId, optionIds }),
           },
-        );
+        });
         if (data.ok && data.poll) {
           setPolls((prev) => prev.map((p) => (p.id === pollId ? data.poll : p)));
           return true;
@@ -259,18 +261,22 @@ export function useChatFeatures(conversationId?: string) {
 
   // ── GIF Search (Tenor/Giphy) ────────────────────────────────────
 
-  const searchGifs = useCallback(async (query: string): Promise<Array<{ url: string; preview: string; width: number; height: number }>> => {
-    if (!query.trim()) return [];
-    try {
-      const data = await retryFetchJson<{ results: Array<{ url: string; preview: string; width: number; height: number }> }>(
-        `/api/messages/gifs/search?q=${encodeURIComponent(query)}`,
-        { maxRetries: 1 },
-      );
-      return data.results ?? [];
-    } catch {
-      return [];
-    }
-  }, []);
+  const searchGifs = useCallback(
+    async (
+      query: string,
+    ): Promise<Array<{ url: string; preview: string; width: number; height: number }>> => {
+      if (!query.trim()) return [];
+      try {
+        const data = await retryFetchJson<{
+          results: Array<{ url: string; preview: string; width: number; height: number }>;
+        }>(`/api/messages/gifs/search?q=${encodeURIComponent(query)}`, { maxRetries: 1 });
+        return data.results ?? [];
+      } catch {
+        return [];
+      }
+    },
+    [],
+  );
 
   return {
     // State

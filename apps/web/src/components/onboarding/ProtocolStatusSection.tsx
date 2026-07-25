@@ -76,27 +76,35 @@ export function ProtocolStatusSection({ walletAddress, isOwnProfile }: Props) {
     fetchStatus();
   }, [fetchStatus]);
 
-  const createAccount = useCallback(async (protocol: string, desiredUsername?: string) => {
-    setCreating(protocol);
-    try {
-      const username = desiredUsername || `user${(walletAddress || '').slice(2, 8)}`;
-      const res = await fetch(`/api/protocol/${protocol}/register`, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ username }),
-      });
-      if (res.ok) {
-        await fetchStatus(); // Refresh the status
-      } else {
-        const errJson = (await res.json().catch(() => ({}))) as { data?: { error?: string }; error?: string };
-        alert(`Failed to create account: ${errJson.data?.error || errJson.error || `HTTP ${res.status}`}`);
+  const createAccount = useCallback(
+    async (protocol: string, desiredUsername?: string) => {
+      setCreating(protocol);
+      try {
+        const username = desiredUsername || `user${(walletAddress || '').slice(2, 8)}`;
+        const res = await fetch(`/api/protocol/${protocol}/register`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ username }),
+        });
+        if (res.ok) {
+          await fetchStatus(); // Refresh the status
+        } else {
+          const errJson = (await res.json().catch(() => ({}))) as {
+            data?: { error?: string };
+            error?: string;
+          };
+          alert(
+            `Failed to create account: ${errJson.data?.error || errJson.error || `HTTP ${res.status}`}`,
+          );
+        }
+      } catch (err) {
+        alert(`Error: ${err instanceof Error ? err.message : 'Unknown'}`);
+      } finally {
+        setCreating(null);
       }
-    } catch (err) {
-      alert(`Error: ${err instanceof Error ? err.message : 'Unknown'}`);
-    } finally {
-      setCreating(null);
-    }
-  }, [walletAddress, fetchStatus]);
+    },
+    [walletAddress, fetchStatus],
+  );
 
   // ─── Loading ────────────────────────────────────────────────────
   if (loading) {
@@ -132,9 +140,7 @@ export function ProtocolStatusSection({ walletAddress, isOwnProfile }: Props) {
         {/* Header */}
         <div className="mb-4 flex items-center justify-between">
           <div>
-            <h3 className="text-sm font-bold text-[var(--color-fg)]">
-              Protocol Accounts
-            </h3>
+            <h3 className="text-sm font-bold text-[var(--color-fg)]">Protocol Accounts</h3>
             <p className="text-xs text-[var(--color-muted)]">
               {registeredCount} of {totalCount} networks connected
             </p>
@@ -301,5 +307,10 @@ export function useProtocolStatus() {
       .catch(() => setLoading(false));
   }, []);
 
-  return { data, loading, registeredCount: data?.connectedCount ?? 0, totalCount: data?.totalPlatforms ?? 0 };
+  return {
+    data,
+    loading,
+    registeredCount: data?.connectedCount ?? 0,
+    totalCount: data?.totalPlatforms ?? 0,
+  };
 }

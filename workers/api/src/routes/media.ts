@@ -15,29 +15,20 @@
 
 import type { Env } from '../index';
 import { jsonResponse, log, noCacheJsonResponse } from '../index';
-import { requireSession } from '../session';
 import {
-  uploadImageToIPFS,
-  getImageMetadataByCid,
-  getCreatorImageStats,
-  linkImageToCreator,
-  MAX_IMAGE_SIZE,
-  ALLOWED_IMAGE_TYPES,
-  validateImage,
-  getOptimizedImageUrl,
-  getDefaultImageUrl,
   checkImageServiceHealth,
-  type ImageUploadResult,
+  getCreatorImageStats,
+  getDefaultImageUrl,
+  getImageMetadataByCid,
+  getOptimizedImageUrl,
   type ImageSizeName,
+  linkImageToCreator,
+  uploadImageToIPFS,
+  validateImage,
 } from '../lib/image-storage';
-import {
-  fetchMedia,
-  buildMediaResponse,
-  verifyMediaAvailability,
-  type GatewayBackend,
-  type MediaType,
-} from '../lib/media-gateway';
 import { uploadBufferToIPFS } from '../lib/ipfs-storage';
+import { buildMediaResponse, fetchMedia, type GatewayBackend } from '../lib/media-gateway';
+import { requireSession } from '../session';
 
 // ─── Constants ──────────────────────────────────────────────────────────
 
@@ -111,27 +102,33 @@ export async function handleImageUpload(request: Request, env: Env): Promise<Res
       size: result.metadata.processedSize,
     });
 
-    return jsonResponse({
-      success: true,
-      cid: result.cid,
-      url: result.url,
-      sizes: result.sizes,
-      metadata: {
-        width: result.metadata.width,
-        height: result.metadata.height,
-        originalSize: result.metadata.originalSize,
-        processedSize: result.metadata.processedSize,
-        mimeType: result.metadata.mimeType,
-        exifStripped: result.metadata.exifStripped,
-        isAnimated: result.metadata.isAnimated,
+    return jsonResponse(
+      {
+        success: true,
+        cid: result.cid,
+        url: result.url,
+        sizes: result.sizes,
+        metadata: {
+          width: result.metadata.width,
+          height: result.metadata.height,
+          originalSize: result.metadata.originalSize,
+          processedSize: result.metadata.processedSize,
+          mimeType: result.metadata.mimeType,
+          exifStripped: result.metadata.exifStripped,
+          isAnimated: result.metadata.isAnimated,
+        },
+        message: 'Image stored on IPFS (decentralized, permanent). Served via Cloudflare CDN.',
       },
-      message: 'Image stored on IPFS (decentralized, permanent). Served via Cloudflare CDN.',
-    }, 201);
+      201,
+    );
   } catch (err) {
     log('error', '[media] Image upload failed:', err);
-    return jsonResponse({
-      error: `Upload failed: ${err instanceof Error ? err.message : 'Unknown error'}`,
-    }, 500);
+    return jsonResponse(
+      {
+        error: `Upload failed: ${err instanceof Error ? err.message : 'Unknown error'}`,
+      },
+      500,
+    );
   }
 }
 
@@ -181,18 +178,24 @@ export async function handleMediaUpload(request: Request, env: Env): Promise<Res
       await linkImageToCreator(env, uploadResult.cid, wallet);
     }
 
-    return jsonResponse({
-      success: true,
-      cid: uploadResult.cid,
-      url: uploadResult.gatewayUrl,
-      allGateways: uploadResult.allGateways,
-      size: uploadResult.size,
-      provider: uploadResult.provider,
-      pinned: uploadResult.pinned,
-    }, 201);
+    return jsonResponse(
+      {
+        success: true,
+        cid: uploadResult.cid,
+        url: uploadResult.gatewayUrl,
+        allGateways: uploadResult.allGateways,
+        size: uploadResult.size,
+        provider: uploadResult.provider,
+        pinned: uploadResult.pinned,
+      },
+      201,
+    );
   } catch (err) {
     log('error', '[media] Upload failed:', err);
-    return jsonResponse({ error: `Upload failed: ${err instanceof Error ? err.message : 'Unknown error'}` }, 500);
+    return jsonResponse(
+      { error: `Upload failed: ${err instanceof Error ? err.message : 'Unknown error'}` },
+      500,
+    );
   }
 }
 
@@ -207,7 +210,7 @@ export async function handleMediaUpload(request: Request, env: Env): Promise<Res
  *   width   — custom width (overrides size)
  *   quality — 1-100 (default 85)
  */
-export async function handleGetImage(request: Request, env: Env, cid: string): Promise<Response> {
+export async function handleGetImage(request: Request, _env: Env, cid: string): Promise<Response> {
   if (request.method !== 'GET') {
     return jsonResponse({ error: 'Method not allowed — use GET' }, 405);
   }
@@ -227,16 +230,22 @@ export async function handleGetImage(request: Request, env: Env, cid: string): P
 
     // Validate size
     if (sizeParam && !VALID_IMAGE_SIZES.includes(sizeParam)) {
-      return jsonResponse({
-        error: `Invalid size: ${sizeParam}. Valid: ${VALID_IMAGE_SIZES.join(', ')}`,
-      }, 400);
+      return jsonResponse(
+        {
+          error: `Invalid size: ${sizeParam}. Valid: ${VALID_IMAGE_SIZES.join(', ')}`,
+        },
+        400,
+      );
     }
 
     // Validate format
     if (!VALID_IMAGE_FORMATS.includes(formatParam)) {
-      return jsonResponse({
-        error: `Invalid format: ${formatParam}. Valid: ${VALID_IMAGE_FORMATS.join(', ')}`,
-      }, 400);
+      return jsonResponse(
+        {
+          error: `Invalid format: ${formatParam}. Valid: ${VALID_IMAGE_FORMATS.join(', ')}`,
+        },
+        400,
+      );
     }
 
     // If format is 'original', redirect to the IPFS gateway directly (no transform)
@@ -266,7 +275,11 @@ export async function handleGetImage(request: Request, env: Env, cid: string): P
 /**
  * Get metadata for an image by CID.
  */
-export async function handleGetImageMetadata(request: Request, env: Env, cid: string): Promise<Response> {
+export async function handleGetImageMetadata(
+  request: Request,
+  env: Env,
+  cid: string,
+): Promise<Response> {
   if (request.method !== 'GET') {
     return jsonResponse({ error: 'Method not allowed — use GET' }, 405);
   }
@@ -312,7 +325,12 @@ export async function handleGetImageMetadata(request: Request, env: Env, cid: st
  * If no specific backend is given, tries all in priority order.
  * Returns the content with proper caching headers.
  */
-export async function handleMediaGateway(request: Request, env: Env, type: string, id: string): Promise<Response> {
+export async function handleMediaGateway(
+  request: Request,
+  env: Env,
+  type: string,
+  id: string,
+): Promise<Response> {
   if (request.method !== 'GET') {
     return jsonResponse({ error: 'Method not allowed — use GET' }, 405);
   }
@@ -384,19 +402,23 @@ export async function handleMakePermanent(request: Request, env: Env): Promise<R
     // Estimate cost based on metadata (best effort)
     const meta = await getImageMetadataByCid(env, cid);
     const estimatedBytes = meta?.processedSize ?? 0;
-    const estimatedCost = (estimatedBytes / 1_000_000 * 0.01).toFixed(4);
+    const estimatedCost = ((estimatedBytes / 1_000_000) * 0.01).toFixed(4);
 
     // For now, this is a planned feature that requires a funded Irys node.
     // Return informative response about the feature.
-    return jsonResponse({
-      success: false,
-      cid,
-      message: 'Arweave permanence coming soon. ' +
-        'This will archive your media permanently on Arweave for ~$0.01/MB (one-time fee). ' +
-        'Your media is currently stored on IPFS (decentralized, pinned).',
-      estimatedCost: `${estimatedCost} USD`,
-      status: 'pending',
-    }, 202);
+    return jsonResponse(
+      {
+        success: false,
+        cid,
+        message:
+          'Arweave permanence coming soon. ' +
+          'This will archive your media permanently on Arweave for ~$0.01/MB (one-time fee). ' +
+          'Your media is currently stored on IPFS (decentralized, pinned).',
+        estimatedCost: `${estimatedCost} USD`,
+        status: 'pending',
+      },
+      202,
+    );
   } catch (err) {
     log('error', '[media] Make permanent failed:', err);
     return jsonResponse({ error: 'Failed to process permanence request' }, 500);
@@ -465,5 +487,5 @@ function formatBytes(bytes: number): string {
   if (bytes === 0) return '0 B';
   const units = ['B', 'KB', 'MB', 'GB'];
   const i = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
-  return `${(bytes / Math.pow(1024, i)).toFixed(1)} ${units[i]}`;
+  return `${(bytes / 1024 ** i).toFixed(1)} ${units[i]}`;
 }

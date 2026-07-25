@@ -81,13 +81,13 @@ export const redditAdapter: PlatformAdapter = {
     // Mentions on Reddit use /u/ prefix
     const mentions = master.mentions ?? [];
     if (mentions.length > 0) {
-      body += '\n\n' + mentions.map((m) => `/u/${m}`).join(' ');
+      body += `\n\n${mentions.map((m) => `/u/${m}`).join(' ')}`;
     }
 
     // Hashtags don't really work on Reddit but include them as links
     const hashtags = master.hashtags ?? [];
     if (hashtags.length > 0) {
-      body += '\n\n' + hashtags.map((h) => `r/${h}`).join(' ');
+      body += `\n\n${hashtags.map((h) => `r/${h}`).join(' ')}`;
     }
 
     body = truncateText(body, REDDIT_CHAR_LIMIT);
@@ -128,7 +128,7 @@ export const redditAdapter: PlatformAdapter = {
 
     let preview = `[Reddit — r/${subreddit}]`;
     preview += `\n📌 Title: ${master.title ?? '(auto-generated from first sentence)'}`;
-    preview += '\n' + master.text.slice(0, 400);
+    preview += `\n${master.text.slice(0, 400)}`;
 
     if (master.text.length > 400) {
       preview += '...';

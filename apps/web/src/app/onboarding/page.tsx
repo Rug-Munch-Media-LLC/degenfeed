@@ -94,7 +94,10 @@ const WALLETS: WalletOption[] = [
 /* ─── Confetti component ─────────────────────────────────────── */
 
 function ConfettiBurst() {
-  const colors = useMemo(() => ['#00ff41', '#8b5cf6', '#f91880', '#f59e0b', '#1185fe', '#00ba7c', '#ff4500'], []);
+  const colors = useMemo(
+    () => ['#00ff41', '#8b5cf6', '#f91880', '#f59e0b', '#1185fe', '#00ba7c', '#ff4500'],
+    [],
+  );
   const particles = useMemo(() => {
     return Array.from({ length: 40 }).map((_, i) => ({
       id: i,
@@ -228,7 +231,9 @@ function ProgressBar({ step, total }: { step: number; total: number }) {
         <div
           key={i}
           className={`h-1.5 flex-1 rounded-full transition-all duration-500 ease-out ${
-            i <= step ? 'bg-degen-500 shadow-[0_0_8px_rgba(0,255,65,0.3)]' : 'bg-[var(--color-border)]'
+            i <= step
+              ? 'bg-degen-500 shadow-[0_0_8px_rgba(0,255,65,0.3)]'
+              : 'bg-[var(--color-border)]'
           }`}
           style={{
             transform: i === step ? 'scaleY(1.4)' : 'scaleY(1)',
@@ -263,8 +268,7 @@ function AnimatedStep({
   direction: 'forward' | 'backward';
   children: React.ReactNode;
 }) {
-  const slideClass =
-    direction === 'forward' ? 'animate-slide-in-right' : 'animate-slide-in-left';
+  const slideClass = direction === 'forward' ? 'animate-slide-in-right' : 'animate-slide-in-left';
   return (
     <div key={direction} className={slideClass}>
       {children}
@@ -451,7 +455,11 @@ export default function OnboardingPage() {
                       }`}
                       style={
                         selected
-                          ? { background: interest.color, color: '#000', boxShadow: `0 0 20px ${interest.color}40` }
+                          ? {
+                              background: interest.color,
+                              color: '#000',
+                              boxShadow: `0 0 20px ${interest.color}40`,
+                            }
                           : {}
                       }
                       aria-pressed={selected}
@@ -488,7 +496,8 @@ export default function OnboardingPage() {
                     {selectedInterests.length} selected
                   </span>
                   <span className="text-[var(--color-muted)]">
-                    {' '}— We&apos;ll prioritize {selectedInterests.join(', ')} content in your feed
+                    {' '}
+                    — We&apos;ll prioritize {selectedInterests.join(', ')} content in your feed
                   </span>
                 </div>
               )}
@@ -498,7 +507,16 @@ export default function OnboardingPage() {
                   onClick={goBack}
                   className="inline-flex items-center gap-1 text-xs font-medium text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    aria-hidden="true"
+                  >
                     <path d="M19 12H5M12 19l-7-7 7-7" />
                   </svg>
                   Back
@@ -536,7 +554,9 @@ export default function OnboardingPage() {
               <div
                 className="mb-4 rounded-xl border p-4"
                 style={{
-                  borderColor: walletAddress ? 'var(--color-accent-soft)' : 'var(--color-glass-border)',
+                  borderColor: walletAddress
+                    ? 'var(--color-accent-soft)'
+                    : 'var(--color-glass-border)',
                   backgroundColor: walletAddress ? 'var(--color-accent-soft)' : 'var(--color-card)',
                 }}
               >
@@ -644,7 +664,16 @@ export default function OnboardingPage() {
                   onClick={goBack}
                   className="inline-flex items-center gap-1 text-xs font-medium text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    aria-hidden="true"
+                  >
                     <path d="M19 12H5M12 19l-7-7 7-7" />
                   </svg>
                   Back
@@ -681,7 +710,9 @@ export default function OnboardingPage() {
               {!scanningComplete && walletAddress && <ScanningAnimation />}
 
               {walletAddress ? (
-                <div className={`transition-all duration-500 ${scanningComplete ? 'opacity-100' : 'opacity-60'}`}>
+                <div
+                  className={`transition-all duration-500 ${scanningComplete ? 'opacity-100' : 'opacity-60'}`}
+                >
                   <IdentityDiscoveryWizard
                     walletAddress={walletAddress}
                     variant="onboarding"
@@ -712,7 +743,16 @@ export default function OnboardingPage() {
                   onClick={goBack}
                   className="inline-flex items-center gap-1 text-xs font-medium text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    aria-hidden="true"
+                  >
                     <path d="M19 12H5M12 19l-7-7 7-7" />
                   </svg>
                   Back
@@ -768,9 +808,7 @@ export default function OnboardingPage() {
                 )}
                 {walletAddress && (
                   <div className="rounded-full border border-[var(--color-glass-border)] bg-[var(--color-card)] px-3 py-1.5">
-                    <span className="text-xs font-mono text-degen-400">
-                      Wallet connected
-                    </span>
+                    <span className="text-xs font-mono text-degen-400">Wallet connected</span>
                   </div>
                 )}
               </div>

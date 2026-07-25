@@ -148,7 +148,7 @@ export async function fetchFromIPFS(
       const response = await fetch(url, {
         method: 'GET',
         headers: {
-          'Accept': 'image/webp,image/avif,image/*,video/*,audio/*,*/*',
+          Accept: 'image/webp,image/avif,image/*,video/*,audio/*,*/*',
           ...headers,
         },
         signal: AbortSignal.timeout(timeout),
@@ -161,7 +161,7 @@ export async function fetchFromIPFS(
         const location = response.headers.get('location');
         if (location) {
           const redirected = await fetch(location, {
-            headers: { 'Accept': 'image/webp,image/avif,image/*,video/*,audio/*,*/*' },
+            headers: { Accept: 'image/webp,image/avif,image/*,video/*,audio/*,*/*' },
             signal: AbortSignal.timeout(timeout),
           });
           if (redirected.ok) {
@@ -179,7 +179,6 @@ export async function fetchFromIPFS(
       log('warn', `[media-gateway] IPFS gateway ${gw.name} returned ${response.status} for ${cid}`);
     } catch (err) {
       log('warn', `[media-gateway] IPFS gateway ${gw.name} failed for ${cid}:`, err);
-      continue;
     }
   }
 
@@ -231,10 +230,12 @@ export async function fetchFromArweave(
         return gatewayResult(response, 'arweave');
       }
 
-      log('warn', `[media-gateway] Arweave gateway ${gw.name} returned ${response.status} for ${txId}`);
+      log(
+        'warn',
+        `[media-gateway] Arweave gateway ${gw.name} returned ${response.status} for ${txId}`,
+      );
     } catch (err) {
       log('warn', `[media-gateway] Arweave gateway ${gw.name} failed for ${txId}:`, err);
-      continue;
     }
   }
 
@@ -258,7 +259,13 @@ export async function fetchFromR2(
   _options?: MediaGatewayOptions,
 ): Promise<MediaGatewayResult> {
   const bucket = (env as any).VIDEO_STORAGE_BINDING as
-    | { get(key: string): Promise<{ body: ReadableStream; size: number; httpMetadata?: { contentType?: string } } | null> }
+    | {
+        get(key: string): Promise<{
+          body: ReadableStream;
+          size: number;
+          httpMetadata?: { contentType?: string };
+        } | null>;
+      }
     | undefined;
 
   if (!bucket) {
@@ -275,7 +282,7 @@ export async function fetchFromR2(
 
   try {
     const obj = await bucket.get(key);
-    if (!obj || !obj.body) {
+    if (!obj?.body) {
       return {
         body: null,
         contentType: 'application/octet-stream',
@@ -433,7 +440,7 @@ export function buildMediaResponse(
         status: 304,
         headers: {
           'cache-control': `public, max-age=${maxAge}, immutable`,
-          'etag': etag,
+          etag: etag,
           'access-control-allow-origin': '*',
         },
       });
@@ -444,7 +451,7 @@ export function buildMediaResponse(
     'content-type': result.contentType,
     'content-length': String(result.contentLength),
     'cache-control': `public, max-age=${maxAge}, ${result.backend !== 'r2' ? 'immutable, ' : ''}s-maxage=${maxAge}`,
-    'etag': etag,
+    etag: etag,
     'x-media-backend': result.backend,
     'x-content-type-options': 'nosniff',
     'access-control-allow-origin': '*',
@@ -502,9 +509,7 @@ export function buildTransformUrl(
  * Verify that media content is accessible through the gateway.
  * Returns a map of backends that can serve the content.
  */
-export async function verifyMediaAvailability(
-  cid: string,
-): Promise<{
+export async function verifyMediaAvailability(cid: string): Promise<{
   available: boolean;
   backends: Record<GatewayBackend, boolean>;
   fastestGateway?: string;
@@ -527,9 +532,7 @@ export async function verifyMediaAvailability(
         backends.ipfs = true;
         break;
       }
-    } catch {
-      continue;
-    }
+    } catch {}
   }
 
   // Check Arweave
@@ -544,9 +547,7 @@ export async function verifyMediaAvailability(
         backends.arweave = true;
         break;
       }
-    } catch {
-      continue;
-    }
+    } catch {}
   }
 
   return {

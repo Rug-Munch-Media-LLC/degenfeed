@@ -92,7 +92,9 @@ function Waveform({
       className="flex items-center gap-[2px]"
       style={{ height, '--wave-color': color } as React.CSSProperties}
       role="img"
-      aria-label={active ? 'Recording waveform' : played ? 'Played voice message' : 'Voice message waveform'}
+      aria-label={
+        active ? 'Recording waveform' : played ? 'Played voice message' : 'Voice message waveform'
+      }
     >
       {samples.slice(0, WAVEFORM_SAMPLES).map((amplitude, i) => {
         const normalizedHeight = Math.max(2, (amplitude / maxVal) * height * 0.9);
@@ -235,7 +237,10 @@ function AudioPlayer({
             <button
               key={speed}
               type="button"
-              onClick={(e) => { e.stopPropagation(); changeSpeed(speed); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                changeSpeed(speed);
+              }}
               className={`rounded px-1 py-0.5 text-[8px] font-medium transition-colors ${
                 playbackRate === speed
                   ? 'bg-degen-500/20 text-degen-400'
@@ -251,7 +256,17 @@ function AudioPlayer({
       {/* Played indicator */}
       {played && (
         <div className="shrink-0" title="Played" aria-label="Voice note has been played">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="text-degen-400" aria-hidden="true">
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            className="text-degen-400"
+            aria-hidden="true"
+          >
             <polyline points="20 6 9 17 4 12" />
           </svg>
         </div>
@@ -276,12 +291,12 @@ export function VoiceNoteRecorder({
   const [duration, setDuration] = useState(0);
   const [waveform, setWaveform] = useState<number[]>(new Array(WAVEFORM_SAMPLES).fill(0.1));
   const [voiceNote, setVoiceNote] = useState<VoiceNoteData | null>(null);
-  const [transcribing, setTranscribing] = useState(false);
+  const [transcribing, _setTranscribing] = useState(false);
   const [transcript, setTranscript] = useState<string | undefined>();
   const [error, setError] = useState<string | null>(null);
   const [slideOffset, setSlideOffset] = useState(0);
   const [isLocked, setIsLocked] = useState(false);
-  const [hasPreviewed, setHasPreviewed] = useState(false);
+  const [_hasPreviewed, setHasPreviewed] = useState(false);
 
   // Refs
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -324,14 +339,13 @@ export function VoiceNoteRecorder({
       analyserRef.current = analyser;
 
       // Supported MIME types in order of preference
-      const mimeType =
-        MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
-          ? 'audio/webm;codecs=opus'
-          : MediaRecorder.isTypeSupported('audio/webm')
-            ? 'audio/webm'
-            : MediaRecorder.isTypeSupported('audio/mp4')
-              ? 'audio/mp4'
-              : 'audio/webm';
+      const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+        ? 'audio/webm;codecs=opus'
+        : MediaRecorder.isTypeSupported('audio/webm')
+          ? 'audio/webm'
+          : MediaRecorder.isTypeSupported('audio/mp4')
+            ? 'audio/mp4'
+            : 'audio/webm';
 
       const recorder = new MediaRecorder(stream, { mimeType });
       mediaRecorderRef.current = recorder;
@@ -416,8 +430,8 @@ export function VoiceNoteRecorder({
             recognition.onresult = (event: SpeechRecognitionEvent) => {
               let finalTranscript = '';
               for (let i = event.resultIndex; i < event.results.length; i++) {
-                if (event.results[i]!.isFinal) {
-                  finalTranscript += event.results[i]![0]!.transcript;
+                if (event.results[i]?.isFinal) {
+                  finalTranscript += event.results[i]?.[0]?.transcript;
                 }
               }
               if (finalTranscript) {
@@ -440,7 +454,16 @@ export function VoiceNoteRecorder({
       setError(message);
       setState('error');
     }
-  }, [disabled, maxDuration, enableTranscription, transcriptLanguage, onRecordStart, duration, waveform]);
+  }, [
+    disabled,
+    maxDuration,
+    enableTranscription,
+    transcriptLanguage,
+    onRecordStart,
+    duration,
+    waveform,
+    stopRecording,
+  ]);
 
   const stopRecording = useCallback(() => {
     const recorder = mediaRecorderRef.current;
@@ -534,7 +557,7 @@ export function VoiceNoteRecorder({
   );
 
   const handlePointerUp = useCallback(
-    (e: React.PointerEvent) => {
+    (_e: React.PointerEvent) => {
       if (state === 'recording' && !isLocked) {
         // Released before lock threshold — stop recording
         stopRecording();
@@ -569,9 +592,7 @@ export function VoiceNoteRecorder({
   if (state === 'completed' && voiceNote) {
     return (
       <div className="flex flex-col gap-2 p-3 bg-[var(--color-card)] border-t border-[var(--color-border)] animate-fade-in">
-        {transcribing && (
-          <p className="text-[10px] text-[var(--color-muted)]">Transcribing...</p>
-        )}
+        {transcribing && <p className="text-[10px] text-[var(--color-muted)]">Transcribing...</p>}
         {transcript && (
           <div className="rounded-lg bg-[var(--color-overlay)] px-3 py-2">
             <p className="text-[10px] text-[var(--color-muted)] mb-0.5">Transcription</p>
@@ -622,7 +643,10 @@ export function VoiceNoteRecorder({
         </button>
         <button
           type="button"
-          onClick={() => { setState('idle'); setError(null); }}
+          onClick={() => {
+            setState('idle');
+            setError(null);
+          }}
           className="rounded-lg bg-[var(--color-overlay)] px-2 py-1 text-[10px] text-[var(--color-fg)] hover:bg-[var(--color-border)]"
         >
           Retry
@@ -642,7 +666,16 @@ export function VoiceNoteRecorder({
           aria-label="Hold to record voice message"
           title="Hold to record"
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            aria-hidden="true"
+          >
             <path d="M12 2a3 3 0 00-3 3v7a3 3 0 006 0V5a3 3 0 00-3-3z" />
             <path d="M19 10v2a7 7 0 01-14 0v-2" />
             <line x1="12" y1="19" x2="12" y2="23" />
@@ -660,7 +693,9 @@ export function VoiceNoteRecorder({
       className="flex items-center gap-3 p-3 bg-[var(--color-card)] border-t border-[var(--color-border)] select-none"
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
-      onPointerLeave={() => { if (state === 'recording' && !isLocked) stopRecording(); }}
+      onPointerLeave={() => {
+        if (state === 'recording' && !isLocked) stopRecording();
+      }}
       style={{ touchAction: 'none' }}
     >
       {/* Cancel button (slide left) */}
@@ -670,7 +705,16 @@ export function VoiceNoteRecorder({
         className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--color-overlay)] text-[var(--color-muted)] hover:bg-red-500/20 hover:text-red-400 transition-colors"
         aria-label="Cancel recording"
       >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          aria-hidden="true"
+        >
           <line x1="18" y1="6" x2="6" y2="18" />
           <line x1="6" y1="6" x2="18" y2="18" />
         </svg>
@@ -683,9 +727,7 @@ export function VoiceNoteRecorder({
 
       {/* Timer */}
       <div className="flex flex-col items-center shrink-0 gap-0.5">
-        <span className="text-sm font-bold text-red-400 tabular-nums">
-          {formattedDuration}
-        </span>
+        <span className="text-sm font-bold text-red-400 tabular-nums">{formattedDuration}</span>
         {/* Recording indicator */}
         <span className="flex items-center gap-1">
           <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" />

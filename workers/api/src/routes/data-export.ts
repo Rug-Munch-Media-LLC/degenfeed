@@ -17,19 +17,19 @@
 
 import type { Env } from '../index';
 import {
-  buildExportManifest,
-  buildActivityPubProfile,
   buildActivityPubNotes,
+  buildActivityPubProfile,
+  buildAtProtoExport,
+  buildDataTransferPackage,
+  buildExportManifest,
+  buildHtmlArchive,
   buildNostrExport,
   buildNostrNotes,
-  buildAtProtoExport,
   buildSolidPodExport,
-  buildDataTransferPackage,
-  buildHtmlArchive,
   jsonToCsv,
 } from '../lib/data-portability';
+import { ok, serverError } from '../response-helpers';
 import { requireSession } from '../session';
-import { ok, badRequest, notFound, serverError } from '../response-helpers';
 
 // ─── Type for gathered user data ──────────────────────────────
 
@@ -102,26 +102,28 @@ async function gatherAllUserData(
         try {
           const [prefRaw, followsRaw2, mutedARaw, mutedWRaw, dwellRaw, topicsRaw] =
             await Promise.all([
-              env.CACHE!.get(`user:prefs:${walletLower}`),
-              env.CACHE!.get(`user:follows:${walletLower}`),
-              env.CACHE!.get(`user:muted_authors:${walletLower}`),
-              env.CACHE!.get(`user:muted_words:${walletLower}`),
-              env.CACHE!.get(`user:dwell:${walletLower}`).catch(() => null),
-              env.CACHE!.get(`user:topics:${walletLower}`).catch(() => null),
+              env.CACHE?.get(`user:prefs:${walletLower}`),
+              env.CACHE?.get(`user:follows:${walletLower}`),
+              env.CACHE?.get(`user:muted_authors:${walletLower}`),
+              env.CACHE?.get(`user:muted_words:${walletLower}`),
+              env.CACHE?.get(`user:dwell:${walletLower}`).catch(() => null),
+              env.CACHE?.get(`user:topics:${walletLower}`).catch(() => null),
             ]);
-        if (prefRaw) {
-          const parsed = JSON.parse(prefRaw);
-          preferences = parsed as Record<string, unknown>;
-          profile.displayName = (parsed as Record<string, string>).displayName;
-          profile.avatarUrl = (parsed as Record<string, string>).avatarUrl;
-          profile.bio = (parsed as Record<string, string>).bio;
+          if (prefRaw) {
+            const parsed = JSON.parse(prefRaw);
+            preferences = parsed as Record<string, unknown>;
+            profile.displayName = (parsed as Record<string, string>).displayName;
+            profile.avatarUrl = (parsed as Record<string, string>).avatarUrl;
+            profile.bio = (parsed as Record<string, string>).bio;
+          }
+          if (followsRaw2) followsRaw = JSON.parse(followsRaw2);
+          if (mutedARaw) mutedAuthorsRaw = JSON.parse(mutedARaw);
+          if (mutedWRaw) mutedWordsRaw = JSON.parse(mutedWRaw);
+          if (dwellRaw) activityLog.push({ type: 'dwell', data: JSON.parse(dwellRaw) });
+          if (topicsRaw) activityLog.push({ type: 'topics', data: JSON.parse(topicsRaw) });
+        } catch {
+          /* KV read failed */
         }
-        if (followsRaw2) followsRaw = JSON.parse(followsRaw2);
-        if (mutedARaw) mutedAuthorsRaw = JSON.parse(mutedARaw);
-        if (mutedWRaw) mutedWordsRaw = JSON.parse(mutedWRaw);
-        if (dwellRaw) activityLog.push({ type: 'dwell', data: JSON.parse(dwellRaw) });
-        if (topicsRaw) activityLog.push({ type: 'topics', data: JSON.parse(topicsRaw) });
-        } catch { /* KV read failed */ }
       })(),
     );
   }
@@ -132,10 +134,12 @@ async function gatherAllUserData(
       (async () => {
         try {
           for (const prefix of ['newsletter:sub:', 'notify:sub:']) {
-            const raw = await env.SUBSCRIPTIONS!.get(`${prefix}${walletLower}`);
+            const raw = await env.SUBSCRIPTIONS?.get(`${prefix}${walletLower}`);
             if (raw) subscriptions[prefix.replace(':', '')] = JSON.parse(raw);
           }
-        } catch { /* skip */ }
+        } catch {
+          /* skip */
+        }
       })(),
     );
   }
@@ -145,9 +149,11 @@ async function gatherAllUserData(
     tasks.push(
       (async () => {
         try {
-          const raw = await env.BOOKMARKS!.get(`bookmarks:${walletLower}`);
+          const raw = await env.BOOKMARKS?.get(`bookmarks:${walletLower}`);
           if (raw) bookmarks = JSON.parse(raw);
-        } catch { /* skip */ }
+        } catch {
+          /* skip */
+        }
       })(),
     );
   }
@@ -164,7 +170,13 @@ async function gatherAllUserData(
             for (const entry of index.slice(0, 500)) {
               const cr = await store.get(`cl:${walletLower}:${entry.id}`);
               if (cr) {
-                const record = JSON.parse(cr) as { id: string; type: string; body: string; createdAt: number; tags?: string[] };
+                const record = JSON.parse(cr) as {
+                  id: string;
+                  type: string;
+                  body: string;
+                  createdAt: number;
+                  tags?: string[];
+                };
                 if (!record) continue;
                 if ((record as unknown as Record<string, unknown>).deleted) continue;
                 contentLibrary.push({
@@ -177,7 +189,9 @@ async function gatherAllUserData(
               }
             }
           }
-        } catch { /* skip */ }
+        } catch {
+          /* skip */
+        }
       })(),
     );
   }
@@ -187,16 +201,18 @@ async function gatherAllUserData(
     tasks.push(
       (async () => {
         try {
-          const raw = await env.PLATFORM_ACCOUNTS!.get(`account:${walletLower}`);
+          const raw = await env.PLATFORM_ACCOUNTS?.get(`account:${walletLower}`);
           if (raw) platformAccounts = JSON.parse(raw) as Record<string, unknown>;
           // Also gather per-protocol records
           for (const plat of ['nostr', 'farcaster', 'lens', 'bluesky', 'mastodon']) {
-            const pr = await env.PLATFORM_ACCOUNTS!.get(`${plat}:${walletLower}`).catch(() => null);
+            const pr = await env.PLATFORM_ACCOUNTS?.get(`${plat}:${walletLower}`).catch(() => null);
             if (pr) {
               (platformAccounts as Record<string, unknown>)[plat] = JSON.parse(pr);
             }
           }
-        } catch { /* skip */ }
+        } catch {
+          /* skip */
+        }
       })(),
     );
   }
@@ -206,9 +222,11 @@ async function gatherAllUserData(
     tasks.push(
       (async () => {
         try {
-          const raw = await env.IDENTITIES!.get(`identity:${walletLower}`);
+          const raw = await env.IDENTITIES?.get(`identity:${walletLower}`);
           if (raw) identities = JSON.parse(raw) as Record<string, unknown>;
-        } catch { /* skip */ }
+        } catch {
+          /* skip */
+        }
       })(),
     );
   }
@@ -218,12 +236,14 @@ async function gatherAllUserData(
     tasks.push(
       (async () => {
         try {
-          const listResult = await env.CACHE!.list({ prefix: `security:audit:${walletLower}:` });
+          const listResult = await env.CACHE?.list({ prefix: `security:audit:${walletLower}:` });
           for (const key of listResult.keys.slice(0, 200)) {
-            const raw = await env.CACHE!.get(key.name);
+            const raw = await env.CACHE?.get(key.name);
             if (raw) activityLog.push({ type: 'security_audit', data: JSON.parse(raw) });
           }
-        } catch { /* skip */ }
+        } catch {
+          /* skip */
+        }
       })(),
     );
   }
@@ -508,10 +528,7 @@ export async function handleExportActivityPub(request: Request, env: Env): Promi
       notes,
       totalItems: notes.length,
       exportedAt: new Date().toISOString(),
-      '@context': [
-        'https://www.w3.org/ns/activitystreams',
-        'https://w3id.org/security/v1',
-      ],
+      '@context': ['https://www.w3.org/ns/activitystreams', 'https://w3id.org/security/v1'],
     };
 
     return new Response(JSON.stringify(exportPayload, null, 2), {
@@ -589,7 +606,8 @@ export async function handleExportAtProto(request: Request, env: Env): Promise<R
       : undefined;
 
     const did = atprotoIdentity?.did || `did:plc:${session.address.slice(2, 18)}`;
-    const handle = atprotoIdentity?.handle || `df-${session.address.slice(2, 14)}.pds.degenfeed.xyz`;
+    const handle =
+      atprotoIdentity?.handle || `df-${session.address.slice(2, 14)}.pds.degenfeed.xyz`;
 
     const atExport = buildAtProtoExport(did, handle, {
       posts: data.contentLibrary.map((p) => ({

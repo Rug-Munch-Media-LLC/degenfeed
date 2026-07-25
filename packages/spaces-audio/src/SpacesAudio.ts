@@ -86,9 +86,6 @@ const DEFAULT_AUDIO_OPTIONS: AudioQualityOptions = {
 
 export class SpacesAudio {
   private roomId: string;
-  private token: string;
-  private localTrack: any = null;
-  private liveKitRoom: any = null;
   private isConnected = false;
   private isSpeaker = false;
   private isMuted = false;

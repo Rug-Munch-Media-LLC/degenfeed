@@ -218,7 +218,8 @@ export default function VideoHubPage() {
 
         {/* Zero-cost hosting indicator */}
         <div className="mb-4 rounded-lg border border-green-500/10 bg-green-500/[0.03] px-3 py-1.5 text-[11px] text-green-400/70">
-          All external video content is served directly from source platforms — DegenFeed pays <strong className="text-green-300">$0 hosting costs</strong> for embedded content.
+          All external video content is served directly from source platforms — DegenFeed pays{' '}
+          <strong className="text-green-300">$0 hosting costs</strong> for embedded content.
         </div>
 
         <VideoHubLayout

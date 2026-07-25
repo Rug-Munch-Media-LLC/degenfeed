@@ -11,7 +11,9 @@
     "./nip19": "./src/nip19.ts",
     "./nip05": "./src/nip05.ts",
     "./nip46": "./src/nip46.ts",
-    "./relay": "./src/relay.ts"
+    "./relay": "./src/relay.ts",
+    "./nip53": "./src/nip53.ts",
+    "./nip71": "./src/nip71.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

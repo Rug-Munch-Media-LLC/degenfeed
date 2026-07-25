@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
-import { formatTimeAgo, MOCK_DAO, shortAddr } from '../layout';
+import { formatTimeAgo, shortAddr } from '../layout';
 
 // ─── Types ─────────────────────────────────────────────────────────────
 
@@ -545,7 +545,7 @@ export default function MembersPage({ params }: { params: { id: string } }) {
                 Most Proposals
               </h3>
               <div className="space-y-1.5">
-                {topProposers.map((m, i) => (
+                {topProposers.map((m, _i) => (
                   <div key={m.id} className="flex items-center justify-between text-[10px]">
                     <div className="flex items-center gap-2">
                       <span className="text-xs">{m.avatar}</span>
@@ -564,7 +564,7 @@ export default function MembersPage({ params }: { params: { id: string } }) {
                 Most Votes Cast
               </h3>
               <div className="space-y-1.5">
-                {topVoters.map((m, i) => (
+                {topVoters.map((m, _i) => (
                   <div key={m.id} className="flex items-center justify-between text-[10px]">
                     <div className="flex items-center gap-2">
                       <span className="text-xs">{m.avatar}</span>

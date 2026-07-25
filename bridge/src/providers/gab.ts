@@ -119,9 +119,7 @@ export function guessNiches(text: string): string[] {
 function gabPostToPost(post: GabPost): UnifiedPost {
   const original = post.reblog ?? post;
   const content = stripHtml(original.content || '');
-  const text = original.spoiler_text
-    ? `[CW: ${original.spoiler_text}]\n\n${content}`
-    : content;
+  const text = original.spoiler_text ? `[CW: ${original.spoiler_text}]\n\n${content}` : content;
   const acct = original.account;
 
   // Determine content type
@@ -202,10 +200,13 @@ function gabPostToPost(post: GabPost): UnifiedPost {
 
 async function fetchPublicTimeline(limit: number): Promise<UnifiedPost[]> {
   try {
-    const res = await $fetch(`${GAB_BASE}/api/v1/timelines/public?local=true&limit=${Math.min(limit, 40)}`, {
-      headers: { 'User-Agent': 'DegenFeed-Bridge/0.1 (Gab)' },
-      signal: AbortSignal.timeout(8000),
-    });
+    const res = await $fetch(
+      `${GAB_BASE}/api/v1/timelines/public?local=true&limit=${Math.min(limit, 40)}`,
+      {
+        headers: { 'User-Agent': 'DegenFeed-Bridge/0.1 (Gab)' },
+        signal: AbortSignal.timeout(8000),
+      },
+    );
     if (!res.ok) return [];
     const posts = (await res.json()) as GabPost[];
     if (!Array.isArray(posts)) return [];

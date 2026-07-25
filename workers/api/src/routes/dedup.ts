@@ -14,16 +14,13 @@
 
 import type { Env } from '../index';
 import { jsonResponse } from '../index';
+import { type DedupCheckRequest, GlobalDedupRegistry } from '../lib/global-dedup';
+import { SeenContentManager } from '../lib/seen-content';
 import { verifySessionCookie } from '../session';
-import { GlobalDedupRegistry, type DedupCheckRequest, type DedupResult } from '../lib/global-dedup';
-import { SeenContentManager, type SeenStats } from '../lib/seen-content';
 
 // ─── Session Helper ───────────────────────────────────────────────────────
 
-async function getWalletFromSession(
-  request: Request,
-  env: Env,
-): Promise<string | null> {
+async function getWalletFromSession(request: Request, env: Env): Promise<string | null> {
   const cookieHeader = request.headers.get('cookie') ?? '';
   const match = cookieHeader
     .split(';')
@@ -41,10 +38,7 @@ async function getWalletFromSession(
 
 // ─── POST /api/dedup/check ───────────────────────────────────────────────
 
-export async function handleDedupCheck(
-  request: Request,
-  env: Env,
-): Promise<Response> {
+export async function handleDedupCheck(request: Request, env: Env): Promise<Response> {
   try {
     const body = (await request.json()) as DedupCheckRequest;
 
@@ -53,7 +47,10 @@ export async function handleDedupCheck(
       return jsonResponse({ error: 'protocol and sourceId are required' }, 400);
     }
     if (!body.text && !body.title && !body.url && !body.rssGuid) {
-      return jsonResponse({ error: 'At least one of text, title, url, or rssGuid is required' }, 400);
+      return jsonResponse(
+        { error: 'At least one of text, title, url, or rssGuid is required' },
+        400,
+      );
     }
 
     const registry = new GlobalDedupRegistry(env);
@@ -76,10 +73,7 @@ export async function handleDedupCheck(
 
 // ─── POST /api/dedup/register ─────────────────────────────────────────────
 
-export async function handleDedupRegister(
-  request: Request,
-  env: Env,
-): Promise<Response> {
+export async function handleDedupRegister(request: Request, env: Env): Promise<Response> {
   try {
     const body = (await request.json()) as DedupCheckRequest;
 
@@ -105,7 +99,7 @@ export async function handleDedupRegister(
 // ─── GET /api/dedup/cluster/:id ───────────────────────────────────────────
 
 export async function handleDedupCluster(
-  request: Request,
+  _request: Request,
   env: Env,
   clusterId: string,
 ): Promise<Response> {
@@ -139,10 +133,7 @@ export async function handleDedupCluster(
 
 // ─── POST /api/dedup/mark-seen ────────────────────────────────────────────
 
-export async function handleDedupMarkSeen(
-  request: Request,
-  env: Env,
-): Promise<Response> {
+export async function handleDedupMarkSeen(request: Request, env: Env): Promise<Response> {
   const wallet = await getWalletFromSession(request, env);
   if (!wallet) {
     return jsonResponse({ error: 'Authentication required' }, 401);
@@ -182,10 +173,7 @@ export async function handleDedupMarkSeen(
 
 // ─── POST /api/dedup/mark-seen (batch) ───────────────────────────────────
 
-export async function handleDedupMarkSeenBatch(
-  request: Request,
-  env: Env,
-): Promise<Response> {
+export async function handleDedupMarkSeenBatch(request: Request, env: Env): Promise<Response> {
   const wallet = await getWalletFromSession(request, env);
   if (!wallet) {
     return jsonResponse({ error: 'Authentication required' }, 401);
@@ -233,10 +221,7 @@ export async function handleDedupMarkSeenBatch(
 
 // ─── GET /api/dedup/seen/stats ────────────────────────────────────────────
 
-export async function handleDedupSeenStats(
-  request: Request,
-  env: Env,
-): Promise<Response> {
+export async function handleDedupSeenStats(request: Request, env: Env): Promise<Response> {
   const wallet = await getWalletFromSession(request, env);
   if (!wallet) {
     return jsonResponse({ error: 'Authentication required' }, 401);
@@ -260,10 +245,7 @@ export async function handleDedupSeenStats(
 
 // ─── POST /api/dedup/has-seen (batch check) ──────────────────────────────
 
-export async function handleDedupHasSeen(
-  request: Request,
-  env: Env,
-): Promise<Response> {
+export async function handleDedupHasSeen(request: Request, env: Env): Promise<Response> {
   const wallet = await getWalletFromSession(request, env);
   if (!wallet) {
     return jsonResponse({ error: 'Authentication required' }, 401);
@@ -294,10 +276,7 @@ export async function handleDedupHasSeen(
 
 // ─── POST /api/dedup/seen/feedback — Record engagement feedback ─────────
 
-export async function handleDedupSeenFeedback(
-  request: Request,
-  env: Env,
-): Promise<Response> {
+export async function handleDedupSeenFeedback(request: Request, env: Env): Promise<Response> {
   const wallet = await getWalletFromSession(request, env);
   if (!wallet) {
     return jsonResponse({ error: 'Authentication required' }, 401);

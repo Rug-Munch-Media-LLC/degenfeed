@@ -98,16 +98,11 @@ function guessBookNiches(text: string, bookTitle?: string, author?: string): str
     niches.push('crypto');
   if (/\b(ai|artificial|intelligence|machine.learning|llm|deep.learning)\b/.test(lower))
     niches.push('ai');
-  if (/\b(tech|technology|programming|software|code|startup)\b/.test(lower))
-    niches.push('tech');
-  if (/\b(science|physics|biology|chemistry|space|genetics)\b/.test(lower))
-    niches.push('science');
-  if (/\b(fiction|novel|fantasy|sci.fi|mystery|romance)\b/.test(lower))
-    niches.push('fiction');
-  if (/\b(history|biography|memoir|essay|philosophy)\b/.test(lower))
-    niches.push('nonfiction');
-  if (/\b(finance|economics|investing|money|trading)\b/.test(lower))
-    niches.push('finance');
+  if (/\b(tech|technology|programming|software|code|startup)\b/.test(lower)) niches.push('tech');
+  if (/\b(science|physics|biology|chemistry|space|genetics)\b/.test(lower)) niches.push('science');
+  if (/\b(fiction|novel|fantasy|sci.fi|mystery|romance)\b/.test(lower)) niches.push('fiction');
+  if (/\b(history|biography|memoir|essay|philosophy)\b/.test(lower)) niches.push('nonfiction');
+  if (/\b(finance|economics|investing|money|trading)\b/.test(lower)) niches.push('finance');
   if (/\b(self.help|psychology|mindfulness|productivity)\b/.test(lower))
     niches.push('self-improvement');
 
@@ -117,25 +112,23 @@ function guessBookNiches(text: string, bookTitle?: string, author?: string): str
 
 // ─── Mapping ──────────────────────────────────────────────────────────
 
-function bookwyrmStatusToPost(
-  status: BookWyrmStatus,
-  source: BookWyrmSource,
-): UnifiedPost {
+function bookwyrmStatusToPost(status: BookWyrmStatus, source: BookWyrmSource): UnifiedPost {
   const text = status.content
     ? stripHtml(status.content).slice(0, 2000)
     : status.book
       ? `📖 ${status.book.title} by ${status.book.author}`
       : '';
 
-  const statusTypeLabel = status.status_type === 'review'
-    ? `⭐ Review (${status.rating || 'unrated'}/5): `
-    : status.status_type === 'comment'
-      ? '💬 Comment: '
-      : status.status_type === 'quotation'
-        ? '📝 Quote: '
-        : status.status_type === 'shelf_change'
-          ? '📚 Reading update: '
-          : '';
+  const statusTypeLabel =
+    status.status_type === 'review'
+      ? `⭐ Review (${status.rating || 'unrated'}/5): `
+      : status.status_type === 'comment'
+        ? '💬 Comment: '
+        : status.status_type === 'quotation'
+          ? '📝 Quote: '
+          : status.status_type === 'shelf_change'
+            ? '📚 Reading update: '
+            : '';
 
   const fullText = `${statusTypeLabel}${text}`;
 
@@ -158,12 +151,16 @@ function bookwyrmStatusToPost(
     embeds: [
       ...(status.book
         ? [
-            { kind: 'book' as const, url: `${source.instance}/book/${status.book.id}`, meta: {
-              title: status.book.title,
-              author: status.book.author,
-              isbn: status.book.isbn || '',
-              cover: status.book.cover || '',
-            }},
+            {
+              kind: 'book' as const,
+              url: `${source.instance}/book/${status.book.id}`,
+              meta: {
+                title: status.book.title,
+                author: status.book.author,
+                isbn: status.book.isbn || '',
+                cover: status.book.cover || '',
+              },
+            },
           ]
         : []),
       ...(status.book?.cover ? [{ kind: 'image' as const, url: status.book.cover }] : []),
@@ -180,7 +177,12 @@ function bookwyrmStatusToPost(
       viewerLiked: false,
       viewerReposted: false,
       viewerBookmarked: false,
-      raw: { likes: status.likes_count || 0, reposts: 0, replies: status.comments_count || 0, quotes: 0 },
+      raw: {
+        likes: status.likes_count || 0,
+        reposts: 0,
+        replies: status.comments_count || 0,
+        quotes: 0,
+      },
     },
     raw: status,
     niches: guessBookNiches(text, status.book?.title, status.book?.author),
@@ -189,10 +191,7 @@ function bookwyrmStatusToPost(
 
 // ─── Fetch Logic ──────────────────────────────────────────────────────
 
-async function fetchFromInstance(
-  source: BookWyrmSource,
-  limit: number,
-): Promise<UnifiedPost[]> {
+async function fetchFromInstance(source: BookWyrmSource, limit: number): Promise<UnifiedPost[]> {
   try {
     // Try the public timeline endpoint
     const res = await $fetch(`${source.instance}/api/statuses/?limit=${limit}`, {
@@ -201,7 +200,7 @@ async function fetchFromInstance(
     });
     if (!res.ok) return [];
 
-    const data = await res.json() as BookWyrmFeedResponse;
+    const data = (await res.json()) as BookWyrmFeedResponse;
     const statuses = data.statuses || data.results || [];
     if (!Array.isArray(statuses)) return [];
 

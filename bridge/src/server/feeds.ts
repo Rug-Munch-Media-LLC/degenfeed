@@ -1,4 +1,5 @@
 import { fetchAetherPosts } from '../providers/aether';
+import { fetchAkkomaPosts } from '../providers/akkoma';
 // Bridge providers that exist but were never registered
 import { fetchArenaPosts } from '../providers/arena';
 import { fetchBlueskyPosts } from '../providers/bluesky';
@@ -12,22 +13,33 @@ import { fetchDeSoPosts } from '../providers/deso';
 // Adapter-based protocols — now have bridge wrappers
 import { fetchDiasporaPosts } from '../providers/diaspora';
 import { fetchDiscordPosts } from '../providers/discord';
+import { fetchDiscoursePosts } from '../providers/discourse';
 import { fetchDTubePosts } from '../providers/dtube';
+import { fetchEpicyonPosts } from '../providers/epicyon';
 // New 2026-07-25: Faircamp
 import { fetchFaircampPosts } from '../providers/faircamp';
 import { fetchFarcasterPosts } from '../providers/farcaster';
+import { fetchFirefishPosts } from '../providers/firefish';
 import { fetchForgejoPosts } from '../providers/forgejo';
 import { fetchFriendicaPosts } from '../providers/friendica';
 import { fetchFunkwhalePosts } from '../providers/funkwhale';
 import { fetchGabPosts } from '../providers/gab';
+import { fetchGhostPosts } from '../providers/ghost';
 import { fetchGitHubPosts } from '../providers/github';
 import { fetchMastodonPosts } from '../providers/gotosocial';
+import { fetchGuppePosts } from '../providers/guppe';
+import { fetchHeadscalePosts } from '../providers/headscale';
 import { fetchHivePosts } from '../providers/hive';
+import { fetchHubzillaPosts } from '../providers/hubzilla';
 import { fetchHuddle01Posts } from '../providers/huddle01';
+import { fetchIceshrimpPosts } from '../providers/iceshrimp';
+import { fetchImmichPosts } from '../providers/immich';
+import { fetchKbinPosts } from '../providers/kbin';
 import { fetchLBRYPosts } from '../providers/lbry';
 import { fetchLemmyPosts } from '../providers/lemmy';
 import { fetchLensPosts } from '../providers/lens';
 import { fetchMatrixPosts } from '../providers/matrix';
+import { fetchMbinPosts } from '../providers/mbin';
 import { fetchMediaGoblinPosts } from '../providers/mediagoblin';
 import { fetchMicroblogPosts } from '../providers/microblog';
 import { fetchMindsPosts } from '../providers/minds';
@@ -47,7 +59,10 @@ import { fetch as fetchRssPosts } from '../providers/rss';
 import { fetchRssBridgePosts } from '../providers/rssbridge';
 import { fetchScuttlebuttPosts } from '../providers/scuttlebutt';
 import { fetchSessionPosts } from '../providers/session';
+import { fetchSharkeyPosts } from '../providers/sharkey';
 import { fetchSteemPosts } from '../providers/steem';
+import { fetchStreamsPosts } from '../providers/streams';
+import { fetchSublinksPosts } from '../providers/sublinks';
 import { fetchSubsocialPosts } from '../providers/subsocial';
 import { fetchTablelandPosts } from '../providers/tableland';
 import { fetchTakahePosts } from '../providers/takahe';
@@ -56,6 +71,7 @@ import { fetchTelegramPosts } from '../providers/telegram';
 import { fetchThreadsPosts } from '../providers/threads';
 import { fetchWriteFreelyPosts } from '../providers/writefreely';
 import { fetchXmtpPosts } from '../providers/xmtp';
+import { fetchYggdrasilPosts } from '../providers/yggdrasil';
 import { fetchZoraPosts } from '../providers/zora';
 import type { UnifiedPost } from './types';
 
@@ -158,6 +174,24 @@ export const PROVIDERS: Record<string, { name: string; fetch: ProviderFetcher }>
   discord: { name: 'Discord (Communities)', fetch: fetchDiscordPosts },
   matrix: { name: 'Matrix (Decentralized Chat)', fetch: fetchMatrixPosts },
   github: { name: 'GitHub (Dev Activity)', fetch: fetchGitHubPosts },
+
+  // ─── ActivityPub Extras (moved from DEFAULT_PREFERENCES) ──────────
+  kbin: { name: 'Kbin / Mbin (Federated Hybrid)', fetch: fetchKbinPosts },
+  hubzilla: { name: 'Hubzilla (Nomadic Identity)', fetch: fetchHubzillaPosts },
+  streams: { name: 'Streams (Nomadic Identity)', fetch: fetchStreamsPosts },
+  guppe: { name: 'Guppe (Federated Groups)', fetch: fetchGuppePosts },
+  epicyon: { name: 'Epicyon (Ultralight ActivityPub)', fetch: fetchEpicyonPosts },
+  sublinks: { name: 'Sublinks (Lightweight Lemmy)', fetch: fetchSublinksPosts },
+  firefish: { name: 'Firefish (Misskey Fork)', fetch: fetchFirefishPosts },
+  iceshrimp: { name: 'Iceshrimp (Misskey Fork)', fetch: fetchIceshrimpPosts },
+  sharkey: { name: 'Sharkey (Misskey + Mastodon API)', fetch: fetchSharkeyPosts },
+  akkoma: { name: 'Akkoma (Pleroma Fork)', fetch: fetchAkkomaPosts },
+  mbin: { name: 'Mbin (Active Kbin Fork)', fetch: fetchMbinPosts },
+  immich: { name: 'Immich (Self-Hosted Photos)', fetch: fetchImmichPosts },
+  discourse: { name: 'Discourse (Forum + ActivityPub)', fetch: fetchDiscoursePosts },
+  ghost: { name: 'Ghost (Headless CMS)', fetch: fetchGhostPosts },
+  headscale: { name: 'Headscale (Mesh VPN)', fetch: fetchHeadscalePosts },
+  yggdrasil: { name: 'Yggdrasil (Decentralized Mesh)', fetch: fetchYggdrasilPosts },
 };
 
 /** Build a deduplicated feed from multiple protocols */

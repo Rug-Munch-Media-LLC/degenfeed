@@ -11,7 +11,6 @@
  */
 
 import type { Env } from '../index';
-import { recordUnifiedTip, type TipPlatform } from '../routes/unified-tip-core';
 import { broadcastToAll } from '../ws-broadcast';
 
 // ─── Types ──────────────────────────────────────────────────────────────
@@ -224,7 +223,7 @@ async function sendPushNotification(env: Env, event: TipNotificationEvent): Prom
  *   - Sound effect trigger
  *   - Live stream overlay tips
  */
-function broadcastTipEvent(env: Env, event: TipNotificationEvent): void {
+function broadcastTipEvent(_env: Env, event: TipNotificationEvent): void {
   const emoji = PROTOCOL_EMOJI[event.sourceProtocol] ?? '⚡';
 
   // Broadcast to the recipient's notification channel
@@ -545,7 +544,7 @@ export async function handleWeeklyDigestCron(env: Env): Promise<{ sent: number; 
     let cursor: string | undefined;
     do {
       const list = await env.CACHE?.list({ prefix: 'notif:prefs:', cursor, limit: 100 });
-      if (!list || !list.keys || list.keys.length === 0) break;
+      if (!list?.keys || list.keys.length === 0) break;
       // The cursor is set for the next page when list_complete is false
       cursor = (list as { cursor?: string }).cursor;
 

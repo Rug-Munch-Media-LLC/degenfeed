@@ -14,10 +14,10 @@
 
 import type { Env } from '../index';
 import { jsonResponse, log, noCacheJsonResponse } from '../index';
-import { requireSession } from '../session';
-import { getCreatorStorageUsage } from '../lib/video-storage-router';
-import type { CreatorStorageUsage } from '../lib/video-storage-router';
 import { getCreatorImageStats } from '../lib/image-storage';
+import type { CreatorStorageUsage } from '../lib/video-storage-router';
+import { getCreatorStorageUsage } from '../lib/video-storage-router';
+import { requireSession } from '../session';
 
 const CF_IPFS_GATEWAY = 'https://cloudflare-ipfs.com/ipfs';
 
@@ -96,7 +96,8 @@ export async function handleCreatorStorage(request: Request, env: Env): Promise<
         arweave: isArweaveConfigured,
         mediaStorage: isMediaStorageConfigured,
       },
-      storageNotice: 'Your media is stored on IPFS (decentralized, permanent). Served via Cloudflare CDN, cached globally.',
+      storageNotice:
+        'Your media is stored on IPFS (decentralized, permanent). Served via Cloudflare CDN, cached globally.',
     });
   } catch (err) {
     log('warn', `[creator-storage] Failed to get storage usage for ${wallet}`, err);
@@ -125,7 +126,8 @@ export async function handleCreatorStorage(request: Request, env: Env): Promise<
         arweave: isArweaveConfigured,
         mediaStorage: isMediaStorageConfigured,
       },
-      storageNotice: 'Your media is stored on IPFS (decentralized, permanent). Served via Cloudflare CDN, cached globally.',
+      storageNotice:
+        'Your media is stored on IPFS (decentralized, permanent). Served via Cloudflare CDN, cached globally.',
     };
 
     return noCacheJsonResponse(fallback);
@@ -136,5 +138,5 @@ function formatBytes(bytes: number): string {
   if (bytes === 0) return '0 B';
   const units = ['B', 'KB', 'MB', 'GB'];
   const i = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
-  return `${(bytes / Math.pow(1024, i)).toFixed(1)} ${units[i]}`;
+  return `${(bytes / 1024 ** i).toFixed(1)} ${units[i]}`;
 }

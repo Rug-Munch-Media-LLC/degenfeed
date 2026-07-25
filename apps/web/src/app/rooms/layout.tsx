@@ -6,7 +6,8 @@ export const metadata: Metadata = {
     'Cross-platform group messaging. Create rooms that span Nostr, Matrix, Farcaster, Bluesky, and Telegram.',
   openGraph: {
     title: 'Rooms — DegenFeed',
-    description: 'Cross-platform group messaging across Nostr, Matrix, Farcaster, Bluesky, and Telegram.',
+    description:
+      'Cross-platform group messaging across Nostr, Matrix, Farcaster, Bluesky, and Telegram.',
     url: 'https://app.degenfeed.xyz/rooms',
     images: [
       {

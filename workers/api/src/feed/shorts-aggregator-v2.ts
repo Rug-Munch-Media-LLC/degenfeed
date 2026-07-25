@@ -18,8 +18,6 @@ import {
   fetchTikTokShorts,
   fetchYouTubeShorts,
   type ShortVideoItem,
-  type ShortVideoSource,
-  SOURCE_COLORS,
 } from '@degenfeed/shorts-provider';
 import type { Env } from '../index';
 
@@ -480,7 +478,7 @@ export class ShortsAggregatorV2 {
       .filter(Boolean);
 
     // Video-focused communities to search
-    const communities = [
+    const _communities = [
       'c/videos',
       'c/mealtimevideos',
       'c/videography',
@@ -775,7 +773,7 @@ export class ShortsAggregatorV2 {
       if (s.title && s.title.length > 5) score += 0.1;
 
       // Has thumbnail
-      if (s.thumbnailUrl && s.thumbnailUrl.startsWith('http')) score += 0.1;
+      if (s.thumbnailUrl?.startsWith('http')) score += 0.1;
 
       // Engagement signal
       if (s.views > 0) {

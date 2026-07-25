@@ -29,30 +29,30 @@ function __cbSuccess(name: string): void {
 import { CHANNEL_BY_NAME, CRYPTO_CHANNELS } from './config';
 import {
   CATEGORY_KEYWORDS,
-  isLowQualityVideo,
-  QUALITY_FILTERS,
   computeEngagementSignals,
   computeQualityScore,
   detectContentType,
+  isLowQualityVideo,
+  QUALITY_FILTERS,
   scoreCreatorRelevance,
 } from './filters';
 import { fetchChannelFeed } from './parser';
 import type {
   ChannelCategory,
   ChannelSubcategory,
-  YouTubeVideoItem,
   DiscoveredCreator,
   VideoContentType,
+  YouTubeVideoItem,
 } from './types';
 
 export { CHANNEL_BY_NAME, CRYPTO_CHANNELS } from './config';
 export {
   CATEGORY_KEYWORDS,
-  isLowQualityVideo,
-  QUALITY_FILTERS,
   computeEngagementSignals,
   computeQualityScore,
   detectContentType,
+  isLowQualityVideo,
+  QUALITY_FILTERS,
   scoreCreatorRelevance,
 } from './filters';
 export { fetchChannelFeed } from './parser';
@@ -60,14 +60,14 @@ export type {
   ChannelCategory,
   ChannelSubcategory,
   DiscoveredCreator,
+  EngagementSignals,
   FetchYouTubeOptions,
+  QualityScore,
   RSSEntry,
+  TrendingCategory,
   VideoContentType,
   YouTubeChannel,
   YouTubeVideoItem,
-  EngagementSignals,
-  QualityScore,
-  TrendingCategory,
 } from './types';
 
 // ─── Invidious instances for trending/discovery ─────────────────────
@@ -167,7 +167,10 @@ export async function fetchTrendingByCategory(
         title,
         channelName: String(v.author ?? 'Unknown'),
         channelUrl: `https://www.youtube.com/channel/${String(v.authorId ?? '')}`,
-        thumbnailUrl: String(v.videoThumbnails?.[0]?.url ?? `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`),
+        thumbnailUrl: String(
+          (v.videoThumbnails as Array<{ url: string }> | undefined)?.[0]?.url ??
+            `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
+        ),
         url: `https://www.youtube.com/watch?v=${videoId}`,
         publishedAt: new Date(publishedMs).toISOString(),
         publishedMs,
@@ -175,7 +178,8 @@ export async function fetchTrendingByCategory(
         views: Number(v.viewCount ?? 0),
         likes: Number(v.likeCount ?? 0),
         description: String(v.description ?? ''),
-        category: category !== 'all' ? category : detectCategory(title, String(v.description ?? '')),
+        category:
+          category !== 'all' ? category : detectCategory(title, String(v.description ?? '')),
         contentType,
         tags: Array.isArray(v.keywords) ? v.keywords.map(String) : undefined,
         source: 'youtube',
@@ -268,9 +272,7 @@ export async function discoverCreators(
  * Integrate discovered creators — call this periodically to keep
  * the channel list fresh. Returns channels added.
  */
-export async function autoDiscoverAndIntegrate(
-  signal?: AbortSignal,
-): Promise<YouTubeChannel[]> {
+export async function autoDiscoverAndIntegrate(signal?: AbortSignal): Promise<YouTubeChannel[]> {
   const discovered = await discoverCreators(['crypto', 'ai', 'tech'], 20, signal);
   // Future: integrate into dynamic channel registry
   return discovered.map((d) => ({
@@ -366,19 +368,24 @@ export async function fetchYouTubeFeed(
 
       // Compute enrichment
       const engagement = skipEnrichment ? undefined : computeEngagementSignals(entry);
-      const qs = skipEnrichment || !engagement ? undefined : computeQualityScore(entry, channelInfo ?? {
-        name: entry.channelName ?? 'Unknown',
-        channelId: entry.channelId ?? '',
-        category: 'market_analysis',
-        subcategory: 'daily-news',
-        weight: 0.5,
-        niches: [],
-      }, engagement);
-      const contentType_ = skipEnrichment ? undefined : detectContentType(
-        entry.title,
-        entry.description,
-        entry.duration,
-      );
+      const qs =
+        skipEnrichment || !engagement
+          ? undefined
+          : computeQualityScore(
+              entry,
+              channelInfo ?? {
+                name: entry.channelName ?? 'Unknown',
+                channelId: entry.channelId ?? '',
+                category: 'market_analysis',
+                subcategory: 'daily-news',
+                weight: 0.5,
+                niches: [],
+              },
+              engagement,
+            );
+      const contentType_ = skipEnrichment
+        ? undefined
+        : detectContentType(entry.title, entry.description, entry.duration);
 
       // Content type filter
       if (contentType) {
@@ -424,9 +431,11 @@ export async function fetchYouTubeFeed(
     else if (sort === 'popular') items.sort((a, b) => (b.views ?? 0) - (a.views ?? 0));
     else if (sort === 'engagement' || sort === 'trending') {
       items.sort((a, b) => {
-        const scoreA = (a.engagement?.growthVelocity ?? (a.views ?? 0)) /
+        const scoreA =
+          (a.engagement?.growthVelocity ?? a.views ?? 0) /
           Math.max(1, (Date.now() - a.publishedMs) / 3600000);
-        const scoreB = (b.engagement?.growthVelocity ?? (b.views ?? 0)) /
+        const scoreB =
+          (b.engagement?.growthVelocity ?? b.views ?? 0) /
           Math.max(1, (Date.now() - b.publishedMs) / 3600000);
         return scoreB - scoreA;
       });

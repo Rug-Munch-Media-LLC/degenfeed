@@ -17,7 +17,6 @@ import {
   sanitizePosts,
   writeCachedHealth,
   writeJsonCache,
-  BridgeFeedProvider,
 } from '../feed';
 import { type Env, jsonResponse } from '../index';
 
@@ -79,7 +78,13 @@ export async function handleProviderFeed(
       if (result.posts.length === 0) {
         return jsonResponse({
           data: [],
-          meta: { total: 0, limit, protocol: provider, notice: result.notice, fetchedAt: Date.now() },
+          meta: {
+            total: 0,
+            limit,
+            protocol: provider,
+            notice: result.notice,
+            fetchedAt: Date.now(),
+          },
         });
       }
       return jsonResponse({
@@ -87,9 +92,12 @@ export async function handleProviderFeed(
         meta: { total: result.posts.length, limit, protocol: provider, fetchedAt: Date.now() },
       });
     } catch (err) {
-      return jsonResponse({
-        error: `Bridge provider failed for ${provider}: ${err instanceof Error ? err.message : 'unknown'}`,
-      }, 502);
+      return jsonResponse(
+        {
+          error: `Bridge provider failed for ${provider}: ${err instanceof Error ? err.message : 'unknown'}`,
+        },
+        502,
+      );
     }
   }
   const protocol = provider as Protocol;

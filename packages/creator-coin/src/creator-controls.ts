@@ -195,7 +195,7 @@ export function calculateVestingSchedule(
         cumulativeUnlockFormatted: `${(stage.unlockBps / 100).toFixed(2)}%`,
         unlockAmount:
           stageUnlock -
-          (stages.length > 0 ? stages[stages.length - 1]!.unlockAmount : initialUnlock),
+          (stages.length > 0 ? stages[stages.length - 1]?.unlockAmount : initialUnlock),
       });
     }
   } else {

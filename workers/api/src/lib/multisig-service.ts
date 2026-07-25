@@ -126,7 +126,6 @@ export interface TransactionFilter {
 // ─── Service ──────────────────────────────────────────────────────────────
 
 export class MultiSigService {
-  private env: Env;
   private kv: KVNamespace;
 
   constructor(env: Env) {
@@ -320,7 +319,7 @@ export class MultiSigService {
 
     if (tx.status !== 'signed') {
       throw new Error(
-        `Transaction cannot be executed (status: ${tx.status}). ` + `Must be 'signed' first.`,
+        `Transaction cannot be executed (status: ${tx.status}). Must be 'signed' first.`,
       );
     }
 
@@ -573,7 +572,7 @@ export class MultiSigService {
     }
     if (filter.signer) {
       const hasSigner = tx.signatures.some(
-        (s) => s.signer.toLowerCase() === filter.signer!.toLowerCase(),
+        (s) => s.signer.toLowerCase() === filter.signer?.toLowerCase(),
       );
       if (!hasSigner) return false;
     }

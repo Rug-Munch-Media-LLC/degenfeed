@@ -1,6 +1,6 @@
 'use client';
 
-import { formatUsd, MiniBarChart, StatCard, type IncomeExpense } from './_helpers';
+import { formatUsd, type IncomeExpense, MiniBarChart, StatCard } from './_helpers';
 
 interface AnalyticsTabProps {
   data: IncomeExpense[];
@@ -15,10 +15,18 @@ export function AnalyticsTab({ data }: AnalyticsTabProps) {
         <MiniBarChart data={data} height={120} />
         <div className="mt-3 flex gap-4 text-[10px]">
           <span className="flex items-center gap-1">
-            <span className="inline-block h-2 w-2 rounded-sm" style={{ backgroundColor: 'var(--color-accent)', opacity: 0.8 }} /> Income
+            <span
+              className="inline-block h-2 w-2 rounded-sm"
+              style={{ backgroundColor: 'var(--color-accent)', opacity: 0.8 }}
+            />{' '}
+            Income
           </span>
           <span className="flex items-center gap-1">
-            <span className="inline-block h-2 w-2 rounded-sm" style={{ backgroundColor: 'var(--color-error)', opacity: 0.7 }} /> Expenses
+            <span
+              className="inline-block h-2 w-2 rounded-sm"
+              style={{ backgroundColor: 'var(--color-error)', opacity: 0.7 }}
+            />{' '}
+            Expenses
           </span>
         </div>
       </div>
@@ -40,9 +48,17 @@ export function AnalyticsTab({ data }: AnalyticsTabProps) {
               return (
                 <tr key={row.month} className="border-t border-[var(--color-border)]">
                   <td className="py-2.5 font-medium">{row.month}</td>
-                  <td className="py-2.5 text-right tabular-nums text-green-400">{formatUsd(row.income)}</td>
-                  <td className="py-2.5 text-right tabular-nums text-red-400">{formatUsd(row.expenses)}</td>
-                  <td className={`py-2.5 text-right tabular-nums font-medium ${net >= 0 ? 'text-green-400' : 'text-red-400'}`}>{formatUsd(net)}</td>
+                  <td className="py-2.5 text-right tabular-nums text-green-400">
+                    {formatUsd(row.income)}
+                  </td>
+                  <td className="py-2.5 text-right tabular-nums text-red-400">
+                    {formatUsd(row.expenses)}
+                  </td>
+                  <td
+                    className={`py-2.5 text-right tabular-nums font-medium ${net >= 0 ? 'text-green-400' : 'text-red-400'}`}
+                  >
+                    {formatUsd(net)}
+                  </td>
                 </tr>
               );
             })}

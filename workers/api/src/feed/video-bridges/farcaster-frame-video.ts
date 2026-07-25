@@ -16,7 +16,7 @@ const PLATFORM_LABEL = 'Farcaster Video';
 const PLATFORM_COLOR = '#8A63D2';
 
 const FARCASTER_HUB = 'https://hub.farcaster.xyz:2281';
-const FARCASTER_NEYNAR = 'https://api.neynar.com';
+const _FARCASTER_NEYNAR = 'https://api.neynar.com';
 
 // ─── Types ─────────────────────────────────────────────────────────────
 
@@ -64,7 +64,7 @@ export async function fetchFarcasterFrameVideos(
 
         const videoId = `fc-video-${cast.hash.slice(0, 12)}`;
         const likes = cast.reactions?.likes_count ?? 0;
-        const recasts = cast.recasts?.count ?? cast.reactions?.recasts_count ?? 0;
+        const _recasts = cast.recasts?.count ?? cast.reactions?.recasts_count ?? 0;
 
         videos.push({
           id: videoId,
@@ -103,10 +103,7 @@ export async function fetchFarcasterFrameVideos(
 
 // ─── Fetch trending casts ────────────────────────────────────────────────
 
-async function fetchTrendingCasts(
-  limit: number,
-  signal?: AbortSignal,
-): Promise<FarcasterCast[]> {
+async function fetchTrendingCasts(limit: number, signal?: AbortSignal): Promise<FarcasterCast[]> {
   try {
     const url = `${FARCASTER_HUB}/v1/trending-casts?limit=${limit}`;
     const res = await fetch(url, {
@@ -176,8 +173,14 @@ function extractVideoUrls(cast: FarcasterCast): VideoEmbed[] {
 function detectVideoType(url: string): VideoEmbed['type'] {
   const lower = url.toLowerCase();
 
-  if (lower.endsWith('.mp4') || lower.endsWith('.webm') || lower.endsWith('.m3u8') ||
-      lower.endsWith('.mov') || lower.includes('video') || lower.includes('/hls/')) {
+  if (
+    lower.endsWith('.mp4') ||
+    lower.endsWith('.webm') ||
+    lower.endsWith('.m3u8') ||
+    lower.endsWith('.mov') ||
+    lower.includes('video') ||
+    lower.includes('/hls/')
+  ) {
     return 'direct';
   }
   if (lower.includes('youtube.com') || lower.includes('youtu.be') || lower.includes('yewtu')) {

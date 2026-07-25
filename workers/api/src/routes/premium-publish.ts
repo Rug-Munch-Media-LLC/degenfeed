@@ -16,36 +16,34 @@
  * All storage uses the CACHE KV namespace with premium: prefix.
  */
 
+import type { MasterPost } from '@degenfeed/cross-protocol-bridge';
 import type { Env } from '../index';
 import { jsonResponse } from '../index';
-import { sanitizeString, sanitizeStringArray } from '../sanitize';
-import { parseSessionCookie, requireSession, validateCsrfToken } from '../session';
 import {
-  requirePremiumTier,
-  TIER_LIMITS,
-  type PremiumTier,
-} from '../premium';
-import {
-  type PremiumUsage,
-  requireProtocolLimit,
-  requireQuota,
-  getPremiumUsage,
-  incrementPremiumUsage,
-} from '../lib/premium-gate';
-import {
-  type FormattedPost,
-  type ThreadSegment,
-  type BestTimeSlot,
   type AutoFormatOptions,
-  autoFormatPost,
   autoFormatForProtocols,
   getBestPostingTime,
+  type ThreadSegment,
 } from '../lib/auto-formatter';
-import type { MasterPost, ProtocolPublishParams } from '@degenfeed/cross-protocol-bridge';
+import {
+  getPremiumUsage,
+  incrementPremiumUsage,
+  requireProtocolLimit,
+  requireQuota,
+} from '../lib/premium-gate';
+import { requirePremiumTier, TIER_LIMITS } from '../premium';
+import { sanitizeString, sanitizeStringArray } from '../sanitize';
+import { parseSessionCookie, requireSession, validateCsrfToken } from '../session';
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
-export type QueueStatus = 'queued' | 'scheduled' | 'publishing' | 'published' | 'failed' | 'cancelled';
+export type QueueStatus =
+  | 'queued'
+  | 'scheduled'
+  | 'publishing'
+  | 'published'
+  | 'failed'
+  | 'cancelled';
 export type RecurrencePattern = 'once' | 'daily' | 'weekly' | 'monthly' | 'weekdays';
 export type RecyclingStrategy = 'engagement' | 'age' | 'manual';
 export type EvergreenFrequency = 'every-7d' | 'every-14d' | 'every-30d' | 'every-90d';
@@ -130,7 +128,7 @@ export interface CalendarDay {
 const PREFIX_QUEUE = 'premium:queue:';
 const PREFIX_EVERGREEN = 'premium:evergreen:';
 const PREFIX_RECURRING = 'premium:recurring:';
-const PREFIX_USAGE = 'premium:usage:';
+const _PREFIX_USAGE = 'premium:usage:';
 
 // ─── Queue Handlers ───────────────────────────────────────────────────────
 
@@ -313,7 +311,13 @@ export async function handleQueueList(request: Request, env: Env): Promise<Respo
     const limit = Math.min(Number(url.searchParams.get('limit')) || 50, 100);
     const cursor = url.searchParams.get('cursor') || undefined;
 
-    const entries = await listQueueEntries(env, session.address.toLowerCase(), statusFilter, limit, cursor);
+    const entries = await listQueueEntries(
+      env,
+      session.address.toLowerCase(),
+      statusFilter,
+      limit,
+      cursor,
+    );
 
     return jsonResponse(entries);
   } catch (e) {
@@ -497,11 +501,14 @@ export async function handleBatchPublish(request: Request, env: Env): Promise<Re
     const tier = await getUserTier(address, env);
     const limits = TIER_LIMITS[tier] ?? TIER_LIMITS.basic;
     if (entries.length > limits.batchSize) {
-      return jsonResponse({
-        error: `Batch size ${entries.length} exceeds limit of ${limits.batchSize}. Upgrade to Pro for larger batches.`,
-        upgrade: true,
-        requiredTier: 'platinum',
-      }, 402);
+      return jsonResponse(
+        {
+          error: `Batch size ${entries.length} exceeds limit of ${limits.batchSize}. Upgrade to Pro for larger batches.`,
+          upgrade: true,
+          requiredTier: 'platinum',
+        },
+        402,
+      );
     }
 
     const created: QueueEntry[] = [];
@@ -554,9 +561,13 @@ export async function handleBatchPublish(request: Request, env: Env): Promise<Re
             expirationTtl: 86400 * 90,
           });
           if (scheduledAt) {
-            await env.CACHE.put(`premium:scheduled:${id}`, JSON.stringify({ walletAddress: address, id }), {
-              expirationTtl: 86400 * 90,
-            });
+            await env.CACHE.put(
+              `premium:scheduled:${id}`,
+              JSON.stringify({ walletAddress: address, id }),
+              {
+                expirationTtl: 86400 * 90,
+              },
+            );
           }
         }
 
@@ -617,12 +628,10 @@ export async function handleCalendarView(request: Request, env: Env): Promise<Re
     const grouped = new Map<string, QueueEntry[]>();
     for (const entry of allEntries) {
       if (entry.status !== 'scheduled' && entry.status !== 'queued') continue;
-      const dateKey = entry.scheduledAt
-        ? entry.scheduledAt.split('T')[0]
-        : 'unscheduled';
+      const dateKey = entry.scheduledAt ? entry.scheduledAt.split('T')[0] : 'unscheduled';
 
       if (!grouped.has(dateKey)) grouped.set(dateKey, []);
-      grouped.get(dateKey)!.push(entry);
+      grouped.get(dateKey)?.push(entry);
     }
 
     // Fill calendar range
@@ -691,7 +700,9 @@ export async function handleBestTimes(request: Request, _env: Env): Promise<Resp
         hourUTC: t.hourUTC,
         score: t.score,
         label: t.label,
-        dayName: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][t.dayOfWeek],
+        dayName: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][
+          t.dayOfWeek
+        ],
         timeFormatted: `${t.hourUTC.toString().padStart(2, '0')}:00 UTC`,
       })),
     });
@@ -785,10 +796,13 @@ export async function handleSetEvergreen(request: Request, env: Env): Promise<Re
     const tier = await getUserTier(address, env);
     const limits = TIER_LIMITS[tier] ?? TIER_LIMITS.basic;
     if (usage.evergreenPosts >= limits.evergreenPosts) {
-      return jsonResponse({
-        error: `Evergreen post limit reached (${usage.evergreenPosts}/${limits.evergreenPosts})`,
-        upgrade: true,
-      }, 402);
+      return jsonResponse(
+        {
+          error: `Evergreen post limit reached (${usage.evergreenPosts}/${limits.evergreenPosts})`,
+          upgrade: true,
+        },
+        402,
+      );
     }
 
     entry.isEvergreen = true;
@@ -800,9 +814,13 @@ export async function handleSetEvergreen(request: Request, env: Env): Promise<Re
       await env.CACHE.put(`${PREFIX_QUEUE}${address}:${body.entryId}`, JSON.stringify(entry), {
         expirationTtl: 86400 * 365,
       });
-      await env.CACHE.put(`${PREFIX_EVERGREEN}${body.entryId}`, JSON.stringify({ walletAddress: address, id: body.entryId }), {
-        expirationTtl: 86400 * 365,
-      });
+      await env.CACHE.put(
+        `${PREFIX_EVERGREEN}${body.entryId}`,
+        JSON.stringify({ walletAddress: address, id: body.entryId }),
+        {
+          expirationTtl: 86400 * 365,
+        },
+      );
     }
 
     await incrementPremiumUsage(address, 'evergreenPosts', 1, env);
@@ -854,9 +872,13 @@ export async function handleSetRecurring(request: Request, env: Env): Promise<Re
       await env.CACHE.put(`${PREFIX_QUEUE}${address}:${body.entryId}`, JSON.stringify(entry), {
         expirationTtl: 86400 * 365,
       });
-      await env.CACHE.put(`${PREFIX_RECURRING}${body.entryId}`, JSON.stringify({ walletAddress: address, id: body.entryId }), {
-        expirationTtl: 86400 * 365,
-      });
+      await env.CACHE.put(
+        `${PREFIX_RECURRING}${body.entryId}`,
+        JSON.stringify({ walletAddress: address, id: body.entryId }),
+        {
+          expirationTtl: 86400 * 365,
+        },
+      );
     }
 
     return jsonResponse({ ok: true, entry });
@@ -931,7 +953,10 @@ export async function executeDuePremiumPosts(env: Env): Promise<number> {
           if (!raw) continue;
 
           const scheduleRef = raw as { walletAddress: string; id: string };
-          const entryRaw = await env.CACHE.get(`${PREFIX_QUEUE}${scheduleRef.walletAddress}:${scheduleRef.id}`, 'json');
+          const entryRaw = await env.CACHE.get(
+            `${PREFIX_QUEUE}${scheduleRef.walletAddress}:${scheduleRef.id}`,
+            'json',
+          );
           if (!entryRaw) {
             // Orphaned reference — clean up
             await env.CACHE.delete(key.name);
@@ -1051,10 +1076,7 @@ async function listQueueEntries(
   }
 }
 
-async function listAllQueueEntries(
-  env: Env,
-  walletAddress: string,
-): Promise<QueueEntry[]> {
+async function listAllQueueEntries(env: Env, walletAddress: string): Promise<QueueEntry[]> {
   const entries: QueueEntry[] = [];
 
   if (!env.CACHE) return entries;
@@ -1102,7 +1124,7 @@ async function executeQueueEntry(entry: QueueEntry, env: Env): Promise<void> {
       adaptLanguage: true,
     };
 
-    const formatted = autoFormatForProtocols(entry.masterPost, entry.protocols, options);
+    const _formatted = autoFormatForProtocols(entry.masterPost, entry.protocols, options);
 
     // Execute cross-publish using the orchestrator
     const { executeCrossPublish } = await import('../lib/cross-publish-orchestrator');
@@ -1116,18 +1138,15 @@ async function executeQueueEntry(entry: QueueEntry, env: Env): Promise<void> {
     );
 
     // Record results
-    entry.results = report.results as Record<string, { success: boolean; error?: string; nativeId?: string }>;
+    entry.results = report.results as Record<
+      string,
+      { success: boolean; error?: string; nativeId?: string }
+    >;
 
     // Record bridge operations for analytics
     for (const [protocol, result] of Object.entries(report.results)) {
       const { recordBridgeOperation } = await import('../lib/bridge-reliability');
-      await recordBridgeOperation(
-        env,
-        protocol,
-        result.ok,
-        0,
-        result.error,
-      ).catch(() => {});
+      await recordBridgeOperation(env, protocol, result.ok, 0, result.error).catch(() => {});
     }
   } catch (err) {
     entry.error = err instanceof Error ? err.message : String(err);
@@ -1217,7 +1236,7 @@ function calculateNextEvergreenRepost(entry: QueueEntry): string {
 }
 
 function getRecurringEntriesForDate(entries: QueueEntry[], date: Date): QueueEntry[] {
-  const dateStr = date.toISOString().split('T')[0];
+  const _dateStr = date.toISOString().split('T')[0];
   const dayOfWeek = date.getUTCDay();
 
   return entries.filter((e) => {

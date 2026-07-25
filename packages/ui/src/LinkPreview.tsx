@@ -7,7 +7,7 @@
  * Shows a rich preview card below the textarea/composed post.
  */
 
-import { memo, useCallback, useEffect, useState } from 'react';
+import { memo, useEffect, useState } from 'react';
 
 export interface LinkPreviewData {
   url: string;

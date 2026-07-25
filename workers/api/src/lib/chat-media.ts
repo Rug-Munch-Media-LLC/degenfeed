@@ -13,10 +13,9 @@
 
 import type { Env } from '../index';
 import { log } from '../index';
-import { storeVideo } from './video-storage-router';
+import { getIPFSGatewayUrl, uploadBufferToIPFS } from './ipfs-storage';
 import { uploadToR2 } from './r2-storage';
-import { uploadBufferToIPFS, getIPFSGatewayUrl } from './ipfs-storage';
-import type { StorageResult } from './video-storage-router';
+import { storeVideo } from './video-storage-router';
 
 // ─── KV Prefixes ──────────────────────────────────────────────────────────
 
@@ -24,14 +23,24 @@ const MEDIA_PREFIX = 'chat:media:';
 const MEDIA_INDEX_PREFIX = 'chat:media:index:';
 const LINK_PREVIEW_PREFIX = 'chat:linkpreview:';
 const POLL_PREFIX = 'chat:poll:';
-const POLL_VOTE_PREFIX = 'chat:poll:vote:';
+const _POLL_VOTE_PREFIX = 'chat:poll:vote:';
 const GIF_CACHE_PREFIX = 'chat:gifcache:';
 const STICKER_PACK_PREFIX = 'chat:sticker:pack:';
 const STICKER_USER_PREFIX = 'chat:sticker:user:';
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
-export type MediaType = 'image' | 'video' | 'audio' | 'file' | 'location' | 'contact' | 'link_preview' | 'sticker' | 'gif' | 'poll';
+export type MediaType =
+  | 'image'
+  | 'video'
+  | 'audio'
+  | 'file'
+  | 'location'
+  | 'contact'
+  | 'link_preview'
+  | 'sticker'
+  | 'gif'
+  | 'poll';
 
 export interface ChatMedia {
   /** Unique media ID */
@@ -158,7 +167,7 @@ const MAX_AUDIO_SIZE = 100 * 1024 * 1024; // 100MB
 const MAX_FILE_SIZE_FREE = 100 * 1024 * 1024; // 100MB free
 const MAX_FILE_SIZE_PREMIUM = 2 * 1024 * 1024 * 1024; // 2GB premium
 const LINK_PREVIEW_CACHE_TTL = 86400 * 7; // 7 days
-const BASE_STICKER_URL = 'https://degenfeed.xyz/stickers';
+const _BASE_STICKER_URL = 'https://degenfeed.xyz/stickers';
 const GIF_SEARCH_CACHE_TTL = 300; // 5 min
 
 // ─── Media ID Generation ──────────────────────────────────────────────────
@@ -265,9 +274,7 @@ export async function uploadChatMedia(
         }
       } else {
         // Large: R2
-        const ext = fileName.includes('.')
-          ? fileName.substring(fileName.lastIndexOf('.'))
-          : '.bin';
+        const ext = fileName.includes('.') ? fileName.substring(fileName.lastIndexOf('.')) : '.bin';
         const storageKey = `chat/media/${conversationId}/${mediaId}${ext}`;
         const r2Result = await uploadToR2(storageKey, buffer, mimeType, env, {
           'media-id': mediaId,
@@ -282,12 +289,7 @@ export async function uploadChatMedia(
       // Generate thumbnail for images
       if (type === 'image' && options?.thumbnailBuffer) {
         const thumbKey = `chat/media/${conversationId}/${mediaId}_thumb.jpg`;
-        const thumbResult = await uploadToR2(
-          thumbKey,
-          options.thumbnailBuffer,
-          'image/jpeg',
-          env,
-        );
+        const thumbResult = await uploadToR2(thumbKey, options.thumbnailBuffer, 'image/jpeg', env);
         media.file!.thumbnailUrl = thumbResult.cdnUrl;
       }
 
@@ -395,10 +397,7 @@ export async function getConversationMedia(
  * Generate a link preview from a URL.
  * Caches results in KV for 7 days.
  */
-export async function generateLinkPreview(
-  url: string,
-  env: Env,
-): Promise<LinkPreviewData | null> {
+export async function generateLinkPreview(url: string, env: Env): Promise<LinkPreviewData | null> {
   const kv = env.CACHE ?? env.CONTENT_LIBRARY;
   if (!kv) return null;
 
@@ -427,8 +426,15 @@ export async function generateLinkPreview(
 
     const html = await response.text();
 
-    const title = extractMeta(html, 'og:title') || extractMeta(html, 'twitter:title') || extractTitle(html) || url;
-    const description = extractMeta(html, 'og:description') || extractMeta(html, 'twitter:description') || extractMeta(html, 'description');
+    const title =
+      extractMeta(html, 'og:title') ||
+      extractMeta(html, 'twitter:title') ||
+      extractTitle(html) ||
+      url;
+    const description =
+      extractMeta(html, 'og:description') ||
+      extractMeta(html, 'twitter:description') ||
+      extractMeta(html, 'description');
     const imageUrl = extractMeta(html, 'og:image') || extractMeta(html, 'twitter:image');
     const favicon = extractFavicon(html, url);
     const siteName = extractMeta(html, 'og:site_name');
@@ -463,8 +469,14 @@ function urlToKey(url: string): string {
 function extractMeta(html: string, property: string): string | null {
   // Try property="..." and name="..."
   const patterns = [
-    new RegExp(`<meta[^>]+property=["']${escapeRegex(property)}["'][^>]+content=["']([^"']+)["']`, 'i'),
-    new RegExp(`<meta[^>]+content=["']([^"']+)["'][^>]+property=["']${escapeRegex(property)}["']`, 'i'),
+    new RegExp(
+      `<meta[^>]+property=["']${escapeRegex(property)}["'][^>]+content=["']([^"']+)["']`,
+      'i',
+    ),
+    new RegExp(
+      `<meta[^>]+content=["']([^"']+)["'][^>]+property=["']${escapeRegex(property)}["']`,
+      'i',
+    ),
     new RegExp(`<meta[^>]+name=["']${escapeRegex(property)}["'][^>]+content=["']([^"']+)["']`, 'i'),
     new RegExp(`<meta[^>]+content=["']([^"']+)["'][^>]+name=["']${escapeRegex(property)}["']`, 'i'),
   ];
@@ -601,9 +613,7 @@ export async function votePoll(
   }
 
   await kv.put(`${POLL_PREFIX}${pollId}`, JSON.stringify(poll), {
-    expirationTtl: poll.endsAt
-      ? Math.ceil((poll.endsAt - Date.now()) / 1000) + 86400
-      : 86400 * 30,
+    expirationTtl: poll.endsAt ? Math.ceil((poll.endsAt - Date.now()) / 1000) + 86400 : 86400 * 30,
   });
 
   return poll;
@@ -762,12 +772,7 @@ export async function createStickerPack(
     const ext = sticker.mimeType === 'image/png' ? '.png' : '.webp';
     const storageKey = `stickers/${packId}/${stickerId}${ext}`;
 
-    const r2Result = await uploadToR2(
-      storageKey,
-      sticker.buffer,
-      sticker.mimeType,
-      env,
-    );
+    const r2Result = await uploadToR2(storageKey, sticker.buffer, sticker.mimeType, env);
 
     processedStickers.push({
       id: stickerId,

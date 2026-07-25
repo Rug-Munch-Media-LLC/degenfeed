@@ -25,10 +25,7 @@ export function SkeletonText({ lines = 3, widths, className = '' }: SkeletonText
   return (
     <div className={`space-y-2 ${className}`} role="presentation" aria-label="Loading content">
       {Array.from({ length: lines }).map((_, i) => (
-        <ShimmerLine
-          key={i}
-          width={effectiveWidths[i % effectiveWidths.length]}
-        />
+        <ShimmerLine key={i} width={effectiveWidths[i % effectiveWidths.length]} />
       ))}
     </div>
   );

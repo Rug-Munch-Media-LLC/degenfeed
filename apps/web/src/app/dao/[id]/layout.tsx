@@ -113,7 +113,7 @@ export default function DAOLayout({
   const dao = MOCK_DAO;
 
   // Extract the sub-path after /dao/[id]/
-  const subPath = '/' + pathname.split('/').slice(3).join('/');
+  const subPath = `/${pathname.split('/').slice(3).join('/')}`;
 
   return (
     <div className="flex min-h-screen bg-[var(--color-bg)]">

@@ -38,7 +38,7 @@ const CURATED_BLOGS: BlogSource[] = [
   { alias: 'tech', instance: 'https://writing.exchange', displayName: 'Writing Exchange' },
 ];
 
-const PUBLIC_INSTANCES = [
+const _PUBLIC_INSTANCES = [
   'https://write.as',
   'https://writing.exchange',
   'https://publish.arrr.xyz',
@@ -113,8 +113,13 @@ function guessNiches(text: string, title: string, tags: string[] = []): string[]
 }
 
 function parseRssItems(xml: string): Array<{
-  title?: string; link?: string; guid?: string; description?: string;
-  author?: string; pubDate?: string; creator?: string;
+  title?: string;
+  link?: string;
+  guid?: string;
+  description?: string;
+  author?: string;
+  pubDate?: string;
+  creator?: string;
 }> {
   const items: Array<Record<string, string>> = [];
   const itemRe = /<item>([\s\S]*?)<\/item>/gi;
@@ -142,10 +147,14 @@ function wfPostToPost(
   blog: BlogSource,
 ): UnifiedPost {
   const title = String((item as WriteFreelyPost).title || '');
-  const body = String((item as WriteFreelyPost).body || (item as Record<string, unknown>).content || '');
+  const body = String(
+    (item as WriteFreelyPost).body || (item as Record<string, unknown>).content || '',
+  );
   const slug = String((item as WriteFreelyPost).slug || (item as Record<string, unknown>).id || '');
   const tags = (item as WriteFreelyPost).tags || [];
-  const text = title ? `${title}\n\n${stripHtml(body).slice(0, 1000)}` : stripHtml(body).slice(0, 1000);
+  const text = title
+    ? `${title}\n\n${stripHtml(body).slice(0, 1000)}`
+    : stripHtml(body).slice(0, 1000);
 
   return {
     id: `writefreely:${slug}@${blog.alias}`,
@@ -189,7 +198,7 @@ async function fetchBlogPosts(blog: BlogSource, limit: number): Promise<UnifiedP
       signal: AbortSignal.timeout(8000),
     });
     if (!res.ok) return [];
-    const data = await res.json() as WriteFreelyCollectionResponse;
+    const data = (await res.json()) as WriteFreelyCollectionResponse;
     const items = (data?.data || data?.items || []) as WriteFreelyPost[];
     if (!Array.isArray(items) || items.length === 0) return [];
     return items.slice(0, limit).map((item) => wfPostToPost(item, blog));

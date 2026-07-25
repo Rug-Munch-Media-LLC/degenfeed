@@ -40,11 +40,7 @@ const TIERS: Tier[] = [
     label: 'Holder',
     icon: '🥉',
     color: 'from-gray-500 to-gray-400',
-    perks: [
-      'Access to holder-only posts',
-      'Vote in community polls',
-      'Holder badge on profile',
-    ],
+    perks: ['Access to holder-only posts', 'Vote in community polls', 'Holder badge on profile'],
   },
   {
     level: 2,
@@ -93,7 +89,9 @@ const TIERS: Tier[] = [
 
 function PerkRow({ perk, unlocked }: { perk: string; unlocked: boolean }) {
   return (
-    <div className={`flex items-center gap-2 text-[11px] ${unlocked ? 'text-[var(--color-fg)]' : 'text-[var(--color-muted)] opacity-50'}`}>
+    <div
+      className={`flex items-center gap-2 text-[11px] ${unlocked ? 'text-[var(--color-fg)]' : 'text-[var(--color-muted)] opacity-50'}`}
+    >
       <span className={`shrink-0 ${unlocked ? 'text-degen-400' : 'text-[var(--color-muted)]'}`}>
         {unlocked ? '✓' : '○'}
       </span>
@@ -121,9 +119,13 @@ function TierCard({
 }) {
   // Animated progress for the next tier
   const prevTierMin = TIERS[Math.max(0, tier.level - 2)]?.minTokens ?? 0;
-  const nextProgress = isNext && !isUnlocked
-    ? Math.min(100, Math.round(((userBalance - prevTierMin) / (tier.minTokens - prevTierMin)) * 100))
-    : 0;
+  const nextProgress =
+    isNext && !isUnlocked
+      ? Math.min(
+          100,
+          Math.round(((userBalance - prevTierMin) / (tier.minTokens - prevTierMin)) * 100),
+        )
+      : 0;
 
   return (
     <div
@@ -217,7 +219,7 @@ export function TokenPerks({ symbol, userBalance = 0, className = '' }: TokenPer
     if (nextTierRef.current && nextTierLevel !== null) {
       nextTierRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
-  }, [nextTierLevel, userBalance]);
+  }, [nextTierLevel]);
 
   return (
     <div className={`space-y-3 ${className}`}>
@@ -272,5 +274,5 @@ export function TokenPerks({ symbol, userBalance = 0, className = '' }: TokenPer
   );
 }
 
-export { TIERS };
 export type { Tier };
+export { TIERS };

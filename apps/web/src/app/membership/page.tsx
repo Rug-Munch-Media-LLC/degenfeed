@@ -668,7 +668,7 @@ export default function MembershipPage() {
   const [showUpgrade, setShowUpgrade] = useState<Tier | null>(null);
   const [upgradeLoading, setUpgradeLoading] = useState(false);
   const [showCancel, setShowCancel] = useState(false);
-  const [upgradeSuccess, setUpgradeSuccess] = useState<string | null>(null);
+  const [upgradeSuccess, _setUpgradeSuccess] = useState<string | null>(null);
 
   const handleUpgrade = useCallback(async (tier: Tier, period: 'monthly' | 'annual') => {
     setUpgradeLoading(true);

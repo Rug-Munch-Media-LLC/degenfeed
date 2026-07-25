@@ -18,9 +18,7 @@
 import { ErrorBoundary } from '@degenfeed/ui';
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { VideoCard } from '../../../components/video/VideoCard';
 import { VideoSourceBadge } from '../../../components/video/VideoSourceBadge';
-import type { UnifiedVideo, UnifiedVideoFeed } from '../../../components/video/useVideoHub';
 
 // ─── Platform tabs configuration ───────────────────────────────────────
 
@@ -117,7 +115,7 @@ interface TrendingItemAPI {
 
 // ─── Helpers ────────────────────────────────────────────────────────
 
-function formatDuration(seconds: number): string {
+function _formatDuration(seconds: number): string {
   if (!seconds || seconds <= 0) return '';
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
@@ -126,7 +124,7 @@ function formatDuration(seconds: number): string {
   return `${m}:${String(s).padStart(2, '0')}`;
 }
 
-function timeAgo(timestamp: number): string {
+function _timeAgo(timestamp: number): string {
   const diff = Date.now() - timestamp;
   const mins = Math.floor(diff / 60000);
   if (mins < 60) return `${mins}m ago`;
@@ -160,42 +158,45 @@ export default function UnifiedVideoFeedPage() {
   const [watchLater, setWatchLater] = useState<Set<string>>(new Set());
 
   // ── Fetch feed ──────────────────────────────────────────────────
-  const fetchFeed = useCallback(async (append = false) => {
-    try {
-      if (append) setLoadingMore(true);
-      else setLoading(true);
+  const fetchFeed = useCallback(
+    async (append = false) => {
+      try {
+        if (append) setLoadingMore(true);
+        else setLoading(true);
 
-      const params = new URLSearchParams();
-      if (activePlatform !== 'all') params.set('source', activePlatform);
-      if (activeCategory !== 'All') params.set('category', activeCategory.toLowerCase());
-      params.set('limit', '30');
-      if (append && cursor) params.set('cursor', cursor);
+        const params = new URLSearchParams();
+        if (activePlatform !== 'all') params.set('source', activePlatform);
+        if (activeCategory !== 'All') params.set('category', activeCategory.toLowerCase());
+        params.set('limit', '30');
+        if (append && cursor) params.set('cursor', cursor);
 
-      const res = await fetch(`/api/video/unified-feed?${params}`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const res = await fetch(`/api/video/unified-feed?${params}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-      const data = (await res.json()) as UnifiedFeedAPI;
+        const data = (await res.json()) as UnifiedFeedAPI;
 
-      if (append) {
-        setItems((prev) => {
-          const seen = new Set(prev.map((i) => i.id));
-          const newItems = data.items.filter((i) => !seen.has(i.id));
-          return [...prev, ...newItems];
-        });
-      } else {
-        setItems(data.items);
+        if (append) {
+          setItems((prev) => {
+            const seen = new Set(prev.map((i) => i.id));
+            const newItems = data.items.filter((i) => !seen.has(i.id));
+            return [...prev, ...newItems];
+          });
+        } else {
+          setItems(data.items);
+        }
+
+        setHasMore(data.hasMore);
+        setCursor(data.cursor);
+        setSourceCounts(data.sourceCounts ?? []);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load feed');
+      } finally {
+        setLoading(false);
+        setLoadingMore(false);
       }
-
-      setHasMore(data.hasMore);
-      setCursor(data.cursor);
-      setSourceCounts(data.sourceCounts ?? []);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load feed');
-    } finally {
-      setLoading(false);
-      setLoadingMore(false);
-    }
-  }, [activePlatform, activeCategory, cursor]);
+    },
+    [activePlatform, activeCategory, cursor],
+  );
 
   // ── Fetch trending ──────────────────────────────────────────────
   const fetchTrending = useCallback(async () => {
@@ -214,7 +215,7 @@ export default function UnifiedVideoFeedPage() {
   useEffect(() => {
     setCursor(undefined);
     setItems([]);
-  }, [activePlatform, activeCategory]);
+  }, []);
 
   useEffect(() => {
     if (!cursor) fetchFeed(false);
@@ -235,7 +236,9 @@ export default function UnifiedVideoFeedPage() {
       // Persist to localStorage
       try {
         localStorage.setItem('degen-watch-later', JSON.stringify([...next]));
-      } catch { /* noop */ }
+      } catch {
+        /* noop */
+      }
       return next;
     });
   }, []);
@@ -245,7 +248,9 @@ export default function UnifiedVideoFeedPage() {
     try {
       const stored = localStorage.getItem('degen-watch-later');
       if (stored) setWatchLater(new Set(JSON.parse(stored)));
-    } catch { /* noop */ }
+    } catch {
+      /* noop */
+    }
   }, []);
 
   // ── Derived ─────────────────────────────────────────────────────
@@ -257,14 +262,18 @@ export default function UnifiedVideoFeedPage() {
 
   // ── Render ──────────────────────────────────────────────────────
   return (
-    <ErrorBoundary fallback={<div className="p-8 text-center text-red-400">Something went wrong loading the unified video feed.</div>}>
+    <ErrorBoundary
+      fallback={
+        <div className="p-8 text-center text-red-400">
+          Something went wrong loading the unified video feed.
+        </div>
+      }
+    >
       <div className="min-h-screen bg-black text-white">
         <div className="mx-auto max-w-7xl px-4 py-6">
           {/* ── Header ─────────────────────────────────────────────── */}
           <div className="mb-6">
-            <h1 className="text-3xl font-bold tracking-tight">
-              Unified Video Feed
-            </h1>
+            <h1 className="text-3xl font-bold tracking-tight">Unified Video Feed</h1>
             <p className="mt-1 text-sm text-gray-400">
               Every video platform, one feed. Each video labeled with its source.
             </p>
@@ -272,10 +281,13 @@ export default function UnifiedVideoFeedPage() {
 
           {/* ── Zero-cost banner ──────────────────────────────────── */}
           <div className="mb-6 rounded-lg border border-green-500/20 bg-green-500/5 px-4 py-2 text-sm text-green-400">
-            <span className="font-semibold">Zero-Cost Hosting:</span> All external video content is served directly from
-            source platforms — no hosting costs for DegenFeed.
+            <span className="font-semibold">Zero-Cost Hosting:</span> All external video content is
+            served directly from source platforms — no hosting costs for DegenFeed.
             {currentPlatform.id !== 'all' && (
-              <span> Currently viewing <strong>{currentPlatform.label}</strong>.</span>
+              <span>
+                {' '}
+                Currently viewing <strong>{currentPlatform.label}</strong>.
+              </span>
             )}
           </div>
 
@@ -305,7 +317,7 @@ export default function UnifiedVideoFeedPage() {
                   {platform.label}
                   {sourceCounts.find((s) => s.source === platform.id) && (
                     <span className="ml-1 rounded bg-white/10 px-1.5 text-[10px] tabular-nums">
-                      {sourceCounts.find((s) => s.source === platform.id)!.count}
+                      {sourceCounts.find((s) => s.source === platform.id)?.count}
                     </span>
                   )}
                 </button>
@@ -351,10 +363,7 @@ export default function UnifiedVideoFeedPage() {
                         />
                       )}
                       <div className="absolute bottom-1.5 left-1.5">
-                        <VideoSourceBadge
-                          source={item.source as any}
-                          size="sm"
-                        />
+                        <VideoSourceBadge source={item.source as any} size="sm" />
                       </div>
                     </div>
                     <h3 className="mt-1.5 text-sm font-medium line-clamp-2">{item.title}</h3>
@@ -386,7 +395,10 @@ export default function UnifiedVideoFeedPage() {
             <div className="rounded-lg border border-red-500/20 bg-red-500/5 p-4 text-center text-red-400">
               {error}
               <button
-                onClick={() => { setError(null); fetchFeed(false); }}
+                onClick={() => {
+                  setError(null);
+                  fetchFeed(false);
+                }}
                 className="ml-2 underline hover:text-red-300"
               >
                 Retry
@@ -404,10 +416,7 @@ export default function UnifiedVideoFeedPage() {
           {items.length > 0 && (
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
               {items.map((item) => (
-                <div
-                  key={item.id}
-                  className="group relative"
-                >
+                <div key={item.id} className="group relative">
                   {/* Video Card */}
                   <Link href={`/video/${item.id}`} className="block">
                     {/* Thumbnail */}
@@ -428,10 +437,7 @@ export default function UnifiedVideoFeedPage() {
                       )}
                       {/* Source badge */}
                       <div className="absolute bottom-1.5 left-1.5">
-                        <VideoSourceBadge
-                          source={item.source as any}
-                          size="sm"
-                        />
+                        <VideoSourceBadge source={item.source as any} size="sm" />
                       </div>
                       {/* Live indicator */}
                       {item.isLive && (
@@ -465,14 +471,26 @@ export default function UnifiedVideoFeedPage() {
                   <button
                     onClick={() => handleToggleWatchLater(item.id)}
                     className="absolute right-2 top-2 z-10 rounded-full bg-black/60 p-1.5 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-black/80"
-                    title={watchLater.has(item.id) ? 'Remove from Watch Later' : 'Add to Watch Later'}
+                    title={
+                      watchLater.has(item.id) ? 'Remove from Watch Later' : 'Add to Watch Later'
+                    }
                   >
                     {watchLater.has(item.id) ? (
-                      <svg className="h-4 w-4 text-yellow-400" fill="currentColor" viewBox="0 0 24 24">
+                      <svg
+                        className="h-4 w-4 text-yellow-400"
+                        fill="currentColor"
+                        viewBox="0 0 24 24"
+                      >
                         <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
                       </svg>
                     ) : (
-                      <svg className="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                      <svg
+                        className="h-4 w-4 text-white"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        strokeWidth={2}
+                      >
                         <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
                       </svg>
                     )}
@@ -500,8 +518,19 @@ export default function UnifiedVideoFeedPage() {
                 {loadingMore ? (
                   <span className="flex items-center gap-2">
                     <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                      />
                     </svg>
                     Loading more...
                   </span>
@@ -516,7 +545,10 @@ export default function UnifiedVideoFeedPage() {
           <div className="mt-6 border-t border-white/10 pt-4">
             <div className="flex flex-wrap gap-x-6 gap-y-2 text-xs text-gray-500">
               <span>All platforms: zero-cost hosting</span>
-              <span>Source: YouTube, PeerTube, Odysee, Twitch, DTube, Rumble, Vimeo, Dailymotion, BitChute, Kick, LiveTube, Nostr, Farcaster, IPFS, Arweave</span>
+              <span>
+                Source: YouTube, PeerTube, Odysee, Twitch, DTube, Rumble, Vimeo, Dailymotion,
+                BitChute, Kick, LiveTube, Nostr, Farcaster, IPFS, Arweave
+              </span>
             </div>
           </div>
         </div>

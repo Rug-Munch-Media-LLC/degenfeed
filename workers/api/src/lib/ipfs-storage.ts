@@ -94,7 +94,7 @@ async function uploadViaWeb3Storage(
   try {
     const headers: Record<string, string> = {};
     if (apiKey) {
-      headers['Authorization'] = `Bearer ${apiKey}`;
+      headers.Authorization = `Bearer ${apiKey}`;
     }
 
     const formData = new FormData();
@@ -333,9 +333,7 @@ export async function verifyIPFSContent(cid: string): Promise<boolean> {
         signal: AbortSignal.timeout(10_000),
       });
       if (response.ok) return true;
-    } catch {
-      continue;
-    }
+    } catch {}
   }
 
   return false;

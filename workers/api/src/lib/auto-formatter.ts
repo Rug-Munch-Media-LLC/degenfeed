@@ -72,7 +72,7 @@ const PLATFORM_LIMITS: Record<string, number> = {
 
 const PLATFORM_THREAD_SUPPORT: Record<string, boolean> = {
   mastodon: true,
-  bluesky: false,   // No native threads
+  bluesky: false, // No native threads
   nostr: true,
   farcaster: false,
   lens: false,
@@ -88,14 +88,14 @@ const PLATFORM_THREAD_SUPPORT: Record<string, boolean> = {
 const PLATFORM_HASHTAG_STYLE: Record<string, 'hash' | 'bare' | 'camel'> = {
   mastodon: 'hash',
   bluesky: 'hash',
-  nostr: 'bare',       // Nostr uses # in content but also supports bare tags
+  nostr: 'bare', // Nostr uses # in content but also supports bare tags
   farcaster: 'hash',
   lens: 'hash',
   threads: 'hash',
-  reddit: 'bare',      // Reddit doesn't use hashtags traditionally
+  reddit: 'bare', // Reddit doesn't use hashtags traditionally
   telegram: 'hash',
   discord: 'hash',
-  lemmy: 'bare',       // Lemmy doesn't use hashtags
+  lemmy: 'bare', // Lemmy doesn't use hashtags
   peertube: 'hash',
   pixelfed: 'hash',
 };
@@ -118,11 +118,13 @@ export function autoThread(
 
   // If platform doesn't support threads, truncate
   if (!PLATFORM_THREAD_SUPPORT[protocol]) {
-    return [{
-      index: 0,
-      text: text.slice(0, maxChars - 3) + '...',
-      charCount: Math.min(text.length, maxChars),
-    }];
+    return [
+      {
+        index: 0,
+        text: `${text.slice(0, maxChars - 3)}...`,
+        charCount: Math.min(text.length, maxChars),
+      },
+    ];
   }
 
   const segments: ThreadSegment[] = [];
@@ -164,9 +166,7 @@ export function autoThread(
     }
 
     // Check if adding this sentence would exceed the limit
-    const testSegment = currentSegment
-      ? `${currentSegment} ${sentence}`
-      : sentence;
+    const testSegment = currentSegment ? `${currentSegment} ${sentence}` : sentence;
     const totalLen = testSegment.length + suffix.length;
 
     if (totalLen > maxChars) {
@@ -199,9 +199,7 @@ export function autoThread(
   const finalCount = segments.length;
   return segments.map((seg, i) => ({
     ...seg,
-    text: i > 0
-      ? seg.text.replace(/\(\d+\/\?\)$/, `(${i + 1}/${finalCount})`)
-      : seg.text,
+    text: i > 0 ? seg.text.replace(/\(\d+\/\?\)$/, `(${i + 1}/${finalCount})`) : seg.text,
     index: i,
   }));
 }
@@ -235,11 +233,13 @@ export function optimizeHashtags(
   if (!hashtags || hashtags.length === 0) return [];
 
   // Clean and deduplicate
-  const cleaned = [...new Set(
-    hashtags
-      .map((h) => h.replace(/^#/, '').trim().toLowerCase())
-      .filter((h) => h.length > 0 && h.length <= 30),
-  )];
+  const cleaned = [
+    ...new Set(
+      hashtags
+        .map((h) => h.replace(/^#/, '').trim().toLowerCase())
+        .filter((h) => h.length > 0 && h.length <= 30),
+    ),
+  ];
 
   // Limit count
   const limited = cleaned.slice(0, maxHashtags);
@@ -251,7 +251,6 @@ export function optimizeHashtags(
       return limited; // No # prefix
     case 'camel':
       return limited.map((h) => h.charAt(0).toUpperCase() + h.slice(1));
-    case 'hash':
     default:
       return limited.map((h) => `#${h}`);
   }
@@ -271,11 +270,48 @@ export function suggestHashtags(
 
   // Extract meaningful keywords (words 3+ chars, no stop words)
   const stopWords = new Set([
-    'the', 'and', 'for', 'are', 'but', 'not', 'you', 'all', 'can',
-    'had', 'her', 'was', 'one', 'our', 'out', 'has', 'have', 'been',
-    'its', 'just', 'like', 'more', 'some', 'than', 'that', 'them',
-    'then', 'they', 'this', 'very', 'were', 'what', 'when', 'where',
-    'which', 'who', 'will', 'with', 'would', 'about', 'from', 'your',
+    'the',
+    'and',
+    'for',
+    'are',
+    'but',
+    'not',
+    'you',
+    'all',
+    'can',
+    'had',
+    'her',
+    'was',
+    'one',
+    'our',
+    'out',
+    'has',
+    'have',
+    'been',
+    'its',
+    'just',
+    'like',
+    'more',
+    'some',
+    'than',
+    'that',
+    'them',
+    'then',
+    'they',
+    'this',
+    'very',
+    'were',
+    'what',
+    'when',
+    'where',
+    'which',
+    'who',
+    'will',
+    'with',
+    'would',
+    'about',
+    'from',
+    'your',
   ]);
 
   const words = combined
@@ -317,26 +353,101 @@ export interface ImageOptimizationResult {
 /**
  * Platform-specific image constraints.
  */
-const IMAGE_CONSTRAINTS: Record<string, {
-  maxCount: number;
-  maxWidth: number;
-  maxHeight: number;
-  aspectRatio?: number;
-  formats: string[];
-  maxSizeMB: number;
-}> = {
-  mastodon:  { maxCount: 4, maxWidth: 1280, maxHeight: 1280, formats: ['jpeg', 'png', 'gif', 'webp'], maxSizeMB: 8 },
-  bluesky:   { maxCount: 4, maxWidth: 2000, maxHeight: 2000, formats: ['jpeg', 'png'], maxSizeMB: 10 },
-  nostr:     { maxCount: 10, maxWidth: 4096, maxHeight: 4096, formats: ['jpeg', 'png', 'gif', 'webp'], maxSizeMB: 10 },
-  farcaster: { maxCount: 4, maxWidth: 1200, maxHeight: 1200, formats: ['jpeg', 'png', 'gif'], maxSizeMB: 5 },
-  lens:      { maxCount: 4, maxWidth: 2000, maxHeight: 2000, formats: ['jpeg', 'png', 'gif', 'webp'], maxSizeMB: 10 },
-  threads:   { maxCount: 10, maxWidth: 2048, maxHeight: 2048, formats: ['jpeg', 'png'], maxSizeMB: 8 },
-  reddit:    { maxCount: 20, maxWidth: 4096, maxHeight: 4096, formats: ['jpeg', 'png', 'gif'], maxSizeMB: 20 },
-  telegram:  { maxCount: 10, maxWidth: 1280, maxHeight: 1280, formats: ['jpeg', 'png', 'gif', 'webp'], maxSizeMB: 10 },
-  discord:   { maxCount: 10, maxWidth: 2048, maxHeight: 2048, formats: ['jpeg', 'png', 'gif', 'webp'], maxSizeMB: 8 },
-  lemmy:     { maxCount: 1, maxWidth: 4096, maxHeight: 4096, formats: ['jpeg', 'png', 'gif'], maxSizeMB: 10 },
-  peertube:  { maxCount: 1, maxWidth: 4096, maxHeight: 4096, formats: ['jpeg', 'png'], maxSizeMB: 10 },
-  pixelfed:  { maxCount: 20, maxWidth: 4096, maxHeight: 4096, formats: ['jpeg', 'png', 'gif', 'webp'], maxSizeMB: 20 },
+const IMAGE_CONSTRAINTS: Record<
+  string,
+  {
+    maxCount: number;
+    maxWidth: number;
+    maxHeight: number;
+    aspectRatio?: number;
+    formats: string[];
+    maxSizeMB: number;
+  }
+> = {
+  mastodon: {
+    maxCount: 4,
+    maxWidth: 1280,
+    maxHeight: 1280,
+    formats: ['jpeg', 'png', 'gif', 'webp'],
+    maxSizeMB: 8,
+  },
+  bluesky: {
+    maxCount: 4,
+    maxWidth: 2000,
+    maxHeight: 2000,
+    formats: ['jpeg', 'png'],
+    maxSizeMB: 10,
+  },
+  nostr: {
+    maxCount: 10,
+    maxWidth: 4096,
+    maxHeight: 4096,
+    formats: ['jpeg', 'png', 'gif', 'webp'],
+    maxSizeMB: 10,
+  },
+  farcaster: {
+    maxCount: 4,
+    maxWidth: 1200,
+    maxHeight: 1200,
+    formats: ['jpeg', 'png', 'gif'],
+    maxSizeMB: 5,
+  },
+  lens: {
+    maxCount: 4,
+    maxWidth: 2000,
+    maxHeight: 2000,
+    formats: ['jpeg', 'png', 'gif', 'webp'],
+    maxSizeMB: 10,
+  },
+  threads: {
+    maxCount: 10,
+    maxWidth: 2048,
+    maxHeight: 2048,
+    formats: ['jpeg', 'png'],
+    maxSizeMB: 8,
+  },
+  reddit: {
+    maxCount: 20,
+    maxWidth: 4096,
+    maxHeight: 4096,
+    formats: ['jpeg', 'png', 'gif'],
+    maxSizeMB: 20,
+  },
+  telegram: {
+    maxCount: 10,
+    maxWidth: 1280,
+    maxHeight: 1280,
+    formats: ['jpeg', 'png', 'gif', 'webp'],
+    maxSizeMB: 10,
+  },
+  discord: {
+    maxCount: 10,
+    maxWidth: 2048,
+    maxHeight: 2048,
+    formats: ['jpeg', 'png', 'gif', 'webp'],
+    maxSizeMB: 8,
+  },
+  lemmy: {
+    maxCount: 1,
+    maxWidth: 4096,
+    maxHeight: 4096,
+    formats: ['jpeg', 'png', 'gif'],
+    maxSizeMB: 10,
+  },
+  peertube: {
+    maxCount: 1,
+    maxWidth: 4096,
+    maxHeight: 4096,
+    formats: ['jpeg', 'png'],
+    maxSizeMB: 10,
+  },
+  pixelfed: {
+    maxCount: 20,
+    maxWidth: 4096,
+    maxHeight: 4096,
+    formats: ['jpeg', 'png', 'gif', 'webp'],
+    maxSizeMB: 20,
+  },
 };
 
 /**
@@ -403,23 +514,26 @@ export interface LinkOptimizationResult {
 /**
  * Platform-specific link behavior.
  */
-const LINK_BEHAVIOR: Record<string, {
-  autoEmbed: boolean;
-  maxLinks: number;
-  shortenUrls: boolean;
-}> = {
-  mastodon:  { autoEmbed: true, maxLinks: 10, shortenUrls: false },
-  bluesky:   { autoEmbed: true, maxLinks: 4, shortenUrls: false },
-  nostr:     { autoEmbed: true, maxLinks: 20, shortenUrls: false },
+const LINK_BEHAVIOR: Record<
+  string,
+  {
+    autoEmbed: boolean;
+    maxLinks: number;
+    shortenUrls: boolean;
+  }
+> = {
+  mastodon: { autoEmbed: true, maxLinks: 10, shortenUrls: false },
+  bluesky: { autoEmbed: true, maxLinks: 4, shortenUrls: false },
+  nostr: { autoEmbed: true, maxLinks: 20, shortenUrls: false },
   farcaster: { autoEmbed: true, maxLinks: 4, shortenUrls: false },
-  lens:      { autoEmbed: true, maxLinks: 10, shortenUrls: false },
-  threads:   { autoEmbed: true, maxLinks: 1, shortenUrls: false },
-  reddit:    { autoEmbed: true, maxLinks: 1, shortenUrls: false },
-  telegram:  { autoEmbed: true, maxLinks: 10, shortenUrls: false },
-  discord:   { autoEmbed: true, maxLinks: 10, shortenUrls: false },
-  lemmy:     { autoEmbed: true, maxLinks: 1, shortenUrls: false },
-  peertube:  { autoEmbed: true, maxLinks: 5, shortenUrls: false },
-  pixelfed:  { autoEmbed: true, maxLinks: 5, shortenUrls: false },
+  lens: { autoEmbed: true, maxLinks: 10, shortenUrls: false },
+  threads: { autoEmbed: true, maxLinks: 1, shortenUrls: false },
+  reddit: { autoEmbed: true, maxLinks: 1, shortenUrls: false },
+  telegram: { autoEmbed: true, maxLinks: 10, shortenUrls: false },
+  discord: { autoEmbed: true, maxLinks: 10, shortenUrls: false },
+  lemmy: { autoEmbed: true, maxLinks: 1, shortenUrls: false },
+  peertube: { autoEmbed: true, maxLinks: 5, shortenUrls: false },
+  pixelfed: { autoEmbed: true, maxLinks: 5, shortenUrls: false },
 };
 
 /**
@@ -440,11 +554,13 @@ export function optimizeLinks(
     const url = links[i];
     if (!isHttpUrl(url)) continue;
 
-    const withUtm = campaign ? appendUtmParams(url, {
-      utm_source: `degenfeed-${protocol}`,
-      utm_medium: 'social',
-      utm_campaign: campaign,
-    }) : url;
+    const withUtm = campaign
+      ? appendUtmParams(url, {
+          utm_source: `degenfeed-${protocol}`,
+          utm_medium: 'social',
+          utm_campaign: campaign,
+        })
+      : url;
 
     results.push({
       original: url,
@@ -459,11 +575,14 @@ export function optimizeLinks(
 /**
  * Append UTM parameters to a URL.
  */
-function appendUtmParams(url: string, params: {
-  utm_source: string;
-  utm_medium: string;
-  utm_campaign: string;
-}): string {
+function appendUtmParams(
+  url: string,
+  params: {
+    utm_source: string;
+    utm_medium: string;
+    utm_campaign: string;
+  },
+): string {
   try {
     const parsed = new URL(url);
     parsed.searchParams.set('utm_source', params.utm_source);
@@ -490,35 +609,107 @@ export interface LanguageAdaptationResult {
 /**
  * Platform-specific tone profiles.
  */
-const TONE_PROFILES: Record<string, {
-  tone: string;
-  maxExclamation: number;
-  useEmoji: boolean;
-  formality: 'casual' | 'neutral' | 'professional';
-  sentenceLengthPreference: 'short' | 'medium' | 'long';
-}> = {
-  mastodon:  { tone: 'conversational', maxExclamation: 2, useEmoji: true, formality: 'casual', sentenceLengthPreference: 'medium' },
-  bluesky:   { tone: 'snappy', maxExclamation: 2, useEmoji: true, formality: 'casual', sentenceLengthPreference: 'short' },
-  nostr:     { tone: 'direct', maxExclamation: 1, useEmoji: true, formality: 'neutral', sentenceLengthPreference: 'long' },
-  farcaster: { tone: 'concise', maxExclamation: 1, useEmoji: true, formality: 'casual', sentenceLengthPreference: 'short' },
-  lens:      { tone: 'thoughtful', maxExclamation: 1, useEmoji: true, formality: 'neutral', sentenceLengthPreference: 'long' },
-  threads:   { tone: 'engaging', maxExclamation: 3, useEmoji: true, formality: 'casual', sentenceLengthPreference: 'short' },
-  reddit:    { tone: 'informative', maxExclamation: 1, useEmoji: false, formality: 'neutral', sentenceLengthPreference: 'long' },
-  telegram:  { tone: 'direct', maxExclamation: 2, useEmoji: true, formality: 'casual', sentenceLengthPreference: 'medium' },
-  discord:   { tone: 'casual', maxExclamation: 3, useEmoji: true, formality: 'casual', sentenceLengthPreference: 'short' },
-  lemmy:     { tone: 'informative', maxExclamation: 1, useEmoji: false, formality: 'neutral', sentenceLengthPreference: 'long' },
-  peertube:  { tone: 'descriptive', maxExclamation: 1, useEmoji: true, formality: 'neutral', sentenceLengthPreference: 'medium' },
-  pixelfed:  { tone: 'visual', maxExclamation: 2, useEmoji: true, formality: 'casual', sentenceLengthPreference: 'short' },
+const TONE_PROFILES: Record<
+  string,
+  {
+    tone: string;
+    maxExclamation: number;
+    useEmoji: boolean;
+    formality: 'casual' | 'neutral' | 'professional';
+    sentenceLengthPreference: 'short' | 'medium' | 'long';
+  }
+> = {
+  mastodon: {
+    tone: 'conversational',
+    maxExclamation: 2,
+    useEmoji: true,
+    formality: 'casual',
+    sentenceLengthPreference: 'medium',
+  },
+  bluesky: {
+    tone: 'snappy',
+    maxExclamation: 2,
+    useEmoji: true,
+    formality: 'casual',
+    sentenceLengthPreference: 'short',
+  },
+  nostr: {
+    tone: 'direct',
+    maxExclamation: 1,
+    useEmoji: true,
+    formality: 'neutral',
+    sentenceLengthPreference: 'long',
+  },
+  farcaster: {
+    tone: 'concise',
+    maxExclamation: 1,
+    useEmoji: true,
+    formality: 'casual',
+    sentenceLengthPreference: 'short',
+  },
+  lens: {
+    tone: 'thoughtful',
+    maxExclamation: 1,
+    useEmoji: true,
+    formality: 'neutral',
+    sentenceLengthPreference: 'long',
+  },
+  threads: {
+    tone: 'engaging',
+    maxExclamation: 3,
+    useEmoji: true,
+    formality: 'casual',
+    sentenceLengthPreference: 'short',
+  },
+  reddit: {
+    tone: 'informative',
+    maxExclamation: 1,
+    useEmoji: false,
+    formality: 'neutral',
+    sentenceLengthPreference: 'long',
+  },
+  telegram: {
+    tone: 'direct',
+    maxExclamation: 2,
+    useEmoji: true,
+    formality: 'casual',
+    sentenceLengthPreference: 'medium',
+  },
+  discord: {
+    tone: 'casual',
+    maxExclamation: 3,
+    useEmoji: true,
+    formality: 'casual',
+    sentenceLengthPreference: 'short',
+  },
+  lemmy: {
+    tone: 'informative',
+    maxExclamation: 1,
+    useEmoji: false,
+    formality: 'neutral',
+    sentenceLengthPreference: 'long',
+  },
+  peertube: {
+    tone: 'descriptive',
+    maxExclamation: 1,
+    useEmoji: true,
+    formality: 'neutral',
+    sentenceLengthPreference: 'medium',
+  },
+  pixelfed: {
+    tone: 'visual',
+    maxExclamation: 2,
+    useEmoji: true,
+    formality: 'casual',
+    sentenceLengthPreference: 'short',
+  },
 };
 
 /**
  * Adapt post content tone for a specific platform.
  * Adjusts exclamation count, emoji usage, and formality.
  */
-export function adaptLanguage(
-  text: string,
-  protocol: string,
-): LanguageAdaptationResult {
+export function adaptLanguage(text: string, protocol: string): LanguageAdaptationResult {
   const profile = TONE_PROFILES[protocol] ?? TONE_PROFILES.mastodon;
   const changes: string[] = [];
   let adapted = text;
@@ -636,7 +827,12 @@ export function autoFormatPost(
       tone: TONE_PROFILES[protocol]?.tone ?? 'neutral',
       charLimit,
     },
-    supportsRichText: protocol === 'telegram' || protocol === 'discord' || protocol === 'reddit' || protocol === 'lemmy' || protocol === 'peertube',
+    supportsRichText:
+      protocol === 'telegram' ||
+      protocol === 'discord' ||
+      protocol === 'reddit' ||
+      protocol === 'lemmy' ||
+      protocol === 'peertube',
     thread: isThread ? thread : undefined,
     optimizedImages,
     optimizedLinks,
@@ -664,7 +860,7 @@ export function autoFormatForProtocols(
 // ─── 7. AI Time Optimization ──────────────────────────────────────────────
 
 export interface BestTimeSlot {
-  dayOfWeek: number;       // 0=Sunday, 6=Saturday
+  dayOfWeek: number; // 0=Sunday, 6=Saturday
   hourUTC: number;
   score: number;
   label: string;
@@ -680,10 +876,10 @@ const PLATFORM_BEST_TIMES: Record<string, BestTimeSlot[]> = {
     { dayOfWeek: 3, hourUTC: 10, score: 0.88, label: 'Wed 10:00 UTC' },
     { dayOfWeek: 4, hourUTC: 15, score: 0.85, label: 'Thu 15:00 UTC' },
     { dayOfWeek: 1, hourUTC: 16, score: 0.82, label: 'Mon 16:00 UTC' },
-    { dayOfWeek: 5, hourUTC: 11, score: 0.80, label: 'Fri 11:00 UTC' },
+    { dayOfWeek: 5, hourUTC: 11, score: 0.8, label: 'Fri 11:00 UTC' },
   ],
   bluesky: [
-    { dayOfWeek: 2, hourUTC: 15, score: 0.90, label: 'Tue 15:00 UTC' },
+    { dayOfWeek: 2, hourUTC: 15, score: 0.9, label: 'Tue 15:00 UTC' },
     { dayOfWeek: 3, hourUTC: 12, score: 0.87, label: 'Wed 12:00 UTC' },
     { dayOfWeek: 1, hourUTC: 17, score: 0.84, label: 'Mon 17:00 UTC' },
     { dayOfWeek: 4, hourUTC: 14, score: 0.82, label: 'Thu 14:00 UTC' },
@@ -701,7 +897,7 @@ const PLATFORM_BEST_TIMES: Record<string, BestTimeSlot[]> = {
     { dayOfWeek: 3, hourUTC: 16, score: 0.89, label: 'Wed 16:00 UTC' },
     { dayOfWeek: 4, hourUTC: 18, score: 0.86, label: 'Thu 18:00 UTC' },
     { dayOfWeek: 5, hourUTC: 14, score: 0.84, label: 'Fri 14:00 UTC' },
-    { dayOfWeek: 1, hourUTC: 19, score: 0.80, label: 'Mon 19:00 UTC' },
+    { dayOfWeek: 1, hourUTC: 19, score: 0.8, label: 'Mon 19:00 UTC' },
   ],
   threads: [
     { dayOfWeek: 2, hourUTC: 12, score: 0.85, label: 'Tue 12:00 UTC' },
@@ -741,9 +937,7 @@ export function getBestPostingTime(protocols: string[]): BestTimeSlot[] {
   }
 
   // Sort by aggregate score (count * score = cross-platform fit)
-  return [...allSlots.values()]
-    .sort((a, b) => (b.count * b.score) - (a.count * a.score))
-    .slice(0, 5);
+  return [...allSlots.values()].sort((a, b) => b.count * b.score - a.count * a.score).slice(0, 5);
 }
 
 /**

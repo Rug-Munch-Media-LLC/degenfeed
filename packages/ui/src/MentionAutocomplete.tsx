@@ -7,7 +7,7 @@
  * Uses a virtual list of recently interacted profiles / trending hashtags.
  */
 
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useEffect, useMemo, useRef, useState } from 'react';
 
 /* ─── Types ────────────────────────────────────────────────── */
 
@@ -100,7 +100,7 @@ export const MentionAutocomplete = memo(function MentionAutocomplete({
   // Reset active index when query changes
   useEffect(() => {
     setActiveIdx(0);
-  }, [query]);
+  }, []);
 
   if (!position || filtered.length === 0) return null;
 
@@ -211,7 +211,7 @@ export const HashtagAutocomplete = memo(function HashtagAutocomplete({
 
   useEffect(() => {
     setActiveIdx(0);
-  }, [query]);
+  }, []);
 
   if (!position || filtered.length === 0) return null;
 

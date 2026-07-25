@@ -10,8 +10,8 @@
  *
  * run: npx playwright test tests/e2e/cross-browser.test.ts
  */
+
 import { expect, test } from '@playwright/test';
-import type { BrowserContext, Page } from '@playwright/test';
 
 const DESKTOP = { width: 1280, height: 800 };
 const TABLET = { width: 768, height: 1024 };

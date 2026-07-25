@@ -9,17 +9,21 @@ import type { Protocol, UnifiedPost } from '@degenfeed/types';
 
 const $fetch = globalThis.fetch;
 
-const PLEROMA_INSTANCES = [
-  'https://pleroma.site',
-  'https://soykaf.com',
-  'https://spinster.xyz',
-];
+const PLEROMA_INSTANCES = ['https://pleroma.site', 'https://soykaf.com', 'https://spinster.xyz'];
 
 type PleromaStatus = Record<string, unknown> & {
   id: string;
   content: string;
   created_at: string;
-  account: Record<string, unknown> & { id: string; username: string; acct: string; display_name: string; note: string; avatar: string; followers_count: number };
+  account: Record<string, unknown> & {
+    id: string;
+    username: string;
+    acct: string;
+    display_name: string;
+    note: string;
+    avatar: string;
+    followers_count: number;
+  };
   media_attachments?: Array<{ type: string; url: string; preview_url?: string }>;
   favourites_count?: number;
   reblogs_count?: number;
@@ -29,7 +33,11 @@ type PleromaStatus = Record<string, unknown> & {
 };
 
 function stripHtml(html: string): string {
-  return html.replace(/<[^>]*>/g, ' ').replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim();
+  return html
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 function guessNiches(text: string): string[] {
@@ -56,7 +64,7 @@ export async function fetchPleromaPosts(limit = 10): Promise<UnifiedPost[]> {
         signal: AbortSignal.timeout(5000),
       });
       if (!res.ok) continue;
-      const data = await res.json() as PleromaStatus[];
+      const data = (await res.json()) as PleromaStatus[];
       if (!Array.isArray(data)) continue;
 
       for (const s of data) {
@@ -83,15 +91,29 @@ export async function fetchPleromaPosts(limit = 10): Promise<UnifiedPost[]> {
           },
           text,
           embeds: (s.media_attachments || []).map((m) => ({
-            kind: (m.type === 'video' || m.type === 'gifv' ? 'video' : 'image') as 'image' | 'video',
+            kind: (m.type === 'video' || m.type === 'gifv' ? 'video' : 'image') as
+              | 'image'
+              | 'video',
             url: m.url,
             meta: { previewUrl: m.preview_url },
           })),
           createdAt: new Date(s.created_at).getTime(),
-          metrics: { likes: s.favourites_count || 0, reposts: s.reblogs_count || 0, replies: s.replies_count || 0, quotes: 0 },
+          metrics: {
+            likes: s.favourites_count || 0,
+            reposts: s.reblogs_count || 0,
+            replies: s.replies_count || 0,
+            quotes: 0,
+          },
           engagement: {
-            viewerLiked: false, viewerReposted: false, viewerBookmarked: false,
-            raw: { likes: s.favourites_count || 0, reposts: s.reblogs_count || 0, replies: s.replies_count || 0, quotes: 0 },
+            viewerLiked: false,
+            viewerReposted: false,
+            viewerBookmarked: false,
+            raw: {
+              likes: s.favourites_count || 0,
+              reposts: s.reblogs_count || 0,
+              replies: s.replies_count || 0,
+              quotes: 0,
+            },
           },
           raw: s,
           niches: guessNiches(text),

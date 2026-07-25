@@ -144,7 +144,7 @@ function matrixUserToHandle(sender: string): string {
   return sender.startsWith('@') ? sender.split(':')[0]?.replace('@', '') || sender : sender;
 }
 
-function matrixUserToId(sender: string): string {
+function _matrixUserToId(sender: string): string {
   return sender;
 }
 

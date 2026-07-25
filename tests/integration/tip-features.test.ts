@@ -7,7 +7,7 @@
  *
  * Pure functions tested directly. External APIs mocked.
  */
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 // ─── Mock KV ───────────────────────────────────────────────────────
 
@@ -15,8 +15,14 @@ function createMockKV(): Record<string, any> {
   const store = new Map<string, string>();
   return {
     get: vi.fn((key: string) => Promise.resolve(store.get(key) ?? null)),
-    put: vi.fn((key: string, value: string) => { store.set(key, value); return Promise.resolve(); }),
-    delete: vi.fn((key: string) => { store.delete(key); return Promise.resolve(); }),
+    put: vi.fn((key: string, value: string) => {
+      store.set(key, value);
+      return Promise.resolve();
+    }),
+    delete: vi.fn((key: string) => {
+      store.delete(key);
+      return Promise.resolve();
+    }),
     _store: store,
   };
 }
@@ -41,8 +47,8 @@ describe('Tip Features — Smart Chain Selection', () => {
     });
 
     expect(results.length).toBeGreaterThan(0);
-    expect(results[0]!.chain).toBe('lightning');
-    expect(results[0]!.rank).toBe(1);
+    expect(results[0]?.chain).toBe('lightning');
+    expect(results[0]?.rank).toBe(1);
   });
 
   it('prefers Solana when Lightning is unavailable', async () => {
@@ -54,8 +60,8 @@ describe('Tip Features — Smart Chain Selection', () => {
       amountUsd: 10,
     });
 
-    expect(results[0]!.chain).toBe('solana');
-    expect(results[0]!.reason).toBeTruthy();
+    expect(results[0]?.chain).toBe('solana');
+    expect(results[0]?.reason).toBeTruthy();
   });
 
   it('favors Ethereum for large tips over $100', async () => {
@@ -70,7 +76,7 @@ describe('Tip Features — Smart Chain Selection', () => {
 
     const ethereum = results.find((r) => r.chain === 'ethereum');
     expect(ethereum).toBeDefined();
-    expect(ethereum!.rank).toBe(1);
+    expect(ethereum?.rank).toBe(1);
   });
 
   it('penalizes expensive chains for micro-tips under $1', async () => {
@@ -85,7 +91,7 @@ describe('Tip Features — Smart Chain Selection', () => {
     // Ethereum has $5 avg fee → penalized heavily for 50c tip
     const ethereum = results.find((r) => r.chain === 'ethereum');
     expect(ethereum).toBeDefined();
-    expect(ethereum!.rank).toBeGreaterThan(1); // Not first choice
+    expect(ethereum?.rank).toBeGreaterThan(1); // Not first choice
   });
 
   it('scores chains by speed and fee', async () => {
@@ -99,9 +105,9 @@ describe('Tip Features — Smart Chain Selection', () => {
     });
 
     // Base is L2 with low fees + fast
-    expect(results[0]!.chain).toBe('base');
-    expect(results[0]!.route.speed).toBe('fast');
-    expect(results[0]!.route.avgFeeUsd).toBeLessThan(results[results.length - 1]!.route.avgFeeUsd);
+    expect(results[0]?.chain).toBe('base');
+    expect(results[0]?.route.speed).toBe('fast');
+    expect(results[0]?.route.avgFeeUsd).toBeLessThan(results[results.length - 1]?.route.avgFeeUsd);
   });
 
   it('provides chain route metadata for all supported chains', async () => {
@@ -128,7 +134,7 @@ describe('Tip Features — Unified Tip Recording', () => {
       platform: 'degenfeed',
       entityId: 'post_123',
       entityType: 'post',
-      amountUsd: 25.50,
+      amountUsd: 25.5,
       fromUserId: '0xsender',
       toUserId: '0xrecipient',
       fromLabel: 'Alice',
@@ -137,11 +143,11 @@ describe('Tip Features — Unified Tip Recording', () => {
     });
 
     expect(activity).not.toBeNull();
-    expect(activity!.id).toContain('utip:');
-    expect(activity!.amountUsd).toBe(25.50);
-    expect(activity!.fromLabel).toBe('Alice');
-    expect(activity!.toLabel).toBe('Bob');
-    expect(activity!.platform).toBe('degenfeed');
+    expect(activity?.id).toContain('utip:');
+    expect(activity?.amountUsd).toBe(25.5);
+    expect(activity?.fromLabel).toBe('Alice');
+    expect(activity?.toLabel).toBe('Bob');
+    expect(activity?.platform).toBe('degenfeed');
   });
 
   it('rejects invalid tip amounts', async () => {
@@ -151,11 +157,13 @@ describe('Tip Features — Unified Tip Recording', () => {
     expect(sanitizeAmountUsd(-10)).toBeNull();
     expect(sanitizeAmountUsd(99999)).toBeNull(); // over MAX_TIP_USD
     expect(sanitizeAmountUsd(50)).toBe(50);
-    expect(sanitizeAmountUsd('25.5')).toBe(25.50);
+    expect(sanitizeAmountUsd('25.5')).toBe(25.5);
   });
 
   it('sanitizes entity IDs', async () => {
-    const { sanitizeEntityId, hasSuspiciousPayload } = await import('../../workers/api/src/routes/unified-tip-core');
+    const { sanitizeEntityId, hasSuspiciousPayload } = await import(
+      '../../workers/api/src/routes/unified-tip-core'
+    );
     // hasSuspiciousPayload is re-exported from sanitize module
 
     expect(sanitizeEntityId('valid-post-id-123')).toBe('valid-post-id-123');
@@ -164,7 +172,9 @@ describe('Tip Features — Unified Tip Recording', () => {
   });
 
   it('starts leaderboard scoring after tip recording', async () => {
-    const { recordUnifiedTip, kvGetJson, leaderboardKey } = await import('../../workers/api/src/routes/unified-tip-core');
+    const { recordUnifiedTip, kvGetJson, leaderboardKey } = await import(
+      '../../workers/api/src/routes/unified-tip-core'
+    );
     const env = createMockEnv();
 
     // Record a tip to a specific recipient
@@ -183,21 +193,27 @@ describe('Tip Features — Unified Tip Recording', () => {
     // Check the "alltime" leaderboard
     const leaderboard = await kvGetJson(env, leaderboardKey('alltime'));
     expect(leaderboard).not.toBeNull();
-    expect(leaderboard!.entries.length).toBeGreaterThanOrEqual(1);
-    const entry = leaderboard!.entries.find((e: any) => e.userId === '0xtop_creator');
+    expect(leaderboard?.entries.length).toBeGreaterThanOrEqual(1);
+    const entry = leaderboard?.entries.find((e: any) => e.userId === '0xtop_creator');
     expect(entry).toBeDefined();
-    expect(entry!.totalUsd).toBe(100);
+    expect(entry?.totalUsd).toBe(100);
   });
 });
 
 describe('Tip Features — Native Protocol Tipping', () => {
   it('dispatches Nostr zap tip via NIP-57', async () => {
-    const { sendNativeTip, PROTOCOL_FEE_ESTIMATES } = await import('../../workers/api/src/lib/native-tips');
+    const { sendNativeTip, PROTOCOL_FEE_ESTIMATES } = await import(
+      '../../workers/api/src/lib/native-tips'
+    );
     const env = createMockEnv();
 
     // Mock the lightning module
     vi.mock('../../workers/api/src/routes/lightning', () => ({
-      resolveLnurlFromPubkey: vi.fn().mockResolvedValue('lnurl1dp68gurn8ghj7mr0vdskc6r0wd6z7mrww4excttdd5j7mhv93xzt6sn2v3jj6cnv43nz2v3e'),
+      resolveLnurlFromPubkey: vi
+        .fn()
+        .mockResolvedValue(
+          'lnurl1dp68gurn8ghj7mr0vdskc6r0wd6z7mrww4excttdd5j7mhv93xzt6sn2v3jj6cnv43nz2v3e',
+        ),
       fetchZapInvoice: vi.fn().mockResolvedValue({
         status: 'OK',
         pr: 'lnbc10n1...',
@@ -210,7 +226,7 @@ describe('Tip Features — Native Protocol Tipping', () => {
       recipientId: 'npub1...',
       recipientName: 'NostrUser',
       amount: '100',
-      amountUsd: 0.10,
+      amountUsd: 0.1,
       sender: '0xsender',
       message: 'Great post!',
     });
@@ -234,7 +250,7 @@ describe('Tip Features — Native Protocol Tipping', () => {
       recipientId: '0xrecipient',
       recipientName: 'FarcasterUser',
       amount: '5',
-      amountUsd: 5.00,
+      amountUsd: 5.0,
       sender: '0xsender',
       senderProfile: { displayName: 'Alice' },
     });
@@ -245,7 +261,9 @@ describe('Tip Features — Native Protocol Tipping', () => {
   });
 
   it('provides protocol fee estimates for all protocols', async () => {
-    const { PROTOCOL_FEE_ESTIMATES, sendNativeTip } = await import('../../workers/api/src/lib/native-tips');
+    const { PROTOCOL_FEE_ESTIMATES, sendNativeTip } = await import(
+      '../../workers/api/src/lib/native-tips'
+    );
 
     // All 10 protocols should have fee estimates
     expect(Object.keys(PROTOCOL_FEE_ESTIMATES)).toHaveLength(10);
@@ -273,8 +291,8 @@ describe('Tip Features — Smart Protocol Selection', () => {
     });
 
     expect(results.length).toBeGreaterThan(0);
-    expect(results[0]!.protocol).toBe('reddit'); // free, no setup, instant
-    expect(results[0]!.feeEstimate.avgFeeUsd).toBe(0);
+    expect(results[0]?.protocol).toBe('reddit'); // free, no setup, instant
+    expect(results[0]?.feeEstimate.avgFeeUsd).toBe(0);
   });
 
   it('prefers preferred protocol with bonus score', async () => {
@@ -287,7 +305,7 @@ describe('Tip Features — Smart Protocol Selection', () => {
       preferredProtocol: 'farcaster',
     });
 
-    expect(results[0]!.protocol).toBe('farcaster');
+    expect(results[0]?.protocol).toBe('farcaster');
   });
 
   it('scores protocols by multiple criteria', async () => {
@@ -307,7 +325,7 @@ describe('Tip Features — Smart Protocol Selection', () => {
 
     // Should be in score order
     for (let i = 1; i < results.length; i++) {
-      expect(results[i - 1]!.rank).toBeLessThan(results[i]!.rank);
+      expect(results[i - 1]?.rank).toBeLessThan(results[i]?.rank);
     }
   });
 });

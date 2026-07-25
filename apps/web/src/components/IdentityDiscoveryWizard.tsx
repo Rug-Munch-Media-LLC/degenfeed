@@ -271,7 +271,7 @@ export function IdentityDiscoveryWizard({
   const [linkingIds, setLinkingIds] = useState<Set<number>>(new Set());
   const [linkedCount, setLinkedCount] = useState(0);
   const [errorMessage, setErrorMessage] = useState('');
-  const [seenBefore, setSeenBefore] = useState(false);
+  const [_seenBefore, setSeenBefore] = useState(false);
   const abortRef = useRef(false);
 
   // Check if we've already run discovery
@@ -367,7 +367,7 @@ export function IdentityDiscoveryWizard({
   const handleLink = useCallback(
     async (idx: number) => {
       const item = linkableItems[idx];
-      if (!item || !item.linkable) return;
+      if (!item?.linkable) return;
 
       // Link single identity
       setLinkingIds((prev) => new Set(prev).add(idx));

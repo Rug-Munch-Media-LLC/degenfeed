@@ -239,7 +239,7 @@ export function personalizeNewsFeed(
   // Determine counts from ratio
   const totalCount = scored.length;
   const discoveryCount = Math.round(totalCount * discoveryRatio);
-  const preferredCount = totalCount - discoveryCount;
+  const _preferredCount = totalCount - discoveryCount;
 
   // Sort each bucket by score
   preferred.sort((a, b) => b.scoreComponents.total - a.scoreComponents.total);

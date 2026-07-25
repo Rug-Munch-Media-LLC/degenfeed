@@ -712,7 +712,7 @@ async function discoverCrossReference(
   const farcaster = existing.find((d) => d.protocol === 'farcaster');
   const lens = existing.find((d) => d.protocol === 'lens');
   const bsky = existing.find((d) => d.protocol === 'bluesky');
-  const nostr = existing.find((d) => d.protocol === 'nostr');
+  const _nostr = existing.find((d) => d.protocol === 'nostr');
   const ens = existing.find((d) => d.protocol === 'ens');
 
   // ── If we have Farcaster, try to find their other identities ──
@@ -732,13 +732,13 @@ async function discoverCrossReference(
           };
           if (userData.messages) {
             let bio = '';
-            let displayName = '';
+            let _displayName = '';
 
             for (const msg of userData.messages) {
               const type = msg.data?.userDataBody?.type;
               const value = msg.data?.userDataBody?.value;
               if (type === 'USER_DATA_TYPE_BIO') bio = value || '';
-              if (type === 'USER_DATA_TYPE_DISPLAY') displayName = value || '';
+              if (type === 'USER_DATA_TYPE_DISPLAY') _displayName = value || '';
             }
 
             // Check bio for Bluesky handle
@@ -773,7 +773,7 @@ async function discoverCrossReference(
                 identity: { npub: nostrMatch[0] },
                 confidence: 'inferred',
                 method: 'crossref_farcaster_bio',
-                label: nostrMatch[0].slice(0, 16) + '...',
+                label: `${nostrMatch[0].slice(0, 16)}...`,
               });
               seenProtocols.add('nostr');
             }

@@ -29,17 +29,17 @@ export interface ActivityEvent {
   type: ActivityType;
   symbol: string;
   actor: string;
-  actorLabel?: string;       // ENS, .sol name, etc.
-  amount?: string;           // Token amount for buy/sell/claim
-  nativeAmount?: string;     // ETH/SOL amount for buys
-  price?: string;            // Price at time of event
-  usdValue?: string;         // USD value
-  badgeName?: string;        // For badge_earned events
-  badgeIcon?: string;        // For badge_earned events
-  phaseName?: string;        // For phase_change events
-  phaseIndex?: number;       // For phase_change events
-  tipAmount?: string;        // For tip_creator events
-  holderCount?: number;      // For new_holder events
+  actorLabel?: string; // ENS, .sol name, etc.
+  amount?: string; // Token amount for buy/sell/claim
+  nativeAmount?: string; // ETH/SOL amount for buys
+  price?: string; // Price at time of event
+  usdValue?: string; // USD value
+  badgeName?: string; // For badge_earned events
+  badgeIcon?: string; // For badge_earned events
+  phaseName?: string; // For phase_change events
+  phaseIndex?: number; // For phase_change events
+  tipAmount?: string; // For tip_creator events
+  holderCount?: number; // For new_holder events
   timestamp: number;
   txHash?: string;
 }
@@ -70,7 +70,7 @@ const ACTIVITY_ICONS: Record<ActivityType, string> = {
   tip_creator: '💬',
 };
 
-const ACTIVITY_LABELS: Record<ActivityType, string> = {
+const _ACTIVITY_LABELS: Record<ActivityType, string> = {
   buy: 'bought',
   sell: 'sold',
   claim_vested: 'claimed',
@@ -106,10 +106,7 @@ async function setActivities(env: Env, symbol: string, events: ActivityEvent[]):
 
 // ─── Append Event ──────────────────────────────────────────────────────────
 
-export async function appendActivityEvent(
-  env: Env,
-  event: ActivityEvent,
-): Promise<void> {
+export async function appendActivityEvent(env: Env, event: ActivityEvent): Promise<void> {
   const events = await getActivities(env, event.symbol);
   events.unshift(event);
   await setActivities(env, event.symbol, events);
@@ -158,7 +155,10 @@ export async function handleCoinActivity(request: Request, env: Env): Promise<Re
   }
 
   const page = Math.max(1, Number(url.searchParams.get('page')) || 1);
-  const pageSize = Math.min(Math.max(1, Number(url.searchParams.get('pageSize')) || DEFAULT_PAGE_SIZE), 100);
+  const pageSize = Math.min(
+    Math.max(1, Number(url.searchParams.get('pageSize')) || DEFAULT_PAGE_SIZE),
+    100,
+  );
   const typeFilter = url.searchParams.get('type') as ActivityType | null;
 
   // Try KV first
@@ -178,9 +178,7 @@ export async function handleCoinActivity(request: Request, env: Env): Promise<Re
   }
 
   // Filter by type if specified
-  const filtered = typeFilter
-    ? events.filter((e) => e.type === typeFilter)
-    : events;
+  const filtered = typeFilter ? events.filter((e) => e.type === typeFilter) : events;
 
   // Paginate
   const start = (page - 1) * pageSize;
@@ -200,8 +198,12 @@ export async function handleCoinActivity(request: Request, env: Env): Promise<Re
 
 function generateMockActivity(symbol: string): ActivityEvent[] {
   const traders = [
-    '0x1234...5678', '0xabcd...ef01', '0x9876...5432',
-    '0xfedc...ba09', '0xdead...beef', '0xcafe...babe',
+    '0x1234...5678',
+    '0xabcd...ef01',
+    '0x9876...5432',
+    '0xfedc...ba09',
+    '0xdead...beef',
+    '0xcafe...babe',
   ];
   const names = ['alice.eth', 'bob.eth', 'charlie.eth', 'dave.eth', 'eve.eth', 'frank.eth'];
   const phases = ['Steal Deal', 'Early Bird', 'Cruise Control', 'Final Call', 'Moonshot'];
@@ -213,7 +215,15 @@ function generateMockActivity(symbol: string): ActivityEvent[] {
   for (let i = 0; i < 50; i++) {
     const idx = Math.floor(Math.random() * traders.length);
     const timestamp = now - Math.floor(Math.random() * 86400000);
-    const types: ActivityType[] = ['buy', 'sell', 'claim_vested', 'new_holder', 'phase_change', 'badge_earned', 'tip_creator'];
+    const types: ActivityType[] = [
+      'buy',
+      'sell',
+      'claim_vested',
+      'new_holder',
+      'phase_change',
+      'badge_earned',
+      'tip_creator',
+    ];
     const type = types[Math.floor(Math.random() * types.length)];
 
     const base: ActivityEvent = {

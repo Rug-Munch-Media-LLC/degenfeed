@@ -10,7 +10,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../../../components/AuthProvider';
 import { useAnnouncer } from '../../../components/ScreenReaderAnnouncer';
-import { useMessages } from '../../../hooks/useMessages';
 import { retryFetchJson } from '../../../lib/retryFetch';
 
 /* ─── Types ─────────────────────────────────────────────────────────── */
@@ -67,13 +66,15 @@ function shortAddr(addr: string): string {
 }
 
 function getInitials(name: string): string {
-  return name
-    .split(/[\s:@]+/)
-    .map((s) => s[0])
-    .filter(Boolean)
-    .slice(0, 2)
-    .join('')
-    .toUpperCase() || '?';
+  return (
+    name
+      .split(/[\s:@]+/)
+      .map((s) => s[0])
+      .filter(Boolean)
+      .slice(0, 2)
+      .join('')
+      .toUpperCase() || '?'
+  );
 }
 
 /* ─── Create Group Modal ────────────────────────────────────────────── */
@@ -155,7 +156,10 @@ function CreateGroupModal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+      onClick={onClose}
+    >
       <div
         className="mx-4 w-full max-w-lg rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] p-6 shadow-2xl max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
@@ -168,7 +172,10 @@ function CreateGroupModal({
 
         {/* Group name */}
         <div className="mb-4">
-          <label htmlFor="group-name" className="block text-[11px] font-medium text-[var(--color-muted)] uppercase tracking-wider mb-1.5">
+          <label
+            htmlFor="group-name"
+            className="block text-[11px] font-medium text-[var(--color-muted)] uppercase tracking-wider mb-1.5"
+          >
             Group Name
           </label>
           <input
@@ -179,13 +186,15 @@ function CreateGroupModal({
             placeholder="e.g. Crypto Traders"
             maxLength={100}
             className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-3.5 py-2.5 text-sm text-[var(--color-fg)] placeholder:text-[var(--color-muted)] focus:border-degen-500/30 focus:ring-1 focus:ring-degen-500/30 transition-shadow"
-            autoFocus
           />
         </div>
 
         {/* Description */}
         <div className="mb-4">
-          <label htmlFor="group-desc" className="block text-[11px] font-medium text-[var(--color-muted)] uppercase tracking-wider mb-1.5">
+          <label
+            htmlFor="group-desc"
+            className="block text-[11px] font-medium text-[var(--color-muted)] uppercase tracking-wider mb-1.5"
+          >
             Description
           </label>
           <textarea
@@ -201,7 +210,10 @@ function CreateGroupModal({
 
         {/* Add members */}
         <div className="mb-4">
-          <label htmlFor="member-input" className="block text-[11px] font-medium text-[var(--color-muted)] uppercase tracking-wider mb-1.5">
+          <label
+            htmlFor="member-input"
+            className="block text-[11px] font-medium text-[var(--color-muted)] uppercase tracking-wider mb-1.5"
+          >
             Add Members ({members.length})
           </label>
           <div className="flex gap-2">
@@ -210,7 +222,12 @@ function CreateGroupModal({
               type="text"
               value={memberInput}
               onChange={(e) => setMemberInput(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addMember(); } }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  addMember();
+                }
+              }}
               placeholder="Wallet address or handle..."
               className="flex-1 rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-3.5 py-2 text-sm text-[var(--color-fg)] placeholder:text-[var(--color-muted)] focus:border-degen-500/30 focus:ring-1 focus:ring-degen-500/30 transition-shadow"
             />
@@ -239,7 +256,15 @@ function CreateGroupModal({
                     className="hover:text-red-400 transition-colors"
                     aria-label={`Remove ${shortAddr(addr)}`}
                   >
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                    <svg
+                      width="10"
+                      height="10"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                    >
                       <line x1="18" y1="6" x2="6" y2="18" />
                       <line x1="6" y1="6" x2="18" y2="18" />
                     </svg>
@@ -255,7 +280,12 @@ function CreateGroupModal({
           <p className="mb-4 text-xs text-red-400 flex items-center gap-1.5" role="alert">
             <svg width="10" height="10" viewBox="0 0 16 16" fill="none" aria-hidden="true">
               <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.2" />
-              <path d="M5.5 5.5l5 5M10.5 5.5l-5 5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+              <path
+                d="M5.5 5.5l5 5M10.5 5.5l-5 5"
+                stroke="currentColor"
+                strokeWidth="1.2"
+                strokeLinecap="round"
+              />
             </svg>
             {error}
           </p>
@@ -286,13 +316,7 @@ function CreateGroupModal({
 
 /* ─── Group Chat View ──────────────────────────────────────────────── */
 
-function GroupChatView({
-  groupId,
-  onBack,
-}: {
-  groupId: string;
-  onBack: () => void;
-}) {
+function GroupChatView({ groupId, onBack }: { groupId: string; onBack: () => void }) {
   const { announce } = useAnnouncer();
   const { tokens } = useAuth();
   const userId = tokens.evmAddress?.toLowerCase() ?? '';
@@ -312,7 +336,9 @@ function GroupChatView({
     try {
       const [infoData, msgData] = await Promise.all([
         retryFetchJson<GroupInfo>(`/api/messages/groups/${groupId}/info`, { maxRetries: 2 }),
-        retryFetchJson<{ messages: GroupMessage[] }>(`/api/messages/groups/${groupId}/messages`, { maxRetries: 2 }),
+        retryFetchJson<{ messages: GroupMessage[] }>(`/api/messages/groups/${groupId}/messages`, {
+          maxRetries: 2,
+        }),
       ]);
       setInfo(infoData);
       setMessages(msgData.messages ?? []);
@@ -323,12 +349,14 @@ function GroupChatView({
     }
   }, [groupId]);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   // Auto-scroll
   useEffect(() => {
     msgEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, []);
 
   // Send message
   const handleSend = useCallback(async () => {
@@ -382,21 +410,24 @@ function GroupChatView({
   }, [newMemberInput, groupId, fetchData, announce]);
 
   // Remove member
-  const handleRemoveMember = useCallback(async (addr: string) => {
-    try {
-      await retryFetchJson(`/api/messages/groups/${groupId}/remove-member`, {
-        fetchOptions: {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({ memberId: addr }),
-        },
-      });
-      fetchData();
-    } catch {
-      // Handle error
-    }
-  }, [groupId, fetchData]);
+  const handleRemoveMember = useCallback(
+    async (addr: string) => {
+      try {
+        await retryFetchJson(`/api/messages/groups/${groupId}/remove-member`, {
+          fetchOptions: {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ memberId: addr }),
+          },
+        });
+        fetchData();
+      } catch {
+        // Handle error
+      }
+    },
+    [groupId, fetchData],
+  );
 
   if (loading) {
     return (
@@ -421,7 +452,15 @@ function GroupChatView({
           className="rounded-lg p-1.5 text-[var(--color-muted)] hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)] transition-colors"
           aria-label="Back to groups"
         >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+          >
             <path d="M19 12H5m0 0l7 7m-7-7l7-7" />
           </svg>
         </button>
@@ -431,7 +470,9 @@ function GroupChatView({
         </div>
 
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-[var(--color-fg)] truncate">{info?.name ?? 'Group'}</p>
+          <p className="text-sm font-semibold text-[var(--color-fg)] truncate">
+            {info?.name ?? 'Group'}
+          </p>
           <p className="text-[10px] text-[var(--color-muted)]">
             {info?.members.length ?? 0} members &middot; E2E encrypted
           </p>
@@ -447,7 +488,16 @@ function GroupChatView({
           }`}
           aria-label="Group info"
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            aria-hidden="true"
+          >
             <circle cx="12" cy="12" r="10" />
             <line x1="12" y1="16" x2="12" y2="12" />
             <line x1="12" y1="8" x2="12.01" y2="8" />
@@ -461,18 +511,42 @@ function GroupChatView({
           <div className="flex-1 overflow-y-auto px-3 py-3 space-y-2">
             {/* Encryption banner */}
             <div className="flex items-center gap-1.5 rounded-lg bg-degen-500/8 border border-degen-500/20 px-3 py-1.5 mb-2">
-              <svg width="10" height="10" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="text-degen-400">
-                <rect x="3" y="7" width="10" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.2" />
-                <path d="M5 7V4a3 3 0 016 0v3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+              <svg
+                width="10"
+                height="10"
+                viewBox="0 0 16 16"
+                fill="none"
+                aria-hidden="true"
+                className="text-degen-400"
+              >
+                <rect
+                  x="3"
+                  y="7"
+                  width="10"
+                  height="7"
+                  rx="1.5"
+                  stroke="currentColor"
+                  strokeWidth="1.2"
+                />
+                <path
+                  d="M5 7V4a3 3 0 016 0v3"
+                  stroke="currentColor"
+                  strokeWidth="1.2"
+                  strokeLinecap="round"
+                />
               </svg>
               <span className="text-[9px] text-degen-400/80">End-to-end encrypted group</span>
             </div>
 
             {messages.length === 0 && (
               <div className="flex flex-col items-center justify-center py-20 text-center">
-                <span className="mb-3 text-3xl opacity-30" aria-hidden="true">👥</span>
+                <span className="mb-3 text-3xl opacity-30" aria-hidden="true">
+                  👥
+                </span>
                 <p className="text-sm text-[var(--color-muted)]">No messages yet</p>
-                <p className="mt-1 text-xs text-[var(--color-muted)]">Send the first message in this encrypted group.</p>
+                <p className="mt-1 text-xs text-[var(--color-muted)]">
+                  Send the first message in this encrypted group.
+                </p>
               </div>
             )}
 
@@ -480,7 +554,10 @@ function GroupChatView({
               const isMe = msg.fromId === userId;
               const sender = info?.members.find((m) => m.walletAddress === msg.fromId);
               return (
-                <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'} animate-message-enter`}>
+                <div
+                  key={msg.id}
+                  className={`flex ${isMe ? 'justify-end' : 'justify-start'} animate-message-enter`}
+                >
                   <div
                     className={`relative max-w-[80%] rounded-2xl px-3.5 py-2.5 ${
                       isMe
@@ -493,9 +570,16 @@ function GroupChatView({
                         {sender?.displayName ?? shortAddr(msg.fromId)}
                       </p>
                     )}
-                    <p className="text-sm whitespace-pre-wrap break-words leading-relaxed">{msg.content}</p>
-                    <div className={`flex items-center gap-1 mt-1.5 ${isMe ? 'justify-end' : 'justify-start'}`}>
-                      <time className="text-[9px] text-[var(--color-muted)]" dateTime={new Date(msg.createdAt).toISOString()}>
+                    <p className="text-sm whitespace-pre-wrap break-words leading-relaxed">
+                      {msg.content}
+                    </p>
+                    <div
+                      className={`flex items-center gap-1 mt-1.5 ${isMe ? 'justify-end' : 'justify-start'}`}
+                    >
+                      <time
+                        className="text-[9px] text-[var(--color-muted)]"
+                        dateTime={new Date(msg.createdAt).toISOString()}
+                      >
                         {formatTime(msg.createdAt)}
                       </time>
                     </div>
@@ -512,7 +596,12 @@ function GroupChatView({
               <textarea
                 value={composeText}
                 onChange={(e) => setComposeText(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSend();
+                  }
+                }}
                 placeholder="Message group..."
                 rows={1}
                 className="flex-1 resize-none rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-3.5 py-2.5 text-sm text-[var(--color-fg)] placeholder:text-[var(--color-muted)] focus:border-degen-500/30 focus:ring-1 focus:ring-degen-500/30 transition-shadow"
@@ -526,12 +615,37 @@ function GroupChatView({
                 aria-label="Send message"
               >
                 {sending ? (
-                  <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  <svg
+                    className="h-4 w-4 animate-spin"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    aria-hidden="true"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                    />
                   </svg>
                 ) : (
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    aria-hidden="true"
+                  >
                     <line x1="22" y1="2" x2="11" y2="13" />
                     <polygon points="22 2 15 22 11 13 2 9 22 2" />
                   </svg>
@@ -547,7 +661,9 @@ function GroupChatView({
             <div className="p-4">
               <h3 className="text-sm font-bold text-[var(--color-fg)] mb-1">{info.name}</h3>
               {info.description && (
-                <p className="text-xs text-[var(--color-muted)] mb-4 leading-relaxed">{info.description}</p>
+                <p className="text-xs text-[var(--color-muted)] mb-4 leading-relaxed">
+                  {info.description}
+                </p>
               )}
 
               {/* Members */}
@@ -559,7 +675,13 @@ function GroupChatView({
                   {isAdmin && (
                     <button
                       type="button"
-                      onClick={() => { const a = prompt('Enter wallet address to add:'); if (a) { handleAddMember(); setNewMemberInput(a); } }}
+                      onClick={() => {
+                        const a = prompt('Enter wallet address to add:');
+                        if (a) {
+                          handleAddMember();
+                          setNewMemberInput(a);
+                        }
+                      }}
                       className="text-[10px] text-degen-400 hover:underline"
                     >
                       + Add
@@ -578,7 +700,8 @@ function GroupChatView({
                           {member.displayName ?? shortAddr(member.walletAddress)}
                         </p>
                         <p className="text-[9px] text-[var(--color-muted)]">
-                          {member.role === 'admin' ? 'Admin' : 'Member'} &middot; {timeAgo(member.joinedAt)}
+                          {member.role === 'admin' ? 'Admin' : 'Member'} &middot;{' '}
+                          {timeAgo(member.joinedAt)}
                         </p>
                       </div>
                     </div>
@@ -589,7 +712,15 @@ function GroupChatView({
                         className="text-[var(--color-muted)] hover:text-red-400 transition-colors p-1"
                         aria-label={`Remove ${shortAddr(member.walletAddress)}`}
                       >
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                        <svg
+                          width="12"
+                          height="12"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                        >
                           <line x1="18" y1="6" x2="6" y2="18" />
                           <line x1="6" y1="6" x2="18" y2="18" />
                         </svg>
@@ -605,15 +736,29 @@ function GroupChatView({
 
       {/* Mobile info panel */}
       {showInfo && info && (
-        <div className="md:hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-sm" onClick={() => setShowInfo(false)}>
-          <div className="absolute right-0 top-0 h-full w-72 bg-[var(--color-card)] border-l border-[var(--color-border)] p-4 overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="md:hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
+          onClick={() => setShowInfo(false)}
+        >
+          <div
+            className="absolute right-0 top-0 h-full w-72 bg-[var(--color-card)] border-l border-[var(--color-border)] p-4 overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
             <button
               type="button"
               onClick={() => setShowInfo(false)}
               className="mb-4 rounded-lg p-1.5 text-[var(--color-muted)] hover:bg-[var(--color-overlay)] transition-colors"
               aria-label="Close info"
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              >
                 <line x1="18" y1="6" x2="6" y2="18" />
                 <line x1="6" y1="6" x2="18" y2="18" />
               </svg>
@@ -660,10 +805,9 @@ export default function GroupsPage() {
     if (!hasSignedIn) return;
     setLoading(true);
     try {
-      const data = await retryFetchJson<{ groups: GroupSummary[] }>(
-        '/api/messages/groups/list',
-        { maxRetries: 2 },
-      );
+      const data = await retryFetchJson<{ groups: GroupSummary[] }>('/api/messages/groups/list', {
+        maxRetries: 2,
+      });
       setGroups(data.groups ?? []);
     } catch {
       // Handle silently
@@ -672,16 +816,25 @@ export default function GroupsPage() {
     }
   }, [hasSignedIn]);
 
-  useEffect(() => { fetchGroups(); }, [fetchGroups]);
+  useEffect(() => {
+    fetchGroups();
+  }, [fetchGroups]);
 
   const totalUnread = useMemo(() => groups.reduce((s, g) => s + (g.unreadCount ?? 0), 0), [groups]);
 
   if (!hasSignedIn) {
     return (
       <div className="mx-auto flex h-[calc(100dvh-8rem)] flex-col items-center justify-center p-6 lg:h-[calc(100dvh-4rem)]">
-        <span className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-2xl text-3xl bg-[var(--color-overlay)] text-[var(--color-muted)]" aria-hidden="true">👥</span>
+        <span
+          className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-2xl text-3xl bg-[var(--color-overlay)] text-[var(--color-muted)]"
+          aria-hidden="true"
+        >
+          👥
+        </span>
         <p className="text-base font-semibold text-[var(--color-fg)]">Sign in to use Group Chats</p>
-        <p className="mt-1.5 text-sm text-[var(--color-muted)]">Create and join encrypted group conversations.</p>
+        <p className="mt-1.5 text-sm text-[var(--color-muted)]">
+          Create and join encrypted group conversations.
+        </p>
       </div>
     );
   }
@@ -700,11 +853,15 @@ export default function GroupsPage() {
       {/* Header */}
       <header className="flex items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-glass-bg)] px-4 py-2.5 shrink-0">
         <div className="flex items-center gap-3">
-          <span className="text-xl" aria-hidden="true">👥</span>
+          <span className="text-xl" aria-hidden="true">
+            👥
+          </span>
           <div>
             <h1 className="text-base font-bold text-[var(--color-fg)] leading-tight">Groups</h1>
             <p className="text-[10px] text-[var(--color-muted)]">
-              {totalUnread > 0 ? `${totalUnread} unread` : `${groups.length} group${groups.length !== 1 ? 's' : ''}`}
+              {totalUnread > 0
+                ? `${totalUnread} unread`
+                : `${groups.length} group${groups.length !== 1 ? 's' : ''}`}
             </p>
           </div>
         </div>
@@ -714,7 +871,16 @@ export default function GroupsPage() {
           onClick={() => setShowCreate(true)}
           className="flex items-center gap-1.5 rounded-xl bg-degen-500 px-3 py-2 text-xs font-bold text-black hover:bg-degen-400 transition-all"
         >
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            aria-hidden="true"
+          >
             <line x1="12" y1="5" x2="12" y2="19" />
             <line x1="5" y1="12" x2="19" y2="12" />
           </svg>
@@ -732,9 +898,13 @@ export default function GroupsPage() {
 
         {!loading && groups.length === 0 && (
           <div className="flex flex-col items-center justify-center py-20 px-4 text-center">
-            <span className="mb-4 text-4xl opacity-30" aria-hidden="true">👥</span>
+            <span className="mb-4 text-4xl opacity-30" aria-hidden="true">
+              👥
+            </span>
             <p className="text-sm font-medium text-[var(--color-fg)]">No groups yet</p>
-            <p className="mt-1 text-xs text-[var(--color-muted)]">Create or join an encrypted group to start chatting.</p>
+            <p className="mt-1 text-xs text-[var(--color-muted)]">
+              Create or join an encrypted group to start chatting.
+            </p>
             <button
               type="button"
               onClick={() => setShowCreate(true)}
@@ -760,19 +930,43 @@ export default function GroupsPage() {
 
             <div className="min-w-0 flex-1">
               <div className="flex items-center justify-between gap-2">
-                <span className={`truncate text-sm ${group.unreadCount > 0 ? 'font-bold' : 'font-medium'} text-[var(--color-fg)]`}>
+                <span
+                  className={`truncate text-sm ${group.unreadCount > 0 ? 'font-bold' : 'font-medium'} text-[var(--color-fg)]`}
+                >
                   {group.name}
                 </span>
-                <span className="shrink-0 text-[10px] text-[var(--color-muted)]">{timeAgo(group.lastActivity)}</span>
+                <span className="shrink-0 text-[10px] text-[var(--color-muted)]">
+                  {timeAgo(group.lastActivity)}
+                </span>
               </div>
               <div className="flex items-center gap-1 mt-0.5">
                 <span className="text-[11px] text-[var(--color-muted)]">
                   {group.memberCount} member{group.memberCount !== 1 ? 's' : ''}
                 </span>
                 <span className="text-[var(--color-muted)]">·</span>
-                <svg width="8" height="8" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="text-degen-400">
-                  <rect x="3" y="7" width="10" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.2" />
-                  <path d="M5 7V4a3 3 0 016 0v3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+                <svg
+                  width="8"
+                  height="8"
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  aria-hidden="true"
+                  className="text-degen-400"
+                >
+                  <rect
+                    x="3"
+                    y="7"
+                    width="10"
+                    height="7"
+                    rx="1.5"
+                    stroke="currentColor"
+                    strokeWidth="1.2"
+                  />
+                  <path
+                    d="M5 7V4a3 3 0 016 0v3"
+                    stroke="currentColor"
+                    strokeWidth="1.2"
+                    strokeLinecap="round"
+                  />
                 </svg>
                 <span className="text-[9px] text-degen-400">E2EE</span>
               </div>

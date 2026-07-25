@@ -119,9 +119,7 @@ export async function setConversationTimer(
 
   const kv = env.CACHE ?? env.CONTENT_LIBRARY;
   if (kv) {
-    await kv
-      .put(`${TIMER_PREFIX}${conversationId}`, JSON.stringify(timer))
-      .catch(() => {});
+    await kv.put(`${TIMER_PREFIX}${conversationId}`, JSON.stringify(timer)).catch(() => {});
   }
 
   return timer;
@@ -194,10 +192,7 @@ export function createMessageMetadata(
 /**
  * Store message metadata in KV.
  */
-export async function storeMessageMetadata(
-  env: Env,
-  metadata: MessageMetadata,
-): Promise<void> {
+export async function storeMessageMetadata(env: Env, metadata: MessageMetadata): Promise<void> {
   const kv = env.CACHE ?? env.CONTENT_LIBRARY;
   if (!kv) return;
 
@@ -209,9 +204,7 @@ export async function storeMessageMetadata(
     .put(`${MESSAGE_META_PREFIX}${metadata.id}`, JSON.stringify(metadata), {
       expirationTtl: Math.max(3600, ttl),
     })
-    .catch((err: unknown) =>
-      log('warn', `[chat-timers] store meta failed: ${metadata.id}`, err),
-    );
+    .catch((err: unknown) => log('warn', `[chat-timers] store meta failed: ${metadata.id}`, err));
 }
 
 /**
@@ -301,11 +294,9 @@ export async function deleteForMe(
     if (kv) {
       const key = `${DELETED_PREFIX}${conversationId}:${userId}:${messageId}`;
       await kv
-        .put(
-          key,
-          JSON.stringify({ messageId, deletedAt: Date.now(), scope: 'me', userId }),
-          { expirationTtl: 86400 * 90 },
-        )
+        .put(key, JSON.stringify({ messageId, deletedAt: Date.now(), scope: 'me', userId }), {
+          expirationTtl: 86400 * 90,
+        })
         .catch(() => {});
     }
     return true;
@@ -318,7 +309,12 @@ export async function deleteForMe(
     await kv
       .put(
         key,
-        JSON.stringify({ messageId, deletedAt: Date.now(), scope: 'me', userId: userId.toLowerCase() }),
+        JSON.stringify({
+          messageId,
+          deletedAt: Date.now(),
+          scope: 'me',
+          userId: userId.toLowerCase(),
+        }),
         { expirationTtl: 86400 * 90 },
       )
       .catch(() => {});
@@ -514,7 +510,7 @@ export async function isMessageUnsent(
 export async function markViewOnce(
   env: Env,
   messageId: string,
-  conversationId: string,
+  _conversationId: string,
 ): Promise<boolean> {
   const meta = await getMessageMetadata(env, messageId);
   if (!meta) return false;
@@ -532,11 +528,11 @@ export async function markViewOnce(
 export async function viewOnceMessage(
   env: Env,
   messageId: string,
-  conversationId: string,
+  _conversationId: string,
   userId: string,
 ): Promise<{ content: string; mediaUrl?: string } | null> {
   const meta = await getMessageMetadata(env, messageId);
-  if (!meta || !meta.viewOnce) return null;
+  if (!meta?.viewOnce) return null;
 
   // Only the intended recipient (not the sender) can view
   if (meta.fromId.toLowerCase() === userId.toLowerCase()) {
@@ -567,10 +563,7 @@ export async function viewOnceMessage(
 /**
  * Mark a message as disappearing (self-destructs after being read).
  */
-export function markDisappearing(
-  meta: MessageMetadata,
-  readAt?: number,
-): MessageMetadata {
+export function markDisappearing(meta: MessageMetadata, readAt?: number): MessageMetadata {
   return {
     ...meta,
     disappearing: true,
@@ -586,12 +579,12 @@ export function markDisappearing(
 export async function handleDisappearingMessage(
   env: Env,
   messageId: string,
-  conversationId: string,
+  _conversationId: string,
   readAt: number,
   timerSeconds: number,
 ): Promise<void> {
   const meta = await getMessageMetadata(env, messageId);
-  if (!meta || !meta.disappearing) return;
+  if (!meta?.disappearing) return;
 
   // Disappearing timer after read: use conversation timer or default 30s
   const disappearDelay = timerSeconds > 0 ? timerSeconds * 1000 : 30000;
@@ -638,10 +631,7 @@ export async function cleanupExpiredMessages(env: Env): Promise<number> {
 
           cleaned++;
         }
-      } catch {
-        // Skip corrupt entries
-        continue;
-      }
+      } catch {}
     }
 
     // Batch delete
@@ -665,7 +655,10 @@ export async function cleanupExpiredMessages(env: Env): Promise<number> {
  * Get the auto-delete timer display label for a conversation.
  * Returns string like "Messages auto-delete in 24h" or null if off.
  */
-export async function getTimerDisplayLabel(env: Env, conversationId: string): Promise<string | null> {
+export async function getTimerDisplayLabel(
+  env: Env,
+  conversationId: string,
+): Promise<string | null> {
   const timer = await getConversationTimer(env, conversationId);
   if (!timer || timer.durationSeconds === 0) return null;
 

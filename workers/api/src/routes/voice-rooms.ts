@@ -15,23 +15,22 @@
 
 import type { Env } from '../index';
 import { jsonResponse, noCacheJsonResponse } from '../index';
-import { requireSession } from '../session';
+import type { RoomType, VoiceRoomParticipant } from '../lib/voice-rooms';
 
 import {
   createRoom,
+  generateInvite,
   getActiveRooms,
   getRoom,
   getRoomParticipants,
-  getUserActiveRooms,
+  getSignals,
   joinRoom,
   leaveRoom,
-  updateParticipantState,
-  generateInvite,
   resolveInvite,
   storeSignal,
-  getSignals,
+  updateParticipantState,
 } from '../lib/voice-rooms';
-import type { RoomType, VoiceRoomParticipant } from '../lib/voice-rooms';
+import { requireSession } from '../session';
 
 // ─── POST /api/voice/create ─────────────────────────────────────────────────
 
@@ -218,7 +217,7 @@ export async function handleGetActiveRooms(request: Request, env: Env): Promise<
 // ─── GET /api/voice/invite/:code ────────────────────────────────────────────
 
 export async function handleResolveInvite(
-  request: Request,
+  _request: Request,
   env: Env,
   code: string,
 ): Promise<Response> {

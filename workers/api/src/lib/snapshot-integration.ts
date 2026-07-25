@@ -21,7 +21,7 @@
  */
 
 import type { Env } from '../index';
-import { badRequest, created, notFound, ok, serverError } from '../response-helpers';
+import { badRequest, created, ok, serverError } from '../response-helpers';
 
 // ─── Types ───────────────────────────────────────────────────────────────
 

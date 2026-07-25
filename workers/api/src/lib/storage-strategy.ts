@@ -34,48 +34,48 @@
 
 import type { Env } from '../index';
 import { log } from '../index';
-import type { VideoContentType, StorageBackend, RoutingDecision } from './video-storage-router';
+import type { RoutingDecision, VideoContentType } from './video-storage-router';
 import { formatSize } from './video-storage-router';
 
 // ─── Constants ──────────────────────────────────────────────────────────
 
 /** Cost per GB per month for each backend (USD). 0 = free tier */
 export const BACKEND_COSTS: Record<string, number> = {
-  ipfs_storacha: 0,           // Free 5GB via Storacha (web3.storage)
-  ipfs_pinata: 0,             // Free 1GB via Pinata
-  ipfs_4everland: 0,          // Free 5GB via 4EVERLAND
-  r2_standard: 0.015,         // Cloudflare R2 Standard
+  ipfs_storacha: 0, // Free 5GB via Storacha (web3.storage)
+  ipfs_pinata: 0, // Free 1GB via Pinata
+  ipfs_4everland: 0, // Free 5GB via 4EVERLAND
+  r2_standard: 0.015, // Cloudflare R2 Standard
   r2_infrequent_access: 0.01, // Cloudflare R2 Infrequent Access
-  b2: 0.006,                  // Backblaze B2
-  storj: 0.007,               // Storj (but $5/mo minimum)
-  arweave: 0.0006 / 1024,     // Arweave via Irys (~$0.0006/MB, amortized per GB/mo over 200yr)
-  bunny: 0.01,                // BunnyCDN Storage
-  sia: 0.002,                 // Sia network
-  filecoin: 0.0003,           // Filecoin cold storage
+  b2: 0.006, // Backblaze B2
+  storj: 0.007, // Storj (but $5/mo minimum)
+  arweave: 0.0006 / 1024, // Arweave via Irys (~$0.0006/MB, amortized per GB/mo over 200yr)
+  bunny: 0.01, // BunnyCDN Storage
+  sia: 0.002, // Sia network
+  filecoin: 0.0003, // Filecoin cold storage
 };
 
 /** Free tier limits per backend */
 export const FREE_TIER_LIMITS: Record<string, number> = {
-  ipfs_storacha: 5 * 1024 * 1024 * 1024,     // 5 GiB
-  ipfs_pinata: 1 * 1024 * 1024 * 1024,        // 1 GB
-  ipfs_4everland: 5 * 1024 * 1024 * 1024,     // 5 GB
-  r2_standard: 10 * 1024 * 1024 * 1024,       // 10 GB/mo free
-  b2: 10 * 1024 * 1024 * 1024,                // 10 GB free
+  ipfs_storacha: 5 * 1024 * 1024 * 1024, // 5 GiB
+  ipfs_pinata: 1 * 1024 * 1024 * 1024, // 1 GB
+  ipfs_4everland: 5 * 1024 * 1024 * 1024, // 5 GB
+  r2_standard: 10 * 1024 * 1024 * 1024, // 10 GB/mo free
+  b2: 10 * 1024 * 1024 * 1024, // 10 GB free
 };
 
 /** Content size thresholds for routing decisions */
-const SHORT_MAX_DURATION = 60;     // seconds
-const SHORT_MAX_SIZE = 50 * 1024 * 1024;     // 50MB
-const MEDIUM_MAX_SIZE = 500 * 1024 * 1024;    // 500MB
+const SHORT_MAX_DURATION = 60; // seconds
+const SHORT_MAX_SIZE = 50 * 1024 * 1024; // 50MB
+const MEDIUM_MAX_SIZE = 500 * 1024 * 1024; // 500MB
 const LARGE_MAX_SIZE = 2 * 1024 * 1024 * 1024; // 2GB
 
 /** Popularity thresholds for auto-migration */
-const POPULAR_VIEWS_7D = 50;      // Views in last 7 days to be "popular"
-const COLD_AGE_DAYS = 30;         // Days before considering cold storage
-const ARCHIVE_AGE_DAYS = 90;      // Days before considering archival migration
-const STALE_AGE_DAYS = 180;       // Days before deep archive
+const POPULAR_VIEWS_7D = 50; // Views in last 7 days to be "popular"
+const COLD_AGE_DAYS = 30; // Days before considering cold storage
+const ARCHIVE_AGE_DAYS = 90; // Days before considering archival migration
+const STALE_AGE_DAYS = 180; // Days before deep archive
 
-const KV_PREFIX_STRATEGY = 'strategy:';
+const _KV_PREFIX_STRATEGY = 'strategy:';
 const KV_PREFIX_POPULAR = 'strategy:popular:';
 const KV_PREFIX_MIGRATION = 'strategy:migration:';
 const KV_PREFIX_COST = 'strategy:cost:';
@@ -193,7 +193,7 @@ export function determineStorageTier(
   const isCold = contentAgeDays >= COLD_AGE_DAYS;
   const isStale = contentAgeDays >= STALE_AGE_DAYS;
   const ipfsFreeRemaining = FREE_TIER_LIMITS.ipfs_storacha - currentIPFSUsage;
-  const r2FreeRemaining = FREE_TIER_LIMITS.r2_standard - currentR2Usage;
+  const _r2FreeRemaining = FREE_TIER_LIMITS.r2_standard - currentR2Usage;
 
   // ─── Premium Content → Arweave (permanent, one-time cost) ────────
   if (isPremium || contentType === 'premium') {
@@ -203,7 +203,7 @@ export function determineStorageTier(
       reason: `Premium content → Arweave via Irys (~${estimateArweaveCost(size)} one-time)`,
       mirrorToIPFS: false,
       mirrorToArweave: false,
-      estimatedMonthlyCostUsd: (size / 1_000_000) * 0.0006 / 12,
+      estimatedMonthlyCostUsd: ((size / 1_000_000) * 0.0006) / 12,
       retentionDays: 0,
       storageTier: 'tier3_premium',
       specificBackend: 'arweave',
@@ -381,7 +381,7 @@ export function estimateArweaveCost(sizeBytes: number): string {
  * Estimate annual storage cost for a creator based on their current usage.
  */
 export function estimateCreatorAnnualCost(
-  totalBytes: number,
+  _totalBytes: number,
   byBackend: Record<string, number>,
 ): { monthly: number; annual: number; breakdown: Record<string, number> } {
   const breakdown: Record<string, number> = {};
@@ -409,7 +409,7 @@ export function estimateCreatorAnnualCost(
  * a prioritized list of migration actions sorted by savings potential.
  */
 export async function findMigrationCandidates(
-  env: Env,
+  _env: Env,
   storageItems: Array<{
     contentId: string;
     size: number;
@@ -439,7 +439,7 @@ export async function findMigrationCandidates(
         contentId: item.contentId,
         from: 'r2_standard',
         to: 'r2_infrequent_access',
-        reason: `Cold (${Math.round(ageDays)}d, ${views} views/7d) → R2 IA saves ${((currentCost - newCost) / currentCost * 100).toFixed(0)}%`,
+        reason: `Cold (${Math.round(ageDays)}d, ${views} views/7d) → R2 IA saves ${(((currentCost - newCost) / currentCost) * 100).toFixed(0)}%`,
         size: item.size,
         savingsPerMonth: currentCost - newCost,
       });
@@ -457,7 +457,7 @@ export async function findMigrationCandidates(
         contentId: item.contentId,
         from: item.backend,
         to: 'b2',
-        reason: `Large file (${formatSize(item.size)}) → B2 saves ${currentCost > 0 ? ((currentCost - newCost) / currentCost * 100).toFixed(0) : 100}%`,
+        reason: `Large file (${formatSize(item.size)}) → B2 saves ${currentCost > 0 ? (((currentCost - newCost) / currentCost) * 100).toFixed(0) : 100}%`,
         size: item.size,
         savingsPerMonth: currentCost - newCost,
       });
@@ -481,11 +481,7 @@ export async function findMigrationCandidates(
     }
 
     // Rule 4: B2 stale → Arweave (>180d, <5 views, creator approved)
-    if (
-      item.backend === 'b2' &&
-      ageDays >= STALE_AGE_DAYS &&
-      views < 5
-    ) {
+    if (item.backend === 'b2' && ageDays >= STALE_AGE_DAYS && views < 5) {
       const arweaveCost = estimateArweaveCost(item.size);
       migrations.push({
         contentId: item.contentId,
@@ -506,10 +502,7 @@ export async function findMigrationCandidates(
 /**
  * Track migration actions in KV for persistence and monitoring.
  */
-export async function persistMigrationPlan(
-  env: Env,
-  migrations: MigrationAction[],
-): Promise<void> {
+export async function persistMigrationPlan(env: Env, migrations: MigrationAction[]): Promise<void> {
   const kv = env.CACHE ?? env.CONTENT_LIBRARY;
   if (!kv) return;
 
@@ -528,9 +521,7 @@ export async function persistMigrationPlan(
 /**
  * Get the current pending migration plan from KV.
  */
-export async function getMigrationPlan(
-  env: Env,
-): Promise<MigrationAction[]> {
+export async function getMigrationPlan(env: Env): Promise<MigrationAction[]> {
   const kv = env.CACHE ?? env.CONTENT_LIBRARY;
   if (!kv) return [];
 
@@ -547,10 +538,7 @@ export async function getMigrationPlan(
 /**
  * Track an individual content view for popularity scoring.
  */
-export async function trackContentView(
-  env: Env,
-  contentId: string,
-): Promise<void> {
+export async function trackContentView(env: Env, contentId: string): Promise<void> {
   const kv = env.CACHE ?? env.CONTENT_LIBRARY;
   if (!kv) return;
 
@@ -573,10 +561,7 @@ export async function trackContentView(
 /**
  * Get the view count for content in the last 7 days.
  */
-export async function getViewCount7d(
-  env: Env,
-  contentId: string,
-): Promise<number> {
+export async function getViewCount7d(env: Env, contentId: string): Promise<number> {
   const kv = env.CACHE ?? env.CONTENT_LIBRARY;
   if (!kv) return 0;
 
@@ -672,14 +657,14 @@ export function forecastStorage(
 
     if (oldest > 0 && months > 0) {
       const totalGrowth = newest / oldest;
-      growthRate = Math.pow(totalGrowth, 1 / months) - 1;
+      growthRate = totalGrowth ** (1 / months) - 1;
       // Cap at reasonable bounds
       growthRate = Math.max(0.01, Math.min(3.0, growthRate));
     }
   }
 
   const projected30d = currentBytes * (1 + growthRate);
-  const projected90d = currentBytes * Math.pow(1 + growthRate, 3);
+  const projected90d = currentBytes * (1 + growthRate) ** 3;
 
   const averageCostPerByte = currentBytes > 0 ? monthlyCost / currentBytes : 0;
   const projectedMonthly30d = projected30d * averageCostPerByte;
@@ -687,13 +672,13 @@ export function forecastStorage(
 
   const freeLimit = 5 * 1_073_741_824; // 5GB free tier
   const monthlyGrowth = currentBytes * growthRate;
-  const daysUntilFull = monthlyGrowth > 0
-    ? Math.ceil(((freeLimit - currentBytes) / monthlyGrowth) * 30)
-    : null;
+  const daysUntilFull =
+    monthlyGrowth > 0 ? Math.ceil(((freeLimit - currentBytes) / monthlyGrowth) * 30) : null;
 
   let recommendation: string;
   if (daysUntilFull !== null && daysUntilFull <= 0) {
-    recommendation = '⚠️ You have exceeded your free storage tier. Upgrade to Premium ($5/mo) to continue uploading.';
+    recommendation =
+      '⚠️ You have exceeded your free storage tier. Upgrade to Premium ($5/mo) to continue uploading.';
   } else if (daysUntilFull !== null && daysUntilFull <= 30) {
     recommendation = `⚠️ You will exhaust your free storage in ~${daysUntilFull} days. Consider upgrading to Premium ($5/mo) for 50GB.`;
   } else if (daysUntilFull !== null && daysUntilFull <= 90) {
@@ -757,9 +742,7 @@ export async function getStrategyStats(
   // Get pending migrations for savings projection
   const migrations = await getMigrationPlan(env);
   stats.pendingMigrations = migrations;
-  stats.potentialMonthlySavings = migrations.reduce(
-    (sum, m) => sum + m.savingsPerMonth, 0,
-  );
+  stats.potentialMonthlySavings = migrations.reduce((sum, m) => sum + m.savingsPerMonth, 0);
 
   return stats;
 }
@@ -797,9 +780,12 @@ export function getBackendLabel(backend: string): string {
  */
 export function getTierColor(tier: StorageTier): string {
   switch (tier) {
-    case 'tier1_free': return '#00ff41';    // Green — free
-    case 'tier2_cheap': return '#f7931a';   // Orange — cheap
-    case 'tier3_premium': return '#8a63d2'; // Purple — premium
+    case 'tier1_free':
+      return '#00ff41'; // Green — free
+    case 'tier2_cheap':
+      return '#f7931a'; // Orange — cheap
+    case 'tier3_premium':
+      return '#8a63d2'; // Purple — premium
   }
 }
 
@@ -829,10 +815,7 @@ export function getBackendEmoji(backend: string): string {
 /**
  * Check if a content ID is currently pinned (popular).
  */
-export async function isContentPopular(
-  env: Env,
-  contentId: string,
-): Promise<boolean> {
+export async function isContentPopular(env: Env, contentId: string): Promise<boolean> {
   const views = await getViewCount7d(env, contentId);
   return views >= POPULAR_VIEWS_7D;
 }
@@ -840,16 +823,13 @@ export async function isContentPopular(
 /**
  * Mark content as pinned for popular retention.
  */
-export async function markContentPinned(
-  env: Env,
-  contentId: string,
-): Promise<void> {
+export async function markContentPinned(env: Env, contentId: string): Promise<void> {
   const kv = env.CACHE ?? env.CONTENT_LIBRARY;
   if (!kv) return;
 
-  await kv.put(
-    `${KV_PREFIX_POPULAR}${contentId}:pinned`,
-    JSON.stringify({ pinnedAt: Date.now() }),
-    { expirationTtl: 86400 * 90 },
-  ).catch(() => {});
+  await kv
+    .put(`${KV_PREFIX_POPULAR}${contentId}:pinned`, JSON.stringify({ pinnedAt: Date.now() }), {
+      expirationTtl: 86400 * 90,
+    })
+    .catch(() => {});
 }

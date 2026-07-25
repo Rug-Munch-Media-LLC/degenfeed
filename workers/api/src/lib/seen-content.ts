@@ -135,7 +135,7 @@ export class SeenContentManager {
   ): Promise<void> {
     if (!this.env.SEEN) return;
 
-    const key = walletKey(wallet);
+    const _key = walletKey(wallet);
     const entryKey = seenEntryKey(wallet, fingerprintHash);
     const now = Date.now();
 
@@ -192,7 +192,7 @@ export class SeenContentManager {
    * then confirms with KV.
    */
   async hasSeen(wallet: string, fingerprintHash: string): Promise<boolean> {
-    const key = walletKey(wallet);
+    const _key = walletKey(wallet);
 
     // Quick bloom check
     const probablySeen = await this.checkBloom(wallet, fingerprintHash);
@@ -264,7 +264,7 @@ export class SeenContentManager {
    */
   async getSeenEntries(
     wallet: string,
-    filter?: SeenContentFilter,
+    _filter?: SeenContentFilter,
     limit: number = 100,
   ): Promise<SeenEntry[]> {
     if (!this.env.SEEN) return [];
@@ -272,7 +272,7 @@ export class SeenContentManager {
 
     try {
       // List seen entries for user (KV list with prefix)
-      const prefix = `${SEEN_PREFIX}${key}:`;
+      const _prefix = `${SEEN_PREFIX}${key}:`;
       // Note: Regular KV doesn't support prefix listing directly.
       // We use the bloom filter as a proxy for what exists.
       const bloomRaw = await this.env.SEEN.get(seenBloomKey(wallet));
@@ -362,7 +362,7 @@ export class SeenContentManager {
 
     // Check local cache first
     const local = this.localBloom.get(walletKey(wallet));
-    if (local && local.has(fingerprintHash)) return true;
+    if (local?.has(fingerprintHash)) return true;
 
     try {
       const raw = await this.env.SEEN.get(seenBloomKey(wallet));
@@ -437,7 +437,7 @@ export class SeenContentManager {
 
       // Engagement tracking
       if (metadata?.liked || metadata?.engaged) {
-        stats.engagementRate = ((stats.totalSeen * stats.engagementRate) + 1) / stats.totalSeen;
+        stats.engagementRate = (stats.totalSeen * stats.engagementRate + 1) / stats.totalSeen;
       }
 
       await this.env.SEEN.put(statsKey, JSON.stringify(stats), {

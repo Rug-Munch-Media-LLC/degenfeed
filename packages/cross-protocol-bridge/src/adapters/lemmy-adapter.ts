@@ -59,12 +59,12 @@ export const lemmyAdapter: PlatformAdapter = {
 
     const hashtags = (master.hashtags ?? []).map((h) => `#${h}`);
     if (hashtags.length > 0) {
-      body += '\n\n' + hashtags.join(' ');
+      body += `\n\n${hashtags.join(' ')}`;
     }
 
     const mentions = master.mentions ?? [];
     if (mentions.length > 0) {
-      body += '\n\n' + mentions.map((m) => `!${m}`).join(' ');
+      body += `\n\n${mentions.map((m) => `!${m}`).join(' ')}`;
     }
 
     body = truncateText(body, LEMMY_CHAR_LIMIT);
@@ -105,7 +105,7 @@ export const lemmyAdapter: PlatformAdapter = {
     const community = suggestCommunity(master.text, master.hashtags ?? []);
     let preview = `[Lemmy — !${community}]`;
     preview += `\n📌 ${master.title ?? '(auto-generated)'}`;
-    preview += '\n' + master.text.slice(0, 300);
+    preview += `\n${master.text.slice(0, 300)}`;
 
     if (master.text.length > 300) {
       preview += '...';

@@ -15,9 +15,8 @@
  * @see /srv/degenfeed/postiz/platforms.json
  */
 
-import type { Env } from '../index';
 import type { MasterPost } from '@degenfeed/cross-protocol-bridge';
-import type { QueueEntry, QueueStatus } from '../routes/premium-publish';
+import type { Env } from '../index';
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
@@ -60,12 +59,15 @@ export interface PostizScheduleResponse {
   /** Target platforms */
   platforms: string[];
   /** Per-platform publish results */
-  results?: Record<string, {
-    success: boolean;
-    nativeId?: string;
-    url?: string;
-    error?: string;
-  }>;
+  results?: Record<
+    string,
+    {
+      success: boolean;
+      nativeId?: string;
+      url?: string;
+      error?: string;
+    }
+  >;
   /** Error message if failed */
   error?: string;
   /** ISO creation timestamp */
@@ -76,15 +78,18 @@ export interface PostizAnalyticsResponse {
   /** Post identifier in Postiz */
   postId: string;
   /** Per-platform engagement metrics */
-  platforms: Record<string, {
-    likes: number;
-    reposts: number;
-    replies: number;
-    quotes: number;
-    impressions?: number;
-    reach?: number;
-    engagement_rate?: number;
-  }>;
+  platforms: Record<
+    string,
+    {
+      likes: number;
+      reposts: number;
+      replies: number;
+      quotes: number;
+      impressions?: number;
+      reach?: number;
+      engagement_rate?: number;
+    }
+  >;
   /** Aggregated totals */
   total: {
     likes: number;
@@ -167,7 +172,7 @@ async function postizRequest<T>(
     // If we have a Postiz API key, use it for authentication
     if (apiKey) {
       headers['X-Postiz-API-Key'] = apiKey;
-      headers['Authorization'] = `Bearer ${apiKey}`;
+      headers.Authorization = `Bearer ${apiKey}`;
     }
 
     const response = await fetch(`${POSTIZ_BASE_URL}${path}`, {
@@ -190,9 +195,10 @@ async function postizRequest<T>(
       return {
         ok: false,
         status: response.status,
-        error: (data as Record<string, unknown>)?.error as string
-          ?? (data as Record<string, unknown>)?.message as string
-          ?? `Postiz API error: ${response.status}`,
+        error:
+          ((data as Record<string, unknown>)?.error as string) ??
+          ((data as Record<string, unknown>)?.message as string) ??
+          `Postiz API error: ${response.status}`,
       };
     }
 
@@ -213,7 +219,7 @@ async function postizRequest<T>(
 // ─── Get Postiz API Key from env ────────────────────────────────────────────
 
 function getPostizApiKey(env: Env): string {
-  return (env as Record<string, string>)['POSTIZ_API_KEY'] ?? '';
+  return (env as Record<string, string>).POSTIZ_API_KEY ?? '';
 }
 
 // ─── Schedule Operations ────────────────────────────────────────────────────
@@ -259,13 +265,11 @@ export async function createPostizSchedule(
     reddit: 'reddit',
     threads: 'threads',
     pixelfed: 'mastodon', // ActivityPub-compatible
-    lemmy: 'mastodon',    // ActivityPub-compatible
+    lemmy: 'mastodon', // ActivityPub-compatible
     peertube: 'mastodon', // ActivityPub-compatible
   };
 
-  const postizPlatforms = protocols
-    .map((p) => platformMap[p.toLowerCase()] ?? p)
-    .filter(Boolean);
+  const postizPlatforms = protocols.map((p) => platformMap[p.toLowerCase()] ?? p).filter(Boolean);
 
   if (postizPlatforms.length === 0) {
     return { nativeFallback: true };
@@ -351,10 +355,7 @@ export async function listPostizSchedules(
 /**
  * Cancel/delete a scheduled post in Postiz.
  */
-export async function cancelPostizSchedule(
-  scheduleId: string,
-  env: Env,
-): Promise<boolean> {
+export async function cancelPostizSchedule(scheduleId: string, env: Env): Promise<boolean> {
   const apiKey = getPostizApiKey(env);
   const result = await postizRequest<{ ok: boolean }>(
     'DELETE',
@@ -423,11 +424,9 @@ export async function syncPostizAnalyticsToDegenFeed(
 
     // Store the full Postiz analytics as a separate record
     if (env.CACHE) {
-      await env.CACHE.put(
-        `postiz:analytics:${postId}`,
-        JSON.stringify(postizAnalytics),
-        { expirationTtl: 86400 * 90 },
-      );
+      await env.CACHE.put(`postiz:analytics:${postId}`, JSON.stringify(postizAnalytics), {
+        expirationTtl: 86400 * 90,
+      });
     }
   } catch {
     // Analytics sync is best-effort

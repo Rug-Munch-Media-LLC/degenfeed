@@ -166,7 +166,7 @@ const fetcher = async (url: string): Promise<LiveStreamsResponse> => {
 
 /* === API-to-Frontend Converter ================================ */
 
-function convertApiStream(apiStream: any): LiveStream {
+function _convertApiStream(apiStream: any): LiveStream {
   const source: StreamSource = apiStream.source || 'twitch';
   const sourceConfig = SOURCE_CONFIG[source] ?? SOURCE_CONFIG.twitch;
 
@@ -175,9 +175,17 @@ function convertApiStream(apiStream: any): LiveStream {
   let streamType: StreamType = SOURCE_TO_STREAM_TYPE[source] ?? 'solo';
   if (category.includes('spaces') || category.includes('talk') || category.includes('podcast')) {
     streamType = 'spaces';
-  } else if (category.includes('launch') || category.includes('token') || category.includes('coin')) {
+  } else if (
+    category.includes('launch') ||
+    category.includes('token') ||
+    category.includes('coin')
+  ) {
     streamType = 'launch';
-  } else if (category.includes('collab') || category.includes('panel') || category.includes('interview')) {
+  } else if (
+    category.includes('collab') ||
+    category.includes('panel') ||
+    category.includes('interview')
+  ) {
     streamType = 'collab';
   }
 
@@ -204,7 +212,7 @@ function convertApiStream(apiStream: any): LiveStream {
 
 const MOCK_LIVE_TITLES = [
   '🚀 Solana Ecosystem Deep Dive — L2 Summer is Here!',
-  'BTC Post-Halving Analysis — What\'s Next?',
+  "BTC Post-Halving Analysis — What's Next?",
   'DeFi Yield Strategies — Q3 Outlook',
   'Building on Base — Live Coding Session',
   'Meme Coin Watch Party 🐸',
@@ -236,9 +244,7 @@ const MOCK_CREATORS = [
   { id: 'c12', handle: 'trade_master', display: 'Trade Master' },
 ];
 
-const MOCK_SOURCES: StreamSource[] = [
-  'twitch', 'kick', 'peertube', 'youtube', 'owncast', 'spaces',
-];
+const MOCK_SOURCES: StreamSource[] = ['twitch', 'kick', 'peertube', 'youtube', 'owncast', 'spaces'];
 
 function generateMockStreams(): LiveStreamsResponse {
   const now = Date.now();
@@ -256,7 +262,8 @@ function generateMockStreams(): LiveStreamsResponse {
     else if (i % 7 === 0) streamType = 'launch';
     else if (i % 9 === 0) streamType = 'collab';
 
-    const category = streamType === 'spaces' ? 'talk' : streamType === 'launch' ? 'crypto' : 'gaming';
+    const category =
+      streamType === 'spaces' ? 'talk' : streamType === 'launch' ? 'crypto' : 'gaming';
     categoryCounts[category] = (categoryCounts[category] ?? 0) + 1;
     sourceCounts[source] = (sourceCounts[source] ?? 0) + 1;
 

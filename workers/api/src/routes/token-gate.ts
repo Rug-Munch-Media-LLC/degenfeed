@@ -147,7 +147,7 @@ export async function handleTokenGateVerifyMulti(request: Request, env: Env): Pr
   }
 
   const config = body.config;
-  if (!config || !config.type || !config.enabled !== undefined) {
+  if (!config?.type || !config.enabled !== undefined) {
     return jsonResponse({ error: 'Gate config required (type, enabled)' }, 400);
   }
 

@@ -165,21 +165,103 @@ export async function indexMessageForSearch(
  */
 function extractSearchTerms(content: string): string[] {
   const commonWords = new Set([
-    'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for',
-    'of', 'with', 'by', 'from', 'is', 'are', 'was', 'were', 'be', 'been',
-    'has', 'have', 'had', 'do', 'does', 'did', 'will', 'would', 'can',
-    'could', 'should', 'may', 'might', 'shall', 'this', 'that', 'these',
-    'those', 'it', 'its', 'he', 'she', 'they', 'we', 'you', 'me', 'my',
-    'your', 'his', 'her', 'our', 'their', 'not', 'no', 'yes', 'so', 'if',
-    'hi', 'hey', 'hello', 'ok', 'okay', 'yeah', 'yes', 'no', 'nope',
-    'please', 'thanks', 'thank', 'ty', 'thx', 'lol', 'lmao', 'lmfao',
-    'brb', 'gtg', 'afk', 'idk', 'tbh', 'imo', 'imho', 'btw', 'fwiw',
-    'omg', 'wtf', 'wth', 'smh', 'fyi', 'dm', 'gm', 'gn',
+    'the',
+    'a',
+    'an',
+    'and',
+    'or',
+    'but',
+    'in',
+    'on',
+    'at',
+    'to',
+    'for',
+    'of',
+    'with',
+    'by',
+    'from',
+    'is',
+    'are',
+    'was',
+    'were',
+    'be',
+    'been',
+    'has',
+    'have',
+    'had',
+    'do',
+    'does',
+    'did',
+    'will',
+    'would',
+    'can',
+    'could',
+    'should',
+    'may',
+    'might',
+    'shall',
+    'this',
+    'that',
+    'these',
+    'those',
+    'it',
+    'its',
+    'he',
+    'she',
+    'they',
+    'we',
+    'you',
+    'me',
+    'my',
+    'your',
+    'his',
+    'her',
+    'our',
+    'their',
+    'not',
+    'no',
+    'yes',
+    'so',
+    'if',
+    'hi',
+    'hey',
+    'hello',
+    'ok',
+    'okay',
+    'yeah',
+    'yes',
+    'no',
+    'nope',
+    'please',
+    'thanks',
+    'thank',
+    'ty',
+    'thx',
+    'lol',
+    'lmao',
+    'lmfao',
+    'brb',
+    'gtg',
+    'afk',
+    'idk',
+    'tbh',
+    'imo',
+    'imho',
+    'btw',
+    'fwiw',
+    'omg',
+    'wtf',
+    'wth',
+    'smh',
+    'fyi',
+    'dm',
+    'gm',
+    'gn',
   ]);
 
   const words = content
     .toLowerCase()
-    .split(/[\s,.;:!?()\[\]{}\/"'@#\$%\^&\*\+=\-<>~`|\\]+/)
+    .split(/[\s,.;:!?()[\]{}/"'@#$%^&*+=\-<>~`|\\]+/)
     .filter((w) => w.length >= INDEX_TERM_MIN_LENGTH && w.length <= INDEX_TERM_MAX_LENGTH)
     .filter((w) => !commonWords.has(w))
     .filter((w) => /^[a-z0-9]+$/.test(w));
@@ -282,10 +364,7 @@ export async function searchMessages(
           score: Math.min(1, score),
         });
       }
-    } catch {
-      // Skip failed conversations
-      continue;
-    }
+    } catch {}
   }
 
   // Sort by score (desc), then by date (desc)
@@ -320,7 +399,7 @@ export async function advancedSearch(
   userId: string,
   params: AdvancedSearchParams,
 ): Promise<{ results: SearchResult[]; total: number }> {
-  let results = await searchMessages(env, userId, params.query ?? '', {
+  const results = await searchMessages(env, userId, params.query ?? '', {
     conversationId: params.conversationId,
     limit: 1000,
   });
@@ -373,7 +452,9 @@ export async function searchByMediaType(
   const results: SearchResult[] = [];
 
   try {
-    const list = await kv.list({ prefix: `${SEARCH_MEDIA_INDEX_PREFIX}${conversationId}:${mediaType}:` });
+    const list = await kv.list({
+      prefix: `${SEARCH_MEDIA_INDEX_PREFIX}${conversationId}:${mediaType}:`,
+    });
 
     for (const key of list.keys) {
       const raw = await kv.get(key.name);
@@ -482,8 +563,8 @@ function highlightMatches(content: string, terms: string[]): string {
   const merged = [ranges[0]!];
   for (let i = 1; i < ranges.length; i++) {
     const last = merged[merged.length - 1]!;
-    if (ranges[i]!.start <= last.end) {
-      last.end = Math.max(last.end, ranges[i]!.end);
+    if (ranges[i]?.start <= last.end) {
+      last.end = Math.max(last.end, ranges[i]?.end);
     } else {
       merged.push(ranges[i]!);
     }
@@ -586,9 +667,12 @@ export async function handleSearchMessages(request: Request, env: Env): Promise<
       hasMore: results.total > offset + results.results.length,
     });
   } catch (err) {
-    return jsonResponse({
-      error: err instanceof Error ? err.message : 'Search failed',
-    }, 500);
+    return jsonResponse(
+      {
+        error: err instanceof Error ? err.message : 'Search failed',
+      },
+      500,
+    );
   }
 }
 
@@ -625,9 +709,12 @@ export async function handleAdvancedSearch(request: Request, env: Env): Promise<
       params,
     });
   } catch (err) {
-    return jsonResponse({
-      error: err instanceof Error ? err.message : 'Advanced search failed',
-    }, 500);
+    return jsonResponse(
+      {
+        error: err instanceof Error ? err.message : 'Advanced search failed',
+      },
+      500,
+    );
   }
 }
 
@@ -648,7 +735,10 @@ export async function handleSearchMedia(
   const offset = parseInt(url.searchParams.get('offset') ?? '0', 10);
 
   if (!mediaType || !['image', 'video', 'audio', 'file', 'link'].includes(mediaType)) {
-    return jsonResponse({ error: 'Valid media type required (image, video, audio, file, link)' }, 400);
+    return jsonResponse(
+      { error: 'Valid media type required (image, video, audio, file, link)' },
+      400,
+    );
   }
 
   try {
@@ -659,9 +749,12 @@ export async function handleSearchMedia(
       mediaType,
     });
   } catch (err) {
-    return jsonResponse({
-      error: err instanceof Error ? err.message : 'Media search failed',
-    }, 500);
+    return jsonResponse(
+      {
+        error: err instanceof Error ? err.message : 'Media search failed',
+      },
+      500,
+    );
   }
 }
 
@@ -708,9 +801,12 @@ export async function handleIndexMessage(request: Request, env: Env): Promise<Re
 
     return noCacheJsonResponse({ ok: true });
   } catch (err) {
-    return jsonResponse({
-      error: err instanceof Error ? err.message : 'Indexing failed',
-    }, 500);
+    return jsonResponse(
+      {
+        error: err instanceof Error ? err.message : 'Indexing failed',
+      },
+      500,
+    );
   }
 }
 
@@ -729,8 +825,11 @@ export async function handleSearchSuggestions(request: Request, env: Env): Promi
     const suggestions = await getSearchSuggestions(env, userId, partial);
     return noCacheJsonResponse({ suggestions });
   } catch (err) {
-    return jsonResponse({
-      error: err instanceof Error ? err.message : 'Suggestions failed',
-    }, 500);
+    return jsonResponse(
+      {
+        error: err instanceof Error ? err.message : 'Suggestions failed',
+      },
+      500,
+    );
   }
 }

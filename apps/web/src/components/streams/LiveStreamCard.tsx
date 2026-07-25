@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { SOURCE_CONFIG, type LiveStream } from './useLiveStreams';
+import { type LiveStream, SOURCE_CONFIG } from './useLiveStreams';
 
 /* === Helpers ================================================== */
 
@@ -170,7 +170,12 @@ interface LiveStreamCardProps {
   large?: boolean;
 }
 
-export function LiveStreamCard({ stream, featured = false, onPlay, large = false }: LiveStreamCardProps) {
+export function LiveStreamCard({
+  stream,
+  featured = false,
+  onPlay,
+  large = false,
+}: LiveStreamCardProps) {
   const sourceConfig = SOURCE_CONFIG[stream.source] ?? SOURCE_CONFIG.twitch;
 
   return (
@@ -191,7 +196,9 @@ export function LiveStreamCard({ stream, featured = false, onPlay, large = false
         }}
       >
         {stream.thumbnailUrl ? (
-          <div className={`relative ${large ? 'aspect-video' : 'aspect-video'} w-full overflow-hidden`}>
+          <div
+            className={`relative ${large ? 'aspect-video' : 'aspect-video'} w-full overflow-hidden`}
+          >
             <Image
               src={stream.thumbnailUrl}
               alt={`${stream.title} thumbnail`}
@@ -264,9 +271,11 @@ export function LiveStreamCard({ stream, featured = false, onPlay, large = false
             }
           }}
         >
-          <h3 className={`truncate font-semibold text-[var(--color-fg)] transition-colors group-hover:text-degen-400 ${
-            large ? 'text-base' : 'text-sm'
-          }`}>
+          <h3
+            className={`truncate font-semibold text-[var(--color-fg)] transition-colors group-hover:text-degen-400 ${
+              large ? 'text-base' : 'text-sm'
+            }`}
+          >
             {stream.title}
           </h3>
         </Link>
@@ -314,7 +323,10 @@ export function LiveStreamCard({ stream, featured = false, onPlay, large = false
                 }}
               />
             </div>
-            <span className="text-[10px] font-medium tabular-nums" style={{ color: stream.sourceColor }}>
+            <span
+              className="text-[10px] font-medium tabular-nums"
+              style={{ color: stream.sourceColor }}
+            >
               {formatViewers(stream.viewerCount)}
             </span>
           </div>

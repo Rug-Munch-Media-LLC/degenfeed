@@ -90,7 +90,8 @@ function guessNiches(text: string, tags: string[] = []): string[] {
   if (/\b(ai |artificial|intelligence|llm|agent|machine learning)\b/.test(lower)) niches.push('ai');
   if (/\b(subsocial|polkadot|dot|substrate|ipfs)\b/.test(lower)) niches.push('subsocial');
   if (/\b(crypto|blockchain|web3)\b/.test(lower)) niches.push('crypto');
-  if (/\b(tech|technology|programming|code|software|dev|startup)\b/.test(lower)) niches.push('tech');
+  if (/\b(tech|technology|programming|code|software|dev|startup)\b/.test(lower))
+    niches.push('tech');
   if (/\b(news|breaking|discussion|opinion)\b/.test(lower)) niches.push('news');
 
   if (niches.length === 0) niches.push('web3');

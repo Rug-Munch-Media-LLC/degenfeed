@@ -42,7 +42,7 @@ export default function NewsClient({
   const [masonryLayout, setMasonryLayout] = useState(false);
   const [readingList, setReadingList] = useState<Set<string>>(getReadingList);
   const [shareStory, setShareStory] = useState<NewsStory | null>(null);
-  const [page, setPage] = useState(1);
+  const [_page, setPage] = useState(1);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [marketPrices, setMarketPrices] = useState<
@@ -122,7 +122,7 @@ export default function NewsClient({
     setPage(1);
     fetchNews(false, 1);
     fetchMarketPrices();
-  }, [category, sort, query, fetchNews, fetchMarketPrices]);
+  }, [fetchNews, fetchMarketPrices]);
   useEffect(() => {
     const id = setInterval(() => fetchNews(true), 60000);
     return () => clearInterval(id);

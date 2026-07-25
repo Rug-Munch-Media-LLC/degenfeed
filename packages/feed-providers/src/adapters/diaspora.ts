@@ -9,14 +9,14 @@ import type { Protocol, UnifiedPost } from '@degenfeed/types';
 
 const $fetch = globalThis.fetch;
 
-const DIASPORA_PODS = [
-  'https://diasp.org',
-  'https://diaspora-fr.org',
-  'https://pod.geraspora.de',
-];
+const DIASPORA_PODS = ['https://diasp.org', 'https://diaspora-fr.org', 'https://pod.geraspora.de'];
 
 function stripHtml(html: string): string {
-  return html.replace(/<[^>]*>/g, ' ').replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim();
+  return html
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 function guessNiches(text: string): string[] {
@@ -29,7 +29,14 @@ function guessNiches(text: string): string[] {
   return n;
 }
 
-function parseRssItems(xml: string): Array<{ title?: string; link?: string; guid?: string; description?: string; author?: string; pubDate?: string }> {
+function parseRssItems(xml: string): Array<{
+  title?: string;
+  link?: string;
+  guid?: string;
+  description?: string;
+  author?: string;
+  pubDate?: string;
+}> {
   const items: Array<Record<string, string>> = [];
   const itemRe = /<item>([\s\S]*?)<\/item>/gi;
   let m: RegExpExecArray | null;
@@ -41,7 +48,10 @@ function parseRssItems(xml: string): Array<{ title?: string; link?: string; guid
       link: (e.match(/<link[^>]*>([\s\S]*?)<\/link>/i) || [])[1] || '',
       guid: (e.match(/<guid[^>]*>([\s\S]*?)<\/guid>/i) || [])[1] || '',
       description: (e.match(/<description[^>]*>([\s\S]*?)<\/description>/i) || [])[1] || '',
-      author: (e.match(/<author[^>]*>([\s\S]*?)<\/author>/i) || [])[1] || (e.match(/<dc:creator[^>]*>([\s\S]*?)<\/dc:creator>/i) || [])[1] || '',
+      author:
+        (e.match(/<author[^>]*>([\s\S]*?)<\/author>/i) || [])[1] ||
+        (e.match(/<dc:creator[^>]*>([\s\S]*?)<\/dc:creator>/i) || [])[1] ||
+        '',
       pubDate: (e.match(/<pubDate[^>]*>([\s\S]*?)<\/pubDate>/i) || [])[1] || '',
     });
   }
