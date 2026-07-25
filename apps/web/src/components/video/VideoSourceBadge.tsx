@@ -30,7 +30,11 @@ interface VideoSourceBadgeProps {
     | 'nostr'
     | 'ipfs'
     | 'arweave'
-    | 'hls';
+    | 'hls'
+    | 'kick'
+    | 'livetube'
+    | 'nostr-video'
+    | 'farcaster-video';
   label?: string;
   size?: 'sm' | 'md' | 'lg';
   showLabel?: boolean;
@@ -165,6 +169,30 @@ const SOURCE_STYLES: Record<string, { label: string; bg: string; text: string; b
     text: 'text-teal-400',
     border: 'border-teal-500/30',
   },
+  kick: {
+    label: 'Kick',
+    bg: 'bg-green-500/15',
+    text: 'text-green-400',
+    border: 'border-green-500/30',
+  },
+  livetube: {
+    label: 'LiveTube',
+    bg: 'bg-orange-600/15',
+    text: 'text-orange-400',
+    border: 'border-orange-600/30',
+  },
+  'nostr-video': {
+    label: 'Nostr Video',
+    bg: 'bg-purple-500/15',
+    text: 'text-purple-400',
+    border: 'border-purple-500/30',
+  },
+  'farcaster-video': {
+    label: 'Farcaster Video',
+    bg: 'bg-indigo-500/15',
+    text: 'text-indigo-400',
+    border: 'border-indigo-500/30',
+  },
 };
 
 export function VideoSourceBadge({
@@ -245,4 +273,8 @@ export const PLATFORM_ICONS: Record<string, string> = {
   ipfs: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v12M6 12h12"/></svg>',
   arweave: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15l-4-4 4-4v8zm6-4l-4 4v-8l4 4z"/></svg>',
   hls: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 13.5v-7l6 3.5-6 3.5z"/></svg>',
+  kick: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 7v10l10 5 10-5V7L12 2zm0 2.18l7 3.5v7l-7 3.5-7-3.5v-7l7-3.5zM9 8v8l6-4-6-4z"/></svg>',
+  livetube: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 6l5 4-5 4V8z"/></svg>',
+  'nostr-video': '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 7v10l10 5 10-5V7L12 2zm0 2.18l7 3.5v7l-7 3.5-7-3.5v-7l7-3.5z"/></svg>',
+  'farcaster-video': '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M4 4h16v16H4V4zm2 2v12h12V6H6zm2 2h8v2H8V8zm0 4h8v2H8v-2zm0 4h5v2H8v-2z"/></svg>',
 };

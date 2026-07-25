@@ -7,9 +7,9 @@
 
 ## Executive Summary
 
-DegenFeed is a **universal feed aggregator** bridging 10+ decentralized social protocols into a single, unified timeline. We self-host the critical infrastructure (GoToSocial, PeerTube, Bluesky PDS, Nostr relay, RSS-Bridge, Redlib) and connect to external networks via their native APIs. The platform supports cross-protocol posting, tipping, token launches, audio spaces, live streaming, and short-form video.
+DegenFeed is a **universal feed aggregator** bridging 44+ decentralized social protocols and services into a single, unified timeline. We self-host the critical infrastructure (GoToSocial, PeerTube, Bluesky PDS, Nostr relay, RSS-Bridge, Redlib, Prosody XMPP) and connect to external networks via their native APIs. The platform supports cross-protocol posting, tipping, token launches, audio spaces, live streaming, and short-form video.
 
-**Phase:** Beta (functional, real data flowing from 8/10 protocols)  
+**Phase:** Beta (functional, real data flowing from all 11 standardized bridge providers + 33+ additional protocols via Matrix hub, ActivityPub federation, and API integrations)  
 **Launch target:** Q4 2026 public beta  
 **Revenue model:** Premium subscriptions + token gate + creator coins + tipping fees
 

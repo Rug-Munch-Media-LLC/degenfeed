@@ -209,6 +209,8 @@ const PLATFORM_TIER: Record<string, number> = {
   pleroma: 0.7,
   misskey: 0.7,
   writefreely: 0.7,
+  funkwhale: 0.7,
+  castopod: 0.7,
 };
 
 // ─── Recency half-life by mode ─────────────────────────────────────────

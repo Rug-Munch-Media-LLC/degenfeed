@@ -18,12 +18,38 @@ const PROTOCOLS = [
   { name: 'Matrix', color: '#0dbd8b', emoji: '💬' },
   { name: 'Discord', color: '#5865f2', emoji: '💜' },
   { name: 'YouTube', color: '#ff0000', emoji: '▶' },
-  { name: 'GitHub', color: '#f1502f', emoji: '🐙' },
-  { name: 'RSS', color: '#ffa500', emoji: '📡' },
-  { name: 'Lemmy', color: '#00b868', emoji: '🍋' },
   { name: 'Substack', color: '#ff6719', emoji: '✉' },
-  { name: 'PeerTube', color: '#e74c3c', emoji: '🎥' },
+  { name: 'Lemmy', color: '#00b868', emoji: '🍋' },
   { name: 'GoToSocial', color: '#6364ff', emoji: '🐘' },
+  { name: 'Pleroma', color: '#ff6688', emoji: '💜' },
+  { name: 'Misskey', color: '#ff88aa', emoji: '🌸' },
+  { name: 'Friendica', color: '#dd88ff', emoji: '🤝' },
+  { name: 'Diaspora', color: '#88aaff', emoji: '🌍' },
+  { name: 'Gab', color: '#888888', emoji: '💬' },
+  { name: 'Minds', color: '#ff8800', emoji: '🧠' },
+  { name: 'WriteFreely', color: '#66ccff', emoji: '✍️' },
+  { name: 'Micro.blog', color: '#ff6699', emoji: '📝' },
+  { name: 'Plume', color: '#ffaa00', emoji: '📄' },
+  { name: 'Write.as', color: '#888888', emoji: '✏️' },
+  { name: 'Publii', color: '#888888', emoji: '📰' },
+  { name: 'Aether', color: '#66ffaa', emoji: '🌐' },
+  { name: 'Scuttlebutt', color: '#88aa00', emoji: '🏴‍☠️' },
+  { name: 'Hive', color: '#ffaa00', emoji: '🍯' },
+  { name: 'PieFed', color: '#88ff88', emoji: '🥧' },
+  { name: 'Owncast', color: '#ff6688', emoji: '📺' },
+  { name: 'Odysee', color: '#88aa00', emoji: '🪙' },
+  { name: 'DTube', color: '#ff8800', emoji: '🎵' },
+  { name: 'Rumble', color: '#ff6600', emoji: '📻' },
+  { name: 'BitTube', color: '#888888', emoji: '🎥' },
+  { name: 'Funkwhale', color: '#66ffaa', emoji: '🎧' },
+  { name: 'Castopod', color: '#ff66aa', emoji: '🎙️' },
+  { name: 'Steem', color: '#ffaa00', emoji: '⛓️' },
+  { name: 'DeSo', color: '#88aaff', emoji: '🔷' },
+  { name: 'Subsocial', color: '#ff6688', emoji: '🔗' },
+  { name: 'CyberConnect', color: '#66ccff', emoji: '🔌' },
+  { name: 'Ceramic', color: '#aa66ff', emoji: '🏺' },
+  { name: 'Status', color: '#66ffaa', emoji: '📱' },
+  { name: 'Session', color: '#888888', emoji: '🕵️' },
 ] as const;
 
 export function ProtocolShowcase() {
@@ -45,7 +71,7 @@ export function ProtocolShowcase() {
           className="mx-auto max-w-xl text-sm leading-relaxed"
           style={{ color: 'var(--color-fg-secondary)' }}
         >
-          18 decentralized networks. One unified timeline. The social graph belongs to the protocols
+          44 decentralized networks. One unified timeline. The social graph belongs to the protocols
           — the window belongs to you.
         </p>
       </div>

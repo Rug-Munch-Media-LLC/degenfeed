@@ -13,11 +13,7 @@
  *   POST /api/news/digest/subscribe       → Subscribe to digest emails
  */
 
-import {
-  type AggregationOptions,
-  aggregateNews,
-  NEWS_SOURCES,
-} from '../feed/news-aggregator';
+import { type AggregationOptions, aggregateNews, NEWS_SOURCES } from '../feed/news-aggregator';
 import {
   DEFAULT_PREFERENCES,
   inferUserProfile,

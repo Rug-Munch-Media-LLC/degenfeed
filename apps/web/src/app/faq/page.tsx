@@ -7,7 +7,7 @@ export const revalidate = 86400;
 export const metadata: Metadata = {
   title: 'FAQ — DegenFeed Web3 Social Universe Questions Answered',
   description:
-    'Everything you need to know about DegenFeed — the Web3 Social Universe. What makes it web3, how cross-posting works, creator coins, self-hosting, data ownership, and how to get started on 25+ decentralized social protocols.',
+    'Everything you need to know about DegenFeed — the Web3 Social Universe. What makes it web3, how cross-posting works, creator coins, self-hosting, data ownership, and how to get started on 44 decentralized social protocols.',
   keywords: [
     'web3 social media faq',
     'decentralized social network questions',

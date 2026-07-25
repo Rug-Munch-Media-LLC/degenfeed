@@ -39,7 +39,7 @@ import {
 
 // ─── Request Body Parsing ─────────────────────────────────────────────
 
-async function parseBody(request: Request): Promise<any> {
+async function parseBody(request: Request): Promise<Record<string, unknown> | null> {
   try {
     return await request.json();
   } catch {
@@ -128,8 +128,8 @@ export async function handleMultisigPropose(request: Request, env: Env): Promise
     const service = new MultiSigService(env);
     const tx = await service.proposeTransaction(daoId, body);
     return jsonResponse({ data: tx }, 201);
-  } catch (err: any) {
-    return jsonResponse({ error: err.message || 'Failed to propose transaction' }, 400);
+  } catch (err: unknown) {
+    return jsonResponse({ error: (err as Error).message || 'Failed to propose transaction' }, 400);
   }
 }
 
@@ -165,8 +165,8 @@ export async function handleMultisigSign(request: Request, env: Env): Promise<Re
       summary,
       progress: formatSignatureProgress(summary.approved, tx.threshold),
     });
-  } catch (err: any) {
-    return jsonResponse({ error: err.message || 'Failed to sign transaction' }, 400);
+  } catch (err: unknown) {
+    return jsonResponse({ error: (err as Error).message || 'Failed to sign transaction' }, 400);
   }
 }
 
@@ -187,8 +187,8 @@ export async function handleMultisigExecute(request: Request, env: Env): Promise
     const service = new MultiSigService(env);
     const tx = await service.executeTransaction(daoId, txId, body?.executionTx);
     return jsonResponse({ data: tx });
-  } catch (err: any) {
-    return jsonResponse({ error: err.message || 'Failed to execute transaction' }, 400);
+  } catch (err: unknown) {
+    return jsonResponse({ error: (err as Error).message || 'Failed to execute transaction' }, 400);
   }
 }
 
@@ -217,8 +217,8 @@ export async function handleMultisigCancel(request: Request, env: Env): Promise<
       body.reason,
     );
     return jsonResponse({ data: tx });
-  } catch (err: any) {
-    return jsonResponse({ error: err.message || 'Failed to cancel transaction' }, 400);
+  } catch (err: unknown) {
+    return jsonResponse({ error: (err as Error).message || 'Failed to cancel transaction' }, 400);
   }
 }
 
@@ -239,8 +239,8 @@ export async function handleMultisigList(request: Request, env: Env): Promise<Re
     const service = new MultiSigService(env);
     const result = await service.listTransactions(daoId, { status, type, limit });
     return jsonResponse({ data: result.transactions, total: result.total });
-  } catch (err: any) {
-    return jsonResponse({ error: err.message || 'Failed to list transactions' }, 400);
+  } catch (err: unknown) {
+    return jsonResponse({ error: (err as Error).message || 'Failed to list transactions' }, 400);
   }
 }
 
@@ -257,8 +257,8 @@ export async function handleMultisigConfig(request: Request, env: Env): Promise<
     const config = await service.getConfig(daoId);
     if (!config) return jsonResponse({ error: 'Multi-sig not configured' }, 404);
     return jsonResponse({ data: config });
-  } catch (err: any) {
-    return jsonResponse({ error: err.message || 'Failed to get config' }, 400);
+  } catch (err: unknown) {
+    return jsonResponse({ error: (err as Error).message || 'Failed to get config' }, 400);
   }
 }
 
@@ -277,8 +277,8 @@ export async function handleMultisigSaveConfig(request: Request, env: Env): Prom
     const service = new MultiSigService(env);
     const config = await service.saveConfig({ ...body, daoId });
     return jsonResponse({ data: config }, 201);
-  } catch (err: any) {
-    return jsonResponse({ error: err.message || 'Failed to save config' }, 400);
+  } catch (err: unknown) {
+    return jsonResponse({ error: (err as Error).message || 'Failed to save config' }, 400);
   }
 }
 
@@ -311,8 +311,8 @@ export async function handleStreamCreate(request: Request, env: Env): Promise<Re
       },
       201,
     );
-  } catch (err: any) {
-    return jsonResponse({ error: err.message || 'Failed to create stream' }, 400);
+  } catch (err: unknown) {
+    return jsonResponse({ error: (err as Error).message || 'Failed to create stream' }, 400);
   }
 }
 
@@ -332,8 +332,8 @@ export async function handleStreamList(request: Request, env: Env): Promise<Resp
     const service = new StreamingPaymentsService(env);
     const result = await service.listStreams(daoId, { status, category });
     return jsonResponse({ data: result.streams, total: result.total });
-  } catch (err: any) {
-    return jsonResponse({ error: err.message || 'Failed to list streams' }, 400);
+  } catch (err: unknown) {
+    return jsonResponse({ error: (err as Error).message || 'Failed to list streams' }, 400);
   }
 }
 
@@ -354,8 +354,8 @@ export async function handleStreamGet(request: Request, env: Env): Promise<Respo
     const service = new StreamingPaymentsService(env);
     const result = await service.getStream(daoId, streamId);
     return jsonResponse({ data: result });
-  } catch (err: any) {
-    return jsonResponse({ error: err.message || 'Failed to get stream' }, 400);
+  } catch (err: unknown) {
+    return jsonResponse({ error: (err as Error).message || 'Failed to get stream' }, 400);
   }
 }
 
@@ -379,8 +379,8 @@ export async function handleStreamModify(request: Request, env: Env): Promise<Re
     const service = new StreamingPaymentsService(env);
     const stream = await service.modifyStream(daoId, streamId, body, body.modifiedBy as Address);
     return jsonResponse({ data: stream });
-  } catch (err: any) {
-    return jsonResponse({ error: err.message || 'Failed to modify stream' }, 400);
+  } catch (err: unknown) {
+    return jsonResponse({ error: (err as Error).message || 'Failed to modify stream' }, 400);
   }
 }
 
@@ -404,8 +404,8 @@ export async function handleStreamCancel(request: Request, env: Env): Promise<Re
     const service = new StreamingPaymentsService(env);
     const result = await service.cancelStream(daoId, streamId, body.cancelledBy as Address);
     return jsonResponse({ data: result });
-  } catch (err: any) {
-    return jsonResponse({ error: err.message || 'Failed to cancel stream' }, 400);
+  } catch (err: unknown) {
+    return jsonResponse({ error: (err as Error).message || 'Failed to cancel stream' }, 400);
   }
 }
 
@@ -429,8 +429,8 @@ export async function handleStreamPause(request: Request, env: Env): Promise<Res
     const service = new StreamingPaymentsService(env);
     const stream = await service.pauseStream(daoId, streamId, body.pausedBy as Address);
     return jsonResponse({ data: stream });
-  } catch (err: any) {
-    return jsonResponse({ error: err.message || 'Failed to pause stream' }, 400);
+  } catch (err: unknown) {
+    return jsonResponse({ error: (err as Error).message || 'Failed to pause stream' }, 400);
   }
 }
 
@@ -454,8 +454,8 @@ export async function handleStreamResume(request: Request, env: Env): Promise<Re
     const service = new StreamingPaymentsService(env);
     const stream = await service.resumeStream(daoId, streamId, body.resumedBy as Address);
     return jsonResponse({ data: stream });
-  } catch (err: any) {
-    return jsonResponse({ error: err.message || 'Failed to resume stream' }, 400);
+  } catch (err: unknown) {
+    return jsonResponse({ error: (err as Error).message || 'Failed to resume stream' }, 400);
   }
 }
 
@@ -474,8 +474,8 @@ export async function handleStreamHistory(request: Request, env: Env): Promise<R
     const service = new StreamingPaymentsService(env);
     const events = await service.getStreamHistory(daoId, streamId);
     return jsonResponse({ data: events });
-  } catch (err: any) {
-    return jsonResponse({ error: err.message || 'Failed to get stream history' }, 400);
+  } catch (err: unknown) {
+    return jsonResponse({ error: (err as Error).message || 'Failed to get stream history' }, 400);
   }
 }
 
@@ -491,8 +491,8 @@ export async function handleStreamAnalytics(request: Request, env: Env): Promise
     const service = new StreamingPaymentsService(env);
     const analytics = await service.getAnalytics(daoId);
     return jsonResponse({ data: analytics });
-  } catch (err: any) {
-    return jsonResponse({ error: err.message || 'Failed to get analytics' }, 400);
+  } catch (err: unknown) {
+    return jsonResponse({ error: (err as Error).message || 'Failed to get analytics' }, 400);
   }
 }
 
@@ -515,8 +515,8 @@ export async function handleGrantCreateProgram(request: Request, env: Env): Prom
     const service = new GrantsService(env);
     const program = await service.createGrantProgram(daoId, body);
     return jsonResponse({ data: program }, 201);
-  } catch (err: any) {
-    return jsonResponse({ error: err.message || 'Failed to create grant program' }, 400);
+  } catch (err: unknown) {
+    return jsonResponse({ error: (err as Error).message || 'Failed to create grant program' }, 400);
   }
 }
 
@@ -532,8 +532,8 @@ export async function handleGrantListPrograms(request: Request, env: Env): Promi
     const service = new GrantsService(env);
     const programs = await service.listGrantPrograms(daoId);
     return jsonResponse({ data: programs });
-  } catch (err: any) {
-    return jsonResponse({ error: err.message || 'Failed to list grant programs' }, 400);
+  } catch (err: unknown) {
+    return jsonResponse({ error: (err as Error).message || 'Failed to list grant programs' }, 400);
   }
 }
 
@@ -552,8 +552,8 @@ export async function handleGrantApply(request: Request, env: Env): Promise<Resp
     const service = new GrantsService(env);
     const app = await service.submitApplication(daoId, body);
     return jsonResponse({ data: app }, 201);
-  } catch (err: any) {
-    return jsonResponse({ error: err.message || 'Failed to submit application' }, 400);
+  } catch (err: unknown) {
+    return jsonResponse({ error: (err as Error).message || 'Failed to submit application' }, 400);
   }
 }
 
@@ -574,8 +574,8 @@ export async function handleGrantListApplications(request: Request, env: Env): P
     const service = new GrantsService(env);
     const result = await service.listApplications(daoId, { status, category, limit });
     return jsonResponse({ data: result.applications, total: result.total });
-  } catch (err: any) {
-    return jsonResponse({ error: err.message || 'Failed to list applications' }, 400);
+  } catch (err: unknown) {
+    return jsonResponse({ error: (err as Error).message || 'Failed to list applications' }, 400);
   }
 }
 
@@ -605,8 +605,8 @@ export async function handleGrantReview(request: Request, env: Env): Promise<Res
       body.rating ?? 3,
     );
     return jsonResponse({ data: app });
-  } catch (err: any) {
-    return jsonResponse({ error: err.message || 'Failed to add review' }, 400);
+  } catch (err: unknown) {
+    return jsonResponse({ error: (err as Error).message || 'Failed to add review' }, 400);
   }
 }
 
@@ -636,8 +636,8 @@ export async function handleGrantVote(request: Request, env: Env): Promise<Respo
       body.reason,
     );
     return jsonResponse({ data: app });
-  } catch (err: any) {
-    return jsonResponse({ error: err.message || 'Failed to cast vote' }, 400);
+  } catch (err: unknown) {
+    return jsonResponse({ error: (err as Error).message || 'Failed to cast vote' }, 400);
   }
 }
 
@@ -667,8 +667,8 @@ export async function handleGrantFinalize(request: Request, env: Env): Promise<R
       body.reason,
     );
     return jsonResponse({ data: app });
-  } catch (err: any) {
-    return jsonResponse({ error: err.message || 'Failed to finalize application' }, 400);
+  } catch (err: unknown) {
+    return jsonResponse({ error: (err as Error).message || 'Failed to finalize application' }, 400);
   }
 }
 
@@ -694,8 +694,8 @@ export async function handleGrantSubmitMilestone(request: Request, env: Env): Pr
     const service = new GrantsService(env);
     const app = await service.submitMilestone(daoId, appId, milestoneId, body.proof);
     return jsonResponse({ data: app });
-  } catch (err: any) {
-    return jsonResponse({ error: err.message || 'Failed to submit milestone' }, 400);
+  } catch (err: unknown) {
+    return jsonResponse({ error: (err as Error).message || 'Failed to submit milestone' }, 400);
   }
 }
 
@@ -711,8 +711,8 @@ export async function handleGrantAnalytics(request: Request, env: Env): Promise<
     const service = new GrantsService(env);
     const analytics = await service.getAnalytics(daoId);
     return jsonResponse({ data: analytics });
-  } catch (err: any) {
-    return jsonResponse({ error: err.message || 'Failed to get analytics' }, 400);
+  } catch (err: unknown) {
+    return jsonResponse({ error: (err as Error).message || 'Failed to get analytics' }, 400);
   }
 }
 
@@ -732,8 +732,8 @@ export async function handleInvestmentPortfolio(request: Request, env: Env): Pro
     const service = new InvestmentService(env);
     const portfolio = await service.getPortfolio(daoId);
     return jsonResponse({ data: portfolio });
-  } catch (err: any) {
-    return jsonResponse({ error: err.message || 'Failed to get portfolio' }, 400);
+  } catch (err: unknown) {
+    return jsonResponse({ error: (err as Error).message || 'Failed to get portfolio' }, 400);
   }
 }
 
@@ -754,8 +754,8 @@ export async function handleInvestmentYields(request: Request, env: Env): Promis
     const service = new InvestmentService(env);
     const opportunities = await service.getYieldOpportunities({ type, maxRisk, minApy, limit });
     return jsonResponse({ data: opportunities });
-  } catch (err: any) {
-    return jsonResponse({ error: err.message || 'Failed to get yield opportunities' }, 400);
+  } catch (err: unknown) {
+    return jsonResponse({ error: (err as Error).message || 'Failed to get yield opportunities' }, 400);
   }
 }
 
@@ -771,8 +771,8 @@ export async function handleInvestmentPerformance(request: Request, env: Env): P
     const service = new InvestmentService(env);
     const performance = await service.getPerformanceSummary(daoId);
     return jsonResponse({ data: performance });
-  } catch (err: any) {
-    return jsonResponse({ error: err.message || 'Failed to get performance' }, 400);
+  } catch (err: unknown) {
+    return jsonResponse({ error: (err as Error).message || 'Failed to get performance' }, 400);
   }
 }
 
@@ -794,8 +794,8 @@ export async function handleInvestmentCreateProposal(
     const service = new InvestmentService(env);
     const proposal = await service.createProposal(daoId, body);
     return jsonResponse({ data: proposal }, 201);
-  } catch (err: any) {
-    return jsonResponse({ error: err.message || 'Failed to create proposal' }, 400);
+  } catch (err: unknown) {
+    return jsonResponse({ error: (err as Error).message || 'Failed to create proposal' }, 400);
   }
 }
 
@@ -814,8 +814,8 @@ export async function handleInvestmentListProposals(request: Request, env: Env):
     const service = new InvestmentService(env);
     const proposals = await service.listProposals(daoId, status);
     return jsonResponse({ data: proposals });
-  } catch (err: any) {
-    return jsonResponse({ error: err.message || 'Failed to list proposals' }, 400);
+  } catch (err: unknown) {
+    return jsonResponse({ error: (err as Error).message || 'Failed to list proposals' }, 400);
   }
 }
 
@@ -844,8 +844,8 @@ export async function handleInvestmentVote(request: Request, env: Env): Promise<
       body.choice,
     );
     return jsonResponse({ data: proposal });
-  } catch (err: any) {
-    return jsonResponse({ error: err.message || 'Failed to vote on proposal' }, 400);
+  } catch (err: unknown) {
+    return jsonResponse({ error: (err as Error).message || 'Failed to vote on proposal' }, 400);
   }
 }
 
@@ -883,7 +883,7 @@ export async function handleTreasuryAnalytics(request: Request, env: Env): Promi
         timestamp: Date.now(),
       },
     });
-  } catch (err: any) {
-    return jsonResponse({ error: err.message || 'Failed to get analytics' }, 400);
+  } catch (err: unknown) {
+    return jsonResponse({ error: (err as Error).message || 'Failed to get analytics' }, 400);
   }
 }

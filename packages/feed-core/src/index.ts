@@ -294,6 +294,8 @@ export const PLATFORM_TIER_WEIGHTS: Record<string, number> = {
   pleroma: 0.7,
   misskey: 0.7,
   writefreely: 0.7,
+  funkwhale: 0.7,
+  castopod: 0.7,
 };
 
 export interface SignalScores {
@@ -1232,6 +1234,8 @@ export function emptyIdentity(): UnifiedIdentity {
       pleroma: null,
       misskey: null,
       writefreely: null,
+      funkwhale: null,
+      castopod: null,
     },
     displayName: '',
     bio: '',

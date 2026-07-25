@@ -30,7 +30,7 @@ export async function handlePostOg(_request: Request, env: Env, postId: string):
   const image =
     post.embeds.find((e) => e.kind === 'image')?.url ||
     post.author.avatarUrl ||
-    'https://degenfeed.xyz/og-image.png';
+    'https://app.degenfeed.xyz/api/media/gateway/ipfs/og-image-v1';
   const author = post.author.displayName;
   const protocol = post.protocol;
 
@@ -67,4 +67,109 @@ function escapeHtml(s: string): string {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
+}
+
+/**
+ * GET /api/og?url=...
+ * Fetches OpenGraph metadata for any URL.
+ * Returns JSON: { url, title, description?, image?, favicon?, siteName? }
+ */
+export async function handleOgFetch(request: Request): Promise<Response> {
+  const url = new URL(request.url);
+  const targetUrl = url.searchParams.get('url');
+  if (!targetUrl) {
+    return new Response(JSON.stringify({ error: 'Missing url parameter' }), {
+      status: 400,
+      headers: { 'content-type': 'application/json' },
+    });
+  }
+
+  // Validate URL
+  let parsed: URL;
+  try {
+    parsed = new URL(targetUrl);
+    if (!['http:', 'https:'].includes(parsed.protocol)) {
+      throw new Error('Invalid protocol');
+    }
+  } catch {
+    return new Response(JSON.stringify({ error: 'Invalid URL' }), {
+      status: 400,
+      headers: { 'content-type': 'application/json' },
+    });
+  }
+
+  try {
+    const res = await fetch(targetUrl, {
+      headers: {
+        'user-agent': 'DegenFeed/0.1 LinkPreview (+https://degenfeed.xyz)',
+        accept: 'text/html,application/xhtml+xml',
+      },
+      signal: AbortSignal.timeout(4000),
+    });
+
+    if (!res.ok) {
+      return new Response(JSON.stringify({ url: targetUrl, title: targetUrl }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      });
+    }
+
+    const html = await res.text();
+
+    // Extract OG metadata with regex (fast, no parser dependency)
+    const ogTitle = html.match(/<meta[^>]*property=["']og:title["'][^>]*content=["'](.*?)["'][^>]*\/?>/i)
+      || html.match(/<meta[^>]*content=["'](.*?)["'][^>]*property=["']og:title["'][^>]*\/?>/i);
+    const title = ogTitle?.[1]
+      || html.match(/<title>([^<]*)<\/title>/i)?.[1]
+      || targetUrl;
+
+    const ogDesc = html.match(/<meta[^>]*property=["']og:description["'][^>]*content=["'](.*?)["'][^>]*\/?>/i)
+      || html.match(/<meta[^>]*content=["'](.*?)["'][^>]*property=["']og:description["'][^>]*\/?>/i);
+    const description = ogDesc?.[1];
+
+    const ogImage = html.match(/<meta[^>]*property=["']og:image["'][^>]*content=["'](.*?)["'][^>]*\/?>/i)
+      || html.match(/<meta[^>]*content=["'](.*?)["'][^>]*property=["']og:image["'][^>]*\/?>/i);
+    let image = ogImage?.[1];
+
+    // Resolve relative image URL
+    if (image && image.startsWith('/')) {
+      image = `${parsed.origin}${image}`;
+    }
+
+    const ogSiteName = html.match(/<meta[^>]*property=["']og:site_name["'][^>]*content=["'](.*?)["'][^>]*\/?>/i)
+      || html.match(/<meta[^>]*content=["'](.*?)["'][^>]*property=["']og:site_name["'][^>]*\/?>/i);
+    const siteName = ogSiteName?.[1];
+
+    // Favicon
+    const faviconLink = html.match(/<link[^>]*rel=["'](?:shortcut )?icon["'][^>]*href=["'](.*?)["'][^>]*\/?>/i);
+    let favicon = faviconLink?.[1];
+    if (favicon && favicon.startsWith('/')) {
+      favicon = `${parsed.origin}${favicon}`;
+    }
+    if (!favicon) {
+      favicon = `${parsed.origin}/favicon.ico`;
+    }
+
+    const result = {
+      url: targetUrl,
+      title: title?.slice(0, 200) ?? targetUrl,
+      description: description?.slice(0, 400),
+      image: image ?? null,
+      favicon: favicon ?? null,
+      siteName: siteName ?? null,
+    };
+
+    return new Response(JSON.stringify(result), {
+      status: 200,
+      headers: {
+        'content-type': 'application/json',
+        'cache-control': 'public, max-age=3600',
+      },
+    });
+  } catch {
+    return new Response(JSON.stringify({ url: targetUrl, title: targetUrl }), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    });
+  }
 }

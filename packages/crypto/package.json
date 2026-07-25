@@ -1,0 +1,17 @@
+{
+  "name": "@degenfeed/crypto",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "./src/e2e-messaging.ts",
+  "exports": {
+    ".": "./src/e2e-messaging.ts",
+    "./e2e-messaging": "./src/e2e-messaging.ts"
+  },
+  "dependencies": {
+    "@degenfeed/types": "workspace:*",
+    "@degenfeed/utils": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}

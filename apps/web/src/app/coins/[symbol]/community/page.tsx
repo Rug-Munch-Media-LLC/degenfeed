@@ -14,6 +14,7 @@
 import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../../../../components/AuthProvider';
+import { TelegramGroupEmbed } from '../../../../components/creator-coin/TelegramGroupEmbed';
 import { useToast } from '../../../../components/Toast';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -282,80 +283,45 @@ function OverviewTab({ data, symbol }: { data: CoinCommunityData; symbol: string
 // ─── Telegram Tab ───────────────────────────────────────────────────────────
 
 function TelegramTab({ data, symbol }: { data: CoinCommunityData; symbol: string }) {
-  const { showToast } = useToast();
-
-  const handleInvite = useCallback(() => {
-    if (data.telegram?.inviteLink) {
-      window.open(data.telegram.inviteLink, '_blank');
-    } else {
-      showToast('info', `Message our bot with /community ${symbol}`);
-    }
-  }, [data.telegram, symbol, showToast]);
+  const telegramGroupData = data.telegram?.exists
+    ? {
+        groupId: data.telegram.groupId ?? '',
+        title: data.telegram.title ?? `${symbol} Community`,
+        inviteLink: data.telegram.inviteLink,
+        memberCount: data.telegram.memberCount,
+        feedEnabled: data.telegram.feedEnabled ?? true,
+        tokenGated: data.telegram.tokenGated ?? false,
+        minHoldRequirement: data.telegram.minHoldRequirement,
+        recentMessages: data.telegram.recentMessages,
+      }
+    : null;
 
   return (
     <div className="space-y-4">
-      <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-5">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h3 className="text-sm font-semibold text-[var(--color-fg)]">
-              {data.telegram?.title || `${symbol} Telegram Group`}
-            </h3>
-            <p className="text-xs text-[var(--color-muted)]">
-              {data.telegram?.exists ? 'Active' : 'Not yet created'}
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={handleInvite}
-            className="rounded-lg bg-blue-500/20 px-4 py-2 text-xs font-medium text-blue-400 hover:bg-blue-500/30 transition-colors"
+      <TelegramGroupEmbed
+        symbol={symbol}
+        coinName={data.name || symbol}
+        groupData={telegramGroupData}
+      />
+      <div className="text-center text-[10px] text-[var(--color-muted)]">
+        <p>
+          💡 Use <code className="text-degen-400">/price</code>,{' '}
+          <code className="text-degen-400">/buy</code>, or{' '}
+          <code className="text-degen-400">/tip @user</code> in the chat above
+        </p>
+        <p className="mt-1">
+          Or open directly in{' '}
+          <a
+            href={
+              data.telegram?.inviteLink ?? `https://t.me/DegenFeedBot?start=community_${symbol}`
+            }
+            target="_blank"
+            rel="noopener"
+            className="text-blue-400 hover:underline"
           >
-            {data.telegram?.exists ? 'Join' : 'Create'}
-          </button>
-        </div>
-
-        {data.telegram?.tokenGated && (
-          <div className="mb-3 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2">
-            <p className="text-xs text-amber-400">
-              🔒 Token-gated: Requires {data.telegram.minHoldRequirement || 'a minimum'} {symbol} to
-              join
-            </p>
-          </div>
-        )}
-
-        {data.telegram?.recentMessages && data.telegram.recentMessages.length > 0 && (
-          <div>
-            <span className="text-xs font-medium text-[var(--color-muted)]">Recent Messages</span>
-            <div className="mt-2 space-y-2">
-              {data.telegram.recentMessages.slice(0, 10).map((msg, i) => (
-                <div
-                  key={i}
-                  className="rounded-lg border border-[var(--color-glass-border)] px-3 py-2"
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium text-[var(--color-fg)]">
-                      {msg.fromUser}
-                    </span>
-                    <span className="text-[10px] text-[var(--color-muted)]">
-                      {formatTimeAgo(msg.timestamp)}
-                    </span>
-                  </div>
-                  <p className="mt-1 text-xs text-[var(--color-muted)] line-clamp-2">{msg.text}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {!data.telegram?.exists && (
-          <div className="rounded-lg border border-dashed border-[var(--color-glass-border)] p-4 text-center">
-            <p className="text-xs text-[var(--color-muted)]">
-              No Telegram group set up for {symbol} yet.
-            </p>
-            <p className="mt-1 text-[10px] text-[var(--color-muted)]">
-              Use the /community command with our bot to create one, or set up in settings.
-            </p>
-          </div>
-        )}
+            Telegram ↗
+          </a>
+        </p>
       </div>
     </div>
   );

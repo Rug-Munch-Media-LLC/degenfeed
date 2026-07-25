@@ -130,7 +130,7 @@ function providerFor(protocol: ProtocolSource, env: Env) {
     case 'bluesky':
       return new BlueskyProvider({ baseUrl: env.BSKY_PUBLIC_URL });
     case 'mastodon':
-      return new MastodonProvider({ instanceUrl: env.GTS_INSTANCE_URL });
+      return new MastodonProvider({ instanceUrl: env.GOTOSOCIAL_INSTANCE_URL });
     case 'threads':
       return new ThreadsProvider();
     default:
@@ -270,14 +270,14 @@ function buildEmbedHtml(post: UnifiedPost, origin: string): string {
 <title>${escapeHtml(author)} on ${protocolLabel} — DegenFeed</title>
 <meta property="og:title" content="${escapeHtml(author)} on ${protocolLabel}"/>
 <meta property="og:description" content="${escapeHtml(text)}"/>
-<meta property="og:image" content="${escapeHtml(image || 'https://app.degenfeed.xyz/og-image.png')}"/>
+<meta property="og:image" content="${escapeHtml(image || 'https://app.degenfeed.xyz/api/media/gateway/ipfs/og-image-v1')}"/>
 <meta property="og:url" content="${escapeHtml(embedUrl)}"/>
 <meta property="og:type" content="article"/>
 <meta property="og:site_name" content="DegenFeed"/>
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:title" content="${escapeHtml(author)} on ${protocolLabel}"/>
 <meta name="twitter:description" content="${escapeHtml(text)}"/>
-<meta name="twitter:image" content="${escapeHtml(image || 'https://app.degenfeed.xyz/og-image.png')}"/>
+<meta name="twitter:image" content="${escapeHtml(image || 'https://app.degenfeed.xyz/api/media/gateway/ipfs/og-image-v1')}"/>
 <script type="application/ld+json">${JSON.stringify(jsonLd)}</script>
 </head>
 <body>

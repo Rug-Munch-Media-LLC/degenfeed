@@ -145,7 +145,7 @@ async function tryGtsAuth(env: Env): Promise<{
   if (!env.GTS_CLIENT_ID || !env.GTS_CLIENT_SECRET) return null;
 
   try {
-    const gtsUrl = env.GTS_INSTANCE_URL || 'https://social.degenfeed.xyz';
+    const gtsUrl = env.GOTOSOCIAL_INSTANCE_URL || 'https://social.degenfeed.xyz';
     const tokenRes = await fetch(`${gtsUrl}/oauth/token`, {
       method: 'POST',
       headers: { 'content-type': 'application/x-www-form-urlencoded' },
@@ -250,7 +250,7 @@ export async function handleWalletVerify(request: Request, env: Env): Promise<Re
       const redirectUri = encodeURIComponent(
         env.GTS_REDIRECT_URI || 'https://degenfeed.xyz/auth/callback',
       );
-      gtsAuthorizeUrl = `${env.GTS_INSTANCE_URL || 'https://social.degenfeed.xyz'}/oauth/authorize?client_id=${gtsSession.clientId}&redirect_uri=${redirectUri}&response_type=code&scope=${GTS_SCOPES}&sign_up=true`;
+      gtsAuthorizeUrl = `${env.GOTOSOCIAL_INSTANCE_URL || 'https://social.degenfeed.xyz'}/oauth/authorize?client_id=${gtsSession.clientId}&redirect_uri=${redirectUri}&response_type=code&scope=${GTS_SCOPES}&sign_up=true`;
     }
 
     if (!env.AUTH_SECRET) {

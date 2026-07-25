@@ -126,7 +126,7 @@ export async function verifyUserOwnership(
   const mobilizonHandle = deriveMobilizonHandle(wallet);
 
   // Base URLs
-  const gtsBase = env.GTS_INSTANCE_URL || 'https://social.degenfeed.xyz';
+  const gtsBase = env.GOTOSOCIAL_INSTANCE_URL || 'https://social.degenfeed.xyz';
   const pdsBase = env.PDS_INSTANCE_URL || 'https://pds.degenfeed.xyz';
   const relayBase = env.RELAY_INSTANCE_URL || 'https://relay.degenfeed.xyz';
   const peertubeBase = env.PEERTUBE_INSTANCE_URL || 'https://video.degenfeed.xyz';

@@ -108,7 +108,7 @@ frames.get('/stream/:id', async (c) => {
   if (!stream) {
     return c.html(
       generateFrameHtml({
-        image: 'https://app.degenfeed.xyz/og/stream-not-found.png',
+        image: 'https://app.degenfeed.xyz/api/media/gateway/ipfs/stream-not-found-v1',
         title: 'Stream Not Found — DegenFeed',
         buttons: [
           {
@@ -192,7 +192,7 @@ frames.post('/stream/:id', async (c) => {
   if (!stream) {
     return c.html(
       generateFrameHtml({
-        image: 'https://app.degenfeed.xyz/og/stream-not-found.png',
+        image: 'https://app.degenfeed.xyz/api/media/gateway/ipfs/stream-not-found-v1',
         title: 'Stream Not Found',
         buttons: [
           {
@@ -254,7 +254,7 @@ frames.get('/stream/:id/gated', async (c) => {
   if (!stream) {
     return c.html(
       generateFrameHtml({
-        image: 'https://app.degenfeed.xyz/og/stream-not-found.png',
+        image: 'https://app.degenfeed.xyz/api/media/gateway/ipfs/stream-not-found-v1',
         title: 'Stream Not Found',
         buttons: [
           {
@@ -325,7 +325,7 @@ frames.post('/stream/:id/gated', async (c) => {
   if (!stream) {
     return c.html(
       generateFrameHtml({
-        image: 'https://app.degenfeed.xyz/og/stream-not-found.png',
+        image: 'https://app.degenfeed.xyz/api/media/gateway/ipfs/stream-not-found-v1',
         title: 'Stream Not Found',
         buttons: [
           {

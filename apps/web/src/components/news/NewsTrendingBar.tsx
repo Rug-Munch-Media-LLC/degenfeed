@@ -3,8 +3,10 @@
 import type { NewsStory } from './types';
 
 export function NewsTrendingBar({ stories }: { stories: NewsStory[] }) {
-  const breaking = stories.filter((s) => s.isBreaking || s.velocity > 2)
-    .sort((a, b) => b.velocity - a.velocity).slice(0, 8);
+  const breaking = stories
+    .filter((s) => s.isBreaking || s.velocity > 2)
+    .sort((a, b) => b.velocity - a.velocity)
+    .slice(0, 8);
   if (breaking.length === 0) return null;
 
   return (
@@ -16,16 +18,30 @@ export function NewsTrendingBar({ stories }: { stories: NewsStory[] }) {
         </span>
         <div className="flex gap-2">
           {breaking.map((s) => (
-            <a key={s.id} href={s.url} target="_blank" rel="noopener"
-              className="group flex shrink-0 items-center gap-2 rounded-lg bg-red-950/40 px-3 py-1.5 text-xs text-gray-300 transition-all hover:bg-red-900/40 hover:text-white hover:shadow-[0_0_12px_rgba(239,68,68,0.2)]">
+            <a
+              key={s.id}
+              href={s.url}
+              target="_blank"
+              rel="noopener"
+              className="group flex shrink-0 items-center gap-2 rounded-lg bg-red-950/40 px-3 py-1.5 text-xs text-gray-300 transition-all hover:bg-red-900/40 hover:text-white hover:shadow-[0_0_12px_rgba(239,68,68,0.2)]"
+            >
               {s.heroImage && (
                 <span className="h-5 w-5 shrink-0 overflow-hidden rounded">
-                  <img src={s.heroImage} alt="" className="h-full w-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                  <img
+                    src={s.heroImage}
+                    alt=""
+                    className="h-full w-full object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = 'none';
+                    }}
+                  />
                 </span>
               )}
               <span className="line-clamp-1 max-w-[200px]">{s.title}</span>
               <span className="shrink-0 text-[10px] text-red-400/60">
-                {(s.alsoCoveredByCount ?? s.alsoCoveredBy.length - 1) > 1 ? `+${s.alsoCoveredByCount ?? s.alsoCoveredBy.length - 1}` : ''}
+                {(s.alsoCoveredByCount ?? s.alsoCoveredBy.length - 1) > 1
+                  ? `+${s.alsoCoveredByCount ?? s.alsoCoveredBy.length - 1}`
+                  : ''}
               </span>
             </a>
           ))}

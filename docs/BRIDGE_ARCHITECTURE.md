@@ -1,6 +1,6 @@
 # Bridge Architecture
 
-The DegenFeed bridge system aggregates content from 15+ social and news protocols
+The DegenFeed bridge system aggregates content from 44+ social and news protocols and services (11 standardized bridge providers + Matrix bridge hub + additional API integrations)
 into a unified feed. This document describes the provider architecture, data flow,
 and how to add new protocols.
 

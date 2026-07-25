@@ -80,7 +80,7 @@ export class ActivityPubStreamBridge {
 
   constructor(env: Env) {
     this.env = env;
-    this.instanceUrl = env.GTS_INSTANCE_URL || 'https://social.degenfeed.xyz';
+    this.instanceUrl = env.GOTOSOCIAL_INSTANCE_URL || 'https://social.degenfeed.xyz';
   }
 
   /**

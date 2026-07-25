@@ -362,7 +362,7 @@ export class UnifiedShortsPipeline {
     }
 
     const instanceBase =
-      auth?.mastodon_instance || this.env.GTS_INSTANCE_URL || 'https://social.degenfeed.xyz';
+      auth?.mastodon_instance || this.env.GOTOSOCIAL_INSTANCE_URL || 'https://social.degenfeed.xyz';
     return {
       url: result.nativeUri || `${instanceBase}/@${short.creator.handle}/${result.nativeId}`,
       nativeId: result.nativeId,

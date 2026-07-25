@@ -2,10 +2,13 @@
 
 **Base URL:** `https://degenfeed.xyz/v1/`  
 **Status:** Stable  
+**API Routes:** ~500+ across 90+ route modules and 31 major endpoint categories  
+**Protocols Covered:** 44+  
+**Packages:** 43+ shared TypeScript packages  
 **Legacy `/api/` routes deprecated — sunset November 1, 2026**  
 **Authentication:** All v1 endpoints require an API key in the `Authorization` header
 
-Access the full power of DegenFeed programmatically: feed aggregation, cross-protocol posting, identity resolution, tipping, creator coins, livestreaming, community management, analytics, and more.
+Access the full power of DegenFeed programmatically: feed aggregation across 44+ protocols, cross-protocol posting, identity resolution, tipping, creator coins (Base + Solana), livestreaming, audio spaces, community management, short-form video, analytics, and more.
 
 All endpoints return JSON. Timestamps are in milliseconds since Unix epoch unless noted.
 
@@ -44,6 +47,8 @@ All endpoints return JSON. Timestamps are in milliseconds since Unix epoch unles
 29. [YouTube](#youtube)
 30. [Prices](#prices)
 31. [Other Endpoints](#other-endpoints)
+32. [WebSocket / Real-Time](#websocket--real-time)
+33. [Matrix Bridge Hub](#matrix-bridge-hub)
 
 ---
 
@@ -127,7 +132,7 @@ All feed endpoints require scope `read:feed`.
 
 ### GET /v1/feed/home
 
-Aggregated and ranked feed from all connected protocols.
+Aggregated and ranked feed from 44+ connected protocols and services (11 standardized bridge providers + Matrix bridge hub + ActivityPub federation + API integrations).
 
 **Query Parameters:**
 
@@ -1165,6 +1170,94 @@ Link preview metadata.
 ### GET /v1/funding
 
 Funding/goal statistics.
+
+---
+
+## WebSocket / Real-Time
+
+DegenFeed provides real-time updates via WebSocket and Server-Sent Events.
+
+### GET /v1/ws
+
+WebSocket endpoint for real-time feed updates, notifications, and chat.
+
+**Connection:**
+```
+wss://degenfeed.xyz/v1/ws?token=<session_token>
+```
+
+**Events:**
+| Event | Direction | Description |
+|-------|-----------|-------------|
+| `feed:update` | Server→Client | New posts available in feed |
+| `notification` | Server→Client | New notification |
+| `tip:received` | Server→Client | Tip received notification |
+| `stream:live` | Server→Client | Followed creator went live |
+| `chat:message` | Bidirectional | Real-time chat message |
+| `space:update` | Server→Client | Audio space status change |
+
+### GET /v1/feed/stream
+
+Server-Sent Events real-time feed stream.
+
+**Request:**
+```
+GET /v1/feed/stream
+Authorization: Bearer df_key_...
+```
+
+**Response:** SSE event stream with `data: { post: UnifiedPost }` events.
+
+### POST /v1/ws/chat/send
+
+Send a chat message via WebSocket bridge.
+
+### Rate Limits
+
+- WebSocket: max 5 connections per session, 5 min idle timeout
+- SSE: max 3 connections per session
+
+---
+
+## Matrix Bridge Hub
+
+DegenFeed's Matrix bridge hub provides access to 20+ additional messaging platforms through the Matrix federation protocol.
+
+### Available Bridges
+
+| Platform | Bridge | Feed | Post |
+|----------|--------|------|------|
+| WhatsApp | mautrix-whatsapp | ✅ | ✅ |
+| Signal | mautrix-signal | ✅ | ✅ |
+| Telegram | mautrix-telegram | ✅ | ✅ |
+| Discord | mautrix-discord | ✅ | ✅ |
+| Slack | mautrix-slack | ✅ | ✅ |
+| IRC | matrix-appservice-irc | ✅ | ✅ |
+| WeChat | mautrix-wechat | ✅ | ✅ |
+| Google Chat | mautrix-googlechat | ✅ | ✅ |
+| +15 more | various mautrix bridges | ✅ | ✅ |
+
+### Matrix Endpoints
+
+### GET /v1/matrix/rooms
+
+List Matrix rooms available to the authenticated user.
+
+### POST /v1/matrix/room/:id/join
+
+Join a Matrix room.
+
+### POST /v1/matrix/room/:id/send
+
+Send a message to a Matrix room (bridges to connected platforms).
+
+### GET /v1/matrix/room/:id/feed
+
+Get recent messages from a Matrix room as feed items.
+
+### POST /v1/matrix/bridge/link
+
+Link an external platform (WhatsApp, Signal, etc.) to DegenFeed via Matrix.
 
 ---
 

@@ -2,7 +2,7 @@
  * Landing page assets — served by the Worker at degenfeed.xyz/
  * and www.degenfeed.xyz/ to bypass the tunnel/port-80 mismatch.
  *
- * Redesigned: 2026-07-25 — "One Feed. Every Protocol. Your Rules."
+ * Redesigned: 2026-07-25 — "One Feed. 44 Protocols. Your Rules."
  * Cyberpunk vision page with aurora gradient, feature grid, protocol marquee.
  */
 
@@ -17,24 +17,24 @@ export const LANDING_HTML = `<!doctype html>
     <title>DegenFeed — The Web3 Social Aggregator</title>
     <meta
       name="description"
-      content="One feed. Every protocol. Your rules. DegenFeed unifies 18 decentralized networks into a single, beautiful timeline. Own your identity. Control your feed. Bridge every protocol."
+      content="One feed. 44 protocols. Your rules. DegenFeed unifies 44 decentralized networks into a single, beautiful timeline. Own your identity. Control your feed. Bridge every protocol."
     />
 
     <!-- Open Graph -->
-    <meta property="og:title" content="DegenFeed — The Web3 Social Aggregator" />
-    <meta property="og:description" content="One feed. Every protocol. Your rules." />
+    <meta property="og:title" content="DegenFeed — 44 Protocols. One Feed." />
+    <meta property="og:description" content="One feed. 44 protocols. Your rules." />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://degenfeed.xyz" />
-    <meta property="og:image" content="https://degenfeed.xyz/og-image.png" />
+    <meta property="og:image" content="https://app.degenfeed.xyz/api/media/gateway/ipfs/og-image-v1" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@degenfeed" />
-    <meta name="twitter:title" content="DegenFeed — The Web3 Social Aggregator" />
-    <meta name="twitter:description" content="One feed. Every protocol. Your rules." />
-    <meta name="twitter:image" content="https://degenfeed.xyz/og-image.png" />
+    <meta name="twitter:title" content="DegenFeed — 44 Protocols. One Feed." />
+    <meta name="twitter:description" content="One feed. 44 protocols. Your rules." />
+    <meta name="twitter:image" content="https://app.degenfeed.xyz/api/media/gateway/ipfs/og-image-v1" />
 
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/favicon.svg" />
@@ -53,7 +53,7 @@ export const LANDING_HTML = `<!doctype html>
         "@type": "WebApplication",
         "name": "DegenFeed",
         "url": "https://degenfeed.xyz",
-        "description": "Open-source multi-protocol social aggregator for web3. Nostr, Farcaster, Lens, Bluesky, Mastodon, and more in one feed. Zero sign-ups to read. One composer to post everywhere.",
+        "description": "Open-source multi-protocol social aggregator. 44 protocols including Nostr, Farcaster, Lens, Bluesky, Mastodon, and more in one feed. Zero sign-ups to read. One composer to post everywhere.",
         "applicationCategory": "SocialNetworkingApplication",
         "operatingSystem": "Web",
         "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
@@ -99,19 +99,19 @@ export const LANDING_HTML = `<!doctype html>
           <!-- Badge -->
           <div class="hero-badge">
             <span class="badge-dot"></span>
-            Live — 18 Protocols · 38 Self-Hosted Nodes
+            Live — 44 Protocols · 42 Self-Hosted Nodes
           </div>
 
           <!-- Headline -->
           <h1 id="hero-title" class="hero-title">
             <span class="hero-gradient-line">One Feed.</span>
-            <span class="hero-fg-line">Every Protocol.</span>
+            <span class="hero-fg-line">44 Protocols.</span>
             <span class="hero-gradient-line">Your Rules.</span>
           </h1>
 
           <!-- Subheadline -->
           <p class="hero-sub">
-            DegenFeed unifies 18 decentralized networks into a single, beautiful timeline.
+            DegenFeed unifies 44 decentralized networks into a single, beautiful timeline.
             Own your identity. Control your feed. Bridge every protocol.
           </p>
 
@@ -130,11 +130,11 @@ export const LANDING_HTML = `<!doctype html>
           <!-- Live Stats -->
           <div class="hero-stats">
             <div class="hero-stat">
-              <span class="hero-stat-value">18</span>
+              <span class="hero-stat-value">44</span>
               <span class="hero-stat-label">Protocols</span>
             </div>
             <div class="hero-stat">
-              <span class="hero-stat-value">38</span>
+              <span class="hero-stat-value">42</span>
               <span class="hero-stat-label">Self-Hosted Nodes</span>
             </div>
             <div class="hero-stat">
@@ -152,7 +152,7 @@ export const LANDING_HTML = `<!doctype html>
             The Unified <span class="gradient-text">Social Layer</span>
           </h2>
           <p class="section-sub">
-            One protocol is limiting. Eighteen is liberation. Every network, every identity, every post — in one place.
+            One protocol is limiting. Forty-four is liberation. Every network, every identity, every post — in one place.
           </p>
         </div>
 
@@ -166,7 +166,7 @@ export const LANDING_HTML = `<!doctype html>
           <article class="f-card">
             <div class="f-card-icon" style="--fc-accent:#00ff41">📡</div>
             <h3 class="f-card-title">Unified Feed</h3>
-            <p class="f-card-desc">No more checking 8 apps. See every post from every protocol in one timeline. Smart deduplication means no repeats.</p>
+            <p class="f-card-desc">No more checking 44 silos. See every post from every protocol in one timeline. 15-layer smart deduplication means zero repeats.</p>
           </article>
 
           <article class="f-card">
@@ -178,13 +178,13 @@ export const LANDING_HTML = `<!doctype html>
           <article class="f-card">
             <div class="f-card-icon" style="--fc-accent:#00ba7c">🔒</div>
             <h3 class="f-card-title">Data Sovereignty</h3>
-            <p class="f-card-desc">We self-host Farcaster Hubble, Nostr relay, PeerTube, GoToSocial, and more. Your data lives on our infrastructure, not theirs.</p>
+            <p class="f-card-desc">We self-host 42 nodes: Farcaster Hubble, Nostr relays, PeerTube, GoToSocial, and more. Your data lives on your terms with our infrastructure.</p>
           </article>
 
           <article class="f-card">
             <div class="f-card-icon" style="--fc-accent:#6364ff">🌉</div>
             <h3 class="f-card-title">Protocol Bridging</h3>
-            <p class="f-card-desc">Post once, publish everywhere. Reply to a Farcaster cast from Nostr. DM a Bluesky user from Matrix. The bridges work.</p>
+            <p class="f-card-desc">Post once, publish everywhere with 12 protocol adapters. Reply to a Farcaster cast from Nostr. DM a Bluesky user from Matrix. The bridges work.</p>
           </article>
 
           <article class="f-card">
@@ -202,7 +202,7 @@ export const LANDING_HTML = `<!doctype html>
             Every Protocol. <span class="gradient-text">One Window.</span>
           </h2>
           <p class="section-sub">
-            18 decentralized networks. One unified timeline. The social graph belongs to the protocols — the window belongs to you.
+            44 decentralized networks. One unified timeline. The social graph belongs to the protocols — the window belongs to you.
           </p>
         </div>
 
@@ -223,12 +223,38 @@ export const LANDING_HTML = `<!doctype html>
               <span class="p-chip" style="--pc:#0dbd8b">💬 Matrix</span>
               <span class="p-chip" style="--pc:#5865f2">💜 Discord</span>
               <span class="p-chip" style="--pc:#ff0000">▶ YouTube</span>
-              <span class="p-chip" style="--pc:#f1502f">🐙 GitHub</span>
-              <span class="p-chip" style="--pc:#ffa500">📡 RSS</span>
               <span class="p-chip" style="--pc:#00b868">🍋 Lemmy</span>
               <span class="p-chip" style="--pc:#ff6719">✉ Substack</span>
-              <span class="p-chip" style="--pc:#e74c3c">🎥 PeerTube</span>
               <span class="p-chip" style="--pc:#6364ff">🐘 GoToSocial</span>
+              <span class="p-chip" style="--pc:#ff6b6b">💜 Pleroma</span>
+              <span class="p-chip" style="--pc:#ff6b6b">🌸 Misskey</span>
+              <span class="p-chip" style="--pc:#ff6b6b">🤝 Friendica</span>
+              <span class="p-chip" style="--pc:#ff6b6b">🌍 Diaspora</span>
+              <span class="p-chip" style="--pc:#ff6b6b">💬 Gab</span>
+              <span class="p-chip" style="--pc:#ff6b6b">🧠 Minds</span>
+              <span class="p-chip" style="--pc:#ff6b6b">✍️ WriteFreely</span>
+              <span class="p-chip" style="--pc:#ff6b6b">📝 Micro.blog</span>
+              <span class="p-chip" style="--pc:#ff6b6b">📄 Plume</span>
+              <span class="p-chip" style="--pc:#ff6b6b">✏️ Write.as</span>
+              <span class="p-chip" style="--pc:#ff6b6b">📰 Publii</span>
+              <span class="p-chip" style="--pc:#ff6b6b">🌐 Aether</span>
+              <span class="p-chip" style="--pc:#ff6b6b">🏴‍☠️ Scuttlebutt</span>
+              <span class="p-chip" style="--pc:#ff6b6b">🍯 Hive</span>
+              <span class="p-chip" style="--pc:#ff6b6b">🥧 PieFed</span>
+              <span class="p-chip" style="--pc:#ff6b6b">📺 Owncast</span>
+              <span class="p-chip" style="--pc:#ff6b6b">🪙 Odysee</span>
+              <span class="p-chip" style="--pc:#ff6b6b">🎵 DTube</span>
+              <span class="p-chip" style="--pc:#ff6b6b">📻 Rumble</span>
+              <span class="p-chip" style="--pc:#ff6b6b">🎥 BitTube</span>
+              <span class="p-chip" style="--pc:#ff6b6b">🎧 Funkwhale</span>
+              <span class="p-chip" style="--pc:#ff6b6b">🎙️ Castopod</span>
+              <span class="p-chip" style="--pc:#ff6b6b">⛓️ Steem</span>
+              <span class="p-chip" style="--pc:#ff6b6b">🔷 DeSo</span>
+              <span class="p-chip" style="--pc:#ff6b6b">🔗 Subsocial</span>
+              <span class="p-chip" style="--pc:#ff6b6b">🔌 CyberConnect</span>
+              <span class="p-chip" style="--pc:#ff6b6b">🏺 Ceramic</span>
+              <span class="p-chip" style="--pc:#ff6b6b">📱 Status</span>
+              <span class="p-chip" style="--pc:#ff6b6b">🕵️ Session</span>
             </div>
             <div class="marquee-content" aria-hidden="true">
               <span class="p-chip" style="--pc:#8b5cf6">🌩 Nostr</span>
@@ -243,14 +269,163 @@ export const LANDING_HTML = `<!doctype html>
               <span class="p-chip" style="--pc:#0dbd8b">💬 Matrix</span>
               <span class="p-chip" style="--pc:#5865f2">💜 Discord</span>
               <span class="p-chip" style="--pc:#ff0000">▶ YouTube</span>
-              <span class="p-chip" style="--pc:#f1502f">🐙 GitHub</span>
-              <span class="p-chip" style="--pc:#ffa500">📡 RSS</span>
               <span class="p-chip" style="--pc:#00b868">🍋 Lemmy</span>
               <span class="p-chip" style="--pc:#ff6719">✉ Substack</span>
-              <span class="p-chip" style="--pc:#e74c3c">🎥 PeerTube</span>
               <span class="p-chip" style="--pc:#6364ff">🐘 GoToSocial</span>
+              <span class="p-chip" style="--pc:#ff6b6b">💜 Pleroma</span>
+              <span class="p-chip" style="--pc:#ff6b6b">🌸 Misskey</span>
+              <span class="p-chip" style="--pc:#ff6b6b">🤝 Friendica</span>
+              <span class="p-chip" style="--pc:#ff6b6b">🌍 Diaspora</span>
+              <span class="p-chip" style="--pc:#ff6b6b">💬 Gab</span>
+              <span class="p-chip" style="--pc:#ff6b6b">🧠 Minds</span>
+              <span class="p-chip" style="--pc:#ff6b6b">✍️ WriteFreely</span>
+              <span class="p-chip" style="--pc:#ff6b6b">📝 Micro.blog</span>
+              <span class="p-chip" style="--pc:#ff6b6b">📄 Plume</span>
+              <span class="p-chip" style="--pc:#ff6b6b">✏️ Write.as</span>
+              <span class="p-chip" style="--pc:#ff6b6b">📰 Publii</span>
+              <span class="p-chip" style="--pc:#ff6b6b">🌐 Aether</span>
+              <span class="p-chip" style="--pc:#ff6b6b">🏴‍☠️ Scuttlebutt</span>
+              <span class="p-chip" style="--pc:#ff6b6b">🍯 Hive</span>
+              <span class="p-chip" style="--pc:#ff6b6b">🥧 PieFed</span>
+              <span class="p-chip" style="--pc:#ff6b6b">📺 Owncast</span>
+              <span class="p-chip" style="--pc:#ff6b6b">🪙 Odysee</span>
+              <span class="p-chip" style="--pc:#ff6b6b">🎵 DTube</span>
+              <span class="p-chip" style="--pc:#ff6b6b">📻 Rumble</span>
+              <span class="p-chip" style="--pc:#ff6b6b">🎥 BitTube</span>
+              <span class="p-chip" style="--pc:#ff6b6b">🎧 Funkwhale</span>
+              <span class="p-chip" style="--pc:#ff6b6b">🎙️ Castopod</span>
+              <span class="p-chip" style="--pc:#ff6b6b">⛓️ Steem</span>
+              <span class="p-chip" style="--pc:#ff6b6b">🔷 DeSo</span>
+              <span class="p-chip" style="--pc:#ff6b6b">🔗 Subsocial</span>
+              <span class="p-chip" style="--pc:#ff6b6b">🔌 CyberConnect</span>
+              <span class="p-chip" style="--pc:#ff6b6b">🏺 Ceramic</span>
+              <span class="p-chip" style="--pc:#ff6b6b">📱 Status</span>
+              <span class="p-chip" style="--pc:#ff6b6b">🕵️ Session</span>
             </div>
           </div>
+        </div>
+      </section>
+
+      <!-- ═══════════════ PROTOCOL CATEGORIES ═══════════════ -->
+      <section class="categories" id="categories" aria-labelledby="categories-title">
+        <div class="section-header">
+          <h2 id="categories-title" class="section-title">
+            Protocols by <span class="gradient-text">Category</span>
+          </h2>
+          <p class="section-sub">
+            From decentralized social to video platforms — 44 protocols organized by what they do best.
+          </p>
+        </div>
+
+        <div class="categories-grid">
+          <!-- 🔗 Decentralized Social -->
+          <article class="cat-card">
+            <div class="cat-card-header">
+              <span class="cat-card-icon" aria-hidden="true">🔗</span>
+              <div>
+                <h3 class="cat-card-title">Decentralized Social</h3>
+                <span class="cat-card-count">12 protocols</span>
+              </div>
+            </div>
+            <div class="cat-protocols">
+              <span class="cat-chip" style="--cc:#8b5cf6">🌩 Nostr</span>
+              <span class="cat-chip" style="--cc:#8a63d2">⚡ Farcaster</span>
+              <span class="cat-chip" style="--cc:#abfe2c">🔮 Lens</span>
+              <span class="cat-chip" style="--cc:#1185fe">🦋 Bluesky</span>
+              <span class="cat-chip" style="--cc:#6364ff">🐘 Mastodon</span>
+              <span class="cat-chip" style="--cc:#ff6688">💜 Pleroma</span>
+              <span class="cat-chip" style="--cc:#ff88aa">🌸 Misskey</span>
+              <span class="cat-chip" style="--cc:#dd88ff">🤝 Friendica</span>
+              <span class="cat-chip" style="--cc:#88aaff">🌍 Diaspora</span>
+              <span class="cat-chip" style="--cc:#888">💬 Gab</span>
+              <span class="cat-chip" style="--cc:#ff8800">🧠 Minds</span>
+              <span class="cat-chip" style="--cc:#888">🧵 Threads</span>
+            </div>
+          </article>
+
+          <!-- 🌐 Federated & Microblog -->
+          <article class="cat-card">
+            <div class="cat-card-header">
+              <span class="cat-card-icon" aria-hidden="true">🌐</span>
+              <div>
+                <h3 class="cat-card-title">Federated &amp; Microblog</h3>
+                <span class="cat-card-count">8 protocols</span>
+              </div>
+            </div>
+            <div class="cat-protocols">
+              <span class="cat-chip" style="--cc:#6364ff">🐘 GoToSocial</span>
+              <span class="cat-chip" style="--cc:#c44a8b">📸 Pixelfed</span>
+              <span class="cat-chip" style="--cc:#66ccff">✍️ WriteFreely</span>
+              <span class="cat-chip" style="--cc:#ff6699">📝 Micro.blog</span>
+              <span class="cat-chip" style="--cc:#ffaa00">📄 Plume</span>
+              <span class="cat-chip" style="--cc:#888">✏️ Write.as</span>
+              <span class="cat-chip" style="--cc:#888">📰 Publii</span>
+              <span class="cat-chip" style="--cc:#66ffaa">🌐 Aether</span>
+            </div>
+          </article>
+
+          <!-- 💬 Communities & Forums -->
+          <article class="cat-card">
+            <div class="cat-card-header">
+              <span class="cat-card-icon" aria-hidden="true">💬</span>
+              <div>
+                <h3 class="cat-card-title">Communities &amp; Forums</h3>
+                <span class="cat-card-count">7 protocols</span>
+              </div>
+            </div>
+            <div class="cat-protocols">
+              <span class="cat-chip" style="--cc:#00b868">🍋 Lemmy</span>
+              <span class="cat-chip" style="--cc:#ff4500">🤖 Reddit</span>
+              <span class="cat-chip" style="--cc:#5865f2">💜 Discord</span>
+              <span class="cat-chip" style="--cc:#0dbd8b">💬 Matrix</span>
+              <span class="cat-chip" style="--cc:#88aa00">🏴‍☠️ Scuttlebutt</span>
+              <span class="cat-chip" style="--cc:#ffaa00">🍯 Hive</span>
+              <span class="cat-chip" style="--cc:#88ff88">🥧 PieFed</span>
+            </div>
+          </article>
+
+          <!-- 🎬 Video & Media -->
+          <article class="cat-card">
+            <div class="cat-card-header">
+              <span class="cat-card-icon" aria-hidden="true">🎬</span>
+              <div>
+                <h3 class="cat-card-title">Video &amp; Media</h3>
+                <span class="cat-card-count">9 protocols</span>
+              </div>
+            </div>
+            <div class="cat-protocols">
+              <span class="cat-chip" style="--cc:#e74c3c">🎬 PeerTube</span>
+              <span class="cat-chip" style="--cc:#ff6688">📺 Owncast</span>
+              <span class="cat-chip" style="--cc:#ff0000">▶ YouTube</span>
+              <span class="cat-chip" style="--cc:#88aa00">🪙 Odysee</span>
+              <span class="cat-chip" style="--cc:#ff8800">🎵 DTube</span>
+              <span class="cat-chip" style="--cc:#ff6600">📻 Rumble</span>
+              <span class="cat-chip" style="--cc:#888">🎥 BitTube</span>
+              <span class="cat-chip" style="--cc:#66ffaa">🎧 Funkwhale</span>
+              <span class="cat-chip" style="--cc:#ff66aa">🎙️ Castopod</span>
+            </div>
+          </article>
+
+          <!-- ⛓️ Web3 & Blockchain -->
+          <article class="cat-card">
+            <div class="cat-card-header">
+              <span class="cat-card-icon" aria-hidden="true">⛓️</span>
+              <div>
+                <h3 class="cat-card-title">Web3 &amp; Blockchain</h3>
+                <span class="cat-card-count">8 protocols</span>
+              </div>
+            </div>
+            <div class="cat-protocols">
+              <span class="cat-chip" style="--cc:#ffaa00">⛓️ Steem</span>
+              <span class="cat-chip" style="--cc:#88aaff">🔷 DeSo</span>
+              <span class="cat-chip" style="--cc:#ff6688">🔗 Subsocial</span>
+              <span class="cat-chip" style="--cc:#66ccff">🔌 CyberConnect</span>
+              <span class="cat-chip" style="--cc:#aa66ff">🏺 Ceramic</span>
+              <span class="cat-chip" style="--cc:#66ffaa">📱 Status</span>
+              <span class="cat-chip" style="--cc:#888">🕵️ Session</span>
+              <span class="cat-chip" style="--cc:#ffaa00">🍯 Hive</span>
+            </div>
+          </article>
         </div>
       </section>
 
@@ -260,23 +435,28 @@ export const LANDING_HTML = `<!doctype html>
           <div class="stat-card">
             <div class="stat-icon">✧</div>
             <div class="stat-value" data-count="10427">10,427+</div>
-            <div class="stat-label">Tweets Posted</div>
+            <div class="stat-label">Posts Published</div>
           </div>
           <div class="stat-card">
             <div class="stat-icon">⬡</div>
-            <div class="stat-value">18</div>
+            <div class="stat-value">44</div>
             <div class="stat-label">Protocols Bridged</div>
           </div>
           <div class="stat-card">
             <div class="stat-icon">◈</div>
-            <div class="stat-value">2,847+</div>
+            <div class="stat-value">2,500+</div>
             <div class="stat-label">Identities Linked</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">💰</div>
+            <div class="stat-value">250+</div>
+            <div class="stat-label">Creator Coins Launched</div>
           </div>
         </div>
         <div class="stats-cta-wrapper">
           <a href="https://git.rugmunch.io/RugMunchMedia/degenfeed-web" target="_blank" rel="noopener" class="stats-built-in-public">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0020 4.77 5.07 5.07 0 0019.91 1S18.73.65 16 2.48a13.38 13.38 0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 005 4.77a5.44 5.44 0 00-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 009 18.13V22"/></svg>
-            Built in public — star on Forgejo
+            Open source (MIT) — Forgejo / Codeberg / GitLab
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17l9.2-9.2M17 17V7H7"/></svg>
           </a>
         </div>
@@ -289,7 +469,7 @@ export const LANDING_HTML = `<!doctype html>
           <div class="cta-icon">⚡</div>
           <h2 id="cta-title" class="cta-title">Ready to unify your social web?</h2>
           <p class="cta-sub">
-            One feed. Every protocol. Your rules. Join thousands of users already bridging
+            One feed. 44 protocols. Your rules. Join thousands of users already bridging
             the decentralized social graph.
           </p>
           <a href="https://app.degenfeed.xyz" class="btn-glow btn-glow-large">
@@ -860,6 +1040,99 @@ a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-
   box-shadow: 0 0 20px color-mix(in srgb, var(--pc, var(--accent)) 20%, transparent);
 }
 
+/* ═══════════════ PROTOCOL CATEGORIES ═══════════════ */
+.categories {
+  padding: 80px 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.categories-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 20px;
+  padding: 0;
+}
+
+.cat-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: 24px;
+  transition: all 0.3s cubic-bezier(0.16,1,0.3,1);
+}
+
+.cat-card:hover {
+  border-color: rgba(0,255,65,0.2);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 40px rgba(0,0,0,0.3), 0 0 20px var(--accent-glow);
+}
+
+.cat-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.cat-card-icon {
+  font-size: 1.4rem;
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-lg);
+  background: var(--accent-soft);
+  border: 1px solid rgba(0,255,65,0.15);
+  flex-shrink: 0;
+}
+
+.cat-card-title {
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--fg);
+  margin-bottom: 2px;
+}
+
+.cat-card-count {
+  font-size: 0.7rem;
+  color: var(--muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.cat-protocols {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cat-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: var(--radius-full);
+  font-size: 0.78rem;
+  font-weight: 600;
+  background: color-mix(in srgb, var(--cc, var(--accent)) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--cc, var(--accent)) 20%, transparent);
+  color: var(--cc, var(--accent));
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.cat-chip:hover {
+  transform: scale(1.06);
+  filter: brightness(1.15);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--cc, var(--accent)) 15%, transparent);
+}
+
 /* ═══════════════ STATS ═══════════════ */
 .stats {
   border-top: 1px solid var(--border);
@@ -871,7 +1144,7 @@ a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-
 
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 24px;
   max-width: 800px;
   margin: 0 auto 24px;

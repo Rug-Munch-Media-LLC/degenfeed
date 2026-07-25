@@ -497,7 +497,7 @@ function PostCardComponent({
   return (
     <>
       <article
-        className="post-card cursor-pointer border-b border-[var(--color-border)] px-4 py-3 transition-all duration-150 hover:bg-[var(--color-overlay)] hover:border-[color-mix(in_srgb,var(--color-accent)_15%,var(--color-border))] hover:shadow-sm"
+        className="post-card group cursor-pointer border-b border-[var(--color-border)] px-4 py-3 transition-all duration-150 hover:bg-[var(--color-overlay)] hover:border-[color-mix(in_srgb,var(--color-accent)_15%,var(--color-border))] hover:shadow-sm"
         onClick={() => onClick?.(post.id)}
         onContextMenu={(e) => onContextMenu?.(e, post.id)}
         onKeyDown={(e) => {
@@ -541,6 +541,22 @@ function PostCardComponent({
           onShowTranslateMenu={() => setShowTranslateMenu((v) => !v)}
           onTranslate={handleTranslate}
         />
+
+        {/* Why this post? ⓘ icon — always visible transparency trigger */}
+        <div className="mb-1 flex justify-end">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onWhyThisPost?.(post);
+            }}
+            className="flex h-6 w-6 items-center justify-center rounded-full text-[11px] text-[var(--color-muted)] opacity-0 transition-all hover:bg-degen-500/10 hover:text-degen-400 group-hover:opacity-100 focus-visible:opacity-100"
+            aria-label="Why this post?"
+            title="Why am I seeing this?"
+          >
+            ⓘ
+          </button>
+        </div>
 
         {/* Post body (paywall, text, token charts) */}
         <PostBody

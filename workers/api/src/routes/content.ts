@@ -42,7 +42,7 @@ function providerFor(protocol: ProtocolSource, env: Env) {
     case 'bluesky':
       return new BlueskyProvider({ baseUrl: env.BSKY_PUBLIC_URL });
     case 'mastodon':
-      return new MastodonProvider({ instanceUrl: env.GTS_INSTANCE_URL });
+      return new MastodonProvider({ instanceUrl: env.GOTOSOCIAL_INSTANCE_URL });
     case 'threads':
       return new ThreadsProvider();
     default:

@@ -12,7 +12,12 @@ import {
 import { broadcastToAll } from '../ws-broadcast';
 import { buildLensCollectIntent } from './lens';
 import { fetchZapInvoice, resolveLnurlFromPubkey } from './lightning';
-import { recordUnifiedTip, type TipEntityType } from './unified-tip';
+import {
+  recordUnifiedTip,
+  type SupportedChain,
+  selectBestChain,
+  type TipEntityType,
+} from './unified-tip-core';
 
 export interface ResolvedTipMethod {
   method: string;
@@ -277,7 +282,7 @@ function buildBaseMethods(protocol: string, env: Env): ResolvedTipMethod[] {
         description: 'Tip via Farcaster Frame — embeddable in any cast',
         icon: '◈',
         available: false,
-        actionUrl: `${env.GTS_INSTANCE_URL || 'https://degenfeed.xyz'}/api/tip/frame/${encodeURIComponent('author')}`,
+        actionUrl: `${env.GOTOSOCIAL_INSTANCE_URL || 'https://degenfeed.xyz'}/api/tip/frame/${encodeURIComponent('author')}`,
         fee: '~$0.01-0.50',
       });
       break;
@@ -396,6 +401,61 @@ export async function handleTipResolve(request: Request, env: Env): Promise<Resp
   const rankedMethods = rankMethods(baseMethods, protocol, postContext);
 
   return jsonResponse({ methods: rankedMethods, resolved: true });
+}
+
+/**
+ * GET /api/tip/smart-chain
+ * Returns the best chain(s) for a tip based on sender + recipient capabilities and amount.
+ * Query params: senderChains, recipientChains, amountUsd, preferredChain (all optional)
+ */
+export async function handleSmartChainSelection(request: Request, _env: Env): Promise<Response> {
+  const url = new URL(request.url);
+  const senderChainsRaw = sanitizeString(url.searchParams.get('senderChains'), 256);
+  const recipientChainsRaw = sanitizeString(url.searchParams.get('recipientChains'), 256);
+  const amountUsd = Number.parseFloat(url.searchParams.get('amountUsd') ?? '10');
+  const preferredChain = sanitizeString(url.searchParams.get('preferredChain'), 32) as
+    | SupportedChain
+    | undefined;
+  const recipientHasLightning = url.searchParams.get('recipientHasLightning') === 'true';
+  const recipientHasSolana = url.searchParams.get('recipientHasSolana') === 'true';
+  const recipientHasEvm = url.searchParams.get('recipientHasEvm') === 'true';
+
+  const parseChains = (raw: string): SupportedChain[] =>
+    raw
+      ? raw
+          .split(',')
+          .filter((c): c is SupportedChain =>
+            ['lightning', 'ethereum', 'base', 'solana', 'polygon', 'optimism', 'arbitrum'].includes(
+              c.trim(),
+            ),
+          )
+          .map((c) => c.trim() as SupportedChain)
+      : [];
+
+  const sender = parseChains(senderChainsRaw);
+  const recipient = parseChains(recipientChainsRaw);
+
+  // If no chains specified, infer from the boolean flags
+  if (recipient.length === 0) {
+    if (recipientHasLightning) recipient.push('lightning');
+    if (recipientHasSolana) recipient.push('solana');
+    if (recipientHasEvm) recipient.push('base', 'ethereum');
+  }
+  if (sender.length === 0) {
+    sender.push('lightning', 'solana', 'base', 'ethereum');
+  }
+
+  const results = selectBestChain({
+    senderChains: sender,
+    recipientChains: recipient,
+    amountUsd: Math.max(0.01, amountUsd),
+    preferredChain,
+    recipientHasLightning,
+    recipientHasSolana,
+    recipientHasEvm,
+  });
+
+  return jsonResponse({ chains: results, amountUsd });
 }
 
 export async function handleTipCreate(request: Request, env: Env): Promise<Response> {
@@ -637,6 +697,18 @@ export interface CreatorTipSettings {
   lensProfile?: string;
   nostrPubkey?: string;
   preferredMethod?: string;
+  /** Multi-chain preferences for smart chain selection */
+  polygonAddress?: string;
+  optimismAddress?: string;
+  arbitrumAddress?: string;
+  /** Creator coin addresses on each chain */
+  creatorCoins?: Array<{
+    chain: string;
+    address: string;
+    symbol: string;
+  }>;
+  /** Lightning node address (user@domain.com) */
+  lightningNodeAddress?: string;
 }
 
 function sanitizeSettings(input: unknown): CreatorTipSettings | null {

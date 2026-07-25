@@ -124,7 +124,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - **87 SSR pages** — Feed, profiles, threads, discover, settings, admin
 - **500+ API routes** — Feeds, auth, tipping, moderation, search, notifications, billing
-- **25+ packages** — Protocol SDKs, feed pipeline, ranking, identity, web3, storage
+- **43+ packages** — Protocol SDKs, feed pipeline, ranking, identity, web3, storage, bridges, spaces, monetization
 - **Auth middleware** — Next.js middleware.ts protects ALL `/api/*` POST/PUT/DELETE
 - **Rate limiting** — 6-tier token bucket with KV-backed fixed-window
 - **Admin panel** — Wallet whitelist + `requireAdmin()` guard on 15 admin routes

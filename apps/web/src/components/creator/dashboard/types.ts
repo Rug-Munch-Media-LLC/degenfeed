@@ -19,7 +19,8 @@ export type TabId =
   | 'analytics'
   | 'monetization'
   | 'publishing'
-  | 'articles';
+  | 'articles'
+  | 'storage';
 
 export const TABS: { id: TabId; label: string; icon: string }[] = [
   { id: 'overview', label: 'Overview', icon: '◆' },
@@ -28,6 +29,7 @@ export const TABS: { id: TabId; label: string; icon: string }[] = [
   { id: 'monetization', label: 'Monetization', icon: '✦' },
   { id: 'articles', label: 'Articles', icon: '📄' },
   { id: 'publishing', label: 'Publishing', icon: '📤' },
+  { id: 'storage', label: 'Storage', icon: '💾' },
 ];
 
 export const PROTOCOL_COLORS: Record<string, string> = {

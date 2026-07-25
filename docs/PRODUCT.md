@@ -5,7 +5,7 @@
 **Status:** Live in production
 
 ## Problem
-Crypto-native users consume content across Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, RSS, and 25+ other protocols. A single client reduces friction and keeps the community in one place — while giving creators ownership of their content, identity, and revenue.
+Crypto-native users consume content across Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, RSS, and 44+ other protocols and services. A single client reduces friction and keeps the community in one place — while giving creators ownership of their content, identity, and revenue.
 
 ## User
 - Crypto users who want one aggregated feed
@@ -43,7 +43,7 @@ Crypto-native users consume content across Nostr, Farcaster, Lens, Bluesky, Mast
 - Landing page is the Next.js app served at `https://app.degenfeed.xyz` (hero section with orbiting protocols, live ticker, feed preview, featured creators)
 - `apps/web` is live at `https://app.degenfeed.xyz` — fully operational with unified feed, composer, tipping, and profile pages
 - `workers/api` is deployed as Cloudflare Worker `degenfeed-api`
-- Cross-protocol posting is live for signed-in users (15+ protocols)
+- Cross-protocol posting is live for signed-in users (15+ protocols, 44+ read sources)
 - Creator coins are live on Base and Solana
 - Cross-chain tipping is live (ETH, SOL, USDC, Lightning)
 - Livestreaming and Audio Spaces are live

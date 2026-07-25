@@ -13,6 +13,10 @@ import { jsonResponse, noCacheJsonResponse } from '../index';
 import { readStringArray, writeStringArray } from '../routes/live-shorts-engine';
 import { broadcastToAll } from '../ws-broadcast';
 import { CHANNELS } from '../ws-channels';
+import { fetchCuratedTwitchStreams } from './live-sources/twitch';
+import { fetchKickLiveStreams } from './live-sources/kick';
+import { fetchAllPeerTubeStreams } from './live-sources/peertube';
+import { processLiveNotifications } from './live-sources/notifications';
 
 // ─── Normalized Unified Stream Type ─────────────────────────────────────
 
@@ -25,7 +29,7 @@ export interface UnifiedIdentity {
   followers?: number;
 }
 
-export type LiveSource = 'owncast' | 'peertube' | 'youtube' | 'twitch' | 'spaces' | 'degenfeed' | 'farcaster' | 'nostr' | 'lens' | 'zora';
+export type LiveSource = 'owncast' | 'peertube' | 'youtube' | 'twitch' | 'kick' | 'spaces' | 'degenfeed' | 'farcaster' | 'nostr' | 'lens' | 'zora';
 
 export interface UnifiedLiveStream {
   id: string;
@@ -969,9 +973,11 @@ export async function aggregateAllStreams(
   // Fetch all sources in parallel — each is independent
   const results = await Promise.allSettled([
     fetchOwncastStreams(env),
-    fetchPeerTubeStreams(env),
+    fetchPeerTubeStreams(env),      // ← uses new multi-instance fetcher
     fetchYouTubeLiveStreams(env),
     fetchTwitchStreams(env),
+    fetchCuratedTwitchStreams(env), // ← new: curated crypto/tech/gaming channels
+    fetchKickLiveStreams(env),      // ← new: Kick.com live streams
     fetchDegenFeedSpaces(env),
     fetchFarcasterLiveStreams(env),
     fetchNostrLiveStreams(env),
@@ -992,6 +998,14 @@ export async function aggregateAllStreams(
   // Cache for 15 seconds
   if (allStreams.length > 0) {
     await setAggregatedCache(env, allStreams, 15);
+  }
+
+  // Process notifications for watched creators (non-blocking)
+  // If this is a cron-triggered refresh, send live notifications
+  if (typeof (env as any).IS_CRON !== 'undefined' && (env as any).IS_CRON) {
+    processLiveNotifications(env, allStreams).catch((e) =>
+      console.error('[live-aggregator] Notification processing failed:', e),
+    );
   }
 
   return allStreams;
@@ -1170,6 +1184,27 @@ export async function getStreamViewerCount(env: Env, streamId: string): Promise<
             data?: Array<{ viewer_count: number }>;
           };
           count = data.data?.[0]?.viewer_count ?? 0;
+        }
+        break;
+      }
+      case 'kick': {
+        const channelName = streamId.replace('kick:', '');
+        try {
+          const resp = await fetch(
+            `https://kick.com/api/v2/channels/${encodeURIComponent(channelName)}`,
+            {
+              headers: { accept: 'application/json', 'User-Agent': 'DegenFeed/1.0' },
+              signal: AbortSignal.timeout(3000),
+            },
+          );
+          if (resp.ok) {
+            const data = (await resp.json()) as {
+              livestream?: { viewer_count: number } | null;
+            };
+            count = data.livestream?.viewer_count ?? 0;
+          }
+        } catch {
+          // Fallback to last known
         }
         break;
       }

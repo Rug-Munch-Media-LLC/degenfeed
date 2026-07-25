@@ -21,18 +21,26 @@ export const CATEGORY_TABS = [
   { id: 'privacy', label: 'Privacy', emoji: '👁️' },
 ];
 
-export function NewsCategoryTabs({ activeCategory, onCategoryChange }: {
-  activeCategory: string; onCategoryChange: (cat: string) => void;
+export function NewsCategoryTabs({
+  activeCategory,
+  onCategoryChange,
+}: {
+  activeCategory: string;
+  onCategoryChange: (cat: string) => void;
 }) {
   return (
     <div className="mb-3 flex gap-1 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-gray-800">
       {CATEGORY_TABS.map((c) => (
-        <button key={c.id} type="button" onClick={() => onCategoryChange(c.id)}
+        <button
+          key={c.id}
+          type="button"
+          onClick={() => onCategoryChange(c.id)}
           className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-all ${
             activeCategory === c.id
               ? 'border-degen-500 bg-degen-500/20 text-degen-400 shadow-[0_0_12px_rgba(34,197,94,0.2)]'
               : 'border-gray-700 text-gray-400 hover:border-gray-600 hover:text-white'
-          }`}>
+          }`}
+        >
           {c.emoji} {c.label}
         </button>
       ))}

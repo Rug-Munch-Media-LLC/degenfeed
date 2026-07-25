@@ -9,8 +9,8 @@ import { useEffect, useState } from 'react';
  */
 
 const STATS = [
-  { label: 'Protocols', value: '18', suffix: '' },
-  { label: 'Self-Hosted Nodes', value: '38', suffix: '' },
+  { label: 'Protocols', value: '44', suffix: '' },
+  { label: 'Self-Hosted Nodes', value: '42', suffix: '' },
   { label: 'Open Source', value: '100', suffix: '%' },
 ] as const;
 
@@ -70,7 +70,7 @@ export function HeroSection() {
           }}
         >
           <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[var(--color-accent)]" />
-          Live — 18 Protocols · 38 Self-Hosted Nodes
+          Live — 44 Protocols · 42 Self-Hosted Nodes
         </div>
 
         {/* Headline */}
@@ -98,7 +98,7 @@ export function HeroSection() {
             animationFillMode: 'both',
           }}
         >
-          DegenFeed unifies 18 decentralized networks into a single, beautiful timeline. Own your
+          DegenFeed unifies 44 decentralized networks into a single, beautiful timeline. Own your
           identity. Control your feed. Bridge every protocol.
         </p>
 

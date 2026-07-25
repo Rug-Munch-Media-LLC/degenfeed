@@ -294,16 +294,29 @@ export const FeedWhyCard = memo(function FeedWhyCard({ post, onClose }: FeedWhyC
         </details>
       )}
 
-      <a
-        href="/settings"
-        onClick={(e) => {
-          e.preventDefault();
-          window.location.href = '/settings';
-        }}
-        className="mt-2 block text-center text-xs text-degen-500 hover:text-degen-400 underline decoration-dotted transition-colors"
-      >
-        Manage your feed preferences →
-      </a>
+      <div className="mt-2 flex items-center justify-center gap-2">
+        <a
+          href="/settings"
+          onClick={(e) => {
+            e.preventDefault();
+            window.location.href = '/settings';
+          }}
+          className="text-xs text-degen-500 hover:text-degen-400 underline decoration-dotted transition-colors"
+        >
+          Preferences
+        </a>
+        <span className="text-[var(--color-muted)]">·</span>
+        <a
+          href="/feed/tune"
+          onClick={(e) => {
+            e.preventDefault();
+            window.location.href = '/feed/tune';
+          }}
+          className="text-xs text-degen-500 hover:text-degen-400 underline decoration-dotted transition-colors"
+        >
+          Full Algorithm Tuner →
+        </a>
+      </div>
     </div>
   );
 });

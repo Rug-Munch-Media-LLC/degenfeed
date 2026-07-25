@@ -83,7 +83,7 @@ async function fetchRepliesFromMastodon(
   auth: Record<string, string>,
   env: Env,
 ): Promise<CrossProtocolReply[]> {
-  const instance = auth.mastodon_instance || env.GTS_INSTANCE_URL || 'https://social.degenfeed.xyz';
+  const instance = auth.mastodon_instance || env.GOTOSOCIAL_INSTANCE_URL || 'https://social.degenfeed.xyz';
   const accessToken = auth.mastodon || auth.mastodon_token;
   if (!accessToken) return [];
   const result = await reliableBridgePublish(

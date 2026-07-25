@@ -24,8 +24,9 @@
  * In a future cleanup, jsonResponse can be re-exported from here
  * instead of index.ts, but both coexist for now.
  *
- * Migration progress: 1 route converted (health.ts)
- * Remaining routes using legacy jsonResponse(): ~140
+ * Migration progress: 7 routes + lib files converted (health.ts, data-export.ts, data-migrate.ts,
+ * dao-registry.ts, defender-integration.ts, snapshot-integration.ts, tally-integration.ts)
+ * Remaining routes using legacy jsonResponse(): ~130
  */
 
 import { logError } from './error-logger';

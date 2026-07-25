@@ -44,7 +44,6 @@ export function ConversationList({
 
   const convIds = conversations.map((c) => c.conversationId);
 
-  // Keyboard navigation
   useMessagesKeyboardNav(
     convIds,
     {
@@ -52,9 +51,7 @@ export function ConversationList({
         const conv = conversations.find((c) => c.conversationId === convId);
         if (conv) onSelect(conv);
       },
-      onCloseConversation: () => {
-        /* handled by parent */
-      },
+      onCloseConversation: () => {},
     },
     true,
     listRef as React.RefObject<HTMLElement | null>,
@@ -62,7 +59,6 @@ export function ConversationList({
 
   return (
     <div className="flex h-full flex-col">
-      {/* == Search + new message ============================== */}
       <div className="border-b border-[var(--color-border)] p-3 space-y-2">
         <div className="relative">
           <svg
@@ -92,16 +88,7 @@ export function ConversationList({
           onClick={onNewMessage}
           className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-[var(--color-border)] bg-[var(--color-card)] px-3 py-2 text-xs font-medium text-[var(--color-muted)] hover:border-degen-500/30 hover:text-degen-400 hover:bg-degen-500/5 transition-all"
         >
-          <svg
-            width="12"
-            height="12"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            aria-hidden="true"
-          >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
             <line x1="12" y1="5" x2="12" y2="19" />
             <line x1="5" y1="12" x2="19" y2="12" />
           </svg>
@@ -109,7 +96,6 @@ export function ConversationList({
         </button>
       </div>
 
-      {/* == Conversation items ================================ */}
       <div
         ref={listRef}
         className="flex-1 overflow-y-auto"
@@ -118,19 +104,15 @@ export function ConversationList({
         aria-activedescendant={selectedId ? `conv-${selectedId}` : undefined}
         tabIndex={0}
       >
-        {/* Loading */}
         {loading && conversations.length === 0 && (
           <div className="p-2">
             <ListSkeleton count={6} leading trailing />
           </div>
         )}
 
-        {/* Error */}
         {!loading && error && conversations.length === 0 && (
           <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
-            <span className="mb-2 text-lg opacity-40" aria-hidden="true">
-              {'⚠\uFE0F'}
-            </span>
+            <span className="mb-2 text-lg opacity-40" aria-hidden="true">{'⚠\uFE0F'}</span>
             <p className="text-xs text-[var(--color-muted)] mb-3">{error}</p>
             <button
               type="button"
@@ -142,24 +124,20 @@ export function ConversationList({
           </div>
         )}
 
-        {/* Empty (no results after search) */}
         {!loading && !error && conversations.length === 0 && (
           <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
-            <span className="mb-3 text-3xl opacity-30" aria-hidden="true">
-              {'\u{1F4AC}'}
-            </span>
+            <span className="mb-3 text-3xl opacity-30" aria-hidden="true">{'\u{1F4AC}'}</span>
             <p className="text-sm text-[var(--color-muted)]">
               {searchQuery ? 'No conversations found' : 'No conversations yet'}
             </p>
             {!searchQuery && (
               <p className="mt-1 text-xs text-[var(--color-muted)]">
-                Send a message to get started
+                Send a message to get started. 🔒 All messages are end-to-end encrypted.
               </p>
             )}
           </div>
         )}
 
-        {/* Conversation items */}
         {conversations.map((conv) => {
           const isSelected = conv.conversationId === selectedId;
           const protocolColor = getProtocolColor(conv.protocol);
@@ -169,6 +147,10 @@ export function ConversationList({
           const initials = getInitials(other);
           const otherDisplay = shortId(other);
           const hasUnread = conv.unreadCount > 0;
+
+          // Encryption status: E2E for Nostr, not for others
+          const isE2E = conv.protocol === 'nostr';
+          const lastMessageText = conv.lastMessage?.content ?? '';
 
           return (
             <button
@@ -190,14 +172,11 @@ export function ConversationList({
               <div className="relative shrink-0 mt-0.5">
                 <span
                   className="flex h-10 w-10 items-center justify-center rounded-full text-xs font-bold"
-                  style={{
-                    backgroundColor: `${protocolColor}18`,
-                    color: protocolColor,
-                  }}
+                  style={{ backgroundColor: `${protocolColor}18`, color: protocolColor }}
                 >
                   {initials}
                 </span>
-                {/* Protocol badge floating on avatar */}
+                {/* Protocol badge */}
                 <span
                   className="absolute -bottom-[2px] -right-[2px] flex h-[18px] w-[18px] items-center justify-center rounded-full text-[8px] border-2 border-[var(--color-bg)]"
                   style={{ backgroundColor: protocolColor }}
@@ -207,18 +186,25 @@ export function ConversationList({
                 >
                   {protocolIcon}
                 </span>
+                {/* E2E lock badge */}
+                {isE2E && (
+                  <span
+                    className="absolute -top-[2px] -right-[2px] flex h-3.5 w-3.5 items-center justify-center rounded-full bg-degen-500 border border-black text-black"
+                    title="End-to-end encrypted"
+                    aria-label="End-to-end encrypted"
+                  >
+                    <svg width="6" height="6" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                      <rect x="3" y="7" width="10" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
+                      <path d="M5 7V4a3 3 0 016 0v3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                    </svg>
+                  </span>
+                )}
               </div>
 
               {/* Content */}
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-2">
-                  <span
-                    className={`truncate text-sm ${
-                      hasUnread
-                        ? 'font-bold text-[var(--color-fg)]'
-                        : 'font-medium text-[var(--color-fg)]'
-                    }`}
-                  >
+                  <span className={`truncate text-sm ${hasUnread ? 'font-bold text-[var(--color-fg)]' : 'font-medium text-[var(--color-fg)]'}`}>
                     {otherDisplay}
                   </span>
                   {conv.lastMessage && (
@@ -228,14 +214,16 @@ export function ConversationList({
                   )}
                 </div>
 
-                {/* Last message preview */}
                 <div className="flex items-center gap-2 mt-0.5">
-                  <span
-                    className={`line-clamp-1 text-xs ${
-                      hasUnread ? 'text-[var(--color-fg)] font-medium' : 'text-[var(--color-muted)]'
-                    }`}
-                  >
-                    {conv.lastMessage ? conv.lastMessage.content : '\u2014'}
+                  {/* E2E lock on preview */}
+                  {isE2E && (
+                    <svg width="6" height="6" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0 text-degen-400">
+                      <rect x="3" y="7" width="10" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.2" />
+                      <path d="M5 7V4a3 3 0 016 0v3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+                    </svg>
+                  )}
+                  <span className={`line-clamp-1 text-xs ${hasUnread ? 'text-[var(--color-fg)] font-medium' : 'text-[var(--color-muted)]'}`}>
+                    {lastMessageText || '\u2014'}
                   </span>
                 </div>
               </div>
@@ -249,7 +237,6 @@ export function ConversationList({
                 </div>
               )}
 
-              {/* Unread dot (no count) */}
               {!hasUnread && conv.lastMessage && !conv.lastMessage.read && (
                 <div className="shrink-0 pt-2">
                   <span className="block h-2 w-2 rounded-full bg-degen-500" />
@@ -260,7 +247,6 @@ export function ConversationList({
         })}
       </div>
 
-      {/* == Footer: unread total ============================== */}
       {unreadTotal > 0 && (
         <div className="border-t border-[var(--color-border)] bg-[var(--color-glass-bg)] px-4 py-2 text-[10px] text-[var(--color-muted)] text-center">
           {unreadTotal} unread {unreadTotal === 1 ? 'message' : 'messages'}

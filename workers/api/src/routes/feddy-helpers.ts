@@ -15,7 +15,7 @@ import { parseSessionCookie, requireSession, validateCsrfToken } from '../sessio
 // ─── GoToSocial Client ─────────────────────────────────────────
 
 export function getGtsClient(env: Env, accessToken?: string): GtSClient {
-  const instanceUrl = env.GTS_INSTANCE_URL ?? 'https://social.degenfeed.xyz';
+  const instanceUrl = env.GOTOSOCIAL_INSTANCE_URL ?? 'https://social.degenfeed.xyz';
   return new GtSClient(instanceUrl, accessToken);
 }
 

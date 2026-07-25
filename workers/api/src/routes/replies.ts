@@ -78,7 +78,7 @@ export async function handlePostReplies(
       }
 
       case 'mastodon': {
-        const instance = env.GTS_INSTANCE_URL || 'https://social.degenfeed.xyz';
+        const instance = env.GOTOSOCIAL_INSTANCE_URL || 'https://social.degenfeed.xyz';
         const contextRes = await fetch(`${instance}/api/v1/statuses/${nativeId}/context`, {
           headers: { 'user-agent': 'DegenFeed/0.1' },
         });

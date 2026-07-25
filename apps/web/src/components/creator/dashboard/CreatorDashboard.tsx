@@ -11,6 +11,7 @@ import { MiniBar } from './MiniBar';
 import { PieChart } from './PieChart';
 import { StatCard } from './StatCard';
 import type { CreatorStats, TabId } from './types';
+import StorageUsage from './StorageUsage';
 import {
   formatCompact,
   formatDate,
@@ -847,6 +848,11 @@ export default function CreatorDashboard() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* STORAGE */}
+      {activeTab === 'storage' && (
+        <StorageUsage />
       )}
     </div>
   );

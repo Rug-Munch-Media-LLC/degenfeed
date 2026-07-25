@@ -545,3 +545,57 @@ export function daoTallyLookupKey(governorAddress: string): string {
 export function daoRealmsLookupKey(realmId: string): string {
   return `dao:lookup:realms:${realmId}`;
 }
+
+// ─── Global Dedup Registry ────────────────────────────────────────────────
+
+/** Dedup fingerprint entry. NS: DEDUP. TTL: 90 days. */
+export function dedupFingerprintKey(hash: string): string {
+  return `dedup:fp:${hash}`;
+}
+
+/** Dedup cluster record. NS: DEDUP. TTL: 90 days. */
+export function dedupClusterKey(clusterId: string): string {
+  return `dedup:cluster:${clusterId}`;
+}
+
+/** Cross-protocol ID mapping. NS: DEDUP. TTL: 90 days. */
+export function dedupCrossMapKey(mappingKey: string): string {
+  return `dedup:xmap:${mappingKey}`;
+}
+
+/** Author's recent dedup entries. NS: DEDUP. TTL: 7 days. */
+export function dedupAuthorKey(authorId: string): string {
+  return `dedup:author:${authorId}`;
+}
+
+/** Recent title fingerprints for Levenshtein comparison. NS: DEDUP. TTL: 7 days. */
+export function dedupTitlesKey(): string {
+  return 'dedup:titles:recent';
+}
+
+/** Bloom filter for quick "probably seen" check. NS: CACHE. TTL: 1 day. */
+export function dedupBloomKey(): string {
+  return 'dedup:bloom:v1';
+}
+
+// ─── Seen Content (per-user) ─────────────────────────────────────────────
+
+/** Seen content entry for a user. NS: SEEN. TTL: 30 days. */
+export function seenEntryKey(wallet: string, fingerprintHash: string): string {
+  return `seen:${wallet.toLowerCase()}:${fingerprintHash}`;
+}
+
+/** Seen content stats for a user. NS: SEEN. TTL: 30 days. */
+export function seenStatsKey(wallet: string): string {
+  return `seen:stats:${wallet.toLowerCase()}`;
+}
+
+/** Per-user bloom filter for quick seen lookup. NS: SEEN. TTL: 30 days. */
+export function seenBloomKey(wallet: string): string {
+  return `seen:bloom:${wallet.toLowerCase()}`;
+}
+
+/** Daily seen count for a user. NS: SEEN. TTL: 90 days. */
+export function seenDailyKey(wallet: string, dateStr: string): string {
+  return `seen:daily:${wallet.toLowerCase()}:${dateStr}`;
+}

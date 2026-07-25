@@ -239,7 +239,7 @@ export class UnifiedShortsFeed {
   async fetchActivityPubShorts(limit: number): Promise<ShortVideo[]> {
     // 1. Fetch from our GoToSocial instance (Loops/Pixelfed compatible)
     const apShorts: ShortVideo[] = [];
-    const instanceUrl = this.env.GTS_INSTANCE_URL || 'https://social.degenfeed.xyz';
+    const instanceUrl = this.env.GOTOSOCIAL_INSTANCE_URL || 'https://social.degenfeed.xyz';
 
     try {
       // Query the federated timeline for video posts

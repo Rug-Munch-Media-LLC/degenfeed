@@ -1,9 +1,9 @@
 # DegenFeed Web — Deployment Guide
 
 **Status:** canonical  
-**Last updated:** 2026-07-20
+**Last updated:** 2026-07-25
 
-This doc covers deploying the full DegenFeed stack: Cloudflare Workers + Pages frontend, self-hosted infrastructure (GoToSocial, AT Protocol PDS, PeerTube, Prosody XMPP), and smart contracts (Base + Solana).
+This doc covers deploying the full DegenFeed stack: Cloudflare Workers + Pages frontend, self-hosted infrastructure (GoToSocial, AT Protocol PDS, PeerTube, Prosody XMPP, Redlib, RSS-Bridge, Matrix), and smart contracts (Base + Solana). 44+ protocols, 48+ Docker services, ~500+ API routes.
 
 ---
 

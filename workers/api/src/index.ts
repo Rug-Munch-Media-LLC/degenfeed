@@ -72,6 +72,20 @@ export interface Env {
   MEILI_SEARCH_KEY?: string;
   /** Optional Postmark server token for transactional email delivery */
   POSTMARK_SERVER_TOKEN?: string;
+  /** XMTP private key for XMTP transport delivery */
+  XMTP_KEY?: string;
+  /** Matrix access token for Matrix transport */
+  MATRIX_ACCESS_TOKEN?: string;
+  /** Matrix instance URL */
+  MATRIX_INSTANCE_URL?: string;
+  /** Bluesky access token for AT Protocol chat */
+  BSKY_ACCESS_TOKEN?: string;
+
+  // ─── Castopod (Podcast Hosting) ──────────────────────────────────────
+  /** Castopod instance URL (default: http://127.0.0.1:8088) */
+  CASTOPOD_INSTANCE_URL?: string;
+  /** Castopod API token for automated podcast/episode creation */
+  CASTOPOD_API_TOKEN?: string;
 
   // ─── Email Engine (Newsletter) ──────────────────────────────────────
   /** Mailgun API key for primary email delivery */
@@ -124,6 +138,12 @@ export interface Env {
   BSKY_DID?: string;
   /** YouTube Data API v3 key for channel discovery */
   YOUTUBE_API_KEY?: string;
+  /** Twitch Client ID for Helix API (app access token flow) */
+  TWITCH_CLIENT_ID?: string;
+  /** Twitch Client Secret for Helix API */
+  TWITCH_CLIENT_SECRET?: string;
+  /** Comma-separated list of extra PeerTube instance URLs to fetch live from */
+  PEERTUBE_EXTRA_INSTANCES?: string;
 
   // ─── Centralized Platform OAuth Credentials ──────────────────────
   /** Medium OAuth client ID (requires OAuth app in Medium settings) */
@@ -168,6 +188,11 @@ export interface Env {
   /** KV namespace for content permanence proofs */
   PERMANENCE?: KVNamespace;
 
+  /** KV namespace for global dedup registry */
+  DEDUP?: KVNamespace;
+  /** KV namespace for per-user seen content tracking */
+  SEEN?: KVNamespace;
+
   /** KV namespace for Farcaster creator coin records */
   FARCASTER_COINS?: KVNamespace;
   /** KV namespace for Lens Protocol creator coin records */
@@ -209,6 +234,8 @@ export interface Env {
   POLYGON_RPC_URL?: string;
   /** Private key of the premium wallet for paying on-chain registration fees */
   PREMIUM_WALLET_KEY?: string;
+  /** Application base URL — e.g. https://app.degenfeed.xyz */
+  APP_BASE_URL?: string;
   /** GoToSocial instance URL (ActivityPub-compatible Mastodon API) for account creation */
   GOTOSOCIAL_INSTANCE_URL?: string;
   /** Lemmy instance URL for account creation */
@@ -235,6 +262,8 @@ export interface Env {
   MOBILIZON_INSTANCE_URL?: string;
 
   // ─── Content permanence (Pinata IPFS) ────────────────────────────────
+  /** web3.storage API key for IPFS uploads (free tier: 1TB, works without key) */
+  WEB3_STORAGE_API_KEY?: string;
   /** Pinata API key for IPFS pinning (Content Permanence API) */
   PINATA_API_KEY?: string;
   /** Pinata secret key for IPFS pinning (Content Permanence API) */
@@ -251,6 +280,14 @@ export interface Env {
   LENS_ACCESS_TOKEN?: string;
   /** Livepeer Studio API key for Livepeer-backed streaming (Zora, generic) */
   LIVEPEER_API_KEY?: string;
+  /** Cloudflare Stream API token for enterprise CDN streaming */
+  CLOUDFLARE_STREAM_TOKEN?: string;
+  /** Cloudflare Stream account ID */
+  CLOUDFLARE_STREAM_ACCOUNT_ID?: string;
+  /** WebRTC STUN/TURN server URLs (comma-separated) */
+  WEBRTC_STUN_SERVERS?: string;
+  /** WebRTC TURN server credentials (JSON: {url, username, credential}) */
+  WEBRTC_TURN_CREDENTIALS?: string;
 
   // ─── Ghost CMS headless ──────────────────────────────────────────────
   /** Ghost CMS site URL (e.g. https://blog.degenfeed.xyz) */
@@ -317,6 +354,22 @@ export interface Env {
   X402_RELAYER_URL?: string;
   /** Farcaster watchlist for live activity monitoring */
   FARCASTER_WATCHLIST?: string;
+
+  // ─── Decentralized Media Storage (Images, Audio, Documents) ────────────
+  /** R2 bucket binding for media storage fallback */
+  MEDIA_STORAGE_BINDING?: R2Bucket;
+  /** KV namespace for media metadata (image dimensions, creator links, storage stats) */
+  MEDIA_METADATA?: KVNamespace;
+  /** Irys node URL for Arweave uploads (default: https://node1.irys.xyz) */
+  IRYS_NODE_URL?: string;
+  /** Irys/Arweave wallet private key (for platform-paid permanent storage) */
+  ARWEAVE_WALLET_KEY?: string;
+  /** Currency for Arweave/Irys payments (default: matic) */
+  ARWEAVE_CURRENCY?: string;
+  /** Custom IPFS gateway base URL for dedicated CDN (optional) */
+  IPFS_GATEWAY_URL?: string;
+  /** Media transformation service URL (e.g. Cloudflare Image Resizing) */
+  IMAGE_TRANSFORM_URL?: string;
 }
 
 // ─── Shared constants ────────────────────────────────────────────────
@@ -672,8 +725,8 @@ export function getGtsConfig(env: Env) {
   return {
     clientId: env.GTS_CLIENT_ID ?? GTS_AUTH_CONFIG.clientId,
     clientSecret: env.GTS_CLIENT_SECRET ?? GTS_AUTH_CONFIG.clientSecret,
-    instanceUrl: env.GTS_INSTANCE_URL ?? GTS_AUTH_CONFIG.instanceUrl,
-    apiBase: env.GTS_API_BASE ?? GTS_AUTH_CONFIG.apiBase,
+    instanceUrl: env.GOTOSOCIAL_INSTANCE_URL ?? GTS_AUTH_CONFIG.instanceUrl,
+    apiBase: env.GOTOSOCIAL_INSTANCE_URL ?? GTS_AUTH_CONFIG.apiBase,
     redirectUri: env.GTS_REDIRECT_URI ?? GTS_AUTH_CONFIG.redirectUri,
     scopes: GTS_AUTH_CONFIG.scopes,
   };
@@ -814,6 +867,17 @@ export async function scheduled(
       log('error', '[scheduled] sync queue processing failed', err);
     }
 
+    // Clean up expired chat messages and files (auto-delete timers)
+    try {
+      const { handleCleanupCron } = await import('./routes/chat-features');
+      const { cleanedMessages, cleanedFiles } = await handleCleanupCron(env);
+      if (cleanedMessages > 0 || cleanedFiles > 0) {
+        log('info', `[scheduled] chat cleanup: ${cleanedMessages} messages, ${cleanedFiles} files`);
+      }
+    } catch (err) {
+      log('warn', '[scheduled] chat cleanup failed', err);
+    }
+
     return; // No other work on the every-minute tick
   }
 
@@ -836,6 +900,20 @@ export async function scheduled(
       }
     } catch (err) {
       log('error', '[scheduled] GDPR deletion processing failed', err);
+    }
+
+    // ── Curated podcast episode aggregation ──────────────────────
+    try {
+      const { handlePodcastAggregation } = await import('./routes/podcast-cron');
+      const result = await handlePodcastAggregation(env);
+      log('info', '[scheduled] curated podcast aggregation complete', {
+        totalFetched: result.totalFetched,
+        totalPodcasts: result.totalPodcasts,
+        durationMs: result.durationMs,
+        errors: result.errors.length > 0 ? result.errors : undefined,
+      });
+    } catch (err) {
+      log('error', '[scheduled] podcast aggregation failed', err);
     }
   }
 

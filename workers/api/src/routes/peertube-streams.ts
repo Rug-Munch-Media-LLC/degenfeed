@@ -202,8 +202,8 @@ async function announceStreamEndToAllProtocols(
 
   try {
     const gtsToken = await env.CACHE?.get('gts:access_token');
-    if (gtsToken && env.GTS_API_BASE) {
-      await fetch(`${env.GTS_API_BASE}/api/v1/statuses`, {
+    if (gtsToken && env.GOTOSOCIAL_INSTANCE_URL) {
+      await fetch(`${env.GOTOSOCIAL_INSTANCE_URL}/api/v1/statuses`, {
         method: 'POST',
         headers: {
           authorization: `Bearer ${gtsToken}`,

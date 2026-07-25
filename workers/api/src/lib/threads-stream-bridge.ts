@@ -29,7 +29,7 @@ import { addChatMessage } from './stream-store';
 // ─── Types ──────────────────────────────────────────────────────────────
 
 export interface ThreadsBridgeConfig {
-  /** GoToSocial instance URL — falls back to env.GTS_INSTANCE_URL */
+  /** GoToSocial instance URL — falls back to env.GOTOSOCIAL_INSTANCE_URL */
   instanceUrl?: string;
   /** GoToSocial access token — falls back to env */
   accessToken?: string;
@@ -70,7 +70,7 @@ export class ThreadsStreamBridge {
   constructor(env: Env, config?: ThreadsBridgeConfig) {
     this.env = env;
     this.config = {
-      instanceUrl: config?.instanceUrl ?? env.GTS_INSTANCE_URL ?? DEFAULT_INSTANCE,
+      instanceUrl: config?.instanceUrl ?? env.GOTOSOCIAL_INSTANCE_URL ?? DEFAULT_INSTANCE,
       // Access token must be provided via config or stored in IdentityHub
       accessToken: config?.accessToken ?? '',
       accountHandle: config?.accountHandle ?? 'degenfeed',

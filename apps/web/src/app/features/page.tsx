@@ -154,7 +154,7 @@ const features: FeatureDetail[] = [
   {
     id: 'aggregation',
     title: 'Content Aggregation',
-    lead: '25+ sources fill your unified feed. Nostr, Farcaster, Lens, Bluesky, Mastodon, Reddit, RSS, YouTube, PeerTube, and more — all in one timeline.',
+    lead: '44+ sources fill your unified feed. Nostr, Farcaster, Lens, Bluesky, Mastodon, Reddit, RSS, YouTube, PeerTube, and more — all in one timeline.',
     details: [
       {
         title: 'Multi-Source Timeline',

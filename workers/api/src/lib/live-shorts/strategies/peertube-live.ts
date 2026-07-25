@@ -52,8 +52,8 @@ export const activityPubLiveStrategy: ProtocolStrategy = {
 
       const peertube = new PeerTubeLiveStream({
         accessToken: gtsToken,
-        instanceUrl: env.GTS_INSTANCE_URL
-          ? env.GTS_INSTANCE_URL.replace('social.', 'video.')
+        instanceUrl: env.GOTOSOCIAL_INSTANCE_URL
+          ? env.GOTOSOCIAL_INSTANCE_URL.replace('social.', 'video.')
           : 'https://video.degenfeed.xyz',
       });
 
@@ -75,7 +75,7 @@ export const activityPubLiveStrategy: ProtocolStrategy = {
       // but we also post to GoToSocial for Mastodon/Twitter-style federation)
       try {
         const { GtSClient } = await import('@degenfeed/mastodon-sdk');
-        const gts = new GtSClient(env.GTS_INSTANCE_URL ?? 'https://social.degenfeed.xyz', gtsToken);
+        const gts = new GtSClient(env.GOTOSOCIAL_INSTANCE_URL ?? 'https://social.degenfeed.xyz', gtsToken);
 
         const statusText = [
           `🔴 LIVE SHORT: ${title}`,
@@ -128,7 +128,7 @@ export const activityPubLiveStrategy: ProtocolStrategy = {
       if (!gtsToken) return;
 
       const { GtSClient } = await import('@degenfeed/mastodon-sdk');
-      const gts = new GtSClient(env.GTS_INSTANCE_URL ?? 'https://social.degenfeed.xyz', gtsToken);
+      const gts = new GtSClient(env.GOTOSOCIAL_INSTANCE_URL ?? 'https://social.degenfeed.xyz', gtsToken);
 
       const statusText = [
         `✅ RECORDING AVAILABLE: ${title}`,

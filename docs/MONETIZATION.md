@@ -310,7 +310,7 @@ Promoted posts and featured placement in feeds.
 |-----------|--------|
 | **Lowest fees** | 0.5% coin fees, 1% cross-protocol tips — 5-40x lower than competitors |
 | **Open source** | AGPL-3.0. Full transparency. Self-hostable. |
-| **Multi-protocol** | Post to 15+ protocols from one interface |
+| **Multi-protocol** | Post to 15+ protocols from one interface (read from 44+) |
 | **True ownership** | No platform lock-in. Your audience follows you across protocols. |
 | **No data selling** | Revenue comes from subscriptions and fees, not user data |
 | **Crypto-native** | Pay with credit card OR crypto. On-chain features built in. |

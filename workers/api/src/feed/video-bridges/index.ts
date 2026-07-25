@@ -22,6 +22,11 @@ export * from './peertube';
 export * from './rumble';
 export * from './twitch';
 export * from './vimeo';
+export * from './kick';
+export * from './live-tube';
+export * from './nostr-video';
+export * from './farcaster-frame-video';
+export * from './ipfs-arweave-video';
 
 // ─── Source registry ───────────────────────────────────────────────────────
 
@@ -43,6 +48,12 @@ export const BRIDGE_SOURCES = [
   'zora',
   'tiktok',
   'instagram',
+  'kick',
+  'livetube',
+  'nostr',
+  'farcaster',
+  'ipfs',
+  'arweave',
 ] as const;
 
 export type BridgeSource = (typeof BRIDGE_SOURCES)[number];
@@ -63,4 +74,10 @@ export const BRIDGE_SOURCE_META: Record<string, { label: string; color: string; 
   zora: { label: 'Zora', color: '#0052FF' },
   tiktok: { label: 'TikTok', color: '#010101' },
   instagram: { label: 'Instagram', color: '#E1306C' },
+  kick: { label: 'Kick', color: '#53FC18' },
+  livetube: { label: 'LiveTube', color: '#FF4500' },
+  nostr: { label: 'Nostr Video', color: '#8B5CF6' },
+  farcaster: { label: 'Farcaster Video', color: '#8A63D2' },
+  ipfs: { label: 'IPFS Video', color: '#4FC3F7' },
+  arweave: { label: 'Arweave Video', color: '#9C27B0' },
 };

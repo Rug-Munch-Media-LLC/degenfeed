@@ -21,7 +21,7 @@ hero:
 
 features:
   - icon: 🌐
-    title: 25+ Protocols
+    title: 44+ Protocols
     details: Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, Reddit, RSS, YouTube, PeerTube, Lemmy, Telegram, Zora, and more — all in one feed.
   - icon: 🔐
     title: Data Independence
@@ -55,7 +55,7 @@ features:
 | [Creator Guide](CREATOR_GUIDE.md) | Monetization guide — creator coins, tips, streams, revenue sharing |
 | [Developer Guide](DEVELOPER_GUIDE.md) | Monorepo structure, adding protocols, testing, deployment |
 | [API Reference](API_REFERENCE.md) | Complete v1 API reference with all endpoints |
-| [Integrations](INTEGRATIONS.md) | Per-protocol integration details for all 25+ protocols |
+| [Integrations](INTEGRATIONS.md) | Per-protocol integration details for all 44+ protocols and services |
 | [Blog: Introducing DegenFeed](BLOG.md) | Why we built it, what it does, technical deep dive, roadmap |
 | [Press Kit](PRESS.md) | Logos, screenshots, metrics, founder info, contact |
 | [ARCHITECTURE.md](./ARCHITECTURE.md) | Monorepo structure, protocol integration map, data flows |

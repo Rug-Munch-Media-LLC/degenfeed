@@ -3,25 +3,41 @@
 // Each concern lives in its own module under youtube/:
 //   types.ts   — ChannelCategory, YouTubeVideoItem, YouTubeChannel, RSSEntry
 //   config.ts  — CRYPTO_CHANNELS data + CHANNEL_BY_NAME lookup
-//   filters.ts — QUALITY_FILTERS, CATEGORY_KEYWORDS, isLowQualityVideo
+//   filters.ts — QUALITY_FILTERS, CATEGORY_KEYWORDS, isLowQualityVideo, computeQualityScore, etc.
 //   parser.ts  — parseYouTubeRss, fetchChannelFeed
-//   index.ts   — Circuit breaker, fetchYouTubeFeed, getYouTubeVideoInfo, utilities
+//   index.ts   — Circuit breaker, fetchYouTubeFeed, getYouTubeVideoInfo, trending, discovery
 
 export { CHANNEL_BY_NAME, CRYPTO_CHANNELS } from './youtube/config';
-export { CATEGORY_KEYWORDS, isLowQualityVideo, QUALITY_FILTERS } from './youtube/filters';
+export {
+  CATEGORY_KEYWORDS,
+  isLowQualityVideo,
+  QUALITY_FILTERS,
+  computeEngagementSignals,
+  computeQualityScore,
+  detectContentType,
+  scoreCreatorRelevance,
+} from './youtube/filters';
 export {
   fetchYouTubeFeed,
   getChannelStats,
   getChannelsByCategory,
   getChannelsBySubcategory,
   getYouTubeVideoInfo,
+  fetchTrendingByCategory,
+  discoverCreators,
+  autoDiscoverAndIntegrate,
 } from './youtube/index';
 export { fetchChannelFeed } from './youtube/parser';
 export type {
   ChannelCategory,
   ChannelSubcategory,
+  DiscoveredCreator,
+  EngagementSignals,
   FetchYouTubeOptions,
+  QualityScore,
   RSSEntry,
+  TrendingCategory,
+  VideoContentType,
   YouTubeChannel,
   YouTubeVideoItem,
 } from './youtube/types';

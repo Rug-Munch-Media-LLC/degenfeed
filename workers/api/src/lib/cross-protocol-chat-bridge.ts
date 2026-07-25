@@ -76,7 +76,7 @@ async function resolvePlatformAuth(env: Env, creatorWallet: string): Promise<Pla
       const creds = await hub.getCredentials(creatorWallet, 'mastodon');
       auth.activitypub = {
         accessToken: creds?.encrypted ?? '', // Would need decryption in production
-        instanceUrl: env.GTS_INSTANCE_URL,
+        instanceUrl: env.GOTOSOCIAL_INSTANCE_URL,
       };
     }
 
@@ -407,7 +407,7 @@ export async function startBridge(
           protocol: 'activitypub' as const,
           postId: apResult.id,
           postUrl: apResult.url,
-          instanceUrl: env.GTS_INSTANCE_URL || 'https://social.degenfeed.xyz',
+          instanceUrl: env.GOTOSOCIAL_INSTANCE_URL || 'https://social.degenfeed.xyz',
           announcedAt: Date.now(),
         }),
         { expirationTtl: 86400 * 7 },

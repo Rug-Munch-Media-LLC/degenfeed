@@ -10,6 +10,10 @@ export const CHANNELS = {
   DM_TYPING: 'dm:typing',
   SPACE_UPDATE: 'space:update',
   TIP_RECEIVED: 'tip:received',
+  /** Global tip feed (for live overlays, leaderboards) */
+  TIP_GLOBAL: 'tip:global',
+  /** User-specific notification channel: user:{address} */
+  USER_PREFIX: 'user:',
   /** Real-time cross-platform bridged chat for streams */
   STREAM_CHAT: 'stream:chat',
 
@@ -22,6 +26,12 @@ export const CHANNELS = {
   FEED_ENGAGEMENT_UPDATE: 'feed:engagement-update',
   /** Emitted when a protocol's health status changes */
   FEED_PROTOCOL_STATUS: 'feed:protocol-status',
+
+  // ── Video Call events ──
+  /** Emitted when a user receives an incoming call */
+  CALL_INCOMING: 'call:incoming',
+  /** Emitted when call state changes (join, leave, mute, end) */
+  CALL_STATE: 'call:state',
 } as const;
 
 export const SYNC_TOPICS = Object.values(CHANNELS);

@@ -96,7 +96,7 @@ degenfeed-web/
 │   │       └── zora.ts               # Zora NFT (GraphQL)
 │   └── package.json
 │
-├── packages/                         # Monorepo workspaces (42 packages)
+├── packages/                         # Monorepo workspaces (43+ packages)
 │   ├── auth/                         # Authentication primitives
 │   ├── bluesky-sdk/                  # Bluesky AT Protocol client SDK
 │   ├── farcaster-sdk/                # Farcaster Hub client SDK
@@ -641,8 +641,9 @@ Monitoring:
 | Total lines of TypeScript | 350,127 |
 | Test files | ~60 |
 | Test lines | 16,646 |
-| Monorepo packages | 42 |
-| Bridge providers (real) | 11 |
+| Monorepo packages | 43+ |
+| Bridge providers (standardized) | 11 |
+| Total protocols accessible | 44+ |
 | Workers API routes | ~90 |
 | Frontend pages | ~60 route groups |
 | React components | ~160 |

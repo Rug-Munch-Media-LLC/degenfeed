@@ -1,6 +1,6 @@
 # DegenFeed Protocol Provider Registry
 
-> **Total: 26+ protocols** — Last updated: 2026-07-25
+> **Total: 29+ protocols** — Last updated: 2026-07-25
 
 Every protocol is documented with its SDK package, provider file, write bridge, and status.
 
@@ -52,6 +52,9 @@ Every protocol is documented with its SDK package, provider file, write bridge, 
 | 29 | Solana | — | — | — | 🟡 Degraded | On-chain events |
 | 30 | kbin | — | — | — | ✅ Live | Fediverse Reddit-like |
 | 31 | Tildes | — | — | — | ✅ Live | Non-profit community |
+| 32 | **Funkwhale** (NEW) | `funkwhale-sdk` (planned) | `funkwhale.ts` | — | 🔵 Beta | Federated music/audio (ActivityPub) |
+| 33 | **Castopod** (NEW) | `castopod-sdk` (planned) | `castopod.ts` | — | 🔵 Beta | Federated podcasting (ActivityPub) |
+| 34 | RSS-Bridge | — | `rssbridge.ts` | — | ✅ Live | Self-hosted content bridge for walled gardens |
 
 ---
 
@@ -88,7 +91,10 @@ These are minimal (≤100 lines) adapters for protocols that don't need full SDK
 │  ├── aether.ts    ←── NEW                           │
 │  ├── scuttlebutt.ts←── NEW                          │
 │  ├── hive.ts      ←── NEW                           │
-│  └── mirror.ts    ←── NEW                           │
+│  ├── mirror.ts    ←── NEW                           │
+│  ├── funkwhale.ts ←── NEW                           │
+│  ├── castopod.ts  ←── NEW                           │
+│  └── rssbridge.ts ←── ENHANCED                      │
 ├─────────────────────────────────────────────────────┤
 │              packages/feed-providers/src/            │
 │  providers/ (SDK provider classes)                  │
