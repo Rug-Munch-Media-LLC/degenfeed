@@ -179,6 +179,25 @@ import {
   handleGiftSend,
   handleGiftTypes,
 } from '../../routes/live-gifts';
+import {
+  handleActiveStickers,
+  handleCreatorContentEarnings,
+  handleCreatorCustomGifts,
+  handleCreatorEmojis,
+  handleCustomGiftBuy,
+  handleCustomGiftCreate,
+  handleCustomGiftMarketplace,
+  handleEmojiBuy,
+  handleEmojiCreate,
+  handleEmojiMarketplace,
+  handleFilterBuy,
+  handleFiltersList,
+  handleMyEmojis,
+  handleMyFilters,
+  handleStickerBuy,
+  handleStickerTrigger,
+  handleStickersList,
+} from '../../routes/live-tiktok';
 export function registerLiveRoutes(app: Hono<{ Bindings: Env }>): void {
   // --- API: YouTube ---
   app.route('/api/youtube', youtubeRoutes);
@@ -685,6 +704,146 @@ export function registerLiveRoutes(app: Hono<{ Bindings: Env }>): void {
   app.post('/api/live/gifts/process-payout', async (c) => {
     try {
       return await withSession(c, () => handleGiftPayout(c.req.raw, c.env));
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // TikTok-Style Live Content — Custom Emojis, Gifts, Filters, Stickers
+  // ═══════════════════════════════════════════════════════════════════════
+
+  // --- Creator Emojis ---
+  app.post('/api/live/emojis/create', async (c) => {
+    try {
+      return await withSession(c, () => handleEmojiCreate(c.req.raw, c.env));
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/live/emojis/marketplace', async (c) => {
+    try {
+      const result = await handleEmojiMarketplace(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/live/emojis/:id/buy', async (c) => {
+    try {
+      return await withSession(c, () => handleEmojiBuy(c.req.raw, c.env, c.req.param('id')));
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/live/emojis/my-purchases', async (c) => {
+    try {
+      return await withSession(c, () => handleMyEmojis(c.req.raw, c.env));
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/live/emojis/creator/:creatorId', async (c) => {
+    try {
+      const result = await handleCreatorEmojis(c.req.raw, c.env, c.req.param('creatorId'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+
+  // --- Custom Gifts ---
+  app.post('/api/live/gifts/custom/create', async (c) => {
+    try {
+      return await withSession(c, () => handleCustomGiftCreate(c.req.raw, c.env));
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/live/gifts/custom/marketplace', async (c) => {
+    try {
+      const result = await handleCustomGiftMarketplace(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/live/gifts/custom/:creatorId', async (c) => {
+    try {
+      const result = await handleCreatorCustomGifts(c.req.raw, c.env, c.req.param('creatorId'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/live/gifts/custom/:id/buy', async (c) => {
+    try {
+      return await withSession(c, () => handleCustomGiftBuy(c.req.raw, c.env, c.req.param('id')));
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+
+  // --- Face Filters ---
+  app.get('/api/live/filters', async (c) => {
+    try {
+      const result = await handleFiltersList(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/live/filters/:id/buy', async (c) => {
+    try {
+      return await withSession(c, () => handleFilterBuy(c.req.raw, c.env, c.req.param('id')));
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/live/filters/my-filters', async (c) => {
+    try {
+      return await withSession(c, () => handleMyFilters(c.req.raw, c.env));
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+
+  // --- Stickers ---
+  app.get('/api/live/stickers', async (c) => {
+    try {
+      const result = await handleStickersList(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/live/stickers/:id/buy', async (c) => {
+    try {
+      return await withSession(c, () => handleStickerBuy(c.req.raw, c.env, c.req.param('id')));
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/live/stickers/:id/trigger', async (c) => {
+    try {
+      return await withSession(c, () => handleStickerTrigger(c.req.raw, c.env, c.req.param('id')));
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/live/stickers/active/:streamId', async (c) => {
+    try {
+      const result = await handleActiveStickers(c.req.raw, c.env, c.req.param('streamId'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+
+  // --- Creator Content Earnings Dashboard ---
+  app.get('/api/live/creator-content/earnings', async (c) => {
+    try {
+      return await withSession(c, () => handleCreatorContentEarnings(c.req.raw, c.env));
     } catch (err) {
       return serverError(err instanceof Error ? err.message : 'Unknown error');
     }
