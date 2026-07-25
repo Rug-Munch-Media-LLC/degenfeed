@@ -372,7 +372,7 @@ export class BridgeFeedProvider implements FeedProvider {
 
   constructor(protocol: Protocol, env: Env) {
     this.protocol = protocol;
-    this.bridgeUrl = env.BRIDGE_INTERNAL_URL || 'http://127.0.0.1:8788';
+    this.bridgeUrl = env.BRIDGE_INTERNAL_URL || 'http://127.0.0.1:8787';
   }
 
   async fetchFeed(options?: { timeoutMs?: number }): Promise<FeedResult> {

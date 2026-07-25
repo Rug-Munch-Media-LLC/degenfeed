@@ -9,8 +9,8 @@
  * at social.degenfeed.xyz. Fetches live posts via the bridge API.
  */
 
-import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useCallback, useEffect, useState } from 'react';
 
 // ─── Types ──────────────────────────────────────────────────────────────
 
@@ -60,6 +60,7 @@ interface FeedResponse {
 // ─── Constants ──────────────────────────────────────────────────────────
 
 const GTS_COLOR = '#6366f1';
+const BRIDGE_BASE = process.env.NEXT_PUBLIC_BRIDGE_BASE || 'https://bridge.degenfeed.xyz';
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'https://degenfeed.xyz/api';
 
 const INSTANCES: GTSInstance[] = [
@@ -164,10 +165,20 @@ export default function SocialPage() {
 
     async function loadFeed() {
       try {
-        const res = await fetch(`${API_BASE}/feed/unified?sources=mastodon&limit=20`, {
+        // Try bridge first (direct connection to the GTS/bridge service)
+        const res = await fetch(`${BRIDGE_BASE}/api/feed/for-you?limit=20&protocols=mastodon`, {
           signal: AbortSignal.timeout(10000),
         });
-        if (!res.ok) throw new Error(`API returned ${res.status}`);
+        if (!res.ok) {
+          // Fall back to API worker
+          const fallback = await fetch(`${API_BASE}/feed/unified?sources=mastodon&limit=20`, {
+            signal: AbortSignal.timeout(10000),
+          });
+          if (!fallback.ok) throw new Error(`API returned ${fallback.status}`);
+          const data: FeedResponse = await fallback.json();
+          if (!cancelled) setFeedPosts(data.data || data.posts || []);
+          return;
+        }
         const data: FeedResponse = await res.json();
         if (!cancelled) {
           setFeedPosts(data.data || data.posts || []);
@@ -194,10 +205,7 @@ export default function SocialPage() {
     if (activeCategory && inst.category !== activeCategory) return false;
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
-      return (
-        inst.name.toLowerCase().includes(q) ||
-        inst.description.toLowerCase().includes(q)
-      );
+      return inst.name.toLowerCase().includes(q) || inst.description.toLowerCase().includes(q);
     }
     return true;
   });
@@ -213,7 +221,17 @@ export default function SocialPage() {
   // ─── Embedded view ────────────────────────────────────────────────
 
   if (embedUrl) {
-    const instance = INSTANCES.find((i) => i.url === embedUrl)!;
+    const instance = INSTANCES.find((i) => i.url === embedUrl);
+    if (!instance) {
+      return (
+        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+          <p>Instance not found</p>
+          <button type="button" onClick={handleBack} className="text-sm underline">
+            Go back
+          </button>
+        </div>
+      );
+    }
     return (
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
         <button
@@ -232,7 +250,10 @@ export default function SocialPage() {
           <p className="mt-1 text-sm" style={{ color: 'var(--color-fg-secondary)' }}>
             {instance.description}
           </p>
-          <div className="mt-2 flex items-center gap-3 text-xs" style={{ color: 'var(--color-muted)' }}>
+          <div
+            className="mt-2 flex items-center gap-3 text-xs"
+            style={{ color: 'var(--color-muted)' }}
+          >
             <span>{instance.users.toLocaleString()} users</span>
             <span>{instance.posts.toLocaleString()} posts</span>
             <span>{instance.language}</span>
@@ -262,7 +283,9 @@ export default function SocialPage() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
       <nav className="mb-4 flex items-center gap-1.5 text-xs text-[var(--color-muted)]">
-        <Link href="/feed" className="transition-colors hover:text-[var(--color-fg)]">Feed</Link>
+        <Link href="/feed" className="transition-colors hover:text-[var(--color-fg)]">
+          Feed
+        </Link>
         <span className="opacity-40">/</span>
         <span style={{ color: 'var(--color-fg-secondary)' }}>Social</span>
       </nav>
@@ -295,8 +318,8 @@ export default function SocialPage() {
               Mastodon / ActivityPub
             </h1>
             <p className="mt-1 text-sm" style={{ color: 'var(--color-fg-secondary)' }}>
-              Federated microblogging powered by GoToSocial. Browse real-time posts 
-              from the fediverse — all inside DegenFeed.
+              Federated microblogging powered by GoToSocial. Browse real-time posts from the
+              fediverse — all inside DegenFeed.
             </p>
             <div className="mt-3 flex items-center gap-3">
               <span
@@ -388,10 +411,12 @@ export default function SocialPage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full rounded-xl border bg-[var(--color-card)] py-2.5 px-4 text-sm text-[var(--color-fg)] placeholder:text-[var(--color-muted)] transition-colors focus:outline-none focus:ring-2"
-            style={{
-              borderColor: 'var(--color-glass-border)',
-              '--tw-ring-color': GTS_COLOR,
-            } as React.CSSProperties}
+            style={
+              {
+                borderColor: 'var(--color-glass-border)',
+                '--tw-ring-color': GTS_COLOR,
+              } as React.CSSProperties
+            }
             aria-label="Search social instances"
           />
         </div>
@@ -438,14 +463,20 @@ export default function SocialPage() {
         </h2>
 
         {filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed py-16"
+          <div
+            className="flex flex-col items-center justify-center rounded-2xl border border-dashed py-16"
             style={{ borderColor: 'var(--color-glass-border)' }}
           >
             <span className="mb-3 text-3xl">🔍</span>
-            <p className="text-sm" style={{ color: 'var(--color-muted)' }}>No instances match your search.</p>
+            <p className="text-sm" style={{ color: 'var(--color-muted)' }}>
+              No instances match your search.
+            </p>
             <button
               type="button"
-              onClick={() => { setSearchQuery(''); setActiveCategory(null); }}
+              onClick={() => {
+                setSearchQuery('');
+                setActiveCategory(null);
+              }}
               className="mt-3 rounded-lg px-4 py-1.5 text-xs font-medium"
               style={{
                 backgroundColor: `${GTS_COLOR}12`,
@@ -458,15 +489,24 @@ export default function SocialPage() {
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {filtered.map((inst) => (
-              <InstanceCard key={inst.name} instance={inst} onBrowse={handleBrowse} color={GTS_COLOR} />
+              <InstanceCard
+                key={inst.name}
+                instance={inst}
+                onBrowse={handleBrowse}
+                color={GTS_COLOR}
+              />
             ))}
           </div>
         )}
       </section>
 
-      <footer className="mt-12 border-t py-8 text-center" style={{ borderColor: 'var(--color-glass-border)' }}>
+      <footer
+        className="mt-12 border-t py-8 text-center"
+        style={{ borderColor: 'var(--color-glass-border)' }}
+      >
         <p className="text-xs" style={{ color: 'var(--color-muted)' }}>
-          Federated microblogging via ActivityPub. DegenFeed aggregates live content from the fediverse.
+          Federated microblogging via ActivityPub. DegenFeed aggregates live content from the
+          fediverse.
         </p>
       </footer>
     </div>
@@ -491,9 +531,7 @@ function PostCard({ post }: { post: MastodonPost }) {
         <div
           className="h-8 w-8 shrink-0 rounded-full bg-cover bg-center"
           style={{
-            backgroundImage: post.author.avatarUrl
-              ? `url(${post.author.avatarUrl})`
-              : undefined,
+            backgroundImage: post.author.avatarUrl ? `url(${post.author.avatarUrl})` : undefined,
             backgroundColor: post.author.avatarUrl ? 'transparent' : GTS_COLOR,
           }}
         >
@@ -515,7 +553,8 @@ function PostCard({ post }: { post: MastodonPost }) {
             )}
           </div>
           <div className="flex items-center gap-2 mt-0.5">
-            <span className="text-[10px] font-medium uppercase tracking-wider rounded-full px-1.5 py-0.5"
+            <span
+              className="text-[10px] font-medium uppercase tracking-wider rounded-full px-1.5 py-0.5"
               style={{
                 backgroundColor: `${GTS_COLOR}15`,
                 color: GTS_COLOR,
@@ -533,8 +572,9 @@ function PostCard({ post }: { post: MastodonPost }) {
       <p
         className="text-sm leading-relaxed line-clamp-4"
         style={{ color: 'var(--color-fg-secondary)' }}
-        dangerouslySetInnerHTML={{ __html: post.html || escapeHtml(post.text) }}
-      />
+      >
+        {stripHtml(post.text || post.html || '')}
+      </p>
 
       <div className="mt-3 flex items-center gap-4 text-xs" style={{ color: 'var(--color-muted)' }}>
         <span>❤️ {post.metrics.likes}</span>
@@ -595,12 +635,20 @@ function InstanceCard({
       {/* Stats */}
       <div className="mt-4 flex gap-4 text-xs">
         <div>
-          <span className="font-mono font-bold" style={{ color }}>{instance.users.toLocaleString()}</span>
-          <span className="ml-1" style={{ color: 'var(--color-muted)' }}>users</span>
+          <span className="font-mono font-bold" style={{ color }}>
+            {instance.users.toLocaleString()}
+          </span>
+          <span className="ml-1" style={{ color: 'var(--color-muted)' }}>
+            users
+          </span>
         </div>
         <div>
-          <span className="font-mono font-bold" style={{ color }}>{instance.posts.toLocaleString()}</span>
-          <span className="ml-1" style={{ color: 'var(--color-muted)' }}>posts</span>
+          <span className="font-mono font-bold" style={{ color }}>
+            {instance.posts.toLocaleString()}
+          </span>
+          <span className="ml-1" style={{ color: 'var(--color-muted)' }}>
+            posts
+          </span>
         </div>
         <div className="ml-auto font-mono text-[10px]" style={{ color: 'var(--color-muted)' }}>
           {instance.language}
@@ -644,10 +692,14 @@ function getTimeAgo(timestamp: number): string {
   return `${days}d ago`;
 }
 
-function escapeHtml(text: string): string {
+function stripHtml(text: string): string {
   return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+    .replace(/<[^>]*>/g, '')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#x27;/g, "'")
+    .replace(/&#x2F;/g, '/')
+    .trim();
 }
