@@ -6,6 +6,8 @@
 
 import type { Hono } from 'hono';
 import type { Env } from '../../index';
+import { jsonResponse } from '../../index';
+import { ok, serverError } from '../../response-helpers';
 import blueskyFeedGen from '../../routes/bluesky-feed-generator';
 
 import { handleCommunities } from '../../routes/communities';
@@ -600,9 +602,12 @@ export function registerFeedRoutes(app: Hono<{ Bindings: Env }>): void {
   });
   app.all('/api/feed/post/:postId', async (c) => {
     try {
-      const result = await const postId = c.req.param('postId');
-    if (c.req.query('format') === 'og') return handlePostOg(c.req.raw, c.env, postId);
-    return handlePostById(c.req.raw, c.env, postId);
+      const postId = c.req.param('postId');
+      if (c.req.query('format') === 'og') return handlePostOg(c.req.raw, c.env, postId);
+      return handlePostById(c.req.raw, c.env, postId);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
   });
   app.all('/api/feed/funding', async (c) => handleFundingFeed(c.req.raw, c.env));
   app.all('/api/feed/top', async (c) => handleTopFeed(c.req.raw, c.env));
@@ -616,8 +621,14 @@ export function registerFeedRoutes(app: Hono<{ Bindings: Env }>): void {
   app.all('/api/feed/scroll-depth', async (c) => handleScrollDepth(c.req.raw, c.env));
   app.all('/api/feed/seen', async (c) => handleMarkSeen(c.req.raw, c.env));
   app.all('/api/feed/engagement-feedback', async (c) => handleEngagementFeedback(c.req.raw, c.env));
-  app.all('/api/feed/category/:category', async (c) =>
-    handleCategorySlugFeed(c.req.raw, c.env, c.req.param('category'), c.executionCtx);
+  app.all('/api/feed/category/:category', async (c) => {
+    try {
+      const result = await handleCategorySlugFeed(
+        c.req.raw,
+        c.env,
+        c.req.param('category'),
+        c.executionCtx,
+      );
       return ok(result);
     } catch (err) {
       return serverError(err instanceof Error ? err.message : 'Unknown error');
@@ -642,12 +653,12 @@ export function registerFeedRoutes(app: Hono<{ Bindings: Env }>): void {
   app.all('/api/feed/per-protocol/:protocol/:category', async (c) => {
     try {
       const result = await handlePerProtocolCategoryFeed(
-      c.req.raw,
-      c.env,
-      c.req.param('protocol'),
-      c.req.param('category'),
-      c.executionCtx,
-    );
+        c.req.raw,
+        c.env,
+        c.req.param('protocol'),
+        c.req.param('category'),
+        c.executionCtx,
+      );
       return ok(result);
     } catch (err) {
       return serverError(err instanceof Error ? err.message : 'Unknown error');
@@ -785,7 +796,12 @@ export function registerFeedRoutes(app: Hono<{ Bindings: Env }>): void {
   });
   app.get('/api/feed/protocol/:protocol', async (c) => {
     try {
-      const result = await handleProtocolFeed(c.req.raw, c.env, c.req.param('protocol'), c.executionCtx);
+      const result = await handleProtocolFeed(
+        c.req.raw,
+        c.env,
+        c.req.param('protocol'),
+        c.executionCtx,
+      );
       return ok(result);
     } catch (err) {
       return serverError(err instanceof Error ? err.message : 'Unknown error');
@@ -793,7 +809,12 @@ export function registerFeedRoutes(app: Hono<{ Bindings: Env }>): void {
   });
   app.get('/api/feed/protocol/:protocol/popular', async (c) => {
     try {
-      const result = await handleProtocolPopular(c.req.raw, c.env, c.req.param('protocol'), c.executionCtx);
+      const result = await handleProtocolPopular(
+        c.req.raw,
+        c.env,
+        c.req.param('protocol'),
+        c.executionCtx,
+      );
       return ok(result);
     } catch (err) {
       return serverError(err instanceof Error ? err.message : 'Unknown error');
@@ -801,7 +822,12 @@ export function registerFeedRoutes(app: Hono<{ Bindings: Env }>): void {
   });
   app.get('/api/feed/protocol/:protocol/trending', async (c) => {
     try {
-      const result = await handleProtocolTrendingRoute(c.req.raw, c.env, c.req.param('protocol'), c.executionCtx);
+      const result = await handleProtocolTrendingRoute(
+        c.req.raw,
+        c.env,
+        c.req.param('protocol'),
+        c.executionCtx,
+      );
       return ok(result);
     } catch (err) {
       return serverError(err instanceof Error ? err.message : 'Unknown error');
@@ -809,7 +835,12 @@ export function registerFeedRoutes(app: Hono<{ Bindings: Env }>): void {
   });
   app.get('/api/feed/protocol/:protocol/newest', async (c) => {
     try {
-      const result = await handleProtocolNewest(c.req.raw, c.env, c.req.param('protocol'), c.executionCtx);
+      const result = await handleProtocolNewest(
+        c.req.raw,
+        c.env,
+        c.req.param('protocol'),
+        c.executionCtx,
+      );
       return ok(result);
     } catch (err) {
       return serverError(err instanceof Error ? err.message : 'Unknown error');
@@ -817,7 +848,12 @@ export function registerFeedRoutes(app: Hono<{ Bindings: Env }>): void {
   });
   app.get('/api/feed/protocol/:protocol/videos', async (c) => {
     try {
-      const result = await handleProtocolVideos(c.req.raw, c.env, c.req.param('protocol'), c.executionCtx);
+      const result = await handleProtocolVideos(
+        c.req.raw,
+        c.env,
+        c.req.param('protocol'),
+        c.executionCtx,
+      );
       return ok(result);
     } catch (err) {
       return serverError(err instanceof Error ? err.message : 'Unknown error');
@@ -858,7 +894,9 @@ export function registerFeedRoutes(app: Hono<{ Bindings: Env }>): void {
   });
   app.post('/api/custom-feeds/:id/subscribe', async (c) => {
     try {
-      return await withSession(c, () => handleCustomFeedSubscribe(c.req.raw, c.env, c.req.param('id')));
+      return await withSession(c, () =>
+        handleCustomFeedSubscribe(c.req.raw, c.env, c.req.param('id')),
+      );
     } catch (err) {
       return serverError(err instanceof Error ? err.message : 'Unknown error');
     }
@@ -881,14 +919,18 @@ export function registerFeedRoutes(app: Hono<{ Bindings: Env }>): void {
   });
   app.put('/api/custom-feeds/:id', async (c) => {
     try {
-      return await withSession(c, () => handleCustomFeedUpdate(c.req.raw, c.env, c.req.param('id')));
+      return await withSession(c, () =>
+        handleCustomFeedUpdate(c.req.raw, c.env, c.req.param('id')),
+      );
     } catch (err) {
       return serverError(err instanceof Error ? err.message : 'Unknown error');
     }
   });
   app.delete('/api/custom-feeds/:id', async (c) => {
     try {
-      return await withSession(c, () => handleCustomFeedDelete(c.req.raw, c.env, c.req.param('id')));
+      return await withSession(c, () =>
+        handleCustomFeedDelete(c.req.raw, c.env, c.req.param('id')),
+      );
     } catch (err) {
       return serverError(err instanceof Error ? err.message : 'Unknown error');
     }
@@ -1563,9 +1605,12 @@ export function registerFeedRoutes(app: Hono<{ Bindings: Env }>): void {
   // --- API: Trending Scraper & Aggregation ---
   app.get('/api/trending/aggregated', async (c) => {
     try {
-      return await const m = await import('../../routes/trending-scraper');
-    const data = await m.scrapeTrendingContent(c.env);
-    return jsonResponse({ items: m.mergeTrendingItems(data), generatedAt: Date.now() });
+      const m = await import('../../routes/trending-scraper');
+      const data = await m.scrapeTrendingContent(c.env);
+      return jsonResponse({ items: m.mergeTrendingItems(data), generatedAt: Date.now() });
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
   });
   app.get('/api/trending/per-platform', async (c) => {
     const { scrapeTrendingContent } = await import('../../routes/trending-scraper');
@@ -1586,25 +1631,30 @@ export function registerFeedRoutes(app: Hono<{ Bindings: Env }>): void {
   // --- V1: Source Discovery ---
   app.get('/api/sources/discover', async (c) => handleSourcesDiscover(c.req.raw, c.env));
   app.get('/api/sources/pending', async (c) => handleSourcesPending(c.req.raw, c.env));
-  app.post('/api/sources/approve', async (c) => withSession(c, () => handleSourcesApprove(c.req.raw, c.env)));
-  app.post('/api/sources/reject', async (c) => withSession(c, () => handleSourcesReject(c.req.raw, c.env)));
+  app.post('/api/sources/approve', async (c) =>
+    withSession(c, () => handleSourcesApprove(c.req.raw, c.env)),
+  );
+  app.post('/api/sources/reject', async (c) =>
+    withSession(c, () => handleSourcesReject(c.req.raw, c.env)),
+  );
   app.get('/api/sources/health', async (c) => handleSourcesHealth(c.req.raw, c.env));
   app.get('/api/sources/trending', async (c) => handleSourcesTrending(c.req.raw, c.env));
   app.get('/api/sources/stale', async (c) => handleSourcesStale(c.req.raw, c.env));
   app.get('/api/sources/new-this-week', async (c) => handleSourcesNewThisWeek(c.req.raw, c.env));
   app.get('/api/sources/stats', async (c) => handleSourcesStats(c.req.raw, c.env));
-  app.post('/api/sources/health-check', async (c) => withSession(c, () => handleSourcesHealthCheck(c.req.raw, c.env)));
-  app.post('/api/sources/record-engagement', async (c) => withSession(c, () => handleRecordEngagement(c.req.raw, c.env)));
+  app.post('/api/sources/health-check', async (c) =>
+    withSession(c, () => handleSourcesHealthCheck(c.req.raw, c.env)),
+  );
+  app.post('/api/sources/record-engagement', async (c) =>
+    withSession(c, () => handleRecordEngagement(c.req.raw, c.env)),
+  );
 
   // --- Feed cache management ---
-  app.post('/api/feed/cache/invalidate', async (c) =>
-    withSession(c, () => handleFeedCacheInvalidate(c.req.raw, c.env));
+  app.post('/api/feed/cache/invalidate', async (c) => {
+    try {
+      return await withSession(c, () => handleFeedCacheInvalidate(c.req.raw, c.env));
     } catch (err) {
       return serverError(err instanceof Error ? err.message : 'Unknown error');
     }
   });
 }
-
-import { handleTrendingSidebar } from '../../routes/trending-sidebar';
-
-import { ok, badRequest, notFound, serverError } from '../response-helpers';

@@ -1,240 +1,402 @@
-# DegenFeed — Code Structure & File Splitting Conventions
+# DegenFeed — Code Structure & Architecture Standards
 
-> **Last updated:** 2026-07-25  
-> **Owner:** Engineering Team  
-> **Applies to:** All TypeScript source files in `workers/`, `bridge/`, `packages/`
-
----
-
-## 1. The 500-Line Rule
-
-**No source file may exceed 500 lines.** Files exceeding this limit must be split.
-
-### Thresholds
-
-| Size | Action |
-|------|--------|
-| < 300 lines | Healthy — no action needed |
-| 300–500 lines | Watch — consider proactive split if multiple concerns |
-| 500+ lines | **Mandatory split** — extract types, constants, helpers, or sub-modules |
-
-### Why 500 Lines?
-
-- **Cognitive load:** A developer should understand any file in a single reading session
-- **Conflict reduction:** Smaller files reduce merge conflict surface area
-- **Testability:** Smaller modules have cleaner unit test boundaries
-- **Build speed:** Incremental builds skip unchanged modules
+> **Status:** canonical
+> **Last updated:** 2026-07-25
+> **Owner:** Engineering Team
+> **Applies to:** All TypeScript source files in `workers/`, `bridge/`, `packages/`, `apps/`
 
 ---
 
-## 2. File Splitting Pattern
+## 1. God Files Eliminated
 
-### Standard Extraction Order
+The following large files were identified as "god files" (single files handling multiple concerns) and split into structured module directories. These refactors serve as reference examples for future work.
 
-When splitting a file exceeding 500 lines, extract in this priority order:
+### 1.1 `news-aggregator.ts` (was >1000 lines)
+
+**Original:** A single file handling news source configuration, fetching, parsing, deduplication, scoring, and caching.
+
+**Split into** (`workers/api/src/feed/`):
+
+| File | Purpose | Size |
+|------|---------|------|
+| `news-types.ts` | News types, source interfaces, category enums | ~150 lines |
+| `news-source-tiers.ts` | Source tier definitions and category assignments | ~200 lines |
+| `news-source-tier-1.ts` through `news-source-tier-4.ts` | Per-tier source configuration | ~100–150 lines each |
+| `news-helpers.ts` | Pure helper functions (dedup, normalization) | ~250 lines |
+| `news-fetcher.ts` | Protocol-specific data fetching | ~350 lines |
+| `news-processor.ts` | Content processing and enrichment | ~300 lines |
+| `news-cache.ts` | Caching layer for news pipeline | ~100 lines |
+| `news-aggregator.ts` | Thin orchestrator (imports all of the above) | **Now ~300 lines** |
+
+### 1.2 `live-aggregator/` (was >1500 lines)
+
+**Original:** Monolithic live aggregation file with streaming, scheduling, lifecycle, and helper logic.
+
+**Split into** directory at `workers/api/src/feed/live-aggregator/`:
+
+| File | Purpose |
+|------|---------|
+| `live-aggregator-types.ts` | Types and interfaces |
+| `live-aggregator-streams.ts` | Stream management |
+| `live-aggregator-schedule.ts` | Scheduling logic |
+| `live-aggregator-lifecycle.ts` | Lifecycle management |
+| `live-aggregator-helpers.ts` | Pure helper functions |
+| `index.ts` | Barrel export |
+
+### 1.3 `bridge/src/providers/rss.ts` (was >1800 lines)
+
+**Original:** A monolithic RSS provider handling parsing, dedup, feed configs, and quality scoring.
+
+**Split into** (`bridge/src/providers/rss/`):
+
+| File | Purpose |
+|------|---------|
+| `rss-types.ts` | RSS provider types |
+| `rss-helpers.ts` | Parsing and normalization helpers |
+| `rss-parser.ts` | XML-to-UnifiedPost parser |
+| `rss-dedup.ts` | Cross-feed deduplication |
+| `feeds/index.ts` | Feed configuration barrel |
+| `feeds/crypto-news.ts` | Crypto news feed configs |
+| `feeds/research.ts` | Research feed configs |
+| `feeds/dev.ts` | Developer feed configs |
+| `feeds/security.ts` | Security feed configs |
+| `feeds/newsletter.ts` | Newsletter feed configs |
+| `index.ts` | Barrel export |
+
+### 1.4 `routes/register/social.ts` (was >1900 lines)
+
+**Original:** A single file registering all social protocol routes (Nostr, Farcaster, Bluesky, Mastodon, etc.).
+
+**Refactored into** (`routes/register/`):
+
+| File | Purpose |
+|------|---------|
+| `social.ts` | Social protocol routes (now ~300 lines) |
+| `feed.ts` | Feed-related routes |
+| `core.ts` | Core utility routes |
+| `dao.ts` | DAO governance routes |
+| `coins.ts` | Creator coin routes |
+| `media.ts` | Media routes |
+| `messaging.ts` | Messaging routes |
+| `live.ts` | Live streaming routes |
+| `index.ts` | Barrel export |
+
+### 1.5 `feed-core/src/index.ts` (was >1400 lines)
+
+**Original:** A single file containing algorithm logic, scoring, moderation, quality checks, and niche classification.
+
+**Split into** (`packages/feed-core/src/`):
+
+| File | Purpose |
+|------|---------|
+| `algorithm.ts` | Feed algorithm and scoring |
+| `moderation.ts` | Content moderation |
+| `quality.ts` | Quality scoring |
+| `spam.ts` | Spam detection |
+| `niches.ts` | Niche classification |
+| `preferences.ts` | User preferences |
+| `identity-resolver.ts` | Cross-protocol identity |
+| `cross-protocol.ts` | Cross-protocol helpers |
+| `circuit-breaker.ts` | Resilience pattern |
+| `index.ts` | Barrel export |
+
+---
+
+## 2. Component Duplication Fixed
+
+### 2.1 PostCard Duplication
+
+**Problem:** Three separate PostCard implementations existed across different UI modules — one for the main feed, one for profiles, and one for search results. Each had slightly different features and inconsistent prop interfaces.
+
+**Fix:** Consolidated into `packages/ui/src/post-card/` with sub-modules:
 
 ```
-Original file (e.g., news-aggregator.ts)
-  ├── types.ts                        # Interfaces, types, enums, type aliases
-  ├── {domain}-constants.ts           # Data arrays, config objects, lookup tables
-  ├── {domain}-helpers.ts             # Pure helper functions, utilities
-  ├── {domain}-handlers.ts            # Request handlers, route callbacks
-  ├── {domain}-sub-module.ts          # Additional domain-specific modules
-  └── index.ts / {original}.ts        # Thin orchestrator (< 300 lines)
+packages/ui/src/post-card/
+  PostCard.tsx                  — Main component
+  PostCardTypes.ts              — Shared type interfaces
+  PostCardHelpers.ts            — Pure helper functions
+  PostCardMedia.tsx             — Media rendering
+  PostCardEngagement.tsx        — Engagement metrics display
+  PostCardSkeleton.tsx          — Loading skeleton
+  PostCardEmpty.tsx             — Empty state
+  PostCardTranslationOverlay.tsx — i18n overlay
+  PostCard.test.tsx             — Test suite
 ```
 
-### Naming Conventions
+All consumers now import `PostCard` from the UI package barrel.
 
-| Concept | Convention | Example |
-|---------|-----------|---------|
-| Types & interfaces | `{domain}-types.ts` | `news-types.ts`, `sso-types.ts` |
-| Constants & data | `{domain}-constants.ts` or `{domain}-tiers.ts` | `news-source-tiers.ts`, `config-tiers.ts` |
-| Pure helpers | `{domain}-helpers.ts` | `news-helpers.ts`, `inbox-helpers.ts` |
-| Business logic | `{domain}-{concern}.ts` | `inbox-aggregator.ts`, `sso-session.ts` |
-| Request handlers | `{domain}-handlers.ts` | `telegram-handlers.ts`, `news-handlers.ts` |
-| Platform wrappers | `platform-wrappers/{name}.ts` | `platform-wrappers/farcaster.ts` |
-| Orchestrator | Original name (< 300 lines) | `news-aggregator.ts` |
+### 2.2 Response Helper Consolidation
 
-### Barrell Exports
+**Problem:** 16+ different rate limit response patterns and ad-hoc `new Response(JSON.stringify(...))` patterns duplicated across route handlers.
 
-Every directory must have an `index.ts` barrel file:
+**Fix:** Standard `response-helpers.ts` in `workers/api/src/`:
 
 ```typescript
-// packages/feed-providers/src/providers/rss/index.ts
-export * from './types';
-export * from './config';
-export * from './parsers';
-export * from './helpers';
-export * from './provider';
+// Workers response helpers — single source of truth
+export function ok(data: unknown): Response       // 200
+export function created(data: unknown): Response  // 201
+export function badRequest(msg?: string): Response // 400
+export function notFound(msg?: string): Response  // 404
+export function serverError(msg?: string): Response // 500
+export function forbidden(msg?: string): Response // 403
+export function methodNotAllowed(methods: string[]): Response // 405 + Allow header
+export function conflict(msg?: string): Response  // 409
+export function rateLimitResponse(ms: number): Response // 429
+export function upgradeRequired(msg?: string): Response // 426
+export function paymentRequired(msg?: string, headers?): Response // 402
+export function badGateway(msg?: string): Response // 502
+export function errorResponse(err, env, opts): Response // Catch-all
 ```
 
-**Rules:**
-- Always use `export *` for re-exports (type-safety preserved by `isolatedModules`)
-- Never re-export types from a non-barrel file — always go through `index.ts`
-- No circular barrel imports (use `tsc --noEmit` to detect)
+### 2.3 KV Key Pattern Deduplication
+
+**Problem:** KV key format strings duplicated across every route handler (e.g., `farcaster:coin:${fid}`, `xchain:token:${address}`).
+
+**Fix:** Centralized `kv-key-patterns.ts` and `kv-helpers.ts` in `workers/api/src/`:
+
+```typescript
+// kv-key-patterns.ts — Single source for all KV key formats
+export const KV_KEYS = {
+  farcasterCoin: (fid: string) => `farcaster:coin:${fid}`,
+  farcasterLink: (fid: string) => `farcaster:link:${fid}`,
+  lensCoin: (profileId: string) => `lens:coin:${profileId}`,
+  xchainToken: (address: string) => `xchain:token:${address}`,
+  // ... all KV key patterns in one place
+} as const;
+```
+
+### 2.4 Auth Provider Patterns
+
+**Problem:** Redundant wallet/session/CSRF validation logic scattered across routes.
+
+**Fix:** Consolidated into standardized middleware in `workers/api/src/lib/`:
+- `admin-guard.ts` — `requireAdminFromSession()`
+- `premium-gate.ts` — `requirePremium()`
+- `tier-gate.ts` — `requireTier()`
+- `input-validator.ts` — `validateRequest()`
 
 ---
 
-## 3. Directory Structure Conventions
+## 3. Patterns to Follow for New Code
 
-### Workers API (`workers/api/src/`)
+### 3.1 Directory-First Module Pattern
 
-```
-feed/                     # Feed pipeline engine
-  index.ts                # Barrel exports
-  news-aggregator.ts      # Orchestrator (< 300 lines)
-  news-types.ts           # News types/interfaces
-  news-source-tiers.ts    # Source data arrays split by tier
-  news-helpers.ts         # Helper functions
-  live-aggregator/        # Subdirectory for complex module
-    index.ts
-    live-aggregator-types.ts
-    live-aggregator-streams.ts
-    live-aggregator-schedule.ts
-    live-aggregator-lifecycle.ts
-    live-aggregator-helpers.ts
-
-lib/                      # Shared libraries
-  sso/                    # Subdirectory for SSO module
-    index.ts
-    sso-types.ts
-    sso-keys.ts
-    sso-crypto.ts
-    sso-session.ts
-    sso-provision.ts
-    sso-recovery.ts
-  video-platform/         # Video platform wrappers
-    index.ts
-    video-platform-types.ts
-    platform-wrappers/    # Per-platform implementations
-    video-platform-aggregator.ts
-  universal-inbox/        # Universal inbox
-    index.ts
-    universal-inbox-types.ts
-    universal-inbox-aggregator.ts
-    universal-inbox-handlers.ts
-    universal-inbox-helpers.ts
-
-routes/                   # API route handlers
-  telegram/               # Subdirectory for complex route
-    index.ts
-    telegram-types.ts
-    telegram-handlers.ts
-  podcast/
-    index.ts
-    podcast-types.ts
-    podcast-handlers.ts
-    podcast-helpers.ts
-```
-
-### Bridge (`bridge/src/`)
+For any new feature that requires more than one function:
 
 ```
-providers/
-  rss/                    # RSS provider (was rss.ts)
-    index.ts
-    rss-types.ts
-    rss-helpers.ts
-    rss-parser.ts
-    rss-dedup.ts
-    feeds/                # Feed configuration arrays split by category
-      index.ts
-      crypto-news.ts
-      research.ts
-      dev.ts
-      security.ts
-      newsletter.ts
+feature-name/
+  index.ts          — Barrel export (always)
+  types.ts          — Types and interfaces (extract first)
+  constants.ts      — Constants (extract second)
+  utils.ts          — Pure helpers (extract third)
+  core.ts           — Business logic (when logic exceeds 200 lines)
+  handlers.ts       — HTTP handlers (when handlers exceed 200 lines)
+  __tests__/        — Test directory
 ```
 
-### Packages (`packages/`)
+### 3.2 Route Registration Pattern
 
-```
-feed-providers/src/providers/rss/
-  index.ts
-  types.ts
-  config.ts               # Thin (< 300 lines) — imports sub-configs
-  config-tiers.ts         # Config split by tier
-  config-news.ts          # News feeds
-  config-defi.ts          # DeFi feeds
-  config-niches.ts        # Niche feeds
-  config-dev.ts           # Dev feeds
-  config-research.ts      # Research feeds
-  parsers.ts
-  helpers.ts
-  quality.ts
-  dedup.ts
-  provider.ts
-```
+New route handlers follow the Hono app pattern via `routes/register/`:
 
----
+```typescript
+// 1. Define handler in routes/{feature}.ts
+// 2. Register in app.ts via register module
+// 3. Export type-safe handlers
 
-## 4. When to Split — Decision Tree
+// routes/register/my-feature.ts
+import { Hono } from 'hono';
+import type { Env } from '../../index';
+import { myHandler } from '../my-feature';
 
-```
-Does the file exceed 500 lines?
-├── No → No action needed
-└── Yes → Identify concerns:
-    ├── Has types/interfaces? → Extract to {domain}-types.ts
-    ├── Has data arrays/configs? → Extract to {domain}-constants.ts
-    ├── Has pure helpers? → Extract to {domain}-helpers.ts
-    └── Has multiple business functions?
-        ├── 2-3 functions → Keep in single {domain}-logic.ts
-        └── 4+ functions → Split by concern (e.g., -session, -provision, -crypto)
+export function registerMyFeatureRoutes(app: Hono<{ Bindings: Env }>) {
+  app.get('/api/my-feature', myHandler);
+}
 ```
 
-### Extraction priority (Pareto rule):
-1. **Types** — always extract first (lowest risk, most reusability)
-2. **Data/constants** — always extract (the bulk of large files is often config)
-3. **Helpers** — extract pure functions (testable independently)
-4. **Handlers** — extract last (may depend on types + helpers)
+### 3.3 SDK Package Pattern
 
----
-
-## 5. Circular Dependency Prevention
-
-### Rules
-- Types files must **never** import from logic files
-- Helper files should only import from types files
-- Handler files import from types + helpers
-- Barrel files (`index.ts`) import from all siblings but never from parent directories
-
-### Detection
-```bash
-# TypeScript will catch circular imports via --noEmit
-npx tsc --noEmit
+```
+packages/my-sdk/
+  src/
+    index.ts          — Barrel export
+    types.ts          — Protocol-specific types
+    helpers.ts        — Pure helper functions (no side effects)
+    fetchers.ts       — API fetchers (external calls)
+    __tests__/        — Test files
+  package.json        — With "exports" field
+  tsconfig.json
 ```
 
-### Common Pitfall
-```
-❌ BAD: types.ts imports from helpers.ts → helpers.ts imports from types.ts
+### 3.4 Query in `app.ts`, Mutate in Route Handler
 
-✅ GOOD: types.ts has no local imports
-         helpers.ts imports only from types.ts
-         handlers.ts imports from types.ts + helpers.ts
+- **Queries** (read operations) use the feed pipeline: `feed/` modules
+- **Mutations** (write operations) happen in route handlers: `routes/` files
+- **Cross-cutting logic** lives in `lib/` modules
+
+### 3.5 Response Helper Pattern
+
+Always use response helpers instead of ad-hoc responses:
+
+```typescript
+// ✅ Good
+import { ok, badRequest, notFound } from '../../response-helpers';
+return ok(data);
+return badRequest('Invalid input');
+
+// ❌ Bad
+return new Response(JSON.stringify(data), { status: 200, headers: { 'content-type': 'application/json' } });
+return new Response(JSON.stringify({ error: 'Invalid input' }), { status: 400, headers: { 'content-type': 'application/json' } });
+```
+
+### 3.6 Service Layer Pattern (Frontend)
+
+```
+apps/web/src/services/
+  feed.ts             — Feed API client functions
+  auth.ts             — Authentication API client
+  profile.ts          — Profile API client
+  tip.ts              — Tipping API client
+  notify.ts           — Notification API client
+
+apps/web/src/hooks/
+  useFeedData.ts      — Feed data hook
+  useAuth.ts          — Auth hook
+  useNotifications.ts — Notification hook
 ```
 
 ---
 
-## 6. Dead Code Removal
+## 4. Anti-Patterns to Avoid
 
-During splitting, remove:
+### ❌ God Files
 
-1. **Unused imports** — TypeScript `noUnusedLocals` will flag these
-2. **Commented-out code** — If it was important, it's in git history
-3. **Duplicate functions** — Same logic in multiple files? Extract to shared
-4. **Unused types/interfaces** — If nothing imports it, delete it
-5. **Empty exports** — `export {}` or `export default {}` with no members
+Files handling multiple concerns (types, config, helpers, business logic, I/O) in one file.
+
+```typescript
+// ❌ Bad — one file doing everything
+export interface FeedPost { ... }
+export const FEED_CONFIG = { ... };
+export function parseFeedPost(raw: unknown) { ... }
+export async function fetchFeed() { ... }
+export async function cacheFeed(posts: FeedPost[]) { ... }
+```
+
+### ❌ Deep Imports
+
+```typescript
+// ❌ Bad — reaching into package internals
+import { algo } from '@degenfeed/feed-core/src/algorithm';
+
+// ✅ Good — import from barrel
+import { FeedAlgorithm } from '@degenfeed/feed-core';
+```
+
+### ❌ Ad-hoc Response Construction
+
+```typescript
+// ❌ Bad
+return new Response(JSON.stringify(data), {
+  status: 200,
+  headers: { 'content-type': 'application/json' },
+});
+
+// ✅ Good
+import { ok } from './response-helpers';
+return ok(data);
+```
+
+### ❌ Duplicate KV Key Strings
+
+```typescript
+// ❌ Bad — raw string scattered across files
+const key = `farcaster:coin:${fid}`;
+
+// ✅ Good — use central key helpers
+import { KV_KEYS } from './kv-key-patterns';
+const key = KV_KEYS.farcasterCoin(fid);
+```
+
+### ❌ Circular Dependencies
+
+```typescript
+// ❌ Bad: types importing from logic
+// types.ts → import { helper } from './utils'
+
+// ✅ Good: types import nothing from logic
+// types.ts → (no local imports)
+// utils.ts → import type { Foo } from './types'
+```
+
+### ❌ Non-Null Assertions
+
+```typescript
+// ❌ Bad
+const x = data!;
+
+// ✅ Good
+const x = data ?? fallback;
+if (!data) throw new Error('data required');
+```
+
+### ❌ Throwing in Bridge Providers
+
+```typescript
+// ❌ Bad — bridge providers must never throw
+export async function fetchPosts(): Promise<UnifiedPost[]> {
+  const resp = await fetch(url);  // may throw
+  return parse(resp);
+}
+
+// ✅ Good — always catch and return []
+export async function fetchPosts(): Promise<UnifiedPost[]> {
+  try {
+    const resp = await fetch(url);
+    return parse(resp);
+  } catch {
+    return [];
+  }
+}
+```
+
+### ❌ Mixed Concerns in Route Files
+
+```typescript
+// ❌ Bad — route file doing fetch + parse + cache + respond
+app.get('/api/feed', async (c) => {
+  const raw = await fetch('...');
+  const parsed = parse(raw);
+  await cache(parsed);
+  return c.json(parsed);
+});
+
+// ✅ Good — route delegates to pipeline
+app.get('/api/feed', async (c) => {
+  const posts = await feedPipeline.fetch(c.env, params);
+  return ok(posts);
+});
+```
+
+### ❌ Orphan Empty Directories
+
+Directories with no files (empty `types/`, `utils/`, `constants/` subdirectories) should not be committed. Only create subdirectories when they contain actual files.
 
 ---
 
-## 7. Verification Checklist
+## 5. Decision Tree for Code Organization
 
-After every file split:
-
-- [ ] `npx tsc --noEmit` passes (no type errors)
-- [ ] `npx vitest run` passes (no test regressions)
-- [ ] No file exceeds 500 lines
-- [ ] Barrel `index.ts` exists in every directory
-- [ ] No circular dependencies
-- [ ] All imports point to barrel files (not deep imports)
-- [ ] `git diff` shows only expected moves + imports
+```
+New code needed?
+├── Single function < 100 lines?
+│   └── Add to appropriate existing file
+├── Multiple related functions?
+│   ├── Has types + logic + config?
+│   │   └── Create feature-name/ directory
+│   └── Has only one concern?
+│       └── Create single file
+├── New protocol integration?
+│   ├── Create SDK package (packages/{name}-sdk/)
+│   └── Add wrapper in platform-wrappers/
+└── New API route group?
+    ├── Create routes/{name}.ts handler
+    └── Register in routes/register/{module}.ts
+```

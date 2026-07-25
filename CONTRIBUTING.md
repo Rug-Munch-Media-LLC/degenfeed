@@ -6,7 +6,8 @@ Part of DegenFeed Web — https://git.rugmunch.io/RugMunchMedia/degenfeed-web
 
 # Contributing to DegenFeed Web
 
-> Next.js multi-protocol social aggregator client. TypeScript + Next.js 15 + React 19.
+> Next.js multi-protocol social aggregator client. TypeScript + Next.js 16 + React 19.
+> Full-stack monorepo (Turborepo + pnpm workspaces) with Cloudflare Workers API, Bridge service, and protocol SDK packages.
 
 ## Repositories
 
@@ -16,7 +17,7 @@ Part of DegenFeed Web — https://git.rugmunch.io/RugMunchMedia/degenfeed-web
 | **GitLab mirror** | https://gitlab.com/rugmunchmedia/degenfeed-web |
 | **Codeberg mirror** | https://codeberg.org/degenfeed/degenfeed-web |
 
-PRs accepted on All platforms. Issues tracked on the primary Forgejo instance.
+PRs accepted on all platforms. Issues tracked on the primary Forgejo instance.
 
 ## TL;DR
 
@@ -25,7 +26,7 @@ git checkout main && git pull --rebase origin main
 git checkout -b feat/my-change
 # …make changes…
 pnpm install
-pnpm lint typecheck test     # pre-push gate
+pnpm lint && pnpm typecheck && pnpm test     # pre-push gate
 git add -A
 git commit -m "feat(web): my change"
 git push origin feat/my-change
@@ -44,7 +45,7 @@ Single-tenant branch-PR pattern. `feat/*` branches merged to `main` after CI pas
 | `feat/<scope>`     | New feature or capability.                       |
 | `fix/<scope>`      | Bug fix.                                         |
 | `chore/<scope>`    | Tooling, deps, formatting, non-functional.       |
-| `refactor/<scope>` | Code restructure, no behavior change.           |
+| `refactor/<scope>` | Code restructure, no behavior change.            |
 | `docs/<scope>`     | Documentation only.                              |
 
 ### Commit Convention
@@ -52,10 +53,11 @@ Single-tenant branch-PR pattern. `feat/*` branches merged to `main` after CI pas
 We use **Conventional Commits**.
 
 ```bash
-feat(web): add composer modal
-fix(adapter-nostr): handle malformed event
-docs: update ARCHITECTURE.md
-chore(deps): bump wagmi to 3.7
+feat(feed): add topic weight encoding
+fix(bridge): handle null response from RSS feed
+chore(deps): update vitest to v4
+docs(architecture): update protocol integration map
+refactor(auth): extract wallet persistence to hook
 ```
 
 Allowed types: `feat`, `fix`, `docs`, `refactor`, `style`, `test`, `chore`,
@@ -73,21 +75,72 @@ Allowed types: `feat`, `fix`, `docs`, `refactor`, `style`, `test`, `chore`,
 Before pushing any branch:
 
 ```bash
-pnpm lint           # biome check
-pnpm typecheck      # tsc --noEmit
-pnpm test           # turbo run test
-pnpm build          # production build sanity
+pnpm lint           # biome check (must exit 0)
+pnpm typecheck      # tsc --noEmit (must exit 0)
+pnpm test           # turbo run test (must exit 0)
+pnpm build          # production build sanity (must exit 0)
 ```
 
 CI is defined in `.forgejo/workflows/ci.yml`.
 
 ## Code Style
 
-- TypeScript 5.5+ with `strict: true`
-- Biome for format + lint (no ESLint, no Prettier)
-- Functional components, hooks, no class components
-- One component per file
-- No file > 500 lines (see `STANDARDS.md`)
+- **TypeScript 5.5+** with `strict: true`, `noUncheckedIndexedAccess`, `noUnusedLocals`
+- **Biome** for format + lint (no ESLint, no Prettier)
+- **No file > 500 lines** — mandatory split above this threshold (see [MODULE-STRUCTURE.md](./docs/MODULE-STRUCTURE.md))
+- **No stub files** — every file must contain real implementation
+- **Functional components** — hooks, no class components
+- **One component per file**
+- **Barrel exports** — every directory has `index.ts`; no deep imports
+- **Response helpers** — use standardized `ok()`, `badRequest()`, etc. from `response-helpers.ts`
+- **KV key helpers** — use centralized `KV_KEYS` from `kv-key-patterns.ts`
+
+## Quality Gates
+
+Every PR must pass these gates before merging:
+
+1. **Tests pass** — `pnpm test` exits 0
+2. **TypeScript** — `tsc --noEmit` passes with zero errors
+3. **Lint** — `biome check` succeeds
+4. **No regressions** — new tests for bug fixes and features
+5. **No secrets** — review staged files for keys/tokens
+6. **No debug code** — no `console.log`, `debugger`, `TODO` without linked issue
+7. **File size** — no file exceeds 500 lines
+8. **Auth** — protected routes have correct auth middleware
+9. **States** — loading, error, and empty states covered on UI components
+
+## Architecture Standards
+
+See the following docs for detailed standards:
+
+| Document | Purpose |
+|----------|---------|
+| [ARCHITECTURE.md](./docs/ARCHITECTURE.md) | System architecture, package map, data flow |
+| [MODULE-STRUCTURE.md](./docs/MODULE-STRUCTURE.md) | File organization, barrel exports, naming |
+| [CODE-STRUCTURE.md](./docs/CODE-STRUCTURE.md) | God file refactoring patterns, anti-patterns |
+| [QUALITY-STANDARDS.md](./docs/QUALITY-STANDARDS.md) | Quality gates, tests, review checklist |
+| [CODE_STANDARDS.md](./docs/CODE_STANDARDS.md) | TypeScript, React, API, testing conventions |
+| [PRODUCT.md](./docs/PRODUCT.md) | What this repo is and isn't |
+
+## Package Development
+
+### Adding a New Protocol SDK
+
+1. Create `packages/{name}-sdk/` with `package.json`, `tsconfig.json`
+2. Add to `pnpm-workspace.yaml`
+3. Follow the SDK pattern: `types.ts → helpers.ts → fetchers.ts → index.ts`
+4. Add route handler in `workers/api/src/routes/`
+5. Register routes in the appropriate `routes/register/{module}.ts`
+6. Add protocol to `@degenfeed/types Protocol` union
+7. Add protocol entry to `ARCHITECTURE.md` integration map
+
+### Adding a New Route
+
+1. Create handler file in `workers/api/src/routes/{feature}.ts`
+2. Use response helpers from `../../response-helpers`
+3. Register route in `workers/api/src/routes/register/{module}.ts`
+4. Add to `workers/api/src/app.ts` import
+5. Add tests in `workers/api/src/__tests__/`
 
 ## License
 
