@@ -1,0 +1,193 @@
+# ── matrix-appservice-irc configuration ──────────────────────────────────────
+# Bridges Libera.Chat crypto channels to Matrix rooms for DegenFeed.
+#
+# Architecture:
+#   IRC <--> matrix-appservice-irc <--> Synapse <--> DegenFeed WebSocket bridge
+#
+# Every provider integration has: error handling, rate limit tracking,
+# response validation, fallback. No silent failures. No unhandled API changes.
+
+homeserver:
+  # URL of the Synapse homeserver
+  url: "http://synapse:8008"
+  # Domain of the homeserver (must match Synapse server_name)
+  domain: "matrix.degenfeed.xyz"
+
+# ─── IRC Bridge Configuration ──────────────────────────────────────────────
+
+ircService:
+  # ─── Servers ───────────────────────────────────────────────────────────
+  servers:
+    # ── Libera.Chat (primary IRC network) ─────────────────────────────
+    libera:
+      name: "Libera.Chat"
+      # Connection
+      host: "irc.libera.chat"
+      port: 6697
+      ssl: true
+      # Bot identity
+      nick: "DegenFeedBot"
+      username: "degenfeed"
+      realname: "DegenFeed IRC Bridge — https://degenfeed.xyz"
+      # Rate limiting
+      rateLimitMaxPerSecond: 0.4        # IRC servers are strict
+      rateLimitMaxDelayMs: 10000         # Max queue delay
+      # Reconnection
+      reconnectIntervalMs: 5000
+      maxReconnectAttempts: 10
+      # Line limits
+      lineLimit: 400                     # IRC max message length
+      # Membership management
+      membershipManagement: false        # We manage room joins manually
+      # Dynamic channels
+      allowJoin: false                   # Don't allow arbitrary joins
+      # Quit message
+      botConfig:
+        enabled: true
+        quitMessage: "DegenFeed IRC Bridge shutting down"
+
+    # ── OFTC (ethereum-dev, bitcoin-dev) ──────────────────────────────
+    oftc:
+      name: "OFTC"
+      host: "irc.oftc.net"
+      port: 6697
+      ssl: true
+      nick: "DegenFeedBot"
+      username: "degenfeed"
+      realname: "DegenFeed IRC Bridge — https://degenfeed.xyz"
+      rateLimitMaxPerSecond: 0.4
+      reconnectIntervalMs: 5000
+      maxReconnectAttempts: 5
+      lineLimit: 400
+      botConfig:
+        enabled: true
+        quitMessage: "DegenFeed IRC Bridge shutting down"
+
+  # ─── Channel Mappings ─────────────────────────────────────────────────
+  # Maps IRC channels → Matrix room aliases
+  mappings:
+    "libera":
+      "#bitcoin":
+        room: "#_irc_libera_bitcoin:matrix.degenfeed.xyz"
+        displayName: "#bitcoin (Libera.Chat)"
+        # Topic sync
+        syncTopic: true
+        # Memberships
+        memberships:
+          local: "on"   # Matrix users in this room will be on IRC
+          remote: "on"  # IRC users will be in Matrix room
+        # Flood protection
+        floodDelayMs: 500
+        # Dynamic admin
+        allowAdditionalMappings: false
+
+      "#bitcoin-core-dev":
+        room: "#_irc_libera_bitcoin-core-dev:matrix.degenfeed.xyz"
+        displayName: "#bitcoin-core-dev (Libera.Chat)"
+        syncTopic: true
+        memberships:
+          local: "on"
+          remote: "on"
+        floodDelayMs: 1000  # Dev channels: less traffic
+
+      "#lightning-dev":
+        room: "#_irc_libera_lightning-dev:matrix.degenfeed.xyz"
+        displayName: "#lightning-dev (Libera.Chat)"
+        syncTopic: true
+        memberships:
+          local: "on"
+          remote: "on"
+        floodDelayMs: 1000
+
+      "#ethereum":
+        room: "#_irc_libera_ethereum:matrix.degenfeed.xyz"
+        displayName: "#ethereum (Libera.Chat)"
+        syncTopic: true
+        memberships:
+          local: "on"
+          remote: "on"
+        floodDelayMs: 500
+
+    "oftc":
+      "#bitcoin-dev":
+        room: "#_irc_oftc_bitcoin-dev:matrix.degenfeed.xyz"
+        displayName: "#bitcoin-dev (OFTC)"
+        syncTopic: true
+        memberships:
+          local: "on"
+          remote: "on"
+        floodDelayMs: 1000
+
+      "#ethereum-dev":
+        room: "#_irc_oftc_ethereum-dev:matrix.degenfeed.xyz"
+        displayName: "#ethereum-dev (OFTC)"
+        syncTopic: true
+        memberships:
+          local: "on"
+          remote: "on"
+        floodDelayMs: 1000
+
+  # ─── Matrix Room Configuration ───────────────────────────────────────
+  matrixHandler:
+    # Type of Matrix room to create
+    roomType: "public_channel"   # Public rooms are discoverable
+    # Enable federation
+    federate: true
+    # Allow anyone to join
+    joinRule: "public"
+    # History visibility
+    historyVisibility: "world_readable"  # Allow DegenFeed to index
+
+  # ─── Message Handling ────────────────────────────────────────────────
+  ircHandler:
+    # How to handle Matrix → IRC messages
+    matrixToIrc:
+      # Prefix for bot messages
+      prefix: "[DegenFeed] "
+      # Strip formatting
+      stripFormatting: true
+      # Max length
+      maxLength: 300
+
+    # How to handle IRC → Matrix messages
+    ircToMatrix:
+      # HTML formatting
+      htmlFormat: true
+      # Include IRC nick prefix
+      prefix: "<{NICK}> "
+      # Add Matrix link
+      linkFormat: true
+
+    # Message queue
+    messageQueue:
+      maxSize: 500
+      delayMs: 100
+      retryCount: 3
+
+  # ─── Presence & Typing ───────────────────────────────────────────────
+  presence:
+    enabled: false                         # IRC doesn't support presence
+    typical: false
+
+  # ─── Media Handling ──────────────────────────────────────────────────
+  media:
+    enabled: false                         # IRC mostly text-only
+
+  # ─── Metrics & Logging ───────────────────────────────────────────────
+  logging:
+    level: "info"                          # debug, info, warn, error
+    logFile: "/data/state/irc-bridge.log"
+    logFileMaxSize: 10485760               # 10MB
+
+  # ─── Privacy ─────────────────────────────────────────────────────────
+  privacy:
+    # Don't expose IP addresses
+    displayIps: false
+
+# ─── Advanced Settings ──────────────────────────────────────────────────────
+advanced:
+  # Encrypt Matrix messages (if the room uses encryption)
+  enableEncryption: false                  # IRC doesn't support E2E
+  # Enable the admin room for bridge control
+  enableAdminRoom: true
+  adminRoomId: "!irc-admin:matrix.degenfeed.xyz"

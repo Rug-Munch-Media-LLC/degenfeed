@@ -1,0 +1,79 @@
+# ── Deploy matrix-appservice-irc for IRC↔Matrix↔DegenFeed bridging ─────────
+# Key channels: Libera.Chat #bitcoin, #bitcoin-core-dev, #lightning-dev, #ethereum
+#
+# Usage:
+#   docker compose -f docker-compose.irc.yml up -d
+#
+# Architecture:
+#   matrix-appservice-irc <--> Synapse/Matrix homeserver <--> DegenFeed WS
+#                            (matrix.degenfeed.xyz)
+
+version: '3.8'
+
+services:
+  # ── Matrix Appservice IRC ──────────────────────────────────────────────
+  # Bridges IRC channels to Matrix rooms. DegenFeed users read/reply via Matrix.
+  appservice-irc:
+    image: ghcr.io/matrix-org/matrix-appservice-irc:latest
+    container_name: matrix-appservice-irc
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8095:8095"  # bridge API (internal)
+    volumes:
+      - ./config/irc-config.yaml:/data/config.yaml:ro
+      - ./config/irc-registration.yaml:/data/registration.yaml:ro
+      - irc-state:/data/state
+    environment:
+      - NODE_ENV=production
+    command:
+      - node
+      - /opt/matrix-appservice-irc/build/src/index.js
+      - -c
+      - /data/config.yaml
+      - -f
+      - /data/registration.yaml
+    depends_on:
+      synapse:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8095/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ── Synapse (Matrix homeserver) ─────────────────────────────────────────
+  # Needed for matrix-appservice-irc to bridge IRC ↔ Matrix.
+  # In production, use your existing Synapse at matrix.degenfeed.xyz
+  synapse:
+    image: ghcr.io/element-hq/synapse:latest
+    container_name: matrix-synapse
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8008:8008"  # Client-Server API (internal)
+    volumes:
+      - ./config/synapse:/data:rw
+      - synapse-media:/data/media_store
+    environment:
+      - SYNAPSE_SERVER_NAME=matrix.degenfeed.xyz
+      - SYNAPSE_REPORT_STATS=no
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8008/_matrix/client/versions"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  irc-state:
+  synapse-media:

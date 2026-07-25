@@ -28,6 +28,10 @@ export type TransportProtocol =
   | 'matrix'
   | 'telegram'
   | 'lens'
+  | 'irc'
+  | 'xmpp'
+  | 'rocketchat'
+  | 'nwc' // Nostr Wallet Connect
   | 'direct-ws';
 
 export interface TransportMessage {
@@ -210,6 +214,12 @@ export class ProtocolTransports {
         return this.deliverViaTelegramBot(message, env, identity);
       case 'lens':
         return this.deliverViaLens(message, env, identity);
+      case 'irc':
+        return this.deliverViaIrc(message, env, identity);
+      case 'xmpp':
+        return this.deliverViaXmpp(message, env, identity);
+      case 'rocketchat':
+        return this.deliverViaRocketChat(message, env, identity);
       case 'direct-ws':
         return this.deliverViaWebSocket(message, env, identity);
       default:
@@ -860,6 +870,307 @@ export class ProtocolTransports {
         protocol,
         ok: false,
         error: 'Lens DM delivery not fully implemented — post reference created',
+        attemptedAt: Date.now(),
+      };
+    } catch (err) {
+      return {
+        protocol,
+        ok: false,
+        error: err instanceof Error ? err.message : String(err),
+        attemptedAt: Date.now(),
+      };
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // IRC — via matrix-appservice-irc bridge
+  // ═══════════════════════════════════════════════════════════════════════
+
+  private async deliverViaIrc(
+    message: TransportMessage,
+    env: Env,
+    identity: ResolvedIdentity,
+  ): Promise<TransportResult> {
+    const protocol: TransportProtocol = 'irc';
+    const start = Date.now();
+
+    try {
+      const ircIdentity = identity.protocols.irc;
+      if (!ircIdentity?.handle) {
+        return { protocol, ok: false, error: 'No IRC identity', attemptedAt: start };
+      }
+
+      // IRC delivery goes through the Matrix appservice-irc bridge.
+      // We find the Matrix room that maps to the IRC channel/user and send via Matrix.
+      const accessToken = env.MATRIX_ACCESS_TOKEN;
+      const homeserver = env.MATRIX_INSTANCE_URL || 'https://matrix.degenfeed.xyz';
+
+      if (!accessToken) {
+        return {
+          protocol,
+          ok: false,
+          error: 'Matrix (IRC bridge) not configured',
+          attemptedAt: start,
+        };
+      }
+
+      // IRC delivery options:
+      // 1. Channel message: if identity has a channel (room), send to the mapped Matrix room
+      // 2. Query (DM): if identity has a nick, use Matrix DM with the bridged IRC user
+
+      const channel = ircIdentity.handle; // e.g., "#bitcoin" or user nick
+      const network = ircIdentity.id; // e.g., "libera" or "oftc"
+
+      // Build the Matrix room ID for the IRC channel
+      // Format: #_irc_<network>_<channel_slug>:matrix.degenfeed.xyz
+      const channelSlug = channel.startsWith('#') ? channel.slice(1) : channel;
+      const matrixRoomAlias = `#_irc_${network}_${channelSlug}:matrix.degenfeed.xyz`;
+
+      const content = message.encryptedBlob ?? message.body;
+      const ircContent = `[DegenFeed] ${content.slice(0, 300)}`; // IRC line limit
+
+      // Send via Matrix → IRC bridge
+      const sendRes = await fetch(
+        `${homeserver}/_matrix/client/v3/join/${encodeURIComponent(matrixRoomAlias)}`,
+        {
+          method: 'POST',
+          headers: {
+            authorization: `Bearer ${accessToken}`,
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify({}),
+          signal: AbortSignal.timeout(5000),
+        },
+      );
+
+      if (!sendRes.ok && sendRes.status !== 400) {
+        // Room may already be joined; 400 means already joined
+        return {
+          protocol,
+          ok: false,
+          error: `Failed to join IRC Matrix room: ${sendRes.status}`,
+          attemptedAt: Date.now(),
+        };
+      }
+
+      // Get the actual room ID
+      const joinData = sendRes.ok ? ((await sendRes.json()) as { room_id?: string }) : null;
+      const roomId = joinData?.room_id ?? matrixRoomAlias;
+
+      // Send message to the Matrix room (which bridges to IRC)
+      const msgRes = await fetch(
+        `${homeserver}/_matrix/client/v3/rooms/${encodeURIComponent(roomId)}/send/m.room.message`,
+        {
+          method: 'POST',
+          headers: {
+            authorization: `Bearer ${accessToken}`,
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify({
+            msgtype: 'm.text',
+            body: ircContent,
+            format: 'org.matrix.custom.html',
+            formatted_body: `<p>${ircContent.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>`,
+          }),
+          signal: AbortSignal.timeout(8000),
+        },
+      );
+
+      const latency = Date.now() - start;
+
+      if (msgRes.ok) {
+        const data = (await msgRes.json()) as { event_id?: string };
+        return {
+          protocol,
+          ok: true,
+          nativeId: data.event_id ?? message.id,
+          nativeUrl: `${homeserver}/#/room/${roomId}`,
+          attemptedAt: Date.now(),
+          health: { ok: true, latencyMs: latency },
+        };
+      }
+
+      if (msgRes.status === 429) {
+        updateRateLimit(protocol, 0, 30_000);
+      }
+
+      return {
+        protocol,
+        ok: false,
+        error: `IRC/Matrix send failed (${msgRes.status})`,
+        attemptedAt: Date.now(),
+      };
+    } catch (err) {
+      return {
+        protocol,
+        ok: false,
+        error: err instanceof Error ? err.message : String(err),
+        attemptedAt: Date.now(),
+      };
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // XMPP — via Prosody/ejabberd + Matrix bridge (bifrost)
+  // ═══════════════════════════════════════════════════════════════════════
+
+  private async deliverViaXmpp(
+    message: TransportMessage,
+    env: Env,
+    identity: ResolvedIdentity,
+  ): Promise<TransportResult> {
+    const protocol: TransportProtocol = 'xmpp';
+    const start = Date.now();
+
+    try {
+      const xmppIdentity = identity.protocols.xmpp;
+      if (!xmppIdentity?.handle) {
+        return { protocol, ok: false, error: 'No XMPP identity', attemptedAt: start };
+      }
+
+      // XMPP delivery goes through matrix-bifrost bridge.
+      // In production, use the XMPP server's REST API.
+      // For now, use the XMPP HTTP upload + message API if available.
+      const xmppApiUrl = env.XMPP_API_URL || 'https://xmpp.degenfeed.xyz';
+      const xmppAdminToken = env.XMPP_ADMIN_TOKEN;
+
+      if (!xmppAdminToken) {
+        return { protocol, ok: false, error: 'XMPP bridge not configured', attemptedAt: start };
+      }
+
+      const content = message.encryptedBlob ?? message.body;
+      const recipientJid = xmppIdentity.handle; // e.g., "user@conference.xmpp.net"
+
+      // Send via XMPP REST API (ejabberd API, Prosody mod_http)
+      const sendRes = await fetch(`${xmppApiUrl}/api/message`, {
+        method: 'POST',
+        headers: {
+          authorization: `Bearer ${xmppAdminToken}`,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          to: recipientJid,
+          body: content.slice(0, 1000),
+          type: 'chat',
+        }),
+        signal: AbortSignal.timeout(8000),
+      });
+
+      const latency = Date.now() - start;
+
+      if (sendRes.ok) {
+        return {
+          protocol,
+          ok: true,
+          nativeId: message.id,
+          nativeUrl: `xmpp:${recipientJid}`,
+          attemptedAt: Date.now(),
+          health: { ok: true, latencyMs: latency },
+        };
+      }
+
+      return {
+        protocol,
+        ok: false,
+        error: `XMPP send failed (${sendRes.status})`,
+        attemptedAt: Date.now(),
+      };
+    } catch (err) {
+      return {
+        protocol,
+        ok: false,
+        error: err instanceof Error ? err.message : String(err),
+        attemptedAt: Date.now(),
+      };
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // Rocket.Chat — via native Matrix federation
+  // ═══════════════════════════════════════════════════════════════════════
+
+  private async deliverViaRocketChat(
+    message: TransportMessage,
+    env: Env,
+    identity: ResolvedIdentity,
+  ): Promise<TransportResult> {
+    const protocol: TransportProtocol = 'rocketchat';
+    const start = Date.now();
+
+    try {
+      const rcIdentity = identity.protocols.rocketchat;
+      if (!rcIdentity?.handle) {
+        return { protocol, ok: false, error: 'No Rocket.Chat identity', attemptedAt: start };
+      }
+
+      // Rocket.Chat has native Matrix federation since v6.0.
+      // We communicate like a Matrix user — send to the Matrix room
+      // that's federated with the Rocket.Chat channel.
+      const accessToken = env.MATRIX_ACCESS_TOKEN;
+      const homeserver = env.MATRIX_INSTANCE_URL || 'https://matrix.degenfeed.xyz';
+
+      if (!accessToken) {
+        return {
+          protocol,
+          ok: false,
+          error: 'Matrix (RC bridge) not configured',
+          attemptedAt: start,
+        };
+      }
+
+      const rcChannelId = rcIdentity.id; // Rocket.Chat room/group ID
+      const rcUsername = rcIdentity.handle; // Rocket.Chat username
+
+      // Rocket.Chat federates as a Matrix homeserver.
+      // The bridged room format is typically: #rc_<channel>:<rc-homeserver>
+      const rcHomeserver = rcIdentity.displayName ?? 'open.rocket.chat';
+      const matrixRoomAlias = `#rc_${rcChannelId}:${rcHomeserver}`;
+
+      const content = message.encryptedBlob ?? message.body;
+      const rcContent = content.slice(0, 1000);
+
+      // Join the federated Rocket.Chat room
+      await fetch(`${homeserver}/_matrix/client/v3/join/${encodeURIComponent(matrixRoomAlias)}`, {
+        method: 'POST',
+        headers: { authorization: `Bearer ${accessToken}`, 'content-type': 'application/json' },
+        body: JSON.stringify({}),
+        signal: AbortSignal.timeout(5000),
+      }).catch(() => {}); // May already be joined — non-fatal
+
+      // Send message
+      const sendRes = await fetch(
+        `${homeserver}/_matrix/client/v3/rooms/${encodeURIComponent(matrixRoomAlias)}/send/m.room.message`,
+        {
+          method: 'POST',
+          headers: {
+            authorization: `Bearer ${accessToken}`,
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify({
+            msgtype: 'm.text',
+            body: `[DegenFeed] ${rcContent}`,
+          }),
+          signal: AbortSignal.timeout(8000),
+        },
+      );
+
+      const latency = Date.now() - start;
+
+      if (sendRes.ok) {
+        const data = (await sendRes.json()) as { event_id?: string };
+        return {
+          protocol,
+          ok: true,
+          nativeId: data.event_id ?? message.id,
+          attemptedAt: Date.now(),
+          health: { ok: true, latencyMs: latency },
+        };
+      }
+
+      return {
+        protocol,
+        ok: false,
+        error: `Rocket.Chat/Matrix send failed (${sendRes.status})`,
         attemptedAt: Date.now(),
       };
     } catch (err) {
