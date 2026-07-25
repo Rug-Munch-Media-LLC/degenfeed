@@ -88,6 +88,7 @@ export type Feature =
   | 'CREATOR_DASHBOARD'
   | 'REVENUE_TRACKING'
   | 'EXTERNAL_PLATFORMS'
+  | 'MULTI_PLATFORM_SIMULCAST'
   | 'SELF_HOSTED_CUSTOM_DOMAIN'
   | 'WHITE_LABEL_REPORTS'
   | 'API_ACCESS'
@@ -234,6 +235,12 @@ export const FEATURES: Record<Feature, FeatureDef> = {
     description: 'Cross-post to LinkedIn, Facebook, X, and more',
     minTier: 'enterprise',
   },
+  MULTI_PLATFORM_SIMULCAST: {
+    key: 'MULTI_PLATFORM_SIMULCAST',
+    label: 'Multi-platform simulcast streaming',
+    description: 'Stream once to Loops, simulcast to YouTube, TikTok, Twitch, Kick, and all protocols',
+    minTier: 'enterprise',
+  },
   SELF_HOSTED_CUSTOM_DOMAIN: {
     key: 'SELF_HOSTED_CUSTOM_DOMAIN',
     label: 'Self-hosted creator page',
@@ -326,6 +333,7 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
   {
     category: 'Enterprise',
     features: [
+      FEATURES.MULTI_PLATFORM_SIMULCAST,
       FEATURES.SELF_HOSTED_CUSTOM_DOMAIN,
       FEATURES.API_ACCESS,
       FEATURES.TEAM_ACCOUNTS,

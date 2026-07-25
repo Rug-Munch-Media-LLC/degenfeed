@@ -41,6 +41,7 @@ export type FeedSource =
   | 'farcaster'
   | 'lens'
   | 'zora'
+  | 'bluesky'
   | 'peertube'
   | 'youtube'
   | 'tiktok'
@@ -108,6 +109,7 @@ export const FEED_SOURCE_LABELS: Record<string, string> = {
   tiktok: 'TikTok',
   instagram: 'Instagram',
   pixelfed: 'Pixelfed',
+  bluesky: 'Bluesky',
   degenfeed: 'DegenFeed',
 };
 
@@ -135,6 +137,7 @@ export class UnifiedShortsFeed {
         'farcaster',
         'lens',
         'zora',
+        'bluesky',
         'peertube',
         'youtube',
         'tiktok',
@@ -240,6 +243,8 @@ export class UnifiedShortsFeed {
         return this.mapShortVideoItems(await fetchTikTokShorts(limit), 'tiktok');
       case 'instagram':
         return this.mapShortVideoItems(await fetchInstagramReels(limit), 'instagram');
+      case 'bluesky':
+        return this.fetchBlueskyShorts(limit);
       case 'degenfeed':
         return this.fetchDegenFeedShorts(limit);
       default:
@@ -997,5 +1002,94 @@ export class UnifiedShortsFeed {
       engagement: { likes: item.likes, views: item.views, tips: 0 },
       contentHash: `${source}:${item.id}`,
     }));
+  }
+
+  // ── Bluesky Native Video (separate from AT Protocol firehose) ──────────
+
+  /**
+   * Fetch short-form video content from Bluesky's native video feed.
+   * Uses the curated Bluesky video feed generator for best results.
+   */
+  async fetchBlueskyShorts(limit: number): Promise<ShortVideo[]> {
+    const bskyShorts: ShortVideo[] = [];
+    const bskyUrl = this.env.BSKY_PUBLIC_URL || 'https://public.api.bsky.app';
+
+    try {
+      // Try the curated Bluesky video feed generator
+      const res = await fetch(
+        `${bskyUrl}/xrpc/app.bsky.feed.getFeed?feed=at://did:plc:z72i7hd5jnv5a7j5l3s5j3xh/app.bsky.feed.generator/video-feed&limit=${Math.min(limit, 30)}`,
+        { signal: AbortSignal.timeout(8000) },
+      );
+
+      if (res.ok) {
+        const data = (await res.json()) as {
+          feed?: Array<{
+            post: {
+              uri: string;
+              cid: string;
+              author: { handle: string; displayName?: string; avatar?: string };
+              record: {
+                text: string;
+                createdAt: string;
+                embed?: {
+                  $type: string;
+                  video?: { ref?: { $link?: string }; mimeType?: string };
+                  playlist?: string;
+                };
+              };
+              likeCount?: number;
+              repostCount?: number;
+            };
+          }>;
+        };
+
+        for (const item of data?.feed ?? []) {
+          const embed = item.post.record.embed;
+          if (
+            !embed ||
+            (embed.$type !== 'app.bsky.embed.video' &&
+              embed.$type !== 'app.bsky.embed.video#main')
+          ) {
+            continue;
+          }
+
+          const videoUrl =
+            embed.playlist ||
+            `https://video.bsky.app/watch/${item.post.uri.split('/').pop()}`;
+          if (!videoUrl) continue;
+
+          const hashtags = item.post.record.text.match(/#\w+/g)?.map((t) => t.slice(1)) ?? [];
+
+          bskyShorts.push({
+            id: `bluesky:${item.post.cid}`,
+            title: item.post.record.text.split('\n')[0]?.slice(0, 100) || 'Bluesky Video',
+            caption: item.post.record.text.slice(0, 500),
+            videoUrl,
+            thumbnailUrl: `https://og.bsky.app/${item.post.uri.split('/').pop()}`,
+            duration: 30,
+            hashtags,
+            creator: {
+              address: `did:${item.post.author.handle}`,
+              handle: item.post.author.displayName || item.post.author.handle,
+              avatar: item.post.author.avatar,
+            },
+            publishedAt: new Date(item.post.record.createdAt).getTime(),
+            protocols: {
+              atproto: `https://bsky.app/profile/${item.post.author.handle}/post/${item.post.uri.split('/').pop()}`,
+            },
+            engagement: {
+              likes: (item.post.likeCount ?? 0) + (item.post.repostCount ?? 0),
+              views: 0,
+              tips: 0,
+            },
+            contentHash: `bsky:${item.post.cid}`,
+          });
+        }
+      }
+    } catch {
+      // Fail-open
+    }
+
+    return bskyShorts.slice(0, limit);
   }
 }

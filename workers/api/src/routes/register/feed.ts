@@ -192,6 +192,11 @@ import {
   handleUnifiedTrending,
   handleZoraCreator,
   handleZoraTrending,
+  handleZoraFeed,
+  handleZoraMarketplaceDetail,
+  handleZoraBid,
+  handleZoraBuy,
+  handleZoraEarnings,
 } from '../../routes/shorts';
 import {
   handleAddSource,
@@ -456,6 +461,47 @@ export function registerFeedRoutes(app: Hono<{ Bindings: Env }>): void {
   app.get('/api/shorts/zora/creator', async (c) => {
     try {
       const result = await handleZoraCreator(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  // --- Zora shorts feed with marketplace data ---
+  app.get('/api/shorts/zora', async (c) => {
+    try {
+      const result = await handleZoraFeed(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/shorts/zora/:tokenId/marketplace', async (c) => {
+    try {
+      const result = await handleZoraMarketplaceDetail(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/shorts/zora/:tokenId/bid', async (c) => {
+    try {
+      const result = await handleZoraBid(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/shorts/zora/:tokenId/buy', async (c) => {
+    try {
+      const result = await handleZoraBuy(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/shorts/zora/earnings/:address', async (c) => {
+    try {
+      const result = await handleZoraEarnings(c.req.raw, c.env);
       return ok(result);
     } catch (err) {
       return serverError(err instanceof Error ? err.message : 'Unknown error');

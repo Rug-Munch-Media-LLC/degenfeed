@@ -6,10 +6,17 @@
  *   TikTok (via RSS-Bridge), Instagram Reels (via RSS-Bridge),
  *   Owncast clips, Lemmy video posts, Pixelfed short videos,
  *   AT Protocol firehose (Bluesky/Skylight/WhiteWind),
- *   Zora video NFTs, Farcaster video Frames
+ *   Zora video NFTs (with marketplace bids/buy data),
+ *   Farcaster video Frames,
+ *   Nostr NIP-71 video events,
+ *   Lens video publications,
+ *   Bluesky native video posts
  *
  * All sources normalized to ShortVideo format, deduplicated across sources,
  * quality scored, Loops content gets priority, ranked for algorithm.
+ *
+ * Each short carries cross-platform availability info: "Also available on"
+ * shows which other platforms host the same content.
  *
  * @see ShortsAlgorithm for the recommendation engine consuming this
  */
@@ -47,6 +54,9 @@ export type ExtendedSource =
   | 'atprotocol' // AT Protocol firehose
   | 'zora' // Zora video NFTs
   | 'farcaster' // Farcaster video Frames
+  | 'nostr' // Nostr NIP-71 video events
+  | 'lens' // Lens video publications
+  | 'bluesky' // Bluesky native video posts
   | 'direct'; // DegenFeed native
 
 export const ALL_SOURCES: ExtendedSource[] = [
@@ -62,6 +72,9 @@ export const ALL_SOURCES: ExtendedSource[] = [
   'atprotocol',
   'zora',
   'farcaster',
+  'nostr',
+  'lens',
+  'bluesky',
 ];
 
 export const SOURCE_META: Record<ExtendedSource, { label: string; color: string; icon: string }> = {
@@ -77,6 +90,9 @@ export const SOURCE_META: Record<ExtendedSource, { label: string; color: string;
   atprotocol: { label: 'AT Protocol', color: '#0085FF', icon: 'ATProtocol' },
   zora: { label: 'Zora', color: '#0052FF', icon: 'Zora' },
   farcaster: { label: 'Farcaster', color: '#8A63D2', icon: 'Farcaster' },
+  nostr: { label: 'Nostr', color: '#7C3AED', icon: 'Nostr' },
+  lens: { label: 'Lens', color: '#00501e', icon: 'Lens' },
+  bluesky: { label: 'Bluesky', color: '#1185fe', icon: 'Bluesky' },
   direct: { label: 'DegenFeed', color: '#00ff41', icon: 'DegenFeed' },
 };
 
@@ -94,6 +110,8 @@ export interface AggregatedShort {
   creatorName: string;
   creatorAvatar?: string;
   creatorHandle?: string;
+  /** Creator wallet address (for on-chain tips) */
+  creatorAddress?: string;
   views: number;
   likes: number;
   tags: string[];
@@ -106,6 +124,34 @@ export interface AggregatedShort {
   contentHash: string;
   /** Vertical format flag */
   vertical: boolean;
+
+  // ── Zora NFT marketplace data ─────────────────────────────────────
+  /** Zora token ID (if this short is minted as an NFT) */
+  zoraTokenId?: string;
+  /** Zora contract address */
+  zoraContractAddress?: string;
+  /** Zora collect/buy URL */
+  zoraUrl?: string;
+  /** Current lowest ask price in ETH (for buy button) */
+  zoraPriceEth?: string;
+  /** Active bid count */
+  zoraBidCount?: number;
+  /** Highest bid in ETH */
+  zoraTopBidEth?: string;
+  /** Creator earnings in ETH from this NFT */
+  zoraCreatorEarningsEth?: string;
+  /** Total mints/editions sold */
+  zoraEditionMints?: number;
+  /** Whether buy/bid is available */
+  zoraMarketplaceActive?: boolean;
+
+  // ── Cross-platform availability ───────────────────────────────────
+  /** Other platforms/sources where this same content is available */
+  alsoAvailableOn?: Array<{
+    source: ExtendedSource;
+    label: string;
+    url: string;
+  }>;
 }
 
 export interface AggregationResult {
@@ -182,6 +228,15 @@ export class ShortsAggregatorV2 {
             break;
           case 'farcaster':
             shorts = await this.fetchFarcasterShorts(limit);
+            break;
+          case 'nostr':
+            shorts = await this.fetchNostrShorts(limit);
+            break;
+          case 'lens':
+            shorts = await this.fetchLensShorts(limit);
+            break;
+          case 'bluesky':
+            shorts = await this.fetchBlueskyShorts(limit);
             break;
           default:
             shorts = [];
@@ -880,8 +935,9 @@ export class ShortsAggregatorV2 {
   // ── Zora Video NFTs ─────────────────────────────────────────────────
 
   /**
-   * Fetch short-form video NFTs from Zora.
-   * Uses Zora GraphQL API to discover video-based NFT tokens.
+   * Fetch short-form video NFTs from Zora with marketplace data.
+   * Uses Zora GraphQL API to discover video-based NFT tokens
+   * and enriches them with bid/buy/earnings info.
    */
   private async fetchZoraShorts(limit: number): Promise<AggregatedShort[]> {
     const shorts: AggregatedShort[] = [];
@@ -908,6 +964,14 @@ export class ShortsAggregatorV2 {
                     owner
                     collection { address name }
                   }
+                  sales {
+                    totalCount
+                    salePrice {
+                      chainTokenPrice {
+                        raw
+                      }
+                    }
+                  }
                 }
               }
             }
@@ -931,6 +995,12 @@ export class ShortsAggregatorV2 {
                   owner: string;
                   collection?: { address: string; name: string };
                 };
+                sales?: {
+                  totalCount: number;
+                  salePrice?: {
+                    chainTokenPrice?: { raw: string };
+                  };
+                };
               }>;
             };
           };
@@ -942,13 +1012,34 @@ export class ShortsAggregatorV2 {
           if (!t.content.url) continue;
 
           const topics = detectNiches(`${t.name} ${t.description}`);
+          const contractAddr = t.collection?.address || 'base';
+          const sourceUrl = `https://zora.co/collect/${contractAddr}:${t.tokenId}`;
+
+          // Compute marketplace data
+          const saleCount = node?.sales?.totalCount ?? 0;
+          const lastSalePrice = node?.sales?.salePrice?.chainTokenPrice?.raw
+            ? this.weiToEth(node.sales.salePrice.chainTokenPrice.raw)
+            : undefined;
+
+          // Fetch real-time marketplace data from Zora API
+          let marketData: {
+            priceEth?: string;
+            bidCount?: number;
+            topBidEth?: string;
+            mintCount?: number;
+          } = {};
+          try {
+            marketData = await this.fetchZoraMarketplaceData(contractAddr, t.tokenId);
+          } catch {
+            // Marketplace data is additive
+          }
 
           shorts.push({
             id: `zora:${t.tokenId}`,
             source: 'zora',
             sourceLabel: 'Zora',
             sourceColor: SOURCE_META.zora.color,
-            sourceUrl: `https://zora.co/collect/${t.collection?.address || 'base'}:${t.tokenId}`,
+            sourceUrl,
             title: t.name,
             description: t.description?.slice(0, 500) || '',
             thumbnailUrl: t.image?.url || '',
@@ -956,16 +1047,26 @@ export class ShortsAggregatorV2 {
             duration: 30,
             creatorName: t.owner.slice(0, 10),
             creatorHandle: t.owner.slice(0, 10),
-            views: 0,
-            likes: 0,
+            creatorAddress: t.owner,
+            views: saleCount,
+            likes: saleCount,
             tags: ['nft', 'zora', 'video', ...topics],
             categories: ['nft', ...topics],
             publishedAt: Date.now(),
             qualityScore: 0.5,
-            engagementRate: 0,
+            engagementRate: saleCount > 0 ? Math.min(saleCount / 100, 1) : 0,
             canTip: true,
             contentHash: `zora:${t.tokenId}`,
             vertical: true,
+            // Zora marketplace data
+            zoraTokenId: t.tokenId,
+            zoraContractAddress: contractAddr,
+            zoraUrl: sourceUrl,
+            zoraPriceEth: marketData.priceEth || lastSalePrice,
+            zoraBidCount: marketData.bidCount ?? 0,
+            zoraTopBidEth: marketData.topBidEth,
+            zoraEditionMints: marketData.mintCount ?? saleCount,
+            zoraMarketplaceActive: !!(marketData.priceEth || marketData.bidCount),
           });
         }
       }
@@ -974,6 +1075,127 @@ export class ShortsAggregatorV2 {
     }
 
     return shorts.slice(0, limit);
+  }
+
+  /**
+   * Fetch real-time marketplace data for a Zora NFT.
+   * Prices, active bids, and mint counts from the Zora Indexer API.
+   * Public so that routes/handlers can also query marketplace data.
+   */
+  async fetchZoraMarketplaceData(
+    contractAddress: string,
+    tokenId: string,
+  ): Promise<{
+    priceEth?: string;
+    bidCount?: number;
+    topBidEth?: string;
+    mintCount?: number;
+  }> {
+    try {
+      // Query Zora Indexer for marketplace data
+      const res = await fetch('https://api.zora.co/graphql', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          query: `
+            query MarketData($collection: String!, $tokenId: String!) {
+              token(
+                network: { network: BASE, chain: BASE_MAINNET }
+                address: $collection
+                tokenId: $tokenId
+              ) {
+                token {
+                  tokenId
+                  mintCount: totalMinted
+                }
+                ask {
+                  price {
+                    chainTokenPrice {
+                      raw
+                      decimal
+                    }
+                  }
+                }
+                bids(first: 5) {
+                  nodes {
+                    bid {
+                      amount {
+                        chainTokenPrice {
+                          raw
+                          decimal
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          `,
+          variables: { collection: contractAddress, tokenId },
+        }),
+        signal: AbortSignal.timeout(4000),
+      });
+
+      if (!res.ok) return {};
+
+      const data = (await res.json()) as {
+        data?: {
+          token?: {
+            token?: { tokenId: string; mintCount?: number };
+            ask?: {
+              price?: {
+                chainTokenPrice?: { raw: string; decimal: number };
+              };
+            };
+            bids?: {
+              nodes?: Array<{
+                bid?: {
+                  amount?: {
+                    chainTokenPrice?: { raw: string; decimal: number };
+                  };
+                };
+              }>;
+            };
+          };
+        };
+      };
+
+      const t = data?.data?.token;
+      const mintCount = t?.token?.mintCount ?? undefined;
+      const askPrice = t?.ask?.price?.chainTokenPrice?.raw
+        ? this.weiToEth(t.ask.price.chainTokenPrice.raw)
+        : undefined;
+      const bids = t?.bids?.nodes ?? [];
+      const bidCount = bids.length;
+      const topBid = bids
+        .map((b) => (b?.bid?.amount?.chainTokenPrice?.raw ? BigInt(b.bid.amount.chainTokenPrice.raw) : 0n))
+        .filter((b) => b > 0n)
+        .sort((a, b) => (b > a ? 1 : -1))[0];
+      const topBidEth = topBid ? this.weiToEth(topBid.toString()) : undefined;
+
+      return {
+        priceEth: askPrice,
+        bidCount: bidCount > 0 ? bidCount : undefined,
+        topBidEth,
+        mintCount,
+      };
+    } catch {
+      return {};
+    }
+  }
+
+  /** Convert wei string to ETH string. */
+  private weiToEth(wei: string): string {
+    try {
+      const val = BigInt(wei);
+      const divisor = 10n ** 18n;
+      const whole = val / divisor;
+      const remainder = val % divisor;
+      const remainderStr = remainder.toString().padStart(18, '0').slice(0, 4);
+      return `${whole}.${remainderStr}`;
+    } catch {
+      return '0.0000';
+    }
   }
 
   // ── Farcaster Video Frames ─────────────────────────────────────────
@@ -1063,6 +1285,324 @@ export class ShortsAggregatorV2 {
     return shorts.slice(0, limit);
   }
 
+  // ── Nostr NIP-71 Video Events ──────────────────────────────────────────
+
+  /**
+   * Fetch short-form video content from Nostr relays using NIP-71.
+   * Queries kind 31388 video events and kind 1 posts with video URLs.
+   * Uses public Nostr REST bridges for HTTP accessibility.
+   */
+  private async fetchNostrShorts(limit: number): Promise<AggregatedShort[]> {
+    const shorts: AggregatedShort[] = [];
+    const relayUrls = [
+      'wss://relay.damus.io',
+      'wss://nos.lol',
+      'wss://relay.nostr.band',
+      'wss://relay.snort.social',
+    ];
+
+    for (const relay of relayUrls.slice(0, 3)) {
+      if (shorts.length >= limit) break;
+      try {
+        const restUrl = relay.replace('wss://', 'https://').replace('ws://', 'http://');
+
+        // NIP-71: kind 31388 video events
+        const res = await fetch(
+          `${restUrl}/api/v1/events?kinds=31388&limit=${Math.ceil(limit / 3)}`,
+          { signal: AbortSignal.timeout(5000) },
+        );
+        if (!res.ok) continue;
+
+        const events = (await res.json()) as Array<{
+          id: string;
+          pubkey: string;
+          content: string;
+          created_at: number;
+          tags: string[][];
+        }>;
+
+        for (const ev of Array.isArray(events) ? events : []) {
+          if (shorts.length >= limit) break;
+
+          // NIP-71: imeta tag has video url
+          const imetaTag = ev.tags.find((t) => t[0] === 'imeta');
+          const titleTag = ev.tags.find((t) => t[0] === 'title');
+          const imageTag = ev.tags.find((t) => t[0] === 'image');
+          const durationTag = ev.tags.find((t) => t[0] === 'duration');
+
+          let videoUrl: string | undefined;
+          if (imetaTag) {
+            for (const entry of imetaTag) {
+              if (entry.startsWith('url ')) videoUrl = entry.slice(4);
+            }
+          }
+
+          // Fallback: check content for direct video URLs
+          if (!videoUrl) {
+            const urlMatch = ev.content.match(
+              /(https?:\/\/[^\s]+\.(?:mp4|webm|mov|m3u8))(?:\?[^\s]*)?/i,
+            );
+            videoUrl = urlMatch?.[1] ?? undefined;
+          }
+
+          if (!videoUrl) continue;
+
+          const title = titleTag?.[1] ?? ev.content.split('\n')[0]?.slice(0, 100) || 'Nostr Video';
+          const thumbnailUrl = imageTag?.[1] ?? '';
+          const duration = durationTag?.[1] ? Number(durationTag[1]) : 30;
+          const hashtags: string[] = ev.tags
+            .filter((t) => t[0] === 't')
+            .map((t) => t[1])
+            .filter(Boolean);
+          const topics = detectNiches(`${title} ${ev.content}`);
+
+          // Filter to shorts only (< 120s)
+          if (duration > 0 && duration > SHORTS_MAX_DURATION) continue;
+
+          shorts.push({
+            id: `nostr:${ev.id}`,
+            source: 'nostr',
+            sourceLabel: 'Nostr',
+            sourceColor: SOURCE_META.nostr.color,
+            sourceUrl: `https://snort.social/e/${ev.id}`,
+            title,
+            description: ev.content.slice(0, 500),
+            thumbnailUrl,
+            videoUrl,
+            duration,
+            creatorName: `npub1${ev.pubkey.slice(0, 8)}...`,
+            creatorHandle: ev.pubkey,
+            views: 0,
+            likes: 0,
+            tags: hashtags.length > 0 ? hashtags : topics,
+            categories: topics.length > 0 ? topics : ['nostr'],
+            publishedAt: ev.created_at * 1000,
+            qualityScore: 0.5,
+            engagementRate: 0,
+            canTip: true,
+            contentHash: `nostr:${ev.id}`,
+            vertical: true,
+          });
+        }
+      } catch {
+        // Fail-open per relay
+      }
+    }
+
+    return shorts.slice(0, limit);
+  }
+
+  // ── Lens Video Publications ─────────────────────────────────────────────
+
+  /**
+   * Fetch short-form video content from Lens Protocol.
+   * Uses Lens API v2 to discover publications with video media.
+   */
+  private async fetchLensShorts(limit: number): Promise<AggregatedShort[]> {
+    const shorts: AggregatedShort[] = [];
+    const lensApiUrl = this.env.LENS_API_URL || 'https://api-v2.lens.dev/graphql';
+
+    try {
+      const query = `
+        query ExploreVideos {
+          explorePublications(
+            request: { limit: ${Math.min(limit, 25)}, orderBy: TOP_REACTION }
+          ) {
+            items {
+              ... on Post {
+                id
+                metadata {
+                  name
+                  content
+                  media {
+                    original { url mimeType }
+                  }
+                }
+                profile { id handle metadata { picture { ... on ImageSet { optimized { uri } } } } }
+                stats { reactions totalUpvotes }
+                createdAt
+              }
+            }
+          }
+        }
+      `;
+
+      const res = await fetch(lensApiUrl, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ query }),
+        signal: AbortSignal.timeout(8000),
+      });
+
+      if (res.ok) {
+        const data = (await res.json()) as {
+          data?: {
+            explorePublications?: {
+              items?: Array<{
+                id: string;
+                metadata?: {
+                  name?: string;
+                  content?: string;
+                  media?: Array<{
+                    original?: { url: string; mimeType: string };
+                  }>;
+                };
+                profile?: {
+                  id: string;
+                  handle: string;
+                  metadata?: { picture?: { optimized?: { uri: string } } };
+                };
+                stats?: { reactions: number; totalUpvotes: number };
+                createdAt: string;
+              }>;
+            };
+          };
+        };
+
+        for (const item of data?.data?.explorePublications?.items ?? []) {
+          const videoMedia = item.metadata?.media?.find((m) =>
+            m.original?.mimeType?.startsWith('video/'),
+          );
+          if (!videoMedia?.original?.url) continue;
+
+          const textContent = `${item.metadata?.name ?? ''} ${item.metadata?.content ?? ''}`;
+          const topics = detectNiches(textContent);
+          const duration = 30; // Lens doesn't expose duration — default
+
+          if (duration > SHORTS_MAX_DURATION) continue;
+          if (!(item.metadata?.content ?? '').toLowerCase().includes('shorts') && duration > 60) continue;
+
+          shorts.push({
+            id: `lens:${item.id}`,
+            source: 'lens',
+            sourceLabel: 'Lens',
+            sourceColor: SOURCE_META.lens.color,
+            sourceUrl: `https://hey.xyz/posts/${item.id}`,
+            title: item.metadata?.name || textContent.split('\n')[0]?.slice(0, 100) || 'Lens Video',
+            description: item.metadata?.content?.slice(0, 500) || '',
+            thumbnailUrl: item.profile?.metadata?.picture?.optimized?.uri || '',
+            videoUrl: videoMedia.original.url,
+            duration,
+            creatorName: item.profile?.handle || 'Lens Creator',
+            creatorAvatar: item.profile?.metadata?.picture?.optimized?.uri,
+            creatorHandle: item.profile?.handle,
+            views: (item.stats?.reactions ?? 0) + (item.stats?.totalUpvotes ?? 0),
+            likes: item.stats?.totalUpvotes ?? 0,
+            tags: topics,
+            categories: ['lens', ...topics],
+            publishedAt: new Date(item.createdAt).getTime(),
+            qualityScore: 0.5,
+            engagementRate: item.stats
+              ? (item.stats.totalUpvotes + item.stats.reactions) /
+                Math.max(item.stats.totalUpvotes + item.stats.reactions, 1)
+              : 0,
+            canTip: true,
+            contentHash: `lens:${item.id}`,
+            vertical: true,
+          });
+        }
+      }
+    } catch {
+      // Fail-open
+    }
+
+    return shorts.slice(0, limit);
+  }
+
+  // ── Bluesky Native Video Posts ───────────────────────────────────────────
+
+  /**
+   * Fetch short-form video content from Bluesky/AT Protocol.
+   * Uses the Bluesky public API to find posts with native video embeds.
+   */
+  private async fetchBlueskyShorts(limit: number): Promise<AggregatedShort[]> {
+    const shorts: AggregatedShort[] = [];
+    const bskyUrl = this.env.BSKY_PUBLIC_URL || 'https://public.api.bsky.app';
+
+    try {
+      // Try curated video feed first
+      const feedRes = await fetch(
+        `${bskyUrl}/xrpc/app.bsky.feed.getFeed?feed=at://did:plc:z72i7hd5jnv5a7j5l3s5j3xh/app.bsky.feed.generator/video-feed&limit=${Math.min(limit, 30)}`,
+        { signal: AbortSignal.timeout(8000) },
+      );
+
+      if (feedRes.ok) {
+        const feedData = (await feedRes.json()) as {
+          feed?: Array<{
+            post: {
+              uri: string;
+              cid: string;
+              author: { handle: string; displayName?: string; avatar?: string };
+              record: {
+                text: string;
+                createdAt: string;
+                embed?: {
+                  $type: string;
+                  video?: { ref?: { $link?: string }; mimeType?: string };
+                  playlist?: string;
+                  alt?: string;
+                };
+              };
+              likeCount?: number;
+              repostCount?: number;
+            };
+          }>;
+        };
+
+        for (const item of feedData?.feed ?? []) {
+          if (shorts.length >= limit) break;
+          const embed = item.post.record.embed;
+          if (
+            !embed ||
+            (embed.$type !== 'app.bsky.embed.video' &&
+              embed.$type !== 'app.bsky.embed.video#main')
+          ) {
+            continue;
+          }
+
+          const videoUrl =
+            embed.playlist ||
+            `https://video.bsky.app/watch/${item.post.uri.split('/').pop()}`;
+          if (!videoUrl) continue;
+
+          const text = item.post.record.text || '';
+          const hashtags = text.match(/#\w+/g)?.map((t) => t.slice(1)) ?? [];
+          const topics = detectNiches(text);
+
+          shorts.push({
+            id: `bluesky:${item.post.cid}`,
+            source: 'bluesky',
+            sourceLabel: 'Bluesky',
+            sourceColor: SOURCE_META.bluesky.color,
+            sourceUrl: `https://bsky.app/profile/${item.post.author.handle}/post/${item.post.uri.split('/').pop()}`,
+            title: text.split('\n')[0]?.slice(0, 100) || 'Bluesky Video',
+            description: text.slice(0, 500),
+            thumbnailUrl: `https://og.bsky.app/${item.post.uri.split('/').pop()}`,
+            videoUrl,
+            duration: 30,
+            creatorName: item.post.author.displayName || item.post.author.handle,
+            creatorAvatar: item.post.author.avatar,
+            creatorHandle: item.post.author.handle,
+            views: (item.post.likeCount ?? 0) + (item.post.repostCount ?? 0),
+            likes: item.post.likeCount ?? 0,
+            tags: hashtags.length > 0 ? hashtags : topics,
+            categories: topics,
+            publishedAt: new Date(item.post.record.createdAt).getTime(),
+            qualityScore: 0.5,
+            engagementRate: 0,
+            canTip: true,
+            contentHash: `bsky:${item.post.cid}`,
+            vertical: true,
+          });
+        }
+      }
+    } catch {
+      // Fail-open
+    }
+
+    return shorts.slice(0, limit);
+  }
+
   // ── Conversion Helper ─────────────────────────────────────────────────
 
   /**
@@ -1101,16 +1641,29 @@ export class ShortsAggregatorV2 {
 
   /**
    * Deduplicate shorts across all sources by content hash.
-   * When duplicates exist, keep the one with higher quality score
-   * and merge engagement data.
+   * When duplicates exist, keep the one with higher quality score,
+   * merge engagement data, and track cross-platform availability.
+   *
+   * The resulting short's `alsoAvailableOn` field lists all other
+   * platforms where the same content was found, with links.
    */
   deduplicate(shorts: AggregatedShort[]): AggregatedShort[] {
     const seen = new Map<string, AggregatedShort>();
+    // Track all sources for each content hash
+    const sourceMap = new Map<string, Map<ExtendedSource, string>>();
 
     for (const short of shorts) {
-      // Generate a content-based hash from URL and title
       const hash = this.computeDedupHash(short);
       const existing = seen.get(hash);
+
+      // Track source → URL mapping for cross-platform availability
+      if (!sourceMap.has(hash)) {
+        sourceMap.set(hash, new Map());
+      }
+      const sources = sourceMap.get(hash)!;
+      if (!sources.has(short.source)) {
+        sources.set(short.source, short.sourceUrl);
+      }
 
       if (!existing) {
         seen.set(hash, short);
@@ -1131,7 +1684,26 @@ export class ShortsAggregatorV2 {
       seen.set(hash, merged);
     }
 
-    return Array.from(seen.values());
+    // Build cross-platform availability lists
+    const result = Array.from(seen.values());
+    for (const short of result) {
+      const sources = sourceMap.get(short.contentHash);
+      if (sources && sources.size > 1) {
+        // Exclude the current primary source, list all others
+        const others = Array.from(sources.entries())
+          .filter(([src]) => src !== short.source)
+          .map(([src, url]) => ({
+            source: src,
+            label: SOURCE_META[src]?.label || src,
+            url,
+          }));
+        if (others.length > 0) {
+          short.alsoAvailableOn = others;
+        }
+      }
+    }
+
+    return result;
   }
 
   /**
@@ -1204,6 +1776,14 @@ export class ShortsAggregatorV2 {
 
       // PeerTube self-hosted gets small boost
       if (s.source === 'peertube') score += 0.05;
+
+      // Zora marketplace-active shorts get boost
+      if (s.zoraMarketplaceActive) score += 0.05;
+
+      // Nostr/Lens/Bluesky get small discovery boost
+      if (s.source === 'nostr') score += 0.03;
+      if (s.source === 'lens') score += 0.03;
+      if (s.source === 'bluesky') score += 0.03;
 
       return { ...s, qualityScore: Math.min(Math.max(score, 0), 1) };
     });
@@ -1337,6 +1917,44 @@ export class ShortsAggregatorV2 {
           case 'farcaster': {
             const hubUrl = this.env.FARCASTER_BOT_HUB_URL || 'http://127.0.0.1:2281';
             const res = await fetch(`${hubUrl}/v1/info`, { signal: AbortSignal.timeout(3000) });
+            return {
+              source,
+              healthy: res.ok,
+              lastFetch: Date.now(),
+              videosCount: 0,
+            } as SourceHealth;
+          }
+          case 'nostr': {
+            const res = await fetch('https://relay.damus.io/api/v1/events?kinds=31388&limit=1', {
+              signal: AbortSignal.timeout(5000),
+            }).catch(() => new Response(null, { status: 503 }));
+            return {
+              source,
+              healthy: res.ok,
+              lastFetch: Date.now(),
+              videosCount: 0,
+            } as SourceHealth;
+          }
+          case 'lens': {
+            const lensApiUrl = this.env.LENS_API_URL || 'https://api-v2.lens.dev/graphql';
+            const res = await fetch(lensApiUrl, {
+              method: 'POST',
+              headers: { 'content-type': 'application/json' },
+              body: JSON.stringify({ query: 'query { ping }' }),
+              signal: AbortSignal.timeout(5000),
+            });
+            return {
+              source,
+              healthy: res.ok,
+              lastFetch: Date.now(),
+              videosCount: 0,
+            } as SourceHealth;
+          }
+          case 'bluesky': {
+            const bskyUrl = this.env.BSKY_PUBLIC_URL || 'https://public.api.bsky.app';
+            const res = await fetch(`${bskyUrl}/xrpc/app.bsky.feed.getTimeline?limit=1`, {
+              signal: AbortSignal.timeout(5000),
+            });
             return {
               source,
               healthy: res.ok,

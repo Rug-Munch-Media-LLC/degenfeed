@@ -156,6 +156,14 @@ export interface Env {
   TWITCH_CLIENT_SECRET?: string;
   /** Loops instance URL for self-hosted shorts (default: https://loops.video) */
   LOOPS_INSTANCE_URL?: string;
+  /** Nostr private key hex for broadcasting live events to Nostr */
+  NOSTR_PRIVATE_KEY?: string;
+  /** Telegram chat ID for live broadcast notifications */
+  TELEGRAM_CHAT_ID?: string;
+  /** GoToSocial/ActivityPub access token for Mastodon broadcasts */
+  GTS_ACCESS_TOKEN?: string;
+  /** Bluesky DID for AT Protocol broadcasts */
+  BSKY_DID?: string;
   /** Comma-separated list of extra PeerTube instance URLs to fetch live from */
   PEERTUBE_EXTRA_INSTANCES?: string;
 

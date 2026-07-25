@@ -259,18 +259,19 @@ export const PROTOCOL_VIDEO_CAPABILITIES: Record<string, ProtocolVideoCapability
     name: 'Bluesky',
     shorts: true,
     live: true,
-    shortsHow: 'Embedded video links in posts. AT Protocol supports external embeds with metadata.',
+    shortsHow:
+      'Native app.bsky.embed.video support. Upload short videos directly via AT Protocol.',
     liveHow:
-      'Posts linking to live streams with link card embeds. No native live yet, but embeddable.',
-    nativeVideo: false,
-    maxVideoDuration: 0,
-    supportedFormats: ['link/*'],
-    maxResolution: 'N/A (embed only)',
+      'Posts with video embeds. Link cards for live streams. AT Protocol video embed available.',
+    nativeVideo: true,
+    maxVideoDuration: 600,
+    supportedFormats: ['video/mp4', 'video/webm', 'video/quicktime', 'application/x-mpegURL'],
+    maxResolution: '1080p',
     embedSupport: true,
-    hasVideoAPI: false,
+    hasVideoAPI: true,
     supportsTokenGating: false,
     category: 'decentralized',
-    integrationStatus: 'partial',
+    integrationStatus: 'complete',
   },
 };
 

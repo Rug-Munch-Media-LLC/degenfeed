@@ -92,6 +92,51 @@ export {
   registerSearchProviderFromPosts,
   searchProtocol,
 } from './search';
+// ─── Shorts Cross-Protocol Publisher ───────────────────────────────────────
+export {
+  publishShortToAllProtocols,
+} from './shorts-publisher';
+export type {
+  CreatorIdentity,
+  ShortsPublishBatchResult,
+  ShortsPublishEvent,
+  ShortsPublishResult,
+} from './shorts-publisher';
+// ─── Live Cross-Protocol Publisher ─────────────────────────────────────────
+export {
+  publishLiveToAllProtocols,
+} from './live-publisher';
+export type {
+  LiveCreatorIdentity,
+  LivePublishBatchResult,
+  LivePublishEvent,
+  LivePublishResult,
+} from './live-publisher';
+// ─── Cross-Protocol Engagement Sync ───────────────────────────────────────
+export {
+  aggregateEngagement,
+  getAggregatedViewCount,
+  syncEngagementAcrossProtocols,
+} from './engagement-sync';
+export type {
+  AggregatedEngagement,
+  EngagementEvent,
+  EngagementType,
+  ProtocolEngagement,
+} from './engagement-sync';
+// ─── Cross-Platform Discovery ─────────────────────────────────────────────
+export {
+  buildCrossPlatformProfile,
+  buildLiveAvailability,
+  buildShortsAvailability,
+  enrichWithFollowerCounts,
+} from './cross-platform-discovery';
+export type {
+  CrossPlatformAvailability,
+  CrossPlatformProfile,
+  PlatformPill,
+  PlatformProfileSnapshot,
+} from './cross-platform-discovery';
 // ─── Transform Adapters ──────────────────────────────────────────────────
 export {
   getAdapter,

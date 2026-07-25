@@ -13,6 +13,7 @@ import { readStringArray, writeStringArray } from '../routes/live-shorts-engine'
 import { broadcastToAll } from '../ws-broadcast';
 import { CHANNELS } from '../ws-channels';
 import { fetchKickLiveStreams } from './live-sources/kick';
+import { fetchLoopsLiveStreams } from './live-sources/loops';
 import { processLiveNotifications } from './live-sources/notifications';
 import { fetchCuratedTwitchStreams } from './live-sources/twitch';
 
@@ -920,7 +921,7 @@ async function fetchNostrLiveStreams(env: Env): Promise<UnifiedLiveStream[]> {
 // Source Health Tracking
 // ═══════════════════════════════════════════════════════════════════════
 
-async function trackSourceHealth(
+export async function trackSourceHealth(
   env: Env,
   source: LiveSource,
   streamCount: number,
@@ -989,6 +990,7 @@ export async function aggregateAllStreams(
     fetchDegenFeedSpaces(env),
     fetchFarcasterLiveStreams(env),
     fetchNostrLiveStreams(env),
+    fetchLoopsLiveStreams(env), // ← Loops TikTok-style vertical live streams
   ]);
 
   const allStreams: UnifiedLiveStream[] = [];
