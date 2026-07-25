@@ -1,0 +1,119 @@
+{
+  "timestamp": "2026-07-25T10:16:02+00:00",
+  "repo": "degenfeed-web",
+  "health_score": 0,
+  "node_version": "v22.23.1",
+  "summary": {
+    "outdated_packages": 6,
+    "vulnerabilities": {
+      "critical": 1,
+      "high": 11,
+      "moderate": 13,
+      "low": 2,
+      "info": 0,
+      "total": 27
+    },
+    "version_bumps": {
+      "major": 2,
+      "minor": 3,
+      "patch": 2
+    },
+    "eol_packages": 0
+  },
+  "outdated_packages": [
+    {
+      "package": "@biomejs/biome",
+      "current": "2.5.2",
+      "latest": "2.5.5",
+      "wanted": "2.5.2",
+      "isDeprecated": false,
+      "dependencyType": "devDependencies"
+    },
+    {
+      "package": "turbo",
+      "current": "2.10.3",
+      "latest": "2.10.6",
+      "wanted": "2.10.3",
+      "isDeprecated": false,
+      "dependencyType": "devDependencies"
+    },
+    {
+      "package": "happy-dom",
+      "current": "20.10.6",
+      "latest": "20.11.1",
+      "wanted": "20.10.6",
+      "isDeprecated": false,
+      "dependencyType": "devDependencies"
+    },
+    {
+      "package": "wrangler",
+      "current": "4.107.0",
+      "latest": "4.114.0",
+      "wanted": "4.107.0",
+      "isDeprecated": false,
+      "dependencyType": "devDependencies"
+    },
+    {
+      "package": "typescript",
+      "current": "5.9.3",
+      "latest": "7.0.2",
+      "wanted": "5.9.3",
+      "isDeprecated": false,
+      "dependencyType": "devDependencies"
+    },
+    {
+      "package": "vite",
+      "current": "6.4.3",
+      "latest": "8.1.5",
+      "wanted": "6.4.3",
+      "isDeprecated": false,
+      "dependencyType": "devDependencies"
+    }
+  ],
+  "vulnerabilities": [],
+  "version_bumps": [
+    {
+      "type": "PATCH",
+      "package": "@biomejs/biome",
+      "current": "^2.5.2",
+      "latest": "2.5.5"
+    },
+    {
+      "type": "MINOR",
+      "package": "@playwright/test",
+      "current": "^1.61.1",
+      "latest": "1.62.0"
+    },
+    {
+      "type": "MINOR",
+      "package": "happy-dom",
+      "current": "^20.10.6",
+      "latest": "20.11.1"
+    },
+    {
+      "type": "PATCH",
+      "package": "turbo",
+      "current": "^2.10.3",
+      "latest": "2.10.6"
+    },
+    {
+      "type": "MAJOR",
+      "package": "typescript",
+      "current": "^5.9.3",
+      "latest": "7.0.2"
+    },
+    {
+      "type": "MAJOR",
+      "package": "vite",
+      "current": "^6.4.3",
+      "latest": "8.1.5"
+    },
+    {
+      "type": "MINOR",
+      "package": "wrangler",
+      "current": "4.107.0",
+      "latest": "4.114.0"
+    }
+  ],
+  "eol_packages": []
+}

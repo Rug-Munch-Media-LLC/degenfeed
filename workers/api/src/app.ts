@@ -189,16 +189,6 @@ import {
   handlePlatformRevenue,
 } from './routes/creator-dashboard';
 import { handleCreatorStorage } from './routes/creator-storage';
-import {
-  handleImageUpload,
-  handleMediaUpload,
-  handleGetImage,
-  handleGetImageMetadata,
-  handleMediaGateway,
-  handleMediaHealth,
-  handleMakePermanent,
-  handleCreatorMediaDashboard,
-} from './routes/media';
 import { creatorVesting } from './routes/creator-vesting';
 import { creatorVideos } from './routes/creator-videos';
 import { handleCrossPostCentralized } from './routes/cross-post-centralized';
@@ -545,6 +535,16 @@ import {
   handleMatrixSendMessage,
 } from './routes/matrix';
 import {
+  handleCreatorMediaDashboard,
+  handleGetImage,
+  handleGetImageMetadata,
+  handleImageUpload,
+  handleMakePermanent,
+  handleMediaGateway,
+  handleMediaHealth,
+  handleMediaUpload,
+} from './routes/media';
+import {
   handleConversationMessages,
   handleConversations,
   handleDeleteMessage,
@@ -681,6 +681,12 @@ import { handlePrices } from './routes/prices';
 import { handleIdentityProfile } from './routes/profile';
 import { handleProtocolSections } from './routes/protocol-sections';
 import { handleActivityPubFeed, handleThreadsFeed } from './routes/protocols';
+import {
+  handleJoinAll,
+  handleProtocolRegister,
+  handleProtocolStatus as handleProtocolSignupStatus,
+} from './routes/protocol-signup';
+import { handleVerifyHealth, handleVerifyPost } from './routes/protocol-verify';
 import { handlePublish } from './routes/publish';
 import { handlePushSend, handlePushSubscribe } from './routes/push';
 import {
@@ -1267,7 +1273,12 @@ app.get('/api/bridge/stats/:protocol', async (c) => handleProtocolStats(c.req.ra
 
 // ─── API: Protocol Status Dashboard ─────────────────────────
 app.get('/api/protocols/status', async (c) => handleProtocolsStatus(c.req.raw, c.env));
-app.get('/api/protocols/status/:name', async (c) => handleProtocolStatus(c.req.raw, c.env));
+app.get('/api/protocols/status/:name', async (c) => handleProtocolOverallStatus(c.req.raw, c.env));
+
+// ─── API: Protocol Account Creation (Self-Hosted Instances) ──────
+app.post('/api/protocol/:protocol/register', async (c) => handleProtocolRegister(c.req.raw, c.env));
+app.get('/api/protocol/status', async (c) => handleProtocolSignupStatus(c.req.raw, c.env));
+app.post('/api/protocol/join-all', async (c) => handleJoinAll(c.req.raw, c.env));
 
 // ─── API: Health ────────────────────────────────────────────
 app.all('/api/health', async (c) => {
@@ -1683,7 +1694,10 @@ import {
   handleFollowList,
   handleFollowRemove,
 } from './routes/follow';
-import { handleProtocolStatus, handleProtocolsStatus } from './routes/protocol-status';
+import {
+  handleProtocolStatus as handleProtocolOverallStatus,
+  handleProtocolsStatus,
+} from './routes/protocol-status';
 
 app.get('/api/bookmarks', async (c) => handleBookmarkList(c.req.raw, c.env));
 app.post('/api/bookmarks', async (c) => withSession(c, () => handleBookmarkAdd(c.req.raw, c.env)));
@@ -2480,10 +2494,14 @@ app.post('/api/media/upload', async (c) => handleMediaUpload(c.req.raw, c.env));
 
 // Image routes — CDN-backed IPFS URLs with on-the-fly transformation
 app.get('/api/media/image/:cid', async (c) => handleGetImage(c.req.raw, c.env, c.req.param('cid')));
-app.get('/api/media/image/:cid/metadata', async (c) => handleGetImageMetadata(c.req.raw, c.env, c.req.param('cid')));
+app.get('/api/media/image/:cid/metadata', async (c) =>
+  handleGetImageMetadata(c.req.raw, c.env, c.req.param('cid')),
+);
 
 // Unified media gateway proxy — fallback chain: IPFS → Arweave → R2
-app.get('/api/media/gateway/:type/:id', async (c) => handleMediaGateway(c.req.raw, c.env, c.req.param('type'), c.req.param('id')));
+app.get('/api/media/gateway/:type/:id', async (c) =>
+  handleMediaGateway(c.req.raw, c.env, c.req.param('type'), c.req.param('id')),
+);
 
 // Media service health check
 app.get('/api/media/health', async (c) => handleMediaHealth(c.req.raw, c.env));
@@ -2568,7 +2586,10 @@ import {
 // ─── API: Live Streaming Hub (Owncast, PeerTube, YouTube, Twitch, Spaces) ───
 import {
   handleCreatorLiveProfile,
+  handleGetNotifications,
+  handleGetWatchedCreators,
   handleGoLive,
+  handleKickChannelStatus,
   handleLiveChatMessages,
   handleLiveChatSend,
   handleLiveDetails,
@@ -2577,6 +2598,8 @@ import {
   handleLiveTip,
   handleLiveUpcoming,
   handleLiveViewersSSE,
+  handleNotificationSettings,
+  handlePeerTubeInstances,
   handlePrivateStreamAllowlist,
   handlePrivateStreamConfig,
   handlePrivateStreamConfigure,
@@ -2589,21 +2612,16 @@ import {
   handleScheduleStream,
   handleStopLive,
   handleStreamRouteStatus,
+  handleTwitchCurated,
+  handleUnwatchCreator,
+  handleWatchCreator,
+  handleWatchedLive,
   handleWebRTCAnswer,
   handleWebRTCEnd,
   handleWebRTCGetOffer,
   handleWebRTCIce,
   handleWebRTCOffer,
   handleWebRTCViewers,
-  handleWatchCreator,
-  handleUnwatchCreator,
-  handleGetWatchedCreators,
-  handleGetNotifications,
-  handleNotificationSettings,
-  handleWatchedLive,
-  handlePeerTubeInstances,
-  handleTwitchCurated,
-  handleKickChannelStatus,
 } from './routes/live';
 
 // Static routes (no path params) — must be before parameterized :id routes
@@ -2638,10 +2656,14 @@ app.post('/api/live/unwatch', async (c) => handleUnwatchCreator(c.req.raw, c.env
 app.get('/api/live/watched', async (c) => handleGetWatchedCreators(c.req.raw, c.env));
 app.get('/api/live/watched/live', async (c) => handleWatchedLive(c.req.raw, c.env));
 app.get('/api/live/notifications', async (c) => handleGetNotifications(c.req.raw, c.env));
-app.post('/api/live/notifications/settings', async (c) => handleNotificationSettings(c.req.raw, c.env));
+app.post('/api/live/notifications/settings', async (c) =>
+  handleNotificationSettings(c.req.raw, c.env),
+);
 
 // ─── Source-specific Routes ─────────────────────────────────────────
-app.get('/api/live/sources/peertube/instances', async (c) => handlePeerTubeInstances(c.req.raw, c.env));
+app.get('/api/live/sources/peertube/instances', async (c) =>
+  handlePeerTubeInstances(c.req.raw, c.env),
+);
 app.get('/api/live/sources/twitch/curated', async (c) => handleTwitchCurated(c.req.raw, c.env));
 app.get('/api/live/kick/status/:channel', async (c) =>
   handleKickChannelStatus(c.req.raw, c.env, c.req.param('channel')),
