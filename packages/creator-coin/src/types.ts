@@ -753,8 +753,8 @@ export interface CrossChainPrice {
   solana: { price: string; usd: number };
   /** LEGACY: Base price */
   base: { price: string; usd: number };
-  /** All chain prices */
-  prices: Record<CreatorChain, { price: string; usd: number }>;
+  /** All chain prices (partial — only chains with active liquidity) */
+  prices: Partial<Record<CreatorChain, { price: string; usd: number }>>;
   diffPercent: number;
   arbitrageProfitable: boolean;
 }

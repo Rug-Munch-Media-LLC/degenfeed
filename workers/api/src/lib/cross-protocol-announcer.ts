@@ -72,9 +72,7 @@ function buildMessage(coin: CoinAnnouncement, maxLen: number = 4096): string {
 }
 
 function buildShortMessage(coin: CoinAnnouncement, maxLen: number = 300): string {
-  const msg =
-    `🚀 $${coin.symbol} launched on DegenFeed!\n\n` +
-    `${coin.degenfeedUrl}`;
+  const msg = `🚀 $${coin.symbol} launched on DegenFeed!\n\n` + `${coin.degenfeedUrl}`;
 
   return msg.length <= maxLen ? msg : msg.slice(0, maxLen - 3) + '...';
 }
@@ -166,7 +164,12 @@ async function announceOnFarcaster(
     const botFid = Number(env.FARCASTER_BOT_FID || 0);
 
     if (!botSignerHex || !botFid) {
-      return { protocol: 'farcaster', ok: false, error: 'Bot signer not configured', timestamp: Date.now() };
+      return {
+        protocol: 'farcaster',
+        ok: false,
+        error: 'Bot signer not configured',
+        timestamp: Date.now(),
+      };
     }
 
     const { buildFarcasterCastMessage, HubClient } = await import('@degenfeed/farcaster-sdk');
@@ -181,7 +184,12 @@ async function announceOnFarcaster(
     });
 
     if (!castResult.ok || !castResult.messageHex) {
-      return { protocol: 'farcaster', ok: false, error: castResult.error || 'Failed to build cast', timestamp: Date.now() };
+      return {
+        protocol: 'farcaster',
+        ok: false,
+        error: castResult.error || 'Failed to build cast',
+        timestamp: Date.now(),
+      };
     }
 
     const hubUrl = env.FARCASTER_BOT_HUB_URL || 'http://127.0.0.1:2281';
@@ -210,7 +218,12 @@ async function announceOnNostr(
 ): Promise<AnnouncementResult> {
   const privateKeyHex = env.NOSTR_PRIVATE_KEY;
   if (!privateKeyHex) {
-    return { protocol: 'nostr', ok: false, error: 'NOSTR_PRIVATE_KEY not configured', timestamp: Date.now() };
+    return {
+      protocol: 'nostr',
+      ok: false,
+      error: 'NOSTR_PRIVATE_KEY not configured',
+      timestamp: Date.now(),
+    };
   }
 
   try {
@@ -325,7 +338,12 @@ async function announceOnBluesky(
   const bskyDid = env.BSKY_DID;
   const bskyPassword = env.BSKY_APP_PASSWORD || env.PREMIUM_WALLET_KEY;
   if (!bskyDid || !bskyPassword) {
-    return { protocol: 'bluesky', ok: false, error: 'Bluesky credentials not configured', timestamp: Date.now() };
+    return {
+      protocol: 'bluesky',
+      ok: false,
+      error: 'Bluesky credentials not configured',
+      timestamp: Date.now(),
+    };
   }
 
   try {
@@ -402,7 +420,12 @@ async function announceOnMastodon(
   const instanceUrl = env.GOTOSOCIAL_INSTANCE_URL || 'https://social.degenfeed.xyz';
   const accessToken = env.MASTODON_ACCESS_TOKEN || env.PREMIUM_WALLET_KEY;
   if (!accessToken) {
-    return { protocol: 'mastodon', ok: false, error: 'Mastodon access token not configured', timestamp: Date.now() };
+    return {
+      protocol: 'mastodon',
+      ok: false,
+      error: 'Mastodon access token not configured',
+      timestamp: Date.now(),
+    };
   }
 
   try {
@@ -437,7 +460,12 @@ async function announceOnTelegram(
   const botToken = env.TELEGRAM_BOT_TOKEN;
   const chatId = env.TELEGRAM_COIN_ANNOUNCEMENT_CHAT_ID || env.TELEGRAM_ANNOUNCEMENT_CHAT_ID;
   if (!botToken || !chatId) {
-    return { protocol: 'telegram', ok: false, error: 'Telegram bot not configured', timestamp: Date.now() };
+    return {
+      protocol: 'telegram',
+      ok: false,
+      error: 'Telegram bot not configured',
+      timestamp: Date.now(),
+    };
   }
 
   try {
@@ -457,17 +485,24 @@ async function announceOnTelegram(
         parse_mode: 'HTML',
         disable_web_page_preview: false,
         reply_markup: {
-          inline_keyboard: [[
-            { text: `💎 Buy $${coin.symbol}`, url: coin.degenfeedUrl },
-            { text: '🔍 Explorer', url: coin.explorerUrl },
-          ]],
+          inline_keyboard: [
+            [
+              { text: `💎 Buy $${coin.symbol}`, url: coin.degenfeedUrl },
+              { text: '🔍 Explorer', url: coin.explorerUrl },
+            ],
+          ],
         },
       }),
     });
 
-    const data = await res.json() as { ok: boolean; result?: { message_id: number } };
+    const data = (await res.json()) as { ok: boolean; result?: { message_id: number } };
     if (!data.ok) {
-      return { protocol: 'telegram', ok: false, error: 'Telegram API error', timestamp: Date.now() };
+      return {
+        protocol: 'telegram',
+        ok: false,
+        error: 'Telegram API error',
+        timestamp: Date.now(),
+      };
     }
 
     return {
@@ -491,13 +526,19 @@ async function announceOnDiscord(
 ): Promise<AnnouncementResult> {
   const webhookUrl = env.DISCORD_COIN_WEBHOOK_URL || env.DISCORD_WEBHOOK_URL;
   if (!webhookUrl) {
-    return { protocol: 'discord', ok: false, error: 'Discord webhook not configured', timestamp: Date.now() };
+    return {
+      protocol: 'discord',
+      ok: false,
+      error: 'Discord webhook not configured',
+      timestamp: Date.now(),
+    };
   }
 
   try {
     const embed = {
       title: `🚀 $${coin.symbol} — ${coin.name}`,
-      description: `A new creator coin has launched on DegenFeed!\n\n` +
+      description:
+        `A new creator coin has launched on DegenFeed!\n\n` +
         `**Chain:** ${coin.chain}\n` +
         `**Price:** ${coin.price}\n` +
         `**Market Cap:** ${coin.marketCap}`,
@@ -521,7 +562,12 @@ async function announceOnDiscord(
     });
 
     if (!res.ok) {
-      return { protocol: 'discord', ok: false, error: `Discord webhook returned ${res.status}`, timestamp: Date.now() };
+      return {
+        protocol: 'discord',
+        ok: false,
+        error: `Discord webhook returned ${res.status}`,
+        timestamp: Date.now(),
+      };
     }
 
     return {

@@ -103,6 +103,10 @@ export class CrossChainBridge {
     return {
       solana: { price: '0', usd: 0 },
       base: { price: '0', usd: 0 },
+      prices: {
+        solana: { price: '0', usd: 0 },
+        base: { price: '0', usd: 0 },
+      },
       diffPercent: 0,
       arbitrageProfitable: false,
     };
@@ -115,8 +119,12 @@ export class CrossChainBridge {
     const mapping: CrossChainMapping = {
       solanaMint: this.config.solanaMint,
       baseWrapped: this.config.baseWrapped,
+      primaryAddress: this.config.solanaMint,
+      primaryChain: 'solana',
+      wrappedAddresses: { base: this.config.baseWrapped },
       creator: this.config.creator,
       attestationHash: `0x${'0'.repeat(64)}`,
+      attestationHashes: { base: `0x${'0'.repeat(64)}` },
       registeredAt: Date.now(),
     };
 
@@ -151,7 +159,7 @@ export async function getCrossChainMapping(
  */
 export async function resolveBaseAddress(kv: any, solanaMint: string): Promise<Address | null> {
   const mapping = await getCrossChainMapping(kv, solanaMint);
-  return mapping?.baseWrapped ?? null;
+  return (mapping?.baseWrapped ?? null) as Address | null;
 }
 
 /**

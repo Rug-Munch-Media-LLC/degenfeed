@@ -95,9 +95,13 @@ export default function BlueskyCoinPage() {
   return (
     <div className="mx-auto max-w-4xl px-4 py-6 animate-page-enter">
       <nav className="mb-4 flex items-center gap-2 text-xs text-[var(--color-muted)]">
-        <Link href="/coins" className="hover:text-degen-400 transition-colors">Coins</Link>
+        <Link href="/coins" className="hover:text-degen-400 transition-colors">
+          Coins
+        </Link>
         <span>/</span>
-        <Link href={`/coins/${symbol}`} className="hover:text-degen-400 transition-colors">${symbol}</Link>
+        <Link href={`/coins/${symbol}`} className="hover:text-degen-400 transition-colors">
+          ${symbol}
+        </Link>
         <span>/</span>
         <span className="font-medium text-sky-400">Bluesky</span>
       </nav>
@@ -106,9 +110,7 @@ export default function BlueskyCoinPage() {
         <div className="flex items-center gap-3">
           <span className="text-2xl">{PROTOCOL_META.icon}</span>
           <div>
-            <h1 className="text-lg font-bold text-[var(--color-fg)]">
-              ${coin.symbol} on Bluesky
-            </h1>
+            <h1 className="text-lg font-bold text-[var(--color-fg)]">${coin.symbol} on Bluesky</h1>
             <p className="text-xs text-[var(--color-muted)]">{PROTOCOL_META.description}</p>
           </div>
           <span className="ml-auto rounded-full bg-sky-500/15 px-3 py-1 text-xs font-semibold text-sky-400">
@@ -123,11 +125,14 @@ export default function BlueskyCoinPage() {
           <div className="rounded-xl border border-sky-500/20 bg-gradient-to-br from-sky-500/5 to-blue-500/5 p-4">
             <h2 className="mb-3 text-sm font-bold text-[var(--color-fg)]">☁️ Bluesky Custom Feed</h2>
             <p className="mb-4 text-xs text-[var(--color-muted)]">
-              Subscribe to the ${coin.symbol} custom feed on Bluesky for real-time updates,
-              price alerts, and community posts.
+              Subscribe to the ${coin.symbol} custom feed on Bluesky for real-time updates, price
+              alerts, and community posts.
             </p>
             <Link
-              href={coin.feedUri || `https://bsky.app/profile/degenfeed.xyz/feed/coin-${symbol.toLowerCase()}`}
+              href={
+                coin.feedUri ||
+                `https://bsky.app/profile/degenfeed.xyz/feed/coin-${symbol.toLowerCase()}`
+              }
               className="inline-block rounded-xl bg-gradient-to-r from-sky-500 to-blue-500 px-4 py-2 text-xs font-bold text-white hover:from-sky-400 hover:to-blue-400 transition-all"
             >
               Subscribe on Bluesky
@@ -186,8 +191,8 @@ export default function BlueskyCoinPage() {
           <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-3">
             <div className="mb-2 text-xs font-semibold text-[var(--color-fg)]">About Bluesky</div>
             <p className="text-[10px] text-[var(--color-muted)] leading-relaxed">
-              Bluesky is an open social web built on the AT Protocol. Follow the custom feed
-              for ${coin.symbol} to stay updated.
+              Bluesky is an open social web built on the AT Protocol. Follow the custom feed for $
+              {coin.symbol} to stay updated.
             </p>
             <Link
               href={coin.buyLink}

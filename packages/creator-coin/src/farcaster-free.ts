@@ -34,9 +34,6 @@ import { buildFarcasterCastMessage } from '@degenfeed/farcaster-sdk';
 
 // ─── Constants ─────────────────────────────────────────────────────────────
 
-/** Default embed URL for the coin on Zora. */
-const ZORA_COIN_URL = 'https://zora.co/coin/base';
-
 /** Max cast text length. */
 const MAX_CAST_LENGTH = 320;
 

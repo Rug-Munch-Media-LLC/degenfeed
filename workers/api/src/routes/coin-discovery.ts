@@ -14,7 +14,7 @@
 
 import { Hono } from 'hono';
 import type { Env } from '../index';
-import { noCacheJsonResponse, jsonResponse } from '../index';
+import { jsonResponse, noCacheJsonResponse } from '../index';
 import { sanitizeString } from '../sanitize';
 
 // ─── Router ─────────────────────────────────────────────────────────────
@@ -27,8 +27,14 @@ const COIN_PREFIX = 'coin:';
 const SYMBOL_INDEX_PREFIX = 'coin:symbol:';
 const PROTOCOL_COIN_INDEX = 'coin:protocol:';
 const VALID_PROTOCOLS = new Set([
-  'farcaster', 'nostr', 'bluesky', 'lens', 'mastodon',
-  'activitypub', 'telegram', 'discord',
+  'farcaster',
+  'nostr',
+  'bluesky',
+  'lens',
+  'mastodon',
+  'activitypub',
+  'telegram',
+  'discord',
 ]);
 
 // ─── KV helpers ─────────────────────────────────────────────────────────
@@ -244,10 +250,9 @@ async function searchProtocolCoins(
 
   return allCoins
     .filter((c) => {
-      const matchesProtocol = c.originProtocol === protocol || c.visibleProtocols?.includes(protocol);
-      const matchesQuery =
-        c.symbol.toLowerCase().includes(q) ||
-        c.name.toLowerCase().includes(q);
+      const matchesProtocol =
+        c.originProtocol === protocol || c.visibleProtocols?.includes(protocol);
+      const matchesQuery = c.symbol.toLowerCase().includes(q) || c.name.toLowerCase().includes(q);
       return matchesProtocol && matchesQuery;
     })
     .slice(0, 20)
@@ -264,7 +269,10 @@ async function getProtocolCoinView(
 ): Promise<ProtocolCoinView | null> {
   // Look up by symbol
   const symbolIndex = await kvGetJson<{
-    coinAddress: string; chain: string; originProtocol: string; originCreatorId: string;
+    coinAddress: string;
+    chain: string;
+    originProtocol: string;
+    originCreatorId: string;
   }>(env.CACHE, SYMBOL_INDEX_PREFIX + symbol.toLowerCase());
 
   if (!symbolIndex) return null;
@@ -280,10 +288,7 @@ async function getProtocolCoinView(
 /**
  * Get all coins visible across protocols (aggregated).
  */
-async function getAllProtocolCoins(
-  limit: number,
-  env: Env,
-): Promise<ProtocolCoinView[]> {
+async function getAllProtocolCoins(limit: number, env: Env): Promise<ProtocolCoinView[]> {
   // Try aggregated index first
   const aggregatedKey = 'coin:discover:all';
   const cached = await kvGetJson<ProtocolCoinView[]>(env.CACHE, aggregatedKey);

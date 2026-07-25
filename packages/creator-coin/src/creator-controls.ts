@@ -43,19 +43,19 @@
  */
 
 import {
-  DEFAULT_CREATOR_CONTROLS,
-  FIXED_PLATFORM_FEE_BPS,
-  VESTING_CONSTANTS,
   type CreatorCoinConfig,
   type CreatorControlConfig,
   type CreatorOptions,
   type DAODeploymentConfig,
+  DEFAULT_CREATOR_CONTROLS,
   type EarlyUnlockPenalty,
   type FeeConfig,
   type FeeRecipientType,
+  FIXED_PLATFORM_FEE_BPS,
   type LabeledAllocation,
   type LabeledWalletOnChain,
   type ProtocolSelection,
+  VESTING_CONSTANTS,
   type VestingConfig,
   type WalletLabel,
 } from './types';
@@ -273,7 +273,10 @@ export function validateCreatorControls(controls: CreatorControlConfig): Validat
   }
 
   // Vesting type validation
-  if (controls.vesting.type === 'staged' && (!controls.vesting.stages || controls.vesting.stages.length === 0)) {
+  if (
+    controls.vesting.type === 'staged' &&
+    (!controls.vesting.stages || controls.vesting.stages.length === 0)
+  ) {
     errors.push({
       field: 'vesting.stages',
       message: 'Staged vesting requires at least one stage',
@@ -319,7 +322,10 @@ export function validateCreatorControls(controls: CreatorControlConfig): Validat
   // Early unlock penalty validation
   if (controls.vesting.earlyUnlockPenalty?.enabled) {
     const penalty = controls.vesting.earlyUnlockPenalty;
-    if (penalty.penaltyBps < 0 || penalty.penaltyBps > CREATOR_CONTROL_CONSTANTS.MAX_EARLY_PENALTY_BPS) {
+    if (
+      penalty.penaltyBps < 0 ||
+      penalty.penaltyBps > CREATOR_CONTROL_CONSTANTS.MAX_EARLY_PENALTY_BPS
+    ) {
       errors.push({
         field: 'vesting.earlyUnlockPenalty.penaltyBps',
         message: `Early unlock penalty must be between 0 and ${CREATOR_CONTROL_CONSTANTS.MAX_EARLY_PENALTY_BPS} bps (0-50%)`,
@@ -361,7 +367,10 @@ export function validateCreatorControls(controls: CreatorControlConfig): Validat
   }
 
   // Treasury allocation: 0-20%
-  if (controls.treasuryAllocationBps < 0 || controls.treasuryAllocationBps > CREATOR_CONTROL_CONSTANTS.TREASURY_ALLOCATION_MAX_BPS) {
+  if (
+    controls.treasuryAllocationBps < 0 ||
+    controls.treasuryAllocationBps > CREATOR_CONTROL_CONSTANTS.TREASURY_ALLOCATION_MAX_BPS
+  ) {
     errors.push({
       field: 'treasuryAllocationBps',
       message: `Treasury allocation must be between 0 and ${CREATOR_CONTROL_CONSTANTS.TREASURY_ALLOCATION_MAX_BPS} bps (0-20%)`,
@@ -392,7 +401,10 @@ export function validateCreatorControls(controls: CreatorControlConfig): Validat
   if (controls.labeledAllocations.length > 0) {
     const labeledTotalByParent = new Map<WalletLabel, number>();
     for (const alloc of controls.labeledAllocations) {
-      labeledTotalByParent.set(alloc.label, (labeledTotalByParent.get(alloc.label) ?? 0) + alloc.allocationBps);
+      labeledTotalByParent.set(
+        alloc.label,
+        (labeledTotalByParent.get(alloc.label) ?? 0) + alloc.allocationBps,
+      );
     }
 
     for (const [label, total] of labeledTotalByParent) {
@@ -469,7 +481,10 @@ export function validateCreatorControls(controls: CreatorControlConfig): Validat
           max: dao.emergencyPauseSigners.length,
         });
       }
-      if (dao.treasuryFundingBps < 0 || dao.treasuryFundingBps > CREATOR_CONTROL_CONSTANTS.TREASURY_ALLOCATION_MAX_BPS) {
+      if (
+        dao.treasuryFundingBps < 0 ||
+        dao.treasuryFundingBps > CREATOR_CONTROL_CONSTANTS.TREASURY_ALLOCATION_MAX_BPS
+      ) {
         errors.push({
           field: 'daoConfig.treasuryFundingBps',
           message: `Treasury funding must be between 0 and ${CREATOR_CONTROL_CONSTANTS.TREASURY_ALLOCATION_MAX_BPS} bps (0-20%)`,
@@ -640,9 +655,10 @@ export function calculateVestingSchedule(
   vesting: VestingConfig,
   startTimestamp: number, // deployment or after_bonding timestamp
 ): VestingSchedule {
-  const effectiveStart = vesting.vestingStart === 'after_bonding'
-    ? startTimestamp // Will be set to graduation timestamp at runtime
-    : startTimestamp;
+  const effectiveStart =
+    vesting.vestingStart === 'after_bonding'
+      ? startTimestamp // Will be set to graduation timestamp at runtime
+      : startTimestamp;
 
   const initialUnlock = (totalAllocationWei * BigInt(vesting.initialUnlockBps)) / 10_000n;
   const cliffEnd = effectiveStart + vesting.cliffDuration;
@@ -656,7 +672,8 @@ export function calculateVestingSchedule(
     for (const stage of vesting.stages) {
       const stageTime = effectiveStart + stage.timeSeconds;
       cumulativeBps += stage.unlockBps;
-      const cumulativeAmount = (totalAllocationWei * BigInt(Math.min(10000, cumulativeBps))) / 10_000n;
+      const cumulativeAmount =
+        (totalAllocationWei * BigInt(Math.min(10000, cumulativeBps))) / 10_000n;
       stages.push({
         timestamp: stageTime,
         cumulativeUnlockBps: cumulativeBps,
@@ -665,7 +682,7 @@ export function calculateVestingSchedule(
           stages.length === 0
             ? cumulativeAmount - initialUnlock
             : cumulativeAmount -
-              ((totalAllocationWei * BigInt(cumulativeBps - stage.unlockBps)) / 10_000n),
+              (totalAllocationWei * BigInt(cumulativeBps - stage.unlockBps)) / 10_000n,
       });
     }
   } else {
@@ -922,9 +939,10 @@ function getDefaultDAOConfig(): DAODeploymentConfig {
 // Protocol Selection Validator (Requirement 5)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export function validateProtocolSelection(
-  selection: ProtocolSelection,
-): { valid: boolean; errors: string[] } {
+export function validateProtocolSelection(selection: ProtocolSelection): {
+  valid: boolean;
+  errors: string[];
+} {
   const errors: string[] = [];
   const validChains = ['solana', 'base', 'optimism', 'arbitrum', 'polygon'] as const;
 
@@ -974,7 +992,12 @@ export function creatorOptionsToConfig(options: CreatorOptions): CreatorControlC
     duration: options.vesting.durationDays * 24 * 60 * 60,
     cliffDuration: options.vesting.cliffDays * 24 * 60 * 60,
     initialUnlockBps: Math.round(options.vesting.initialUnlockPercent * 100),
-    type: options.vesting.type === 'custom' ? 'staged' : options.vesting.type === 'cliff' ? 'cliff' : 'linear',
+    type:
+      options.vesting.type === 'custom'
+        ? 'staged'
+        : options.vesting.type === 'cliff'
+          ? 'cliff'
+          : 'linear',
     vestingStart: options.vesting.start,
     earlyUnlockPenalty: options.vesting.earlyUnlockPenalty?.enabled
       ? {
@@ -1195,25 +1218,33 @@ export function generateOnChainCreatorControlsCode(
   uint256 public constant VESTING_DURATION = ${controls.vesting.duration};
   uint256 public constant VESTING_CLIFF = ${controls.vesting.cliffDuration};
   uint256 public constant INITIAL_UNLOCK_BPS = ${controls.vesting.initialUnlockBps};
-  ${controls.vesting.earlyUnlockPenalty?.enabled ? `
+  ${
+    controls.vesting.earlyUnlockPenalty?.enabled
+      ? `
   bool public constant EARLY_UNLOCK_PENALTY_ENABLED = true;
   uint256 public constant EARLY_UNLOCK_PENALTY_BPS = ${controls.vesting.earlyUnlockPenalty.penaltyBps};
   uint256 public constant EARLY_UNLOCK_WINDOW = ${controls.vesting.earlyUnlockPenalty.windowSeconds};
-  ` : `
+  `
+      : `
   bool public constant EARLY_UNLOCK_PENALTY_ENABLED = false;
-  `}
+  `
+  }
 
   // ═══ DAO Setup (Req 4) ══════════════════════════════════════════════
-  ${controls.enableDAO && daoConfig ? `
+  ${
+    controls.enableDAO && daoConfig
+      ? `
   bool public constant DAO_ENABLED = true;
   string public constant DAO_NAME = "${daoConfig.name}";
   uint256 public constant TREASURY_FUNDING_BPS = ${daoConfig.treasuryFundingBps};
   uint256 public constant EMERGENCY_PAUSE_THRESHOLD = ${daoConfig.emergencyPauseThreshold};
   address[] public emergencyPauseSigners;
   // DAO can update: fees=${daoConfig.canUpdateFees}, params=${daoConfig.canUpdateParameters}, treasury=${daoConfig.canSpendTreasury}
-  ` : `
+  `
+      : `
   bool public constant DAO_ENABLED = false;
-  `}
+  `
+  }
 
   // ═══ Protocol Selection (Req 5) ════════════════════════════════════
   bool public constant PROTOCOL_EXPANDABLE = ${controls.protocolSelection.expandable ? 'true' : 'false'};

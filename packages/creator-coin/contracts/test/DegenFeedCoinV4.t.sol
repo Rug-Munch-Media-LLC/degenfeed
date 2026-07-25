@@ -72,7 +72,8 @@ contract DegenFeedCoinV4Test is Test {
         assertEq(coin.symbol(), "TEST");
         assertEq(coin.creator(), creator);
         assertEq(coin.decimals(), 18);
-        assertEq(coin.totalSupply(), 1_000_000_000 * 1e18);
+        // Total supply starts at creator allocation (10% of 1B = 100M, 50% vested = 50M upfront)
+        assertEq(coin.totalSupply(), 50_000_000 * 1e18);
         assertEq(coin.TOTAL_SUPPLY(), 1_000_000_000 * 1e18);
     }
 
@@ -334,44 +335,92 @@ contract DegenFeedCoinV4Test is Test {
         assertFalse(coin.isBlocked(user1));
     }
 
+    /// @dev Helper: deploy coin with 0% creator allocation (no upfront minting) for trading tests
+    function _deployCleanCoin() internal returns (DegenFeedCoinV4) {
+        WalletLabel[] memory lbls = new WalletLabel[](1);
+        lbls[0] = WalletLabel.Creator;
+        address[] memory wlts = new address[](1);
+        wlts[0] = creator;
+
+        CreatorParameters memory p = CreatorParameters({
+            feeBps: 50,
+            vestingDuration: 0,
+            vestingPercentageBps: 0,
+            creatorAllocationBps: 0,
+            preBondingDuration: 0,
+            maxWalletBps: 500, // 5% for testing
+            vestingType: VestingType.None,
+            daoEnabled: false,
+            antiSniperEnabled: true,
+            sandwichProtection: false,
+            minBlockDelay: 0
+        });
+
+        address[] memory emptySigners;
+        DAOConfig memory empty = DAOConfig({
+            multiSigTreasury: address(0),
+            governor: address(0),
+            initialSigners: emptySigners,
+            signerThreshold: 0
+        });
+
+        // Deploy from address(this) so initialBuy must come from address(this)
+        return new DegenFeedCoinV4(
+            "Clean", "CLN", creator, platformFeeReceiver,
+            address(0), address(0), 0, p, empty, lbls, wlts
+        );
+    }
+
     function test_AntiExploit_Cooldown() public {
-        // Initialize via factory
-        vm.deal(deployer, 1 ether);
-        vm.prank(deployer);
-        coin.initialBuy{value: 0.1 ether}();
+        DegenFeedCoinV4 clean = _deployCleanCoin();
+
+        // Initialize via factory (we are the deployer = address(this))
+        vm.deal(address(this), 1 ether);
+        clean.initialBuy{value: 0.1 ether}();
 
         // First buy
         vm.deal(user1, 1 ether);
         vm.prank(user1);
-        coin.buy{value: 0.1 ether}(0);
+        clean.buy{value: 0.1 ether}(0);
 
         // Immediately try to buy again — should fail (cooldown)
         vm.deal(user1, 1 ether);
         vm.prank(user1);
         vm.expectRevert("V4: AE cooldown");
-        coin.buy{value: 0.1 ether}(0);
+        clean.buy{value: 0.1 ether}(0);
     }
 
     function test_AntiExploit_CooldownPasses() public {
-        vm.prank(deployer);
-        coin.initialBuy{value: 0.1 ether}();
+        DegenFeedCoinV4 clean = _deployCleanCoin();
+
+        vm.deal(address(this), 1 ether);
+        clean.initialBuy{value: 0.1 ether}();
 
         vm.deal(user1, 1 ether);
         vm.prank(user1);
-        coin.buy{value: 0.1 ether}(0);
+        clean.buy{value: 0.1 ether}(0);
 
-        // Wait 60s (anti-sniper active = 60s cooldown)
+        // Wait 60s (anti-sniper active = 60s cooldown) AND advance block
         vm.warp(block.timestamp + 61);
+        vm.roll(block.number + 1);
 
         vm.deal(user1, 1 ether);
         vm.prank(user1);
-        coin.buy{value: 0.1 ether}(0); // Should succeed
+        clean.buy{value: 0.1 ether}(0); // Should succeed
     }
 
     // ── 6. Bonding Curve ──────────────────────────────────────────────
 
-    function test_BondingCurve_InitialPrice() public {
-        assertEq(coin.getCurrentPrice(), coin.MIN_PRICE());
+    function test_BondingCurve_MinPriceOnZeroSupply() public {
+        // When no tokens minted, price should be MIN_PRICE
+        DegenFeedCoinV4 clean = _deployCleanCoin();
+        assertEq(clean.getCurrentPrice(), clean.MIN_PRICE());
+    }
+
+    function test_BondingCurve_PriceWithAllocation() public {
+        // With 50M tokens minted (5% of graduation supply), price > MIN_PRICE
+        assertTrue(coin.getCurrentPrice() > coin.MIN_PRICE());
+        assertTrue(coin.getCurrentPrice() < coin.MAX_PRICE());
     }
 
     function test_BondingCurve_PhaseZero() public {
@@ -381,24 +430,23 @@ contract DegenFeedCoinV4Test is Test {
     }
 
     function test_BondingCurve_Progress() public {
-        // Initially 0% progress (only creator allocation minted = 50M = 5%)
-        // But the supply is 1B initially - wait, 50M is less than GRADUATION_SUPPLY (800M)
-        // getProgressBps uses _totalSupply (50M) => (50M * 10000) / 800M = 625
+        // 50M tokens minted / 800M graduation supply * 10000 = 625 bps
         uint256 progress = coin.getProgressBps();
         (uint256 phaseIndex,) = coin.getCurrentPhase();
         assertTrue(progress < 10000);
-        // 50M / 800M * 10000 = 625
         assertEq(progress, 625);
     }
 
     function test_BondingCurve_PriceIncreases() public {
-        uint256 initialPrice = coin.getCurrentPrice();
+        DegenFeedCoinV4 clean = _deployCleanCoin();
+        uint256 initialPrice = clean.getCurrentPrice();
+        assertEq(initialPrice, clean.MIN_PRICE());
 
-        // Simulate buying tokens to move along the curve
-        vm.prank(deployer);
-        coin.initialBuy{value: 0.1 ether}();
+        // Buy to move along the curve
+        vm.deal(address(this), 1 ether);
+        clean.initialBuy{value: 0.1 ether}();
 
-        uint256 priceAfterBuy = coin.getCurrentPrice();
+        uint256 priceAfterBuy = clean.getCurrentPrice();
         assertGe(priceAfterBuy, initialPrice);
     }
 
@@ -491,9 +539,13 @@ contract DegenFeedCoinV4Test is Test {
 
         assertTrue(daoCoin.daoActive());
 
-        (address ms, address gov, , ) = daoCoin.dao();
+        // Struct getter excludes dynamic arrays — returns only (addr, addr, uint256)
+        (address ms, address gov, uint256 threshold_) = daoCoin.dao();
         assertEq(ms, address(0xEEEE));
         assertEq(gov, address(0xFFFF));
+        assertEq(threshold_, 2);
+        assertTrue(daoCoin.isDAOSigner(creator));
+        assertTrue(daoCoin.isDAOSigner(address(0xCCCC)));
     }
 
     // ── 10. Compliance Checks ───────────────────────────────────────────

@@ -482,19 +482,31 @@ function Tile({
   accent?: string;
 }) {
   return (
-    <div
-      className="relative overflow-hidden rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-4 transition-all hover:border-degen-500/20"
-    >
+    <div className="relative overflow-hidden rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-4 transition-all hover:border-degen-500/20">
       {accent && (
-        <div className="absolute right-0 top-0 h-0.5 w-full opacity-60" style={{ background: `linear-gradient(90deg, transparent, ${accent})` }} />
+        <div
+          className="absolute right-0 top-0 h-0.5 w-full opacity-60"
+          style={{ background: `linear-gradient(90deg, transparent, ${accent})` }}
+        />
       )}
       <div className="mb-2 flex items-center justify-between">
         <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-degen-500/10 text-sm text-degen-400">
           {icon}
         </span>
         {trend && (
-          <span className={`flex items-center gap-0.5 text-[10px] font-semibold ${trend.up ? 'text-degen-400' : 'text-red-400'}`}>
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" className={trend.up ? '' : 'rotate-180'}>
+          <span
+            className={`flex items-center gap-0.5 text-[10px] font-semibold ${trend.up ? 'text-degen-400' : 'text-red-400'}`}
+          >
+            <svg
+              width="10"
+              height="10"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              className={trend.up ? '' : 'rotate-180'}
+            >
               <polyline points="18 15 12 9 6 15" />
             </svg>
             {trend.value}%
@@ -509,7 +521,13 @@ function Tile({
 }
 
 /* ── Pie Chart ─────────────────────────────────────── */
-function PieChart({ data, size = 120 }: { data: Array<{ label: string; value: number; color: string }>; size?: number }) {
+function PieChart({
+  data,
+  size = 120,
+}: {
+  data: Array<{ label: string; value: number; color: string }>;
+  size?: number;
+}) {
   const total = data.reduce((s, d) => s + d.value, 0) || 1;
   const r = size / 2 - 10;
   const cx = size / 2;
@@ -535,7 +553,13 @@ function PieChart({ data, size = 120 }: { data: Array<{ label: string; value: nu
     };
   });
   return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-label="Supply breakdown pie chart" role="img">
+    <svg
+      width={size}
+      height={size}
+      viewBox={`0 0 ${size} ${size}`}
+      aria-label="Supply breakdown pie chart"
+      role="img"
+    >
       {slices.map((s, i) => (
         <path key={i} d={s.path} fill={s.color} stroke="var(--color-card)" strokeWidth="1" />
       ))}
@@ -564,19 +588,27 @@ function VestingBar({ vesting }: { vesting: VestingSchedule }) {
       <div className="grid grid-cols-4 gap-2 text-[9px]">
         <div>
           <span className="text-[var(--color-muted)]">Cliff ends</span>
-          <p className="font-mono text-[var(--color-fg)]">{new Date(vesting.cliffEndDate).toLocaleDateString()}</p>
+          <p className="font-mono text-[var(--color-fg)]">
+            {new Date(vesting.cliffEndDate).toLocaleDateString()}
+          </p>
         </div>
         <div>
           <span className="text-[var(--color-muted)]">Next unlock</span>
-          <p className="font-mono text-degen-400">{new Date(vesting.nextUnlockDate).toLocaleDateString()}</p>
+          <p className="font-mono text-degen-400">
+            {new Date(vesting.nextUnlockDate).toLocaleDateString()}
+          </p>
         </div>
         <div>
           <span className="text-[var(--color-muted)]">Amount</span>
-          <p className="font-mono text-[var(--color-fg)]">{(vesting.nextUnlockAmount / 1e6).toFixed(2)}M</p>
+          <p className="font-mono text-[var(--color-fg)]">
+            {(vesting.nextUnlockAmount / 1e6).toFixed(2)}M
+          </p>
         </div>
         <div>
           <span className="text-[var(--color-muted)]">Vesting ends</span>
-          <p className="font-mono text-[var(--color-fg)]">{new Date(vesting.vestingEndDate).toLocaleDateString()}</p>
+          <p className="font-mono text-[var(--color-fg)]">
+            {new Date(vesting.vestingEndDate).toLocaleDateString()}
+          </p>
         </div>
       </div>
     </div>
@@ -590,7 +622,10 @@ function MiniBarChart({ data, color = '#00ff41' }: { data: number[]; color?: str
     <div className="flex items-end gap-[2px] h-20">
       {data.map((v, i) => (
         <div key={i} className="flex-1 group relative">
-          <div className="w-full rounded-t-sm transition-all hover:opacity-80" style={{ height: `${(v / max) * 100}%`, background: color, opacity: 0.5 }} />
+          <div
+            className="w-full rounded-t-sm transition-all hover:opacity-80"
+            style={{ height: `${(v / max) * 100}%`, background: color, opacity: 0.5 }}
+          />
         </div>
       ))}
     </div>
@@ -603,8 +638,12 @@ function TradeRow({ trade }: { trade: TradeEntry }) {
   return (
     <div className="flex items-center justify-between py-1.5 text-[10px] border-b border-[var(--color-glass-border)] last:border-0">
       <div className="flex items-center gap-1.5 min-w-0">
-        <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${trade.type === 'buy' ? 'bg-degen-400' : 'bg-red-400'}`} />
-        <span className={`font-semibold shrink-0 ${trade.type === 'buy' ? 'text-degen-400' : 'text-red-400'}`}>
+        <span
+          className={`h-1.5 w-1.5 shrink-0 rounded-full ${trade.type === 'buy' ? 'bg-degen-400' : 'bg-red-400'}`}
+        />
+        <span
+          className={`font-semibold shrink-0 ${trade.type === 'buy' ? 'text-degen-400' : 'text-red-400'}`}
+        >
           {trade.type === 'buy' ? 'BUY' : 'SELL'}
         </span>
         <span className="font-mono text-[var(--color-muted)] truncate max-w-[60px]">
@@ -613,10 +652,18 @@ function TradeRow({ trade }: { trade: TradeEntry }) {
         <WalletLabelBadge label={trade.traderLabel} />
       </div>
       <div className="flex items-center gap-2 shrink-0">
-        <span className="tabular-nums text-[var(--color-fg)]">{(trade.tokenAmount / 1000).toFixed(0)}K</span>
-        <span className="tabular-nums text-[var(--color-muted)]">${trade.nativeValue.toFixed(2)}</span>
+        <span className="tabular-nums text-[var(--color-fg)]">
+          {(trade.tokenAmount / 1000).toFixed(0)}K
+        </span>
+        <span className="tabular-nums text-[var(--color-muted)]">
+          ${trade.nativeValue.toFixed(2)}
+        </span>
         <span className="text-[var(--color-muted)] w-10 text-right">
-          {ago < 60 ? `${ago}m` : Math.floor(ago / 60) < 24 ? `${Math.floor(ago / 60)}h` : `${Math.floor(ago / 1440)}d`}
+          {ago < 60
+            ? `${ago}m`
+            : Math.floor(ago / 60) < 24
+              ? `${Math.floor(ago / 60)}h`
+              : `${Math.floor(ago / 1440)}d`}
         </span>
         {trade.isBundled && <span className="text-red-400 text-[7px] font-bold">⚠</span>}
       </div>
@@ -632,12 +679,27 @@ function TradeRow({ trade }: { trade: TradeEntry }) {
 function MetricsSection({ coin }: { coin: CoinSummary }) {
   return (
     <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
-      <Tile label="Price" value={`$${coin.price.toFixed(6)}`} icon="💰" trend={{ value: coin.priceChange24h, up: coin.priceChange24h >= 0 }} />
+      <Tile
+        label="Price"
+        value={`$${coin.price.toFixed(6)}`}
+        icon="💰"
+        trend={{ value: coin.priceChange24h, up: coin.priceChange24h >= 0 }}
+      />
       <Tile label="Market Cap" value={`$${(coin.marketCap / 1e6).toFixed(2)}M`} icon="📊" />
       <Tile label="Holders" value={coin.holderCount.toLocaleString()} icon="👥" sub="+12 today" />
       <Tile label="24h Volume" value={`$${(coin.volume24h / 1e3).toFixed(0)}K`} icon="⚡" />
-      <Tile label="Liquidity" value={`$${(coin.liquidity / 1e3).toFixed(0)}K`} icon="💧" accent="var(--color-accent)" />
-      <Tile label="Revenue" value={`$${coin.creatorRevenue.toLocaleString()}`} icon="💰" trend={{ value: 18.5, up: true }} />
+      <Tile
+        label="Liquidity"
+        value={`$${(coin.liquidity / 1e3).toFixed(0)}K`}
+        icon="💧"
+        accent="var(--color-accent)"
+      />
+      <Tile
+        label="Revenue"
+        value={`$${coin.creatorRevenue.toLocaleString()}`}
+        icon="💰"
+        trend={{ value: 18.5, up: true }}
+      />
     </div>
   );
 }
@@ -647,12 +709,12 @@ function HolderListSection({ holders }: { holders: HolderEntry[] }) {
   const [showAll, setShowAll] = useState(false);
   const display = showAll ? holders : holders.slice(0, 15);
   const labelsCount = {
-    creator: holders.filter(h => h.label === 'creator').length,
-    team: holders.filter(h => h.label === 'team').length,
-    lp: holders.filter(h => h.label === 'lp').length,
-    dao: holders.filter(h => h.label === 'dao').length,
-    bundled: holders.filter(h => h.label === 'bundled').length,
-    community: holders.filter(h => h.label === 'community').length,
+    creator: holders.filter((h) => h.label === 'creator').length,
+    team: holders.filter((h) => h.label === 'team').length,
+    lp: holders.filter((h) => h.label === 'lp').length,
+    dao: holders.filter((h) => h.label === 'dao').length,
+    bundled: holders.filter((h) => h.label === 'bundled').length,
+    community: holders.filter((h) => h.label === 'community').length,
   };
 
   return (
@@ -660,12 +722,34 @@ function HolderListSection({ holders }: { holders: HolderEntry[] }) {
       <div className="mb-3 flex items-center justify-between">
         <h3 className="text-sm font-bold text-[var(--color-fg)]">👥 Holder List</h3>
         <div className="flex flex-wrap gap-1">
-          {labelsCount.creator > 0 && <span className="rounded bg-degen-500/15 px-1.5 py-0.5 text-[8px] text-degen-400">{labelsCount.creator} creator</span>}
-          {labelsCount.team > 0 && <span className="rounded bg-blue-500/15 px-1.5 py-0.5 text-[8px] text-blue-400">{labelsCount.team} team</span>}
-          {labelsCount.lp > 0 && <span className="rounded bg-purple-500/15 px-1.5 py-0.5 text-[8px] text-purple-400">{labelsCount.lp} LP</span>}
-          {labelsCount.dao > 0 && <span className="rounded bg-amber-500/15 px-1.5 py-0.5 text-[8px] text-amber-400">{labelsCount.dao} DAO</span>}
-          {labelsCount.bundled > 0 && <span className="rounded bg-red-500/15 px-1.5 py-0.5 text-[8px] text-red-400">{labelsCount.bundled} bundled</span>}
-          <span className="rounded bg-[var(--color-overlay)] px-1.5 py-0.5 text-[8px] text-[var(--color-muted)]">{labelsCount.community} community</span>
+          {labelsCount.creator > 0 && (
+            <span className="rounded bg-degen-500/15 px-1.5 py-0.5 text-[8px] text-degen-400">
+              {labelsCount.creator} creator
+            </span>
+          )}
+          {labelsCount.team > 0 && (
+            <span className="rounded bg-blue-500/15 px-1.5 py-0.5 text-[8px] text-blue-400">
+              {labelsCount.team} team
+            </span>
+          )}
+          {labelsCount.lp > 0 && (
+            <span className="rounded bg-purple-500/15 px-1.5 py-0.5 text-[8px] text-purple-400">
+              {labelsCount.lp} LP
+            </span>
+          )}
+          {labelsCount.dao > 0 && (
+            <span className="rounded bg-amber-500/15 px-1.5 py-0.5 text-[8px] text-amber-400">
+              {labelsCount.dao} DAO
+            </span>
+          )}
+          {labelsCount.bundled > 0 && (
+            <span className="rounded bg-red-500/15 px-1.5 py-0.5 text-[8px] text-red-400">
+              {labelsCount.bundled} bundled
+            </span>
+          )}
+          <span className="rounded bg-[var(--color-overlay)] px-1.5 py-0.5 text-[8px] text-[var(--color-muted)]">
+            {labelsCount.community} community
+          </span>
         </div>
       </div>
       <div className="max-h-80 overflow-y-auto scrollbar-thin">
@@ -673,27 +757,38 @@ function HolderListSection({ holders }: { holders: HolderEntry[] }) {
           {display.map((h) => (
             <div key={h.address} className="flex items-center justify-between py-1.5 text-[10px]">
               <div className="flex items-center gap-1.5 min-w-0">
-                <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${h.isCreator ? 'bg-degen-400' : h.label === 'bundled' ? 'bg-red-400' : 'bg-[var(--color-glass-border)]'}`} />
+                <span
+                  className={`h-1.5 w-1.5 shrink-0 rounded-full ${h.isCreator ? 'bg-degen-400' : h.label === 'bundled' ? 'bg-red-400' : 'bg-[var(--color-glass-border)]'}`}
+                />
                 <span className="font-mono text-[var(--color-fg)] truncate max-w-[60px]">
                   {h.address.slice(0, 6)}..{h.address.slice(-4)}
                 </span>
                 <WalletLabelBadge label={h.label} />
                 {h.pnl !== undefined && (
                   <span className={`text-[8px] ${h.pnl >= 0 ? 'text-degen-400' : 'text-red-400'}`}>
-                    {h.pnl >= 0 ? '+' : ''}{h.pnl.toFixed(1)}%
+                    {h.pnl >= 0 ? '+' : ''}
+                    {h.pnl.toFixed(1)}%
                   </span>
                 )}
               </div>
               <div className="flex items-center gap-2 shrink-0">
-                <span className="tabular-nums text-[var(--color-fg)]">{(h.balance / 1e6).toFixed(2)}M</span>
-                <span className="w-10 text-right text-[var(--color-muted)]">{h.percentage.toFixed(2)}%</span>
+                <span className="tabular-nums text-[var(--color-fg)]">
+                  {(h.balance / 1e6).toFixed(2)}M
+                </span>
+                <span className="w-10 text-right text-[var(--color-muted)]">
+                  {h.percentage.toFixed(2)}%
+                </span>
               </div>
             </div>
           ))}
         </div>
       </div>
       {holders.length > 15 && (
-        <button type="button" onClick={() => setShowAll(!showAll)} className="mt-2 w-full rounded-lg bg-[var(--color-overlay)] py-1.5 text-[9px] text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors">
+        <button
+          type="button"
+          onClick={() => setShowAll(!showAll)}
+          className="mt-2 w-full rounded-lg bg-[var(--color-overlay)] py-1.5 text-[9px] text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
+        >
           {showAll ? 'Show less' : `Show all ${holders.length} holders`}
         </button>
       )}
@@ -703,8 +798,8 @@ function HolderListSection({ holders }: { holders: HolderEntry[] }) {
 
 /* ── Trade History ────────────────────────────────── */
 function TradeHistorySection({ trades }: { trades: TradeEntry[] }) {
-  const buys = trades.filter(t => t.type === 'buy');
-  const sells = trades.filter(t => t.type === 'sell');
+  const buys = trades.filter((t) => t.type === 'buy');
+  const sells = trades.filter((t) => t.type === 'sell');
   const buyVol = buys.reduce((s, t) => s + t.nativeValue, 0);
   const sellVol = sells.reduce((s, t) => s + t.nativeValue, 0);
   const ratio = sellVol > 0 ? (buyVol / sellVol).toFixed(2) : '∞';
@@ -717,9 +812,7 @@ function TradeHistorySection({ trades }: { trades: TradeEntry[] }) {
           <span className="text-degen-400">{buys.length} buys</span>
           <span>/</span>
           <span className="text-red-400">{sells.length} sells</span>
-          <span className="rounded bg-[var(--color-overlay)] px-1.5 py-0.5">
-            Ratio: {ratio}
-          </span>
+          <span className="rounded bg-[var(--color-overlay)] px-1.5 py-0.5">Ratio: {ratio}</span>
         </div>
       </div>
       <div className="max-h-72 overflow-y-auto scrollbar-thin">
@@ -736,16 +829,31 @@ function RevenueSection({ revenue }: { revenue: RevenueData }) {
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <Tile label="Total Revenue" value={`$${revenue.totalRevenue.toLocaleString()}`} icon="💰" trend={{ value: 18.5, up: true }} />
-        <Tile label="Creator Fees" value={`$${revenue.creatorFees.toLocaleString()}`} icon="📋" trend={{ value: 12.3, up: true }} />
-        <Tile label="Tips Received" value={`$${revenue.tipsReceived.toLocaleString()}`} icon="⚡" trend={{ value: 24.1, up: true }} />
+        <Tile
+          label="Total Revenue"
+          value={`$${revenue.totalRevenue.toLocaleString()}`}
+          icon="💰"
+          trend={{ value: 18.5, up: true }}
+        />
+        <Tile
+          label="Creator Fees"
+          value={`$${revenue.creatorFees.toLocaleString()}`}
+          icon="📋"
+          trend={{ value: 12.3, up: true }}
+        />
+        <Tile
+          label="Tips Received"
+          value={`$${revenue.tipsReceived.toLocaleString()}`}
+          icon="⚡"
+          trend={{ value: 24.1, up: true }}
+        />
         <Tile label="Platform Fees" value={`$${revenue.platformFees.toLocaleString()}`} icon="🏛️" />
       </div>
 
       {/* Revenue chart */}
       <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-4">
         <h3 className="mb-3 text-xs font-bold text-[var(--color-fg)]">Daily Revenue (30 days)</h3>
-        <MiniBarChart data={revenue.revenueByDay.map(d => d.amount)} color="#00ff41" />
+        <MiniBarChart data={revenue.revenueByDay.map((d) => d.amount)} color="#00ff41" />
       </div>
 
       {/* Fee Transparency Breakdown */}
@@ -756,33 +864,49 @@ function RevenueSection({ revenue }: { revenue: RevenueData }) {
             <span className="flex items-center gap-1.5 text-[var(--color-fg)]">
               <span className="h-2 w-2 rounded-full bg-degen-400" />
               Creator Fee
-              <span className="text-[var(--color-muted)]">({revenue.feeBreakdown.creator.pct}%)</span>
+              <span className="text-[var(--color-muted)]">
+                ({revenue.feeBreakdown.creator.pct}%)
+              </span>
             </span>
-            <span className="font-mono text-degen-400">${revenue.feeBreakdown.creator.amount.toFixed(2)}</span>
+            <span className="font-mono text-degen-400">
+              ${revenue.feeBreakdown.creator.amount.toFixed(2)}
+            </span>
           </div>
           <div className="flex items-center justify-between text-[10px]">
             <span className="flex items-center gap-1.5 text-[var(--color-fg)]">
               <span className="h-2 w-2 rounded-full bg-amber-400" />
               Platform Fee
-              <span className="text-[var(--color-muted)]">({revenue.feeBreakdown.platform.pct}%)</span>
+              <span className="text-[var(--color-muted)]">
+                ({revenue.feeBreakdown.platform.pct}%)
+              </span>
             </span>
-            <span className="font-mono text-amber-400">${revenue.feeBreakdown.platform.amount.toFixed(2)}</span>
+            <span className="font-mono text-amber-400">
+              ${revenue.feeBreakdown.platform.amount.toFixed(2)}
+            </span>
           </div>
           <div className="flex items-center justify-between text-[10px]">
             <span className="flex items-center gap-1.5 text-[var(--color-fg)]">
               <span className="h-2 w-2 rounded-full bg-purple-400" />
               Treasury
-              <span className="text-[var(--color-muted)]">({revenue.feeBreakdown.treasury.pct}%)</span>
+              <span className="text-[var(--color-muted)]">
+                ({revenue.feeBreakdown.treasury.pct}%)
+              </span>
             </span>
-            <span className="font-mono text-purple-400">${revenue.feeBreakdown.treasury.amount.toFixed(2)}</span>
+            <span className="font-mono text-purple-400">
+              ${revenue.feeBreakdown.treasury.amount.toFixed(2)}
+            </span>
           </div>
           <div className="flex items-center justify-between text-[10px]">
             <span className="flex items-center gap-1.5 text-[var(--color-fg)]">
               <span className="h-2 w-2 rounded-full bg-blue-400" />
               Liquidity Pool
-              <span className="text-[var(--color-muted)]">({revenue.feeBreakdown.liquidity.pct}%)</span>
+              <span className="text-[var(--color-muted)]">
+                ({revenue.feeBreakdown.liquidity.pct}%)
+              </span>
             </span>
-            <span className="font-mono text-blue-400">${revenue.feeBreakdown.liquidity.amount.toFixed(2)}</span>
+            <span className="font-mono text-blue-400">
+              ${revenue.feeBreakdown.liquidity.amount.toFixed(2)}
+            </span>
           </div>
         </div>
       </div>
@@ -791,24 +915,35 @@ function RevenueSection({ revenue }: { revenue: RevenueData }) {
 }
 
 /* ── Vesting Section ──────────────────────────────── */
-function VestingSection({ vesting, bundling }: { vesting: VestingSchedule; bundling: BundlingInfo }) {
+function VestingSection({
+  vesting,
+  bundling,
+}: {
+  vesting: VestingSchedule;
+  bundling: BundlingInfo;
+}) {
   return (
     <div className="space-y-4">
       <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-4">
-        <h3 className="mb-3 text-xs font-bold text-[var(--color-fg)]">🔒 Creator Vesting Schedule</h3>
+        <h3 className="mb-3 text-xs font-bold text-[var(--color-fg)]">
+          🔒 Creator Vesting Schedule
+        </h3>
         <VestingBar vesting={vesting} />
       </div>
 
       {/* Lock Proof */}
       <div className="rounded-xl border border-degen-500/20 bg-degen-500/5 p-4">
         <div className="flex items-center gap-2 mb-2">
-          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-degen-500/20 text-[10px]">✓</span>
+          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-degen-500/20 text-[10px]">
+            ✓
+          </span>
           <span className="text-xs font-semibold text-degen-400">Lock Proof Verified</span>
           <span className="ml-auto text-[9px] text-[var(--color-muted)]">On-chain</span>
         </div>
         <p className="text-[9px] text-[var(--color-muted)]">
-          {(vesting.totalLocked / 1e6).toFixed(0)}M tokens locked in vesting contract until {new Date(vesting.vestingEndDate).toLocaleDateString()}.
-          Cliff ends {new Date(vesting.cliffEndDate).toLocaleDateString()}. Linear vesting with weekly unlocks.
+          {(vesting.totalLocked / 1e6).toFixed(0)}M tokens locked in vesting contract until{' '}
+          {new Date(vesting.vestingEndDate).toLocaleDateString()}. Cliff ends{' '}
+          {new Date(vesting.cliffEndDate).toLocaleDateString()}. Linear vesting with weekly unlocks.
         </p>
       </div>
 
@@ -818,13 +953,16 @@ function VestingSection({ vesting, bundling }: { vesting: VestingSchedule; bundl
           <div className="flex items-center gap-2 mb-2">
             <span className="text-sm">⚠️</span>
             <span className="text-xs font-semibold text-red-400">Bundling Detected</span>
-            <span className={`ml-auto rounded px-1.5 py-0.5 text-[8px] font-semibold ${bundling.riskLevel === 'low' ? 'bg-yellow-500/15 text-yellow-400' : 'bg-red-500/15 text-red-400'}`}>
+            <span
+              className={`ml-auto rounded px-1.5 py-0.5 text-[8px] font-semibold ${bundling.riskLevel === 'low' ? 'bg-yellow-500/15 text-yellow-400' : 'bg-red-500/15 text-red-400'}`}
+            >
               {bundling.riskLevel} risk
             </span>
           </div>
           <p className="text-[9px] text-[var(--color-muted)]">
-            {bundling.bundledWallets} bundled wallets identified holding {(bundling.totalBundledTokens / 1e6).toFixed(1)}M tokens ({bundling.bundlingPercentage}% of supply).
-            All bundled wallets are labeled in the holder list.
+            {bundling.bundledWallets} bundled wallets identified holding{' '}
+            {(bundling.totalBundledTokens / 1e6).toFixed(1)}M tokens ({bundling.bundlingPercentage}%
+            of supply). All bundled wallets are labeled in the holder list.
           </p>
         </div>
       )}
@@ -853,9 +991,14 @@ function SupplySection({ supply }: { supply: SupplyBreakdown }) {
               <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: d.color }} />
               <span className="flex-1 text-[var(--color-fg)]">{d.label}</span>
               <div className="flex-1 h-1.5 rounded-full bg-[var(--color-glass-border)] overflow-hidden">
-                <div className="h-full rounded-full transition-all" style={{ width: `${(d.value / supply.totalSupply) * 100}%`, background: d.color }} />
+                <div
+                  className="h-full rounded-full transition-all"
+                  style={{ width: `${(d.value / supply.totalSupply) * 100}%`, background: d.color }}
+                />
               </div>
-              <span className="w-14 text-right font-mono text-[var(--color-muted)]">{((d.value / supply.totalSupply) * 100).toFixed(1)}%</span>
+              <span className="w-14 text-right font-mono text-[var(--color-muted)]">
+                {((d.value / supply.totalSupply) * 100).toFixed(1)}%
+              </span>
             </div>
           ))}
         </div>
@@ -876,15 +1019,22 @@ function AuditTrailSection({ audits }: { audits: AuditEntry[] }) {
       <h3 className="mb-3 text-xs font-bold text-[var(--color-fg)]">📋 Parameter Audit Trail</h3>
       <div className="space-y-2">
         {audits.map((a) => (
-          <div key={a.txHash} className="flex items-start gap-2 rounded-lg border border-[var(--color-glass-border)] p-2">
+          <div
+            key={a.txHash}
+            className="flex items-start gap-2 rounded-lg border border-[var(--color-glass-border)] p-2"
+          >
             <span className="mt-0.5 text-[9px]">📝</span>
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-medium text-[var(--color-fg)]">{a.action}</span>
-                <span className="text-[8px] text-[var(--color-muted)]">{Math.floor((Date.now() - a.timestamp) / 86400000)}d ago</span>
+                <span className="text-[8px] text-[var(--color-muted)]">
+                  {Math.floor((Date.now() - a.timestamp) / 86400000)}d ago
+                </span>
               </div>
               <p className="text-[9px] text-[var(--color-muted)]">Params: {a.params}</p>
-              <p className="text-[8px] text-[var(--color-muted)] font-mono">by {a.actor} · {a.txHash.slice(0, 10)}..</p>
+              <p className="text-[8px] text-[var(--color-muted)] font-mono">
+                by {a.actor} · {a.txHash.slice(0, 10)}..
+              </p>
             </div>
           </div>
         ))}
@@ -902,7 +1052,9 @@ function QuickActions({ coin, onRefresh }: { coin: CoinSummary; onRefresh: () =>
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ amount }),
-    }).then(r => r.ok ? alert('🔥 Burn successful!') : alert('Burn failed')).catch(() => alert('Burn failed'));
+    })
+      .then((r) => (r.ok ? alert('🔥 Burn successful!') : alert('Burn failed')))
+      .catch(() => alert('Burn failed'));
     onRefresh();
   }, [coin.address, onRefresh]);
 
@@ -914,7 +1066,9 @@ function QuickActions({ coin, onRefresh }: { coin: CoinSummary; onRefresh: () =>
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ recipients: [{ address: addr, amount: amt }] }),
-    }).then(r => r.ok ? alert('✈️ Airdrop sent!') : alert('Airdrop failed')).catch(() => alert('Airdrop failed'));
+    })
+      .then((r) => (r.ok ? alert('✈️ Airdrop sent!') : alert('Airdrop failed')))
+      .catch(() => alert('Airdrop failed'));
     onRefresh();
   }, [coin.address, onRefresh]);
 
@@ -930,19 +1084,34 @@ function QuickActions({ coin, onRefresh }: { coin: CoinSummary; onRefresh: () =>
     <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-4">
       <h3 className="mb-3 text-xs font-bold text-[var(--color-fg)]">⚡ Quick Actions</h3>
       <div className="grid grid-cols-2 gap-2">
-        <button type="button" onClick={handleBurn} className="flex flex-col items-center gap-1 rounded-lg bg-red-500/10 p-3 text-red-400 hover:bg-red-500/20 transition-all">
+        <button
+          type="button"
+          onClick={handleBurn}
+          className="flex flex-col items-center gap-1 rounded-lg bg-red-500/10 p-3 text-red-400 hover:bg-red-500/20 transition-all"
+        >
           <span className="text-lg">🔥</span>
           <span className="text-[9px] font-semibold">Burn Tokens</span>
         </button>
-        <button type="button" onClick={handleAirdrop} className="flex flex-col items-center gap-1 rounded-lg bg-purple-500/10 p-3 text-purple-400 hover:bg-purple-500/20 transition-all">
+        <button
+          type="button"
+          onClick={handleAirdrop}
+          className="flex flex-col items-center gap-1 rounded-lg bg-purple-500/10 p-3 text-purple-400 hover:bg-purple-500/20 transition-all"
+        >
           <span className="text-lg">✈️</span>
           <span className="text-[9px] font-semibold">Airdrop</span>
         </button>
-        <button type="button" onClick={handleDaoParamUpdate} className="flex flex-col items-center gap-1 rounded-lg bg-amber-500/10 p-3 text-amber-400 hover:bg-amber-500/20 transition-all">
+        <button
+          type="button"
+          onClick={handleDaoParamUpdate}
+          className="flex flex-col items-center gap-1 rounded-lg bg-amber-500/10 p-3 text-amber-400 hover:bg-amber-500/20 transition-all"
+        >
           <span className="text-lg">⚙️</span>
           <span className="text-[9px] font-semibold">DAO Params</span>
         </button>
-        <Link href={`/creator/coins/${coin.address}`} className="flex flex-col items-center gap-1 rounded-lg bg-degen-500/10 p-3 text-degen-400 hover:bg-degen-500/20 transition-all">
+        <Link
+          href={`/creator/coins/${coin.address}`}
+          className="flex flex-col items-center gap-1 rounded-lg bg-degen-500/10 p-3 text-degen-400 hover:bg-degen-500/20 transition-all"
+        >
           <span className="text-lg">📊</span>
           <span className="text-[9px] font-semibold">Analytics</span>
         </Link>
@@ -955,7 +1124,14 @@ function QuickActions({ coin, onRefresh }: { coin: CoinSummary; onRefresh: () =>
 // MAIN PAGE
 // ══════════════════════════════════════════════════════════════════════
 
-type DashboardTab = 'overview' | 'holders' | 'trades' | 'revenue' | 'vesting' | 'supply' | 'transparency';
+type DashboardTab =
+  | 'overview'
+  | 'holders'
+  | 'trades'
+  | 'revenue'
+  | 'vesting'
+  | 'supply'
+  | 'transparency';
 
 export default function CreatorDashboardPage() {
   const router = useRouter();
@@ -993,8 +1169,13 @@ export default function CreatorDashboardPage() {
       <div className="mx-auto max-w-6xl px-4 py-20 text-center animate-page-enter">
         <div className="mb-4 text-5xl">🪙</div>
         <h1 className="mb-2 text-xl font-bold text-[var(--color-fg)]">No Coins Yet</h1>
-        <p className="mb-6 text-sm text-[var(--color-muted)]">Launch your first creator coin to see your dashboard.</p>
-        <Link href="/creator/studio" className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-degen-600 to-degen-400 px-6 py-3 text-sm font-bold text-black hover:from-degen-500 hover:to-degen-300">
+        <p className="mb-6 text-sm text-[var(--color-muted)]">
+          Launch your first creator coin to see your dashboard.
+        </p>
+        <Link
+          href="/creator/studio"
+          className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-degen-600 to-degen-400 px-6 py-3 text-sm font-bold text-black hover:from-degen-500 hover:to-degen-300"
+        >
           🚀 Launch Your Coin
         </Link>
       </div>
@@ -1006,7 +1187,10 @@ export default function CreatorDashboardPage() {
       {/* ─── Header ─────────────────────────────────────── */}
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[var(--color-fg)]" style={{ fontFamily: 'var(--font-heading)' }}>
+          <h1
+            className="text-2xl font-bold text-[var(--color-fg)]"
+            style={{ fontFamily: 'var(--font-heading)' }}
+          >
             🛠️ Coin Management
           </h1>
           <p className="mt-1 text-sm text-[var(--color-muted)]">
@@ -1050,17 +1234,32 @@ export default function CreatorDashboardPage() {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-sm font-bold text-[var(--color-fg)]">{selectedCoin.name}</span>
-                <span className="font-mono text-[10px] text-[var(--color-muted)]">${selectedCoin.symbol}</span>
-                {selectedCoin.graduated
-                  ? <span className="rounded-full bg-green-500/15 px-2 py-0.5 text-[8px] font-semibold text-green-400">✅ Graduated</span>
-                  : <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[8px] font-semibold text-amber-400">⏳ Bonding</span>
-                }
+                <span className="text-sm font-bold text-[var(--color-fg)]">
+                  {selectedCoin.name}
+                </span>
+                <span className="font-mono text-[10px] text-[var(--color-muted)]">
+                  ${selectedCoin.symbol}
+                </span>
+                {selectedCoin.graduated ? (
+                  <span className="rounded-full bg-green-500/15 px-2 py-0.5 text-[8px] font-semibold text-green-400">
+                    ✅ Graduated
+                  </span>
+                ) : (
+                  <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[8px] font-semibold text-amber-400">
+                    ⏳ Bonding
+                  </span>
+                )}
               </div>
               <div className="flex items-center gap-3 text-[9px] text-[var(--color-muted)]">
                 <span>{selectedCoin.chain === 'solana' ? '◎ Solana' : '⧫ Base'}</span>
-                <span>Created {Math.floor((Date.now() - selectedCoin.deployedAt) / 86400000)}d ago</span>
-                <button type="button" onClick={() => navigator.clipboard.writeText(selectedCoin.address)} className="font-mono text-degen-400 hover:underline">
+                <span>
+                  Created {Math.floor((Date.now() - selectedCoin.deployedAt) / 86400000)}d ago
+                </span>
+                <button
+                  type="button"
+                  onClick={() => navigator.clipboard.writeText(selectedCoin.address)}
+                  className="font-mono text-degen-400 hover:underline"
+                >
                   {selectedCoin.address.slice(0, 8)}..{selectedCoin.address.slice(-6)}
                 </button>
               </div>
@@ -1070,8 +1269,11 @@ export default function CreatorDashboardPage() {
       )}
 
       {/* ─── Tabs ────────────────────────────────────────── */}
-      <div className="mb-6 flex gap-1 overflow-x-auto rounded-2xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-1 scrollbar-none" role="tablist">
-        {([
+      <div
+        className="mb-6 flex gap-1 overflow-x-auto rounded-2xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-1 scrollbar-none"
+        role="tablist"
+      >
+        {[
           { id: 'overview' as DashboardTab, label: 'Overview', icon: '📊' },
           { id: 'holders' as DashboardTab, label: 'Holders', icon: '👥' },
           { id: 'trades' as DashboardTab, label: 'Trades', icon: '⚡' },
@@ -1079,7 +1281,7 @@ export default function CreatorDashboardPage() {
           { id: 'vesting' as DashboardTab, label: 'Vesting', icon: '🔒' },
           { id: 'supply' as DashboardTab, label: 'Supply', icon: '📊' },
           { id: 'transparency' as DashboardTab, label: 'Transparency', icon: '🔍' },
-        ]).map((tab) => (
+        ].map((tab) => (
           <button
             key={tab.id}
             type="button"
@@ -1112,24 +1314,16 @@ export default function CreatorDashboardPage() {
       )}
 
       {/* ═══ HOLDERS ═══ */}
-      {activeTab === 'holders' && (
-        <HolderListSection holders={holders} />
-      )}
+      {activeTab === 'holders' && <HolderListSection holders={holders} />}
 
       {/* ═══ TRADES ═══ */}
-      {activeTab === 'trades' && (
-        <TradeHistorySection trades={trades} />
-      )}
+      {activeTab === 'trades' && <TradeHistorySection trades={trades} />}
 
       {/* ═══ REVENUE ═══ */}
-      {activeTab === 'revenue' && (
-        <RevenueSection revenue={revenue} />
-      )}
+      {activeTab === 'revenue' && <RevenueSection revenue={revenue} />}
 
       {/* ═══ VESTING ═══ */}
-      {activeTab === 'vesting' && (
-        <VestingSection vesting={vesting} bundling={bundling} />
-      )}
+      {activeTab === 'vesting' && <VestingSection vesting={vesting} bundling={bundling} />}
 
       {/* ═══ SUPPLY ═══ */}
       {activeTab === 'supply' && (
@@ -1151,7 +1345,8 @@ export default function CreatorDashboardPage() {
               <div>
                 <h2 className="text-lg font-bold text-[var(--color-fg)]">Transparency Dashboard</h2>
                 <p className="text-xs text-[var(--color-muted)]">
-                  All wallets labeled · Vesting on-chain verified · Fees transparent · Supply auditable
+                  All wallets labeled · Vesting on-chain verified · Fees transparent · Supply
+                  auditable
                 </p>
               </div>
               <div className="ml-auto text-center">
@@ -1176,22 +1371,30 @@ export default function CreatorDashboardPage() {
               <div className="rounded-lg border border-[var(--color-glass-border)] p-3">
                 <div className="text-[10px] text-[var(--color-muted)]">Platform Fee</div>
                 <div className="text-lg font-bold text-amber-400">0.5%</div>
-                <div className="text-[8px] text-[var(--color-muted)]">All trades · Funds platform operations</div>
+                <div className="text-[8px] text-[var(--color-muted)]">
+                  All trades · Funds platform operations
+                </div>
               </div>
               <div className="rounded-lg border border-[var(--color-glass-border)] p-3">
                 <div className="text-[10px] text-[var(--color-muted)]">Creator Fee</div>
                 <div className="text-lg font-bold text-degen-400">1.0%</div>
-                <div className="text-[8px] text-[var(--color-muted)]">All trades · Goes to creator wallet</div>
+                <div className="text-[8px] text-[var(--color-muted)]">
+                  All trades · Goes to creator wallet
+                </div>
               </div>
               <div className="rounded-lg border border-[var(--color-glass-border)] p-3">
                 <div className="text-[10px] text-[var(--color-muted)]">Treasury Allocation</div>
                 <div className="text-lg font-bold text-purple-400">0.3%</div>
-                <div className="text-[8px] text-[var(--color-muted)]">DAO controlled · Community proposals</div>
+                <div className="text-[8px] text-[var(--color-muted)]">
+                  DAO controlled · Community proposals
+                </div>
               </div>
               <div className="rounded-lg border border-[var(--color-glass-border)] p-3">
                 <div className="text-[10px] text-[var(--color-muted)]">Liquidity Fee</div>
                 <div className="text-lg font-bold text-blue-400">0.2%</div>
-                <div className="text-[8px] text-[var(--color-muted)]">Auto-adds to LP · Permanent liquidity</div>
+                <div className="text-[8px] text-[var(--color-muted)]">
+                  Auto-adds to LP · Permanent liquidity
+                </div>
               </div>
             </div>
           </div>
@@ -1205,16 +1408,20 @@ export default function CreatorDashboardPage() {
               <div>
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-semibold text-degen-400">On-Chain Lock Proof</span>
-                  <span className="rounded-full bg-degen-500/15 px-2 py-0.5 text-[8px] text-degen-400">Verified</span>
+                  <span className="rounded-full bg-degen-500/15 px-2 py-0.5 text-[8px] text-degen-400">
+                    Verified
+                  </span>
                 </div>
                 <p className="text-[10px] text-[var(--color-muted)]">
                   Creator tokens are locked in a audited vesting contract at{' '}
-                  <span className="font-mono text-degen-400">0xVesting...Contract</span>.
-                  Verified on {selectedCoin.chain === 'solana' ? 'Solscan' : 'Etherscan'}.
+                  <span className="font-mono text-degen-400">0xVesting...Contract</span>. Verified
+                  on {selectedCoin.chain === 'solana' ? 'Solscan' : 'Etherscan'}.
                 </p>
               </div>
               <a
-                href={selectedCoin.chain === 'solana' ? 'https://solscan.io' : 'https://basescan.org'}
+                href={
+                  selectedCoin.chain === 'solana' ? 'https://solscan.io' : 'https://basescan.org'
+                }
                 target="_blank"
                 rel="noopener noreferrer"
                 className="ml-auto rounded-lg bg-degen-500/15 px-3 py-1.5 text-[9px] font-medium text-degen-400 hover:bg-degen-500/25 transition-colors"

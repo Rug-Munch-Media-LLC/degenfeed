@@ -95,9 +95,13 @@ export default function LensCoinPage() {
   return (
     <div className="mx-auto max-w-4xl px-4 py-6 animate-page-enter">
       <nav className="mb-4 flex items-center gap-2 text-xs text-[var(--color-muted)]">
-        <Link href="/coins" className="hover:text-degen-400 transition-colors">Coins</Link>
+        <Link href="/coins" className="hover:text-degen-400 transition-colors">
+          Coins
+        </Link>
         <span>/</span>
-        <Link href={`/coins/${symbol}`} className="hover:text-degen-400 transition-colors">${symbol}</Link>
+        <Link href={`/coins/${symbol}`} className="hover:text-degen-400 transition-colors">
+          ${symbol}
+        </Link>
         <span>/</span>
         <span className="font-medium text-emerald-400">Lens</span>
       </nav>
@@ -106,9 +110,7 @@ export default function LensCoinPage() {
         <div className="flex items-center gap-3">
           <span className="text-2xl">{PROTOCOL_META.icon}</span>
           <div>
-            <h1 className="text-lg font-bold text-[var(--color-fg)]">
-              ${coin.symbol} on Lens
-            </h1>
+            <h1 className="text-lg font-bold text-[var(--color-fg)]">${coin.symbol} on Lens</h1>
             <p className="text-xs text-[var(--color-muted)]">{PROTOCOL_META.description}</p>
           </div>
           <span className="ml-auto rounded-full bg-emerald-500/15 px-3 py-1 text-xs font-semibold text-emerald-400">
@@ -187,8 +189,8 @@ export default function LensCoinPage() {
           <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-3">
             <div className="mb-2 text-xs font-semibold text-[var(--color-fg)]">About Lens</div>
             <p className="text-[10px] text-[var(--color-muted)] leading-relaxed">
-              Lens Protocol is a decentralized social graph. Publications can include
-              collect modules that let followers buy creator coins directly.
+              Lens Protocol is a decentralized social graph. Publications can include collect
+              modules that let followers buy creator coins directly.
             </p>
           </div>
         </div>
