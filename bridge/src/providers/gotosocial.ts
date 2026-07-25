@@ -1,6 +1,8 @@
 /**
  * GotoSocial / Mastodon Provider
  *
+ * Rate Limit: 300 requests/5 minutes (public Mastodon APIs)
+ *
  * Fetches posts from the local GotoSocial instance (port 8082) and from
  * public Mastodon instances that serve their public timeline without auth.
  *
@@ -9,6 +11,7 @@
  * which serve /api/v1/timelines/public without authentication.
  */
 
+import { checkRateLimit } from '../rate-limiter';
 import { guessNiches, stripHtml } from '../lib/utils';
 
 export { guessNiches, stripHtml };
@@ -222,6 +225,11 @@ export const schema: SchemaGuard = {
 };
 
 export async function fetchMastodonPosts(limit = 20): Promise<UnifiedPost[]> {
+  // Rate limit: 300 requests/5 minutes (public Mastodon API)
+  if (!checkRateLimit('mastodon', { maxRequests: 300, windowMs: 300_000 })) {
+    console.log('[mastodon] Rate limited, skipping fetch');
+    return [];
+  }
   const [gts, publics] = await Promise.all([
     fetchFromGts(Math.ceil(limit / 3)),
     fetchFromPublicInstances(Math.ceil(limit / 1.5)),

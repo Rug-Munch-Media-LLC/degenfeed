@@ -29,6 +29,7 @@ import {
 import { uploadBufferToIPFS } from '../lib/ipfs-storage';
 import { buildMediaResponse, fetchMedia, type GatewayBackend } from '../lib/media-gateway';
 import { requireSession } from '../session';
+import { methodNotAllowed } from '../response-helpers';
 
 // ─── Constants ──────────────────────────────────────────────────────────
 
@@ -51,7 +52,7 @@ const VALID_IMAGE_FORMATS = ['webp', 'avif', 'jpeg', 'png', 'original'];
  */
 export async function handleImageUpload(request: Request, env: Env): Promise<Response> {
   if (request.method !== 'POST') {
-    return jsonResponse({ error: 'Method not allowed — use POST' }, 405);
+    return methodNotAllowed(['POST']);
   }
 
   // Require authentication
@@ -142,7 +143,7 @@ export async function handleImageUpload(request: Request, env: Env): Promise<Res
  */
 export async function handleMediaUpload(request: Request, env: Env): Promise<Response> {
   if (request.method !== 'POST') {
-    return jsonResponse({ error: 'Method not allowed — use POST' }, 405);
+    return methodNotAllowed(['POST']);
   }
 
   const session = await requireSession(request, env);
@@ -212,7 +213,7 @@ export async function handleMediaUpload(request: Request, env: Env): Promise<Res
  */
 export async function handleGetImage(request: Request, _env: Env, cid: string): Promise<Response> {
   if (request.method !== 'GET') {
-    return jsonResponse({ error: 'Method not allowed — use GET' }, 405);
+    return methodNotAllowed(['GET']);
   }
 
   try {
@@ -281,7 +282,7 @@ export async function handleGetImageMetadata(
   cid: string,
 ): Promise<Response> {
   if (request.method !== 'GET') {
-    return jsonResponse({ error: 'Method not allowed — use GET' }, 405);
+    return methodNotAllowed(['GET']);
   }
 
   try {
@@ -332,7 +333,7 @@ export async function handleMediaGateway(
   id: string,
 ): Promise<Response> {
   if (request.method !== 'GET') {
-    return jsonResponse({ error: 'Method not allowed — use GET' }, 405);
+    return methodNotAllowed(['GET']);
   }
 
   // Validate backend type
@@ -385,7 +386,7 @@ export async function handleMediaHealth(_request: Request, env: Env): Promise<Re
  */
 export async function handleMakePermanent(request: Request, env: Env): Promise<Response> {
   if (request.method !== 'POST') {
-    return jsonResponse({ error: 'Method not allowed — use POST' }, 405);
+    return methodNotAllowed(['POST']);
   }
 
   const session = await requireSession(request, env);
@@ -469,7 +470,7 @@ export async function handleMakePermanent(request: Request, env: Env): Promise<R
  */
 export async function handleCreatorMediaDashboard(request: Request, env: Env): Promise<Response> {
   if (request.method !== 'GET') {
-    return jsonResponse({ error: 'Method not allowed — use GET' }, 405);
+    return methodNotAllowed(['GET']);
   }
 
   const session = await requireSession(request, env);

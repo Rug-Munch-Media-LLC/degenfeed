@@ -2,7 +2,7 @@
  * @degenfeed/api-worker — PeerTube Utils
  */
 
-import type { Env } from '../index';
+import type { Env } from '../../index';
 import type { PeerTubeVideo, PeerTubeChannel } from './types';
 import { PEERTUBE_CATEGORIES } from './types';
 

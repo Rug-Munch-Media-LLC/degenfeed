@@ -45,6 +45,7 @@ import { jsonResponse, noCacheJsonResponse } from '../index';
 import { type ShortProtocol, UnifiedShortsPipeline } from '../lib/unified-shorts';
 import { ZoraVideoIntegration } from '../lib/zora-video';
 import { requireSession } from '../session';
+import { methodNotAllowed } from '../response-helpers';
 
 // ─── Default user profile for unauthenticated requests ────────────────────
 
@@ -116,9 +117,7 @@ async function loadUserProfile(_request: Request, _env: Env): Promise<UserIntere
 // ─── Handler: Main shorts feed ───────────────────────────────────────────
 
 export async function handleShortsFeed(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'GET') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
 
   const url = new URL(request.url);
   const params = parseParams(url, request);
@@ -143,9 +142,7 @@ export async function handleShortsFeedEndpoint(request: Request, env: Env): Prom
 // ─── Handler: Trending shorts ────────────────────────────────────────────
 
 export async function handleShortsTrending(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'GET') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
 
   const url = new URL(request.url);
   const limit = Math.min(Math.max(1, Number(url.searchParams.get('limit')) || 20), 50);
@@ -162,9 +159,7 @@ export async function handleShortsTrending(request: Request, env: Env): Promise<
 // ─── Handler: For You (personalized) shorts ──────────────────────────────
 
 export async function handleShortsForYou(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'GET') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
 
   const url = new URL(request.url);
   const params = parseParams(url, request);
@@ -184,9 +179,7 @@ export async function handleShortsForYou(request: Request, env: Env): Promise<Re
 const VALID_SOURCES: ShortVideoSource[] = ['youtube', 'peertube', 'tiktok_rss', 'instagram'];
 
 export async function handleShortsBySource(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'GET') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
 
   const url = new URL(request.url);
   const source = url.pathname.split('/').pop() as ShortVideoSource;
@@ -209,9 +202,7 @@ export async function handleShortsBySource(request: Request, env: Env): Promise<
 // ─── Handler: Create short via PeerTube ──────────────────────────────────
 
 export async function handleCreateShort(request: Request, _env: Env): Promise<Response> {
-  if (request.method !== 'POST') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   try {
     const body = (await request.json()) as {
@@ -263,9 +254,7 @@ export async function handleCreateShort(request: Request, _env: Env): Promise<Re
 // ─── POST /api/shorts/publish — Publish short to selected protocols ─────
 
 export async function handleUnifiedPublish(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
@@ -337,9 +326,7 @@ export async function handleUnifiedPublish(request: Request, env: Env): Promise<
 // ─── POST /api/shorts/mint — Mint as Zora video NFT ─────────────────────
 
 export async function handleUnifiedMint(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
@@ -371,9 +358,7 @@ export async function handleUnifiedMint(request: Request, env: Env): Promise<Res
 // ─── GET /api/shorts/unified/feed — Unified multi-protocol shorts feed ──
 
 export async function handleUnifiedFeed(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'GET') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
 
   const url = new URL(request.url);
   const sourcesParam = url.searchParams.get('sources') || '';
@@ -400,9 +385,7 @@ export async function handleUnifiedFeed(request: Request, env: Env): Promise<Res
 // ─── GET /api/shorts/unified/:source — Source-specific unified feed ─────
 
 export async function handleUnifiedFeedBySource(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'GET') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
 
   const url = new URL(request.url);
   const source = url.pathname.split('/').pop() as string;
@@ -444,9 +427,7 @@ export async function handleUnifiedFeedBySource(request: Request, env: Env): Pro
 // ─── POST /api/shorts/:id/tip — Tip a short ───────────────────────────────
 
 export async function handleShortsTip(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
@@ -492,9 +473,7 @@ export async function handleShortsTip(request: Request, env: Env): Promise<Respo
 // ─── POST /api/shorts/:id/share — Share short to a protocol ──────────────
 
 export async function handleShortsShare(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
@@ -533,9 +512,7 @@ export async function handleShortsShare(request: Request, env: Env): Promise<Res
 // ─── GET /api/shorts/zora/trending — Trending Zora video NFTs ───────────
 
 export async function handleZoraTrending(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'GET') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
 
   const url = new URL(request.url);
   const limit = Math.min(Math.max(1, Number(url.searchParams.get('limit')) || 20), 50);
@@ -549,9 +526,7 @@ export async function handleZoraTrending(request: Request, env: Env): Promise<Re
 // ─── GET /api/shorts/zora/creator — Creator's Zora video NFTs ──────────
 
 export async function handleZoraCreator(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'GET') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
 
   const url = new URL(request.url);
   const creatorAddress = url.searchParams.get('creator');
@@ -607,9 +582,7 @@ async function saveProfile(env: Env, address: string, profile: UserShortsProfile
 // ─── GET /api/shorts/v2/feed — V2 personalized feed ─────────────────────
 
 export async function handleShortsFeedV2(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'GET') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
 
   try {
     const url = new URL(request.url);
@@ -670,9 +643,7 @@ export async function handleShortsFeedV2(request: Request, env: Env): Promise<Re
  * using the v2 aggregator.
  */
 export async function handleShortsTrendingV2(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'GET') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
 
   try {
     const url = new URL(request.url);
@@ -730,9 +701,7 @@ export async function handleShortsTrendingV2(request: Request, env: Env): Promis
 // ─── GET /api/shorts/category/:cat — Shorts by category ────────────────
 
 export async function handleShortsByCategory(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'GET') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
 
   try {
     const url = new URL(request.url);
@@ -780,9 +749,7 @@ export async function handleShortsByCategory(request: Request, env: Env): Promis
 // ─── POST /api/shorts/watch — Record watch event ──────────────────────
 
 export async function handleShortsWatch(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   try {
     const body = (await request.json()) as WatchEvent & { shortId: string };
@@ -866,9 +833,7 @@ export async function handleShortsWatch(request: Request, env: Env): Promise<Res
 // ─── POST /api/shorts/feedback — Explicit feedback ─────────────────────
 
 export async function handleShortsFeedback(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   try {
     const body = (await request.json()) as {
@@ -950,9 +915,7 @@ export async function handleShortsFeedback(request: Request, env: Env): Promise<
 // ─── GET /api/shorts/algorithm/status — Algorithm phase & profile stats ──
 
 export async function handleAlgorithmStatus(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'GET') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
 
   try {
     const session = await requireSession(request, env);

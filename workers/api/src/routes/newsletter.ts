@@ -30,6 +30,7 @@ import { getProtocolColor, rmiUrl } from '@degenfeed/utils';
 import { authenticateApiKey } from '../admin';
 import { type Env, jsonResponse, noCacheJsonResponse } from '../index';
 import { DEFAULT_PROTOCOLS, getProvider } from './feed';
+import { methodNotAllowed } from '../response-helpers';
 
 const ALLOWED_NICHES = new Set([
   'bitcoin',
@@ -339,7 +340,7 @@ RSS: https://degenfeed.xyz/api/feed/rss.xml
 
 export async function handleNewsletterSubscribe(request: Request, env: Env): Promise<Response> {
   if (request.method !== 'POST' && request.method !== 'DELETE') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
+    return methodNotAllowed(['POST', 'DELETE']);
   }
   let body: { email?: string; niches?: string[]; protocols?: string[] } = {};
   try {

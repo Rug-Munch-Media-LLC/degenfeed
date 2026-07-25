@@ -8,6 +8,7 @@
  */
 
 import { type Env, jsonResponse } from '../index';
+import { methodNotAllowed } from '../response-helpers';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const MAX_EMAILS = 10000;
@@ -17,9 +18,7 @@ function safeKey(s: string): string {
 }
 
 export async function handleNotify(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   let email = '';
   try {

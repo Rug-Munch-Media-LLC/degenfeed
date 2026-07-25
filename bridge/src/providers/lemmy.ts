@@ -1,6 +1,8 @@
 /**
  * Lemmy Provider
  *
+ * Rate Limit: 60 requests/minute per instance
+ *
  * Fetches posts from the self-hosted Lemmy instance (port 8536) and from
  * public Lemmy instances via their v3 API. Lemmy is a federated Reddit
  * alternative running ActivityPub.
@@ -9,6 +11,7 @@
  * DeFi, NFTs, tech, and web3.
  */
 
+import { checkRateLimit } from '../rate-limiter';
 import type { SchemaGuard, UnifiedPost } from '../server/types';
 
 const _$fetch = globalThis.fetch;
@@ -419,6 +422,11 @@ export const schema: SchemaGuard = {
 };
 
 export async function fetchLemmyPosts(limit = 20): Promise<UnifiedPost[]> {
+  // Rate limit: 60 requests/minute per instance
+  if (!checkRateLimit('lemmy', { maxRequests: 60, windowMs: 60_000 })) {
+    console.log('[lemmy] Rate limited, skipping fetch');
+    return [];
+  }
   const all: UnifiedPost[] = [];
 
   // Fetch from local Lemmy communities via API

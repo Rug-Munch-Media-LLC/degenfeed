@@ -23,6 +23,7 @@
 
 import type { Env } from '../index';
 import { jsonResponse, log, noCacheJsonResponse } from '../index';
+import { methodNotAllowed } from '../response-helpers';
 
 // ─── Types ──────────────────────────────────────────────────────────────
 
@@ -509,9 +510,7 @@ export class PrivateStreamService {
  * Creator configures a private/token-gated stream.
  */
 export async function handlePrivateStreamConfigure(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   try {
     const body = (await request.json()) as {
@@ -560,9 +559,7 @@ export async function handlePrivateStreamConfigure(request: Request, env: Env): 
  * Viewer requests access to a private stream.
  */
 export async function handlePrivateStreamJoin(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   try {
     const body = (await request.json()) as ViewerAccessRequest;
@@ -610,9 +607,7 @@ export async function handlePrivateStreamConfig(
   env: Env,
   streamId: string,
 ): Promise<Response> {
-  if (request.method !== 'GET') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
 
   try {
     const service = new PrivateStreamService(env);
@@ -652,9 +647,7 @@ export async function handlePrivateStreamRevoke(
   env: Env,
   streamId: string,
 ): Promise<Response> {
-  if (request.method !== 'DELETE') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'DELETE') return methodNotAllowed(['DELETE']);
 
   try {
     const service = new PrivateStreamService(env);
@@ -684,9 +677,7 @@ export async function handlePrivateStreamRotate(
   env: Env,
   streamId: string,
 ): Promise<Response> {
-  if (request.method !== 'POST') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   try {
     const body = (await request.json()) as {
@@ -728,9 +719,7 @@ export async function handlePrivateStreamViewers(
   env: Env,
   streamId: string,
 ): Promise<Response> {
-  if (request.method !== 'GET') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
 
   try {
     const service = new PrivateStreamService(env);
@@ -752,9 +741,7 @@ export async function handlePrivateStreamViewers(
  * Creator adds an address to the allowlist (bypasses token check).
  */
 export async function handlePrivateStreamAllowlist(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   try {
     const body = (await request.json()) as {

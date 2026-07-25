@@ -5,12 +5,13 @@
  */
 
 import type { Protocol } from '@degenfeed/types';
-import { type Env, jsonResponse } from '../index';
+import { type Env, jsonResponse } from '../../index';
 import { DEFAULT_PROTOCOLS } from '../feed';
 import { isValidEmail, safeKey } from './types';
+import { methodNotAllowed } from '../response-helpers';
 
 export async function handleDigestSubscribeEmail(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
   let body: { email?: string; timezone?: string; niches?: string[]; protocols?: string[] } = {};
   try { body = (await request.json()) as typeof body; } catch { return jsonResponse({ error: 'Invalid JSON' }, 400); }
   const email = (body.email ?? '').trim().toLowerCase();
@@ -35,7 +36,7 @@ export async function handleDigestSubscribeEmail(request: Request, env: Env): Pr
 }
 
 export async function handleDigestUnsubscribeEmail(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
   let body: { email?: string } = {};
   try { body = (await request.json()) as typeof body; } catch { return jsonResponse({ error: 'Invalid JSON' }, 400); }
   const email = (body.email ?? '').trim().toLowerCase();

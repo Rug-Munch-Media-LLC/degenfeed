@@ -6,7 +6,7 @@
  */
 
 import { Hono } from 'hono';
-import type { Env } from '../index';
+import type { Env } from '../../index';
 import { registerVideoRoutes } from './videos';
 import { registerLiveRoutes } from './live';
 import { registerChannelRoutes, registerFederationRoutes } from './channels';

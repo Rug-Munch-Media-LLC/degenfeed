@@ -40,6 +40,7 @@ import { identityKey } from '@degenfeed/utils';
 import type { Env } from '../index';
 import { jsonResponse, log, noCacheJsonResponse } from '../index';
 import { requireSession } from '../session';
+import { methodNotAllowed } from '../response-helpers';
 
 // ─── Constants ─────────────────────────────────────────────────────────────
 
@@ -126,9 +127,7 @@ const SELF_HOSTED_IDS = new Set(SELF_HOSTED_PROTOCOLS.map((p) => p.id));
 // ─── Route: POST /api/protocol/:protocol/register ─────────────────────
 
 export async function handleProtocolRegister(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   // Parse protocol name from URL path: /api/protocol/{protocol}/register
   const url = new URL(request.url);
@@ -267,9 +266,7 @@ export async function handleProtocolStatus(request: Request, env: Env): Promise<
 // ─── Route: POST /api/protocol/join-all ─────────────────────────────
 
 export async function handleJoinAll(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;

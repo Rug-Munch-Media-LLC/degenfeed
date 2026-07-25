@@ -10,6 +10,7 @@
 import { aggregateNews } from '../feed/news-aggregator';
 import { NEWS_SOURCES } from '../feed/news-source-tiers';
 import { type Env, jsonResponse, log, noCacheJsonResponse } from '../index';
+import { methodNotAllowed } from '../response-helpers';
 
 // ─── KV Keys ──────────────────────────────────────────────────────────────
 
@@ -121,9 +122,7 @@ export async function handleSourcesHealth(_request: Request, env: Env): Promise<
 // ─── POST /api/news/sources/refresh — Force Refresh All Sources ──────────
 
 export async function handleSourcesRefresh(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   // Trigger full aggregation (this fetches all sources)
   const startTime = Date.now();

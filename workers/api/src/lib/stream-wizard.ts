@@ -681,9 +681,7 @@ export class StreamWizard {
  * Start a new stream configuration wizard.
  */
 export async function handleWizardStart(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405 });
-  }
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   try {
     const body = (await request.json()) as { creatorId?: string };
@@ -721,9 +719,7 @@ export async function handleWizardStart(request: Request, env: Env): Promise<Res
  * Set stream configuration.
  */
 export async function handleWizardStep1(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405 });
-  }
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   try {
     const body = (await request.json()) as {
@@ -772,9 +768,7 @@ export async function handleWizardStep1(request: Request, env: Env): Promise<Res
  * Set audience estimation.
  */
 export async function handleWizardStep2(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405 });
-  }
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   try {
     const body = (await request.json()) as {
@@ -823,9 +817,7 @@ export async function handleWizardStep2(request: Request, env: Env): Promise<Res
  * Set broadcast targets.
  */
 export async function handleWizardStep3(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405 });
-  }
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   try {
     const body = (await request.json()) as {
@@ -869,9 +861,7 @@ export async function handleWizardStep3(request: Request, env: Env): Promise<Res
  * Set monetization configuration.
  */
 export async function handleWizardStep4(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405 });
-  }
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   try {
     const body = (await request.json()) as {
@@ -914,9 +904,7 @@ export async function handleWizardStep4(request: Request, env: Env): Promise<Res
  * Go Live!
  */
 export async function handleWizardGoLive(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405 });
-  }
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   try {
     const body = (await request.json()) as { sessionId?: string };
@@ -965,9 +953,7 @@ export async function handleWizardStatus(
   env: Env,
   sessionId: string,
 ): Promise<Response> {
-  if (request.method !== 'GET') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405 });
-  }
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
 
   try {
     const wizard = new StreamWizard(env);
@@ -1013,9 +999,7 @@ export async function handleWizardCancel(
   env: Env,
   sessionId: string,
 ): Promise<Response> {
-  if (request.method !== 'DELETE') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405 });
-  }
+  if (request.method !== 'DELETE') return methodNotAllowed(['DELETE']);
 
   try {
     const wizard = new StreamWizard(env);

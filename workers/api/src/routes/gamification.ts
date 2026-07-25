@@ -17,6 +17,7 @@
 
 import type { Env } from '../index';
 import { jsonResponse, noCacheJsonResponse } from '../index';
+import { methodNotAllowed } from '../response-helpers';
 
 // ─── Achievement definitions ─────────────────────────────────────────────
 
@@ -429,7 +430,7 @@ export async function handleAchievements(request: Request, env: Env): Promise<Re
 }
 
 export async function handleAchievementCheck(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   const wallet = await resolveWallet(request, env);
   if (!wallet) return jsonResponse({ error: 'Unauthorized' }, 401);
@@ -561,7 +562,7 @@ export async function handleChallengesToday(request: Request, env: Env): Promise
 }
 
 export async function handleChallengeProgress(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   const wallet = await resolveWallet(request, env);
   if (!wallet) return jsonResponse({ error: 'Unauthorized' }, 401);
@@ -637,7 +638,7 @@ export async function handleXp(request: Request, env: Env): Promise<Response> {
 }
 
 export async function handleXpAward(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   const wallet = await resolveWallet(request, env);
   if (!wallet) return jsonResponse({ error: 'Unauthorized' }, 401);
@@ -708,7 +709,7 @@ export async function handleSocialProof(request: Request, env: Env): Promise<Res
 }
 
 export async function handleActivityRecord(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   const wallet = await resolveWallet(request, env);
   if (!wallet) return jsonResponse({ error: 'Unauthorized' }, 401);

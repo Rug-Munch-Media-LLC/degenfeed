@@ -8,16 +8,6 @@
 import type { Env } from './index';
 import { handleError } from './lib/errors';
 
-// ─── JSON response ───────────────────────────────────────────
-
-export function jsonResponse(
-  c: { json: (data: unknown, status?: number) => Response },
-  data: unknown,
-  status = 200,
-): Response {
-  return c.json(data, status as Parameters<typeof c.json>[1]);
-}
-
 // ─── Error response from catch blocks ───────────────────────
 // Use this in route catch blocks instead of ad-hoc error responses.
 // e.g. return errorResponse(err, env, requestId);
@@ -104,10 +94,21 @@ export function paymentRequired(message = 'Payment Required', extraHeaders?: Rec
   });
 }
 
-export function methodNotAllowed(message = 'Method not allowed'): Response {
-  return new Response(JSON.stringify({ error: message }), {
+/**
+ * Standardized 405 Method Not Allowed response.
+ * Includes `Allow` header so clients know which methods are accepted.
+ *
+ * Usage:
+ *   if (request.method !== 'POST') return methodNotAllowed(['POST']);
+ *   if (c.req.method !== 'GET') return methodNotAllowed(['GET']);
+ */
+export function methodNotAllowed(allowedMethods: string[]): Response {
+  return new Response(JSON.stringify({ error: `Method not allowed. Allowed: ${allowedMethods.join(', ')}` }), {
     status: 405,
-    headers: { 'content-type': 'application/json' },
+    headers: {
+      'content-type': 'application/json',
+      allow: allowedMethods.join(', '),
+    },
   });
 }
 

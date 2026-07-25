@@ -13,6 +13,7 @@
 
 import type { Env } from '../index';
 import { jsonResponse, noCacheJsonResponse } from '../index';
+import { methodNotAllowed } from '../response-helpers';
 
 function safeKey(s: string): string {
   return s.replace(/[^a-zA-Z0-9:_@./-]/g, '_').toLowerCase();
@@ -28,7 +29,7 @@ function getUserId(request: Request, env: Env): string | null {
 // ─── POST /api/matrix/connect ────────────────────────────────
 
 export async function handleMatrixConnect(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
   const userId = getUserId(request, env);
   if (!userId) return jsonResponse({ error: 'Session required' }, 401);
 
@@ -79,7 +80,7 @@ export async function handleMatrixConnect(request: Request, env: Env): Promise<R
 // ─── POST /api/matrix/send ───────────────────────────────────
 
 export async function handleMatrixSendMessage(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
   const userId = getUserId(request, env);
   if (!userId) return jsonResponse({ error: 'Session required' }, 401);
 
@@ -139,7 +140,7 @@ export async function handleMatrixSendMessage(request: Request, env: Env): Promi
 // ─── GET /api/matrix/rooms ───────────────────────────────────
 
 export async function handleMatrixRoomsList(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
   const userId = getUserId(request, env);
   if (!userId) return jsonResponse({ error: 'Session required' }, 401);
 
@@ -164,7 +165,7 @@ export async function handleMatrixRoomsList(request: Request, env: Env): Promise
 // ─── DELETE /api/matrix/disconnect ───────────────────────────
 
 export async function handleMatrixDisconnect(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'DELETE') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'DELETE') return methodNotAllowed(['DELETE']);
   const userId = getUserId(request, env);
   if (!userId) return jsonResponse({ error: 'Session required' }, 401);
 
@@ -213,7 +214,7 @@ export async function handleMatrixDisconnect(request: Request, env: Env): Promis
 // ─── POST /api/matrix/bridge ─────────────────────────────────
 
 export async function handleMatrixBridgeMessages(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
   const userId = getUserId(request, env);
   if (!userId) return jsonResponse({ error: 'Session required' }, 401);
 

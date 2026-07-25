@@ -19,6 +19,7 @@ import type { Protocol } from '@degenfeed/types';
 import { type Env, jsonResponse, noCacheJsonResponse } from '../index';
 import { validateBodySize } from '../sanitize';
 import { requireSession } from '../session';
+import { methodNotAllowed } from '../response-helpers';
 
 interface NotificationTypePref {
   likes: boolean;
@@ -257,9 +258,7 @@ export async function handlePreferences(request: Request, env: Env): Promise<Res
     return noCacheJsonResponse(DEFAULT_PREFS);
   }
 
-  if (request.method !== 'POST') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   const bodySizeCheck = validateBodySize(request, 16 * 1024);
   if (!bodySizeCheck.ok) return jsonResponse({ error: bodySizeCheck.error }, 413);

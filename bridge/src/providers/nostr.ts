@@ -1,6 +1,8 @@
 /**
  * Nostr Provider
  *
+ * Rate Limit: 30 requests/minute per relay
+ *
  * Fetches notes from the self-hosted Nostr relay (ws://127.0.0.1:8085)
  * AND from public Nostr relays. Uses native WebSocket (Node 18+).
  *
@@ -8,6 +10,7 @@
  * events, and merges results.
  */
 
+import { checkRateLimit } from '../rate-limiter';
 import type { SchemaGuard, UnifiedPost } from '../server/types';
 
 const _$fetch = globalThis.fetch;
@@ -210,6 +213,11 @@ export const schema: SchemaGuard = {
 };
 
 export async function fetchNostrPosts(limit = 20): Promise<UnifiedPost[]> {
+  // Rate limit: 30 requests/minute per relay; check total across relays
+  if (!checkRateLimit('nostr', { maxRequests: 30, windowMs: 60_000 })) {
+    console.log('[nostr] Rate limited, skipping fetch');
+    return [];
+  }
   const perRelay = Math.max(3, Math.ceil(limit / RELAYS.length));
 
   const results = await Promise.allSettled(

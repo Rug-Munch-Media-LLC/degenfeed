@@ -14,7 +14,7 @@
 
 import type { CrossProtocolIdentity } from '@degenfeed/utils';
 import { identityKey } from '@degenfeed/utils';
-import { type Env, noCacheJsonResponse } from '../index';
+import { type Env, jsonResponse, noCacheJsonResponse } from '../index';
 import { checkPremiumStatus } from '../premium';
 
 // ─── Constants ──────────────────────────────────────────────────────

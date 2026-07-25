@@ -11,6 +11,7 @@
  */
 
 import type { Env } from '../index';
+import { badRequest, methodNotAllowed, ok } from '../response-helpers';
 import { broadcastToAll } from '../ws-broadcast';
 
 // ─── Types ──────────────────────────────────────────────────────────────
@@ -494,18 +495,12 @@ export async function handleTipNotificationPrefs(request: Request, env: Env): Pr
   const userId = url.searchParams.get('userId');
 
   if (!userId) {
-    return new Response(JSON.stringify({ error: 'userId required' }), {
-      status: 400,
-      headers: { 'content-type': 'application/json' },
-    });
+    return badRequest('userId required');
   }
 
   if (request.method === 'GET') {
     const prefs = await loadPreferences(env, userId);
-    return new Response(JSON.stringify(prefs), {
-      status: 200,
-      headers: { 'content-type': 'application/json' },
-    });
+    return ok(prefs);
   }
 
   if (request.method === 'POST') {
@@ -513,22 +508,13 @@ export async function handleTipNotificationPrefs(request: Request, env: Env): Pr
       const body = (await request.json()) as Partial<TipNotificationPrefs>;
       await saveTipNotificationPrefs(env, userId, body);
       const prefs = await loadPreferences(env, userId);
-      return new Response(JSON.stringify(prefs), {
-        status: 200,
-        headers: { 'content-type': 'application/json' },
-      });
+      return ok(prefs);
     } catch {
-      return new Response(JSON.stringify({ error: 'Invalid body' }), {
-        status: 400,
-        headers: { 'content-type': 'application/json' },
-      });
+      return badRequest('Invalid body');
     }
   }
 
-  return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-    status: 405,
-    headers: { 'content-type': 'application/json' },
-  });
+  return methodNotAllowed(['GET', 'POST']);
 }
 
 // ─── Cron: Send weekly digests to all active users ────────────────────

@@ -1,6 +1,9 @@
 /**
  * GitHub Provider
  *
+ * Rate Limit: 60 requests/hour (unauthenticated)
+ * Rate Limit: 5000 requests/hour (authenticated with GITHUB_TOKEN)
+ *
  * Fetches activity from GitHub — repositories, issues, pull requests,
  * releases, and discussions. GitHub is essential for tracking open-source
  * crypto projects, developer activity, and protocol development.
@@ -18,6 +21,7 @@
  * 3. Track trending crypto repos + specific orgs
  */
 
+import { checkRateLimit } from '../rate-limiter';
 import type { SchemaGuard, UnifiedPost } from '../server/types';
 
 const $fetch = globalThis.fetch;
@@ -440,6 +444,12 @@ export const schema: SchemaGuard = {
 };
 
 export async function fetchGitHubPosts(limit = 20): Promise<UnifiedPost[]> {
+  // Rate limit: 60 requests/hour (unauthenticated), 5000/hour (with GITHUB_TOKEN)
+  // Use the conservative unauthenticated limit
+  if (!checkRateLimit('github', { maxRequests: 60, windowMs: 3_600_000 })) {
+    console.log('[github] Rate limited, skipping fetch');
+    return [];
+  }
   const perSource = Math.max(2, Math.ceil(limit / TRACKED_SOURCES.length));
 
   const results = await Promise.allSettled(

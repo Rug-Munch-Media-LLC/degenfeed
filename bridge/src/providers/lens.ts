@@ -1,6 +1,8 @@
 /**
  * Lens Protocol Provider — Self-hosted Lens Indexer
  *
+ * Rate Limit: 50 requests/minute (GraphQL API via local indexer)
+ *
  * Reads Lens publications from our local Lens indexer (port 8088) instead of
  * the external api.lens.xyz GraphQL API.
  *
@@ -13,6 +15,7 @@
  * Endpoint: http://127.0.0.1:8088/api/publications
  */
 
+import { checkRateLimit } from '../rate-limiter';
 import type { SchemaGuard, UnifiedPost } from '../server/types';
 
 const $fetch = globalThis.fetch;
@@ -208,6 +211,11 @@ export const schema: SchemaGuard = {
 };
 
 export async function fetchLensPosts(limit = 20): Promise<UnifiedPost[]> {
+  // Rate limit: 50 requests/minute
+  if (!checkRateLimit('lens', { maxRequests: 50, windowMs: 60_000 })) {
+    console.log('[lens] Rate limited, skipping fetch');
+    return [];
+  }
   const posts = await fetchPosts(limit);
   return posts;
 }

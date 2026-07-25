@@ -14,6 +14,7 @@
 
 import type { Env } from '../index';
 import { jsonResponse } from '../index';
+import { methodNotAllowed } from '../response-helpers';
 
 function safeKey(s: string): string {
   return s.toLowerCase().replace(/[^a-z0-9@._-]/g, '_');
@@ -44,7 +45,7 @@ function isAdmin(request: Request, env: Env): boolean {
 // ─── POST /api/newsletter/send ─────────────────────────────
 
 export async function handleNewsletterSend(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
   const userId = getUserId(request, env);
   if (!userId && !isAdmin(request, env))
     return jsonResponse({ error: 'Session or API key required' }, 401);
@@ -127,7 +128,7 @@ export async function handleNewsletterSubscribersList(
   request: Request,
   env: Env,
 ): Promise<Response> {
-  if (request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
   if (!isAdmin(request, env)) return jsonResponse({ error: 'Unauthorized' }, 401);
 
   try {
@@ -149,7 +150,7 @@ export async function handleNewsletterSubscriberRemove(
   request: Request,
   env: Env,
 ): Promise<Response> {
-  if (request.method !== 'DELETE') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'DELETE') return methodNotAllowed(['DELETE']);
 
   let body: { email: string };
   try {
@@ -181,7 +182,7 @@ export async function handleNewsletterSubscriberRemove(
 // ─── POST /api/newsletter/draft ────────────────────────────
 
 export async function handleNewsletterCreateDraft(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
   const userId = getUserId(request, env);
   if (!userId) return jsonResponse({ error: 'Session required' }, 401);
 
@@ -222,7 +223,7 @@ export async function handleNewsletterCreateDraft(request: Request, env: Env): P
 // ─── POST /api/newsletter/test ─────────────────────────────
 
 export async function handleNewsletterSendTest(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
   const userId = getUserId(request, env);
   if (!userId && !isAdmin(request, env)) return jsonResponse({ error: 'Session required' }, 401);
 

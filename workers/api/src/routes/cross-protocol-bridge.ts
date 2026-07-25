@@ -15,6 +15,7 @@ import type { Protocol } from '@degenfeed/types';
 import { type Env, jsonResponse, noCacheJsonResponse } from '../index';
 import type { PublishInput } from '../lib/publish-orchestrator';
 import { ALLOWED_PROTOCOLS, hasSuspiciousPayload, sanitizeString } from '../sanitize';
+import { methodNotAllowed } from '../response-helpers';
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
@@ -91,7 +92,7 @@ interface SyncRequest {
  */
 export async function handleWrapContent(request: Request, env: Env): Promise<Response> {
   if (request.method !== 'POST') {
-    return jsonResponse({ error: 'Method not allowed — use POST' }, 405);
+    return methodNotAllowed(['POST']);
   }
 
   let body: WrapRequest;
@@ -205,7 +206,7 @@ export async function handleWrapContent(request: Request, env: Env): Promise<Res
  */
 export async function handleZoraBridge(request: Request, env: Env): Promise<Response> {
   if (request.method !== 'POST') {
-    return jsonResponse({ error: 'Method not allowed — use POST' }, 405);
+    return methodNotAllowed(['POST']);
   }
 
   let body: ZoraBridgeRequest;
@@ -368,7 +369,7 @@ export async function handleZoraBridge(request: Request, env: Env): Promise<Resp
  */
 export async function handleSyncEdit(request: Request, env: Env): Promise<Response> {
   if (request.method !== 'POST') {
-    return jsonResponse({ error: 'Method not allowed — use POST' }, 405);
+    return methodNotAllowed(['POST']);
   }
 
   let body: SyncRequest;
@@ -489,7 +490,7 @@ export async function handleSyncEdit(request: Request, env: Env): Promise<Respon
  */
 export async function handleBridgeStatus(request: Request, env: Env): Promise<Response> {
   if (request.method !== 'GET') {
-    return jsonResponse({ error: 'Method not allowed — use GET' }, 405);
+    return methodNotAllowed(['GET']);
   }
 
   const url = new URL(request.url);

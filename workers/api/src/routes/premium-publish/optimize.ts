@@ -4,21 +4,22 @@
  * AI time optimization, content recycling, evergreen posts, recurring posts.
  */
 
-import type { Env } from '../index';
-import { jsonResponse } from '../index';
-import { getBestPostingTime } from '../lib/auto-formatter';
-import { getPremiumUsage, incrementPremiumUsage } from '../lib/premium-gate';
+import type { Env } from '../../index';
+import { jsonResponse } from '../../index';
+import { getBestPostingTime } from '../../lib/auto-formatter';
+import { getPremiumUsage, incrementPremiumUsage } from '../../lib/premium-gate';
 import { requirePremiumTier, TIER_LIMITS } from '../premium';
 import { sanitizeStringArray } from '../sanitize';
-import { requireSession } from '../session';
+import { requireSession } from '../../session';
 import type { RecurrencePattern, EvergreenFrequency, RecyclingStrategy, QueueEntry } from './types';
 import { PREFIX_EVERGREEN, PREFIX_RECURRING } from './types';
 import { getQueueEntry } from './utils';
+import { methodNotAllowed } from '../response-helpers';
 
 // ─── AI Time Optimization ──────────────────────────────────────────────────
 
 export async function handleBestTimes(request: Request, _env: Env): Promise<Response> {
-  if (request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
   try {
     const url = new URL(request.url);
     const protocols = sanitizeStringArray((url.searchParams.get('protocols') ?? 'mastodon,bluesky,nostr').split(','), 64);
@@ -39,7 +40,7 @@ export async function handleBestTimes(request: Request, _env: Env): Promise<Resp
 // ─── Content Recycling ─────────────────────────────────────────────────────
 
 export async function handleRecyclePost(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
   try {
     const session = await requireSession(request, env);
     if (session instanceof Response) return session;
@@ -63,7 +64,7 @@ export async function handleRecyclePost(request: Request, env: Env): Promise<Res
 // ─── Evergreen Posts ───────────────────────────────────────────────────────
 
 export async function handleSetEvergreen(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
   try {
     const session = await requireSession(request, env);
     if (session instanceof Response) return session;
@@ -98,7 +99,7 @@ export async function handleSetEvergreen(request: Request, env: Env): Promise<Re
 // ─── Recurring Posts ───────────────────────────────────────────────────────
 
 export async function handleSetRecurring(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
   try {
     const session = await requireSession(request, env);
     if (session instanceof Response) return session;

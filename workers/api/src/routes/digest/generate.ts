@@ -7,7 +7,7 @@
 import { computeTrendingTopics, deduplicatePosts, enrichPostNiches, isRelevantPost, isSpamPost } from '@degenfeed/feed-core';
 import type { Protocol, UnifiedPost } from '@degenfeed/types';
 import { getProtocolColor, rmiUrl } from '@degenfeed/utils';
-import { type Env, noCacheJsonResponse } from '../index';
+import { type Env, noCacheJsonResponse } from '../../index';
 import { DEFAULT_PROTOCOLS, getProvider } from '../feed';
 import { buildRichDigestHtml } from './templates';
 import type { DigestResponse, DigestSection, DigestItem, DigestFormatType, MarketPrice } from './types';
@@ -118,8 +118,8 @@ async function gatherDigestPosts(env: Env, protocols: Protocol[], niches: string
     for (const r of results) { if (r.status === 'fulfilled') all.push(...r.value); }
   }
 
-  try { const { fetchYouTubeVideos } = await import('../feed/unified-fetchers'); const { posts: ytPosts } = await fetchYouTubeVideos(10); all.push(...ytPosts.map((p) => ({ ...p, protocol: 'youtube' as Protocol }))); } catch { /* YouTube unavailable */ }
-  try { const { fetchPeerTubeVideos } = await import('../feed/unified-fetchers'); const ptPosts = await fetchPeerTubeVideos(10); all.push(...ptPosts.map((p) => ({ ...p, protocol: 'peertube' as Protocol }))); } catch { /* PeerTube unavailable */ }
+  try { const { fetchYouTubeVideos } = await import('../../feed/unified-fetchers'); const { posts: ytPosts } = await fetchYouTubeVideos(10); all.push(...ytPosts.map((p) => ({ ...p, protocol: 'youtube' as Protocol }))); } catch { /* YouTube unavailable */ }
+  try { const { fetchPeerTubeVideos } = await import('../../feed/unified-fetchers'); const ptPosts = await fetchPeerTubeVideos(10); all.push(...ptPosts.map((p) => ({ ...p, protocol: 'peertube' as Protocol }))); } catch { /* PeerTube unavailable */ }
 
   let filtered = all.filter((p) => !isSpamPost(p)).map(enrichPostNiches);
   if (niches.length > 0) filtered = filtered.filter((p) => p.niches.some((n) => niches.includes(n)));
@@ -296,7 +296,7 @@ export async function handleDigestToday(request: Request, env: Env): Promise<Res
     const cookieMatch = cookies.split(';').map((s) => s.trim()).find((s) => s.startsWith('__Host-dfid='));
     if (cookieMatch) {
       try {
-        const { verifySessionCookie } = await import('../session');
+        const { verifySessionCookie } = await import('../../session');
         const payload = await verifySessionCookie(cookieMatch.slice('__Host-dfid='.length), env.AUTH_SECRET ?? '');
         resolvedWallet = payload?.address ?? null;
       } catch { /* session verify failed */ }

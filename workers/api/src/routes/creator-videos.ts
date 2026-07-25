@@ -1006,8 +1006,9 @@ function generateDummyTimeSeries(days: number, total: number): ViewDataPoint[] {
     const date = new Date(now);
     date.setDate(date.getDate() - i);
     const jitter = Math.max(0, dailyAvg + Math.round((Math.random() - 0.5) * dailyAvg * 0.5));
+    const dateStr = date.toISOString().split('T')[0];
     series.push({
-      date: date.toISOString().split('T')[0],
+      date: dateStr,
       count: i === 0 ? Math.max(0, total - series.reduce((s, x) => s + x.count, 0)) : jitter,
     });
   }
@@ -1024,8 +1025,9 @@ function generateDummyTipsTimeSeries(days: number, total: number): TipDataPoint[
     const date = new Date(now);
     date.setDate(date.getDate() - i);
     const jitter = Math.max(0, dailyAvg + Math.round((Math.random() - 0.5) * dailyAvg * 0.5));
+    const dateStr = date.toISOString().split('T')[0];
     series.push({
-      date: date.toISOString().split('T')[0],
+      date: dateStr,
       amountUsdCents:
         i === 0 ? Math.max(0, total - series.reduce((s, x) => s + x.amountUsdCents, 0)) : jitter,
     });
@@ -1036,5 +1038,4 @@ function generateDummyTipsTimeSeries(days: number, total: number): TipDataPoint[
 
 // ─── Export ──────────────────────────────────────────────────────────────
 
-export type { CreatorVideoMeta, VideoAnalytics };
 export { creatorVideos };

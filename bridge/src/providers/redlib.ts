@@ -1,6 +1,9 @@
 /**
  * Reddit Provider
  *
+ * Rate Limit: 600 requests/10 minutes (OAuth2 API)
+ * Rate Limit: 60 requests/10 minutes (unauthenticated fallback)
+ *
  * Fetches Reddit content via multiple strategies:
  * 1. PRIMARY: OAuth2-authenticated Reddit JSON API (600 req/10min)
  * 2. FALLBACK: Direct Reddit JSON API (rate-limited, 800ms delay between requests)
@@ -14,6 +17,7 @@
  * To set up: https://www.reddit.com/prefs/apps → Create "script" app
  */
 
+import { checkRateLimit } from '../rate-limiter';
 import type { SchemaGuard, UnifiedPost } from '../server/types';
 import { getRedditOAuth } from './reddit-auth';
 
@@ -415,6 +419,11 @@ export const schema: SchemaGuard = {
 };
 
 export async function fetchRedditPosts(limit = 20): Promise<UnifiedPost[]> {
+  // Rate limit: 600 requests/10 minutes (OAuth), 60 requests/10 minutes (unauthenticated)
+  if (!checkRateLimit('reddit', { maxRequests: 600, windowMs: 600_000 })) {
+    console.log('[reddit] Rate limited, skipping fetch');
+    return [];
+  }
   const perSub = Math.max(2, Math.ceil(limit / SUBREDDITS.length));
   const all: UnifiedPost[] = [];
   let oauthCount = 0;

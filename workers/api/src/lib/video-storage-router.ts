@@ -488,6 +488,90 @@ export async function storeVideo(
   };
 }
 
+// ─── Creator Storage Usage ────────────────────────────────────────────
+
+export interface CreatorStorageUsage {
+  totalBytes: number;
+  totalReadable: string;
+  freeLimit: number;
+  usagePercent: number;
+  byBackend: Record<string, { bytes: number; readable: string; count: number }>;
+  byType: Record<string, number>;
+  plan: string;
+  expiringSoon: Array<{ id: string; name: string; expiresAt: number; size: number }>;
+}
+
+export async function getCreatorStorageUsage(
+  env: Env,
+  _wallet: string,
+): Promise<CreatorStorageUsage> {
+  const freeLimit = 5 * 1_073_741_824; // 5 GB
+  const zeroUsage = {
+    bytes: 0,
+    readable: '0 B',
+    count: 0,
+  };
+
+  try {
+    let totalBytes = 0;
+    let totalCount = 0;
+    const byBackend: Record<string, { bytes: number; readable: string; count: number }> = {
+      ipfs: { ...zeroUsage },
+      r2: { ...zeroUsage },
+      arweave: { ...zeroUsage },
+    };
+
+    // If R2 is configured, attempt to list objects
+    if (env.VIDEO_STORAGE_BINDING) {
+      const r2 = env.VIDEO_STORAGE_BINDING as R2Bucket;
+      const listed = await r2.list({ limit: 1000 });
+      for (const obj of listed.objects) {
+        totalBytes += obj.size;
+        totalCount++;
+        byBackend.r2.bytes += obj.size;
+        byBackend.r2.count++;
+      }
+      byBackend.r2.readable = formatBytes(byBackend.r2.bytes);
+    }
+
+    totalBytes = totalBytes || 0;
+    const usagePercent = freeLimit > 0 ? Math.min(100, (totalBytes / freeLimit) * 100) : 0;
+
+    return {
+      totalBytes,
+      totalReadable: formatBytes(totalBytes),
+      freeLimit,
+      usagePercent: Math.round(usagePercent * 100) / 100,
+      byBackend,
+      byType: {},
+      plan: 'free',
+      expiringSoon: [],
+    };
+  } catch {
+    return {
+      totalBytes: 0,
+      totalReadable: '0 B',
+      freeLimit,
+      usagePercent: 0,
+      byBackend: {
+        ipfs: { ...zeroUsage },
+        r2: { ...zeroUsage },
+        arweave: { ...zeroUsage },
+      },
+      byType: {},
+      plan: 'free',
+      expiringSoon: [],
+    };
+  }
+}
+
+function formatBytes(bytes: number): string {
+  if (bytes === 0) return '0 B';
+  const units = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+  return `${(bytes / 1024 ** i).toFixed(1)} ${units[i]}`;
+}
+
 // ─── Utility ─────────────────────────────────────────────────────────
 
 function extractIPFSCid(url: string): string | null {

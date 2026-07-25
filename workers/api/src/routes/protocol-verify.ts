@@ -16,13 +16,12 @@
 import type { Env } from '../index';
 import { jsonResponse, log } from '../index';
 import { requireSession } from '../session';
+import { methodNotAllowed } from '../response-helpers';
 
 // ─── POST /api/protocol/verify/post ────────────────────────────────────
 
 export async function handleVerifyPost(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;

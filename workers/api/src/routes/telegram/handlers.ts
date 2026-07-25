@@ -7,12 +7,13 @@ import type { TelegramLinkedUser, TelegramGroupConfig, TelegramUpdate } from './
 import { telegramGroupKey, telegramUserKey, telegramWalletIndex, telegramCoinGroupKey, telegramGroupFeedKey } from './constants';
 import { sendTelegramMessage, validateTelegramInitDataAsync } from './utils';
 import { handleBotCommand } from './commands';
+import { methodNotAllowed } from '../response-helpers';
 
 /**
  * POST /api/telegram/webhook — Receive Telegram Bot API updates
  */
 export async function handleTelegramWebhook(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
   const botToken = env.TELEGRAM_BOT_TOKEN;
   if (!botToken) return jsonResponse({ error: 'Telegram bot not configured' }, 501);
 
@@ -81,7 +82,7 @@ export async function handleTelegramGenerateLink(request: Request, env: Env): Pr
  * POST /api/telegram/send — Send message via bot (server-side)
  */
 export async function handleTelegramSend(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
   const botToken = env.TELEGRAM_BOT_TOKEN;
@@ -105,7 +106,7 @@ export async function handleTelegramBotInfo(_request: Request, env: Env): Promis
  * POST /api/telegram/link-account — Link Telegram account to wallet
  */
 export async function handleTelegramLinkAccount(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
   let body: { telegramId?: string; username?: string; firstName?: string };
@@ -139,7 +140,7 @@ export async function handleTelegramGetLinked(request: Request, env: Env): Promi
  * DELETE /api/telegram/link-account — Unlink Telegram account
  */
 export async function handleTelegramUnlinkAccount(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'DELETE') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'DELETE') return methodNotAllowed(['DELETE']);
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
   try {
@@ -153,7 +154,7 @@ export async function handleTelegramUnlinkAccount(request: Request, env: Env): P
  * POST /api/telegram/auth — Verify Telegram login widget data
  */
 export async function handleTelegramAuth(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
   const botToken = env.TELEGRAM_BOT_TOKEN;
   if (!botToken) return jsonResponse({ error: 'Telegram bot not configured' }, 501);
   const session = await requireSession(request, env);
@@ -186,7 +187,7 @@ export async function handleTelegramAuth(request: Request, env: Env): Promise<Re
  * GET /api/telegram/chats — List user's Telegram groups
  */
 export async function handleTelegramChats(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
   const url = new URL(request.url);
@@ -213,7 +214,7 @@ export async function handleTelegramChats(request: Request, env: Env): Promise<R
  * POST /api/telegram/groups/:groupId/link — Link group to creator coin
  */
 export async function handleTelegramGroupLink(request: Request, env: Env, groupId?: string): Promise<Response> {
-  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
   if (!groupId) return jsonResponse({ error: 'groupId parameter is required' }, 400);
@@ -235,7 +236,7 @@ export async function handleTelegramGroupLink(request: Request, env: Env, groupI
  * GET /api/telegram/groups — Get Telegram group for a coin
  */
 export async function handleTelegramGetGroups(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
   const url = new URL(request.url);
   const symbol = url.searchParams.get('symbol')?.toUpperCase();
   if (!symbol) return jsonResponse({ error: 'symbol query parameter is required' }, 400);

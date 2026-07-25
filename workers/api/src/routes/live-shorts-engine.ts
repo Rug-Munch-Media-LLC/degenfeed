@@ -6,7 +6,8 @@
  */
 
 import type { Env } from '../index';
-import { type ProtocolId, selectBackend } from '../lib/live-shorts/protocol-strategies';
+import type { ProtocolId } from '../lib/live-shorts/live-strategy';
+import { selectBackend } from '../lib/live-shorts/protocol-strategies';
 import { getStrategy } from '../lib/live-shorts/strategies';
 import { announceStreamToAllProtocols } from '../lib/stream-announcer';
 import { broadcastToAll } from '../ws-broadcast';

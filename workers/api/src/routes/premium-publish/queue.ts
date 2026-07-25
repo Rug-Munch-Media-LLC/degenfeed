@@ -5,21 +5,22 @@
  */
 
 import type { MasterPost } from '@degenfeed/cross-protocol-bridge';
-import type { Env } from '../index';
-import { jsonResponse } from '../index';
-import { getBestPostingTime, autoFormatForProtocols, type AutoFormatOptions } from '../lib/auto-formatter';
-import { getPremiumUsage, incrementPremiumUsage, requireProtocolLimit, requireQuota } from '../lib/premium-gate';
+import type { Env } from '../../index';
+import { jsonResponse } from '../../index';
+import { getBestPostingTime, autoFormatForProtocols, type AutoFormatOptions } from '../../lib/auto-formatter';
+import { getPremiumUsage, incrementPremiumUsage, requireProtocolLimit, requireQuota } from '../../lib/premium-gate';
 import { requirePremiumTier, TIER_LIMITS } from '../premium';
 import { sanitizeString, sanitizeStringArray } from '../sanitize';
-import { parseSessionCookie, requireSession, validateCsrfToken } from '../session';
+import { parseSessionCookie, requireSession, validateCsrfToken } from '../../session';
 import type { QueueEntry, BatchPublishEntry, CalendarDay, QueueStatus, RecurrencePattern, EvergreenFrequency, RecyclingStrategy } from './types';
 import { PREFIX_QUEUE, PREFIX_EVERGREEN, PREFIX_RECURRING } from './types';
 import { getQueueEntry, listQueueEntries, listAllQueueEntries, getNextQueuePosition, getUserTier, getNextDateForDayAndHour, calculateNextRecurrence, calculateNextEvergreenRepost, getRecurringEntriesForDate } from './utils';
+import { methodNotAllowed } from '../response-helpers';
 
 // ─── Queue Handlers ───────────────────────────────────────────────────────
 
 export async function handleQueueAdd(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
   try {
     const session = await requireSession(request, env);
     if (session instanceof Response) return session;
@@ -101,7 +102,7 @@ export async function handleQueueAdd(request: Request, env: Env): Promise<Respon
 }
 
 export async function handleQueueList(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
   try {
     const session = await requireSession(request, env);
     if (session instanceof Response) return session;
@@ -119,7 +120,7 @@ export async function handleQueueList(request: Request, env: Env): Promise<Respo
 }
 
 export async function handleQueueUpdate(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'PATCH') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'PATCH') return methodNotAllowed(['PATCH']);
   try {
     const session = await requireSession(request, env);
     if (session instanceof Response) return session;
@@ -156,7 +157,7 @@ export async function handleQueueUpdate(request: Request, env: Env): Promise<Res
 }
 
 export async function handleQueueDelete(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'DELETE') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'DELETE') return methodNotAllowed(['DELETE']);
   try {
     const session = await requireSession(request, env);
     if (session instanceof Response) return session;
@@ -187,7 +188,7 @@ export async function handleQueueDelete(request: Request, env: Env): Promise<Res
 // ─── Batch Publish ─────────────────────────────────────────────────────────
 
 export async function handleBatchPublish(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
   try {
     const session = await requireSession(request, env);
     if (session instanceof Response) return session;
@@ -246,7 +247,7 @@ export async function handleBatchPublish(request: Request, env: Env): Promise<Re
 // ─── Calendar View ─────────────────────────────────────────────────────────
 
 export async function handleCalendarView(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
   try {
     const session = await requireSession(request, env);
     if (session instanceof Response) return session;
@@ -289,7 +290,7 @@ export async function handleCalendarView(request: Request, env: Env): Promise<Re
 // ─── Queue Stats ──────────────────────────────────────────────────────────
 
 export async function handleQueueStats(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
   try {
     const session = await requireSession(request, env);
     if (session instanceof Response) return session;

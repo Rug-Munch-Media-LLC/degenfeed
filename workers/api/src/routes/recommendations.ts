@@ -20,6 +20,7 @@ import {
   type RecommendationOptions,
 } from '../lib/recommendation-engine';
 import { requireSession } from '../session';
+import { methodNotAllowed } from '../response-helpers';
 
 // ─── Helper: extract wallet from session ─────────────────────────────────
 
@@ -32,7 +33,7 @@ async function requireWallet(request: Request, env: Env): Promise<string | null>
 // ─── GET /api/recommendations/videos ────────────────────────────────────
 
 export async function handleVideoRecommendations(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
 
   const url = new URL(request.url);
   const wallet = await requireWallet(request, env);
@@ -60,7 +61,7 @@ export async function handleVideoRecommendations(request: Request, env: Env): Pr
 // ─── GET /api/recommendations/shorts ────────────────────────────────────
 
 export async function handleShortsRecommendations(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
 
   const wallet = await requireWallet(request, env);
   if (!wallet) return jsonResponse({ error: 'Session required' }, 401);
@@ -86,7 +87,7 @@ export async function handleShortsRecommendations(request: Request, env: Env): P
 // ─── GET /api/recommendations/streams ───────────────────────────────────
 
 export async function handleStreamRecommendations(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
 
   const wallet = await requireWallet(request, env);
   if (!wallet) return jsonResponse({ error: 'Session required' }, 401);
@@ -111,7 +112,7 @@ export async function handleStreamRecommendations(request: Request, env: Env): P
 // ─── GET /api/recommendations/related ───────────────────────────────────
 
 export async function handleRelatedRecommendations(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
 
   const url = new URL(request.url);
   const source = url.searchParams.get('source') as ContentSource | null;
@@ -160,7 +161,7 @@ export async function handleRelatedRecommendations(request: Request, env: Env): 
 // ─── GET /api/recommendations/trending ──────────────────────────────────
 
 export async function handlePersonalizedTrending(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
 
   const url = new URL(request.url);
   const wallet = await requireWallet(request, env);
@@ -188,7 +189,7 @@ export async function handlePersonalizedTrending(request: Request, env: Env): Pr
 // ─── GET /api/recommendations/discover ──────────────────────────────────
 
 export async function handleDiscoverRecommendations(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
 
   const wallet = await requireWallet(request, env);
   if (!wallet) return jsonResponse({ error: 'Session required' }, 401);
@@ -213,7 +214,7 @@ export async function handleDiscoverRecommendations(request: Request, env: Env):
 // ─── POST /api/recommendations/interaction ─────────────────────────────
 
 export async function handleRecordInteraction(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   const wallet = await requireWallet(request, env);
   if (!wallet) return jsonResponse({ error: 'Session required' }, 401);

@@ -15,6 +15,7 @@ import { PRESET_NAMES, type PresetName, presetKvKey } from '@degenfeed/feed-core
 import { type Env, jsonResponse, noCacheJsonResponse } from '../index';
 import { validateBodySize } from '../sanitize';
 import { requireSession } from '../session';
+import { methodNotAllowed } from '../response-helpers';
 
 export interface StoredPresetEntry {
   presetName: PresetName;
@@ -70,9 +71,7 @@ export async function handleFeedPresets(request: Request, env: Env): Promise<Res
     }
   }
 
-  if (request.method !== 'POST') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   const bodySizeCheck = validateBodySize(request, 1024);
   if (!bodySizeCheck.ok) return jsonResponse({ error: bodySizeCheck.error }, 413);

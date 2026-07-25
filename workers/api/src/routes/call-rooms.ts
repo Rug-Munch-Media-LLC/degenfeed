@@ -19,6 +19,7 @@ import { jsonResponse, noCacheJsonResponse } from '../index';
 import { requireSession } from '../session';
 import { broadcastToUser } from '../ws-broadcast';
 import { CHANNELS } from '../ws-channels';
+import { methodNotAllowed } from '../response-helpers';
 
 // ─── Types ──────────────────────────────────────────────────────────────
 
@@ -354,9 +355,7 @@ export class CallRoomManager {
  * POST /api/rooms/create — Create a persistent room
  */
 export async function handleRoomCreate(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
@@ -396,9 +395,7 @@ export async function handleRoomCreate(request: Request, env: Env): Promise<Resp
  * GET /api/rooms/active — Active rooms
  */
 export async function handleRoomsActive(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'GET') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
 
   try {
     const manager = new CallRoomManager(env);
@@ -439,9 +436,7 @@ export async function handleRoomInfo(
   env: Env,
   roomId: string,
 ): Promise<Response> {
-  if (request.method !== 'GET') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
 
   try {
     const manager = new CallRoomManager(env);
@@ -467,9 +462,7 @@ export async function handleRoomJoin(
   env: Env,
   roomId: string,
 ): Promise<Response> {
-  if (request.method !== 'POST') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
@@ -501,9 +494,7 @@ export async function handleRoomLeave(
   env: Env,
   roomId: string,
 ): Promise<Response> {
-  if (request.method !== 'POST') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
@@ -532,9 +523,7 @@ export async function handleRoomInvite(
   env: Env,
   roomId: string,
 ): Promise<Response> {
-  if (request.method !== 'POST') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
@@ -573,9 +562,7 @@ export async function handleRoomDelete(
   env: Env,
   roomId: string,
 ): Promise<Response> {
-  if (request.method !== 'POST') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
@@ -604,9 +591,7 @@ export async function handleRoomMute(
   env: Env,
   roomId: string,
 ): Promise<Response> {
-  if (request.method !== 'POST') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;

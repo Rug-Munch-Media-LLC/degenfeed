@@ -11,6 +11,7 @@
  */
 
 import { type Env, jsonResponse, noCacheJsonResponse } from '../index';
+import { methodNotAllowed } from '../response-helpers';
 
 export interface FeatureFlag {
   key: string;
@@ -119,9 +120,7 @@ export async function handleFeatures(request: Request, env: Env): Promise<Respon
     });
   }
 
-  if (request.method !== 'POST') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   if (!requireAdmin(request, env)) {
     return jsonResponse({ error: 'Unauthorized' }, 401);

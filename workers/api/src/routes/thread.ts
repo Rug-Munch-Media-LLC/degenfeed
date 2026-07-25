@@ -20,6 +20,7 @@ import type { Protocol, UnifiedPost } from '@degenfeed/types';
 import { type Env, jsonResponse, noCacheJsonResponse } from '../index';
 import { ALLOWED_PROTOCOLS, sanitizeString } from '../sanitize';
 import { handlePostReplies } from './replies';
+import { methodNotAllowed } from '../response-helpers';
 
 // ─── Types ──────────────────────────────────────────────────
 
@@ -294,7 +295,7 @@ export async function handleUnifiedThread(
   dfUriParam: string,
 ): Promise<Response> {
   if (request.method !== 'GET') {
-    return jsonResponse({ error: 'Method not allowed — use GET' }, 405);
+    return methodNotAllowed(['GET']);
   }
   const parsed = parseDfUri(sanitizeString(dfUriParam, 1024) ?? '');
   if (!parsed) {

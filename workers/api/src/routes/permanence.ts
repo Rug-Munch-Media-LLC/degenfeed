@@ -12,6 +12,7 @@ import type { ContentProof } from '@degenfeed/types';
 import type { Env } from '../index';
 import { jsonResponse, noCacheJsonResponse } from '../index';
 import { requireSession } from '../session';
+import { methodNotAllowed } from '../response-helpers';
 
 // ─── Irys / Arweave constants ────────────────────────────────────────
 
@@ -151,7 +152,7 @@ interface StoreRequest {
  */
 export async function handlePermanenceStore(request: Request, env: Env): Promise<Response> {
   if (request.method !== 'POST') {
-    return jsonResponse({ error: 'Method not allowed — use POST' }, 405);
+    return methodNotAllowed(['POST']);
   }
 
   const session = await requireSession(request, env);
@@ -238,7 +239,7 @@ export async function handlePermanenceVerify(
   contentHash: string,
 ): Promise<Response> {
   if (request.method !== 'GET') {
-    return jsonResponse({ error: 'Method not allowed — use GET' }, 405);
+    return methodNotAllowed(['GET']);
   }
 
   if (contentHash?.length !== 64 || !/^[0-9a-f]{64}$/i.test(contentHash)) {
@@ -285,7 +286,7 @@ export async function handlePermanenceVerify(
  */
 export async function handlePermanenceAnchor(request: Request, env: Env): Promise<Response> {
   if (request.method !== 'POST') {
-    return jsonResponse({ error: 'Method not allowed — use POST' }, 405);
+    return methodNotAllowed(['POST']);
   }
 
   const session = await requireSession(request, env);

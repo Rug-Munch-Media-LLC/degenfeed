@@ -1,12 +1,16 @@
 /**
  * Farcaster Provider — Hubble Hub Primary + Seed Fallback
  *
+ * Rate Limit: 60 requests/minute (Neynar API)
+ * Rate Limit: 120 requests/minute (self-hosted Hubble)
+ *
  * FETCHING STRATEGY (priority order):
  * 1. Hubble REST API (self-hosted, fast once synced)
  * 2. Curated seed data (works immediately, even before Hubble syncs)
  * 3. Neynar API (optional, requires NEYNAR_API_KEY env var)
  */
 
+import { checkRateLimit } from '../rate-limiter';
 import type { SchemaGuard, UnifiedPost } from '../server/types';
 
 const HUBBLE_BASE = 'http://127.0.0.1:2281';
@@ -640,6 +644,11 @@ export const schema: SchemaGuard = {
 // ─── Main Fetcher ──────────────────────────────────────────────────────
 
 export async function fetchFarcasterPosts(limit = 20): Promise<UnifiedPost[]> {
+  // Rate limit: 60 requests/minute (conservative min of Neynar/Hubble)
+  if (!checkRateLimit('farcaster', { maxRequests: 60, windowMs: 60_000 })) {
+    console.log('[farcaster] Rate limited, skipping fetch');
+    return [];
+  }
   const all: UnifiedPost[] = [];
   const targetLimit = Math.max(limit, 10);
 

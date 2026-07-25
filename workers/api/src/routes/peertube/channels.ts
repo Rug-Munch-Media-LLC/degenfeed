@@ -5,8 +5,8 @@
  */
 
 import { Hono } from 'hono';
-import type { Env } from '../index';
-import { jsonResponse, noCacheJsonResponse } from '../index';
+import type { Env } from '../../index';
+import { jsonResponse, noCacheJsonResponse } from '../../index';
 import { getPeerTubeClient, peertubeFetch, mapChannelForResponse } from './utils';
 import type { PeerTubeChannel, PeerTubeVideo, PaginatedResponse } from './types';
 import { PEERTUBE_CATEGORIES } from './types';

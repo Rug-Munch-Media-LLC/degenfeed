@@ -953,9 +953,7 @@ export async function handleStreamRouteStatus(
   env: Env,
   streamId: string,
 ): Promise<Response> {
-  if (request.method !== 'GET') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405 });
-  }
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
 
   try {
     const router = new StreamingRouter(env);
@@ -1021,9 +1019,7 @@ export async function handleStreamRouteStatus(
  * Estimate cost for a given viewer count.
  */
 export async function handleRouteEstimate(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'GET') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405 });
-  }
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
 
   try {
     const url = new URL(request.url);
@@ -1107,9 +1103,7 @@ export async function handleRouteEstimate(request: Request, env: Env): Promise<R
  * Manually switch a stream to a specific mode.
  */
 export async function handleRouteSwitch(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405 });
-  }
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   try {
     const body = (await request.json()) as {
@@ -1174,9 +1168,7 @@ export async function handleBandwidthReport(
   env: Env,
   streamId: string,
 ): Promise<Response> {
-  if (request.method !== 'GET') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405 });
-  }
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
 
   try {
     const tracker = new BandwidthTracker(env);
@@ -1221,9 +1213,7 @@ export async function handleBandwidthReport(
  * Get aggregate bandwidth across all streams.
  */
 export async function handleBandwidthSummary(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'GET') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405 });
-  }
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
 
   try {
     const tracker = new BandwidthTracker(env);

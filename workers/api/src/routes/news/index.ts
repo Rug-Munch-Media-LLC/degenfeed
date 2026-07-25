@@ -640,7 +640,7 @@ export async function handleNewsletterCreatorCreate(
   request: Request,
   env: Env,
 ): Promise<Response> {
-  if (request.method !== 'POST') return methodNotAllowed();
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
   try {
     const body = (await request.json()) as { name?: string; description?: string; tier?: string };
     if (!body.name?.trim()) return badRequest('Newsletter name is required');
@@ -700,7 +700,7 @@ export async function handleNewsletterCreatorIssue(
   request: Request,
   env: Env,
 ): Promise<Response> {
-  if (request.method !== 'POST') return methodNotAllowed();
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
   try {
     const body = (await request.json()) as {
       newsletterId?: string;
@@ -767,7 +767,7 @@ export async function handleNewsletterCreatorSubscribe(
   request: Request,
   env: Env,
 ): Promise<Response> {
-  if (request.method !== 'POST') return methodNotAllowed();
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
   try {
     const body = (await request.json()) as {
       newsletterId?: string;

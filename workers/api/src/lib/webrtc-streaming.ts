@@ -21,6 +21,7 @@
 
 import type { Env } from '../index';
 import { jsonResponse, noCacheJsonResponse } from '../index';
+import { methodNotAllowed } from '../response-helpers';
 
 // ─── Types ──────────────────────────────────────────────────────────────
 
@@ -516,9 +517,7 @@ export class WebRTCSessionManager {
  * Broadcaster creates a WebRTC session with SDP offer.
  */
 export async function handleWebRTCOffer(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   try {
     const body = (await request.json()) as WebRTCOfferRequest;
@@ -555,9 +554,7 @@ export async function handleWebRTCOffer(request: Request, env: Env): Promise<Res
  * Viewer submits SDP answer to connect to broadcaster.
  */
 export async function handleWebRTCAnswer(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   try {
     const body = (await request.json()) as WebRTCAnswerRequest;
@@ -612,9 +609,7 @@ export async function handleWebRTCAnswer(request: Request, env: Env): Promise<Re
  * Exchange ICE candidates between peers.
  */
 export async function handleWebRTCIce(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'POST') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   try {
     const body = (await request.json()) as WebRTCIceRequest;
@@ -650,9 +645,7 @@ export async function handleWebRTCGetOffer(
   env: Env,
   sessionId: string,
 ): Promise<Response> {
-  if (request.method !== 'GET') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
 
   try {
     const manager = new WebRTCSessionManager(env);
@@ -688,9 +681,7 @@ export async function handleWebRTCGetOffer(
  * Get connected viewer count for a WebRTC session.
  */
 export async function handleWebRTCViewers(request: Request, env: Env): Promise<Response> {
-  if (request.method !== 'GET') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
 
   try {
     const url = new URL(request.url);
@@ -745,9 +736,7 @@ export async function handleWebRTCEnd(
   env: Env,
   sessionId: string,
 ): Promise<Response> {
-  if (request.method !== 'DELETE') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
-  }
+  if (request.method !== 'DELETE') return methodNotAllowed(['DELETE']);
 
   try {
     const manager = new WebRTCSessionManager(env);
