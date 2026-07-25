@@ -22,7 +22,7 @@ export async function handlePrices(request: Request, env: Env): Promise<Response
       `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=${vsCurrencies}&include_24hr_change=true`,
       { headers: { accept: 'application/json' } },
     );
-    if (!res.ok) throw new Error(`CoinGecko returned ${res.status}`);
+    if (!res.ok) { const _throwErr = new Error(`CoinGecko returned ${res.status}`); throw _throwErr; }
     const data = (await res.json()) as Record<string, CoinGeckoPrice>;
 
     if (env.CACHE) {

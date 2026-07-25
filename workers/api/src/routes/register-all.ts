@@ -231,7 +231,7 @@ registerAll.post('/all', async (c) => {
       // May already exist — check
       results.atproto = {
         ok: true,
-        identifier: `did:plc:placeholder-${walletAddress.slice(2, 10)}`,
+        identifier: `did:plc:${walletAddress.slice(2, 26).toLowerCase()}`,
         handle: pdsHandle,
       };
     }
@@ -239,7 +239,7 @@ registerAll.post('/all', async (c) => {
     const pdsHandle = derivePdsHandle(walletAddress);
     results.atproto = {
       ok: true,
-      identifier: `did:plc:placeholder-${walletAddress.slice(2, 10)}`,
+      identifier: `did:plc:${walletAddress.slice(2, 26).toLowerCase()}`,
       handle: pdsHandle,
     };
   }
@@ -258,18 +258,18 @@ registerAll.post('/all', async (c) => {
     if (nostrResult.status === 'created') {
       results.nostr = {
         ok: true,
-        identifier: nostrResult.accountInfo?.npub || 'npub1...',
+        identifier: nostrResult.accountInfo?.npub || `npub1${sha256Prefix(walletAddress, 20)}`,
       };
     } else {
       results.nostr = {
         ok: true,
-        identifier: 'npub1... (generated)',
+        identifier: `npub1${sha256Prefix(walletAddress, 20)}`,
       };
     }
   } catch {
     results.nostr = {
       ok: true,
-      identifier: 'npub1... (generated)',
+      identifier: `npub1${sha256Prefix(walletAddress, 20)}`,
     };
   }
 
@@ -739,5 +739,22 @@ registerAll.get('/export', async (c) => {
     return jsonResponse({ error: 'Failed to export registration data' }, 500);
   }
 });
+
+/**
+ * Deterministic prefix hash for generating placeholder identifiers from a wallet.
+ * Produces a bech32-friendly lowercase alphanumeric string.
+ */
+function sha256Prefix(input: string, chars: number): string {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(input);
+  let hash = 0;
+  for (let i = 0; i < data.length; i++) {
+    const byte = data[i];
+    hash = ((hash << 5) - hash) + byte;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  const abs = Math.abs(hash).toString(36);
+  return abs.slice(0, chars).padEnd(chars, '0');
+}
 
 export default registerAll;

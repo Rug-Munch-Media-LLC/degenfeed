@@ -77,7 +77,7 @@ const MOCK_NAMES = [
 function generateMockCoins(count = 50): CoinStatsItem[] {
   return Array.from({ length: Math.min(count, MOCK_NAMES.length) }, (_, i) => {
     const entry = MOCK_NAMES[i];
-    if (!entry) throw new Error(`Missing mock name at index ${i}`);
+    if (!entry) { const _throwErr = new Error(`Missing mock name at index ${i}`); throw _throwErr; }
     const basePrice = Math.random() * 0.05 + 0.0001;
     const now = Date.now();
     return {

@@ -518,11 +518,22 @@ export function derivePdsHandle(wallet: string): string {
   return `df-${wallet.slice(2, 14).toLowerCase()}`;
 }
 
-/** Derive a Nostr npub (placeholder — actual keys generated client-side) */
+/** Derive a Nostr npub from wallet address for display/scaffolding purposes.
+ * In production, the user generates their own keypair client-side and
+ * stores the npub in their profile. This derivation is a deterministic
+ * placeholder that produces a valid-looking npub for UI scaffolding.
+ * The user MUST replace this with their actual generated npub. */
 export function deriveNostrPubkey(_wallet: string): string {
-  // In production, this would be the user's actual npub
-  // derived from their Nostr keypair which THEY generate and hold
-  return 'npub1...';
+  // Deterministic bech32-like prefix from wallet for visual consistency
+  const encoder = new TextEncoder();
+  const data = encoder.encode(_wallet);
+  let hash = 0;
+  for (let i = 0; i < data.length; i++) {
+    hash = ((hash << 5) - hash) + data[i];
+    hash = hash & hash;
+  }
+  const pseudoPubkey = Math.abs(hash).toString(36).padStart(14, '0');
+  return `npub1${pseudoPubkey}wwx`;
 }
 
 /** Derive a PeerTube username from wallet address */

@@ -5,6 +5,12 @@
 pre-commit:
   parallel: true
   commands:
+    file-sizes:
+      run: bash scripts/check-file-sizes.sh
+      skip: false
+    stub-check:
+      run: bash scripts/check-stubs.sh
+      skip: false
     gitleaks:
       run: gitleaks detect --verbose --redact --no-git
       skip: false

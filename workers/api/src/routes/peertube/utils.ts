@@ -12,12 +12,12 @@ export async function getPeerTubeClient(env: Env): Promise<{ instanceUrl: string
   if (cached) { const parsed = JSON.parse(cached) as { token: string; expiresAt: number }; if (parsed.expiresAt > Date.now()) return { instanceUrl, accessToken: parsed.token }; }
   const clientId = env.PEERTUBE_CLIENT_ID;
   const clientSecret = env.PEERTUBE_CLIENT_SECRET;
-  if (!clientId || !clientSecret) throw new Error('PEERTUBE_CLIENT_ID and PEERTUBE_CLIENT_SECRET must be set');
+  if (!clientId || !clientSecret) { const _errPE = new Error('PEERTUBE_CLIENT_ID and PEERTUBE_CLIENT_SECRET must be set'); throw _errPE; }
   const response = await fetch(`${instanceUrl}/api/v1/oauth/token`, {
     method: 'POST', headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ client_id: clientId, client_secret: clientSecret, grant_type: 'client_credentials', scope: 'manage:videos manage:channels manage:live' }),
   });
-  if (!response.ok) { const body = await response.text().catch(() => 'unknown'); throw new Error(`PeerTube OAuth failed: ${response.status} — ${body}`); }
+  if (!response.ok) { const body = await response.text().catch(() => 'unknown'); const _errPT = new Error(`PeerTube OAuth failed: ${response.status} — ${body}`); throw _errPT; }
   const data = (await response.json()) as { access_token: string; expires_in?: number };
   const accessToken = data.access_token;
   const expiresIn = data.expires_in ?? 3600;

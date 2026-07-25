@@ -327,7 +327,7 @@ export async function handleExportJson(request: Request, env: Env): Promise<Resp
       activityLog: data.activityLog,
     };
 
-    return new Response(JSON.stringify(exportPayload, null, 2), {
+    const _respData = JSON.stringify(exportPayload, null, 2); return new Response(_respData, {
       status: 200,
       headers: {
         'content-type': 'application/json; charset=utf-8',
@@ -531,7 +531,7 @@ export async function handleExportActivityPub(request: Request, env: Env): Promi
       '@context': ['https://www.w3.org/ns/activitystreams', 'https://w3id.org/security/v1'],
     };
 
-    return new Response(JSON.stringify(exportPayload, null, 2), {
+    const _respData = JSON.stringify(exportPayload, null, 2); return new Response(_respData, {
       status: 200,
       headers: {
         'content-type': 'application/activity+json; charset=utf-8',
@@ -627,7 +627,7 @@ export async function handleExportAtProto(request: Request, env: Env): Promise<R
       profile: atExport.profile,
     });
 
-    return new Response(JSON.stringify(packagePayload, null, 2), {
+    const _respData = JSON.stringify(packagePayload, null, 2); return new Response(_respData, {
       status: 200,
       headers: {
         'content-type': 'application/json; charset=utf-8',
@@ -677,7 +677,7 @@ export async function handleExportSolid(request: Request, env: Env): Promise<Res
 
     const podExport = buildSolidPodExport(session.address, resources);
 
-    return new Response(JSON.stringify(podExport, null, 2), {
+    const _respData = JSON.stringify(podExport, null, 2); return new Response(_respData, {
       status: 200,
       headers: {
         'content-type': 'application/ld+json; charset=utf-8',

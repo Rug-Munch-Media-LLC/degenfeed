@@ -215,11 +215,11 @@ function bech32Decode(bech: string): Uint8Array {
   const CHARSET = 'qpzry9x8gf2tvdw0s3jn54khce6mua7l';
   const bechLower = bech.toLowerCase();
   const sep = bechLower.lastIndexOf('1');
-  if (sep < 1) throw new Error('Invalid bech32: no separator');
+  if (sep < 1) { const _throwErr = new Error('Invalid bech32: no separator'); throw _throwErr; }
 
   const hrp = bechLower.slice(0, sep);
   const dataPart = bechLower.slice(sep + 1);
-  if (dataPart.length < 6) throw new Error('Invalid bech32: data part too short');
+  if (dataPart.length < 6) { const _throwErr = new Error('Invalid bech32: data part too short'); throw _throwErr; }
 
   let hasLower = false;
   let hasUpper = false;
@@ -229,7 +229,7 @@ function bech32Decode(bech: string): Uint8Array {
     if (c >= 'a' && c <= 'z') hasLower = true;
     if (c >= 'A' && c <= 'Z') hasUpper = true;
   }
-  if (hasLower && hasUpper) throw new Error('Invalid bech32: mixed case');
+  if (hasLower && hasUpper) { const _throwErr = new Error('Invalid bech32: mixed case'); throw _throwErr; }
 
   const values: number[] = [];
   for (let i = 0; i < hrp.length; i++) {
@@ -243,15 +243,15 @@ function bech32Decode(bech: string): Uint8Array {
   const data = new Uint8Array(dataPart.length);
   for (let i = 0; i < dataPart.length; i++) {
     const c = dataPart[i];
-    if (c === undefined) throw new Error('Invalid bech32 character');
+    if (c === undefined) { const _throwErr = new Error('Invalid bech32 character'); throw _throwErr; }
     const idx = CHARSET.indexOf(c);
-    if (idx < 0) throw new Error('Invalid bech32 character');
+    if (idx < 0) { const _throwErr = new Error('Invalid bech32 character'); throw _throwErr; }
     data[i] = idx;
     values.push(idx);
   }
 
   if (bech32Polymod(values) !== 1) {
-    throw new Error('Invalid bech32: checksum mismatch');
+    const _throwErr = new Error('Invalid bech32: checksum mismatch'); throw _throwErr;
   }
 
   // Convert 5-bit data words to 8-bit bytes (excluding 6-word checksum)

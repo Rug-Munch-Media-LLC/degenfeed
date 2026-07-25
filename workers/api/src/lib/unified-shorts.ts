@@ -897,8 +897,24 @@ export class UnifiedShortsPipeline {
 
   private async uploadToPermanentStorage(_file: File): Promise<string> {
     // Upload to IPFS via web3.storage or Pinata, or to Arweave
-    // For now, return placeholder — real upload requires SDK integration
-    throw new Error('Direct file upload not yet implemented — provide a videoUrl instead');
+    // Requires WEB3_STORAGE_API_KEY or PINATA_API_KEY env var
+    const hasStorageConfig = !!(this.env.PINATA_API_KEY || this.env.WEB3_STORAGE_API_KEY);
+    if (!hasStorageConfig) {
+      throw new Error(
+        'Direct file upload not configured. Set PINATA_API_KEY or WEB3_STORAGE_API_KEY env var, ' +
+          'or provide a pre-uploaded videoUrl instead.',
+      );
+    }
+    try {
+      // Upload to IPFS via Pinata or web3.storage
+      const buffer = await _file.arrayBuffer();
+      const fileName = `shorts/${Date.now()}-${_file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+      const { uploadBufferToIPFS } = await import('./ipfs-storage');
+      const result = await uploadBufferToIPFS(buffer, fileName, _file.type, this.env);
+      return result.gatewayUrl || `https://cloudflare-ipfs.com/ipfs/${result.cid}`;
+    } catch (err) {
+      throw new Error(`Upload failed: ${err instanceof Error ? err.message : String(err)}`);
+    }
   }
 
   private async computeContentHash(videoUrl: string): Promise<string> {

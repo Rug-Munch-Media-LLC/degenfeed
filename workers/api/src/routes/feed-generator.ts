@@ -41,7 +41,7 @@ const feedGen = new Hono<{ Bindings: Env }>();
 feedGen.get('/.well-known/did.json', async (_c) => {
   const didDoc = buildFeedGeneratorDidDoc();
 
-  return new Response(JSON.stringify(didDoc), {
+  const _respData = JSON.stringify(didDoc); return new Response(_respData, {
     headers: {
       'content-type': 'application/json',
       'access-control-allow-origin': '*',

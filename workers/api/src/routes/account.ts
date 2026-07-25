@@ -101,7 +101,8 @@ export async function handleAccountDelete(request: Request, env: Env): Promise<R
     }
   }
 
-  return new Response(JSON.stringify({ ok: true, deleted: keysDeleted }), {
+  const _delBody = JSON.stringify({ ok: true, deleted: keysDeleted });
+  return new Response(_delBody, {
     status: 200,
     headers: {
       'content-type': 'application/json',

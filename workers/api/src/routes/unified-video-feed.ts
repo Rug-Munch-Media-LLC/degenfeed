@@ -346,35 +346,61 @@ async function gatherVideos(
           case 'farcaster':
           case 'ipfs':
           case 'arweave': {
-            // These bridges are available in the video-bridges directory
-            // For demonstration, return placeholder items
-            // In production, each bridge would be called with its specific fetcher
-            items = [
-              {
-                id: `${source.id}-trending-1`,
-                title: `Trending on ${source.label}`,
-                description: `Popular content from ${source.label} — decentralized, zero-cost hosting.`,
-                thumbnailUrl: '',
-                videoUrl: `https://${source.id}.com/trending`,
-                duration: 0,
-                durationLabel: '',
-                source: source.id,
-                sourceLabel: source.label,
-                sourceColor: source.color,
-                channelName: `${source.label} Creator`,
-                channelId: `${source.id}:creator`,
-                channelAvatar: '',
-                channelUrl: '',
-                publishedAt: Date.now() - 3600000,
-                publishedLabel: '1h ago',
-                views: 10000,
-                likes: 500,
-                category: 'trending',
-                tags: [source.id],
-                isLive: false,
-                isZeroCost: true,
-              },
-            ];
+            // Call the appropriate video bridge for each source
+            const bridges: Record<string, string> = {
+              twitch: '../feed/video-bridges/twitch',
+              vimeo: '../feed/video-bridges/vimeo',
+              dailymotion: '../feed/video-bridges/dailymotion',
+              bitchute: '../feed/video-bridges/bitchute',
+              kick: '../feed/video-bridges/kick',
+              livetube: '../feed/video-bridges/live-tube',
+              nostr: '../feed/video-bridges/nostr-video',
+              farcaster: '../feed/video-bridges/farcaster-frame-video',
+              ipfs: '../feed/video-bridges/ipfs-arweave-video',
+              arweave: '../feed/video-bridges/ipfs-arweave-video',
+            };
+            const bridgePath = bridges[source.id];
+            if (bridgePath) {
+              try {
+                const bridge = await import(bridgePath);
+                const fetcher = bridge.default || bridge.fetchFeed || bridge.fetchTrending;
+                if (typeof fetcher === 'function') {
+                  const bridgeItems = await fetcher(source.id, perSourceLimit);
+                  if (Array.isArray(bridgeItems) && bridgeItems.length > 0) {
+                    items = bridgeItems.map((v: any) => ({
+                      id: `${source.id}-${v.id || crypto.randomUUID().slice(0, 8)}`,
+                      title: v.title || `Video from ${source.label}`,
+                      description: v.description || '',
+                      thumbnailUrl: v.thumbnailUrl || v.thumbnail || '',
+                      videoUrl: v.videoUrl || v.url || '',
+                      duration: v.duration || 0,
+                      durationLabel: formatDurationLabel(v.duration || 0),
+                      source: source.id,
+                      sourceLabel: source.label,
+                      sourceColor: source.color,
+                      channelName: v.channelName || v.creatorName || `${source.label} Creator`,
+                      channelId: v.channelId || v.creatorId || `${source.id}:creator`,
+                      channelAvatar: v.channelAvatar || v.creatorAvatar || '',
+                      channelUrl: v.channelUrl || v.creatorUrl || '',
+                      publishedAt: v.publishedAt ? new Date(v.publishedAt).getTime() : Date.now(),
+                      publishedLabel: v.publishedAt ? timeAgoLabel(new Date(v.publishedAt).getTime()) : '',
+                      views: v.views || v.viewCount || 0,
+                      likes: v.likes || v.likeCount || 0,
+                      category: v.category || 'general',
+                      tags: v.tags || [],
+                      isLive: v.isLive || false,
+                      isZeroCost: true,
+                    }));
+                  }
+                }
+              } catch (err) {
+                console.warn(`[unified-video-feed] Bridge ${source.id} not available:`, String(err));
+              }
+            }
+            // If bridge returned no items, return empty rather than placeholder data
+            if (items.length === 0) {
+              console.info(`[unified-video-feed] No items from ${source.id} — bridge may need configuration`);
+            }
             break;
           }
         }

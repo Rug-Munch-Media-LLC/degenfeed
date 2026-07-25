@@ -37,6 +37,22 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
 
+  quality-gate:
+    runs-on: ubuntu-latest
+    needs: install
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Check file sizes (<500 lines)
+        run: bash scripts/check-file-sizes.sh
+      - name: Check for stubs (TODOs, FIXMEs, placeholders)
+        run: bash scripts/check-stubs.sh
+
   stylelint:
     runs-on: ubuntu-latest
     needs: install

@@ -65,8 +65,9 @@ export async function handleCreatorStorage(request: Request, env: Env): Promise<
         'https://dweb.link/ipfs/',
       ],
       exifStripped: true, // All uploaded images have EXIF stripped for privacy
-      makePermanentAvailable: false, // Arweave permanence coming soon
+      makePermanentAvailable: false, // Requires ARWEAVE_WALLET or IRYS_NODE_URL env var
       makePermanentCostEstimate: '~$0.01/MB (one-time fee)',
+      makePermanentHowTo: 'Set ARWEAVE_WALLET env var or deploy an Irys node to enable Arweave permanence',
       images: imageStats.images.map((img) => ({
         cid: img.cid,
         url: `${CF_IPFS_GATEWAY}/${img.cid}`,

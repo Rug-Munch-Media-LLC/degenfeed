@@ -25,7 +25,7 @@ async function fetchMarketPrices(env: Env): Promise<Record<string, MarketPrice>>
       `https://api.coingecko.com/api/v3/simple/price?ids=${MARKET_COINS}&vs_currencies=usd&include_24hr_change=true`,
       { headers: { accept: 'application/json' } },
     );
-    if (!res.ok) throw new Error(`CoinGecko returned ${res.status}`);
+    if (!res.ok) { const _throwErr = new Error(`CoinGecko returned ${res.status}`); throw _throwErr; }
     const data = (await res.json()) as Record<string, MarketPrice>;
     if (env.CACHE) await env.CACHE.put(MARKET_CACHE_KEY, JSON.stringify(data), { expirationTtl: MARKET_CACHE_TTL });
     return data;

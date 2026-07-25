@@ -7,8 +7,7 @@
 
 import type { UnifiedPost } from '@degenfeed/types';
 import type { Env } from '../index';
-
-const JSON_HEADERS = { 'content-type': 'application/json' as const };
+import { badRequest, ok } from '../response-helpers';
 
 export async function handlePostOg(_request: Request, env: Env, postId: string): Promise<Response> {
   const decoded = decodeURIComponent(postId);
@@ -80,7 +79,7 @@ export async function handleOgFetch(request: Request): Promise<Response> {
   const url = new URL(request.url);
   const targetUrl = url.searchParams.get('url');
   if (!targetUrl) {
-    return new Response(JSON.stringify({ error: 'Missing url parameter' }), { status: 400, headers: JSON_HEADERS });
+    return badRequest('Missing url parameter');
   }
 
   // Validate URL
@@ -88,10 +87,10 @@ export async function handleOgFetch(request: Request): Promise<Response> {
   try {
     parsed = new URL(targetUrl);
     if (!['http:', 'https:'].includes(parsed.protocol)) {
-      throw new Error('Invalid protocol');
+      return badRequest('Invalid URL');
     }
   } catch {
-    return new Response(JSON.stringify({ error: 'Invalid URL' }), { status: 400, headers: JSON_HEADERS });
+    return badRequest('Invalid URL');
   }
 
   try {
@@ -104,10 +103,7 @@ export async function handleOgFetch(request: Request): Promise<Response> {
     });
 
     if (!res.ok) {
-      return new Response(JSON.stringify({ url: targetUrl, title: targetUrl }), {
-        status: 200,
-        headers: { 'content-type': 'application/json' },
-      });
+      return ok({ url: targetUrl, title: targetUrl });
     }
 
     const html = await res.text();
@@ -159,7 +155,8 @@ export async function handleOgFetch(request: Request): Promise<Response> {
       siteName: siteName ?? null,
     };
 
-    return new Response(JSON.stringify(result), {
+    const json = JSON.stringify(result);
+    return new Response(json, {
       status: 200,
       headers: {
         'content-type': 'application/json',
@@ -167,9 +164,6 @@ export async function handleOgFetch(request: Request): Promise<Response> {
       },
     });
   } catch {
-    return new Response(JSON.stringify({ url: targetUrl, title: targetUrl }), {
-      status: 200,
-      headers: { 'content-type': 'application/json' },
-    });
+    return ok({ url: targetUrl, title: targetUrl });
   }
 }

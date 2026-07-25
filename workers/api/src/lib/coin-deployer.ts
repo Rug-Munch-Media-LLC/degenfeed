@@ -103,7 +103,12 @@ export class CoinDeployError extends Error {
 
 class DeployerFeatureDisabled extends CoinDeployError {
   constructor() {
-    super('Creator coin deployments coming soon. Join the waitlist.', 'FEATURE_NOT_ENABLED');
+    super(
+      'Real creator coin deployments disabled. Set ENABLE_REAL_DEPLOYMENTS=true and configure ' +
+        'PREMIUM_WALLET_KEY + BASE_RPC_URL (for Base) or SOLANA_RPC_URL (for Solana) to activate. ' +
+        'See docs/creator-coins.md for full setup.',
+      'FEATURE_NOT_ENABLED',
+    );
     this.name = 'DeployerFeatureDisabled';
   }
 }

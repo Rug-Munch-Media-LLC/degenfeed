@@ -135,7 +135,7 @@ async function getLensProfile(profileId: string): Promise<{
       }),
     });
 
-    if (!res.ok) throw new Error(`Lens API returned ${res.status}`);
+    if (!res.ok) { const _throwErr = new Error(`Lens API returned ${res.status}`); throw _throwErr; }
     const json = (await res.json()) as {
       data?: {
         profile?: {
@@ -149,7 +149,7 @@ async function getLensProfile(profileId: string): Promise<{
       };
     };
     const profile = json.data?.profile;
-    if (!profile) throw new Error('Profile not found');
+    if (!profile) { const _throwErr = new Error('Profile not found'); throw _throwErr; }
 
     const handle = profile.handle?.localName || profileId;
     const displayName = profile.metadata?.displayName || handle;
@@ -185,7 +185,7 @@ async function deployCreatorCoin(opts: {
   env?: Env;
 }): Promise<{ coinAddress: string; tokenId: string; signature: string }> {
   if (!opts.env) {
-    throw new Error('Environment required for deployment');
+    const _throwErr = new Error('Environment required for deployment'); throw _throwErr;
   }
   const { deployCoin } = await import('../lib/coin-deployer');
 

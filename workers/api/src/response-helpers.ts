@@ -83,6 +83,48 @@ export function serverError(message = 'Internal server error'): Response {
   });
 }
 
+export function forbidden(message = 'Forbidden'): Response {
+  return new Response(JSON.stringify({ error: message }), {
+    status: 403,
+    headers: { 'content-type': 'application/json' },
+  });
+}
+
+export function upgradeRequired(message = 'Upgrade Required'): Response {
+  return new Response(JSON.stringify({ error: message }), {
+    status: 426,
+    headers: { 'content-type': 'application/json' },
+  });
+}
+
+export function paymentRequired(message = 'Payment Required', extraHeaders?: Record<string, string>): Response {
+  return new Response(JSON.stringify({ error: message }), {
+    status: 402,
+    headers: { 'content-type': 'application/json', ...extraHeaders },
+  });
+}
+
+export function methodNotAllowed(message = 'Method not allowed'): Response {
+  return new Response(JSON.stringify({ error: message }), {
+    status: 405,
+    headers: { 'content-type': 'application/json' },
+  });
+}
+
+export function conflict(message = 'Conflict'): Response {
+  return new Response(JSON.stringify({ error: message }), {
+    status: 409,
+    headers: { 'content-type': 'application/json' },
+  });
+}
+
+export function badGateway(message = 'Bad gateway'): Response {
+  return new Response(JSON.stringify({ error: message }), {
+    status: 502,
+    headers: { 'content-type': 'application/json' },
+  });
+}
+
 export function rateLimitResponse(retryAfterMs: number): Response {
   return new Response(JSON.stringify({ error: 'Rate limit exceeded', retryAfterMs }), {
     status: 429,

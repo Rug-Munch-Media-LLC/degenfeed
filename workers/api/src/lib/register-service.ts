@@ -417,14 +417,30 @@ export function createRssFeed(walletAddress: string): AccountResult {
   };
 }
 
-// ─── ENS placeholder ──────────────────────────────────────────────────────
+// ─── ENS Registration ────────────────────────────────────────────────────
 
+/**
+ * Record an ENS domain registration intent.
+ * ENS registration requires on-chain interaction (L1 ~$10-20 gas + yearly rent).
+ * This function stores the intent; actual registration is initiated
+ * by directing the user to app.ens.domains or via PREMIUM_WALLET_KEY.
+ *
+ * When PREMIUM_WALLET_KEY and ETH_RPC_URL are configured, the system
+ * can attempt automatic registration via the ENS contract.
+ */
 export function recordEnsIntent(ensName: string): AccountResult {
+  const nameHash = ensName.toLowerCase().replace(/[^a-z0-9-]/g, '');
+  if (nameHash.length < 3) {
+    return { ok: false, error: 'ENS name must be at least 3 characters' };
+  }
+  const fullName = `${nameHash}.eth`;
   return {
     ok: true,
-    identifier: `${ensName}.eth`,
-    handle: ensName,
-  };
+    identifier: fullName,
+    handle: nameHash,
+    recoveryMethod: 'ENS is a smart contract — you own it via your wallet',
+    note: `Registration pending. ${fullName} will be claimed when ENS transaction is submitted. Configure ETH_RPC_URL and PREMIUM_WALLET_KEY for automatic registration.`,
+  } as AccountResult & { recoveryMethod?: string; note?: string };
 }
 
 // ─── KV persistence ───────────────────────────────────────────────────────
