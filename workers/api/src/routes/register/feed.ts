@@ -46,7 +46,6 @@ import {
   handleDiscoverTrending,
 } from '../../routes/discover';
 import { handleFarcasterFeed } from '../../routes/farcaster-feed';
-import { qualityDashboardRoutes } from '../../routes/feed-quality-dashboard';
 import {
   handleFeedCacheInvalidate,
   handleFeedHealth,
@@ -69,6 +68,7 @@ import {
   handleProtocolTrendingRoute,
   handleProtocolVideos,
 } from '../../routes/feed-protocol';
+import { qualityDashboardRoutes } from '../../routes/feed-quality-dashboard';
 import {
   handleCategoryFeed,
   handleDefaultFeed,
@@ -213,6 +213,7 @@ import {
   handleSourcesTrending,
 } from '../../routes/source-health';
 import { handleStreamFeed } from '../../routes/stream';
+import { handleTrendingSidebar } from '../../routes/trending-sidebar';
 import {
   handleImagesCategory,
   handleImagesCreator,
