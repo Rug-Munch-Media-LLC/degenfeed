@@ -18,7 +18,7 @@ import {
   handleCallSignalPoll,
   handleCallStatus,
 } from '../../lib/video-call';
-import { ok, serverError } from '../../response-helpers';
+import { badRequest, ok, serverError } from '../../response-helpers';
 import {
   handleRoomCreate,
   handleRoomDelete,
@@ -75,42 +75,42 @@ import { handleRealtimeWebSocket } from '../../routes/realtime';
 import { withSession } from '../../routes/route-registry';
 import {
   handleSpaceAcceptSpeaker,
+  handleSpaceAnalytics,
+  handleSpaceChatHistory,
+  handleSpaceChatReact,
+  handleSpaceChatSend,
+  handleSpaceChatTip,
+  handleSpaceClips,
   handleSpaceCreate,
   handleSpaceCreateClip,
-  handleSpaceClips,
+  handleSpaceDeleteMessage,
   handleSpaceDetails,
   handleSpaceEnd,
   handleSpaceInviteSpeaker,
   handleSpaceJoin,
   handleSpaceLeave,
   handleSpaceMuteSpeaker,
+  handleSpaceMuteUser,
+  handleSpacePinMessage,
   handleSpaceRaiseHand,
   handleSpaceReact,
   handleSpaceRecording,
+  handleSpaceRecordingStart,
+  handleSpaceRecordingStop,
   handleSpaceRemoveSpeaker,
   handleSpaceRequestSpeak,
+  handleSpaceSetFarcasterCast,
+  handleSpaceSetNostrEvent,
+  handleSpaceSetReminder,
   handleSpaceSpeakersAdd,
   handleSpaceSpeakersRemove,
   handleSpaceStart,
-  handleSpaceChatSend,
-  handleSpaceChatHistory,
-  handleSpacePinMessage,
-  handleSpaceChatReact,
-  handleSpaceChatTip,
-  handleSpaceDeleteMessage,
-  handleSpaceMuteUser,
-  handleSpaceRecordingStart,
-  handleSpaceRecordingStop,
-  handleSpaceTranscript,
-  handleSpaceSetReminder,
-  handleSpaceSetNostrEvent,
-  handleSpaceSetFarcasterCast,
   handleSpacesByCategory,
-  handleSpaceAnalytics,
   handleSpacesLive,
   handleSpacesPast,
   handleSpacesTrending,
   handleSpacesUpcoming,
+  handleSpaceTranscript,
 } from '../../routes/spaces';
 import streams from '../../routes/streams';
 import { handleTokenSSE, handleTokenWebSocket } from '../../routes/token-websocket';
@@ -343,7 +343,9 @@ export function registerLiveRoutes(app: Hono<{ Bindings: Env }>): void {
   });
   app.post('/api/live/stop', async (c) => {
     try {
-      return await withSession(c, () => handleStopLive(c.req.raw, c.env));
+      return await withSession(c, () =>
+        handleStopLive(c.req.raw, c.env, c.req.param('streamId') ?? ''),
+      );
     } catch (err) {
       return serverError(err instanceof Error ? err.message : 'Unknown error');
     }
@@ -381,7 +383,7 @@ export function registerLiveRoutes(app: Hono<{ Bindings: Env }>): void {
   });
   app.get('/api/live/viewers/:id', async (c) => {
     try {
-      const result = await handleLiveViewersSSE(c.req.raw, c.env, c.req.param('id'));
+      const result = await handleLiveViewersSSE(c.req.raw, c.env);
       return ok(result);
     } catch (err) {
       return serverError(err instanceof Error ? err.message : 'Unknown error');
@@ -398,7 +400,7 @@ export function registerLiveRoutes(app: Hono<{ Bindings: Env }>): void {
   });
   app.post('/api/live/unwatch', async (c) => {
     try {
-      const result = await handleUnwatchCreator(c.req.raw, c.env);
+      const result = await handleUnwatchCreator(c.req.raw, c.env, c.req.param('creatorId') ?? '');
       return ok(result);
     } catch (err) {
       return serverError(err instanceof Error ? err.message : 'Unknown error');
@@ -512,7 +514,7 @@ export function registerLiveRoutes(app: Hono<{ Bindings: Env }>): void {
   });
   app.get('/api/live/webrtc/viewers', async (c) => {
     try {
-      const result = await handleWebRTCViewers(c.req.raw, c.env);
+      const result = await handleWebRTCViewers(c.req.raw, c.env, c.req.param('streamId') ?? '');
       return ok(result);
     } catch (err) {
       return serverError(err instanceof Error ? err.message : 'Unknown error');
@@ -709,7 +711,9 @@ export function registerLiveRoutes(app: Hono<{ Bindings: Env }>): void {
   });
   app.post('/api/live/private/join', async (c) => {
     try {
-      return await withSession(c, () => handlePrivateStreamJoin(c.req.raw, c.env));
+      return await withSession(c, () =>
+        handlePrivateStreamJoin(c.req.raw, c.env, c.req.param('streamId') ?? ''),
+      );
     } catch (err) {
       return serverError(err instanceof Error ? err.message : 'Unknown error');
     }
@@ -748,7 +752,9 @@ export function registerLiveRoutes(app: Hono<{ Bindings: Env }>): void {
   });
   app.post('/api/live/private/allowlist', async (c) => {
     try {
-      return await withSession(c, () => handlePrivateStreamAllowlist(c.req.raw, c.env));
+      return await withSession(c, () =>
+        handlePrivateStreamAllowlist(c.req.raw, c.env, c.req.param('streamId') ?? ''),
+      );
     } catch (err) {
       return serverError(err instanceof Error ? err.message : 'Unknown error');
     }
