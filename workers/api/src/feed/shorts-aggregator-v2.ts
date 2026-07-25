@@ -35,19 +35,19 @@ export interface SourceHealth {
 }
 
 export type ExtendedSource =
-  | 'loops'           // Primary self-hosted
-  | 'peertube'        // Self-hosted federated
-  | 'youtube'         // YouTube Shorts
-  | 'tiktok_rss'      // TikTok via RSS-Bridge
-  | 'instagram'       // Instagram Reels
-  | 'owncast'         // Owncast clips
-  | 'rss_bridge'      // Generic RSS-Bridge
-  | 'lemmy'           // Lemmy video posts
-  | 'pixelfed'        // Self-hosted Pixelfed
-  | 'atprotocol'      // AT Protocol firehose
-  | 'zora'            // Zora video NFTs
-  | 'farcaster'       // Farcaster video Frames
-  | 'direct';         // DegenFeed native
+  | 'loops' // Primary self-hosted
+  | 'peertube' // Self-hosted federated
+  | 'youtube' // YouTube Shorts
+  | 'tiktok_rss' // TikTok via RSS-Bridge
+  | 'instagram' // Instagram Reels
+  | 'owncast' // Owncast clips
+  | 'rss_bridge' // Generic RSS-Bridge
+  | 'lemmy' // Lemmy video posts
+  | 'pixelfed' // Self-hosted Pixelfed
+  | 'atprotocol' // AT Protocol firehose
+  | 'zora' // Zora video NFTs
+  | 'farcaster' // Farcaster video Frames
+  | 'direct'; // DegenFeed native
 
 export const ALL_SOURCES: ExtendedSource[] = [
   'loops',
@@ -757,7 +757,8 @@ export class ShortsAggregatorV2 {
                 : '',
             videoUrl: video.url,
             duration: video.duration,
-            creatorName: video.channel?.displayName || video.account?.displayName || 'Loops Creator',
+            creatorName:
+              video.channel?.displayName || video.account?.displayName || 'Loops Creator',
             creatorAvatar: video.channel?.avatar?.path
               ? `${loopsUrl}${video.channel.avatar.path}`
               : video.account?.avatar,
@@ -829,15 +830,13 @@ export class ShortsAggregatorV2 {
           const embed = item.post.record.embed;
           if (
             !embed ||
-            (embed.$type !== 'app.bsky.embed.video' &&
-              embed.$type !== 'app.bsky.embed.video#main')
+            (embed.$type !== 'app.bsky.embed.video' && embed.$type !== 'app.bsky.embed.video#main')
           ) {
             continue;
           }
 
           const videoUrl =
-            embed.playlist ||
-            `https://video.bsky.app/watch/${item.post.uri.split('/').pop()}`;
+            embed.playlist || `https://video.bsky.app/watch/${item.post.uri.split('/').pop()}`;
           if (!videoUrl) continue;
 
           const text = item.post.record.text || '';
@@ -1242,7 +1241,12 @@ export class ShortsAggregatorV2 {
             const res = await fetch(`${loopsUrl}/api/v1/status`, {
               signal: AbortSignal.timeout(3000),
             });
-            return { source, healthy: res.ok, lastFetch: Date.now(), videosCount: 0 } as SourceHealth;
+            return {
+              source,
+              healthy: res.ok,
+              lastFetch: Date.now(),
+              videosCount: 0,
+            } as SourceHealth;
           }
           case 'owncast': {
             const owncastUrl = this.env.OWCAST_INSTANCE_URL || 'https://owncast.degenfeed.xyz';
@@ -1307,21 +1311,38 @@ export class ShortsAggregatorV2 {
             const res = await fetch(`${bskyUrl}/xrpc/app.bsky.feed.getTimeline?limit=1`, {
               signal: AbortSignal.timeout(3000),
             });
-            return { source, healthy: res.ok, lastFetch: Date.now(), videosCount: 0 } as SourceHealth;
+            return {
+              source,
+              healthy: res.ok,
+              lastFetch: Date.now(),
+              videosCount: 0,
+            } as SourceHealth;
           }
           case 'zora': {
             const res = await fetch('https://api.zora.co/graphql', {
               method: 'POST',
               headers: { 'content-type': 'application/json' },
-              body: JSON.stringify({ query: 'query { tokens(pagination: {limit: 1}) { nodes { token { tokenId } } } }' }),
+              body: JSON.stringify({
+                query: 'query { tokens(pagination: {limit: 1}) { nodes { token { tokenId } } } }',
+              }),
               signal: AbortSignal.timeout(3000),
             });
-            return { source, healthy: res.ok, lastFetch: Date.now(), videosCount: 0 } as SourceHealth;
+            return {
+              source,
+              healthy: res.ok,
+              lastFetch: Date.now(),
+              videosCount: 0,
+            } as SourceHealth;
           }
           case 'farcaster': {
             const hubUrl = this.env.FARCASTER_BOT_HUB_URL || 'http://127.0.0.1:2281';
             const res = await fetch(`${hubUrl}/v1/info`, { signal: AbortSignal.timeout(3000) });
-            return { source, healthy: res.ok, lastFetch: Date.now(), videosCount: 0 } as SourceHealth;
+            return {
+              source,
+              healthy: res.ok,
+              lastFetch: Date.now(),
+              videosCount: 0,
+            } as SourceHealth;
           }
           default:
             return {

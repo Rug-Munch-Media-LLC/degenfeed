@@ -29,11 +29,15 @@
  * Dedup strategy: event ID cache with TTL (24h) and content hash
  */
 
-import type { UnifiedEvent, RSVPCrossProtocol } from './server/types';
-import { fetchSmokeSignalEvents, createSmokeSignalEvent, rsvpToEvent } from './providers/smokesignal';
+import { fetchFarcasterEvents } from './providers/farcaster-events';
 import { fetchMobilizonPosts, mobilizonEventToUnified } from './providers/mobilizon';
 import { fetchNostrCalendarEvents } from './providers/nostr-events';
-import { fetchFarcasterEvents } from './providers/farcaster-events';
+import {
+  createSmokeSignalEvent,
+  fetchSmokeSignalEvents,
+  rsvpToEvent,
+} from './providers/smokesignal';
+import type { RSVPCrossProtocol, UnifiedEvent } from './server/types';
 
 // ─── Constants ─────────────────────────────────────────────────────────
 
@@ -79,7 +83,7 @@ function contentHash(event: Partial<UnifiedEvent>): string {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
     const chr = str.charCodeAt(i);
-    hash = ((hash << 5) - hash) + chr;
+    hash = (hash << 5) - hash + chr;
     hash |= 0;
   }
   return `ch:${Math.abs(hash).toString(36)}`;
@@ -110,10 +114,10 @@ export async function syncMobilizonToSmokeSignal(authToken: string): Promise<{
 
   try {
     const mobilizonPosts = await fetchMobilizonPosts(20);
-    
+
     for (const post of mobilizonPosts) {
       const eventId = post.id;
-      
+
       // Skip if already seen
       if (isSeen('mobilizon', eventId)) {
         skipped++;
@@ -121,14 +125,19 @@ export async function syncMobilizonToSmokeSignal(authToken: string): Promise<{
       }
 
       // Skip duplicates by content
-      if (isDuplicateByContent({ title: post.text?.split('\n')[0], beginsOn: new Date(post.createdAt).toISOString() })) {
+      if (
+        isDuplicateByContent({
+          title: post.text?.split('\n')[0],
+          beginsOn: new Date(post.createdAt).toISOString(),
+        })
+      ) {
         skipped++;
         continue;
       }
 
       // Extract event data from UnifiedPost
       const lines = post.text?.split('\n') || [];
-      const title = lines[0]?.replace(/^[📅🎉]\s*/, '') || 'Untitled Event';
+      const title = lines[0]?.replace(/^[📅🎉]\s*/u, '') || 'Untitled Event';
       const beginsOn = new Date(post.createdAt).toISOString();
       const description = lines.slice(1).join('\n').slice(0, 2000);
 
@@ -138,7 +147,7 @@ export async function syncMobilizonToSmokeSignal(authToken: string): Promise<{
           name: title,
           description,
           startsAt: beginsOn,
-          location: post.embeds?.find(e => e.kind === 'link')?.url || undefined,
+          location: post.embeds?.find((e) => e.kind === 'link')?.url || undefined,
         },
         authToken,
       );
@@ -146,12 +155,12 @@ export async function syncMobilizonToSmokeSignal(authToken: string): Promise<{
       if (result.ok && result.uri) {
         markSeen('mobilizon', eventId);
         markContentSeen({ title, beginsOn, description });
-        
+
         // Track bridging
         const targetIds = bridgedIds.get(eventId) || [];
         targetIds.push(result.uri);
         bridgedIds.set(eventId, targetIds);
-        
+
         bridged++;
         log(`✓ Mobilizon→SmokeSignal: "${title}"`);
       } else {
@@ -185,7 +194,7 @@ export async function syncSmokeSignalToMobilizon(mobilizonToken: string): Promis
 
     for (const event of atprotoEvents) {
       const eventId = event.id;
-      
+
       if (isSeen('smokesignal', eventId)) {
         skipped++;
         continue;
@@ -198,7 +207,7 @@ export async function syncSmokeSignalToMobilizon(mobilizonToken: string): Promis
 
       // Create event on local Mobilizon instance via GraphQL
       const mobilizonUrl = process.env.MOBILIZON_API_URL || 'http://127.0.0.1:8098';
-      
+
       try {
         const gqlMutation = `
           mutation CreateEvent($input: CreateEventInput!) {
@@ -261,7 +270,9 @@ export async function syncSmokeSignalToMobilizon(mobilizonToken: string): Promis
           errors.push(`SmokeSignal→Mobilizon HTTP ${res.status}: ${errText.slice(0, 100)}`);
         }
       } catch (err) {
-        errors.push(`SmokeSignal→Mobilizon fetch error: "${event.title}": ${(err as Error).message}`);
+        errors.push(
+          `SmokeSignal→Mobilizon fetch error: "${event.title}": ${(err as Error).message}`,
+        );
       }
     }
   } catch (err) {
@@ -286,10 +297,10 @@ export async function syncRSVP(
 
   // Find bridged event IDs
   const targets = bridgedIds.get(rsvp.eventId) || [];
-  
+
   for (const targetId of targets) {
     const [targetProtocol] = targetId.split(':');
-    
+
     try {
       if (targetProtocol === 'smokesignal' || targetProtocol === 'atproto') {
         const result = await rsvpToEvent(
@@ -314,9 +325,12 @@ export async function syncRSVP(
             }
           }
         `;
-        const status = rsvp.response === 'yes' ? 'ACCEPTED'
-          : rsvp.response === 'maybe' ? 'TENTATIVE'
-          : 'REJECTED';
+        const status =
+          rsvp.response === 'yes'
+            ? 'ACCEPTED'
+            : rsvp.response === 'maybe'
+              ? 'TENTATIVE'
+              : 'REJECTED';
 
         const res = await fetch(`${mobilizonUrl}/api`, {
           method: 'POST',
@@ -374,9 +388,9 @@ export async function runSyncCycle(
 
   log(
     `Sync cycle complete: ` +
-    `M→SS ${m2ss.bridged} bridged, ${m2ss.skipped} skipped; ` +
-    `SS→M ${ss2m.bridged} bridged, ${ss2m.skipped} skipped ` +
-    `(${durationMs}ms)`,
+      `M→SS ${m2ss.bridged} bridged, ${m2ss.skipped} skipped; ` +
+      `SS→M ${ss2m.bridged} bridged, ${ss2m.skipped} skipped ` +
+      `(${durationMs}ms)`,
   );
 
   return { mobilizonToSS: m2ss, ssToMobilizon: ss2m, durationMs };
@@ -467,9 +481,7 @@ export async function fetchUnifiedEventsFeed(
 
   if (filters?.categories?.length) {
     const cats = filters.categories.map((c) => c.toLowerCase());
-    filtered = filtered.filter((e) =>
-      e.categories.some((c) => cats.includes(c.toLowerCase())),
-    );
+    filtered = filtered.filter((e) => e.categories.some((c) => cats.includes(c.toLowerCase())));
   }
 
   if (filters?.dateFrom) {
@@ -484,19 +496,21 @@ export async function fetchUnifiedEventsFeed(
 
   if (filters?.location) {
     const q = filters.location.toLowerCase();
-    filtered = filtered.filter((e) =>
-      e.location?.name?.toLowerCase().includes(q) ||
-      e.location?.address?.toLowerCase().includes(q) ||
-      e.location?.locality?.toLowerCase().includes(q),
+    filtered = filtered.filter(
+      (e) =>
+        e.location?.name?.toLowerCase().includes(q) ||
+        e.location?.address?.toLowerCase().includes(q) ||
+        e.location?.locality?.toLowerCase().includes(q),
     );
   }
 
   if (filters?.query) {
     const q = filters.query.toLowerCase();
-    filtered = filtered.filter((e) =>
-      e.title.toLowerCase().includes(q) ||
-      e.description.toLowerCase().includes(q) ||
-      e.tags.some((t) => t.toLowerCase().includes(q)),
+    filtered = filtered.filter(
+      (e) =>
+        e.title.toLowerCase().includes(q) ||
+        e.description.toLowerCase().includes(q) ||
+        e.tags.some((t) => t.toLowerCase().includes(q)),
     );
   }
 
@@ -546,10 +560,7 @@ export async function fetchTrendingEvents(limit = 20): Promise<UnifiedEvent[]> {
 /**
  * Filter events near a location string.
  */
-export async function fetchEventsNear(
-  locationQuery: string,
-  limit = 20,
-): Promise<UnifiedEvent[]> {
+export async function fetchEventsNear(locationQuery: string, limit = 20): Promise<UnifiedEvent[]> {
   const { events } = await fetchUnifiedEventsFeed(limit * 2, { location: locationQuery });
   return events.slice(0, limit);
 }

@@ -248,11 +248,35 @@ export const FRAME_TEMPLATES: FrameTemplate[] = [
     defaultButtonLabel: '🪙 Buy Now',
     defaultActionType: 'tx',
     fields: [
-      { key: 'coinSymbol', label: 'Coin Symbol', type: 'text', required: true, placeholder: '$DEGEN' },
+      {
+        key: 'coinSymbol',
+        label: 'Coin Symbol',
+        type: 'text',
+        required: true,
+        placeholder: '$DEGEN',
+      },
       { key: 'coinAddress', label: 'Coin Contract Address', type: 'address', required: true },
-      { key: 'chainId', label: 'Chain', type: 'select', required: true, options: ['eip155:8453', 'eip155:10', 'eip155:137'] },
-      { key: 'price', label: 'Price per coin (ETH)', type: 'text', required: false, placeholder: '0.001' },
-      { key: 'backgroundColor', label: 'Background Color', type: 'color', required: false, defaultValue: '#6A47E4' },
+      {
+        key: 'chainId',
+        label: 'Chain',
+        type: 'select',
+        required: true,
+        options: ['eip155:8453', 'eip155:10', 'eip155:137'],
+      },
+      {
+        key: 'price',
+        label: 'Price per coin (ETH)',
+        type: 'text',
+        required: false,
+        placeholder: '0.001',
+      },
+      {
+        key: 'backgroundColor',
+        label: 'Background Color',
+        type: 'color',
+        required: false,
+        defaultValue: '#6A47E4',
+      },
     ],
   },
   {
@@ -266,9 +290,27 @@ export const FRAME_TEMPLATES: FrameTemplate[] = [
     defaultActionType: 'tx',
     fields: [
       { key: 'creatorAddress', label: 'Creator Wallet Address', type: 'address', required: true },
-      { key: 'creatorName', label: 'Creator Name', type: 'text', required: false, placeholder: 'Creator name' },
-      { key: 'chainId', label: 'Chain', type: 'select', required: true, options: ['eip155:8453', 'eip155:10', 'eip155:137', 'eip155:1'] },
-      { key: 'amounts', label: 'Suggested amounts (comma-separated)', type: 'text', required: false, placeholder: '0.001,0.005,0.01' },
+      {
+        key: 'creatorName',
+        label: 'Creator Name',
+        type: 'text',
+        required: false,
+        placeholder: 'Creator name',
+      },
+      {
+        key: 'chainId',
+        label: 'Chain',
+        type: 'select',
+        required: true,
+        options: ['eip155:8453', 'eip155:10', 'eip155:137', 'eip155:1'],
+      },
+      {
+        key: 'amounts',
+        label: 'Suggested amounts (comma-separated)',
+        type: 'text',
+        required: false,
+        placeholder: '0.001,0.005,0.01',
+      },
     ],
   },
   {
@@ -281,9 +323,27 @@ export const FRAME_TEMPLATES: FrameTemplate[] = [
     defaultButtonLabel: '🔔 Subscribe',
     defaultActionType: 'tx',
     fields: [
-      { key: 'price', label: 'Monthly Price (ETH)', type: 'text', required: true, placeholder: '0.01' },
-      { key: 'benefits', label: 'Benefits (comma-separated)', type: 'text', required: false, placeholder: 'exclusive content, early access' },
-      { key: 'chainId', label: 'Chain', type: 'select', required: true, options: ['eip155:8453', 'eip155:10'] },
+      {
+        key: 'price',
+        label: 'Monthly Price (ETH)',
+        type: 'text',
+        required: true,
+        placeholder: '0.01',
+      },
+      {
+        key: 'benefits',
+        label: 'Benefits (comma-separated)',
+        type: 'text',
+        required: false,
+        placeholder: 'exclusive content, early access',
+      },
+      {
+        key: 'chainId',
+        label: 'Chain',
+        type: 'select',
+        required: true,
+        options: ['eip155:8453', 'eip155:10'],
+      },
     ],
   },
   {
@@ -297,9 +357,26 @@ export const FRAME_TEMPLATES: FrameTemplate[] = [
     defaultActionType: 'tx',
     fields: [
       { key: 'daoName', label: 'DAO Name', type: 'text', required: true, placeholder: 'My DAO' },
-      { key: 'membershipAddress', label: 'Membership NFT Address', type: 'address', required: true },
-      { key: 'price', label: 'Membership Price (ETH)', type: 'text', required: false, placeholder: '0.0' },
-      { key: 'chainId', label: 'Chain', type: 'select', required: true, options: ['eip155:8453', 'eip155:10'] },
+      {
+        key: 'membershipAddress',
+        label: 'Membership NFT Address',
+        type: 'address',
+        required: true,
+      },
+      {
+        key: 'price',
+        label: 'Membership Price (ETH)',
+        type: 'text',
+        required: false,
+        placeholder: '0.0',
+      },
+      {
+        key: 'chainId',
+        label: 'Chain',
+        type: 'select',
+        required: true,
+        options: ['eip155:8453', 'eip155:10'],
+      },
     ],
   },
   {
@@ -314,8 +391,20 @@ export const FRAME_TEMPLATES: FrameTemplate[] = [
     fields: [
       { key: 'nftAddress', label: 'NFT Contract Address', type: 'address', required: true },
       { key: 'nftName', label: 'NFT Name', type: 'text', required: false, placeholder: 'My NFT' },
-      { key: 'price', label: 'Price (ETH, 0 for free)', type: 'text', required: false, placeholder: '0.0' },
-      { key: 'chainId', label: 'Chain', type: 'select', required: true, options: ['eip155:8453', 'eip155:10', 'eip155:137', 'eip155:1'] },
+      {
+        key: 'price',
+        label: 'Price (ETH, 0 for free)',
+        type: 'text',
+        required: false,
+        placeholder: '0.0',
+      },
+      {
+        key: 'chainId',
+        label: 'Chain',
+        type: 'select',
+        required: true,
+        options: ['eip155:8453', 'eip155:10', 'eip155:137', 'eip155:1'],
+      },
     ],
   },
   {
@@ -329,11 +418,29 @@ export const FRAME_TEMPLATES: FrameTemplate[] = [
     defaultActionType: 'post',
     fields: [
       { key: 'customImage', label: 'Frame Image URL', type: 'url', required: true },
-      { key: 'buttonLabel1', label: 'Button 1 Label', type: 'text', required: true, placeholder: 'Button 1' },
-      { key: 'buttonAction1', label: 'Button 1 Action', type: 'select', required: false, options: ['post', 'post_redirect', 'link', 'mint', 'tx'] },
+      {
+        key: 'buttonLabel1',
+        label: 'Button 1 Label',
+        type: 'text',
+        required: true,
+        placeholder: 'Button 1',
+      },
+      {
+        key: 'buttonAction1',
+        label: 'Button 1 Action',
+        type: 'select',
+        required: false,
+        options: ['post', 'post_redirect', 'link', 'mint', 'tx'],
+      },
       { key: 'buttonTarget1', label: 'Button 1 Target', type: 'text', required: false },
       { key: 'buttonLabel2', label: 'Button 2 Label', type: 'text', required: false },
-      { key: 'buttonAction2', label: 'Button 2 Action', type: 'select', required: false, options: ['post', 'post_redirect', 'link', 'mint', 'tx'] },
+      {
+        key: 'buttonAction2',
+        label: 'Button 2 Action',
+        type: 'select',
+        required: false,
+        options: ['post', 'post_redirect', 'link', 'mint', 'tx'],
+      },
       { key: 'buttonTarget2', label: 'Button 2 Target', type: 'text', required: false },
     ],
   },
@@ -365,7 +472,8 @@ export function buildFrameEmbed(params: {
     },
   };
   if (params.splashImageUrl) embed.button.action.splashImageUrl = params.splashImageUrl;
-  if (params.splashBackgroundColor) embed.button.action.splashBackgroundColor = params.splashBackgroundColor;
+  if (params.splashBackgroundColor)
+    embed.button.action.splashBackgroundColor = params.splashBackgroundColor;
   return embed;
 }
 
@@ -448,24 +556,28 @@ export function generateFramesV2Html(params: {
     meta.push(`  <meta property="fc:frame:refresh_period" content="${refreshPeriod}" />`);
   }
   if (transaction) {
-    meta.push(`  <meta property="fc:frame:transaction" content="${escapeHtml(JSON.stringify(transaction))}" />`);
+    meta.push(
+      `  <meta property="fc:frame:transaction" content="${escapeHtml(JSON.stringify(transaction))}" />`,
+    );
   }
   if (location) {
     meta.push(`  <meta http-equiv="refresh" content="0;url=${escapeHtml(location)}" />`);
   }
 
   // Frame SDK script (required for v2 communication)
-  meta.push('',
+  meta.push(
+    '',
     '  <!-- Frame SDK -->',
-    '  <script src="https://cdn.jsdelivr.net/npm/@farcaster/frame-sdk@latest/dist/index.min.js"><\/script>',
+    '  <script src="https://cdn.jsdelivr.net/npm/@farcaster/frame-sdk@latest/dist/index.min.js"></script>',
     '  <script>',
     '    window.FarcasterFrameSDK?.ready().then(() => {',
     '      console.log("Frame SDK ready");',
     '    });',
-    '  <\/script>',
+    '  </script>',
   );
 
-  meta.push('</head>',
+  meta.push(
+    '</head>',
     '<body>',
     '  <p>Frame content loaded. Opening in Mini App browser...</p>',
     '</body>',

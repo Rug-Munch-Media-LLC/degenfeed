@@ -2,39 +2,38 @@ import type { Protocol, UnifiedIdentity } from '@degenfeed/types';
 
 export type { BuildCastMessageOpts } from './engage';
 export { buildFarcasterCastMessage, engageFarcaster } from './engage';
-export type { Protocol, UnifiedIdentity };
-
 // ─── Frames v2 / Mini Apps ───────────────────────────────────────────────
 export type {
-  FrameEmbed,
-  FrameConfig,
   AccountAssociation,
-  FrameManifest,
-  TriggerConfig,
   FrameActionBody,
+  FrameConfig,
+  FrameEmbed,
+  FrameInteractionEvent,
+  FrameManifest,
+  FrameNotificationDetails,
   FrameResponse,
   FrameResponseButton,
   FrameResponseButtonAction,
   FrameResponseTransaction,
   FrameState,
-  FrameInteractionEvent,
   FrameTemplate,
-  FrameTemplateType,
   FrameTemplateField,
-  FrameNotificationDetails,
+  FrameTemplateType,
   FrameWebhookEvent,
   FrameWebhookPayload,
+  TriggerConfig,
 } from './frames-v2';
 export {
-  FRAME_TEMPLATES,
   advanceFrameState,
   buildFrameEmbed,
   buildFrameManifest,
   createFrameState,
+  FRAME_TEMPLATES,
   generateFramesV2Html,
   renderFrameEmbedMetaTag,
   serializeFrameEmbed,
 } from './frames-v2';
+export type { Protocol, UnifiedIdentity };
 
 export const DEFAULT_HUB_URL = 'http://127.0.0.1:2281';
 export const FALLBACK_HUB_URLS = [

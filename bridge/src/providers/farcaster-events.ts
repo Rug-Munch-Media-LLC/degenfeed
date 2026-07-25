@@ -9,7 +9,7 @@
  * Uses the self-hosted Hubble hub for data.
  */
 
-import type { SchemaGuard, UnifiedEvent, FarcasterEventFrame } from '../server/types';
+import type { FarcasterEventFrame, SchemaGuard, UnifiedEvent } from '../server/types';
 
 const $fetch = globalThis.fetch;
 
@@ -29,15 +29,27 @@ const EVENT_CHANNELS = [
 ];
 
 const EVENT_KEYWORDS = [
-  'event', 'meetup', 'conference', 'hackathon', 'workshop', 'talk',
-  'panel', 'summit', 'convention', 'festival', 'live show', 'concert',
-  'webinar', 'AMA', 'town hall', 'community call',
+  'event',
+  'meetup',
+  'conference',
+  'hackathon',
+  'workshop',
+  'talk',
+  'panel',
+  'summit',
+  'convention',
+  'festival',
+  'live show',
+  'concert',
+  'webinar',
+  'AMA',
+  'town hall',
+  'community call',
 ];
 
 const CURATED_FIDS: number[] = [
-  1, 2, 3, 50, 215, 228, 239, 339, 354, 433, 602, 615, 910,
-  1099, 1565, 2281, 2875, 3093, 3621, 4120, 4983, 5120,
-  5650, 6423, 7486, 7771, 8642, 8832, 9245,
+  1, 2, 3, 50, 215, 228, 239, 339, 354, 433, 602, 615, 910, 1099, 1565, 2281, 2875, 3093, 3621,
+  4120, 4983, 5120, 5650, 6423, 7486, 7771, 8642, 8832, 9245,
 ];
 
 const FETCH_TIMEOUT_MS = 10000;
@@ -56,7 +68,8 @@ function isEventRelated(text: string): boolean {
 
 function extractEventDate(text: string): string | undefined {
   // Try to find date patterns: "June 15", "2024-06-15", "tomorrow", "next week"
-  const dateRegex = /(\b(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s+\d{1,2}(?:st|nd|rd|th)?(?:,?\s*\d{4})?\b)/gi;
+  const dateRegex =
+    /(\b(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s+\d{1,2}(?:st|nd|rd|th)?(?:,?\s*\d{4})?\b)/gi;
   const match = text.match(dateRegex);
   if (match) return match[0];
 
@@ -93,10 +106,7 @@ function guessEventCategories(text: string): string[] {
 
 // ─── Fetch from Hubble ───────────────────────────────────────────────
 
-async function fetchCastsFromHubble(
-  fid: number,
-  limit: number,
-): Promise<FarcasterEventFrame[]> {
+async function fetchCastsFromHubble(fid: number, limit: number): Promise<FarcasterEventFrame[]> {
   try {
     const res = await $fetch(
       `${HUBBLE_BASE}/v1/castsByFid?fid=${fid}&pageSize=${Math.min(limit, 25)}`,
@@ -162,8 +172,12 @@ async function fetchCastsFromHubble(
 function farcasterFrameToUnifiedEvent(frame: FarcasterEventFrame): UnifiedEvent | null {
   try {
     const title = frame.eventTitle || 'Untitled Farcaster Event';
-    const eventUrl = frame.eventUrl || frame.embeds[0]?.url || `https://warpcast.com/~/conversations/${frame.hash}`;
-    const eventDate = frame.eventDate || new Date(frame.timestamp * 1000).toISOString().split('T')[0];
+    const eventUrl =
+      frame.eventUrl ||
+      frame.embeds[0]?.url ||
+      `https://warpcast.com/~/conversations/${frame.hash}`;
+    const eventDate =
+      frame.eventDate || new Date(frame.timestamp * 1000).toISOString().split('T')[0];
 
     // Try to parse a date from frame text
     const beginsOn = frame.eventDate

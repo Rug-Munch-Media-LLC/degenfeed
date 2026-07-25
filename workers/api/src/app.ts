@@ -33,15 +33,14 @@ import { registerCoinsRoutes } from './routes/register/coins';
 import { registerCoreRoutes } from './routes/register/core';
 import { registerDaoRoutes } from './routes/register/dao';
 import { registerFeedRoutes } from './routes/register/feed';
+// ─── Farcaster Frames v2 + Nostr NIP-29 Groups ─────────────────────────
+import { registerFramesRoutes } from './routes/register/frames';
 import { registerLensRoutes } from './routes/register/lens';
 import { registerLiveRoutes } from './routes/register/live';
 import { registerMediaRoutes } from './routes/register/media';
 import { registerMessagingRoutes } from './routes/register/messaging';
-import { registerPremiumRoutes } from './routes/register/premium';
-
-// ─── Farcaster Frames v2 + Nostr NIP-29 Groups ─────────────────────────
-import { registerFramesRoutes } from './routes/register/frames';
 import { registerNostrGroupRoutes } from './routes/register/nostr-groups';
+import { registerPremiumRoutes } from './routes/register/premium';
 import { registerSocialRoutes } from './routes/register/social';
 
 // ─── Additional dependencies ─────────────────────────────────
@@ -389,6 +388,29 @@ app.get('/api/external/status', async (c) => handleExternalStatus(c.req.raw, c.e
 app.post('/api/external/standalone/subscribe', async (c) =>
   handleStandaloneSubscribe(c.req.raw, c.env),
 );
+
+// ═══════════════════════════════════════════════════════════════════════════
+// BRIDGY FED BRIDGE ROUTES
+// ═══════════════════════════════════════════════════════════════════════════
+
+import {
+  handleBridgyConfigure,
+  handleBridgyCrossPost,
+  handleBridgyRegisterUser,
+  handleBridgyStatus,
+  handleBridgyUsers,
+} from './routes/bridgy-routes';
+
+// GET  /api/bridgy/status    — Bridgy Fed bridge health
+app.get('/api/bridgy/status', async (c) => handleBridgyStatus(c.req.raw, c.env));
+// POST /api/bridgy/configure — Configure Bridgy Fed for an instance (admin)
+app.post('/api/bridgy/configure', async (c) => handleBridgyConfigure(c.req.raw, c.env));
+// GET  /api/bridgy/users     — List bridged users
+app.get('/api/bridgy/users', async (c) => handleBridgyUsers(c.req.raw, c.env));
+// POST /api/bridgy/cross-post — Cross-post via Bridgy Fed
+app.post('/api/bridgy/cross-post', async (c) => handleBridgyCrossPost(c.req.raw, c.env));
+// POST /api/bridgy/register  — Register user's bridge
+app.post('/api/bridgy/register', async (c) => handleBridgyRegisterUser(c.req.raw, c.env));
 
 // ═══════════════════════════════════════════════════════════════════════════
 // CROSS-PLATFORM ACCOUNT PORTABILITY ROUTES

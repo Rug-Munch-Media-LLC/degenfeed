@@ -289,17 +289,23 @@ export async function fetchMobilizonPosts(limit = 20): Promise<UnifiedPost[]> {
 /**
  * Convert a UnifiedPost (from Mobilizon) to a UnifiedEvent for the event bridge.
  */
-export function mobilizonEventToUnified(post: UnifiedPost): import('../server/types').UnifiedEvent | null {
+export function mobilizonEventToUnified(
+  post: UnifiedPost,
+): import('../server/types').UnifiedEvent | null {
   try {
     const lines = post.text?.split('\n') || [];
-    const title = lines[0]?.replace(/^[📅🎉]\s*/, '').trim() || 'Untitled Event';
-    const desc = lines.slice(2).filter(l => !l.startsWith('📍') && !l.startsWith('🌐') && !l.startsWith('🏷️')).join('\n').trim();
-    const locationLine = lines.find(l => l.startsWith('📍'))?.replace('📍 ', '') || '';
-    const onlineLine = lines.find(l => l.startsWith('🌐'))?.replace('🌐 Online: ', '') || '';
+    const title = lines[0]?.replace(/^[📅🎉]\s*/u, '').trim() || 'Untitled Event';
+    const desc = lines
+      .slice(2)
+      .filter((l) => !l.startsWith('📍') && !l.startsWith('🌐') && !l.startsWith('🏷️'))
+      .join('\n')
+      .trim();
+    const locationLine = lines.find((l) => l.startsWith('📍'))?.replace('📍 ', '') || '';
+    const onlineLine = lines.find((l) => l.startsWith('🌐'))?.replace('🌐 Online: ', '') || '';
     const isOnline = !!onlineLine;
-    const tagLine = lines.find(l => l.startsWith('🏷️'))?.replace('🏷️ ', '') || '';
+    const tagLine = lines.find((l) => l.startsWith('🏷️'))?.replace('🏷️ ', '') || '';
     const tags = tagLine ? tagLine.split(',').map((t: string) => t.trim()) : [];
-    
+
     const raw = (post.raw || {}) as Record<string, unknown>;
     const beginsOn = (raw.beginsOn as string) || new Date(post.createdAt).toISOString();
     const endsOn = raw.endsOn as string | undefined;
@@ -329,9 +335,14 @@ export function mobilizonEventToUnified(post: UnifiedPost): import('../server/ty
       organizer: post.author,
       tags,
       picture: picture ? { url: picture.url, name: picture.name } : undefined,
-      url: (raw.uuid ? `${(raw as any)._instanceUrl || ''}/events/${raw.uuid}` : undefined) || (post.embeds?.find(e => e.kind === 'link')?.url) || '',
+      url:
+        (raw.uuid ? `${(raw as any)._instanceUrl || ''}/events/${raw.uuid}` : undefined) ||
+        post.embeds?.find((e) => e.kind === 'link')?.url ||
+        '',
       rsvpCount: 0,
-      maxAttendees: (raw.options as Record<string, unknown>)?.maximumAttendeeCapacity as number | undefined,
+      maxAttendees: (raw.options as Record<string, unknown>)?.maximumAttendeeCapacity as
+        | number
+        | undefined,
       status: raw.status === 'cancelled' ? 'cancelled' : 'confirmed',
       visibility: (raw.visibility as string) === 'private' ? 'private' : 'public',
       categories: guessEventNiches(title, desc, tags),

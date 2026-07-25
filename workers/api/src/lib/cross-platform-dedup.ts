@@ -100,8 +100,20 @@ const CROSS_POST_HEADERS = [
 const KNOWN_BRIDGES: Array<{ from: string; to: string; name: string }> = [
   { from: 'nostr', to: 'farcaster', name: 'Nostr-Farcaster Bridge' },
   { from: 'farcaster', to: 'nostr', name: 'Nostr-Farcaster Bridge' },
-  { from: 'bluesky', to: 'mastodon', name: 'Bridgy Fed' },
-  { from: 'mastodon', to: 'bluesky', name: 'Bridgy Fed' },
+  // Bridgy Fed — self-hosted bridge service
+  { from: 'bluesky', to: 'mastodon', name: 'Bridgy Fed (self-hosted)' },
+  { from: 'mastodon', to: 'bluesky', name: 'Bridgy Fed (self-hosted)' },
+  { from: 'bluesky', to: 'gotosocial', name: 'Bridgy Fed (self-hosted)' },
+  { from: 'gotosocial', to: 'bluesky', name: 'Bridgy Fed (self-hosted)' },
+  { from: 'discourse', to: 'mastodon', name: 'Bridgy Fed (self-hosted)' },
+  { from: 'discourse', to: 'bluesky', name: 'Bridgy Fed (self-hosted)' },
+  { from: 'ghost', to: 'mastodon', name: 'Bridgy Fed (self-hosted)' },
+  { from: 'ghost', to: 'bluesky', name: 'Bridgy Fed (self-hosted)' },
+  { from: 'mobilizon', to: 'bluesky', name: 'Bridgy Fed (self-hosted)' },
+  { from: 'mobilizon', to: 'mastodon', name: 'Bridgy Fed (self-hosted)' },
+  { from: 'pds', to: 'mastodon', name: 'Bridgy Fed (self-hosted)' },
+  { from: 'pds', to: 'gotosocial', name: 'Bridgy Fed (self-hosted)' },
+  // Other bridges
   { from: 'bluesky', to: 'nostr', name: 'Bluesky-Nostr Bridge' },
   { from: 'nostr', to: 'bluesky', name: 'Bluesky-Nostr Bridge' },
   { from: 'rss', to: 'nostr', name: 'RSS-Nostr Bridge' },

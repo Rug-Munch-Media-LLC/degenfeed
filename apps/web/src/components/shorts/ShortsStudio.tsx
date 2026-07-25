@@ -14,8 +14,8 @@
  */
 
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { PROTOCOL_META, type ShortProtocol } from './protocolMeta';
 import { PublishProgress, type PublishResult } from './PublishProgress';
+import { PROTOCOL_META, type ShortProtocol } from './protocolMeta';
 
 // ─── Types ───────────────────────────────────────────────────────────────
 
@@ -421,9 +421,7 @@ export function ShortsStudio({ open, onClose, onPublished }: ShortsStudioProps) 
 
         {/* Publish targets */}
         <div>
-          <label className="mb-2 block text-xs font-medium text-white/70">
-            Publish to
-          </label>
+          <label className="mb-2 block text-xs font-medium text-white/70">Publish to</label>
           <div className="flex flex-wrap gap-2">
             {PUBLISH_TARGETS.map((t) => {
               const active = selectedTargets.has(t.key);
@@ -470,9 +468,7 @@ export function ShortsStudio({ open, onClose, onPublished }: ShortsStudioProps) 
             </button>
             <div className="flex-1">
               <label className="text-xs font-medium text-white/80">Mint as Zora NFT</label>
-              <p className="text-[10px] text-white/40">
-                Your short becomes a tradeable video NFT
-              </p>
+              <p className="text-[10px] text-white/40">Your short becomes a tradeable video NFT</p>
             </div>
           </div>
         )}
@@ -562,13 +558,7 @@ export function ShortsStudio({ open, onClose, onPublished }: ShortsStudioProps) 
         {/* Success header */}
         <div className="flex flex-col items-center gap-2 py-3">
           <div className="flex h-14 w-14 items-center justify-center rounded-full bg-degen-500/15">
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              className="text-degen-400"
-            >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-degen-400">
               <path
                 d="M20 6L9 17l-5-5"
                 stroke="currentColor"
@@ -581,8 +571,10 @@ export function ShortsStudio({ open, onClose, onPublished }: ShortsStudioProps) 
           <h3 className="text-base font-bold text-white">Published!</h3>
           <p className="text-center text-xs text-white/50">
             Published to{' '}
-            <span className="font-semibold text-degen-400">{successCount}/{totalCount}</span>
-            {' '}platforms · ~{(reachEstimate / 1_000_000).toFixed(1)}M reach
+            <span className="font-semibold text-degen-400">
+              {successCount}/{totalCount}
+            </span>{' '}
+            platforms · ~{(reachEstimate / 1_000_000).toFixed(1)}M reach
           </p>
         </div>
 

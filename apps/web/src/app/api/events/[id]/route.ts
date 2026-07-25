@@ -3,17 +3,15 @@ import { proxyGet } from '../../_proxy';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
     // Proxy to the bridge which handles /api/events/:id internally
-    const bridgeUrl = process.env.WORKER_URL
-      ?? process.env.NEXT_PUBLIC_WORKER_URL
-      ?? process.env.NEXT_PUBLIC_API_BASE
-      ?? 'http://localhost:8787';
+    const bridgeUrl =
+      process.env.WORKER_URL ??
+      process.env.NEXT_PUBLIC_WORKER_URL ??
+      process.env.NEXT_PUBLIC_API_BASE ??
+      'http://localhost:8787';
 
     const res = await fetch(`${bridgeUrl}/api/events`, {
       headers: { 'Content-Type': 'application/json' },
@@ -25,8 +23,8 @@ export async function GET(
 
     const data = await res.json();
     const events = data.events || [];
-    const event = events.find((e: { id: string; url?: string }) =>
-      e.id === id || e.url?.includes(id),
+    const event = events.find(
+      (e: { id: string; url?: string }) => e.id === id || e.url?.includes(id),
     );
 
     if (!event) {

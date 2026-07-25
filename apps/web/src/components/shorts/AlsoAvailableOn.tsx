@@ -68,9 +68,7 @@ export function AlsoAvailableOn({
               rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}
               className={`inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 font-medium transition-all hover:opacity-80 ${
-                compact
-                  ? 'text-[8px] leading-none'
-                  : 'text-[9px] leading-tight'
+                compact ? 'text-[8px] leading-none' : 'text-[9px] leading-tight'
               }`}
               style={{
                 backgroundColor: `${badge.color}15`,

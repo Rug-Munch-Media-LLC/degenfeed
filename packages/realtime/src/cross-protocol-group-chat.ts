@@ -11,8 +11,7 @@
 
 import type { Env, TransportProtocol } from './protocol-transports';
 import { ProtocolTransports } from './protocol-transports';
-import { getInbox } from './unified-inbox';
-import { getProtocolBadge } from './unified-inbox';
+import { getInbox, getProtocolBadge } from './unified-inbox';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -491,17 +490,20 @@ export class CrossProtocolGroupChat {
       try {
         // Use the unified inbox to store a cross-protocol copy
         const inbox = getInbox();
-        await inbox.storeMessage(env as any, inbox.createInboxMessage({
-          id: msg.id + `-${protocol}`,
-          fromId: msg.fromWallet,
-          fromName: msg.fromName,
-          fromAvatar: msg.fromAvatar,
-          toId: `room:${room.id}`,
-          body: msg.body,
-          protocol,
-          createdAt: msg.createdAt,
-          contentType: msg.contentType as any,
-        }));
+        await inbox.storeMessage(
+          env as any,
+          inbox.createInboxMessage({
+            id: msg.id + `-${protocol}`,
+            fromId: msg.fromWallet,
+            fromName: msg.fromName,
+            fromAvatar: msg.fromAvatar,
+            toId: `room:${room.id}`,
+            body: msg.body,
+            protocol,
+            createdAt: msg.createdAt,
+            contentType: msg.contentType as any,
+          }),
+        );
       } catch {
         // Non-critical
       }
