@@ -7,7 +7,7 @@ import type { TelegramLinkedUser, TelegramGroupConfig, TelegramUpdate } from './
 import { telegramGroupKey, telegramUserKey, telegramWalletIndex, telegramCoinGroupKey, telegramGroupFeedKey } from './constants';
 import { sendTelegramMessage, validateTelegramInitDataAsync } from './utils';
 import { handleBotCommand } from './commands';
-import { methodNotAllowed } from '../response-helpers';
+import { methodNotAllowed } from '../../response-helpers';
 
 /**
  * POST /api/telegram/webhook — Receive Telegram Bot API updates

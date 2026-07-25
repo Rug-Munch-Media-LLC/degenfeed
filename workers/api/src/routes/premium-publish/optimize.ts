@@ -8,13 +8,13 @@ import type { Env } from '../../index';
 import { jsonResponse } from '../../index';
 import { getBestPostingTime } from '../../lib/auto-formatter';
 import { getPremiumUsage, incrementPremiumUsage } from '../../lib/premium-gate';
-import { requirePremiumTier, TIER_LIMITS } from '../premium';
-import { sanitizeStringArray } from '../sanitize';
+import { requirePremiumTier, TIER_LIMITS } from '../../premium';
+import { sanitizeStringArray } from '../../sanitize';
 import { requireSession } from '../../session';
 import type { RecurrencePattern, EvergreenFrequency, RecyclingStrategy, QueueEntry } from './types';
 import { PREFIX_EVERGREEN, PREFIX_RECURRING } from './types';
 import { getQueueEntry } from './utils';
-import { methodNotAllowed } from '../response-helpers';
+import { methodNotAllowed } from '../../response-helpers';
 
 // ─── AI Time Optimization ──────────────────────────────────────────────────
 

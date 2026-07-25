@@ -76,7 +76,7 @@ export async function getNextQueuePosition(walletAddress: string, env: Env): Pro
 
 export async function getUserTier(walletAddress: string, env: Env): Promise<string> {
   try {
-    const { checkPremiumStatus } = await import('../premium');
+    const { checkPremiumStatus } = await import('../../premium');
     const status = await checkPremiumStatus(walletAddress, env);
     return status?.tier ?? 'basic';
   } catch {

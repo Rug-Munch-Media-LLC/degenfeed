@@ -669,7 +669,7 @@ export async function handleNewsletterCreatorMine(
   request: Request,
   env: Env,
 ): Promise<Response> {
-  const { requireSession } = await import('../session');
+  const { requireSession } = await import('../../session');
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
 

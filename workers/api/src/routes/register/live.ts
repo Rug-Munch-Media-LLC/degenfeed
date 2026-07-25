@@ -7,7 +7,6 @@
 import type { Hono } from 'hono';
 import type { Env } from '../../index';
 
-import { jsonResponse } from '../../index';
 import peertubeRouter from '../../routes/peertube';
 
 import podcastRouter from '../../routes/podcast';
@@ -35,6 +34,7 @@ import { handleRoomCreate, handleRoomsActive, handleRoomInfo, handleRoomJoin, ha
 import { handleSpacesLive, handleSpacesUpcoming, handleSpacesPast, handleSpacesTrending, handleSpaceCreate, handleSpaceDetails, handleSpaceStart, handleSpaceEnd, handleSpaceJoin, handleSpaceLeave, handleSpaceRequestSpeak, handleSpaceInviteSpeaker, handleSpaceAcceptSpeaker, handleSpaceRemoveSpeaker, handleSpaceMuteSpeaker, handleSpaceRaiseHand, handleSpaceReact, handleSpaceRecording, handleSpaceTranscript } from '../../routes/spaces';
 import { handleRealtimeWebSocket } from '../../routes/realtime';
 
+import { ok, badRequest, notFound, serverError } from '../response-helpers';
 export function registerLiveRoutes(app: Hono<{ Bindings: Env }>): void {
   // --- API: YouTube ---
   app.route('/api/youtube', youtubeRoutes);
@@ -46,195 +46,605 @@ export function registerLiveRoutes(app: Hono<{ Bindings: Env }>): void {
   app.route('/api/podcast', podcastRouter);
 
   // --- API: Voice & Video Rooms ---
-  app.post('/api/voice/create', async (c) =>
-    withSession(c, () => handleCreateRoom(c.req.raw, c.env)),
-  );
-  app.get('/api/voice/active', async (c) =>
-    withSession(c, () => handleGetActiveRooms(c.req.raw, c.env)),
-  );
-  app.post('/api/voice/:id/join', async (c) =>
-    withSession(c, () => handleJoinRoom(c.req.raw, c.env, c.req.param('id'))),
-  );
-  app.post('/api/voice/:id/leave', async (c) =>
-    withSession(c, () => handleLeaveRoom(c.req.raw, c.env, c.req.param('id'))),
-  );
-  app.post('/api/voice/:id/update', async (c) =>
-    withSession(c, () => handleUpdateState(c.req.raw, c.env, c.req.param('id'))),
-  );
-  app.get('/api/voice/:id/participants', async (c) =>
-    withSession(c, () => handleGetParticipants(c.req.raw, c.env, c.req.param('id'))),
-  );
-  app.get('/api/voice/:id/invite', async (c) =>
-    withSession(c, () => handleGenerateInvite(c.req.raw, c.env, c.req.param('id'))),
-  );
-  app.get('/api/voice/invite/:code', async (c) =>
-    handleResolveInvite(c.req.raw, c.env, c.req.param('code')),
-  );
-  app.post('/api/voice/:id/signal', async (c) =>
-    withSession(c, () => handleSendSignal(c.req.raw, c.env, c.req.param('id'))),
-  );
-  app.get('/api/voice/:id/signals', async (c) =>
-    withSession(c, () => handleGetSignals(c.req.raw, c.env, c.req.param('id'))),
-  );
+  app.post('/api/voice/create', async (c) => {
+    try {
+      return await withSession(c, () => handleCreateRoom(c.req.raw, c.env));
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/voice/active', async (c) => {
+    try {
+      return await withSession(c, () => handleGetActiveRooms(c.req.raw, c.env));
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/voice/:id/join', async (c) => {
+    try {
+      return await withSession(c, () => handleJoinRoom(c.req.raw, c.env, c.req.param('id')));
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/voice/:id/leave', async (c) => {
+    try {
+      return await withSession(c, () => handleLeaveRoom(c.req.raw, c.env, c.req.param('id')));
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/voice/:id/update', async (c) => {
+    try {
+      return await withSession(c, () => handleUpdateState(c.req.raw, c.env, c.req.param('id')));
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/voice/:id/participants', async (c) => {
+    try {
+      return await withSession(c, () => handleGetParticipants(c.req.raw, c.env, c.req.param('id')));
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/voice/:id/invite', async (c) => {
+    try {
+      return await withSession(c, () => handleGenerateInvite(c.req.raw, c.env, c.req.param('id')));
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/voice/invite/:code', async (c) => {
+    try {
+      const result = await handleResolveInvite(c.req.raw, c.env, c.req.param('code'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/voice/:id/signal', async (c) => {
+    try {
+      return await withSession(c, () => handleSendSignal(c.req.raw, c.env, c.req.param('id')));
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/voice/:id/signals', async (c) => {
+    try {
+      return await withSession(c, () => handleGetSignals(c.req.raw, c.env, c.req.param('id')));
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
 
   // --- API: Cross-Platform Unified Rooms ---
-  app.post('/api/rooms/unified/create', async (c) =>
-    withSession(c, () => handleUnifiedRoomCreate(c.req.raw, c.env)),
-  );
-  app.get('/api/rooms/unified/mine', async (c) =>
-    withSession(c, () => handleUnifiedRoomMine(c.req.raw, c.env)),
-  );
-  app.get('/api/rooms/unified/:id', async (c) =>
-    withSession(c, () => handleUnifiedRoomInfo(c.req.raw, c.env, c.req.param('id'))),
-  );
-  app.post('/api/rooms/unified/:id/join', async (c) =>
-    withSession(c, () => handleUnifiedRoomJoin(c.req.raw, c.env, c.req.param('id'))),
-  );
-  app.post('/api/rooms/unified/:id/leave', async (c) =>
-    withSession(c, () => handleUnifiedRoomLeave(c.req.raw, c.env, c.req.param('id'))),
-  );
-  app.post('/api/rooms/unified/:id/message', async (c) =>
-    withSession(c, () => handleUnifiedRoomMessage(c.req.raw, c.env, c.req.param('id'))),
-  );
-  app.get('/api/rooms/unified/:id/messages', async (c) =>
-    withSession(c, () => handleUnifiedRoomMessages(c.req.raw, c.env, c.req.param('id'))),
-  );
-  app.post('/api/rooms/unified/:id/invite', async (c) =>
-    withSession(c, () => handleUnifiedRoomInvite(c.req.raw, c.env, c.req.param('id'))),
-  );
-  app.put('/api/rooms/unified/:id/transport', async (c) =>
-    withSession(c, () => handleUnifiedRoomTransport(c.req.raw, c.env, c.req.param('id'))),
-  );
-  app.get('/api/rooms/unified/:id/unread', async (c) =>
-    withSession(c, () => handleUnifiedRoomUnread(c.req.raw, c.env, c.req.param('id'))),
-  );
+  app.post('/api/rooms/unified/create', async (c) => {
+    try {
+      return await withSession(c, () => handleUnifiedRoomCreate(c.req.raw, c.env));
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/rooms/unified/mine', async (c) => {
+    try {
+      return await withSession(c, () => handleUnifiedRoomMine(c.req.raw, c.env));
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/rooms/unified/:id', async (c) => {
+    try {
+      return await withSession(c, () => handleUnifiedRoomInfo(c.req.raw, c.env, c.req.param('id')));
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/rooms/unified/:id/join', async (c) => {
+    try {
+      return await withSession(c, () => handleUnifiedRoomJoin(c.req.raw, c.env, c.req.param('id')));
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/rooms/unified/:id/leave', async (c) => {
+    try {
+      return await withSession(c, () => handleUnifiedRoomLeave(c.req.raw, c.env, c.req.param('id')));
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/rooms/unified/:id/message', async (c) => {
+    try {
+      return await withSession(c, () => handleUnifiedRoomMessage(c.req.raw, c.env, c.req.param('id')));
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/rooms/unified/:id/messages', async (c) => {
+    try {
+      return await withSession(c, () => handleUnifiedRoomMessages(c.req.raw, c.env, c.req.param('id')));
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/rooms/unified/:id/invite', async (c) => {
+    try {
+      return await withSession(c, () => handleUnifiedRoomInvite(c.req.raw, c.env, c.req.param('id')));
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.put('/api/rooms/unified/:id/transport', async (c) => {
+    try {
+      return await withSession(c, () => handleUnifiedRoomTransport(c.req.raw, c.env, c.req.param('id')));
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/rooms/unified/:id/unread', async (c) => {
+    try {
+      return await withSession(c, () => handleUnifiedRoomUnread(c.req.raw, c.env, c.req.param('id')));
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
 
   // --- API: Live Shorts (60s cross-protocol live broadcasting) ---
   app.route('/api/live-shorts', liveShorts);
 
   // --- API: Live Streaming Hub (Owncast, PeerTube, YouTube, Twitch, Spaces) ---
-  app.get('/api/live/now', async (c) => handleLiveNow(c.req.raw, c.env));
-  app.get('/api/live/upcoming', async (c) => handleLiveUpcoming(c.req.raw, c.env));
-  app.get('/api/live/sources', async (c) => handleLiveSources(c.req.raw, c.env));
-  app.post('/api/live/go-live', async (c) => withSession(c, () => handleGoLive(c.req.raw, c.env)));
-  app.post('/api/live/stop', async (c) => withSession(c, () => handleStopLive(c.req.raw, c.env)));
-  app.post('/api/live/schedule', async (c) => withSession(c, () => handleScheduleStream(c.req.raw, c.env)));
-  app.get('/api/live/chat/:id/messages', async (c) =>
-    handleLiveChatMessages(c.req.raw, c.env, c.req.param('id')),
-  );
-  app.post('/api/live/chat/:id/message', async (c) =>
-    handleLiveChatSend(c.req.raw, c.env, c.req.param('id')),
-  );
-  app.get('/api/live/creators/:id', async (c) =>
-    handleCreatorLiveProfile(c.req.raw, c.env, c.req.param('id')),
-  );
-  app.get('/api/live/viewers/:id', async (c) =>
-    handleLiveViewersSSE(c.req.raw, c.env, c.req.param('id')),
-  );
+  app.get('/api/live/now', async (c) => {
+    try {
+      const result = await handleLiveNow(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/live/upcoming', async (c) => {
+    try {
+      const result = await handleLiveUpcoming(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/live/sources', async (c) => {
+    try {
+      const result = await handleLiveSources(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/live/go-live', async (c) => {
+    try {
+      return await withSession(c, () => handleGoLive(c.req.raw, c.env));
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/live/stop', async (c) => {
+    try {
+      return await withSession(c, () => handleStopLive(c.req.raw, c.env));
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/live/schedule', async (c) => {
+    try {
+      return await withSession(c, () => handleScheduleStream(c.req.raw, c.env));
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/live/chat/:id/messages', async (c) => {
+    try {
+      const result = await handleLiveChatMessages(c.req.raw, c.env, c.req.param('id'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/live/chat/:id/message', async (c) => {
+    try {
+      const result = await handleLiveChatSend(c.req.raw, c.env, c.req.param('id'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/live/creators/:id', async (c) => {
+    try {
+      const result = await handleCreatorLiveProfile(c.req.raw, c.env, c.req.param('id'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/live/viewers/:id', async (c) => {
+    try {
+      const result = await handleLiveViewersSSE(c.req.raw, c.env, c.req.param('id'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
 
   // --- Notification Routes ---
-  app.post('/api/live/watch', async (c) => withSession(c, () => handleWatchCreator(c.req.raw, c.env)));
-  app.post('/api/live/unwatch', async (c) => handleUnwatchCreator(c.req.raw, c.env));
-  app.get('/api/live/watched', async (c) => handleGetWatchedCreators(c.req.raw, c.env));
-  app.get('/api/live/watched/live', async (c) => handleWatchedLive(c.req.raw, c.env));
-  app.get('/api/live/notifications', async (c) => handleGetNotifications(c.req.raw, c.env));
-  app.post('/api/live/notifications/settings', async (c) =>
-    withSession(c, () => handleNotificationSettings(c.req.raw, c.env)),
-  );
+  app.post('/api/live/watch', async (c) => {
+    try {
+      return await withSession(c, () => handleWatchCreator(c.req.raw, c.env));
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/live/unwatch', async (c) => {
+    try {
+      const result = await handleUnwatchCreator(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/live/watched', async (c) => {
+    try {
+      const result = await handleGetWatchedCreators(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/live/watched/live', async (c) => {
+    try {
+      const result = await handleWatchedLive(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/live/notifications', async (c) => {
+    try {
+      const result = await handleGetNotifications(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/live/notifications/settings', async (c) => {
+    try {
+      return await withSession(c, () => handleNotificationSettings(c.req.raw, c.env));
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
 
   // --- Source-specific Routes ---
-  app.get('/api/live/sources/peertube/instances', async (c) =>
-    handlePeerTubeInstances(c.req.raw, c.env),
-  );
-  app.get('/api/live/sources/twitch/curated', async (c) => handleTwitchCurated(c.req.raw, c.env));
-  app.get('/api/live/kick/status/:channel', async (c) =>
-    handleKickChannelStatus(c.req.raw, c.env, c.req.param('channel')),
-  );
-  app.get('/api/live/:id', async (c) => handleLiveDetails(c.req.raw, c.env, c.req.param('id')));
-  app.post('/api/live/:id/tip', async (c) => handleLiveTip(c.req.raw, c.env, c.req.param('id')));
+  app.get('/api/live/sources/peertube/instances', async (c) => {
+    try {
+      const result = await handlePeerTubeInstances(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/live/sources/twitch/curated', async (c) => {
+    try {
+      const result = await handleTwitchCurated(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/live/kick/status/:channel', async (c) => {
+    try {
+      const result = await handleKickChannelStatus(c.req.raw, c.env, c.req.param('channel'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/live/:id', async (c) => {
+    try {
+      const result = await handleLiveDetails(c.req.raw, c.env, c.req.param('id'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/live/:id/tip', async (c) => {
+    try {
+      const result = await handleLiveTip(c.req.raw, c.env, c.req.param('id'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
 
   // --- WebRTC P2P Streaming ---
-  app.post('/api/live/webrtc/offer', async (c) => withSession(c, () => handleWebRTCOffer(c.req.raw, c.env)));
-  app.post('/api/live/webrtc/answer', async (c) => handleWebRTCAnswer(c.req.raw, c.env));
-  app.post('/api/live/webrtc/ice', async (c) => handleWebRTCIce(c.req.raw, c.env));
-  app.get('/api/live/webrtc/offer/:sessionId', async (c) =>
-    handleWebRTCGetOffer(c.req.raw, c.env, c.req.param('sessionId')),
-  );
-  app.get('/api/live/webrtc/viewers', async (c) => handleWebRTCViewers(c.req.raw, c.env));
-  app.delete('/api/live/webrtc/session/:sessionId', async (c) =>
-    handleWebRTCEnd(c.req.raw, c.env, c.req.param('sessionId')),
-  );
+  app.post('/api/live/webrtc/offer', async (c) => {
+    try {
+      return await withSession(c, () => handleWebRTCOffer(c.req.raw, c.env));
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/live/webrtc/answer', async (c) => {
+    try {
+      const result = await handleWebRTCAnswer(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/live/webrtc/ice', async (c) => {
+    try {
+      const result = await handleWebRTCIce(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/live/webrtc/offer/:sessionId', async (c) => {
+    try {
+      const result = await handleWebRTCGetOffer(c.req.raw, c.env, c.req.param('sessionId'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/live/webrtc/viewers', async (c) => {
+    try {
+      const result = await handleWebRTCViewers(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.delete('/api/live/webrtc/session/:sessionId', async (c) => {
+    try {
+      const result = await handleWebRTCEnd(c.req.raw, c.env, c.req.param('sessionId'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
 
   // --- Video Call (WebRTC P2P) ---
-  app.post('/api/calls/create', async (c) => withSession(c, () => handleCallCreate(c.req.raw, c.env)));
-  app.post('/api/calls/:id/join', async (c) => handleCallJoin(c.req.raw, c.env, c.req.param('id')));
-  app.post('/api/calls/:id/leave', async (c) =>
-    handleCallLeave(c.req.raw, c.env, c.req.param('id')),
-  );
-  app.get('/api/calls/:id/status', async (c) =>
-    handleCallStatus(c.req.raw, c.env, c.req.param('id')),
-  );
-  app.post('/api/calls/:id/signal', async (c) =>
-    handleCallSignal(c.req.raw, c.env, c.req.param('id')),
-  );
-  app.get('/api/calls/:id/signal/poll', async (c) =>
-    handleCallSignalPoll(c.req.raw, c.env, c.req.param('id')),
-  );
-  app.post('/api/calls/:id/kick', async (c) => handleCallKick(c.req.raw, c.env, c.req.param('id')));
-  app.post('/api/calls/:id/mute', async (c) => handleCallMute(c.req.raw, c.env, c.req.param('id')));
-  app.post('/api/calls/:id/end', async (c) => handleCallEnd(c.req.raw, c.env, c.req.param('id')));
-  app.get('/api/calls/history', async (c) => handleCallHistory(c.req.raw, c.env));
+  app.post('/api/calls/create', async (c) => {
+    try {
+      return await withSession(c, () => handleCallCreate(c.req.raw, c.env));
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/calls/:id/join', async (c) => {
+    try {
+      const result = await handleCallJoin(c.req.raw, c.env, c.req.param('id'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/calls/:id/leave', async (c) => {
+    try {
+      const result = await handleCallLeave(c.req.raw, c.env, c.req.param('id'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/calls/:id/status', async (c) => {
+    try {
+      const result = await handleCallStatus(c.req.raw, c.env, c.req.param('id'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/calls/:id/signal', async (c) => {
+    try {
+      const result = await handleCallSignal(c.req.raw, c.env, c.req.param('id'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/calls/:id/signal/poll', async (c) => {
+    try {
+      const result = await handleCallSignalPoll(c.req.raw, c.env, c.req.param('id'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/calls/:id/kick', async (c) => {
+    try {
+      const result = await handleCallKick(c.req.raw, c.env, c.req.param('id'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/calls/:id/mute', async (c) => {
+    try {
+      const result = await handleCallMute(c.req.raw, c.env, c.req.param('id'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/calls/:id/end', async (c) => {
+    try {
+      const result = await handleCallEnd(c.req.raw, c.env, c.req.param('id'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/calls/history', async (c) => {
+    try {
+      const result = await handleCallHistory(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
 
   // --- Persistent Call Rooms ---
-  app.post('/api/rooms/create', async (c) => withSession(c, () => handleRoomCreate(c.req.raw, c.env)));
-  app.get('/api/rooms/active', async (c) => handleRoomsActive(c.req.raw, c.env));
-  app.get('/api/rooms/:id', async (c) => handleRoomInfo(c.req.raw, c.env, c.req.param('id')));
-  app.post('/api/rooms/:id/join', async (c) => handleRoomJoin(c.req.raw, c.env, c.req.param('id')));
-  app.post('/api/rooms/:id/leave', async (c) =>
-    handleRoomLeave(c.req.raw, c.env, c.req.param('id')),
-  );
-  app.post('/api/rooms/:id/invite', async (c) =>
-    handleRoomInvite(c.req.raw, c.env, c.req.param('id')),
-  );
-  app.post('/api/rooms/:id/delete', async (c) =>
-    handleRoomDelete(c.req.raw, c.env, c.req.param('id')),
-  );
-  app.post('/api/rooms/:id/mute', async (c) => handleRoomMute(c.req.raw, c.env, c.req.param('id')));
+  app.post('/api/rooms/create', async (c) => {
+    try {
+      return await withSession(c, () => handleRoomCreate(c.req.raw, c.env));
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/rooms/active', async (c) => {
+    try {
+      const result = await handleRoomsActive(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/rooms/:id', async (c) => {
+    try {
+      const result = await handleRoomInfo(c.req.raw, c.env, c.req.param('id'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/rooms/:id/join', async (c) => {
+    try {
+      const result = await handleRoomJoin(c.req.raw, c.env, c.req.param('id'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/rooms/:id/leave', async (c) => {
+    try {
+      const result = await handleRoomLeave(c.req.raw, c.env, c.req.param('id'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/rooms/:id/invite', async (c) => {
+    try {
+      const result = await handleRoomInvite(c.req.raw, c.env, c.req.param('id'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/rooms/:id/delete', async (c) => {
+    try {
+      const result = await handleRoomDelete(c.req.raw, c.env, c.req.param('id'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/rooms/:id/mute', async (c) => {
+    try {
+      const result = await handleRoomMute(c.req.raw, c.env, c.req.param('id'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
 
   // --- Adaptive Streaming Router ---
-  app.get('/api/live/route/status/:streamId', async (c) =>
-    handleStreamRouteStatus(c.req.raw, c.env, c.req.param('streamId')),
-  );
-  app.get('/api/live/route/estimate', async (c) => handleRouteEstimate(c.req.raw, c.env));
-  app.post('/api/live/route/switch', async (c) => handleRouteSwitch(c.req.raw, c.env));
+  app.get('/api/live/route/status/:streamId', async (c) => {
+    try {
+      const result = await handleStreamRouteStatus(c.req.raw, c.env, c.req.param('streamId'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/live/route/estimate', async (c) => {
+    try {
+      const result = await handleRouteEstimate(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/live/route/switch', async (c) => {
+    try {
+      const result = await handleRouteSwitch(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
 
   // --- Private / Token-Gated Streaming ---
-  app.post('/api/live/private/configure', async (c) =>
-    withSession(c, () => handlePrivateStreamConfigure(c.req.raw, c.env)),
-  );
-  app.post('/api/live/private/join', async (c) => withSession(c, () => handlePrivateStreamJoin(c.req.raw, c.env)));
-  app.get('/api/live/private/config/:streamId', async (c) =>
-    handlePrivateStreamConfig(c.req.raw, c.env, c.req.param('streamId')),
-  );
-  app.delete('/api/live/private/revoke/:streamId', async (c) =>
-    handlePrivateStreamRevoke(c.req.raw, c.env, c.req.param('streamId')),
-  );
-  app.post('/api/live/private/rotate/:streamId', async (c) =>
-    handlePrivateStreamRotate(c.req.raw, c.env, c.req.param('streamId')),
-  );
-  app.get('/api/live/private/viewers/:streamId', async (c) =>
-    handlePrivateStreamViewers(c.req.raw, c.env, c.req.param('streamId')),
-  );
-  app.post('/api/live/private/allowlist', async (c) =>
-    withSession(c, () => handlePrivateStreamAllowlist(c.req.raw, c.env)),
-  );
+  app.post('/api/live/private/configure', async (c) => {
+    try {
+      return await withSession(c, () => handlePrivateStreamConfigure(c.req.raw, c.env));
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/live/private/join', async (c) => {
+    try {
+      return await withSession(c, () => handlePrivateStreamJoin(c.req.raw, c.env));
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/live/private/config/:streamId', async (c) => {
+    try {
+      const result = await handlePrivateStreamConfig(c.req.raw, c.env, c.req.param('streamId'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.delete('/api/live/private/revoke/:streamId', async (c) => {
+    try {
+      const result = await handlePrivateStreamRevoke(c.req.raw, c.env, c.req.param('streamId'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/live/private/rotate/:streamId', async (c) => {
+    try {
+      const result = await handlePrivateStreamRotate(c.req.raw, c.env, c.req.param('streamId'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/live/private/viewers/:streamId', async (c) => {
+    try {
+      const result = await handlePrivateStreamViewers(c.req.raw, c.env, c.req.param('streamId'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/live/private/allowlist', async (c) => {
+    try {
+      return await withSession(c, () => handlePrivateStreamAllowlist(c.req.raw, c.env));
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
 
   // --- API: DegenFeed Multi-type Streaming (solo, spaces, collab, coin-launch) ---
   app.route('/api/streams', streams);
 
   // --- WebSocket: Token real-time updates ---
   app.get('/ws/token/:address', async (c) => {
-    // SSE fallback: check for text/event-stream Accept header
+    try {
+      return await // SSE fallback: check for text/event-stream Accept header
     const accept = c.req.header('accept');
     if (accept?.includes('text/event-stream')) {
       return handleTokenSSE(c.req.raw, c.env);
@@ -251,47 +661,111 @@ export function registerLiveRoutes(app: Hono<{ Bindings: Env }>): void {
   app.post('/api/spaces/create', async (c) => withSession(c, () => handleSpaceCreate(c.req.raw, c.env)));
   app.get('/api/spaces/:id', async (c) => handleSpaceDetails(c.req.raw, c.env, c.req.param('id')));
   app.post('/api/spaces/:id/start', async (c) =>
-    withSession(c, () => handleSpaceStart(c.req.raw, c.env, c.req.param('id'))),
-  );
-  app.post('/api/spaces/:id/end', async (c) => withSession(c, () => handleSpaceEnd(c.req.raw, c.env, c.req.param('id'))));
-  app.post('/api/spaces/:id/join', async (c) =>
-    handleSpaceJoin(c.req.raw, c.env, c.req.param('id')),
-  );
-  app.post('/api/spaces/:id/leave', async (c) =>
-    handleSpaceLeave(c.req.raw, c.env, c.req.param('id')),
-  );
-  app.post('/api/spaces/:id/request-speak', async (c) =>
-    handleSpaceRequestSpeak(c.req.raw, c.env, c.req.param('id')),
-  );
-  app.post('/api/spaces/:id/invite-speaker', async (c) =>
-    handleSpaceInviteSpeaker(c.req.raw, c.env, c.req.param('id')),
-  );
-  app.post('/api/spaces/:id/accept-speaker', async (c) =>
-    handleSpaceAcceptSpeaker(c.req.raw, c.env, c.req.param('id')),
-  );
-  app.post('/api/spaces/:id/remove-speaker', async (c) =>
-    handleSpaceRemoveSpeaker(c.req.raw, c.env, c.req.param('id')),
-  );
-  app.post('/api/spaces/:id/mute-speaker', async (c) =>
-    handleSpaceMuteSpeaker(c.req.raw, c.env, c.req.param('id')),
-  );
-  app.post('/api/spaces/:id/raise-hand', async (c) =>
-    handleSpaceRaiseHand(c.req.raw, c.env, c.req.param('id')),
-  );
-  app.post('/api/spaces/:id/react', async (c) =>
-    handleSpaceReact(c.req.raw, c.env, c.req.param('id')),
-  );
-  app.get('/api/spaces/:id/recording', async (c) =>
-    handleSpaceRecording(c.req.raw, c.env, c.req.param('id')),
-  );
-  app.all('/api/spaces/:id/transcript', async (c) =>
-    handleSpaceTranscript(c.req.raw, c.env, c.req.param('id')),
-  );
+    withSession(c, () => handleSpaceStart(c.req.raw, c.env, c.req.param('id')));
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/spaces/:id/end', async (c) => {
+    try {
+      return await withSession(c, () => handleSpaceEnd(c.req.raw, c.env, c.req.param('id')));
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/spaces/:id/join', async (c) => {
+    try {
+      const result = await handleSpaceJoin(c.req.raw, c.env, c.req.param('id'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/spaces/:id/leave', async (c) => {
+    try {
+      const result = await handleSpaceLeave(c.req.raw, c.env, c.req.param('id'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/spaces/:id/request-speak', async (c) => {
+    try {
+      const result = await handleSpaceRequestSpeak(c.req.raw, c.env, c.req.param('id'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/spaces/:id/invite-speaker', async (c) => {
+    try {
+      const result = await handleSpaceInviteSpeaker(c.req.raw, c.env, c.req.param('id'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/spaces/:id/accept-speaker', async (c) => {
+    try {
+      const result = await handleSpaceAcceptSpeaker(c.req.raw, c.env, c.req.param('id'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/spaces/:id/remove-speaker', async (c) => {
+    try {
+      const result = await handleSpaceRemoveSpeaker(c.req.raw, c.env, c.req.param('id'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/spaces/:id/mute-speaker', async (c) => {
+    try {
+      const result = await handleSpaceMuteSpeaker(c.req.raw, c.env, c.req.param('id'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/spaces/:id/raise-hand', async (c) => {
+    try {
+      const result = await handleSpaceRaiseHand(c.req.raw, c.env, c.req.param('id'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/spaces/:id/react', async (c) => {
+    try {
+      const result = await handleSpaceReact(c.req.raw, c.env, c.req.param('id'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/spaces/:id/recording', async (c) => {
+    try {
+      const result = await handleSpaceRecording(c.req.raw, c.env, c.req.param('id'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.all('/api/spaces/:id/transcript', async (c) => {
+    try {
+      const result = await handleSpaceTranscript(c.req.raw, c.env, c.req.param('id'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
 
   // --- Feed cache management ---
   app.get('/ws/realtime', async (c) => {
     const wsResp = handleRealtimeWebSocket(c.req.raw, c.env);
     if (wsResp) return wsResp;
-    return jsonResponse({ error: 'WebSocket upgrade failed' }, 400);
+    return badRequest('WebSocket upgrade failed');
   });
 }
