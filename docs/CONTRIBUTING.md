@@ -6,102 +6,41 @@ Part of DegenFeed Web — https://git.rugmunch.io/RugMunchMedia/degenfeed-web
 
 # Contributing to DegenFeed Web
 
-> Next.js multi-protocol social aggregator client. TypeScript + Next.js 15 + React 19.
+> Next.js multi-protocol social aggregator client. TypeScript + Next.js 16 + React 19.
+> Full-stack monorepo (Turborepo + pnpm workspaces) with Cloudflare Workers API, Bridge service, and protocol SDK packages.
 
-## Repositories
+See the [root CONTRIBUTING.md](../CONTRIBUTING.md) for the canonical contributing guide.
 
-| Platform | URL |
-|----------|-----|
-| **Primary** | https://git.rugmunch.io/RugMunchMedia/degenfeed-web |
-| **GitLab mirror** | https://gitlab.com/rugmunchmedia/degenfeed-web |
-| **Codeberg mirror** | https://codeberg.org/degenfeed/degenfeed-web |
+This page exists as a symlink target for the VitePress documentation site.
 
-PRs accepted on All platforms. Issues tracked on the primary Forgejo instance.
-
-## TL;DR
+## Quick Start
 
 ```bash
-git checkout main && git pull --rebase origin main
-git checkout -b feat/my-change
-# …make changes…
+git clone https://git.rugmunch.io/RugMunchMedia/degenfeed-web
+cd degenfeed-web
 pnpm install
-pnpm lint typecheck test     # pre-push gate
-git add -A
-git commit -m "feat(web): my change"
-git push origin feat/my-change
-# Open a PR on Forgejo (git.rugmunch.io/RugMunchMedia/degenfeed-web)
+pnpm dev              # Run all workspaces in dev mode
+pnpm lint typecheck   # Verify code quality
+pnpm test             # Run all tests
 ```
 
-## Repository Model
+## Documentation Index
 
-Single-tenant branch-PR pattern. `feat/*` branches merged to `main` after CI passes.
+| Document | Purpose |
+|----------|---------|
+| [ARCHITECTURE.md](./ARCHITECTURE.md) | System architecture, package map, data flow |
+| [MODULE-STRUCTURE.md](./MODULE-STRUCTURE.md) | File organization, barrel exports, naming |
+| [CODE-STRUCTURE.md](./CODE-STRUCTURE.md) | God file refactoring patterns, anti-patterns |
+| [QUALITY-STANDARDS.md](./QUALITY-STANDARDS.md) | Quality gates, tests, review checklist |
+| [CODE_STANDARDS.md](./CODE_STANDARDS.md) | TypeScript, React, API, testing conventions |
+| [API_REFERENCE.md](./API_REFERENCE.md) | API endpoint reference |
+| [TESTING_PLAN.md](./TESTING_PLAN.md) | Testing strategy and patterns |
 
-### Branches
+## Key Rules
 
-| Branch             | Purpose                                          |
-|--------------------|--------------------------------------------------|
-| `main`             | Production-ready. Protected. Forgejo-mirrored.   |
-| `feat/<scope>`     | New feature or capability.                       |
-| `fix/<scope>`      | Bug fix.                                         |
-| `chore/<scope>`    | Tooling, deps, formatting, non-functional.       |
-| `refactor/<scope>` | Code restructure, no behavior change.           |
-| `docs/<scope>`     | Documentation only.                              |
-
-### Commit Convention
-
-We use **Conventional Commits**.
-
-```bash
-feat(web): add composer modal
-fix(adapter-nostr): handle malformed event
-docs: update ARCHITECTURE.md
-chore(deps): bump wagmi to 3.7
-```
-
-Allowed types: `feat`, `fix`, `docs`, `refactor`, `style`, `test`, `chore`,
-`ops`, `security`, `ci`, `build`, `perf`, `revert`.
-
-## Remotes
-
-| Remote      | URL                                                              | Role                          |
-|-------------|------------------------------------------------------------------|-------------------------------|
-| `origin`    | `ssh://git@git.rugmunch.io:2222/RugMunchMedia/degenfeed-web.git` | Canonical — Forgejo.          |
-| `external-*`| codeberg / github / gitlab (read-only mirrors)                   | Optional community mirrors.   |
-
-## Pre-Push Checklist
-
-Before pushing any branch:
-
-```bash
-pnpm lint           # biome check
-pnpm typecheck      # tsc --noEmit
-pnpm test           # turbo run test
-pnpm build          # production build sanity
-```
-
-CI is defined in `.forgejo/workflows/ci.yml`.
-
-## Code Style
-
-- TypeScript 5.5+ with `strict: true`
-- Biome for format + lint (no ESLint, no Prettier)
-- Functional components, hooks, no class components
-- One component per file
-- No file > 500 lines (see `STANDARDS.md`)
-
-## License
-
-By contributing, you agree your work is licensed under the MIT License.
-See [LICENSE](./LICENSE).
-
-## Code of Conduct
-
-Be precise, be kind. Cite `file:line` when reviewing. Prefer surgical commits.
-
-## Further Reading
-
-- `AGENTS.md` — repo contract, owners, commands
-- `ARCHITECTURE.md` — module layout, data flow
-- `PRODUCT.md` — what this repo is and isn't
-- `../standards/CONVENTIONS.md` — fleet-wide conventions
-- `../standards/TOOLCHAIN.md` — tool inventory
+1. **No file > 500 lines** — mandatory split
+2. **No stub files** — every file must contain real implementation
+3. **Barrel exports** — every directory has `index.ts`
+4. **Response helpers** — use `ok()`, `badRequest()`, etc.
+5. **Bridge providers never throw** — return `[]` on error
+6. **TypeScript strict mode** — no `any`, no non-null assertions

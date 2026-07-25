@@ -14,6 +14,7 @@ import {
   handleCreatorRewardsHistory,
   handleCreatorRewardsLeaderboard,
 } from '../../lib/creator-rewards';
+import { ok, serverError } from '../../response-helpers';
 import {
   handleCoinStatsGainers,
   handleCoinStatsHighestVolume,
@@ -46,7 +47,6 @@ import peertubeStreams from '../../routes/peertube-streams';
 import { handlePrices } from '../../routes/prices';
 import { withSession } from '../../routes/route-registry';
 import tokenCommunity from '../../routes/token-community';
-import { ok, badRequest, notFound, serverError } from '../response-helpers';
 import {
   handleTokenGateContent,
   handleTokenGateDelete,
@@ -174,7 +174,12 @@ export function registerCoinsRoutes(app: Hono<{ Bindings: Env }>): void {
   });
   app.get('/api/token-gate/gate/:contentType/:contentId', async (c) => {
     try {
-      const result = await handleTokenGateGet(c.req.raw, c.env, c.req.param('contentType'), c.req.param('contentId'));
+      const result = await handleTokenGateGet(
+        c.req.raw,
+        c.env,
+        c.req.param('contentType'),
+        c.req.param('contentId'),
+      );
       return ok(result);
     } catch (err) {
       return serverError(err instanceof Error ? err.message : 'Unknown error');
@@ -182,7 +187,12 @@ export function registerCoinsRoutes(app: Hono<{ Bindings: Env }>): void {
   });
   app.delete('/api/token-gate/gate/:contentType/:contentId', async (c) => {
     try {
-      const result = await handleTokenGateDelete(c.req.raw, c.env, c.req.param('contentType'), c.req.param('contentId'));
+      const result = await handleTokenGateDelete(
+        c.req.raw,
+        c.env,
+        c.req.param('contentType'),
+        c.req.param('contentId'),
+      );
       return ok(result);
     } catch (err) {
       return serverError(err instanceof Error ? err.message : 'Unknown error');

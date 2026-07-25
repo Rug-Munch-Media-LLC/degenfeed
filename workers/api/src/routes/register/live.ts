@@ -6,11 +6,94 @@
 
 import type { Hono } from 'hono';
 import type { Env } from '../../index';
-
+import {
+  handleCallCreate,
+  handleCallEnd,
+  handleCallHistory,
+  handleCallJoin,
+  handleCallKick,
+  handleCallLeave,
+  handleCallMute,
+  handleCallSignal,
+  handleCallSignalPoll,
+  handleCallStatus,
+} from '../../lib/video-call';
+import { ok, serverError } from '../../response-helpers';
+import {
+  handleRoomCreate,
+  handleRoomDelete,
+  handleRoomInfo,
+  handleRoomInvite,
+  handleRoomJoin,
+  handleRoomLeave,
+  handleRoomMute,
+  handleRoomsActive,
+} from '../../routes/call-rooms';
+import {
+  handleCreatorLiveProfile,
+  handleGetNotifications,
+  handleGetWatchedCreators,
+  handleGoLive,
+  handleKickChannelStatus,
+  handleLiveChatMessages,
+  handleLiveChatSend,
+  handleLiveDetails,
+  handleLiveNow,
+  handleLiveSources,
+  handleLiveTip,
+  handleLiveUpcoming,
+  handleLiveViewersSSE,
+  handleNotificationSettings,
+  handlePeerTubeInstances,
+  handlePrivateStreamAllowlist,
+  handlePrivateStreamConfig,
+  handlePrivateStreamConfigure,
+  handlePrivateStreamJoin,
+  handlePrivateStreamRevoke,
+  handlePrivateStreamRotate,
+  handlePrivateStreamViewers,
+  handleRouteEstimate,
+  handleRouteSwitch,
+  handleScheduleStream,
+  handleStopLive,
+  handleStreamRouteStatus,
+  handleTwitchCurated,
+  handleUnwatchCreator,
+  handleWatchCreator,
+  handleWatchedLive,
+  handleWebRTCAnswer,
+  handleWebRTCEnd,
+  handleWebRTCGetOffer,
+  handleWebRTCIce,
+  handleWebRTCOffer,
+  handleWebRTCViewers,
+} from '../../routes/live';
+import liveShorts from '../../routes/live-shorts-index';
 import peertubeRouter from '../../routes/peertube';
-
 import podcastRouter from '../../routes/podcast';
+import { handleRealtimeWebSocket } from '../../routes/realtime';
 import { withSession } from '../../routes/route-registry';
+import {
+  handleSpaceAcceptSpeaker,
+  handleSpaceCreate,
+  handleSpaceDetails,
+  handleSpaceEnd,
+  handleSpaceInviteSpeaker,
+  handleSpaceJoin,
+  handleSpaceLeave,
+  handleSpaceMuteSpeaker,
+  handleSpaceRaiseHand,
+  handleSpaceReact,
+  handleSpaceRecording,
+  handleSpaceRemoveSpeaker,
+  handleSpaceRequestSpeak,
+  handleSpaceStart,
+  handleSpacesLive,
+  handleSpacesPast,
+  handleSpacesTrending,
+  handleSpacesUpcoming,
+  handleSpaceTranscript,
+} from '../../routes/spaces';
 import streams from '../../routes/streams';
 import { handleTokenSSE, handleTokenWebSocket } from '../../routes/token-websocket';
 import {
@@ -25,16 +108,19 @@ import {
   handleUnifiedRoomTransport,
   handleUnifiedRoomUnread,
 } from '../../routes/unified-room-routes';
+import {
+  handleCreateRoom,
+  handleGenerateInvite,
+  handleGetActiveRooms,
+  handleGetParticipants,
+  handleGetSignals,
+  handleJoinRoom,
+  handleLeaveRoom,
+  handleResolveInvite,
+  handleSendSignal,
+  handleUpdateState,
+} from '../../routes/voice-rooms';
 import youtubeRoutes from '../../routes/youtube';
-import liveShorts from '../../routes/live-shorts-index';
-import { handleCreateRoom, handleGetActiveRooms, handleJoinRoom, handleLeaveRoom, handleUpdateState, handleGetParticipants, handleGenerateInvite, handleResolveInvite, handleSendSignal, handleGetSignals } from '../../routes/voice-rooms';
-import { handleLiveNow, handleLiveUpcoming, handleLiveSources, handleLiveDetails, handleCreatorLiveProfile, handleGoLive, handleStopLive, handleScheduleStream, handleLiveChatMessages, handleLiveChatSend, handleLiveTip, handleLiveViewersSSE, handleWatchCreator, handleUnwatchCreator, handleGetWatchedCreators, handleGetNotifications, handleNotificationSettings, handleWatchedLive, handlePeerTubeInstances, handleTwitchCurated, handleKickChannelStatus, handleWebRTCOffer, handleWebRTCAnswer, handleWebRTCIce, handleWebRTCGetOffer, handleWebRTCViewers, handleWebRTCEnd, handleStreamRouteStatus, handleRouteEstimate, handleRouteSwitch, handlePrivateStreamConfigure, handlePrivateStreamJoin, handlePrivateStreamConfig, handlePrivateStreamRevoke, handlePrivateStreamRotate, handlePrivateStreamViewers, handlePrivateStreamAllowlist } from '../../routes/live';
-import { handleCallCreate, handleCallJoin, handleCallLeave, handleCallStatus, handleCallSignal, handleCallSignalPoll, handleCallKick, handleCallMute, handleCallEnd, handleCallHistory } from '../../lib/video-call';
-import { handleRoomCreate, handleRoomsActive, handleRoomInfo, handleRoomJoin, handleRoomLeave, handleRoomInvite, handleRoomDelete, handleRoomMute } from '../../routes/call-rooms';
-import { handleSpacesLive, handleSpacesUpcoming, handleSpacesPast, handleSpacesTrending, handleSpaceCreate, handleSpaceDetails, handleSpaceStart, handleSpaceEnd, handleSpaceJoin, handleSpaceLeave, handleSpaceRequestSpeak, handleSpaceInviteSpeaker, handleSpaceAcceptSpeaker, handleSpaceRemoveSpeaker, handleSpaceMuteSpeaker, handleSpaceRaiseHand, handleSpaceReact, handleSpaceRecording, handleSpaceTranscript } from '../../routes/spaces';
-import { handleRealtimeWebSocket } from '../../routes/realtime';
-
-import { ok, badRequest, notFound, serverError } from '../response-helpers';
 export function registerLiveRoutes(app: Hono<{ Bindings: Env }>): void {
   // --- API: YouTube ---
   app.route('/api/youtube', youtubeRoutes);
@@ -149,42 +235,54 @@ export function registerLiveRoutes(app: Hono<{ Bindings: Env }>): void {
   });
   app.post('/api/rooms/unified/:id/leave', async (c) => {
     try {
-      return await withSession(c, () => handleUnifiedRoomLeave(c.req.raw, c.env, c.req.param('id')));
+      return await withSession(c, () =>
+        handleUnifiedRoomLeave(c.req.raw, c.env, c.req.param('id')),
+      );
     } catch (err) {
       return serverError(err instanceof Error ? err.message : 'Unknown error');
     }
   });
   app.post('/api/rooms/unified/:id/message', async (c) => {
     try {
-      return await withSession(c, () => handleUnifiedRoomMessage(c.req.raw, c.env, c.req.param('id')));
+      return await withSession(c, () =>
+        handleUnifiedRoomMessage(c.req.raw, c.env, c.req.param('id')),
+      );
     } catch (err) {
       return serverError(err instanceof Error ? err.message : 'Unknown error');
     }
   });
   app.get('/api/rooms/unified/:id/messages', async (c) => {
     try {
-      return await withSession(c, () => handleUnifiedRoomMessages(c.req.raw, c.env, c.req.param('id')));
+      return await withSession(c, () =>
+        handleUnifiedRoomMessages(c.req.raw, c.env, c.req.param('id')),
+      );
     } catch (err) {
       return serverError(err instanceof Error ? err.message : 'Unknown error');
     }
   });
   app.post('/api/rooms/unified/:id/invite', async (c) => {
     try {
-      return await withSession(c, () => handleUnifiedRoomInvite(c.req.raw, c.env, c.req.param('id')));
+      return await withSession(c, () =>
+        handleUnifiedRoomInvite(c.req.raw, c.env, c.req.param('id')),
+      );
     } catch (err) {
       return serverError(err instanceof Error ? err.message : 'Unknown error');
     }
   });
   app.put('/api/rooms/unified/:id/transport', async (c) => {
     try {
-      return await withSession(c, () => handleUnifiedRoomTransport(c.req.raw, c.env, c.req.param('id')));
+      return await withSession(c, () =>
+        handleUnifiedRoomTransport(c.req.raw, c.env, c.req.param('id')),
+      );
     } catch (err) {
       return serverError(err instanceof Error ? err.message : 'Unknown error');
     }
   });
   app.get('/api/rooms/unified/:id/unread', async (c) => {
     try {
-      return await withSession(c, () => handleUnifiedRoomUnread(c.req.raw, c.env, c.req.param('id')));
+      return await withSession(c, () =>
+        handleUnifiedRoomUnread(c.req.raw, c.env, c.req.param('id')),
+      );
     } catch (err) {
       return serverError(err instanceof Error ? err.message : 'Unknown error');
     }
@@ -644,13 +742,16 @@ export function registerLiveRoutes(app: Hono<{ Bindings: Env }>): void {
   // --- WebSocket: Token real-time updates ---
   app.get('/ws/token/:address', async (c) => {
     try {
-      return await // SSE fallback: check for text/event-stream Accept header
-    const accept = c.req.header('accept');
-    if (accept?.includes('text/event-stream')) {
-      return handleTokenSSE(c.req.raw, c.env);
+      // SSE fallback: check for text/event-stream Accept header
+      const accept = c.req.header('accept');
+      if (accept?.includes('text/event-stream')) {
+        return handleTokenSSE(c.req.raw, c.env);
+      }
+      // WebSocket upgrade
+      return handleTokenWebSocket(c.req.raw, c.env);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
     }
-    // WebSocket upgrade
-    return handleTokenWebSocket(c.req.raw, c.env);
   });
 
   // --- API: Audio Spaces ---
@@ -658,10 +759,13 @@ export function registerLiveRoutes(app: Hono<{ Bindings: Env }>): void {
   app.get('/api/spaces/upcoming', async (c) => handleSpacesUpcoming(c.req.raw, c.env));
   app.get('/api/spaces/past', async (c) => handleSpacesPast(c.req.raw, c.env));
   app.get('/api/spaces/trending', async (c) => handleSpacesTrending(c.req.raw, c.env));
-  app.post('/api/spaces/create', async (c) => withSession(c, () => handleSpaceCreate(c.req.raw, c.env)));
+  app.post('/api/spaces/create', async (c) =>
+    withSession(c, () => handleSpaceCreate(c.req.raw, c.env)),
+  );
   app.get('/api/spaces/:id', async (c) => handleSpaceDetails(c.req.raw, c.env, c.req.param('id')));
-  app.post('/api/spaces/:id/start', async (c) =>
-    withSession(c, () => handleSpaceStart(c.req.raw, c.env, c.req.param('id')));
+  app.post('/api/spaces/:id/start', async (c) => {
+    try {
+      return await withSession(c, () => handleSpaceStart(c.req.raw, c.env, c.req.param('id')));
     } catch (err) {
       return serverError(err instanceof Error ? err.message : 'Unknown error');
     }

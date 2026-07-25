@@ -6,8 +6,6 @@
 
 import type { Hono } from 'hono';
 import type { Env } from '../../index';
-import { jsonResponse } from '../../index';
-
 import {
   handleInboxActivity,
   handleInboxComments,
@@ -18,6 +16,7 @@ import {
   handleInboxStatus,
   handleInboxUnified,
 } from '../../lib/universal-inbox';
+import { methodNotAllowed } from '../../response-helpers';
 import {
   handleCreatePoll,
   handleCreateStickerPack,
@@ -82,7 +81,6 @@ import {
   handleUnreadCount,
 } from '../../routes/messages';
 import { withSession } from '../../routes/route-registry';
-import { methodNotAllowed } from '../response-helpers';
 
 export function registerMessagingRoutes(app: Hono<{ Bindings: Env }>): void {
   // --- API: Messages (DM) ---

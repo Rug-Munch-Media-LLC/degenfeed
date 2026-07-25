@@ -6,8 +6,11 @@
 
 import type { Hono } from 'hono';
 import type { Env } from '../../index';
+import { jsonResponse } from '../../index';
+import { methodNotAllowed, ok, serverError } from '../../response-helpers';
 import {
   handleAddRule,
+  handleGetSignals as handleAlgoGetSignals,
   handleApplyPreset,
   handleDeleteRule,
   handleExplainPost,
@@ -18,7 +21,6 @@ import {
   handleSharePreset,
   handleUpdateSignals,
   handleUpdateWeights,
-  handleGetSignals as handleAlgoGetSignals,
 } from '../../routes/algo-control';
 import { handleAnalytics } from '../../routes/analytics';
 import { handleBlinkTip } from '../../routes/blink';
@@ -27,6 +29,19 @@ import {
   handleBlueskyTipCreate,
   handleBlueskyTipStats,
 } from '../../routes/bluesky-tip';
+import {
+  handleBookmarkAdd,
+  handleBookmarkCheck,
+  handleBookmarkList,
+  handleBookmarkRemove,
+} from '../../routes/bookmarks';
+import {
+  handleBridgeHealth,
+  handleBridgeStats,
+  handleCircuitReset,
+  handleProtocolHealth,
+  handleProtocolStats,
+} from '../../routes/bridge-health';
 import {
   handleCommunitiesList,
   handleCommunityCreate,
@@ -52,6 +67,13 @@ import {
   handleDiscordOAuthCallback,
 } from '../../routes/discord';
 import { handleEngage } from '../../routes/engage';
+import {
+  handleFollowAdd,
+  handleFollowCheck,
+  handleFollowingFeed,
+  handleFollowList,
+  handleFollowRemove,
+} from '../../routes/follow';
 import {
   handleAchievementCheck,
   handleAchievements,
@@ -88,6 +110,7 @@ import {
   handleCreateAtproto,
   handleIdentityDiscover,
   handleIdentityDiscoveryStatus,
+  handleStatus as handleIdentityExtensionsStatus,
   handleIdentityLinkAll,
   handleLinkAtproto,
   handleLinkTelegram,
@@ -142,20 +165,41 @@ import {
 } from '../../routes/permanence';
 import { handleIdentityProfile } from '../../routes/profile';
 import { handlePublish } from '../../routes/publish';
+import { handleWebhookReceiver } from '../../routes/realtime';
 import registerAll from '../../routes/register-all';
 import {
   handleBlueskyPoolStats,
   handleRegisterPlatform,
   handleRegisterPlatformStatus,
 } from '../../routes/register-platform';
+import {
+  handleReputationEarn,
+  handleReputationGet,
+  handleReputationHistory,
+  handleReputationLeaderboard,
+  handleReputationSlash,
+  handleReputationStake,
+  handleReputationStakeResolve,
+  handleReputationStakes,
+} from '../../routes/reputation';
 import { withSession } from '../../routes/route-registry';
-import { handleBridgeHealth, handleProtocolHealth, handleCircuitReset, handleBridgeStats, handleProtocolStats } from '../../routes/bridge-health';
-import { handleBookmarkAdd, handleBookmarkRemove, handleBookmarkList, handleBookmarkCheck } from '../../routes/bookmarks';
-import { handleFollowAdd, handleFollowRemove, handleFollowList, handleFollowCheck, handleFollowingFeed } from '../../routes/follow';
-import { handleStatus as handleIdentityExtensionsStatus } from '../../routes/identity-extensions';
-import { handleReputationGet, handleReputationHistory, handleReputationLeaderboard, handleReputationEarn, handleReputationSlash, handleReputationStake, handleReputationStakeResolve, handleReputationStakes } from '../../routes/reputation';
-import { handleSSOProvision, handleSSOProvisionSingle, handleSSODashboard, handleSSOSessionCreate, handleSSOSessionVerify, handleSSOSessionRefresh, handleSSOSessionRevoke, handleSSOSessionRevokeAll, handleSSOActivity, handleSSOActivityRecord, handleSSOExport, handleSSOImport, handleSSORecoveryGenerate, handleSSORecoveryRestore, handleSSOHealth } from '../../routes/sso-dashboard';
-import { handleWebhookReceiver } from '../../routes/realtime';
+import {
+  handleSSOActivity,
+  handleSSOActivityRecord,
+  handleSSODashboard,
+  handleSSOExport,
+  handleSSOHealth,
+  handleSSOImport,
+  handleSSOProvision,
+  handleSSOProvisionSingle,
+  handleSSORecoveryGenerate,
+  handleSSORecoveryRestore,
+  handleSSOSessionCreate,
+  handleSSOSessionRefresh,
+  handleSSOSessionRevoke,
+  handleSSOSessionRevokeAll,
+  handleSSOSessionVerify,
+} from '../../routes/sso-dashboard';
 import {
   handleTelegramAuth,
   handleTelegramBotInfo,
@@ -210,7 +254,6 @@ import {
   handleWebhookTrigger,
 } from '../../routes/webhooks';
 import { handleX402Paywall, handleX402Verify } from '../../routes/x402';
-import { methodNotAllowed, ok, badRequest, notFound, serverError } from '../response-helpers';
 
 export function registerSocialRoutes(app: Hono<{ Bindings: Env }>): void {
   // --- API: Bridge Health ---
@@ -261,15 +304,19 @@ export function registerSocialRoutes(app: Hono<{ Bindings: Env }>): void {
   // --- API: Bridge ---
   app.all('/api/bridge/rss-to-nostr', async (c) => {
     try {
-      return await const { handleRssToNostrBridge } = await import('../../routes/publish');
-    return withSession(c, () => handleRssToNostrBridge(c.req.raw, c.env));
+      const { handleRssToNostrBridge } = await import('../../routes/publish');
+      return await withSession(c, () => handleRssToNostrBridge(c.req.raw, c.env));
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
   });
   app.get('/api/cross-reply/status', async (c) => {
     const { handleCrossReplyStatus } = await import('../../routes/cross-reply');
     return handleCrossReplyStatus(c.req.raw, c.env);
   });
-  app.all('/api/cross-reply', async (c) =>
-    withSession(c, () => handleCrossReply(c.req.raw, c.env));
+  app.all('/api/cross-reply', async (c) => {
+    try {
+      return await withSession(c, () => handleCrossReply(c.req.raw, c.env));
     } catch (err) {
       return serverError(err instanceof Error ? err.message : 'Unknown error');
     }
@@ -278,9 +325,7 @@ export function registerSocialRoutes(app: Hono<{ Bindings: Env }>): void {
   // --- API: Cross-Protocol Stream Chat Bridge ---
   app.post('/api/cross-protocol-bridge/stream/start', async (c) => {
     try {
-      return await const { startBridge } = await import('../../lib/cross-protocol-chat-bridge');
-    const { stopBridge } = await import('../../lib/cross-protocol-chat-bridge');
-    try {
+      const { startBridge } = await import('../../lib/cross-protocol-chat-bridge');
       const body = (await c.req.json()) as {
         streamId: string;
         announcementResults?: Record<
@@ -346,8 +391,9 @@ export function registerSocialRoutes(app: Hono<{ Bindings: Env }>): void {
 
   // --- API: Bridge Health ---
   app.get('/api/bookmarks', async (c) => handleBookmarkList(c.req.raw, c.env));
-  app.post('/api/bookmarks', async (c) =>
-    withSession(c, () => handleBookmarkAdd(c.req.raw, c.env));
+  app.post('/api/bookmarks', async (c) => {
+    try {
+      return await withSession(c, () => handleBookmarkAdd(c.req.raw, c.env));
     } catch (err) {
       return serverError(err instanceof Error ? err.message : 'Unknown error');
     }
@@ -427,8 +473,11 @@ export function registerSocialRoutes(app: Hono<{ Bindings: Env }>): void {
   // --- API: Cross-Publish (one-click multi-protocol) ---
   app.post('/api/publish/all', async (c) => {
     try {
-      return await const { handlePublishAll } = await import('../../routes/publish');
-    return withSession(c, () => handlePublishAll(c.req.raw, c.env));
+      const { handlePublishAll } = await import('../../routes/publish');
+      return await withSession(c, () => handlePublishAll(c.req.raw, c.env));
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
   });
   app.post('/api/publish/selected', async (c) => {
     const { handlePublishSelected } = await import('../../routes/publish');
@@ -459,19 +508,20 @@ export function registerSocialRoutes(app: Hono<{ Bindings: Env }>): void {
     return ok({ batches });
   });
   app.all('/api/crosspost/batch/:batchId', async (c) => {
-    const { getCrossPostBatch, deleteCrossPostBatch } = await import(
-      '../../lib/cross-publish-orchestrator';
+    try {
+      const { getCrossPostBatch, deleteCrossPostBatch } = await import(
+        '../../lib/cross-publish-orchestrator'
+      );
+      const batchId = c.req.param('batchId');
+      if (c.req.method === 'DELETE') {
+        await deleteCrossPostBatch(batchId, c.env);
+        return ok({ deleted: true });
+      }
+      const batch = await getCrossPostBatch(batchId, c.env);
+      return batch ? jsonResponse(batch) : jsonResponse({ error: 'Batch not found' }, 404);
     } catch (err) {
       return serverError(err instanceof Error ? err.message : 'Unknown error');
     }
-  });
-    const batchId = c.req.param('batchId');
-    if (c.req.method === 'DELETE') {
-      const ok = await deleteCrossPostBatch(batchId, c.env);
-      return ok({ ok });
-    }
-    const batch = await getCrossPostBatch(batchId, c.env);
-    return batch ? jsonResponse(batch) : jsonResponse({ error: 'Batch not found' }, 404);
   });
 
   // --- API: Tips ---
@@ -524,10 +574,13 @@ export function registerSocialRoutes(app: Hono<{ Bindings: Env }>): void {
   });
   app.all('/api/tip/settings', async (c) => {
     try {
-      return await if (c.req.method === 'GET') return handleTipSettingsGet(c.req.raw, c.env);
-    if (c.req.method === 'POST')
-      return withSession(c, () => handleTipSettingsPost(c.req.raw, c.env));
-    return methodNotAllowed(['GET', 'POST']);
+      if (c.req.method === 'GET') return handleTipSettingsGet(c.req.raw, c.env);
+      if (c.req.method === 'POST')
+        return await withSession(c, () => handleTipSettingsPost(c.req.raw, c.env));
+      return methodNotAllowed(['GET', 'POST']);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
   });
 
   // --- API: Tip Notification Preferences ---
@@ -537,8 +590,9 @@ export function registerSocialRoutes(app: Hono<{ Bindings: Env }>): void {
   });
 
   // --- API: Unified Tips (cross-platform ledger) ---
-  app.post('/api/tip/unified', async (c) =>
-    withSession(c, () => handleUnifiedTipCreate(c.req.raw, c.env));
+  app.post('/api/tip/unified', async (c) => {
+    try {
+      return await withSession(c, () => handleUnifiedTipCreate(c.req.raw, c.env));
     } catch (err) {
       return serverError(err instanceof Error ? err.message : 'Unknown error');
     }
@@ -875,8 +929,11 @@ export function registerSocialRoutes(app: Hono<{ Bindings: Env }>): void {
   // --- API: Cross-Chain Tip Routing ---
   app.post('/api/tip/cross-chain', async (c) => {
     try {
-      return await const { handleCrossChainTip } = await import('../../routes/unified-tip');
-    return withSession(c, () => handleCrossChainTip(c.req.raw, c.env));
+      const { handleCrossChainTip } = await import('../../routes/unified-tip');
+      return await withSession(c, () => handleCrossChainTip(c.req.raw, c.env));
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
   });
 
   // --- API: Smart Chain Selection ---
@@ -909,8 +966,9 @@ export function registerSocialRoutes(app: Hono<{ Bindings: Env }>): void {
     if (wallet) return handleGetIdentityProfile(c.req.raw, c.env);
     return handleIdentityProfile(c.req.raw, c.env);
   });
-  app.post('/api/identity/link', async (c) =>
-    withSession(c, () => handleLinkIdentity(c.req.raw, c.env));
+  app.post('/api/identity/link', async (c) => {
+    try {
+      return await withSession(c, () => handleLinkIdentity(c.req.raw, c.env));
     } catch (err) {
       return serverError(err instanceof Error ? err.message : 'Unknown error');
     }
@@ -1640,7 +1698,9 @@ export function registerSocialRoutes(app: Hono<{ Bindings: Env }>): void {
   // --- API: Governance (DAOs) ---
   app.post('/api/community/:name/proposals', async (c) => {
     try {
-      return await withSession(c, () => handleProposalCreate(c.req.raw, c.env, c.req.param('name')));
+      return await withSession(c, () =>
+        handleProposalCreate(c.req.raw, c.env, c.req.param('name')),
+      );
     } catch (err) {
       return serverError(err instanceof Error ? err.message : 'Unknown error');
     }
@@ -1656,15 +1716,20 @@ export function registerSocialRoutes(app: Hono<{ Bindings: Env }>): void {
   app.post('/api/community/:name/proposals/:id/vote', async (c) => {
     try {
       return await withSession(c, () =>
-      handleProposalVote(c.req.raw, c.env, c.req.param('name'), c.req.param('id')),
-    );
+        handleProposalVote(c.req.raw, c.env, c.req.param('name'), c.req.param('id')),
+      );
     } catch (err) {
       return serverError(err instanceof Error ? err.message : 'Unknown error');
     }
   });
   app.get('/api/community/:name/proposals/:id/results', async (c) => {
     try {
-      const result = await handleProposalResults(c.req.raw, c.env, c.req.param('name'), c.req.param('id'));
+      const result = await handleProposalResults(
+        c.req.raw,
+        c.env,
+        c.req.param('name'),
+        c.req.param('id'),
+      );
       return ok(result);
     } catch (err) {
       return serverError(err instanceof Error ? err.message : 'Unknown error');
@@ -1732,13 +1797,17 @@ export function registerSocialRoutes(app: Hono<{ Bindings: Env }>): void {
   // --- API: Platform Limits (for UI content adaptation) ---
   app.get('/api/cross-post/limits', async (_c) => {
     try {
-      const result = await const { PLATFORM_LIMITS } = await import('../../routes/cross-post-centralized');
-    return ok({ limits: PLATFORM_LIMITS });
+      const { PLATFORM_LIMITS } = await import('../../routes/cross-post-centralized');
+      return ok({ limits: PLATFORM_LIMITS });
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
   });
 
   // --- API: Reputation ---
-  app.get('/api/reputation/leaderboard', async (c) =>
-    handleReputationLeaderboard(c.req.raw, c.env);
+  app.get('/api/reputation/leaderboard', async (c) => {
+    try {
+      const result = await handleReputationLeaderboard(c.req.raw, c.env);
       return ok(result);
     } catch (err) {
       return serverError(err instanceof Error ? err.message : 'Unknown error');

@@ -6,6 +6,7 @@
 
 import type { Hono } from 'hono';
 import type { Env } from '../../index';
+import { jsonResponse } from '../../index';
 import {
   handleDaoRegistryGet,
   handleDaoRegistryLink,
@@ -30,6 +31,7 @@ import {
   handleTallyRegister,
   handleTallyStatus,
 } from '../../lib/tally-integration';
+import { ok, serverError } from '../../response-helpers';
 import {
   handleDaoCreate,
   handleDaoDelegate,
@@ -98,25 +100,23 @@ import {
   handleTreasuryAnalytics,
 } from '../../routes/dao-treasury';
 import { withSession } from '../../routes/route-registry';
-
-import { ok, badRequest, notFound, serverError } from '../response-helpers';
 export function registerDaoRoutes(app: Hono<{ Bindings: Env }>): void {
   // --- API: DAO Activity Feed, Notifications & Subscribe ---
   app.get('/api/dao/:daoId/feed', async (c) => {
     try {
-      return await const { handleDaoActivity } = await import('../../routes/dao-activity');
-    return handleDaoActivity(c.req.raw, c.env, c.req.param('daoId'));
+      return handleDaoActivity(c.req.raw, c.env, c.req.param('daoId'));
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
   });
   app.post('/api/dao/:daoId/activity', async (c) => {
     const { handleDaoActivity } = await import('../../routes/dao-activity');
     return handleDaoActivity(c.req.raw, c.env, c.req.param('daoId'));
   });
   app.get('/api/dao/:daoId/realtime', async (c) => {
-    const { handleDaoActivity } = await import('../../routes/dao-activity');
     return jsonResponse({ poll: true, daoId: c.req.param('daoId') });
   });
   app.get('/api/dao/:daoId/notifications', async (c) => {
-    const { handleDaoActivity } = await import('../../routes/dao-activity');
     return handleDaoActivity(c.req.raw, c.env, c.req.param('daoId'));
   });
   app.post('/api/dao/:daoId/notifications/read', async (_c) => {
@@ -135,8 +135,9 @@ export function registerDaoRoutes(app: Hono<{ Bindings: Env }>): void {
   app.get('/api/dao/activity/mine', async (c) => handleMyDaoActivity(c.req.raw, c.env));
   app.post('/api/dao/create', async (c) => withSession(c, () => handleDaoCreate(c.req.raw, c.env)));
   app.get('/api/dao/:daoId', async (c) => handleDaoGet(c.req.raw, c.env, c.req.param('daoId')));
-  app.put('/api/dao/:daoId', async (c) =>
-    withSession(c, () => handleDaoUpdate(c.req.raw, c.env, c.req.param('daoId')));
+  app.put('/api/dao/:daoId', async (c) => {
+    try {
+      return await withSession(c, () => handleDaoUpdate(c.req.raw, c.env, c.req.param('daoId')));
     } catch (err) {
       return serverError(err instanceof Error ? err.message : 'Unknown error');
     }
@@ -173,7 +174,9 @@ export function registerDaoRoutes(app: Hono<{ Bindings: Env }>): void {
   });
   app.post('/api/dao/:daoId/proposals', async (c) => {
     try {
-      return await withSession(c, () => handleDaoProposalCreate(c.req.raw, c.env, c.req.param('daoId')));
+      return await withSession(c, () =>
+        handleDaoProposalCreate(c.req.raw, c.env, c.req.param('daoId')),
+      );
     } catch (err) {
       return serverError(err instanceof Error ? err.message : 'Unknown error');
     }
@@ -188,7 +191,12 @@ export function registerDaoRoutes(app: Hono<{ Bindings: Env }>): void {
   });
   app.get('/api/dao/:daoId/proposals/:proposalId', async (c) => {
     try {
-      const result = await handleDaoProposalGet(c.req.raw, c.env, c.req.param('daoId'), c.req.param('proposalId'));
+      const result = await handleDaoProposalGet(
+        c.req.raw,
+        c.env,
+        c.req.param('daoId'),
+        c.req.param('proposalId'),
+      );
       return ok(result);
     } catch (err) {
       return serverError(err instanceof Error ? err.message : 'Unknown error');
@@ -197,8 +205,8 @@ export function registerDaoRoutes(app: Hono<{ Bindings: Env }>): void {
   app.put('/api/dao/:daoId/proposals/:proposalId', async (c) => {
     try {
       return await withSession(c, () =>
-      handleDaoProposalUpdate(c.req.raw, c.env, c.req.param('daoId'), c.req.param('proposalId')),
-    );
+        handleDaoProposalUpdate(c.req.raw, c.env, c.req.param('daoId'), c.req.param('proposalId')),
+      );
     } catch (err) {
       return serverError(err instanceof Error ? err.message : 'Unknown error');
     }
@@ -206,8 +214,8 @@ export function registerDaoRoutes(app: Hono<{ Bindings: Env }>): void {
   app.delete('/api/dao/:daoId/proposals/:proposalId', async (c) => {
     try {
       return await withSession(c, () =>
-      handleDaoProposalDelete(c.req.raw, c.env, c.req.param('daoId'), c.req.param('proposalId')),
-    );
+        handleDaoProposalDelete(c.req.raw, c.env, c.req.param('daoId'), c.req.param('proposalId')),
+      );
     } catch (err) {
       return serverError(err instanceof Error ? err.message : 'Unknown error');
     }
@@ -215,15 +223,20 @@ export function registerDaoRoutes(app: Hono<{ Bindings: Env }>): void {
   app.post('/api/dao/:daoId/proposals/:proposalId/vote', async (c) => {
     try {
       return await withSession(c, () =>
-      handleDaoProposalVote(c.req.raw, c.env, c.req.param('daoId'), c.req.param('proposalId')),
-    );
+        handleDaoProposalVote(c.req.raw, c.env, c.req.param('daoId'), c.req.param('proposalId')),
+      );
     } catch (err) {
       return serverError(err instanceof Error ? err.message : 'Unknown error');
     }
   });
   app.get('/api/dao/:daoId/proposals/:proposalId/votes', async (c) => {
     try {
-      const result = await handleDaoProposalVotes(c.req.raw, c.env, c.req.param('daoId'), c.req.param('proposalId'));
+      const result = await handleDaoProposalVotes(
+        c.req.raw,
+        c.env,
+        c.req.param('daoId'),
+        c.req.param('proposalId'),
+      );
       return ok(result);
     } catch (err) {
       return serverError(err instanceof Error ? err.message : 'Unknown error');
@@ -231,7 +244,12 @@ export function registerDaoRoutes(app: Hono<{ Bindings: Env }>): void {
   });
   app.get('/api/dao/:daoId/proposals/:proposalId/vote/me', async (c) => {
     try {
-      const result = await handleDaoProposalMyVote(c.req.raw, c.env, c.req.param('daoId'), c.req.param('proposalId'));
+      const result = await handleDaoProposalMyVote(
+        c.req.raw,
+        c.env,
+        c.req.param('daoId'),
+        c.req.param('proposalId'),
+      );
       return ok(result);
     } catch (err) {
       return serverError(err instanceof Error ? err.message : 'Unknown error');
@@ -240,8 +258,8 @@ export function registerDaoRoutes(app: Hono<{ Bindings: Env }>): void {
   app.post('/api/dao/:daoId/proposals/:proposalId/queue', async (c) => {
     try {
       return await withSession(c, () =>
-      handleDaoProposalQueue(c.req.raw, c.env, c.req.param('daoId'), c.req.param('proposalId')),
-    );
+        handleDaoProposalQueue(c.req.raw, c.env, c.req.param('daoId'), c.req.param('proposalId')),
+      );
     } catch (err) {
       return serverError(err instanceof Error ? err.message : 'Unknown error');
     }
@@ -249,8 +267,8 @@ export function registerDaoRoutes(app: Hono<{ Bindings: Env }>): void {
   app.post('/api/dao/:daoId/proposals/:proposalId/execute', async (c) => {
     try {
       return await withSession(c, () =>
-      handleDaoProposalExecute(c.req.raw, c.env, c.req.param('daoId'), c.req.param('proposalId')),
-    );
+        handleDaoProposalExecute(c.req.raw, c.env, c.req.param('daoId'), c.req.param('proposalId')),
+      );
     } catch (err) {
       return serverError(err instanceof Error ? err.message : 'Unknown error');
     }
@@ -264,7 +282,9 @@ export function registerDaoRoutes(app: Hono<{ Bindings: Env }>): void {
   });
   app.post('/api/dao/:daoId/revoke-delegation', async (c) => {
     try {
-      return await withSession(c, () => handleDaoRevokeDelegation(c.req.raw, c.env, c.req.param('daoId')));
+      return await withSession(c, () =>
+        handleDaoRevokeDelegation(c.req.raw, c.env, c.req.param('daoId')),
+      );
     } catch (err) {
       return serverError(err instanceof Error ? err.message : 'Unknown error');
     }
@@ -279,7 +299,12 @@ export function registerDaoRoutes(app: Hono<{ Bindings: Env }>): void {
   });
   app.get('/api/dao/:daoId/delegation/:address', async (c) => {
     try {
-      const result = await handleDaoDelegationStatus(c.req.raw, c.env, c.req.param('daoId'), c.req.param('address'));
+      const result = await handleDaoDelegationStatus(
+        c.req.raw,
+        c.env,
+        c.req.param('daoId'),
+        c.req.param('address'),
+      );
       return ok(result);
     } catch (err) {
       return serverError(err instanceof Error ? err.message : 'Unknown error');
@@ -311,7 +336,9 @@ export function registerDaoRoutes(app: Hono<{ Bindings: Env }>): void {
   });
   app.post('/api/dao/:daoId/treasury/transfer', async (c) => {
     try {
-      return await withSession(c, () => handleDaoTreasuryTransfer(c.req.raw, c.env, c.req.param('daoId')));
+      return await withSession(c, () =>
+        handleDaoTreasuryTransfer(c.req.raw, c.env, c.req.param('daoId')),
+      );
     } catch (err) {
       return serverError(err instanceof Error ? err.message : 'Unknown error');
     }
@@ -327,13 +354,13 @@ export function registerDaoRoutes(app: Hono<{ Bindings: Env }>): void {
   app.delete('/api/dao/:daoId/treasury/streams/:streamId', async (c) => {
     try {
       return await withSession(c, () =>
-      handleDaoTreasuryStreamDelete(
-        c.req.raw,
-        c.env,
-        c.req.param('daoId'),
-        c.req.param('streamId'),
-      ),
-    );
+        handleDaoTreasuryStreamDelete(
+          c.req.raw,
+          c.env,
+          c.req.param('daoId'),
+          c.req.param('streamId'),
+        ),
+      );
     } catch (err) {
       return serverError(err instanceof Error ? err.message : 'Unknown error');
     }
@@ -349,13 +376,13 @@ export function registerDaoRoutes(app: Hono<{ Bindings: Env }>): void {
   app.post('/api/dao/:daoId/treasury/grant/:grantId/milestone', async (c) => {
     try {
       return await withSession(c, () =>
-      handleDaoTreasuryGrantMilestone(
-        c.req.raw,
-        c.env,
-        c.req.param('daoId'),
-        c.req.param('grantId'),
-      ),
-    );
+        handleDaoTreasuryGrantMilestone(
+          c.req.raw,
+          c.env,
+          c.req.param('daoId'),
+          c.req.param('grantId'),
+        ),
+      );
     } catch (err) {
       return serverError(err instanceof Error ? err.message : 'Unknown error');
     }
@@ -381,21 +408,30 @@ export function registerDaoRoutes(app: Hono<{ Bindings: Env }>): void {
   // --- API: External DAO Integrations — Snapshot ---
   app.post('/api/dao/:daoId/snapshot/strategy', async (c) => {
     try {
-      return await withSession(c, () => handleSnapshotStrategyGenerate(c.req.raw, c.env, c.req.param('daoId')));
+      return await withSession(c, () =>
+        handleSnapshotStrategyGenerate(c.req.raw, c.env, c.req.param('daoId')),
+      );
     } catch (err) {
       return serverError(err instanceof Error ? err.message : 'Unknown error');
     }
   });
   app.post('/api/dao/:daoId/snapshot/sync-proposal', async (c) => {
     try {
-      return await withSession(c, () => handleSnapshotSyncProposal(c.req.raw, c.env, c.req.param('daoId')));
+      return await withSession(c, () =>
+        handleSnapshotSyncProposal(c.req.raw, c.env, c.req.param('daoId')),
+      );
     } catch (err) {
       return serverError(err instanceof Error ? err.message : 'Unknown error');
     }
   });
   app.get('/api/dao/:daoId/snapshot/votes/:proposalId', async (c) => {
     try {
-      const result = await handleSnapshotImportVotes(c.req.raw, c.env, c.req.param('daoId'), c.req.param('proposalId'));
+      const result = await handleSnapshotImportVotes(
+        c.req.raw,
+        c.env,
+        c.req.param('daoId'),
+        c.req.param('proposalId'),
+      );
       return ok(result);
     } catch (err) {
       return serverError(err instanceof Error ? err.message : 'Unknown error');
@@ -403,7 +439,9 @@ export function registerDaoRoutes(app: Hono<{ Bindings: Env }>): void {
   });
   app.post('/api/dao/:daoId/snapshot/delegation-sync', async (c) => {
     try {
-      return await withSession(c, () => handleDelegationSync(c.req.raw, c.env, c.req.param('daoId')));
+      return await withSession(c, () =>
+        handleDelegationSync(c.req.raw, c.env, c.req.param('daoId')),
+      );
     } catch (err) {
       return serverError(err instanceof Error ? err.message : 'Unknown error');
     }
@@ -412,14 +450,18 @@ export function registerDaoRoutes(app: Hono<{ Bindings: Env }>): void {
   // --- API: External DAO Integrations — Tally ---
   app.post('/api/dao/:daoId/tally/check', async (c) => {
     try {
-      return await withSession(c, () => handleTallyCompatibilityCheck(c.req.raw, c.env, c.req.param('daoId')));
+      return await withSession(c, () =>
+        handleTallyCompatibilityCheck(c.req.raw, c.env, c.req.param('daoId')),
+      );
     } catch (err) {
       return serverError(err instanceof Error ? err.message : 'Unknown error');
     }
   });
   app.post('/api/dao/:daoId/tally/register', async (c) => {
     try {
-      return await withSession(c, () => handleTallyRegister(c.req.raw, c.env, c.req.param('daoId')));
+      return await withSession(c, () =>
+        handleTallyRegister(c.req.raw, c.env, c.req.param('daoId')),
+      );
     } catch (err) {
       return serverError(err instanceof Error ? err.message : 'Unknown error');
     }
@@ -436,7 +478,9 @@ export function registerDaoRoutes(app: Hono<{ Bindings: Env }>): void {
   // --- API: External DAO Integrations — Defender ---
   app.post('/api/dao/:daoId/defender/setup', async (c) => {
     try {
-      return await withSession(c, () => handleDefenderSetup(c.req.raw, c.env, c.req.param('daoId')));
+      return await withSession(c, () =>
+        handleDefenderSetup(c.req.raw, c.env, c.req.param('daoId')),
+      );
     } catch (err) {
       return serverError(err instanceof Error ? err.message : 'Unknown error');
     }
@@ -458,7 +502,9 @@ export function registerDaoRoutes(app: Hono<{ Bindings: Env }>): void {
   });
   app.delete('/api/dao/:daoId/defender', async (c) => {
     try {
-      return await withSession(c, () => handleDefenderDisable(c.req.raw, c.env, c.req.param('daoId')));
+      return await withSession(c, () =>
+        handleDefenderDisable(c.req.raw, c.env, c.req.param('daoId')),
+      );
     } catch (err) {
       return serverError(err instanceof Error ? err.message : 'Unknown error');
     }
@@ -475,14 +521,18 @@ export function registerDaoRoutes(app: Hono<{ Bindings: Env }>): void {
   });
   app.post('/api/dao/registry/:daoId/link', async (c) => {
     try {
-      return await withSession(c, () => handleDaoRegistryLink(c.req.raw, c.env, c.req.param('daoId')));
+      return await withSession(c, () =>
+        handleDaoRegistryLink(c.req.raw, c.env, c.req.param('daoId')),
+      );
     } catch (err) {
       return serverError(err instanceof Error ? err.message : 'Unknown error');
     }
   });
   app.post('/api/dao/registry/:daoId/verify', async (c) => {
     try {
-      return await withSession(c, () => handleDaoRegistryVerify(c.req.raw, c.env, c.req.param('daoId')));
+      return await withSession(c, () =>
+        handleDaoRegistryVerify(c.req.raw, c.env, c.req.param('daoId')),
+      );
     } catch (err) {
       return serverError(err instanceof Error ? err.message : 'Unknown error');
     }
