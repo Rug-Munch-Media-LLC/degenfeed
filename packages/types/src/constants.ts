@@ -66,10 +66,7 @@ export type Protocol =
   | 'rarible'
   | 'deso'
   | 'writefreely'
-  | 'hubzilla'
-  | 'streams'
-  | 'guppe'
-  | 'epicyon'
+  // REMOVED: hubzilla, streams, guppe, epicyon — never implemented
   | 'ens'
   | 'unstoppable'
   | 'ion'
@@ -105,16 +102,12 @@ export type Protocol =
   | 'ceramic'
   | 'tableland'
   | 'mbin'
-  | 'sublinks'
-  | 'firefish'
-  | 'iceshrimp'
-  | 'sharkey'
-  | 'akkoma'
   | 'immich'
   | 'discourse'
   | 'ghost'
-  | 'headscale'
-  | 'yggdrasil';
+  // REMOVED: sublinks, firefish, iceshrimp, sharkey, akkoma, headscale, yggdrasil — never implemented
+  // ─── Infrastructure (status-only, not in main feed) ────────
+  | 'infra';
 
 /** All protocol identifiers as a const array */
 export const PROTOCOLS = [
@@ -172,10 +165,6 @@ export const PROTOCOLS = [
   'microblog',
   'cyberconnect',
   'arena',
-  'hubzilla',
-  'streams',
-  'guppe',
-  'epicyon',
   'ens',
   'unstoppable',
   'ion',
@@ -212,16 +201,10 @@ export const PROTOCOLS = [
   'ceramic',
   'tableland',
   'mbin',
-  'sublinks',
-  'firefish',
-  'iceshrimp',
-  'sharkey',
-  'akkoma',
   'immich',
   'discourse',
   'ghost',
-  'headscale',
-  'yggdrasil',
+  // REMOVED: sublinks, firefish, iceshrimp, sharkey, akkoma, headscale, yggdrasil
 ] as const satisfies Protocol[];
 
 // ─── Chain Definitions ────────────────────────────────────────────
@@ -359,7 +342,6 @@ export const PLATFORM_TIER_WEIGHTS: Record<string, number> = {
   dtube: 0.7,
   email: 0.5,
   ens: 0.7,
-  epicyon: 0.5,
   ethereum: 0.6,
   farcaster: 1.0,
   filecoin: 0.6,
@@ -368,9 +350,7 @@ export const PLATFORM_TIER_WEIGHTS: Record<string, number> = {
   gab: 0.5,
   github: 0.6,
   google: 0.5,
-  guppe: 0.6,
   hive: 0.7,
-  hubzilla: 0.6,
   ion: 0.5,
   juicebox: 0.6,
   kbin: 0.7,
@@ -436,15 +416,10 @@ export const PLATFORM_TIER_WEIGHTS: Record<string, number> = {
   // Data / Storage
   ceramic: 0.5,
   mbin: 0.5,
-  sublinks: 0.5,
-  firefish: 0.5,
-  iceshrimp: 0.5,
-  sharkey: 0.5,
-  akkoma: 0.5,
   immich: 0.5,
   discourse: 0.5,
   ghost: 0.5,
-  headscale: 0.5,
-  yggdrasil: 0.5,
   tableland: 0.4,
+  // Infrastructure (status-only)
+  infra: 0.3,
 };

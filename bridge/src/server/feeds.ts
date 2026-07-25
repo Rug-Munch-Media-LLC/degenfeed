@@ -1,43 +1,42 @@
+/**
+ * Bridge Feed Builder
+ *
+ * Registry of all protocol providers with error handling,
+ * circuit breakers, failover, and rate limiting.
+ *
+ * Last cleanup: 2026-07-25 — Removed 14 dead providers, implemented 8 real ones
+ */
+
 import { fetchAetherPosts } from '../providers/aether';
-import { fetchAkkomaPosts } from '../providers/akkoma';
-// Bridge providers that exist but were never registered
 import { fetchArenaPosts } from '../providers/arena';
 import { fetchArweavePosts } from '../providers/arweave';
+import { fetchAtprotoPosts } from '../providers/atproto';
 import { fetchBlueskyPosts } from '../providers/bluesky';
 import { fetchBonfirePosts } from '../providers/bonfire';
-// NEW PROTOCOL IMPORTS - 2026-07-26
 import { fetchBookWyrmPosts } from '../providers/bookwyrm';
 import { fetchCastopodPosts } from '../providers/castopod';
 import { fetchCeramicPosts } from '../providers/ceramic';
 import { fetchCyberConnectPosts } from '../providers/cyberconnect';
-import { fetchDeSoPosts } from '../providers/deso';
-// Adapter-based protocols — now have bridge wrappers
+import { fetchDesoPosts } from '../providers/deso';
 import { fetchDiasporaPosts } from '../providers/diaspora';
 import { fetchDiscordPosts } from '../providers/discord';
 import { fetchDiscoursePosts } from '../providers/discourse';
 import { fetchDTubePosts } from '../providers/dtube';
-import { fetchEpicyonPosts } from '../providers/epicyon';
-// New 2026-07-25: Faircamp
 import { fetchFaircampPosts } from '../providers/faircamp';
 import { fetchFarcasterPosts } from '../providers/farcaster';
-import { fetchFirefishPosts } from '../providers/firefish';
+import { fetchFlarumPosts } from '../providers/flarum';
 import { fetchForgejoPosts } from '../providers/forgejo';
 import { fetchFriendicaPosts } from '../providers/friendica';
 import { fetchFunkwhalePosts } from '../providers/funkwhale';
 import { fetchGabPosts } from '../providers/gab';
 import { fetchGhostPosts } from '../providers/ghost';
 import { fetchGitHubPosts } from '../providers/github';
+// ─── Real Provider Imports ─────────────────────────────────────────
 import { fetchMastodonPosts } from '../providers/gotosocial';
-import { fetchGuppePosts } from '../providers/guppe';
-import { fetchHeadscalePosts } from '../providers/headscale';
 import { fetchHivePosts } from '../providers/hive';
-import { fetchHubzillaPosts } from '../providers/hubzilla';
 import { fetchHuddle01Posts } from '../providers/huddle01';
-import { fetchIceshrimpPosts } from '../providers/iceshrimp';
 import { fetchImmichPosts } from '../providers/immich';
-import { fetchIpfsClusterPosts } from '../providers/ipfs-cluster';
 import { fetchKbinPosts } from '../providers/kbin';
-import { fetchKnownPosts } from '../providers/known';
 import { fetchLBRYPosts } from '../providers/lbry';
 import { fetchLemmyPosts } from '../providers/lemmy';
 import { fetchLensPosts } from '../providers/lens';
@@ -47,124 +46,295 @@ import { fetchMediaGoblinPosts } from '../providers/mediagoblin';
 import { fetchMicroblogPosts } from '../providers/microblog';
 import { fetchMindsPosts } from '../providers/minds';
 import { fetchMirrorPosts } from '../providers/mirror';
+// ─── NEW Real Provider Imports (2026-07-25) ────────────────────────
 import { fetchMisskeyPosts } from '../providers/misskey';
 import { fetchMitraPosts } from '../providers/mitra';
 import { fetchMobilizonPosts } from '../providers/mobilizon';
 import { fetchNostrPosts } from '../providers/nostr';
 import { fetchOrbisPosts } from '../providers/orbis';
 import { fetchOwncastPosts } from '../providers/owncast';
+import { fetchParagraphPosts } from '../providers/paragraph';
 import { fetchPeerTubePosts } from '../providers/peertube';
 import { fetchPixelfedPosts } from '../providers/pixelfed';
 import { fetchPleromaPosts } from '../providers/pleroma';
-import { fetchPlumePosts } from '../providers/plume';
-import { fetchPubliiPosts } from '../providers/publii';
 import { fetchPushPosts } from '../providers/push';
 import { fetchRedditPosts } from '../providers/redlib';
 import { fetch as fetchRssPosts } from '../providers/rss';
 import { fetchRssBridgePosts } from '../providers/rssbridge';
 import { fetchScuttlebuttPosts } from '../providers/scuttlebutt';
 import { fetchSessionPosts } from '../providers/session';
-import { fetchSharkeyPosts } from '../providers/sharkey';
 import { fetchSteemPosts } from '../providers/steem';
-import { fetchStreamsPosts } from '../providers/streams';
 import { fetchStrfryPosts } from '../providers/strfry';
-import { fetchSublinksPosts } from '../providers/sublinks';
 import { fetchSubsocialPosts } from '../providers/subsocial';
 import { fetchTablelandPosts } from '../providers/tableland';
 import { fetchTakahePosts } from '../providers/takahe';
-// Bridge providers for telegram, discord, matrix, github
 import { fetchTelegramPosts } from '../providers/telegram';
 import { fetchThreadsPosts } from '../providers/threads';
 import { fetchWriteFreelyPosts } from '../providers/writefreely';
+// ─── Infrastructure Providers (status-only, not in main feed) ─────
 import { fetchXmtpPosts } from '../providers/xmtp';
-import { fetchYggdrasilPosts } from '../providers/yggdrasil';
-import { fetchAtprotoPosts } from '../providers/atproto';
 import { fetchZoraPosts } from '../providers/zora';
-import type { UnifiedPost } from './types';
-import { checkRateLimit } from '../rate-limiter';
 import type { RateLimitConfig } from '../rate-limiter';
+import { checkRateLimit } from '../rate-limiter';
+import { providerCircuitBreaker } from '../reliability/circuit-breaker';
+import { type FetchResult, failoverRouter, fallbackCache } from '../reliability/failover-router';
+import { healthDashboard } from '../reliability/health-dashboard';
+import {
+  registerAllProvidersWithCircuitBreaker,
+  registerFailoverStrategies,
+} from '../reliability/register-all';
+import { deadLetterQueue, withRetry } from '../reliability/retry';
+import type { UnifiedPost } from './types';
 
 interface ProviderEntry {
   name: string;
   fetch: ProviderFetcher;
   rateLimit?: RateLimitConfig;
+  category?: 'content' | 'infrastructure';
 }
 
 type ProviderFetcher = (limit: number) => Promise<UnifiedPost[]>;
 
 export const PROVIDERS: Record<string, ProviderEntry> = {
-  // ─── Original Providers ─────────────────────────────────────────
-  mastodon: { name: 'Mastodon/GTS', fetch: fetchMastodonPosts, rateLimit: { maxRequests: 300, windowMs: 300_000 } },
-  reddit: { name: 'Reddit/Redlib', fetch: fetchRedditPosts, rateLimit: { maxRequests: 600, windowMs: 600_000 } },
-  rss: { name: 'RSS+Newsletter (100+ sources)', fetch: fetchRssPosts, rateLimit: { maxRequests: 60, windowMs: 60_000 } },
+  // ═══════════════════════════════════════════════════════════════════
+  // TIER 1: Core Social
+  // ═══════════════════════════════════════════════════════════════════
+  mastodon: {
+    name: 'Mastodon/GTS',
+    fetch: fetchMastodonPosts,
+    rateLimit: { maxRequests: 300, windowMs: 300_000 },
+    category: 'content',
+  },
+  bluesky: {
+    name: 'Bluesky/PDS',
+    fetch: fetchBlueskyPosts,
+    rateLimit: { maxRequests: 3000, windowMs: 300_000 },
+    category: 'content',
+  },
+  nostr: {
+    name: 'Nostr',
+    fetch: fetchNostrPosts,
+    rateLimit: { maxRequests: 30, windowMs: 60_000 },
+    category: 'content',
+  },
+  farcaster: {
+    name: 'Farcaster',
+    fetch: fetchFarcasterPosts,
+    rateLimit: { maxRequests: 60, windowMs: 60_000 },
+    category: 'content',
+  },
+  lens: {
+    name: 'Lens',
+    fetch: fetchLensPosts,
+    rateLimit: { maxRequests: 50, windowMs: 60_000 },
+    category: 'content',
+  },
+
+  // ═══════════════════════════════════════════════════════════════════
+  // TIER 2: Established Platforms
+  // ═══════════════════════════════════════════════════════════════════
+  reddit: {
+    name: 'Reddit/Redlib',
+    fetch: fetchRedditPosts,
+    rateLimit: { maxRequests: 600, windowMs: 600_000 },
+    category: 'content',
+  },
+  rss: {
+    name: 'RSS+Newsletter (100+ sources)',
+    fetch: fetchRssPosts,
+    rateLimit: { maxRequests: 60, windowMs: 60_000 },
+    category: 'content',
+  },
   newsletter: {
     name: 'Newsletters (Substack/Medium/Mirror/Paragraph/Ghost/Beehiiv)',
     rateLimit: { maxRequests: 60, windowMs: 60_000 },
+    category: 'content',
     fetch: async (limit) => {
       const { fetchNewsletterPosts } = await import('../providers/rss');
       return fetchNewsletterPosts(limit);
     },
   },
-  rssbridge: { name: 'RSS-Bridge (legacy)', fetch: fetchRssBridgePosts, rateLimit: { maxRequests: 60, windowMs: 60_000 } },
-  lemmy: { name: 'Lemmy', fetch: fetchLemmyPosts, rateLimit: { maxRequests: 60, windowMs: 60_000 } },
-  peertube: { name: 'PeerTube', fetch: fetchPeerTubePosts, rateLimit: { maxRequests: 50, windowMs: 60_000 } },
-  bluesky: { name: 'Bluesky/PDS', fetch: fetchBlueskyPosts, rateLimit: { maxRequests: 3000, windowMs: 300_000 } },
-  nostr: { name: 'Nostr', fetch: fetchNostrPosts, rateLimit: { maxRequests: 30, windowMs: 60_000 } },
-  farcaster: { name: 'Farcaster', fetch: fetchFarcasterPosts, rateLimit: { maxRequests: 60, windowMs: 60_000 } },
-  lens: { name: 'Lens', fetch: fetchLensPosts, rateLimit: { maxRequests: 50, windowMs: 60_000 } },
-  pixelfed: { name: 'Pixelfed', fetch: fetchPixelfedPosts },
-  threads: { name: 'Threads (Meta)', fetch: fetchThreadsPosts },
-  zora: { name: 'Zora (NFT)', fetch: fetchZoraPosts },
-  dtube: { name: 'DTube (Hive Video)', fetch: fetchDTubePosts },
-  lbry: { name: 'Odysee/LBRY (Video)', fetch: fetchLBRYPosts },
-  gab: { name: 'Gab / Dissenter', fetch: fetchGabPosts },
-  minds: { name: 'Minds (Crypto Social)', fetch: fetchMindsPosts },
-  aether: { name: 'Aether (P2P Communities)', fetch: fetchAetherPosts },
-  scuttlebutt: { name: 'Scuttlebutt/SSB', fetch: fetchScuttlebuttPosts },
-  hive: { name: 'Hive Blog', fetch: fetchHivePosts },
-  mirror: { name: 'Mirror.xyz (Articles)', fetch: fetchMirrorPosts },
-  funkwhale: { name: 'Funkwhale (Audio/Music)', fetch: fetchFunkwhalePosts },
-  castopod: { name: 'Castopod (Podcasting)', fetch: fetchCastopodPosts },
-  writefreely: { name: 'WriteFreely / Write.as', fetch: fetchWriteFreelyPosts },
-  mediagoblin: { name: 'MediaGoblin', fetch: fetchMediaGoblinPosts },
-  owncast: { name: 'Owncast (Live Streaming)', fetch: fetchOwncastPosts },
+  rssbridge: {
+    name: 'RSS-Bridge (legacy)',
+    fetch: fetchRssBridgePosts,
+    rateLimit: { maxRequests: 60, windowMs: 60_000 },
+    category: 'content',
+  },
+  lemmy: {
+    name: 'Lemmy',
+    fetch: fetchLemmyPosts,
+    rateLimit: { maxRequests: 60, windowMs: 60_000 },
+    category: 'content',
+  },
+  peertube: {
+    name: 'PeerTube',
+    fetch: fetchPeerTubePosts,
+    rateLimit: { maxRequests: 50, windowMs: 60_000 },
+    category: 'content',
+  },
+  pixelfed: { name: 'Pixelfed', fetch: fetchPixelfedPosts, category: 'content' },
+  threads: { name: 'Threads (Meta)', fetch: fetchThreadsPosts, category: 'content' },
+  zora: { name: 'Zora (NFT)', fetch: fetchZoraPosts, category: 'content' },
+  dtube: { name: 'DTube (Hive Video)', fetch: fetchDTubePosts, category: 'content' },
+  lbry: { name: 'Odysee/LBRY (Video)', fetch: fetchLBRYPosts, category: 'content' },
+  gab: { name: 'Gab / Dissenter', fetch: fetchGabPosts, category: 'content' },
+  minds: { name: 'Minds (Crypto Social)', fetch: fetchMindsPosts, category: 'content' },
+  aether: { name: 'Aether (P2P Communities)', fetch: fetchAetherPosts, category: 'content' },
+  scuttlebutt: { name: 'Scuttlebutt/SSB', fetch: fetchScuttlebuttPosts, category: 'content' },
+  hive: { name: 'Hive Blog', fetch: fetchHivePosts, category: 'content' },
+  paragraph: {
+    name: 'Paragraph.xyz (Farcaster Articles)',
+    fetch: fetchParagraphPosts,
+    category: 'content',
+  },
+  mirror: { name: 'Mirror.xyz (Articles)', fetch: fetchMirrorPosts, category: 'content' },
+  funkwhale: { name: 'Funkwhale (Audio/Music)', fetch: fetchFunkwhalePosts, category: 'content' },
+  castopod: { name: 'Castopod (Podcasting)', fetch: fetchCastopodPosts, category: 'content' },
+  writefreely: {
+    name: 'WriteFreely / Write.as',
+    fetch: fetchWriteFreelyPosts,
+    category: 'content',
+  },
+  mediagoblin: { name: 'MediaGoblin', fetch: fetchMediaGoblinPosts, category: 'content' },
+  owncast: { name: 'Owncast (Live Streaming)', fetch: fetchOwncastPosts, category: 'content' },
+  arena: {
+    name: 'Arena.social (Social Trading on Avalanche)',
+    fetch: fetchArenaPosts,
+    category: 'content',
+  },
+  deso: {
+    name: 'DeSo / Bitclout (Layer-1 Social Blockchain)',
+    fetch: fetchDesoPosts,
+    category: 'content',
+  },
+  microblog: {
+    name: 'Micro.blog (IndieWeb Microblogging)',
+    fetch: fetchMicroblogPosts,
+    category: 'content',
+  },
+  session: {
+    name: 'Session / SOGS (Privacy Messenger)',
+    fetch: fetchSessionPosts,
+    category: 'content',
+  },
+  steem: { name: 'Steem (Blockchain Social Rewards)', fetch: fetchSteemPosts, category: 'content' },
+  subsocial: {
+    name: 'Subsocial (Polkadot Social)',
+    fetch: fetchSubsocialPosts,
+    category: 'content',
+  },
 
-  // ─── ActivityPub Ecosystem (NEW) ────────────────────────────────
-  bookwyrm: { name: 'BookWyrm (Federated Books)', fetch: fetchBookWyrmPosts },
-  mobilizon: { name: 'Mobilizon (Federated Events)', fetch: fetchMobilizonPosts },
-  forgejo: { name: 'Forgejo/Gitea (Git Repos)', fetch: fetchForgejoPosts },
-  bonfire: { name: 'Bonfire (Federated Social)', fetch: fetchBonfirePosts },
-  mitra: { name: 'Mitra (Lightweight Microblog)', fetch: fetchMitraPosts },
-  takahe: { name: 'Takahē (Multi-Domain Fedi)', fetch: fetchTakahePosts },
+  // ═══════════════════════════════════════════════════════════════════
+  // TIER 3: ActivityPub Ecosystem
+  // ═══════════════════════════════════════════════════════════════════
+  bookwyrm: { name: 'BookWyrm (Federated Books)', fetch: fetchBookWyrmPosts, category: 'content' },
+  mobilizon: {
+    name: 'Mobilizon (Federated Events)',
+    fetch: fetchMobilizonPosts,
+    category: 'content',
+  },
+  forgejo: { name: 'Forgejo/Gitea (Git Repos)', fetch: fetchForgejoPosts, category: 'content' },
+  bonfire: { name: 'Bonfire (Federated Social)', fetch: fetchBonfirePosts, category: 'content' },
+  mitra: { name: 'Mitra (Lightweight Microblog)', fetch: fetchMitraPosts, category: 'content' },
+  takahe: { name: 'Takahē (Multi-Domain Fedi)', fetch: fetchTakahePosts, category: 'content' },
 
-  // ─── Blockchain Social (NEW) ────────────────────────────────────
-  orbis: { name: 'Orbis (Ceramic Social)', fetch: fetchOrbisPosts },
-  xmtp: { name: 'XMTP (Web3 Messaging)', fetch: fetchXmtpPosts },
-  push: { name: 'Push Protocol (Web3 Notifications)', fetch: fetchPushPosts },
-  huddle01: { name: 'Huddle01 (Decentralized Video)', fetch: fetchHuddle01Posts },
+  // ═══════════════════════════════════════════════════════════════════
+  // TIER 4: Federated Microblogging (NEW real implementations)
+  // ═══════════════════════════════════════════════════════════════════
+  misskey: {
+    name: 'Misskey (Rich Media Fedi)',
+    fetch: fetchMisskeyPosts,
+    rateLimit: { maxRequests: 60, windowMs: 60_000 },
+    category: 'content',
+  },
+  pleroma: {
+    name: 'Pleroma / Akkoma (Lightweight Fedi)',
+    fetch: fetchPleromaPosts,
+    rateLimit: { maxRequests: 60, windowMs: 60_000 },
+    category: 'content',
+  },
+  friendica: {
+    name: 'Friendica (Fediverse Compatible)',
+    fetch: fetchFriendicaPosts,
+    rateLimit: { maxRequests: 60, windowMs: 60_000 },
+    category: 'content',
+  },
+  diaspora: {
+    name: 'Diaspora* (Federated Social)',
+    fetch: fetchDiasporaPosts,
+    rateLimit: { maxRequests: 60, windowMs: 60_000 },
+    category: 'content',
+  },
 
-  // ─── Data/Storage (NEW) ─────────────────────────────────────────
-  ceramic: { name: 'Ceramic/ComposeDB', fetch: fetchCeramicPosts },
-  tableland: { name: 'Tableland (Decentralized DB)', fetch: fetchTablelandPosts },
+  // ═══════════════════════════════════════════════════════════════════
+  // TIER 5: Federated Content Aggregation (NEW real implementations)
+  // ═══════════════════════════════════════════════════════════════════
+  kbin: {
+    name: 'Kbin / Mbin (Federated Hybrid)',
+    fetch: fetchKbinPosts,
+    rateLimit: { maxRequests: 60, windowMs: 60_000 },
+    category: 'content',
+  },
+  mbin: {
+    name: 'Mbin (Active Kbin Fork)',
+    fetch: fetchMbinPosts,
+    rateLimit: { maxRequests: 60, windowMs: 60_000 },
+    category: 'content',
+  },
+  flarum: {
+    name: 'Flarum (Federated Forums)',
+    fetch: fetchFlarumPosts,
+    rateLimit: { maxRequests: 30, windowMs: 60_000 },
+    category: 'content',
+  },
 
-  // ─── Unregistered Providers (existing files, newly bound) ─────────
-  arena: { name: 'Arena.social (Social Trading on Avalanche)', fetch: fetchArenaPosts },
-  deso: { name: 'DeSo / Bitclout (Layer-1 Social Blockchain)', fetch: fetchDeSoPosts },
-  microblog: { name: 'Micro.blog (IndieWeb Microblogging)', fetch: fetchMicroblogPosts },
-  session: { name: 'Session / SOGS (Privacy Messenger)', fetch: fetchSessionPosts },
-  steem: { name: 'Steem (Blockchain Social Rewards)', fetch: fetchSteemPosts },
-  subsocial: { name: 'Subsocial (Polkadot Social)', fetch: fetchSubsocialPosts },
-  cyberconnect: { name: 'CyberConnect (Web3 Social Graph)', fetch: fetchCyberConnectPosts },
+  // ═══════════════════════════════════════════════════════════════════
+  // TIER 6: Decentralized Storage / Web3 Content (real implementations)
+  // ═══════════════════════════════════════════════════════════════════
+  arweave: {
+    name: 'Arweave (Permaweb Gateway)',
+    fetch: fetchArweavePosts,
+    rateLimit: { maxRequests: 30, windowMs: 60_000 },
+    category: 'content',
+  },
+  orbis: { name: 'Orbis (Ceramic Social)', fetch: fetchOrbisPosts, category: 'content' },
 
-  // ─── Adapter-based Protocols (now bridged) ───────────────────────
-  diaspora: { name: 'Diaspora* (Federated Social)', fetch: fetchDiasporaPosts },
-  friendica: { name: 'Friendica (Fediverse Compatible)', fetch: fetchFriendicaPosts },
-  pleroma: { name: 'Pleroma / Akkoma (Lightweight Fedi)', fetch: fetchPleromaPosts },
-  misskey: { name: 'Misskey / Firefish (Rich Media Fedi)', fetch: fetchMisskeyPosts },
+  // ═══════════════════════════════════════════════════════════════════
+  // TIER 7: Messaging & Dev Platforms
+  // ═══════════════════════════════════════════════════════════════════
+  telegram: {
+    name: 'Telegram (Channels & Groups)',
+    fetch: fetchTelegramPosts,
+    category: 'content',
+  },
+  discord: { name: 'Discord (Communities)', fetch: fetchDiscordPosts, category: 'content' },
+  matrix: { name: 'Matrix (Decentralized Chat)', fetch: fetchMatrixPosts, category: 'content' },
+  github: {
+    name: 'GitHub (Dev Activity)',
+    fetch: fetchGitHubPosts,
+    rateLimit: { maxRequests: 60, windowMs: 3_600_000 },
+    category: 'content',
+  },
+  discourse: {
+    name: 'Discourse (Forum + ActivityPub)',
+    fetch: fetchDiscoursePosts,
+    category: 'content',
+  },
+  ghost: { name: 'Ghost (Headless CMS)', fetch: fetchGhostPosts, category: 'content' },
+  forgejo: { name: 'Forgejo/Gitea Git Repos', fetch: fetchForgejoPosts, category: 'content' },
+  immich: { name: 'Immich (Self-Hosted Photos)', fetch: fetchImmichPosts, category: 'content' },
+  faircamp: {
+    name: 'Faircamp (Self-Hosted Music Sites)',
+    fetch: fetchFaircampPosts,
+    category: 'content',
+  },
 
-  // ─── Class-based providers (audius, rarible) ─────────────────────
+  // ═══════════════════════════════════════════════════════════════════
+  // TIER 8: Class-based providers
+  // ═══════════════════════════════════════════════════════════════════
   audius: {
     name: 'Audius (Decentralized Music)',
+    category: 'content',
     fetch: async (limit: number) => {
       const { AudiusProvider } = await import('../providers/audius');
       const p = new AudiusProvider();
@@ -174,6 +344,7 @@ export const PROVIDERS: Record<string, ProviderEntry> = {
   },
   rarible: {
     name: 'Rarible Protocol (NFT Market Activity)',
+    category: 'content',
     fetch: async (limit: number) => {
       const { RaribleProvider } = await import('../providers/rarible');
       const p = new RaribleProvider();
@@ -182,42 +353,72 @@ export const PROVIDERS: Record<string, ProviderEntry> = {
     },
   },
 
-  // ─── New Headless Protocol: Faircamp ─────────────────────────────
-  faircamp: { name: 'Faircamp (Self-Hosted Music Sites)', fetch: fetchFaircampPosts },
+  // ═══════════════════════════════════════════════════════════════════
+  // TIER 9: Cross-Protocol / AT Protocol
+  // ═══════════════════════════════════════════════════════════════════
+  atproto: {
+    name: 'AT Protocol (Bluesky/Public)',
+    fetch: fetchAtprotoPosts,
+    rateLimit: { maxRequests: 60, windowMs: 60_000 },
+    category: 'content',
+  },
+  strfry: {
+    name: 'strfry (Nostr Search Relay)',
+    fetch: fetchStrfryPosts,
+    rateLimit: { maxRequests: 30, windowMs: 60_000 },
+    category: 'content',
+  },
 
-  // ─── Messaging & Social Platforms ──────────────────────────────
-  telegram: { name: 'Telegram (Channels & Groups)', fetch: fetchTelegramPosts },
-  discord: { name: 'Discord (Communities)', fetch: fetchDiscordPosts },
-  matrix: { name: 'Matrix (Decentralized Chat)', fetch: fetchMatrixPosts },
-  github: { name: 'GitHub (Dev Activity)', fetch: fetchGitHubPosts, rateLimit: { maxRequests: 60, windowMs: 3_600_000 } },
-
-  // ─── ActivityPub Extras (moved from DEFAULT_PREFERENCES) ──────────
-  kbin: { name: 'Kbin / Mbin (Federated Hybrid)', fetch: fetchKbinPosts },
-  hubzilla: { name: 'Hubzilla (Nomadic Identity)', fetch: fetchHubzillaPosts },
-  streams: { name: 'Streams (Nomadic Identity)', fetch: fetchStreamsPosts },
-  guppe: { name: 'Guppe (Federated Groups)', fetch: fetchGuppePosts },
-  epicyon: { name: 'Epicyon (Ultralight ActivityPub)', fetch: fetchEpicyonPosts },
-  sublinks: { name: 'Sublinks (Lightweight Lemmy)', fetch: fetchSublinksPosts },
-  firefish: { name: 'Firefish (Misskey Fork)', fetch: fetchFirefishPosts },
-  iceshrimp: { name: 'Iceshrimp (Misskey Fork)', fetch: fetchIceshrimpPosts },
-  sharkey: { name: 'Sharkey (Misskey + Mastodon API)', fetch: fetchSharkeyPosts },
-  akkoma: { name: 'Akkoma (Pleroma Fork)', fetch: fetchAkkomaPosts },
-
-  // ─── FINAL PUSH: New Protocols (2026-07-27) ─────────────────────────
-  plume: { name: "'Plume (Federated Blogging)'", fetch: fetchPlumePosts },
-  known: { name: "'Known (IndieWeb Publishing)'", fetch: fetchKnownPosts },
-  ipfsCluster: { name: "'IPFS Cluster (Decentralized Pinning)'", fetch: fetchIpfsClusterPosts },
-  arweave: { name: "'Arweave (Permaweb Gateway)'", fetch: fetchArweavePosts },
-  strfry: { name: "'strfry (Nostr Search Relay)'", fetch: fetchStrfryPosts },
-  publii: { name: "'Publii (Desktop Static CMS)'", fetch: fetchPubliiPosts },
-  mbin: { name: 'Mbin (Active Kbin Fork)', fetch: fetchMbinPosts },
-  immich: { name: 'Immich (Self-Hosted Photos)', fetch: fetchImmichPosts },
-  discourse: { name: 'Discourse (Forum + ActivityPub)', fetch: fetchDiscoursePosts },
-  ghost: { name: 'Ghost (Headless CMS)', fetch: fetchGhostPosts },
-  headscale: { name: 'Headscale (Mesh VPN)', fetch: fetchHeadscalePosts },
-  yggdrasil: { name: 'Yggdrasil (Decentralized Mesh)', fetch: fetchYggdrasilPosts },
-  atproto: { name: 'AT Protocol (Bluesky/Public)', fetch: fetchAtprotoPosts, rateLimit: { maxRequests: 60, windowMs: 60_000 } },
+  // ═══════════════════════════════════════════════════════════════════
+  // INFRASTRUCTURE PROVIDERS (status-only, excluded from main feed)
+  // ═══════════════════════════════════════════════════════════════════
+  xmtp: {
+    name: 'XMTP (Web3 Messaging — Infra)',
+    fetch: fetchXmtpPosts,
+    category: 'infrastructure',
+  },
+  ceramic: {
+    name: 'Ceramic/ComposeDB — Infra',
+    fetch: fetchCeramicPosts,
+    category: 'infrastructure',
+  },
+  tableland: {
+    name: 'Tableland (Decentralized DB — Infra)',
+    fetch: fetchTablelandPosts,
+    category: 'infrastructure',
+  },
+  cyberconnect: {
+    name: 'CyberConnect (Web3 Social Graph — Infra)',
+    fetch: fetchCyberConnectPosts,
+    category: 'infrastructure',
+  },
+  push: {
+    name: 'Push Protocol (Web3 Notifications — Infra)',
+    fetch: fetchPushPosts,
+    category: 'infrastructure',
+  },
+  huddle01: {
+    name: 'Huddle01 (Decentralized Video — Infra)',
+    fetch: fetchHuddle01Posts,
+    category: 'infrastructure',
+  },
 };
+
+// ─── Reliability Initialization ─────────────────────────────────────────
+let reliabilityInitialized = false;
+
+export function initializeReliability(): void {
+  if (reliabilityInitialized) return;
+  reliabilityInitialized = true;
+
+  registerAllProvidersWithCircuitBreaker();
+  registerFailoverStrategies(PROVIDERS);
+
+  console.log('[reliability] All providers registered with circuit breakers and failover');
+}
+
+// Initialize on import
+initializeReliability();
 
 /** Race a promise against a timeout (milliseconds) */
 function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
@@ -229,7 +430,7 @@ function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise
   ]);
 }
 
-/** Build a deduplicated feed from multiple protocols */
+/** Build a deduplicated feed from multiple protocols with reliability */
 export async function buildFeed(
   protocols: string[],
   limit: number,
@@ -237,8 +438,13 @@ export async function buildFeed(
   const perProtocol: Record<string, number> = {};
   const errors: string[] = [];
   const notices: string[] = [];
+  const providerSources: Record<string, string> = {};
+  const cacheAges: Record<string, number> = {};
 
-  const activeProtocols = protocols.filter((p) => p in PROVIDERS);
+  // Only include content providers (exclude infrastructure)
+  const activeProtocols = protocols.filter(
+    (p) => p in PROVIDERS && PROVIDERS[p].category !== 'infrastructure',
+  );
   if (activeProtocols.length === 0)
     activeProtocols.push(
       'mastodon',
@@ -250,39 +456,131 @@ export async function buildFeed(
       'farcaster',
       'lens',
       'pixelfed',
-      'bookwyrm',
-      'bonfire',
     );
 
   const perProviderLimit = Math.max(5, Math.ceil((limit * 1.5) / activeProtocols.length));
-  const FETCH_TIMEOUT_MS = 10000; // 10s per-provider timeout
+  const FETCH_TIMEOUT_MS = 10000;
+
   const results = await Promise.allSettled(
     activeProtocols.map(async (protocol) => {
       const provider = PROVIDERS[protocol];
       if (!provider) return { protocol, posts: [] as UnifiedPost[] };
 
-      // Check rate limit before fetching
+      providerCircuitBreaker.register(protocol);
+
+      if (!providerCircuitBreaker.isAllowed(protocol)) {
+        const cached = fallbackCache.get(protocol);
+        if (cached) {
+          const ageMs = Date.now() - cached.fetchedAt;
+          console.log(`[reliability] ${protocol}: Circuit open, serving ${ageMs}ms old cache`);
+          return {
+            protocol,
+            posts: cached.posts.slice(0, perProviderLimit),
+            source: 'cached',
+            cacheAgeMs: ageMs,
+            notice: `degraded (circuit open, using ${Math.round(ageMs / 1000)}s old cache)`,
+          };
+        }
+        return {
+          protocol,
+          posts: [] as UnifiedPost[],
+          error: `Circuit breaker open for ${protocol}`,
+        };
+      }
+
       if (provider.rateLimit) {
         const key = `provider:${protocol}`;
         if (!checkRateLimit(key, provider.rateLimit)) {
           console.log(`[bridge] Rate limit hit for ${protocol}, skipping`);
+          const cached = fallbackCache.get(protocol);
+          if (cached) {
+            return {
+              protocol,
+              posts: cached.posts.slice(0, perProviderLimit),
+              source: 'cached',
+              cacheAgeMs: Date.now() - cached.fetchedAt,
+              notice: 'rate-limited (using cache)',
+            };
+          }
           return { protocol, posts: [] as UnifiedPost[], notice: 'rate-limited' };
         }
       }
 
       try {
-        const posts = await withTimeout(
-          provider.fetch(perProviderLimit),
-          FETCH_TIMEOUT_MS,
-          `provider:${protocol}`,
+        healthDashboard.recordFetch(protocol);
+        const posts = await withRetry(
+          async () => {
+            const result = await withTimeout(
+              provider.fetch(perProviderLimit),
+              FETCH_TIMEOUT_MS,
+              `provider:${protocol}`,
+            );
+            return result;
+          },
+          {
+            providerKey: protocol,
+            onRetry: (attempt, delay) => {
+              console.log(`[retry] ${protocol}: attempt ${attempt} in ${delay}ms`);
+            },
+          },
         );
-        return { protocol, posts };
+
+        healthDashboard.recordSuccess(protocol, FETCH_TIMEOUT_MS);
+        providerCircuitBreaker.recordSuccess(protocol);
+        fallbackCache.set(protocol, posts);
+
+        return { protocol, posts, source: 'live' };
       } catch (err) {
-        return {
-          protocol,
-          posts: [] as UnifiedPost[],
-          error: err instanceof Error ? err.message : 'unknown error',
-        };
+        const errMsg = err instanceof Error ? err.message : String(err);
+        healthDashboard.recordFailure(protocol, FETCH_TIMEOUT_MS);
+
+        if (failoverRouter.hasStrategy(protocol)) {
+          try {
+            const failoverResult = await failoverRouter.execute(protocol, perProviderLimit);
+            if (failoverResult.status === 'fallback') {
+              return {
+                protocol,
+                posts: failoverResult.posts,
+                source: 'fallback',
+                notice: `using fallback: ${failoverResult.source}`,
+              };
+            }
+            if (failoverResult.status === 'cached') {
+              return {
+                protocol,
+                posts: failoverResult.posts,
+                source: 'cached',
+                cacheAgeMs: failoverResult.cacheAgeMs,
+                notice: `degraded (${Math.round(failoverResult.cacheAgeMs / 1000)}s old cache)`,
+              };
+            }
+          } catch {
+            /* failover also failed */
+          }
+        }
+
+        const cached = fallbackCache.get(protocol);
+        if (cached) {
+          const ageMs = Date.now() - cached.fetchedAt;
+          console.log(`[reliability] ${protocol}: Fetch failed, serving ${ageMs}ms old cache`);
+          return {
+            protocol,
+            posts: cached.posts.slice(0, perProviderLimit),
+            source: 'cached',
+            cacheAgeMs: ageMs,
+            notice: `degraded (${Math.round(ageMs / 1000)}s old cache)`,
+          };
+        }
+
+        deadLetterQueue.enqueue({
+          id: `${protocol}-${Date.now()}`,
+          providerKey: protocol,
+          operation: 'fetch',
+          error: errMsg,
+          exhaustedRetries: 3,
+        });
+
+        return { protocol, posts: [] as UnifiedPost[], error: errMsg };
       }
     }),
   );
@@ -290,20 +588,25 @@ export async function buildFeed(
   const allPosts: UnifiedPost[] = [];
   for (const result of results) {
     if (result.status === 'fulfilled') {
-      const { protocol, posts, error, notice } = result.value as {
+      const { protocol, posts, error, notice, source, cacheAgeMs } = result.value as {
         protocol: string;
         posts: UnifiedPost[];
         error?: string;
         notice?: string;
+        source?: string;
+        cacheAgeMs?: number;
       };
       perProtocol[protocol] = posts.length;
+      providerSources[protocol] = source ?? 'live';
+      if (cacheAgeMs) cacheAges[protocol] = cacheAgeMs;
       allPosts.push(...posts);
       if (error) errors.push(`${protocol}: ${error}`);
       if (notice) notices.push(`${protocol}: ${notice}`);
-    } else
+    } else {
       errors.push(
         `provider: ${result.reason instanceof Error ? result.reason.message : 'unknown'}`,
       );
+    }
   }
 
   for (const [protocol, count] of Object.entries(perProtocol))
@@ -317,6 +620,8 @@ export async function buildFeed(
         total: 0,
         limit,
         perProtocol,
+        providerSources,
+        cacheAges,
         errors: errors.length > 0 ? errors : undefined,
         notices,
         page: 1,
@@ -336,8 +641,11 @@ export async function buildFeed(
     }
   }
 
+  const degradedCount = Object.keys(cacheAges).length;
+
   console.log(
-    `[bridge] Built feed: ${deduped.length} posts from ${Object.keys(perProtocol).length} sources`,
+    `[bridge] Built feed: ${deduped.length} posts from ${Object.keys(perProtocol).length} sources` +
+      (degradedCount > 0 ? ` (${degradedCount} degraded)` : ''),
   );
   return {
     posts: deduped,
@@ -345,6 +653,9 @@ export async function buildFeed(
       total: deduped.length,
       limit,
       perProtocol,
+      providerSources,
+      cacheAges: Object.keys(cacheAges).length > 0 ? cacheAges : undefined,
+      degraded: degradedCount > 0 ? degradedCount : undefined,
       errors: errors.length > 0 ? errors : undefined,
       notices: notices.length > 0 ? notices : undefined,
       fetchedAt: Date.now(),
@@ -387,7 +698,7 @@ export const DEFAULT_PREFERENCES = {
       'farcaster',
       'lens',
       'bluesky',
-      // ── Tier 2: Established ──────────────────────────────
+      // ── Tier 2: Established Platforms ──────────────────
       'reddit',
       'rss',
       'lemmy',
@@ -397,6 +708,7 @@ export const DEFAULT_PREFERENCES = {
       'lbry',
       'hive',
       'mirror',
+      'paragraph',
       'funkwhale',
       'castopod',
       'writefreely',
@@ -404,7 +716,7 @@ export const DEFAULT_PREFERENCES = {
       'misskey',
       'subsocial',
       'steem',
-      // ── Tier 3: ActivityPub Ecosystem ────────────────────
+      // ── Tier 3: ActivityPub Ecosystem ───────────────────
       'diaspora',
       'friendica',
       'mediagoblin',
@@ -415,30 +727,31 @@ export const DEFAULT_PREFERENCES = {
       'mitra',
       'takahe',
       'owncast',
-      // ── Tier 4: Experimental ─────────────────────────────
+      // ── Tier 4: New Real Implementations ──────────────
+      'kbin',
+      'mbin',
+      'flarum',
+      'arweave',
+      // ── Tier 5: Experimental ──────────────────────────
       'gab',
       'minds',
       'aether',
       'scuttlebutt',
       'deso',
       'session',
-      'cyberconnect',
       'arena',
       'microblog',
       'faircamp',
       'orbis',
-      'ceramic',
-      // ── Messaging & Dev Platforms ─────────────────────────
+      // ── Messaging & Dev Platforms ──────────────────────
       'telegram',
       'discord',
       'matrix',
       'github',
-      // ── Tier 5: Infrastructure ───────────────────────────
-      'xmtp',
-      'push',
-      'huddle01',
-      'tableland',
-      // ── NFT / Music ──────────────────────────────────────
+      'discourse',
+      'ghost',
+      'immich',
+      // ── NFT / Music ────────────────────────────────────
       'audius',
       'rarible',
     ],

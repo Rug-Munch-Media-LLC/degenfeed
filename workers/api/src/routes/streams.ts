@@ -12,6 +12,7 @@
  */
 
 import { Hono } from 'hono';
+import { aggregateAllStreams, getSourceHealth } from '../feed/live-aggregator';
 import type { Env } from '../index';
 import { jsonResponse, noCacheJsonResponse } from '../index';
 import {
@@ -22,6 +23,146 @@ import {
 import { requireSession } from '../session';
 import { broadcastToAll } from '../ws-broadcast';
 import { CHANNELS } from '../ws-channels';
+
+// ─── Frontend Live API ─────────────────────────────────────────────────────
+
+/**
+ * GET /live — Unified live stream feed for the frontend.
+ *
+ * Returns aggregated live streams from all sources (Owncast, PeerTube, YouTube,
+ * Twitch, Kick, Spaces, Farcaster, Nostr) formatted for the /live page.
+ *
+ * Query params:
+ *   ?refresh=true  — bypass cache
+ *   ?source=twitch — filter by source (comma-separated)
+ *   ?limit=N       — max items (default 50, max 100)
+ */
+streams.get('/live', async (c) => {
+  try {
+    const url = new URL(c.req.url);
+    const forceRefresh = url.searchParams.get('refresh') === 'true';
+    const sourceFilter = url.searchParams.get('source');
+    const limitParam = url.searchParams.get('limit');
+
+    const allStreams = await aggregateAllStreams(c.env, forceRefresh);
+
+    let filtered = allStreams;
+    if (sourceFilter) {
+      const sources = sourceFilter.split(',');
+      filtered = allStreams.filter((s) => sources.includes(s.source));
+    }
+
+    if (limitParam) {
+      const limit = Math.min(Number.parseInt(limitParam, 10) || 50, 100);
+      filtered = filtered.slice(0, limit);
+    }
+
+    // Sort by viewer count descending
+    const sorted = [...filtered].sort((a, b) => b.viewerCount - a.viewerCount);
+
+    // Top 5 for featured
+    const featured = sorted.slice(0, 5);
+
+    // Aggregate source counts
+    const sourceCounts: Record<string, number> = {};
+    const categoryCounts: Record<string, number> = {};
+    for (const s of allStreams) {
+      sourceCounts[s.source] = (sourceCounts[s.source] || 0) + 1;
+      const cat = (s.category || 'general').toLowerCase();
+      categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
+    }
+
+    // Convert to frontend-friendly format
+    const sourceLabel = (src: string): string => {
+      const labels: Record<string, string> = {
+        owncast: 'Owncast',
+        peertube: 'PeerTube',
+        youtube: 'YouTube',
+        twitch: 'Twitch',
+        kick: 'Kick',
+        spaces: 'Spaces',
+        farcaster: 'Farcaster',
+        nostr: 'Nostr',
+        degenfeed: 'DegenFeed',
+      };
+      return labels[src] || src;
+    };
+
+    const streams = sorted.map((s) => ({
+      id: s.id,
+      title: s.title,
+      creatorId: s.streamer.id,
+      creatorHandle: s.streamer.handle,
+      creatorAvatar: s.streamer.avatarUrl,
+      streamType: s.source === 'spaces' ? 'spaces' : s.source === 'farcaster' ? 'collab' : 'solo',
+      source: s.source,
+      sourceLabel: sourceLabel(s.source),
+      sourceColor: sourceColorMap(s.source),
+      viewerCount: s.viewerCount,
+      thumbnailUrl: s.thumbnailUrl,
+      isLive: s.isLive,
+      startedAt: s.startedAt,
+      tags: s.tags,
+      category: s.category,
+      embedUrl: s.embedUrl,
+      platformMeta: s.platformMeta,
+      streamer: s.streamer,
+    }));
+
+    return noCacheJsonResponse({
+      streams,
+      featured: featured.map((s) => ({
+        id: s.id,
+        title: s.title,
+        creatorId: s.streamer.id,
+        creatorHandle: s.streamer.handle,
+        creatorAvatar: s.streamer.avatarUrl,
+        streamType: s.source === 'spaces' ? 'spaces' : 'solo',
+        source: s.source,
+        sourceLabel: sourceLabel(s.source),
+        sourceColor: sourceColorMap(s.source),
+        viewerCount: s.viewerCount,
+        thumbnailUrl: s.thumbnailUrl,
+        isLive: s.isLive,
+        startedAt: s.startedAt,
+        tags: s.tags,
+        category: s.category,
+        embedUrl: s.embedUrl,
+        platformMeta: s.platformMeta,
+        streamer: s.streamer,
+      })),
+      total: allStreams.length,
+      sourceCounts,
+      categoryCounts,
+    });
+  } catch (err) {
+    const error = err instanceof Error ? err.message : String(err);
+    console.error('[streams] GET /live failed:', error);
+    return jsonResponse({
+      streams: [],
+      featured: [],
+      total: 0,
+      sourceCounts: {},
+      categoryCounts: {},
+      error,
+    });
+  }
+});
+
+function sourceColorMap(source: string): string {
+  const colors: Record<string, string> = {
+    twitch: '#9146FF',
+    kick: '#53FC18',
+    peertube: '#F1684B',
+    owncast: '#00ff41',
+    youtube: '#FF0000',
+    spaces: '#00BCD4',
+    farcaster: '#8A63D2',
+    nostr: '#E87928',
+    degenfeed: '#00ff41',
+  };
+  return colors[source] || '#888';
+}
 
 // ─── Constants ───────────────────────────────────────────────────────────
 
