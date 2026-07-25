@@ -1,7 +1,7 @@
 import type { NewsSourceMeta } from "./news-types";
 
 export const TIER_4_SOURCES: NewsSourceMeta[] = [
-  //──Tier4:Tech/general──{
+  {
     id: 'techcrunch',
     name: 'TechCrunch',
     category: 'tech',

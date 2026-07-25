@@ -1,7 +1,7 @@
 import type { NewsSourceMeta } from "./news-types";
 
 export const TIER_2_SOURCES: NewsSourceMeta[] = [
-  //──Tier2:Analytical/newslettersources──{
+  {
     id: 'bankless',
     name: 'Bankless',
     category: 'defi',
@@ -177,7 +177,8 @@ export const TIER_2_SOURCES: NewsSourceMeta[] = [
     nicheTags: ['ai', 'generative', 'video', 'creative', 'media'],
     imageSupport: true,
   },
-  //──CryptoMarkets&Trading(15sources)──{
+  //──CryptoMarkets&Trading(15sources)──
+  {
     id: 'coinmarketcap',
     name: 'CoinMarketCap',
     category: 'markets',
@@ -297,7 +298,8 @@ export const TIER_2_SOURCES: NewsSourceMeta[] = [
     nicheTags: ['defi', 'tvl', 'analytics', 'data'],
     imageSupport: true,
   },
-  //──NFTs&Gaming(10sources)──{
+  //──NFTs&Gaming(10sources)──
+  {
     id: 'opensea',
     name: 'OpenSea',
     category: 'nft',
@@ -417,7 +419,8 @@ export const TIER_2_SOURCES: NewsSourceMeta[] = [
     nicheTags: ['markets', 'breaking', 'alerts', 'trading'],
     imageSupport: true,
   },
-  //═══════════════════════════════════════════════════════════════════════════//TASK1:EXPANDEDSOURCES(100+new)—beatingCryptoPaniccoverage//═══════════════════════════════════════════════════════════════════════════//──CreatorNewsletters(20)──{
+  //═══════════════════════════════════════════════════════════════════════════//TASK1:EXPANDEDSOURCES(100+new)—beatingCryptoPaniccoverage//═══════════════════════════════════════════════════════════════════════════//──CreatorNewsletters(20)──
+  {
     id: 'milkroad-news',
     name: 'Milk Road',
     category: 'crypto',
@@ -489,7 +492,8 @@ export const TIER_2_SOURCES: NewsSourceMeta[] = [
     nicheTags: ['vc', 'asia', 'blockchain', 'investment'],
     imageSupport: true,
   },
-  //──RegionalCrypto(15)──{
+  //──RegionalCrypto(15)──
+  {
     id: 'coindesk-korea',
     name: 'CoinDesk Korea',
     category: 'crypto',
@@ -585,7 +589,8 @@ export const TIER_2_SOURCES: NewsSourceMeta[] = [
     nicheTags: ['japan', 'bitcoin', 'asia'],
     imageSupport: true,
   },
-  //──Alt-Media/Independent(15)──{
+  //──Alt-Media/Independent(15)──
+  {
     id: 'martys-bent',
     name: "Marty's Bent",
     category: 'bitcoin',
@@ -681,7 +686,8 @@ export const TIER_2_SOURCES: NewsSourceMeta[] = [
     nicheTags: ['crypto', 'exchange', 'defi', 'nft', 'payments'],
     imageSupport: true,
   },
-  //──Data/On-Chain(15)──{
+  //──Data/On-Chain(15)──
+  {
     id: 'dune-analytics-blog',
     name: 'Dune Analytics Blog',
     category: 'onchain',
