@@ -56,7 +56,7 @@ export interface SpaceChatMessage {
   tipAmount?: number;
   tipCurrency?: string;
   isPinned: boolean;
-  replyTo: string | null;         // ID of parent message
+  replyTo: string | null; // ID of parent message
   mediaUrl?: string;
   mediaType?: 'image' | 'link' | 'audio';
   editedAt?: number;
@@ -106,7 +106,16 @@ export interface ScheduledSpaceNotification {
 }
 
 export type SpaceVisibility = 'public' | 'followers' | 'invite';
-export type SpaceCategory = 'talk' | 'defi' | 'nft' | 'trading' | 'gaming' | 'music' | 'ama' | 'podcast' | 'other';
+export type SpaceCategory =
+  | 'talk'
+  | 'defi'
+  | 'nft'
+  | 'trading'
+  | 'gaming'
+  | 'music'
+  | 'ama'
+  | 'podcast'
+  | 'other';
 
 export interface SpaceRecord {
   id: string;

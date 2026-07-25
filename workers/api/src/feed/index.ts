@@ -22,6 +22,7 @@ export * from './feed-interstitials';
 export * from './feed-per-category-trending';
 export * from './feed-quality-gates';
 export * from './feed-quality-monitor';
+export * from './feed-quality-dashboard';
 export * from './feed-scorer';
 export * from './news-aggregator';
 export * from './personalized-news';

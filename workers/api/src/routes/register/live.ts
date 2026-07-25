@@ -76,6 +76,8 @@ import { withSession } from '../../routes/route-registry';
 import {
   handleSpaceAcceptSpeaker,
   handleSpaceCreate,
+  handleSpaceCreateClip,
+  handleSpaceClips,
   handleSpaceDetails,
   handleSpaceEnd,
   handleSpaceInviteSpeaker,
@@ -87,12 +89,28 @@ import {
   handleSpaceRecording,
   handleSpaceRemoveSpeaker,
   handleSpaceRequestSpeak,
+  handleSpaceSpeakersAdd,
+  handleSpaceSpeakersRemove,
   handleSpaceStart,
+  handleSpaceChatSend,
+  handleSpaceChatHistory,
+  handleSpacePinMessage,
+  handleSpaceChatReact,
+  handleSpaceChatTip,
+  handleSpaceDeleteMessage,
+  handleSpaceMuteUser,
+  handleSpaceRecordingStart,
+  handleSpaceRecordingStop,
+  handleSpaceTranscript,
+  handleSpaceSetReminder,
+  handleSpaceSetNostrEvent,
+  handleSpaceSetFarcasterCast,
+  handleSpacesByCategory,
+  handleSpaceAnalytics,
   handleSpacesLive,
   handleSpacesPast,
   handleSpacesTrending,
   handleSpacesUpcoming,
-  handleSpaceTranscript,
 } from '../../routes/spaces';
 import streams from '../../routes/streams';
 import { handleTokenSSE, handleTokenWebSocket } from '../../routes/token-websocket';
@@ -865,6 +883,170 @@ export function registerLiveRoutes(app: Hono<{ Bindings: Env }>): void {
       return serverError(err instanceof Error ? err.message : 'Unknown error');
     }
   });
+
+  // --- API: Spaces Chat (rich) ---
+  app.post('/api/spaces/:id/chat', async (c) => {
+    try {
+      const result = await handleSpaceChatSend(c.req.raw, c.env, c.req.param('id'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/spaces/:id/chat', async (c) => {
+    try {
+      const result = await handleSpaceChatHistory(c.req.raw, c.env, c.req.param('id'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/spaces/:id/chat/pin', async (c) => {
+    try {
+      const result = await handleSpacePinMessage(c.req.raw, c.env, c.req.param('id'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/spaces/:id/chat/react', async (c) => {
+    try {
+      const result = await handleSpaceChatReact(c.req.raw, c.env, c.req.param('id'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/spaces/:id/chat/tip', async (c) => {
+    try {
+      const result = await handleSpaceChatTip(c.req.raw, c.env, c.req.param('id'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/spaces/:id/chat/delete', async (c) => {
+    try {
+      const result = await handleSpaceDeleteMessage(c.req.raw, c.env, c.req.param('id'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/spaces/:id/chat/mute', async (c) => {
+    try {
+      const result = await handleSpaceMuteUser(c.req.raw, c.env, c.req.param('id'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+
+  // --- API: Spaces Recording ---
+  app.post('/api/spaces/:id/record/start', async (c) => {
+    try {
+      const result = await handleSpaceRecordingStart(c.req.raw, c.env, c.req.param('id'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/spaces/:id/record/stop', async (c) => {
+    try {
+      const result = await handleSpaceRecordingStop(c.req.raw, c.env, c.req.param('id'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+
+  // --- API: Spaces Speakers (add/remove aliases) ---
+  app.post('/api/spaces/:id/speakers/add', async (c) => {
+    try {
+      const result = await handleSpaceSpeakersAdd(c.req.raw, c.env, c.req.param('id'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/spaces/:id/speakers/remove', async (c) => {
+    try {
+      const result = await handleSpaceSpeakersRemove(c.req.raw, c.env, c.req.param('id'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+
+  // --- API: Spaces Reminders ---
+  app.post('/api/spaces/:id/remind', async (c) => {
+    try {
+      const result = await handleSpaceSetReminder(c.req.raw, c.env, c.req.param('id'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+
+  // --- API: Spaces Cross-Protocol ---
+  app.post('/api/spaces/:id/nostr', async (c) => {
+    try {
+      const result = await handleSpaceSetNostrEvent(c.req.raw, c.env, c.req.param('id'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/spaces/:id/farcaster', async (c) => {
+    try {
+      const result = await handleSpaceSetFarcasterCast(c.req.raw, c.env, c.req.param('id'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+
+  // --- API: Spaces Clips ---
+  app.get('/api/spaces/:id/clips', async (c) => {
+    try {
+      const result = await handleSpaceClips(c.req.raw, c.env, c.req.param('id'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/spaces/:id/clips', async (c) => {
+    try {
+      const result = await handleSpaceCreateClip(c.req.raw, c.env, c.req.param('id'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+
+  // --- API: Spaces Analytics ---
+  app.get('/api/spaces/:id/analytics', async (c) => {
+    try {
+      const result = await handleSpaceAnalytics(c.req.raw, c.env, c.req.param('id'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+
+  // --- API: Spaces Discovery ---
+  app.get('/api/spaces/category', async (c) => {
+    try {
+      const result = await handleSpacesByCategory(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  // Alias: /api/spaces/active -> live
+  app.get('/api/spaces/active', async (c) => handleSpacesLive(c.req.raw, c.env));
+  // Alias: /api/spaces/scheduled -> upcoming
+  app.get('/api/spaces/scheduled', async (c) => handleSpacesUpcoming(c.req.raw, c.env));
 
   // --- Feed cache management ---
   app.get('/ws/realtime', async (c) => {

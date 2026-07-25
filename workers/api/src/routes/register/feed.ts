@@ -46,6 +46,7 @@ import {
   handleDiscoverTrending,
 } from '../../routes/discover';
 import { handleFarcasterFeed } from '../../routes/farcaster-feed';
+import { qualityDashboardRoutes } from '../../routes/feed-quality-dashboard';
 import {
   handleFeedCacheInvalidate,
   handleFeedHealth,
@@ -938,6 +939,9 @@ export function registerFeedRoutes(app: Hono<{ Bindings: Env }>): void {
 
   // --- API: Bluesky Feed Generator (live content feed) ---
   app.route('/api/bluesky/feed', blueskyFeedGen);
+
+  // --- API: Feed Quality Dashboard (admin) ---
+  app.route('/api/admin/feed-quality', qualityDashboardRoutes);
 
   // --- API: RMI ---
   app.all('/api/rmi/news/headlines', async (c) => {

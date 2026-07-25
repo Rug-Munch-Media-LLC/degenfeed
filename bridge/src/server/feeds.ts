@@ -78,6 +78,7 @@ import { fetchThreadsPosts } from '../providers/threads';
 import { fetchWriteFreelyPosts } from '../providers/writefreely';
 import { fetchXmtpPosts } from '../providers/xmtp';
 import { fetchYggdrasilPosts } from '../providers/yggdrasil';
+import { fetchAtprotoPosts } from '../providers/atproto';
 import { fetchZoraPosts } from '../providers/zora';
 import type { UnifiedPost } from './types';
 import { checkRateLimit } from '../rate-limiter';
@@ -215,6 +216,7 @@ export const PROVIDERS: Record<string, ProviderEntry> = {
   ghost: { name: 'Ghost (Headless CMS)', fetch: fetchGhostPosts },
   headscale: { name: 'Headscale (Mesh VPN)', fetch: fetchHeadscalePosts },
   yggdrasil: { name: 'Yggdrasil (Decentralized Mesh)', fetch: fetchYggdrasilPosts },
+  atproto: { name: 'AT Protocol (Bluesky/Public)', fetch: fetchAtprotoPosts, rateLimit: { maxRequests: 60, windowMs: 60_000 } },
 };
 
 /** Race a promise against a timeout (milliseconds) */
