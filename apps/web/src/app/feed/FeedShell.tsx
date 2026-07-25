@@ -2,7 +2,7 @@
  * @degenfeed/web — FeedShell layout wrapper
  *
  * Provides:
- *  - Desktop: left sidebar with protocol list + live indicators
+ *  - Desktop: left sidebar with protocol list grouped by category + live indicators
  *  - Mobile: horizontal scrollable protocol tabs with swipe gesture
  *  - Content area for feed pages
  *
@@ -14,18 +14,93 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
-import { PROTOCOL_LIST, SIDEBAR_ORDER } from '../../components/feed/feed-protocols';
+import {
+  CATEGORIES,
+  CATEGORY_DISPLAY_ORDER,
+  CATEGORY_PROTOCOLS,
+  PROTOCOL_LIST,
+  type ProtocolCategory,
+  SIDEBAR_ORDER,
+} from '../../components/feed/feed-protocols';
 
 // ─── Protocol icon/color mapping for sidebar ─────────────────────────
 
-const PROTOCOL_META: Record<string, { label: string; color: string; icon: string; route: string }> =
-  {};
+const PROTOCOL_META: Record<
+  string,
+  { label: string; color: string; icon: string; route: string; category: ProtocolCategory }
+> = {};
 for (const p of PROTOCOL_LIST) {
-  PROTOCOL_META[p.id] = { label: p.label, color: p.color, icon: p.icon, route: p.route };
+  PROTOCOL_META[p.id] = {
+    label: p.label,
+    color: p.color,
+    icon: p.icon,
+    route: p.route,
+    category: p.category,
+  };
 }
+
+// ─── Extra quick-link protocols (non-feeds, linked externally) ────────
+
+const EXTRA_LINKS = [
+  { id: 'discord', label: 'Discord', icon: '💬', color: '#5865f2', href: '/feed/discord' },
+  { id: 'telegram', label: 'Telegram', icon: '✈', color: '#26a5e4', href: '/feed/telegram' },
+  { id: 'youtube', label: 'YouTube', icon: '▶', color: '#ff0000', href: '/feed/youtube' },
+  { id: 'github', label: 'GitHub', icon: '◉', color: '#6e40c9', href: '/feed/github' },
+  { id: 'hive', label: 'Hive', icon: '◆', color: '#e31337', href: '/feed/hive' },
+];
 
 interface FeedShellProps {
   children: ReactNode;
+}
+
+function SidebarLink({
+  href,
+  icon,
+  label,
+  color,
+  isActive,
+  count,
+  showDot,
+}: {
+  href: string;
+  icon: string;
+  label: string;
+  color: string;
+  isActive: boolean;
+  count?: number;
+  showDot?: boolean;
+}) {
+  return (
+    <Link
+      href={href}
+      className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+        isActive
+          ? 'bg-[var(--color-overlay)] text-[var(--color-fg)]'
+          : 'text-[var(--color-muted)] hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)]'
+      }`}
+      style={
+        isActive
+          ? {
+              borderLeft: `3px solid ${color}`,
+              marginLeft: '-3px',
+            }
+          : undefined
+      }
+    >
+      <span className="flex h-5 w-5 items-center justify-center text-xs" aria-hidden="true">
+        {icon}
+      </span>
+      <span className="flex-1 truncate">{label}</span>
+      {count !== undefined && (
+        <span className="text-[10px] tabular-nums text-[var(--color-muted)] opacity-60">
+          {count}
+        </span>
+      )}
+      {showDot && (
+        <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: color }} />
+      )}
+    </Link>
+  );
 }
 
 export function FeedShell({ children }: FeedShellProps) {
@@ -112,7 +187,7 @@ export function FeedShell({ children }: FeedShellProps) {
     setTouchDelta(0);
   }, [touchDelta, activeProtocol, router.push]);
 
-  // ── Route transition state: fade on protocol change — NO flash ──
+  // ── Route transition state ──
   const [transitioning, setTransitioning] = useState(false);
   const prevPathRef = useRef(pathname);
   useEffect(() => {
@@ -131,6 +206,26 @@ export function FeedShell({ children }: FeedShellProps) {
     }
   }, []);
 
+  // ── Helper: render a protocol link ──
+  const renderProtocolLink = (pid: string) => {
+    const meta = PROTOCOL_META[pid];
+    if (!meta) return null;
+    const isActive = pathname === meta.route;
+    const stat = sourceStats?.[pid];
+    return (
+      <SidebarLink
+        key={pid}
+        href={meta.route}
+        icon={meta.icon}
+        label={meta.label}
+        color={meta.color}
+        isActive={isActive}
+        count={stat?.count}
+        showDot={stat && stat.count > 0}
+      />
+    );
+  };
+
   return (
     <div
       className="mx-auto flex w-full max-w-7xl flex-col gap-0 lg:flex-row"
@@ -145,26 +240,45 @@ export function FeedShell({ children }: FeedShellProps) {
       >
         <nav className="sticky top-16 space-y-1 p-3" aria-label="Protocol navigation">
           {/* All / unified feed link */}
-          <Link
+          <SidebarLink
             href="/feed"
-            className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-              pathname === '/feed'
-                ? 'bg-degen-500/10 text-degen-400'
-                : 'text-[var(--color-muted)] hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)]'
-            }`}
-          >
-            <span className="flex h-6 w-6 items-center justify-center text-sm">◆</span>
-            <span>All Sources</span>
-            {totalPosts > 0 && (
-              <span className="ml-auto text-[10px] tabular-nums text-[var(--color-muted)] opacity-60">
-                {totalPosts}
-              </span>
-            )}
-          </Link>
+            icon="◆"
+            label="All Sources"
+            color="#00ff41"
+            isActive={pathname === '/feed'}
+            count={totalPosts > 0 ? totalPosts : undefined}
+            showDot={totalPosts > 0}
+          />
 
-          {/* ── Protocols section (quick links to top protocols) ── */}
           <div className="h-px bg-[var(--color-glass-border)] my-2" />
 
+          {/* ── Quick links (Messaging, Dev) ── */}
+          <div className="px-3 py-1">
+            <span
+              className="text-[9px] font-semibold uppercase tracking-widest"
+              style={{ color: 'var(--color-muted)' }}
+            >
+              Quick Links
+            </span>
+          </div>
+
+          {EXTRA_LINKS.map((p) => {
+            const isActive = pathname === p.href;
+            return (
+              <SidebarLink
+                key={p.id}
+                href={p.href}
+                icon={p.icon}
+                label={p.label}
+                color={p.color}
+                isActive={isActive}
+              />
+            );
+          })}
+
+          <div className="h-px bg-[var(--color-glass-border)] my-2" />
+
+          {/* ── Protocols grouped by category ── */}
           <div className="px-3 py-1">
             <span
               className="text-[9px] font-semibold uppercase tracking-widest"
@@ -174,71 +288,29 @@ export function FeedShell({ children }: FeedShellProps) {
             </span>
           </div>
 
-          {/* Top popular protocols as quick links */}
-          {[
-            { id: 'discord', label: 'Discord', icon: '💬', color: '#5865f2' },
-            { id: 'telegram', label: 'Telegram', icon: '✈', color: '#26a5e4' },
-            { id: 'youtube', label: 'YouTube', icon: '▶', color: '#ff0000' },
-            { id: 'github', label: 'GitHub', icon: '◉', color: '#6e40c9' },
-            { id: 'zora', label: 'Zora', icon: '🎨', color: '#6b21a8' },
-            { id: 'peertube', label: 'PeerTube', icon: '🎬', color: '#f1680d' },
-            { id: 'pixelfed', label: 'Pixelfed', icon: '📷', color: '#f9a825' },
-            { id: 'audius', label: 'Audius', icon: '🎵', color: '#cc0fe0' },
-            { id: 'hive', label: 'Hive', icon: '◆', color: '#e31337' },
-            { id: 'rarible', label: 'NFT Markets', icon: '🖼', color: '#feda02' },
-          ].map((p) => {
-            const isActive = pathname === `/feed/${p.id}`;
+          {CATEGORY_DISPLAY_ORDER.map((catId) => {
+            const catInfo = CATEGORIES[catId];
+            const protocolIds = CATEGORY_PROTOCOLS[catId];
+            if (!protocolIds || protocolIds.length === 0) return null;
+
             return (
-              <Link
-                key={p.id}
-                href={`/feed/${p.id}`}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                  isActive
-                    ? 'bg-[var(--color-overlay)] text-[var(--color-fg)]'
-                    : 'text-[var(--color-muted)] hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)]'
-                }`}
-                style={
-                  isActive
-                    ? {
-                        borderLeft: `3px solid ${p.color}`,
-                        marginLeft: '-3px',
-                      }
-                    : undefined
-                }
-              >
-                <span
-                  className="flex h-5 w-5 items-center justify-center text-xs"
-                  aria-hidden="true"
-                >
-                  {p.icon}
-                </span>
-                <span className="flex-1 truncate">{p.label}</span>
-              </Link>
+              <div key={catId} className="mb-1">
+                <div className="px-3 py-0.5">
+                  <span
+                    className="text-[8px] font-semibold uppercase tracking-widest opacity-50"
+                    style={{ color: 'var(--color-muted)' }}
+                  >
+                    {catInfo.icon} {catInfo.label}
+                  </span>
+                </div>
+                {protocolIds.map(renderProtocolLink)}
+              </div>
             );
           })}
 
-          {/* Separator between protocols and media hub */}
           <div className="h-px bg-[var(--color-glass-border)] my-2" />
 
-          <Link
-            href="/feed/media"
-            className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-              pathname === '/feed/media'
-                ? 'bg-[var(--color-overlay)] text-[var(--color-fg)]'
-                : 'text-[var(--color-muted)] hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)]'
-            }`}
-            style={
-              pathname === '/feed/media'
-                ? { borderLeft: '3px solid #ff6b9d', marginLeft: '-3px' }
-                : undefined
-            }
-          >
-            <span className="flex h-6 w-6 items-center justify-center text-sm" aria-hidden="true">
-              🎨
-            </span>
-            <span className="flex-1 truncate">Media Hub</span>
-          </Link>
-
+          {/* ── Live link ── */}
           <Link
             href="/feed/live"
             className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
@@ -261,55 +333,6 @@ export function FeedShell({ children }: FeedShellProps) {
               style={{ backgroundColor: '#ef4444' }}
             />
           </Link>
-
-          <div className="h-px bg-[var(--color-glass-border)] my-2" />
-
-          {/* Per-protocol links */}
-          {SIDEBAR_ORDER.map((pid) => {
-            const meta = PROTOCOL_META[pid];
-            if (!meta) return null;
-            const isActive = pathname === meta.route;
-            const stat = sourceStats?.[pid];
-            return (
-              <Link
-                key={pid}
-                href={meta.route}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                  isActive
-                    ? 'bg-[var(--color-overlay)] text-[var(--color-fg)]'
-                    : 'text-[var(--color-muted)] hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)]'
-                }`}
-                style={
-                  isActive
-                    ? {
-                        borderLeft: `3px solid ${meta.color}`,
-                        marginLeft: '-3px',
-                      }
-                    : undefined
-                }
-              >
-                <span
-                  className="flex h-6 w-6 items-center justify-center text-sm"
-                  aria-hidden="true"
-                >
-                  {meta.icon}
-                </span>
-                <span className="flex-1 truncate">{meta.label}</span>
-                {stat && (
-                  <span className="text-[10px] tabular-nums text-[var(--color-muted)] opacity-60">
-                    {stat.count}
-                  </span>
-                )}
-                {/* Live dot */}
-                {stat && stat.count > 0 && (
-                  <span
-                    className="h-1.5 w-1.5 shrink-0 rounded-full"
-                    style={{ backgroundColor: meta.color }}
-                  />
-                )}
-              </Link>
-            );
-          })}
         </nav>
       </aside>
 
@@ -321,7 +344,6 @@ export function FeedShell({ children }: FeedShellProps) {
           className="hide-scrollbar flex gap-1 overflow-x-auto border-b px-2 py-2 lg:hidden"
           style={{ borderColor: 'var(--color-glass-border)' }}
         >
-          {/* All / unified */}
           <Link
             href="/feed"
             data-active={pathname === '/feed' ? 'true' : undefined}
@@ -332,22 +354,6 @@ export function FeedShell({ children }: FeedShellProps) {
             }`}
           >
             ◆ All
-          </Link>
-          <Link
-            href="/feed/media"
-            data-active={pathname === '/feed/media' ? 'true' : undefined}
-            className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-colors ${
-              pathname === '/feed/media'
-                ? 'text-[var(--color-fg)] bg-[#ff6b9d]18'
-                : 'text-[var(--color-muted)] hover:text-[var(--color-fg)] bg-[var(--color-overlay)]'
-            }`}
-            style={
-              pathname === '/feed/media'
-                ? { backgroundColor: '#ff6b9d18', color: '#ff6b9d' }
-                : undefined
-            }
-          >
-            🎨 Media
           </Link>
           <Link
             href="/feed/live"
@@ -388,24 +394,17 @@ export function FeedShell({ children }: FeedShellProps) {
               </Link>
             );
           })}
-          {/* Extra protocol quick links on mobile */}
-          {[
-            { id: 'discord', label: 'Discord', icon: '💬', c: '#5865f2' },
-            { id: 'telegram', label: 'Telegram', icon: '✈', c: '#26a5e4' },
-            { id: 'youtube', label: 'YouTube', icon: '▶', c: '#ff0000' },
-            { id: 'github', label: 'GitHub', icon: '◉', c: '#6e40c9' },
-            { id: 'zora', label: 'Zora', icon: '🎨', c: '#6b21a8' },
-          ].map((p) => {
-            const isActive = pathname === `/feed/${p.id}`;
+          {EXTRA_LINKS.map((p) => {
+            const isActive = pathname === p.href;
             return (
               <Link
                 key={p.id}
-                href={`/feed/${p.id}`}
+                href={p.href}
                 data-active={isActive ? 'true' : undefined}
                 className="inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-colors"
                 style={{
-                  backgroundColor: isActive ? `${p.c}18` : 'var(--color-overlay)',
-                  color: isActive ? p.c : 'var(--color-muted)',
+                  backgroundColor: isActive ? `${p.color}18` : 'var(--color-overlay)',
+                  color: isActive ? p.color : 'var(--color-muted)',
                 }}
               >
                 <span aria-hidden="true">{p.icon}</span>
@@ -440,19 +439,52 @@ export function FeedShell({ children }: FeedShellProps) {
         </div>
       </main>
 
-      {/* ── Right gutter (optional, for future use) ── */}
+      {/* ── Right gutter ── */}
       <aside
         className="hidden w-56 shrink-0 border-l xl:block"
         style={{ borderColor: 'var(--color-glass-border)' }}
       >
-        <div className="sticky top-16 p-3">
-          <p className="text-[10px] font-medium uppercase tracking-wider text-[var(--color-muted)]">
-            Protocol Mix
-          </p>
-          <p className="mt-1 text-xs text-[var(--color-muted)]">
-            DegenFeed aggregates posts from {PROTOCOL_LIST.length} protocols into one unified
-            timeline. Select a protocol above to view its feed.
-          </p>
+        <div className="sticky top-16 space-y-4 p-3">
+          <div>
+            <p className="text-[10px] font-medium uppercase tracking-wider text-[var(--color-muted)]">
+              Protocol Mix
+            </p>
+            <p className="mt-1 text-xs text-[var(--color-muted)]">
+              DegenFeed aggregates posts from {PROTOCOL_LIST.length} protocols into one unified
+              timeline. Select a protocol above to view its feed.
+            </p>
+          </div>
+
+          {/* Connected protocols indicator */}
+          {sourceStats && (
+            <div>
+              <p className="text-[10px] font-medium uppercase tracking-wider text-[var(--color-muted)]">
+                Active Sources
+              </p>
+              <div className="mt-2 space-y-1.5">
+                {Object.entries(sourceStats)
+                  .filter(([, s]) => s.count > 0)
+                  .slice(0, 8)
+                  .map(([proto, stat]) => {
+                    const meta = PROTOCOL_META[proto];
+                    return (
+                      <div key={proto} className="flex items-center gap-2 text-xs">
+                        <span
+                          className="h-1.5 w-1.5 shrink-0 rounded-full"
+                          style={{ backgroundColor: meta?.color ?? '#666' }}
+                        />
+                        <span className="flex-1 truncate text-[var(--color-muted)]">
+                          {stat.label}
+                        </span>
+                        <span className="tabular-nums text-[var(--color-muted)] opacity-60">
+                          {stat.count}
+                        </span>
+                      </div>
+                    );
+                  })}
+              </div>
+            </div>
+          )}
         </div>
       </aside>
     </div>

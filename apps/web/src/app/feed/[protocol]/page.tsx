@@ -139,10 +139,10 @@ function ProtocolFeedContent({ protocol }: { protocol: string }) {
       });
 
       if (!res.ok) {
-        // Fallback to generic protocol feed if sort endpoint not available
+        // Fallback to bridge API at /api/feed/{protocol}
         if (res.status === 404) {
           const fallbackUrl = new URL(
-            `/api/feed/protocol/${encodeURIComponent(protocol)}`,
+            `/api/feed/${encodeURIComponent(protocol)}`,
             window.location.origin,
           );
           fallbackUrl.searchParams.set('limit', '50');
@@ -152,12 +152,14 @@ function ProtocolFeedContent({ protocol }: { protocol: string }) {
           });
           if (!fallbackRes.ok) throw new Error(`Feed returned ${fallbackRes.status}`);
           const fallbackJson = (await fallbackRes.json()) as {
+            posts?: UnifiedPost[];
             data?: UnifiedPost[];
             meta?: FeedMeta;
           };
-          setPosts(fallbackJson.data ?? []);
+          const feed = fallbackJson.posts ?? fallbackJson.data ?? [];
+          setPosts(feed);
           setFeedMeta(fallbackJson.meta ?? {});
-          setState(fallbackJson.data?.length ? 'loaded' : 'empty');
+          setState(feed.length ? 'loaded' : 'empty');
           return;
         }
         throw new Error(`Feed returned ${res.status}`);

@@ -3,7 +3,29 @@
  *
  * Split into module at ./sso-bridge/ for maintainability.
  * @see ./sso-bridge/index.ts
+ * Re-exports everything from the sub-module.
  */
 
-export type { SSOProtocolDef, SSOAccountState, SSOWalletState, SSOSession, SSOExportBundle, SSOProvisioningResult, SSOSessionPayload } from './sso-bridge/types';
-export { ALL_SSO_PROTOCOLS, SSO_PROTOCOL_MAP, SELF_HOSTED_PROTOCOL_IDS, ssoWalletStateKey, ssoSessionKey, ssoRevokedKey, ssoCredsKey, ssoExportKey, ssoLastActiveKey, ssoActivityFeedKey, ssoActivityFeedItemKey } from './sso-bridge/constants';
+export {
+  ALL_SSO_PROTOCOLS,
+  SELF_HOSTED_PROTOCOL_IDS,
+  SSO_PROTOCOL_MAP,
+  ssoActivityFeedItemKey,
+  ssoActivityFeedKey,
+  ssoCredsKey,
+  ssoExportKey,
+  ssoLastActiveKey,
+  ssoRevokedKey,
+  ssoSessionKey,
+  ssoWalletStateKey,
+} from './sso-bridge/constants';
+export * from './sso-bridge/implementation';
+export type {
+  SSOAccountState,
+  SSOExportBundle,
+  SSOProtocolDef,
+  SSOProvisioningResult,
+  SSOSession,
+  SSOSessionPayload,
+  SSOWalletState,
+} from './sso-bridge/types';

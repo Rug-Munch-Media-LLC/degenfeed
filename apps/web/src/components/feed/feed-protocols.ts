@@ -8,6 +8,15 @@
  * See docs/MISSED_PLATFORMS.md for research details
  */
 
+export type ProtocolCategory =
+  | 'social'
+  | 'video'
+  | 'content'
+  | 'communities'
+  | 'web3'
+  | 'media'
+  | 'news';
+
 export interface ProtocolConfig {
   id: string;
   label: string;
@@ -17,8 +26,19 @@ export interface ProtocolConfig {
   endpoint: string;
   route: string;
   postNoun: string;
+  category: ProtocolCategory;
   stats: { label: string; value: string }[];
 }
+
+export const CATEGORIES: Record<ProtocolCategory, { label: string; icon: string }> = {
+  social: { label: 'Social Networks', icon: '💬' },
+  video: { label: 'Video Platforms', icon: '🎬' },
+  content: { label: 'Content & Publishing', icon: '📝' },
+  communities: { label: 'Communities & Forums', icon: '👥' },
+  web3: { label: 'Web3 & Crypto', icon: '🔗' },
+  media: { label: 'Media Hub', icon: '🎨' },
+  news: { label: 'News & RSS', icon: '📰' },
+};
 
 export const PROTOCOLS: Record<string, ProtocolConfig> = {
   mastodon: {
@@ -30,6 +50,7 @@ export const PROTOCOLS: Record<string, ProtocolConfig> = {
     endpoint: '/api/feed/mastodon',
     route: '/feed/mastodon',
     postNoun: 'toot',
+    category: 'social',
     stats: [
       { label: 'active instances', value: '12k+' },
       { label: 'fediverse reach', value: 'global' },
@@ -44,6 +65,7 @@ export const PROTOCOLS: Record<string, ProtocolConfig> = {
     endpoint: '/api/feed/bluesky',
     route: '/feed/bluesky',
     postNoun: 'skeet',
+    category: 'social',
     stats: [
       { label: 'custom feeds', value: '1.8k+' },
       { label: 'PDS network', value: 'bsky.social' },
@@ -58,6 +80,7 @@ export const PROTOCOLS: Record<string, ProtocolConfig> = {
     endpoint: '/api/feed/nostr',
     route: '/feed/nostr',
     postNoun: 'note',
+    category: 'social',
     stats: [
       { label: 'active relays', value: '340+' },
       { label: 'zaps today', value: '12k+' },
@@ -70,8 +93,9 @@ export const PROTOCOLS: Record<string, ProtocolConfig> = {
     icon: '◈',
     description: 'Sufficiently decentralized social network',
     endpoint: '/api/feed/farcaster',
-    route: '/farcaster',
+    route: '/feed/farcaster',
     postNoun: 'cast',
+    category: 'social',
     stats: [
       { label: 'channels', value: '1.2k+' },
       { label: 'hub', value: 'nemes.farcaster.xyz' },
@@ -84,8 +108,9 @@ export const PROTOCOLS: Record<string, ProtocolConfig> = {
     icon: '🌿',
     description: 'User-owned social graph on Polygon',
     endpoint: '/api/feed/lens',
-    route: '/lens',
+    route: '/feed/lens',
     postNoun: 'publication',
+    category: 'social',
     stats: [
       { label: 'profiles', value: '400k+' },
       { label: 'network', value: 'Polygon' },
@@ -98,8 +123,9 @@ export const PROTOCOLS: Record<string, ProtocolConfig> = {
     icon: '🎬',
     description: 'Decentralized video platform on ActivityPub',
     endpoint: '/api/feed/peertube',
-    route: '/feed/videos',
+    route: '/feed/peertube',
     postNoun: 'video',
+    category: 'video',
     stats: [
       { label: 'instances', value: '800+' },
       { label: 'videos', value: 'millions' },
@@ -114,6 +140,7 @@ export const PROTOCOLS: Record<string, ProtocolConfig> = {
     endpoint: '/api/feed/lemmy',
     route: '/feed/lemmy',
     postNoun: 'post',
+    category: 'communities',
     stats: [
       { label: 'communities', value: '10k+' },
       { label: 'instances', value: '2.5k+' },
@@ -126,8 +153,9 @@ export const PROTOCOLS: Record<string, ProtocolConfig> = {
     icon: '📷',
     description: 'Decentralized image sharing on ActivityPub',
     endpoint: '/api/feed/pixelfed',
-    route: '/feed/images',
+    route: '/feed/pixelfed',
     postNoun: 'photo',
+    category: 'content',
     stats: [
       { label: 'instances', value: '1.2k+' },
       { label: 'photos shared', value: 'millions' },
@@ -140,8 +168,9 @@ export const PROTOCOLS: Record<string, ProtocolConfig> = {
     icon: '🎨',
     description: 'NFT minting protocol with creator coins',
     endpoint: '/api/feed/zora',
-    route: '/feed/nfts',
+    route: '/feed/zora',
     postNoun: 'mint',
+    category: 'web3',
     stats: [
       { label: 'network', value: 'Zora/Base' },
       { label: 'mints today', value: '10k+' },
@@ -154,8 +183,9 @@ export const PROTOCOLS: Record<string, ProtocolConfig> = {
     icon: '🎵',
     description: 'Decentralized music streaming — trending tracks & artist updates',
     endpoint: '/api/feed/audius',
-    route: '/feed/music',
+    route: '/feed/audius',
     postNoun: 'track',
+    category: 'web3',
     stats: [
       { label: 'catalog', value: '400M+ streams' },
       { label: 'free tier', value: '500K req/mo' },
@@ -170,6 +200,7 @@ export const PROTOCOLS: Record<string, ProtocolConfig> = {
     endpoint: '/api/feed/rarible',
     route: '/feed/nft-market',
     postNoun: 'sale',
+    category: 'web3',
     stats: [
       { label: 'chains', value: '7+' },
       { label: 'marketplaces', value: 'aggregated' },
@@ -184,6 +215,7 @@ export const PROTOCOLS: Record<string, ProtocolConfig> = {
     endpoint: '/api/feed/media',
     route: '/feed/media',
     postNoun: 'post',
+    category: 'media',
     stats: [
       { label: 'protocols', value: '9+' },
       { label: 'media types', value: 'image/video/live' },
@@ -195,9 +227,10 @@ export const PROTOCOLS: Record<string, ProtocolConfig> = {
     color: '#ffa500',
     icon: '📰',
     description: 'Aggregated from 350+ crypto news sources',
-    endpoint: '/api/feed/news',
-    route: '/feed/news',
+    endpoint: '/api/feed/rss',
+    route: '/feed/rss',
     postNoun: 'article',
+    category: 'news',
     stats: [
       { label: 'sources', value: '350+' },
       { label: 'updated', value: 'hourly' },
@@ -212,6 +245,7 @@ export const PROTOCOLS: Record<string, ProtocolConfig> = {
     endpoint: '/api/feed/reddit',
     route: '/feed/reddit',
     postNoun: 'post',
+    category: 'communities',
     stats: [
       { label: 'subreddits', value: 'crypto' },
       { label: 'active', value: '24/7' },
@@ -225,16 +259,10 @@ export const PROTOCOL_LIST = Object.values(PROTOCOLS);
 export const SIDEBAR_ORDER = [
   'mastodon',
   'bluesky',
+  'audius',
+  'rarible',
   'nostr',
   'farcaster',
   'lens',
-  'audius',
-  'rarible',
   'peertube',
-  'lemmy',
-  'pixelfed',
-  'zora',
-  'media',
-  'rss',
-  'reddit',
-] as const;
+];
