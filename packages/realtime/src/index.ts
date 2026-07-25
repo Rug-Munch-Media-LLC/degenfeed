@@ -10,7 +10,28 @@
 
 export type { ChannelName } from './channels';
 export { CHANNEL_LIST, CHANNELS } from './channels';
-
+// ─── Chat Discovery ─────────────────────────────────────────────────────────
+export type {
+  DiscoveredCommunity,
+  DiscoveryResult,
+  DiscoverySearchParams,
+} from './chat-discovery';
+export {
+  ChatDiscovery,
+  getDiscovery,
+} from './chat-discovery';
+// ─── Cross-Protocol Group Chat ──────────────────────────────────────────────
+export type {
+  CrossProtocolRoom,
+  CrossProtocolRoomCreateParams,
+  GroupChatMessage,
+  GroupMember,
+  GroupMemberRole,
+} from './cross-protocol-group-chat';
+export {
+  CrossProtocolGroupChat,
+  getGroupChat,
+} from './cross-protocol-group-chat';
 // ─── Cross-Protocol Router ──────────────────────────────────────────────────
 export type {
   IncomingMessage,
@@ -26,7 +47,6 @@ export {
   CrossProtocolRouter,
   getRouter,
 } from './cross-protocol-router';
-
 // ─── Identity Resolver ──────────────────────────────────────────────────────
 export type {
   IdentifierFormat,
@@ -41,7 +61,13 @@ export {
   resolveIdentity,
   sourceProtocolFromFormat,
 } from './identity-resolver';
-
+// ─── IRC Bridge Client ──────────────────────────────────────────────────────
+export type {
+  IrcBridgeConfig,
+  IrcBridgeHealth,
+  IrcChannelInfo,
+} from './irc-bridge-client';
+export { IrcBridgeClient } from './irc-bridge-client';
 // ─── Message Bridge (legacy) ────────────────────────────────────────────────
 export type {
   BridgeResult,
@@ -54,19 +80,18 @@ export {
   generateMessageId,
   MessageBridge,
 } from './message-bridge';
-
-// ─── Protocol Transports ────────────────────────────────────────────────────
+// ─── Multi-Device Sync ──────────────────────────────────────────────────────
 export type {
-  ProtocolHealth,
-  TransportMessage,
-  TransportProtocol,
-  TransportResult,
-} from './protocol-transports';
+  DeviceInfo,
+  DeviceSyncPayload,
+  OutboxEntry,
+  OutboxQueue,
+  SyncState,
+} from './multi-device-sync';
 export {
-  getProtocolHealth,
-  ProtocolTransports,
-} from './protocol-transports';
-
+  getSync,
+  MultiDeviceSync,
+} from './multi-device-sync';
 // ─── NIP-17 Nostr Transport ────────────────────────────────────────────────
 export type {
   Nip17Message,
@@ -78,7 +103,27 @@ export {
   npubToHex,
   receiveNip17Messages,
 } from './nip17-transport';
-
+// ─── Protocol Transports ────────────────────────────────────────────────────
+export type {
+  ProtocolHealth,
+  TransportMessage,
+  TransportProtocol,
+  TransportResult,
+} from './protocol-transports';
+export {
+  getProtocolHealth,
+  ProtocolTransports,
+} from './protocol-transports';
+// ─── Spaces Bridge ──────────────────────────────────────────────────────────
+export type {
+  SpaceBroadcastResult,
+  SpaceEvent,
+  SpaceEventType,
+} from './spaces-bridge';
+export {
+  getSpacesBridge,
+  SpacesBridge,
+} from './spaces-bridge';
 // ─── Unified Inbox ──────────────────────────────────────────────────────────
 export type {
   DeliveryStatusMap,
@@ -94,64 +139,6 @@ export {
   PROTOCOL_BADGES,
   UnifiedInbox,
 } from './unified-inbox';
-
-// ─── Spaces Bridge ──────────────────────────────────────────────────────────
-export type {
-  SpaceBroadcastResult,
-  SpaceEvent,
-  SpaceEventType,
-} from './spaces-bridge';
-export {
-  getSpacesBridge,
-  SpacesBridge,
-} from './spaces-bridge';
-
-// ─── Multi-Device Sync ──────────────────────────────────────────────────────
-export type {
-  DeviceInfo,
-  DeviceSyncPayload,
-  OutboxEntry,
-  OutboxQueue,
-  SyncState,
-} from './multi-device-sync';
-export {
-  getSync,
-  MultiDeviceSync,
-} from './multi-device-sync';
-
-// ─── IRC Bridge Client ──────────────────────────────────────────────────────
-export type {
-  IrcBridgeConfig,
-  IrcBridgeHealth,
-  IrcChannelInfo,
-} from './irc-bridge-client';
-export {
-  IrcBridgeClient,
-} from './irc-bridge-client';
-
-// ─── Cross-Protocol Group Chat ──────────────────────────────────────────────
-export type {
-  CrossProtocolRoom,
-  CrossProtocolRoomCreateParams,
-  GroupChatMessage,
-  GroupMember,
-  GroupMemberRole,
-} from './cross-protocol-group-chat';
-export {
-  CrossProtocolGroupChat,
-  getGroupChat,
-} from './cross-protocol-group-chat';
-
-// ─── Chat Discovery ─────────────────────────────────────────────────────────
-export type {
-  DiscoveredCommunity,
-  DiscoveryResult,
-  DiscoverySearchParams,
-} from './chat-discovery';
-export {
-  ChatDiscovery,
-  getDiscovery,
-} from './chat-discovery';
 
 // ─── Realtime Hooks ─────────────────────────────────────────────────────────
 export { useRealtime } from './useRealtime';

@@ -188,7 +188,7 @@ export class ZoraEarnings {
    */
   async getProtocolRewards(creatorAddress: Address): Promise<ProtocolRewardsInfo> {
     try {
-      const balance = await this.publicClient.readContract({
+      const balance = (await this.publicClient.readContract({
         address: ZORA_PROTOCOL_REWARDS,
         abi: [
           {
@@ -208,11 +208,11 @@ export class ZoraEarnings {
         ],
         functionName: 'balanceOf',
         args: [creatorAddress],
-      }) as bigint;
+      })) as bigint;
 
       let totalEarned = 0n;
       try {
-        totalEarned = await this.publicClient.readContract({
+        totalEarned = (await this.publicClient.readContract({
           address: ZORA_PROTOCOL_REWARDS,
           abi: [
             {
@@ -225,7 +225,7 @@ export class ZoraEarnings {
           ],
           functionName: 'totalEarned',
           args: [creatorAddress],
-        }) as bigint;
+        })) as bigint;
       } catch {
         totalEarned = balance;
       }
@@ -240,9 +240,9 @@ export class ZoraEarnings {
         totalEarnedEth: formatEther(totalEarned),
         claimedWei: claimed.toString(),
         breakdown: {
-          mintRewards: formatEther(balance * 800n / 1000n), // ~80% from mints
-          saleRewards: formatEther(balance * 150n / 1000n), // ~15% from sales
-          referralRewards: formatEther(balance * 50n / 1000n), // ~5% from referrals
+          mintRewards: formatEther((balance * 800n) / 1000n), // ~80% from mints
+          saleRewards: formatEther((balance * 150n) / 1000n), // ~15% from sales
+          referralRewards: formatEther((balance * 50n) / 1000n), // ~5% from referrals
         },
       };
     } catch {
@@ -273,13 +273,15 @@ export class ZoraEarnings {
       const { encodeFunctionData, formatEther } = await import('viem');
 
       const data = encodeFunctionData({
-        abi: [{
-          type: 'function',
-          name: 'claimRewards',
-          inputs: [{ type: 'address', name: 'recipient' }],
-          outputs: [],
-          stateMutability: 'nonpayable',
-        }],
+        abi: [
+          {
+            type: 'function',
+            name: 'claimRewards',
+            inputs: [{ type: 'address', name: 'recipient' }],
+            outputs: [],
+            stateMutability: 'nonpayable',
+          },
+        ],
         functionName: 'claimRewards',
         args: [creatorAddress],
       });
@@ -327,11 +329,10 @@ export class ZoraEarnings {
     const rewardsTotal = protocolRewards.unclaimedEth;
 
     // Calculate total (convert strings to rough numbers)
-    const totalNum = [primaryTotal, secondaryTotal, tipsTotal, rewardsTotal]
-      .reduce((sum, val) => {
-        const num = parseFloat(val || '0');
-        return sum + (isNaN(num) ? 0 : num);
-      }, 0);
+    const totalNum = [primaryTotal, secondaryTotal, tipsTotal, rewardsTotal].reduce((sum, val) => {
+      const num = parseFloat(val || '0');
+      return sum + (isNaN(num) ? 0 : num);
+    }, 0);
 
     // Get indexer stats
     const indexerStats = await this.getCreatorIndexerStats(creatorAddress);
@@ -368,7 +369,7 @@ export class ZoraEarnings {
 
       if (!res.ok) return [];
 
-      const data = await res.json() as { data?: Array<Record<string, unknown>> };
+      const data = (await res.json()) as { data?: Array<Record<string, unknown>> };
       if (!data.data) return [];
 
       const creator = creatorAddress.toLowerCase();
@@ -385,7 +386,8 @@ export class ZoraEarnings {
 
         return {
           id: `zora:nft:${token.id as string}`,
-          contractAddress: (token.collection_address as Address) || '0x0000000000000000000000000000000000000000',
+          contractAddress:
+            (token.collection_address as Address) || '0x0000000000000000000000000000000000000000',
           tokenId: (token.id as string)?.split(':').pop() ?? '0',
           name: (token.name as string) || 'Untitled',
           imageUrl: (token.image_url as string) || undefined,
@@ -462,24 +464,22 @@ export class ZoraEarnings {
    */
   async getCreatorTips(creatorAddress: Address, limit: number = 20): Promise<TipEvent[]> {
     try {
-      const res = await fetch(
-        `${this.indexerUrl}/api/tips?limit=${limit}`,
-        { signal: AbortSignal.timeout(5000) },
-      );
+      const res = await fetch(`${this.indexerUrl}/api/tips?limit=${limit}`, {
+        signal: AbortSignal.timeout(5000),
+      });
 
       if (!res.ok) return [];
 
-      const data = await res.json() as { data?: Array<Record<string, unknown>> };
+      const data = (await res.json()) as { data?: Array<Record<string, unknown>> };
       if (!data.data) return [];
 
       const creator = creatorAddress.toLowerCase();
       return data.data
-        .filter((t: Record<string, unknown>) =>
-          (t.creator as string)?.toLowerCase() === creator,
-        )
+        .filter((t: Record<string, unknown>) => (t.creator as string)?.toLowerCase() === creator)
         .map((t: Record<string, unknown>) => ({
           id: (t.id as string) || '',
-          contractAddress: (t.nft_contract as Address) || '0x0000000000000000000000000000000000000000',
+          contractAddress:
+            (t.nft_contract as Address) || '0x0000000000000000000000000000000000000000',
           tokenId: t.nft_token_id as string,
           tipper: (t.tipper as Address) || '0x0000000000000000000000000000000000000000',
           amountEth: (t.amount_eth as string) || '0',
@@ -498,10 +498,7 @@ export class ZoraEarnings {
   /**
    * Get revenue per NFT for a creator, sorted by earnings.
    */
-  async getTopEarningNFTs(
-    creatorAddress: Address,
-    limit: number = 10,
-  ): Promise<NFTSalesHistory[]> {
+  async getTopEarningNFTs(creatorAddress: Address, limit: number = 10): Promise<NFTSalesHistory[]> {
     const nfts = await this.getPerNFTSalesHistory(creatorAddress);
     return nfts
       .sort((a, b) => parseFloat(b.creatorEarningsEth) - parseFloat(a.creatorEarningsEth))
@@ -517,13 +514,12 @@ export class ZoraEarnings {
 
       if (!res.ok) return { totalEth: '0', count: 0 };
 
-      const data = await res.json() as { data?: Array<Record<string, unknown>> };
+      const data = (await res.json()) as { data?: Array<Record<string, unknown>> };
       if (!data.data) return { totalEth: '0', count: 0 };
 
       const creator = creatorAddress.toLowerCase();
       const sales = data.data.filter(
-        (t: Record<string, unknown>) =>
-          (t.creator_address as string)?.toLowerCase() === creator,
+        (t: Record<string, unknown>) => (t.creator_address as string)?.toLowerCase() === creator,
       );
 
       const totalEth = sales.reduce((sum: number, t: Record<string, unknown>) => {
@@ -541,17 +537,16 @@ export class ZoraEarnings {
 
   private async getSecondaryRoyaltiesData(creatorAddress: Address): Promise<EarningsSource> {
     try {
-      const res = await fetch(
-        `${this.indexerUrl}/api/sales?limit=200`,
-        { signal: AbortSignal.timeout(5000) },
-      );
+      const res = await fetch(`${this.indexerUrl}/api/sales?limit=200`, {
+        signal: AbortSignal.timeout(5000),
+      });
 
       if (!res.ok) return { totalEth: '0', count: 0 };
 
-      const data = await res.json() as { data?: Array<Record<string, unknown>> };
+      const data = (await res.json()) as { data?: Array<Record<string, unknown>> };
       // Sales endpoint may return empty or have data
       // In production, we'd compute 5% royalties on each sale
-      return { totalEth: '0', count: (data.data?.length ?? 0) };
+      return { totalEth: '0', count: data.data?.length ?? 0 };
     } catch {
       return { totalEth: '0', count: 0 };
     }
@@ -577,15 +572,14 @@ export class ZoraEarnings {
         return { uniqueCollectors: 0, totalMinted: 0, averagePrice: '0' };
       }
 
-      const data = await res.json() as { data?: Array<Record<string, unknown>> };
+      const data = (await res.json()) as { data?: Array<Record<string, unknown>> };
       if (!data.data) {
         return { uniqueCollectors: 0, totalMinted: 0, averagePrice: '0' };
       }
 
       const creator = creatorAddress.toLowerCase();
       const tokens = data.data.filter(
-        (t: Record<string, unknown>) =>
-          (t.creator_address as string)?.toLowerCase() === creator,
+        (t: Record<string, unknown>) => (t.creator_address as string)?.toLowerCase() === creator,
       );
 
       const totalMinted = tokens.length;
@@ -593,9 +587,7 @@ export class ZoraEarnings {
       const totalPrice = prices.reduce((a, b) => a + b, 0);
       const averagePrice = totalMinted > 0 ? (totalPrice / totalMinted).toFixed(6) : '0';
 
-      const collectors = new Set(
-        tokens.map((t) => (t.originator_address as string)).filter(Boolean),
-      );
+      const collectors = new Set(tokens.map((t) => t.originator_address as string).filter(Boolean));
 
       return {
         uniqueCollectors: collectors.size,

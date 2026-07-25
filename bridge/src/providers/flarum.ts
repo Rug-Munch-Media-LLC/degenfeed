@@ -45,7 +45,11 @@ const FLARUM_INSTANCES = [
   { host: 'discuss.codeberg.org', label: 'Codeberg Discuss' },
 ];
 
-function findIncluded(included: FlarumInclude[] | undefined, id: string, type: string): FlarumInclude | null {
+function findIncluded(
+  included: FlarumInclude[] | undefined,
+  id: string,
+  type: string,
+): FlarumInclude | null {
   if (!included) return null;
   return included.find((i) => i.id === id && i.type === type) || null;
 }
@@ -57,7 +61,11 @@ export async function fetchFlarumPosts(limit = 20): Promise<UnifiedPost[]> {
   const fetches = FLARUM_INSTANCES.map(async ({ host, label }) => {
     try {
       const res = await $fetch(
-        'https://' + host + '/api/discussions?include=startUser,tags&page%5Blimit%5D=' + perInstance + '&sort=-createdAt',
+        'https://' +
+          host +
+          '/api/discussions?include=startUser,tags&page%5Blimit%5D=' +
+          perInstance +
+          '&sort=-createdAt',
         {
           headers: { 'User-Agent': 'DegenFeed-Bridge/0.1 (Flarum)', Accept: 'application/json' },
           signal: AbortSignal.timeout(8000),

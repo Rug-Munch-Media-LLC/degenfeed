@@ -1,10 +1,11 @@
 /**
  * @degenfeed/api-worker — IPFS Storage Integration
  *
- * Upload video content to IPFS via multiple providers:
+ * Upload video content to IPFS via free providers only:
  *   - web3.storage (primary — free tier: 1TB, no API key required for small uploads)
  *   - Pinata (fallback — requires PINATA_API_KEY + PINATA_SECRET_KEY)
- *   - Public Infura IPFS (last resort — no pinning guarantee)
+ *
+ * NO paid providers. NO Infura (deprecated — Infura IPFS requires paid plan).
  *
  * Generates gateway URLs for content delivery:
  *   - ipfs.io
@@ -21,7 +22,7 @@ import { log } from '../index';
 
 const WEB3_STORAGE_API = 'https://api.web3.storage/upload';
 const PINATA_API = 'https://api.pinata.cloud/pinning/pinFileToIPFS';
-const INFURA_IPFS_API = 'https://ipfs.infura.io:5001/api/v0/add';
+// Infura IPFS removed — no paid providers. Use web3.storage (free tier) or Pinata.
 
 export const IPFS_GATEWAYS = [
   { url: 'https://{cid}.ipfs.dweb.link', name: 'dweb', priority: 1 },
@@ -42,7 +43,7 @@ export interface IPFSUploadResult {
   /** All available gateway URLs */
   allGateways: string[];
   /** Which provider was used for the upload */
-  provider: 'web3-storage' | 'pinata' | 'infura' | 'none';
+  provider: 'web3-storage' | 'pinata' | 'none';
   /** Whether the content is actively pinned */
   pinned: boolean;
   /** Size in bytes as reported by the provider */
@@ -162,34 +163,6 @@ async function uploadViaPinata(
   }
 }
 
-/**
- * Last-resort upload via Infura IPFS API (no pinning guarantee).
- */
-async function uploadViaInfura(
-  file: Blob,
-  fileName: string,
-): Promise<{ cid: string; size: number } | null> {
-  try {
-    const formData = new FormData();
-    formData.append('file', file, fileName);
-
-    const response = await fetch(INFURA_IPFS_API, {
-      method: 'POST',
-      body: formData,
-      signal: AbortSignal.timeout(60_000),
-    });
-
-    if (!response.ok) return null;
-
-    const result = (await response.json()) as { Hash?: string };
-    if (!result.Hash) return null;
-
-    return { cid: result.Hash, size: file.size };
-  } catch {
-    return null;
-  }
-}
-
 // ─── KV Pin Tracking ───────────────────────────────────────────────────
 
 async function trackPinStatus(
@@ -228,10 +201,9 @@ export async function getPinStatus(
 /**
  * Upload a video/file to IPFS.
  *
- * Provider priority:
- *   1. web3.storage (free, generous tier)
+ * Provider priority (zero paid providers):
+ *   1. web3.storage (free, generous tier, works without API key)
  *   2. Pinata (if API keys configured)
- *   3. Infura (last resort, no pinning)
  *
  * Stores pin status in KV (env.CACHE or env.CONTENT_LIBRARY) for monitoring.
  *
@@ -249,8 +221,7 @@ export async function uploadToIPFS(
     (await uploadViaWeb3Storage(file, fileName, env.WEB3_STORAGE_API_KEY)) ??
     (env.PINATA_API_KEY && env.PINATA_SECRET_KEY
       ? await uploadViaPinata(file, fileName, env.PINATA_API_KEY, env.PINATA_SECRET_KEY)
-      : null) ??
-    (await uploadViaInfura(file, fileName));
+      : null);
 
   if (!uploadResult) {
     return {
@@ -265,7 +236,7 @@ export async function uploadToIPFS(
   }
 
   const { cid, size } = uploadResult;
-  const pinned = uploadResult.provider !== 'infura';
+  const pinned = true; // Both web3.storage and Pinata pin by default
   const kv = env.CACHE ?? env.CONTENT_LIBRARY;
 
   // Track pin status in KV

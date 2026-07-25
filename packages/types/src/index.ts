@@ -93,7 +93,10 @@ export type Protocol =
   | 'mediagoblin'
   | 'deso'
   | 'audius'
-  | 'rarible' | 'flarum' | 'arweave' | 'infra';
+  | 'rarible'
+  | 'flarum'
+  | 'arweave'
+  | 'infra';
 
 export interface UnifiedIdentity {
   /** Stable canonical identifier: `${protocol}:${id}` */

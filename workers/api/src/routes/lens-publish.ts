@@ -19,11 +19,11 @@
  * No paid API dependency.
  */
 
-import { LensClient, LENS_API_URL } from '@degenfeed/lens-sdk';
+import { LENS_API_URL, LensClient } from '@degenfeed/lens-sdk';
 import type { Env } from '../index';
 import { jsonResponse, log, noCacheJsonResponse } from '../index';
+import { hasSuspiciousPayload, sanitizeString, validateBodySize } from '../sanitize';
 import { requireSession } from '../session';
-import { validateBodySize, sanitizeString, hasSuspiciousPayload } from '../sanitize';
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
@@ -73,9 +73,12 @@ export async function handleLensPublish(request: Request, env: Env): Promise<Res
   // Get linked Lens profile
   const lensAuth = await getLensAuth(env, session.address);
   if (!lensAuth) {
-    return jsonResponse({
-      error: 'No Lens profile linked. Authenticate at POST /api/lens/auth first.',
-    }, 401);
+    return jsonResponse(
+      {
+        error: 'No Lens profile linked. Authenticate at POST /api/lens/auth first.',
+      },
+      401,
+    );
   }
 
   // Validate body
@@ -137,12 +140,15 @@ export async function handleLensPublish(request: Request, env: Env): Promise<Res
       id: createPost.id,
     });
 
-    return jsonResponse({
-      success: true,
-      hash: createPost.hash,
-      publicationId: createPost.id,
-      handle: `${lensAuth.handle}.lens`,
-    }, 201);
+    return jsonResponse(
+      {
+        success: true,
+        hash: createPost.hash,
+        publicationId: createPost.id,
+        handle: `${lensAuth.handle}.lens`,
+      },
+      201,
+    );
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Lens publish failed';
     return jsonResponse({ error: message }, 502);
@@ -157,9 +163,12 @@ export async function handleLensPublishGasless(request: Request, env: Env): Prom
 
   const lensAuth = await getLensAuth(env, session.address);
   if (!lensAuth) {
-    return jsonResponse({
-      error: 'No Lens profile linked. Authenticate at POST /api/lens/auth first.',
-    }, 401);
+    return jsonResponse(
+      {
+        error: 'No Lens profile linked. Authenticate at POST /api/lens/auth first.',
+      },
+      401,
+    );
   }
 
   const sizeCheck = validateBodySize(request, 128 * 1024);
@@ -188,39 +197,41 @@ export async function handleLensPublishGasless(request: Request, env: Env): Prom
     const result = await momoka.submit({
       content,
       profileId: lensAuth.profileId,
-      accessToken: '',  // Momoka accepts submissions without Lens API token
+      accessToken: '', // Momoka accepts submissions without Lens API token
       media: body.media,
       tags: body.tags,
       attributes: body.attributes,
     });
 
     if (!result.accepted) {
-      return jsonResponse({
-        error: result.error || 'Momoka submission rejected',
-      }, 502);
+      return jsonResponse(
+        {
+          error: result.error || 'Momoka submission rejected',
+        },
+        502,
+      );
     }
 
     // Store the Momoka proof for data portability
-    await momoka.storeProof(
-      env as unknown as { CACHE?: KVNamespace },
-      session.address,
-      result,
-    );
+    await momoka.storeProof(env as unknown as { CACHE?: KVNamespace }, session.address, result);
 
     log('info', '[lens-publish] Gasless post created', {
       profile: lensAuth.handle,
       daHash: result.daHash,
     });
 
-    return jsonResponse({
-      success: true,
-      gasless: true,
-      daHash: result.daHash,
-      proofUrl: result.proofUrl,
-      publicationId: result.publicationId,
-      handle: `${lensAuth.handle}.lens`,
-      message: 'Your post was published gaslessly via Momoka. Zero gas fees paid.',
-    }, 201);
+    return jsonResponse(
+      {
+        success: true,
+        gasless: true,
+        daHash: result.daHash,
+        proofUrl: result.proofUrl,
+        publicationId: result.publicationId,
+        handle: `${lensAuth.handle}.lens`,
+        message: 'Your post was published gaslessly via Momoka. Zero gas fees paid.',
+      },
+      201,
+    );
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Gasless publish failed';
     return jsonResponse({ error: message }, 502);
@@ -279,11 +290,14 @@ export async function handleLensComment(request: Request, env: Env): Promise<Res
       },
     );
 
-    return jsonResponse({
-      success: true,
-      result,
-      publicationId: body.publicationId,
-    }, 201);
+    return jsonResponse(
+      {
+        success: true,
+        result,
+        publicationId: body.publicationId,
+      },
+      201,
+    );
   } catch (err) {
     return jsonResponse({ error: String(err) }, 502);
   }
@@ -544,7 +558,8 @@ export async function handleLensExplore(request: Request, env: Env): Promise<Res
     );
 
     return noCacheJsonResponse({
-      data: (data as { explorePublications?: { items: unknown[] } })?.explorePublications?.items || [],
+      data:
+        (data as { explorePublications?: { items: unknown[] } })?.explorePublications?.items || [],
       meta: { source: 'lens_api', limit },
     });
   } catch (err) {

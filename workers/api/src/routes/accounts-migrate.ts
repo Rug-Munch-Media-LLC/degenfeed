@@ -26,7 +26,16 @@ import { requireSession } from '../session';
 // ─── Types ────────────────────────────────────────────────────────────────
 
 export type MigrationDirection = 'import' | 'export';
-export type MigrationProtocol = 'mastodon' | 'bluesky' | 'farcaster' | 'lens' | 'peertube' | 'lemmy' | 'pixelfed' | 'nostr' | 'generic';
+export type MigrationProtocol =
+  | 'mastodon'
+  | 'bluesky'
+  | 'farcaster'
+  | 'lens'
+  | 'peertube'
+  | 'lemmy'
+  | 'pixelfed'
+  | 'nostr'
+  | 'generic';
 
 export interface MigrationJob {
   id: string;
@@ -77,13 +86,25 @@ export async function handleMigrateBluesky(request: Request, env: Env): Promise<
     try {
       if (direction === 'import') {
         // Import Bluesky account from external PDS
-        const result = await migrateBlueskyImport(wallet, walletLower, sourceInstance, body.authToken, env);
+        const result = await migrateBlueskyImport(
+          wallet,
+          walletLower,
+          sourceInstance,
+          body.authToken,
+          env,
+        );
         job.result = result;
         job.totalItems = (result.migratedContent || 0) + (result.migratedFollowers || 0);
         job.processedItems = job.totalItems;
       } else {
         // Export Bluesky account to external PDS
-        const result = await migrateBlueskyExport(wallet, walletLower, body.targetInstance || sourceInstance, body.authToken, env);
+        const result = await migrateBlueskyExport(
+          wallet,
+          walletLower,
+          body.targetInstance || sourceInstance,
+          body.authToken,
+          env,
+        );
         job.result = result;
         job.totalItems = (result.migratedContent || 0) + (result.migratedFollowers || 0);
         job.processedItems = job.totalItems;
@@ -108,14 +129,17 @@ export async function handleMigrateBluesky(request: Request, env: Env): Promise<
       job.completedAt = Date.now();
       await persistJob(env, walletLower, job);
 
-      return jsonResponse({
-        success: false,
-        jobId: job.id,
-        protocol: 'bluesky',
-        direction,
-        status: 'failed',
-        error: job.error,
-      }, 500);
+      return jsonResponse(
+        {
+          success: false,
+          jobId: job.id,
+          protocol: 'bluesky',
+          direction,
+          status: 'failed',
+          error: job.error,
+        },
+        500,
+      );
     }
   });
 }
@@ -145,10 +169,22 @@ export async function handleMigrateMastodon(request: Request, env: Env): Promise
 
     try {
       if (direction === 'import') {
-        const result = await migrateMastodonImport(wallet, walletLower, sourceInstance, body.authToken, env);
+        const result = await migrateMastodonImport(
+          wallet,
+          walletLower,
+          sourceInstance,
+          body.authToken,
+          env,
+        );
         job.result = result;
       } else {
-        const result = await migrateMastodonExport(wallet, walletLower, body.targetInstance || sourceInstance, body.authToken, env);
+        const result = await migrateMastodonExport(
+          wallet,
+          walletLower,
+          body.targetInstance || sourceInstance,
+          body.authToken,
+          env,
+        );
         job.result = result;
       }
 
@@ -157,14 +193,31 @@ export async function handleMigrateMastodon(request: Request, env: Env): Promise
       job.completedAt = Date.now();
       await persistJob(env, walletLower, job);
 
-      return jsonResponse({ success: true, jobId: job.id, protocol: 'mastodon', direction, status: job.status, result: job.result });
+      return jsonResponse({
+        success: true,
+        jobId: job.id,
+        protocol: 'mastodon',
+        direction,
+        status: job.status,
+        result: job.result,
+      });
     } catch (err) {
       job.status = 'failed';
       job.error = err instanceof Error ? err.message : 'Unknown error';
       job.completedAt = Date.now();
       await persistJob(env, walletLower, job);
 
-      return jsonResponse({ success: false, jobId: job.id, protocol: 'mastodon', direction, status: 'failed', error: job.error }, 500);
+      return jsonResponse(
+        {
+          success: false,
+          jobId: job.id,
+          protocol: 'mastodon',
+          direction,
+          status: 'failed',
+          error: job.error,
+        },
+        500,
+      );
     }
   });
 }
@@ -194,10 +247,22 @@ export async function handleMigrateFarcaster(request: Request, env: Env): Promis
 
     try {
       if (direction === 'import') {
-        const result = await migrateFarcasterImport(wallet, walletLower, sourceInstance, body.authToken, env);
+        const result = await migrateFarcasterImport(
+          wallet,
+          walletLower,
+          sourceInstance,
+          body.authToken,
+          env,
+        );
         job.result = result;
       } else {
-        const result = await migrateFarcasterExport(wallet, walletLower, body.targetInstance || sourceInstance, body.authToken, env);
+        const result = await migrateFarcasterExport(
+          wallet,
+          walletLower,
+          body.targetInstance || sourceInstance,
+          body.authToken,
+          env,
+        );
         job.result = result;
       }
 
@@ -206,14 +271,31 @@ export async function handleMigrateFarcaster(request: Request, env: Env): Promis
       job.completedAt = Date.now();
       await persistJob(env, walletLower, job);
 
-      return jsonResponse({ success: true, jobId: job.id, protocol: 'farcaster', direction, status: job.status, result: job.result });
+      return jsonResponse({
+        success: true,
+        jobId: job.id,
+        protocol: 'farcaster',
+        direction,
+        status: job.status,
+        result: job.result,
+      });
     } catch (err) {
       job.status = 'failed';
       job.error = err instanceof Error ? err.message : 'Unknown error';
       job.completedAt = Date.now();
       await persistJob(env, walletLower, job);
 
-      return jsonResponse({ success: false, jobId: job.id, protocol: 'farcaster', direction, status: 'failed', error: job.error }, 500);
+      return jsonResponse(
+        {
+          success: false,
+          jobId: job.id,
+          protocol: 'farcaster',
+          direction,
+          status: 'failed',
+          error: job.error,
+        },
+        500,
+      );
     }
   });
 }
@@ -246,7 +328,15 @@ export async function handleMigrateImport(request: Request, env: Env): Promise<R
     await persistJob(env, walletLower, job);
 
     try {
-      const result = await genericImport(wallet, walletLower, protocol, sourceInstance, body.authToken, body.data, env);
+      const result = await genericImport(
+        wallet,
+        walletLower,
+        protocol,
+        sourceInstance,
+        body.authToken,
+        body.data,
+        env,
+      );
       job.result = result;
       job.totalItems = (result.migratedContent || 0) + (result.migratedFollowers || 0);
       job.processedItems = job.totalItems;
@@ -255,14 +345,31 @@ export async function handleMigrateImport(request: Request, env: Env): Promise<R
       job.completedAt = Date.now();
       await persistJob(env, walletLower, job);
 
-      return jsonResponse({ success: true, jobId: job.id, protocol, direction: 'import', status: job.status, result: job.result });
+      return jsonResponse({
+        success: true,
+        jobId: job.id,
+        protocol,
+        direction: 'import',
+        status: job.status,
+        result: job.result,
+      });
     } catch (err) {
       job.status = 'failed';
       job.error = err instanceof Error ? err.message : 'Unknown error';
       job.completedAt = Date.now();
       await persistJob(env, walletLower, job);
 
-      return jsonResponse({ success: false, jobId: job.id, protocol, direction: 'import', status: 'failed', error: job.error }, 500);
+      return jsonResponse(
+        {
+          success: false,
+          jobId: job.id,
+          protocol,
+          direction: 'import',
+          status: 'failed',
+          error: job.error,
+        },
+        500,
+      );
     }
   });
 }
@@ -295,7 +402,14 @@ export async function handleMigrateExport(request: Request, env: Env): Promise<R
     await persistJob(env, walletLower, job);
 
     try {
-      const result = await genericExport(wallet, walletLower, protocol, targetInstance, body.authToken, env);
+      const result = await genericExport(
+        wallet,
+        walletLower,
+        protocol,
+        targetInstance,
+        body.authToken,
+        env,
+      );
       job.result = result;
       job.totalItems = (result.migratedContent || 0) + (result.migratedFollowers || 0);
       job.processedItems = job.totalItems;
@@ -304,14 +418,31 @@ export async function handleMigrateExport(request: Request, env: Env): Promise<R
       job.completedAt = Date.now();
       await persistJob(env, walletLower, job);
 
-      return jsonResponse({ success: true, jobId: job.id, protocol, direction: 'export', status: job.status, result: job.result });
+      return jsonResponse({
+        success: true,
+        jobId: job.id,
+        protocol,
+        direction: 'export',
+        status: job.status,
+        result: job.result,
+      });
     } catch (err) {
       job.status = 'failed';
       job.error = err instanceof Error ? err.message : 'Unknown error';
       job.completedAt = Date.now();
       await persistJob(env, walletLower, job);
 
-      return jsonResponse({ success: false, jobId: job.id, protocol, direction: 'export', status: 'failed', error: job.error }, 500);
+      return jsonResponse(
+        {
+          success: false,
+          jobId: job.id,
+          protocol,
+          direction: 'export',
+          status: 'failed',
+          error: job.error,
+        },
+        500,
+      );
     }
   });
 }
@@ -361,7 +492,11 @@ export async function handleMigrateJobs(request: Request, env: Env): Promise<Res
 // ─── Protocol Migration Implementations ───────────────────────────────────
 
 async function migrateBlueskyImport(
-  wallet: string, walletLower: string, sourcePds: string, authToken: string | undefined, env: Env,
+  wallet: string,
+  walletLower: string,
+  sourcePds: string,
+  authToken: string | undefined,
+  env: Env,
 ): Promise<MigrationJob['result']> {
   const pdsUrl = sourcePds.replace(/\/$/, '');
   let migratedContent = 0;
@@ -374,7 +509,13 @@ async function migrateBlueskyImport(
       headers: { authorization: `Bearer ${authToken}` },
     });
     if (profileRes.ok) {
-      const profile = (await profileRes.json()) as { did?: string; handle?: string; displayName?: string; description?: string; avatar?: string };
+      const profile = (await profileRes.json()) as {
+        did?: string;
+        handle?: string;
+        displayName?: string;
+        description?: string;
+        avatar?: string;
+      };
       // Store profile in preferences
       if (env.CACHE) {
         const prefsRaw = await env.CACHE.get(`user:prefs:${walletLower}`);
@@ -390,11 +531,18 @@ async function migrateBlueskyImport(
     }
 
     // 2. Fetch recent posts via getAuthorFeed
-    const feedRes = await fetch(`${pdsUrl}/xrpc/app.bsky.feed.getAuthorFeed?actor=${encodeURIComponent(wallet.slice(0, 10))}&limit=50`, {
-      headers: { authorization: `Bearer ${authToken}` },
-    });
+    const feedRes = await fetch(
+      `${pdsUrl}/xrpc/app.bsky.feed.getAuthorFeed?actor=${encodeURIComponent(wallet.slice(0, 10))}&limit=50`,
+      {
+        headers: { authorization: `Bearer ${authToken}` },
+      },
+    );
     if (feedRes.ok) {
-      const feed = (await feedRes.json()) as { feed?: Array<{ post?: { uri?: string; record?: { text?: string; createdAt?: string }; cid?: string } }> };
+      const feed = (await feedRes.json()) as {
+        feed?: Array<{
+          post?: { uri?: string; record?: { text?: string; createdAt?: string }; cid?: string };
+        }>;
+      };
       const store = env.CONTENT_LIBRARY || env.CACHE;
       if (store && feed.feed) {
         for (const item of feed.feed) {
@@ -416,7 +564,9 @@ async function migrateBlueskyImport(
               importedAt: Date.now(),
               migration: true,
             },
-            createdAt: post.record.createdAt ? new Date(post.record.createdAt).getTime() : Date.now(),
+            createdAt: post.record.createdAt
+              ? new Date(post.record.createdAt).getTime()
+              : Date.now(),
             updatedAt: Date.now(),
           };
           await store.put(`cl:${walletLower}:${contentId}`, JSON.stringify(record));
@@ -426,11 +576,16 @@ async function migrateBlueskyImport(
     }
 
     // 3. Fetch followers
-    const followersRes = await fetch(`${pdsUrl}/xrpc/app.bsky.graph.getFollowers?actor=${encodeURIComponent(walletLower)}&limit=100`, {
-      headers: { authorization: `Bearer ${authToken}` },
-    });
+    const followersRes = await fetch(
+      `${pdsUrl}/xrpc/app.bsky.graph.getFollowers?actor=${encodeURIComponent(walletLower)}&limit=100`,
+      {
+        headers: { authorization: `Bearer ${authToken}` },
+      },
+    );
     if (followersRes.ok) {
-      const followers = (await followersRes.json()) as { followers?: Array<{ did: string; handle: string }> };
+      const followers = (await followersRes.json()) as {
+        followers?: Array<{ did: string; handle: string }>;
+      };
       migratedFollowers = followers.followers?.length || 0;
       // Store follower DIDs for reference
       if (env.CACHE && followers.followers) {
@@ -453,7 +608,11 @@ async function migrateBlueskyImport(
 }
 
 async function migrateBlueskyExport(
-  wallet: string, walletLower: string, targetPds: string, authToken: string | undefined, env: Env,
+  wallet: string,
+  walletLower: string,
+  targetPds: string,
+  authToken: string | undefined,
+  env: Env,
 ): Promise<MigrationJob['result']> {
   // Export to external Bluesky/AT Protocol PDS
   const pdsUrl = targetPds.replace(/\/$/, '');
@@ -481,7 +640,9 @@ async function migrateBlueskyExport(
               record: {
                 $type: 'app.bsky.feed.post',
                 text: record.body || '',
-                createdAt: record.createdAt ? new Date(record.createdAt).toISOString() : new Date().toISOString(),
+                createdAt: record.createdAt
+                  ? new Date(record.createdAt).toISOString()
+                  : new Date().toISOString(),
               },
             }),
           });
@@ -500,7 +661,11 @@ async function migrateBlueskyExport(
 }
 
 async function migrateMastodonImport(
-  wallet: string, walletLower: string, sourceInstance: string, authToken: string | undefined, env: Env,
+  wallet: string,
+  walletLower: string,
+  sourceInstance: string,
+  authToken: string | undefined,
+  env: Env,
 ): Promise<MigrationJob['result']> {
   let migratedContent = 0;
   const apiBase = `${sourceInstance.replace(/\/$/, '')}/api/v1`;
@@ -512,7 +677,10 @@ async function migrateMastodonImport(
     });
     if (statusesRes.ok) {
       const statuses = (await statusesRes.json()) as Array<{
-        id: string; content: string; created_at: string; media_attachments?: Array<{ url: string }>;
+        id: string;
+        content: string;
+        created_at: string;
+        media_attachments?: Array<{ url: string }>;
       }>;
       const store = env.CONTENT_LIBRARY || env.CACHE;
       if (store) {
@@ -525,7 +693,12 @@ async function migrateMastodonImport(
             creatorWallet: walletLower,
             type: 'post',
             body: plainText,
-            media: status.media_attachments?.map((m) => ({ url: m.url, mimeType: 'image/jpeg', alt: '' })) || [],
+            media:
+              status.media_attachments?.map((m) => ({
+                url: m.url,
+                mimeType: 'image/jpeg',
+                alt: '',
+              })) || [],
             protocols: {},
             importSource: {
               platform: 'mastodon',
@@ -553,7 +726,11 @@ async function migrateMastodonImport(
 }
 
 async function migrateMastodonExport(
-  wallet: string, walletLower: string, targetInstance: string, authToken: string | undefined, env: Env,
+  wallet: string,
+  walletLower: string,
+  targetInstance: string,
+  authToken: string | undefined,
+  env: Env,
 ): Promise<MigrationJob['result']> {
   let migratedContent = 0;
   const apiBase = `${targetInstance.replace(/\/$/, '')}/api/v1`;
@@ -585,11 +762,20 @@ async function migrateMastodonExport(
     }
   }
 
-  return { migratedContent, preservedUsername: true, identityPreserved: true, targetUrl: targetInstance };
+  return {
+    migratedContent,
+    preservedUsername: true,
+    identityPreserved: true,
+    targetUrl: targetInstance,
+  };
 }
 
 async function migrateFarcasterImport(
-  wallet: string, walletLower: string, sourceHub: string, _authToken: string | undefined, env: Env,
+  wallet: string,
+  walletLower: string,
+  sourceHub: string,
+  _authToken: string | undefined,
+  env: Env,
 ): Promise<MigrationJob['result']> {
   let migratedContent = 0;
   const hubUrl = sourceHub.replace(/\/$/, '');
@@ -598,7 +784,12 @@ async function migrateFarcasterImport(
   try {
     const castsRes = await fetch(`${hubUrl}/v1/castsByFid?fid=1&limit=50`);
     if (castsRes.ok) {
-      const casts = (await castsRes.json()) as { messages?: Array<{ data?: { castAddBody?: { text?: string }; timestamp?: number }; hash?: string }> };
+      const casts = (await castsRes.json()) as {
+        messages?: Array<{
+          data?: { castAddBody?: { text?: string }; timestamp?: number };
+          hash?: string;
+        }>;
+      };
       const store = env.CONTENT_LIBRARY || env.CACHE;
       if (store && casts.messages) {
         for (const msg of casts.messages) {
@@ -634,7 +825,11 @@ async function migrateFarcasterImport(
 }
 
 async function migrateFarcasterExport(
-  wallet: string, _walletLower: string, targetHub: string, _authToken: string | undefined, _env: Env,
+  wallet: string,
+  _walletLower: string,
+  targetHub: string,
+  _authToken: string | undefined,
+  _env: Env,
 ): Promise<MigrationJob['result']> {
   // Farcaster export requires on-chain operations (transferring FID)
   return {
@@ -647,15 +842,28 @@ async function migrateFarcasterExport(
 }
 
 async function genericImport(
-  wallet: string, walletLower: string, protocol: MigrationProtocol, sourceInstance: string, _authToken: string | undefined, data: unknown, env: Env,
+  wallet: string,
+  walletLower: string,
+  protocol: MigrationProtocol,
+  sourceInstance: string,
+  _authToken: string | undefined,
+  data: unknown,
+  env: Env,
 ): Promise<MigrationJob['result']> {
   const store = env.CONTENT_LIBRARY || env.CACHE;
   if (!store || !data) {
-    return { migratedContent: 0, preservedUsername: true, identityPreserved: true, targetUrl: sourceInstance };
+    return {
+      migratedContent: 0,
+      preservedUsername: true,
+      identityPreserved: true,
+      targetUrl: sourceInstance,
+    };
   }
 
   let migratedContent = 0;
-  const items = Array.isArray(data) ? data : (data as Record<string, unknown>).items || (data as Record<string, unknown>).posts || [data];
+  const items = Array.isArray(data)
+    ? data
+    : (data as Record<string, unknown>).items || (data as Record<string, unknown>).posts || [data];
 
   for (const item of items.slice(0, 500)) {
     const entry = item as Record<string, unknown>;
@@ -685,14 +893,30 @@ async function genericImport(
     migratedContent++;
   }
 
-  return { migratedContent, preservedUsername: true, identityPreserved: true, targetUrl: sourceInstance };
+  return {
+    migratedContent,
+    preservedUsername: true,
+    identityPreserved: true,
+    targetUrl: sourceInstance,
+  };
 }
 
 async function genericExport(
-  wallet: string, walletLower: string, protocol: MigrationProtocol, targetInstance: string, authToken: string | undefined, env: Env,
+  wallet: string,
+  walletLower: string,
+  protocol: MigrationProtocol,
+  targetInstance: string,
+  authToken: string | undefined,
+  env: Env,
 ): Promise<MigrationJob['result']> {
   const store = env.CONTENT_LIBRARY || env.CACHE;
-  if (!store) return { migratedContent: 0, preservedUsername: true, identityPreserved: true, targetUrl: targetInstance };
+  if (!store)
+    return {
+      migratedContent: 0,
+      preservedUsername: true,
+      identityPreserved: true,
+      targetUrl: targetInstance,
+    };
 
   let migratedContent = 0;
   const idxRaw = await store.get(`cl:idx:${walletLower}`);
@@ -728,7 +952,12 @@ async function genericExport(
     }
   }
 
-  return { migratedContent, preservedUsername: true, identityPreserved: true, targetUrl: targetInstance };
+  return {
+    migratedContent,
+    preservedUsername: true,
+    identityPreserved: true,
+    targetUrl: targetInstance,
+  };
 }
 
 // ─── Generic Migration Handler ────────────────────────────────────────────
@@ -789,7 +1018,10 @@ async function handleMigration(
       direction: body.direction,
       error: err instanceof Error ? err.message : String(err),
     });
-    return jsonResponse({ error: `Migration failed: ${err instanceof Error ? err.message : 'Unknown error'}` }, 500);
+    return jsonResponse(
+      { error: `Migration failed: ${err instanceof Error ? err.message : 'Unknown error'}` },
+      500,
+    );
   }
 }
 

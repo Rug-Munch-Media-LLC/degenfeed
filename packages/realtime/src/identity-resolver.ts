@@ -80,10 +80,10 @@ const MATRIX_PATTERN = /^@[\w\-./]+:[\w\-./]+$/;
 const MASTODON_PATTERN = /^@?([\w\-./]+)@([\w\-./]+\.[a-zA-Z]{2,})$/;
 const MASTODON_HANDLE_PATTERN = /^@?[\w\-./]+@[\w\-./]+/;
 const TELEGRAM_ID_PATTERN = /^\d{5,}$/;
-const IRC_CHANNEL_PATTERN = /^#[a-zA-Z0-9_\-]{1,50}$/;
+const IRC_CHANNEL_PATTERN = /^#[a-zA-Z0-9_-]{1,50}$/;
 const IRC_NICK_PATTERN = /^[a-zA-Z_\\[\]{}^`|][a-zA-Z0-9_\\[\]{}^`|-]{1,30}$/;
-const XMPP_JID_PATTERN = /^[a-zA-Z0-9._\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}(\/[a-zA-Z0-9_\-]+)?$/;
-const ROCKETCHAT_USER_PATTERN = /^@[a-zA-Z0-9._\-]{2,30}$/;
+const XMPP_JID_PATTERN = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(\/[a-zA-Z0-9_-]+)?$/;
+const ROCKETCHAT_USER_PATTERN = /^@[a-zA-Z0-9._-]{2,30}$/;
 
 export function detectIdentifier(raw: string): IdentifierFormat {
   const trimmed = raw.trim();

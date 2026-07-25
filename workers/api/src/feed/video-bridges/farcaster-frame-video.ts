@@ -110,8 +110,16 @@ async function fetchTrendingCasts(limit: number, signal?: AbortSignal): Promise<
       headers: { Accept: 'application/json' },
     });
     if (res.ok) {
-      const data = (await res.json()) as { messages: Array<{ data: { castAddBody: { text: string; embeds: { url: string }[] }; fid: number; timestamp: number } }> };
-      return (data.messages ?? []).map(msg => ({
+      const data = (await res.json()) as {
+        messages: Array<{
+          data: {
+            castAddBody: { text: string; embeds: { url: string }[] };
+            fid: number;
+            timestamp: number;
+          };
+        }>;
+      };
+      return (data.messages ?? []).map((msg) => ({
         hash: msg.data?.castAddBody?.text?.slice(0, 8) ?? '',
         author: { fid: msg.data?.fid ?? 0, username: `fid:${msg.data?.fid ?? 0}` },
         text: msg.data?.castAddBody?.text ?? '',
@@ -134,17 +142,28 @@ async function fetchTrendingCasts(limit: number, signal?: AbortSignal): Promise<
           headers: { Accept: 'application/json' },
         });
         if (!res.ok) continue;
-        const data = (await res.json()) as { messages?: Array<{ hash: string; data: { castAddBody: { text: string; embeds: { url: string }[] }; fid: number; timestamp: number } }> };
+        const data = (await res.json()) as {
+          messages?: Array<{
+            hash: string;
+            data: {
+              castAddBody: { text: string; embeds: { url: string }[] };
+              fid: number;
+              timestamp: number;
+            };
+          }>;
+        };
         for (const msg of data.messages ?? []) {
           allCasts.push({
             hash: msg.hash,
             author: { fid: msg.data.fid, username: `fid:${msg.data.fid}` },
             text: msg.data.castAddBody.text,
             timestamp: msg.data.timestamp * 1000,
-            embeds: (msg.data.castAddBody.embeds || []).map((e: { url: string }) => ({ url: e.url })),
+            embeds: (msg.data.castAddBody.embeds || []).map((e: { url: string }) => ({
+              url: e.url,
+            })),
           });
         }
-      } catch { continue; }
+      } catch {}
     }
     return allCasts.slice(0, limit);
   } catch {

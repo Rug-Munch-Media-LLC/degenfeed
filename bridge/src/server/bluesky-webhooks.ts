@@ -10,8 +10,8 @@
  * @module @degenfeed/bridge/bluesky-webhooks
  */
 
-import type http from 'node:http';
 import { createHmac, timingSafeEqual } from 'node:crypto';
+import type http from 'node:http';
 
 // ─── Types ───────────────────────────────────────────────────────────
 
@@ -68,15 +68,10 @@ export function verifyWebhookSignature(
     const timestamp = timestampPart.split('=')[1];
     const signature = sigPart.split('=')[1];
 
-    const expected = createHmac('sha256', secret)
-      .update(`${timestamp}.${payload}`)
-      .digest('hex');
+    const expected = createHmac('sha256', secret).update(`${timestamp}.${payload}`).digest('hex');
 
     // Constant-time comparison to prevent timing attacks
-    return timingSafeEqual(
-      Buffer.from(expected),
-      Buffer.from(signature),
-    );
+    return timingSafeEqual(Buffer.from(expected), Buffer.from(signature));
   } catch {
     return false;
   }
@@ -87,9 +82,7 @@ export function verifyWebhookSignature(
 /**
  * Deliver a webhook event to all subscribed endpoints.
  */
-export async function deliverWebhookEvent(
-  event: WebhookEvent,
-): Promise<void> {
+export async function deliverWebhookEvent(event: WebhookEvent): Promise<void> {
   const payload = JSON.stringify(event);
   const deliveries: Promise<void>[] = [];
 
@@ -107,10 +100,7 @@ export async function deliverWebhookEvent(
   await Promise.allSettled(deliveries);
 }
 
-async function deliverToEndpoint(
-  sub: WebhookSubscription,
-  payload: string,
-): Promise<void> {
+async function deliverToEndpoint(sub: WebhookSubscription, payload: string): Promise<void> {
   const timestamp = Math.floor(Date.now() / 1000);
   const signature = createHmac('sha256', sub.secret)
     .update(`${timestamp}.${payload}`)
@@ -139,9 +129,7 @@ async function deliverToEndpoint(
 
 // ─── Webhook Subscription Management ─────────────────────────────────
 
-export function registerWebhookSubscription(
-  sub: WebhookSubscription,
-): void {
+export function registerWebhookSubscription(sub: WebhookSubscription): void {
   webhookSubscriptions.set(sub.id, sub);
 }
 
@@ -205,7 +193,8 @@ export async function handleWebhookRoutes(
       const url = body.url as string;
       const secret = body.secret as string;
       const events = body.events as string[];
-      const id = body.id as string || `wh_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+      const id =
+        (body.id as string) || `wh_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
       if (!url || !secret || !events || !Array.isArray(events) || events.length === 0) {
         return jsonError(400, 'MISSING_FIELDS', 'url, secret, and events are required'), true;

@@ -46,12 +46,12 @@ import {
 import {
   handleLensExport,
   handleLensExportDownload,
+  handleLensFollow,
   handleLensFollowers,
   handleLensFollowing,
-  handleLensFollow,
-  handleLensUnfollow,
   handleLensProfileGet,
   handleLensProfileResolve,
+  handleLensUnfollow,
 } from '../../routes/lens-profile';
 
 export function registerLensRoutes(app: Hono<{ Bindings: Env }>): void {

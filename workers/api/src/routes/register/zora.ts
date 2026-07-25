@@ -12,11 +12,11 @@
  */
 import type { Hono } from 'hono';
 import type { Env } from '../../index';
-import zoraNFT from '../../routes/zora-nft';
-import zoraMarketplace from '../../routes/zora-marketplace';
-import zoraEarnings from '../../routes/zora-earnings';
-import zoraVideo from '../../routes/zora-video';
 import zoraCompat from '../../routes/zora-compat';
+import zoraEarnings from '../../routes/zora-earnings';
+import zoraMarketplace from '../../routes/zora-marketplace';
+import zoraNFT from '../../routes/zora-nft';
+import zoraVideo from '../../routes/zora-video';
 
 export function registerZoraRoutes(app: Hono<{ Bindings: Env }>): void {
   // Zora NFT Minting & Management

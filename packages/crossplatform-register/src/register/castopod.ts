@@ -114,7 +114,10 @@ export async function registerCastopod(
       return {
         platform: 'castopod' as const,
         status: 'failed',
-        error: errData.error || errData.message || `Castopod registration failed with HTTP ${registerRes.status}`,
+        error:
+          errData.error ||
+          errData.message ||
+          `Castopod registration failed with HTTP ${registerRes.status}`,
       };
     }
 
@@ -146,8 +149,7 @@ export async function registerCastopod(
     }
 
     // Step 6: Get actor/profile URL
-    const actorId =
-      registerData.actor_id || `${instanceUrl}/@${desiredUsername}`;
+    const actorId = registerData.actor_id || `${instanceUrl}/@${desiredUsername}`;
 
     const accountInfo: Record<string, string> = {
       username: desiredUsername,

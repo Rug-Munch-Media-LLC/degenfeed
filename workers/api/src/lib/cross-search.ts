@@ -376,36 +376,47 @@ export class CrossNetworkSearch {
   // ─── Farcaster Search ─────────────────────────────────────────
 
   async searchFarcaster(query: string): Promise<SearchResult[]> {
-    const base = this.env.FARCASTER_HUB_URL?.startsWith('https://api.')
-      ? this.env.FARCASTER_HUB_URL
-      : 'https://api.farcaster.xyz';
-    const data = await fetchJsonWithTimeout<{
-      result?: {
-        casts?: Array<{
-          hash: string;
-          text?: string;
-          timestamp?: number;
-          author?: { displayName?: string; username?: string; pfp?: { url?: string } };
-          reactions?: { count?: number };
-          recasts?: { count?: number };
-        }>;
-      };
-    }>(`${base}/v2/cast-search?q=${encodeURIComponent(query)}&limit=20`);
-    return (data?.result?.casts ?? []).slice(0, 10).map((c) => {
-      return makeResult({
-        id: `farcaster:${c.hash}`,
-        type: 'post',
-        title: truncate(c.text ?? '', 80),
-        description: truncate(c.text ?? '', 200),
-        source: 'farcaster',
-        relevanceScore: 0.8 + ((c.reactions?.count ?? 0) + (c.recasts?.count ?? 0) * 2) * 0.01,
-        url: `https://warpcast.com/${c.author?.username || '~'}/${c.hash.slice(0, 8)}`,
-        metadata: {
-          author: c.author?.displayName || c.author?.username || 'unknown',
-          avatarUrl: c.author?.pfp?.url,
-          likes: c.reactions?.count ?? 0,
-          recasts: c.recasts?.count ?? 0,
-        },
+    // Search via Hubble — look up username proof for exact match, then fetch casts
+    const hubUrl = this.env.FARCASTER_HUB_URL || 'http://127.0.0.1:2281';
+    const results: SearchResult[] = [];
+
+    // Try exact username lookup via Hubble's userNameProof
+    try {
+      const nameResp = await fetch(`${hubUrl}/v1/userNameProofByName?name=${encodeURIComponent(query)}`, {
+        headers: { accept: 'application/json' },
+        signal: AbortSignal.timeout(5000),
+      });
+      if (nameResp.ok) {
+        const proof = (await nameResp.json()) as { fid?: number; name?: string } | null;
+        if (proof?.fid) {
+          const castResp = await fetch(`${hubUrl}/v1/castsByFid?fid=${proof.fid}&pageSize=5`, {
+            headers: { accept: 'application/json' },
+            signal: AbortSignal.timeout(5000),
+          });
+          if (castResp.ok) {
+            const castData = (await castResp.json()) as { messages?: Array<{ hash: string; data: { castAddBody: { text: string }; fid: number; timestamp: number } }> };
+            for (const msg of castData.messages ?? []) {
+              const text = msg.data?.castAddBody?.text;
+              if (!text) continue;
+              results.push({
+                id: `farcaster:${msg.hash}`,
+                protocol: 'farcaster',
+                text,
+                author: { fid: msg.data.fid, username: query },
+                createdAt: (msg.data.timestamp + 1609459200) * 1000,
+                url: `https://warpcast.com/${query}/${msg.hash}`,
+                score: 0,
+              });
+            }
+          }
+        }
+      }
+    } catch { /* non-critical */ }
+
+    return results;
+  }
+
+  // ─── Lens Search ──────────────────────────────────────────────────────
       });
     });
   }
@@ -924,45 +935,41 @@ export class CrossNetworkSearch {
   }
 
   async #fetchTrendingFarcaster(): Promise<TrendingItem[]> {
-    const base = this.env.FARCASTER_HUB_URL?.startsWith('https://api.')
-      ? this.env.FARCASTER_HUB_URL
-      : 'https://api.farcaster.xyz';
-    const data = await fetchJsonWithTimeout<{
-      result?: {
-        casts?: Array<{
-          hash: string;
-          text?: string;
-          timestamp?: number;
-          author?: { displayName?: string; username?: string; pfp?: { url?: string } };
-          reactions?: { count?: number };
-          recasts?: { count?: number };
-        }>;
-      };
-    }>(`${base}/v2/feed?limit=10&feedType=trending`);
-    return (data?.result?.casts ?? []).map((c) => ({
-      id: `farcaster:${c.hash}`,
-      title: truncate(c.text ?? '', 80),
-      description: truncate(c.text ?? '', 200),
-      url: `https://warpcast.com/${c.author?.username || '~'}/${c.hash.slice(0, 8)}`,
-      source: 'farcaster',
-      sourceLabel: 'Farcaster',
-      sourceColor: '#8a63d2',
-      score: (c.reactions?.count ?? 0) + (c.recasts?.count ?? 0) * 2,
-      velocity:
-        (c.reactions?.count ?? 0) /
-        Math.max(
-          1,
-          (c.timestamp ?? Date.now()) > 1e12
-            ? (Date.now() - (c.timestamp ?? Date.now())) / 3600000
-            : 1,
-        ),
-      engagement: (c.reactions?.count ?? 0) + (c.recasts?.count ?? 0),
-      publishedAt: (c.timestamp ?? 0) > 1e12 ? (c.timestamp ?? 0) : (c.timestamp ?? 0) * 1000,
-      metadata: {
-        author: c.author?.displayName || c.author?.username || 'unknown',
-        avatarUrl: c.author?.pfp?.url,
-      },
-    }));
+    const hubUrl = this.env.FARCASTER_HUB_URL || 'http://127.0.0.1:2281';
+    const items: TrendingItem[] = [];
+    const curatedFids = [3, 2, 1, 228, 239, 354, 5650];
+
+    for (const fid of curatedFids) {
+      try {
+        const resp = await fetch(`${hubUrl}/v1/castsByFid?fid=${fid}&pageSize=3`, {
+          headers: { accept: 'application/json' },
+          signal: AbortSignal.timeout(4000),
+        });
+        if (!resp.ok) continue;
+        const data = (await resp.json()) as { messages?: Array<{ hash: string; data: { castAddBody: { text: string }; fid: number; timestamp: number } }> };
+        for (const msg of data.messages ?? []) {
+          const text = msg.data?.castAddBody?.text;
+          if (!text) continue;
+          const ts = (msg.data.timestamp + 1609459200) * 1000;
+          items.push({
+            id: `farcaster:${msg.hash}`,
+            title: truncate(text, 80),
+            description: truncate(text, 200),
+            url: `https://warpcast.com/fid:${msg.data.fid}/${msg.hash.slice(0, 8)}`,
+            source: 'farcaster',
+            sourceLabel: 'Farcaster',
+            sourceColor: '#8a63d2',
+            score: 100,
+            velocity: 0,
+            engagement: 0,
+            publishedAt: ts,
+            metadata: { author: `fid:${msg.data.fid}`, avatarUrl: '' },
+          });
+        }
+      } catch { }
+    }
+
+    return items;
   }
 
   async #fetchTrendingLemmy(): Promise<TrendingItem[]> {

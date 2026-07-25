@@ -27,6 +27,12 @@ import {
   handleBridgeUnread,
 } from '../../routes/bridge';
 import {
+  handleDiscoveryByProtocol,
+  handleDiscoveryRecommended,
+  handleDiscoverySearch,
+  handleDiscoveryTrending,
+} from '../../routes/chat-discovery-routes';
+import {
   handleCreatePoll,
   handleCreateStickerPack,
   handleDeleteFile,
@@ -80,6 +86,15 @@ import {
   handleUserGroups,
 } from '../../routes/e2e-messages';
 import {
+  handleIrcChannels,
+  handleIrcCurated,
+  handleIrcHealth,
+  handleIrcJoin,
+  handleIrcLeave,
+  handleIrcSend,
+  handleRocketChatConnect,
+} from '../../routes/irc-bridge-routes';
+import {
   handleConversationMessages,
   handleConversations,
   handleDeleteMessage,
@@ -103,21 +118,6 @@ import {
   handleUnifiedSend,
   handleUnifiedTyping,
 } from '../../routes/unified-chat';
-import {
-  handleDiscoveryByProtocol,
-  handleDiscoveryRecommended,
-  handleDiscoverySearch,
-  handleDiscoveryTrending,
-} from '../../routes/chat-discovery-routes';
-import {
-  handleIrcChannels,
-  handleIrcCurated,
-  handleIrcHealth,
-  handleIrcJoin,
-  handleIrcLeave,
-  handleIrcSend,
-  handleRocketChatConnect,
-} from '../../routes/irc-bridge-routes';
 
 export function registerMessagingRoutes(app: Hono<{ Bindings: Env }>): void {
   // --- API: Messages (DM) ---

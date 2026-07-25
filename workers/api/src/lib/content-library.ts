@@ -461,7 +461,7 @@ async function fetchEngagementFromProtocol(
 
     case 'farcaster': {
       try {
-        const hubUrl = env.FARCASTER_HUB_URL || 'https://hub.farcaster.standardcrypto.vc:2281';
+        const hubUrl = env.FARCASTER_HUB_URL || 'http://127.0.0.1:2281';
         const res = await fetch(`${hubUrl}/v1/castById?fid=0&hash=${postId}`, {
           signal: AbortSignal.timeout(3000),
         });

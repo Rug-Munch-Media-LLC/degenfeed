@@ -711,7 +711,7 @@ const PROTOCOL_HEALTH_CHECKS: Record<
     return pingUrl('https://api.nostr.band/');
   },
   farcaster: async (env) => {
-    const hub = env.FARCASTER_HUB_URL || 'https://hub.farcaster.standardcrypto.vc:2281';
+    const hub = env.FARCASTER_HUB_URL || 'http://127.0.0.1:2281';
     return pingUrl(`${hub}/v1/info`);
   },
   lens: async (env) => {

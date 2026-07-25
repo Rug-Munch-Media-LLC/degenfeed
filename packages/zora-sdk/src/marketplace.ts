@@ -231,10 +231,14 @@ export class ZoraMarketplace {
     const limit = Math.min(query.limit ?? 20, 100);
     const sort = query.sort ?? 'volume_24h';
 
-    const sortParam = sort === 'volume_24h' ? 'volume'
-      : sort === 'sales_24h' ? 'sales'
-      : sort === 'floor_price' ? 'price'
-      : 'recent';
+    const sortParam =
+      sort === 'volume_24h'
+        ? 'volume'
+        : sort === 'sales_24h'
+          ? 'sales'
+          : sort === 'floor_price'
+            ? 'price'
+            : 'recent';
 
     try {
       const url = `${this.indexerUrl}/api/collections?limit=${limit}&sort=${sortParam}`;
@@ -242,7 +246,7 @@ export class ZoraMarketplace {
 
       if (!res.ok) return [];
 
-      const data = await res.json() as {
+      const data = (await res.json()) as {
         data?: Array<Record<string, unknown>>;
       };
 
@@ -279,7 +283,7 @@ export class ZoraMarketplace {
 
       if (!res.ok) return [];
 
-      const data = await res.json() as {
+      const data = (await res.json()) as {
         data?: Array<Record<string, unknown>>;
       };
 
@@ -295,7 +299,8 @@ export class ZoraMarketplace {
 
       return filtered.map((item: Record<string, unknown>) => ({
         id: `zora:token:${item.id as string}`,
-        contractAddress: (item.collection_address as Address) || '0x0000000000000000000000000000000000000000',
+        contractAddress:
+          (item.collection_address as Address) || '0x0000000000000000000000000000000000000000',
         tokenId: item.id?.toString()?.split(':').pop() ?? '0',
         seller: (item.owner_address as Address) || '0x0000000000000000000000000000000000000000',
         priceWei: item.mint_price_eth?.toString() ?? '0',
@@ -324,11 +329,13 @@ export class ZoraMarketplace {
 
       if (!res.ok) return null;
 
-      const data = await res.json() as { data?: Record<string, unknown> };
+      const data = (await res.json()) as { data?: Record<string, unknown> };
       if (!data.data) return null;
 
       const col = data.data;
-      const floorWei = col.floor_price ? BigInt(Math.floor((col.floor_price as number) * 1e18)).toString() : '0';
+      const floorWei = col.floor_price
+        ? BigInt(Math.floor((col.floor_price as number) * 1e18)).toString()
+        : '0';
 
       return {
         address: collectionAddress,
@@ -336,7 +343,9 @@ export class ZoraMarketplace {
         floorWei,
         floorEth: col.floor_price ? `${(col.floor_price as number).toFixed(4)}` : '0',
         floorChange24h: (col.floor_change as number) ?? 0,
-        volume24hWei: col.volume ? BigInt(Math.floor((col.volume as number) * 1e18)).toString() : '0',
+        volume24hWei: col.volume
+          ? BigInt(Math.floor((col.volume as number) * 1e18)).toString()
+          : '0',
         sales24h: (col.sales_count as number) ?? 0,
         listedCount: 0,
         totalSupply: (col.total_supply as number) ?? 0,
@@ -358,7 +367,10 @@ export class ZoraMarketplace {
       throw new Error('ZoraMarketplace: privateKey required to buy');
     }
 
-    if (!params.contractAddress || params.contractAddress === '0x0000000000000000000000000000000000000000') {
+    if (
+      !params.contractAddress ||
+      params.contractAddress === '0x0000000000000000000000000000000000000000'
+    ) {
       throw new Error('Valid contract address required');
     }
     if (params.priceWei <= 0n) {
@@ -370,25 +382,22 @@ export class ZoraMarketplace {
 
       // Fill buy order through Zora Module Manager
       const data = encodeFunctionData({
-        abi: [{
-          type: 'function',
-          name: 'fillBuyOrder',
-          inputs: [
-            { type: 'address', name: 'tokenContract' },
-            { type: 'uint256', name: 'tokenId' },
-            { type: 'address', name: 'seller' },
-            { type: 'uint256', name: 'price' },
-          ],
-          outputs: [],
-          stateMutability: 'payable',
-        }],
-        functionName: 'fillBuyOrder',
-        args: [
-          params.contractAddress,
-          BigInt(params.tokenId),
-          params.seller,
-          params.priceWei,
+        abi: [
+          {
+            type: 'function',
+            name: 'fillBuyOrder',
+            inputs: [
+              { type: 'address', name: 'tokenContract' },
+              { type: 'uint256', name: 'tokenId' },
+              { type: 'address', name: 'seller' },
+              { type: 'uint256', name: 'price' },
+            ],
+            outputs: [],
+            stateMutability: 'payable',
+          },
         ],
+        functionName: 'fillBuyOrder',
+        args: [params.contractAddress, BigInt(params.tokenId), params.seller, params.priceWei],
       });
 
       const hash = await this.walletClient.sendTransaction({
@@ -434,18 +443,20 @@ export class ZoraMarketplace {
 
       // Create sell order through Zora Module Manager
       const data = encodeFunctionData({
-        abi: [{
-          type: 'function',
-          name: 'createSellOrder',
-          inputs: [
-            { type: 'address', name: 'tokenContract' },
-            { type: 'uint256', name: 'tokenId' },
-            { type: 'uint256', name: 'price' },
-            { type: 'uint256', name: 'expiration' },
-          ],
-          outputs: [],
-          stateMutability: 'nonpayable',
-        }],
+        abi: [
+          {
+            type: 'function',
+            name: 'createSellOrder',
+            inputs: [
+              { type: 'address', name: 'tokenContract' },
+              { type: 'uint256', name: 'tokenId' },
+              { type: 'uint256', name: 'price' },
+              { type: 'uint256', name: 'expiration' },
+            ],
+            outputs: [],
+            stateMutability: 'nonpayable',
+          },
+        ],
         functionName: 'createSellOrder',
         args: [
           params.contractAddress,
@@ -490,18 +501,20 @@ export class ZoraMarketplace {
       const { encodeFunctionData, formatEther } = await import('viem');
 
       const data = encodeFunctionData({
-        abi: [{
-          type: 'function',
-          name: 'placeBid',
-          inputs: [
-            { type: 'address', name: 'tokenContract' },
-            { type: 'uint256', name: 'tokenId' },
-            { type: 'uint256', name: 'amount' },
-            { type: 'uint256', name: 'expiration' },
-          ],
-          outputs: [],
-          stateMutability: 'payable',
-        }],
+        abi: [
+          {
+            type: 'function',
+            name: 'placeBid',
+            inputs: [
+              { type: 'address', name: 'tokenContract' },
+              { type: 'uint256', name: 'tokenId' },
+              { type: 'uint256', name: 'amount' },
+              { type: 'uint256', name: 'expiration' },
+            ],
+            outputs: [],
+            stateMutability: 'payable',
+          },
+        ],
         functionName: 'placeBid',
         args: [
           params.contractAddress,
@@ -545,18 +558,20 @@ export class ZoraMarketplace {
       const { encodeFunctionData, formatEther } = await import('viem');
 
       const data = encodeFunctionData({
-        abi: [{
-          type: 'function',
-          name: 'makeOffer',
-          inputs: [
-            { type: 'address', name: 'tokenContract' },
-            { type: 'uint256', name: 'tokenId' },
-            { type: 'uint256', name: 'amount' },
-            { type: 'uint256', name: 'expiration' },
-          ],
-          outputs: [],
-          stateMutability: 'payable',
-        }],
+        abi: [
+          {
+            type: 'function',
+            name: 'makeOffer',
+            inputs: [
+              { type: 'address', name: 'tokenContract' },
+              { type: 'uint256', name: 'tokenId' },
+              { type: 'uint256', name: 'amount' },
+              { type: 'uint256', name: 'expiration' },
+            ],
+            outputs: [],
+            stateMutability: 'payable',
+          },
+        ],
         functionName: 'makeOffer',
         args: [
           params.contractAddress,
@@ -590,24 +605,25 @@ export class ZoraMarketplace {
    * Get price history for an NFT from our indexer.
    * Returns sale events in chronological order.
    */
-  async getPriceHistory(
-    contractAddress: Address,
-    tokenId: string,
-  ): Promise<PricePoint[]> {
+  async getPriceHistory(contractAddress: Address, tokenId: string): Promise<PricePoint[]> {
     try {
       const url = `${this.indexerUrl}/api/sales?collection=${contractAddress.toLowerCase()}`;
       const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
 
       if (!res.ok) return [];
 
-      const data = await res.json() as { data?: Array<Record<string, unknown>> };
+      const data = (await res.json()) as { data?: Array<Record<string, unknown>> };
       if (!data.data) return [];
 
       return data.data
         .filter((s: Record<string, unknown>) => !tokenId || s.token_id === tokenId)
         .map((sale: Record<string, unknown>) => ({
-          timestamp: sale.timestamp ? new Date(sale.timestamp as string).getTime() / 1000 : Date.now() / 1000,
-          priceWei: sale.buy_price_eth ? BigInt(Math.floor((sale.buy_price_eth as number) * 1e18)).toString() : '0',
+          timestamp: sale.timestamp
+            ? new Date(sale.timestamp as string).getTime() / 1000
+            : Date.now() / 1000,
+          priceWei: sale.buy_price_eth
+            ? BigInt(Math.floor((sale.buy_price_eth as number) * 1e18)).toString()
+            : '0',
           priceEth: sale.buy_price_eth ? `${(sale.buy_price_eth as number).toFixed(6)}` : '0',
           event: 'sale' as const,
         }))

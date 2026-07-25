@@ -122,7 +122,7 @@ export async function handleIdentityProfile(request: Request, env: Env): Promise
     }
 
     if (/^\d+$/.test(handle)) {
-      const hubUrl = env.FARCASTER_HUB_URL || 'https://hub.pinata.cloud';
+      const hubUrl = env.FARCASTER_HUB_URL || 'http://127.0.0.1:2281';
       try {
         const res = await fetch(`${hubUrl}/v1/userDataByFid?fid=${handle}`, {
           headers: { 'user-agent': 'DegenFeed/0.1' },

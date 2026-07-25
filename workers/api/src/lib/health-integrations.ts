@@ -237,7 +237,7 @@ async function checkNostr(env: Env): Promise<IntegrationHealth> {
 }
 
 async function checkFarcaster(env: Env): Promise<IntegrationHealth> {
-  const hubUrl = env.FARCASTER_HUB_URL || 'https://hub.farcaster.standardcrypto.vc:2281';
+  const hubUrl = env.FARCASTER_HUB_URL || 'http://127.0.0.1:2281';
   return pingUrl(`${hubUrl}/v1/info`);
 }
 

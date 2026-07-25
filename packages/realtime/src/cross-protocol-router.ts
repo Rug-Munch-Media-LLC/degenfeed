@@ -127,8 +127,10 @@ export class CrossProtocolRouter {
     let encryptedBlob: string | undefined;
     try {
       encryptedBlob = await this.encryptForDelivery(
-        env as any, message.fromAddress,
-        recipient.walletAddress ?? message.to, message.body,
+        env as any,
+        message.fromAddress,
+        recipient.walletAddress ?? message.to,
+        message.body,
       );
     } catch (err) {
       console.error('[cross-protocol-router] E2E encrypt failed:', err);
@@ -141,36 +143,77 @@ export class CrossProtocolRouter {
       body: message.body,
       encryptedBlob,
       preferredProtocol: message.preferredProtocol,
-      metadata: { sourceProtocol: fmt.type, contentType: message.contentType ?? 'text', requestReadReceipt: true },
+      metadata: {
+        sourceProtocol: fmt.type,
+        contentType: message.contentType ?? 'text',
+        requestReadReceipt: true,
+      },
     };
 
     const deliveryResults = await this.transports.routeToAll(transportMsg, recipient, env);
     const deliveredTo = deliveryResults.filter((r) => r.ok).map((r) => r.protocol);
-    const conversationId = buildConversationId(message.fromAddress, recipient.walletAddress ?? message.to);
+    const conversationId = buildConversationId(
+      message.fromAddress,
+      recipient.walletAddress ?? message.to,
+    );
 
     await this.storeOutboundMessage(env as any, message.fromAddress, {
-      id: messageId, fromId: message.fromAddress, toId: recipient.walletAddress ?? message.to,
-      body: message.body, encryptedBlob, conversationId, timestamp, deliveredTo, deliveryResults, recipient,
+      id: messageId,
+      fromId: message.fromAddress,
+      toId: recipient.walletAddress ?? message.to,
+      body: message.body,
+      encryptedBlob,
+      conversationId,
+      timestamp,
+      deliveredTo,
+      deliveryResults,
+      recipient,
     });
 
-    return { messageId, recipient, deliveryResults, deliveredTo: [...new Set(deliveredTo)], delivered: deliveredTo.length > 0, encryptedBlob, conversationId, timestamp };
+    return {
+      messageId,
+      recipient,
+      deliveryResults,
+      deliveredTo: [...new Set(deliveredTo)],
+      delivered: deliveredTo.length > 0,
+      encryptedBlob,
+      conversationId,
+      timestamp,
+    };
   }
 
-  async routeIncoming(message: IncomingMessage, env: Env): Promise<{ decrypted: string | null; inboxId: string } | null> {
+  async routeIncoming(
+    message: IncomingMessage,
+    env: Env,
+  ): Promise<{ decrypted: string | null; inboxId: string } | null> {
     try {
       let decrypted: string | null = null;
       if (message.encrypted && message.encryptedBlob) {
-        decrypted = await this.decryptForDelivery(env as any, message.toId, message.fromId, message.encryptedBlob);
+        decrypted = await this.decryptForDelivery(
+          env as any,
+          message.toId,
+          message.fromId,
+          message.encryptedBlob,
+        );
       } else {
         decrypted = message.encryptedBlob ?? null;
       }
 
-      const inboxId = await this.storeInboxMessage(env as any, message.toId, { ...message, decrypted });
+      const inboxId = await this.storeInboxMessage(env as any, message.toId, {
+        ...message,
+        decrypted,
+      });
 
       this.broadcastToUser(message.toId, 'dm:new', {
-        id: message.id, fromId: message.fromId, decrypted, encryptedBlob: message.encryptedBlob,
-        protocol: message.protocol, conversationId: buildConversationId(message.fromId, message.toId),
-        createdAt: message.createdAt, replyTo: message.replyTo, contentType: message.contentType,
+        id: message.id,
+        fromId: message.fromId,
+        decrypted,
+        encryptedBlob: message.encryptedBlob,
+        protocol: message.protocol,
+        conversationId: buildConversationId(message.fromId, message.toId),
+        createdAt: message.createdAt,
+        replyTo: message.replyTo,
+        contentType: message.contentType,
       });
 
       return { decrypted, inboxId };
@@ -180,18 +223,37 @@ export class CrossProtocolRouter {
     }
   }
 
-  async sendTyping(fromAddress: string, toIdentifier: string, isTyping: boolean, env: Env): Promise<void> {
+  async sendTyping(
+    fromAddress: string,
+    toIdentifier: string,
+    isTyping: boolean,
+    env: Env,
+  ): Promise<void> {
     const conversationId = buildConversationId(fromAddress, toIdentifier);
     const key = `${KV_TYPING_PREFIX}${conversationId}:${fromAddress}`;
     if (env.CACHE) {
       if (isTyping) await env.CACHE.put(key, String(Date.now()), { expirationTtl: 30 });
       else await env.CACHE.delete(key).catch(() => {});
     }
-    this.broadcastToUser(toIdentifier, 'dm:typing', { conversationId, userId: fromAddress, isTyping });
+    this.broadcastToUser(toIdentifier, 'dm:typing', {
+      conversationId,
+      userId: fromAddress,
+      isTyping,
+    });
   }
 
-  async sendReadReceipt(userId: string, conversationId: string, lastReadMessageId: string, env: Env): Promise<void> {
-    const receipt: ReadReceipt = { conversationId, userId, lastReadMessageId, timestamp: Date.now() };
+  async sendReadReceipt(
+    userId: string,
+    conversationId: string,
+    lastReadMessageId: string,
+    env: Env,
+  ): Promise<void> {
+    const receipt: ReadReceipt = {
+      conversationId,
+      userId,
+      lastReadMessageId,
+      timestamp: Date.now(),
+    };
     const key = `${KV_READ_PREFIX}${conversationId}:${userId}`;
     if (env.CACHE) await env.CACHE.put(key, JSON.stringify(receipt), { expirationTtl: 86400 * 90 });
     const [partyA, partyB] = conversationId.split(':');
@@ -205,25 +267,42 @@ export class CrossProtocolRouter {
     if (recipient) this.broadcastToUser(recipient, 'dm:reaction', reaction);
   }
 
-  private async encryptForDelivery(env: any, fromAddress: string, toAddress: string, plaintext: string): Promise<string> {
+  private async encryptForDelivery(
+    env: any,
+    fromAddress: string,
+    toAddress: string,
+    plaintext: string,
+  ): Promise<string> {
     const crypto = await import('@degenfeed/crypto');
-    if (!(await crypto.hasKeyBundle(env, fromAddress))) await crypto.generateKeyBundle(env, fromAddress);
+    if (!(await crypto.hasKeyBundle(env, fromAddress)))
+      await crypto.generateKeyBundle(env, fromAddress);
     const existingSession = await crypto.loadSession(env, fromAddress, toAddress);
     if (!existingSession) await crypto.initiateConversation(env, fromAddress, toAddress);
     const { payload } = await crypto.encryptMessage(env, fromAddress, toAddress, plaintext);
     return JSON.stringify(payload);
   }
 
-  private async decryptForDelivery(env: any, recipientAddress: string, senderAddress: string, encryptedBlob: string): Promise<string | null> {
+  private async decryptForDelivery(
+    env: any,
+    recipientAddress: string,
+    senderAddress: string,
+    encryptedBlob: string,
+  ): Promise<string | null> {
     try {
       const crypto = await import('@degenfeed/crypto');
       const payload = JSON.parse(encryptedBlob);
       const decrypted = await crypto.decryptMessage(env, recipientAddress, senderAddress, payload);
       return decrypted.plaintext;
-    } catch { return null; }
+    } catch {
+      return null;
+    }
   }
 
-  private async storeOutboundMessage(env: { CACHE?: any }, userId: string, record: any): Promise<void> {
+  private async storeOutboundMessage(
+    env: { CACHE?: any },
+    userId: string,
+    record: any,
+  ): Promise<void> {
     if (!env.CACHE) return;
     try {
       const key = `${KV_OUTBOX_PREFIX}${userId}`;
@@ -234,7 +313,11 @@ export class CrossProtocolRouter {
     } catch {}
   }
 
-  private async storeInboxMessage(env: { CACHE?: any }, userId: string, message: IncomingMessage & { decrypted?: string | null }): Promise<string> {
+  private async storeInboxMessage(
+    env: { CACHE?: any },
+    userId: string,
+    message: IncomingMessage & { decrypted?: string | null },
+  ): Promise<string> {
     if (!env.CACHE) return message.id;
     const inboxId = message.id || crypto.randomUUID();
     try {
@@ -242,19 +325,28 @@ export class CrossProtocolRouter {
       const raw = await env.CACHE.get(inboxKey);
       const inbox = raw ? JSON.parse(raw) : [];
       inbox.push(message);
-      await env.CACHE.put(inboxKey, JSON.stringify(inbox.slice(-500)), { expirationTtl: 86400 * 90 });
+      await env.CACHE.put(inboxKey, JSON.stringify(inbox.slice(-500)), {
+        expirationTtl: 86400 * 90,
+      });
 
       const convId = buildConversationId(message.fromId, message.toId);
       const convKey = `${KV_CONV_PREFIX}${convId}`;
       const convRaw = await env.CACHE.get(convKey);
       const conv = convRaw ? JSON.parse(convRaw) : [];
       conv.push(message);
-      await env.CACHE.put(convKey, JSON.stringify(conv.slice(-1000)), { expirationTtl: 86400 * 90 });
+      await env.CACHE.put(convKey, JSON.stringify(conv.slice(-1000)), {
+        expirationTtl: 86400 * 90,
+      });
     } catch {}
     return inboxId;
   }
 
-  async getInbox(env: { CACHE?: any }, userId: string, limit = 50, before?: number): Promise<Array<IncomingMessage & { decrypted?: string | null }>> {
+  async getInbox(
+    env: { CACHE?: any },
+    userId: string,
+    limit = 50,
+    before?: number,
+  ): Promise<Array<IncomingMessage & { decrypted?: string | null }>> {
     if (!env.CACHE) return [];
     try {
       const key = `${KV_INBOX_PREFIX}${userId}`;
@@ -264,10 +356,18 @@ export class CrossProtocolRouter {
       let filtered = inbox;
       if (before) filtered = filtered.filter((m: any) => m.createdAt < before);
       return filtered.slice(-limit);
-    } catch { return []; }
+    } catch {
+      return [];
+    }
   }
 
-  async getConversation(env: { CACHE?: any }, userIdA: string, userIdB: string, limit = 50, before?: number): Promise<Array<IncomingMessage & { decrypted?: string | null }>> {
+  async getConversation(
+    env: { CACHE?: any },
+    userIdA: string,
+    userIdB: string,
+    limit = 50,
+    before?: number,
+  ): Promise<Array<IncomingMessage & { decrypted?: string | null }>> {
     if (!env.CACHE) return [];
     try {
       const convId = buildConversationId(userIdA, userIdB);
@@ -278,10 +378,17 @@ export class CrossProtocolRouter {
       let filtered = messages;
       if (before) filtered = filtered.filter((m: any) => m.createdAt < before);
       return filtered.slice(-limit);
-    } catch { return []; }
+    } catch {
+      return [];
+    }
   }
 
-  async getConversations(env: { CACHE?: any }, userId: string): Promise<Array<{ conversationId: string; otherUserId: string; lastMessageAt: number; unread: number }>> {
+  async getConversations(
+    env: { CACHE?: any },
+    userId: string,
+  ): Promise<
+    Array<{ conversationId: string; otherUserId: string; lastMessageAt: number; unread: number }>
+  > {
     if (!env.CACHE) return [];
     try {
       const inbox = await this.getInbox(env, userId, 500);
@@ -293,20 +400,35 @@ export class CrossProtocolRouter {
         if (msg.fromId !== userId) existing.unread += 1;
         convMap.set(convId, existing);
       }
-      return Array.from(convMap.entries()).map(([conversationId, data]) => {
-        const [partyA = '', partyB = ''] = conversationId.split(':');
-        return { conversationId, otherUserId: partyA === userId ? partyB : partyA, lastMessageAt: data.lastMessageAt, unread: data.unread };
-      }).sort((a, b) => b.lastMessageAt - a.lastMessageAt);
-    } catch { return []; }
+      return Array.from(convMap.entries())
+        .map(([conversationId, data]) => {
+          const [partyA = '', partyB = ''] = conversationId.split(':');
+          return {
+            conversationId,
+            otherUserId: partyA === userId ? partyB : partyA,
+            lastMessageAt: data.lastMessageAt,
+            unread: data.unread,
+          };
+        })
+        .sort((a, b) => b.lastMessageAt - a.lastMessageAt);
+    } catch {
+      return [];
+    }
   }
 
-  async getLastRead(env: { CACHE?: any }, conversationId: string, userId: string): Promise<ReadReceipt | null> {
+  async getLastRead(
+    env: { CACHE?: any },
+    conversationId: string,
+    userId: string,
+  ): Promise<ReadReceipt | null> {
     if (!env.CACHE) return null;
     try {
       const key = `${KV_READ_PREFIX}${conversationId}:${userId}`;
       const raw = await env.CACHE.get(key);
-      return raw ? JSON.parse(raw) as ReadReceipt : null;
-    } catch { return null; }
+      return raw ? (JSON.parse(raw) as ReadReceipt) : null;
+    } catch {
+      return null;
+    }
   }
 
   async isTyping(env: { CACHE?: any }, conversationId: string, userId: string): Promise<boolean> {
@@ -316,7 +438,9 @@ export class CrossProtocolRouter {
       const raw = await env.CACHE.get(key);
       if (!raw) return false;
       return Date.now() - Number.parseInt(raw, 10) < 30_000;
-    } catch { return false; }
+    } catch {
+      return false;
+    }
   }
 }
 

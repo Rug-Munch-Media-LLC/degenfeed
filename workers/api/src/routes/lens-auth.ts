@@ -14,12 +14,11 @@
  *   Register:  3 req/min per IP (on-chain costs involved)
  */
 
-import { LensClient, LENS_API_URL } from '@degenfeed/lens-sdk';
+import { LENS_API_URL, LensClient } from '@degenfeed/lens-sdk';
 import type { Env } from '../index';
 import { jsonResponse, log } from '../index';
+import { hasSuspiciousPayload, sanitizeString, validateBodySize } from '../sanitize';
 import { requireSession } from '../session';
-import { validateBodySize } from '../sanitize';
-import { hasSuspiciousPayload, sanitizeString } from '../sanitize';
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
@@ -161,7 +160,13 @@ export async function handleLensRegister(request: Request, env: Env): Promise<Re
   // 2. Rate limit: 3 req/min
   const ip = request.headers.get('cf-connecting-ip') || 'unknown';
   const { rateLimit } = await import('../index');
-  const rl = await rateLimit(env, ip, 'lens:register', REGISTER_RATE_LIMIT.max, REGISTER_RATE_LIMIT.window);
+  const rl = await rateLimit(
+    env,
+    ip,
+    'lens:register',
+    REGISTER_RATE_LIMIT.max,
+    REGISTER_RATE_LIMIT.window,
+  );
   if (!rl.allowed) {
     const { rateLimitResponse } = await import('../response-helpers');
     return rateLimitResponse(rl.retryAfter);
@@ -170,24 +175,32 @@ export async function handleLensRegister(request: Request, env: Env): Promise<Re
   // 3. Check if wallet already has a linked Lens profile
   const existingLink = await env.CACHE?.get(lensProfileLinkKey(walletAddress));
   if (existingLink) {
-    return jsonResponse({
-      error: 'Wallet already linked to a Lens profile',
-      profileLink: JSON.parse(existingLink),
-    }, 409);
+    return jsonResponse(
+      {
+        error: 'Wallet already linked to a Lens profile',
+        profileLink: JSON.parse(existingLink),
+      },
+      409,
+    );
   }
 
   // 4. Check if wallet already owns Lens profiles on-chain
   const existingProfiles = await resolveProfilesByWallet(walletAddress);
   if (existingProfiles.defaultProfile || existingProfiles.allProfiles.length > 0) {
     // Wallet already has Lens profiles — they should use /auth instead
-    return jsonResponse({
-      error: 'Wallet already owns Lens profiles. Use POST /api/lens/auth to connect.',
-      profiles: existingProfiles.allProfiles,
-      defaultProfile: existingProfiles.defaultProfile ? {
-        id: existingProfiles.defaultProfile.id,
-        handle: existingProfiles.defaultProfile.handle?.localName,
-      } : null,
-    }, 409);
+    return jsonResponse(
+      {
+        error: 'Wallet already owns Lens profiles. Use POST /api/lens/auth to connect.',
+        profiles: existingProfiles.allProfiles,
+        defaultProfile: existingProfiles.defaultProfile
+          ? {
+              id: existingProfiles.defaultProfile.id,
+              handle: existingProfiles.defaultProfile.handle?.localName,
+            }
+          : null,
+      },
+      409,
+    );
   }
 
   // 5. Validate body
@@ -203,9 +216,12 @@ export async function handleLensRegister(request: Request, env: Env): Promise<Re
 
   const handle = sanitizeString(body.handle, 31);
   if (!handle || !/^[a-zA-Z0-9_\-.]{5,31}$/.test(handle)) {
-    return jsonResponse({
-      error: 'Handle must be 5-31 characters: letters, numbers, hyphens, underscores, dots',
-    }, 400);
+    return jsonResponse(
+      {
+        error: 'Handle must be 5-31 characters: letters, numbers, hyphens, underscores, dots',
+      },
+      400,
+    );
   }
   if (hasSuspiciousPayload(handle)) {
     return jsonResponse({ error: 'Invalid characters in handle' }, 400);
@@ -213,7 +229,8 @@ export async function handleLensRegister(request: Request, env: Env): Promise<Re
 
   // 6. Generate auth challenge for signing
   const nonce = crypto.randomUUID();
-  const authMessage = `DegenFeed Lens Profile Registration\n\n` +
+  const authMessage =
+    `DegenFeed Lens Profile Registration\n\n` +
     `Wallet: ${walletAddress}\n` +
     `Handle: ${handle}.lens\n` +
     `Nonce: ${nonce}\n` +
@@ -222,11 +239,15 @@ export async function handleLensRegister(request: Request, env: Env): Promise<Re
     `the creation of a Lens profile with the handle @${handle}.lens`;
 
   // Store the nonce for verification
-  await env.CACHE?.put(lensNonceKey(walletAddress), JSON.stringify({
-    nonce,
-    handle,
-    createdAt: Date.now(),
-  }), { expirationTtl: 300 }); // 5 min TTL
+  await env.CACHE?.put(
+    lensNonceKey(walletAddress),
+    JSON.stringify({
+      nonce,
+      handle,
+      createdAt: Date.now(),
+    }),
+    { expirationTtl: 300 },
+  ); // 5 min TTL
 
   // 7. If gasless, return the message to sign + on-chain tx calldata
   //    In the Momoka path, the profile is created via the Lens API with
@@ -239,14 +260,18 @@ export async function handleLensRegister(request: Request, env: Env): Promise<Re
 
   // Store pending registration
   const pendingKey = `lens:pending:${walletAddress}`;
-  await env.CACHE?.put(pendingKey, JSON.stringify({
-    handle,
-    wallet: walletAddress,
-    gasless: isGasless,
-    nonce,
-    step: 'awaiting_signature',
-    createdAt: Date.now(),
-  }), { expirationTtl: 600 });
+  await env.CACHE?.put(
+    pendingKey,
+    JSON.stringify({
+      handle,
+      wallet: walletAddress,
+      gasless: isGasless,
+      nonce,
+      step: 'awaiting_signature',
+      createdAt: Date.now(),
+    }),
+    { expirationTtl: 600 },
+  );
 
   // Build the on-chain transaction intent for handle registration
   // This generates the calldata for LensHub.createProfile + handle registration
@@ -321,11 +346,14 @@ export async function handleLensAuth(request: Request, env: Env): Promise<Respon
 
   if (allProfiles.length === 0) {
     // No Lens profiles found for this wallet
-    return jsonResponse({
-      error: 'No Lens profiles found for this wallet address',
-      wallet: authWallet,
-      hint: 'Create one at POST /api/lens/register',
-    }, 404);
+    return jsonResponse(
+      {
+        error: 'No Lens profiles found for this wallet address',
+        wallet: authWallet,
+        hint: 'Create one at POST /api/lens/register',
+      },
+      404,
+    );
   }
 
   // 5. Determine which profile to link
@@ -339,7 +367,8 @@ export async function handleLensAuth(request: Request, env: Env): Promise<Respon
     selectedProfile = {
       id: defaultProfile.id,
       handle: defaultProfile.handle?.localName || 'unknown',
-      displayName: defaultProfile.metadata?.displayName || defaultProfile.handle?.localName || 'Unknown',
+      displayName:
+        defaultProfile.metadata?.displayName || defaultProfile.handle?.localName || 'Unknown',
     };
   } else {
     selectedProfile = allProfiles[0];
@@ -355,29 +384,37 @@ export async function handleLensAuth(request: Request, env: Env): Promise<Respon
   if (!verified) {
     // Return the profiles + a message to sign for verification
     const nonce = crypto.randomUUID();
-    const authMessage = `DegenFeed Lens Authentication\n\n` +
+    const authMessage =
+      `DegenFeed Lens Authentication\n\n` +
       `Wallet: ${authWallet}\n` +
       `Nonce: ${nonce}\n` +
       `Timestamp: ${Date.now()}\n\n` +
       `Sign this message to prove you own this wallet and authorize ` +
       `linking your Lens profile @${selectedProfile.handle}.lens to DegenFeed.`;
 
-    await env.CACHE?.put(lensNonceKey(authWallet), JSON.stringify({
-      nonce,
-      wallet: authWallet,
-      profileId: selectedProfile.id,
-      handle: selectedProfile.handle,
-      createdAt: Date.now(),
-    }), { expirationTtl: 300 });
+    await env.CACHE?.put(
+      lensNonceKey(authWallet),
+      JSON.stringify({
+        nonce,
+        wallet: authWallet,
+        profileId: selectedProfile.id,
+        handle: selectedProfile.handle,
+        createdAt: Date.now(),
+      }),
+      { expirationTtl: 300 },
+    );
 
-    return jsonResponse({
-      verified: false,
-      message: 'Sign the auth message to prove wallet ownership',
-      authMessage,
-      nonce,
-      profiles: allProfiles,
-      selectedProfile,
-    }, 200);
+    return jsonResponse(
+      {
+        verified: false,
+        message: 'Sign the auth message to prove wallet ownership',
+        authMessage,
+        nonce,
+        profiles: allProfiles,
+        selectedProfile,
+      },
+      200,
+    );
   }
 
   // 8. Link the Lens profile to the DegenFeed identity
@@ -428,7 +465,10 @@ export async function handleLensAuth(request: Request, env: Env): Promise<Respon
     expirationTtl: 365 * 86400,
   });
 
-  log('info', '[lens-auth] Profile linked', { wallet: authWallet, profile: selectedProfile.handle });
+  log('info', '[lens-auth] Profile linked', {
+    wallet: authWallet,
+    profile: selectedProfile.handle,
+  });
 
   return jsonResponse({
     success: true,
@@ -469,13 +509,15 @@ export async function handleLensAuthStatus(request: Request, env: Env): Promise<
   // Fetch fresh profile data from Lens API
   const client = new LensClient(env.LENS_API_URL || LENS_API_URL);
   const profile = await client.getProfile(link.profileId);
-  const freshData = profile ? {
-    displayName: profile.metadata?.displayName || link.displayName,
-    avatarUrl: profile.metadata?.picture?.optimized?.uri || '',
-    bio: profile.metadata?.bio || '',
-    followerCount: profile.stats?.followers || 0,
-    followingCount: profile.stats?.following || 0,
-  } : {};
+  const freshData = profile
+    ? {
+        displayName: profile.metadata?.displayName || link.displayName,
+        avatarUrl: profile.metadata?.picture?.optimized?.uri || '',
+        bio: profile.metadata?.bio || '',
+        followerCount: profile.stats?.followers || 0,
+        followingCount: profile.stats?.following || 0,
+      }
+    : {};
 
   return jsonResponse({
     linked: true,
@@ -538,10 +580,13 @@ export async function handleLensConfirmRegistration(request: Request, env: Env):
   const pendingKey = `lens:pending:${walletAddress}`;
   const pendingRaw = await env.CACHE?.get(pendingKey);
   if (!pendingRaw) {
-    return jsonResponse({
-      error: 'No pending registration. Start one at POST /api/lens/register.',
-      hint: 'register',
-    }, 400);
+    return jsonResponse(
+      {
+        error: 'No pending registration. Start one at POST /api/lens/register.',
+        hint: 'register',
+      },
+      400,
+    );
   }
 
   const pending = JSON.parse(pendingRaw);
@@ -577,7 +622,8 @@ export async function handleLensConfirmRegistration(request: Request, env: Env):
 
   return jsonResponse({
     success: true,
-    message: 'Lens profile registration confirmed. Profile will be active once the transaction confirms on Polygon.',
+    message:
+      'Lens profile registration confirmed. Profile will be active once the transaction confirms on Polygon.',
     handle: `${pending.handle}.lens`,
     wallet: walletAddress,
     txHash: body.txHash || null,

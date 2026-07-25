@@ -59,10 +59,13 @@ export async function handleCrossLoginMastodon(request: Request, env: Env): Prom
     // Fetch stored GtS/Mastodon credentials from our platform accounts
     const credentials = await getProtocolCredentials(wallet, 'mastodon', env);
     if (!credentials?.accessToken) {
-      return jsonResponse({
-        error: 'No Mastodon account found. Register first via POST /api/accounts/join-all',
-        registerUrl: '/api/accounts/join-all',
-      }, 404);
+      return jsonResponse(
+        {
+          error: 'No Mastodon account found. Register first via POST /api/accounts/join-all',
+          registerUrl: '/api/accounts/join-all',
+        },
+        404,
+      );
     }
 
     // Obtain an OAuth token for the target instance using our identity
@@ -77,10 +80,13 @@ export async function handleCrossLoginMastodon(request: Request, env: Env): Prom
       }),
     });
     if (!appRes.ok) {
-      return jsonResponse({
-        error: `Failed to register app on ${instanceUrl}. Ensure the instance allows registration.`,
-        instanceUrl,
-      }, 400);
+      return jsonResponse(
+        {
+          error: `Failed to register app on ${instanceUrl}. Ensure the instance allows registration.`,
+          instanceUrl,
+        },
+        400,
+      );
     }
     const appData = (await appRes.json()) as { client_id?: string; client_secret?: string };
 
@@ -99,10 +105,13 @@ export async function handleCrossLoginMastodon(request: Request, env: Env): Prom
     });
 
     if (!tokenRes.ok) {
-      return jsonResponse({
-        error: `Login to ${instanceUrl} failed. The instance may not accept external credentials.`,
-        note: 'Try using the Mastodon OAuth flow directly.',
-      }, 403);
+      return jsonResponse(
+        {
+          error: `Login to ${instanceUrl} failed. The instance may not accept external credentials.`,
+          note: 'Try using the Mastodon OAuth flow directly.',
+        },
+        403,
+      );
     }
 
     const tokenData = (await tokenRes.json()) as {
@@ -133,10 +142,13 @@ export async function handleCrossLoginBluesky(request: Request, env: Env): Promi
   return handleCrossLoginProtocol(request, env, 'bluesky', async (wallet, instanceUrl) => {
     const credentials = await getProtocolCredentials(wallet, 'bluesky', env);
     if (!credentials) {
-      return jsonResponse({
-        error: 'No Bluesky account found. Register first via POST /api/accounts/join-all',
-        registerUrl: '/api/accounts/join-all',
-      }, 404);
+      return jsonResponse(
+        {
+          error: 'No Bluesky account found. Register first via POST /api/accounts/join-all',
+          registerUrl: '/api/accounts/join-all',
+        },
+        404,
+      );
     }
 
     // Bluesky cross-login uses the PDS API with app password
@@ -151,10 +163,13 @@ export async function handleCrossLoginBluesky(request: Request, env: Env): Promi
     });
 
     if (!loginRes.ok) {
-      return jsonResponse({
-        error: `Login to Bluesky PDS ${pdsUrl} failed.`,
-        note: 'Your DegenFeed PDS account uses a separate app password for external auth.',
-      }, 403);
+      return jsonResponse(
+        {
+          error: `Login to Bluesky PDS ${pdsUrl} failed.`,
+          note: 'Your DegenFeed PDS account uses a separate app password for external auth.',
+        },
+        403,
+      );
     }
 
     const sessionData = (await loginRes.json()) as {
@@ -175,7 +190,8 @@ export async function handleCrossLoginBluesky(request: Request, env: Env): Promi
         refreshToken: sessionData.refreshJwt,
         appPassword: credentials.appPassword,
       },
-      instructions: 'Use accessJwt as Bearer token in XRPC calls. For AT Protocol: set Authorization header.',
+      instructions:
+        'Use accessJwt as Bearer token in XRPC calls. For AT Protocol: set Authorization header.',
     });
   });
 }
@@ -186,10 +202,13 @@ export async function handleCrossLoginFarcaster(request: Request, env: Env): Pro
   return handleCrossLoginProtocol(request, env, 'farcaster', async (wallet, instanceUrl) => {
     const credentials = await getProtocolCredentials(wallet, 'farcaster', env);
     if (!credentials?.fid) {
-      return jsonResponse({
-        error: 'No Farcaster account found. Register first via POST /api/accounts/join-all',
-        registerUrl: '/api/accounts/join-all',
-      }, 404);
+      return jsonResponse(
+        {
+          error: 'No Farcaster account found. Register first via POST /api/accounts/join-all',
+          registerUrl: '/api/accounts/join-all',
+        },
+        404,
+      );
     }
 
     // Farcaster uses EIP-712 signed keys for auth — we provide the signed key package
@@ -207,10 +226,13 @@ export async function handleCrossLoginFarcaster(request: Request, env: Env): Pro
     });
 
     if (!signKeyRes.ok) {
-      return jsonResponse({
-        error: 'Failed to generate Farcaster signed key.',
-        note: 'You may need to sign with your custody address wallet.',
-      }, 403);
+      return jsonResponse(
+        {
+          error: 'Failed to generate Farcaster signed key.',
+          note: 'You may need to sign with your custody address wallet.',
+        },
+        403,
+      );
     }
 
     const keyData = (await signKeyRes.json()) as {
@@ -254,7 +276,8 @@ export async function handleCrossLoginMatrix(request: Request, env: Env): Promis
         accessToken: ssoToken,
       },
       loginUrl: `${homeserver}/_matrix/client/v3/login/sso/redirect?redirectUrl=${encodeURIComponent('https://degenfeed.xyz/auth/callback')}`,
-      instructions: 'Use SSO token to authenticate via the Matrix login API. Token expires in 1 hour.',
+      instructions:
+        'Use SSO token to authenticate via the Matrix login API. Token expires in 1 hour.',
     });
   });
 }
@@ -265,10 +288,13 @@ export async function handleCrossLoginPeerTube(request: Request, env: Env): Prom
   return handleCrossLoginProtocol(request, env, 'peertube', async (wallet, instanceUrl) => {
     const credentials = await getProtocolCredentials(wallet, 'peertube', env);
     if (!credentials?.accessToken) {
-      return jsonResponse({
-        error: 'No PeerTube account found. Register first via POST /api/accounts/join-all',
-        registerUrl: '/api/accounts/join-all',
-      }, 404);
+      return jsonResponse(
+        {
+          error: 'No PeerTube account found. Register first via POST /api/accounts/join-all',
+          registerUrl: '/api/accounts/join-all',
+        },
+        404,
+      );
     }
 
     const apiBase = `${instanceUrl.replace(/\/$/, '')}/api/v1`;
@@ -282,9 +308,12 @@ export async function handleCrossLoginPeerTube(request: Request, env: Env): Prom
     });
 
     if (!loginRes.ok) {
-      return jsonResponse({
-        error: `Login to PeerTube instance ${instanceUrl} failed.`,
-      }, 403);
+      return jsonResponse(
+        {
+          error: `Login to PeerTube instance ${instanceUrl} failed.`,
+        },
+        403,
+      );
     }
 
     const loginData = (await loginRes.json()) as {
@@ -313,10 +342,13 @@ export async function handleCrossLoginLemmy(request: Request, env: Env): Promise
   return handleCrossLoginProtocol(request, env, 'lemmy', async (wallet, instanceUrl) => {
     const credentials = await getProtocolCredentials(wallet, 'lemmy', env);
     if (!credentials?.password) {
-      return jsonResponse({
-        error: 'No Lemmy account found. Register first via POST /api/accounts/join-all',
-        registerUrl: '/api/accounts/join-all',
-      }, 404);
+      return jsonResponse(
+        {
+          error: 'No Lemmy account found. Register first via POST /api/accounts/join-all',
+          registerUrl: '/api/accounts/join-all',
+        },
+        404,
+      );
     }
 
     const apiBase = `${instanceUrl.replace(/\/$/, '')}/api/v3`;
@@ -330,9 +362,12 @@ export async function handleCrossLoginLemmy(request: Request, env: Env): Promise
     });
 
     if (!loginRes.ok) {
-      return jsonResponse({
-        error: `Login to Lemmy instance ${instanceUrl} failed.`,
-      }, 403);
+      return jsonResponse(
+        {
+          error: `Login to Lemmy instance ${instanceUrl} failed.`,
+        },
+        403,
+      );
     }
 
     const loginData = (await loginRes.json()) as {
@@ -358,10 +393,13 @@ export async function handleCrossLoginPixelfed(request: Request, env: Env): Prom
   return handleCrossLoginProtocol(request, env, 'pixelfed', async (wallet, instanceUrl) => {
     const credentials = await getProtocolCredentials(wallet, 'pixelfed', env);
     if (!credentials?.accessToken) {
-      return jsonResponse({
-        error: 'No Pixelfed account found. Register first via POST /api/accounts/join-all',
-        registerUrl: '/api/accounts/join-all',
-      }, 404);
+      return jsonResponse(
+        {
+          error: 'No Pixelfed account found. Register first via POST /api/accounts/join-all',
+          registerUrl: '/api/accounts/join-all',
+        },
+        404,
+      );
     }
 
     // Pixelfed uses Mastodon-compatible OAuth
@@ -424,8 +462,25 @@ export async function handleCrossLoginCredentials(request: Request, env: Env): P
   const wallet = session.address;
 
   // Get credentials from all protocols (masked)
-  const protocols = ['mastodon', 'bluesky', 'farcaster', 'nostr', 'lemmy', 'peertube', 'pixelfed', 'writefreely', 'bookwyrm', 'funkwhale', 'mobilizon', 'owncast', 'castopod'];
-  const result: Record<string, { available: boolean; username?: string; did?: string; fid?: number }> = {};
+  const protocols = [
+    'mastodon',
+    'bluesky',
+    'farcaster',
+    'nostr',
+    'lemmy',
+    'peertube',
+    'pixelfed',
+    'writefreely',
+    'bookwyrm',
+    'funkwhale',
+    'mobilizon',
+    'owncast',
+    'castopod',
+  ];
+  const result: Record<
+    string,
+    { available: boolean; username?: string; did?: string; fid?: number }
+  > = {};
 
   for (const protocol of protocols) {
     const creds = await getProtocolCredentials(wallet, protocol, env);
@@ -479,10 +534,13 @@ export async function handleCrossLoginSSOToken(request: Request, env: Env): Prom
       note: 'Use this SSO token to authenticate across all DegenFeed protocol instances.',
     });
   } catch (err) {
-    return jsonResponse({
-      error: 'Failed to generate SSO token',
-      detail: err instanceof Error ? err.message : 'Unknown error',
-    }, 500);
+    return jsonResponse(
+      {
+        error: 'Failed to generate SSO token',
+        detail: err instanceof Error ? err.message : 'Unknown error',
+      },
+      500,
+    );
   }
 }
 
@@ -527,11 +585,14 @@ async function handleCrossLoginProtocol(
       instance: body.instanceUrl,
       error: err instanceof Error ? err.message : String(err),
     });
-    return jsonResponse({
-      error: `Cross-instance login failed: ${err instanceof Error ? err.message : 'Unknown error'}`,
-      protocol,
-      instanceUrl: body.instanceUrl,
-    }, 502);
+    return jsonResponse(
+      {
+        error: `Cross-instance login failed: ${err instanceof Error ? err.message : 'Unknown error'}`,
+        protocol,
+        instanceUrl: body.instanceUrl,
+      },
+      502,
+    );
   }
 }
 

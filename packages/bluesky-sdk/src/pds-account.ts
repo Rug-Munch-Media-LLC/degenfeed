@@ -7,7 +7,7 @@
  * @module @degenfeed/bluesky-sdk/pds-account
  */
 
-import { PDS_DEGENFEED_URL, DEFAULT_USER_AGENT } from './index';
+import { DEFAULT_USER_AGENT, PDS_DEGENFEED_URL } from './index';
 
 // ─── Types ────────────────────────────────────────────────────────────
 
@@ -115,10 +115,7 @@ export class PdsAccountClient {
   private did: string | null = null;
   private userAgent: string;
 
-  constructor(
-    pdsUrl: string = PDS_DEGENFEED_URL,
-    userAgent: string = DEFAULT_USER_AGENT,
-  ) {
+  constructor(pdsUrl: string = PDS_DEGENFEED_URL, userAgent: string = DEFAULT_USER_AGENT) {
     this.pdsUrl = pdsUrl;
     this.userAgent = userAgent;
   }
@@ -150,18 +147,10 @@ export class PdsAccountClient {
   async createAccount(opts: CreateAccountOpts): Promise<CreateAccountResult> {
     // Validate inputs
     if (opts.password.length < 8) {
-      throw new PdsAccountError(
-        'Password must be at least 8 characters',
-        'WEAK_PASSWORD',
-        400,
-      );
+      throw new PdsAccountError('Password must be at least 8 characters', 'WEAK_PASSWORD', 400);
     }
     if (!opts.email.includes('@')) {
-      throw new PdsAccountError(
-        'Invalid email address',
-        'INVALID_EMAIL',
-        400,
-      );
+      throw new PdsAccountError('Invalid email address', 'INVALID_EMAIL', 400);
     }
 
     // Sanitize handle — strip domain if provided, ensure degenfeed.xyz domain
@@ -197,11 +186,7 @@ export class PdsAccountClient {
     };
     if (opts.inviteCode) body.inviteCode = opts.inviteCode;
 
-    const res = await this.pdsRequest(
-      'POST',
-      '/xrpc/com.atproto.server.createAccount',
-      body,
-    );
+    const res = await this.pdsRequest('POST', '/xrpc/com.atproto.server.createAccount', body);
 
     if (!res.ok) {
       const errText = await res.text().catch(() => '');
@@ -213,11 +198,7 @@ export class PdsAccountClient {
         );
       }
       if (res.status === 429) {
-        throw new PdsAccountError(
-          'Rate limited — try again later',
-          'RATE_LIMITED',
-          429,
-        );
+        throw new PdsAccountError('Rate limited — try again later', 'RATE_LIMITED', 429);
       }
       throw new PdsAccountError(
         `Account creation failed: ${errText.slice(0, 200)}`,
@@ -253,11 +234,7 @@ export class PdsAccountClient {
    * maintains a log of DID document operations and provides
    * the authoritative DID document for each user.
    */
-  private async createPlcDid(
-    plcUrl: string,
-    handle: string,
-    recoveryKey: string,
-  ): Promise<string> {
+  private async createPlcDid(plcUrl: string, handle: string, recoveryKey: string): Promise<string> {
     // Generate a signing key pair for the DID document
     const signingKey = await this.generateKey();
     const rotationKey = await this.generateKey();
@@ -318,22 +295,15 @@ export class PdsAccountClient {
       );
 
       // Export public key as multibase
-      const publicKeyRaw = await crypto.subtle.exportKey(
-        'raw',
-        keyPair.publicKey,
-      );
+      const publicKeyRaw = await crypto.subtle.exportKey('raw', keyPair.publicKey);
       const publicKeyBytes = new Uint8Array(publicKeyRaw);
 
       // Encode as multibase (did:key:z... prefix)
       // z prefix indicates base58-btc multibase encoding
-      const publicKeyMultibase =
-        'z' + this.base58Encode(publicKeyBytes);
+      const publicKeyMultibase = 'z' + this.base58Encode(publicKeyBytes);
 
       // Export private key for storage
-      const privateKeyRaw = await crypto.subtle.exportKey(
-        'pkcs8',
-        keyPair.privateKey,
-      );
+      const privateKeyRaw = await crypto.subtle.exportKey('pkcs8', keyPair.privateKey);
       const privateKeyBytes = new Uint8Array(privateKeyRaw);
 
       return { publicKeyMultibase, privateKey: privateKeyBytes };
@@ -352,8 +322,7 @@ export class PdsAccountClient {
    * Simple base58 encoding (Bitcoin-style alphabet).
    */
   private base58Encode(bytes: Uint8Array): string {
-    const alphabet =
-      '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+    const alphabet = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
     const bn = BigInt(
       '0x' +
         Array.from(bytes)
@@ -394,11 +363,7 @@ export class PdsAccountClient {
     if (!res.ok) {
       const errText = await res.text().catch(() => '');
       if (res.status === 401) {
-        throw new PdsAccountError(
-          'Invalid handle or password',
-          'AUTH_FAILED',
-          401,
-        );
+        throw new PdsAccountError('Invalid handle or password', 'AUTH_FAILED', 401);
       }
       throw new PdsAccountError(
         `Session creation failed: ${errText.slice(0, 200)}`,
@@ -426,11 +391,7 @@ export class PdsAccountClient {
    */
   async refreshSession(): Promise<void> {
     if (!this.refreshJwt) {
-      throw new PdsAccountError(
-        'No refresh token available',
-        'NO_REFRESH_TOKEN',
-        401,
-      );
+      throw new PdsAccountError('No refresh token available', 'NO_REFRESH_TOKEN', 401);
     }
 
     const res = await fetch(`${this.pdsUrl}/xrpc/com.atproto.server.refreshSession`, {
@@ -665,11 +626,7 @@ export class PdsAccountClient {
    * Initiate account recovery using a recovery key.
    * This allows the user to reset their password if they've lost access.
    */
-  async recoverAccount(
-    handle: string,
-    recoveryKey: string,
-    newPassword: string,
-  ): Promise<void> {
+  async recoverAccount(handle: string, recoveryKey: string, newPassword: string): Promise<void> {
     if (!validateRecoveryKey(recoveryKey)) {
       throw new PdsAccountError(
         'Invalid recovery key format (must be 48 hex characters)',
@@ -708,10 +665,7 @@ export class PdsAccountClient {
   /**
    * Create invite codes (requires admin or existing user).
    */
-  async createInviteCode(
-    useCount: number,
-    forAccount?: string,
-  ): Promise<string> {
+  async createInviteCode(useCount: number, forAccount?: string): Promise<string> {
     this.ensureAuthenticated();
 
     const body: Record<string, unknown> = { useCount };
@@ -751,19 +705,12 @@ export class PdsAccountClient {
     inviteCodeRequired: boolean;
     phoneVerificationRequired: boolean;
   }> {
-    const res = await fetch(
-      `${this.pdsUrl}/xrpc/com.atproto.server.describeServer`,
-      {
-        headers: { 'user-agent': this.userAgent },
-      },
-    );
+    const res = await fetch(`${this.pdsUrl}/xrpc/com.atproto.server.describeServer`, {
+      headers: { 'user-agent': this.userAgent },
+    });
 
     if (!res.ok) {
-      throw new PdsAccountError(
-        'Failed to get server info',
-        'SERVER_INFO_FAILED',
-        res.status,
-      );
+      throw new PdsAccountError('Failed to get server info', 'SERVER_INFO_FAILED', res.status);
     }
 
     return res.json() as Promise<{
@@ -782,16 +729,13 @@ export class PdsAccountClient {
   async requestAccountDeletion(): Promise<void> {
     this.ensureAuthenticated();
 
-    const res = await fetch(
-      `${this.pdsUrl}/xrpc/com.atproto.server.requestAccountDelete`,
-      {
-        method: 'POST',
-        headers: {
-          authorization: `Bearer ${this.accessJwt}`,
-          'user-agent': this.userAgent,
-        },
+    const res = await fetch(`${this.pdsUrl}/xrpc/com.atproto.server.requestAccountDelete`, {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${this.accessJwt}`,
+        'user-agent': this.userAgent,
       },
-    );
+    });
 
     if (!res.ok) {
       const errText = await res.text().catch(() => '');
@@ -815,11 +759,7 @@ export class PdsAccountClient {
     }
   }
 
-  private async pdsRequest(
-    method: string,
-    path: string,
-    body?: unknown,
-  ): Promise<Response> {
+  private async pdsRequest(method: string, path: string, body?: unknown): Promise<Response> {
     const url = path.startsWith('http') ? path : `${this.pdsUrl}${path}`;
     const headers: Record<string, string> = {
       'user-agent': this.userAgent,
@@ -837,11 +777,7 @@ export class PdsAccountClient {
         body: body ? JSON.stringify(body) : undefined,
       });
     } catch (err) {
-      throw new PdsAccountError(
-        `Network error: ${(err as Error).message}`,
-        'NETWORK_ERROR',
-        502,
-      );
+      throw new PdsAccountError(`Network error: ${(err as Error).message}`, 'NETWORK_ERROR', 502);
     }
   }
 }

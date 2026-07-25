@@ -406,7 +406,7 @@ export async function crossPostZoraMint(
 
       switch (protocol) {
         case 'farcaster': {
-          const hubUrl = env.FARCASTER_HUB_URL || 'https://hub.farcaster.standardcrypto.vc:2281';
+          const hubUrl = env.FARCASTER_HUB_URL || 'http://127.0.0.1:2281';
           // Submit to Farcaster hub
           const fcRes = await fetch(`${hubUrl}/v1/submitMessage`, {
             method: 'POST',

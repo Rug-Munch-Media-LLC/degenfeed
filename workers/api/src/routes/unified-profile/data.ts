@@ -203,10 +203,10 @@ async function performProfileSearch(
         const proof = (await nameProofResp.json()) as { fid?: number; name?: string } | null;
         if (proof?.fid) {
           // Fetch user data from Hubble
-          const userResp = await fetch(
-            `${hubUrl}/v1/userDataByFid?fid=${proof.fid}`,
-            { headers: { accept: 'application/json' }, signal: AbortSignal.timeout(5000) },
-          );
+          const userResp = await fetch(`${hubUrl}/v1/userDataByFid?fid=${proof.fid}`, {
+            headers: { accept: 'application/json' },
+            signal: AbortSignal.timeout(5000),
+          });
           if (userResp.ok) {
             const userData = (await userResp.json()) as {
               messages?: Array<{ data: { userDataBody: { type: string; value: string } } }>;
@@ -486,10 +486,10 @@ async function getSuggestedProfiles(
         if (results.length >= limit) break;
         if (results.some((r) => r.protocol === 'farcaster' && r.id === String(fid))) continue;
 
-        const userResp = await fetch(
-          `${hubUrl}/v1/userDataByFid?fid=${fid}`,
-          { headers: { accept: 'application/json' }, signal: AbortSignal.timeout(3000) },
-        );
+        const userResp = await fetch(`${hubUrl}/v1/userDataByFid?fid=${fid}`, {
+          headers: { accept: 'application/json' },
+          signal: AbortSignal.timeout(3000),
+        });
         if (!userResp.ok) continue;
 
         const userData = (await userResp.json()) as {
@@ -537,10 +537,10 @@ async function getTrendingProfiles(
       for (const fid of curatedFids) {
         if (results.length >= limit) break;
 
-        const userResp = await fetch(
-          `${hubUrl}/v1/userDataByFid?fid=${fid}`,
-          { headers: { accept: 'application/json' }, signal: AbortSignal.timeout(3000) },
-        );
+        const userResp = await fetch(`${hubUrl}/v1/userDataByFid?fid=${fid}`, {
+          headers: { accept: 'application/json' },
+          signal: AbortSignal.timeout(3000),
+        });
         if (!userResp.ok) continue;
 
         const userData = (await userResp.json()) as {

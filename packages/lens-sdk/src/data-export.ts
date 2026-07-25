@@ -11,7 +11,7 @@
  * All data is fetched via the free Lens public API — no paid API needed.
  */
 
-import { LensClient, LENS_API_URL } from './index';
+import { LENS_API_URL, LensClient } from './index';
 
 // KVNamespace type for Cloudflare Workers (available at runtime)
 type KVNamespace = {
@@ -299,7 +299,11 @@ export class LensDataExportService {
    * Generate a portable DID document for the Lens profile.
    * This can be used to prove ownership across different Lens instances.
    */
-  generateDidDocument(profileId: string, handle: string, walletAddress: string): Record<string, unknown> {
+  generateDidDocument(
+    profileId: string,
+    handle: string,
+    walletAddress: string,
+  ): Record<string, unknown> {
     return {
       '@context': ['https://www.w3.org/ns/did/v1', 'https://spec.lens.xyz/ns/did/v1'],
       id: `did:lens:${profileId}`,

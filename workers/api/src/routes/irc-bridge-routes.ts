@@ -16,8 +16,8 @@
 
 import type { Env } from '../index';
 import { jsonResponse, noCacheJsonResponse } from '../index';
-import { requireSession } from '../session';
 import { methodNotAllowed } from '../response-helpers';
+import { requireSession } from '../session';
 
 // ─── IRC Bridge Client Factory ──────────────────────────────────────────────
 
@@ -46,16 +46,19 @@ export async function handleIrcHealth(request: Request, env: Env): Promise<Respo
       health,
     });
   } catch (err) {
-    return jsonResponse({
-      ok: false,
-      error: err instanceof Error ? err.message : 'Health check failed',
-      health: {
-        connected: false,
-        ircNetworks: [],
-        lastMessageAt: null,
-        latencyMs: 0,
+    return jsonResponse(
+      {
+        ok: false,
+        error: err instanceof Error ? err.message : 'Health check failed',
+        health: {
+          connected: false,
+          ircNetworks: [],
+          lastMessageAt: null,
+          latencyMs: 0,
+        },
       },
-    }, 200);
+      200,
+    );
   }
 }
 
@@ -102,23 +105,32 @@ export async function handleIrcJoin(request: Request, env: Env): Promise<Respons
 
   const validNetworks = ['libera', 'oftc'];
   if (!validNetworks.includes(network)) {
-    return jsonResponse({ error: `Invalid network. Must be one of: ${validNetworks.join(', ')}` }, 400);
+    return jsonResponse(
+      { error: `Invalid network. Must be one of: ${validNetworks.join(', ')}` },
+      400,
+    );
   }
 
   try {
     const client = await getIrcClient(env);
     const result = await client.joinChannel(channel, network);
 
-    return jsonResponse({
-      ok: true,
-      channel: result,
-      message: `Joined ${channel} on ${network}. Messages from this channel will now appear in your unified inbox.`,
-    }, 201);
+    return jsonResponse(
+      {
+        ok: true,
+        channel: result,
+        message: `Joined ${channel} on ${network}. Messages from this channel will now appear in your unified inbox.`,
+      },
+      201,
+    );
   } catch (err) {
-    return jsonResponse({
-      ok: false,
-      error: err instanceof Error ? err.message : 'Failed to join channel',
-    }, 502);
+    return jsonResponse(
+      {
+        ok: false,
+        error: err instanceof Error ? err.message : 'Failed to join channel',
+      },
+      502,
+    );
   }
 }
 
@@ -245,18 +257,25 @@ export async function handleRocketChatConnect(request: Request, env: Env): Promi
   try {
     const key = `rocketchat:federation:${session.address.toLowerCase()}`;
     if (env.CACHE) {
-      await env.CACHE.put(key, JSON.stringify({
-        serverUrl: body.serverUrl,
-        channelId: body.channelId,
-        accessToken: body.accessToken ?? null,
-        connectedAt: Date.now(),
-      }), { expirationTtl: 86400 * 365 });
+      await env.CACHE.put(
+        key,
+        JSON.stringify({
+          serverUrl: body.serverUrl,
+          channelId: body.channelId,
+          accessToken: body.accessToken ?? null,
+          connectedAt: Date.now(),
+        }),
+        { expirationTtl: 86400 * 365 },
+      );
     }
 
-    return jsonResponse({
-      ok: true,
-      message: `Connected to Rocket.Chat channel ${body.channelId}. It is reachable via Matrix federation.`,
-    }, 201);
+    return jsonResponse(
+      {
+        ok: true,
+        message: `Connected to Rocket.Chat channel ${body.channelId}. It is reachable via Matrix federation.`,
+      },
+      201,
+    );
   } catch {
     return jsonResponse({ error: 'Failed to store Rocket.Chat connection' }, 500);
   }

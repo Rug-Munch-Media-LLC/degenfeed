@@ -7,6 +7,73 @@
  * Last cleanup: 2026-07-25 — Removed 14 dead providers, implemented 8 real ones
  */
 
+import { fetchAetherPosts } from '../providers/aether';
+import { fetchArenaPosts } from '../providers/arena';
+import { fetchArweavePosts } from '../providers/arweave';
+import { fetchAtprotoPosts } from '../providers/atproto';
+import { fetchBlueskyPosts } from '../providers/bluesky';
+import { fetchBonfirePosts } from '../providers/bonfire';
+import { fetchBookWyrmPosts } from '../providers/bookwyrm';
+import { fetchCastopodPosts } from '../providers/castopod';
+import { fetchCeramicPosts } from '../providers/ceramic';
+import { fetchCyberConnectPosts } from '../providers/cyberconnect';
+import { fetchDesoPosts } from '../providers/deso';
+import { fetchDiasporaPosts } from '../providers/diaspora';
+import { fetchDiscordPosts } from '../providers/discord';
+import { fetchDiscoursePosts } from '../providers/discourse';
+import { fetchDTubePosts } from '../providers/dtube';
+import { fetchFaircampPosts } from '../providers/faircamp';
+import { fetchFarcasterPosts } from '../providers/farcaster';
+import { fetchFlarumPosts } from '../providers/flarum';
+import { fetchForgejoPosts } from '../providers/forgejo';
+import { fetchFriendicaPosts } from '../providers/friendica';
+import { fetchFunkwhalePosts } from '../providers/funkwhale';
+import { fetchGabPosts } from '../providers/gab';
+import { fetchGhostPosts } from '../providers/ghost';
+import { fetchGitHubPosts } from '../providers/github';
+// ─── Real Provider Imports ─────────────────────────────────────────
+import { fetchMastodonPosts } from '../providers/gotosocial';
+import { fetchHivePosts } from '../providers/hive';
+import { fetchHuddle01Posts } from '../providers/huddle01';
+import { fetchImmichPosts } from '../providers/immich';
+import { fetchKbinPosts } from '../providers/kbin';
+import { fetchLBRYPosts } from '../providers/lbry';
+import { fetchLemmyPosts } from '../providers/lemmy';
+import { fetchLensPosts } from '../providers/lens';
+import { fetchMatrixPosts } from '../providers/matrix';
+import { fetchMbinPosts } from '../providers/mbin';
+import { fetchMediaGoblinPosts } from '../providers/mediagoblin';
+import { fetchMicroblogPosts } from '../providers/microblog';
+import { fetchMindsPosts } from '../providers/minds';
+import { fetchMirrorPosts } from '../providers/mirror';
+// ─── NEW Real Provider Imports (2026-07-25) ────────────────────────
+import { fetchMisskeyPosts } from '../providers/misskey';
+import { fetchMitraPosts } from '../providers/mitra';
+import { fetchMobilizonPosts } from '../providers/mobilizon';
+import { fetchNostrPosts } from '../providers/nostr';
+import { fetchOrbisPosts } from '../providers/orbis';
+import { fetchOwncastPosts } from '../providers/owncast';
+import { fetchParagraphPosts } from '../providers/paragraph';
+import { fetchPeerTubePosts } from '../providers/peertube';
+import { fetchPixelfedPosts } from '../providers/pixelfed';
+import { fetchPleromaPosts } from '../providers/pleroma';
+import { fetchPushPosts } from '../providers/push';
+import { fetchRedditPosts } from '../providers/redlib';
+import { fetch as fetchRssPosts } from '../providers/rss';
+import { fetchRssBridgePosts } from '../providers/rssbridge';
+import { fetchScuttlebuttPosts } from '../providers/scuttlebutt';
+import { fetchSessionPosts } from '../providers/session';
+import { fetchSteemPosts } from '../providers/steem';
+import { fetchStrfryPosts } from '../providers/strfry';
+import { fetchSubsocialPosts } from '../providers/subsocial';
+import { fetchTablelandPosts } from '../providers/tableland';
+import { fetchTakahePosts } from '../providers/takahe';
+import { fetchTelegramPosts } from '../providers/telegram';
+import { fetchThreadsPosts } from '../providers/threads';
+import { fetchWriteFreelyPosts } from '../providers/writefreely';
+// ─── Infrastructure Providers (status-only, not in main feed) ─────
+import { fetchXmtpPosts } from '../providers/xmtp';
+import { fetchZoraPosts } from '../providers/zora';
 import type { RateLimitConfig } from '../rate-limiter';
 import { checkRateLimit } from '../rate-limiter';
 import { providerCircuitBreaker } from '../reliability/circuit-breaker';
@@ -18,76 +85,6 @@ import {
 } from '../reliability/register-all';
 import { deadLetterQueue, withRetry } from '../reliability/retry';
 import type { UnifiedPost } from './types';
-
-// ─── Real Provider Imports ─────────────────────────────────────────
-import { fetchMastodonPosts } from '../providers/gotosocial';
-import { fetchBlueskyPosts } from '../providers/bluesky';
-import { fetchNostrPosts } from '../providers/nostr';
-import { fetchFarcasterPosts } from '../providers/farcaster';
-import { fetchLensPosts } from '../providers/lens';
-import { fetchPixelfedPosts } from '../providers/pixelfed';
-import { fetchRedditPosts } from '../providers/redlib';
-import { fetch as fetchRssPosts } from '../providers/rss';
-import { fetchRssBridgePosts } from '../providers/rssbridge';
-import { fetchLemmyPosts } from '../providers/lemmy';
-import { fetchPeerTubePosts } from '../providers/peertube';
-import { fetchThreadsPosts } from '../providers/threads';
-import { fetchZoraPosts } from '../providers/zora';
-import { fetchDTubePosts } from '../providers/dtube';
-import { fetchLBRYPosts } from '../providers/lbry';
-import { fetchGabPosts } from '../providers/gab';
-import { fetchMindsPosts } from '../providers/minds';
-import { fetchAetherPosts } from '../providers/aether';
-import { fetchScuttlebuttPosts } from '../providers/scuttlebutt';
-import { fetchHivePosts } from '../providers/hive';
-import { fetchParagraphPosts } from '../providers/paragraph';
-import { fetchMirrorPosts } from '../providers/mirror';
-import { fetchFunkwhalePosts } from '../providers/funkwhale';
-import { fetchCastopodPosts } from '../providers/castopod';
-import { fetchWriteFreelyPosts } from '../providers/writefreely';
-import { fetchMediaGoblinPosts } from '../providers/mediagoblin';
-import { fetchOwncastPosts } from '../providers/owncast';
-import { fetchArenaPosts } from '../providers/arena';
-import { fetchDesoPosts } from '../providers/deso';
-import { fetchMicroblogPosts } from '../providers/microblog';
-import { fetchSessionPosts } from '../providers/session';
-import { fetchSteemPosts } from '../providers/steem';
-import { fetchSubsocialPosts } from '../providers/subsocial';
-import { fetchAtprotoPosts } from '../providers/atproto';
-import { fetchOrbisPosts } from '../providers/orbis';
-import { fetchPushPosts } from '../providers/push';
-import { fetchHuddle01Posts } from '../providers/huddle01';
-import { fetchDiscordPosts } from '../providers/discord';
-import { fetchTelegramPosts } from '../providers/telegram';
-import { fetchMatrixPosts } from '../providers/matrix';
-import { fetchGitHubPosts } from '../providers/github';
-import { fetchForgejoPosts } from '../providers/forgejo';
-import { fetchBonfirePosts } from '../providers/bonfire';
-import { fetchMitraPosts } from '../providers/mitra';
-import { fetchTakahePosts } from '../providers/takahe';
-import { fetchMobilizonPosts } from '../providers/mobilizon';
-import { fetchFaircampPosts } from '../providers/faircamp';
-import { fetchDiscoursePosts } from '../providers/discourse';
-import { fetchGhostPosts } from '../providers/ghost';
-import { fetchImmichPosts } from '../providers/immich';
-import { fetchStrfryPosts } from '../providers/strfry';
-
-// ─── NEW Real Provider Imports (2026-07-25) ────────────────────────
-import { fetchMisskeyPosts } from '../providers/misskey';
-import { fetchPleromaPosts } from '../providers/pleroma';
-import { fetchFriendicaPosts } from '../providers/friendica';
-import { fetchDiasporaPosts } from '../providers/diaspora';
-import { fetchArweavePosts } from '../providers/arweave';
-import { fetchKbinPosts } from '../providers/kbin';
-import { fetchMbinPosts } from '../providers/mbin';
-import { fetchBookWyrmPosts } from '../providers/bookwyrm';
-import { fetchFlarumPosts } from '../providers/flarum';
-
-// ─── Infrastructure Providers (status-only, not in main feed) ─────
-import { fetchXmtpPosts } from '../providers/xmtp';
-import { fetchCeramicPosts } from '../providers/ceramic';
-import { fetchTablelandPosts } from '../providers/tableland';
-import { fetchCyberConnectPosts } from '../providers/cyberconnect';
 
 interface ProviderEntry {
   name: string;
@@ -185,25 +182,57 @@ export const PROVIDERS: Record<string, ProviderEntry> = {
   aether: { name: 'Aether (P2P Communities)', fetch: fetchAetherPosts, category: 'content' },
   scuttlebutt: { name: 'Scuttlebutt/SSB', fetch: fetchScuttlebuttPosts, category: 'content' },
   hive: { name: 'Hive Blog', fetch: fetchHivePosts, category: 'content' },
-  paragraph: { name: 'Paragraph.xyz (Farcaster Articles)', fetch: fetchParagraphPosts, category: 'content' },
+  paragraph: {
+    name: 'Paragraph.xyz (Farcaster Articles)',
+    fetch: fetchParagraphPosts,
+    category: 'content',
+  },
   mirror: { name: 'Mirror.xyz (Articles)', fetch: fetchMirrorPosts, category: 'content' },
   funkwhale: { name: 'Funkwhale (Audio/Music)', fetch: fetchFunkwhalePosts, category: 'content' },
   castopod: { name: 'Castopod (Podcasting)', fetch: fetchCastopodPosts, category: 'content' },
-  writefreely: { name: 'WriteFreely / Write.as', fetch: fetchWriteFreelyPosts, category: 'content' },
+  writefreely: {
+    name: 'WriteFreely / Write.as',
+    fetch: fetchWriteFreelyPosts,
+    category: 'content',
+  },
   mediagoblin: { name: 'MediaGoblin', fetch: fetchMediaGoblinPosts, category: 'content' },
   owncast: { name: 'Owncast (Live Streaming)', fetch: fetchOwncastPosts, category: 'content' },
-  arena: { name: 'Arena.social (Social Trading on Avalanche)', fetch: fetchArenaPosts, category: 'content' },
-  deso: { name: 'DeSo / Bitclout (Layer-1 Social Blockchain)', fetch: fetchDesoPosts, category: 'content' },
-  microblog: { name: 'Micro.blog (IndieWeb Microblogging)', fetch: fetchMicroblogPosts, category: 'content' },
-  session: { name: 'Session / SOGS (Privacy Messenger)', fetch: fetchSessionPosts, category: 'content' },
+  arena: {
+    name: 'Arena.social (Social Trading on Avalanche)',
+    fetch: fetchArenaPosts,
+    category: 'content',
+  },
+  deso: {
+    name: 'DeSo / Bitclout (Layer-1 Social Blockchain)',
+    fetch: fetchDesoPosts,
+    category: 'content',
+  },
+  microblog: {
+    name: 'Micro.blog (IndieWeb Microblogging)',
+    fetch: fetchMicroblogPosts,
+    category: 'content',
+  },
+  session: {
+    name: 'Session / SOGS (Privacy Messenger)',
+    fetch: fetchSessionPosts,
+    category: 'content',
+  },
   steem: { name: 'Steem (Blockchain Social Rewards)', fetch: fetchSteemPosts, category: 'content' },
-  subsocial: { name: 'Subsocial (Polkadot Social)', fetch: fetchSubsocialPosts, category: 'content' },
+  subsocial: {
+    name: 'Subsocial (Polkadot Social)',
+    fetch: fetchSubsocialPosts,
+    category: 'content',
+  },
 
   // ═══════════════════════════════════════════════════════════════════
   // TIER 3: ActivityPub Ecosystem
   // ═══════════════════════════════════════════════════════════════════
   bookwyrm: { name: 'BookWyrm (Federated Books)', fetch: fetchBookWyrmPosts, category: 'content' },
-  mobilizon: { name: 'Mobilizon (Federated Events)', fetch: fetchMobilizonPosts, category: 'content' },
+  mobilizon: {
+    name: 'Mobilizon (Federated Events)',
+    fetch: fetchMobilizonPosts,
+    category: 'content',
+  },
   forgejo: { name: 'Forgejo/Gitea (Git Repos)', fetch: fetchForgejoPosts, category: 'content' },
   bonfire: { name: 'Bonfire (Federated Social)', fetch: fetchBonfirePosts, category: 'content' },
   mitra: { name: 'Mitra (Lightweight Microblog)', fetch: fetchMitraPosts, category: 'content' },
@@ -273,7 +302,11 @@ export const PROVIDERS: Record<string, ProviderEntry> = {
   // ═══════════════════════════════════════════════════════════════════
   // TIER 7: Messaging & Dev Platforms
   // ═══════════════════════════════════════════════════════════════════
-  telegram: { name: 'Telegram (Channels & Groups)', fetch: fetchTelegramPosts, category: 'content' },
+  telegram: {
+    name: 'Telegram (Channels & Groups)',
+    fetch: fetchTelegramPosts,
+    category: 'content',
+  },
   discord: { name: 'Discord (Communities)', fetch: fetchDiscordPosts, category: 'content' },
   matrix: { name: 'Matrix (Decentralized Chat)', fetch: fetchMatrixPosts, category: 'content' },
   github: {
@@ -282,10 +315,18 @@ export const PROVIDERS: Record<string, ProviderEntry> = {
     rateLimit: { maxRequests: 60, windowMs: 3_600_000 },
     category: 'content',
   },
-  discourse: { name: 'Discourse (Forum + ActivityPub)', fetch: fetchDiscoursePosts, category: 'content' },
+  discourse: {
+    name: 'Discourse (Forum + ActivityPub)',
+    fetch: fetchDiscoursePosts,
+    category: 'content',
+  },
   ghost: { name: 'Ghost (Headless CMS)', fetch: fetchGhostPosts, category: 'content' },
   immich: { name: 'Immich (Self-Hosted Photos)', fetch: fetchImmichPosts, category: 'content' },
-  faircamp: { name: 'Faircamp (Self-Hosted Music Sites)', fetch: fetchFaircampPosts, category: 'content' },
+  faircamp: {
+    name: 'Faircamp (Self-Hosted Music Sites)',
+    fetch: fetchFaircampPosts,
+    category: 'content',
+  },
 
   // ═══════════════════════════════════════════════════════════════════
   // TIER 8: Class-based providers
@@ -548,7 +589,9 @@ export async function buildFeed(
       if (error) errors.push(protocol + ': ' + error);
       if (notice) notices.push(protocol + ': ' + notice);
     } else {
-      errors.push('provider: ' + (result.reason instanceof Error ? result.reason.message : 'unknown'));
+      errors.push(
+        'provider: ' + (result.reason instanceof Error ? result.reason.message : 'unknown'),
+      );
     }
   }
 
@@ -587,7 +630,11 @@ export async function buildFeed(
   const degradedCount = Object.keys(cacheAges).length;
 
   console.log(
-    '[bridge] Built feed: ' + deduped.length + ' posts from ' + Object.keys(perProtocol).length + ' sources' +
+    '[bridge] Built feed: ' +
+      deduped.length +
+      ' posts from ' +
+      Object.keys(perProtocol).length +
+      ' sources' +
       (degradedCount > 0 ? ' (' + degradedCount + ' degraded)' : ''),
   );
   return {

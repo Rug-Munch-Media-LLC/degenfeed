@@ -64,7 +64,7 @@ export const farcasterLiveStrategy: ProtocolStrategy = {
         };
       }
 
-      const hubUrl = env.FARCASTER_HUB_URL ?? 'https://hub.farcaster.standardcrypto.vc:2281';
+      const hubUrl = env.FARCASTER_HUB_URL ?? 'http://127.0.0.1:2281';
 
       // Build and sign the cast
       const signed = buildFarcasterCastMessage({
@@ -131,9 +131,7 @@ export const farcasterLiveStrategy: ProtocolStrategy = {
 
       if (!signed.ok) return;
 
-      const client = new HubClient(
-        env.FARCASTER_HUB_URL ?? 'https://hub.farcaster.standardcrypto.vc:2281',
-      );
+      const client = new HubClient(env.FARCASTER_HUB_URL ?? 'http://127.0.0.1:2281');
       if (signed.messageHex) await client.submitMessage(signed.messageHex);
     } catch {
       // Non-critical
@@ -146,7 +144,7 @@ export const farcasterLiveStrategy: ProtocolStrategy = {
 
     try {
       const { HubClient } = await import('@degenfeed/farcaster-sdk');
-      const hubUrl = env.FARCASTER_HUB_URL ?? 'https://hub.farcaster.standardcrypto.vc:2281';
+      const hubUrl = env.FARCASTER_HUB_URL ?? 'http://127.0.0.1:2281';
       const client = new HubClient(hubUrl);
 
       const cast = await (client as any).getCastById(protocolId, 0);

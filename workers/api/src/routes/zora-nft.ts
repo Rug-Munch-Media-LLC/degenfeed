@@ -101,17 +101,20 @@ zoraNFT.post('/mint', async (c) => {
       // Non-critical — indexer may not be running
     }
 
-    return noCacheJsonResponse({
-      ok: true,
-      nft: {
-        tokenId: result.tokenId,
-        contractAddress: result.contractAddress,
-        txHash: result.txHash,
-        explorerUrl: result.explorerUrl,
-        metadataUri: result.metadataUri,
-        zoraUrl: result.zoraUrl,
+    return noCacheJsonResponse(
+      {
+        ok: true,
+        nft: {
+          tokenId: result.tokenId,
+          contractAddress: result.contractAddress,
+          txHash: result.txHash,
+          explorerUrl: result.explorerUrl,
+          metadataUri: result.metadataUri,
+          zoraUrl: result.zoraUrl,
+        },
       },
-    }, 201);
+      201,
+    );
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     return jsonResponse({ error: `Mint failed: ${msg}` }, 500);
@@ -156,15 +159,18 @@ zoraNFT.post('/create-collection', async (c) => {
       chain: (body.chain as 'base' | 'zora') ?? 'base',
     });
 
-    return noCacheJsonResponse({
-      ok: true,
-      collection: {
-        address: result.collectionAddress,
-        txHash: result.txHash,
-        explorerUrl: result.explorerUrl,
-        zoraUrl: result.zoraUrl,
+    return noCacheJsonResponse(
+      {
+        ok: true,
+        collection: {
+          address: result.collectionAddress,
+          txHash: result.txHash,
+          explorerUrl: result.explorerUrl,
+          zoraUrl: result.zoraUrl,
+        },
       },
-    }, 201);
+      201,
+    );
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     return jsonResponse({ error: `Collection creation failed: ${msg}` }, 500);
@@ -261,7 +267,10 @@ zoraNFT.get('/trending', async (c) => {
       return jsonResponse({ error: 'Indexer unavailable' }, 502);
     }
 
-    const data = await res.json() as { data?: Record<string, unknown>[]; meta?: Record<string, unknown> };
+    const data = (await res.json()) as {
+      data?: Record<string, unknown>[];
+      meta?: Record<string, unknown>;
+    };
     return noCacheJsonResponse({
       nfts: data.data ?? [],
       meta: data.meta ?? { returned: 0, limit },
@@ -286,16 +295,15 @@ zoraNFT.get('/:address/:tokenId', async (c) => {
 
   try {
     // Fetch from our indexer
-    const res = await fetch(
-      `${INDEXER_URL}/api/tokens?collection=${contractAddress}&limit=1`,
-      { signal: AbortSignal.timeout(5000) },
-    );
+    const res = await fetch(`${INDEXER_URL}/api/tokens?collection=${contractAddress}&limit=1`, {
+      signal: AbortSignal.timeout(5000),
+    });
 
     if (!res.ok) {
       return jsonResponse({ error: 'NFT not found in indexer' }, 404);
     }
 
-    const data = await res.json() as { data?: Record<string, unknown>[] };
+    const data = (await res.json()) as { data?: Record<string, unknown>[] };
 
     if (!data.data || data.data.length === 0) {
       return jsonResponse({ error: 'NFT not found' }, 404);
@@ -340,7 +348,10 @@ zoraNFT.get('/:address', async (c) => {
       return jsonResponse({ error: 'Indexer unavailable' }, 502);
     }
 
-    const data = await res.json() as { data?: Record<string, unknown>[]; meta?: Record<string, unknown> };
+    const data = (await res.json()) as {
+      data?: Record<string, unknown>[];
+      meta?: Record<string, unknown>;
+    };
     return noCacheJsonResponse({
       nfts: data.data ?? [],
       meta: data.meta ?? { total: 0, returned: 0 },
@@ -394,17 +405,23 @@ zoraNFT.post('/upload', async (c) => {
 
     if (!pinataRes.ok) {
       const body = await pinataRes.text().catch(() => '');
-      return jsonResponse({ error: `Pinata upload failed: ${pinataRes.status}: ${body.slice(0, 200)}` }, 502);
+      return jsonResponse(
+        { error: `Pinata upload failed: ${pinataRes.status}: ${body.slice(0, 200)}` },
+        502,
+      );
     }
 
     const pinataData = (await pinataRes.json()) as { IpfsHash: string };
 
-    return noCacheJsonResponse({
-      ok: true,
-      ipfsUri: `ipfs://${pinataData.IpfsHash}`,
-      ipfsCid: pinataData.IpfsHash,
-      gatewayUrl: `https://gateway.pinata.cloud/ipfs/${pinataData.IpfsHash}`,
-    }, 201);
+    return noCacheJsonResponse(
+      {
+        ok: true,
+        ipfsUri: `ipfs://${pinataData.IpfsHash}`,
+        ipfsCid: pinataData.IpfsHash,
+        gatewayUrl: `https://gateway.pinata.cloud/ipfs/${pinataData.IpfsHash}`,
+      },
+      201,
+    );
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     return jsonResponse({ error: `Upload failed: ${msg}` }, 500);

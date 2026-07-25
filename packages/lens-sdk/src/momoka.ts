@@ -30,10 +30,7 @@ type KVNamespace = {
 
 export const MOMOKA_API_URL = 'https://momoka.lens.xyz';
 
-export const MOMOKA_FALLBACK_URLS = [
-  'https://momoka.lens.xyz',
-  'https://momoka.testnet.lens.dev',
-];
+export const MOMOKA_FALLBACK_URLS = ['https://momoka.lens.xyz', 'https://momoka.testnet.lens.dev'];
 
 // ─── Types ───────────────────────────────────────────────────────────────
 
@@ -206,9 +203,7 @@ export class MomokaClient {
         if (!res.ok) continue;
 
         return (await res.json()) as MomokaProof;
-      } catch {
-        continue;
-      }
+      } catch {}
     }
 
     return null;

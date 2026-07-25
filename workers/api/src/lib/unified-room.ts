@@ -984,7 +984,7 @@ async function deliverViaFarcaster(
     }
 
     // Fallback: try Hub API
-    const hubUrl = env.FARCASTER_HUB_URL || 'https://hub.farcaster.standardcrypto.vc:2281';
+    const hubUrl = env.FARCASTER_HUB_URL || 'http://127.0.0.1:2281';
     const hubRes = await fetch(`${hubUrl}/v1/submitMessage`, {
       method: 'POST',
       headers: { 'content-type': 'application/octet-stream' },

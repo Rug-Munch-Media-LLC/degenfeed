@@ -135,7 +135,7 @@ export async function handlePostReplies(
       }
 
       case 'farcaster': {
-        const hubUrl = env.FARCASTER_HUB_URL || 'https://hub.pinata.cloud';
+        const hubUrl = env.FARCASTER_HUB_URL || 'http://127.0.0.1:2281';
         const res = await fetch(`${hubUrl}/v1/castsByParent?hash=${nativeId}&pageSize=${limit}`, {
           headers: {
             'user-agent': 'DegenFeed/0.1',

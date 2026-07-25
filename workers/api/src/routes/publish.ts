@@ -299,7 +299,7 @@ async function perProtocolPublishSingle(
     }
 
     case 'farcaster': {
-      const hubUrl = env.FARCASTER_HUB_URL || 'https://hub.farcaster.standardcrypto.vc:2281';
+      const hubUrl = env.FARCASTER_HUB_URL || 'http://127.0.0.1:2281';
       const signedMessage = body?.signedMessage || auth.farcaster_message;
       if (signedMessage) {
         let messageBody: BodyInit = signedMessage;
@@ -583,8 +583,8 @@ export async function handleRssToNostrBridge(request: Request, _env: Env): Promi
 
 import type { MasterPost } from '@degenfeed/cross-protocol-bridge';
 import { adaptForProtocols, previewForProtocols } from '@degenfeed/cross-protocol-bridge';
-import { hasSuspiciousPayload } from '../sanitize';
 import { methodNotAllowed } from '../response-helpers';
+import { hasSuspiciousPayload } from '../sanitize';
 
 /**
  * POST /api/publish/all

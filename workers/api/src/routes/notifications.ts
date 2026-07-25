@@ -446,7 +446,7 @@ async function fetchBlueskyNotifications(
 
 async function fetchFarcasterNotifications(env: Env, fid: number): Promise<Notification[]> {
   const results: Notification[] = [];
-  const hubUrl = env.FARCASTER_HUB_URL || 'https://hub.pinata.cloud';
+  const hubUrl = env.FARCASTER_HUB_URL || 'http://127.0.0.1:2281';
   try {
     // Fetch reactions targeting the user's casts
     const reactionsRes = await fetch(

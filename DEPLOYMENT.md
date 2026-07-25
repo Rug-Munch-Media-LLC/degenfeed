@@ -563,8 +563,8 @@ Set in `workers/api/wrangler.toml` under `[vars]`:
 | `MASTODON_INSTANCE_URL` | `"https://social.degenfeed.xyz"` | Mastodon instance for signup |
 | `REDLIB_URL` | `"https://redlib.degenfeed.xyz"` | Redlib proxy |
 | `RSS_BRIDGE_URL` | `"https://rss-bridge.degenfeed.xyz"` | RSS-Bridge proxy |
-| `FLARESOLVERR_URL` | `"http://100.104.130.92:8191"` | FlareSolverr endpoint |
-| `RMI_BACKEND_URL` | `"http://100.104.130.92:8000"` | RMI backend for token risk data |
+| `FLARESOLVERR_URL` | `"http://<internal-ip>:8191"` | FlareSolverr endpoint |
+| `RMI_BACKEND_URL` | `"http://<internal-ip>:8000"` | RMI backend for token risk data |
 | `POSTIZ_BASE_URL` | `"http://127.0.0.1:3105"` | Postiz API base |
 | `POSTIZ_INTEGRATIONS` | — | JSON-encoded platform→integration ID map |
 | `ALLOW_DEV_OAUTH` | `"false"` | Allow all OAuth in dev |
