@@ -52,6 +52,8 @@ export interface Env {
   SOLANA_RPC_URL?: string;
   /** Base URL of the rmi-backend (default: http://127.0.0.1:8000) */
   RMI_BACKEND_URL?: string;
+  /** Bridge service internal URL for protocol feed fetching */
+  BRIDGE_INTERNAL_URL?: string;
   /** Self-hosted Redlib instance for Reddit feed proxying */
   REDLIB_URL?: string;
   /** Self-hosted RSS-Bridge instance for proxied RSS feed fetching */

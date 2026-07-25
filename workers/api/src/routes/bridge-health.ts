@@ -267,3 +267,35 @@ export async function handleProtocolStats(request: Request, env: Env): Promise<R
     );
   }
 }
+
+// ─── Feed Quality Report Endpoint ────────────────────────────────────
+
+/**
+ * GET /api/bridge/quality
+ *
+ * Returns per-protocol content counts and empty feed alerts.
+ * Used by the monitoring dashboard and the feed quality monitor.
+ */
+export async function handleFeedQualityReport(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'GET') {
+    return jsonResponse({ error: 'Method not allowed — use GET' }, 405);
+  }
+
+  try {
+    const { getFeedQualityReport } = await import('../feed/feed-quality-monitor');
+    const report = await getFeedQualityReport(env);
+
+    return noCacheJsonResponse({
+      ok: true,
+      ...report,
+    });
+  } catch (err) {
+    return jsonResponse(
+      {
+        ok: false,
+        error: `Failed to generate feed quality report: ${err instanceof Error ? err.message : String(err)}`,
+      },
+      500,
+    );
+  }
+}

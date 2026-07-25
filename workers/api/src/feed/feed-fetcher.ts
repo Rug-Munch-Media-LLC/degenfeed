@@ -802,6 +802,7 @@ export async function fetchFromProviders(
     if (!protocol) continue;
     if (result.status === 'fulfilled') {
       collected.push(result.value);
+      void recordFetchQuality(env, protocol, result.value.posts.length);
     } else {
       const message = result.reason instanceof Error ? result.reason.message : 'unknown';
       collected.push({ protocol, posts: [], failed: true, error: message });

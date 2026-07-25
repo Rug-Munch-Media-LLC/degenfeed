@@ -88,6 +88,22 @@ export type Protocol =
   | 'unlock'
   | 'mintgate'
   | 'bonfida'
+  // ─── ActivityPub Ecosystem (Headless Forks) ─────────────────
+  | 'bookwyrm'
+  | 'mobilizon'
+  | 'bonfire'
+  | 'mitra'
+  | 'takahe'
+  | 'forgejo'
+  | 'owncast'
+  | 'faircamp'
+  // ─── Blockchain Social / Web3 ──────────────────────────────
+  | 'xmtp'
+  | 'push'
+  | 'huddle01'
+  // ─── Data / Storage ────────────────────────────────────────
+  | 'ceramic'
+  | 'tableland'
 ;
 
 /** All protocol identifiers as a const array */
@@ -134,6 +150,13 @@ export const PROTOCOLS = [
   'unlock',
   'mintgate',
   'bonfida',
+  // ActivityPub Ecosystem
+  'bookwyrm', 'mobilizon', 'bonfire', 'mitra', 'takahe',
+  'forgejo', 'owncast', 'faircamp',
+  // Blockchain Social
+  'orbis', 'xmtp', 'push', 'huddle01',
+  // Data / Storage
+  'ceramic', 'tableland',
 ] as const satisfies Protocol[];
 
 // ─── Chain Definitions ────────────────────────────────────────────
@@ -290,4 +313,20 @@ export const PLATFORM_TIER_WEIGHTS: Record<string, number> = {
   writefreely: 0.7,
   youtube: 0.9,
   zora: 0.8,
+  // ActivityPub Ecosystem
+  bookwyrm: 0.7,
+  mobilizon: 0.6,
+  bonfire: 0.6,
+  mitra: 0.6,
+  takahe: 0.6,
+  forgejo: 0.6,
+  owncast: 0.6,
+  faircamp: 0.5,
+  // Blockchain Social
+  xmtp: 0.4,
+  push: 0.4,
+  huddle01: 0.4,
+  // Data / Storage
+  ceramic: 0.5,
+  tableland: 0.4,
 };
