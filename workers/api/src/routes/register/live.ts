@@ -35,8 +35,20 @@ import {
   handleGetWatchedCreators,
   handleGoLive,
   handleKickChannelStatus,
+  handleLiveChatAnalytics,
+  handleLiveChatBan,
+  handleLiveChatConfig,
+  handleLiveChatDelete,
+  handleLiveChatExport,
   handleLiveChatMessages,
+  handleLiveChatPin,
+  handleLiveChatPinned,
+  handleLiveChatProtocols,
+  handleLiveChatReact,
   handleLiveChatSend,
+  handleLiveChatTgLink,
+  handleLiveChatTimeout,
+  handleLiveChatUnban,
   handleLiveDetails,
   handleLiveNow,
   handleLiveSources,
@@ -55,8 +67,18 @@ import {
   handleRouteEstimate,
   handleRouteSwitch,
   handleScheduleStream,
+  handleSimulcastActive,
+  handleSimulcastAnalytics,
+  handleSimulcastDetails,
+  handleSimulcastHistory,
+  handleSimulcastPlatformAction,
+  handleSimulcastPlatforms,
+  handleSimulcastStart,
+  handleSimulcastStop,
+  handleSimulcastUpdateMetadata,
   handleStopLive,
   handleStreamRouteStatus,
+  handleTelegramWebhookEndpoint,
   handleTwitchCurated,
   handleUnwatchCreator,
   handleWatchCreator,
@@ -139,6 +161,24 @@ import {
   handleUpdateState,
 } from '../../routes/voice-rooms';
 import youtubeRoutes from '../../routes/youtube';
+import {
+  handleLoopsActive,
+  handleLoopsBroadcast,
+  handleLoopsBroadcastStatus,
+  handleLoopsGoLive,
+  handleLoopsHealth,
+  handleLoopsPlatforms,
+  handleLoopsStopLive,
+} from '../../routes/loops-live';
+import {
+  handleGiftEarnings,
+  handleGiftHistory,
+  handleGiftLeaderboard,
+  handleGiftPackages,
+  handleGiftPayout,
+  handleGiftSend,
+  handleGiftTypes,
+} from '../../routes/live-gifts';
 export function registerLiveRoutes(app: Hono<{ Bindings: Env }>): void {
   // --- API: YouTube ---
   app.route('/api/youtube', youtubeRoutes);
@@ -373,6 +413,118 @@ export function registerLiveRoutes(app: Hono<{ Bindings: Env }>): void {
       return serverError(err instanceof Error ? err.message : 'Unknown error');
     }
   });
+  app.post('/api/live/chat/:id/react', async (c) => {
+    try {
+      const result = await handleLiveChatReact(c.req.raw, c.env, c.req.param('id'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/live/chat/:id/delete', async (c) => {
+    try {
+      const result = await handleLiveChatDelete(c.req.raw, c.env, c.req.param('id'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/live/chat/:id/pin', async (c) => {
+    try {
+      const result = await handleLiveChatPin(c.req.raw, c.env, c.req.param('id'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.delete('/api/live/chat/:id/pin', async (c) => {
+    try {
+      const result = await handleLiveChatPin(c.req.raw, c.env, c.req.param('id'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/live/chat/:id/pinned', async (c) => {
+    try {
+      const result = await handleLiveChatPinned(c.req.raw, c.env, c.req.param('id'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/live/chat/:id/ban', async (c) => {
+    try {
+      const result = await handleLiveChatBan(c.req.raw, c.env, c.req.param('id'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/live/chat/:id/unban', async (c) => {
+    try {
+      const result = await handleLiveChatUnban(c.req.raw, c.env, c.req.param('id'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/live/chat/:id/timeout', async (c) => {
+    try {
+      const result = await handleLiveChatTimeout(c.req.raw, c.env, c.req.param('id'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/live/chat/:id/config', async (c) => {
+    try {
+      const result = await handleLiveChatConfig(c.req.raw, c.env, c.req.param('id'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/live/chat/:id/analytics', async (c) => {
+    try {
+      const result = await handleLiveChatAnalytics(c.req.raw, c.env, c.req.param('id'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/live/chat/:id/export', async (c) => {
+    try {
+      const result = await handleLiveChatExport(c.req.raw, c.env, c.req.param('id'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/live/chat/:id/protocols', async (c) => {
+    try {
+      const result = await handleLiveChatProtocols(c.req.raw, c.env, c.req.param('id'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/live/chat/:id/tg-link', async (c) => {
+    try {
+      const result = await handleLiveChatTgLink(c.req.raw, c.env, c.req.param('id'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/live/chat/telegram-webhook', async (c) => {
+    try {
+      const result = await handleTelegramWebhookEndpoint(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
   app.get('/api/live/creators/:id', async (c) => {
     try {
       const result = await handleCreatorLiveProfile(c.req.raw, c.env, c.req.param('id'));
@@ -475,6 +627,64 @@ export function registerLiveRoutes(app: Hono<{ Bindings: Env }>): void {
     try {
       const result = await handleLiveTip(c.req.raw, c.env, c.req.param('id'));
       return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // Live Gifts — Telegram-Style Gift Economy with Crypto
+  // ═══════════════════════════════════════════════════════════════════════
+  app.get('/api/live/gifts/types', async (c) => {
+    try {
+      const result = await handleGiftTypes(c.req.raw);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/live/gifts/packages', async (c) => {
+    try {
+      const result = await handleGiftPackages(c.req.raw);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/live/gifts/send', async (c) => {
+    try {
+      return await withSession(c, () => handleGiftSend(c.req.raw, c.env));
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/live/gifts/leaderboard', async (c) => {
+    try {
+      const result = await handleGiftLeaderboard(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/live/gifts/history', async (c) => {
+    try {
+      const result = await handleGiftHistory(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/live/gifts/earnings', async (c) => {
+    try {
+      const result = await handleGiftEarnings(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/live/gifts/process-payout', async (c) => {
+    try {
+      return await withSession(c, () => handleGiftPayout(c.req.raw, c.env));
     } catch (err) {
       return serverError(err instanceof Error ? err.message : 'Unknown error');
     }
@@ -1054,10 +1264,199 @@ export function registerLiveRoutes(app: Hono<{ Bindings: Env }>): void {
   // Alias: /api/spaces/scheduled -> upcoming
   app.get('/api/spaces/scheduled', async (c) => handleSpacesUpcoming(c.req.raw, c.env));
 
+  // --- API: Loops Live (TikTok-Style Vertical Streaming) ---
+  app.post('/api/loops/live/start', async (c) => {
+    try {
+      return await withSession(c, () => handleLoopsGoLive(c.req.raw, c.env));
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/loops/live/stop', async (c) => {
+    try {
+      const result = await handleLoopsStopLive(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/loops/live/active', async (c) => {
+    try {
+      const result = await handleLoopsActive(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/loops/live/broadcast', async (c) => {
+    try {
+      return await withSession(c, () => handleLoopsBroadcast(c.req.raw, c.env));
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/loops/live/broadcast/:id', async (c) => {
+    try {
+      const result = await handleLoopsBroadcastStatus(c.req.raw, c.env, c.req.param('id'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/loops/live/platforms', async (c) => {
+    try {
+      const result = await handleLoopsPlatforms(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/loops/live/health', async (c) => {
+    try {
+      const result = await handleLoopsHealth(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+
   // --- Feed cache management ---
   app.get('/ws/realtime', async (c) => {
     const wsResp = handleRealtimeWebSocket(c.req.raw, c.env);
     if (wsResp) return wsResp;
     return badRequest('WebSocket upgrade failed');
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // Simulcast — Multi-Platform Live Streaming (Enterprise $20/mo)
+  // ═══════════════════════════════════════════════════════════════════════
+  //
+  // Creator streams to Loops (RTMP), DegenFeed restreams to:
+  //   YouTube Live, TikTok Live, Twitch, Kick
+  // + announces on: Farcaster, Nostr, Bluesky, Mastodon, PeerTube, Owncast
+  //
+  // All routes gated behind Enterprise tier via withSession or tier check.
+
+  // --- Start / Stop Simulcast ---
+  app.post('/api/live/simulcast/start', async (c) => {
+    try {
+      return await withSession(c, () => handleSimulcastStart(c.req.raw, c.env));
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/live/simulcast/stop', async (c) => {
+    try {
+      return await withSession(c, () => handleSimulcastStop(c.req.raw, c.env));
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+
+  // --- Platform Management within Simulcast ---
+  app.post('/api/live/simulcast/:id/platform/:platform/:action', async (c) => {
+    try {
+      return await withSession(c, () =>
+        handleSimulcastPlatformAction(
+          c.req.raw,
+          c.env,
+          c.req.param('id'),
+          c.req.param('platform'),
+          c.req.param('action'),
+        ),
+      );
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+
+  // --- Metadata Sync ---
+  app.patch('/api/live/simulcast/:id/metadata', async (c) => {
+    try {
+      return await withSession(c, () =>
+        handleSimulcastUpdateMetadata(c.req.raw, c.env, c.req.param('id')),
+      );
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+
+  // --- Active Simulcast ---
+  app.get('/api/live/simulcast/active', async (c) => {
+    try {
+      const result = await handleSimulcastActive(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+
+  // --- Simulcast History ---
+  app.get('/api/live/simulcast/history', async (c) => {
+    try {
+      const result = await handleSimulcastHistory(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+
+  // --- Simulcast Details ---
+  app.get('/api/live/simulcast/:id', async (c) => {
+    try {
+      const result = await handleSimulcastDetails(c.req.raw, c.env, c.req.param('id'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+
+  // --- Simulcast Analytics ---
+  app.get('/api/live/simulcast/:id/analytics', async (c) => {
+    try {
+      const result = await handleSimulcastAnalytics(c.req.raw, c.env, c.req.param('id'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+
+  // --- Available Simulcast Platforms ---
+  app.get('/api/live/simulcast/platforms', async (c) => {
+    try {
+      const result = await handleSimulcastPlatforms(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+
+  // --- Platform Connection (for external platform OAuth) ---
+  // These delegate to the external-platforms.ts module
+  app.get('/api/live/platforms', async (c) => {
+    try {
+      const { handleListPlatforms } = await import('../../routes/external-platforms');
+      const result = await handleListPlatforms(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/live/platforms/connect', async (c) => {
+    try {
+      const { handleConnectExternalPlatform } = await import('../../routes/external-platforms');
+      return await withSession(c, () => handleConnectExternalPlatform(c.req.raw, c.env));
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.delete('/api/live/platforms/:id', async (c) => {
+    try {
+      const { handleDisconnectPlatform } = await import('../../routes/external-platforms');
+      const result = await handleDisconnectPlatform(c.req.raw, c.env, c.req.param('id'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
   });
 }

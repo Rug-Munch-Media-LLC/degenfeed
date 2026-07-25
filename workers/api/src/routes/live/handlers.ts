@@ -51,6 +51,7 @@ function sourceLabel(source: string): string {
     farcaster: 'Farcaster',
     nostr: 'Nostr',
     degenfeed: 'DegenFeed',
+    loops: 'Loops Live',
     lens: 'Lens',
     zora: 'Zora',
   };
@@ -151,6 +152,7 @@ export async function handleLiveSources(_request: Request, env: Env): Promise<Re
       'spaces',
       'farcaster',
       'nostr',
+      'loops',
     ];
 
     for (const src of knownSources) {
@@ -426,36 +428,63 @@ export async function handleScheduleStream(request: Request, env: Env): Promise<
   }
 }
 
-// ─── Chat ────────────────────────────────────────────────────────────────
+// ─── Unified Chat ──────────────────────────────────────────────────────────
+
+import {
+  sendChatMessage,
+  getChatMessages,
+  deleteChatMessage as unifiedDeleteMessage,
+  banUser as unifiedBanUser,
+  unbanUser as unifiedUnbanUser,
+  timeoutUser as unifiedTimeoutUser,
+  toggleReaction as unifiedToggleReaction,
+  pinMessage as unifiedPinMessage,
+  unpinMessage as unifiedUnpinMessage,
+  getPinnedMessages as unifiedGetPinned,
+  updateChatConfig,
+  getChatConfig,
+  handleTelegramWebhook,
+  linkTelegramChatToStream,
+  getProtocolViewerBreakdown,
+  recordViewerProtocol,
+  type ChatProtocol,
+  type LiveChatMessage,
+  type SendMessageInput,
+} from '../../live-chat/unified-chat';
+
+import { getChatAnalytics, trackMessage, exportChat } from '../../live-chat/chat-analytics';
 
 /**
  * GET /api/live/chat/:id/messages
- * Get recent chat messages for a stream.
- * In production, this would use a real-time chat backend (Durable Objects, etc.)
- * For now, returns cached messages from KV.
+ * Get recent unified chat messages for a stream (from ALL protocols).
  */
 export async function handleLiveChatMessages(
-  _request: Request,
+  request: Request,
   env: Env,
   streamId: string,
 ): Promise<Response> {
   try {
-    const chatKey = `live:chat:${streamId}:messages`;
-    const raw = await env.CACHE?.get(chatKey);
-    const messages = raw ? JSON.parse(raw) : [];
+    const url = new URL(request.url);
+    const limit = Math.min(Number(url.searchParams.get('limit')) || 50, 200);
+    const before = url.searchParams.get('before') || undefined;
+
+    const messages = await getChatMessages(env, streamId, limit, before);
     return noCacheJsonResponse({
+      messages,
       data: messages,
       meta: { streamId, total: messages.length },
     });
   } catch (err) {
     const error = err instanceof Error ? err.message : String(err);
-    return jsonResponse({ data: [], meta: { streamId, total: 0, error } });
+    console.error('[handlers] handleLiveChatMessages failed:', error);
+    return jsonResponse({ messages: [], data: [], meta: { streamId, total: 0, error } });
   }
 }
 
 /**
  * POST /api/live/chat/:id/message
- * Send a chat message to a stream.
+ * Send a chat message to a stream's unified chat feed.
+ * Supports: protocol selection, gifts, badges, reactions.
  */
 export async function handleLiveChatSend(
   request: Request,
@@ -467,48 +496,316 @@ export async function handleLiveChatSend(
       message?: string;
       displayName?: string;
       avatarUrl?: string;
+      userId?: string;
+      protocol?: string;
+      gift?: { amount: string; symbol: string; chain?: string };
+      badges?: string[];
+      chatColor?: string;
     };
+
     const message = body.message?.trim();
     if (!message) {
       return jsonResponse({ ok: false, error: 'Message is required' }, 400);
     }
 
-    const chatKey = `live:chat:${streamId}:messages`;
-    const raw = await env.CACHE?.get(chatKey);
-    const messages: Array<{
-      id: string;
-      streamId: string;
-      userId: string;
-      displayName: string;
-      avatarUrl?: string;
-      message: string;
-      timestamp: number;
-      source: string;
-    }> = raw ? JSON.parse(raw) : [];
-
-    const msg = {
-      id: `chat:${Date.now()}:${Math.random().toString(36).slice(2, 8)}`,
+    const result = await sendChatMessage(env, {
       streamId,
-      userId: body.displayName || 'anonymous',
+      userId: body.userId || body.displayName || 'anonymous',
       displayName: body.displayName || 'Anonymous',
       avatarUrl: body.avatarUrl,
       message,
-      timestamp: Date.now(),
-      source: 'web',
-    };
+      protocol: (body.protocol as ChatProtocol) || 'degenfeed',
+      gift: body.gift,
+      badges: body.badges,
+      chatColor: body.chatColor,
+    });
 
-    messages.push(msg);
-    // Keep last 100 messages
-    const trimmed = messages.slice(-100);
-    await env.CACHE?.put(chatKey, JSON.stringify(trimmed), { expirationTtl: 3600 });
+    if (!result) {
+      return jsonResponse({ ok: false, error: 'Message blocked by rate limit or moderation' }, 429);
+    }
 
-    // Broadcast to WebSocket for real-time delivery
-    broadcastToAll(CHANNELS.FEED_NEW, { type: 'live_chat', ...msg });
+    // Track analytics
+    trackMessage(env, result).catch(() => {});
 
-    return jsonResponse({ ok: true, message: msg }, 201);
+    return jsonResponse({ ok: true, message: result }, 201);
   } catch (err) {
     const error = err instanceof Error ? err.message : String(err);
+    console.error('[handlers] handleLiveChatSend failed:', error);
     return jsonResponse({ ok: false, error }, 500);
+  }
+}
+
+/**
+ * POST /api/live/chat/:id/react
+ * Toggle a reaction (emoji) on a message.
+ */
+export async function handleLiveChatReact(
+  request: Request,
+  env: Env,
+  streamId: string,
+): Promise<Response> {
+  try {
+    const body = (await request.json()) as { messageId?: string; emoji?: string; userId?: string };
+    if (!body.messageId || !body.emoji) {
+      return jsonResponse({ ok: false, error: 'messageId and emoji are required' }, 400);
+    }
+    const reactions = await unifiedToggleReaction(
+      env,
+      streamId,
+      body.messageId,
+      body.userId || 'anonymous',
+      body.emoji,
+    );
+    return jsonResponse({ ok: true, reactions });
+  } catch (err) {
+    return jsonResponse({ ok: false, error: String(err) }, 500);
+  }
+}
+
+/**
+ * POST /api/live/chat/:id/delete
+ * Delete a chat message (host/moderator).
+ */
+export async function handleLiveChatDelete(
+  request: Request,
+  env: Env,
+  streamId: string,
+): Promise<Response> {
+  try {
+    const body = (await request.json()) as { messageId?: string; moderatorId?: string };
+    if (!body.messageId) {
+      return jsonResponse({ ok: false, error: 'messageId is required' }, 400);
+    }
+    const ok = await unifiedDeleteMessage(env, streamId, body.messageId, body.moderatorId || 'host');
+    return jsonResponse({ ok });
+  } catch (err) {
+    return jsonResponse({ ok: false, error: String(err) }, 500);
+  }
+}
+
+/**
+ * POST /api/live/chat/:id/pin
+ * Pin/unpin a message (host only).
+ */
+export async function handleLiveChatPin(
+  request: Request,
+  env: Env,
+  streamId: string,
+): Promise<Response> {
+  try {
+    if (request.method === 'DELETE') {
+      const body = (await request.json().catch(() => ({}))) as { messageId?: string };
+      if (!body.messageId) return jsonResponse({ ok: false, error: 'messageId required' }, 400);
+      const ok = await unifiedUnpinMessage(env, streamId, body.messageId);
+      return jsonResponse({ ok });
+    }
+    const body = (await request.json()) as { messageId?: string };
+    if (!body.messageId) return jsonResponse({ ok: false, error: 'messageId required' }, 400);
+    const ok = await unifiedPinMessage(env, streamId, body.messageId);
+    return jsonResponse({ ok });
+  } catch (err) {
+    return jsonResponse({ ok: false, error: String(err) }, 500);
+  }
+}
+
+/**
+ * GET /api/live/chat/:id/pinned
+ * Get pinned message IDs.
+ */
+export async function handleLiveChatPinned(
+  _request: Request,
+  env: Env,
+  streamId: string,
+): Promise<Response> {
+  try {
+    const messageIds = await unifiedGetPinned(env, streamId);
+    return noCacheJsonResponse({ messageIds });
+  } catch (err) {
+    return jsonResponse({ messageIds: [], meta: { error: String(err) } });
+  }
+}
+
+/**
+ * POST /api/live/chat/:id/ban
+ * Ban a user from chat (host only).
+ */
+export async function handleLiveChatBan(
+  request: Request,
+  env: Env,
+  streamId: string,
+): Promise<Response> {
+  try {
+    const body = (await request.json()) as { userId?: string; moderatorId?: string };
+    if (!body.userId) return jsonResponse({ ok: false, error: 'userId required' }, 400);
+    const ok = await unifiedBanUser(env, streamId, body.userId, body.moderatorId || 'host');
+    return jsonResponse({ ok });
+  } catch (err) {
+    return jsonResponse({ ok: false, error: String(err) }, 500);
+  }
+}
+
+/**
+ * POST /api/live/chat/:id/unban
+ * Unban a user.
+ */
+export async function handleLiveChatUnban(
+  request: Request,
+  env: Env,
+  streamId: string,
+): Promise<Response> {
+  try {
+    const body = (await request.json()) as { userId?: string };
+    if (!body.userId) return jsonResponse({ ok: false, error: 'userId required' }, 400);
+    const ok = await unifiedUnbanUser(env, streamId, body.userId);
+    return jsonResponse({ ok });
+  } catch (err) {
+    return jsonResponse({ ok: false, error: String(err) }, 500);
+  }
+}
+
+/**
+ * POST /api/live/chat/:id/timeout
+ * Timeout a user from chat (host only).
+ */
+export async function handleLiveChatTimeout(
+  request: Request,
+  env: Env,
+  streamId: string,
+): Promise<Response> {
+  try {
+    const body = (await request.json()) as { userId?: string; durationMs?: number; moderatorId?: string };
+    if (!body.userId) return jsonResponse({ ok: false, error: 'userId required' }, 400);
+    const durationMs = body.durationMs || 300000; // default 5 min
+    const ok = await unifiedTimeoutUser(env, streamId, body.userId, durationMs, body.moderatorId || 'host');
+    return jsonResponse({ ok, durationMs });
+  } catch (err) {
+    return jsonResponse({ ok: false, error: String(err) }, 500);
+  }
+}
+
+/**
+ * POST /api/live/chat/:id/config
+ * Update chat mode (host only).
+ */
+export async function handleLiveChatConfig(
+  request: Request,
+  env: Env,
+  streamId: string,
+): Promise<Response> {
+  try {
+    const body = (await request.json()) as {
+      mode?: string;
+      slowModeInterval?: number;
+      enabled?: boolean;
+    };
+    const updates: Record<string, unknown> = {};
+    if (body.mode) updates.mode = body.mode;
+    if (body.slowModeInterval !== undefined) updates.slowModeInterval = body.slowModeInterval;
+    if (body.enabled !== undefined) updates.enabled = body.enabled;
+
+    const config = await updateChatConfig(env, streamId, updates as any);
+    return jsonResponse({ ok: true, config });
+  } catch (err) {
+    return jsonResponse({ ok: false, error: String(err) }, 500);
+  }
+}
+
+/**
+ * GET /api/live/chat/:id/analytics
+ * Get chat analytics for a stream.
+ */
+export async function handleLiveChatAnalytics(
+  _request: Request,
+  env: Env,
+  streamId: string,
+): Promise<Response> {
+  try {
+    const analytics = await getChatAnalytics(env, streamId);
+    return noCacheJsonResponse(analytics);
+  } catch (err) {
+    return jsonResponse({
+      messagesPerMinute: 0,
+      totalMessages: 0,
+      topChatters: [],
+      sentiment: { positive: 0, neutral: 0, negative: 0, total: 0 },
+      platformBreakdown: {},
+      viewerPlatformBreakdown: {},
+      engagementRate: 0,
+      peakMpm: 0,
+      activeChatters: 0,
+      timestamp: Date.now(),
+      meta: { error: String(err) },
+    });
+  }
+}
+
+/**
+ * GET /api/live/chat/:id/export
+ * Export chat messages.
+ */
+export async function handleLiveChatExport(
+  _request: Request,
+  env: Env,
+  streamId: string,
+): Promise<Response> {
+  try {
+    const exported = await exportChat(env, streamId);
+    return noCacheJsonResponse(exported);
+  } catch (err) {
+    return jsonResponse({ messages: [], meta: { total: 0, exportedAt: Date.now(), error: String(err) } });
+  }
+}
+
+/**
+ * GET /api/live/chat/:id/protocols
+ * Get viewer count breakdown by protocol.
+ */
+export async function handleLiveChatProtocols(
+  _request: Request,
+  env: Env,
+  streamId: string,
+): Promise<Response> {
+  try {
+    const breakdown = await getProtocolViewerBreakdown(env, streamId);
+    return noCacheJsonResponse({ breakdown });
+  } catch (err) {
+    return jsonResponse({ breakdown: {} });
+  }
+}
+
+/**
+ * POST /api/live/chat/:id/tg-link
+ * Link a Telegram chat to a stream (called from bot).
+ */
+export async function handleLiveChatTgLink(
+  request: Request,
+  env: Env,
+  streamId: string,
+): Promise<Response> {
+  try {
+    const body = (await request.json()) as { telegramChatId?: number };
+    if (!body.telegramChatId) return jsonResponse({ ok: false, error: 'telegramChatId required' }, 400);
+    await linkTelegramChatToStream(env, body.telegramChatId, streamId);
+    return jsonResponse({ ok: true });
+  } catch (err) {
+    return jsonResponse({ ok: false, error: String(err) }, 500);
+  }
+}
+
+/**
+ * POST /api/live/chat/telegram-webhook
+ * Webhook receiver for Telegram bot messages.
+ */
+export async function handleTelegramWebhookEndpoint(
+  request: Request,
+  env: Env,
+): Promise<Response> {
+  try {
+    const body = await request.json();
+    const result = await handleTelegramWebhook(env, body as any);
+    return jsonResponse(result);
+  } catch (err) {
+    return jsonResponse({ ok: false, error: String(err) });
   }
 }
 
@@ -1098,4 +1395,515 @@ export async function handlePrivateStreamAllowlist(
   } catch {
     return jsonResponse({ data: [], meta: { streamId, total: 0 } });
   }
+}
+
+// ═════════════════════════════════════════════════════════════════════════
+// Simulcast — Multi-Platform Live Streaming (Enterprise)
+// ═════════════════════════════════════════════════════════════════════════
+
+/**
+ * POST /api/live/simulcast/start
+ * Start a multi-platform simulcast stream.
+ * Enterprise tier only ($20/mo).
+ *
+ * Body:
+ *   { title, description?, category?, tags?, thumbnailUrl?,
+ *     chatBridging?, announceOnProtocols?, addWatermark?, tipRouting?,
+ *     platforms?: { youtube?: string, tiktok?: string, twitch?: string, kick?: string } }
+ *     where each value is the Postiz integration ID for that platform.
+ *
+ * Returns simulcast session details including Loops RTMP URL + stream key.
+ */
+export async function handleSimulcastStart(request: Request, env: Env): Promise<Response> {
+  try {
+    // ── Enterprise tier gate ────────────────────────────────────────
+    const authResult = await extractAuthUser(request, env);
+    if (authResult instanceof Response) return authResult;
+
+    const { userId, walletAddress } = authResult;
+    const tierCheck = await checkEnterpriseGate(walletAddress, env);
+    if (tierCheck) return tierCheck;
+
+    // ── Parse request body ──────────────────────────────────────────
+    const body = (await request.json()) as Record<string, unknown>;
+    const title = (body.title as string)?.trim();
+    if (!title) {
+      return jsonResponse({ ok: false, error: 'Stream title is required' }, 400);
+    }
+
+    const connectedPlatforms = body.platforms as Record<string, string> | undefined;
+
+    // ── Start simulcast ─────────────────────────────────────────────
+    const { startSimulcast } = await import('../../lib/simulcast-engine');
+
+    const simulcast = await startSimulcast(
+      userId,
+      walletAddress,
+      {
+        title,
+        description: (body.description as string) || '',
+        category: (body.category as string) || 'General',
+        tags: (body.tags as string[]) || [],
+        thumbnailUrl: (body.thumbnailUrl as string) || undefined,
+        chatBridging: body.chatBridging !== false,
+        announceOnProtocols: body.announceOnProtocols !== false,
+        addWatermark: body.addWatermark !== false,
+        tipRouting: body.tipRouting !== false,
+      },
+      env,
+      connectedPlatforms,
+    );
+
+    return jsonResponse(
+      {
+        ok: true,
+        id: simulcast.id,
+        streamKey: simulcast.loopsStreamKey,
+        rtmpUrl: simulcast.loopsRtmpUrl,
+        playbackUrl: simulcast.loopsPlaybackUrl,
+        embedUrl: simulcast.loopsEmbedUrl,
+        platforms: simulcast.platforms,
+        startedAt: simulcast.startedAt,
+        instructions: {
+          obs: `Stream to RTMP URL: ${simulcast.loopsRtmpUrl} with Stream Key: ${simulcast.loopsStreamKey}`,
+          watermark: 'A "Streaming via DegenFeed" watermark is added to your Loops stream. It does NOT appear on external platforms.',
+          description: 'All platforms show "Powered by DegenFeed" in stream descriptions.',
+          tips: 'Viewers can tip from ANY platform. Tips route through DegenFeed and you earn in crypto.',
+        },
+      },
+      201,
+    );
+  } catch (err) {
+    const error = err instanceof Error ? err.message : String(err);
+    console.error('[handlers] handleSimulcastStart failed:', error);
+    return jsonResponse({ ok: false, error }, 500);
+  }
+}
+
+/**
+ * POST /api/live/simulcast/stop
+ * Stop all streams in a simulcast session.
+ *
+ * Body: { simulcastId }
+ */
+export async function handleSimulcastStop(request: Request, env: Env): Promise<Response> {
+  try {
+    const authResult = await extractAuthUser(request, env);
+    if (authResult instanceof Response) return authResult;
+
+    const { userId } = authResult;
+    const body = (await request.json()) as { simulcastId?: string };
+    const simulcastId = body.simulcastId;
+    if (!simulcastId) {
+      return jsonResponse({ ok: false, error: 'simulcastId is required' }, 400);
+    }
+
+    const { stopSimulcast } = await import('../../lib/simulcast-engine');
+    const result = await stopSimulcast(simulcastId, userId, env);
+
+    if (!result.ok) {
+      return jsonResponse({ ok: false, error: result.error }, 400);
+    }
+
+    return jsonResponse({ ok: true, simulcastId });
+  } catch (err) {
+    const error = err instanceof Error ? err.message : String(err);
+    return jsonResponse({ ok: false, error }, 500);
+  }
+}
+
+/**
+ * POST /api/live/simulcast/:id/platform/:platform/:action
+ * Start or stop an individual platform within a running simulcast.
+ *
+ * Example: POST /api/live/simulcast/simulcast:xxx/platform/twitch/start
+ *          POST /api/live/simulcast/simulcast:xxx/platform/twitch/stop
+ */
+export async function handleSimulcastPlatformAction(
+  request: Request,
+  env: Env,
+  simulcastId: string,
+  platform: string,
+  action: string,
+): Promise<Response> {
+  try {
+    const authResult = await extractAuthUser(request, env);
+    if (authResult instanceof Response) return authResult;
+
+    const { userId } = authResult;
+
+    if (action !== 'start' && action !== 'stop') {
+      return jsonResponse({ ok: false, error: 'Action must be "start" or "stop"' }, 400);
+    }
+
+    // If starting, we may need an integration ID
+    let integrationId: string | undefined;
+    if (action === 'start') {
+      const body = await request.json().catch(() => ({})) as Record<string, unknown>;
+      integrationId = body.integrationId as string | undefined;
+    }
+
+    const { setSimulcastPlatformStatus } = await import('../../lib/simulcast-engine');
+    const result = await setSimulcastPlatformStatus(
+      simulcastId,
+      userId,
+      platform as any,
+      action as 'start' | 'stop',
+      env,
+      integrationId,
+    );
+
+    if (!result.ok) {
+      return jsonResponse({ ok: false, error: result.error }, 400);
+    }
+
+    return jsonResponse({ ok: true, simulcastId, platform, action });
+  } catch (err) {
+    const error = err instanceof Error ? err.message : String(err);
+    return jsonResponse({ ok: false, error }, 500);
+  }
+}
+
+/**
+ * PATCH /api/live/simulcast/:id/metadata
+ * Update stream title, description, or thumbnail across ALL platforms.
+ *
+ * Body: { title?, description?, category?, tags?, thumbnailUrl? }
+ */
+export async function handleSimulcastUpdateMetadata(
+  request: Request,
+  env: Env,
+  simulcastId: string,
+): Promise<Response> {
+  try {
+    const authResult = await extractAuthUser(request, env);
+    if (authResult instanceof Response) return authResult;
+
+    const { userId } = authResult;
+    const body = (await request.json()) as Record<string, unknown>;
+
+    const { updateSimulcastMetadata } = await import('../../lib/simulcast-engine');
+    const result = await updateSimulcastMetadata(
+      simulcastId,
+      userId,
+      {
+        title: body.title as string | undefined,
+        description: body.description as string | undefined,
+        category: body.category as string | undefined,
+        tags: body.tags as string[] | undefined,
+        thumbnailUrl: body.thumbnailUrl as string | undefined,
+      },
+      env,
+    );
+
+    if (!result.ok) {
+      return jsonResponse({ ok: false, error: result.error }, 400);
+    }
+
+    return jsonResponse({ ok: true, simulcastId });
+  } catch (err) {
+    const error = err instanceof Error ? err.message : String(err);
+    return jsonResponse({ ok: false, error }, 500);
+  }
+}
+
+/**
+ * GET /api/live/simulcast/active
+ * Get the current active simulcast for the authenticated user.
+ */
+export async function handleSimulcastActive(request: Request, env: Env): Promise<Response> {
+  try {
+    const authResult = await extractAuthUser(request, env);
+    if (authResult instanceof Response) return authResult;
+
+    const { userId } = authResult;
+
+    const { getActiveSimulcast, summarizeSimulcast } = await import('../../lib/simulcast-engine');
+    const active = await getActiveSimulcast(userId, env);
+
+    if (!active) {
+      return jsonResponse({ data: null, meta: { active: false } });
+    }
+
+    return jsonResponse({
+      data: summarizeSimulcast(active),
+      meta: { active: true },
+    });
+  } catch (err) {
+    const error = err instanceof Error ? err.message : String(err);
+    return jsonResponse({ data: null, meta: { error } });
+  }
+}
+
+/**
+ * GET /api/live/simulcast/history
+ * Get simulcast history for the authenticated user.
+ */
+export async function handleSimulcastHistory(request: Request, env: Env): Promise<Response> {
+  try {
+    const authResult = await extractAuthUser(request, env);
+    if (authResult instanceof Response) return authResult;
+
+    const { userId } = authResult;
+
+    const { getCreatorSimulcasts, summarizeSimulcast } = await import('../../lib/simulcast-engine');
+    const simulcasts = await getCreatorSimulcasts(userId, env);
+
+    return jsonResponse({
+      data: simulcasts.map(summarizeSimulcast),
+      meta: { total: simulcasts.length },
+    });
+  } catch (err) {
+    const error = err instanceof Error ? err.message : String(err);
+    return jsonResponse({ data: [], meta: { total: 0, error } });
+  }
+}
+
+/**
+ * GET /api/live/simulcast/:id
+ * Get details for a specific simulcast session.
+ */
+export async function handleSimulcastDetails(
+  _request: Request,
+  env: Env,
+  simulcastId: string,
+): Promise<Response> {
+  try {
+    const { getSimulcastById, summarizeSimulcast } = await import('../../lib/simulcast-engine');
+    const simulcast = await getSimulcastById(simulcastId, env);
+
+    if (!simulcast) {
+      return jsonResponse({ data: null, meta: { error: 'Simulcast not found' } }, 404);
+    }
+
+    return jsonResponse({ data: summarizeSimulcast(simulcast), meta: { id: simulcastId } });
+  } catch (err) {
+    const error = err instanceof Error ? err.message : String(err);
+    return jsonResponse({ data: null, meta: { error } });
+  }
+}
+
+/**
+ * GET /api/live/simulcast/:id/analytics
+ * Get analytics for a simulcast session.
+ * Includes per-platform viewer breakdown, revenue, chat engagement, and rankings.
+ */
+export async function handleSimulcastAnalytics(
+  _request: Request,
+  env: Env,
+  simulcastId: string,
+): Promise<Response> {
+  try {
+    const { getSimulcastById } = await import('../../lib/simulcast-engine');
+    const { computeSimulcastAnalytics } = await import('../../lib/simulcast-analytics');
+
+    const simulcast = await getSimulcastById(simulcastId, env);
+    if (!simulcast) {
+      return jsonResponse({ data: null, meta: { error: 'Simulcast not found' } }, 404);
+    }
+
+    const analytics = await computeSimulcastAnalytics(simulcast, env);
+
+    return jsonResponse({ data: analytics, meta: { simulcastId } });
+  } catch (err) {
+    const error = err instanceof Error ? err.message : String(err);
+    return jsonResponse({ data: null, meta: { error } });
+  }
+}
+
+/**
+ * GET /api/live/simulcast/platforms
+ * Get the set of simulcast platforms available and their status.
+ * Returns both the list of available platforms and which ones the
+ * authenticated user has connected accounts for.
+ */
+export async function handleSimulcastPlatforms(request: Request, env: Env): Promise<Response> {
+  try {
+    const authResult = await extractAuthUser(request, env);
+    if (authResult instanceof Response) return authResult;
+
+    const { userId } = authResult;
+
+    // Get connected external platform accounts
+    const { getConnectedExternalAccounts } = await import('../../lib/postiz-bridge');
+    const connected = await getConnectedExternalAccounts(userId, env);
+
+    const simulcastPlatforms = [
+      {
+        id: 'youtube',
+        name: 'YouTube Live',
+        icon: '▶️',
+        requiresOAuth: true,
+        connected: connected.some((a) => a.platform === 'youtube'),
+        capabilities: ['go_live', 'chat', 'analytics'],
+      },
+      {
+        id: 'tiktok',
+        name: 'TikTok Live',
+        icon: '🎵',
+        requiresOAuth: true,
+        connected: connected.some((a) => a.platform === 'tiktok'),
+        capabilities: ['go_live', 'chat', 'analytics'],
+      },
+      {
+        id: 'twitch',
+        name: 'Twitch',
+        icon: '📺',
+        requiresOAuth: true,
+        connected: connected.some((a) => a.platform === 'twitch'),
+        capabilities: ['go_live', 'chat', 'analytics', 'clips'],
+      },
+      {
+        id: 'kick',
+        name: 'Kick',
+        icon: '🔴',
+        requiresOAuth: true,
+        connected: connected.some((a) => a.platform === 'kick'),
+        capabilities: ['go_live', 'chat', 'analytics'],
+      },
+    ];
+
+    // Protocol platforms (always available for announcement)
+    const protocolPlatforms = [
+      {
+        id: 'farcaster',
+        name: 'Farcaster',
+        icon: '🏰',
+        connected: true,
+        type: 'protocol',
+      },
+      {
+        id: 'nostr',
+        name: 'Nostr',
+        icon: '⚡',
+        connected: true,
+        type: 'protocol',
+      },
+      {
+        id: 'bluesky',
+        name: 'Bluesky',
+        icon: '☁️',
+        connected: true,
+        type: 'protocol',
+      },
+      {
+        id: 'mastodon',
+        name: 'Mastodon',
+        icon: '🐘',
+        connected: true,
+        type: 'protocol',
+      },
+      {
+        id: 'peertube',
+        name: 'PeerTube',
+        icon: '▶️',
+        connected: true,
+        type: 'protocol',
+      },
+      {
+        id: 'owncast',
+        name: 'Owncast',
+        icon: '🔴',
+        connected: true,
+        type: 'protocol',
+      },
+    ];
+
+    return jsonResponse({
+      data: {
+        simulcast: simulcastPlatforms,
+        protocols: protocolPlatforms,
+        instructions: {
+          connectVia: 'Use POST /api/live/platforms/connect to connect an external platform account.',
+          requiredTier: 'Enterprise ($20/mo)',
+        },
+      },
+      meta: {
+        totalSimulcast: simulcastPlatforms.length,
+        totalProtocols: protocolPlatforms.length,
+        connectedCount: simulcastPlatforms.filter((p) => p.connected).length,
+      },
+    });
+  } catch (err) {
+    const error = err instanceof Error ? err.message : String(err);
+    return jsonResponse({ data: null, meta: { error } });
+  }
+}
+
+// ─── Auth & Tier Helpers ────────────────────────────────────────────────────
+
+/**
+ * Extract authenticated user from request.
+ * Returns { userId, walletAddress } or a 401 Response.
+ */
+async function extractAuthUser(
+  req: Request,
+  env: Env,
+): Promise<{ userId: string; walletAddress: string } | Response> {
+  const authHeader = req.headers.get('authorization');
+  if (authHeader?.startsWith('Bearer ')) {
+    const token = authHeader.slice(7);
+    if (env.SUBSCRIPTIONS) {
+      try {
+        const session = await env.SUBSCRIPTIONS.get(`session:${token}`);
+        if (session) {
+          const parsed = JSON.parse(session) as { userId?: string; wallet?: string };
+          const userId = parsed.userId ?? parsed.wallet ?? 'anon';
+          const walletAddress = parsed.wallet ?? parsed.userId ?? '';
+          return { userId, walletAddress };
+        }
+      } catch {
+        // Fall through
+      }
+    }
+  }
+
+  // Try wallet address header or query param
+  const url = new URL(req.url);
+  const walletAddress = req.headers.get('x-wallet-address') || url.searchParams.get('wallet') || '';
+  if (walletAddress) {
+    return { userId: walletAddress.toLowerCase(), walletAddress: walletAddress.toLowerCase() };
+  }
+
+  // Anon fallback with limited access
+  return { userId: 'anon', walletAddress: '' };
+}
+
+/**
+ * Check if the wallet has Enterprise tier access.
+ * Returns a 402 Response if not, or null if allowed.
+ */
+async function checkEnterpriseGate(walletAddress: string, env: Env): Promise<Response | null> {
+  if (!walletAddress) {
+    return jsonResponse(
+      {
+        error: 'Enterprise tier required for multi-platform simulcast. Upgrade to Enterprise ($20/mo).',
+        upgrade: true,
+        requiredTier: 'enterprise',
+        feature: 'MULTI_PLATFORM_SIMULCAST',
+      },
+      402,
+      { 'X-Premium-Required': 'Enterprise' },
+    );
+  }
+
+  const { getUserTier, checkFeatureAccess } = await import('../../lib/membership-tiers');
+  const tier = await getUserTier(walletAddress, env);
+  const hasAccess = checkFeatureAccess(tier, 'MULTI_PLATFORM_SIMULCAST');
+
+  if (!hasAccess) {
+    return jsonResponse(
+      {
+        error: `Multi-platform simulcast requires Enterprise tier ($20/mo). Your current tier: ${tier}.`,
+        upgrade: true,
+        requiredTier: 'enterprise',
+        currentTier: tier,
+        feature: 'MULTI_PLATFORM_SIMULCAST',
+      },
+      402,
+      { 'X-Premium-Required': 'Enterprise' },
+    );
+  }
+
+  return null;
 }

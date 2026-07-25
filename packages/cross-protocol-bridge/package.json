@@ -9,7 +9,11 @@
     ".": "./src/index.ts",
     "./protocol-video": "./src/protocol-video.ts",
     "./video-discovery": "./src/video-discovery.ts",
-    "./live-discovery": "./src/live-discovery.ts"
+    "./live-discovery": "./src/live-discovery.ts",
+    "./shorts-publisher": "./src/shorts-publisher.ts",
+    "./live-publisher": "./src/live-publisher.ts",
+    "./engagement-sync": "./src/engagement-sync.ts",
+    "./cross-platform-discovery": "./src/cross-platform-discovery.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

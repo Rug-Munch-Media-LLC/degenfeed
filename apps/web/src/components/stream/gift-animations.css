@@ -1,0 +1,278 @@
+/**
+ * @degenfeed/web — Gift Animation Keyframes
+ *
+ * Animation classes for the 6 gift types plus streak bonuses.
+ * Used by GiftAnimation.tsx overlay components.
+ */
+
+/* ─── Rose: Petal Shower ─────────────────────────────────────────── */
+.gift-animation-rose .petal {
+  position: absolute;
+  animation: rose-fall linear forwards;
+}
+
+@keyframes rose-fall {
+  0% {
+    transform: translateY(-20px) rotate(0deg) scale(0.5);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 0.7;
+  }
+  100% {
+    transform: translateY(100vh) rotate(720deg) scale(0.3);
+    opacity: 0;
+  }
+}
+
+/* ─── Balloon: Float Up ──────────────────────────────────────────── */
+.gift-animation-balloon .balloon {
+  position: absolute;
+  animation: balloon-float ease-out forwards;
+}
+
+@keyframes balloon-float {
+  0% {
+    transform: translateY(100vh) scale(0.3);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.8;
+    transform: translateY(80vh) scale(0.8) rotate(-5deg);
+  }
+  100% {
+    transform: translateY(-20vh) scale(1.1) rotate(5deg);
+    opacity: 0.3;
+  }
+}
+
+/* ─── Diamond: Sparkle Burst ─────────────────────────────────────── */
+.gift-animation-diamond {
+  animation: diamond-glow 0.4s ease-out 3;
+}
+
+@keyframes diamond-glow {
+  0%, 100% {
+    filter: brightness(1) drop-shadow(0 0 0 transparent);
+  }
+  50% {
+    filter: brightness(1.5) drop-shadow(0 0 20px rgba(0, 255, 255, 0.6));
+  }
+}
+
+.gift-animation-diamond .sparkle {
+  position: absolute;
+  animation: sparkle-burst 0.8s ease-out forwards;
+}
+
+@keyframes sparkle-burst {
+  0% {
+    transform: scale(0) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.5) rotate(180deg) translate(var(--dx), var(--dy));
+    opacity: 0;
+  }
+}
+
+/* ─── Rocket: Fly-Through ────────────────────────────────────────── */
+.gift-animation-rocket {
+  animation: rocket-shake 0.1s linear infinite;
+}
+
+@keyframes rocket-shake {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(3px); }
+}
+
+.gift-animation-rocket .flame {
+  animation: rocket-flame 0.15s ease-in-out infinite alternate;
+}
+
+@keyframes rocket-flame {
+  0% {
+    transform: scaleY(0.8);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scaleY(1.2);
+    opacity: 1;
+  }
+}
+
+/* ─── Crown: Placement with Fanfare ──────────────────────────────── */
+.gift-animation-crown {
+  animation: crown-appear 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+}
+
+@keyframes crown-appear {
+  0% {
+    transform: scale(0) rotate(-180deg);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+.gift-animation-crown .fanfare {
+  animation: fanfare-burst 1s ease-out both;
+}
+
+@keyframes fanfare-burst {
+  0% {
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--fx), var(--fy)) scale(1.5);
+    opacity: 0;
+  }
+}
+
+/* ─── Whale: Breach ──────────────────────────────────────────────── */
+.gift-animation-whale {
+  animation: whale-splash 0.3s ease-out;
+}
+
+@keyframes whale-splash {
+  0%, 100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.3) saturate(1.5);
+  }
+}
+
+.gift-animation-whale .droplet {
+  animation: droplet-fall 1.2s ease-in forwards;
+}
+
+@keyframes droplet-fall {
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(80px) scale(0.3);
+    opacity: 0;
+  }
+}
+
+/* ─── Streak Bonuses ─────────────────────────────────────────────── */
+.streak-3 {
+  animation: streak-glow 0.5s ease-in-out 3;
+}
+.streak-5 {
+  animation: streak-fire 0.3s ease-in-out infinite;
+}
+.streak-10 {
+  animation: streak-lightning 0.2s ease-out 5;
+}
+.streak-25 {
+  animation: streak-legendary 0.5s ease-in-out infinite;
+}
+.streak-50 {
+  animation: streak-godmode 0.3s ease-in-out infinite;
+}
+
+@keyframes streak-glow {
+  0%, 100% { box-shadow: 0 0 5px rgba(255, 150, 0, 0.3); }
+  50% { box-shadow: 0 0 20px rgba(255, 150, 0, 0.8); }
+}
+
+@keyframes streak-fire {
+  0%, 100% { filter: hue-rotate(0deg); }
+  50% { filter: hue-rotate(30deg) brightness(1.2); }
+}
+
+@keyframes streak-lightning {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(2) drop-shadow(0 0 10px rgba(255, 255, 0, 0.8)); }
+}
+
+@keyframes streak-legendary {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+@keyframes streak-godmode {
+  0%, 100% { transform: scale(1) rotate(0deg); }
+  25% { transform: scale(1.1) rotate(-2deg); }
+  75% { transform: scale(1.1) rotate(2deg); }
+}
+
+/* ─── Shared Keyframes ───────────────────────────────────────────── */
+@keyframes sparkle {
+  0% {
+    transform: scale(0) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(2) rotate(180deg);
+    opacity: 0;
+  }
+}
+
+@keyframes fadeOut {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes fade-in-up {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.3s ease-out both;
+}
+
+/* ─── Gift Panel Styles ──────────────────────────────────────────── */
+.gift-panel-wrapper {
+  position: relative;
+  z-index: 40;
+}
+
+.gift-panel {
+  background: linear-gradient(180deg, rgba(15, 15, 25, 0.98) 0%, rgba(20, 10, 30, 0.98) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow:
+    0 0 40px rgba(168, 85, 247, 0.15),
+    0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.gift-panel-compact {
+  position: relative;
+  z-index: 30;
+}
+
+/* ─── Gift Grid Hover ────────────────────────────────────────────── */
+.gift-panel button:active {
+  transform: scale(0.97);
+}
+
+/* ─── Scrollbar for gift panel ───────────────────────────────────── */
+.gift-panel ::-webkit-scrollbar {
+  width: 4px;
+}
+.gift-panel ::-webkit-scrollbar-track {
+  background: transparent;
+}
+.gift-panel ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+}
