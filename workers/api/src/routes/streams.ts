@@ -12,7 +12,7 @@
  */
 
 import { Hono } from 'hono';
-import { aggregateAllStreams, getSourceHealth } from '../feed/live-aggregator';
+import { aggregateAllStreams } from '../feed/live-aggregator';
 import type { Env } from '../index';
 import { jsonResponse, noCacheJsonResponse } from '../index';
 import {
@@ -23,6 +23,10 @@ import {
 import { requireSession } from '../session';
 import { broadcastToAll } from '../ws-broadcast';
 import { CHANNELS } from '../ws-channels';
+
+// ─── Router ──────────────────────────────────────────────────────────────
+
+const streams = new Hono<{ Bindings: Env }>();
 
 // ─── Frontend Live API ─────────────────────────────────────────────────────
 
@@ -88,7 +92,7 @@ streams.get('/live', async (c) => {
       return labels[src] || src;
     };
 
-    const streams = sorted.map((s) => ({
+    const formattedStreams = sorted.map((s) => ({
       id: s.id,
       title: s.title,
       creatorId: s.streamer.id,
@@ -110,7 +114,7 @@ streams.get('/live', async (c) => {
     }));
 
     return noCacheJsonResponse({
-      streams,
+      streams: formattedStreams,
       featured: featured.map((s) => ({
         id: s.id,
         title: s.title,
@@ -193,10 +197,6 @@ interface StreamRecord {
   thumbnail?: string;
   startedAt: number;
 }
-
-// ─── Router ──────────────────────────────────────────────────────────────
-
-const streams = new Hono<{ Bindings: Env }>();
 
 // ═══════════════════════════════════════════════════════════════════════
 // POST /announce — Announce a stream to all linked protocols
