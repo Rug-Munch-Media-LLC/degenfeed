@@ -122,12 +122,12 @@ export function registerCoinsRoutes(app: Hono<{ Bindings: Env }>): void {
   app.get('/api/creator/coin/:address/trades', async (c) =>
     handleCreatorCoinTrades(c.req.raw, c.env),
   );
-  app.post('/api/creator/coin/:address/burn', async (c) => handleCreatorCoinBurn(c.req.raw, c.env));
+  app.post('/api/creator/coin/:address/burn', async (c) => withSession(c, () => handleCreatorCoinBurn(c.req.raw, c.env)));
   app.post('/api/creator/coin/:address/airdrop', async (c) =>
-    handleCreatorCoinAirdrop(c.req.raw, c.env),
+    withSession(c, () => handleCreatorCoinAirdrop(c.req.raw, c.env)),
   );
   app.post('/api/creator/coin/:address/gated-post', async (c) =>
-    handleCreatorCoinGatedPost(c.req.raw, c.env),
+    withSession(c, () => handleCreatorCoinGatedPost(c.req.raw, c.env)),
   );
   app.get('/api/creator/coin/:address/revenue', async (c) =>
     handleCreatorCoinRevenue(c.req.raw, c.env),
@@ -148,10 +148,10 @@ export function registerCoinsRoutes(app: Hono<{ Bindings: Env }>): void {
   );
 
   // --- API: Token Community (engagement layer) ---
-  app.route('/api/token', tokenCommunity);
+  app.route('/api/token/community', tokenCommunity);
 
   // --- API: PeerTube Livestreams (creator token streaming) ---
-  app.route('/api/token', peertubeStreams);
+  app.route('/api/token/streams', peertubeStreams);
 
   // --- API: Prices ---
   app.all('/api/prices', async (c) => handlePrices(c.req.raw, c.env));

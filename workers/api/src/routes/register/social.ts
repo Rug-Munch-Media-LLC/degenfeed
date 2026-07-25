@@ -674,11 +674,11 @@ export function registerSocialRoutes(app: Hono<{ Bindings: Env }>): void {
   app.post('/api/matrix/bridge', async (c) => handleMatrixBridgeMessages(c.req.raw, c.env));
 
   // --- API: Webhook System ---
-  app.post('/api/webhooks/create', async (c) => handleWebhookCreate(c.req.raw, c.env));
+  app.post('/api/webhooks/create', async (c) => withSession(c, () => handleWebhookCreate(c.req.raw, c.env)));
   app.post('/api/webhooks/test', async (c) => handleWebhookTest(c.req.raw, c.env));
   app.get('/api/webhooks', async (c) => handleWebhookList(c.req.raw, c.env));
   app.delete('/api/webhooks', async (c) => handleWebhookDelete(c.req.raw, c.env));
-  app.post('/api/webhooks/trigger', async (c) => handleWebhookTrigger(c.req.raw, c.env));
+  app.post('/api/webhooks/trigger', async (c) => withSession(c, () => handleWebhookTrigger(c.req.raw, c.env)));
 
   // --- API: GitHub Integration ---
   app.post('/api/github/connect', async (c) => handleGitHubConnect(c.req.raw, c.env));
@@ -741,28 +741,28 @@ export function registerSocialRoutes(app: Hono<{ Bindings: Env }>): void {
 
   // --- API: Cross-Post to Centralized Platforms ---
   app.post('/api/cross-post/medium', async (c) =>
-    handleCrossPostCentralized(c.req.raw, c.env, 'medium'),
+    withSession(c, () => handleCrossPostCentralized(c.req.raw, c.env, 'medium')),
   );
   app.post('/api/cross-post/substack', async (c) =>
-    handleCrossPostCentralized(c.req.raw, c.env, 'substack'),
+    withSession(c, () => handleCrossPostCentralized(c.req.raw, c.env, 'substack')),
   );
   app.post('/api/cross-post/youtube', async (c) =>
-    handleCrossPostCentralized(c.req.raw, c.env, 'youtube'),
+    withSession(c, () => handleCrossPostCentralized(c.req.raw, c.env, 'youtube')),
   );
   app.post('/api/cross-post/tiktok', async (c) =>
-    handleCrossPostCentralized(c.req.raw, c.env, 'tiktok'),
+    withSession(c, () => handleCrossPostCentralized(c.req.raw, c.env, 'tiktok')),
   );
   app.post('/api/cross-post/instagram', async (c) =>
-    handleCrossPostCentralized(c.req.raw, c.env, 'instagram'),
+    withSession(c, () => handleCrossPostCentralized(c.req.raw, c.env, 'instagram')),
   );
   app.post('/api/cross-post/linkedin', async (c) =>
-    handleCrossPostCentralized(c.req.raw, c.env, 'linkedin'),
+    withSession(c, () => handleCrossPostCentralized(c.req.raw, c.env, 'linkedin')),
   );
   app.post('/api/cross-post/reddit', async (c) =>
-    handleCrossPostCentralized(c.req.raw, c.env, 'reddit'),
+    withSession(c, () => handleCrossPostCentralized(c.req.raw, c.env, 'reddit')),
   );
   app.post('/api/cross-post/pinterest', async (c) =>
-    handleCrossPostCentralized(c.req.raw, c.env, 'pinterest'),
+    withSession(c, () => handleCrossPostCentralized(c.req.raw, c.env, 'pinterest')),
   );
 
   // --- API: Platform Limits (for UI content adaptation) ---
@@ -775,9 +775,9 @@ export function registerSocialRoutes(app: Hono<{ Bindings: Env }>): void {
   app.get('/api/reputation/leaderboard', async (c) =>
     handleReputationLeaderboard(c.req.raw, c.env),
   );
-  app.post('/api/reputation/earn', async (c) => handleReputationEarn(c.req.raw, c.env));
-  app.post('/api/reputation/slash', async (c) => handleReputationSlash(c.req.raw, c.env));
-  app.post('/api/reputation/stake', async (c) => handleReputationStake(c.req.raw, c.env));
+  app.post('/api/reputation/earn', async (c) => withSession(c, () => handleReputationEarn(c.req.raw, c.env)));
+  app.post('/api/reputation/slash', async (c) => withSession(c, () => handleReputationSlash(c.req.raw, c.env)));
+  app.post('/api/reputation/stake', async (c) => withSession(c, () => handleReputationStake(c.req.raw, c.env)));
   app.post('/api/reputation/stake/resolve', async (c) =>
     handleReputationStakeResolve(c.req.raw, c.env),
   );

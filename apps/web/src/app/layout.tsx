@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { JetBrains_Mono, Plus_Jakarta_Sans, Syne } from 'next/font/google';
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import Script from 'next/script';
 
 import '../styles/design-tokens.css';
@@ -111,6 +111,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const cookieStore = await cookies();
   const _theme = cookieStore.get('df_theme')?.value || 'dark';
 
+  // Read CSP nonce from middleware-injected request header
+  const headersList = await headers();
+  const nonce = headersList.get('x-csp-nonce') || '';
+
   return (
     <html
       lang="en"
@@ -123,6 +127,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         </a>
         {/* ⚡ SSR-safe theme: sync localStorage before paint to prevent flash */}
         <script
+          nonce={nonce}
           dangerouslySetInnerHTML={{
             __html: [
               '(function(){',
@@ -168,7 +173,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <link rel="preload" href="/icon.svg" as="image" fetchPriority="high" />
 
         {/* == Critical CSS inlining — above-the-fold styles == */}
-        <style data-critical="1">
+        <style nonce={nonce} data-critical="1">
           {[
             'body{--bg:#000;--fg:#e7e9ea;background:var(--bg);color:var(--fg);margin:0;font-family:"Plus Jakarta Sans",Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}',
             '.skip-link{position:absolute;top:-100%;left:0;z-index:100;padding:8px 16px;background:var(--color-accent,#00ff41);color:#000;font-weight:600}',
@@ -185,16 +190,19 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           data-domain="degenfeed.xyz"
           src="https://plausible.rugmunch.io/js/script.js"
           strategy="afterInteractive"
+          nonce={nonce}
         />
         <Script
           id="sw-register"
           strategy="afterInteractive"
+          nonce={nonce}
         >{`if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').catch(()=>{})}`}</Script>
         {/* Scanline overlay for cyberpunk texture */}
         <div className="scanline" aria-hidden="true" />
         {/* JSON-LD structured data */}
         <script
           type="application/ld+json"
+          nonce={nonce}
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
               '@context': 'https://schema.org',
