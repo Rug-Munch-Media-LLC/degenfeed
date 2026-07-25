@@ -8,19 +8,29 @@
 
 import type { Env } from '../index';
 import { jsonResponse, noCacheJsonResponse } from '../index';
-import { broadcastToAll, broadcastToUser } from '../ws-broadcast';
-import {
-  getSpace, saveSpace, requireSessionAddr, isHostOrCoHost, generateId,
-  pushChatMessage, getChatMessages, updateChatMessage,
-} from './utils';
-import type { SpaceChatMessage, ChatReaction } from './types';
 import { methodNotAllowed } from '../response-helpers';
+import { broadcastToAll, broadcastToUser } from '../ws-broadcast';
+import type { SpaceChatMessage } from './types';
+import {
+  generateId,
+  getChatMessages,
+  getSpace,
+  isHostOrCoHost,
+  pushChatMessage,
+  requireSessionAddr,
+  saveSpace,
+  updateChatMessage,
+} from './utils';
 
 // ──────────────────────────────────────────────
 //  CHAT: SEND
 // ──────────────────────────────────────────────
 
-export async function handleSpaceChatSend(request: Request, env: Env, spaceId: string): Promise<Response> {
+export async function handleSpaceChatSend(
+  request: Request,
+  env: Env,
+  spaceId: string,
+): Promise<Response> {
   if (request.method !== 'POST') return methodNotAllowed(['POST']);
   const sessionAddr = await requireSessionAddr(request, env);
   if (sessionAddr instanceof Response) return sessionAddr;
@@ -34,7 +44,8 @@ export async function handleSpaceChatSend(request: Request, env: Env, spaceId: s
       tipCurrency?: string;
       tipRecipientId?: string;
     };
-    if (!body.text?.trim() && !body.mediaUrl) return jsonResponse({ error: 'Message text or media is required' }, 400);
+    if (!body.text?.trim() && !body.mediaUrl)
+      return jsonResponse({ error: 'Message text or media is required' }, 400);
     const space = await getSpace(env, spaceId);
     if (!space) return jsonResponse({ error: 'Space not found' }, 404);
     if (space.status !== 'live') return jsonResponse({ error: 'Space is not live' }, 400);
@@ -47,7 +58,9 @@ export async function handleSpaceChatSend(request: Request, env: Env, spaceId: s
     const message: SpaceChatMessage = {
       id: generateId(),
       userId: sessionAddr,
-      username: body.tipRecipientId ? 'Tip' : (space.speakers.find((s) => s.id === sessionAddr)?.displayName || 'Listener'),
+      username: body.tipRecipientId
+        ? 'Tip'
+        : space.speakers.find((s) => s.id === sessionAddr)?.displayName || 'Listener',
       avatarUrl: space.speakers.find((s) => s.id === sessionAddr)?.avatarUrl,
       text: body.text?.trim() || '',
       timestamp: Date.now(),
@@ -68,14 +81,20 @@ export async function handleSpaceChatSend(request: Request, env: Env, spaceId: s
     // Broadcast to all clients
     broadcastToAll('space:chat', { spaceId, message });
     return jsonResponse({ message, ok: true });
-  } catch (e) { return jsonResponse({ error: String(e) }, 500); }
+  } catch (e) {
+    return jsonResponse({ error: String(e) }, 500);
+  }
 }
 
 // ──────────────────────────────────────────────
 //  CHAT: HISTORY
 // ──────────────────────────────────────────────
 
-export async function handleSpaceChatHistory(request: Request, env: Env, spaceId: string): Promise<Response> {
+export async function handleSpaceChatHistory(
+  request: Request,
+  env: Env,
+  spaceId: string,
+): Promise<Response> {
   if (request.method !== 'GET') return methodNotAllowed(['GET']);
   try {
     const space = await getSpace(env, spaceId);
@@ -84,14 +103,20 @@ export async function handleSpaceChatHistory(request: Request, env: Env, spaceId
     // Filter out deleted messages unless they are referenced
     const visible = messages.filter((m) => !m.deleted);
     return noCacheJsonResponse({ messages: visible, pinnedMessageIds: space.pinnedMessages || [] });
-  } catch (e) { return jsonResponse({ error: String(e) }, 500); }
+  } catch (e) {
+    return jsonResponse({ error: String(e) }, 500);
+  }
 }
 
 // ──────────────────────────────────────────────
 //  CHAT: PIN MESSAGE
 // ──────────────────────────────────────────────
 
-export async function handleSpacePinMessage(request: Request, env: Env, spaceId: string): Promise<Response> {
+export async function handleSpacePinMessage(
+  request: Request,
+  env: Env,
+  spaceId: string,
+): Promise<Response> {
   if (request.method !== 'POST') return methodNotAllowed(['POST']);
   const sessionAddr = await requireSessionAddr(request, env);
   if (sessionAddr instanceof Response) return sessionAddr;
@@ -100,7 +125,8 @@ export async function handleSpacePinMessage(request: Request, env: Env, spaceId:
     if (!body.messageId) return jsonResponse({ error: 'messageId is required' }, 400);
     const space = await getSpace(env, spaceId);
     if (!space) return jsonResponse({ error: 'Space not found' }, 404);
-    if (!isHostOrCoHost(sessionAddr, space)) return jsonResponse({ error: 'Only host or co-host can pin messages' }, 403);
+    if (!isHostOrCoHost(sessionAddr, space))
+      return jsonResponse({ error: 'Only host or co-host can pin messages' }, 403);
     if (!space.pinnedMessages) space.pinnedMessages = [];
     const isPinning = body.pin !== false;
 
@@ -120,24 +146,33 @@ export async function handleSpacePinMessage(request: Request, env: Env, spaceId:
     await saveSpace(env, space);
 
     broadcastToAll('space:update', {
-      spaceId, status: isPinning ? 'message-pinned' : 'message-unpinned',
-      messageId: body.messageId, userId: sessionAddr,
+      spaceId,
+      status: isPinning ? 'message-pinned' : 'message-unpinned',
+      messageId: body.messageId,
+      userId: sessionAddr,
     });
     return jsonResponse({ pinnedMessages: space.pinnedMessages, ok: true });
-  } catch (e) { return jsonResponse({ error: String(e) }, 500); }
+  } catch (e) {
+    return jsonResponse({ error: String(e) }, 500);
+  }
 }
 
 // ──────────────────────────────────────────────
 //  CHAT: REACT TO MESSAGE
 // ──────────────────────────────────────────────
 
-export async function handleSpaceChatReact(request: Request, env: Env, spaceId: string): Promise<Response> {
+export async function handleSpaceChatReact(
+  request: Request,
+  env: Env,
+  spaceId: string,
+): Promise<Response> {
   if (request.method !== 'POST') return methodNotAllowed(['POST']);
   const sessionAddr = await requireSessionAddr(request, env);
   if (sessionAddr instanceof Response) return sessionAddr;
   try {
     const body = (await request.json()) as { messageId?: string; emoji?: string };
-    if (!body.messageId || !body.emoji) return jsonResponse({ error: 'messageId and emoji are required' }, 400);
+    if (!body.messageId || !body.emoji)
+      return jsonResponse({ error: 'messageId and emoji are required' }, 400);
     const space = await getSpace(env, spaceId);
     if (!space) return jsonResponse({ error: 'Space not found' }, 404);
 
@@ -156,18 +191,27 @@ export async function handleSpaceChatReact(request: Request, env: Env, spaceId: 
     if (!updated) return jsonResponse({ error: 'Message not found' }, 404);
 
     broadcastToAll('space:update', {
-      spaceId, status: 'message-reacted',
-      messageId: body.messageId, emoji: body.emoji, userId: sessionAddr,
+      spaceId,
+      status: 'message-reacted',
+      messageId: body.messageId,
+      emoji: body.emoji,
+      userId: sessionAddr,
     });
     return jsonResponse({ message: updated, ok: true });
-  } catch (e) { return jsonResponse({ error: String(e) }, 500); }
+  } catch (e) {
+    return jsonResponse({ error: String(e) }, 500);
+  }
 }
 
 // ──────────────────────────────────────────────
 //  CHAT: DELETE/MODERATE
 // ──────────────────────────────────────────────
 
-export async function handleSpaceDeleteMessage(request: Request, env: Env, spaceId: string): Promise<Response> {
+export async function handleSpaceDeleteMessage(
+  request: Request,
+  env: Env,
+  spaceId: string,
+): Promise<Response> {
   if (request.method !== 'POST') return methodNotAllowed(['POST']);
   const sessionAddr = await requireSessionAddr(request, env);
   if (sessionAddr instanceof Response) return sessionAddr;
@@ -189,17 +233,25 @@ export async function handleSpaceDeleteMessage(request: Request, env: Env, space
     if (!updated) return jsonResponse({ error: 'Message not found' }, 404);
 
     broadcastToAll('space:update', {
-      spaceId, status: 'message-deleted', messageId: body.messageId,
+      spaceId,
+      status: 'message-deleted',
+      messageId: body.messageId,
     });
     return jsonResponse({ ok: true });
-  } catch (e) { return jsonResponse({ error: String(e) }, 500); }
+  } catch (e) {
+    return jsonResponse({ error: String(e) }, 500);
+  }
 }
 
 // ──────────────────────────────────────────────
 //  CHAT: MUTE USER
 // ──────────────────────────────────────────────
 
-export async function handleSpaceMuteUser(request: Request, env: Env, spaceId: string): Promise<Response> {
+export async function handleSpaceMuteUser(
+  request: Request,
+  env: Env,
+  spaceId: string,
+): Promise<Response> {
   if (request.method !== 'POST') return methodNotAllowed(['POST']);
   const sessionAddr = await requireSessionAddr(request, env);
   if (sessionAddr instanceof Response) return sessionAddr;
@@ -208,7 +260,8 @@ export async function handleSpaceMuteUser(request: Request, env: Env, spaceId: s
     if (!body.userId) return jsonResponse({ error: 'userId is required' }, 400);
     const space = await getSpace(env, spaceId);
     if (!space) return jsonResponse({ error: 'Space not found' }, 404);
-    if (!isHostOrCoHost(sessionAddr, space)) return jsonResponse({ error: 'Only host or co-host can mute users' }, 403);
+    if (!isHostOrCoHost(sessionAddr, space))
+      return jsonResponse({ error: 'Only host or co-host can mute users' }, 403);
 
     if (!space.chatMutedUsers) space.chatMutedUsers = [];
     const isMuting = body.mute !== false;
@@ -221,18 +274,26 @@ export async function handleSpaceMuteUser(request: Request, env: Env, spaceId: s
     await saveSpace(env, space);
 
     broadcastToAll('space:update', {
-      spaceId, status: isMuting ? 'user-muted' : 'user-unmuted',
-      userId: body.userId, modId: sessionAddr,
+      spaceId,
+      status: isMuting ? 'user-muted' : 'user-unmuted',
+      userId: body.userId,
+      modId: sessionAddr,
     });
     return jsonResponse({ chatMutedUsers: space.chatMutedUsers, ok: true });
-  } catch (e) { return jsonResponse({ error: String(e) }, 500); }
+  } catch (e) {
+    return jsonResponse({ error: String(e) }, 500);
+  }
 }
 
 // ──────────────────────────────────────────────
 //  CHAT: TIP IN CHAT
 // ──────────────────────────────────────────────
 
-export async function handleSpaceChatTip(request: Request, env: Env, spaceId: string): Promise<Response> {
+export async function handleSpaceChatTip(
+  request: Request,
+  env: Env,
+  spaceId: string,
+): Promise<Response> {
   if (request.method !== 'POST') return methodNotAllowed(['POST']);
   const sessionAddr = await requireSessionAddr(request, env);
   if (sessionAddr instanceof Response) return sessionAddr;
@@ -243,12 +304,16 @@ export async function handleSpaceChatTip(request: Request, env: Env, spaceId: st
       currency?: string;
       messageId?: string;
     };
-    if (!body.recipientId || !body.amount) return jsonResponse({ error: 'recipientId and amount are required' }, 400);
+    if (!body.recipientId || !body.amount)
+      return jsonResponse({ error: 'recipientId and amount are required' }, 400);
     const space = await getSpace(env, spaceId);
     if (!space) return jsonResponse({ error: 'Space not found' }, 404);
-    if (!space.tippingEnabled) return jsonResponse({ error: 'Tipping is disabled in this space' }, 400);
+    if (!space.tippingEnabled)
+      return jsonResponse({ error: 'Tipping is disabled in this space' }, 400);
 
-    const recipient = space.speakers.find((s) => s.id.toLowerCase() === body.recipientId?.toLowerCase());
+    const recipient = space.speakers.find(
+      (s) => s.id.toLowerCase() === body.recipientId?.toLowerCase(),
+    );
     if (!recipient) return jsonResponse({ error: 'Recipient not found' }, 404);
 
     // Create a tip message in chat
@@ -271,17 +336,26 @@ export async function handleSpaceChatTip(request: Request, env: Env, spaceId: st
 
     broadcastToAll('space:chat', { spaceId, message: tipMessage });
     broadcastToUser(body.recipientId, 'space:tip', {
-      spaceId, amount: body.amount, currency: body.currency || 'SOL', fromUserId: sessionAddr,
+      spaceId,
+      amount: body.amount,
+      currency: body.currency || 'SOL',
+      fromUserId: sessionAddr,
     });
     return jsonResponse({ message: tipMessage, ok: true });
-  } catch (e) { return jsonResponse({ error: String(e) }, 500); }
+  } catch (e) {
+    return jsonResponse({ error: String(e) }, 500);
+  }
 }
 
 // ──────────────────────────────────────────────
 //  EMOJI REACTIONS (legacy, to space itself)
 // ──────────────────────────────────────────────
 
-export async function handleSpaceReact(request: Request, env: Env, spaceId: string): Promise<Response> {
+export async function handleSpaceReact(
+  request: Request,
+  env: Env,
+  spaceId: string,
+): Promise<Response> {
   if (request.method !== 'POST') return methodNotAllowed(['POST']);
   const sessionAddr = await requireSessionAddr(request, env);
   if (sessionAddr instanceof Response) return sessionAddr;
@@ -294,25 +368,39 @@ export async function handleSpaceReact(request: Request, env: Env, spaceId: stri
     space.reactions.push({ userId: sessionAddr, emoji: body.emoji, createdAt: Date.now() });
     if (space.reactions.length > 50) space.reactions = space.reactions.slice(-50);
     await saveSpace(env, space);
-    broadcastToAll('space:update', { spaceId, status: 'react', userId: sessionAddr, emoji: body.emoji });
+    broadcastToAll('space:update', {
+      spaceId,
+      status: 'react',
+      userId: sessionAddr,
+      emoji: body.emoji,
+    });
     return jsonResponse({ space, ok: true });
-  } catch (e) { return jsonResponse({ error: String(e) }, 500); }
+  } catch (e) {
+    return jsonResponse({ error: String(e) }, 500);
+  }
 }
 
 // ──────────────────────────────────────────────
 //  RECORDING
 // ──────────────────────────────────────────────
 
-export async function handleSpaceRecordingStart(request: Request, env: Env, spaceId: string): Promise<Response> {
+export async function handleSpaceRecordingStart(
+  request: Request,
+  env: Env,
+  spaceId: string,
+): Promise<Response> {
   if (request.method !== 'POST') return methodNotAllowed(['POST']);
   const sessionAddr = await requireSessionAddr(request, env);
   if (sessionAddr instanceof Response) return sessionAddr;
   try {
     const space = await getSpace(env, spaceId);
     if (!space) return jsonResponse({ error: 'Space not found' }, 404);
-    if (!isHostOrCoHost(sessionAddr, space)) return jsonResponse({ error: 'Only host or co-host can start recording' }, 403);
-    if (space.recording?.startedAt && !space.recording.endedAt) return jsonResponse({ error: 'Recording already in progress' }, 400);
-    if (!space.isRecorded) return jsonResponse({ error: 'Recording is disabled for this space' }, 400);
+    if (!isHostOrCoHost(sessionAddr, space))
+      return jsonResponse({ error: 'Only host or co-host can start recording' }, 403);
+    if (space.recording?.startedAt && !space.recording.endedAt)
+      return jsonResponse({ error: 'Recording already in progress' }, 400);
+    if (!space.isRecorded)
+      return jsonResponse({ error: 'Recording is disabled for this space' }, 400);
 
     space.recording = {
       ...space.recording,
@@ -321,70 +409,115 @@ export async function handleSpaceRecordingStart(request: Request, env: Env, spac
     await saveSpace(env, space);
     broadcastToAll('space:update', { spaceId, status: 'recording-started', userId: sessionAddr });
     return jsonResponse({ recording: space.recording, ok: true });
-  } catch (e) { return jsonResponse({ error: String(e) }, 500); }
+  } catch (e) {
+    return jsonResponse({ error: String(e) }, 500);
+  }
 }
 
-export async function handleSpaceRecordingStop(request: Request, env: Env, spaceId: string): Promise<Response> {
+export async function handleSpaceRecordingStop(
+  request: Request,
+  env: Env,
+  spaceId: string,
+): Promise<Response> {
   if (request.method !== 'POST') return methodNotAllowed(['POST']);
   const sessionAddr = await requireSessionAddr(request, env);
   if (sessionAddr instanceof Response) return sessionAddr;
   try {
     const space = await getSpace(env, spaceId);
     if (!space) return jsonResponse({ error: 'Space not found' }, 404);
-    if (!isHostOrCoHost(sessionAddr, space)) return jsonResponse({ error: 'Only host or co-host can stop recording' }, 403);
-    if (!space.recording?.startedAt) return jsonResponse({ error: 'No recording in progress' }, 400);
+    if (!isHostOrCoHost(sessionAddr, space))
+      return jsonResponse({ error: 'Only host or co-host can stop recording' }, 403);
+    if (!space.recording?.startedAt)
+      return jsonResponse({ error: 'No recording in progress' }, 400);
 
     space.recording.endedAt = Date.now();
-    space.recording.duration = Math.floor((space.recording.endedAt - space.recording.startedAt) / 1000);
+    space.recording.duration = Math.floor(
+      (space.recording.endedAt - space.recording.startedAt) / 1000,
+    );
     await saveSpace(env, space);
-    broadcastToAll('space:update', { spaceId, status: 'recording-stopped', userId: sessionAddr, duration: space.recording.duration });
+    broadcastToAll('space:update', {
+      spaceId,
+      status: 'recording-stopped',
+      userId: sessionAddr,
+      duration: space.recording.duration,
+    });
     return jsonResponse({ recording: space.recording, ok: true });
-  } catch (e) { return jsonResponse({ error: String(e) }, 500); }
+  } catch (e) {
+    return jsonResponse({ error: String(e) }, 500);
+  }
 }
 
-export async function handleSpaceRecording(request: Request, env: Env, spaceId: string): Promise<Response> {
+export async function handleSpaceRecording(
+  request: Request,
+  env: Env,
+  spaceId: string,
+): Promise<Response> {
   if (request.method !== 'GET') return methodNotAllowed(['GET']);
   try {
     const space = await getSpace(env, spaceId);
     if (!space) return jsonResponse({ error: 'Space not found' }, 404);
-    if (!space.recording?.url && !space.recording?.startedAt) return jsonResponse({ error: 'Recording not available yet' }, 404);
+    if (!space.recording?.url && !space.recording?.startedAt)
+      return jsonResponse({ error: 'Recording not available yet' }, 404);
     return noCacheJsonResponse({
       recording: space.recording,
-      space: { id: space.id, title: space.title, hostName: space.hostName, hostAvatarUrl: space.hostAvatarUrl, createdAt: space.createdAt },
+      space: {
+        id: space.id,
+        title: space.title,
+        hostName: space.hostName,
+        hostAvatarUrl: space.hostAvatarUrl,
+        createdAt: space.createdAt,
+      },
     });
-  } catch (e) { return jsonResponse({ error: String(e) }, 500); }
+  } catch (e) {
+    return jsonResponse({ error: String(e) }, 500);
+  }
 }
 
 // ──────────────────────────────────────────────
 //  TRANSCRIPT
 // ──────────────────────────────────────────────
 
-export async function handleSpaceTranscript(request: Request, env: Env, spaceId: string): Promise<Response> {
-  if (request.method !== 'POST' && request.method !== 'GET') return methodNotAllowed(['GET', 'POST']);
+export async function handleSpaceTranscript(
+  request: Request,
+  env: Env,
+  spaceId: string,
+): Promise<Response> {
+  if (request.method !== 'POST' && request.method !== 'GET')
+    return methodNotAllowed(['GET', 'POST']);
   try {
     const space = await getSpace(env, spaceId);
     if (!space) return jsonResponse({ error: 'Space not found' }, 404);
     if (request.method === 'GET') {
-      if (space.transcript) return noCacheJsonResponse({ transcript: space.transcript, summary: space.summary });
+      if (space.transcript)
+        return noCacheJsonResponse({ transcript: space.transcript, summary: space.summary });
       return jsonResponse({ error: 'Transcript not available yet' }, 404);
     }
     const sessionAddr = await requireSessionAddr(request, env);
     if (sessionAddr instanceof Response) return sessionAddr;
-    if (!isHostOrCoHost(sessionAddr, space)) return jsonResponse({ error: 'Only host or co-host can request transcript' }, 403);
-    if (space.status !== 'ended') return jsonResponse({ error: 'Space must be ended before generating transcript' }, 400);
-    if (!space.recording?.url) return jsonResponse({ error: 'No recording available to transcribe' }, 400);
+    if (!isHostOrCoHost(sessionAddr, space))
+      return jsonResponse({ error: 'Only host or co-host can request transcript' }, 403);
+    if (space.status !== 'ended')
+      return jsonResponse({ error: 'Space must be ended before generating transcript' }, 400);
+    if (!space.recording?.url)
+      return jsonResponse({ error: 'No recording available to transcribe' }, 400);
     space.transcript = 'Transcript generation pending — AI service integration required.';
     space.summary = 'Summary generation pending — AI service integration required.';
     await saveSpace(env, space, 604800);
     return jsonResponse({ ok: true, message: 'Transcript generation queued', spaceId });
-  } catch (e) { return jsonResponse({ error: String(e) }, 500); }
+  } catch (e) {
+    return jsonResponse({ error: String(e) }, 500);
+  }
 }
 
 // ──────────────────────────────────────────────
 //  CLIPS
 // ──────────────────────────────────────────────
 
-export async function handleSpaceCreateClip(request: Request, env: Env, spaceId: string): Promise<Response> {
+export async function handleSpaceCreateClip(
+  request: Request,
+  env: Env,
+  spaceId: string,
+): Promise<Response> {
   if (request.method !== 'POST') return methodNotAllowed(['POST']);
   const sessionAddr = await requireSessionAddr(request, env);
   if (sessionAddr instanceof Response) return sessionAddr;
@@ -395,7 +528,8 @@ export async function handleSpaceCreateClip(request: Request, env: Env, spaceId:
     }
     const space = await getSpace(env, spaceId);
     if (!space) return jsonResponse({ error: 'Space not found' }, 404);
-    if (body.endTime <= body.startTime) return jsonResponse({ error: 'endTime must be after startTime' }, 400);
+    if (body.endTime <= body.startTime)
+      return jsonResponse({ error: 'endTime must be after startTime' }, 400);
 
     if (!space.clips) space.clips = [];
     const clip = {
@@ -414,23 +548,35 @@ export async function handleSpaceCreateClip(request: Request, env: Env, spaceId:
     await saveSpace(env, space, 604800);
 
     return jsonResponse({ clip, ok: true });
-  } catch (e) { return jsonResponse({ error: String(e) }, 500); }
+  } catch (e) {
+    return jsonResponse({ error: String(e) }, 500);
+  }
 }
 
-export async function handleSpaceClips(request: Request, env: Env, spaceId: string): Promise<Response> {
+export async function handleSpaceClips(
+  request: Request,
+  env: Env,
+  spaceId: string,
+): Promise<Response> {
   if (request.method !== 'GET') return methodNotAllowed(['GET']);
   try {
     const space = await getSpace(env, spaceId);
     if (!space) return jsonResponse({ error: 'Space not found' }, 404);
     return noCacheJsonResponse({ clips: space.clips || [] });
-  } catch (e) { return jsonResponse({ error: String(e) }, 500); }
+  } catch (e) {
+    return jsonResponse({ error: String(e) }, 500);
+  }
 }
 
 // ──────────────────────────────────────────────
 //  ANALYTICS
 // ──────────────────────────────────────────────
 
-export async function handleSpaceAnalytics(request: Request, env: Env, spaceId: string): Promise<Response> {
+export async function handleSpaceAnalytics(
+  request: Request,
+  env: Env,
+  spaceId: string,
+): Promise<Response> {
   if (request.method !== 'GET') return methodNotAllowed(['GET']);
   try {
     const space = await getSpace(env, spaceId);
@@ -446,12 +592,22 @@ export async function handleSpaceAnalytics(request: Request, env: Env, spaceId: 
       totalTips: totalTips.length,
       tipAmountTotal,
       tipCurrency: 'SOL',
-      averageListenDuration: space.startedAt && space.endedAt ? (space.endedAt - space.startedAt) / 1000 / Math.max(space.listeners, 1) : 0,
-      engagementScore: Math.round((messages.length + totalTips.length * 5 + space.reactions.length * 2) / Math.max(space.listeners, 1) * 100) / 100,
+      averageListenDuration:
+        space.startedAt && space.endedAt
+          ? (space.endedAt - space.startedAt) / 1000 / Math.max(space.listeners, 1)
+          : 0,
+      engagementScore:
+        Math.round(
+          ((messages.length + totalTips.length * 5 + space.reactions.length * 2) /
+            Math.max(space.listeners, 1)) *
+            100,
+        ) / 100,
       reactionCount: space.reactions.length,
       handRaiseCount: space.handRaised.length,
       clipCount: space.clips?.length || 0,
     };
     return noCacheJsonResponse({ analytics });
-  } catch (e) { return jsonResponse({ error: String(e) }, 500); }
+  } catch (e) {
+    return jsonResponse({ error: String(e) }, 500);
+  }
 }
