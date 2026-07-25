@@ -122,6 +122,7 @@ export interface AggregationResult {
   meta: {
     total: number;
     sourceCount: number;
+    sourcedCount: number;
     fetchedAt: number;
     errors: string[];
     sentiment: { bullish: number; bearish: number; neutral: number };

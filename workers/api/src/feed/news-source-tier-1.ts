@@ -71,7 +71,7 @@ export const TIER_1_SOURCES: NewsSourceMeta[] = [
     url: 'https://cryptoslate.com/feed/',
     type: 'rss',
   },
-  //──AI&Tech(15sources)──//AIResearch&Labs{
+  {
     id: 'arxiv-ai',
     name: 'ArXiv AI',
     category: 'ai',

@@ -81,7 +81,6 @@ export const TIER_3_SOURCES: NewsSourceMeta[] = [
     url: 'https://medium.com/feed/immunefi',
     type: 'rss',
   },
-  //──RedditviaRSS──
   {
     id: 'reddit-cc',
     name: 'r/CryptoCurrency',
