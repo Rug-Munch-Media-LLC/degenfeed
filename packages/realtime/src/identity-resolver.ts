@@ -45,6 +45,9 @@ export type ResolvableProtocol =
   | 'telegram'
   | 'lens'
   | 'ens'
+  | 'irc'
+  | 'xmpp'
+  | 'rocketchat'
   | 'unknown';
 
 export type IdentifierFormat =
@@ -58,6 +61,10 @@ export type IdentifierFormat =
   | { type: 'telegram-id'; userId: string }
   | { type: 'lens-handle'; handle: string }
   | { type: 'ens-name'; name: string }
+  | { type: 'irc-nick'; nick: string; network?: string }
+  | { type: 'irc-channel'; channel: string; network?: string }
+  | { type: 'xmpp-jid'; jid: string }
+  | { type: 'rocketchat-user'; userId: string; server?: string }
   | { type: 'unknown'; raw: string };
 
 // ─── Identifier Detection ───────────────────────────────────────────────────
@@ -73,6 +80,10 @@ const MATRIX_PATTERN = /^@[\w\-./]+:[\w\-./]+$/;
 const MASTODON_PATTERN = /^@?([\w\-./]+)@([\w\-./]+\.[a-zA-Z]{2,})$/;
 const MASTODON_HANDLE_PATTERN = /^@?[\w\-./]+@[\w\-./]+/;
 const TELEGRAM_ID_PATTERN = /^\d{5,}$/;
+const IRC_CHANNEL_PATTERN = /^#[a-zA-Z0-9_\-]{1,50}$/;
+const IRC_NICK_PATTERN = /^[a-zA-Z_\\[\]{}^`|][a-zA-Z0-9_\\[\]{}^`|-]{1,30}$/;
+const XMPP_JID_PATTERN = /^[a-zA-Z0-9._\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}(\/[a-zA-Z0-9_\-]+)?$/;
+const ROCKETCHAT_USER_PATTERN = /^@[a-zA-Z0-9._\-]{2,30}$/;
 
 export function detectIdentifier(raw: string): IdentifierFormat {
   const trimmed = raw.trim();
@@ -139,6 +150,32 @@ export function detectIdentifier(raw: string): IdentifierFormat {
     return { type: 'telegram-id', userId: trimmed };
   }
 
+  // IRC channel (#channel)
+  if (IRC_CHANNEL_PATTERN.test(trimmed)) {
+    // Check for network prefix: #network/channel
+    const ircMatch = trimmed.match(/^#(\w+)\/(.+)$/);
+    return {
+      type: 'irc-channel',
+      channel: trimmed,
+      network: ircMatch?.[1] ?? 'libera',
+    };
+  }
+
+  // XMPP JID (user@domain)
+  if (XMPP_JID_PATTERN.test(trimmed)) {
+    return { type: 'xmpp-jid', jid: trimmed };
+  }
+
+  // Rocket.Chat user (@username)
+  if (ROCKETCHAT_USER_PATTERN.test(trimmed)) {
+    return { type: 'rocketchat-user', userId: trimmed.slice(1) };
+  }
+
+  // IRC nick — last check since it's the broadest pattern
+  if (IRC_NICK_PATTERN.test(trimmed) && trimmed.length >= 2) {
+    return { type: 'irc-nick', nick: trimmed };
+  }
+
   return { type: 'unknown', raw: trimmed };
 }
 
@@ -163,6 +200,13 @@ export function sourceProtocolFromFormat(fmt: IdentifierFormat): ResolvableProto
       return 'lens';
     case 'ens-name':
       return 'ens';
+    case 'irc-nick':
+    case 'irc-channel':
+      return 'irc';
+    case 'xmpp-jid':
+      return 'xmpp';
+    case 'rocketchat-user':
+      return 'rocketchat';
     default:
       return 'unknown';
   }
@@ -517,6 +561,38 @@ function applyDirectIdentity(fmt: IdentifierFormat, result: ResolvedIdentity): v
     case 'lens-handle':
       if (!result.protocols.lens) {
         result.protocols.lens = { id: fmt.handle, handle: fmt.handle };
+      }
+      break;
+    case 'irc-nick':
+      if (!result.protocols.irc) {
+        result.protocols.irc = {
+          id: fmt.network ?? 'libera',
+          handle: fmt.nick,
+          displayName: fmt.nick,
+        };
+      }
+      break;
+    case 'irc-channel':
+      if (!result.protocols.irc) {
+        result.protocols.irc = {
+          id: fmt.network ?? 'libera',
+          handle: fmt.channel,
+          displayName: fmt.channel,
+        };
+      }
+      break;
+    case 'xmpp-jid':
+      if (!result.protocols.xmpp) {
+        result.protocols.xmpp = { id: fmt.jid, handle: fmt.jid };
+      }
+      break;
+    case 'rocketchat-user':
+      if (!result.protocols.rocketchat) {
+        result.protocols.rocketchat = {
+          id: fmt.userId,
+          handle: fmt.userId,
+          displayName: fmt.server,
+        };
       }
       break;
     default:

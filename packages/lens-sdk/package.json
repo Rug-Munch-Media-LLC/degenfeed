@@ -7,7 +7,9 @@
   "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
-    "./video": "./src/video.ts"
+    "./video": "./src/video.ts",
+    "./momoka": "./src/momoka.ts",
+    "./data-export": "./src/data-export.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

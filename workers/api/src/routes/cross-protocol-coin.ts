@@ -761,10 +761,7 @@ async function announceCoinLaunch(opts: {
 
 /**
  * Post a Farcaster cast announcing the coin launch.
- * Uses the Neynar API (recommended for server-side posting) or falls back to
- * submitting a signed message to a Farcaster Hub via a bot signer.
- *
- * The bot must have a managed signer (signer_uuid) registered via Neynar.
+ * Uses our self-hosted Hubble to sign and submit the cast.
  */
 async function postFarcasterCast(
   _creatorWallet: string,
@@ -777,43 +774,7 @@ async function postFarcasterCast(
   if (!fid || !Number.isFinite(fid)) return null;
 
   try {
-    // Neynar API: posts via a managed signer (bot account posts on behalf)
-    if (env.NEYNAR_API_KEY) {
-      // Use the DegenFeed bot signer UUID (configured in env)
-      const signerUuid = (env as Record<string, string | undefined>).FARCASTER_SIGNER_UUID || '';
-      if (signerUuid) {
-        const res = await fetch('https://api.neynar.com/v2/farcaster/cast', {
-          method: 'POST',
-          headers: {
-            'content-type': 'application/json',
-            accept: 'application/json',
-            'x-api-key': env.NEYNAR_API_KEY,
-          },
-          body: JSON.stringify({
-            signer_uuid: signerUuid,
-            text,
-            parent: undefined,
-            channel_id: 'degenfeed',
-          }),
-        });
-
-        if (res.ok) {
-          const data = (await res.json()) as { cast?: { hash?: string } };
-          if (data.cast?.hash) {
-            return {
-              ok: true,
-              hash: data.cast.hash,
-              protocol: 'farcaster',
-              method: 'neynar',
-            };
-          }
-        }
-        const errText = await res.text().catch(() => '');
-        console.warn('[cross-protocol-coin] Neynar post failed:', errText.slice(0, 200));
-      }
-    }
-
-    // Fallback: build and submit a signed message via a bot signer key
+    // Submit via Hubble: build and submit a signed message via a bot signer key
     const botSignerHex = (env as Record<string, string | undefined>).FARCASTER_BOT_SIGNER_KEY;
     const botFid = Number((env as Record<string, string | undefined>).FARCASTER_BOT_FID || 0);
     if (botSignerHex && botFid) {
@@ -831,7 +792,7 @@ async function postFarcasterCast(
         return null;
       }
 
-      const hubUrl = env.FARCASTER_HUB_URL || 'https://hub.farcaster.standardcrypto.vc:2281';
+      const hubUrl = env.FARCASTER_BOT_HUB_URL || 'http://127.0.0.1:2281';
       const hub = new HubClient(hubUrl);
 
       // Convert hex string to bytes for the Hub submitMessage endpoint

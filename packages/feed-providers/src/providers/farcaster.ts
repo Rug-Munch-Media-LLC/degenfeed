@@ -1,11 +1,10 @@
 /**
- * FarcasterProvider — Fetches casts from Farcaster hubs with free API fallbacks.
+ * FarcasterProvider — Fetches casts from Farcaster hubs.
  *
  * Strategy (in order):
- *   1. Hub: fetch casts from a curated set of real crypto FIDs via the hub
- *   2. Username resolution: resolve usernames to FIDs via /v1/userNameProofByName
- *   3. Free public API fallback: Neynar-compatible search at api.farcaster.xyz
- *      (no auth required for basic reads, returns recent casts matching keywords)
+ *   1. Hubble (primary): fetch casts from a curated set of FIDs via our self-hosted Hubble
+ *   2. Public hub fallback: Pinata, StandardCrypto hubs
+ *   3. Public Farcaster API: api.farcaster.xyz for trending/search
  *
  * The curated FIDs below are real Farcaster accounts that consistently
  * post crypto/web3 content.
@@ -21,12 +20,12 @@ import type { Protocol, UnifiedPost } from '@degenfeed/types';
 import type { FeedProvider, FeedResult, FetchOptions, HealthResult, SchemaGuard } from '../types';
 import { buildUrl, DEFAULT_TIMEOUT_MS, DEFAULT_USER_AGENT, fetchJson, withTimeout } from '../utils';
 
-export const DEFAULT_HUB_URL = 'https://hub.pinata.cloud';
+export const DEFAULT_HUB_URL = 'http://127.0.0.1:2281';
 export const FALLBACK_HUB_URLS = [
-  'https://hoyt.farcaster.standardcrypto.vc:2281',
-  'https://hub-grpc.pinata.cloud',
+  'https://hubble.degenfeed.xyz',
+  'https://hub.farcaster.standardcrypto.vc:2281',
   'https://hub.pinata.cloud',
-  'https://nemes.farcaster.xyz',
+  'https://hub-grpc.pinata.cloud',
 ];
 
 export const DEFAULT_FARCASTER_PUBLIC_API = 'https://api.farcaster.xyz';

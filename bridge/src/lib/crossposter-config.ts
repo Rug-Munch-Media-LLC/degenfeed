@@ -52,8 +52,9 @@ export const DEFAULT_CONFIG: CrossPairConfig[] = [
     sourceConfig: {},
     targetConfigs: {
       farcaster: {
-        apiKey: process.env.NEYNAR_API_KEY || '',
-        signerUuid: process.env.FARCASTER_SIGNER_UUID || '',
+        botFid: process.env.FARCASTER_BOT_FID || '',
+        botSignerKey: process.env.FARCASTER_BOT_SIGNER_KEY || '',
+        hubUrl: process.env.FARCASTER_BOT_HUB_URL || 'http://127.0.0.1:2281',
       },
     },
   },

@@ -193,41 +193,45 @@ async function performProfileSearch(
 
   if (!protocolFilter || protocolFilter === 'farcaster') {
     try {
-      if (env.NEYNAR_API_KEY) {
-        const neynarResp = await fetch(
-          `https://api.neynar.com/v2/farcaster/user/search?q=${encodeURIComponent(lowerQuery)}&limit=${Math.min(limit, 25)}`,
-          { headers: { api_key: env.NEYNAR_API_KEY }, signal: AbortSignal.timeout(5000) },
-        );
-        if (neynarResp.ok) {
-          const neynarData = (await neynarResp.json()) as {
-            result?: {
-              users?: Array<{
-                fid: number;
-                username: string;
-                display_name?: string;
-                pfp_url?: string;
-                profile?: { bio?: { text?: string } };
-                follower_count?: number;
-                following_count?: number;
-              }>;
+      const hubUrl = 'http://127.0.0.1:2281';
+      // Try resolving as a username via Hubble's on-chain proof
+      const nameProofResp = await fetch(
+        `${hubUrl}/v1/userNameProofByName?name=${encodeURIComponent(lowerQuery)}`,
+        { headers: { accept: 'application/json' }, signal: AbortSignal.timeout(5000) },
+      );
+      if (nameProofResp.ok) {
+        const proof = (await nameProofResp.json()) as { fid?: number; name?: string } | null;
+        if (proof?.fid) {
+          // Fetch user data from Hubble
+          const userResp = await fetch(
+            `${hubUrl}/v1/userDataByFid?fid=${proof.fid}`,
+            { headers: { accept: 'application/json' }, signal: AbortSignal.timeout(5000) },
+          );
+          if (userResp.ok) {
+            const userData = (await userResp.json()) as {
+              messages?: Array<{ data: { userDataBody: { type: string; value: string } } }>;
             };
-          };
-          for (const u of neynarData?.result?.users ?? []) {
-            if (results.length >= limit) break;
-            if (
-              !u.username.toLowerCase().includes(lowerQuery) &&
-              !u.display_name?.toLowerCase().includes(lowerQuery)
-            )
-              continue;
+            let username = '';
+            let displayName = '';
+            let pfp = '';
+            let bio = '';
+            for (const msg of userData.messages ?? []) {
+              const b = msg.data?.userDataBody;
+              if (!b) continue;
+              if (b.type === 'USER_DATA_TYPE_USERNAME') username = b.value;
+              else if (b.type === 'USER_DATA_TYPE_DISPLAY') displayName = b.value;
+              else if (b.type === 'USER_DATA_TYPE_PFP') pfp = b.value;
+              else if (b.type === 'USER_DATA_TYPE_BIO') bio = b.value;
+            }
             results.push({
               protocol: 'farcaster',
-              id: String(u.fid),
-              handle: u.username,
-              displayName: u.display_name || u.username,
-              avatar: u.pfp_url,
-              bio: u.profile?.bio?.text,
-              followerCount: u.follower_count,
-              followingCount: u.following_count,
+              id: String(proof.fid),
+              handle: username || lowerQuery,
+              displayName: displayName || username || `FID ${proof.fid}`,
+              avatar: pfp,
+              bio,
+              followerCount: 0,
+              followingCount: 0,
               verified: true,
             });
           }
@@ -473,37 +477,44 @@ async function getSuggestedProfiles(
     /* non-critical */
   }
 
-  if (results.length < limit && env.NEYNAR_API_KEY) {
+  // Supplement with curated FIDs if search results insufficient
+  if (results.length < limit) {
     try {
-      const trendingResp = await fetch(
-        'https://api.neynar.com/v2/farcaster/user/trending?limit=25',
-        { headers: { api_key: env.NEYNAR_API_KEY }, signal: AbortSignal.timeout(5000) },
-      );
-      if (trendingResp.ok) {
-        const trendingData = (await trendingResp.json()) as {
-          users?: Array<{
-            fid: number;
-            username: string;
-            display_name?: string;
-            pfp_url?: string;
-            profile?: { bio?: { text?: string } };
-            follower_count?: number;
-          }>;
+      const hubUrl = 'http://127.0.0.1:2281';
+      const curatedFids = [3, 2, 1, 228, 239, 354, 5650, 602, 615, 3621];
+      for (const fid of curatedFids) {
+        if (results.length >= limit) break;
+        if (results.some((r) => r.protocol === 'farcaster' && r.id === String(fid))) continue;
+
+        const userResp = await fetch(
+          `${hubUrl}/v1/userDataByFid?fid=${fid}`,
+          { headers: { accept: 'application/json' }, signal: AbortSignal.timeout(3000) },
+        );
+        if (!userResp.ok) continue;
+
+        const userData = (await userResp.json()) as {
+          messages?: Array<{ data: { userDataBody: { type: string; value: string } } }>;
         };
-        for (const u of trendingData?.users ?? []) {
-          if (results.length >= limit) break;
-          if (results.some((r) => r.protocol === 'farcaster' && r.id === String(u.fid))) continue;
-          results.push({
-            protocol: 'farcaster',
-            id: String(u.fid),
-            handle: u.username,
-            displayName: u.display_name || u.username,
-            avatar: u.pfp_url,
-            bio: u.profile?.bio?.text,
-            followerCount: u.follower_count,
-            verified: true,
-          });
+        let username = '';
+        let displayName = '';
+        let pfp = '';
+        for (const msg of userData.messages ?? []) {
+          const b = msg.data?.userDataBody;
+          if (!b) continue;
+          if (b.type === 'USER_DATA_TYPE_USERNAME') username = b.value;
+          else if (b.type === 'USER_DATA_TYPE_DISPLAY') displayName = b.value;
+          else if (b.type === 'USER_DATA_TYPE_PFP') pfp = b.value;
         }
+
+        results.push({
+          protocol: 'farcaster',
+          id: String(fid),
+          handle: username || `fid:${fid}`,
+          displayName: displayName || username || `FID ${fid}`,
+          avatar: pfp,
+          followerCount: 0,
+          verified: true,
+        });
       }
     } catch {
       /* non-critical */
@@ -520,40 +531,44 @@ async function getTrendingProfiles(
   const results: ProfileSearchResult[] = [];
 
   if (!protocolFilter || protocolFilter === 'farcaster') {
-    if (env.NEYNAR_API_KEY) {
-      try {
-        const trendingResp = await fetch(
-          'https://api.neynar.com/v2/farcaster/user/trending?limit=25',
-          { headers: { api_key: env.NEYNAR_API_KEY }, signal: AbortSignal.timeout(5000) },
+    try {
+      const hubUrl = 'http://127.0.0.1:2281';
+      const curatedFids = [3, 2, 1, 228, 239, 354, 5650, 602, 615, 3621, 7771, 8642, 4120];
+      for (const fid of curatedFids) {
+        if (results.length >= limit) break;
+
+        const userResp = await fetch(
+          `${hubUrl}/v1/userDataByFid?fid=${fid}`,
+          { headers: { accept: 'application/json' }, signal: AbortSignal.timeout(3000) },
         );
-        if (trendingResp.ok) {
-          const data = (await trendingResp.json()) as {
-            users?: Array<{
-              fid: number;
-              username: string;
-              display_name?: string;
-              pfp_url?: string;
-              profile?: { bio?: { text?: string } };
-              follower_count?: number;
-            }>;
-          };
-          for (const u of data?.users ?? []) {
-            if (results.length >= limit) break;
-            results.push({
-              protocol: 'farcaster',
-              id: String(u.fid),
-              handle: u.username,
-              displayName: u.display_name || u.username,
-              avatar: u.pfp_url,
-              bio: u.profile?.bio?.text,
-              followerCount: u.follower_count,
-              verified: true,
-            });
-          }
+        if (!userResp.ok) continue;
+
+        const userData = (await userResp.json()) as {
+          messages?: Array<{ data: { userDataBody: { type: string; value: string } } }>;
+        };
+        let username = '';
+        let displayName = '';
+        let pfp = '';
+        for (const msg of userData.messages ?? []) {
+          const b = msg.data?.userDataBody;
+          if (!b) continue;
+          if (b.type === 'USER_DATA_TYPE_USERNAME') username = b.value;
+          else if (b.type === 'USER_DATA_TYPE_DISPLAY') displayName = b.value;
+          else if (b.type === 'USER_DATA_TYPE_PFP') pfp = b.value;
         }
-      } catch {
-        /* non-critical */
+
+        results.push({
+          protocol: 'farcaster',
+          id: String(fid),
+          handle: username || `fid:${fid}`,
+          displayName: displayName || username || `FID ${fid}`,
+          avatar: pfp,
+          followerCount: 0,
+          verified: true,
+        });
       }
+    } catch {
+      /* non-critical */
     }
   }
 

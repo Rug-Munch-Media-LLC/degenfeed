@@ -112,7 +112,7 @@ async function getFarcasterProfile(fid: number): Promise<{
   pfpUrl: string;
   metadataUri: string;
 }> {
-  const hubUrl = 'https://hub.farcaster.standardcrypto.vc:2281';
+  const hubUrl = 'http://127.0.0.1:2281';
   try {
     const res = await fetch(`${hubUrl}/v1/userDataByFid?fid=${fid}`, {
       headers: { 'user-agent': 'DegenFeed/0.1' },

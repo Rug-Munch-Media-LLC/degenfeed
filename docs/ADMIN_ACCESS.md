@@ -375,12 +375,12 @@ curl -s http://127.0.0.1:8085/ 2>/dev/null
 
 ## 10. Farcaster
 
-> **Status:** Hubble container running but NOT synced (no peers). Neynar API key needed for data.
+> **Status:** Hubble container running. Self-hosted data source. No external API needed.
 
 | Field | Value |
 |-------|-------|
-| **Neynar API** | `https://api.neynar.com/v2/` — free tier (10k req/day) |
-| **Neynar signup** | https://dev.neynar.com/ |
+| **Hubble REST** | `http://127.0.0.1:2281/v1/` — self-hosted, no rate limits |
+| **Hubble health** | `GET /v1/info` — health check endpoint |
 | **Hubble container** | `degenfeed-hubble` |
 | **Hubble REST API** | `http://127.0.0.1:2281` |
 | **Hubble gRPC API** | `127.0.0.1:2283` (NOT publicly reachable — prevents diff sync) |
@@ -390,27 +390,24 @@ curl -s http://127.0.0.1:8085/ 2>/dev/null
 
 The bridge Farcaster provider (`bridge/src/providers/farcaster.ts`) uses this fallback chain:
 
-1. **Neynar API** (primary) — requires `NEYNAR_API_KEY` in `.env`
+1. **Hubble REST API** (primary) — runs on `http://127.0.0.1:2281`
    - Full cast data: text, reactions, embeds, author profiles
    - Free tier: 10,000 requests/day (enough for a feed bridge)
 2. **Self-hosted Hubble** (fallback) — configured via `FARCASTER_HUB_URL`
    - Uses raw hub REST API (`/v1/castsByFid` for curated FIDs)
-   - FID → username mapping requires an external index (Neynar or Hubble sync)
+   - FID → username mapping uses Hubble's userDataByFid endpoint
    - **Current status:** Hubble has no peers (port 2283 behind NAT) — returns empty
 3. **Returns empty** if neither source is available
 
 ### How to Get Farcaster Working (Recommended Path)
 
-1. **Get a free Neynar API key:**
+1. **Configure the Hubble bot signer:**
    ```bash
-   # Step 1: Go to https://dev.neynar.com/ and sign up (free, no credit card)
-   # Step 2: Create a new app to get your API key
-   # Step 3: Store the key securely
-   gopass insert rmi/infra/neynar_api_key
-
-   # Step 4: Add the key to bridge .env
+   # Add the bot credentials to bridge .env
    # Edit /srv/work/repos/degenfeed-web/bridge/.env and set:
-   # NEYNAR_API_KEY=your_key_here
+   FARCASTER_BOT_HUB_URL=http://127.0.0.1:2281
+   FARCASTER_BOT_FID=your_bot_fid
+   FARCASTER_BOT_SIGNER_KEY=your_signer_private_key_hex
    ```
 
 2. **Restart the bridge:**
@@ -452,13 +449,13 @@ docker logs degenfeed-hubble 2>/dev/null | tail -20
 To fix Hubble sync, the RPC port must be accessible:
 - **Option A:** Set up port forwarding on Talos for port 2283
 - **Option B:** Use a VPN/tunnel (WireGuard) to expose the port
-- **Option C:** Use Neynar API instead (simpler, free for low volume)
+- **Option C:** Use the Hubble REST API directly (no external API needed)
 
 ### Env Vars Reference
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `NEYNAR_API_KEY` | No (but recommended) | — | Free API key from neynar.com |
+| `FARCASTER_BOT_FID` | Yes | — | Bot FID for Hubble publishing |
 | `FARCASTER_HUB_URL` | No | `http://127.0.0.1:2281` | Hubble hub REST API URL |
 | `FARCASTER_FID` | No | — | FID for crossposting |
 | `FARCASTER_SIGNER_UUID` | No | — | Signer UUID for crossposting |

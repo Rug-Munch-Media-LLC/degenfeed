@@ -610,7 +610,7 @@ async function getCreatorReputation(env: Env, address: string): Promise<number> 
 }
 
 async function verifyFarcasterFid(_fid: number, _env: Env): Promise<string | null> {
-  // In production, query Neynar or the Farcaster hub to verify FID owner
+  // In production, query the Farcaster hub to verify FID owner
   // For now, return a mock
   return null;
 }

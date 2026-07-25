@@ -18,6 +18,7 @@ import { registerLiveRoutes } from './live';
 import { registerMediaRoutes } from './media';
 import { registerMessagingRoutes } from './messaging';
 import { registerSocialRoutes } from './social';
+import { registerZoraRoutes } from './zora';
 
 export function registerRoutes(app: Hono<{ Bindings: Env }>): void {
   registerCoreRoutes(app);
@@ -28,4 +29,5 @@ export function registerRoutes(app: Hono<{ Bindings: Env }>): void {
   registerMediaRoutes(app);
   registerMessagingRoutes(app);
   registerLiveRoutes(app);
+  registerZoraRoutes(app);
 }

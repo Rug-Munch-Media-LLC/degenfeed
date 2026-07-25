@@ -162,7 +162,8 @@ wrangler secret put TWITTER_CLIENT_SECRET
 
 ```bash
 wrangler secret put PREMIUM_WALLET_KEY
-wrangler secret put NEYNAR_API_KEY
+wrangler secret put FARCASTER_BOT_FID
+wrangler secret put FARCASTER_BOT_SIGNER_KEY
 wrangler secret put NOSTR_PRIVATE_KEY
 wrangler secret put PINATA_API_KEY
 wrangler secret put PINATA_SECRET_KEY
@@ -587,7 +588,7 @@ Set in `workers/api/wrangler.toml` under `[vars]`:
 | `PEERTUBE_CLIENT_SECRET` | PeerTube OAuth client secret |
 | `TELEGRAM_BOT_TOKEN` | Telegram bot API token |
 | `NOSTR_PRIVATE_KEY` | Nostr private key hex |
-| `NEYNAR_API_KEY` | Neynar API key |
+| `FARCASTER_BOT_FID` | Farcaster bot FID for Hubble |
 | `PINATA_API_KEY` | Pinata IPFS API key |
 | `PINATA_SECRET_KEY` | Pinata IPFS secret key |
 | `PREMIUM_WALLET_KEY` | Private key for registration fee payments |

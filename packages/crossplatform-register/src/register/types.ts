@@ -12,7 +12,9 @@ export type RegistrationPlatform =
   | 'bookwyrm'
   | 'funkwhale'
   | 'mobilizon'
-  | 'writefreely';
+  | 'writefreely'
+  | 'owncast'
+  | 'castopod';
 
 export type RegistrationStatus = 'pending' | 'created' | 'failed';
 
@@ -52,4 +54,10 @@ export interface RegisterOptions {
   mobilizonInstanceUrl?: string;
   /** WriteFreely instance URL (default: https://blog.degenfeed.xyz) */
   writefreelyInstanceUrl?: string;
+  /** Owncast instance URL (default: https://live.degenfeed.xyz) */
+  owncastInstanceUrl?: string;
+  /** Owncast admin API key (for user creation) */
+  owncastAdminKey?: string;
+  /** Castopod instance URL (default: https://podcasts.degenfeed.xyz) */
+  castopodInstanceUrl?: string;
 }

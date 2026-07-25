@@ -14,7 +14,7 @@
 | **Lens (Momoka)** | ✅ Gasless | Lens Profile | Profile creation | **$0** |
 | **Lens Chain** | ✅ Native gasless | Lens Profile | Profile creation | **$0** |
 | **Farcaster (Hubble)** | ✅ After FID | FID + Signer | ~$0.25 (one-time) | **$0** |
-| **Farcaster (Neynar)** | ✅ Free tier | Neynar API Key | $0 (sponsored) | 150 credits/cast |
+| ~~Farcaster (Neynar)~~ | ❌ Removed | N/A | N/A | N/A |
 
 ---
 
@@ -140,7 +140,7 @@ const result = await lens.postCreatorCoin({
 | Cost Type | Amount | Who Pays | Free? |
 |-----------|--------|----------|-------|
 | FID Registration | ~$0.20 (Optimism) | User (one-time) | ❌ |
-| Signer Creation | ~$0.05 (Optimism) | **Neynar sponsors** | ✅ |
+| Signer Creation | ~$0.05 (Optimism) | User (one-time) | ❌ |
 | Storage Rent | $0 (after registration) | N/A | ✅ |
 | **Posting a cast** | **$0** | **Nobody** | **✅** |
 
@@ -172,31 +172,11 @@ const result = await poster.postCreatorCoin({
 - `buildFarcasterCastMessage` handles protobuf encoding + signing
 - Multiple fallback hub URLs configured
 
-### Option B: Neynar Free Tier — Free Tier Credits
-
-Neynar provides a **free API tier** with 25,000 credits:
-
-```ts
-const poster = new FarcasterFreePostClient({
-  mode: 'neynar',
-  neynarApiKey: process.env.NEYNAR_API_KEY,
-  neynarSignerUuid: '...', // Get via SIWN flow
-});
-
-// Each cast costs 150 credits = ~166 free casts
-```
-
-**Free tier limits:**
-- 25,000 initial credits
-- 150 credits per POST cast
-- Signer creation: **Sponsored by Neynar** (user pays $0)
-- Free tier available at [neynar.com](https://neynar.com)
-
 ### Option C: x402 Micropayments — Gasless USDC
 
 For programmatic agents, x402 allows gasless posting using EIP-3009:
 - User signs a USDC `transferWithAuthorization` (no gas needed)
-- Costs 0.001 USDC per call to Neynar's hub
+- Costs 0.001 USDC per call to the x402-enabled Hubble
 - No ETH needed for gas — just USDC signature
 
 ---
@@ -211,7 +191,7 @@ For programmatic agents, x402 allows gasless posting using EIP-3009:
 | Coin deploy (on-chain) | ~$0.05 gas | N/A | N/A |
 | Post announcement | $0 (on existing coin) | **$0** (Momoka) | **$0** (Hubble) |
 | Monthly unlimited posting | $0 (own wallet) | **$0** | **$0** (Hubble) |
-| Relayer/sponsor available | ERC-4337 paymasters | Lens API sponsorship | Neynar sponsorship |
+| Relayer/sponsor available | ERC-4337 paymasters | Lens API sponsorship | Hubble self-hosted |
 
 ### Free vs Paid Tradeoffs
 
@@ -222,7 +202,7 @@ For programmatic agents, x402 allows gasless posting using EIP-3009:
 | Lens Momoka | Gasless posting | Rate limited, no collects |
 | Lens Chain | Native gasless | Must be on Lens Chain |
 | Farcaster Hubble | Free self-hosted | Need own Hubble node |
-| Farcaster Neynar | Free tier (166 posts) | Limited credits, then paid |
+| ~~Farcaster Neynar~~ | ❌ Removed | N/A |
 
 ---
 
@@ -326,7 +306,7 @@ async function launchCoinForFree(name: string, symbol: string, uri: string, crea
 | Zora 1155 Premints | [nft-docs.zora.co](https://nft-docs.zora.co/protocol-sdk/creator/premint) | Gasless creation for NFTs |
 | Lens Momoka | [docs.lens.xyz](https://docs.lens.xyz/docs/momoka) | "DA operations don't require gas" |
 | Lens Chain | [lens.xyz/faq](https://lens.xyz/faq) | "You don't need GHO to post" |
-| Farcaster + Neynar | [docs.neynar.com](https://docs.neynar.com) | Free tier + sponsored signers |
+| Farcaster + Hubble | Self-hosted | Unlimited free posting |
 | Farcaster Hubble | [github.com/farcasterxyz/hub](https://github.com/farcasterxyz/hub-monorepo) | Self-hosted = free posting |
 
 ---

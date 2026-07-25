@@ -135,13 +135,11 @@ export function detectVideoPublication(publication: {
   // Check for video media attachments
   let videoUrl: string | undefined;
   let thumbnailUrl: string | undefined;
-  let _mimeType: string | undefined;
 
   for (const media of mediaItems) {
     const mt = media.original?.mimeType ?? '';
     if (VIDEO_MIME_TYPES.some((vmt) => mt.startsWith(vmt))) {
       videoUrl = media.original?.url;
-      _mimeType = mt;
       thumbnailUrl = media.optimized?.url ?? metadata.coverPicture;
       break;
     }

@@ -4,11 +4,11 @@ export type { BuildCastMessageOpts } from './engage';
 export { buildFarcasterCastMessage, engageFarcaster } from './engage';
 export type { Protocol, UnifiedIdentity };
 
-export const DEFAULT_HUB_URL = 'https://hub.farcaster.standardcrypto.vc:2281';
+export const DEFAULT_HUB_URL = 'http://127.0.0.1:2281';
 export const FALLBACK_HUB_URLS = [
   DEFAULT_HUB_URL,
-  'https://hoyt.farcaster.standardcrypto.vc:2281',
-  'https://hub-grpc.pinata.cloud',
+  'https://hubble.degenfeed.xyz',
+  'https://hub.farcaster.standardcrypto.vc:2281',
   'https://hub.pinata.cloud',
 ];
 

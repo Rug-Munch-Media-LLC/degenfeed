@@ -40,7 +40,7 @@ DegenFeed is a **universal feed aggregator** bridging 44+ decentralized social p
 | Nostr WebSocket relay | 2026-06 | 6-relay WebSocket fetcher | ✅ |
 | Lens v2 GraphQL | 2026-06 | Lens Protocol v2 integration | ✅ |
 | Pixelfed API + RSS | 2026-06 | Self-hosted + public instance fetcher | ✅ |
-| Farcaster (Neynar) | 2026-06 | Neynar API integration | 🟡 Needs key |
+| Farcaster (Hubble) | 2026-07 | Self-hosted Hubble integration | ✅ Complete |
 | Zora GraphQL | 2026-06 | NFT minting protocol bridge | ✅ |
 | YouTube integration | 2026-06 | YouTube API + scrape fetcher | ✅ |
 | Cross-poster (GTS→Nostr) | 2026-06 | Cross-protocol publishing | ✅ |
@@ -79,7 +79,7 @@ DegenFeed is a **universal feed aggregator** bridging 44+ decentralized social p
 - **42 monorepo packages** with clean dependency graph
 
 ### Needs Attention 🟡
-- **Farcaster API key** — NEYNAR_API_KEY env var not configured; stub still used when key missing
+- **Farcaster API key** — Removed Neynar dependency; using self-hosted Hubble now
 - **Reddit CDN block** — Reddit blocks all requests from our IPs; Redlib proxy fully functional but returns empty
 - **Test coverage** — Good unit coverage, E2E tests need expansion (Playwright smoke tests partially failing)
 - **Monetization** — Premium tiers exist but backend billing integration needs live testing
@@ -87,7 +87,7 @@ DegenFeed is a **universal feed aggregator** bridging 44+ decentralized social p
 
 ### Blocked 🔴
 - **Reddit provider** — CDN blocks all requests; need rotating proxies or paid Reddit API
-- **Farcaster Hub** — Self-hosted hub not yet deployed; relying on Neynar for now
+- **Farcaster Hub** — Self-hosted Hubble deployed and operational. Neynar fully removed.
 
 ---
 
@@ -97,7 +97,7 @@ DegenFeed is a **universal feed aggregator** bridging 44+ decentralized social p
 | Goal | Effort | Impact | Target | Dependencies |
 |------|--------|--------|--------|-------------|
 | **Self-host Farcaster Hub** | 3 weeks | 🔥🔥🔥 | Aug 2026 | Docker, Hub software |
-| **Farcaster API key** | 1 day | 🔥🔥🔥 | Jul 2026 | NEYNAR_API_KEY |
+| **Farcaster Hubble** | Complete | ✅ | Jul 2026 | Self-hosted Hubble |
 | **Reddit CDN bypass** | 2 weeks | 🔥🔥🔥 | Aug 2026 | Rotating proxies / paid API |
 | **Mature mobile (Capacitor)** | 4 weeks | 🔥🔥🔥 | Sep 2026 | Push notifications, offline |
 | **E2E test completion** | 2 weeks | 🔥🔥 | Aug 2026 | Playwright, CI pipeline |

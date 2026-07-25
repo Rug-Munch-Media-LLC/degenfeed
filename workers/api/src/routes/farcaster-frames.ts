@@ -11,8 +11,8 @@
  *   - Frames v2 Ready: FC frame JSON + manifest at /.well-known/farcaster.json
  *   - Dynamic SVG badge images for frames
  *   - Token-gated stream frames with balance check
- *   - Post frame to Farcaster via Neynar
- *
+ *   - Post frame to Farcaster via Hubble
+ */
  * Routes:
  *   GET  /api/farcaster/frames/stream/:id         — Frame for a live stream
  *   GET  /api/farcaster/frames/stream/:id/gated   — Token-gated stream frame
@@ -836,12 +836,12 @@ frames.post('/coin/:symbol', async (c) => {
 // ═══════════════════════════════════════════════════════════════════════════
 
 /**
- * Post a frame URL as a cast to Farcaster.
+ * Post a frame URL as a cast to Farcaster via Hubble.
  *
  * Expects JSON body:
- *   { signerUuid: string, text: string, embedUrl: string, channelId?: string }
+ *   { text: string, embedUrl: string, channelId?: string }
  *
- * Uses the Neynar API to publish the cast with the frame URL embedded.
+ * Uses our self-hosted Hubble to sign and submit the cast.
  * The frame URL must serve valid Frame meta tags.
  */
 frames.post('/post', async (c) => {
@@ -850,15 +850,11 @@ frames.post('/post', async (c) => {
 
   try {
     const body = (await c.req.json()) as {
-      signerUuid?: string;
       text?: string;
       embedUrl?: string;
       channelId?: string;
     };
 
-    if (!body.signerUuid) {
-      return jsonResponse({ error: 'signerUuid is required (Neynar signer)' }, 400);
-    }
     if (!body.text) {
       return jsonResponse({ error: 'text is required' }, 400);
     }
@@ -868,7 +864,7 @@ frames.post('/post', async (c) => {
 
     const result = await postCastToFarcaster(
       c.env,
-      body.signerUuid,
+      '',
       body.text,
       [body.embedUrl],
       body.channelId,
@@ -899,16 +895,11 @@ frames.post('/post-to-channel', async (c) => {
 
   try {
     const body = (await c.req.json()) as {
-      signerUuid?: string;
       text?: string;
       embedUrl?: string;
       channelId?: string;
-      parentUrl?: string;
     };
 
-    if (!body.signerUuid) {
-      return jsonResponse({ error: 'signerUuid is required' }, 400);
-    }
     if (!body.text) {
       return jsonResponse({ error: 'text is required' }, 400);
     }
@@ -919,44 +910,21 @@ frames.post('/post-to-channel', async (c) => {
       return jsonResponse({ error: 'channelId is required' }, 400);
     }
 
-    // Use the Neynar API directly for channel posting
-    const apiKey = c.env.NEYNAR_API_KEY;
-    if (!apiKey) {
-      return jsonResponse({ error: 'NEYNAR_API_KEY not configured' }, 500);
+    const result = await postCastToFarcaster(
+      c.env,
+      '',
+      body.text,
+      [body.embedUrl],
+      body.channelId,
+    );
+
+    if (result.error) {
+      return jsonResponse({ error: result.error }, 502);
     }
 
-    const castText = body.text.length > 320 ? `${body.text.slice(0, 317)}...` : body.text;
-
-    const castBody: Record<string, unknown> = {
-      signer_uuid: body.signerUuid,
-      text: castText,
-      embeds: [{ url: body.embedUrl }],
-      channel_id: body.channelId,
-    };
-
-    if (body.parentUrl) {
-      castBody.parent_url = body.parentUrl;
-    }
-
-    const response = await fetch('https://api.neynar.com/v2/farcaster/cast', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        api_key: apiKey,
-        'user-agent': 'DegenFeed/1.0',
-      },
-      body: JSON.stringify(castBody),
-    });
-
-    if (!response.ok) {
-      const errorBody = await response.text().catch(() => 'unknown');
-      return jsonResponse({ error: `Neynar API error ${response.status}: ${errorBody}` }, 502);
-    }
-
-    const data = (await response.json()) as { cast?: { hash?: string } };
     return jsonResponse({
       ok: true,
-      hash: data.cast?.hash,
+      hash: result.hash,
       channelId: body.channelId,
     });
   } catch (err) {
@@ -981,7 +949,6 @@ frames.post('/announce-stream', async (c) => {
 
   try {
     const body = (await c.req.json()) as {
-      signerUuid?: string;
       streamId?: string;
       title?: string;
       creatorHandle?: string;
@@ -989,9 +956,6 @@ frames.post('/announce-stream', async (c) => {
       tags?: string[];
     };
 
-    if (!body.signerUuid) {
-      return jsonResponse({ error: 'signerUuid is required' }, 400);
-    }
     if (!body.streamId) {
       return jsonResponse({ error: 'streamId is required' }, 400);
     }
@@ -1007,11 +971,11 @@ frames.post('/announce-stream', async (c) => {
       return jsonResponse({ error: 'No relevant channels found' }, 404);
     }
 
-    // Post to each channel
+    // Post to each channel via Hubble
     const results = await Promise.allSettled(
       channels.map(async (ch: FarcasterChannel) => {
         const castText = `🔴 LIVE: ${title}\n\n${creatorHandle} is streaming on DegenFeed`;
-        return postCastToFarcaster(c.env, body.signerUuid!, castText, [embedUrl], ch.id);
+        return postCastToFarcaster(c.env, '', castText, [embedUrl], ch.id);
       }),
     );
 

@@ -23,43 +23,47 @@ const farcasterBridge: AnnounceBridge = {
   platform: 'farcaster',
   async announce(space: SpaceItem, announcement: SpaceAnnouncement) {
     try {
-      const apiKey = process.env.FARCASTER_API_KEY ?? process.env.NEYNAR_API_KEY;
-      if (!apiKey) return { ok: false, error: 'FARCASTER_API_KEY not configured' };
-
-      // Use Neynar API to publish a cast
-      const signerUuid = process.env.FARCASTER_SIGNER_UUID;
-      if (!signerUuid) return { ok: false, error: 'FARCASTER_SIGNER_UUID not configured' };
+      const fid = process.env.FARCASTER_BOT_FID;
+      const signerKey = process.env.FARCASTER_BOT_SIGNER_KEY;
+      const hubUrl = process.env.FARCASTER_BOT_HUB_URL || 'http://127.0.0.1:2281';
+      if (!fid || !signerKey) return { ok: false, error: 'Farcaster bot not configured (FARCASTER_BOT_FID / FARCASTER_BOT_SIGNER_KEY)' };
 
       const text =
         announcement.text.length > 280
           ? `${announcement.text.slice(0, 277)}...`
           : announcement.text;
 
-      // Post cast with embedded link
-      const res = await fetch('https://api.neynar.com/v2/farcaster/cast', {
-        method: 'POST',
-        headers: {
-          accept: 'application/json',
-          'api-key': apiKey,
-          'content-type': 'application/json',
-        },
-        body: JSON.stringify({
-          signer_uuid: signerUuid,
-          text,
-          embeds: [{ url: space.platforms[0]?.url ?? announcement.spaceUrl }],
-        }),
+      // Build and submit cast to Hubble
+      const { buildFarcasterCastMessage } = await import('@degenfeed/farcaster-sdk');
+      const castResult = buildFarcasterCastMessage({
+        signerKeyHex: signerKey,
+        fid: Number(fid),
+        text,
+        embeds: [{ url: space.platforms[0]?.url ?? announcement.spaceUrl }],
+      });
+
+      if (!castResult.ok || !castResult.messageHex) {
+        return { ok: false, error: `Failed to build cast: ${castResult.error}` };
+      }
+
+      const bodyBytes = new Uint8Array(
+        castResult.messageHex.match(/.{1,2}/g)?.map((b: string) => parseInt(b, 16)) ?? [],
+      );
+      const res = await fetch(`${hubUrl}/v1/submitMessage`, {
+        method: 'PUT',
+        headers: { 'content-type': 'application/octet-stream', 'user-agent': 'DegenFeed/1.0' },
+        body: bodyBytes,
       });
 
       if (!res.ok) {
         const errText = await res.text().catch(() => 'Unknown error');
-        return { ok: false, error: `Farcaster API error: ${res.status} ${errText}` };
+        return { ok: false, error: `Hubble rejected cast: ${res.status} ${errText}` };
       }
 
-      const data = (await res.json()) as { cast?: { hash?: string } };
       return {
         ok: true,
-        nativeId: data.cast?.hash ?? `fc:${Date.now()}`,
-        url: `https://warpcast.com/~/conversations/${data.cast?.hash}`,
+        nativeId: castResult.messageHex.slice(0, 40),
+        url: `https://warpcast.com/~/conversations/${castResult.messageHex.slice(0, 40)}`,
       };
     } catch (e) {
       return { ok: false, error: `Farcaster failed: ${e}` };
@@ -468,7 +472,7 @@ export function getAnnounceBridge(platform: AnnouncePlatform): AnnounceBridge {
 
 export function getConfiguredAnnouncePlatforms(): AnnouncePlatform[] {
   const configMap: Record<AnnouncePlatform, string[]> = {
-    farcaster: ['FARCASTER_API_KEY'],
+    farcaster: ['FARCASTER_BOT_FID', 'FARCASTER_BOT_SIGNER_KEY'],
     lens: ['LENS_ACCESS_TOKEN'],
     bluesky: ['BLUESKY_JWT'],
     mastodon: ['MASTODON_ACCESS_TOKEN'],

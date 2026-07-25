@@ -33,6 +33,7 @@ import { registerCoinsRoutes } from './routes/register/coins';
 import { registerCoreRoutes } from './routes/register/core';
 import { registerDaoRoutes } from './routes/register/dao';
 import { registerFeedRoutes } from './routes/register/feed';
+import { registerLensRoutes } from './routes/register/lens';
 import { registerLiveRoutes } from './routes/register/live';
 import { registerMediaRoutes } from './routes/register/media';
 import { registerMessagingRoutes } from './routes/register/messaging';
@@ -334,6 +335,7 @@ registerFeedRoutes(app);
 registerSocialRoutes(app);
 registerDaoRoutes(app);
 registerCoinsRoutes(app);
+registerLensRoutes(app);
 registerMediaRoutes(app);
 registerMessagingRoutes(app);
 registerLiveRoutes(app);
@@ -381,6 +383,86 @@ app.get('/api/external/status', async (c) => handleExternalStatus(c.req.raw, c.e
 app.post('/api/external/standalone/subscribe', async (c) =>
   handleStandaloneSubscribe(c.req.raw, c.env),
 );
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CROSS-PLATFORM ACCOUNT PORTABILITY ROUTES
+// ═══════════════════════════════════════════════════════════════════════════
+
+// ─── 1. Join All Networks ─────────────────────────────────────────────────
+import {
+  handleJoinAll,
+  handleJoinAllRetry,
+  handleJoinAllStatus,
+} from './routes/accounts-join-all';
+app.post('/api/accounts/join-all', async (c) => handleJoinAll(c.req.raw, c.env));
+app.get('/api/accounts/join-all/status', async (c) => handleJoinAllStatus(c.req.raw, c.env));
+app.post('/api/accounts/join-all/retry', async (c) => handleJoinAllRetry(c.req.raw, c.env));
+
+// ─── 2. Cross-Instance Login ──────────────────────────────────────────────
+import {
+  handleCrossLoginBluesky,
+  handleCrossLoginCredentials,
+  handleCrossLoginFarcaster,
+  handleCrossLoginLemmy,
+  handleCrossLoginMastodon,
+  handleCrossLoginMatrix,
+  handleCrossLoginPeerTube,
+  handleCrossLoginPixelfed,
+  handleCrossLoginSSOToken,
+} from './routes/accounts-cross-login';
+app.post('/api/accounts/cross-login/mastodon', async (c) => handleCrossLoginMastodon(c.req.raw, c.env));
+app.post('/api/accounts/cross-login/bluesky', async (c) => handleCrossLoginBluesky(c.req.raw, c.env));
+app.post('/api/accounts/cross-login/farcaster', async (c) => handleCrossLoginFarcaster(c.req.raw, c.env));
+app.post('/api/accounts/cross-login/matrix', async (c) => handleCrossLoginMatrix(c.req.raw, c.env));
+app.post('/api/accounts/cross-login/peertube', async (c) => handleCrossLoginPeerTube(c.req.raw, c.env));
+app.post('/api/accounts/cross-login/lemmy', async (c) => handleCrossLoginLemmy(c.req.raw, c.env));
+app.post('/api/accounts/cross-login/pixelfed', async (c) => handleCrossLoginPixelfed(c.req.raw, c.env));
+app.get('/api/accounts/cross-login/credentials', async (c) => handleCrossLoginCredentials(c.req.raw, c.env));
+app.get('/api/accounts/cross-login/sso-token', async (c) => handleCrossLoginSSOToken(c.req.raw, c.env));
+
+// ─── 3. Data Portability Hub ──────────────────────────────────────────────
+import {
+  handleExportAll,
+  handleExportAllDownload,
+  handleExportAllManifest,
+  handleExportAllStatus,
+} from './routes/accounts-export-all';
+app.post('/api/accounts/export-all', async (c) => handleExportAll(c.req.raw, c.env));
+app.get('/api/accounts/export-all/status', async (c) => handleExportAllStatus(c.req.raw, c.env));
+app.get('/api/accounts/export-all/manifest', async (c) => handleExportAllManifest(c.req.raw, c.env));
+app.get('/api/accounts/export-all/download', async (c) => handleExportAllDownload(c.req.raw, c.env));
+
+// ─── 4. Account Migration ─────────────────────────────────────────────────
+import {
+  handleMigrateBluesky,
+  handleMigrateExport,
+  handleMigrateFarcaster,
+  handleMigrateImport,
+  handleMigrateJobs,
+  handleMigrateMastodon,
+  handleMigrateStatus,
+} from './routes/accounts-migrate';
+app.post('/api/accounts/migrate/bluesky', async (c) => handleMigrateBluesky(c.req.raw, c.env));
+app.post('/api/accounts/migrate/mastodon', async (c) => handleMigrateMastodon(c.req.raw, c.env));
+app.post('/api/accounts/migrate/farcaster', async (c) => handleMigrateFarcaster(c.req.raw, c.env));
+app.post('/api/accounts/migrate/import', async (c) => handleMigrateImport(c.req.raw, c.env));
+app.post('/api/accounts/migrate/export', async (c) => handleMigrateExport(c.req.raw, c.env));
+app.get('/api/accounts/migrate/status', async (c) => handleMigrateStatus(c.req.raw, c.env));
+app.get('/api/accounts/migrate/jobs', async (c) => handleMigrateJobs(c.req.raw, c.env));
+
+// ─── 5. Cross-Platform Profile Sync ──────────────────────────────────────
+import {
+  handleProfileSync,
+  handleProfileSyncProtocol,
+  handleProfileSyncStatus,
+  handleProfileUpdate,
+  handleProfileVisibility,
+} from './routes/accounts-profile-sync';
+app.get('/api/accounts/profile/status', async (c) => handleProfileSyncStatus(c.req.raw, c.env));
+app.put('/api/accounts/profile/update', async (c) => handleProfileUpdate(c.req.raw, c.env));
+app.post('/api/accounts/profile/sync', async (c) => handleProfileSync(c.req.raw, c.env));
+app.post('/api/accounts/profile/sync/:protocol', async (c) => handleProfileSyncProtocol(c.req.raw, c.env));
+app.put('/api/accounts/profile/visibility', async (c) => handleProfileVisibility(c.req.raw, c.env));
 
 // ═══════════════════════════════════════════════════════════════
 // POST-ROUTE REGISTRATIONS (catch-all, static redirects, etc.)

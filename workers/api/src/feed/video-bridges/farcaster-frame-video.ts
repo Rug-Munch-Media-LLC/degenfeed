@@ -15,8 +15,7 @@ const PLATFORM: VideoPlatform = 'farcaster';
 const PLATFORM_LABEL = 'Farcaster Video';
 const PLATFORM_COLOR = '#8A63D2';
 
-const FARCASTER_HUB = 'https://hub.farcaster.xyz:2281';
-const _FARCASTER_NEYNAR = 'https://api.neynar.com';
+const FARCASTER_HUB = 'http://127.0.0.1:2281';
 
 // ─── Types ─────────────────────────────────────────────────────────────
 
@@ -105,34 +104,52 @@ export async function fetchFarcasterFrameVideos(
 
 async function fetchTrendingCasts(limit: number, signal?: AbortSignal): Promise<FarcasterCast[]> {
   try {
-    const url = `${FARCASTER_HUB}/v1/trending-casts?limit=${limit}`;
+    const url = `${FARCASTER_HUB}/v1/trendingFeed?time_window=24h&limit=${limit}`;
     const res = await fetch(url, {
       signal,
       headers: { Accept: 'application/json' },
     });
     if (res.ok) {
-      const data = (await res.json()) as { casts: FarcasterCast[] };
-      return data.casts ?? [];
-    }
-  } catch {
-    // Fallback to Neynar
-  }
-
-  try {
-    const url = `https://api.neynar.com/v2/farcaster/feed/trending?limit=${limit}&feed_type=filter&filter_type=global`;
-    const res = await fetch(url, {
-      signal,
-      headers: { Accept: 'application/json' },
-    });
-    if (res.ok) {
-      const data = (await res.json()) as { casts: FarcasterCast[] };
-      return data.casts ?? [];
+      const data = (await res.json()) as { messages: Array<{ data: { castAddBody: { text: string; embeds: { url: string }[] }; fid: number; timestamp: number } }> };
+      return (data.messages ?? []).map(msg => ({
+        hash: msg.data?.castAddBody?.text?.slice(0, 8) ?? '',
+        author: { fid: msg.data?.fid ?? 0, username: `fid:${msg.data?.fid ?? 0}` },
+        text: msg.data?.castAddBody?.text ?? '',
+        timestamp: (msg.data?.timestamp ?? 0) * 1000,
+        embeds: msg.data?.castAddBody?.embeds ?? [],
+      }));
     }
   } catch {
     // ignore
   }
 
-  return [];
+  // Fallback: scan curated FIDs for casts with embeds
+  try {
+    const allCasts: FarcasterCast[] = [];
+    const curatedFids = [3, 2, 1, 228, 239, 354, 5650];
+    for (const fid of curatedFids) {
+      try {
+        const res = await fetch(`${FARCASTER_HUB}/v1/castsByFid?fid=${fid}&pageSize=5`, {
+          signal,
+          headers: { Accept: 'application/json' },
+        });
+        if (!res.ok) continue;
+        const data = (await res.json()) as { messages?: Array<{ hash: string; data: { castAddBody: { text: string; embeds: { url: string }[] }; fid: number; timestamp: number } }> };
+        for (const msg of data.messages ?? []) {
+          allCasts.push({
+            hash: msg.hash,
+            author: { fid: msg.data.fid, username: `fid:${msg.data.fid}` },
+            text: msg.data.castAddBody.text,
+            timestamp: msg.data.timestamp * 1000,
+            embeds: (msg.data.castAddBody.embeds || []).map((e: { url: string }) => ({ url: e.url })),
+          });
+        }
+      } catch { continue; }
+    }
+    return allCasts.slice(0, limit);
+  } catch {
+    return [];
+  }
 }
 
 // ─── Extract video URLs from a cast ──────────────────────────────────────

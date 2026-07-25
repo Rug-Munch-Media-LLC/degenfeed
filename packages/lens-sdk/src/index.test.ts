@@ -36,3 +36,50 @@ describe('@degenfeed/lens-sdk', () => {
     expect(identity.avatarUrl).toBe('https://x.jpg');
   });
 });
+
+describe('@degenfeed/lens-sdk/momoka', () => {
+  it('should export MomokaClient class', async () => {
+    const { MomokaClient } = await import('./momoka');
+    const client = new MomokaClient();
+    expect(client).toBeInstanceOf(MomokaClient);
+  });
+
+  it('should reject submit to invalid URL', async () => {
+    const { MomokaClient } = await import('./momoka');
+    const client = new MomokaClient('https://invalid.momoka.test');
+    const result = await client.submit({
+      content: 'test',
+      profileId: '0x01',
+      accessToken: 'test',
+    });
+    expect(result.accepted).toBe(false);
+    expect(result.error).toBeTruthy();
+  });
+
+  it('should return degraded health for invalid URL', async () => {
+    const { MomokaClient } = await import('./momoka');
+    const client = new MomokaClient('https://invalid.momoka.test');
+    const health = await client.health();
+    expect(health.status).toBe('down');
+  });
+});
+
+describe('@degenfeed/lens-sdk/data-export', () => {
+  it('should export LensDataExportService class', async () => {
+    const { LensDataExportService } = await import('./data-export');
+    const svc = new LensDataExportService();
+    expect(svc).toBeInstanceOf(LensDataExportService);
+  });
+
+  it('should generate DID document', async () => {
+    const { LensDataExportService } = await import('./data-export');
+    const svc = new LensDataExportService();
+    const doc = svc.generateDidDocument('0x01', 'stani', '0x1234');
+    expect(doc.id).toBe('did:lens:0x01');
+    expect(doc.alsoKnownAs).toContain('lens://stani');
+    expect(doc.verificationMethod).toHaveLength(1);
+    expect(doc.verificationMethod).toBeDefined();
+    const vm = doc.verificationMethod as Record<string, unknown>[];
+    expect((vm[0] as Record<string, unknown>).blockchainAccountId as string).toContain('0x1234');
+  });
+});

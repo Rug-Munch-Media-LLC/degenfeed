@@ -2,16 +2,15 @@
  * @degenfeed/api-worker — Farcaster Channel Announcement Integration
  *
  * Posts stream/space announcements to relevant Farcaster channels
- * using the Neynar API for publishing casts with embeds.
+ * via our self-hosted Hubble. No external API dependency.
  *
  * Channel discovery maps stream categories/tags to known Farcaster channels.
- * Announcements are posted as casts with the stream URL embedded so the
- * frame renders inline in the channel feed.
- *
- * @see https://docs.neynar.com/reference/publish-cast
+ * Announcements are cast with the stream URL embedded so the frame renders
+ * inline in the channel feed.
  */
 
 import type { Env } from '../index';
+import { publishCastToFarcaster } from './hubble-publisher';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -145,7 +144,6 @@ export function getRelevantChannels(category?: string, tags?: string[]): Farcast
   ].filter(Boolean);
 
   if (allTerms.length === 0) {
-    // Default: suggest the general live channel
     const defaultChannel = CHANNEL_REGISTRY[0]?.channel;
     return defaultChannel ? [defaultChannel] : [];
   }
@@ -176,7 +174,7 @@ export function getRelevantChannels(category?: string, tags?: string[]): Farcast
 /**
  * Post a stream/space announcement to a Farcaster channel.
  *
- * Uses the Neynar API to publish a cast with the stream URL embedded,
+ * Uses our self-hosted Hubble to publish a cast with the stream URL embedded,
  * which renders the frame inline in the channel feed.
  *
  * @param env - Environment bindings
@@ -193,52 +191,18 @@ export async function postToFarcasterChannel(
   embedUrl: string,
   parentUrl: string,
 ): Promise<ChannelAnnouncement> {
-  const apiKey = env.NEYNAR_API_KEY;
-  if (!apiKey) {
-    return {
-      channelId,
-      error: 'NEYNAR_API_KEY not configured',
-    };
-  }
+  const result = await publishCastToFarcaster(env as unknown as Record<string, string | undefined>, {
+    text,
+    embeds: [embedUrl],
+    channelId,
+    parentUrl,
+  });
 
-  // Ensure text is within Farcaster's 320-char limit
-  const castText = text.length > 320 ? `${text.slice(0, 317)}...` : text;
-
-  try {
-    const response = await fetch('https://api.neynar.com/v2/farcaster/cast', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        api_key: apiKey,
-        'user-agent': 'DegenFeed/1.0 (Farcaster Integration)',
-      },
-      body: JSON.stringify({
-        text: castText,
-        embeds: [{ url: embedUrl }],
-        channel_id: channelId,
-        parent_url: parentUrl,
-      }),
-    });
-
-    if (!response.ok) {
-      const errorBody = await response.text().catch(() => 'unknown');
-      return {
-        channelId,
-        error: `Neynar API error ${response.status}: ${errorBody}`,
-      };
-    }
-
-    const data = (await response.json()) as { cast?: { hash?: string } };
-    return {
-      channelId,
-      castHash: data.cast?.hash,
-    };
-  } catch (err) {
-    return {
-      channelId,
-      error: err instanceof Error ? err.message : String(err),
-    };
-  }
+  return {
+    channelId,
+    castHash: result.hash,
+    error: result.error,
+  };
 }
 
 // ─── Bulk Channel Announcement ──────────────────────────────────────────────
@@ -248,14 +212,6 @@ export async function postToFarcasterChannel(
  *
  * Discovers matching channels from category/tags, then posts to each
  * in parallel. One channel failure never blocks others.
- *
- * @param env - Environment bindings
- * @param embedUrl - URL to embed (must serve Frame meta tags)
- * @param title - Stream/space title
- * @param creatorHandle - Creator's Farcaster handle
- * @param category - Stream category for channel matching
- * @param tags - Stream tags for channel matching
- * @returns Array of announcement results
  */
 export async function announceToRelevantChannels(
   env: Env,
@@ -284,16 +240,16 @@ export async function announceToRelevantChannels(
   });
 }
 
-// ─── Neynar Cast Publishing (for posting frames as casts) ──────────────────
+// ─── Hubble Cast Publishing (replaces Neynar) ──────────────────────────────
 
 /**
- * Post a cast to Farcaster using the Neynar API.
+ * Post a cast to Farcaster via our self-hosted Hubble.
  *
- * The cast can embed a URL (which serves Frame meta tags) to render
- * as an interactive frame in the feed.
+ * Uses the bot signer key to create, sign, and submit the cast message.
+ * No external API dependency — all publishing goes through our Hubble.
  *
  * @param env - Environment bindings
- * @param signerUuid - Neynar signer UUID for the publishing user
+ * @param signerUuid - Ignored (kept for API compat, uses bot signer from env)
  * @param text - Cast text (max 320 chars)
  * @param embedUrls - URLs to embed (max 2)
  * @param channelId - Optional Farcaster channel ID
@@ -301,47 +257,16 @@ export async function announceToRelevantChannels(
  */
 export async function postCastToFarcaster(
   env: Env,
-  signerUuid: string,
+  _signerUuid: string,
   text: string,
   embedUrls: string[] = [],
   channelId?: string,
 ): Promise<{ hash?: string; error?: string }> {
-  const apiKey = env.NEYNAR_API_KEY;
-  if (!apiKey) {
-    return { error: 'NEYNAR_API_KEY not configured' };
-  }
+  const result = await publishCastToFarcaster(env as unknown as Record<string, string | undefined>, {
+    text,
+    embeds: embedUrls,
+    channelId,
+  });
 
-  const castText = text.length > 320 ? `${text.slice(0, 317)}...` : text;
-
-  try {
-    const body: Record<string, unknown> = {
-      signer_uuid: signerUuid,
-      text: castText,
-      embeds: embedUrls.map((url) => ({ url })),
-    };
-
-    if (channelId) {
-      body.channel_id = channelId;
-    }
-
-    const response = await fetch('https://api.neynar.com/v2/farcaster/cast', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        api_key: apiKey,
-        'user-agent': 'DegenFeed/1.0',
-      },
-      body: JSON.stringify(body),
-    });
-
-    if (!response.ok) {
-      const errorBody = await response.text().catch(() => 'unknown');
-      return { error: `Neynar error ${response.status}: ${errorBody}` };
-    }
-
-    const data = (await response.json()) as { cast?: { hash?: string } };
-    return { hash: data.cast?.hash };
-  } catch (err) {
-    return { error: err instanceof Error ? err.message : String(err) };
-  }
+  return { hash: result.hash, error: result.error };
 }

@@ -2,6 +2,24 @@ import type { Protocol, UnifiedIdentity } from '@degenfeed/types';
 
 export type { Protocol, UnifiedIdentity };
 
+// Re-export Momoka types
+export type {
+  MomokaSubmitRequest,
+  MomokaSubmitResult,
+  MomokaProof,
+  MomokaHealth,
+} from './momoka';
+
+// Re-export DataExport types
+export type {
+  LensDataExport,
+  LensProfileExport,
+  LensPublicationExport,
+  LensFollowExport,
+  LensReactionExport,
+  LensMomokaProofExport,
+} from './data-export';
+
 export const LENS_API_URL = 'https://api-v2.lens.dev/graphql';
 export const FALLBACK_LENS_URLS = ['https://api.lens.xyz/graphql', LENS_API_URL];
 

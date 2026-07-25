@@ -471,64 +471,66 @@ export class UnifiedShortsFeed {
   }
 
   async fetchFarcasterShorts(limit: number): Promise<ShortVideo[]> {
-    // Fetch Farcaster casts with video embeds via Neynar API
+    // Fetch Farcaster casts with video embeds via our Hubble
     const fcShorts: ShortVideo[] = [];
 
-    const apiKey = this.env.NEYNAR_API_KEY;
-    if (!apiKey) return [];
+    const hubUrl = this.env.FARCASTER_BOT_HUB_URL || 'http://127.0.0.1:2281';
 
     try {
-      const res = await fetch(
-        `https://api.neynar.com/v2/farcaster/feed?feed_type=filter&filter_type=global&limit=${Math.min(limit, 25)}`,
-        { headers: { accept: 'application/json', api_key: apiKey } },
-      );
-
-      if (res.ok) {
+      // Scan curated FIDs for casts with video embeds
+      const curatedFids = [3, 2, 1, 228, 239, 354, 5650, 602, 7771];
+      for (const fid of curatedFids) {
+        if (fcShorts.length >= limit) break;
+        const res = await fetch(
+          `${hubUrl}/v1/castsByFid?fid=${fid}&pageSize=10`,
+          { headers: { accept: 'application/json' } },
+        );
+        if (!res.ok) continue;
         const data = (await res.json()) as {
-          casts?: Array<{
+          messages?: Array<{
             hash: string;
-            author: {
+            data: {
+              castAddBody: { text: string; embeds: Array<{ url: string }> };
               fid: number;
-              username: string;
-              display_name?: string;
-              pfp_url?: string;
+              timestamp: number;
             };
-            text: string;
-            embeds?: Array<{ url: string }>;
-            reactions?: { likes_count: number; recasts_count: number };
-            timestamp: string;
           }>;
         };
 
-        for (const cast of data?.casts ?? []) {
-          const videoEmbed = cast.embeds?.find(
+        for (const msg of data?.messages ?? []) {
+          const body = msg.data?.castAddBody;
+          if (!body?.text) continue;
+          const videoEmbed = (body.embeds || []).find(
             (e) => e.url.match(/\.(mp4|webm|mov)$/i) || e.url.includes('video'),
           );
           if (!videoEmbed) continue;
 
+          const fid = msg.data?.fid || 0;
+          const ts = (msg.data?.timestamp || 0) * 1000;
+
           fcShorts.push({
-            id: `farcaster:${cast.hash}`,
-            title: cast.text.split('\n')[0]?.slice(0, 100) || 'Cast',
-            caption: cast.text.slice(0, 500),
+            id: `farcaster:${msg.hash}`,
+            title: body.text.split('\n')[0]?.slice(0, 100) || 'Cast',
+            caption: body.text.slice(0, 500),
             videoUrl: videoEmbed.url,
-            thumbnailUrl: cast.author.pfp_url || '',
+            thumbnailUrl: '',
             duration: 30,
             hashtags: [],
             creator: {
-              address: `fid:${cast.author.fid}`,
-              handle: cast.author.display_name || cast.author.username,
-              avatar: cast.author.pfp_url,
+              address: `fid:${fid}`,
+              handle: `fid:${fid}`,
+              avatar: '',
             },
-            publishedAt: new Date(cast.timestamp).getTime(),
+            publishedAt: ts ? new Date(ts).getTime() : Date.now(),
             protocols: {
-              farcaster: `https://warpcast.com/${cast.author.username}/${cast.hash}`,
+              farcaster: `https://warpcast.com/fid:${fid}/${msg.hash}`,
             },
             engagement: {
-              likes: (cast.reactions?.likes_count ?? 0) + (cast.reactions?.recasts_count ?? 0),
+              likes: 0,
               views: 0,
               tips: 0,
             },
-            contentHash: `fc:${cast.hash}`,
+            contentHash: `fc:${msg.hash}`,
           });
         }
       }

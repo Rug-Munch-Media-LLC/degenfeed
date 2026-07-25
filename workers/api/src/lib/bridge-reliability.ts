@@ -1085,7 +1085,6 @@ export class BridgeHealthMonitor {
       'discord',
       'matrix',
       'github',
-      'hubzilla',
     ];
 
     // Check all protocols in parallel
@@ -1305,7 +1304,6 @@ export async function getAllBridgeStats(env: Env): Promise<BridgeStats> {
     'discord',
     'matrix',
     'github',
-    'streams',
   ];
   const byProtocol: Record<string, ProtocolStats> = {};
   let totalOps = 0;

@@ -260,81 +260,82 @@ export async function scrapeYouTubeTrending(): Promise<PlatformTrending> {
 
 // ─── Farcaster trending ──────────────────────────────────────────────────
 
-interface NeynarCast {
+interface HubbleCast {
   hash: string;
-  text: string;
-  author: {
-    display_name?: string;
-    username?: string;
-    pfp_url?: string;
+  data: {
+    castAddBody: {
+      text: string;
+      embeds: { url: string }[];
+    };
+    fid: number;
+    timestamp: number;
   };
-  reactions?: {
-    likes_count?: number;
-    recasts_count?: number;
-  };
-  timestamp?: number;
 }
 
 /**
- * Fetch trending casts from Farcaster via Neynar API.
- * Falls back gracefully if no API key configured.
+ * Fetch trending casts from Farcaster via our self-hosted Hubble.
+ * Scrapes curated FIDs for recent casts and scores by recency.
  */
-export async function scrapeFarcasterTrending(env: Env): Promise<PlatformTrending> {
-  const apiKey = env.NEYNAR_API_KEY;
-  if (!apiKey) {
-    return { ...EMPTY_PLATFORM, fetchedAt: Date.now(), source: 'farcaster' };
-  }
-
+export async function scrapeFarcasterTrending(_env: Env): Promise<PlatformTrending> {
   try {
-    const res = await fetch(
-      'https://api.neynar.com/v2/farcaster/feed/trending?limit=25&feed_type=filter&filter_type=global',
-      {
-        headers: {
-          api_key: apiKey,
-          'user-agent': 'DegenFeed/0.1 (+https://degenfeed.xyz)',
-        },
-        signal: AbortSignal.timeout(FETCH_TIMEOUT),
-      },
-    );
-    if (!res.ok) {
-      return { ...EMPTY_PLATFORM, fetchedAt: Date.now(), source: 'farcaster' };
+    const HUBBLE_URL = _env.FARCASTER_BOT_HUB_URL || 'http://127.0.0.1:2281';
+
+    // Fetch from curated FIDs that consistently post quality content
+    const curatedFids = [3, 2, 1, 228, 239, 354, 5650, 602, 615, 910, 3621];
+    const now = Date.now();
+    const allCasts: Array<{ hash: string; text: string; fid: number; author: string; ts: number }> = [];
+
+    for (const fid of curatedFids) {
+      try {
+        const res = await fetch(
+          `${HUBBLE_URL}/v1/castsByFid?fid=${fid}&pageSize=5`,
+          {
+            signal: AbortSignal.timeout(FETCH_TIMEOUT),
+            headers: { accept: 'application/json' },
+          },
+        );
+        if (!res.ok) continue;
+        const data = (await res.json()) as { messages?: HubbleCast[] };
+        for (const msg of data.messages ?? []) {
+          const text = msg.data?.castAddBody?.text;
+          if (!text) continue;
+          const ts = (msg.data.timestamp + 1609459200) * 1000;
+          allCasts.push({
+            hash: msg.hash,
+            text,
+            fid: msg.data.fid,
+            author: `fid:${msg.data.fid}`,
+            ts,
+          });
+        }
+      } catch {
+        continue;
+      }
     }
 
-    const body = (await res.json()) as {
-      casts?: NeynarCast[];
-    };
+    // Sort by recency and take top
+    allCasts.sort((a, b) => b.ts - a.ts);
 
-    const items: TrendingItem[] = (body.casts ?? []).map((cast) => {
-      const likes = cast.reactions?.likes_count ?? 0;
-      const recasts = cast.reactions?.recasts_count ?? 0;
-      const publishedAt = cast.timestamp ? cast.timestamp * 1000 : Date.now();
-      const rb = recencyBonus(publishedAt);
-
-      const compositeScore = (likes * 2 + recasts * 3) * rb;
+    const items: TrendingItem[] = allCasts.slice(0, 15).map((cast) => {
+      const rb = recencyBonus(cast.ts);
+      const compositeScore = Math.round(100 * rb);
 
       return {
         id: `farcaster:${cast.hash}`,
-        title: cast.text?.slice(0, 200) ?? '',
-        url: `https://warpcast.com/${cast.author?.username ?? 'unknown'}/${cast.hash}`,
+        title: cast.text.slice(0, 200),
+        url: `https://warpcast.com/${cast.author}/${cast.hash}`,
         platform: 'farcaster',
-        authorName: cast.author?.display_name ?? cast.author?.username ?? 'Unknown',
-        authorAvatar: cast.author?.pfp_url,
-        score: Math.round(compositeScore),
-        engagement: {
-          likes,
-          comments: 0,
-          shares: recasts,
-        },
-        publishedAt,
-        summary: cast.text?.replace(/\n+/g, ' ').trim().slice(0, 300),
+        authorName: cast.author,
+        score: compositeScore,
+        engagement: { likes: 0, comments: 0 },
+        publishedAt: cast.ts,
+        summary: cast.text.replace(/\n+/g, ' ').trim().slice(0, 300),
       };
     });
 
-    items.sort((a, b) => b.score - a.score);
-
     return {
-      items: items.slice(0, 15),
-      fetchedAt: Date.now(),
+      items,
+      fetchedAt: now,
       source: 'farcaster',
     };
   } catch {
