@@ -503,7 +503,7 @@ export async function handleLiveChatSend(
     await env.CACHE?.put(chatKey, JSON.stringify(trimmed), { expirationTtl: 3600 });
 
     // Broadcast to WebSocket for real-time delivery
-    broadcastToAll(CHANNELS.FEED_NEW, { type: 'live_chat', streamId, ...msg });
+    broadcastToAll(CHANNELS.FEED_NEW, { type: 'live_chat', ...msg });
 
     return jsonResponse({ ok: true, message: msg }, 201);
   } catch (err) {
@@ -914,7 +914,7 @@ export async function handleWebRTCGetOffer(
  * Get connected viewer count for WebRTC sessions.
  */
 export async function handleWebRTCViewers(
-  request: Request,
+  _request: Request,
   _env: Env,
   streamId: string,
 ): Promise<Response> {
