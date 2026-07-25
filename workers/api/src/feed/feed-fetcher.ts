@@ -178,6 +178,9 @@ async function logSlowProviderToKv(env: Env, protocol: string, durationMs: numbe
 }
 
 // ─── Provider factory ────────────────────────────────────────────
+// Supports 10 core protocols directly via FeedProvider implementations.
+// ALL OTHER protocols fall back to the bridge HTTP API, which has
+// a comprehensive PROVIDERS registry with 50+ bridge fetchers.
 
 export function getProvider(protocol: Protocol, env: Env): FeedProvider {
   switch (protocol) {
@@ -204,7 +207,72 @@ export function getProvider(protocol: Protocol, env: Env): FeedProvider {
     case 'rss':
       return new RssWithFallbackProvider(env);
     default:
-      throw new Error(`Unknown protocol: ${protocol}`);
+      // Fall back to bridge API for all other protocols (50+)
+      return new BridgeFeedProvider(protocol, env);
+  }
+}
+
+/**
+ * BridgeFeedProvider — generic fallback for any protocol that has
+ * a bridge provider registered in bridge/src/server/feeds.ts.
+ *
+ * Fetches from the bridge HTTP API (which runs alongside the worker
+ * on Talos). This allows ALL 68+ protocols to be fetched through
+ * the same unified feed pipeline.
+ */
+export class BridgeFeedProvider implements FeedProvider {
+  readonly protocol: Protocol;
+  schema = {
+    id: '' as string,
+    name: '',
+    description: '',
+    endpoint: '',
+    requiresAuth: false,
+    contentType: 'mixed' as const,
+  };
+  private readonly bridgeUrl: string;
+
+  constructor(protocol: Protocol, env: Env) {
+    this.protocol = protocol;
+    this.bridgeUrl = env.BRIDGE_INTERNAL_URL || 'http://127.0.0.1:8788';
+  }
+
+  async fetchFeed(options?: { timeoutMs?: number }): Promise<FeedResult> {
+    const timeoutMs = options?.timeoutMs ?? 6000;
+    try {
+      const res = await fetch(`${this.bridgeUrl}/api/feed/${this.protocol}?limit=50`, {
+        signal: AbortSignal.timeout(timeoutMs),
+      });
+      if (!res.ok) {
+        return { posts: [], notice: `Bridge returned ${res.status} for ${this.protocol}` };
+      }
+      const body = (await res.json()) as { data?: UnifiedPost[]; posts?: UnifiedPost[] };
+      const posts = body.data ?? body.posts ?? [];
+      return { posts: posts.slice(0, 50) };
+    } catch (err) {
+      return {
+        posts: [],
+        notice: `Bridge unavailable for ${this.protocol}: ${err instanceof Error ? err.message : 'unknown'}`,
+      };
+    }
+  }
+
+  async healthCheck(): Promise<{ healthy: boolean; latencyMs: number; error?: string }> {
+    try {
+      const start = performance.now();
+      const res = await fetch(`${this.bridgeUrl}/api/bridge/health/${this.protocol}`, {
+        signal: AbortSignal.timeout(3000),
+      });
+      const latency = Math.round(performance.now() - start);
+      if (res.ok) return { healthy: true, latencyMs: latency };
+      return { healthy: false, latencyMs: latency, error: `HTTP ${res.status}` };
+    } catch (err) {
+      return {
+        healthy: false,
+        latencyMs: 0,
+        error: err instanceof Error ? err.message : 'unknown',
+      };
+    }
   }
 }
 
