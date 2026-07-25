@@ -170,8 +170,14 @@ export async function handleSubscriptionNftCreate(request: Request, env: Env): P
 
   const name = sanitizeString(body.name, 128);
   const description = sanitizeString(body.description, 500) || '';
-  const price = typeof body.price === 'number' ? body.price : Number.parseFloat(sanitizeString(String(body.price), 32));
-  const durationDays = typeof body.durationDays === 'number' ? body.durationDays : Number.parseInt(sanitizeString(String(body.durationDays), 16));
+  const price =
+    typeof body.price === 'number'
+      ? body.price
+      : Number.parseFloat(sanitizeString(String(body.price), 32));
+  const durationDays =
+    typeof body.durationDays === 'number'
+      ? body.durationDays
+      : Number.parseInt(sanitizeString(String(body.durationDays), 16));
   const chain = sanitizeString(body.chain, 32) || 'base';
   const benefits = Array.isArray(body.benefits)
     ? body.benefits.map((b: string) => sanitizeString(b, 200)).filter(Boolean)
@@ -345,15 +351,22 @@ export async function handleSubscriptionNftUpdateTier(
   const updated: SubscriptionTier = {
     ...existing,
     name: sanitizeString(body.name, 128) || existing.name,
-    description: body.description !== undefined ? sanitizeString(body.description, 500) || '' : existing.description,
+    description:
+      body.description !== undefined
+        ? sanitizeString(body.description, 500) || ''
+        : existing.description,
     price: typeof body.price === 'number' ? body.price : existing.price,
     durationDays: typeof body.durationDays === 'number' ? body.durationDays : existing.durationDays,
     benefits: Array.isArray(body.benefits)
       ? body.benefits.map((b: string) => sanitizeString(b, 200)).filter(Boolean)
       : existing.benefits,
     active: body.active !== undefined ? body.active : existing.active,
-    maxSubscribers: typeof body.maxSubscribers === 'number' ? body.maxSubscribers : existing.maxSubscribers,
-    metadataUri: body.metadataUri !== undefined ? sanitizeString(body.metadataUri, 500) || undefined : existing.metadataUri,
+    maxSubscribers:
+      typeof body.maxSubscribers === 'number' ? body.maxSubscribers : existing.maxSubscribers,
+    metadataUri:
+      body.metadataUri !== undefined
+        ? sanitizeString(body.metadataUri, 500) || undefined
+        : existing.metadataUri,
     updatedAt: nowUnix(),
   };
 
@@ -483,10 +496,7 @@ export async function handleSubscriptionNftSubscribe(
   // Verify amount matches price
   const parsedAmount = Number.parseFloat(amount);
   if (Number.isNaN(parsedAmount) || Math.abs(parsedAmount - tier.price) > 0.01) {
-    return jsonResponse(
-      { error: `Amount ${amount} does not match tier price ${tier.price}` },
-      400,
-    );
+    return jsonResponse({ error: `Amount ${amount} does not match tier price ${tier.price}` }, 400);
   }
 
   const subscriber = session.address.toLowerCase();
@@ -499,7 +509,10 @@ export async function handleSubscriptionNftSubscribe(
     const existingRaw = await env.SUBSCRIPTIONS?.get(subKey(normalizedCreator, subscriber));
     if (existingRaw) {
       const existing = JSON.parse(existingRaw) as NftSubscription;
-      if (existing.status === 'active' && (existing.expiryDate === 0 || existing.expiryDate > now)) {
+      if (
+        existing.status === 'active' &&
+        (existing.expiryDate === 0 || existing.expiryDate > now)
+      ) {
         return jsonResponse({ error: 'Already subscribed to this creator' }, 409);
       }
     }
@@ -524,23 +537,35 @@ export async function handleSubscriptionNftSubscribe(
 
   try {
     // Store subscription record
-    await env.SUBSCRIPTIONS?.put(subKey(normalizedCreator, subscriber), JSON.stringify(subscription), {
-      expirationTtl: NONCE_TTL_SEC,
-    });
+    await env.SUBSCRIPTIONS?.put(
+      subKey(normalizedCreator, subscriber),
+      JSON.stringify(subscription),
+      {
+        expirationTtl: NONCE_TTL_SEC,
+      },
+    );
 
     // Store nonce
-    await env.CACHE?.put(nonceKey(normalizedCreator, subscriber), JSON.stringify({ nonce, amount, tierId }), {
-      expirationTtl: NONCE_TTL_SEC,
-    });
+    await env.CACHE?.put(
+      nonceKey(normalizedCreator, subscriber),
+      JSON.stringify({ nonce, amount, tierId }),
+      {
+        expirationTtl: NONCE_TTL_SEC,
+      },
+    );
 
     // Add to subscriber index
     const subsRaw = await env.SUBSCRIPTIONS?.get(subscribersKey(normalizedCreator));
     const subsList: string[] = subsRaw ? JSON.parse(subsRaw) : [];
     if (!subsList.includes(subscriber)) {
       subsList.push(subscriber);
-      await env.SUBSCRIPTIONS?.put(subscribersKey(normalizedCreator), JSON.stringify(subsList.slice(-MAX_SUBSCRIBERS)), {
-        expirationTtl: SUB_TTL_SEC,
-      });
+      await env.SUBSCRIPTIONS?.put(
+        subscribersKey(normalizedCreator),
+        JSON.stringify(subsList.slice(-MAX_SUBSCRIBERS)),
+        {
+          expirationTtl: SUB_TTL_SEC,
+        },
+      );
     }
 
     return noCacheJsonResponse({
@@ -573,10 +598,7 @@ interface ConfirmBody {
   nftContract?: string;
 }
 
-export async function handleSubscriptionNftConfirm(
-  request: Request,
-  env: Env,
-): Promise<Response> {
+export async function handleSubscriptionNftConfirm(request: Request, env: Env): Promise<Response> {
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
 
@@ -667,9 +689,13 @@ export async function handleSubscriptionNftConfirm(
     });
 
     // Mark txHash as used
-    await env.SUBSCRIPTIONS?.put(txKey(txHash), JSON.stringify({ usedAt: now, creator: normalizedCreator, subscriber }), {
-      expirationTtl: TX_DEDUP_TTL_SEC,
-    });
+    await env.SUBSCRIPTIONS?.put(
+      txKey(txHash),
+      JSON.stringify({ usedAt: now, creator: normalizedCreator, subscriber }),
+      {
+        expirationTtl: TX_DEDUP_TTL_SEC,
+      },
+    );
 
     // Delete nonce
     await env.CACHE?.delete(nonceKey(normalizedCreator, subscriber));
@@ -686,13 +712,19 @@ export async function handleSubscriptionNftConfirm(
 
     // Increment subscriber count on tier
     try {
-      const tierRaw = await env.SUBSCRIPTIONS?.get(tierKey(normalizedCreator, tierId || subscription.tierId));
+      const tierRaw = await env.SUBSCRIPTIONS?.get(
+        tierKey(normalizedCreator, tierId || subscription.tierId),
+      );
       if (tierRaw) {
         const tier = JSON.parse(tierRaw) as SubscriptionTier;
         tier.subscriberCount = (tier.subscriberCount || 0) + 1;
-        await env.SUBSCRIPTIONS?.put(tierKey(normalizedCreator, tierId || subscription.tierId), JSON.stringify(tier), {
-          expirationTtl: SUB_TTL_SEC,
-        });
+        await env.SUBSCRIPTIONS?.put(
+          tierKey(normalizedCreator, tierId || subscription.tierId),
+          JSON.stringify(tier),
+          {
+            expirationTtl: SUB_TTL_SEC,
+          },
+        );
       }
     } catch {
       // Non-fatal
@@ -713,10 +745,7 @@ export async function handleSubscriptionNftConfirm(
 
 // ─── Subscriber: GET /api/subscription-nft/active — List active subs ──────
 
-export async function handleSubscriptionNftActive(
-  request: Request,
-  env: Env,
-): Promise<Response> {
+export async function handleSubscriptionNftActive(request: Request, env: Env): Promise<Response> {
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
 
@@ -773,10 +802,7 @@ interface CancelBody {
   creator?: string;
 }
 
-export async function handleSubscriptionNftCancel(
-  request: Request,
-  env: Env,
-): Promise<Response> {
+export async function handleSubscriptionNftCancel(request: Request, env: Env): Promise<Response> {
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
 
@@ -838,10 +864,7 @@ export async function handleSubscriptionNftCancel(
 
 // ─── Check: GET /api/subscription-nft/check — Check access for content ────
 
-export async function handleSubscriptionNftCheck(
-  request: Request,
-  env: Env,
-): Promise<Response> {
+export async function handleSubscriptionNftCheck(request: Request, env: Env): Promise<Response> {
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
 

@@ -2,7 +2,7 @@ import { ed25519 } from '@noble/curves/ed25519';
 import { secp256k1 } from '@noble/curves/secp256k1';
 import { keccak_256 } from '@noble/hashes/sha3';
 import { bytesToHex, hexToBytes } from '@noble/hashes/utils';
-import { type Env, jsonResponse, log, rateLimit } from '../index';
+import { type Env, jsonResponse, log, rateLimit, recordBruteForceFailure } from '../index';
 import { extractRequestMetadata, logSecurityEvent } from '../lib/security-log';
 import { createSession, generateCsrfToken, parseSessionCookie, storeCsrfToken } from '../session';
 import { storeSessionMeta } from './sessions';
@@ -217,6 +217,8 @@ export async function handleWalletVerify(request: Request, env: Env): Promise<Re
       storedNonce = null;
     }
     if (!storedNonce || storedNonce !== body.nonce) {
+      // Invalid nonce counts as a failed attempt for brute force tracking
+      await recordBruteForceFailure(env, clientIp);
       return jsonResponse({ error: 'Invalid or expired nonce' }, 401);
     }
     try {
@@ -233,6 +235,8 @@ export async function handleWalletVerify(request: Request, env: Env): Promise<Re
       valid = verifySolanaSignature(body.message, body.signature, body.address);
     }
     if (!valid) {
+      // Record the failure for brute force protection escalation
+      await recordBruteForceFailure(env, clientIp);
       return jsonResponse({ error: 'Invalid signature' }, 401);
     }
 

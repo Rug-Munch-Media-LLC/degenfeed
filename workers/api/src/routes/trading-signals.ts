@@ -185,7 +185,16 @@ function generateFallbackSignals(): TradingSignal[] {
     { id: '$WIF', name: 'dogwifhat', image: '' },
   ];
 
-  const types: TradingSignalType[] = ['buy', 'sell', 'buy', 'buy', 'whale_movement', 'launch', 'social_spike', 'buy'];
+  const types: TradingSignalType[] = [
+    'buy',
+    'sell',
+    'buy',
+    'buy',
+    'whale_movement',
+    'launch',
+    'social_spike',
+    'buy',
+  ];
 
   const signals: TradingSignal[] = [];
   for (let i = 0; i < 20; i++) {
@@ -207,15 +216,16 @@ function generateFallbackSignals(): TradingSignal[] {
       type: signalType,
       coin: coinId,
       coinName,
-      label: signalType === 'buy'
-        ? `${actorLabel} bought ${coinId}`
-        : signalType === 'sell'
-          ? `${actorLabel} sold ${coinId}`
-          : signalType === 'launch'
-            ? `New coin ${coinId} launched by ${actorLabel}`
-            : signalType === 'whale_movement'
-              ? `Whale ${actorLabel} moved ${coinId}`
-              : `${coinId} spiking on social`,
+      label:
+        signalType === 'buy'
+          ? `${actorLabel} bought ${coinId}`
+          : signalType === 'sell'
+            ? `${actorLabel} sold ${coinId}`
+            : signalType === 'launch'
+              ? `New coin ${coinId} launched by ${actorLabel}`
+              : signalType === 'whale_movement'
+                ? `Whale ${actorLabel} moved ${coinId}`
+                : `${coinId} spiking on social`,
       amountUsd: amount,
       amountTokens: (amount * (3 + Math.random() * 10)).toFixed(0),
       actor: actorName,
@@ -232,16 +242,106 @@ function generateFallbackSignals(): TradingSignal[] {
 
 function generateFallbackTrending(): TrendingCoin[] {
   const coinData = [
-    { id: '$DEGEN', symbol: 'DEGEN', name: 'Degen', priceUsd: 0.089, change24h: 24.5, socialVolume: 12500, uniqueAuthors: 3400, sources: ['farcaster', 'lens', 'degenfeed'] },
-    { id: '$BOB', symbol: 'BOB', name: 'Bob', priceUsd: 0.032, change24h: 15.2, socialVolume: 8900, uniqueAuthors: 2100, sources: ['farcaster', 'base'] },
-    { id: '$FREN', symbol: 'FREN', name: 'Fren', priceUsd: 0.0045, change24h: 42.1, socialVolume: 7500, uniqueAuthors: 1800, sources: ['lens', 'degenfeed'] },
-    { id: '$SOL', symbol: 'SOL', name: 'Solana', priceUsd: 187.50, change24h: 5.3, socialVolume: 52000, uniqueAuthors: 12000, sources: ['solana', 'farcaster'] },
-    { id: '$ETH', symbol: 'ETH', name: 'Ethereum', priceUsd: 3450.00, change24h: -2.1, socialVolume: 48000, uniqueAuthors: 11000, sources: ['ethereum', 'farcaster'] },
-    { id: '$PEPE', symbol: 'PEPE', name: 'Pepe', priceUsd: 0.000012, change24h: 68.3, socialVolume: 32000, uniqueAuthors: 5600, sources: ['ethereum', 'degenfeed'] },
-    { id: '$WIF', symbol: 'WIF', name: 'dogwifhat', priceUsd: 2.45, change24h: -5.8, socialVolume: 28000, uniqueAuthors: 4300, sources: ['solana', 'degenfeed'] },
-    { id: '$BONK', symbol: 'BONK', name: 'Bonk', priceUsd: 0.000034, change24h: 12.4, socialVolume: 21000, uniqueAuthors: 3800, sources: ['solana'] },
-    { id: '$DOGE', symbol: 'DOGE', name: 'Dogecoin', priceUsd: 0.15, change24h: 3.2, socialVolume: 19000, uniqueAuthors: 8900, sources: ['ethereum', 'farcaster'] },
-    { id: '$TOSHI', symbol: 'TOSHI', name: 'Toshi', priceUsd: 0.00056, change24h: 92.7, socialVolume: 15000, uniqueAuthors: 2200, sources: ['base', 'lens'] },
+    {
+      id: '$DEGEN',
+      symbol: 'DEGEN',
+      name: 'Degen',
+      priceUsd: 0.089,
+      change24h: 24.5,
+      socialVolume: 12500,
+      uniqueAuthors: 3400,
+      sources: ['farcaster', 'lens', 'degenfeed'],
+    },
+    {
+      id: '$BOB',
+      symbol: 'BOB',
+      name: 'Bob',
+      priceUsd: 0.032,
+      change24h: 15.2,
+      socialVolume: 8900,
+      uniqueAuthors: 2100,
+      sources: ['farcaster', 'base'],
+    },
+    {
+      id: '$FREN',
+      symbol: 'FREN',
+      name: 'Fren',
+      priceUsd: 0.0045,
+      change24h: 42.1,
+      socialVolume: 7500,
+      uniqueAuthors: 1800,
+      sources: ['lens', 'degenfeed'],
+    },
+    {
+      id: '$SOL',
+      symbol: 'SOL',
+      name: 'Solana',
+      priceUsd: 187.5,
+      change24h: 5.3,
+      socialVolume: 52000,
+      uniqueAuthors: 12000,
+      sources: ['solana', 'farcaster'],
+    },
+    {
+      id: '$ETH',
+      symbol: 'ETH',
+      name: 'Ethereum',
+      priceUsd: 3450.0,
+      change24h: -2.1,
+      socialVolume: 48000,
+      uniqueAuthors: 11000,
+      sources: ['ethereum', 'farcaster'],
+    },
+    {
+      id: '$PEPE',
+      symbol: 'PEPE',
+      name: 'Pepe',
+      priceUsd: 0.000012,
+      change24h: 68.3,
+      socialVolume: 32000,
+      uniqueAuthors: 5600,
+      sources: ['ethereum', 'degenfeed'],
+    },
+    {
+      id: '$WIF',
+      symbol: 'WIF',
+      name: 'dogwifhat',
+      priceUsd: 2.45,
+      change24h: -5.8,
+      socialVolume: 28000,
+      uniqueAuthors: 4300,
+      sources: ['solana', 'degenfeed'],
+    },
+    {
+      id: '$BONK',
+      symbol: 'BONK',
+      name: 'Bonk',
+      priceUsd: 0.000034,
+      change24h: 12.4,
+      socialVolume: 21000,
+      uniqueAuthors: 3800,
+      sources: ['solana'],
+    },
+    {
+      id: '$DOGE',
+      symbol: 'DOGE',
+      name: 'Dogecoin',
+      priceUsd: 0.15,
+      change24h: 3.2,
+      socialVolume: 19000,
+      uniqueAuthors: 8900,
+      sources: ['ethereum', 'farcaster'],
+    },
+    {
+      id: '$TOSHI',
+      symbol: 'TOSHI',
+      name: 'Toshi',
+      priceUsd: 0.00056,
+      change24h: 92.7,
+      socialVolume: 15000,
+      uniqueAuthors: 2200,
+      sources: ['base', 'lens'],
+    },
   ];
 
   return coinData.map((c, i) => ({
@@ -279,7 +379,13 @@ export async function handleTradingSignals(request: Request, env: Env): Promise<
   }
 
   // Filter by type
-  const validTypes: TradingSignalType[] = ['buy', 'sell', 'launch', 'whale_movement', 'social_spike'];
+  const validTypes: TradingSignalType[] = [
+    'buy',
+    'sell',
+    'launch',
+    'whale_movement',
+    'social_spike',
+  ];
   if (type && validTypes.includes(type as TradingSignalType)) {
     signals = signals.filter((s) => s.type === type);
   }
@@ -323,10 +429,7 @@ interface CreateSignalBody {
   marketCapUsd?: number;
 }
 
-export async function handleTradingSignalCreate(
-  request: Request,
-  env: Env,
-): Promise<Response> {
+export async function handleTradingSignalCreate(request: Request, env: Env): Promise<Response> {
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
 
@@ -337,9 +440,18 @@ export async function handleTradingSignalCreate(
     return jsonResponse({ error: 'Invalid JSON' }, 400);
   }
 
-  const validTypes: TradingSignalType[] = ['buy', 'sell', 'launch', 'whale_movement', 'social_spike'];
+  const validTypes: TradingSignalType[] = [
+    'buy',
+    'sell',
+    'launch',
+    'whale_movement',
+    'social_spike',
+  ];
   if (!body.type || !validTypes.includes(body.type)) {
-    return jsonResponse({ error: 'Valid type required: buy, sell, launch, whale_movement, social_spike' }, 400);
+    return jsonResponse(
+      { error: 'Valid type required: buy, sell, launch, whale_movement, social_spike' },
+      400,
+    );
   }
 
   const coin = sanitizeCoinAddress(body.coin);
@@ -406,9 +518,7 @@ export async function handleTradingSignalAction(
 
   try {
     const signals = (await kvGet<TradingSignal[]>(env, SIGNALS_KEY)) ?? [];
-    const updated = signals.map((s) =>
-      s.id === sanitizedId ? { ...s, actioned: true } : s,
-    );
+    const updated = signals.map((s) => (s.id === sanitizedId ? { ...s, actioned: true } : s));
     await kvPut(env, SIGNALS_KEY, updated);
     return jsonResponse({ success: true });
   } catch {
@@ -464,8 +574,20 @@ export async function handleTradingWhales(request: Request, env: Env): Promise<R
         platform: 'ethereum',
         portfolioValueUsd: 45200000,
         recentTrades: [
-          { coin: '$DEGEN', coinName: 'Degen', type: 'buy', amountUsd: 50000, timestamp: now - 600000 },
-          { coin: '$PEPE', coinName: 'Pepe', type: 'buy', amountUsd: 125000, timestamp: now - 1800000 },
+          {
+            coin: '$DEGEN',
+            coinName: 'Degen',
+            type: 'buy',
+            amountUsd: 50000,
+            timestamp: now - 600000,
+          },
+          {
+            coin: '$PEPE',
+            coinName: 'Pepe',
+            type: 'buy',
+            amountUsd: 125000,
+            timestamp: now - 1800000,
+          },
         ],
         riskScore: 4,
         tags: ['whale', 'smart_money'],
@@ -477,8 +599,20 @@ export async function handleTradingWhales(request: Request, env: Env): Promise<R
         platform: 'solana',
         portfolioValueUsd: 28300000,
         recentTrades: [
-          { coin: '$WIF', coinName: 'dogwifhat', type: 'sell', amountUsd: 75000, timestamp: now - 900000 },
-          { coin: '$BONK', coinName: 'Bonk', type: 'buy', amountUsd: 100000, timestamp: now - 3600000 },
+          {
+            coin: '$WIF',
+            coinName: 'dogwifhat',
+            type: 'sell',
+            amountUsd: 75000,
+            timestamp: now - 900000,
+          },
+          {
+            coin: '$BONK',
+            coinName: 'Bonk',
+            type: 'buy',
+            amountUsd: 100000,
+            timestamp: now - 3600000,
+          },
         ],
         riskScore: 6,
         tags: ['whale', 'sniper'],
@@ -490,8 +624,20 @@ export async function handleTradingWhales(request: Request, env: Env): Promise<R
         platform: 'farcaster',
         portfolioValueUsd: 12500000,
         recentTrades: [
-          { coin: '$BOB', coinName: 'Bob', type: 'buy', amountUsd: 25000, timestamp: now - 1200000 },
-          { coin: '$FREN', coinName: 'Fren', type: 'buy', amountUsd: 10000, timestamp: now - 2400000 },
+          {
+            coin: '$BOB',
+            coinName: 'Bob',
+            type: 'buy',
+            amountUsd: 25000,
+            timestamp: now - 1200000,
+          },
+          {
+            coin: '$FREN',
+            coinName: 'Fren',
+            type: 'buy',
+            amountUsd: 10000,
+            timestamp: now - 2400000,
+          },
         ],
         riskScore: 7,
         tags: ['smart_money', 'degen'],
@@ -503,7 +649,13 @@ export async function handleTradingWhales(request: Request, env: Env): Promise<R
         platform: 'ethereum',
         portfolioValueUsd: 8900000,
         recentTrades: [
-          { coin: '$ETH', coinName: 'Ethereum', type: 'buy', amountUsd: 200000, timestamp: now - 7200000 },
+          {
+            coin: '$ETH',
+            coinName: 'Ethereum',
+            type: 'buy',
+            amountUsd: 200000,
+            timestamp: now - 7200000,
+          },
         ],
         riskScore: 3,
         tags: ['whale'],
@@ -515,8 +667,20 @@ export async function handleTradingWhales(request: Request, env: Env): Promise<R
         platform: 'solana',
         portfolioValueUsd: 56700000,
         recentTrades: [
-          { coin: '$SOL', coinName: 'Solana', type: 'buy', amountUsd: 500000, timestamp: now - 14400000 },
-          { coin: '$WIF', coinName: 'dogwifhat', type: 'sell', amountUsd: 150000, timestamp: now - 28800000 },
+          {
+            coin: '$SOL',
+            coinName: 'Solana',
+            type: 'buy',
+            amountUsd: 500000,
+            timestamp: now - 14400000,
+          },
+          {
+            coin: '$WIF',
+            coinName: 'dogwifhat',
+            type: 'sell',
+            amountUsd: 150000,
+            timestamp: now - 28800000,
+          },
         ],
         riskScore: 8,
         tags: ['whale', 'sniper', 'smart_money'],

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
@@ -107,7 +107,9 @@ function SignalRow({
   return (
     <div
       className={`flex items-start gap-3 px-4 py-3 transition-colors hover:bg-[var(--color-overlay)] ${compact ? 'py-2' : ''}`}
-      style={{ borderLeft: `3px solid ${SIGNAL_BORDER[signal.type] || 'var(--color-glass-border)'}` }}
+      style={{
+        borderLeft: `3px solid ${SIGNAL_BORDER[signal.type] || 'var(--color-glass-border)'}`,
+      }}
     >
       {/* Icon */}
       <div
@@ -119,21 +121,41 @@ function SignalRow({
 
       {/* Content */}
       <div className="flex-1 min-w-0">
-        <p className={`font-semibold truncate ${compact ? 'text-xs' : 'text-sm'}`} style={{ color: 'var(--color-fg)' }}>
+        <p
+          className={`font-semibold truncate ${compact ? 'text-xs' : 'text-sm'}`}
+          style={{ color: 'var(--color-fg)' }}
+        >
           {signal.label}
         </p>
         <div className="flex items-center gap-2 mt-0.5">
-          <span className="text-xs font-medium" style={{ color: signal.type === 'buy' ? '#10b981' : signal.type === 'sell' ? '#ef4444' : 'var(--color-muted)' }}>
+          <span
+            className="text-xs font-medium"
+            style={{
+              color:
+                signal.type === 'buy'
+                  ? '#10b981'
+                  : signal.type === 'sell'
+                    ? '#ef4444'
+                    : 'var(--color-muted)',
+            }}
+          >
             {formatUsd(signal.amountUsd)}
           </span>
           {signal.priceUsd && (
             <>
-              <span className="text-[10px]" style={{ color: 'var(--color-muted)' }}>at</span>
-              <span className="text-xs" style={{ color: 'var(--color-muted)' }}>${signal.priceUsd.toFixed(4)}</span>
+              <span className="text-[10px]" style={{ color: 'var(--color-muted)' }}>
+                at
+              </span>
+              <span className="text-xs" style={{ color: 'var(--color-muted)' }}>
+                ${signal.priceUsd.toFixed(4)}
+              </span>
             </>
           )}
         </div>
-        <div className="flex items-center gap-2 mt-0.5 text-[10px]" style={{ color: 'var(--color-muted)' }}>
+        <div
+          className="flex items-center gap-2 mt-0.5 text-[10px]"
+          style={{ color: 'var(--color-muted)' }}
+        >
           <span>{signal.actorName}</span>
           <span>·</span>
           <span>{signal.source}</span>
@@ -185,9 +207,14 @@ function TypeFilter({
             type="button"
             onClick={() => onChange(t.id)}
             className={`shrink-0 rounded-full px-3 py-1 text-[10px] font-medium transition-all ${
-              activeType === t.id ? 'bg-degen-500/10 text-degen-400' : 'text-[var(--color-muted)] hover:text-[var(--color-fg)]'
+              activeType === t.id
+                ? 'bg-degen-500/10 text-degen-400'
+                : 'text-[var(--color-muted)] hover:text-[var(--color-fg)]'
             }`}
-            style={{ border: activeType === t.id ? '1px solid rgba(0, 255, 65, 0.2)' : '1px solid transparent' }}
+            style={{
+              border:
+                activeType === t.id ? '1px solid rgba(0, 255, 65, 0.2)' : '1px solid transparent',
+            }}
           >
             {t.label}
           </button>
@@ -197,7 +224,10 @@ function TypeFilter({
   }
 
   return (
-    <div className="flex gap-2 px-4 py-3 border-b overflow-x-auto" style={{ borderColor: 'var(--color-glass-border)' }}>
+    <div
+      className="flex gap-2 px-4 py-3 border-b overflow-x-auto"
+      style={{ borderColor: 'var(--color-glass-border)' }}
+    >
       {types.map((t) => (
         <button
           key={t.id}
@@ -244,14 +274,109 @@ export function TradingSignalsFeed({
       // Fallback data
       const now = Date.now();
       const fallback: TradingSignal[] = [
-        { id: '1', type: 'buy', coin: '$DEGEN', coinName: 'Degen', label: 'Vitalik bought $DEGEN', amountUsd: 15000, actor: 'vitalik.eth', actorName: 'Vitalik Buterin', source: 'farcaster', timestamp: now - 120000, priceUsd: 0.089 },
-        { id: '2', type: 'sell', coin: '$BOB', coinName: 'Bob', label: 'Whale sold $BOB', amountUsd: 42000, actor: '0x1234...abcd', actorName: 'Smart Whale', source: 'ethereum', timestamp: now - 300000, priceUsd: 0.032 },
-        { id: '3', type: 'launch', coin: '$FREN', coinName: 'Fren', label: '$FREN launched by @fren', amountUsd: 50000, actor: '@fren', actorName: 'Fren', source: 'lens', timestamp: now - 600000 },
-        { id: '4', type: 'buy', coin: '$WIF', coinName: 'dogwifhat', label: 'Solana Whale bought $WIF', amountUsd: 75000, actor: 'sol:abc...xyz', actorName: 'Solana Whale', source: 'solana', timestamp: now - 900000, priceUsd: 2.45 },
-        { id: '5', type: 'whale_movement', coin: '$SOL', coinName: 'Solana', label: 'Whale moved 50,000 $SOL', amountUsd: 500000, actor: 'jito_sol:5abc', actorName: 'Jito Whale', source: 'solana', timestamp: now - 1800000, priceUsd: 187.50 },
-        { id: '6', type: 'social_spike', coin: '$PEPE', coinName: 'Pepe', label: '$PEPE spiking on social', amountUsd: 98000, actor: 'farcaster:8483', actorName: 'Degen Trader', source: 'farcaster', timestamp: now - 2400000, priceUsd: 0.000012 },
-        { id: '7', type: 'buy', coin: '$ETH', coinName: 'Ethereum', label: 'Crypto Shark bought $ETH', amountUsd: 200000, actor: '0xabcd...5678', actorName: 'Crypto Shark', source: 'ethereum', timestamp: now - 3600000, priceUsd: 3450 },
-        { id: '8', type: 'buy', coin: '$FREN', coinName: 'Fren', label: 'Lens Degen bought $FREN', amountUsd: 10000, actor: 'lens:0x01', actorName: 'Lens Degen', source: 'lens', timestamp: now - 4800000, priceUsd: 0.0045 },
+        {
+          id: '1',
+          type: 'buy',
+          coin: '$DEGEN',
+          coinName: 'Degen',
+          label: 'Vitalik bought $DEGEN',
+          amountUsd: 15000,
+          actor: 'vitalik.eth',
+          actorName: 'Vitalik Buterin',
+          source: 'farcaster',
+          timestamp: now - 120000,
+          priceUsd: 0.089,
+        },
+        {
+          id: '2',
+          type: 'sell',
+          coin: '$BOB',
+          coinName: 'Bob',
+          label: 'Whale sold $BOB',
+          amountUsd: 42000,
+          actor: '0x1234...abcd',
+          actorName: 'Smart Whale',
+          source: 'ethereum',
+          timestamp: now - 300000,
+          priceUsd: 0.032,
+        },
+        {
+          id: '3',
+          type: 'launch',
+          coin: '$FREN',
+          coinName: 'Fren',
+          label: '$FREN launched by @fren',
+          amountUsd: 50000,
+          actor: '@fren',
+          actorName: 'Fren',
+          source: 'lens',
+          timestamp: now - 600000,
+        },
+        {
+          id: '4',
+          type: 'buy',
+          coin: '$WIF',
+          coinName: 'dogwifhat',
+          label: 'Solana Whale bought $WIF',
+          amountUsd: 75000,
+          actor: 'sol:abc...xyz',
+          actorName: 'Solana Whale',
+          source: 'solana',
+          timestamp: now - 900000,
+          priceUsd: 2.45,
+        },
+        {
+          id: '5',
+          type: 'whale_movement',
+          coin: '$SOL',
+          coinName: 'Solana',
+          label: 'Whale moved 50,000 $SOL',
+          amountUsd: 500000,
+          actor: 'jito_sol:5abc',
+          actorName: 'Jito Whale',
+          source: 'solana',
+          timestamp: now - 1800000,
+          priceUsd: 187.5,
+        },
+        {
+          id: '6',
+          type: 'social_spike',
+          coin: '$PEPE',
+          coinName: 'Pepe',
+          label: '$PEPE spiking on social',
+          amountUsd: 98000,
+          actor: 'farcaster:8483',
+          actorName: 'Degen Trader',
+          source: 'farcaster',
+          timestamp: now - 2400000,
+          priceUsd: 0.000012,
+        },
+        {
+          id: '7',
+          type: 'buy',
+          coin: '$ETH',
+          coinName: 'Ethereum',
+          label: 'Crypto Shark bought $ETH',
+          amountUsd: 200000,
+          actor: '0xabcd...5678',
+          actorName: 'Crypto Shark',
+          source: 'ethereum',
+          timestamp: now - 3600000,
+          priceUsd: 3450,
+        },
+        {
+          id: '8',
+          type: 'buy',
+          coin: '$FREN',
+          coinName: 'Fren',
+          label: 'Lens Degen bought $FREN',
+          amountUsd: 10000,
+          actor: 'lens:0x01',
+          actorName: 'Lens Degen',
+          source: 'lens',
+          timestamp: now - 4800000,
+          priceUsd: 0.0045,
+        },
       ];
       setSignals(fallback);
     } finally {
@@ -270,13 +395,15 @@ export function TradingSignalsFeed({
     return () => clearInterval(interval);
   }, [fetchSignals, refreshInterval]);
 
-  const filteredSignals = activeType === 'all'
-    ? signals
-    : signals.filter((s) => s.type === activeType);
+  const filteredSignals =
+    activeType === 'all' ? signals : signals.filter((s) => s.type === activeType);
 
   if (compact) {
     return (
-      <div className="rounded-xl border overflow-hidden" style={{ borderColor: 'var(--color-glass-border)' }}>
+      <div
+        className="rounded-xl border overflow-hidden"
+        style={{ borderColor: 'var(--color-glass-border)' }}
+      >
         <div className="flex items-center justify-between px-4 pt-3 pb-2">
           <h3 className="text-sm font-bold" style={{ color: 'var(--color-fg)' }}>
             Trading Signals
@@ -287,7 +414,10 @@ export function TradingSignalsFeed({
           </span>
         </div>
         <TypeFilter activeType={activeType} onChange={setActiveType} compact />
-        <div className="divide-y max-h-80 overflow-y-auto" style={{ borderColor: 'var(--color-glass-border)' }}>
+        <div
+          className="divide-y max-h-80 overflow-y-auto"
+          style={{ borderColor: 'var(--color-glass-border)' }}
+        >
           {filteredSignals.slice(0, Math.min(limit, 10)).map((signal) => (
             <SignalRow key={signal.id} signal={signal} compact onCopyTrade={onCopyTrade} />
           ))}
@@ -297,7 +427,10 @@ export function TradingSignalsFeed({
   }
 
   return (
-    <div className="rounded-xl border overflow-hidden" style={{ borderColor: 'var(--color-glass-border)' }}>
+    <div
+      className="rounded-xl border overflow-hidden"
+      style={{ borderColor: 'var(--color-glass-border)' }}
+    >
       {/* Header */}
       <div className="flex items-center justify-between px-4 pt-4 pb-3">
         <div>
@@ -313,7 +446,9 @@ export function TradingSignalsFeed({
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-degen-400 opacity-75" />
             <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-degen-500" />
           </span>
-          <span className="text-xs font-medium" style={{ color: 'var(--color-muted)' }}>LIVE</span>
+          <span className="text-xs font-medium" style={{ color: 'var(--color-muted)' }}>
+            LIVE
+          </span>
         </div>
       </div>
 
@@ -324,7 +459,9 @@ export function TradingSignalsFeed({
       {loading ? (
         <div className="text-center py-12">
           <div className="animate-spin w-8 h-8 border-2 border-degen-500 border-t-transparent rounded-full mx-auto mb-2" />
-          <p className="text-xs" style={{ color: 'var(--color-muted)' }}>Loading signals...</p>
+          <p className="text-xs" style={{ color: 'var(--color-muted)' }}>
+            Loading signals...
+          </p>
         </div>
       ) : filteredSignals.length > 0 ? (
         <div className="divide-y" style={{ borderColor: 'var(--color-glass-border)' }}>
@@ -334,19 +471,31 @@ export function TradingSignalsFeed({
         </div>
       ) : (
         <div className="text-center py-8">
-          <p className="text-xs" style={{ color: 'var(--color-muted)' }}>No signals yet</p>
+          <p className="text-xs" style={{ color: 'var(--color-muted)' }}>
+            No signals yet
+          </p>
         </div>
       )}
 
       {/* Footer stats */}
-      <div className="flex items-center justify-between px-4 py-3 border-t text-[10px]" style={{ borderColor: 'var(--color-glass-border)', color: 'var(--color-muted)' }}>
+      <div
+        className="flex items-center justify-between px-4 py-3 border-t text-[10px]"
+        style={{ borderColor: 'var(--color-glass-border)', color: 'var(--color-muted)' }}
+      >
         <span>{signals.length} signals in feed</span>
         <button
           type="button"
           onClick={fetchSignals}
           className="flex items-center gap-1 transition-colors hover:text-degen-400"
         >
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg
+            width="10"
+            height="10"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
             <polyline points="23 4 23 10 17 10" />
             <path d="M20.49 15a9 9 0 11-2.12-9.36L23 10" />
           </svg>

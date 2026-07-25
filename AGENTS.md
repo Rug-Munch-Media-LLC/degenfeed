@@ -5,7 +5,7 @@
 > AI agent contract. Read this before touching anything in this repo.
 
 ## Status
-canonical · owner=crmuncher · last_updated=2026-07-06
+canonical · owner=crmuncher · last_updated=2026-07-25
 
 ## What This Repo Is
 Next.js multi-protocol social aggregator client. Aggregates Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, and RSS into a single feed and composer.
@@ -92,6 +92,13 @@ make clean       # remove build artifacts and node_modules
 
 ## Architecture
 See [ARCHITECTURE.md](ARCHITECTURE.md). Update it when components change.
+
+## Packages (PeerTube)
+- `packages/peertube-sdk/` — Complete PeerTube REST API client (videos, channels, playlists, live, comments, accounts, search, federation, admin). Export: `PeerTubeClient`, `peerTubeHealthCheck`, `getPeerTubeAccessToken`. Import as `@degenfeed/peertube-sdk`.
+- `packages/peertube-provider/` — Higher-level provider with circuit breaker, federated discovery, upload/livestream management. Used by worker routes.
+- Routes: `routes/peertube.ts` mounts under `/api/peertube` (upload, list, rate, channels, live, federation). `routes/peertube-streams.ts` mounts under `/api/token/:address/peertube` (token-gated livestreams). `routes/peertube-tip.ts` handles tipping.
+- PeerTube instance: `video.degenfeed.xyz` (internal `127.0.0.1:9011`). Access via `PEERTUBE_INSTANCE_URL`, `PEERTUBE_CLIENT_ID`, `PEERTUBE_CLIENT_SECRET` env vars.
+- Frontend: `/video/peertube` (PeerTube explorer), `components/video/PeerTubePlayer.tsx` (custom embed player with theater mode).
 
 ## Plan
 [ROADMAP.md](ROADMAP.md) shows current sprint and upcoming work. Update weekly.

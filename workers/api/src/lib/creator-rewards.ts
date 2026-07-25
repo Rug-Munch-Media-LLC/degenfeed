@@ -105,13 +105,13 @@ const DISTRIBUTION_INTERVAL_MS = 7 * 24 * 60 * 60 * 1000; // Weekly
 const KV_TTL_YEAR = 60 * 60 * 24 * 365;
 
 // Weights
-const WEIGHT_ENGAGEMENT = 0.40;
-const WEIGHT_TIPS = 0.30;
-const WEIGHT_HOLDER_GROWTH = 0.20;
-const WEIGHT_COIN_ACTIVITY = 0.10;
+const WEIGHT_ENGAGEMENT = 0.4;
+const WEIGHT_TIPS = 0.3;
+const WEIGHT_HOLDER_GROWTH = 0.2;
+const WEIGHT_COIN_ACTIVITY = 0.1;
 
 // Platform fee capture (20% of platform fees go to rewards)
-const REWARD_POOL_FRACTION = 0.20;
+const REWARD_POOL_FRACTION = 0.2;
 
 // ─── Key builders ──────────────────────────────────────────────────────────
 
@@ -139,7 +139,9 @@ async function kvGet<T>(env: Env, key: string): Promise<T | null> {
   try {
     const raw = await env.CACHE?.get(key);
     if (raw) return JSON.parse(raw) as T;
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
   return null;
 }
 
@@ -148,7 +150,9 @@ async function kvPut(env: Env, key: string, value: unknown, ttl?: number): Promi
     await env.CACHE?.put(key, JSON.stringify(value), {
       expirationTtl: ttl ?? KV_TTL_YEAR,
     });
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 }
 
 // ─── Record platform fee contribution ─────────────────────────────────────
@@ -248,7 +252,9 @@ export async function computeWeeklyRewards(env: Env): Promise<{
     if (listResult) {
       creatorKeys.push(...listResult.keys.map((k) => k.name));
     }
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 
   // Load metrics for each creator
   const allMetrics: Array<{ address: string; metrics: CreatorMetrics }> = [];
@@ -259,7 +265,9 @@ export async function computeWeeklyRewards(env: Env): Promise<{
         const metrics = JSON.parse(raw) as CreatorMetrics;
         allMetrics.push({ address: key.replace(REWARD_CREATOR_PREFIX, ''), metrics });
       }
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }
 
   if (allMetrics.length === 0) {
@@ -284,7 +292,11 @@ export async function computeWeeklyRewards(env: Env): Promise<{
   const distributions: RewardDistribution['distributions'] = [];
 
   for (const { address, metrics } of allMetrics) {
-    if (metrics.contributionWeight <= 0 && metrics.engagementScore <= 0 && metrics.tipsReceived <= 0) {
+    if (
+      metrics.contributionWeight <= 0 &&
+      metrics.engagementScore <= 0 &&
+      metrics.tipsReceived <= 0
+    ) {
       continue;
     }
 
@@ -408,10 +420,7 @@ export async function handleCreatorRewards(request: Request, env: Env): Promise<
 
 // GET /api/creator/rewards/history — Past distributions
 
-export async function handleCreatorRewardsHistory(
-  _request: Request,
-  env: Env,
-): Promise<Response> {
+export async function handleCreatorRewardsHistory(_request: Request, env: Env): Promise<Response> {
   const url = new URL(_request.url);
   const limit = Math.min(Number(url.searchParams.get('limit')) || 12, 52);
 
@@ -501,10 +510,7 @@ export async function handleCreatorRewardsLeaderboard(
 
 // POST /api/creator/rewards/compute — Trigger weekly computation (admin only)
 
-export async function handleCreatorRewardsCompute(
-  request: Request,
-  env: Env,
-): Promise<Response> {
+export async function handleCreatorRewardsCompute(request: Request, env: Env): Promise<Response> {
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
 

@@ -1,0 +1,3 @@
+[submodule "packages/creator-coin/contracts/lib/openzeppelin-contracts"]
+	path = packages/creator-coin/contracts/lib/openzeppelin-contracts
+	url = https://github.com/OpenZeppelin/openzeppelin-contracts

@@ -15,6 +15,7 @@ import { VideoCard } from './VideoCard';
 
 interface VideoRowProps {
   title: string;
+  subtitle?: string; // Secondary text below title
   videos: UnifiedVideo[];
   href?: string; // "See all" link target
   size?: 'sm' | 'md' | 'lg';
@@ -80,7 +81,10 @@ export function VideoRow({
     <section className={`relative ${className}`}>
       {/* Header */}
       <div className="mb-3 flex items-center justify-between px-1">
-        <h2 className="text-lg font-bold text-[var(--color-fg)]">{title}</h2>
+        <div>
+          <h2 className="text-lg font-bold text-[var(--color-fg)]">{title}</h2>
+          {subtitle && <p className="text-xs text-[var(--color-muted)] mt-0.5">{subtitle}</p>}
+        </div>
         {href && videos.length > 0 && (
           <Link
             href={href}

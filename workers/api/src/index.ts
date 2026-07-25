@@ -56,6 +56,12 @@ export interface Env {
   REDLIB_URL?: string;
   /** Self-hosted RSS-Bridge instance for proxied RSS feed fetching */
   RSS_BRIDGE_URL?: string;
+  /** Owncast instance URL for live streaming clips */
+  OWCAST_INSTANCE_URL?: string;
+  /** Comma-separated list of Lemmy instances to fetch from */
+  LEMMY_INSTANCES?: string;
+  /** Comma-separated list of Pixelfed instances to fetch from */
+  PIXELFED_INSTANCES?: string;
   /** Optional bearer for rmi-backend if gated */
   RMI_API_KEY?: string;
   /** Optional Sentry DSN for error reporting */
@@ -178,6 +184,8 @@ export interface Env {
 
   /** KV namespace for custom feed storage */
   CUSTOM_FEEDS?: KVNamespace;
+  /** KV namespace for creator coin treasury fee tracking */
+  TREASURY?: KVNamespace;
 
   // ─── Postiz cross-posting ───────────────────────────────────────────
   /** Postiz API base URL (e.g. "http://postiz:3000" or "https://api.postiz.com") */
@@ -255,6 +263,10 @@ export interface Env {
   GHOST_SUBSCRIBERS?: KVNamespace;
   /** KV namespace for Ghost tip records */
   GHOST_TIPS?: KVNamespace;
+
+  // ─── Content Library ────────────────────────────────────────────────
+  /** KV namespace for the unified content library — all creator content stored here */
+  CONTENT_LIBRARY?: KVNamespace;
   /** SendGrid or Mailgun API key for email delivery */
   EMAIL_API_KEY?: string;
   /** Email provider: 'sendgrid' | 'mailgun' */
@@ -393,6 +405,248 @@ export async function rateLimit(
   return { allowed: true, retryAfter: 0 };
 }
 
+// ─── Tiered rate limiters ────────────────────────────────────────────
+// These build on the KV-backed rateLimit() to provide context-aware
+// rate limiting for specific attack vectors:
+//
+//   Brute force:  wallet verify → 5/min → after 3 failures, 1/min for 30min
+//   Enumeration:  email/username checks → 3/min with exponential backoff
+//   Scraping:     feed endpoints → 30/min anonymous, 120/min authenticated
+//   DDoS:         global 1000 req/min across all IPs
+//   Admin:        10/min with wallet-specific tracking
+//
+// Failure counters use a separate KV prefix so they don't interfere with
+// the main rate limit counters.
+
+const BRUTE_FORCE_MAX = 5;
+const BRUTE_FORCE_WINDOW_MS = 60_000;
+const BRUTE_FORCE_BLOCK_MAX = 3;
+const BRUTE_FORCE_BLOCK_WINDOW_MS = 1_800_000; // 30 minutes
+const BRUTE_FORCE_BLOCK_RATE = 1; // 1 req/min when blocked
+const BRUTE_FORCE_BLOCK_RATE_WINDOW_MS = 60_000;
+
+const ENUMERATION_MAX = 3;
+const ENUMERATION_WINDOW_MS = 60_000;
+const ENUMERATION_BACKOFF_BASE_MS = 10_000; // Start at 10s
+const ENUMERATION_BACKOFF_MAX_MS = 300_000; // Cap at 5min
+
+const ANON_SCRAPE_MAX = 30;
+const AUTH_SCRAPE_MAX = 120;
+const SCRAPE_WINDOW_MS = 60_000;
+
+const GLOBAL_DDOS_MAX = 1000;
+const GLOBAL_DDOS_WINDOW_MS = 60_000;
+
+const ADMIN_MAX = 10;
+const ADMIN_WINDOW_MS = 60_000;
+
+/**
+ * Check if a path is a feed/scrape endpoint.
+ */
+function isScrapePath(path: string): boolean {
+  return (
+    path.startsWith('/api/feed/') ||
+    path.startsWith('/api/discover/') ||
+    path.startsWith('/api/search/') ||
+    path.startsWith('/api/shorts/feed') ||
+    path.startsWith('/api/shorts/trending') ||
+    path.startsWith('/api/shorts/for-you')
+  );
+}
+
+/**
+ * Check if a path is an enumeration-susceptible endpoint.
+ */
+function isEnumerationPath(path: string): boolean {
+  return (
+    path === '/api/auth/email/register' ||
+    path === '/api/auth/email/signin' ||
+    path === '/api/auth/email/status' ||
+    path === '/api/auth/email/password-reset' ||
+    path === '/api/auth/email/password-reset/confirm'
+  );
+}
+
+/**
+ * Check if a path is an admin endpoint.
+ */
+function isAdminPath(path: string): boolean {
+  return path.startsWith('/api/admin/');
+}
+
+/**
+ * Check if a path is a brute-force target (wallet verify).
+ */
+function isBruteForcePath(path: string): boolean {
+  return path === '/api/auth/wallet/verify';
+}
+
+/**
+ * Tiered rate limit dispatch.
+ *
+ * Returns the appropriate rate limit for the request context.
+ * More specific checks (brute force, enumeration) take priority over
+ * general scraping/DDoS limits.
+ */
+export async function tieredRateLimit(
+  env: Env,
+  ip: string,
+  path: string,
+  isAuthenticated: boolean,
+): Promise<RateLimitResult> {
+  if (env.RATE_LIMIT_DISABLED === 'true') {
+    return { allowed: true, retryAfter: 0 };
+  }
+  if (!env.CACHE) {
+    return { allowed: true, retryAfter: 0 };
+  }
+
+  // ── Brute force protection (wallet verify) ─────────────────────
+  if (isBruteForcePath(path)) {
+    const failureKey = `bf:fail:${ip}`;
+    const now = Date.now();
+
+    // Check failure count in the current window
+    let failureCount = 0;
+    try {
+      const raw = await env.CACHE.get(failureKey);
+      if (raw) {
+        const parsed = JSON.parse(raw) as { count: number; resetAt: number };
+        if (parsed.resetAt > now) {
+          failureCount = parsed.count;
+        }
+      }
+    } catch {
+      // KV hiccup — fail open
+    }
+
+    // If in blocked state (>3 failures), use stricter rate
+    if (failureCount >= BRUTE_FORCE_BLOCK_MAX) {
+      return rateLimit(env, ip, path, BRUTE_FORCE_BLOCK_RATE, BRUTE_FORCE_BLOCK_RATE_WINDOW_MS);
+    }
+
+    // Normal: 5/min
+    return rateLimit(env, ip, path, BRUTE_FORCE_MAX, BRUTE_FORCE_WINDOW_MS);
+  }
+
+  // ── Enumeration protection ─────────────────────────────────────
+  if (isEnumerationPath(path)) {
+    // Count attempts for this IP
+    const enumKey = `enum:${ip}:${path}`;
+    const now = Date.now();
+
+    let attempts = 0;
+    try {
+      const raw = await env.CACHE.get(enumKey);
+      if (raw) {
+        const parsed = JSON.parse(raw) as { count: number; resetAt: number };
+        if (parsed.resetAt > now) {
+          attempts = parsed.count;
+        }
+      }
+    } catch {
+      // KV hiccup — fail open
+    }
+
+    // Exponential backoff: each attempt beyond the first increases the window
+    // Window = base * 2^(attempts - ENUMERATION_MAX), capped at max
+    let windowMs = ENUMERATION_WINDOW_MS;
+    if (attempts >= ENUMERATION_MAX) {
+      const extraAttempts = attempts - ENUMERATION_MAX + 1;
+      windowMs = Math.min(
+        ENUMERATION_BACKOFF_BASE_MS * 2 ** extraAttempts,
+        ENUMERATION_BACKOFF_MAX_MS,
+      );
+      return rateLimit(env, ip, path, 1, windowMs);
+    }
+
+    // Track attempt count
+    const bucketSec = Math.max(1, Math.ceil(ENUMERATION_WINDOW_MS / 1000));
+    const resetAt = now + ENUMERATION_WINDOW_MS;
+    try {
+      await env.CACHE.put(enumKey, JSON.stringify({ count: attempts + 1, resetAt }), {
+        expirationTtl: bucketSec,
+      });
+    } catch {
+      // Non-critical
+    }
+
+    return rateLimit(env, ip, path, ENUMERATION_MAX, ENUMERATION_WINDOW_MS);
+  }
+
+  // ── Scraping protection (feed/search endpoints) ────────────────
+  if (isScrapePath(path)) {
+    const maxReq = isAuthenticated ? AUTH_SCRAPE_MAX : ANON_SCRAPE_MAX;
+    return rateLimit(env, ip, path, maxReq, SCRAPE_WINDOW_MS);
+  }
+
+  // ── Admin endpoints ────────────────────────────────────────────
+  if (isAdminPath(path)) {
+    return rateLimit(env, ip, path, ADMIN_MAX, ADMIN_WINDOW_MS);
+  }
+
+  // ── Global DDoS protection ─────────────────────────────────────
+  // Count requests across ALL paths for this IP
+  const globalKey = `rl:global:${ip}`;
+  const globalBucketSec = Math.max(1, Math.ceil(GLOBAL_DDOS_WINDOW_MS / 1000));
+  const now = Date.now();
+  const globalResetAt = now + GLOBAL_DDOS_WINDOW_MS;
+
+  let globalCount = 1;
+  try {
+    const raw = await env.CACHE.get(globalKey);
+    if (raw) {
+      const parsed = JSON.parse(raw) as { count: number; resetAt: number };
+      if (parsed.resetAt > now) {
+        globalCount = parsed.count + 1;
+      }
+    }
+    await env.CACHE.put(globalKey, JSON.stringify({ count: globalCount, resetAt: globalResetAt }), {
+      expirationTtl: globalBucketSec,
+    });
+  } catch {
+    // KV hiccup — fail open
+  }
+
+  if (globalCount > GLOBAL_DDOS_MAX) {
+    return { allowed: false, retryAfter: Math.max(0, globalResetAt - now) };
+  }
+
+  // ── Default: use the existing per-path rate limit ──────────────
+  const maxReq = Number(env.RATE_MAX_REQ) || DEFAULT_RATE_MAX;
+  const windowMs = Number(env.RATE_WINDOW_MS) || DEFAULT_RATE_WINDOW;
+  return rateLimit(env, ip, path, maxReq, windowMs);
+}
+
+/**
+ * Record a failed brute force attempt.
+ * Called by the wallet verify handler when signature verification fails.
+ */
+export async function recordBruteForceFailure(env: Env, ip: string): Promise<void> {
+  if (!env.CACHE) return;
+  const failureKey = `bf:fail:${ip}`;
+  const now = Date.now();
+  const windowMs = BRUTE_FORCE_BLOCK_WINDOW_MS;
+  const bucketSec = Math.max(1, Math.ceil(windowMs / 1000));
+
+  let count = 1;
+  try {
+    const raw = await env.CACHE.get(failureKey);
+    if (raw) {
+      const parsed = JSON.parse(raw) as { count: number; resetAt: number };
+      if (parsed.resetAt > now) {
+        count = parsed.count + 1;
+      }
+    }
+    const resetAt = now + windowMs;
+    await env.CACHE.put(failureKey, JSON.stringify({ count, resetAt }), {
+      expirationTtl: bucketSec,
+    });
+  } catch {
+    // Non-critical
+  }
+}
+
 // Rate limit cleanup inline in rateLimit() — avoids global setInterval (CF Workers restriction)
 
 // ─── GotoSocial config ───────────────────────────────────────────────
@@ -509,6 +763,27 @@ export async function scheduled(
     await executeScheduledPosts(env).catch((err) =>
       log('warn', '[scheduled] scheduled post executor failed', err),
     );
+
+    // Execute content syndication queue
+    try {
+      const { executeDueSyndicationRules } = await import('./routes/content-syndication-routes');
+      const synced = await executeDueSyndicationRules(env);
+      if (synced > 0) {
+        log('info', `[scheduled] executed ${synced} syndication rules`);
+      }
+    } catch (err) {
+      log('warn', '[scheduled] syndication executor failed', err);
+    }
+
+    // Execute scheduled cross-posts
+    const { executeDueScheduledCrossPosts } = await import('./routes/publish');
+    const executed = await executeDueScheduledCrossPosts(env).catch((err) => {
+      log('warn', '[scheduled] cross-post executor failed', err);
+      return 0;
+    });
+    if (executed > 0) {
+      log('info', `[scheduled] executed ${executed} scheduled cross-posts`);
+    }
 
     // Process realtime sync queue (every 30s effectively, since cron fires every min)
     try {

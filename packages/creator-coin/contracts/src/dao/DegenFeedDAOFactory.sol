@@ -54,7 +54,6 @@ contract DegenFeedDAOFactory {
     /// @notice List of all deployed DAOs
     address[] public allDAOs;
 
-    event DAODeployed(address indexed coin, address indexed governor, address indexed timelock);
     event FeeUpdated(uint256 newFeeBps);
     event Paused(bool isPaused);
 
@@ -127,7 +126,13 @@ contract DegenFeedDAOFactory {
         deployedDAOs[params.coin] = governor;
         allDAOs.push(governor);
 
-        emit DAODeployed(params.coin, governor, timelock);
+        emit DAODeployed(
+            params.coin,
+            governor,
+            timelock,
+            params.creator,
+            block.timestamp
+        );
     }
 
     /**

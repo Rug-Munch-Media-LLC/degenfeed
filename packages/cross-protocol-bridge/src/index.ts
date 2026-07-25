@@ -24,16 +24,33 @@
  * ```
  */
 
+// ─── Cross-Post Adapters ──────────────────────────────────────────────
+export {
+  adaptForProtocols,
+  getAdapter as getPlatformAdapter,
+  getAllAdapters as getAllPlatformAdapters,
+  getAvailableProtocols,
+  previewForProtocols,
+  registerAdapter as registerPlatformAdapter,
+  registerAllAdapters,
+} from './adapters/index';
+export type {
+  LinkCard,
+  MasterPost,
+  MediaAttachment,
+  PlatformAdapter,
+  PlatformDefinition,
+  ProtocolPublishParams,
+} from './adapters/types';
+export { ALL_PLATFORMS } from './adapters/types';
 // ─── Core Bridge ─────────────────────────────────────────────────────────
 export {
   Bridge,
   getDefaultBridge,
   resetDefaultBridge,
 } from './bridge';
-
 // ─── Circuit Breaker ─────────────────────────────────────────────────────
 export { CircuitBreaker, circuitBreaker } from './circuit-breaker';
-
 // ─── Health Monitor ──────────────────────────────────────────────────────
 export { HealthMonitor, healthMonitor } from './health-monitor';
 // ─── Identity Linking ────────────────────────────────────────────────────
@@ -60,7 +77,6 @@ export {
   translateHashtag,
   translateHashtagsForProtocol,
 } from './normalization';
-
 // ─── Notifications ───────────────────────────────────────────────────────
 export {
   fetchUnifiedNotifications,
@@ -68,7 +84,6 @@ export {
   getNotificationFetcher,
   registerNotificationFetcher,
 } from './notifications';
-
 // ─── Search ──────────────────────────────────────────────────────────────
 export {
   computeRelevanceScore,
@@ -77,7 +92,6 @@ export {
   registerSearchProviderFromPosts,
   searchProtocol,
 } from './search';
-
 // ─── Transform Adapters ──────────────────────────────────────────────────
 export {
   getAdapter,

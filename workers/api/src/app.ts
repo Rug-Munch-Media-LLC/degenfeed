@@ -21,7 +21,7 @@ import {
 } from './api-key';
 import { applyCors, getAllowedOrigin, isAllowedOrigin, parseOriginHeader } from './cors';
 import type { Env } from './index';
-import { jsonResponse, rateLimit, tieredRateLimit, recordBruteForceFailure } from './index';
+import { jsonResponse, rateLimit, recordBruteForceFailure, tieredRateLimit } from './index';
 import { validateBodySize } from './sanitize';
 import { parseSessionCookie, validateCsrfToken } from './session';
 
@@ -32,6 +32,38 @@ import { requireAdminFromSession } from './lib/admin-guard';
 
 // ─── Route handlers ──────────────────────────────────────────
 
+import {
+  handleCreatorRewards,
+  handleCreatorRewardsClaim,
+  handleCreatorRewardsCompute,
+  handleCreatorRewardsHistory,
+  handleCreatorRewardsLeaderboard,
+} from './lib/creator-rewards';
+import {
+  handleDaoRegistryGet,
+  handleDaoRegistryLink,
+  handleDaoRegistryList,
+  handleDaoRegistryRegister,
+  handleDaoRegistryVerify,
+} from './lib/dao-registry';
+import {
+  handleDefenderDisable,
+  handleDefenderSetup,
+  handleDefenderStatus,
+  handleDefenderSync,
+} from './lib/defender-integration';
+// ─── External DAO Tooling Integrations ────────────────────────
+import {
+  handleDelegationSync,
+  handleSnapshotImportVotes,
+  handleSnapshotStrategyGenerate,
+  handleSnapshotSyncProposal,
+} from './lib/snapshot-integration';
+import {
+  handleTallyCompatibilityCheck,
+  handleTallyRegister,
+  handleTallyStatus,
+} from './lib/tally-integration';
 import { handleAccountExport } from './routes/account';
 import {
   handleAccountDelete,
@@ -82,21 +114,21 @@ import {
 } from './routes/connected-accounts';
 import { handleContentResolve } from './routes/content';
 import { creatorConfig } from './routes/creator-config';
+import {
+  handleCreatorCoinAirdrop,
+  handleCreatorCoinBurn,
+  handleCreatorCoinGatedPost,
+  handleCreatorCoinHolders,
+  handleCreatorCoinRevenue,
+  handleCreatorCoinStats,
+  handleCreatorCoinsList,
+  handleCreatorCoinTrades,
+  handlePlatformRevenue,
+} from './routes/creator-dashboard';
 import { creatorVesting } from './routes/creator-vesting';
 import { creatorVideos } from './routes/creator-videos';
 import { handleCrossPostCentralized } from './routes/cross-post-centralized';
 import { crossProtocolCoin } from './routes/cross-protocol-coin';
-import {
-  handleCreatorCoinsList,
-  handleCreatorCoinStats,
-  handleCreatorCoinHolders,
-  handleCreatorCoinTrades,
-  handleCreatorCoinBurn,
-  handleCreatorCoinAirdrop,
-  handleCreatorCoinGatedPost,
-  handleCreatorCoinRevenue,
-  handlePlatformRevenue,
-} from './routes/creator-dashboard';
 import { handleCrossReply } from './routes/cross-reply';
 import { handleAltFeed, handleNewsletterFeed, handleTopFeed } from './routes/curated';
 import {
@@ -116,6 +148,76 @@ import {
   handleCustomFeedUpdate,
 } from './routes/custom-feed';
 import {
+  handleDaoCreate,
+  handleDaoDelegate,
+  handleDaoDelegatesTop,
+  handleDaoDelegationMine,
+  handleDaoDelegationStatus,
+  handleDaoDiscover,
+  handleDaoGet,
+  handleDaoJoin,
+  handleDaoLeave,
+  handleDaoMine,
+  handleDaoProposalCreate,
+  handleDaoProposalDelete,
+  handleDaoProposalExecute,
+  handleDaoProposalGet,
+  handleDaoProposalMyVote,
+  handleDaoProposalQueue,
+  handleDaoProposalsList,
+  handleDaoProposalUpdate,
+  handleDaoProposalVote,
+  handleDaoProposalVotes,
+  handleDaoRevokeDelegation,
+  handleDaoStats,
+  handleDaoTreasuryGrantCreate,
+  handleDaoTreasuryGrantMilestone,
+  handleDaoTreasuryGrants,
+  handleDaoTreasuryOverview,
+  handleDaoTreasuryStreamCreate,
+  handleDaoTreasuryStreamDelete,
+  handleDaoTreasuryStreams,
+  handleDaoTreasuryTransactions,
+  handleDaoTreasuryTransfer,
+  handleDaoUpdate,
+} from './routes/dao';
+import { handleDaoActivity, handleMyDaoActivity } from './routes/dao-activity';
+import {
+  handleGrantAnalytics,
+  handleGrantApply,
+  handleGrantCreateProgram,
+  handleGrantFinalize,
+  handleGrantListApplications,
+  handleGrantListPrograms,
+  handleGrantReview,
+  handleGrantSubmitMilestone,
+  handleGrantVote,
+  handleInvestmentCreateProposal,
+  handleInvestmentListProposals,
+  handleInvestmentPerformance,
+  handleInvestmentPortfolio,
+  handleInvestmentVote,
+  handleInvestmentYields,
+  handleMultisigCancel,
+  handleMultisigConfig,
+  handleMultisigExecute,
+  handleMultisigList,
+  handleMultisigPropose,
+  handleMultisigSaveConfig,
+  handleMultisigSign,
+  handleStreamAnalytics,
+  handleStreamCancel,
+  handleStreamCreate,
+  handleStreamGet,
+  handleStreamHistory,
+  handleStreamList,
+  handleStreamModify,
+  handleStreamPause,
+  handleStreamResume,
+  handleTreasuryAnalytics,
+} from './routes/dao-treasury';
+import {
+  handleDigestFormat,
   handleDigestStatus,
   handleDigestSubscribeEmail,
   handleDigestToday,
@@ -138,15 +240,6 @@ import {
   handleDiscordOAuth,
   handleDiscordOAuthCallback,
 } from './routes/discord';
-import {
-  handleTelegramBotInfo,
-  handleTelegramGenerateLink,
-  handleTelegramGetLinked,
-  handleTelegramLinkAccount,
-  handleTelegramSend,
-  handleTelegramUnlinkAccount,
-  handleTelegramWebhook,
-} from './routes/telegram';
 import {
   handleDiscover,
   handleDiscoverCommunities,
@@ -347,7 +440,18 @@ import {
   handleResolveReport,
   handleSubmitReport,
 } from './routes/moderation';
-import { handleNewsFeed } from './routes/news';
+import {
+  handleNewsCategory,
+  handleNewsDigestPreview,
+  handleNewsDigestSubscribe,
+  handleNewsFeed,
+  handleNewsFeed,
+  handleNewsPreferences,
+  handleNewsSearch,
+  handleNewsSources,
+  handleNewsStory,
+  handleNewsTrending,
+} from './routes/news';
 import {
   handleNewsletterDigest,
   handleNewsletterStatus,
@@ -404,6 +508,7 @@ import {
   handleParagraphSubscribe,
   handleParagraphTrending,
 } from './routes/paragraph';
+import peertubeRouter from './routes/peertube';
 import peertubeStreams from './routes/peertube-streams';
 import {
   handlePeerTubeLeaderboard,
@@ -475,13 +580,19 @@ import {
   handleSearchTrending,
 } from './routes/search';
 import {
+  handleAlgorithmStatus,
   handleCreateShort,
+  handleShortsByCategory,
   handleShortsBySource,
   handleShortsFeed,
+  handleShortsFeedback,
+  handleShortsFeedV2,
   handleShortsForYou,
   handleShortsShare,
   handleShortsTip,
   handleShortsTrending,
+  handleShortsTrendingV2,
+  handleShortsWatch,
   handleUnifiedFeed,
   handleUnifiedFeedBySource,
   handleUnifiedMint,
@@ -489,6 +600,13 @@ import {
   handleZoraCreator,
   handleZoraTrending,
 } from './routes/shorts';
+import {
+  handleAddSource,
+  handleListSources,
+  handleRefreshSource,
+  handleRemoveSource,
+  handleSourceSuggestions,
+} from './routes/shorts-sources';
 import {
   handleSourcesApprove,
   handleSourcesDiscover,
@@ -522,11 +640,20 @@ import {
   handleSubscriptionNftCheck,
   handleSubscriptionNftConfirm,
   handleSubscriptionNftCreate,
-  handleSubscriptionNftSubscribers,
   handleSubscriptionNftSubscribe,
+  handleSubscriptionNftSubscribers,
   handleSubscriptionNftTiers,
   handleSubscriptionNftUpdateTier,
 } from './routes/subscription-nft';
+import {
+  handleTelegramBotInfo,
+  handleTelegramGenerateLink,
+  handleTelegramGetLinked,
+  handleTelegramLinkAccount,
+  handleTelegramSend,
+  handleTelegramUnlinkAccount,
+  handleTelegramWebhook,
+} from './routes/telegram';
 import {
   handleLightningInvoice,
   handleTipCreate,
@@ -539,15 +666,24 @@ import {
 } from './routes/tip';
 import tokenCommunity from './routes/token-community';
 import {
+  handleTokenGateContent,
+  handleTokenGateDelete,
+  handleTokenGateGet,
   handleTokenGateResolve,
   handleTokenGateVerify,
   handleTokenGateVerifyMulti,
-  handleTokenGateContent,
-  handleTokenGateGet,
-  handleTokenGateDelete,
 } from './routes/token-gate';
 import { handleTokenSSE, handleTokenWebSocket } from './routes/token-websocket';
 import totpRoutes from './routes/totp';
+import {
+  handleTradingCoinSignals,
+  handleTradingCoinSummary,
+  handleTradingSignalAction,
+  handleTradingSignalCreate,
+  handleTradingSignals,
+  handleTradingTrending,
+  handleTradingWhales,
+} from './routes/trading-signals';
 import { handleTranslate } from './routes/translate';
 import {
   handleTipBadges,
@@ -558,22 +694,6 @@ import {
   handleUnifiedTipLeaderboard,
   handleUnifiedTipStats,
 } from './routes/unified-tip';
-import {
-  handleTradingSignals,
-  handleTradingSignalCreate,
-  handleTradingSignalAction,
-  handleTradingTrending,
-  handleTradingWhales,
-  handleTradingCoinSignals,
-  handleTradingCoinSummary,
-} from './routes/trading-signals';
-import {
-  handleCreatorRewards,
-  handleCreatorRewardsHistory,
-  handleCreatorRewardsClaim,
-  handleCreatorRewardsLeaderboard,
-  handleCreatorRewardsCompute,
-} from './lib/creator-rewards';
 import videoHub from './routes/video-hub';
 import { handleVisualFeed, handleVisualForYou, handleVisualTrending } from './routes/visual-feed';
 import { handleWalletNonce, handleWalletVerify } from './routes/wallet';
@@ -600,9 +720,9 @@ import zoraVideoRoutes from './routes/zora-video';
 
 // ─── App ────────────────────────────────────────────────────
 
-
 import { cspForPath } from './lib/csp';
-import { validateRequest, validateJsonBody } from './lib/input-validator';
+import { validateJsonBody, validateRequest } from './lib/input-validator';
+
 const app = new Hono<{ Bindings: Env }>();
 
 // ─── Global onError handler ─────────────────────────────────
@@ -764,8 +884,6 @@ app.use('*', async (c, next) => {
   });
 });
 
-
-
 // ─── Middleware: CORS post-response ──────────────────────────
 // Registered first so it wraps every response with CORS headers.
 app.use('*', async (c, next) => {
@@ -805,7 +923,6 @@ app.use('*', async (c, next) => {
 
   return next();
 });
-
 
 // ─── Middleware: body size + CSRF for state-changing requests ──
 // Protects POST/PUT/PATCH/DELETE against cross-site request forgery via:
@@ -901,7 +1018,9 @@ app.use('*', async (c, next) => {
   // Detect if the request is authenticated (has a session or API key)
   const authHeader = c.req.header('authorization');
   const cookieHeader = c.req.header('cookie');
-  const isAuthenticated = !!(authHeader?.startsWith('Bearer ') || cookieHeader?.includes('session='));
+  const isAuthenticated = !!(
+    authHeader?.startsWith('Bearer ') || cookieHeader?.includes('session=')
+  );
 
   const rl = await tieredRateLimit(c.env, ip, c.req.path, isAuthenticated);
   if (!rl.allowed) {
@@ -1030,6 +1149,21 @@ app.get('/api/shorts/unified/:source', async (c) => handleUnifiedFeedBySource(c.
 // ── Cross-platform actions on shorts ─────────────
 app.post('/api/shorts/:id/tip', async (c) => handleShortsTip(c.req.raw, c.env));
 app.post('/api/shorts/:id/share', async (c) => handleShortsShare(c.req.raw, c.env));
+
+// ── V2 enhanced feed (ShortsAggregatorV2 + ShortsAlgorithm) ──
+app.get('/api/shorts/v2/feed', async (c) => handleShortsFeedV2(c.req.raw, c.env));
+app.get('/api/shorts/v2/trending', async (c) => handleShortsTrendingV2(c.req.raw, c.env));
+app.get('/api/shorts/category/:cat', async (c) => handleShortsByCategory(c.req.raw, c.env));
+app.post('/api/shorts/watch', async (c) => handleShortsWatch(c.req.raw, c.env));
+app.post('/api/shorts/feedback', async (c) => handleShortsFeedback(c.req.raw, c.env));
+app.get('/api/shorts/algorithm/status', async (c) => handleAlgorithmStatus(c.req.raw, c.env));
+
+// ── Shorts source management ─────────────────────
+app.get('/api/shorts/sources', async (c) => handleListSources(c.req.raw, c.env));
+app.post('/api/shorts/sources', async (c) => handleAddSource(c.req.raw, c.env));
+app.delete('/api/shorts/sources/:id', async (c) => handleRemoveSource(c.req.raw, c.env));
+app.post('/api/shorts/sources/:id/refresh', async (c) => handleRefreshSource(c.req.raw, c.env));
+app.get('/api/shorts/sources/suggestions', async (c) => handleSourceSuggestions(c.req.raw, c.env));
 
 // ── Zora video NFT endpoints ─────────────────────
 app.get('/api/shorts/zora/trending', async (c) => handleZoraTrending(c.req.raw, c.env));
@@ -1437,7 +1571,9 @@ app.get('/api/crosspost/author/:wallet', async (c) => {
   return jsonResponse({ batches });
 });
 app.all('/api/crosspost/batch/:batchId', async (c) => {
-  const { getCrossPostBatch, deleteCrossPostBatch } = await import('./lib/cross-publish-orchestrator');
+  const { getCrossPostBatch, deleteCrossPostBatch } = await import(
+    './lib/cross-publish-orchestrator'
+  );
   const batchId = c.req.param('batchId');
   if (c.req.method === 'DELETE') {
     const ok = await deleteCrossPostBatch(batchId, c.env);
@@ -1472,7 +1608,9 @@ app.get('/api/tip/unified/activity', async (c) => handleUnifiedTipActivity(c.req
 
 // ─── API: Tip Badges & Extended Leaderboards (gamification) ──
 app.get('/api/tips/badges', async (c) => handleTipBadges(c.req.raw, c.env));
-app.get('/api/tips/leaderboard/protocols', async (c) => handleTipLeaderboardProtocols(c.req.raw, c.env));
+app.get('/api/tips/leaderboard/protocols', async (c) =>
+  handleTipLeaderboardProtocols(c.req.raw, c.env),
+);
 app.get('/api/tips/leaderboard/coins', async (c) => handleTipLeaderboardCoins(c.req.raw, c.env));
 
 // ─── API: Trading Signals (social trading feed) ──────────────
@@ -1485,8 +1623,12 @@ app.post('/api/trading/signals/:id/action', async (c) =>
 );
 app.get('/api/trading/trending', async (c) => handleTradingTrending(c.req.raw, c.env));
 app.get('/api/trading/whales', async (c) => handleTradingWhales(c.req.raw, c.env));
-app.get('/api/trading/coins/:coin', async (c) => handleTradingCoinSignals(c.req.raw, c.env, c.req.param('coin')));
-app.get('/api/trading/coins/:coin/summary', async (c) => handleTradingCoinSummary(c.req.raw, c.env, c.req.param('coin')));
+app.get('/api/trading/coins/:coin', async (c) =>
+  handleTradingCoinSignals(c.req.raw, c.env, c.req.param('coin')),
+);
+app.get('/api/trading/coins/:coin/summary', async (c) =>
+  handleTradingCoinSummary(c.req.raw, c.env, c.req.param('coin')),
+);
 
 // ─── API: Creator Rewards Program ──────────────────────────
 app.get('/api/creator/rewards', async (c) =>
@@ -1496,7 +1638,9 @@ app.get('/api/creator/rewards/history', async (c) => handleCreatorRewardsHistory
 app.post('/api/creator/rewards/claim', async (c) =>
   withSession(c, () => handleCreatorRewardsClaim(c.req.raw, c.env)),
 );
-app.get('/api/creator/rewards/leaderboard', async (c) => handleCreatorRewardsLeaderboard(c.req.raw, c.env));
+app.get('/api/creator/rewards/leaderboard', async (c) =>
+  handleCreatorRewardsLeaderboard(c.req.raw, c.env),
+);
 app.post('/api/creator/rewards/compute', async (c) =>
   withSession(c, () => handleCreatorRewardsCompute(c.req.raw, c.env)),
 );
@@ -1545,6 +1689,9 @@ app.post('/api/peertube/tip', async (c) =>
 );
 app.get('/api/peertube/tip/stats', async (c) => handlePeerTubeTipStats(c.req.raw, c.env));
 app.get('/api/peertube/tip/leaderboard', async (c) => handlePeerTubeLeaderboard(c.req.raw, c.env));
+
+// ─── API: PeerTube Video Platform (upload, list, live, federation) ──
+app.route('/api/peertube', peertubeRouter);
 
 // ─── API: Bluesky Tips ───────────────────────────────────────
 app.post('/api/bluesky/tip', async (c) =>
@@ -1748,9 +1895,7 @@ app.get('/api/subscription-nft/active', async (c) =>
 app.post('/api/subscription-nft/cancel', async (c) =>
   withSession(c, () => handleSubscriptionNftCancel(c.req.raw, c.env)),
 );
-app.get('/api/subscription-nft/check', async (c) =>
-  handleSubscriptionNftCheck(c.req.raw, c.env),
-);
+app.get('/api/subscription-nft/check', async (c) => handleSubscriptionNftCheck(c.req.raw, c.env));
 
 // ─── API: Tiers ──────────────────────────────────────────────
 import tiers from './routes/tiers';
@@ -1793,12 +1938,22 @@ app.route('/api/creator/videos', creatorVideos);
 // ─── API: Creator Coin Dashboard (TASK 3) ────────────────────────
 app.get('/api/creator/coins', async (c) => handleCreatorCoinsList(c.req.raw, c.env));
 app.get('/api/creator/coin/:address/stats', async (c) => handleCreatorCoinStats(c.req.raw, c.env));
-app.get('/api/creator/coin/:address/holders', async (c) => handleCreatorCoinHolders(c.req.raw, c.env));
-app.get('/api/creator/coin/:address/trades', async (c) => handleCreatorCoinTrades(c.req.raw, c.env));
+app.get('/api/creator/coin/:address/holders', async (c) =>
+  handleCreatorCoinHolders(c.req.raw, c.env),
+);
+app.get('/api/creator/coin/:address/trades', async (c) =>
+  handleCreatorCoinTrades(c.req.raw, c.env),
+);
 app.post('/api/creator/coin/:address/burn', async (c) => handleCreatorCoinBurn(c.req.raw, c.env));
-app.post('/api/creator/coin/:address/airdrop', async (c) => handleCreatorCoinAirdrop(c.req.raw, c.env));
-app.post('/api/creator/coin/:address/gated-post', async (c) => handleCreatorCoinGatedPost(c.req.raw, c.env));
-app.get('/api/creator/coin/:address/revenue', async (c) => handleCreatorCoinRevenue(c.req.raw, c.env));
+app.post('/api/creator/coin/:address/airdrop', async (c) =>
+  handleCreatorCoinAirdrop(c.req.raw, c.env),
+);
+app.post('/api/creator/coin/:address/gated-post', async (c) =>
+  handleCreatorCoinGatedPost(c.req.raw, c.env),
+);
+app.get('/api/creator/coin/:address/revenue', async (c) =>
+  handleCreatorCoinRevenue(c.req.raw, c.env),
+);
 
 // ─── API: Platform Revenue Transparency (public, TASK 4) ─────────
 app.get('/api/platform/revenue', async (c) => handlePlatformRevenue(c.req.raw, c.env));
@@ -1814,6 +1969,74 @@ import liveShorts from './routes/live-shorts-index';
 
 app.route('/api/live-shorts', liveShorts);
 app.route('/v1/live-shorts', liveShorts);
+
+// ─── API: Live Streaming Hub (Owncast, PeerTube, YouTube, Twitch, Spaces) ───
+import {
+  handleCreatorLiveProfile,
+  handleGoLive,
+  handleLiveChatMessages,
+  handleLiveChatSend,
+  handleLiveDetails,
+  handleLiveNow,
+  handleLiveSources,
+  handleLiveTip,
+  handleLiveUpcoming,
+  handleLiveViewersSSE,
+  handleScheduleStream,
+  handleStopLive,
+} from './routes/live';
+
+// Static routes (no path params) — must be before parameterized :id routes
+app.get('/api/live/now', async (c) => handleLiveNow(c.req.raw, c.env));
+app.get('/api/live/upcoming', async (c) => handleLiveUpcoming(c.req.raw, c.env));
+app.get('/api/live/sources', async (c) => handleLiveSources(c.req.raw, c.env));
+app.post('/api/live/go-live', async (c) => handleGoLive(c.req.raw, c.env));
+app.post('/api/live/stop', async (c) => handleStopLive(c.req.raw, c.env));
+app.post('/api/live/schedule', async (c) => handleScheduleStream(c.req.raw, c.env));
+
+// Chat routes
+app.get('/api/live/chat/:id/messages', async (c) =>
+  handleLiveChatMessages(c.req.raw, c.env, c.req.param('id')),
+);
+app.post('/api/live/chat/:id/message', async (c) =>
+  handleLiveChatSend(c.req.raw, c.env, c.req.param('id')),
+);
+
+// Creator profile
+app.get('/api/live/creators/:id', async (c) =>
+  handleCreatorLiveProfile(c.req.raw, c.env, c.req.param('id')),
+);
+
+// Viewer count (SSE)
+app.get('/api/live/viewers/:id', async (c) =>
+  handleLiveViewersSSE(c.req.raw, c.env, c.req.param('id')),
+);
+
+// Stream details + tipping (must be last to avoid conflicting with above)
+app.get('/api/live/:id', async (c) => handleLiveDetails(c.req.raw, c.env, c.req.param('id')));
+app.post('/api/live/:id/tip', async (c) => handleLiveTip(c.req.raw, c.env, c.req.param('id')));
+
+// V1 versions
+app.get('/v1/live/now', async (c) => handleLiveNow(c.req.raw, c.env));
+app.get('/v1/live/upcoming', async (c) => handleLiveUpcoming(c.req.raw, c.env));
+app.get('/v1/live/sources', async (c) => handleLiveSources(c.req.raw, c.env));
+app.post('/v1/live/go-live', async (c) => handleGoLive(c.req.raw, c.env));
+app.post('/v1/live/stop', async (c) => handleStopLive(c.req.raw, c.env));
+app.post('/v1/live/schedule', async (c) => handleScheduleStream(c.req.raw, c.env));
+app.get('/v1/live/chat/:id/messages', async (c) =>
+  handleLiveChatMessages(c.req.raw, c.env, c.req.param('id')),
+);
+app.post('/v1/live/chat/:id/message', async (c) =>
+  handleLiveChatSend(c.req.raw, c.env, c.req.param('id')),
+);
+app.get('/v1/live/creators/:id', async (c) =>
+  handleCreatorLiveProfile(c.req.raw, c.env, c.req.param('id')),
+);
+app.get('/v1/live/viewers/:id', async (c) =>
+  handleLiveViewersSSE(c.req.raw, c.env, c.req.param('id')),
+);
+app.get('/v1/live/:id', async (c) => handleLiveDetails(c.req.raw, c.env, c.req.param('id')));
+app.post('/v1/live/:id/tip', async (c) => handleLiveTip(c.req.raw, c.env, c.req.param('id')));
 
 // ─── API: Video Aggregator (cross-platform creator following) ──────────
 import { videoAggregator } from './routes/video-aggregator';
@@ -2044,21 +2267,15 @@ app.post('/api/discord/community/create', async (c) =>
 app.get('/api/discord/community/:symbol', async (c) =>
   handleDiscordCommunityInfo(c.req.raw, c.env),
 );
-app.get('/api/discord/connection', async (c) =>
-  handleDiscordConnectionStatus(c.req.raw, c.env),
-);
-app.delete('/api/discord/connection', async (c) =>
-  handleDiscordDisconnectOAuth(c.req.raw, c.env),
-);
+app.get('/api/discord/connection', async (c) => handleDiscordConnectionStatus(c.req.raw, c.env));
+app.delete('/api/discord/connection', async (c) => handleDiscordDisconnectOAuth(c.req.raw, c.env));
 
 // ─── API: Telegram Bot Integration ────────────────────────
 app.post('/api/telegram/webhook', async (c) => handleTelegramWebhook(c.req.raw, c.env));
 app.get('/api/telegram/link', async (c) => handleTelegramGenerateLink(c.req.raw, c.env));
 app.post('/api/telegram/send', async (c) => handleTelegramSend(c.req.raw, c.env));
 app.get('/api/telegram/bot-info', async (c) => handleTelegramBotInfo(c.req.raw, c.env));
-app.post('/api/telegram/link-account', async (c) =>
-  handleTelegramLinkAccount(c.req.raw, c.env),
-);
+app.post('/api/telegram/link-account', async (c) => handleTelegramLinkAccount(c.req.raw, c.env));
 app.get('/api/telegram/linked', async (c) => handleTelegramGetLinked(c.req.raw, c.env));
 app.delete('/api/telegram/link-account', async (c) =>
   handleTelegramUnlinkAccount(c.req.raw, c.env),
@@ -2088,11 +2305,23 @@ app.post('/api/github/bridge', async (c) => handleGitHubBridgeActivity(c.req.raw
 // ─── API: Digest (Daily) ───────────────────────────────────
 app.all('/api/digest/today', async (c) => handleDigestToday(c.req.raw, c.env));
 app.all('/api/digest/yesterday', async (c) => handleDigestYesterday(c.req.raw, c.env));
+app.all('/api/digest/format', async (c) => handleDigestFormat(c.req.raw, c.env));
 app.all('/api/digest/subscribe-email', async (c) => handleDigestSubscribeEmail(c.req.raw, c.env));
 app.all('/api/digest/unsubscribe-email', async (c) =>
   handleDigestUnsubscribeEmail(c.req.raw, c.env),
 );
 app.all('/api/digest/status', async (c) => handleDigestStatus(c.req.raw, c.env));
+
+// ─── API: News (Intelligent Aggregation) ─────────────────
+app.all('/api/news/feed', async (c) => handleNewsFeed(c.req.raw, c.env));
+app.all('/api/news/trending', async (c) => handleNewsTrending(c.req.raw, c.env));
+app.all('/api/news/category/:category', async (c) => handleNewsCategory(c.req.raw, c.env));
+app.all('/api/news/story/:storyId', async (c) => handleNewsStory(c.req.raw, c.env));
+app.all('/api/news/search', async (c) => handleNewsSearch(c.req.raw, c.env));
+app.all('/api/news/sources', async (c) => handleNewsSources(c.req.raw, c.env));
+app.all('/api/news/preferences', async (c) => handleNewsPreferences(c.req.raw, c.env));
+app.all('/api/news/digest/preview', async (c) => handleNewsDigestPreview(c.req.raw, c.env));
+app.all('/api/news/digest/subscribe', async (c) => handleNewsDigestSubscribe(c.req.raw, c.env));
 
 // ─── API: Gamification (Streaks / Achievements / XP / Social Proof) ──
 app.all('/api/gamification/streak', async (c) => handleStreakCheck(c.req.raw, c.env));
@@ -2112,6 +2341,19 @@ app.all('/api/gamification/xp/award', async (c) => handleXpAward(c.req.raw, c.en
 app.all('/api/gamification/social-proof', async (c) => handleSocialProof(c.req.raw, c.env));
 app.all('/api/gamification/activity', async (c) => handleActivityRecord(c.req.raw, c.env));
 app.all('/api/gamification/activity/recent', async (c) => handleRecentActivity(c.req.raw, c.env));
+
+// ─── API: DAO Activity Feed, Notifications & Subscribe ────
+app.get('/api/dao/:daoId/feed', async (c) => handleDAOActivityFeed(c.req.raw, c.env));
+app.post('/api/dao/:daoId/activity', async (c) => handleDAORecordActivity(c.req.raw, c.env));
+app.get('/api/dao/:daoId/realtime', async (c) => handleDAORealtimePoll(c.req.raw, c.env));
+app.get('/api/dao/:daoId/notifications', async (c) => handleDAONotifications(c.req.raw, c.env));
+app.post('/api/dao/:daoId/notifications/read', async (c) =>
+  handleDAONotificationsRead(c.req.raw, c.env),
+);
+app.post('/api/dao/:daoId/subscribe', async (c) => handleDAOSubscribe(c.req.raw, c.env));
+app.get('/api/dao/:daoId/subscribe/status', async (c) =>
+  handleDAOSubscribeStatus(c.req.raw, c.env),
+);
 
 // ─── API: Deploy ──────────────────────────────────────────
 import { handleDeployRequest, handleDeployStatus } from './routes/deploy';
@@ -2146,6 +2388,101 @@ app.all('/api/search/coins', async (c) => handleSearchCoins(c.req.raw, c.env));
 app.all('/api/search/communities', async (c) => handleSearchCommunities(c.req.raw, c.env));
 app.all('/api/search/trending', async (c) => handleSearchTrending(c.req.raw, c.env));
 app.all('/api/search', async (c) => handleSearch(c.req.raw, c.env));
+
+// ─── API: Content Library ────────────────────────────────────
+import {
+  handleDeleteContentLibraryItem,
+  handleGetContentLibraryItem,
+  handleGetContentLicense,
+  handleGetContentMonetization,
+  handleGetContentUsage,
+  handleListContentLibrary,
+  handleSetContentLicense,
+  handleSetContentMonetization,
+  handleSyncAllContentEngagement,
+  handleSyncContentEngagement,
+  handleUpdateContentLibraryItem,
+} from './routes/content-library-routes';
+
+app.all('/api/content/library/sync-all', async (c) =>
+  handleSyncAllContentEngagement(c.req.raw, c.env),
+);
+app.all('/api/content/library', async (c) => handleListContentLibrary(c.req.raw, c.env));
+app.all('/api/content/library/:contentId/sync', async (c) =>
+  handleSyncContentEngagement(c.req.raw, c.env),
+);
+app.all('/api/content/library/:contentId/license', async (c) => {
+  if (c.req.method === 'POST') return handleSetContentLicense(c.req.raw, c.env);
+  return handleGetContentLicense(c.req.raw, c.env);
+});
+app.all('/api/content/library/:contentId/monetization', async (c) => {
+  if (c.req.method === 'POST') return handleSetContentMonetization(c.req.raw, c.env);
+  return handleGetContentMonetization(c.req.raw, c.env);
+});
+app.all('/api/content/library/:contentId/usage', async (c) =>
+  handleGetContentUsage(c.req.raw, c.env),
+);
+app.all('/api/content/library/:contentId', async (c) => {
+  if (c.req.method === 'PUT') return handleUpdateContentLibraryItem(c.req.raw, c.env);
+  if (c.req.method === 'DELETE') return handleDeleteContentLibraryItem(c.req.raw, c.env);
+  return handleGetContentLibraryItem(c.req.raw, c.env);
+});
+
+// ─── API: Content Import/Export ──────────────────────────────
+import {
+  handleExportContentJson,
+  handleExportContentMarkdown,
+  handleExportContentOpml,
+  handleImportMedium,
+  handleImportRss,
+  handleImportStatus,
+  handleImportSubstack,
+  handleImportTwitter,
+  handleImportYouTube,
+} from './routes/content-import';
+
+app.all('/api/content/import/youtube', async (c) => handleImportYouTube(c.req.raw, c.env));
+app.all('/api/content/import/medium', async (c) => handleImportMedium(c.req.raw, c.env));
+app.all('/api/content/import/substack', async (c) => handleImportSubstack(c.req.raw, c.env));
+app.all('/api/content/import/twitter', async (c) => handleImportTwitter(c.req.raw, c.env));
+app.all('/api/content/import/rss', async (c) => handleImportRss(c.req.raw, c.env));
+app.all('/api/content/import/status/:id', async (c) => handleImportStatus(c.req.raw, c.env));
+app.all('/api/content/export', async (c) => handleExportContentJson(c.req.raw, c.env));
+app.all('/api/content/export/markdown', async (c) => handleExportContentMarkdown(c.req.raw, c.env));
+app.all('/api/content/export/opml', async (c) => handleExportContentOpml(c.req.raw, c.env));
+
+// ─── API: Content Syndication ───────────────────────────────
+import {
+  handleCanSyndicate,
+  handleExecuteSyndication,
+  handleGetSyndicationHistory,
+  handleGetSyndicationRules,
+  handleListSyndicationQueue,
+  handleQueueSyndication,
+  handleSetSyndicationRules,
+  handleUpdateProtocolRule,
+} from './routes/content-syndication-routes';
+
+app.all('/api/content/syndication/rules/:protocol', async (c) =>
+  handleUpdateProtocolRule(c.req.raw, c.env),
+);
+app.all('/api/content/syndication/rules', async (c) => {
+  if (c.req.method === 'POST') return handleSetSyndicationRules(c.req.raw, c.env);
+  return handleGetSyndicationRules(c.req.raw, c.env);
+});
+app.all('/api/content/syndication/queue/:queueId', async (c) =>
+  handleExecuteSyndication(c.req.raw, c.env),
+);
+app.all('/api/content/syndication/queue', async (c) => {
+  if (c.req.method === 'POST') return handleQueueSyndication(c.req.raw, c.env);
+  return handleListSyndicationQueue(c.req.raw, c.env);
+});
+app.all('/api/content/syndication/history', async (c) =>
+  handleGetSyndicationHistory(c.req.raw, c.env),
+);
+app.all('/api/content/syndication/can/:protocol', async (c) =>
+  handleCanSyndicate(c.req.raw, c.env),
+);
 
 // ─── API: Content Resolution (df:// URIs) ───────────────────
 app.all('/api/content/*', async (c) => handleContentResolve(c.req.raw, c.env));
@@ -2227,6 +2564,181 @@ app.post('/api/community/:name/proposals/:id/vote', async (c) =>
 );
 app.get('/api/community/:name/proposals/:id/results', async (c) =>
   handleProposalResults(c.req.raw, c.env, c.req.param('name'), c.req.param('id')),
+);
+
+// ─── API: DAO System ──────────────────────────────────────────
+// Static routes before parameterized routes
+app.get('/api/dao/mine', async (c) => handleDaoMine(c.req.raw, c.env));
+app.get('/api/dao/discover', async (c) => handleDaoDiscover(c.req.raw, c.env));
+app.get('/api/dao/activity/mine', async (c) => handleMyDaoActivity(c.req.raw, c.env));
+app.post('/api/dao/create', async (c) => withSession(c, () => handleDaoCreate(c.req.raw, c.env)));
+
+// Parameterized DAO routes
+app.get('/api/dao/:daoId', async (c) => handleDaoGet(c.req.raw, c.env, c.req.param('daoId')));
+app.put('/api/dao/:daoId', async (c) =>
+  withSession(c, () => handleDaoUpdate(c.req.raw, c.env, c.req.param('daoId'))),
+);
+app.get('/api/dao/:daoId/stats', async (c) =>
+  handleDaoStats(c.req.raw, c.env, c.req.param('daoId')),
+);
+app.post('/api/dao/:daoId/join', async (c) =>
+  withSession(c, () => handleDaoJoin(c.req.raw, c.env, c.req.param('daoId'))),
+);
+app.post('/api/dao/:daoId/leave', async (c) =>
+  withSession(c, () => handleDaoLeave(c.req.raw, c.env, c.req.param('daoId'))),
+);
+
+// DAO activity feed
+app.get('/api/dao/:daoId/activity', async (c) =>
+  handleDaoActivity(c.req.raw, c.env, c.req.param('daoId')),
+);
+
+// DAO Proposals
+app.post('/api/dao/:daoId/proposals', async (c) =>
+  withSession(c, () => handleDaoProposalCreate(c.req.raw, c.env, c.req.param('daoId'))),
+);
+app.get('/api/dao/:daoId/proposals', async (c) =>
+  handleDaoProposalsList(c.req.raw, c.env, c.req.param('daoId')),
+);
+app.get('/api/dao/:daoId/proposals/:proposalId', async (c) =>
+  handleDaoProposalGet(c.req.raw, c.env, c.req.param('daoId'), c.req.param('proposalId')),
+);
+app.put('/api/dao/:daoId/proposals/:proposalId', async (c) =>
+  withSession(c, () =>
+    handleDaoProposalUpdate(c.req.raw, c.env, c.req.param('daoId'), c.req.param('proposalId')),
+  ),
+);
+app.delete('/api/dao/:daoId/proposals/:proposalId', async (c) =>
+  withSession(c, () =>
+    handleDaoProposalDelete(c.req.raw, c.env, c.req.param('daoId'), c.req.param('proposalId')),
+  ),
+);
+app.post('/api/dao/:daoId/proposals/:proposalId/vote', async (c) =>
+  withSession(c, () =>
+    handleDaoProposalVote(c.req.raw, c.env, c.req.param('daoId'), c.req.param('proposalId')),
+  ),
+);
+app.get('/api/dao/:daoId/proposals/:proposalId/votes', async (c) =>
+  handleDaoProposalVotes(c.req.raw, c.env, c.req.param('daoId'), c.req.param('proposalId')),
+);
+app.get('/api/dao/:daoId/proposals/:proposalId/vote/me', async (c) =>
+  handleDaoProposalMyVote(c.req.raw, c.env, c.req.param('daoId'), c.req.param('proposalId')),
+);
+app.post('/api/dao/:daoId/proposals/:proposalId/queue', async (c) =>
+  withSession(c, () =>
+    handleDaoProposalQueue(c.req.raw, c.env, c.req.param('daoId'), c.req.param('proposalId')),
+  ),
+);
+app.post('/api/dao/:daoId/proposals/:proposalId/execute', async (c) =>
+  withSession(c, () =>
+    handleDaoProposalExecute(c.req.raw, c.env, c.req.param('daoId'), c.req.param('proposalId')),
+  ),
+);
+
+// DAO Delegation
+app.post('/api/dao/:daoId/delegate', async (c) =>
+  withSession(c, () => handleDaoDelegate(c.req.raw, c.env, c.req.param('daoId'))),
+);
+app.post('/api/dao/:daoId/revoke-delegation', async (c) =>
+  withSession(c, () => handleDaoRevokeDelegation(c.req.raw, c.env, c.req.param('daoId'))),
+);
+app.get('/api/dao/:daoId/delegation/mine', async (c) =>
+  handleDaoDelegationMine(c.req.raw, c.env, c.req.param('daoId')),
+);
+app.get('/api/dao/:daoId/delegation/:address', async (c) =>
+  handleDaoDelegationStatus(c.req.raw, c.env, c.req.param('daoId'), c.req.param('address')),
+);
+app.get('/api/dao/:daoId/delegates', async (c) =>
+  handleDaoDelegatesTop(c.req.raw, c.env, c.req.param('daoId')),
+);
+
+// DAO Treasury
+app.get('/api/dao/:daoId/treasury', async (c) =>
+  handleDaoTreasuryOverview(c.req.raw, c.env, c.req.param('daoId')),
+);
+app.get('/api/dao/:daoId/treasury/transactions', async (c) =>
+  handleDaoTreasuryTransactions(c.req.raw, c.env, c.req.param('daoId')),
+);
+app.post('/api/dao/:daoId/treasury/transfer', async (c) =>
+  withSession(c, () => handleDaoTreasuryTransfer(c.req.raw, c.env, c.req.param('daoId'))),
+);
+app.post('/api/dao/:daoId/treasury/stream', async (c) =>
+  withSession(c, () => handleDaoTreasuryStreamCreate(c.req.raw, c.env, c.req.param('daoId'))),
+);
+app.get('/api/dao/:daoId/treasury/streams', async (c) =>
+  handleDaoTreasuryStreams(c.req.raw, c.env, c.req.param('daoId')),
+);
+app.delete('/api/dao/:daoId/treasury/streams/:streamId', async (c) =>
+  withSession(c, () =>
+    handleDaoTreasuryStreamDelete(c.req.raw, c.env, c.req.param('daoId'), c.req.param('streamId')),
+  ),
+);
+app.post('/api/dao/:daoId/treasury/grant', async (c) =>
+  withSession(c, () => handleDaoTreasuryGrantCreate(c.req.raw, c.env, c.req.param('daoId'))),
+);
+app.get('/api/dao/:daoId/treasury/grants', async (c) =>
+  handleDaoTreasuryGrants(c.req.raw, c.env, c.req.param('daoId')),
+);
+app.post('/api/dao/:daoId/treasury/grant/:grantId/milestone', async (c) =>
+  withSession(c, () =>
+    handleDaoTreasuryGrantMilestone(c.req.raw, c.env, c.req.param('daoId'), c.req.param('grantId')),
+  ),
+);
+
+// ─── API: DAO Registry (static before parameterized) ──────
+app.get('/api/dao/registry', async (c) => handleDaoRegistryList(c.req.raw, c.env));
+app.post('/api/dao/registry', async (c) =>
+  withSession(c, () => handleDaoRegistryRegister(c.req.raw, c.env)),
+);
+
+// ─── API: External DAO Integrations — Snapshot ─────────────
+app.post('/api/dao/:daoId/snapshot/strategy', async (c) =>
+  withSession(c, () => handleSnapshotStrategyGenerate(c.req.raw, c.env, c.req.param('daoId'))),
+);
+app.post('/api/dao/:daoId/snapshot/sync-proposal', async (c) =>
+  withSession(c, () => handleSnapshotSyncProposal(c.req.raw, c.env, c.req.param('daoId'))),
+);
+app.get('/api/dao/:daoId/snapshot/votes/:proposalId', async (c) =>
+  handleSnapshotImportVotes(c.req.raw, c.env, c.req.param('daoId'), c.req.param('proposalId')),
+);
+app.post('/api/dao/:daoId/snapshot/delegation-sync', async (c) =>
+  withSession(c, () => handleDelegationSync(c.req.raw, c.env, c.req.param('daoId'))),
+);
+
+// ─── API: External DAO Integrations — Tally ────────────────
+app.post('/api/dao/:daoId/tally/check', async (c) =>
+  withSession(c, () => handleTallyCompatibilityCheck(c.req.raw, c.env, c.req.param('daoId'))),
+);
+app.post('/api/dao/:daoId/tally/register', async (c) =>
+  withSession(c, () => handleTallyRegister(c.req.raw, c.env, c.req.param('daoId'))),
+);
+app.get('/api/dao/:daoId/tally/status', async (c) =>
+  handleTallyStatus(c.req.raw, c.env, c.req.param('daoId')),
+);
+
+// ─── API: External DAO Integrations — Defender ─────────────
+app.post('/api/dao/:daoId/defender/setup', async (c) =>
+  withSession(c, () => handleDefenderSetup(c.req.raw, c.env, c.req.param('daoId'))),
+);
+app.get('/api/dao/:daoId/defender/status', async (c) =>
+  handleDefenderStatus(c.req.raw, c.env, c.req.param('daoId')),
+);
+app.post('/api/dao/:daoId/defender/sync', async (c) =>
+  withSession(c, () => handleDefenderSync(c.req.raw, c.env, c.req.param('daoId'))),
+);
+app.delete('/api/dao/:daoId/defender', async (c) =>
+  withSession(c, () => handleDefenderDisable(c.req.raw, c.env, c.req.param('daoId'))),
+);
+
+// ─── API: DAO Registry — Entry detail ───────────────────────
+app.get('/api/dao/registry/:daoId', async (c) =>
+  handleDaoRegistryGet(c.req.raw, c.env, c.req.param('daoId')),
+);
+app.post('/api/dao/registry/:daoId/link', async (c) =>
+  withSession(c, () => handleDaoRegistryLink(c.req.raw, c.env, c.req.param('daoId'))),
+);
+app.post('/api/dao/registry/:daoId/verify', async (c) =>
+  withSession(c, () => handleDaoRegistryVerify(c.req.raw, c.env, c.req.param('daoId'))),
 );
 
 // ─── API: Moderation ───────────────────────────────────────
@@ -2667,13 +3179,9 @@ app.post('/v1/telegram/webhook', async (c) => handleTelegramWebhook(c.req.raw, c
 app.get('/v1/telegram/link', async (c) => handleTelegramGenerateLink(c.req.raw, c.env));
 app.post('/v1/telegram/send', async (c) => handleTelegramSend(c.req.raw, c.env));
 app.get('/v1/telegram/bot-info', async (c) => handleTelegramBotInfo(c.req.raw, c.env));
-app.post('/v1/telegram/link-account', async (c) =>
-  handleTelegramLinkAccount(c.req.raw, c.env),
-);
+app.post('/v1/telegram/link-account', async (c) => handleTelegramLinkAccount(c.req.raw, c.env));
 app.get('/v1/telegram/linked', async (c) => handleTelegramGetLinked(c.req.raw, c.env));
-app.delete('/v1/telegram/link-account', async (c) =>
-  handleTelegramUnlinkAccount(c.req.raw, c.env),
-);
+app.delete('/v1/telegram/link-account', async (c) => handleTelegramUnlinkAccount(c.req.raw, c.env));
 
 // ─── V1: Matrix Integration ───────────────────────────────
 app.post('/v1/matrix/connect', async (c) => handleMatrixConnect(c.req.raw, c.env));
@@ -3167,6 +3675,103 @@ app.get('/v1/billing/my-status', async (c) =>
 );
 app.all('/v1/x402/paywall', async (c) => handleX402Paywall(c.req.raw, c.env));
 app.all('/v1/x402/verify', async (c) => handleX402Verify(c.req.raw, c.env));
+
+// ─── API: DAO Treasury ────────────────────────────────────────────
+// Multi-sig
+app.get('/api/dao/:daoId/treasury/multisig', async (c) => handleMultisigList(c.req.raw, c.env));
+app.get('/api/dao/:daoId/treasury/multisig/config', async (c) =>
+  handleMultisigConfig(c.req.raw, c.env),
+);
+app.post('/api/dao/:daoId/treasury/multisig/config', async (c) =>
+  handleMultisigSaveConfig(c.req.raw, c.env),
+);
+app.post('/api/dao/:daoId/treasury/multisig/propose', async (c) =>
+  handleMultisigPropose(c.req.raw, c.env),
+);
+app.post('/api/dao/:daoId/treasury/multisig/:txId/sign', async (c) =>
+  handleMultisigSign(c.req.raw, c.env),
+);
+app.post('/api/dao/:daoId/treasury/multisig/:txId/execute', async (c) =>
+  handleMultisigExecute(c.req.raw, c.env),
+);
+app.post('/api/dao/:daoId/treasury/multisig/:txId/cancel', async (c) =>
+  handleMultisigCancel(c.req.raw, c.env),
+);
+
+// Streaming payments
+app.get('/api/dao/:daoId/treasury/stream', async (c) => handleStreamList(c.req.raw, c.env));
+app.post('/api/dao/:daoId/treasury/stream', async (c) => handleStreamCreate(c.req.raw, c.env));
+app.get('/api/dao/:daoId/treasury/stream/analytics', async (c) =>
+  handleStreamAnalytics(c.req.raw, c.env),
+);
+app.get('/api/dao/:daoId/treasury/stream/:streamId', async (c) =>
+  handleStreamGet(c.req.raw, c.env),
+);
+app.put('/api/dao/:daoId/treasury/stream/:streamId', async (c) =>
+  handleStreamModify(c.req.raw, c.env),
+);
+app.delete('/api/dao/:daoId/treasury/stream/:streamId', async (c) =>
+  handleStreamCancel(c.req.raw, c.env),
+);
+app.post('/api/dao/:daoId/treasury/stream/:streamId/pause', async (c) =>
+  handleStreamPause(c.req.raw, c.env),
+);
+app.post('/api/dao/:daoId/treasury/stream/:streamId/resume', async (c) =>
+  handleStreamResume(c.req.raw, c.env),
+);
+app.get('/api/dao/:daoId/treasury/stream/:streamId/history', async (c) =>
+  handleStreamHistory(c.req.raw, c.env),
+);
+
+// Grants
+app.get('/api/dao/:daoId/treasury/grant', async (c) => handleGrantListPrograms(c.req.raw, c.env));
+app.post('/api/dao/:daoId/treasury/grant', async (c) => handleGrantCreateProgram(c.req.raw, c.env));
+app.get('/api/dao/:daoId/treasury/grant/applications', async (c) =>
+  handleGrantListApplications(c.req.raw, c.env),
+);
+app.get('/api/dao/:daoId/treasury/grant/analytics', async (c) =>
+  handleGrantAnalytics(c.req.raw, c.env),
+);
+app.post('/api/dao/:daoId/treasury/grant/:grantId/apply', async (c) =>
+  handleGrantApply(c.req.raw, c.env),
+);
+app.post('/api/dao/:daoId/treasury/grant/app/:appId/review', async (c) =>
+  handleGrantReview(c.req.raw, c.env),
+);
+app.post('/api/dao/:daoId/treasury/grant/app/:appId/vote', async (c) =>
+  handleGrantVote(c.req.raw, c.env),
+);
+app.post('/api/dao/:daoId/treasury/grant/app/:appId/finalize', async (c) =>
+  handleGrantFinalize(c.req.raw, c.env),
+);
+app.post('/api/dao/:daoId/treasury/grant/app/:appId/milestone/:milestoneId/submit', async (c) =>
+  handleGrantSubmitMilestone(c.req.raw, c.env),
+);
+
+// Investments
+app.get('/api/dao/:daoId/treasury/investment/portfolio', async (c) =>
+  handleInvestmentPortfolio(c.req.raw, c.env),
+);
+app.get('/api/dao/:daoId/treasury/investment/yields', async (c) =>
+  handleInvestmentYields(c.req.raw, c.env),
+);
+app.get('/api/dao/:daoId/treasury/investment/performance', async (c) =>
+  handleInvestmentPerformance(c.req.raw, c.env),
+);
+app.post('/api/dao/:daoId/treasury/investment/proposal', async (c) =>
+  handleInvestmentCreateProposal(c.req.raw, c.env),
+);
+app.get('/api/dao/:daoId/treasury/investment/proposals', async (c) =>
+  handleInvestmentListProposals(c.req.raw, c.env),
+);
+app.post('/api/dao/:daoId/treasury/investment/proposal/:proposalId/vote', async (c) =>
+  handleInvestmentVote(c.req.raw, c.env),
+);
+
+// Consolidated analytics
+app.get('/api/dao/:daoId/treasury/analytics', async (c) =>
+  handleTreasuryAnalytics(c.req.raw, c.env),
+);
 app.post('/v1/token-gate/verify', async (c) => handleTokenGateVerify(c.req.raw, c.env));
 app.post('/v1/token-gate/resolve', async (c) => handleTokenGateResolve(c.req.raw, c.env));
 app.all('/v1/rmi/news/headlines', async (c) => handleRmiHeadlines(c.req.raw, c.env));
