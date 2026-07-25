@@ -463,10 +463,7 @@ export async function handleAnalytics(request: Request, env: Env): Promise<Respo
   const forceRefresh = url.searchParams.get('refresh') === 'true';
 
   if (!wallet) {
-    return new Response(JSON.stringify({ error: 'wallet required' }), {
-      status: 400,
-      headers: { 'content-type': 'application/json' },
-    });
+    return jsonResponse({ error: 'wallet required' }, 400);
   }
 
   // ── Premium tier determines lookback window ──────────────────────

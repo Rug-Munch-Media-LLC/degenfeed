@@ -1,5 +1,6 @@
 import { type Env, jsonResponse, rateLimit } from '../index';
 import { validateBodySize } from '../sanitize';
+import { rateLimitResponse } from '../response-helpers';
 import {
   consumeState,
   DISCORD_STATE_PREFIX,
@@ -24,15 +25,7 @@ async function checkRateLimit(
   const ip =
     request.headers.get('cf-connecting-ip') || request.headers.get('x-forwarded-for') || 'unknown';
   const rl = await rateLimit(env, ip, key, maxReqs, windowMs);
-  if (!rl.allowed) {
-    return new Response(JSON.stringify({ error: 'Rate limit', retryAfterMs: rl.retryAfter }), {
-      status: 429,
-      headers: {
-        'content-type': 'application/json',
-        'retry-after': String(Math.ceil(rl.retryAfter / 1000)),
-      },
-    });
-  }
+  if (!rl.allowed) return rateLimitResponse(rl.retryAfter);
   return null;
 }
 

@@ -10,7 +10,7 @@
  */
 
 import type { Env } from '../index';
-import { jsonResponse } from '../index';
+import { AuthError, ForbiddenError } from './errors';
 
 /**
  * Parse ADMIN_WALLETS env var into a lowercase Set for efficient lookup.
@@ -36,64 +36,52 @@ export function isAdmin(walletAddress: string, adminWalletsEnv: string | undefin
 
 /**
  * Validate a wallet address against the admin list.
- * Returns `{ allowed: true }` or `{ allowed: false, error: string }`.
+ * Throws ForbiddenError or AuthError on failure.
  */
 export function requireAdmin(
   walletAddress: string | undefined | null,
   adminWalletsEnv: string | undefined,
-): { allowed: boolean; error?: string } {
+): { allowed: true } {
   if (!walletAddress) {
-    return { allowed: false, error: 'No wallet address provided' };
+    throw new AuthError('No wallet address provided');
   }
   if (!adminWalletsEnv) {
-    return { allowed: false, error: 'ADMIN_WALLETS not configured' };
+    throw new ForbiddenError('ADMIN_WALLETS not configured');
   }
   if (!isAdmin(walletAddress, adminWalletsEnv)) {
-    return { allowed: false, error: 'Not an admin wallet' };
+    throw new ForbiddenError('Not an admin wallet');
   }
   return { allowed: true };
 }
 
 /**
  * Require admin access from a Hono-style request via session cookie.
- * Returns the session address on success, or a 403 Response on failure.
+ * Returns the session address on success, or throws AppError on failure.
  */
 export async function requireAdminFromSession(
   request: Request,
   env: Env,
-): Promise<{ address: string } | Response> {
+): Promise<{ address: string }> {
   const { requireSession } = await import('../session');
   const session = await requireSession(request, env);
-  if (session instanceof Response) return session;
-
-  const check = requireAdmin(session.address, env.ADMIN_WALLETS);
-  if (!check.allowed) {
-    return jsonResponse({ error: check.error || 'Forbidden: admin access required' }, 403);
+  if (session instanceof Response) {
+    throw new AuthError('Session required for admin access');
   }
+
+  requireAdmin(session.address, env.ADMIN_WALLETS);
   return { address: session.address };
 }
 
 /**
  * Require admin access from a Next.js-style request via X-Wallet-Address header.
- * Returns the wallet address on success, or a 403 Response on failure.
+ * Returns the wallet address on success, or throws AppError on failure.
  */
 export function requireAdminFromHeader(
   request: Request,
   adminWalletsEnv: string | undefined,
-): { address: string } | Response {
+): { address: string } {
   const walletAddress = request.headers.get('x-wallet-address') || '';
-  const check = requireAdmin(walletAddress, adminWalletsEnv);
-  if (!check.allowed) {
-    return new Response(
-      JSON.stringify({
-        error: check.error || 'Forbidden: admin access required',
-      }),
-      {
-        status: 403,
-        headers: { 'content-type': 'application/json' },
-      },
-    );
-  }
+  requireAdmin(walletAddress, adminWalletsEnv);
   return { address: walletAddress };
 }
 

@@ -17,6 +17,7 @@ import { validateRequest } from '../lib/input-validator';
 import type { handlePublish } from '../routes/publish';
 import { validateBodySize } from '../sanitize';
 import { parseSessionCookie, validateCsrfToken } from '../session';
+import { rateLimitResponse } from '../response-helpers';
 
 // ─── Constants ──────────────────────────────────────────────
 
@@ -320,15 +321,7 @@ export function setupMiddleware(app: Hono<{ Bindings: Env }>): void {
     );
 
     const rl = await tieredRateLimit(c.env, ip, c.req.path, isAuthenticated);
-    if (!rl.allowed) {
-      return new Response(JSON.stringify({ error: 'Rate limit', retryAfterMs: rl.retryAfter }), {
-        status: 429,
-        headers: {
-          'content-type': 'application/json',
-          'retry-after': String(Math.ceil(rl.retryAfter / 1000)),
-        },
-      });
-    }
+    if (!rl.allowed) return rateLimitResponse(rl.retryAfter);
     await next();
   });
 

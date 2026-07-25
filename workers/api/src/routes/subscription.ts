@@ -15,6 +15,7 @@
  */
 
 import { type Env, jsonResponse, noCacheJsonResponse, rateLimit } from '../index';
+import { rateLimitResponse } from '../response-helpers';
 import {
   isValidEvmAddress,
   isValidSolanaAddress,
@@ -525,15 +526,7 @@ export async function handleSubscriptionStatus(request: Request, env: Env): Prom
   const ip =
     request.headers.get('cf-connecting-ip') || request.headers.get('x-forwarded-for') || 'unknown';
   const rl = await rateLimit(env, ip, '/api/subscription/status', 10, 60_000);
-  if (!rl.allowed) {
-    return new Response(JSON.stringify({ error: 'Rate limit', retryAfterMs: rl.retryAfter }), {
-      status: 429,
-      headers: {
-        'content-type': 'application/json',
-        'retry-after': String(Math.ceil(rl.retryAfter / 1000)),
-      },
-    });
-  }
+  if (!rl.allowed) return rateLimitResponse(rl.retryAfter);
 
   const subscriber = session.address.toLowerCase();
   const subKey = kvSubKey(creator, subscriber);

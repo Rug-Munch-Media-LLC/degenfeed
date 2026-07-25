@@ -1,4 +1,5 @@
 import { type Env, getGtsConfig, jsonResponse, rateLimit } from '../index';
+import { rateLimitResponse } from '../response-helpers';
 import { validateBodySize } from '../sanitize';
 import {
   consumeState as consumeOAuthState,
@@ -47,15 +48,7 @@ export async function handleGtSAuthorize(request: Request, env: Env): Promise<Re
   const ip =
     request.headers.get('cf-connecting-ip') || request.headers.get('x-forwarded-for') || 'unknown';
   const rl = await rateLimit(env, ip, 'oauth:gts-authorize', 10, 60000);
-  if (!rl.allowed) {
-    return new Response(JSON.stringify({ error: 'Rate limit', retryAfterMs: rl.retryAfter }), {
-      status: 429,
-      headers: {
-        'content-type': 'application/json',
-        'retry-after': String(Math.ceil(rl.retryAfter / 1000)),
-      },
-    });
-  }
+  if (!rl.allowed) return rateLimitResponse(rl.retryAfter);
 
   const state = generateState();
   await storeState(env, state);
@@ -155,9 +148,13 @@ export async function handleGtSCallback(request: Request, env: Env): Promise<Res
         : null,
     });
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Callback error';
-    console.error('[auth] handleGtSCallback failed:', err instanceof Error ? err.message : err);
-    return jsonResponse({ error: message }, 500);
+    const { logError } = await import('../error-logger');
+    const code = await logError(env, err, {
+      route: '/api/auth/gotosocial/callback',
+      method: 'POST',
+      statusCode: 500,
+    });
+    return jsonResponse({ error: 'OAuth callback failed', code }, 500);
   }
 }
 
@@ -174,15 +171,7 @@ export async function handleGtSRegister(request: Request, env: Env): Promise<Res
   const ip =
     request.headers.get('cf-connecting-ip') || request.headers.get('x-forwarded-for') || 'unknown';
   const rl = await rateLimit(env, ip, 'oauth:gts-register', 10, 60000);
-  if (!rl.allowed) {
-    return new Response(JSON.stringify({ error: 'Rate limit', retryAfterMs: rl.retryAfter }), {
-      status: 429,
-      headers: {
-        'content-type': 'application/json',
-        'retry-after': String(Math.ceil(rl.retryAfter / 1000)),
-      },
-    });
-  }
+  if (!rl.allowed) return rateLimitResponse(rl.retryAfter);
 
   const state = generateState();
   await storeState(env, state);
@@ -227,15 +216,7 @@ export async function handleThreadsAuthorize(request: Request, env: Env): Promis
   const ip =
     request.headers.get('cf-connecting-ip') || request.headers.get('x-forwarded-for') || 'unknown';
   const rl = await rateLimit(env, ip, 'oauth:threads-authorize', 10, 60000);
-  if (!rl.allowed) {
-    return new Response(JSON.stringify({ error: 'Rate limit', retryAfterMs: rl.retryAfter }), {
-      status: 429,
-      headers: {
-        'content-type': 'application/json',
-        'retry-after': String(Math.ceil(rl.retryAfter / 1000)),
-      },
-    });
-  }
+  if (!rl.allowed) return rateLimitResponse(rl.retryAfter);
 
   const state = generateState();
   await storeState(env, state, THREADS_STATE_PREFIX);
@@ -342,8 +323,13 @@ export async function handleThreadsCallback(request: Request, env: Env): Promise
       accessToken: shortLivedToken,
     });
   } catch (err) {
-    console.error('[auth] handleThreadsCallback failed:', err instanceof Error ? err.message : err);
-    return jsonResponse({ error: (err as Error).message }, 500);
+    const { logError } = await import('../error-logger');
+    const code = await logError(env, err, {
+      route: '/api/auth/threads/callback',
+      method: 'POST',
+      statusCode: 500,
+    });
+    return jsonResponse({ error: 'Threads callback failed', code }, 500);
   }
 }
 
@@ -362,15 +348,7 @@ export async function handleWarpcastAuthorize(request: Request, env: Env): Promi
   const ip =
     request.headers.get('cf-connecting-ip') || request.headers.get('x-forwarded-for') || 'unknown';
   const rl = await rateLimit(env, ip, 'oauth:warpcast-authorize', 10, 60000);
-  if (!rl.allowed) {
-    return new Response(JSON.stringify({ error: 'Rate limit', retryAfterMs: rl.retryAfter }), {
-      status: 429,
-      headers: {
-        'content-type': 'application/json',
-        'retry-after': String(Math.ceil(rl.retryAfter / 1000)),
-      },
-    });
-  }
+  if (!rl.allowed) return rateLimitResponse(rl.retryAfter);
 
   const state = generateState();
   await storeState(env, state, 'warpcast:state:');
@@ -443,11 +421,13 @@ export async function handleWarpcastCallback(request: Request, env: Env): Promis
       avatar: data.user?.pfp_url,
     });
   } catch (err) {
-    console.error(
-      '[auth] handleWarpcastCallback failed:',
-      err instanceof Error ? err.message : err,
-    );
-    return jsonResponse({ error: (err as Error).message }, 500);
+    const { logError } = await import('../error-logger');
+    const code = await logError(env, err, {
+      route: '/api/auth/warpcast/callback',
+      method: 'POST',
+      statusCode: 500,
+    });
+    return jsonResponse({ error: 'Warpcast callback failed', code }, 500);
   }
 }
 
@@ -546,7 +526,12 @@ export async function handleRedditCallback(request: Request, env: Env): Promise<
       avatar,
     });
   } catch (err) {
-    console.error('[auth] handleRedditCallback failed:', err instanceof Error ? err.message : err);
-    return jsonResponse({ error: (err as Error).message }, 500);
+    const { logError } = await import('../error-logger');
+    const code = await logError(env, err, {
+      route: '/api/auth/reddit/callback',
+      method: 'POST',
+      statusCode: 500,
+    });
+    return jsonResponse({ error: 'Reddit callback failed', code }, 500);
   }
 }

@@ -6,6 +6,7 @@
 
 import type { Hono } from 'hono';
 import type { Env } from '../../index';
+import { jsonResponse } from '../../index';
 
 import {
   handleAddRule,
@@ -19,6 +20,7 @@ import {
   handleSharePreset,
   handleUpdateSignals,
   handleUpdateWeights,
+  handleGetSignals as handleAlgoGetSignals,
 } from '../../routes/algo-control';
 import { handleAnalytics } from '../../routes/analytics';
 import { handleBlinkTip } from '../../routes/blink';
@@ -149,6 +151,13 @@ import {
   handleRegisterPlatformStatus,
 } from '../../routes/register-platform';
 import { withSession } from '../../routes/route-registry';
+import { handleBridgeHealth, handleProtocolHealth, handleCircuitReset, handleBridgeStats, handleProtocolStats } from '../../routes/bridge-health';
+import { handleBookmarkAdd, handleBookmarkRemove, handleBookmarkList, handleBookmarkCheck } from '../../routes/bookmarks';
+import { handleFollowAdd, handleFollowRemove, handleFollowList, handleFollowCheck, handleFollowingFeed } from '../../routes/follow';
+import { handleStatus as handleIdentityExtensionsStatus } from '../../routes/identity-extensions';
+import { handleReputationGet, handleReputationHistory, handleReputationLeaderboard, handleReputationEarn, handleReputationSlash, handleReputationStake, handleReputationStakeResolve, handleReputationStakes } from '../../routes/reputation';
+import { handleSSOProvision, handleSSOProvisionSingle, handleSSODashboard, handleSSOSessionCreate, handleSSOSessionVerify, handleSSOSessionRefresh, handleSSOSessionRevoke, handleSSOSessionRevokeAll, handleSSOActivity, handleSSOActivityRecord, handleSSOExport, handleSSOImport, handleSSORecoveryGenerate, handleSSORecoveryRestore, handleSSOHealth } from '../../routes/sso-dashboard';
+import { handleWebhookReceiver } from '../../routes/realtime';
 import {
   handleTelegramAuth,
   handleTelegramBotInfo,
@@ -354,7 +363,7 @@ export function registerSocialRoutes(app: Hono<{ Bindings: Env }>): void {
   });
   app.all('/api/crosspost/batch/:batchId', async (c) => {
     const { getCrossPostBatch, deleteCrossPostBatch } = await import(
-      './lib/cross-publish-orchestrator'
+      '../../lib/cross-publish-orchestrator'
     );
     const batchId = c.req.param('batchId');
     if (c.req.method === 'DELETE') {
