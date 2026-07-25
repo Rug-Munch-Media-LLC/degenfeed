@@ -87,18 +87,6 @@ const STATIC_REDIRECTS: Record<string, string> = {
   '/home': 'https://app.degenfeed.xyz/home',
 };
 
-// ─── Session helper ─────────────────────────────────────────
-
-// biome-ignore lint/suspicious/noExplicitAny: Hono Context type - used across all route handlers
-async function _withSession(c: any, handler: () => Promise<Response>): Promise<Response> {
-  const { requireSession, applySessionRefresh } = await import('./session');
-  const session = await requireSession(c.req.raw, c.env);
-  if (session instanceof Response) return session;
-  const resp = await handler();
-  if (c.env.AUTH_SECRET) return applySessionRefresh(resp, session, c.env.AUTH_SECRET);
-  return resp;
-}
-
 // ─── Middleware: Request ID correlation ─────────────────────
 // Every request gets a unique x-request-id header for log correlation.
 // Added before CORS so it's always present.

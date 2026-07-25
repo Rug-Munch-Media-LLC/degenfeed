@@ -6,7 +6,6 @@
 
 import type { Hono } from 'hono';
 import type { Env } from '../../index';
-import { jsonResponse } from '../../index';
 import blueskyFeedGen from '../../routes/bluesky-feed-generator';
 
 import { handleCommunities } from '../../routes/communities';
@@ -225,73 +224,383 @@ import {
 
 export function registerFeedRoutes(app: Hono<{ Bindings: Env }>): void {
   // --- API: Shorts ---
-  app.get('/api/shorts/feed', async (c) => handleShortsFeed(c.req.raw, c.env));
-  app.get('/api/shorts/trending', async (c) => handleShortsTrending(c.req.raw, c.env));
-  app.get('/api/shorts/for-you', async (c) => handleShortsForYou(c.req.raw, c.env));
-  app.get('/api/shorts/source/:source', async (c) => handleShortsBySource(c.req.raw, c.env));
-  app.post('/api/shorts/create', async (c) => handleCreateShort(c.req.raw, c.env));
+  app.get('/api/shorts/feed', async (c) => {
+    try {
+      const result = await handleShortsFeed(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/shorts/trending', async (c) => {
+    try {
+      const result = await handleShortsTrending(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/shorts/for-you', async (c) => {
+    try {
+      const result = await handleShortsForYou(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/shorts/source/:source', async (c) => {
+    try {
+      const result = await handleShortsBySource(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/shorts/create', async (c) => {
+    try {
+      const result = await handleCreateShort(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
 
   // --- Unified multi-protocol publish & mint ---
-  app.post('/api/shorts/publish', async (c) => handleUnifiedPublish(c.req.raw, c.env));
-  app.post('/api/shorts/mint', async (c) => handleUnifiedMint(c.req.raw, c.env));
+  app.post('/api/shorts/publish', async (c) => {
+    try {
+      const result = await handleUnifiedPublish(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/shorts/mint', async (c) => {
+    try {
+      const result = await handleUnifiedMint(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
 
   // --- Unified multi-protocol feed ---
-  app.get('/api/shorts/unified/feed', async (c) => handleUnifiedFeed(c.req.raw, c.env));
-  app.get('/api/shorts/unified/:source', async (c) => handleUnifiedFeedBySource(c.req.raw, c.env));
+  app.get('/api/shorts/unified/feed', async (c) => {
+    try {
+      const result = await handleUnifiedFeed(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/shorts/unified/:source', async (c) => {
+    try {
+      const result = await handleUnifiedFeedBySource(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
 
   // --- Cross-platform actions on shorts ---
-  app.post('/api/shorts/:id/tip', async (c) => handleShortsTip(c.req.raw, c.env));
-  app.post('/api/shorts/:id/share', async (c) => handleShortsShare(c.req.raw, c.env));
+  app.post('/api/shorts/:id/tip', async (c) => {
+    try {
+      const result = await handleShortsTip(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/shorts/:id/share', async (c) => {
+    try {
+      const result = await handleShortsShare(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
 
   // --- V2 enhanced feed (ShortsAggregatorV2 + ShortsAlgorithm) ---
-  app.get('/api/shorts/v2/feed', async (c) => handleShortsFeedV2(c.req.raw, c.env));
-  app.get('/api/shorts/v2/trending', async (c) => handleShortsTrendingV2(c.req.raw, c.env));
-  app.get('/api/shorts/category/:cat', async (c) => handleShortsByCategory(c.req.raw, c.env));
-  app.post('/api/shorts/watch', async (c) => handleShortsWatch(c.req.raw, c.env));
-  app.post('/api/shorts/feedback', async (c) => handleShortsFeedback(c.req.raw, c.env));
-  app.get('/api/shorts/algorithm/status', async (c) => handleAlgorithmStatus(c.req.raw, c.env));
+  app.get('/api/shorts/v2/feed', async (c) => {
+    try {
+      const result = await handleShortsFeedV2(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/shorts/v2/trending', async (c) => {
+    try {
+      const result = await handleShortsTrendingV2(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/shorts/category/:cat', async (c) => {
+    try {
+      const result = await handleShortsByCategory(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/shorts/watch', async (c) => {
+    try {
+      const result = await handleShortsWatch(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/shorts/feedback', async (c) => {
+    try {
+      const result = await handleShortsFeedback(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/shorts/algorithm/status', async (c) => {
+    try {
+      const result = await handleAlgorithmStatus(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
 
   // --- Shorts source management ---
-  app.get('/api/shorts/sources', async (c) => handleListSources(c.req.raw, c.env));
-  app.post('/api/shorts/sources', async (c) => handleAddSource(c.req.raw, c.env));
-  app.delete('/api/shorts/sources/:id', async (c) => handleRemoveSource(c.req.raw, c.env));
-  app.post('/api/shorts/sources/:id/refresh', async (c) => handleRefreshSource(c.req.raw, c.env));
-  app.get('/api/shorts/sources/suggestions', async (c) =>
-    handleSourceSuggestions(c.req.raw, c.env),
-  );
+  app.get('/api/shorts/sources', async (c) => {
+    try {
+      const result = await handleListSources(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/shorts/sources', async (c) => {
+    try {
+      const result = await handleAddSource(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.delete('/api/shorts/sources/:id', async (c) => {
+    try {
+      const result = await handleRemoveSource(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/shorts/sources/:id/refresh', async (c) => {
+    try {
+      const result = await handleRefreshSource(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/shorts/sources/suggestions', async (c) => {
+    try {
+      const result = await handleSourceSuggestions(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
 
   // --- Zora video NFT endpoints ---
-  app.get('/api/shorts/zora/trending', async (c) => handleZoraTrending(c.req.raw, c.env));
-  app.get('/api/shorts/zora/creator', async (c) => handleZoraCreator(c.req.raw, c.env));
+  app.get('/api/shorts/zora/trending', async (c) => {
+    try {
+      const result = await handleZoraTrending(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/shorts/zora/creator', async (c) => {
+    try {
+      const result = await handleZoraCreator(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
 
   // --- API: Feed (specific routes before parameterized) ---
-  app.all('/api/feed/home', async (c) => handleHomeFeed(c.req.raw, c.env, c.executionCtx));
-  app.get('/api/feed/protocol-sections', async (c) => handleProtocolSections(c.req.raw, c.env));
-  app.all('/api/feed/for-you', async (c) => handleForYouFeed(c.req.raw, c.env, c.executionCtx));
-  app.post('/api/feed/dwell', async (c) => handleRecordDwell(c.req.raw, c.env));
-  app.post('/api/feed/feedback', async (c) => handleFeedback(c.req.raw, c.env));
-  app.all('/api/feed/trending', async (c) => handleTrendingFeed(c.req.raw, c.env, c.executionCtx));
-  app.all('/api/feed/health', async (c) => handleFeedHealth(c.req.raw, c.env));
-  app.all('/api/feed/pixelfed', async (c) => handlePixelfedFeed(c.req.raw, c.env));
-  app.all('/api/pixelfed/trending', async (c) => handlePixelfedTrending(c.req.raw, c.env));
-  app.all('/api/pixelfed/tags/:tag', async (c) =>
-    handlePixelfedTag(c.req.raw, c.env, c.req.param('tag')),
-  );
-  app.all('/api/pixelfed/health', async (c) => handlePixelfedHealth(c.req.raw, c.env));
-  app.all('/api/feed/rss.xml', async (c) => handleRssXml(c.req.raw, c.env));
-  app.all('/api/feed/atom.xml', async (c) => handleRssXml(c.req.raw, c.env));
-  app.all('/api/feed/news', async (c) => handleNewsFeed(c.req.raw, c.env));
-  app.all('/api/feed/reddit', async (c) => handleRedditFeed(c.req.raw, c.env));
-  app.all('/api/feed/activitypub', async (c) => handleActivityPubFeed(c.req.raw, c.env));
-  app.all('/api/feed/threads', async (c) => handleThreadsFeed(c.req.raw, c.env));
-  app.all('/api/feed/farcaster', async (c) => handleFarcasterFeed(c.req.raw, c.env));
-  app.all('/api/feed/rss', async (c) => handleRssFeed(c.req.raw, c.env));
-  app.all('/api/feed/post/:postId/replies', async (c) =>
-    handlePostReplies(c.req.raw, c.env, c.req.param('postId')),
-  );
-  app.get('/api/og', async (c) => handleOgFetch(c.req.raw));
+  app.all('/api/feed/home', async (c) => {
+    try {
+      const result = await handleHomeFeed(c.req.raw, c.env, c.executionCtx);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/feed/protocol-sections', async (c) => {
+    try {
+      const result = await handleProtocolSections(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.all('/api/feed/for-you', async (c) => {
+    try {
+      const result = await handleForYouFeed(c.req.raw, c.env, c.executionCtx);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/feed/dwell', async (c) => {
+    try {
+      const result = await handleRecordDwell(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/feed/feedback', async (c) => {
+    try {
+      const result = await handleFeedback(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.all('/api/feed/trending', async (c) => {
+    try {
+      const result = await handleTrendingFeed(c.req.raw, c.env, c.executionCtx);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.all('/api/feed/health', async (c) => {
+    try {
+      const result = await handleFeedHealth(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.all('/api/feed/pixelfed', async (c) => {
+    try {
+      const result = await handlePixelfedFeed(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.all('/api/pixelfed/trending', async (c) => {
+    try {
+      const result = await handlePixelfedTrending(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.all('/api/pixelfed/tags/:tag', async (c) => {
+    try {
+      const result = await handlePixelfedTag(c.req.raw, c.env, c.req.param('tag'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.all('/api/pixelfed/health', async (c) => {
+    try {
+      const result = await handlePixelfedHealth(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.all('/api/feed/rss.xml', async (c) => {
+    try {
+      const result = await handleRssXml(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.all('/api/feed/atom.xml', async (c) => {
+    try {
+      const result = await handleRssXml(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.all('/api/feed/news', async (c) => {
+    try {
+      const result = await handleNewsFeed(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.all('/api/feed/reddit', async (c) => {
+    try {
+      const result = await handleRedditFeed(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.all('/api/feed/activitypub', async (c) => {
+    try {
+      const result = await handleActivityPubFeed(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.all('/api/feed/threads', async (c) => {
+    try {
+      const result = await handleThreadsFeed(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.all('/api/feed/farcaster', async (c) => {
+    try {
+      const result = await handleFarcasterFeed(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.all('/api/feed/rss', async (c) => {
+    try {
+      const result = await handleRssFeed(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.all('/api/feed/post/:postId/replies', async (c) => {
+    try {
+      const result = await handlePostReplies(c.req.raw, c.env, c.req.param('postId'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/og', async (c) => {
+    try {
+      const result = await handleOgFetch(c.req.raw);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
   app.all('/api/feed/post/:postId', async (c) => {
-    const postId = c.req.param('postId');
+    try {
+      const result = await const postId = c.req.param('postId');
     if (c.req.query('format') === 'og') return handlePostOg(c.req.raw, c.env, postId);
     return handlePostById(c.req.raw, c.env, postId);
   });
@@ -308,255 +617,960 @@ export function registerFeedRoutes(app: Hono<{ Bindings: Env }>): void {
   app.all('/api/feed/seen', async (c) => handleMarkSeen(c.req.raw, c.env));
   app.all('/api/feed/engagement-feedback', async (c) => handleEngagementFeedback(c.req.raw, c.env));
   app.all('/api/feed/category/:category', async (c) =>
-    handleCategorySlugFeed(c.req.raw, c.env, c.req.param('category'), c.executionCtx),
-  );
-  app.all('/api/feed/mix', async (c) => handleCategoryMixFeed(c.req.raw, c.env, c.executionCtx));
-  app.all('/api/feed/everything', async (c) =>
-    handleEverythingFeed(c.req.raw, c.env, c.executionCtx),
-  );
-  app.all('/api/feed/per-protocol/:protocol/:category', async (c) =>
-    handlePerProtocolCategoryFeed(
+    handleCategorySlugFeed(c.req.raw, c.env, c.req.param('category'), c.executionCtx);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.all('/api/feed/mix', async (c) => {
+    try {
+      const result = await handleCategoryMixFeed(c.req.raw, c.env, c.executionCtx);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.all('/api/feed/everything', async (c) => {
+    try {
+      const result = await handleEverythingFeed(c.req.raw, c.env, c.executionCtx);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.all('/api/feed/per-protocol/:protocol/:category', async (c) => {
+    try {
+      const result = await handlePerProtocolCategoryFeed(
       c.req.raw,
       c.env,
       c.req.param('protocol'),
       c.req.param('category'),
       c.executionCtx,
-    ),
-  );
-  app.all('/api/feed/unified', async (c) => handleUnifiedFeed(c.req.raw, c.env));
-  app.get('/api/feed/unified/trending', async (c) => handleTrendingContent(c.req.raw, c.env));
-  app.get('/api/feed/unified/for-you', async (c) => handleForYouFeed(c.req.raw, c.env));
-  app.get('/api/feed/unified/category/:id', async (c) =>
-    handleCategoryFeed(c.req.raw, c.env, c.req.param('id')),
-  );
-  app.get('/api/feed/unified/search', async (c) => handleUnifiedSearch(c.req.raw, c.env));
-  app.get('/api/feed/unified/sources', async (c) => handleSourceDiscovery(c.req.raw, c.env));
-  app.post('/api/feed/unified/default', async (c) => handleDefaultFeed(c.req.raw, c.env));
-  app.get('/api/feed/unified/network/:network', async (c) =>
-    handleNetworkFeed(c.req.raw, c.env, c.req.param('network')),
-  );
-  app.all('/api/feed/visual', async (c) => handleVisualFeed(c.req.raw, c.env));
-  app.all('/api/feed/visual/trending', async (c) => handleVisualTrending(c.req.raw, c.env));
-  app.all('/api/feed/visual/for-you', async (c) => handleVisualForYou(c.req.raw, c.env));
-  app.all('/api/feed/images/trending', async (c) => handleImagesTrending(c.req.raw, c.env));
-  app.all('/api/feed/images/latest', async (c) => handleImagesLatest(c.req.raw, c.env));
-  app.all('/api/feed/images/category', async (c) => handleImagesCategory(c.req.raw, c.env));
-  app.all('/api/feed/images/creator', async (c) => handleImagesCreator(c.req.raw, c.env));
+    );
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.all('/api/feed/unified', async (c) => {
+    try {
+      const result = await handleUnifiedFeed(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/feed/unified/trending', async (c) => {
+    try {
+      const result = await handleTrendingContent(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/feed/unified/for-you', async (c) => {
+    try {
+      const result = await handleForYouFeed(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/feed/unified/category/:id', async (c) => {
+    try {
+      const result = await handleCategoryFeed(c.req.raw, c.env, c.req.param('id'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/feed/unified/search', async (c) => {
+    try {
+      const result = await handleUnifiedSearch(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/feed/unified/sources', async (c) => {
+    try {
+      const result = await handleSourceDiscovery(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/feed/unified/default', async (c) => {
+    try {
+      const result = await handleDefaultFeed(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/feed/unified/network/:network', async (c) => {
+    try {
+      const result = await handleNetworkFeed(c.req.raw, c.env, c.req.param('network'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.all('/api/feed/visual', async (c) => {
+    try {
+      const result = await handleVisualFeed(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.all('/api/feed/visual/trending', async (c) => {
+    try {
+      const result = await handleVisualTrending(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.all('/api/feed/visual/for-you', async (c) => {
+    try {
+      const result = await handleVisualForYou(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.all('/api/feed/images/trending', async (c) => {
+    try {
+      const result = await handleImagesTrending(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.all('/api/feed/images/latest', async (c) => {
+    try {
+      const result = await handleImagesLatest(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.all('/api/feed/images/category', async (c) => {
+    try {
+      const result = await handleImagesCategory(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.all('/api/feed/images/creator', async (c) => {
+    try {
+      const result = await handleImagesCreator(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
 
   // --- Protocol-specific feeds — must be before provider catch-all ---
-  app.get('/api/feed/protocols', async (c) => handleProtocolsList(c.req.raw, c.env));
-  app.get('/api/feed/protocol/:protocol', async (c) =>
-    handleProtocolFeed(c.req.raw, c.env, c.req.param('protocol'), c.executionCtx),
-  );
-  app.get('/api/feed/protocol/:protocol/popular', async (c) =>
-    handleProtocolPopular(c.req.raw, c.env, c.req.param('protocol'), c.executionCtx),
-  );
-  app.get('/api/feed/protocol/:protocol/trending', async (c) =>
-    handleProtocolTrendingRoute(c.req.raw, c.env, c.req.param('protocol'), c.executionCtx),
-  );
-  app.get('/api/feed/protocol/:protocol/newest', async (c) =>
-    handleProtocolNewest(c.req.raw, c.env, c.req.param('protocol'), c.executionCtx),
-  );
-  app.get('/api/feed/protocol/:protocol/videos', async (c) =>
-    handleProtocolVideos(c.req.raw, c.env, c.req.param('protocol'), c.executionCtx),
-  );
-  app.all('/api/feed/:provider', async (c) =>
-    handleProviderFeed(c.req.raw, c.env, c.req.param('provider')),
-  );
+  app.get('/api/feed/protocols', async (c) => {
+    try {
+      const result = await handleProtocolsList(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/feed/protocol/:protocol', async (c) => {
+    try {
+      const result = await handleProtocolFeed(c.req.raw, c.env, c.req.param('protocol'), c.executionCtx);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/feed/protocol/:protocol/popular', async (c) => {
+    try {
+      const result = await handleProtocolPopular(c.req.raw, c.env, c.req.param('protocol'), c.executionCtx);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/feed/protocol/:protocol/trending', async (c) => {
+    try {
+      const result = await handleProtocolTrendingRoute(c.req.raw, c.env, c.req.param('protocol'), c.executionCtx);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/feed/protocol/:protocol/newest', async (c) => {
+    try {
+      const result = await handleProtocolNewest(c.req.raw, c.env, c.req.param('protocol'), c.executionCtx);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/feed/protocol/:protocol/videos', async (c) => {
+    try {
+      const result = await handleProtocolVideos(c.req.raw, c.env, c.req.param('protocol'), c.executionCtx);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.all('/api/feed/:provider', async (c) => {
+    try {
+      const result = await handleProviderFeed(c.req.raw, c.env, c.req.param('provider'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
 
   // --- API: Custom Feeds (session-gated) ---
-  app.post('/api/custom-feeds', async (c) =>
-    withSession(c, () => handleCustomFeedCreate(c.req.raw, c.env)),
-  );
-  app.get('/api/custom-feeds', async (c) => handleCustomFeedList(c.req.raw, c.env));
-  app.get('/api/custom-feeds/public', async (c) => handleCustomFeedPublic(c.req.raw, c.env));
-  app.post('/api/custom-feeds/:id/subscribe', async (c) =>
-    withSession(c, () => handleCustomFeedSubscribe(c.req.raw, c.env, c.req.param('id'))),
-  );
-  app.get('/api/custom-feeds/:id/execute', async (c) =>
-    handleCustomFeedExecute(c.req.raw, c.env, c.req.param('id')),
-  );
-  app.get('/api/custom-feeds/:id', async (c) =>
-    handleCustomFeedGet(c.req.raw, c.env, c.req.param('id')),
-  );
-  app.put('/api/custom-feeds/:id', async (c) =>
-    withSession(c, () => handleCustomFeedUpdate(c.req.raw, c.env, c.req.param('id'))),
-  );
-  app.delete('/api/custom-feeds/:id', async (c) =>
-    withSession(c, () => handleCustomFeedDelete(c.req.raw, c.env, c.req.param('id'))),
-  );
+  app.post('/api/custom-feeds', async (c) => {
+    try {
+      return await withSession(c, () => handleCustomFeedCreate(c.req.raw, c.env));
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/custom-feeds', async (c) => {
+    try {
+      const result = await handleCustomFeedList(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/custom-feeds/public', async (c) => {
+    try {
+      const result = await handleCustomFeedPublic(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/custom-feeds/:id/subscribe', async (c) => {
+    try {
+      return await withSession(c, () => handleCustomFeedSubscribe(c.req.raw, c.env, c.req.param('id')));
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/custom-feeds/:id/execute', async (c) => {
+    try {
+      const result = await handleCustomFeedExecute(c.req.raw, c.env, c.req.param('id'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/custom-feeds/:id', async (c) => {
+    try {
+      const result = await handleCustomFeedGet(c.req.raw, c.env, c.req.param('id'));
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.put('/api/custom-feeds/:id', async (c) => {
+    try {
+      return await withSession(c, () => handleCustomFeedUpdate(c.req.raw, c.env, c.req.param('id')));
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.delete('/api/custom-feeds/:id', async (c) => {
+    try {
+      return await withSession(c, () => handleCustomFeedDelete(c.req.raw, c.env, c.req.param('id')));
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
 
   // --- API: Bluesky Feed Generator (live content feed) ---
   app.route('/api/bluesky/feed', blueskyFeedGen);
 
   // --- API: RMI ---
-  app.all('/api/rmi/news/headlines', async (c) => handleRmiHeadlines(c.req.raw, c.env));
-  app.all('/api/rmi/news/sources', async (c) => handleRmiSources(c.req.raw, c.env));
-  app.all('/api/rmi/news/sentiment', async (c) => handleRmiSentiment(c.req.raw, c.env));
-  app.all('/api/rmi/news/stats', async (c) => handleRmiStats(c.req.raw, c.env));
-  app.all('/api/rmi/health', async (c) => handleRmiHealth(c.req.raw, c.env));
-  app.all('/api/rmi/news', async (c) => handleRmiNews(c.req.raw, c.env));
-  app.all('/api/rmi/news/*', async (c) => handleRmiNews(c.req.raw, c.env));
+  app.all('/api/rmi/news/headlines', async (c) => {
+    try {
+      const result = await handleRmiHeadlines(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.all('/api/rmi/news/sources', async (c) => {
+    try {
+      const result = await handleRmiSources(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.all('/api/rmi/news/sentiment', async (c) => {
+    try {
+      const result = await handleRmiSentiment(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.all('/api/rmi/news/stats', async (c) => {
+    try {
+      const result = await handleRmiStats(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.all('/api/rmi/health', async (c) => {
+    try {
+      const result = await handleRmiHealth(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.all('/api/rmi/news', async (c) => {
+    try {
+      const result = await handleRmiNews(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.all('/api/rmi/news/*', async (c) => {
+    try {
+      const result = await handleRmiNews(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
 
   // --- API: Discover ---
-  app.all('/api/discover', async (c) => handleDiscover(c.req.raw, c.env));
-  app.get('/api/discover/trending', async (c) => handleDiscoverTrending(c.req.raw, c.env));
-  app.get('/api/discover/communities', async (c) => handleDiscoverCommunities(c.req.raw, c.env));
-  app.get('/api/discover/people', async (c) => handleDiscoverPeople(c.req.raw, c.env));
-  app.get('/api/discover/topics', async (c) => handleDiscoverTopics(c.req.raw, c.env));
-  app.get('/api/discover/featured', async (c) => handleDiscoverFeatured(c.req.raw, c.env));
-  app.get('/api/discover/new', async (c) => handleDiscoverNew(c.req.raw, c.env));
+  app.all('/api/discover', async (c) => {
+    try {
+      const result = await handleDiscover(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/discover/trending', async (c) => {
+    try {
+      const result = await handleDiscoverTrending(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/discover/communities', async (c) => {
+    try {
+      const result = await handleDiscoverCommunities(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/discover/people', async (c) => {
+    try {
+      const result = await handleDiscoverPeople(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/discover/topics', async (c) => {
+    try {
+      const result = await handleDiscoverTopics(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/discover/featured', async (c) => {
+    try {
+      const result = await handleDiscoverFeatured(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/discover/new', async (c) => {
+    try {
+      const result = await handleDiscoverNew(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
 
   // --- API: Recommendations ---
-  app.get('/api/recommendations/videos', async (c) => handleVideoRecommendations(c.req.raw, c.env));
-  app.get('/api/recommendations/shorts', async (c) =>
-    handleShortsRecommendations(c.req.raw, c.env),
-  );
-  app.get('/api/recommendations/streams', async (c) =>
-    handleStreamRecommendations(c.req.raw, c.env),
-  );
-  app.get('/api/recommendations/related', async (c) =>
-    handleRelatedRecommendations(c.req.raw, c.env),
-  );
-  app.get('/api/recommendations/trending', async (c) =>
-    handlePersonalizedTrending(c.req.raw, c.env),
-  );
-  app.get('/api/recommendations/discover', async (c) =>
-    handleDiscoverRecommendations(c.req.raw, c.env),
-  );
-  app.post('/api/recommendations/interaction', async (c) =>
-    handleRecordInteraction(c.req.raw, c.env),
-  );
+  app.get('/api/recommendations/videos', async (c) => {
+    try {
+      const result = await handleVideoRecommendations(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/recommendations/shorts', async (c) => {
+    try {
+      const result = await handleShortsRecommendations(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/recommendations/streams', async (c) => {
+    try {
+      const result = await handleStreamRecommendations(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/recommendations/related', async (c) => {
+    try {
+      const result = await handleRelatedRecommendations(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/recommendations/trending', async (c) => {
+    try {
+      const result = await handlePersonalizedTrending(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/recommendations/discover', async (c) => {
+    try {
+      const result = await handleDiscoverRecommendations(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/recommendations/interaction', async (c) => {
+    try {
+      const result = await handleRecordInteraction(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
 
   // --- API: Push ---
-  app.all('/api/push/subscribe', async (c) =>
-    withSession(c, () => handlePushSubscribe(c.req.raw, c.env)),
-  );
-  app.all('/api/push/send', async (c) => handlePushSend(c.req.raw, c.env));
+  app.all('/api/push/subscribe', async (c) => {
+    try {
+      return await withSession(c, () => handlePushSubscribe(c.req.raw, c.env));
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.all('/api/push/send', async (c) => {
+    try {
+      const result = await handlePushSend(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
 
   // --- API: Newsletter ---
-  app.all('/api/newsletter/subscribe', async (c) => handleNewsletterSubscribe(c.req.raw, c.env));
-  app.all('/api/newsletter/status', async (c) => handleNewsletterStatus(c.req.raw, c.env));
-  app.all('/api/newsletter/digest', async (c) => handleNewsletterDigest(c.req.raw, c.env));
-  app.all('/api/newsletter/digest/*', async (c) => handleNewsletterDigest(c.req.raw, c.env));
+  app.all('/api/newsletter/subscribe', async (c) => {
+    try {
+      const result = await handleNewsletterSubscribe(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.all('/api/newsletter/status', async (c) => {
+    try {
+      const result = await handleNewsletterStatus(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.all('/api/newsletter/digest', async (c) => {
+    try {
+      const result = await handleNewsletterDigest(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.all('/api/newsletter/digest/*', async (c) => {
+    try {
+      const result = await handleNewsletterDigest(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
 
   // --- API: Newsletter Send (SendGrid/Mailgun/SMTP) ---
-  app.post('/api/newsletter/send', async (c) => handleNewsletterSend(c.req.raw, c.env));
-  app.get('/api/newsletter/subscribers', async (c) =>
-    handleNewsletterSubscribersList(c.req.raw, c.env),
-  );
-  app.delete('/api/newsletter/subscriber', async (c) =>
-    handleNewsletterSubscriberRemove(c.req.raw, c.env),
-  );
-  app.post('/api/newsletter/draft', async (c) => handleNewsletterCreateDraft(c.req.raw, c.env));
-  app.post('/api/newsletter/test', async (c) => handleNewsletterSendTest(c.req.raw, c.env));
+  app.post('/api/newsletter/send', async (c) => {
+    try {
+      const result = await handleNewsletterSend(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/newsletter/subscribers', async (c) => {
+    try {
+      const result = await handleNewsletterSubscribersList(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.delete('/api/newsletter/subscriber', async (c) => {
+    try {
+      const result = await handleNewsletterSubscriberRemove(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/newsletter/draft', async (c) => {
+    try {
+      const result = await handleNewsletterCreateDraft(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/newsletter/test', async (c) => {
+    try {
+      const result = await handleNewsletterSendTest(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
 
   // --- API: Newsletter Bridge (Substack/Ghost) ---
-  app.post('/api/newsletter/bridge/connect', async (c) =>
-    handleNewsletterBridgeConnect(c.req.raw, c.env),
-  );
-  app.delete('/api/newsletter/bridge/disconnect', async (c) =>
-    handleNewsletterBridgeDisconnect(c.req.raw, c.env),
-  );
-  app.get('/api/newsletter/bridge/list', async (c) => handleNewsletterBridgeList(c.req.raw, c.env));
-  app.post('/api/newsletter/bridge/poll', async (c) =>
-    handleNewsletterBridgePoll(c.req.raw, c.env),
-  );
-  app.post('/api/newsletter/bridge/auto-poll', async (c) =>
-    handleNewsletterBridgeAutoPoll(c.req.raw, c.env),
-  );
-  app.get('/api/newsletter/bridge/stats', async (c) =>
-    handleNewsletterBridgeStats(c.req.raw, c.env),
-  );
+  app.post('/api/newsletter/bridge/connect', async (c) => {
+    try {
+      const result = await handleNewsletterBridgeConnect(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.delete('/api/newsletter/bridge/disconnect', async (c) => {
+    try {
+      const result = await handleNewsletterBridgeDisconnect(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/newsletter/bridge/list', async (c) => {
+    try {
+      const result = await handleNewsletterBridgeList(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/newsletter/bridge/poll', async (c) => {
+    try {
+      const result = await handleNewsletterBridgePoll(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/newsletter/bridge/auto-poll', async (c) => {
+    try {
+      const result = await handleNewsletterBridgeAutoPoll(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/newsletter/bridge/stats', async (c) => {
+    try {
+      const result = await handleNewsletterBridgeStats(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
 
   // --- API: Creator Newsletter (EmailEngine) ---
-  app.post('/api/newsletter/creator/send', async (c) =>
-    handleCreatorNewsletterSend(c.req.raw, c.env),
-  );
-  app.get('/api/newsletter/creator/subscribers', async (c) =>
-    handleCreatorNewsletterSubscribers(c.req.raw, c.env),
-  );
-  app.post('/api/newsletter/creator/subscribe', async (c) =>
-    handleCreatorNewsletterSubscribe(c.req.raw, c.env),
-  );
-  app.delete('/api/newsletter/creator/subscribe', async (c) =>
-    handleCreatorNewsletterUnsubscribe(c.req.raw, c.env),
-  );
-  app.get('/api/newsletter/creator/count', async (c) =>
-    handleCreatorNewsletterCount(c.req.raw, c.env),
-  );
-  app.get('/api/newsletter/creator/stats/*', async (c) =>
-    handleCreatorNewsletterStats(c.req.raw, c.env),
-  );
-  app.post('/api/newsletter/creator/webhook/mailgun', async (c) =>
-    handleMailgunWebhook(c.req.raw, c.env),
-  );
-  app.get('/api/newsletter/creator/health', async (c) =>
-    handleCreatorNewsletterHealth(c.req.raw, c.env),
-  );
+  app.post('/api/newsletter/creator/send', async (c) => {
+    try {
+      const result = await handleCreatorNewsletterSend(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/newsletter/creator/subscribers', async (c) => {
+    try {
+      const result = await handleCreatorNewsletterSubscribers(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/newsletter/creator/subscribe', async (c) => {
+    try {
+      const result = await handleCreatorNewsletterSubscribe(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.delete('/api/newsletter/creator/subscribe', async (c) => {
+    try {
+      const result = await handleCreatorNewsletterUnsubscribe(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/newsletter/creator/count', async (c) => {
+    try {
+      const result = await handleCreatorNewsletterCount(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/newsletter/creator/stats/*', async (c) => {
+    try {
+      const result = await handleCreatorNewsletterStats(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/newsletter/creator/webhook/mailgun', async (c) => {
+    try {
+      const result = await handleMailgunWebhook(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/newsletter/creator/health', async (c) => {
+    try {
+      const result = await handleCreatorNewsletterHealth(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
 
   // --- API: Digest (Daily) ---
-  app.all('/api/digest/today', async (c) => handleDigestToday(c.req.raw, c.env));
-  app.all('/api/digest/yesterday', async (c) => handleDigestYesterday(c.req.raw, c.env));
-  app.all('/api/digest/format', async (c) => handleDigestFormat(c.req.raw, c.env));
-  app.all('/api/digest/subscribe-email', async (c) => handleDigestSubscribeEmail(c.req.raw, c.env));
-  app.all('/api/digest/unsubscribe-email', async (c) =>
-    handleDigestUnsubscribeEmail(c.req.raw, c.env),
-  );
-  app.all('/api/digest/status', async (c) => handleDigestStatus(c.req.raw, c.env));
+  app.all('/api/digest/today', async (c) => {
+    try {
+      const result = await handleDigestToday(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.all('/api/digest/yesterday', async (c) => {
+    try {
+      const result = await handleDigestYesterday(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.all('/api/digest/format', async (c) => {
+    try {
+      const result = await handleDigestFormat(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.all('/api/digest/subscribe-email', async (c) => {
+    try {
+      const result = await handleDigestSubscribeEmail(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.all('/api/digest/unsubscribe-email', async (c) => {
+    try {
+      const result = await handleDigestUnsubscribeEmail(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.all('/api/digest/status', async (c) => {
+    try {
+      const result = await handleDigestStatus(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
 
   // --- Newsletter Creator Routes ---
-  app.post('/api/news/newsletter/create', async (c) =>
-    handleNewsletterCreatorCreate(c.req.raw, c.env),
-  );
-  app.get('/api/news/newsletter/mine', async (c) => handleNewsletterCreatorMine(c.req.raw, c.env));
-  app.post('/api/news/newsletter/:id/issue', async (c) =>
-    handleNewsletterCreatorIssue(c.req.raw, c.env),
-  );
-  app.get('/api/news/newsletter/issues', async (c) =>
-    handleNewsletterCreatorIssues(c.req.raw, c.env),
-  );
-  app.post('/api/news/newsletter/subscribe', async (c) =>
-    handleNewsletterCreatorSubscribe(c.req.raw, c.env),
-  );
-  app.all('/api/news/feed', async (c) => handleNewsFeed(c.req.raw, c.env));
-  app.all('/api/news/trending', async (c) => handleNewsTrending(c.req.raw, c.env));
-  app.all('/api/news/category/:category', async (c) => handleNewsCategory(c.req.raw, c.env));
-  app.all('/api/news/story/:storyId', async (c) => handleNewsStory(c.req.raw, c.env));
-  app.all('/api/news/search', async (c) => handleNewsSearch(c.req.raw, c.env));
-  app.all('/api/news/sources', async (c) => handleNewsSourcesRoute(c.req.raw, c.env));
-  app.all('/api/news/sources/health', async (c) => handleNewsSourcesRoute(c.req.raw, c.env));
-  app.all('/api/news/sources/refresh', async (c) => handleNewsSourcesRoute(c.req.raw, c.env));
-  app.all('/api/news/sources/stats', async (c) => handleNewsSourcesRoute(c.req.raw, c.env));
-  app.all('/api/news/preferences', async (c) => handleNewsPreferences(c.req.raw, c.env));
-  app.all('/api/news/digest/preview', async (c) => handleNewsDigestPreview(c.req.raw, c.env));
-  app.all('/api/news/digest/subscribe', async (c) => handleNewsDigestSubscribe(c.req.raw, c.env));
+  app.post('/api/news/newsletter/create', async (c) => {
+    try {
+      const result = await handleNewsletterCreatorCreate(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/news/newsletter/mine', async (c) => {
+    try {
+      const result = await handleNewsletterCreatorMine(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/news/newsletter/:id/issue', async (c) => {
+    try {
+      const result = await handleNewsletterCreatorIssue(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/news/newsletter/issues', async (c) => {
+    try {
+      const result = await handleNewsletterCreatorIssues(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.post('/api/news/newsletter/subscribe', async (c) => {
+    try {
+      const result = await handleNewsletterCreatorSubscribe(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.all('/api/news/feed', async (c) => {
+    try {
+      const result = await handleNewsFeed(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.all('/api/news/trending', async (c) => {
+    try {
+      const result = await handleNewsTrending(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.all('/api/news/category/:category', async (c) => {
+    try {
+      const result = await handleNewsCategory(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.all('/api/news/story/:storyId', async (c) => {
+    try {
+      const result = await handleNewsStory(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.all('/api/news/search', async (c) => {
+    try {
+      const result = await handleNewsSearch(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.all('/api/news/sources', async (c) => {
+    try {
+      const result = await handleNewsSourcesRoute(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.all('/api/news/sources/health', async (c) => {
+    try {
+      const result = await handleNewsSourcesRoute(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.all('/api/news/sources/refresh', async (c) => {
+    try {
+      const result = await handleNewsSourcesRoute(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.all('/api/news/sources/stats', async (c) => {
+    try {
+      const result = await handleNewsSourcesRoute(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.all('/api/news/preferences', async (c) => {
+    try {
+      const result = await handleNewsPreferences(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.all('/api/news/digest/preview', async (c) => {
+    try {
+      const result = await handleNewsDigestPreview(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.all('/api/news/digest/subscribe', async (c) => {
+    try {
+      const result = await handleNewsDigestSubscribe(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
 
   // --- New personalized/digest endpoints ---
-  app.all('/api/news/for-you', async (c) => handleNewsForYou(c.req.raw, c.env));
-  app.all('/api/news/hot', async (c) => handleNewsHot(c.req.raw, c.env));
-  app.all('/api/news/deep-dives', async (c) => handleNewsDeepDives(c.req.raw, c.env));
-  app.all('/api/news/quick-reads', async (c) => handleNewsQuickReads(c.req.raw, c.env));
-  app.all('/api/news/protocol/:protocol', async (c) => handleNewsProtocol(c.req.raw, c.env));
-  app.all('/api/news/token/:token', async (c) => handleNewsToken(c.req.raw, c.env));
-  app.all('/api/news/author/:author', async (c) => handleNewsAuthor(c.req.raw, c.env));
-  app.all('/api/news/mark-read', async (c) => handleNewsMarkRead(c.req.raw, c.env));
-  app.all('/api/news/reading-list', async (c) => handleReadingList(c.req.raw, c.env));
-  app.all('/api/news/reading-list/:id', async (c) => handleReadingListToggle(c.req.raw, c.env));
+  app.all('/api/news/for-you', async (c) => {
+    try {
+      const result = await handleNewsForYou(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.all('/api/news/hot', async (c) => {
+    try {
+      const result = await handleNewsHot(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.all('/api/news/deep-dives', async (c) => {
+    try {
+      const result = await handleNewsDeepDives(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.all('/api/news/quick-reads', async (c) => {
+    try {
+      const result = await handleNewsQuickReads(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.all('/api/news/protocol/:protocol', async (c) => {
+    try {
+      const result = await handleNewsProtocol(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.all('/api/news/token/:token', async (c) => {
+    try {
+      const result = await handleNewsToken(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.all('/api/news/author/:author', async (c) => {
+    try {
+      const result = await handleNewsAuthor(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.all('/api/news/mark-read', async (c) => {
+    try {
+      const result = await handleNewsMarkRead(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.all('/api/news/reading-list', async (c) => {
+    try {
+      const result = await handleReadingList(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.all('/api/news/reading-list/:id', async (c) => {
+    try {
+      const result = await handleReadingListToggle(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
 
   // --- API: Trending Sidebar ---
-  app.get('/api/trending/sidebar', async (c) => handleTrendingSidebar(c.req.raw, c.env));
+  app.get('/api/trending/sidebar', async (c) => {
+    try {
+      const result = await handleTrendingSidebar(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
 
   // --- API: Trending Scraper & Aggregation ---
   app.get('/api/trending/aggregated', async (c) => {
-    const m = await import('../../routes/trending-scraper');
+    try {
+      return await const m = await import('../../routes/trending-scraper');
     const data = await m.scrapeTrendingContent(c.env);
     return jsonResponse({ items: m.mergeTrendingItems(data), generatedAt: Date.now() });
   });
   app.get('/api/trending/per-platform', async (c) => {
     const { scrapeTrendingContent } = await import('../../routes/trending-scraper');
     const data = await scrapeTrendingContent(c.env);
-    return jsonResponse(data.platforms);
+    return ok(data.platforms);
   });
   app.get('/api/trending/now', async (c) => {
     const m = await import('../../routes/trending-scraper');
@@ -566,7 +1580,7 @@ export function registerFeedRoutes(app: Hono<{ Bindings: Env }>): void {
   app.get('/api/trending/cross-network', async (c) => {
     const { scrapeTrendingContent } = await import('../../routes/trending-scraper');
     const data = await scrapeTrendingContent(c.env);
-    return jsonResponse(data);
+    return ok(data);
   });
 
   // --- V1: Source Discovery ---
@@ -584,8 +1598,13 @@ export function registerFeedRoutes(app: Hono<{ Bindings: Env }>): void {
 
   // --- Feed cache management ---
   app.post('/api/feed/cache/invalidate', async (c) =>
-    withSession(c, () => handleFeedCacheInvalidate(c.req.raw, c.env)),
-  );
+    withSession(c, () => handleFeedCacheInvalidate(c.req.raw, c.env));
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
 }
 
 import { handleTrendingSidebar } from '../../routes/trending-sidebar';
+
+import { ok, badRequest, notFound, serverError } from '../response-helpers';

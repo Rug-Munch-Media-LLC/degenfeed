@@ -8,7 +8,7 @@ import type { Protocol } from '@degenfeed/types';
 import { type Env, jsonResponse } from '../../index';
 import { DEFAULT_PROTOCOLS } from '../feed';
 import { isValidEmail, safeKey } from './types';
-import { methodNotAllowed } from '../response-helpers';
+import { methodNotAllowed } from '../../response-helpers';
 
 export async function handleDigestSubscribeEmail(request: Request, env: Env): Promise<Response> {
   if (request.method !== 'POST') return methodNotAllowed(['POST']);
