@@ -207,7 +207,7 @@ export {
 // ─── Live Stream ─────────────────────────────────────────────────────────
 
 export {
-  applyLiveBoost,
+  applyLiveStreamBoost,
   LIVE_BOOST_BPS,
   LiveStreamMonitor,
   SUPPORTED_PLATFORMS,

@@ -8,8 +8,10 @@ import { useEffect, useState } from 'react';
 
 const MILESTONES = [
   { label: 'Posts Published', value: 10427, suffix: '+', icon: '✧' },
-  { label: 'Protocols Bridged', value: 44, suffix: '', icon: '⬡' },
-  { label: 'Identities Linked', value: 2500, suffix: '+', icon: '◈' },
+  { label: 'Protocols Bridged', value: 101, suffix: '+', icon: '⬡' },
+  { label: 'News Sources', value: 214, suffix: '', icon: '📰' },
+  { label: 'Network Ownership', value: 58, suffix: '%', icon: '🔒' },
+  { label: 'Self-Hosted Services', value: 50, suffix: '+', icon: '🖥' },
   { label: 'Creator Coins Launched', value: 250, suffix: '+', icon: '💰' },
 ] as const;
 
@@ -48,7 +50,7 @@ export function StatsBar() {
       style={{ borderColor: 'var(--color-border)' }}
     >
       <div className="mx-auto max-w-5xl">
-        <div className="mb-8 grid gap-6 sm:grid-cols-2 md:grid-cols-4">
+        <div className="mb-8 grid gap-6 grid-cols-2 sm:grid-cols-3 md:grid-cols-6">
           {MILESTONES.map((m) => (
             <div key={m.label} className="text-center">
               <div className="mb-2 text-2xl" aria-hidden="true">

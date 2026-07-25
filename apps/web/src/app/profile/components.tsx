@@ -247,6 +247,302 @@ export function TabEmptyState({ tab }: { tab: ProfileTab }) {
   );
 }
 
+/**
+ * CreatorToolsPanel — Tools for creators (own profile)
+ */
+export function CreatorToolsPanel({
+  tools,
+  loading,
+  onLaunchCoin,
+  onManageCoin,
+  onGoLive,
+  onCreatePost,
+  onCreatePodcast,
+  onNewsletter,
+}: {
+  tools?: {
+    coinDashboardUrl?: string;
+    totalCoins?: number;
+    totalStreams?: number;
+    totalPosts?: number;
+  } | null;
+  loading?: boolean;
+  onLaunchCoin: () => void;
+  onManageCoin: () => void;
+  onGoLive: () => void;
+  onCreatePost: () => void;
+  onCreatePodcast: () => void;
+  onNewsletter: () => void;
+}) {
+  if (loading) {
+    return (
+      <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-4">
+        <div className="h-5 w-32 skeleton rounded mb-3" />
+        <div className="grid grid-cols-2 gap-2">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-10 skeleton rounded-lg" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-4">
+      <h3 className="mb-3 text-sm font-bold text-[var(--color-fg)]">Creator Tools</h3>
+      {tools?.totalCoins !== undefined && (
+        <div className="mb-2 flex gap-4 text-xs text-[var(--color-muted)]">
+          <span>{tools.totalCoins} coins</span>
+          <span>{tools.totalStreams ?? 0} streams</span>
+          <span>{tools.totalPosts ?? 0} posts</span>
+        </div>
+      )}
+      <div className="grid grid-cols-2 gap-2">
+        <button
+          type="button"
+          onClick={onLaunchCoin}
+          className="rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 px-3 py-2 text-xs font-bold text-white transition-all hover:from-purple-500 hover:to-pink-500"
+        >
+          🪙 Launch Coin
+        </button>
+        <button
+          type="button"
+          onClick={onManageCoin}
+          className="rounded-lg border border-[var(--color-glass-border)] px-3 py-2 text-xs text-[var(--color-muted)] transition-colors hover:text-[var(--color-fg)]"
+        >
+          Manage Coins
+        </button>
+        <button
+          type="button"
+          onClick={onGoLive}
+          className="rounded-lg border border-degen-500/30 px-3 py-2 text-xs font-medium text-degen-400 transition-colors hover:bg-degen-500/10"
+        >
+          📡 Go Live
+        </button>
+        <button
+          type="button"
+          onClick={onCreatePost}
+          className="rounded-lg border border-[var(--color-glass-border)] px-3 py-2 text-xs text-[var(--color-muted)] transition-colors hover:text-[var(--color-fg)]"
+        >
+          ✍️ New Post
+        </button>
+        <button
+          type="button"
+          onClick={onCreatePodcast}
+          className="rounded-lg border border-[var(--color-glass-border)] px-3 py-2 text-xs text-[var(--color-muted)] transition-colors hover:text-[var(--color-fg)]"
+        >
+          🎙️ Podcast
+        </button>
+        <button
+          type="button"
+          onClick={onNewsletter}
+          className="rounded-lg border border-[var(--color-glass-border)] px-3 py-2 text-xs text-[var(--color-muted)] transition-colors hover:text-[var(--color-fg)]"
+        >
+          📬 Newsletter
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * ProfileSearchInput — Search bar for profiles
+ */
+export function ProfileSearchInput({
+  value,
+  onChange,
+  onClear,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  onClear: () => void;
+}) {
+  return (
+    <div className="relative">
+      <svg
+        className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-muted)]"
+        width="14"
+        height="14"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="11" cy="11" r="8" />
+        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+      </svg>
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="Search profiles..."
+        className="w-full rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] py-2.5 pl-10 pr-8 text-sm text-[var(--color-fg)] placeholder-[var(--color-muted)] outline-none transition-all focus:border-degen-500/30"
+      />
+      {value && (
+        <button
+          type="button"
+          onClick={onClear}
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-muted)] hover:text-[var(--color-fg)]"
+        >
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      )}
+    </div>
+  );
+}
+
+/**
+ * SearchResults — Display search results
+ */
+export function SearchResults({
+  results,
+  loading,
+  onSelect,
+}: {
+  results: Array<{ id: string; walletAddress?: string; displayName: string; handle?: string }>;
+  loading?: boolean;
+  onSelect: (result: {
+    id: string;
+    walletAddress?: string;
+    displayName: string;
+    handle?: string;
+  }) => void;
+}) {
+  if (loading) {
+    return (
+      <div className="space-y-2">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="flex items-center gap-2 p-2">
+            <div className="h-8 w-8 rounded-full skeleton" />
+            <div className="flex-1">
+              <div className="h-3 w-24 skeleton rounded" />
+              <div className="mt-1 h-2 w-16 skeleton rounded" />
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+  if (results.length === 0) return null;
+  return (
+    <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] overflow-hidden">
+      {results.map((result) => (
+        <button
+          key={result.id}
+          type="button"
+          onClick={() => onSelect(result)}
+          className="flex w-full items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-white/5"
+        >
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-degen-500/30 to-purple-500/30 text-[8px] font-bold text-degen-400">
+            {result.displayName[0]?.toUpperCase() || '?'}
+          </div>
+          <div>
+            <div className="text-xs font-medium text-[var(--color-fg)]">{result.displayName}</div>
+            {result.handle && (
+              <div className="text-[10px] text-[var(--color-muted)]">@{result.handle}</div>
+            )}
+          </div>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/**
+ * SuggestedFollows — Suggested profiles to follow
+ */
+export function SuggestedFollows({
+  profiles,
+}: {
+  profiles: Array<{ id: string; displayName: string; handle?: string; reason?: string }>;
+}) {
+  if (profiles.length === 0) return null;
+  return (
+    <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-3">
+      <h4 className="mb-2 text-xs font-bold text-[var(--color-fg)]">Suggested Follows</h4>
+      <div className="space-y-2">
+        {profiles.map((profile) => (
+          <div key={profile.id} className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-degen-500/30 to-purple-500/30 text-[7px] font-bold text-degen-400">
+                {profile.displayName[0]?.toUpperCase() || '?'}
+              </div>
+              <div>
+                <div className="text-xs font-medium text-[var(--color-fg)]">
+                  {profile.displayName}
+                </div>
+                {profile.handle && (
+                  <div className="text-[9px] text-[var(--color-muted)]">@{profile.handle}</div>
+                )}
+              </div>
+            </div>
+            <button
+              type="button"
+              className="rounded-lg bg-degen-500/15 px-2.5 py-1 text-[9px] font-semibold text-degen-400 transition-colors hover:bg-degen-500/25"
+            >
+              + Follow
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * TabContent — Renders the active tab content
+ */
+export function TabContent({
+  tab,
+  posts,
+  loading,
+}: {
+  tab: string;
+  posts: Array<{ id: string; content?: string }>;
+  loading?: boolean;
+}) {
+  if (loading) {
+    return (
+      <div className="space-y-3">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="rounded-xl border border-[var(--color-glass-border)] p-3">
+            <div className="h-3 w-3/4 skeleton rounded" />
+            <div className="mt-2 h-2 w-1/2 skeleton rounded" />
+          </div>
+        ))}
+      </div>
+    );
+  }
+  if (posts.length === 0) {
+    return <TabEmptyState tab={tab as import('./types').ProfileTab} />;
+  }
+  return (
+    <div className="space-y-2">
+      {posts.map((post) => (
+        <div
+          key={post.id}
+          className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-3"
+        >
+          <p className="text-sm text-[var(--color-fg)]">{post.content || 'No content'}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function ProfileHeader({
   displayName,
   handle,

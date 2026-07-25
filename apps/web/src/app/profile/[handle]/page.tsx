@@ -3,17 +3,7 @@
 import { ErrorBoundary, ReputationBadge } from '@degenfeed/ui';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import {
-  CreatorToolsPanel,
-  ProfileHeader,
-  ProfileSearchInput,
-  ProfileSkeleton,
-  ProfileTabs,
-  SearchResults,
-  StatsBar,
-  SuggestedFollows,
-  TabContent,
-} from '../components';
+import { ProfileHeader, ProfileSkeleton, ProfileTabs, StatsBar } from '../components';
 import { useProfile } from '../use-profile';
 
 export const dynamic = 'force-dynamic';

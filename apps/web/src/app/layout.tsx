@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { JetBrains_Mono, Plus_Jakarta_Sans, Syne } from 'next/font/google';
 import { cookies } from 'next/headers';
 import Script from 'next/script';
+
 import '../styles/design-tokens.css';
 import './globals.css';
 import { AuthProvider } from '../components/AuthProvider';
@@ -36,6 +37,11 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   manifest: '/manifest.json',
+  icons: {
+    icon: '/icon.svg',
+    shortcut: '/favicon.ico',
+    apple: '/icon-192.png',
+  },
   metadataBase: new URL('https://app.degenfeed.xyz'),
   title: {
     default: 'DegenFeed — The Web3 Social Universe | Nostr, Farcaster, Lens, Bluesky',
@@ -49,6 +55,7 @@ export const metadata: Metadata = {
     'lens protocol app',
     'bluesky aggregator',
     'mastodon reader',
+    '101+ protocols',
     'fediverse cross-post',
     'web3 social feed',
     'crypto tipping app',
@@ -136,6 +143,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <meta name="apple-mobile-web-app-title" content="DegenFeed" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="application-name" content="DegenFeed" />
+        <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+        <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
         <link rel="apple-touch-icon" href="/icon-192.png" />
         <link
           rel="apple-touch-startup-image"
@@ -203,11 +212,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 url: 'https://app.degenfeed.xyz',
               },
               featureList: [
-                'Multi-protocol feed aggregation',
-                'Nostr, Farcaster, Lens, Bluesky, Mastodon, and more',
+                'Multi-protocol feed aggregation across 101+ protocols',
+                'Nostr, Farcaster, Lens, Bluesky, Mastodon, PeerTube, and more',
                 'Cross-protocol search',
                 'Real-time notifications',
-                'Creator coins and tipping',
+                'Creator coins and tipping on Base + Solana',
                 'Live streaming across protocols',
               ],
             }),

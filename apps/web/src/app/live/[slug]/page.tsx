@@ -1,21 +1,34 @@
 'use client';
 
 /**
- * @degenfeed/web — Individual Stream Page
+ * @degenfeed/web — Unified Live Stream / Creator Page
  *
- * Full-featured stream viewer with:
- *   - Large video player (theater mode)
- *   - Stream info (title, streamer, viewer count, uptime)
- *   - Real-time chat sidebar
- *   - Tip button
- *   - Share button
- *   - Related live streams
- *   - Streamer's other content
+ * Merged from the prior [creator] and [streamId] routes which created
+ * an ambiguous route conflict in Next.js 16.
+ *
+ * This single [slug] route handles both:
+ *   1. Stream-by-ID — fetches real stream data from the API
+ *   2. Creator handle — renders a mock creator stream page as fallback
  */
 
 import { ErrorBoundary } from '@degenfeed/ui';
+import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import useSWR from 'swr';
+import { StreamChat } from '../../../components/stream/StreamChat';
+import { StreamClips } from '../../../components/stream/StreamClips';
+import { StreamInfo } from '../../../components/stream/StreamInfo';
+import { StreamMiniPlayer } from '../../../components/stream/StreamMiniPlayer';
+import { StreamPlayer } from '../../../components/stream/StreamPlayer';
+import { StreamSchedule } from '../../../components/stream/StreamSchedule';
+import { StreamVODs } from '../../../components/stream/StreamVODs';
+import type { StreamExtended } from '../../../components/stream/types';
+import {
+  generateMockClips,
+  generateMockSchedule,
+  generateMockStream,
+  generateMockVODs,
+} from '../../../components/stream/types';
 
 // ─── Types ─────────────────────────────────────────────────────────────
 
@@ -73,9 +86,34 @@ const fetcher = async (url: string) => {
   return res.json();
 };
 
+// ─── Detecting slug type ──────────────────────────────────────────────
+
+function isStreamId(slug: string): boolean {
+  // Stream IDs typically contain hyphens, are UUID-like, or are hex strings
+  return slug.includes('-') || slug.length > 24 || /^[a-f0-9]{8,}$/i.test(slug);
+}
+
+// ─── Mock Creator Data ────────────────────────────────────────────────
+
+function useStreamData(id: string): StreamExtended {
+  const [stream] = useMemo(() => generateMockStream(1), []);
+  const base = stream!;
+  return {
+    ...base,
+    id,
+    title: id.includes('stream') ? base.title : `${id}'s Stream`,
+    creatorHandle: id,
+    creatorDisplayName: id
+      .split('_')
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(' '),
+    creatorId: base.creatorId ?? id,
+  };
+}
+
 // ─── Stream Video Player ──────────────────────────────────────────────
 
-function StreamPlayer({
+function StreamVideoPlayer({
   embedUrl,
   source,
   title,
@@ -197,7 +235,7 @@ function SourceBadge({ source }: { source: string }) {
   );
 }
 
-// ─── Stream Info Header ───────────────────────────────────────────────
+// ─── Stream Info Header (Live Data) ────────────────────────────────────
 
 function StreamInfoHeader({ stream }: { stream: StreamDetails['stream'] }) {
   const uptime = useMemo(() => {
@@ -560,22 +598,260 @@ function RelatedStreams({ currentStreamId }: { currentStreamId: string }) {
   );
 }
 
-// ─── Main Page ─────────────────────────────────────────────────────────
+// ─── Creator Page View (mock data) ─────────────────────────────────────
 
-interface StreamPageProps {
-  params: { streamId: string };
+function CreatorPageView({ slug }: { slug: string }) {
+  const stream = useStreamData(slug);
+  const [isTheater, setIsTheater] = useState(false);
+  const [showMiniPlayer, setShowMiniPlayer] = useState(false);
+  const [activeSection, setActiveSection] = useState<'about' | 'schedule' | 'vods' | 'clips'>(
+    'about',
+  );
+  const [showSidebar, setShowSidebar] = useState(true);
+
+  const vods = useMemo(() => generateMockVODs(6), []);
+  const clips = useMemo(() => generateMockClips(8), []);
+  const schedule = useMemo(() => generateMockSchedule(), []);
+
+  const handleTheaterToggle = useCallback(() => {
+    setIsTheater((v) => !v);
+    setShowMiniPlayer(false);
+  }, []);
+
+  const handleClosePlayer = useCallback(() => {
+    setShowMiniPlayer(true);
+  }, []);
+
+  const handleExpandMiniPlayer = useCallback(() => {
+    setShowMiniPlayer(false);
+  }, []);
+
+  return (
+    <ErrorBoundary>
+      {/* == Back navigation == */}
+      <div className="sticky top-0 z-30 bg-black/80 backdrop-blur-md border-b border-white/5">
+        <div className="mx-auto max-w-[1800px] px-4 py-2">
+          <div className="flex items-center gap-2 text-xs">
+            <Link href="/live" className="text-white/40 hover:text-white/70 transition-colors">
+              Live
+            </Link>
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+              className="text-white/20"
+            >
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+            <span className="text-white/70 truncate">{stream.creatorDisplayName}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* == Main content area == */}
+      <div className="mx-auto max-w-[1800px]">
+        <div className={`flex ${showSidebar ? 'flex-col lg:flex-row' : 'flex-col'}`}>
+          {/* == Left: Player + Below content == */}
+          <div className={`flex-1 min-w-0 ${showSidebar ? 'lg:mr-0' : ''}`}>
+            {/* Player */}
+            <StreamPlayer
+              stream={stream}
+              onClose={handleClosePlayer}
+              onTheaterToggle={handleTheaterToggle}
+              isTheater={isTheater}
+            />
+
+            {/* Below player content */}
+            <div className="px-4 py-4 space-y-6">
+              {/* Stream Info (title, creator, follow/subscribe, description) */}
+              <StreamInfo stream={stream} />
+
+              {/* Section tabs */}
+              <div className="flex gap-1 border-b border-white/10" role="tablist">
+                {[
+                  { id: 'about' as const, label: 'About', icon: 'ℹ️' },
+                  { id: 'schedule' as const, label: 'Schedule', icon: '📅' },
+                  { id: 'vods' as const, label: 'VODs', icon: '📼' },
+                  { id: 'clips' as const, label: 'Clips', icon: '✂️' },
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={activeSection === tab.id}
+                    onClick={() => setActiveSection(tab.id)}
+                    className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-medium capitalize transition-all border-b-2 ${
+                      activeSection === tab.id
+                        ? 'border-degen-500 text-degen-400'
+                        : 'border-transparent text-white/40 hover:text-white/70'
+                    }`}
+                  >
+                    <span aria-hidden="true" className="text-sm">
+                      {tab.icon}
+                    </span>
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Tab content */}
+              <div className="animate-fade-in">
+                {activeSection === 'about' && (
+                  <div className="space-y-4">
+                    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                      <h3 className="text-sm font-semibold text-white/80">
+                        About {stream.creatorDisplayName}
+                      </h3>
+                      <p className="mt-2 text-xs leading-relaxed text-white/50">
+                        Welcome to the stream! We talk about crypto, DeFi, web3, and everything in
+                        between. Make sure to follow and subscribe so you never miss a stream!
+                      </p>
+                      <div className="mt-3 grid grid-cols-3 gap-3 border-t border-white/10 pt-3">
+                        <div className="text-center">
+                          <p className="text-xs font-bold text-white">
+                            {stream.stats.totalViews.toLocaleString()}
+                          </p>
+                          <p className="text-[9px] text-white/40">Channel Views</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-xs font-bold text-white">
+                            {stream.stats.followers.toLocaleString()}
+                          </p>
+                          <p className="text-[9px] text-white/40">Followers</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-xs font-bold text-white">
+                            {stream.stats.subscribers.toLocaleString()}
+                          </p>
+                          <p className="text-[9px] text-white/40">Subscribers</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Related channels placeholder */}
+                    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                      <h3 className="text-sm font-semibold text-white/70">Related Channels</h3>
+                      <div className="mt-3 flex gap-3 overflow-x-auto pb-2 scrollbar-none">
+                        {['defi_degen', 'sol_whale', 'nft_collector', 'meme_lord'].map((handle) => (
+                          <Link
+                            key={handle}
+                            href={`/live/${handle}`}
+                            className="flex shrink-0 items-center gap-2 rounded-lg border border-white/10 px-3 py-2 transition-all hover:border-degen-500/20"
+                          >
+                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-degen-500/30 to-purple-500/30 text-[8px] font-bold text-degen-400">
+                              {(handle[0] ?? '?').toUpperCase()}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="truncate text-xs font-medium text-white/70">
+                                @{handle}
+                              </p>
+                              <p className="text-[9px] text-white/30">Live</p>
+                            </div>
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {activeSection === 'schedule' && <StreamSchedule streams={schedule} />}
+                {activeSection === 'vods' && <StreamVODs vods={vods} />}
+                {activeSection === 'clips' && <StreamClips clips={clips} />}
+              </div>
+            </div>
+          </div>
+
+          {/* == Right: Chat sidebar == */}
+          {showSidebar && (
+            <div className="w-full lg:w-[380px] lg:min-w-[380px] shrink-0 border-t lg:border-t-0 lg:border-l border-white/10">
+              <div className="h-full flex flex-col" style={{ maxHeight: 'calc(100vh - 48px)' }}>
+                {/* Chat header */}
+                <div className="flex items-center justify-between px-3 py-2 border-b border-white/10 shrink-0">
+                  <span className="text-xs font-semibold text-white/70">Stream Chat</span>
+                  <button
+                    type="button"
+                    onClick={() => setShowSidebar(false)}
+                    className="flex h-6 w-6 items-center justify-center rounded text-white/30 hover:text-white/60"
+                    aria-label="Close chat"
+                  >
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden="true"
+                    >
+                      <polyline points="15 18 9 12 15 6" />
+                    </svg>
+                  </button>
+                </div>
+                {/* Chat messages */}
+                <div className="flex-1 overflow-hidden">
+                  <StreamChat streamId={stream.id} maxHeight="100%" />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Sidebar toggle (when hidden) */}
+          {!showSidebar && (
+            <button
+              type="button"
+              onClick={() => setShowSidebar(true)}
+              className="fixed right-4 top-20 z-40 flex items-center gap-1.5 rounded-lg bg-degen-500/20 border border-degen-500/30 px-3 py-2 text-xs font-medium text-degen-400 hover:bg-degen-500/30 transition-all"
+              aria-label="Show chat"
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+              Show Chat
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* == Mini Player (PiP-style) == */}
+      {showMiniPlayer && (
+        <StreamMiniPlayer
+          title={stream.title}
+          onClose={() => setShowMiniPlayer(false)}
+          onExpand={handleExpandMiniPlayer}
+        />
+      )}
+    </ErrorBoundary>
+  );
 }
 
-export default function StreamPage({ params }: StreamPageProps) {
-  const { streamId } = params;
-  const { data, error, isLoading } = useSWR<StreamDetails>(`/api/live/${streamId}`, fetcher, {
+// ─── Stream Page View (live data via API) ──────────────────────────────
+
+function StreamPageView({ slug }: { slug: string }) {
+  const { data, error, isLoading } = useSWR<StreamDetails>(`/api/live/${slug}`, fetcher, {
     refreshInterval: 30000,
   });
 
   // Keyboard shortcuts
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      // Escape to navigate back
       if (e.key === 'Escape' && !e.ctrlKey && !e.metaKey) {
         // Let the user navigate back normally
       }
@@ -603,7 +879,7 @@ export default function StreamPage({ params }: StreamPageProps) {
           <div className="text-4xl mb-4">📡</div>
           <h2 className="text-lg font-bold text-[var(--color-fg)]">Stream Not Found</h2>
           <p className="mt-1 text-sm text-[var(--color-muted)]">
-            This stream doesn't exist or has ended.
+            This stream doesn&apos;t exist or has ended.
           </p>
           <a
             href="/live"
@@ -626,7 +902,11 @@ export default function StreamPage({ params }: StreamPageProps) {
           {/* Left: Player + Info */}
           <div className="flex-1 min-w-0">
             {/* Video Player */}
-            <StreamPlayer embedUrl={stream.embedUrl} source={stream.source} title={stream.title} />
+            <StreamVideoPlayer
+              embedUrl={stream.embedUrl}
+              source={stream.source}
+              title={stream.title}
+            />
 
             {/* Stream Info */}
             <div className="mt-4">
@@ -653,8 +933,26 @@ export default function StreamPage({ params }: StreamPageProps) {
         </div>
 
         {/* Related Streams */}
-        <RelatedStreams currentStreamId={streamId} />
+        <RelatedStreams currentStreamId={slug} />
       </div>
     </ErrorBoundary>
   );
+}
+
+// ─── Main Page ─────────────────────────────────────────────────────────
+
+interface PageProps {
+  params: { slug: string };
+}
+
+export default function LiveSlugPage({ params }: PageProps) {
+  const { slug } = params;
+
+  // If the slug looks like a stream ID, try the API-backed view.
+  // Otherwise, show the creator profile (mock) view.
+  if (isStreamId(slug)) {
+    return <StreamPageView slug={slug} />;
+  }
+
+  return <CreatorPageView slug={slug} />;
 }

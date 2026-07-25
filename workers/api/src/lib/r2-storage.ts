@@ -220,6 +220,31 @@ export async function uploadToR2(
 /**
  * Get metadata for a stored R2 object.
  */
+export async function getR2Object(
+  env: Env,
+  key: string,
+): Promise<{
+  body: ReadableStream | null;
+  size: number;
+  contentType: string;
+  etag: string;
+} | null> {
+  try {
+    const r2 = env.R2_BUCKET as R2Bucket | undefined;
+    if (!r2) return null;
+    const obj = await r2.get(key);
+    if (!obj) return null;
+    return {
+      body: obj.body,
+      size: obj.size,
+      contentType: obj.httpMetadata?.contentType ?? 'application/octet-stream',
+      etag: obj.etag,
+    };
+  } catch {
+    return null;
+  }
+}
+
 export async function getR2ObjectInfo(env: Env, key: string): Promise<R2ObjectInfo | null> {
   // Try KV first for fast metadata
   const kv = env.CACHE ?? env.CONTENT_LIBRARY;

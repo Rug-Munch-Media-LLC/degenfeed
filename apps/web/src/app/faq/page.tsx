@@ -7,7 +7,7 @@ export const revalidate = 86400;
 export const metadata: Metadata = {
   title: 'FAQ — DegenFeed Web3 Social Universe Questions Answered',
   description:
-    'Everything you need to know about DegenFeed — the Web3 Social Universe. What makes it web3, how cross-posting works, creator coins, self-hosting, data ownership, and how to get started on 44 decentralized social protocols.',
+    'Everything you need to know about DegenFeed — the Web3 Social Universe. What makes it web3, how cross-posting works, creator coins, self-hosting, data ownership, and how to get started on 101+ decentralized social protocols.',
   keywords: [
     'web3 social media faq',
     'decentralized social network questions',
@@ -52,7 +52,7 @@ const faqStructuredData = {
       name: 'What is DegenFeed?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'DegenFeed is an open-source, multi-protocol social aggregator for web3. It pulls posts from Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, Reddit, and RSS into one unified, ranked timeline. No account needed to browse. Connect a wallet to post, tip, and engage across protocols. Creators can launch their own coins, livestream to multiple platforms, and earn tips in crypto.',
+        text: 'DegenFeed is an open-source, multi-protocol social aggregator for web3. It pulls posts from 101+ protocols including Nostr, Farcaster, Lens, Bluesky, Mastodon, PeerTube, Owncast, Lemmy, Pixelfed, Threads, Reddit, and RSS into one unified, ranked timeline. No account needed to browse. Connect a wallet to post, tip, and engage across protocols. Creators can launch their own coins, livestream to multiple platforms, and earn tips in crypto.',
       },
     },
     {
@@ -60,7 +60,7 @@ const faqStructuredData = {
       name: 'How is DegenFeed different from Twitter/X?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'DegenFeed is not a walled garden. It reads from 15+ open protocols and lets you post to multiple networks simultaneously. There are no ads, no algorithm manipulation, no data selling. The ranking algorithm is transparent, open source (AGPL-3.0), and self-hostable. Creators can launch tokens, earn tips across chains, and stream live — none of which is possible on traditional social media.',
+        text: 'DegenFeed is not a walled garden. It reads from 101+ open protocols and lets you post to multiple networks simultaneously. There are no ads, no algorithm manipulation, no data selling. The ranking algorithm is transparent, open source (AGPL-3.0), and self-hostable. Creators can launch tokens, earn tips across chains, and stream live — none of which is possible on traditional social media.',
       },
     },
     {
@@ -68,7 +68,7 @@ const faqStructuredData = {
       name: 'What protocols does DegenFeed support?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'Nostr, Farcaster (casts via Hub API), Lens (profiles via GraphQL v2), Bluesky (AT Protocol), Mastodon/ActivityPub, Threads (read-only), Reddit (RSS + JSON API), RSS/Atom (353+ sources), YouTube, PeerTube, Lemmy, Discord, Matrix, GitHub, Telegram, and Substack/Ghost.',
+        text: 'All of them. DegenFeed bridges 101+ protocols total. Major protocols include: Nostr, Farcaster, Lens, Bluesky, Mastodon, PeerTube, Owncast, Lemmy, Pixelfed, Matrix, Reddit, Threads, RSS/Atom (353+ sources), YouTube, GoToSocial, Pleroma, Misskey, Friendica, Diaspora, Gab, Minds, WriteFreely, Micro.blog, Plume, Write.as, Publii, Aether, Scuttlebutt, Hive, PieFed, Odysee, DTube, Rumble, BitTube, Funkwhale, Castopod, Steem, DeSo, Subsocial, CyberConnect, Ceramic, Status, Session, Telegram, Signal, IRC, XMPP, Discord, and many more. Every major decentralized social protocol is supported.',
       },
     },
     {
@@ -84,7 +84,7 @@ const faqStructuredData = {
       name: 'How does crypto tipping work?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: "Tap the tip button on any post to send ETH, SOL, or USDC directly to the creator's wallet. DegenFeed uses on-chain transactions with zero platform fees. For Nostr posts, Lightning Network zaps are supported via LNURL. Tips support batch tipping (up to 50 recipients), streaming payments (pay-per-minute during livestreams), and cross-chain bridging via Wormhole. To receive tips, connect a wallet with your account.",
+        text: "Tap the tip button on any post to send ETH, SOL, or USDC directly to the creator's wallet. DegenFeed uses on-chain transactions with zero platform fees. Tipping is cross-chain and context-aware — the best route is automatically selected based on the creator's connected wallets and content type. For Nostr posts, Lightning Network zaps are supported via LNURL. Tips can be sent on Ethereum, Base, Solana, or Lightning Network. To receive tips, connect a wallet with your account.",
       },
     },
     {

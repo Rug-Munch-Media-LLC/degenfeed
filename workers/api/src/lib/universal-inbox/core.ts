@@ -5,23 +5,63 @@
  * sharing, network status, and mark-read operations.
  */
 
+import type { Protocol } from '@degenfeed/types';
 import type { Env } from '../../index';
 import { hasSuspiciousPayload } from '../../sanitize';
-import type { Protocol } from '@degenfeed/types';
-import type {
-  InboxItem, InboxFeed, InboxItemKind, InboxReplyRequest, InboxShareRequest,
-  InboxReadRequest, CrossNetworkShareResult, ActivityFeedItem, UserNetworkStatus,
-  NetworkStatus, NetworkCapability,
-} from './types';
-import { PROTOCOL_MAX_LENGTH, DEFAULT_PAGE_SIZE, PROTOCOL_CAPABILITIES, INBOX_UNIFIED_KEY, INBOX_DMS_KEY, INBOX_COMMENTS_KEY, INBOX_STATUS_KEY } from './constants';
-import { getInboxItems, saveInboxItems, paginateInbox, formatProtocol, getUserLinkedProtocols } from './utils';
 import {
-  fetchNostrDMs, fetchNostrReplies, fetchNostrNotifications,
-  fetchMatrixDMs, fetchMastodonDMs, fetchMastodonReplies, fetchMastodonNotifications,
-  fetchBlueskyDMs, fetchFarcasterDMs, fetchFarcasterReplies,
-  fetchPeerTubeComments, fetchLemmyComments, fetchPixelfedComments,
+  DEFAULT_PAGE_SIZE,
+  INBOX_COMMENTS_KEY,
+  INBOX_DMS_KEY,
+  INBOX_STATUS_KEY,
+  INBOX_UNIFIED_KEY,
+  PROTOCOL_CAPABILITIES,
+  PROTOCOL_MAX_LENGTH,
+} from './constants';
+import {
+  fetchBlueskyDMs,
+  fetchFarcasterDMs,
+  fetchFarcasterReplies,
+  fetchLemmyComments,
+  fetchMastodonDMs,
+  fetchMastodonNotifications,
+  fetchMastodonReplies,
+  fetchMatrixDMs,
+  fetchNostrDMs,
+  fetchNostrNotifications,
+  fetchNostrReplies,
+  fetchPeerTubeComments,
+  fetchPixelfedComments,
 } from './fetchers';
-import { replyMastodon, replyNostr, replyFarcaster, replyBluesky, replyPeerTube, replyLemmy, replyPixelfed, replyMatrix } from './reply-handlers';
+import {
+  replyBluesky,
+  replyFarcaster,
+  replyLemmy,
+  replyMastodon,
+  replyMatrix,
+  replyNostr,
+  replyPeerTube,
+  replyPixelfed,
+} from './reply-handlers';
+import type {
+  ActivityFeedItem,
+  CrossNetworkShareResult,
+  InboxFeed,
+  InboxItem,
+  InboxItemKind,
+  InboxReadRequest,
+  InboxReplyRequest,
+  InboxShareRequest,
+  NetworkCapability,
+  NetworkStatus,
+  UserNetworkStatus,
+} from './types';
+import {
+  formatProtocol,
+  getInboxItems,
+  getUserLinkedProtocols,
+  paginateInbox,
+  saveInboxItems,
+} from './utils';
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // AGGREGATION ENGINE
@@ -108,7 +148,11 @@ export async function aggregateUnifiedInbox(
   }
 
   const seen = new Set<string>();
-  const deduped = allItems.filter((i) => { if (seen.has(i.id)) return false; seen.add(i.id); return true; });
+  const deduped = allItems.filter((i) => {
+    if (seen.has(i.id)) return false;
+    seen.add(i.id);
+    return true;
+  });
   deduped.sort((a, b) => b.createdAt - a.createdAt);
 
   await saveInboxItems(env, INBOX_UNIFIED_KEY(walletAddress), deduped);
@@ -117,13 +161,17 @@ export async function aggregateUnifiedInbox(
 }
 
 export async function aggregateDMs(
-  walletAddress: string, env: Env, options?: { limit?: number; cursor?: string; includeRead?: boolean },
+  walletAddress: string,
+  env: Env,
+  options?: { limit?: number; cursor?: string; includeRead?: boolean },
 ): Promise<InboxFeed> {
   return aggregateUnifiedInbox(walletAddress, env, { ...options, kind: 'dm' });
 }
 
 export async function aggregateComments(
-  walletAddress: string, env: Env, options?: { limit?: number; cursor?: string; includeRead?: boolean },
+  walletAddress: string,
+  env: Env,
+  options?: { limit?: number; cursor?: string; includeRead?: boolean },
 ): Promise<InboxFeed> {
   return aggregateUnifiedInbox(walletAddress, env, { ...options, kind: 'comment' });
 }
@@ -133,7 +181,9 @@ export async function aggregateComments(
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 export async function replyToInboxItem(
-  walletAddress: string, request: InboxReplyRequest, env: Env,
+  walletAddress: string,
+  request: InboxReplyRequest,
+  env: Env,
 ): Promise<{ ok: boolean; nativeId?: string; error?: string }> {
   const { parentInboxId, content, auth, signedMessage } = request;
 
@@ -160,15 +210,24 @@ export async function replyToInboxItem(
   const truncatedContent = content.length > maxLen ? `${content.slice(0, maxLen - 3)}...` : content;
 
   switch (protocol) {
-    case 'mastodon': return replyMastodon(truncatedContent, nativeId, mergedAuth, env);
-    case 'nostr': return replyNostr(truncatedContent, nativeId, mergedAuth, signedMessage);
-    case 'farcaster': return replyFarcaster(truncatedContent, mergedAuth, signedMessage);
-    case 'bluesky': return replyBluesky(truncatedContent, mergedAuth);
-    case 'peertube': return replyPeerTube(truncatedContent, nativeId, mergedAuth, parentNativeId);
-    case 'lemmy': return replyLemmy(truncatedContent, parentNativeId, mergedAuth);
-    case 'pixelfed': return replyPixelfed(truncatedContent, nativeId, mergedAuth);
-    case 'matrix': return replyMatrix(truncatedContent, mergedAuth);
-    default: return { ok: false, error: `Reply to ${protocol} not yet supported` };
+    case 'mastodon':
+      return replyMastodon(truncatedContent, nativeId, mergedAuth, env);
+    case 'nostr':
+      return replyNostr(truncatedContent, nativeId, mergedAuth, signedMessage);
+    case 'farcaster':
+      return replyFarcaster(truncatedContent, mergedAuth, signedMessage);
+    case 'bluesky':
+      return replyBluesky(truncatedContent, mergedAuth);
+    case 'peertube':
+      return replyPeerTube(truncatedContent, nativeId, mergedAuth, parentNativeId);
+    case 'lemmy':
+      return replyLemmy(truncatedContent, parentNativeId, mergedAuth);
+    case 'pixelfed':
+      return replyPixelfed(truncatedContent, nativeId, mergedAuth);
+    case 'matrix':
+      return replyMatrix(truncatedContent, mergedAuth);
+    default:
+      return { ok: false, error: `Reply to ${protocol} not yet supported` };
   }
 }
 
@@ -186,37 +245,56 @@ export function buildActivityFeed(items: InboxItem[]): ActivityFeedItem[] {
     let targetProtocol: Protocol | undefined;
 
     switch (item.kind) {
-      case 'dm': summary = `${actorLabel} sent you a DM on ${protocolLabel}`; break;
+      case 'dm':
+        summary = `${actorLabel} sent you a DM on ${protocolLabel}`;
+        break;
       case 'comment':
         targetProtocol = item.parentProtocol;
-        summary = item.parentProtocol && item.parentProtocol !== item.protocol
-          ? `${actorLabel} commented on your ${formatProtocol(item.parentProtocol)} content via ${protocolLabel}`
-          : `${actorLabel} commented on your ${protocolLabel} post`;
+        summary =
+          item.parentProtocol && item.parentProtocol !== item.protocol
+            ? `${actorLabel} commented on your ${formatProtocol(item.parentProtocol)} content via ${protocolLabel}`
+            : `${actorLabel} commented on your ${protocolLabel} post`;
         break;
       case 'reply':
         targetProtocol = item.parentProtocol;
-        summary = item.parentProtocol && item.parentProtocol !== item.protocol
-          ? `${actorLabel} replied to your ${formatProtocol(item.parentProtocol)} post from ${protocolLabel}`
-          : `${actorLabel} replied to your ${protocolLabel} post`;
+        summary =
+          item.parentProtocol && item.parentProtocol !== item.protocol
+            ? `${actorLabel} replied to your ${formatProtocol(item.parentProtocol)} post from ${protocolLabel}`
+            : `${actorLabel} replied to your ${protocolLabel} post`;
         break;
-      case 'mention': summary = `${actorLabel} mentioned you on ${protocolLabel}`; break;
+      case 'mention':
+        summary = `${actorLabel} mentioned you on ${protocolLabel}`;
+        break;
       case 'like':
         targetProtocol = item.parentProtocol;
-        summary = item.parentProtocol && item.parentProtocol !== item.protocol
-          ? `${actorLabel} liked your ${formatProtocol(item.parentProtocol)} post from ${protocolLabel}`
-          : `${actorLabel} liked your ${protocolLabel} post`;
+        summary =
+          item.parentProtocol && item.parentProtocol !== item.protocol
+            ? `${actorLabel} liked your ${formatProtocol(item.parentProtocol)} post from ${protocolLabel}`
+            : `${actorLabel} liked your ${protocolLabel} post`;
         break;
-      case 'repost': summary = `${actorLabel} reposted your ${protocolLabel} post`; break;
-      case 'follow': summary = `${actorLabel} followed you on ${protocolLabel}`; break;
-      case 'tip': summary = `${actorLabel} sent you ${item.amount ?? ''} ${item.currency ?? ''} on ${protocolLabel}`; break;
-      default: summary = `${actorLabel} interacted on ${protocolLabel}`;
+      case 'repost':
+        summary = `${actorLabel} reposted your ${protocolLabel} post`;
+        break;
+      case 'follow':
+        summary = `${actorLabel} followed you on ${protocolLabel}`;
+        break;
+      case 'tip':
+        summary = `${actorLabel} sent you ${item.amount ?? ''} ${item.currency ?? ''} on ${protocolLabel}`;
+        break;
+      default:
+        summary = `${actorLabel} interacted on ${protocolLabel}`;
     }
 
     activities.push({
-      id: `activity:${item.id}`, summary, kind: item.kind,
-      sourceProtocol: item.protocol, targetProtocol,
-      actor: item.actor, content: item.content.slice(0, 150),
-      url: item.url, createdAt: item.createdAt,
+      id: `activity:${item.id}`,
+      summary,
+      kind: item.kind,
+      sourceProtocol: item.protocol,
+      targetProtocol,
+      actor: item.actor,
+      content: item.content.slice(0, 150),
+      url: item.url,
+      createdAt: item.createdAt,
     });
   }
 
@@ -229,7 +307,10 @@ export function buildActivityFeed(items: InboxItem[]): ActivityFeedItem[] {
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 async function resolveSourceContent(
-  uri: string, protocol: Protocol, _walletAddress: string, _env: Env,
+  uri: string,
+  protocol: Protocol,
+  _walletAddress: string,
+  _env: Env,
 ): Promise<{ text: string; hashtags?: string[] } | null> {
   const cleanUri = uri.startsWith('df://') ? uri.slice(5) : uri;
   const parts = cleanUri.split(':');
@@ -238,7 +319,9 @@ async function resolveSourceContent(
 }
 
 export async function shareCrossNetwork(
-  walletAddress: string, request: InboxShareRequest, env: Env,
+  walletAddress: string,
+  request: InboxShareRequest,
+  env: Env,
 ): Promise<{ results: CrossNetworkShareResult[]; totalOk: number; totalFail: number }> {
   const { sourceUri, sourceProtocol, targetProtocols, text, auth } = request;
   if (!sourceUri || targetProtocols.length === 0) return { results: [], totalOk: 0, totalFail: 0 };
@@ -252,36 +335,74 @@ export async function shareCrossNetwork(
       const shareText = text ?? sourceContent?.text ?? '';
       const { executeCrossPublish } = await import('../cross-publish-orchestrator');
       const publishResult = await executeCrossPublish(
-        { masterPost: { text: shareText.slice(0, PROTOCOL_MAX_LENGTH[target] ?? 10000), hashtags: sourceContent?.hashtags }, protocols: [target as Protocol], auth: auth ?? {} },
+        {
+          masterPost: {
+            text: shareText.slice(0, PROTOCOL_MAX_LENGTH[target] ?? 10000),
+            hashtags: sourceContent?.hashtags,
+          },
+          protocols: [target as Protocol],
+          auth: auth ?? {},
+        },
         env,
       );
-      const targetResult = publishResult.results.find((r: { protocol: string }) => r.protocol === target);
-      results.push({ protocol: target, ok: targetResult?.status === 'published', nativeId: targetResult?.postId, url: targetResult?.url, error: targetResult?.error });
+      const targetResult = publishResult.results.find(
+        (r: { protocol: string }) => r.protocol === target,
+      );
+      results.push({
+        protocol: target,
+        ok: targetResult?.status === 'published',
+        nativeId: targetResult?.postId,
+        url: targetResult?.url,
+        error: targetResult?.error,
+      });
     } catch (e) {
-      results.push({ protocol: target, ok: false, error: `Share to ${target} failed: ${(e as Error).message}` });
+      results.push({
+        protocol: target,
+        ok: false,
+        error: `Share to ${target} failed: ${(e as Error).message}`,
+      });
     }
   }
 
-  return { results, totalOk: results.filter((r) => r.ok).length, totalFail: results.filter((r) => !r.ok).length };
+  return {
+    results,
+    totalOk: results.filter((r) => r.ok).length,
+    totalFail: results.filter((r) => !r.ok).length,
+  };
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // NETWORK STATUS
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-export async function getUserNetworkStatus(walletAddress: string, env: Env): Promise<UserNetworkStatus> {
+export async function getUserNetworkStatus(
+  walletAddress: string,
+  env: Env,
+): Promise<UserNetworkStatus> {
   const linkedProtocols = await getUserLinkedProtocols(walletAddress, env);
   const cached = await getInboxItems(env, INBOX_STATUS_KEY(walletAddress));
-  const cachedStatus = cached.length > 0 ? (JSON.parse(JSON.stringify(cached[0])) as unknown as UserNetworkStatus) : null;
+  const cachedStatus =
+    cached.length > 0
+      ? (JSON.parse(JSON.stringify(cached[0])) as unknown as UserNetworkStatus)
+      : null;
   if (cachedStatus && Date.now() - cachedStatus.checkedAt < 60_000) return cachedStatus;
 
-  const status: UserNetworkStatus = { protocols: {}, totalConnected: 0, totalAvailable: 0, checkedAt: Date.now() };
+  const status: UserNetworkStatus = {
+    protocols: {},
+    totalConnected: 0,
+    totalAvailable: 0,
+    checkedAt: Date.now(),
+  };
 
   for (const [protocol, link] of Object.entries(linkedProtocols)) {
     const caps = PROTOCOL_CAPABILITIES[protocol] ?? ['post'];
     status.protocols[protocol as Protocol] = {
-      connected: true, handle: link.handle, displayName: link.displayName,
-      avatarUrl: link.avatarUrl, capabilities: caps as NetworkCapability[], lastVerified: link.linkedAt,
+      connected: true,
+      handle: link.handle,
+      displayName: link.displayName,
+      avatarUrl: link.avatarUrl,
+      capabilities: caps as NetworkCapability[],
+      lastVerified: link.linkedAt,
     };
     status.totalConnected++;
   }
@@ -289,9 +410,14 @@ export async function getUserNetworkStatus(walletAddress: string, env: Env): Pro
   status.totalAvailable = Object.keys(PROTOCOL_CAPABILITIES).length;
 
   const statusItem: InboxItem = {
-    id: `status:${walletAddress}`, kind: 'dm', protocol: 'nostr',
+    id: `status:${walletAddress}`,
+    kind: 'dm',
+    protocol: 'nostr',
     actor: { id: walletAddress, handle: walletAddress, protocol: 'nostr' },
-    content: JSON.stringify(status), createdAt: Date.now(), read: true, seen: true,
+    content: JSON.stringify(status),
+    createdAt: Date.now(),
+    read: true,
+    seen: true,
   };
   await saveInboxItems(env, INBOX_STATUS_KEY(walletAddress), [statusItem]);
 
@@ -299,23 +425,56 @@ export async function getUserNetworkStatus(walletAddress: string, env: Env): Pro
 }
 
 export function formatNetworkStatusReport(status: UserNetworkStatus): {
-  connected: Array<{ protocol: string; label: string; handle?: string; capabilities: NetworkCapability[] }>;
-  disconnected: Array<{ protocol: string; label: string; availableCapabilities: NetworkCapability[] }>;
-  totalConnected: number; totalAvailable: number;
-}> {
-  const connected: Array<{ protocol: string; label: string; handle?: string; capabilities: NetworkCapability[] }> = [];
-  const disconnected: Array<{ protocol: string; label: string; availableCapabilities: NetworkCapability[] }> = [];
+  connected: Array<{
+    protocol: string;
+    label: string;
+    handle?: string;
+    capabilities: NetworkCapability[];
+  }>;
+  disconnected: Array<{
+    protocol: string;
+    label: string;
+    availableCapabilities: NetworkCapability[];
+  }>;
+  totalConnected: number;
+  totalAvailable: number;
+} {
+  const connected: Array<{
+    protocol: string;
+    label: string;
+    handle?: string;
+    capabilities: NetworkCapability[];
+  }> = [];
+  const disconnected: Array<{
+    protocol: string;
+    label: string;
+    availableCapabilities: NetworkCapability[];
+  }> = [];
 
   for (const [protocol, caps] of Object.entries(PROTOCOL_CAPABILITIES)) {
     const ns = status.protocols[protocol as Protocol];
     if (ns?.connected) {
-      connected.push({ protocol, label: formatProtocol(protocol), handle: ns.handle, capabilities: caps as NetworkCapability[] });
+      connected.push({
+        protocol,
+        label: formatProtocol(protocol),
+        handle: ns.handle,
+        capabilities: caps as NetworkCapability[],
+      });
     } else {
-      disconnected.push({ protocol, label: formatProtocol(protocol), availableCapabilities: caps as NetworkCapability[] });
+      disconnected.push({
+        protocol,
+        label: formatProtocol(protocol),
+        availableCapabilities: caps as NetworkCapability[],
+      });
     }
   }
 
-  return { connected, disconnected, totalConnected: status.totalConnected, totalAvailable: status.totalAvailable };
+  return {
+    connected,
+    disconnected,
+    totalConnected: status.totalConnected,
+    totalAvailable: status.totalAvailable,
+  };
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -323,7 +482,9 @@ export function formatNetworkStatusReport(status: UserNetworkStatus): {
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 export async function markInboxItemsRead(
-  walletAddress: string, itemIds: string[], env: Env,
+  walletAddress: string,
+  itemIds: string[],
+  env: Env,
 ): Promise<{ marked: number }> {
   let count = 0;
 

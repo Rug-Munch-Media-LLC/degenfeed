@@ -5,7 +5,7 @@
  *
  * We're fighting for data independence, creator content control,
  * and a space where creators can actually own their content and their audience.
- * One app. 44 protocols. Your data, never sold.
+ * One app. 101+ protocols. Your data, never sold.
  */
 
 import Link from 'next/link';
@@ -480,9 +480,10 @@ export default function HomePage() {
               </h3>
               <div className="space-y-3">
                 {[
-                  { label: 'Protocols Supported', value: '44+' },
-                  { label: 'Active Sources', value: '468' },
-                  { label: 'Daily Active Users', value: '2,847' },
+                  { label: 'Protocols Supported', value: '101+' },
+                  { label: 'News Sources', value: '214' },
+                  { label: 'Self-Hosted Services', value: '50+' },
+                  { label: 'Network Ownership', value: '58%' },
                   { label: 'Posts Indexed', value: '10,427' },
                   { label: 'Your Protocols', value: `${connectedCount}` },
                 ].map((stat) => (

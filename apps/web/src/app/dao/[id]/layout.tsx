@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState } from 'react';
+import { use, useState } from 'react';
 
 // ─── Nav Config ─────────────────────────────────────────────────────────
 
@@ -106,8 +106,9 @@ export default function DAOLayout({
   params,
 }: {
   children: React.ReactNode;
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const { id } = use(params);
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const dao = MOCK_DAO;
@@ -135,7 +136,7 @@ export default function DAOLayout({
       >
         {/* Sidebar header */}
         <div className="flex h-16 items-center justify-between border-b border-[var(--color-border)] px-5">
-          <Link href={`/dao/${params.id}`} className="flex items-center gap-2.5">
+          <Link href={`/dao/${id}`} className="flex items-center gap-2.5">
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-degen-500/20 text-sm font-bold text-degen-400">
               {dao.avatar}
             </span>
@@ -168,7 +169,7 @@ export default function DAOLayout({
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto px-3 py-4">
           {DAO_NAV.map((item) => {
-            const navHref = item.href ? `/dao/${params.id}${item.href}` : `/dao/${params.id}`;
+            const navHref = item.href ? `/dao/${id}${item.href}` : `/dao/${id}`;
             const isActive = subPath === (item.href || '/');
             return (
               <Link

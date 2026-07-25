@@ -267,7 +267,7 @@ export class LiveStreamMonitor {
 /**
  * Calculate the boosted price when a creator is live.
  */
-export function applyLiveBoost(
+export function applyLiveStreamBoost(
   basePrice: bigint,
   boostBps: number = LIVE_BOOST_BPS,
 ): { boostedPrice: bigint; discountBps: number } {

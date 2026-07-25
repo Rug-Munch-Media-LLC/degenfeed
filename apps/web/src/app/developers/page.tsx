@@ -6,7 +6,7 @@ export const revalidate = 86400;
 export const metadata: Metadata = {
   title: 'Developers — DegenFeed API, SDKs & Webhooks',
   description:
-    'Build on DegenFeed. Public REST API with 30+ endpoint categories, SDKs for Nostr/Farcaster/Lens/Bluesky/Mastodon, webhook integrations, and protocol adapter guides. Aggregate 15+ protocols programmatically.',
+    'Build on DegenFeed. Public REST API with 30+ endpoint categories, SDKs for Nostr/Farcaster/Lens/Bluesky/Mastodon, webhook integrations, and protocol adapter guides. Aggregate 101+ protocols programmatically.',
   keywords: [
     'degenfeed api',
     'web3 social api',

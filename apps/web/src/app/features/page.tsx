@@ -5,7 +5,7 @@ import './page.css';
 export const metadata: Metadata = {
   title: 'Features — Creator Coins, Cross-Protocol Posting, Tipping & Livestreaming',
   description:
-    'Explore everything DegenFeed can do: universal cross-posting to 15+ protocols, one-click creator coin deployment on Base & Solana, cross-chain tipping (ETH/SOL/USDC/Lightning), multi-protocol livestreaming, audio spaces, shorts, federated communities, self-hosted infrastructure, and more.',
+    'Explore everything DegenFeed can do: universal cross-posting to 101+ protocols, one-click creator coin deployment on Base & Solana, cross-chain tipping (ETH/SOL/USDC/Lightning), multi-protocol livestreaming, audio spaces, shorts, federated communities, self-hosted infrastructure, and more.',
   keywords: [
     'creator coin platform',
     'web3 content publishing',
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'DegenFeed Features — Cross-Protocol Social, Creator Coins & Livestreaming',
     description:
-      'Post once to 15+ protocols. Launch your own creator coin on Base & Solana. Stream to 7 platforms simultaneously. Tip in ETH, SOL, USDC, or Lightning. Zero platform fees.',
+      'Post once to 101+ protocols. Launch your own creator coin on Base & Solana. Stream to 7 platforms simultaneously. Tip in ETH, SOL, USDC, or Lightning. Zero platform fees.',
     url: 'https://app.degenfeed.xyz/features',
     siteName: 'DegenFeed',
     type: 'website',
@@ -39,7 +39,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'DegenFeed Features — Cross-Protocol Social & Creator Monetization',
     description:
-      'Cross-post to 15+ protocols. Launch creator coins. Stream everywhere. Tip in any currency. Own your social network.',
+      'Cross-post to 101+ protocols. Launch creator coins. Stream everywhere. Tip in any currency. Own your social network.',
     images: ['https://app.degenfeed.xyz/og-image.png'],
   },
 };
@@ -62,7 +62,7 @@ const features: FeatureDetail[] = [
   {
     id: 'cross-posting',
     title: 'Universal Cross-Posting',
-    lead: 'Write once. Reach 15+ protocols. Replies from any network appear in one unified thread. No more copy-pasting across apps.',
+    lead: 'Write once. Reach 101+ protocols. Replies from any network appear in one unified thread. No more copy-pasting across apps.',
     details: [
       {
         title: 'One Composer, Many Networks',
@@ -185,7 +185,7 @@ const features: FeatureDetail[] = [
   {
     id: 'aggregation',
     title: 'Content Aggregation',
-    lead: '44+ sources fill your unified feed. Nostr, Farcaster, Lens, Bluesky, Mastodon, Reddit, RSS, YouTube, PeerTube, and more — all in one timeline.',
+    lead: '101+ sources fill your unified feed. Nostr, Farcaster, Lens, Bluesky, Mastodon, Reddit, RSS, YouTube, PeerTube, and more — all in one timeline.',
     details: [
       {
         title: 'Multi-Source Timeline',
@@ -410,7 +410,7 @@ export default function FeaturesPage() {
               period="/month"
               desc="For active creators building an audience."
               features={[
-                'Cross-post to 15+ protocols',
+                'Cross-post to 101+ protocols',
                 'Tipping (0% fee)',
                 'Analytics dashboard',
                 'Priority support',

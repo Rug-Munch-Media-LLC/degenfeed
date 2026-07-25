@@ -527,9 +527,10 @@ const server = http.createServer(async (req, res) => {
         .split(',')
         .map((p) => p.trim())
         .filter(Boolean);
-      const { posts, meta } = await buildFeed(protocols, limit);
-      meta.page = page;
-      return jsonOk(res, { posts, meta });
+      const result = await buildFeed(protocols, limit);
+      result.meta.page = page;
+      // Return both formats for backward compatibility
+      return jsonOk(res, { data: result.posts, posts: result.posts, meta: result.meta });
     }
 
     if (path === '/api/rss/sources') {
@@ -819,7 +820,7 @@ const server = http.createServer(async (req, res) => {
       if (allowed.includes(proto)) {
         const result = await buildFeed([proto], limit);
         result.meta.page = page;
-        return jsonOk(res, result);
+        return jsonOk(res, { data: result.posts, posts: result.posts, meta: result.meta });
       }
     }
 

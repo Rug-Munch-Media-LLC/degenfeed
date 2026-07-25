@@ -45,7 +45,8 @@ async function fetchFromPds(_limit: number): Promise<UnifiedPost[]> {
     const syncRes = await $fetch(
       `${PDS_BASE}/xrpc/com.atproto.sync.getLatestCommit?did=${encodeURIComponent(info.did)}`,
       { signal: AbortSignal.timeout(3000) },
-    );
+    ).catch(() => null);
+    if (!syncRes) return [];
     if (!syncRes.ok) return [];
     return [];
   } catch {
@@ -59,7 +60,7 @@ async function fetchAuthorFeed(actor: string, limit: number): Promise<UnifiedPos
     const res = await $fetch(url, {
       headers: { 'User-Agent': 'DegenFeed-Bridge/0.1' },
       signal: AbortSignal.timeout(5000),
-    });
+    }).catch(() => null);
     if (!res.ok) return [];
     const data = (await res.json()) as BskyFeedResponse;
     return (

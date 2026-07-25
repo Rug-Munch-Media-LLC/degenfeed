@@ -9,9 +9,10 @@ import { useEffect, useState } from 'react';
  */
 
 const STATS = [
-  { label: 'Protocols', value: '44', suffix: '' },
-  { label: 'Self-Hosted Nodes', value: '42', suffix: '' },
-  { label: 'Open Source', value: '100', suffix: '%' },
+  { label: 'Protocols', value: '101', suffix: '+' },
+  { label: 'News Sources', value: '214', suffix: '' },
+  { label: 'Self-Hosted Services', value: '50', suffix: '+' },
+  { label: 'Network Ownership', value: '58', suffix: '%' },
 ] as const;
 
 export function HeroSection() {
@@ -58,6 +59,51 @@ export function HeroSection() {
       </div>
 
       <div className="relative z-10 mx-auto max-w-5xl px-4">
+        {/* Brand Logo */}
+        <div
+          className="mb-8 flex animate-fade-in items-center justify-center gap-3"
+          style={{ animationDelay: '0s', animationFillMode: 'both' }}
+        >
+          <svg
+            width="36"
+            height="36"
+            viewBox="0 0 512 512"
+            role="img"
+            aria-label="DegenFeed"
+            className="logo-glow"
+          >
+            <title>DegenFeed</title>
+            <defs>
+              <linearGradient id="hero-bg" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stopColor="#0d0d0d" />
+                <stop offset="100%" stopColor="#000000" />
+              </linearGradient>
+            </defs>
+            <rect x="0" y="0" width="512" height="512" fill="url(#hero-bg)" rx="96" />
+            <g
+              stroke="#00ff41"
+              strokeWidth="52"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              fill="none"
+            >
+              <line x1="160" y1="92" x2="160" y2="420" />
+              <path d="M 160 92 A 148 164 0 0 1 160 420" />
+            </g>
+            <circle cx="230" cy="256" r="100" fill="#00ff41" fillOpacity="0.06" />
+            <rect x="350" y="352" width="28" height="28" fill="#00ff41" rx="4" />
+          </svg>
+          <span
+            className="text-xl font-black tracking-tight"
+            style={{
+              color: 'var(--color-fg)',
+              fontFamily: 'var(--font-heading)',
+            }}
+          >
+            DegenFeed
+          </span>
+        </div>
+
         {/* Badge */}
         <div
           className="mb-6 inline-flex animate-fade-in items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-semibold"
@@ -65,12 +111,12 @@ export function HeroSection() {
             borderColor: 'var(--color-accent)',
             background: 'var(--color-accent-soft)',
             color: 'var(--color-accent)',
-            animationDelay: '0.1s',
+            animationDelay: '0.15s',
             animationFillMode: 'both',
           }}
         >
           <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[var(--color-accent)]" />
-          Live — 44 Protocols · 42 Self-Hosted Nodes
+          Live — 101+ Protocols · 214 News Sources · 58% Network Ownership
         </div>
 
         {/* Headline */}
@@ -98,7 +144,7 @@ export function HeroSection() {
             animationFillMode: 'both',
           }}
         >
-          DegenFeed unifies 44 decentralized networks into a single, beautiful timeline. Own your
+          DegenFeed unifies 101+ decentralized protocols into a single, beautiful timeline. Own your
           identity. Control your feed. Bridge every protocol.
         </p>
 

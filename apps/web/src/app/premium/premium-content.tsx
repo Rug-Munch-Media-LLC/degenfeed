@@ -15,7 +15,7 @@ function FreeForeverBanner() {
   return (
     <div className="rounded-xl border border-green-500/20 bg-green-500/5 p-4 text-center text-sm text-green-400">
       <span className="font-semibold">✨ Free Forever:</span> Browse, read, search, and engage
-      across all 15+ protocols. No account, no payment, no time limit.
+      across all 101+ protocols. No account, no payment, no time limit.
     </div>
   );
 }

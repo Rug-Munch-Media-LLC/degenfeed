@@ -14,7 +14,6 @@
  *   - Newsletters (Substack, Medium, Mirror, Paragraph, Ghost, WordPress, Beehiiv)
  */
 
-import { Meilisearch } from 'meilisearch';
 import type { UnifiedPost } from './server/types';
 
 // ─── Configuration ─────────────────────────────────────────────────────
@@ -33,14 +32,17 @@ let indexErrors = 0;
 
 // ─── Meilisearch Client ────────────────────────────────────────────────
 
-let client: Meilisearch;
+let client: any;
 
-function getClient(): Meilisearch {
+// Lazy-init optional Meilisearch client
+function getClient(): any {
   if (!client) {
-    client = new Meilisearch({
-      host: MEILI_URL,
-      apiKey: MEILI_KEY,
-    });
+    try {
+      const { Meilisearch } = require('meilisearch');
+      client = new Meilisearch({ host: MEILI_URL, apiKey: MEILI_KEY });
+    } catch {
+      return null;
+    }
   }
   return client;
 }
@@ -73,6 +75,7 @@ export interface SearchDocument {
 
 async function ensureIndex(): Promise<void> {
   const meili = getClient();
+  if (!meili) return;
 
   try {
     const indexes = await meili.getRawIndexes();
@@ -315,6 +318,7 @@ async function fetchAllProviderDocuments(): Promise<SearchDocument[]> {
 
 async function fullIndex(): Promise<{ count: number; errors: number }> {
   const meili = getClient();
+  if (!meili) return { count: 0, errors: 1 };
   const start = Date.now();
 
   console.log('[indexer] Starting full index...');
@@ -358,6 +362,7 @@ async function fullIndex(): Promise<{ count: number; errors: number }> {
 
 async function incrementalIndex(): Promise<{ count: number; errors: number }> {
   const meili = getClient();
+  if (!meili) return { count: 0, errors: 1 };
   const start = Date.now();
 
   console.log('[indexer] Starting incremental index...');
@@ -407,6 +412,7 @@ async function incrementalIndex(): Promise<{ count: number; errors: number }> {
 export async function indexPost(post: UnifiedPost): Promise<boolean> {
   try {
     const meili = getClient();
+    if (!meili) return false;
     const doc = postToDocument(post);
     await meili.index(INDEX_NAME).addDocuments([doc], { primaryKey: 'id' });
     indexedIds.add(post.id);
@@ -422,6 +428,7 @@ export async function indexPosts(posts: UnifiedPost[]): Promise<number> {
 
   try {
     const meili = getClient();
+    if (!meili) return 0;
     const docs = posts.map(postToDocument);
     await meili.index(INDEX_NAME).addDocuments(docs, { primaryKey: 'id' });
 

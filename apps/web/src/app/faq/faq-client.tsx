@@ -5,7 +5,7 @@ import { useMemo, useState } from 'react';
 const faqs = [
   {
     q: 'What is DegenFeed?',
-    a: "DegenFeed is the Web3 Social Universe — an open-source, multi-protocol aggregator that unifies 44 decentralized social protocols into one app. Nostr, Farcaster, Lens, Bluesky, Mastodon, Reddit, RSS, YouTube, and more, all in a single ranked feed. No account needed to browse. Connect a wallet to post, tip, launch creator coins, and engage across every protocol at once. We don't own your content — we give you the tools to own it yourself.",
+    a: "DegenFeed is the Web3 Social Universe — an open-source, multi-protocol aggregator that unifies 101+ decentralized social protocols into one app. Nostr, Farcaster, Lens, Bluesky, Mastodon, PeerTube, Owncast, Lemmy, Pixelfed, Reddit, RSS, YouTube, Matrix, and more, all in a single ranked feed. No account needed to browse. Connect a wallet to post, tip, launch creator coins, and engage across every protocol at once. We don't own your content — we give you the tools to own it yourself.",
   },
   {
     q: 'How is DegenFeed different from Twitter/X, Bluesky, and Mastodon?',
@@ -13,7 +13,7 @@ const faqs = [
   },
   {
     q: 'What protocols does DegenFeed support?',
-    a: 'Nostr (kind 1 text notes, kind 7 reactions, NIP-05/07/46), Farcaster (casts, replies, reactions via Hub API), Lens (profiles, publications, mirrors via GraphQL v2), Bluesky (AT Protocol — posts, likes, reposts), Mastodon / ActivityPub (via GotoSocial instance + federated instances), Threads (read-only via HTML scraping), Reddit (RSS + JSON API), RSS / Atom (353+ sources including YouTube, PeerTube, Mirror.xyz, Substack, Medium, Hacker News), and Lemmy (federated communities via API v3).',
+    a: 'All of them. DegenFeed bridges 101+ protocols total. Major protocols include: Nostr, Farcaster, Lens, Bluesky, Mastodon, PeerTube, Owncast, Lemmy, Pixelfed, Matrix, Reddit, Threads, RSS/Atom (353+ sources), YouTube, GoToSocial, Pleroma, Misskey, Friendica, Diaspora, Gab, Minds, WriteFreely, Micro.blog, Plume, Write.as, Publii, Aether, Scuttlebutt, Hive, PieFed, Odysee, DTube, Rumble, BitTube, Funkwhale, Castopod, Steem, DeSo, Subsocial, CyberConnect, Ceramic, Status, Session, Telegram, Signal, IRC, XMPP, and many more. Every major decentralized social protocol is supported.',
   },
   {
     q: 'What makes DegenFeed web3?',
@@ -25,7 +25,7 @@ const faqs = [
   },
   {
     q: 'How does tipping work?',
-    a: "Tap the tip button on any post to send ETH, SOL, or USDC directly to the creator's wallet. DegenFeed uses on-chain transactions — no platform takes a cut. For Nostr posts, Lightning Network zaps are also supported via LNURL. To receive tips, connect a wallet with your account. Tips appear on your analytics dashboard and can be withdrawn at any time. Tipping is available to all users with a connected wallet.",
+    a: "Tap the tip button on any post to send ETH, SOL, or USDC directly to the creator's wallet. DegenFeed uses on-chain transactions — no platform takes a cut. Tipping is cross-chain and context-aware: the best route is automatically selected based on the creator's connected wallets and the content they've posted. For Nostr posts, Lightning Network zaps are supported via LNURL. Tips can be sent on Ethereum, Base, Solana, or Lightning Network. To receive tips, connect a wallet with your account. Tips appear on your analytics dashboard and can be withdrawn at any time. Tipping is available to all users with a connected wallet.",
   },
   {
     q: 'Is DegenFeed free?',
@@ -97,7 +97,7 @@ const faqs = [
   },
   {
     q: 'When is DegenFeed launching?',
-    a: "DegenFeed is already live at app.degenfeed.xyz! The feed is fully operational — you can browse content from all 15+ protocols right now without an account. The waitlist is for premium features: cross-protocol posting, creator coins, livestreaming, and analytics. We're rolling out these features gradually through Q3–Q4 2026. Join the waitlist to get early access as each feature launches.",
+    a: "DegenFeed is already live at app.degenfeed.xyz! The feed is fully operational — you can browse content from 101+ protocols right now without an account. The waitlist is for premium features: cross-protocol posting, creator coins, livestreaming, and analytics. We're rolling out these features gradually through Q3–Q4 2026. Join the waitlist to get early access as each feature launches.",
   },
   {
     q: 'How does the algorithm rank posts?',
@@ -109,7 +109,7 @@ const faqs = [
   },
   {
     q: 'How do I get started?',
-    a: 'Open app.degenfeed.xyz and start browsing — no account required. To post, cross-post, tip, and engage, click "Sign In" and connect an EVM wallet (MetaMask, Rainbow, WalletConnect) or Solana wallet (Phantom, Backpack, Solflare). Once signed in, go to Settings → Connected Accounts to link your Nostr, Farcaster, Lens, Bluesky, or Mastodon handles. Then use the composer to write a post and select which protocols to publish to. Browse the Feed, Trending, and News tabs to discover content across all 44 protocols. For full docs, visit docs.degenfeed.xyz.',
+    a: 'Open app.degenfeed.xyz and start browsing — no account required. To post, cross-post, tip, and engage, click "Sign In" and connect an EVM wallet (MetaMask, Rainbow, WalletConnect) or Solana wallet (Phantom, Backpack, Solflare). Once signed in, go to Settings → Connected Accounts to link your Nostr, Farcaster, Lens, Bluesky, or Mastodon handles. Then use the composer to write a post and select which protocols to publish to. Browse the Feed, Trending, and News tabs to discover content across all 101+ protocols. For full docs, visit docs.degenfeed.xyz.',
   },
 ];
 
