@@ -7,7 +7,8 @@
  *   GET  /api/news/sources/stats       — Stats: total articles, by source, by category
  */
 
-import { aggregateNews, NEWS_SOURCES } from '../feed/news-aggregator';
+import { aggregateNews } from '../feed/news-aggregator';
+import { NEWS_SOURCES } from '../feed/news-source-tiers';
 import { type Env, jsonResponse, log, noCacheJsonResponse } from '../index';
 
 // ─── KV Keys ──────────────────────────────────────────────────────────────

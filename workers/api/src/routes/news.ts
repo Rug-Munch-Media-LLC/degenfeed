@@ -5,4 +5,4 @@
  * @see ./news/index.ts
  */
 
-export type {} from './news/types';
+export * from './news/index';
