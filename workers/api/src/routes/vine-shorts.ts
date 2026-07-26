@@ -46,17 +46,3 @@
  */
 import { detectNiches } from '@degenfeed/feed-core';
 import {
-  type AggregatedShort,
-  type ExtendedSource,
-  ShortsAggregatorV2,
-} from '../feed/shorts-aggregator-v2';
-import { ShortsAlgorithm, type UserShortsProfile, type WatchEvent } from '../feed/shorts-algorithm';
-import type { Env } from '../index';
-import { jsonResponse, noCacheJsonResponse } from '../index';
-import { methodNotAllowed } from '../response-helpers';
-import { requireSession } from '../session';
-
-// ─── Re-exports — split into domain files ──────────────────────────────
-
-export * from './vine-shorts-handlers';
-export * from './vine-shorts-types';

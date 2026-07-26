@@ -6,7 +6,7 @@
  */
 
 import type { Context, Next } from 'hono';
-import type { Env } from './index';
+import type { Env } from './types';
 
 // ─── Types ──────────────────────────────────────────────
 

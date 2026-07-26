@@ -12,7 +12,7 @@
  */
 
 import openapiSpec from '../../openapi.json';
-import type { Env } from '../index';
+import type { Env } from '../types';
 
 // ─── Swagger UI HTML template ──────────────────────────────────────
 // Dark theme matching DegenFeed brand. Loads Swagger UI from CDN so
@@ -91,82 +91,3 @@ const SWAGGER_HTML = `<!DOCTYPE html>
   <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
   <script>
     window.onload = function () {
-      SwaggerUIBundle({
-        url: window.location.pathname.replace(/\\/?$/, '') + '/openapi.json',
-        dom_id: '#swagger-ui',
-        deepLinking: true,
-        presets: [
-          SwaggerUIBundle.presets.apis,
-          SwaggerUIBundle.SwaggerUIStandalonePreset,
-        ],
-        plugins: [
-          SwaggerUIBundle.plugins.DownloadUrl,
-        ],
-        layout: 'BaseLayout',
-        docExpansion: 'list',
-        defaultModelsExpandDepth: 1,
-        defaultModelExpandDepth: 1,
-        tryItOutEnabled: false,
-        filter: true,
-        showExtensions: true,
-        showCommonExtensions: true,
-        supportedSubmitMethods: [],
-      });
-    };
-  </script>
-</body>
-</html>`;
-
-// ─── Handler: serve OpenAPI spec JSON ─────────────────────────────
-
-/**
- * GET /api/docs/openapi.json or GET /v1/docs/openapi.json
- *
- * Serves the static OpenAPI 3.1 specification from the bundled JSON
- * import. The spec is compiled into the worker bundle at build time
- * by esbuild (resolveJsonModule + bundler module resolution).
- */
-export async function handleOpenApiJson(_request: Request, _env: Env): Promise<Response> {
-  const _specBody = JSON.stringify(openapiSpec, null, 2);
-  return new Response(_specBody, {
-    status: 200,
-    headers: {
-      'content-type': 'application/json',
-      'access-control-allow-origin': '*',
-      'cache-control': 'public, max-age=3600',
-      'content-security-policy': "default-src 'none'",
-    },
-  });
-}
-
-// ─── Handler: serve Swagger UI HTML ───────────────────────────────
-
-/**
- * GET /api/docs or GET /v1/docs
- *
- * Returns an HTML page with Swagger UI pre-configured to load the
- * OpenAPI spec from the same path + /openapi.json.
- */
-export async function handleApiDocs(request: Request): Promise<Response> {
-  const url = new URL(request.url);
-  const specUrl = `${url.pathname.replace(/\/?$/, '')}/openapi.json`;
-  const html = SWAGGER_HTML.replace('$SPEC_URL', specUrl);
-
-  return new Response(html, {
-    status: 200,
-    headers: {
-      'content-type': 'text/html; charset=utf-8',
-      'cache-control': 'public, max-age=3600',
-      'content-security-policy':
-        "default-src 'self'; " +
-        "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; " +
-        "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; " +
-        "img-src 'self' data:; " +
-        "connect-src 'self' https:; " +
-        "font-src 'self' https://cdn.jsdelivr.net; " +
-        "frame-ancestors 'none'; " +
-        "base-uri 'self'; " +
-        "form-action 'none'",
-    },
-  });
-}

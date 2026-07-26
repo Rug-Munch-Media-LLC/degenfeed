@@ -40,12 +40,11 @@ import { ShortsAggregator } from '../feed/shorts-aggregator';
 import { ShortsAggregatorV2 } from '../feed/shorts-aggregator-v2';
 import { ShortsAlgorithm, type UserShortsProfile, type WatchEvent } from '../feed/shorts-algorithm';
 import { FEED_SOURCE_LABELS, UnifiedShortsFeed } from '../feed/shorts-unified';
-import type { Env } from '../index';
-import { jsonResponse, noCacheJsonResponse } from '../index';
 import { type ShortProtocol, UnifiedShortsPipeline } from '../lib/unified-shorts';
 import { ZoraVideoIntegration } from '../lib/zora-video';
-import { methodNotAllowed } from '../response-helpers';
+import { jsonResponse, methodNotAllowed, noCacheJsonResponse } from '../response-helpers';
 import { requireSession } from '../session';
+import type { Env } from '../types';
 
 // ─── Re-exports — split into domain files ──────────────────────────────
 

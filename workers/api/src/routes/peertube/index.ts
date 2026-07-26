@@ -6,10 +6,10 @@
  */
 
 import { Hono } from 'hono';
-import type { Env } from '../../index';
-import { registerVideoRoutes } from './videos';
-import { registerLiveRoutes } from './live';
+import type { Env } from '../../types';
 import { registerChannelRoutes, registerFederationRoutes } from './channels';
+import { registerLiveRoutes } from './live';
+import { registerVideoRoutes } from './videos';
 
 const peertubeRouter = new Hono<{ Bindings: Env }>();
 

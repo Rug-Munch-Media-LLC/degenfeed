@@ -6,7 +6,7 @@
  */
 
 import { Hono } from 'hono';
-import type { Env } from '../index';
+import type { Env } from '../types';
 import feddyAdmin from './feddy-admin';
 import feddyCommunity from './feddy-community';
 import feddyCore from './feddy-core';
