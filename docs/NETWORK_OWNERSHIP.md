@@ -106,7 +106,7 @@ docker exec gotosocial /gotosocial/gotosocial admin account promote --username N
 | User | Password | Notes |
 |------|----------|-------|
 | `degenfeed` | `b775d23e7fbc25734f89c601f28332b7` | Full admin access |
-| (DB) | JWT secret: `5e90dc2ffb47f8233fef33403e1cd9d94f0cda538492aa81f07e09e41a6305f5` | In `/srv/degenfeed/lemmy/.env` |
+| (DB) | JWT secret: `[REDACTED_JWT_SECRET]` | In `/srv/degenfeed/lemmy/.env` |
 
 **How to Manage:**
 ```bash
@@ -359,7 +359,7 @@ docker exec degenfeed-pixelfed-db mariadb -u pixelfed -ppixelfed_changeme pixelf
 | Field | Value |
 |-------|-------|
 | Admin Password | `PV2fBHuwu3zdKpT6+QbtW2uD80Hk5eeB` (in `/srv/degenfeed/pds/.env`) |
-| JWT Secret | `67e1e9638a4c48fdcf8397b97435cab597740a32b82ece13251d566278e12252` |
+| JWT Secret | `[REDACTED_JWT_SECRET]` |
 | PLC Rotation Key | `dbb35a9990acdb2a1baf6d4002b6a987b9f8e886ec04002d0c016fe48142805e` |
 | Service Handle Domains | `.degenfeed.xyz` |
 

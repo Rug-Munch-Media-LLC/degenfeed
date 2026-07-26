@@ -554,6 +554,36 @@ function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise
   });
 }
 
+/**
+ * Process an array of items with a concurrency limit.
+ * Runs at most `concurrency` promises simultaneously.
+ * Returns results in order. Each item's fn is expected to catch its own errors
+ * and return a result — this does not catch per-item exceptions.
+ */
+async function runWithConcurrencyLimit<T, R>(
+  items: T[],
+  concurrency: number,
+  fn: (item: T) => Promise<R>,
+): Promise<R[]> {
+  const results: R[] = new Array(items.length);
+  const queue = items.map((item, index) => ({ item, index }));
+
+  async function worker(): Promise<void> {
+    while (queue.length > 0) {
+      const { item, index } = queue.shift()!;
+      results[index] = await fn(item);
+    }
+  }
+
+  const workers = Array.from({ length: Math.min(concurrency, items.length) }, () =>
+    worker().catch((err) => {
+      console.error('[bridge] Worker error:', err);
+    }),
+  );
+  await Promise.all(workers);
+  return results;
+}
+
 /** Build a deduplicated feed from multiple protocols with reliability */
 export async function buildFeed(
   protocols: string[],
@@ -590,9 +620,12 @@ export async function buildFeed(
     Math.ceil((limit * 1.2) / Math.max(activeProtocols.length, 1)),
   );
   const FETCH_TIMEOUT_MS = 5000;
+  const MAX_CONCURRENT = 20; // Limit to 20 concurrent provider fetches to prevent OOM
 
-  const results = await Promise.allSettled(
-    activeProtocols.map(async (protocol) => {
+  const results = await runWithConcurrencyLimit(
+    activeProtocols,
+    MAX_CONCURRENT,
+    async (protocol) => {
       const provider = PROVIDERS[protocol];
       if (!provider) return { protocol, posts: [] as UnifiedPost[] };
 
@@ -698,24 +731,19 @@ export async function buildFeed(
 
         return { protocol, posts: [] as UnifiedPost[], error: errMsg };
       }
-    }),
+    },
   );
 
   const allPosts: UnifiedPost[] = [];
   for (const result of results) {
-    if (result.status === 'fulfilled') {
-      const { protocol, posts, error, notice, source, cacheAgeMs } = result.value as any;
-      perProtocol[protocol] = posts.length;
-      providerSources[protocol] = source ?? 'live';
-      if (cacheAgeMs) cacheAges[protocol] = cacheAgeMs;
-      allPosts.push(...posts);
-      if (error) errors.push(`${protocol}: ${error}`);
-      if (notice) notices.push(`${protocol}: ${notice}`);
-    } else {
-      errors.push(
-        `provider: ${result.reason instanceof Error ? result.reason.message : 'unknown'}`,
-      );
-    }
+    const { protocol, posts, error, notice, source, cacheAgeMs } = result as any;
+    if (!protocol) continue; // Skip results that might be from failed providers
+    perProtocol[protocol] = posts?.length ?? 0;
+    providerSources[protocol] = source ?? 'live';
+    if (cacheAgeMs) cacheAges[protocol] = cacheAgeMs;
+    if (posts) allPosts.push(...posts);
+    if (error) errors.push(`${protocol}: ${error}`);
+    if (notice) notices.push(`${protocol}: ${notice}`);
   }
 
   for (const [protocol, count] of Object.entries(perProtocol))

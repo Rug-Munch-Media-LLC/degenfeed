@@ -19,7 +19,7 @@ Welcome to the DegenFeed documentation hub. This index links every document in t
 | A creator looking to monetize | [Creator Guide](CREATOR_GUIDE.md) |
 | A developer contributing | [Developer Guide](DEVELOPER_GUIDE.md) |
 | Building an integration | [API Reference](API_REFERENCE.md) |
-| Curious about our mission | [About Page](/about) |
+| Curious about our mission | [About Page](BLOG.md) |
 | Looking for the story | [Blog: Introducing DegenFeed](BLOG.md) |
 | Media / press | [Press Kit](PRESS.md) |
 
@@ -53,7 +53,7 @@ Welcome to the DegenFeed documentation hub. This index links every document in t
 | [API: Tips](api/tips.md) | Tipping endpoints |
 | [API: Features](api/features.md) | Feature flags and tiers |
 | [Code Standards](CODE_STANDARDS.md) | TypeScript, React, CSS conventions |
-| [Frontend Tools](FRONTEND_TOOLS.md) | Frontend workflow and tooling |
+| [Frontend Tools](FRONTEND-TOOLS.md) | Frontend workflow and tooling |
 | [Contributing Guide](CONTRIBUTING.md) | How to contribute code, docs, bugs |
 
 ## Architecture & Design
@@ -97,7 +97,7 @@ Welcome to the DegenFeed documentation hub. This index links every document in t
 | [Creator Coins](CREATOR_COINS.md) | Token economics, bonding curves, vesting, anti-exploit |
 | [Tipping Architecture](TIPPING-ARCHITECTURE.md) | Cross-chain tipping system design |
 | [Longform Publishing](LONGFORM_PUBLISHING.md) | Long-form content across protocols |
-| [Audio Spaces & Streaming](/features) | Livestreaming architecture (see app) |
+| [Audio Spaces & Streaming](https://app.degenfeed.xyz) | Livestreaming architecture (see app) |
 | [Mobile](MOBILE.md) | PWA and native mobile plans |
 | [Monetization](MONETIZATION.md) | Revenue model and pricing |
 | [Network Ownership](NETWORK_OWNERSHIP.md) | Self-sovereign identity and network ownership |
@@ -138,8 +138,8 @@ Welcome to the DegenFeed documentation hub. This index links every document in t
 |----------|-------------|
 | [Blog: Introducing DegenFeed](BLOG.md) | Why we built it, what it does, technical deep dive, roadmap |
 | [Press Kit](PRESS.md) | Logos, screenshots, metrics, founder info, contact |
-| [About Page](/about) | Company story, mission, beliefs, technology |
-| [FAQ](/faq) | Frequently asked questions |
+| [About Page](BLOG.md) | Company story, mission, beliefs, technology |
+| [FAQ](guide/index.md) | Frequently asked questions |
 
 ---
 

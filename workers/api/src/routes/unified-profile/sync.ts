@@ -12,8 +12,8 @@ import {
   setPrimaryOverride,
   syncProfile,
 } from '../../lib/profile-sync';
-import { jsonResponse } from '../response-helpers';
-import { requireSession } from '../session';
+import { jsonResponse } from '../../response-helpers';
+import { requireSession } from '../../session';
 import type { Env } from '../types';
 
 export async function handleSyncProfile(
