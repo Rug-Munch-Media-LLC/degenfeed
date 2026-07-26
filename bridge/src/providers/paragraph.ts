@@ -258,7 +258,7 @@ async function fetchTrending(limit: number): Promise<UnifiedPost[]> {
   }
 }
 
-async function fetchByPublication(publicationSlug: string, limit: number): Promise<UnifiedPost[]> {
+async function _fetchByPublication(publicationSlug: string, limit: number): Promise<UnifiedPost[]> {
   try {
     const res = await apiFetch<ParagraphApiResponse<ParagraphPost[]> | ParagraphFeedResponse>(
       `/v1/publications/slug/${publicationSlug}/posts?limit=${Math.min(limit, 20)}`,
@@ -318,11 +318,12 @@ async function fetchPublicationRss(slug: string, limit: number): Promise<Unified
     const xml = await res.text();
     const posts: UnifiedPost[] = [];
     const itemRe = /<item>([\s\S]*?)<\/item>/gi;
-    let m: RegExpExecArray | null;
     let idx = 0;
 
-    while ((m = itemRe.exec(xml)) !== null && posts.length < limit) {
-      const item = m[1];
+    const pMatches = xml.matchAll(itemRe);
+    for (const pMatch of pMatches) {
+      if (posts.length >= limit) break;
+      const item = pMatch[1];
       const titleMatch = item.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
       const linkMatch = item.match(/<link[^>]*>([\s\S]*?)<\/link>/i);
       const dateMatch = item.match(/<pubDate[^>]*>([\s\S]*?)<\/pubDate>/i);

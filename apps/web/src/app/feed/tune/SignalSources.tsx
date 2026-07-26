@@ -15,7 +15,10 @@ export default function SignalToggle({
   return (
     <div
       className="flex items-center gap-3 rounded-lg border p-2.5"
-      style={{ borderColor: 'var(--color-glass-border)', backgroundColor: 'var(--color-bg-secondary)' }}
+      style={{
+        borderColor: 'var(--color-glass-border)',
+        backgroundColor: 'var(--color-bg-secondary)',
+      }}
     >
       <span className="text-base shrink-0" aria-hidden="true">
         {signal.icon}
@@ -45,7 +48,9 @@ export function SignalSourcesSection({
   return (
     <section>
       <div className="mb-4 flex items-center gap-2">
-        <span className="text-lg" aria-hidden="true">📡</span>
+        <span className="text-lg" aria-hidden="true">
+          📡
+        </span>
         <h2
           className="text-lg font-bold"
           style={{ color: 'var(--color-fg)', fontFamily: 'var(--font-heading)' }}
@@ -58,7 +63,11 @@ export function SignalSourcesSection({
       </p>
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         {signals.map((signal) => (
-          <SignalToggle key={signal.id} signal={signal} onToggle={() => onToggleSignal(signal.id)} />
+          <SignalToggle
+            key={signal.id}
+            signal={signal}
+            onToggle={() => onToggleSignal(signal.id)}
+          />
         ))}
       </div>
     </section>

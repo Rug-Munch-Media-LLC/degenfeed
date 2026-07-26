@@ -11,8 +11,8 @@
  * which serve /api/v1/timelines/public without authentication.
  */
 
-import { checkRateLimit } from '../rate-limiter';
 import { guessNiches, stripHtml } from '../lib/utils';
+import { checkRateLimit } from '../rate-limiter';
 
 export { guessNiches, stripHtml };
 

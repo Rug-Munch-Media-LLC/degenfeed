@@ -68,9 +68,7 @@ function parseDiasporaId(id: string): string {
 function extractAuthorInfo(author: { name: string; uri?: string }) {
   const name = author.name || 'Unknown';
   const uri = (author as any).uri || author.uri || '';
-  const handle = uri
-    .replace(/^https?:\/\//, '')
-    .replace(/\/?$/, '');
+  const handle = uri.replace(/^https?:\/\//, '').replace(/\/?$/, '');
   const username = name.toLowerCase().replace(/\s+/g, '_');
   return { name, handle, uri, username };
 }
@@ -100,9 +98,7 @@ export async function fetchDiasporaPosts(limit = 20): Promise<UnifiedPost[]> {
       return entries.slice(0, perPod).map((entry) => {
         const authorInfo = extractAuthorInfo(entry.author);
         const content = stripHtml(entry.content || '');
-        const text = entry.title
-          ? `${entry.title}\n\n${content}`
-          : content;
+        const text = entry.title ? `${entry.title}\n\n${content}` : content;
         const createdAt = new Date(entry.published).getTime();
 
         return {

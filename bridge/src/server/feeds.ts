@@ -11,6 +11,7 @@ import { fetchAetherPosts } from '../providers/aether';
 import { fetchArenaPosts } from '../providers/arena';
 import { fetchArweavePosts } from '../providers/arweave';
 import { fetchAtprotoPosts } from '../providers/atproto';
+import { fetchBandcampPosts } from '../providers/bandcamp';
 import { fetchBlueskyPosts } from '../providers/bluesky';
 import { fetchBonfirePosts } from '../providers/bonfire';
 import { fetchBookWyrmPosts } from '../providers/bookwyrm';
@@ -29,6 +30,7 @@ import { fetchForgejoPosts } from '../providers/forgejo';
 import { fetchFriendicaPosts } from '../providers/friendica';
 import { fetchFunkwhalePosts } from '../providers/funkwhale';
 import { fetchGabPosts } from '../providers/gab';
+import { fetchGancioPosts } from '../providers/gancio';
 import { fetchGhostPosts } from '../providers/ghost';
 import { fetchGitHubPosts } from '../providers/github';
 // ─── Real Provider Imports ─────────────────────────────────────────
@@ -36,10 +38,13 @@ import { fetchMastodonPosts } from '../providers/gotosocial';
 import { fetchHivePosts } from '../providers/hive';
 import { fetchHuddle01Posts } from '../providers/huddle01';
 import { fetchImmichPosts } from '../providers/immich';
+import { fetchJuiceboxPosts } from '../providers/juicebox';
 import { fetchKbinPosts } from '../providers/kbin';
 import { fetchLBRYPosts } from '../providers/lbry';
 import { fetchLemmyPosts } from '../providers/lemmy';
 import { fetchLensPosts } from '../providers/lens';
+import { fetchLitPosts } from '../providers/lit';
+import { fetchLobstersPosts } from '../providers/lobsters';
 import { fetchMatrixPosts } from '../providers/matrix';
 import { fetchMbinPosts } from '../providers/mbin';
 import { fetchMediaGoblinPosts } from '../providers/mediagoblin';
@@ -51,6 +56,8 @@ import { fetchMisskeyPosts } from '../providers/misskey';
 import { fetchMitraPosts } from '../providers/mitra';
 import { fetchMobilizonPosts } from '../providers/mobilizon';
 import { fetchNostrPosts } from '../providers/nostr';
+import { fetchNostrGroupsPosts } from '../providers/nostr-groups';
+import { fetchOpenSeaPosts } from '../providers/opensea';
 import { fetchOrbisPosts } from '../providers/orbis';
 import { fetchOwncastPosts } from '../providers/owncast';
 import { fetchParagraphPosts } from '../providers/paragraph';
@@ -64,13 +71,20 @@ import { fetchRssBridgePosts } from '../providers/rssbridge';
 import { fetchScuttlebuttPosts } from '../providers/scuttlebutt';
 import { fetchSessionPosts } from '../providers/session';
 import { fetchEvents as fetchSmokeSignalEvents } from '../providers/smokesignal';
+import { fetchSnapshotPosts } from '../providers/snapshot';
+import { fetchSoundCloudPosts } from '../providers/soundcloud';
 import { fetchSteemPosts } from '../providers/steem';
 import { fetchStrfryPosts } from '../providers/strfry';
 import { fetchSubsocialPosts } from '../providers/subsocial';
 import { fetchTablelandPosts } from '../providers/tableland';
 import { fetchTakahePosts } from '../providers/takahe';
+import { fetchTallyPosts } from '../providers/tally';
 import { fetchTelegramPosts } from '../providers/telegram';
 import { fetchThreadsPosts } from '../providers/threads';
+import { fetchTwitchPosts } from '../providers/twitch';
+import { fetchUnlockPosts } from '../providers/unlock';
+import { fetchVimeoPosts } from '../providers/vimeo';
+import { fetchWordPressPosts } from '../providers/wordpress';
 import { fetchWriteFreelyPosts } from '../providers/writefreely';
 // ─── Infrastructure Providers (status-only, not in main feed) ─────
 import { fetchXmtpPosts } from '../providers/xmtp';
@@ -377,6 +391,52 @@ export const PROVIDERS: Record<string, ProviderEntry> = {
   },
 
   // ═══════════════════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════════════
+  // TIER 10: New Protocol Integrations (2026-07-26)
+  // ═══════════════════════════════════════════════════════════════════
+  gancio: {
+    name: 'Gancio (Federated Events)',
+    fetch: fetchGancioPosts,
+    rateLimit: { maxRequests: 30, windowMs: 60_000 },
+    category: 'content',
+  },
+  soundcloud: {
+    name: 'SoundCloud (Music RSS)',
+    fetch: fetchSoundCloudPosts,
+    rateLimit: { maxRequests: 30, windowMs: 60_000 },
+    category: 'content',
+  },
+  bandcamp: {
+    name: 'Bandcamp (Music Releases)',
+    fetch: fetchBandcampPosts,
+    rateLimit: { maxRequests: 30, windowMs: 60_000 },
+    category: 'content',
+  },
+  vimeo: {
+    name: 'Vimeo (Professional Video)',
+    fetch: fetchVimeoPosts,
+    rateLimit: { maxRequests: 30, windowMs: 60_000 },
+    category: 'content',
+  },
+  twitch: {
+    name: 'Twitch (Live Streams & Clips)',
+    fetch: fetchTwitchPosts,
+    rateLimit: { maxRequests: 30, windowMs: 60_000 },
+    category: 'content',
+  },
+  wordpress: {
+    name: 'WordPress + ActivityPub',
+    fetch: fetchWordPressPosts,
+    rateLimit: { maxRequests: 30, windowMs: 60_000 },
+    category: 'content',
+  },
+  'nostr-groups': {
+    name: 'Nostr Groups (NIP-29)',
+    fetch: fetchNostrGroupsPosts,
+    rateLimit: { maxRequests: 30, windowMs: 60_000 },
+    category: 'content',
+  },
+
   // INFRASTRUCTURE PROVIDERS (status-only, excluded from main feed)
   // ═══════════════════════════════════════════════════════════════════
   xmtp: {
@@ -407,6 +467,51 @@ export const PROVIDERS: Record<string, ProviderEntry> = {
   huddle01: {
     name: 'Huddle01 (Decentralized Video — Infra)',
     fetch: fetchHuddle01Posts,
+    category: 'infrastructure',
+  },
+
+  // ═══════════════════════════════════════════════════════════════════
+  // PROTOCOL EXPANSION PACK — OpenSea, Lobsters, DAO Governance
+  // ═══════════════════════════════════════════════════════════════════
+  opensea: {
+    name: 'OpenSea (NFT Marketplace)',
+    fetch: fetchOpenSeaPosts,
+    rateLimit: { maxRequests: 30, windowMs: 60_000 },
+    category: 'content',
+  },
+  lobsters: {
+    name: 'Lobste.rs (Tech Link Aggregation)',
+    fetch: fetchLobstersPosts,
+    rateLimit: { maxRequests: 60, windowMs: 60_000 },
+    category: 'content',
+  },
+  snapshot: {
+    name: 'Snapshot (DAO Governance Voting)',
+    fetch: fetchSnapshotPosts,
+    rateLimit: { maxRequests: 30, windowMs: 60_000 },
+    category: 'content',
+  },
+  tally: {
+    name: 'Tally (DAO Governance & Treasury)',
+    fetch: fetchTallyPosts,
+    rateLimit: { maxRequests: 30, windowMs: 60_000 },
+    category: 'content',
+  },
+  juicebox: {
+    name: 'Juicebox (DAO Funding & Projects)',
+    fetch: fetchJuiceboxPosts,
+    rateLimit: { maxRequests: 30, windowMs: 60_000 },
+    category: 'content',
+  },
+  unlock: {
+    name: 'Unlock Protocol (Token-Gated Membership)',
+    fetch: fetchUnlockPosts,
+    rateLimit: { maxRequests: 30, windowMs: 60_000 },
+    category: 'content',
+  },
+  lit: {
+    name: 'Lit Protocol (Decentralized Key Mgmt)',
+    fetch: fetchLitPosts,
     category: 'infrastructure',
   },
 };
@@ -749,7 +854,20 @@ export const DEFAULT_PREFERENCES = {
       'ghost',
       'immich',
       'audius',
+      'gancio',
+      'soundcloud',
+      'bandcamp',
+      'vimeo',
+      'twitch',
+      'wordpress',
+      'nostr-groups',
       'rarible',
+      'opensea',
+      'lobsters',
+      'snapshot',
+      'tally',
+      'juicebox',
+      'unlock',
     ],
     contentTypes: {
       posts: 100,

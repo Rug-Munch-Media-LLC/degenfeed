@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import type { AlgorithmWeights, WeightPreset } from './types';
-import { WEIGHT_LABELS, PRESETS } from './types';
+import { WEIGHT_LABELS } from './types';
 
 /* ─── Toggle Switch ─────────────────────────────────────────── */
 
@@ -236,13 +236,19 @@ export function PreviewPanel({
       {diffs.length > 0 && (
         <p className="mt-3 text-[10px]" style={{ color: 'var(--color-muted)' }}>
           {diffs.filter((d) => d.diff > 0).length > 0
-            ? `🟢 More weight on: ${diffs.filter((d) => d.diff > 0).map((d) => d.label).join(', ')}`
+            ? `🟢 More weight on: ${diffs
+                .filter((d) => d.diff > 0)
+                .map((d) => d.label)
+                .join(', ')}`
             : ''}
           {diffs.filter((d) => d.diff > 0).length > 0 && diffs.filter((d) => d.diff < 0).length > 0
             ? ' | '
             : ''}
           {diffs.filter((d) => d.diff < 0).length > 0
-            ? `🔴 Less weight on: ${diffs.filter((d) => d.diff < 0).map((d) => d.label).join(', ')}`
+            ? `🔴 Less weight on: ${diffs
+                .filter((d) => d.diff < 0)
+                .map((d) => d.label)
+                .join(', ')}`
             : ''}
         </p>
       )}
@@ -262,7 +268,9 @@ export function WeightSlidersSection({
   return (
     <section>
       <div className="mb-4 flex items-center gap-2">
-        <span className="text-lg" aria-hidden="true">🎛️</span>
+        <span className="text-lg" aria-hidden="true">
+          🎛️
+        </span>
         <h2
           className="text-lg font-bold"
           style={{ color: 'var(--color-fg)', fontFamily: 'var(--font-heading)' }}
@@ -279,7 +287,12 @@ export function WeightSlidersSection({
       >
         <div className="space-y-5">
           {(Object.keys(WEIGHT_LABELS) as Array<keyof AlgorithmWeights>).map((key) => (
-            <WeightSlider key={key} weightKey={key} value={weights[key]} onChange={onWeightChange} />
+            <WeightSlider
+              key={key}
+              weightKey={key}
+              value={weights[key]}
+              onChange={onWeightChange}
+            />
           ))}
         </div>
       </div>

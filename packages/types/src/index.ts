@@ -96,6 +96,13 @@ export type Protocol =
   | 'rarible'
   | 'flarum'
   | 'arweave'
+  | 'opensea'
+  | 'lobsters'
+  | 'snapshot'
+  | 'tally'
+  | 'juicebox'
+  | 'unlock'
+  | 'lit'
   | 'infra';
 
 export interface UnifiedIdentity {
@@ -170,6 +177,20 @@ export interface UnifiedIdentity {
     arweaveTxId?: string;
     /** ENS name */
     ens?: string;
+    /** OpenSea collection slug */
+    openseaSlug?: string;
+    /** Lobste.rs username */
+    lobstersUsername?: string;
+    /** Snapshot space ID */
+    snapshotSpace?: string;
+    /** Tally governance ID */
+    tallyGovId?: string;
+    /** Juicebox project ID */
+    juiceboxProjectId?: string;
+    /** Unlock Protocol lock address */
+    unlockLockAddress?: string;
+    /** Lit Protocol PKP token ID */
+    litPkpTokenId?: string;
   };
 }
 

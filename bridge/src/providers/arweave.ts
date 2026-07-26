@@ -62,12 +62,7 @@ interface ArweavePost {
   tags: ArweaveTag[];
 }
 
-const CONTENT_TYPES_TO_SCAN = [
-  'text/html',
-  'text/plain',
-  'text/markdown',
-  'application/json',
-];
+const CONTENT_TYPES_TO_SCAN = ['text/html', 'text/plain', 'text/markdown', 'application/json'];
 
 // Known Arweave apps and their tag patterns
 const CURATED_APPS = [
@@ -96,9 +91,9 @@ function extractTag(tags: ArweaveTag[], name: string): string | null {
   return t ? t.value : null;
 }
 
-function bytesToSize(bytes: string): string {
+function _bytesToSize(bytes: string): string {
   const n = parseInt(bytes, 10);
-  if (isNaN(n)) return '0 B';
+  if (Number.isNaN(n)) return '0 B';
   if (n < 1024) return `${n} B`;
   if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
   return `${(n / (1024 * 1024)).toFixed(1)} MB`;
@@ -106,13 +101,13 @@ function bytesToSize(bytes: string): string {
 
 function parsePermawebPost(node: ArweaveTransaction): ArweavePost | null {
   const contentType = extractTag(node.tags, 'Content-Type') || 'unknown';
-  const title = extractTag(node.tags, 'Title') ||
+  const title =
+    extractTag(node.tags, 'Title') ||
     extractTag(node.tags, 'title') ||
     extractTag(node.tags, 'Topic') ||
     `Permaweb Content ${node.id.slice(0, 8)}`;
-  const appName = extractTag(node.tags, 'App-Name') ||
-    extractTag(node.tags, 'Application') ||
-    'Unknown';
+  const _appName =
+    extractTag(node.tags, 'App-Name') || extractTag(node.tags, 'Application') || 'Unknown';
   const unixTime = node.block?.timestamp || Math.floor(Date.now() / 1000);
 
   return {
@@ -175,9 +170,7 @@ export async function fetchArweavePosts(limit = 20): Promise<UnifiedPost[]> {
           keys: { address: post.owner },
         },
         text: post.content.slice(0, 2000),
-        embeds: [
-          { kind: 'link', url: `${ARWEAVE_VIEW}/${post.txId}`, meta: { txId: post.txId } },
-        ],
+        embeds: [{ kind: 'link', url: `${ARWEAVE_VIEW}/${post.txId}`, meta: { txId: post.txId } }],
         contentType: 'article',
         createdAt: post.timestamp,
         metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
@@ -201,7 +194,7 @@ export async function fetchArweavePosts(limit = 20): Promise<UnifiedPost[]> {
       const appQuery = `
         {
           transactions(
-            tags: { name: "App-Name", values: ${JSON.stringify(CURATED_APPS.map(a => a.appName))} }
+            tags: { name: "App-Name", values: ${JSON.stringify(CURATED_APPS.map((a) => a.appName))} }
             first: ${Math.min(limit - all.length, 20)}
             sort: HEIGHT_DESC
           ) {

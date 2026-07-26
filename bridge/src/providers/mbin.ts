@@ -40,7 +40,7 @@ export async function fetchMbinPosts(limit = 20): Promise<UnifiedPost[]> {
   const fetches = MBIN_INSTANCES.map(async ({ host, label }) => {
     try {
       const entriesRes = await $fetch(
-        'https://' + host + '/api/entries?sort=hot&page=1&perPage=' + perInstance,
+        `https://${host}/api/entries?sort=hot&page=1&perPage=${perInstance}`,
         {
           headers: { 'User-Agent': 'DegenFeed-Bridge/0.1 (Mbin)' },
           signal: AbortSignal.timeout(8000),
@@ -51,15 +51,15 @@ export async function fetchMbinPosts(limit = 20): Promise<UnifiedPost[]> {
 
       return entries.slice(0, perInstance).map((entry) => {
         const content = stripHtml(entry.body || '');
-        const text = entry.title ? entry.title + (content ? '\n\n' + content : '') : content;
+        const text = entry.title ? entry.title + (content ? `\n\n${content}` : '') : content;
         const createdAt = new Date(entry.createdAt).getTime();
         return {
-          id: 'mbin:entry:' + entry.id + '@' + host,
+          id: `mbin:entry:${entry.id}@${host}`,
           protocol: 'mbin',
           author: {
-            id: 'mbin:user:' + entry.user.id + '@' + host,
+            id: `mbin:user:${entry.user.id}@${host}`,
             primary: { protocol: 'mbin', id: String(entry.user.id) },
-            handles: { mbin: '@' + entry.user.username + '@' + label },
+            handles: { mbin: `@${entry.user.username}@${label}` },
             displayName: entry.user.username,
             bio: (entry.user.about || '').slice(0, 200),
             avatarUrl: entry.user.avatar || '',
@@ -116,7 +116,7 @@ export async function fetchMbinPosts(limit = 20): Promise<UnifiedPost[]> {
     }
   }
 
-  console.log('[bridge] Mbin: ' + deduped.length + ' entries');
+  console.log(`[bridge] Mbin: ${deduped.length} entries`);
   return deduped;
 }
 
