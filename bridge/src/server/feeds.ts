@@ -17,7 +17,7 @@ import { fetchBookWyrmPosts } from '../providers/bookwyrm';
 import { fetchCastopodPosts } from '../providers/castopod';
 import { fetchCeramicPosts } from '../providers/ceramic';
 import { fetchCyberConnectPosts } from '../providers/cyberconnect';
-import { fetchDesoPosts } from '../providers/deso';
+import { fetchDeSoPosts } from '../providers/deso';
 import { fetchDiasporaPosts } from '../providers/diaspora';
 import { fetchDiscordPosts } from '../providers/discord';
 import { fetchDiscoursePosts } from '../providers/discourse';
@@ -78,7 +78,7 @@ import { fetchZoraPosts } from '../providers/zora';
 import type { RateLimitConfig } from '../rate-limiter';
 import { checkRateLimit } from '../rate-limiter';
 import { providerCircuitBreaker } from '../reliability/circuit-breaker';
-import { type FetchResult, failoverRouter, fallbackCache } from '../reliability/failover-router';
+import { failoverRouter, fallbackCache } from '../reliability/failover-router';
 import { healthDashboard } from '../reliability/health-dashboard';
 import {
   registerAllProvidersWithCircuitBreaker,
@@ -205,7 +205,7 @@ export const PROVIDERS: Record<string, ProviderEntry> = {
   },
   deso: {
     name: 'DeSo / Bitclout (Layer-1 Social Blockchain)',
-    fetch: fetchDesoPosts,
+    fetch: fetchDeSoPosts,
     category: 'content',
   },
   microblog: {
@@ -491,7 +491,7 @@ export async function buildFeed(
       }
 
       if (provider.rateLimit) {
-        const key = 'provider:' + protocol;
+        const key = `provider:${protocol}`;
         if (!checkRateLimit(key, provider.rateLimit)) {
           const cached = fallbackCache.get(protocol);
           if (cached) {
@@ -514,14 +514,14 @@ export async function buildFeed(
             const result = await withTimeout(
               provider.fetch(perProviderLimit),
               FETCH_TIMEOUT_MS,
-              'provider:' + protocol,
+              `provider:${protocol}`,
             );
             return result;
           },
           {
             providerKey: protocol,
             onRetry: (attempt, delay) => {
-              console.log('[retry] ' + protocol + ': attempt ' + attempt + ' in ' + delay + 'ms');
+              console.log(`[retry] ${protocol}: attempt ${attempt} in ${delay}ms`);
             },
           },
         );
@@ -543,7 +543,7 @@ export async function buildFeed(
                 protocol,
                 posts: failoverResult.posts,
                 source: 'fallback',
-                notice: 'using fallback: ' + failoverResult.source,
+                notice: `using fallback: ${failoverResult.source}`,
               };
             }
             if (failoverResult.status === 'cached') {
@@ -573,7 +573,7 @@ export async function buildFeed(
         }
 
         deadLetterQueue.enqueue({
-          id: protocol + '-' + Date.now(),
+          id: `${protocol}-${Date.now()}`,
           providerKey: protocol,
           operation: 'fetch',
           error: errMsg,
@@ -593,17 +593,17 @@ export async function buildFeed(
       providerSources[protocol] = source ?? 'live';
       if (cacheAgeMs) cacheAges[protocol] = cacheAgeMs;
       allPosts.push(...posts);
-      if (error) errors.push(protocol + ': ' + error);
-      if (notice) notices.push(protocol + ': ' + notice);
+      if (error) errors.push(`${protocol}: ${error}`);
+      if (notice) notices.push(`${protocol}: ${notice}`);
     } else {
       errors.push(
-        'provider: ' + (result.reason instanceof Error ? result.reason.message : 'unknown'),
+        `provider: ${result.reason instanceof Error ? result.reason.message : 'unknown'}`,
       );
     }
   }
 
   for (const [protocol, count] of Object.entries(perProtocol))
-    console.log('[bridge] ' + protocol + ': ' + count + ' posts');
+    console.log(`[bridge] ${protocol}: ${count} posts`);
 
   if (allPosts.length === 0) {
     notices.push('All content sources returned no data. Check that backend services are running.');
@@ -642,7 +642,7 @@ export async function buildFeed(
       ' posts from ' +
       Object.keys(perProtocol).length +
       ' sources' +
-      (degradedCount > 0 ? ' (' + degradedCount + ' degraded)' : ''),
+      (degradedCount > 0 ? ` (${degradedCount} degraded)` : ''),
   );
   return {
     posts: deduped,
