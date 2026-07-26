@@ -9,4 +9,4 @@
 
 // ─── Types ──────────────────────────────────────────────────────────────
 
-export type UserExportManifest = {}
+export type UserExportManifest = {};

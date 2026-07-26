@@ -13,7 +13,13 @@
 
 import { jsonResponse } from '../response-helpers';
 import type { Env } from '../types';
-import { GIFT_STREAM_STATE_PREFIX, kvGetJson, kvPutJson, type StreamGiftState, streamGiftKey } from './live-gifts-core';
+import {
+  GIFT_STREAM_STATE_PREFIX,
+  kvGetJson,
+  kvPutJson,
+  type StreamGiftState,
+  streamGiftKey,
+} from './live-gifts-core';
 
 // ─── Constants ───────────────────────────────────────────────────────────
 
@@ -22,4 +28,4 @@ const TTL_30_DAYS = 60 * 60 * 24 * 30;
 
 // ─── Payout Record ───────────────────────────────────────────────────────
 
-export type GiftPayoutRecord = {}
+export type GiftPayoutRecord = {};

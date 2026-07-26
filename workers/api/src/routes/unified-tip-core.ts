@@ -36,4 +36,4 @@ export type SupportedChain =
   | 'optimism'
   | 'arbitrum';
 
-export type ChainRoute = {}
+export type ChainRoute = {};

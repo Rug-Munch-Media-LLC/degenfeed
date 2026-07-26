@@ -53,4 +53,4 @@ export type StorageBackend =
   | 'r2+arweave'; // R2 primary + Arweave permanent copy
 
 /** Result of routing analysis */
-export type RoutingDecision = {}
+export type RoutingDecision = {};

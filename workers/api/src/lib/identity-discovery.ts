@@ -22,4 +22,4 @@ import type { Env } from '../types';
 
 // ─── Types ──────────────────────────────────────────────────────────────
 
-export type DiscoveredIdentity = {}
+export type DiscoveredIdentity = {};

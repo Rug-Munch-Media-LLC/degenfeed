@@ -27,4 +27,4 @@ import { withReliability } from './bridge-reliability';
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
-export type LiveStream = {}
+export type LiveStream = {};

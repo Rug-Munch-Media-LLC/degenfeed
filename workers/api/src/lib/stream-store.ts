@@ -31,4 +31,4 @@ export type StreamSurface =
   | 'spaces-hub';
 export type StreamHost = 'peertube' | 'huddle01';
 
-export type LiveStream = {}
+export type LiveStream = {};

@@ -28,4 +28,4 @@ import { addChatMessage } from './stream-store';
 
 // ─── Types ──────────────────────────────────────────────────────────────
 
-export type ThreadsBridgeConfig = {}
+export type ThreadsBridgeConfig = {};

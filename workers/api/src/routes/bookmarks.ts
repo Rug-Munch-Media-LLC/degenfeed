@@ -17,4 +17,4 @@ import type { Env } from '../types';
 
 // ─── Types ───────────────────────────────────────────────────
 
-type BookmarkEntry = {}
+type BookmarkEntry = {};

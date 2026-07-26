@@ -29,4 +29,4 @@ import { WebRTCSessionManager } from './webrtc-streaming';
 
 export type StreamingMode = 'p2p' | 'owncast' | 'peertube' | 'livepeer' | 'cloudflare';
 
-export type SimulcastTarget = {}
+export type SimulcastTarget = {};

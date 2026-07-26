@@ -11,4 +11,4 @@ import type { Env } from '../types';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
-export type DeployRequest = {}
+export type DeployRequest = {};

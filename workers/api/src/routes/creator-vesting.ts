@@ -20,4 +20,4 @@ import type { Env } from '../types';
 // Better than Zora's fixed 5-year: creators choose the right schedule.
 // Each preset shows exactly what the creator gets and when.
 
-type VestingPresetRequirements = {}
+type VestingPresetRequirements = {};

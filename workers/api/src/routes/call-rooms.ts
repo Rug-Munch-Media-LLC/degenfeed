@@ -22,4 +22,4 @@ import { CHANNELS } from '../ws-channels';
 
 // ─── Types ──────────────────────────────────────────────────────────────
 
-export type CallRoom = {}
+export type CallRoom = {};

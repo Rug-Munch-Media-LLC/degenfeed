@@ -22,4 +22,4 @@ import type { Env } from '../types';
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
-export type RegistrationPlan = {}
+export type RegistrationPlan = {};

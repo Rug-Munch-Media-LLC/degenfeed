@@ -36,4 +36,4 @@ export type SyncActionType =
 
 export type SyncStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'dead_letter';
 
-export type SyncAction = {}
+export type SyncAction = {};

@@ -7,4 +7,4 @@ import type { MediaAttachment } from './format-translator';
 
 // ─── Bridge Types ───────────────────────────────────────────────────────
 
-export type BridgeContentInput = {}
+export type BridgeContentInput = {};

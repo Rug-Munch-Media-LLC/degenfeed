@@ -16,4 +16,4 @@ import { broadcastToAll } from '../ws-broadcast';
 
 // ─── Types ──────────────────────────────────────────────────────────────
 
-export type TipNotificationEvent = {}
+export type TipNotificationEvent = {};

@@ -15,4 +15,4 @@ import { publishCastToFarcaster } from './hubble-publisher';
 
 export type CrossPostProtocol = 'farcaster' | 'nostr' | 'bluesky' | 'mastodon';
 
-export type CrossPostResult = {}
+export type CrossPostResult = {};

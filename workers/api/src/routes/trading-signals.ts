@@ -21,4 +21,4 @@ import type { Env } from '../types';
 
 export type TradingSignalType = 'buy' | 'sell' | 'launch' | 'whale_movement' | 'social_spike';
 
-export type TradingSignal = {}
+export type TradingSignal = {};

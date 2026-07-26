@@ -16,4 +16,4 @@ import type { UnifiedPost } from '@degenfeed/types';
 
 // ─── Types ──────────────────────────────────────────────────────────────
 
-export type ExplainerContext = {}
+export type ExplainerContext = {};

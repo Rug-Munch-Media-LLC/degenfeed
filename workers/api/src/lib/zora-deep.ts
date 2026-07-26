@@ -18,4 +18,4 @@ import type { Env } from '../types';
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
-export type ZoraToken = {}
+export type ZoraToken = {};

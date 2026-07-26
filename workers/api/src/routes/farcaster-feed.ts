@@ -16,4 +16,4 @@ import type { Env } from '../types';
 // Realistic crypto posts from well-known Farcaster users (FIDs).
 // Used as fallback when Farcaster hubs are unreachable.
 
-type SeedUser = {}
+type SeedUser = {};

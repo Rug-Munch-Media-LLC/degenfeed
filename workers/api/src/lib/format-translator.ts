@@ -15,4 +15,4 @@ import type { Protocol } from '@degenfeed/types';
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
-export type MediaAttachment = {}
+export type MediaAttachment = {};

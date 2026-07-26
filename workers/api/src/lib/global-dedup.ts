@@ -31,4 +31,4 @@ import type { Env } from '../types';
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
-export type DedupFingerprint = {}
+export type DedupFingerprint = {};

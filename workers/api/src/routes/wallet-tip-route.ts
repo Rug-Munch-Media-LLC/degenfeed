@@ -32,4 +32,4 @@ export type WalletKnowledge =
   /** We don't know anything about this recipient */
   | 'unknown';
 
-export type WalletRouteRequest = {}
+export type WalletRouteRequest = {};

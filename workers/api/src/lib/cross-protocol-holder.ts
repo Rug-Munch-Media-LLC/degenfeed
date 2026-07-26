@@ -15,4 +15,4 @@ import type { Env } from '../types';
 
 // ─── Types ──────────────────────────────────────────────────────────────
 
-export type ProtocolIdentity = {}
+export type ProtocolIdentity = {};

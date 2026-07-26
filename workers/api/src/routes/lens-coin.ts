@@ -26,4 +26,4 @@ const TTL_1Y = 60 * 60 * 24 * 365;
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
-type LensCoinRecord = {}
+type LensCoinRecord = {};

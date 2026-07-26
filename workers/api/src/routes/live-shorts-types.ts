@@ -23,4 +23,4 @@ export const DEFAULT_PROTOCOLS: Protocol[] = [
 
 export const MAX_LIVE_SHORT_DURATION_SECONDS = 60;
 
-export type LiveShortRecord = {}
+export type LiveShortRecord = {};

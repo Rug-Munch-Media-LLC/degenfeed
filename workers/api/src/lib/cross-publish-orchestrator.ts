@@ -18,4 +18,4 @@ import { orchestratePublish } from './publish-orchestrator';
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
-export type CrossPublishRequest = {}
+export type CrossPublishRequest = {};

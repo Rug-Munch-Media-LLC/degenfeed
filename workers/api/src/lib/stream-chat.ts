@@ -34,4 +34,4 @@ export type ChatSource =
   | 'farcaster'
   | 'nostr';
 
-export type ChatMessage = {}
+export type ChatMessage = {};

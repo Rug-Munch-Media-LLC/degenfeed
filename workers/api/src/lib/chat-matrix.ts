@@ -51,4 +51,4 @@ export type ChatProtocol =
   | 'lens'
   | 'matrix';
 
-export type ProtocolPreferences = {}
+export type ProtocolPreferences = {};

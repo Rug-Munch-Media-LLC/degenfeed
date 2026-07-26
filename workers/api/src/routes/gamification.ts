@@ -20,4 +20,4 @@ import type { Env } from '../types';
 
 // ─── Achievement definitions ─────────────────────────────────────────────
 
-export type AchievementDef = {}
+export type AchievementDef = {};

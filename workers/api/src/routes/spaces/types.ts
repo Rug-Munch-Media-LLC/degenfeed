@@ -2,4 +2,4 @@
  * @degenfeed/api-worker — Spaces Types
  */
 
-export type SpaceSpeaker = {}
+export type SpaceSpeaker = {};

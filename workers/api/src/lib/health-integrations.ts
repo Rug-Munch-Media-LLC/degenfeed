@@ -27,4 +27,4 @@ import type { Env } from '../types';
 
 export type IntegrationStatus = 'ok' | 'degraded' | 'down';
 
-export type IntegrationHealth = {}
+export type IntegrationHealth = {};

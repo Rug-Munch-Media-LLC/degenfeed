@@ -13,4 +13,4 @@
 import { jsonResponse, methodNotAllowed, noCacheJsonResponse } from '../response-helpers';
 import type { Env } from '../types';
 
-export type FeatureFlag = {}
+export type FeatureFlag = {};

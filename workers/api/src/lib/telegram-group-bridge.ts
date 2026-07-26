@@ -20,4 +20,4 @@ import type { Env } from '../types';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
-export type TelegramGroupBridgeConfig = {}
+export type TelegramGroupBridgeConfig = {};

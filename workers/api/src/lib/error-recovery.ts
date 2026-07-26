@@ -28,4 +28,4 @@ export type ErrorCategory = 'network' | 'wallet' | 'contract' | 'stream' | 'coin
 
 export type ErrorSeverity = 'critical' | 'high' | 'medium' | 'low';
 
-export type ClassifiedError = {}
+export type ClassifiedError = {};

@@ -16,4 +16,4 @@ import type { Env } from '../types';
 
 export type ChainType = 'ethereum' | 'solana' | 'polygon' | 'base';
 
-export type SimulatedTransaction = {}
+export type SimulatedTransaction = {};

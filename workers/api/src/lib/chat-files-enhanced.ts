@@ -23,4 +23,4 @@ import { uploadToR2 } from './r2-storage';
 
 export type UserTier = 'free' | 'pro' | 'creator' | 'enterprise';
 
-export type TieredFileLimits = {}
+export type TieredFileLimits = {};

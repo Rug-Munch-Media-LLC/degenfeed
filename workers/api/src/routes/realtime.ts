@@ -49,4 +49,4 @@ const IP_RATE_WINDOW_MS = 60_000;
 
 // ─── In-memory State ─────────────────────────────────────────────────────
 
-type ClientConnection = {}
+type ClientConnection = {};

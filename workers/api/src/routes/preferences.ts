@@ -21,4 +21,4 @@ import { validateBodySize } from '../sanitize';
 import { requireSession } from '../session';
 import type { Env } from '../types';
 
-type NotificationTypePref = {}
+type NotificationTypePref = {};

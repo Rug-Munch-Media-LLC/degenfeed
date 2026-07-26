@@ -29,4 +29,4 @@ export type ContentSource =
 
 export type InteractionAction = 'watch' | 'like' | 'share' | 'skip' | 'complete' | 'tip';
 
-export type InteractionMetadata = {}
+export type InteractionMetadata = {};

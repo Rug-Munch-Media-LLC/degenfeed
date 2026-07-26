@@ -26,4 +26,4 @@ import type { Env } from '../types';
 
 export type ZoraNetwork = 'base' | 'ethereum' | 'optimism' | 'arbitrum' | 'zora';
 
-export type ZoraVideoItem = {}
+export type ZoraVideoItem = {};

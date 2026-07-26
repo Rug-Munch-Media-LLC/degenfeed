@@ -1,9 +1,6 @@
 /**
- * @degenfeed/api-worker — Farcaster Frame Routes
- *
- * Barrel for the Farcaster Frames system.
+ * @degenfeed/api-worker — Farcaster Frame Routes Barrel
  */
-
 import { Hono } from 'hono';
 import type { Env } from '../index';
 import { registerStreamFrameRoutes } from './streams';
@@ -12,7 +9,6 @@ import { registerCoinFrameRoutes } from './coins';
 import { registerPostFrameRoutes } from './posts';
 
 export const frames = new Hono<{ Bindings: Env }>();
-
 registerStreamFrameRoutes(frames);
 registerSpaceFrameRoutes(frames);
 registerCoinFrameRoutes(frames);

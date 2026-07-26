@@ -25,4 +25,4 @@ const FALLBACK_GATEWAYS = [
 
 // ─── Types ──────────────────────────────────────────────────────────────
 
-export type ArweaveUploadResult = {}
+export type ArweaveUploadResult = {};

@@ -21,4 +21,4 @@ import { seal, unseal } from './crypto-seal';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
-export type GroupMember = {}
+export type GroupMember = {};

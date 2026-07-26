@@ -10,4 +10,4 @@ export type DigestFormatType =
   | 'topic-digest'
   | 'protocol-digest';
 
-export type DigestSection = {}
+export type DigestSection = {};

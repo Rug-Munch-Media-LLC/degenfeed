@@ -24,4 +24,4 @@ import type { Env } from '../types';
 
 // ─── Gift Type Definitions ───────────────────────────────────────────────
 
-export type GiftType = {}
+export type GiftType = {};

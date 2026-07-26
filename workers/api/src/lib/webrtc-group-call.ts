@@ -33,4 +33,4 @@ export type CallMode = 'mesh' | 'sfu';
 export type CallState = 'connecting' | 'ringing' | 'connected' | 'ended';
 export type StreamType = 'camera' | 'screen' | 'audio';
 
-export type CallParticipant = {}
+export type CallParticipant = {};

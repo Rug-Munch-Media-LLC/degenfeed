@@ -26,4 +26,4 @@ import type { Env } from '../types';
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
-export type OperationRecord<T = unknown> = {}
+export type OperationRecord<T = unknown> = {};

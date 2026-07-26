@@ -25,4 +25,4 @@ import type { Env } from '../types';
 
 // ─── Types ───────────────────────────────────────────────────────────────
 
-export type FarcasterLiveSession = {}
+export type FarcasterLiveSession = {};

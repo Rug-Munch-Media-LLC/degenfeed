@@ -34,4 +34,4 @@ import { CHANNELS } from '../ws-channels';
 
 // ─── Types ───────────────────────────────────────────────────────────────
 
-export type PeerTubeStreamRecord = {}
+export type PeerTubeStreamRecord = {};

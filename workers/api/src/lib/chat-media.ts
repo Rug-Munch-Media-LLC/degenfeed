@@ -42,4 +42,4 @@ export type MediaType =
   | 'gif'
   | 'poll';
 
-export type ChatMedia = {}
+export type ChatMedia = {};

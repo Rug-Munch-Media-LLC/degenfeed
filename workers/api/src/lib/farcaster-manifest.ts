@@ -15,4 +15,4 @@
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
-export type AccountAssociation = {}
+export type AccountAssociation = {};

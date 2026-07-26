@@ -19,4 +19,4 @@ import type { Env } from '../types';
 
 export type LicenseType = 'all-rights' | 'cc-by' | 'cc-by-sa' | 'cc-by-nc' | 'cc0' | 'custom';
 
-export type LicenseRecord = {}
+export type LicenseRecord = {};

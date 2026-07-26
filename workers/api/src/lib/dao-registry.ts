@@ -24,4 +24,4 @@ import type { Env } from '../types';
 
 // ─── Types ───────────────────────────────────────────────────────────────
 
-export type DAORegistryEntry = {}
+export type DAORegistryEntry = {};

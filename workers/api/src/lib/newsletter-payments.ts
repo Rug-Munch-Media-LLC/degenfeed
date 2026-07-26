@@ -29,4 +29,4 @@ import type { Env } from '../types';
 export type PaymentMethod = 'evm' | 'solana' | 'lightning';
 export type PaymentStatus = 'pending' | 'confirmed' | 'failed' | 'refunded';
 
-export type PaymentInvoice = {}
+export type PaymentInvoice = {};

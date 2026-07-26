@@ -30,4 +30,4 @@ import type { Env } from '../types';
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
-type ExportManifest = {}
+type ExportManifest = {};

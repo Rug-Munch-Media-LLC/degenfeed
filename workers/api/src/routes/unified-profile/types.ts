@@ -4,4 +4,4 @@
 
 import type { AggregatedProfile } from '../../lib/profile-sync';
 
-export type ProfileSearchResult = {}
+export type ProfileSearchResult = {};

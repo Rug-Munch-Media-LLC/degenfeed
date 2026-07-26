@@ -22,4 +22,4 @@ const _CACHE_TTL_SHORT = 300; // 5 min
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
-type SourceHealthEntry = {}
+type SourceHealthEntry = {};

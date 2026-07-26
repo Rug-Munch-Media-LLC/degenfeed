@@ -30,4 +30,4 @@ import type { Env } from '../types';
 
 export type DidMethod = 'key' | 'web';
 
-export type DidRecord = {}
+export type DidRecord = {};

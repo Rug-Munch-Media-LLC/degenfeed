@@ -14,4 +14,4 @@
 
 // ─── Types ───────────────────────────────────────────────────────────
 
-export type ValidationResult = {}
+export type ValidationResult = {};

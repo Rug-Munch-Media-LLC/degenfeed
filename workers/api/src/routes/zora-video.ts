@@ -27,4 +27,4 @@ import type { Env } from '../types';
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
-export type ZoraVideoMintRequest = {}
+export type ZoraVideoMintRequest = {};

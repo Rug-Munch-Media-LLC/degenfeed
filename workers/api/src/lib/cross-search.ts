@@ -3,4 +3,4 @@ import type { Env } from '../types';
 
 // ─── Types ──────────────────────────────────────────────────────────
 
-export type SearchResult = {}
+export type SearchResult = {};

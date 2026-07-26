@@ -29,4 +29,4 @@ import type { Env } from '../types';
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
-type CrossLoginRequest = {}
+type CrossLoginRequest = {};

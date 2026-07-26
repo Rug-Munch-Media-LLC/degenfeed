@@ -42,4 +42,4 @@ export type MediaType = 'image' | 'video' | 'audio' | 'application' | 'unknown';
 
 export type GatewayBackend = 'ipfs' | 'arweave' | 'r2';
 
-export type MediaGatewayResult = {}
+export type MediaGatewayResult = {};

@@ -13,4 +13,4 @@ import type { Env } from '../types';
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
-export type FrameAnalyticsEvent = {}
+export type FrameAnalyticsEvent = {};

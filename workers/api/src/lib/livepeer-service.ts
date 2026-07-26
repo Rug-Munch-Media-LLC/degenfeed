@@ -16,4 +16,4 @@ import { recordBridgeOperation, withReliability } from './bridge-reliability';
 
 // ─── Types ──────────────────────────────────────────────────────────────
 
-export type LivepeerStreamOptions = {}
+export type LivepeerStreamOptions = {};

@@ -21,4 +21,4 @@ import type { Env } from '../types';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
-type BridgeSendBody = {}
+type BridgeSendBody = {};

@@ -19,4 +19,4 @@ export const VALID_PROTOCOLS = new Set([
   'activitypub',
 ]);
 
-export type CrossProtocolCoinRecord = {}
+export type CrossProtocolCoinRecord = {};

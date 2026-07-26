@@ -19,4 +19,4 @@ import { recordHolderPurchase, resolveWalletFromProtocol } from './cross-protoco
 
 // ─── Types ──────────────────────────────────────────────────────────────
 
-export type PurchaseRequest = {}
+export type PurchaseRequest = {};

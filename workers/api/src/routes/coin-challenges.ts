@@ -29,4 +29,4 @@ export type ChallengeType =
 
 export type ChallengeStatus = 'active' | 'completed' | 'expired';
 
-export type Challenge = {}
+export type Challenge = {};

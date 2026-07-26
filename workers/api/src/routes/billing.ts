@@ -5,4 +5,4 @@ import type { Env } from '../types';
 
 export type SubscriptionTier = 'pro' | 'platinum';
 
-type SubscriptionRecord = {}
+type SubscriptionRecord = {};

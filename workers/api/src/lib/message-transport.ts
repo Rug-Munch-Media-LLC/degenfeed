@@ -30,4 +30,4 @@ export type TransportProtocol =
   | 'xmtp'
   | 'direct-ws';
 
-export type TransportMessage = {}
+export type TransportMessage = {};

@@ -43,4 +43,4 @@ export type ProtocolEventType =
   | 'identity'
   | 'bookmark';
 
-export type ProtocolIdentity = {}
+export type ProtocolIdentity = {};

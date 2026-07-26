@@ -30,4 +30,4 @@ const SEARCH_MEDIA_INDEX_PREFIX = 'chat:search:media:';
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
-export type SearchResult = {}
+export type SearchResult = {};

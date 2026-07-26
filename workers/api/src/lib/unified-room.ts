@@ -22,4 +22,4 @@ import { seal, unseal } from './crypto-seal';
 
 export type RoomTransport = 'nostr' | 'matrix' | 'farcaster' | 'bluesky' | 'telegram' | 'web';
 
-export type RoomMember = {}
+export type RoomMember = {};

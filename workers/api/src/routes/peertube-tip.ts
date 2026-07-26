@@ -23,4 +23,4 @@ import { recordUnifiedTip } from './unified-tip';
 
 // ─── Types ───────────────────────────────────────────────────────────────
 
-type TipEntry = {}
+type TipEntry = {};
