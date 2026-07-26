@@ -12,3 +12,39 @@
  */
 
 export type {
+  ActivityItem,
+  ChainRoute,
+  CreatorCoinInfo,
+  CrossChainTipRequest,
+  CrossChainTipResult,
+  SmartChainSelectionRequest,
+  SmartChainSelectionResult,
+  SupportedChain,
+  TipEntityType,
+  TipPeriod,
+  TipPlatform,
+  UnifiedLeaderboardEntry,
+  UnifiedTipEvent,
+} from './unified-tip-core';
+export {
+  entityKey,
+  handleUnifiedTipCreate,
+  leaderboardKey,
+  periodBucket,
+  recordUnifiedTip,
+  selectBestChain,
+  userReceivedKey,
+  userSentKey,
+} from './unified-tip-core';
+export { handleCrossChainTip } from './unified-tip-crosschain';
+export type { CreatorTipAnalytics } from './unified-tip-leaderboard';
+export {
+  handleTipAnalytics,
+  handleTipBadges,
+  handleTipLeaderboardCoins,
+  handleTipLeaderboardProtocols,
+  handleTopTippers,
+  handleUnifiedTipActivity,
+  handleUnifiedTipLeaderboard,
+  handleUnifiedTipStats,
+} from './unified-tip-leaderboard';

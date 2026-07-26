@@ -9,6 +9,411 @@
  */
 
 import { Hono } from 'hono';
-import { jsonResponse, noCacheJsonResponse } from '../response-helpers';
-import type { Env } from '../types';
 import {
+  cancelMembership,
+  checkProtocolAccess,
+  FEATURE_GROUPS,
+  type FeatureDef,
+  getLockedFeatures,
+  getLockedProtocols,
+  getMembership,
+  getNextTier,
+  getProtocolAccessSummary,
+  getProtocolsByTier,
+  getProtocolsForTier,
+  getProtocolUpgradeCta,
+  getUserTier,
+  hasTierAccess,
+  PROTOCOL_ACCESS,
+  type ProtocolId,
+  TIER_INFO,
+  TIER_LIMITS,
+  type Tier,
+  upgradeTier,
+} from '../lib/membership-tiers';
+import { jsonResponse, noCacheJsonResponse } from '../response-helpers';
+import { requireSession } from '../session';
+import type { Env } from '../types';
+
+// ─── Hono Router ────────────────────────────────────────────────────────────
+
+const membership = new Hono<{ Bindings: Env }>();
+
+// ─── GET /api/membership/tier ────────────────────────────────────────────────
+// Returns the current user's tier, subscription status, and next billing info.
+
+membership.get('/tier', async (c) => {
+  const session = await requireSession(c.req.raw, c.env);
+  if (session instanceof Response) return session;
+
+  const wallet = session.address;
+  const tier = await getUserTier(wallet, c.env);
+  const record = await getMembership(wallet, c.env);
+
+  return noCacheJsonResponse({
+    tier,
+    tierInfo: TIER_INFO[tier],
+    isPremium: tier !== 'free',
+    status: record?.status ?? 'active',
+    expiresAt: record?.expiresAt ? new Date(record.expiresAt).toISOString() : null,
+    activatedAt: record?.activatedAt ? new Date(record.activatedAt).toISOString() : null,
+    autoRenew: record?.autoRenew ?? false,
+    billingMethod: record?.billingMethod ?? 'none',
+    trialEndsAt: record?.trialEndsAt ? new Date(record.trialEndsAt).toISOString() : null,
+    limits: TIER_LIMITS[tier],
+    canUpgrade: tier !== 'enterprise',
+    nextTier: getNextTier(tier),
+  });
+});
+
+// ─── GET /api/membership/features ────────────────────────────────────────────
+// Returns all features organized by group, with unlocked status.
+
+membership.get('/features', async (c) => {
+  const session = await requireSession(c.req.raw, c.env);
+  if (session instanceof Response) return session;
+
+  const tier = await getUserTier(session.address, c.env);
+
+  const features = FEATURE_GROUPS.map((group) => ({
+    category: group.category,
+    features: group.features.map((f: FeatureDef) => ({
+      key: f.key,
+      label: f.label,
+      description: f.description,
+      minTier: f.minTier,
+      unlocked: hasTierAccess(tier, f.minTier),
+    })),
+  }));
+
+  const unlockedCount = features.reduce(
+    (sum, g) => sum + g.features.filter((f: { unlocked: boolean }) => f.unlocked).length,
+    0,
+  );
+  const totalCount = features.reduce((sum, g) => sum + g.features.length, 0);
+  const lockedFeatures = getLockedFeatures(tier);
+
+  return noCacheJsonResponse({
+    tier,
+    tierInfo: TIER_INFO[tier],
+    features,
+    unlockedCount,
+    totalCount,
+    lockedCount: lockedFeatures.length,
+    lockedFeatures: lockedFeatures.map((f: FeatureDef) => ({
+      key: f.key,
+      label: f.label,
+      minTier: f.minTier,
+      upgradeTo: getNextTier(tier),
+    })),
+    upgradeUrl: '/membership',
+  });
+});
+
+// ─── POST /api/membership/upgrade ────────────────────────────────────────────
+// Process a tier upgrade. Expects on-chain payment verification or redirect.
+
+membership.post('/upgrade', async (c) => {
+  const session = await requireSession(c.req.raw, c.env);
+  if (session instanceof Response) return session;
+
+  interface UpgradeBody {
+    tier: string;
+    txHash?: string;
+    period?: 'monthly' | 'annual';
+  }
+
+  let body: UpgradeBody;
+  try {
+    body = (await c.req.json()) as UpgradeBody;
+  } catch {
+    return jsonResponse({ error: 'Invalid JSON body' }, 400);
+  }
+
+  const targetTier = body.tier as Tier;
+  const validTiers: Tier[] = ['pro', 'creator', 'enterprise'];
+
+  if (!targetTier || !validTiers.includes(targetTier)) {
+    return jsonResponse(
+      {
+        error: `Invalid tier. Must be one of: ${validTiers.join(', ')}`,
+        validTiers,
+      },
+      400,
+    );
+  }
+
+  const wallet = session.address;
+  const currentTier = await getUserTier(wallet, c.env);
+
+  // Check if already on this tier or higher
+  if (hasTierAccess(currentTier, targetTier)) {
+    return jsonResponse(
+      {
+        error: `Already on ${TIER_INFO[targetTier].name} tier or higher`,
+        currentTier,
+      },
+      409,
+    );
+  }
+
+  // If txHash is provided, verify and process the upgrade
+  if (body.txHash) {
+    const result = await upgradeTier(wallet, targetTier, c.env, {
+      txHash: body.txHash,
+      amount: TIER_INFO[targetTier].price,
+      currency: 'USD',
+      period: body.period ?? 'monthly',
+    });
+
+    if (!result.success) {
+      return jsonResponse({ error: result.error ?? 'Upgrade failed' }, 400);
+    }
+
+    return noCacheJsonResponse({
+      success: true,
+      message: `Upgraded to ${TIER_INFO[targetTier].name} tier!`,
+      tier: targetTier,
+      tierInfo: TIER_INFO[targetTier],
+    });
+  }
+
+  // No txHash — return payment requirements
+  const price = TIER_INFO[targetTier].price;
+  return jsonResponse({
+    requiresPayment: true,
+    tier: targetTier,
+    tierInfo: TIER_INFO[targetTier],
+    amount: price,
+    currency: 'USD',
+    period: body.period ?? 'monthly',
+    message: `Send ${price} USDC to upgrade to ${TIER_INFO[targetTier].name}.`,
+    // Payment address — in production, this would be a unique deposit address
+    paymentAddress: null,
+    // Or redirect to Stripe checkout
+    checkoutUrl: `/api/billing/checkout?tier=${targetTier}`,
+  });
+});
+
+// ─── GET /api/membership/history ─────────────────────────────────────────────
+// Returns payment history for the current user.
+
+membership.get('/history', async (c) => {
+  const session = await requireSession(c.req.raw, c.env);
+  if (session instanceof Response) return session;
+
+  const record = await getMembership(session.address, c.env);
+
+  return noCacheJsonResponse({
+    payments: record?.paymentHistory ?? [],
+    totalSpent: (record?.paymentHistory ?? [])
+      .filter((p) => p.status === 'confirmed')
+      .reduce((sum, p) => sum + p.amount, 0),
+    currency: record?.paymentHistory[0]?.currency ?? 'USD',
+  });
+});
+
+// ─── POST /api/membership/cancel ─────────────────────────────────────────────
+// Cancel subscription. Tier remains active until expiry.
+
+membership.post('/cancel', async (c) => {
+  const session = await requireSession(c.req.raw, c.env);
+  if (session instanceof Response) return session;
+
+  const result = await cancelMembership(session.address, c.env);
+
+  if (!result.success) {
+    return jsonResponse({ error: 'No active subscription found' }, 404);
+  }
+
+  return jsonResponse({
+    success: true,
+    message: 'Subscription cancelled. Your tier remains active until expiry.',
+    expiresAt: new Date(result.expiresAt).toISOString(),
+  });
+});
+
+// ─── POST /api/membership/verify-payment ─────────────────────────────────────
+// Verify an on-chain payment for tier upgrade.
+
+membership.post('/verify-payment', async (c) => {
+  const session = await requireSession(c.req.raw, c.env);
+  if (session instanceof Response) return session;
+
+  interface VerifyBody {
+    tier: string;
+    txHash: string;
+    chain?: string;
+  }
+
+  let body: VerifyBody;
+  try {
+    body = (await c.req.json()) as VerifyBody;
+  } catch {
+    return jsonResponse({ error: 'Invalid JSON body' }, 400);
+  }
+
+  if (!body.txHash) {
+    return jsonResponse({ error: 'txHash is required' }, 400);
+  }
+
+  const targetTier = body.tier as Tier;
+  if (!['pro', 'creator', 'enterprise'].includes(targetTier)) {
+    return jsonResponse({ error: 'Invalid tier' }, 400);
+  }
+
+  const result = await upgradeTier(session.address, targetTier, c.env, {
+    txHash: body.txHash,
+    amount: TIER_INFO[targetTier].price,
+    currency: 'USDC',
+    period: 'monthly',
+  });
+
+  if (!result.success) {
+    return jsonResponse({ error: result.error ?? 'Verification failed' }, 400);
+  }
+
+  return noCacheJsonResponse({
+    success: true,
+    message: `Payment verified. Upgraded to ${TIER_INFO[targetTier].name}!`,
+    tier: targetTier,
+  });
+});
+
+// ════════════════════════════════════════════════════════════════════════════
+// PROTOCOL ACCESS DASHBOARD
+// ════════════════════════════════════════════════════════════════════════════
+
+// ─── GET /api/membership/protocols ────────────────────────────────────────────
+// Returns ALL protocols organized by tier, so users can see what they get.
+// No auth required — this is a catalog endpoint.
+
+membership.get('/protocols', async (c) => {
+  const protocolsByTier = getProtocolsByTier();
+
+  // Build a catalog: each tier's protocols + upgrade info
+  const catalog = (
+    Object.entries(protocolsByTier) as [Tier, (typeof protocolsByTier)['free']][]
+  ).map(([tier, protocols]) => ({
+    tier,
+    tierInfo: TIER_INFO[tier],
+    protocols: protocols.map((p) => ({
+      id: p.id,
+      label: p.label,
+      description: p.shortDescription,
+      icon: p.icon,
+      federated: p.federated,
+      benefits: p.benefits,
+    })),
+  }));
+
+  return noCacheJsonResponse({
+    catalog,
+    totalProtocols: Object.keys(PROTOCOL_ACCESS).length,
+    activityPubCount: catalog[0]?.protocols.length ?? 0, // Free tier = all AP
+    freeLabel: 'One account = ActivityPub across 10+ services',
+  });
+});
+
+// ─── GET /api/membership/protocols/status ─────────────────────────────────────
+// Returns the user's personal protocol dashboard: which are unlocked/locked.
+
+membership.get('/protocols/status', async (c) => {
+  const session = await requireSession(c.req.raw, c.env);
+  if (session instanceof Response) return session;
+
+  const tier = await getUserTier(session.address, c.env);
+  const allProtocols = Object.values(PROTOCOL_ACCESS);
+  const summary = getProtocolAccessSummary(tier);
+
+  const protocols = allProtocols.map((def) => {
+    const unlocked = checkProtocolAccess(tier, def.id);
+    const upgradeCta = unlocked ? null : getProtocolUpgradeCta(tier, def.id);
+    return {
+      id: def.id,
+      label: def.label,
+      description: def.shortDescription,
+      icon: def.icon,
+      federated: def.federated,
+      benefits: def.benefits,
+      minTier: def.minTier,
+      unlocked,
+      locked: !unlocked,
+      upgradeCta,
+    };
+  });
+
+  return noCacheJsonResponse({
+    tier,
+    tierInfo: TIER_INFO[tier],
+    protocols,
+    summary,
+    canUpgrade: tier !== 'enterprise',
+    nextTier: getNextTier(tier),
+  });
+});
+
+// ─── GET /api/membership/protocols/:id ────────────────────────────────────────
+// Returns detail about a specific protocol + whether it's unlocked for the user.
+
+import type { Tier as TierType } from '../lib/membership-tiers';
+
+membership.get('/protocols/:id', async (c) => {
+  const protocolId = c.req.param('id') as ProtocolId;
+  const def = PROTOCOL_ACCESS[protocolId];
+
+  if (!def) {
+    return jsonResponse({ error: `Unknown protocol: ${protocolId}` }, 404);
+  }
+
+  // Auth optional — show catalog info without session
+  let unlocked = false;
+  let userTier: TierType = 'free';
+  let upgradeCta: string | null = null;
+
+  try {
+    const session = await requireSession(c.req.raw, c.env);
+    if (!(session instanceof Response)) {
+      userTier = await getUserTier(session.address, c.env);
+      unlocked = checkProtocolAccess(userTier, protocolId);
+      upgradeCta = getProtocolUpgradeCta(userTier, protocolId);
+    }
+  } catch {
+    // No session — show as locked with generic upgrade info
+  }
+
+  return noCacheJsonResponse({
+    protocol: {
+      id: def.id,
+      label: def.label,
+      description: def.description,
+      shortDescription: def.shortDescription,
+      icon: def.icon,
+      federated: def.federated,
+      benefits: def.benefits,
+      minTier: def.minTier,
+      tierInfo: TIER_INFO[def.minTier],
+    },
+    unlocked,
+    userTier,
+    ...(upgradeCta ? { upgradeCta } : {}),
+    ...(!unlocked
+      ? {
+          upgradeUrl: '/api/membership/upgrade',
+          upgradeTo: getNextTier(userTier === 'free' ? 'free' : userTier),
+        }
+      : {}),
+  });
+});
+
+// ─── API reference: protocol registration routes ───────────────────────────
+// Registration is handled by protocol-register-gated.ts
+// POST /api/gts/register       — Free
+// POST /api/nostr/register     — Pro+
+// POST /api/bluesky/register   — Creator+
+// POST /api/lemmy/register     — Creator+
+// POST /api/farcaster/register — Enterprise
+// POST /api/lens/register      — Enterprise
+// POST /api/zora/mint          — Enterprise
+
+export default membership;

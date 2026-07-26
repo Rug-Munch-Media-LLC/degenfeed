@@ -10,7 +10,7 @@
  *   - WebSocket for real-time sticker triggers and filter changes
  */
 
-import type { Env } from '../index';
+import type { Env } from '../types';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // 1. CREATOR EMOJIS

@@ -1,8 +1,8 @@
 /**
  * @degenfeed/api-worker — Creator Video Utilities
  */
-import type { Env } from '../index';
-import { type CreatorVideoMeta, type VideoAnalytics } from './types';
+import type { Env } from '../types';
+import type { CreatorVideoMeta, VideoAnalytics } from './types';
 
 const VIDEOS_PREFIX = 'creator:videos:';
 const PROGRESS_PREFIX = 'creator:videos:progress:';
@@ -29,9 +29,15 @@ export async function getVideos(env: Env, address: string): Promise<CreatorVideo
   try {
     const raw = await env.CONTENT_STORE?.get(videosKey(address));
     return raw ? JSON.parse(raw) : [];
-  } catch { return []; }
+  } catch {
+    return [];
+  }
 }
 
-export async function saveVideos(env: Env, address: string, videos: CreatorVideoMeta[]): Promise<void> {
+export async function saveVideos(
+  env: Env,
+  address: string,
+  videos: CreatorVideoMeta[],
+): Promise<void> {
   await env.CONTENT_STORE?.put(videosKey(address), JSON.stringify(videos));
 }

@@ -19,4 +19,58 @@ export const VALID_PROTOCOLS = new Set([
   'activitypub',
 ]);
 
-export type CrossProtocolCoinRecord = {};
+export interface CrossProtocolCoinRecord {
+  symbol: string;
+  name: string;
+  coinAddress: string;
+  tokenId: string;
+  chain: string;
+  chainId: number;
+  originProtocol: string;
+  originCreatorId: string;
+  deployedAt: number;
+  deployedBy: string;
+  metadataUri: string;
+  zoraUrl: string;
+  degenfeedUrl: string;
+  announcements?: Record<string, unknown>[];
+  totalSupply: string;
+  price: string;
+  supporters: number;
+  totalTips: number;
+  totalTipsUsd: number;
+}
+
+export interface LaunchCoinBody {
+  name?: string;
+  symbol?: string;
+  chain?: 'base' | 'base_sepolia' | 'solana' | 'solana_devnet';
+  originProtocol?: string;
+  vestingConfig?: {
+    vestingDurationDays?: number;
+    creatorAllocationBps?: number;
+    cliffDays?: number;
+  };
+  feeConfig?: {
+    creatorFeeBps?: number;
+    platformFeeBps?: number;
+  };
+}
+
+export interface VestingConfig {
+  vestingDurationDays: number;
+  creatorAllocationBps: number;
+  cliffDays: number;
+}
+
+export interface FeeConfig {
+  creatorFeeBps: number;
+  platformFeeBps: number;
+}
+
+export type CoinChain = 'base' | 'base_sepolia' | 'solana' | 'solana_devnet';
+
+export interface DeployResult {
+  coinAddress: string;
+  tokenId: string;
+}

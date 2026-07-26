@@ -12,3 +12,29 @@
  */
 
 export {
+  handleGetPostPerformance,
+  handleListPostAnalytics,
+  handleRecordEngagement,
+} from './analytics';
+export {
+  handleComposerPost,
+  handleComposerPreview,
+  handleComposerProtocols,
+} from './composer';
+export {
+  handleBestTimes,
+  handleRecyclePost,
+  handleSetEvergreen,
+  handleSetRecurring,
+} from './optimize';
+export {
+  executeDuePremiumPosts,
+  handleBatchPublish,
+  handleCalendarView,
+  handleQueueAdd,
+  handleQueueDelete,
+  handleQueueList,
+  handleQueueStats,
+  handleQueueUpdate,
+} from './queue';
+export * from './types';

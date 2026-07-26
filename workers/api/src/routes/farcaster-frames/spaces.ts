@@ -2,181 +2,181 @@
  * @degenfeed/api-worker — Farcaster Space Frame Handlers
  */
 import type { Hono } from 'hono';
-import type { Env } from '../index';
-import { jsonResponse, noCacheJsonResponse } from '../index';
 import { generateFrameHtml } from '../../lib/farcaster-live';
-import { getSpace, escapeXml } from './utils';
+import { jsonResponse, noCacheJsonResponse } from '../response-helpers';
+import type { Env } from '../types';
+import { escapeXml, getSpace } from './utils';
 
 export function registerSpaceFrameRoutes(frames: Hono<{ Bindings: Env }>): void {
-// ═══════════════════════════════════════════════════════════════════════════
-// GET /api/farcaster/frames/space/:id — Frame for an audio space
-// ═══════════════════════════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════════════════════
+  // GET /api/farcaster/frames/space/:id — Frame for an audio space
+  // ═══════════════════════════════════════════════════════════════════════════
 
-/**
- * Return a Farcaster Frame HTML page for an audio space.
- *
- * Uses fc:live meta tags (FIP #269) for live activity discovery.
- * Shows speakers, listener count, and join button.
- */
+  /**
+   * Return a Farcaster Frame HTML page for an audio space.
+   *
+   * Uses fc:live meta tags (FIP #269) for live activity discovery.
+   * Shows speakers, listener count, and join button.
+   */
   frames.get('/space/:id', async (c) => {
-  const spaceId = c.req.param('id');
-  const space = await getSpace(c.env, spaceId);
+    const spaceId = c.req.param('id');
+    const space = await getSpace(c.env, spaceId);
 
-  if (!space) {
-    return c.html(
-      generateFrameHtml({
-        image: 'https://app.degenfeed.xyz/og/space-not-found.png',
-        title: 'Space Not Found — DegenFeed',
-        buttons: [
-          {
-            index: 1,
-            label: 'Browse Spaces',
-            action: 'link',
-            target: 'https://app.degenfeed.xyz/spaces',
-          },
-        ],
-      }),
-    );
-  }
+    if (!space) {
+      return c.html(
+        generateFrameHtml({
+          image: 'https://app.degenfeed.xyz/og/space-not-found.png',
+          title: 'Space Not Found — DegenFeed',
+          buttons: [
+            {
+              index: 1,
+              label: 'Browse Spaces',
+              action: 'link',
+              target: 'https://app.degenfeed.xyz/spaces',
+            },
+          ],
+        }),
+      );
+    }
 
-  const title = (space.title as string) || 'Untitled Space';
-  const hostName = (space.hostName as string) || 'Anonymous';
-  const _hostId = (space.hostId as string) || '';
-  const speakers = (space.speakers as Array<Record<string, unknown>>) || [];
-  const listenerCount = (space.listeners as number) || 0;
-  const speakerCount = speakers.length || 0;
-  const _status = (space.status as string) || 'live';
-  const _tags = (space.tags as string[]) || [];
-  const thumbnail = 'https://app.degenfeed.xyz/og/space-default.png';
+    const title = (space.title as string) || 'Untitled Space';
+    const hostName = (space.hostName as string) || 'Anonymous';
+    const _hostId = (space.hostId as string) || '';
+    const speakers = (space.speakers as Array<Record<string, unknown>>) || [];
+    const listenerCount = (space.listeners as number) || 0;
+    const speakerCount = speakers.length || 0;
+    const _status = (space.status as string) || 'live';
+    const _tags = (space.tags as string[]) || [];
+    const thumbnail = 'https://app.degenfeed.xyz/og/space-default.png';
 
-  // Build live activity meta for FIP #269
-  const hostFid = (space.hostFid as number) || 0;
-  const startedAt = (space.startedAt as number) || (space.createdAt as number) || Date.now();
-  const speakerFids = speakers
-    .map((s) => s.fid as number | undefined)
-    .filter((f): f is number => f !== undefined);
+    // Build live activity meta for FIP #269
+    const hostFid = (space.hostFid as number) || 0;
+    const startedAt = (space.startedAt as number) || (space.createdAt as number) || Date.now();
+    const speakerFids = speakers
+      .map((s) => s.fid as number | undefined)
+      .filter((f): f is number => f !== undefined);
 
-  const liveActivity: LiveActivityMeta = {
-    type: 'live-audio-space',
-    title,
-    description: `Audio space hosted by ${hostName} on DegenFeed`,
-    image: thumbnail,
-    hostFid,
-    startedAt,
-    speakerFids: speakerFids.length > 0 ? speakerFids : undefined,
-    participantCount: speakerCount + listenerCount,
-    protocol: 'webrtc',
-  };
+    const liveActivity: LiveActivityMeta = {
+      type: 'live-audio-space',
+      title,
+      description: `Audio space hosted by ${hostName} on DegenFeed`,
+      image: thumbnail,
+      hostFid,
+      startedAt,
+      speakerFids: speakerFids.length > 0 ? speakerFids : undefined,
+      participantCount: speakerCount + listenerCount,
+      protocol: 'webrtc',
+    };
 
-  const frameUrl = `https://app.degenfeed.xyz/api/farcaster/frames/space/${spaceId}`;
-  const spaceAppUrl = `https://app.degenfeed.xyz/spaces/${spaceId}`;
-  const speakerInfo = `👥 ${speakerCount} speakers · ${listenerCount} listening`;
+    const frameUrl = `https://app.degenfeed.xyz/api/farcaster/frames/space/${spaceId}`;
+    const spaceAppUrl = `https://app.degenfeed.xyz/spaces/${spaceId}`;
+    const speakerInfo = `👥 ${speakerCount} speakers · ${listenerCount} listening`;
 
-  const html = generateFrameHtml({
-    image: `https://app.degenfeed.xyz/api/farcaster/frames/space/${spaceId}/image`,
-    imageAspectRatio: '1:1',
-    title: `🎙️ ${title}`,
-    description: speakerInfo,
-    postUrl: frameUrl,
-    liveActivity,
-    refreshInterval: 15,
-    buttons: [
-      {
-        index: 1,
-        label: '🎙️ Join Space',
-        action: 'link',
-        target: spaceAppUrl,
-      },
-      {
-        index: 2,
-        label: speakerCount > 0 ? `👥 Speakers (${speakerCount})` : '👥 Join as Speaker',
-        action: 'post',
-      },
-      {
-        index: 3,
-        label: `🎧 ${listenerCount} listening`,
-        action: 'post',
-      },
-    ],
+    const html = generateFrameHtml({
+      image: `https://app.degenfeed.xyz/api/farcaster/frames/space/${spaceId}/image`,
+      imageAspectRatio: '1:1',
+      title: `🎙️ ${title}`,
+      description: speakerInfo,
+      postUrl: frameUrl,
+      liveActivity,
+      refreshInterval: 15,
+      buttons: [
+        {
+          index: 1,
+          label: '🎙️ Join Space',
+          action: 'link',
+          target: spaceAppUrl,
+        },
+        {
+          index: 2,
+          label: speakerCount > 0 ? `👥 Speakers (${speakerCount})` : '👥 Join as Speaker',
+          action: 'post',
+        },
+        {
+          index: 3,
+          label: `🎧 ${listenerCount} listening`,
+          action: 'post',
+        },
+      ],
+    });
+
+    return c.html(html);
   });
 
-  return c.html(html);
-});
-
-// POST handler for /space/:id — handle button:2 (speakers) and button:3 (listeners)
+  // POST handler for /space/:id — handle button:2 (speakers) and button:3 (listeners)
   frames.post('/space/:id', async (c) => {
-  const spaceId = c.req.param('id');
-  const space = await getSpace(c.env, spaceId);
+    const spaceId = c.req.param('id');
+    const space = await getSpace(c.env, spaceId);
 
-  if (!space) {
-    return c.html(
-      generateFrameHtml({
-        image: 'https://app.degenfeed.xyz/og/space-not-found.png',
-        title: 'Space Not Found',
-        buttons: [
-          {
-            index: 1,
-            label: '← Back',
-            action: 'link',
-            target: 'https://app.degenfeed.xyz/spaces',
-          },
-        ],
-      }),
-    );
-  }
+    if (!space) {
+      return c.html(
+        generateFrameHtml({
+          image: 'https://app.degenfeed.xyz/og/space-not-found.png',
+          title: 'Space Not Found',
+          buttons: [
+            {
+              index: 1,
+              label: '← Back',
+              action: 'link',
+              target: 'https://app.degenfeed.xyz/spaces',
+            },
+          ],
+        }),
+      );
+    }
 
-  const title = (space.title as string) || 'Untitled Space';
-  const speakers = (space.speakers as Array<Record<string, unknown>>) || [];
-  const listenerCount = (space.listeners as number) || 0;
-  const spaceAppUrl = `https://app.degenfeed.xyz/spaces/${spaceId}`;
+    const title = (space.title as string) || 'Untitled Space';
+    const speakers = (space.speakers as Array<Record<string, unknown>>) || [];
+    const listenerCount = (space.listeners as number) || 0;
+    const spaceAppUrl = `https://app.degenfeed.xyz/spaces/${spaceId}`;
 
-  // Return speakers/listeners info frame
-  const _speakerList = speakers
-    .slice(0, 5)
-    .map((s) => `• ${(s.displayName as string) || 'Anonymous'}`)
-    .join('\n');
+    // Return speakers/listeners info frame
+    const _speakerList = speakers
+      .slice(0, 5)
+      .map((s) => `• ${(s.displayName as string) || 'Anonymous'}`)
+      .join('\n');
 
-  const html = generateFrameHtml({
-    image: 'https://app.degenfeed.xyz/og/space-speakers.png',
-    imageAspectRatio: '1:1',
-    title: `🎙️ ${title}`,
-    description: `${speakers.length} speakers · ${listenerCount} listeners`,
-    postUrl: `https://app.degenfeed.xyz/api/farcaster/frames/space/${spaceId}`,
-    buttons: [
-      {
-        index: 1,
-        label: '🎙️ Join',
-        action: 'link',
-        target: spaceAppUrl,
-      },
-      {
-        index: 2,
-        label: '↩️ Back',
-        action: 'post',
-      },
-    ],
+    const html = generateFrameHtml({
+      image: 'https://app.degenfeed.xyz/og/space-speakers.png',
+      imageAspectRatio: '1:1',
+      title: `🎙️ ${title}`,
+      description: `${speakers.length} speakers · ${listenerCount} listeners`,
+      postUrl: `https://app.degenfeed.xyz/api/farcaster/frames/space/${spaceId}`,
+      buttons: [
+        {
+          index: 1,
+          label: '🎙️ Join',
+          action: 'link',
+          target: spaceAppUrl,
+        },
+        {
+          index: 2,
+          label: '↩️ Back',
+          action: 'post',
+        },
+      ],
+    });
+
+    return c.html(html);
   });
 
-  return c.html(html);
-});
-
-// ═══════════════════════════════════════════════════════════════════════════
-// GET /api/farcaster/frames/space/:id/image — Dynamic SVG badge for space
-// ═══════════════════════════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════════════════════
+  // GET /api/farcaster/frames/space/:id/image — Dynamic SVG badge for space
+  // ═══════════════════════════════════════════════════════════════════════════
 
   frames.get('/space/:id/image', async (c) => {
-  const spaceId = c.req.param('id');
-  const space = await getSpace(c.env, spaceId);
+    const spaceId = c.req.param('id');
+    const space = await getSpace(c.env, spaceId);
 
-  const title = (space?.title as string) || 'Untitled Space';
-  const hostName = (space?.hostName as string) || 'Anonymous';
-  const speakerCount = ((space?.speakers as Array<unknown>) || []).length;
-  const listenerCount = (space?.listeners as number) || 0;
-  const status = (space?.status as string) || 'live';
+    const title = (space?.title as string) || 'Untitled Space';
+    const hostName = (space?.hostName as string) || 'Anonymous';
+    const speakerCount = ((space?.speakers as Array<unknown>) || []).length;
+    const listenerCount = (space?.listeners as number) || 0;
+    const status = (space?.status as string) || 'live';
 
-  const hue = (spaceId.charCodeAt(0) * 53) % 360;
+    const hue = (spaceId.charCodeAt(0) * 53) % 360;
 
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="630" height="630" viewBox="0 0 630 630">
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="630" height="630" viewBox="0 0 630 630">
   <defs>
     <radialGradient id="bg">
       <stop offset="0%" style="stop-color:hsl(${hue}, 50%, 25%)" />
@@ -234,13 +234,12 @@ export function registerSpaceFrameRoutes(frames: Hono<{ Bindings: Env }>): void 
   </text>
 </svg>`;
 
-  return new Response(svg, {
-    headers: {
-      'content-type': 'image/svg+xml',
-      'cache-control': 'no-cache, no-store, must-revalidate',
-      'access-control-allow-origin': '*',
-    },
+    return new Response(svg, {
+      headers: {
+        'content-type': 'image/svg+xml',
+        'cache-control': 'no-cache, no-store, must-revalidate',
+        'access-control-allow-origin': '*',
+      },
+    });
   });
-});
-
 }

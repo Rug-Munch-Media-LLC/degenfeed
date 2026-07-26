@@ -2,10 +2,9 @@
  * @degenfeed/api-worker — Connected Accounts OAuth Handlers
  */
 
-import type { Env } from '../../index';
-import { jsonResponse } from '../../index';
-import { methodNotAllowed } from '../../response-helpers';
+import { jsonResponse, methodNotAllowed } from '../../response-helpers';
 import { requireSession } from '../../session';
+import type { Env } from '../../types';
 import { consumeState, generateOAuthState, storeState } from '../oauth-state';
 import { buildOAuthUrl } from './oauth-urls';
 import { CENTRALIZED_PLATFORMS, type CentralizedPlatform, PLATFORM_LABELS } from './types';

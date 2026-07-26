@@ -2,7 +2,7 @@
  * @degenfeed/api-worker — Farcaster Frame Utilities
  */
 
-import type { Env } from '../index';
+import type { Env } from '../types';
 import { COIN_PREFIX, SPACE_PREFIX, STREAM_PREFIX } from './types';
 
 export async function getStream(env: Env, id: string): Promise<Record<string, unknown> | null> {

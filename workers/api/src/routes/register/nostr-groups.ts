@@ -8,3 +8,6 @@ import nostrGroups from '../nostr-groups';
 import { withSession } from '../route-registry';
 
 export function registerNostrGroupRoutes(app: Hono<{ Bindings: Env }>): void {
+  // Mount Nostr groups sub-router under /api/nostr
+  app.route('/api/nostr', nostrGroups);
+}

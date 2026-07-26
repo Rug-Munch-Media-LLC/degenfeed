@@ -29,4 +29,453 @@ export type ChallengeType =
 
 export type ChallengeStatus = 'active' | 'completed' | 'expired';
 
-export type Challenge = {};
+export interface Challenge {
+  id: string;
+  coinSymbol: string;
+  type: ChallengeType;
+  title: string;
+  description: string;
+  target: number;
+  current: number;
+  status: ChallengeStatus;
+  reward: ChallengeReward;
+  startsAt: number;
+  endsAt: number;
+  createdBy: string;
+  createdByLabel?: string;
+  participants?: number;
+  winner?: string;
+  winnerLabel?: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface ChallengeReward {
+  type: 'badge' | 'price_boost' | 'reputation' | 'nft' | 'community_vote';
+  label: string;
+  value?: string;
+  badgeName?: string;
+  badgeIcon?: string;
+  boostBps?: number;
+  reputationAmount?: number;
+  nftName?: string;
+}
+
+export interface CreateChallengeRequest {
+  type: ChallengeType;
+  title: string;
+  description: string;
+  target: number;
+  reward: ChallengeReward;
+  durationHours: number;
+}
+
+// ─── Constants ─────────────────────────────────────────────────────────────
+
+const KV_PREFIX = 'coin:challenges:';
+const MAX_CHALLENGES = 50;
+const CACHE_TTL = 60; // 1 minute
+
+const CHALLENGE_TYPES: Record<ChallengeType, { label: string; icon: string; description: string }> =
+  {
+    holder_milestone: {
+      label: 'Holder Milestone',
+      icon: '👥',
+      description: 'Reach a target number of holders',
+    },
+    buy_pressure: {
+      label: 'Buy Pressure',
+      icon: '📈',
+      description: 'Buy a target amount of tokens within a time window',
+    },
+    community_vote: {
+      label: 'Community Vote',
+      icon: '🗳️',
+      description: 'Vote on the next feature or decision',
+    },
+    referral_race: {
+      label: 'Referral Race',
+      icon: '🏁',
+      description: 'Invite the most new holders to win',
+    },
+    content_contest: {
+      label: 'Content Contest',
+      icon: '🎨',
+      description: 'Best meme or video about the coin wins',
+    },
+  };
+
+// ─── KV Helpers ────────────────────────────────────────────────────────────
+
+async function getChallenges(env: Env, symbol: string): Promise<Challenge[]> {
+  try {
+    const key = KV_PREFIX + symbol.toLowerCase();
+    const raw = await env.CACHE?.get(key);
+    if (raw) return JSON.parse(raw) as Challenge[];
+  } catch {
+    // Fall through
+  }
+  return [];
+}
+
+async function setChallenges(env: Env, symbol: string, challenges: Challenge[]): Promise<void> {
+  try {
+    const key = KV_PREFIX + symbol.toLowerCase();
+    await env.CACHE?.put(key, JSON.stringify(challenges.slice(0, MAX_CHALLENGES)), {
+      expirationTtl: CACHE_TTL,
+    });
+  } catch {
+    // Non-critical
+  }
+}
+
+// ─── GET /api/coin/:symbol/challenges ─────────────────────────────────────
+
+export async function handleCoinChallengesList(request: Request, env: Env): Promise<Response> {
+  const url = new URL(request.url);
+  const parts = url.pathname.split('/').filter(Boolean);
+  const symbol = extractSymbol(parts);
+
+  if (!symbol) {
+    return jsonResponse({ error: 'Symbol is required' }, 400);
+  }
+
+  const statusFilter = url.searchParams.get('status') as ChallengeStatus | 'all' | null;
+  const typeFilter = url.searchParams.get('type') as ChallengeType | null;
+
+  let challenges = await getChallenges(env, symbol);
+
+  if (challenges.length === 0) {
+    // Return mock challenges for demo
+    challenges = generateMockChallenges(symbol.toUpperCase());
+  } else {
+    // Update statuses based on time
+    const now = Date.now();
+    challenges = challenges.map((c) => {
+      if (c.status !== 'completed') {
+        if (c.endsAt <= now) return { ...c, status: 'expired' as const };
+        if (c.current >= c.target) return { ...c, status: 'completed' as const };
+      }
+      return c;
+    });
+    await setChallenges(env, symbol, challenges);
+  }
+
+  // Apply filters
+  let filtered = challenges;
+  if (statusFilter && statusFilter !== 'all') {
+    filtered = filtered.filter((c) => c.status === statusFilter);
+  }
+  if (typeFilter) {
+    filtered = filtered.filter((c) => c.type === typeFilter);
+  }
+
+  return noCacheJsonResponse({
+    challenges: filtered,
+    total: filtered.length,
+    symbol: symbol.toUpperCase(),
+  });
+}
+
+// ─── POST /api/coin/:symbol/challenges ────────────────────────────────────
+
+export async function handleCoinChallengeCreate(request: Request, env: Env): Promise<Response> {
+  const session = await requireSession(request, env);
+  if (session instanceof Response) return session;
+
+  const url = new URL(request.url);
+  const parts = url.pathname.split('/').filter(Boolean);
+  const symbol = extractSymbol(parts);
+
+  if (!symbol) {
+    return jsonResponse({ error: 'Symbol is required' }, 400);
+  }
+
+  // Verify creator owns this coin (simplified check)
+  const coinKey = `coin:data:${symbol.toLowerCase()}`;
+  const coinData = await getCoinData(env, coinKey);
+  if (coinData && coinData.creator?.toLowerCase() !== session.address.toLowerCase()) {
+    return jsonResponse({ error: 'Only the coin creator can create challenges' }, 403);
+  }
+
+  let body: CreateChallengeRequest;
+  try {
+    body = (await request.json()) as CreateChallengeRequest;
+  } catch {
+    return jsonResponse({ error: 'Invalid JSON body' }, 400);
+  }
+
+  if (!body.type || !body.title || !body.target || !body.reward || !body.durationHours) {
+    return jsonResponse(
+      { error: 'type, title, target, reward, and durationHours are required' },
+      400,
+    );
+  }
+
+  if (!CHALLENGE_TYPES[body.type]) {
+    return jsonResponse(
+      {
+        error: `Invalid challenge type. Must be one of: ${Object.keys(CHALLENGE_TYPES).join(', ')}`,
+      },
+      400,
+    );
+  }
+
+  const now = Date.now();
+  const challenge: Challenge = {
+    id: `ch_${crypto.randomUUID().slice(0, 8)}`,
+    coinSymbol: symbol.toUpperCase(),
+    type: body.type,
+    title: sanitizeString(body.title, 200) || body.title,
+    description: sanitizeString(body.description, 1000) || '',
+    target: body.target,
+    current: 0,
+    status: 'active',
+    reward: body.reward,
+    startsAt: now,
+    endsAt: now + body.durationHours * 3600_000,
+    createdBy: session.address,
+    createdByLabel: `${session.address.slice(0, 6)}...${session.address.slice(-4)}`,
+    participants: 0,
+  };
+
+  const challenges = await getChallenges(env, symbol);
+  challenges.unshift(challenge);
+  await setChallenges(env, symbol, challenges);
+
+  return jsonResponse({ success: true, challenge }, 201);
+}
+
+// ─── POST /api/coin/:symbol/challenges/:id/progress ──────────────────────
+
+const _VALID_CHALLENGE_PROGRESS_BODIES = new Set(['increment']);
+
+export async function handleCoinChallengeProgress(request: Request, env: Env): Promise<Response> {
+  const session = await requireSession(request, env);
+  if (session instanceof Response) return session;
+
+  const url = new URL(request.url);
+  const parts = url.pathname.split('/').filter(Boolean);
+  const symbol = extractSymbol(parts);
+  const challengeId = parts[parts.length - 2]; // .../:id/progress
+
+  if (!symbol || !challengeId) {
+    return jsonResponse({ error: 'Symbol and challenge ID are required' }, 400);
+  }
+
+  let body: { increment?: number };
+  try {
+    body = (await request.json()) as { increment?: number };
+  } catch {
+    return jsonResponse({ error: 'Invalid JSON body' }, 400);
+  }
+
+  const increment = Math.max(1, Math.min(body.increment ?? 1, 1000000)); // Sanity cap
+  const challenges = await getChallenges(env, symbol);
+  const challenge = challenges.find((c) => c.id === challengeId);
+
+  if (!challenge) {
+    return jsonResponse({ error: 'Challenge not found' }, 404);
+  }
+
+  if (challenge.status !== 'active') {
+    return jsonResponse({ error: 'Challenge is not active' }, 400);
+  }
+
+  challenge.current = Math.min(challenge.current + increment, challenge.target);
+  challenge.participants = (challenge.participants ?? 0) + 1;
+
+  if (challenge.current >= challenge.target) {
+    challenge.status = 'completed';
+  }
+
+  await setChallenges(env, symbol, challenges);
+
+  return noCacheJsonResponse({
+    success: true,
+    challenge,
+    completed: challenge.status === 'completed',
+    progressPercent: Math.round((challenge.current / challenge.target) * 100),
+  });
+}
+
+// ─── PATCH /api/coin/:symbol/challenges/:id ──────────────────────────────
+
+export async function handleCoinChallengeUpdate(request: Request, env: Env): Promise<Response> {
+  const session = await requireSession(request, env);
+  if (session instanceof Response) return session;
+
+  const url = new URL(request.url);
+  const parts = url.pathname.split('/').filter(Boolean);
+  const symbol = extractSymbol(parts);
+  const challengeId = parts[parts.length - 1];
+
+  if (!symbol || !challengeId) {
+    return jsonResponse({ error: 'Symbol and challenge ID are required' }, 400);
+  }
+
+  let body: {
+    title?: string;
+    description?: string;
+    status?: 'active' | 'completed' | 'expired';
+  };
+  try {
+    body = (await request.json()) as typeof body;
+  } catch {
+    return jsonResponse({ error: 'Invalid JSON body' }, 400);
+  }
+
+  // Verify creator owns this coin
+  const coinKey = `coin:data:${symbol.toLowerCase()}`;
+  const coinData = await getCoinData(env, coinKey);
+  if (coinData && coinData.creator?.toLowerCase() !== session.address.toLowerCase()) {
+    return jsonResponse({ error: 'Only the coin creator can update challenges' }, 403);
+  }
+
+  const challenges = await getChallenges(env, symbol);
+  const challenge = challenges.find((c) => c.id === challengeId);
+
+  if (!challenge) {
+    return jsonResponse({ error: 'Challenge not found' }, 404);
+  }
+
+  if (body.title !== undefined)
+    challenge.title = sanitizeString(body.title, 200) || challenge.title;
+  if (body.description !== undefined)
+    challenge.description = sanitizeString(body.description, 1000) || challenge.description;
+  if (body.status !== undefined && ['active', 'completed', 'expired'].includes(body.status)) {
+    challenge.status = body.status;
+  }
+
+  await setChallenges(env, symbol, challenges);
+
+  return jsonResponse({ success: true, challenge });
+}
+
+// ─── Helpers ───────────────────────────────────────────────────────────────
+
+function extractSymbol(parts: string[]): string {
+  const coinIdx = parts.indexOf('coin');
+  if (coinIdx === -1) return '';
+  return parts[coinIdx + 1] ?? '';
+}
+
+async function getCoinData(env: Env, key: string): Promise<{ creator?: string } | null> {
+  try {
+    const raw = await env.CACHE?.get(key);
+    return raw ? (JSON.parse(raw) as { creator?: string }) : null;
+  } catch {
+    return null;
+  }
+}
+
+// ─── Mock Data ─────────────────────────────────────────────────────────────
+
+function generateMockChallenges(symbol: string): Challenge[] {
+  const now = Date.now();
+  return [
+    {
+      id: `ch_${symbol}_holders`,
+      coinSymbol: symbol,
+      type: 'holder_milestone',
+      title: `${symbol} Army: 500 Holders`,
+      description: `Help us reach 500 holders! Everyone holding at that point gets the "Early Army" badge.`,
+      target: 500,
+      current: 347,
+      status: 'active',
+      reward: {
+        type: 'badge',
+        label: 'Early Army Badge',
+        badgeName: 'Early Army',
+        badgeIcon: '🪖',
+      },
+      startsAt: now - 86400000 * 2,
+      endsAt: now + 86400000 * 5,
+      createdBy: '0xcreator...0001',
+      createdByLabel: 'creator.eth',
+      participants: 347,
+    },
+    {
+      id: `ch_${symbol}_buy`,
+      coinSymbol: symbol,
+      type: 'buy_pressure',
+      title: `Buy Rush: 10,000 ${symbol}`,
+      description: `Collectively buy 10,000 $${symbol} in 24h to unlock a price boost event!`,
+      target: 10000,
+      current: 6234,
+      status: 'active',
+      reward: {
+        type: 'price_boost',
+        label: 'Price Boost Event',
+        boostBps: 200, // 2% boost
+      },
+      startsAt: now - 86400000,
+      endsAt: now + 86400000,
+      createdBy: '0xcreator...0001',
+      createdByLabel: 'creator.eth',
+      participants: 89,
+    },
+    {
+      id: `ch_${symbol}_vote`,
+      coinSymbol: symbol,
+      type: 'community_vote',
+      title: 'Choose the Next Feature',
+      description:
+        'Vote on what feature we build next: NFT integration, DAO governance, or cross-chain bridge?',
+      target: 1000,
+      current: 1000,
+      status: 'completed',
+      reward: {
+        type: 'reputation',
+        label: '+50 Reputation',
+        reputationAmount: 50,
+      },
+      startsAt: now - 86400000 * 3,
+      endsAt: now - 86400000,
+      createdBy: '0xcreator...0001',
+      createdByLabel: 'creator.eth',
+      participants: 1000,
+      winner: 'dao_governance',
+    },
+    {
+      id: `ch_${symbol}_referral`,
+      coinSymbol: symbol,
+      type: 'referral_race',
+      title: `Referral Leaderboard — ${symbol}`,
+      description: `Invite friends to buy $${symbol}. Top 3 referrers win an exclusive NFT!`,
+      target: 100,
+      current: 45,
+      status: 'active',
+      reward: {
+        type: 'nft',
+        label: 'Exclusive Referral NFT',
+        nftName: `${symbol} Referral Champion`,
+      },
+      startsAt: now - 86400000,
+      endsAt: now + 86400000 * 6,
+      createdBy: '0xcreator...0001',
+      createdByLabel: 'creator.eth',
+      participants: 23,
+    },
+    {
+      id: `ch_${symbol}_meme`,
+      coinSymbol: symbol,
+      type: 'content_contest',
+      title: `${symbol} Meme War`,
+      description: `Create the best meme about $${symbol}. Community votes decide the winner!`,
+      target: 50,
+      current: 12,
+      status: 'active',
+      reward: {
+        type: 'community_vote',
+        label: 'Community Choice Winner',
+      },
+      startsAt: now,
+      endsAt: now + 86400000 * 7,
+      createdBy: '0xcreator...0001',
+      createdByLabel: 'creator.eth',
+      participants: 12,
+    },
+  ];
+}
+
+export { CHALLENGE_TYPES };
