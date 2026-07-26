@@ -1,3 +1,21 @@
+// ═══════════════════════════════════════════════════════════════════════
+// CRITICAL: Error handlers MUST be registered BEFORE any module imports
+// to catch errors during module loading/evaluation.
+// Provider modules (zora, etc.) can throw during transpilation/loading,
+// and without these handlers, the process aborts with SIGABRT (status 134).
+// ═══════════════════════════════════════════════════════════════════════
+process.on('unhandledRejection', (reason) => {
+  console.error('[bridge] Unhandled rejection:', reason instanceof Error ? reason.message : reason);
+});
+process.on('uncaughtException', (err) => {
+  console.error('[bridge] Uncaught exception:', err.message);
+  // Don't abort on EADDRINUSE from rapid restart
+  if ((err as NodeJS.ErrnoException).code === 'EADDRINUSE') {
+    console.error('[bridge] Port in use, waiting for restart...');
+    return;
+  }
+});
+
 import http from 'node:http';
 import { getCrossPosterStats, startCrossPoster } from '../crossposter';
 import { getIndexerStatus, reindex, startIndexer } from '../search-indexer';
@@ -6,14 +24,7 @@ import { handleEventRoute } from './event-routes';
 import { buildFeed, DEFAULT_PREFERENCES, PROVIDERS } from './feeds';
 import { handleGtsRoute } from './gts-routes';
 import { handleNostrRoute } from './nostr-routes';
-
-// Catch unhandled rejections to prevent process crashes
-process.on('unhandledRejection', (reason) => {
-  console.error('[bridge] Unhandled rejection:', reason instanceof Error ? reason.message : reason);
-});
-process.on('uncaughtException', (err) => {
-  console.error('[bridge] Uncaught exception:', err.message);
-});
+import { feedCache } from './response-cache';
 
 import type { UnifiedPost } from './types';
 
@@ -337,18 +348,23 @@ async function crossProtocolSearch(
   }
 
   // Fallback: search providers directly
+  const allProviderKeys = Object.keys(PROVIDERS).filter((k) => PROVIDERS[k].category !== 'infrastructure');
   const activeProtocols =
     sources.length > 0 && !sources.includes('all')
       ? sources.filter((s) => s in PROVIDERS)
-      : Object.keys(PROVIDERS);
+      : allProviderKeys;
 
   if (activeProtocols.length === 0) return result;
 
+  // Safety cap: never fetch from more than 10 providers in search fallback
+  // to prevent memory exhaustion from 70+ concurrent fetches
+  const cappedProtocols = activeProtocols.slice(0, 10);
+
   const qLower = q.toLowerCase();
-  const perProvider = Math.max(5, Math.ceil(limit / activeProtocols.length));
+  const perProvider = Math.max(3, Math.ceil(limit / cappedProtocols.length));
 
   const results = await Promise.allSettled(
-    activeProtocols.map(async (protocol) => {
+    cappedProtocols.map(async (protocol) => {
       try {
         const provider = PROVIDERS[protocol];
         if (!provider) return [];
@@ -555,24 +571,34 @@ const server = http.createServer(async (req, res) => {
         .split(',')
         .map((p) => p.trim())
         .filter(Boolean);
-      const result = await buildFeed(protocols, limit);
-      result.meta.page = page;
-      // NEVER return empty — if buildFeed returned empty (shouldn't happen with seed fallback)
-      // add a notice and ensure we always have content
-      if (!result.posts || result.posts.length === 0) {
-        const { getSeedContent } = await import('./seed-content');
-        const seedPosts = getSeedContent(limit);
-        for (const p of seedPosts) (p as Record<string, unknown>)._demo = true;
-        result.posts = seedPosts;
-        result.meta.total = seedPosts.length;
-        result.meta.isDemo = true;
-        result.meta.notices = result.meta.notices || [];
-        (result.meta.notices as string[]).push(
-          'All providers returned empty — serving demo content',
-        );
-      }
-      // Return both formats for backward compatibility
-      return jsonOk(res, { data: result.posts, posts: result.posts, meta: result.meta });
+
+      // Build a cache key from the feed params
+      const cacheKey = `feed:${protocols.sort().join(',')}:${limit}`;
+
+      const result = await feedCache.getOrFetch(
+        cacheKey,
+        async () => {
+          const feedResult = await buildFeed(protocols, limit);
+          feedResult.meta.page = page;
+          // NEVER return empty — if buildFeed returned empty, serve seed content
+          if (!feedResult.posts || feedResult.posts.length === 0) {
+            const { getSeedContent } = await import('./seed-content');
+            const seedPosts = getSeedContent(limit);
+            for (const p of seedPosts) (p as Record<string, unknown>)._demo = true;
+            feedResult.posts = seedPosts;
+            feedResult.meta.total = seedPosts.length;
+            feedResult.meta.isDemo = true;
+            feedResult.meta.notices = feedResult.meta.notices || [];
+            (feedResult.meta.notices as string[]).push(
+              'All providers returned empty — serving demo content',
+            );
+          }
+          return feedResult;
+        },
+        45_000, // 45 second TTL for feed responses
+      );
+
+      return jsonOk(res, { data: result.posts, posts: result.posts, meta: { ...result.meta, page, cachedAt: Date.now() } });
     }
 
     if (path === '/api/rss/sources') {
@@ -908,46 +934,67 @@ const server = http.createServer(async (req, res) => {
         'github',
       ];
       if (allowed.includes(proto)) {
-        const result = await buildFeed([proto], limit);
+        const singleCacheKey = `feed:single:${proto}:${limit}`;
+        const result = await feedCache.getOrFetch(
+          singleCacheKey,
+          async () => {
+            const r = await buildFeed([proto], limit);
+            // NEVER return empty for single-provider feeds
+            if (!r.posts || r.posts.length === 0) {
+              const { getSeedContent } = await import('./seed-content');
+              const seedPosts = getSeedContent(limit, proto);
+              for (const p of seedPosts) (p as Record<string, unknown>)._demo = true;
+              r.posts = seedPosts;
+              r.meta.total = seedPosts.length;
+              r.meta.isDemo = true;
+              r.meta.source = 'demo';
+              r.meta.notices = r.meta.notices || [];
+              (r.meta.notices as string[]).push(
+                `Provider ${proto} returned empty — serving demo content. Connect a real ${proto} account at app.degenfeed.xyz`,
+              );
+            }
+            return r;
+          },
+          45_000,
+        );
         result.meta.page = page;
-        // NEVER return empty for single-provider feeds
-        if (!result.posts || result.posts.length === 0) {
-          const { getSeedContent } = await import('./seed-content');
-          const seedPosts = getSeedContent(limit, proto);
-          for (const p of seedPosts) (p as Record<string, unknown>)._demo = true;
-          result.posts = seedPosts;
-          result.meta.total = seedPosts.length;
-          result.meta.isDemo = true;
-          result.meta.source = 'demo';
-          result.meta.notices = result.meta.notices || [];
-          (result.meta.notices as string[]).push(
-            `Provider ${proto} returned empty — serving demo content. Connect a real ${proto} account at app.degenfeed.xyz`,
-          );
-        }
         return jsonOk(res, { data: result.posts, posts: result.posts, meta: result.meta });
       }
     }
 
     if (path === '/api/feed/stats') {
-      const entries = await Promise.allSettled(
-        Object.entries(PROVIDERS).map(async ([key, p]) => {
-          try {
-            const posts = await p.fetch(3);
-            return { protocol: key, count: posts.length, label: p.name };
-          } catch {
-            return { protocol: key, count: 0, label: key };
+      // Cached — fetching from 70+ providers on every request causes OOM
+      const statsCacheKey = 'feed:stats';
+      const statsResult = await feedCache.getOrFetch(
+        statsCacheKey,
+        async () => {
+          // Only sample a representative subset to avoid 70+ concurrent fetches
+          const sampleProviders = ['mastodon', 'bluesky', 'nostr', 'farcaster', 'rss', 'reddit', 'lemmy', 'lens'];
+          const entries = await Promise.allSettled(
+            sampleProviders.map(async (key) => {
+              const p = PROVIDERS[key];
+              if (!p) return { protocol: key, count: 0, label: key };
+              try {
+                const posts = await p.fetch(3);
+                return { protocol: key, count: posts.length, label: p.name };
+              } catch {
+                return { protocol: key, count: 0, label: key };
+              }
+            }),
+          );
+          const sources: Record<string, { count: number; label: string }> = {};
+          let totalPosts = 0;
+          for (const e of entries) {
+            if (e.status === 'fulfilled') {
+              sources[e.value.protocol] = { count: e.value.count, label: e.value.label };
+              totalPosts += e.value.count;
+            }
           }
-        }),
+          return { totalPosts, sources, fetchedAt: Date.now() } as any;
+        },
+        60_000, // 60 second cache
       );
-      const sources: Record<string, { count: number; label: string }> = {};
-      let totalPosts = 0;
-      for (const e of entries) {
-        if (e.status === 'fulfilled') {
-          sources[e.value.protocol] = { count: e.value.count, label: e.value.label };
-          totalPosts += e.value.count;
-        }
-      }
-      return jsonOk(res, { totalPosts, sources, fetchedAt: Date.now() });
+      return jsonOk(res, statsResult);
     }
 
     if (['/api/preferences', '/v1/preferences'].includes(path)) {
