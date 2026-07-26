@@ -250,8 +250,8 @@ export async function buildCrossPlatformProfile(
         identity.profileUrl ||
         buildProfileUrl(identity.protocol, identity.handle, identity.id),
       linked: identity.verified,
-    };
-  });
+    }));
+
 
   const totalFollowers = profiles.reduce((sum, p) => sum + p.followerCount, 0);
   const platformCount = profiles.length;

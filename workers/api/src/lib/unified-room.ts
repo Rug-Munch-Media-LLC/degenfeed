@@ -981,7 +981,6 @@ async function deliverViaFarcaster(
         deliveredAt: Date.now(),
         };
       }
-    }
 
     // Fallback: try Hub API
     const hubUrl = env.FARCASTER_HUB_URL || 'http://127.0.0.1:2281';

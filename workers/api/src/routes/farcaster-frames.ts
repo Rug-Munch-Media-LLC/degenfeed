@@ -12,7 +12,6 @@
  *   - Dynamic SVG badge images for frames
  *   - Token-gated stream frames with balance check
  *   - Post frame to Farcaster via Hubble
- */
  * Routes:
  *   GET  /api/farcaster/frames/stream/:id         — Frame for a live stream
  *   GET  /api/farcaster/frames/stream/:id/gated   — Token-gated stream frame
