@@ -12,7 +12,7 @@
  * which adds a small random boost for content discovery.
  */
 
-import type { ShortVideoItem } from './index';
+import type { ShortVideoItem } from './types';
 
 // ─── Types ────────────────────────────────────────────────────────────────
 

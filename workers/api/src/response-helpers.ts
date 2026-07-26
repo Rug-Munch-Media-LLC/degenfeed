@@ -5,8 +5,8 @@
  * These replace ad-hoc `new Response(JSON.stringify({...}))` patterns.
  */
 
-import type { Env } from './index';
 import { handleError } from './lib/errors';
+import type { Env } from './types';
 
 // ─── Error response from catch blocks ───────────────────────
 // Use this in route catch blocks instead of ad-hoc error responses.
@@ -87,7 +87,10 @@ export function upgradeRequired(message = 'Upgrade Required'): Response {
   });
 }
 
-export function paymentRequired(message = 'Payment Required', extraHeaders?: Record<string, string>): Response {
+export function paymentRequired(
+  message = 'Payment Required',
+  extraHeaders?: Record<string, string>,
+): Response {
   return new Response(JSON.stringify({ error: message }), {
     status: 402,
     headers: { 'content-type': 'application/json', ...extraHeaders },
@@ -103,13 +106,16 @@ export function paymentRequired(message = 'Payment Required', extraHeaders?: Rec
  *   if (c.req.method !== 'GET') return methodNotAllowed(['GET']);
  */
 export function methodNotAllowed(allowedMethods: string[]): Response {
-  return new Response(JSON.stringify({ error: `Method not allowed. Allowed: ${allowedMethods.join(', ')}` }), {
-    status: 405,
-    headers: {
-      'content-type': 'application/json',
-      allow: allowedMethods.join(', '),
+  return new Response(
+    JSON.stringify({ error: `Method not allowed. Allowed: ${allowedMethods.join(', ')}` }),
+    {
+      status: 405,
+      headers: {
+        'content-type': 'application/json',
+        allow: allowedMethods.join(', '),
+      },
     },
-  });
+  );
 }
 
 export function conflict(message = 'Conflict'): Response {

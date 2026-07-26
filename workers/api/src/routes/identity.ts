@@ -7,8 +7,9 @@
  * GET  /api/identity/profile          — Get all linked identities for a wallet address (public)
  */
 
+import { resolveHandle } from '@degenfeed/identity';
 import type { CrossProtocolIdentity } from '@degenfeed/utils';
-import { identityKey, resolveHandle } from '@degenfeed/utils';
+import { identityKey } from '@degenfeed/utils';
 import { type Env, jsonResponse, noCacheJsonResponse } from '../index';
 import { requireSession } from '../session';
 
