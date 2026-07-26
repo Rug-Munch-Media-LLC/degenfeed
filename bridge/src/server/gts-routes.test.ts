@@ -28,18 +28,21 @@ vi.mock('./federation-hub', () => ({
   },
 }));
 
-// Mock fediverse discovery
+// Mock fediverse discovery — return empty arrays as default
+const mockFetchTrendingHashtags = vi.fn().mockResolvedValue([]);
+const mockDiscoverPopularCommunities = vi.fn().mockResolvedValue([]);
+
 vi.mock('./fediverse-discovery', () => ({
-  fetchTrendingHashtags: vi.fn(),
-  fetchTrendingPosts: vi.fn(),
-  discoverPopularCommunities: vi.fn(),
+  fetchTrendingHashtags: mockFetchTrendingHashtags,
+  fetchTrendingPosts: vi.fn().mockResolvedValue([]),
+  discoverPopularCommunities: mockDiscoverPopularCommunities,
   followFediverseAccount: vi.fn(),
   lookupFediverseAccount: vi.fn(),
   searchFediverseAccounts: vi.fn(),
 }));
 
 import { federationHub } from './federation-hub';
-import { authenticateUser, verifyToken } from './gts-oauth';
+import { authenticateUser } from './gts-oauth';
 
 describe('GTS Routes', () => {
   beforeEach(() => {
@@ -337,7 +340,7 @@ describe('Federation Hub', () => {
 
   it('should generate correct handle for each service', () => {
     // Use the federationHub singleton
-    const handle = federationHub.getServiceHandle?.('testuser', 'peertube');
+    const _handle = federationHub.getServiceHandle?.('testuser', 'peertube');
     // This test verifies the function exists
     expect(typeof federationHub.discoverIdentity).toBe('function');
     expect(typeof federationHub.summarizeIdentity).toBe('function');

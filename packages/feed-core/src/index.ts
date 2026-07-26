@@ -1477,46 +1477,6 @@ export function buildUnifiedPost(args: {
   };
 }
 
-// ─── Ranking (folded from @degenfeed/ranking) ─────────────────────
-export type {
-  AuthorReputation,
-  DiversityConstraints,
-  QualitySignals,
-  RankingContext,
-  ScoreBreakdown,
-  ScorerContext,
-  TrendingTopic,
-  UserAlgorithmPreferences as RankingUserPrefs,
-} from '@degenfeed/ranking';
-export {
-  checkDiversity,
-  computeAuthorReputation,
-  computeQualitySignals,
-  computeTrendingTopics,
-  DEFAULT_DIVERSITY,
-  engagementVelocity,
-  extractHashtags,
-  extractTickers,
-  freshnessBoost,
-  interleaveByProtocol,
-  nicheRelevance,
-  normalizeEngagement,
-  PLATFORM_TIER,
-  platformRelevance,
-  qualityBoost,
-  rank,
-  rankDiverse,
-  rankV2,
-  recencyDecay,
-  score,
-  scoreBreakdownV2,
-  scoreV2,
-  sourceWeight,
-  VELOCITY_WINDOW_HOURS,
-  WEIGHTS,
-  WEIGHTS_V2,
-} from '@degenfeed/ranking';
-
 // ─── Cross-Protocol Threading ───────────────────────────────────────────
 export type {
   CrossProtocolLink,

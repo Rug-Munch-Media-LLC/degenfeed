@@ -14,7 +14,7 @@
  * bucket, which is good enough for relative trending.
  */
 
-import type { Env } from './index';
+import type { Env } from './types';
 
 // ─── Types ──────────────────────────────────────────────────────────
 

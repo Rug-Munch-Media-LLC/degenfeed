@@ -22,7 +22,7 @@
 
 // ─── Types ───────────────────────────────────────────────────────────
 
-import type { PeerTubeVideo, PeerTubeVideoResponse } from './index';
+import type { PeerTubeVideo, PeerTubeVideoResponse } from './types';
 
 export interface FederatedVideoItem {
   id: string;

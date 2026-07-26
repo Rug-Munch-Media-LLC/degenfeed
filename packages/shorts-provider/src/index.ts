@@ -44,60 +44,12 @@ export const SOURCE_COLORS: Record<string, string> = {
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
-export type ShortVideoSource =
-  | 'peertube'
-  | 'youtube'
-  | 'twitter'
-  | 'tiktok_rss'
-  | 'instagram'
-  | 'direct'
-  | 'bluesky';
-
-export interface ShortVideoItem {
-  id: string;
-  title: string;
-  description: string;
-  thumbnailUrl: string;
-  videoUrl: string;
-  /** Duration in seconds */
-  duration: number;
-  authorName: string;
-  authorAvatar?: string;
-  views: number;
-  likes: number;
-  source: ShortVideoSource;
-  sourceUrl: string;
-  /** Detected topics (defi, nft, trading, etc.) */
-  topics: string[];
-  publishedAt: number;
-  /** True if detected as vertical format */
-  vertical: boolean;
-  /** Quality signal 0-1 */
-  qualityScore: number;
-  /** Human-readable source label for UI badges */
-  sourceLabel: string;
-  /** Source badge color hex */
-  sourceColor?: string;
-  /** Whether DegenFeed tipping is available */
-  canTip: boolean;
-  /** Creator coin ticker if available */
-  creatorCoinSymbol?: string;
-  /** Creator coin contract address if available */
-  creatorCoinAddress?: string;
-}
-
-export interface ShortsFeedResult {
-  videos: ShortVideoItem[];
-  sources: {
-    peertube: number;
-    youtube: number;
-    tiktok: number;
-    instagram: number;
-    bluesky: number;
-  };
-  cursor: string | null;
-  hasMore: boolean;
-}
+export type {
+  FetchShortsOptions,
+  ShortsFeedResult,
+  ShortVideoItem,
+  ShortVideoSource,
+} from './types';
 
 export interface FetchShortsOptions {
   /** Max videos to return (default 20) */

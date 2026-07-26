@@ -17,20 +17,19 @@
  */
 
 import {
-  computeTrendingTopics,
   deduplicatePosts,
   enrichPostNiches,
   isRelevantPost,
   isSpamPost,
-  rankDiverse,
 } from '@degenfeed/feed-core';
 import { getNewsletterFeeds, RmiDataBusProvider, RssProvider } from '@degenfeed/feed-providers';
+import { computeTrendingTopics, rankDiverse } from '@degenfeed/ranking';
 import type { Protocol, UnifiedPost } from '@degenfeed/types';
 import { getProtocolColor, rmiUrl } from '@degenfeed/utils';
 import { authenticateApiKey } from '../admin';
 import { type Env, jsonResponse, noCacheJsonResponse } from '../index';
-import { DEFAULT_PROTOCOLS, getProvider } from './feed';
 import { methodNotAllowed } from '../response-helpers';
+import { DEFAULT_PROTOCOLS, getProvider } from './feed';
 
 const ALLOWED_NICHES = new Set([
   'bitcoin',

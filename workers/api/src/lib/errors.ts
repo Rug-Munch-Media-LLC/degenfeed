@@ -25,7 +25,7 @@
  */
 
 import { logError } from '../error-logger';
-import type { Env } from '../index';
+import type { Env } from '../types';
 
 // ─── Base Error Class ────────────────────────────────────────────────
 
