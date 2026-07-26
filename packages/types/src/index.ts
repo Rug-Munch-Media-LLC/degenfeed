@@ -698,3 +698,11 @@ export interface ActiveSession {
   decryptedSecret: string | null;
   unlockedAt: number;
 }
+
+/**
+ * Generic environment bindings interface.
+ * Used by packages that operate in Cloudflare Workers or similar environments.
+ */
+export interface Env {
+  [key: string]: unknown;
+}

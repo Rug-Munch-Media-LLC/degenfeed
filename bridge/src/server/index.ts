@@ -49,9 +49,37 @@ async function checkSourceHealth(url: string): Promise<boolean> {
   }
 }
 
+/**
+ * Recursively sanitize all string fields in an object tree to remove
+ * control characters (U+0000–U+001F except \t, \n, \r) that can break
+ * JSON parsing on the consumer side. Some provider text content contains
+ * literal null bytes, form feeds, or other control chars that survive
+ * JSON.stringify but cause Python and other decoders to reject the payload.
+ */
+function sanitizeControlChars(value: unknown): unknown {
+  if (typeof value === 'string') {
+    // Strip control chars except \t (0x09), \n (0x0a), \r (0x0d)
+    // biome-ignore lint/suspicious/noControlCharactersInRegex: intentional — we need to match specific control char ranges to sanitize JSON payloads
+    return value.replace(/[\x00-\x08\x0b\x0c\x0e-\x1f]/g, '');
+  }
+  if (Array.isArray(value)) {
+    return value.map(sanitizeControlChars);
+  }
+  if (value && typeof value === 'object') {
+    const obj = value as Record<string, unknown>;
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(obj)) {
+      out[k] = sanitizeControlChars(v);
+    }
+    return out;
+  }
+  return value;
+}
+
 function jsonOk(res: http.ServerResponse, data: unknown) {
+  const sanitized = sanitizeControlChars(data);
   res.writeHead(200, { 'Content-Type': 'application/json' });
-  res.end(JSON.stringify(data));
+  res.end(JSON.stringify(sanitized));
 }
 
 // ─── Cross-Protocol Notification Generator ──────────────────────────────
@@ -348,7 +376,9 @@ async function crossProtocolSearch(
   }
 
   // Fallback: search providers directly
-  const allProviderKeys = Object.keys(PROVIDERS).filter((k) => PROVIDERS[k].category !== 'infrastructure');
+  const allProviderKeys = Object.keys(PROVIDERS).filter(
+    (k) => PROVIDERS[k].category !== 'infrastructure',
+  );
   const activeProtocols =
     sources.length > 0 && !sources.includes('all')
       ? sources.filter((s) => s in PROVIDERS)
@@ -595,10 +625,14 @@ const server = http.createServer(async (req, res) => {
           }
           return feedResult;
         },
-        45_000, // 45 second TTL for feed responses
+        30_000, // 30 second TTL for feed responses (reduced from 45s)
       );
 
-      return jsonOk(res, { data: result.posts, posts: result.posts, meta: { ...result.meta, page, cachedAt: Date.now() } });
+      return jsonOk(res, {
+        data: result.posts,
+        posts: result.posts,
+        meta: { ...result.meta, page, cachedAt: Date.now() },
+      });
     }
 
     if (path === '/api/rss/sources') {
@@ -969,7 +1003,16 @@ const server = http.createServer(async (req, res) => {
         statsCacheKey,
         async () => {
           // Only sample a representative subset to avoid 70+ concurrent fetches
-          const sampleProviders = ['mastodon', 'bluesky', 'nostr', 'farcaster', 'rss', 'reddit', 'lemmy', 'lens'];
+          const sampleProviders = [
+            'mastodon',
+            'bluesky',
+            'nostr',
+            'farcaster',
+            'rss',
+            'reddit',
+            'lemmy',
+            'lens',
+          ];
           const entries = await Promise.allSettled(
             sampleProviders.map(async (key) => {
               const p = PROVIDERS[key];

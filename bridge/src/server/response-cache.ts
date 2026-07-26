@@ -59,13 +59,16 @@ export class FeedResponseCache {
     staleTTL?: number;
     fetchTimeout?: number;
   }) {
-    this.maxEntries = options?.maxEntries ?? 100;
-    this.defaultTTL = options?.defaultTTL ?? 60_000; // 60s default TTL
-    this.staleTTL = options?.staleTTL ?? 300_000; // 5min max stale age
+    this.maxEntries = options?.maxEntries ?? 30;
+    this.defaultTTL = options?.defaultTTL ?? 30_000; // 30s default TTL
+    this.staleTTL = options?.staleTTL ?? 120_000; // 2min max stale age (was 5min)
     this.fetchTimeout = options?.fetchTimeout ?? 8_000; // 8s max fetch time
 
-    // Periodic eviction of expired entries (every 60s)
-    setInterval(() => this.evictExpired(), 60_000).unref();
+    // Periodic eviction of expired entries (every 30s)
+    setInterval(() => this.evictExpired(), 30_000).unref();
+
+    // Periodic memory reporting (every 60s)
+    setInterval(() => this.reportMemory(), 60_000).unref();
   }
 
   /**
@@ -256,6 +259,29 @@ export class FeedResponseCache {
   }
 
   /**
+   * Report memory usage to console for monitoring OOM trends.
+   */
+  private reportMemory(): void {
+    const mem = process.memoryUsage();
+    const stats = this.getStats();
+    console.log(
+      `[response-cache] rss=${Math.round(mem.rss / 1024 / 1024)}MB ` +
+      `heap=${Math.round(mem.heapUsed / 1024 / 1024)}/${Math.round(mem.heapTotal / 1024 / 1024)}MB ` +
+      `entries=${stats.size}/${stats.maxSize} ` +
+      `hits=${stats.hits} misses=${stats.misses} stale=${stats.staleHits} evictions=${stats.evictions}`,
+    );
+
+    // If heap usage exceeds 1.5GB, suggest a forced GC
+    if (mem.heapUsed > 1.5 * 1024 * 1024 * 1024) {
+      console.warn('[response-cache] Heap usage >1.5GB, suggesting GC');
+      if (typeof global.gc === 'function') {
+        global.gc();
+        console.log('[response-cache] Forced global.gc() completed');
+      }
+    }
+  }
+
+  /**
    * Evict a single entry (oldest by cachedAt) to make room.
    */
   private evictOne(): void {
@@ -278,12 +304,13 @@ export class FeedResponseCache {
 
 /**
  * Singleton feed cache instance.
- * maxEntries=50 to prevent memory exhaustion with 210MB peak.
- * defaultTTL=45s — balance between freshness and provider load.
+ * maxEntries=30 to prevent memory exhaustion with 210MB peak.
+ * defaultTTL=30s — reduced from 45s for fresher content.
+ * staleTTL=120s (2min) — reduced from 5min to serve fresher stale content.
  */
 export const feedCache = new FeedResponseCache({
-  maxEntries: 50,
-  defaultTTL: 45_000,
-  staleTTL: 300_000,
+  maxEntries: 30,
+  defaultTTL: 30_000,
+  staleTTL: 120_000,
   fetchTimeout: 8_000,
 });

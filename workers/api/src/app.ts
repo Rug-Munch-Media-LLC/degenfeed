@@ -17,7 +17,7 @@
 import { Hono } from 'hono';
 import { apiKeyMiddleware } from './api-key';
 import { applyCors, getAllowedOrigin, isAllowedOrigin, parseOriginHeader } from './cors';
-import { tieredRateLimit } from './index';
+import { tieredRateLimit } from './rate-limit';
 import { jsonResponse } from './response-helpers';
 import { validateBodySize } from './sanitize';
 import { parseSessionCookie, validateCsrfToken } from './session';
@@ -546,5 +546,5 @@ app.all('/*', async (c) => {
 // ─── Exports ─────────────────────────────────────────────────
 
 export default app;
-export { scheduled } from './index';
+export { scheduled } from './cron-handler';
 export { app };

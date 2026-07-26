@@ -585,7 +585,10 @@ export async function buildFeed(
       'pixelfed',
     );
 
-  const perProviderLimit = Math.max(3, Math.ceil((limit * 1.2) / Math.max(activeProtocols.length, 1)));
+  const perProviderLimit = Math.max(
+    3,
+    Math.ceil((limit * 1.2) / Math.max(activeProtocols.length, 1)),
+  );
   const FETCH_TIMEOUT_MS = 5000;
 
   const results = await Promise.allSettled(

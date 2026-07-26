@@ -80,6 +80,54 @@ export {
   parseRelayListEvent,
 } from './relay-metadata';
 
+// ─── NIP-17 (Sealed Direct Messages) ──────────────────────────────────
+
+/**
+ * NIP-17 encrypted direct message type.
+ */
+export interface Nip17Message {
+  kind: number;
+  content: string;
+  tags: string[][];
+  created_at: number;
+  encryption: string;
+}
+
+/**
+ * NIP-17 publish options.
+ */
+export interface Nip17PublishOptions {
+  relays: string[];
+  privateKey: string;
+}
+
+/**
+ * NIP-17 publish result.
+ */
+export interface Nip17PublishResult {
+  id: string;
+}
+
+/**
+ * Publish a NIP-17 sealed direct message.
+ * This is a stub — full implementation depends on relay connectivity.
+ */
+export async function publishNip17(
+  _message: Nip17Message,
+  _options: Nip17PublishOptions,
+): Promise<Nip17PublishResult> {
+  throw new Error('NIP-17: not yet implemented in this environment');
+}
+
+/**
+ * Encrypt plaintext using NIP-17 (gift wrap + seal) with a given private key.
+ * This is a stub — full implementation depends on @noble/crypto.
+ */
+export async function nip17Encrypt(plaintext: string, _privateKey: string): Promise<string> {
+  // In production this uses NIP-17 wrapping/nip44 + seal
+  throw new Error('NIP-17 encryption: not yet implemented in this environment');
+}
+
 // ─── Normalizers ───────────────────────────────────────────────────────
 
 import {

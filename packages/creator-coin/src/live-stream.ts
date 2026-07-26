@@ -11,7 +11,7 @@ import type { LiveStreamInfo } from './types';
 // ─── Constants ─────────────────────────────────────────────────────────────
 
 const LIVE_BOOST_BPS = 200; // 2% discount when live
-const _AUTO_EXPIRE_MS = 2 * 60 * 60 * 1000; // 2 hours
+// const _AUTO_EXPIRE_MS = 2 * 60 * 60 * 1000; // 2 hours -- reserved for future use
 
 // ─── Supported Platforms ───────────────────────────────────────────────────
 

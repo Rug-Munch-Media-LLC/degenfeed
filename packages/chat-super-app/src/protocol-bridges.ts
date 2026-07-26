@@ -55,7 +55,14 @@ export interface ProtocolMessage {
 export interface ProtocolConfig {
   protocol: BridgeProtocolId;
   enabled: boolean;
-  nativeEncryption: 'olm' | 'nip17' | 'signal-double-ratchet' | 'http-signatures' | 'did-auth' | 'eip712' | 'none';
+  nativeEncryption:
+    | 'olm'
+    | 'nip17'
+    | 'signal-double-ratchet'
+    | 'http-signatures'
+    | 'did-auth'
+    | 'eip712'
+    | 'none';
   requiresKeyExchange: boolean;
   supportsGroups: boolean;
   maxMessageLength: number;
@@ -316,7 +323,7 @@ export class ProtocolBridges {
 
   private async sendToMatrixUnencrypted(
     message: ProtocolMessage,
-    env: Env,
+    _env: Env,
     matrixUrl: string,
     accessToken: string,
   ): Promise<{ ok: boolean; nativeId?: string; error?: string }> {
@@ -462,7 +469,7 @@ export class ProtocolBridges {
 
   private async sendViaAtProtocolMention(
     message: ProtocolMessage,
-    env: Env,
+    _env: Env,
     pdsUrl: string,
     accessToken: string,
   ): Promise<{ ok: boolean; nativeId?: string; error?: string }> {
@@ -640,9 +647,7 @@ export class ProtocolBridges {
         },
         body: JSON.stringify({
           content: message.body,
-          message_reference: message.replyTo
-            ? { message_id: message.replyTo }
-            : undefined,
+          message_reference: message.replyTo ? { message_id: message.replyTo } : undefined,
         }),
       });
 
@@ -809,10 +814,7 @@ export class ProtocolBridges {
   /**
    * Create an HTTP Signature for ActivityPub.
    */
-  private async signWithHttpSignature(
-    body: string,
-    env: Env,
-  ): Promise<string> {
+  private async signWithHttpSignature(body: string, _env: Env): Promise<string> {
     // Simplified HTTP Signature — in production, use a proper HTTP Signature library
     const encoder = new TextEncoder();
     const data = encoder.encode(body);

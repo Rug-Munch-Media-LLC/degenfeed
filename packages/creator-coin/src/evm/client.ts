@@ -19,7 +19,6 @@ import type {
 
 // ─── Constants ─────────────────────────────────────────────────────────────
 
-const _BASE_CHAIN_ID = 8453;
 const ZORA_FACTORY = '0x777777751622c0d3258f214F9DF38E35BF45baF3' as const;
 
 export class CreatorCoinEVMClient {
