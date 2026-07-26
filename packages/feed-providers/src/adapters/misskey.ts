@@ -6,6 +6,7 @@
  */
 
 import type { Protocol, UnifiedPost } from '@degenfeed/types';
+import { guessNiches } from '@degenfeed/utils';
 
 const $fetch = globalThis.fetch;
 
@@ -41,20 +42,6 @@ type MisskeyNote = Record<string, unknown> & {
   repliesCount: number;
   reactionCount: number;
 };
-
-function guessNiches(text: string, tags: string[]): string[] {
-  const lower = `${text} ${tags.join(' ')}`.toLowerCase();
-  const n: string[] = [];
-  if (/\b(btc|bitcoin|crypto|blockchain|web3|defi|nft|eth|solana)\b/.test(lower)) n.push('crypto');
-  if (/\b(tech|programming|code|software|javascript|typescript|webdev)\b/.test(lower))
-    n.push('tech');
-  if (/\b(ai |artificial|intelligence|llm|machine learning|stable diffusion)\b/.test(lower))
-    n.push('ai');
-  if (/\b(art|illustration|drawing|manga|anime|music|creative)\b/.test(lower)) n.push('art');
-  if (/\b(gaming|game|vtuber|stream)\b/.test(lower)) n.push('gaming');
-  if (n.length === 0) n.push('social');
-  return n;
-}
 
 async function fetchTimeline(
   inst: string,
@@ -133,7 +120,7 @@ export async function fetchMisskeyPosts(limit = 10): Promise<UnifiedPost[]> {
           },
         },
         raw: note,
-        niches: guessNiches(text, note.tags || []),
+        niches: guessNiches(text, (note.tags || []).join(' ')),
       });
     }
   }

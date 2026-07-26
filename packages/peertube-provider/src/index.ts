@@ -65,6 +65,7 @@ export { getFederatedFeed } from './federated';
 export type {
   ChatFetchResult,
   ChatMessage,
+  PeerTubeChannelResult,
   PeerTubeLiveStreamConfig,
   StreamCreateOptions,
   StreamCreateResult,

@@ -9,30 +9,11 @@
  *      Guppe server: https://gup.pe
  */
 import type { Protocol, UnifiedPost } from '@degenfeed/types';
+import { guessNiches, stripHtml } from '@degenfeed/utils';
 
 const $fetch = globalThis.fetch;
 
 const _GUPPE_INSTANCES = ['https://gup.pe'];
-
-function stripHtml(html: string): string {
-  return html
-    .replace(/<[^>]*>/g, ' ')
-    .replace(/&amp;/g, '&')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-function guessNiches(text: string): string[] {
-  const lower = text.toLowerCase();
-  const n: string[] = [];
-  if (/\b(btc|bitcoin|crypto|blockchain|web3|defi|nft)\b/.test(lower)) n.push('crypto');
-  if (/\b(tech|programming|code|software|foss|linux)\b/.test(lower)) n.push('tech');
-  if (/\b(gaming|games|game|play)\b/.test(lower)) n.push('gaming');
-  if (/\b(art|photo|photography|music|creative)\b/.test(lower)) n.push('art');
-  if (/\b(fediverse|activitypub|groups|social)\b/.test(lower)) n.push('fediverse');
-  if (n.length === 0) n.push('social');
-  return n;
-}
 
 const POPULAR_GROUPS = [
   'fediverse',

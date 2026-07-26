@@ -136,6 +136,25 @@ export interface ChatFetchResult {
   total: number;
 }
 
+// ─── Channel Types ────────────────────────────────────────────────────
+
+/** Minimal channel result from the PeerTube API. */
+export interface PeerTubeChannelResult {
+  id: number;
+  name: string;
+  displayName: string;
+  description: string;
+  support: string;
+  url: string;
+  avatar: { path: string } | null;
+  banner: { path: string } | null;
+  videosCount: number;
+  viewsCount: number;
+  followersCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // ─── Constants ─────────────────────────────────────────────────────────
 
 /** Default PeerTube instance. */
@@ -300,17 +319,19 @@ export class PeerTubeLiveStream {
    */
   async createStream(
     opts: StreamCreateOptions & {
-      tokenAddress: string;
-      creatorAddress: string;
+      tokenAddress?: string;
+      creatorAddress?: string;
     },
   ): Promise<StreamCreateResult> {
+    const tokenAddress = opts.tokenAddress ?? 'none';
+    const creatorAddress = opts.creatorAddress ?? 'none';
     const channel = await this.resolveChannel(opts.channelName);
 
     // Tag with DegenFeed metadata for discoverability
     const tags = [
       ...(opts.tags ?? []),
       'degenfeed',
-      `token:${opts.tokenAddress.slice(0, 8)}`,
+      tokenAddress !== 'none' ? `token:${tokenAddress.slice(0, 8)}` : '',
       opts.tokenSymbol ? `$${opts.tokenSymbol.toLowerCase()}` : '',
     ].filter(Boolean);
 
@@ -329,9 +350,9 @@ export class PeerTubeLiveStream {
       // Custom metadata for DegenFeed integration
       pluginData: {
         degenfeed: {
-          tokenAddress: opts.tokenAddress,
+          tokenAddress,
           tokenSymbol: opts.tokenSymbol ?? '',
-          creatorAddress: opts.creatorAddress,
+          creatorAddress,
           tokenGated: opts.tokenGated ?? false,
           platform: 'degenfeed',
           version: '1.0',
@@ -391,8 +412,7 @@ export class PeerTubeLiveStream {
       };
 
       streamKey =
-        session.streamKey ??
-        generateStreamKey(opts.tokenAddress, opts.creatorAddress, liveVideo.video.uuid);
+        session.streamKey ?? generateStreamKey(tokenAddress, creatorAddress, liveVideo.video.uuid);
       rtmpUrl = session.rtmpUrl ?? `${this.instanceUrl}${RTMP_INGEST}`;
     }
 
@@ -613,6 +633,45 @@ export class PeerTubeLiveStream {
     } catch {
       return null;
     }
+  }
+
+  /**
+   * List PeerTube channels, optionally filtered by name pattern.
+   * Used by the cross-protocol bridge to find existing channels before creating new ones.
+   */
+  async listChannels(params?: {
+    namePattern?: string;
+    start?: number;
+    count?: number;
+    sort?: string;
+  }): Promise<{ total: number; data: PeerTubeChannelResult[] }> {
+    const searchParams = new URLSearchParams();
+    if (params?.namePattern) searchParams.set('namePattern', params.namePattern);
+    if (params?.start !== undefined) searchParams.set('start', String(params.start));
+    if (params?.count !== undefined) searchParams.set('count', String(params.count));
+    if (params?.sort) searchParams.set('sort', params.sort);
+
+    const url = `${this.instanceUrl}/api/v1/video-channels?${searchParams.toString()}`;
+    const response = await authenticatedFetch(url, this.accessToken);
+    return response.json() as Promise<{ total: number; data: PeerTubeChannelResult[] }>;
+  }
+
+  /**
+   * Create a PeerTube channel manually.
+   * Used by the cross-protocol bridge for custom channel naming.
+   */
+  async createChannel(opts: {
+    name: string;
+    displayName: string;
+    description?: string;
+    support?: string;
+  }): Promise<PeerTubeChannelResult> {
+    const url = `${this.instanceUrl}/api/v1/video-channels`;
+    const response = await authenticatedFetch(url, this.accessToken, {
+      method: 'POST',
+      body: JSON.stringify(opts),
+    });
+    return response.json() as Promise<PeerTubeChannelResult>;
   }
 
   /**

@@ -6,57 +6,11 @@
  */
 
 import type { Protocol, UnifiedPost } from '@degenfeed/types';
+import { guessNiches, parseRssItems, stripHtml } from '@degenfeed/utils';
 
 const $fetch = globalThis.fetch;
 
 const DIASPORA_PODS = ['https://diasp.org', 'https://diaspora-fr.org', 'https://pod.geraspora.de'];
-
-function stripHtml(html: string): string {
-  return html
-    .replace(/<[^>]*>/g, ' ')
-    .replace(/&amp;/g, '&')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-function guessNiches(text: string): string[] {
-  const lower = text.toLowerCase();
-  const n: string[] = [];
-  if (/\b(btc|bitcoin|crypto|blockchain|web3)\b/.test(lower)) n.push('crypto');
-  if (/\b(tech|programming|code|software|linux|foss)\b/.test(lower)) n.push('tech');
-  if (/\b(privacy|surveillance|encryption|security)\b/.test(lower)) n.push('privacy');
-  if (n.length === 0) n.push('social');
-  return n;
-}
-
-function parseRssItems(xml: string): Array<{
-  title?: string;
-  link?: string;
-  guid?: string;
-  description?: string;
-  author?: string;
-  pubDate?: string;
-}> {
-  const items: Array<Record<string, string>> = [];
-  const itemRe = /<item>([\s\S]*?)<\/item>/gi;
-  let m: RegExpExecArray | null;
-  while ((m = itemRe.exec(xml)) !== null) {
-    if (!m[1]) continue;
-    const e: string = m[1];
-    items.push({
-      title: (e.match(/<title[^>]*>([\s\S]*?)<\/title>/i) || [])[1] || '',
-      link: (e.match(/<link[^>]*>([\s\S]*?)<\/link>/i) || [])[1] || '',
-      guid: (e.match(/<guid[^>]*>([\s\S]*?)<\/guid>/i) || [])[1] || '',
-      description: (e.match(/<description[^>]*>([\s\S]*?)<\/description>/i) || [])[1] || '',
-      author:
-        (e.match(/<author[^>]*>([\s\S]*?)<\/author>/i) || [])[1] ||
-        (e.match(/<dc:creator[^>]*>([\s\S]*?)<\/dc:creator>/i) || [])[1] ||
-        '',
-      pubDate: (e.match(/<pubDate[^>]*>([\s\S]*?)<\/pubDate>/i) || [])[1] || '',
-    });
-  }
-  return items;
-}
 
 export async function fetchDiasporaPosts(limit = 10): Promise<UnifiedPost[]> {
   const posts: UnifiedPost[] = [];

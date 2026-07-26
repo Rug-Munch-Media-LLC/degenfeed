@@ -338,35 +338,9 @@ export async function startFarcasterRestream(
       peerTubeEmbedUrl = stream.embedUrl;
       peerTubeRtmpUrl = stream.rtmpUrl;
       peerTubeStreamKey = stream.streamKey;
-    } else {
-      // Fallback: create a standalone PeerTube video record via dynamic import
-      try {
-        const { PeerTubeClient } = await import('@degenfeed/peertube-sdk');
-        const client = new PeerTubeClient({ instanceUrl });
-        const createResult = await client.live.create({
-          channelId: 1, // Default DegenFeed channel
-          name: `Farcaster Live: ${detection.title}`,
-          description: `Restreaming Farcaster live from @${detection.username}`,
-          privacy: 1,
-          tags: ['farcaster', 'live', 'restream'],
-          saveReplay: true,
-        });
-
-        if (createResult.video) {
-          peerTubeUuid = createResult.video.uuid;
-          peerTubeEmbedUrl = `${instanceUrl}${createResult.video.embedPath}`;
-
-          // Start live session to get stream key
-          const session = await client.live.session(createResult.video.id);
-          if (session) {
-            peerTubeRtmpUrl = session.rtmpUrl;
-            peerTubeStreamKey = session.streamKey;
-          }
-        }
-      } catch (err) {
-        console.error('[farcaster-live-wrapper] PeerTube SDK import failed:', err);
-      }
     }
+    // Note: No unauthenticated fallback — PeerTube live APIs always require auth.
+    // Without gtsToken, the live stream cannot be created.
   } catch (err) {
     console.error('[farcaster-live-wrapper] PeerTube mirror creation failed:', err);
     // Continue without PeerTube mirror — we still track the Farcaster live
@@ -678,13 +652,13 @@ export async function archiveToPeerTubeVOD(
     // [REVIEW] This requires HLS→MP4 transcoding which depends on infrastructure
     const gtsToken = await env.CACHE?.get('gts:access_token');
     if (gtsToken) {
-      const peertubeSdk = await import('@degenfeed/peertube-sdk');
-      const client = new peertubeSdk.PeerTubeClient({ accessToken: gtsToken, instanceUrl });
+      const { PeerTubeUploader } = await import('@degenfeed/peertube-provider');
+      const uploader = new PeerTubeUploader({ accessToken: gtsToken, instanceUrl });
 
       // Create a video entry pointing to the recording
-      const createResult = await client.videos.upload({
+      const uploadResult = await uploader.uploadVideo({
         file: new Blob([], { type: 'video/mp4' }), // Placeholder — real VOD pipeline needed
-        name: `📺 ${session.title}`,
+        title: `${session.title}`,
         description: `Farcaster VOD from @${session.username}\n\nRecorded: ${new Date(session.startedAt).toISOString()}\nOriginal: ${session.activityUrl}`,
         privacy: 1,
         tags: ['farcaster', 'vod', 'recording'],
@@ -692,11 +666,11 @@ export async function archiveToPeerTubeVOD(
         downloadEnabled: true,
       });
 
-      if (createResult.video) {
+      if (uploadResult.uuid) {
         return {
           ok: true,
-          url: `${instanceUrl}/videos/watch/${createResult.video.uuid}`,
-          uuid: createResult.video.uuid,
+          url: `${instanceUrl}/videos/watch/${uploadResult.uuid}`,
+          uuid: uploadResult.uuid,
         };
       }
     }

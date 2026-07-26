@@ -10,24 +10,27 @@
 import {
   applyQualityFilters,
   buildQualityAuthorProfile,
-  checkDiversity,
   computeProtocolQuality,
   computeQualityScore,
+  type PresetName,
+  type ProtocolQualityResult,
+  type ResolvedPreset,
+  type UserAlgorithmPreferences,
+} from '@degenfeed/feed-core';
+import {
+  checkDiversity,
   computeTrendingTopics,
   freshnessBoost,
   interleaveByProtocol,
-  type PresetName,
-  type ProtocolQualityResult,
   type RankingContext,
   type ScoreBreakdown as RankingV2ScoreBreakdown,
-  type ResolvedPreset,
   rankDiverse,
+  type ScoringWeights,
   scoreBreakdownV2,
   type TrendingTopic,
-  type UserAlgorithmPreferences,
-} from '@degenfeed/feed-core';
-import type { ScoringWeights, UnifiedMode } from '@degenfeed/ranking';
-import { scorePost as unifiedScorePost } from '@degenfeed/ranking';
+  type UnifiedMode,
+  scorePost as unifiedScorePost,
+} from '@degenfeed/ranking';
 import type { UnifiedPost } from '@degenfeed/types';
 import { type Env, log } from '../types';
 import type { StoredUserPreferences } from './feed-cache';

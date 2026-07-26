@@ -6,38 +6,16 @@ import type {
   UnifiedPost,
 } from '@degenfeed/types';
 
-// ─── User-Controlled Feed Algorithm ────────────────────────────────
+// ─── User-Controlled Feed Algorithm (deprecated) ───────────────────
 export type {
-  AlgorithmAuditEntry,
   AlgorithmContext,
   AlgorithmMode,
-  AlgorithmScoreBreakdown,
-  AlgorithmTransparency,
-  AlgorithmWeights,
-  NicheSelection,
   ProtocolWeights,
-  ReasonEntry,
-  ScoredPost,
-  ScorerFn,
   UserAlgorithmPreferences,
 } from './algorithm';
-export {
-  ALL_NICHES,
-  AlgorithmAuditLog,
-  buildAlgorithmTransparency,
-  DEFAULT_WEIGHTS,
-  FeedAlgorithm,
-  globalAuditLog,
-  MODE_LABELS,
-  MODE_PRESETS,
-  NICHE_LABELS,
-  scoreNiche,
-  scorePopularity,
-  scoreProtocol,
-  scoreQuality,
-  scoreRecency,
-  scoreRelevance,
-} from './algorithm';
+// FeedAlgorithm class and helper scorers removed in consolidation.
+// Use scorePost() from @degenfeed/ranking instead.
+
 // ─── Content Categorization V3 — Multi-label with confidence ─────────
 export type {
   CategorizationFeedback,
@@ -180,21 +158,6 @@ export {
   PROTOCOL_QUALITY_WEIGHTS,
   scoreQualityV3,
 } from './quality-v3';
-// ─── Content Quality V4 — Next-gen scoring with sigmoid freshness, cross-protocol, etc. ─
-export type {
-  QualityV4Context,
-  QualityV4Signals,
-} from './quality-v4';
-export {
-  computeEngagementVelocityV4,
-  creatorReputation,
-  crossProtocolBoost,
-  preferenceAlignment,
-  QualityV4Scorer,
-  scoreQualityV4,
-  sigmoidFreshness,
-  sourceDiversity,
-} from './quality-v4';
 export type { SpamContext, SpamResult, SpamTier } from './spam';
 // ─── Advanced spam detection (continuous scoring) ──────────────────
 export {

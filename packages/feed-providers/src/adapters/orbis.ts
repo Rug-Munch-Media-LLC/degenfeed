@@ -8,28 +8,10 @@
  *      Indexing API: https://ceramic-infra.orbis.club/
  */
 import type { Protocol, UnifiedPost } from '@degenfeed/types';
+import { guessNiches, stripHtml } from '@degenfeed/utils';
 
 const $fetch = globalThis.fetch;
 const ORBIS_API = 'https://ceramic-infra.orbis.club';
-
-function stripHtml(html: string): string {
-  return html
-    .replace(/<[^>]*>/g, ' ')
-    .replace(/&amp;/g, '&')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-function guessNiches(text: string): string[] {
-  const lower = text.toLowerCase();
-  const n: string[] = [];
-  if (/\b(btc|bitcoin|crypto|blockchain|web3|defi|nft)\b/.test(lower)) n.push('crypto');
-  if (/\b(tech|programming|code|software|foss|linux)\b/.test(lower)) n.push('tech');
-  if (/\b(privacy|identity|ceramic|orbis|decentralized)\b/.test(lower)) n.push('identity');
-  if (/\b(fediverse|activitypub|social|community)\b/.test(lower)) n.push('social');
-  if (n.length === 0) n.push('social');
-  return n;
-}
 
 export async function fetchOrbisPosts(limit = 10): Promise<UnifiedPost[]> {
   const posts: UnifiedPost[] = [];

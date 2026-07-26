@@ -6,6 +6,7 @@
  */
 
 import type { Protocol, UnifiedPost } from '@degenfeed/types';
+import { guessNiches, stripHtml } from '@degenfeed/utils';
 
 const $fetch = globalThis.fetch;
 
@@ -31,26 +32,6 @@ type PleromaStatus = Record<string, unknown> & {
   sensitive?: boolean;
   spoiler_text?: string;
 };
-
-function stripHtml(html: string): string {
-  return html
-    .replace(/<[^>]*>/g, ' ')
-    .replace(/&amp;/g, '&')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-function guessNiches(text: string): string[] {
-  const lower = text.toLowerCase();
-  const n: string[] = [];
-  if (/\b(btc|bitcoin|crypto|blockchain|web3|defi|nft|eth|solana)\b/.test(lower)) n.push('crypto');
-  if (/\b(tech|programming|code|software|foss|linux|elixir)\b/.test(lower)) n.push('tech');
-  if (/\b(privacy|surveillance|encryption|decentralized)\b/.test(lower)) n.push('privacy');
-  if (/\b(pleroma|fediverse|activitypub|mastodon)\b/.test(lower)) n.push('fediverse');
-  if (/\b(art|photography|photo|drawing|creative|music)\b/.test(lower)) n.push('art');
-  if (n.length === 0) n.push('social');
-  return n;
-}
 
 export async function fetchPleromaPosts(limit = 10): Promise<UnifiedPost[]> {
   const posts: UnifiedPost[] = [];

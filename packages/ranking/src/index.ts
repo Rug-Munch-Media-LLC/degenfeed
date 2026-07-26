@@ -124,99 +124,12 @@ export type {
 export { VideoScoreEngine, videoScorer } from './video-scorer';
 
 // ═════════════════════════════════════════════════════════════════════
-// NEW: V2 Feed Algorithm Modules
+// V2 Feed Algorithm Modules — removed in consolidation
 // ═════════════════════════════════════════════════════════════════════
-
-// ─── TASK 1: Content Quality Scoring V2 ─────────────────────────────
-export type {
-  QualitySignalsV2,
-  QualityScorerContext,
-} from './quality-v2';
-export {
-  scoreQualityV2,
-  enrichWithQualityV2,
-} from './quality-v2';
-
-// ─── TASK 2: User Algo V2 ──────────────────────────────────────────
-export type {
-  FeedbackSignal,
-  FormatPreferences,
-  TemporalSlot,
-  UserAlgoV2Context,
-  UserAlgoV2Profile,
-  UserAlgoV2Result,
-} from './user-algo-v2';
-export {
-  emptyUserAlgoV2Profile,
-  isMutedByFeedback,
-  learnInterests,
-  learnTemporalPrefs,
-  processFeedback,
-  scoreUserAlgoV2,
-  shouldInjectDiscovery,
-} from './user-algo-v2';
-
-// ─── TASK 3: Protocol-Level Algo ───────────────────────────────────
-export type {
-  BlueskySignals,
-  FarcasterSignals,
-  MastodonSignals,
-  NostrSignals,
-  PeerTubeSignals,
-  ProtocolAlgoResult,
-  ProtocolScoringContext,
-} from './protocol-algo';
-export {
-  extractProtocolSignalsFromPost,
-  scoreProtocolAlgo,
-} from './protocol-algo';
-
-// ─── TASK 4: Anti-Gaming Protection ────────────────────────────────
-export type {
-  AntiGamingContext,
-  AntiGamingResult,
-  BotDetectionSignals,
-  EngagementFarmSignals,
-  SpamDetectionSignals,
-  SybilDetectionSignals,
-} from './anti-gaming';
-export {
-  analyzeTextSpam,
-  extractSpamSignalsFromPost,
-  scoreAntiGaming,
-} from './anti-gaming';
-
-// ─── TASK 5: Algorithm Transparency ────────────────────────────────
-export type {
-  ABTestConfig,
-  ABTestVariant,
-  AuditEntry,
-  FactorExplanation,
-  ScoreBreakdownUI,
-  TuneYourFeedOption,
-  WhyThisPost,
-} from './transparency';
-export {
-  assignABTest,
-  buildScoreBreakdownUI,
-  createAuditEntry,
-  getActiveVariants,
-  suggestTuning,
-  whyThisPost,
-} from './transparency';
-
-// ─── V2 Orchestrator (combines all 5 tasks) ────────────────────────
-export type {
-  FeedAlgorithmV2Options,
-  FeedAlgorithmV2Result,
-  FeedRankingV2Options,
-} from './feed-algorithm-v2';
-export {
-  createUserAlgoV2Context,
-  getTuningSuggestions,
-  rankV2 as rankV2Full,
-  scorePostV2,
-} from './feed-algorithm-v2';
+// The V2 orchestrator (feed-algorithm-v2, quality-v2, user-algo-v2,
+// protocol-algo, anti-gaming, transparency) was dead code with zero
+// production consumers.  Use scorePost() from unified-scorer instead.
+// ═════════════════════════════════════════════════════════════════════
 
 export const WEIGHTS = {
   w1: 1.0,
