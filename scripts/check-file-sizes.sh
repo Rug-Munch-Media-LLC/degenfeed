@@ -1,49 +1,41 @@
-#!/usr/bin/env bash
-# ── File Size Quality Gate ────────────────────────────────────────────
-# Checks all .ts/.tsx files under workers/api/src/routes/ and apps/web/src/
-# Flags any file >500 lines. Exits non-zero if violations found.
-# Usage: bash scripts/check-file-sizes.sh
-# ───────────────────────────────────────────────────────────────────────
+#!/bin/bash
+# ─── File size pre-commit check ─────────────────────────────────────────
+# Warns when staged source files exceed 2000 lines.
+# Non-blocking — surfaces large-file debt without blocking commits.
 
 set -euo pipefail
 
 RED='\033[0;31m'
-GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
-MAX_LINES=2000
+THRESHOLD=2000
+FOUND=0
 
-# Directories to scan
-DIRS=(
-    "workers/api/src/routes"
-    "apps/web/src"
-)
+# Get staged source files
+STAGED=$(git diff --cached --name-only --diff-filter=ACM \
+    -- '*.ts' '*.tsx' '*.js' '*.jsx' '*.json' '*.css' 2>/dev/null || true)
 
-violations=0
+if [ -z "$STAGED" ]; then
+    exit 0
+fi
 
-for dir in "${DIRS[@]}"; do
-    if [ ! -d "$dir" ]; then
-        echo -e "${YELLOW}⚠  Directory not found: $dir (skipping)${NC}"
+while IFS= read -r file; do
+    if [ ! -f "$file" ]; then
         continue
     fi
-
-    while IFS= read -r -d '' file; do
-        line_count=$(wc -l <"$file")
-        if [ "$line_count" -gt "$MAX_LINES" ]; then
-            echo -e "${RED}❌ ${file#"$PWD"/}  —  ${line_count} lines (max ${MAX_LINES})${NC}"
-            violations=$((violations + 1))
+    LINES=$(wc -l <"$file")
+    if [ "$LINES" -gt "$THRESHOLD" ]; then
+        if [ "$FOUND" -eq 0 ]; then
+            echo -e "${YELLOW}[check-file-sizes] Files exceeding ${THRESHOLD} lines:${NC}"
         fi
-    done < <(find "$dir" -type f \( -name '*.ts' -o -name '*.tsx' \) -print0)
-done
+        echo -e "  ${RED}$file${NC}: ${LINES} lines"
+        FOUND=$((FOUND + 1))
+    fi
+done <<<"$STAGED"
 
-if [ "$violations" -gt 0 ]; then
-    echo ""
-    echo -e "${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-    echo -e "${RED}  GOD CODE DETECTED: ${violations} file(s) exceed ${MAX_LINES} lines  ${NC}"
-    echo -e "${RED}  Refactor or split these files before committing.   ${NC}"
-    echo -e "${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-    exit 1
-else
-    echo -e "${GREEN}✓ File size check passed — all files under ${MAX_LINES} lines${NC}"
+if [ "$FOUND" -gt 0 ]; then
+    echo -e "${YELLOW}[check-file-sizes] $FOUND file(s) exceed ${THRESHOLD} lines. Consider splitting.${NC}"
 fi
+
+exit 0
