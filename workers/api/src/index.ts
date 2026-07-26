@@ -8,21 +8,18 @@
 
 export type { Env, RateLimitResult } from './types';
 
+// Re-export from canonical source files to break circular import chains.
+// Routes and lib files should import from these source files directly:
+//   - types.ts        for Env, RateLimitResult
+//   - response-helpers.ts for jsonResponse, noCacheJsonResponse
+//   - logger.ts       for log
+//   - constants.ts    for DEFAULT_RELAYS, FARCASTER_HUBS, etc.
+
+export { log } from './logger';
+export { jsonResponse, noCacheJsonResponse } from './response-helpers';
+
 import { isAllowedOrigin, parseOriginHeader } from './cors';
 import { handleCron } from './routes/cron';
-
-// ─── Shared constants ────────────────────────────────────────────────
-
-export function log(level: 'info' | 'warn' | 'error', msg: string, data?: unknown): void {
-  console.log(
-    JSON.stringify({
-      l: level,
-      m: msg,
-      t: Date.now(),
-      ...(data ? { d: data } : {}),
-    }),
-  );
-}
 
 export const DEFAULT_RELAYS = [
   'wss://relay.damus.io',
@@ -365,40 +362,6 @@ export function getGtsConfig(env: Env) {
     redirectUri: env.GTS_REDIRECT_URI ?? GTS_AUTH_CONFIG.redirectUri,
     scopes: GTS_AUTH_CONFIG.scopes,
   };
-}
-
-// ─── Response helper ─────────────────────────────────────────────────
-
-/**
- * @deprecated Use response-helpers.ts (ok/created/badRequest/unauthorized/notFound/serverError) instead.
- * response-helpers.ts wraps responses in a consistent { data } envelope.
- * Routes using jsonResponse() should be migrated to response-helpers for consistency.
- * Migrated routes: health.ts
- */
-export function jsonResponse(
-  data: unknown,
-  status = 200,
-  extraHeaders?: Record<string, string>,
-): Response {
-  const headers: Record<string, string> = {
-    'content-type': 'application/json',
-    'cache-control': 'public, max-age=30',
-    ...extraHeaders,
-  };
-  return new Response(JSON.stringify(data), {
-    status,
-    headers,
-  });
-}
-
-export function noCacheJsonResponse(data: unknown, status = 200): Response {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: {
-      'content-type': 'application/json',
-      'cache-control': 'no-store, must-revalidate',
-    },
-  });
 }
 
 // ─── CORS / CSRF helpers ─────────────────────────────────────────────
