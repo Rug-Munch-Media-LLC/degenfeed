@@ -20,4 +20,4 @@ import type { Env } from '../types';
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
-export type SectionItem = {}
+export type SectionItem = {};

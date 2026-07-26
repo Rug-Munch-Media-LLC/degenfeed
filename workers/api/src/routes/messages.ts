@@ -40,4 +40,4 @@ export type DmProtocol =
   | 'farcaster'
   | 'lens';
 
-type DirectMessage = {}
+type DirectMessage = {};

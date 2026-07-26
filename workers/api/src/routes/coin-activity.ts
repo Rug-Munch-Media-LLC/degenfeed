@@ -24,4 +24,4 @@ export type ActivityType =
   | 'badge_earned'
   | 'tip_creator';
 
-export type ActivityEvent = {}
+export type ActivityEvent = {};

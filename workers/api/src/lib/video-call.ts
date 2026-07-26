@@ -20,4 +20,4 @@ import { CHANNELS } from '../ws-channels';
 
 // ─── Types ──────────────────────────────────────────────────────────────
 
-export type VideoCall = {}
+export type VideoCall = {};

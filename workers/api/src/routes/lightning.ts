@@ -8,4 +8,4 @@ import { bytesToHex } from '@noble/hashes/utils';
  *   3. Return invoice + QR data
  */
 
-export type ZapInvoice = {}
+export type ZapInvoice = {};

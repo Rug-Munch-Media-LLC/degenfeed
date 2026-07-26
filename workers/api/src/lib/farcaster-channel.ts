@@ -14,4 +14,4 @@ import { publishCastToFarcaster } from './hubble-publisher';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
-export type FarcasterChannel = {}
+export type FarcasterChannel = {};

@@ -30,4 +30,4 @@ export type ReputationAction =
   | 'early_member'
   | 'consecutive_vote_bonus';
 
-export type ReputationEvent = {}
+export type ReputationEvent = {};

@@ -39,4 +39,4 @@ export type ShortProtocol =
 
 export type Chain = 'base' | 'ethereum' | 'optimism' | 'arbitrum' | 'solana';
 
-export type ShortVideo = {}
+export type ShortVideo = {};

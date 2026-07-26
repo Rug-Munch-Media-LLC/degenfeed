@@ -12,4 +12,4 @@ import type { Env } from '../types';
 
 export type RoomType = 'voice' | 'video';
 
-export type VoiceRoom = {}
+export type VoiceRoom = {};

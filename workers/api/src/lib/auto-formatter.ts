@@ -16,4 +16,4 @@ import type { MasterPost, ProtocolPublishParams } from '@degenfeed/cross-protoco
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
-export type ThreadSegment = {}
+export type ThreadSegment = {};

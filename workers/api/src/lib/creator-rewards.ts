@@ -23,4 +23,4 @@ import type { Env } from '../types';
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
-export type RewardPool = {}
+export type RewardPool = {};

@@ -32,4 +32,4 @@ export const UPLOAD_TOKEN_PREFIX = 'chat:file:token:';
 
 export type StorageTier = 'ipfs' | 'r2_standard' | 'r2_premium';
 
-export type ChatFile = {}
+export type ChatFile = {};

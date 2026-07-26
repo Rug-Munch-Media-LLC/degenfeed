@@ -14,4 +14,4 @@ import { jsonResponse } from '../response-helpers';
 import { validateBodySize } from '../sanitize';
 import type { Env } from '../types';
 
-type PushSubscription = {}
+type PushSubscription = {};

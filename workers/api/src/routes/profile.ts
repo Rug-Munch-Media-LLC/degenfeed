@@ -11,4 +11,4 @@ import type { UnifiedPost } from '@degenfeed/types';
 import { jsonResponse } from '../response-helpers';
 import type { Env } from '../types';
 
-type LinkedAccount = {}
+type LinkedAccount = {};

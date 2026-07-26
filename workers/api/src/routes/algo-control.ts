@@ -17,4 +17,4 @@ import type { Env } from '../types';
 
 // ─── Types ──────────────────────────────────────────────────────────────
 
-export type AlgorithmWeights = {}
+export type AlgorithmWeights = {};

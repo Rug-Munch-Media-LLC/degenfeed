@@ -29,4 +29,4 @@ import { jsonResponse, methodNotAllowed, noCacheJsonResponse } from '../response
 import { ALLOWED_PROTOCOLS, hasSuspiciousPayload, sanitizeString } from '../sanitize';
 import type { Env } from '../types';
 
-type CrossReplyRequest = {}
+type CrossReplyRequest = {};

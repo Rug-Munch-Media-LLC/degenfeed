@@ -14,4 +14,4 @@ import type { Env } from '../types';
 
 export type Tier = 'free' | 'pro' | 'creator' | 'enterprise';
 
-export type TierInfo = {}
+export type TierInfo = {};

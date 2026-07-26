@@ -39,4 +39,4 @@ export const CURATED_LAST_FETCH_KEY = 'podcast:curated:last-fetch';
 
 // ─── RSS Parsing ─────────────────────────────────────────────────────────
 
-type RawRssFeed = {}
+type RawRssFeed = {};

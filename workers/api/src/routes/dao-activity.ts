@@ -29,4 +29,4 @@ export type ActivityType =
   | 'grant_created'
   | 'grant_milestone_completed';
 
-export type ActivityEvent = {}
+export type ActivityEvent = {};

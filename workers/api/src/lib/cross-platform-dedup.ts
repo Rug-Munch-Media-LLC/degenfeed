@@ -20,4 +20,4 @@ import type { GlobalDedupRegistry } from './global-dedup';
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
-export type CrossPlatformLink = {}
+export type CrossPlatformLink = {};

@@ -40,4 +40,4 @@ const OFFSET_MASK = 0x0f;
 
 // ─── Exports ──────────────────────────────────────────────────
 
-export type TOTPSecret = {}
+export type TOTPSecret = {};

@@ -35,4 +35,4 @@ export type TokenStandard =
   | 'creator_coin'
   | 'wallet_balance';
 
-export type TokenGateConfig = {}
+export type TokenGateConfig = {};

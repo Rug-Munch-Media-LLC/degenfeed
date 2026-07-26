@@ -17,4 +17,4 @@ import type { Env } from '../types';
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
-export type SeenEntry = {}
+export type SeenEntry = {};

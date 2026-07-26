@@ -18,4 +18,4 @@ import type { Env } from '../types';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
-export type QuadraticVoterState = {}
+export type QuadraticVoterState = {};

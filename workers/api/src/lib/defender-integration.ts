@@ -33,4 +33,4 @@ export type DefenderNetwork =
   | 'avalanche-mainnet'
   | 'avalanche-fuji';
 
-export type DefenderConfig = {}
+export type DefenderConfig = {};

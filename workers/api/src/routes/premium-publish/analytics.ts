@@ -25,4 +25,4 @@ const PREFIX_PROTOCOL_STATS = 'premium:protocol:stats:';
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
-export type PostPerformance = {}
+export type PostPerformance = {};

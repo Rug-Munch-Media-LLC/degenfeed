@@ -32,4 +32,4 @@ import type { Env } from '../types';
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
-type ProfileData = {}
+type ProfileData = {};

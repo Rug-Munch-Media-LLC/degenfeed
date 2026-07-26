@@ -24,4 +24,4 @@ import type { Env } from '../types';
 
 // ─── Types ──────────────────────────────────────────────────────────────
 
-export type WebRTCSession = {}
+export type WebRTCSession = {};

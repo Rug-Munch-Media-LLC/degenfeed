@@ -34,4 +34,4 @@ export type NativeTipProtocol =
   | 'github'
   | 'telegram';
 
-export type NativeTipRequest = {}
+export type NativeTipRequest = {};

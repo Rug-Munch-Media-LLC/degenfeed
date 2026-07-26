@@ -33,4 +33,4 @@ const KV_BRIDGY_REGISTRATION_PREFIX = 'bridgy:registration:';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
-export type BridgyFedConfig = {}
+export type BridgyFedConfig = {};

@@ -26,4 +26,4 @@ import { ThreadsStreamBridge } from './threads-stream-bridge';
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
-export type ChatBridgeConfig = {}
+export type ChatBridgeConfig = {};

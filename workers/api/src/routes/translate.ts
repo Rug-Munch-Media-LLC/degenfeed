@@ -29,4 +29,4 @@ const TRANSLATABLE_PROTOCOLS = new Set([
 
 // ─── Request shape ──────────────────────────────────────────────────
 
-type TranslateRequest = {}
+type TranslateRequest = {};

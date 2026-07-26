@@ -28,4 +28,4 @@ import { addChatMessage, addReaction } from './stream-store';
 
 export type NostrLiveStatus = 'live' | 'ended' | 'planned';
 
-export type NostrLiveEventContent = {}
+export type NostrLiveEventContent = {};

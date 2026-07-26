@@ -20,4 +20,4 @@ import type { Env } from '../types';
 const SCHEDULED_PREFIX = 'scheduled:';
 const MAX_RETRIES = 3;
 
-type ScheduledEntry = {}
+type ScheduledEntry = {};

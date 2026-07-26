@@ -44,4 +44,4 @@ export type SecurityEventType =
 
 export type SecurityEventSeverity = 'low' | 'medium' | 'high' | 'critical';
 
-export type SecurityEvent = {}
+export type SecurityEvent = {};

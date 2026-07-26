@@ -23,4 +23,4 @@ import type { Env } from '../types';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
-type VestingConfig = {}
+type VestingConfig = {};

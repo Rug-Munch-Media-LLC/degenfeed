@@ -39,4 +39,4 @@ const MAX_ALERT_COUNT = 50;
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
-export type BridgeAlert = {}
+export type BridgeAlert = {};

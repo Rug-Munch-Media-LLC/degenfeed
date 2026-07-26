@@ -10,4 +10,4 @@
 
 import type { LiveSource, UnifiedLiveStream } from '../../feed/live-aggregator';
 
-export type PlatformBadge = {}
+export type PlatformBadge = {};

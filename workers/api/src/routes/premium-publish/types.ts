@@ -13,4 +13,4 @@ export type RecurrencePattern = 'once' | 'daily' | 'weekly' | 'monthly' | 'weekd
 export type RecyclingStrategy = 'engagement' | 'age' | 'manual';
 export type EvergreenFrequency = 'every-7d' | 'every-14d' | 'every-30d' | 'every-90d';
 
-export type QueueEntry = {}
+export type QueueEntry = {};

@@ -38,4 +38,4 @@ import type { Env } from '../types';
  * Third-party apps consuming Zora's /coins endpoint can switch to our
  * compat endpoint without changing their parser.
  */
-export type ZoraCompatCoinData = {}
+export type ZoraCompatCoinData = {};

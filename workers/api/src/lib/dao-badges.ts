@@ -15,4 +15,4 @@ import type { Env } from '../types';
 
 export type BadgeCategory = 'voting' | 'proposal' | 'treasury' | 'community' | 'special';
 
-export type DAOBadgeDef = {}
+export type DAOBadgeDef = {};

@@ -22,4 +22,4 @@ import { createPostizSchedule, getSchedulingEngine, shouldUsePostiz } from './po
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
-export type PremiumUsage = {}
+export type PremiumUsage = {};

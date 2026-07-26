@@ -9,4 +9,4 @@ import { jsonResponse } from '../response-helpers';
 import { isValidFetchUrl, safeFetch } from '../sanitize';
 import type { Env } from '../types';
 
-type FrameData = {}
+type FrameData = {};

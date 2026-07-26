@@ -19,4 +19,4 @@
 
 export type LiveActivityType = 'live-video' | 'live-audio-space' | 'live-event' | 'live-stream';
 
-export type LiveActivityMeta = {}
+export type LiveActivityMeta = {};

@@ -19,4 +19,4 @@ import type { Env } from '../types';
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
-export type MintVideoNFTOptions = {}
+export type MintVideoNFTOptions = {};

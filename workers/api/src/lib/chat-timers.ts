@@ -28,4 +28,4 @@ export const UNSEND_PREFIX = 'chat:unsend:';
 
 export type DeleteScope = 'everyone' | 'me';
 
-export type MessageMetadata = {}
+export type MessageMetadata = {};

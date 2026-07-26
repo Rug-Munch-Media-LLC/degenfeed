@@ -11,4 +11,4 @@ import type { Protocol } from '@degenfeed/types';
 
 // ─── Types ─────────────────────────────────────────────────────────
 
-export type NewsletterConfig = {}
+export type NewsletterConfig = {};

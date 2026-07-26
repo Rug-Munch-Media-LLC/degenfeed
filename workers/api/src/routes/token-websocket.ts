@@ -26,11 +26,17 @@
  */
 
 import { getOnlineCount, updateOnlineHeartbeat } from '../lib/community-store';
-import { badRequest, forbidden, rateLimitResponse, serverError, upgradeRequired } from '../response-helpers';
+import {
+  badRequest,
+  forbidden,
+  rateLimitResponse,
+  serverError,
+  upgradeRequired,
+} from '../response-helpers';
 import type { Env } from '../types';
 
 // ─── In-memory subscription registry ───────────────────────────────────
 // Tracks active WebSocket connections per token address so we can
 // broadcast events to all connected clients.
 
-type TokenSubscription = {}
+type TokenSubscription = {};

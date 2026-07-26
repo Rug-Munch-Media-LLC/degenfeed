@@ -25,4 +25,4 @@ import type { Env } from '../types';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
-type ImportJob = {}
+type ImportJob = {};

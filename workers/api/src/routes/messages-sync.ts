@@ -19,4 +19,4 @@ const MESSAGE_INDEX_PREFIX = 'chat:msg:index:';
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
-type SyncRequest = {}
+type SyncRequest = {};

@@ -12,4 +12,4 @@ import type { Env } from '../types';
 
 /* ─── Types ─────────────────────────────────────────────────────────── */
 
-export type SignedRequest = {}
+export type SignedRequest = {};

@@ -29,4 +29,4 @@ export type ProposalType = 'text' | 'rule_change' | 'mod_action' | 'treasury';
 export type ProposalStatus = 'active' | 'passed' | 'rejected' | 'cancelled';
 export type VoteChoice = 'for' | 'against' | 'abstain';
 
-export type Proposal = {}
+export type Proposal = {};

@@ -17,4 +17,4 @@ import { validateBodySize } from '../sanitize';
 import { requireSession } from '../session';
 import type { Env } from '../types';
 
-export type StoredPresetEntry = {}
+export type StoredPresetEntry = {};

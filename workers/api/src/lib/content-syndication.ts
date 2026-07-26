@@ -21,4 +21,4 @@ import type { ContentRecord, MediaAttachment } from './content-library';
 export type SyndicationMode = 'auto' | 'manual-review' | 'never';
 export type SyndicationStatus = 'queued' | 'in-progress' | 'completed' | 'failed' | 'cancelled';
 
-export type ProtocolSyndicationRule = {}
+export type ProtocolSyndicationRule = {};

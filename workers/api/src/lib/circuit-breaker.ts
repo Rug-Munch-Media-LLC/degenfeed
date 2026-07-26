@@ -16,4 +16,4 @@ import { logSecurityEvent } from './security-log';
 
 export type CircuitState = 'CLOSED' | 'HALF_OPEN' | 'OPEN';
 
-export type CircuitBreakerConfig = {}
+export type CircuitBreakerConfig = {};

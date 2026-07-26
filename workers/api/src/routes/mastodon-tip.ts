@@ -19,4 +19,4 @@ import { recordUnifiedTip } from './unified-tip';
 
 // ─── Types ───────────────────────────────────────────────────────────
 
-type MastodonTipRecord = {}
+type MastodonTipRecord = {};

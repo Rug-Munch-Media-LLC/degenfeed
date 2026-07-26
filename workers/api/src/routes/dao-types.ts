@@ -25,4 +25,4 @@ export type ActivityType =
 
 // ─── DAO Entity ──────────────────────────────────────────────────────
 
-export type Dao = {}
+export type Dao = {};

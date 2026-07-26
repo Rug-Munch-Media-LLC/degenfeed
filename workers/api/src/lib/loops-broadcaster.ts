@@ -29,4 +29,4 @@ export type TargetPlatform =
   | 'owncast'
   | 'telegram';
 
-export type LoopsBroadcastConfig = {}
+export type LoopsBroadcastConfig = {};

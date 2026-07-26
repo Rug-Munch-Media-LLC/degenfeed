@@ -16,4 +16,4 @@ import type { Env } from '../types';
 
 export type HolderTier = 'supporter' | 'believer' | 'diamond_hands' | 'og' | 'whale';
 
-export type HolderReputation = {}
+export type HolderReputation = {};

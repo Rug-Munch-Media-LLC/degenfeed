@@ -18,4 +18,4 @@ import type { Env } from '../types';
 
 export type StorageTier = 'standard' | 'premium' | 'archive' | 'temporary';
 
-export type R2UploadResult = {}
+export type R2UploadResult = {};

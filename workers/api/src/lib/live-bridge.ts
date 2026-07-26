@@ -28,4 +28,4 @@ export type BridgeDirection =
 
 export type BridgeProtocol = 'nostr' | 'peertube' | 'farcaster' | 'owncast' | 'youtube' | 'all';
 
-export type BridgeConfig = {}
+export type BridgeConfig = {};

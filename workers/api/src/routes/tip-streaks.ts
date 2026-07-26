@@ -25,4 +25,4 @@ const _VALID_METHODS = [
   'generate_qr',
 ];
 
-export type TipStreakRecord = {}
+export type TipStreakRecord = {};

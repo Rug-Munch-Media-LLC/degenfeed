@@ -19,4 +19,4 @@ import type { Env } from '../types';
 
 // ─── Types ───────────────────────────────────────────────────
 
-type FollowEntry = {}
+type FollowEntry = {};

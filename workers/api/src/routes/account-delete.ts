@@ -22,7 +22,9 @@
  *   - SESSIONS:     revoked marker for the wallet address
  */
 
-import { type Env, jsonResponse, log, noCacheJsonResponse } from '../index';
+import type { Env } from '../types';
+import { jsonResponse, noCacheJsonResponse } from '../response-helpers';
+import { log } from '../logger';
 import { requireSession, revokeAllSessionsForAddress } from '../session';
 
 // ─── Constants ──────────────────────────────────────────────────────

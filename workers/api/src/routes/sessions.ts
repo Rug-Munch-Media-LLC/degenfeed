@@ -29,4 +29,4 @@ import type { Env } from '../types';
  *   user:sessions:{address} → JSON array of nonces
  */
 
-export type SessionMeta = {}
+export type SessionMeta = {};

@@ -31,4 +31,4 @@ import type { Env } from '../types';
 export type ChainType = 'evm' | 'solana';
 export type TxStatus = 'pending' | 'confirmed' | 'failed' | 'stuck' | 'replaced';
 
-export type TransactionRecord = {}
+export type TransactionRecord = {};

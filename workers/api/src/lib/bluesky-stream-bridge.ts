@@ -20,4 +20,4 @@ import { withReliability } from './bridge-reliability';
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
-export type BlueskyAnnounceResult = {}
+export type BlueskyAnnounceResult = {};
