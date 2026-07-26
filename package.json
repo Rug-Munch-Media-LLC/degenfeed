@@ -22,9 +22,14 @@
     "deploy:tip-contract:base": "tsx scripts/deploy-tip-contract.ts --network=base",
     "deploy:tip-contract:optimism": "tsx scripts/deploy-tip-contract.ts --network=optimism",
     "deploy:tip-contract:arbitrum": "tsx scripts/deploy-tip-contract.ts --network=arbitrum",
-    "deploy:tip-contract:forge": "forge build --contracts packages/tip-contract/src/DegenFeedTips.sol"
+    "deploy:tip-contract:forge": "forge build --contracts packages/tip-contract/src/DegenFeedTips.sol",
+    "deps:freshness": "npx npm-check-updates --format group",
+    "changeset": "changeset",
+    "version:ci": "changeset version",
+    "release:ci": "changeset publish"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.28.0",
     "@asamuzakjp/css-color": "^6.0.5",
     "@axe-core/playwright": "^4.12.1",
     "@biomejs/biome": "^2.5.5",

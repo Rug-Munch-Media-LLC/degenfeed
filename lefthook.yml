@@ -29,6 +29,9 @@ pre-commit:
 pre-push:
   parallel: true
   commands:
+    oxlint:
+      run: npx oxlint@latest --max-warnings=0 packages/ apps/
+      skip: false
     gitleaks-full:
       run: gitleaks detect --verbose --redact
       skip: false
