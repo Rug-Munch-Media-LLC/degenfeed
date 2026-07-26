@@ -8,18 +8,8 @@ const MESSAGE_TYPE_REACTION_ADD = 6;
 const MESSAGE_TYPE_REACTION_REMOVE = 7;
 
 const REACTION_TYPE_LIKE = 1;
-const _REACTION_TYPE_RECAST = 2;
 
 const HASH_SCHEME_BLAKE3 = 1;
-
-function _varintLen(value: number): number {
-  if (value < 128) return 1;
-  if (value < 16384) return 2;
-  if (value < 2097152) return 3;
-  if (value < 268435456) return 4;
-  if (value < 34359738368) return 5;
-  return 6;
-}
 
 function encodeVarint(value: number): Uint8Array {
   const out: number[] = [];

@@ -14,6 +14,7 @@ import {
   ALL_CATEGORIES,
   applyCurationPipeline,
   applyUserFilters,
+  BridgeFeedProvider,
   broadcastFeedUpdate,
   buildCatchUpSummary,
   cachedJsonResponse,
@@ -157,21 +158,50 @@ async function generateAndCacheFeed(
   // 3. Fetch from providers
   const notices: string[] = [];
   const timer = new ProviderTimer();
-  const results = await Promise.race([
-    fetchFromProviders(env, requestedProtocols, limit, notices, execCtx, timer),
-    new Promise<never>((_, reject) =>
-      setTimeout(
-        () => reject(new Error(`feed generation timeout after ${FEED_GENERATION_TIMEOUT_MS}ms`)),
-        FEED_GENERATION_TIMEOUT_MS,
+
+  let allPosts: import('@degenfeed/types').UnifiedPost[] = [];
+  let errors: string[] = [];
+  let perProtocol: Record<string, number> = {};
+
+  // Home feed uses the bridge's aggregated superfeed instead of fanning out
+  // to 68+ native providers (which return 0 posts). The bridge aggregates
+  // real content from 10+ major protocols and caches it for 45s.
+  if (feedType === 'home') {
+    const bridgeProvider = new BridgeFeedProvider(
+      'home' as import('@degenfeed/types').Protocol,
+      env,
+    );
+    try {
+      const bridgeResult = await bridgeProvider.fetchFeed({ timeoutMs: 10000 });
+      allPosts = bridgeResult.posts || [];
+      if (bridgeResult.notice) notices.push(bridgeResult.notice);
+      perProtocol = { bridge: allPosts.length };
+      console.log(`[feed] home feed: bridge returned ${allPosts.length} posts`);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'unknown';
+      notices.push(`Bridge unavailable: ${msg}`);
+      console.warn('[feed] Bridge unavailable for home feed:', msg);
+    }
+  } else {
+    const results = await Promise.race([
+      fetchFromProviders(env, requestedProtocols, limit, notices, execCtx, timer),
+      new Promise<never>((_, reject) =>
+        setTimeout(
+          () => reject(new Error(`feed generation timeout after ${FEED_GENERATION_TIMEOUT_MS}ms`)),
+          FEED_GENERATION_TIMEOUT_MS,
+        ),
       ),
-    ),
-  ]).catch((err: unknown) => {
-    const msg = err instanceof Error ? err.message : 'feed generation timed out';
-    notices.push(msg);
-    console.warn('[feed]', msg);
-    return [] as Awaited<ReturnType<typeof fetchFromProviders>>;
-  });
-  const { posts: allPosts, errors, perProtocol } = collectProviderResults(results);
+    ]).catch((err: unknown) => {
+      const msg = err instanceof Error ? err.message : 'feed generation timed out';
+      notices.push(msg);
+      console.warn('[feed]', msg);
+      return [] as Awaited<ReturnType<typeof fetchFromProviders>>;
+    });
+    const collected = collectProviderResults(results);
+    allPosts = collected.posts;
+    errors = collected.errors;
+    perProtocol = collected.perProtocol;
+  }
 
   // 4. Cross-protocol content deduplication
   const dedupResult = deduplicateCrossProtocol(allPosts);

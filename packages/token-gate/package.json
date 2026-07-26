@@ -15,7 +15,8 @@
   },
   "dependencies": {
     "@degenfeed/types": "workspace:*",
-    "@degenfeed/utils": "workspace:*"
+    "@degenfeed/utils": "workspace:*",
+    "@degenfeed/web3": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.9.3",
