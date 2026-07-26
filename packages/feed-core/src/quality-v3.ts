@@ -1,5 +1,7 @@
 /**
  * @degenfeed/feed-core — Content Scoring V3
+ * @deprecated Use scoreQualityV3 only for dashboard reporting.
+ * Do NOT use for ranking — use scorePost() from @degenfeed/ranking instead.
  *
  * Enhanced quality scoring beyond V2 with:
  * 1. Engagement velocity: how fast engagement is growing
@@ -261,7 +263,10 @@ export function computeLanguageQuality(post: UnifiedPost): number {
   if (properlyCapped > 1) score += 5;
 
   // Varied vocabulary (unique word ratio)
-  const words = text.toLowerCase().split(/\s+/).filter((w) => w.length > 2);
+  const words = text
+    .toLowerCase()
+    .split(/\s+/)
+    .filter((w) => w.length > 2);
   const uniqueWords = new Set(words).size;
   const vocabRatio = words.length > 0 ? uniqueWords / words.length : 0.5;
   if (vocabRatio > 0.7) score += 10;
@@ -297,7 +302,10 @@ export function computeEngagementVelocity(
   if (!prev) {
     // No history — estimate from current engagement rate
     const totalEng =
-      post.metrics.likes + post.metrics.reposts * 2 + post.metrics.replies * 3 + (post.metrics.quotes ?? 0) * 4;
+      post.metrics.likes +
+      post.metrics.reposts * 2 +
+      post.metrics.replies * 3 +
+      (post.metrics.quotes ?? 0) * 4;
     const rate = totalEng / ageHours;
 
     if (rate > 200) return 95;
@@ -315,7 +323,10 @@ export function computeEngagementVelocity(
   const dLikes = Math.max(0, post.metrics.likes - prev.likes);
   const dReposts = Math.max(0, post.metrics.reposts - prev.reposts);
   const dReplies = Math.max(0, post.metrics.replies - prev.replies);
-  const dQuotes = Math.max(0, (post.metrics.quotes ?? 0) - ((prev as { quotes?: number }).quotes ?? 0));
+  const dQuotes = Math.max(
+    0,
+    (post.metrics.quotes ?? 0) - ((prev as { quotes?: number }).quotes ?? 0),
+  );
 
   const newEngagements = dLikes + dReposts * 2 + dReplies * 3 + dQuotes * 4;
   const velocityPerHour = newEngagements / deltaHours;
@@ -342,7 +353,9 @@ export function computeFreshnessV3(post: UnifiedPost, now: number): number {
   const text = post.text ?? '';
 
   // Detect breaking news patterns
-  const isBreakingNews = /\b(breaking|just in|BREAKING|developing story|exclusive|scoop)\b/i.test(text);
+  const isBreakingNews = /\b(breaking|just in|BREAKING|developing story|exclusive|scoop)\b/i.test(
+    text,
+  );
   const hasUrgency = /\b(urgent|critical|emergency|alert|important announcement)\b/i.test(text);
 
   // Base freshness by age
@@ -468,11 +481,14 @@ export function computeSourceDiversity(
 
   // Each dimension contributes to diversity score
   const creatorDiversity = 1 - Math.min(1, creatorCount / Math.max(1, Math.ceil(safeTotal * 0.15)));
-  const categoryDiversity = 1 - Math.min(1, categoryCount / Math.max(1, Math.ceil(safeTotal * 0.25)));
-  const protocolDiversity = 1 - Math.min(1, protocolCount / Math.max(1, Math.ceil(safeTotal * 0.3)));
+  const categoryDiversity =
+    1 - Math.min(1, categoryCount / Math.max(1, Math.ceil(safeTotal * 0.25)));
+  const protocolDiversity =
+    1 - Math.min(1, protocolCount / Math.max(1, Math.ceil(safeTotal * 0.3)));
 
   // Weight: creator saturation matters most (avoid same person dominating)
-  const diversityScore = (creatorDiversity * 0.5 + categoryDiversity * 0.25 + protocolDiversity * 0.25) * 100;
+  const diversityScore =
+    (creatorDiversity * 0.5 + categoryDiversity * 0.25 + protocolDiversity * 0.25) * 100;
 
   return Math.max(0, Math.round(diversityScore));
 }
@@ -550,12 +566,12 @@ export function scoreQualityV3(
   // ── Composite (weighted combination) ──────────────────────────────
   const weights = {
     engagementVelocity: 0.15,
-    creatorQuality: 0.20,
-    sourceDiversity: 0.10,
-    freshness: 0.20,
+    creatorQuality: 0.2,
+    sourceDiversity: 0.1,
+    freshness: 0.2,
     languageQuality: 0.15,
-    protocolMultiplier: 0.10,
-    evergreenBonus: 0.10,
+    protocolMultiplier: 0.1,
+    evergreenBonus: 0.1,
   };
 
   const composite =
@@ -565,7 +581,7 @@ export function scoreQualityV3(
     freshness * weights.freshness +
     languageQuality * weights.languageQuality +
     protocolMultiplier * weights.protocolMultiplier +
-    (evergreenScore * 100) * weights.evergreenBonus;
+    evergreenScore * 100 * weights.evergreenBonus;
 
   // Collect reasons
   const reasons: string[] = [
@@ -599,11 +615,9 @@ export function scoreQualityV3(
 /**
  * Attach V3 quality signals to a post for frontend transparency.
  */
-export function enrichWithQualityV3(
-  post: UnifiedPost,
-  signals: QualityV3Signals,
-): UnifiedPost {
-  const feedDebug = ((post as unknown as Record<string, unknown>).feedDebug as Record<string, unknown>) ?? {};
+export function enrichWithQualityV3(post: UnifiedPost, signals: QualityV3Signals): UnifiedPost {
+  const feedDebug =
+    ((post as unknown as Record<string, unknown>).feedDebug as Record<string, unknown>) ?? {};
   return {
     ...post,
     feedDebug: {

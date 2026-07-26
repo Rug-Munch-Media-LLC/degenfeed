@@ -11,13 +11,13 @@
  */
 
 import type { LiveSource } from '../feed/live-aggregator';
+import { methodNotAllowed } from '../response-helpers';
 import type { Env } from '../types';
 import { jsonResponse, noCacheJsonResponse } from '../types';
 import { broadcastToAll } from '../ws-broadcast';
 import { CHANNELS } from '../ws-channels';
 import { recordBridgeOperation } from './bridge-reliability';
 import { NostrLiveBridge } from './nostr-live-bridge';
-import { methodNotAllowed } from '../response-helpers';
 
 // ─── Types ──────────────────────────────────────────────────────────────
 
@@ -161,42 +161,51 @@ export class LiveBridge {
           );
         } else if (protocol === 'peertube') {
           // Create PeerTube live mirror via the peertube-provider
-          const { PeerTubeClient } = await import('@degenfeed/peertube-sdk');
+          const { PeerTubeLiveStream } = await import('@degenfeed/peertube-provider');
           const gtsToken = await this.env.CACHE?.get('gts:access_token');
           const peertubeUrl = this.env.PEERTUBE_INSTANCE_URL ?? 'https://video.degenfeed.xyz';
 
           if (gtsToken) {
-            const client = new PeerTubeClient({ accessToken: gtsToken, instanceUrl: peertubeUrl });
+            const peertube = new PeerTubeLiveStream({
+              accessToken: gtsToken,
+              instanceUrl: peertubeUrl,
+            });
 
             // Find or create a channel for the streamer
-            const channels = await client.channels.list({
+            const channels = await peertube.listChannels({
               namePattern: announce.streamerAddress.slice(0, 20),
             });
             let channelId: number;
+            let channelName: string;
 
             if (channels.data.length > 0) {
-              channelId = channels.data[0]?.id;
+              channelId = channels.data[0].id;
+              channelName = channels.data[0].name;
             } else {
-              const newChannel = await client.channels.create({
-                name: `streamer-${announce.streamerAddress.slice(0, 8)}`,
+              const channelNameSlug = `streamer-${announce.streamerAddress.slice(0, 8)}`;
+              const newChannel = await peertube.createChannel({
+                name: channelNameSlug,
                 displayName: announce.streamerName,
                 description: `DegenFeed auto-created channel for ${announce.streamerName}`,
               });
               channelId = newChannel.id;
+              channelName = newChannel.name;
             }
 
-            const liveStream = await client.live.create({
-              channelId,
-              name: announce.title.slice(0, 120),
+            // Use createStream which handles channel resolution + live session creation
+            const liveResult = await peertube.createStream({
+              channelName,
+              title: announce.title.slice(0, 120),
               description: announce.description?.slice(0, 500),
-              saveReplay: true,
               tags: announce.tags ?? ['degenfeed', 'live'],
+              creatorAddress: announce.streamerAddress,
+              tokenAddress: announce.streamerAddress,
             });
 
             results[protocol] = {
               ok: true,
-              id: liveStream.video.uuid,
-              url: liveStream.video.url,
+              id: liveResult.uuid,
+              url: liveResult.url,
             };
           } else {
             results[protocol] = { ok: false, error: 'No PeerTube access token available' };

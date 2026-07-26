@@ -67,16 +67,6 @@ const HTML_ENTITIES: Record<string, string> = {
   '&nbsp;': ' ',
 };
 
-export function stripHtml(html: string): string {
-  if (!html) return '';
-  return html
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/&amp;|&lt;|&gt;|&quot;|&#39;|&apos;|&nbsp;/g, (m) => HTML_ENTITIES[m] ?? m)
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
 export function decodeXmlEntities(str: string): string {
   return str
     .replace(/<!\[CDATA\[(.*?)\]\]>/gs, '$1')
@@ -309,6 +299,11 @@ export {
 
 export type { TranslationResult } from './protocolTranslator';
 export { estimateTranslationLoss, PROTOCOL_FORMATS, translateContent } from './protocolTranslator';
+
+// ─── Content parsing (shared adapter utilities) ────────────────────────
+
+export type { RssItem } from './content';
+export { guessNiches, parseRssItems, stripHtml } from './content';
 
 // ─── Cross-protocol communities ────────────────────────────────────────
 

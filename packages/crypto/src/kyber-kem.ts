@@ -38,11 +38,11 @@ export const KYBER_PARAMS = {
   Q: 3329, // Modulus
   ETA1: 2, // CBD parameter
   ETA2: 2, // CBD parameter
-  DU: 11, // Ciphertext compression bits (u)
-  DV: 11, // Ciphertext compression bits (v)
+  DU: 11, // Ciphertext compression bits (u) — per ML-KEM-1024
+  DV: 5, // Ciphertext compression bits (v) — per ML-KEM-1024
   PUBLIC_KEY_BYTES: 1568, // 32 + k * n * 12 / 8 = 32 + 1536 = 1568
-  SECRET_KEY_BYTES: 3168, // public_key + k * n * 12 / 8 + 32 = 1568 + 1536 + 64
-  CIPHERTEXT_BYTES: 1568, // du * k * n / 8 + dv * n / 8 = 1408 + 352 = 1760 — actually 1568 for Kyber-1024
+  SECRET_KEY_BYTES: 3168, // k * n * 12 / 8 + public_key + 32 = 1536 + 1568 + 64 = 3168
+  CIPHERTEXT_BYTES: 1568, // du * k * n / 8 + dv * n / 8 = 1408 + 160 = 1568
 };
 
 // ─── Ring Modulo q Operations ──────────────────────────────────────────────
@@ -76,20 +76,20 @@ function montgomeryReduce(a: number): number {
 /**
  * NTT (Number Theoretic Transform) — forward transform.
  * Converts polynomial to NTT domain for fast multiplication.
+ * Uses standard Kyber CT butterfly with 7 layers (len = 128 → 2).
  */
 function ntt(a: number[]): number[] {
   const out = [...a];
-  const len = N;
   const zetas = KYBER_ZETAS;
+  let zetaIdx = 0;
 
-  let j = 0;
-  for (let l = 128; l >= 1; l >>= 1) {
-    for (let start = 0; start < len; start = j + l) {
-      const zeta = zetas[--j < 0 ? (j += zetas.length) : j % zetas.length]!;
-      for (let i = start; i < start + l; i++) {
-        const t = montgomeryReduce(zeta * out[i + l]!);
-        out[i + l] = out[i]! - t;
-        if (out[i + l]! < 0) out[i + l]! += Q;
+  for (let len = 128; len >= 2; len >>= 1) {
+    for (let start = 0; start < N; start += 2 * len) {
+      const zeta = zetas[zetaIdx++]!;
+      for (let i = start; i < start + len; i++) {
+        const t = montgomeryReduce(zeta * out[i + len]!);
+        out[i + len] = out[i]! - t;
+        if (out[i + len]! < 0) out[i + len]! += Q;
         out[i] = out[i]! + t;
         if (out[i]! >= Q) out[i]! -= Q;
       }
@@ -100,32 +100,31 @@ function ntt(a: number[]): number[] {
 
 /**
  * Inverse NTT.
+ * Uses 7 layers (len = 2 → 128) with GSM butterfly.
  */
 function intt(a: number[]): number[] {
   const out = [...a];
-  const len = N;
-  const _zetas = KYBER_ZETAS;
   const zetasInv = KYBER_ZETAS_INV;
+  let zetaIdx = 0;
 
-  let j = 0;
-  for (let l = 1; l < 128; l <<= 1) {
-    for (let start = 0; start < len; start = j + l) {
-      const zeta = zetasInv[j < zetasInv.length ? j : j % zetasInv.length]!;
-      j++;
-      for (let i = start; i < start + l; i++) {
-        const t = out[i + l]!;
-        out[i + l] = out[i]! - t;
-        if (out[i + l]! < 0) out[i + l]! += Q;
+  for (let len = 2; len <= 128; len <<= 1) {
+    for (let start = 0; start < N; start += 2 * len) {
+      const zeta = zetasInv[zetaIdx % zetasInv.length]!;
+      zetaIdx++;
+      for (let i = start; i < start + len; i++) {
+        const t = out[i + len]!;
+        out[i + len] = out[i]! - t;
+        if (out[i + len]! < 0) out[i + len]! += Q;
         out[i] = out[i]! + t;
         if (out[i]! >= Q) out[i]! -= Q;
-        out[i + l] = montgomeryReduce(zeta * out[i + l]!);
+        out[i + len] = montgomeryReduce(zeta * out[i + len]!);
       }
     }
   }
 
-  // Multiply by 1/n = 3303 mod Q using Barrett
+  // Multiply by 1/n = 3303 mod Q
   const ninv = 3303;
-  for (let i = 0; i < len; i++) {
+  for (let i = 0; i < N; i++) {
     out[i] = montgomeryReduce(out[i]! * ninv);
   }
   return out;
@@ -501,18 +500,23 @@ export async function kyberEncapsulate(publicKey: Uint8Array): Promise<KyberCiph
     vPoly[k] = barrettReduce(vPoly[k]! + eDoublePrime[k]!);
   }
 
-  // Compress and encode ciphertext: u (compressed) + v (compressed)
-  const encodedCoeffs: number[] = [];
+  // Compress and encode ciphertext: u (compressed with DU bits) + v (compressed with DV bits)
+  const uCoeffs: number[] = [];
   for (let i = 0; i < KYBER_PARAMS.K; i++) {
     for (let k = 0; k < N; k++) {
-      encodedCoeffs.push(compress(uPoly[i]?.[k]!, KYBER_PARAMS.DU));
+      uCoeffs.push(compress(uPoly[i]?.[k]!, KYBER_PARAMS.DU));
     }
   }
+  const vCoeffs: number[] = [];
   for (let k = 0; k < N; k++) {
-    encodedCoeffs.push(compress(vPoly[k]!, KYBER_PARAMS.DV));
+    vCoeffs.push(compress(vPoly[k]!, KYBER_PARAMS.DV));
   }
 
-  const ciphertext = encodeBits(encodedCoeffs, KYBER_PARAMS.DU);
+  const uEncoded = encodeBits(uCoeffs, KYBER_PARAMS.DU);
+  const vEncoded = encodeBits(vCoeffs, KYBER_PARAMS.DV);
+  const ciphertext = new Uint8Array(uEncoded.length + vEncoded.length);
+  ciphertext.set(uEncoded, 0);
+  ciphertext.set(vEncoded, uEncoded.length);
 
   // Derive shared secret
   const sharedSecret = await hashSHA256(r);
@@ -542,23 +546,31 @@ export async function kyberDecapsulate(
   // Convert s back to NTT domain
   const sPolyNtt = sPoly.map((p) => ntt(p));
 
-  // Decode ciphertext
-  const totalCoeffs = KYBER_PARAMS.K * N + N; // u coeffs + v coeffs
-  const decoded = decodeBits(ciphertext, totalCoeffs, KYBER_PARAMS.DU);
+  // Decode ciphertext — u encoded with DU bits, v encoded with DV bits
+  const uCount = KYBER_PARAMS.K * N;
+  const vCount = N;
+  const uBits = KYBER_PARAMS.DU;
+  const vBits = KYBER_PARAMS.DV;
+  const uBytes = (uCount * uBits + 7) >> 3;
+  const uEncoded = ciphertext.slice(0, uBytes);
+  const vEncoded = ciphertext.slice(uBytes);
+
+  const uDecoded = decodeBits(uEncoded, uCount, uBits);
+  const vDecoded = decodeBits(vEncoded, vCount, vBits);
 
   const uPoly: number[][] = [];
   let coeffIdx = 0;
   for (let i = 0; i < KYBER_PARAMS.K; i++) {
     const poly: number[] = [];
     for (let k = 0; k < N; k++) {
-      poly.push(decompress(decoded[coeffIdx++]!, KYBER_PARAMS.DU));
+      poly.push(decompress(uDecoded[coeffIdx++]!, KYBER_PARAMS.DU));
     }
     uPoly.push(poly);
   }
 
   const vCoeffs: number[] = [];
   for (let k = 0; k < N; k++) {
-    vCoeffs.push(decompress(decoded[coeffIdx++]!, KYBER_PARAMS.DV));
+    vCoeffs.push(decompress(vDecoded[k]!, KYBER_PARAMS.DV));
   }
 
   // Compute shared secret: s^T * u

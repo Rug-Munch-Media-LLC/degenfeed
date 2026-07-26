@@ -6,6 +6,7 @@
  */
 
 import type { Protocol, UnifiedPost } from '@degenfeed/types';
+import { guessNiches, parseRssItems, stripHtml } from '@degenfeed/utils';
 
 const $fetch = globalThis.fetch;
 
@@ -13,54 +14,6 @@ const CURATED_BLOGS = [
   { alias: 'degen', instance: 'https://write.as' },
   { alias: 'freedog', instance: 'https://write.as' },
 ];
-
-function stripHtml(html: string): string {
-  return html
-    .replace(/<[^>]*>/g, ' ')
-    .replace(/&amp;/g, '&')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-function guessNiches(text: string, title: string): string[] {
-  const lower = `${text} ${title}`.toLowerCase();
-  const n: string[] = [];
-  if (/\b(btc|bitcoin|crypto|blockchain|web3|defi|nft|eth|solana|token)\b/.test(lower))
-    n.push('crypto');
-  if (/\b(tech|programming|code|software|startup|saas|developer)\b/.test(lower)) n.push('tech');
-  if (/\b(ai |artificial|intelligence|llm|machine learning|gpt|openai)\b/.test(lower)) n.push('ai');
-  if (/\b(privacy|surveillance|encryption|security|decentralized|federation)\b/.test(lower))
-    n.push('privacy');
-  if (/\b(writing|blog|publishing|writer|poetry|essay|journalism)\b/.test(lower)) n.push('writing');
-  if (n.length === 0) n.push('article');
-  return n;
-}
-
-function parseRssItems(xml: string): Array<{
-  title?: string;
-  link?: string;
-  guid?: string;
-  description?: string;
-  author?: string;
-  pubDate?: string;
-}> {
-  const items: Array<Record<string, string>> = [];
-  const itemRe = /<item>([\s\S]*?)<\/item>/gi;
-  let m: RegExpExecArray | null;
-  while ((m = itemRe.exec(xml)) !== null) {
-    if (!m[1]) continue;
-    const e: string = m[1];
-    items.push({
-      title: (e.match(/<title[^>]*>([\s\S]*?)<\/title>/i) || [])[1] || '',
-      link: (e.match(/<link[^>]*>([\s\S]*?)<\/link>/i) || [])[1] || '',
-      guid: (e.match(/<guid[^>]*>([\s\S]*?)<\/guid>/i) || [])[1] || '',
-      description: (e.match(/<description[^>]*>([\s\S]*?)<\/description>/i) || [])[1] || '',
-      author: (e.match(/<author[^>]*>([\s\S]*?)<\/author>/i) || [])[1] || '',
-      pubDate: (e.match(/<pubDate[^>]*>([\s\S]*?)<\/pubDate>/i) || [])[1] || '',
-    });
-  }
-  return items;
-}
 
 export async function fetchWriteFreelyPosts(limit = 10): Promise<UnifiedPost[]> {
   const posts: UnifiedPost[] = [];

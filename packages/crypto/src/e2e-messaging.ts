@@ -541,8 +541,8 @@ export async function initSession(
     theirIdentityKey,
     rootKey: toBase64Url(rootKeyBytes),
     sendChainKey: toBase64Url(chainKeyBytes),
-    recvChainKey: null, // Set when we receive their first message
-    ourEphemeralKey: await exportPublicKey(ephemeralPair.publicKey),
+    recvChainKey: toBase64Url(chainKeyBytes), // Both parties start with the same chain key from X3DH
+    ourEphemeralKey: await exportPublicKey(ephemeralPair.privateKey),
     theirEphemeralPublicKey: null,
     sendMsgNum: 0,
     recvMsgNum: 0,
@@ -589,7 +589,7 @@ async function dhRatchet(
     rootKey: toBase64Url(newRootKey),
     sendChainKey: toBase64Url(newChainKey),
     recvChainKey: null,
-    ourEphemeralKey: await exportPublicKey(newEphemeralPair.publicKey),
+    ourEphemeralKey: await exportPublicKey(newEphemeralPair.privateKey),
     theirEphemeralPublicKey: theirEphemeral,
     sendMsgNum: 0,
     recvMsgNum: 0,
@@ -664,9 +664,16 @@ export async function ratchetEncrypt(
     updatedAt: Date.now(),
   };
 
+  // Strip private key material for transmission (receiver imports as public)
+  const ourPublicJwk: JsonWebKey = {
+    kty: session.ourEphemeralKey.kty,
+    crv: session.ourEphemeralKey.crv,
+    x: session.ourEphemeralKey.x,
+    y: session.ourEphemeralKey.y,
+  };
   const encrypted: EncryptedPayload = {
-    ephemeralKey: session.ourEphemeralKey,
-    ratchetKey: session.ourEphemeralKey,
+    ephemeralKey: ourPublicJwk,
+    ratchetKey: ourPublicJwk,
     messageNum: session.sendMsgNum,
     previousChainMsgNum: session.recvMsgNum,
     ciphertext,
@@ -690,10 +697,11 @@ export async function ratchetDecrypt(
 ): Promise<{ decrypted: DecryptedMessage; session: SessionState }> {
   let currentSession = { ...session };
 
-  // Check if we need to DH ratchet (their ratchet key changed)
+  // Check if we need to DH ratchet (their ratchet key changed).
+  // First message after X3DH uses the initial chain key directly — no DH ratchet needed.
   const theirRatchetKey = encrypted.ratchetKey ?? encrypted.ephemeralKey;
   const needRatchet =
-    !currentSession.theirEphemeralPublicKey ||
+    currentSession.theirEphemeralPublicKey !== null &&
     JSON.stringify(theirRatchetKey) !== JSON.stringify(currentSession.theirEphemeralPublicKey);
 
   if (needRatchet) {
@@ -745,6 +753,7 @@ export async function ratchetDecrypt(
     }
     // Update receiving chain to current message
     currentSession.recvChainKey = toBase64Url(chainKeyBytes);
+    currentSession.recvMsgNum = encrypted.messageNum;
   }
 
   // Try to decrypt with the appropriate key

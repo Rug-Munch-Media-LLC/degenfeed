@@ -9,6 +9,7 @@
  *      GET /api/v1/timelines/public (Mastodon-compat)
  */
 import type { Protocol, UnifiedPost } from '@degenfeed/types';
+import { guessNiches, stripHtml } from '@degenfeed/utils';
 
 const $fetch = globalThis.fetch;
 
@@ -19,26 +20,6 @@ const HUBZILLA_INSTANCES = [
   'https://hubs.selfhosted.social',
   'https://hub.ssh.surf',
 ];
-
-function stripHtml(html: string): string {
-  return html
-    .replace(/<[^>]*>/g, ' ')
-    .replace(/&amp;/g, '&')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-function guessNiches(text: string): string[] {
-  const lower = text.toLowerCase();
-  const n: string[] = [];
-  if (/\b(btc|bitcoin|crypto|blockchain|web3|defi|nft)\b/.test(lower)) n.push('crypto');
-  if (/\b(tech|programming|code|software|foss|linux)\b/.test(lower)) n.push('tech');
-  if (/\b(privacy|surveillance|encryption|security|decentralized|nomadic)\b/.test(lower))
-    n.push('privacy');
-  if (/\b(fediverse|activitypub|hubzilla|zot|social)\b/.test(lower)) n.push('fediverse');
-  if (n.length === 0) n.push('social');
-  return n;
-}
 
 export async function fetchHubzillaPosts(limit = 10): Promise<UnifiedPost[]> {
   const posts: UnifiedPost[] = [];

@@ -14,8 +14,8 @@
  *   GET /api/discover/new            — Recently created communities & active people
  */
 
-import type { TrendingTopic } from '@degenfeed/feed-core';
 import { isSpamPost } from '@degenfeed/feed-core';
+import type { TrendingTopic } from '@degenfeed/ranking';
 import type { UnifiedPost } from '@degenfeed/types';
 import { COMMUNITY_KV_PREFIX, type CrossProtocolCommunity } from '@degenfeed/utils';
 import { jsonResponse } from '../response-helpers';

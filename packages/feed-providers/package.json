@@ -18,7 +18,8 @@
     "@degenfeed/feed-core": "workspace:*",
     "@degenfeed/pixelfed-sdk": "workspace:*",
     "@degenfeed/source-discovery": "workspace:*",
-    "@degenfeed/types": "workspace:*"
+    "@degenfeed/types": "workspace:*",
+    "@degenfeed/utils": "workspace:*"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.5",

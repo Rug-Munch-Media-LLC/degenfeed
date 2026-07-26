@@ -4,7 +4,8 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
+    testTimeout: 10_000,
     include: ['src/**/*.{test,spec}.{ts,tsx}'],
-    passWithNoTests: true,
+    exclude: ['node_modules', 'dist', '.turbo'],
   },
 });
