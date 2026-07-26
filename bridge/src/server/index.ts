@@ -557,6 +557,20 @@ const server = http.createServer(async (req, res) => {
         .filter(Boolean);
       const result = await buildFeed(protocols, limit);
       result.meta.page = page;
+      // NEVER return empty — if buildFeed returned empty (shouldn't happen with seed fallback)
+      // add a notice and ensure we always have content
+      if (!result.posts || result.posts.length === 0) {
+        const { getSeedContent } = await import('./seed-content');
+        const seedPosts = getSeedContent(limit);
+        for (const p of seedPosts) (p as Record<string, unknown>)._demo = true;
+        result.posts = seedPosts;
+        result.meta.total = seedPosts.length;
+        result.meta.isDemo = true;
+        result.meta.notices = result.meta.notices || [];
+        (result.meta.notices as string[]).push(
+          'All providers returned empty — serving demo content',
+        );
+      }
       // Return both formats for backward compatibility
       return jsonOk(res, { data: result.posts, posts: result.posts, meta: result.meta });
     }
@@ -838,15 +852,25 @@ const server = http.createServer(async (req, res) => {
       if (proto === 'zora') {
         const { fetchZoraPosts } = await import('../providers/zora');
         const posts = await fetchZoraPosts(limit);
+        if (!posts || posts.length === 0) {
+          const { getSeedContent } = await import('./seed-content');
+          const seedPosts = getSeedContent(limit, 'zora');
+          for (const p of seedPosts) (p as Record<string, unknown>)._demo = true;
+          return jsonOk(res, {
+            posts: seedPosts,
+            meta: {
+              total: seedPosts.length,
+              page,
+              limit,
+              source: 'demo',
+              isDemo: true,
+              fetchedAt: Date.now(),
+            },
+          });
+        }
         return jsonOk(res, {
           posts,
-          meta: {
-            total: posts.length,
-            page,
-            limit,
-            source: 'zora-indexer',
-            fetchedAt: Date.now(),
-          },
+          meta: { total: posts.length, page, limit, source: 'zora-indexer', fetchedAt: Date.now() },
         });
       }
 
@@ -886,6 +910,20 @@ const server = http.createServer(async (req, res) => {
       if (allowed.includes(proto)) {
         const result = await buildFeed([proto], limit);
         result.meta.page = page;
+        // NEVER return empty for single-provider feeds
+        if (!result.posts || result.posts.length === 0) {
+          const { getSeedContent } = await import('./seed-content');
+          const seedPosts = getSeedContent(limit, proto);
+          for (const p of seedPosts) (p as Record<string, unknown>)._demo = true;
+          result.posts = seedPosts;
+          result.meta.total = seedPosts.length;
+          result.meta.isDemo = true;
+          result.meta.source = 'demo';
+          result.meta.notices = result.meta.notices || [];
+          (result.meta.notices as string[]).push(
+            `Provider ${proto} returned empty — serving demo content. Connect a real ${proto} account at app.degenfeed.xyz`,
+          );
+        }
         return jsonOk(res, { data: result.posts, posts: result.posts, meta: result.meta });
       }
     }

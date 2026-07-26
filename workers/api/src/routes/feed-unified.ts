@@ -23,7 +23,7 @@
  *   q          — Search query (search endpoint only)
  */
 
-import type { Protocol } from '@degenfeed/types';
+import type { Protocol, UnifiedPost } from '@degenfeed/types';
 import {
   type BuildFeedOptions,
   buildDefaultFeed,
@@ -34,10 +34,32 @@ import {
   type NetworkCategory,
 } from '../feed/content-pipeline';
 import { checkProvidersHealth } from '../feed/feed-fetcher';
+import { getSeedContent } from '../feed/seed-content';
 import type { Env } from '../index';
 import { jsonResponse } from '../index';
 
-// ─── Helpers ────────────────────────────────────────────────────────────
+// ─── Helper to enrich posts with badges + seed fallback ─────────────────
+
+function enrichWithBadges(posts: UnifiedPost[]): Array<UnifiedPost & Record<string, unknown>> {
+  return posts.map((p) => {
+    const badge = badgeForProtocol(p.protocol);
+    return { ...p, sourceBadge: badge.emoji, sourceColor: badge.color, sourceLabel: badge.label };
+  });
+}
+
+function seedFallback(
+  limit: number,
+  protocol?: string,
+): Array<UnifiedPost & Record<string, unknown>> {
+  const seed = getSeedContent(limit, protocol);
+  return seed.map((p) => ({
+    ...p,
+    sourceBadge: '●',
+    sourceColor: '#666',
+    sourceLabel: 'Demo',
+    _demo: true,
+  }));
+}
 
 function parseSources(raw: string | null): FeedSourceKey[] | undefined {
   if (!raw || raw === 'all') return undefined;
@@ -89,13 +111,17 @@ export async function handleUnifiedFeed(request: Request, env: Env): Promise<Res
     cursor,
   });
 
+  // Never return empty — serve seed content if all real sources failed
+  const posts = feed.posts.length > 0 ? feed.posts : seedFallback(limit);
+
   return jsonResponse({
-    data: feed.posts,
+    data: enrichWithBadges(posts as UnifiedPost[]),
     meta: {
-      total: feed.posts.length,
+      total: posts.length,
       sourceBreakdown: feed.sourceBreakdown,
       nextCursor: feed.nextCursor,
       generatedAt: feed.generatedAt,
+      isDemo: feed.posts.length === 0,
     },
   });
 }
@@ -119,11 +145,9 @@ export async function handleTrendingContent(request: Request, env: Env): Promise
     protocols,
   });
 
-  // Attach source badges
-  const enriched = posts.map((p) => {
-    const badge = badgeForProtocol(p.protocol);
-    return { ...p, sourceBadge: badge.emoji, sourceColor: badge.color, sourceLabel: badge.label };
-  });
+  // Never return empty — use seed content fallback
+  const finalPosts = posts.length > 0 ? posts : seedFallback(limit);
+  const enriched = enrichWithBadges(finalPosts as UnifiedPost[]);
 
   return jsonResponse({
     data: enriched,
@@ -131,6 +155,7 @@ export async function handleTrendingContent(request: Request, env: Env): Promise
       total: enriched.length,
       windowHours,
       minEngagement,
+      isDemo: posts.length === 0,
     },
   });
 }
@@ -149,25 +174,28 @@ export async function handleForYouFeed(request: Request, env: Env): Promise<Resp
   if (!wallet) {
     // No wallet = anonymous user. Return trending as "for-you" default.
     const posts = await pipeline.getTrendingContent({ limit });
-    const enriched = posts.map((p) => {
-      const badge = badgeForProtocol(p.protocol);
-      return { ...p, sourceBadge: badge.emoji, sourceColor: badge.color, sourceLabel: badge.label };
-    });
+    const finalPosts = posts.length > 0 ? posts : seedFallback(limit);
+    const enriched = enrichWithBadges(finalPosts as UnifiedPost[]);
     return jsonResponse({
       data: enriched,
-      meta: { total: enriched.length, note: 'anonymous-user-falling-back-to-trending' },
+      meta: {
+        total: enriched.length,
+        note:
+          posts.length === 0
+            ? 'demo-content-no-account'
+            : 'anonymous-user-falling-back-to-trending',
+        isDemo: posts.length === 0,
+      },
     });
   }
 
   const curated = await pipeline.getCuratedContent({ wallet, limit });
-  const enriched = curated.map((p) => {
-    const badge = badgeForProtocol(p.protocol);
-    return { ...p, sourceBadge: badge.emoji, sourceColor: badge.color, sourceLabel: badge.label };
-  });
+  const finalPosts = curated.length > 0 ? curated : seedFallback(limit);
+  const enriched = enrichWithBadges(finalPosts as UnifiedPost[]);
 
   return jsonResponse({
     data: enriched,
-    meta: { total: enriched.length, wallet },
+    meta: { total: enriched.length, wallet, isDemo: curated.length === 0 },
   });
 }
 
@@ -198,14 +226,19 @@ export async function handleCategoryFeed(
       return tags.some((tag) => text.includes(tag));
     });
 
-    const enriched = filtered.slice(0, limit).map((p) => {
-      const badge = badgeForProtocol(p.protocol);
-      return { ...p, sourceBadge: badge.emoji, sourceColor: badge.color, sourceLabel: badge.label };
-    });
+    // Never return empty
+    const finalPosts =
+      filtered.length > 0 ? filtered.slice(0, limit) : seedFallback(limit, categoryId);
+    const enriched = enrichWithBadges(finalPosts as UnifiedPost[]);
 
     return jsonResponse({
       data: enriched,
-      meta: { total: enriched.length, category: categoryId, label: defaultCat.label },
+      meta: {
+        total: enriched.length,
+        category: categoryId,
+        label: defaultCat.label,
+        isDemo: filtered.length === 0,
+      },
     });
   }
 
@@ -218,13 +251,16 @@ export async function handleCategoryFeed(
     limit,
   });
 
+  const finalPosts = feed.posts.length > 0 ? feed.posts : seedFallback(limit, categoryId);
+
   return jsonResponse({
-    data: feed.posts,
+    data: enrichWithBadges(finalPosts as UnifiedPost[]),
     meta: {
-      total: feed.posts.length,
+      total: finalPosts.length,
       category: categoryId,
       sourceBreakdown: feed.sourceBreakdown,
       nextCursor: feed.nextCursor,
+      isDemo: feed.posts.length === 0,
     },
   });
 }
@@ -261,10 +297,9 @@ export async function handleUnifiedSearch(request: Request, env: Env): Promise<R
     return searchText.includes(q);
   });
 
-  const enriched = matched.slice(0, limit).map((p) => {
-    const badge = badgeForProtocol(p.protocol);
-    return { ...p, sourceBadge: badge.emoji, sourceColor: badge.color, sourceLabel: badge.label };
-  });
+  // If no search results, show seed content with search notice
+  const finalPosts = matched.length > 0 ? matched.slice(0, limit) : seedFallback(limit);
+  const enriched = enrichWithBadges(finalPosts as UnifiedPost[]);
 
   return jsonResponse({
     data: enriched,
@@ -272,6 +307,8 @@ export async function handleUnifiedSearch(request: Request, env: Env): Promise<R
       total: enriched.length,
       query,
       matchedTotal: matched.length,
+      isDemo: matched.length === 0,
+      notice: matched.length === 0 ? `No results for "${query}" — showing demo content` : undefined,
     },
   });
 }
@@ -325,14 +362,20 @@ export async function handleSourceDiscovery(_request: Request, env: Env): Promis
  */
 export async function handleDefaultFeed(_request: Request, env: Env): Promise<Response> {
   const feed = await buildDefaultFeed(env);
+  const limit = Math.min(Number(new URL(_request.url).searchParams.get('limit')) || 50, 200);
+
+  // Never return empty for new user default feed
+  const posts = feed.posts.length > 0 ? feed.posts : seedFallback(limit);
+  const enriched = enrichWithBadges(posts as UnifiedPost[]);
 
   return jsonResponse({
-    data: feed.posts,
+    data: enriched,
     meta: {
-      total: feed.posts.length,
+      total: enriched.length,
       sourceBreakdown: feed.sourceBreakdown,
       generatedAt: feed.generatedAt,
-      note: 'default-feed-for-new-users',
+      note: feed.posts.length === 0 ? 'default-feed-with-demo' : 'default-feed-for-new-users',
+      isDemo: feed.posts.length === 0,
     },
   });
 }
@@ -367,14 +410,13 @@ export async function handleNetworkFeed(
   const pipeline = new ContentPipeline(env);
   const posts = await pipeline.getNetworkContent(network as NetworkCategory);
 
-  const enriched = posts.slice(0, limit).map((p) => {
-    const badge = badgeForProtocol(p.protocol);
-    return { ...p, sourceBadge: badge.emoji, sourceColor: badge.color, sourceLabel: badge.label };
-  });
+  // Never return empty — seed fallback
+  const finalPosts = posts.length > 0 ? posts.slice(0, limit) : seedFallback(limit, network);
+  const enriched = enrichWithBadges(finalPosts as UnifiedPost[]);
 
   return jsonResponse({
     data: enriched,
-    meta: { total: enriched.length, network },
+    meta: { total: enriched.length, network, isDemo: posts.length === 0 },
   });
 }
 
