@@ -80,6 +80,14 @@ function jsonOk(res: http.ServerResponse, data: unknown) {
   const sanitized = sanitizeControlChars(data);
   res.writeHead(200, { 'Content-Type': 'application/json' });
   res.end(JSON.stringify(sanitized));
+
+  // Trigger GC after large feed responses if --expose-gc is enabled
+  const dataStr = JSON.stringify(sanitized);
+  if (dataStr && dataStr.length > 100_000 && typeof global.gc === 'function') {
+    setImmediate(() => {
+      global.gc();
+    });
+  }
 }
 
 // ─── Cross-Protocol Notification Generator ──────────────────────────────

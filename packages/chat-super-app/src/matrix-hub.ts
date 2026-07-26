@@ -17,15 +17,25 @@
 
 import type { Env } from '@degenfeed/types';
 
+// ─── KV Store Type ──────────────────────────────────────────────────────────
+
+interface KVStore {
+  get(key: string): Promise<string | null>;
+  put(key: string, value: string, options?: { expirationTtl?: number }): Promise<void>;
+}
+
+function getKV(env: Env): KVStore | null {
+  const kv = getKV(env);
+  return (kv as unknown as KVStore) ?? null;
+}
+
 // ─── Constants ─────────────────────────────────────────────────────────────
 
 const CONDUIT_URL = process.env.CONDUIT_URL || 'http://localhost:8448';
 const CONDUIT_ACCESS_TOKEN_KEY = 'matrix:conduit:access_token';
 const CONDUIT_ADMIN_TOKEN_KEY = 'matrix:conduit:admin_token';
 
-const BRIDGE_PREFIX = 'matrix:bridge:';
 const BRIDGE_ROOM_PREFIX = 'matrix:bridge:room:';
-const BRIDGE_HEALTH_PREFIX = 'matrix:bridge:health:';
 const BRIDGE_CONFIG_PREFIX = 'matrix:bridge:config:';
 
 /** All protocols that can be bridged through Matrix */
@@ -45,6 +55,7 @@ export const BRIDGEABLE_PROTOCOLS = [
   'session',
   'xmtp',
   'whatsapp',
+  'matrix',
 ] as const;
 
 export type BridgeProtocol = (typeof BRIDGEABLE_PROTOCOLS)[number];
@@ -106,7 +117,6 @@ export interface BridgeStatus {
 export class MatrixHub {
   private conduitUrl: string;
   private accessToken: string | null = null;
-  private adminToken: string | null = null;
   private bridgeConfigs: Map<BridgeProtocol, BridgeConfig> = new Map();
   private bridgeRooms: Map<string, BridgeRoom> = new Map();
 
@@ -120,7 +130,7 @@ export class MatrixHub {
   async initialize(env: Env): Promise<boolean> {
     try {
       // Load tokens from KV
-      const kv = env.CACHE ?? env.CONTENT_LIBRARY;
+      const kv = getKV(env);
       if (kv) {
         this.accessToken = await kv.get(CONDUIT_ACCESS_TOKEN_KEY);
         this.adminToken = await kv.get(CONDUIT_ADMIN_TOKEN_KEY);
@@ -173,7 +183,6 @@ export class MatrixHub {
       });
 
       if (!res.ok) {
-        const errText = await res.text().catch(() => '');
         // Try admin registration if user-facing register fails
         return await this.adminRegisterBot(env, botUsername, botPassword);
       }
@@ -182,7 +191,7 @@ export class MatrixHub {
       this.accessToken = data.access_token;
 
       // Store tokens
-      const kv = env.CACHE ?? env.CONTENT_LIBRARY;
+      const kv = getKV(env);
       if (kv) {
         await kv.put(CONDUIT_ACCESS_TOKEN_KEY, data.access_token, {
           expirationTtl: 86400 * 365,
@@ -250,7 +259,7 @@ export class MatrixHub {
       const data = (await res.json()) as { access_token: string; user_id: string };
       this.accessToken = data.access_token;
 
-      const kv = env.CACHE ?? env.CONTENT_LIBRARY;
+      const kv = getKV(env);
       if (kv) {
         await kv.put(CONDUIT_ACCESS_TOKEN_KEY, data.access_token, {
           expirationTtl: 86400 * 365,
@@ -414,7 +423,7 @@ export class MatrixHub {
     }
 
     // Bridge to all other protocols that have rooms mapped to this one
-    const bridgedProtocols = await this.getBridgedProtocolsForRoom(env, roomId, sourceProtocol);
+    const bridgedProtocols = await this.getBridgedProtocolsForRoom(roomId, sourceProtocol);
     for (const targetProtocol of bridgedProtocols) {
       try {
         const targetConfig = this.bridgeConfigs.get(targetProtocol);
@@ -699,8 +708,9 @@ export class MatrixHub {
 
   private async bridgeToNostr(config: BridgeConfig, message: BridgeMessage): Promise<void> {
     // Uses NIP-04 or NIP-17 encrypted DMs via Nostr relay
-    const { publishToNostr } = await import('@degenfeed/nostr-sdk');
-    await publishToNostr({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const nostrSdk = (await import('@degenfeed/nostr-sdk')) as any;
+    await nostrSdk.publishToNostr({
       kind: 4, // NIP-04 encrypted DM
       content: message.body,
       tags: [['p', config.metadata.recipientPubkey || '']],
@@ -902,7 +912,7 @@ export class MatrixHub {
 
   private async ensureBridgeRoom(env: Env, protocol: BridgeProtocol): Promise<string> {
     // Check if a room already exists for this protocol
-    const kv = env.CACHE ?? env.CONTENT_LIBRARY;
+    const kv = getKV(env);
     if (kv) {
       const existingRoomId = await kv.get(`${BRIDGE_ROOM_PREFIX}${protocol}`);
       if (existingRoomId) return existingRoomId;
@@ -926,7 +936,6 @@ export class MatrixHub {
   }
 
   private async getBridgedProtocolsForRoom(
-    env: Env,
     roomId: string,
     excludeProtocol: BridgeProtocol,
   ): Promise<BridgeProtocol[]> {
@@ -945,7 +954,7 @@ export class MatrixHub {
   // ─── KV Persistence ────────────────────────────────────────────────────
 
   private async loadBridgeConfigs(env: Env): Promise<void> {
-    const kv = env.CACHE ?? env.CONTENT_LIBRARY;
+    const kv = getKV(env);
     if (!kv) return;
 
     for (const protocol of BRIDGEABLE_PROTOCOLS) {
@@ -965,7 +974,7 @@ export class MatrixHub {
     protocol: BridgeProtocol,
     config: BridgeConfig,
   ): Promise<void> {
-    const kv = env.CACHE ?? env.CONTENT_LIBRARY;
+    const kv = getKV(env);
     if (!kv) return;
 
     await kv.put(`${BRIDGE_CONFIG_PREFIX}${protocol}`, JSON.stringify(config), {
@@ -974,7 +983,7 @@ export class MatrixHub {
   }
 
   private async saveBridgeRoom(env: Env, room: BridgeRoom): Promise<void> {
-    const kv = env.CACHE ?? env.CONTENT_LIBRARY;
+    const kv = getKV(env);
     if (!kv) return;
 
     await kv.put(`${BRIDGE_ROOM_PREFIX}${room.roomId}`, JSON.stringify(room), {
@@ -983,7 +992,7 @@ export class MatrixHub {
   }
 
   private async getBotUserId(env: Env): Promise<string> {
-    const kv = env.CACHE ?? env.CONTENT_LIBRARY;
+    const kv = getKV(env);
     if (!kv) return '';
 
     try {
