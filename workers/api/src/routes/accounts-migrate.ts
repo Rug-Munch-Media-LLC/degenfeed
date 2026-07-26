@@ -20,8 +20,10 @@
  *   - Account creation date
  */
 
-import { type Env, jsonResponse, log, noCacheJsonResponse } from '../index';
+import { log } from '../index';
+import { jsonResponse, noCacheJsonResponse } from '../response-helpers';
 import { requireSession } from '../session';
+import type { Env } from '../types';
 
 // ─── Types ────────────────────────────────────────────────────────────────
 

@@ -21,4 +21,262 @@ import { validateBodySize } from '../sanitize';
 import { requireSession } from '../session';
 import type { Env } from '../types';
 
-type NotificationTypePref = {};
+interface NotificationTypePref {
+  likes: boolean;
+  reposts: boolean;
+  replies: boolean;
+  follows: boolean;
+  mentions: boolean;
+}
+
+type NotificationProtocolPrefs = Partial<Record<Protocol | 'tip', boolean | NotificationTypePref>>;
+
+interface PreferencesBody {
+  hideLowQuality?: boolean;
+  hideLowQualityThreshold?: number;
+  preferredNiches?: string[];
+  preferredPlatforms?: string[];
+  mutedNiches?: string[];
+  recencyWeight?: number;
+  engagementWeight?: number;
+  diversityBoost?: boolean;
+  allowNonCrypto?: boolean;
+  // ── New quality filters ────────────────────────────────────────
+  showOriginalContent?: boolean;
+  minEngagement?: number;
+  maxPerNiche?: number;
+  interleaveProtocols?: boolean;
+  /** Notification preferences — per-protocol type toggles */
+  notifications?: NotificationProtocolPrefs;
+  // ── Messaging preferences ─────────────────────────────────────
+  messaging?: {
+    defaultProtocol?: string;
+    fallbackProtocols?: string[];
+    encryptionRequired?: boolean;
+    readReceipts?: boolean;
+    typingIndicators?: boolean;
+    disappearingTimer?: number;
+  };
+}
+
+interface StoredPreferences {
+  hideLowQuality: boolean;
+  hideLowQualityThreshold: number;
+  preferredNiches: string[];
+  preferredPlatforms: Protocol[];
+  mutedNiches: string[];
+  recencyWeight: number;
+  engagementWeight: number;
+  diversityBoost: boolean;
+  allowNonCrypto: boolean;
+  // ── New quality filters ────────────────────────────────────────
+  showOriginalContent: boolean;
+  minEngagement: number;
+  maxPerNiche: number;
+  interleaveProtocols: boolean;
+  /** Notification preferences — users can toggle like/repost/reply/follow per protocol */
+  notifications: NotificationProtocolPrefs;
+  /** Messaging preferences */
+  messaging: {
+    defaultProtocol: string;
+    fallbackProtocols: string[];
+    encryptionRequired: boolean;
+    readReceipts: boolean;
+    typingIndicators: boolean;
+    disappearingTimer: number;
+  };
+  updatedAt: number;
+}
+
+const DEFAULT_NOTIF_PREFS: NotificationProtocolPrefs = {
+  nostr: {
+    likes: true,
+    reposts: true,
+    replies: true,
+    follows: true,
+    mentions: true,
+  },
+  farcaster: {
+    likes: true,
+    reposts: true,
+    replies: true,
+    follows: true,
+    mentions: true,
+  },
+  lens: {
+    likes: true,
+    reposts: true,
+    replies: true,
+    follows: true,
+    mentions: true,
+  },
+  bluesky: {
+    likes: true,
+    reposts: true,
+    replies: true,
+    follows: true,
+    mentions: true,
+  },
+  mastodon: {
+    likes: true,
+    reposts: true,
+    replies: true,
+    follows: true,
+    mentions: true,
+  },
+  tip: true,
+};
+
+const DEFAULT_PREFS: StoredPreferences = {
+  hideLowQuality: false,
+  hideLowQualityThreshold: 1.0,
+  preferredNiches: [],
+  preferredPlatforms: [],
+  mutedNiches: [],
+  recencyWeight: 1,
+  engagementWeight: 1,
+  diversityBoost: true,
+  allowNonCrypto: false,
+  showOriginalContent: false,
+  minEngagement: 0,
+  maxPerNiche: 5,
+  interleaveProtocols: true,
+  notifications: DEFAULT_NOTIF_PREFS,
+  messaging: {
+    defaultProtocol: 'nostr',
+    fallbackProtocols: ['matrix', 'direct-ws', 'bluesky', 'mastodon'],
+    encryptionRequired: true,
+    readReceipts: true,
+    typingIndicators: true,
+    disappearingTimer: 0,
+  },
+  updatedAt: 0,
+};
+
+function clamp(n: unknown, min: number, max: number, fallback: number): number {
+  if (typeof n !== 'number' || !Number.isFinite(n)) return fallback;
+  return Math.max(min, Math.min(max, n));
+}
+
+export function sanitizePrefs(body: PreferencesBody): StoredPreferences {
+  return {
+    hideLowQuality: typeof body.hideLowQuality === 'boolean' ? body.hideLowQuality : false,
+    preferredNiches: Array.isArray(body.preferredNiches)
+      ? body.preferredNiches.map((n) => String(n).toLowerCase().trim()).filter((n) => n.length > 0)
+      : [],
+    preferredPlatforms: Array.isArray(body.preferredPlatforms)
+      ? body.preferredPlatforms.filter((p): p is Protocol => typeof p === 'string')
+      : [],
+    mutedNiches: Array.isArray(body.mutedNiches)
+      ? body.mutedNiches.map((n) => String(n).toLowerCase().trim()).filter((n) => n.length > 0)
+      : [],
+    recencyWeight: clamp(body.recencyWeight, 0.1, 5, 1),
+    engagementWeight: clamp(body.engagementWeight, 0.1, 5, 1),
+    diversityBoost: typeof body.diversityBoost === 'boolean' ? body.diversityBoost : true,
+    allowNonCrypto: typeof body.allowNonCrypto === 'boolean' ? body.allowNonCrypto : false,
+    hideLowQualityThreshold: clamp(body.hideLowQualityThreshold, 0, 10, 1),
+    // New quality filters
+    showOriginalContent:
+      typeof body.showOriginalContent === 'boolean' ? body.showOriginalContent : false,
+    minEngagement: clamp(body.minEngagement, 0, 1000, 0),
+    maxPerNiche: clamp(body.maxPerNiche, 1, 20, 5),
+    interleaveProtocols:
+      typeof body.interleaveProtocols === 'boolean' ? body.interleaveProtocols : true,
+    notifications: sanitizeNotifPrefs(body.notifications),
+    updatedAt: Date.now(),
+    messaging: sanitizeMessagingPrefs(body.messaging),
+  };
+}
+
+function sanitizeMessagingPrefs(input: unknown): StoredPreferences['messaging'] {
+  const def = DEFAULT_PREFS.messaging;
+  if (typeof input !== 'object' || input === null) return { ...def };
+  const raw = input as Record<string, unknown>;
+  return {
+    defaultProtocol:
+      typeof raw.defaultProtocol === 'string' ? raw.defaultProtocol : def.defaultProtocol,
+    fallbackProtocols: Array.isArray(raw.fallbackProtocols)
+      ? raw.fallbackProtocols.filter((p): p is string => typeof p === 'string')
+      : def.fallbackProtocols,
+    encryptionRequired:
+      typeof raw.encryptionRequired === 'boolean' ? raw.encryptionRequired : def.encryptionRequired,
+    readReceipts: typeof raw.readReceipts === 'boolean' ? raw.readReceipts : def.readReceipts,
+    typingIndicators:
+      typeof raw.typingIndicators === 'boolean' ? raw.typingIndicators : def.typingIndicators,
+    disappearingTimer:
+      typeof raw.disappearingTimer === 'number'
+        ? Math.max(0, Math.min(10080, raw.disappearingTimer))
+        : def.disappearingTimer,
+  };
+}
+
+function sanitizeNotifPrefs(input: unknown): NotificationProtocolPrefs {
+  if (typeof input !== 'object' || input === null) return { ...DEFAULT_NOTIF_PREFS };
+  const raw = input as Record<string, unknown>;
+  const result: NotificationProtocolPrefs = {};
+  // Copy over known protocol keys, validating their shape
+  for (const key of ['nostr', 'farcaster', 'lens', 'bluesky', 'mastodon', 'tip'] as const) {
+    const val = raw[key];
+    if (key === 'tip') {
+      result[key] = typeof val === 'boolean' ? val : DEFAULT_NOTIF_PREFS.tip;
+    } else if (typeof val === 'object' && val !== null) {
+      const tv = val as Record<string, unknown>;
+      result[key] = {
+        likes: typeof tv.likes === 'boolean' ? tv.likes : true,
+        reposts: typeof tv.reposts === 'boolean' ? tv.reposts : true,
+        replies: typeof tv.replies === 'boolean' ? tv.replies : true,
+        follows: typeof tv.follows === 'boolean' ? tv.follows : true,
+        mentions: typeof tv.mentions === 'boolean' ? tv.mentions : true,
+      };
+    } else {
+      // If entire key is missing, use default
+      const def = DEFAULT_NOTIF_PREFS[key as keyof typeof DEFAULT_NOTIF_PREFS];
+      if (def !== undefined) result[key] = def;
+    }
+  }
+  return result;
+}
+
+function prefsKey(address: string): string {
+  return `user:prefs:${address.toLowerCase()}`;
+}
+
+export async function handlePreferences(request: Request, env: Env): Promise<Response> {
+  const session = await requireSession(request, env);
+  if (session instanceof Response) return session;
+
+  if (request.method === 'GET') {
+    try {
+      const raw = await env.CACHE?.get(prefsKey(session.address));
+      if (raw) {
+        const parsed = JSON.parse(raw) as Partial<StoredPreferences>;
+        return noCacheJsonResponse({ ...DEFAULT_PREFS, ...parsed });
+      }
+    } catch {
+      /* KV operation failed -- non-critical, continue */
+    }
+    return noCacheJsonResponse(DEFAULT_PREFS);
+  }
+
+  if (request.method !== 'POST') return methodNotAllowed(['POST']);
+
+  const bodySizeCheck = validateBodySize(request, 16 * 1024);
+  if (!bodySizeCheck.ok) return jsonResponse({ error: bodySizeCheck.error }, 413);
+
+  let body: PreferencesBody = {};
+  try {
+    body = (await request.json()) as PreferencesBody;
+  } catch {
+    return jsonResponse({ error: 'Invalid JSON' }, 400);
+  }
+
+  const sanitized = sanitizePrefs(body);
+  try {
+    await env.CACHE?.put(prefsKey(session.address), JSON.stringify(sanitized), {
+      expirationTtl: 60 * 60 * 24 * 400,
+    });
+  } catch {
+    return jsonResponse({ error: 'Failed to persist preferences' }, 500);
+  }
+  return noCacheJsonResponse({ ok: true, preferences: sanitized });
+}

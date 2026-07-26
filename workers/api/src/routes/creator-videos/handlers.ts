@@ -1,13 +1,14 @@
 /**
  * @degenfeed/api-worker — Creator Video Route Handlers
  */
-import type { Env } from '../index';
-import { jsonResponse, noCacheJsonResponse } from '../index';
+
+import { jsonResponse, noCacheJsonResponse } from '../response-helpers';
 import { requireSession } from '../session';
+import type { Env } from '../types';
 import { broadcastToAll } from '../ws-broadcast';
 import { CHANNELS } from '../ws-channels';
-import { type CreatorVideoMeta, type VideoAnalytics } from './types';
-import { getVideos, saveVideos, progressKey, analyticsKey, lookupKey } from './utils';
+import type { CreatorVideoMeta, VideoAnalytics } from './types';
+import { analyticsKey, getVideos, lookupKey, progressKey, saveVideos } from './utils';
 
 // ═══════════════════════════════════════════════════════════════════════
 // POST /api/creator/videos/upload — Upload a video
@@ -825,4 +826,4 @@ function generateDummyTipsTimeSeries(days: number, total: number): TipDataPoint[
 
 // ─── Export ──────────────────────────────────────────────────────────────
 
-export { creatorVideos };
+export type { creatorVideos };

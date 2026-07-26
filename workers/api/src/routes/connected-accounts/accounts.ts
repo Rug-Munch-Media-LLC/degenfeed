@@ -2,9 +2,9 @@
  * @degenfeed/api-worker — Connected Accounts Management Handlers
  */
 
-import type { Env } from '../../index';
-import { jsonResponse } from '../../index';
+import { jsonResponse } from '../../response-helpers';
 import { requireSession } from '../../session';
+import type { Env } from '../../types';
 import { type ConnectedAccount, PLATFORM_ICONS } from './types';
 import { connectedAccountKey, removePlatformFromIndex } from './utils';
 

@@ -23,3 +23,15 @@ import { registerSocialRoutes } from './social';
 import { registerZoraRoutes } from './zora';
 
 export function registerRoutes(app: Hono<{ Bindings: Env }>): void {
+  registerCoreRoutes(app);
+  registerFeedRoutes(app);
+  registerSocialRoutes(app);
+  registerDaoRoutes(app);
+  registerCoinsRoutes(app);
+  registerMediaRoutes(app);
+  registerMessagingRoutes(app);
+  registerLiveRoutes(app);
+  registerFramesRoutes(app);
+  registerNostrGroupRoutes(app);
+  registerZoraRoutes(app);
+}

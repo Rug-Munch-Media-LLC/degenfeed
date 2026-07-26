@@ -2,331 +2,334 @@
  * @degenfeed/api-worker — Farcaster Stream Frame Handlers
  */
 import type { Hono } from 'hono';
-import type { Env } from '../index';
-import { jsonResponse, noCacheJsonResponse } from '../index';
 import { generateFrameHtml } from '../../lib/farcaster-live';
-import { getStream, escapeXml } from './utils';
+import { jsonResponse, noCacheJsonResponse } from '../response-helpers';
+import type { Env } from '../types';
+import { escapeXml, getStream } from './utils';
 
 export function registerStreamFrameRoutes(frames: Hono<{ Bindings: Env }>): void {
-// ═══════════════════════════════════════════════════════════════════════════
-// GET /api/farcaster/frames/stream/:id — Frame for a live stream
-// ═══════════════════════════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════════════════════
+  // GET /api/farcaster/frames/stream/:id — Frame for a live stream
+  // ═══════════════════════════════════════════════════════════════════════════
 
-/**
- * Return a Farcaster Frame HTML page for a live stream.
- *
- * Supports:
- *   - Video Frame: fc:frame:video HLS URL (if stream has HLS)
- *   - Standard Frame: fc:frame:image thumbnail
- *   - Live Activity: fc:live meta tags (FIP #269)
- *   - Buttons: Watch Live, Tip Creator, Share
- */
+  /**
+   * Return a Farcaster Frame HTML page for a live stream.
+   *
+   * Supports:
+   *   - Video Frame: fc:frame:video HLS URL (if stream has HLS)
+   *   - Standard Frame: fc:frame:image thumbnail
+   *   - Live Activity: fc:live meta tags (FIP #269)
+   *   - Buttons: Watch Live, Tip Creator, Share
+   */
   frames.get('/stream/:id', async (c) => {
-  const streamId = c.req.param('id');
-  const stream = await getStream(c.env, streamId);
+    const streamId = c.req.param('id');
+    const stream = await getStream(c.env, streamId);
 
-  if (!stream) {
-    return c.html(
-      generateFrameHtml({
-        image: 'https://app.degenfeed.xyz/api/media/gateway/ipfs/stream-not-found-v1',
-        title: 'Stream Not Found — DegenFeed',
-        buttons: [
-          {
-            index: 1,
-            label: 'Browse Streams',
-            action: 'link',
-            target: 'https://app.degenfeed.xyz/live',
-          },
-        ],
-      }),
-    );
-  }
+    if (!stream) {
+      return c.html(
+        generateFrameHtml({
+          image: 'https://app.degenfeed.xyz/api/media/gateway/ipfs/stream-not-found-v1',
+          title: 'Stream Not Found — DegenFeed',
+          buttons: [
+            {
+              index: 1,
+              label: 'Browse Streams',
+              action: 'link',
+              target: 'https://app.degenfeed.xyz/live',
+            },
+          ],
+        }),
+      );
+    }
 
-  const title = (stream.title as string) || 'Untitled Stream';
-  const creatorHandle =
-    (stream.creatorHandle as string) || (stream.creator as string) || 'anonymous';
-  const thumbnail = (stream.thumbnail as string) || 'https://app.degenfeed.xyz/og/live-default.png';
-  const hlsUrl = stream.hlsUrl as string | undefined;
-  const startedAt = (stream.startedAt as number) || Date.now();
-  const viewerCount = (stream.viewerCount as number) || 0;
+    const title = (stream.title as string) || 'Untitled Stream';
+    const creatorHandle =
+      (stream.creatorHandle as string) || (stream.creator as string) || 'anonymous';
+    const thumbnail =
+      (stream.thumbnail as string) || 'https://app.degenfeed.xyz/og/live-default.png';
+    const hlsUrl = stream.hlsUrl as string | undefined;
+    const startedAt = (stream.startedAt as number) || Date.now();
+    const viewerCount = (stream.viewerCount as number) || 0;
 
-  // Build live activity meta for FIP #269
-  const liveActivity: LiveActivityMeta = {
-    type: 'live-stream',
-    title,
-    description: `${creatorHandle} is live on DegenFeed`,
-    image: thumbnail,
-    hostFid: (stream.fid as number) || 0,
-    startedAt,
-    participantCount: viewerCount,
-    protocol: hlsUrl ? 'hls' : undefined,
-    hlsUrl,
-  };
+    // Build live activity meta for FIP #269
+    const liveActivity: LiveActivityMeta = {
+      type: 'live-stream',
+      title,
+      description: `${creatorHandle} is live on DegenFeed`,
+      image: thumbnail,
+      hostFid: (stream.fid as number) || 0,
+      startedAt,
+      participantCount: viewerCount,
+      protocol: hlsUrl ? 'hls' : undefined,
+      hlsUrl,
+    };
 
-  const frameUrl = `https://app.degenfeed.xyz/api/farcaster/frames/stream/${streamId}`;
-  const streamAppUrl = `https://app.degenfeed.xyz/live/${streamId}`;
-  const tipUrl = `https://app.degenfeed.xyz/tip/${stream.creator || streamId}`;
+    const frameUrl = `https://app.degenfeed.xyz/api/farcaster/frames/stream/${streamId}`;
+    const streamAppUrl = `https://app.degenfeed.xyz/live/${streamId}`;
+    const tipUrl = `https://app.degenfeed.xyz/tip/${stream.creator || streamId}`;
 
-  const html = generateFrameHtml({
-    image: `https://app.degenfeed.xyz/api/farcaster/frames/stream/${streamId}/image`,
-    imageAspectRatio: '1.91:1',
-    videoUrl: hlsUrl,
-    videoType: 'application/x-mpegURL',
-    title: `🔴 LIVE: ${title}`,
-    description: `${creatorHandle} is streaming on DegenFeed`,
-    postUrl: frameUrl,
-    liveActivity,
-    refreshInterval: 30, // Refresh frame image every 30s for live updates
-    buttons: [
-      {
-        index: 1,
-        label: '▶️ Watch Live',
-        action: 'link',
-        target: streamAppUrl,
-      },
-      {
-        index: 2,
-        label: '💎 Tip Creator',
-        action: 'link',
-        target: tipUrl,
-      },
-      {
-        index: 3,
-        label: '🔁 Share',
-        action: 'post',
-      },
-    ],
+    const html = generateFrameHtml({
+      image: `https://app.degenfeed.xyz/api/farcaster/frames/stream/${streamId}/image`,
+      imageAspectRatio: '1.91:1',
+      videoUrl: hlsUrl,
+      videoType: 'application/x-mpegURL',
+      title: `🔴 LIVE: ${title}`,
+      description: `${creatorHandle} is streaming on DegenFeed`,
+      postUrl: frameUrl,
+      liveActivity,
+      refreshInterval: 30, // Refresh frame image every 30s for live updates
+      buttons: [
+        {
+          index: 1,
+          label: '▶️ Watch Live',
+          action: 'link',
+          target: streamAppUrl,
+        },
+        {
+          index: 2,
+          label: '💎 Tip Creator',
+          action: 'link',
+          target: tipUrl,
+        },
+        {
+          index: 3,
+          label: '🔁 Share',
+          action: 'post',
+        },
+      ],
+    });
+
+    return c.html(html);
   });
 
-  return c.html(html);
-});
-
-// ═══════════════════════════════════════════════════════════════════════════
-// POST handler for /stream/:id (button:3 "Share" action)
-// ═══════════════════════════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════════════════════
+  // POST handler for /stream/:id (button:3 "Share" action)
+  // ═══════════════════════════════════════════════════════════════════════════
 
   frames.post('/stream/:id', async (c) => {
-  const streamId = c.req.param('id');
-  const stream = await getStream(c.env, streamId);
+    const streamId = c.req.param('id');
+    const stream = await getStream(c.env, streamId);
 
-  if (!stream) {
-    return c.html(
-      generateFrameHtml({
-        image: 'https://app.degenfeed.xyz/api/media/gateway/ipfs/stream-not-found-v1',
-        title: 'Stream Not Found',
-        buttons: [
-          {
-            index: 1,
-            label: '← Back',
-            action: 'link',
-            target: 'https://app.degenfeed.xyz/live',
-          },
-        ],
-      }),
-    );
-  }
+    if (!stream) {
+      return c.html(
+        generateFrameHtml({
+          image: 'https://app.degenfeed.xyz/api/media/gateway/ipfs/stream-not-found-v1',
+          title: 'Stream Not Found',
+          buttons: [
+            {
+              index: 1,
+              label: '← Back',
+              action: 'link',
+              target: 'https://app.degenfeed.xyz/live',
+            },
+          ],
+        }),
+      );
+    }
 
-  const title = (stream.title as string) || 'Untitled Stream';
-  const creatorHandle = (stream.creatorHandle as string) || 'anonymous';
-  const streamAppUrl = `https://app.degenfeed.xyz/live/${streamId}`;
+    const title = (stream.title as string) || 'Untitled Stream';
+    const creatorHandle = (stream.creatorHandle as string) || 'anonymous';
+    const streamAppUrl = `https://app.degenfeed.xyz/live/${streamId}`;
 
-  // After "Share" button click, return a confirmation frame
-  const html = generateFrameHtml({
-    image: 'https://app.degenfeed.xyz/og/share-frame.png',
-    title: `Share ${title}`,
-    description: 'Share this stream on Farcaster',
-    buttons: [
-      {
-        index: 1,
-        label: '📤 Post to Farcaster',
-        action: 'post_redirect',
-        target: `https://app.degenfeed.xyz/api/farcaster/frames/post?url=${encodeURIComponent(streamAppUrl)}&text=${encodeURIComponent(`🔴 LIVE: ${title}\n\n${creatorHandle} is streaming on DegenFeed`)}`,
-      },
-      {
-        index: 2,
-        label: '↩️ Back to Stream',
-        action: 'link',
-        target: streamAppUrl,
-      },
-    ],
+    // After "Share" button click, return a confirmation frame
+    const html = generateFrameHtml({
+      image: 'https://app.degenfeed.xyz/og/share-frame.png',
+      title: `Share ${title}`,
+      description: 'Share this stream on Farcaster',
+      buttons: [
+        {
+          index: 1,
+          label: '📤 Post to Farcaster',
+          action: 'post_redirect',
+          target: `https://app.degenfeed.xyz/api/farcaster/frames/post?url=${encodeURIComponent(streamAppUrl)}&text=${encodeURIComponent(`🔴 LIVE: ${title}\n\n${creatorHandle} is streaming on DegenFeed`)}`,
+        },
+        {
+          index: 2,
+          label: '↩️ Back to Stream',
+          action: 'link',
+          target: streamAppUrl,
+        },
+      ],
+    });
+
+    return c.html(html);
   });
 
-  return c.html(html);
-});
+  // ═══════════════════════════════════════════════════════════════════════════
+  // GET /api/farcaster/frames/stream/:id/gated — Token-gated stream frame
+  // ═══════════════════════════════════════════════════════════════════════════
 
-// ═══════════════════════════════════════════════════════════════════════════
-// GET /api/farcaster/frames/stream/:id/gated — Token-gated stream frame
-// ═══════════════════════════════════════════════════════════════════════════
-
-/**
- * Token-gated stream access via Frame.
- *
- * The frame includes a "Verify Access" button that checks the user's
- * token balance. If the user holds the required token, the stream is
- * shown. Otherwise, a "Buy Token" button is displayed.
- *
- * Token gate uses fc:frame:state to pass the verification context.
- */
+  /**
+   * Token-gated stream access via Frame.
+   *
+   * The frame includes a "Verify Access" button that checks the user's
+   * token balance. If the user holds the required token, the stream is
+   * shown. Otherwise, a "Buy Token" button is displayed.
+   *
+   * Token gate uses fc:frame:state to pass the verification context.
+   */
   frames.get('/stream/:id/gated', async (c) => {
-  const streamId = c.req.param('id');
-  const stream = await getStream(c.env, streamId);
+    const streamId = c.req.param('id');
+    const stream = await getStream(c.env, streamId);
 
-  if (!stream) {
-    return c.html(
-      generateFrameHtml({
-        image: 'https://app.degenfeed.xyz/api/media/gateway/ipfs/stream-not-found-v1',
-        title: 'Stream Not Found',
-        buttons: [
-          {
-            index: 1,
-            label: 'Browse Streams',
-            action: 'link',
-            target: 'https://app.degenfeed.xyz/live',
-          },
-        ],
-      }),
-    );
-  }
+    if (!stream) {
+      return c.html(
+        generateFrameHtml({
+          image: 'https://app.degenfeed.xyz/api/media/gateway/ipfs/stream-not-found-v1',
+          title: 'Stream Not Found',
+          buttons: [
+            {
+              index: 1,
+              label: 'Browse Streams',
+              action: 'link',
+              target: 'https://app.degenfeed.xyz/live',
+            },
+          ],
+        }),
+      );
+    }
 
-  const title = (stream.title as string) || 'Untitled Stream';
-  const _creatorHandle = (stream.creatorHandle as string) || 'anonymous';
-  const thumbnail = (stream.thumbnail as string) || 'https://app.degenfeed.xyz/og/live-default.png';
-  const requiredToken = (stream.gateToken as string) || '';
-  const requiredTokenSymbol = (stream.gateTokenSymbol as string) || requiredToken.slice(0, 6);
-  const coinSymbol = (stream.coinSymbol as string) || requiredTokenSymbol;
+    const title = (stream.title as string) || 'Untitled Stream';
+    const _creatorHandle = (stream.creatorHandle as string) || 'anonymous';
+    const thumbnail =
+      (stream.thumbnail as string) || 'https://app.degenfeed.xyz/og/live-default.png';
+    const requiredToken = (stream.gateToken as string) || '';
+    const requiredTokenSymbol = (stream.gateTokenSymbol as string) || requiredToken.slice(0, 6);
+    const coinSymbol = (stream.coinSymbol as string) || requiredTokenSymbol;
 
-  // Build gated frame HTML
-  // The "Verify Access" button POSTs to the same URL with button index
-  // If user holds token → return unlocked frame
-  // If not → return "Buy Token" frame
+    // Build gated frame HTML
+    // The "Verify Access" button POSTs to the same URL with button index
+    // If user holds token → return unlocked frame
+    // If not → return "Buy Token" frame
 
-  const gatedFrameUrl = `https://app.degenfeed.xyz/api/farcaster/frames/stream/${streamId}/gated`;
-  const _unlockUrl = `https://app.degenfeed.xyz/live/${streamId}`;
-  const buyUrl = requiredToken
-    ? `https://app.degenfeed.xyz/launch/${coinSymbol}`
-    : `https://app.degenfeed.xyz/live/${streamId}`;
+    const gatedFrameUrl = `https://app.degenfeed.xyz/api/farcaster/frames/stream/${streamId}/gated`;
+    const _unlockUrl = `https://app.degenfeed.xyz/live/${streamId}`;
+    const buyUrl = requiredToken
+      ? `https://app.degenfeed.xyz/launch/${coinSymbol}`
+      : `https://app.degenfeed.xyz/live/${streamId}`;
 
-  const state = JSON.stringify({
-    streamId,
-    requiredToken,
-    attempt: 0,
+    const state = JSON.stringify({
+      streamId,
+      requiredToken,
+      attempt: 0,
+    });
+
+    const html = generateFrameHtml({
+      image: thumbnail,
+      imageAspectRatio: '1.91:1',
+      title: `🔒 ${title} — Token Gated`,
+      description: `Hold $${coinSymbol} to watch`,
+      postUrl: gatedFrameUrl,
+      state,
+      buttons: [
+        {
+          index: 1,
+          label: `🔑 Verify Access`,
+          action: 'post',
+        },
+        {
+          index: 2,
+          label: `🪙 Buy $${coinSymbol}`,
+          action: 'link',
+          target: buyUrl,
+        },
+      ],
+    });
+
+    return c.html(html);
   });
 
-  const html = generateFrameHtml({
-    image: thumbnail,
-    imageAspectRatio: '1.91:1',
-    title: `🔒 ${title} — Token Gated`,
-    description: `Hold $${coinSymbol} to watch`,
-    postUrl: gatedFrameUrl,
-    state,
-    buttons: [
-      {
-        index: 1,
-        label: `🔑 Verify Access`,
-        action: 'post',
-      },
-      {
-        index: 2,
-        label: `🪙 Buy $${coinSymbol}`,
-        action: 'link',
-        target: buyUrl,
-      },
-    ],
-  });
-
-  return c.html(html);
-});
-
-// POST handler: verify token gate and return unlocked/locked frame
+  // POST handler: verify token gate and return unlocked/locked frame
   frames.post('/stream/:id/gated', async (c) => {
-  const streamId = c.req.param('id');
-  const stream = await getStream(c.env, streamId);
+    const streamId = c.req.param('id');
+    const stream = await getStream(c.env, streamId);
 
-  if (!stream) {
-    return c.html(
-      generateFrameHtml({
-        image: 'https://app.degenfeed.xyz/api/media/gateway/ipfs/stream-not-found-v1',
-        title: 'Stream Not Found',
-        buttons: [
-          {
-            index: 1,
-            label: '← Back',
-            action: 'link',
-            target: 'https://app.degenfeed.xyz/live',
-          },
-        ],
-      }),
-    );
-  }
+    if (!stream) {
+      return c.html(
+        generateFrameHtml({
+          image: 'https://app.degenfeed.xyz/api/media/gateway/ipfs/stream-not-found-v1',
+          title: 'Stream Not Found',
+          buttons: [
+            {
+              index: 1,
+              label: '← Back',
+              action: 'link',
+              target: 'https://app.degenfeed.xyz/live',
+            },
+          ],
+        }),
+      );
+    }
 
-  const title = (stream.title as string) || 'Untitled Stream';
-  const unlockUrl = `https://app.degenfeed.xyz/live/${streamId}`;
-  const thumbnail = (stream.thumbnail as string) || 'https://app.degenfeed.xyz/og/live-default.png';
+    const title = (stream.title as string) || 'Untitled Stream';
+    const unlockUrl = `https://app.degenfeed.xyz/live/${streamId}`;
+    const thumbnail =
+      (stream.thumbnail as string) || 'https://app.degenfeed.xyz/og/live-default.png';
 
-  // Parse the frame POST body for verified wallet info
-  // In production, verify the trustedData.messageBytes against a Farcaster Hub
-  // For now, return an unlocked frame that redirects to the stream
-  const html = generateFrameHtml({
-    image: thumbnail,
-    imageAspectRatio: '1.91:1',
-    title: `✅ Access Granted — ${title}`,
-    description: 'You have the required token. Enjoy the stream!',
-    buttons: [
-      {
-        index: 1,
-        label: '▶️ Watch Now',
-        action: 'link',
-        target: unlockUrl,
-      },
-      {
-        index: 2,
-        label: '💎 Tip Creator',
-        action: 'link',
-        target: `https://app.degenfeed.xyz/tip/${stream.creator || streamId}`,
-      },
-    ],
+    // Parse the frame POST body for verified wallet info
+    // In production, verify the trustedData.messageBytes against a Farcaster Hub
+    // For now, return an unlocked frame that redirects to the stream
+    const html = generateFrameHtml({
+      image: thumbnail,
+      imageAspectRatio: '1.91:1',
+      title: `✅ Access Granted — ${title}`,
+      description: 'You have the required token. Enjoy the stream!',
+      buttons: [
+        {
+          index: 1,
+          label: '▶️ Watch Now',
+          action: 'link',
+          target: unlockUrl,
+        },
+        {
+          index: 2,
+          label: '💎 Tip Creator',
+          action: 'link',
+          target: `https://app.degenfeed.xyz/tip/${stream.creator || streamId}`,
+        },
+      ],
+    });
+
+    return c.html(html);
   });
 
-  return c.html(html);
-});
+  // ═══════════════════════════════════════════════════════════════════════════
+  // GET /api/farcaster/frames/stream/:id/image — Dynamic SVG badge for stream
+  // ═══════════════════════════════════════════════════════════════════════════
 
-// ═══════════════════════════════════════════════════════════════════════════
-// GET /api/farcaster/frames/stream/:id/image — Dynamic SVG badge for stream
-// ═══════════════════════════════════════════════════════════════════════════
-
-/**
- * Generate a live-updating SVG image for the stream frame.
- *
- * Renders:
- *   - Stream thumbnail/background
- *   - "LIVE" badge
- *   - Current viewer count
- *   - Stream title
- *   - Creator handle
- *   - Creator coin price (if available)
- *
- * This SVG is returned as the fc:frame:image so it updates dynamically
- * when the frame is re-fetched (respecting refresh_period).
- */
+  /**
+   * Generate a live-updating SVG image for the stream frame.
+   *
+   * Renders:
+   *   - Stream thumbnail/background
+   *   - "LIVE" badge
+   *   - Current viewer count
+   *   - Stream title
+   *   - Creator handle
+   *   - Creator coin price (if available)
+   *
+   * This SVG is returned as the fc:frame:image so it updates dynamically
+   * when the frame is re-fetched (respecting refresh_period).
+   */
   frames.get('/stream/:id/image', async (c) => {
-  const streamId = c.req.param('id');
-  const stream = await getStream(c.env, streamId);
+    const streamId = c.req.param('id');
+    const stream = await getStream(c.env, streamId);
 
-  const title = (stream?.title as string) || 'Untitled Stream';
-  const creatorHandle = (stream?.creatorHandle as string) || 'anonymous';
-  const viewerCount = (stream?.viewerCount as number) || 0;
-  const startedAt = (stream?.startedAt as number) || Date.now();
-  const uptimeMinutes = Math.floor((Date.now() - startedAt) / 60000);
-  const uptimeStr =
-    uptimeMinutes < 60
-      ? `${uptimeMinutes}m`
-      : `${Math.floor(uptimeMinutes / 60)}h ${uptimeMinutes % 60}m`;
+    const title = (stream?.title as string) || 'Untitled Stream';
+    const creatorHandle = (stream?.creatorHandle as string) || 'anonymous';
+    const viewerCount = (stream?.viewerCount as number) || 0;
+    const startedAt = (stream?.startedAt as number) || Date.now();
+    const uptimeMinutes = Math.floor((Date.now() - startedAt) / 60000);
+    const uptimeStr =
+      uptimeMinutes < 60
+        ? `${uptimeMinutes}m`
+        : `${Math.floor(uptimeMinutes / 60)}h ${uptimeMinutes % 60}m`;
 
-  // Generate a dynamic gradient based on stream ID for uniqueness
-  const hue1 = (streamId.charCodeAt(0) * 37) % 360;
-  const hue2 = (hue1 + 40) % 360;
+    // Generate a dynamic gradient based on stream ID for uniqueness
+    const hue1 = (streamId.charCodeAt(0) * 37) % 360;
+    const hue2 = (hue1 + 40) % 360;
 
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
   <defs>
     <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" style="stop-color:hsl(${hue1}, 60%, 20%)" />
@@ -396,13 +399,12 @@ export function registerStreamFrameRoutes(frames: Hono<{ Bindings: Env }>): void
   <circle cx="1150" cy="150" r="40" fill="rgba(255,255,255,0.02)" />
 </svg>`;
 
-  return new Response(svg, {
-    headers: {
-      'content-type': 'image/svg+xml',
-      'cache-control': 'no-cache, no-store, must-revalidate',
-      'access-control-allow-origin': '*',
-    },
+    return new Response(svg, {
+      headers: {
+        'content-type': 'image/svg+xml',
+        'cache-control': 'no-cache, no-store, must-revalidate',
+        'access-control-allow-origin': '*',
+      },
+    });
   });
-});
-
 }

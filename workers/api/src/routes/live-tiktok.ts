@@ -33,3 +33,49 @@
  */
 
 export type {
+  CreatorContentEarnings,
+  CreatorEmoji,
+  CustomGift,
+  CustomGiftPurchase,
+  EmojiPurchase,
+  EmojiTier,
+  FaceFilter,
+  FilterAccess,
+  FilterCategory,
+  FilterPurchase,
+  GiftRarity,
+  LiveSticker,
+  StickerCategory,
+  StickerTrigger,
+} from './live-tiktok-core';
+
+export {
+  calculateCreatorNet,
+  calculateFee,
+  DEFAULT_CREATOR_EMOJIS,
+  DEFAULT_FILTERS,
+  DEFAULT_STICKERS,
+  GIFT_RARITY_CONFIG,
+  generateId,
+  generateTokenId,
+} from './live-tiktok-core';
+
+export {
+  handleActiveStickers,
+  handleCreatorContentEarnings,
+  handleCreatorCustomGifts,
+  handleCreatorEmojis,
+  handleCustomGiftBuy,
+  handleCustomGiftCreate,
+  handleCustomGiftMarketplace,
+  handleEmojiBuy,
+  handleEmojiCreate,
+  handleEmojiMarketplace,
+  handleFilterBuy,
+  handleFiltersList,
+  handleMyEmojis,
+  handleMyFilters,
+  handleStickerBuy,
+  handleStickersList,
+  handleStickerTrigger,
+} from './live-tiktok-handlers';
