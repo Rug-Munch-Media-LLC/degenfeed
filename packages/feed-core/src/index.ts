@@ -38,8 +38,40 @@ export {
   scoreRecency,
   scoreRelevance,
 } from './algorithm';
+// ─── Content Categorization V3 — Multi-label with confidence ─────────
+export type {
+  CategorizationFeedback,
+  CategorizationV3Options,
+  CategorizationV3Result,
+  CategoryAssignment,
+  CategoryDef,
+  CategorySlug,
+  TrendingCategory,
+} from './categorization-v3';
+export {
+  ALL_CATEGORIES,
+  CATEGORIES,
+  CategorizationFeedbackStore,
+  classifyPost,
+  computeTrendingCategories,
+} from './categorization-v3';
 export type { CircuitState } from './circuit-breaker';
 export { CircuitBreaker, CircuitBreakerError } from './circuit-breaker';
+// ─── Diversity Algorithm — Category/creator/protocol rotation ─────────
+export type {
+  DiversityConfig,
+  DiversityResult,
+  DiversityState,
+  ScoredItem,
+} from './diversity';
+export {
+  DEFAULT_DIVERSITY_CONFIG,
+  diversifyFeed,
+  interleaveProtocols,
+  isOpposingViewpoint,
+  isSerendipitous,
+  rankWithDiversity,
+} from './diversity';
 export type { ModerationCheckResult, ModerationThresholds } from './moderation';
 // ─── Auto-moderation configuration ────────────────────────────────
 export {
@@ -58,6 +90,27 @@ export {
   scoreCommunityQuality,
   subscriberTier,
 } from './niches';
+// ─── Personalization V2 — Implicit/explicit/temporal/session ──────────
+export type {
+  CreatorAffinity,
+  ExplicitSignal,
+  ImplicitSignal,
+  PersonalizationV2Profile,
+  PersonalizationV2Result,
+  SessionEntry,
+  TemporalPreference,
+} from './personalization-v2';
+export {
+  computeSessionBoost,
+  deserializePersonalizationV2,
+  emptyPersonalizationV2Profile,
+  learnFromExplicitSignal,
+  learnFromImplicitSignal,
+  learnTemporalPreference,
+  recordSessionView,
+  scorePersonalizationV2,
+  serializePersonalizationV2,
+} from './personalization-v2';
 export type { TopicPreference, UserBehaviorProfile } from './preferences';
 // ─── AI-powered preference learning + personalization ─────────────
 export {
@@ -109,32 +162,6 @@ export {
   presetKvKey,
   resolvePreset,
 } from './quality-presets';
-export type { SpamContext, SpamResult, SpamTier } from './spam';
-// ─── Advanced spam detection (continuous scoring) ──────────────────
-export {
-  contentQualityScore,
-  isSpamPost,
-  spamScore,
-  spamTier,
-} from './spam';
-
-// ─── Content Categorization V3 — Multi-label with confidence ─────────
-export type {
-  CategoryAssignment,
-  CategoryDef,
-  CategorySlug,
-  CategorizationFeedback,
-  CategorizationV3Options,
-  CategorizationV3Result,
-  TrendingCategory,
-} from './categorization-v3';
-export {
-  ALL_CATEGORIES,
-  CATEGORIES,
-  CategorizationFeedbackStore,
-  classifyPost,
-  computeTrendingCategories,
-} from './categorization-v3';
 
 // ─── Content Quality V3 — Enhanced scoring ────────────────────────────
 export type {
@@ -153,44 +180,29 @@ export {
   PROTOCOL_QUALITY_WEIGHTS,
   scoreQualityV3,
 } from './quality-v3';
-
-// ─── Diversity Algorithm — Category/creator/protocol rotation ─────────
+// ─── Content Quality V4 — Next-gen scoring with sigmoid freshness, cross-protocol, etc. ─
 export type {
-  DiversityConfig,
-  DiversityResult,
-  DiversityState,
-  ScoredItem,
-} from './diversity';
+  QualityV4Context,
+  QualityV4Signals,
+} from './quality-v4';
 export {
-  DEFAULT_DIVERSITY_CONFIG,
-  diversifyFeed,
-  interleaveProtocols,
-  isOpposingViewpoint,
-  isSerendipitous,
-  rankWithDiversity,
-} from './diversity';
-
-// ─── Personalization V2 — Implicit/explicit/temporal/session ──────────
-export type {
-  CreatorAffinity,
-  ExplicitSignal,
-  ImplicitSignal,
-  PersonalizationV2Profile,
-  PersonalizationV2Result,
-  SessionEntry,
-  TemporalPreference,
-} from './personalization-v2';
+  computeEngagementVelocityV4,
+  creatorReputation,
+  crossProtocolBoost,
+  preferenceAlignment,
+  QualityV4Scorer,
+  scoreQualityV4,
+  sigmoidFreshness,
+  sourceDiversity,
+} from './quality-v4';
+export type { SpamContext, SpamResult, SpamTier } from './spam';
+// ─── Advanced spam detection (continuous scoring) ──────────────────
 export {
-  computeSessionBoost,
-  deserializePersonalizationV2,
-  emptyPersonalizationV2Profile,
-  learnFromExplicitSignal,
-  learnFromImplicitSignal,
-  learnTemporalPreference,
-  recordSessionView,
-  scorePersonalizationV2,
-  serializePersonalizationV2,
-} from './personalization-v2';
+  contentQualityScore,
+  isSpamPost,
+  spamScore,
+  spamTier,
+} from './spam';
 
 export const NICHE_KEYWORDS: Record<string, string[]> = {
   crypto: ['bitcoin', 'btc', 'crypto', 'cryptocurrency', 'blockchain', 'web3', 'token', 'altcoin'],

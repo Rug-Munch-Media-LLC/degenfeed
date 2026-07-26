@@ -50,6 +50,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { path: '/feeds', changefreq: 'hourly', priority: 0.7 },
     { path: '/home', changefreq: 'always', priority: 0.9 },
     { path: '/home/funding', changefreq: 'hourly', priority: 0.7 },
+    { path: '/coins', changefreq: 'hourly', priority: 0.7 },
+    { path: '/events', changefreq: 'daily', priority: 0.6 },
+    { path: '/live', changefreq: 'always', priority: 0.8 },
+    { path: '/live-shorts', changefreq: 'hourly', priority: 0.7 },
+    { path: '/rooms', changefreq: 'hourly', priority: 0.6 },
+    { path: '/music', changefreq: 'daily', priority: 0.5 },
+    { path: '/books', changefreq: 'daily', priority: 0.4 },
+    { path: '/pricing', changefreq: 'weekly', priority: 0.5 },
+    { path: '/features', changefreq: 'monthly', priority: 0.5 },
+    { path: '/onboarding', changefreq: 'monthly', priority: 0.4 },
+    { path: '/connect', changefreq: 'monthly', priority: 0.4 },
+    { path: '/waitlist', changefreq: 'daily', priority: 0.3 },
+    { path: '/topics', changefreq: 'daily', priority: 0.6 },
+    { path: '/social', changefreq: 'hourly', priority: 0.7 },
+    { path: '/membership', changefreq: 'weekly', priority: 0.5 },
+    { path: '/articles', changefreq: 'daily', priority: 0.6 },
   ];
 
   // == 2. Per-protocol home sections ===================================
@@ -63,6 +79,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     'reddit',
     'rss',
     'lemmy',
+    'atproto',
+    'zora',
+    'matrix',
+    'live',
+    'videos',
+    'images',
+    'media',
   ];
 
   // == 3. Niches (topic filter pages) ==================================
@@ -76,6 +99,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     'security',
     'macro',
     'layer2',
+    'gaming',
+    'privacy',
+    'scalability',
+    'metaverse',
+    'rwa',
+    'meme',
+    'onchain',
+    'stablecoin',
+    'etf',
+    'regulation',
+    'memecoin',
   ];
 
   // == 4. Dynamic data from the API ====================================

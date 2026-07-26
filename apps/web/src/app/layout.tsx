@@ -161,6 +161,26 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <meta name="msapplication-tap-highlight" content="no" />
         <meta name="msapplication-TileImage" content="/icon-512.png" />
 
+        {/* == RSS / Atom feed autodiscovery links == */}
+        <link
+          rel="alternate"
+          type="application/rss+xml"
+          title="DegenFeed — Unified Protocol Feed"
+          href="https://app.degenfeed.xyz/api/feed/rss"
+        />
+        <link
+          rel="alternate"
+          type="application/atom+xml"
+          title="DegenFeed — Unified Protocol Feed (Atom)"
+          href="https://app.degenfeed.xyz/api/feed/atom"
+        />
+        <link
+          rel="alternate"
+          type="application/rss+xml"
+          title="DegenFeed — News Feed"
+          href="https://app.degenfeed.xyz/api/feed/news?format=rss"
+        />
+
         {/* == LCP: Preconnect to critical origins == */}
         <link rel="preconnect" href="https://app.degenfeed.xyz" />
         <link rel="preconnect" href="https://degenfeed.xyz" />
@@ -199,7 +219,50 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         >{`if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').catch(()=>{})}`}</Script>
         {/* Scanline overlay for cyberpunk texture */}
         <div className="scanline" aria-hidden="true" />
-        {/* JSON-LD structured data */}
+        {/* JSON-LD structured data — BreadcrumbList */}
+        <script
+          type="application/ld+json"
+          nonce={nonce}
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'BreadcrumbList',
+              name: 'DegenFeed Breadcrumb',
+              itemListElement: [
+                {
+                  '@type': 'ListItem',
+                  position: 1,
+                  name: 'Home',
+                  item: 'https://app.degenfeed.xyz',
+                },
+              ],
+            }),
+          }}
+        />
+        {/* JSON-LD structured data — Organization */}
+        <script
+          type="application/ld+json"
+          nonce={nonce}
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'Organization',
+              name: 'Rug Munch Media LLC',
+              url: 'https://app.degenfeed.xyz',
+              logo: 'https://app.degenfeed.xyz/icon-512.png',
+              sameAs: ['https://github.com/degenfeed', 'https://git.rugmunch.io/RugMunchMedia'],
+              description: 'Creator of DegenFeed — The Web3 Social Universe',
+              foundingDate: '2024',
+              legalName: 'Rug Munch Media LLC',
+              address: {
+                '@type': 'PostalAddress',
+                addressCountry: 'US',
+                addressRegion: 'WY',
+              },
+            }),
+          }}
+        />
+        {/* JSON-LD structured data — WebApplication */}
         <script
           type="application/ld+json"
           nonce={nonce}
