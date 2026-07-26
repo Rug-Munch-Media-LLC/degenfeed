@@ -36,16 +36,45 @@ export async function handleRedditFeed(request: Request, env: Env): Promise<Resp
     notice = result.notice;
   } catch (err) {
     console.error('[feed] Reddit provider fetch failed:', err instanceof Error ? err.message : err);
+    // Never return empty — serve seed content
+    const { getSeedContent } = await import('../feed/seed-content');
+    const seedPosts = getSeedContent(limit, 'reddit');
     return jsonResponse({
-      data: [],
+      data: seedPosts,
       meta: {
-        total: 0,
+        total: seedPosts.length,
         limit,
         subreddit: subreddit || 'all',
+        isDemo: true,
+        source: 'demo',
         error: 'Reddit provider failed',
+        demoNote: 'Connect Reddit to see real content from your communities',
+        fetchedAt: Date.now(),
       },
     });
   }
+
+  // Never return empty — serve seed content if all real sources failed
+  if (posts.length === 0) {
+    const { getSeedContent } = await import('../feed/seed-content');
+    const seedPosts = getSeedContent(limit, 'reddit');
+    const response = {
+      data: seedPosts,
+      meta: {
+        total: seedPosts.length,
+        limit,
+        subreddit: subreddit || 'all',
+        isDemo: true,
+        source: 'demo',
+        notice: notice || 'Reddit returned empty — serving demo content',
+        demoNote: 'Connect Reddit to see real content from your communities',
+        fetchedAt: Date.now(),
+      },
+    };
+    await writeJsonCache(env, cacheKey, response, 180, 'reddit cache write');
+    return jsonResponse(response);
+  }
+
   const response = {
     data: posts,
     meta: {
@@ -67,42 +96,48 @@ export async function handleProviderFeed(
 ): Promise<Response> {
   // Accept ANY protocol — falls through to BridgeFeedProvider for unregistered ones
   const valid = new Set<Protocol>(DEFAULT_PROTOCOLS);
+  const params = new URL(request.url).searchParams;
+  const limit = Math.min(Number(params.get('limit')) || 50, 200);
+
+  // Helper: serve seed content when real content is unavailable
+  async function serveSeedFallback(reason: string): Promise<Response> {
+    const { getSeedContent } = await import('../feed/seed-content');
+    const seedPosts = getSeedContent(limit, provider);
+    return jsonResponse({
+      data: seedPosts,
+      meta: {
+        total: seedPosts.length,
+        limit,
+        protocol: provider,
+        isDemo: true,
+        source: 'demo',
+        notice: reason,
+        demoNote: `Connect a real ${provider} account at app.degenfeed.xyz to see real content`,
+        fetchedAt: Date.now(),
+      },
+    });
+  }
+
   if (!valid.has(provider as Protocol)) {
     // If not in DEFAULT_PROTOCOLS, try BridgeFeedProvider anyway
     const { BridgeFeedProvider } = await import('../feed/feed-fetcher');
     const bridgeProvider = new BridgeFeedProvider(provider as Protocol, env);
-    const params = new URL(request.url).searchParams;
-    const limit = Math.min(Number(params.get('limit')) || 50, 200);
     try {
       const result = await bridgeProvider.fetchFeed({ timeoutMs: 6000 });
       if (result.posts.length === 0) {
-        return jsonResponse({
-          data: [],
-          meta: {
-            total: 0,
-            limit,
-            protocol: provider,
-            notice: result.notice,
-            fetchedAt: Date.now(),
-          },
-        });
+        return serveSeedFallback(result.notice || `Bridge returned empty for ${provider}`);
       }
       return jsonResponse({
         data: result.posts.slice(0, limit),
         meta: { total: result.posts.length, limit, protocol: provider, fetchedAt: Date.now() },
       });
     } catch (err) {
-      return jsonResponse(
-        {
-          error: `Bridge provider failed for ${provider}: ${err instanceof Error ? err.message : 'unknown'}`,
-        },
-        502,
+      return serveSeedFallback(
+        `Bridge provider failed for ${provider}: ${err instanceof Error ? err.message : 'unknown'}`,
       );
     }
   }
   const protocol = provider as Protocol;
-  const params = new URL(request.url).searchParams;
-  const limit = Math.min(Number(params.get('limit')) || 50, 200);
 
   try {
     const feedProvider = getProvider(protocol, env);
@@ -134,6 +169,11 @@ export async function handleProviderFeed(
       } catch {
         /* bridge also unavailable */
       }
+    }
+
+    // Never return empty — serve seed content if all real sources failed
+    if (posts.length === 0) {
+      return serveSeedFallback(result.notice || `Provider ${provider} returned empty`);
     }
 
     return jsonResponse({
@@ -168,9 +208,11 @@ export async function handleProviderFeed(
     } catch {
       /* bridge unavailable */
     }
-    const message = err instanceof Error ? err.message : 'Provider fetch failed';
-    console.error('[feed] provider feed fetch failed:', err instanceof Error ? err.message : err);
-    return jsonResponse({ error: message }, 502);
+
+    // Ultimate fallback: seed content
+    return serveSeedFallback(
+      `Provider ${provider} failed: ${err instanceof Error ? err.message : 'unknown'}`,
+    );
   }
 }
 

@@ -30,7 +30,7 @@ const MAX_SCAN_FIDS = 30;
 /** Per-FID page size for Hubble */
 const DEFAULT_PAGE_SIZE = 5;
 /** Overall fetch timeout */
-const FETCH_TIMEOUT_MS = 10_000;
+const _FETCH_TIMEOUT_MS = 10_000;
 /** Per-request timeout for Hubble calls */
 const HUBBLE_REQUEST_TIMEOUT = 8_000;
 
@@ -228,13 +228,13 @@ async function fetchUserData(fid: number): Promise<{
     }
 
     return {
-      username: userData['USER_DATA_TYPE_USERNAME'] || defaultUser.username,
+      username: userData.USER_DATA_TYPE_USERNAME || defaultUser.username,
       displayName:
-        userData['USER_DATA_TYPE_DISPLAY'] ||
-        userData['USER_DATA_TYPE_USERNAME'] ||
+        userData.USER_DATA_TYPE_DISPLAY ||
+        userData.USER_DATA_TYPE_USERNAME ||
         defaultUser.displayName,
-      pfpUrl: userData['USER_DATA_TYPE_PFP'] || '',
-      bio: userData['USER_DATA_TYPE_BIO'] || '',
+      pfpUrl: userData.USER_DATA_TYPE_PFP || '',
+      bio: userData.USER_DATA_TYPE_BIO || '',
     };
   } catch {
     return defaultUser;
@@ -340,9 +340,104 @@ function guessFarcasterNiches(text: string): string[] {
 // ─── Main Fetcher ────────────────────────────────────────────────────────
 
 /**
+ * Farcaster — NEYNAR PUBLIC API fallback.
+ * Used when self-hosted Hubble is unreachable/syncing.
+ * Neynar's free tier allows 25,000 calls/month.
+ */
+const NEYNAR_API_KEY = process.env.NEYNAR_API_KEY || '';
+const NEYNAR_API = 'https://api.neynar.com';
+
+interface NeynarCast {
+  hash: string;
+  author: {
+    fid: number;
+    username: string;
+    display_name: string;
+    pfp_url: string;
+    bio: string;
+  };
+  text: string;
+  timestamp: string;
+  reactions: { likes: number; recasts: number; replies: number };
+  embeds: Array<{ url: string }>;
+}
+
+async function fetchFromNeynar(limit: number): Promise<UnifiedPost[]> {
+  if (!NEYNAR_API_KEY) {
+    console.log('[farcaster] No NEYNAR_API_KEY configured, skipping public API fallback');
+    return [];
+  }
+
+  try {
+    // Fetch recent casts from curated FIDs via Neynar's casts API
+    const fids = CURATED_FIDS.slice(0, 10).join(',');
+    const url = `${NEYNAR_API}/v2/farcaster/feed?feed_type=filter&filter_type=fids&fids=${fids}&limit=${Math.min(limit, 50)}`;
+    const res = await fetch(url, {
+      headers: {
+        accept: 'application/json',
+        'x-api-key': NEYNAR_API_KEY,
+      },
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!res.ok) {
+      console.log(`[farcaster] Neynar returned ${res.status}`);
+      return [];
+    }
+    const data = (await res.json()) as { casts?: NeynarCast[] };
+    if (!data.casts?.length) return [];
+
+    return data.casts.slice(0, limit).map((cast) => {
+      const published = Date.parse(cast.timestamp);
+      return {
+        id: `farcaster:neynar:${cast.hash}`,
+        protocol: 'farcaster' as const,
+        author: {
+          id: `farcaster:${cast.author.fid}`,
+          primary: { protocol: 'farcaster' as const, id: String(cast.author.fid) },
+          handles: { farcaster: cast.author.username },
+          displayName: cast.author.display_name || cast.author.username,
+          bio: cast.author.bio || '',
+          avatarUrl: cast.author.pfp_url || '',
+          followerCount: 0,
+          followingCount: 0,
+          links: [],
+          keys: { fid: String(cast.author.fid) },
+        },
+        text: cast.text,
+        embeds: (cast.embeds || []).map((e) => ({ kind: 'link' as const, url: e.url })),
+        contentType: 'text' as const,
+        createdAt: Number.isNaN(published) ? Date.now() : published,
+        metrics: {
+          likes: cast.reactions?.likes ?? 0,
+          reposts: cast.reactions?.recasts ?? 0,
+          replies: cast.reactions?.replies ?? 0,
+          quotes: 0,
+        },
+        engagement: {
+          viewerLiked: false,
+          viewerReposted: false,
+          viewerBookmarked: false,
+          raw: {
+            likes: cast.reactions?.likes ?? 0,
+            reposts: cast.reactions?.recasts ?? 0,
+            replies: cast.reactions?.replies ?? 0,
+            quotes: 0,
+          },
+        },
+        raw: cast,
+        niches: guessFarcasterNiches(cast.text),
+      } as UnifiedPost;
+    });
+  } catch (err: any) {
+    console.log(`[farcaster] Neynar fallback failed: ${err?.message || err}`);
+    return [];
+  }
+}
+
+/**
  * Fetch real Farcaster posts from our self-hosted Hubble.
- * Returns EMPTY array with a descriptive notice if Hubble is down or syncing.
- * NEVER returns fake/seed data.
+ * If Hubble is down, falls back to Neynar public API.
+ * NEVER returns fake/seed data — only real content.
  */
 export async function fetchFarcasterPosts(limit = 20): Promise<UnifiedPost[]> {
   // Rate limit: 120 requests/minute (conservative for self-hosted Hubble)
@@ -359,7 +454,12 @@ export async function fetchFarcasterPosts(limit = 20): Promise<UnifiedPost[]> {
     // Check Hubble health first
     const hubbleStatus = await getHubbleStatus();
     if (!hubbleStatus) {
-      console.log('[farcaster] Hubble unreachable — no data available');
+      console.log('[farcaster] Hubble unreachable — trying Neynar fallback');
+      const fallbackPosts = await fetchFromNeynar(targetLimit);
+      if (fallbackPosts.length > 0) {
+        console.log(`[farcaster] Neynar fallback returned ${fallbackPosts.length} posts`);
+        return fallbackPosts.slice(0, limit);
+      }
       return [];
     }
 
@@ -368,73 +468,106 @@ export async function fetchFarcasterPosts(limit = 20): Promise<UnifiedPost[]> {
         `[farcaster] Hubble is SYNCING (${hubbleStatus.syncPercentage}%) — ` +
           `limited data available. Peer: ${hubbleStatus.peerId || 'none'}`,
       );
+      // Try Neynar in parallel as supplement
+      const neynarPromise = fetchFromNeynar(Math.ceil(targetLimit / 2)).catch(
+        () => [] as UnifiedPost[],
+      );
+      // Still try Hubble too
+      const hubblePosts = await tryHubbleFetch(scanFids, targetLimit);
+      const neynarPosts = await neynarPromise;
+      all.push(...hubblePosts, ...neynarPosts);
+
+      if (all.length > 0) {
+        return dedupeFarcasterPosts(all, limit);
+      }
+      return []; // Let bridge-level fallback handle it
     }
 
     if (!hubbleStatus.isSynced && !hubbleStatus.isSyncing && !hubbleStatus.rootHash) {
-      console.log('[farcaster] Hubble is connected but empty (no root hash) — returning empty');
+      console.log('[farcaster] Hubble is connected but empty (no root hash) — trying Neynar');
+      const fallbackPosts = await fetchFromNeynar(targetLimit);
+      if (fallbackPosts.length > 0) {
+        console.log(`[farcaster] Neynar fallback returned ${fallbackPosts.length} posts`);
+        return fallbackPosts.slice(0, limit);
+      }
       return [];
     }
 
-    // Fetch from Hubble — scan curated FIDs in parallel batches
-    const scanFids = CURATED_FIDS.slice(0, MAX_SCAN_FIDS);
-    const perFid = Math.max(1, Math.min(DEFAULT_PAGE_SIZE, Math.ceil(targetLimit / 8)));
-    const batchSize = 5; // Fetch 5 FIDs at a time to avoid overwhelming Hubble
+    // Hubble is healthy — fetch from it
+    const hubblePosts = await tryHubbleFetch(CURATED_FIDS.slice(0, MAX_SCAN_FIDS), targetLimit);
+    all.push(...hubblePosts);
 
-    for (let i = 0; i < scanFids.length && all.length < targetLimit; i += batchSize) {
-      const batch = scanFids.slice(i, i + batchSize);
-      const batchResults = await Promise.allSettled(
-        batch.map(async (fid) => {
-          // Rate limit check per-batch (5 requests at a time)
-          if (!checkRateLimit('farcaster:hubble', { maxRequests: 120, windowMs: 60_000 })) {
-            return [];
-          }
-          return fetchCastsForFid(fid, perFid);
-        }),
+    // If Hubble returned very little, supplement with Neynar
+    if (all.length < Math.ceil(limit / 3)) {
+      const neynarPosts = await fetchFromNeynar(Math.ceil(limit / 2)).catch(
+        () => [] as UnifiedPost[],
       );
-
-      for (const result of batchResults) {
-        if (result.status === 'fulfilled') {
-          for (const post of result.value) {
-            if (all.length >= targetLimit) break;
-            all.push(post);
-          }
-        }
-        if (all.length >= targetLimit) break;
-      }
+      all.push(...neynarPosts);
     }
 
-    // Sort by recency (newest first)
-    all.sort((a, b) => b.createdAt - a.createdAt);
-
-    // Deduplicate by text prefix
-    const seen = new Set<string>();
-    const deduped: UnifiedPost[] = [];
-    for (const p of all) {
-      const key = p.text.slice(0, 60);
-      if (!seen.has(key) && deduped.length < limit) {
-        seen.add(key);
-        deduped.push(p);
-      }
-    }
-
-    const elapsed = Date.now() - startTime;
-    const status = hubbleStatus.isSynced ? 'synced' : 'syncing';
-    console.log(
-      `[farcaster] ${deduped.length} posts from Hubble (${status}, ${hubbleStatus.syncPercentage}%) in ${elapsed}ms`,
-    );
-
-    if (deduped.length === 0) {
-      console.log('[farcaster] Hubble returned 0 posts — this is normal during initial sync');
-    }
-
-    return deduped;
+    return dedupeFarcasterPosts(all, limit);
   } catch (err: any) {
     const elapsed = Date.now() - startTime;
     console.log(`[farcaster] Fetch failed after ${elapsed}ms: ${err?.message || err}`);
 
-    // Return empty — NEVER return fake data
+    // Final fallback: try Neynar
+    const neynarPosts = await fetchFromNeynar(targetLimit).catch(() => [] as UnifiedPost[]);
+    if (neynarPosts.length > 0) {
+      console.log(`[farcaster] Neynar emergency fallback: ${neynarPosts.length} posts`);
+      return neynarPosts.slice(0, limit);
+    }
     return [];
   }
+}
+
+/**
+ * Fetch posts from Hubble given a list of FIDs.
+ */
+async function tryHubbleFetch(fids: number[], targetLimit: number): Promise<UnifiedPost[]> {
+  const all: UnifiedPost[] = [];
+  const perFid = Math.max(1, Math.min(DEFAULT_PAGE_SIZE, Math.ceil(targetLimit / 8)));
+  const batchSize = 5;
+
+  for (let i = 0; i < fids.length && all.length < targetLimit; i += batchSize) {
+    const batch = fids.slice(i, i + batchSize);
+    const batchResults = await Promise.allSettled(
+      batch.map(async (fid) => {
+        if (!checkRateLimit('farcaster:hubble', { maxRequests: 120, windowMs: 60_000 })) {
+          return [];
+        }
+        return fetchCastsForFid(fid, perFid);
+      }),
+    );
+
+    for (const result of batchResults) {
+      if (result.status === 'fulfilled') {
+        for (const post of result.value) {
+          if (all.length >= targetLimit) break;
+          all.push(post);
+        }
+      }
+      if (all.length >= targetLimit) break;
+    }
+  }
+
+  return all;
+}
+
+/**
+ * Deduplicate farcaster posts by text prefix, sort newest-first, apply limit.
+ */
+function dedupeFarcasterPosts(posts: UnifiedPost[], limit: number): UnifiedPost[] {
+  posts.sort((a, b) => b.createdAt - a.createdAt);
+  const seen = new Set<string>();
+  const deduped: UnifiedPost[] = [];
+  for (const p of posts) {
+    const key = p.text.slice(0, 60);
+    if (!seen.has(key) && deduped.length < limit) {
+      seen.add(key);
+      deduped.push(p);
+    }
+  }
+  return deduped;
 }
 
 // ─── Sign In With Farcaster (SIWF) ──────────────────────────────────────

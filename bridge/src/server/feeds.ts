@@ -85,6 +85,7 @@ import {
   registerFailoverStrategies,
 } from '../reliability/register-all';
 import { deadLetterQueue, withRetry } from '../reliability/retry';
+import { getSeedContent } from './seed-content';
 import type { UnifiedPost } from './types';
 
 interface ProviderEntry {
@@ -426,14 +427,18 @@ export function initializeReliability(): void {
 // Initialize on import
 initializeReliability();
 
-/** Race a promise against a timeout (milliseconds) */
+/** Race a promise against a timeout (milliseconds) using AbortController */
 function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
-  return Promise.race([
-    promise,
-    new Promise<T>((_, reject) =>
-      setTimeout(() => reject(new Error(`[bridge] ${label} timed out after ${ms}ms`)), ms),
-    ),
-  ]);
+  const controller = new AbortController();
+  const timeoutPromise = new Promise<T>((_, reject) => {
+    const id = setTimeout(() => {
+      controller.abort();
+      reject(new Error(`[bridge] ${label} timed out after ${ms}ms`));
+    }, ms);
+    // Clean up timeout if promise settles first
+    void promise.then(() => clearTimeout(id)).catch(() => clearTimeout(id));
+  });
+  return Promise.race([promise, timeoutPromise]);
 }
 
 /** Build a deduplicated feed from multiple protocols with reliability */
@@ -606,11 +611,16 @@ export async function buildFeed(
     console.log(`[bridge] ${protocol}: ${count} posts`);
 
   if (allPosts.length === 0) {
-    notices.push('All content sources returned no data. Check that backend services are running.');
+    notices.push('All content sources returned no data. Serving demo content.');
+    // NEVER return empty — serve seed/demo content so the feed always has something
+    const seedPosts = getSeedContent(limit);
+    for (const p of seedPosts) {
+      (p as Record<string, unknown>)._demo = true;
+    }
     return {
-      posts: [],
+      posts: seedPosts,
       meta: {
-        total: 0,
+        total: seedPosts.length,
         limit,
         perProtocol,
         providerSources,
@@ -619,7 +629,10 @@ export async function buildFeed(
         notices,
         page: 1,
         fetchedAt: Date.now(),
-        source: 'live',
+        source: 'demo',
+        isDemo: true,
+        demoNote:
+          'Connect more protocols to see real content. Configure Nostr, Farcaster, Bluesky, or Mastodon at app.degenfeed.xyz/settings',
       },
     };
   }

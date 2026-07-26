@@ -310,20 +310,39 @@ async function generateAndCacheFeed(
     // non-critical
   }
 
-  if (freshnessSorted.length === 0 && errors.length > 0) {
-    return jsonResponse({
-      data: [],
+  if (freshnessSorted.length === 0) {
+    // NEVER return empty — serve seed/demo content so the feed always has something
+    const { getSeedContent } = await import('../feed/seed-content');
+    const seedPosts = getSeedContent(limit);
+    const responseBody = {
+      data: seedPosts,
       meta: {
-        total: 0,
+        total: seedPosts.length,
         limit,
         perProtocol,
-        errors,
-        notices,
+        errors: errors.length > 0 ? errors : undefined,
+        notices: [
+          ...notices,
+          'All providers returned empty — serving demo content. Connect more protocols at app.degenfeed.xyz/settings',
+        ],
         fetchedAt: now,
-        freshness: freshnessMeta,
-        note: relevant.length === 0 ? 'No relevant posts found' : 'All sources failed or filtered',
+        isDemo: true,
+        source: 'demo',
+        demoNote:
+          'Connect Nostr, Farcaster, Bluesky, or Mastodon to see real content from every network',
       },
-    });
+    };
+    // Cache the seed response briefly to avoid regenerating on every request
+    if (!cursor) {
+      void setFeedCache(env, userId, feedType, responseBody, responseBody.meta);
+    }
+    const resp = cachedJsonResponse(responseBody, 200, 15);
+    const feedElapsed = Date.now() - feedStartTime;
+    resp.headers.set(
+      'X-DegenFeed-Debug',
+      `cache=miss,demo=true,feed-generation=${(feedElapsed / 1000).toFixed(1)}s`,
+    );
+    return resp;
   }
 
   // 12. Build response with coverage audit
