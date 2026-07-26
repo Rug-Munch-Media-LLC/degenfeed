@@ -11,7 +11,7 @@
  * All data is fetched via the free Lens public API — no paid API needed.
  */
 
-import { LENS_API_URL, LensClient } from './index';
+import { LENS_API_URL, LensClient } from './client';
 
 // KVNamespace type for Cloudflare Workers (available at runtime)
 type KVNamespace = {
