@@ -22,7 +22,6 @@
     "@degenfeed/ghost-bridge": "workspace:*",
     "@degenfeed/identity": "workspace:*",
     "@degenfeed/lens-sdk": "workspace:*",
-    "@degenfeed/livepeer-provider": "workspace:*",
     "@degenfeed/mastodon-sdk": "workspace:*",
     "@degenfeed/mirror-bridge": "workspace:*",
     "@degenfeed/nostr-sdk": "workspace:*",
