@@ -11,7 +11,10 @@
     "./feed-generator": "./src/feed-generator.ts",
     "./pds-account": "./src/pds-account.ts",
     "./pds-migration": "./src/pds-migration.ts",
-    "./pds-social": "./src/pds-social.ts"
+    "./pds-social": "./src/pds-social.ts",
+    "./atproto-directory": "./src/atproto-directory.ts",
+    "./atproto-feeds": "./src/atproto-feeds.ts",
+    "./atproto-firehose": "./src/atproto-firehose.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

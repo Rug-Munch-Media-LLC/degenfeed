@@ -6,10 +6,10 @@
  * Also handles emoji reactions, recording metadata, and AI transcript/summary.
  */
 
-import type { Env } from '../index';
-import { jsonResponse, noCacheJsonResponse } from '../index';
-import { methodNotAllowed } from '../response-helpers';
-import { broadcastToAll, broadcastToUser } from '../ws-broadcast';
+import type { Env } from '../../index';
+import { jsonResponse, noCacheJsonResponse } from '../../index';
+import { methodNotAllowed } from '../../response-helpers';
+import { broadcastToAll, broadcastToUser } from '../../ws-broadcast';
 import type { SpaceChatMessage } from './types';
 import {
   generateId,

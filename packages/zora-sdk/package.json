@@ -15,7 +15,10 @@
     "./platform-fees": "./src/platform-fees.ts",
     "./video": "./src/video.ts",
     "./zora-api": "./src/zora-api.ts",
-    "./live-mint": "./src/live-mint.ts"
+    "./live-mint": "./src/live-mint.ts",
+    "./earnings": "./src/earnings.ts",
+    "./marketplace": "./src/marketplace.ts",
+    "./nft-mint": "./src/nft-mint.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

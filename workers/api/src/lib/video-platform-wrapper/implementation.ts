@@ -18,8 +18,8 @@
  * No silent failures. No unhandled API changes. Every provider gets a health check.
  */
 
-import type { UnifiedLiveStream } from '../feed/live-aggregator';
-import type { Env } from '../index';
+import type { UnifiedLiveStream } from '../../feed/live-aggregator';
+import type { Env } from '../../index';
 
 // ─── Unified Video Types ─────────────────────────────────────────────────
 

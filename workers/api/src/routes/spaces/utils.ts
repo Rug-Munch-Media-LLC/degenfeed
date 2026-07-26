@@ -2,9 +2,9 @@
  * @degenfeed/api-worker — Spaces Utils
  */
 
-import type { Env } from '../index';
-import { liveIndexKey, spaceKey, upcomingIndexKey } from '../kv-helpers';
-import { requireSession } from '../session';
+import type { Env } from '../../index';
+import { liveIndexKey, spaceKey, upcomingIndexKey } from '../../kv-helpers';
+import { requireSession } from '../../session';
 import type { SpaceChatMessage, SpaceRecord } from './types';
 
 function pastIndexKey(): string {
