@@ -1,0 +1,30 @@
+coverage:
+  status:
+    project:
+      default:
+        target: 50%
+        threshold: 5%
+    patch:
+      default:
+        target: 40%
+        threshold: 5%
+
+comment:
+  layout: "reach, diff, flags, files"
+  behavior: default
+  require_changes: true
+
+ignore:
+  - "**/*.test.ts"
+  - "**/*.test.tsx"
+  - "**/*.spec.ts"
+  - "**/*.d.ts"
+  - "**/*.config.ts"
+  - "e2e/"
+
+flags:
+  unittests:
+    paths:
+      - apps/
+      - packages/
+    carryforward: true
