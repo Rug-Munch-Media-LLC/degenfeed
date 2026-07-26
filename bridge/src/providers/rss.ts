@@ -1691,15 +1691,33 @@ export function deduplicatePosts(posts: UnifiedPost[], limit: number): UnifiedPo
   return [...seen.values()].slice(0, limit);
 }
 
-// ─── Main Fetch Functions ────────────────────────────────────────────
+// ─── Lazy Cache ──────────────────────────────────────────────────────
+
+const RSS_CACHE_TTL = 300_000; // 5 minutes
+let rssCache: { posts: UnifiedPost[]; fetchedAt: number } | null = null;
 
 /**
- * Fetch from ALL RSS feeds (100+ sources).
+ * Fetch from ALL RSS feeds (100+ sources) with lazy initialization + TTL cache.
  * Respects per-source limits to ensure diversity.
  */
 export async function fetchRssPosts(limit = 50): Promise<UnifiedPost[]> {
+  // Return cached data if still fresh
+  if (rssCache && Date.now() - rssCache.fetchedAt < RSS_CACHE_TTL) {
+    const cached = rssCache.posts.slice(0, limit);
+    console.log(
+      `[rss] Cache HIT: ${cached.length} posts (age: ${Math.round((Date.now() - rssCache.fetchedAt) / 1000)}s)`,
+    );
+    return cached;
+  }
+
   // Rate limit: 60 requests/minute
   if (!checkRateLimit('rss', { maxRequests: 60, windowMs: 60_000 })) {
+    // Return stale cache if available (better than nothing)
+    if (rssCache) {
+      const stale = rssCache.posts.slice(0, limit);
+      console.log(`[rss] Rate limited, serving ${stale.length} stale cached posts`);
+      return stale;
+    }
     console.log('[rss] Rate limited, skipping fetch');
     return [];
   }
@@ -1750,6 +1768,9 @@ export async function fetchRssPosts(limit = 50): Promise<UnifiedPost[]> {
   for (const [cat, count] of byCategory) {
     console.log(`[rss]   ${cat}: ${count} posts`);
   }
+
+  // Update cache with deduplicated results
+  rssCache = { posts: deduped, fetchedAt: Date.now() };
 
   return deduped;
 }

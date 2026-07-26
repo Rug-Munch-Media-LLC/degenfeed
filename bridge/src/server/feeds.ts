@@ -84,7 +84,7 @@ import {
   registerAllProvidersWithCircuitBreaker,
   registerFailoverStrategies,
 } from '../reliability/register-all';
-import { deadLetterQueue, withRetry } from '../reliability/retry';
+import { deadLetterQueue } from '../reliability/retry';
 import { getSeedContent } from './seed-content';
 import type { UnifiedPost } from './types';
 
@@ -424,9 +424,6 @@ export function initializeReliability(): void {
   console.log('[reliability] All providers registered with circuit breakers and failover');
 }
 
-// Initialize on import
-initializeReliability();
-
 /** Race a promise against a timeout (milliseconds) using AbortController */
 function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
   const controller = new AbortController();
@@ -446,6 +443,9 @@ export async function buildFeed(
   protocols: string[],
   limit: number,
 ): Promise<{ posts: UnifiedPost[]; meta: Record<string, unknown> }> {
+  // Lazy-initialize reliability on first data request (not at module import)
+  initializeReliability();
+
   const perProtocol: Record<string, number> = {};
   const errors: string[] = [];
   const notices: string[] = [];
@@ -514,21 +514,13 @@ export async function buildFeed(
 
       try {
         healthDashboard.recordFetch(protocol);
-        const posts = await withRetry(
-          async () => {
-            const result = await withTimeout(
-              provider.fetch(perProviderLimit),
-              FETCH_TIMEOUT_MS,
-              `provider:${protocol}`,
-            );
-            return result;
-          },
-          {
-            providerKey: protocol,
-            onRetry: (attempt, delay) => {
-              console.log(`[retry] ${protocol}: attempt ${attempt} in ${delay}ms`);
-            },
-          },
+        // Fetch with timeout but NO retry — if a provider times out,
+        // we want to fail fast and try the fallback or cache.
+        // Retrying slow providers compounds delays and blocks the feed.
+        const posts = await withTimeout(
+          provider.fetch(perProviderLimit),
+          FETCH_TIMEOUT_MS,
+          `provider:${protocol}`,
         );
 
         healthDashboard.recordSuccess(protocol, FETCH_TIMEOUT_MS);
