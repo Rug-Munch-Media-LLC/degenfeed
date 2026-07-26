@@ -529,18 +529,29 @@ export function initializeReliability(): void {
   console.log('[reliability] All providers registered with circuit breakers and failover');
 }
 
-/** Race a promise against a timeout (milliseconds) using AbortController */
+/**
+ * Race a promise against a timeout (milliseconds).
+ *
+ * CRITICAL: This properly handles the losing promise's rejection to prevent
+ * unhandled rejections that cause SIGABRT. The old implementation used
+ * Promise.race which left the losing promise's rejection unhandled.
+ */
 function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
-  const controller = new AbortController();
-  const timeoutPromise = new Promise<T>((_, reject) => {
-    const id = setTimeout(() => {
-      controller.abort();
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => {
       reject(new Error(`[bridge] ${label} timed out after ${ms}ms`));
     }, ms);
-    // Clean up timeout if promise settles first
-    void promise.then(() => clearTimeout(id)).catch(() => clearTimeout(id));
+
+    promise
+      .then((val) => {
+        clearTimeout(timer);
+        resolve(val);
+      })
+      .catch((err) => {
+        clearTimeout(timer);
+        reject(err);
+      });
   });
-  return Promise.race([promise, timeoutPromise]);
 }
 
 /** Build a deduplicated feed from multiple protocols with reliability */
@@ -574,8 +585,8 @@ export async function buildFeed(
       'pixelfed',
     );
 
-  const perProviderLimit = Math.max(5, Math.ceil((limit * 1.5) / activeProtocols.length));
-  const FETCH_TIMEOUT_MS = 10000;
+  const perProviderLimit = Math.max(3, Math.ceil((limit * 1.2) / Math.max(activeProtocols.length, 1)));
+  const FETCH_TIMEOUT_MS = 5000;
 
   const results = await Promise.allSettled(
     activeProtocols.map(async (protocol) => {

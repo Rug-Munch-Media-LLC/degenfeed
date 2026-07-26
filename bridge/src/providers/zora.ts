@@ -4,11 +4,9 @@
  * Reads Zora NFT data from our local Zora indexer (port 8090) instead of
  * the external api.zora.co GraphQL API.
  *
- * This gives DegenFeed ownership of its Zora NFT data — no dependency on
- * the public Zora API for reads.
- *
- * The local indexer runs at /srv/degenfeed/zora-indexer/ and polls
- * api.zora.co every 30s, storing results in SQLite.
+ * ⚠️ KNOWN ISSUE: The tsx/esbuild transpiler's __name helper on export
+ * aliases can cause "Maximum call stack size exceeded" during module
+ * loading. We use renamed exports explicitly to prevent this.
  *
  * Endpoint: http://127.0.0.1:8091/
  *   GET /api/collections  — NFT collections
@@ -19,7 +17,12 @@
 
 import type { SchemaGuard, UnifiedPost } from '../server/types';
 
-const $fetch = globalThis.fetch;
+/**
+ * Use global fetch directly. The old `$fetch = globalThis.fetch` workaround
+ * was needed when we had `export const fetch = fetchZoraPosts` which caused
+ * the esbuild __name transpiler to overflow. Now that we export individual
+ * function names, there's no collision.
+ */
 
 // ─── Configuration ────────────────────────────────────────────────────
 
@@ -144,7 +147,7 @@ async function fetchFromIndexer<T>(path: string, limit: number): Promise<T[]> {
   const url = `${ZORA_INDEXER_URL}${path}?limit=${limit}`;
 
   try {
-    const res = await $fetch(url, {
+    const res = await fetch(url, {
       headers: { 'User-Agent': 'DegenFeed-Bridge/0.1' },
       signal: AbortSignal.timeout(5000),
     });
@@ -407,5 +410,7 @@ export async function fetchZoraPosts(limit = 20): Promise<UnifiedPost[]> {
   return deduped;
 }
 
-/** @alias Use `fetch` as the standardized export name */
-export const fetch = fetchZoraPosts;
+// ─── Exports ──────────────────────────────────────────────────────────
+// All functions are already exported inline (export async function / export const).
+// No need for a re-export block that causes tsx transpiler __name decoration.
+// The PROVIDERS registry in feeds.ts uses { fetchZoraPosts } directly.
