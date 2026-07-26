@@ -95,6 +95,12 @@ paths = [
   '''scripts/proprietary-firewall\.py''',
 ]
 
+# Regex patterns to allowlist (intentional test/redaction markers)
+regexes = [
+  '<runtime-generated-mnemonic>',
+  '\[REDACTED[^\]]*\]',
+]
+
 # Stopwords (false-positive patterns to ignore)
 stopwords = [
   "example-api-key",
