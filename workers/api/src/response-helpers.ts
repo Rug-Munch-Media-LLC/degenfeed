@@ -8,6 +8,38 @@
 import { handleError } from './lib/errors';
 import type { Env } from './types';
 
+// ─── Legacy response helpers ───────────────────────────────────
+// jsonResponse and noCacheJsonResponse are the original response builders
+// defined in index.ts. They are extracted here to break circular import chains
+// (index → routes → index). Routes should prefer the status-specific helpers
+// (ok/created/badRequest/etc.) but for backward compat we keep the originals.
+
+export function jsonResponse(
+  data: unknown,
+  status = 200,
+  extraHeaders?: Record<string, string>,
+): Response {
+  const headers: Record<string, string> = {
+    'content-type': 'application/json',
+    'cache-control': 'public, max-age=30',
+    ...extraHeaders,
+  };
+  return new Response(JSON.stringify(data), {
+    status,
+    headers,
+  });
+}
+
+export function noCacheJsonResponse(data: unknown, status = 200): Response {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: {
+      'content-type': 'application/json',
+      'cache-control': 'no-store, must-revalidate',
+    },
+  });
+}
+
 // ─── Error response from catch blocks ───────────────────────
 // Use this in route catch blocks instead of ad-hoc error responses.
 // e.g. return errorResponse(err, env, requestId);
