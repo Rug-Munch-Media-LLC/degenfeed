@@ -14,8 +14,8 @@
  *   PremiumTier type
  */
 
-import type { Env } from './index';
-import { jsonResponse } from './index';
+import { jsonResponse } from './response-helpers';
+import type { Env } from './types';
 
 export type PremiumTier = 'basic' | 'pro' | 'creator' | 'platinum' | 'enterprise';
 

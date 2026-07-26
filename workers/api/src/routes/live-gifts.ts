@@ -15,34 +15,3 @@
  */
 
 export type {
-  GiftPackage,
-  GiftRecord,
-  GiftStreakTier,
-  GiftType,
-  GiftTypeId,
-  StreamGiftState,
-  SubscriptionGiftOption,
-} from './live-gifts-core';
-export {
-  GIFT_PACKAGES,
-  GIFT_STREAK_TIERS,
-  GIFT_TYPES,
-  GIFT_TIERS,
-  SUBSCRIPTION_GIFT_OPTIONS,
-  calculateCreatorEarnings,
-  calculateGiftFee,
-  checkStreakTier,
-  isSupportedGiftChain,
-  isValidGiftTypeId,
-  lookupGiftType,
-} from './live-gifts-core';
-export {
-  handleGiftEarnings,
-  handleGiftHistory,
-  handleGiftLeaderboard,
-  handleGiftPackages,
-  handleGiftPayout,
-  handleGiftSend,
-  handleGiftTypes,
-  recordGift,
-} from './live-gifts-handlers';

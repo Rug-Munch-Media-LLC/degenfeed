@@ -17,10 +17,11 @@
 import { Hono } from 'hono';
 import { apiKeyMiddleware } from './api-key';
 import { applyCors, getAllowedOrigin, isAllowedOrigin, parseOriginHeader } from './cors';
-import type { Env } from './index';
-import { jsonResponse, tieredRateLimit } from './index';
+import { tieredRateLimit } from './index';
+import { jsonResponse } from './response-helpers';
 import { validateBodySize } from './sanitize';
 import { parseSessionCookie, validateCsrfToken } from './session';
+import type { Env } from './types';
 
 // ─── Error handling ──────────────────────────────────────────
 

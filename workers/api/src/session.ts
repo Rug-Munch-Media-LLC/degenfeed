@@ -1,5 +1,5 @@
 import { bytesToHex, hexToBytes } from '@noble/hashes/utils';
-import type { Env } from './index';
+import type { Env } from './types';
 
 export interface SessionPayload {
   address: string;

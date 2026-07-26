@@ -9,7 +9,7 @@
  */
 
 import type { Hono } from 'hono';
-import type { Env } from '../../index';
+import type { Env } from '../../types';
 import { registerCoinsRoutes } from './coins';
 import { registerCoreRoutes } from './core';
 import { registerDaoRoutes } from './dao';
@@ -23,15 +23,3 @@ import { registerSocialRoutes } from './social';
 import { registerZoraRoutes } from './zora';
 
 export function registerRoutes(app: Hono<{ Bindings: Env }>): void {
-  registerCoreRoutes(app);
-  registerFeedRoutes(app);
-  registerSocialRoutes(app);
-  registerDaoRoutes(app);
-  registerCoinsRoutes(app);
-  registerMediaRoutes(app);
-  registerMessagingRoutes(app);
-  registerLiveRoutes(app);
-  registerFramesRoutes(app);
-  registerNostrGroupRoutes(app);
-  registerZoraRoutes(app);
-}
