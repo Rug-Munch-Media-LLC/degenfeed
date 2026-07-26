@@ -65,7 +65,7 @@ class FailoverRouter {
         status: 'cached',
         posts: cached.posts.slice(0, limit),
         source: protocol,
-        cacheAgeMs: Date.now() - cached.timestamp,
+        cacheAgeMs: Date.now() - cached.fetchedAt,
       };
     }
 
@@ -76,28 +76,33 @@ class FailoverRouter {
 /**
  * In-memory fallback cache keyed by protocol -> { posts, timestamp }.
  */
+export interface FallbackCacheEntry {
+  posts: UnifiedPost[];
+  fetchedAt: number;
+}
+
 class FallbackCache {
-  private cache = new Map<string, { posts: UnifiedPost[]; timestamp: number }>();
+  private cache = new Map<string, FallbackCacheEntry>();
   private maxAge = 300000; // 5 minutes
 
   set(protocol: string, posts: UnifiedPost[]): void {
-    this.cache.set(protocol, { posts, timestamp: Date.now() });
+    this.cache.set(protocol, { posts, fetchedAt: Date.now() });
   }
 
-  get(protocol: string): UnifiedPost[] | null {
+  get(protocol: string): FallbackCacheEntry | null {
     const entry = this.cache.get(protocol);
     if (!entry) return null;
-    if (Date.now() - entry.timestamp > this.maxAge) {
+    if (Date.now() - entry.fetchedAt > this.maxAge) {
       this.cache.delete(protocol);
       return null;
     }
-    return entry.posts;
+    return entry;
   }
 
   getAge(protocol: string): number | null {
     const entry = this.cache.get(protocol);
     if (!entry) return null;
-    return Date.now() - entry.timestamp;
+    return Date.now() - entry.fetchedAt;
   }
 }
 

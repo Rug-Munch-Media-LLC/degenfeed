@@ -417,11 +417,6 @@ export class CrossNetworkSearch {
   }
 
   // ─── Lens Search ──────────────────────────────────────────────────────
-      });
-    });
-  }
-
-  // ─── Lens Search ──────────────────────────────────────────────
 
   async searchLens(query: string): Promise<SearchResult[]> {
     const apiUrl = this.env.LENS_API_URL || 'https://api.lens.xyz/graphql';

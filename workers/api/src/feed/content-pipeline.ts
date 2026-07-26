@@ -34,6 +34,7 @@ import {
   fetchFromProviders,
 } from './feed-fetcher';
 import { applyQualityPipeline } from './feed-quality-gates';
+import { getSeedContent } from './seed-content';
 import type { UnifiedFeedPost } from './unified-feed';
 import { fetchLemmyPosts, fetchPeerTubeVideos, fetchYouTubeVideos } from './unified-fetchers';
 
@@ -710,6 +711,26 @@ export class ContentPipeline {
     const allPosts = sources.flat();
     const dedupResult = deduplicateCrossProtocol(allPosts);
     const posts = dedupResult.posts;
+
+    // If ALL sources returned nothing, serve seed content
+    if (posts.length === 0) {
+      const seedPosts = getSeedContent(50);
+      const enriched = seedPosts.map(
+        (p) =>
+          ({
+            ...p,
+            sourceBadge: '●',
+            sourceColor: '#666',
+            sourceLabel: 'Demo',
+            _demo: true,
+          }) as UnifiedFeedPost,
+      );
+      return {
+        posts: enriched,
+        sourceBreakdown: { _demo: enriched.length },
+        generatedAt: Date.now(),
+      };
+    }
 
     // Score and rank by engagement + freshness
     const now = Date.now();

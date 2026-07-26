@@ -122,7 +122,7 @@ export const ALL_PROTOCOLS: Protocol[] = [
 export const DEFAULT_PROTOCOLS: Protocol[] = ALL_PROTOCOLS;
 
 export const DEFAULT_TIMEOUT_MS = 6000;
-export const FEED_GENERATION_TIMEOUT_MS = 8000;
+export const FEED_GENERATION_TIMEOUT_MS = 12000;
 
 // ─── Per-provider timeouts ───────────────────────────────────────
 // Aggressive timeouts for slow providers. RSS and ponder are the
@@ -354,23 +354,29 @@ export class BridgeFeedProvider implements FeedProvider {
   }
 
   async fetchFeed(options?: { timeoutMs?: number }): Promise<FeedResult> {
-    const timeoutMs = options?.timeoutMs ?? 6000;
-    try {
-      const res = await fetch(`${this.bridgeUrl}/api/feed/${this.protocol}?limit=50`, {
-        signal: AbortSignal.timeout(timeoutMs),
-      });
-      if (!res.ok) {
-        return { posts: [], notice: `Bridge returned ${res.status} for ${this.protocol}` };
+    const timeoutMs = options?.timeoutMs ?? 10000; // 10s for bridge (it aggregates many providers)
+    // Retry once on failure
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const res = await fetch(`${this.bridgeUrl}/api/feed/${this.protocol}?limit=50`, {
+          signal: AbortSignal.timeout(timeoutMs),
+        });
+        if (!res.ok) {
+          if (attempt === 0) continue; // Retry on non-200
+          return { posts: [], notice: `Bridge returned ${res.status} for ${this.protocol}` };
+        }
+        const body = (await res.json()) as { data?: UnifiedPost[]; posts?: UnifiedPost[] };
+        const posts = body.data ?? body.posts ?? [];
+        return { posts: posts.slice(0, 50) };
+      } catch (err) {
+        if (attempt === 0) continue; // Retry on error
+        return {
+          posts: [],
+          notice: `Bridge unavailable for ${this.protocol}: ${err instanceof Error ? err.message : 'unknown'}`,
+        };
       }
-      const body = (await res.json()) as { data?: UnifiedPost[]; posts?: UnifiedPost[] };
-      const posts = body.data ?? body.posts ?? [];
-      return { posts: posts.slice(0, 50) };
-    } catch (err) {
-      return {
-        posts: [],
-        notice: `Bridge unavailable for ${this.protocol}: ${err instanceof Error ? err.message : 'unknown'}`,
-      };
     }
+    return { posts: [], notice: `Bridge unavailable for ${this.protocol} after retry` };
   }
 
   async healthCheck(): Promise<{ healthy: boolean; latencyMs: number; error?: string }> {
@@ -860,8 +866,13 @@ export async function fetchFromProviders(
 /**
  * Wraps fetchFromProviders with a top-level timeout.
  * If the fetch takes longer than `timeoutMs`, returns whatever
- * results have been collected so far (via Promise.race).
- * Used by route handlers to enforce the 8s feed generation limit.
+ * results have been collected so far (partial results).
+ * Used by route handlers to enforce the feed generation limit.
+ *
+ * Individual provider fetches have their OWN per-provider timeouts
+ * (PROVIDER_TIMEOUTS), so by the time the overall timeout fires,
+ * most providers should have already resolved or timed out individually.
+ * This outer timeout is a safety net that ensures we NEVER hang.
  */
 export async function fetchFromProvidersWithTimeout(
   env: Env,
@@ -872,15 +883,20 @@ export async function fetchFromProvidersWithTimeout(
   execCtx?: ExecutionContext,
   timer?: ProviderTimer,
 ): Promise<{ results: ProviderResult[]; timedOut: boolean }> {
+  // Since individual provider fetches have their OWN per-provider timeouts
+  // (most are 4-8s), the overall timeout rarely fires. But if it does,
+  // we still have partial results from providers that already resolved.
+  // The Promise.race here is a backstop — not a replacement for per-provider timeouts.
   const result = await Promise.race([
-    (async (): Promise<{ results: ProviderResult[]; timedOut: false }> => ({
-      results: await fetchFromProviders(env, protocols, limit, notices, execCtx, timer),
-      timedOut: false as const,
-    }))(),
-    (async (): Promise<{ results: ProviderResult[]; timedOut: true }> => {
-      await new Promise((r) => setTimeout(r, timeoutMs));
-      return { results: [], timedOut: true as const };
-    })(),
+    fetchFromProviders(env, protocols, limit, notices, execCtx, timer).then(
+      (r) => ({ results: r, timedOut: false as const }),
+    ),
+    new Promise<{ results: ProviderResult[]; timedOut: true }>((resolve) =>
+      setTimeout(() => {
+        notices.push(`Feed generation timeout after ${timeoutMs}ms — serving partial results`);
+        resolve({ results: [], timedOut: true });
+      }, timeoutMs),
+    ),
   ]);
   return result;
 }

@@ -30,3 +30,4 @@ export * from './smart-refresh';
 export * from './topic-modeler';
 export * from './unified-feed';
 export * from './unified-fetchers';
+export * from './seed-content';

@@ -295,67 +295,79 @@ export async function handlePodcastRoute(
 
   // /api/podcast/discover — Discovery feed
   if (path === '/api/podcast/discover' && method === 'GET') {
-    return handleDiscover(req, res);
+    await handleDiscover(req, res);
+    return true;
   }
 
   // /api/podcast/trending — Trending episodes
   if (path === '/api/podcast/trending' && method === 'GET') {
-    return handleTrending(req, res);
+    await handleTrending(req, res);
+    return true;
   }
 
   // /api/podcast/mine — Creator's podcasts
   if (path === '/api/podcast/mine' && method === 'GET') {
-    return handleMine(req, res);
+    await handleMine(req, res);
+    return true;
   }
 
   // /api/podcast/create — Create podcast
   if (path === '/api/podcast/create' && method === 'POST') {
-    return handleCreatePodcast(req, res);
+    await handleCreatePodcast(req, res);
+    return true;
   }
 
   // /api/podcast/episode — Publish episode
   if (path === '/api/podcast/episode' && method === 'POST') {
-    return handleCreateEpisode(req, res);
+    await handleCreateEpisode(req, res);
+    return true;
   }
 
   // /api/podcast/categories — Category listing
   if (path === '/api/podcast/categories' && method === 'GET') {
-    return handleCategories(req, res);
+    await handleCategories(req, res);
+    return true;
   }
 
   // /api/podcast/search — Search
   if (path === '/api/podcast/search' && method === 'GET') {
-    return handleSearch(req, res);
+    await handleSearch(req, res);
+    return true;
   }
 
   // /api/podcast/episode/:id/publish — Publish episode
   const publishMatch = path.match(/^\/api\/podcast\/episode\/([^/]+)\/publish$/);
   if (publishMatch && method === 'POST') {
-    return handlePublishEpisode(req, res, publishMatch[1]);
+    await handlePublishEpisode(req, res, publishMatch[1]);
+    return true;
   }
 
   // /api/podcast/episode/:id/tip — Tip episode
   const tipMatch = path.match(/^\/api\/podcast\/episode\/([^/]+)\/tip$/);
   if (tipMatch && method === 'POST') {
-    return handleTipEpisode(req, res, tipMatch[1]);
+    await handleTipEpisode(req, res, tipMatch[1]);
+    return true;
   }
 
   // /api/podcast/episode/:id — Delete episode
   const episodeDeleteMatch = path.match(/^\/api\/podcast\/episode\/([^/]+)$/);
   if (episodeDeleteMatch && method === 'DELETE') {
-    return handleDeleteEpisode(req, res, episodeDeleteMatch[1]);
+    await handleDeleteEpisode(req, res, episodeDeleteMatch[1]);
+    return true;
   }
 
   // /api/podcast/:id/episodes — Get episodes
   const episodesMatch = path.match(/^\/api\/podcast\/([^/]+)\/episodes$/);
   if (episodesMatch && method === 'GET') {
-    return handleGetEpisodes(req, res, episodesMatch[1]);
+    await handleGetEpisodes(req, res, episodesMatch[1]);
+    return true;
   }
 
   // /api/podcast/:id — Get single podcast
   const podcastMatch = path.match(/^\/api\/podcast\/([^/]+)$/);
   if (podcastMatch && method === 'GET') {
-    return handleGetPodcast(req, res, podcastMatch[1]);
+    await handleGetPodcast(req, res, podcastMatch[1]);
+    return true;
   }
 
   return false; // Not handled
