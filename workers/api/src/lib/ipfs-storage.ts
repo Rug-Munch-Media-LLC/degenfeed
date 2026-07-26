@@ -15,8 +15,8 @@
  * Tracks pin status in KV for monitoring.
  */
 
-import { log } from '../logger';
 import type { Env } from '../types';
+import { log } from '../types';
 
 // ─── Constants ──────────────────────────────────────────────────────────
 
@@ -36,8 +36,30 @@ const KV_PREFIX = 'ipfs:pin:';
 // ─── Types ──────────────────────────────────────────────────────────────
 
 export interface IPFSUploadResult {
+  /** Content Identifier (CID) */
+  cid: string;
+  /** Primary gateway URL for playback */
+  gatewayUrl: string;
+  /** All available gateway URLs */
+  allGateways: string[];
+  /** Which provider was used for the upload */
+  provider: 'web3-storage' | 'pinata' | 'none';
+  /** Whether the content is actively pinned */
+  pinned: boolean;
+  /** Size in bytes as reported by the provider */
+  size: number;
+  /** Timestamp of upload */
+  uploadedAt: number;
+}
 
 export interface PinStatus {
+  cid: string;
+  provider: string;
+  pinned: boolean;
+  pinnedAt: number | null;
+  lastChecked: number;
+  error?: string;
+}
 
 // ─── Gateway Helpers ────────────────────────────────────────────────────
 
@@ -46,11 +68,18 @@ export interface PinStatus {
  * Falls back through priority-ordered gateways if preferDegenFeed is set.
  */
 export function getIPFSGatewayUrl(cid: string, preferLocalGateway = true): string {
+  const gateways = preferLocalGateway ? IPFS_GATEWAYS : IPFS_GATEWAYS.slice(1);
+  const best = gateways[0];
+  if (!best) return `https://ipfs.io/ipfs/${cid}`;
+  return best.url.replace('{cid}', cid);
+}
 
 /**
  * Get all gateway URLs for a CID.
  */
 export function getAllGatewayUrls(cid: string): string[] {
+  return IPFS_GATEWAYS.map((gw) => gw.url.replace('{cid}', cid));
+}
 
 // ─── Provider Implementations ──────────────────────────────────────────
 
@@ -63,6 +92,37 @@ async function uploadViaWeb3Storage(
   fileName: string,
   apiKey?: string,
 ): Promise<{ cid: string; size: number } | null> {
+  try {
+    const headers: Record<string, string> = {};
+    if (apiKey) {
+      headers.Authorization = `Bearer ${apiKey}`;
+    }
+
+    const formData = new FormData();
+    formData.append('file', file, fileName);
+
+    const response = await fetch(WEB3_STORAGE_API, {
+      method: 'POST',
+      headers,
+      body: formData,
+      signal: AbortSignal.timeout(120_000), // 2 min for uploads
+    });
+
+    if (!response.ok) {
+      const errText = await response.text().catch(() => 'unknown');
+      log('warn', `[ipfs-storage] web3.storage upload failed: ${response.status} ${errText}`);
+      return null;
+    }
+
+    const result = (await response.json()) as { cid?: string };
+    if (!result.cid) return null;
+
+    return { cid: result.cid, size: file.size };
+  } catch (err) {
+    log('warn', `[ipfs-storage] web3.storage error:`, err);
+    return null;
+  }
+}
 
 /**
  * Upload via Pinata (requires PINATA_API_KEY + PINATA_SECRET_KEY in env).
@@ -73,6 +133,35 @@ async function uploadViaPinata(
   apiKey: string,
   secretKey: string,
 ): Promise<{ cid: string; size: number } | null> {
+  try {
+    const formData = new FormData();
+    formData.append('file', file, fileName);
+
+    const response = await fetch(PINATA_API, {
+      method: 'POST',
+      headers: {
+        pinata_api_key: apiKey,
+        pinata_secret_api_key: secretKey,
+      },
+      body: formData,
+      signal: AbortSignal.timeout(120_000),
+    });
+
+    if (!response.ok) {
+      const errText = await response.text().catch(() => 'unknown');
+      log('warn', `[ipfs-storage] Pinata upload failed: ${response.status} ${errText}`);
+      return null;
+    }
+
+    const result = (await response.json()) as { IpfsHash?: string };
+    if (!result.IpfsHash) return null;
+
+    return { cid: result.IpfsHash, size: file.size };
+  } catch (err) {
+    log('warn', `[ipfs-storage] Pinata error:`, err);
+    return null;
+  }
+}
 
 // ─── KV Pin Tracking ───────────────────────────────────────────────────
 
@@ -81,6 +170,15 @@ async function trackPinStatus(
   cid: string,
   status: Omit<PinStatus, 'cid'>,
 ): Promise<void> {
+  if (!kv) return;
+  const key = `${KV_PREFIX}${cid}`;
+  const record: PinStatus = { cid, ...status, lastChecked: Date.now() };
+  try {
+    await kv.put(key, JSON.stringify(record), { expirationTtl: 86400 * 365 }); // 1 year
+  } catch (err) {
+    log('warn', `[ipfs-storage] Failed to store pin status: ${cid}`, err);
+  }
+}
 
 /**
  * Get the current pin status for a CID from KV.
@@ -89,6 +187,14 @@ export async function getPinStatus(
   kv: KVNamespace | undefined,
   cid: string,
 ): Promise<PinStatus | null> {
+  if (!kv) return null;
+  try {
+    const raw = await kv.get(`${KV_PREFIX}${cid}`);
+    return raw ? (JSON.parse(raw) as PinStatus) : null;
+  } catch {
+    return null;
+  }
+}
 
 // ─── Main Upload Function ──────────────────────────────────────────────
 
@@ -111,6 +217,45 @@ export async function uploadToIPFS(
   fileName: string,
   env: Env,
 ): Promise<IPFSUploadResult> {
+  const uploadResult =
+    (await uploadViaWeb3Storage(file, fileName, env.WEB3_STORAGE_API_KEY)) ??
+    (env.PINATA_API_KEY && env.PINATA_SECRET_KEY
+      ? await uploadViaPinata(file, fileName, env.PINATA_API_KEY, env.PINATA_SECRET_KEY)
+      : null);
+
+  if (!uploadResult) {
+    return {
+      cid: '',
+      gatewayUrl: '',
+      allGateways: [],
+      provider: 'none',
+      pinned: false,
+      size: file.size,
+      uploadedAt: Date.now(),
+    };
+  }
+
+  const { cid, size } = uploadResult;
+  const pinned = true; // Both web3.storage and Pinata pin by default
+  const kv = env.CACHE ?? env.CONTENT_LIBRARY;
+
+  // Track pin status in KV
+  await trackPinStatus(kv, cid, {
+    provider: uploadResult.provider,
+    pinned,
+    pinnedAt: pinned ? Date.now() : null,
+  });
+
+  return {
+    cid,
+    gatewayUrl: getIPFSGatewayUrl(cid),
+    allGateways: getAllGatewayUrls(cid),
+    provider: uploadResult.provider,
+    pinned,
+    size,
+    uploadedAt: Date.now(),
+  };
+}
 
 /**
  * Upload raw bytes to IPFS.
@@ -122,15 +267,45 @@ export async function uploadBufferToIPFS(
   mimeType: string,
   env: Env,
 ): Promise<IPFSUploadResult> {
+  const blob = new Blob([buffer], { type: mimeType });
+  return uploadToIPFS(blob, fileName, env);
+}
 
 /**
  * Check if IPFS is reachable/healthy by hitting the web3.storage API.
  * Returns true if the service is accessible (not a full upload test).
  */
 export async function checkIPFSHealth(): Promise<boolean> {
+  try {
+    const response = await fetch('https://up.web3.storage', {
+      method: 'HEAD',
+      signal: AbortSignal.timeout(5_000),
+    });
+    return response.ok || response.status < 500;
+  } catch {
+    return false;
+  }
+}
 
 /**
  * Verify that an IPFS CID resolves through at least one gateway.
  */
 export async function verifyIPFSContent(cid: string): Promise<boolean> {
+  const urls = [
+    `https://ipfs.io/ipfs/${cid}`,
+    `https://${cid}.ipfs.dweb.link`,
+    `https://cloudflare-ipfs.com/ipfs/${cid}`,
+  ];
 
+  for (const url of urls) {
+    try {
+      const response = await fetch(url, {
+        method: 'HEAD',
+        signal: AbortSignal.timeout(10_000),
+      });
+      if (response.ok) return true;
+    } catch {}
+  }
+
+  return false;
+}

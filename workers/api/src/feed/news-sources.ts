@@ -9,5 +9,18 @@
  */
 
 export type {
+  NewsSourceMeta,
+  AggregatedStory,
+  SentimentResult,
+  StoryCluster,
+  StoryEntities,
+  AggregationOptions,
+  AggregationResult,
+  ArticleEnrichment,
+  ParsedRssItem,
+} from './news-types';
 export {
-
+  NEWS_SOURCES,
+  NEWSLETTER_FEEDS,
+  NEWS_SOURCE_COUNT,
+} from './news-source-tiers';

@@ -5,9 +5,27 @@
  */
 
 export {
+  farcasterPlatformWrapper,
+  zoraPlatformWrapper,
+  lensPlatformWrapper,
+  nostrPlatformWrapper,
+  dtubePlatformWrapper,
+  odyseePlatformWrapper,
+  rumblePlatformWrapper,
+  bittubePlatformWrapper,
+} from './implementation';
 
 import { registerWrapper } from './constants';
 import {
+  farcasterPlatformWrapper,
+  zoraPlatformWrapper,
+  lensPlatformWrapper,
+  nostrPlatformWrapper,
+  dtubePlatformWrapper,
+  odyseePlatformWrapper,
+  rumblePlatformWrapper,
+  bittubePlatformWrapper,
+} from './implementation';
 
 registerWrapper(farcasterPlatformWrapper);
 registerWrapper(zoraPlatformWrapper);
@@ -17,4 +35,3 @@ registerWrapper(dtubePlatformWrapper);
 registerWrapper(odyseePlatformWrapper);
 registerWrapper(rumblePlatformWrapper);
 registerWrapper(bittubePlatformWrapper);
-

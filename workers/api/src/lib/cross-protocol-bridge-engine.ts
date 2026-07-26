@@ -9,3 +9,18 @@
  */
 
 export { fetchSourceContent } from './bridge-fetchers';
+export {
+  bridgeContent,
+  bridgeContentToAll,
+  fetchReplies,
+  getBridgeHandler,
+  handleBridgeWebhook,
+} from './bridge-publish';
+export type {
+  BridgeContentInput,
+  BridgeDirectionHandler,
+  BridgeReport,
+  BridgeResult,
+  CrossProtocolReply,
+  SourceContent,
+} from './bridge-types';
