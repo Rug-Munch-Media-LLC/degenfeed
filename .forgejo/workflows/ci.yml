@@ -154,3 +154,14 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: Run E2E tests
         run: pnpm --filter degenfeed-web test:e2e
+
+  # ── Gate 9: Lefthook-mirror checks ──────────────────────────
+  # Mirrors pre-commit hooks from lefthook.yml
+  lefthook-mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check file sizes
+        run: bash scripts/check-file-sizes.sh
+      - name: Check stubs
+        run: bash scripts/check-stubs.sh
