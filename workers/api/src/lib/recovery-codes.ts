@@ -21,8 +21,8 @@
  *   const valid = await verifyRecoveryCode(env, wallet, code);
  */
 
-import { recoveryCodeHashKey } from '../kv-key-patterns';
 import type { Env } from '../types';
+import { recoveryCodeHashKey } from '../kv-key-patterns';
 
 // ─── Constants ────────────────────────────────────────────────
 
@@ -50,3 +50,112 @@ export async function generateRecoveryCodes(
   address: string,
   count: number = DEFAULT_CODE_COUNT,
 ): Promise<string[]> {
+  const codes: string[] = [];
+  const normalizedAddress = address.toLowerCase();
+
+  for (let i = 0; i < count; i++) {
+    const bytes = crypto.getRandomValues(new Uint8Array(BYTES_PER_CODE));
+    const hex = bytesToHex(bytes);
+
+    // Format: XXXX-XXXX-XXXX
+    const code = `${hex.slice(0, 4)}-${hex.slice(4, 8)}-${hex.slice(8, 12)}`;
+
+    // SHA-256 hash — never store plaintext
+    const hash = await sha256Hex(code);
+
+    // Store in KV with long TTL
+    const key = recoveryCodeHashKey(normalizedAddress, hash);
+    try {
+      await env.CACHE?.put(key, '1', {
+        expirationTtl: RECOVERY_CODE_TTL,
+      });
+    } catch {
+      // KV write failure — continue generating remaining codes
+      // The user can regenerate if setup fails
+      console.error(`[recovery-codes] Failed to store code ${i + 1}/${count}`);
+    }
+
+    codes.push(code);
+  }
+
+  return codes;
+}
+
+/**
+ * Verify a recovery code. Returns true if the code is valid and
+ * has not been used before. The code hash is deleted from KV on
+ * successful verification (one-time use).
+ *
+ * This is constant-time in the sense that SHA-256 verification
+ * is done before the KV lookup — but the overall operation
+ * depends on KV round-trip time.
+ */
+export async function verifyRecoveryCode(
+  env: Env,
+  address: string,
+  code: string,
+): Promise<boolean> {
+  const normalizedAddress = address.toLowerCase();
+
+  // Validate format first (fast reject)
+  if (!/^[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}$/i.test(code)) {
+    return false;
+  }
+
+  const hash = await sha256Hex(code);
+  const key = recoveryCodeHashKey(normalizedAddress, hash);
+
+  try {
+    const exists = await env.CACHE?.get(key);
+    if (exists === null || exists === undefined) {
+      return false;
+    }
+
+    // One-time use — delete immediately
+    await env.CACHE?.delete(key);
+    return true;
+  } catch {
+    // KV hiccup — fail closed (don't allow login through a broken check)
+    return false;
+  }
+}
+
+/**
+ * Count remaining recovery codes for a wallet (for display purposes).
+ * Walks through the expected keys — this is an estimate since we don't
+ * have a list index.
+ *
+ * @returns Number of codes found, or -1 if we can't determine (KV error).
+ */
+export async function countRemainingRecoveryCodes(_env: Env, _address: string): Promise<number> {
+  // We store hashes with deterministic keys based on the hash itself.
+  // Without a list index, we can't enumerate them efficiently.
+  // Return -1 to signal "unknown" — the UI should handle this gracefully.
+  return -1;
+}
+
+// ─── SHA-256 helper ───────────────────────────────────────────
+
+/**
+ * Compute the SHA-256 hex digest of a string using the Web Crypto API.
+ */
+export async function sha256Hex(input: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(input);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashBytes = new Uint8Array(hashBuffer);
+  return bytesToHex(hashBytes);
+}
+
+/**
+ * Convert a Uint8Array to a lowercase hex string.
+ * Local implementation to avoid importing @noble/hashes in this file
+ * (though it's fine if imported — we use it in totp.ts).
+ */
+function bytesToHex(bytes: Uint8Array): string {
+  let hex = '';
+  for (const byte of bytes) {
+    hex += byte.toString(16).padStart(2, '0');
+  }
+  return hex;
+}

@@ -25,16 +25,60 @@ export const DEFAULT_PAGE_SIZE = 50;
 // ─── Protocol Character Limits ────────────────────────────────────────────
 
 export const PROTOCOL_MAX_LENGTH: Record<string, number> = {
+  farcaster: 320,
+  mastodon: 500,
+  bluesky: 300,
+  threads: 500,
+  nostr: 10000,
+  lens: 10000,
+  lemmy: 10000,
+  reddit: 40000,
+  peertube: 5000,
+  pixelfed: 5000,
+};
 
 // ─── Protocol Labels ──────────────────────────────────────────────────────
 
 export const PROTOCOL_LABELS: Record<string, string> = {
+  nostr: 'Nostr',
+  farcaster: 'Farcaster',
+  lens: 'Lens',
+  bluesky: 'Bluesky',
+  threads: 'Threads',
+  mastodon: 'Mastodon',
+  lemmy: 'Lemmy',
+  peertube: 'PeerTube',
+  pixelfed: 'Pixelfed',
+  matrix: 'Matrix',
+  discord: 'Discord',
+  telegram: 'Telegram',
+  xmtp: 'XMTP',
+  reddit: 'Reddit',
+  rss: 'RSS',
+  youtube: 'YouTube',
+  github: 'GitHub',
+};
 
 // ─── Protocol Capabilities ───────────────────────────────────────────────
 
 import type { NetworkCapability } from './types';
 
 export const PROTOCOL_CAPABILITIES: Record<string, NetworkCapability[]> = {
+  nostr: ['post', 'dm', 'reply', 'like', 'repost', 'follow', 'tip'],
+  farcaster: ['post', 'reply', 'like', 'repost'],
+  mastodon: ['post', 'dm', 'reply', 'comment', 'like', 'repost', 'follow', 'upload-media'],
+  bluesky: ['post', 'dm', 'reply', 'like', 'repost', 'follow', 'upload-media'],
+  lens: ['post', 'reply', 'like', 'comment', 'follow'],
+  matrix: ['dm'],
+  telegram: ['dm'],
+  discord: ['dm'],
+  lemmy: ['post', 'comment', 'reply', 'like', 'follow'],
+  peertube: ['post', 'comment', 'reply', 'like', 'upload-media', 'live-stream'],
+  pixelfed: ['post', 'comment', 'like', 'follow', 'upload-media'],
+  threads: ['post', 'reply', 'like'],
+  reddit: ['post', 'comment', 'like'],
+  xmtp: ['dm'],
+};
 
 // ─── Supported Protocol Sets ─────────────────────────────────────────────
 
@@ -47,4 +91,3 @@ export const COMMENT_PROTOCOLS = new Set<Protocol>([
   'peertube', 'lemmy', 'pixelfed', 'mastodon', 'nostr',
   'farcaster', 'bluesky',
 ]);
-

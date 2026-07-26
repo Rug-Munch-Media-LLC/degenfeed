@@ -12,7 +12,7 @@
  *   - "native": Our own DegenFeed experience
  */
 
-import type { Env } from '../../types';
+import type { Env } from '../../index';
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
@@ -48,10 +48,102 @@ export type PostFormat =
   | 'native_short';
 
 export interface LiveShortConfig {
+  /** Which backend this protocol uses for RTMP→HLS transcoding. */
+  backend: BackendType;
+  /** Level of native live streaming support this protocol has. */
+  nativeLiveSupport: NativeLiveSupport;
+  /** How to measure viewer engagement on this protocol. */
+  viewerSignal: string;
+  /** How the live short is displayed to viewers on this protocol. */
+  displayFormat: DisplayFormat;
+  /** How the live short post is formatted on this protocol. */
+  postFormat: PostFormat;
+  /** Human-readable label for the protocol (e.g. "Mastodon"). */
+  label: string;
+  /** Color for UI badge. */
+  color: string;
+  /** Whether this protocol supports tipping natively. */
+  supportsNativeTipping: boolean;
+}
 
 export interface LiveSessionInfo {
+  /** Protocol-specific session/post ID. */
+  protocolId: string;
+  /** URL where the live short is visible on this protocol. */
+  protocolUrl: string;
+  /** Whether the announcement succeeded. */
+  announced: boolean;
+  /** Error message if announcement failed. */
+  error?: string;
+}
 
 export interface ViewerCountResult {
+  /** Estimated viewer count on this protocol. */
+  count: number;
+  /** Raw signal value (likes, clicks, WS connections, etc.). */
+  rawSignal: number;
+}
 
 export interface ProtocolStrategy {
+  /** Static configuration for this protocol. */
+  config: LiveShortConfig;
 
+  /**
+   * Announce a live short on this protocol.
+   *
+   * Called when the creator starts a live short. Returns the protocol-specific
+   * post/event ID and URL so viewers can find and watch the live short.
+   */
+  announceLive(
+    env: Env,
+    sessionId: string,
+    creator: string,
+    creatorHandle: string,
+    title: string,
+    playbackUrl: string,
+    /** Duration in seconds (typically 60). */
+    duration: number,
+  ): Promise<LiveSessionInfo>;
+
+  /**
+   * Update the live short announcement to "ended" status.
+   *
+   * Called when the live short ends. Some protocols can update the original
+   * post to show "Recording available" or similar.
+   */
+  updateEnded(
+    env: Env,
+    sessionId: string,
+    protocolId: string,
+    title: string,
+    recordingUrl: string,
+  ): Promise<void>;
+
+  /**
+   * Get the current viewer count from this protocol.
+   *
+   * Different protocols have different signals for live viewers:
+   * - ActivityPub: engagement rate / boosts
+   * - Bluesky: embed click count
+   * - Nostr: current_participants tag
+   * - Farcaster: frame interaction count
+   * - Lens: publication stats
+   * - Zora: NFT views
+   * - DegenFeed: WebSocket connections
+   */
+  getViewerCount(env: Env, protocolId: string): Promise<ViewerCountResult>;
+
+  /**
+   * Post a tip notification on this protocol.
+   *
+   * Some protocols allow posting tip events (Nostr zaps, Farcaster casts).
+   */
+  postTipNotification?(
+    env: Env,
+    protocolId: string,
+    tipper: string,
+    amount: string,
+    chain: string,
+    message?: string,
+  ): Promise<void>;
+}
