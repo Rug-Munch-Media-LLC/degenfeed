@@ -57,6 +57,7 @@ function __cbSuccess(name: string): void {
  */
 
 import type { Protocol } from '@degenfeed/types';
+import type { PeerTubeFetchOptions, PeerTubeVideo, PeerTubeVideoResponse } from './types';
 
 // ─── Re-exports ──────────────────────────────────────────────────────
 
