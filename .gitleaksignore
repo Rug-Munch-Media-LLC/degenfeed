@@ -135,3 +135,27 @@ scripts/deploy/setup-cloudflare.sh:gopass-reference:73
 scripts/git/radicle-setup.sh:internal-hostname:3
 workers/api/wrangler.toml:internal-hostname:196
 workers/api/wrangler.toml:internal-hostname:197
+
+# ── Historic leaks (now fixed in working tree / branch HEADs) ──────────────
+# These commits are NOT ancestors of main. They exist only on stale branches
+# (fix/de-god-files-routes, feat/live-streaming). Both branches have been
+# fixed at their HEADs. These historic fingerprints are ignored to prevent
+# CI noise until branches are force-pushed or GC'd.
+
+# fix/de-god-files-routes branch: internal IP redacted in HEAD commit 32871d62
+0d277a2773e002bf1971f441766a2dad22db1a68:packages/spaces/src/owncast.ts:internal-hostname:10
+0d277a2773e002bf1971f441766a2dad22db1a68:packages/spaces/src/owncast.ts:internal-hostname:27
+
+# fix/de-god-files-routes branch: test mnemonic replaced with placeholder in HEAD commit 32871d62
+b19d428c461b34cd6d5984f77d1dd469ad2e1159:bridge/src/web2-onboarding/index.ts:wallet-mnemonic:236
+
+# main branch (ancestor): internal IP redacted in current working tree
+c79a18a792cbab30fb58fd11ac5d1c3f0cb59e69:packages/spaces-bridge/src/owncast.ts:internal-hostname:10
+c79a18a792cbab30fb58fd11ac5d1c3f0cb59e69:packages/spaces-bridge/src/owncast.ts:internal-hostname:27
+
+# main branch (ancestor): JWT secrets redacted in current working tree
+0f81b61f17246c018cfb68e98ec4bcf4b1b3e318:docs/NETWORK_OWNERSHIP.md:ethereum-private-key:106
+0f81b61f17246c018cfb68e98ec4bcf4b1b3e318:docs/NETWORK_OWNERSHIP.md:ethereum-private-key:294
+
+# feat/live-streaming branch: JWT secret redacted in HEAD commit 71ab10f4
+11a78eaaa4dc44ff3fdf707ce108752811e9e503:docs/DEPLOYED.md:ethereum-private-key:70
