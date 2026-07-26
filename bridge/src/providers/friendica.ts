@@ -148,7 +148,9 @@ export async function fetchFriendicaPosts(limit = 20): Promise<UnifiedPost[]> {
     }
   }
 
-  console.log(`[bridge] Friendica: ${deduped.length} posts from ${FRIENDICA_INSTANCES.length} instances`);
+  console.log(
+    `[bridge] Friendica: ${deduped.length} posts from ${FRIENDICA_INSTANCES.length} instances`,
+  );
   return deduped;
 }
 

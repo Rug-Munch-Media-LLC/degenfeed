@@ -1,9 +1,9 @@
 # Missed Platforms Research & Integration
 
-> **Audit of decentralized/web3 platforms NOT yet integrated into DegenFeed**
-> **Date:** 2026-07-24
+> **Audit of decentralized/web3 platforms — integration tracker**
+> **Date:** 2026-07-26
 > **Owner:** crmuncher
-> **Status:** Research complete — top integrations in progress
+> **Status:** Research complete — 7 new protocols integrated (Protocol Expansion Pack)
 
 ---
 
@@ -41,11 +41,11 @@
 |---|----------|----------|-------------|-----------|---------|-------------------|----------|
 | 1 | **Audius** | Music/Audio | ✅ Apache-2.0 | ✅ Docker node | ✅ JS SDK + REST + gRPC | Music NFTs, trending tracks, artist feed content | 🔴 HIGH |
 | 2 | **Rarible Protocol** | NFT Marketplace | ✅ MIT | ✅ Docker | ✅ TS SDK + REST + MCP | Cross-chain NFT activity, sales data, market feed | 🔴 HIGH |
-| 3 | **Paragraph** | Web3 Publishing | ❌ Platform | ❌ Cloud-only | ✅ REST API + TS SDK + MCP | Web3 blog posts, writer coins, newsletter content | 🟡 MEDIUM |
-| 4 | **XMTP** | Messaging | ✅ MIT | ⚠️ Permissioned | ✅ JS/RN/iOS/Android SDK | Decentralized messaging, DM integration | 🟡 MEDIUM |
-| 5 | **Push Protocol** | Notifications | ✅ MIT | ✅ Delivery node | ✅ TS SDK + REST API + Socket | Web3 push notifications for feed events | 🟡 MEDIUM |
-| 6 | **CyberConnect** | Social Graph | ✅ GPL-3.0 | ❌ Network-based | ✅ GraphQL API + TS SDK | Social graph data, identity resolution | 🟡 MEDIUM |
-| 7 | **OpenSea SDK** | NFT Marketplace | ✅ MIT (SDK) | ❌ Cloud API | ✅ TS SDK + WS Stream + CLI | Largest NFT marketplace data, trending mints | 🟡 MEDIUM |
+| 3 | **Paragraph** | Web3 Publishing | ❌ Platform | ❌ Cloud-only | ✅ REST API + TS SDK + MCP | Web3 blog posts, writer coins, newsletter content | ✅ INTEGRATED |
+| 4 | **XMTP** | Messaging | ✅ MIT | ⚠️ Permissioned | ✅ JS/RN/iOS/Android SDK | Decentralized messaging, DM integration | ✅ INTEGRATED |
+| 5 | **Push Protocol** | Notifications | ✅ MIT | ✅ Delivery node | ✅ TS SDK + REST API + Socket | Web3 push notifications for feed events | ✅ INTEGRATED |
+| 6 | **CyberConnect** | Social Graph | ✅ GPL-3.0 | ❌ Network-based | ✅ GraphQL API + TS SDK | Social graph data, identity resolution | ✅ INTEGRATED |
+| 7 | **OpenSea SDK** | NFT Marketplace | ✅ MIT (SDK) | ❌ Cloud API | ✅ TS SDK + WS Stream + CLI | Largest NFT marketplace data, trending mints | ✅ INTEGRATED |
 | 8 | **Orbis** | Social Protocol | ✅ OSS | ✅ Self-host Ceramic | ✅ TS SDK | Decentralized social on Ceramic, encrypted content | 🟡 MEDIUM |
 | 9 | **Ceramic Network** | Data Network | ✅ MIT/Apache-2.0 | ✅ ceramic-one Rust | ✅ HTTP API + TS SDK | Decentralized data layer, event streams | 🟡 MEDIUM |
 | 10 | **Tableland** | Database | ✅ MIT/Apache-2.0 | ✅ Docker validator | ✅ TS SDK + CLI + REST API | Decentralized SQL database for app data | 🟡 MEDIUM |
@@ -521,18 +521,29 @@ const collection = await sdk.apis.collection.getCollectionById({
 
 | # | Platform | Action | Effort | Value | Status |
 |---|----------|--------|--------|-------|--------|
-| 1 | **Audius** | Add bridge provider + feed-protocols.ts entry | 2-3 days | Music NFT & trending content | 🔴 IN PROGRESS |
-| 2 | **Rarible Protocol** | Add bridge provider + NFT feed data | 2-3 days | Cross-chain NFT activity | 🔴 IN PROGRESS |
+| 1 | **Audius** | Add bridge provider + feed-protocols.ts entry | 2-3 days | Music NFT & trending content | ✅ DONE |
+| 2 | **Rarible Protocol** | Add bridge provider + NFT feed data | 2-3 days | Cross-chain NFT activity | ✅ DONE |
 
 ### Tier 2: Integrate Next (Next 2 Weeks)
 
-| # | Platform | Action | Effort | Value |
-|---|----------|--------|--------|-------|
-| 3 | **Paragraph** | Add bridge provider for web3 blogs | 1-2 days | Web3 publishing content |
-| 4 | **OpenSea SDK** | Add Stream API for real-time NFT events | 2-3 days | Real-time NFT feed data |
-| 5 | **Push Protocol** | Add notification bridge | 3-4 days | Decentralized notifications |
-| 6 | **XMTP** | Add messaging SDK | 3-4 days | Decentralized DMs |
-| 7 | **CyberConnect** | Add GraphQL resolver for social graph | 1-2 days | Identity resolution |
+| # | Platform | Action | Effort | Value | Status |
+|---|----------|--------|--------|-------|--------|
+| 3 | **Paragraph** | Add bridge provider for web3 blogs | 1-2 days | Web3 publishing content | ✅ DONE |
+| 4 | **OpenSea SDK** | Add Stream API for real-time NFT events | 2-3 days | Real-time NFT feed data | ✅ DONE |
+| 5 | **Push Protocol** | Add notification bridge | 3-4 days | Decentralized notifications | ✅ DONE |
+| 6 | **XMTP** | Add messaging SDK | 3-4 days | Decentralized DMs | ✅ DONE |
+| 7 | **CyberConnect** | Add GraphQL resolver for social graph | 1-2 days | Identity resolution | ✅ DONE |
+
+### Tier 3: Completed Integrations (Protocol Expansion Pack)
+
+| # | Platform | Action | Value | Status |
+|---|----------|--------|-------|--------|
+| 8 | **Lobsters** | Add bridge provider for tech link aggregation | Computing-focused community content | ✅ DONE |
+| 9 | **Snapshot** | Add bridge provider for DAO governance proposals | DAO voting activity & governance content | ✅ DONE |
+| 10 | **Tally** | Add bridge provider for DAO treasury management | DAO governance & treasury proposals | ✅ DONE |
+| 11 | **Juicebox** | Add bridge provider for DAO fundraising projects | DAO funding & project treasury content | ✅ DONE |
+| 12 | **Unlock Protocol** | Add bridge provider for token-gated memberships | Membership NFT & gated content activity | ✅ DONE |
+| 13 | **Lit Protocol** | Add infrastructure provider for access control | Decentralized key management & PKP activity | ✅ DONE |
 
 ### Tier 3: Monitor / Future Roadmap
 

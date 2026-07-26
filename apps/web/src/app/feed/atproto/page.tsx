@@ -19,7 +19,8 @@ const atprotoBreadcrumb = {
 
 export const metadata: Metadata = {
   title: 'AT Protocol Feed — Bluesky Content | DegenFeed',
-  description: 'Browse AT Protocol content, Bluesky posts, and federated feeds aggregated in your DegenFeed timeline.',
+  description:
+    'Browse AT Protocol content, Bluesky posts, and federated feeds aggregated in your DegenFeed timeline.',
   keywords: ['at protocol feed', 'bluesky', 'atproto', 'federated social'],
   openGraph: {
     title: 'AT Protocol Feed — DegenFeed',

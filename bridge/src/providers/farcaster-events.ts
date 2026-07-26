@@ -18,7 +18,7 @@ const $fetch = globalThis.fetch;
 const HUBBLE_BASE = process.env.HUBBLE_URL || 'http://127.0.0.1:2281';
 
 // Event-related Farcaster channels (these are real channel IDs on Farcaster)
-const EVENT_CHANNELS = [
+const _EVENT_CHANNELS = [
   'events',
   'meetups',
   'conferences',
@@ -143,7 +143,7 @@ async function fetchCastsFromHubble(fid: number, limit: number): Promise<Farcast
       .map((msg): FarcasterEventFrame | null => {
         try {
           const body = msg?.data?.castAddBody;
-          if (!body || !body.text) return null;
+          if (!body?.text) return null;
 
           return {
             fid: msg.data?.fid || fid,
@@ -176,7 +176,7 @@ function farcasterFrameToUnifiedEvent(frame: FarcasterEventFrame): UnifiedEvent 
       frame.eventUrl ||
       frame.embeds[0]?.url ||
       `https://warpcast.com/~/conversations/${frame.hash}`;
-    const eventDate =
+    const _eventDate =
       frame.eventDate || new Date(frame.timestamp * 1000).toISOString().split('T')[0];
 
     // Try to parse a date from frame text

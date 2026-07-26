@@ -21,7 +21,7 @@
 
 import type { NostrCalendarEvent, SchemaGuard, UnifiedEvent } from '../server/types';
 
-const $fetch = globalThis.fetch;
+const _$fetch = globalThis.fetch;
 
 // ─── Constants ─────────────────────────────────────────────────────────
 
@@ -34,7 +34,7 @@ const RELAYS = [
 ];
 
 const KIND_CALENDAR_EVENT = 31922;
-const KIND_CALENDAR = 31923;
+const _KIND_CALENDAR = 31923;
 
 const FETCH_TIMEOUT_MS = 8000;
 
@@ -168,7 +168,7 @@ function nostrEventToUnified(event: NostrCalendarEvent): UnifiedEvent | null {
     const startStr = extractTag(event.tags, 'start');
     const endStr = extractTag(event.tags, 'end');
     const location = extractTag(event.tags, 'location');
-    const geohash = extractTag(event.tags, 'g');
+    const _geohash = extractTag(event.tags, 'g');
     const refs = extractAllTags(event.tags, 'r');
     const hashtags = extractAllTags(event.tags, 't');
     const participants = extractAllTags(event.tags, 'p');
@@ -176,7 +176,7 @@ function nostrEventToUnified(event: NostrCalendarEvent): UnifiedEvent | null {
     const startUnix = startStr ? parseInt(startStr, 10) : event.created_at;
     const endUnix = endStr ? parseInt(endStr, 10) : undefined;
 
-    if (!startUnix || isNaN(startUnix)) return null;
+    if (!startUnix || Number.isNaN(startUnix)) return null;
 
     const beginsOn = new Date(startUnix * 1000).toISOString();
     const endsOn = endUnix ? new Date(endUnix * 1000).toISOString() : undefined;

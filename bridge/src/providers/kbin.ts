@@ -41,7 +41,7 @@ export async function fetchKbinPosts(limit = 20): Promise<UnifiedPost[]> {
   const fetches = KBIN_INSTANCES.map(async ({ host, label }) => {
     try {
       const entriesRes = await $fetch(
-        'https://' + host + '/api/entries?sort=hot&page=1&perPage=' + perInstance,
+        `https://${host}/api/entries?sort=hot&page=1&perPage=${perInstance}`,
         {
           headers: { 'User-Agent': 'DegenFeed-Bridge/0.1 (Kbin)' },
           signal: AbortSignal.timeout(8000),
@@ -52,15 +52,15 @@ export async function fetchKbinPosts(limit = 20): Promise<UnifiedPost[]> {
 
       return entries.slice(0, perInstance).map((entry) => {
         const content = stripHtml(entry.body || '');
-        const text = entry.title ? entry.title + (content ? '\n\n' + content : '') : content;
+        const text = entry.title ? entry.title + (content ? `\n\n${content}` : '') : content;
         const createdAt = new Date(entry.createdAt).getTime();
         return {
-          id: 'kbin:entry:' + entry.id + '@' + host,
+          id: `kbin:entry:${entry.id}@${host}`,
           protocol: 'kbin',
           author: {
-            id: 'kbin:user:' + entry.user.id + '@' + host,
+            id: `kbin:user:${entry.user.id}@${host}`,
             primary: { protocol: 'kbin', id: String(entry.user.id) },
-            handles: { kbin: '@' + entry.user.username + '@' + label },
+            handles: { kbin: `@${entry.user.username}@${label}` },
             displayName: entry.user.username,
             bio: (entry.user.about || '').slice(0, 200),
             avatarUrl: entry.user.avatar || '',
@@ -117,7 +117,7 @@ export async function fetchKbinPosts(limit = 20): Promise<UnifiedPost[]> {
     }
   }
 
-  console.log('[bridge] Kbin: ' + deduped.length + ' entries');
+  console.log(`[bridge] Kbin: ${deduped.length} entries`);
   return deduped;
 }
 

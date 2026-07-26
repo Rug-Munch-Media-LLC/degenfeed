@@ -23,7 +23,9 @@ export default function RuleBuilder({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const rule: Omit<CustomRule, 'id' | 'createdAt' | 'enabled'> = {
-      type, adjustment, description: '',
+      type,
+      adjustment,
+      description: '',
     };
     switch (type) {
       case 'boost-creator':
@@ -65,74 +67,141 @@ export default function RuleBuilder({
         Add a Custom Rule
       </h4>
       <div className="mb-3 grid grid-cols-2 gap-1.5">
-        {(Object.entries(RULE_TYPE_LABELS) as Array<[CustomRule['type'], { label: string; icon: string; fields: string[] }]>).map(
-          ([key, meta]) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => setType(key)}
-              className={`flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-[10px] font-medium transition-all ${
-                type === key
-                  ? 'bg-degen-500/15 text-degen-400'
-                  : 'bg-[var(--color-bg-tertiary)] text-[var(--color-muted)] hover:text-[var(--color-fg)]'
-              }`}
-            >
-              <span>{meta.icon}</span>
-              <span>{meta.label}</span>
-            </button>
-          ),
-        )}
+        {(
+          Object.entries(RULE_TYPE_LABELS) as Array<
+            [CustomRule['type'], { label: string; icon: string; fields: string[] }]
+          >
+        ).map(([key, meta]) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => setType(key)}
+            className={`flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-[10px] font-medium transition-all ${
+              type === key
+                ? 'bg-degen-500/15 text-degen-400'
+                : 'bg-[var(--color-bg-tertiary)] text-[var(--color-muted)] hover:text-[var(--color-fg)]'
+            }`}
+          >
+            <span>{meta.icon}</span>
+            <span>{meta.label}</span>
+          </button>
+        ))}
       </div>
       <div className="mb-3 space-y-2">
         {type === 'boost-creator' && (
           <>
             <div>
-              <label htmlFor="rule-creator-id" className="mb-1 block text-[10px] font-medium" style={{ color: 'var(--color-fg)' }}>
+              <label
+                htmlFor="rule-creator-id"
+                className="mb-1 block text-[10px] font-medium"
+                style={{ color: 'var(--color-fg)' }}
+              >
                 Creator ID (wallet address or protocol ID)
               </label>
-              <input id="rule-creator-id" type="text" value={creatorId} onChange={(e) => setCreatorId(e.target.value)}
-                placeholder="e.g. 0x... or npub1..." className="tune-input" required />
+              <input
+                id="rule-creator-id"
+                type="text"
+                value={creatorId}
+                onChange={(e) => setCreatorId(e.target.value)}
+                placeholder="e.g. 0x... or npub1..."
+                className="tune-input"
+                required
+              />
             </div>
             <div>
-              <label htmlFor="rule-creator-name" className="mb-1 block text-[10px] font-medium" style={{ color: 'var(--color-fg)' }}>
+              <label
+                htmlFor="rule-creator-name"
+                className="mb-1 block text-[10px] font-medium"
+                style={{ color: 'var(--color-fg)' }}
+              >
                 Display name (optional)
               </label>
-              <input id="rule-creator-name" type="text" value={creatorName} onChange={(e) => setCreatorName(e.target.value)}
-                placeholder="e.g. @alice" className="tune-input" />
+              <input
+                id="rule-creator-name"
+                type="text"
+                value={creatorName}
+                onChange={(e) => setCreatorName(e.target.value)}
+                placeholder="e.g. @alice"
+                className="tune-input"
+              />
             </div>
             <div>
-              <label htmlFor="rule-adjustment" className="mb-1 block text-[10px] font-medium" style={{ color: 'var(--color-fg)' }}>
+              <label
+                htmlFor="rule-adjustment"
+                className="mb-1 block text-[10px] font-medium"
+                style={{ color: 'var(--color-fg)' }}
+              >
                 Score boost: +{adjustment}%
               </label>
-              <input id="rule-adjustment" type="range" min={5} max={100} step={5} value={adjustment}
-                onChange={(e) => setAdjustment(Number(e.target.value))} className="tune-slider" />
+              <input
+                id="rule-adjustment"
+                type="range"
+                min={5}
+                max={100}
+                step={5}
+                value={adjustment}
+                onChange={(e) => setAdjustment(Number(e.target.value))}
+                className="tune-slider"
+              />
             </div>
           </>
         )}
         {type === 'mute-hashtag' && (
           <div>
-            <label htmlFor="rule-hashtag" className="mb-1 block text-[10px] font-medium" style={{ color: 'var(--color-fg)' }}>
+            <label
+              htmlFor="rule-hashtag"
+              className="mb-1 block text-[10px] font-medium"
+              style={{ color: 'var(--color-fg)' }}
+            >
               Hashtag to mute
             </label>
-            <input id="rule-hashtag" type="text" value={hashtag} onChange={(e) => setHashtag(e.target.value)}
-              placeholder="e.g. politics" className="tune-input" required />
+            <input
+              id="rule-hashtag"
+              type="text"
+              value={hashtag}
+              onChange={(e) => setHashtag(e.target.value)}
+              placeholder="e.g. politics"
+              className="tune-input"
+              required
+            />
           </div>
         )}
         {type === 'min-engagement' && (
           <div>
-            <label htmlFor="rule-min-likes" className="mb-1 block text-[10px] font-medium" style={{ color: 'var(--color-fg)' }}>
+            <label
+              htmlFor="rule-min-likes"
+              className="mb-1 block text-[10px] font-medium"
+              style={{ color: 'var(--color-fg)' }}
+            >
               Minimum likes: {minLikes}
             </label>
-            <input id="rule-min-likes" type="range" min={0} max={500} step={5} value={minLikes}
-              onChange={(e) => setMinLikes(Number(e.target.value))} className="tune-slider" />
+            <input
+              id="rule-min-likes"
+              type="range"
+              min={0}
+              max={500}
+              step={5}
+              value={minLikes}
+              onChange={(e) => setMinLikes(Number(e.target.value))}
+              className="tune-slider"
+            />
           </div>
         )}
         {type === 'content-type' && (
           <div>
-            <label htmlFor="rule-content-type" className="mb-1 block text-[10px] font-medium" style={{ color: 'var(--color-fg)' }}>
+            <label
+              htmlFor="rule-content-type"
+              className="mb-1 block text-[10px] font-medium"
+              style={{ color: 'var(--color-fg)' }}
+            >
               Content type to show
             </label>
-            <select id="rule-content-type" value={contentType} onChange={(e) => setContentType(e.target.value)} className="tune-input">
+            <select
+              id="rule-content-type"
+              value={contentType}
+              onChange={(e) => setContentType(e.target.value)}
+              className="tune-input"
+            >
               <option value="text">Text</option>
               <option value="image">Images</option>
               <option value="video">Video</option>
@@ -142,7 +211,10 @@ export default function RuleBuilder({
           </div>
         )}
       </div>
-      <button type="submit" className="w-full rounded-lg bg-degen-500/20 py-2 text-xs font-semibold text-degen-400 hover:bg-degen-500/30 transition-colors">
+      <button
+        type="submit"
+        className="w-full rounded-lg bg-degen-500/20 py-2 text-xs font-semibold text-degen-400 hover:bg-degen-500/30 transition-colors"
+      >
         Add Rule
       </button>
     </form>
@@ -188,7 +260,16 @@ export function RuleItem({
           className="rounded-lg p-1.5 text-[var(--color-muted)] hover:bg-red-500/10 hover:text-red-400 transition-colors"
           aria-label={`Delete rule ${rule.description}`}
         >
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            aria-hidden="true"
+          >
             <polyline points="3 6 5 6 21 6" />
             <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
           </svg>

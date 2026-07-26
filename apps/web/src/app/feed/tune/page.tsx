@@ -1,12 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { AlgorithmWeights, CustomRule, SignalSource, WeightPreset } from './types';
-import { DEFAULT_WEIGHTS, PRESETS, WEIGHT_LABELS } from './types';
-import { PresetCard, PreviewPanel, WeightSlidersSection } from './WeightSliders';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import RuleBuilder, { RuleItem } from './CustomRules';
 import { SignalSourcesSection } from './SignalSources';
+import type { AlgorithmWeights, CustomRule, SignalSource, WeightPreset } from './types';
+import { DEFAULT_WEIGHTS, PRESETS } from './types';
+import { PresetCard, PreviewPanel, WeightSlidersSection } from './WeightSliders';
 
 /* ═════════════════════════════════════════════════════════════════
    PAGE
@@ -68,16 +68,20 @@ export default function FeedTunePage() {
     setSaved(false);
     try {
       await fetch(`/api/algo/weights/preset/${preset.slug}`, {
-        method: 'POST', credentials: 'include',
+        method: 'POST',
+        credentials: 'include',
       });
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }, []);
 
   const handleSave = useCallback(async () => {
     setSaving(true);
     try {
       const res = await fetch('/api/algo/weights', {
-        method: 'PUT', credentials: 'include',
+        method: 'PUT',
+        credentials: 'include',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify(weights),
       });
@@ -86,33 +90,43 @@ export default function FeedTunePage() {
         setInitialWeights({ ...weights });
         setTimeout(() => setSaved(false), 3000);
       }
-    } catch { /* ignore */ }
-    finally { setSaving(false); }
+    } catch {
+      /* ignore */
+    } finally {
+      setSaving(false);
+    }
   }, [weights]);
 
   const handleReset = useCallback(async () => {
     try {
       const res = await fetch('/api/algo/weights/reset', {
-        method: 'POST', credentials: 'include',
+        method: 'POST',
+        credentials: 'include',
       });
       if (res.ok) {
         const data = (await res.json()) as { weights: AlgorithmWeights };
         setWeights(data.weights);
         setActivePreset(null);
       }
-    } catch { setWeights(DEFAULT_WEIGHTS); }
+    } catch {
+      setWeights(DEFAULT_WEIGHTS);
+    }
   }, []);
 
   const handleAddRule = useCallback(
     async (rule: Omit<CustomRule, 'id' | 'createdAt' | 'enabled'>) => {
       const newRule: CustomRule = {
-        ...rule, id: crypto.randomUUID(), enabled: true, createdAt: Date.now(),
+        ...rule,
+        id: crypto.randomUUID(),
+        enabled: true,
+        createdAt: Date.now(),
       };
       setRules((prev) => [...prev, newRule]);
       setShowRuleBuilder(false);
       try {
         await fetch('/api/algo/rules', {
-          method: 'POST', credentials: 'include',
+          method: 'POST',
+          credentials: 'include',
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify(newRule),
         });
@@ -123,17 +137,23 @@ export default function FeedTunePage() {
     [],
   );
 
-  const handleToggleRule = useCallback(async (ruleId: string) => {
-    setRules((prev) => prev.map((r) => (r.id === ruleId ? { ...r, enabled: !r.enabled } : r)));
-    const updated = rules.map((r) => (r.id === ruleId ? { ...r, enabled: !r.enabled } : r));
-    try {
-      await fetch('/api/algo/rules', {
-        method: 'POST', credentials: 'include',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(updated.find((r) => r.id === ruleId)),
-      });
-    } catch { /* ignore */ }
-  }, [rules]);
+  const handleToggleRule = useCallback(
+    async (ruleId: string) => {
+      setRules((prev) => prev.map((r) => (r.id === ruleId ? { ...r, enabled: !r.enabled } : r)));
+      const updated = rules.map((r) => (r.id === ruleId ? { ...r, enabled: !r.enabled } : r));
+      try {
+        await fetch('/api/algo/rules', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(updated.find((r) => r.id === ruleId)),
+        });
+      } catch {
+        /* ignore */
+      }
+    },
+    [rules],
+  );
 
   const handleDeleteRule = useCallback(async (ruleId: string) => {
     setRules((prev) => prev.filter((r) => r.id !== ruleId));
@@ -148,17 +168,23 @@ export default function FeedTunePage() {
     }
   }, []);
 
-  const handleToggleSignal = useCallback(async (signalId: string) => {
-    const updated = signals.map((s) => (s.id === signalId ? { ...s, enabled: !s.enabled } : s));
-    setSignals(updated);
-    try {
-      await fetch('/api/algo/signals', {
-        method: 'PUT', credentials: 'include',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ signals: updated.map((s) => ({ id: s.id, enabled: s.enabled })) }),
-      });
-    } catch { setSignals(signals); }
-  }, [signals]);
+  const handleToggleSignal = useCallback(
+    async (signalId: string) => {
+      const updated = signals.map((s) => (s.id === signalId ? { ...s, enabled: !s.enabled } : s));
+      setSignals(updated);
+      try {
+        await fetch('/api/algo/signals', {
+          method: 'PUT',
+          credentials: 'include',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ signals: updated.map((s) => ({ id: s.id, enabled: s.enabled })) }),
+        });
+      } catch {
+        setSignals(signals);
+      }
+    },
+    [signals],
+  );
 
   const handleShare = useCallback(async (slug: string) => {
     try {
@@ -168,7 +194,9 @@ export default function FeedTunePage() {
         setShareUrl(data.shareUrl);
         await navigator.clipboard.writeText(data.shareUrl).catch(() => {});
       }
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }, []);
 
   const handleShareCustom = useCallback(async () => {
@@ -199,12 +227,24 @@ export default function FeedTunePage() {
           href="/settings/personalization"
           className="mb-3 inline-flex items-center gap-1 text-xs font-medium text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            aria-hidden="true"
+          >
             <path d="M19 12H5M12 19l-7-7 7-7" />
           </svg>
           Back to Personalization
         </Link>
-        <h1 className="text-2xl font-black" style={{ color: 'var(--color-fg)', fontFamily: 'var(--font-heading)' }}>
+        <h1
+          className="text-2xl font-black"
+          style={{ color: 'var(--color-fg)', fontFamily: 'var(--font-heading)' }}
+        >
           Feed Algorithm Tuner
         </h1>
         <p className="mt-1 text-sm" style={{ color: 'var(--color-muted)' }}>
@@ -221,7 +261,16 @@ export default function FeedTunePage() {
         <div>
           {saved ? (
             <span className="flex items-center gap-1.5 text-xs text-degen-400">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                aria-hidden="true"
+              >
                 <polyline points="20 6 9 17 4 12" />
               </svg>
               Saved!
@@ -235,13 +284,20 @@ export default function FeedTunePage() {
           )}
         </div>
         <div className="flex items-center gap-2">
-          <button type="button" onClick={handleReset}
+          <button
+            type="button"
+            onClick={handleReset}
             className="rounded-lg border px-3 py-1.5 text-[10px] font-medium transition-colors"
-            style={{ borderColor: 'var(--color-glass-border)', color: 'var(--color-muted)' }}>
+            style={{ borderColor: 'var(--color-glass-border)', color: 'var(--color-muted)' }}
+          >
             Reset
           </button>
-          <button type="button" onClick={handleSave} disabled={saving}
-            className="rounded-lg bg-degen-500/20 px-4 py-1.5 text-[10px] font-semibold text-degen-400 hover:bg-degen-500/30 transition-colors disabled:opacity-50">
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={saving}
+            className="rounded-lg bg-degen-500/20 px-4 py-1.5 text-[10px] font-semibold text-degen-400 hover:bg-degen-500/30 transition-colors disabled:opacity-50"
+          >
             {saving ? 'Saving\u2026' : 'Apply'}
           </button>
         </div>
@@ -251,8 +307,13 @@ export default function FeedTunePage() {
         {/* ═══ 1. Presets ═══ */}
         <section>
           <div className="mb-4 flex items-center gap-2">
-            <span className="text-lg" aria-hidden="true">🏷️</span>
-            <h2 className="text-lg font-bold" style={{ color: 'var(--color-fg)', fontFamily: 'var(--font-heading)' }}>
+            <span className="text-lg" aria-hidden="true">
+              🏷️
+            </span>
+            <h2
+              className="text-lg font-bold"
+              style={{ color: 'var(--color-fg)', fontFamily: 'var(--font-heading)' }}
+            >
               Presets
             </h2>
           </div>
@@ -277,17 +338,26 @@ export default function FeedTunePage() {
           <PreviewPanel currentWeights={initialWeights} proposedWeights={weights} />
           <div
             className="rounded-xl border p-4"
-            style={{ borderColor: 'var(--color-glass-border)', backgroundColor: 'var(--color-card)' }}
+            style={{
+              borderColor: 'var(--color-glass-border)',
+              backgroundColor: 'var(--color-card)',
+            }}
           >
-            <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold" style={{ color: 'var(--color-fg)' }}>
+            <h3
+              className="mb-3 flex items-center gap-2 text-sm font-semibold"
+              style={{ color: 'var(--color-fg)' }}
+            >
               <span>🔗</span> Share Your Algorithm
             </h3>
             <p className="mb-3 text-[11px]" style={{ color: 'var(--color-muted)' }}>
               Generate a shareable link with your current configuration.
             </p>
-            <button type="button" onClick={handleShareCustom}
+            <button
+              type="button"
+              onClick={handleShareCustom}
               className="w-full rounded-lg border py-2 text-xs font-medium transition-colors"
-              style={{ borderColor: 'var(--color-glass-border)', color: 'var(--color-fg)' }}>
+              style={{ borderColor: 'var(--color-glass-border)', color: 'var(--color-fg)' }}
+            >
               Copy Share Link
             </button>
             {shareUrl && (
@@ -302,18 +372,27 @@ export default function FeedTunePage() {
         <section>
           <div className="mb-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="text-lg" aria-hidden="true">⚙️</span>
-              <h2 className="text-lg font-bold" style={{ color: 'var(--color-fg)', fontFamily: 'var(--font-heading)' }}>
+              <span className="text-lg" aria-hidden="true">
+                ⚙️
+              </span>
+              <h2
+                className="text-lg font-bold"
+                style={{ color: 'var(--color-fg)', fontFamily: 'var(--font-heading)' }}
+              >
                 Custom Rules
               </h2>
             </div>
-            <button type="button" onClick={() => setShowRuleBuilder(!showRuleBuilder)}
-              className="rounded-lg bg-degen-500/15 px-3 py-1.5 text-[10px] font-semibold text-degen-400 hover:bg-degen-500/25 transition-colors">
+            <button
+              type="button"
+              onClick={() => setShowRuleBuilder(!showRuleBuilder)}
+              className="rounded-lg bg-degen-500/15 px-3 py-1.5 text-[10px] font-semibold text-degen-400 hover:bg-degen-500/25 transition-colors"
+            >
               {showRuleBuilder ? 'Cancel' : '+ Add Rule'}
             </button>
           </div>
           <p className="mb-4 text-xs" style={{ color: 'var(--color-muted)' }}>
-            Create IF/THEN rules like &quot;Boost posts from @alice&quot; or &quot;Mute #politics&quot;
+            Create IF/THEN rules like &quot;Boost posts from @alice&quot; or &quot;Mute
+            #politics&quot;
           </p>
 
           {showRuleBuilder && (
@@ -323,8 +402,16 @@ export default function FeedTunePage() {
           )}
 
           {rules.length === 0 && !showRuleBuilder ? (
-            <div className="rounded-xl border p-8 text-center" style={{ borderColor: 'var(--color-glass-border)', backgroundColor: 'var(--color-card)' }}>
-              <p className="text-sm" style={{ color: 'var(--color-muted)' }}>No custom rules yet.</p>
+            <div
+              className="rounded-xl border p-8 text-center"
+              style={{
+                borderColor: 'var(--color-glass-border)',
+                backgroundColor: 'var(--color-card)',
+              }}
+            >
+              <p className="text-sm" style={{ color: 'var(--color-muted)' }}>
+                No custom rules yet.
+              </p>
               <p className="mt-1 text-xs" style={{ color: 'var(--color-muted)' }}>
                 Create rules to boost specific creators, mute topics, or filter by engagement.
               </p>
@@ -332,7 +419,12 @@ export default function FeedTunePage() {
           ) : (
             <div className="space-y-2">
               {rules.map((rule) => (
-                <RuleItem key={rule.id} rule={rule} onToggle={() => handleToggleRule(rule.id)} onDelete={() => handleDeleteRule(rule.id)} />
+                <RuleItem
+                  key={rule.id}
+                  rule={rule}
+                  onToggle={() => handleToggleRule(rule.id)}
+                  onDelete={() => handleDeleteRule(rule.id)}
+                />
               ))}
             </div>
           )}
@@ -343,11 +435,18 @@ export default function FeedTunePage() {
       </div>
 
       {/* Footer */}
-      <div className="mt-10 rounded-xl border p-4" style={{ borderColor: 'var(--color-glass-border)', backgroundColor: 'var(--color-card)' }}>
+      <div
+        className="mt-10 rounded-xl border p-4"
+        style={{ borderColor: 'var(--color-glass-border)', backgroundColor: 'var(--color-card)' }}
+      >
         <div className="flex items-start gap-3">
-          <span className="text-lg" aria-hidden="true">💡</span>
+          <span className="text-lg" aria-hidden="true">
+            💡
+          </span>
           <div>
-            <p className="text-xs font-medium" style={{ color: 'var(--color-fg)' }}>How it works</p>
+            <p className="text-xs font-medium" style={{ color: 'var(--color-fg)' }}>
+              How it works
+            </p>
             <p className="mt-1 text-[11px]" style={{ color: 'var(--color-muted)' }}>
               Your feed algorithm scores every post using weighted signals. Higher weights give that
               signal more influence. Presets are a quick way to get a specific feed mood. Custom

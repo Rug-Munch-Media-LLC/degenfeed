@@ -753,6 +753,18 @@ This creates a long-form publishing layer alongside DegenFeed's short-form aggre
 | 11 | **Mbin** | Create packages/mbin-sdk | Additional Reddit-like content source. |
 | 12 | **Odysee/LBRY** | Cross-publish DegenFeed videos | Additional distribution for creator video content. |
 
+### Protocol Expansion Pack (Completed 2026-07-26)
+
+| # | Platform | Action | Value | Status |
+|---|----------|--------|-------|--------|
+| 13 | **OpenSea** | Bridge provider + feed page + protocol config | Real-time NFT marketplace events (sales, listings, bids) via Stream API | ✅ DONE |
+| 14 | **Lobsters** | Bridge provider + feed page + protocol config | Computing-focused link aggregation & tech discussion | ✅ DONE |
+| 15 | **Snapshot** | Bridge provider + feed page + protocol config | DAO governance proposals & voting activity via GraphQL API | ✅ DONE |
+| 16 | **Tally** | Bridge provider + feed page + protocol config | DAO treasury management & governance proposal data | ✅ DONE |
+| 17 | **Juicebox** | Bridge provider + feed page + protocol config | DAO fundraising projects & programmable funding activity | ✅ DONE |
+| 18 | **Unlock Protocol** | Bridge provider + feed page + protocol config | Token-gated membership NFTs, locks & key activity | ✅ DONE |
+| 19 | **Lit Protocol** | Infrastructure provider + protocol type | Decentralized key management, PKPs & access control | ✅ DONE |
+
 ### Tier 4: Monitor (No Immediate Action)
 
 | Platform | Why Wait |
@@ -761,7 +773,6 @@ This creates a long-form publishing layer alongside DegenFeed's short-form aggre
 | **Pleroma/Akkoma** | Our Mastodon SDK already covers this. Akkoma growth is slow. |
 | **Friendica** | Small user base. Mastodon API covered. |
 | **Hubzilla** | Tiny user base despite rich features. |
-| **Lobsters** | Read-only RSS bridge. Low value. |
 | **Tildes** | Single instance, no write access, invite-only. |
 | **Postmill** | Tiny, no federation, no development. |
 | **Gancio** | Mobilizon already covers events. Let native federation bridge Gancio. |

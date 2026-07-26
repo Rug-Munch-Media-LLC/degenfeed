@@ -137,7 +137,7 @@ async function fetchRecordsFromPDS(
  * Normalize a Smoke Signal AT Protocol record (events.smokesignal.event)
  * to UnifiedEvent.
  */
-function pdsRecordToUnifiedEvent(record: PDSRecord, pdsUrl: string): UnifiedEvent | null {
+function pdsRecordToUnifiedEvent(record: PDSRecord, _pdsUrl: string): UnifiedEvent | null {
   try {
     const value = record.value;
     const uriParts = record.uri.split('/');
@@ -161,8 +161,8 @@ function pdsRecordToUnifiedEvent(record: PDSRecord, pdsUrl: string): UnifiedEven
     if (!name || !startsAt) return null;
 
     let address: string | undefined;
-    let lat: number | undefined;
-    let lng: number | undefined;
+    let _lat: number | undefined;
+    let _lng: number | undefined;
     if (location) {
       // Location can be a string "City, Place" or an object with address/lat/lng
       if (typeof location === 'string') {
@@ -262,7 +262,7 @@ function apiEventToUnifiedEvent(apiEvent: SmokeSignalAPIEvent): UnifiedEvent | n
 /**
  * Fetch Smoke Signal events from the AT Protocol PDS via direct XRPC calls.
  */
-async function fetchFromPDS(limit: number): Promise<UnifiedEvent[]> {
+async function _fetchFromPDS(limit: number): Promise<UnifiedEvent[]> {
   try {
     const collection = 'events.smokesignal.event';
     const records = await fetchRecordsFromPDS(PDS_URLS[0], collection, limit);

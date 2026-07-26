@@ -13,8 +13,7 @@ import type { SchemaGuard, UnifiedPost } from '../server/types';
 
 // ─── Configuration ────────────────────────────────────────────────────
 
-const ATPROTO_PUBLIC_URL =
-  process.env.ATPROTO_PUBLIC_URL || 'https://public.api.bsky.app';
+const ATPROTO_PUBLIC_URL = process.env.ATPROTO_PUBLIC_URL || 'https://public.api.bsky.app';
 
 const FEED_GENERATOR =
   process.env.ATPROTO_FEED ||
@@ -60,10 +59,7 @@ interface ATProtoFeedResponse {
 /**
  * Fetch the feed skeleton from the AT Protocol public API.
  */
-async function fetchAtprotoFeed(
-  feed: string,
-  limit: number,
-): Promise<ATProtoFeedViewPost[]> {
+async function fetchAtprotoFeed(feed: string, limit: number): Promise<ATProtoFeedViewPost[]> {
   const url = `${ATPROTO_PUBLIC_URL}/xrpc/app.bsky.feed.getFeedSkeleton?feed=${encodeURIComponent(feed)}&limit=${Math.min(limit, 30)}`;
 
   try {
@@ -108,27 +104,22 @@ function extractNiches(text: string): string[] {
   if (/\b(bitcoin|btc|crypto|blockchain)\b/.test(lower)) niches.push('crypto');
   if (/\b(defi|liquidity|yield|swap|dex)\b/.test(lower)) niches.push('defi');
   if (/\b(nft|collectible|mint|opensea)\b/.test(lower)) niches.push('nft');
-  if (/\b(ai|artificial intelligence|llm|machine learning|gpt)\b/.test(lower))
-    niches.push('ai');
-  if (/\b(tech|startup|software|developer|code)\b/.test(lower))
-    niches.push('tech');
-  if (/\b(security|privacy|surveillance|censorship)\b/.test(lower))
-    niches.push('security');
+  if (/\b(ai|artificial intelligence|llm|machine learning|gpt)\b/.test(lower)) niches.push('ai');
+  if (/\b(tech|startup|software|developer|code)\b/.test(lower)) niches.push('tech');
+  if (/\b(security|privacy|surveillance|censorship)\b/.test(lower)) niches.push('security');
   return niches;
 }
 
-function atprotoToUnifiedPost(
-  item: ATProtoFeedViewPost,
-): UnifiedPost | null {
+function atprotoToUnifiedPost(item: ATProtoFeedViewPost): UnifiedPost | null {
   try {
     const { post } = item;
     const record = post.record;
 
-    if (!record || !record.text) return null;
+    if (!record?.text) return null;
 
     const text = record.text;
     const createdAt = new Date(record.createdAt || post.indexedAt).getTime();
-    if (isNaN(createdAt)) return null;
+    if (Number.isNaN(createdAt)) return null;
 
     const nativeId = post.uri.split('/').pop() || post.cid;
 
@@ -137,7 +128,9 @@ function atprotoToUnifiedPost(
     // Extract embed images
     const embedRecord = post.embed as Record<string, unknown> | undefined;
     if (embedRecord?.$type === 'app.bsky.embed.images') {
-      const images = embedRecord.images as Array<{ fullsize?: string; thumb?: string; alt?: string }> | undefined;
+      const images = embedRecord.images as
+        | Array<{ fullsize?: string; thumb?: string; alt?: string }>
+        | undefined;
       if (images) {
         for (const img of images) {
           if (img.fullsize) {

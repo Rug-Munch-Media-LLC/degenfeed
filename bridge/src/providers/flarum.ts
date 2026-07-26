@@ -9,7 +9,7 @@
  * Returns discussion threads with author info and comment counts.
  */
 
-import { guessNiches, stripHtml } from '../lib/utils';
+import { guessNiches } from '../lib/utils';
 import type { SchemaGuard, UnifiedPost } from '../server/types';
 
 const $fetch = globalThis.fetch;
@@ -91,12 +91,12 @@ export async function fetchFlarumPosts(limit = 20): Promise<UnifiedPost[]> {
         const username = attrs?.username || 'Unknown';
 
         return {
-          id: 'flarum:disc:' + disc.id + '@' + host,
+          id: `flarum:disc:${disc.id}@${host}`,
           protocol: 'flarum',
           author: {
-            id: 'flarum:user:' + (startUserId || '0') + '@' + host,
+            id: `flarum:user:${startUserId || '0'}@${host}`,
             primary: { protocol: 'flarum', id: String(startUserId || '0') },
-            handles: { flarum: '@' + username + '@' + label },
+            handles: { flarum: `@${username}@${label}` },
             displayName: username,
             bio: '',
             avatarUrl: '',
@@ -105,8 +105,8 @@ export async function fetchFlarumPosts(limit = 20): Promise<UnifiedPost[]> {
             links: [],
             keys: {},
           },
-          text: (title + '\n\n' + commentCount + ' comments').slice(0, 2000),
-          embeds: [{ kind: 'link', url: 'https://' + host + '/d/' + disc.id, meta: { title } }],
+          text: `${title}\n\n${commentCount} comments`.slice(0, 2000),
+          embeds: [{ kind: 'link', url: `https://${host}/d/${disc.id}`, meta: { title } }],
           contentType: 'text',
           createdAt: Number.isNaN(createdAt) ? Date.now() : createdAt,
           metrics: { likes: 0, reposts: 0, replies: commentCount, quotes: 0 },
@@ -139,7 +139,7 @@ export async function fetchFlarumPosts(limit = 20): Promise<UnifiedPost[]> {
     }
   }
 
-  console.log('[bridge] Flarum: ' + deduped.length + ' discussions');
+  console.log(`[bridge] Flarum: ${deduped.length} discussions`);
   return deduped;
 }
 
