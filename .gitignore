@@ -66,13 +66,6 @@ __pycache__/
 .mypy_cache/
 *.egg-info/
 
-# ── Python (for monorepo/hybrid projects) ────────────────────────
-__pycache__/
-.venv/
-.mypy_cache/
-*.pyc
-*.egg-info/
-
 # ── Cache / temp / backups ─────────────────────────────────────
 .cache/
 tmp/
@@ -90,3 +83,5 @@ GAPS.md
 REMAINING.md
 docs/BRIDGE_ARCHITECTURE.md
 docs/ENTERPRISE_DEPLOYMENT.md
+
+
