@@ -1,9 +1,0 @@
-/srv/work/repos/degenfeed-web/packages/solana-programs/degenfeed-creator-token/programs/degenfeed-creator-token/target/debug/deps/libsecp256k1-86c457e6d77a1bcd.d: /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/libsecp256k1-0.6.0/src/lib.rs /srv/work/repos/degenfeed-web/packages/solana-programs/degenfeed-creator-token/programs/degenfeed-creator-token/target/debug/build/libsecp256k1-fbdb413a372cd264/out/const.rs /srv/work/repos/degenfeed-web/packages/solana-programs/degenfeed-creator-token/programs/degenfeed-creator-token/target/debug/build/libsecp256k1-fbdb413a372cd264/out/const_gen.rs
-
-/srv/work/repos/degenfeed-web/packages/solana-programs/degenfeed-creator-token/programs/degenfeed-creator-token/target/debug/deps/liblibsecp256k1-86c457e6d77a1bcd.rmeta: /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/libsecp256k1-0.6.0/src/lib.rs /srv/work/repos/degenfeed-web/packages/solana-programs/degenfeed-creator-token/programs/degenfeed-creator-token/target/debug/build/libsecp256k1-fbdb413a372cd264/out/const.rs /srv/work/repos/degenfeed-web/packages/solana-programs/degenfeed-creator-token/programs/degenfeed-creator-token/target/debug/build/libsecp256k1-fbdb413a372cd264/out/const_gen.rs
-
-/root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/libsecp256k1-0.6.0/src/lib.rs:
-/srv/work/repos/degenfeed-web/packages/solana-programs/degenfeed-creator-token/programs/degenfeed-creator-token/target/debug/build/libsecp256k1-fbdb413a372cd264/out/const.rs:
-/srv/work/repos/degenfeed-web/packages/solana-programs/degenfeed-creator-token/programs/degenfeed-creator-token/target/debug/build/libsecp256k1-fbdb413a372cd264/out/const_gen.rs:
-
-# env-dep:OUT_DIR=/srv/work/repos/degenfeed-web/packages/solana-programs/degenfeed-creator-token/programs/degenfeed-creator-token/target/debug/build/libsecp256k1-fbdb413a372cd264/out
