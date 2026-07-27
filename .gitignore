@@ -1,6 +1,5 @@
 # TypeScript / Node .gitignore — Rug Munch Media fleet standard
 # See https://git.rugmunch.io/RugMunchMedia/standards for source of truth.
-
 # ── Secrets (zero tolerance) ───────────────────────────────────
 .env
 .env.*
@@ -16,29 +15,24 @@
 credentials.json
 service-account.json
 .secrets/
-
 # ── Node ───────────────────────────────────────────────────────
 node_modules/
 .npm/
 .pnpm-store/
 yarn-error.log
 yarn-debug.log
-
 # ── Build artifacts ────────────────────────────────────────────
 dist/
 build/
 .next/
-
 # ── Generated seed data ──────────────────────────────────────
 /scripts/seed-data/
 .turbo/
 out/
 *.tsbuildinfo
-
 # ── Coverage ───────────────────────────────────────────────────
 coverage/
 *.lcov
-
 # ── IDE ────────────────────────────────────────────────────────
 .vscode/
 .idea/
@@ -46,18 +40,15 @@ coverage/
 *.swo
 *~
 .DS_Store
-
 # ── Logs ───────────────────────────────────────────────────────
 *.log
 logs/
 pnpm-debug.log*
-
 # ── Solana/Rust build artifacts ────────────────────────────────
 target/
 *.so
 *.rlib
 *.d
-
 # ── Python ─────────────────────────────────────────────────────
 __pycache__/
 *.pyc
@@ -65,7 +56,6 @@ __pycache__/
 .venv/
 .mypy_cache/
 *.egg-info/
-
 # ── Cache / temp / backups ─────────────────────────────────────
 .cache/
 tmp/
@@ -73,7 +63,6 @@ tmp/
 *.tmp.vercel/
 *.bak
 *.backup*
-
 # Proprietary files moved to private fleet-infra
 CLOUDFLARE.md
 docs/DEGENFEED_RESTORE_PROCEDURE.md
@@ -83,5 +72,10 @@ GAPS.md
 REMAINING.md
 docs/BRIDGE_ARCHITECTURE.md
 docs/ENTERPRISE_DEPLOYMENT.md
-
+# Missing common patterns (added by fleet standardization)
+.pytest_cache/
+.ruff_cache/
+.nuxt/
+htmlcov/
+Thumbs.db
 
