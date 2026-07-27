@@ -325,6 +325,13 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: Run E2E tests
         run: pnpm --filter degenfeed-web test:e2e
+        env:
+          CI: true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report/
 
   # ── Gate 9: Lefthook-mirror checks ──────────────────────────
   # Mirrors pre-commit hooks from lefthook.yml
