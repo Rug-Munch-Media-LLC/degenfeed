@@ -1,6 +1,6 @@
 'use client';
 
-import { formatTimeAgo, shortAddr } from '../../../../../dao/[id]/layout';
+import { formatTimeAgo, shortAddr } from '../../../layout';
 import type { VoteChoice, VoteEntry } from '../types';
 
 const choiceColors: Record<VoteChoice, { label: string; color: string; bg: string }> = {
