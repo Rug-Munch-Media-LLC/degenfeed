@@ -105,12 +105,17 @@ paths = [
   '''crossref/.*\.json''',
   '''scripts/enterprise-firewall\.py''',
   '''scripts/proprietary-firewall\.py''',
+  # Test files: 10.0.0.1 used as example private IP in sanitization tests
+  '''workers/api/src/__tests__/''',
+  '''workers/api/src/sanitize\.ts''',
 ]
 
 # Regex patterns to allowlist (intentional test/redaction markers)
 regexes = [
   '<runtime-generated-mnemonic>',
   '\[REDACTED[^\]]*\]',
+  # Example private IP used in sanitization test fixtures
+  '''10\.0\.0\.1''',
 ]
 
 # Stopwords (false-positive patterns to ignore)
