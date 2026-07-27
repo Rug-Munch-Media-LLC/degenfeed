@@ -2,6 +2,8 @@
  * Cross-poster per-target publishers
  */
 
+import WebSocket from 'ws';
+
 // ─── Publisher implementations ──────────────────────────────────────────
 
 async function publishToNostrRelay(_payload: unknown): Promise<boolean> {

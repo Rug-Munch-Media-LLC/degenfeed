@@ -406,7 +406,7 @@ After rotating any key, run:
 cd /path/to/degenfeed-web && gitleaks detect --no-git --config .gitleaks.toml -v
 
 # 2. Full gitleaks scan on Elk app (if applicable)
-cd /root/degenfeed && gitleaks detect --no-git -v
+cd /path/to/degenfeed && gitleaks detect --no-git -v
 
 # 3. Verify the affected service works
 # (Specific verification commands listed per key above)
