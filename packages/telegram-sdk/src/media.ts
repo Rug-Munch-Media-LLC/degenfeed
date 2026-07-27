@@ -9,7 +9,7 @@ import type { TgInputMedia } from './types';
 
 // Minimal interface matching the TGBotClientLike methods used by this module.
 // Avoids circular import: index.ts → media.ts → index.ts
-interface TGBotClientLikeLike {
+interface TGBotClientLike {
   sendPhoto(
     chatId: string,
     photo: string | Blob,

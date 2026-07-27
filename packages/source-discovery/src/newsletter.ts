@@ -360,7 +360,6 @@ async function inspectNewsletter(
 
     // Count recent posts (last 30 days for newsletters)
     const thirtyDaysAgo = Date.now() - 30 * 86_400_000;
-    const _sevenDaysAgo = Date.now() - 7 * 86_400_000;
     let recentPosts = 0;
     let lastPostDate = 0;
 
@@ -377,9 +376,6 @@ async function inspectNewsletter(
         }
       }
     }
-
-    // For newsletters, check weekly post cadence
-    const _weeklyPosts = (text.match(/<(item|entry)>/g) ?? []).length;
 
     return {
       recentPosts,

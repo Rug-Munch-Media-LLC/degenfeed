@@ -32,7 +32,7 @@ describe('muteIdentity / unmuteIdentity', () => {
       get: vi.fn().mockResolvedValue(undefined),
       delete: vi.fn().mockResolvedValue(undefined),
     };
-
+    void _mockDb;
     // We need to mock db before import, but since it's already cached,
     // let's just verify the function exists and the sync call shape
     expect(typeof muteIdentity).toBe('function');

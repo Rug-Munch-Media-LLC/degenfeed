@@ -348,9 +348,6 @@ export function normalizePixelfedPost(
   const text = stripHtml(html);
 
   const embeds: Embed[] = [];
-  let _hasVideo = false;
-  let _hasImage = false;
-
   for (const media of original.media_attachments) {
     if (media.type === 'image' || media.type === 'gifv') {
       embeds.push({
