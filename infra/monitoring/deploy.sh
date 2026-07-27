@@ -5,14 +5,14 @@ set -euo pipefail
 # Usage: ./deploy.sh
 
 HYDRA_SSH="${HYDRA_SSH:-contabo}"
-HYDRA_HOST="${HYDRA_HOST:-100.64.135.3}"
+HYDRA_HOST="${HYDRA_HOST:-[INTERNAL_HOST]}"
 REMOTE_DIR="${REMOTE_DIR:-/srv/degenfeed-monitoring}"
 SSH_USER="${SSH_USER:-root}"
 
 if [[ "${HYDRA_SSH}" == "contabo" ]]; then
-  HYDRA_TARGET="${SSH_USER}@${HYDRA_HOST}"
+    HYDRA_TARGET="${SSH_USER}@${HYDRA_HOST}"
 else
-  HYDRA_TARGET="${HYDRA_SSH}"
+    HYDRA_TARGET="${HYDRA_SSH}"
 fi
 
 echo "==> Deploying DegenFeed monitoring stack to Hydra (${HYDRA_TARGET})"
@@ -20,10 +20,10 @@ echo "==> Deploying DegenFeed monitoring stack to Hydra (${HYDRA_TARGET})"
 # Copy infrastructure files
 echo "==> Copying compose + config..."
 rsync -avz --delete \
-  docker-compose.yml \
-  prometheus.yml \
-  grafana/ \
-  "${HYDRA_TARGET}:${REMOTE_DIR}/"
+    docker-compose.yml \
+    prometheus.yml \
+    grafana/ \
+    "${HYDRA_TARGET}:${REMOTE_DIR}/"
 
 # Start the stack
 echo "==> Starting stack via docker compose..."

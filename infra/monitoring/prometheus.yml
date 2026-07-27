@@ -29,7 +29,7 @@ scrape_configs:
 
   - job_name: 'talos-node'
     static_configs:
-      - targets: ['100.104.130.92:9100']
+      - targets: ['[INTERNAL_HOST]:9100']
         labels:
           instance: 'talos'
 

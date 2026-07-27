@@ -47,7 +47,7 @@ Grafana + Prometheus + Node Exporter for the DegenFeed fleet, deployed on Hydra 
 |--------|----------|-------------|
 | `degenfeed-worker` | `https://degenfeed.xyz/api/health` | Edge worker relay health |
 | `degenfeed-social` | `https://social.degenfeed.xyz/api/v1/instance` | GotoSocial instance info |
-| `talos-node` | `100.104.130.92:9100` | Talos host metrics |
+| `talos-node` | `[INTERNAL_HOST]:9100` | Talos host metrics |
 | `hydra-node` | `localhost:9100` | Hydra host metrics |
 
 ## Dashboards
@@ -77,8 +77,8 @@ curl http://localhost:9090/-/ready      # Prometheus
 
 | Service | URL |
 |---------|-----|
-| Grafana | `http://100.64.135.3:3001` |
-| Prometheus | `http://100.64.135.3:9090` |
+| Grafana | `http://[INTERNAL_HOST]:3001` |
+| Prometheus | `http://[INTERNAL_HOST]:9090` |
 
 Default login: `admin` / `admin`
 

@@ -88,7 +88,7 @@
 | M1 | **Code split god bundles** | Code Quality | 5d | MEDIUM | 170 lib files in workers/api/src/lib/ — many >800 lines, should be directories with sub-modules |
 | M2 | **KV rate limiter not atomic** | Architecture | 1d | LOW | CF Workers isolates may race on KV writes. Worst case: slight over-allowance. Durable Objects fix. |
 | M3 | **No IP reputation/blocklist** | Security | 2d | MEDIUM | Need Cloudflare WAF or IP intelligence integration for feed endpoints. |
-| M4 | **Documentation contradictions** | Docs | 1d | LOW | Old IPs (100.100.18.18, 100.87.38.106), wrong service locations, stale file-size claims. |
+| M4 | **Documentation contradictions** | Docs | 1d | LOW | Old IPs ([INTERNAL_IP], [INTERNAL_IP]), wrong service locations, stale file-size claims. |
 | M5 | **Structured logging missing** | Observability | 2d | MEDIUM | Most API routes use console.log. No structured logger with correlation IDs. |
 | M6 | **MeiliSearch frontend integration** | Frontend | 2d | MEDIUM | Global search bar exists but doesn't connect to MeiliSearch. |
 | M7 | **Renovate bot token placeholder** | DevOps | 0.5d | LOW | Renovate can't run — token still placeholder in config. |
