@@ -543,8 +543,7 @@ export class FeedAlgorithm {
 
     for (const scorer of this.scorers) {
       const baseWeight = this.prefs.weights[scorer.weightKey] ?? 0;
-      const _modeBoost =
-        (modeAdjustments[scorer.weightKey] ?? baseWeight) / Math.max(baseWeight, 1);
+      void modeAdjustments;
       const effectiveWeight = baseWeight;
 
       const { score, reason } = scorer.fn(post, this.prefs, ctx);

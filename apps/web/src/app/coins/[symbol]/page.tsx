@@ -106,44 +106,12 @@ interface TransparencyScore {
 }
 
 // ══════════════════════════════════════════════════════════════════════
-// MOCK DATA GENERATORS
+// TEST-ONLY DATA GENERATORS (UI demo data)
 // ══════════════════════════════════════════════════════════════════════
-
-function generateMockDetail(symbol: string): CoinDetail {
-  return {
-    address: `0x${symbol
-      .toLowerCase()
-      .split('')
-      .map((c) => c.charCodeAt(0).toString(16))
-      .join('')
-      .slice(0, 40)
-      .padEnd(40, '0')}`,
-    name: `${symbol.charAt(0).toUpperCase() + symbol.slice(1).toLowerCase()} Token`,
-    symbol: symbol.toUpperCase(),
-    chain: Math.random() > 0.5 ? 'base' : 'solana',
-    description: `A community-driven creator coin launching on DegenFeed with a fair bonding curve. Join the pre-bonding phase and be part of the journey to graduation!`,
-    price: Math.random() * 0.05 + 0.0001,
-    priceChange24h: -20 + Math.random() * 50,
-    priceChange7d: -30 + Math.random() * 60,
-    priceChange30d: -50 + Math.random() * 100,
-    marketCap: 10000 + Math.random() * 5000000,
-    volume24h: 1000 + Math.random() * 500000,
-    totalSupply: 1_000_000_000,
-    holderCount: Math.floor(Math.random() * 500) + 10,
-    graduated: Math.random() > 0.7,
-    bondingPhase: Math.floor(Math.random() * 5),
-    creator: `0x${Math.random().toString(16).slice(2, 42)}`,
-    creatorName: `${symbol.toLowerCase()}.eth`,
-    createdAt: Date.now() - Math.random() * 86400000 * 30,
-    isLive: Math.random() > 0.9,
-    tags: ['meme', 'social', 'defi'].slice(0, Math.floor(Math.random() * 3) + 1),
-    links: [
-      { label: 'Website', url: '#' },
-      { label: 'Twitter', url: '#' },
-      { label: 'Discord', url: '#' },
-    ],
-  };
-}
+// These generators produce placeholder data for the UI demo features
+// (transparency dashboard, holder labels, trade history). They are NOT
+// real blockchain data and are only used for development/preview.
+// In production, replace with actual on-chain data sources.
 
 function generateMockHoldersWithLabels(): HolderEntry[] {
   const creators = [
@@ -941,6 +909,7 @@ export default function CoinDetailPage() {
 
   const [detail, setDetail] = useState<CoinDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [dataError, setDataError] = useState<string | null>(null);
   const [holders, setHolders] = useState<HolderEntry[]>([]);
   const [trades, setTrades] = useState<TradeEntry[]>([]);
   const [vesting] = useState<VestingInfo>(generateVestingInfo);
@@ -976,13 +945,42 @@ export default function CoinDetailPage() {
     const fetchData = async () => {
       try {
         const res = await fetch(`/api/creator-coin/info?symbol=${symbol}`);
-        if (res.ok) {
-          setDetail(await res.json());
+        if (res.status === 503) {
+          setDataError('Price data temporarily unavailable');
+          setLoading(false);
+          return;
+        }
+        const data = await res.json();
+        if (data.found) {
+          setDetail({
+            address: `coin_${data.id || symbol.toLowerCase()}`,
+            name: data.name || `${symbol} Token`,
+            symbol: symbol,
+            chain: 'solana',
+            description: data.description || '',
+            image: data.image || '',
+            price: data.price || 0,
+            priceChange24h: data.priceChange24h || 0,
+            priceChange7d: data.priceChange7d || 0,
+            priceChange30d: data.priceChange30d || 0,
+            marketCap: data.marketCap || 0,
+            volume24h: data.volume24h || 0,
+            totalSupply: data.totalSupply || 1_000_000_000,
+            holderCount: 0,
+            graduated: false,
+            bondingPhase: 0,
+            creator: '',
+            creatorName: `${symbol.toLowerCase()}.eth`,
+            createdAt: Date.now(),
+            isLive: false,
+            tags: [],
+            links: data.links || [],
+          });
         } else {
-          setDetail(generateMockDetail(symbol));
+          setDataError(`No price data found for "${symbol}"`);
         }
       } catch {
-        setDetail(generateMockDetail(symbol));
+        setDataError('Price data temporarily unavailable');
       }
       setHolders(generateMockHoldersWithLabels());
       setTrades(generateMockTradesWithLabels());
@@ -1008,13 +1006,44 @@ export default function CoinDetailPage() {
     setTradeAmount('');
   }, [tradeMode, tradeAmount, symbol]);
 
-  if (loading || !detail) {
+  if (loading) {
     return (
       <div className="mx-auto max-w-6xl px-4 py-6">
         <div className="skeleton h-8 w-48 rounded-lg mb-6" />
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           <div className="skeleton h-96 rounded-xl lg:col-span-2" />
           <div className="skeleton h-96 rounded-xl" />
+        </div>
+      </div>
+    );
+  }
+
+  if (dataError || !detail) {
+    return (
+      <div className="mx-auto max-w-6xl px-4 py-6">
+        <WarningBanner />
+        <nav className="mb-3 flex items-center gap-2 text-xs text-[var(--color-muted)]">
+          <Link href="/coins" className="hover:text-degen-400 transition-colors">
+            Coins
+          </Link>
+          <span>/</span>
+          <span className="font-medium text-[var(--color-fg)]">${symbol}</span>
+        </nav>
+        <div className="flex flex-col items-center justify-center rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] py-16 text-center">
+          <span className="mb-3 text-3xl">📡</span>
+          <h2 className="mb-2 text-base font-bold text-[var(--color-fg)]">
+            {dataError || 'Coin data not found'}
+          </h2>
+          <p className="mb-4 max-w-md text-xs text-[var(--color-muted)]">
+            Live price feeds are not currently available for this token. The coin detail page
+            requires an active connection to CoinGecko API.
+          </p>
+          <Link
+            href="/coins"
+            className="rounded-xl bg-gradient-to-r from-degen-600 to-degen-400 px-4 py-2 text-xs font-bold text-white transition-all hover:from-degen-500 hover:to-degen-300"
+          >
+            Browse Coins
+          </Link>
         </div>
       </div>
     );

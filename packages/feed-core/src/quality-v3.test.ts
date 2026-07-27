@@ -2,15 +2,14 @@
  * Tests for Content Quality Scoring V3
  */
 
-import { describe, it, expect } from 'vitest';
-import {
-  scoreQualityV3,
-  detectEvergreen,
-  computeLanguageQuality,
-  computeEngagementVelocity,
-  computeCreatorQuality,
-} from './quality-v3';
 import type { UnifiedPost } from '@degenfeed/types';
+import { describe, expect, it } from 'vitest';
+import {
+  computeCreatorQuality,
+  computeLanguageQuality,
+  detectEvergreen,
+  scoreQualityV3,
+} from './quality-v3';
 
 function makePost(overrides: Partial<UnifiedPost> = {}): UnifiedPost {
   return {
@@ -34,7 +33,12 @@ function makePost(overrides: Partial<UnifiedPost> = {}): UnifiedPost {
     embeds: [],
     createdAt: Date.now() - 3600000,
     metrics: { likes: 50, reposts: 10, replies: 5, quotes: 2 },
-    engagement: { viewerLiked: false, viewerReposted: false, viewerBookmarked: false, raw: { likes: 50, reposts: 10, replies: 5, quotes: 0 } },
+    engagement: {
+      viewerLiked: false,
+      viewerReposted: false,
+      viewerBookmarked: false,
+      raw: { likes: 50, reposts: 10, replies: 5, quotes: 0 },
+    },
     raw: {},
     niches: ['bitcoin'],
     ...overrides,
@@ -96,7 +100,7 @@ describe('scoreQualityV3', () => {
       text: 'FREE BTC!!! CLICK HERE!!! win win win win win win win win win http://scam.com',
     });
     const qualityPost = makePost({
-      text: 'The Bitcoin halving event reduces block rewards by 50%, creating supply-side pressure that historically leads to significant price appreciation over the following 12-18 months. This mechanism is fundamental to Bitcoin\'s monetary policy.',
+      text: "The Bitcoin halving event reduces block rewards by 50%, creating supply-side pressure that historically leads to significant price appreciation over the following 12-18 months. This mechanism is fundamental to Bitcoin's monetary policy.",
     });
 
     const spam = scoreQualityV3(spamPost);
@@ -125,7 +129,8 @@ describe('detectEvergreen', () => {
 
 describe('computeLanguageQuality', () => {
   it('scores well-written content higher', () => {
-    const good = 'The Federal Reserve\'s decision to maintain interest rates has significant implications for cryptocurrency markets.';
+    const good =
+      "The Federal Reserve's decision to maintain interest rates has significant implications for cryptocurrency markets.";
     const bad = 'FREE BTC!!! CLICK!!! $$$ http://scam.link';
     expect(computeLanguageQuality(makePost({ text: good }))).toBeGreaterThan(
       computeLanguageQuality(makePost({ text: bad })),

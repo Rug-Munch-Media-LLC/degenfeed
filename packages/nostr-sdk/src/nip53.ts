@@ -282,6 +282,7 @@ export function normalizeLiveEvent(event: NostrLiveEvent): {
   const isLive = event.status === 'live';
   const isScheduled = event.status === 'planned' && (event.startsAt ?? 0) > now;
   const _isEnded = event.status === 'ended' || ((event.startsAt ?? 0) < now && !isLive);
+  void _isEnded;
 
   return {
     id: `nostr:${event.id}`,
@@ -327,15 +328,17 @@ export async function fetchNostrLiveEvents(
         resolve(filterLiveEvents(events, filter));
       }, timeoutMs);
 
-      const _subId = pool.subscribe([{ ...subFilter }], (relayEvent) => {
-        if (relayEvent.kind === 'event' && relayEvent.event) {
-          const parsed = parseLiveEvent(relayEvent.event);
-          if (parsed) events.push(parsed);
-        }
-        if (relayEvent.kind === 'eose') {
-          clearTimeout(timeout);
-          resolve(filterLiveEvents(events, filter));
-        }
+      pool.subscribe([{ ...subFilter }], {
+        onEvent: (relayEvent) => {
+          if (relayEvent.kind === 'event' && relayEvent.event) {
+            const parsed = parseLiveEvent(relayEvent.event);
+            if (parsed) events.push(parsed);
+          }
+          if (relayEvent.kind === 'eose') {
+            clearTimeout(timeout);
+            resolve(filterLiveEvents(events, filter));
+          }
+        },
       });
 
       // Clean up on resolve

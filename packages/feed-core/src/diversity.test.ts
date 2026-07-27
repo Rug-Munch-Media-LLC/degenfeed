@@ -2,9 +2,14 @@
  * Tests for Diversity Algorithm
  */
 
-import { describe, it, expect } from 'vitest';
-import { diversifyFeed, interleaveProtocols, isSerendipitous, DEFAULT_DIVERSITY_CONFIG } from './diversity';
 import type { UnifiedPost } from '@degenfeed/types';
+import { describe, expect, it } from 'vitest';
+import {
+  DEFAULT_DIVERSITY_CONFIG,
+  diversifyFeed,
+  interleaveProtocols,
+  isSerendipitous,
+} from './diversity';
 
 function makePost(id: string, overrides: Partial<UnifiedPost> = {}): UnifiedPost {
   return {
@@ -28,7 +33,12 @@ function makePost(id: string, overrides: Partial<UnifiedPost> = {}): UnifiedPost
     embeds: [],
     createdAt: Date.now() - 3600000,
     metrics: { likes: 10, reposts: 2, replies: 1, quotes: 0 },
-    engagement: { viewerLiked: false, viewerReposted: false, viewerBookmarked: false, raw: { likes: 10, reposts: 2, replies: 1, quotes: 0 } },
+    engagement: {
+      viewerLiked: false,
+      viewerReposted: false,
+      viewerBookmarked: false,
+      raw: { likes: 10, reposts: 2, replies: 1, quotes: 0 },
+    },
     raw: {},
     niches: ['bitcoin'],
     ...overrides,
@@ -49,7 +59,9 @@ describe('diversifyFeed', () => {
     const categories = result.items.map((i) => i.category);
     // Should not have more than 2 consecutive same categories
     for (let i = 0; i < categories.length - 2; i++) {
-      expect(categories[i]).not.toBe(categories[i + 1]) || expect(categories[i]).not.toBe(categories[i + 2]);
+      expect(categories[i] === categories[i + 1] ? categories[i] !== categories[i + 2] : true).toBe(
+        true,
+      );
     }
   });
 
@@ -65,7 +77,9 @@ describe('diversifyFeed', () => {
     const creatorIds = result.items.map((i) => i.post.author.id);
     // No more than 2 consecutive same creator
     for (let i = 0; i < creatorIds.length - 2; i++) {
-      expect(creatorIds[i]).not.toBe(creatorIds[i + 1]) || expect(creatorIds[i]).not.toBe(creatorIds[i + 2]);
+      expect(creatorIds[i] === creatorIds[i + 1] ? creatorIds[i] !== creatorIds[i + 2] : true).toBe(
+        true,
+      );
     }
   });
 
@@ -93,10 +107,16 @@ describe('diversifyFeed', () => {
       { post: makePost('5', { protocol: 'bluesky' }), score: 6 },
     ];
 
-    const result = diversifyFeed(items, { ...DEFAULT_DIVERSITY_CONFIG, maxConsecutiveProtocol: 2, interleaveProtocols: true });
+    const result = diversifyFeed(items, {
+      ...DEFAULT_DIVERSITY_CONFIG,
+      maxConsecutiveProtocol: 2,
+      interleaveProtocols: true,
+    });
     const protocols = result.items.map((i) => i.post.protocol);
     for (let i = 0; i < protocols.length - 2; i++) {
-      expect(protocols[i]).not.toBe(protocols[i + 1]) || expect(protocols[i]).not.toBe(protocols[i + 2]);
+      expect(protocols[i] === protocols[i + 1] ? protocols[i] !== protocols[i + 2] : true).toBe(
+        true,
+      );
     }
   });
 });

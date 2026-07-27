@@ -253,7 +253,6 @@ export class IdentityResolver {
     try {
       const atIdx = handle.indexOf('@');
       if (atIdx <= 0) return null;
-      const _uname = handle.slice(0, atIdx);
       const domain = handle.slice(atIdx + 1);
       const url = `https://${domain}/.well-known/webfinger?resource=acct:${encodeURIComponent(handle)}`;
       const res = await fetchFn(url, {
