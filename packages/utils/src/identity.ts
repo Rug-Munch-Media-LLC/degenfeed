@@ -193,23 +193,6 @@ async function resolveLensHandle(
   }
 }
 
-async function _resolveThreadsHandle(
-  handle: string,
-  fetchFn: typeof fetch,
-): Promise<HandleResolution | null> {
-  // Threads uses ActivityPub WebFinger (same as Mastodon)
-  // Handles look like: user@threads.net
-  // Bridgy Fed enables Threads ActivityPub discovery
-  const atIndex = handle.indexOf('@');
-  if (atIndex <= 0 || atIndex === handle.length - 1) return null;
-
-  const domain = handle.slice(atIndex + 1);
-  // Only resolve for threads.net domains
-  if (domain !== 'threads.net' && !domain.endsWith('.threads.net')) return null;
-
-  return resolveFediverseHandle(handle, fetchFn);
-}
-
 async function resolveBlueskyHandle(
   handle: string,
   fetchFn: typeof fetch,
@@ -239,7 +222,6 @@ export async function resolveFediverseHandle(
   // Format: user@instance.com
   const atIndex = handle.indexOf('@');
   if (atIndex <= 0 || atIndex === handle.length - 1) return null;
-  const _username = handle.slice(0, atIndex);
   const domain = handle.slice(atIndex + 1);
 
   try {

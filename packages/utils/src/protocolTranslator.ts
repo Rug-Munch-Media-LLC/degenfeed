@@ -144,8 +144,6 @@ export function translateContent(
   toProtocol: string,
 ): TranslationResult {
   const target = PROTOCOL_FORMATS[toProtocol];
-  const _source = PROTOCOL_FORMATS[fromProtocol];
-
   if (!target) {
     return {
       translated: content,
