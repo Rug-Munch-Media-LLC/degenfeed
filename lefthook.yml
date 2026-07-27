@@ -1,0 +1,42 @@
+# ── lefthook.yml — fast git hooks ──
+# Source of truth: standards/templates/lefthook-base.yml
+# Variant: frontend
+# Install: lefthook install
+
+pre-commit:
+  parallel: true
+  commands:
+    no-env-files:
+      run: |
+        if find . -maxdepth 3 -name '.env' -not -name '.env.example' -not -path './.git/*' -not -path './node_modules/*' | grep -q .; then
+          echo "ERROR: .env files found. Move secrets to gopass (gopass show ...). See AGENTS.md hard-rule 6."
+          find . -maxdepth 3 -name '.env' -not -name '.env.example' -not -path './.git/*' -not -path './node_modules/*'
+          exit 1
+        fi
+      skip:
+        - merge
+        - rebase
+    gitleaks:
+      run: gitleaks protect --staged --no-banner --verbose
+    envsitter:
+      run: envsitter validate --file .env 2>/dev/null || true
+    biome:
+      glob: "*.{ts,tsx,js,jsx,json,css}"
+      run: npx biome check --write --no-errors-on-unmatched {staged_files}
+      stage_fixed: true
+    oxlint:
+      glob: "*.{ts,tsx,js,jsx}"
+      run: npx oxlint@latest --max-warnings=0 {staged_files}
+pre-push:
+  parallel: true
+  commands:
+    gitleaks-full:
+      run: gitleaks detect --source . --no-git -v
+    typecheck:
+      run: npx tsc --noEmit
+    test:
+      run: npx vitest run
+commit-msg:
+  commands:
+    commitlint:
+      run: commitlint --edit "$1"
