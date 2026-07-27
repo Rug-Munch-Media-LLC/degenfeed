@@ -52,6 +52,27 @@ coverage/
 logs/
 pnpm-debug.log*
 
+# ── Solana/Rust build artifacts ────────────────────────────────
+target/
+*.so
+*.rlib
+*.d
+
+# ── Python ─────────────────────────────────────────────────────
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+.mypy_cache/
+*.egg-info/
+
+# ── Python (for monorepo/hybrid projects) ────────────────────────
+__pycache__/
+.venv/
+.mypy_cache/
+*.pyc
+*.egg-info/
+
 # ── Cache / temp / backups ─────────────────────────────────────
 .cache/
 tmp/
@@ -59,3 +80,13 @@ tmp/
 *.tmp.vercel/
 *.bak
 *.backup*
+
+# Proprietary files moved to private fleet-infra
+CLOUDFLARE.md
+docs/DEGENFEED_RESTORE_PROCEDURE.md
+docs/NETWORK_OWNERSHIP.md
+docs/OWNERSHIP.md
+GAPS.md
+REMAINING.md
+docs/BRIDGE_ARCHITECTURE.md
+docs/ENTERPRISE_DEPLOYMENT.md

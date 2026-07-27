@@ -1,8 +1,0 @@
-/srv/work/repos/degenfeed-web/packages/solana-programs/degenfeed-creator-token/programs/degenfeed-creator-token/target/debug/deps/spl_token_group_interface-e4f89c156ed95949.d: /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/spl-token-group-interface-0.2.5/src/lib.rs /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/spl-token-group-interface-0.2.5/src/error.rs /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/spl-token-group-interface-0.2.5/src/instruction.rs /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/spl-token-group-interface-0.2.5/src/state.rs
-
-/srv/work/repos/degenfeed-web/packages/solana-programs/degenfeed-creator-token/programs/degenfeed-creator-token/target/debug/deps/libspl_token_group_interface-e4f89c156ed95949.rmeta: /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/spl-token-group-interface-0.2.5/src/lib.rs /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/spl-token-group-interface-0.2.5/src/error.rs /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/spl-token-group-interface-0.2.5/src/instruction.rs /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/spl-token-group-interface-0.2.5/src/state.rs
-
-/root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/spl-token-group-interface-0.2.5/src/lib.rs:
-/root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/spl-token-group-interface-0.2.5/src/error.rs:
-/root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/spl-token-group-interface-0.2.5/src/instruction.rs:
-/root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/spl-token-group-interface-0.2.5/src/state.rs:
