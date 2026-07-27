@@ -15,6 +15,65 @@ import type { Env } from '../types';
 
 const _MAX_BRIDGE_PER_HOUR = 3;
 
+// ─── URL scanner (RMI Backend integration) ──────────────────────────
+// Scans URLs in publish content against rmi-backend's security data to
+// block known scam/phishing links before they reach any protocol.
+// Non-blocking on failure — if rmi-backend is unreachable, posts go through.
+
+const URL_REGEX =
+  /https?:\/\/([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9](?:\/[^\s"<>{}|\\^`[\]]*)?/gi;
+
+/**
+ * Extract all URLs from a text string.
+ */
+function extractUrls(text: string): string[] {
+  const matches = text.match(URL_REGEX);
+  return matches ? [...new Set(matches)] : [];
+}
+
+/**
+ * Scan a list of URLs against rmi-backend's DataBus token_security endpoint.
+ *
+ * Returns flagged URLs (risk_score > 50) or null if the backend is unreachable.
+ * Fire-and-forget friendly: never throws — always returns a clean result.
+ */
+async function scanUrlsAgainstRmiBackend(
+  urls: string[],
+  env: Env,
+): Promise<{ flagged: string[]; error?: string }> {
+  const { rmiUrl } = await import('@degenfeed/utils');
+
+  const flagged: string[] = [];
+
+  for (const url of urls) {
+    try {
+      const scanUrl = `${rmiUrl(env)}/api/v1/databus/fetch/token_security?url=${encodeURIComponent(url)}`;
+      const resp = await fetch(scanUrl, {
+        signal: AbortSignal.timeout(5_000),
+        headers: { accept: 'application/json' },
+      });
+
+      if (!resp.ok) {
+        // Backend returned an error for this URL — log but don't block
+        console.warn(`[urlscan] rmi-backend returned ${resp.status} for ${url.slice(0, 60)}`);
+        continue;
+      }
+
+      const result = (await resp.json()) as { risk_score?: number; data?: { risk_score?: number } };
+      const riskScore = result.risk_score ?? result.data?.risk_score ?? 0;
+
+      if (riskScore > 50) {
+        flagged.push(url);
+      }
+    } catch {
+      // rmi-backend unreachable — non-blocking, allow the post
+      console.warn(`[urlscan] rmi-backend unreachable, skipping scan for ${url.slice(0, 60)}`);
+    }
+  }
+
+  return { flagged };
+}
+
 /**
  * Map our Protocol types to Postiz platform names.
  * Only platforms that Postiz supports natively go here.
@@ -63,6 +122,25 @@ export async function handlePublish(request: Request, env: Env): Promise<Respons
     }
     if (targets.length === 0) {
       return jsonResponse({ error: 'Invalid targets' }, 400);
+    }
+
+    // ── Scan URLs against rmi-backend scam database ────────────────
+    // Before publishing, check if any URLs in the post content are known
+    // scams. Non-blocking: if rmi-backend is down, the post goes through.
+    // This protects users from phishing links shared on the platform.
+    const urlsInContent = extractUrls(text);
+    if (urlsInContent.length > 0) {
+      const scanResult = await scanUrlsAgainstRmiBackend(urlsInContent, env);
+      if (scanResult.flagged.length > 0) {
+        return jsonResponse(
+          {
+            error: 'One or more URLs in your post appear to be known scams',
+            flagged_urls: scanResult.flagged,
+            code: 'SCAM_URL_DETECTED',
+          },
+          400,
+        );
+      }
     }
 
     // ── Premium gate: Postiz publishing requires Pro+ ──────────────
@@ -585,7 +663,7 @@ export async function handleRssToNostrBridge(request: Request, _env: Env): Promi
 import type { MasterPost } from '@degenfeed/cross-protocol-bridge';
 import { adaptForProtocols, previewForProtocols } from '@degenfeed/cross-protocol-bridge';
 import { methodNotAllowed } from '../response-helpers';
-import { hasSuspiciousPayload } from '../sanitize';
+// hasSuspiciousPayload already imported at top of file
 
 /**
  * POST /api/publish/all
@@ -606,6 +684,22 @@ export async function handlePublishAll(request: Request, env: Env): Promise<Resp
     const masterPost = body.masterPost;
     if (!masterPost?.text || hasSuspiciousPayload(masterPost.text)) {
       return jsonResponse({ error: 'Invalid or suspicious post text' }, 400);
+    }
+
+    // ── Scan URLs against rmi-backend scam database ────────────────
+    const urlsInContent = extractUrls(masterPost.text);
+    if (urlsInContent.length > 0) {
+      const scanResult = await scanUrlsAgainstRmiBackend(urlsInContent, env);
+      if (scanResult.flagged.length > 0) {
+        return jsonResponse(
+          {
+            error: 'One or more URLs in your post appear to be known scams',
+            flagged_urls: scanResult.flagged,
+            code: 'SCAM_URL_DETECTED',
+          },
+          400,
+        );
+      }
     }
 
     const auth = body.auth ?? {};
@@ -649,6 +743,22 @@ export async function handlePublishSelected(request: Request, env: Env): Promise
     const masterPost = body.masterPost;
     if (!masterPost?.text || hasSuspiciousPayload(masterPost.text)) {
       return jsonResponse({ error: 'Invalid or suspicious post text' }, 400);
+    }
+
+    // ── Scan URLs against rmi-backend scam database ────────────────
+    const urlsInContent = extractUrls(masterPost.text);
+    if (urlsInContent.length > 0) {
+      const scanResult = await scanUrlsAgainstRmiBackend(urlsInContent, env);
+      if (scanResult.flagged.length > 0) {
+        return jsonResponse(
+          {
+            error: 'One or more URLs in your post appear to be known scams',
+            flagged_urls: scanResult.flagged,
+            code: 'SCAM_URL_DETECTED',
+          },
+          400,
+        );
+      }
     }
 
     const protocols = body.protocols ?? [];
@@ -772,6 +882,22 @@ export async function handleScheduleCrossPost(request: Request, env: Env): Promi
     const masterPost = body.masterPost;
     if (!masterPost?.text || hasSuspiciousPayload(masterPost.text)) {
       return jsonResponse({ error: 'Invalid or suspicious post text' }, 400);
+    }
+
+    // ── Scan URLs against rmi-backend scam database ────────────────
+    const urlsInContent = extractUrls(masterPost.text);
+    if (urlsInContent.length > 0) {
+      const scanResult = await scanUrlsAgainstRmiBackend(urlsInContent, env);
+      if (scanResult.flagged.length > 0) {
+        return jsonResponse(
+          {
+            error: 'One or more URLs in your post appear to be known scams',
+            flagged_urls: scanResult.flagged,
+            code: 'SCAM_URL_DETECTED',
+          },
+          400,
+        );
+      }
     }
 
     const protocols = body.protocols ?? [];
