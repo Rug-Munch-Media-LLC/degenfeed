@@ -182,6 +182,58 @@ jobs:
           name: sbom
           path: sbom.spdx.json
 
+  # ── Gate: Container vulnerability scan (Trivy) ─────────────────
+  trivy-scan:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image for scanning
+        run: docker build -t app:${{ github.sha }} ./apps/web
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: 'app:${{ github.sha }}'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          exit-code: '1'
+          severity: 'CRITICAL,HIGH'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: trivy-results
+          path: trivy-results.sarif
+
+  # ── Gate: Container image signing (Cosign) — main only ───────
+  sign-image:
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: sigstore/cosign-installer@v3
+        with:
+          cosign-release: 'v2.4.3'
+      - name: Set up Docker BuildKit
+        run: |
+          echo "DOCKER_BUILDKIT=1" >> $GITHUB_ENV
+          echo "BUILDKIT_PROGRESS=plain" >> $GITHUB_ENV
+      - name: Build Docker image
+        run: docker build -t registry.rugmunch.io/degenfeed-web:${{ github.sha }} ./apps/web
+      - name: Push to registry
+        run: docker push registry.rugmunch.io/degenfeed-web:${{ github.sha }}
+      - name: Sign image with keyless (OIDC)
+        run: |
+          cosign sign --yes registry.rugmunch.io/degenfeed-web:${{ github.sha }}
+        env:
+          COSIGN_EXPERIMENTAL: "1"
+      - name: Verify signature
+        run: |
+          cosign verify \
+            --certificate-identity "https://git.rugmunch.io/RugMunchMedia/degenfeed-web/.forgejo/workflows/ci.yml@refs/heads/main" \
+            --certificate-oidc-issuer "https://git.rugmunch.io" \
+            registry.rugmunch.io/degenfeed-web:${{ github.sha }}
+        env:
+          COSIGN_EXPERIMENTAL: "1"
+
   # ── Gate 6: Dependency freshness ──────────────────────────────
   deps-freshness:
     runs-on: ubuntu-latest
