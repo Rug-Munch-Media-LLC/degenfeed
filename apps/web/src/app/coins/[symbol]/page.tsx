@@ -26,6 +26,10 @@
 // In production, all data should be fetched from on-chain sources
 // and verified before display. See DEPLOYMENT.md for production
 // configuration requirements.
+//
+// TODO: Replace mock data with real API calls from on-chain data providers.
+// Currently using Math.random() for prices, fake holder lists, and
+// simulated trading data. ALL figures are illustrative only.
 // ══════════════════════════════════════════════════════════════════════
 
 import Link from 'next/link';
@@ -216,7 +220,7 @@ function generateVestingInfo(): VestingInfo {
   };
 }
 
-function generateTransparencyScore(): TransparencyScore {
+function _generateTransparencyScore(): TransparencyScore {
   return {
     walletLabeling: 95,
     vestingClarity: 90,
@@ -231,6 +235,40 @@ function generateTransparencyScore(): TransparencyScore {
 // ══════════════════════════════════════════════════════════════════════
 // HELPERS
 // ══════════════════════════════════════════════════════════════════════
+
+/**
+ * Warning banner displayed at the top of the coin detail page
+ * to clearly indicate that all data is for demo/development purposes.
+ */
+function WarningBanner() {
+  return (
+    <div
+      style={{
+        background: '#1a0000',
+        border: '1px solid #ff4444',
+        borderRadius: '8px',
+        padding: '12px 16px',
+        marginBottom: '16px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '10px',
+      }}
+      role="alert"
+    >
+      <span style={{ fontSize: '18px', flexShrink: 0 }}>⚠️</span>
+      <div>
+        <p style={{ color: '#ff6666', fontWeight: 700, fontSize: '13px', margin: 0 }}>
+          Demo Data — Not Connected to Live Price Feeds
+        </p>
+        <p style={{ color: '#999', fontSize: '11px', margin: '4px 0 0 0' }}>
+          All prices, charts, holder lists, and trading interfaces shown on this page are simulated.
+          Data does NOT represent real blockchain activity. Connect to on-chain data providers for
+          production use.
+        </p>
+      </div>
+    </div>
+  );
+}
 
 function shortenAddress(addr: string): string {
   if (!addr || addr.length < 10) return addr;
@@ -429,10 +467,14 @@ function TradeConfirmModal({
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-in"
       onClick={onClose}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') onClose();
+      }}
     >
       <div
         className="mx-4 w-full max-w-sm rounded-2xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-5 shadow-2xl animate-scale-in"
         onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between">
           <h3 className="text-sm font-bold text-[var(--color-fg)]">
@@ -667,14 +709,12 @@ function LockProofBadge() {
             80M tokens locked in audited vesting contract · Linear vesting · Weekly unlocks
           </p>
         </div>
-        <a
-          href="#"
-          target="_blank"
-          rel="noopener noreferrer"
+        <button
+          type="button"
           className="ml-auto rounded-lg bg-degen-500/15 px-2 py-1 text-[8px] font-medium text-degen-400 hover:bg-degen-500/25"
         >
           View ↗
-        </a>
+        </button>
       </div>
     </div>
   );
@@ -696,9 +736,9 @@ function AuditTrail() {
     <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-4">
       <h3 className="mb-3 text-xs font-bold text-[var(--color-fg)]">📋 Audit Trail</h3>
       <div className="space-y-1.5">
-        {entries.map((e, i) => (
+        {entries.map((e) => (
           <div
-            key={i}
+            key={e.action}
             className="flex items-start gap-2 rounded-lg border border-[var(--color-glass-border)] p-2"
           >
             <span className="mt-0.5 text-[8px]">📝</span>
@@ -719,8 +759,8 @@ function AuditTrail() {
 }
 
 /* ── Community Trust Features ──────────────────────── */
-function CommunityTrust({ detail, vesting }: { detail: CoinDetail; vesting: VestingInfo }) {
-  const [voteOpen, setVoteOpen] = useState(true);
+function CommunityTrust({ detail }: { detail: CoinDetail }) {
+  const [voteOpen, _setVoteOpen] = useState(true);
   const [voted, setVoted] = useState<'for' | 'against' | null>(null);
   const [preBondingEnds] = useState(Date.now() + 86400000 * 3);
   const countdown = countdownStr(preBondingEnds - Date.now());
@@ -893,7 +933,6 @@ function CommunityTrust({ detail, vesting }: { detail: CoinDetail; vesting: Vest
 // MAIN PAGE
 // ══════════════════════════════════════════════════════════════════════
 
-type TabSection = 'trades' | 'holders' | 'info' | 'transparency' | 'trust';
 type DetailTab = 'info' | 'transparency' | 'trust';
 
 export default function CoinDetailPage() {
@@ -988,6 +1027,9 @@ export default function CoinDetailPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-6 animate-page-enter">
+      {/* ⚠️ Demo data warning banner */}
+      <WarningBanner />
+
       {/* Breadcrumb */}
       <nav className="mb-3 flex items-center gap-2 text-xs text-[var(--color-muted)]">
         <Link href="/coins" className="hover:text-degen-400 transition-colors">
@@ -999,12 +1041,39 @@ export default function CoinDetailPage() {
 
       {/* Multi-Protocol View Tabs */}
       <div className="mb-4 flex flex-wrap gap-1.5">
-        <span className="rounded-lg bg-degen-500/15 px-2.5 py-1 text-[9px] font-semibold text-degen-400">All Protocols</span>
-        <Link href={`/coins/${detail.symbol}/farcaster`} className="rounded-lg bg-indigo-500/10 px-2.5 py-1 text-[9px] font-medium text-indigo-400 hover:bg-indigo-500/20 transition-colors">⬡ Farcaster</Link>
-        <Link href={`/coins/${detail.symbol}/nostr`} className="rounded-lg bg-purple-500/10 px-2.5 py-1 text-[9px] font-medium text-purple-400 hover:bg-purple-500/20 transition-colors">⚡ Nostr</Link>
-        <Link href={`/coins/${detail.symbol}/bluesky`} className="rounded-lg bg-sky-500/10 px-2.5 py-1 text-[9px] font-medium text-sky-400 hover:bg-sky-500/20 transition-colors">☁️ Bluesky</Link>
-        <Link href={`/coins/${detail.symbol}/mastodon`} className="rounded-lg bg-indigo-500/10 px-2.5 py-1 text-[9px] font-medium text-indigo-400 hover:bg-indigo-500/20 transition-colors">🐘 Mastodon</Link>
-        <Link href={`/coins/${detail.symbol}/lens`} className="rounded-lg bg-emerald-500/10 px-2.5 py-1 text-[9px] font-medium text-emerald-400 hover:bg-emerald-500/20 transition-colors">👁️ Lens</Link>
+        <span className="rounded-lg bg-degen-500/15 px-2.5 py-1 text-[9px] font-semibold text-degen-400">
+          All Protocols
+        </span>
+        <Link
+          href={`/coins/${detail.symbol}/farcaster`}
+          className="rounded-lg bg-indigo-500/10 px-2.5 py-1 text-[9px] font-medium text-indigo-400 hover:bg-indigo-500/20 transition-colors"
+        >
+          ⬡ Farcaster
+        </Link>
+        <Link
+          href={`/coins/${detail.symbol}/nostr`}
+          className="rounded-lg bg-purple-500/10 px-2.5 py-1 text-[9px] font-medium text-purple-400 hover:bg-purple-500/20 transition-colors"
+        >
+          ⚡ Nostr
+        </Link>
+        <Link
+          href={`/coins/${detail.symbol}/bluesky`}
+          className="rounded-lg bg-sky-500/10 px-2.5 py-1 text-[9px] font-medium text-sky-400 hover:bg-sky-500/20 transition-colors"
+        >
+          ☁️ Bluesky
+        </Link>
+        <Link
+          href={`/coins/${detail.symbol}/mastodon`}
+          className="rounded-lg bg-indigo-500/10 px-2.5 py-1 text-[9px] font-medium text-indigo-400 hover:bg-indigo-500/20 transition-colors"
+        >
+          🐘 Mastodon
+        </Link>
+        <Link
+          href={`/coins/${detail.symbol}/lens`}
+          className="rounded-lg bg-emerald-500/10 px-2.5 py-1 text-[9px] font-medium text-emerald-400 hover:bg-emerald-500/20 transition-colors"
+        >
+          👁️ Lens
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -1269,7 +1338,7 @@ export default function CoinDetailPage() {
               )}
 
               {/* ── TRUST TAB ── */}
-              {activeTab === 'trust' && <CommunityTrust detail={detail} vesting={vesting} />}
+              {activeTab === 'trust' && <CommunityTrust detail={detail} />}
             </div>
           </div>
         </div>

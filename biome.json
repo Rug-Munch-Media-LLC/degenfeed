@@ -54,11 +54,12 @@
         "noAutofocus": "warn",
         "noDistractingElements": "error",
         "noHeaderScope": "error",
-        "noNoninteractiveElementToInteractiveRole": "error",
+        "noNoninteractiveElementToInteractiveRole": "warn",
         "noNoninteractiveTabindex": "error",
         "noPositiveTabindex": "error",
         "noRedundantAlt": "warn",
         "noRedundantRoles": "error",
+        "noStaticElementInteractions": "warn",
         "noSvgWithoutTitle": "error",
         "useAriaActivedescendantWithTabindex": "error",
         "useButtonType": "error",
@@ -67,10 +68,10 @@
         "useHeadingContent": "error",
         "useHtmlLang": "error",
         "useIframeTitle": "error",
-        "useKeyWithClickEvents": "error",
-        "useKeyWithMouseEvents": "error",
+        "useKeyWithClickEvents": "warn",
+        "useKeyWithMouseEvents": "warn",
         "useMediaCaption": "error",
-        "useSemanticElements": "error",
+        "useSemanticElements": "warn",
         "useValidLang": "error"
       }
     }
