@@ -55,7 +55,7 @@ nak key generate
 | Target | Location |
 |--------|----------|
 | Cloudflare Workers | `workers/api` → `wrangler.toml` or Cloudflare Dashboard → `degenfeed-api` → Variables |
-| Local development | `apps/web/.env` (NOT committed — gopass: `rmi/degenfeed/nostr-private-key`) |
+| Local development | `apps/web/.env` (NOT committed — [SECRETS_MANAGER]) |
 | CI/CD | `.forgejo/workflows/deploy.yml` — add as Actions secret |
 
 ### Verification
@@ -111,7 +111,7 @@ gotosocial admin account token create \
 ### Where to Place
 | Target | Location |
 |--------|----------|
-| Production env | gopass: `rmi/degenfeed/gts-access-token` |
+| Production env | [SECRETS_MANAGER] |
 | Dev env | `apps/web/.env` — set `GTS_ACCESS_TOKEN=<new_token>` |
 | Cloudflare Workers | Dashboard → `degenfeed-api` → `GTS_ACCESS_TOKEN` secret |
 
@@ -159,7 +159,7 @@ curl -X POST https://social.degenfeed.xyz/api/v1/apps \
 ```
 
 ### Where to Place
-gopass: `rmi/degenfeed/gts-oauth`
+[SECRETS_MANAGER]
 
 ---
 
@@ -183,7 +183,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ### Where to Place
 | Target | Location |
 |--------|----------|
-| Production | gopass: `rmi/degenfeed/auth-secret` |
+| Production | [SECRETS_MANAGER] |
 | Cloudflare Pages | Environment → `AUTH_SECRET` |
 
 > **⚠️ Note:** Rotating AUTH_SECRET invalidates all existing sessions. Plan for a maintenance window.
@@ -208,7 +208,7 @@ openssl rand -base64 32
 ```
 
 ### Where to Place
-gopass: `rmi/degenfeed/postiz-api-key`
+[SECRETS_MANAGER]
 
 ---
 
@@ -239,7 +239,7 @@ For each service:
 5. Copy new client ID and secret
 
 ### Where to Place
-gopass: `rmi/degenfeed/oauth-<provider>`
+[SECRETS_MANAGER]
 
 ---
 
@@ -258,7 +258,7 @@ Credentials for Pinata IPFS pinning service, used to upload and pin NFT metadata
 4. Copy API Key and Secret Key
 
 ### Where to Place
-gopass: `rmi/degenfeed/pinata`
+[SECRETS_MANAGER]
 
 ---
 
@@ -284,7 +284,7 @@ npx web-push generate-vapid-keys
 ```
 
 ### Where to Place
-gopass: `rmi/degenfeed/vapid-private`
+[SECRETS_MANAGER]
 
 ---
 
@@ -302,7 +302,7 @@ API key for the Neynar Farcaster API, used for hub queries and Farcaster data ac
 3. Replace the existing key
 
 ### Where to Place
-gopass: `rmi/degenfeed/neynar-api-key`
+[SECRETS_MANAGER]
 
 ---
 
@@ -326,7 +326,7 @@ Tokens used for Cloudflare Pages deployment, Workers management, and DNS managem
 | Target | Location |
 |--------|----------|
 | CI/CD | Forgejo → Settings → Actions Secrets → `CLOUDFLARE_API_TOKEN` |
-| Local | gopass: `rmi/degenfeed/cloudflare-api-token` |
+| Local | [SECRETS_MANAGER] |
 
 ### Verification
 ```bash
@@ -374,25 +374,23 @@ Same procedure as GTS_ACCESS_TOKEN (#2 above), but generated against the GoToSoc
 
 ## Secret Storage
 
-All production secrets **MUST** be stored in gopass:
+All production secrets **MUST** be stored in secrets-manager:
 
 ```bash
-# Set up gopass store
-gopass setup
+# Store each rotated key in your secrets manager
+# (replace SECRETS_PATH with your actual secrets manager path)
+secrets set SECRETS_PATH/degenfeed/nostr-private-key
+secrets set SECRETS_PATH/degenfeed/gts-access-token
+secrets set SECRETS_PATH/degenfeed/gts-oauth
+secrets set SECRETS_PATH/degenfeed/auth-secret
+secrets set SECRETS_PATH/degenfeed/postiz-api-key
+secrets set SECRETS_PATH/degenfeed/pinata
+secrets set SECRETS_PATH/degenfeed/vapid-private
+secrets set SECRETS_PATH/degenfeed/neynar-api-key
+secrets set SECRETS_PATH/degenfeed/cloudflare-api-token
 
-# Store each rotated key
-gopass insert rmi/degenfeed/nostr-private-key
-gopass insert rmi/degenfeed/gts-access-token
-gopass insert rmi/degenfeed/gts-oauth
-gopass insert rmi/degenfeed/auth-secret
-gopass insert rmi/degenfeed/postiz-api-key
-gopass insert rmi/degenfeed/pinata
-gopass insert rmi/degenfeed/vapid-private
-gopass insert rmi/degenfeed/neynar-api-key
-gopass insert rmi/degenfeed/cloudflare-api-token
-
-# Verify
-gopass list rmi/degenfeed/
+# Verify all keys are stored
+secrets list SECRETS_PATH/degenfeed/
 ```
 
 After rotation, **DO NOT** commit `.env` files with real values. The `.lefthook.yml` pre-commit hook blocks `.env` files automatically.
@@ -405,7 +403,7 @@ After rotating any key, run:
 
 ```bash
 # 1. Full gitleaks scan
-cd /srv/work/repos/degenfeed-web && gitleaks detect --no-git --config .gitleaks.toml -v
+cd /path/to/degenfeed-web && gitleaks detect --no-git --config .gitleaks.toml -v
 
 # 2. Full gitleaks scan on Elk app (if applicable)
 cd /root/degenfeed && gitleaks detect --no-git -v
@@ -414,7 +412,7 @@ cd /root/degenfeed && gitleaks detect --no-git -v
 # (Specific verification commands listed per key above)
 
 # 4. Check that dev env works
-cd /srv/work/repos/degenfeed-web && lefthook run pre-commit
+cd /path/to/degenfeed-web && lefthook run pre-commit
 
 # 5. Commit and push
 git add -A && git commit -m "chore(security): rotate <key-name>" && git push
