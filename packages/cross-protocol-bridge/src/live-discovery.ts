@@ -112,22 +112,6 @@ export interface LiveHubFilter {
   streamType?: UnifiedLiveStream['streamType'];
 }
 
-const _PROTOCOL_CONFIG: Record<string, { icon: string; label: string }> = {
-  peertube: { icon: '📺', label: 'PeerTube' },
-  owncast: { icon: '📡', label: 'Owncast' },
-  livepeer: { icon: '🎬', label: 'Livepeer' },
-  twitch: { icon: '📹', label: 'Twitch' },
-  kick: { icon: '🦵', label: 'Kick' },
-  youtube: { icon: '▶️', label: 'YouTube' },
-  farcaster: { icon: '🏰', label: 'Farcaster' },
-  nostr: { icon: '⚡', label: 'Nostr' },
-  lens: { icon: '🔍', label: 'Lens' },
-  zora: { icon: '🎨', label: 'Zora' },
-  bluesky: { icon: '☁️', label: 'Bluesky' },
-  mastodon: { icon: '🐘', label: 'Mastodon' },
-  twitter: { icon: '🐦', label: 'Twitter/X' },
-};
-
 // ─── Aggregator ─────────────────────────────────────────────────────────
 
 /**
@@ -231,9 +215,10 @@ export async function aggregateLiveHub(filter: LiveHubFilter = {}): Promise<Unif
 
 async function fetchPeerTubeLive(filter: LiveHubFilter): Promise<UnifiedLiveStream[]> {
   try {
+    // @ts-expect-error - @degenfeed/peertube-provider is lazy optional peer dependency
     const { fetchPeerTubeVideos } = await import('@degenfeed/peertube-provider');
     const result = await fetchPeerTubeVideos({ isLive: true, limit: filter.limit ?? 50 });
-    return result.data.map((video) => ({
+    return result.data.map((video: Record<string, any>) => ({
       id: `peertube:${video.uuid}`,
       title: video.name,
       description: video.shortDescription ?? '',
@@ -305,11 +290,12 @@ async function fetchNostrLive(filter: LiveHubFilter): Promise<UnifiedLiveStream[
 
 async function fetchZoraLiveMints(filter: LiveHubFilter): Promise<UnifiedLiveStream[]> {
   try {
+    // @ts-expect-error - @degenfeed/zora-sdk/live-mint is lazy optional peer dependency
     const { fetchZoraLiveMints, normalizeZoraLiveMint } = await import(
       '@degenfeed/zora-sdk/live-mint'
     );
     const mints = await fetchZoraLiveMints({ limit: filter.limit ?? 20 });
-    return mints.map((mint) => {
+    return mints.map((mint: Record<string, any>) => {
       const normalized = normalizeZoraLiveMint(mint);
       return {
         id: normalized.id,

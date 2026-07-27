@@ -18,7 +18,7 @@
  */
 
 import { type NextRequest, NextResponse } from 'next/server';
-import { proxyPost } from '../../../_proxy';
+import { proxyPost } from '../../_proxy';
 
 export const dynamic = 'force-dynamic';
 

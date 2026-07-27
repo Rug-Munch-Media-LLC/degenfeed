@@ -9,8 +9,8 @@
  * @module @degenfeed/bluesky-sdk/atproto-feeds
  */
 
-import { DEFAULT_USER_AGENT, PDS_DEGENFEED_URL } from './index';
 import type { CrossAppContent } from './atproto-directory';
+import { DEFAULT_USER_AGENT, PDS_DEGENFEED_URL } from './index';
 
 // ─── Types ─────────────────────────────────────────────────────────────
 
@@ -50,14 +50,20 @@ export interface FeedSkeletonResponse {
 
 export const DEGENFEED_FEED_GENERATOR_DID = 'did:web:feeds.degenfeed.xyz';
 export const DEGENFEED_FEED_HANDLE = 'feeds.degenfeed.xyz';
-export const DEGENFEED_FEED_CRYPTO_URI = 'at://did:web:feeds.degenfeed.xyz/app.bsky.feed.generator/degenfeed-crypto';
-export const DEGENFEED_FEED_TRENDING_URI = 'at://did:web:feeds.degenfeed.xyz/app.bsky.feed.generator/degenfeed-trending';
-export const DEGENFEED_FEED_CROSSPROTOCOL_URI = 'at://did:web:feeds.degenfeed.xyz/app.bsky.feed.generator/degenfeed-crossproto';
+export const DEGENFEED_FEED_CRYPTO_URI =
+  'at://did:web:feeds.degenfeed.xyz/app.bsky.feed.generator/degenfeed-crypto';
+export const DEGENFEED_FEED_TRENDING_URI =
+  'at://did:web:feeds.degenfeed.xyz/app.bsky.feed.generator/degenfeed-trending';
+export const DEGENFEED_FEED_CROSSPROTOCOL_URI =
+  'at://did:web:feeds.degenfeed.xyz/app.bsky.feed.generator/degenfeed-crossproto';
 
 export const FEED_DESCRIPTIONS: Record<DegenFeedType, string> = {
-  crypto: 'Crypto-curated content on AT Protocol — market analysis, DeFi, NFT drops, on-chain alpha curated by DegenFeed',
-  trending: 'Trending content across AT Protocol — what\'s hot right now in the decentralized social web',
-  'cross-protocol': 'Cross-protocol content — Nostr and Farcaster content bridged to AT Protocol. One feed, many networks.',
+  crypto:
+    'Crypto-curated content on AT Protocol — market analysis, DeFi, NFT drops, on-chain alpha curated by DegenFeed',
+  trending:
+    "Trending content across AT Protocol — what's hot right now in the decentralized social web",
+  'cross-protocol':
+    'Cross-protocol content — Nostr and Farcaster content bridged to AT Protocol. One feed, many networks.',
 };
 
 // ─── Mock data for feeds (production connects to real AT Protocol relay) ──
@@ -69,16 +75,37 @@ export const FEED_DESCRIPTIONS: Record<DegenFeedType, string> = {
  * content from across the AT Protocol ecosystem. In production, it
  * uses keyword filtering + ML classification on the firehose.
  */
-export async function generateCryptoFeed(
-  opts: DegenFeedOpts = {},
-): Promise<DegenFeedResponse> {
+export async function generateCryptoFeed(opts: DegenFeedOpts = {}): Promise<DegenFeedResponse> {
   const limit = Math.min(opts.limit || 50, 100);
   const pdsUrl = opts.pdsUrl || PDS_DEGENFEED_URL;
   const cryptoKeywords = [
-    'bitcoin', 'ethereum', 'solana', 'crypto', 'defi', 'nft', 'web3',
-    'blockchain', 'token', 'dao', 'btc', 'eth', 'sol', 'airdrop',
-    'staking', 'yield', 'liquidity', 'pool', 'swap', 'farm',
-    'mint', 'collect', 'art', 'degen', '$', 'trading', 'market',
+    'bitcoin',
+    'ethereum',
+    'solana',
+    'crypto',
+    'defi',
+    'nft',
+    'web3',
+    'blockchain',
+    'token',
+    'dao',
+    'btc',
+    'eth',
+    'sol',
+    'airdrop',
+    'staking',
+    'yield',
+    'liquidity',
+    'pool',
+    'swap',
+    'farm',
+    'mint',
+    'collect',
+    'art',
+    'degen',
+    '$',
+    'trading',
+    'market',
   ];
 
   const items: CrossAppContent[] = [];
@@ -126,12 +153,12 @@ export async function generateCryptoFeed(
             type: 'post',
             author: {
               did: authorDid,
-              handle: (value.author?.handle as string) || authorDid.slice(0, 12),
-              displayName: value.author?.displayName as string || undefined,
+              handle: ((value.author as any)?.handle as string) || authorDid.slice(0, 12),
+              displayName: ((value.author as any)?.displayName as string) || undefined,
             },
             text: text.slice(0, 500),
             url: `https://bsky.app/profile/${authorDid}/post/${rkey}`,
-            publishedAt: value.createdAt as string || new Date().toISOString(),
+            publishedAt: (value.createdAt as string) || new Date().toISOString(),
             badgeColor: '#22C55E', // DegenFeed green badge
           });
         }
@@ -162,9 +189,7 @@ export async function generateCryptoFeed(
  * Generate the DegenFeed trending feed.
  * Shows highest-engagement content across AT Protocol apps.
  */
-export async function generateTrendingFeed(
-  opts: DegenFeedOpts = {},
-): Promise<DegenFeedResponse> {
+export async function generateTrendingFeed(opts: DegenFeedOpts = {}): Promise<DegenFeedResponse> {
   const limit = Math.min(opts.limit || 50, 100);
   const pdsUrl = opts.pdsUrl || PDS_DEGENFEED_URL;
   const items: CrossAppContent[] = [];
@@ -193,56 +218,67 @@ export async function generateTrendingFeed(
       };
       if (!data.records) return [];
 
-      const appKey = collection === 'app.bsky.feed.post' ? 'bluesky'
-        : collection === 'com.whtwnd.blog.entry' ? 'whitewind'
-        : 'frontpage';
+      const appKey =
+        collection === 'app.bsky.feed.post'
+          ? 'bluesky'
+          : collection === 'com.whtwnd.blog.entry'
+            ? 'whitewind'
+            : 'frontpage';
 
-      const appName = collection === 'app.bsky.feed.post' ? 'Bluesky'
-        : collection === 'com.whtwnd.blog.entry' ? 'WhiteWind'
-        : 'Frontpage';
+      const appName =
+        collection === 'app.bsky.feed.post'
+          ? 'Bluesky'
+          : collection === 'com.whtwnd.blog.entry'
+            ? 'WhiteWind'
+            : 'Frontpage';
 
-      const contentType = collection === 'app.bsky.feed.post' ? 'post' as const
-        : collection === 'com.whtwnd.blog.entry' ? 'article' as const
-        : 'link' as const;
+      const contentType =
+        collection === 'app.bsky.feed.post'
+          ? ('post' as const)
+          : collection === 'com.whtwnd.blog.entry'
+            ? ('article' as const)
+            : ('link' as const);
 
-      return data.records.map((record): CrossAppContent | null => {
-        try {
-          const value = record.value;
-          const uriParts = record.uri.split('/');
-          const rkey = uriParts[uriParts.length - 1] || '';
-          const authorDid = uriParts[2] || '';
-          const text = (value.text as string) || (value.content as string) || '';
+      return data.records
+        .map((record): CrossAppContent | null => {
+          try {
+            const value = record.value;
+            const uriParts = record.uri.split('/');
+            const rkey = uriParts[uriParts.length - 1] || '';
+            const authorDid = uriParts[2] || '';
+            const text = (value.text as string) || (value.content as string) || '';
 
-          // Calculate a trending score based on engagement
-          const likes = (value.likeCount as number) || (value.likes as number) || 0;
-          const reposts = (value.repostCount as number) || (value.reposts as number) || 0;
-          const replies = (value.replyCount as number) || (value.replies as number) || 0;
-          const trendingScore = likes + reposts * 2 + replies * 3;
+            // Calculate a trending score based on engagement
+            const likes = (value.likeCount as number) || (value.likes as number) || 0;
+            const reposts = (value.repostCount as number) || (value.reposts as number) || 0;
+            const replies = (value.replyCount as number) || (value.replies as number) || 0;
+            const trendingScore = likes + reposts * 2 + replies * 3;
 
-          // Skip items with no engagement
-          if (trendingScore === 0) return null;
+            // Skip items with no engagement
+            if (trendingScore === 0) return null;
 
-          return {
-            id: record.cid,
-            uri: record.uri,
-            sourceApp: appKey,
-            sourceAppName: appName,
-            type: contentType,
-            author: {
-              did: authorDid,
-              handle: (value.author?.handle as string) || authorDid.slice(0, 12),
-            },
-            title: value.title as string || undefined,
-            text: text.slice(0, 500),
-            url: `https://bsky.app/profile/${authorDid}/post/${rkey}`,
-            publishedAt: value.createdAt as string || new Date().toISOString(),
-            metrics: { likes, reposts, replies },
-            badgeColor: '#F59E0B', // Amber trending badge
-          };
-        } catch {
-          return null;
-        }
-      }).filter((item): item is CrossAppContent => item !== null);
+            return {
+              id: record.cid,
+              uri: record.uri,
+              sourceApp: appKey,
+              sourceAppName: appName,
+              type: contentType,
+              author: {
+                did: authorDid,
+                handle: ((value.author as any)?.handle as string) || authorDid.slice(0, 12),
+              },
+              title: (value.title as string) || undefined,
+              text: text.slice(0, 500),
+              url: `https://bsky.app/profile/${authorDid}/post/${rkey}`,
+              publishedAt: (value.createdAt as string) || new Date().toISOString(),
+              metrics: { likes, reposts, replies },
+              badgeColor: '#F59E0B', // Amber trending badge
+            };
+          } catch {
+            return null;
+          }
+        })
+        .filter((item): item is CrossAppContent => item !== null);
     } catch {
       return [];
     }
@@ -257,8 +293,10 @@ export async function generateTrendingFeed(
 
   // Sort by engagement score (approximate trending)
   items.sort((a, b) => {
-    const scoreA = (a.metrics?.likes || 0) + (a.metrics?.reposts || 0) * 2 + (a.metrics?.replies || 0) * 3;
-    const scoreB = (b.metrics?.likes || 0) + (b.metrics?.reposts || 0) * 2 + (b.metrics?.replies || 0) * 3;
+    const scoreA =
+      (a.metrics?.likes || 0) + (a.metrics?.reposts || 0) * 2 + (a.metrics?.replies || 0) * 3;
+    const scoreB =
+      (b.metrics?.likes || 0) + (b.metrics?.reposts || 0) * 2 + (b.metrics?.replies || 0) * 3;
     return scoreB - scoreA;
   });
 
@@ -364,10 +402,7 @@ export async function generateCrossProtocolFeed(
  * Build the feed skeleton response for AT Protocol feed generator protocol.
  * Converts DegenFeed items to AT Protocol skeleton format.
  */
-export function toFeedSkeleton(
-  response: DegenFeedResponse,
-  cursor?: string,
-): FeedSkeletonResponse {
+export function toFeedSkeleton(response: DegenFeedResponse, cursor?: string): FeedSkeletonResponse {
   return {
     feed: response.feed.map((item) => ({ post: item.uri })),
     cursor: cursor || (response.hasMore ? response.feed[response.feed.length - 1]?.id : undefined),
@@ -377,9 +412,7 @@ export function toFeedSkeleton(
 /**
  * Main dispatch: generate any DegenFeed type.
  */
-export async function generateDegenFeed(
-  opts: DegenFeedOpts = {},
-): Promise<DegenFeedResponse> {
+export async function generateDegenFeed(opts: DegenFeedOpts = {}): Promise<DegenFeedResponse> {
   const feedType = opts.feedType || 'crypto';
 
   switch (feedType) {

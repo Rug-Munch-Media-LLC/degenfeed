@@ -234,7 +234,11 @@ export class PdsAccountClient {
    * maintains a log of DID document operations and provides
    * the authoritative DID document for each user.
    */
-  private async createPlcDid(plcUrl: string, handle: string, recoveryKey: string): Promise<string> {
+  private async createPlcDid(
+    plcUrl: string,
+    handle: string,
+    _recoveryKey: string,
+  ): Promise<string> {
     // Generate a signing key pair for the DID document
     const signingKey = await this.generateKey();
     const rotationKey = await this.generateKey();

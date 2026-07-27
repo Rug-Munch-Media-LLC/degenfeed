@@ -273,6 +273,7 @@ export class CrossProtocolRouter {
     toAddress: string,
     plaintext: string,
   ): Promise<string> {
+    // @ts-expect-error - @degenfeed/crypto is a lazy optional peer dependency
     const crypto = await import('@degenfeed/crypto');
     if (!(await crypto.hasKeyBundle(env, fromAddress)))
       await crypto.generateKeyBundle(env, fromAddress);
@@ -289,6 +290,7 @@ export class CrossProtocolRouter {
     encryptedBlob: string,
   ): Promise<string | null> {
     try {
+      // @ts-expect-error - @degenfeed/crypto is a lazy optional peer dependency
       const crypto = await import('@degenfeed/crypto');
       const payload = JSON.parse(encryptedBlob);
       const decrypted = await crypto.decryptMessage(env, recipientAddress, senderAddress, payload);

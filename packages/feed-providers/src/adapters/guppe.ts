@@ -13,8 +13,6 @@ import { guessNiches, stripHtml } from '@degenfeed/utils';
 
 const $fetch = globalThis.fetch;
 
-const _GUPPE_INSTANCES = ['https://gup.pe'];
-
 const POPULAR_GROUPS = [
   'fediverse',
   'photography',
@@ -60,7 +58,7 @@ export async function fetchGuppePosts(limit = 10): Promise<UnifiedPost[]> {
           author: {
             id: `guppe:${authorId}`,
             primary: { protocol: 'guppe' as Protocol, id: authorId },
-            handles: { guppe: authorName },
+            handles: { guppe: authorName } as any,
             displayName: authorName,
             bio: '',
             avatarUrl: '',

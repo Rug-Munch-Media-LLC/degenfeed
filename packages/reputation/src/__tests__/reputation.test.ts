@@ -40,9 +40,9 @@ describe('Reputation Constants', () => {
   });
 
   it('defines lose rules with negative or zero base amounts', () => {
-    expect(LOSE_RULES['slash:spam'].baseAmount).toBe(-25);
-    expect(LOSE_RULES['slash:report'].baseAmount).toBe(-10);
-    expect(LOSE_RULES['slash:ban'].baseAmount).toBe(0);
+    expect(LOSE_RULES['slash:spam']!.baseAmount).toBe(-25);
+    expect(LOSE_RULES['slash:report']!.baseAmount).toBe(-10);
+    expect(LOSE_RULES['slash:ban']!.baseAmount).toBe(0);
   });
 
   it('has tier labels with icons for all tiers', () => {
@@ -50,9 +50,9 @@ describe('Reputation Constants', () => {
     expect(tiers).toHaveLength(7);
     for (const tier of tiers) {
       expect(TIER_LABELS[tier]).toBeDefined();
-      expect(TIER_LABELS[tier].icon).toBeTruthy();
-      expect(TIER_LABELS[tier].label).toBeTruthy();
-      expect(TIER_LABELS[tier].minRep).toBeGreaterThanOrEqual(0);
+      expect(TIER_LABELS[tier]!.icon).toBeTruthy();
+      expect(TIER_LABELS[tier]!.label).toBeTruthy();
+      expect(TIER_LABELS[tier]!.minRep).toBeGreaterThanOrEqual(0);
     }
   });
 
@@ -60,7 +60,7 @@ describe('Reputation Constants', () => {
     const tiers = Object.keys(TIER_THRESHOLDS);
     for (const tier of tiers) {
       expect(TIER_BENEFITS[tier]).toBeDefined();
-      expect(typeof TIER_BENEFITS[tier].enhancedDiscovery).toBe('boolean');
+      expect(typeof TIER_BENEFITS[tier]!.enhancedDiscovery).toBe('boolean');
     }
   });
 

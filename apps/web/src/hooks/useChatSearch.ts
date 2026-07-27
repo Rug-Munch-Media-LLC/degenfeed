@@ -58,7 +58,7 @@ export function renderHighlightedContent(
   content: string,
 ): Array<{ text: string; highlighted: boolean }> {
   const parts: Array<{ text: string; highlighted: boolean }> = [];
-  const regex = /<<hl>>(.*?)<</hl>>/g;
+  const regex = /<<hl>>(.*?)<<\/hl>>/g;
   let lastIndex = 0;
   let match: RegExpExecArray | null;
 

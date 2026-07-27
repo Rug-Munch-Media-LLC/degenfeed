@@ -199,15 +199,6 @@ export async function aggregateUnifiedShorts(
     fetchYouTubeShorts(filter).catch(() => []),
   ]);
 
-  const _sourceLabels: Record<string, string> = {
-    farcaster: 'Farcaster',
-    zora: 'Zora',
-    lens: 'Lens',
-    nostr: 'Nostr',
-    peertube: 'PeerTube',
-    youtube: 'YouTube',
-  };
-
   for (const result of results) {
     if (result.status === 'fulfilled') {
       const shorts = result.value;
@@ -235,8 +226,8 @@ export async function aggregateUnifiedShorts(
   const categoryFiltered = filter.category
     ? filtered.filter(
         (s) =>
-          s.tags.some((t) => t.toLowerCase() === filter.category?.toLowerCase()) ||
-          s.title.toLowerCase().includes(filter.category?.toLowerCase()),
+          s.tags.some((t) => t.toLowerCase() === (filter.category ?? '').toLowerCase()) ||
+          s.title.toLowerCase().includes((filter.category ?? '').toLowerCase()),
       )
     : filtered;
 
@@ -258,7 +249,7 @@ export async function aggregateUnifiedShorts(
   return {
     shorts: annotated,
     sources: sourceCounts,
-    cursor: limited.length >= limit ? limited[limit - 1]?.id : null,
+    cursor: limited.length >= limit ? (limited[limit - 1]?.id ?? null) : null,
     hasMore: categoryFiltered.length > limit,
     aggregatedAt: Date.now(),
     aggregationTimeMs,
@@ -279,7 +270,7 @@ async function fetchZoraShorts(filter: UnifiedShortsFilter): Promise<UnifiedShor
       '@degenfeed/zora-sdk/live-mint'
     );
     const nfts = await fetchZoraShortVideos({ limit: filter.limit ?? 20 });
-    return nfts.map((nft) => {
+    return nfts.map((nft: Record<string, any>) => {
       const normalized = normalizeZoraShort(nft);
       return {
         id: normalized.id,
@@ -313,9 +304,8 @@ async function fetchZoraShorts(filter: UnifiedShortsFilter): Promise<UnifiedShor
 async function fetchLensShorts(_filter: UnifiedShortsFilter): Promise<UnifiedShort[]> {
   // Lens shorts come from publications with video media
   try {
-    const { detectVideoPublication, normalizeLensVideo } = await import(
-      '@degenfeed/lens-sdk/video'
-    );
+    // @ts-expect-error - @degenfeed/lens-sdk/video is lazy optional peer dependency
+    await import('@degenfeed/lens-sdk/video');
     // Would use LensClient to fetch publications
     return [];
   } catch {
@@ -365,9 +355,10 @@ async function fetchNostrShorts(filter: UnifiedShortsFilter): Promise<UnifiedSho
 
 async function fetchPeerTubeShorts(filter: UnifiedShortsFilter): Promise<UnifiedShort[]> {
   try {
+    // @ts-expect-error - @degenfeed/shorts-provider is lazy optional peer dependency
     const { fetchPeerTubeShorts } = await import('@degenfeed/shorts-provider');
     const shorts = await fetchPeerTubeShorts(filter.limit ?? 20);
-    return shorts.map((s) => ({
+    return shorts.map((s: Record<string, any>) => ({
       id: s.id,
       type: 'short' as const,
       title: s.title,
@@ -398,9 +389,10 @@ async function fetchPeerTubeShorts(filter: UnifiedShortsFilter): Promise<Unified
 
 async function fetchYouTubeShorts(filter: UnifiedShortsFilter): Promise<UnifiedShort[]> {
   try {
+    // @ts-expect-error - @degenfeed/shorts-provider is lazy optional peer dependency
     const { fetchYouTubeShorts } = await import('@degenfeed/shorts-provider');
     const shorts = await fetchYouTubeShorts(filter.limit ?? 20);
-    return shorts.map((s) => ({
+    return shorts.map((s: Record<string, any>) => ({
       id: s.id,
       type: 'short' as const,
       title: s.title,

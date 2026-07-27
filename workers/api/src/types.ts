@@ -69,6 +69,8 @@ export interface Env {
   SENTRY_DSN?: string;
   /** API key for MeiliSearch (production requires Authorization: Bearer <key>) */
   MEILI_SEARCH_KEY?: string;
+  /** MeiliSearch server URL (default: http://127.0.0.1:7700) */
+  MEILI_URL?: string;
   /** Optional Postmark server token for transactional email delivery */
   POSTMARK_SERVER_TOKEN?: string;
   /** XMTP private key for XMTP transport delivery */

@@ -193,14 +193,12 @@ export class BlueskyProvider implements FeedProvider {
   readonly protocol: Protocol = 'bluesky';
   readonly schema: SchemaGuard = isBskyPostView;
   private readonly primaryUrl: string;
-  private readonly fallbackUrl: string;
   private readonly accessJwt?: string;
   private readonly curatedActors: string[];
   private readonly breaker = new CircuitBreaker('bluesky');
 
   constructor(options: BlueskyProviderOptions = {}) {
     this.primaryUrl = options.baseUrl || BSKY_PUBLIC_URL;
-    this.fallbackUrl = options.fallbackUrl || BSKY_SOCIAL_URL;
     this.accessJwt = options.accessJwt;
     this.curatedActors = options.curatedActors ?? CURATED_BSKY_ACTORS;
   }

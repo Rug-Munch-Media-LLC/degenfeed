@@ -157,7 +157,6 @@ export class PixelfedProvider implements FeedProvider {
         }
 
         // ── 2. Federated Pixelfed instances public timelines ──
-        const _fedStart = performance.now();
         const fedResults = await Promise.allSettled(
           this.fallbackUrls.map(async (url) => {
             try {

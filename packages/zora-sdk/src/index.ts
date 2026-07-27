@@ -111,7 +111,6 @@ export type {
   NFTSalesHistory,
   ProtocolRewardsInfo,
   TipEvent,
-  ZoraEarnings,
 } from './earnings';
 export { ZoraEarnings } from './earnings';
 // ─── Zora 2026 Coins Protocol (ETH pair — ZORA token stripped) ─────────────
@@ -132,7 +131,6 @@ export type {
   PricePoint,
   TradeResult,
   TrendingQuery,
-  ZoraMarketplace,
 } from './marketplace';
 export { ZoraMarketplace } from './marketplace';
 export type {
@@ -142,7 +140,6 @@ export type {
   UploadMetadataResult,
   ZoraCollectionConfig,
   ZoraNFTMintConfig,
-  ZoraNFTMinter,
 } from './nft-mint';
 export { ZoraNFTMinter } from './nft-mint';
 export type { FeeSplit } from './platform-fees';
@@ -212,7 +209,7 @@ export type {
   MintVideoOptions,
   PinataConfig,
   TipResult,
-  TrendingQuery,
+  TrendingQuery as VideoTrendingQuery,
   VideoMetadata,
   VideoUploadResult,
   ZoraVideoNFT,
@@ -243,7 +240,6 @@ export {
  * This linear function is kept for backward compatibility.
  */
 export function getCurrentPrice(totalSupplyIssued: bigint): bigint {
-  const _TOTAL_SUPPLY = 1_000_000_000_000_000_000n;
   const GRADUATION_SUPPLY = 800_000_000_000_000_000n;
   const MIN_PRICE = 1n;
   const MAX_PRICE = 1_000n;

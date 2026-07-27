@@ -270,7 +270,7 @@ export class ZoraEarnings {
     }
 
     try {
-      const { encodeFunctionData, formatEther } = await import('viem');
+      const { encodeFunctionData } = await import('viem');
 
       const data = encodeFunctionData({
         abi: [
@@ -320,7 +320,7 @@ export class ZoraEarnings {
       this.getTipData(creatorAddress),
     ]);
 
-    const { formatEther, parseEther } = await import('viem');
+    const { formatEther: _formatEther, parseEther: _parseEther } = await import('viem');
 
     // Sum up totals from indexer data
     const primaryTotal = primarySales.totalEth;
@@ -420,7 +420,6 @@ export class ZoraEarnings {
     const { formatEther } = await import('viem');
 
     const platformFee = (params.amountWei * PLATFORM_FEE_BPS) / 10000n;
-    const creatorNet = params.amountWei - platformFee;
 
     const tip: TipEvent = {
       id: `tip:${params.tipper}:${Date.now()}`,
@@ -535,7 +534,7 @@ export class ZoraEarnings {
     }
   }
 
-  private async getSecondaryRoyaltiesData(creatorAddress: Address): Promise<EarningsSource> {
+  private async getSecondaryRoyaltiesData(_creatorAddress: Address): Promise<EarningsSource> {
     try {
       const res = await fetch(`${this.indexerUrl}/api/sales?limit=200`, {
         signal: AbortSignal.timeout(5000),

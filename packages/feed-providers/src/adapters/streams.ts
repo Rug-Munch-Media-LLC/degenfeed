@@ -43,7 +43,7 @@ export async function fetchStreamsPosts(limit = 10): Promise<UnifiedPost[]> {
             author: {
               id: `streams:${String(acct?.id || item.id)}`,
               primary: { protocol: 'streams' as Protocol, id: String(acct?.acct || '') },
-              handles: { streams: String(acct?.acct || '') },
+              handles: { streams: String(acct?.acct || '') } as any,
               displayName: String(acct?.display_name || acct?.username || 'Streams User'),
               bio: stripHtml(String(acct?.note || '')),
               avatarUrl: String(acct?.avatar || ''),
@@ -97,7 +97,7 @@ export async function fetchStreamsPosts(limit = 10): Promise<UnifiedPost[]> {
             author: {
               id: `streams:rss:${inst}`,
               primary: { protocol: 'streams' as Protocol, id: item.author || inst },
-              handles: { streams: item.author || null },
+              handles: { streams: item.author || null } as any,
               displayName: item.author || new URL(inst).hostname,
               bio: '',
               avatarUrl: '',

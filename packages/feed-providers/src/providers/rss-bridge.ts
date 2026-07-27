@@ -92,8 +92,7 @@ export class RssBridgeProvider implements FeedProvider {
         `rss-bridge:${feedUrl.slice(0, 64)}`,
       );
       return { ok: res.ok, body: await res.text(), status: res.status };
-    } catch (err) {
-      const _message = err instanceof Error ? err.message : 'unknown';
+    } catch {
       return { ok: false, body: '', status: 0 };
     }
   }

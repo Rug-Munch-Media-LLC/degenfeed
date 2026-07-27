@@ -1,48 +1,45 @@
 import { type NextRequest, NextResponse } from 'next/server';
-import { proxyGet } from '../_proxy';
 
 export const dynamic = 'force-dynamic';
 
 /**
  * Unified cross-protocol search endpoint.
  *
- * GET /api/search?q=bitcoin&sources=mastodon,bluesky,nostr&page=1&limit=20
+ * Proxies search requests to the search backend (bridge or Hono worker),
+ * mapping frontend parameter names to backend parameter names.
  *
- * Parameters:
- *   q       - Search query (required)
- *   sources - Comma-separated protocol filter (optional, default: all)
- *   page    - Page number (optional, default: 1)
- *   limit   - Results per page (optional, default: 20, max: 100)
+ * Frontend sends: q, limit, protocols
+ * Backend expects: q, limit, sources
  *
- * Returns results from ALL protocols in a unified format with
- * cross-protocol deduplication.
+ * GET /api/search?q=bitcoin&limit=20&protocols=mastodon,bluesky
  */
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const q = searchParams.get('q') || '';
-    const sources = searchParams.get('sources') || 'all';
-    const page = searchParams.get('page') || '1';
     const limit = searchParams.get('limit') || '20';
+    const page = searchParams.get('page') || '1';
 
-    // Forward to worker/bridge which handles Meilisearch + fallback
+    // Accept both 'protocols' (frontend) and 'sources' (backend) params
+    const protocols = searchParams.get('sources') || searchParams.get('protocols') || 'all';
+
+    if (!q || q.length < 2) {
+      return NextResponse.json(
+        { error: 'Search query is required (min 2 characters)' },
+        { status: 400 },
+      );
+    }
+
     const workerUrl =
       process.env.WORKER_URL ||
       process.env.NEXT_PUBLIC_WORKER_URL ||
       process.env.NEXT_PUBLIC_API_BASE ||
+      process.env.NEXT_PUBLIC_API_URL ||
       'http://localhost:8787';
 
-    const targetUrl = `${workerUrl}/api/search?q=${encodeURIComponent(q)}&sources=${encodeURIComponent(sources)}&page=${encodeURIComponent(page)}&limit=${encodeURIComponent(limit)}`;
+    // Forward to the backend with correctly mapped parameter names
+    const targetUrl = `${workerUrl}/api/search?q=${encodeURIComponent(q)}&sources=${encodeURIComponent(protocols)}&page=${encodeURIComponent(page)}&limit=${encodeURIComponent(limit)}`;
 
-    // Try actual proxy first
-    try {
-      const res = await proxyGet('/api/search', request);
-      if (res.ok) return res;
-    } catch {
-      // Fall through
-    }
-
-    // Fallback: direct fetch to bridge
     const res = await fetch(targetUrl, {
       headers: {
         'Content-Type': 'application/json',
@@ -53,7 +50,7 @@ export async function GET(request: NextRequest) {
     });
 
     if (!res.ok) {
-      throw new Error(`Bridge returned ${res.status}`);
+      throw new Error(`Backend returned ${res.status}`);
     }
 
     const data = await res.json();

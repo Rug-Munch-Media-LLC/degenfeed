@@ -350,9 +350,9 @@ export class ChatDiscovery {
             protocol: 'matrix', // Cross-protocol rooms show as Matrix
             network: 'degenfeed',
             identifier: room.id,
-            memberCount: room.memberCount,
+            memberCount: (room as any).memberCount ?? room.members.length,
             activityScore: 50,
-            tags: room.protocols,
+            tags: room.activeProtocols as unknown as [string, ...string[]],
             curated: false,
             nsfw: false,
           });

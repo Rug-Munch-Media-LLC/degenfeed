@@ -12,14 +12,7 @@ import type { Protocol, UnifiedPost } from '@degenfeed/types';
 
 const $fetch = globalThis.fetch;
 
-const _ENS_GATEWAY = 'https://euc.xyz';
 const ETH_RPC = 'https://cloudflare-eth.com/v1/mainnet';
-
-const _ENS_RESOLVER_ABI = [
-  'function text(bytes32 node, string key) view returns (string)',
-  'function addr(bytes32 node) view returns (address)',
-  'function name(bytes32 node) view returns (string)',
-] as const;
 
 function namehash(name: string): string {
   // Simple ENS namehash computation

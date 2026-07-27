@@ -21,14 +21,6 @@ function isNumber(v: unknown): v is number {
   return typeof v === 'number';
 }
 
-function _optionalString(v: unknown): v is string | undefined {
-  return v === undefined || typeof v === 'string';
-}
-
-function _optionalNumber(v: unknown): v is number | undefined {
-  return v === undefined || typeof v === 'number';
-}
-
 // ─── Nostr ────────────────────────────────────────────────────────
 
 interface NostrEventRaw {

@@ -11,6 +11,7 @@ export type ShortVideoSource =
   | 'zora'
   | 'loops'
   | 'tiktok'
+  | 'tiktok_rss'
   | 'instagram'
   | 'bluesky';
 

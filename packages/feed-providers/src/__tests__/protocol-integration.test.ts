@@ -19,8 +19,8 @@ import { MastodonProvider } from '../providers/mastodon';
 import { NostrProvider } from '../providers/nostr';
 import { PixelfedProvider } from '../providers/pixelfed';
 import { RedditProvider } from '../providers/reddit';
-import { RssProvider } from '../providers/rss';
 import type {} from '../providers/rmi-databus';
+import { RssProvider } from '../providers/rss';
 import { isAvailable, ThreadsProvider } from '../providers/threads';
 import { isBskyPostView } from '../schemas';
 
@@ -138,14 +138,26 @@ describe('Protocol Integration: Nostr', () => {
     globalThis.WebSocket = vi.fn().mockImplementation(() => ({
       close: vi.fn(),
       send: vi.fn(),
-      set onopen(fn: (() => void) | null) { onopen = fn; },
-      get onopen() { return onopen; },
+      set onopen(fn: (() => void) | null) {
+        onopen = fn;
+      },
+      get onopen() {
+        return onopen;
+      },
       set onmessage(_: ((e: MessageEvent) => void) | null) {},
-      get onmessage() { return null; },
-      set onerror(fn: (() => void) | null) {},
-      get onerror() { return null; },
-      set onclose(fn: (() => void) | null) { onclose = fn; },
-      get onclose() { return onclose; },
+      get onmessage() {
+        return null;
+      },
+      set onerror(_fn: (() => void) | null) {},
+      get onerror() {
+        return null;
+      },
+      set onclose(fn: (() => void) | null) {
+        onclose = fn;
+      },
+      get onclose() {
+        return onclose;
+      },
     })) as unknown as typeof WebSocket;
 
     (globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
@@ -157,7 +169,8 @@ describe('Protocol Integration: Nostr', () => {
             created_at: Math.floor(Date.now() / 1000) - 3600,
             kind: 1,
             tags: [],
-            content: 'Bitcoin is the soundest money ever created. The blocksize war taught us that staying decentralized is harder than it looks, but worth the tradeoffs. #bitcoin',
+            content:
+              'Bitcoin is the soundest money ever created. The blocksize war taught us that staying decentralized is harder than it looks, but worth the tradeoffs. #bitcoin',
             sig: 'sig1',
           },
           {
@@ -166,7 +179,8 @@ describe('Protocol Integration: Nostr', () => {
             created_at: Math.floor(Date.now() / 1000) - 7200,
             kind: 1,
             tags: [['t', 'crypto']],
-            content: 'Just deployed a new smart contract on Solana. The developer experience keeps getting better with every release.',
+            content:
+              'Just deployed a new smart contract on Solana. The developer experience keeps getting better with every release.',
             sig: 'sig2',
           },
         ],
@@ -195,7 +209,9 @@ describe('Protocol Integration: Nostr', () => {
       throw new Error('WebSocket connection failed');
     }) as unknown as typeof WebSocket;
 
-    (globalThis.fetch as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('Connection refused'));
+    (globalThis.fetch as ReturnType<typeof vi.fn>).mockRejectedValue(
+      new Error('Connection refused'),
+    );
     const provider = new NostrProvider({ relays: ['wss://down.relay'] });
     const health = await provider.healthCheck({ timeoutMs: 100 });
     expect(health.healthy).toBe(false);
@@ -253,9 +269,7 @@ describe('Protocol Integration: Farcaster', () => {
   });
 
   it('returns empty when hub returns non-ok status', async () => {
-    (globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
-      mockErrorResponse(503),
-    );
+    (globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(mockErrorResponse(503));
     const provider = new FarcasterProvider({
       hubUrl: 'https://hub.example.com',
       curatedFids: [1],
@@ -284,7 +298,10 @@ describe('Protocol Integration: Bluesky', () => {
               uri: 'at://did:plc:abc/app.bsky.feed.post/1',
               cid: 'bafyabc',
               author: { did: 'did:plc:abc', handle: 'alice.bsky.social', displayName: 'Alice' },
-              record: { text: 'Bluesky is the most promising decentralized protocol right now. The AT Protocol has real advantages over ActivityPub for scalability.', createdAt: now },
+              record: {
+                text: 'Bluesky is the most promising decentralized protocol right now. The AT Protocol has real advantages over ActivityPub for scalability.',
+                createdAt: now,
+              },
               likeCount: 100,
               repostCount: 25,
               replyCount: 10,
@@ -337,12 +354,17 @@ describe('Protocol Integration: Mastodon', () => {
           id: '1001',
           uri: 'https://mastodon.social/@alice/1001',
           created_at: new Date(Date.now() - 3600000).toISOString(),
-          content: '<p>The fediverse is growing faster than ever. Mastodon now has over 2 million monthly active users and the bridge to Threads is bringing even more people into the open social web.</p>',
+          content:
+            '<p>The fediverse is growing faster than ever. Mastodon now has over 2 million monthly active users and the bridge to Threads is bringing even more people into the open social web.</p>',
           visibility: 'public',
           sensitive: false,
           spoiler_text: '',
           media_attachments: [
-            { type: 'image', url: 'https://example.com/img.png', meta: { width: 800, height: 600 } },
+            {
+              type: 'image',
+              url: 'https://example.com/img.png',
+              meta: { width: 800, height: 600 },
+            },
           ],
           tags: [{ name: 'fediverse' }, { name: 'mastodon' }],
           reblogs_count: 15,
@@ -450,7 +472,9 @@ describe('Protocol Integration: RSS', () => {
 
   it('returns empty array for empty feed', async () => {
     (globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
-      mockRssResponse(`<?xml version="1.0"?><rss version="2.0"><channel><title>Empty</title></channel></rss>`),
+      mockRssResponse(
+        `<?xml version="1.0"?><rss version="2.0"><channel><title>Empty</title></channel></rss>`,
+      ),
     );
     const provider = new RssProvider({ feeds: ['https://example.com/empty.xml'] });
     const result = await provider.fetchFeed({ timeoutMs: 500 });
@@ -539,7 +563,8 @@ describe('Protocol Integration: Threads', () => {
             id: 's1',
             uri: 'https://threads.net/@mosseri/post/1',
             created_at: new Date().toISOString(),
-            content: '<p>Threads is now part of the fediverse. This is a big step for open social networking and interoperability between platforms.</p>',
+            content:
+              '<p>Threads is now part of the fediverse. This is a big step for open social networking and interoperability between platforms.</p>',
             visibility: 'public',
             sensitive: false,
             spoiler_text: '',
@@ -603,7 +628,11 @@ describe('Protocol Integration: Pixelfed', () => {
           sensitive: false,
           spoiler_text: '',
           media_attachments: [
-            { type: 'image', url: 'https://example.com/photo.jpg', meta: { width: 1920, height: 1080 } },
+            {
+              type: 'image',
+              url: 'https://example.com/photo.jpg',
+              meta: { width: 1920, height: 1080 },
+            },
           ],
           tags: [{ name: 'Bitcoin2024' }],
           reblogs_count: 5,
@@ -636,7 +665,7 @@ describe('Protocol Integration: Pixelfed', () => {
     expect(result.posts.length).toBeGreaterThan(0);
     expect(result.posts[0]?.protocol).toBe('pixelfed');
     expect(result.posts[0]?.text).toContain('Bitcoin2024');
-    expect(result.posts[0]?.embeds.some(e => e.kind === 'image')).toBe(true);
+    expect(result.posts[0]?.embeds.some((e) => e.kind === 'image')).toBe(true);
   });
 });
 
@@ -666,16 +695,14 @@ describe('Protocol Integration: RMI Databus', () => {
   });
 
   it('rmi-databus provides valid protocol string', async () => {
-    const { default: rmiProvider } = await import('../providers/rmi-databus').catch(() => ({ default: null }));
+    await import('../providers/rmi-databus').catch(() => {});
     // If importable, verify provider interface
     expect(typeof 'rmi-databus').toBe('string');
   });
 
   it('protocol provider handles API responses consistently', async () => {
     // All providers should return valid FeedResult shape
-    (globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
-      mockOkResponse({ data: [] }),
-    );
+    (globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(mockOkResponse({ data: [] }));
 
     const result = await fetch('https://databus.rugmunch.io/api/feed');
     const data = await result.json();

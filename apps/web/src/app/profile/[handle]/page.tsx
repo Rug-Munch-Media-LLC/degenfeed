@@ -1,7 +1,7 @@
 'use client';
 
 import { ErrorBoundary, ReputationBadge } from '@degenfeed/ui';
-import dynamic from 'next/dynamic';
+import nextDynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import {
@@ -17,12 +17,16 @@ import {
 import { useProfile } from '../use-profile';
 
 // Dynamically import podcast & music tab content for route splitting
-const PodcastTabContent = dynamic(() => import('../PodcastTabContent'), {
-  loading: () => <div className="p-4 text-center text-sm text-[var(--color-muted)]">Loading podcasts…</div>,
+const PodcastTabContent = nextDynamic(() => import('../PodcastTabContent'), {
+  loading: () => (
+    <div className="p-4 text-center text-sm text-[var(--color-muted)]">Loading podcasts…</div>
+  ),
 });
 
-const MusicTabContent = dynamic(() => import('../MusicTabContent'), {
-  loading: () => <div className="p-4 text-center text-sm text-[var(--color-muted)]">Loading music…</div>,
+const MusicTabContent = nextDynamic(() => import('../MusicTabContent'), {
+  loading: () => (
+    <div className="p-4 text-center text-sm text-[var(--color-muted)]">Loading music…</div>
+  ),
 });
 
 export const dynamic = 'force-dynamic';

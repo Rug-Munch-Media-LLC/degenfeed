@@ -29,7 +29,7 @@ export const metadata: Metadata = {
   alternates: { canonical: 'https://app.degenfeed.xyz/feed/push' },
 };
 
-export default function Push ProtocolFeedPage() {
+export default function PushProtocolFeedPage() {
   return (
     <>
       <Script id="breadcrumb-push-feed" type="application/ld+json">

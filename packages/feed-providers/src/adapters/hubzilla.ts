@@ -48,7 +48,9 @@ export async function fetchHubzillaPosts(limit = 10): Promise<UnifiedPost[]> {
                 protocol: 'hubzilla' as Protocol,
                 id: String(item.author?.xchan_addr || ''),
               },
-              handles: { hubzilla: String(item.author?.xchan_name || item.author?.name || '') },
+              handles: {
+                hubzilla: String(item.author?.xchan_name || item.author?.name || ''),
+              } as any,
               displayName: String(item.author?.xchan_name || item.author?.name || 'Hubzilla User'),
               bio: stripHtml(String(item.author?.xchan_description || '')),
               avatarUrl: String(
@@ -108,7 +110,7 @@ export async function fetchHubzillaPosts(limit = 10): Promise<UnifiedPost[]> {
             author: {
               id: `hubzilla:mast:${String(acct?.id || item.id)}`,
               primary: { protocol: 'hubzilla' as Protocol, id: String(acct?.acct || '') },
-              handles: { hubzilla: String(acct?.acct || '') },
+              handles: { hubzilla: String(acct?.acct || '') } as any,
               displayName: String(acct?.display_name || 'Hubzilla User'),
               bio: stripHtml(String(acct?.note || '')),
               avatarUrl: String(acct?.avatar || ''),

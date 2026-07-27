@@ -30,6 +30,15 @@ import { fetchYouTubeFeed } from '@degenfeed/youtube-provider';
 export type { UserInterestProfile } from './scorer';
 export { computeShortScore, rankShorts } from './scorer';
 
+import type {
+  FetchShortsOptions,
+  ShortsFeedResult,
+  ShortVideoItem,
+  ShortVideoSource,
+} from './types';
+
+export type { FetchShortsOptions, ShortsFeedResult, ShortVideoItem, ShortVideoSource };
+
 // ─── Source color map ─────────────────────────────────────────────────
 
 export const SOURCE_COLORS: Record<string, string> = {
@@ -41,24 +50,6 @@ export const SOURCE_COLORS: Record<string, string> = {
   direct: '#666666',
   bluesky: '#0085ff',
 };
-
-// ─── Types ────────────────────────────────────────────────────────────────
-
-export type {
-  FetchShortsOptions,
-  ShortsFeedResult,
-  ShortVideoItem,
-  ShortVideoSource,
-} from './types';
-
-export interface FetchShortsOptions {
-  /** Max videos to return (default 20) */
-  limit?: number;
-  /** Comma-separated topic filter */
-  topics?: string[];
-  /** AbortSignal for cancellation */
-  signal?: AbortSignal;
-}
 
 // ─── Constants ────────────────────────────────────────────────────────────
 
@@ -187,11 +178,6 @@ const CRYPTO_TIKTOK_CREATORS = [
 ];
 
 /**
- * TikTok oEmbed endpoint — returns embed metadata for a video URL.
- */
-const _TIKTOK_OEMBED = 'https://www.tiktok.com/oembed';
-
-/**
  * Fetch TikTok shorts from trending crypto creators.
  * Uses TikTok's oEmbed API and RSS bridge feeds.
  */
@@ -268,11 +254,6 @@ const CRYPTO_INSTAGRAM_CREATORS = [
   'defi',
   'nft',
 ];
-
-/**
- * Instagram oEmbed endpoint.
- */
-const _INSTAGRAM_OEMBED = 'https://api.instagram.com/oembed';
 
 /**
  * Fetch Instagram Reels from crypto creators.

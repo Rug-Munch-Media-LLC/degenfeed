@@ -10,8 +10,18 @@ import type {
 export type {
   AlgorithmContext,
   AlgorithmMode,
+  AlgorithmWeights,
+  NicheSelection,
   ProtocolWeights,
   UserAlgorithmPreferences,
+} from './algorithm';
+export {
+  ALL_NICHES,
+  DEFAULT_WEIGHTS,
+  FeedAlgorithm,
+  globalAuditLog,
+  MODE_LABELS,
+  NICHE_LABELS,
 } from './algorithm';
 // FeedAlgorithm class and helper scorers removed in consolidation.
 // Use scorePost() from @degenfeed/ranking instead.

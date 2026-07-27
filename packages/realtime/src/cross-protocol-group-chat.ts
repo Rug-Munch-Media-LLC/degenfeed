@@ -84,10 +84,10 @@ const KV_ROOM_MEMBERS_PREFIX = 'cross-protocol:members:';
 // ─── Cross-Protocol Group Chat ─────────────────────────────────────────────
 
 export class CrossProtocolGroupChat {
-  private transports: ProtocolTransports;
+  private _transports: ProtocolTransports;
 
   constructor() {
-    this.transports = new ProtocolTransports();
+    this._transports = new ProtocolTransports();
   }
 
   /**

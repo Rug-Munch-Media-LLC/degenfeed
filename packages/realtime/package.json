@@ -20,6 +20,9 @@
     "lint": "biome check src/",
     "test": "true"
   },
+  "dependencies": {
+    "@degenfeed/crypto": "workspace:*"
+  },
   "peerDependencies": {
     "react": "^19.0.0"
   },
