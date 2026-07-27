@@ -79,3 +79,4 @@ docs/ENTERPRISE_DEPLOYMENT.md
 htmlcov/
 Thumbs.db
 
+apps/web/playwright-report/
