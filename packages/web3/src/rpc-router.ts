@@ -73,7 +73,7 @@ export function getRpcUrl(chain: Chain): string {
   if (!urls || urls.length === 0) {
     throw new Error(`No RPC URLs configured for chain: ${chain}`);
   }
-  return urls[0];
+  return urls[0]!;
 }
 
 /**
