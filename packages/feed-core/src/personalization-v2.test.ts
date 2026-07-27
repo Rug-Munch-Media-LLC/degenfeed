@@ -2,18 +2,18 @@
  * Tests for Feed Personalization V2
  */
 
-import { describe, it, expect } from 'vitest';
+import type { UnifiedPost } from '@degenfeed/types';
+import { describe, expect, it } from 'vitest';
 import {
+  deserializePersonalizationV2,
   emptyPersonalizationV2Profile,
-  learnFromImplicitSignal,
   learnFromExplicitSignal,
+  learnFromImplicitSignal,
   learnTemporalPreference,
   recordSessionView,
   scorePersonalizationV2,
   serializePersonalizationV2,
-  deserializePersonalizationV2,
 } from './personalization-v2';
-import type { UnifiedPost } from '@degenfeed/types';
 
 function makePost(overrides: Partial<UnifiedPost> = {}): UnifiedPost {
   return {
@@ -37,7 +37,12 @@ function makePost(overrides: Partial<UnifiedPost> = {}): UnifiedPost {
     embeds: [],
     createdAt: Date.now() - 3600000,
     metrics: { likes: 10, reposts: 2, replies: 1, quotes: 0 },
-    engagement: { viewerLiked: false, viewerReposted: false, viewerBookmarked: false, raw: { likes: 10, reposts: 2, replies: 1, quotes: 0 } },
+    engagement: {
+      viewerLiked: false,
+      viewerReposted: false,
+      viewerBookmarked: false,
+      raw: { likes: 10, reposts: 2, replies: 1, quotes: 0 },
+    },
     raw: {},
     niches: ['bitcoin', 'defi'],
     ...overrides,
@@ -99,7 +104,7 @@ describe('PersonalizationV2', () => {
     const post = makePost();
     profile = recordSessionView(profile, post, 10000, Date.now());
     expect(profile.sessionHistory.length).toBe(1);
-    expect(profile.sessionHistory[0].postIds).toContain('test:1');
+    expect(profile.sessionHistory[0]!.postIds).toContain('test:1');
   });
 
   it('computes personalization multiplier', () => {
@@ -119,7 +124,14 @@ describe('PersonalizationV2', () => {
 
   it('serializes and deserializes', () => {
     let profile = emptyPersonalizationV2Profile();
-    profile = learnFromImplicitSignal(profile, makePost({ niches: ['ai'] }), 10000, 0.5, true, Date.now());
+    profile = learnFromImplicitSignal(
+      profile,
+      makePost({ niches: ['ai'] }),
+      10000,
+      0.5,
+      true,
+      Date.now(),
+    );
 
     const serialized = serializePersonalizationV2(profile);
     const deserialized = deserializePersonalizationV2(serialized);

@@ -2,9 +2,13 @@
  * Tests for Content Categorization V3
  */
 
-import { describe, it, expect } from 'vitest';
-import { classifyPost, computeTrendingCategories, CategorizationFeedbackStore } from './categorization-v3';
 import type { UnifiedPost } from '@degenfeed/types';
+import { describe, expect, it } from 'vitest';
+import {
+  CategorizationFeedbackStore,
+  classifyPost,
+  computeTrendingCategories,
+} from './categorization-v3';
 
 function makePost(overrides: Partial<UnifiedPost> = {}): UnifiedPost {
   return {
@@ -29,7 +33,12 @@ function makePost(overrides: Partial<UnifiedPost> = {}): UnifiedPost {
     rootId: undefined,
     createdAt: Date.now() - 3600000,
     metrics: { likes: 10, reposts: 2, replies: 1, quotes: 0 },
-    engagement: { viewerLiked: false, viewerReposted: false, viewerBookmarked: false, raw: { likes: 10, reposts: 2, replies: 1, quotes: 0 } },
+    engagement: {
+      viewerLiked: false,
+      viewerReposted: false,
+      viewerBookmarked: false,
+      raw: { likes: 10, reposts: 2, replies: 1, quotes: 0 },
+    },
     raw: {},
     niches: ['bitcoin'],
     ...overrides,
@@ -45,7 +54,7 @@ describe('classifyPost', () => {
     const result = classifyPost(post);
     expect(result.primary).toBe('bitcoin');
     expect(result.categories.length).toBeGreaterThanOrEqual(1);
-    expect(result.categories[0].confidence).toBeGreaterThan(0);
+    expect(result.categories[0]!.confidence).toBeGreaterThan(0);
   });
 
   it('returns up to 3 categories', () => {
@@ -82,6 +91,7 @@ describe('classifyPost', () => {
         followingCount: 200,
         links: [],
         keys: {},
+        verified: [],
       },
     });
     const result = classifyPost(post);
@@ -105,8 +115,8 @@ describe('classifyPost', () => {
       niches: ['solana', 'defi'],
     });
     const result = classifyPost(post);
-    expect(result.categories[0].signals.length).toBeGreaterThan(0);
-    expect(result.categories[0].signals.some((s) => s.startsWith('niche:'))).toBe(true);
+    expect(result.categories[0]!.signals.length).toBeGreaterThan(0);
+    expect(result.categories[0]!.signals.some((s) => s.startsWith('niche:'))).toBe(true);
   });
 
   it('falls back to general for uncategorized content', () => {
@@ -130,8 +140,8 @@ describe('computeTrendingCategories', () => {
     ];
     const trends = computeTrendingCategories(classified as any);
     expect(trends.length).toBeGreaterThanOrEqual(3);
-    expect(trends[0].slug).toBe('bitcoin');
-    expect(trends[0].postCount).toBe(2);
+    expect(trends[0]!.slug).toBe('bitcoin');
+    expect(trends[0]!.postCount).toBe(2);
   });
 });
 

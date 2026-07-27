@@ -175,10 +175,11 @@ export function parseVideoEvent(event: {
 
   // Determine if short-form
   const isShort =
-    isShortDuration(duration) ||
-    (mimeType &&
-      SHORT_MIME_TYPES.includes(mimeType) &&
-      (!duration || duration <= SHORT_DURATION_MAX));
+    (isShortDuration(duration) ||
+      (mimeType &&
+        SHORT_MIME_TYPES.includes(mimeType) &&
+        (!duration || duration <= SHORT_DURATION_MAX))) ??
+    false;
 
   // Extract tags (t tags + hashtags from content)
   const hashtagTags = tagMap.get('t') ?? [];
@@ -354,15 +355,17 @@ export async function fetchNostrVideoEvents(
         resolve(filterVideoEvents(events, filter));
       }, timeoutMs);
 
-      pool.subscribe([{ ...subFilter }], (relayEvent) => {
-        if (relayEvent.kind === 'event' && relayEvent.event) {
-          const parsed = parseVideoEvent(relayEvent.event);
-          if (parsed) events.push(parsed);
-        }
-        if (relayEvent.kind === 'eose') {
-          clearTimeout(timeout);
-          resolve(filterVideoEvents(events, filter));
-        }
+      pool.subscribe([{ ...subFilter }], {
+        onEvent: (relayEvent) => {
+          if (relayEvent.kind === 'event' && relayEvent.event) {
+            const parsed = parseVideoEvent(relayEvent.event);
+            if (parsed) events.push(parsed);
+          }
+          if (relayEvent.kind === 'eose') {
+            clearTimeout(timeout);
+            resolve(filterVideoEvents(events, filter));
+          }
+        },
       });
     });
   } catch {
