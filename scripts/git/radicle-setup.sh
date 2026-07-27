@@ -1,6 +1,6 @@
 #!/bin/bash
 # radicle-setup — Configure Radicle decentralized git with cryptorugmuncher branding
-# Run on Talos (100.104.130.92) where the radicle-node runs.
+# Run on the production server where the radicle-node runs.
 # This sets up identity, avatar, and per-repo branding for all Rug Munch Media repos.
 
 set -euo pipefail

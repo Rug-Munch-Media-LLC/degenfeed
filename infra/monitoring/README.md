@@ -23,8 +23,8 @@ Grafana + Prometheus + Node Exporter for the DegenFeed fleet, deployed on Hydra 
    ┌──────────┐
    │ Node Exp │
    │ Talos    │
-   │ 100.104. │
-   │ 130.92   │
+   │ [INTERNAL │
+   │ IP]      │
    └──────────┘
 
    ┌──────────────┐
