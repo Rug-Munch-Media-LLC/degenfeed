@@ -39,7 +39,11 @@ async function getClientAsync(): Promise<any> {
   if (client) return client;
   try {
     const { Meilisearch } = await import('meilisearch');
-    client = new Meilisearch({ host: MEILI_URL, apiKey: MEILI_KEY });
+    client = new Meilisearch({
+      host: MEILI_URL,
+      apiKey: MEILI_KEY,
+      timeout: 30000, // 30s timeout per request to prevent hung requests
+    });
     console.log('[indexer] Meilisearch client created, host=' + MEILI_URL);
     return client;
   } catch (e) {
@@ -357,10 +361,13 @@ async function fullIndex(): Promise<{ count: number; errors: number }> {
   }
 
   const elapsed = ((Date.now() - start) / 1000).toFixed(1);
-  console.log(`[indexer] Indexed ${indexed} documents in ${elapsed}s (${errors} errors)`);
+  console.log(`[indexer] Full index: ${indexed} documents in ${elapsed}s (${errors} errors)`);
 
   indexCount = indexed;
   indexErrors = errors;
+  totalCycles++;
+  lastCycleDuration = Date.now() - start;
+  lastCycleNew = indexed;
   lastIndexTime = Date.now();
 
   return { count: indexed, errors };
@@ -379,6 +386,7 @@ async function incrementalIndex(): Promise<{ count: number; errors: number }> {
 
   if (newDocs.length === 0) {
     console.log('[indexer] No new documents to index');
+    lastIndexTime = Date.now();
     return { count: 0, errors: 0 };
   }
 
@@ -390,8 +398,9 @@ async function incrementalIndex(): Promise<{ count: number; errors: number }> {
   let indexed = 0;
   let errors = 0;
 
-  for (let i = 0; i < documents.length; i += batchSize) {
-    const batch = documents.slice(i, i + batchSize);
+  // Only index NEW documents (not all fetched)
+  for (let i = 0; i < newDocs.length; i += batchSize) {
+    const batch = newDocs.slice(i, i + batchSize);
     try {
       await meili.index(INDEX_NAME).addDocuments(batch, { primaryKey: 'id' });
       indexed += batch.length;
@@ -408,8 +417,11 @@ async function incrementalIndex(): Promise<{ count: number; errors: number }> {
   const elapsed = ((Date.now() - start) / 1000).toFixed(1);
   console.log(`[indexer] Incremental index: ${indexed} docs in ${elapsed}s`);
 
-  indexCount = indexed;
-  indexErrors = errors;
+  indexCount += indexed;
+  indexErrors += errors;
+  totalCycles++;
+  lastCycleDuration = Date.now() - start;
+  lastCycleNew = newDocs.length;
   lastIndexTime = Date.now();
 
   return { count: indexed, errors };
@@ -480,13 +492,14 @@ export async function startIndexer(): Promise<void> {
   const INTERVAL_MS = 5 * 60 * 1000;
   intervalHandle = setInterval(async () => {
     if (isRunning) {
-      console.log('[indexer] Previous index still running, skipping');
+      console.log('[indexer] Previous index still running, skipping cycle');
       return;
     }
 
     isRunning = true;
     try {
-      await incrementalIndex();
+      const result = await incrementalIndex();
+      console.log(`[indexer] Cycle complete. ${result.count} new docs indexed. Next in ${INTERVAL_MS / 1000}s.`);
     } catch (err) {
       console.error('[indexer] Incremental index failed:', err);
     } finally {
@@ -523,7 +536,7 @@ export async function reindex(): Promise<{ count: number; errors: number; elapse
   }
 }
 
-// ─── Status ────────────────────────────────────────────────────────────
+  // ─── Status ────────────────────────────────────────────────────────────
 
 export interface IndexerStatus {
   running: boolean;
@@ -532,9 +545,18 @@ export interface IndexerStatus {
   documentCount: number;
   errorCount: number;
   indexedIds: number;
+  totalCycles: number;
+  lastCycleDuration: number;
+  lastCycleNew: number;
+  nextRunIn: number;
 }
 
+let totalCycles = 0;
+let lastCycleDuration = 0;
+let lastCycleNew = 0;
+
 export function getIndexerStatus(): IndexerStatus {
+  const nextAt = lastIndexTime > 0 ? lastIndexTime + 300_000 : 0;
   return {
     running: isRunning,
     initialized: lastIndexTime > 0,
@@ -542,7 +564,9 @@ export function getIndexerStatus(): IndexerStatus {
     documentCount: indexCount,
     errorCount: indexErrors,
     indexedIds: indexedIds.size,
+    totalCycles,
+    lastCycleDuration,
+    lastCycleNew,
+    nextRunIn: nextAt > 0 ? Math.max(0, nextAt - Date.now()) : -1,
   };
 }
-
-export { indexCount, indexErrors, isRunning, lastIndexTime };
