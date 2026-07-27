@@ -329,15 +329,13 @@ export async function fetchNostrLiveEvents(
       }, timeoutMs);
 
       pool.subscribe([{ ...subFilter }], {
-        onEvent: (relayEvent) => {
-          if (relayEvent.kind === 'event' && relayEvent.event) {
-            const parsed = parseLiveEvent(relayEvent.event);
-            if (parsed) events.push(parsed);
-          }
-          if (relayEvent.kind === 'eose') {
-            clearTimeout(timeout);
-            resolve(filterLiveEvents(events, filter));
-          }
+        onEvent: (event) => {
+          const parsed = parseLiveEvent(event);
+          if (parsed) events.push(parsed);
+        },
+        onEose: () => {
+          clearTimeout(timeout);
+          resolve(filterLiveEvents(events, filter));
         },
       });
 

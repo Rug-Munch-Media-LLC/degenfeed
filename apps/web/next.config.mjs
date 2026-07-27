@@ -1,6 +1,6 @@
 /** @type {import("next").NextConfig} */
 const nextConfig = {
-  output: 'standalone',
+  output: process.env.CF_PAGES ? undefined : 'standalone',
 
   // ── Compression (Brotli/gzip) for TTFB ──
   compress: true,
