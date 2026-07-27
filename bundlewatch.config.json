@@ -6,7 +6,7 @@
       "compression": "gzip"
     },
     {
-      "path": "./apps/web/.next/static/css/*.css",
+      "path": "./apps/web/.next/static/**/*.css",
       "maxSize": "75 kB",
       "compression": "gzip"
     }
