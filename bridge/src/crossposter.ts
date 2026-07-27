@@ -296,25 +296,64 @@ const TRANSFORMS: Record<string, TransformFunction> = {
 
   /**
    * Transform for Bluesky: create app.bsky.feed.post record
+   * with proper AT Protocol facet byte-offset annotations.
+   *
+   * Facets are generated for:
+   *   - URLs (http/https) → app.bsky.richtext.facet#link
+   *   - @mentions → app.bsky.richtext.facet#mention
+   *   - #hashtags → app.bsky.richtext.facet#tag
    */
   bluesky: (post: UnifiedPost): TransformResult => {
     const text = `${post.text}\n\n[Originally from ${post.protocol}]`;
+    const encoder = new TextEncoder();
     const facets: Array<{
       index: { byteStart: number; byteEnd: number };
-      features: Array<{ $type: string; uri?: string; tag?: string }>;
+      features: Array<{ $type: string; uri?: string; tag?: string; did?: string }>;
     }> = [];
 
-    // Add link facets if there are embeds
-    for (const embed of post.embeds) {
-      if (embed.kind === 'link') {
-        facets.push({
-          index: {
-            byteStart: 0,
-            byteEnd: new TextEncoder().encode(text).byteLength,
+    // Parse text for URLs, @mentions, and #hashtags with correct byte offsets
+    const textForRegex = text;
+
+    // Pattern 1: URLs
+    const urlRegex = /https?:\/\/[^\s<>"']+(?:\/[^\s<>"']*)?/g;
+    for (const match of textForRegex.matchAll(urlRegex)) {
+      const url = match[0];
+      const byteStart = encoder.encode(textForRegex.slice(0, match.index)).byteLength;
+      const byteEnd = byteStart + encoder.encode(url).byteLength;
+      facets.push({
+        index: { byteStart, byteEnd },
+        features: [{ $type: 'app.bsky.richtext.facet#link', uri: url }],
+      });
+    }
+
+    // Pattern 2: @mentions (e.g., @user, @user@domain)
+    const mentionRegex = /@([a-zA-Z0-9_.-]+(?:@[a-zA-Z0-9_.-]+)*)/g;
+    for (const match of textForRegex.matchAll(mentionRegex)) {
+      const mention = match[0];
+      const byteStart = encoder.encode(textForRegex.slice(0, match.index)).byteLength;
+      const byteEnd = byteStart + encoder.encode(mention).byteLength;
+      facets.push({
+        index: { byteStart, byteEnd },
+        features: [
+          {
+            $type: 'app.bsky.richtext.facet#mention',
+            did: mention.includes('@') ? `at://${mention.slice(1)}` : undefined,
           },
-          features: [{ $type: 'app.bsky.richtext.facet#link', uri: embed.url }],
-        });
-      }
+        ],
+      });
+    }
+
+    // Pattern 3: #hashtags
+    const hashtagRegex = /#([a-zA-Z0-9_\u0080-\uFFFF-]+)/g;
+    for (const match of textForRegex.matchAll(hashtagRegex)) {
+      const tag = match[0];
+      const tagName = match[1];
+      const byteStart = encoder.encode(textForRegex.slice(0, match.index)).byteLength;
+      const byteEnd = byteStart + encoder.encode(tag).byteLength;
+      facets.push({
+        index: { byteStart, byteEnd },
+        features: [{ $type: 'app.bsky.richtext.facet#tag', tag: tagName }],
+      });
     }
 
     return {
@@ -324,7 +363,6 @@ const TRANSFORMS: Record<string, TransformFunction> = {
         text,
         createdAt: new Date(post.createdAt).toISOString(),
         facets: facets.length > 0 ? facets : undefined,
-        // In production, also handle embed = external, images, etc.
       },
     };
   },
@@ -505,16 +543,69 @@ const TRANSFORMS: Record<string, TransformFunction> = {
     const episodeUrl = post.embeds.find((e) => e.meta?.type === 'episode')?.url || '';
 
     const text = `${post.text}\n\n🎧 ${audioUrl}${episodeUrl ? `\n🔗 ${episodeUrl}` : ''}`;
+    const encoder = new TextEncoder();
 
     const facets: Array<{
       index: { byteStart: number; byteEnd: number };
-      features: Array<{ $type: string; uri?: string }>;
+      features: Array<{ $type: string; uri?: string; tag?: string; did?: string }>;
     }> = [];
 
+    // Add correct byte-offset facet for audio URL
     if (audioUrl) {
+      const audioIndex = text.indexOf(audioUrl);
+      if (audioIndex !== -1) {
+        const byteStart = encoder.encode(text.slice(0, audioIndex)).byteLength;
+        const byteEnd = byteStart + encoder.encode(audioUrl).byteLength;
+        facets.push({
+          index: { byteStart, byteEnd },
+          features: [{ $type: 'app.bsky.richtext.facet#link', uri: audioUrl }],
+        });
+      }
+    }
+
+    // Add correct byte-offset facet for episode URL
+    if (episodeUrl) {
+      const epIndex = text.indexOf(episodeUrl);
+      if (epIndex !== -1) {
+        const byteStart = encoder.encode(text.slice(0, epIndex)).byteLength;
+        const byteEnd = byteStart + encoder.encode(episodeUrl).byteLength;
+        facets.push({
+          index: { byteStart, byteEnd },
+          features: [{ $type: 'app.bsky.richtext.facet#link', uri: episodeUrl }],
+        });
+      }
+    }
+
+    // Parse text for @mentions and #hashtags in the podcast text
+    const textForRegex = text;
+
+    // @mentions
+    const mentionRegex = /@([a-zA-Z0-9_.-]+(?:@[a-zA-Z0-9_.-]+)*)/g;
+    for (const match of textForRegex.matchAll(mentionRegex)) {
+      const mention = match[0];
+      const byteStart = encoder.encode(textForRegex.slice(0, match.index)).byteLength;
+      const byteEnd = byteStart + encoder.encode(mention).byteLength;
       facets.push({
-        index: { byteStart: 0, byteEnd: new TextEncoder().encode(text).byteLength },
-        features: [{ $type: 'app.bsky.richtext.facet#link', uri: audioUrl }],
+        index: { byteStart, byteEnd },
+        features: [
+          {
+            $type: 'app.bsky.richtext.facet#mention',
+            did: mention.includes('@') ? `at://${mention.slice(1)}` : undefined,
+          },
+        ],
+      });
+    }
+
+    // #hashtags
+    const hashtagRegex = /#([a-zA-Z0-9_\u0080-\uFFFF-]+)/g;
+    for (const match of textForRegex.matchAll(hashtagRegex)) {
+      const tag = match[0];
+      const tagName = match[1];
+      const byteStart = encoder.encode(textForRegex.slice(0, match.index)).byteLength;
+      const byteEnd = byteStart + encoder.encode(tag).byteLength;
+      facets.push({
+        index: { byteStart, byteEnd },
+        features: [{ $type: 'app.bsky.richtext.facet#tag', tag: tagName }],
       });
     }
 

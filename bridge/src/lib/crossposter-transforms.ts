@@ -42,25 +42,64 @@ export const TRANSFORMS: Record<string, TransformFunction> = {
 
   /**
    * Transform for Bluesky: create app.bsky.feed.post record
+   * with proper AT Protocol facet byte-offset annotations.
+   *
+   * Facets are generated for:
+   *   - URLs (http/https) → app.bsky.richtext.facet#link
+   *   - @mentions → app.bsky.richtext.facet#mention
+   *   - #hashtags → app.bsky.richtext.facet#tag
    */
   bluesky: (post: UnifiedPost): TransformResult => {
     const text = `${post.text}\n\n[Originally from ${post.protocol}]`;
+    const encoder = new TextEncoder();
     const facets: Array<{
       index: { byteStart: number; byteEnd: number };
-      features: Array<{ $type: string; uri?: string; tag?: string }>;
+      features: Array<{ $type: string; uri?: string; tag?: string; did?: string }>;
     }> = [];
 
-    // Add link facets if there are embeds
-    for (const embed of post.embeds) {
-      if (embed.kind === 'link') {
-        facets.push({
-          index: {
-            byteStart: 0,
-            byteEnd: new TextEncoder().encode(text).byteLength,
+    // Parse text for URLs, @mentions, and #hashtags with correct byte offsets
+    const textForRegex = text;
+
+    // Pattern 1: URLs
+    const urlRegex = /https?:\/\/[^\s<>"']+(?:\/[^\s<>"']*)?/g;
+    for (const match of textForRegex.matchAll(urlRegex)) {
+      const url = match[0];
+      const byteStart = encoder.encode(textForRegex.slice(0, match.index)).byteLength;
+      const byteEnd = byteStart + encoder.encode(url).byteLength;
+      facets.push({
+        index: { byteStart, byteEnd },
+        features: [{ $type: 'app.bsky.richtext.facet#link', uri: url }],
+      });
+    }
+
+    // Pattern 2: @mentions (e.g., @user, @user@domain)
+    const mentionRegex = /@([a-zA-Z0-9_.-]+(?:@[a-zA-Z0-9_.-]+)*)/g;
+    for (const match of textForRegex.matchAll(mentionRegex)) {
+      const mention = match[0];
+      const byteStart = encoder.encode(textForRegex.slice(0, match.index)).byteLength;
+      const byteEnd = byteStart + encoder.encode(mention).byteLength;
+      facets.push({
+        index: { byteStart, byteEnd },
+        features: [
+          {
+            $type: 'app.bsky.richtext.facet#mention',
+            did: mention.includes('@') ? `at://${mention.slice(1)}` : undefined,
           },
-          features: [{ $type: 'app.bsky.richtext.facet#link', uri: embed.url }],
-        });
-      }
+        ],
+      });
+    }
+
+    // Pattern 3: #hashtags
+    const hashtagRegex = /#([a-zA-Z0-9_\u0080-\uFFFF-]+)/g;
+    for (const match of textForRegex.matchAll(hashtagRegex)) {
+      const tag = match[0];
+      const tagName = match[1];
+      const byteStart = encoder.encode(textForRegex.slice(0, match.index)).byteLength;
+      const byteEnd = byteStart + encoder.encode(tag).byteLength;
+      facets.push({
+        index: { byteStart, byteEnd },
+        features: [{ $type: 'app.bsky.richtext.facet#tag', tag: tagName }],
+      });
     }
 
     return {
