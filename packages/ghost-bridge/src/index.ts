@@ -376,6 +376,15 @@ export class GhostBridge {
 
   // ─── Cross-Protocol Publishing ──────────────────────────────────
 
+  /**
+   * @deprecated Ghost bridge cross-publish returns fake success results.
+   * Each protocol case in the switch statement fabricates an {ok: true} response
+   * with a constructed URL rather than actually publishing to the platform.
+   * This is a stub/demo implementation only.
+   * 
+   * TODO: Replace with actual SDK calls for each protocol.
+   * See packages/cross-protocol-bridge/ for the real implementation.
+   */
   async crossPublish(postId: string, protocols: Protocol[]): Promise<PublishResults> {
     const post = await this.getPost(postId);
     const results: Record<Protocol, { ok: boolean; url?: string; error?: string }> = {} as Record<

@@ -14,6 +14,20 @@
  * - Community Trust: fair launch badge, pre-bonding timer, creator verification
  */
 
+// ══════════════════════════════════════════════════════════════════════
+// ⚠️  DEMO DATA — NOT REAL
+// ══════════════════════════════════════════════════════════════════════
+// This coin detail page renders demo/simulated data for development
+// and testing purposes. Market data, price charts, holder lists, and
+// trading interfaces shown here do NOT represent real blockchain data
+// unless the application is connected to a live RPC endpoint with a
+// configured data provider.
+//
+// In production, all data should be fetched from on-chain sources
+// and verified before display. See DEPLOYMENT.md for production
+// configuration requirements.
+// ══════════════════════════════════════════════════════════════════════
+
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
