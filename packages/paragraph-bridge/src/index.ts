@@ -79,6 +79,7 @@ const PARAGRAPH_CAST_TYPE_LONG_FORM = 'long-form-content';
 
 export class ParagraphBridge {
   private apiUrl: string;
+  // @ts-expect-error -- stored for future use
   private farcasterHubUrl: string;
   private apiKey: string;
 

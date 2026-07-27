@@ -44,6 +44,7 @@ const TG_RATE_LIMIT_RPS = 30;
 
 /** Default retry delay (ms) when rate-limited. */
 const _TG_RATE_LIMIT_RETRY_MS = 1_000;
+void _TG_RATE_LIMIT_RETRY_MS;
 
 /** Max retries for rate-limited requests. */
 const TG_MAX_RETRIES = 3;

@@ -315,7 +315,8 @@ export async function fetchYouTubeFeed(
     sort = 'recent',
     maxAgeDays,
     disableQualityFilter = false,
-    enableDiscovery = false,
+    // @ts-expect-error -- kept for API compatibility
+    enableDiscovery,
     minEngagementRate,
     contentType,
     skipEnrichment = false,

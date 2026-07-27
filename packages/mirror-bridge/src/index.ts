@@ -76,6 +76,7 @@ const MIRROR_WRITING_NFT_CONTRACT = '0x3A3C33dFE2Bf3c09d1251fD6F3c4D2b4E5F6A7B8'
 export class MirrorBridge {
   private graphqlUrl: string;
   private arweaveGateway: string;
+  // @ts-expect-error -- stored for future use
   private optimismRpc: string;
 
   constructor(config?: {

@@ -522,7 +522,6 @@ export function lemmyToUnifiedPost(postView: LemmyPostView, meta: LemmyFeedMeta)
   const { post, creator, community, counts } = postView;
   const instance = new URL(meta.instanceUrl).hostname;
   const nativeId = `lemmy:${community.name}:${post.id}`;
-  const _isLink = !!post.url && !post.body;
   const text = post.body || post.name || '';
 
   // Build identity

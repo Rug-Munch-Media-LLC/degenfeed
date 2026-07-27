@@ -63,8 +63,6 @@ export function signTransaction(tx: TransactionRequest, privateKeyHex: string): 
 
   // Compute recovery ID with EIP-155 chain ID
   const chainId = BigInt(tx.chainId);
-  const _v = chainId * 2n + BigInt(35) + BigInt(sig.recovery);
-
   // Re-encode with signature
   const signedFields = [
     toRlp(tx.nonce),
