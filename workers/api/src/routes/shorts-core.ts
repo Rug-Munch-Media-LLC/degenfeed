@@ -37,11 +37,8 @@
 import type { ShortVideoSource } from '@degenfeed/shorts-provider';
 import type { UserInterestProfile } from '@degenfeed/shorts-provider/scorer';
 import { ShortsAggregator } from '../feed/shorts-aggregator';
-import { ShortsAggregatorV2 } from '../feed/shorts-aggregator-v2';
-import { ShortsAlgorithm, type UserShortsProfile, type WatchEvent } from '../feed/shorts-algorithm';
 import { FEED_SOURCE_LABELS, UnifiedShortsFeed } from '../feed/shorts-unified';
 import { type ShortProtocol, UnifiedShortsPipeline } from '../lib/unified-shorts';
-import { ZoraVideoIntegration } from '../lib/zora-video';
 import { jsonResponse, methodNotAllowed, noCacheJsonResponse } from '../response-helpers';
 import { requireSession } from '../session';
 import type { Env } from '../types';
@@ -198,9 +195,9 @@ export async function handleShortsBySource(request: Request, env: Env): Promise<
   return noCacheJsonResponse(result);
 }
 
-// ─── Handler: Create short via PeerTube ──────────────────────────────────
+// ─── Handler: Create short (persisted to KV) ─────────────────────────────
 
-export async function handleCreateShort(request: Request, _env: Env): Promise<Response> {
+export async function handleCreateShort(request: Request, env: Env): Promise<Response> {
   if (request.method !== 'POST') return methodNotAllowed(['POST']);
 
   try {
@@ -215,23 +212,45 @@ export async function handleCreateShort(request: Request, _env: Env): Promise<Re
       return jsonResponse({ error: 'title and videoUrl are required' }, 400);
     }
 
-    // Upload to PeerTube instance — pending PeerTube API integration
-    // This requires PeerTube OAuth credentials configured in env
-    // For now, return a placeholder response indicating the flow
+    // Validate video URL format
+    try {
+      const url = new URL(body.videoUrl);
+      if (!['http:', 'https:'].includes(url.protocol)) {
+        return jsonResponse({ error: 'videoUrl must be an HTTP or HTTPS URL' }, 400);
+      }
+    } catch {
+      return jsonResponse({ error: 'videoUrl is not a valid URL' }, 400);
+    }
+
+    const id = `degenfeed:${crypto.randomUUID()}`;
+    const short = {
+      id,
+      title: body.title,
+      description: body.description ?? '',
+      videoUrl: body.videoUrl,
+      thumbnailUrl: body.thumbnailUrl ?? '',
+      source: 'direct',
+      sourceLabel: 'DegenFeed',
+      status: 'published' as const,
+      createdAt: Date.now(),
+      views: 0,
+      likes: 0,
+    };
+
+    // Persist to KV if configured
+    if (env.SHORTS) {
+      await env.SHORTS.put(
+        `short:${id}`,
+        JSON.stringify(short),
+        { expirationTtl: 60 * 60 * 24 * 90 }, // 90 day TTL
+      );
+    }
 
     return jsonResponse(
       {
         success: true,
-        message: 'Short submitted for review. It will appear in the feed once approved.',
-        short: {
-          id: `degenfeed:${crypto.randomUUID()}`,
-          title: body.title,
-          videoUrl: body.videoUrl,
-          thumbnailUrl: body.thumbnailUrl,
-          source: 'direct',
-          sourceLabel: 'DegenFeed',
-          status: 'pending_review',
-        },
+        message: 'Short created successfully.',
+        short,
       },
       201,
     );

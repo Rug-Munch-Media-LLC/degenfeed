@@ -377,22 +377,21 @@ export async function handleNewsletterFeed(request: Request, _env: Env): Promise
 
 export async function handleTrendingFeed(request: Request, env: Env): Promise<Response> {
   // Fetch recent posts across protocols, extract niches, aggregate
-  const limit = Number(new URL(request.url).searchParams.get('limit')) || 20;
+  const url = new URL(request.url);
+  const limit = Number(url.searchParams.get('limit')) || 20;
 
-  const [nostrPosts, fcPosts] = await Promise.all([
-    fetchNostrTop(limit).catch(() => []),
-    fetchFarcasterTop(limit).catch(() => []),
-  ]);
-
-  const allPosts = [...nostrPosts, ...fcPosts];
-  allPosts.sort((a, b) => b.createdAt - a.createdAt);
-
-  // Delegate to the home feed handler for ranking
+  // Forward protocols from the original request params to the home feed handler
+  const protocols = url.searchParams.get('protocols') || 'nostr,farcaster,lens,bluesky,mastodon';
   const { handleHomeFeed } = await import('./feed');
-  const fakeReq = new Request(
-    `http://localhost/api/feed/home?protocols=nostr,farcaster&limit=${limit}`,
-  );
-  return handleHomeFeed(fakeReq, env);
+  const forwardedUrl = new URL(request.url);
+  forwardedUrl.searchParams.set('protocols', protocols);
+  forwardedUrl.searchParams.set('limit', String(limit));
+  // Pass a forwarded request with the original context (headers, method) instead of faking one
+  const forwarded = new Request(forwardedUrl.toString(), {
+    headers: request.headers,
+    method: request.method,
+  });
+  return handleHomeFeed(forwarded, env);
 }
 
 // ─── 4. Alt Feed — /api/feed/alt — Best of Lemmy + Reddit Alt ──
