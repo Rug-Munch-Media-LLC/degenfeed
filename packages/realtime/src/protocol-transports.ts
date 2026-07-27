@@ -18,6 +18,8 @@
 import type { Env } from '@degenfeed/types';
 import { getDeliveryProtocols, type ResolvedIdentity, resolveIdentity } from './identity-resolver';
 
+export type { Env };
+
 // ─── Types ──────────────────────────────────────────────────────────────────
 
 export type TransportProtocol =
@@ -1203,7 +1205,7 @@ export class ProtocolTransports {
 
       // Try to import the ws-broadcast from the API worker (if this runs in the worker context)
       try {
-        const mod = await import(/* @vite-ignore */ '../../workers/api/src/ws-broadcast');
+        const mod = await import(/* @vite-ignore */ '../../../workers/api/src/ws-broadcast');
         if (mod?.broadcastToUser) {
           delivered = mod.broadcastToUser(message.toId, 'dm:new', {
             id: message.id,

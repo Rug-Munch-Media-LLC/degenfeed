@@ -43,27 +43,8 @@ export function signTransaction(tx: TransactionRequest, privateKeyHex: string): 
   const pk = privateKeyHex.startsWith('0x') ? privateKeyHex.slice(2) : privateKeyHex;
   const privKeyBytes = hexToBytes(pk);
 
-  // Build the RLP array for an EIP-155 transaction
-  const fields = [
-    toRlp(tx.nonce),
-    toRlp(tx.gasPrice),
-    toRlp(tx.gas),
-    toRlp(tx.to),
-    toRlp(tx.value),
-    toRlp(tx.data),
-    toRlp(BigInt(tx.chainId)),
-    toRlp(0n), // r (empty)
-    toRlp(0n), // s (empty)
-  ];
-
-  // Sign the RLP-encoded transaction hash
-  const encoded = rlpEncode(fields);
-  const hash = keccak_256(hexToBytes(encoded));
-  const sig = secp256k1.sign(hash, privKeyBytes);
-
-  // Compute recovery ID with EIP-155 chain ID
-  const chainId = BigInt(tx.chainId);
   // Re-encode with signature
+  const chainId = BigInt(tx.chainId);
   const signedFields = [
     toRlp(tx.nonce),
     toRlp(tx.gasPrice),
@@ -81,7 +62,6 @@ export function signTransaction(tx: TransactionRequest, privateKeyHex: string): 
 
   const finalSig = secp256k1.sign(unsignedHash, privKeyBytes);
 
-  const _finalV = chainId * 2n + BigInt(35) + BigInt(finalSig.recovery);
   const finalFields = [
     toRlp(tx.nonce),
     toRlp(tx.gasPrice),
@@ -89,7 +69,7 @@ export function signTransaction(tx: TransactionRequest, privateKeyHex: string): 
     toRlp(tx.to),
     toRlp(tx.value),
     toRlp(tx.data),
-    toRlp(_finalV),
+    toRlp(chainId * 2n + BigInt(35) + BigInt(finalSig.recovery)),
     toRlp(toBigIntSig(finalSig.r)),
     toRlp(toBigIntSig(finalSig.s)),
   ];

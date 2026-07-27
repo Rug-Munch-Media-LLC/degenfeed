@@ -148,12 +148,12 @@ import {
 } from '@degenfeed/web3/rpc-router';
 
 const RPC_URLS: Record<TokenGateChain, string> = {
-  ethereum: RPC_FALLBACKS.ethereum[0],
-  base: RPC_FALLBACKS.base[0],
-  polygon: RPC_FALLBACKS.polygon[0],
-  arbitrum: RPC_FALLBACKS.arbitrum[0],
-  optimism: RPC_FALLBACKS.optimism[0],
-  solana: RPC_FALLBACKS.solana[0],
+  ethereum: RPC_FALLBACKS.ethereum[0]!,
+  base: RPC_FALLBACKS.base[0]!,
+  polygon: RPC_FALLBACKS.polygon[0]!,
+  arbitrum: RPC_FALLBACKS.arbitrum[0]!,
+  optimism: RPC_FALLBACKS.optimism[0]!,
+  solana: RPC_FALLBACKS.solana[0]!,
 };
 
 function getRpcUrl(chain: TokenGateChain): string {
@@ -521,6 +521,23 @@ export async function resolveTokenGateSymbol(gate: TokenGate): Promise<string> {
 }
 
 /**
+/**
+ * Validate a URL is safe to fetch (blocks SSRF to internal/private networks).
+ */
+function isSafeUrl(uri: string): boolean {
+  try {
+    const url = new URL(uri);
+    const blockedHosts = ['localhost', '127.0.0.1', '0.0.0.0', '169.254.169.254', '[::1]'];
+    if (blockedHosts.includes(url.hostname)) return false;
+    if (/^(10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.)/.test(url.hostname)) return false;
+    if (!['http:', 'https:'].includes(url.protocol)) return false;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Resolve NFT metadata (name + image) from tokenURI.
  */
 export async function resolveNFTMetadata(
@@ -547,6 +564,12 @@ export async function resolveNFTMetadata(
   // Handle IPFS URIs
   if (uri.startsWith('ipfs://')) {
     uri = uri.replace('ipfs://', 'https://ipfs.io/ipfs/');
+  }
+
+  // Validate URI to prevent SSRF (internal network / cloud metadata)
+  if (!isSafeUrl(uri)) {
+    console.warn('Blocked unsafe tokenURI:', uri);
+    return null;
   }
 
   try {

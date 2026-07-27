@@ -449,6 +449,31 @@ export const PROTOCOLS: Record<string, ProtocolConfig> = {
 
 export const PROTOCOL_LIST = Object.values(PROTOCOLS);
 
+/** Ordered list of category IDs for sidebar display */
+export const CATEGORY_DISPLAY_ORDER: ProtocolCategory[] = [
+  'social',
+  'web3',
+  'content',
+  'communities',
+  'video',
+  'media',
+  'news',
+];
+
+/** Map each category to its protocol IDs, maintaining SIDEBAR_ORDER within each category */
+export const CATEGORY_PROTOCOLS: Record<ProtocolCategory, string[]> = (() => {
+  const map: Record<string, string[]> = {};
+  for (const cat of CATEGORY_DISPLAY_ORDER) {
+    map[cat] = [];
+  }
+  for (const protocol of PROTOCOL_LIST) {
+    if (map[protocol.category]) {
+      map[protocol.category].push(protocol.id);
+    }
+  }
+  return map as Record<ProtocolCategory, string[]>;
+})();
+
 /** Ordered list of protocols for the sidebar/tabs */
 export const SIDEBAR_ORDER = [
   'mastodon',

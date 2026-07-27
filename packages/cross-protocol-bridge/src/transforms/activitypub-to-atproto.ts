@@ -38,7 +38,6 @@ function mapContentToBskyPost(content: NormalizedContent): Record<string, unknow
     const idx = text.indexOf(tagStr);
     if (idx >= 0) {
       const encoder = new TextEncoder();
-      const _bytes = encoder.encode(text);
       const byteStart = encoder.encode(text.slice(0, idx)).byteLength;
       const byteEnd = byteStart + encoder.encode(tagStr).byteLength;
 

@@ -9,8 +9,6 @@
  *   4. Platform compatibility detection
  */
 
-import type { MasterPost } from './adapters/types';
-
 // ═══════════════════════════════════════════════════════════════════════
 // TASK 1: PROTOCOL VIDEO/LIVE/SHORTS CAPABILITY MATRIX
 // ═══════════════════════════════════════════════════════════════════════
@@ -259,8 +257,7 @@ export const PROTOCOL_VIDEO_CAPABILITIES: Record<string, ProtocolVideoCapability
     name: 'Bluesky',
     shorts: true,
     live: true,
-    shortsHow:
-      'Native app.bsky.embed.video support. Upload short videos directly via AT Protocol.',
+    shortsHow: 'Native app.bsky.embed.video support. Upload short videos directly via AT Protocol.',
     liveHow:
       'Posts with video embeds. Link cards for live streams. AT Protocol video embed available.',
     nativeVideo: true,
@@ -411,20 +408,6 @@ async function publishToSingleProtocol(
   options: CrossPlatformPublishOptions,
   authToken: string,
 ): Promise<CrossPlatformPublishResult> {
-  // Build a MasterPost that the existing adapters can consume
-  const _masterPost: MasterPost = {
-    text: options.description,
-    title: options.title,
-    media: [{ url: options.videoUrl, mimeType: options.mimeType }],
-    hashtags: options.tags,
-    linkCard: {
-      url: options.videoUrl,
-      title: options.title,
-      description: options.description.slice(0, 200),
-      imageUrl: options.thumbnailUrl,
-    },
-  };
-
   // Fire-and-forget with protocol-specific publishing logic
   switch (protocol) {
     case 'farcaster': {
@@ -450,9 +433,7 @@ async function publishToSingleProtocol(
     }
 
     case 'nostr': {
-      const { serializeVideoEvent, serializeLiveEvent } = await import(
-        '@degenfeed/nostr-sdk/nip71'
-      );
+      const { serializeVideoEvent } = await import('@degenfeed/nostr-sdk/nip71');
       const { serializeLiveEvent: serializeLive } = await import('@degenfeed/nostr-sdk/nip53');
       if (options.isLive) {
         const event = serializeLive({
@@ -496,7 +477,7 @@ async function publishToSingleProtocol(
             tags: options.tags,
             profileId: authToken,
           });
-      return { protocol, success: true, nativeId: req.variables.request.profileId };
+      return { protocol, success: true, nativeId: (req as any)?.variables?.request?.profileId };
     }
 
     case 'zora': {

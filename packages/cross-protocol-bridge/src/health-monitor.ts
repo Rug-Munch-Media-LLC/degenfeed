@@ -140,7 +140,7 @@ export class HealthMonitor {
   }
 
   private async runChecks(): Promise<void> {
-    const _results = await Promise.allSettled(
+    await Promise.allSettled(
       BRIDGE_PATHS.map(async (path) => {
         if (!path.enabled) return;
         try {

@@ -29,7 +29,7 @@ export const metadata: Metadata = {
   alternates: { canonical: 'https://app.degenfeed.xyz/feed/microblog' },
 };
 
-export default function Micro.blogFeedPage() {
+export default function MicroblogFeedPage() {
   return (
     <>
       <Script id="breadcrumb-microblog-feed" type="application/ld+json">

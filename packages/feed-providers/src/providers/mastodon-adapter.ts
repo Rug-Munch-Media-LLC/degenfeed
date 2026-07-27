@@ -1,4 +1,4 @@
-import { buildUnifiedPost, detectNiches } from '@degenfeed/feed-core';
+import { buildUnifiedPost } from '@degenfeed/feed-core';
 import type { Embed, Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
 import { buildUrl, DEFAULT_USER_AGENT, fetchJson } from '../utils';
 export interface GtSAccount {
@@ -118,7 +118,6 @@ export function statusToUnifiedPost(status: GtSStatus, instanceUrl: string): Uni
   }
 
   const finalText = original.spoiler_text ? `[CW: ${original.spoiler_text}]\n\n${text}` : text;
-  const _niches = detectNiches(`${finalText} ${original.tags.map((t) => t.name).join(' ')}`);
   const nativeId = isBoost ? `boost:${status.id}:${original.id}` : original.id;
 
   return buildUnifiedPost({

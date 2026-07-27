@@ -38,7 +38,7 @@ export async function fetchEpicyonPosts(limit = 10): Promise<UnifiedPost[]> {
             author: {
               id: `epicyon:rss:${inst}`,
               primary: { protocol: 'epicyon' as Protocol, id: item.author || inst },
-              handles: { epicyon: item.author || new URL(inst).hostname },
+              handles: { epicyon: item.author || new URL(inst).hostname } as any,
               displayName: item.author || new URL(inst).hostname,
               bio: '',
               avatarUrl: '',
@@ -82,7 +82,7 @@ export async function fetchEpicyonPosts(limit = 10): Promise<UnifiedPost[]> {
             author: {
               id: `epicyon:${String(acct?.id || item.id)}`,
               primary: { protocol: 'epicyon' as Protocol, id: String(acct?.acct || '') },
-              handles: { epicyon: String(acct?.acct || '') },
+              handles: { epicyon: String(acct?.acct || '') } as any,
               displayName: String(acct?.display_name || acct?.username || 'Epicyon User'),
               bio: stripHtml(String(acct?.note || '')),
               avatarUrl: String(acct?.avatar || ''),

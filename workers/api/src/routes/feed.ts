@@ -521,3 +521,54 @@ export async function handleFeedCacheInvalidate(request: Request, env: Env): Pro
     invalidatedAt: Date.now(),
   });
 }
+
+// ─── Feed cache warmup (cron) ────────────────────────────────
+
+/**
+ * Cron warmup — pre-generates anonymous home and trending feeds into KV
+ * so the first user request on cold start gets a cache hit.
+ *
+ * Called every 5 minutes by the scheduled handler in cron-handler.ts.
+ * Uses a synthetic Request with no params (defaults to limit=50, sort=scored)
+ * and no auth (anonymous user), which populates the `anon` cache keys.
+ * Even if the bridge is down, seed/demo content gets cached, ensuring
+ * the KV cache is never empty on cold start for the next request.
+ */
+export async function warmupFeedCache(env: Env): Promise<void> {
+  const now = Date.now();
+  console.log('[feed-warmup] Starting feed cache warmup...');
+
+  // Warm up anonymous home feed
+  try {
+    const cronReq = new Request('http://cron/');
+    const homeResp = await generateAndCacheFeed(cronReq, env, undefined, 'home', null);
+    if (homeResp.ok) {
+      console.log(`[feed-warmup] Home feed cached in ${Date.now() - now}ms`);
+    } else {
+      console.warn(`[feed-warmup] Home feed returned status ${homeResp.status}`);
+    }
+  } catch (err) {
+    console.warn(
+      '[feed-warmup] Home feed warmup failed:',
+      err instanceof Error ? err.message : err,
+    );
+  }
+
+  // Warm up anonymous trending feed
+  try {
+    const cronReq = new Request('http://cron/');
+    const trendResp = await generateAndCacheFeed(cronReq, env, undefined, 'trending', null);
+    if (trendResp.ok) {
+      console.log(`[feed-warmup] Trending feed cached in ${Date.now() - now}ms`);
+    } else {
+      console.warn(`[feed-warmup] Trending feed returned status ${trendResp.status}`);
+    }
+  } catch (err) {
+    console.warn(
+      '[feed-warmup] Trending feed warmup failed:',
+      err instanceof Error ? err.message : err,
+    );
+  }
+
+  console.log(`[feed-warmup] Feed cache warmup complete (${Date.now() - now}ms total)`);
+}

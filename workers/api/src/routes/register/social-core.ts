@@ -1085,4 +1085,30 @@ export function registerSocialCoreRoutes(app: Hono<{ Bindings: Env }>): void {
       return serverError(err instanceof Error ? err.message : 'Unknown error');
     }
   });
+
+  // ─── API: Unified Search (MeiliSearch-backed) ─────────────────
+  app.get('/api/search', async (c) => {
+    try {
+      const { handleSearch } = await import('../../routes/search');
+      return await handleSearch(c.req.raw, c.env);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/search/autocomplete', async (c) => {
+    try {
+      const { handleSearchAutocomplete } = await import('../../routes/search');
+      return await handleSearchAutocomplete(c.req.raw, c.env);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/search/identity', async (c) => {
+    try {
+      const { handleSearchIdentity } = await import('../../routes/search');
+      return await handleSearchIdentity(c.req.raw, c.env);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
 }

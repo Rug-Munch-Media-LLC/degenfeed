@@ -300,9 +300,7 @@ const circuitBreaker: CircuitBreakerState = {
   openUntil: 0,
 };
 
-const CB_THRESHOLD = 10; // higher threshold — ActivityPub is far more stable
 const CB_WINDOW_MS = 60 * 60 * 1000;
-const CB_COOLDOWN_MS = 30 * 60 * 1000;
 
 function isCircuitOpen(): boolean {
   const now = Date.now();
@@ -311,20 +309,6 @@ function isCircuitOpen(): boolean {
     (t) => now - t < CB_WINDOW_MS,
   );
   return false;
-}
-
-function _recordFailure(): void {
-  const now = Date.now();
-  circuitBreaker.failureTimestamps.push(now);
-  circuitBreaker.failureTimestamps = circuitBreaker.failureTimestamps.filter(
-    (t) => now - t < CB_WINDOW_MS,
-  );
-  if (circuitBreaker.failureTimestamps.length > CB_THRESHOLD) {
-    circuitBreaker.openUntil = now + CB_COOLDOWN_MS;
-    console.warn(
-      `[threads] Circuit opened for ${CB_COOLDOWN_MS / 60000} min after ${circuitBreaker.failureTimestamps.length} API failures`,
-    );
-  }
 }
 
 // ─── Provider options ────────────────────────────────────────────────

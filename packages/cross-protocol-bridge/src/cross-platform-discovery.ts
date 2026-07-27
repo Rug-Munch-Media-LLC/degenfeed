@@ -16,8 +16,8 @@
  */
 
 import type { Protocol } from '@degenfeed/types';
-import type { ShortsPublishBatchResult } from './shorts-publisher';
 import type { LivePublishBatchResult } from './live-publisher';
+import type { ShortsPublishBatchResult } from './shorts-publisher';
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
@@ -103,7 +103,15 @@ const ALL_PROTOCOL_META: Record<string, { label: string; icon: string; color: st
 };
 
 // Which platforms support following from DegenFeed
-const FOLLOWABLE_PLATFORMS: Protocol[] = ['farcaster', 'nostr', 'bluesky', 'mastodon', 'lens', 'peertube', 'pixelfed'];
+const FOLLOWABLE_PLATFORMS: Protocol[] = [
+  'farcaster',
+  'nostr',
+  'bluesky',
+  'mastodon',
+  'lens',
+  'peertube',
+  'pixelfed',
+];
 
 // ─── Main Discovery Functions ─────────────────────────────────────────────
 
@@ -235,23 +243,19 @@ export async function buildCrossPlatformProfile(
 ): Promise<CrossPlatformProfile> {
   // Find the primary identity
   const primary =
-    linkedIdentities.find((i) => String(i.protocol) === 'loops') ||
-    linkedIdentities[0] ||
-    null;
+    linkedIdentities.find((i) => String(i.protocol) === 'loops') || linkedIdentities[0] || null;
 
   const profiles: PlatformProfileSnapshot[] = linkedIdentities.map((identity) => ({
     protocol: identity.protocol,
-      handle: identity.handle,
-      displayName: identity.displayName || identity.handle,
-      avatarUrl: identity.avatarUrl,
-      followerCount: identity.followerCount ?? 0,
-      followingCount: identity.followingCount ?? 0,
-      profileUrl:
-        identity.profileUrl ||
-        buildProfileUrl(identity.protocol, identity.handle, identity.id),
-      linked: identity.verified,
-    }));
-
+    handle: identity.handle,
+    displayName: identity.displayName || identity.handle,
+    avatarUrl: identity.avatarUrl,
+    followerCount: identity.followerCount ?? 0,
+    followingCount: identity.followingCount ?? 0,
+    profileUrl:
+      identity.profileUrl || buildProfileUrl(identity.protocol, identity.handle, identity.id),
+    linked: identity.verified,
+  }));
 
   const totalFollowers = profiles.reduce((sum, p) => sum + p.followerCount, 0);
   const platformCount = profiles.length;
@@ -285,7 +289,7 @@ export async function enrichWithFollowerCounts(
     if (!handle) continue;
 
     // Build follow URL based on platform
-    const followUrl = buildFollowUrl(pill.protocol, handle);
+    const followUrl = buildFollowUrl(pill.protocol as Protocol, handle);
     if (followUrl) {
       enriched[i] = { ...pill, followUrl, creatorHandle: handle };
     }
@@ -329,9 +333,8 @@ function buildShortSummary(pills: PlatformPill[], _originalSource: string): stri
  * Format follower count with platform diversity.
  */
 function formatFollowerCount(total: number, platformCount: number): string {
-  const formatted = total >= 1000
-    ? `${(total / 1000).toFixed(total >= 10000 ? 0 : 1)}K`
-    : String(total);
+  const formatted =
+    total >= 1000 ? `${(total / 1000).toFixed(total >= 10000 ? 0 : 1)}K` : String(total);
   return `${formatted} across ${platformCount} ${platformCount === 1 ? 'platform' : 'platforms'}`;
 }
 

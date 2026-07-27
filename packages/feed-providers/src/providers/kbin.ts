@@ -100,7 +100,6 @@ function adaptKbinPost(post: KbinPost, instance: string): UnifiedPost {
   const instanceDomain = instance.replace(/^https?:\/\//, '');
 
   const magazineName = post.magazine?.name ?? 'general';
-  const _nativeId = `kbin:${magazineName}:${post.id}`;
 
   const author: UnifiedIdentity = {
     id: `kbin:${post.account.id}`,

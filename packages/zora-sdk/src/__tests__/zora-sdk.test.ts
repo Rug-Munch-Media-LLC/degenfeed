@@ -535,7 +535,7 @@ describe('Milestones', () => {
   it('getReachedMilestones returns milestones below current progress', () => {
     const milestones = getReachedMilestones(50);
     expect(milestones).toHaveLength(3);
-    expect(milestones[0].name).toBe('Ignition');
+    expect(milestones[0]!.name).toBe('Ignition');
   });
 
   it('getNextMilestone returns the next un-reached milestone', () => {

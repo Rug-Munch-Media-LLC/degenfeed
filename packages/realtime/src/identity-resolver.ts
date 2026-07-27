@@ -78,7 +78,6 @@ const ENS_PATTERN = /^[a-zA-Z0-9-]+\.eth$/;
 const LENS_PATTERN = /^[a-zA-Z0-9-]+\.lens$/;
 const MATRIX_PATTERN = /^@[\w\-./]+:[\w\-./]+$/;
 const MASTODON_PATTERN = /^@?([\w\-./]+)@([\w\-./]+\.[a-zA-Z]{2,})$/;
-const MASTODON_HANDLE_PATTERN = /^@?[\w\-./]+@[\w\-./]+/;
 const TELEGRAM_ID_PATTERN = /^\d{5,}$/;
 const IRC_CHANNEL_PATTERN = /^#[a-zA-Z0-9_-]{1,50}$/;
 const IRC_NICK_PATTERN = /^[a-zA-Z_\\[\]{}^`|][a-zA-Z0-9_\\[\]{}^`|-]{1,30}$/;
@@ -362,8 +361,23 @@ function buildLookupKeys(fmt: IdentifierFormat): string[] {
       keys.push(`identity:${fmt.name}`);
       keys.push(`ens:${fmt.name}`);
       break;
+    case 'irc-nick':
+      keys.push(`identity:irc:${fmt.nick}`);
+      break;
+    case 'irc-channel':
+      keys.push(`identity:irc:${fmt.channel}`);
+      break;
+    case 'xmpp-jid':
+      keys.push(`identity:xmpp:${fmt.jid}`);
+      break;
+    case 'rocketchat-user':
+      keys.push(`identity:rocketchat:${fmt.userId}`);
+      break;
+    case 'unknown':
+      keys.push(`identity:unknown:${fmt.raw}`);
+      break;
     default:
-      keys.push(`identity:${fmt.raw.toLowerCase()}`);
+      keys.push(`identity:${(fmt as any).raw?.toLowerCase() ?? 'unknown'}`);
       break;
   }
 

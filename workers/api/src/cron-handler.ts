@@ -98,6 +98,15 @@ export async function scheduled(
     return; // No other work on the every-minute tick
   }
 
+  // ── Feed cache warmup — every 5 minutes ────────────────────────────
+  if (cron === '*/5 * * * *') {
+    const { warmupFeedCache } = await import('../routes/feed');
+    await warmupFeedCache(env).catch((err) =>
+      log('warn', '[scheduled] feed cache warmup failed', err),
+    );
+    return;
+  }
+
   // ── Trending scraper — 30-min and daily ticks ──────────────────────
   const { scrapeTrendingContent } = await import('./routes/trending-scraper');
   await scrapeTrendingContent(env).catch((err) =>

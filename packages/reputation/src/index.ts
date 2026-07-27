@@ -205,7 +205,6 @@ export function nextLevelThreshold(
 ): { current: string; next: string; currentMin: number; nextMin: number; progress: number } {
   const tiers = Object.entries(TIER_THRESHOLDS).sort((a, b) => b[1] - a[1]);
   const currentIdx = tiers.findIndex(([name]) => name === currentLevel);
-  const _prevLevel = tiers[Math.max(0, currentIdx + 1)];
   const nextLevel = tiers[Math.max(0, currentIdx - 1)];
   const currentMin = TIER_THRESHOLDS[currentLevel] ?? 0;
   const nextMin = nextLevel ? nextLevel[1] : currentMin;

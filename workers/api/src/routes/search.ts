@@ -2,7 +2,15 @@
  * @degenfeed/api-worker — Search Routes
  *
  * Split into module at ./search/ for maintainability.
- * @see ./search/index.ts
+ * @see ./search/handler.ts
  */
 
-export type {} from './search/types';
+export type {
+  IdentityResultItem,
+  SearchResultItem,
+} from './search/handler';
+export {
+  handleSearch,
+  handleSearchAutocomplete,
+  handleSearchIdentity,
+} from './search/handler';

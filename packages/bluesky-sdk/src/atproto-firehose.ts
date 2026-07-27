@@ -237,11 +237,12 @@ export async function discoverCrossAppContent(opts: DiscoverOpts = {}): Promise<
             if (!text && !title) return null;
 
             // Extract author info
+            const valueAuthor = value.author as Record<string, unknown> | undefined;
             const author = {
-              did: authorDid || (value.author?.did as string) || '',
-              handle: (value.author?.handle as string) || authorDid?.slice(0, 12) || 'unknown',
-              displayName: (value.author?.displayName as string) || undefined,
-              avatar: (value.author?.avatar as string) || undefined,
+              did: authorDid || (valueAuthor?.did as string) || '',
+              handle: (valueAuthor?.handle as string) || authorDid?.slice(0, 12) || 'unknown',
+              displayName: (valueAuthor?.displayName as string) || undefined,
+              avatar: (valueAuthor?.avatar as string) || undefined,
             };
 
             // Build URL based on content type
@@ -348,6 +349,7 @@ export async function discoverAppContent(
     if (!data.records) return [];
 
     const mapping = COLLECTION_TO_APP[collection];
+    if (!mapping) return [];
 
     return data.records
       .map((record): CrossAppContent | null => {
@@ -365,7 +367,7 @@ export async function discoverAppContent(
             type: mapping.type,
             author: {
               did: authorDid,
-              handle: (value.author?.handle as string) || authorDid.slice(0, 12),
+              handle: ((value.author as any)?.handle as string) || authorDid.slice(0, 12),
             },
             title: (value.title as string) || undefined,
             text: (value.text as string) || (value.content as string) || '',

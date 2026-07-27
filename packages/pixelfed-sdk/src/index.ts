@@ -360,7 +360,7 @@ export function normalizePixelfedPost(
           height: (media.meta?.original as Record<string, unknown>)?.height,
         },
       });
-      _hasImage = true;
+      void 0;
     } else if (media.type === 'video') {
       embeds.push({
         kind: 'video',
@@ -371,7 +371,7 @@ export function normalizePixelfedPost(
           duration: (media.meta?.original as Record<string, unknown>)?.duration,
         },
       });
-      _hasVideo = true;
+      void 0;
     }
   }
 
