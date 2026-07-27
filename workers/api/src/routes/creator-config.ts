@@ -218,7 +218,7 @@ creatorConfig.put('/config/vesting', async (c) => {
   )) as Partial<CreatorConfig> | null;
 
   const updated: Partial<CreatorConfig> = {
-    ...(existing || {}),
+    ...existing,
     vesting: vestingConfig,
   };
 
@@ -297,7 +297,7 @@ creatorConfig.put('/config/fees', async (c) => {
   )) as Partial<CreatorConfig> | null;
 
   const updated: Partial<CreatorConfig> = {
-    ...(existing || {}),
+    ...existing,
     ...(body.feeBps !== undefined ? { feeBps: body.feeBps } : {}),
     ...(body.recipients !== undefined ? { recipients: body.recipients } : {}),
     ...(body.platformFeeBps !== undefined ? { platformFeeBps: body.platformFeeBps } : {}),
@@ -375,7 +375,7 @@ creatorConfig.post('/config/cross-chain', async (c) => {
   await c.env.CACHE?.put(
     configKey,
     JSON.stringify({
-      ...(config || {}),
+      ...config,
       creatorAddress: auth.address,
       crossChainTokens,
     }),
@@ -609,15 +609,85 @@ async function getCreatorReputation(env: Env, address: string): Promise<number> 
   return 0; // Default: lowest reputation
 }
 
-async function verifyFarcasterFid(_fid: number, _env: Env): Promise<string | null> {
-  // In production, query the Farcaster hub to verify FID owner
-  // For now, return a mock
-  return null;
+async function verifyFarcasterFid(fid: number, env: Env): Promise<string | null> {
+  // Query the Farcaster Hub HTTP API for the custody address of an FID
+  // Uses the Hub's REST API at /v1/custodyAddress/{fid}
+  const hubUrl = env.FARCASTER_HUB_URL || 'https://hub-api.neynar.com';
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+    const res = await fetch(`${hubUrl}/v1/custodyAddress/${fid}`, {
+      headers: {
+        accept: 'application/json',
+        ...(env.NEYNAR_API_KEY ? { 'x-api-key': env.NEYNAR_API_KEY } : {}),
+      },
+      signal: controller.signal,
+    });
+    clearTimeout(timeout);
+
+    if (!res.ok) return null;
+
+    const data = (await res.json()) as { data?: { custodyAddress?: string } };
+    return data?.data?.custodyAddress ?? null;
+  } catch {
+    // Hub unavailable — fall back to Neynar API if key is configured
+    if (!env.NEYNAR_API_KEY) return null;
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 5000);
+      const res = await fetch(`https://api.neynar.com/v2/farcaster/user/bulk?fids=${fid}`, {
+        headers: {
+          accept: 'application/json',
+          'x-api-key': env.NEYNAR_API_KEY,
+        },
+        signal: controller.signal,
+      });
+      clearTimeout(timeout);
+      if (!res.ok) return null;
+      const data = (await res.json()) as { users?: Array<{ custody_address?: string }> };
+      return data?.users?.[0]?.custody_address ?? null;
+    } catch {
+      return null;
+    }
+  }
 }
 
-async function verifyLensProfile(_profileId: string, _env: Env): Promise<string | null> {
-  // In production, query Lens API to verify profile owner
-  return null;
+async function verifyLensProfile(profileId: string, env: Env): Promise<string | null> {
+  // Query Lens API (v2) to verify a profile's ownedBy address
+  const lensApiUrl = env.LENS_API_URL || 'https://api-v2.lens.dev';
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+    const headers: Record<string, string> = { 'content-type': 'application/json' };
+    if (env.LENS_ACCESS_TOKEN) {
+      headers.authorization = `Bearer ${env.LENS_ACCESS_TOKEN}`;
+    }
+    const res = await fetch(lensApiUrl, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        query: `
+          query Profile($profileId: ProfileId!) {
+            profile(request: { profileId: $profileId }) {
+              ownedBy
+            }
+          }
+        `,
+        variables: { profileId },
+      }),
+      signal: controller.signal,
+    });
+    clearTimeout(timeout);
+
+    if (!res.ok) return null;
+
+    const data = (await res.json()) as {
+      data?: { profile?: { ownedBy?: string } };
+    };
+    return data?.data?.profile?.ownedBy ?? null;
+  } catch {
+    return null;
+  }
 }
 
 function validateVesting(config: VestingConfig, repScore: number): string[] {
