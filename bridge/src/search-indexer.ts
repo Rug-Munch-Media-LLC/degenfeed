@@ -35,15 +35,21 @@ let indexErrors = 0;
 let client: any;
 
 // Lazy-init optional Meilisearch client
-function getClient(): any {
-  if (!client) {
-    try {
-      const { Meilisearch } = require('meilisearch');
-      client = new Meilisearch({ host: MEILI_URL, apiKey: MEILI_KEY });
-    } catch {
-      return null;
-    }
+async function getClientAsync(): Promise<any> {
+  if (client) return client;
+  try {
+    const { Meilisearch } = await import('meilisearch');
+    client = new Meilisearch({ host: MEILI_URL, apiKey: MEILI_KEY });
+    console.log('[indexer] Meilisearch client created, host=' + MEILI_URL);
+    return client;
+  } catch (e) {
+    console.error('[indexer] Failed to create Meilisearch client:', (e as Error).message);
+    return null;
   }
+}
+
+// Synchronous fallback — returns null if client not yet initialized
+function getClient(): any {
   return client;
 }
 
@@ -74,7 +80,7 @@ export interface SearchDocument {
 // ─── Index Setup ───────────────────────────────────────────────────────
 
 async function ensureIndex(): Promise<void> {
-  const meili = getClient();
+  const meili = await getClientAsync();
   if (!meili) return;
 
   try {
@@ -317,7 +323,7 @@ async function fetchAllProviderDocuments(): Promise<SearchDocument[]> {
 // ─── Indexing ──────────────────────────────────────────────────────────
 
 async function fullIndex(): Promise<{ count: number; errors: number }> {
-  const meili = getClient();
+  const meili = await getClientAsync();
   if (!meili) return { count: 0, errors: 1 };
   const start = Date.now();
 
@@ -361,7 +367,7 @@ async function fullIndex(): Promise<{ count: number; errors: number }> {
 }
 
 async function incrementalIndex(): Promise<{ count: number; errors: number }> {
-  const meili = getClient();
+  const meili = await getClientAsync();
   if (!meili) return { count: 0, errors: 1 };
   const start = Date.now();
 
@@ -411,7 +417,7 @@ async function incrementalIndex(): Promise<{ count: number; errors: number }> {
 
 export async function indexPost(post: UnifiedPost): Promise<boolean> {
   try {
-    const meili = getClient();
+    const meili = await getClientAsync();
     if (!meili) return false;
     const doc = postToDocument(post);
     await meili.index(INDEX_NAME).addDocuments([doc], { primaryKey: 'id' });
@@ -427,7 +433,7 @@ export async function indexPosts(posts: UnifiedPost[]): Promise<number> {
   if (posts.length === 0) return 0;
 
   try {
-    const meili = getClient();
+    const meili = await getClientAsync();
     if (!meili) return 0;
     const docs = posts.map(postToDocument);
     await meili.index(INDEX_NAME).addDocuments(docs, { primaryKey: 'id' });
