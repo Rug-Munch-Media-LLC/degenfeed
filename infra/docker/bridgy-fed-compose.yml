@@ -9,6 +9,7 @@ services:
   # Google Cloud Firestore emulator (Datastore mode) — required by Bridgy Fed
   firestore-emulator:
     image: gcr.io/google.com/cloudsdktool/google-cloud-cli:emulators
+    user: "1000:1000"
     container_name: bridgy-firestore-emulator
     hostname: firestore-emulator
     restart: unless-stopped
