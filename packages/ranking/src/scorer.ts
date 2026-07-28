@@ -45,6 +45,11 @@ export interface ScorerContext {
  * - Verified authors (green check): +1
  * - Established accounts (>100 followers): +0.5
  * - Followed by viewer: +0.5
+ * - Baseline: 0.05 for all authors (prevents zero-score for new/unverified accounts)
+ *
+ * Real data analysis (2026-07-28): 88% of bridge posts have zero reputation
+ * because followerCount is 0 and verified is empty. The baseline ensures
+ * these posts aren't unfairly penalized vs the tiny fraction that has data.
  */
 export function computeAuthorReputation(post: UnifiedPost, ctx: ScorerContext): AuthorReputation {
   const isVerified = post.author.verified.length > 0;
@@ -52,7 +57,7 @@ export function computeAuthorReputation(post: UnifiedPost, ctx: ScorerContext): 
   const isEstablished = followerCount >= 100;
   const isFollowed = ctx.followed.has(post.author.id);
 
-  let score = 0;
+  let score = 0.05; // baseline for all authors
   if (isVerified) score += 1;
   if (isEstablished) score += 0.5;
   if (isFollowed) score += 0.5;

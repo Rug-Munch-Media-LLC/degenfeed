@@ -100,7 +100,7 @@ export const DEFAULT_UNIFIED_WEIGHTS: ScoringWeights = {
   quality: 40,
   reputation: 30,
   diversity: 30,
-  source: 20,
+  source: 40,
   velocity: 40,
 };
 
@@ -117,7 +117,7 @@ export const UNIFIED_MODE_PRESETS: Record<UnifiedMode, Partial<ScoringWeights>> 
     quality: 50,
     reputation: 40,
     diversity: 50,
-    source: 30,
+    source: 35,
     velocity: 30,
   },
   'breaking-news': {
@@ -127,7 +127,7 @@ export const UNIFIED_MODE_PRESETS: Record<UnifiedMode, Partial<ScoringWeights>> 
     quality: 20,
     reputation: 20,
     diversity: 30,
-    source: 20,
+    source: 25,
     velocity: 70,
   },
   'deep-dive': {
@@ -147,7 +147,7 @@ export const UNIFIED_MODE_PRESETS: Record<UnifiedMode, Partial<ScoringWeights>> 
     quality: 30,
     reputation: 30,
     diversity: 40,
-    source: 30,
+    source: 35,
     velocity: 50,
   },
   'for-you': {
@@ -157,7 +157,7 @@ export const UNIFIED_MODE_PRESETS: Record<UnifiedMode, Partial<ScoringWeights>> 
     quality: 40,
     reputation: 40,
     diversity: 30,
-    source: 20,
+    source: 35,
     velocity: 50,
   },
 };
@@ -235,14 +235,17 @@ export function recencyDecay(createdAt: number, now: number, halfLifeHours: numb
 }
 
 /**
- * Freshness boost multiplier based on post age:
- *   <15 min → 2.0x,  <1h → 1.5x,  <2h → 1.2x,  older → 1.0x
+ * Freshness boost multiplier based on post age.
+ * Reduced from v2 values (2.0/1.5/1.2) to v3 calibrated values (1.3/1.15/1.05)
+ * based on real data analysis: the 2.0x boost + recency decay double-dipping
+ * caused very-fresh posts to dominate regardless of quality.
+ * See FEED-ALGORITHM-TUNING.md for the analysis.
  */
 export function freshnessBoost(createdAt: number, now: number): number {
   const ageMin = (now - createdAt) / 60000;
-  if (ageMin < 15) return 2.0;
-  if (ageMin < 60) return 1.5;
-  if (ageMin < 120) return 1.2;
+  if (ageMin < 15) return 1.3;
+  if (ageMin < 60) return 1.15;
+  if (ageMin < 120) return 1.05;
   return 1.0;
 }
 
@@ -594,11 +597,15 @@ export function scorePost(
     contributions.velocity;
 
   // ── Quality score multiplier (from computeQualityScore, 0-100) ─────
+  // Widen the multiplier range: instead of linear 0.05-1.0, use a squashed
+  // curve so the gap between poor (30) and great (90) content is ~2x,
+  // not the old ~1.3x. This prevents low-effort posts from scoring nearly
+  // as high as original content. Minimum floor at 0.3 prevents zero scores.
   const qualityScore = computeQualityScore(post, {
     author: buildQualityAuthorProfile(post.author),
     uniqueness: 10,
   });
-  const qualityMultiplier = Math.max(0.05, qualityScore / 100);
+  const qualityMultiplier = Math.max(0.3, Math.min(1.0, qualityScore / 70));
 
   // ── Mode-specific freshness/length boost ────────────────────────────
   const modeBoost = modeFreshnessBoost(post, mode, now);
