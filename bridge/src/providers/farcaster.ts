@@ -342,9 +342,30 @@ function guessFarcasterNiches(text: string): string[] {
 /**
  * Farcaster — NEYNAR PUBLIC API fallback.
  * Used when self-hosted Hubble is unreachable/syncing.
- * Neynar's free tier allows 25,000 calls/month.
+ * Three accounts configured for 150K total calls/month (50K each).
+ * Key rotation distributes load evenly across accounts.
  */
-const NEYNAR_API_KEY = process.env.NEYNAR_API_KEY || '';
+const NEYNAR_KEYS: string[] = [
+  process.env.NEYNAR_API_KEY || '',
+  process.env.NEYNAR_API_KEY_2 || '',
+  process.env.NEYNAR_API_KEY_3 || '',
+].filter(Boolean);
+
+let _neynarKeyIndex = 0;
+let _neynarCallCount = 0;
+const NEYNAR_MAX_CALLS = parseInt(process.env.NEYNAR_MAX_CALLS_PER_MONTH || '50000', 10);
+
+function getNeynarKey(): string {
+  if (NEYNAR_KEYS.length === 0) return '';
+  const key = NEYNAR_KEYS[_neynarKeyIndex];
+  _neynarCallCount++;
+  // Rotate every 100 calls to distribute across accounts
+  if (_neynarCallCount % 100 === 0) {
+    _neynarKeyIndex = (_neynarKeyIndex + 1) % NEYNAR_KEYS.length;
+  }
+  return key;
+}
+
 const NEYNAR_API = 'https://api.neynar.com';
 
 interface NeynarCast {
@@ -363,7 +384,8 @@ interface NeynarCast {
 }
 
 async function fetchFromNeynar(limit: number): Promise<UnifiedPost[]> {
-  if (!NEYNAR_API_KEY) {
+  const apiKey = getNeynarKey();
+  if (!apiKey) {
     console.log('[farcaster] No NEYNAR_API_KEY configured, skipping public API fallback');
     return [];
   }
@@ -375,7 +397,7 @@ async function fetchFromNeynar(limit: number): Promise<UnifiedPost[]> {
     const res = await fetch(url, {
       headers: {
         accept: 'application/json',
-        'x-api-key': NEYNAR_API_KEY,
+        'x-api-key': apiKey,
       },
       signal: AbortSignal.timeout(8000),
     });
