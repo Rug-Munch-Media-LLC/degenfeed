@@ -7,7 +7,7 @@ import WebSocket from 'ws';
 // ─── Publisher implementations ──────────────────────────────────────────
 
 async function publishToNostrRelay(_payload: unknown): Promise<boolean> {
-  const relayUrl = process.env.NOSTR_RELAY_URL || 'ws://127.0.0.1:32768';
+  const relayUrl = process.env.NOSTR_RELAY_URL || 'ws://127.0.0.1:8085';
   try {
     return new Promise((resolve) => {
       try {
@@ -54,18 +54,49 @@ async function publishToNostrRelay(_payload: unknown): Promise<boolean> {
 
 async function publishToBluesky(_payload: unknown): Promise<boolean> {
   const pdsUrl = process.env.ATPROTO_PDS_URL || 'https://bsky.social';
-  const jwt = process.env.BLUESKY_CROSSPOST_JWT || '';
+  const appPassword = process.env.BLUESKY_APP_PASSWORD || '';
+  const identifier = process.env.BLUESKY_IDENTIFIER || '';
   const did = process.env.BLUESKY_CROSSPOST_DID || '';
 
-  if (!jwt || !did) return false;
-  const payload = _payload as Record<string, unknown>;
+  if (!did) return false;
 
+  // Resolve JWT: use cached env var first, refresh via app password if expired
+  let jwt = process.env.BLUESKY_CROSSPOST_JWT || '';
+  if (!jwt || isJwtExpired(jwt)) {
+    if (!appPassword || !identifier) {
+      console.log('[crossposter] Bluesky: missing app password or identifier for JWT refresh');
+      return false;
+    }
+    try {
+      const sessionRes = await fetch(pdsUrl + '/xrpc/com.atproto.server.createSession', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identifier, password: appPassword }),
+      });
+      if (!sessionRes.ok) {
+        console.log('[crossposter] Bluesky: session refresh failed');
+        return false;
+      }
+      const session = (await sessionRes.json()) as { accessJwt?: string };
+      if (!session.accessJwt) {
+        console.log('[crossposter] Bluesky: no accessJwt in session response');
+        return false;
+      }
+      jwt = session.accessJwt;
+      console.log('[crossposter] Bluesky: JWT refreshed via app password');
+    } catch (err) {
+      console.log('[crossposter] Bluesky: session error', (err as Error).message);
+      return false;
+    }
+  }
+
+  const payload = _payload as Record<string, unknown>;
   try {
-    const res = await fetch(`${pdsUrl}/xrpc/com.atproto.repo.createRecord`, {
+    const res = await fetch(pdsUrl + '/xrpc/com.atproto.repo.createRecord', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${jwt}`,
+        Authorization: 'Bearer ' + jwt,
       },
       body: JSON.stringify({
         repo: did,
@@ -76,6 +107,19 @@ async function publishToBluesky(_payload: unknown): Promise<boolean> {
     return res.ok;
   } catch {
     return false;
+  }
+}
+
+/** Check if a JWT token is expired by decoding its payload */
+function isJwtExpired(token: string): boolean {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return true;
+    const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf8'));
+    const now = Math.floor(Date.now() / 1000);
+    return !payload.exp || payload.exp < now;
+  } catch {
+    return true;
   }
 }
 

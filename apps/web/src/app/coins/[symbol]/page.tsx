@@ -27,9 +27,9 @@
 // and verified before display. See DEPLOYMENT.md for production
 // configuration requirements.
 //
-// TODO: Replace mock data with real API calls from on-chain data providers.
-// Currently using Math.random() for prices, fake holder lists, and
-// simulated trading data. ALL figures are illustrative only.
+// TODO: Replace demo data with real API calls from on-chain data providers.
+// Price chart uses seeded deterministic data from symbol hash (no Math.random()).
+// Holder and trade sections show "Coming Soon" until real data sources are connected.
 // ══════════════════════════════════════════════════════════════════════
 
 import Link from 'next/link';
@@ -65,26 +65,6 @@ interface CoinDetail {
   links: { label: string; url: string }[];
 }
 
-interface HolderEntry {
-  address: string;
-  balance: number;
-  percentage: number;
-  rank: number;
-  label?: 'creator' | 'team' | 'lp' | 'dao' | 'community' | 'bundled';
-  isBundled?: boolean;
-}
-
-interface TradeEntry {
-  txHash: string;
-  type: 'buy' | 'sell';
-  trader: string;
-  amount: number;
-  price: number;
-  timestamp: number;
-  usdValue: number;
-  traderLabel?: 'creator' | 'team' | 'lp' | 'dao' | 'community' | 'bundled';
-}
-
 interface VestingInfo {
   totalLocked: number;
   totalUnlocked: number;
@@ -95,83 +75,26 @@ interface VestingInfo {
   nextUnlockAmount: number;
 }
 
-interface TransparencyScore {
-  walletLabeling: number;
-  vestingClarity: number;
-  feeDisclosure: number;
-  supplyAudit: number;
-  bundlingDisclosure: number;
-  lockProof: number;
-  overall: number;
-}
-
 // ══════════════════════════════════════════════════════════════════════
-// TEST-ONLY DATA GENERATORS (UI demo data)
+// DEMO DATA GENERATORS (stable, deterministic for development)
 // ══════════════════════════════════════════════════════════════════════
-// These generators produce placeholder data for the UI demo features
-// (transparency dashboard, holder labels, trade history). They are NOT
-// real blockchain data and are only used for development/preview.
-// In production, replace with actual on-chain data sources.
+// These produce deterministic placeholder data for UI demo features.
+// They use a seeded value based on the symbol to ensure consistent
+// output per coin across renders. NO Math.random() in production paths.
 
-function generateMockHoldersWithLabels(): HolderEntry[] {
-  const creators = [
-    { addr: `0x${'c'.repeat(40)}`, label: 'creator' as const },
-    { addr: `0x${'t'.repeat(40)}`, label: 'team' as const },
-    { addr: `0x${'l'.repeat(40)}`, label: 'lp' as const },
-    { addr: `0x${'d'.repeat(40)}`, label: 'dao' as const },
-    { addr: `0x${'b1'.repeat(20)}`, label: 'bundled' as const },
-    { addr: `0x${'b2'.repeat(20)}`, label: 'bundled' as const },
-    { addr: `0x${'b3'.repeat(20)}`, label: 'bundled' as const },
-  ];
-  const result: HolderEntry[] = creators.map((c, i) => ({
-    address: c.addr,
-    balance: [50000000, 15000000, 45000000, 25000000, 20000000, 15000000, 12000000][i],
-    percentage: [5, 1.5, 4.5, 2.5, 2.0, 1.5, 1.2][i],
-    rank: i + 1,
-    label: c.label,
-    isBundled: c.label === 'bundled',
-  }));
-  for (let i = 0; i < 23; i++) {
-    const bal = Math.floor(Math.random() * 5000000) + 100000;
-    result.push({
-      address: `0x${(i + 100).toString(16).padStart(40, '0')}`,
-      balance: bal,
-      percentage: (bal / 1000000000) * 100,
-      rank: result.length + 1,
-      label: 'community',
-      isBundled: false,
-    });
-  }
-  return result.sort((a, b) => b.balance - a.balance).map((h, i) => ({ ...h, rank: i + 1 }));
+function seededRandom(seed: number): () => number {
+  let s = seed;
+  return () => {
+    s = (s * 16807 + 0) % 2147483647;
+    return (s - 1) / 2147483646;
+  };
 }
 
-function generateMockTradesWithLabels(): TradeEntry[] {
-  const labeledWallets = [
-    { addr: `0x${'c'.repeat(40)}`, label: 'creator' as const },
-    { addr: `0x${'t'.repeat(40)}`, label: 'team' as const },
-    { addr: `0x${'l'.repeat(40)}`, label: 'lp' as const },
-    { addr: `0x${'b1'.repeat(20)}`, label: 'bundled' as const },
-    { addr: `0x${'b2'.repeat(20)}`, label: 'bundled' as const },
-  ];
-  return Array.from({ length: 50 }, (_, i) => {
-    const w = labeledWallets[Math.floor(Math.random() * labeledWallets.length)];
-    return {
-      txHash: `0x${(i + 1).toString(16).padStart(64, '0')}`,
-      type: Math.random() > 0.4 ? 'buy' : 'sell',
-      trader: w.addr,
-      amount: Math.floor(Math.random() * 10000) + 10,
-      price: Math.random() * 0.01 + 0.001,
-      timestamp: Date.now() - Math.floor(Math.random() * 86400000),
-      usdValue: Math.random() * 1000 + 10,
-      traderLabel: w.label,
-    };
-  });
-}
-
-function generatePriceData(days: number): number[] {
+function generatePriceData(days: number, seed = 42): number[] {
+  const rng = seededRandom(seed);
   let price = 50;
   return Array.from({ length: days }, () => {
-    price = Math.max(5, Math.min(95, price + (Math.random() - 0.48) * 8));
+    price = Math.max(5, Math.min(95, price + (rng() - 0.48) * 8));
     return price;
   });
 }
@@ -185,18 +108,6 @@ function generateVestingInfo(): VestingInfo {
     vestingEndDate: new Date(Date.now() + 86400000 * 365).toISOString(),
     nextUnlockDate: new Date(Date.now() + 86400000 * 7).toISOString(),
     nextUnlockAmount: 1538461,
-  };
-}
-
-function _generateTransparencyScore(): TransparencyScore {
-  return {
-    walletLabeling: 95,
-    vestingClarity: 90,
-    feeDisclosure: 100,
-    supplyAudit: 85,
-    bundlingDisclosure: 80,
-    lockProof: 70,
-    overall: 87,
   };
 }
 
@@ -254,15 +165,6 @@ function formatCompact(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
   if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
   return String(n);
-}
-
-function timeAgo(ts: number): string {
-  const mins = Math.floor((Date.now() - ts) / 60000);
-  if (mins < 1) return 'just now';
-  if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  return `${Math.floor(hrs / 24)}d ago`;
 }
 
 function countdownStr(ms: number): string {
@@ -344,23 +246,6 @@ function PriceChart({
         ))}
       </div>
     </div>
-  );
-}
-
-/* ── Wallet Label Badge ───────────────────────────── */
-function WalletLabelBadge({ label }: { label?: string }) {
-  if (!label || label === 'community') return null;
-  const styles: Record<string, string> = {
-    creator: 'bg-degen-500/15 text-degen-400',
-    team: 'bg-blue-500/15 text-blue-400',
-    lp: 'bg-purple-500/15 text-purple-400',
-    dao: 'bg-amber-500/15 text-amber-400',
-    bundled: 'bg-red-500/15 text-red-400',
-  };
-  return (
-    <span className={`rounded px-1 py-0.5 text-[7px] font-semibold ${styles[label] || ''}`}>
-      {label}
-    </span>
   );
 }
 
@@ -910,8 +795,6 @@ export default function CoinDetailPage() {
   const [detail, setDetail] = useState<CoinDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [dataError, setDataError] = useState<string | null>(null);
-  const [holders, setHolders] = useState<HolderEntry[]>([]);
-  const [trades, setTrades] = useState<TradeEntry[]>([]);
   const [vesting] = useState<VestingInfo>(generateVestingInfo);
   const [timeframe, setTimeframe] = useState('24H');
 
@@ -925,8 +808,9 @@ export default function CoinDetailPage() {
 
   const [activeTab, setActiveTab] = useState<DetailTab>('info');
 
-  // Price chart data
+  // Price chart data — deterministic from symbol seed (demo only)
   const priceData = useMemo(() => {
+    if (!symbol) return [];
     const days =
       timeframe === '1H'
         ? 60
@@ -937,8 +821,9 @@ export default function CoinDetailPage() {
             : timeframe === '30D'
               ? 30
               : 365;
-    return generatePriceData(days);
-  }, [timeframe]);
+    const seed = symbol.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
+    return generatePriceData(days, seed);
+  }, [timeframe, symbol]);
 
   useEffect(() => {
     if (!symbol) return;
@@ -982,8 +867,6 @@ export default function CoinDetailPage() {
       } catch {
         setDataError('Price data temporarily unavailable');
       }
-      setHolders(generateMockHoldersWithLabels());
-      setTrades(generateMockTradesWithLabels());
       setLoading(false);
     };
     fetchData();
@@ -1051,8 +934,6 @@ export default function CoinDetailPage() {
 
   const isUp = detail.priceChange24h >= 0;
   const chartColor = isUp ? '#00ff41' : '#ff4444';
-  const recentTrades = trades.slice(0, 25);
-  const topHolders = holders.slice(0, 20);
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-6 animate-page-enter">
@@ -1209,85 +1090,35 @@ export default function CoinDetailPage() {
               {/* ── INFO TAB ── */}
               {activeTab === 'info' && (
                 <div className="space-y-3">
-                  {/* Trades */}
+                  {/* Trades — Coming Soon */}
                   <div>
                     <h4 className="text-[10px] font-semibold text-[var(--color-fg)] mb-2">
                       ⚡ Recent Trades
                     </h4>
-                    <div className="divide-y divide-[var(--color-glass-border)]">
-                      {recentTrades.length === 0 && (
-                        <p className="py-3 text-center text-[10px] text-[var(--color-muted)]">
-                          No trades yet
-                        </p>
-                      )}
-                      {recentTrades.map((t) => (
-                        <div
-                          key={t.txHash}
-                          className="flex items-center justify-between py-1.5 text-[9px]"
-                        >
-                          <div className="flex items-center gap-1.5 min-w-0">
-                            <span
-                              className={`h-1.5 w-1.5 shrink-0 rounded-full ${t.type === 'buy' ? 'bg-degen-400' : 'bg-red-400'}`}
-                            />
-                            <span
-                              className={`font-semibold shrink-0 ${t.type === 'buy' ? 'text-degen-400' : 'text-red-400'}`}
-                            >
-                              {t.type === 'buy' ? 'BUY' : 'SELL'}
-                            </span>
-                            <span className="font-mono text-[var(--color-muted)] truncate max-w-[50px]">
-                              {shortenAddress(t.trader)}
-                            </span>
-                            <WalletLabelBadge label={t.traderLabel} />
-                          </div>
-                          <div className="flex items-center gap-2 shrink-0">
-                            <span className="tabular-nums text-[var(--color-fg)]">
-                              {formatCompact(t.amount)}
-                            </span>
-                            <span className="tabular-nums text-[var(--color-muted)]">
-                              ${t.usdValue.toFixed(2)}
-                            </span>
-                            <span className="text-[var(--color-muted)] w-8 text-right">
-                              {timeAgo(t.timestamp)}
-                            </span>
-                          </div>
-                        </div>
-                      ))}
+                    <div className="flex flex-col items-center justify-center py-6 text-center border border-dashed border-[var(--color-glass-border)] rounded-lg">
+                      <span className="text-lg mb-1.5">📊</span>
+                      <span className="text-[10px] font-medium text-[var(--color-muted)]">
+                        Live trades coming soon
+                      </span>
+                      <span className="text-[8px] text-[var(--color-muted)] mt-0.5">
+                        Real-time trade data will appear here once connected to an on-chain data provider.
+                      </span>
                     </div>
                   </div>
 
-                  {/* Holders */}
+                  {/* Holders — Coming Soon */}
                   <div>
                     <h4 className="text-[10px] font-semibold text-[var(--color-fg)] mb-2">
                       👥 Top Holders
                     </h4>
-                    <div className="divide-y divide-[var(--color-glass-border)]">
-                      {topHolders.map((h) => (
-                        <div
-                          key={h.address}
-                          className="flex items-center justify-between py-1.5 text-[9px]"
-                        >
-                          <div className="flex items-center gap-1.5 min-w-0">
-                            <span
-                              className={`w-4 text-center font-bold ${h.rank <= 3 ? 'text-degen-400' : 'text-[var(--color-muted)]'}`}
-                            >
-                              {h.rank <= 3 ? ['🥇', '🥈', '🥉'][h.rank - 1] : `#${h.rank}`}
-                            </span>
-                            <span className="font-mono text-[var(--color-fg)] truncate max-w-[60px]">
-                              {shortenAddress(h.address)}
-                            </span>
-                            <WalletLabelBadge label={h.label} />
-                            {h.isBundled && <span className="text-red-400 text-[7px]">⚠️</span>}
-                          </div>
-                          <div className="flex items-center gap-2 shrink-0">
-                            <span className="tabular-nums text-[var(--color-fg)]">
-                              {formatCompact(h.balance)}
-                            </span>
-                            <span className="w-10 text-right text-[var(--color-muted)]">
-                              {h.percentage.toFixed(2)}%
-                            </span>
-                          </div>
-                        </div>
-                      ))}
+                    <div className="flex flex-col items-center justify-center py-6 text-center border border-dashed border-[var(--color-glass-border)] rounded-lg">
+                      <span className="text-lg mb-1.5">👥</span>
+                      <span className="text-[10px] font-medium text-[var(--color-muted)]">
+                        Holder data coming soon
+                      </span>
+                      <span className="text-[8px] text-[var(--color-muted)] mt-0.5">
+                        Wallet labeling and holder distribution will appear here once connected.
+                      </span>
                     </div>
                   </div>
 

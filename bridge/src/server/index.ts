@@ -21,6 +21,7 @@ import { getCrossPosterStats, startCrossPoster } from '../crossposter';
 import { getIndexerStatus, reindex, startIndexer } from '../search-indexer';
 import { handleBlueskyRoute } from './bluesky-routes';
 import { handleEventRoute } from './event-routes';
+import { validateAuth } from './auth-middleware';
 import { buildFeed, DEFAULT_PREFERENCES, PROVIDERS } from './feeds';
 import { handleGtsRoute } from './gts-routes';
 import { handleNostrRoute } from './nostr-routes';
@@ -477,7 +478,14 @@ const server = http.createServer(async (req, res) => {
     res.end();
     return;
   }
-
+  // ═══════════════════════════════════════════════════════════════════════
+  // Authentication Gate — Bearer token required for all non-health routes
+  // ═══════════════════════════════════════════════════════════════════════
+  if (!validateAuth(req)) {
+    res.writeHead(401, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ error: "Unauthorized", message: "Valid BRIDGE_API_KEY required via Authorization: Bearer <key>" }));
+    return;
+  }
   const url = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
   const path = url.pathname;
   const searchParams = url.searchParams;

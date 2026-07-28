@@ -9,8 +9,8 @@
  *   - One-account-to-rule-them-all mapping
  *
  * Supported services (all ActivityPub):
- *   GoToSocial, Mastodon, PeerTube, Lemmy, Pixelfed, WriteFreely,
- *   BookWyrm, Mobilizon, Funkwhale, Castopod, Owncast
+ *   GoToSocial, PeerTube, Lemmy, Pixelfed, WriteFreely,
+ *   Castopod, Owncast
  */
 
 export interface FediverseIdentity {
@@ -65,9 +65,9 @@ const DEFAULT_CONFIG: FederationHubConfig = {
     },
     lemmy: {
       webfingerTemplate:
-        'https://talk.degenfeed.xyz/.well-known/webfinger?resource=acct:{username}@talk.degenfeed.xyz',
-      profileUrlTemplate: 'https://talk.degenfeed.xyz/u/{username}',
-      usernameTemplate: '{username}@talk.degenfeed.xyz',
+        'https://community.degenfeed.xyz/.well-known/webfinger?resource=acct:{username}@community.degenfeed.xyz',
+      profileUrlTemplate: 'https://community.degenfeed.xyz/u/{username}',
+      usernameTemplate: '{username}@community.degenfeed.xyz',
     },
     pixelfed: {
       webfingerTemplate:
@@ -77,27 +77,9 @@ const DEFAULT_CONFIG: FederationHubConfig = {
     },
     writefreely: {
       webfingerTemplate:
-        'https://write.degenfeed.xyz/.well-known/webfinger?resource=acct:{username}@write.degenfeed.xyz',
-      profileUrlTemplate: 'https://write.degenfeed.xyz/{username}',
-      usernameTemplate: '{username}@write.degenfeed.xyz',
-    },
-    bookwyrm: {
-      webfingerTemplate:
-        'https://books.degenfeed.xyz/.well-known/webfinger?resource=acct:{username}@books.degenfeed.xyz',
-      profileUrlTemplate: 'https://books.degenfeed.xyz/user/{username}',
-      usernameTemplate: '{username}@books.degenfeed.xyz',
-    },
-    mobilizon: {
-      webfingerTemplate:
-        'https://events.degenfeed.xyz/.well-known/webfinger?resource=acct:{username}@events.degenfeed.xyz',
-      profileUrlTemplate: 'https://events.degenfeed.xyz/@/{username}',
-      usernameTemplate: '{username}@events.degenfeed.xyz',
-    },
-    funkwhale: {
-      webfingerTemplate:
-        'https://music.degenfeed.xyz/.well-known/webfinger?resource=acct:{username}@music.degenfeed.xyz',
-      profileUrlTemplate: 'https://music.degenfeed.xyz/@/{username}',
-      usernameTemplate: '{username}@music.degenfeed.xyz',
+        'https://blog.degenfeed.xyz/.well-known/webfinger?resource=acct:{username}@blog.degenfeed.xyz',
+      profileUrlTemplate: 'https://blog.degenfeed.xyz/{username}',
+      usernameTemplate: '{username}@blog.degenfeed.xyz',
     },
     castopod: {
       webfingerTemplate:
@@ -123,7 +105,7 @@ const DEFAULT_CONFIG: FederationHubConfig = {
  *
  * A user with `@cryptorugmunch@social.degenfeed.xyz` can also be:
  *   @cryptorugmunch@video.degenfeed.xyz (PeerTube)
- *   @cryptorugmunch@talk.degenfeed.xyz (Lemmy)
+ *   @cryptorugmunch@community.degenfeed.xyz (Lemmy)
  *   @cryptorugmunch@photos.degenfeed.xyz (Pixelfed)
  *   etc.
  */
@@ -256,7 +238,7 @@ export class FederationHub {
         parser: (data) => data?.accounts?.length > 0,
       },
       lemmy: {
-        url: `https://talk.degenfeed.xyz/api/v3/user?username=${username}`,
+        url: `https://community.degenfeed.xyz/api/v3/user?username=${username}`,
         parser: (data) => data?.person_view != null,
       },
       pixelfed: {
@@ -323,9 +305,6 @@ export class FederationHub {
       lemmy: 'Lemmy (Communities)',
       pixelfed: 'Pixelfed (Photos)',
       writefreely: 'WriteFreely (Blogging)',
-      bookwyrm: 'BookWyrm (Books)',
-      mobilizon: 'Mobilizon (Events)',
-      funkwhale: 'Funkwhale (Music)',
       castopod: 'Castopod (Podcasts)',
       owncast: 'Owncast (Live Streaming)',
     };

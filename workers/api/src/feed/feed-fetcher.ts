@@ -347,10 +347,12 @@ export class BridgeFeedProvider implements FeedProvider {
   readonly protocol: Protocol;
   readonly schema: import('@degenfeed/feed-providers').SchemaGuard = (): boolean => true;
   private readonly bridgeUrl: string;
+  private readonly bridgeApiKey: string | undefined;
 
   constructor(protocol: Protocol, env: Env) {
     this.protocol = protocol;
     this.bridgeUrl = env.BRIDGE_INTERNAL_URL || 'http://127.0.0.1:8787';
+    this.bridgeApiKey = env.BRIDGE_API_KEY;
   }
 
   async fetchFeed(options?: { timeoutMs?: number }): Promise<FeedResult> {
@@ -359,6 +361,7 @@ export class BridgeFeedProvider implements FeedProvider {
     for (let attempt = 0; attempt < 2; attempt++) {
       try {
         const res = await fetch(`${this.bridgeUrl}/api/feed/${this.protocol}?limit=50`, {
+          headers: this.bridgeApiKey ? { 'Authorization': `Bearer ${this.bridgeApiKey}` } : {},
           signal: AbortSignal.timeout(timeoutMs),
         });
         if (!res.ok) {
@@ -383,6 +386,7 @@ export class BridgeFeedProvider implements FeedProvider {
     try {
       const start = performance.now();
       const res = await fetch(`${this.bridgeUrl}/api/bridge/health/${this.protocol}`, {
+          headers: this.bridgeApiKey ? { 'Authorization': `Bearer ${this.bridgeApiKey}` } : {},
         signal: AbortSignal.timeout(3000),
       });
       const latency = Math.round(performance.now() - start);

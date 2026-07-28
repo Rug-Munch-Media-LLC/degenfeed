@@ -27,6 +27,26 @@ export interface GtSMediaAttachment {
   url: string;
 }
 
+/**
+ * ActivityPub mention — from GtS/Mastodon status `mentions` array.
+ * Contains the remote profile URL and the @mention handle.
+ */
+export interface GtSMention {
+  url: string;
+  acct: string;
+  id: string;
+  username: string;
+}
+
+/**
+ * ActivityPub hashtag — from GtS/Mastodon status `tags` array.
+ * The `url` field points to the hashtag timeline on that instance.
+ */
+export interface GtSTag {
+  name: string;
+  url?: string;
+}
+
 export interface GtSStatus {
   id: string;
   uri: string;
@@ -36,7 +56,8 @@ export interface GtSStatus {
   sensitive: boolean;
   spoiler_text: string;
   media_attachments: GtSMediaAttachment[];
-  tags: { name: string }[];
+  tags: GtSTag[];
+  mentions: GtSMention[];
   reblogs_count: number;
   favourites_count: number;
   replies_count: number;
@@ -61,6 +82,13 @@ export function stripHtml(html: string): string {
     .replace(/\u0026nbsp;/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
+}
+
+/**
+ * Escape special regex characters for use in mention/hashtag matching.
+ */
+function escapeRegexForMention(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&');
 }
 
 export function accountToIdentity(account: GtSAccount, instanceUrl: string): UnifiedIdentity {
@@ -96,8 +124,80 @@ export function statusToUnifiedPost(status: GtSStatus, instanceUrl: string): Uni
   const identity = accountToIdentity(status.account, instanceUrl);
   const original = status.reblog ?? status;
   const isBoost = status.reblog !== null;
-  const html = original.content || '';
-  const text = stripHtml(html);
+  const rawHtml = original.content || '';
+  const text = stripHtml(rawHtml);
+
+  // ── Enrich text with mention/hashtag/link structure from the HTML ──
+  // Parse the raw HTML to extract mention handles and hashtag text
+  const mentions = original.mentions ?? [];
+  const tags = original.tags ?? [];
+
+  // Build a structured text representation that preserves @mentions and #hashtags
+  let enrichedText = text;
+  let enrichedHtml = rawHtml;
+
+  // Convert HTML mention anchors (<a href="..." class="mention">@handle</a>)
+  // to @handle@domain format in the plain text representation
+  for (const mention of mentions) {
+    const handle = mention.acct.includes('@') ? mention.acct : `${mention.acct}@${new URL(instanceUrl).hostname}`;
+    const mentionTag = `@${handle}`;
+    // Replace the plain text mention handle with the full @mention@domain
+    // Match patterns like @username or @username@domain in the stripped text
+    const textMentionPattern = new RegExp(
+      `@${escapeRegexForMention(mention.username)}(?:@${escapeRegexForMention(new URL(mention.url).hostname.replace(/^www\./, ''))})?`,
+      'g',
+    );
+    enrichedText = enrichedText.replace(textMentionPattern, mentionTag);
+
+    // Ensure HTML mention anchors use the full handle
+    enrichedHtml = enrichedHtml.replace(
+      new RegExp(
+        `<a[^>]*href="${escapeRegexForMention(mention.url)}"[^>]*class="mention"[^>]*>[^<]*</a>`,
+        'g',
+      ),
+      (anchor) => {
+        // Replace the display text inside the anchor with the full handle
+        return anchor.replace(/>[^<]+</, `>${mentionTag}<`);
+      },
+    );
+  }
+
+  // Convert hashtag anchors to #tag format in plain text
+  // Tags already appear as #tag in stripped text, but ensure they're consistently formatted
+  for (const tag of tags) {
+    if (!tag.name) continue;
+    const hashtagText = `#${tag.name}`;
+    // Ensure #hashtag has the right URL in HTML
+    if (tag.url) {
+      const tagAnchorPattern = new RegExp(
+        `<a[^>]*href="${escapeRegexForMention(tag.url)}"[^>]*>[^<]*</a>`,
+        'g',
+      );
+      enrichedHtml = enrichedHtml.replace(tagAnchorPattern, (anchor) => {
+        // If the anchor text is already #tag, keep it; otherwise wrap tag name
+        if (anchor.includes(`>#${tag.name}<`) || anchor.includes(`>${hashtagText}<`)) {
+          return anchor;
+        }
+        return anchor.replace(/>[^<]+</, `>${hashtagText}<`);
+      });
+    }
+  }
+
+  // Preserve link URLs from HTML anchors not already handled (non-mention, non-hashtag)
+  enrichedHtml = enrichedHtml.replace(
+    /<a\s+[^>]*href="([^"]+)"[^>]*>([^<]+)<\/a>/g,
+    (match, href: string, linkText: string) => {
+      // Skip mentions and hashtags already processed
+      if (
+        mentions.some((m) => m.url === href) ||
+        tags.some((t) => t.url === href)
+      ) {
+        return match;
+      }
+      // Keep the link as an HTML anchor but also append URL in text
+      return match;
+    },
+  );
 
   const embeds: Embed[] = [];
   for (const media of original.media_attachments) {
@@ -117,7 +217,7 @@ export function statusToUnifiedPost(status: GtSStatus, instanceUrl: string): Uni
     });
   }
 
-  const finalText = original.spoiler_text ? `[CW: ${original.spoiler_text}]\n\n${text}` : text;
+  const finalText = original.spoiler_text ? `[CW: ${original.spoiler_text}]\n\n${enrichedText}` : enrichedText;
   const nativeId = isBoost ? `boost:${status.id}:${original.id}` : original.id;
 
   return buildUnifiedPost({
@@ -125,7 +225,7 @@ export function statusToUnifiedPost(status: GtSStatus, instanceUrl: string): Uni
     nativeId,
     author: identity,
     text: finalText,
-    html,
+    html: enrichedHtml,
     embeds,
     parentNativeId: original.in_reply_to_id ?? undefined,
     createdAt: new Date(original.created_at).getTime(),
@@ -357,6 +457,12 @@ export function misskeyNoteToGtS(note: MisskeyNote): GtSStatus {
       following_count: 0,
       fields: [],
     },
+    mentions: note.mentions.map((m) => ({
+      url: `https://misskey.io/@${m}`,
+      acct: m,
+      id: m,
+      username: m,
+    })),
     favourited: false,
     reblogged: false,
   };
