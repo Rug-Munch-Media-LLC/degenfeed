@@ -46,6 +46,7 @@ const GTS_BASE = process.env.GTS_BASE || 'http://127.0.0.1:8082';
 // App credentials (from degenfeed_app.json or env)
 const GTS_CLIENT_ID = process.env.GTS_CLIENT_ID || '';
 const GTS_CLIENT_SECRET = process.env.GTS_CLIENT_SECRET || '';
+const GTS_ACCESS_TOKEN = process.env.GTS_ACCESS_TOKEN || '';
 
 // ─── Helpers ────────────────────────────────────────────────────────
 
@@ -701,18 +702,25 @@ async function createGtsAccount(
   url: string;
   created_at: string;
 } | null> {
-  const body: Record<string, string> = {
+  // GTS requires an app-level OAuth token for POST /api/v1/accounts.
+  // The GTS_ACCESS_TOKEN env var is set from gopass (app credentials).
+
+  // Send agreement as boolean (GTS Go struct expects bool, not string)
+  const body: Record<string, unknown> = {
     username,
     email,
     password,
-    agreement: 'true',
+    agreement: true,
     locale: 'en',
   };
   if (reason) body.reason = reason;
 
   const res = await fetch(`${GTS_BASE}/api/v1/accounts`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(GTS_ACCESS_TOKEN ? { Authorization: `Bearer ${GTS_ACCESS_TOKEN}` } : {}),
+    },
     body: JSON.stringify(body),
     signal: AbortSignal.timeout(15_000),
   });
@@ -720,6 +728,11 @@ async function createGtsAccount(
   if (!res.ok) {
     // 422 = validation error (likely duplicate username/email)
     if (res.status === 422) return null;
+    // 401 = unauthorized (token missing or invalid)
+    if (res.status === 401) {
+      console.warn('[gts-routes] Account creation returned 401 — GTS_ACCESS_TOKEN may be missing or expired');
+      return null;
+    }
     const text = await res.text().catch(() => '');
     console.error(`[gts-routes] Account creation failed (${res.status}):`, text.slice(0, 200));
     return null;

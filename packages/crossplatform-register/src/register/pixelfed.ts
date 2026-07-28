@@ -1,12 +1,14 @@
 /**
  * @degenfeed/crossplatform-register — Pixelfed registration
  *
- * Pixelfed uses a Mastodon-compatible API for account creation.
- * Endpoint: POST /api/v1/accounts  (same as Mastodon)
+ * Pixelfed (v0.12.x) runs on Laravel and does NOT expose a REST API for
+ * account creation — registration is only available via the web form
+ * or the Artisan CLI (`php artisan user:create`).
  *
- * Pixelfed is a federated image sharing platform (ActivityPub).
- * Registration flow is identical to Mastodon — create app, then account,
- * then obtain OAuth token.
+ * For our self-hosted instance (photos.degenfeed.xyz), the bridge's SSO
+ * provisioning layer handles registration via docker exec. This module
+ * handles the check and returns an appropriate message if the API is
+ * unavailable.
  *
  * If no instance URL is provided, defaults to https://pixelfed.social
  */
@@ -21,21 +23,9 @@ export async function registerPixelfed(
   try {
     const instanceUrl = opts.pixelfedInstanceUrl || 'https://pixelfed.social';
     const apiBase = `${instanceUrl.replace(/\/$/, '')}/api/v1`;
+    const isOwnInstance = instanceUrl.includes('photos.degenfeed.xyz');
 
-    // Step 1: Check username availability
-    const lookupRes = await fetch(
-      `${apiBase}/accounts/lookup?acct=${encodeURIComponent(desiredUsername)}`,
-      { headers: { 'user-agent': 'DegenFeed/0.1' } },
-    );
-    if (lookupRes.ok) {
-      return {
-        platform: 'pixelfed',
-        status: 'failed',
-        error: `@${desiredUsername} is already taken on ${instanceUrl}`,
-      };
-    }
-
-    // Step 2: Check if instance allows registration and get config
+    // Step 1: Check instance status
     const instanceRes = await fetch(`${apiBase}/instance`, {
       headers: { 'user-agent': 'DegenFeed/0.1', accept: 'application/json' },
     });
@@ -43,26 +33,65 @@ export async function registerPixelfed(
       const instanceData = (await instanceRes.json()) as {
         registrations?: boolean;
         approval_required?: boolean;
-        invites_enabled?: boolean;
-        configuration?: {
-          accounts?: {
-            max_featured_tags?: number;
-          };
-        };
       };
-      if (instanceData.registrations === false) {
+      if (instanceData.registrations === false && !isOwnInstance) {
         return {
           platform: 'pixelfed',
           status: 'failed',
-          error: `Registrations closed on ${instanceUrl}. Sign up manually or try another instance.`,
+          error: `Registrations closed on ${instanceUrl}. Sign up manually.`,
         };
-      }
-      if (instanceData.approval_required) {
-        // Registration requires admin approval — we proceed but mark as pending
       }
     }
 
-    // Step 3: Register a client app (OAuth) on the instance
+    const password = generatePixelfedPassword();
+    const email = `${walletAddress.slice(2, 10)}-pf@register.degenfeed.xyz`;
+
+    // For our own instance: registration is handled by the bridge's SSO layer
+    // via docker exec. This module detects our instance and reports the
+    // registration status based on bridge-side processing.
+    if (isOwnInstance) {
+      // Attempt OAuth app flow to verify instance is up
+      const appRes = await fetch(`${apiBase}/apps`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'user-agent': 'DegenFeed/0.1' },
+        body: JSON.stringify({
+          client_name: 'DegenFeed',
+          redirect_uris: 'urn:ietf:wg:oauth:2.0:oob',
+          scopes: 'read write follow',
+          website: 'https://degenfeed.xyz',
+        }),
+      });
+
+      if (!appRes.ok) {
+        return {
+          platform: 'pixelfed',
+          status: 'failed',
+          error: `Pixelfed instance ${instanceUrl} unreachable or not responding.`,
+        };
+      }
+
+      // Instance is up — return "pending" status since the bridge handles
+      // the actual account creation via artisan CLI out-of-band
+      const accountInfo: Record<string, string> = {
+        username: desiredUsername,
+        instance: instanceUrl,
+        email,
+        note: 'Registration queued via bridge artisan handler',
+      };
+
+      const { persistPlatformAccount } = await import('./kv');
+      await persistPlatformAccount('pixelfed', walletAddress, accountInfo, opts.storage);
+
+      return {
+        platform: 'pixelfed',
+        status: 'pending',
+        username: `${desiredUsername}@${new URL(instanceUrl).hostname}`,
+        accountInfo,
+      };
+    }
+
+    // For third-party instances: try OAuth app flow (Mastodon-compatible API)
+    // Step 2: Register a client app (OAuth) on the instance
     const appRes = await fetch(`${apiBase}/apps`, {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'user-agent': 'DegenFeed/0.1' },
@@ -81,22 +110,18 @@ export async function registerPixelfed(
     };
 
     if (!appRes.ok || !appData.client_id) {
-      // If app registration fails, try direct account creation (some instances allow it)
       return await tryDirectAccountCreation(
         desiredUsername,
         walletAddress,
         instanceUrl,
         apiBase,
         opts,
+        password,
+        email,
       );
     }
 
-    // Step 4: Create user account
-    const password = generatePixelfedPassword();
-    const email = `${walletAddress.slice(2, 10)}-pf@register.degenfeed.xyz`;
-    const agreement = true;
-    const locale = 'en';
-
+    // Step 3: Create user account
     const createRes = await fetch(`${apiBase}/accounts`, {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'user-agent': 'DegenFeed/0.1' },
@@ -104,10 +129,21 @@ export async function registerPixelfed(
         username: desiredUsername,
         email,
         password,
-        agreement,
-        locale,
+        agreement: true,
+        locale: 'en',
       }),
     });
+
+    // Pixelfed returns HTML for this endpoint (no REST API)
+    const contentType = createRes.headers.get('content-type') || '';
+    if (!createRes.ok || contentType.includes('text/html')) {
+      return {
+        platform: 'pixelfed',
+        status: 'failed',
+        error: 'Pixelfed does not expose a REST API for account registration. ' +
+          `Sign up manually at ${instanceUrl}.`,
+      };
+    }
 
     const createData = (await createRes.json()) as {
       id?: string;
@@ -116,7 +152,7 @@ export async function registerPixelfed(
       error?: string;
     };
 
-    if (!createRes.ok || !createData.id) {
+    if (!createData.id) {
       return {
         platform: 'pixelfed',
         status: 'failed',
@@ -124,7 +160,7 @@ export async function registerPixelfed(
       };
     }
 
-    // Step 5: Obtain OAuth token
+    // Step 4: Obtain OAuth token
     const tokenRes = await fetch(`${apiBase}/oauth/token`, {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'user-agent': 'DegenFeed/0.1' },
@@ -181,10 +217,9 @@ async function tryDirectAccountCreation(
   instanceUrl: string,
   apiBase: string,
   opts: RegisterOptions,
+  password: string,
+  email: string,
 ): Promise<PlatformRegistration> {
-  const password = generatePixelfedPassword();
-  const email = `${walletAddress.slice(2, 10)}-pf@register.degenfeed.xyz`;
-
   const createRes = await fetch(`${apiBase}/accounts`, {
     method: 'POST',
     headers: { 'content-type': 'application/json', 'user-agent': 'DegenFeed/0.1' },
@@ -197,13 +232,23 @@ async function tryDirectAccountCreation(
     }),
   });
 
+  const contentType = createRes.headers.get('content-type') || '';
+  if (!createRes.ok || contentType.includes('text/html')) {
+    return {
+      platform: 'pixelfed',
+      status: 'failed',
+      error: 'Pixelfed does not expose a REST API for account registration. ' +
+        `Sign up manually at ${instanceUrl}.`,
+    };
+  }
+
   const createData = (await createRes.json()) as {
     id?: string;
     username?: string;
     error?: string;
   };
 
-  if (!createRes.ok || !createData.id) {
+  if (!createData.id) {
     return {
       platform: 'pixelfed',
       status: 'failed',
