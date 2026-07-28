@@ -730,7 +730,9 @@ async function createGtsAccount(
     if (res.status === 422) return null;
     // 401 = unauthorized (token missing or invalid)
     if (res.status === 401) {
-      console.warn('[gts-routes] Account creation returned 401 — GTS_ACCESS_TOKEN may be missing or expired');
+      console.warn(
+        '[gts-routes] Account creation returned 401 — GTS_ACCESS_TOKEN may be missing or expired',
+      );
       return null;
     }
     const text = await res.text().catch(() => '');

@@ -32,6 +32,8 @@ Welcome to the DegenFeed documentation hub. This index links every document in t
 | [User Guide](USER_GUIDE.md) | Step-by-step: account creation, posting, tipping, spaces, communities, search, notifications, settings |
 | [Creator Guide](CREATOR_GUIDE.md) | Creator coins, tips, livestreaming, revenue sharing, growth strategies |
 | [Registration & Auth Guide](REGISTRATION.md) | Wallet sign-in, protocol linking, identity resolution |
+| [DegenFeed Mesh FAQ](MESH-FAQ.md) | How the multi-network mesh works — one account on 8+ networks |
+| [social.degenfeed.xyz Guide](SOCIAL_DEGENFEED_README.md) | Welcome to the DegenFeed Mesh entry point |
 | [Self-Host Guide](SELF_HOST_GUIDE.md) | Running your own DegenFeed instance |
 | [Guide Index](guide/index.md) | Quick-start guide for getting started |
 | [Guide: Protocols](guide/protocols.md) | How to connect and use each protocol |
@@ -150,6 +152,8 @@ docs/
 ├── README.md              ← YOU ARE HERE
 ├── index.md               ← VitePress home page
 ├── USER_GUIDE.md          ← End-user guide
+├── SOCIAL_DEGENFEED_README.md ← social.degenfeed.xyz welcome guide
+├── MESH-FAQ.md            ← DegenFeed Mesh FAQ (one account on 8+ networks)
 ├── CREATOR_GUIDE.md       ← Creator monetization guide
 ├── DEVELOPER_GUIDE.md     ← Developer contribution guide
 ├── API_REFERENCE.md       ← Complete API reference
