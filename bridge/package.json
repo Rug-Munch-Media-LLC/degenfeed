@@ -12,7 +12,8 @@
     "@degenfeed/bluesky-sdk": "workspace:*",
     "@degenfeed/types": "workspace:*",
     "@degenfeed/utils": "workspace:*",
-    "meilisearch": "^0.60.0"
+    "meilisearch": "^0.60.0",
+    "@degenfeed/nostr-sdk": "workspace:*"
   },
   "devDependencies": {
     "tsx": "^4",

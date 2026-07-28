@@ -22,6 +22,7 @@
  * content to target protocols using the configured transforms.
  */
 
+import { getPublicKey, signEvent } from '@degenfeed/nostr-sdk';
 import type { UnifiedPost } from './server/types';
 
 // ─── Types ──────────────────────────────────────────────────────────────
@@ -644,9 +645,28 @@ const TRANSFORMS: Record<string, TransformFunction> = {
 
 async function publishToNostrRelay(_payload: unknown): Promise<boolean> {
   const relayUrl = process.env.NOSTR_RELAY_URL || 'ws://127.0.0.1:8085';
+  const privateKeyHex = process.env.NOSTR_PRIVATE_KEY_HEX;
+  if (!privateKeyHex) {
+    console.log('[nostr] No NOSTR_PRIVATE_KEY_HEX configured — cannot sign events');
+    return false;
+  }
   try {
     return new Promise((resolve) => {
       try {
+        // Sign the event with proper Nostr pubkey, id, and sig
+        const payload = _payload as Record<string, unknown>;
+        const pubkey = getPublicKey(privateKeyHex);
+        const signedEvent = signEvent(
+          {
+            pubkey,
+            created_at: (payload.created_at as number) || Math.floor(Date.now() / 1000),
+            kind: (payload.kind as number) || 1,
+            tags: (payload.tags as string[][]) || [],
+            content: (payload.content as string) || '',
+          },
+          privateKeyHex,
+        );
+
         const ws = new WebSocket(relayUrl);
         const timer = setTimeout(() => {
           ws.close();
@@ -654,7 +674,8 @@ async function publishToNostrRelay(_payload: unknown): Promise<boolean> {
         }, 5000);
 
         ws.addEventListener('open', () => {
-          ws.send(JSON.stringify(['EVENT', _payload]));
+          ws.send(JSON.stringify(['EVENT', signedEvent]));
+          console.log(`[nostr] Sent signed event ${signedEvent.id.slice(0, 8)} to ${relayUrl}`);
         });
 
         ws.addEventListener('message', (event: MessageEvent) => {
@@ -663,7 +684,13 @@ async function publishToNostrRelay(_payload: unknown): Promise<boolean> {
             if (msg[0] === 'OK') {
               clearTimeout(timer);
               ws.close();
-              resolve(msg[1] === true || typeof msg[1] === 'string');
+              const ok = msg[2] === true;
+              if (ok) {
+                console.log(`[nostr] ✓ Event accepted by relay`);
+              } else {
+                console.log(`[nostr] ✗ Relay rejected event: ${JSON.stringify(msg).slice(0, 200)}`);
+              }
+              resolve(ok);
             }
           } catch {
             // ignore
@@ -1384,7 +1411,9 @@ async function fetchLatestPodcastEpisode(): Promise<UnifiedPost | null> {
   try {
     // Try to fetch from the bridge's podcast store via API
     const res = await fetch('http://127.0.0.1:8787/api/podcast/trending?limit=5', {
-      headers: process.env.BRIDGE_API_KEY ? { 'Authorization': `Bearer ${process.env.BRIDGE_API_KEY}` } : {},
+      headers: process.env.BRIDGE_API_KEY
+        ? { Authorization: `Bearer ${process.env.BRIDGE_API_KEY}` }
+        : {},
       signal: AbortSignal.timeout(5000),
     });
     if (res.ok) {

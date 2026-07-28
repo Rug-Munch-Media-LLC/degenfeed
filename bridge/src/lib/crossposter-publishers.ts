@@ -2,15 +2,35 @@
  * Cross-poster per-target publishers
  */
 
+import { getPublicKey, signEvent } from '@degenfeed/nostr-sdk';
 import WebSocket from 'ws';
 
 // ─── Publisher implementations ──────────────────────────────────────────
 
 async function publishToNostrRelay(_payload: unknown): Promise<boolean> {
   const relayUrl = process.env.NOSTR_RELAY_URL || 'ws://127.0.0.1:8085';
+  const privateKeyHex = process.env.NOSTR_PRIVATE_KEY_HEX;
+  if (!privateKeyHex) {
+    console.log('[nostr] No NOSTR_PRIVATE_KEY_HEX configured — cannot sign events');
+    return false;
+  }
   try {
     return new Promise((resolve) => {
       try {
+        // Sign the event with proper Nostr pubkey, id, and sig
+        const payload = _payload as Record<string, unknown>;
+        const pubkey = getPublicKey(privateKeyHex);
+        const signedEvent = signEvent(
+          {
+            pubkey,
+            created_at: (payload.created_at as number) || Math.floor(Date.now() / 1000),
+            kind: (payload.kind as number) || 1,
+            tags: (payload.tags as string[][]) || [],
+            content: (payload.content as string) || '',
+          },
+          privateKeyHex,
+        );
+
         const ws = new WebSocket(relayUrl);
         const timer = setTimeout(() => {
           ws.close();
@@ -18,7 +38,8 @@ async function publishToNostrRelay(_payload: unknown): Promise<boolean> {
         }, 5000);
 
         ws.addEventListener('open', () => {
-          ws.send(JSON.stringify(['EVENT', _payload]));
+          ws.send(JSON.stringify(['EVENT', signedEvent]));
+          console.log(`[nostr] Sent signed event ${signedEvent.id.slice(0, 8)} to ${relayUrl}`);
         });
 
         ws.addEventListener('message', (event: MessageEvent) => {
@@ -27,7 +48,13 @@ async function publishToNostrRelay(_payload: unknown): Promise<boolean> {
             if (msg[0] === 'OK') {
               clearTimeout(timer);
               ws.close();
-              resolve(msg[1] === true || typeof msg[1] === 'string');
+              const ok = msg[2] === true;
+              if (ok) {
+                console.log(`[nostr] ✓ Event accepted by relay`);
+              } else {
+                console.log(`[nostr] ✗ Relay rejected event: ${JSON.stringify(msg).slice(0, 200)}`);
+              }
+              resolve(ok);
             }
           } catch {
             // ignore
@@ -198,45 +225,145 @@ async function publishToFarcaster(_payload: unknown): Promise<boolean> {
   }
 }
 
+// ─── Lens v2 helpers ─────────────────────────────────────────────────────
+// Lens Protocol v2 uses api.lens.xyz with wallet-based SIWE auth.
+// Access tokens expire in ~10 min; refresh tokens in ~9 days.
+// We cache the access token in memory and auto-refresh when expired.
+
+let _lensAccessToken: string | null = null;
+let _lensTokenExpiresAt = 0;
+
+async function lensAuthenticate(): Promise<string | null> {
+  const lensApiUrl = process.env.LENS_API_URL || 'https://api.lens.xyz/graphql';
+  const refreshToken = process.env.LENS_REFRESH_TOKEN || '';
+  const accountAddr = process.env.LENS_ACCOUNT_ADDRESS || '';
+
+  if (!refreshToken || !accountAddr) {
+    console.log(
+      '[crossposter] Lens: cannot authenticate — missing LENS_REFRESH_TOKEN or LENS_ACCOUNT_ADDRESS',
+    );
+    return null;
+  }
+
+  // Use refresh token to get a new access token
+  try {
+    const res = await fetch(lensApiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Origin: 'https://degenfeed.xyz' },
+      body: JSON.stringify({
+        query: `mutation {
+          refresh(request: { refreshToken: "${refreshToken}" }) {
+            ... on AuthenticationTokens { accessToken refreshToken }
+          }
+        }`,
+      }),
+    });
+    if (!res.ok) {
+      console.log(`[crossposter] Lens: token refresh HTTP ${res.status}`);
+      return null;
+    }
+    const body = (await res.json()) as {
+      data?: { refresh?: { accessToken?: string; refreshToken?: string } };
+    };
+    const newToken = body?.data?.refresh?.accessToken;
+    if (!newToken) {
+      console.log('[crossposter] Lens: token refresh failed — no accessToken in response');
+      return null;
+    }
+
+    _lensAccessToken = newToken;
+    _lensTokenExpiresAt = decodeJwtExpiry(newToken);
+    console.log('[crossposter] Lens: token refreshed');
+
+    // Store updated refresh token
+    const newRefresh = body?.data?.refresh?.refreshToken;
+    if (newRefresh) {
+      process.env.LENS_REFRESH_TOKEN = newRefresh;
+    }
+
+    return newToken;
+  } catch (err) {
+    console.log(`[crossposter] Lens: token refresh error: ${(err as Error).message}`);
+    return null;
+  }
+}
+
+/** Decode JWT expiry timestamp (in seconds since epoch). Returns 0 on failure. */
+function decodeJwtExpiry(token: string): number {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return 0;
+    const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf8'));
+    return payload.exp || 0;
+  } catch {
+    return 0;
+  }
+}
+
 async function publishToLens(_payload: unknown): Promise<boolean> {
-  const lensApiUrl = process.env.LENS_API_URL || 'https://api-v2.lens.dev/graphql';
-  const accessToken = process.env.LENS_ACCESS_TOKEN || '';
-  const profileId = process.env.LENS_PROFILE_ID || '';
+  const lensApiUrl = process.env.LENS_API_URL || 'https://api.lens.xyz/graphql';
+  const accountAddr = process.env.LENS_ACCOUNT_ADDRESS || '';
+  const feedAddr = process.env.LENS_FEED_ADDRESS || '0xcB5E109FFC0E15565082d78E68dDDf2573703580';
   const payload = _payload as { text: string; embeds?: Array<{ url: string }> };
 
-  if (!accessToken || !profileId) {
-    console.log('[crossposter] Lens: missing LENS_ACCESS_TOKEN or LENS_PROFILE_ID');
+  if (!accountAddr) {
+    console.log('[crossposter] Lens: missing LENS_ACCOUNT_ADDRESS — cannot post');
     return false;
+  }
+
+  // Get a valid access token (reuse cached or re-authenticate)
+  let accessToken = _lensAccessToken;
+  const now = Math.floor(Date.now() / 1000);
+  if (!accessToken || now >= _lensTokenExpiresAt - 60) {
+    accessToken = null;
+    _lensAccessToken = null;
+  }
+  if (!accessToken) {
+    accessToken = await lensAuthenticate();
+    if (!accessToken) {
+      console.log('[crossposter] Lens: failed to authenticate');
+      return false;
+    }
   }
 
   const truncatedText =
     payload.text.length > 5000 ? `${payload.text.slice(0, 4997)}...` : payload.text;
+
+  // Lens v2: post content as JSON with a "content" field, URI-encoded
+  const contentObj = { content: truncatedText };
+  const contentUri = `data:application/json,${encodeURIComponent(JSON.stringify(contentObj))}`;
 
   try {
     const res = await fetch(lensApiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        Origin: 'https://degenfeed.xyz',
         Authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify({
-        query: `mutation CreatePost($request: CreatePublicPostRequest!) {
-          createPost(request: $request) {
-            ... on Post { id }
+        query: `mutation {
+          post(request: { contentUri: "${contentUri}", feed: "${feedAddr}" }) {
+            __typename
+            ... on PostResponse { hash }
+            ... on TransactionWillFail { reason }
+            ... on PostOperationValidationFailed { reason }
           }
         }`,
-        variables: {
-          request: {
-            profileId,
-            contentURI: `data:text/plain,${encodeURIComponent(truncatedText)}`,
-          },
-        },
       }),
     });
 
     if (res.ok) {
-      console.log(`[crossposter] ✓ Lens post successful`);
-      return true;
+      const body = (await res.json()) as {
+        data?: { post?: { __typename: string; hash?: string; reason?: string } };
+      };
+      const result = body?.data?.post;
+      if (result?.__typename === 'PostResponse') {
+        console.log(`[crossposter] ✓ Lens post successful: ${result.hash?.slice(0, 18) || ''}...`);
+        return true;
+      }
+      console.log(`[crossposter] ✗ Lens: ${result?.__typename}: ${result?.reason || ''}`);
+      return false;
     }
 
     const errBody = await res.text().catch(() => '');

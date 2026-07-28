@@ -239,7 +239,7 @@ export class PdsMigrationClient {
    * This writes all records from the CAR file into the target PDS's
    * repository, making the data available on our instance.
    */
-  async importRepo(did: string, carData: Uint8Array): Promise<{ recordsImported: number }> {
+  async importRepo(_did: string, carData: Uint8Array): Promise<{ recordsImported: number }> {
     this.ensureAuthenticated();
 
     const res = await fetch(`${this.pdsUrl}/xrpc/com.atproto.repo.importRepo`, {
@@ -249,7 +249,7 @@ export class PdsMigrationClient {
         'user-agent': this.userAgent,
         authorization: `Bearer ${this.accessJwt}`,
       },
-      body: carData,
+      body: carData as BodyInit,
       signal: AbortSignal.timeout(120000), // 2 min for large repos
     });
 
@@ -297,8 +297,8 @@ export class PdsMigrationClient {
    */
   async updateDidPdsEndpoint(
     did: string,
-    signingKey: string,
-    rotationKey: string,
+    _signingKey: string,
+    _rotationKey: string,
     newPdsUrl: string = this.pdsUrl,
   ): Promise<void> {
     // Construct the PLC operation to update the service endpoint
@@ -540,7 +540,7 @@ export class PdsMigrationClient {
         'user-agent': this.userAgent,
         authorization: `Bearer ${this.accessJwt}`,
       },
-      body: data,
+      body: data as BodyInit,
       signal: AbortSignal.timeout(30000),
     });
 
