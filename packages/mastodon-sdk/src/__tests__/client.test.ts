@@ -5,7 +5,7 @@
  * request headers, body serialization, response parsing, and error handling.
  */
 
-import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { GtSAccount, GtSStatus } from '../index';
 
 // Mock data
@@ -88,9 +88,7 @@ describe('GtSClient', () => {
     // Access private instanceUrl through the verifyCredentials call
     // The trailing slash should be stripped, making the URL
     // https://social.example.com/api/v1/accounts/verify_credentials
-    fetchSpy.mockResolvedValue(
-      new Response(JSON.stringify(MOCK_ACCOUNT), { status: 200 }),
-    );
+    fetchSpy.mockResolvedValue(new Response(JSON.stringify(MOCK_ACCOUNT), { status: 200 }));
     client.verifyCredentials();
     const callUrl = fetchSpy.mock.calls[0][0] as string;
     expect(callUrl).toBe('https://social.example.com/api/v1/accounts/verify_credentials');
@@ -117,9 +115,7 @@ describe('GtSClient', () => {
   // ─── GET requests ────────────────────────────────────────────────────
 
   it('should call verifyCredentials and return account', async () => {
-    fetchSpy.mockResolvedValue(
-      new Response(JSON.stringify(MOCK_ACCOUNT), { status: 200 }),
-    );
+    fetchSpy.mockResolvedValue(new Response(JSON.stringify(MOCK_ACCOUNT), { status: 200 }));
 
     const client = new GtSClient('https://social.example.com', 'tok_abc');
     const result = await client.verifyCredentials();
@@ -140,9 +136,7 @@ describe('GtSClient', () => {
   });
 
   it('should call lookupAccount with the correct URL', async () => {
-    fetchSpy.mockResolvedValue(
-      new Response(JSON.stringify(MOCK_ACCOUNT), { status: 200 }),
-    );
+    fetchSpy.mockResolvedValue(new Response(JSON.stringify(MOCK_ACCOUNT), { status: 200 }));
 
     const client = new GtSClient('https://mastodon.social', 'tok_xyz');
     const result = await client.lookupAccount('user@example.com');
@@ -154,9 +148,7 @@ describe('GtSClient', () => {
   });
 
   it('should call getAccount with the correct URL', async () => {
-    fetchSpy.mockResolvedValue(
-      new Response(JSON.stringify(MOCK_ACCOUNT), { status: 200 }),
-    );
+    fetchSpy.mockResolvedValue(new Response(JSON.stringify(MOCK_ACCOUNT), { status: 200 }));
 
     const client = new GtSClient('https://mastodon.social');
     const result = await client.getAccount('42');
@@ -168,19 +160,16 @@ describe('GtSClient', () => {
 
   it('should call getTrendingHashtags with limit param', async () => {
     fetchSpy.mockResolvedValue(
-      new Response(
-        JSON.stringify([
-          { name: 'bitcoin', url: '/tags/bitcoin', history: [] },
-        ]),
-        { status: 200 },
-      ),
+      new Response(JSON.stringify([{ name: 'bitcoin', url: '/tags/bitcoin', history: [] }]), {
+        status: 200,
+      }),
     );
 
     const client = new GtSClient('https://mastodon.social', 'tok_t');
     const result = await client.getTrendingHashtags(5);
 
     expect(result).toHaveLength(1);
-    expect(result[0].name).toBe('bitcoin');
+    expect(result[0]!.name).toBe('bitcoin');
 
     const callUrl = fetchSpy.mock.calls[0][0] as string;
     expect(callUrl).toContain('/api/v1/trends/tags');
@@ -190,9 +179,7 @@ describe('GtSClient', () => {
   // ─── POST requests ───────────────────────────────────────────────────
 
   it('should publish a status with the correct body', async () => {
-    fetchSpy.mockResolvedValue(
-      new Response(JSON.stringify(MOCK_STATUS), { status: 200 }),
-    );
+    fetchSpy.mockResolvedValue(new Response(JSON.stringify(MOCK_STATUS), { status: 200 }));
 
     const client = new GtSClient('https://mastodon.social', 'tok_pub');
     const result = await client.publish('Hello world!', {
@@ -216,26 +203,20 @@ describe('GtSClient', () => {
   });
 
   it('should publish a reply with in_reply_to_id', async () => {
-    fetchSpy.mockResolvedValue(
-      new Response(JSON.stringify(MOCK_STATUS), { status: 200 }),
-    );
+    fetchSpy.mockResolvedValue(new Response(JSON.stringify(MOCK_STATUS), { status: 200 }));
 
     const client = new GtSClient('https://mastodon.social', 'tok_rep');
     await client.publish('@user reply!', {
       inReplyToId: '12345',
     });
 
-    const body = JSON.parse(
-      (fetchSpy.mock.calls[0][1] as RequestInit).body as string,
-    );
+    const body = JSON.parse((fetchSpy.mock.calls[0][1] as RequestInit).body as string);
     expect(body.in_reply_to_id).toBe('12345');
     expect(body.status).toBe('@user reply!');
   });
 
   it('should publish a post with content warning', async () => {
-    fetchSpy.mockResolvedValue(
-      new Response(JSON.stringify(MOCK_STATUS), { status: 200 }),
-    );
+    fetchSpy.mockResolvedValue(new Response(JSON.stringify(MOCK_STATUS), { status: 200 }));
 
     const client = new GtSClient('https://mastodon.social', 'tok_cw');
     await client.publish('Sensitive content', {
@@ -243,9 +224,7 @@ describe('GtSClient', () => {
       spoilerText: 'NSFW',
     });
 
-    const body = JSON.parse(
-      (fetchSpy.mock.calls[0][1] as RequestInit).body as string,
-    );
+    const body = JSON.parse((fetchSpy.mock.calls[0][1] as RequestInit).body as string);
     expect(body.sensitive).toBe(true);
     expect(body.spoiler_text).toBe('NSFW');
   });
@@ -253,9 +232,7 @@ describe('GtSClient', () => {
   // ─── Like / Repost / Bookmark ────────────────────────────────────────
 
   it('should like a status', async () => {
-    fetchSpy.mockResolvedValue(
-      new Response(JSON.stringify(MOCK_STATUS), { status: 200 }),
-    );
+    fetchSpy.mockResolvedValue(new Response(JSON.stringify(MOCK_STATUS), { status: 200 }));
 
     const client = new GtSClient('https://mastodon.social', 'tok_like');
     await client.like('987');
@@ -266,9 +243,7 @@ describe('GtSClient', () => {
   });
 
   it('should unlike a status', async () => {
-    fetchSpy.mockResolvedValue(
-      new Response(JSON.stringify(MOCK_STATUS), { status: 200 }),
-    );
+    fetchSpy.mockResolvedValue(new Response(JSON.stringify(MOCK_STATUS), { status: 200 }));
 
     const client = new GtSClient('https://mastodon.social', 'tok_unlike');
     await client.unlike('987');
@@ -278,9 +253,7 @@ describe('GtSClient', () => {
   });
 
   it('should repost a status', async () => {
-    fetchSpy.mockResolvedValue(
-      new Response(JSON.stringify(MOCK_STATUS), { status: 200 }),
-    );
+    fetchSpy.mockResolvedValue(new Response(JSON.stringify(MOCK_STATUS), { status: 200 }));
 
     const client = new GtSClient('https://mastodon.social', 'tok_boost');
     await client.repost('987');
@@ -290,9 +263,7 @@ describe('GtSClient', () => {
   });
 
   it('should bookmark a status', async () => {
-    fetchSpy.mockResolvedValue(
-      new Response(JSON.stringify(MOCK_STATUS), { status: 200 }),
-    );
+    fetchSpy.mockResolvedValue(new Response(JSON.stringify(MOCK_STATUS), { status: 200 }));
 
     const client = new GtSClient('https://mastodon.social', 'tok_bm');
     await client.bookmark('987');
@@ -304,9 +275,7 @@ describe('GtSClient', () => {
   // ─── Account management ──────────────────────────────────────────────
 
   it('should follow an account', async () => {
-    fetchSpy.mockResolvedValue(
-      new Response(JSON.stringify(MOCK_ACCOUNT), { status: 200 }),
-    );
+    fetchSpy.mockResolvedValue(new Response(JSON.stringify(MOCK_ACCOUNT), { status: 200 }));
 
     const client = new GtSClient('https://mastodon.social', 'tok_follow');
     const result = await client.follow('42');
@@ -317,9 +286,7 @@ describe('GtSClient', () => {
   });
 
   it('should get followers for an account', async () => {
-    fetchSpy.mockResolvedValue(
-      new Response(JSON.stringify([MOCK_ACCOUNT]), { status: 200 }),
-    );
+    fetchSpy.mockResolvedValue(new Response(JSON.stringify([MOCK_ACCOUNT]), { status: 200 }));
 
     const client = new GtSClient('https://mastodon.social', 'tok_f');
     const result = await client.getFollowers('42', 10);
@@ -342,9 +309,7 @@ describe('GtSClient', () => {
       redirect_uri: 'urn:ietf:wg:oauth:2.0:oob',
       vapid_key: '',
     };
-    fetchSpy.mockResolvedValue(
-      new Response(JSON.stringify(appResponse), { status: 200 }),
-    );
+    fetchSpy.mockResolvedValue(new Response(JSON.stringify(appResponse), { status: 200 }));
 
     const client = new GtSClient('https://mastodon.social');
     const result = await client.registerApp({
@@ -369,9 +334,7 @@ describe('GtSClient', () => {
       scope: 'read write',
       created_at: 1700000000,
     };
-    fetchSpy.mockResolvedValue(
-      new Response(JSON.stringify(tokenResponse), { status: 200 }),
-    );
+    fetchSpy.mockResolvedValue(new Response(JSON.stringify(tokenResponse), { status: 200 }));
 
     const client = new GtSClient('https://mastodon.social');
     const result = await client.authenticateWithPassword(
@@ -409,9 +372,7 @@ describe('GtSClient', () => {
   });
 
   it('should throw on 404 Not Found', async () => {
-    fetchSpy.mockResolvedValue(
-      new Response('Not Found', { status: 404, statusText: 'Not Found' }),
-    );
+    fetchSpy.mockResolvedValue(new Response('Not Found', { status: 404, statusText: 'Not Found' }));
 
     const client = new GtSClient('https://mastodon.social', 'tok_ok');
     await expect(client.getAccount('999999')).rejects.toThrow(/404/);
@@ -439,9 +400,7 @@ describe('GtSClient', () => {
   });
 
   it('should handle empty response body on error', async () => {
-    fetchSpy.mockResolvedValue(
-      new Response(null, { status: 403, statusText: 'Forbidden' }),
-    );
+    fetchSpy.mockResolvedValue(new Response(null, { status: 403, statusText: 'Forbidden' }));
 
     const client = new GtSClient('https://mastodon.social', 'tok_403');
     await expect(client.verifyCredentials()).rejects.toThrow(/403/);
@@ -464,9 +423,7 @@ describe('GtSClient', () => {
   // ─── Edge cases ──────────────────────────────────────────────────────
 
   it('should search accounts with correct params', async () => {
-    fetchSpy.mockResolvedValue(
-      new Response(JSON.stringify([MOCK_ACCOUNT]), { status: 200 }),
-    );
+    fetchSpy.mockResolvedValue(new Response(JSON.stringify([MOCK_ACCOUNT]), { status: 200 }));
 
     const client = new GtSClient('https://mastodon.social', 'tok_search');
     const results = await client.searchAccounts('bitcoin', 5);
@@ -480,9 +437,7 @@ describe('GtSClient', () => {
   });
 
   it('should look up account by acct and return null on failure', async () => {
-    fetchSpy.mockResolvedValue(
-      new Response('Not Found', { status: 404 }),
-    );
+    fetchSpy.mockResolvedValue(new Response('Not Found', { status: 404 }));
 
     const client = new GtSClient('https://mastodon.social', 'tok_lookup');
     const result = await client.lookupAccountByAcct('nonexistent@example.com');
@@ -493,16 +448,12 @@ describe('GtSClient', () => {
   it('should handle export operations', async () => {
     const client = new GtSClient('https://mastodon.social', 'tok_export');
 
-    fetchSpy.mockResolvedValueOnce(
-      new Response(JSON.stringify([MOCK_ACCOUNT]), { status: 200 }),
-    );
+    fetchSpy.mockResolvedValueOnce(new Response(JSON.stringify([MOCK_ACCOUNT]), { status: 200 }));
     const blocks = await client.exportBlocks();
     expect(blocks).toHaveLength(1);
-    expect(blocks[0].username).toBe('testuser');
+    expect(blocks[0]!.username).toBe('testuser');
 
-    fetchSpy.mockResolvedValueOnce(
-      new Response(JSON.stringify([MOCK_ACCOUNT]), { status: 200 }),
-    );
+    fetchSpy.mockResolvedValueOnce(new Response(JSON.stringify([MOCK_ACCOUNT]), { status: 200 }));
     const mutes = await client.exportMutes();
     expect(mutes).toHaveLength(1);
   });
@@ -594,7 +545,7 @@ describe('statusToUnifiedPost', () => {
 
     const post = statusToUnifiedPost(statusWithMedia, 'https://social.example.com');
     expect(post.embeds).toHaveLength(1);
-    expect(post.embeds[0].kind).toBe('image');
+    expect(post.embeds[0]!.kind).toBe('image');
   });
 
   it('should extract niches from content', async () => {
