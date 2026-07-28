@@ -1,7 +1,8 @@
-import { badRequest, conflict, ok, serverError } from "../../response-helpers";
+import { log } from '../../logger';
+import { badRequest, conflict, errorResponse, ok } from "../../response-helpers";
 import { requireSession } from "../../session";
 import type { Env } from "../../types";
-import type { MigrationDirection, MigrationJob, MigrationPlatform } from "./types";
+import type { MigrationJob, MigrationPlatform } from "./types";
 
 export async function handleImportTwitter(request: Request, env: Env): Promise<Response> {
   return handleGenericImport(request, env, 'twitter', async (body, walletLower) => {
@@ -454,15 +455,70 @@ async function handleGenericImport(
     job.completedAt = Date.now();
     await storeJob(env, job);
 
-    return serverError(env, err, { route: `handleImport${platform}` });
+    return errorResponse(err, env, { route: `handleImport${platform}` });
   } finally {
     await releaseLock(env, walletLower, platform);
   }
 }
 
-// ─── Export Handlers ──────────────────────────────────────────
+// ─── Shared Helpers ────────────────────────────────────────────
 
-/**
- * POST /api/account/migrate/export/mastodon
- * Export user content to a Mastodon/GoToSocial instance.
- * Requires connected Mastodon account with API access.
+function generateJobId(): string {
+  const ts = Date.now().toString(36);
+  const rand = Math.random().toString(36).slice(2, 8);
+  return `${ts}-${rand}`;
+}
+
+function migrationKey(wallet: string, jobId: string): string {
+  return `migration:${wallet.toLowerCase()}:${jobId}`;
+}
+
+function migrationIndexKey(wallet: string): string {
+  return `migration:idx:${wallet.toLowerCase()}`;
+}
+
+function migrationLockKey(wallet: string, platform: string): string {
+  return `migration:lock:${wallet.toLowerCase()}:${platform}`;
+}
+
+async function storeJob(env: Env, job: MigrationJob): Promise<void> {
+  const store = env.CACHE;
+  if (!store) return;
+  try {
+    await store.put(migrationKey(job.wallet, job.id), JSON.stringify(job), {
+      expirationTtl: 7 * 86400,
+    });
+    const idxRaw = await store.get(migrationIndexKey(job.wallet));
+    const idx: string[] = idxRaw ? JSON.parse(idxRaw) : [];
+    idx.unshift(job.id);
+    await store.put(migrationIndexKey(job.wallet), JSON.stringify(idx.slice(0, 50)), {
+      expirationTtl: 7 * 86400,
+    });
+  } catch {
+    /* non-critical */
+  }
+}
+
+async function acquireLock(env: Env, wallet: string, platform: string): Promise<boolean> {
+  if (!env.CACHE) return true;
+  try {
+    const existing = await env.CACHE.get(migrationLockKey(wallet, platform));
+    if (existing) return false;
+    await env.CACHE.put(migrationLockKey(wallet, platform), '1', { expirationTtl: 300 });
+    return true;
+  } catch {
+    return true;
+  }
+}
+
+async function releaseLock(env: Env, wallet: string, platform: string): Promise<void> {
+  if (!env.CACHE) return;
+  try {
+    await env.CACHE.delete(migrationLockKey(wallet, platform));
+  } catch {
+    /* ignore */
+  }
+}
+
+// Export handlers live in ./export-handlers.ts
+// This file focuses on import handlers only.

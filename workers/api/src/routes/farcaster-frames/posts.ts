@@ -2,10 +2,14 @@
  * @degenfeed/api-worker — Farcaster Post & Announce Frame Handlers
  */
 import type { Hono } from 'hono';
-import { generateFrameHtml } from '../../lib/farcaster-live';
-import { jsonResponse, noCacheJsonResponse } from '../response-helpers';
-import { requireSession } from '../session';
-import type { Env } from '../types';
+import {
+  type FarcasterChannel,
+  getRelevantChannels,
+  postCastToFarcaster,
+} from '../../lib/farcaster-channel';
+import { jsonResponse, noCacheJsonResponse } from '../../response-helpers';
+import { requireSession } from '../../session';
+import type { Env } from '../../types';
 
 export function registerPostFrameRoutes(frames: Hono<{ Bindings: Env }>): void {
 // ═══════════════════════════════════════════════════════════════════════════
@@ -201,4 +205,8 @@ function escapeXml(str: string): string {
   return str
     .replace(/&/g, '&amp;')
     .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
 }
