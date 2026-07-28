@@ -140,7 +140,8 @@ export async function registerPixelfed(
       return {
         platform: 'pixelfed',
         status: 'failed',
-        error: 'Pixelfed does not expose a REST API for account registration. ' +
+        error:
+          'Pixelfed does not expose a REST API for account registration. ' +
           `Sign up manually at ${instanceUrl}.`,
       };
     }
@@ -237,7 +238,8 @@ async function tryDirectAccountCreation(
     return {
       platform: 'pixelfed',
       status: 'failed',
-      error: 'Pixelfed does not expose a REST API for account registration. ' +
+      error:
+        'Pixelfed does not expose a REST API for account registration. ' +
         `Sign up manually at ${instanceUrl}.`,
     };
   }

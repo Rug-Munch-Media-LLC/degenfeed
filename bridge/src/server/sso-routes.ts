@@ -165,10 +165,24 @@ export async function provisionMeshAccounts(
           });
         } catch (execErr) {
           const msg = execErr instanceof Error ? execErr.message : String(execErr);
-          if (msg.includes('already exists') || msg.includes('Duplicate') || msg.includes('already taken')) {
-            results.push({ protocol: 'pixelfed', ok: false, status: 'failed', error: `@${username} already taken` });
+          if (
+            msg.includes('already exists') ||
+            msg.includes('Duplicate') ||
+            msg.includes('already taken')
+          ) {
+            results.push({
+              protocol: 'pixelfed',
+              ok: false,
+              status: 'failed',
+              error: `@${username} already taken`,
+            });
           } else {
-            results.push({ protocol: 'pixelfed', ok: false, status: 'failed', error: `Artisan failed: ${msg.slice(0, 200)}` });
+            results.push({
+              protocol: 'pixelfed',
+              ok: false,
+              status: 'failed',
+              error: `Artisan failed: ${msg.slice(0, 200)}`,
+            });
           }
           failCount++;
         }
