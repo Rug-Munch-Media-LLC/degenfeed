@@ -10,6 +10,7 @@
  *   GET  /api/sso/provision/status — Check provisioning status
  */
 
+import { execSync } from 'node:child_process';
 import crypto from 'node:crypto';
 import type http from 'node:http';
 import { registerOnPlatform } from '@degenfeed/crossplatform-register';
@@ -43,6 +44,16 @@ const PROVISION_PROTOCOLS: ProvisionProtocol[] = [
 function generateWalletAddress(username: string): string {
   const hash = crypto.createHash('sha256').update(`degenfeed:sso:${username}`).digest('hex');
   return `0x${hash.slice(0, 40)}`;
+}
+
+/**
+ * Generate a random password for provisioning.
+ */
+function generateRandomPassword(): string {
+  const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
+  let result = '';
+  for (let i = 0; i < 24; i++) result += chars.charAt(Math.floor(Math.random() * chars.length));
+  return result;
 }
 
 /**
@@ -128,6 +139,42 @@ export async function provisionMeshAccounts(
     }
 
     try {
+      // Special case: Pixelfed has no REST registration API.
+      // For our self-hosted instance, create the user via Docker artisan CLI.
+      if (proto.id === 'pixelfed' && proto.instanceUrl.includes('photos.degenfeed.xyz')) {
+        const email = `${walletAddress.slice(2, 10)}-pf@register.degenfeed.xyz`;
+        const password = generateRandomPassword();
+        const displayName = `DegenFeed User ${walletAddress.slice(2, 8)}`;
+        try {
+          execSync(
+            `docker exec degenfeed-pixelfed php artisan user:create --no-interaction` +
+              ` --username="${username}"` +
+              ` --email="${email}"` +
+              ` --password="${password}"` +
+              ` --name="${displayName}"` +
+              ` --confirm_email="1"`,
+            { timeout: 15_000, stdio: 'pipe' },
+          );
+          okCount++;
+          console.log(`[sso] ✓ Provisioned Pixelfed for ${username} via artisan`);
+          results.push({
+            protocol: 'pixelfed',
+            ok: true,
+            status: 'created',
+            username: `${username}@photos.degenfeed.xyz`,
+          });
+        } catch (execErr) {
+          const msg = execErr instanceof Error ? execErr.message : String(execErr);
+          if (msg.includes('already exists') || msg.includes('Duplicate') || msg.includes('already taken')) {
+            results.push({ protocol: 'pixelfed', ok: false, status: 'failed', error: `@${username} already taken` });
+          } else {
+            results.push({ protocol: 'pixelfed', ok: false, status: 'failed', error: `Artisan failed: ${msg.slice(0, 200)}` });
+          }
+          failCount++;
+        }
+        continue;
+      }
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const opts: Record<string, any> = {
         walletAddress,

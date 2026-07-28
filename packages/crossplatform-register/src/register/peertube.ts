@@ -91,6 +91,11 @@ export async function registerPeerTube(
         password,
         displayName,
         email,
+        registrationReason: `Creating DegenFeed unified account for @${desiredUsername}`,
+        channel: {
+          name: `${desiredUsername}_channel`,
+          displayName: `${displayName}'s Channel`,
+        },
       }),
     });
 
