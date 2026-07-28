@@ -321,7 +321,7 @@ async function crossProtocolSearch(
       };
 
       result.data = (meiliData.hits || []).map((hit: Record<string, unknown>) => {
-        const protocol = String(hit.source || 'unknown');
+        const protocol = String(hit.protocol || hit.source || 'unknown');
         return {
           id: String(hit.id || ''),
           protocol,
@@ -358,7 +358,7 @@ async function crossProtocolSearch(
         } else {
           identityMap.set(authorId, {
             id: authorId,
-            protocol: String(hit.source || 'unknown'),
+            protocol: String(hit.protocol || hit.source || 'unknown'),
             displayName: String(hit.authorName || 'Unknown'),
             handle: String(hit.authorHandle || ''),
             avatarUrl: String(hit.authorAvatar || '') || null,

@@ -62,6 +62,7 @@ function getClient(): any {
 export interface SearchDocument {
   id: string;
   source: string;
+  protocol: string;
   contentType: string;
   sourceLabel: string;
   text: string;
@@ -98,7 +99,7 @@ async function ensureIndex(): Promise<void> {
 
     await meili
       .index(INDEX_NAME)
-      .updateFilterableAttributes(['source', 'contentType', 'niches', 'createdAt', 'authorId']);
+      .updateFilterableAttributes(['source', 'protocol', 'contentType', 'niches', 'createdAt', 'authorId']);
 
     await meili.index(INDEX_NAME).updateSortableAttributes(['createdAt']);
 
@@ -111,6 +112,7 @@ async function ensureIndex(): Promise<void> {
       .updateDisplayedAttributes([
         'id',
         'source',
+        'protocol',
         'contentType',
         'sourceLabel',
         'text',
@@ -198,6 +200,7 @@ function postToDocument(post: UnifiedPost): SearchDocument {
   return {
     id: sanitizeId(post.id),
     source: post.protocol,
+    protocol: post.protocol,
     contentType,
     sourceLabel: getSourceLabel(post.protocol),
     text: post.text,
@@ -531,6 +534,14 @@ export async function reindex(): Promise<{ count: number; errors: number; elapse
   try {
     await ensureIndex();
     indexedIds.clear();
+
+    // Clear all existing documents before reindexing so old fields (e.g.
+    // missing `protocol`) don't persist across schema changes.
+    const meili = await getClientAsync();
+    if (meili) {
+      await meili.index(INDEX_NAME).deleteAllDocuments();
+    }
+
     const result = await fullIndex();
     return { ...result, elapsed: Date.now() - start };
   } finally {

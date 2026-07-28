@@ -24,6 +24,7 @@ const MEILI_DEFAULT_URL = 'http://127.0.0.1:7700';
 interface MeiliHit {
   id: string;
   source: string;
+  protocol: string;
   contentType: string;
   sourceLabel: string;
   text: string;
@@ -115,7 +116,7 @@ function parseNiches(raw: string[] | string): string[] {
 function hitToSearchResult(hit: MeiliHit): SearchResultItem {
   return {
     id: hit.id,
-    protocol: hit.source,
+    protocol: hit.protocol || hit.source,
     author: {
       displayName: hit.authorName || hit.authorHandle || 'Unknown',
       avatarUrl: hit.authorAvatar || undefined,
@@ -133,7 +134,7 @@ function hitToSearchResult(hit: MeiliHit): SearchResultItem {
 function hitToIdentity(hit: MeiliHit): IdentityResultItem {
   return {
     id: hit.authorId || hit.id,
-    protocol: hit.source,
+    protocol: hit.protocol || hit.source,
     displayName: hit.authorName || hit.authorHandle || 'Unknown',
     handle: hit.authorHandle || null,
     avatarUrl: hit.authorAvatar || null,
@@ -254,6 +255,7 @@ export async function handleSearch(request: Request, env: Env): Promise<Response
     attributesToRetrieve: [
       'id',
       'source',
+      'protocol',
       'contentType',
       'sourceLabel',
       'text',
@@ -534,7 +536,7 @@ export async function handleSearchIdentity(request: Request, env: Env): Promise<
     } else {
       identityMap.set(key, {
         id: key,
-        protocol: hit.source,
+        protocol: hit.protocol || hit.source,
         displayName: hit.authorName || hit.authorHandle || 'Unknown',
         handle: hit.authorHandle || null,
         avatarUrl: hit.authorAvatar || null,
