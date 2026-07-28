@@ -524,7 +524,7 @@ export async function resolveTokenGateSymbol(gate: TokenGate): Promise<string> {
 /**
  * Validate a URL is safe to fetch (blocks SSRF to internal/private networks).
  */
-function isSafeUrl(uri: string): boolean {
+export function isSafeUrl(uri: string): boolean {
   try {
     const url = new URL(uri);
     const blockedHosts = ['localhost', '127.0.0.1', '0.0.0.0', '169.254.169.254', '[::1]'];
