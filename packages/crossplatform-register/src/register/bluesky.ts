@@ -18,6 +18,33 @@ export async function registerBluesky(
     // Determine if this is our self-hosted PDS (which has inviteCodeRequired=false)
     const isOwnPds = pdsUrl.includes('pds.degenfeed.xyz');
 
+    // Sanitize handle for AT Protocol compatibility:
+    // AT handles only allow [a-z0-9-] in the local part (no underscores, no dots).
+    // GTS usernames often contain underscores, causing InvalidRequest from PDS.
+    const sanitizedHandle = desiredUsername
+      .toLowerCase()
+      .replace(/[^a-z0-9-]/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .replace(/--+/g, '-');
+    if (!sanitizedHandle) {
+      return {
+        platform: 'bluesky',
+        status: 'failed',
+        error: 'Username contains no valid characters for Bluesky handle',
+      };
+    }
+
+    // Truncate to fit PDS handle length limit (~32 chars total including domain).
+    // Our PDS domain is .degenfeed.xyz (14 chars), so local part max is ~18 chars.
+    const localPart = sanitizedHandle.slice(0, 18).replace(/-+$/, '');
+    if (!localPart) {
+      return {
+        platform: 'bluesky',
+        status: 'failed',
+        error: 'Username contains no valid characters for Bluesky handle',
+      };
+    }
+
     // Only acquire invite code for PDS that require it
     let inviteCode: string | null = null;
     if (!isOwnPds) {
@@ -48,18 +75,18 @@ export async function registerBluesky(
           const serverData = (await serverRes.json()) as { availableUserDomains?: string[] };
           const domain = serverData.availableUserDomains?.[0];
           if (domain) {
-            handle = `${desiredUsername}${domain}`;
+            handle = `${localPart}${domain}`;
           } else {
-            handle = desiredUsername;
+            handle = localPart;
           }
         } else {
-          handle = desiredUsername;
+          handle = localPart;
         }
       } catch {
-        handle = desiredUsername;
+        handle = localPart;
       }
     } else {
-      handle = desiredUsername;
+      handle = localPart;
     }
 
     // Build request body — omit inviteCode for our own PDS (inviteCodeRequired=false)
