@@ -4,14 +4,23 @@
  * Creates a user account on a self-hosted Castopod instance.
  * Castopod is a federated podcast hosting platform (ActivityPub).
  *
- * Castopod API:
- *   - Health: GET /api/health-check
- *   - Register: POST /api/register
+ * Castopod uses CodeIgniter Shield for auth — registration is via
+ * web form POST /cp-auth/register with X-Forwarded-Proto: https header.
  *
- * Self-hosted instance: https://podcasts.degenfeed.xyz
+ * Self-hosted instance: https://podcast.degenfeed.xyz
  */
 
 import type { PlatformRegistration, RegisterOptions } from './types';
+
+/**
+ * Headers needed for all requests to bypass Castopod's Caddy HTTPS redirect
+ * when calling via HTTP on the internal Docker network.
+ */
+const BYPASS_HTTPS_HEADERS: Record<string, string> = {
+  'x-forwarded-proto': 'https',
+  'x-forwarded-port': '443',
+  'x-forwarded-host': 'podcast.degenfeed.xyz',
+};
 
 export async function registerCastopod(
   desiredUsername: string,
@@ -19,18 +28,27 @@ export async function registerCastopod(
   opts: RegisterOptions,
 ): Promise<PlatformRegistration> {
   try {
-    const instanceUrl = opts.castopodInstanceUrl || 'https://podcasts.degenfeed.xyz';
-    const apiBase = `${instanceUrl.replace(/\/$/, '')}/api`;
+    const instanceUrl = opts.castopodInstanceUrl || 'https://podcast.degenfeed.xyz';
+    const siteHost = new URL(instanceUrl).host;
+    const apiBase = `${instanceUrl.replace(/\/$/, '')}`;
 
     // Step 1: Check instance health
-    const healthRes = await fetch(`${instanceUrl}/api/health-check`, {
-      headers: { 'user-agent': 'DegenFeed/0.1', accept: 'application/json' },
+    // Castopod exposes a health endpoint at GET /health
+    const healthRes = await fetch(`${apiBase}/health`, {
+      headers: {
+        'user-agent': 'DegenFeed/0.1',
+        accept: 'application/json',
+        ...BYPASS_HTTPS_HEADERS,
+      },
     });
 
     if (!healthRes.ok) {
-      // Try the base URL fallback
+      // Fallback: try homepage
       const pingRes = await fetch(instanceUrl, {
-        headers: { 'user-agent': 'DegenFeed/0.1' },
+        headers: {
+          'user-agent': 'DegenFeed/0.1',
+          ...BYPASS_HTTPS_HEADERS,
+        },
       });
       if (!pingRes.ok) {
         return {
@@ -42,73 +60,47 @@ export async function registerCastopod(
     }
 
     // Step 2: Check if registration is open
-    const siteRes = await fetch(`${apiBase}/site`, {
-      headers: { 'user-agent': 'DegenFeed/0.1', accept: 'application/json' },
-    });
-    if (siteRes.ok) {
-      const siteData = (await siteRes.json()) as {
-        registrations_open?: boolean;
-        closed?: boolean;
-      };
-      if (siteData.registrations_open === false || siteData.closed === true) {
-        return {
-          platform: 'castopod' as const,
-          status: 'failed',
-          error: `Registration is closed on ${instanceUrl}. Contact the admin.`,
-        };
-      }
-    }
+    // Castopod stores registration status in settings; we can infer from the
+    // register page or check if registration returns allowed.
+    // POST /cp-auth/register returns 303 on success, 404 if disabled
 
-    // Step 3: Check username availability
-    const lookupRes = await fetch(
-      `${apiBase}/users/lookup?username=${encodeURIComponent(desiredUsername)}`,
-      {
-        headers: { 'user-agent': 'DegenFeed/0.1', accept: 'application/json' },
-      },
-    );
-    if (lookupRes.ok) {
-      const lookupData = (await lookupRes.json()) as { exists?: boolean };
-      if (lookupData.exists) {
-        return {
-          platform: 'castopod' as const,
-          status: 'failed',
-          error: `@${desiredUsername} is already taken on ${instanceUrl}`,
-        };
-      }
-    }
-
-    // Step 4: Register user
+    // Step 3: Register user via Castopod auth form
     const password = generateCastopodPassword();
     const email = `${walletAddress.slice(2, 10)}-cp@register.degenfeed.xyz`;
 
-    const registerRes = await fetch(`${apiBase}/register`, {
+    const registerRes = await fetch(`${apiBase}/cp-auth/register`, {
       method: 'POST',
       headers: {
-        'content-type': 'application/json',
+        'content-type': 'application/x-www-form-urlencoded',
         'user-agent': 'DegenFeed/0.1',
+        accept: 'text/html',
+        ...BYPASS_HTTPS_HEADERS,
       },
-      body: JSON.stringify({
+      body: new URLSearchParams({
         username: desiredUsername,
         password,
         email,
-        display_name: desiredUsername,
-        agree_terms: true,
-        locale: 'en',
-      }),
+      }).toString(),
+      redirect: 'manual',
     });
 
-    if (!registerRes.ok) {
-      const errData = (await registerRes.json().catch(() => ({}))) as {
-        error?: string;
-        message?: string;
+    if (registerRes.status === 404) {
+      return {
+        platform: 'castopod' as const,
+        status: 'failed',
+        error: `Registration is closed on ${instanceUrl}. Contact the admin.`,
       };
+    }
 
-      if (registerRes.status === 409) {
-        return {
-          platform: 'castopod' as const,
-          status: 'failed',
-          error: `@${desiredUsername} is already taken on ${instanceUrl}`,
-        };
+    if (registerRes.status !== 303) {
+      const errData: { error?: string; message?: string } = {};
+      try {
+        const body = await registerRes.text();
+        // Try to parse error from HTML or JSON
+        const match = body.match(/(?:error|message)[":= ]+([^"<\n]+)/i);
+        if (match) errData.message = match[1];
+      } catch {
+        // ignore parse errors
       }
 
       return {
@@ -121,41 +113,37 @@ export async function registerCastopod(
       };
     }
 
-    const registerData = (await registerRes.json().catch(() => ({}))) as {
-      user?: { id: string; username: string; display_name: string };
-      token?: string;
-      actor_id?: string;
-      message?: string;
-    };
+    // Step 4: Obtain auth token via Castopod login
+    let accessToken = '';
+    const loginRes = await fetch(`${apiBase}/cp-auth/login`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded',
+        'user-agent': 'DegenFeed/0.1',
+        accept: 'text/html',
+        ...BYPASS_HTTPS_HEADERS,
+      },
+      body: new URLSearchParams({
+        email,
+        password,
+      }).toString(),
+      redirect: 'manual',
+    });
 
-    // Step 5: Obtain auth token
-    let accessToken = registerData.token || '';
-    if (!accessToken) {
-      const tokenRes = await fetch(`${apiBase}/auth/token`, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          username: desiredUsername,
-          password,
-          grant_type: 'password',
-          client_id: 'degenfeed',
-          client_secret: 'degenfeed_secret',
-        }),
-      });
-      if (tokenRes.ok) {
-        const tokenData = (await tokenRes.json()) as { access_token?: string };
-        accessToken = tokenData.access_token || '';
-      }
+    // Castopod login sets session cookies; for token-based auth,
+    // we extract the session ID from the Set-Cookie header
+    const setCookie = loginRes.headers.get('set-cookie') || '';
+    const sessionMatch = setCookie.match(/ci_session=([^;]+)/);
+    if (sessionMatch) {
+      accessToken = sessionMatch[1];
     }
 
-    // Step 6: Get actor/profile URL
-    const actorId = registerData.actor_id || `${instanceUrl}/@${desiredUsername}`;
+    // Step 5: Build actor/profile URL
+    const actorId = `${instanceUrl}/@${desiredUsername}`;
 
     const accountInfo: Record<string, string> = {
       username: desiredUsername,
       instance: instanceUrl,
-      userId: String(registerData.user?.id ?? ''),
-      displayName: registerData.user?.display_name || desiredUsername,
       accessToken,
       actorId,
       profileUrl: actorId,
@@ -168,7 +156,7 @@ export async function registerCastopod(
     return {
       platform: 'castopod' as const,
       status: 'created',
-      username: `${desiredUsername}@podcasts.degenfeed.xyz`,
+      username: `${desiredUsername}@${siteHost}`,
       accountInfo,
     };
   } catch (err) {

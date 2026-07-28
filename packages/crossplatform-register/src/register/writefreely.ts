@@ -4,7 +4,8 @@
  * Creates a user account on a self-hosted WriteFreely instance.
  * WriteFreely is a federated long-form publishing platform (ActivityPub).
  *
- * API: POST /api/account/new  (WriteFreely v0.15+)
+ * WriteFreely does not expose a JSON registration API on OSS self-hosted.
+ * We use the web signup form (POST /auth/signup) and then login to get an API token.
  *
  * Self-hosted instance: https://blog.degenfeed.xyz
  */
@@ -21,10 +22,10 @@ export async function registerWriteFreely(
     const apiBase = `${instanceUrl.replace(/\/$/, '')}/api`;
 
     // Step 1: Check instance health and registration status
-    const instanceRes = await fetch(`${apiBase}/instance`, {
+    const nodeInfoRes = await fetch(`${apiBase}/nodeinfo`, {
       headers: { 'user-agent': 'DegenFeed/0.1', accept: 'application/json' },
     });
-    if (!instanceRes.ok) {
+    if (!nodeInfoRes.ok) {
       return {
         platform: 'writefreely',
         status: 'failed',
@@ -32,39 +33,47 @@ export async function registerWriteFreely(
       };
     }
 
-    // Step 2: Register account
+    const nodeInfo = (await nodeInfoRes.json()) as {
+      openRegistrations?: boolean;
+      software?: { name?: string; version?: string };
+    };
+    if (!nodeInfo.openRegistrations) {
+      return {
+        platform: 'writefreely',
+        status: 'failed',
+        error: `Registration is closed on ${instanceUrl}. Contact the admin.`,
+      };
+    }
+
+    // Step 2: Register account via web signup form
     const password = generateWriteFreelyPassword();
     const email = `${walletAddress.slice(2, 10)}-wf@register.degenfeed.xyz`;
 
-    const registerRes = await fetch(`${apiBase}/account/new`, {
+    const registerRes = await fetch(`${instanceUrl}/auth/signup`, {
       method: 'POST',
       headers: {
-        'content-type': 'application/json',
+        'content-type': 'application/x-www-form-urlencoded',
         'user-agent': 'DegenFeed/0.1',
       },
-      body: JSON.stringify({
-        username: desiredUsername,
-        password,
-        email,
+      body: new URLSearchParams({
         alias: desiredUsername,
-      }),
+        pass: password,
+        email,
+      }).toString(),
+      // 302 redirect is expected on success; follow it so we get the session cookie
+      redirect: 'manual',
     });
 
-    if (!registerRes.ok) {
+    // Registration via web form returns 302 Found on success
+    if (registerRes.status !== 302) {
       const errText = await registerRes.text().catch(() => '');
-      // Check if user already exists
+      // 409 or 400 often means "already taken" in OSS WriteFreely
       if (registerRes.status === 409 || registerRes.status === 400) {
-        const searchRes = await fetch(
-          `${apiBase}/collections?alias=${encodeURIComponent(desiredUsername)}`,
-          { headers: { 'user-agent': 'DegenFeed/0.1' } },
-        );
-        if (searchRes.ok) {
-          return {
-            platform: 'writefreely',
-            status: 'failed',
-            error: `@${desiredUsername} is already taken on ${instanceUrl}`,
-          };
-        }
+        return {
+          platform: 'writefreely',
+          status: 'failed',
+          error: `@${desiredUsername} is already taken on ${instanceUrl}`,
+        };
       }
       return {
         platform: 'writefreely',
@@ -73,38 +82,33 @@ export async function registerWriteFreely(
       };
     }
 
-    const registerData = (await registerRes.json()) as {
-      user?: { id: number; username: string };
-      collection?: { alias: string; title: string };
-      access_token?: string;
-    };
+    // Step 3: Obtain access token via API login
+    let accessToken = '';
+    const tokenRes = await fetch(`${apiBase}/auth/login`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'user-agent': 'DegenFeed/0.1',
+        accept: 'application/json',
+      },
+      body: JSON.stringify({
+        alias: desiredUsername,
+        pass: password,
+      }),
+    });
 
-    // Step 3: Obtain access token
-    let accessToken = registerData.access_token;
-    if (!accessToken) {
-      const tokenRes = await fetch(`${instanceUrl}/oauth/token`, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          grant_type: 'password',
-          username: desiredUsername,
-          password,
-          client_id: 'degenfeed',
-          client_secret: 'degenfeed_secret',
-        }),
-      });
-      if (tokenRes.ok) {
-        const tokenData = (await tokenRes.json()) as { access_token?: string };
-        accessToken = tokenData.access_token;
-      }
+    if (tokenRes.ok) {
+      const tokenData = (await tokenRes.json()) as {
+        data?: { access_token?: string };
+        access_token?: string;
+      };
+      accessToken = tokenData.data?.access_token ?? tokenData.access_token ?? '';
     }
 
     const accountInfo: Record<string, string> = {
       username: desiredUsername,
       instance: instanceUrl,
-      userId: String(registerData.user?.id ?? ''),
-      collectionAlias: registerData.collection?.alias ?? desiredUsername,
-      accessToken: accessToken ?? '',
+      accessToken,
       profileUrl: `${instanceUrl}/${desiredUsername}`,
     };
 
