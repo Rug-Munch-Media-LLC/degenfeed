@@ -14,7 +14,7 @@ export const DEFAULT_CONFIG: CrossPairConfig[] = [
     rateLimit: { maxPosts: 10, windowMs: 3600000 },
     sourceConfig: {},
     targetConfigs: {
-      nostr: { relayUrl: process.env.NOSTR_RELAY_URL || 'ws://127.0.0.1:32768' },
+      nostr: { relayUrl: process.env.NOSTR_RELAY_URL || 'ws://127.0.0.1:8085' },
     },
   },
   {

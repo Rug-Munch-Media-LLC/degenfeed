@@ -499,7 +499,9 @@ export async function startIndexer(): Promise<void> {
     isRunning = true;
     try {
       const result = await incrementalIndex();
-      console.log(`[indexer] Cycle complete. ${result.count} new docs indexed. Next in ${INTERVAL_MS / 1000}s.`);
+      console.log(
+        `[indexer] Cycle complete. ${result.count} new docs indexed. Next in ${INTERVAL_MS / 1000}s.`,
+      );
     } catch (err) {
       console.error('[indexer] Incremental index failed:', err);
     } finally {
@@ -536,7 +538,7 @@ export async function reindex(): Promise<{ count: number; errors: number; elapse
   }
 }
 
-  // ─── Status ────────────────────────────────────────────────────────────
+// ─── Status ────────────────────────────────────────────────────────────
 
 export interface IndexerStatus {
   running: boolean;

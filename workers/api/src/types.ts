@@ -53,6 +53,8 @@ export interface Env {
   RMI_BACKEND_URL?: string;
   /** Bridge service internal URL for protocol feed fetching */
   BRIDGE_INTERNAL_URL?: string;
+  /** Bridge API key for authenticated requests to the bridge service */
+  BRIDGE_API_KEY?: string;
   /** Self-hosted Redlib instance for Reddit feed proxying */
   REDLIB_URL?: string;
   /** Self-hosted RSS-Bridge instance for proxied RSS feed fetching */

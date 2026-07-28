@@ -198,6 +198,8 @@ RMI_BACKEND_URL = "http://localhost:8000"
 RSS_BRIDGE_URL = "https://rss-bridge.degenfeed.xyz"
 # Bridge service URL for protocol feed fetching
 BRIDGE_INTERNAL_URL = "https://bridge.degenfeed.xyz"
+# Bridge API key — set via "wrangler secret put BRIDGE_API_KEY" in production
+# BRIDGE_API_KEY = "your-32-byte-hex-key"
 # Feature flags — comma-separated list of flags that should default to enabled
 FEATURE_FLAGS_DEFAULT = "reply-composer,dark-mode-only,farcaster-frames"
 # Postiz cross-posting API — for scheduled social media publishing

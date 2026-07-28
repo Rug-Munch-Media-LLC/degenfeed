@@ -246,7 +246,7 @@ export async function discoverPopularCommunities(): Promise<
             name: c.community.name,
             title: c.community.title,
             description: c.community.description || '',
-            instance: 'talk.degenfeed.xyz',
+            instance: 'community.degenfeed.xyz',
             subscribers: c.counts.subscribers,
             posts: c.counts.posts,
             icon: c.community.icon,

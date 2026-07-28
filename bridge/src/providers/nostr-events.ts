@@ -1,13 +1,14 @@
 /**
- * Nostr NIP-52 Calendar Events Provider
+ * Nostr Events Provider — Calendar (NIP-52) + Text Notes (kind 1)
  *
- * Fetches calendar events from Nostr relays using NIP-52 (kind 31922).
- * NIP-52 defines a standardized calendar event format:
+ * Calendar events use NIP-52 (kind 31922):
  *   kind: 31922 (calendar event) — a single event occurrence
  *   kind: 31923 (calendar) — a list of events (RSVP)
  *   kind: 31924 (date-based calendar event) — events with dates instead of timestamps
  *
- * Tags:
+ * Text notes use NIP-01 (kind 1) — the main Nostr social feed.
+ *
+ * Calendar tags:
  *   d   — identifier (required)
  *   title — event title
  *   start — Unix timestamp of event start
@@ -20,6 +21,7 @@
  */
 
 import type { NostrCalendarEvent, SchemaGuard, UnifiedEvent } from '../server/types';
+import type { UnifiedIdentity, UnifiedPost } from '../server/types';
 
 const _$fetch = globalThis.fetch;
 
@@ -35,8 +37,24 @@ const RELAYS = [
 
 const KIND_CALENDAR_EVENT = 31922;
 const _KIND_CALENDAR = 31923;
+const KIND_TEXT_NOTE = 1;
 
 const FETCH_TIMEOUT_MS = 8000;
+
+// ─── Text Note Types ──────────────────────────────────────────────────
+
+/**
+ * A Nostr kind-1 text note as received over WebSocket.
+ */
+interface NostrTextNoteEvent {
+  id: string;
+  pubkey: string;
+  created_at: number;
+  kind: number;
+  tags: string[][];
+  content: string;
+  sig: string;
+}
 
 // ─── Helpers ──────────────────────────────────────────────────────────
 
@@ -220,6 +238,198 @@ function nostrEventToUnified(event: NostrCalendarEvent): UnifiedEvent | null {
   }
 }
 
+// ─── Fetch Text Notes (kind 1) ────────────────────────────────────────
+
+function fetchTextNotesFromRelay(
+  relayUrl: string,
+  limit: number,
+  timeout = FETCH_TIMEOUT_MS,
+): Promise<NostrTextNoteEvent[]> {
+  return new Promise((resolve) => {
+    const events: NostrTextNoteEvent[] = [];
+    let resolved = false;
+    let ws: WebSocket | null = null;
+
+    const timer = setTimeout(() => {
+      if (!resolved) {
+        resolved = true;
+        ws?.close();
+        resolve(events);
+      }
+    }, timeout);
+
+    try {
+      ws = new WebSocket(relayUrl);
+
+      ws.addEventListener('open', () => {
+        if (!ws) return;
+        // Subscribe to kind-1 text notes
+        ws.send(
+          JSON.stringify([
+            'REQ',
+            'degenfeed-textnotes',
+            {
+              kinds: [KIND_TEXT_NOTE],
+              limit: Math.min(limit, 50),
+            },
+          ]),
+        );
+      });
+
+      ws.addEventListener('message', (event: MessageEvent) => {
+        try {
+          const msg = JSON.parse(event.data as string);
+          if (msg[0] === 'EVENT' && msg[2]?.kind === KIND_TEXT_NOTE) {
+            events.push(msg[2] as NostrTextNoteEvent);
+          }
+          if (msg[0] === 'EOSE') {
+            clearTimeout(timer);
+            if (!resolved) {
+              resolved = true;
+              ws?.close();
+              resolve(events);
+            }
+          }
+        } catch {
+          // Bad message
+        }
+      });
+
+      ws.addEventListener('error', () => {
+        clearTimeout(timer);
+        if (!resolved) {
+          resolved = true;
+          resolve(events);
+        }
+      });
+
+      ws.addEventListener('close', () => {
+        clearTimeout(timer);
+        if (!resolved) {
+          resolved = true;
+          resolve(events);
+        }
+      });
+
+      // Safety: close after 2x timeout
+      setTimeout(() => {
+        if (!resolved) {
+          resolved = true;
+          ws?.close();
+          resolve(events);
+        }
+      }, timeout * 2);
+    } catch {
+      clearTimeout(timer);
+      if (!resolved) {
+        resolved = true;
+        resolve(events);
+      }
+    }
+  });
+}
+
+/**
+ * Convert a Nostr kind-1 text note event to a UnifiedPost.
+ */
+function textNoteToUnifiedPost(event: NostrTextNoteEvent): UnifiedPost {
+  // Extract mentions (p tags) and hashtags (t tags)
+  const mentionPubkeys = event.tags.filter((t) => t[0] === 'p').map((t) => t[1]);
+  const hashtags = event.tags.filter((t) => t[0] === 't').map((t) => t[1]);
+  const rootTag = event.tags.find((t) => t[0] === 'e' && t[3] === 'root');
+  const replyTag = event.tags.find((t) => t[0] === 'e' && t[3] === 'reply');
+  const firstETag = event.tags.find((t) => t[0] === 'e');
+
+  const text = event.content || '';
+
+  // Build enriched HTML with mention/hashtag links
+  let html = text;
+  for (const pk of mentionPubkeys) {
+    const npub = hexToBech32(pk);
+    html = html.replace(
+      new RegExp(`@${pk.slice(0, 8)}`, 'g'),
+      `<a href="nostr:${npub}">@${npub}</a>`,
+    );
+  }
+  for (const tag of hashtags) {
+    html = html.replace(
+      new RegExp(`#${escapeRegex(tag)}`, 'gi'),
+      `<a href="/search?tag=${encodeURIComponent(tag)}">#${tag}</a>`,
+    );
+  }
+
+  const identity: UnifiedIdentity = {
+    id: `nostr:${event.pubkey}`,
+    primary: { protocol: 'nostr', id: event.pubkey },
+    handles: { nostr: hexToBech32(event.pubkey) },
+    displayName: hexToBech32(event.pubkey),
+    bio: '',
+    avatarUrl: '',
+    followerCount: 0,
+    followingCount: 0,
+    links: [],
+    keys: { nostrPubkey: event.pubkey },
+  };
+
+  return {
+    id: `nostr:${event.id}`,
+    protocol: 'nostr',
+    author: identity,
+    text,
+    html,
+    embeds: [],
+    parentNativeId: replyTag?.[1] ?? (firstETag && !rootTag ? firstETag[1] : undefined),
+    rootNativeId: rootTag?.[1],
+    createdAt: event.created_at * 1000,
+    metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
+    engagement: {
+      viewerLiked: false,
+      viewerReposted: false,
+      viewerBookmarked: false,
+      raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
+    },
+    raw: event,
+    niches: hashtags,
+  };
+}
+
+/** Escape special regex characters in a string. */
+function escapeRegex(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
+ * Fetch kind-1 text notes from Nostr relays.
+ * Returns UnifiedPost array suitable for the bridge's feed providers.
+ */
+export async function fetchNostrTextNotes(limit = 25): Promise<UnifiedPost[]> {
+  const perRelay = Math.max(5, Math.ceil(limit / RELAYS.length));
+
+  const results = await Promise.allSettled(
+    RELAYS.map((relay) => fetchTextNotesFromRelay(relay, perRelay)),
+  );
+
+  const allEvents: NostrTextNoteEvent[] = [];
+  for (const r of results) {
+    if (r.status === 'fulfilled') allEvents.push(...r.value);
+  }
+
+  // Deduplicate by event id, sort by created_at desc
+  const seen = new Set<string>();
+  const posts: UnifiedPost[] = [];
+  const sorted = allEvents.sort((a, b) => b.created_at - a.created_at);
+  for (const e of sorted) {
+    if (!seen.has(e.id)) {
+      seen.add(e.id);
+      posts.push(textNoteToUnifiedPost(e));
+      if (posts.length >= limit) break;
+    }
+  }
+
+  console.log(`[nostr-events] Text notes: ${posts.length} kind-1 posts`);
+  return posts;
+}
+
 // ─── Main Fetch ───────────────────────────────────────────────────────
 
 /**
@@ -255,9 +465,9 @@ export async function fetchNostrCalendarEvents(limit = 20): Promise<UnifiedEvent
   return unified;
 }
 
-// ─── Provider Schema ─────────────────────────────────────────────────
+// ─── Provider Schemas ────────────────────────────────────────────────
 
-export const schema: SchemaGuard = {
+export const calendarSchema: SchemaGuard = {
   id: 'nostr-calendar',
   name: 'Nostr NIP-52 Calendar Events',
   description: 'Calendar events from Nostr relays using NIP-52 (kind 31922)',
@@ -265,3 +475,15 @@ export const schema: SchemaGuard = {
   requiresAuth: false,
   contentType: 'event',
 };
+
+export const textNotesSchema: SchemaGuard = {
+  id: 'nostr-text-notes',
+  name: 'Nostr Kind-1 Text Notes',
+  description: 'Social text notes from Nostr relays using NIP-01 (kind 1)',
+  endpoint: '/api/feed/nostr',
+  requiresAuth: false,
+  contentType: 'post',
+};
+
+// Backward-compat alias
+export const schema: SchemaGuard = calendarSchema;
