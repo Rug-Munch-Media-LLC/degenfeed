@@ -989,3 +989,102 @@ function sanitizeUrl(url: string): string {
   }
   return '';
 }
+
+// ─── PUBLIC EXPORTS for lib/profile-sync barrel ──────────────────────────
+
+/** List of protocols that support profile sync operations */
+export const SUPPORTED_SYNC_PROTOCOLS = PROTOCOLS_WITH_PROFILE_API;
+
+/** Aggregate cross-protocol identity data for a wallet into a unified profile */
+export async function aggregateProfile(
+  wallet: string,
+  env: Env,
+  opts?: { forceRefresh?: boolean },
+): Promise<Record<string, unknown>> {
+  const cacheKey = `profile:aggregated:${wallet}`;
+  if (!opts?.forceRefresh) {
+    const cached = await env.IDENTITIES?.get(cacheKey, 'json');
+    if (cached) return cached as Record<string, unknown>;
+  }
+  // Build profile from cross-protocol identity
+  const identity = await env.IDENTITIES?.get(`identity:${wallet}`, 'json') as Record<string, unknown> | null;
+  const profile: Record<string, unknown> = {
+    wallet,
+    displayName: '',
+    bio: '',
+    avatarUrl: '',
+    bannerUrl: '',
+    protocols: {} as Record<string, unknown>,
+    linkedAt: Date.now(),
+  };
+  if (identity) {
+    for (const protocol of PROTOCOLS_WITH_PROFILE_API) {
+      const data = (identity as Record<string, unknown>)[protocol];
+      if (data) {
+        (profile.protocols as Record<string, unknown>)[protocol] = data;
+        if (!profile.displayName && (data as Record<string, unknown>).displayName) {
+          profile.displayName = (data as Record<string, unknown>).displayName;
+        }
+        if (!profile.avatarUrl && (data as Record<string, unknown>).avatarUrl) {
+          profile.avatarUrl = (data as Record<string, unknown>).avatarUrl;
+        }
+        if (!profile.bio && (data as Record<string, unknown>).bio) {
+          profile.bio = (data as Record<string, unknown>).bio;
+        }
+      }
+    }
+  }
+  await env.IDENTITIES?.put(cacheKey, JSON.stringify(profile), { expirationTtl: 300 });
+  return profile;
+}
+
+/** Get sync status for a wallet across all protocols */
+export async function getSyncStatus(
+  wallet: string,
+  env: Env,
+): Promise<Record<string, { synced: boolean; lastSync?: number }>> {
+  const status: Record<string, { synced: boolean; lastSync?: number }> = {};
+  for (const protocol of PROTOCOLS_WITH_PROFILE_API) {
+    const key = `sync:${wallet}:${protocol}`;
+    const ts = await env.IDENTITIES?.get(key);
+    status[protocol] = { synced: !!ts, lastSync: ts ? parseInt(ts) : undefined };
+  }
+  return status;
+}
+
+/** Push profile data to all connected protocols */
+export async function pushProfile(
+  wallet: string,
+  profile: Record<string, unknown>,
+  env: Env,
+): Promise<ProfileSyncResult[]> {
+  const results: ProfileSyncResult[] = [];
+  const walletLower = wallet.toLowerCase();
+  for (const protocol of PROTOCOLS_WITH_PROFILE_API) {
+    try {
+      const result = await syncProfileToProtocol(wallet, walletLower, protocol, profile as ProfileData, env);
+      results.push(result);
+    } catch (err) {
+      results.push({ protocol, ok: false, error: (err as Error).message });
+    }
+  }
+  return results;
+}
+
+/** Sync profile to all connected protocols (alias for pushProfile) */
+export async function syncProfile(
+  wallet: string,
+  profile: Record<string, unknown>,
+  env: Env,
+): Promise<ProfileSyncResult[]> {
+  return pushProfile(wallet, profile, env);
+}
+
+/** Set the primary protocol override for a wallet */
+export async function setPrimaryOverride(
+  wallet: string,
+  protocol: string,
+  env: Env,
+): Promise<void> {
+  await env.IDENTITIES?.put(`profile:primary:${wallet}`, protocol);
+}
