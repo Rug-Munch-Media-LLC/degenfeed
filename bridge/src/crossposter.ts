@@ -840,7 +840,7 @@ async function publishToFarcaster(_payload: unknown): Promise<boolean> {
       castResult.messageHex.match(/.{1,2}/g)?.map((b: string) => parseInt(b, 16)) ?? [],
     );
     const res = await fetch(`${hubUrl}/v1/submitMessage`, {
-      method: 'PUT',
+      method: 'POST',
       headers: {
         'content-type': 'application/octet-stream',
         'user-agent': 'DegenFeed/1.0',
