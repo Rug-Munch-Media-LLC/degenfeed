@@ -24,13 +24,16 @@ export const RANKING_WEIGHTS = {
 export type WeightComponent = keyof typeof RANKING_WEIGHTS;
 
 /**
- * Fresh content boost: posts <1hr old get +20% score multiplier.
- * This is applied AFTER the main scoring (NOT a 2x multiplier like before).
+ * Fresh content boost: posts <1hr old get a small score multiplier.
+ * Reduced from 1.2 to 1.08 (2026-07-28) to prevent recency dominance.
+ * The unified scorer's freshnessBoost (1.3x <15min, 1.15x <1hr) already
+ * provides enough recency bias — this extra boost was causing double-dipping.
+ * See FEED-ALGORITHM-TUNING.md for the analysis.
  */
-export const FRESH_CONTENT_BOOST = 1.2;
+export const FRESH_CONTENT_BOOST = 1.08;
 export const FRESH_CONTENT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
 export const MODERATELY_FRESH_WINDOW_MS = 6 * 60 * 60 * 1000; // 6 hours
-export const MODERATELY_FRESH_BOOST = 1.1;
+export const MODERATELY_FRESH_BOOST = 1.05;
 
 /**
  * Boredom breaker config: every N posts, inject a high-quality post
