@@ -10,10 +10,11 @@
   },
   "dependencies": {
     "@degenfeed/bluesky-sdk": "workspace:*",
+    "@degenfeed/crossplatform-register": "workspace:*",
+    "@degenfeed/nostr-sdk": "workspace:*",
     "@degenfeed/types": "workspace:*",
     "@degenfeed/utils": "workspace:*",
-    "meilisearch": "^0.60.0",
-    "@degenfeed/nostr-sdk": "workspace:*"
+    "meilisearch": "^0.60.0"
   },
   "devDependencies": {
     "tsx": "^4",

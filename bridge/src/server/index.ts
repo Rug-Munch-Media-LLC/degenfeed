@@ -19,13 +19,14 @@ process.on('uncaughtException', (err) => {
 import http from 'node:http';
 import { getCrossPosterStats, startCrossPoster } from '../crossposter';
 import { getIndexerStatus, reindex, startIndexer } from '../search-indexer';
+import { validateAuth } from './auth-middleware';
 import { handleBlueskyRoute } from './bluesky-routes';
 import { handleEventRoute } from './event-routes';
-import { validateAuth } from './auth-middleware';
 import { buildFeed, DEFAULT_PREFERENCES, PROVIDERS } from './feeds';
 import { handleGtsRoute } from './gts-routes';
 import { handleNostrRoute } from './nostr-routes';
 import { feedCache } from './response-cache';
+import { handleSsoRoute } from './sso-routes';
 
 import type { UnifiedPost } from './types';
 
@@ -482,8 +483,13 @@ const server = http.createServer(async (req, res) => {
   // Authentication Gate — Bearer token required for all non-health routes
   // ═══════════════════════════════════════════════════════════════════════
   if (!validateAuth(req)) {
-    res.writeHead(401, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ error: "Unauthorized", message: "Valid BRIDGE_API_KEY required via Authorization: Bearer <key>" }));
+    res.writeHead(401, { 'Content-Type': 'application/json' });
+    res.end(
+      JSON.stringify({
+        error: 'Unauthorized',
+        message: 'Valid BRIDGE_API_KEY required via Authorization: Bearer <key>',
+      }),
+    );
     return;
   }
   const url = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
@@ -518,6 +524,12 @@ const server = http.createServer(async (req, res) => {
     // ═══════════════════════════════════════════════════════════════════
     const gtsHandled = await handleGtsRoute(path, req.method || 'GET', req, res);
     if (gtsHandled) return;
+
+    // ═══════════════════════════════════════════════════════════════════
+    // SSO Provisioning Routes — auto-provision mesh accounts after sign-up
+    // ═══════════════════════════════════════════════════════════════════
+    const ssoHandled = await handleSsoRoute(path, req.method || 'GET', req, res);
+    if (ssoHandled) return;
 
     // ── Cross-Poster Health / Status ──────────────────────────────
     if (path === '/api/crossposter/status') {
