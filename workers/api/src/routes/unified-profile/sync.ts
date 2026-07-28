@@ -26,9 +26,12 @@ export async function handleSyncProfile(
   if (session.address.toLowerCase() !== wallet.toLowerCase())
     return jsonResponse({ error: 'Can only sync your own profile' }, 403);
   try {
-    const result = await syncProfile(wallet, env, { forceRefresh: true });
+    const result = await syncProfile(wallet, {}, env);
     return jsonResponse({
-      data: { syncedProtocols: result.synced, aggregated: result.aggregated },
+      data: {
+        syncedProtocols: result.map(r => r.protocol),
+        results: result,
+      },
     });
   } catch (err) {
     return jsonResponse({ error: `Sync failed: ${String(err)}` }, 500);
@@ -64,13 +67,12 @@ export async function handleUpdateProfile(
       400,
     );
   try {
-    const result = await pushProfile(wallet, body, env);
-    const succeeded = Object.values(result.pushed).filter((p) => p.success).length;
-    const failed = Object.values(result.pushed).filter((p) => !p.success).length;
+    const result = await pushProfile(wallet, body as Record<string, unknown>, env);
+    const succeeded = result.filter(p => p.ok).length;
+    const failed = result.filter(p => !p.ok).length;
     return jsonResponse({
       data: {
-        pushed: result.pushed,
-        aggregated: result.aggregated,
+        results: result,
         summary: { totalProtocols: SUPPORTED_SYNC_PROTOCOLS.length, succeeded, failed },
       },
     });
@@ -121,8 +123,13 @@ export async function handleSetPrimary(
     overrides[field] = protocol;
   }
   try {
-    const aggregated = await setPrimaryOverride(wallet, overrides, env);
-    return jsonResponse({ data: aggregated });
+    // Apply each field override to the specified protocol
+    const results: Record<string, void> = {};
+    for (const [field, protocol] of Object.entries(overrides)) {
+      if (!protocol) continue;
+      results[field] = await setPrimaryOverride(wallet, protocol, env);
+    }
+    return jsonResponse({ data: { overrides: results } });
   } catch (err) {
     return jsonResponse({ error: `Failed to set primary: ${String(err)}` }, 500);
   }
