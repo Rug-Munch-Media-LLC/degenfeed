@@ -4,6 +4,8 @@
  * Single Sign-On bridge across all self-hosted protocol instances.
  * Provides session management, identity provisioning, and cross-network activity tracking.
  */
+
+import { registerOnPlatform } from '@degenfeed/crossplatform-register';
 import type { Env } from '../../index';
 import {
   ALL_SSO_PROTOCOLS,
@@ -15,13 +17,7 @@ import {
   ssoSessionKey,
   ssoWalletStateKey,
 } from './constants';
-import type {
-  SSOAccountState,
-  SSOExportBundle,
-  SSOProvisioningResult,
-  SSOSession,
-  SSOWalletState,
-} from './types';
+import type { SSOAccountState, SSOExportBundle, SSOSession, SSOWalletState } from './types';
 
 // ─── Protocol Health ──────────────────────────────────────────────────
 
@@ -136,36 +132,207 @@ export async function getOrInitWalletState(
 
 // ─── Provisioning ──────────────────────────────────────────────────────
 
+// Mapping from SSO protocol IDs to the instance URL fields used by registerOnPlatform
+const PROTOCOL_USERNAME_EMAIL_MAP: Record<string, { instanceUrlKey: string; defaultUrl: string }> =
+  {
+    nostr: { instanceUrlKey: 'nostrRelayUrl', defaultUrl: 'ws://127.0.0.1:8085' },
+    mastodon: { instanceUrlKey: 'mastodonInstanceUrl', defaultUrl: 'https://social.degenfeed.xyz' },
+    lemmy: { instanceUrlKey: 'lemmyInstanceUrl', defaultUrl: 'https://community.degenfeed.xyz' },
+    bluesky: { instanceUrlKey: 'bskyPdsUrl', defaultUrl: 'https://pds.degenfeed.xyz' },
+    pixelfed: { instanceUrlKey: 'pixelfedInstanceUrl', defaultUrl: 'https://photos.degenfeed.xyz' },
+    peertube: { instanceUrlKey: 'peertubeInstanceUrl', defaultUrl: 'https://video.degenfeed.xyz' },
+    writefreely: {
+      instanceUrlKey: 'writefreelyInstanceUrl',
+      defaultUrl: 'https://blog.degenfeed.xyz',
+    },
+    owncast: { instanceUrlKey: 'owncastInstanceUrl', defaultUrl: 'https://live.degenfeed.xyz' },
+    castopod: {
+      instanceUrlKey: 'castopodInstanceUrl',
+      defaultUrl: 'https://podcast.degenfeed.xyz',
+    },
+  };
+
+/**
+ * Provision accounts on ALL SSO protocols for a given wallet.
+ * Actually calls the individual service registration APIs.
+ */
 export async function provisionAllProtocols(
   walletAddress: string,
   env: Env,
-): Promise<SSOProvisioningResult> {
-  const results: SSOProvisioningResult = { provisioned: [], failed: [], total: 0 };
-  for (const protocolId of ALL_SSO_PROTOCOLS) {
+): Promise<{
+  provisioned: string[];
+  alreadyExisted: number;
+  created: number;
+  failed: string[];
+  results: Array<{ protocol: string; ok: boolean; username?: string; error?: string }>;
+}> {
+  const provisioned: string[] = [];
+  const failed: string[] = [];
+  let createdCount = 0;
+  let alreadyExistedCount = 0;
+  const results: Array<{ protocol: string; ok: boolean; username?: string; error?: string }> = [];
+
+  // Get wallet state for username/identity info
+  const state = await getOrInitWalletState(walletAddress, env);
+
+  // Derive a username from the wallet address for cross-service registration
+  const username = `df${walletAddress.slice(2, 10)}`;
+  for (const protocolDef of ALL_SSO_PROTOCOLS) {
+    const protocolId = protocolDef.id;
+
+    // Skip protocols that are already provisioned in wallet state
+    const existingAccount = state.accounts[protocolId];
+    if (existingAccount && existingAccount.status === 'active') {
+      alreadyExistedCount++;
+      provisioned.push(protocolId);
+      results.push({
+        protocol: protocolId,
+        ok: true,
+        username: existingAccount.username || undefined,
+      });
+      continue;
+    }
+
     try {
-      await provisionSingleProtocol(walletAddress, protocolId, env);
-      results.provisioned.push(protocolId);
-    } catch {
-      results.failed.push(protocolId);
+      // Build register opts with proper instance URLs
+      const protoConfig = PROTOCOL_USERNAME_EMAIL_MAP[protocolId];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const opts: Record<string, any> = {
+        walletAddress,
+        storage: env.PLATFORM_ACCOUNTS,
+      };
+      if (protoConfig) {
+        opts[protoConfig.instanceUrlKey] = protoConfig.defaultUrl;
+      }
+
+      const registration = await registerOnPlatform(
+        protocolId,
+        username,
+        walletAddress,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        opts as any,
+      );
+
+      if (registration.status === 'created' || registration.status === 'pending') {
+        createdCount++;
+        provisioned.push(protocolId);
+        results.push({
+          protocol: protocolId,
+          ok: true,
+          username: registration.username,
+          error: registration.status === 'pending' ? registration.error : undefined,
+        });
+
+        // Update wallet state with actual account info
+        state.accounts[protocolId] = {
+          protocol: protocolId,
+          registered: registration.status === 'created',
+          username: registration.username || username,
+          profileUrl: registration.accountInfo?.profileUrl || null,
+          lastActive: Date.now(),
+          createdAt: Date.now(),
+        } as SSOAccountState;
+
+        console.log(
+          `[sso-bridge] Provisioned ${protocolId} for ${walletAddress.slice(0, 8)} as ${registration.username}`,
+        );
+      } else {
+        failed.push(protocolId);
+        results.push({
+          protocol: protocolId,
+          ok: false,
+          error: registration.error || 'Registration returned failed status',
+        });
+        console.warn(
+          `[sso-bridge] Failed to provision ${protocolId} for ${walletAddress.slice(0, 8)}: ${registration.error}`,
+        );
+      }
+    } catch (err) {
+      failed.push(protocolId);
+      const msg = err instanceof Error ? err.message : 'Unknown error';
+      results.push({ protocol: protocolId, ok: false, error: msg });
+      console.warn(
+        `[sso-bridge] Error provisioning ${protocolId} for ${walletAddress.slice(0, 8)}: ${msg}`,
+      );
     }
   }
-  results.total = results.provisioned.length;
-  return results;
+
+  // Persist updated wallet state
+  await env.IDENTITIES.put(ssoWalletStateKey(walletAddress), JSON.stringify(state));
+
+  return {
+    provisioned,
+    alreadyExisted: alreadyExistedCount,
+    created: createdCount,
+    failed,
+    results,
+  };
 }
 
+/**
+ * Provision a single SSO protocol for a given wallet.
+ * Actually calls the service registration API.
+ */
 export async function provisionSingleProtocol(
   walletAddress: string,
   protocolId: string,
   env: Env,
-): Promise<boolean> {
-  const state = await getOrInitWalletState(walletAddress, env);
-  state.accounts[protocolId] = {
-    protocol: protocolId,
-    status: 'active',
-    provisionedAt: Date.now(),
-  } as SSOAccountState;
-  await env.IDENTITIES.put(ssoWalletStateKey(walletAddress), JSON.stringify(state));
-  return true;
+): Promise<{ ok: boolean; username?: string; error?: string }> {
+  const username = `df${walletAddress.slice(2, 10)}`;
+  try {
+    const protoConfig = PROTOCOL_USERNAME_EMAIL_MAP[protocolId];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const opts: Record<string, any> = {
+      walletAddress,
+      storage: env.PLATFORM_ACCOUNTS,
+    };
+    if (protoConfig) {
+      opts[protoConfig.instanceUrlKey] = protoConfig.defaultUrl;
+    }
+
+    const registration = await registerOnPlatform(
+      protocolId,
+      username,
+      walletAddress,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      opts as any,
+    );
+
+    if (registration.status === 'created' || registration.status === 'pending') {
+      // Update wallet state
+      const state = await getOrInitWalletState(walletAddress, env);
+      state.accounts[protocolId] = {
+        protocol: protocolId,
+        registered: registration.status === 'created',
+        username: registration.username || username,
+        profileUrl: registration.accountInfo?.profileUrl || null,
+        lastActive: Date.now(),
+        createdAt: Date.now(),
+      } as SSOAccountState;
+      await env.IDENTITIES.put(ssoWalletStateKey(walletAddress), JSON.stringify(state));
+
+      console.log(
+        `[sso-bridge] Provisioned single ${protocolId} for ${walletAddress.slice(0, 8)} as ${registration.username}`,
+      );
+
+      return {
+        ok: true,
+        username: registration.username,
+        error: registration.status === 'pending' ? registration.error : undefined,
+      };
+    }
+
+    return {
+      ok: false,
+      error: registration.error || 'Registration returned failed status',
+    };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'Unknown error';
+    console.warn(
+      `[sso-bridge] Error provisioning single ${protocolId} for ${walletAddress.slice(0, 8)}: ${msg}`,
+    );
+    return { ok: false, error: msg };
+  }
 }
 
 // ─── Identity Bundle ───────────────────────────────────────────────────

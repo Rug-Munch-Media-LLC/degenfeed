@@ -37,6 +37,7 @@ import {
   registerGtsApp,
   verifyToken,
 } from './gts-oauth';
+import { provisionMeshAccounts } from './sso-routes';
 
 // ─── Config ─────────────────────────────────────────────────────────
 
@@ -156,6 +157,29 @@ async function handleFullRegister(
       accessToken || undefined,
     );
 
+    // Step 5: Provision accounts on ALL other mesh services (async, non-blocking)
+    provisionMeshAccounts(
+      walletAddress || `0x${Buffer.from(username).toString('hex').slice(0, 40)}`,
+      username,
+      email,
+      ['mastodon'],
+    )
+      .then(({ results, summary }) => {
+        console.log(
+          `[gts-routes] Post-registration provisioning for ${username}: ${summary.ok} ok, ${summary.failed} failed, ${summary.skipped} skipped`,
+        );
+        if (summary.failed > 0) {
+          const failedList = results.filter((r) => !r.ok).map((r) => `${r.protocol}: ${r.error}`);
+          console.warn(`[gts-routes] Provisioning failures for ${username}:`, failedList);
+        }
+      })
+      .catch((err: unknown) => {
+        console.error(
+          `[gts-routes] Provisioning threw for ${username}:`,
+          err instanceof Error ? err.message : err,
+        );
+      });
+
     // Step 4: Return complete registration result
     return jsonOk(res, {
       ok: true,
@@ -238,6 +262,25 @@ async function handleGtsRegister(
     } catch {
       // email confirmation may be pending
     }
+
+    // Fire-and-forget provisioning on mesh services
+    provisionMeshAccounts(
+      `0x${Buffer.from(username).toString('hex').slice(0, 40)}`,
+      username,
+      email,
+      ['mastodon'],
+    )
+      .then(({ results, summary }) => {
+        console.log(
+          `[gts-routes] Post-register provisioning for ${username}: ${summary.ok} ok, ${summary.failed} failed, ${summary.skipped} skipped`,
+        );
+      })
+      .catch((err: unknown) => {
+        console.error(
+          `[gts-routes] Post-register provisioning threw:`,
+          err instanceof Error ? err.message : err,
+        );
+      });
 
     return jsonOk(res, {
       ok: true,
