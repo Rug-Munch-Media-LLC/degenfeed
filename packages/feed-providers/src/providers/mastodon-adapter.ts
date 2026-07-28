@@ -139,7 +139,9 @@ export function statusToUnifiedPost(status: GtSStatus, instanceUrl: string): Uni
   // Convert HTML mention anchors (<a href="..." class="mention">@handle</a>)
   // to @handle@domain format in the plain text representation
   for (const mention of mentions) {
-    const handle = mention.acct.includes('@') ? mention.acct : `${mention.acct}@${new URL(instanceUrl).hostname}`;
+    const handle = mention.acct.includes('@')
+      ? mention.acct
+      : `${mention.acct}@${new URL(instanceUrl).hostname}`;
     const mentionTag = `@${handle}`;
     // Replace the plain text mention handle with the full @mention@domain
     // Match patterns like @username or @username@domain in the stripped text
@@ -188,10 +190,7 @@ export function statusToUnifiedPost(status: GtSStatus, instanceUrl: string): Uni
     /<a\s+[^>]*href="([^"]+)"[^>]*>([^<]+)<\/a>/g,
     (match, href: string, linkText: string) => {
       // Skip mentions and hashtags already processed
-      if (
-        mentions.some((m) => m.url === href) ||
-        tags.some((t) => t.url === href)
-      ) {
+      if (mentions.some((m) => m.url === href) || tags.some((t) => t.url === href)) {
         return match;
       }
       // Keep the link as an HTML anchor but also append URL in text
@@ -217,7 +216,9 @@ export function statusToUnifiedPost(status: GtSStatus, instanceUrl: string): Uni
     });
   }
 
-  const finalText = original.spoiler_text ? `[CW: ${original.spoiler_text}]\n\n${enrichedText}` : enrichedText;
+  const finalText = original.spoiler_text
+    ? `[CW: ${original.spoiler_text}]\n\n${enrichedText}`
+    : enrichedText;
   const nativeId = isBoost ? `boost:${status.id}:${original.id}` : original.id;
 
   return buildUnifiedPost({

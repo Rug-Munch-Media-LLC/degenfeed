@@ -1101,7 +1101,8 @@ export default function CoinDetailPage() {
                         Live trades coming soon
                       </span>
                       <span className="text-[8px] text-[var(--color-muted)] mt-0.5">
-                        Real-time trade data will appear here once connected to an on-chain data provider.
+                        Real-time trade data will appear here once connected to an on-chain data
+                        provider.
                       </span>
                     </div>
                   </div>
