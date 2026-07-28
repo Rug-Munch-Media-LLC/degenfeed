@@ -32,7 +32,13 @@ interface BskyEmbedView {
   duration?: number;
 }
 
-interface BskyPostView {
+export interface BskyFeedResponse {
+  feed?: Array<{ post: BskyPostView }>;
+  posts?: BskyPostView[];
+  cursor?: string;
+}
+
+export interface BskyPostView {
   uri: string;
   cid: string;
   author: BskyAuthor;

@@ -8,7 +8,7 @@
 import { checkRateLimit } from '../../../rate-limiter';
 import type { UnifiedPost } from '../../../server';
 import { postToUnified } from './mapper';
-import type { BskyFeedResponse } from './types';
+import type { BskyFeedResponse, BskyPostView } from './types';
 
 const $fetch = globalThis.fetch;
 
@@ -42,22 +42,162 @@ const SEARCH_QUERIES = [
 ];
 const TRENDING_QUERY = 'crypto OR bitcoin OR ethereum OR solana OR defi';
 
-async function fetchFromPds(_limit: number): Promise<UnifiedPost[]> {
+/** Extract a blob CID from various AT Protocol ref formats */
+function extractBlobCid(blob: unknown): string {
+  if (!blob || typeof blob !== 'object') return '';
+  const b = blob as Record<string, unknown>;
+  const ref = b.ref;
+  if (ref && typeof ref === 'object') {
+    const r = ref as Record<string, unknown>;
+    if (typeof r.$link === 'string') return r.$link;
+    if (typeof r.link === 'string') return r.link;
+    if (typeof r['/'] === 'string') return r['/'];
+  }
+  if (typeof b.$link === 'string') return b.$link;
+  if (typeof b.link === 'string') return b.link;
+  if (typeof b.cid === 'string') return b.cid;
+  return '';
+}
+
+async function fetchFromPds(limit: number): Promise<UnifiedPost[]> {
   try {
-    const infoRes = await $fetch(`${PDS_BASE}/xrpc/com.atproto.server.describeServer`, {
-      signal: AbortSignal.timeout(3000),
-    });
-    if (!infoRes.ok) return [];
-    const info = (await infoRes.json()) as { did?: string };
-    if (!info.did) return [];
-    const syncRes = await $fetch(
-      `${PDS_BASE}/xrpc/com.atproto.sync.getLatestCommit?did=${encodeURIComponent(info.did)}`,
-      { signal: AbortSignal.timeout(3000) },
-    ).catch(() => null);
-    if (!syncRes) return [];
-    if (!syncRes.ok) return [];
-    return [];
-  } catch {
+    // Step 1: List all repos on the local PDS
+    const listUrl = `${PDS_BASE}/xrpc/com.atproto.sync.listRepos?limit=30`;
+    const listRes = await $fetch(listUrl, { signal: AbortSignal.timeout(5000) });
+    if (!listRes.ok) {
+      console.log(`[bluesky] PDS listRepos: HTTP ${listRes.status}`);
+      return [];
+    }
+    const listData = (await listRes.json()) as {
+      repos?: Array<{ did: string; active?: boolean }>;
+    };
+    const repos = (listData.repos ?? []).filter((r) => r.active !== false);
+    if (repos.length === 0) {
+      console.log('[bluesky] PDS: no repos found');
+      return [];
+    }
+    console.log(`[bluesky] PDS: ${repos.length} repos found`);
+
+    // Step 2: Fetch posts from each repo (up to 15 repos, limit total)
+    const perRepo = Math.max(1, Math.ceil(limit / Math.min(repos.length, 15)));
+    const repoSlice = repos.slice(0, 15);
+
+    const results = await Promise.allSettled(
+      repoSlice.map(async (repo) => {
+        // 2a. Resolve handle for this DID
+        let handle: string = repo.did;
+        try {
+          const descUrl = `${PDS_BASE}/xrpc/com.atproto.repo.describeRepo?repo=${encodeURIComponent(repo.did)}`;
+          const descRes = await $fetch(descUrl, {
+            signal: AbortSignal.timeout(3000),
+          });
+          if (descRes.ok) {
+            const descData = (await descRes.json()) as { handle?: string };
+            if (descData.handle) handle = descData.handle;
+          }
+        } catch {
+          // fall back to DID as handle
+        }
+
+        // 2b. Fetch posts for this repo
+        const recordsUrl = `${PDS_BASE}/xrpc/com.atproto.repo.listRecords?repo=${encodeURIComponent(repo.did)}&collection=app.bsky.feed.post&limit=${Math.min(perRepo, 100)}`;
+        const recordsRes = await $fetch(recordsUrl, {
+          signal: AbortSignal.timeout(5000),
+        });
+        if (!recordsRes.ok) return [] as UnifiedPost[];
+        const recordsData = (await recordsRes.json()) as {
+          records?: Array<{
+            uri: string;
+            cid: string;
+            value: {
+              text?: string;
+              createdAt?: string;
+              embed?: Record<string, unknown>;
+              reply?: { parent: { uri: string }; root: { uri: string } };
+              $type?: string;
+            };
+          }>;
+        };
+        const records = (recordsData.records ?? []).filter((r) => r.value?.text?.trim());
+        if (records.length === 0) return [] as UnifiedPost[];
+
+        // 2c. Transform raw records into BskyPostView-compatible objects
+        return records.map((record) => {
+          const rawEmbed = record.value.embed;
+          let embedImages:
+            | Array<{
+                image: { ref: { link: string } };
+                alt: string;
+                aspectRatio?: { width: number; height: number };
+              }>
+            | undefined;
+          let embedExternal: { uri: string; title?: string; description?: string } | undefined;
+
+          if (rawEmbed && typeof rawEmbed === 'object') {
+            const e = rawEmbed as Record<string, unknown>;
+            const images = e.images;
+            if (Array.isArray(images)) {
+              embedImages = images.map((img: Record<string, unknown>) => ({
+                image: {
+                  ref: {
+                    link: extractBlobCid(img.image),
+                  },
+                },
+                alt: (img.alt as string) || '',
+                aspectRatio: img.aspectRatio as { width: number; height: number } | undefined,
+              }));
+            }
+            const external = e.external;
+            if (external && typeof external === 'object') {
+              embedExternal = external as {
+                uri: string;
+                title?: string;
+                description?: string;
+              };
+            }
+          }
+
+          // Build a minimal BskyPostView-compatible object
+          const postView: BskyPostView = {
+            uri: record.uri,
+            cid: record.cid,
+            author: {
+              did: repo.did,
+              handle,
+              displayName: handle,
+            },
+            record: {
+              text: record.value.text || '',
+              createdAt: record.value.createdAt || new Date().toISOString(),
+              embed:
+                embedImages || embedExternal
+                  ? {
+                      external: embedExternal,
+                      images: embedImages,
+                    }
+                  : undefined,
+              reply: record.value.reply,
+            },
+            likeCount: 0,
+            repostCount: 0,
+            replyCount: 0,
+            indexedAt: record.value.createdAt || new Date().toISOString(),
+          };
+
+          return postToUnified(postView);
+        });
+      }),
+    );
+
+    const allPosts: UnifiedPost[] = [];
+    for (const r of results) {
+      if (r.status === 'fulfilled') allPosts.push(...r.value);
+    }
+
+    console.log(`[bluesky] PDS: ${allPosts.length} posts from local PDS`);
+    return allPosts.slice(0, limit);
+  } catch (err) {
+    console.log(`[bluesky] PDS error: ${(err as Error).message}`);
     return [];
   }
 }
