@@ -20,8 +20,13 @@
  *   r     — reference URL
  */
 
-import type { NostrCalendarEvent, SchemaGuard, UnifiedEvent } from '../server/types';
-import type { UnifiedIdentity, UnifiedPost } from '../server/types';
+import type {
+  NostrCalendarEvent,
+  SchemaGuard,
+  UnifiedEvent,
+  UnifiedIdentity,
+  UnifiedPost,
+} from '../server/types';
 
 const _$fetch = globalThis.fetch;
 
