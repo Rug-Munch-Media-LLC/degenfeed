@@ -18,10 +18,13 @@ import type http from 'node:http';
 
 const OUR_RELAY_WS = process.env.NOSTR_RELAY_WS || 'ws://127.0.0.1:8085';
 const OUR_RELAY_WSS = process.env.NOSTR_RELAY_WSS || 'wss://nostr.degenfeed.xyz';
-const DEGENFEED_NPUB = process.env.DEGENFEED_NOSTR_NPUB || '0307fc061381e9a4d66111a67fd863e2e7d3ce70bfb01146192015a80df6bbf';
+const _DEGENFEED_NPUB =
+  process.env.DEGENFEED_NOSTR_NPUB ||
+  '0307fc061381e9a4d66111a67fd863e2e7d3ce70bfb01146192015a80df6bbf';
 const NIP05_DOMAIN = process.env.NIP05_DOMAIN || 'nostr.degenfeed.xyz';
-const DEGENFEED_NOSTR_NSEC = process.env.DEGENFEED_NOSTR_NSEC || '';
-const API_KEY = process.env.NOSTR_API_KEY || '';
+const DEGENFEED_NOSTR_NSEC =
+  process.env.DEGENFEED_NOSTR_NSEC || process.env.NOSTR_PRIVATE_KEY_HEX || '';
+const _API_KEY = process.env.NOSTR_API_KEY || '';
 
 // ─── In-Memory KV Store ─────────────────────────────────────────────────
 // Maps npub hex -> { username, nip05, registeredAt, profile }
@@ -51,7 +54,9 @@ function jsonError(res: http.ServerResponse, status: number, code: string, messa
 
 // ─── Relay WebSocket Publish ────────────────────────────────────────────
 
-function publishToRelay(event: Record<string, unknown>): Promise<{ success: boolean; message: string }> {
+function publishToRelay(
+  event: Record<string, unknown>,
+): Promise<{ success: boolean; message: string }> {
   return new Promise((resolve) => {
     try {
       const ws = new WebSocket(OUR_RELAY_WS);
@@ -139,7 +144,11 @@ function getNip05Url(): string {
 
 // ─── Route Handlers ─────────────────────────────────────────────────────
 
-async function handleRegister(path: string, req: http.IncomingMessage, res: http.ServerResponse): Promise<void> {
+async function handleRegister(
+  _path: string,
+  req: http.IncomingMessage,
+  res: http.ServerResponse,
+): Promise<void> {
   if (req.method !== 'POST') {
     return jsonError(res, 405, 'METHOD_NOT_ALLOWED', 'Use POST to register');
   }
@@ -168,7 +177,12 @@ async function handleRegister(path: string, req: http.IncomingMessage, res: http
     }
 
     if (!/^[a-zA-Z0-9_]+$/.test(username)) {
-      return jsonError(res, 400, 'VALIDATION_ERROR', 'username must be alphanumeric with underscores only');
+      return jsonError(
+        res,
+        400,
+        'VALIDATION_ERROR',
+        'username must be alphanumeric with underscores only',
+      );
     }
 
     // Check if username is already taken
@@ -229,7 +243,11 @@ async function handleRegister(path: string, req: http.IncomingMessage, res: http
   }
 }
 
-async function handleAuth(path: string, req: http.IncomingMessage, res: http.ServerResponse): Promise<void> {
+async function handleAuth(
+  _path: string,
+  req: http.IncomingMessage,
+  res: http.ServerResponse,
+): Promise<void> {
   if (req.method !== 'POST') {
     return jsonError(res, 405, 'METHOD_NOT_ALLOWED', 'Use POST to authenticate');
   }
@@ -306,17 +324,55 @@ async function handleAuth(path: string, req: http.IncomingMessage, res: http.Ser
   }
 }
 
-async function handlePublish(path: string, req: http.IncomingMessage, res: http.ServerResponse): Promise<void> {
+async function handlePublish(
+  _path: string,
+  req: http.IncomingMessage,
+  res: http.ServerResponse,
+): Promise<void> {
   if (req.method !== 'POST') {
     return jsonError(res, 405, 'METHOD_NOT_ALLOWED', 'Use POST to publish');
   }
 
   try {
-    const body = await parseBody(req);
-    const { event } = body as { event?: Record<string, unknown> };
+    const body = (await parseBody(req)) as Record<string, unknown>;
+    let event = body.event as Record<string, unknown> | undefined;
 
-    if (!event || !event.kind) {
-      return jsonError(res, 400, 'VALIDATION_ERROR', 'event with kind field is required');
+    // Mode 1: Simple content+tags — auto-sign with server key
+    if (!event && body.content) {
+      if (!DEGENFEED_NOSTR_NSEC) {
+        return jsonError(
+          res,
+          400,
+          'SERVER_KEY_MISSING',
+          'DEGENFEED_NOSTR_NSEC not configured — cannot auto-sign. Send a pre-signed event instead.',
+        );
+      }
+      try {
+        const { createTextNote } = await import('@degenfeed/nostr-sdk');
+        const signed = createTextNote(
+          body.content as string,
+          DEGENFEED_NOSTR_NSEC,
+          (body.tags as string[][]) || [],
+        );
+        event = signed as unknown as Record<string, unknown>;
+      } catch (err) {
+        return jsonError(
+          res,
+          500,
+          'SIGNING_ERROR',
+          `Failed to auto-sign event: ${(err as Error).message}`,
+        );
+      }
+    }
+
+    // Mode 2: Pre-signed event — requires event.kind
+    if (!event?.kind) {
+      return jsonError(
+        res,
+        400,
+        'VALIDATION_ERROR',
+        'Send {event:{kind,id,pubkey,...}} for pre-signed, or {content,tags} for auto-sign',
+      );
     }
 
     const result = await publishToRelay(event);
@@ -336,7 +392,11 @@ async function handlePublish(path: string, req: http.IncomingMessage, res: http.
   }
 }
 
-async function handleRelayManagement(path: string, req: http.IncomingMessage, res: http.ServerResponse): Promise<void> {
+async function handleRelayManagement(
+  _path: string,
+  req: http.IncomingMessage,
+  res: http.ServerResponse,
+): Promise<void> {
   // GET: list all known users and their relay info
   if (req.method === 'GET') {
     const userList = Array.from(users.values()).map((u) => ({
@@ -361,7 +421,11 @@ async function handleRelayManagement(path: string, req: http.IncomingMessage, re
   return jsonError(res, 405, 'METHOD_NOT_ALLOWED', 'Use GET to list relay info');
 }
 
-async function handleHealth(path: string, req: http.IncomingMessage, res: http.ServerResponse): Promise<void> {
+async function handleHealth(
+  _path: string,
+  _req: http.IncomingMessage,
+  res: http.ServerResponse,
+): Promise<void> {
   const health = await checkRelayHealth();
   return jsonOk(res, {
     ok: health.connected,
@@ -380,7 +444,11 @@ async function handleHealth(path: string, req: http.IncomingMessage, res: http.S
   });
 }
 
-async function handleVerifyNip05(path: string, req: http.IncomingMessage, res: http.ServerResponse): Promise<void> {
+async function handleVerifyNip05(
+  path: string,
+  req: http.IncomingMessage,
+  res: http.ServerResponse,
+): Promise<void> {
   const url = new URL(path, `http://${req.headers.host || 'localhost'}`);
   const pubkey = url.searchParams.get('pubkey');
   const nip05 = url.searchParams.get('nip05');
@@ -395,7 +463,6 @@ async function handleVerifyNip05(path: string, req: http.IncomingMessage, res: h
     return jsonError(res, 400, 'VALIDATION_ERROR', 'Invalid NIP-05 format (should be user@domain)');
   }
 
-  const username = nip05.slice(0, atIndex);
   const domain = nip05.slice(atIndex + 1);
 
   // Check domain matches
@@ -492,4 +559,4 @@ export async function handleNostrRoute(
   return false; // Not handled here
 }
 
-export { OUR_RELAY_WS, OUR_RELAY_WSS, NIP05_DOMAIN, users, getNip05Url };
+export { getNip05Url, NIP05_DOMAIN, OUR_RELAY_WS, OUR_RELAY_WSS, users };
