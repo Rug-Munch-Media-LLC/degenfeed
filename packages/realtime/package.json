@@ -21,7 +21,8 @@
     "test": "true"
   },
   "dependencies": {
-    "@degenfeed/crypto": "workspace:*"
+    "@degenfeed/crypto": "workspace:*",
+    "@degenfeed/utils": "workspace:*"
   },
   "peerDependencies": {
     "react": "^19.0.0"
