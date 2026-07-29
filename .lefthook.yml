@@ -55,9 +55,14 @@ pre-commit:
         - rebase
 
     # -- Secret scanning (UNIVERSAL) ---------------------------
-    # Uses .gitleaks.toml from repo root (custom RMI rules)
+    # Uses canonical standards config; falls back to per-repo .gitleaks.toml
     gitleaks:
-      run: gitleaks protect --staged --config .gitleaks.toml --verbose
+      run: |
+        if [ -f ../standards/.gitleaks.toml ]; then
+          gitleaks protect --staged --config ../standards/.gitleaks.toml --verbose
+        else
+          gitleaks protect --staged --config .gitleaks.toml --verbose
+        fi
 
     # -- envsitter validation (UNIVERSAL) ----------------------
     envsitter:
@@ -102,8 +107,14 @@ pre-push:
       run: bash scripts/pre-commit-methodology-check.sh
 
     # -- Full-repo secret scan (UNIVERSAL) --------------------
+    # Uses canonical standards config; falls back to per-repo .gitleaks.toml
     gitleaks-full:
-      run: gitleaks detect --source . --no-git --config .gitleaks.toml -v
+      run: |
+        if [ -f ../standards/.gitleaks.toml ]; then
+          gitleaks detect --source . --no-git --config ../standards/.gitleaks.toml -v
+        else
+          gitleaks detect --source . --no-git --config .gitleaks.toml -v
+        fi
 
     # -- Python type check (PYTHON repos) ---------------------
     mypy:
