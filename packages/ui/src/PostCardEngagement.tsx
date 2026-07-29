@@ -6,6 +6,25 @@ import { memo, useCallback, useState } from 'react';
 import { getProtocolLabel as _getProtocolLabel } from './ProtocolBadge';
 import { QuickTipButton } from './QuickTipButton';
 
+// ─── Action vocabulary per protocol ──────────────────────────────
+
+const ACTION_VERBS: Record<string, { repost: string; like: string; reply: string }> = {
+  mastodon: { repost: 'Boost', like: 'Favorite', reply: 'Reply' },
+  bluesky: { repost: 'Repost', like: 'Like', reply: 'Reply' },
+  farcaster: { repost: 'Recast', like: 'Like', reply: 'Reply' },
+  nostr: { repost: 'Repost', like: 'Zap', reply: 'Reply' },
+  lens: { repost: 'Mirror', like: 'Like', reply: 'Comment' },
+  lemmy: { repost: 'Boost', like: 'Upvote', reply: 'Reply' },
+  reddit: { repost: 'Share', like: 'Upvote', reply: 'Reply' },
+  rss: { repost: 'Share', like: 'Like', reply: 'Comment' },
+  threads: { repost: 'Repost', like: 'Like', reply: 'Reply' },
+  peertube: { repost: 'Share', like: 'Like', reply: 'Comment' },
+};
+
+function getActionVerb(protocol: string, action: 'repost' | 'like' | 'reply'): string {
+  return ACTION_VERBS[protocol]?.[action] ?? action.charAt(0).toUpperCase() + action.slice(1);
+}
+
 // ─── Types ─────────────────────────────────────────────────────────
 
 export interface EngageResult {
@@ -218,7 +237,7 @@ export const PostCardEngagement = memo(function PostCardEngagement({
                 localState.engagement.viewerLiked ? 'liked' : ''
               }`}
               onClick={handleLike}
-              aria-label="Like post"
+              aria-label={`${getActionVerb(post.protocol, 'like')} post`}
               aria-pressed={localState.engagement.viewerLiked}
             >
               <LikeParticles active={likeParticles} />
@@ -252,7 +271,7 @@ export const PostCardEngagement = memo(function PostCardEngagement({
                   </svg>
                 )}
               </span>{' '}
-              <span aria-label={`${localState.metrics.likes} likes`}>
+              <span aria-label={`${localState.metrics.likes} ${getActionVerb(post.protocol, 'like').toLowerCase()}s`}>
                 {formatCount(localState.metrics.likes)}
               </span>
             </button>
@@ -264,7 +283,7 @@ export const PostCardEngagement = memo(function PostCardEngagement({
                 localState.engagement.viewerReposted ? 'reposted' : ''
               }`}
               onClick={handleRepost}
-              aria-label="Repost post"
+              aria-label={`${getActionVerb(post.protocol, 'repost')} post`}
               aria-pressed={localState.engagement.viewerReposted}
             >
               <span
@@ -288,7 +307,7 @@ export const PostCardEngagement = memo(function PostCardEngagement({
                   <path d="M21 13v2a4 4 0 0 1-4 4H3" />
                 </svg>
               </span>{' '}
-              <span aria-label={`${localState.metrics.reposts} reposts`}>
+              <span aria-label={`${localState.metrics.reposts} ${getActionVerb(post.protocol, 'repost').toLowerCase()}s`}>
                 {formatCount(localState.metrics.reposts)}
               </span>
             </button>
@@ -298,7 +317,7 @@ export const PostCardEngagement = memo(function PostCardEngagement({
               type="button"
               className={`action-btn group ${animatingReply ? 'animate-heart-pop' : ''}`}
               onClick={handleReplyToggle}
-              aria-label="Reply to post"
+              aria-label={`${getActionVerb(post.protocol, 'reply')} to post`}
               aria-expanded={showReply}
             >
               <span className="inline-block" aria-hidden="true">
@@ -316,7 +335,9 @@ export const PostCardEngagement = memo(function PostCardEngagement({
                   <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
                 </svg>
               </span>{' '}
-              <span aria-label={`${localState.metrics.replies} replies`}>
+              <span
+                aria-label={`${localState.metrics.replies} ${getActionVerb(post.protocol, 'reply').toLowerCase()}s`}
+              >
                 {formatCount(localState.metrics.replies)}
               </span>
             </button>

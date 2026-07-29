@@ -23,6 +23,11 @@ import {
 import { MAX_TEXT_LENGTH, scheduleIdle } from './PostCardHelpers';
 import type { LocalState, PostCardProps } from './PostCardTypes';
 import { PostBody, PostHeader, PostMedia, PostMetrics, PostThread } from './post-card';
+import {
+  getProtocolColor,
+  getProtocolIcon,
+  getProtocolLabel,
+} from './ProtocolBadge';
 import { ReportModal } from './ReportModal';
 import { TranslationPreview } from './TranslationPreview';
 
@@ -497,7 +502,7 @@ function PostCardComponent({
   return (
     <>
       <article
-        className="post-card group cursor-pointer border-b border-[var(--color-border)] px-4 py-3 transition-all duration-150 hover:bg-[var(--color-overlay)] hover:border-[color-mix(in_srgb,var(--color-accent)_15%,var(--color-border))] hover:shadow-sm"
+        className={`post-card protocol-${post.protocol} group cursor-pointer border-b border-[var(--color-border)] px-4 py-3 transition-all duration-150 hover:bg-[var(--color-overlay)] hover:border-[color-mix(in_srgb,var(--color-accent)_15%,var(--color-border))] hover:shadow-sm`}
         onClick={() => onClick?.(post.id)}
         onContextMenu={(e) => onContextMenu?.(e, post.id)}
         onKeyDown={(e) => {
@@ -542,8 +547,19 @@ function PostCardComponent({
           onTranslate={handleTranslate}
         />
 
-        {/* Why this post? ⓘ icon — always visible transparency trigger */}
-        <div className="mb-1 flex justify-end">
+        {/* Protocol badge (left) + Why this post? ⓘ icon (right) */}
+        <div className="mb-1 flex items-center justify-between">
+          <span
+            className="protocol-badge inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold leading-none"
+            style={{
+              backgroundColor: `${getProtocolColor(post.protocol)}18`,
+              color: getProtocolColor(post.protocol),
+            }}
+            title={getProtocolLabel(post.protocol)}
+          >
+            <span className="text-[0.8em]" aria-hidden="true">{getProtocolIcon(post.protocol)}</span>
+            <span>{getProtocolLabel(post.protocol)}</span>
+          </span>
           <button
             type="button"
             onClick={(e) => {

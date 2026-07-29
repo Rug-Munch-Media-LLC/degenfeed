@@ -9,8 +9,8 @@ services:
       - DATABASE_URL=postgres://glitchtip:${GLITCHTIP_DB_PASSWORD}@glitchtip-db:5432/glitchtip
       - GLITCHTIP_DOMAIN=https://glitchtip.rugmunch.io
       - ENABLE_USER_REGISTRATION=true
-      - DEFAULT_FROM_EMAIL=glitchtip@degenfeed.xyz
-      - EMAIL_URL=smtp://cryptorugmuncher@gmail.com:${GMAIL_APP_PASSWORD}@smtp.gmail.com:587
+      - DEFAULT_FROM_EMAIL=noreply@rugmunch.io
+      - EMAIL_URL=smtp://noreply%40rugmunch.io:${GLITCHTIP_SMTP_PASSWORD}@rmi-mail:587
     ports:
       - '8000:8000'
     depends_on:

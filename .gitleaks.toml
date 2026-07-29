@@ -111,6 +111,10 @@ paths = [
   # Test files: 10.0.0.1 used as example private IP in sanitization tests
   '''workers/api/src/__tests__/''',
   '''workers/api/src/sanitize\.ts''',
+  # Gitignored bridge env files (real private keys, chmod 600, not tracked by git)
+  '''bridge/''',
+  # Gitleaks config itself (PRIVATE-KEY regex definition self-reference false positive)
+  '''\.gitleaks\.toml''',
 ]
 
 # Regex patterns to allowlist (intentional test/redaction markers)
