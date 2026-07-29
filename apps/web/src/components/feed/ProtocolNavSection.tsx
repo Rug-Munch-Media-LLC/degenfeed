@@ -2,14 +2,13 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   CATEGORIES,
   CATEGORY_DISPLAY_ORDER,
   CATEGORY_PROTOCOLS,
   PROTOCOL_LIST,
   type ProtocolCategory,
-  SIDEBAR_ORDER,
 } from './feed-protocols';
 
 // ── Protocol icon/color mapping ────────────────────────────────────
@@ -65,11 +64,7 @@ function SidebarLink({
           ? 'bg-[var(--color-overlay)] text-[var(--color-fg)]'
           : 'text-[var(--color-muted)] hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)]'
       }`}
-      style={
-        isActive
-          ? { borderLeft: `3px solid ${color}`, marginLeft: '-3px' }
-          : undefined
-      }
+      style={isActive ? { borderLeft: `3px solid ${color}`, marginLeft: '-3px' } : undefined}
     >
       <span className="flex h-5 w-5 items-center justify-center text-xs" aria-hidden="true">
         {icon}
@@ -124,7 +119,11 @@ export function ProtocolNavSection() {
   const renderProtocolLink = (pid: string) => {
     const meta = PROTOCOL_META[pid];
     if (!meta) return null;
-    const isActive = pathname === meta.route || pathname.startsWith(`${meta.route}/`) || pathname === `/${pid}` || pathname.startsWith(`/${pid}/`);
+    const isActive =
+      pathname === meta.route ||
+      pathname.startsWith(`${meta.route}/`) ||
+      pathname === `/${pid}` ||
+      pathname.startsWith(`/${pid}/`);
     const stat = sourceStats?.[pid];
     return (
       <SidebarLink
