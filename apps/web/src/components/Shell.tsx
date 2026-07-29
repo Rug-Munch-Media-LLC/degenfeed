@@ -16,6 +16,7 @@ import { KeyboardShortcuts } from './KeyboardShortcuts';
 import { LeftSidebar } from './LeftSidebar';
 import { OfflineBanner } from './OfflineBanner';
 import { ProtocolConnectFlow } from './ProtocolConnectFlow';
+import { ProtocolNavSection } from './feed/ProtocolNavSection';
 import { ProtocolHealthBanner } from './ProtocolHealthBanner';
 import { ProtocolQuickSwitcher } from './ProtocolQuickSwitcher';
 import { QuickJumpFloating } from './QuickJumpFloating';
@@ -598,6 +599,13 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
                 onQuickSwitcherOpen={() => setQuickSwitcherOpen(true)}
                 onProtocolConnectOpen={() => setProtocolConnectOpen(true)}
               />
+              {/* ── Global protocol navigation (hidden on feed routes — FeedShell provides its own there) ── */}
+              {!sidebarCollapsed && !isSelfLayoutPage && !pathname.startsWith('/feed') && !pathname.startsWith('/feeds/') && pathname !== '/' && (
+                <>
+                  <div className="mx-3 h-px bg-[var(--color-glass-border)]" />
+                  <ProtocolNavSection />
+                </>
+              )}
             </div>
           </>
         )}
