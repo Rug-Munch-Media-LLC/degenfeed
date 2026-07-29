@@ -44,7 +44,6 @@ pre-commit:
           -not -path '*/venv/*' \
           -not -path '*/.venv/*' \
           -not -path '*/__pycache__/*' \
-          -not -path '*/bridge/.env*' \
           | grep -q .; then
           echo "ERROR: .env files found. Move secrets to gopass."
           echo "       Run: gopass show <path>"
