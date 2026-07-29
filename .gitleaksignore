@@ -159,3 +159,52 @@ c79a18a792cbab30fb58fd11ac5d1c3f0cb59e69:packages/spaces-bridge/src/owncast.ts:i
 
 # feat/live-streaming branch: JWT secret redacted in HEAD commit 71ab10f4
 11a78eaaa4dc44ff3fdf707ce108752811e9e503:docs/DEPLOYED.md:ethereum-private-key:70
+
+# ── internal-tailscale-ip: historic leaks (redacted from working tree) ──────
+# These Tailscale 100.x.x.x IPs were committed in docs/config files and have
+# since been redacted from the working tree. The old commits remain in history.
+0d277a2773e002bf1971f441766a2dad22db1a68:packages/spaces/src/owncast.ts:internal-tailscale-ip:10
+0d277a2773e002bf1971f441766a2dad22db1a68:packages/spaces/src/owncast.ts:internal-tailscale-ip:27
+8fe61c2f0593432cb8486bdba01be7afd50739f1:NEXT-WINS.md:internal-tailscale-ip:91
+5652aeb10503c809e005b37baf3268501db9eeba:docs/DEPLOYMENT.md:internal-tailscale-ip:565
+5652aeb10503c809e005b37baf3268501db9eeba:docs/DEPLOYMENT.md:internal-tailscale-ip:566
+b336c2ac0e10ce2b8d53266982c0d3553c5c6fb2:workers/api/.dev.vars.example:internal-tailscale-ip:153
+b336c2ac0e10ce2b8d53266982c0d3553c5c6fb2:docs/PRODUCTION_ARCHITECTURE.md:internal-tailscale-ip:62
+b336c2ac0e10ce2b8d53266982c0d3553c5c6fb2:docs/PRODUCTION_ARCHITECTURE.md:internal-tailscale-ip:101
+b336c2ac0e10ce2b8d53266982c0d3553c5c6fb2:docs/PRODUCTION_ARCHITECTURE.md:internal-tailscale-ip:122
+b336c2ac0e10ce2b8d53266982c0d3553c5c6fb2:docs/PRODUCTION_ARCHITECTURE.md:internal-tailscale-ip:166
+b336c2ac0e10ce2b8d53266982c0d3553c5c6fb2:docs/PRODUCTION_ARCHITECTURE.md:internal-tailscale-ip:228
+b336c2ac0e10ce2b8d53266982c0d3553c5c6fb2:workers/api/wrangler.toml:internal-tailscale-ip:220
+b336c2ac0e10ce2b8d53266982c0d3553c5c6fb2:workers/api/wrangler.toml:internal-tailscale-ip:221
+ba4a87b723a1d306f02b839e50f2ae7f2baeecb9:apps/web/.env.example:internal-tailscale-ip:172
+ba4a87b723a1d306f02b839e50f2ae7f2baeecb9:apps/web/.env.example:internal-tailscale-ip:175
+ba4a87b723a1d306f02b839e50f2ae7f2baeecb9:DEPLOYMENT.md:internal-tailscale-ip:565
+ba4a87b723a1d306f02b839e50f2ae7f2baeecb9:DEPLOYMENT.md:internal-tailscale-ip:566
+11a78eaaa4dc44ff3fdf707ce108752811e9e503:docs/monitoring.md:internal-tailscale-ip:89
+11a78eaaa4dc44ff3fdf707ce108752811e9e503:packages/feed-providers/src/providers/threads.ts:internal-tailscale-ip:51
+11a78eaaa4dc44ff3fdf707ce108752811e9e503:packages/feed-providers/src/providers/threads.ts:internal-tailscale-ip:52
+ad75aa5912132efc2d083ada7213eaaef01af097:infra/monitoring/deploy.sh:internal-tailscale-ip:8
+ad75aa5912132efc2d083ada7213eaaef01af097:infra/monitoring/README.md:internal-tailscale-ip:50
+ad75aa5912132efc2d083ada7213eaaef01af097:infra/monitoring/README.md:internal-tailscale-ip:80
+ad75aa5912132efc2d083ada7213eaaef01af097:infra/monitoring/README.md:internal-tailscale-ip:81
+ad75aa5912132efc2d083ada7213eaaef01af097:infra/monitoring/prometheus.yml:internal-tailscale-ip:32
+ad75aa5912132efc2d083ada7213eaaef01af097:scripts/git/radicle-setup.sh:internal-tailscale-ip:3
+27be37aa97c233181474cc8959a7f3559b1d25de:workers/api/wrangler.toml:internal-tailscale-ip:81
+27be37aa97c233181474cc8959a7f3559b1d25de:workers/api/wrangler.toml:internal-tailscale-ip:82
+3af390925ee0ab0e615ef84507179ac55f63d6d2:workers/api/wrangler.toml:internal-tailscale-ip:61
+552fba8ac37e558ac4e99bd651afdd76d902ae3e:packages/feed-providers/src/providers/threads.ts:internal-tailscale-ip:11
+552fba8ac37e558ac4e99bd651afdd76d902ae3e:packages/feed-providers/src/providers/threads.ts:internal-tailscale-ip:22
+543c6bf53455a7e6c3a7a2956b5c29ad0a313861:GAPS.md:internal-tailscale-ip:45
+543c6bf53455a7e6c3a7a2956b5c29ad0a313861:GAPS.md:internal-tailscale-ip:90
+be3a7ad45aa67d0df57b1756c5f4cdf4a2ad035f:AGENTS.md:internal-tailscale-ip:29
+be3a7ad45aa67d0df57b1756c5f4cdf4a2ad035f:AGENTS.md:internal-tailscale-ip:30
+be3a7ad45aa67d0df57b1756c5f4cdf4a2ad035f:AGENTS.md:internal-tailscale-ip:31
+be3a7ad45aa67d0df57b1756c5f4cdf4a2ad035f:AGENTS.md:internal-tailscale-ip:36
+be3a7ad45aa67d0df57b1756c5f4cdf4a2ad035f:AGENTS.md:internal-tailscale-ip:97
+be3a7ad45aa67d0df57b1756c5f4cdf4a2ad035f:AGENTS.md:internal-tailscale-ip:98
+be3a7ad45aa67d0df57b1756c5f4cdf4a2ad035f:AGENTS.md:internal-tailscale-ip:100
+be3a7ad45aa67d0df57b1756c5f4cdf4a2ad035f:AGENTS.md:internal-tailscale-ip:101
+be3a7ad45aa67d0df57b1756c5f4cdf4a2ad035f:AGENTS.md:internal-tailscale-ip:286
+be3a7ad45aa67d0df57b1756c5f4cdf4a2ad035f:AGENTS.md:internal-tailscale-ip:335
+aeeefd7c83346b40f67d90a20eaa8114c167e307:GAPS.md:internal-tailscale-ip:69
+aeeefd7c83346b40f67d90a20eaa8114c167e307:REMAINING.md:internal-tailscale-ip:173
