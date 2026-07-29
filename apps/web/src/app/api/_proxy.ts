@@ -1,8 +1,10 @@
 /**
- * Shared proxy helper for worker API routes.
- * Forwards requests to the worker backend using WORKER_URL env var.
+ * @degenfeed/web — Shared proxy helper for worker/bridge API routes.
  *
- * Environment variable priority:
+ * Forwards requests to the local bridge worker using WORKER_URL.
+ * Automatically injects BRIDGE_API_KEY so the bridge can authenticate.
+ *
+ * Environment variable priority for WORKER_URL:
  *   1. WORKER_URL
  *   2. NEXT_PUBLIC_WORKER_URL
  *   3. NEXT_PUBLIC_API_BASE
@@ -21,7 +23,7 @@ function resolveWorkerUrl(): string {
 
 /**
  * Extract auth/session headers from the incoming request to forward to the worker.
- * The worker needs these to identify the authenticated user.
+ * Also injects BRIDGE_API_KEY for bridge-level auth (from server env).
  */
 function forwardHeaders(request: Request): Record<string, string> {
   const headers: Record<string, string> = {};
@@ -33,6 +35,9 @@ function forwardHeaders(request: Request): Record<string, string> {
   if (csrf) headers['X-CSRF-Token'] = csrf;
   const forwardedFor = request.headers.get('x-forwarded-for');
   if (forwardedFor) headers['X-Forwarded-For'] = forwardedFor;
+  // Inject bridge API key for local bridge auth (from server env)
+  const bridgeKey = process.env.BRIDGE_API_KEY;
+  if (bridgeKey) headers.Authorization = `Bearer ${bridgeKey}`;
   return headers;
 }
 
