@@ -8,34 +8,34 @@
 
 ## 1. DNS Records — degenfeed.xyz
 
-### Zone ID: `116a9676c3358def6796910ccb96f1fc`
+### Zone ID: `[CLOUDFLARE_ZONE_ID]`
 ### Tunnel ID: `9f428b88-5a57-4b28-a7dc-1368f4f32811`
-### Server IP: `152.53.80.39` (Talos, Netcup)
+### Server IP: `[TALOS_PUBLIC_IP]` (Talos, Netcup)
 ### Tunnel CNAME target: `9f428b88-5a57-4b28-a7dc-1368f4f32811.cfargotunnel.com`
 
 | Subdomain | Type | Target | Proxy | Backend Port | Service |
 |-----------|------|--------|-------|-------------|---------|
 | `degenfeed.xyz` | CNAME | tunnel | ☁️ proxied | nginx :80 → static | Main landing page |
-| `www.degenfeed.xyz` | A | 152.53.80.39 | ☁️ proxied | nginx :80 → redirect to apex | WWW redirect |
+| `www.degenfeed.xyz` | A | [TALOS_PUBLIC_IP] | ☁️ proxied | nginx :80 → redirect to apex | WWW redirect |
 | `app.degenfeed.xyz` | CNAME | tunnel | ☁️ proxied | :3100 | Next.js web app |
-| `social.degenfeed.xyz` | A | 152.53.80.39 | ☁️ proxied | :8082 | GoToSocial / Mastodon |
-| `talk.degenfeed.xyz` | A | 152.53.80.39 | ☁️ proxied | :8536 | Lemmy |
+| `social.degenfeed.xyz` | A | [TALOS_PUBLIC_IP] | ☁️ proxied | :8082 | GoToSocial / Mastodon |
+| `talk.degenfeed.xyz` | A | [TALOS_PUBLIC_IP] | ☁️ proxied | :8536 | Lemmy |
 | `community.degenfeed.xyz` | CNAME | tunnel | ☁️ proxied | :8536 | Lemmy (alt) |
-| `video.degenfeed.xyz` | A | 152.53.80.39 | ❌ DNS only | :9010 (nginx :443) | PeerTube |
-| `photos.degenfeed.xyz` | A | 152.53.80.39 | ☁️ proxied | :8087 | Pixelfed (planned) |
-| `blog.degenfeed.xyz` | A | 152.53.80.39 | ☁️ proxied | :8086 | WriteFreely |
+| `video.degenfeed.xyz` | A | [TALOS_PUBLIC_IP] | ❌ DNS only | :9010 (nginx :443) | PeerTube |
+| `photos.degenfeed.xyz` | A | [TALOS_PUBLIC_IP] | ☁️ proxied | :8087 | Pixelfed (planned) |
+| `blog.degenfeed.xyz` | A | [TALOS_PUBLIC_IP] | ☁️ proxied | :8086 | WriteFreely |
 | `post.degenfeed.xyz` | CNAME | tunnel | ☁️ proxied | :3105 | Postiz (scheduling) |
 | `relay.degenfeed.xyz` | CNAME | tunnel | ☁️ proxied | :8084 | ActivityPub Relay |
-| `search.degenfeed.xyz` | A | 152.53.80.39 | ☁️ proxied | :7700 | Meilisearch (planned) |
-| `nostr.degenfeed.xyz` | A | 152.53.80.39 | ☁️ proxied | :8085 | Nostr Relay (planned) |
-| `pds.degenfeed.xyz` | A | 152.53.80.39 | ☁️ proxied | :3012 | Bluesky PDS |
-| `zora.degenfeed.xyz` | A | 152.53.80.39 | ☁️ proxied | :8091 | Zora API Indexer |
-| `lens.degenfeed.xyz` | A | 152.53.80.39 | ☁️ proxied | :8099 | Lens Indexer (planned) |
+| `search.degenfeed.xyz` | A | [TALOS_PUBLIC_IP] | ☁️ proxied | :7700 | Meilisearch (planned) |
+| `nostr.degenfeed.xyz` | A | [TALOS_PUBLIC_IP] | ☁️ proxied | :8085 | Nostr Relay (planned) |
+| `pds.degenfeed.xyz` | A | [TALOS_PUBLIC_IP] | ☁️ proxied | :3012 | Bluesky PDS |
+| `zora.degenfeed.xyz` | A | [TALOS_PUBLIC_IP] | ☁️ proxied | :8091 | Zora API Indexer |
+| `lens.degenfeed.xyz` | A | [TALOS_PUBLIC_IP] | ☁️ proxied | :8099 | Lens Indexer (planned) |
 | `docs.degenfeed.xyz` | CNAME | tunnel | ☁️ proxied | nginx :80 → static | Documentation |
-| `api.degenfeed.xyz` | A | 152.53.80.39 | ☁️ proxied | nginx :80 → :3100 | API proxy to Next.js |
+| `api.degenfeed.xyz` | A | [TALOS_PUBLIC_IP] | ☁️ proxied | nginx :80 → :3100 | API proxy to Next.js |
 | `spaces.degenfeed.xyz` | CNAME | tunnel | ☁️ proxied | nginx :80 → static | Community Spaces |
-| `redlib.degenfeed.xyz` | A | 152.53.80.39 | ❌ DNS only | :8281 | Redlib (Reddit proxy) |
-| `rss-bridge.degenfeed.xyz` | A | 152.53.80.39 | ❌ DNS only | :8282 | RSS-Bridge |
+| `redlib.degenfeed.xyz` | A | [TALOS_PUBLIC_IP] | ❌ DNS only | :8281 | Redlib (Reddit proxy) |
+| `rss-bridge.degenfeed.xyz` | A | [TALOS_PUBLIC_IP] | ❌ DNS only | :8282 | RSS-Bridge |
 
 ### DNS Record Types Explained
 
@@ -52,7 +52,7 @@ The tunnel (`talos-rmi-remote`) uses **cloudflare-managed remote config**. The l
 
 **Current API token status:** ✅ ACTIVE as of 2026-07-24
 ```
-Token stored in: gopass path rmi/cloudflare/api_token_active
+Token stored in: gopass path CLOUDFLARE_API_TOKEN_PATH
 ```
 
 ---
@@ -219,18 +219,18 @@ To update: Cloudflare Dashboard → Zero Trust → Networks → Tunnels → talo
 
 | Credential | Location | Status |
 |-----------|----------|--------|
-| API Token | gopass: rmi/cloudflare/api_token_active | ✅ Active |
-| Account ID | gopass: rmi/cloudflare/cloudflare_account_id | ✅ `8f9bd9165c1250b426c66dc1967deefd` |
-| Tunnel Token | gopass: rmi/cloudflare/tunnel_token_talos_rmi_active | ✅ Valid |
-| R2 Access Key | gopass: rmi/cloudflare/r2_degenfeed_access_key_id | ✅ Valid |
+| API Token | gopass: CLOUDFLARE_API_TOKEN_PATH | ✅ Active |
+| Account ID | gopass: CLOUDFLARE_ACCOUNT_ID_PATH | ✅ `[CLOUDFLARE_ACCOUNT_ID]` |
+| Tunnel Token | gopass: CLOUDFLARE_TUNNEL_TOKEN_PATH | ✅ Valid |
+| R2 Access Key | gopass: CLOUDFLARE_R2_ACCESS_KEY_PATH | ✅ Valid |
 | cert.pem | `~/.cloudflared/cert.pem` | ❌ Missing (needed for `cloudflared tunnel route` CLI) |
 
 ### DNS API Token Usage
 
 ```bash
 # Retrieve token from secure store
-TOKEN=$(gopass show rmi/cloudflare/api_token_active)
-ZONE_ID="116a9676c3358def6796910ccb96f1fc"
+TOKEN=$(gopass show CLOUDFLARE_API_TOKEN_PATH)
+ZONE_ID="[CLOUDFLARE_ZONE_ID]"
 
 # List all DNS records
 curl -s -H "Authorization: Bearer $TOKEN" \
@@ -240,7 +240,7 @@ curl -s -H "Authorization: Bearer $TOKEN" \
 curl -s -X POST \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"type":"A","name":"subdomain.degenfeed.xyz","content":"152.53.80.39","ttl":120,"proxied":true}' \
+  -d '{"type":"A","name":"subdomain.degenfeed.xyz","content":"[TALOS_PUBLIC_IP]","ttl":120,"proxied":true}' \
   "https://api.cloudflare.com/client/v4/zones/$ZONE_ID/dns_records"
 
 # Create CNAME to tunnel

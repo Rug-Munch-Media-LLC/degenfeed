@@ -627,12 +627,12 @@ echo "Cleaning DNS / tunnel..."
 # tunnel will be repointed in v2 setup
 
 echo "Removing gopass entries (keeping audit log)..."
-gopass rm -f rmi/local-services/degenfeed-akkoma-admin-password
-gopass rm -f rmi/local-services/degenfeed-akkoma-admin-token
-gopass rm -f rmi/local-services/degenfeed-akkoma-oauth-client-id
-gopass rm -f rmi/local-services/degenfeed-akkoma-oauth-client-secret
-gopass rm -f rmi/local-services/degenfeed-akkoma-postgres-password
-gopass rm -f rmi/local-services/degenfeed-web3-bridge-secret
+gopass rm -f LOCAL_SERVICES_PATH/akkoma-admin-password
+gopass rm -f LOCAL_SERVICES_PATH/akkoma-admin-token
+gopass rm -f LOCAL_SERVICES_PATH/akkoma-oauth-client-id
+gopass rm -f LOCAL_SERVICES_PATH/akkoma-oauth-client-secret
+gopass rm -f LOCAL_SERVICES_PATH/akkoma-postgres-password
+gopass rm -f LOCAL_SERVICES_PATH/web3-bridge-secret
 
 echo "Done. Total cold-storage footprint:"
 du -sh /srv/backups/degenfeed-v1-final
@@ -764,7 +764,7 @@ echo "v1 is dead. Long live v2."
 ### 8.1 Initialize
 
 ```bash
-ssh netcup
+ssh [INTERNAL]
 mkdir -p /srv/work/repos/degenfeed-web
 cd /srv/work/repos/degenfeed-web
 git init
@@ -787,8 +787,8 @@ Use the existing `fleet-template` to scaffold `apps/web` with all the standard p
 
 ### 8.3 Secrets management
 
-- Cloudflare API token in gopass: `rmi/infra/cloudflare-api-token`.
-- Cloudflare account ID: `8f9bd9165c1250b426c66dc1967deefd` (already in notes).
+- Cloudflare API token in gopass: `CLOUDFLARE_API_TOKEN_PATH`.
+- Cloudflare account ID: `[CLOUDFLARE_ACCOUNT_ID]` (already in notes).
 - Tunnel ID: `9f428b88-5a57-4b28-a7dc-1368f4f32811` (re-use or recreate).
 - DegenFeed signing keys (Nostr, Farcaster, Lens, Bluesky) generated during deploy, encrypted with passphrase, stored in gopass.
 

@@ -68,8 +68,8 @@ echo
 # ── 1. Resolve auth ────────────────────────────────────────────────────
 if [[ -z "${CLOUDFLARE_API_TOKEN:-}" && -z "${CLOUDFLARE_API_KEY:-}" ]]; then
   if command -v gopass >/dev/null 2>&1; then
-    if gopass show rmi/cloudflare/api_key_global >/dev/null 2>&1; then
-      export CLOUDFLARE_API_KEY="$(gopass show -o rmi/cloudflare/api_key_global)"
+    if gopass show CLOUDFLARE_API_KEY_PATH >/dev/null 2>&1; then
+      export CLOUDFLARE_API_KEY="$(gopass show -o CLOUDFLARE_API_KEY_PATH)"
     fi
   fi
 fi
@@ -83,8 +83,8 @@ if [[ -z "${CLOUDFLARE_API_TOKEN:-}" && -z "${CLOUDFLARE_API_KEY:-}" ]]; then
 fi
 
 if [[ -z "${CLOUDFLARE_ACCOUNT_ID:-}" ]]; then
-  if command -v gopass >/dev/null 2>&1 && gopass show rmi/cloudflare/cloudflare_account_id >/dev/null 2>&1; then
-    export CLOUDFLARE_ACCOUNT_ID="$(gopass show -o rmi/cloudflare/cloudflare_account_id)"
+  if command -v gopass >/dev/null 2>&1 && gopass show CLOUDFLARE_ACCOUNT_ID_PATH >/dev/null 2>&1; then
+    export CLOUDFLARE_ACCOUNT_ID="$(gopass show -o CLOUDFLARE_ACCOUNT_ID_PATH)"
   fi
 fi
 
