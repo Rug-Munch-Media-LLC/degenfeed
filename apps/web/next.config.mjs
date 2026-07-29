@@ -35,7 +35,29 @@ const nextConfig = {
   },
 
   // ── Monorepo transpilation ──
-  transpilePackages: ['@degenfeed/types', '@degenfeed/ui'],
+  transpilePackages: [
+    '@degenfeed/auth',
+    '@degenfeed/bluesky-sdk',
+    '@degenfeed/creator-coin',
+    '@degenfeed/farcaster-sdk',
+    '@degenfeed/feed-core',
+    '@degenfeed/feed-providers',
+    '@degenfeed/identity',
+    '@degenfeed/lens-sdk',
+    '@degenfeed/monetization',
+    '@degenfeed/nostr-sdk',
+    '@degenfeed/peertube-provider',
+    '@degenfeed/ranking',
+    '@degenfeed/realtime',
+    '@degenfeed/source-discovery',
+    '@degenfeed/spaces-bridge',
+    '@degenfeed/storage',
+    '@degenfeed/types',
+    '@degenfeed/ui',
+    '@degenfeed/utils',
+    '@degenfeed/web3',
+    '@degenfeed/youtube-provider',
+  ],
 
   // ── Headers for caching ──
   async headers() {
