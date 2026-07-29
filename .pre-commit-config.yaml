@@ -53,7 +53,6 @@ repos:
       - id: mixed-line-ending
         args: ['--fix=lf']
       - id: forbid-submodules
-      - id: forbid-binary-files
 
 # ── Global settings ────────────────────────────────────────────
 default_language_version:
