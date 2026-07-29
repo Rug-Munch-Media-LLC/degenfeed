@@ -99,7 +99,14 @@ async function ensureIndex(): Promise<void> {
 
     await meili
       .index(INDEX_NAME)
-      .updateFilterableAttributes(['source', 'protocol', 'contentType', 'niches', 'createdAt', 'authorId']);
+      .updateFilterableAttributes([
+        'source',
+        'protocol',
+        'contentType',
+        'niches',
+        'createdAt',
+        'authorId',
+      ]);
 
     await meili.index(INDEX_NAME).updateSortableAttributes(['createdAt']);
 
