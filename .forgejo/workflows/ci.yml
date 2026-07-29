@@ -67,9 +67,27 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: npx oxlint@latest --max-warnings=0 packages/ apps/
 
-  # ── Gate 1: Static analysis (Biome) ────────────────────────────
+  # ── Gate: Biome standalone lint + format check ─────────────────
+  biome:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.7.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Biome lint
+        run: npx biome lint . --no-errors-on-unmatched
+      - name: Biome format check
+        run: npx biome format . --no-errors-on-unmatched
+
+  # ── Gate 1: Static analysis (Biome via turbo) ────────────────
   lint:
-    needs: [oxlint-fast]
+    needs: [oxlint-fast, biome]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -100,7 +118,29 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
 
-  # ── Gate 3: Unit + integration tests ─────────────────────────
+  # ── Gate: Vitest standalone unit tests ────────────────────────
+  vitest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.7.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Vitest run
+        run: npx vitest run --reporter=verbose
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: vitest-coverage
+          path: coverage/
+
+  # ── Gate 3: Unit + integration tests (via turbo) ─────────────
   test:
     runs-on: ubuntu-latest
     steps:
