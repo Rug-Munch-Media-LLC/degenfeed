@@ -1,15 +1,11 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:recommended"],
+  "description": "degenfeed-web — extends RugMunch shared preset with npm-only and Web3-specific rules",
+  "extends": ["local>RugMunchMedia/standards:renovate-presets/rugmunch.json"],
   "enabledManagers": ["npm"],
+  "prHourlyLimit": 5,
+  "labels": ["dependencies"],
   "packageRules": [
-    {
-      "matchUpdateTypes": ["patch"],
-      "automerge": true,
-      "automergeType": "branch",
-      "platformAutomerge": true,
-      "description": "Auto-merge patch updates (bug fixes) after CI passes"
-    },
     {
       "matchPackageNames": [
         "@solana/web3.js",
@@ -40,12 +36,6 @@
       "description": "Dev tooling can auto-merge"
     },
     {
-      "matchDepTypes": ["devDependencies"],
-      "matchUpdateTypes": ["patch"],
-      "automerge": true,
-      "automergeType": "branch"
-    },
-    {
       "matchPackageNames": [
         "@degenfeed/api-worker",
         "@degenfeed/auth",
@@ -68,10 +58,5 @@
       "enabled": false,
       "description": "Internal workspace packages — never bump externally"
     }
-  ],
-  "labels": ["dependencies"],
-  "prHourlyLimit": 5,
-  "schedule": ["before 6am on Monday"],
-  "timezone": "UTC",
-  "dependencyDashboard": true
+  ]
 }
