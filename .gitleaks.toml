@@ -81,6 +81,7 @@ tags = ["rmi", "critical"]
 # ─── ALLOWLIST ──────────────────────────────────────────────────────────────
 
 [allowlist]
+regexTarget = "line"
 description = "Global allowlist — applies to all repos"
 paths = [
   # Pre-commit methodology check: detection patterns (scanner, not leak)
@@ -114,6 +115,8 @@ paths = [
 
 # Regex patterns to allowlist (intentional test/redaction markers)
 regexes = [
+  # Gopass documentation references (instructions, not actual secrets)
+  '''gopass\s+(?:show|ls|insert|generate).*rmi/''',
   '<runtime-generated-mnemonic>',
   '\[REDACTED[^\]]*\]',
   # Example private IP used in sanitization test fixtures

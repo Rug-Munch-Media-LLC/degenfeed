@@ -65,8 +65,8 @@ Internet
 
 ```toml
 routes = [
-  { pattern = "degenfeed.xyz/api/*", zone_id = "116a9676c3358def6796910ccb96f1fc" },
-  { pattern = "app.degenfeed.xyz/api/*", zone_id = "116a9676c3358def6796910ccb96f1fc" },
+  { pattern = "degenfeed.xyz/api/*", zone_id = "[CLOUDFLARE_ZONE_ID]" },
+  { pattern = "app.degenfeed.xyz/api/*", zone_id = "[CLOUDFLARE_ZONE_ID]" },
 ]
 ```
 

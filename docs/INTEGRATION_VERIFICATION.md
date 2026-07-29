@@ -372,7 +372,7 @@ All 11 bridge providers are verified compliant with the standardized Provider In
 | nginx | 🟢 | Running, all protocol routes active |
 | SSL certificates | 🟢 | All valid (expire Sep-Oct 2026) |
 | DNS (Cloudflare) | 🟢 | All degenfeed.xyz subdomains resolving |
-| Host server (152.53.80.39) | 🟢 | Talos — all services reachable |
+| Host server ([TALOS_PUBLIC_IP]) | 🟢 | Talos — all services reachable |
 | Docker networking | 🟢 | rmi_network, degenfeed_default, peertube, owncast networks active |
 
 ---

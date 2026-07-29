@@ -183,7 +183,7 @@ This document provides **deep, evidence-based verification** of ownership and co
 |-----------|--------|
 | Can we post? | ✅ 5 videos uploaded |
 | Can others see? | ✅ Federation enabled |
-| DNS resolves? | ✅ video.degenfeed.xyz → 152.53.80.39 (direct IP) |
+| DNS resolves? | ✅ video.degenfeed.xyz → [TALOS_PUBLIC_IP] (direct IP) |
 | External? | ⚠️ Not yet discoverable on directory services |
 
 #### Independence — 🟢 **5/5**

@@ -17,8 +17,8 @@
 # Requirements:
 #   - wrangler 4.x installed on the host running this script.
 #   - gopass entries (see the user guide in DEPLOYMENT.md):
-#       rmi/cloudflare/cloudflare_account_id  (32-hex account id)
-#       rmi/cloudflare/api_key_global          (Global API Key)
+#       CLOUDFLARE_ACCOUNT_ID_PATH  (32-hex account id)
+#       CLOUDFLARE_API_KEY_PATH          (Global API Key)
 #       — OR an API token (recommended) that we'll set as
 #         CLOUDFLARE_API_TOKEN via environment.
 #   - jq (for JSON parsing).
@@ -47,12 +47,12 @@ hr; bold "DegenFeed — Cloudflare first-time setup"; hr
 # ── 1. Resolve auth ────────────────────────────────────────────────
 if [[ -z "${CLOUDFLARE_API_TOKEN:-}" ]]; then
   if command -v gopass >/dev/null 2>&1; then
-    if gopass show rmi/cloudflare/api_key_global >/dev/null 2>&1; then
+    if gopass show CLOUDFLARE_API_KEY_PATH >/dev/null 2>&1; then
       # Global API key. wrangler 4.x doesn't accept it via CLOUDFLARE_API_KEY
       # for token operations; only scoped tokens work. So we also ask the
       # operator to set CLOUDFLARE_API_TOKEN manually if they have one.
       if [[ -z "${CLOUDFLARE_API_KEY:-}" ]]; then
-        export CLOUDFLARE_API_KEY="$(gopass show -o rmi/cloudflare/api_key_global)"
+        export CLOUDFLARE_API_KEY="$(gopass show -o CLOUDFLARE_API_KEY_PATH)"
       fi
     fi
   fi
@@ -63,18 +63,18 @@ if [[ -z "${CLOUDFLARE_API_TOKEN:-}" && -z "${CLOUDFLARE_API_KEY:-}" ]]; then
   red "Set one of:"
   red "  CLOUDFLARE_API_TOKEN=cfat_xxxxx ./scripts/deploy/setup-cloudflare.sh"
   red "  CLOUDFLARE_API_KEY=xxxxx ./scripts/deploy/setup-cloudflare.sh"
-  red "  export CLOUDFLARE_API_KEY=\$(gopass show -o rmi/cloudflare/api_key_global)"
+  red "  export CLOUDFLARE_API_KEY=\$(gopass show -o CLOUDFLARE_API_KEY_PATH)"
   exit 1
 fi
 
 # Resolve account id
 if [[ -z "${CLOUDFLARE_ACCOUNT_ID:-}" ]]; then
-  if command -v gopass >/dev/null 2>&1 && gopass show rmi/cloudflare/cloudflare_account_id >/dev/null 2>&1; then
-    export CLOUDFLARE_ACCOUNT_ID="$(gopass show -o rmi/cloudflare/cloudflare_account_id)"
+  if command -v gopass >/dev/null 2>&1 && gopass show CLOUDFLARE_ACCOUNT_ID_PATH >/dev/null 2>&1; then
+    export CLOUDFLARE_ACCOUNT_ID="$(gopass show -o CLOUDFLARE_ACCOUNT_ID_PATH)"
   fi
 fi
 if [[ -z "${CLOUDFLARE_ACCOUNT_ID:-}" ]]; then
-  red "ERROR: CLOUDFLARE_ACCOUNT_ID not set and gopass entry rmi/cloudflare/cloudflare_account_id not found."
+  red "ERROR: CLOUDFLARE_ACCOUNT_ID not set and gopass entry CLOUDFLARE_ACCOUNT_ID_PATH not found."
   exit 1
 fi
 
