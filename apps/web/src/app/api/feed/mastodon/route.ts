@@ -9,7 +9,7 @@
  *   MASTODON_INSTANCE_URL  — default: http://127.0.0.1:8082
  */
 
-import { buildUnifiedPost, detectNiches } from '@degenfeed/feed-core';
+import { buildUnifiedPost } from '@degenfeed/feed-core';
 import type { Embed, Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
 import { type NextRequest, NextResponse } from 'next/server';
 
@@ -18,8 +18,7 @@ export const revalidate = 0;
 
 // ─── Configuration ─────────────────────────────────────────────────────
 
-const INSTANCE_URL =
-  process.env.MASTODON_INSTANCE_URL ?? 'http://127.0.0.1:8082';
+const INSTANCE_URL = process.env.MASTODON_INSTANCE_URL ?? 'http://127.0.0.1:8082';
 
 // ─── Types (minimal GtS/Mastodon response shape) ──────────────────────
 
@@ -155,9 +154,7 @@ function statusToUnifiedPost(status: GtSStatus, instanceUrl: string): UnifiedPos
     });
   }
 
-  const finalText = original.spoiler_text
-    ? `[CW: ${original.spoiler_text}]\n\n${text}`
-    : text;
+  const finalText = original.spoiler_text ? `[CW: ${original.spoiler_text}]\n\n${text}` : text;
   const nativeId = isBoost ? `boost:${status.id}:${original.id}` : original.id;
 
   return buildUnifiedPost({
@@ -186,16 +183,13 @@ export async function GET(request: NextRequest) {
   try {
     const limit = request.nextUrl.searchParams.get('limit') ?? '50';
 
-    const res = await fetch(
-      `${INSTANCE_URL}/api/v1/timelines/public?limit=${limit}&local=true`,
-      {
-        headers: {
-          accept: 'application/json',
-          'user-agent': 'DegenFeed/0.1 (+https://degenfeed.xyz)',
-        },
-        signal: AbortSignal.timeout(10_000),
+    const res = await fetch(`${INSTANCE_URL}/api/v1/timelines/public?limit=${limit}&local=true`, {
+      headers: {
+        accept: 'application/json',
+        'user-agent': 'DegenFeed/0.1 (+https://degenfeed.xyz)',
       },
-    );
+      signal: AbortSignal.timeout(10_000),
+    });
 
     if (!res.ok) {
       return NextResponse.json(
@@ -231,9 +225,6 @@ export async function GET(request: NextRequest) {
     );
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Internal server error';
-    return NextResponse.json(
-      { data: [], meta: { errors: [message] } },
-      { status: 200 },
-    );
+    return NextResponse.json({ data: [], meta: { errors: [message] } }, { status: 200 });
   }
 }
