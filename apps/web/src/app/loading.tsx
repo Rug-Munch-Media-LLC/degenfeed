@@ -1,56 +1,65 @@
-// Root loading state — shows landing page content immediately while JS hydrates
-// Prevents the blue spinner from appearing on initial load
+// Root loading state — minimal flash. Shows header + subtle pulse.
+// Matches the new landing page design to avoid jarring transitions.
+
+const LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="36" height="36">
+  <defs><linearGradient id="lb" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#0d0d0d"/><stop offset="100%" stop-color="#000000"/></linearGradient></defs>
+  <rect width="512" height="512" fill="url(#lb)" rx="96"/>
+  <g stroke="#00ff41" stroke-width="52" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <line x1="160" y1="92" x2="160" y2="420"/>
+    <path d="M 160 92 A 148 164 0 0 1 160 420"/>
+  </g>
+  <rect x="350" y="352" width="28" height="28" fill="#00ff41" rx="4"/>
+  <circle cx="230" cy="256" r="100" fill="#00ff41" opacity="0.06"/>
+</svg>`;
+
 export default function RootLoading() {
   return (
-    <div className="landing-page">
-      <div className="mx-auto max-w-[1200px]">
-        {/* Hero Section */}
-        <section
-          className="px-6 pb-20 pt-28 lg:pt-40 text-center"
-          style={{ paddingTop: '7rem', paddingBottom: '5rem' }}
-        >
-          <h1
-            className="mx-auto max-w-4xl text-4xl font-bold tracking-tight lg:text-6xl"
-            style={{ fontFamily: 'Sora, sans-serif' }}
-          >
-            See what&apos;s happening in web3 right now.
-          </h1>
-          <p className="mx-auto mt-6 max-w-2xl text-lg text-[var(--color-muted)]">
-            Every network. One feed. Nostr, Farcaster, Lens, Bluesky, Mastodon, and more — all in
-            one place.
-          </p>
-          <div className="mt-10 flex items-center justify-center gap-4">
-            <span className="inline-flex h-12 w-32 animate-pulse rounded-full bg-[var(--color-muted)]" />
-            <span className="inline-flex h-12 w-40 animate-pulse rounded-full bg-[var(--color-muted)]" />
+    <>
+      {/* Inline minimal theme to prevent FOUC */}
+      <style>{`
+        :root {
+          --bg: #000000; --surface: #070707; --card: #0d0d0d;
+          --border: #1a1a1a; --fg: #e7e9ea; --fg-secondary: #a0a0a0;
+          --fg-tertiary: #606060; --accent: #00ff41;
+          --font-heading: 'Syne', 'Plus Jakarta Sans', Inter, system-ui, sans-serif;
+        }
+        .loading-header {
+          position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+          background: rgba(0,0,0,0.8); backdrop-filter: blur(16px);
+          border-bottom: 1px solid var(--border);
+        }
+        .loading-inner {
+          max-width: 1200px; margin: 0 auto; padding: 0 20px;
+          height: 64px; display: flex; align-items: center; justify-content: space-between;
+        }
+        .loading-brand {
+          display: flex; align-items: center; gap: 10px;
+          font-family: var(--font-heading); font-weight: 800; font-size: 20px; color: var(--fg);
+        }
+        .loading-scanline {
+          position: fixed; inset: 0; pointer-events: none; z-index: 9998;
+          background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
+        }
+        .loading-pulse {
+          width: 60px; height: 60px; border-radius: 50%;
+          border: 3px solid var(--border); border-top-color: var(--accent);
+          animation: spin 0.8s linear infinite;
+          position: fixed; top: 50%; left: 50%; margin: -30px 0 0 -30px;
+          z-index: 100;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @media (prefers-reduced-motion: reduce) { .loading-pulse { animation: none; } }
+      `}</style>
+      <div className="loading-scanline" aria-hidden="true" />
+      <header className="loading-header" role="banner">
+        <div className="loading-inner">
+          <div className="loading-brand">
+            <span dangerouslySetInnerHTML={{ __html: LOGO_SVG }} />
+            <span>DegenFeed</span>
           </div>
-        </section>
-
-        {/* Stats Bar */}
-        <section className="border-t border-[var(--color-border)] py-8">
-          <div className="flex flex-wrap items-center justify-center gap-8 text-sm text-[var(--color-muted)]">
-            <span>101+ Protocols</span>
-            <span>319 RSS Sources</span>
-            <span>137 Reddit Communities</span>
-            <span>68 YouTube Channels</span>
-          </div>
-        </section>
-
-        {/* Feature Grid Skeleton */}
-        <section className="border-t border-[var(--color-border)] px-6 py-16">
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div
-                key={i}
-                className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] p-6"
-              >
-                <div className="mb-3 h-8 w-8 animate-pulse rounded-lg bg-[var(--color-muted)]" />
-                <div className="mb-2 h-5 w-3/4 animate-pulse rounded bg-[var(--color-muted)]" />
-                <div className="h-4 w-full animate-pulse rounded bg-[var(--color-muted)]" />
-              </div>
-            ))}
-          </div>
-        </section>
-      </div>
-    </div>
+        </div>
+      </header>
+      <div className="loading-pulse" aria-label="Loading" />
+    </>
   );
 }
