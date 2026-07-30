@@ -1,612 +1,1249 @@
-'use client';
-
-/**
- * DegenFeed — The Web3 Social Universe.
- *
- * We're fighting for data independence, creator content control,
- * and a space where creators can actually own their content and their audience.
- * One app. 101+ protocols. Your data, never sold.
- */
-
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
-import { LiveTicker } from '../components/hero/LiveTicker';
-import { CTASection } from '../components/landing/CTASection';
-import { FeatureGrid } from '../components/landing/FeatureGrid';
-import { HeroSection } from '../components/landing/HeroSection';
-import { ProtocolShowcase } from '../components/landing/ProtocolShowcase';
-import { StatsBar } from '../components/landing/StatsBar';
-import { ProtocolConnectFlow } from '../components/ProtocolConnectFlow';
-import { useProtocolConnections } from '../hooks/useProtocolConnections';
+import type { ReactNode } from 'react';
 
-/* ─── Types ──────────────────────────────────────────────────────── */
+/* ─── LOGO (inlined from public/icon.svg) ─────────────────────────────── */
 
-interface FeedPreviewItem {
-  id: string;
-  protocol: string;
-  text: string;
-  author: string;
-  likes: number;
-  reposts: number;
-  time: string;
+const LOGO_SVG = (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 512 512"
+    width="36"
+    height="36"
+    role="img"
+    aria-label="DegenFeed logo"
+  >
+    <defs>
+      <linearGradient id="lgb" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stopColor="#0d0d0d" />
+        <stop offset="100%" stopColor="#000000" />
+      </linearGradient>
+    </defs>
+    <rect width="512" height="512" fill="url(#lgb)" rx={96} />
+    <g stroke="#00ff41" strokeWidth={52} strokeLinecap="round" strokeLinejoin="round" fill="none">
+      <line x1={160} y1={92} x2={160} y2={420} />
+      <path d="M 160 92 A 148 164 0 0 1 160 420" />
+    </g>
+    <rect x={350} y={352} width={28} height={28} fill="#00ff41" rx={4}>
+      <animate attributeName="opacity" values="1;0.08;1" dur="1s" repeatCount="indefinite" />
+    </rect>
+    <circle cx={230} cy={256} r={100} fill="#00ff41" opacity={0.06} />
+  </svg>
+);
+
+/* ─── THEME INLINE STYLES ─────────────────────────────────────────────── */
+
+const THEME_STYLES = `
+  :root {
+    --bg: #000000;
+    --surface: #070707;
+    --surface-raised: #0a0a0a;
+    --card: #0d0d0d;
+    --border: #1a1a1a;
+    --border-soft: #141414;
+    --fg: #e7e9ea;
+    --fg-secondary: #a0a0a0;
+    --fg-tertiary: #606060;
+    --accent: #00ff41;
+    --accent-dim: #00cc34;
+    --accent-subtle: rgba(0, 255, 65, 0.06);
+    --accent-glow: rgba(0, 255, 65, 0.12);
+    --accent-soft: rgba(0, 255, 65, 0.04);
+    --gradient-text: linear-gradient(135deg, #00ff41, #00ccff);
+    --font-body: 'Plus Jakarta Sans', Inter, system-ui, -apple-system, sans-serif;
+    --font-heading: 'Syne', 'Plus Jakarta Sans', Inter, system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  a { color: inherit; text-decoration: none; }
+
+  ::selection { background: var(--accent); color: #000; }
+
+  /* ── Skip link ── */
+  .skip-link {
+    position: absolute;
+    top: -100%;
+    left: 0;
+    z-index: 9999;
+    padding: 8px 16px;
+    background: var(--accent);
+    color: #000;
+    font-weight: 700;
+    font-size: 14px;
+    border-radius: 0 0 8px 0;
+    transition: top 0.15s;
+  }
+  .skip-link:focus { top: 0; }
+
+  /* ── Scanline overlay ── */
+  .scanline {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 9998;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0, 0, 0, 0.03) 2px,
+      rgba(0, 0, 0, 0.03) 4px
+    );
+  }
+
+  /* ── Reduced motion ── */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  /* ── Header ── */
+  .header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+  }
+  .header-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .header-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--font-heading);
+    font-weight: 800;
+    font-size: 20px;
+    color: var(--fg);
+  }
+  .header-brand svg { flex-shrink: 0; }
+  .header-nav { display: flex; align-items: center; gap: 24px; }
+  .header-nav a {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--fg-secondary);
+    transition: color 0.2s;
+  }
+  .header-nav a:hover { color: var(--fg); }
+  .header-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 20px;
+    background: var(--accent);
+    color: #000 !important;
+    font-weight: 700;
+    font-size: 14px;
+    border-radius: 9999px;
+    transition: all 0.2s;
+  }
+  .header-cta:hover {
+    background: var(--accent-dim);
+    transform: translateY(-1px);
+    box-shadow: 0 0 20px var(--accent-glow);
+  }
+  .header-mobile-cta {
+    display: none;
+  }
+
+  @media (max-width: 768px) {
+    .header-nav a:not(.header-cta) { display: none; }
+    .header-cta { display: none; }
+    .header-mobile-cta {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px;
+      background: var(--accent);
+      color: #000 !important;
+      font-weight: 700;
+      font-size: 13px;
+      border-radius: 9999px;
+      width: 36px;
+      height: 36px;
+    }
+  }
+
+  /* ── Hero ── */
+  .hero {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 120px 20px 80px;
+    overflow: hidden;
+  }
+  .hero-glow {
+    position: absolute;
+    top: 20%;
+    left: 50%;
+    width: 800px;
+    height: 800px;
+    transform: translateX(-50%);
+    background: radial-gradient(circle, var(--accent-glow) 0%, transparent 60%);
+    pointer-events: none;
+    animation: glow-float 10s ease-in-out infinite alternate;
+  }
+  @keyframes glow-float {
+    0% { opacity: 0.3; transform: translateX(-50%) translateY(0) scale(1); }
+    100% { opacity: 0.7; transform: translateX(-50%) translateY(-24px) scale(1.06); }
+  }
+  .hero-grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0, 255, 65, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 255, 65, 0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+    mask-image: radial-gradient(ellipse at center, black 30%, transparent 70%);
+    -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero-badges {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 32px;
+  }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 9999px;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: var(--font-mono);
+    letter-spacing: 0.02em;
+  }
+  .badge-green {
+    background: var(--accent-subtle);
+    color: var(--accent);
+    border: 1px solid rgba(0, 255, 65, 0.2);
+  }
+  .badge-green::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: pulse-dot 2s ease-in-out infinite;
+  }
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+  .badge-outline {
+    border: 1px solid var(--border);
+    color: var(--fg-secondary);
+  }
+  .hero-title {
+    position: relative;
+    z-index: 1;
+    font-family: var(--font-heading);
+    font-weight: 800;
+    font-size: clamp(2.8rem, 8vw, 5rem);
+    line-height: 1.08;
+    letter-spacing: -0.03em;
+    margin-bottom: 20px;
+  }
+  .hero-title .accent {
+    background: var(--gradient-text);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .hero-sub {
+    position: relative;
+    z-index: 1;
+    font-size: clamp(1rem, 2.2vw, 1.25rem);
+    color: var(--fg-secondary);
+    max-width: 640px;
+    margin: 0 auto 36px;
+    line-height: 1.7;
+  }
+  .hero-cta {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    justify-content: center;
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 32px;
+    border-radius: 9999px;
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: 16px;
+    transition: all 0.25s;
+    cursor: pointer;
+    border: none;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: #000;
+  }
+  .btn-primary:hover {
+    background: var(--accent-dim);
+    transform: translateY(-2px);
+    box-shadow: 0 0 30px rgba(0, 255, 65, 0.25);
+  }
+  .btn-secondary {
+    background: transparent;
+    color: var(--fg);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:hover {
+    border-color: var(--fg-secondary);
+    background: var(--surface-raised);
+    transform: translateY(-2px);
+  }
+  .btn-arrow {
+    transition: transform 0.2s;
+  }
+  .btn:hover .btn-arrow {
+    transform: translateX(3px);
+  }
+
+  /* ── Stats bar ── */
+  .stats-bar {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0;
+    margin-top: 56px;
+    padding: 24px 40px;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: var(--card);
+    max-width: 780px;
+    width: 100%;
+  }
+  .stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 8px 24px;
+    min-width: 120px;
+  }
+  .stat-value {
+    font-family: var(--font-heading);
+    font-weight: 800;
+    font-size: 28px;
+    color: var(--accent);
+    letter-spacing: -0.02em;
+  }
+  .stat-label {
+    font-size: 12px;
+    color: var(--fg-tertiary);
+    margin-top: 2px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .stat-divider {
+    width: 1px;
+    background: var(--border);
+    align-self: stretch;
+    margin: 4px 0;
+  }
+
+  @media (max-width: 640px) {
+    .stats-bar { padding: 16px; gap: 8px; }
+    .stat-item { min-width: 80px; padding: 6px 12px; }
+    .stat-value { font-size: 22px; }
+    .stat-divider { display: none; }
+    .stats-bar { flex-direction: row; flex-wrap: wrap; justify-content: center; }
+  }
+
+  /* ── Section shared ── */
+  .section-wrap {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 20px;
+  }
+  .section-label {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    justify-content: center;
+    margin-bottom: 16px;
+  }
+  .section-label-line {
+    width: 32px;
+    height: 1px;
+    background: var(--border);
+  }
+  .section-label-text {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--fg-tertiary);
+    font-family: var(--font-mono);
+  }
+  .section-title {
+    font-family: var(--font-heading);
+    font-weight: 800;
+    font-size: clamp(1.8rem, 4vw, 2.6rem);
+    text-align: center;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    margin-bottom: 16px;
+  }
+  .section-title .accent {
+    background: var(--gradient-text);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .section-sub {
+    text-align: center;
+    font-size: 16px;
+    color: var(--fg-secondary);
+    max-width: 580px;
+    margin: 0 auto 48px;
+    line-height: 1.7;
+  }
+
+  /* ── Features grid ── */
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 16px;
+    margin-bottom: 80px;
+  }
+  .feature-card {
+    padding: 28px;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: var(--card);
+    transition: all 0.3s;
+  }
+  .feature-card:hover {
+    border-color: rgba(0, 255, 65, 0.15);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+  }
+  .feature-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: var(--accent-subtle);
+    color: var(--accent);
+    margin-bottom: 16px;
+  }
+  .feature-card h3 {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: 18px;
+    margin-bottom: 8px;
+    letter-spacing: -0.01em;
+  }
+  .feature-card p {
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--fg-secondary);
+  }
+
+  /* ── Protocol list ── */
+  .protocol-strip {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 80px;
+  }
+  .protocol-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border: 1px solid var(--border);
+    border-radius: 9999px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--fg);
+    background: var(--surface);
+    transition: all 0.2s;
+  }
+  .protocol-chip:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-subtle);
+  }
+  .protocol-chip-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* ── How It Works ── */
+  .steps-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    margin-bottom: 80px;
+  }
+  .step-card {
+    text-align: center;
+    padding: 32px 20px;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: var(--card);
+  }
+  .step-num {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--accent-subtle);
+    color: var(--accent);
+    font-family: var(--font-mono);
+    font-weight: 800;
+    font-size: 18px;
+    margin: 0 auto 16px;
+  }
+  .step-card h3 {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: 18px;
+    margin-bottom: 8px;
+  }
+  .step-card p {
+    font-size: 14px;
+    color: var(--fg-secondary);
+    line-height: 1.7;
+  }
+
+  /* ── Quote ── */
+  .quote-card {
+    max-width: 680px;
+    margin: 0 auto 64px;
+    padding: 40px 32px;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    background: var(--card);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .quote-card::before {
+    content: '"';
+    position: absolute;
+    top: -10px;
+    left: 20px;
+    font-size: 100px;
+    font-family: var(--font-heading);
+    color: var(--accent);
+    opacity: 0.08;
+    line-height: 1;
+  }
+  .quote-text {
+    position: relative;
+    z-index: 1;
+    font-size: 18px;
+    line-height: 1.7;
+    color: var(--fg-secondary);
+    font-style: italic;
+  }
+  .quote-attribution {
+    margin-top: 16px;
+    font-size: 13px;
+    color: var(--fg-tertiary);
+    font-style: normal;
+  }
+
+  /* ── Final CTA ── */
+  .cta-final {
+    text-align: center;
+    padding: 80px 20px;
+  }
+  .cta-final h2 {
+    font-family: var(--font-heading);
+    font-weight: 800;
+    font-size: clamp(2rem, 5vw, 3rem);
+    letter-spacing: -0.02em;
+    margin-bottom: 16px;
+  }
+  .cta-final p {
+    font-size: 16px;
+    color: var(--fg-secondary);
+    margin-bottom: 32px;
+    line-height: 1.7;
+  }
+  .cta-final .btns {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 16px;
+  }
+
+  /* ── Footer ── */
+  .footer {
+    border-top: 1px solid var(--border);
+    padding: 48px 20px 32px;
+  }
+  .footer-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  .footer-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 40px;
+    margin-bottom: 40px;
+  }
+  .footer-brand-area {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .footer-brand-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--font-heading);
+    font-weight: 800;
+    font-size: 18px;
+  }
+  .footer-brand-row svg { flex-shrink: 0; }
+  .footer-desc {
+    font-size: 13px;
+    color: var(--fg-tertiary);
+    line-height: 1.6;
+    max-width: 300px;
+  }
+  .footer-col h4 {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--fg-tertiary);
+    margin-bottom: 16px;
+    font-family: var(--font-mono);
+  }
+  .footer-col a {
+    display: block;
+    font-size: 14px;
+    color: var(--fg-secondary);
+    margin-bottom: 10px;
+    transition: color 0.2s;
+  }
+  .footer-col a:hover { color: var(--fg); }
+  .footer-bottom {
+    border-top: 1px solid var(--border-soft);
+    padding-top: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+  .footer-bottom p {
+    font-size: 12px;
+    color: var(--fg-tertiary);
+  }
+  .footer-socials {
+    display: flex;
+    gap: 16px;
+  }
+  .footer-socials a {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--fg-tertiary);
+    transition: color 0.2s;
+  }
+  .footer-socials a:hover { color: var(--accent); }
+
+  @media (max-width: 768px) {
+    .footer-grid {
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+    .footer-brand-area { grid-column: 1 / -1; }
+    .features-grid { grid-template-columns: 1fr; }
+    .steps-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 480px) {
+    .footer-grid { grid-template-columns: 1fr; }
+    .footer-bottom { flex-direction: column; text-align: center; }
+  }
+
+  /* ── Animations ── */
+  .fade-up {
+    opacity: 0;
+    transform: translateY(24px);
+    animation: fadeUp 0.7s ease-out forwards;
+  }
+  @keyframes fadeUp {
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .fade-up-d1 { animation-delay: 0.1s; }
+  .fade-up-d2 { animation-delay: 0.2s; }
+  .fade-up-d3 { animation-delay: 0.3s; }
+  .fade-up-d4 { animation-delay: 0.4s; }
+  .fade-up-d5 { animation-delay: 0.5s; }
+  .fade-up-d6 { animation-delay: 0.6s; }
+`;
+
+/* ─── FEATURES DATA ───────────────────────────────────────────────────── */
+
+interface Feature {
+  icon: ReactNode;
+  title: string;
+  desc: string;
 }
 
-interface Creator {
-  id: string;
+const FEATURES: Feature[] = [
+  {
+    icon: (
+      <svg
+        width="22"
+        height="22"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="12" cy="12" r="10" />
+        <path d="M12 8v8M8 12h8" />
+      </svg>
+    ),
+    title: 'Multi-Protocol Feed',
+    desc: 'Aggregate Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, Reddit, RSS, YouTube, and more into one unified timeline. Filter by network, topic, or creator.',
+  },
+  {
+    icon: (
+      <svg
+        width="22"
+        height="22"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <rect x="3" y="3" width="18" height="18" rx="4" />
+        <path d="M9 12l2 2 4-4" />
+      </svg>
+    ),
+    title: 'Zero Sign-Up Required',
+    desc: 'No account, no wallet, no key needed. Open the app and start reading every protocol immediately. Zero friction, zero data collection.',
+  },
+  {
+    icon: (
+      <svg
+        width="22"
+        height="22"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M12 3v18M3 12h18" />
+        <path d="M8 16l4 4 4-4" opacity="0.6" />
+        <path d="M8 8l4-4 4 4" opacity="0.6" />
+      </svg>
+    ),
+    title: 'Cross-Post Everywhere',
+    desc: 'Compose once. Publish to Nostr, Farcaster, Lens, Bluesky, Mastodon, and Threads simultaneously. Partial failures retry automatically in the background.',
+  },
+  {
+    icon: (
+      <svg
+        width="22"
+        height="22"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <rect x="4" y="4" width="16" height="16" rx="3" />
+        <circle cx="12" cy="12" r="3" />
+        <path d="M7 7h.01" />
+      </svg>
+    ),
+    title: 'Your Keys, Your Data',
+    desc: 'Sign in with your existing Nostr key, Farcaster signer, or Lens wallet. Your keys never leave your browser. We never store or touch your private data.',
+  },
+  {
+    icon: (
+      <svg
+        width="22"
+        height="22"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M12 2L2 7l10 5 10-5-10-5z" />
+        <path d="M2 17l10 5 10-5" opacity="0.7" />
+        <path d="M2 12l10 5 10-5" opacity="0.5" />
+      </svg>
+    ),
+    title: '100% Open Source',
+    desc: 'MIT licensed. Self-hostable. Public API. No tokens, no ads, no VC funding. Built by Rug Munch Media LLC for the community.',
+  },
+  {
+    icon: (
+      <svg
+        width="22"
+        height="22"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
+      </svg>
+    ),
+    title: 'Real-Time Updates',
+    desc: 'Live streaming across all protocols. See posts, likes, and reposts as they happen. No refresh needed — WebSocket-powered instant updates.',
+  },
+];
+
+/* ─── PROTOCOLS DATA ──────────────────────────────────────────────────── */
+
+interface Protocol {
   name: string;
-  handle: string;
-  protocol: string;
-  followers: string;
-  avatar: string;
-  badge?: string;
+  color: string;
 }
 
-/* ─── Data ───────────────────────────────────────────────────────── */
-
-const PROTOCOL_COLORS: Record<string, string> = {
-  nostr: 'var(--color-protocol-nostr)',
-  farcaster: 'var(--color-protocol-farcaster)',
-  lens: 'var(--color-protocol-lens)',
-  bluesky: 'var(--color-protocol-bluesky)',
-  mastodon: 'var(--color-protocol-mastodon)',
-  reddit: 'var(--color-protocol-reddit)',
-  peertube: 'var(--color-protocol-peertube)',
-  pixelfed: 'var(--color-protocol-pixelfed)',
-  threads: 'var(--color-protocol-threads)',
-  youtube: 'var(--color-protocol-youtube)',
-};
-
-const FEED_PREVIEW: FeedPreviewItem[] = [
-  {
-    id: '1',
-    protocol: 'farcaster',
-    text: 'gm everyone 🌞 just deployed a new creator coin on base. feeling optimistic about on-chain social this cycle.',
-    author: 'alice.eth',
-    likes: 142,
-    reposts: 38,
-    time: '12m ago',
-  },
-  {
-    id: '2',
-    protocol: 'nostr',
-    text: 'nostr relays have been so reliable lately. the decentralized web is real and it works.',
-    author: 'npub1...8xk3',
-    likes: 89,
-    reposts: 22,
-    time: '34m ago',
-  },
-  {
-    id: '3',
-    protocol: 'bluesky',
-    text: "just hit 10k followers on bsky! really loving the community here. thanks for making this place special y'all",
-    author: 'builder.bsky.social',
-    likes: 234,
-    reposts: 67,
-    time: '1h ago',
-  },
-  {
-    id: '4',
-    protocol: 'mastodon',
-    text: 'the fediverse is thriving. migrated my entire blog to activitypub and engagement is up 3x.',
-    author: 'chad@hachyderm.io',
-    likes: 67,
-    reposts: 15,
-    time: '2h ago',
-  },
-  {
-    id: '5',
-    protocol: 'lens',
-    text: 'lens v2 is going to change everything. open action framework + momoka = unbeatable combination',
-    author: 'lens/0xdef1',
-    likes: 178,
-    reposts: 52,
-    time: '3h ago',
-  },
-  {
-    id: '6',
-    protocol: 'peertube',
-    text: 'just uploaded my first 4K video on peertube. the quality is incredible and zero ads.',
-    author: 'video.host',
-    likes: 95,
-    reposts: 28,
-    time: '4h ago',
-  },
+const PROTOCOLS: Protocol[] = [
+  { name: 'Nostr', color: '#8e30eb' },
+  { name: 'Farcaster', color: '#8a63d2' },
+  { name: 'Lens', color: '#abfe2c' },
+  { name: 'Bluesky', color: '#1185fe' },
+  { name: 'Mastodon', color: '#6364ff' },
+  { name: 'Threads', color: '#888' },
+  { name: 'Reddit', color: '#ff4500' },
+  { name: 'PeerTube', color: '#f2690d' },
+  { name: 'PixelFed', color: '#ff0080' },
+  { name: 'YouTube', color: '#ff0000' },
+  { name: 'RSS', color: '#ffa500' },
+  { name: 'Discourse', color: '#00aeef' },
 ];
 
-const FEATURED_CREATORS: Creator[] = [
-  {
-    id: '1',
-    name: 'Alice',
-    handle: 'alice.eth',
-    protocol: 'farcaster',
-    followers: '12.4K',
-    avatar: 'A',
-    badge: '🏆 Top Creator',
-  },
-  {
-    id: '2',
-    name: 'Bob',
-    handle: 'bob@hachyderm.io',
-    protocol: 'mastodon',
-    followers: '8.2K',
-    avatar: 'B',
-    badge: '🔥 Trending',
-  },
-  {
-    id: '3',
-    name: 'Carol',
-    handle: 'carol.bsky.social',
-    protocol: 'bluesky',
-    followers: '15.7K',
-    avatar: 'C',
-    badge: '✨ Rising Star',
-  },
-  {
-    id: '4',
-    name: 'Dave',
-    handle: 'npub1dave',
-    protocol: 'nostr',
-    followers: '6.9K',
-    avatar: 'D',
-    badge: '⚡ Zap King',
-  },
+/* ─── STATS DATA ──────────────────────────────────────────────────────── */
+
+const STATS = [
+  { label: 'Protocols', value: '101+' },
+  { label: 'RSS Sources', value: '319' },
+  { label: 'Reddit Communities', value: '137' },
+  { label: 'YouTube Channels', value: '68' },
 ];
 
-const TRENDING_TOPICS = [
-  { topic: '#DeFiSummer', posts: '12.4K', protocol: 'farcaster' },
-  { topic: 'Solana Ecosystem', posts: '8.2K', protocol: 'reddit' },
-  { topic: 'Creator Coins', posts: '5.7K', protocol: 'lens' },
-  { topic: 'nostr relays', posts: '4.1K', protocol: 'nostr' },
-  { topic: 'AT Protocol', posts: '3.9K', protocol: 'bluesky' },
-  { topic: 'ActivityPub', posts: '3.2K', protocol: 'mastodon' },
-];
+/* ─── PAGE COMPONENT ──────────────────────────────────────────────────── */
 
-/* ─── Protocol-Color Badge ──────────────────────────────────────── */
-
-function ProtocolBadge({ pid, connected }: { pid: string; connected?: boolean }) {
-  const labels: Record<string, string> = {
-    nostr: 'Nostr',
-    farcaster: 'Farcaster',
-    lens: 'Lens',
-    bluesky: 'Bluesky',
-    mastodon: 'Mastodon',
-    reddit: 'Reddit',
-    peertube: 'PeerTube',
-    pixelfed: 'PixelFed',
-  };
-  const color = PROTOCOL_COLORS[pid] || 'var(--color-muted)';
-
+export default function LandingPage() {
   return (
-    <span
-      className="protocol-badge"
-      style={{
-        background: connected ? `${color}20` : `${color}10`,
-        color: connected ? color : 'var(--color-muted)',
-        border: `1px solid ${connected ? `${color}40` : 'var(--color-border)'}`,
-        opacity: connected ? 1 : 0.5,
-      }}
-    >
-      {connected && <span className="h-1.5 w-1.5 rounded-full" style={{ background: color }} />}
-      {labels[pid] || pid}
-    </span>
-  );
-}
+    <>
+      <style>{THEME_STYLES}</style>
+      <div className="scanline" aria-hidden="true" />
 
-/* ─── Feed Preview Card ─────────────────────────────────────────── */
-
-function FeedPreviewCard({ item, index }: { item: FeedPreviewItem; index: number }) {
-  const color = PROTOCOL_COLORS[item.protocol] || 'var(--color-accent)';
-
-  return (
-    <article
-      className="feed-enter group rounded-2xl border p-4 transition-all duration-300 hover:scale-[1.02]"
-      style={{
-        borderColor: 'var(--color-border)',
-        background: 'var(--color-card)',
-        animationDelay: `${index * 80}ms`,
-      }}
-    >
-      <div className="mb-3 flex items-center gap-2.5">
-        <span
-          className="flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold"
-          style={{ background: `${color}18`, color }}
-        >
-          {item.protocol.charAt(0).toUpperCase()}
-        </span>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <span className="truncate text-sm font-bold text-[var(--color-fg)]">{item.author}</span>
-            <span
-              className="protocol-badge"
-              style={{ background: `${color}15`, color, border: `1px solid ${color}30` }}
-            >
-              {item.protocol}
-            </span>
-          </div>
-        </div>
-        <span className="text-xs text-[var(--color-muted)]">{item.time}</span>
-      </div>
-
-      <p className="mb-3 text-sm leading-relaxed text-[var(--color-fg)]">{item.text}</p>
-
-      <div className="flex items-center gap-4 text-xs text-[var(--color-muted)]">
-        <button type="button" className="post-action gap-1.5" aria-label="Like">
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <path d="M14 9V5a3 3 0 00-3-3l-4 9v11h11.28a2 2 0 002-1.7l1.38-9a2 2 0 00-2-2.3H14z" />
-          </svg>
-          {item.likes}
-        </button>
-        <button type="button" className="post-action gap-1.5" aria-label="Repost">
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <polyline points="17 1 21 5 17 9" />
-            <path d="M3 11V9a4 4 0 014-4h14" />
-            <polyline points="7 23 3 19 7 15" />
-            <path d="M21 13v2a4 4 0 01-4 4H3" />
-          </svg>
-          {item.reposts}
-        </button>
-        <button type="button" className="post-action gap-1.5" aria-label="Reply">
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
-          </svg>
-        </button>
-        <button type="button" className="post-action gap-1.5" aria-label="Tip">
-          ⚡
-        </button>
-      </div>
-    </article>
-  );
-}
-
-/* ─── Creator Card ──────────────────────────────────────────────── */
-
-function CreatorCard({ creator, index }: { creator: Creator; index: number }) {
-  const color = PROTOCOL_COLORS[creator.protocol] || 'var(--color-accent)';
-
-  return (
-    <div
-      className="feed-enter flex items-center gap-3 rounded-xl border p-3 transition-all duration-300 hover:border-[var(--color-accent)]/30"
-      style={{
-        borderColor: 'var(--color-border)',
-        background: 'var(--color-card)',
-        animationDelay: `${index * 100}ms`,
-      }}
-    >
-      <span
-        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold"
-        style={{ background: `${color}20`, color }}
-      >
-        {creator.avatar}
-      </span>
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <span className="truncate text-sm font-bold text-[var(--color-fg)]">{creator.name}</span>
-          {creator.badge && (
-            <span className="whitespace-nowrap rounded-full bg-[var(--color-accent-secondary)]/15 px-2 py-0.5 text-[9px] font-semibold text-[var(--color-accent-secondary)]">
-              {creator.badge}
-            </span>
-          )}
-        </div>
-        <div className="flex items-center gap-2 text-xs text-[var(--color-muted)]">
-          <span className="truncate">{creator.handle}</span>
-          <span className="h-1 w-1 rounded-full bg-[var(--color-muted)]" />
-          <span>{creator.followers} followers</span>
-        </div>
-      </div>
-      <button
-        type="button"
-        className="shrink-0 rounded-full border px-3 py-1 text-[11px] font-semibold transition-all hover:border-[var(--color-accent)] hover:bg-[var(--color-accent)] hover:text-black"
-        style={{ borderColor: 'var(--color-border)', color: 'var(--color-accent)' }}
-      >
-        Follow
-      </button>
-    </div>
-  );
-}
-
-/* ═══════════════════════════════════════════════════════════════════
-   PAGE
-   ═══════════════════════════════════════════════════════════════════ */
-
-export default function HomePage() {
-  const { connectedCount, connections } = useProtocolConnections();
-  const [connectOpen, setConnectOpen] = useState(false);
-  const feedPreview = useMemo(() => FEED_PREVIEW.sort(() => Math.random() - 0.5).slice(0, 4), []);
-
-  return (
-    <div className="relative min-h-screen">
-      {/* Background glow layers */}
-      <div className="pointer-events-none fixed inset-0 z-0" aria-hidden="true">
-        <div className="bg-cyber absolute inset-0" />
-        <div className="bg-noise" />
-      </div>
-
-      <div className="relative z-10 mx-auto max-w-[1100px] px-4">
-        {/* ════════════ HERO SECTION (Redesigned) ════════════ */}
-        <HeroSection />
-
-        {/* ════════════ LIVE TICKER ════════════ */}
-        <section className="mb-8">
-          <div
-            className="w-full rounded-xl border"
-            style={{ borderColor: 'var(--color-border)', background: 'var(--color-card)' }}
-          >
-            <div className="flex items-center gap-2 px-4 pt-3 pb-1">
-              <span className="live-badge text-[10px]">Live</span>
-              <span className="text-xs font-semibold text-[var(--color-fg)]">
-                What&apos;s Hot Right Now
-              </span>
-            </div>
-            <LiveTicker />
-          </div>
-        </section>
-
-        {/* ════════════ FEATURE GRID ════════════ */}
-        <FeatureGrid />
-
-        {/* ════════════ PROTOCOL SHOWCASE ════════════ */}
-        <ProtocolShowcase />
-
-        {/* ════════════ STATS BAR ════════════ */}
-        <StatsBar />
-
-        {/* ════════════ TRENDING + STATS BENTO ════════════ */}
-        <section className="mb-12 mt-8">
-          <div className="grid gap-4 md:grid-cols-3">
-            {/* Your Networks */}
-            <div
-              className="hover-lift rounded-2xl border p-5"
-              style={{ borderColor: 'var(--color-border)', background: 'var(--color-card)' }}
-            >
-              <h3 className="mb-4 flex items-center gap-2 text-sm font-bold text-[var(--color-fg)]">
-                <span
-                  className="flex h-7 w-7 items-center justify-center rounded-lg text-xs"
-                  style={{ background: 'var(--color-accent-soft)', color: 'var(--color-accent)' }}
-                >
-                  ⚡
-                </span>
-                Your Networks
-              </h3>
-              <div className="space-y-2.5">
-                {Object.entries(connections)
-                  .slice(0, 6)
-                  .map(([id, conn]) => (
-                    <div key={id} className="flex items-center gap-2.5">
-                      <span
-                        className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[9px] font-bold"
-                        style={{
-                          background: `${conn.color}18`,
-                          color: conn.color,
-                          opacity: conn.connected ? 1 : 0.4,
-                        }}
-                      >
-                        {conn.icon}
-                      </span>
-                      <span className="flex-1 text-xs text-[var(--color-fg)]">{conn.name}</span>
-                      <span
-                        className={`h-2 w-2 rounded-full ${conn.connected ? 'bg-[var(--color-accent)]' : 'bg-[var(--color-muted)]'}`}
-                        style={conn.connected ? { boxShadow: '0 0 6px var(--color-accent)' } : {}}
-                      />
-                    </div>
-                  ))}
-              </div>
-              <button
-                type="button"
-                onClick={() => setConnectOpen(true)}
-                className="mt-4 w-full rounded-xl border border-dashed py-2.5 text-[11px] font-semibold transition-colors hover:border-[var(--color-accent)]/30 hover:bg-[var(--color-accent-soft)]"
-                style={{ borderColor: 'var(--color-border)', color: 'var(--color-muted)' }}
+      {/* ════════════ HEADER ════════════ */}
+      <header className="header">
+        <div className="header-inner">
+          <Link href="/" className="header-brand" aria-label="DegenFeed home">
+            {LOGO_SVG}
+            <span>DegenFeed</span>
+          </Link>
+          <nav className="header-nav" aria-label="Primary">
+            <Link href="https://app.degenfeed.xyz/feed">Feed</Link>
+            <Link href="https://social.degenfeed.xyz">Social</Link>
+            <Link href="https://blog.degenfeed.xyz">Blog</Link>
+            <Link href="https://docs.degenfeed.xyz">Docs</Link>
+            <Link href="https://app.degenfeed.xyz" className="header-cta">
+              Launch App
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="btn-arrow"
+                aria-hidden="true"
               >
-                + Connect a protocol
-              </button>
-            </div>
-
-            {/* Trending */}
-            <div
-              className="hover-lift rounded-2xl border p-5"
-              style={{ borderColor: 'var(--color-border)', background: 'var(--color-card)' }}
-            >
-              <h3 className="mb-4 flex items-center gap-2 text-sm font-bold text-[var(--color-fg)]">
-                <span
-                  className="flex h-7 w-7 items-center justify-center rounded-lg text-xs"
-                  style={{ background: 'rgba(249,24,128,0.12)', color: '#f91880' }}
-                >
-                  🔥
-                </span>
-                Trending
-              </h3>
-              <div className="space-y-2">
-                {TRENDING_TOPICS.map((t) => (
-                  <div
-                    key={t.topic}
-                    className="flex items-center justify-between rounded-lg px-3 py-2 transition-colors hover:bg-[var(--color-overlay)]"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-semibold text-[var(--color-fg)]">
-                          {t.topic}
-                        </span>
-                      </div>
-                      <span className="text-xs text-[var(--color-muted)]">{t.posts} posts</span>
-                    </div>
-                    <ProtocolBadge pid={t.protocol} />
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Platform Stats */}
-            <div
-              className="hover-lift rounded-2xl border p-5"
-              style={{ borderColor: 'var(--color-border)', background: 'var(--color-card)' }}
-            >
-              <h3 className="mb-4 flex items-center gap-2 text-sm font-bold text-[var(--color-fg)]">
-                <span
-                  className="flex h-7 w-7 items-center justify-center rounded-lg text-xs"
-                  style={{ background: 'rgba(0,186,124,0.12)', color: '#00ba7c' }}
-                >
-                  📊
-                </span>
-                Platform Stats
-              </h3>
-              <div className="space-y-3">
-                {[
-                  { label: 'Protocols Supported', value: '101+' },
-                  { label: 'News Sources', value: '214' },
-                  { label: 'Self-Hosted Services', value: '50+' },
-                  { label: 'Network Ownership', value: '58%' },
-                  { label: 'Posts Indexed', value: '10,427' },
-                  { label: 'Your Protocols', value: `${connectedCount}` },
-                ].map((stat) => (
-                  <div
-                    key={stat.label}
-                    className="flex items-center justify-between border-b pb-2 last:border-0 last:pb-0"
-                    style={{ borderColor: 'var(--color-border)' }}
-                  >
-                    <span className="text-xs text-[var(--color-muted)]">{stat.label}</span>
-                    <span className="text-sm font-bold text-[var(--color-fg)]">{stat.value}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ════════════ WHAT'S HAPPENING ════════════ */}
-        <section className="mb-12">
-          <div className="mb-5 flex items-center justify-between">
-            <h2
-              className="text-xl font-bold text-[var(--color-fg)]"
-              style={{ fontFamily: 'var(--font-heading)' }}
-            >
-              What&apos;s happening
-            </h2>
+                <path d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
+            </Link>
             <Link
-              href="/feed"
-              className="text-sm font-semibold transition-colors hover:underline"
-              style={{ color: 'var(--color-accent)' }}
+              href="https://app.degenfeed.xyz"
+              className="header-mobile-cta"
+              aria-label="Launch App"
             >
-              View full feed &rarr;
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
             </Link>
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {feedPreview.map((item, i) => (
-              <FeedPreviewCard key={item.id} item={item} index={i} />
-            ))}
-          </div>
-        </section>
-
-        {/* ════════════ FEATURED CREATORS ════════════ */}
-        <section className="mb-12">
-          <div className="mb-5 flex items-center gap-2">
-            <h2
-              className="text-xl font-bold text-[var(--color-fg)]"
-              style={{ fontFamily: 'var(--font-heading)' }}
-            >
-              Featured Creators
-            </h2>
-            <span className="live-badge text-[10px]">Trending</span>
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {FEATURED_CREATORS.map((creator, i) => (
-              <CreatorCard key={creator.id} creator={creator} index={i} />
-            ))}
-          </div>
-        </section>
-
-        {/* ════════════ CTA SECTION (Redesigned) ════════════ */}
-        <CTASection />
-
-        {/* ════════════ MISSION STATEMENT ════════════ */}
-        <div
-          className="mb-8 rounded-2xl border p-6 text-center"
-          style={{ borderColor: 'var(--color-border)', background: 'var(--color-card)' }}
-        >
-          <p
-            className="text-base italic leading-relaxed md:text-lg"
-            style={{ color: 'var(--color-fg-secondary)' }}
-          >
-            &ldquo;DegenFeed exists to unify the fragmented decentralized social web. We don&apos;t
-            own your content &mdash; we give you the tools to own it yourself.&rdquo;
-          </p>
-        </div>
-
-        {/* ════════════ FOOTER ════════════ */}
-        <footer
-          className="border-t pb-12 pt-8 text-center text-xs"
-          style={{ borderColor: 'var(--color-border)', color: 'var(--color-muted)' }}
-        >
-          <nav className="mb-3 flex flex-wrap justify-center gap-4">
-            <Link href="/about" className="hover:underline">
-              About
-            </Link>
-            <Link href="/features" className="hover:underline">
-              Features
-            </Link>
-            <Link href="/docs" className="hover:underline">
-              Docs
-            </Link>
-            <Link href="/faq" className="hover:underline">
-              FAQ
-            </Link>
-            <Link href="/privacy" className="hover:underline">
-              Privacy
-            </Link>
-            <Link href="/terms" className="hover:underline">
-              Terms
-            </Link>
-            <a
-              href="https://github.com/rugmunchmedia/degenfeed"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:underline"
-            >
-              GitHub
-            </a>
           </nav>
-          <p>
-            &copy; {new Date().getFullYear()} DegenFeed &mdash; a Rug Munch Media LLC product. Open
-            source. Free forever. Your data, never sold.{' '}
-            <span className="hidden sm:inline">No account required to browse.</span>
-          </p>
-        </footer>
-      </div>
+        </div>
+      </header>
 
-      {/* Protocol Connect Flow */}
-      <ProtocolConnectFlow
-        open={connectOpen}
-        protocolId={null}
-        onClose={() => setConnectOpen(false)}
-      />
-    </div>
+      <main id="main-content">
+        {/* ════════════ HERO ════════════ */}
+        <section className="hero" aria-labelledby="hero-title">
+          <div className="hero-glow" aria-hidden="true" />
+          <div className="hero-grid" aria-hidden="true" />
+
+          <div className="hero-badges">
+            <span className="badge badge-green">Now Live</span>
+            <span className="badge badge-outline">Open Source</span>
+            <span className="badge badge-outline">Free Forever</span>
+          </div>
+
+          <h1 id="hero-title" className="hero-title">
+            The Web3
+            <br />
+            <span className="accent">Social Universe</span>
+          </h1>
+
+          <p className="hero-sub">
+            Aggregate every protocol. Read everything for free.
+            <br />
+            Sign in with your existing identity to like, reply, and cross-post everywhere.
+          </p>
+
+          <div className="hero-cta">
+            <Link href="https://app.degenfeed.xyz" className="btn btn-primary">
+              Launch App
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 20 20"
+                fill="none"
+                className="btn-arrow"
+                aria-hidden="true"
+              >
+                <path
+                  d="M4 10h12M10 4l6 6-6 6"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </Link>
+            <Link href="https://social.degenfeed.xyz" className="btn btn-secondary">
+              Create Free Account
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 20 20"
+                fill="none"
+                className="btn-arrow"
+                aria-hidden="true"
+              >
+                <path
+                  d="M4 10h12M10 4l6 6-6 6"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </Link>
+          </div>
+
+          {/* Stats bar */}
+          <div className="stats-bar">
+            {STATS.map((stat, _i) => (
+              <span key={stat.label} className="stat-item">
+                <span className="stat-value">{stat.value}</span>
+                <span className="stat-label">{stat.label}</span>
+              </span>
+            ))}
+            <span className="stat-divider" aria-hidden="true" />
+            <span className="stat-item">
+              <span className="stat-value">15M+</span>
+              <span className="stat-label">Reachable</span>
+            </span>
+          </div>
+        </section>
+
+        {/* ════════════ PROTOCOLS ════════════ */}
+        <section className="section-wrap" aria-labelledby="protocols-title">
+          <div className="section-label">
+            <span className="section-label-line" aria-hidden="true" />
+            <span className="section-label-text">Supported Networks</span>
+            <span className="section-label-line" aria-hidden="true" />
+          </div>
+          <h2 id="protocols-title" className="section-title">
+            One Window Into <span className="accent">Every</span> Protocol
+          </h2>
+          <p className="section-sub">
+            Read and interact across the entire open social graph from a single interface.
+          </p>
+          <div className="protocol-strip">
+            {PROTOCOLS.map((p) => (
+              <span key={p.name} className="protocol-chip">
+                <span className="protocol-chip-dot" style={{ background: p.color }} />
+                {p.name}
+              </span>
+            ))}
+          </div>
+        </section>
+
+        {/* ════════════ FEATURES ════════════ */}
+        <section className="section-wrap" aria-labelledby="features-title">
+          <div className="section-label">
+            <span className="section-label-line" aria-hidden="true" />
+            <span className="section-label-text">Platform Capabilities</span>
+            <span className="section-label-line" aria-hidden="true" />
+          </div>
+          <h2 id="features-title" className="section-title">
+            Everything You Need to <span className="accent">Navigate</span> the Open Social Graph
+          </h2>
+          <div className="features-grid">
+            {FEATURES.map((f) => (
+              <article key={f.title} className="feature-card">
+                <div className="feature-icon">{f.icon}</div>
+                <h3>{f.title}</h3>
+                <p>{f.desc}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        {/* ════════════ HOW IT WORKS ════════════ */}
+        <section className="section-wrap" aria-labelledby="how-title">
+          <div className="section-label">
+            <span className="section-label-line" aria-hidden="true" />
+            <span className="section-label-text">How It Works</span>
+            <span className="section-label-line" aria-hidden="true" />
+          </div>
+          <h2 id="how-title" className="section-title">
+            Three Steps to <span className="accent">Connect</span> Everything
+          </h2>
+          <div className="steps-grid">
+            <div className="step-card">
+              <div className="step-num">01</div>
+              <h3>Open the App</h3>
+              <p>
+                No sign-up, no wallet, no key. All protocols and RSS feeds load instantly. Start
+                reading in seconds.
+              </p>
+            </div>
+            <div className="step-card">
+              <div className="step-num">02</div>
+              <h3>Connect Your Identity</h3>
+              <p>
+                Nostr key, Farcaster signer, Lens wallet, Bluesky password, Mastodon token — use
+                what you already have.
+              </p>
+            </div>
+            <div className="step-card">
+              <div className="step-num">03</div>
+              <h3>Cross-Post Everywhere</h3>
+              <p>
+                Link multiple accounts and compose once. DegenFeed publishes to every network in
+                parallel.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* ════════════ QUOTE ════════════ */}
+        <section className="section-wrap" aria-labelledby="manifesto-title">
+          <div className="quote-card">
+            <div className="section-label">
+              <span className="section-label-line" aria-hidden="true" />
+              <span className="section-label-text">Our Philosophy</span>
+              <span className="section-label-line" aria-hidden="true" />
+            </div>
+            <h2 id="manifesto-title" className="section-title" style={{ marginBottom: 24 }}>
+              The Window to the <span className="accent">Open Social Graph</span>
+            </h2>
+            <blockquote className="quote-text">
+              &ldquo;The open social graph is fractured across a dozen protocols, each with its own
+              app, its own feed, its own set of accounts to manage. DegenFeed is the window that
+              sees them all. The graph belongs to the protocols. The window belongs to you.&rdquo;
+            </blockquote>
+            <p className="quote-attribution">&mdash; DegenFeed Team</p>
+          </div>
+        </section>
+
+        {/* ════════════ FINAL CTA ════════════ */}
+        <section className="cta-final" aria-labelledby="cta-title">
+          <h2 id="cta-title">
+            Ready to Explore the
+            <br />
+            Social Universe?
+          </h2>
+          <p>
+            The feed is live. No waitlist. No tokens. No sign-up required.
+            <br />
+            Built for the community, forever.
+          </p>
+          <div className="btns">
+            <Link href="https://app.degenfeed.xyz" className="btn btn-primary">
+              Launch App
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 20 20"
+                fill="none"
+                className="btn-arrow"
+                aria-hidden="true"
+              >
+                <path
+                  d="M4 10h12M10 4l6 6-6 6"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </Link>
+            <Link href="https://social.degenfeed.xyz" className="btn btn-secondary">
+              Create Free Account
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 20 20"
+                fill="none"
+                className="btn-arrow"
+                aria-hidden="true"
+              >
+                <path
+                  d="M4 10h12M10 4l6 6-6 6"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </Link>
+          </div>
+        </section>
+      </main>
+
+      {/* ════════════ FOOTER ════════════ */}
+      <footer className="footer" role="contentinfo">
+        <div className="footer-inner">
+          <div className="footer-grid">
+            <div className="footer-brand-area">
+              <div className="footer-brand-row">
+                {LOGO_SVG}
+                <span>DegenFeed</span>
+              </div>
+              <p className="footer-desc">
+                The Web3 Social Universe. Aggregate Nostr, Farcaster, Lens, Bluesky, Mastodon, and
+                more into one unified feed. Built on open protocols by{' '}
+                <strong>Rug Munch Media LLC</strong>.
+              </p>
+            </div>
+            <div className="footer-col">
+              <h4>Product</h4>
+              <a href="https://app.degenfeed.xyz">Launch App</a>
+              <a href="https://docs.degenfeed.xyz">Documentation</a>
+              <a href="https://status.degenfeed.xyz">Status</a>
+              <a href="https://blog.degenfeed.xyz">Blog</a>
+            </div>
+            <div className="footer-col">
+              <h4>Network</h4>
+              <a href="https://social.degenfeed.xyz">Social</a>
+              <a href="https://community.degenfeed.xyz">Community</a>
+              <a href="https://video.degenfeed.xyz">Video</a>
+              <a href="https://photos.degenfeed.xyz">Photos</a>
+            </div>
+            <div className="footer-col">
+              <h4>Legal</h4>
+              <a href="/privacy">Privacy</a>
+              <a href="/terms">Terms</a>
+              <a href="https://github.com/RugMunchMedia">GitHub</a>
+              <a href="https://git.rugmunch.io/RugMunchMedia">Git</a>
+            </div>
+          </div>
+          <div className="footer-bottom">
+            <p>
+              &copy; {new Date().getFullYear()} DegenFeed &mdash; a Rug Munch Media LLC product.
+              Open source (MIT). Your data, never sold.
+            </p>
+            <div className="footer-socials">
+              <a href="https://github.com/RugMunchMedia" target="_blank" rel="noopener noreferrer">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  aria-hidden="true"
+                >
+                  <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
+                </svg>
+                GitHub
+              </a>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </>
   );
 }
