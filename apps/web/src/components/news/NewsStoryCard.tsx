@@ -2,7 +2,16 @@
 
 import Image from 'next/image';
 import type { NewsStory } from './types';
-import { formatTime, sentimentColor, sentimentEmoji, TIER_STYLES } from './types';
+import {
+  BIAS_STYLES,
+  FACTUAL_STYLES,
+  formatTime,
+  sentimentColor,
+  sentimentEmoji,
+  sentimentScoreColor,
+  sentimentScoreEmoji,
+  TIER_STYLES,
+} from './types';
 
 const CATEGORY_COLORS: Record<string, { badge: string; text: string; bg: string }> = {
   bitcoin: { badge: 'bg-orange-500/15', text: 'text-orange-300', bg: 'bg-orange-950/40' },
@@ -21,7 +30,7 @@ export function NewsStoryCard({
   masonry = false,
   onBookmark,
   isBookmarked,
-  onShare,
+  onShare: _onShare,
 }: {
   story: NewsStory;
   compact?: boolean;
@@ -101,6 +110,33 @@ export function NewsStoryCard({
             {tier.label}
           </span>
           <span className="text-[10px] text-gray-500">{story.source}</span>
+          {/* Ground News-style Bias Badge */}
+          {story.bias && BIAS_STYLES[story.bias] && (
+            <span
+              className={`rounded px-1 py-0.5 text-[8px] font-bold ${BIAS_STYLES[story.bias].bg} ${BIAS_STYLES[story.bias].ring} ring-1`}
+              style={{ color: BIAS_STYLES[story.bias].color }}
+            >
+              {BIAS_STYLES[story.bias].label}
+            </span>
+          )}
+          {/* Factual Rating Badge */}
+          {story.factualRating && FACTUAL_STYLES[story.factualRating] && (
+            <span
+              className={`rounded px-1 py-0.5 text-[8px] font-bold ${FACTUAL_STYLES[story.factualRating].bg}`}
+              style={{ color: FACTUAL_STYLES[story.factualRating].color }}
+            >
+              {FACTUAL_STYLES[story.factualRating].label}
+            </span>
+          )}
+          {/* Sentiment Score Badge */}
+          {story.sentimentScore != null && (
+            <span
+              className={`rounded px-1 py-0.5 text-[8px] font-bold ${sentimentScoreColor(story.sentimentScore)}`}
+            >
+              {sentimentScoreEmoji(story.sentimentScore)} {story.sentimentScore > 0 ? '+' : ''}
+              {story.sentimentScore}
+            </span>
+          )}
           {/* Also covered by count */}
           {(story.alsoCoveredByCount ?? story.alsoCoveredBy.length - 1) > 1 && (
             <span className="rounded-full bg-blue-500/10 px-1.5 py-0.5 text-[8px] text-blue-300">
