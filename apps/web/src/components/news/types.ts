@@ -66,6 +66,13 @@ export interface NewsStory {
     depthMatch: number;
     total: number;
   };
+  // Ground News-style rating fields
+  bias?: 'left' | 'center-left' | 'center' | 'center-right' | 'right';
+  sentimentScore?: number; // -100 to +100
+  sentimentLabel?: 'bullish' | 'slightly_bullish' | 'neutral' | 'slightly_bearish' | 'bearish';
+  factualRating?: 'high' | 'medium' | 'low' | 'unrated';
+  sourceTier?: number; // 1-3
+  ratingConfidence?: number; // 0-1
 }
 
 export interface NewsMeta {
@@ -127,6 +134,62 @@ export function sentimentEmoji(s: SentimentResult | null | undefined): string {
   if (s.label === 'bullish') return '🟢';
   if (s.label === 'bearish') return '🔴';
   return '⚪';
+}
+
+// ── Ground News-style rating helpers ──────────────────────────────
+
+export const BIAS_STYLES: Record<
+  string,
+  { label: string; color: string; bg: string; ring: string }
+> = {
+  left: { label: 'Left', color: '#dc2626', bg: 'bg-red-500/15', ring: 'ring-red-500/30' },
+  'center-left': {
+    label: 'Lean Left',
+    color: '#f97316',
+    bg: 'bg-orange-500/15',
+    ring: 'ring-orange-500/30',
+  },
+  center: { label: 'Center', color: '#6b7280', bg: 'bg-gray-500/15', ring: 'ring-gray-500/30' },
+  'center-right': {
+    label: 'Lean Right',
+    color: '#3b82f6',
+    bg: 'bg-blue-500/15',
+    ring: 'ring-blue-500/30',
+  },
+  right: { label: 'Right', color: '#2563eb', bg: 'bg-blue-600/15', ring: 'ring-blue-600/30' },
+};
+
+export const FACTUAL_STYLES: Record<string, { label: string; color: string; bg: string }> = {
+  high: { label: 'High', color: '#22c55e', bg: 'bg-green-500/15' },
+  medium: { label: 'Medium', color: '#eab308', bg: 'bg-yellow-500/15' },
+  low: { label: 'Low', color: '#ef4444', bg: 'bg-red-500/15' },
+  unrated: { label: 'Unrated', color: '#6b7280', bg: 'bg-gray-500/10' },
+};
+
+export function sentimentScoreEmoji(score: number | null | undefined): string {
+  if (score == null || score === 0) return '➖';
+  if (score >= 30) return '🔥';
+  if (score >= 10) return '📈';
+  if (score <= -30) return '🧊';
+  if (score <= -10) return '📉';
+  return '➖';
+}
+
+export function sentimentScoreColor(score: number | null | undefined): string {
+  if (score == null || score === 0) return 'text-gray-400';
+  if (score >= 20) return 'text-green-400';
+  if (score <= -20) return 'text-red-400';
+  return 'text-yellow-400';
+}
+
+export function biasColor(bias: string | null | undefined): string {
+  const style = BIAS_STYLES[bias || ''];
+  return style?.color || '#6b7280';
+}
+
+export function factualColor(rating: string | null | undefined): string {
+  const style = FACTUAL_STYLES[rating || ''];
+  return style?.color || '#6b7280';
 }
 
 export function sourceIcon(source: string): string {

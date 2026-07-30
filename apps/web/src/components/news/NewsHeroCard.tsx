@@ -2,7 +2,16 @@
 
 import Image from 'next/image';
 import type { NewsStory } from './types';
-import { formatTime, sentimentColor, sentimentEmoji, TIER_STYLES } from './types';
+import {
+  BIAS_STYLES,
+  FACTUAL_STYLES,
+  formatTime,
+  sentimentColor,
+  sentimentEmoji,
+  sentimentScoreColor,
+  sentimentScoreEmoji,
+  TIER_STYLES,
+} from './types';
 
 const CATEGORY_COLORS: Record<string, { badge: string; text: string; bg: string }> = {
   bitcoin: { badge: 'bg-orange-500/15', text: 'text-orange-300', bg: 'bg-orange-950/40' },
@@ -79,6 +88,33 @@ export function NewsHeroCard({
           >
             {story.source} · {tier.label}
           </span>
+          {/* Ground News-style Bias Badge */}
+          {story.bias && BIAS_STYLES[story.bias] && (
+            <span
+              className={`rounded-md px-1.5 py-0.5 text-[9px] font-bold ${BIAS_STYLES[story.bias].bg} ${BIAS_STYLES[story.bias].ring} ring-1`}
+              style={{ color: BIAS_STYLES[story.bias].color }}
+            >
+              {BIAS_STYLES[story.bias].label}
+            </span>
+          )}
+          {/* Factual Rating Badge */}
+          {story.factualRating && FACTUAL_STYLES[story.factualRating] && (
+            <span
+              className={`rounded-md px-1.5 py-0.5 text-[9px] font-bold ${FACTUAL_STYLES[story.factualRating].bg}`}
+              style={{ color: FACTUAL_STYLES[story.factualRating].color }}
+            >
+              {FACTUAL_STYLES[story.factualRating].label}
+            </span>
+          )}
+          {/* Sentiment Score */}
+          {story.sentimentScore != null && (
+            <span
+              className={`rounded-md px-1.5 py-0.5 text-[9px] font-bold ${sentimentScoreColor(story.sentimentScore)}`}
+            >
+              {sentimentScoreEmoji(story.sentimentScore)} {story.sentimentScore > 0 ? '+' : ''}
+              {story.sentimentScore}
+            </span>
+          )}
           {/* Sentiment indicator */}
           <span
             className={`rounded-md border px-1.5 py-0.5 text-[10px] ${sentimentColor(story.sentiment)}`}

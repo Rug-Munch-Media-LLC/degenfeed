@@ -41,6 +41,13 @@ export interface RmiArticle {
   token_address?: string | null;
   chain?: string | null;
   comment_count?: number | null;
+  // Ground News-style rating fields (from rmi-backend enrichment)
+  bias?: string | null;
+  sentiment_score?: number | null;
+  sentiment_label?: string | null;
+  factual_rating?: string | null;
+  source_tier?: number | null;
+  rating_confidence?: number | null;
 }
 
 export interface RmiFeedResponse {
@@ -131,7 +138,7 @@ function articleToUnifiedPost(a: RmiArticle, _backendUrl: string): UnifiedPost |
   const publishedAt = a.published_at ? new Date(a.published_at).getTime() : Date.now();
   const createdAt = Number.isNaN(publishedAt) ? Date.now() : publishedAt;
 
-  // Annotate raw with sentiment for downstream consumers
+  // Annotate raw with sentiment + ratings for downstream consumers
   const raw: Record<string, unknown> = {
     article: a,
     sourceName: source,
@@ -142,6 +149,13 @@ function articleToUnifiedPost(a: RmiArticle, _backendUrl: string): UnifiedPost |
     chain: a.chain,
     tokenAddress: a.token_address,
     riskScore: a.risk_score,
+    // Ground News-style rating fields
+    bias: a.bias,
+    sentimentScoreNum: a.sentiment_score,
+    sentimentLabel: a.sentiment_label,
+    factualRating: a.factual_rating,
+    sourceTier: a.source_tier,
+    ratingConfidence: a.rating_confidence,
   };
 
   return {
