@@ -16,8 +16,8 @@ import {
   getFeeSummaryFromConfig,
   TOKEN_GENERATION_FEE,
 } from '../index';
+import type { FeeStructure } from '../types';
 import { createFeeConfig } from '../types';
-import type { FeeConfig, FeeStructure } from '../types';
 
 // ─── Fee Split (Legacy FeeStructure) ──────────────────────────────────────
 

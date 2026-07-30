@@ -93,6 +93,17 @@ const nextConfig = {
     ];
   },
 
+  // ── Redirect root to feed (no landing page) ──
+  async redirects() {
+    return [
+      {
+        source: '/',
+        destination: '/feed',
+        permanent: true,
+      },
+    ];
+  },
+
   eslint: { ignoreDuringBuilds: true }, // TODO: Remove by 2026-08-01 — gradually fix lint errors
   typescript: { ignoreBuildErrors: true }, // Pre-existing type issues with Next.js 16 async params
 };

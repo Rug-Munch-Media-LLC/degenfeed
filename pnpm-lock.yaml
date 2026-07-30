@@ -273,6 +273,9 @@ importers:
       '@degenfeed/types':
         specifier: workspace:*
         version: link:../types
+      '@degenfeed/utils':
+        specifier: workspace:*
+        version: link:../utils
     devDependencies:
       '@biomejs/biome':
         specifier: ^2.5.5
@@ -784,6 +787,9 @@ importers:
       '@degenfeed/crypto':
         specifier: workspace:*
         version: link:../crypto
+      '@degenfeed/utils':
+        specifier: workspace:*
+        version: link:../utils
     devDependencies:
       '@biomejs/biome':
         specifier: ^2.5.5

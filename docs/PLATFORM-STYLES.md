@@ -578,7 +578,7 @@ const actions = PROTOCOL_ACTIONS[post.protocol] ?? DEFAULT_ACTIONS;
 | `packages/ui/src/post-card/PostBody.tsx` | Post body with protocol-specific body tint |
 | `packages/ui/src/post-card/PostThread.tsx` | Protocol-specific thread/context components |
 | `packages/ui/src/PostCardEngagement.tsx` | Action buttons with protocol-aware rendering |
-| `packages/ui/src/FeedList.tsx` | Feed list container (renders <article> wrappers) |
+| `packages/ui/src/FeedList.tsx` | Feed list container (renders `<article>` wrappers) |
 | `packages/types/src/index.ts` | UnifiedPost type definition |
 
 ---

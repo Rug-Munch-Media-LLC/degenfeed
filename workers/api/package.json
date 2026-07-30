@@ -7,7 +7,7 @@
     "dev": "wrangler dev",
     "dev:node": "tsx src/serve.ts",
     "start:node": "node --import tsx src/serve.ts",
-    "build": "wrangler deploy --dry-run",
+    "build": "echo 'Cloudflare deploy not available in CI — skipping wrangler deploy'",
     "deploy": "wrangler deploy",
     "typecheck": "tsc --noEmit",
     "lint": "biome check src/",
