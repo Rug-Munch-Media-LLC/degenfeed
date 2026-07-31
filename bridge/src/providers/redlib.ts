@@ -166,9 +166,10 @@ async function fetchFromRedlib(subreddit: string, limit: number): Promise<Unifie
     // Redlib may return an HTML error page when Reddit blocks its upstream.
     if (!text.trim().startsWith('{')) return [];
 
-    const data = (JSON.parse(text) as {
-      data?: { children?: Array<{ data: Record<string, unknown> }> };
-    }) ?? {};
+    const data =
+      (JSON.parse(text) as {
+        data?: { children?: Array<{ data: Record<string, unknown> }> };
+      }) ?? {};
     if (!data.data?.children) return [];
 
     return data.data.children
@@ -254,16 +255,13 @@ export function parseRssXml(xml: string, subreddit: string, limit: number): Unif
   let m: RegExpExecArray | null;
   // biome-ignore lint/suspicious/noAssignInExpressions: standard regex exec loop
   while ((m = entryRe.exec(xml)) !== null && posts.length < limit) {
-    const e = m[1];
+    const e = m[1] ?? '';
     const titleMatch = e.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
     const linkMatch = e.match(/<link[^>]+href=["']([^"']+)["']/i);
     const updatedMatch = e.match(/<updated[^>]*>([\s\S]*?)<\/updated>/i);
-    const _contentMatch =
-      e.match(/<content[^>]*>([\s\S]*?)<\/content>/i) ||
-      e.match(/<summary[^>]*>([\s\S]*?)<\/summary>/i);
-    const title = titleMatch ? stripHtml(titleMatch[1]).trim() : '';
+    const title = titleMatch?.[1] ? stripHtml(titleMatch[1]).trim() : '';
     if (!title) continue;
-    const link = linkMatch ? linkMatch[1] : '';
+    const link = linkMatch?.[1] ?? '';
 
     posts.push({
       id: `reddit:${subreddit}:rss_${index}`,
@@ -283,7 +281,9 @@ export function parseRssXml(xml: string, subreddit: string, limit: number): Unif
       text: title,
       embeds: link ? [{ kind: 'link', url: link }] : [],
       contentType: link ? 'link' : 'text',
-      createdAt: updatedMatch ? new Date(updatedMatch[1]).getTime() : Date.now() - index * 600000,
+      createdAt: updatedMatch?.[1]
+        ? new Date(updatedMatch[1]).getTime()
+        : Date.now() - index * 600000,
       metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0, views: 0 },
       engagement: {
         viewerLiked: false,
@@ -302,12 +302,12 @@ export function parseRssXml(xml: string, subreddit: string, limit: number): Unif
     const itemRe = /<item[\s>]([\s\S]*?)<\/item>/gi;
     // biome-ignore lint/suspicious/noAssignInExpressions: standard regex exec loop
     while ((m = itemRe.exec(xml)) !== null && posts.length < limit) {
-      const e = m[1];
+      const e = m[1] ?? '';
       const titleMatch = e.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
       const linkMatch = e.match(/<link[^>]*>([\s\S]*?)<\/link>/i);
-      const title = titleMatch ? stripHtml(titleMatch[1]).trim() : '';
+      const title = titleMatch?.[1] ? stripHtml(titleMatch[1]).trim() : '';
       if (!title) continue;
-      const link = linkMatch ? stripHtml(linkMatch[1]) : '';
+      const link = linkMatch?.[1] ? stripHtml(linkMatch[1]) : '';
 
       posts.push({
         id: `reddit:${subreddit}:rss_${index}`,
@@ -513,10 +513,9 @@ export async function fetchRedditPosts(limit = 20): Promise<UnifiedPost[]> {
   const hasOAuth = getRedditOAuth().isConfigured;
 
   // PRIMARY: RSS feeds — the only strategy verified working from this host.
-  // Uses a small, weighted subset so we stay under Reddit's per-IP budget
-  // and well inside the buildFeed 5s timeout. Requests run sequentially with
-  // spacing; we stop as soon as we have enough posts.
-  const rssSubs = ['CryptoCurrency', 'Bitcoin', 'ethereum', 'solana', 'CryptoMarkets'];
+  // Keep the request count LOW: one subreddit usually satisfies small limits,
+  // and each call is wrapped in buildFeed's 5s timeout, so we must return fast.
+  const rssSubs = ['CryptoCurrency', 'Bitcoin', 'ethereum'];
   const perSubRss = Math.max(2, Math.ceil(limit / rssSubs.length));
   for (const sub of rssSubs) {
     try {
@@ -525,7 +524,7 @@ export async function fetchRedditPosts(limit = 20): Promise<UnifiedPost[]> {
       rssCount += posts.length;
       if (all.length >= limit) break;
       // Space out requests — Reddit 429s bursts from a single IP.
-      await new Promise((r) => setTimeout(r, 700));
+      await new Promise((r) => setTimeout(r, 400));
     } catch {
       // continue to next subreddit
     }
@@ -533,9 +532,9 @@ export async function fetchRedditPosts(limit = 20): Promise<UnifiedPost[]> {
 
   // SECONDARY: OAuth2-authenticated JSON API (600 req/10min, no delays needed)
   if (hasOAuth && all.length < limit) {
-    for (const sub of SUBREDDITS.slice(0, 7)) {
+    for (const sub of SUBREDDITS.slice(0, 4)) {
       try {
-        const perSub = Math.max(2, Math.ceil((limit - all.length) / 4));
+        const perSub = Math.max(2, Math.ceil((limit - all.length) / 2));
         const posts = await fetchFromRedditOAuth(sub, perSub);
         all.push(...posts);
         oauthCount += posts.length;
@@ -546,33 +545,27 @@ export async function fetchRedditPosts(limit = 20): Promise<UnifiedPost[]> {
     }
   }
 
-  // TERTIARY: Unauthenticated JSON API with delays (often blocked; last-resort
-  // enrichment when RSS alone didn't return enough posts).
-  if (!hasOAuth && all.length < 5) {
-    for (const sub of SUBREDDITS.slice(0, 2)) {
-      try {
-        await new Promise((r) => setTimeout(r, 800));
-        const posts = await fetchFromRedditJson(sub, perSubRss);
-        all.push(...posts);
-        jsonCount += posts.length;
-        if (all.length >= limit) break;
-      } catch {
-        // continue to next subreddit
-      }
+  // TERTIARY: Unauthenticated JSON API (usually CDN-blocked; quick attempt
+  // only when RSS returned nothing at all).
+  if (!hasOAuth && all.length === 0) {
+    try {
+      await new Promise((r) => setTimeout(r, 300));
+      const posts = await fetchFromRedditJson('CryptoCurrency', perSubRss);
+      all.push(...posts);
+      jsonCount += posts.length;
+    } catch {
+      // continue
     }
   }
 
   // LAST RESORT: Redlib (often blocked by Reddit CDN, but local + free)
-  if (all.length < 3) {
-    for (const sub of SUBREDDITS.slice(0, 3)) {
-      try {
-        const posts = await fetchFromRedlib(sub, perSubRss);
-        all.push(...posts);
-        redlibCount += posts.length;
-        if (all.length >= limit) break;
-      } catch {
-        // continue
-      }
+  if (all.length === 0) {
+    try {
+      const posts = await fetchFromRedlib('CryptoCurrency', perSubRss);
+      all.push(...posts);
+      redlibCount += posts.length;
+    } catch {
+      // continue
     }
   }
 
