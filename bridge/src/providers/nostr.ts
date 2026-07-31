@@ -15,14 +15,23 @@ import type { SchemaGuard, UnifiedPost } from '../server/types';
 
 const _$fetch = globalThis.fetch;
 
-/** Our relay + public relays */
+/**
+ * Our relay + public relays.
+ *
+ * Order matters: the local relay is queried first (fast, self-hosted data),
+ * then reliable public relays. Known-flaky relays are kept but queried with
+ * a short timeout so they never block the feed: the bridge feed builder
+ * wraps every provider fetch in a 5s budget (FETCH_TIMEOUT_MS in feeds.ts),
+ * so any relay that hangs for its full per-relay timeout would cause the
+ * whole provider to be killed and fail over to a different protocol.
+ */
 const RELAYS = [
   { url: 'ws://127.0.0.1:8085', local: true },
-  { url: 'wss://relay.damus.io', local: false },
   { url: 'wss://nos.lol', local: false },
+  { url: 'wss://purplepag.es', local: false },
+  { url: 'wss://relay.damus.io', local: false },
   { url: 'wss://relay.primal.net', local: false },
   { url: 'wss://relay.nostr.band', local: false },
-  { url: 'wss://purplepag.es', local: false },
 ];
 
 // ─── Types ─────────────────────────────────────────────────────────────
@@ -84,11 +93,30 @@ function parseProfile(content: string): NostrProfile | null {
 
 // ─── Relay Fetch ───────────────────────────────────────────────────────
 
+/**
+ * Resolve a promise with whatever it produced once the budget elapses.
+ * Used to guarantee the Nostr provider never exceeds the feed builder's
+ * 5s fetch budget — slow/hanging relays must not trigger failover.
+ */
+async function withTotalBudget<T>(promise: Promise<T>, ms: number): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<T>((resolve) => {
+        timer = setTimeout(() => resolve(undefined as unknown as T), ms);
+      }),
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
 function fetchFromRelay(
   relayUrl: string,
   kinds: number[],
   limit: number,
-  timeout = 8000,
+  timeout = 2500,
 ): Promise<{ events: NostrEvent[]; profiles: NostrEvent[] }> {
   return new Promise((resolve) => {
     const events: NostrEvent[] = [];
@@ -96,16 +124,22 @@ function fetchFromRelay(
     let resolved = false;
     let ws: WebSocket | null = null;
 
-    const timer = setTimeout(() => {
-      if (!resolved) {
-        resolved = true;
-        if (ws) {
-          try {
-            ws.close();
-          } catch {}
-        }
-        resolve({ events, profiles });
+    // Early-exit when we already collected enough events — never wait
+    // the full timeout for a slow relay when we have what we need.
+    const maybeResolve = () => {
+      if (resolved) return;
+      resolved = true;
+      clearTimeout(timer);
+      if (ws) {
+        try {
+          ws.close();
+        } catch {}
       }
+      resolve({ events, profiles });
+    };
+
+    const timer = setTimeout(() => {
+      maybeResolve();
     }, timeout);
 
     try {
@@ -123,13 +157,9 @@ function fetchFromRelay(
             const ev = msg[2] as NostrEvent;
             if (ev.kind === 0) profiles.push(ev);
             else if (ev.kind === 1) events.push(ev);
+            if (events.length >= limit) maybeResolve();
           } else if (msg[0] === 'EOSE') {
-            clearTimeout(timer);
-            if (!resolved) {
-              resolved = true;
-              ws?.close();
-              resolve({ events, profiles });
-            }
+            maybeResolve();
           }
         } catch {
           /* skip malformed */
@@ -137,27 +167,14 @@ function fetchFromRelay(
       });
 
       ws.addEventListener('error', () => {
-        clearTimeout(timer);
-        if (!resolved) {
-          resolved = true;
-          ws?.close();
-          resolve({ events, profiles });
-        }
+        maybeResolve();
       });
 
       ws.addEventListener('close', () => {
-        clearTimeout(timer);
-        if (!resolved) {
-          resolved = true;
-          resolve({ events, profiles });
-        }
+        maybeResolve();
       });
     } catch {
-      clearTimeout(timer);
-      if (!resolved) {
-        resolved = true;
-        resolve({ events, profiles });
-      }
+      maybeResolve();
     }
   });
 }
@@ -220,9 +237,18 @@ export async function fetchNostrPosts(limit = 20): Promise<UnifiedPost[]> {
   }
   const perRelay = Math.max(3, Math.ceil(limit / RELAYS.length));
 
-  const results = await Promise.allSettled(
-    RELAYS.map((r) => fetchFromRelay(r.url, [0, 1], perRelay + 5)),
+  // Total budget for the whole relay fan-out. The feed builder (feeds.ts)
+  // kills provider fetches after 5s (FETCH_TIMEOUT_MS), so we must always
+  // return well before that or the feed fails over to another protocol.
+  const settled = await withTotalBudget(
+    Promise.allSettled(
+      RELAYS.map((r) => fetchFromRelay(r.url, [0, 1], perRelay + 5)),
+    ),
+    3500,
   );
+  // Budget may elapse before allSettled finishes — treat missing results as empty.
+  const results: PromiseSettledResult<{ events: NostrEvent[]; profiles: NostrEvent[] }>[] =
+    Array.isArray(settled) ? settled : [];
 
   const allEvents: NostrEvent[] = [];
   const allProfiles: NostrEvent[] = [];

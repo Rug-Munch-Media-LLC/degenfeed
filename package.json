@@ -55,6 +55,7 @@
     "@noble/hashes": "^2.2.0",
     "@scure/base": "^2.2.0",
     "@telegram-apps/sdk": "^3.11.8",
+    "hls.js": "^1.6.16",
     "swr": "^2.4.2"
   }
 }

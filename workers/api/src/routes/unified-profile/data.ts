@@ -5,7 +5,7 @@
  */
 
 import { aggregateProfile, SUPPORTED_SYNC_PROTOCOLS } from '../../lib/profile-sync';
-import { jsonResponse, noCacheJsonResponse } from '../response-helpers';
+import { jsonResponse, noCacheJsonResponse } from '../../response-helpers';
 import type { Env } from '../types';
 import type { ProfileSearchResult } from './types';
 import { filterAggregatedProfile, stripHtml } from './utils';

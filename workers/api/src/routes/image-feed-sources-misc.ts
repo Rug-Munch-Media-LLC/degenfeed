@@ -5,14 +5,16 @@ export async function fetchLensImages(env: Env, limit: number): Promise<UnifiedI
   const meta = metaFor('lens');
 
   const query = `query {
-    explorePublications(
-      request: {sortCriteria: TOP_COMMENTED, limit: ${Math.min(limit, 50)}}
+    posts(
+      request: {filter: {postTypes: [ROOT]}, pageSize: ${Math.min(limit, 50) === 50 ? 'FIFTY' : 'TEN'}}
     ) { items { __typename ... on Post {
         id
-        metadata { name content image { original { url width height } } tags[] }
-        profile { id handle name picture { ... on MediaSet { original { url } } } }
-        stats { totalAmountOfComments totalAmountOfMirrors totalAmountOfCollects }
-        createdAt
+        timestamp
+        metadata { ... on ImageMetadata {
+          content title image { item }
+        } ... on TextOnlyMetadata { content } }
+        author { address username { localName } metadata { name picture } }
+        stats { reactions comments reposts quotes }
       }}
     }
   }`;
@@ -27,20 +29,20 @@ export async function fetchLensImages(env: Env, limit: number): Promise<UnifiedI
     if (!res?.ok) return results;
 
     const json = (await res.json()) as {
-      data?: { explorePublications?: { items: Array<Record<string, unknown>> } };
+      data?: { posts?: { items: Array<Record<string, unknown>> } };
     };
 
-    const items = json?.data?.explorePublications?.items ?? [];
+    const items = json?.data?.posts?.items ?? [];
     for (const item of items) {
       const meta_data = item.metadata as Record<string, unknown> | undefined;
       const image = meta_data?.image as Record<string, unknown> | undefined;
-      const imageUrl = (image?.original as Record<string, unknown> | undefined)?.url as
-        | string
-        | undefined;
+      const imageUrl = (image?.item as string) ?? '';
       if (!imageUrl) continue;
 
-      const profile = item.profile as Record<string, unknown> | undefined;
+      const profile = item.author as Record<string, unknown> | undefined;
       const stats = item.stats as Record<string, unknown> | undefined;
+      const authorMeta = profile?.metadata as Record<string, unknown> | undefined;
+      const username = profile?.username as Record<string, unknown> | undefined;
 
       results.push({
         id: `lens:${item.id as string}`,
@@ -48,30 +50,26 @@ export async function fetchLensImages(env: Env, limit: number): Promise<UnifiedI
         protocol: 'lens',
         imageUrl,
         fullImageUrl: imageUrl,
-        title: (meta_data?.content as string) ?? (meta_data?.name as string) ?? '',
+        title: (meta_data?.title as string) ?? (meta_data?.content as string) ?? '',
         author: {
-          id: `lens:${profile?.id as string}`,
-          displayName: (profile?.name as string) ?? (profile?.handle as string) ?? 'Lens Creator',
-          handle: profile?.handle as string,
-          avatarUrl: (
-            (profile?.picture as Record<string, unknown> | undefined)?.original as
-              | Record<string, unknown>
-              | undefined
-          )?.url as string,
+          id: `lens:${profile?.address as string}`,
+          displayName: (authorMeta?.name as string) ?? (username?.localName as string) ?? 'Lens Creator',
+          handle: username?.localName as string,
+          avatarUrl: (authorMeta?.picture as string) ?? '',
         },
         sourceBadge: meta.badge,
         sourceColor: meta.color,
         sourceLabel: meta.label,
         category: guessCategory(
-          (meta_data?.name as string) ?? '',
+          (meta_data?.title as string) ?? '',
           (meta_data?.tags as string[]) ?? [],
           'lens',
         ),
-        createdAt: new Date(item.createdAt as string).getTime(),
+        createdAt: new Date(item.timestamp as string).getTime(),
         aspectRatio: 4 / 3,
         likes: 0,
-        shares: (stats?.totalAmountOfMirrors as number) ?? 0,
-        comments: (stats?.totalAmountOfComments as number) ?? 0,
+        shares: (stats?.reposts as number) ?? 0,
+        comments: (stats?.comments as number) ?? 0,
         isNFT: false,
         tags: (meta_data?.tags as string[]) ?? [],
       });

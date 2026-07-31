@@ -707,7 +707,10 @@ export interface ActiveSession {
  * Cloudflare `KVNamespace` is assignable to this interface.
  */
 export interface KVNamespaceLike {
-  get(key: string, options?: { type?: 'text' | 'json' | 'arrayBuffer' | 'stream'; cacheTtl?: number }): Promise<string | null>;
+  get(
+    key: string,
+    options?: { type?: 'text' | 'json' | 'arrayBuffer' | 'stream'; cacheTtl?: number },
+  ): Promise<string | null>;
   put(
     key: string,
     value: string | ArrayBuffer | ArrayBufferView | ReadableStream | null,

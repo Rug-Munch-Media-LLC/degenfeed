@@ -18,13 +18,13 @@ import {
 } from '../utils';
 
 export const DEFAULT_RELAYS = [
+  'ws://127.0.0.1:8085',
   'wss://relay.damus.io',
   'wss://nos.lol',
   'wss://relay.primal.net',
   'wss://relay.nostr.band',
   'wss://nostr.wine',
   'wss://relay.snort.social',
-  'wss://nostr.wine',
   'wss://purplepag.es',
 ];
 
@@ -158,7 +158,9 @@ function fetchFromWebSocket(
                 {
                   kinds: [1],
                   limit: limit * 3,
-                  '#t': CRYPTO_HASHTAGS.map((t) => `#${t}`).slice(0, 10),
+                  // NIP-01 tag filters: the '#t' key matches the 't' tag
+                  // and the array holds the tag VALUES — no '#' prefix.
+                  '#t': CRYPTO_HASHTAGS.slice(0, 10),
                 },
               ];
         ws.send(JSON.stringify(['REQ', subId, ...filters_]));

@@ -79,6 +79,14 @@ docs/ENTERPRISE_DEPLOYMENT.md
 htmlcov/
 Thumbs.db
 
-apps/web/playwright-report/
+playwright-report/
 .env.bridge
 .git-blame-ignore-revs
+
+# tsc emit artifacts in SDK packages (source is .ts; main → ./src/index.ts)
+packages/farcaster-sdk/src/*.js
+packages/farcaster-sdk/src/*.d.ts
+packages/farcaster-sdk/src/*.map
+packages/lens-sdk/src/*.js
+packages/lens-sdk/src/*.d.ts
+packages/lens-sdk/src/*.map
