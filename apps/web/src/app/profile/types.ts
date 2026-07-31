@@ -8,6 +8,8 @@ export interface ResolvedIdentity {
   color: string;
   isPrimary: boolean;
   verified: boolean;
+  /** Total followers across protocols (used in profile header) */
+  followerCount?: number;
 }
 
 export interface ProfileStats {
@@ -15,6 +17,64 @@ export interface ProfileStats {
   followers: number;
   following: number;
   tipsReceived: number;
+  /** Followers keyed by protocol (e.g. { nostr: 120, farcaster: 80 }) */
+  followersByProtocol?: Record<string, number>;
+  /** Posts keyed by protocol */
+  postsByProtocol?: Record<string, number>;
+}
+
+/** Cross-protocol activity feed item */
+export interface ActivityItem {
+  id: string;
+  type: 'post' | 'live' | 'podcast' | 'tip' | 'coin' | 'reaction' | 'comment' | string;
+  protocol: string;
+  message: string;
+  timestamp: number;
+}
+
+/** Content performance widget data */
+export interface ContentPerformance {
+  period: string;
+  totalViews: number;
+  totalLikes: number;
+  totalShares: number;
+  engagementRate: number;
+  topPost?: {
+    text: string;
+    engagement: number;
+  };
+}
+
+/** Creator coin ticker data */
+export interface CreatorCoin {
+  ticker: string;
+  name: string;
+  price: number;
+  priceChange24h: number;
+}
+
+/** DAO membership badge */
+export interface DAOMembership {
+  id: string;
+  name: string;
+  chain: string;
+  votingPower?: number;
+}
+
+/** Discovered profile in search / suggestions */
+export interface DiscoveredProfile {
+  id: string;
+  displayName: string;
+  handle?: string;
+  avatarUrl?: string;
+  protocols?: string[];
+}
+
+/** Revenue stats widget data */
+export interface RevenueStats {
+  period: string;
+  totalRevenue: number;
+  revenueBySource: Record<string, number>;
 }
 
 export type ProfileTab = 'posts' | 'replies' | 'media' | 'likes' | 'podcast' | 'music';

@@ -8,11 +8,14 @@ import type {
 
 // ─── User-Controlled Feed Algorithm (deprecated) ───────────────────
 export type {
+  AlgorithmAuditEntry,
   AlgorithmContext,
   AlgorithmMode,
+  AlgorithmScoreBreakdown,
   AlgorithmWeights,
   NicheSelection,
   ProtocolWeights,
+  ReasonEntry,
   UserAlgorithmPreferences,
 } from './algorithm';
 export {

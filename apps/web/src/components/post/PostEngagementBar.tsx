@@ -10,7 +10,8 @@
  */
 
 import type { EngagementAction, EngagementMetrics } from '@degenfeed/types';
-import { type ContentVenue, type PastTip, TipMenu } from '../tip/TipMenu';
+import { TipMenu } from '../tip/TipMenu';
+import type { ContentVenue, PastTip } from '../tip/types';
 
 export function PostEngagementBar({
   liked,

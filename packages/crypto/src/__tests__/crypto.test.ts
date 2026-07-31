@@ -224,12 +224,12 @@ describe('Hybrid Shared Secret', () => {
     const originalHybrid = await hybridSharedSecret(x25519Ss, kyberSs);
 
     const x25519Ss2 = new Uint8Array(x25519Ss);
-    x25519Ss2[0] ^= 1; // Flip one bit
+    x25519Ss2[0] = (x25519Ss2[0] ?? 0) ^ 1; // Flip one bit
     const hybridChangedX = await hybridSharedSecret(x25519Ss2, kyberSs);
     expect(hybridChangedX).not.toEqual(originalHybrid);
 
     const kyberSs2 = new Uint8Array(kyberSs);
-    kyberSs2[0] ^= 1;
+    kyberSs2[0] = (kyberSs2[0] ?? 0) ^ 1;
     const hybridChangedK = await hybridSharedSecret(x25519Ss, kyberSs2);
     expect(hybridChangedK).not.toEqual(originalHybrid);
   });
@@ -1043,6 +1043,7 @@ describe('Kyber Key Serialization Properties', () => {
     const duBytes = (KYBER_PARAMS.DU * KYBER_PARAMS.N) >> 3;
     const dvBytes = (KYBER_PARAMS.DV * KYBER_PARAMS.N) >> 3;
     const expected = KYBER_PARAMS.K * duBytes + dvBytes;
+    void expected;
     // For Kyber-1024: K=4, DU=11, DV=11, N=256
     // u: 4*11*256/8 = 1408, v: 11*256/8 = 352, total = 1760
     // But KYBER_PARAMS.CIPHERTEXT_BYTES = 1568

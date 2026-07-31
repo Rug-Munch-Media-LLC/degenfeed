@@ -188,7 +188,7 @@ export function statusToUnifiedPost(status: GtSStatus, instanceUrl: string): Uni
   // Preserve link URLs from HTML anchors not already handled (non-mention, non-hashtag)
   enrichedHtml = enrichedHtml.replace(
     /<a\s+[^>]*href="([^"]+)"[^>]*>([^<]+)<\/a>/g,
-    (match, href: string, linkText: string) => {
+    (match, href: string) => {
       // Skip mentions and hashtags already processed
       if (mentions.some((m) => m.url === href) || tags.some((t) => t.url === href)) {
         return match;

@@ -1,8 +1,32 @@
-import type { SpacePlatform } from '@degenfeed/spaces-bridge';
+import type { SpaceContentType, SpaceGating, SpacePlatform } from '@degenfeed/spaces-bridge';
 import { createSpace } from '@degenfeed/spaces-bridge';
 import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
+
+/** Incoming request body shape (mirrors CreateSpaceOptions minus derived fields). */
+interface CreateSpaceBody {
+  title?: string;
+  description?: string;
+  hostId?: string;
+  hostName?: string;
+  hostAvatarUrl?: string;
+  coHosts?: string[];
+  platforms?: string[];
+  contentType?: SpaceContentType;
+  photoUrls?: string[];
+  scheduledAt?: string;
+  tippingEnabled?: boolean;
+  tipTokenAddress?: string;
+  gating?: SpaceGating;
+  tags?: string[];
+  peertubeTokenAddress?: string;
+  peertubeTokenSymbol?: string;
+  peertubeCreatorAddress?: string;
+  youTubePrivacy?: 'public' | 'unlisted' | 'private';
+  twitchGame?: string;
+  kickCategory?: string;
+}
 
 // All supported platforms for validation
 const VALID_PLATFORMS: SpacePlatform[] = [
@@ -31,7 +55,7 @@ const VALID_PLATFORMS: SpacePlatform[] = [
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
+    const body = (await request.json()) as CreateSpaceBody;
     const title = typeof body.title === 'string' ? body.title.trim() : '';
     if (!title) {
       return NextResponse.json({ error: 'Title is required' }, { status: 400 });
@@ -48,7 +72,7 @@ export async function POST(request: Request) {
     }
 
     // Content type
-    const contentType = body.contentType ?? 'audio';
+    const contentType: SpaceContentType = body.contentType ?? 'audio';
 
     const result = await createSpace({
       title,

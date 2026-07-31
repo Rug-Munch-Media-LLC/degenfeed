@@ -93,9 +93,29 @@ const nextConfig = {
     ];
   },
 
-  // ── Landing page at / — no redirect ──
+  // ── Host-aware root routing ──
+  // degenfeed.xyz/ → marketing landing page (page.tsx)
+  // app.degenfeed.xyz/ → Twitter-clone feed with left sidebar
+  async redirects() {
+    return [
+      {
+        source: '/',
+        has: [{ type: 'host', value: 'app.degenfeed.xyz' }],
+        destination: '/feed',
+        permanent: false,
+      },
+      {
+        source: '/',
+        has: [{ type: 'host', value: 'm.degenfeed.xyz' }],
+        destination: '/feed',
+        permanent: false,
+      },
+    ];
+  },
 
-  eslint: { ignoreDuringBuilds: true }, // TODO: Remove by 2026-08-01 — gradually fix lint errors
+  // Note: Next.js 16 removed the `eslint` config option. Linting runs via
+  // `biome check` in CI. Type errors are pre-existing; they are validated
+  // separately with `tsc --noEmit` in CI (see apps/web/package.json).
   typescript: { ignoreBuildErrors: true }, // Pre-existing type issues with Next.js 16 async params
 };
 

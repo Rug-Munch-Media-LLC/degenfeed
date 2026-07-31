@@ -10,7 +10,6 @@ import {
   ScrollToTop,
 } from '@degenfeed/ui';
 import dynamic from 'next/dynamic';
-import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../../components/AuthProvider';
 import { FeedComposer } from '../../components/FeedComposer';
@@ -28,7 +27,7 @@ import {
 } from '../../components/FeedTuner';
 import { FeedFilterBar, FeedTabBar } from '../../components/feed/FeedFilterBar';
 import {
-  FeedAuthGate,
+  FeedAuthBanner,
   FeedEmptyState,
   FeedErrorState,
   FeedLoadingSkeleton,
@@ -41,7 +40,7 @@ import { PullToRefresh } from '../../components/feed/PullToRefresh';
 import { SortSelector } from '../../components/feed/SortSelector';
 import { GettingStartedChecklist } from '../../components/GettingStartedChecklist';
 import { GuidedTour } from '../../components/GuidedTour';
-import { PostContextMenu, useContextMenu } from '../../components/PostContextMenu';
+import { PostContextMenu } from '../../components/PostContextMenu';
 import { useAnnouncer } from '../../components/ScreenReaderAnnouncer';
 import { useToast } from '../../components/Toast';
 import { useEdgeSwipeBack } from '../../hooks/useEdgeSwipeBack';
@@ -51,7 +50,6 @@ import { useHapticFeedback } from '../../hooks/useHapticFeedback';
 import { useNotifications } from '../../hooks/useNotifications';
 import { useRealtimeFeed } from '../../hooks/useRealtimeFeed';
 import { useReturningUser } from '../../hooks/useReturningUser';
-import { useScrollVelocity } from '../../hooks/useScrollVelocity';
 import { useSwipeTabs } from '../../hooks/useSwipeTabs';
 import { fetchWithSwr, getCached } from '../../lib/fetchWithCache';
 import { ReadingProgressBar } from './components/ReadingProgressBar';
@@ -98,7 +96,7 @@ interface FeedMeta {
 }
 
 export default function FeedPage() {
-  const { signedInProtocols, engage, publish, ready, walletAddress } = useAuth();
+  const { openSignIn, signedInProtocols, engage, publish, ready, walletAddress } = useAuth();
   const { showToast } = useToast();
   const isAdmin = walletAddress ? ADMIN_WALLETS.has(walletAddress.toLowerCase()) : false;
 
@@ -133,7 +131,6 @@ export default function FeedPage() {
   );
   useEdgeSwipeBack(() => window.history.back());
   const haptic = useHapticFeedback();
-  const _router = useRouter();
   const returnUser = useReturningUser();
 
   // ── Real-time feed updates via WebSocket ──
@@ -281,27 +278,6 @@ export default function FeedPage() {
     setActivePreset(presetId);
   }, []);
 
-  const _handleTopicToggle = useCallback(
-    (topic: string) => {
-      setTopicWeights((prev) => {
-        const next = { ...prev, [topic]: (prev[topic] ?? 0) > 0 ? 0 : 1 };
-        persistTopicWeights(next);
-        return next;
-      });
-    },
-    [persistTopicWeights],
-  );
-  const _handleTopicWeightChange = useCallback(
-    (topic: string, weight: number) => {
-      setTopicWeights((prev) => {
-        const next = { ...prev, [topic]: weight };
-        persistTopicWeights(next);
-        return next;
-      });
-    },
-    [persistTopicWeights],
-  );
-
   useEffect(() => {
     async function load() {
       try {
@@ -362,9 +338,6 @@ export default function FeedPage() {
   // Memoized feed content to optimize re-renders
   const memoizedFeed = useMemo(() => posts, [posts]);
 
-  const { handleContextMenu, closeContextMenu } = useContextMenu();
-  const _contextMenuHandlers = { handleContextMenu, closeContextMenu };
-
   useEffect(() => {
     if (contextMenuPostId) {
       const handler = (e: MouseEvent) => {
@@ -381,7 +354,6 @@ export default function FeedPage() {
 
   // useViewportPrefetch(posts, (post) => post);
   // useHoverPrefetch(posts, (post) => post);
-  const _scrollVelocity = useScrollVelocity();
 
   const announceFeed = useCallback((msg: string, priority?: 'polite' | 'assertive') => {
     announcerRef.current?.(msg, priority);
@@ -391,8 +363,14 @@ export default function FeedPage() {
     async (checkOnly = false) => {
       if (!checkOnly) setState('loading');
       try {
-        const endpoint = activeTab === 'for-you' ? '/api/feed/for-you' : '/api/feed/home';
-        const cacheKey = `feed_${activeTab}_${protocolFilter ?? 'all'}_${loadedLimit}_${hideLowQuality}_${allowNonCrypto}_${showOriginalContent}_${minEngagement}_${maxPerNiche}_${recencyWeight}_${engagementWeight}_${freshnessPreference}_${creatorDiversity}_${exploreRatio}_${algorithmTransparent}_${activePreset ?? 'none'}`;
+        // Anonymous users always read the public timeline. The personalized
+        // "for-you" endpoint is only used once the user has signed in.
+        const endpoint = hasSignedIn
+          ? activeTab === 'for-you'
+            ? '/api/feed/for-you'
+            : '/api/feed/home'
+          : '/api/feed/home';
+        const cacheKey = `feed_${hasSignedIn ? 'signed' : 'anon'}_${activeTab}_${protocolFilter ?? 'all'}_${loadedLimit}_${hideLowQuality}_${allowNonCrypto}_${showOriginalContent}_${minEngagement}_${maxPerNiche}_${recencyWeight}_${engagementWeight}_${freshnessPreference}_${creatorDiversity}_${exploreRatio}_${algorithmTransparent}_${activePreset ?? 'none'}`;
         const url = new URL(endpoint, window.location.origin);
         url.searchParams.set('limit', String(loadedLimit));
         const protocolsToFetch = protocolFilter
@@ -483,6 +461,7 @@ export default function FeedPage() {
     },
     [
       activeTab,
+      hasSignedIn,
       loadedLimit,
       hideLowQuality,
       hideThreshold,
@@ -508,6 +487,16 @@ export default function FeedPage() {
     fetchFeed(false);
   }, [fetchFeed]);
 
+  // Composing requires auth — anonymous visitors are prompted to sign in
+  // instead of hitting a dead-end composer with no connected protocols.
+  const handleComposeClick = useCallback(() => {
+    if (!hasSignedIn) {
+      openSignIn();
+      return;
+    }
+    setShowComposer(true);
+  }, [hasSignedIn, openSignIn]);
+
   const handleEngage = async (
     action: EngagementAction,
     postId: string,
@@ -515,6 +504,12 @@ export default function FeedPage() {
   ): Promise<{ ok: boolean; error?: string }> => {
     const post = posts.find((p) => p.id === postId);
     if (!post) return { ok: false, error: 'Post not found' };
+    // Bookmark/unbookmark work locally without an account; all other
+    // engagement (like, repost, reply) requires signing in first.
+    if (!hasSignedIn && action !== 'bookmark' && action !== 'unbookmark') {
+      openSignIn();
+      return { ok: false, error: 'Sign in to like, repost, or reply' };
+    }
     if (['like', 'unlike'].includes(action)) haptic.triggerLike();
     else if (['repost', 'unrepost'].includes(action)) haptic.triggerRepost();
     else if (['bookmark', 'unbookmark'].includes(action)) haptic.triggerBookmark();
@@ -569,7 +564,6 @@ export default function FeedPage() {
         <FeedLoadingSkeleton />
       </div>
     );
-  if (!hasSignedIn) return <FeedAuthGate />;
 
   return (
     <ErrorBoundary>
@@ -581,6 +575,7 @@ export default function FeedPage() {
               Admin mode
             </div>
           )}
+          {!hasSignedIn && <FeedAuthBanner onSignIn={openSignIn} />}
           {!isCompact && <GettingStartedChecklist />}
           {returnUser && <GuidedTour />}
 
@@ -638,7 +633,7 @@ export default function FeedPage() {
               <FeedLayoutSwitcher current={layout} onChange={setLayout} />
               <button
                 type="button"
-                onClick={() => setShowComposer(true)}
+                onClick={handleComposeClick}
                 className="flex h-8 w-8 items-center justify-center rounded-full bg-degen-500/20 text-degen-400 hover:bg-degen-500/30 transition-colors"
                 aria-label="Compose"
               >
@@ -759,7 +754,13 @@ export default function FeedPage() {
           )}
 
           {/* Composer */}
-          {showComposer && <FeedComposer signedInProtocols={{}} onPost={publish} />}
+          {showComposer && (
+            <FeedComposer
+              signedInProtocols={signedInProtocols}
+              onPost={publish}
+              onRequestSignIn={openSignIn}
+            />
+          )}
 
           {/* Tip modal */}
           {tipPost && (

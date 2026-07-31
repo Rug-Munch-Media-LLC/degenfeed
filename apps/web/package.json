@@ -55,6 +55,7 @@
     "@simplewebauthn/browser": "^11.0.0",
     "@telegram-apps/sdk": "^3.11.8",
     "dompurify": "^3.4.12",
+    "hls.js": "^1.6.16",
     "next": "^16.2.11",
     "qrcode.react": "^4.2.0",
     "react": "^19.2.8",

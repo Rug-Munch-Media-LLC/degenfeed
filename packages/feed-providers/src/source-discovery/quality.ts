@@ -104,7 +104,6 @@ export function estimateRelevance(name: string, description?: string): number {
   const nameLower = name.toLowerCase();
   const nameMatches = CRYPTO_KEYWORDS.filter((kw) => nameLower.includes(kw)).length;
 
-  const _totalKeywords = CRYPTO_KEYWORDS.length;
   return Math.min(1, matches * 0.05 + nameMatches * 0.15);
 }
 

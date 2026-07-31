@@ -14,7 +14,8 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
-import type { VineShortItem, VineCategory } from './useVineFeed';
+import type { VineShortItem } from './useVineFeed';
+import type { VineCategory } from './vineConstants';
 import { VINE_CATEGORY_META } from './vineConstants';
 
 // ─── Types ────────────────────────────────────────────────────────────────

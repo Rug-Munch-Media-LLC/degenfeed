@@ -77,17 +77,39 @@ export function FeedErrorState({ error, onRetry }: { error: string; onRetry?: ()
   );
 }
 
-export function FeedAuthGate() {
+/**
+ * Non-blocking sign-in prompt shown above the public timeline.
+ * Reading the feed never requires auth — signing in only unlocks
+ * posting, engaging, and personalization.
+ */
+export function FeedAuthBanner({ onSignIn }: { onSignIn: () => void }) {
   return (
-    <div className="mx-auto max-w-md py-20 text-center">
-      <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl border border-[var(--color-border)] bg-[var(--color-overlay)]">
-        <span className="text-3xl text-degen-400">◆</span>
+    <section
+      aria-label="Sign in to post and engage"
+      className="mb-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-4"
+    >
+      <div className="flex flex-col items-center gap-3 text-center sm:flex-row sm:text-left">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[var(--color-border)] bg-[var(--color-overlay)]">
+          <span className="text-lg text-degen-400" aria-hidden="true">
+            ◆
+          </span>
+        </div>
+        <div className="min-w-0 flex-1">
+          <h1 className="text-base font-bold text-[var(--color-fg)]">DegenFeed</h1>
+          <p className="mt-0.5 text-xs leading-relaxed text-[var(--color-muted)]">
+            Browsing the public timeline. Connect a wallet or sign in to post, like, and reply
+            across protocols.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onSignIn}
+          className="btn-primary inline-flex shrink-0 items-center justify-center gap-2 text-sm"
+        >
+          Connect Wallet
+        </button>
       </div>
-      <h1 className="text-2xl font-bold text-[var(--color-fg)]">DegenFeed</h1>
-      <p className="mt-2 text-sm text-[var(--color-muted)]">
-        Connect a wallet or sign in to see your cross-protocol feed.
-      </p>
-    </div>
+    </section>
   );
 }
 

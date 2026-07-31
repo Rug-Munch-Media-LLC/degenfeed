@@ -95,8 +95,8 @@ const GROUP_KEY_PREFIX = 'mls:key:';
 
 // ─── Base64url ─────────────────────────────────────────────────────────────
 
-function toBase64Url(buffer: ArrayBuffer): string {
-  const bytes = new Uint8Array(buffer);
+function toBase64Url(buffer: ArrayBuffer | Uint8Array): string {
+  const bytes = buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer);
   let binary = '';
   for (let i = 0; i < bytes.length; i++) {
     binary += String.fromCharCode(bytes[i]!);
@@ -104,7 +104,7 @@ function toBase64Url(buffer: ArrayBuffer): string {
   return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
-function fromBase64Url(str: string): Uint8Array {
+function fromBase64Url(str: string): Uint8Array<ArrayBuffer> {
   str = str.replace(/-/g, '+').replace(/_/g, '/');
   const padding = '='.repeat((4 - (str.length % 4)) % 4);
   const raw = atob(str + padding);
@@ -134,14 +134,14 @@ async function generateMlsKeyPair(): Promise<{
   const ecdhPrivate = await crypto.subtle.exportKey('jwk', ecdhKeyPair.privateKey);
 
   // Generate Kyber-1024 key
-  const { kyberKeyPair } = await import('./kyber-kem').catch(() => ({
-    kyberKeyPair: null as any,
+  const { generateKyberKeyPair } = await import('./kyber-kem').catch(() => ({
+    generateKyberKeyPair: null as any,
   }));
   let kyberPublic = null;
   let kyberSecret = null;
 
-  if (kyberKeyPair) {
-    const kp = await kyberKeyPair.generateKyberKeyPair();
+  if (generateKyberKeyPair) {
+    const kp = await generateKyberKeyPair();
     kyberPublic = toBase64Url(kp.publicKey);
     kyberSecret = toBase64Url(kp.secretKey);
   }
@@ -171,7 +171,7 @@ async function generateMlsKeyPair(): Promise<{
 async function deriveMlsSharedSecret(
   ourSecretKey: string,
   theirPublicKey: string,
-): Promise<Uint8Array> {
+): Promise<Uint8Array<ArrayBuffer>> {
   const theirData = JSON.parse(new TextDecoder().decode(fromBase64Url(theirPublicKey)));
   const ourData = JSON.parse(new TextDecoder().decode(fromBase64Url(ourSecretKey)));
 
@@ -200,13 +200,16 @@ async function deriveMlsSharedSecret(
   let kyberSecret = new Uint8Array(32);
   if (theirData.kyber && ourData.kyber) {
     try {
-      const { kyberEncapsulate, kyberDecapsulate } = await import('./kyber-kem');
+      const { kyberEncapsulate } = await import('./kyber-kem');
       const theirKyberPub = fromBase64Url(theirData.kyber);
-      const _ourKyberSec = fromBase64Url(ourData.kyber);
 
       // Hybrid: encapsulate with their Kyber key, derive from our side
       const { sharedSecret } = await kyberEncapsulate(theirKyberPub);
-      kyberSecret = sharedSecret;
+      kyberSecret = new Uint8Array(
+        sharedSecret.buffer as ArrayBuffer,
+        sharedSecret.byteOffset,
+        sharedSecret.byteLength,
+      );
     } catch {
       // Kyber not available, fall back to ECDH only
     }
@@ -237,11 +240,11 @@ async function deriveMlsSharedSecret(
  * Each member has their own sender chain in MLS.
  */
 async function ratchetSenderKey(
-  currentKey: Uint8Array,
+  currentKey: Uint8Array<ArrayBuffer>,
   index: number,
 ): Promise<{
-  messageKey: Uint8Array;
-  nextChainKey: Uint8Array;
+  messageKey: Uint8Array<ArrayBuffer>;
+  nextChainKey: Uint8Array<ArrayBuffer>;
 }> {
   const hmacKey = await crypto.subtle.importKey(
     'raw',
@@ -305,7 +308,8 @@ export async function createMlsGroup(
         );
         const pathKey = await deriveAesKey(sharedSecret);
         const encrypted = await aesEncrypt(pathKey, pathSecret);
-        encryptedPath[allMembers[j]?.toLowerCase()] = JSON.stringify(encrypted);
+        const memberId = allMembers[j]?.toLowerCase();
+        if (memberId) encryptedPath[memberId] = JSON.stringify(encrypted);
       }
     }
 
@@ -320,7 +324,7 @@ export async function createMlsGroup(
     }
 
     members.push({
-      walletAddress: allMembers[i]?.toLowerCase(),
+      walletAddress: allMembers[i]!.toLowerCase(),
       publicKey,
       encryptedPath,
       treeIndex: treeSize - 1 + i,
@@ -331,7 +335,7 @@ export async function createMlsGroup(
 
   // Build key tree
   for (let i = 0; i < members.length; i++) {
-    tree[treeSize - 1 + i] = members[i]?.publicKey;
+    tree[treeSize - 1 + i] = members[i]!.publicKey;
   }
 
   // Compute parent nodes (simplified linear tree)
@@ -629,7 +633,7 @@ export async function saveMlsGroup(env: Env, group: MlsGroup): Promise<void> {
 
 // ─── Cryptographic Helpers ─────────────────────────────────────────────────
 
-async function deriveAesKey(rawKey: Uint8Array): Promise<CryptoKey> {
+async function deriveAesKey(rawKey: Uint8Array<ArrayBuffer>): Promise<CryptoKey> {
   return crypto.subtle.importKey('raw', rawKey, { name: AES_ALG, length: 256 }, false, [
     'encrypt',
     'decrypt',
@@ -638,7 +642,7 @@ async function deriveAesKey(rawKey: Uint8Array): Promise<CryptoKey> {
 
 async function aesEncrypt(
   key: CryptoKey,
-  plaintext: Uint8Array,
+  plaintext: Uint8Array<ArrayBuffer>,
 ): Promise<{ ciphertext: string; iv: string }> {
   const iv = crypto.getRandomValues(new Uint8Array(IV_LENGTH));
   const encrypted = await crypto.subtle.encrypt(
@@ -652,7 +656,7 @@ async function aesEncrypt(
   };
 }
 
-async function aesDecrypt(key: CryptoKey, ciphertext: string, iv: string): Promise<Uint8Array> {
+async function aesDecrypt(key: CryptoKey, ciphertext: string, iv: string): Promise<Uint8Array<ArrayBuffer>> {
   const ct = fromBase64Url(ciphertext);
   const ivBytes = fromBase64Url(iv);
   const decrypted = await crypto.subtle.decrypt(
