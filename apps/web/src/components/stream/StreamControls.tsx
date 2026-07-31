@@ -58,6 +58,7 @@ export function StreamControls({
   onToggleAudioOnly,
   onToggleLowLatency,
   onToggleBandwidthSaver,
+  onShowSettings,
   onVolumeChange,
   onQualitySelect,
   onCycleSpeed,

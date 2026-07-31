@@ -7,7 +7,7 @@
 export type { TipButtonContext } from './TipButton';
 export { TipButton } from './TipButton';
 export { default as TipModal } from './TipModal';
-export type { ContentVenue, PastTip, TipMenuOption, TipMenuProps } from './TipMenu';
+export type { ContentVenue, PastTip, TipMenuOption, TipMenuProps } from './types';
 export { TipMenu } from './TipMenu';
 export type { EarningsDashboardProps, EarningsEntry, EarningsSummary } from './EarningsDashboard';
 export { EarningsDashboard } from './EarningsDashboard';

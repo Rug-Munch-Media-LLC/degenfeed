@@ -36,6 +36,9 @@ importers:
       '@telegram-apps/sdk':
         specifier: ^3.11.8
         version: 3.11.8(typescript@7.0.2)
+      hls.js:
+        specifier: ^1.6.16
+        version: 1.6.16
       swr:
         specifier: ^2.4.2
         version: 2.4.2(react@19.2.8)
@@ -178,6 +181,9 @@ importers:
       dompurify:
         specifier: ^3.4.12
         version: 3.4.12
+      hls.js:
+        specifier: ^1.6.16
+        version: 1.6.16
       next:
         specifier: ^16.2.11
         version: 16.2.11(@playwright/test@1.61.1)(@types/node@20.19.43)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -977,6 +983,9 @@ importers:
 
   packages/types:
     devDependencies:
+      '@cloudflare/workers-types':
+        specifier: ^5.20260724.1
+        version: 5.20260724.1
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -4661,6 +4670,9 @@ packages:
 
   hast-util-whitespace@3.0.0:
     resolution: {integrity: sha512-88JUN06ipLwsnv+dVn+OIYOvAuvBMy/Qoi6O7mQHxdPXpjy+Cd6xRkWwux7DKO+4sYILtLBRIKgsdpS2gQc7qw==}
+
+  hls.js@1.6.16:
+    resolution: {integrity: sha512-VSIRpLfRwlAAdGL4wiTucx2ScRipo0ed1FBatWkyt832jC4CReKstga6yIhYVwGu9LOBjuX9wzmRMeQdBJtzEA==}
 
   hono@4.12.32:
     resolution: {integrity: sha512-XcuyW9qE2kJn07PkecMOBd5Vq/hMy7mmGw+idz1yblbg9N17ijJODrvPkn7/dwL3Kulj8LcRJ69DLOWf91dRUg==}
@@ -9751,6 +9763,8 @@ snapshots:
   hast-util-whitespace@3.0.0:
     dependencies:
       '@types/hast': 3.0.5
+
+  hls.js@1.6.16: {}
 
   hono@4.12.32: {}
 

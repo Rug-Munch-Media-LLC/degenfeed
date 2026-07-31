@@ -42,9 +42,7 @@ const AES_ALG = 'AES-GCM' as const;
 const AES_KEY_LEN = 256;
 const IV_LENGTH = 12;
 const TAG_LENGTH = 128; // GCM tag bits
-const _HKDF_HASH = 'SHA-256' as const;
 const HKDF_BYTES = 32;
-const _DH_OUTPUT_BYTES = 32;
 const MAX_SKIP = 1000; // Max skipped message keys to keep (DoS protection)
 const RATCHET_KEY_LABEL = new TextEncoder().encode('degenfeed-double-ratchet-v1');
 
@@ -146,7 +144,6 @@ export interface PQKeyBundle {
 const KEY_BUNDLE_PREFIX = 'e2e:keybundle:';
 const SESSION_PREFIX = 'e2e:session:';
 const PREKEY_PREFIX = 'e2e:prekey:';
-const _DEVICE_PREFIX = 'e2e:device:';
 const KYBER_KEY_PREFIX = 'e2e:kyber:';
 const SECURE_ENCLAVE_PREFIX = 'e2e:enclave:';
 
@@ -159,8 +156,11 @@ const ENABLE_PQ = true; // Enable post-quantum hybrid mode
 
 // ─── Base64url Helpers ──────────────────────────────────────────────────────
 
-function toBase64Url(buffer: ArrayBuffer): string {
-  const bytes = new Uint8Array(buffer);
+/** ArrayBuffer-backed byte array (TS 5.7+ typed-array generics). */
+type Bytes = Uint8Array<ArrayBuffer>;
+
+function toBase64Url(buffer: ArrayBuffer | Uint8Array): string {
+  const bytes = buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer);
   let binary = '';
   for (let i = 0; i < bytes.length; i++) {
     binary += String.fromCharCode(bytes[i]!);
@@ -168,7 +168,7 @@ function toBase64Url(buffer: ArrayBuffer): string {
   return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
-function fromBase64Url(str: string): Uint8Array {
+function fromBase64Url(str: string): Bytes {
   str = str.replace(/-/g, '+').replace(/_/g, '/');
   const padding = '='.repeat((4 - (str.length % 4)) % 4);
   const raw = atob(str + padding);
@@ -179,7 +179,7 @@ function fromBase64Url(str: string): Uint8Array {
   return bytes;
 }
 
-function concatBytes(...arrays: Uint8Array[]): Uint8Array {
+function concatBytes(...arrays: Uint8Array[]): Bytes {
   const totalLen = arrays.reduce((sum, arr) => sum + arr.length, 0);
   const result = new Uint8Array(totalLen);
   let offset = 0;
@@ -232,11 +232,11 @@ async function importPrivateKey(jwk: JsonWebKey): Promise<CryptoKey> {
  * HKDF-SHA256 key derivation.
  */
 async function hkdf(
-  salt: Uint8Array,
-  ikm: Uint8Array,
-  info: Uint8Array,
+  salt: Bytes,
+  ikm: Bytes,
+  info: Bytes,
   length: number,
-): Promise<Uint8Array> {
+): Promise<Bytes> {
   // Expand via HMAC-SHA256
   const key = await crypto.subtle.importKey('raw', salt, { name: 'HMAC', hash: 'SHA-256' }, false, [
     'sign',
@@ -247,7 +247,6 @@ async function hkdf(
 
   // HKDF-Expand
   const result = new Uint8Array(length);
-  const _t: Uint8Array[] = [];
   const keyForExpand = await crypto.subtle.importKey(
     'raw',
     prk,
@@ -256,7 +255,7 @@ async function hkdf(
     ['sign'],
   );
 
-  let block: Uint8Array = new Uint8Array(0);
+  let block: Bytes = new Uint8Array(0);
   const n = Math.ceil(length / 32);
   for (let i = 1; i <= n; i++) {
     const input = concatBytes(block, info, new Uint8Array([i]));
@@ -270,7 +269,7 @@ async function hkdf(
 /**
  * Derive an AES-256-GCM key from a raw 32-byte key.
  */
-async function deriveAesKey(rawKey: Uint8Array): Promise<CryptoKey> {
+async function deriveAesKey(rawKey: Bytes): Promise<CryptoKey> {
   return crypto.subtle.importKey('raw', rawKey, { name: AES_ALG, length: AES_KEY_LEN }, false, [
     'encrypt',
     'decrypt',
@@ -282,8 +281,8 @@ async function deriveAesKey(rawKey: Uint8Array): Promise<CryptoKey> {
  */
 async function aesEncrypt(
   key: CryptoKey,
-  plaintext: Uint8Array,
-  aad?: Uint8Array,
+  plaintext: Bytes,
+  aad?: Bytes,
 ): Promise<{ ciphertext: string; iv: string }> {
   const iv = crypto.getRandomValues(new Uint8Array(IV_LENGTH));
   const encrypted = await crypto.subtle.encrypt(
@@ -305,8 +304,8 @@ async function aesDecrypt(
   key: CryptoKey,
   ciphertext: string,
   iv: string,
-  aad?: Uint8Array,
-): Promise<Uint8Array> {
+  aad?: Bytes,
+): Promise<Bytes> {
   const ct = fromBase64Url(ciphertext);
   const ivBytes = fromBase64Url(iv);
   const decrypted = await crypto.subtle.decrypt(
@@ -431,10 +430,9 @@ export async function x3dhInitiate(
   ourIdentityKey: CryptoKey,
   _ourIdentityJwk: JsonWebKey,
   theirBundle: KeyBundle,
-): Promise<{ sharedSecret: Uint8Array; usedOtp: boolean }> {
+): Promise<{ sharedSecret: Bytes; usedOtp: boolean }> {
   // Generate ephemeral key for this session
   const ephemeralKeyPair = await generateKeyPair();
-  const _ephemeralPublic = await exportPublicKey(ephemeralKeyPair.publicKey);
 
   const theirIdentityKey = await importPublicKey(theirBundle.identityKey);
   const theirSignedPreKey = await importPublicKey(theirBundle.signedPreKey);
@@ -460,8 +458,6 @@ export async function x3dhInitiate(
 
   // Concatenate DH outputs: DH1 || DH2 || DH3
   const dhConcat = concatBytes(new Uint8Array(dh1), new Uint8Array(dh2), new Uint8Array(dh3));
-
-  const _usedOtp = false;
 
   // DH4 = DH(EK_A, OPK_B) if available
   if (theirBundle.oneTimePreKeys && theirBundle.oneTimePreKeys.length > 0) {
@@ -489,7 +485,7 @@ export async function x3dhReceive(
   ourOneTimePreKey: CryptoKey | null,
   theirEphemeralKey: JsonWebKey,
   theirIdentityKeyJwk: JsonWebKey,
-): Promise<Uint8Array> {
+): Promise<Bytes> {
   const theirEphemeralKeyImported = await importPublicKey(theirEphemeralKey);
   const theirIdentityKey = await importPublicKey(theirIdentityKeyJwk);
 
@@ -525,7 +521,7 @@ export async function x3dhReceive(
 export async function initSession(
   ourIdentityKeyPair: CryptoKeyPair,
   theirIdentityKey: JsonWebKey,
-  sharedSecret: Uint8Array,
+  sharedSecret: Bytes,
 ): Promise<SessionState> {
   const ourIdentityJwk = await exportPublicKey(ourIdentityKeyPair.publicKey);
   const ephemeralPair = await generateKeyPair();
@@ -604,9 +600,9 @@ async function dhRatchet(
  * Symmetric ratchet: advance the chain key to get a new message key.
  * Uses HKDF to derive the message key + new chain key from the current chain key.
  */
-async function symmetricRatchet(chainKey: Uint8Array): Promise<{
-  messageKey: Uint8Array;
-  nextChainKey: Uint8Array;
+async function symmetricRatchet(chainKey: Bytes): Promise<{
+  messageKey: Bytes;
+  nextChainKey: Bytes;
 }> {
   // Chain key = HMAC-SHA256(chain_key, 0x01)
   const hmacKey = await crypto.subtle.importKey(
@@ -757,7 +753,7 @@ export async function ratchetDecrypt(
   }
 
   // Try to decrypt with the appropriate key
-  let messageKey: Uint8Array;
+  let messageKey: Bytes;
   let fromSkipped = false;
 
   // Check skipped key store first
@@ -1279,7 +1275,7 @@ export async function hybridX3dhInitiate(
   theirBundle: KeyBundle,
   env: Env,
   peerId: string,
-): Promise<{ sharedSecret: Uint8Array; usedOtp: boolean }> {
+): Promise<{ sharedSecret: Bytes; usedOtp: boolean }> {
   // Step 1: Standard X3DH
   const x3dh = await x3dhInitiate(ourIdentityKey, ourIdentityJwk, theirBundle);
 
@@ -1288,10 +1284,14 @@ export async function hybridX3dhInitiate(
   try {
     const theirKyberKey = await getKyberPublicKey(env, peerId);
     if (theirKyberKey && ENABLE_PQ) {
-      const { kyberEncapsulate, hybridSharedSecret } = await import('./kyber-kem');
+      const { kyberEncapsulate } = await import('./kyber-kem');
       const kyberPub = fromBase64Url(theirKyberKey.kyberPublicKey);
       const encapsulated = await kyberEncapsulate(kyberPub);
-      kyberSs = encapsulated.sharedSecret;
+      kyberSs = new Uint8Array(
+        encapsulated.sharedSecret.buffer as ArrayBuffer,
+        encapsulated.sharedSecret.byteOffset,
+        encapsulated.sharedSecret.byteLength,
+      );
     }
   } catch {
     // PQ not available — fall back to X25519 only (still secure)

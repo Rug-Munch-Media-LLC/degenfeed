@@ -179,7 +179,7 @@ const KYBER_ZETAS_INV: number[] = [
  * We use SHA-256 with domain separation as an approximation.
  * In production, use @noble/hashes/sha3 for true SHA-3.
  */
-async function hashSHA256(data: Uint8Array): Promise<Uint8Array> {
+async function hashSHA256(data: Uint8Array<ArrayBuffer>): Promise<Uint8Array<ArrayBuffer>> {
   const hash = await crypto.subtle.digest('SHA-256', data);
   return new Uint8Array(hash);
 }
@@ -189,7 +189,7 @@ async function hashSHA256(data: Uint8Array): Promise<Uint8Array> {
  * Approximated using HKDF expansion for variable-length output.
  * For production, use a proper SHAKE implementation.
  */
-async function shake256(input: Uint8Array, outputLen: number): Promise<Uint8Array> {
+async function shake256(input: Uint8Array<ArrayBuffer>, outputLen: number): Promise<Uint8Array<ArrayBuffer>> {
   // This is a simplified SHAKE using HKDF-expand as PRF.
   // In production, use @noble/hashes/sha3 for genuine SHAKE-256.
   const prk = await hashSHA256(input);
@@ -359,7 +359,6 @@ export async function generateKyberKeyPair(): Promise<KyberKeyPair> {
   // Generate secret vector s (small coefficients)
   const sPoly: number[][] = [];
   for (let i = 0; i < KYBER_PARAMS.K; i++) {
-    const _nonce = new Uint8Array([i]);
     const seed = await shake256(sigma, 256);
     const poly = cbd(seed, KYBER_PARAMS.ETA1);
     sPoly.push(ntt(poly));

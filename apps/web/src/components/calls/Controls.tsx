@@ -1,6 +1,6 @@
 'use client';
 
-import type { MediaStream } from 'react';
+/* MediaStream is a DOM global type (lib.dom) — no import needed. */
 
 /* ─── Controls Bar Props ──────────────────────────────────────────── */
 

@@ -700,9 +700,55 @@ export interface ActiveSession {
 }
 
 /**
+ * Structural subset of Cloudflare `KVNamespace`.
+ *
+ * Shared packages must stay dependency-free of `@cloudflare/workers-types`,
+ * so we declare the operations the monorepo actually uses. The real
+ * Cloudflare `KVNamespace` is assignable to this interface.
+ */
+export interface KVNamespaceLike {
+  get(key: string, options?: { type?: 'text' | 'json' | 'arrayBuffer' | 'stream'; cacheTtl?: number }): Promise<string | null>;
+  put(
+    key: string,
+    value: string | ArrayBuffer | ArrayBufferView | ReadableStream | null,
+    options?: { expiration?: number; expirationTtl?: number; metadata?: unknown },
+  ): Promise<void>;
+  delete(key: string): Promise<void>;
+}
+
+/**
  * Generic environment bindings interface.
  * Used by packages that operate in Cloudflare Workers or similar environments.
+ *
+ * Declares the Cloudflare KV namespaces and common secrets consumed across
+ * the monorepo so `env.<binding>` is typed instead of `unknown`.
+ * Remaining dynamic bindings fall through to the index signature.
  */
 export interface Env {
+  // ─── Cloudflare KV namespaces ──────────────────────────────────────────────
+  CACHE?: KVNamespaceLike;
+  CONTENT_LIBRARY?: KVNamespaceLike;
+  CONTENT_STORE?: KVNamespaceLike;
+  IDENTITIES?: KVNamespaceLike;
+  SUBSCRIPTIONS?: KVNamespaceLike;
+  GOVERNANCE?: KVNamespaceLike;
+  PLATFORM_ACCOUNTS?: KVNamespaceLike;
+  SHORTS?: KVNamespaceLike;
+  CUSTOM_FEEDS?: KVNamespaceLike;
+  REPUTATION?: KVNamespaceLike;
+  SPACES?: KVNamespaceLike;
+  DEDUP?: KVNamespaceLike;
+  REPORTS?: KVNamespaceLike;
+  STREAMS?: KVNamespaceLike;
+  SEEN?: KVNamespaceLike;
+  BOOKMARKS?: KVNamespaceLike;
+  VIDEO_STORAGE_BINDING?: KVNamespaceLike;
+  // ─── Common string secrets / config ────────────────────────────────────────
+  AUTH_SECRET?: string;
+  NOSTR_PRIVATE_KEY?: string;
+  BSKY_ACCESS_TOKEN?: string;
+  BSKY_DID?: string;
+  TELEGRAM_BOT_TOKEN?: string;
+  GOTOSOCIAL_INSTANCE_URL?: string;
   [key: string]: unknown;
 }

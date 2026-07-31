@@ -21,9 +21,7 @@
     "allowSyntheticDefaultImports": true,
     "incremental": true,
     "baseUrl": ".",
-    "paths": {
-      "@degenfeed/*": ["../../packages/*/src", "../../apps/*/src"]
-    }
+    "paths": {}
   },
   "exclude": ["node_modules", "**/dist", "**/.next", "**/.turbo", "**/coverage"]
 }

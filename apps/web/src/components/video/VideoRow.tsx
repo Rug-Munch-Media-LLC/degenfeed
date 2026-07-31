@@ -29,6 +29,7 @@ interface VideoRowProps {
 
 export function VideoRow({
   title,
+  subtitle,
   videos,
   href,
   size = 'md',

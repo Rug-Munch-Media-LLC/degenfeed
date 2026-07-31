@@ -117,9 +117,6 @@ async function inspectFeed(
       }
     }
 
-    // Count total entries
-    const _totalEntries = (text.match(/<(item|entry)>/g) ?? []).length;
-
     return {
       recentPosts,
       lastPostDate,

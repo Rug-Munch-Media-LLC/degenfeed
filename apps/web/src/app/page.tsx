@@ -908,7 +908,7 @@ export default function LandingPage() {
             <Link href="https://social.degenfeed.xyz">Social</Link>
             <Link href="https://blog.degenfeed.xyz">Blog</Link>
             <Link href="https://docs.degenfeed.xyz">Docs</Link>
-            <Link href="https://app.degenfeed.xyz" className="header-cta">
+            <Link href="https://app.degenfeed.xyz/feed" className="header-cta">
               Launch App
               <svg
                 width="16"
@@ -926,7 +926,7 @@ export default function LandingPage() {
               </svg>
             </Link>
             <Link
-              href="https://app.degenfeed.xyz"
+              href="https://app.degenfeed.xyz/feed"
               className="header-mobile-cta"
               aria-label="Launch App"
             >
@@ -972,7 +972,7 @@ export default function LandingPage() {
           </p>
 
           <div className="hero-cta">
-            <Link href="https://app.degenfeed.xyz" className="btn btn-primary">
+            <Link href="https://app.degenfeed.xyz/feed" className="btn btn-primary">
               Launch App
               <svg
                 width="20"
@@ -1143,7 +1143,7 @@ export default function LandingPage() {
             Built for the community, forever.
           </p>
           <div className="btns">
-            <Link href="https://app.degenfeed.xyz" className="btn btn-primary">
+            <Link href="https://app.degenfeed.xyz/feed" className="btn btn-primary">
               Launch App
               <svg
                 width="20"
@@ -1202,7 +1202,7 @@ export default function LandingPage() {
             </div>
             <div className="footer-col">
               <h4>Product</h4>
-              <a href="https://app.degenfeed.xyz">Launch App</a>
+              <a href="https://app.degenfeed.xyz/feed">Launch App</a>
               <a href="https://docs.degenfeed.xyz">Documentation</a>
               <a href="https://status.degenfeed.xyz">Status</a>
               <a href="https://blog.degenfeed.xyz">Blog</a>

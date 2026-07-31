@@ -46,7 +46,10 @@ export async function GET(request: Request) {
       return NextResponse.json({ found: false }, { status: 200 });
     }
 
-    const coinId = markets[0].id;
+    const coinId = markets[0]?.id;
+    if (!coinId) {
+      return NextResponse.json({ found: false }, { status: 200 });
+    }
 
     // Step 2: Get full coin details
     const detailRes = await fetch(
