@@ -189,7 +189,10 @@ async function hashSHA256(data: Uint8Array<ArrayBuffer>): Promise<Uint8Array<Arr
  * Approximated using HKDF expansion for variable-length output.
  * For production, use a proper SHAKE implementation.
  */
-async function shake256(input: Uint8Array<ArrayBuffer>, outputLen: number): Promise<Uint8Array<ArrayBuffer>> {
+async function shake256(
+  input: Uint8Array<ArrayBuffer>,
+  outputLen: number,
+): Promise<Uint8Array<ArrayBuffer>> {
   // This is a simplified SHAKE using HKDF-expand as PRF.
   // In production, use @noble/hashes/sha3 for genuine SHAKE-256.
   const prk = await hashSHA256(input);

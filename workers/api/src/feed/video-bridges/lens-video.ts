@@ -7,7 +7,18 @@
 
 import type { UnifiedVideo } from '../video-aggregator';
 
-const LENS_API = 'https://api-v2.lens.dev';
+const LENS_API = 'https://api.lens.xyz/graphql';
+
+const LENS_POST_VIDEO_FIELDS = `
+  id timestamp
+  metadata {
+    ... on VideoMetadata { content title video { item } }
+    ... on ImageMetadata { content image { item } }
+    ... on TextOnlyMetadata { content }
+  }
+  author { address username { localName } metadata { name bio picture } }
+  stats { reactions comments reposts quotes }
+`;
 
 export async function fetchLensChannelVideos(
   profileId: string,
@@ -15,13 +26,8 @@ export async function fetchLensChannelVideos(
 ): Promise<UnifiedVideo[]> {
   try {
     const query = `query {
-      publications(request: {profileId: "${profileId}", publicationTypes: [POST], limit: 20}) {
-        items { __typename ... on Post {
-          id
-          metadata { name description content image { original { url } } media { original { url mimeType } } }
-          stats { totalAmountOfViews totalAmountOfMirrors }
-          createdAt
-        }}
+      posts(request: {filter: {authors: ["${profileId}"], postTypes: [ROOT]}, pageSize: FIFTY}) {
+        items { __typename ... on Post ${LENS_POST_VIDEO_FIELDS} }
       }
     }`;
 
@@ -33,44 +39,46 @@ export async function fetchLensChannelVideos(
     if (!res.ok) return [];
 
     const json = (await res.json()) as {
-      data?: { publications?: { items: Array<Record<string, unknown>> } };
+      data?: { posts?: { items: Array<Record<string, unknown>> } };
     };
 
-    const items = json?.data?.publications?.items ?? [];
+    const items = json?.data?.posts?.items ?? [];
     return items
       .filter((item: Record<string, unknown>) => {
-        const media = (item.metadata as Record<string, unknown> | undefined)?.media as
-          | Array<Record<string, unknown>>
+        const video = (item.metadata as Record<string, unknown> | undefined)?.video as
+          | Record<string, unknown>
           | undefined;
-        return media?.some((m) => (m.mimeType as string)?.startsWith('video/'));
+        return Boolean(video?.item);
       })
       .map((item: Record<string, unknown>) => {
         const meta = item.metadata as Record<string, unknown> | undefined;
-        const media = meta?.media as Array<Record<string, unknown>> | undefined;
-        const video = media?.find((m) => (m.mimeType as string)?.startsWith('video/'));
+        const video = meta?.video as Record<string, unknown> | undefined;
         const image = meta?.image as Record<string, unknown> | undefined;
         const stats = item.stats as Record<string, unknown> | undefined;
+        const author = item.author as Record<string, unknown> | undefined;
+        const authorMeta = author?.metadata as Record<string, unknown> | undefined;
+        const username = author?.username as Record<string, unknown> | undefined;
         const pubId = item.id as string;
+        const publishedAt = (item.timestamp as string) ?? new Date().toISOString();
 
         return {
           id: `lens:${pubId}`,
-          title: (meta?.name as string) ?? 'Lens Video',
-          description: (meta?.content as string) ?? (meta?.description as string) ?? '',
-          thumbnail:
-            ((image?.original as Record<string, unknown> | undefined)?.url as string) ?? '',
-          url: ((video?.original as Record<string, unknown> | undefined)?.url as string) ?? '',
+          title: (meta?.title as string) ?? 'Lens Video',
+          description: (meta?.content as string) ?? '',
+          thumbnail: (image?.item as string) ?? '',
+          url: (video?.item as string) ?? '',
           duration: 0,
           platform: 'lens' as const,
           platformLabel: 'Lens',
           platformColor: '#00501e',
-          creatorName: 'Lens Creator',
-          creatorId: profileId,
-          creatorAvatar: '',
-          creatorUrl: `https://lenster.xyz/u/${profileId}`,
-          viewCount: Number((stats?.totalAmountOfViews as number) ?? 0),
+          creatorName: (authorMeta?.name as string) ?? 'Lens Creator',
+          creatorId: (author?.address as string) ?? profileId,
+          creatorAvatar: (authorMeta?.picture as string) ?? '',
+          creatorUrl: `https://hey.xyz/u/${(username?.localName as string) ?? profileId}`,
+          viewCount: Number((stats?.reactions as number) ?? 0),
           likeCount: 0,
-          publishedAt: item.createdAt as string,
-          publishedMs: new Date(item.createdAt as string).getTime(),
+          publishedAt,
+          publishedMs: new Date(publishedAt).getTime(),
           category: 'entertainment',
           tags: ['lens', 'video'],
           isShort: true,
@@ -86,13 +94,8 @@ export async function fetchLensChannelVideos(
 export async function fetchLensTrendingVideos(_category: string): Promise<UnifiedVideo[]> {
   try {
     const query = `query {
-      explorePublications(request: {sortCriteria: TOP_COMMENTED, limit: 20}) {
-        items { __typename ... on Post {
-          id
-          metadata { name description content image { original { url } } media { original { url mimeType } } }
-          stats { totalAmountOfViews totalAmountOfMirrors }
-          createdAt
-        }}
+      posts(request: {filter: {postTypes: [ROOT]}, pageSize: FIFTY}) {
+        items { __typename ... on Post ${LENS_POST_VIDEO_FIELDS} }
       }
     }`;
 
@@ -104,43 +107,45 @@ export async function fetchLensTrendingVideos(_category: string): Promise<Unifie
     if (!res.ok) return [];
 
     const json = (await res.json()) as {
-      data?: { explorePublications?: { items: Array<Record<string, unknown>> } };
+      data?: { posts?: { items: Array<Record<string, unknown>> } };
     };
 
-    const items = json?.data?.explorePublications?.items ?? [];
+    const items = json?.data?.posts?.items ?? [];
     return items
       .filter((item: Record<string, unknown>) => {
-        const media = (item.metadata as Record<string, unknown> | undefined)?.media as
-          | Array<Record<string, unknown>>
+        const video = (item.metadata as Record<string, unknown> | undefined)?.video as
+          | Record<string, unknown>
           | undefined;
-        return media?.some((m) => (m.mimeType as string)?.startsWith('video/'));
+        return Boolean(video?.item);
       })
       .map((item: Record<string, unknown>) => {
         const meta = item.metadata as Record<string, unknown> | undefined;
-        const media = meta?.media as Array<Record<string, unknown>> | undefined;
-        const video = media?.find((m) => (m.mimeType as string)?.startsWith('video/'));
+        const video = meta?.video as Record<string, unknown> | undefined;
         const image = meta?.image as Record<string, unknown> | undefined;
         const stats = item.stats as Record<string, unknown> | undefined;
+        const author = item.author as Record<string, unknown> | undefined;
+        const authorMeta = author?.metadata as Record<string, unknown> | undefined;
+        const username = author?.username as Record<string, unknown> | undefined;
+        const publishedAt = (item.timestamp as string) ?? new Date().toISOString();
 
         return {
           id: `lens:${item.id as string}`,
-          title: (meta?.name as string) ?? 'Lens Video',
+          title: (meta?.title as string) ?? 'Lens Video',
           description: (meta?.content as string) ?? '',
-          thumbnail:
-            ((image?.original as Record<string, unknown> | undefined)?.url as string) ?? '',
-          url: ((video?.original as Record<string, unknown> | undefined)?.url as string) ?? '',
+          thumbnail: (image?.item as string) ?? '',
+          url: (video?.item as string) ?? '',
           duration: 0,
           platform: 'lens' as const,
           platformLabel: 'Lens',
           platformColor: '#00501e',
-          creatorName: 'Lens Creator',
-          creatorId: 'lens:unknown',
-          creatorAvatar: '',
-          creatorUrl: '',
-          viewCount: Number((stats?.totalAmountOfViews as number) ?? 0),
+          creatorName: (authorMeta?.name as string) ?? 'Lens Creator',
+          creatorId: (author?.address as string) ?? 'lens:unknown',
+          creatorAvatar: (authorMeta?.picture as string) ?? '',
+          creatorUrl: `https://hey.xyz/u/${(username?.localName as string) ?? 'unknown'}`,
+          viewCount: Number((stats?.reactions as number) ?? 0),
           likeCount: 0,
-          publishedAt: item.createdAt as string,
-          publishedMs: new Date(item.createdAt as string).getTime(),
+          publishedAt,
+          publishedMs: new Date(publishedAt).getTime(),
           category: 'entertainment',
           tags: ['lens', 'video'],
           isShort: true,
@@ -155,58 +160,58 @@ export async function fetchLensTrendingVideos(_category: string): Promise<Unifie
 
 export async function searchLensVideos(query: string): Promise<UnifiedVideo[]> {
   try {
-    const gqlQuery = `query {
-      search(request: {query: "${query.replace(/"/g, '\\"')}", type: PUBLICATION, limit: 10}) {
-        items { __typename ... on Post {
-          id
-          metadata { name description media { original { url mimeType } } }
-          createdAt
-        }}
+    const gqlQuery = `query($q:String!) {
+      posts(request: {filter: {searchQuery: $q, postTypes: [ROOT]}, pageSize: FIFTY}) {
+        items { __typename ... on Post ${LENS_POST_VIDEO_FIELDS} }
       }
     }`;
 
     const res = await fetch(LENS_API, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ query: gqlQuery }),
+      body: JSON.stringify({ query: gqlQuery, variables: { q: query } }),
     });
     if (!res.ok) return [];
 
     const json = (await res.json()) as {
-      data?: { search?: { items: Array<Record<string, unknown>> } };
+      data?: { posts?: { items: Array<Record<string, unknown>> } };
     };
 
-    const items = json?.data?.search?.items ?? [];
+    const items = json?.data?.posts?.items ?? [];
     return items
       .filter((item: Record<string, unknown>) => {
-        const media = (item.metadata as Record<string, unknown> | undefined)?.media as
-          | Array<Record<string, unknown>>
+        const video = (item.metadata as Record<string, unknown> | undefined)?.video as
+          | Record<string, unknown>
           | undefined;
-        return media?.some((m) => (m.mimeType as string)?.startsWith('video/'));
+        return Boolean(video?.item);
       })
       .map((item: Record<string, unknown>) => {
         const meta = item.metadata as Record<string, unknown> | undefined;
-        const media = meta?.media as Array<Record<string, unknown>> | undefined;
-        const video = media?.find((m) => (m.mimeType as string)?.startsWith('video/'));
+        const video = meta?.video as Record<string, unknown> | undefined;
+        const image = meta?.image as Record<string, unknown> | undefined;
+        const author = item.author as Record<string, unknown> | undefined;
+        const authorMeta = author?.metadata as Record<string, unknown> | undefined;
+        const username = author?.username as Record<string, unknown> | undefined;
+        const publishedAt = (item.timestamp as string) ?? new Date().toISOString();
 
         return {
           id: `lens:${item.id as string}`,
-          title: (meta?.name as string) ?? 'Lens Video',
-          description: '',
-          thumbnail: '',
-          url: ((video?.original as Record<string, unknown> | undefined)?.url as string) ?? '',
+          title: (meta?.title as string) ?? 'Lens Video',
+          description: (meta?.content as string) ?? '',
+          thumbnail: (image?.item as string) ?? '',
+          url: (video?.item as string) ?? '',
           duration: 0,
           platform: 'lens' as const,
           platformLabel: 'Lens',
           platformColor: '#00501e',
-          creatorName: 'Lens Creator',
-          creatorId: 'lens:search',
-          creatorAvatar: '',
-          creatorUrl: '',
+          creatorName: (authorMeta?.name as string) ?? 'Lens Creator',
+          creatorId: (author?.address as string) ?? 'lens:search',
+          creatorAvatar: (authorMeta?.picture as string) ?? '',
+          creatorUrl: `https://hey.xyz/u/${(username?.localName as string) ?? 'unknown'}`,
           viewCount: 0,
           likeCount: 0,
-          publishedAt: item.createdAt as string,
-          publishedMs: new Date(item.createdAt as string).getTime(),
+          publishedAt,
+          publishedMs: new Date(publishedAt).getTime(),
           category: 'entertainment',
           tags: ['lens', 'video'],
           isShort: true,

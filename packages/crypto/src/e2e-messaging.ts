@@ -231,12 +231,7 @@ async function importPrivateKey(jwk: JsonWebKey): Promise<CryptoKey> {
 /**
  * HKDF-SHA256 key derivation.
  */
-async function hkdf(
-  salt: Bytes,
-  ikm: Bytes,
-  info: Bytes,
-  length: number,
-): Promise<Bytes> {
+async function hkdf(salt: Bytes, ikm: Bytes, info: Bytes, length: number): Promise<Bytes> {
   // Expand via HMAC-SHA256
   const key = await crypto.subtle.importKey('raw', salt, { name: 'HMAC', hash: 'SHA-256' }, false, [
     'sign',

@@ -5,9 +5,10 @@
  * Rate Limit: 60 requests/10 minutes (unauthenticated fallback)
  *
  * Fetches Reddit content via multiple strategies:
- * 1. PRIMARY: OAuth2-authenticated Reddit JSON API (600 req/10min)
- * 2. FALLBACK: Direct Reddit JSON API (rate-limited, 800ms delay between requests)
- * 3. THIRD: Reddit RSS feeds (works when JSON API is blocked)
+ * 1. PRIMARY: Reddit RSS feeds (www.reddit.com/r/{sub}/hot/.rss) — no auth,
+ *    works from datacenter IPs where the JSON API is CDN-blocked
+ * 2. SECONDARY: OAuth2-authenticated Reddit JSON API (600 req/10min)
+ * 3. TERTIARY: Direct Reddit JSON API (rate-limited, 800ms delay between requests)
  * 4. LAST RESORT: Self-hosted Redlib instance (port 8281, often blocked by Reddit CDN)
  *
  * With OAuth2 configured (REDDIT_CLIENT_ID, REDDIT_CLIENT_SECRET, REDDIT_USERNAME,
@@ -140,12 +141,90 @@ export function guessNiches(text: string, subreddit: string): string[] {
 
 // ─── Fetch from Redlib ───────────────────────────────────────────────
 
-async function fetchFromRedlib(_subreddit: string, _limit: number): Promise<UnifiedPost[]> {
-  // Redlib is unreliable due to Reddit rate-limiting. Use direct Reddit JSON API instead.
-  return [];
+/**
+ * Fetch posts from the self-hosted Redlib instance (default 127.0.0.1:8281).
+ *
+ * Redlib mirrors Reddit's JSON shape: { data: { children: [{ data }] } }.
+ * It is often blocked by Reddit's CDN (upstream returns an HTML block page
+ * which fails JSON parsing), so this is a genuine last resort — but it is
+ * still worth attempting because the instance is local and zero-cost.
+ */
+async function fetchFromRedlib(subreddit: string, limit: number): Promise<UnifiedPost[]> {
+  try {
+    const redlibBase = process.env.REDLIB_URL || 'http://127.0.0.1:8281';
+    const url = `${redlibBase}/r/${encodeURIComponent(subreddit)}/hot.json?limit=${Math.min(limit, 25)}`;
+    const res = await $fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; DegenFeed-Bridge/0.1; +https://degenfeed.xyz)',
+        Accept: 'application/json',
+      },
+      signal: AbortSignal.timeout(4000),
+    });
+    if (!res.ok) return [];
+
+    const text = await res.text();
+    // Redlib may return an HTML error page when Reddit blocks its upstream.
+    if (!text.trim().startsWith('{')) return [];
+
+    const data = (JSON.parse(text) as {
+      data?: { children?: Array<{ data: Record<string, unknown> }> };
+    }) ?? {};
+    if (!data.data?.children) return [];
+
+    return data.data.children
+      .slice(0, limit)
+      .map((child, i) => {
+        const d = child.data;
+        const title = (d.title as string) || '';
+        const author = (d.author as string) || 'unknown';
+        const score = (d.score as number) || 0;
+        const comments = (d.num_comments as number) || 0;
+        const created = ((d.created_utc as number) || 0) * 1000;
+        const link = (d.url as string) || '';
+        const sub = (d.subreddit as string) || subreddit;
+
+        if (!title) return null;
+
+        return {
+          id: `reddit:${sub}:redlib_${(d.id as string) || i}`,
+          protocol: 'reddit' as const,
+          author: {
+            id: `reddit:u/${author}`,
+            primary: { protocol: 'reddit' as const, id: author },
+            handles: { reddit: `u/${author}` },
+            displayName: author,
+            bio: `Reddit user on r/${sub}`,
+            avatarUrl: '',
+            followerCount: 0,
+            followingCount: 0,
+            links: [{ label: 'subreddit', url: `https://reddit.com/r/${sub}` }],
+            keys: {},
+          },
+          text: title,
+          embeds: link ? [{ kind: 'link', url: link }] : [],
+          contentType: link ? 'link' : 'text',
+          createdAt: created || Date.now() - i * 600000,
+          metrics: { likes: score, reposts: 0, replies: comments, quotes: 0, views: 0 },
+          engagement: {
+            viewerLiked: false,
+            viewerReposted: false,
+            viewerBookmarked: false,
+            raw: { likes: score, reposts: 0, replies: comments, quotes: 0 },
+          },
+          raw: d,
+          niches: guessNiches(title, sub),
+        };
+      })
+      .filter(Boolean) as UnifiedPost[];
+  } catch {
+    return [];
+  }
 }
 
-// ─── Fallback: Reddit RSS feeds ──────────────────────────────────────
+// ─── Primary: Reddit RSS feeds ───────────────────────────────────────
+// Verified working from this host (2026-07-31): Reddit serves valid Atom
+// for /r/{sub}/hot/.rss with a browser-like UA, and does NOT require auth.
+// Requests must be spaced out — Reddit aggressively rate-limits bursts.
 
 async function fetchFromRedditRss(subreddit: string, limit: number): Promise<UnifiedPost[]> {
   try {
@@ -155,7 +234,7 @@ async function fetchFromRedditRss(subreddit: string, limit: number): Promise<Uni
         headers: {
           'User-Agent': 'Mozilla/5.0 (compatible; DegenFeed-Bridge/0.1; +https://degenfeed.xyz)',
         },
-        signal: AbortSignal.timeout(5000),
+        signal: AbortSignal.timeout(3500),
       },
     );
     if (!res.ok) return [];
@@ -419,23 +498,44 @@ export const schema: SchemaGuard = {
 };
 
 export async function fetchRedditPosts(limit = 20): Promise<UnifiedPost[]> {
-  // Rate limit: 600 requests/10 minutes (OAuth), 60 requests/10 minutes (unauthenticated)
-  if (!checkRateLimit('reddit', { maxRequests: 600, windowMs: 600_000 })) {
+  // Reddit unauthenticated limit: ~60 requests/10 min per IP. Keep our own
+  // in-process budget far below that so bursts don't trip Reddit's CDN.
+  if (!checkRateLimit('reddit', { maxRequests: 20, windowMs: 600_000 })) {
     console.log('[reddit] Rate limited, skipping fetch');
     return [];
   }
-  const perSub = Math.max(2, Math.ceil(limit / SUBREDDITS.length));
   const all: UnifiedPost[] = [];
   let oauthCount = 0;
   let jsonCount = 0;
   let rssCount = 0;
+  let redlibCount = 0;
 
   const hasOAuth = getRedditOAuth().isConfigured;
 
-  // PRIMARY: OAuth2-authenticated JSON API (600 req/10min, no delays needed)
-  if (hasOAuth) {
+  // PRIMARY: RSS feeds — the only strategy verified working from this host.
+  // Uses a small, weighted subset so we stay under Reddit's per-IP budget
+  // and well inside the buildFeed 5s timeout. Requests run sequentially with
+  // spacing; we stop as soon as we have enough posts.
+  const rssSubs = ['CryptoCurrency', 'Bitcoin', 'ethereum', 'solana', 'CryptoMarkets'];
+  const perSubRss = Math.max(2, Math.ceil(limit / rssSubs.length));
+  for (const sub of rssSubs) {
+    try {
+      const posts = await fetchFromRedditRss(sub, perSubRss);
+      all.push(...posts);
+      rssCount += posts.length;
+      if (all.length >= limit) break;
+      // Space out requests — Reddit 429s bursts from a single IP.
+      await new Promise((r) => setTimeout(r, 700));
+    } catch {
+      // continue to next subreddit
+    }
+  }
+
+  // SECONDARY: OAuth2-authenticated JSON API (600 req/10min, no delays needed)
+  if (hasOAuth && all.length < limit) {
     for (const sub of SUBREDDITS.slice(0, 7)) {
       try {
+        const perSub = Math.max(2, Math.ceil((limit - all.length) / 4));
         const posts = await fetchFromRedditOAuth(sub, perSub);
         all.push(...posts);
         oauthCount += posts.length;
@@ -444,12 +544,15 @@ export async function fetchRedditPosts(limit = 20): Promise<UnifiedPost[]> {
         // continue to next subreddit
       }
     }
-  } else {
-    // Fallback: Unauthenticated JSON API with 800ms delays
-    for (const sub of SUBREDDITS.slice(0, 5)) {
+  }
+
+  // TERTIARY: Unauthenticated JSON API with delays (often blocked; last-resort
+  // enrichment when RSS alone didn't return enough posts).
+  if (!hasOAuth && all.length < 5) {
+    for (const sub of SUBREDDITS.slice(0, 2)) {
       try {
         await new Promise((r) => setTimeout(r, 800));
-        const posts = await fetchFromRedditJson(sub, perSub);
+        const posts = await fetchFromRedditJson(sub, perSubRss);
         all.push(...posts);
         jsonCount += posts.length;
         if (all.length >= limit) break;
@@ -459,27 +562,13 @@ export async function fetchRedditPosts(limit = 20): Promise<UnifiedPost[]> {
     }
   }
 
-  // FALLBACK: Reddit RSS if JSON API returns too little
-  if (all.length < 5) {
-    for (const sub of SUBREDDITS.slice(0, 5)) {
-      try {
-        await new Promise((r) => setTimeout(r, 500));
-        const posts = await fetchFromRedditRss(sub, perSub);
-        all.push(...posts);
-        rssCount += posts.length;
-        if (all.length >= limit) break;
-      } catch {
-        // continue
-      }
-    }
-  }
-
-  // LAST RESORT: Redlib (often blocked by Reddit)
+  // LAST RESORT: Redlib (often blocked by Reddit CDN, but local + free)
   if (all.length < 3) {
     for (const sub of SUBREDDITS.slice(0, 3)) {
       try {
-        const posts = await fetchFromRedlib(sub, perSub);
+        const posts = await fetchFromRedlib(sub, perSubRss);
         all.push(...posts);
+        redlibCount += posts.length;
         if (all.length >= limit) break;
       } catch {
         // continue
@@ -500,7 +589,7 @@ export async function fetchRedditPosts(limit = 20): Promise<UnifiedPost[]> {
 
   const authMode = hasOAuth ? 'oauth' : 'unauthenticated';
   console.log(
-    `[bridge] Reddit: ${deduped.length} posts [${authMode}] (oauth: ${oauthCount}, json: ${jsonCount}, rss: ${rssCount}, total raw: ${all.length})`,
+    `[bridge] Reddit: ${deduped.length} posts [${authMode}] (rss: ${rssCount}, oauth: ${oauthCount}, json: ${jsonCount}, redlib: ${redlibCount}, total raw: ${all.length})`,
   );
   return deduped;
 }

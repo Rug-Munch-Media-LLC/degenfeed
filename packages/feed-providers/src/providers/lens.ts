@@ -67,14 +67,17 @@ export const CURATED_LENS_HANDLES = [
 interface LensAccount {
   address: string;
   username?: { localName?: string };
-  metadata?: { displayName?: string; picture?: string };
+  metadata?: { name?: string | null; bio?: string | null; picture?: string | null };
 }
 interface LensPost {
   id: string;
-  metadata?: { content?: string; asset?: { image?: { raw?: { uri?: string } } } };
+  timestamp?: string;
+  metadata?: {
+    content?: string | null;
+    image?: { item?: string | null } | null;
+  };
   author?: LensAccount;
-  createdAt?: string;
-  stats?: { reactions?: number; comments?: number; mirrors?: number; quotes?: number };
+  stats?: { reactions?: number; comments?: number; reposts?: number; quotes?: number };
 }
 
 export interface LensProviderOptions {
@@ -100,8 +103,8 @@ function postToUnified(pub: LensPost): UnifiedPost {
         rss: null,
         mastodon: null,
       },
-      displayName: a?.metadata?.displayName ?? h ?? '',
-      bio: '',
+      displayName: a?.metadata?.name ?? h ?? '',
+      bio: a?.metadata?.bio ?? '',
       avatarUrl: a?.metadata?.picture ?? '',
       verified: [],
       followerCount: 0,
@@ -110,10 +113,10 @@ function postToUnified(pub: LensPost): UnifiedPost {
       keys: {},
     },
     text: pub.metadata?.content ?? '',
-    createdAt: pub.createdAt ? new Date(pub.createdAt).getTime() : Date.now(),
+    createdAt: pub.timestamp ? new Date(pub.timestamp).getTime() : Date.now(),
     metrics: {
       likes: pub.stats?.reactions ?? 0,
-      reposts: pub.stats?.mirrors ?? 0,
+      reposts: pub.stats?.reposts ?? 0,
       replies: pub.stats?.comments ?? 0,
       quotes: pub.stats?.quotes ?? 0,
     },
@@ -130,6 +133,21 @@ async function lensGql(url: string, q: string, v?: unknown): Promise<unknown> {
   if (d.errors?.length) throw new Error(`Lens: ${d.errors[0]?.message ?? '?'}`);
   return d.data;
 }
+
+// Shared selection fragments for the 2026 Lens API (api.lens.xyz/graphql).
+// PostMetadata is a UNION — content lives on the concrete metadata types.
+const POST_FIELDS = `
+  id timestamp
+  metadata {
+    ... on TextOnlyMetadata { content }
+    ... on ImageMetadata { content image { item } }
+    ... on VideoMetadata { content }
+    ... on LinkMetadata { content }
+    ... on ArticleMetadata { content }
+  }
+  author { address username { localName } metadata { name bio picture } }
+  stats { reactions comments reposts quotes }
+`;
 
 export class LensProvider implements FeedProvider {
   readonly protocol: Protocol = 'lens';
@@ -152,7 +170,7 @@ export class LensProvider implements FeedProvider {
           const explore = await withTimeout(
             lensGql(
               this.apiUrl,
-              'query{mlPostsExplore(request:{pageSize:FIFTY}){items{id metadata{content asset{...on PostMetadataMediaImage{image{raw{uri}}}}} author{username{localName}metadata{displayName picture}} createdAt stats{reactions comments mirrors quotes}}}}',
+              `query{mlPostsExplore(request:{pageSize:FIFTY}){items{__typename ... on Post{${POST_FIELDS}}}}}`,
             ),
             Math.min(t, 4000),
             'lens:explore',
@@ -192,7 +210,7 @@ export class LensProvider implements FeedProvider {
             const curated = await withTimeout(
               lensGql(
                 this.apiUrl,
-                'query($a:[String!]!){posts(request:{filter:{authors:$a},pageSize:THIRTY}){items{id metadata{content asset{...on PostMetadataMediaImage{image{raw{uri}}}}} author{username{localName}metadata{displayName picture}} createdAt stats{reactions comments mirrors quotes}}}}',
+                `query($a:[String!]!){posts(request:{filter:{authors:$a,postTypes:[ROOT]},pageSize:FIFTY}){items{__typename ... on Post{${POST_FIELDS}}}}}`,
                 { a: addrs },
               ),
               Math.min(t, 4000),
@@ -206,7 +224,7 @@ export class LensProvider implements FeedProvider {
           /* curated unavailable */
         }
 
-        // Tertiary: mirror publications from curated accounts —
+        // Tertiary: reposts from curated accounts —
         // surfaces what the crypto thought-leaders are amplifying.
         try {
           const names = ['stani.lens', 'lensprotocol.lens', 'nader.lens', 'jessepollak.lens'];
@@ -216,7 +234,7 @@ export class LensProvider implements FeedProvider {
                 const acc = await withTimeout(
                   lensGql(
                     this.apiUrl,
-                    'query($q:String!){accounts(request:{filter:{searchBy:{localNameQuery:$q}},pageSize:ONE}){items{address}}}',
+                    'query($q:String!){accounts(request:{filter:{searchBy:{localNameQuery:$q}},pageSize:FIFTY}){items{address}}}',
                     { q: name.replace('.lens', '') },
                   ),
                   Math.min(t, 2000),
@@ -236,7 +254,7 @@ export class LensProvider implements FeedProvider {
             const mirrors = await withTimeout(
               lensGql(
                 this.apiUrl,
-                'query($a:[String!]!){publications(request:{where:{from:$a, publicationTypes:[MIRROR]}, limit:TEN}){items{__typename ... on Mirror{id createdAt stats{reactions comments mirrors quotes} mirrorOn{... on Post{id metadata{content asset{...on PostMetadataMediaImage{image{raw{uri}}}}} author{username{localName}metadata{displayName picture}} createdAt stats{reactions comments mirrors quotes}}}}}}}',
+                `query($a:[String!]!){posts(request:{filter:{authors:$a,postTypes:[REPOST]},pageSize:TEN}){items{__typename ... on Repost{id timestamp repostOf{... on Post{${POST_FIELDS}}}}}}}`,
                 { a: mirrorAddrs },
               ),
               Math.min(t, 4000),
@@ -245,27 +263,19 @@ export class LensProvider implements FeedProvider {
             const mirrorItems =
               (
                 mirrors as {
-                  publications?: {
+                  posts?: {
                     items?: Array<{
                       id: string;
-                      createdAt: string;
-                      stats?: LensPost['stats'];
-                      mirrorOn?: LensPost;
+                      timestamp?: string;
+                      repostOf?: LensPost;
                     }>;
                   };
                 }
-              )?.publications?.items ?? [];
+              )?.posts?.items ?? [];
             for (const m of mirrorItems) {
-              const original = m.mirrorOn;
+              const original = m.repostOf;
               if (!original) continue;
-              posts.push(
-                enrichPostNiches(
-                  postToUnified({
-                    ...original,
-                    stats: m.stats ?? original.stats,
-                  }),
-                ),
-              );
+              posts.push(enrichPostNiches(postToUnified(original)));
             }
           }
         } catch {

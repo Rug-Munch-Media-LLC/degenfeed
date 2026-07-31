@@ -32,6 +32,7 @@ import { extractJwtFromRequest, isJwt, type JwtClaims, verifyRmiJwt } from '@/li
 import {
   adminLimiter,
   authLimiter,
+  getClientIpFromHeaders,
   globalLimiter,
   publishLimiter,
   type RateLimitResult,
@@ -90,6 +91,8 @@ const MUTATING_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 const ALLOWED_ORIGINS = [
   'https://degenfeed.xyz',
   'https://www.degenfeed.xyz',
+  'https://app.degenfeed.xyz',
+  'https://social.degenfeed.xyz',
   'http://localhost:3000',
   'http://localhost:3001',
 ];
@@ -97,16 +100,17 @@ const ALLOWED_ORIGINS = [
 // == Helpers ==============================================================
 
 /**
- * Best-effort client IP extraction.  Cloudflare sets `cf-connecting-ip` when
- * proxied; otherwise falls through x-forwarded-for → x-real-ip → localhost.
+ * Trustworthy client IP extraction — delegates to
+ * `getClientIpFromHeaders` in `@/lib/rate-limit` (single source of truth).
+ *
+ * SECURITY (CVSS 8.6 rate-limit bypass): Cloudflare's `cf-connecting-ip`
+ * wins when present and XFF is ignored entirely. On direct origin access the
+ * RIGHTMOST `x-forwarded-for` entry is used — the one appended by our own
+ * nginx `$proxy_add_x_forwarded_for` — never the leftmost, which is fully
+ * attacker-controlled (`X-Forwarded-For: <spoof>, <real-ip>`).
  */
 function getClientIp(request: NextRequest): string {
-  return (
-    request.headers.get('cf-connecting-ip') ??
-    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
-    request.headers.get('x-real-ip') ??
-    '127.0.0.1'
-  );
+  return getClientIpFromHeaders(request.headers);
 }
 
 /**
@@ -264,7 +268,9 @@ const APP_SUBDOMAIN_PREFIXES = ['app.', 'm.', 'beta.'];
 /** Does this hostname belong to the app subdomain (feed-first) family? */
 function isAppHost(hostname: string): boolean {
   const lower = hostname.toLowerCase();
-  return APP_SUBDOMAIN_PREFIXES.some((prefix) => lower === prefix.slice(0, -1) || lower.startsWith(prefix));
+  return APP_SUBDOMAIN_PREFIXES.some(
+    (prefix) => lower === prefix.slice(0, -1) || lower.startsWith(prefix),
+  );
 }
 
 export async function proxy(request: NextRequest): Promise<NextResponse> {
@@ -358,12 +364,16 @@ async function handleApiRoute(
 
   // ── Public paths pass through ──
   if (isSkipPath(pathname)) {
-    return stamp(applyHeaders(NextResponse.next({ request: { headers: requestHeaders } }), corsHeaders));
+    return stamp(
+      applyHeaders(NextResponse.next({ request: { headers: requestHeaders } }), corsHeaders),
+    );
   }
 
   // ── GET requests are public (read-only) ──
   if (!MUTATING_METHODS.has(method)) {
-    return stamp(applyHeaders(NextResponse.next({ request: { headers: requestHeaders } }), corsHeaders));
+    return stamp(
+      applyHeaders(NextResponse.next({ request: { headers: requestHeaders } }), corsHeaders),
+    );
   }
 
   // ── Session verification for mutating methods ──
@@ -431,5 +441,7 @@ async function handleApiRoute(
   }
 
   // ── Proceed ──
-  return stamp(applyHeaders(NextResponse.next({ request: { headers: requestHeaders } }), corsHeaders));
+  return stamp(
+    applyHeaders(NextResponse.next({ request: { headers: requestHeaders } }), corsHeaders),
+  );
 }

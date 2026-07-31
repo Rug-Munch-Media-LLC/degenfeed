@@ -656,7 +656,11 @@ async function aesEncrypt(
   };
 }
 
-async function aesDecrypt(key: CryptoKey, ciphertext: string, iv: string): Promise<Uint8Array<ArrayBuffer>> {
+async function aesDecrypt(
+  key: CryptoKey,
+  ciphertext: string,
+  iv: string,
+): Promise<Uint8Array<ArrayBuffer>> {
   const ct = fromBase64Url(ciphertext);
   const ivBytes = fromBase64Url(iv);
   const decrypted = await crypto.subtle.decrypt(

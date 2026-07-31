@@ -425,13 +425,13 @@ export class CrossNetworkSearch {
         posts?: {
           items?: Array<{
             id: string;
-            metadata?: { content?: string; asset?: { image?: { raw?: { uri?: string } } } };
+            metadata?: { content?: string; image?: { item?: string | null } | null };
             author?: {
               username?: { localName?: string };
-              metadata?: { displayName?: string; picture?: string };
+              metadata?: { name?: string | null; picture?: string | null };
             };
-            createdAt?: string;
-            stats?: { reactions?: number; comments?: number; mirrors?: number };
+            timestamp?: string;
+            stats?: { reactions?: number; comments?: number; reposts?: number };
           }>;
         };
       };
@@ -440,7 +440,7 @@ export class CrossNetworkSearch {
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
         query:
-          'query($q:String!){posts(request:{filter:{searchQuery:$q},pageSize:FIFTY}){items{id metadata{content asset{...on PostMetadataMediaImage{image{raw{uri}}}}} author{username{localName}metadata{displayName picture}} createdAt stats{reactions comments mirrors quotes}}}}',
+          'query($q:String!){posts(request:{filter:{searchQuery:$q},pageSize:FIFTY}){items{__typename ... on Post{id timestamp metadata{... on TextOnlyMetadata{content} ... on ImageMetadata{content image{item}} ... on VideoMetadata{content}} author{address username{localName}metadata{name picture}} stats{reactions comments reposts quotes}}}}}',
         variables: { q: query },
       }),
     });
@@ -453,11 +453,11 @@ export class CrossNetworkSearch {
         description: truncate(text, 200),
         source: 'lens',
         relevanceScore: 0.7 + (item.stats?.reactions ?? 0) * 0.01,
-        thumbnail: item.metadata?.asset?.image?.raw?.uri,
+        thumbnail: item.metadata?.image?.item,
         url: `https://hey.xyz/posts/${item.id}`,
         metadata: {
           author:
-            item.author?.metadata?.displayName || item.author?.username?.localName || 'lens user',
+            item.author?.metadata?.name || item.author?.username?.localName || 'lens user',
           avatarUrl: item.author?.metadata?.picture,
           reactions: item.stats?.reactions ?? 0,
         },

@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
   if (auth) return auth;
 
   return NextResponse.json(SYSTEM_CONFIG, {
-    headers: { 'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60' },
+    headers: { 'Cache-Control': 'private, no-store' },
   });
 }
 

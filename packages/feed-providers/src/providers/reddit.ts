@@ -591,9 +591,11 @@ async function fetchFromRedditRss(
 }
 
 /**
- * Fetch from a single subreddit using all available strategies in parallel.
- * Returns the first non-empty result. After fetching, applies quality filter,
- * weight, and category tags via enrichPost.
+ * Fetch from a single subreddit using strategies in priority order.
+ * RSS first (no auth, works from datacenter IPs), then JSON API, then
+ * community frontends. Strategies run SEQUENTIALLY — firing them all in
+ * parallel multiplied requests per subreddit by 4-6x and instantly tripped
+ * Reddit's per-IP rate limiter, which is what made "all strategies fail".
  */
 async function fetchSubreddit(
   config: SubredditConfig,
@@ -604,7 +606,6 @@ async function fetchSubreddit(
 ): Promise<UnifiedPost[]> {
   const { name: subreddit } = config;
 
-  // Try all strategies in parallel, pick the first non-empty result
   const strategies: Array<{ name: string; fn: () => Promise<UnifiedPost[]> }> = [
     { name: 'rss', fn: () => fetchFromRedditRss(subreddit, sort, limit) },
     { name: 'json', fn: () => fetchFromRedditJson(subreddit, sort, limit) },
@@ -614,18 +615,23 @@ async function fetchSubreddit(
     })),
   ];
 
-  const results = await Promise.allSettled(
-    strategies.map((s) => withTimeout(s.fn(), timeoutMs, `reddit:${s.name}`)),
-  );
-
-  // Return the first strategy that produced posts
-  for (const r of results) {
-    if (r.status === 'fulfilled' && r.value.length > 0) {
+  // Run strategies in order and return the first non-empty result.
+  // Sequential execution keeps per-IP request volume low enough to avoid
+  // Reddit's CDN rate limiting.
+  for (const strategy of strategies) {
+    try {
+      const posts = await withTimeout(strategy.fn(), timeoutMs, `reddit:${strategy.name}`);
+      if (posts.length === 0) continue;
       // Apply enrichPost to every post (quality filter + weight + category tags)
-      return r.value
+      const enriched = posts
         .map((post) => enrichPost(post, config))
         .filter((post): post is UnifiedPost => post !== null);
+      if (enriched.length > 0) return enriched;
+    } catch {
+      // try next strategy
     }
+    // Small spacing between strategies to stay under per-IP rate limits.
+    await new Promise((r) => setTimeout(r, 250));
   }
   return [];
 }
@@ -669,7 +675,7 @@ export class RedditProvider implements FeedProvider {
         const limit = 100;
         const perSub = Math.max(3, Math.ceil(limit / Math.min(this.configs.length, 50)));
 
-        const results = await withConcurrencyLimit(this.configs, 4, async (config) => {
+        const results = await withConcurrencyLimit(this.configs, 2, async (config) => {
           try {
             return await fetchSubreddit(config, this.sort, perSub, timeoutMs, this.frontends);
           } catch {

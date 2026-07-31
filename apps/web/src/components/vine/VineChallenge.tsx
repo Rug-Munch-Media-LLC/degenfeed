@@ -118,9 +118,7 @@ export function VineChallenge({
         >
           {categoryMeta?.emoji} {categoryMeta?.label}
         </span>
-        {joined && (
-          <span className="text-[9px] font-medium text-vine-400">✓ Joined</span>
-        )}
+        {joined && <span className="text-[9px] font-medium text-vine-400">✓ Joined</span>}
       </button>
     );
   }
@@ -179,7 +177,9 @@ export function VineChallenge({
           <span className="text-xs text-white/50">
             {hasEnded ? 'Ended' : hasStarted ? 'Ends in' : 'Starts in'}:
           </span>
-          <span className={`text-sm font-mono font-bold ${remaining < 3600000 ? 'text-red-400' : 'text-white'}`}>
+          <span
+            className={`text-sm font-mono font-bold ${remaining < 3600000 ? 'text-red-400' : 'text-white'}`}
+          >
             {hasEnded ? '—' : formatCountdown(remaining)}
           </span>
         </div>
