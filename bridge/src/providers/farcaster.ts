@@ -1,16 +1,21 @@
 /**
- * Farcaster Provider — Self-Hosted Hubble Hub (Primary)
+ * Farcaster Provider — Neynar API (Primary while Hubble syncs) / Hubble Hub (Primary when synced)
  *
- * DATA SOURCE: Self-hosted Hubble node at HUBBLE_BASE (127.0.0.1:2281).
- * NO seed data. NO fake posts. If Hubble returns empty, we return empty.
+ * DATA SOURCE:
+ *   - Primary: Neynar public API (https://api.neynar.com) while the self-hosted
+ *     Hubble node at HUBBLE_BASE (127.0.0.1:2281) is still syncing (< HUBBLE_MIN_SYNC_PERCENT).
+ *   - Primary: self-hosted Hubble once it is fully synced (>= HUBBLE_MIN_SYNC_PERCENT).
+ * NO seed data. NO fake posts. Never returns curated demo content.
  *
  * Rate Limit: 120 requests/minute (self-hosted Hubble has generous limits)
+ * Neynar budget: NEYNAR_MAX_CALLS_PER_MONTH (default 50K) with multi-key rotation
  * Failure tracking: per-request failure count with staggered retry
  *
  * Endpoints consumed:
- *   GET /v1/info           — hub sync status & health
- *   GET /v1/castsByFid     — fetch casts for a given FID
- *   GET /v1/userDataByFid  — fetch user profile data for a given FID
+ *   Neynar:  GET /v2/farcaster/feed           — casts from curated FIDs
+ *   Hubble:  GET /v1/info                     — hub sync status & health
+ *            GET /v1/castsByFid               — fetch casts for a given FID
+ *            GET /v1/userDataByFid            — fetch user profile data for a given FID
  *
  * Account / Auth:
  *   POST /v1/submitMessage — submit signed messages (register, cast, etc.)
@@ -33,6 +38,12 @@ const DEFAULT_PAGE_SIZE = 5;
 const _FETCH_TIMEOUT_MS = 10_000;
 /** Per-request timeout for Hubble calls */
 const HUBBLE_REQUEST_TIMEOUT = 8_000;
+/**
+ * Minimum Hubble sync percentage before we trust it as the primary source.
+ * Below this threshold (syncing/unsynced) we prefer the Neynar API instead,
+ * because a partially-synced hub returns almost no casts and wastes request time.
+ */
+const HUBBLE_MIN_SYNC_PERCENT = parseInt(process.env.HUBBLE_MIN_SYNC_PERCENT || '90', 10);
 
 const gfetch = globalThis.fetch;
 
@@ -249,7 +260,7 @@ async function fetchCastsForFid(fid: number, pageSize: number): Promise<UnifiedP
   if (!result?.messages?.length) return [];
 
   // Fetch user data in parallel (cached by most providers per FID)
-  const [userData] = await Promise.all([fetchUserData(fid)]);
+  const userData = await fetchUserData(fid);
 
   const posts: UnifiedPost[] = [];
   for (const msg of result.messages) {
@@ -357,6 +368,12 @@ const NEYNAR_MAX_CALLS = parseInt(process.env.NEYNAR_MAX_CALLS_PER_MONTH || '500
 
 function getNeynarKey(): string {
   if (NEYNAR_KEYS.length === 0) return '';
+  if (_neynarCallCount >= NEYNAR_MAX_CALLS) {
+    console.log(
+      `[farcaster] Neynar monthly budget exhausted (${_neynarCallCount}/${NEYNAR_MAX_CALLS})`,
+    );
+    return '';
+  }
   const key = NEYNAR_KEYS[_neynarKeyIndex];
   _neynarCallCount++;
   // Rotate every 100 calls to distribute across accounts
@@ -457,8 +474,14 @@ async function fetchFromNeynar(limit: number): Promise<UnifiedPost[]> {
 }
 
 /**
- * Fetch real Farcaster posts from our self-hosted Hubble.
- * If Hubble is down, falls back to Neynar public API.
+ * Fetch real Farcaster posts.
+ *
+ * Source selection (Hubble-first only when it is genuinely synced):
+ *   1. If Hubble is unreachable, syncing below HUBBLE_MIN_SYNC_PERCENT, or empty
+ *      → use Neynar public API as the PRIMARY source.
+ *   2. If Neynar fails/returns nothing → fall back to whatever Hubble has.
+ *   3. If Hubble is fully synced (>= HUBBLE_MIN_SYNC_PERCENT) → Hubble primary,
+ *      Neynar supplements only when Hubble returns very little.
  * NEVER returns fake/seed data — only real content.
  */
 export async function fetchFarcasterPosts(limit = 20): Promise<UnifiedPost[]> {
@@ -475,47 +498,40 @@ export async function fetchFarcasterPosts(limit = 20): Promise<UnifiedPost[]> {
   try {
     // Check Hubble health first
     const hubbleStatus = await getHubbleStatus();
-    if (!hubbleStatus) {
-      console.log('[farcaster] Hubble unreachable — trying Neynar fallback');
-      const fallbackPosts = await fetchFromNeynar(targetLimit);
-      if (fallbackPosts.length > 0) {
-        console.log(`[farcaster] Neynar fallback returned ${fallbackPosts.length} posts`);
-        return fallbackPosts.slice(0, limit);
+
+    const hubbleUsable =
+      hubbleStatus !== null &&
+      hubbleStatus.isSynced &&
+      hubbleStatus.syncPercentage >= HUBBLE_MIN_SYNC_PERCENT;
+
+    // Hubble is not usable (unreachable, syncing below threshold, or empty)
+    // → PREFER Neynar instead of querying a hub that has almost no data.
+    if (!hubbleUsable) {
+      let reason = 'not fully synced';
+      if (!hubbleStatus) {
+        reason = 'unreachable';
+      } else if (hubbleStatus.syncPercentage < HUBBLE_MIN_SYNC_PERCENT) {
+        reason = `only ${hubbleStatus.syncPercentage}% synced (min ${HUBBLE_MIN_SYNC_PERCENT}%)`;
       }
-      return [];
-    }
+      console.log(`[farcaster] Hubble ${reason} — preferring Neynar API`);
 
-    if (hubbleStatus.isSyncing) {
-      console.log(
-        `[farcaster] Hubble is SYNCING (${hubbleStatus.syncPercentage}%) — ` +
-          `limited data available. Peer: ${hubbleStatus.peerId || 'none'}`,
-      );
-      // Try Neynar in parallel as supplement
-      const neynarPromise = fetchFromNeynar(Math.ceil(targetLimit / 2)).catch(
-        () => [] as UnifiedPost[],
-      );
-      // Still try Hubble too
-      const hubblePosts = await tryHubbleFetch(scanFids, targetLimit);
-      const neynarPosts = await neynarPromise;
-      all.push(...hubblePosts, ...neynarPosts);
+      const neynarPosts = await fetchFromNeynar(targetLimit).catch(() => [] as UnifiedPost[]);
+      if (neynarPosts.length > 0) {
+        console.log(`[farcaster] Neynar returned ${neynarPosts.length} posts`);
+        return neynarPosts.slice(0, limit);
+      }
 
-      if (all.length > 0) {
-        return dedupeFarcasterPosts(all, limit);
+      // Neynar failed — fall back to whatever partial data Hubble has
+      console.log('[farcaster] Neynar empty — falling back to partial Hubble data');
+      const hubblePosts = await tryHubbleFetch(CURATED_FIDS.slice(0, MAX_SCAN_FIDS), targetLimit);
+      if (hubblePosts.length > 0) {
+        console.log(`[farcaster] Hubble partial returned ${hubblePosts.length} posts`);
+        return hubblePosts.slice(0, limit);
       }
       return []; // Let bridge-level fallback handle it
     }
 
-    if (!hubbleStatus.isSynced && !hubbleStatus.isSyncing && !hubbleStatus.rootHash) {
-      console.log('[farcaster] Hubble is connected but empty (no root hash) — trying Neynar');
-      const fallbackPosts = await fetchFromNeynar(targetLimit);
-      if (fallbackPosts.length > 0) {
-        console.log(`[farcaster] Neynar fallback returned ${fallbackPosts.length} posts`);
-        return fallbackPosts.slice(0, limit);
-      }
-      return [];
-    }
-
-    // Hubble is healthy — fetch from it
+    // Hubble is healthy and fully synced — fetch from it
     const hubblePosts = await tryHubbleFetch(CURATED_FIDS.slice(0, MAX_SCAN_FIDS), targetLimit);
     all.push(...hubblePosts);
 
@@ -838,11 +854,11 @@ export async function registerFID(params: RegisterFIDParams): Promise<RegisterFI
 
 export const schema: SchemaGuard = {
   id: 'farcaster',
-  name: 'Farcaster (Self-Hosted Hubble)',
+  name: 'Farcaster (Neynar API + Self-Hosted Hubble)',
   description:
-    'On-chain social via self-hosted Farcaster Hubble node — no seed data, no external API dependency',
+    'On-chain social via Neynar public API while Hubble syncs, then self-hosted Hubble — no seed data, real content only',
   endpoint: '/api/feed/farcaster',
   requiresAuth: false,
-  authEnvVar: '',
+  authEnvVar: 'NEYNAR_API_KEY',
   contentType: 'text',
 };
