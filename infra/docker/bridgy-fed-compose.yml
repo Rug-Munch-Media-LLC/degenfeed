@@ -33,6 +33,10 @@ services:
           memory: 256m
           cpus: '0.5'
 
+    labels:
+      - app.rugmunch.io/name=bridgy-firestore-emulator
+      - app.rugmunch.io/role=dev-tool
+      - app.rugmunch.io/description=Firestore emulator for Bridgy
   bridgy-fed:
     image: bridgy-fed:latest
     build:
@@ -91,6 +95,10 @@ services:
           memory: 128M
           cpus: "0.25"
 
+    labels:
+      - app.rugmunch.io/name=bridgy-fed
+      - app.rugmunch.io/role=api
+      - app.rugmunch.io/description=Bridgy Fed bridge
 volumes:
   bridgy-fed-data:
     name: bridgy-fed-data
