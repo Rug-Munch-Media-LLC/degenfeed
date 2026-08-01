@@ -156,7 +156,7 @@ wrangler r2 bucket create degenfeed-assets
 | 5.3 | GotoSocial media backed up | ✅ | Tarball of local storage (R2 S3 is Cloudflare-managed separately) |
 | 5.4 | App Postgres databases backed up | ✅ | `backup-app-postgres.sh` covers: `degenfeed-glitchtip-db`, `degenfeed-lemmy-db`, `degenfeed-postiz-db`, `degenfeed-postiz-temporal-db`, `peertube-postgres-1` |
 | 5.5 | Git log captured | ✅ | `degenfeed-git-log-*.txt.age` in `/backups/degenfeed/` |
-| 5.6 | Off-site R2 replication configured | ✅ | `/backups/degenfeed/` → `r2-crypt:archives/` in `offsite-backup.sh` |
+| 5.6 | Off-site B2 replication configured | ✅ | `/backups/degenfeed/` → `b2-crypt:archives/` in `offsite-backup.sh` (migrated from R2 to B2 2026-07-31) |
 | 5.7 | Backup monitoring active | ✅ | `backup-monitor.sh` checks DegenFeed backup freshness (<26h) |
 | 5.8 | Sentinel file recent | ✅ | `/backups/.last-successful-backup` updated daily |
 | 5.9 | **GAP: Backup files verified — encrypted .age files exist** | ⚠️ | As of 2026-07-24: 8x gotosocial-db.sqlite.gz.age, 8x gotosocial-config.yaml.age, 8x degenfeed-git-log.txt.age — all within retention |
@@ -189,7 +189,7 @@ export HEALTHCHECKS_URL="https://hc-ping.com/your-uuid"
 ```
 
 3. **KV backup strategy:** Cloudflare KV is durable but not backup-native. For critical data:
-- Periodically dump via `wrangler kv:key list --namespace-id=...` → R2
+- Periodically dump via `wrangler kv:key list --namespace-id=...` → B2 (migrated from R2 to B2 2026-07-31)
 - Or use [Workers KV export](https://developers.cloudflare.com/kv/reference/kv-bulk/)
 
 ---
