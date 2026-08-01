@@ -3,14 +3,14 @@
 **Status:** canonical  
 **Last updated:** 2026-07-25  
 **Protocols:** 44+ (11 standardized bridge providers + Matrix bridge hub + ActivityPub federation + API integrations)  
-**Docker Services:** 48+ across the fleet (Talos + Hydra)  
+**Docker Services:** 48+ across the fleet ([HOST-1] + [HOST-2])  
 **Monorepo Packages:** 43+  
 **Worker API Routes:** ~500+ (200+ route modules in 90+ major route groups)  
 **TypeScript Source Files:** 1,419+
 
 ## Overview
 
-Turborepo monorepo with a Cloudflare Pages-hosted Next.js 16 client and a Cloudflare Worker edge API. Shared packages provide protocol adapters, feed normalization, identity resolution, creator coins, livestreaming, and wallet auth. Self-hosted infrastructure (GoToSocial, AT Protocol PDS, PeerTube, Matrix, Redlib, RSS-Bridge, Prosody XMPP) runs on Talos.
+Turborepo monorepo with a Cloudflare Pages-hosted Next.js 16 client and a Cloudflare Worker edge API. Shared packages provide protocol adapters, feed normalization, identity resolution, creator coins, livestreaming, and wallet auth. Self-hosted infrastructure (GoToSocial, AT Protocol PDS, PeerTube, Matrix, Redlib, RSS-Bridge, Prosody XMPP) runs on [HOST-1].
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
@@ -311,7 +311,7 @@ Next.js renders feed timeline
 
 ## Service Architecture (48+ Docker Services)
 
-### Self-Hosted Infrastructure (Talos)
+### Self-Hosted Infrastructure ([HOST-1])
 
 | Service | URL | Purpose | Container |
 |---------|-----|---------|-----------|
@@ -322,7 +322,7 @@ Next.js renders feed timeline
 | **Redlib** | redlib.degenfeed.xyz | Privacy Reddit proxy | Docker |
 | **RSS-Bridge** | rss-bridge.degenfeed.xyz | RSS feed generation | Docker |
 
-### Matrix Bridge Hub (Talos/Hydra — Planned)
+### Matrix Bridge Hub ([HOST-1]/[HOST-2] — Planned)
 
 | Service | Purpose |
 |---------|---------|
@@ -335,14 +335,14 @@ Next.js renders feed timeline
 | **matrix-appservice-irc** | IRC bridge |
 | **matrix-bifrost** | XMPP bridge |
 
-### Monitoring Stack (Hydra + Talos)
+### Monitoring Stack ([HOST-2] + [HOST-1])
 
 | Service | URL | Purpose |
 |---------|-----|---------|
 | **GlitchTip** | glitchtip.rugmunch.io | Sentry-compatible error tracking |
-| **Grafana** | hydra:3001 | Dashboards for fleet health |
-| **Prometheus** | hydra:9090 | Metrics storage |
-| **Node Exporter** | All hosts :9100 | Host metrics |
+| **Grafana** | [HOST-2] | Dashboards for fleet health |
+| **Prometheus** | [HOST-2] | Metrics storage |
+| **Node Exporter** | All hosts | Host metrics |
 
 ### Additional Platform Services (Planned)
 

@@ -169,7 +169,7 @@ export const DEFAULT_DNS: DnsSslEntry[] = [
     sslStatus: 'valid',
     sslExpiry: Date.now() + 7776000000,
     issuer: 'Cloudflare',
-    ip: '185.10.68.42',
+    ip: '[INTERNAL]',
   },
   {
     domain: 'api.degenfeed.xyz',
@@ -177,7 +177,7 @@ export const DEFAULT_DNS: DnsSslEntry[] = [
     sslStatus: 'valid',
     sslExpiry: Date.now() + 7776000000,
     issuer: 'Cloudflare',
-    ip: '185.10.68.42',
+    ip: '[INTERNAL]',
   },
   {
     domain: 'degenfeed.xyz',
@@ -185,7 +185,7 @@ export const DEFAULT_DNS: DnsSslEntry[] = [
     sslStatus: 'valid',
     sslExpiry: Date.now() + 7776000000,
     issuer: 'Cloudflare',
-    ip: '185.10.68.42',
+    ip: '[INTERNAL]',
   },
   {
     domain: 'cdn.degenfeed.xyz',
@@ -193,7 +193,7 @@ export const DEFAULT_DNS: DnsSslEntry[] = [
     sslStatus: 'valid',
     sslExpiry: Date.now() + 5184000000,
     issuer: 'Cloudflare',
-    ip: '185.10.68.42',
+    ip: '[INTERNAL]',
   },
   {
     domain: 'relay.degenfeed.xyz',
@@ -201,7 +201,7 @@ export const DEFAULT_DNS: DnsSslEntry[] = [
     sslStatus: 'expiring',
     sslExpiry: Date.now() + 864000000,
     issuer: "Let's Encrypt",
-    ip: '185.10.68.84',
+    ip: '[INTERNAL]',
   },
   { domain: 'metrics.degenfeed.xyz', dnsStatus: 'unresolved', sslStatus: 'missing', ip: '—' },
 ];

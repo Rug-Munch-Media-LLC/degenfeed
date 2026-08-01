@@ -10,44 +10,44 @@
 
 ### Zone ID: `[CLOUDFLARE_ZONE_ID]`
 ### Tunnel ID: `9f428b88-5a57-4b28-a7dc-1368f4f32811`
-### Server IP: `[TALOS_PUBLIC_IP]` (Talos, Netcup)
+### Server IP: `[PUBLIC_IP]` ([HOST-1], Netcup)
 ### Tunnel CNAME target: `9f428b88-5a57-4b28-a7dc-1368f4f32811.cfargotunnel.com`
 
 | Subdomain | Type | Target | Proxy | Backend Port | Service |
 |-----------|------|--------|-------|-------------|---------|
-| `degenfeed.xyz` | CNAME | tunnel | ☁️ proxied | nginx :80 → static | Main landing page |
-| `www.degenfeed.xyz` | A | [TALOS_PUBLIC_IP] | ☁️ proxied | nginx :80 → redirect to apex | WWW redirect |
-| `app.degenfeed.xyz` | CNAME | tunnel | ☁️ proxied | :3100 | Next.js web app |
-| `social.degenfeed.xyz` | A | [TALOS_PUBLIC_IP] | ☁️ proxied | :8082 | GoToSocial / Mastodon |
-| `talk.degenfeed.xyz` | A | [TALOS_PUBLIC_IP] | ☁️ proxied | :8536 | Lemmy |
-| `community.degenfeed.xyz` | CNAME | tunnel | ☁️ proxied | :8536 | Lemmy (alt) |
-| `video.degenfeed.xyz` | A | [TALOS_PUBLIC_IP] | ❌ DNS only | :9010 (nginx :443) | PeerTube |
-| `photos.degenfeed.xyz` | A | [TALOS_PUBLIC_IP] | ☁️ proxied | :8087 | Pixelfed (planned) |
-| `blog.degenfeed.xyz` | A | [TALOS_PUBLIC_IP] | ☁️ proxied | :8086 | WriteFreely |
-| `post.degenfeed.xyz` | CNAME | tunnel | ☁️ proxied | :3105 | Postiz (scheduling) |
-| `relay.degenfeed.xyz` | CNAME | tunnel | ☁️ proxied | :8084 | ActivityPub Relay |
-| `search.degenfeed.xyz` | A | [TALOS_PUBLIC_IP] | ☁️ proxied | :7700 | Meilisearch (planned) |
-| `nostr.degenfeed.xyz` | A | [TALOS_PUBLIC_IP] | ☁️ proxied | :8085 | Nostr Relay (planned) |
-| `pds.degenfeed.xyz` | A | [TALOS_PUBLIC_IP] | ☁️ proxied | :3012 | Bluesky PDS |
-| `zora.degenfeed.xyz` | A | [TALOS_PUBLIC_IP] | ☁️ proxied | :8091 | Zora API Indexer |
-| `lens.degenfeed.xyz` | A | [TALOS_PUBLIC_IP] | ☁️ proxied | :8099 | Lens Indexer (planned) |
-| `docs.degenfeed.xyz` | CNAME | tunnel | ☁️ proxied | nginx :80 → static | Documentation |
-| `api.degenfeed.xyz` | A | [TALOS_PUBLIC_IP] | ☁️ proxied | nginx :80 → :3100 | API proxy to Next.js |
-| `spaces.degenfeed.xyz` | CNAME | tunnel | ☁️ proxied | nginx :80 → static | Community Spaces |
-| `redlib.degenfeed.xyz` | A | [TALOS_PUBLIC_IP] | ❌ DNS only | :8281 | Redlib (Reddit proxy) |
-| `rss-bridge.degenfeed.xyz` | A | [TALOS_PUBLIC_IP] | ❌ DNS only | :8282 | RSS-Bridge |
+| `degenfeed.xyz` | CNAME | tunnel | ☁️ proxied | nginx → static | Main landing page |
+| `www.degenfeed.xyz` | A | [PUBLIC_IP] | ☁️ proxied | nginx → redirect to apex | WWW redirect |
+| `app.degenfeed.xyz` | CNAME | tunnel | ☁️ proxied | — | Next.js web app |
+| `social.degenfeed.xyz` | A | [PUBLIC_IP] | ☁️ proxied | — | GoToSocial / Mastodon |
+| `talk.degenfeed.xyz` | A | [PUBLIC_IP] | ☁️ proxied | — | Lemmy |
+| `community.degenfeed.xyz` | CNAME | tunnel | ☁️ proxied | — | Lemmy (alt) |
+| `video.degenfeed.xyz` | A | [PUBLIC_IP] | ❌ DNS only | — | PeerTube |
+| `photos.degenfeed.xyz` | A | [PUBLIC_IP] | ☁️ proxied | — | Pixelfed (planned) |
+| `blog.degenfeed.xyz` | A | [PUBLIC_IP] | ☁️ proxied | — | WriteFreely |
+| `post.degenfeed.xyz` | CNAME | tunnel | ☁️ proxied | — | Postiz (scheduling) |
+| `relay.degenfeed.xyz` | CNAME | tunnel | ☁️ proxied | — | ActivityPub Relay |
+| `search.degenfeed.xyz` | A | [PUBLIC_IP] | ☁️ proxied | — | Meilisearch (planned) |
+| `nostr.degenfeed.xyz` | A | [PUBLIC_IP] | ☁️ proxied | — | Nostr Relay (planned) |
+| `pds.degenfeed.xyz` | A | [PUBLIC_IP] | ☁️ proxied | — | Bluesky PDS |
+| `zora.degenfeed.xyz` | A | [PUBLIC_IP] | ☁️ proxied | — | Zora API Indexer |
+| `lens.degenfeed.xyz` | A | [PUBLIC_IP] | ☁️ proxied | — | Lens Indexer (planned) |
+| `docs.degenfeed.xyz` | CNAME | tunnel | ☁️ proxied | nginx → static | Documentation |
+| `api.degenfeed.xyz` | A | [PUBLIC_IP] | ☁️ proxied | nginx → app | API proxy to Next.js |
+| `spaces.degenfeed.xyz` | CNAME | tunnel | ☁️ proxied | nginx → static | Community Spaces |
+| `redlib.degenfeed.xyz` | A | [PUBLIC_IP] | ❌ DNS only | — | Redlib (Reddit proxy) |
+| `rss-bridge.degenfeed.xyz` | A | [PUBLIC_IP] | ❌ DNS only | — | RSS-Bridge |
 
 ### DNS Record Types Explained
 
 - **CNAME to tunnel** (`*.cfargotunnel.com`): Traffic goes through Cloudflare Tunnel. The cloudflared service on the server proxies to the backend. Tunnel must have the hostname in its ingress config.
-- **A record (proxied)**: Traffic goes to Cloudflare edge → origin server IP. Cloudflare terminates TLS, re-encrypts to origin. Nginx on :443 handles the request with Cloudflare Origin CA cert.
-- **A record (DNS only)**: Traffic goes directly to server IP (no Cloudflare proxy). Nginx on :443 handles with Let's Encrypt or other cert.
+- **A record (proxied)**: Traffic goes to Cloudflare edge → origin server IP. Cloudflare terminates TLS, re-encrypts to origin. Nginx handles the request with Cloudflare Origin CA cert.
+- **A record (DNS only)**: Traffic goes directly to server IP (no Cloudflare proxy). Nginx handles with Let's Encrypt or other cert.
 
 ### ⚠️ Known Issue: Tunnel Config
 
-The tunnel (`talos-rmi-remote`) uses **cloudflare-managed remote config**. The local `/root/.cloudflared/config.yml` is **NOT authoritative** — the Cloudflare API pushes the ingress rules on tunnel startup. To update, use:
+The tunnel (`[HOST-1]-rmi-remote`) uses **cloudflare-managed remote config**. The local `~/.cloudflared/config.yml` is **NOT authoritative** — the Cloudflare API pushes the ingress rules on tunnel startup. To update, use:
 
-1. **Cloudflare Dashboard** → Zero Trust → Networks → Tunnels → `talos-rmi-remote` → Configure → Public Hostnames
+1. **Cloudflare Dashboard** → Zero Trust → Networks → Tunnels → `[HOST-1]-rmi-remote` → Configure → Public Hostnames
 2. Or update via API (requires valid token with Tunnel:Edit permission)
 
 **Current API token status:** ✅ ACTIVE as of 2026-07-24
@@ -75,26 +75,26 @@ All configs live in `/etc/nginx/sites-available/` with symlinks in `/etc/nginx/s
 
 | Config File | Server Name | Backend | Notes |
 |------------|-------------|---------|-------|
-| `degenfeed.xyz` | degenfeed.xyz, www.degenfeed.xyz | Static files + /api/ → :3100 | Landing page |
-| `app.degenfeed.xyz` | app.degenfeed.xyz | :3100 | Next.js app |
-| `social.degenfeed.xyz` | social.degenfeed.xyz | :8082 | GoToSocial |
-| `talk.degenfeed.xyz` | talk.degenfeed.xyz | :8536 | Lemmy |
-| `community.degenfeed.xyz` | community.degenfeed.xyz | :8536 | Lemmy (alt domain) |
-| `post.degenfeed.xyz` | post.degenfeed.xyz | :3105 | Postiz |
-| `blog.degenfeed.xyz` | blog.degenfeed.xyz | :8086 | WriteFreely |
-| `video.degenfeed.xyz` | video.degenfeed.xyz | nginx → :9010 | PeerTube |
-| `pds.degenfeed.xyz` | pds.degenfeed.xyz | :3012 | Bluesky PDS |
-| `search.degenfeed.xyz` | search.degenfeed.xyz | :7700 | Meilisearch |
-| `relay.degenfeed.xyz` | relay.degenfeed.xyz | :8084 | ActivityPub Relay |
-| `nostr.degenfeed.xyz` | nostr.degenfeed.xyz | :8085 | Nostr Relay |
-| `photos.degenfeed.xyz` | photos.degenfeed.xyz | :8087 | Pixelfed |
-| `zora.degenfeed.xyz` | zora.degenfeed.xyz | :8091 | Zora API |
-| `lens.degenfeed.xyz` | lens.degenfeed.xyz | :8099 | Lens Indexer |
+| `degenfeed.xyz` | degenfeed.xyz, www.degenfeed.xyz | Static files + /api/ → app | Landing page |
+| `app.degenfeed.xyz` | app.degenfeed.xyz | — | Next.js app |
+| `social.degenfeed.xyz` | social.degenfeed.xyz | — | GoToSocial |
+| `talk.degenfeed.xyz` | talk.degenfeed.xyz | — | Lemmy |
+| `community.degenfeed.xyz` | community.degenfeed.xyz | — | Lemmy (alt domain) |
+| `post.degenfeed.xyz` | post.degenfeed.xyz | — | Postiz |
+| `blog.degenfeed.xyz` | blog.degenfeed.xyz | — | WriteFreely |
+| `video.degenfeed.xyz` | video.degenfeed.xyz | nginx → PeerTube | PeerTube |
+| `pds.degenfeed.xyz` | pds.degenfeed.xyz | — | Bluesky PDS |
+| `search.degenfeed.xyz` | search.degenfeed.xyz | — | Meilisearch |
+| `relay.degenfeed.xyz` | relay.degenfeed.xyz | — | ActivityPub Relay |
+| `nostr.degenfeed.xyz` | nostr.degenfeed.xyz | — | Nostr Relay |
+| `photos.degenfeed.xyz` | photos.degenfeed.xyz | — | Pixelfed |
+| `zora.degenfeed.xyz` | zora.degenfeed.xyz | — | Zora API |
+| `lens.degenfeed.xyz` | lens.degenfeed.xyz | — | Lens Indexer |
 | `docs.degenfeed.xyz` | docs.degenfeed.xyz | Static files | VitePress docs |
 | `spaces.degenfeed.xyz` | spaces.degenfeed.xyz | Static | Spaces frontend |
-| `redlib.degenfeed.xyz` | redlib.degenfeed.xyz | :8281 | Redlib |
-| `rss-bridge.degenfeed.xyz` | rss-bridge.degenfeed.xyz | :8282 | RSS-Bridge |
-| `api.degenfeed.xyz` | api.degenfeed.xyz | nginx :80 → :3100 | API routing |
+| `redlib.degenfeed.xyz` | redlib.degenfeed.xyz | — | Redlib |
+| `rss-bridge.degenfeed.xyz` | rss-bridge.degenfeed.xyz | — | RSS-Bridge |
+| `api.degenfeed.xyz` | api.degenfeed.xyz | nginx → app | API routing |
 
 ### Common Nginx Pattern
 
@@ -211,9 +211,9 @@ systemctl restart cloudflared
 
 ### Config File
 
-Located at `/root/.cloudflared/config.yml`
+Located at `~/.cloudflared/config.yml`
 ⚠️ Local config is IGNORED — tunnel uses Cloudflare-managed config.
-To update: Cloudflare Dashboard → Zero Trust → Networks → Tunnels → talos-rmi-remote
+To update: Cloudflare Dashboard → Zero Trust → Networks → Tunnels → [HOST-1]-rmi-remote
 
 ### Credentials
 
@@ -240,7 +240,7 @@ curl -s -H "Authorization: Bearer $TOKEN" \
 curl -s -X POST \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"type":"A","name":"subdomain.degenfeed.xyz","content":"[TALOS_PUBLIC_IP]","ttl":120,"proxied":true}' \
+  -d '{"type":"A","name":"subdomain.degenfeed.xyz","content":"[PUBLIC_IP]","ttl":120,"proxied":true}' \
   "https://api.cloudflare.com/client/v4/zones/$ZONE_ID/dns_records"
 
 # Create CNAME to tunnel

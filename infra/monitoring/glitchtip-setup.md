@@ -8,7 +8,7 @@ GlitchTip instance.
 ## Deploy
 
 ```bash
-# From any Talos host that can reach the monitoring docker network:
+# From any [HOST-1] host that can reach the monitoring docker network:
 docker compose -f infra/monitoring/glitchtip.yml up -d
 
 # Check health:

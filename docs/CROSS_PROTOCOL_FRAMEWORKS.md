@@ -58,12 +58,12 @@ bridging with reply threading, identity mapping, and protocol-native formatting.
 
 ```
 ┌──────────────────────────────────────────────────────┐
-│                  Bridgy Fed on Talos                   │
+│                  Bridgy Fed on [HOST-1]                   │
 │                                                        │
 │  ┌──────────────────┐    ┌─────────────────────────┐  │
 │  │ Firestore Emulator│    │     Bridgy Fed           │  │
 │  │ (Datastore mode)  │◄───│ gunicorn (2 workers)    │  │
-│  │ localhost:8089    │    │ localhost:8085           │  │
+│  │ localhost        │    │ localhost                 │  │
 │  └──────────────────┘    └──────────┬──────────────┘  │
 │                                      │                  │
 │               ┌──────────────────────┼──────────┐      │
@@ -225,7 +225,7 @@ Bridgy Fed complements this by providing the ActivityPub↔AT Protocol translati
 
 | Component | Container | Status | Port |
 |-----------|-----------|--------|------|
-| Firestore Emulator | `bridgy-firestore-emulator` | ✅ Healthy | 127.0.0.1:8089 |
+| Firestore Emulator | `bridgy-firestore-emulator` | ✅ Healthy | 127.0.0.1 |
 | Bridgy Fed App | `bridgy-fed` | ✅ Running | 127.0.0.1:8085 |
 
 **Fix applied:** Installed `.[app]` extras (was missing `arroba`, `google-cloud-ndb`).
@@ -324,7 +324,7 @@ docker network create rmi-net 2>/dev/null || true
 ### Deploy Bridgy Fed
 
 ```bash
-cd /srv/work/repos/degenfeed-web
+cd /path/to/degenfeed-web
 
 # Build the Docker image
 docker compose -f infra/docker/bridgy-fed-compose.yml build --no-cache bridgy-fed

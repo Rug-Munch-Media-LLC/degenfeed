@@ -68,7 +68,7 @@ const techStack = [
   { category: 'Protocol SDKs', tech: '30+ internal packages — one adapter per protocol' },
   { category: 'Smart Contracts', tech: 'Solidity (Base), Anchor/Rust (Solana), Wormhole bridge' },
   { category: 'Infrastructure', tech: 'GoToSocial, AT Protocol PDS, PeerTube, Prosody XMPP' },
-  { category: 'Search', tech: 'MeiliSearch self-hosted on Talos' },
+  { category: 'Search', tech: 'MeiliSearch self-hosted' },
   { category: 'Monitoring', tech: 'Self-hosted Grafana, Prometheus, GlitchTip, Plausible' },
 ];
 
@@ -180,7 +180,7 @@ export default function AboutPage() {
               <strong className="text-[var(--color-fg)]">Open Source First</strong>
               <p>
                 DegenFeed is AGPL-3.0 licensed. Every line of code is inspectable, forkable, and
-                improvable. There are no proprietary modules, no obfuscated algorithms, no hidden
+                improvable. There are no closed-source modules, no obfuscated algorithms, no hidden
                 data collection. The ranking algorithm is transparent — every post shows its score
                 breakdown.
               </p>

@@ -952,7 +952,7 @@ Key Zora API endpoints the bridge consumes:
 | Aspect | This Design | Alternative: monolithic bridge |
 |--------|-------------|-------------------------------|
 | Components | 3 packages + 2 worker extensions | Single big service |
-| Deployment | CF Worker (serverless) + packages | Docker service on Talos |
+| Deployment | CF Worker (serverless) + packages | Docker service on [INTERNAL] |
 | Scalability | Serverless, auto-scale | Requires manual scaling |
 | Latency | Sub-second for webhooks | Sub-second for webhooks |
 | Development | Parallel package work | Sequential monolith |

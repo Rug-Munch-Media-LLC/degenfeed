@@ -113,8 +113,8 @@ The crypto-native / AI-native / open-source builder who:
 | **Crypto** | viem (already in stack), ethers v5 fallback, @noble/secp256k1 | Matches fleet |
 | **Hosting** | Cloudflare Pages + Workers | Free tier covers millions of requests |
 | **Cache** | Cloudflare KV + Workers Cache API | Free, edge-fast |
-| **Analytics** | Plausible (self-hosted on Talos) | Privacy-respecting, free |
-| **Search** | MeiliSearch (self-hosted on Talos) | Free, fast, open source |
+| **Analytics** | Plausible (self-hosted on [HOST-1]) | Privacy-respecting, free |
+| **Search** | MeiliSearch (self-hosted on [HOST-1]) | Free, fast, open source |
 
 **Zero paid SaaS.** Zero per-user cost. This thing is free to operate at any reasonable scale.
 
@@ -272,11 +272,11 @@ We always fetch from at least 3 in parallel, dedupe by event id. If primary fail
 
 **Farcaster Hubs:**
 - `hub.pinata.cloud` (free public)
-- Self-host `farcaster/hub-monorepo` on Talos (free, gives us a private read path).
+- Self-host `farcaster/hub-monorepo` on [HOST-1] (free, gives us a private read path).
 
 **Lens API:**
 - `https://api.lens.xyz/graphql` (public, free tier)
-- Self-host Lens API indexer on Talos for faster queries.
+- Self-host Lens API indexer on [HOST-1] for faster queries.
 
 **Bluesky:**
 - `https://public.api.bsky.app` (public, free)
@@ -553,8 +553,8 @@ Three-column responsive. Collapses to single column < 1024px. Nav rail collapses
 | Cloudflare Pages | Unlimited static requests | Same |
 | Cloudflare Workers | 100k requests/day free, then $0.50/million | ~50M requests/mo → ~$25/mo |
 | Cloudflare KV | 100k reads/day free, then $0.50/million | Within free tier mostly |
-| Plausible self-hosted | Free (uses Talos resources) | Negligible |
-| MeiliSearch self-hosted | Free | ~$0 (existing Talos box) |
+| Plausible self-hosted | Free (uses [HOST-1] resources) | Negligible |
+| MeiliSearch self-hosted | Free | ~$0 (existing [HOST-1] box) |
 | **Total** | **$0** at launch | **~$25/mo** at 100k MAU |
 
 We can run this for ten years on the cost of one dinner.
@@ -567,17 +567,17 @@ We can run this for ten years on the cost of one dinner.
 
 | Component | Location | Action |
 |---|---|---|
-| Akkoma server | `/srv/degenfeed-akkoma/` | **Stop, archive, delete.** |
+| Akkoma server | `/path/to/degenfeed-akkoma/` | **Stop, archive, delete.** |
 | Akkoma DB | `degenfeed-akkoma-db` volume | **Backup then drop.** |
 | Soapbox frontend | `degenfeed-soapbox-frontend` | **Stop, delete.** |
-| Web3 bridge backend | `degenfeed-web3-bridge` container + repo `/srv/work/repos/degenfeed-web3-bridge/` | **Stop, archive, keep code for reference, do not deploy.** |
+| Web3 bridge backend | `degenfeed-web3-bridge` container + repo `/path/to/degenfeed-web3-bridge/` | **Stop, archive, keep code for reference, do not deploy.** |
 | Web3 bridge frontend | `degenfeed-web3-frontend` | **Stop, delete.** |
-| Mastodon legacy data | `/srv/degenfeed-akkoma/migration-archive/mastodon-deprecated/` | **Keep tarball cold storage.** |
+| Mastodon legacy data | `/path/to/degenfeed-akkoma/migration-archive/mastodon-deprecated/` | **Keep tarball cold storage.** |
 | `degenfeed.xyz` DNS | Cloudflare | **Keep domain.** Point to new Pages site. |
 | Cloudflare Tunnel | Active for degenfeed.xyz | **Repoint to Pages.** |
 | Nginx vhost | `/etc/nginx/sites-available/degenfeed.xyz` | **Remove.** |
-| Mastodon theme assets | `/srv/degenfeed-akkoma/migration-archive/mastodon-theme/` | **Keep.** Can mine for inspiration. |
-| Backup scripts | `/root/scripts/degenfeed-backup.sh` | **Replace** with new site backup. |
+| Mastodon theme assets | `/path/to/degenfeed-akkoma/migration-archive/mastodon-theme/` | **Keep.** Can mine for inspiration. |
+| Backup scripts | `/path/to/scripts/degenfeed-backup.sh` | **Replace** with new site backup. |
 | gopass entries | All `degenfeed-akkoma-*` entries | **Keep** (audit trail), add new entries for v2. |
 | Email forwarding / SMTP | Gmail SMTP setup | **Keep** for `@degenfeed.xyz` if needed. |
 | ActivityPub followers | Any external followers we had | **They'll be stranded.** We'll post a farewell on the new site explaining. |
@@ -585,29 +585,29 @@ We can run this for ten years on the cost of one dinner.
 ### 6.2 The nuke script
 
 ```bash
-# /root/scripts/nuke-degenfeed-v1.sh
+# /path/to/scripts/nuke-degenfeed-v1.sh
 #!/usr/bin/env bash
 set -euo pipefail
 
 echo "=== DegenFeed v1 decommission ==="
 echo "Final backup..."
 TS=$(date +%Y%m%d-%H%M%S)
-mkdir -p /srv/backups/degenfeed-v1-final
+mkdir -p /path/to/backups/degenfeed-v1-final
 
 # Postgres final dump
 docker exec degenfeed-akkoma-db pg_dump -U akkoma akkoma \
-  | gzip > /srv/backups/degenfeed-v1-final/akkoma-pg-$TS.sql.gz
+  | gzip > /path/to/backups/degenfeed-v1-final/akkoma-pg-$TS.sql.gz
 
 # Local uploads
-tar czf /srv/backups/degenfeed-v1-final/uploads-$TS.tar.gz \
-  /srv/degenfeed-akkoma/uploads
+tar czf /path/to/backups/degenfeed-v1-final/uploads-$TS.tar.gz \
+  /path/to/degenfeed-akkoma/uploads
 
 # Configs
-tar czf /srv/backups/degenfeed-v1-final/config-$TS.tar.gz \
-  /srv/degenfeed-akkoma/config /srv/degenfeed-akkoma/soapbox-instance
+tar czf /path/to/backups/degenfeed-v1-final/config-$TS.tar.gz \
+  /path/to/degenfeed-akkoma/config /path/to/degenfeed-akkoma/soapbox-instance
 
 echo "Stopping services..."
-cd /srv/degenfeed-akkoma
+cd /path/to/degenfeed-akkoma
 docker compose down --volumes
 
 echo "Removing containers, networks, volumes..."
@@ -615,8 +615,8 @@ docker system prune -af --filter "label=com.docker.compose.project=degenfeed-akk
 docker volume rm degenfeed-akkoma_postgres_data degenfeed-akkoma_redis_data
 
 echo "Archiving for cold storage..."
-mv /srv/degenfeed-akkoma /srv/backups/degenfeed-v1-final/akkoma-deploy
-mv /srv/work/repos/degenfeed-web3-bridge /srv/backups/degenfeed-v1-final/web3-bridge-source
+mv /path/to/degenfeed-akkoma /path/to/backups/degenfeed-v1-final/akkoma-deploy
+mv /path/to/degenfeed-web3-bridge /path/to/backups/degenfeed-v1-final/web3-bridge-source
 
 echo "Removing nginx vhost..."
 rm -f /etc/nginx/sites-enabled/degenfeed.xyz
@@ -635,7 +635,7 @@ gopass rm -f LOCAL_SERVICES_PATH/akkoma-postgres-password
 gopass rm -f LOCAL_SERVICES_PATH/web3-bridge-secret
 
 echo "Done. Total cold-storage footprint:"
-du -sh /srv/backups/degenfeed-v1-final
+du -sh /path/to/backups/degenfeed-v1-final
 echo "v1 is dead. Long live v2."
 ```
 
@@ -744,7 +744,7 @@ echo "v1 is dead. Long live v2."
 8. DNS cutover from v1.
 9. Launch post to all connected identities.
 10. Submit to Nostr client directory, Farcaster client directory, Lens app directory, Bluesky app directory.
-11. Set up status page (status.degenfeed.xyz using uptime-kuma on Talos).
+11. Set up status page (status.degenfeed.xyz using uptime-kuma on [HOST-1]).
 
 **Definition of done:** Public site live at degenfeed.xyz, accepting sign-ins, serving mixed feed. Published launch announcement.
 
@@ -765,8 +765,8 @@ echo "v1 is dead. Long live v2."
 
 ```bash
 ssh [INTERNAL]
-mkdir -p /srv/work/repos/degenfeed-web
-cd /srv/work/repos/degenfeed-web
+mkdir -p /path/to/degenfeed-web
+cd /path/to/degenfeed-web
 git init
 pnpm init
 # set up workspace
@@ -800,7 +800,7 @@ Use the existing `fleet-template` to scaffold `apps/web` with all the standard p
 |---|---|
 | A protocol deprecates or breaks (e.g., Lens v3 transition) | Pin SDK versions, abstract behind `UnifiedPost`, write contract tests |
 | Relay / Hub goes down | Worker health-checks every 5 min, auto-failover to pool |
-| Rate limiting by Hubs | Self-host Hub on Talos for the long term |
+| Rate limiting by Hubs | Self-host Hub on [HOST-1] for the long term |
 | Spam | Client-side filtering via mute lists (NIP-51), per-user blocklists; no central moderation |
 | Legal (DMCA, GDPR) | We host zero user content; relays and source protocols own content; we are a client |
 | Discovery / cold-start on the *viewer* side | Heavy cross-posting from our launch accounts; submit to all protocol app directories; launch with a curated "50 must-follow" list |
@@ -841,7 +841,7 @@ Use the existing `fleet-template` to scaffold `apps/web` with all the standard p
 1. **The graph already exists.** 6M+ accounts. We don't have to grow it.
 2. **The clients today are bad.** Damus, Amethyst, Farcaster clients, Lens clients — all have the design quality of 2014 Twitter. There's room.
 3. **Zero marginal cost.** Static site + edge workers. We can't lose money on this.
-4. **The team already has the infra.** Talos for backups, Plausible, MeiliSearch, Cloudflare account, Tailscale, gopass, fleet-template. Nothing new to buy.
+4. **The team already has the infra.** [HOST-1] for backups, Plausible, MeiliSearch, Cloudflare account, Tailscale, gopass, fleet-template. Nothing new to buy.
 5. **The aggregator idea is validated by every successful aggregator in history.** TweetDeck → Tweetbot. Feedly. Reeder. Algorithmic feeds. People want a better window, not a new network.
 6. **We can pivot further.** If a new protocol emerges, we add a client. If the landscape consolidates, we don't care — we read whatever exists.
 
@@ -857,6 +857,6 @@ The moat is not the technology. The moat is the **design quality**, the **curati
 2. **Pick the domain question.** `degenfeed.xyz` vs new.
 3. **Set the nuke date.** Aim for 7 days from today. Gives time for the announcement to propagate.
 4. **Post the announcement on the existing instance** with the new direction.
-5. **I scaffold `degenfeed-web`** on Talos and start Week 1.
+5. **I scaffold `degenfeed-web`** on [HOST-1] and start Week 1.
 
 Let's go.

@@ -860,7 +860,7 @@ Value: {
 | **Disable frontend** | `forceAdminRedirect: false`, disable theme layer, disable portal |
 | **Configure headless API** | Enable Content API + Admin API, generate keys |
 | **Configure webhooks** | Set up `post.published` → `api.degenfeed.xyz/webhooks/ghost/` |
-| **Deploy to Talos** | Docker compose on `articles.degenfeed.xyz` subdomain |
+| **Deploy to [HOST-1]** | Docker compose on `articles.degenfeed.xyz` subdomain |
 | **Verify ActivityPub** | Ghost ActivityPub service federating with Mastodon |
 
 **Deliverable:** Ghost running headless at `articles.degenfeed.xyz`, API accessible, ActivityPub working.
@@ -995,10 +995,10 @@ Reverse:
 
 | Resource | Requirement |
 |---|---|
-| **Server** | Talos VM (existing) |
+| **Server** | [HOST-1] VM (existing) |
 | **Subdomain** | `articles.degenfeed.xyz` |
-| **Database** | MySQL 8.0 (Docker on Talos or hosted) |
-| **Storage** | Ghost media stored in S3-compatible (Minio on Talos) or local volume |
+| **Database** | MySQL 8.0 (Docker on [HOST-1] or hosted) |
+| **Storage** | Ghost media stored in S3-compatible (Minio on [HOST-1]) or local volume |
 | **Cache** | Redis (existing `rmi-redis`) |
 | **Email** | Mailgun or SMTP relay |
 | **Stripe** | Stripe Connect account |
@@ -1009,7 +1009,7 @@ Reverse:
 
 | Item | Monthly Cost |
 |---|---|
-| MySQL (Docker on Talos) | $0 (existing hardware) |
+| MySQL (Docker on [HOST-1]) | $0 (existing hardware) |
 | Storage (Minio, 10 GB) | $0 (existing) |
 | Email (Mailgun, 10K/mo) | $1 (free tier) |
 | Stripe (Connect + processing) | 2.9% + $0.30 per transaction |

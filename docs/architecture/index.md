@@ -37,7 +37,7 @@ infra/
 | Edge API | Cloudflare Worker degenfeed-api | `https://degenfeed.xyz/api/*` and `https://app.degenfeed.xyz/api/*` |
 | Social server | GotoSocial (separate repo/deploy) | `https://social.degenfeed.xyz` |
 
-The deployed DegenFeed social server is **GotoSocial**, not Mastodon. It runs from `/srv/degenfeed/` on Talos and is independent of this repo.
+The deployed DegenFeed social server is **GotoSocial**, not Mastodon. It runs from `/path/to/degenfeed/` on [HOST-1] and is independent of this repo.
 
 ## Key flows
 1. **Feed aggregation** — `workers/api` fetches and normalizes posts from configured protocols via the shared SDK packages, then serves them to `apps/web`.

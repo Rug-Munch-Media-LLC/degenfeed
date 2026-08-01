@@ -64,7 +64,7 @@ This document provides **deep, evidence-based verification** of ownership and co
 | Can create users? | `docker exec gotosocial /gotosocial/gotosocial admin account create --username verifytest --email verifytest@degenfeed.xyz --password "Verif1edT3st!"` | ✅ Success | User created and confirmed in DB |
 | Can delete users? | `docker exec gotosocial /gotosocial/gotosocial admin account delete --username verifytest` | ✅ Success | User deleted (confirmed via `admin account list`) |
 | Can moderate content? | `docker exec gotosocial /gotosocial/gotosocial admin account suspend --username USER` (CLI exists) | ✅ Supported | CLI tools for moderation exist |
-| Can change config? | Config at `/srv/degenfeed/gotosocial/config.yaml` — edited and restarted | ✅ Verified | Config file bind-mounted; restart picks up changes |
+| Can change config? | Config at `/path/to/degenfeed/gotosocial/config.yaml` — edited and restarted | ✅ Verified | Config file bind-mounted; restart picks up changes |
 | Can shutdown/restart? | `docker restart gotosocial` → service recovered | ✅ Verified | Restarted and returned healthy; API responded correctly |
 
 **Admin users:** `cryptorugmunch` (admin), `degenfeed_bot` (non-admin)  
@@ -74,11 +74,11 @@ This document provides **deep, evidence-based verification** of ownership and co
 
 | Criterion | Test | Evidence |
 |-----------|------|----------|
-| Where is data stored? | SQLite at `/srv/degenfeed/gotosocial/data/gotosocial.sqlite` | Bind mount container → host |
-| Can we export? | SQLite file is portable; `gzip` archive exists | Multiple backup archives in `/srv/degenfeed/backups/` |
+| Where is data stored? | SQLite at `/path/to/degenfeed/gotosocial/data/gotosocial.sqlite` | Bind mount container → host |
+| Can we export? | SQLite file is portable; `gzip` archive exists | Multiple backup archives in `/path/to/degenfeed/backups/` |
 | Can we backup/restore? | Daily backups run (config + SQLite gzip) | 12 backup sets from Jul 9–17 |
 | Can we migrate? | SQLite is a single file — copy to any server | Portable format |
-| Is data in our possession? | On Talos server, encrypted disk | `/dev/vda3` (2TB, 21% used) |
+| Is data in our possession? | On [HOST-1] server, encrypted disk | `[DISK]` (2TB, 21% used) |
 
 #### Network Participation — 🟡 **4/5**
 
@@ -128,7 +128,7 @@ This document provides **deep, evidence-based verification** of ownership and co
 | Can we export? | `docker exec degenfeed-lemmy-db pg_dump -U lemmy` |
 | Can we backup/restore? | Volume-based backup possible |
 | Can we migrate? | Standard PostgreSQL dump/restore |
-| Is data in our possession? | On Talos local disk |
+| Is data in our possession? | On [HOST-1] local disk |
 
 #### Network Participation — 🟢 **5/5**
 
@@ -175,7 +175,7 @@ This document provides **deep, evidence-based verification** of ownership and co
 | Can we export? | 🟡 Videos stored at `peertube_peertube_data` volume |
 | Can we backup? | ✅ Docker volumes can be snapshotted |
 | Can we migrate? | ✅ PostgreSQL dump + video files |
-| Data in possession? | ✅ On Talos |
+| Data in possession? | ✅ On [HOST-1] |
 
 #### Network Participation — 🟡 **4/5**
 
@@ -183,7 +183,7 @@ This document provides **deep, evidence-based verification** of ownership and co
 |-----------|--------|
 | Can we post? | ✅ 5 videos uploaded |
 | Can others see? | ✅ Federation enabled |
-| DNS resolves? | ✅ video.degenfeed.xyz → [TALOS_PUBLIC_IP] (direct IP) |
+| DNS resolves? | ✅ video.degenfeed.xyz → [PUBLIC_IP] (direct IP) |
 | External? | ⚠️ Not yet discoverable on directory services |
 
 #### Independence — 🟢 **5/5**
@@ -210,7 +210,7 @@ This document provides **deep, evidence-based verification** of ownership and co
 | Can create users? | ⚠️ CLI had issue: "username is invalid" | Could only create via API |
 | Can delete users? | ⚠️ Via CLI or DB | Not tested |
 | Can moderate? | ⚠️ dfadmin is NOT marked as admin | `isAdmin: None` in API response |
-| Can change config? | ✅ Config at `/srv/degenfeed/writefreely/config.ini` | Verified |
+| Can change config? | ✅ Config at `/path/to/degenfeed/writefreely/config.ini` | Verified |
 | Can shutdown/restart? | ✅ Docker compose | Verified |
 
 **Admin user:** `degenfeed` listed in `admin_users` config, but `dfadmin` (created user) is NOT admin.
@@ -223,7 +223,7 @@ This document provides **deep, evidence-based verification** of ownership and co
 | Can we export? | ✅ SQLite file is portable |
 | Can we backup? | ✅ Volume backup |
 | Can we migrate? | ✅ Copy SQLite file |
-| Data in possession? | ✅ On Talos |
+| Data in possession? | ✅ On [HOST-1] |
 
 #### Network Participation — 🟡 **3/5**
 
@@ -300,7 +300,7 @@ This document provides **deep, evidence-based verification** of ownership and co
 |-----------|------|--------|
 | Can create users? | ✅ `php artisan user:create` works | Test user `testphoto` created |
 | Can promote? | ✅ DB: `UPDATE users SET is_admin=1` | `photos_admin` is admin |
-| Can change config? | ✅ `.env` at `/srv/degenfeed/pixelfed.env` | Verified |
+| Can change config? | ✅ `.env` at `/path/to/degenfeed/pixelfed.env` | Verified |
 | Can shutdown/restart? | ✅ Docker compose | Verified |
 | API verified? | ✅ Instance info, WebFinger, NodeInfo all respond | Confirmed |
 
@@ -315,7 +315,7 @@ This document provides **deep, evidence-based verification** of ownership and co
 | Can we export? | 🟡 Storage is in Docker volume (not bind-mounted) |
 | Can we backup? | ✅ DB volume can be snapshotted |
 | Can we migrate? | ✅ MySQL dump + file copy |
-| Data in possession? | ✅ On Talos |
+| Data in possession? | ✅ On [HOST-1] |
 
 #### Network Participation — 🟡 **4/5**
 
@@ -347,7 +347,7 @@ This document provides **deep, evidence-based verification** of ownership and co
 | Criterion | Result |
 |-----------|--------|
 | Service running? | ✅ Container healthy |
-| Can configure? | ✅ Data at /srv/degenfeed/owncast/data |
+| Can configure? | ✅ Data at /path/to/degenfeed/owncast/data |
 | Can stream? | ⚠️ Not currently streaming (offline) |
 | Can shutdown/restart? | ✅ Docker compose |
 
@@ -368,7 +368,7 @@ This document provides **deep, evidence-based verification** of ownership and co
 | Can create users? | ✅ No invite codes required | `inviteCodeRequired: false` |
 | Can create accounts? | ✅ API: `com.atproto.server.createAccount` | Account `df-admin.degenfeed.xyz` created |
 | Can post? | ✅ Skeet posted: `at://did:plc:2kunfxxjckvzvrmeiqon5pc6/app.bsky.feed.post/3mrfnwn6u5k2b` | Verified |
-| Can change config? | ✅ `/srv/degenfeed/pds/.env` | JWT secret, admin password, rotation key |
+| Can change config? | ✅ `/path/to/degenfeed/pds/.env` | JWT secret, admin password, rotation key |
 | Can shutdown/restart? | ✅ Docker compose | Verified |
 
 **DID:** `did:web:pds.degenfeed.xyz`  
@@ -379,11 +379,11 @@ This document provides **deep, evidence-based verification** of ownership and co
 
 | Criterion | Evidence |
 |-----------|----------|
-| Where is data? | SQLite at `/srv/degenfeed/pds/data` (bind mount) |
+| Where is data? | SQLite at `/path/to/degenfeed/pds/data` (bind mount) |
 | Can we export? | ✅ SQLite file is portable |
 | Can we backup? | ✅ Bind mount to host filesystem |
 | Can we migrate? | ✅ Copy SQLite file |
-| Data in possession? | ✅ On Talos |
+| Data in possession? | ✅ On [HOST-1] |
 
 #### Network Participation — 🟡 **3/5**
 
@@ -420,7 +420,7 @@ This document provides **deep, evidence-based verification** of ownership and co
 |-----------|------|--------|
 | Can create events? | ✅ Ownership note published via WebSocket | Verified by querying relay |
 | Can control? | ✅ Admin pubkey in config, open relay | Anyone can post (no restricted writes) |
-| Can change config? | ✅ `/srv/degenfeed/nostr-relay/config.toml` | Verified |
+| Can change config? | ✅ `/path/to/degenfeed/nostr-relay/config.toml` | Verified |
 | Can shutdown/restart? | ✅ Docker restart, events persist | Tested — data survives restart |
 | NIP support? | ✅ NIPs 1,2,9,11,12,15,16,20,22,33,40 | Verified via NIP-11 info |
 
@@ -434,7 +434,7 @@ This document provides **deep, evidence-based verification** of ownership and co
 | Can we export? | ✅ SQLite file from volume backup |
 | Can we backup? | ✅ Volume snapshots |
 | Data persists? | ✅ Events survive container restart (verified) |
-| Data in possession? | ✅ On Talos |
+| Data in possession? | ✅ On [HOST-1] |
 
 #### Network Participation — 🟡 **3/5**
 
@@ -477,7 +477,7 @@ This document provides **deep, evidence-based verification** of ownership and co
 
 | Criterion | Evidence |
 |-----------|----------|
-| Where is data? | `/srv/degenfeed/hubble-data/` on host |
+| Where is data? | `/path/to/degenfeed/hubble-data/` on host |
 | Can we export? | ⚠️ Partial data only (2% synced) |
 | Can we backup? | ⚠️ Partial backup of incomplete data |
 
@@ -523,7 +523,7 @@ This document provides **deep, evidence-based verification** of ownership and co
 | What data? | **140 publications** indexed from Lens API |
 | Latest timestamp? | 2026-07-24T18:09:16 (active sync) |
 | Can we export? | ✅ SQLite from volume |
-| Data in possession? | ✅ On Talos |
+| Data in possession? | ✅ On [HOST-1] |
 
 **Sample data:** Real Lens posts including `.@baseapp has launched a new campaign`, Polymarket airdrops, etc.
 

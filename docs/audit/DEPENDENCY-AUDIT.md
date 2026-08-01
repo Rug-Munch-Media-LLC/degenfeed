@@ -130,7 +130,7 @@ Manually inspected dependency names for typosquatting:
 |------|------------|------------|
 | npm registry compromise | Standard risk | Use lockfile, verify signatures |
 | Malicious package update | Possible | Pin transitive deps, use `resolution` overrides |
-| CI pipeline compromise | Low | Builds happen on Talos with access controls |
+| CI pipeline compromise | Low | Builds happen on [HOST-1] with access controls |
 | Workspace package poisoning | Low | All `@degenfeed/*` packages audited in monorepo |
 
 ---

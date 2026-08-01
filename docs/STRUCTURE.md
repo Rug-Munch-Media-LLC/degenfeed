@@ -569,7 +569,7 @@ Infrastructure packages:
           │
           ▼
    ┌──────────────┐
-   │  Talos Host  │
+   │  [HOST-1] Host  │
    │  Docker      │
    │  Compose     │
    └──────────────┘
@@ -591,7 +591,7 @@ Infrastructure packages:
                     ▼                 ▼                  ▼
           ┌─────────────────┐ ┌──────────────┐ ┌──────────────────┐
           │ Cloudflare Pages│ │  Cloudflare  │ │  Nginx Reverse   │
-          │  (Frontend)     │ │  Workers     │ │  Proxy (Talos)   │
+          │  (Frontend)     │ │  Workers     │ │  Proxy ([HOST-1])   │
           │  CDN + SSR      │ │  (API)       │ │  Port 443 →      │
           │  apps/web       │ │  workers/api │ │  Internal svcs   │
           └─────────────────┘ └──────┬───────┘ └──────────────────┘

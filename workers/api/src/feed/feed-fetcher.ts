@@ -340,7 +340,7 @@ export function getProvider(protocol: Protocol, env: Env): FeedProvider {
  * a bridge provider registered in bridge/src/server/feeds.ts.
  *
  * Fetches from the bridge HTTP API (which runs alongside the worker
- * on Talos). This allows ALL 68+ protocols to be fetched through
+ * on [HOST-1]). This allows ALL 68+ protocols to be fetched through
  * the same unified feed pipeline.
  */
 export class BridgeFeedProvider implements FeedProvider {
@@ -361,7 +361,7 @@ export class BridgeFeedProvider implements FeedProvider {
     for (let attempt = 0; attempt < 2; attempt++) {
       try {
         const res = await fetch(`${this.bridgeUrl}/api/feed/${this.protocol}?limit=50`, {
-          headers: this.bridgeApiKey ? { 'Authorization': `Bearer ${this.bridgeApiKey}` } : {},
+          headers: this.bridgeApiKey ? { Authorization: `Bearer ${this.bridgeApiKey}` } : {},
           signal: AbortSignal.timeout(timeoutMs),
         });
         if (!res.ok) {
@@ -386,7 +386,7 @@ export class BridgeFeedProvider implements FeedProvider {
     try {
       const start = performance.now();
       const res = await fetch(`${this.bridgeUrl}/api/bridge/health/${this.protocol}`, {
-          headers: this.bridgeApiKey ? { 'Authorization': `Bearer ${this.bridgeApiKey}` } : {},
+        headers: this.bridgeApiKey ? { Authorization: `Bearer ${this.bridgeApiKey}` } : {},
         signal: AbortSignal.timeout(3000),
       });
       const latency = Math.round(performance.now() - start);
@@ -403,7 +403,7 @@ export class BridgeFeedProvider implements FeedProvider {
 }
 
 // Wrapper that tries RMI first, falls back to public RSS.
-// This is needed because RMI is only reachable from Talos internal
+// This is needed because RMI is only reachable from [HOST-1] internal
 // network, not from the Cloudflare edge.
 class RssWithFallbackProvider implements FeedProvider {
   readonly protocol: Protocol = 'rss';
@@ -892,9 +892,10 @@ export async function fetchFromProvidersWithTimeout(
   // we still have partial results from providers that already resolved.
   // The Promise.race here is a backstop — not a replacement for per-provider timeouts.
   const result = await Promise.race([
-    fetchFromProviders(env, protocols, limit, notices, execCtx, timer).then(
-      (r) => ({ results: r, timedOut: false as const }),
-    ),
+    fetchFromProviders(env, protocols, limit, notices, execCtx, timer).then((r) => ({
+      results: r,
+      timedOut: false as const,
+    })),
     new Promise<{ results: ProviderResult[]; timedOut: true }>((resolve) =>
       setTimeout(() => {
         notices.push(`Feed generation timeout after ${timeoutMs}ms — serving partial results`);

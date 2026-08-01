@@ -4,7 +4,7 @@ node = "22"
 bun = "1"
 
 [env]
-# Managed by mise — reproducible dev environments across Cinnabox/Talos/Hydra
+# Managed by mise — reproducible dev environments across [HOST-3]/[HOST-1]/[HOST-2]
 
 [settings]
 always_keep_download = false

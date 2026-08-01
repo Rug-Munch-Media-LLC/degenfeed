@@ -13,18 +13,17 @@
  * - API differences between platforms
  * - Media upload optimization
  *
- * @see /srv/degenfeed/postiz/README.md
- * @see /srv/work/repos/degenfeed-web/workers/api/src/lib/postiz-bridge.ts
+ * @see /path/to/degenfeed/postiz/README.md
+ * @see /path/to/degenfeed-web/workers/api/src/lib/postiz-bridge.ts
  */
 
-import { checkFeatureAccess, getUserTier } from '../lib/membership-tiers';
+import { getUserTier } from '../lib/membership-tiers';
 import {
   completeExternalPlatformConnection,
   disconnectExternalPlatform,
   EXTERNAL_PLATFORM_CATEGORIES,
   EXTERNAL_PLATFORM_IDS,
   type ExternalGoLiveRequest,
-  type ExternalPlatformAccount,
   type ExternalPlatformId,
   type ExternalPostRequest,
   getConnectedExternalAccounts,

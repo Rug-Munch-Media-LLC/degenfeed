@@ -53,7 +53,7 @@ audit:
 | 2.2 | Sentry/GlitchTip in Worker | ✅ | `SENTRY_DSN` env var wired, `reportError()` and `logError()` in `error-logger.ts` |
 | 2.3 | GlitchTip deployment defined | ✅ | `infra/monitoring/glitchtip.yml` — Docker Compose with Postgres backend |
 | 2.4 | GlitchTip setup documented | ✅ | `infra/monitoring/glitchtip-setup.md` — project creation, DSN, env vars |
-| 2.5 | `glitchtip.rugmunch.io` reachable | ⚠️ | Check: does the container exist on Talos? Verify with `docker ps | grep glitchtip` |
+| 2.5 | `glitchtip.rugmunch.io` reachable | ⚠️ | Check: does the container exist on [HOST-1]? Verify with `docker ps | grep glitchtip` |
 | 2.6 | Error persistence in KV | ✅ | `error-logger.ts` stores last 50 errors per isolate in KV for health dashboard |
 | 2.7 | **GAP: GlitchTip may not be running** | ❌ | Confirmed in CLOUDFLARE.md / LAUNCH-CHECKLIST.md — GlitchTip container status not verified. Deploy with: `docker compose -f infra/monitoring/glitchtip.yml up -d` |
 | 2.8 | **GAP: No error alert routing** | ❌ | Errors log to console + KV; no real-time alerting (PagerDuty, n8n webhook, Slack) |
@@ -151,7 +151,7 @@ wrangler r2 bucket create degenfeed-assets
 
 | # | Check | Status | Details |
 |---|-------|--------|---------|
-| 5.1 | GotoSocial SQLite backed up | ✅ | `/root/scripts/degenfeed-backup.sh` — daily, `.age` encrypted, 7-day retention |
+| 5.1 | GotoSocial SQLite backed up | ✅ | `/path/to/scripts/degenfeed-backup.sh` — daily, `.age` encrypted, 7-day retention |
 | 5.2 | GotoSocial config backed up | ✅ | `config.yaml` copied daily |
 | 5.3 | GotoSocial media backed up | ✅ | Tarball of local storage (R2 S3 is Cloudflare-managed separately) |
 | 5.4 | App Postgres databases backed up | ✅ | `backup-app-postgres.sh` covers: `degenfeed-glitchtip-db`, `degenfeed-lemmy-db`, `degenfeed-postiz-db`, `degenfeed-postiz-temporal-db`, `peertube-postgres-1` |
@@ -174,7 +174,7 @@ age -d -i ~/.age/key.txt gotosocial-db-20260724-020001.sqlite.gz.age > gotosocia
 gunzip gotosocial-db.sqlite.gz
 # Stop GotoSocial, replace DB, restart
 systemctl stop gotosocial
-cp gotosocial-db.sqlite /srv/degenfeed/gotosocial/data/gotosocial.sqlite
+cp gotosocial-db.sqlite /path/to/degenfeed/gotosocial/data/gotosocial.sqlite
 systemctl start gotosocial
 
 # Postgres app restore (e.g., GlitchTip)
@@ -244,14 +244,14 @@ security-headers:
 
 | # | Check | Status | Details |
 |---|-------|--------|---------|
-| 7.1 | Prometheus scraping | ⚠️ | 7 up / 3 down targets — talos-node, hydra-node, degenfeed-http have issues |
+| 7.1 | Prometheus scraping | ⚠️ | 7 up / 3 down targets — [HOST-1]-node, [HOST-2]-node, degenfeed-http have issues |
 | 7.2 | Grafana dashboards | ✅ | 5 dashboards: Fleet Health, DegenFeed Metrics, Agent Fleet, CI/CD, LLM Costs |
 | 7.3 | Alert rules | ❌ | fleet-prometheus has **0 rule groups** — no automated alerting |
 | 7.4 | Alertmanager | ❌ | No Alertmanager container — alerts route nowhere |
 | 7.5 | Dead man's switch | ✅ | Every 30 min writes `/backups/.dead-mans-switch` |
 | 7.6 | Healthchecks.io | ❌ | URL configured but never sourced from env |
-| 7.7 | Node exporter on Talos | ⚠️ | Port 9100 timeout via Tailscale IP |
-| 7.8 | Node exporter on Hydra | ❌ | Port 9100 → 404 |
+| 7.7 | Node exporter on [HOST-1] | ⚠️ | Port 9100 timeout via Tailscale IP |
+| 7.8 | Node exporter on [HOST-2] | ❌ | Port 9100 → 404 |
 | 7.9 | DegenFeed metrics endpoint | ✅ | `/api/health` returns structured JSON with error counts; `/metrics` returns Prometheus format |
 | 7.10 | **GAP: No synthetic monitoring** | ❌ | No Checkly, Playwright, or Cloudflare Health Check for critical user flows |
 | 7.11 | **GAP: No uptime SLA tracking** | ❌ | No status page, no incident response runbook |
@@ -288,8 +288,8 @@ groups:
 
 3. **Wire Healthchecks.io:**
 ```bash
-# In /root/scripts/degenfeed-backup.sh, source fleet-infra .env:
-source /srv/work/repos/fleet-infra/.env 2>/dev/null || true
+# In /path/to/scripts/degenfeed-backup.sh, source fleet-infra .env:
+source /path/to/fleet-infra/.env 2>/dev/null || true
 ```
 
 ---
@@ -310,7 +310,7 @@ source /srv/work/repos/fleet-infra/.env 2>/dev/null || true
 | # | Task | Owner | Depends |
 |---|------|-------|---------|
 | 5 | Add `x-request-id` to Worker + Next.js middleware | Backend | — |
-| 6 | Fix Prometheus targets (talos-node, hydra-node, degenfeed-http) | DevOps | — |
+| 6 | Fix Prometheus targets ([HOST-1]-node, [HOST-2]-node, degenfeed-http) | DevOps | — |
 | 7 | Deploy Alertmanager + first alert rules | DevOps | — |
 | 8 | Add `pnpm audit --prod` to CI pipeline | DevOps | — |
 
@@ -358,4 +358,4 @@ source /srv/work/repos/fleet-infra/.env 2>/dev/null || true
 
 ---
 
-*Generated 2026-07-24 · Last review: Copy to `/root/.knowledge/verification_log.txt` after completion*
+*Generated 2026-07-24 · Last review: Copy to `/path/to/knowledge/verification_log.txt` after completion*

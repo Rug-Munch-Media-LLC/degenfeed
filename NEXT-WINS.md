@@ -2,7 +2,7 @@
 
 > **Synthesis Date:** 2026-07-25
 > **Scope:** degenfeed-web monorepo (2,390 TS/TSX files, 43 packages, 241 routes, 420 components, 189 pages)
-> **Infrastructure:** Talos (netcup), Hydra (contabo), Cinnabox, Cloudflare (Pages + Workers + KV + DNS)
+> **Infrastructure:** [HOST-1] (netcup), [HOST-2] (contabo), [HOST-3], Cloudflare (Pages + Workers + KV + DNS)
 
 ---
 
@@ -50,7 +50,7 @@
 | Protocol ecosystem | 25 (4 OWN, 12 PARTICIPATE, 9 BRIDGE) |
 | Test files | 147 (plus 15 e2e) |
 | Large files >1000 lines | 30+ |
-| Infrastructure hosts | 4 (Cloudflare, Talos, Hydra, Cinnabox) |
+| Infrastructure hosts | 4 (Cloudflare, [HOST-1], [HOST-2], [HOST-3]) |
 | Docker containers | 19 running |
 
 ---
@@ -64,7 +64,7 @@
 | C1 | **8 packages fail typecheck** | Backend/API | 2d | HIGH | @degenfeed/spaces-audio, ranking, web3, mastodon-sdk, feed-core, zora-sdk, realtime all have type errors. This means the "make ci" gate is not authoritative. |
 | C2 | **15 dependency vulnerabilities (7 high)** | Security | 1d | HIGH | next@16.2.10 (4 SSRF/DoS), postcss (path traversal), sharp (libvips CVEs), brace-expansion (DoS). Next bump to 16.2.11 patches 4 of these. |
 | C3 | **Stripe production keys** | Business/Security | 0.5d | HIGH | Test mode only — no real payments. Requires rotating pk_test key in Stripe dashboard + gopass. |
-| C4 | **Nostr Nests (spaces.degenfeed.xyz) down** | Infra | 1d | MEDIUM | 404 — service needs restart on Hydra. Blocks audio spaces feature. |
+| C4 | **Nostr Nests (spaces.degenfeed.xyz) down** | Infra | 1d | MEDIUM | 404 — service needs restart on [HOST-2]. Blocks audio spaces feature. |
 | C5 | **Feed API cold-start timeout (8s)** | API | 1d | MEDIUM | First request after cache expiry times out. KV warmup cron needed. |
 | C6 | **CI gates not authoritative** | DevOps | 1d | HIGH | `continue-on-error: true` and `|| true` in pipelines. CI currently doesn't fail when it should. |
 
@@ -118,7 +118,7 @@
 | 1 | **Fix 8 package type errors** | 🔴 C1 | Backend | `pnpm typecheck` passes on all 30 packages |
 | 1 | **Bump next@16.2.10 → 16.2.11** | 🔴 C2 | Backend | `pnpm audit` shows 0 high |
 | 2 | **Run pnpm update for transitive deps** | 🔴 C2 | Backend | postcss ≥8.5.18, sharp ≥0.35.0 |
-| 2 | **Restart Nostr Nests on Hydra** | 🔴 C4 | DevOps | spaces.degenfeed.xyz returns 200 |
+| 2 | **Restart Nostr Nests on [HOST-2]** | 🔴 C4 | DevOps | spaces.degenfeed.xyz returns 200 |
 | 3 | **Add feed cache warmup cron** | 🔴 C5 | Backend | KV warmup every 60s, cold-start <2s |
 | 3 | **Fix CI gates (remove || true)** | 🔴 C6 | DevOps | CI fails on lint/typecheck errors |
 | 4 | **Rotate Stripe keys → production** | 🔴 C3 | Business | Stripe dashboard → gopass → .env.secrets |

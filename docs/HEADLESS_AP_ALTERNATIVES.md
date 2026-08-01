@@ -594,19 +594,19 @@ ADD:     None needed
 
 ```bash
 # 1. Stop
-docker compose -f /srv/degenfeed/gotosocial/docker-compose.yml down
+docker compose -f /path/to/degenfeed/gotosocial/docker-compose.yml down
 
 # 2. Backup
-cp /srv/degenfeed/gotosocial/data/gotosocial.sqlite \
-   /srv/degenfeed/backups/gotosocial-pre-upgrade.sqlite
+cp /path/to/degenfeed/gotosocial/data/gotosocial.sqlite \
+   /path/to/degenfeed/backups/gotosocial-pre-upgrade.sqlite
 
 # 3. Update tag
 sed -i 's/gotosocial:0.22.0/gotosocial:0.22.1/' \
-   /srv/degenfeed/gotosocial/docker-compose.yml
+   /path/to/degenfeed/gotosocial/docker-compose.yml
 
 # 4. Pull and start
-docker compose -f /srv/degenfeed/gotosocial/docker-compose.yml pull
-docker compose -f /srv/degenfeed/gotosocial/docker-compose.yml up -d
+docker compose -f /path/to/degenfeed/gotosocial/docker-compose.yml pull
+docker compose -f /path/to/degenfeed/gotosocial/docker-compose.yml up -d
 
 # 5. Verify
 curl https://social.degenfeed.xyz/api/v1/instance

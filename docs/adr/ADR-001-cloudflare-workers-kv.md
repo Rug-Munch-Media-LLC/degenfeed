@@ -45,9 +45,9 @@ Hono (~12KB gzipped) for route modularity and portability. ~100 route modules un
 WebSocket rooms (spaces, chat, live feed updates) use Durable Objects for strong consistency.
 
 ### 4. What We Are NOT Using Workers For
-- Raw TCP connections (Nostr relays needing TCP use Talos sidecar)
-- Long-running compute >30s (dispatched to Talos background workers)
-- Relational database (PostgreSQL on Talos)
+- Raw TCP connections (Nostr relays needing TCP use [HOST-1] sidecar)
+- Long-running compute >30s (dispatched to [HOST-1] background workers)
+- Relational database (PostgreSQL on [HOST-1])
 - File/blob storage (R2 available but not part of Worker request path)
 
 ## Consequences
@@ -61,7 +61,7 @@ WebSocket rooms (spaces, chat, live feed updates) use Durable Objects for strong
 
 ### Negative
 1. **KV eventual consistency** — 60s propagation window, mitigated by fail-closed sessions and cache-aside with TTL
-2. **No raw TCP** — Protocol SDKs use HTTPS/WebSocket variants; Talos sidecar for TCP-heavy relays
+2. **No raw TCP** — Protocol SDKs use HTTPS/WebSocket variants; [HOST-1] sidecar for TCP-heavy relays
 3. **10ms CPU per-call limit on Bundled plan** — Mitigated by concurrency limiting and KV caching
 4. **Durable Objects bottleneck at scale** — Room sharding at 500 concurrent users per DO
 5. **Vendor lock-in** — Mitigated by abstraction layers, Hono portability, and Vitest for non-CF tests

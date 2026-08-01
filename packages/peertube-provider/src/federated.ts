@@ -143,7 +143,7 @@ export const FEDERATED_PEERTUBE_INSTANCES: Array<{
   //   name: 'Foucry PeerTube',
   //   tags: ['tech', 'general'],
   //   priority: 3,
-  //   // NOTE: commented out 2026-07-18 — instance unreachable from Talos
+  //   // NOTE: commented out 2026-07-18 — instance unreachable from [INTERNAL]
   // },
   {
     url: 'https://peertube.1312.media',

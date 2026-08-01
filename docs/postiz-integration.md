@@ -70,13 +70,13 @@ Cloudflare Worker (workers/api/src/routes/publish.ts)
 - Docker Compose v2+
 - 2GB RAM minimum, 4GB recommended
 - A domain or subdomain pointing to your server (optional, for OAuth callbacks)
-- `/srv/degenfeed/.env` with `POSTIZ_JWT_SECRET` and any OAuth client keys
+- `/path/to/degenfeed/.env` with `POSTIZ_JWT_SECRET` and any OAuth client keys
 
 ### Deployment
 
 ```bash
 # Start the Postiz stack
-cd /srv/degenfeed/postiz
+cd /path/to/degenfeed/postiz
 docker compose up -d
 
 # Wait for startup (health checks run at 30s intervals)
@@ -89,10 +89,10 @@ docker compose logs -f postiz
 
 1. Open `http://localhost:3105` and create an admin account
 2. Go to **Settings → Developers → Public API** and generate an API key
-3. Set `POSTIZ_API_KEY` in `/srv/degenfeed/.env`
+3. Set `POSTIZ_API_KEY` in `/path/to/degenfeed/.env`
 4. In Postiz UI, add social channels (Settings → Channels → Connect)
 5. Note each channel's integration ID (visible in the URL or API response)
-6. Set `POSTIZ_INTEGRATIONS` in `/srv/degenfeed/.env`:
+6. Set `POSTIZ_INTEGRATIONS` in `/path/to/degenfeed/.env`:
    ```json
    {"mastodon":"int_abc123","bluesky":"int_def456"}
    ```

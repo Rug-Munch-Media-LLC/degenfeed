@@ -16,8 +16,8 @@
  * Postiz runs at http://127.0.0.1:3105 (internal) /
  * https://schedule.degenfeed.xyz (external).
  *
- * @see /srv/degenfeed/postiz/README.md
- * @see /srv/degenfeed/postiz/platforms.json
+ * @see /path/to/degenfeed/postiz/README.md
+ * @see /path/to/degenfeed/postiz/platforms.json
  */
 
 import type { MasterPost } from '@degenfeed/cross-protocol-bridge';
@@ -417,7 +417,6 @@ export async function getExternalPlatformConnectUrl(
     return { error: `Unsupported platform: ${platform}` };
   }
 
-  const apiKey = getPostizApiKey(env);
   const baseUrl = getPostizBaseUrl(env);
 
   // Generate a state token for CSRF protection
@@ -512,24 +511,17 @@ export async function completeExternalPlatformConnection(
         JSON.stringify(account),
       );
       // Also store in the user's account list
-      const existing = await env.PLATFORM_ACCOUNTS.get(
-        `ext-platform:user:${userId}`,
-      );
+      const existing = await env.PLATFORM_ACCOUNTS.get(`ext-platform:user:${userId}`);
       const accounts: ExternalPlatformAccount[] = existing
         ? (JSON.parse(existing) as ExternalPlatformAccount[])
         : [];
-      const existingIdx = accounts.findIndex(
-        (a) => a.platform === platform,
-      );
+      const existingIdx = accounts.findIndex((a) => a.platform === platform);
       if (existingIdx >= 0) {
         accounts[existingIdx] = account;
       } else {
         accounts.push(account);
       }
-      await env.PLATFORM_ACCOUNTS.put(
-        `ext-platform:user:${userId}`,
-        JSON.stringify(accounts),
-      );
+      await env.PLATFORM_ACCOUNTS.put(`ext-platform:user:${userId}`, JSON.stringify(accounts));
     }
   } catch {
     // KV error — account is still returned
@@ -552,9 +544,7 @@ export async function getConnectedExternalAccounts(
   if (!env.PLATFORM_ACCOUNTS) return [];
 
   try {
-    const raw = await env.PLATFORM_ACCOUNTS.get(
-      `ext-platform:user:${userId}`,
-    );
+    const raw = await env.PLATFORM_ACCOUNTS.get(`ext-platform:user:${userId}`);
     if (!raw) return [];
     return JSON.parse(raw) as ExternalPlatformAccount[];
   } catch {
@@ -579,23 +569,14 @@ export async function disconnectExternalPlatform(
 
   try {
     // Remove individual account record
-    await env.PLATFORM_ACCOUNTS.delete(
-      `ext-platform:${userId}:${platform}`,
-    );
+    await env.PLATFORM_ACCOUNTS.delete(`ext-platform:${userId}:${platform}`);
 
     // Remove from user's account list
-    const existing = await env.PLATFORM_ACCOUNTS.get(
-      `ext-platform:user:${userId}`,
-    );
+    const existing = await env.PLATFORM_ACCOUNTS.get(`ext-platform:user:${userId}`);
     if (existing) {
-      const accounts: ExternalPlatformAccount[] = JSON.parse(
-        existing,
-      ) as ExternalPlatformAccount[];
+      const accounts: ExternalPlatformAccount[] = JSON.parse(existing) as ExternalPlatformAccount[];
       const filtered = accounts.filter((a) => a.platform !== platform);
-      await env.PLATFORM_ACCOUNTS.put(
-        `ext-platform:user:${userId}`,
-        JSON.stringify(filtered),
-      );
+      await env.PLATFORM_ACCOUNTS.put(`ext-platform:user:${userId}`, JSON.stringify(filtered));
     }
 
     return true;
@@ -620,7 +601,6 @@ export async function postToExternalPlatforms(
   integrationIds: Record<string, string>,
   env: Env,
 ): Promise<Record<string, { success: boolean; url?: string; error?: string }>> {
-  const apiKey = getPostizApiKey(env);
   const baseUrl = getPostizBaseUrl(env);
   const results: Record<string, { success: boolean; url?: string; error?: string }> = {};
 
@@ -718,7 +698,6 @@ export async function scheduleExternalPost(
     return { results };
   }
 
-  const apiKey = getPostizApiKey(env);
   const baseUrl = getPostizBaseUrl(env);
   const results: Record<string, { success: boolean; error?: string }> = {};
 
@@ -770,7 +749,7 @@ export async function scheduleExternalPost(
       });
 
       if (res.ok) {
-        const data = (await res.json()) as { postId?: string };
+        await res.json();
         results[platform] = {
           success: true,
         };
@@ -816,7 +795,6 @@ export async function goLiveOnExternalPlatform(
   streamUrl?: string;
   error?: string;
 }> {
-  const apiKey = getPostizApiKey(env);
   const baseUrl = getPostizBaseUrl(env);
   const postizType = EXTERNAL_TO_POSTIZ_TYPE[request.platform] ?? request.platform;
 
@@ -893,7 +871,6 @@ export async function getExternalPlatformAnalytics(
   postizIntegrationId: string,
   env: Env,
 ): Promise<ExternalAnalyticsResponse | { error: string }> {
-  const apiKey = getPostizApiKey(env);
   const baseUrl = getPostizBaseUrl(env);
 
   try {

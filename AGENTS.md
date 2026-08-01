@@ -10,7 +10,7 @@ canonical · owner=crmuncher · last_updated=2026-07-29
 ## What This Repo Is
 Next.js 15 multi-protocol social aggregator — monorepo with 39 packages. Aggregates Nostr, Farcaster, Lens, Bluesky, Mastodon/ActivityPub, Threads, RSS, PeerTube, Pixelfed, Zora, Telegram, Lemmy, and YouTube into a single feed, composer, and cross-platform bridge.
 
-> **This repo is NOT the deployed DegenFeed social server** — GotoSocial runs separately at `/srv/degenfeed/` behind `social.degenfeed.xyz`. This repo is the web client, API worker, cross-protocol bridge, and tip contract system.
+> **This repo is NOT the deployed DegenFeed social server** — GotoSocial runs separately at `/path/to/degenfeed/` behind `social.degenfeed.xyz`. This repo is the web client, API worker, cross-protocol bridge, and tip contract system.
 
 ## Monorepo Architecture
 
@@ -209,5 +209,5 @@ See [PRODUCT.md](PRODUCT.md) for product state and acceptance criteria.
 - Backup: TBD
 
 ## Related Repos
-- `degenfeed/` — deployed GotoSocial instance (separate git repo, lives on Talos)
+- `degenfeed/` — deployed GotoSocial instance (separate git repo, lives on [HOST-1])
 - See [standards/PRODUCTS.md](https://git.rugmunch.io/RugMunchMedia/standards/raw/branch/main/PRODUCTS.md).

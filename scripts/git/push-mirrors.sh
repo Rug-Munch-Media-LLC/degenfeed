@@ -1,6 +1,6 @@
 #!/bin/bash
 # push-mirrors — Push to all remote mirrors (Forgejo origin + GitLab + Codeberg + Radicle)
-# Radicle push requires `rad` CLI and a running `radicle-node` (on Talos/Hydra).
+# Radicle push requires `rad` CLI and a running `radicle-node` (on [HOST-1]/[HOST-2]).
 # Usage: ./scripts/git/push-mirrors.sh [branch]
 
 set -euo pipefail
@@ -36,7 +36,7 @@ if command -v rad &>/dev/null; then
     echo "  (radicle remote not configured — run: rad init && rad push)"
   fi
 else
-  echo "  (rad CLI not available — Radicle sync handled by cron on Talos/Hydra)"
+  echo "  (rad CLI not available — Radicle sync handled by cron on [HOST-1]/[HOST-2])"
 fi
 
 echo ""
@@ -44,4 +44,4 @@ echo "=== Done ==="
 echo "Forgejo:  https://git.rugmunch.io/RugMunchMedia/degenfeed-web"
 echo "GitLab:   https://gitlab.com/cryptorugmuncher/degenfeed-web"
 echo "Codeberg: https://codeberg.org/cryptorugmunch/degenfeed-web"
-echo "Radicle:  rad:z4HA4VujocEo1b3jTFwNk5qEGgF3V (synced weekly via Hydra cron)"
+echo "Radicle:  rad:z4HA4VujocEo1b3jTFwNk5qEGgF3V (synced weekly via [HOST-2] cron)"

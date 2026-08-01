@@ -153,7 +153,7 @@ const DEFAULT_ALERTS: AlertItem[] = [
   {
     id: 'alert1',
     type: 'high_cpu',
-    message: 'CPU at 91% on Talos (Nostr relay worker)',
+    message: 'CPU at 91% on [HOST-1] (Nostr relay worker)',
     severity: 'warning',
     timestamp: Date.now() - 120000,
     value: '91%',
@@ -161,7 +161,7 @@ const DEFAULT_ALERTS: AlertItem[] = [
   {
     id: 'alert2',
     type: 'disk_warning',
-    message: 'Disk usage at 82% on Hydra — /data partition',
+    message: 'Disk usage at 82% on [HOST-2] — /data partition',
     severity: 'warning',
     timestamp: Date.now() - 300000,
     value: '82%',
