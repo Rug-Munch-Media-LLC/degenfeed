@@ -70,7 +70,7 @@
 | walletpress | main | ✅ All 4 | Clean |
 | degenfeed-web | fix/farcaster-remove-seed-data | ✅ All 4 | 22 commits, clean tree. Branch not merged to main. |
 | standards | main | ✅ All 4 | Clean |
-| /srv/degenfeed | — | ⬜ Skipped | Not a git repo |
+| /path/to/degenfeed | — | ⬜ Skipped | Not a git repo |
 
 ## Session Metadata
 - **Date:** 2026-07-25

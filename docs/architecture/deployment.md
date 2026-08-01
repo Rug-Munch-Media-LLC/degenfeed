@@ -7,7 +7,7 @@
 | Landing page | Cloudflare Pages | Global edge |
 | Web client | Cloudflare Pages | Global edge |
 | Edge API | Cloudflare Worker | Global edge |
-| Social server | Talos (bare metal via Docker) | Germany (netcup) |
+| Social server | [HOST-1] (bare metal via Docker) | Germany (netcup) |
 | DNS | Cloudflare DNS | — |
 
 ## CI/CD
@@ -19,4 +19,4 @@
 
 ## Social Server
 
-GotoSocial runs on Talos at `/srv/degenfeed/` with Docker Compose. Backed by Postgres. Daily backups to Cloudflare R2.
+GotoSocial runs on [HOST-1] at `/path/to/degenfeed/` with Docker Compose. Backed by Postgres. Daily backups to Cloudflare R2.

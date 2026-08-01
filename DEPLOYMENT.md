@@ -34,12 +34,12 @@ Internet
    ├── degenfeed.xyz ────────── Landing page (Cloudflare Worker)
    ├── degenfeed.xyz/api/* ──── Hono API (Cloudflare Worker)
    │
-   ├── social.degenfeed.xyz ─── GoToSocial (Docker, Talos)
-   ├── pds.degenfeed.xyz ────── AT Protocol PDS (Docker, Talos)
-   ├── video.degenfeed.xyz ──── PeerTube (Docker, Talos)
-   ├── redlib.degenfeed.xyz ─── Redlib (Docker, Talos)
-   ├── rss-bridge.degenfeed.xyz RSS-Bridge (Docker, Talos)
-   └── chat.degenfeed.xyz ───── Prosody XMPP (Docker, Talos)
+   ├── social.degenfeed.xyz ─── GoToSocial (Docker, [HOST-1])
+   ├── pds.degenfeed.xyz ────── AT Protocol PDS (Docker, [HOST-1])
+   ├── video.degenfeed.xyz ──── PeerTube (Docker, [HOST-1])
+   ├── redlib.degenfeed.xyz ─── Redlib (Docker, [HOST-1])
+   ├── rss-bridge.degenfeed.xyz RSS-Bridge (Docker, [HOST-1])
+   └── chat.degenfeed.xyz ───── Prosody XMPP (Docker, [HOST-1])
 ```
 
 | Component | Target | URL |
@@ -47,12 +47,12 @@ Internet
 | Landing page | Cloudflare Worker | `https://degenfeed.xyz` |
 | Web client | Cloudflare Pages | `https://app.degenfeed.xyz` |
 | Edge API | Cloudflare Worker `degenfeed-api` | `https://degenfeed.xyz/api/*` |
-| Social server | GoToSocial (Docker, Talos) | `https://social.degenfeed.xyz` |
-| Video + Livestreams | PeerTube (Docker, Talos) | `https://video.degenfeed.xyz` |
-| AT Protocol PDS | Bluesky PDS (Docker, Talos) | `https://pds.degenfeed.xyz` |
-| XMPP Chat | Prosody (Docker, Talos) | `chat.degenfeed.xyz` |
-| Feed Proxy | Redlib (Docker, Talos) | `https://redlib.degenfeed.xyz` |
-| RSS Proxy | RSS-Bridge (Docker, Talos) | `https://rss-bridge.degenfeed.xyz` |
+| Social server | GoToSocial (Docker, [HOST-1]) | `https://social.degenfeed.xyz` |
+| Video + Livestreams | PeerTube (Docker, [HOST-1]) | `https://video.degenfeed.xyz` |
+| AT Protocol PDS | Bluesky PDS (Docker, [HOST-1]) | `https://pds.degenfeed.xyz` |
+| XMPP Chat | Prosody (Docker, [HOST-1]) | `chat.degenfeed.xyz` |
+| Feed Proxy | Redlib (Docker, [HOST-1]) | `https://redlib.degenfeed.xyz` |
+| RSS Proxy | RSS-Bridge (Docker, [HOST-1]) | `https://rss-bridge.degenfeed.xyz` |
 
 ---
 
@@ -312,7 +312,7 @@ anchor verify $PROGRAM_ID --provider.cluster mainnet
 
 ## Self-Hosted Infrastructure
 
-All services run as Docker containers on Talos (netcup). See `infra/` for compose files.
+All services run as Docker containers on [HOST-1] (netcup). See `infra/` for compose files.
 
 ### GoToSocial (ActivityPub)
 
@@ -324,7 +324,7 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      - /srv/degenfeed/gotosocial:/gotosocial/storage
+      - /path/to/degenfeed/gotosocial:/gotosocial/storage
     environment:
       GTS_HOST: social.degenfeed.xyz
       GTS_PORT: 8080
@@ -354,7 +354,7 @@ services:
       PDS_BSKY_APP_VIEW_URL: https://api.bsky.app
       PDS_REPORT_VIEW_URL: https://mod.bsky.app
     volumes:
-      - /srv/degenfeed/pds:/pds/data
+      - /path/to/degenfeed/pds:/pds/data
 ```
 
 ### PeerTube (Video + Livestreaming)
@@ -385,8 +385,8 @@ services:
       PEERTUBE_SIGNUP_ENABLED: "true"
       PEERTUBE_SIGNUP_LIMIT: 100
     volumes:
-      - /srv/degenfeed/peertube/data:/data
-      - /srv/degenfeed/peertube/config:/config
+      - /path/to/degenfeed/peertube/data:/data
+      - /path/to/degenfeed/peertube/config:/config
 ```
 
 After deployment:
@@ -427,14 +427,14 @@ docker run -d --name rss-bridge \
 
 ## Monitoring Stack
 
-Error tracking and infrastructure monitoring is deployed on Talos and Hydra. See `infra/monitoring/` for compose files.
+Error tracking and infrastructure monitoring is deployed on [HOST-1] and [HOST-2]. See `infra/monitoring/` for compose files.
 
 | Service | Where | Purpose |
 |---------|-------|---------|
-| **GlitchTip** | Talos `:8000` (glitchtip.rugmunch.io) | Sentry-compatible error tracking |
-| **Grafana** | Hydra `:3001` | Dashboards for fleet health |
-| **Prometheus** | Hydra `:9090` | Metrics storage |
-| **Node Exporter** | Hydra + Talos `:9100` | Host metrics (CPU, memory, disk) |
+| **GlitchTip** | [HOST-1] (glitchtip.rugmunch.io) | Sentry-compatible error tracking |
+| **Grafana** | [HOST-2] | Dashboards for fleet health |
+| **Prometheus** | [HOST-2] | Metrics storage |
+| **Node Exporter** | [HOST-2] + [HOST-1] | Host metrics (CPU, memory, disk) |
 
 ### GlitchTip Setup
 
@@ -563,7 +563,7 @@ Set in `workers/api/wrangler.toml` under `[vars]`:
 | `MASTODON_INSTANCE_URL` | `"https://social.degenfeed.xyz"` | Mastodon instance for signup |
 | `REDLIB_URL` | `"https://redlib.degenfeed.xyz"` | Redlib proxy |
 | `RSS_BRIDGE_URL` | `"https://rss-bridge.degenfeed.xyz"` | RSS-Bridge proxy |
-| `FLARESOLVERR_URL` | `"http://<internal-ip>:8191"` | FlareSolverr endpoint |
+| `FLARESOLVERR_URL` | `"http://<internal-ip>:<port>"` | FlareSolverr endpoint |
 | `RMI_BACKEND_URL` | `"http://<internal-ip>:8000"` | RMI backend for token risk data |
 | `POSTIZ_BASE_URL` | `"http://127.0.0.1:3105"` | Postiz API base |
 | `POSTIZ_INTEGRATIONS` | — | JSON-encoded platform→integration ID map |

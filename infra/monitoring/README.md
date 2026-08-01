@@ -1,20 +1,20 @@
 # DegenFeed Fleet Monitoring Stack
 
-Grafana + Prometheus + Node Exporter for the DegenFeed fleet, deployed on Hydra (Contabo).
+Grafana + Prometheus + Node Exporter for the DegenFeed fleet, deployed on [HOST-2] (Contabo).
 
 ## Architecture
 
 ```
                   ┌──────────────┐
                   │  Prometheus   │
-                  │  :9090        │
+                  │               │
                   └──────┬───────┘
           ┌──────────────┼──────────────┐
           ▼              ▼              ▼
    ┌──────────┐   ┌──────────┐   ┌──────────┐
    │ Node Exp │   │ Worker   │   │ Social   │
-   │ :9100    │   │ degenfeed│   │ social.  │
-   │ Hydra    │   │ .xyz     │   │ degenfeed│
+   │          │   │ degenfeed│   │ social.  │
+   │ [HOST-2]    │   │ .xyz     │   │ degenfeed│
    │          │   │ /api/    │   │ .xyz     │
    │          │   │ health   │   │ /api/v1/ │
    │          │   │          │   │ instance │
@@ -22,14 +22,14 @@ Grafana + Prometheus + Node Exporter for the DegenFeed fleet, deployed on Hydra 
 
    ┌──────────┐
    │ Node Exp │
-   │ Talos    │
+   │ [HOST-1]    │
    │ [INTERNAL │
    │ IP]      │
    └──────────┘
 
    ┌──────────────┐
    │   Grafana    │◄── you are here
-   │  :3001       │
+   │               │
    └──────────────┘
 ```
 
@@ -37,9 +37,9 @@ Grafana + Prometheus + Node Exporter for the DegenFeed fleet, deployed on Hydra 
 
 | Service | Port | Purpose |
 |---------|------|---------|
-| Grafana | 3001 | Dashboards & alerts |
-| Prometheus | 9090 | Metrics storage & query |
-| Node Exporter | - | Host metrics (CPU/mem/disk) on Hydra |
+| Grafana | — | Dashboards & alerts |
+| Prometheus | — | Metrics storage & query |
+| Node Exporter | - | Host metrics (CPU/mem/disk) on [HOST-2] |
 
 ## Scraped Targets
 
@@ -47,8 +47,8 @@ Grafana + Prometheus + Node Exporter for the DegenFeed fleet, deployed on Hydra 
 |--------|----------|-------------|
 | `degenfeed-worker` | `https://degenfeed.xyz/api/health` | Edge worker relay health |
 | `degenfeed-social` | `https://social.degenfeed.xyz/api/v1/instance` | GotoSocial instance info |
-| `talos-node` | `[INTERNAL_HOST]:9100` | Talos host metrics |
-| `hydra-node` | `localhost:9100` | Hydra host metrics |
+| `[HOST-1]-node` | `[INTERNAL_HOST]` | [HOST-1] host metrics |
+| `[HOST-2]-node` | `localhost` | [HOST-2] host metrics |
 
 ## Dashboards
 
@@ -57,28 +57,28 @@ The **DegenFeed Fleet Health** dashboard (provisioned automatically) has:
 1. **Fleet Status** — UP/DOWN stat panels for every target
 2. **Worker Response Times** — HTTP duration phases (DNS, connect, TLS, transfer)
 3. **Error Rates** — HTTP status codes + probe error ratio
-4. **Node Resources** — CPU, memory, and disk for Hydra and Talos
+4. **Node Resources** — CPU, memory, and disk for [HOST-2] and [HOST-1]
 
 ## Quick Start
 
 ```bash
-# Deploy to Hydra
+# Deploy to [HOST-2]
 ./deploy.sh
 
 # Or manually:
 docker compose up -d
 
 # Check health
-curl http://localhost:3001/api/health   # Grafana
-curl http://localhost:9090/-/ready      # Prometheus
+curl http://localhost/api/health   # Grafana
+curl http://localhost/-/ready      # Prometheus
 ```
 
 ## Access
 
 | Service | URL |
 |---------|-----|
-| Grafana | `http://[INTERNAL_HOST]:3001` |
-| Prometheus | `http://[INTERNAL_HOST]:9090` |
+| Grafana | `http://[INTERNAL_HOST]` |
+| Prometheus | `http://[INTERNAL_HOST]` |
 
 Default login: `admin` / `admin`
 
@@ -87,7 +87,7 @@ Default login: `admin` / `admin`
 To add a new node exporter to the fleet:
 
 1. Deploy `quay.io/prometheus/node-exporter:latest` on the target host
-2. Ensure port 9100 is accessible from Hydra
+2. Ensure the node exporter port is accessible from [HOST-2]
 3. Add the target to `prometheus.yml` under `scrape_configs`
 4. Restart Prometheus: `docker compose restart prometheus`
 

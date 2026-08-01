@@ -66,5 +66,5 @@ Crypto-native users consume content across Nostr, Farcaster, Lens, Bluesky, Mast
 ## Fleet dependencies
 - DegenFeed GotoSocial at `https://social.degenfeed.xyz` (separate deployment)
 - Cloudflare Pages + Workers for hosting and edge API
-- Plausible analytics self-hosted on Talos
-- MeiliSearch self-hosted on Talos
+- Plausible analytics self-hosted on [HOST-1]
+- MeiliSearch self-hosted on [HOST-1]

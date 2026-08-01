@@ -185,7 +185,7 @@ RATE_WINDOW_MS = "5000"
 RATE_MAX_REQ = "60"
 RATE_LIMIT_DISABLED = "false"
 # Error tracking via GlitchTip (MIT, self-hosted Sentry-compatible)
-# Deploy GlitchTip on Talos first, then set DSN via:
+# Deploy GlitchTip on [HOST-1] first, then set DSN via:
 #   wrangler secret put GLITCHTIP_DSN
 # The SDK is the same @sentry/cloudflare — just point at glitchtip.rugmunch.io
 # The worker reads this at runtime via env.SENTRY_DSN.

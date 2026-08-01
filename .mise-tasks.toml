@@ -1,5 +1,5 @@
 # .mise-tasks.toml — standardized task definitions
-# Runs on Cinnabox, Talos, Hydra — same commands everywhere
+# Runs on [HOST-3], [HOST-1], [HOST-2] — same commands everywhere
 # Usage: mise run lint | mise run ci | mise run check
 # See: https://mise.jdx.dev/tasks/
 

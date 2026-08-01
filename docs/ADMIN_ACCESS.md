@@ -312,7 +312,7 @@ with open('/tmp/owncast_hash.txt') as f:
     hashed = f.read().strip()
 hash_bytes = hashed.encode()
 prefix = bytes([0x3f, 0x0c, 0x00, len(hash_bytes)]) + hash_bytes
-db = sqlite3.connect('/srv/degenfeed/owncast/data/owncast.db')
+db = sqlite3.connect('/path/to/degenfeed/owncast/data/owncast.db')
 db.execute(\"DELETE FROM datastore WHERE key='admin_password_key'\")
 db.execute(\"INSERT INTO datastore(key, value, timestamp) VALUES ('admin_password_key', ?, datetime('now'))\", (prefix,))
 db.commit()
@@ -344,7 +344,7 @@ curl -s http://127.0.0.1:8084/.well-known/nodeinfo
 ```
 
 ### Admin Key Usage
-The `RELAY_ADMIN_KEY` in `/srv/degenfeed/relay/config.yml` is used by the relay worker
+The `RELAY_ADMIN_KEY` in `/path/to/degenfeed/relay/config.yml` is used by the relay worker
 to sign ActivityPub activities. This is set automatically — no manual API calls needed.
 
 ---
@@ -384,7 +384,7 @@ curl -s http://127.0.0.1:8085/ 2>/dev/null
 | **Hubble container** | `degenfeed-hubble` |
 | **Hubble REST API** | `http://127.0.0.1:2281` |
 | **Hubble gRPC API** | `127.0.0.1:2283` (NOT publicly reachable — prevents diff sync) |
-| **Env file (bridge)** | `/srv/work/repos/degenfeed-web/bridge/.env` |
+| **Env file (bridge)** | `/path/to/degenfeed-web/bridge/.env` |
 
 ### Provider Fallback Chain
 
@@ -404,7 +404,7 @@ The bridge Farcaster provider (`bridge/src/providers/farcaster.ts`) uses this fa
 1. **Configure the Hubble bot signer:**
    ```bash
    # Add the bot credentials to bridge .env
-   # Edit /srv/work/repos/degenfeed-web/bridge/.env and set:
+   # Edit /path/to/degenfeed-web/bridge/.env and set:
    FARCASTER_BOT_HUB_URL=http://127.0.0.1:2281
    FARCASTER_BOT_FID=your_bot_fid
    FARCASTER_BOT_SIGNER_KEY=your_signer_private_key_hex
@@ -447,7 +447,7 @@ docker logs degenfeed-hubble 2>/dev/null | tail -20
 ```
 
 To fix Hubble sync, the RPC port must be accessible:
-- **Option A:** Set up port forwarding on Talos for port 2283
+- **Option A:** Set up port forwarding on [HOST-1] for port 2283
 - **Option B:** Use a VPN/tunnel (WireGuard) to expose the port
 - **Option C:** Use the Hubble REST API directly (no external API needed)
 
@@ -501,7 +501,7 @@ curl -s http://127.0.0.1:3100/api/health
 ```
 
 ### Adding Admin Wallets
-1. Update `ADMIN_WALLETS` and `NEXT_PUBLIC_ADMIN_WALLETS` in `/srv/degenfeed/.env`
+1. Update `ADMIN_WALLETS` and `NEXT_PUBLIC_ADMIN_WALLETS` in `/path/to/degenfeed/.env`
 2. Update `docker-compose.yml` build args
 3. Rebuild and restart: `docker compose build web && docker compose up -d web`
 
@@ -515,7 +515,7 @@ If you lose admin access to any service, use Docker exec to reset:
 
 ```bash
 # Emergency access checklist:
-# 1. SSH into Talos (internal IP) or run locally
+# 1. SSH into [HOST-1] (internal IP) or run locally
 # 2. For each service, use the password reset commands listed above
 # 3. Store new passwords in gopass
 
@@ -593,5 +593,5 @@ gopass ls degenfeed/
   # Edit ~/.config/gopass/config and add:
   # autopush = false
   ```
-- The gopass store is at `~/.local/share/gopass/stores/root/`
-- Remote: `root@<internal-host>:/srv/git/gopass.git` (SSH key required)
+- The gopass store is at `[GOPASS_STORE]`
+- Remote: `[INTERNAL]` (SSH key required)

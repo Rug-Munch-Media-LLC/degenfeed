@@ -4,7 +4,7 @@
 
 **Last updated:** 2026-07-24
 **Status:** ⚡ Research complete — now deploying
-**Current stack fleet:** 103 containers across 3 hosts (Talos, Hydra, Cinnabox)
+**Current stack fleet:** 103 containers across 3 hosts ([HOST-1], [HOST-2], [HOST-3])
 
 ---
 
@@ -500,7 +500,7 @@ services:
     volumes:
       - piefed-data:/app/data
       - piefed-media:/app/media
-    env_file: /srv/degenfeed/piefed.env
+    env_file: /path/to/degenfeed/piefed.env
     depends_on:
       - piefed-db
       - piefed-redis
@@ -516,7 +516,7 @@ services:
     restart: unless-stopped
     volumes:
       - piefed-media:/app/media
-    env_file: /srv/degenfeed/piefed.env
+    env_file: /path/to/degenfeed/piefed.env
     command: celery -A piefed.tasks worker --loglevel=info
     depends_on:
       - piefed-db

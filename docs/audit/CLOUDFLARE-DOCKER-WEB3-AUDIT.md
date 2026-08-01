@@ -25,7 +25,7 @@ pages_build_output_dir = ".vercel/output/static"
 - Tunnel managed via fleet-infra repo
 
 ### 2.3 Nginx Security Headers
-**File:** `/srv/degenfeed/nginx/security-headers.conf`
+**File:** `/path/to/degenfeed/nginx/security-headers.conf`
 
 | Header | Value | Status |
 |--------|-------|--------|
@@ -160,7 +160,7 @@ image: gabekangas/owncast:v0.2.5
 - `retries` configured for all
 
 ### 4.8 ✅ Fail2ban — GOOD
-**File:** `/srv/degenfeed/fail2ban/jail.local`
+**File:** `/path/to/degenfeed/fail2ban/jail.local`
 - 7 jails configured
 - SSH, nginx auth, 404 flood, bot search, rate limit, bad bots
 - Default bantime: 1 hour

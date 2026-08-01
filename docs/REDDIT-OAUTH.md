@@ -67,10 +67,10 @@ systemctl daemon-reload
 systemctl restart degenfeed-bridge
 ```
 
-Alternatively, add the vars directly to `/srv/degenfeed/.env`:
+Alternatively, add the vars directly to `/path/to/degenfeed/.env`:
 
 ```bash
-# /srv/degenfeed/.env
+# /path/to/degenfeed/.env
 REDDIT_CLIENT_ID=your_client_id
 REDDIT_CLIENT_SECRET=your_client_secret
 REDDIT_USERNAME=your_reddit_username
@@ -81,7 +81,7 @@ And update the systemd service to load them:
 
 ```bash
 # Add to [Service] section of /etc/systemd/system/degenfeed-bridge.service:
-EnvironmentFile=/srv/degenfeed/.env
+EnvironmentFile=/path/to/degenfeed/.env
 ```
 
 ## Step 5: Verify

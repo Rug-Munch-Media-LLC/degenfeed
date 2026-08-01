@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# DegenFeed Fleet Monitoring Stack — Deploy to Hydra
+# DegenFeed Fleet Monitoring Stack — Deploy to [HOST-2]
 # Usage: ./deploy.sh
 
 HYDRA_SSH="${HYDRA_SSH:-contabo}"
 HYDRA_HOST="${HYDRA_HOST:-[INTERNAL_HOST]}"
-REMOTE_DIR="${REMOTE_DIR:-/srv/degenfeed-monitoring}"
+REMOTE_DIR="${REMOTE_DIR:-/path/to/degenfeed-monitoring}"
 SSH_USER="${SSH_USER:-root}"
 
 if [[ "${HYDRA_SSH}" == "contabo" ]]; then
@@ -15,7 +15,7 @@ else
     HYDRA_TARGET="${HYDRA_SSH}"
 fi
 
-echo "==> Deploying DegenFeed monitoring stack to Hydra (${HYDRA_TARGET})"
+echo "==> Deploying DegenFeed monitoring stack to [HOST-2] (${HYDRA_TARGET})"
 
 # Copy infrastructure files
 echo "==> Copying compose + config..."
@@ -27,6 +27,7 @@ rsync -avz --delete \
 
 # Start the stack
 echo "==> Starting stack via docker compose..."
+# shellcheck disable=SC2087  # ${REMOTE_DIR} expands client-side, \$(...) server-side
 ssh "${HYDRA_TARGET}" <<-SSH
   set -euo pipefail
   cd "${REMOTE_DIR}"
@@ -57,8 +58,8 @@ echo "============================================"
 echo "  DegenFeed Fleet Monitoring"
 echo "============================================"
 echo ""
-echo "  Grafana:    http://${HYDRA_HOST}:3001"
-echo "  Prometheus: http://${HYDRA_HOST}:9090"
+echo "  Grafana:    http://${HYDRA_HOST}"
+echo "  Prometheus: http://${HYDRA_HOST}"
 echo "  Login:      admin / admin"
 echo ""
 echo "  Dashboards provisioned automatically."

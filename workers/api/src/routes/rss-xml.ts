@@ -98,7 +98,7 @@ async function gather(env: Env, _requested: Protocol[]): Promise<UnifiedPost[]> 
   const all: UnifiedPost[] = [];
   const timeoutMs = 5000;
 
-  // Try RMI DataBus first (only works from Talos internal network).
+  // Try RMI DataBus first (only works from [HOST-1] internal network).
   try {
     const rmi = new RmiDataBusProvider({ backendUrl: rmiUrl(env) });
     const rmiPosts = await rmi.fetchFeed({ timeoutMs });

@@ -147,7 +147,7 @@ if (args.secret) {
 - Nginx-level rate limiting in `security-headers.conf` (belt-and-suspenders)
 
 ### 4.2 ✅ Nginx Rate Limiting — GOOD
-**File:** `/srv/degenfeed/nginx/security-headers.conf`
+**File:** `/path/to/degenfeed/nginx/security-headers.conf`
 ```nginx
 limit_req_zone $binary_remote_addr zone=auth:10m rate=5r/m;
 limit_req_zone $binary_remote_addr zone=federation:10m rate=60r/m;
@@ -188,13 +188,13 @@ limit_req_zone $binary_remote_addr zone=search:10m rate=10r/m;
 - No `Cross-Origin-Resource-Policy` (CORP)
 
 ### 5.3 ❌ .env File Exposed
-**File:** `/srv/degenfeed/.env`
+**File:** `/path/to/degenfeed/.env`
 - Contains credentials: `MEILI_MASTER_KEY`, `LEMMY_DB_PASSWORD`, `LEMMY_ADMIN_PASSWORD`, `LEMMY_PICTRS_KEY`
 - Comment at top: `TODO: move ALL secrets to gopass — do not store plaintext in .env`
 - File is readable by Docker containers via `env_file:` directive
 
 ### 5.4 ❌ NEXT_PUBLIC_ADMIN_WALLETS Hardcoded in Dockerfile
-**File:** `/srv/degenfeed/docker-compose.yml`
+**File:** `/path/to/degenfeed/docker-compose.yml`
 ```yaml
 args:
   NEXT_PUBLIC_ADMIN_WALLETS: "0x1e3ac01d0fdb976179790bdd02823196a92705c9"
@@ -314,7 +314,7 @@ RUN pnpm install --frozen-lockfile --ignore-scripts
 ## 9. Logging and Monitoring
 
 ### 9.1 ✅ Fail2ban — GOOD
-**File:** `/srv/degenfeed/fail2ban/jail.local`
+**File:** `/path/to/degenfeed/fail2ban/jail.local`
 - SSH: 5 retries, 1h ban
 - Nginx auth: 10 retries, 30min ban
 - Nginx 404 flood: 60 req/60s, 30min ban
@@ -323,7 +323,7 @@ RUN pnpm install --frozen-lockfile --ignore-scripts
 
 ### 9.2 ✅ Health Checks — GOOD
 - All Docker services have health checks
-- Prometheus targets configured: `/srv/degenfeed/prometheus-targets.json`
+- Prometheus targets configured: `/path/to/degenfeed/prometheus-targets.json`
 
 ### 9.3 ❌ No Application-Level Security Audit Logging
 - No structured audit events for:

@@ -265,7 +265,7 @@ DegenFeed is a **universal feed aggregator** bridging 44+ decentralized social p
 
 ## 9. Resource Plan
 
-### Infrastructure (Self-Hosted on Talos)
+### Infrastructure (Self-Hosted on [HOST-1])
 | Service | Status | RAM | Storage | Port |
 |---------|--------|-----|---------|------|
 | Bridge server | 🟢 Running | 512MB | 1GB | 8787 |

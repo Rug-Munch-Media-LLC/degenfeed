@@ -4,7 +4,7 @@
  * bridge between RMI's 353+ source DataBus aggregator and DegenFeed.
  *
  * Wire in: set RMI_BACKEND_URL in the worker env (default
- * http://127.0.0.1:8000 on Talos, https://api.rugmunch.io in prod).
+ * http://127.0.0.1:8000 on [HOST-1], https://api.rugmunch.io in prod).
  *
  * The provider is a normal FeedProvider — the home feed route already
  * includes 'rss' (via RssProvider) and this provider can be added

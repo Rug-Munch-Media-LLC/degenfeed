@@ -6,8 +6,8 @@
 
 ### Done
 - Pivoted from Akkoma/Soapbox/web3-bridge to aggregator-only architecture.
-- Nuked v1: stopped, archived to /srv/backups/degenfeed-v1-final/, removed nginx vhost.
-- Scaffolded monorepo at /srv/work/repos/degenfeed-web with pnpm workspaces, Turborepo, Biome.
+- Nuked v1: stopped, archived to /path/to/backups/degenfeed-v1-final/, removed nginx vhost.
+- Scaffolded monorepo at /path/to/degenfeed-web with pnpm workspaces, Turborepo, Biome.
 - Built shared types package @degenfeed/types (UnifiedPost, UnifiedIdentity, etc).
 - Built @degenfeed/feed-core (normalization, dedupe, niche detection).
 - Built @degenfeed/ranking (transparent scoring with documented weights).

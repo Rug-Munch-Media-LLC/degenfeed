@@ -48,7 +48,7 @@
 | 10 | **Snac2** | **3 — Native Client** | `light.degenfeed.xyz` | Snac2 | 8021 |
 | 11 | **Bluesky PDS** | **3 — Native Client** | `pds.degenfeed.xyz` | AT Protocol PDS | 3012 |
 | 12 | **ActivityPub Relay** | **2 — Full SDK** | `relay.degenfeed.xyz` | yukimochi/activity-relay | 8084 |
-| 13 | **Forgejo** | **3 — Native Client** | `git.rugmunch.io` | Forgejo | 3002 |
+| 13 | **Forgejo** | **3 — Native Client** | `git.rugmunch.io` | Forgejo | — |
 | 14 | **RSS-Bridge** | **2 — Full SDK** | `rss-bridge.degenfeed.xyz` | RSS-Bridge | 8282 |
 | 15 | **Lens Protocol** | **1 — Indexer** | `lens-indexer` (local) | GraphQL indexer | 8099 |
 | 16 | **Zora** | **1 — Indexer** | `zora-indexer` (local) | RPC indexer | 8091 |

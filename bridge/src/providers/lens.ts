@@ -9,7 +9,7 @@
  * This gives DegenFeed ownership of its Lens data — no dependency on
  * the public Lens API for reads.
  *
- * The local indexer runs at /srv/degenfeed/lens-indexer/ and polls
+ * The local indexer runs at /path/to/degenfeed/lens-indexer/ and polls
  * api.lens.xyz every 30s, storing results in SQLite.
  *
  * Endpoint: http://127.0.0.1:8088/api/publications

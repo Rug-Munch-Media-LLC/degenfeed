@@ -13,7 +13,7 @@ purpose: Single source of truth for which frontend tools to use and when.
 
 | Tool | License | Description | In Use | Agent Guidance |
 |------|---------|-------------|--------|----------------|
-| **Penpot** | MPL 2.0 | Open source design & prototyping platform (Figma alternative). Browser-based, self-hostable. | No | Use for collaborative UI mockups and design handoff. Self-host on Talos if needed. |
+| **Penpot** | MPL 2.0 | Open source design & prototyping platform (Figma alternative). Browser-based, self-hostable. | No | Use for collaborative UI mockups and design handoff. Self-host on [HOST-1] if needed. |
 | **Excalidraw** | MIT | Virtual whiteboard for sketching diagrams and wireframes. Embeddable as React/Vue component. | No | Use for quick architectural diagrams, flowcharts, and whiteboard-style wireframes during planning. |
 | **Draw.io** | Apache 2.0 | Diagram editor, self-hostable via Docker, integrates with VS Code. | No | Use for system architecture diagrams, flow charts, and ERDs. |
 

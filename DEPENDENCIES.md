@@ -2,7 +2,7 @@
 
 > **Last Updated:** 2026-07-25  
 > **Node:** 22.23.1 | **pnpm:** 11.17.0 | **Package Manager:** pnpm@11.7.0  
-> **Repository:** `/srv/work/repos/degenfeed-web`
+> **Repository:** `/path/to/degenfeed-web`
 
 ## Node.js Dependencies
 
@@ -190,4 +190,4 @@ docker compose pull --ignore-buildable
 docker compose up -d
 
 # Self-hosted protocols
-bash /srv/degenfeed/scripts/update-all-protocols.sh
+bash /path/to/degenfeed/scripts/update-all-protocols.sh

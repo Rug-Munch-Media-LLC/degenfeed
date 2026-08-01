@@ -2,11 +2,11 @@
 
 ## Overview
 
-Hubble is a self-hosted Farcaster Hub running on Talos. It syncs the full Farcaster network (Optimism L2 contracts) and provides a local HTTP API for the DegenFeed bridge instead of relying on external Farcaster APIs.
+Hubble is a self-hosted Farcaster Hub running on [HOST-1]. It syncs the full Farcaster network (Optimism L2 contracts) and provides a local HTTP API for the DegenFeed bridge instead of relying on external Farcaster APIs.
 
 - **Container**: `degenfeed-hubble` (image: `degenfeed-hubble:patched`)
 - **API**: `http://127.0.0.1:2281/v1/info`
-- **Data Dir**: `/srv/degenfeed/hubble-data/` (bind mount)
+- **Data Dir**: `/path/to/degenfeed/hubble-data/` (bind mount)
 - **Network**: host mode (uses host networking, not Docker bridge)
 
 ## Current Sync Status
@@ -27,7 +27,7 @@ docker ps --filter name=hubble --format "table {{.Names}}\t{{.Status}}\t{{.Size}
 curl -s http://127.0.0.1:2281/v1/info | python3 -m json.tool
 
 # Data growth
-du -sh /srv/degenfeed/hubble-data/
+du -sh /path/to/degenfeed/hubble-data/
 ```
 
 ## Resource Limits Configured
@@ -38,22 +38,22 @@ du -sh /srv/degenfeed/hubble-data/
 | Memory | 2 GB (mem_limit) | Hard limit, container OOM-killed if exceeded |
 | Swap | 4 GB total (2 GB RAM + 2 GB swap) | memswap_limit |
 | Storage (container) | 10 GB | storage_opt — caps container writable layer only |
-| Storage (bind mount) | **Unlimited** | RocksDB data lives on `/srv/degenfeed/hubble-data/` bind mount |
+| Storage (bind mount) | **Unlimited** | RocksDB data lives on `/path/to/degenfeed/hubble-data/` bind mount |
 
 ### Important Note on Storage Limits
 
-The `storage_opt` setting only caps the Docker container's writable layer (ephemeral files inside the container). The RocksDB data directory is a **bind mount** (`/srv/degenfeed/hubble-data/`) and is **not limited** by this setting. The host filesystem (`/dev/vda3`, 2TB total, currently 24% used) is the effective limit.
+The `storage_opt` setting only caps the Docker container's writable layer (ephemeral files inside the container). The RocksDB data directory is a **bind mount** (`/path/to/degenfeed/hubble-data/`) and is **not limited** by this setting. The host filesystem (`[DISK]`, 2TB total, currently 24% used) is the effective limit.
 
 **Monitor bind mount growth** separately:
 ```bash
-du -sh /srv/degenfeed/hubble-data/
+du -sh /path/to/degenfeed/hubble-data/
 ```
 
 ### Adjusting Limits
 
-Edit `/srv/degenfeed/docker-compose.yml` in the `hubble:` service section, then:
+Edit `/path/to/degenfeed/docker-compose.yml` in the `hubble:` service section, then:
 ```bash
-docker compose -f /srv/degenfeed/docker-compose.yml up -d hubble
+docker compose -f /path/to/degenfeed/docker-compose.yml up -d hubble
 ```
 
 ## Backup Schedule
@@ -72,11 +72,11 @@ Backups include:
 
 ```bash
 # Run immediately
-bash /root/scripts/backup-hubble.sh
+bash /path/to/scripts/backup-hubble.sh
 
 # Check backup status
 ls -lh /backups/hubble/
-bash /root/scripts/backup-status.sh | grep hubble
+bash /path/to/scripts/backup-status.sh | grep hubble
 ```
 
 ### Backup Retention
@@ -90,7 +90,7 @@ bash /root/scripts/backup-status.sh | grep hubble
 
 ```bash
 # Stop Hubble
-docker compose -f /srv/degenfeed/docker-compose.yml stop hubble
+docker compose -f /path/to/degenfeed/docker-compose.yml stop hubble
 
 # Find latest backup
 ls -lt /backups/hubble/*.tar.gz* | head -5
@@ -109,15 +109,15 @@ cp "$BACKUP_FILE" "$DECRYPTED/backup.tar.gz"
 tar -xzf "$DECRYPTED/backup.tar.gz" -C "$DECRYPTED"
 
 # Restore data
-sudo rm -rf /srv/degenfeed/hubble-data/*
-sudo cp -r "$DECRYPTED"/YYYYMMDD-HHMMSS/rocksdb_backup/* /srv/degenfeed/hubble-data/ 2>/dev/null || true
-sudo cp -r "$DECRYPTED"/YYYYMMDD-HHMMSS/*.protobuf /srv/degenfeed/hubble-data/ 2>/dev/null || true
+sudo rm -rf /path/to/degenfeed/hubble-data/*
+sudo cp -r "$DECRYPTED"/YYYYMMDD-HHMMSS/rocksdb_backup/* /path/to/degenfeed/hubble-data/ 2>/dev/null || true
+sudo cp -r "$DECRYPTED"/YYYYMMDD-HHMMSS/*.protobuf /path/to/degenfeed/hubble-data/ 2>/dev/null || true
 
 # Fix ownership
-sudo chown -R 1000:1000 /srv/degenfeed/hubble-data/ 2>/dev/null || sudo chown -R ops:ops /srv/degenfeed/hubble-data/
+sudo chown -R 1000:1000 /path/to/degenfeed/hubble-data/ 2>/dev/null || sudo chown -R ops:ops /path/to/degenfeed/hubble-data/
 
 # Start Hubble
-docker compose -f /srv/degenfeed/docker-compose.yml start hubble
+docker compose -f /path/to/degenfeed/docker-compose.yml start hubble
 
 # Verify
 sleep 30
@@ -161,8 +161,8 @@ If disk usage exceeds 90%, the backup pipeline will alert automatically. You'll 
 df -h /
 
 # Hubble data
-du -sh /srv/degenfeed/hubble-data/
-du -sh /srv/degenfeed/hubble-data/* | sort -rh | head -10
+du -sh /path/to/degenfeed/hubble-data/
+du -sh /path/to/degenfeed/hubble-data/* | sort -rh | head -10
 
 # Backup directory
 du -sh /backups/hubble/
@@ -180,19 +180,19 @@ ls -t /backups/hubble/*.tar.gz* | tail -n +3 | xargs rm -f
 ```bash
 # Hubble may have a compaction endpoint or you can restart it
 # Restarting Hubble triggers automatic RocksDB compaction on startup
-docker compose -f /srv/degenfeed/docker-compose.yml restart hubble
+docker compose -f /path/to/degenfeed/docker-compose.yml restart hubble
 ```
 
 **Option C: Adjust resource limits** (if container OOM is causing issues)
 ```bash
-# Edit /srv/degenfeed/docker-compose.yml and increase mem_limit
+# Edit /path/to/degenfeed/docker-compose.yml and increase mem_limit
 # Then recreate:
-docker compose -f /srv/degenfeed/docker-compose.yml up -d hubble
+docker compose -f /path/to/degenfeed/docker-compose.yml up -d hubble
 ```
 
 **Option D: Increase host disk** (if running out of space)
 ```bash
-# Talos runs on /dev/vda3 with 2TB — extend if needed
+# [HOST-1] runs on [DISK] with 2TB — extend if needed
 # Check with: lsblk && df -h
 ```
 

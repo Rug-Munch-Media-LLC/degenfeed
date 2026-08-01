@@ -8,12 +8,12 @@
 
 Bridgy Fed is a self-hosted protocol bridge that translates messages between
 ActivityPub, Bluesky (AT Protocol), Nostr, and Farcaster. It runs as a
-standalone Docker container on Talos, behind Nginx, on the shared `rmi-net`
+standalone Docker container on [HOST-1], behind Nginx, on the shared `rmi-net`
 network alongside the existing GotoSocial instance and DegenFeed services.
 
 ```
                     ┌──────────────────────────────────────────┐
-                    │            DegenFeed (Talos)             │
+                    │            DegenFeed ([HOST-1])             │
                     │                                          │
   ┌─────────────┐   │   ┌──────────┐     ┌───────────────┐    │
   │ DegenFeed    │       │GotoSocial│────▶│  Bridgy Fed   │    │
@@ -132,7 +132,7 @@ Building per-protocol write adapters in the edge worker duplicates what Bridgy
 Fed already does well: translating ActivityPub objects to native protocol
 formats, handling reply threading across protocols, and maintaining user-to-user
 mapping tables. Bridgy Fed has 6+ years of edge-case hardening for
-cross-protocol message delivery. Wrapping it as a Docker service on Talos gives
+cross-protocol message delivery. Wrapping it as a Docker service on [HOST-1] gives
 us self-hosted bridging without reinventing the protocol translation layer.
 
 ### Why write-only through Bridgy Fed?
@@ -158,7 +158,7 @@ public for protocol compliance.
 |---------|-------|
 | Bridgy Fed not detecting GtS posts | Verify GotoSocial is federating (`curl -H 'Accept: application/activity+json' https://social.degenfeed.xyz/@user`) |
 | Bluesky cross-posts failing | Check Bluesky app password in Bridgy Fed `/data` config |
-| Nostr cross-posts failing | Verify Nostr relays are reachable from Talos |
+| Nostr cross-posts failing | Verify Nostr relays are reachable from [HOST-1] |
 | Rate limit errors | Check Redis connection (`docker exec rmi-redis redis-cli -n 5 DBSIZE`) |
 | Container doesn't start | `docker logs bridgy-fed` — check for missing env vars or volume permissions |
 

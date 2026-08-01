@@ -15,8 +15,8 @@
  *                                     → Native (Farcaster, Nostr, Bluesky,
  *                                        Mastodon, PeerTube, Owncast AP)
  *
- * @see /srv/work/repos/degenfeed-web/workers/api/src/lib/postiz-bridge.ts
- * @see /srv/work/repos/degenfeed-web/workers/api/src/feed/live-aggregator.ts
+ * @see /path/to/degenfeed-web/workers/api/src/lib/postiz-bridge.ts
+ * @see /path/to/degenfeed-web/workers/api/src/feed/live-aggregator.ts
  */
 
 import type { Env } from '../types';
@@ -25,12 +25,7 @@ import { CHANNELS } from '../ws-channels';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
-export const SIMULCAST_PLATFORMS = [
-  'youtube',
-  'tiktok',
-  'twitch',
-  'kick',
-] as const;
+export const SIMULCAST_PLATFORMS = ['youtube', 'tiktok', 'twitch', 'kick'] as const;
 
 export const SIMULCAST_PROTOCOLS = [
   'farcaster',
@@ -44,10 +39,7 @@ export const SIMULCAST_PROTOCOLS = [
 export type SimulcastPlatform = (typeof SIMULCAST_PLATFORMS)[number];
 export type SimulcastProtocol = (typeof SIMULCAST_PROTOCOLS)[number];
 
-export const SIMULCAST_ALL = [
-  ...SIMULCAST_PLATFORMS,
-  ...SIMULCAST_PROTOCOLS,
-] as const;
+export const SIMULCAST_ALL = [...SIMULCAST_PLATFORMS, ...SIMULCAST_PROTOCOLS] as const;
 
 export type SimulcastTarget = SimulcastPlatform | SimulcastProtocol;
 
@@ -60,12 +52,6 @@ function simulcastKey(id: string): string {
 }
 function creatorSimulcastIndexKey(userId: string): string {
   return `simulcast:creator:${userId.toLowerCase()}`;
-}
-function simulcastPlatformKey(id: string, platform: string): string {
-  return `simulcast:${id}:platform:${platform}`;
-}
-function simulcastAnalyticsKey(id: string): string {
-  return `simulcast:${id}:analytics`;
 }
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -161,7 +147,10 @@ function generateSimulcastId(): string {
  * Generate a Loops/Owncast stream key.
  */
 function generateStreamKey(): string {
-  return crypto.randomUUID?.()?.replace(/-/g, '').slice(0, 16) ?? `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`;
+  return (
+    crypto.randomUUID?.()?.replace(/-/g, '').slice(0, 16) ??
+    `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`
+  );
 }
 
 /**
@@ -212,7 +201,9 @@ export async function startSimulcast(
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
         title: config.title,
-        description: config.description ? `🎥 ${config.description}\n\nPowered by DegenFeed` : 'Powered by DegenFeed',
+        description: config.description
+          ? `🎥 ${config.description}\n\nPowered by DegenFeed`
+          : 'Powered by DegenFeed',
       }),
       signal: AbortSignal.timeout(3000),
     });
@@ -409,7 +400,10 @@ export async function setSimulcastPlatformStatus(
 
     if (action === 'start') {
       if (!SIMULCAST_PLATFORMS.includes(platform as SimulcastPlatform)) {
-        return { ok: false, error: `Cannot start platform ${platform} individually. Use protocol announcements.` };
+        return {
+          ok: false,
+          error: `Cannot start platform ${platform} individually. Use protocol announcements.`,
+        };
       }
 
       const result = await startExternalPlatformStream(
@@ -541,10 +535,7 @@ export async function getActiveSimulcast(
 /**
  * List all simulcasts for a creator (recent history).
  */
-export async function getCreatorSimulcasts(
-  userId: string,
-  env: Env,
-): Promise<SimulcastStream[]> {
+export async function getCreatorSimulcasts(userId: string, env: Env): Promise<SimulcastStream[]> {
   try {
     const raw = await env.STREAMS?.get(creatorSimulcastIndexKey(userId));
     if (!raw) return [];
@@ -572,10 +563,7 @@ export async function getCreatorSimulcasts(
 /**
  * Get a single simulcast by ID.
  */
-export async function getSimulcastById(
-  id: string,
-  env: Env,
-): Promise<SimulcastStream | null> {
+export async function getSimulcastById(id: string, env: Env): Promise<SimulcastStream | null> {
   try {
     const raw = await env.STREAMS?.get(simulcastKey(id));
     return raw ? (JSON.parse(raw) as SimulcastStream) : null;
@@ -700,29 +688,19 @@ async function announceOnAllProtocols(
   const protocolAnnouncements: Promise<void>[] = [];
 
   // Farcaster cast
-  protocolAnnouncements.push(
-    publishToFarcaster(announcement, liveUrl, env).catch(() => {}),
-  );
+  protocolAnnouncements.push(publishToFarcaster(announcement, liveUrl, env).catch(() => {}));
 
   // Nostr event (kind 1 + kind 30311 for live)
-  protocolAnnouncements.push(
-    publishToNostr(announcement, config, liveUrl, env).catch(() => {}),
-  );
+  protocolAnnouncements.push(publishToNostr(announcement, config, liveUrl, env).catch(() => {}));
 
   // Bluesky post
-  protocolAnnouncements.push(
-    publishToBluesky(announcement, liveUrl, env).catch(() => {}),
-  );
+  protocolAnnouncements.push(publishToBluesky(announcement, liveUrl, env).catch(() => {}));
 
   // Mastodon/GoToSocial toot
-  protocolAnnouncements.push(
-    publishToMastodon(announcement, env).catch(() => {}),
-  );
+  protocolAnnouncements.push(publishToMastodon(announcement, env).catch(() => {}));
 
   // PeerTube live status
-  protocolAnnouncements.push(
-    publishToPeerTube(config, liveUrl, env).catch(() => {}),
-  );
+  protocolAnnouncements.push(publishToPeerTube(config, liveUrl, env).catch(() => {}));
 
   await Promise.allSettled(protocolAnnouncements);
 }
@@ -730,11 +708,7 @@ async function announceOnAllProtocols(
 /**
  * Publish a go-live announcement to Farcaster via Hubble.
  */
-async function publishToFarcaster(
-  text: string,
-  url: string,
-  env: Env,
-): Promise<void> {
+async function publishToFarcaster(text: string, url: string, env: Env): Promise<void> {
   const hubUrl = env.FARCASTER_HUB_URL ?? 'http://127.0.0.1:3010';
   const signerKey = env.FARCASTER_BOT_SIGNER_KEY ?? env.FARCASTER_SIGNER_KEY;
   const fid = env.FARCASTER_BOT_FID ?? env.FARCASTER_FID;
@@ -795,19 +769,13 @@ async function publishToNostr(
 /**
  * Publish a go-live announcement to Bluesky AT Protocol.
  */
-async function publishToBluesky(
-  text: string,
-  url: string,
-  env: Env,
-): Promise<void> {
+async function publishToBluesky(text: string, url: string, env: Env): Promise<void> {
   const identifier = env.BSKY_BOT_IDENTIFIER ?? env.BSKY_DID;
   const password = env.BSKY_BOT_PASSWORD ?? env.BSKY_ACCESS_TOKEN;
   if (!identifier || !password) return;
 
   try {
-    const { atProtoLiveStrategy } = await import(
-      '../lib/live-shorts/strategies/atproto-live'
-    );
+    const { atProtoLiveStrategy } = await import('../lib/live-shorts/strategies/atproto-live');
     await atProtoLiveStrategy.publishToBluesky?.({
       text: text.slice(0, 300),
       embedUrl: url,
@@ -821,10 +789,7 @@ async function publishToBluesky(
 /**
  * Publish a go-live announcement to Mastodon/GoToSocial.
  */
-async function publishToMastodon(
-  text: string,
-  env: Env,
-): Promise<void> {
+async function publishToMastodon(text: string, env: Env): Promise<void> {
   const gtsToken = (env as Record<string, string>).GTS_BOT_TOKEN;
   const gtsUrl = env.GTS_INSTANCE_URL ?? env.GOTOSOCIAL_INSTANCE_URL ?? 'https://gts.degenfeed.xyz';
   if (!gtsToken) return;
@@ -850,11 +815,7 @@ async function publishToMastodon(
 /**
  * Publish a go-live event to PeerTube.
  */
-async function publishToPeerTube(
-  config: SimulcastConfig,
-  url: string,
-  env: Env,
-): Promise<void> {
+async function publishToPeerTube(config: SimulcastConfig, url: string, env: Env): Promise<void> {
   const peertubeUrl = env.PEERTUBE_INSTANCE_URL ?? 'https://video.degenfeed.xyz';
 
   try {
