@@ -27,6 +27,11 @@ services:
       timeout: 5s
       retries: 10
       start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+          cpus: '0.5'
 
   bridgy-fed:
     image: bridgy-fed:latest
