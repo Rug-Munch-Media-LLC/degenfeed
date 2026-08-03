@@ -18,8 +18,9 @@
  * actually flowing data. `disconnect()` is a no-op refresh.
  */
 
-import { getProtocolColor, getProtocolLabel, PROTOCOL_ICONS } from '@degenfeed/ui';
+import { getProtocolLabel } from '@degenfeed/ui';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { EXTRA_PROTOCOLS, PROTOCOL_LIST } from '../components/feed/feed-protocols';
 
 /* ─── Types ─────────────────────────────────────────────────── */
 
@@ -33,6 +34,8 @@ export interface ProtocolConnection {
   connected: boolean;
   /** Derived from real bridge health: healthy / unhealthy / unconfigured */
   status: ProtocolStatus;
+  /** Canonical feed route (e.g. /feed/nostr) */
+  route: string;
   handle?: string;
   instanceUrl?: string;
   avatar?: string;
@@ -61,64 +64,35 @@ const HEALTH_ENDPOINT = '/api/feed/health';
 
 /* ─── Default protocol list ─────────────────────────────────── */
 
-const DEFAULT_PROTOCOLS: ProtocolConnection[] = [
-  {
-    id: 'nostr',
-    name: 'Nostr',
-    icon: PROTOCOL_ICONS.nostr ?? 'N',
-    color: getProtocolColor('nostr'),
+/**
+ * Full catalog of protocol feeds. Built from the canonical registry
+ * (feed-protocols.ts) plus extra routed feeds. The bridge health
+ * endpoint reports live status for the ones it tracks; everything else
+ * stays `unconfigured` (grey) until the bridge reports it.
+ */
+const DEFAULT_PROTOCOLS: ProtocolConnection[] = PROTOCOL_LIST.map(
+  (p): ProtocolConnection => ({
+    id: p.id,
+    name: p.label,
+    icon: p.icon,
+    color: p.color,
     connected: false,
     status: 'unconfigured',
-  },
-  {
-    id: 'farcaster',
-    name: 'Farcaster',
-    icon: PROTOCOL_ICONS.farcaster ?? 'F',
-    color: getProtocolColor('farcaster'),
-    connected: false,
-    status: 'unconfigured',
-  },
-  {
-    id: 'lens',
-    name: 'Lens',
-    icon: PROTOCOL_ICONS.lens ?? 'L',
-    color: getProtocolColor('lens'),
-    connected: false,
-    status: 'unconfigured',
-  },
-  {
-    id: 'bluesky',
-    name: 'Bluesky',
-    icon: PROTOCOL_ICONS.bluesky ?? 'B',
-    color: getProtocolColor('bluesky'),
-    connected: false,
-    status: 'unconfigured',
-  },
-  {
-    id: 'mastodon',
-    name: 'Mastodon',
-    icon: PROTOCOL_ICONS.mastodon ?? 'M',
-    color: getProtocolColor('mastodon'),
-    connected: false,
-    status: 'unconfigured',
-  },
-  {
-    id: 'reddit',
-    name: 'Reddit',
-    icon: 'R',
-    color: getProtocolColor('reddit'),
-    connected: false,
-    status: 'unconfigured',
-  },
-  {
-    id: 'rss',
-    name: 'RSS',
-    icon: 'A',
-    color: getProtocolColor('rss'),
-    connected: false,
-    status: 'unconfigured',
-  },
-];
+    route: p.route,
+  }),
+).concat(
+  EXTRA_PROTOCOLS.map(
+    (p): ProtocolConnection => ({
+      id: p.id,
+      name: p.label,
+      icon: p.icon,
+      color: p.color,
+      connected: false,
+      status: 'unconfigured',
+      route: p.route,
+    }),
+  ),
+);
 
 interface HealthPayload {
   sources?: Record<string, { healthy?: boolean }>;

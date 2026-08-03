@@ -130,6 +130,22 @@ export const PROTOCOLS: Record<string, ProtocolConfig> = {
       { label: 'videos', value: 'millions' },
     ],
   },
+  youtube: {
+    id: 'youtube',
+    label: 'YouTube',
+    color: '#ff0000',
+    icon: '▶',
+    description:
+      'Top crypto, tech & AI videos — Coin Bureau, Bankless, Finematics, Fireship, Two Minute Papers and 11 more',
+    endpoint: '/api/feed/youtube',
+    route: '/feed/youtube',
+    postNoun: 'video',
+    category: 'video',
+    stats: [
+      { label: 'channels', value: '15' },
+      { label: 'categories', value: 'crypto/tech/AI' },
+    ],
+  },
   lemmy: {
     id: 'lemmy',
     label: 'Lemmy',
@@ -541,6 +557,209 @@ export const PROTOCOLS: Record<string, ProtocolConfig> = {
 
 export const PROTOCOL_LIST = Object.values(PROTOCOLS);
 
+/**
+ * Extra protocol feeds that are routed but not part of the canonical
+ * PROTOCOLS registry. These still resolve to a real `/feed/{id}` page and
+ * some are reported by the bridge health endpoint (live status dots).
+ * Kept separate so existing FeedShell / ProtocolNavSection behavior is
+ * unchanged while the global sidebar can surface every feed.
+ */
+export interface ExtraProtocolConfig {
+  id: string;
+  label: string;
+  color: string;
+  icon: string;
+  route: string;
+  category: ProtocolCategory;
+}
+
+export const EXTRA_PROTOCOLS: ExtraProtocolConfig[] = [
+  {
+    id: 'discord',
+    label: 'Discord',
+    color: '#5865f2',
+    icon: '💬',
+    route: '/feed/discord',
+    category: 'communities',
+  },
+  {
+    id: 'telegram',
+    label: 'Telegram',
+    color: '#26a5e4',
+    icon: '✈',
+    route: '/feed/telegram',
+    category: 'communities',
+  },
+  {
+    id: 'youtube',
+    label: 'YouTube',
+    color: '#ff0000',
+    icon: '▶',
+    route: '/feed/youtube',
+    category: 'video',
+  },
+  {
+    id: 'github',
+    label: 'GitHub',
+    color: '#6e40c9',
+    icon: '◉',
+    route: '/feed/github',
+    category: 'communities',
+  },
+  {
+    id: 'hive',
+    label: 'Hive',
+    color: '#e31337',
+    icon: '◆',
+    route: '/feed/hive',
+    category: 'social',
+  },
+  {
+    id: 'threads',
+    label: 'Threads',
+    color: '#888888',
+    icon: '⊞',
+    route: '/feed/threads',
+    category: 'social',
+  },
+  {
+    id: 'matrix',
+    label: 'Matrix',
+    color: '#000000',
+    icon: '🕸',
+    route: '/feed/matrix',
+    category: 'communities',
+  },
+  {
+    id: 'xmtp',
+    label: 'XMTP',
+    color: '#5b8def',
+    icon: '💬',
+    route: '/feed/xmtp',
+    category: 'social',
+  },
+  {
+    id: 'gab',
+    label: 'Gab',
+    color: '#00a2ff',
+    icon: '🗯',
+    route: '/feed/gab',
+    category: 'social',
+  },
+  {
+    id: 'minds',
+    label: 'Minds',
+    color: '#2a90d9',
+    icon: '🧠',
+    route: '/feed/minds',
+    category: 'social',
+  },
+  {
+    id: 'steem',
+    label: 'Steem',
+    color: '#4ba2f2',
+    icon: '⛏',
+    route: '/feed/steem',
+    category: 'social',
+  },
+  {
+    id: 'gotosocial',
+    label: 'GoToSocial',
+    color: '#8b5cf6',
+    icon: '🐘',
+    route: '/feed/gotosocial',
+    category: 'social',
+  },
+  {
+    id: 'bonfire',
+    label: 'Bonfire',
+    color: '#f97316',
+    icon: '🔥',
+    route: '/feed/bonfire',
+    category: 'social',
+  },
+  {
+    id: 'mitra',
+    label: 'Mitra',
+    color: '#22c55e',
+    icon: '🌿',
+    route: '/feed/mitra',
+    category: 'social',
+  },
+  {
+    id: 'takahe',
+    label: 'Takahē',
+    color: '#0ea5e9',
+    icon: '🐦',
+    route: '/feed/takahe',
+    category: 'social',
+  },
+  {
+    id: 'forgejo',
+    label: 'Forgejo',
+    color: '#60a5fa',
+    icon: '🛠',
+    route: '/feed/forgejo',
+    category: 'communities',
+  },
+  {
+    id: 'mobilizon',
+    label: 'Mobilizon',
+    color: '#00a2ff',
+    icon: '📅',
+    route: '/feed/mobilizon',
+    category: 'communities',
+  },
+  {
+    id: 'bookwyrm',
+    label: 'BookWyrm',
+    color: '#800080',
+    icon: '📚',
+    route: '/feed/bookwyrm',
+    category: 'content',
+  },
+  {
+    id: 'orbis',
+    label: 'Orbis',
+    color: '#8b5cf6',
+    icon: '🌐',
+    route: '/feed/orbis',
+    category: 'web3',
+  },
+  {
+    id: 'push',
+    label: 'Push Protocol',
+    color: '#f97316',
+    icon: '🔔',
+    route: '/feed/push',
+    category: 'web3',
+  },
+  {
+    id: 'huddle01',
+    label: 'Huddle01',
+    color: '#6366f1',
+    icon: '🎥',
+    route: '/feed/huddle01',
+    category: 'video',
+  },
+  {
+    id: 'ceramic',
+    label: 'Ceramic',
+    color: '#f97316',
+    icon: '🏺',
+    route: '/feed/ceramic',
+    category: 'web3',
+  },
+  {
+    id: 'tableland',
+    label: 'Tableland',
+    color: '#14b8a6',
+    icon: '🗄',
+    route: '/feed/tableland',
+    category: 'web3',
+  },
+];
+
 /** Ordered list of category IDs for sidebar display */
 export const CATEGORY_DISPLAY_ORDER: ProtocolCategory[] = [
   'social',
@@ -579,6 +798,7 @@ export const SIDEBAR_ORDER = [
   'farcaster',
   'lens',
   'peertube',
+  'youtube',
   'gancio',
   'soundcloud',
   'bandcamp',
