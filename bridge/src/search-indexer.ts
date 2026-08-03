@@ -44,17 +44,12 @@ async function getClientAsync(): Promise<any> {
       apiKey: MEILI_KEY,
       timeout: 30000, // 30s timeout per request to prevent hung requests
     });
-    console.log('[indexer] Meilisearch client created, host=' + MEILI_URL);
+    console.log(`[indexer] Meilisearch client created, host=${MEILI_URL}`);
     return client;
   } catch (e) {
     console.error('[indexer] Failed to create Meilisearch client:', (e as Error).message);
     return null;
   }
-}
-
-// Synchronous fallback — returns null if client not yet initialized
-function getClient(): any {
-  return client;
 }
 
 // ─── Search Document Shape ─────────────────────────────────────────────
@@ -84,6 +79,35 @@ export interface SearchDocument {
 
 // ─── Index Setup ───────────────────────────────────────────────────────
 
+/**
+ * Apply a settings update and WAIT for Meilisearch to finish processing it.
+ *
+ * Settings updates (sortable/filterable/searchable/displayed/ranking) are
+ * async tasks. Without waiting, failures are silently dropped and the
+ * setting never persists. This was observed 2026-07-31: filterable applied,
+ * but sortable/searchable/displayed/ranking all failed with
+ * "No space left on device (os error 28)" and the index was left with
+ * sortableAttributes=[] — breaking `sort=createdAt:desc` queries.
+ */
+async function updateSettings(
+  meili: any,
+  update: (index: any) => Promise<{ taskUid: number }>,
+): Promise<void> {
+  const task = await update(meili.index(INDEX_NAME));
+  // meilisearch-js v0.60: waitForTask lives on the `tasks` sub-client and
+  // takes `{ timeout, interval }` (not timeOutMs). Settings updates trigger a
+  // full reindex of all docs, so 5s default is far too short.
+  const result = await meili.tasks.waitForTask(task.taskUid, { timeout: 120_000 });
+  // Surface failed settings tasks (e.g. disk-full during reindex) instead of
+  // silently leaving the index misconfigured.
+  if (result.status !== 'succeeded') {
+    console.error(
+      `[indexer] Settings update failed (${result.type}): ` +
+        `${result.error?.message || result.status}`,
+    );
+  }
+}
+
 async function ensureIndex(): Promise<void> {
   const meili = await getClientAsync();
   if (!meili) return;
@@ -97,26 +121,31 @@ async function ensureIndex(): Promise<void> {
       await meili.createIndex(INDEX_NAME, { primaryKey: 'id' });
     }
 
-    await meili
-      .index(INDEX_NAME)
-      .updateFilterableAttributes([
+    // NOTE: `protocol`, `timestamp`, `engagement` are declared sortable so the
+    // index config matches the runtime settings applied via curl. Only
+    // `createdAt` (and `protocol`) are actual document fields today —
+    // Meilisearch ignores sortable attributes that documents don't contain.
+    await updateSettings(meili, (index) =>
+      index.updateSortableAttributes(['createdAt', 'protocol', 'timestamp', 'engagement']),
+    );
+
+    await updateSettings(meili, (index) =>
+      index.updateFilterableAttributes([
         'source',
         'protocol',
         'contentType',
         'niches',
         'createdAt',
         'authorId',
-      ]);
+      ]),
+    );
 
-    await meili.index(INDEX_NAME).updateSortableAttributes(['createdAt']);
+    await updateSettings(meili, (index) =>
+      index.updateSearchableAttributes(['text', 'html', 'authorName', 'authorHandle', 'niches']),
+    );
 
-    await meili
-      .index(INDEX_NAME)
-      .updateSearchableAttributes(['text', 'html', 'authorName', 'authorHandle', 'niches']);
-
-    await meili
-      .index(INDEX_NAME)
-      .updateDisplayedAttributes([
+    await updateSettings(meili, (index) =>
+      index.updateDisplayedAttributes([
         'id',
         'source',
         'protocol',
@@ -136,11 +165,12 @@ async function ensureIndex(): Promise<void> {
         'imageUrl',
         'language',
         'metadata',
-      ]);
+      ]),
+    );
 
-    await meili
-      .index(INDEX_NAME)
-      .updateRankingRules(['words', 'typo', 'proximity', 'attribute', 'sort', 'exactness']);
+    await updateSettings(meili, (index) =>
+      index.updateRankingRules(['words', 'typo', 'proximity', 'attribute', 'sort', 'exactness']),
+    );
 
     console.log('[indexer] Index configured successfully');
   } catch (err) {

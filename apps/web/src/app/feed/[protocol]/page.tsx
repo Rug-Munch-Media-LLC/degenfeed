@@ -138,37 +138,52 @@ function ProtocolFeedContent({ protocol }: { protocol: string }) {
         headers: { 'cache-control': 'no-store' },
       });
 
-      if (!res.ok) {
-        // Fallback to bridge API at /api/feed/{protocol}
-        if (res.status === 404) {
-          const fallbackUrl = new URL(
-            `/api/feed/${encodeURIComponent(protocol)}`,
-            window.location.origin,
-          );
-          fallbackUrl.searchParams.set('limit', '50');
-          const fallbackRes = await fetch(fallbackUrl.toString(), {
-            credentials: 'include',
-            cache: 'no-store',
-          });
-          if (!fallbackRes.ok) throw new Error(`Feed returned ${fallbackRes.status}`);
-          const fallbackJson = (await fallbackRes.json()) as {
+      // Parse the primary response defensively. The bridge does not implement
+      // /api/feed/protocol/{p}/{sort}: production can return HTTP 400
+      // ("Unknown provider") and localhost returns a {status:"ok"} stub with no
+      // posts/data array. Treat both as "not a feed payload".
+      let json: { posts?: UnifiedPost[]; data?: UnifiedPost[]; meta?: FeedMeta } | null = null;
+      if (res.ok) {
+        try {
+          json = (await res.json()) as {
             posts?: UnifiedPost[];
             data?: UnifiedPost[];
             meta?: FeedMeta;
           };
-          const feed = fallbackJson.posts ?? fallbackJson.data ?? [];
-          setPosts(feed);
-          setFeedMeta(fallbackJson.meta ?? {});
-          setState(feed.length ? 'loaded' : 'empty');
-          return;
+        } catch {
+          json = null;
         }
-        throw new Error(`Feed returned ${res.status}`);
       }
 
-      const json = (await res.json()) as { data?: UnifiedPost[]; meta?: FeedMeta };
-      setPosts(json.data ?? []);
+      // Fallback to the working bridge endpoint at /api/feed/{protocol} when the
+      // protocol+sort endpoint errors OR returns no posts/data.
+      if (!res.ok || !json || (!json.posts && !json.data)) {
+        const fallbackUrl = new URL(
+          `/api/feed/${encodeURIComponent(protocol)}`,
+          window.location.origin,
+        );
+        fallbackUrl.searchParams.set('limit', '50');
+        const fallbackRes = await fetch(fallbackUrl.toString(), {
+          credentials: 'include',
+          cache: 'no-store',
+        });
+        if (!fallbackRes.ok) throw new Error(`Feed returned ${fallbackRes.status}`);
+        const fallbackJson = (await fallbackRes.json()) as {
+          posts?: UnifiedPost[];
+          data?: UnifiedPost[];
+          meta?: FeedMeta;
+        };
+        const feed = fallbackJson.posts ?? fallbackJson.data ?? [];
+        setPosts(feed);
+        setFeedMeta(fallbackJson.meta ?? {});
+        setState(feed.length ? 'loaded' : 'empty');
+        return;
+      }
+
+      const feed = json.posts ?? json.data ?? [];
+      setPosts(feed);
       setFeedMeta(json.meta ?? {});
-      setState(json.data?.length ? 'loaded' : 'empty');
+      setState(feed.length ? 'loaded' : 'empty');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load feed');
       setState('error');

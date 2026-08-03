@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
+import { LandingStats } from '../components/LandingStats';
 
 /* ─── LOGO (inlined from public/icon.svg) ─────────────────────────────── */
 
@@ -879,15 +880,6 @@ const PROTOCOLS: Protocol[] = [
   { name: 'Discourse', color: '#00aeef' },
 ];
 
-/* ─── STATS DATA ──────────────────────────────────────────────────────── */
-
-const STATS = [
-  { label: 'Protocols', value: '101+' },
-  { label: 'RSS Sources', value: '319' },
-  { label: 'Reddit Communities', value: '137' },
-  { label: 'YouTube Channels', value: '68' },
-];
-
 /* ─── PAGE COMPONENT ──────────────────────────────────────────────────── */
 
 export default function LandingPage() {
@@ -1012,19 +1004,9 @@ export default function LandingPage() {
             </Link>
           </div>
 
-          {/* Stats bar */}
+          {/* Stats bar — real counts from bridge health, "—" when unavailable */}
           <div className="stats-bar">
-            {STATS.map((stat, _i) => (
-              <span key={stat.label} className="stat-item">
-                <span className="stat-value">{stat.value}</span>
-                <span className="stat-label">{stat.label}</span>
-              </span>
-            ))}
-            <span className="stat-divider" aria-hidden="true" />
-            <span className="stat-item">
-              <span className="stat-value">15M+</span>
-              <span className="stat-label">Reachable</span>
-            </span>
+            <LandingStats />
           </div>
         </section>
 

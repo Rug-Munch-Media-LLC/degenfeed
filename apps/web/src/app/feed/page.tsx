@@ -84,6 +84,7 @@ interface FeedMeta {
   perProtocol?: Record<string, number>;
   errors?: string[];
   notices?: string[];
+  providerSources?: Record<string, string>;
   trending?: { topic: string; count: number; score: number }[];
   topOfHour?: string | null;
   fetchedAt?: number;

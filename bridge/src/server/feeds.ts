@@ -619,7 +619,7 @@ export async function buildFeed(
     3,
     Math.ceil((limit * 1.2) / Math.max(activeProtocols.length, 1)),
   );
-  const FETCH_TIMEOUT_MS = 5000;
+  const FETCH_TIMEOUT_MS = 15000;
   const MAX_CONCURRENT = 20; // Limit to 20 concurrent provider fetches to prevent OOM
 
   const results = await runWithConcurrencyLimit(
@@ -736,7 +736,14 @@ export async function buildFeed(
 
   const allPosts: UnifiedPost[] = [];
   for (const result of results) {
-    const { protocol, posts, error, notice, source, cacheAgeMs } = result as any;
+    const { protocol, posts, error, notice, source, cacheAgeMs } = result as {
+      protocol?: string;
+      posts?: UnifiedPost[];
+      source?: string;
+      notice?: string;
+      cacheAgeMs?: number;
+      error?: string;
+    };
     if (!protocol) continue; // Skip results that might be from failed providers
     perProtocol[protocol] = posts?.length ?? 0;
     providerSources[protocol] = source ?? 'live';

@@ -25,7 +25,12 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 const RECONNECT_DELAYS = [1_000, 2_000, 4_000, 8_000, 15_000, 30_000];
 const MAX_RECONNECT_DELAY = 30_000;
-const DEFAULT_WS_URL = 'wss://api.degenfeed.xyz/ws/realtime';
+// The realtime socket lives on the DegenFeed bridge (port 8787), NOT the
+// rmi-backend API service. `api.degenfeed.xyz` proxies to rmi-backend and has
+// no WS endpoint — connecting there hangs forever in "Connecting…".
+// Override per-environment with NEXT_PUBLIC_WS_URL (e.g. ws://127.0.0.1:8787
+// from inside the web container, or wss://bridge.degenfeed.xyz in prod).
+const DEFAULT_WS_URL = process.env.NEXT_PUBLIC_WS_URL ?? 'wss://bridge.degenfeed.xyz/ws/realtime';
 const SCROLL_TOP_THRESHOLD = 80; // px from top for auto-insert detection
 
 // ─── Types ────────────────────────────────────────────────────────────────

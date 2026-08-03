@@ -300,7 +300,7 @@ export const LeftSidebar = memo(function LeftSidebar({
             <>
               <span className="sidebar-nav-label">Live</span>
               <span className="ml-auto flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-red-500/15 px-1.5 text-[9px] font-bold text-red-400">
-                12
+                {loaded ? healthyCount : '—'}
               </span>
             </>
           )}
@@ -446,6 +446,18 @@ export const LeftSidebar = memo(function LeftSidebar({
           if (!conn) return null;
           const color = conn.color;
           const active = isProtocolPage(pid);
+          const dotClass =
+            conn.status === 'healthy'
+              ? 'bg-degen-500'
+              : conn.status === 'unhealthy'
+                ? 'bg-yellow-500'
+                : 'bg-[var(--color-muted)]';
+          const dotLabel =
+            conn.status === 'healthy'
+              ? 'Healthy'
+              : conn.status === 'unhealthy'
+                ? 'Unhealthy'
+                : 'Not configured';
           return (
             <Link
               key={pid}
@@ -458,8 +470,8 @@ export const LeftSidebar = memo(function LeftSidebar({
               <span
                 className="sidebar-nav-icon flex items-center justify-center rounded-lg text-sm font-bold"
                 style={{
-                  backgroundColor: conn.connected ? `${color}1a` : 'transparent',
-                  color: conn.connected ? color : 'var(--color-muted)',
+                  backgroundColor: conn.status === 'healthy' ? `${color}1a` : 'transparent',
+                  color: conn.status === 'healthy' ? color : 'var(--color-muted)',
                 }}
               >
                 {conn.icon}
@@ -469,8 +481,8 @@ export const LeftSidebar = memo(function LeftSidebar({
                   <span className="sidebar-nav-label">{conn.name}</span>
                   <span
                     role="img"
-                    className={`ml-auto flex h-2 w-2 rounded-full ${conn.connected ? 'bg-degen-500' : 'bg-[var(--color-muted)]'}`}
-                    aria-label={conn.connected ? 'Connected' : 'Not connected'}
+                    className={`ml-auto flex h-2 w-2 rounded-full ${dotClass}`}
+                    aria-label={dotLabel}
                   />
                 </>
               )}

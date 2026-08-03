@@ -6,6 +6,7 @@ interface FeedMeta {
   perProtocol?: Record<string, number>;
   errors?: string[];
   notices?: string[];
+  providerSources?: Record<string, string>;
   trending?: { topic: string; count: number; score: number }[];
   topOfHour?: string | null;
   fetchedAt?: number;
@@ -127,11 +128,14 @@ export function FeedNewPostsBanner({ count, onRefresh }: { count: number; onRefr
 
 export function FeedProtocolSummary({ meta }: { meta?: FeedMeta }) {
   if (!meta?.perProtocol || Object.keys(meta.perProtocol).length === 0) return null;
+  const fallbackSources = meta.providerSources ?? {};
   return (
     <div className="mb-4 flex flex-wrap gap-2">
       {Object.entries(meta.perProtocol).map(([protocol, count]) => {
         const protocolVar = `--color-protocol-${protocol}`;
         const fallbackColor = '#666';
+        const source = fallbackSources[protocol];
+        const isFallback = source === 'fallback' || source === 'cached';
         return (
           <span
             key={protocol}
@@ -142,6 +146,14 @@ export function FeedProtocolSummary({ meta }: { meta?: FeedMeta }) {
             }}
           >
             {protocol} {count}
+            {isFallback && (
+              <span
+                className="rounded-full bg-amber-500/10 px-1.5 text-[9px] font-medium text-amber-400"
+                title={`${protocol} content is being served from a fallback source because the primary source is unavailable`}
+              >
+                via fallback
+              </span>
+            )}
           </span>
         );
       })}
