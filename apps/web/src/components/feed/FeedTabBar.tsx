@@ -70,6 +70,7 @@ export function FeedTabBar({
             aria-label="Open feed tuner"
           >
             <svg
+              aria-hidden="true"
               width="14"
               height="14"
               viewBox="0 0 24 24"
