@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useCallback, useMemo, useState } from 'react';
 import FeeConfigPanel from './FeeConfigPanel';
 import type { RevenueRecipient } from './RecipientSplitEditor';
@@ -671,7 +670,6 @@ interface CreateCoinWizardProps {
 }
 
 export default function CreateCoinWizard({ className = '' }: CreateCoinWizardProps) {
-  const _router = useRouter();
 
   const [step, setStep] = useState<StepId>(1);
   const [deploying, setDeploying] = useState(false);

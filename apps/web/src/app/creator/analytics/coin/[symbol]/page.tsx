@@ -211,7 +211,6 @@ function CandlestickChart({ candles }: { candles: Candle[]; color?: string }) {
   const maxPrice = Math.max(...candles.map((c) => c.high));
   const minPrice = Math.min(...candles.map((c) => c.low));
   const range = maxPrice - minPrice || 1;
-  const _maxVol = Math.max(...candles.map((c) => c.volume), 1);
 
   const xScale = (i: number) => pad.left + (i / candles.length) * (w - pad.left - pad.right);
   const yScale = (v: number) =>

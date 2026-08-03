@@ -14,7 +14,6 @@
  */
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 
 // ══════════════════════════════════════════════════════════════════════
@@ -1135,7 +1134,6 @@ type DashboardTab =
   | 'transparency';
 
 export default function CreatorDashboardPage() {
-  const _router = useRouter();
   const [activeTab, setActiveTab] = useState<DashboardTab>('overview');
   const [selectedCoinIdx, setSelectedCoinIdx] = useState(0);
 
@@ -1163,7 +1161,6 @@ export default function CreatorDashboardPage() {
     setTrades(generateMockTrades());
   }, [selectedCoin]);
 
-  const _firstCoin = coins[0];
 
   if (coins.length === 0) {
     return (

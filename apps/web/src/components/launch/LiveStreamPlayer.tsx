@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useIsMobile, useKeyboardHeight } from '../../hooks/useMobileResponsive';
+import { useIsMobile} from '../../hooks/useMobileResponsive';
 import { usePeerTubeStream } from '../../hooks/usePeerTubeStream';
 import { useActiveStream, useTokenStreams } from '../../hooks/useTokenStreams';
 import LiveCommentFeed from './LiveCommentFeed';
@@ -22,10 +22,8 @@ export default function LiveStreamPlayer({
   tokenAddress,
   tokenSymbol,
   isCreator = false,
-  className = '',
 }: LiveStreamPlayerProps) {
   const isMobileScreen = useIsMobile();
-  const _keyboardHeight = useKeyboardHeight();
 
   // Legacy stream (non-PeerTube fallback)
   const legacy = useActiveStream(tokenAddress);
@@ -693,95 +691,6 @@ function LiveStreamView({
 
 /* === Stream Offline State ============================ */
 
-function _StreamOffline({
-  tokenAddress,
-  tokenSymbol,
-  isCreator,
-  notifySubscribed,
-  onNotifySubscribe,
-  onStartStream,
-  hasRecording,
-  onViewRecording,
-}: {
-  tokenAddress: string;
-  tokenSymbol?: string;
-  isCreator: boolean;
-  notifySubscribed: boolean;
-  onNotifySubscribe: () => void;
-  onStartStream: () => void;
-  hasRecording: boolean;
-  onViewRecording: () => void;
-}) {
-  return (
-    <div className="overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-card)]">
-      {/* Offline display */}
-      <div className="flex flex-col items-center justify-center px-4 py-10">
-        <div className="mb-3 text-4xl opacity-50">🎙️</div>
-        <h3 className="text-sm font-semibold text-[var(--color-fg)]">
-          Creator hasn&apos;t gone live yet
-        </h3>
-        <p className="mt-1 text-xs text-[var(--color-muted)] text-center max-w-xs">
-          {isCreator
-            ? 'Start a PeerTube stream to engage with your token community!'
-            : `Get notified when ${tokenSymbol || 'this creator'} goes live`}
-        </p>
-
-        <div className="mt-4 flex gap-2">
-          {isCreator ? (
-            <button
-              type="button"
-              onClick={onStartStream}
-              className="btn-primary flex items-center gap-1.5 px-4 py-2 text-sm font-medium"
-            >
-              <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-degen-400 opacity-75" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-degen-500" />
-              </span>
-              Go Live
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={onNotifySubscribe}
-              disabled={notifySubscribed}
-              className="btn-secondary flex items-center gap-1.5 px-4 py-2 text-sm font-medium disabled:opacity-50"
-            >
-              {notifySubscribed ? '✅ Notifications On' : '🔔 Notify me when live'}
-            </button>
-          )}
-        </div>
-
-        {/* PeerTube branding */}
-        {isCreator && (
-          <div className="mt-4 flex items-center gap-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-overlay)] px-4 py-2">
-            <span className="text-lg">🌐</span>
-            <div className="text-left">
-              <p className="text-xs font-medium text-[var(--color-fg)]">PeerTube Livestreaming</p>
-              <p className="text-[10px] text-[var(--color-muted)]">
-                Federated to ActivityPub, Nostr, Farcaster, Bluesky, Telegram
-              </p>
-            </div>
-          </div>
-        )}
-
-        {hasRecording && (
-          <button
-            type="button"
-            onClick={onViewRecording}
-            className="mt-3 text-xs text-degen-400 hover:underline"
-          >
-            📼 Watch previous recording
-          </button>
-        )}
-      </div>
-
-      {/* Chat still available offline */}
-      <div className="border-t border-[var(--color-border)]">
-        <LiveCommentFeed tokenAddress={tokenAddress} compact />
-      </div>
-    </div>
-  );
-}
 
 /* === Skeleton Loading ================================ */
 

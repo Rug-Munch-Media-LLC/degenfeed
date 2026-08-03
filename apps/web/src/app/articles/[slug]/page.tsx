@@ -355,8 +355,7 @@ function TokenGate({ post }: { post: GhostPost }) {
 export default function ArticlePage() {
   const params = useParams();
   const slug = params.slug as string;
-  const { account: address } = useWeb3();
-
+  const {} = useWeb3();
   const [post, setPost] = useState<GhostPost | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

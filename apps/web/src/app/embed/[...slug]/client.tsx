@@ -9,10 +9,6 @@ interface EmbedPageClientProps {
   dfUri: string;
 }
 
-function _truncate(s: string, max: number): string {
-  if (s.length <= max) return s;
-  return `${s.slice(0, max).replace(/\s+\S*$/, '')}…`;
-}
 
 function getProtocolColor(p: string): string {
   const colors: Record<string, string> = {

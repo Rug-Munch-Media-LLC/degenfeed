@@ -177,7 +177,6 @@ export function CommunityFeed({
   community,
   posts,
   isMember,
-  isPremium,
   walletAddress,
   onPostCreated,
 }: {

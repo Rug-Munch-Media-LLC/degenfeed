@@ -102,8 +102,6 @@ export function getInitials(name: string): string {
 }
 
 export function formatMessageTime(ts: number): string {
-  const now = Date.now();
-  const _diff = now - ts;
   const msgDate = new Date(ts);
   const today = new Date();
 
@@ -341,17 +339,10 @@ export function useMessages() {
   // Clean up old typing indicators
   useEffect(() => {
     const interval = setInterval(() => {
-      const _now = Date.now();
       setTypingUsers((prev) => {
         const next = new Map(prev);
         const changed = false;
-        for (const [_convId, users] of next) {
-          const _filtered = new Set(
-            [...users].filter((_uid) => {
-              // We store timestamp in the timeout map; if no recent entry, prune
-              return true;
-            }),
-          );
+        for (const [_convId] of next) {
           // Clean up via timeout check
         }
         // Timeout-based cleanup

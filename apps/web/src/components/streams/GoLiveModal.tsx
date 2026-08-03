@@ -220,8 +220,6 @@ export function GoLiveModal({
   onClose,
   onStart,
   defaultCoinAddress,
-  defaultCoinSymbol,
-  defaultSurfaces,
 }: GoLiveModalProps) {
   const [form, setForm] = useState<GoLiveForm>({
     title: '',

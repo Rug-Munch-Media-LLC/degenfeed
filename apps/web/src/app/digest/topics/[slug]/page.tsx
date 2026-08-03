@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams} from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 
 // === Types =================================================================
@@ -119,7 +119,6 @@ function formatTime(ts: number): string {
 
 export default function TopicDigestPage() {
   const params = useParams();
-  const _router = useRouter();
   const slug = (params?.slug as string)?.toLowerCase() ?? '';
   const meta = TOPIC_META[slug];
 

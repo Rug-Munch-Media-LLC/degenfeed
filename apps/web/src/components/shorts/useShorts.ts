@@ -81,7 +81,6 @@ export interface UseShortsResult {
 
 const INITIAL_LIMIT = 20;
 const LOAD_MORE_LIMIT = 10;
-const LOAD_MORE_BUFFER = 3;
 
 export function useShorts(opts: UseShortsOptions = {}): UseShortsResult {
   const {
@@ -90,7 +89,6 @@ export function useShorts(opts: UseShortsOptions = {}): UseShortsResult {
     limit: _limit,
     loadMoreLimit = LOAD_MORE_LIMIT,
     initialLimit = INITIAL_LIMIT,
-    loadMoreBuffer = LOAD_MORE_BUFFER,
   } = opts;
 
   const [state, setState] = useState<{

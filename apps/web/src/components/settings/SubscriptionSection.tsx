@@ -16,7 +16,6 @@ interface SubscriptionSectionProps {
 }
 
 export function SubscriptionSection({
-  showUpgradeModal,
   setShowUpgradeModal,
   refreshPremium,
   crossPlatformKey,

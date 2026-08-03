@@ -12,14 +12,6 @@ function formatViews(n: number): string {
   return String(n);
 }
 
-function _formatDate(iso: string): string {
-  const d = new Date(iso);
-  const now = Date.now();
-  const diff = now - d.getTime();
-  if (diff < 86400000) return 'Today';
-  if (diff < 86400000 * 2) return 'Yesterday';
-  return `${Math.floor(diff / 86400000)}d ago`;
-}
 
 export function StreamClips({ clips }: StreamClipsProps) {
   const items = clips ?? generateMockClips();

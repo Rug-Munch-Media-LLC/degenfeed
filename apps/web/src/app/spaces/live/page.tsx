@@ -158,18 +158,6 @@ export default function LiveSpacesPage() {
     setActiveSpaceId(id);
   }, []);
 
-  const _handleBroadcast = useCallback(async (text: string, protocols: string[]) => {
-    const res = await fetch('/api/publish', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ text, targets: protocols }),
-    });
-    if (!res.ok) {
-      const errData = (await res.json().catch(() => null)) as { error?: string } | null;
-      throw new Error(errData?.error || 'Broadcast failed');
-    }
-  }, []);
-
   const refreshNow = useCallback(() => {
     setLoading(true);
     fetchLiveSpaces();

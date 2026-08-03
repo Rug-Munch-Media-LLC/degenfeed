@@ -35,13 +35,6 @@ function countBySource(streams: LiveStream[]): Record<string, number> {
   return counts;
 }
 
-function countByCategory(streams: LiveStream[]): Record<string, number> {
-  const counts: Record<string, number> = {};
-  for (const s of streams) {
-    counts[s.streamType] = (counts[s.streamType] ?? 0) + 1;
-  }
-  return counts;
-}
 
 /* ─── Filter Types ────────────────────────────────────────────── */
 
@@ -462,8 +455,7 @@ function StartingSoonSection() {
 /* === Main Live Page =========================================== */
 
 export default function LivePage() {
-  const { streams, featured, total, sourceCounts, isLoading, isValidating } = useLiveStreams();
-  const [activeTab, setActiveTab] = useState<StreamType | 'all'>('all');
+  const {streams, featured, total, isLoading, isValidating} = useLiveStreams();  const [activeTab, setActiveTab] = useState<StreamType | 'all'>('all');
   const [activeCategory, setActiveCategory] = useState<StreamCategory | 'all'>('all');
   const [activeMedia, setActiveMedia] = useState<MediaFilter>('all');
   const [activePlatform, setActivePlatform] = useState<PlatformFilter>('all');
@@ -507,7 +499,6 @@ export default function LivePage() {
   const spaces = useMemo(() => streams.filter((s) => s.streamType === 'spaces'), [streams]);
   const counts = useMemo(() => countByType(streams), [streams]);
   const streamsBySource = useMemo(() => countBySource(streams), [streams]);
-  const _streamsByCategory = useMemo(() => countByCategory(streams), [streams]);
 
   // Auto-rotate featured every 15 seconds
   const [featuredIndex, setFeaturedIndex] = useState(0);

@@ -170,7 +170,6 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const protocol = searchParams.get('protocol') || 'default';
-    const _authorId = searchParams.get('authorId') || '';
     const postContextRaw = searchParams.get('postContext');
 
     let postContext: Record<string, unknown> | null = null;

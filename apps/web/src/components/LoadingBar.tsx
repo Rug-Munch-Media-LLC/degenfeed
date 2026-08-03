@@ -15,8 +15,6 @@ export function LoadingBar() {
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const _pathname = usePathname();
-  const _searchParams = useSearchParams();
 
   // Reset on route change
   useEffect(() => {

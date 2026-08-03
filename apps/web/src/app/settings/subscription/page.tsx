@@ -375,8 +375,7 @@ function BillingHistory() {
 export default function SubscriptionSettingsPage() {
   const { tier, isPremium, expiresAt, daysRemaining, nextBillingAmount, loading, refresh } =
     usePremium();
-  const { walletAddress } = useAuth();
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const {} = useAuth();  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [selectedTier, setSelectedTier] = useState<string | null>(null);
 
   const handleUpgrade = useCallback(() => {

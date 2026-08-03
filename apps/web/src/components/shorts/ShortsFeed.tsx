@@ -81,7 +81,6 @@ export function ShortsFeed({
   const [showToast, setShowToast] = useState<string | null>(null);
   const [prerenderedVideos, setPrerenderedVideos] = useState<Set<number>>(new Set());
   const [pullDismissing, setPullDismissing] = useState(false);
-  const _dismissTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // == Snap-scroll detection via IntersectionObserver =====================
   useEffect(() => {

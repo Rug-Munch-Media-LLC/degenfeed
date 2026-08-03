@@ -77,13 +77,6 @@ export const ALL_SOURCE_OPTIONS: SourceOption[] = [
   { key: 'degenfeed', label: 'DegenFeed', group: 'native', description: 'Native DegenFeed' },
 ];
 
-const _GROUP_LABELS: Record<string, string> = {
-  'self-hosted': 'Self-Hosted',
-  protocol: 'Protocol',
-  commercial: 'Commercial',
-  nft: 'NFT',
-  native: 'Native',
-};
 
 // ─── Component ───────────────────────────────────────────────────────────
 

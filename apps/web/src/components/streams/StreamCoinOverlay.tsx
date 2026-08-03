@@ -80,10 +80,6 @@ function BondingCurveChart({ progress }: { progress: number }) {
 
 export function StreamCoinOverlay({
   stream,
-  coinAddress,
-  streamId,
-  tokenSymbol,
-  onBuy,
 }: StreamCoinOverlayProps) {
   const { showToast } = useToast();
   const { ready, signedInProtocols } = useAuth();

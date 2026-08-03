@@ -33,10 +33,6 @@ interface MediaMasonryGridProps {
 
 // ─── Helpers ─────────────────────────────────────────────────────
 
-function _clampAspectRatio(ar: number): number {
-  'use client';
-  return Math.min(Math.max(ar, 0.4), 3);
-}
 
 // ─── Masonry Grid ────────────────────────────────────────────────
 
@@ -45,7 +41,6 @@ export function MediaMasonryGrid({
   state,
   error,
   filter,
-  onPostClick,
   onRetry,
   onLoadMore,
   hasMore,

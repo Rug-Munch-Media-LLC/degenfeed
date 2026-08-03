@@ -25,12 +25,6 @@ interface RelayInfo {
   nip05WellKnown: string;
 }
 
-interface NostrUser {
-  pubkey: string;
-  npub: string;
-  username: string;
-  nip05: string;
-}
 
 export default function NostrDashboardPage() {
   const [relayInfo, setRelayInfo] = useState<RelayInfo | null>(null);
@@ -127,7 +121,6 @@ export default function NostrDashboardPage() {
 
       // Create and sign the event client-side
       const event = sdk.createTextNote(noteContent.trim(), sdk.nsecDecode(nsecStored).hex);
-      const _npub = sdk.npubEncode(event.pubkey);
 
       // Publish via our API
       const res = await fetch('/api/nostr/publish', {

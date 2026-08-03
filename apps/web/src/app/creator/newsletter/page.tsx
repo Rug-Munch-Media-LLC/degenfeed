@@ -60,9 +60,6 @@ function formatPercent(n: number): string {
   return `${(n * 100).toFixed(1)}%`;
 }
 
-function _pluralize(n: number, singular: string, plural?: string): string {
-  return n === 1 ? singular : (plural ?? `${singular}s`);
-}
 
 // === Stat Card =============================================
 

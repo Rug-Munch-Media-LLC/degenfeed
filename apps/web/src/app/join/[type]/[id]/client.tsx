@@ -26,7 +26,7 @@ interface Props {
   id: string;
 }
 
-export function joinPageClient({ type, id }: Props) {
+export function joinPageClient({id}: Props) {
   const [_data, setData] = useState<StreamData | null>(null);
   const [loading, setLoading] = useState(true);
 

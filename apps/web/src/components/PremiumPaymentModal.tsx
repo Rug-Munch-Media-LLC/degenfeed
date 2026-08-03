@@ -21,10 +21,6 @@ type PaymentStep = 'select-tier' | 'payment-method' | 'confirm' | 'processing' |
 
 type PaymentMethod = 'eth-base' | 'usdc-base' | 'sol' | null;
 
-interface StepProps {
-  tier: TierConfig;
-  onSelect: (tier: PremiumTier) => void;
-}
 
 // === Close icon ==========================================================
 
@@ -382,8 +378,7 @@ export function PremiumPaymentModal({
   initialTier,
   onSuccess,
 }: PremiumPaymentModalProps) {
-  const { walletAddress } = useAuth();
-  const { showToast } = useToast();
+  const {} = useAuth();  const { showToast } = useToast();
 
   const [step, setStep] = useState<PaymentStep>('select-tier');
   const [selectedTier, setSelectedTier] = useState<TierConfig | null>(

@@ -337,7 +337,6 @@ export function JoinAllProtocols({ username, onComplete, onSkip, initialProcessi
   const created = results.filter((r) => r.status === 'created').length;
   const failed = results.filter((r) => r.status === 'failed').length;
   const pending = results.filter((r) => r.status === 'pending').length;
-  const _succeededResults = results.filter((r) => r.status === 'created');
 
   return (
     <div className="rounded-2xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-6">

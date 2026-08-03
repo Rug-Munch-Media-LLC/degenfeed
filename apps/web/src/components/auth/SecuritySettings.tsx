@@ -69,11 +69,6 @@ export default function SecuritySettings({ onStateChange }: SecuritySettingsProp
     [onStateChange],
   );
 
-  // Called after user acknowledges recovery codes
-  const _handleRecoveryAcknowledged = useCallback(() => {
-    setView('idle');
-  }, []);
-
   // Confirm disable with TOTP or recovery code
   const handleDisable = useCallback(async () => {
     if (!disableInput.trim()) return;

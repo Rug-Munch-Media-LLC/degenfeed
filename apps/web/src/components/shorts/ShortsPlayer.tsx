@@ -86,31 +86,11 @@ export interface ShortsPlayerProps {
   onRetry?: () => void;
 }
 
-// ─── Default Categories ─────────────────────────────────────────────────
-
-const _DEFAULT_CATEGORIES = [
-  { id: 'all', label: 'All' },
-  { id: 'music', label: 'Music' },
-  { id: 'gaming', label: 'Gaming' },
-  { id: 'tech', label: 'Tech' },
-  { id: 'comedy', label: 'Comedy' },
-  { id: 'crypto', label: 'Crypto' },
-  { id: 'defi', label: 'DeFi' },
-  { id: 'trading', label: 'Trading' },
-  { id: 'nft', label: 'NFT' },
-  { id: 'sports', label: 'Sports' },
-  { id: 'education', label: 'Education' },
-  { id: 'streaming', label: 'Streaming' },
-];
-
 // ─── Player Component ───────────────────────────────────────────────────
 
 export function ShortsPlayer({
   shorts,
   initialIndex = 0,
-  _categories,
-  _activeCategory,
-  _onCategoryChange,
   onEndReached,
   onWatchEvent,
   onLike,

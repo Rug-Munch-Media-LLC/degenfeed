@@ -159,7 +159,6 @@ export default function ProposalDetailPage({
   }, [votes, sortBy]);
 
   const myVotingPower = 12_500;
-  const _canVote = proposal.status === 'active' && !voteSubmitted;
   const needsQuorum = total < proposal.quorum;
 
   return (

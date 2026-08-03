@@ -83,7 +83,6 @@ export function PresetCard({
   preset,
   active,
   onApply,
-  onShare,
 }: {
   preset: WeightPreset;
   active: boolean;

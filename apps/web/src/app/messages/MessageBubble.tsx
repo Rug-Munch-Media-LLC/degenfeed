@@ -181,7 +181,7 @@ function DisappearingIcon({ minutes }: { minutes: number }) {
   );
 }
 
-function ReadReceipts({ read, status }: { read: boolean; status?: string }) {
+function ReadReceipts({status}: { read: boolean; status?: string }) {
   const color =
     status === 'read'
       ? '#60a5fa'

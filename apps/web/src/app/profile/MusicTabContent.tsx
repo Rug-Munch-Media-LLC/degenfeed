@@ -190,7 +190,7 @@ export default function MusicTabContent({ creatorId, artistName }: MusicTabConte
       {/* Track List */}
       {viewMode === 'tracks' && (
         <div className="divide-y divide-[var(--color-glass-border)] rounded-xl border border-[var(--color-glass-border)] overflow-hidden">
-          {tracks.map((track, idx) => (
+          {tracks.map((track) => (
             <div
               key={track.id}
               className={`flex items-center gap-3 px-4 py-3 transition-colors hover:bg-[var(--color-card)]/50 ${

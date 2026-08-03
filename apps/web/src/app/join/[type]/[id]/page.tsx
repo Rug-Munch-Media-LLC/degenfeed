@@ -38,8 +38,7 @@ const PROTOCOL_INFO: Record<string, { name: string; icon: string; color: string 
 // === Metadata =========================================================
 
 export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
-  const { type, id } = await params;
-  const { ref } = await searchParams;
+  const {type} = await params;  const { ref } = await searchParams;
 
   const baseTitle = type === 'space' ? 'Audio Space' : 'Live Stream';
   const protocol = ref ? (PROTOCOL_INFO[ref] ?? null) : null;

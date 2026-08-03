@@ -354,7 +354,7 @@ function PricingCard({ tier, billing }: { tier: (typeof TIERS)[0]; billing: Bill
 
 /* ─── Comparison Table ────────────────────────────────────────── */
 
-function ComparisonTable({ billing }: { billing: BillingPeriod }) {
+function ComparisonTable({}: { billing: BillingPeriod }) {
   const groups = useMemo(() => {
     const g: { category: string; features: Feature[] }[] = [];
     let current: Feature[] = [];

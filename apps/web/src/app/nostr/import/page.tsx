@@ -53,7 +53,6 @@ export default function NostrImportPage() {
       }
 
       const secretKeyBytes = bech32.fromWords(decoded.words);
-      const _secretKeyHex = bytesToHex(secretKeyBytes);
       const pubkeyHex = bytesToHex(schnorr.getPublicKey(secretKeyBytes));
 
       // Register with server (only pubkey sent)

@@ -40,24 +40,6 @@ interface FeedMeta {
 
 // ─── Post type badge ───────────────────────────────────────────────────
 
-function _PostTypeBadge({ type }: { type?: string }) {
-  const map: Record<string, { label: string; icon: string }> = {
-    link: { label: 'Link', icon: '🔗' },
-    text: { label: 'Text', icon: '💬' },
-    image: { label: 'Image', icon: '🖼️' },
-    video: { label: 'Video', icon: '🎬' },
-  };
-  const meta = map[type ?? 'text'] ?? map.text!;
-  return (
-    <span
-      className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider"
-      style={{ backgroundColor: `${PIEFED_COLOR}15`, color: PIEFED_COLOR }}
-    >
-      <span aria-hidden="true">{meta.icon}</span>
-      {meta.label}
-    </span>
-  );
-}
 
 // ─── Header ────────────────────────────────────────────────────────────
 

@@ -19,7 +19,6 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const limit = searchParams.get('limit') || '20';
-    const _protocols = searchParams.get('protocols') || 'all';
 
     // Get wallet from session for personalized notifications
     const session = await getSessionFromRequest(request);

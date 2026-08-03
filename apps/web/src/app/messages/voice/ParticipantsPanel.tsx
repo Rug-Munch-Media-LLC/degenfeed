@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState} from 'react';
 import { useAuth } from '../../../components/AuthProvider';
 import { useAnnouncer } from '../../../components/ScreenReaderAnnouncer';
 import { retryFetchJson } from '../../../lib/retryFetch';
@@ -293,12 +293,6 @@ export function VoiceRoomView({ roomId, onLeave }: { roomId: string; onLeave: ()
     },
     [roomId],
   );
-
-  const me = useMemo(
-    () => room?.participants.find((p) => p.walletAddress === userId),
-    [room, userId],
-  );
-  const _isSpeaking = me && !me.muted && !me.deafened;
 
   const handleGenerateInvite = useCallback(async () => {
     try {

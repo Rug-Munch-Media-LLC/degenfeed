@@ -371,7 +371,6 @@ export function ComposeBar({
   encrypted = false,
   onAttachFile,
   onVoiceRecord,
-  onPickEmoji,
   onPickGif,
   onOpenPoll,
 }: ComposeBarProps) {
@@ -425,7 +424,6 @@ export function ComposeBar({
 
   const canSend = value.trim().length > 0 && !sending && !overLimit;
   const availableProtocols = protocols ?? PROTOCOLS;
-  const _protocolColor = getProtocolColor(protocol);
 
   const handleFileSelect = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState} from 'react';
 
 const LAST_VISIT_KEY = 'df_last_visit';
 const TWELVE_HOURS_MS = 12 * 60 * 60 * 1000;
@@ -19,7 +19,6 @@ export function WelcomeBackModal() {
   const [show, setShow] = useState(false);
   const [preview, setPreview] = useState<DigestPreview | null>(null);
   const [loading, setLoading] = useState(true);
-  const _dismissedRef = useRef(false);
 
   const checkAndFetch = useCallback(async () => {
     try {

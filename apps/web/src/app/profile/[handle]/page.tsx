@@ -36,7 +36,6 @@ interface Props {
 }
 
 export default function ProfileByIdentifierPage({ params }: Props) {
-  const _unwrappedParams = 'then' in params ? { handle: '' } : (params as { handle: string });
   const handle = 'then' in params ? '' : (params as { handle: string }).handle;
 
   return <ProfileByIdentifierContent handleParam={handle || ''} />;

@@ -75,8 +75,6 @@ export function MediaCard({ post, onClick }: MediaCardProps) {
   const isVideo = post.mediaType === 'video' || post.mediaType === 'nft_video';
   const imgSrc = post.imageUrl;
   const sourceMeta = MEDIA_SOURCES[post.source] ?? MEDIA_SOURCES[post.protocol];
-  const _sourceColor = sourceMeta?.color ?? post.sourceColor ?? 'var(--color-accent)';
-  const _sourceLabel = sourceMeta?.label ?? post.sourceLabel ?? post.source;
   const sourceIcon = sourceMeta?.icon ?? '◆';
 
   return (

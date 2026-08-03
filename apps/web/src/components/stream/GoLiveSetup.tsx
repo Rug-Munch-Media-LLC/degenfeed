@@ -20,7 +20,7 @@ interface GoLiveSetupProps {
   initialData?: Partial<GoLiveSetupData>;
 }
 
-export function GoLiveSetup({ onStart, onCancel, initialData }: GoLiveSetupProps) {
+export function GoLiveSetup({onStart, initialData}: GoLiveSetupProps) {
   const [form, setForm] = useState<GoLiveSetupData>({
     title: initialData?.title ?? '',
     category: initialData?.category ?? 'crypto',

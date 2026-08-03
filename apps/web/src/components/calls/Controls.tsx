@@ -23,7 +23,6 @@ export function ControlsBar({
   audioMuted,
   videoMuted,
   isScreenSharing,
-  callActive,
   onToggleAudio,
   onToggleVideo,
   onScreenShare,

@@ -41,7 +41,6 @@ import { GettingStartedChecklist } from '../../components/GettingStartedChecklis
 import { GuidedTour } from '../../components/GuidedTour';
 import { PostContextMenu } from '../../components/PostContextMenu';
 import { useAnnouncer } from '../../components/ScreenReaderAnnouncer';
-import { useToast } from '../../components/Toast';
 import { useEdgeSwipeBack } from '../../hooks/useEdgeSwipeBack';
 import { useFeedControls } from '../../hooks/useFeedControls';
 import { useFeedLayout } from '../../hooks/useFeedLayout';
@@ -99,7 +98,6 @@ interface FeedMeta {
 
 export default function FeedPage() {
   const { openSignIn, signedInProtocols, engage, publish, ready, walletAddress } = useAuth();
-  const { showToast } = useToast();
   const isAdmin = walletAddress ? ADMIN_WALLETS.has(walletAddress.toLowerCase()) : false;
 
   const [activeTab, setActiveTab] = useState<Tab>('for-you');
@@ -590,20 +588,6 @@ export default function FeedPage() {
     }
     return engage(action, postId, post.protocol, { content: content ?? '' });
   };
-
-  const _handleShareToast = useCallback(
-    (message: string) => {
-      navigator.clipboard
-        .writeText(message)
-        .then(() => {
-          showToast('success', 'Link copied!');
-        })
-        .catch(() => {
-          showToast('error', 'Failed to copy');
-        });
-    },
-    [showToast],
-  );
 
   useEffect(() => {
     fetchFeed();

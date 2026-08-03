@@ -23,8 +23,7 @@ function FreeForeverBanner() {
 /* === Pricing Page ============================================== */
 
 export function PremiumContent() {
-  const { tier, loading: statusLoading } = usePremium();
-  const [showPayment, setShowPayment] = useState(false);
+  const {tier} = usePremium();  const [showPayment, setShowPayment] = useState(false);
 
   const handleSubscribe = useCallback(async (_selectedTier: PremiumTier) => {
     setShowPayment(true);

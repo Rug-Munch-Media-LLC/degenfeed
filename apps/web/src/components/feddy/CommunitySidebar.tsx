@@ -11,7 +11,6 @@ function formatCount(n: number): string {
 export function CommunitySidebar({
   community,
   stats,
-  viewerRole,
 }: {
   community: FeddyCommunity;
   stats: CommunityStats | null;

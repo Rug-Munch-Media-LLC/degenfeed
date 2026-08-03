@@ -354,7 +354,7 @@ export function useOfflineQueue<T = unknown>(options: UseOfflineQueueOptions = {
 
         const batch = sorted.slice(i, i + batchSize);
 
-        const _results = await Promise.allSettled(
+        await Promise.allSettled(
           batch.map(async (op) => {
             try {
               const success = await (

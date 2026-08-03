@@ -34,11 +34,8 @@ import { VINE_CATEGORY_META } from './vineConstants';
 
 // ─── Constants ────────────────────────────────────────────────────────────
 
-const _PRELOAD_AHEAD = 1;
 const LOAD_MORE_BUFFER = 3;
 const AUTO_ADVANCE_MS = 30_000;
-const _NEW_CONTENT_INJECTION_RATE = 0.2;
-
 // ─── Props ────────────────────────────────────────────────────────────────
 
 export interface VineFeedProps {
@@ -367,14 +364,6 @@ export function VineFeed({ vineFeed, onDismiss }: VineFeedProps) {
     const t = setTimeout(() => setShowToast(null), 1200);
     return () => clearTimeout(t);
   }, [showToast]);
-
-  // ── Format Helpers ───────────────────────────────────────────────────
-
-  const _formatCount = (n: number): string => {
-    if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-    if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
-    return String(n);
-  };
 
   // ── Render: Loading ─────────────────────────────────────────────────
 

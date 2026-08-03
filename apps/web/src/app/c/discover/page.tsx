@@ -105,7 +105,6 @@ function qualityLabel(tier: string): string {
 function CommunityCard({ community }: { community: FederatedCommunity }) {
   const qColor = qualityColor(community.qualityTier);
   const isLocal = community.isLocal;
-  const _instanceShort = community.instance.replace(/\.(xyz|com|org|ml|ee|dev)$/, '');
 
   return (
     <Link

@@ -3,7 +3,6 @@
 import { useCallback, useState } from 'react';
 
 export function JoinButton({
-  communityId,
   communityName,
   isMember,
   isOwner,
