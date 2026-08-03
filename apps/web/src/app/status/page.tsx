@@ -41,7 +41,8 @@ export const metadata: Metadata = {
 
 export interface ProtocolStatus {
   status: 'up' | 'degraded' | 'down';
-  latency: number;
+  /** Optional — the bridge health probe does not report per-protocol latency. */
+  latency?: number;
   lastChecked: number;
   circuitBreakerOpen: boolean;
   error?: string;
@@ -66,16 +67,26 @@ async function getBaseUrl(): Promise<string> {
 }
 
 async function loadHealth(): Promise<ProtocolsHealthResponse | null> {
-  try {
-    const res = await fetch(`${await getBaseUrl()}/api/health/protocols`, {
-      cache: 'no-store',
-      headers: { 'cache-control': 'no-store' },
-    });
-    if (!res.ok) return null;
-    return (await res.json()) as ProtocolsHealthResponse;
-  } catch {
-    return null;
+  // Prefer the public base URL derived from request headers (works on
+  // Cloudflare Pages and when accessed via the domain). Fall back to the
+  // local server port for Docker/standalone deployments where the Host
+  // header (e.g. localhost:3100) is not reachable from inside the container.
+  const urls = [
+    `${await getBaseUrl()}/api/health/protocols`,
+    'http://127.0.0.1:3000/api/health/protocols',
+  ];
+  for (const url of urls) {
+    try {
+      const res = await fetch(url, {
+        cache: 'no-store',
+        headers: { 'cache-control': 'no-store' },
+      });
+      if (res.ok) return (await res.json()) as ProtocolsHealthResponse;
+    } catch {
+      // try the next candidate
+    }
   }
+  return null;
 }
 
 export default async function StatusPage() {

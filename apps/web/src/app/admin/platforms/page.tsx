@@ -223,10 +223,28 @@ export default function AdminPlatformsPage() {
   const fetchPlatforms = useCallback(async () => {
     try {
       const res = await fetch('/api/health/protocols', { credentials: 'include' });
-      if (res.ok) {
-        const data = (await res.json()) as { protocols: PlatformStatus[] };
-        if (data.protocols?.length) setPlatforms(data.protocols);
-      }
+      if (!res.ok) return;
+      const data = (await res.json()) as {
+        protocols: Record<
+          string,
+          { status: 'up' | 'degraded' | 'down'; lastChecked: number; error?: string }
+        >;
+      };
+      const health = data.protocols;
+      if (!health || typeof health !== 'object') return;
+      // The health endpoint returns a record keyed by protocol id. Merge live
+      // status into the rich default rows so icons/config/version are preserved.
+      const merged = DEFAULT_PLATFORMS.map((p) => {
+        const h = health[p.id];
+        if (!h) return p;
+        return {
+          ...p,
+          status: h.status === 'up' ? 'online' : h.status === 'down' ? 'offline' : 'degraded',
+          lastFetch: h.lastChecked || p.lastFetch,
+          lastError: h.error || p.lastError,
+        };
+      });
+      setPlatforms(merged);
     } catch {
       // use defaults
     }
