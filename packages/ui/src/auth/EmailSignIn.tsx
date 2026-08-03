@@ -5,12 +5,21 @@ import { memo, useState } from 'react';
 export interface EmailSignInProps {
   onSignIn: (creds: Record<string, string>) => void;
   onBack: () => void;
+  /** Default to the registration form (used by the "Create Account" tab) */
+  defaultMode?: 'signin' | 'register';
+  /** True while the sign-in/registration request is in flight */
+  busy?: boolean;
 }
 
-export const EmailSignIn = memo(function EmailSignIn({ onSignIn, onBack }: EmailSignInProps) {
+export const EmailSignIn = memo(function EmailSignIn({
+  onSignIn,
+  onBack,
+  defaultMode = 'signin',
+  busy = false,
+}: EmailSignInProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isNewUser, setIsNewUser] = useState(false);
+  const [isNewUser, setIsNewUser] = useState(defaultMode === 'register');
   const [displayName, setDisplayName] = useState('');
   const [error, setError] = useState('');
 
@@ -51,6 +60,7 @@ export const EmailSignIn = memo(function EmailSignIn({ onSignIn, onBack }: Email
             placeholder="Your display name"
             className="input w-full"
             maxLength={64}
+            autoComplete="name"
           />
         </label>
       )}
@@ -77,8 +87,13 @@ export const EmailSignIn = memo(function EmailSignIn({ onSignIn, onBack }: Email
         />
       </label>
       {error && <p className="text-xs text-red-400">{error}</p>}
-      <button type="button" onClick={handleSubmit} className="btn-primary w-full">
-        {isNewUser ? 'Create Account' : 'Sign In'}
+      <button
+        type="button"
+        onClick={handleSubmit}
+        disabled={busy}
+        className="btn-primary w-full disabled:opacity-60"
+      >
+        {busy ? 'Please wait…' : isNewUser ? 'Create Account' : 'Sign In'}
       </button>
       <div className="text-center">
         <button

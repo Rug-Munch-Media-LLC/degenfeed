@@ -11,6 +11,7 @@ import {
   setPrimaryIdentity as setPrimaryIdentityInDb,
 } from '@degenfeed/storage';
 import type { EngagementAction } from '@degenfeed/types';
+import type { AuthTab } from '@degenfeed/ui';
 import dynamic from 'next/dynamic';
 import {
   createContext,
@@ -50,6 +51,7 @@ import {
   type StoredWalletMeta,
   setActiveWalletIndex,
 } from '../lib/walletStorage';
+import { RegistrationPrompt } from './RegistrationPrompt';
 import { useToast } from './Toast';
 
 /** Cross-protocol reply context passed to ComposeModal. */
@@ -64,6 +66,8 @@ export interface ComposeReplyContext {
 /** Values that change only when identity/wallet data changes */
 export interface AuthStateValue {
   signedInProtocols: Record<string, boolean>;
+  /** True while a wallet sign-in request is in flight */
+  signingIn: boolean;
   /** Active wallet address (backward-compat: first wallet in the list) */
   walletAddress?: string;
   /** All connected wallet addresses */
@@ -86,6 +90,10 @@ export interface AuthActionValue {
   walletCount: number;
   ready: boolean;
   openSignIn: () => void;
+  /** Open the sign-in modal directly on the "Create Account" tab. */
+  openSignUp: () => void;
+  /** Trigger a sign-in for a protocol directly (wallet, email, nsec, …). */
+  signIn: (protocol: string, credentials?: string | Record<string, string>) => Promise<void>;
   openCompose: () => void;
   /** Open the composer in cross-protocol reply mode for the given parent post. */
   openComposeReply: (ctx: ComposeReplyContext) => void;
@@ -166,6 +174,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // loading happen in the background without blocking the UI.
   const [ready] = useState(true);
   const [showSignIn, setShowSignIn] = useState(false);
+  const [signInTab, setSignInTab] = useState<AuthTab>('signin');
+  const [signInError, setSignInError] = useState<string | null>(null);
   const [showCompose, setShowCompose] = useState(false);
   const [composeReplyContext, setComposeReplyContext] = useState<ComposeReplyContext | undefined>(
     undefined,
@@ -390,6 +400,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const handleSignIn = useCallback(
     async (protocol: string, credentials?: string | Record<string, string>) => {
+      setSignInError(null);
       try {
         if (protocol === 'ethereum') {
           const session = await signInWithEthereum();
@@ -592,6 +603,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setShowSignIn(false);
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Sign-in failed';
+        setSignInError(message);
         showToast('error', `Sign-in failed: ${message}`);
       }
     },
@@ -761,7 +773,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const walletCount = walletAddresses.length;
 
-  const openSignIn = useCallback(() => setShowSignIn(true), []);
+  const openSignIn = useCallback(() => {
+    setSignInError(null);
+    setSignInTab('signin');
+    setShowSignIn(true);
+  }, []);
+  const openSignUp = useCallback(() => {
+    setSignInError(null);
+    setSignInTab('signup');
+    setShowSignIn(true);
+  }, []);
   const openCompose = useCallback(() => {
     setComposeReplyContext(undefined);
     setShowCompose(true);
@@ -776,6 +797,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const stateValue = useMemo(
     () => ({
       signedInProtocols,
+      signingIn: walletSigningIn || solanaSigningIn,
       walletAddress,
       walletAddresses,
       walletMeta,
@@ -787,6 +809,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }),
     [
       signedInProtocols,
+      walletSigningIn,
+      solanaSigningIn,
       walletAddress,
       walletAddresses,
       walletMeta,
@@ -805,6 +829,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       walletCount,
       ready,
       openSignIn,
+      openSignUp,
+      signIn: handleSignIn,
       openCompose,
       openComposeReply,
       signOut: handleSignOut,
@@ -824,6 +850,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       walletCount,
       ready,
       openSignIn,
+      openSignUp,
+      handleSignIn,
       openCompose,
       openComposeReply,
       handleSignOut,
@@ -846,12 +874,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         <SignInModal
           open={showSignIn}
-          onClose={() => setShowSignIn(false)}
+          onClose={() => {
+            setSignInError(null);
+            setShowSignIn(false);
+          }}
           onSignIn={handleSignIn}
           walletAddress={walletAddress}
           walletSigningIn={walletSigningIn || solanaSigningIn}
           availableWallets={availableWallets}
+          initialTab={signInTab}
+          onTabChange={setSignInTab}
+          busy={walletSigningIn || solanaSigningIn}
+          error={signInError ?? undefined}
         />
+
+        {/* Registration prompt — nudges anonymous browsers after a few pages */}
+        <RegistrationPrompt />
 
         <ComposeModal
           open={showCompose}
@@ -865,6 +903,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           onCrossReply={handleCrossReply}
           onRequestSignIn={() => {
             setShowCompose(false);
+            setSignInError(null);
+            setSignInTab('signin');
             setShowSignIn(true);
           }}
           primaryIdentity={

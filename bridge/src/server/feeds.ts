@@ -101,6 +101,7 @@ import {
 } from '../reliability/register-all';
 import { deadLetterQueue } from '../reliability/retry';
 import { getSeedContent } from './seed-content';
+import { feedCache } from './response-cache';
 import type { UnifiedPost } from './types';
 
 interface ProviderEntry {
@@ -611,7 +612,7 @@ export const DEFAULT_HOME_PROTOCOLS = [
   'zora',
 ];
 
-const FEED_CACHE_TTL_MS = 30_000; // 30s — matches HTTP-level response cache TTL
+const FEED_CACHE_TTL_MS = 60_000; // 60s — matches HTTP-level response cache TTL
 const FEED_CACHE_MAX_ENTRIES = 20;
 
 interface FeedResult {
@@ -963,6 +964,10 @@ async function buildFeedInternal(
  * requests (HTTP default home set, the frontend 7-protocol set, and trending)
  * at limit=50 so the limit-agnostic cache can serve any request with a smaller
  * limit while keeping the prewarm itself fast.
+ *
+ * Also seeds the HTTP-level stale-while-revalidate cache (feedCache) with the
+ * exact keys the route handlers use, so even the very first request after a
+ * restart is served from cache instead of triggering a synchronous rebuild.
  */
 export async function prewarmFeedCache(): Promise<void> {
   const started = Date.now();
@@ -980,11 +985,32 @@ export async function prewarmFeedCache(): Promise<void> {
     ];
     for (const target of targets) {
       await buildFeed(target.protocols, target.limit);
+      // Seed the HTTP-level SWR cache with the same key shape index.ts uses
+      // (`feed:${protocols.sort()}:${limit}`) so a first hit is instant.
+      const httpKey = `feed:${[...target.protocols].sort().join(',')}:${target.limit}`;
+      await feedCache.getOrFetch(
+        httpKey,
+        async () => {
+          const result = await buildFeed(target.protocols, target.limit);
+          return { posts: result.posts, meta: result.meta };
+        },
+        FEED_CACHE_TTL_MS,
+      );
     }
     console.log(`[feeds] Feed cache pre-warmed in ${Date.now() - started}ms`);
   } catch (err) {
     console.error('[feeds] Feed cache pre-warm failed:', err);
   }
+}
+
+/**
+ * Periodically re-warm the feed caches so they never fully expire between
+ * user visits. Unref'd — does not keep the process alive.
+ */
+export function startFeedCacheRefresher(intervalMs = 55_000): NodeJS.Timeout {
+  return setInterval(() => {
+    void prewarmFeedCache();
+  }, intervalMs).unref();
 }
 
 export const DEFAULT_PREFERENCES = {
