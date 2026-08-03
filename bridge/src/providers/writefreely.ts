@@ -32,6 +32,11 @@ interface BlogSource {
 }
 
 const CURATED_BLOGS: BlogSource[] = [
+  {
+    alias: 'degenfeed',
+    instance: process.env.WRITEFREELY_BASE_URL || 'http://127.0.0.1:8086',
+    displayName: 'DegenFeed Blog',
+  },
   { alias: 'degen', instance: 'https://write.as', displayName: 'Degen Write.as' },
   { alias: 'freedog', instance: 'https://write.as', displayName: 'FreeDog' },
   { alias: 'press', instance: 'https://write.as', displayName: 'Write.as Press' },
@@ -65,10 +70,6 @@ interface WriteFreelyCollectionResponse {
   data?: WriteFreelyPost[];
   items?: WriteFreelyPost[];
   total?: number;
-}
-
-interface WriteFreelySinglePost {
-  data?: WriteFreelyPost;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────
@@ -123,9 +124,12 @@ function parseRssItems(xml: string): Array<{
 }> {
   const items: Array<Record<string, string>> = [];
   const itemRe = /<item>([\s\S]*?)<\/item>/gi;
-  let m: RegExpExecArray | null;
-  while ((m = itemRe.exec(xml)) !== null) {
-    if (!m[1]) continue;
+  let m = itemRe.exec(xml);
+  while (m !== null) {
+    if (!m[1]) {
+      m = itemRe.exec(xml);
+      continue;
+    }
     const e = m[1];
     items.push({
       title: (e.match(/<title[^>]*>([\s\S]*?)<\/title>/i) || [])[1] || '',
@@ -136,6 +140,7 @@ function parseRssItems(xml: string): Array<{
       pubDate: (e.match(/<pubDate[^>]*>([\s\S]*?)<\/pubDate>/i) || [])[1] || '',
       creator: (e.match(/<dc:creator[^>]*>([\s\S]*?)<\/dc:creator>/i) || [])[1] || '',
     });
+    m = itemRe.exec(xml);
   }
   return items;
 }

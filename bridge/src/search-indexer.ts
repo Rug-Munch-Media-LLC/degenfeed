@@ -14,6 +14,7 @@
  *   - Newsletters (Substack, Medium, Mirror, Paragraph, Ghost, WordPress, Beehiiv)
  */
 
+import type { Index, Meilisearch } from 'meilisearch';
 import type { UnifiedPost } from './server/types';
 
 // ─── Configuration ─────────────────────────────────────────────────────
@@ -32,10 +33,10 @@ let indexErrors = 0;
 
 // ─── Meilisearch Client ────────────────────────────────────────────────
 
-let client: any;
+let client: Meilisearch | null = null;
 
 // Lazy-init optional Meilisearch client
-async function getClientAsync(): Promise<any> {
+async function getClientAsync(): Promise<Meilisearch | null> {
   if (client) return client;
   try {
     const { Meilisearch } = await import('meilisearch');
@@ -90,8 +91,8 @@ export interface SearchDocument {
  * sortableAttributes=[] — breaking `sort=createdAt:desc` queries.
  */
 async function updateSettings(
-  meili: any,
-  update: (index: any) => Promise<{ taskUid: number }>,
+  meili: Meilisearch,
+  update: (index: Index) => Promise<{ taskUid: number }>,
 ): Promise<void> {
   const task = await update(meili.index(INDEX_NAME));
   // meilisearch-js v0.60: waitForTask lives on the `tasks` sub-client and

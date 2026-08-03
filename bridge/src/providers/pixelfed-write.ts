@@ -17,7 +17,7 @@
 
 import type { UnifiedPost } from '../server/types';
 
-const PIXELFED_BASE = process.env.PIXELFED_BASE_URL || 'http://127.0.0.1:8087';
+const PIXELFED_BASE = process.env.PIXELFED_BASE_URL || 'http://127.0.0.1:8096';
 const PIXELFED_ACCESS_TOKEN = process.env.PIXELFED_ACCESS_TOKEN || '';
 
 // ─── Types ──────────────────────────────────────────────────────────────
@@ -58,7 +58,7 @@ async function apiFetch<T>(
   const url = `${PIXELFED_BASE}${path}`;
   const headers: Record<string, string> = {
     Accept: 'application/json',
-    ...((options.headers as Record<string, string>) || {}),
+    ...(options.headers as Record<string, string> | undefined),
   };
 
   // Add auth if not already present on multipart form
