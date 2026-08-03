@@ -23,6 +23,43 @@ const CATEGORY_COLORS: Record<string, { badge: string; text: string; bg: string 
   regulation: { badge: 'bg-yellow-500/15', text: 'text-yellow-300', bg: 'bg-yellow-950/40' },
   security: { badge: 'bg-red-500/15', text: 'text-red-300', bg: 'bg-red-950/40' },
   markets: { badge: 'bg-emerald-500/15', text: 'text-emerald-300', bg: 'bg-emerald-950/40' },
+  // Expanded categories (2026-08-03)
+  layer2: { badge: 'bg-purple-500/15', text: 'text-purple-300', bg: 'bg-purple-950/40' },
+  bridges: { badge: 'bg-sky-500/15', text: 'text-sky-300', bg: 'bg-sky-950/40' },
+  'zero-knowledge': { badge: 'bg-violet-500/15', text: 'text-violet-300', bg: 'bg-violet-950/40' },
+  staking: { badge: 'bg-sky-500/15', text: 'text-sky-300', bg: 'bg-sky-950/40' },
+  mev: { badge: 'bg-amber-500/15', text: 'text-amber-300', bg: 'bg-amber-950/40' },
+  rwa: { badge: 'bg-amber-500/15', text: 'text-amber-300', bg: 'bg-amber-950/40' },
+  stablecoin: { badge: 'bg-cyan-500/15', text: 'text-cyan-300', bg: 'bg-cyan-950/40' },
+  payments: { badge: 'bg-emerald-500/15', text: 'text-emerald-300', bg: 'bg-emerald-950/40' },
+  gaming: { badge: 'bg-rose-500/15', text: 'text-rose-300', bg: 'bg-rose-950/40' },
+  ai: { badge: 'bg-fuchsia-500/15', text: 'text-fuchsia-300', bg: 'bg-fuchsia-950/40' },
+  aicrypto: { badge: 'bg-purple-500/15', text: 'text-purple-300', bg: 'bg-purple-950/40' },
+  storage: { badge: 'bg-teal-500/15', text: 'text-teal-300', bg: 'bg-teal-950/40' },
+  identity: { badge: 'bg-indigo-500/15', text: 'text-indigo-300', bg: 'bg-indigo-950/40' },
+  social: { badge: 'bg-pink-500/15', text: 'text-pink-300', bg: 'bg-pink-950/40' },
+  insurance: { badge: 'bg-orange-500/15', text: 'text-orange-300', bg: 'bg-orange-950/40' },
+  carbon: { badge: 'bg-lime-500/15', text: 'text-lime-300', bg: 'bg-lime-950/40' },
+  memecoin: { badge: 'bg-amber-500/15', text: 'text-amber-300', bg: 'bg-amber-950/40' },
+  etf: { badge: 'bg-fuchsia-500/15', text: 'text-fuchsia-300', bg: 'bg-fuchsia-950/40' },
+  onchain: { badge: 'bg-emerald-500/15', text: 'text-emerald-300', bg: 'bg-emerald-950/40' },
+  token: { badge: 'bg-yellow-500/15', text: 'text-yellow-300', bg: 'bg-yellow-950/40' },
+  dex: { badge: 'bg-teal-500/15', text: 'text-teal-300', bg: 'bg-teal-950/40' },
+  oracle: { badge: 'bg-purple-500/15', text: 'text-purple-300', bg: 'bg-purple-950/40' },
+  wallet: { badge: 'bg-blue-500/15', text: 'text-blue-300', bg: 'bg-blue-950/40' },
+  mining: { badge: 'bg-orange-500/15', text: 'text-orange-300', bg: 'bg-orange-950/40' },
+  privacy: { badge: 'bg-violet-500/15', text: 'text-violet-300', bg: 'bg-violet-950/40' },
+  governance: { badge: 'bg-indigo-500/15', text: 'text-indigo-300', bg: 'bg-indigo-950/40' },
+  dao: { badge: 'bg-purple-500/15', text: 'text-purple-300', bg: 'bg-purple-950/40' },
+  macro: { badge: 'bg-emerald-500/15', text: 'text-emerald-300', bg: 'bg-emerald-950/40' },
+  business: { badge: 'bg-stone-500/15', text: 'text-stone-300', bg: 'bg-stone-950/40' },
+  geopolitics: { badge: 'bg-blue-500/15', text: 'text-blue-300', bg: 'bg-blue-950/40' },
+  tech: { badge: 'bg-slate-500/15', text: 'text-slate-300', bg: 'bg-slate-950/40' },
+  science: { badge: 'bg-teal-500/15', text: 'text-teal-300', bg: 'bg-teal-950/40' },
+  startups: { badge: 'bg-orange-500/15', text: 'text-orange-300', bg: 'bg-orange-950/40' },
+  mobile: { badge: 'bg-gray-500/15', text: 'text-gray-300', bg: 'bg-gray-950/40' },
+  culture: { badge: 'bg-pink-500/15', text: 'text-pink-300', bg: 'bg-pink-950/40' },
+  crypto: { badge: 'bg-orange-500/15', text: 'text-orange-300', bg: 'bg-orange-950/40' },
 };
 
 export function NewsStoryCard({
@@ -171,6 +208,26 @@ export function NewsStoryCard({
           <p className="mb-2 text-xs leading-relaxed text-gray-400 line-clamp-2">
             {story.summary || story.metaDescription}
           </p>
+        )}
+        {/* Niche category badges */}
+        {story.niches && story.niches.length > 0 && (
+          <div className="mb-2 flex flex-wrap gap-1">
+            {story.niches.slice(0, 4).map((n) => {
+              const nc = CATEGORY_COLORS[n] || {
+                badge: 'bg-gray-500/15',
+                text: 'text-gray-300',
+                bg: 'bg-gray-950/40',
+              };
+              return (
+                <span
+                  key={n}
+                  className={`rounded-md ${nc.badge} px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-wide ${nc.text} ring-1 ring-white/10`}
+                >
+                  {n}
+                </span>
+              );
+            })}
+          </div>
         )}
         {/* Bottom: tokens + actions */}
         <div className="mt-auto flex items-center justify-between gap-2">

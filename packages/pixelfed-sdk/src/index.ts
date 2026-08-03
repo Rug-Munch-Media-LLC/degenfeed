@@ -170,6 +170,18 @@ function stripHtml(html: string): string {
     .trim();
 }
 
+/**
+ * Rewrite media URLs that point at the container-local instance
+ * (localhost / 127.0.0.1) to the public photos.degenfeed.xyz origin so
+ * browser clients can actually load full-size images.
+ */
+export function rewriteMediaUrl(url: string | null | undefined): string {
+  if (!url) return '';
+  return url
+    .replace(/^https?:\/\/localhost(:\d+)?/i, 'https://photos.degenfeed.xyz')
+    .replace(/^https?:\/\/127\.0\.0\.1(:\d+)?/i, 'https://photos.degenfeed.xyz');
+}
+
 // ─── Low-level API fetch ───────────────────────────────────────────
 
 export interface ApiFetchOptions {
@@ -362,7 +374,7 @@ export function normalizePixelfedPost(
     if (media.type === 'image' || media.type === 'gifv') {
       embeds.push({
         kind: 'image',
-        url: media.url,
+        url: rewriteMediaUrl(media.url),
         meta: {
           description: media.description,
           blurhash: media.blurhash,
@@ -374,7 +386,7 @@ export function normalizePixelfedPost(
     } else if (media.type === 'video') {
       embeds.push({
         kind: 'video',
-        url: media.url,
+        url: rewriteMediaUrl(media.url),
         meta: {
           description: media.description,
           blurhash: media.blurhash,

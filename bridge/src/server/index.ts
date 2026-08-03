@@ -952,6 +952,36 @@ const server = http.createServer(async (req, res) => {
       return jsonOk(res, liveFeed);
     }
 
+    // GET /api/feed/peertube/trending — most-viewed PeerTube VODs
+    if (path === '/api/feed/peertube/trending') {
+      const limit = Math.min(parseInt(searchParams.get('limit') || '12', 10), 50);
+      const { fetchPeerTubeTrending } = await import('../providers/peertube');
+      const posts = await fetchPeerTubeTrending(limit);
+      return jsonOk(res, { posts, meta: { total: posts.length, limit, source: 'peertube', fetchedAt: Date.now() } });
+    }
+
+    // GET /api/feed/peertube/channels — local PeerTube channel subscriptions
+    if (path === '/api/feed/peertube/channels') {
+      const limit = Math.min(parseInt(searchParams.get('limit') || '20', 10), 100);
+      const { fetchPeerTubeChannels } = await import('../providers/peertube');
+      const channels = await fetchPeerTubeChannels(limit);
+      return jsonOk(res, { channels, meta: { total: channels.length, limit, source: 'peertube', fetchedAt: Date.now() } });
+    }
+
+    // GET /api/feed/owncast/schedule — upcoming Owncast streams
+    if (path === '/api/feed/owncast/schedule') {
+      const { fetchOwncastSchedule } = await import('../providers/owncast');
+      const schedule = await fetchOwncastSchedule();
+      return jsonOk(res, { schedule, meta: { total: schedule.length, source: 'owncast', fetchedAt: Date.now() } });
+    }
+
+    // GET /api/feed/owncast/archive — past Owncast streams with thumbnails
+    if (path === '/api/feed/owncast/archive') {
+      const { fetchOwncastArchive } = await import('../providers/owncast');
+      const archive = await fetchOwncastArchive();
+      return jsonOk(res, { archive, meta: { total: archive.length, source: 'owncast', fetchedAt: Date.now() } });
+    }
+
     if (path.startsWith('/api/feed/')) {
       const proto = path.replace('/api/feed/', '');
       const limit = Math.min(parseInt(searchParams.get('limit') || '25', 10), 200);

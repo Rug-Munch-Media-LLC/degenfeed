@@ -7,6 +7,8 @@ import type { Embed, EngagementMetrics, EngagementVector, UnifiedIdentity } from
 
 export type VisualSource =
   | 'pixelfed'
+  | 'peertube'
+  | 'owncast'
   | 'zora'
   | 'bluesky'
   | 'nostr'

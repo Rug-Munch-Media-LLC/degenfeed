@@ -405,6 +405,8 @@ export interface CustomFeed {
 
 export type VisualSource =
   | 'pixelfed'
+  | 'peertube'
+  | 'owncast'
   | 'zora'
   | 'bluesky'
   | 'nostr'

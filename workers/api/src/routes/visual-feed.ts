@@ -23,6 +23,8 @@ import type { Env } from '../types';
 
 const VALID_SOURCES = new Set([
   'pixelfed',
+  'peertube',
+  'owncast',
   'zora',
   'bluesky',
   'nostr',

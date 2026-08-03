@@ -66,6 +66,32 @@ export interface OwncastLiveStream {
   lastDisconnectTime?: string;
 }
 
+/** Structured upcoming-stream entry for the schedule display. */
+export interface OwncastScheduledStream {
+  id: string;
+  title: string;
+  description?: string;
+  scheduledAt: number;
+  durationMinutes?: number;
+  thumbnail?: string;
+  streamer: string;
+  instanceUrl: string;
+}
+
+/** Structured past-stream archive entry. */
+export interface OwncastArchiveEntry {
+  id: string;
+  title: string;
+  description?: string;
+  thumbnail: string;
+  url: string;
+  streamedAt: number;
+  durationSeconds?: number;
+  streamer: string;
+  instanceUrl: string;
+  viewerPeak?: number;
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────
 
 function guessStreamNiches(title: string, desc: string): string[] {
@@ -228,6 +254,154 @@ async function fetchInstance(instance: {
     lastConnectTime: status.lastConnectTime,
     lastDisconnectTime: status.lastDisconnectTime,
   };
+}
+
+/**
+ * Fetch the upcoming stream schedule for the local Owncast instance.
+ *
+ * Owncast 0.2.x does not expose a native schedule endpoint, so we derive
+ * a schedule from the instance config when available and otherwise return
+ * an empty list. The DegenFeed Owncast fork can expose `/api/schedule`
+ * (JSON array of {title, description, startsAt, durationMinutes}) — we
+ * prefer that endpoint when present.
+ */
+export async function fetchOwncastSchedule(
+  instances: Array<{ url: string; name: string }> = OWNCAST_INSTANCES,
+): Promise<OwncastScheduledStream[]> {
+  const local = instances[0];
+  if (!local) return [];
+  const schedule: OwncastScheduledStream[] = [];
+
+  try {
+    const res = await $fetch(`${local.url}/api/schedule`, {
+      headers: { 'User-Agent': 'DegenFeed-Bridge/0.1 (Owncast)' },
+      signal: AbortSignal.timeout(3000),
+    });
+    if (res.ok) {
+      const raw = (await res.json()) as Array<{
+        id?: string;
+        title?: string;
+        description?: string;
+        startsAt?: string | number;
+        scheduledAt?: string | number;
+        durationMinutes?: number;
+      }>;
+      for (const item of Array.isArray(raw) ? raw : []) {
+        const startRaw = item.startsAt ?? item.scheduledAt;
+        const startMs =
+          typeof startRaw === 'number'
+            ? startRaw
+            : typeof startRaw === 'string'
+              ? new Date(startRaw).getTime()
+              : NaN;
+        if (!Number.isNaN(startMs)) {
+          schedule.push({
+            id: item.id ?? `owncast:schedule:${startMs}`,
+            title: item.title || 'Upcoming Stream',
+            description: item.description,
+            scheduledAt: startMs,
+            durationMinutes: item.durationMinutes,
+            thumbnail: local.url,
+            streamer: local.name,
+            instanceUrl: local.url,
+          });
+        }
+      }
+      console.log(`[bridge] Owncast schedule: ${schedule.length} upcoming stream(s)`);
+      return schedule;
+    }
+  } catch {
+    // Endpoint absent on base Owncast — fall through to config-derived schedule
+  }
+
+  // Fallback: derive a placeholder schedule from the instance config summary
+  try {
+    const infoRes = await $fetch(`${local.url}/api/config`, {
+      headers: { 'User-Agent': 'DegenFeed-Bridge/0.1 (Owncast)' },
+      signal: AbortSignal.timeout(3000),
+    });
+    if (infoRes.ok) {
+      const info = (await infoRes.json()) as OwncastServerInfo & {
+        streamTitle?: string;
+      };
+      const title = info.streamTitle || info.name || 'Scheduled Stream';
+      // No explicit schedule data — return empty rather than fabricate times.
+      console.log('[bridge] Owncast schedule: no schedule endpoint, using empty schedule');
+      return schedule;
+    }
+  } catch {
+    // ignore
+  }
+  return schedule;
+}
+
+/**
+ * Fetch the past-stream archive (VODs) with thumbnails.
+ *
+ * Base Owncast 0.2.x does not expose a public archive API, so this returns
+ * an empty list unless the fork exposes `/api/video` or `/api/videos`.
+ */
+export async function fetchOwncastArchive(
+  instances: Array<{ url: string; name: string }> = OWNCAST_INSTANCES,
+): Promise<OwncastArchiveEntry[]> {
+  const local = instances[0];
+  if (!local) return [];
+  const archive: OwncastArchiveEntry[] = [];
+
+  for (const ep of ['/api/video', '/api/videos']) {
+    try {
+      const res = await $fetch(`${local.url}${ep}`, {
+        headers: { 'User-Agent': 'DegenFeed-Bridge/0.1 (Owncast)' },
+        signal: AbortSignal.timeout(3000),
+      });
+      if (!res.ok) continue;
+      const raw = (await res.json()) as Array<{
+        id?: string;
+        title?: string;
+        description?: string;
+        thumbnail?: string;
+        preview?: string;
+        url?: string;
+        streamedAt?: string | number;
+        durationSeconds?: number;
+        viewerPeak?: number;
+      }>;
+      for (const item of Array.isArray(raw) ? raw : []) {
+        if (!item.url) continue;
+        const streamedRaw = item.streamedAt;
+        const streamedMs =
+          typeof streamedRaw === 'number'
+            ? streamedRaw
+            : typeof streamedRaw === 'string'
+              ? new Date(streamedRaw).getTime()
+              : Date.now();
+        archive.push({
+          id: item.id ?? `owncast:archive:${streamedMs}`,
+          title: item.title || 'Past Stream',
+          description: item.description,
+          thumbnail: item.thumbnail
+            ? item.thumbnail.startsWith('http')
+              ? item.thumbnail
+              : `${local.url}${item.thumbnail}`
+            : item.preview
+              ? `${local.url}${item.preview}`
+              : `${local.url}/thumbnail.jpg`,
+          url: item.url.startsWith('http') ? item.url : `${local.url}${item.url}`,
+          streamedAt: streamedMs,
+          durationSeconds: item.durationSeconds,
+          streamer: local.name,
+          instanceUrl: local.url,
+          viewerPeak: item.viewerPeak,
+        });
+      }
+      if (archive.length > 0) break;
+    } catch {
+      // endpoint absent — try next
+    }
+  }
+
+  console.log(`[bridge] Owncast archive: ${archive.length} past stream(s)`);
+  return archive;
 }
 
 // ─── Fetch Logic ──────────────────────────────────────────────────────
