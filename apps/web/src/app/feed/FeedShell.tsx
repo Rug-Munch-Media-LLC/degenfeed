@@ -355,22 +355,6 @@ export function FeedShell({ children }: FeedShellProps) {
           >
             ◆ All
           </Link>
-          <Link
-            href="/feed/live"
-            data-active={pathname === '/feed/live' ? 'true' : undefined}
-            className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-colors ${
-              pathname === '/feed/live'
-                ? 'text-[var(--color-fg)]'
-                : 'text-[var(--color-muted)] hover:text-[var(--color-fg)] bg-[var(--color-overlay)]'
-            }`}
-            style={
-              pathname === '/feed/live'
-                ? { backgroundColor: '#ef444418', color: '#ef4444' }
-                : undefined
-            }
-          >
-            ● Live
-          </Link>
           {SIDEBAR_ORDER.map((pid) => {
             const meta = PROTOCOL_META[pid];
             if (!meta) return null;

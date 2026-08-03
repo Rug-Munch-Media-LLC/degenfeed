@@ -67,9 +67,24 @@ interface WriteFreelyPost {
 }
 
 interface WriteFreelyCollectionResponse {
-  data?: WriteFreelyPost[];
+  data?: WriteFreelyPost[] | { posts?: WriteFreelyPost[]; [key: string]: unknown };
   items?: WriteFreelyPost[];
   total?: number;
+}
+
+/**
+ * Extract posts from a WriteFreely collection API response.
+ *
+ * The API has two response shapes depending on the instance:
+ *  - write.as style:   { "data": [ ...posts ] }
+ *  - self-hosted:      { "code": 200, "data": { "posts": [ ...posts ], ...collection meta } }
+ */
+function extractCollectionPosts(data: unknown): WriteFreelyPost[] {
+  if (Array.isArray(data)) return data as WriteFreelyPost[];
+  if (data && typeof data === 'object' && Array.isArray((data as { posts?: unknown }).posts)) {
+    return (data as { posts: WriteFreelyPost[] }).posts;
+  }
+  return [];
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────
@@ -204,7 +219,7 @@ async function fetchBlogPosts(blog: BlogSource, limit: number): Promise<UnifiedP
     });
     if (!res.ok) return [];
     const data = (await res.json()) as WriteFreelyCollectionResponse;
-    const items = (data?.data || data?.items || []) as WriteFreelyPost[];
+    const items = extractCollectionPosts(data?.data ?? data?.items ?? data);
     if (!Array.isArray(items) || items.length === 0) return [];
     return items.slice(0, limit).map((item) => wfPostToPost(item, blog));
   } catch (err) {
