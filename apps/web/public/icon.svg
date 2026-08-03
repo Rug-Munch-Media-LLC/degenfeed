@@ -5,18 +5,18 @@
       <stop offset="0%" stop-color="#0d0d0d"/>
       <stop offset="100%" stop-color="#000000"/>
     </linearGradient>
+    <linearGradient id="d" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#60a5fa"/>
+      <stop offset="100%" stop-color="#1d9bf0"/>
+    </linearGradient>
   </defs>
   <!-- Background rounded square -->
   <rect width="512" height="512" fill="url(#bg)" rx="96"/>
-  <!-- D letter — thick stroke, left vertical + right arc -->
-  <g stroke="#00ff41" stroke-width="52" stroke-linecap="round" stroke-linejoin="round" fill="none">
+  <!-- D letter — thick stroke, left vertical + right arc (blue gradient) -->
+  <g stroke="url(#d)" stroke-width="52" stroke-linecap="round" stroke-linejoin="round" fill="none">
     <line x1="160" y1="92" x2="160" y2="420"/>
     <path d="M 160 92 A 148 164 0 0 1 160 420"/>
   </g>
-  <!-- Terminal cursor block (blinking) -->
-  <rect x="350" y="352" width="28" height="28" fill="#00ff41" rx="4">
-    <animate attributeName="opacity" values="1;0.08;1" dur="1s" repeatCount="indefinite"/>
-  </rect>
   <!-- Subtle glow circle behind D -->
-  <circle cx="230" cy="256" r="100" fill="#00ff41" opacity="0.06"/>
+  <circle cx="230" cy="256" r="100" fill="#1d9bf0" opacity="0.08"/>
 </svg>

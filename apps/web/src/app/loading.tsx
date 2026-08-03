@@ -2,14 +2,13 @@
 // Matches the new landing page design to avoid jarring transitions.
 
 const LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="36" height="36">
-  <defs><linearGradient id="lb" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#0d0d0d"/><stop offset="100%" stop-color="#000000"/></linearGradient></defs>
+  <defs><linearGradient id="lb" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#0d0d0d"/><stop offset="100%" stop-color="#000000"/></linearGradient><linearGradient id="ld" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#60a5fa"/><stop offset="100%" stop-color="#1d9bf0"/></linearGradient></defs>
   <rect width="512" height="512" fill="url(#lb)" rx="96"/>
-  <g stroke="#00ff41" stroke-width="52" stroke-linecap="round" stroke-linejoin="round" fill="none">
+  <g stroke="url(#ld)" stroke-width="52" stroke-linecap="round" stroke-linejoin="round" fill="none">
     <line x1="160" y1="92" x2="160" y2="420"/>
     <path d="M 160 92 A 148 164 0 0 1 160 420"/>
   </g>
-  <rect x="350" y="352" width="28" height="28" fill="#00ff41" rx="4"/>
-  <circle cx="230" cy="256" r="100" fill="#00ff41" opacity="0.06"/>
+  <circle cx="230" cy="256" r="100" fill="#1d9bf0" opacity="0.08"/>
 </svg>`;
 
 export default function RootLoading() {
@@ -20,7 +19,7 @@ export default function RootLoading() {
         :root {
           --bg: #000000; --surface: #070707; --card: #0d0d0d;
           --border: #1a1a1a; --fg: #e7e9ea; --fg-secondary: #a0a0a0;
-          --fg-tertiary: #606060; --accent: #00ff41;
+          --fg-tertiary: #606060; --accent: #1d9bf0;
           --font-heading: 'Syne', 'Plus Jakarta Sans', Inter, system-ui, sans-serif;
         }
         .loading-header {

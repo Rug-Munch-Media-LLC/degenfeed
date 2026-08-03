@@ -18,16 +18,17 @@ const LOGO_SVG = (
         <stop offset="0%" stopColor="#0d0d0d" />
         <stop offset="100%" stopColor="#000000" />
       </linearGradient>
+      <linearGradient id="lgd" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stopColor="#60a5fa" />
+        <stop offset="100%" stopColor="#1d9bf0" />
+      </linearGradient>
     </defs>
     <rect width="512" height="512" fill="url(#lgb)" rx={96} />
-    <g stroke="#00ff41" strokeWidth={52} strokeLinecap="round" strokeLinejoin="round" fill="none">
+    <g stroke="url(#lgd)" strokeWidth={52} strokeLinecap="round" strokeLinejoin="round" fill="none">
       <line x1={160} y1={92} x2={160} y2={420} />
       <path d="M 160 92 A 148 164 0 0 1 160 420" />
     </g>
-    <rect x={350} y={352} width={28} height={28} fill="#00ff41" rx={4}>
-      <animate attributeName="opacity" values="1;0.08;1" dur="1s" repeatCount="indefinite" />
-    </rect>
-    <circle cx={230} cy={256} r={100} fill="#00ff41" opacity={0.06} />
+    <circle cx={230} cy={256} r={100} fill="#1d9bf0" opacity={0.08} />
   </svg>
 );
 
@@ -44,12 +45,12 @@ const THEME_STYLES = `
     --fg: #e7e9ea;
     --fg-secondary: #a0a0a0;
     --fg-tertiary: #606060;
-    --accent: #00ff41;
-    --accent-dim: #00cc34;
-    --accent-subtle: rgba(0, 255, 65, 0.06);
-    --accent-glow: rgba(0, 255, 65, 0.12);
-    --accent-soft: rgba(0, 255, 65, 0.04);
-    --gradient-text: linear-gradient(135deg, #00ff41, #00ccff);
+    --accent: #1d9bf0;
+    --accent-dim: #1a8cd8;
+    --accent-subtle: rgba(29, 155, 240, 0.06);
+    --accent-glow: rgba(29, 155, 240, 0.12);
+    --accent-soft: rgba(29, 155, 240, 0.04);
+    --gradient-text: linear-gradient(135deg, #1d9bf0, #00ccff);
     --font-body: 'Plus Jakarta Sans', Inter, system-ui, -apple-system, sans-serif;
     --font-heading: 'Syne', 'Plus Jakarta Sans', Inter, system-ui, sans-serif;
     --font-mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
