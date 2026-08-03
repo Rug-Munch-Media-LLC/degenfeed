@@ -25,7 +25,7 @@ export function CTASection() {
           className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl text-2xl"
           style={{
             background: 'var(--color-accent-soft)',
-            border: '1px solid rgba(0,255,65,0.2)',
+            border: '1px solid rgba(29,155,240,0.2)',
             color: 'var(--color-accent)',
           }}
           aria-hidden="true"

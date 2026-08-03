@@ -3,7 +3,7 @@
 import { ErrorBoundary, ReputationBadge } from '@degenfeed/ui';
 import nextDynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, use } from 'react';
 import {
   CrossProtocolActivityFeed,
   ProfileContentTabs,
@@ -32,11 +32,11 @@ const MusicTabContent = nextDynamic(() => import('../MusicTabContent'), {
 export const dynamic = 'force-dynamic';
 
 interface Props {
-  params: Promise<{ handle: string }> | { handle: string };
+  params: Promise<{ handle: string }>;
 }
 
 export default function ProfileByIdentifierPage({ params }: Props) {
-  const handle = 'then' in params ? '' : (params as { handle: string }).handle;
+  const { handle } = use(params);
 
   return <ProfileByIdentifierContent handleParam={handle || ''} />;
 }

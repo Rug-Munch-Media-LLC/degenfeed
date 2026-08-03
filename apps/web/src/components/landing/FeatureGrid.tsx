@@ -11,7 +11,7 @@ const FEATURES = [
     title: 'Cross-Protocol Identity',
     description:
       'One wallet. Every identity. Link your Nostr npub, Farcaster FID, Bluesky DID, Mastodon handle, and Lens profile — all owned by you.',
-    gradient: 'linear-gradient(135deg, rgba(139,92,246,0.15), rgba(0,255,65,0.05))',
+    gradient: 'linear-gradient(135deg, rgba(139,92,246,0.15), rgba(29,155,240,0.05))',
     border: 'rgba(139,92,246,0.2)',
     accent: 'var(--color-protocol-nostr)',
   },
@@ -20,8 +20,8 @@ const FEATURES = [
     title: 'Unified Feed',
     description:
       'No more checking 101+ silos. See every post from every protocol in one timeline. 15-layer smart deduplication means zero repeats.',
-    gradient: 'linear-gradient(135deg, rgba(0,255,65,0.15), rgba(17,133,254,0.05))',
-    border: 'rgba(0,255,65,0.2)',
+    gradient: 'linear-gradient(135deg, rgba(29,155,240,0.15), rgba(17,133,254,0.05))',
+    border: 'rgba(29,155,240,0.2)',
     accent: 'var(--color-accent)',
   },
   {
@@ -29,7 +29,7 @@ const FEATURES = [
     title: 'Creator Coins',
     description:
       'Launch your own token across Base and Solana. Let fans tip you from ANY protocol. Vesting schedules, bonding curves, anti-exploit protection.',
-    gradient: 'linear-gradient(135deg, rgba(245,158,11,0.15), rgba(0,255,65,0.05))',
+    gradient: 'linear-gradient(135deg, rgba(245,158,11,0.15), rgba(29,155,240,0.05))',
     border: 'rgba(245,158,11,0.2)',
     accent: 'var(--color-accent-tertiary)',
   },
@@ -47,7 +47,7 @@ const FEATURES = [
     title: 'Protocol Bridging',
     description:
       'Post once, publish everywhere with 101+ protocol adapters. Reply to a Farcaster cast from Nostr. DM a Bluesky user from Matrix. The bridges work.',
-    gradient: 'linear-gradient(135deg, rgba(99,100,255,0.15), rgba(0,255,65,0.05))',
+    gradient: 'linear-gradient(135deg, rgba(99,100,255,0.15), rgba(29,155,240,0.05))',
     border: 'rgba(99,100,255,0.2)',
     accent: 'var(--color-protocol-mastodon)',
   },

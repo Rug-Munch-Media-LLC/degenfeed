@@ -87,6 +87,7 @@ import { fetchUnlockPosts } from '../providers/unlock';
 import { fetchVimeoPosts } from '../providers/vimeo';
 import { fetchWordPressPosts } from '../providers/wordpress';
 import { fetchWriteFreelyPosts } from '../providers/writefreely';
+import { fetchYouTubePosts } from '../providers/youtube';
 // ─── Infrastructure Providers (status-only, not in main feed) ─────
 import { fetchXmtpPosts } from '../providers/xmtp';
 import { fetchZoraPosts } from '../providers/zora';
@@ -180,6 +181,12 @@ export const PROVIDERS: Record<string, ProviderEntry> = {
       const { fetchPodcastPosts } = await import('../providers/rss');
       return fetchPodcastPosts(limit);
     },
+  },
+  youtube: {
+    name: 'YouTube (Crypto/Tech/AI Channels)',
+    rateLimit: { maxRequests: 30, windowMs: 60_000 },
+    category: 'content',
+    fetch: fetchYouTubePosts,
   },
   rssbridge: {
     name: 'RSS-Bridge (legacy)',
@@ -613,6 +620,7 @@ export const DEFAULT_HOME_PROTOCOLS = [
   'newsletter',
   'lemmy',
   'peertube',
+  'youtube',
   'bluesky',
   'nostr',
   'farcaster',
@@ -696,6 +704,140 @@ function setCachedFeed(key: string, data: FeedResult): void {
  * Cached: fresh results are served from a 30s TTL cache (limit-agnostic),
  * and concurrent identical requests coalesce into a single provider fetch.
  */
+
+// ─── Cross-protocol dedup + interleave ──────────────────────────────────
+// Same content can arrive on multiple protocols (bridged posts, cross-posted
+// threads, duplicated news links). A single normalized fingerprint catches
+// exact dupes; a URL fingerprint catches bridged copies that add a prefix
+// (e.g. "via nostr:" / "cross-posted from X"). After dedup we interleave so
+// the feed never shows 5+ posts from one protocol in a row.
+
+/**
+ * Normalize post text into a stable, comparable fingerprint.
+ * - lowercase
+ * - strip URLs (they differ per protocol for the same content)
+ * - strip @mentions (bridged copies often prepend the source handle)
+ * - strip punctuation/whitespace runs
+ */
+export function textFingerprint(text: string): string {
+  return (text || '')
+    .toLowerCase()
+    .replace(/https?:\/\/\S+/g, ' ')
+    .replace(/@[\w.-]+/g, ' ')
+    .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * Normalize an embed/link URL for cross-protocol comparison.
+ * Strips protocol, www., trailing slashes and common tracking params so the
+ * same article/video linked from Nostr/Farcaster/Bluesky matches.
+ */
+export function urlFingerprint(url: string): string {
+  let u = (url || '').trim();
+  try {
+    const parsed = new URL(u);
+    u = (parsed.hostname || '').replace(/^www\./, '') + parsed.pathname;
+  } catch {
+    const cleaned = u
+      .replace(/^https?:\/\//i, '')
+      .replace(/^www\./i, '')
+      .split(/[?#]/)[0];
+    u = cleaned ?? u;
+  }
+  return u.replace(/\/+$/, '').toLowerCase();
+}
+
+/** Extract URL fingerprints from a post's embeds + inline links. */
+function postUrlFingerprints(p: UnifiedPost): string[] {
+  const urls: string[] = [];
+  for (const e of p.embeds || []) {
+    if (e.url) urls.push(urlFingerprint(e.url));
+  }
+  const inline = (p.text || '').match(/https?:\/\/[^\s]+/g);
+  if (inline) for (const u of inline) urls.push(urlFingerprint(u));
+  return [...new Set(urls.filter(Boolean))];
+}
+
+/**
+ * Dedup + interleave a batch of cross-protocol posts.
+ *
+ * Dedup keys, in priority order:
+ *  1. normalized text fingerprint (min 24 chars to avoid false positives on
+ *     generic one-liners) — catches identical bridged/cross-posted copies
+ *  2. URL fingerprint when the text fingerprint is too short to be reliable —
+ *     catches "check this out https://..." copies across protocols
+ *
+ * Interleave: round-robin over protocols so consecutive posts are diverse.
+ * Within a protocol, posts keep their provider order (newest first).
+ */
+export function dedupeAndInterleave(posts: UnifiedPost[], limit: number): UnifiedPost[] {
+  const seenText = new Set<string>();
+  const seenUrls = new Set<string>();
+  const unique: UnifiedPost[] = [];
+
+  for (const p of posts) {
+    const fp = textFingerprint(p.text);
+    const urls = postUrlFingerprints(p);
+
+    // Strong text match → duplicate (same content, possibly bridged)
+    if (fp.length >= 24) {
+      if (seenText.has(fp)) continue;
+      seenText.add(fp);
+      // Once text matched, also remember its URLs so a URL-only copy later
+      // (e.g. text truncated to just the link) is deduped too.
+      for (const u of urls) seenUrls.add(u);
+      unique.push(p);
+      continue;
+    }
+
+    // Short text — rely on URL match to catch cross-protocol copies.
+    let isDup = false;
+    for (const u of urls) {
+      if (seenUrls.has(u)) {
+        isDup = true;
+        break;
+      }
+    }
+    if (isDup) continue;
+    for (const u of urls) seenUrls.add(u);
+    unique.push(p);
+  }
+
+  // Interleave round-robin across protocols for diversity.
+  const byProtocol = new Map<string, UnifiedPost[]>();
+  for (const p of unique) {
+    const arr = byProtocol.get(p.protocol);
+    if (arr) arr.push(p);
+    else byProtocol.set(p.protocol, [p]);
+  }
+
+  const interleaved: UnifiedPost[] = [];
+  // Deterministic but varied order: rotate the starting protocol so the same
+  // post list from cache can still produce different mixes per request when
+  // served sliced (limit changes rotate the start point).
+  const protocolOrder = [...byProtocol.keys()].sort();
+  const startIdx = protocolOrder.length > 0 ? (limit % protocolOrder.length) : 0;
+  let cursor = startIdx;
+  let remaining = protocolOrder.length;
+
+  while (interleaved.length < limit && remaining > 0) {
+    const proto = protocolOrder[cursor % protocolOrder.length];
+    if (!proto) break;
+    const arr = byProtocol.get(proto);
+    if (arr && arr.length > 0) {
+      interleaved.push(arr.shift()!);
+      remaining = protocolOrder.length; // reset — still have work in this proto
+    } else {
+      remaining--;
+    }
+    cursor++;
+  }
+
+  return interleaved;
+}
+
 export async function buildFeed(
   protocols: string[],
   limit: number,
@@ -928,15 +1070,7 @@ async function buildFeedInternal(
     };
   }
 
-  const seen = new Set<string>();
-  const deduped: UnifiedPost[] = [];
-  for (const p of allPosts) {
-    const key = p.text.slice(0, 80);
-    if (!seen.has(key) && deduped.length < limit) {
-      seen.add(key);
-      deduped.push(p);
-    }
-  }
+  const deduped = dedupeAndInterleave(allPosts, limit);
 
   const degradedCount = Object.keys(cacheAges).length;
 
@@ -1060,6 +1194,7 @@ export const DEFAULT_PREFERENCES = {
       'smokesignal',
       'lemmy',
       'peertube',
+      'youtube',
       'pixelfed',
       'dtube',
       'lbry',

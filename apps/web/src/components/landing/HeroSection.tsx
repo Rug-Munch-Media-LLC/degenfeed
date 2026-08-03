@@ -51,7 +51,7 @@ export function HeroSection() {
           className="absolute inset-0 opacity-[0.03]"
           style={{
             backgroundImage:
-              'linear-gradient(rgba(0,255,65,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(0,255,65,0.3) 1px, transparent 1px)',
+              'linear-gradient(rgba(29,155,240,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(29,155,240,0.3) 1px, transparent 1px)',
             backgroundSize: '60px 60px',
             transform: `translateY(${scrollY * -0.05}px)`,
           }}
@@ -81,7 +81,7 @@ export function HeroSection() {
             </defs>
             <rect x="0" y="0" width="512" height="512" fill="url(#hero-bg)" rx="96" />
             <g
-              stroke="#00ff41"
+              stroke="#1d9bf0"
               strokeWidth="52"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -90,8 +90,8 @@ export function HeroSection() {
               <line x1="160" y1="92" x2="160" y2="420" />
               <path d="M 160 92 A 148 164 0 0 1 160 420" />
             </g>
-            <circle cx="230" cy="256" r="100" fill="#00ff41" fillOpacity="0.06" />
-            <rect x="350" y="352" width="28" height="28" fill="#00ff41" rx="4" />
+            <circle cx="230" cy="256" r="100" fill="#1d9bf0" fillOpacity="0.06" />
+            <rect x="350" y="352" width="28" height="28" fill="#1d9bf0" rx="4" />
           </svg>
           <span
             className="text-xl font-black tracking-tight"

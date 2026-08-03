@@ -1,5 +1,7 @@
 'use client';
 
+import Link from 'next/link';
+
 interface FeedMeta {
   total?: number;
   limit?: number;
@@ -59,6 +61,20 @@ export function FeedEmptyState({ activeTab }: { activeTab: string }) {
             ? 'No trending posts right now. Check back soon or try a different feed.'
             : 'Your feed is empty. Try following some accounts or exploring trending topics.'}
       </p>
+      <div className="flex flex-wrap items-center justify-center gap-2">
+        <Link
+          href="/trending"
+          className="inline-flex min-h-[44px] items-center justify-center rounded-full bg-[var(--color-accent)] px-5 text-sm font-semibold text-black transition-all hover:opacity-90 hover:shadow-[0_0_16px_var(--color-accent-glow)]"
+        >
+          Explore trending
+        </Link>
+        <Link
+          href="/discover"
+          className="inline-flex min-h-[44px] items-center justify-center rounded-full border border-[var(--color-border)] px-5 text-sm font-medium text-[var(--color-fg)] transition-colors hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
+        >
+          Discover people
+        </Link>
+      </div>
     </div>
   );
 }

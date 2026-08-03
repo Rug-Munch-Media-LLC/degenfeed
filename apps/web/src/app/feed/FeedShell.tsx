@@ -244,7 +244,7 @@ export function FeedShell({ children }: FeedShellProps) {
             href="/feed"
             icon="◆"
             label="All Sources"
-            color="#00ff41"
+            color="#1d9bf0"
             isActive={pathname === '/feed'}
             count={totalPosts > 0 ? totalPosts : undefined}
             showDot={totalPosts > 0}

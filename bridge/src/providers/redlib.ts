@@ -26,12 +26,33 @@ const $fetch = globalThis.fetch;
 
 const REDDIT_RSS = 'https://www.reddit.com';
 
+/**
+ * Short TTL cache for the whole reddit fetch. The feed prewarmer + refresher
+ * call providers repeatedly (3 protocol sets every ~55s); without a cache each
+ * call burns one of our conservative 20 req/10min in-process budget slots and
+ * Reddit returns 0 posts in the home feed. A 90s cache collapses those
+ * repeated calls into a single real fetch while keeping content fresh enough
+ * for a social feed.
+ */
+const REDDIT_CACHE_TTL_MS = 90_000;
+let redditCache: { posts: UnifiedPost[]; expiresAt: number } | null = null;
+
+function getCachedPosts(): UnifiedPost[] | null {
+  if (redditCache && Date.now() < redditCache.expiresAt) return redditCache.posts;
+  return null;
+}
+
+function setCachedPosts(posts: UnifiedPost[]): void {
+  redditCache = { posts, expiresAt: Date.now() + REDDIT_CACHE_TTL_MS };
+}
+
 /** Crypto/tech subreddits ranked by relevance */
 const SUBREDDITS = [
   'CryptoCurrency',
   'Bitcoin',
   'ethereum',
   'solana',
+  'ethdev',
   'CryptoMarkets',
   'defi',
   'ethfinance',
@@ -89,6 +110,7 @@ export function guessNiches(text: string, subreddit: string): string[] {
   if (
     /\b(eth|ethereum|vitalik|pectra)\b/.test(lower) ||
     subLower === 'ethereum' ||
+    subLower === 'ethdev' ||
     subLower === 'ethfinance' ||
     subLower === 'ethtrader'
   )
@@ -498,6 +520,12 @@ export const schema: SchemaGuard = {
 };
 
 export async function fetchRedditPosts(limit = 20): Promise<UnifiedPost[]> {
+  // Serve from the short TTL cache first so repeated feed-build calls
+  // (prewarm + refresher + user requests) don't burn the in-process budget
+  // or hammer Reddit's CDN.
+  const cached = getCachedPosts();
+  if (cached) return cached.slice(0, limit);
+
   // Reddit unauthenticated limit: ~60 requests/10 min per IP. Keep our own
   // in-process budget far below that so bursts don't trip Reddit's CDN.
   if (!checkRateLimit('reddit', { maxRequests: 20, windowMs: 600_000 })) {
@@ -584,6 +612,7 @@ export async function fetchRedditPosts(limit = 20): Promise<UnifiedPost[]> {
   console.log(
     `[bridge] Reddit: ${deduped.length} posts [${authMode}] (rss: ${rssCount}, oauth: ${oauthCount}, json: ${jsonCount}, redlib: ${redlibCount}, total raw: ${all.length})`,
   );
+  setCachedPosts(deduped);
   return deduped;
 }
 

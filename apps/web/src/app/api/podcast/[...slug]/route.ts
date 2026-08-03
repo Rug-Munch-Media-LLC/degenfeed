@@ -45,28 +45,28 @@ function forwardHeaders(request: Request): Record<string, string> {
 
 export async function GET(
   request: Request,
-  { params }: { params: Promise<{ slug?: string[] }> | { slug?: string[] } },
+  { params }: { params: Promise<{ slug?: string[] }> },
 ): Promise<Response> {
-  const slug = 'then' in params ? [] : (params as { slug?: string[] }).slug;
-  const path = slug ? `/api/podcast/${slug.join('/')}` : '/api/podcast';
+  const slug = (await params).slug;
+  const path = slug && slug.length ? `/api/podcast/${slug.join('/')}` : '/api/podcast';
   return proxyToBridge('GET', path, request);
 }
 
 export async function POST(
   request: Request,
-  { params }: { params: Promise<{ slug?: string[] }> | { slug?: string[] } },
+  { params }: { params: Promise<{ slug?: string[] }> },
 ): Promise<Response> {
-  const slug = 'then' in params ? [] : (params as { slug?: string[] }).slug;
-  const path = slug ? `/api/podcast/${slug.join('/')}` : '/api/podcast';
+  const slug = (await params).slug;
+  const path = slug && slug.length ? `/api/podcast/${slug.join('/')}` : '/api/podcast';
   return proxyToBridge('POST', path, request);
 }
 
 export async function DELETE(
   request: Request,
-  { params }: { params: Promise<{ slug?: string[] }> | { slug?: string[] } },
+  { params }: { params: Promise<{ slug?: string[] }> },
 ): Promise<Response> {
-  const slug = 'then' in params ? [] : (params as { slug?: string[] }).slug;
-  const path = slug ? `/api/podcast/${slug.join('/')}` : '/api/podcast';
+  const slug = (await params).slug;
+  const path = slug && slug.length ? `/api/podcast/${slug.join('/')}` : '/api/podcast';
   return proxyToBridge('DELETE', path, request);
 }
 
