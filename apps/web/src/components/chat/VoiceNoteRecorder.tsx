@@ -74,7 +74,6 @@ function Waveform({
   color = 'var(--degen-400, #00ff41)',
   height = 48,
   barWidth = 3,
-  barGap = 2,
   played,
 }: {
   samples: number[];
@@ -304,12 +303,42 @@ export function VoiceNoteRecorder({
   const analyserRef = useRef<AnalyserNode | null>(null);
   const animationFrameRef = useRef<number>(0);
   const startTimeRef = useRef<number>(0);
-  const durationIntervalRef = useRef<ReturnType<typeof setInterval>>();
+  const durationIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const recorderRef = useRef<HTMLDivElement>(null);
 
   // ── Recording Logic ─────────────────────────────────────────────────
+
+  const stopRecording = useCallback(() => {
+    const recorder = mediaRecorderRef.current;
+    if (recorder && recorder.state !== 'inactive') {
+      recorder.stop();
+    }
+
+    // Clean up
+    if (durationIntervalRef.current) {
+      clearInterval(durationIntervalRef.current);
+    }
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+    }
+
+    // Stop transcription
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+      } catch {
+        // Already stopped
+      }
+    }
+
+    // Stop media tracks
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+    }
+  }, []);
 
   const startRecording = useCallback(async () => {
     if (disabled) return;
@@ -465,35 +494,6 @@ export function VoiceNoteRecorder({
     stopRecording,
   ]);
 
-  const stopRecording = useCallback(() => {
-    const recorder = mediaRecorderRef.current;
-    if (recorder && recorder.state !== 'inactive') {
-      recorder.stop();
-    }
-
-    // Clean up
-    if (durationIntervalRef.current) {
-      clearInterval(durationIntervalRef.current);
-    }
-    if (animationFrameRef.current) {
-      cancelAnimationFrame(animationFrameRef.current);
-    }
-
-    // Stop transcription
-    if (recognitionRef.current) {
-      try {
-        recognitionRef.current.stop();
-      } catch {
-        // Already stopped
-      }
-    }
-
-    // Stop media tracks
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((t) => t.stop());
-      streamRef.current = null;
-    }
-  }, []);
 
   // Cleanup on unmount
   useEffect(() => {

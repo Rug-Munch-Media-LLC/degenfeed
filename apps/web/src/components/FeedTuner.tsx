@@ -142,29 +142,16 @@ interface FeedTunerProps {
 export function FeedTuner(props: FeedTunerProps) {
   const {
     topicWeights: weights,
-    onWeightsChange,
     onApply = () => {},
     onReset,
     onClose = () => {},
     feedMixConfig,
-    onFeedMixChange,
     onFeedMixApply = () => {},
     onFeedMixReset,
     savedMixes,
     onSaveMix,
     onLoadMix,
     onDeleteMix,
-    algorithmTransparent,
-    onAlgorithmTransparencyChange,
-    freshnessPreference,
-    onFreshnessChange,
-    creatorDiversity,
-    onCreatorDiversityChange,
-    exploreRatio,
-    onExploreRatioChange,
-    activePreset,
-    onApplyPreset,
-    feedPresets,
   } = props;
 
   const [activeTab, setActiveTab] = useState<'mix' | 'topics' | 'presets'>('mix');

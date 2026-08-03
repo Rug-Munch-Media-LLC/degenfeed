@@ -29,7 +29,7 @@ export interface IncomingCall {
   participants: number;
 }
 
-export type CallViewState = 'idle' | 'calling' | 'ringing' | 'connecting' | 'connected' | 'ended';
+export type CallViewState = 'idle' | 'calling' | 'ringing' | 'connecting' | 'connected' | 'active' | 'ended';
 
 export interface PeerConnection {
   peerId: string;
