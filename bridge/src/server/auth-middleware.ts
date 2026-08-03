@@ -9,6 +9,7 @@
 // a valid API key for all non-health routes.
 // ═══════════════════════════════════════════════════════════════════════════
 
+import { timingSafeEqual } from 'node:crypto';
 import type { IncomingMessage } from 'node:http';
 
 /**
@@ -61,5 +62,14 @@ export function validateAuth(req: IncomingMessage): boolean {
   }
 
   const token = authHeader.slice(7);
-  return token === apiKey;
+
+  // Constant-time comparison to prevent timing side-channel attacks
+  // on the BRIDGE_API_KEY. Both values are UTF-8 encoded to fixed-length
+  // buffers; mismatched lengths fail immediately (non-secret length check).
+  const tokenBuf = Buffer.from(token, 'utf8');
+  const keyBuf = Buffer.from(apiKey, 'utf8');
+  if (tokenBuf.length !== keyBuf.length) {
+    return false;
+  }
+  return timingSafeEqual(tokenBuf, keyBuf);
 }
