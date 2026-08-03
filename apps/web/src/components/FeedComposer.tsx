@@ -411,8 +411,14 @@ export function FeedComposer({
             </p>
           )}
 
-          {/* ── Protocol target buttons ── */}
+          {/* ── Protocol target buttons — recipient picker ── */}
           <div className="mt-2 flex flex-wrap items-center gap-2">
+            <span
+              className="inline-flex items-center text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]"
+              aria-hidden="true"
+            >
+              To
+            </span>
             {TARGETS.map((t) => {
               const connected = !!signedInProtocols[t.id];
               const active = selected.has(t.id);
@@ -574,7 +580,7 @@ export function FeedComposer({
                 {selected.size > 0 && ` / ${minCharLimit}`}
               </span>
               {selected.size === 0 && (
-                <span className="text-yellow-500">Select a network to post</span>
+                <span className="text-yellow-500">Select recipients to post to</span>
               )}
               {overLimit && (
                 <span className="text-red-400">

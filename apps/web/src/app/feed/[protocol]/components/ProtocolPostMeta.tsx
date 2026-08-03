@@ -3,13 +3,14 @@
 /**
  * @degenfeed/web — ProtocolPostMeta
  *
- * Per-protocol metadata strip rendered inside each post card on the
+ * Per-protocol metadata strip rendered INSIDE each post card on the
  * /feed/[protocol] pages. Shows protocol-native chips (npub, FID, DID,
  * community, subreddit, …) plus a small action row with protocol-specific
  * actions: zap (nostr), open frame (farcaster), open in native app, copy link.
  *
- * The strip is rendered by FeedList's `postMetaSlot` hook, so it appears
- * inside the post's article after the shared PostCard.
+ * Rendered by PostCard's `postMetaSlot` hook, so it appears inline within
+ * the shared card layout — inline badges, not a separate section — which
+ * keeps every protocol card visually consistent.
  */
 
 import type { EngagementAction, UnifiedPost } from '@degenfeed/types';
@@ -80,11 +81,9 @@ export function ProtocolPostMeta({ post, onEngage, onReply }: ProtocolPostMetaPr
 
   return (
     <div
-      className="flex flex-wrap items-center gap-x-3 gap-y-1.5 border-t px-4 py-2"
-      style={{
-        borderColor: 'var(--color-glass-border)',
-        backgroundColor: 'color-mix(in srgb, var(--color-fg) 2%, transparent)',
-      }}
+      className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-1.5 px-4"
+      role="group"
+      aria-label={`${info.label} post details`}
     >
       {/* Protocol-native metadata chips */}
       <div className="flex flex-wrap items-center gap-1.5">

@@ -737,8 +737,8 @@ export const FeedList = memo(function FeedList({
                 onShowMoreLikeThis={onShowMoreLikeThis}
                 onShowLessLikeThis={onShowLessLikeThis}
                 onContextMenu={onContextMenu}
+                postMetaSlot={postMetaSlot}
               />
-              {postMetaSlot?.(post)}
             </article>,
           );
         }
