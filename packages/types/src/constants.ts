@@ -283,6 +283,8 @@ export type SpaceStatus = 'live' | 'scheduled' | 'ended';
 
 export type VisualSource =
   | 'pixelfed'
+  | 'peertube'
+  | 'owncast'
   | 'zora'
   | 'bluesky'
   | 'nostr'

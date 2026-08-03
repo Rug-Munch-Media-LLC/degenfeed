@@ -28,6 +28,8 @@ async function fetchWithTimeout(url: string, opts: RequestInit & { timeout?: num
 
 const BADGES: Record<string, { emoji: string; color: string; label: string }> = {
   pixelfed: { emoji: '📸', color: '#6366f1', label: 'Pixelfed' },
+  peertube: { emoji: '🎬', color: '#f1680d', label: 'PeerTube' },
+  owncast: { emoji: '🔴', color: '#ef4444', label: 'Owncast' },
   zora: { emoji: '🎨', color: '#8b5cf6', label: 'Zora' },
   bluesky: { emoji: '🦋', color: '#1185fe', label: 'Bluesky' },
   nostr: { emoji: '⚡', color: '#8e30eb', label: 'Nostr' },
@@ -84,6 +86,46 @@ function makeMetrics(likes = 0, reposts = 0, replies = 0) {
 
 async function fetchPixelfedContent(env: Env, limit: number): Promise<VisualPost[]> {
   const results: VisualPost[] = [];
+
+  // Option A0: Self-hosted Pixelfed instance with Bearer token (local=true)
+  try {
+    const localUrl = env.PIXELFED_INSTANCE_URL || 'http://127.0.0.1:8096';
+    const token = env.PIXELFED_ACCESS_TOKEN;
+    const publicUrl = env.PIXELFED_PUBLIC_URL || 'https://photos.degenfeed.xyz';
+    if (token) {
+      const res = await fetchWithTimeout(
+        `${localUrl}/api/v1/timelines/public?only_media=true&local=true&limit=${Math.min(limit, 40)}`,
+        {
+          headers: {
+            accept: 'application/json',
+            authorization: `Bearer ${token}`,
+            'user-agent': 'DegenFeed/1.0',
+          },
+          timeout: 4000,
+        },
+      );
+      if (res.ok) {
+        const data = (await res.json()) as GtSStatus[];
+        for (const status of Array.isArray(data) ? data : []) {
+          const normalized = normalizeGtSStatusToVisual(status, localUrl);
+          if (normalized) {
+            // Rewrite container-local media URLs to the public origin.
+            normalized.imageUrl = normalized.imageUrl.replace(
+              /^https?:\/\/localhost(:\d+)?/i,
+              publicUrl,
+            );
+            normalized.fullImageUrl = normalized.fullImageUrl?.replace(
+              /^https?:\/\/localhost(:\d+)?/i,
+              publicUrl,
+            );
+            results.push(normalized);
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('[visual-feed] Local Pixelfed timeline fetch failed:', err);
+  }
 
   // Option A: GtS public timeline filtered to media-only posts
   try {
@@ -155,6 +197,10 @@ function normalizeGtSStatusToVisual(status: GtSStatus, instanceUrl: string): Vis
   const handle = status.account.acct.includes('@')
     ? status.account.acct
     : `${status.account.acct}@${hostname}`;
+  // Media served from container-local origins won't load in browsers — rewrite.
+  const mediaUrl = (u: string) =>
+    u.replace(/^https?:\/\/localhost(:\d+)?/i, 'https://photos.degenfeed.xyz')
+      .replace(/^https?:\/\/127\.0\.0\.1(:\d+)?/i, 'https://photos.degenfeed.xyz');
 
   return {
     id: `pixelfed:${status.id}`,
@@ -174,15 +220,15 @@ function normalizeGtSStatusToVisual(status: GtSStatus, instanceUrl: string): Vis
       keys: {},
     },
     text: status.content ? stripHtml(status.content).slice(0, 200) : '',
-    imageUrl: isVideo ? firstMedia.preview_url : firstMedia.url,
-    fullImageUrl: isVideo ? undefined : firstMedia.url,
-    videoUrl: isVideo ? firstMedia.url : undefined,
+    imageUrl: mediaUrl(isVideo ? firstMedia.preview_url : firstMedia.url),
+    fullImageUrl: isVideo ? undefined : mediaUrl(firstMedia.url),
+    videoUrl: isVideo ? mediaUrl(firstMedia.url) : undefined,
     duration: isVideo
       ? (((firstMedia.meta?.original as Record<string, unknown>)?.duration as number) ?? undefined)
       : undefined,
     embeds: media.map((m) => ({
       kind: m.type === 'video' ? 'video' : 'image',
-      url: m.url,
+      url: mediaUrl(m.url),
       meta: { description: m.description, blurhash: m.blurhash },
     })),
     blurHash: firstMedia.blurhash ?? undefined,

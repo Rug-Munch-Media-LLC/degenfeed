@@ -297,6 +297,10 @@ export interface Env {
   LEMMY_INSTANCE_URL?: string;
   /** Pixelfed instance URL for account creation */
   PIXELFED_INSTANCE_URL?: string;
+  /** Pixelfed access token (Bearer) for the local instance public timeline */
+  PIXELFED_ACCESS_TOKEN?: string;
+  /** Public origin for local Pixelfed media (default: https://photos.degenfeed.xyz) */
+  PIXELFED_PUBLIC_URL?: string;
   /** Nostr relay URLs (comma-separated) */
   NOSTR_RELAYS?: string;
 

@@ -195,6 +195,92 @@ const CRYPTO_NEWS_FEEDS: FeedSource[] = [
     niches: ['crypto', 'markets'],
     featured: true,
   },
+  // ── Web3/crypto news expansion (verified 2026-08-03) ─────────────
+  {
+    url: 'https://www.onchaintimes.com/feed/',
+    label: 'On Chain Times',
+    category: 'crypto-news',
+    niches: ['crypto', 'onchain'],
+  },
+  {
+    url: 'https://ethdaily.io/feed/',
+    label: 'ETH Daily',
+    category: 'crypto-news',
+    niches: ['crypto', 'ethereum'],
+  },
+  {
+    url: 'https://thedailydegen.substack.com/feed',
+    label: 'The Daily Degen',
+    category: 'crypto-news',
+    niches: ['crypto', 'memecoin'],
+    platform: 'substack',
+  },
+  {
+    url: 'https://www.daotimes.com/feed',
+    label: 'DAO Times',
+    category: 'crypto-news',
+    niches: ['crypto', 'dao', 'governance'],
+  },
+  {
+    url: 'https://coingecko.com/rss',
+    label: 'CoinGecko',
+    category: 'crypto-news',
+    niches: ['crypto', 'markets'],
+  },
+  {
+    url: 'https://coingape.com/feed/',
+    label: 'CoinGape',
+    category: 'crypto-news',
+    niches: ['crypto'],
+  },
+  {
+    url: 'https://watcher.guru/news/feed/',
+    label: 'Watcher.Guru',
+    category: 'crypto-news',
+    niches: ['crypto'],
+  },
+  {
+    url: 'https://cryptonews.com/news/feed/',
+    label: 'CryptoNews',
+    category: 'crypto-news',
+    niches: ['crypto'],
+  },
+  {
+    url: 'https://finbold.com/feed/',
+    label: 'Finbold',
+    category: 'crypto-news',
+    niches: ['crypto', 'markets'],
+  },
+  {
+    url: 'https://forkast.news/feed/',
+    label: 'Forkast',
+    category: 'crypto-news',
+    niches: ['crypto', 'asia'],
+  },
+  {
+    url: 'https://www.crypto-news-flash.com/feed/',
+    label: 'Crypto News Flash',
+    category: 'crypto-news',
+    niches: ['crypto'],
+  },
+  {
+    url: 'https://thebittimes.com/feed',
+    label: 'TheBitTimes',
+    category: 'crypto-news',
+    niches: ['crypto'],
+  },
+  {
+    url: 'https://cointelegraph.com/rss/tag/bitcoin',
+    label: 'CoinTelegraph Bitcoin',
+    category: 'crypto-news',
+    niches: ['crypto', 'bitcoin'],
+  },
+  {
+    url: 'https://decrypt.co/feed/defi',
+    label: 'Decrypt DeFi',
+    category: 'crypto-news',
+    niches: ['crypto', 'defi'],
+  },
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -266,6 +352,69 @@ const DEV_FEEDS: FeedSource[] = [
     label: 'Ethereum Magicians',
     category: 'dev-technical',
     niches: ['ethereum', 'dev'],
+  },
+];
+
+// ═══════════════════════════════════════════════════════════════════════════
+// LAYER 1 & 2 (verified 2026-08-03)
+// ═══════════════════════════════════════════════════════════════════════════
+
+const L1_L2_FEEDS: FeedSource[] = [
+  {
+    url: 'https://solana.com/news/rss.xml',
+    label: 'Solana Blog',
+    category: 'crypto-research',
+    niches: ['solana', 'dev'],
+    featured: true,
+  },
+  {
+    url: 'https://arbitrumfoundation.medium.com/feed',
+    label: 'Arbitrum',
+    category: 'crypto-research',
+    niches: ['layer2', 'ethereum', 'research'],
+    platform: 'medium',
+  },
+  {
+    url: 'https://medium.com/feed/ethereum-optimism',
+    label: 'Optimism',
+    category: 'crypto-research',
+    niches: ['layer2', 'ethereum', 'research'],
+    platform: 'medium',
+  },
+  {
+    url: 'https://medium.com/feed/starkware',
+    label: 'Starknet',
+    category: 'crypto-research',
+    niches: ['layer2', 'zero-knowledge', 'ethereum'],
+    platform: 'medium',
+  },
+  {
+    url: 'https://medium.com/feed/zksync',
+    label: 'zkSync',
+    category: 'crypto-research',
+    niches: ['layer2', 'zero-knowledge', 'ethereum'],
+    platform: 'medium',
+  },
+  {
+    url: 'https://medium.com/feed/avalancheavax',
+    label: 'Avalanche',
+    category: 'crypto-research',
+    niches: ['crypto', 'layer2', 'research'],
+    platform: 'medium',
+  },
+  {
+    url: 'https://medium.com/feed/near-protocol',
+    label: 'Near',
+    category: 'crypto-research',
+    niches: ['crypto', 'layer2', 'research'],
+    platform: 'medium',
+  },
+  {
+    url: 'https://bittensor.substack.com/feed',
+    label: 'Bittensor',
+    category: 'crypto-research',
+    niches: ['aicrypto', 'ai', 'crypto'],
+    platform: 'substack',
   },
 ];
 
@@ -471,10 +620,69 @@ const TECH_FEEDS: FeedSource[] = [
     niches: ['tech', 'business', 'strategy'],
     featured: true,
   },
+  // ── General tech / crypto-adjacent expansion (verified 2026-08-03) ────
+  {
+    url: 'https://www.generalist.com/feed',
+    label: 'The Generalist',
+    category: 'tech',
+    niches: ['tech', 'startups', 'business'],
+    featured: true,
+  },
+  {
+    url: 'https://www.exponentialview.co/feed',
+    label: 'Exponential View',
+    category: 'tech',
+    niches: ['tech', 'ai', 'research'],
+  },
+  {
+    url: 'https://www.ben-evans.com/benedictevans?format=rss',
+    label: 'Benedict Evans',
+    category: 'tech',
+    niches: ['tech', 'ai', 'business'],
+  },
+  {
+    url: 'https://www.notboring.co/feed',
+    label: 'Not Boring',
+    category: 'tech',
+    niches: ['tech', 'startups', 'business'],
+  },
+  {
+    url: 'https://thenetwork.substack.com/feed',
+    label: 'The Network',
+    category: 'tech',
+    niches: ['tech', 'ai', 'research'],
+    platform: 'substack',
+  },
+  {
+    url: 'https://theprotocol.substack.com/feed',
+    label: 'The Protocol',
+    category: 'tech',
+    niches: ['tech', 'startups'],
+    platform: 'substack',
+  },
+  {
+    url: 'https://www.sequoiacap.com/feed/',
+    label: 'Sequoia',
+    category: 'tech',
+    niches: ['startups', 'vc', 'business'],
+  },
+  {
+    url: 'https://a16zcrypto.substack.com/feed',
+    label: 'a16z Crypto',
+    category: 'tech',
+    niches: ['crypto', 'vc', 'research'],
+    platform: 'substack',
+  },
+  {
+    url: 'https://www.forbes.com/innovation/feed/',
+    label: 'Forbes Innovation',
+    category: 'tech',
+    niches: ['tech', 'ai', 'business'],
+  },
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════
-// DEFI-SPECIFIC (8 feeds)
+// DEFI-SPECIFIC (verified 2026-08-03)
 // ═══════════════════════════════════════════════════════════════════════════
 const DEFI_FEEDS: FeedSource[] = [
   {
@@ -482,6 +690,59 @@ const DEFI_FEEDS: FeedSource[] = [
     label: 'Curve Finance',
     category: 'defi',
     niches: ['defi', 'ethereum'],
+  },
+  {
+    url: 'https://medium.com/feed/compound-finance',
+    label: 'Compound',
+    category: 'defi',
+    niches: ['defi', 'ethereum'],
+    platform: 'medium',
+  },
+  {
+    url: 'https://blog.lido.fi/rss/',
+    label: 'Lido',
+    category: 'defi',
+    niches: ['defi', 'staking', 'ethereum'],
+  },
+  {
+    url: 'https://medium.com/feed/uniswap-labs',
+    label: 'Uniswap',
+    category: 'defi',
+    niches: ['defi', 'dex', 'ethereum'],
+    platform: 'medium',
+  },
+  {
+    url: 'https://medium.com/feed/iearn',
+    label: 'Yearn',
+    category: 'defi',
+    niches: ['defi', 'yield', 'ethereum'],
+    platform: 'medium',
+  },
+  {
+    url: 'https://medium.com/feed/gmx-io',
+    label: 'GMX',
+    category: 'defi',
+    niches: ['defi', 'dex', 'perpetuals'],
+    platform: 'medium',
+  },
+  {
+    url: 'https://forum.makerdao.com/posts.rss',
+    label: 'MakerDAO',
+    category: 'defi',
+    niches: ['defi', 'stablecoin', 'governance'],
+  },
+  {
+    url: 'https://uniswap.substack.com/feed',
+    label: 'Uniswap Blog',
+    category: 'defi',
+    niches: ['defi', 'dex', 'ethereum'],
+    platform: 'substack',
+  },
+  {
+    url: 'https://blog.bitfinex.com/feed/',
+    label: 'Bitfinex Blog',
+    category: 'defi',
+    niches: ['crypto', 'exchange', 'research'],
   },
 ];
 
@@ -855,6 +1116,7 @@ export const ALL_FEEDS: FeedSource[] = [
   ...RESEARCH_FEEDS,
   ...VC_FEEDS,
   ...DEV_FEEDS,
+  ...L1_L2_FEEDS,
   ...SECURITY_FEEDS,
   ...ACADEMIC_FEEDS,
   ...TECH_FEEDS,
@@ -1270,26 +1532,49 @@ export function guessNiches(text: string, baseNiches: string[]): string[] {
   if (/\b(eth|ethereum|vitalik|pectra|eip|erc)\b/.test(lower)) niches.add('ethereum');
   if (/\b(sol|solana|spl|jupiter|pyth)\b/.test(lower)) niches.add('solana');
   if (/\b(defi|liquidity|yield|farm|lp|stake|apy)\b/.test(lower)) niches.add('defi');
+  if (/\b(stak|validator|delegat|restak|eigenlayer|ssv|lido|jito)\b/.test(lower))
+    niches.add('staking');
+  if (/\b(mev|sandwich|front.?run|back.?run|extractable)\b/.test(lower)) niches.add('mev');
+  if (/\b(bridge|bridging|wormhole|layerzero|axelar|ibc|interoperab)\b/.test(lower))
+    niches.add('bridges');
+  if (/\b(zero.?knowledge|zk.?proof|validity.?proof|zkp|zksync|starknet|circom)\b/.test(lower))
+    niches.add('zero-knowledge');
   if (/\b(nft|art|collectible|punk|ens|soulbound)\b/.test(lower)) niches.add('nft');
   if (/\b(ai|artificial|intelligence|llm|agent|gpt|transformer|neural)\b/.test(lower))
     niches.add('ai');
+  if (/\b(ai.?agent|ai.?crypto|decentralized.?ai|compute.?marketplace|bittensor|fetch\.?ai)\b/.test(lower))
+    niches.add('aicrypto');
+  if (/\b(storage|filecoin|arweave|ipfs|datacap|decentralized.?storage|storj)\b/.test(lower))
+    niches.add('storage');
+  if (/\b(identity|did|verifiable.?credential|soulbound|worldcoin|proof.?of.?personhood)\b/.test(lower))
+    niches.add('identity');
+  if (/\b(social|farcaster|lens|bluesky|socialfi|content|creator.?economy|deso)\b/.test(lower))
+    niches.add('social');
+  if (/\b(insurance|underwrit|coverage|nexus.?mutual|cover)\b/.test(lower)) niches.add('insurance');
+  if (/\b(carbon|offset|verra|gold.?standard|regen|toucan|moss|ecosystem.?credit)\b/.test(lower))
+    niches.add('carbon');
+  if (/\b(payment|remittance|payments|crypto.?pay|lightning|visa|mastercard|paypal|stripe)\b/.test(lower))
+    niches.add('payments');
+  if (/\b(rwa|real.?world.?asset|tokeniz|tokenization|syndicate|centrifuge)\b/.test(lower))
+    niches.add('rwa');
   if (/\b(sec|regulation|etf|compliance|sec|cfpb|finra|oig)\b/.test(lower))
     niches.add('regulation');
   if (/\b(meme|pepe|dog|shib|bonk|wif|mew)\b/.test(lower)) niches.add('memecoin');
   if (/\b(layer2|l2|arbitrum|optimism|base|scroll|zksync)\b/.test(lower)) niches.add('layer2');
   if (/\b(security|hack|exploit|audit|vulnerability|bug)\b/.test(lower)) niches.add('security');
   if (/\b(oracle|chainlink|pyth|api3)\b/.test(lower)) niches.add('oracle');
-  if (/\b(dao|governance|vote|treasury)\b/.test(lower)) niches.add('dao');
+  if (/\b(dao|treasury|proposal|snapshot|delegate|quorum)\b/.test(lower)) niches.add('dao');
+  if (/\b(governance|vote|voting|proposal|constitution|parameter.?change)\b/.test(lower))
+    niches.add('governance');
   if (/\b(gaming|gamefi|play-to-earn|metaverse)\b/.test(lower)) niches.add('gaming');
   if (/\b(token|airdrop|listing|binance|coinbase)\b/.test(lower)) niches.add('token');
   if (/\b(mobile|telegram|ton|crypto\s*pay)\b/.test(lower)) niches.add('mobile');
-  if (/\b(zk|zero.?knowledge|validity|proof)\b/.test(lower)) niches.add('zero-knowledge');
   if (/\b(dex|swap|amm|order.?book|perpetual)\b/.test(lower)) niches.add('dex');
   if (/\b(custody|wallet|self.?custody|hardware)\b/.test(lower)) niches.add('wallet');
-  if (/\b(bridge|interoperability|ibc|polkadot|cosmos)\b/.test(lower)) niches.add('interop');
-  if (/\b(rwa|real.?world|tokenization)\b/.test(lower)) niches.add('rwa');
   if (/\b(stablecoin|usdc|usdt|dai|fdusd)\b/.test(lower)) niches.add('stablecoin');
   if (/\b(privacy|monero|tornado|anonymity)\b/.test(lower)) niches.add('privacy');
+  if (/\b(mining|miner|hashrate|asic|pool|proof.?of.?work|difficulty)\b/.test(lower))
+    niches.add('mining');
 
   // World / science / business topics (topic expansion)
   if (
@@ -1303,11 +1588,13 @@ export function guessNiches(text: string, baseNiches: string[]): string[] {
   )
     niches.add('geopolitics');
   if (
-    /\b(economy|recession|inflation|gdp|fed|interest rate|tariff|trade war|unemployment|central bank)\b/.test(
+    /\b(economy|recession|inflation|gdp|fed|interest rate|tariff|trade war|unemployment|central bank|pmi|cpi|rate cut|hike)\b/.test(
       lower,
     )
-  )
+  ) {
     niches.add('business');
+    niches.add('macro');
+  }
 
   // Add crypto as default if nothing matched and no base niches
   if (niches.size === 0) niches.add('crypto');
@@ -2112,6 +2399,47 @@ export const SOURCE_TIERS: Record<string, number> = {
   'NFT Now': 3,
   'Rarible Blog': 3,
   'Decrypt NFT': 3,
+  // 2026-08-03 source expansion — web3/crypto news (Tier 2)
+  'On Chain Times': 2,
+  'ETH Daily': 2,
+  'The Daily Degen': 2,
+  'DAO Times': 2,
+  CoinGecko: 2,
+  CoinGape: 2,
+  'Watcher.Guru': 2,
+  CryptoNews: 2,
+  Finbold: 2,
+  Forkast: 2,
+  'Crypto News Flash': 2,
+  TheBitTimes: 3,
+  'CoinTelegraph Bitcoin': 1,
+  'Decrypt DeFi': 1,
+  // 2026-08-03 source expansion — DeFi protocols (Tier 2)
+  Compound: 2,
+  Lido: 2,
+  Uniswap: 2,
+  Yearn: 2,
+  GMX: 2,
+  MakerDAO: 2,
+  'Uniswap Blog': 2,
+  'Bitfinex Blog': 2,
+  // 2026-08-03 source expansion — Layer 1/2 (Tier 2)
+  Arbitrum: 2,
+  Optimism: 2,
+  Starknet: 2,
+  zkSync: 2,
+  Avalanche: 2,
+  Near: 2,
+  Bittensor: 2,
+  // 2026-08-03 source expansion — general tech / crypto-adjacent (Tier 2)
+  'The Generalist': 2,
+  'Exponential View': 2,
+  'Benedict Evans': 2,
+  'Not Boring': 2,
+  'The Network': 2,
+  'The Protocol': 2,
+  Sequoia: 2,
+  'Forbes Innovation': 2,
 };
 
 /**
