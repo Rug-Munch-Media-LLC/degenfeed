@@ -22,7 +22,13 @@ import { getIndexerStatus, reindex, startIndexer } from '../search-indexer';
 import { validateAuth } from './auth-middleware';
 import { handleBlueskyRoute } from './bluesky-routes';
 import { handleEventRoute } from './event-routes';
-import { buildFeed, DEFAULT_PREFERENCES, PROVIDERS } from './feeds';
+import {
+  buildFeed,
+  DEFAULT_HOME_PROTOCOLS,
+  DEFAULT_PREFERENCES,
+  PROVIDERS,
+  prewarmFeedCache,
+} from './feeds';
 import { handleGtsRoute } from './gts-routes';
 import { handleNostrRoute } from './nostr-routes';
 import { handlePublishRoute } from './publish-routes';
@@ -629,9 +635,7 @@ const server = http.createServer(async (req, res) => {
     ) {
       const limit = Math.min(parseInt(searchParams.get('limit') || '50', 10), 200);
       const page = parseInt(searchParams.get('page') || '1', 10);
-      const protocolsRaw =
-        searchParams.get('protocols') ||
-        'mastodon,reddit,rss,lemmy,peertube,bluesky,nostr,farcaster,lens,pixelfed';
+      const protocolsRaw = searchParams.get('protocols') || DEFAULT_HOME_PROTOCOLS.join(',');
       const protocols = protocolsRaw
         .split(',')
         .map((p) => p.trim())
@@ -1159,4 +1163,7 @@ server.listen(PORT, BRIDGE_HOST, () => {
     .catch((err) => {
       console.error('[bridge] Search indexer failed:', err);
     });
+  // Pre-warm the feed result cache so the first user request is fast
+  // (fixes 20s cold start from aggregating 30+ providers on first request)
+  void prewarmFeedCache();
 });

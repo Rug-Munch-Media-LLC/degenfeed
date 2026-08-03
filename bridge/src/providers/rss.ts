@@ -1456,7 +1456,7 @@ async function fetchSingleFeed(feed: FeedSource, limit: number): Promise<Unified
         'User-Agent': USER_AGENT,
         Accept: 'application/rss+xml, application/atom+xml, application/xml, text/xml',
       },
-      signal: AbortSignal.timeout(10000),
+      signal: AbortSignal.timeout(4000),
     });
 
     if (!res.ok) {
@@ -1556,7 +1556,7 @@ async function fetchMirrorFeed(feed: FeedSource, limit: number): Promise<Unified
   try {
     const res = await globalThis.fetch(feed.url, {
       headers: { 'User-Agent': USER_AGENT },
-      signal: AbortSignal.timeout(10000),
+      signal: AbortSignal.timeout(4000),
     });
     if (!res.ok) return [];
 
@@ -1729,7 +1729,9 @@ export async function fetchRssPosts(limit = 50): Promise<UnifiedPost[]> {
 
   console.log(`[rss] Fetching ${activeFeeds.length} feeds, ${perFeed} items per feed`);
 
-  // Fetch all feeds in parallel with concurrency control
+  // Fetch feeds in parallel with concurrency control. Stop fetching once we
+  // have enough posts (early exit) — fetching all 148 feeds for a small limit
+  // was the dominant cold-start cost (~7s).
   const BATCH_SIZE = 25;
   for (let i = 0; i < activeFeeds.length; i += BATCH_SIZE) {
     const batch = activeFeeds.slice(i, i + BATCH_SIZE);
@@ -1741,9 +1743,12 @@ export async function fetchRssPosts(limit = 50): Promise<UnifiedPost[]> {
       }
     }
 
+    // Early exit once we have enough raw posts for the requested limit
+    if (all.length >= limit) break;
+
     // Small delay between batches to avoid hammering servers
     if (i + BATCH_SIZE < activeFeeds.length) {
-      await new Promise((resolve) => setTimeout(resolve, 200));
+      await new Promise((resolve) => setTimeout(resolve, 50));
     }
   }
 

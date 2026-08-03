@@ -158,7 +158,7 @@ async function fetchFromRedlib(subreddit: string, limit: number): Promise<Unifie
         'User-Agent': 'Mozilla/5.0 (compatible; DegenFeed-Bridge/0.1; +https://degenfeed.xyz)',
         Accept: 'application/json',
       },
-      signal: AbortSignal.timeout(4000),
+      signal: AbortSignal.timeout(2000),
     });
     if (!res.ok) return [];
 
@@ -235,7 +235,7 @@ async function fetchFromRedditRss(subreddit: string, limit: number): Promise<Uni
         headers: {
           'User-Agent': 'Mozilla/5.0 (compatible; DegenFeed-Bridge/0.1; +https://degenfeed.xyz)',
         },
-        signal: AbortSignal.timeout(3500),
+        signal: AbortSignal.timeout(2000),
       },
     );
     if (!res.ok) return [];
@@ -423,7 +423,7 @@ async function fetchFromRedditJson(subreddit: string, limit: number): Promise<Un
     const headers = await getRedditOAuth().getAuthHeaders();
     const res = await $fetch(url, {
       headers,
-      signal: AbortSignal.timeout(8000),
+      signal: AbortSignal.timeout(4000),
     });
     if (!res.ok) {
       if (res.status === 429) {
