@@ -35,9 +35,9 @@ minimumReleaseAgeExclude:
   - miniflare@4.20260722.1
   - wrangler@4.115.0
 overrides:
-  # GHSA-3gc7-fjrx-p6mg: bigint-buffer <=1.1.5 buffer overflow
+  # GHSA-vj5c-m527-mpff / GHSA-3gc7-fjrx-p6mg: bigint-buffer <=1.1.5 buffer overflow
+  # NOTE: advisory says patched >=1.1.6 but it is NOT published yet (latest=1.1.5). Track upstream.
   # (transitive via @solana/web3.js -> creator-coin, bundled into the web app)
-  # NOTE: no fix version exists yet — 1.1.5 is the latest. Tracked for upstream release.
   bigint-buffer: ^1.1.5
   ws: ^8.21.1
   undici: '>=6.27.0'
