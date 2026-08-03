@@ -1314,6 +1314,99 @@ export function guessNiches(text: string, baseNiches: string[]): string[] {
   return [...niches];
 }
 
+// ─── Price Impact & Trending Coins ──────────────────────────────────
+// CryptoPanic-style "which coins are affected" tagging. Articles that
+// mention the top coins by market cap get a price-impact annotation and a
+// ranking boost. Simulated until real user votes arrive.
+
+export interface PriceImpactEntry {
+  symbol: string;
+  weight: number;
+}
+
+/**
+ * Top coins by market cap (non-stablecoin) used for price-impact tagging.
+ * `weight` reflects market-cap influence (1.0 = most impactful).
+ */
+export const TOP_MARKET_CAP_COINS: ReadonlyArray<{
+  symbol: string;
+  names: readonly string[];
+  weight: number;
+}> = [
+  { symbol: 'BTC', names: ['bitcoin', 'btc', 'satoshi'], weight: 1.0 },
+  { symbol: 'ETH', names: ['ethereum', 'eth', 'ether'], weight: 0.95 },
+  { symbol: 'BNB', names: ['bnb', 'binance coin', 'bsc'], weight: 0.85 },
+  { symbol: 'SOL', names: ['solana', 'sol'], weight: 0.82 },
+  { symbol: 'XRP', names: ['xrp', 'ripple'], weight: 0.75 },
+  { symbol: 'DOGE', names: ['dogecoin', 'doge'], weight: 0.7 },
+  { symbol: 'ADA', names: ['cardano', 'ada'], weight: 0.66 },
+  { symbol: 'TRX', names: ['tron', 'trx'], weight: 0.62 },
+  { symbol: 'TON', names: ['toncoin', 'ton'], weight: 0.6 },
+  { symbol: 'AVAX', names: ['avalanche', 'avax'], weight: 0.58 },
+];
+
+const TICKER_TO_WEIGHT = new Map<string, number>(
+  TOP_MARKET_CAP_COINS.map((c) => [c.symbol, c.weight]),
+);
+
+/** Escape regex special chars in a literal string. */
+function escapeRegex(text: string): string {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
+ * Extract price-impact entries from article text: `$BTC`-style tickers and
+ * coin-name mentions of the top market-cap coins. Returns deduplicated
+ * `[{symbol, weight}]` sorted by weight (most impactful first).
+ */
+export function extractPriceImpact(text: string): PriceImpactEntry[] {
+  if (!text) return [];
+  const found = new Map<string, number>();
+
+  // $TICKER mentions (e.g. "$BTC", "$SOL") — most explicit signal
+  const tickerRe = /\$([A-Z]{2,10})\b/g;
+  let m: RegExpExecArray | null;
+  // biome-ignore lint/suspicious/noAssignInExpressions: regex loop
+  while ((m = tickerRe.exec(text)) !== null) {
+    const ticker = m[1];
+    if (!ticker) continue;
+    const sym = ticker.toUpperCase();
+    const w = TICKER_TO_WEIGHT.get(sym);
+    if (w !== undefined) found.set(sym, Math.max(found.get(sym) ?? 0, w));
+  }
+
+  // Coin-name mentions (bitcoin, ethereum, ...)
+  const lower = text.toLowerCase();
+  for (const coin of TOP_MARKET_CAP_COINS) {
+    for (const name of coin.names) {
+      if (new RegExp(`\\b${escapeRegex(name)}\\b`, 'i').test(lower)) {
+        found.set(coin.symbol, Math.max(found.get(coin.symbol) ?? 0, coin.weight));
+        break;
+      }
+    }
+  }
+
+  return [...found.entries()]
+    .map(([symbol, weight]) => ({ symbol, weight }))
+    .sort((a, b) => b.weight - a.weight);
+}
+
+/**
+ * Coins considered "trending" for the simulated community-vote signal.
+ * Top majors + currently hot memecoins (matches the memecoin niche regex).
+ */
+export const TRENDING_COINS: ReadonlySet<string> = new Set([
+  'BTC',
+  'ETH',
+  'SOL',
+  'PEPE',
+  'DOGE',
+  'BONK',
+  'WIF',
+  'SHIB',
+  'MEW',
+]);
+
 // ─── RSS/Atom Parsing ─────────────────────────────────────────────────
 
 export interface ParsedFeedItem {
@@ -1579,6 +1672,8 @@ async function fetchSingleFeed(feed: FeedSource, limit: number): Promise<Unified
           platform: feed.platform,
           image: featuredImage,
           sentiment,
+          // CryptoPanic-style price impact: which coins this article affects.
+          priceImpact: extractPriceImpact(`${item.title} ${item.contentText}`),
         },
         niches: allNiches,
         contentType: 'link',
@@ -2051,28 +2146,175 @@ export function crossReferenceScore(crossReference: unknown): number {
   return Math.min(1, 0.25 + (refs - 1) * 0.15);
 }
 
+// ─── Price Impact, Signals & Category Boost ──────────────────────────
+// CryptoPanic-beating features: price-impact tagging (which coins an
+// article affects), a simulated community vote signal (until real users
+// vote), and multi-category boosts (preferred niches + trending velocity).
+
+/** Preferred niche taxonomy used for the user-category boost. */
+export const PREFERRED_NICHES: ReadonlySet<string> = new Set([
+  'crypto',
+  'bitcoin',
+  'ethereum',
+  'solana',
+  'defi',
+  'ai',
+  'layer2',
+  'stablecoin',
+]);
+
+/**
+ * Price-impact score 0..1: an article that mentions top market-cap coins
+ * gets a boost proportional to the highest-weight coin mentioned, with a
+ * small additive bonus for multi-coin coverage (capped at 1).
+ */
+export function priceImpactScore(priceImpact: unknown): number {
+  if (!Array.isArray(priceImpact) || priceImpact.length === 0) return 0;
+  const entries = priceImpact as PriceImpactEntry[];
+  const maxWeight = entries.reduce((max, c) => Math.max(max, c.weight ?? 0), 0);
+  const multiBonus = Math.min(0.3, (entries.length - 1) * 0.15);
+  return Math.min(1, maxWeight + multiBonus);
+}
+
+export interface SyntheticSignals {
+  votes: number;
+  reasons: string[];
+  breakdown: {
+    tier1Source: boolean;
+    crossReference: boolean;
+    trendingCoin: boolean;
+    verified: boolean;
+  };
+}
+
+/**
+ * Simulate community vote signals until real users exist:
+ *  - tier-1 source (CoinDesk etc.):        +3
+ *  - cited by 3+ feeds (cross-reference):  +2
+ *  - mentions a trending coin:             +1
+ *  - verified author/org:                  +1
+ * Max possible = 7.
+ */
+export function computeSyntheticSignals(opts: {
+  tier: number;
+  crossReferenceCount: number;
+  priceImpact: unknown;
+  verified: boolean;
+}): SyntheticSignals {
+  let votes = 0;
+  const reasons: string[] = [];
+  const breakdown: SyntheticSignals['breakdown'] = {
+    tier1Source: false,
+    crossReference: false,
+    trendingCoin: false,
+    verified: false,
+  };
+
+  if (opts.tier === 1) {
+    votes += 3;
+    breakdown.tier1Source = true;
+    reasons.push('tier-1 source');
+  }
+  if (opts.crossReferenceCount >= 3) {
+    votes += 2;
+    breakdown.crossReference = true;
+    reasons.push('cited by 3+ feeds');
+  }
+  if (Array.isArray(opts.priceImpact)) {
+    const symbols = (opts.priceImpact as PriceImpactEntry[]).map((c) => c.symbol);
+    if (symbols.some((s) => TRENDING_COINS.has(s))) {
+      votes += 1;
+      breakdown.trendingCoin = true;
+      reasons.push('mentions trending coin');
+    }
+  }
+  if (opts.verified) {
+    votes += 1;
+    breakdown.verified = true;
+    reasons.push('verified author/org');
+  }
+
+  return { votes, reasons, breakdown };
+}
+
+/**
+ * Normalized per-niche article velocity (0..1) over a rolling window.
+ * Used for the "trending category" boost: categories with the most recent
+ * article volume get a higher weight.
+ */
+export function computeCategoryVelocity(
+  posts: UnifiedPost[],
+  now = Date.now(),
+  windowMs = 6 * 60 * 60 * 1000,
+): Map<string, number> {
+  const counts = new Map<string, number>();
+  for (const post of posts) {
+    if (now - post.createdAt > windowMs) continue;
+    for (const niche of post.niches ?? []) {
+      counts.set(niche, (counts.get(niche) ?? 0) + 1);
+    }
+  }
+  const max = Math.max(1, ...counts.values());
+  const normalized = new Map<string, number>();
+  for (const [niche, count] of counts) normalized.set(niche, count / max);
+  return normalized;
+}
+
+/** Rank context: preferred niches + per-niche velocity for this batch. */
+export interface RankContext {
+  preferredNiches?: ReadonlySet<string>;
+  categoryVelocity?: ReadonlyMap<string, number>;
+}
+
 /**
  * Compute the final news rank for a post (0..100).
  *
- * Signals:
+ * Signals (CryptoPanic-beating):
  *  - source reputation (tier 1 → high)
  *  - freshness decay (newer → higher)
  *  - cross-reference grounding (multiple feeds → higher authority)
+ *  - price impact (top market-cap coins mentioned → boost)
+ *  - simulated community votes (tier-1, cross-ref, trending coin, verified)
+ *  - category boost (preferred niches + trending-category velocity)
  *  - sentiment (marginally boost positive/neutral over negative)
  *
- * Scores are stored on `raw.rank` and `raw.rankSignals` for transparency.
+ * Scores are stored on `raw.rank`, `raw.rankSignals`, `raw.signals` and
+ * `raw.priceImpact` for transparency.
  */
-export function rankNewsPost(post: UnifiedPost, now = Date.now()): number {
+export function rankNewsPost(post: UnifiedPost, now = Date.now(), ctx: RankContext = {}): number {
   const raw = post.raw as Record<string, unknown> | undefined;
   const label = (raw?.feedLabel as string | undefined) || post.author?.displayName || '';
+  const tier = sourceTier(label);
 
-  const reputation = (4 - sourceTier(label)) / 3; // tier 1 → 1.0, tier 4 → 0
+  const reputation = (4 - tier) / 3; // tier 1 → 1.0, tier 4 → 0
   const freshness = freshnessScore(post.createdAt, now);
   const grounding = crossReferenceScore(raw?.crossReference);
 
+  // Price impact: articles mentioning top market-cap coins rank higher.
+  const priceImpact = Array.isArray(raw?.priceImpact) ? raw.priceImpact : [];
+  const impact = priceImpactScore(priceImpact);
+
+  // Simulated community vote signal (proportional weight in ranking).
+  const crossReferenceCount = Array.isArray(raw?.crossReference)
+    ? (raw.crossReference as unknown[]).length
+    : 0;
+  const signals = computeSyntheticSignals({
+    tier,
+    crossReferenceCount,
+    priceImpact,
+    verified: tier <= 2,
+  });
+  const signalScore = Math.min(1, signals.votes / 7); // 7 = max synthetic votes
+
+  // Category boost: preferred niches (user categories) + trending velocity.
+  const preferred = ctx.preferredNiches ?? PREFERRED_NICHES;
+  const velocity = ctx.categoryVelocity ?? new Map<string, number>();
+  const postNiches = post.niches ?? [];
+  const preferredBoost = postNiches.some((n) => preferred.has(n)) ? 0.6 : 0;
+  const trendingBoost = postNiches.reduce((max, n) => Math.max(max, velocity.get(n) ?? 0), 0);
+  const categoryBoost = Math.min(1, preferredBoost + trendingBoost * 0.4);
+
   // Sentiment signal: normalized -1..+1 scaled to a ±5% rank adjustment.
-  // Positive/neutral headlines are marginally boosted over negative ones;
-  // neutral (0) scores land exactly in the middle and are unaffected.
   const sentimentRaw = raw?.sentiment as { normalized?: number } | undefined;
   const rawSentiment = sentimentRaw?.normalized;
   const sentimentValue =
@@ -2080,16 +2322,32 @@ export function rankNewsPost(post: UnifiedPost, now = Date.now()): number {
   const sentimentSignal = Math.max(-1, Math.min(1, sentimentValue)) * 0.05;
 
   const score = Math.round(
-    (reputation * 0.45 + freshness * 0.35 + grounding * 0.2 + sentimentSignal) * 100,
+    (reputation * 0.3 +
+      freshness * 0.25 +
+      grounding * 0.12 +
+      impact * 0.1 +
+      signalScore * 0.15 +
+      categoryBoost * 0.08 +
+      sentimentSignal) *
+      100,
   );
 
   if (raw) {
-    raw.sourceTier = sourceTier(label);
+    raw.sourceTier = tier;
     raw.rank = score;
+    raw.signals = {
+      votes: signals.votes,
+      reasons: signals.reasons,
+      breakdown: signals.breakdown,
+      synthetic: true,
+    };
     raw.rankSignals = {
       sourceReputation: Math.round(reputation * 100) / 100,
       freshness: Math.round(freshness * 100) / 100,
       crossReference: Math.round(grounding * 100) / 100,
+      priceImpact: Math.round(impact * 100) / 100,
+      signalVotes: Math.round(signalScore * 100) / 100,
+      categoryBoost: Math.round(categoryBoost * 100) / 100,
       sentiment: Math.round(sentimentSignal * 100) / 100,
     };
   }
@@ -2098,17 +2356,23 @@ export function rankNewsPost(post: UnifiedPost, now = Date.now()): number {
 
 /**
  * Rank a batch of posts by news rank (best first), then by freshness as
- * a stable tie-breaker. Populates raw.rank/raw.rankSignals on each post.
+ * a stable tie-breaker. Populates raw.rank/raw.rankSignals/raw.signals on
+ * each post. Computes per-niche velocity from the batch to power the
+ * trending-category boost.
  */
-export function rankNewsPosts(posts: UnifiedPost[]): UnifiedPost[] {
+export function rankNewsPosts(posts: UnifiedPost[], ctx: RankContext = {}): UnifiedPost[] {
   const now = Date.now();
-  for (const post of posts) rankNewsPost(post, now);
-  return [...posts].sort((a, b) => {
-    const ra = rankNewsPost(a, now);
-    const rb = rankNewsPost(b, now);
-    if (rb !== ra) return rb - ra;
-    return b.createdAt - a.createdAt;
+  const velocity = computeCategoryVelocity(posts, now);
+  const fullCtx: RankContext = { ...ctx, categoryVelocity: velocity };
+  const scored = posts.map((post) => ({
+    post,
+    rank: rankNewsPost(post, now, fullCtx),
+  }));
+  scored.sort((a, b) => {
+    if (b.rank !== a.rank) return b.rank - a.rank;
+    return b.post.createdAt - a.post.createdAt;
   });
+  return scored.map((s) => s.post);
 }
 
 // ─── Lazy Cache ──────────────────────────────────────────────────────

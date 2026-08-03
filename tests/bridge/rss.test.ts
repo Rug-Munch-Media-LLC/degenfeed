@@ -503,3 +503,304 @@ describe('RSS Provider — fetchNewsletterPosts (error handling)', () => {
     expect(posts).toEqual([]);
   });
 });
+
+// ─── CryptoPanic-beating ranking: price impact, signals, category boost ───
+
+describe('RSS Provider — extractPriceImpact', () => {
+  let mod: typeof import('../../bridge/src/providers/rss');
+
+  beforeAll(async () => {
+    mod = await import('../../bridge/src/providers/rss');
+  });
+
+  it('extracts $TICKER mentions and maps to symbols', () => {
+    const result = (
+      mod.extractPriceImpact as (t: string) => Array<{ symbol: string; weight: number }>
+    )('Bitcoin surges as $BTC breaks ATH while $ETH follows');
+    const symbols = result.map((c) => c.symbol);
+    expect(symbols).toContain('BTC');
+    expect(symbols).toContain('ETH');
+  });
+
+  it('detects coin names without dollar signs', () => {
+    const result = (
+      mod.extractPriceImpact as (t: string) => Array<{ symbol: string; weight: number }>
+    )('Solana and XRP lead the rally today');
+    const symbols = result.map((c) => c.symbol);
+    expect(symbols).toContain('SOL');
+    expect(symbols).toContain('XRP');
+  });
+
+  it('sorts by weight descending (BTC first)', () => {
+    const result = (
+      mod.extractPriceImpact as (t: string) => Array<{ symbol: string; weight: number }>
+    )('Solana $SOL vs Cardano $ADA — who wins? Bitcoin is watching');
+    expect(result[0]?.symbol).toBe('BTC');
+    expect(result[0]?.weight ?? 0).toBeGreaterThan(result[1]?.weight ?? 0);
+    expect(result[1]?.symbol).toBe('SOL');
+  });
+
+  it('returns empty for text without top coins', () => {
+    const result = (
+      mod.extractPriceImpact as (t: string) => Array<{ symbol: string; weight: number }>
+    )('Weather forecast for tomorrow in Paris');
+    expect(result).toEqual([]);
+  });
+
+  it('deduplicates repeated ticker mentions', () => {
+    const result = (
+      mod.extractPriceImpact as (t: string) => Array<{ symbol: string; weight: number }>
+    )('$BTC and Bitcoin and BTC again');
+    const btc = result.filter((c) => c.symbol === 'BTC');
+    expect(btc).toHaveLength(1);
+  });
+});
+
+describe('RSS Provider — priceImpactScore', () => {
+  let mod: typeof import('../../bridge/src/providers/rss');
+
+  beforeAll(async () => {
+    mod = await import('../../bridge/src/providers/rss');
+  });
+
+  it('returns 0 for no price impact', () => {
+    expect((mod.priceImpactScore as (x: unknown) => number)([])).toBe(0);
+    expect((mod.priceImpactScore as (x: unknown) => number)(undefined)).toBe(0);
+  });
+
+  it('scores top coin (BTC) near 1.0', () => {
+    const score = (mod.priceImpactScore as (x: unknown) => number)([
+      { symbol: 'BTC', weight: 1.0 },
+    ]);
+    expect(score).toBe(1);
+  });
+
+  it('adds multi-coin bonus capped at 1.0', () => {
+    const score = (mod.priceImpactScore as (x: unknown) => number)([
+      { symbol: 'BTC', weight: 1.0 },
+      { symbol: 'ETH', weight: 0.95 },
+      { symbol: 'SOL', weight: 0.82 },
+    ]);
+    expect(score).toBe(1);
+  });
+
+  it('scores lower-cap coin proportionally', () => {
+    const score = (mod.priceImpactScore as (x: unknown) => number)([
+      { symbol: 'AVAX', weight: 0.58 },
+    ]);
+    expect(score).toBeLessThan(1);
+    expect(score).toBeGreaterThan(0);
+  });
+});
+
+describe('RSS Provider — computeSyntheticSignals', () => {
+  let mod: typeof import('../../bridge/src/providers/rss');
+
+  beforeAll(async () => {
+    mod = await import('../../bridge/src/providers/rss');
+  });
+
+  const call = (opts: {
+    tier: number;
+    crossReferenceCount: number;
+    priceImpact: Array<{ symbol: string; weight: number }>;
+    verified: boolean;
+  }) =>
+    (mod.computeSyntheticSignals as (o: never) => { votes: number; reasons: string[] })(
+      opts as never,
+    );
+
+  it('tier-1 source adds +3 votes', () => {
+    expect(call({ tier: 1, crossReferenceCount: 1, priceImpact: [], verified: false }).votes).toBe(
+      3,
+    );
+  });
+
+  it('cross-reference of 3+ feeds adds +2 votes', () => {
+    expect(call({ tier: 3, crossReferenceCount: 4, priceImpact: [], verified: false }).votes).toBe(
+      2,
+    );
+  });
+
+  it('cross-reference below 3 adds no cross-ref votes', () => {
+    expect(call({ tier: 3, crossReferenceCount: 2, priceImpact: [], verified: false }).votes).toBe(
+      0,
+    );
+  });
+
+  it('trending coin mention adds +1 vote', () => {
+    expect(
+      call({
+        tier: 3,
+        crossReferenceCount: 1,
+        priceImpact: [{ symbol: 'DOGE', weight: 0.7 }],
+        verified: false,
+      }).votes,
+    ).toBe(1);
+  });
+
+  it('verified author/org adds +1 vote', () => {
+    expect(call({ tier: 3, crossReferenceCount: 1, priceImpact: [], verified: true }).votes).toBe(
+      1,
+    );
+  });
+
+  it('full stack reaches 7 votes (tier1 + crossref + trending + verified)', () => {
+    expect(
+      call({
+        tier: 1,
+        crossReferenceCount: 3,
+        priceImpact: [{ symbol: 'SOL', weight: 0.82 }],
+        verified: true,
+      }).votes,
+    ).toBe(7);
+  });
+});
+
+describe('RSS Provider — computeCategoryVelocity', () => {
+  let mod: typeof import('../../bridge/src/providers/rss');
+
+  beforeAll(async () => {
+    mod = await import('../../bridge/src/providers/rss');
+  });
+
+  it('normalizes per-niche velocity to 0..1', () => {
+    const posts = [
+      { createdAt: Date.now(), niches: ['bitcoin', 'crypto'] },
+      { createdAt: Date.now(), niches: ['bitcoin'] },
+      { createdAt: Date.now() - 60_000, niches: ['ethereum'] },
+    ] as never;
+    const velocity = (mod.computeCategoryVelocity as (p: never, n: number) => Map<string, number>)(
+      posts,
+      Date.now(),
+    );
+    expect(velocity.get('bitcoin')).toBe(1); // most recent posts
+    expect(velocity.get('crypto')).toBe(0.5);
+    expect(velocity.get('ethereum')).toBe(0.5);
+  });
+
+  it('ignores posts older than the window', () => {
+    const posts = [
+      { createdAt: Date.now() - 7 * 60 * 60 * 1000, niches: ['bitcoin'] },
+      { createdAt: Date.now(), niches: ['solana'] },
+    ] as never;
+    const velocity = (mod.computeCategoryVelocity as (p: never, n: number) => Map<string, number>)(
+      posts,
+      Date.now(),
+    );
+    expect(velocity.has('bitcoin')).toBe(false);
+    expect(velocity.get('solana')).toBe(1);
+  });
+});
+
+describe('RSS Provider — rankNewsPost with signals', () => {
+  let mod: typeof import('../../bridge/src/providers/rss');
+
+  beforeAll(async () => {
+    mod = await import('../../bridge/src/providers/rss');
+  });
+
+  const makePost = (overrides: Record<string, unknown> = {}): never => {
+    const base: Record<string, unknown> = {
+      id: 'rss:test:1',
+      protocol: 'rss',
+      author: {
+        id: 'rss:test',
+        primary: { protocol: 'rss', id: 'test' },
+        handles: {},
+        displayName: 'Test Feed',
+        bio: '',
+        avatarUrl: '',
+        followerCount: 0,
+        followingCount: 0,
+        links: [],
+        keys: {},
+      },
+      text: 'Bitcoin surges to new highs',
+      embeds: [],
+      createdAt: Date.now() - 60_000,
+      metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
+      engagement: {
+        viewerLiked: false,
+        viewerReposted: false,
+        viewerBookmarked: false,
+        raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
+      },
+      raw: {
+        feedLabel: 'CoinDesk',
+        sentiment: { normalized: 0 },
+      },
+      niches: ['crypto', 'bitcoin'],
+    };
+    return { ...base, ...overrides } as never;
+  };
+
+  it('stores signals and priceImpact on raw', () => {
+    const post = makePost({
+      raw: {
+        feedLabel: 'CoinDesk',
+        sentiment: { normalized: 0 },
+        priceImpact: [{ symbol: 'BTC', weight: 1.0 }],
+        crossReference: ['a', 'b', 'c'],
+      },
+    }) as { raw: Record<string, unknown> };
+    (mod.rankNewsPost as (p: never, n: number) => number)(post as never, Date.now());
+    const raw = post.raw;
+    expect(raw.signals).toBeDefined();
+    const signals = raw.signals as { votes: number; synthetic: boolean };
+    expect(signals.votes).toBeGreaterThanOrEqual(3);
+    expect(signals.synthetic).toBe(true);
+    expect(raw.rankSignals).toBeDefined();
+    const rankSignals = raw.rankSignals as Record<string, number>;
+    expect(rankSignals.priceImpact).toBe(1);
+    expect(rankSignals.signalVotes).toBeGreaterThan(0);
+    expect(rankSignals.categoryBoost).toBeGreaterThan(0);
+  });
+
+  it('ranks posts with price impact + signals above plain posts', () => {
+    const now = Date.now();
+    const rich = makePost({
+      raw: {
+        feedLabel: 'CoinDesk',
+        sentiment: { normalized: 0 },
+        priceImpact: [{ symbol: 'BTC', weight: 1.0 }],
+        crossReference: ['a', 'b', 'c'],
+      },
+    }) as never;
+    const plain = makePost({
+      id: 'rss:test:2',
+      raw: { feedLabel: 'CoinDesk', sentiment: { normalized: 0 } },
+    }) as never;
+
+    const richScore = (mod.rankNewsPost as (p: never, n: number) => number)(rich, now);
+    const plainScore = (mod.rankNewsPost as (p: never, n: number) => number)(plain, now);
+    expect(richScore).toBeGreaterThan(plainScore);
+  });
+
+  it('rankNewsPosts applies trending category boost', () => {
+    const posts = [
+      makePost({
+        id: 'rss:hot:1',
+        text: 'Bitcoin ETF approved',
+        raw: { feedLabel: 'CoinDesk', sentiment: { normalized: 0 } },
+        niches: ['bitcoin', 'crypto'],
+      }),
+      makePost({
+        id: 'rss:hot:2',
+        text: 'Another bitcoin story',
+        raw: { feedLabel: 'CoinTelegraph', sentiment: { normalized: 0 } },
+        niches: ['bitcoin'],
+      }),
+      makePost({
+        id: 'rss:other:1',
+        text: 'Random niche news',
+        raw: { feedLabel: 'Bitcoinist', sentiment: { normalized: 0 } },
+        niches: ['gaming'],
+      }),
+    ] as never;
+    const ranked = (mod.rankNewsPosts as (p: never) => never[])(posts);
+    const first = ranked[0] as { raw: Record<string, unknown> };
+    const rankSignals = first.raw.rankSignals as { categoryBoost: number };
+    expect(rankSignals.categoryBoost).toBeGreaterThan(0);
+  });
+});
