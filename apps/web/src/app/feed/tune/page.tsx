@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState} from 'react';
 import RuleBuilder, { RuleItem } from './CustomRules';
 import { SignalSourcesSection } from './SignalSources';
 import type { AlgorithmWeights, CustomRule, SignalSource, WeightPreset } from './types';
@@ -23,7 +23,6 @@ export default function FeedTunePage() {
   const [saved, setSaved] = useState(false);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [showRuleBuilder, setShowRuleBuilder] = useState(false);
-  const _debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   // Load saved preferences on mount
   useEffect(() => {

@@ -26,7 +26,6 @@ const CHAT_TABS = [
 
 /* ─── Constants ──────────────────────────────────────────────────────── */
 
-const _PROTOCOLS = ['nostr', 'farcaster', 'lens', 'bluesky', 'mastodon'] as const;
 
 const TRANSPORT_OPTIONS = [
   { id: 'nostr', label: 'Nostr', icon: '☀️', color: '#E33A3A', e2e: true },

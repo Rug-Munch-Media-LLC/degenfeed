@@ -64,7 +64,6 @@ const PRESETS: VestingPreset[] = [
 
 function VestingTimeline({
   config,
-  allocationPct,
 }: {
   config: VestingConfig;
   allocationPct: number;

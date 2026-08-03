@@ -150,10 +150,6 @@ const PLATFORM_COLORS: Record<string, string> = {
 
 // === Helpers ==============================================================
 
-function _shortenAddress(addr: string): string {
-  if (addr.length < 10) return addr;
-  return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
-}
 
 function formatDate(iso: string): string {
   const d = new Date(iso);
@@ -171,7 +167,6 @@ function formatDate(iso: string): string {
 function PlatformCard({
   platform,
   connected,
-  onConnect,
   onDisconnect,
 }: {
   platform: (typeof CENTRALIZED_PLATFORMS)[0];
@@ -300,7 +295,6 @@ function PlatformCard({
 
 function CrossPostComposer({
   connectedPlatforms,
-  onPublish,
 }: {
   connectedPlatforms: string[];
   onPublish: (text: string, targets: string[], title?: string) => Promise<void>;
@@ -730,8 +724,7 @@ function SubstackSetupModal({ onClose }: { onClose: () => void }) {
 // ═══════════════════════════════════════════════════════════════════════════
 
 export default function CrossPostPage() {
-  const { ready, walletAddress, signedInProtocols } = useAuth();
-  const [accounts, setAccounts] = useState<ConnectedAccount[]>([]);
+  const {ready, walletAddress} = useAuth();  const [accounts, setAccounts] = useState<ConnectedAccount[]>([]);
   const [loading, setLoading] = useState(true);
   const [showSubstackModal, setShowSubstackModal] = useState(false);
 

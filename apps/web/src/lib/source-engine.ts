@@ -512,7 +512,6 @@ export function runHealthCheck(): { checked: number; stale: number; culled: numb
   let stale = 0;
   let culledCount = 0;
   const now = Date.now();
-  const _staleThreshold = now - 14 * 86_400_000;
 
   for (const health of Object.values(data.healthMap)) {
     health.lastCheckedAt = now;

@@ -645,8 +645,6 @@ export function TabEmptyState({ tab }: { tab: string }) {
 
 /** AudioPlayer — inline mini player for podcast/music content */
 function AudioPlayer({
-  audioUrl,
-  title,
   isPlaying,
   onToggle,
 }: {

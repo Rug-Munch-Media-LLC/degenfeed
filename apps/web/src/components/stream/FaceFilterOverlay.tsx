@@ -69,7 +69,6 @@ export function FaceFilterOverlay({
   activeFilterId,
   onFilterSelect,
   visible,
-  onClose,
 }: FaceFilterOverlayProps) {
   const [activeCategory, setActiveCategory] = useState<string>('hat');
   const [buyingId, setBuyingId] = useState<string | null>(null);

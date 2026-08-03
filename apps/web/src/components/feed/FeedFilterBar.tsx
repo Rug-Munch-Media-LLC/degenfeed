@@ -7,8 +7,6 @@ export function FeedFilterBar({
   onToggleAllowNonCrypto,
   showOriginalContent,
   onToggleShowOriginal,
-  minEngagement,
-  onMinEngagementChange,
   protocolFilter,
   onProtocolFilterChange,
   onOpenTuner,

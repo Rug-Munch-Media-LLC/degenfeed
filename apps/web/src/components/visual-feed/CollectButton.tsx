@@ -27,7 +27,6 @@ export function CollectButton({ post, size = 'sm' }: CollectButtonProps) {
 
   if (!post.collectUrl) return null;
 
-  const _sizeClasses = size === 'sm' ? 'h-7 w-7 text-xs' : 'h-9 rounded-full px-3 text-sm';
 
   return (
     <button

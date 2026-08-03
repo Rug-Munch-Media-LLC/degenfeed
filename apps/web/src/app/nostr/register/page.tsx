@@ -30,33 +30,12 @@ interface GeneratedKeys {
 
 type RegistrationStep = 'generate' | 'username' | 'registering' | 'complete' | 'error';
 
-interface RpcRequest {
-  jsonrpc: '2.0';
-  id: number;
-  method: string;
-  params: string[];
-}
 
 interface RpcResponse {
   jsonrpc: '2.0';
   id: number;
   result?: unknown;
   error?: { code: number; message: string };
-}
-
-// ─── NIP-07 Extension Bridge ─────────────────────────────────────────────
-
-async function getExtensionPubkey(): Promise<string | null> {
-  if (typeof window === 'undefined') return null;
-  const win = window as unknown as Record<string, unknown>;
-  if (win.nostr && typeof (win.nostr as Record<string, unknown>).getPublicKey === 'function') {
-    try {
-      return await (win.nostr as { getPublicKey: () => Promise<string> }).getPublicKey();
-    } catch {
-      return null;
-    }
-  }
-  return null;
 }
 
 // ─── Nostr SDK Bridge (loaded dynamically) ───────────────────────────────

@@ -41,11 +41,6 @@ interface Podcast {
   language?: string;
 }
 
-interface CuratedPodcast extends Podcast {
-  host: string;
-  rssUrl: string;
-  source: 'curated';
-}
 
 interface PodcastEpisode {
   id: string;

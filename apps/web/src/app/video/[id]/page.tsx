@@ -14,7 +14,7 @@
 
 import { ErrorBoundary } from '@degenfeed/ui';
 import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams} from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { UnifiedVideo } from '../../../components/video/useVideoHub';
 import { VideoPlayer } from '../../../components/video/VideoPlayer';
@@ -139,7 +139,6 @@ function formatViews(views: number): string {
 
 export default function VideoDetailPage() {
   const params = useParams<{ id: string }>();
-  const _router = useRouter();
   const [saved, setSaved] = useState(false);
   const [_showShare, setShowShare] = useState(false);
 
@@ -157,10 +156,6 @@ export default function VideoDetailPage() {
       // ignore
     }
   }, [videoId]);
-
-  const _handlePlay = useCallback((v: UnifiedVideo) => {
-    window.open(v.videoUrl, '_blank', 'noopener noreferrer');
-  }, []);
 
   const handleWatchLater = useCallback(() => {
     if (!video) return;

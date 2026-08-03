@@ -34,23 +34,6 @@ function HomeIcon({ active }: { active: boolean }) {
   );
 }
 
-function _FeedIcon({ active }: { active: boolean }) {
-  return (
-    <svg
-      width="22"
-      height="22"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={active ? 2.5 : 1.5}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M4 4h16v4H4zM4 10h16v4H4zM4 16h16v4H4z" />
-    </svg>
-  );
-}
 
 function ProtocolsIcon({ active }: { active: boolean }) {
   return (

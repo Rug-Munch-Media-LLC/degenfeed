@@ -21,7 +21,6 @@ function ShareButton({ href, label, color }: { href: string; label: string; colo
 export function GoLiveActions({
   connection,
   config,
-  platform,
   onGoLive,
 }: {
   connection: StreamConnection;

@@ -15,7 +15,7 @@ const REPORT_REASONS = [
   'Other',
 ];
 
-export function StreamReportButton({ streamId }: StreamReportButtonProps) {
+export function StreamReportButton({}: StreamReportButtonProps) {
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState('');
   const [submitted, setSubmitted] = useState(false);

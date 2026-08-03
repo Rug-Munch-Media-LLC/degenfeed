@@ -3,8 +3,7 @@ import { NextResponse } from 'next/server';
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { name, symbol, uri, creator, chain, creatorAllocationBps, creatorFeeBps, crossChain } =
-      body;
+    const {name, symbol, creator, chain, crossChain} =      body;
 
     if (!name || !symbol || !creator) {
       return NextResponse.json(

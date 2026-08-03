@@ -166,47 +166,6 @@ const fetcher = async (url: string): Promise<LiveStreamsResponse> => {
 
 /* === API-to-Frontend Converter ================================ */
 
-function _convertApiStream(apiStream: any): LiveStream {
-  const source: StreamSource = apiStream.source || 'twitch';
-  const sourceConfig = SOURCE_CONFIG[source] ?? SOURCE_CONFIG.twitch;
-
-  // Map backend category to stream type
-  const category = (apiStream.category || '').toLowerCase();
-  let streamType: StreamType = SOURCE_TO_STREAM_TYPE[source] ?? 'solo';
-  if (category.includes('spaces') || category.includes('talk') || category.includes('podcast')) {
-    streamType = 'spaces';
-  } else if (
-    category.includes('launch') ||
-    category.includes('token') ||
-    category.includes('coin')
-  ) {
-    streamType = 'launch';
-  } else if (
-    category.includes('collab') ||
-    category.includes('panel') ||
-    category.includes('interview')
-  ) {
-    streamType = 'collab';
-  }
-
-  return {
-    id: apiStream.id,
-    title: apiStream.title,
-    creatorId: apiStream.streamer?.id ?? apiStream.id,
-    creatorHandle: apiStream.streamer?.handle ?? apiStream.streamer?.displayName ?? 'unknown',
-    creatorAvatar: apiStream.streamer?.avatarUrl,
-    streamType,
-    source,
-    sourceLabel: sourceConfig.label,
-    sourceColor: sourceConfig.color,
-    viewerCount: apiStream.viewerCount ?? 0,
-    thumbnailUrl: apiStream.thumbnailUrl,
-    isLive: apiStream.isLive ?? true,
-    startedAt: apiStream.startedAt ?? Date.now(),
-    tags: apiStream.tags ?? [],
-    platformMeta: apiStream.platformMeta,
-  };
-}
 
 /* === Mock Data (Fallback when API unavailable) ================ */
 

@@ -25,7 +25,6 @@ import { useCallback, useState } from 'react';
 
 const FC_COLOR = '#8a63d2';
 const FC_PROTOCOL = 'farcaster';
-const _FC_LABEL = 'Farcaster';
 
 // ─── Miniapp Definition ─────────────────────────────────────────────────
 

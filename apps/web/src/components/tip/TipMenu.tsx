@@ -33,8 +33,7 @@ export function TipMenu({
   className = '',
   compact = false,
 }: TipMenuProps) {
-  const { state, resolveMethods, createTip } = useTip();
-  const { account: evmAccount, connect: connectEvm } = useWeb3();
+  const {createTip} = useTip();  const { account: evmAccount, connect: connectEvm } = useWeb3();
   const { account: solAccount, connect: connectSol } = useSolana();
   const { announce } = useAnnouncer();
 

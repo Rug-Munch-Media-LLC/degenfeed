@@ -36,7 +36,6 @@ const WelcomeBackModal = dynamic(
   { ssr: false, loading: () => null },
 );
 
-const _APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION || '0.1.0';
 
 /* === Page title ============================================= */
 

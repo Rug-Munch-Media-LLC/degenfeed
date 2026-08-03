@@ -156,37 +156,6 @@ interface RainDrop {
   size: number;
 }
 
-function _EmojiRain({ emoji, count = 30 }: { emoji: string; count?: number }) {
-  const [drops] = useState<RainDrop[]>(() =>
-    Array.from({ length: count }, (_, i) => ({
-      id: i,
-      emoji,
-      x: Math.random() * 100,
-      delay: Math.random() * 2,
-      duration: 2 + Math.random() * 3,
-      size: 0.5 + Math.random() * 1.5,
-    })),
-  );
-
-  return (
-    <div className="pointer-events-none absolute inset-0 z-30 overflow-hidden">
-      {drops.map((drop) => (
-        <span
-          key={drop.id}
-          className="absolute text-sm opacity-70"
-          style={{
-            left: `${drop.x}%`,
-            top: '-20px',
-            fontSize: `${drop.size}rem`,
-            animation: `sticker-rain ${drop.duration}s ease-in ${drop.delay}s both`,
-          }}
-        >
-          {emoji}
-        </span>
-      ))}
-    </div>
-  );
-}
 
 // ─── Props ───────────────────────────────────────────────────────────────
 

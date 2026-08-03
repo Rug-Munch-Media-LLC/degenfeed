@@ -25,15 +25,6 @@ interface TradingSignal {
   priceUsd?: number;
 }
 
-interface TrendingCoin {
-  id: string;
-  symbol: string;
-  name: string;
-  priceUsd: number;
-  change24h: number;
-  socialVolume: number;
-  rank: number;
-}
 
 // ─── Constants ────────────────────────────────────────────────────────────
 

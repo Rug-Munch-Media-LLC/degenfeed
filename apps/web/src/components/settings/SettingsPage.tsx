@@ -21,8 +21,7 @@ import type { Section } from './types';
 
 export default function SettingsPage() {
   const { showToast } = useToast();
-  const { walletAddress } = useAuth();
-  const { refresh: refreshPremium } = usePremium();
+  const {} = useAuth();  const { refresh: refreshPremium } = usePremium();
   const {
     prefs,
     setTheme,

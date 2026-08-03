@@ -44,7 +44,6 @@ const ActionButton = memo(function ActionButton({
   size = 'md',
 }: ActionBtnProps) {
   const btnSize = size === 'sm' ? 'h-9 w-9' : 'h-11 w-11';
-  const _iconSize = size === 'sm' ? 18 : 22;
 
   return (
     <div className="group relative flex flex-col items-center">

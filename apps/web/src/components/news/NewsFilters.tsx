@@ -13,7 +13,6 @@ export function NewsFilters({
   setSort,
   searchInput,
   setSearchInput,
-  query,
   setQuery,
   masonryLayout,
   setMasonryLayout,

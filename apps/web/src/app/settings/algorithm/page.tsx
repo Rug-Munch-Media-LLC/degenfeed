@@ -175,7 +175,6 @@ function NicheChip({
 // ─── Helper: Protocol Weight Slider ────────────────────────────────────
 
 function ProtocolWeightRow({
-  id,
   label,
   color,
   weight,

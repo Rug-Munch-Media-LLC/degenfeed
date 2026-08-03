@@ -2,7 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams} from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import BondingCurveChart from '../../../components/launch/BondingCurveChart';
 import BuySellInterface from '../../../components/launch/BuySellInterface';
@@ -121,7 +121,6 @@ function CoinPageSkeleton() {
 
 export default function CoinPage() {
   const params = useParams();
-  const _router = useRouter();
   const symbol = typeof params.symbol === 'string' ? params.symbol : '';
 
   // Fetch live bonding curve data
@@ -133,7 +132,6 @@ export default function CoinPage() {
     recentTrades,
     holderCount,
     isLoading: curveLoading,
-    isError: curveError,
     isLive,
     refresh,
   } = useBondingCurve(symbol);

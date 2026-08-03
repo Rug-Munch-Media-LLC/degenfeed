@@ -115,7 +115,6 @@ function useStreamData(id: string): StreamExtended {
 
 function StreamVideoPlayer({
   embedUrl,
-  source,
   title,
 }: {
   embedUrl?: string;

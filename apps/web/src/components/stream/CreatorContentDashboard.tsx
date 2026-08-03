@@ -380,7 +380,6 @@ export function CreatorContentDashboard({ compact = false }: CreatorContentDashb
 
 function MiniRow({
   icon,
-  label,
   usd,
   color,
 }: {

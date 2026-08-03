@@ -496,7 +496,6 @@ function UpgradeModal({
 // ─── Current Tier Banner ───────────────────────────────────────────────────
 
 function CurrentTierBanner({
-  tier,
   name,
   isPremium,
   expiresAt,
@@ -667,8 +666,7 @@ function UnlockPrompts({
 // ─── Page Component ────────────────────────────────────────────────────────
 
 export default function MembershipPage() {
-  const { status, features, upgrade, cancel } = useMembership();
-  const [showUpgrade, setShowUpgrade] = useState<Tier | null>(null);
+  const {status, cancel} = useMembership();  const [showUpgrade, setShowUpgrade] = useState<Tier | null>(null);
   const [upgradeLoading, setUpgradeLoading] = useState(false);
   const [showCancel, setShowCancel] = useState(false);
   const [upgradeSuccess, _setUpgradeSuccess] = useState<string | null>(null);

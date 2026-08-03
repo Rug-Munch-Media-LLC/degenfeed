@@ -382,14 +382,12 @@ async function handleApiRoute(
 
   let payload: SessionPayload | null = null;
   let jwtClaims: JwtClaims | null = null;
-  let _authMethod: 'wallet' | 'jwt' | null = null;
 
   // Try JWT from rmi-backend first
   const rmiToken = cookieHeader ? extractJwtFromRequest(request) : null;
   if (rmiToken && isJwt(rmiToken)) {
     jwtClaims = await verifyRmiJwt(rmiToken);
     if (jwtClaims) {
-      _authMethod = 'jwt';
       payload = {
         address: jwtClaims.wallet ?? `rmi:${jwtClaims.id}`,
         chain: 'ethereum',
@@ -411,7 +409,6 @@ async function handleApiRoute(
       const token = authHeader.slice(AUTH_TOKEN_PREFIX.length).trim();
       if (token) {
         payload = await verifySessionCookie(token, secret);
-        if (payload) _authMethod = 'wallet';
       }
     }
 
@@ -419,7 +416,6 @@ async function handleApiRoute(
       const cookieValue = parseSessionCookie(cookieHeader);
       if (cookieValue) {
         payload = await verifySessionCookie(cookieValue, secret);
-        if (payload) _authMethod = 'wallet';
       }
     }
   }

@@ -256,7 +256,6 @@ export function splitLongMessage(content: string, protocol: string): MessagePart
   const maxPerPart = config.maxChars - prefixOverhead;
 
   const parts: MessagePart[] = [];
-  const _remaining = content;
 
   // Use grapheme-aware splitting
   if (typeof Intl !== 'undefined' && 'Segmenter' in Intl) {

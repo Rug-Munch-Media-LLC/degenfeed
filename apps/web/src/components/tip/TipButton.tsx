@@ -40,8 +40,7 @@ export function TipButton({
   className = '',
 }: TipButtonContext) {
   const { state, resolveMethods, createTip, fetchLightningInvoice, setTipStatus } = useTip();
-  const { account: evmAccount, connect: connectEvm, provider } = useWeb3();
-  const { account: solAccount, connect: connectSol, signAndSendTransaction } = useSolana();
+  const {account: evmAccount, connect: connectEvm} = useWeb3();  const { account: solAccount, connect: connectSol, signAndSendTransaction } = useSolana();
   const { announce } = useAnnouncer();
 
   const [isOpen, setIsOpen] = useState(false);

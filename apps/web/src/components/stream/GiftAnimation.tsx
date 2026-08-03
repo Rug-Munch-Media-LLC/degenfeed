@@ -48,33 +48,6 @@ interface GiftAnimationProps {
 
 // ─── Particle Generators ─────────────────────────────────────────────────
 
-function _generateParticles(
-  count: number,
-  emoji: string,
-  area: { w: number; h: number },
-): Array<{
-  id: number;
-  emoji: string;
-  x: number;
-  y: number;
-  vx: number;
-  vy: number;
-  rotation: number;
-  scale: number;
-  opacity: number;
-}> {
-  return Array.from({ length: count }, (_, i) => ({
-    id: i,
-    emoji,
-    x: Math.random() * area.w,
-    y: area.h + 50, // Start below the screen
-    vx: (Math.random() - 0.5) * 4,
-    vy: -(Math.random() * 6 + 4), // Float upward
-    rotation: Math.random() * 360,
-    scale: 0.5 + Math.random() * 1.0,
-    opacity: 0.7 + Math.random() * 0.3,
-  }));
-}
 
 // ─── Gift Animations ─────────────────────────────────────────────────────
 

@@ -36,53 +36,6 @@ interface ConnectPlatformModalProps {
   onRefresh?: () => void;
 }
 
-// ─── Platform Data ────────────────────────────────────────────────────────
-
-const _PLATFORMS: Omit<PlatformInfo, 'connected'>[] = [
-  {
-    id: 'youtube',
-    name: 'YouTube',
-    icon: '▶️',
-    description: 'Post videos, schedule uploads, go live, pull analytics',
-    capabilities: ['Post Videos', 'Schedule', 'Go Live', 'Analytics'],
-  },
-  {
-    id: 'twitch',
-    name: 'Twitch',
-    icon: '📺',
-    description: 'Go live notifications, clip sharing, channel management',
-    capabilities: ['Go Live', 'Clips', 'Channel Mgmt'],
-  },
-  {
-    id: 'kick',
-    name: 'Kick',
-    icon: '🔴',
-    description: 'Go live and share clips',
-    capabilities: ['Go Live', 'Clips'],
-  },
-  {
-    id: 'tiktok',
-    name: 'TikTok',
-    icon: '🎵',
-    description: 'Post videos, schedule, live streaming',
-    capabilities: ['Post Videos', 'Schedule', 'Go Live'],
-  },
-  {
-    id: 'instagram',
-    name: 'Instagram',
-    icon: '📸',
-    description: 'Post images, videos, and stories',
-    capabilities: ['Post Images', 'Post Videos', 'Stories'],
-  },
-  {
-    id: 'linkedin',
-    name: 'LinkedIn',
-    icon: '💼',
-    description: 'Post articles and professional updates',
-    capabilities: ['Post Articles', 'Post Updates', 'Analytics'],
-  },
-];
-
 // ─── Capability Badge ─────────────────────────────────────────────────────
 
 function CapabilityBadge({ label }: { label: string }) {

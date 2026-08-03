@@ -121,7 +121,6 @@ export interface UseVineFeedResult {
 
 const INITIAL_LIMIT = 20;
 const LOAD_MORE_LIMIT = 10;
-const _QUEUE_SIZE = 50;
 
 // ─── Hook ─────────────────────────────────────────────────────────────────
 

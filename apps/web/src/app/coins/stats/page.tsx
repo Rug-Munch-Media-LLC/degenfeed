@@ -64,10 +64,6 @@ function formatCompactNum(n: number): string {
   return String(n);
 }
 
-function _shortenAddress(addr: string): string {
-  if (!addr || addr.length < 10) return addr;
-  return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
-}
 
 function generateSparklineData(): number[] {
   let price = 30 + Math.random() * 40;

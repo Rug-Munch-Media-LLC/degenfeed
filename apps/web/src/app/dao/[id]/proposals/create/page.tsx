@@ -1,14 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { MilestoneEditor } from './_components/MilestoneEditor';
 import { CONSTITUTIONAL_PARAMS, MOCK_TOKENS, PROPOSAL_TYPES } from './constants';
 import type { ConstitutionalParam, Milestone, ProposalType } from './types';
 
 export default function CreateProposalPage({ params }: { params: { id: string } }) {
-  const _router = useRouter();
   const [step, setStep] = useState<'type' | 'content' | 'preview'>('type');
   const [proposalType, setProposalType] = useState<ProposalType | null>(null);
   const [title, setTitle] = useState('');

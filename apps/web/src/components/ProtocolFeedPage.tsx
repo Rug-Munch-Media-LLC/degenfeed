@@ -5,7 +5,7 @@ import type { EngagementAction, UnifiedPost } from '@degenfeed/types';
 import { ErrorBoundary, FeedList } from '@degenfeed/ui';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { useRouter} from 'next/navigation';
 import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
 import { useRealtimeFeed } from '../hooks/useRealtimeFeed';
 import { useAuth } from './AuthProvider';
@@ -192,7 +192,6 @@ interface Props {
 export function ProtocolFeedPage({ protocol }: Props) {
   const config: ProtocolFeedConfig = PROTOCOL_CONFIGS[protocol] as ProtocolFeedConfig;
   const router = useRouter();
-  const _pathname = usePathname();
   const { engage, openComposeReply } = useAuth();
   const [, startTransition] = useTransition();
 

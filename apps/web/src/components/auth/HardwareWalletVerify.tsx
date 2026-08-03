@@ -74,7 +74,6 @@ function ShieldCheckIcon() {
 export function HardwareWalletVerify({
   onVerified,
   mode = 'setup',
-  walletType,
 }: HardwareWalletVerifyProps) {
   const web3 = useWeb3();
   const { challenge, step, loading, error, startChallenge, signAndVerifyWithEthereum, reset } =

@@ -358,7 +358,6 @@ export default function VideoDiscoveryPage() {
                       {videos.map((video) => {
                         const apiVideo = row.videos.find((v) => v.id === video.id);
                         const progress = apiVideo?.watchProgress ?? 0;
-                        const _position = apiVideo?.watchPosition ?? 0;
 
                         return (
                           <Link

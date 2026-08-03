@@ -36,15 +36,6 @@ interface EmojisResponse {
 
 // ─── Effect class map ────────────────────────────────────────────────────
 
-const EFFECT_CLASS_MAP: Record<string, string> = {
-  'emoji-burst': 'emoji-chat-burst',
-  'emoji-launch': 'emoji-chat-launch',
-  'emoji-wobble': 'emoji-chat-wobble',
-  'emoji-rain': 'emoji-chat-rain',
-  'emoji-sparkle': 'emoji-chat-sparkle',
-  'emoji-bounce': 'emoji-chat-bounce',
-  'emoji-shake': 'emoji-chat-shake',
-};
 
 const fetcher = async (url: string) => {
   const res = await fetch(url);
@@ -143,13 +134,6 @@ export function EmojiPickerLive({ onSelect, onClose }: EmojiPickerLiveProps) {
     },
     [onSelect],
   );
-
-  const _getEmojiClass = (emoji: EmojiItem): string => {
-    if (emoji.effectClass && EFFECT_CLASS_MAP[emoji.effectClass]) {
-      return EFFECT_CLASS_MAP[emoji.effectClass]!;
-    }
-    return 'emoji-chat-bounce';
-  };
 
   // ─── Render ────────────────────────────────────────────────────────
 

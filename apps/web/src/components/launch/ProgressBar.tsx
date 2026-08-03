@@ -76,18 +76,15 @@ export default function ProgressBar({
   action,
   className = '',
   eraName,
-  eraGradient,
   first100Remaining,
   streakDays,
   showFireworks = true,
-  currentMilestone,
   holderCount,
   boughtLast60s,
   isTrending,
 }: ProgressBarProps) {
   const clamped = Math.min(100, Math.max(0, progress));
   const height = size === 'sm' ? 'h-2' : size === 'lg' ? 'h-4' : 'h-3';
-  const _textSize = size === 'sm' ? 'text-xs' : 'text-sm';
   const isGraduated = clamped >= 100;
 
   // == Fireworks state ====================================

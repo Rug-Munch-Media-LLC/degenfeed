@@ -4,21 +4,6 @@ import type { UnifiedPost } from '@degenfeed/types';
 import { parseVideoUrl, type VideoInfo } from '@degenfeed/utils';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-interface ShortsInteractionState {
-  liked: boolean;
-  likeCount: number;
-  bookmarked: boolean;
-  muted: boolean;
-  showOverlay: boolean;
-  progress: number;
-  tipCount: number;
-  showCaption: boolean;
-  showInfoPanel: boolean;
-  heartVisible: boolean;
-  tipModalOpen: boolean;
-  emotes: Array<{ id: number; emoji: string; x: number }>;
-  pullDismissProgress: number;
-}
 
 interface ShortsCallbacks {
   liked: boolean;

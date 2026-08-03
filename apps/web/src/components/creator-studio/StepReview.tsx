@@ -41,7 +41,7 @@ function getCoinExplorerUrl(deployTarget: string, address: string): string {
   }
 }
 
-export default function StepReview({ form, update, simulateDeploy }: StepReviewProps) {
+export default function StepReview({form, update}: StepReviewProps) {
   return (
     <div className="space-y-5">
       <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-5">

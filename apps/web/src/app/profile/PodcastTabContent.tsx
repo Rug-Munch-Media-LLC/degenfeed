@@ -161,7 +161,6 @@ export default function PodcastTabContent({ creatorId, initialPodcasts }: Podcas
                 </div>
                 <div className="divide-y divide-[var(--color-glass-border)]">
                   {latestEpisodes.map((ep) => {
-                    const _epData =
                       'podcast' in ep
                         ? (ep as ProfilePodcastEpisode & { podcast: ProfilePodcast })
                         : null;

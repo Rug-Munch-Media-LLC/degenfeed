@@ -33,8 +33,6 @@ export function SpaceShare({
   spaceId,
   title,
   hostName,
-  platforms = [],
-  protocols = [],
   isLive,
   scheduledAt,
 }: SpaceShareProps) {
@@ -43,7 +41,6 @@ export function SpaceShare({
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Merge platforms and protocols into a unique list
-  const _allPlatforms = [...new Set([...platforms, ...protocols])];
 
   const spaceUrl =
     typeof window !== 'undefined' ? `${window.location.origin}/spaces/${spaceId}` : '';

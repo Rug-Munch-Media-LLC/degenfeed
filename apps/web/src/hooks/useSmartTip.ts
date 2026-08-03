@@ -92,8 +92,7 @@ export interface CreatorTipAnalytics {
 
 export function useSmartTip() {
   const { state, resolveMethods, createTip, fetchLightningInvoice, setTipStatus } = useTip();
-  const { account: evmAccount, chainId: evmChainId } = useWeb3();
-  const { account: solAccount } = useSolana();
+  const {account: evmAccount} = useWeb3();  const { account: solAccount } = useSolana();
 
   const [smartChains, setSmartChains] = useState<SmartChainOption[]>([]);
   const [chainLoading, setChainLoading] = useState(false);

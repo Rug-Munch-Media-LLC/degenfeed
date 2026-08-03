@@ -69,7 +69,6 @@ function LivePageSkeleton() {
 
 function StreamNotLive({
   symbol,
-  coinAddress,
   onGoLive,
 }: {
   symbol: string;
@@ -205,8 +204,6 @@ export default function CoinLaunchStreamPage() {
     price,
     progress,
     recentTrades,
-    holderCount,
-    isLoading: curveLoading,
   } = useBondingCurve(coinAddress);
 
   // Stream data

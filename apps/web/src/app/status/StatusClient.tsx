@@ -128,7 +128,6 @@ function SummaryBanner({
 }) {
   const allUp = summary.down === 0 && summary.degraded === 0;
   const hasDown = summary.down > 0;
-  const _hasDegraded = summary.degraded > 0;
 
   let bgClass: string;
   let icon: string;

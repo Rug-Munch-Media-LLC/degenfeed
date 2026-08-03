@@ -43,7 +43,6 @@ export default function TokenCommunityPage({ params }: CommunityPageProps) {
   // Derive token address from the symbol — in production this comes from the metadata
   const {
     curve,
-    price,
     totalRaised,
     holderCount,
     isLoading: curveLoading,

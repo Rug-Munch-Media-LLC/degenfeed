@@ -27,7 +27,6 @@ export function VideoPlayer({
   embedUrl,
   videoUrl,
   source,
-  poster,
   autoplay = true,
   onError,
   className = '',

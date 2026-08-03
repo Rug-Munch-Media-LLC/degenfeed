@@ -129,7 +129,7 @@ interface CreatorDashboardProps {
   streamId?: string;
 }
 
-export function CreatorDashboard({ streamId }: CreatorDashboardProps) {
+export function CreatorDashboard({}: CreatorDashboardProps) {
   const [activeTab, setActiveTab] = useState<'overview' | 'chat' | 'revenue' | 'vods'>('overview');
   const analytics = useRef(generateMockAnalytics()).current;
   const streams = useRef(generateMockStream(1)).current[0];

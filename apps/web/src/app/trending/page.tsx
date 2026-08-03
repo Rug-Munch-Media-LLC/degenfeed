@@ -236,7 +236,6 @@ export default function TrendingPage() {
     setActiveFilter(filter);
   };
 
-  const _maxScore = topics.length > 0 ? Math.max(...topics.map((t) => t.score)) : 0;
 
   return (
     <ErrorBoundary>

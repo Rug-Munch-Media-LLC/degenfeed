@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { JetBrains_Mono, Plus_Jakarta_Sans, Syne } from 'next/font/google';
-import { cookies, headers } from 'next/headers';
+import { headers} from 'next/headers';
 import Script from 'next/script';
 
 import '../styles/design-tokens.css';
@@ -108,8 +108,6 @@ export const viewport: Viewport = {
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const cookieStore = await cookies();
-  const _theme = cookieStore.get('df_theme')?.value || 'dark';
 
   // Read CSP nonce from middleware-injected request header
   const headersList = await headers();

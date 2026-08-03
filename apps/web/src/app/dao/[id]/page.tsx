@@ -313,10 +313,6 @@ function ProposalCard({ proposal }: { proposal: Proposal }) {
     proposal.endTime,
   );
   const typeBadge = getTypeBadge(proposal.type);
-  const total = proposal.forVotes + proposal.againstVotes + proposal.abstainVotes;
-  const _forPct = (proposal.forVotes / total) * 100;
-  const _againstPct = (proposal.againstVotes / total) * 100;
-  const _abstainPct = (proposal.abstainVotes / total) * 100;
 
   return (
     <Link

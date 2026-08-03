@@ -289,7 +289,6 @@ function StackedBarChart({ data }: { data: MonthlyRevenue[] }) {
       {/* Bars */}
       {data.map((d, i) => {
         const x = pad.left + i * (chartW / data.length) + gap / 2;
-        const _total = d.tips + d.coinFees + d.subs + d.tokenGate;
         const hTips = (d.tips / maxVal) * chartH;
         const hCoin = (d.coinFees / maxVal) * chartH;
         const hSubs = (d.subs / maxVal) * chartH;

@@ -47,13 +47,11 @@ export function useLiveComments(tokenAddress: string): UseLiveCommentsResult {
   const [comments, setComments] = useState<TokenComment[]>([]);
   const [onlineCount, setOnlineCount] = useState(0);
   const [isConnected, setIsConnected] = useState(false);
-  const _wsRef = useRef<WebSocket | null>(null);
   const reconnectRef = useRef<number>(0);
   const maxReconnect = useRef(5);
 
   // Fetch initial comments via HTTP
-  const { data, error, isLoading } = useSWR<CommentsResponse>(
-    tokenAddress ? `/api/token/${tokenAddress}/comments?limit=50` : null,
+  const {error, isLoading} = useSWR<CommentsResponse>(    tokenAddress ? `/api/token/${tokenAddress}/comments?limit=50` : null,
     async (url: string) => {
       const res = await fetch(url);
       if (!res.ok) throw new Error('Failed to fetch comments');
