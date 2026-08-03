@@ -42,9 +42,12 @@ export async function POST(request: NextRequest) {
       process.env.WORKER_URL || process.env.NEXT_PUBLIC_WORKER_URL || 'http://localhost:8787';
 
     try {
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      const bridgeKey = process.env.BRIDGE_API_KEY;
+      if (bridgeKey) headers.Authorization = `Bearer ${bridgeKey}`;
       const res = await fetch(`${workerUrl}/api/bridge/reply`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({
           parentPostUri: `df://post/${parentId}`,
           parentProtocol,

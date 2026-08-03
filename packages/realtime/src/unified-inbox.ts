@@ -293,7 +293,7 @@ export class UnifiedInbox {
       for (const [convId, messages] of convMap) {
         messages.sort((a, b) => b.createdAt - a.createdAt);
         const [partyA, partyB] = convId.split(':');
-        const otherUserId = partyA === userId ? partyB : partyA;
+        const otherUserId = (partyA === userId ? (partyB ?? partyA) : partyA) ?? '';
         const lastMessage = messages[0];
         summaries.push({
           conversationId: convId,

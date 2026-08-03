@@ -62,7 +62,7 @@ export const DEFAULT_CONFIG: CrossPairConfig[] = [
     id: 'gts-to-lens',
     source: 'mastodon',
     targets: ['lens'],
-    enabled: false, // [DS] 2026-08-03: LENS_REFRESH_TOKEN missing (not in gopass) — disabled until credentials provisioned
+    enabled: false, // [DS] 2026-08-03: LENS_REFRESH_TOKEN missing (not in gopass) AND LENS_WALLET_PRIVATE_KEY absent — Lens v2 requires refresh token or wallet SIWE; neither provisioned
     pollIntervalMs: 60000,
     rateLimit: { maxPosts: 5, windowMs: 3600000 },
     sourceConfig: {},
@@ -98,7 +98,7 @@ export const DEFAULT_CONFIG: CrossPairConfig[] = [
     id: 'pixelfed-to-mastodon',
     source: 'pixelfed',
     targets: ['mastodon'],
-    enabled: false, // [DS] 2026-08-03: MASTODON_ACCESS_TOKEN in gopass is stale (401 on live GTS) — disabled until valid token restored
+    enabled: true, // [DS] 2026-08-03: valid write-scoped token promoted from GTS SQLite DB (DegenFeed Crossposter Bot, read+write+follow+push, expires 2027-07-27)
     pollIntervalMs: 120000,
     rateLimit: { maxPosts: 4, windowMs: 3600000 },
     sourceConfig: {},

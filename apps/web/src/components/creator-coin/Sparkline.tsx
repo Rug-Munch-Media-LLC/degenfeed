@@ -49,10 +49,10 @@ export function Sparkline({
 
   // Build fill polygon: path down to baseline
   const firstPt =
-    data.length > 0 ? `0,${height - ((data[0] - min) / range) * height}` : `0,${height}`;
+    data.length > 0 ? `0,${height - ((data[0]! - min) / range) * height}` : `0,${height}`;
   const lastPt =
     data.length > 0
-      ? `${width},${height - ((data[data.length - 1] - min) / range) * height}`
+      ? `${width},${height - ((data[data.length - 1]! - min) / range) * height}`
       : `${width},${height}`;
   const fillPath = `${points} ${lastPt} ${width},${height} 0,${height} ${firstPt.split(',')[0]},${height}`;
 
@@ -78,7 +78,7 @@ export function Sparkline({
       {/* End dot */}
       <circle
         cx={width}
-        cy={height - ((data[data.length - 1] - min) / range) * height}
+        cy={height - ((data[data.length - 1]! - min) / range) * height}
         r="2"
         fill={color}
       />

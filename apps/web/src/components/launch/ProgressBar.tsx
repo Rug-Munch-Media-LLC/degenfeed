@@ -110,6 +110,7 @@ export default function ProgressBar({
     if (clamped > (prevMilestoneRef.current ?? 0)) {
       prevMilestoneRef.current = clamped;
     }
+    return undefined;
   }, [clamped, showFireworks]);
 
   // Determine gradient from era or phase

@@ -323,7 +323,7 @@ export default function PrivacySettingsPage() {
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {EXPORT_FORMATS.map((fmt) => (
-              <ExportButton key={fmt.id} format={fmt} walletAddress={walletAddress} />
+              <ExportButton key={fmt.id} format={fmt} walletAddress={walletAddress ?? null} />
             ))}
           </div>
           <div className="rounded-xl border border-degen-500/20 bg-degen-500/5 px-4 py-3">
@@ -352,7 +352,7 @@ export default function PrivacySettingsPage() {
               <MigrationCard
                 key={platform.id}
                 platform={platform}
-                walletAddress={walletAddress}
+                walletAddress={walletAddress ?? null}
                 onStatusChange={() => {}}
               />
             ))}

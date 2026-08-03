@@ -14,7 +14,7 @@ import { PROTOCOL_META, ProtocolShell } from '@degenfeed/ui/protocol-shell';
 import Link from 'next/link';
 import { useCallback, useState } from 'react';
 
-const BW_META = PROTOCOL_META.bookwyrm;
+const BW_META = PROTOCOL_META.bookwyrm!;
 const BW_COLOR = BW_META.color;
 
 // ─── Types & Data ───────────────────────────────────────────────────────

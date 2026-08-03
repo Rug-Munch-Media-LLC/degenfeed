@@ -62,28 +62,11 @@ const CRYPTO_NEWS_FEEDS: FeedSource[] = [
     niches: ['crypto', 'defi', 'ethereum'],
   },
   {
-    url: 'https://www.bankless.com/rss.xml',
-    label: 'Bankless',
-    category: 'crypto-news',
-    niches: ['crypto', 'defi', 'ethereum'],
-  },
-  {
-    url: 'https://messari.io/rss',
-    label: 'Messari',
+    url: 'https://blockworks.co/feed',
+    label: 'Blockworks',
     category: 'crypto-news',
     niches: ['crypto', 'research'],
-  },
-  {
-    url: 'https://delphidigital.io/feed',
-    label: 'Delphi Digital',
-    category: 'crypto-news',
-    niches: ['crypto', 'research'],
-  },
-  {
-    url: 'https://www.nansen.ai/feed',
-    label: 'Nansen',
-    category: 'crypto-news',
-    niches: ['crypto', 'research', 'ethereum'],
+    featured: true,
   },
   {
     url: 'https://cointelegraph.com/rss',
@@ -151,12 +134,6 @@ const CRYPTO_NEWS_FEEDS: FeedSource[] = [
     niches: ['bitcoin'],
   },
   {
-    url: 'https://ethereumworldnews.com/feed/',
-    label: 'Ethereum World News',
-    category: 'crypto-news',
-    niches: ['ethereum'],
-  },
-  {
     url: 'https://ambcrypto.com/feed/',
     label: 'AMBCrypto',
     category: 'crypto-news',
@@ -172,12 +149,6 @@ const CRYPTO_NEWS_FEEDS: FeedSource[] = [
   {
     url: 'https://www.zycrypto.com/feed/',
     label: 'ZyCrypto',
-    category: 'crypto-news',
-    niches: ['crypto'],
-  },
-  {
-    url: 'https://www.cryptoglobe.com/feed/',
-    label: 'CryptoGlobe',
     category: 'crypto-news',
     niches: ['crypto'],
   },
@@ -199,6 +170,13 @@ const CRYPTO_NEWS_FEEDS: FeedSource[] = [
     category: 'crypto-news',
     niches: ['crypto'],
   },
+  {
+    url: 'https://cryptoslate.com/feed/',
+    label: 'CryptoSlate',
+    category: 'crypto-news',
+    niches: ['crypto'],
+    featured: true,
+  },
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -207,25 +185,7 @@ const CRYPTO_NEWS_FEEDS: FeedSource[] = [
 
 const RESEARCH_FEEDS: FeedSource[] = [
   {
-    url: 'https://coinmetrics.io/feed/',
-    label: 'CoinMetrics',
-    category: 'crypto-research',
-    niches: ['crypto', 'research', 'bitcoin'],
-  },
-  {
-    url: 'https://dune.com/blog/rss.xml',
-    label: 'Dune Analytics',
-    category: 'crypto-research',
-    niches: ['crypto', 'research', 'analytics'],
-  },
-  {
-    url: 'https://flipsidecrypto.xyz/feed.xml',
-    label: 'Flipside Crypto',
-    category: 'crypto-research',
-    niches: ['crypto', 'research', 'analytics'],
-  },
-  {
-    url: 'https://www.theblock.co/rss',
+    url: 'https://www.theblock.co/rss.xml',
     label: 'The Block',
     category: 'crypto-research',
     niches: ['crypto', 'research'],
@@ -238,16 +198,11 @@ const RESEARCH_FEEDS: FeedSource[] = [
     niches: ['crypto', 'research'],
   },
   {
-    url: 'https://www.coindesk.com/arc/outboundfeeds/rss/category/opinion/',
-    label: 'CoinDesk Opinion',
+    url: 'https://www.chainalysis.com/blog/feed/',
+    label: 'Chainalysis',
     category: 'crypto-research',
-    niches: ['crypto', 'opinion'],
-  },
-  {
-    url: 'https://blog.chain.link/feed/',
-    label: 'Chainlink Blog',
-    category: 'crypto-research',
-    niches: ['crypto', 'oracle', 'defi'],
+    niches: ['crypto', 'research', 'security'],
+    featured: true,
   },
   {
     url: 'https://blog.ethereum.org/feed.xml',
@@ -255,31 +210,6 @@ const RESEARCH_FEEDS: FeedSource[] = [
     category: 'crypto-research',
     niches: ['ethereum'],
     featured: true,
-  },
-  {
-    url: 'https://blog.solana.com/feed.xml',
-    label: 'Solana Blog',
-    category: 'crypto-research',
-    niches: ['solana'],
-    featured: true,
-  },
-  {
-    url: 'https://blog.polygon.technology/feed/',
-    label: 'Polygon Blog',
-    category: 'crypto-research',
-    niches: ['ethereum', 'layer2'],
-  },
-  {
-    url: 'https://blog.arbitrum.io/feed.xml',
-    label: 'Arbitrum Blog',
-    category: 'crypto-research',
-    niches: ['ethereum', 'layer2'],
-  },
-  {
-    url: 'https://optimism.mirror.xyz/feed/updates',
-    label: 'Optimism Blog',
-    category: 'crypto-research',
-    niches: ['ethereum', 'layer2'],
   },
 ];
 
@@ -289,77 +219,16 @@ const RESEARCH_FEEDS: FeedSource[] = [
 
 const VC_FEEDS: FeedSource[] = [
   {
-    url: 'https://electriccapital.com/feed/',
-    label: 'Electric Capital',
-    category: 'vc-investment',
-    niches: ['crypto', 'research', 'vc'],
-  },
-  {
-    url: 'https://a16zcrypto.com/feed/',
-    label: 'a16z Crypto',
-    category: 'vc-investment',
-    niches: ['crypto', 'vc', 'research'],
-    featured: true,
-  },
-  {
-    url: 'https://paradigm.xyz/feed.xml',
-    label: 'Paradigm',
-    category: 'vc-investment',
-    niches: ['crypto', 'vc', 'research'],
-  },
-  {
-    url: 'https://panteracapital.com/feed/',
-    label: 'Pantera Capital',
-    category: 'vc-investment',
-    niches: ['crypto', 'vc'],
-  },
-  {
-    url: 'https://multicoin.capital/feed/',
-    label: 'Multicoin Capital',
-    category: 'vc-investment',
-    niches: ['crypto', 'vc', 'research'],
-  },
-  {
-    url: 'https://framework.ventures/feed.xml',
-    label: 'Framework Ventures',
-    category: 'vc-investment',
-    niches: ['crypto', 'vc'],
-  },
-  {
-    url: 'https://variant.fund/feed/',
-    label: 'Variant Fund',
-    category: 'vc-investment',
-    niches: ['crypto', 'vc'],
-  },
-  {
-    url: 'https://dragonfly.xyz/feed.xml',
-    label: 'Dragonfly Capital',
-    category: 'vc-investment',
-    niches: ['crypto', 'vc'],
-  },
-  {
-    url: 'https://1kx.network/feed.xml',
-    label: '1kx',
-    category: 'vc-investment',
-    niches: ['crypto', 'vc'],
-  },
-  {
-    url: 'https://www.placeholder.vc/feed/',
-    label: 'Placeholder VC',
-    category: 'vc-investment',
-    niches: ['crypto', 'vc'],
-  },
-  {
-    url: 'https://collabcurrency.com/feed/',
-    label: 'Collab+Currency',
-    category: 'vc-investment',
-    niches: ['crypto', 'vc', 'solana'],
-  },
-  {
     url: 'https://www.castleisland.vc/feed/',
     label: 'Castle Island VC',
     category: 'vc-investment',
     niches: ['crypto', 'vc', 'bitcoin'],
+  },
+  {
+    url: 'https://blog.kraken.com/feed/',
+    label: 'Kraken Blog',
+    category: 'vc-investment',
+    niches: ['crypto', 'exchange'],
   },
 ];
 
@@ -380,54 +249,6 @@ const DEV_FEEDS: FeedSource[] = [
     category: 'dev-technical',
     niches: ['ethereum', 'dev'],
   },
-  {
-    url: 'https://forums.solana.com/posts.rss',
-    label: 'Solana Tech Forums',
-    category: 'dev-technical',
-    niches: ['solana', 'dev'],
-  },
-  {
-    url: 'https://research.circle.com/feed.xml',
-    label: 'Circle Research',
-    category: 'dev-technical',
-    niches: ['crypto', 'stablecoin'],
-  },
-  {
-    url: 'https://celo.org/feed.xml',
-    label: 'Celo Blog',
-    category: 'dev-technical',
-    niches: ['crypto', 'mobile'],
-  },
-  {
-    url: 'https://near.org/blog/feed.xml',
-    label: 'NEAR Blog',
-    category: 'dev-technical',
-    niches: ['crypto', 'layer1'],
-  },
-  {
-    url: 'https://blog.avax.network/feed',
-    label: 'Avalanche Blog',
-    category: 'dev-technical',
-    niches: ['crypto', 'layer1'],
-  },
-  {
-    url: 'https://blog.cosmos.network/feed/',
-    label: 'Cosmos Blog',
-    category: 'dev-technical',
-    niches: ['crypto', 'cosmos'],
-  },
-  {
-    url: 'https://blog.ton.org/feed.xml',
-    label: 'TON Blog',
-    category: 'dev-technical',
-    niches: ['crypto', 'telegram'],
-  },
-  {
-    url: 'https://suiblog.com/feed/',
-    label: 'Sui Blog',
-    category: 'dev-technical',
-    niches: ['crypto', 'layer1'],
-  },
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -435,13 +256,6 @@ const DEV_FEEDS: FeedSource[] = [
 // ═══════════════════════════════════════════════════════════════════════════
 
 const SECURITY_FEEDS: FeedSource[] = [
-  {
-    url: 'https://rekt.news/feed.xml',
-    label: 'Rekt News',
-    category: 'security',
-    niches: ['security', 'crypto', 'hack'],
-    featured: true,
-  },
   {
     url: 'https://web3isgoinggreat.com/feed.xml',
     label: 'Web3 is Going Great',
@@ -456,19 +270,6 @@ const SECURITY_FEEDS: FeedSource[] = [
     featured: true,
   },
   {
-    url: 'https://blog.openzeppelin.com/feed.xml',
-    label: 'OpenZeppelin',
-    category: 'security',
-    niches: ['security', 'ethereum', 'solidity'],
-  },
-  {
-    url: 'https://research.certik.com/feed.xml',
-    label: 'CertiK Research',
-    category: 'security',
-    niches: ['security', 'audit'],
-    featured: true,
-  },
-  {
     url: 'https://slowmist.medium.com/feed',
     label: 'SlowMist',
     category: 'security',
@@ -479,12 +280,6 @@ const SECURITY_FEEDS: FeedSource[] = [
     label: 'Halborn',
     category: 'security',
     niches: ['security', 'crypto'],
-  },
-  {
-    url: 'https://neodyme.io/feed.xml',
-    label: 'Neodyme',
-    category: 'security',
-    niches: ['security', 'solana'],
   },
 ];
 
@@ -593,13 +388,6 @@ const TECH_FEEDS: FeedSource[] = [
     category: 'tech',
     niches: ['ai', 'research'],
   },
-  {
-    url: 'https://www.anthropic.com/feed.xml',
-    label: 'Anthropic',
-    category: 'tech',
-    niches: ['ai'],
-    featured: true,
-  },
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -608,44 +396,8 @@ const TECH_FEEDS: FeedSource[] = [
 
 const DEFI_FEEDS: FeedSource[] = [
   {
-    url: 'https://defillama.com/rss/blog',
-    label: 'DefiLlama Blog',
-    category: 'defi',
-    niches: ['defi', 'crypto'],
-  },
-  {
-    url: 'https://blog.uniswap.org/feed.xml',
-    label: 'Uniswap Blog',
-    category: 'defi',
-    niches: ['defi', 'ethereum'],
-  },
-  {
-    url: 'https://blog.aave.com/feed.xml',
-    label: 'Aave Blog',
-    category: 'defi',
-    niches: ['defi', 'ethereum'],
-  },
-  {
-    url: 'https://blog.makerdao.com/feed/',
-    label: 'MakerDAO Blog',
-    category: 'defi',
-    niches: ['defi', 'ethereum', 'stablecoin'],
-  },
-  {
     url: 'https://curve.substack.com/feed',
     label: 'Curve Finance',
-    category: 'defi',
-    niches: ['defi', 'ethereum'],
-  },
-  {
-    url: 'https://blog.sushi.com/feed.xml',
-    label: 'Sushi Blog',
-    category: 'defi',
-    niches: ['defi'],
-  },
-  {
-    url: 'https://blog.compound.finance/feed/',
-    label: 'Compound Blog',
     category: 'defi',
     niches: ['defi', 'ethereum'],
   },
@@ -658,12 +410,6 @@ const DEFI_FEEDS: FeedSource[] = [
 const NFT_FEEDS: FeedSource[] = [
   { url: 'https://nftnow.com/feed/', label: 'NFT Now', category: 'nft', niches: ['nft', 'crypto'] },
   {
-    url: 'https://opensea.io/blog/feed/',
-    label: 'OpenSea Blog',
-    category: 'nft',
-    niches: ['nft', 'ethereum'],
-  },
-  {
     url: 'https://decrypt.co/feed/nft',
     label: 'Decrypt NFT',
     category: 'nft',
@@ -675,18 +421,6 @@ const NFT_FEEDS: FeedSource[] = [
     category: 'nft',
     niches: ['nft', 'ethereum'],
   },
-  {
-    url: 'https://mirror.xyz/nftculture/feed/updates',
-    label: 'NFT Culture',
-    category: 'nft',
-    niches: ['nft'],
-  },
-  {
-    url: 'https://www.theblock.co/rss/nft',
-    label: 'The Block NFT',
-    category: 'nft',
-    niches: ['nft'],
-  },
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -695,40 +429,10 @@ const NFT_FEEDS: FeedSource[] = [
 
 const AI_FEEDS: FeedSource[] = [
   {
-    url: 'https://hai.stanford.edu/feed.xml',
-    label: 'Stanford HAI',
-    category: 'ai',
-    niches: ['ai', 'research'],
-  },
-  {
-    url: 'https://www.deeplearning.ai/blog/rss.xml',
-    label: 'DeepLearning.AI',
-    category: 'ai',
-    niches: ['ai', 'dev'],
-  },
-  {
     url: 'https://huggingface.co/blog/feed.xml',
     label: 'Hugging Face Blog',
     category: 'ai',
     niches: ['ai', 'dev', 'research'],
-  },
-  {
-    url: 'https://jalammar.github.com/feed.xml',
-    label: 'Jay Alammar',
-    category: 'ai',
-    niches: ['ai', 'dev'],
-  },
-  {
-    url: 'https://lilianweng.github.io/feed.xml',
-    label: "Lil'Log",
-    category: 'ai',
-    niches: ['ai', 'research'],
-  },
-  {
-    url: 'https://simonwillison.net/atom.xml',
-    label: 'Simon Willison',
-    category: 'ai',
-    niches: ['ai', 'dev', 'python'],
   },
 ];
 
@@ -740,13 +444,6 @@ const AI_FEEDS: FeedSource[] = [
  * Top crypto/DeFi Substack writers. RSS format: https://{author}.substack.com/feed
  */
 const SUBSTACK_WRITERS: FeedSource[] = [
-  {
-    url: 'https://milessuter.substack.com/feed',
-    label: 'Miles Suter',
-    category: 'newsletter',
-    niches: ['crypto', 'bitcoin'],
-    platform: 'substack',
-  },
   {
     url: 'https://validity.substack.com/feed',
     label: 'Validity',
@@ -797,27 +494,6 @@ const SUBSTACK_WRITERS: FeedSource[] = [
     platform: 'substack',
   },
   {
-    url: 'https://thewrapper.substack.com/feed',
-    label: 'The Wrapper',
-    category: 'newsletter',
-    niches: ['crypto'],
-    platform: 'substack',
-  },
-  {
-    url: 'https://goongrubbing.substack.com/feed',
-    label: 'Goon Grubbing',
-    category: 'newsletter',
-    niches: ['crypto', 'memecoin'],
-    platform: 'substack',
-  },
-  {
-    url: 'https://jessewalden.substack.com/feed',
-    label: 'Jesse Walden',
-    category: 'newsletter',
-    niches: ['crypto', 'vc'],
-    platform: 'substack',
-  },
-  {
     url: 'https://defieducation.substack.com/feed',
     label: 'DeFi Education',
     category: 'newsletter',
@@ -839,31 +515,10 @@ const SUBSTACK_WRITERS: FeedSource[] = [
     platform: 'substack',
   },
   {
-    url: 'https://bitcoinmagazine.substack.com/feed',
-    label: 'Bitcoin Magazine',
-    category: 'newsletter',
-    niches: ['bitcoin'],
-    platform: 'substack',
-  },
-  {
-    url: 'https://zkwhiteboard.substack.com/feed',
-    label: 'ZK Whiteboard',
-    category: 'newsletter',
-    niches: ['crypto', 'research', 'zero-knowledge'],
-    platform: 'substack',
-  },
-  {
     url: 'https://thedefiant.substack.com/feed',
     label: 'The Defiant (Substack)',
     category: 'newsletter',
     niches: ['defi', 'crypto'],
-    platform: 'substack',
-  },
-  {
-    url: 'https://martinzaggra.substack.com/feed',
-    label: 'Martin Zagg',
-    category: 'newsletter',
-    niches: ['crypto', 'solana'],
     platform: 'substack',
   },
   {
@@ -922,20 +577,6 @@ const MEDIUM_PUBLICATIONS: FeedSource[] = [
     platform: 'medium',
   },
   {
-    url: 'https://medium.com/feed/defi-pulse',
-    label: 'DeFi Pulse (Medium)',
-    category: 'newsletter',
-    niches: ['defi'],
-    platform: 'medium',
-  },
-  {
-    url: 'https://medium.com/feed/cyberconnect',
-    label: 'CyberConnect',
-    category: 'newsletter',
-    niches: ['crypto', 'social'],
-    platform: 'medium',
-  },
-  {
     url: 'https://medium.com/feed/ethglobal',
     label: 'ETHGlobal',
     category: 'newsletter',
@@ -949,135 +590,43 @@ const MEDIUM_PUBLICATIONS: FeedSource[] = [
     niches: ['crypto', 'oracle'],
     platform: 'medium',
   },
-  {
-    url: 'https://medium.com/feed/humanity-protocol',
-    label: 'Humanity Protocol',
-    category: 'newsletter',
-    niches: ['crypto', 'identity'],
-    platform: 'medium',
-  },
 ];
 
 /**
  * Top Mirror.xyz writers. API: https://mirror.xyz/{address}/feed/updates
  * Mirror uses Ethereum addresses for identity.
+ * NOTE: All Mirror feeds were returning 403 (Cloudflare) as of 2026-08-03
+ * audit — disabled. Re-add when Mirror lifts the bot challenge.
  */
-const MIRROR_WRITERS: FeedSource[] = [
-  {
-    url: 'https://mirror.xyz/0xE3cD9A0aE32c3e2f0b0f1fB1cB3EfC3F7f2cEf1/feed/updates',
-    label: 'Mirror Ecosystem',
-    category: 'newsletter',
-    niches: ['crypto', 'web3'],
-    platform: 'mirror',
-  },
-  {
-    url: 'https://mirror.xyz/0xA7B1C2D3E4F5G6H7I8J9K0L1M2N3O4P5Q6R7S8T9/feed/updates',
-    label: 'Mirror Writers',
-    category: 'newsletter',
-    niches: ['crypto', 'web3'],
-    platform: 'mirror',
-  },
-];
+const MIRROR_WRITERS: FeedSource[] = [];
 
 /**
  * Paragraph.xyz web3 newsletters. Uses GraphQL API.
+ * NOTE: All Paragraph RSS endpoints were returning 429/404 as of 2026-08-03
+ * audit — removed. Re-add if Paragraph restores its public feed endpoints.
  */
-const PARAGRAPH_NEWSLETTERS: FeedSource[] = [
-  {
-    url: 'https://paragraph.xyz/api/feeds/rss/@bankless',
-    label: 'Bankless (Paragraph)',
-    category: 'newsletter',
-    niches: ['crypto', 'defi'],
-    platform: 'paragraph',
-  },
-  {
-    url: 'https://paragraph.xyz/api/feeds/rss/@a16z',
-    label: 'a16z (Paragraph)',
-    category: 'newsletter',
-    niches: ['crypto', 'vc'],
-    platform: 'paragraph',
-  },
-  {
-    url: 'https://paragraph.xyz/api/feeds/rss/@variant',
-    label: 'Variant (Paragraph)',
-    category: 'newsletter',
-    niches: ['crypto', 'vc'],
-    platform: 'paragraph',
-  },
-  {
-    url: 'https://paragraph.xyz/api/feeds/rss/@miles',
-    label: 'Miles (Paragraph)',
-    category: 'newsletter',
-    niches: ['crypto', 'bitcoin'],
-    platform: 'paragraph',
-  },
-  {
-    url: 'https://paragraph.xyz/api/feeds/rss/@doseofdefi',
-    label: 'Dose of DeFi (Paragraph)',
-    category: 'newsletter',
-    niches: ['defi'],
-    platform: 'paragraph',
-  },
-  {
-    url: 'https://paragraph.xyz/api/feeds/rss/@goon',
-    label: 'Goon (Paragraph)',
-    category: 'newsletter',
-    niches: ['crypto', 'memecoin'],
-    platform: 'paragraph',
-  },
-];
+const PARAGRAPH_NEWSLETTERS: FeedSource[] = [];
 
 /**
  * Ghost blogs with public RSS feeds.
+ * NOTE: The Ghost content API endpoints (blog.ethereum.org, blog.solana.com)
+ * return 404/DNS errors as of 2026-08-03 audit — removed. The primary RSS
+ * feeds for Ethereum/Solana blogs remain in RESEARCH_FEEDS.
  */
-const GHOST_BLOGS: FeedSource[] = [
-  {
-    url: 'https://blog.ethereum.org/ghost/api/v3/content/posts/?limit=10',
-    label: 'Ethereum Blog (Ghost)',
-    category: 'newsletter',
-    niches: ['ethereum'],
-    platform: 'ghost',
-  },
-  {
-    url: 'https://blog.solana.com/ghost/api/v3/content/posts/?limit=10',
-    label: 'Solana Blog (Ghost)',
-    category: 'newsletter',
-    niches: ['solana'],
-    platform: 'ghost',
-  },
-];
+const GHOST_BLOGS: FeedSource[] = [];
 
 /**
  * Beehiiv publications with RSS.
+ * NOTE: The Block (Beehiiv) is 403 and Milken Institute is 404 as of the
+ * 2026-08-03 audit — removed.
  */
-const BEEHIIV_PUBLICATIONS: FeedSource[] = [
-  {
-    url: 'https://www.theblock.co/feed',
-    label: 'The Block (Beehiiv)',
-    category: 'newsletter',
-    niches: ['crypto', 'research'],
-    platform: 'beehiiv',
-  },
-  {
-    url: 'https://www.milkeninstitute.org/feed',
-    label: 'Milken Institute',
-    category: 'newsletter',
-    niches: ['finance', 'crypto'],
-    platform: 'beehiiv',
-  },
-];
+const BEEHIIV_PUBLICATIONS: FeedSource[] = [];
 
 // ═══════════════════════════════════════════════════════════════════════════
 // REGULATION & POLICY (4 feeds)
 // ═══════════════════════════════════════════════════════════════════════════
 
 const REGULATION_FEEDS: FeedSource[] = [
-  {
-    url: 'https://www.coindesk.com/arc/outboundfeeds/rss/category/policy/',
-    label: 'CoinDesk Policy',
-    category: 'regulation',
-    niches: ['regulation', 'crypto'],
-  },
   {
     url: 'https://www.sec.gov/rss/news/press.xml',
     label: 'SEC Press',
@@ -1087,12 +636,6 @@ const REGULATION_FEEDS: FeedSource[] = [
   {
     url: 'https://www.coincenter.org/feed/',
     label: 'Coin Center',
-    category: 'regulation',
-    niches: ['regulation', 'crypto'],
-  },
-  {
-    url: 'https://blockchainassociation.org/feed/',
-    label: 'Blockchain Association',
     category: 'regulation',
     niches: ['regulation', 'crypto'],
   },
@@ -1152,6 +695,10 @@ export function getNewsletterFeeds(): FeedSource[] {
 export function stripHtml(html: string): string {
   return (
     html
+      // Unwrap CDATA sections FIRST — otherwise <![CDATA[...]]> is matched as an
+      // HTML tag below and the content is destroyed (feeds with CDATA titles —
+      // CoinDesk, The Verge, OpenAI, Blockworks, etc. — returned 0 items).
+      .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1')
       // Replace non-break tags with spaces first
       .replace(/<(?!br\s*\/?)[^>]+>/gi, ' ')
       // Then handle <br> as newlines
@@ -1660,35 +1207,284 @@ async function fetchFeed(feed: FeedSource, limit: number): Promise<UnifiedPost[]
 // ─── Deduplication ───────────────────────────────────────────────────
 
 /**
- * Deduplicate posts across all sources using title similarity.
- * Uses a rolling window of the first 60 chars as the dedup key.
+ * Normalize a URL for cross-feed dedup: lowercase, strip protocol/www,
+ * drop tracking params and trailing slash.
+ */
+export function normalizeUrlKey(url: string): string {
+  try {
+    const u = new URL(url);
+    u.hash = '';
+    for (const p of [
+      'utm_source',
+      'utm_medium',
+      'utm_campaign',
+      'utm_term',
+      'utm_content',
+      'ref',
+      'source',
+      'mc_cid',
+      'mc_eid',
+    ]) {
+      u.searchParams.delete(p);
+    }
+    let host = u.hostname.replace(/^www\./i, '');
+    let path = u.pathname.replace(/\/+$/, '');
+    if (path === '') path = '/';
+    return `${host}${path}`.toLowerCase();
+  } catch {
+    return url.toLowerCase().replace(/^https?:\/\//, '').replace(/\/+$/, '').split('?')[0];
+  }
+}
+
+/** Extract the canonical link URL from a post's embeds. */
+export function extractLinkUrl(post: UnifiedPost): string | undefined {
+  for (const embed of post.embeds) {
+    if (embed.kind === 'link' && embed.url) return embed.url;
+  }
+  return undefined;
+}
+
+/**
+ * Tokenize a title for fuzzy similarity: lowercase, strip punctuation,
+ * drop very short tokens and common stopwords.
+ */
+const TITLE_STOPWORDS = new Set([
+  'the', 'a', 'an', 'and', 'or', 'but', 'for', 'with', 'from', 'its', 'this',
+  'that', 'these', 'those', 'are', 'was', 'were', 'has', 'have', 'had', 'will',
+  'would', 'could', 'should', 'into', 'over', 'under', 'after', 'before',
+]);
+
+export function titleTokens(title: string): string[] {
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .split(/\s+/)
+    .filter((t) => t.length > 2 && !TITLE_STOPWORDS.has(t));
+}
+
+/**
+ * Jaccard similarity between two titles (token sets).
+ * 1.0 = identical; >0.75 = same story.
+ */
+export function titleSimilarity(a: string, b: string): number {
+  const ta = titleTokens(a);
+  const tb = titleTokens(b);
+  if (ta.length === 0 || tb.length === 0) return 0;
+  const setA = new Set(ta);
+  const setB = new Set(tb);
+  let inter = 0;
+  for (const t of setA) if (setB.has(t)) inter++;
+  const union = setA.size + setB.size - inter;
+  return union === 0 ? 0 : inter / union;
+}
+
+/** Fuzzy title-similarity threshold for "same story" detection. */
+const TITLE_SIM_THRESHOLD = 0.6;
+
+/** Number of most-recent posts to fuzzy-match against (bounded scan). */
+const TITLE_SCAN_WINDOW = 80;
+
+/**
+ * Deduplicate posts across all sources using:
+ *  1. exact canonical URL match (normalized),
+ *  2. exact content hash (first 120 chars of text),
+ *  3. fuzzy title similarity (Jaccard > 0.6) within a bounded window.
+ *
+ * When duplicates are found the best copy is kept, niches are merged, and
+ * a crossReference list (feed labels covering the same story) is recorded —
+ * this feeds the ranking/grounding pass (cross-reference authority).
  */
 export function deduplicatePosts(posts: UnifiedPost[], limit: number): UnifiedPost[] {
-  const seen = new Map<string, UnifiedPost>();
+  const kept: UnifiedPost[] = [];
 
   // Sort by creation date (newest first) to keep the freshest copy
   const sorted = [...posts].sort((a, b) => b.createdAt - a.createdAt);
 
   for (const post of sorted) {
-    // Create a normalized key from the title (first 80 chars, lowercased, stripped)
-    const key = post.text
-      .toLowerCase()
-      .replace(/[^a-z0-9]/g, '')
-      .slice(0, 80);
+    const url = extractLinkUrl(post);
+    const urlKey = url ? normalizeUrlKey(url) : '';
+    const contentKey = post.text.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 120);
+    const raw = post.raw as Record<string, unknown> | undefined;
+    const feedLabel = (raw?.feedLabel as string | undefined) || post.author?.displayName || '';
+    let matched: UnifiedPost | undefined;
 
-    if (!seen.has(key)) {
-      seen.set(key, post);
-    } else {
-      // Merge niches if we already have this post from another source
-      const existing = seen.get(key);
-      if (existing) {
-        const mergedNiches = new Set([...existing.niches, ...post.niches]);
-        existing.niches = [...mergedNiches];
+    // Layer 1: exact canonical URL
+    if (urlKey) {
+      matched = kept.find((p) => {
+        const pu = extractLinkUrl(p);
+        return pu ? normalizeUrlKey(pu) === urlKey : false;
+      });
+    }
+
+    // Layer 2: exact content key (same title text verbatim)
+    if (!matched && contentKey.length >= 20) {
+      matched = kept.find((p) => {
+        const pk = p.text.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 120);
+        return pk === contentKey;
+      });
+    }
+
+    // Layer 3: fuzzy title similarity (bounded scan for performance)
+    if (!matched && post.text.length > 10) {
+      const window = kept.slice(0, TITLE_SCAN_WINDOW);
+      let bestSim = 0;
+      for (const p of window) {
+        const sim = titleSimilarity(post.text, p.text);
+        if (sim > bestSim) {
+          bestSim = sim;
+          matched = p;
+        }
       }
+      if (bestSim < TITLE_SIM_THRESHOLD) matched = undefined;
+    }
+
+    if (matched) {
+      // Merge niches
+      const mergedNiches = new Set([...matched.niches, ...post.niches]);
+      matched.niches = [...mergedNiches];
+
+      // Record cross-reference (grounding signal): which feed labels cover
+      // this same story. Also copy over the original URLs for authority.
+      const mRaw = matched.raw as Record<string, unknown> | undefined;
+      const refs = new Set<string>(
+        (mRaw?.crossReference as string[] | undefined) ?? [],
+      );
+      if (feedLabel) refs.add(feedLabel);
+      const otherRef = (raw?.feedLabel as string | undefined) || feedLabel;
+      if (otherRef) refs.add(otherRef);
+      if (mRaw) mRaw.crossReference = [...refs];
+      const urls = new Set<string>(
+        (mRaw?.crossReferenceUrls as string[] | undefined) ?? [],
+      );
+      if (url) urls.add(url);
+      const otherUrl = extractLinkUrl(post);
+      if (otherUrl) urls.add(otherUrl);
+      if (mRaw) mRaw.crossReferenceUrls = [...urls];
+    } else {
+      // Fresh copy — seed its cross-reference tracking
+      if (raw) {
+        if (feedLabel && !Array.isArray(raw.crossReference)) {
+          raw.crossReference = [feedLabel];
+        }
+        if (url && !Array.isArray(raw.crossReferenceUrls)) {
+          raw.crossReferenceUrls = [url];
+        }
+      }
+      kept.push(post);
     }
   }
 
-  return [...seen.values()].slice(0, limit);
+  return kept.slice(0, limit);
+}
+
+// ─── Ranking & Grounding ────────────────────────────────────────────
+
+/**
+ * Source reputation tiers (1 = most authoritative, 4 = long tail).
+ * Used for source reputation scoring in the news ranking pass.
+ */
+export const SOURCE_TIERS: Record<string, number> = {
+  // Tier 1 — flagship crypto news & research
+  'CoinDesk': 1, 'CoinTelegraph': 1, 'Decrypt': 1, 'The Block': 1,
+  'Blockworks': 1, 'BitcoinMagazine': 1, 'The Defiant': 1, 'CoinMetrics': 1,
+  'Dune Analytics': 1, 'Messari': 1, 'a16z Crypto': 1, 'Paradigm': 1,
+  'Pantera Capital': 1, 'Electric Capital': 1, 'Kraken Blog': 1,
+  'Chainalysis': 1, 'CryptoSlate': 1, 'Unchained Crypto': 1,
+  // Tier 2 — established but secondary
+  'CryptoPotato': 2, 'UToday': 2, 'CryptoBriefing': 2, 'Bitcoin.com News': 2,
+  'BeInCrypto': 2, 'AMBCrypto': 2, 'Daily Hodl': 2, 'NewsBTC': 2,
+  'The Hacker News': 2, 'BleepingComputer': 2, 'OpenAI Blog': 2,
+  'Google AI': 2, 'Hugging Face Blog': 2, 'Trail of Bits': 2,
+  'SlowMist': 2, 'Halborn': 2, 'Web3 is Going Great': 2, 'Curve Finance': 2,
+  'Ethereum Blog': 2, 'Solana Blog': 2, 'Polygon Blog': 2,
+  'Chainlink Blog': 2, 'Coin Center': 2, 'SEC Press': 2,
+  'The Verge': 2, 'Hacker News': 2, 'FreeCodeCamp': 2, 'Hacker Noon': 2,
+  // Tier 3 — niche / long tail
+  'Bitcoinist': 3, 'Live Bitcoin News': 3, 'ZyCrypto': 3, 'NullTX': 3,
+  'CryptoNewsZ': 3, 'CoinPedia': 3, 'Ethereum World News': 3,
+  'Blockchain Association': 3, 'CoinDesk Policy': 3, 'CoinDesk Opinion': 3,
+  'NFT Now': 3, 'Rarible Blog': 3, 'Decrypt NFT': 3,
+};
+
+/**
+ * Map a feed label to its reputation tier (defaults to 3).
+ */
+export function sourceTier(label: string | undefined): number {
+  if (!label) return 3;
+  return SOURCE_TIERS[label] ?? 3;
+}
+
+/**
+ * Freshness decay score 0..1 — newer articles rank higher.
+ * Half-life of ~12 hours, floor at 0.05.
+ */
+export function freshnessScore(createdAt: number, now = Date.now()): number {
+  const ageHours = Math.max(0, now - createdAt) / 3_600_000;
+  if (ageHours < 0.5) return 1;
+  if (ageHours < 6) return 0.9;
+  if (ageHours < 24) return 0.7;
+  if (ageHours < 72) return 0.45;
+  if (ageHours < 168) return 0.2;
+  return 0.05;
+}
+
+/**
+ * Cross-reference grounding: an article covered by multiple feeds gets
+ * higher authority. Diminishing returns after 5 sources.
+ */
+export function crossReferenceScore(crossReference: unknown): number {
+  const refs = Array.isArray(crossReference) ? crossReference.length : 0;
+  if (refs <= 1) return 0;
+  return Math.min(1, 0.25 + (refs - 1) * 0.15);
+}
+
+/**
+ * Compute the final news rank for a post (0..100).
+ *
+ * Signals:
+ *  - source reputation (tier 1 → high)
+ *  - freshness decay (newer → higher)
+ *  - cross-reference grounding (multiple feeds → higher authority)
+ *
+ * Scores are stored on `raw.rank` and `raw.rankSignals` for transparency.
+ */
+export function rankNewsPost(post: UnifiedPost, now = Date.now()): number {
+  const raw = post.raw as Record<string, unknown> | undefined;
+  const label = (raw?.feedLabel as string | undefined) || post.author?.displayName || '';
+
+  const reputation = (4 - sourceTier(label)) / 3; // tier 1 → 1.0, tier 4 → 0
+  const freshness = freshnessScore(post.createdAt, now);
+  const grounding = crossReferenceScore(raw?.crossReference);
+
+  const score = Math.round(
+    (reputation * 0.45 + freshness * 0.35 + grounding * 0.2) * 100,
+  );
+
+  if (raw) {
+    raw.sourceTier = sourceTier(label);
+    raw.rank = score;
+    raw.rankSignals = {
+      sourceReputation: Math.round(reputation * 100) / 100,
+      freshness: Math.round(freshness * 100) / 100,
+      crossReference: Math.round(grounding * 100) / 100,
+    };
+  }
+  return score;
+}
+
+/**
+ * Rank a batch of posts by news rank (best first), then by freshness as
+ * a stable tie-breaker. Populates raw.rank/raw.rankSignals on each post.
+ */
+export function rankNewsPosts(posts: UnifiedPost[]): UnifiedPost[] {
+  const now = Date.now();
+  for (const post of posts) rankNewsPost(post, now);
+  return [...posts].sort((a, b) => {
+    const ra = rankNewsPost(a, now);
+    const rb = rankNewsPost(b, now);
+    if (rb !== ra) return rb - ra;
+    return b.createdAt - a.createdAt;
+  });
 }
 
 // ─── Lazy Cache ──────────────────────────────────────────────────────
@@ -1755,6 +1551,9 @@ export async function fetchRssPosts(limit = 50): Promise<UnifiedPost[]> {
   // Deduplicate
   const deduped = deduplicatePosts(all, limit);
 
+  // Rank by source reputation + freshness + cross-reference grounding
+  const ranked = rankNewsPosts(deduped);
+
   // Log stats
   const byCategory = new Map<string, number>();
   for (const feed of activeFeeds) {
@@ -1774,10 +1573,10 @@ export async function fetchRssPosts(limit = 50): Promise<UnifiedPost[]> {
     console.log(`[rss]   ${cat}: ${count} posts`);
   }
 
-  // Update cache with deduplicated results
-  rssCache = { posts: deduped, fetchedAt: Date.now() };
+  // Update cache with deduplicated + ranked results
+  rssCache = { posts: ranked, fetchedAt: Date.now() };
 
-  return deduped;
+  return ranked;
 }
 
 /**

@@ -53,17 +53,17 @@ export interface DeviceSyncPayload {
 }
 
 export class MultiDeviceSync {
-  async registerDevice(env: any, userId: string, device: any): Promise<DeviceInfo> {
+  async registerDevice(_env: any, _userId: string, device: any): Promise<DeviceInfo> {
     const now = Date.now();
     const deviceInfo: DeviceInfo = { ...device, registeredAt: now, lastSeenAt: now, active: true };
     return deviceInfo;
   }
-  async unregisterDevice(env: any, userId: string, deviceId: string): Promise<void> {}
-  async getDevices(env: any, userId: string): Promise<DeviceInfo[]> {
+  async unregisterDevice(_env: any, _userId: string, _deviceId: string): Promise<void> {}
+  async getDevices(_env: any, _userId: string): Promise<DeviceInfo[]> {
     return [];
   }
-  async heartbeat(env: any, userId: string, deviceId: string): Promise<void> {}
-  async getSyncState(env: any, userId: string): Promise<SyncState> {
+  async heartbeat(_env: any, _userId: string, _deviceId: string): Promise<void> {}
+  async getSyncState(_env: any, userId: string): Promise<SyncState> {
     return {
       userId,
       lastRead: {},
@@ -73,36 +73,36 @@ export class MultiDeviceSync {
       sessionRefs: {},
     };
   }
-  async updateSyncState(env: any, userId: string, updates: Partial<SyncState>): Promise<SyncState> {
+  async updateSyncState(_env: any, _userId: string, _updates: Partial<SyncState>): Promise<SyncState> {
     return {} as SyncState;
   }
   async updateLastRead(
-    env: any,
-    userId: string,
-    conversationId: string,
-    lastReadMessageId: string,
+    _env: any,
+    _userId: string,
+    _conversationId: string,
+    _lastReadMessageId: string,
   ): Promise<void> {}
-  async queueForOffline(env: any, recipientId: string, entry: OutboxEntry): Promise<void> {}
-  async flushQueue(env: any, userId: string): Promise<OutboxEntry[]> {
+  async queueForOffline(_env: any, _recipientId: string, _entry: OutboxEntry): Promise<void> {}
+  async flushQueue(_env: any, _userId: string): Promise<OutboxEntry[]> {
     return [];
   }
   async markQueueRetry(
-    env: any,
-    recipientId: string,
-    messageId: string,
-    error?: string,
+    _env: any,
+    _recipientId: string,
+    _messageId: string,
+    _error?: string,
   ): Promise<void> {}
   async syncSession(
-    env: any,
-    userId: string,
-    peerId: string,
-    encryptedSessionRef: string,
+    _env: any,
+    _userId: string,
+    _peerId: string,
+    _encryptedSessionRef: string,
   ): Promise<void> {}
-  async getSyncedSessions(env: any, userId: string): Promise<Record<string, string>> {
+  async getSyncedSessions(_env: any, _userId: string): Promise<Record<string, string>> {
     return {};
   }
-  async broadcastToDevices(env: any, userId: string, payload: DeviceSyncPayload): Promise<void> {}
-  async getSyncEvents(env: any, userId: string, since?: number): Promise<DeviceSyncPayload[]> {
+  async broadcastToDevices(_env: any, _userId: string, _payload: DeviceSyncPayload): Promise<void> {}
+  async getSyncEvents(_env: any, _userId: string, _since?: number): Promise<DeviceSyncPayload[]> {
     return [];
   }
 }

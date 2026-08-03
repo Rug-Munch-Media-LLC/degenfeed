@@ -223,6 +223,7 @@ export function useChatFeatures(conversationId?: string) {
           setPolls((prev) => [...prev, data.poll]);
           return data.poll;
         }
+        return null;
       } catch {
         return null;
       }
@@ -246,6 +247,7 @@ export function useChatFeatures(conversationId?: string) {
           setPolls((prev) => prev.map((p) => (p.id === pollId ? data.poll : p)));
           return true;
         }
+        return false;
       } catch {
         return false;
       }

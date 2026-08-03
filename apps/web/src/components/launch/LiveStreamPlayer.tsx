@@ -515,6 +515,7 @@ function LiveStreamView({
       const timer = setTimeout(() => setShowRecordingBanner(true), 5000);
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [stream.state]);
 
   return (

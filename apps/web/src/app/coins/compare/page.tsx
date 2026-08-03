@@ -394,7 +394,7 @@ function MiniPriceChart({ data }: { data: number[] }) {
   const range = max - min || 1;
   const w = 140;
   const h = 50;
-  const isUp = data[data.length - 1] >= data[0];
+  const isUp = data[data.length - 1]! >= data[0]!;
   const color = isUp ? '#00ff41' : '#ff4444';
   const points = data
     .map((v, i) => `${(i / (data.length - 1)) * w},${h - ((v - min) / range) * h}`)

@@ -10,7 +10,6 @@
  */
 
 import type { Env, TransportProtocol } from './protocol-transports';
-import { ProtocolTransports } from './protocol-transports';
 import { getInbox, getProtocolBadge } from './unified-inbox';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -84,11 +83,6 @@ const KV_ROOM_MEMBERS_PREFIX = 'cross-protocol:members:';
 // ─── Cross-Protocol Group Chat ─────────────────────────────────────────────
 
 export class CrossProtocolGroupChat {
-  private _transports: ProtocolTransports;
-
-  constructor() {
-    this._transports = new ProtocolTransports();
-  }
 
   /**
    * Create a new cross-protocol room.

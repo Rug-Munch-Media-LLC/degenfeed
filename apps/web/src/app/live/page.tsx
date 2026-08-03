@@ -266,7 +266,7 @@ function FilterBar({
       .filter(([key]) => {
         const source = key as StreamSource;
         return (
-          streamsBySource[source] > 0 ||
+          (streamsBySource[source] ?? 0) > 0 ||
           source === 'twitch' ||
           source === 'kick' ||
           source === 'peertube' ||

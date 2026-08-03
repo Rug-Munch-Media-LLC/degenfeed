@@ -384,6 +384,7 @@ export function ProtocolFeedPage({ protocol }: Props) {
       }, 500);
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [realtimeFeed.newPostCount, handleRealtimeInsert]);
 
   const handleRefresh = useCallback(() => {

@@ -126,7 +126,7 @@ export function ContentTypeBadge({ type }: { type?: string }) {
     photos: { icon: '📸', label: 'Photos', color: '#f59e0b' },
     announcement: { icon: '📢', label: 'Announce', color: '#06b6d4' },
   };
-  const m = meta[type ?? 'audio'] ?? meta.audio;
+  const m = meta[type ?? 'audio'] ?? meta.audio ?? { icon: '🎙️', label: 'Audio', color: '#8b5cf6' };
   return (
     <span
       className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider"

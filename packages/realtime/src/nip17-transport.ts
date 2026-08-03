@@ -29,7 +29,6 @@ const NIP17_RELAYS = [
   'wss://relay.nostr.band',
 ];
 
-const NIP44_ALG = 'AES-GCM' as const;
 const NIP44_IV_LENGTH = 12;
 const NIP44_TAG_LENGTH = 128;
 
@@ -142,7 +141,7 @@ async function nip44Decrypt(
   const decrypted = await crypto.subtle.decrypt(
     { name: 'AES-GCM', iv: iv as BufferSource, tagLength: NIP44_TAG_LENGTH },
     key,
-    ct,
+    ct as unknown as BufferSource,
   );
 
   return new TextDecoder().decode(decrypted);
@@ -164,7 +163,7 @@ export async function createNip17GiftWrap(
   senderPubkey: string,
   recipientPubkey: string,
   content: string,
-  env?: Env,
+  _env?: Env,
 ): Promise<Nip17SendResult> {
   try {
     const nostr = await import('@degenfeed/nostr-sdk');
@@ -180,16 +179,9 @@ export async function createNip17GiftWrap(
     // Step 2: Create kind 14 rumor (seal content)
     // The rumor is a JSON string that gets encrypted as the seal
     const rumorCreatedAt = Math.floor(Date.now() / 1000);
-    const rumorContent = JSON.stringify({
-      ciphertext,
-      nonce,
-      v: 'nip44-v2',
-    });
 
     // Step 3: Create the seal (kind 13) — encrypted rumor
     // The seal encrypts the rumor event to the recipient
-    const sealTag = ['p', recipientPubkey];
-    const rumorTags = [sealTag, ['k', '14']];
 
     // In production, use actual NIP-17 signing:
     // const rumor = nostr.createRumor(14, rumorContent, rumorTags, senderNsec);
@@ -199,7 +191,6 @@ export async function createNip17GiftWrap(
     // For the implementation, use the NIP-04-like approach as fallback
     // with the gift wrap event structure
     const rumorId = crypto.randomUUID().replace(/-/g, '');
-    const giftWrapId = crypto.randomUUID().replace(/-/g, '');
 
     // Step 4: Publish to relays
     const relayResults: Array<{ relay: string; ok: boolean; ms: number }> = [];
@@ -377,11 +368,6 @@ function bytesToHex(bytes: Uint8Array): string {
   return Array.from(bytes)
     .map((b) => b.toString(16).padStart(2, '0'))
     .join('');
-}
-
-// Re-define to avoid hoisting issues
-async function _unused_placeholder() {
-  // Nothing
 }
 
 function convertBits(

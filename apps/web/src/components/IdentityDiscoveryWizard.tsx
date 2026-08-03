@@ -409,7 +409,7 @@ export function IdentityDiscoveryWizard({
       });
 
       if (res.success && res.data?.data) {
-        setLinkedCount((c) => c + res.data.data.linked);
+        setLinkedCount((c) => c + (res.data.data?.linked ?? 0));
         setLinkableItems((prev) => prev.map((d) => ({ ...d, linkable: false })));
 
         setTimeout(() => {

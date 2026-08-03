@@ -397,6 +397,7 @@ function SectionContent({ section }: { section: string }) {
       }, 500);
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [realtimeFeed.newPostCount, handleRealtimeInsert]);
 
   // Poll for new posts in the background (only needs the data array)

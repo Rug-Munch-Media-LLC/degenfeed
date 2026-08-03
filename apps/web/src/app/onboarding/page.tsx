@@ -304,6 +304,7 @@ export default function OnboardingPage() {
       const timer = setTimeout(() => setShowConfetti(false), 3000);
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [step]);
 
   // Auto-complete scanning animation on discover step
@@ -312,6 +313,7 @@ export default function OnboardingPage() {
       const timer = setTimeout(() => setScanningComplete(true), 3000);
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [step, walletAddress]);
 
   const toggleInterest = useCallback((id: string) => {
@@ -576,7 +578,7 @@ export default function OnboardingPage() {
                       <button
                         key={w.id}
                         type="button"
-                        onClick={connect}
+                        onClick={() => connect()}
                         className="inline-flex items-center gap-2 rounded-full border border-[var(--color-glass-border)] bg-[var(--color-bg-secondary)] px-3.5 py-2 text-xs font-medium text-[var(--color-fg)] transition-all hover:border-degen-500/30 hover:bg-[var(--color-card-hover)]"
                         aria-label={`Connect with ${w.name}`}
                       >

@@ -36,5 +36,6 @@ export function usePageTransition(ready = true) {
       }, 50);
       return () => clearTimeout(id);
     }
+    return undefined;
   }, [ready]);
 }

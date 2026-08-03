@@ -243,6 +243,7 @@ export default function SearchPage() {
       const timer = setTimeout(() => doSearch(query), 1000 * retryCount);
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [error, retryCount, doSearch, query]);
 
   const handleAutocompleteSelect = useCallback(

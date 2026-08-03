@@ -61,6 +61,7 @@ export function VideoSearchBar({
       document.addEventListener('mousedown', handler);
       return () => document.removeEventListener('mousedown', handler);
     }
+    return undefined;
   }, [showSourceMenu]);
 
   const handleSubmit = useCallback(

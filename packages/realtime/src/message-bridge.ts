@@ -67,17 +67,7 @@ export interface BridgeResult {
 const KV_MESSAGES_SENT_PREFIX = 'messages:sent:';
 const KV_MESSAGES_RECEIVED_PREFIX = 'messages:received:';
 const KV_MESSAGES_CONV_PREFIX = 'messages:conv:';
-const _KV_THREAD_PREFIX = 'messages:thread:';
 const DEFAULT_RELAYS = ['wss://relay.damus.io', 'wss://nos.lol', 'wss://relay.primal.net'];
-
-const _PROTOCOL_ORDER: DmProtocol[] = [
-  'nostr',
-  'matrix',
-  'bluesky',
-  'mastodon',
-  'discord',
-  'telegram',
-];
 
 // ─── Message Bridge ────────────────────────────────────────────────────────
 

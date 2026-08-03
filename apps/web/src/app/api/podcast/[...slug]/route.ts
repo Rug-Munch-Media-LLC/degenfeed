@@ -37,6 +37,9 @@ function forwardHeaders(request: Request): Record<string, string> {
   if (auth) headers.Authorization = auth;
   const wallet = request.headers.get('x-wallet-address');
   if (wallet) headers['X-Wallet-Address'] = wallet;
+  // Inject bridge API key for local bridge auth (from server env)
+  const bridgeKey = process.env.BRIDGE_API_KEY;
+  if (bridgeKey) headers.Authorization = `Bearer ${bridgeKey}`;
   return headers;
 }
 
