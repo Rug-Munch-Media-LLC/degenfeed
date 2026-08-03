@@ -323,7 +323,7 @@ export function IdentityDiscoveryWizard({
           progressMessages.length - 1,
           Math.floor((next / 100) * progressMessages.length),
         );
-        setProgressMessage(progressMessages[msgIdx]);
+        setProgressMessage(progressMessages[msgIdx] ?? '');
         return next;
       });
     }, 600);
@@ -409,7 +409,7 @@ export function IdentityDiscoveryWizard({
       });
 
       if (res.success && res.data?.data) {
-        setLinkedCount((c) => c + (res.data.data?.linked ?? 0));
+        setLinkedCount((c) => c + (res.data?.data?.linked ?? 0));
         setLinkableItems((prev) => prev.map((d) => ({ ...d, linkable: false })));
 
         setTimeout(() => {
@@ -428,7 +428,7 @@ export function IdentityDiscoveryWizard({
   const handleIgnore = useCallback((idx: number) => {
     setLinkableItems((prev) => {
       const next = [...prev];
-      next[idx] = { ...next[idx], linkable: false };
+      next[idx] = { ...next[idx]!, linkable: false };
       return next;
     });
   }, []);

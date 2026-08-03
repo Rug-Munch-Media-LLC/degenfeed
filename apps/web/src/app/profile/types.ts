@@ -68,6 +68,10 @@ export interface DiscoveredProfile {
   handle?: string;
   avatarUrl?: string;
   protocols?: string[];
+  /** Match reason / signal shown next to the profile */
+  reason?: string;
+  /** Number of followers (if known) */
+  followerCount?: number;
 }
 
 /** Revenue stats widget data */

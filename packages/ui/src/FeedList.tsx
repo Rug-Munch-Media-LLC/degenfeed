@@ -125,6 +125,11 @@ export interface FeedListProps {
    * TASK 5: Direction of tab slide transition ('left' | 'right')
    */
   slideDirection?: 'left' | 'right';
+  /**
+   * Optional protocol-specific meta slot rendered inside each post article
+   * (e.g. NIP-05, zaps, relay chips). Receives the post being rendered.
+   */
+  postMetaSlot?: (post: UnifiedPost) => ReactNode;
 }
 
 /* ── Sub-components ───────────────────────────────────────────── */
@@ -415,6 +420,7 @@ export const FeedList = memo(function FeedList({
   onContextMenu,
   density = 'default',
   slideDirection,
+  postMetaSlot,
 }: FeedListProps) {
   const sentinelRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -732,6 +738,7 @@ export const FeedList = memo(function FeedList({
                 onShowLessLikeThis={onShowLessLikeThis}
                 onContextMenu={onContextMenu}
               />
+              {postMetaSlot?.(post)}
             </article>,
           );
         }

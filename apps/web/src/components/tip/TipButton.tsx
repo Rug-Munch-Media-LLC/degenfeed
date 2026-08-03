@@ -56,7 +56,7 @@ export function TipButton({
   const [showConfetti, setShowConfetti] = useState(false);
   const [_isOnchain, setIsOnchain] = useState(false);
   const [chainLoading, setChainLoading] = useState(false);
-  const confettiTimer = useRef<ReturnType<typeof setTimeout>>();
+  const confettiTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const feeEstimate = useMemo(() => {
     if (!selectedChain) return '\u2014';

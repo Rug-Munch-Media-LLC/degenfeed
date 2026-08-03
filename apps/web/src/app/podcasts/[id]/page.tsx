@@ -126,7 +126,7 @@ function MiniAudioPlayer({
       audio.pause();
       audio.src = '';
     };
-  }, [episode?.id, episode.audioUrl, episode]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [episode?.id, episode?.audioUrl, episode]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const togglePlay = () => {
     if (!audioRef.current) return;

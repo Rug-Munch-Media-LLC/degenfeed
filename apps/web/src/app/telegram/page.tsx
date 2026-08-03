@@ -77,7 +77,7 @@ function generateMockActivity(): ActivityItem[] {
   const symbols = ['DEGEN', 'PEPE', 'MOCHI', 'RUG'];
   const types: ActivityItem['type'][] = ['buy', 'sell', 'holder', 'alert'];
   return Array.from({ length: 20 }, (_, i) => {
-    const type = types[Math.floor(Math.random() * types.length)];
+    const type = types[Math.floor(Math.random() * types.length)] ?? 'alert';
     const symbol = symbols[Math.floor(Math.random() * symbols.length)];
     const texts: Record<ActivityItem['type'], string[]> = {
       buy: [`Bought ${symbol}`, `Purchased more ${symbol}`, `Accumulated ${symbol}`],
@@ -444,7 +444,7 @@ export default function TelegramMiniAppPage() {
           <h1 className="text-base font-bold text-[var(--color-fg)]">DegenFeed</h1>
           <p className="text-[10px] text-[var(--color-muted)]">
             {tg.user
-              ? `Hi, ${tg.user.firstName || tg.user.username || 'Crypto Degener'} 👋`
+              ? `Hi, ${tg.user.first_name || tg.user.username || 'Crypto Degener'} 👋`
               : 'Your Web3 Social Hub'}
           </p>
         </div>

@@ -342,7 +342,7 @@ export default function OnboardingPage() {
     const idx = stepOrder.indexOf(step);
     if (idx > 0) {
       setDirection('backward');
-      setStep(stepOrder[idx - 1]);
+      setStep(stepOrder[idx - 1]!);
     }
   }, [step, stepOrder]);
 

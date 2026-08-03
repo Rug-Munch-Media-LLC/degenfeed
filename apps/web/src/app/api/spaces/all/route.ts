@@ -18,7 +18,7 @@ export async function GET() {
     const enriched = spaces.map((space) => {
       if (!space.contentType && space.platforms.length > 0) {
         const mainPlatform = space.platforms[0]?.platform;
-        return { ...space, contentType: getContentType(mainPlatform) };
+        return { ...space, contentType: getContentType(mainPlatform ?? '') };
       }
       return space;
     });

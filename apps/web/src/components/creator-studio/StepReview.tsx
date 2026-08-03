@@ -208,7 +208,7 @@ export default function StepReview({form, update}: StepReviewProps) {
                   </a>
                   <span className="text-[9px] text-[var(--color-muted)]">
                     ↗{' '}
-                    {form.deployTarget === 'solana' || form.deployTarget === 'solana_devnet'
+                    {form.deployTarget === 'solana' || (form.deployTarget as string) === 'solana_devnet'
                       ? 'Solscan'
                       : 'BaseScan'}
                   </span>
@@ -218,7 +218,7 @@ export default function StepReview({form, update}: StepReviewProps) {
                 Chain:{' '}
                 {form.deployTarget === 'base'
                   ? 'Base Mainnet'
-                  : form.deployTarget === 'base_sepolia'
+                  : (form.deployTarget as string) === 'base_sepolia'
                     ? 'Base Sepolia'
                     : form.deployTarget === 'solana'
                       ? 'Solana Mainnet'

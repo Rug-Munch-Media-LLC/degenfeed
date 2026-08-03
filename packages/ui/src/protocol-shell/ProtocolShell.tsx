@@ -45,7 +45,7 @@ export interface ProtocolShellProps {
   /** Stats for the header */
   headerStats?: ProtocolHeaderStats[];
   /** Sidebar sections */
-  sidebarSections: ProtocolSidebarSection[];
+  sidebarSections?: ProtocolSidebarSection[];
   /** Sidebar quick stats */
   sidebarStats?: { label: string; value: string | number }[];
   /** Sidebar collapsed state toggle */
@@ -142,7 +142,7 @@ export function ProtocolShell({
   description,
   navItems = [],
   headerStats = [],
-  sidebarSections,
+  sidebarSections = [],
   sidebarStats = [],
   defaultSidebarCollapsed = false,
   actions,

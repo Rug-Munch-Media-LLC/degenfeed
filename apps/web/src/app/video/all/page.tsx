@@ -245,11 +245,11 @@ export default function UnifiedVideoFeedPage() {
   // ── Render ──────────────────────────────────────────────────────
   return (
     <ErrorBoundary
-      fallback={
+      fallback={() => (
         <div className="p-8 text-center text-red-400">
           Something went wrong loading the unified video feed.
         </div>
-      }
+      )}
     >
       <div className="min-h-screen bg-black text-white">
         <div className="mx-auto max-w-7xl px-4 py-6">

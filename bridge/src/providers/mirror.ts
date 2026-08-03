@@ -18,7 +18,6 @@ import type { SchemaGuard, UnifiedPost } from '../server/types';
 
 const $fetch = globalThis.fetch;
 
-const MIRROR_GRAPHQL = 'https://mirror-api.com/graphql';
 const MIRROR_FRONT = 'https://mirror.xyz';
 
 // ─── Types ─────────────────────────────────────────────────────────────
@@ -78,20 +77,6 @@ interface MirrorPost {
     tokenId: string;
     chainId: number;
   };
-}
-
-interface MirrorGraphqlResponse {
-  data?: {
-    posts?: MirrorPost[];
-    entries?: MirrorPost[];
-    projects?: Array<{ entries: MirrorPost[] }>;
-  };
-  errors?: Array<{ message: string }>;
-}
-
-interface MirrorExploreResponse {
-  entries: MirrorPost[];
-  cursor?: string;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────
@@ -219,74 +204,127 @@ function mirrorPostToPost(post: MirrorPost): UnifiedPost {
   } as UnifiedPost;
 }
 
-// ─── Fetch via Mirror GraphQL API ──────────────────────────────────────
+// ─── Fetch via Arweave GraphQL ────────────────────────────────────────
+// mirror-api.com (the old public Mirror GraphQL proxy) is dead (DNS NXDOMAIN
+// as of 2026-08-03). We query the Arweave permaweb GraphQL endpoint directly
+// for MirrorXYZ transactions and unwrap the { content: {...} } envelope that
+// Arweave gateways return — this yields real titles/authors instead of the
+// placeholder "Mirror Article" records the old bridge produced.
 
-async function graphqlQuery(query: string): Promise<MirrorGraphqlResponse> {
-  const res = await $fetch(MIRROR_GRAPHQL, {
+const ARWEAVE_GQL = 'https://arweave.net/graphql';
+const ARWEAVE_GW = 'https://arweave.net';
+
+async function arweaveQuery(query: string): Promise<unknown> {
+  const res = await $fetch(ARWEAVE_GQL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'User-Agent': 'DegenFeed-Bridge/0.1 (Mirror)',
+      'User-Agent': 'DegenFeed-Bridge/0.2 (Mirror)',
     },
     body: JSON.stringify({ query }),
-    signal: AbortSignal.timeout(10000),
+    signal: AbortSignal.timeout(15000),
   });
-  if (!res.ok) throw new Error(`Mirror GraphQL HTTP ${res.status}`);
-  return res.json() as Promise<MirrorGraphqlResponse>;
+  if (!res.ok) throw new Error(`Arweave GraphQL HTTP ${res.status}`);
+  return res.json();
+}
+
+async function fetchArweaveContent(txId: string): Promise<Record<string, unknown> | null> {
+  try {
+    const res = await $fetch(`${ARWEAVE_GW}/${txId}`, {
+      redirect: 'follow',
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!res.ok) return null;
+    const raw = (await res.json()) as Record<string, unknown>;
+    // Arweave gateway wraps Mirror content: { content: { body, title, ... } }
+    const content = (raw?.content as Record<string, unknown> | undefined) || raw;
+    return content || null;
+  } catch {
+    return null;
+  }
 }
 
 async function fetchRecentPosts(limit: number): Promise<UnifiedPost[]> {
   try {
     const query = `
       {
-        posts(first: ${Math.min(limit, 50)}, orderBy: publishedAt, orderDirection: desc) {
-          digest
-          publishedAt
-          title
-          excerpt
-          body
-          arweaveTxId
-          author
-          coverImage
-          tags
-        }
-      }
-    `;
-    const result = await graphqlQuery(query);
-    const posts = result?.data?.posts || [];
-    return posts.map(mirrorPostToPost);
-  } catch (err) {
-    console.log(`[bridge] Mirror GraphQL error: ${(err as Error).message}`);
-    return [];
-  }
-}
-
-async function fetchExplore(limit: number): Promise<UnifiedPost[]> {
-  try {
-    const query = `
-      {
-        explore(first: ${Math.min(limit, 30)}) {
-          entries {
-            digest
-            publishedAt
-            title
-            excerpt
-            author
-            coverImage
-            tags
+        transactions(
+          tags: [{ name: "App-Name", values: ["MirrorXYZ"] }]
+          first: ${Math.min(limit * 3, 60)}
+          sort: HEIGHT_DESC
+        ) {
+          edges {
+            node {
+              id
+              tags { name value }
+              block { timestamp }
+            }
           }
         }
       }
     `;
-    const result = await graphqlQuery(query);
-    const entries = result?.data?.explore?.[0]?.entries || [];
-    return entries.map(mirrorPostToPost);
-  } catch {
+    const result = (await arweaveQuery(query)) as {
+      data?: {
+        transactions?: {
+          edges?: Array<{
+            node: {
+              id: string;
+              tags?: Array<{ name: string; value: string }>;
+              block?: { timestamp?: number };
+            };
+          }>;
+        };
+      };
+    };
+    const edges = result?.data?.transactions?.edges || [];
+
+    const posts: UnifiedPost[] = [];
+    for (const edge of edges.slice(0, limit * 2)) {
+      const txId = edge.node.id;
+      const content = await fetchArweaveContent(txId);
+      if (!content) continue;
+      const title = (content.title as string) || '';
+      const body = (content.body as string) || '';
+      // Skip non-article txs (profile updates, metadata-only, empty posts)
+      if (!title && !body) continue;
+
+      const contributor =
+        ((content.authors as string[] | undefined)?.[0] as string) ||
+        (content.contributor as string) ||
+        edge.node.tags?.find((t) => t.name === 'Contributor')?.value ||
+        '';
+      const authorName = contributor
+        ? contributor.length > 12
+          ? `${contributor.slice(0, 6)}…${contributor.slice(-4)}`
+          : contributor
+        : 'Mirror writer';
+
+      const timestamp = content.timestamp || edge.node.block?.timestamp || 0;
+      const post: MirrorPost = {
+        digest: (content.digest as string) || txId,
+        publishedAt: timestamp ? Number(timestamp) * 1000 : Date.now(),
+        title,
+        body,
+        excerpt: (content.excerpt as string) || '',
+        arweaveTxId: txId,
+        author: contributor,
+        authorDetails: { address: contributor, displayName: authorName },
+        coverImage: (content.coverImage as string) || '',
+        url: `${MIRROR_FRONT}/${contributor || '0x0'}/${(content.digest as string) || txId}`,
+        tags: edge.node.tags?.map((t) => t.value) || [],
+      };
+      posts.push(mirrorPostToPost(post));
+    }
+    return posts.slice(0, limit);
+  } catch (err) {
+    console.log(`[bridge] Mirror Arweave error: ${(err as Error).message}`);
     return [];
   }
 }
 
 // ─── Fetch via RSS (fallback) ──────────────────────────────────────────
+// Note: mirror.xyz/{writer}/rss returns 403 for most writers (Cloudflare),
+// so this path is a best-effort fallback only.
 
 const CURATED_WRITERS = [
   'https://mirror.xyz/vasa.eth', // Tech/crypto
@@ -309,17 +347,19 @@ async function fetchWriterRss(writerUrl: string, limit: number): Promise<Unified
     let m: RegExpExecArray | null;
     let idx = 0;
 
+    // biome-ignore lint/suspicious/noAssignInExpressions: regex exec loop
     while ((m = itemRe.exec(xml)) !== null && posts.length < limit) {
-      const item = m[1];
+      const item = m[1] || '';
       const titleMatch = item.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
       const linkMatch = item.match(/<link[^>]*>([\s\S]*?)<\/link>/i);
       const dateMatch = item.match(/<pubDate[^>]*>([\s\S]*?)<\/pubDate>/i);
       const descMatch = item.match(/<description[^>]*>([\s\S]*?)<\/description>/i);
 
-      const title = titleMatch ? stripHtml(titleMatch[1]) : 'Mirror Article';
-      const link = linkMatch ? linkMatch[1] : '';
-      const text = `${title}\n\n${descMatch ? stripHtml(descMatch[1]).slice(0, 500) : ''}`.trim();
-      const createdAt = dateMatch ? new Date(dateMatch[1]).getTime() : Date.now();
+      const title = titleMatch?.[1] ? stripHtml(titleMatch[1]) : 'Mirror Article';
+      const link = linkMatch?.[1] || '';
+      const text =
+        `${title}\n\n${descMatch?.[1] ? stripHtml(descMatch[1]).slice(0, 500) : ''}`.trim();
+      const createdAt = dateMatch?.[1] ? new Date(dateMatch[1]).getTime() : Date.now();
       const digest = link.split('/').pop() || `idx-${idx}`;
 
       posts.push({
@@ -374,13 +414,12 @@ export const schema: SchemaGuard = {
 export async function fetchMirrorPosts(limit = 20): Promise<UnifiedPost[]> {
   const perSource = Math.max(3, Math.ceil(limit / 4));
 
-  const [graphqlPosts, explorePosts, ...writerPosts] = await Promise.all([
+  const [graphqlPosts, ...writerPosts] = await Promise.all([
     fetchRecentPosts(perSource),
-    fetchExplore(perSource),
     ...CURATED_WRITERS.map((w) => fetchWriterRss(w, 5)),
   ]);
 
-  const all = [graphqlPosts, explorePosts, ...writerPosts].flat();
+  const all = [graphqlPosts, ...writerPosts].flat();
 
   // Deduplicate by digest
   const seen = new Set<string>();
@@ -393,7 +432,7 @@ export async function fetchMirrorPosts(limit = 20): Promise<UnifiedPost[]> {
   }
 
   console.log(
-    `[bridge] Mirror: ${deduped.length} posts (graphql: ${graphqlPosts.length}, explore: ${explorePosts.length}, writers: ${writerPosts.length} feeds)`,
+    `[bridge] Mirror: ${deduped.length} posts (arweave-graphql: ${graphqlPosts.length}, writers: ${writerPosts.length} feeds)`,
   );
   return deduped;
 }

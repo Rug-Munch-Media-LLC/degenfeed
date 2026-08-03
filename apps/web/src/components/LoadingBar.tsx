@@ -1,6 +1,5 @@
 'use client';
 
-import { usePathname, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 /**

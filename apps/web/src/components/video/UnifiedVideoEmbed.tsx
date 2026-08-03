@@ -316,7 +316,7 @@ export function UnifiedVideoEmbed({
 
     (async () => {
       const Hls = await loadHls();
-      if (!Hls?.isSupported()) {
+      if (!(Hls as unknown as { isSupported?: () => boolean })?.isSupported?.()) {
         setHlsSupported(false);
         return;
       }

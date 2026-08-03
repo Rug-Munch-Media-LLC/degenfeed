@@ -195,7 +195,7 @@ export function LiveSpaceCard({
       {isPhotos && space.photoUrls && space.photoUrls.length > 0 && (
         <div className="relative mb-3 overflow-hidden rounded-xl">
           <Image
-            src={space.photoUrls[0]}
+            src={space.photoUrls[0] ?? ''}
             alt={space.title}
             width={300}
             height={300}

@@ -64,6 +64,7 @@ interface PodcastEpisode {
   plays: number;
   uniqueListeners: number;
   tipsReceived: string;
+  activityPubId?: string;
 }
 
 // ─── Constants ─────────────────────────────────────────────────────────

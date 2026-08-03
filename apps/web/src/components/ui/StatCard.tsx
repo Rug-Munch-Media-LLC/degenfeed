@@ -8,6 +8,8 @@ export interface StatCardProps {
   sub?: string;
   icon?: ReactNode;
   accent?: string;
+  /** Alias for accent — accepted for backward compatibility */
+  color?: string;
   trend?: { direction: 'up' | 'down' | 'neutral'; value: string };
   className?: string;
 }
@@ -18,6 +20,7 @@ export default function StatCard({
   sub,
   icon,
   accent,
+  color,
   trend,
   className = '',
 }: StatCardProps) {
@@ -25,12 +28,12 @@ export default function StatCard({
     <div
       className={`relative overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-4 transition-all duration-200 hover:shadow-md ${className}`}
     >
-      {accent && (
+      {accent || color ? (
         <div
           className="absolute right-0 top-0 h-16 w-16 translate-x-4 -translate-y-4 rounded-full opacity-10"
-          style={{ background: accent }}
+          style={{ background: accent || color }}
         />
-      )}
+      ) : null}
 
       <div className="flex items-start justify-between">
         <div className="min-w-0 flex-1">

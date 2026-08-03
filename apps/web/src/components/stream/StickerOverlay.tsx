@@ -145,18 +145,6 @@ function FloatingSticker({
   );
 }
 
-// ─── Emoji Rain Generator ────────────────────────────────────────────────
-
-interface RainDrop {
-  id: number;
-  emoji: string;
-  x: number;
-  delay: number;
-  duration: number;
-  size: number;
-}
-
-
 // ─── Props ───────────────────────────────────────────────────────────────
 
 interface StickerOverlayProps {

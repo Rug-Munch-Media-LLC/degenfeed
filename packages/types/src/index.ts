@@ -347,6 +347,15 @@ export interface UnifiedPost {
   };
   /** Universal df:// URI for cross-protocol addressing, sharing, and bookmarking */
   dfUri?: string;
+  /** Protocol-specific source label (e.g. Mastodon instance display name) */
+  source?: string;
+  /** Protocol-specific metadata (content warnings, instance info, etc.) */
+  meta?: {
+    contentWarning?: string;
+    instanceHost?: string;
+    instanceLabel?: string;
+    spoiler_text?: string;
+  };
   /** On-chain content permanence proof (Arweave/IPFS) */
   contentProof?: ContentProof;
 }

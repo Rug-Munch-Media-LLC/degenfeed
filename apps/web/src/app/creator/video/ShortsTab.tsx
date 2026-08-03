@@ -161,7 +161,7 @@ export default function ShortsTab() {
         <DropZone
           onFile={(files) => {
             setMode('upload');
-            setPreviewUrl(URL.createObjectURL(files[0]));
+            setPreviewUrl(URL.createObjectURL(files[0]!));
             setMode('edit');
           }}
           accept="video/*"
