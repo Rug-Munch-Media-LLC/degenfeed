@@ -21,6 +21,9 @@ const PUBLIC_PATHS = [
   '/api/health',
   '/.well-known',
   '/api/bridge/health',
+  // Owncast posts stream lifecycle webhooks here without a BRIDGE_API_KEY.
+  // The handler validates event types; it does not expose bridge data.
+  '/api/webhooks',
 ] as const;
 
 /**
