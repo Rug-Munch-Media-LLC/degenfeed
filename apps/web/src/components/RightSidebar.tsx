@@ -106,8 +106,11 @@ function TrendingCard() {
       </h2>
       {!loaded ? (
         <div className="space-y-2 px-4 py-3">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-10 animate-pulse rounded-md bg-white/[0.04]" />
+          {[...Array(4)].map(() => (
+            <div
+              key={crypto.randomUUID()}
+              className="h-10 animate-pulse rounded-md bg-white/[0.04]"
+            />
           ))}
         </div>
       ) : topics.length === 0 ? (
@@ -214,8 +217,11 @@ function LiveNowCard() {
       </div>
       {!loaded ? (
         <div className="space-y-2 px-4 py-3">
-          {[...Array(2)].map((_, i) => (
-            <div key={i} className="h-10 animate-pulse rounded-md bg-white/[0.04]" />
+          {[...Array(2)].map(() => (
+            <div
+              key={crypto.randomUUID()}
+              className="h-10 animate-pulse rounded-md bg-white/[0.04]"
+            />
           ))}
         </div>
       ) : streams.length === 0 ? (
