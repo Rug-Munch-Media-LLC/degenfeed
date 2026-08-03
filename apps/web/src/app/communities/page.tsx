@@ -10,7 +10,7 @@
  * to the wider Lemmy fediverse — all inside our cyberpunk design.
  */
 
-import { ProtocolShell, PROTOCOL_META } from '@degenfeed/ui/protocol-shell';
+import { PROTOCOL_META, ProtocolShell } from '@degenfeed/ui/protocol-shell';
 import Link from 'next/link';
 import { useCallback, useState } from 'react';
 
@@ -126,9 +126,7 @@ export default function CommunitiesPage() {
     if (activeCategory && c.category !== activeCategory) return false;
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
-      return (
-        c.name.toLowerCase().includes(q) || c.description.toLowerCase().includes(q)
-      );
+      return c.name.toLowerCase().includes(q) || c.description.toLowerCase().includes(q);
     }
     return true;
   });
@@ -171,13 +169,10 @@ export default function CommunitiesPage() {
           frameAspectRatio={16 / 9}
           sandboxed={true}
           noSidebar={true}
-          breadcrumbs={[
-            { label: 'Communities', href: '/communities' },
-            { label: community.name },
-          ]}
+          breadcrumbs={[{ label: 'Communities', href: '/communities' }, { label: community.name }]}
           featureFlags={{
-            'Federated': true,
-            'Vote': true,
+            Federated: true,
+            Vote: true,
             'Cross-post': true,
           }}
         />
@@ -267,10 +262,12 @@ export default function CommunitiesPage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full rounded-xl border bg-[var(--color-card)] py-2.5 pl-9 pr-3 text-sm text-[var(--color-fg)] placeholder:text-[var(--color-muted)] transition-colors focus:outline-none focus:ring-2"
-            style={{
-              borderColor: 'var(--color-glass-border)',
-              '--tw-ring-color': LEMMY_COLOR,
-            } as React.CSSProperties}
+            style={
+              {
+                borderColor: 'var(--color-glass-border)',
+                '--tw-ring-color': LEMMY_COLOR,
+              } as React.CSSProperties
+            }
             aria-label="Search communities"
           />
         </div>
@@ -298,7 +295,10 @@ export default function CommunitiesPage() {
       {/* Trending section */}
       {!activeCategory && !searchQuery && (
         <section className="mb-10">
-          <h2 className="mb-4 font-heading text-lg font-bold tracking-tight" style={{ color: 'var(--color-fg)' }}>
+          <h2
+            className="mb-4 font-heading text-lg font-bold tracking-tight"
+            style={{ color: 'var(--color-fg)' }}
+          >
             🔥 Trending Communities
           </h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -311,7 +311,10 @@ export default function CommunitiesPage() {
 
       {/* All communities */}
       <section>
-        <h2 className="mb-4 font-heading text-lg font-bold tracking-tight" style={{ color: 'var(--color-fg)' }}>
+        <h2
+          className="mb-4 font-heading text-lg font-bold tracking-tight"
+          style={{ color: 'var(--color-fg)' }}
+        >
           {activeCategory || 'All Communities'}
           <span className="ml-2 text-sm font-normal" style={{ color: 'var(--color-muted)' }}>
             ({filtered.length})
@@ -327,7 +330,10 @@ export default function CommunitiesPage() {
             <p className="text-sm text-[var(--color-muted)]">No communities match your search.</p>
             <button
               type="button"
-              onClick={() => { setSearchQuery(''); setActiveCategory(null); }}
+              onClick={() => {
+                setSearchQuery('');
+                setActiveCategory(null);
+              }}
               className="mt-3 rounded-lg px-4 py-1.5 text-xs font-medium"
               style={{
                 backgroundColor: `${LEMMY_COLOR}12`,
@@ -420,7 +426,10 @@ function CommunityCard({
           {LEMMY_META.logo}
         </span>
         <div className="min-w-0">
-          <h3 className="font-heading font-bold tracking-tight" style={{ color: 'var(--color-fg)' }}>
+          <h3
+            className="font-heading font-bold tracking-tight"
+            style={{ color: 'var(--color-fg)' }}
+          >
             !{community.name}
           </h3>
           <p className="mt-0.5 text-xs line-clamp-2" style={{ color: 'var(--color-fg-secondary)' }}>
@@ -435,13 +444,17 @@ function CommunityCard({
           <span className="font-mono font-bold" style={{ color: LEMMY_COLOR }}>
             {community.members.toLocaleString()}
           </span>
-          <span className="ml-1" style={{ color: 'var(--color-muted)' }}>members</span>
+          <span className="ml-1" style={{ color: 'var(--color-muted)' }}>
+            members
+          </span>
         </div>
         <div>
           <span className="font-mono font-bold" style={{ color: LEMMY_COLOR }}>
             {community.posts.toLocaleString()}
           </span>
-          <span className="ml-1" style={{ color: 'var(--color-muted)' }}>posts</span>
+          <span className="ml-1" style={{ color: 'var(--color-muted)' }}>
+            posts
+          </span>
         </div>
       </div>
 

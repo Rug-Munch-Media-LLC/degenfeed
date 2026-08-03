@@ -1,4 +1,4 @@
-import { ContentShellSkeleton, CardSkeleton, Line } from '@/components/loading/PageSkeleton';
+import { CardSkeleton, ContentShellSkeleton, Line } from '@/components/loading/PageSkeleton';
 
 export default function AuthLoading() {
   return (
@@ -7,7 +7,10 @@ export default function AuthLoading() {
         <CardSkeleton>
           <Line width="w-48" height="h-6" />
           <Line width="w-full" height="h-3" />
-          <div className="h-12 w-full animate-pulse rounded-xl" style={{ backgroundColor: 'var(--color-muted)', opacity: 0.3 }} />
+          <div
+            className="h-12 w-full animate-pulse rounded-xl"
+            style={{ backgroundColor: 'var(--color-muted)', opacity: 0.3 }}
+          />
           <Line width="w-3/4" height="h-3" />
         </CardSkeleton>
       </div>

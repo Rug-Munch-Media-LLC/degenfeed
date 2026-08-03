@@ -31,7 +31,9 @@ export default function StudioTabBar({
                 : 'text-[var(--color-muted)] hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)]'
             }`}
           >
-            <span className="text-sm" aria-hidden="true">{tab.icon}</span>
+            <span className="text-sm" aria-hidden="true">
+              {tab.icon}
+            </span>
             <div className="text-left">
               <div className="text-xs font-semibold">{tab.label}</div>
               <div className="text-[8px] opacity-60 hidden sm:block">{tab.desc}</div>

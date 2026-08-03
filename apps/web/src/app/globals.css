@@ -1146,26 +1146,66 @@
     border-left: 3px solid transparent;
     transition: border-color var(--duration-fast) ease-out;
   }
-  .post-card.protocol-mastodon { border-left-color: #6364ff; }
-  .post-card.protocol-nostr { border-left-color: #8b5cf6; }
-  .post-card.protocol-bluesky { border-left-color: #1185fe; }
-  .post-card.protocol-farcaster { border-left-color: #8a63d2; }
-  .post-card.protocol-lens { border-left-color: #abfe2c; }
-  .post-card.protocol-lemmy { border-left-color: #2d9cdb; }
-  .post-card.protocol-peertube { border-left-color: #f1680d; }
-  .post-card.protocol-rss { border-left-color: #ffa500; }
-  .post-card.protocol-reddit { border-left-color: #ff4500; }
-  .post-card.protocol-threads { border-left-color: #888888; }
-  .post-card.protocol-activitypub { border-left-color: #6364ff; }
-  .post-card.protocol-atproto { border-left-color: #1185fe; }
-  .post-card.protocol-pixelfed { border-left-color: #f9a825; }
-  .post-card.protocol-youtube { border-left-color: #ff0000; }
-  .post-card.protocol-github { border-left-color: #6e40c9; }
-  .post-card.protocol-telegram { border-left-color: #26a5e4; }
-  .post-card.protocol-discord { border-left-color: #5865f2; }
-  .post-card.protocol-mirror { border-left-color: #222222; }
-  .post-card.protocol-paragraph { border-left-color: #6c5ce7; }
-  .post-card.protocol-zora { border-left-color: #7c3aed; }
+  .post-card.protocol-mastodon {
+    border-left-color: #6364ff;
+  }
+  .post-card.protocol-nostr {
+    border-left-color: #8b5cf6;
+  }
+  .post-card.protocol-bluesky {
+    border-left-color: #1185fe;
+  }
+  .post-card.protocol-farcaster {
+    border-left-color: #8a63d2;
+  }
+  .post-card.protocol-lens {
+    border-left-color: #abfe2c;
+  }
+  .post-card.protocol-lemmy {
+    border-left-color: #2d9cdb;
+  }
+  .post-card.protocol-peertube {
+    border-left-color: #f1680d;
+  }
+  .post-card.protocol-rss {
+    border-left-color: #ffa500;
+  }
+  .post-card.protocol-reddit {
+    border-left-color: #ff4500;
+  }
+  .post-card.protocol-threads {
+    border-left-color: #888888;
+  }
+  .post-card.protocol-activitypub {
+    border-left-color: #6364ff;
+  }
+  .post-card.protocol-atproto {
+    border-left-color: #1185fe;
+  }
+  .post-card.protocol-pixelfed {
+    border-left-color: #f9a825;
+  }
+  .post-card.protocol-youtube {
+    border-left-color: #ff0000;
+  }
+  .post-card.protocol-github {
+    border-left-color: #6e40c9;
+  }
+  .post-card.protocol-telegram {
+    border-left-color: #26a5e4;
+  }
+  .post-card.protocol-discord {
+    border-left-color: #5865f2;
+  }
+  .post-card.protocol-mirror {
+    border-left-color: #222222;
+  }
+  .post-card.protocol-paragraph {
+    border-left-color: #6c5ce7;
+  }
+  .post-card.protocol-zora {
+    border-left-color: #7c3aed;
+  }
 
   /* ═══ Sticky Feed Header (TASK 5) ═══ */
   .feed-header-sticky {

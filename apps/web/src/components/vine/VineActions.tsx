@@ -34,7 +34,14 @@ interface ActionBtnProps {
 }
 
 const ActionButton = memo(function ActionButton({
-  icon, label, count, active = false, onClick, color, tooltip, size = 'md',
+  icon,
+  label,
+  count,
+  active = false,
+  onClick,
+  color,
+  tooltip,
+  size = 'md',
 }: ActionBtnProps) {
   const btnSize = size === 'sm' ? 'h-9 w-9' : 'h-11 w-11';
   const iconSize = size === 'sm' ? 18 : 22;
@@ -43,7 +50,10 @@ const ActionButton = memo(function ActionButton({
     <div className="group relative flex flex-col items-center">
       <button
         type="button"
-        onClick={(e) => { e.stopPropagation(); onClick?.(); }}
+        onClick={(e) => {
+          e.stopPropagation();
+          onClick?.();
+        }}
         className={`flex flex-col items-center gap-0.5 transition-transform active:scale-90`}
         aria-label={`${label}${count != null && count > 0 ? ` — ${formatCount(count)}` : ''}`}
       >
@@ -101,9 +111,21 @@ export interface VineActionsProps {
 // ─── Component ────────────────────────────────────────────────────────────
 
 export function VineActions({
-  liked, likeCount, revined, revineCount, vibeScore, canTip,
-  commentCount, onLike, onRevine, onComment, onTip,
-  onShowVibe, onNotInterested, onSeeMoreLikeThis, visible,
+  liked,
+  likeCount,
+  revined,
+  revineCount,
+  vibeScore,
+  canTip,
+  commentCount,
+  onLike,
+  onRevine,
+  onComment,
+  onTip,
+  onShowVibe,
+  onNotInterested,
+  onSeeMoreLikeThis,
+  visible,
 }: VineActionsProps) {
   return (
     <div
@@ -120,7 +142,13 @@ export function VineActions({
             </svg>
           ) : (
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 1 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              <path
+                d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 1 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
           )
         }
@@ -136,9 +164,23 @@ export function VineActions({
       <ActionButton
         icon={
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M1 12C1 12 5 4 12 4C19 4 23 12 23 12C23 12 19 20 12 20C5 20 1 12 1 12Z" stroke="currentColor" strokeWidth="1.5" />
-            <path d="M12 9C13.66 9 15 10.34 15 12C15 13.66 13.66 15 12 15C10.34 15 9 13.66 9 12C9 10.34 10.34 9 12 9Z" stroke="currentColor" strokeWidth="1.5" />
-            <path d="M16 8L20 12L16 16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <path
+              d="M1 12C1 12 5 4 12 4C19 4 23 12 23 12C23 12 19 20 12 20C5 20 1 12 1 12Z"
+              stroke="currentColor"
+              strokeWidth="1.5"
+            />
+            <path
+              d="M12 9C13.66 9 15 10.34 15 12C15 13.66 13.66 15 12 15C10.34 15 9 13.66 9 12C9 10.34 10.34 9 12 9Z"
+              stroke="currentColor"
+              strokeWidth="1.5"
+            />
+            <path
+              d="M16 8L20 12L16 16"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
           </svg>
         }
         label="Revine"
@@ -153,7 +195,13 @@ export function VineActions({
       <ActionButton
         icon={
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <path
+              d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10z"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
           </svg>
         }
         label="Comment"
@@ -167,7 +215,15 @@ export function VineActions({
         <ActionButton
           icon={
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" className="text-vine-400" />
+              <path
+                d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                fill="none"
+                className="text-vine-400"
+              />
             </svg>
           }
           label="Tip"
@@ -183,7 +239,10 @@ export function VineActions({
       {/* 📊 Vibe Score */}
       <ActionButton
         icon={
-          <span className="text-sm font-bold tabular-nums" style={{ color: vibeScore >= 70 ? '#00FF41' : vibeScore >= 40 ? '#FFD600' : '#FF6B35' }}>
+          <span
+            className="text-sm font-bold tabular-nums"
+            style={{ color: vibeScore >= 70 ? '#00FF41' : vibeScore >= 40 ? '#FFD600' : '#FF6B35' }}
+          >
             {vibeScore}
           </span>
         }
@@ -197,7 +256,13 @@ export function VineActions({
       <ActionButton
         icon={
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M10 15l-4-4m0 0l4-4m-4 4h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <path
+              d="M10 15l-4-4m0 0l4-4m-4 4h12"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
           </svg>
         }
         label="Not interested"
@@ -211,7 +276,13 @@ export function VineActions({
       <ActionButton
         icon={
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M14 9l4 4-4 4M10 15l-4-4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <path
+              d="M14 9l4 4-4 4M10 15l-4-4 4-4"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
           </svg>
         }
         label="More like this"

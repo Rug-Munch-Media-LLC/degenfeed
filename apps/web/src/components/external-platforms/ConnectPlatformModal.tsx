@@ -120,17 +120,13 @@ function PlatformCard({
           {platform.icon}
         </span>
         <div className="min-w-0 flex-1">
-          <h3 className="truncate font-semibold text-[var(--color-fg)]">
-            {platform.name}
-          </h3>
+          <h3 className="truncate font-semibold text-[var(--color-fg)]">{platform.name}</h3>
           {platform.connected && platform.connectedAccount ? (
             <p className="truncate text-xs text-green-400">
               ✓ Connected as {platform.connectedAccount.displayName}
             </p>
           ) : (
-            <p className="truncate text-xs text-[var(--color-muted)]">
-              {platform.description}
-            </p>
+            <p className="truncate text-xs text-[var(--color-muted)]">{platform.description}</p>
           )}
         </div>
       </div>
@@ -167,11 +163,7 @@ function PlatformCard({
 
 // ─── Main Component ───────────────────────────────────────────────────────
 
-export function ConnectPlatformModal({
-  isOpen,
-  onClose,
-  onRefresh,
-}: ConnectPlatformModalProps) {
+export function ConnectPlatformModal({ isOpen, onClose, onRefresh }: ConnectPlatformModalProps) {
   const [platforms, setPlatforms] = useState<PlatformInfo[]>([]);
   const [connecting, setConnecting] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -189,11 +181,27 @@ export function ConnectPlatformModal({
       ]);
 
       const statusData = (await statusRes.json()) as {
-        data?: { hasAccess?: boolean; accounts?: Array<{ platform: string; displayName: string; avatarUrl?: string; connectedAt: string }> };
+        data?: {
+          hasAccess?: boolean;
+          accounts?: Array<{
+            platform: string;
+            displayName: string;
+            avatarUrl?: string;
+            connectedAt: string;
+          }>;
+        };
         error?: string;
       };
       const platformsData = (await platformsRes.json()) as {
-        data?: { platforms: Array<{ id: string; name: string; icon: string; description: string; capabilities: string[] }> };
+        data?: {
+          platforms: Array<{
+            id: string;
+            name: string;
+            icon: string;
+            description: string;
+            capabilities: string[];
+          }>;
+        };
       };
 
       const status = statusData.data;
@@ -207,9 +215,7 @@ export function ConnectPlatformModal({
       }
 
       const connectedAccounts = status?.accounts ?? [];
-      const connectedMap = new Map(
-        connectedAccounts.map((a) => [a.platform, a]),
-      );
+      const connectedMap = new Map(connectedAccounts.map((a) => [a.platform, a]));
 
       setPlatforms(
         platformList.map((p) => ({
@@ -239,35 +245,32 @@ export function ConnectPlatformModal({
   }, [isOpen, fetchPlatforms]);
 
   // Initiate connection
-  const handleConnect = useCallback(
-    async (platformId: string) => {
-      setConnecting(platformId);
-      setError(null);
-      try {
-        const res = await fetch('/api/external/connect', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ platform: platformId }),
-        });
-        const data = (await res.json()) as {
-          data?: { url?: string };
-          error?: string;
-        };
+  const handleConnect = useCallback(async (platformId: string) => {
+    setConnecting(platformId);
+    setError(null);
+    try {
+      const res = await fetch('/api/external/connect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ platform: platformId }),
+      });
+      const data = (await res.json()) as {
+        data?: { url?: string };
+        error?: string;
+      };
 
-        if (res.ok && data.data?.url) {
-          // Redirect to Postiz OAuth
-          window.location.href = data.data.url;
-        } else {
-          setError(data.error ?? 'Connection failed');
-        }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Connection failed');
-      } finally {
-        setConnecting(null);
+      if (res.ok && data.data?.url) {
+        // Redirect to Postiz OAuth
+        window.location.href = data.data.url;
+      } else {
+        setError(data.error ?? 'Connection failed');
       }
-    },
-    [],
-  );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Connection failed');
+    } finally {
+      setConnecting(null);
+    }
+  }, []);
 
   // Disconnect platform
   const handleDisconnect = useCallback(
@@ -302,9 +305,7 @@ export function ConnectPlatformModal({
         {/* Header */}
         <div className="mb-6 flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-bold text-[var(--color-fg)]">
-              DegenFeed Connect
-            </h2>
+            <h2 className="text-xl font-bold text-[var(--color-fg)]">DegenFeed Connect</h2>
             <p className="text-sm text-[var(--color-muted)]">
               Connect external platforms to post, schedule, and go live
             </p>
@@ -333,9 +334,7 @@ export function ConnectPlatformModal({
           </div>
         ) : !hasAccess ? (
           <div className="py-8 text-center">
-            <p className="mb-2 text-lg text-[var(--color-fg)]">
-              🚀 DegenFeed Connect
-            </p>
+            <p className="mb-2 text-lg text-[var(--color-fg)]">🚀 DegenFeed Connect</p>
             <p className="mb-4 text-sm text-[var(--color-muted)]">
               Post to YouTube, Twitch, Kick, TikTok, Instagram, and LinkedIn.
               <br />

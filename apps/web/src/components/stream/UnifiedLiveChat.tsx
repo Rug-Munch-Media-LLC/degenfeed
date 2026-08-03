@@ -26,9 +26,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   type ChatMode,
   type ChatProtocol,
+  getProtocolBadge,
   type LiveChatMessage,
   type ProtocolBadgeConfig,
-  getProtocolBadge,
   useUnifiedChat,
 } from './useUnifiedChat';
 
@@ -203,7 +203,10 @@ function MessageBubble({
 
           {/* Highlighted (gift) badge */}
           {msg.isHighlighted && msg.gift && (
-            <span className="rounded bg-yellow-500/20 px-1 py-[1px] text-[7px] font-bold text-yellow-400" title={`${msg.gift.amount} ${msg.gift.symbol}`}>
+            <span
+              className="rounded bg-yellow-500/20 px-1 py-[1px] text-[7px] font-bold text-yellow-400"
+              title={`${msg.gift.amount} ${msg.gift.symbol}`}
+            >
               🎁 {msg.gift.amount} {msg.gift.symbol}
             </span>
           )}
@@ -254,7 +257,19 @@ function MessageBubble({
               className="flex h-6 w-6 items-center justify-center rounded text-white/50 hover:text-white hover:bg-white/10 transition-colors"
               title="React"
             >
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+              <svg
+                width="11"
+                height="11"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <path d="M8 14s1.5 2 4 2 4-2 4-2" />
+                <line x1="9" y1="9" x2="9.01" y2="9" />
+                <line x1="15" y1="9" x2="15.01" y2="9" />
+              </svg>
             </button>
           </ReactionPopover>
 
@@ -279,7 +294,15 @@ function MessageBubble({
   );
 }
 
-function ActionButton({ icon, title, onClick }: { icon: string; title: string; onClick: () => void }) {
+function ActionButton({
+  icon,
+  title,
+  onClick,
+}: {
+  icon: string;
+  title: string;
+  onClick: () => void;
+}) {
   return (
     <button
       type="button"
@@ -333,7 +356,13 @@ function ReactionPopover({
 // EMOTE PICKER
 // ═══════════════════════════════════════════════════════════════════════════
 
-function EmotePicker({ onSelect, onClose }: { onSelect: (src: string) => void; onClose: () => void }) {
+function EmotePicker({
+  onSelect,
+  onClose,
+}: {
+  onSelect: (src: string) => void;
+  onClose: () => void;
+}) {
   const categories = [...new Set(ALL_EMOTES.map((e) => e.category))];
   const [activeCategory, setActiveCategory] = useState(categories[0]);
   const filtered = ALL_EMOTES.filter((e) => e.category === activeCategory);
@@ -348,7 +377,9 @@ function EmotePicker({ onSelect, onClose }: { onSelect: (src: string) => void; o
             type="button"
             onClick={() => setActiveCategory(cat)}
             className={`rounded-lg px-2 py-1 text-[9px] font-medium capitalize transition-colors ${
-              activeCategory === cat ? 'bg-degen-500/20 text-degen-400' : 'text-white/50 hover:text-white/80'
+              activeCategory === cat
+                ? 'bg-degen-500/20 text-degen-400'
+                : 'text-white/50 hover:text-white/80'
             }`}
           >
             {cat}
@@ -362,7 +393,10 @@ function EmotePicker({ onSelect, onClose }: { onSelect: (src: string) => void; o
           <button
             key={emote.id}
             type="button"
-            onClick={() => { onSelect(emote.src); onClose(); }}
+            onClick={() => {
+              onSelect(emote.src);
+              onClose();
+            }}
             className="flex aspect-square items-center justify-center rounded-lg text-lg transition-colors hover:bg-white/10"
             title={emote.name}
           >
@@ -390,7 +424,10 @@ function ChatModeIndicator({ mode }: { mode: ChatMode }) {
 
   const info = config[mode];
   return (
-    <div className="flex items-center gap-1.5 rounded-lg px-2 py-1 text-[9px] font-medium" style={{ backgroundColor: `${info.color}15`, color: info.color }}>
+    <div
+      className="flex items-center gap-1.5 rounded-lg px-2 py-1 text-[9px] font-medium"
+      style={{ backgroundColor: `${info.color}15`, color: info.color }}
+    >
       <span>{info.icon}</span>
       <span>{info.label}</span>
     </div>
@@ -401,7 +438,13 @@ function ChatModeIndicator({ mode }: { mode: ChatMode }) {
 // ANALYTICS OVERLAY
 // ═══════════════════════════════════════════════════════════════════════════
 
-function AnalyticsPanel({ analytics, onClose }: { analytics: NonNullable<ReturnType<typeof useUnifiedChat>['analytics']>; onClose: () => void }) {
+function AnalyticsPanel({
+  analytics,
+  onClose,
+}: {
+  analytics: NonNullable<ReturnType<typeof useUnifiedChat>['analytics']>;
+  onClose: () => void;
+}) {
   const protocolLabels: Record<string, string> = {
     degenfeed: '🌀 DegenFeed',
     nostr: '⚡ Nostr',
@@ -415,7 +458,9 @@ function AnalyticsPanel({ analytics, onClose }: { analytics: NonNullable<ReturnT
     <div className="absolute left-0 right-0 top-0 bottom-0 z-30 overflow-y-auto bg-gray-900/98 backdrop-blur-md p-3 space-y-3">
       <div className="flex items-center justify-between">
         <h3 className="text-xs font-bold text-white/80">Chat Analytics</h3>
-        <button type="button" onClick={onClose} className="text-white/40 hover:text-white text-xs">✕</button>
+        <button type="button" onClick={onClose} className="text-white/40 hover:text-white text-xs">
+          ✕
+        </button>
       </div>
 
       {/* Metrics row */}
@@ -430,9 +475,18 @@ function AnalyticsPanel({ analytics, onClose }: { analytics: NonNullable<ReturnT
       <div>
         <h4 className="text-[9px] font-semibold text-white/40 uppercase mb-1">Sentiment</h4>
         <div className="flex h-2 rounded-full overflow-hidden">
-          <div className="bg-green-500 transition-all" style={{ width: `${analytics.sentiment.positive}%` }} />
-          <div className="bg-gray-500 transition-all" style={{ width: `${analytics.sentiment.neutral}%` }} />
-          <div className="bg-red-500 transition-all" style={{ width: `${analytics.sentiment.negative}%` }} />
+          <div
+            className="bg-green-500 transition-all"
+            style={{ width: `${analytics.sentiment.positive}%` }}
+          />
+          <div
+            className="bg-gray-500 transition-all"
+            style={{ width: `${analytics.sentiment.neutral}%` }}
+          />
+          <div
+            className="bg-red-500 transition-all"
+            style={{ width: `${analytics.sentiment.negative}%` }}
+          />
         </div>
         <div className="flex justify-between mt-0.5 text-[8px] text-white/30">
           <span>😊 {analytics.sentiment.positive}%</span>
@@ -443,14 +497,22 @@ function AnalyticsPanel({ analytics, onClose }: { analytics: NonNullable<ReturnT
 
       {/* Platform breakdown */}
       <div>
-        <h4 className="text-[9px] font-semibold text-white/40 uppercase mb-1">Where viewers chat from</h4>
+        <h4 className="text-[9px] font-semibold text-white/40 uppercase mb-1">
+          Where viewers chat from
+        </h4>
         <div className="space-y-1">
-          {Object.entries(analytics.platformBreakdown).sort(([, a], [, b]) => b - a).map(([protocol, count]) => (
-            <div key={protocol} className="flex items-center justify-between">
-              <span className="text-[10px] text-white/60">{protocolLabels[protocol] || protocol}</span>
-              <span className="text-[10px] font-medium text-white/80 tabular-nums">{count} msgs</span>
-            </div>
-          ))}
+          {Object.entries(analytics.platformBreakdown)
+            .sort(([, a], [, b]) => b - a)
+            .map(([protocol, count]) => (
+              <div key={protocol} className="flex items-center justify-between">
+                <span className="text-[10px] text-white/60">
+                  {protocolLabels[protocol] || protocol}
+                </span>
+                <span className="text-[10px] font-medium text-white/80 tabular-nums">
+                  {count} msgs
+                </span>
+              </div>
+            ))}
           {Object.keys(analytics.platformBreakdown).length === 0 && (
             <span className="text-[9px] text-white/30">No data yet</span>
           )}
@@ -474,9 +536,7 @@ function AnalyticsPanel({ analytics, onClose }: { analytics: NonNullable<ReturnT
       </div>
 
       {analytics.peakMpm > 0 && (
-        <div className="text-[8px] text-white/30">
-          Peak: {analytics.peakMpm} msg/min
-        </div>
+        <div className="text-[8px] text-white/30">Peak: {analytics.peakMpm} msg/min</div>
       )}
     </div>
   );
@@ -519,7 +579,10 @@ function WatchingBreakdown({ breakdown }: { breakdown: Record<string, number> })
             <span
               key={protocol}
               className="inline-flex items-center gap-1 rounded-full px-1.5 py-[1px] text-[8px] font-medium"
-              style={{ backgroundColor: `${getProtocolBadge(protocol as ChatProtocol).color}15`, color: getProtocolBadge(protocol as ChatProtocol).color }}
+              style={{
+                backgroundColor: `${getProtocolBadge(protocol as ChatProtocol).color}15`,
+                color: getProtocolBadge(protocol as ChatProtocol).color,
+              }}
             >
               {protocolLabels[protocol] || protocol}
               <span className="tabular-nums">{count}</span>
@@ -622,9 +685,14 @@ function ChatInput({
                 <button
                   key={opt.protocol}
                   type="button"
-                  onClick={() => { onProtocolChange(opt.protocol); setShowProtocolSelect(false); }}
+                  onClick={() => {
+                    onProtocolChange(opt.protocol);
+                    setShowProtocolSelect(false);
+                  }}
                   className={`flex w-full items-center gap-2 px-3 py-1.5 text-[11px] transition-colors ${
-                    currentProtocol === opt.protocol ? 'bg-white/10 text-white' : 'text-white/60 hover:bg-white/5 hover:text-white'
+                    currentProtocol === opt.protocol
+                      ? 'bg-white/10 text-white'
+                      : 'text-white/60 hover:bg-white/5 hover:text-white'
                   }`}
                 >
                   <span>{opt.label}</span>
@@ -640,7 +708,13 @@ function ChatInput({
           type="text"
           value={value}
           onChange={(e) => setValue(e.target.value)}
-          placeholder={disabled ? 'Connecting...' : cooldown ? 'Slow mode...' : `Chat as ${getProtocolBadge(currentProtocol).label}...`}
+          placeholder={
+            disabled
+              ? 'Connecting...'
+              : cooldown
+                ? 'Slow mode...'
+                : `Chat as ${getProtocolBadge(currentProtocol).label}...`
+          }
           disabled={disabled || cooldown}
           maxLength={500}
           className="flex-1 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-white outline-none placeholder:text-white/30 focus:border-degen-500/40 focus:shadow-[0_0_8px_rgba(0,255,65,0.15)] disabled:opacity-50"
@@ -648,7 +722,9 @@ function ChatInput({
 
         {/* Slow mode indicator */}
         {slowMode && (
-          <span className="text-[10px] text-amber-400/60" title="Slow mode enabled">🐢</span>
+          <span className="text-[10px] text-amber-400/60" title="Slow mode enabled">
+            🐢
+          </span>
         )}
 
         {/* Emote button */}
@@ -659,9 +735,23 @@ function ChatInput({
             className="flex h-8 w-8 items-center justify-center rounded-lg text-white/40 transition-colors hover:bg-white/10 hover:text-white"
             aria-label="Emotes"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <path d="M8 14s1.5 2 4 2 4-2 4-2" />
+              <line x1="9" y1="9" x2="9.01" y2="9" />
+              <line x1="15" y1="9" x2="15.01" y2="9" />
+            </svg>
           </button>
-          {showEmotes && <EmotePicker onSelect={handleEmoteSelect} onClose={() => setShowEmotes(false)} />}
+          {showEmotes && (
+            <EmotePicker onSelect={handleEmoteSelect} onClose={() => setShowEmotes(false)} />
+          )}
         </div>
 
         {/* Send */}
@@ -671,7 +761,9 @@ function ChatInput({
           className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-degen-500 text-black transition-all hover:bg-degen-400 disabled:opacity-30"
           aria-label="Send"
         >
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+            <polygon points="5 3 19 12 5 21 5 3" />
+          </svg>
         </button>
       </div>
     </form>
@@ -817,7 +909,17 @@ export function UnifiedLiveChat({
             className="flex h-6 w-6 items-center justify-center rounded text-white/30 hover:text-white/60 transition-colors"
             title="Search chat"
           >
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <svg
+              width="11"
+              height="11"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
           </button>
 
           {/* Analytics toggle */}
@@ -828,7 +930,18 @@ export function UnifiedLiveChat({
               className="flex h-6 w-6 items-center justify-center rounded text-white/30 hover:text-white/60 transition-colors"
               title="Chat analytics"
             >
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+              <svg
+                width="11"
+                height="11"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <line x1="18" y1="20" x2="18" y2="10" />
+                <line x1="12" y1="20" x2="12" y2="4" />
+                <line x1="6" y1="20" x2="6" y2="14" />
+              </svg>
             </button>
           )}
 
@@ -986,7 +1099,16 @@ export function UnifiedLiveChat({
           className="absolute bottom-14 right-3 flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-gray-800 text-white/50 shadow-lg transition-all hover:text-white"
           aria-label="Scroll to bottom"
         >
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
+          <svg
+            width="11"
+            height="11"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
         </button>
       )}
 

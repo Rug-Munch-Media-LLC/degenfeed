@@ -9,7 +9,7 @@
  * Browse Mobilizon events and embed them inside DegenFeed's shell.
  */
 
-import { ProtocolShell, PROTOCOL_META } from '@degenfeed/ui/protocol-shell';
+import { PROTOCOL_META, ProtocolShell } from '@degenfeed/ui/protocol-shell';
 import Link from 'next/link';
 import { useCallback, useState } from 'react';
 
@@ -104,7 +104,8 @@ const FEATURED_EVENTS: EventEntry[] = [
     url: 'https://mobilizon.fr/events/4517',
     attendees: 190,
     category: 'Panel',
-    description: 'Discussion on decentralized publishing, content monetization, and censorship resistance.',
+    description:
+      'Discussion on decentralized publishing, content monetization, and censorship resistance.',
     virtual: true,
     imageUrl: '',
   },
@@ -189,20 +190,24 @@ export default function EventsPage() {
           description={event.description}
           headerStats={[
             { label: 'Date', value: event.date },
-            { label: 'Attendees', value: event.attendees.toLocaleString(), trend: event.attendees > 300 ? 'up' : 'neutral' },
-            { label: 'Location', value: event.virtual ? '🌐 Virtual' : event.location.split(',')[0] },
+            {
+              label: 'Attendees',
+              value: event.attendees.toLocaleString(),
+              trend: event.attendees > 300 ? 'up' : 'neutral',
+            },
+            {
+              label: 'Location',
+              value: event.virtual ? '🌐 Virtual' : event.location.split(',')[0],
+            },
           ]}
           frameAspectRatio={16 / 9}
           sandboxed={true}
           noSidebar={true}
-          breadcrumbs={[
-            { label: 'Events', href: '/events' },
-            { label: event.name },
-          ]}
+          breadcrumbs={[{ label: 'Events', href: '/events' }, { label: event.name }]}
           featureFlags={{
-            'Federated': true,
-            'RSVP': true,
-            'Calendar': true,
+            Federated: true,
+            RSVP: true,
+            Calendar: true,
           }}
         />
       </div>
@@ -214,7 +219,9 @@ export default function EventsPage() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
       <nav className="mb-4 flex items-center gap-1.5 text-xs text-[var(--color-muted)]">
-        <Link href="/feed" className="transition-colors hover:text-[var(--color-fg)]">Feed</Link>
+        <Link href="/feed" className="transition-colors hover:text-[var(--color-fg)]">
+          Feed
+        </Link>
         <span className="opacity-40">/</span>
         <span style={{ color: 'var(--color-fg-secondary)' }}>Events</span>
       </nav>
@@ -269,10 +276,12 @@ export default function EventsPage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full rounded-xl border bg-[var(--color-card)] py-2.5 px-4 text-sm text-[var(--color-fg)] placeholder:text-[var(--color-muted)] transition-colors focus:outline-none focus:ring-2"
-            style={{
-              borderColor: 'var(--color-glass-border)',
-              '--tw-ring-color': MOB_COLOR,
-            } as React.CSSProperties}
+            style={
+              {
+                borderColor: 'var(--color-glass-border)',
+                '--tw-ring-color': MOB_COLOR,
+              } as React.CSSProperties
+            }
             aria-label="Search events"
           />
         </div>
@@ -324,7 +333,10 @@ export default function EventsPage() {
 
       {/* Event grid */}
       <section>
-        <h2 className="mb-4 font-heading text-lg font-bold tracking-tight" style={{ color: 'var(--color-fg)' }}>
+        <h2
+          className="mb-4 font-heading text-lg font-bold tracking-tight"
+          style={{ color: 'var(--color-fg)' }}
+        >
           {activeCategory || (showVirtual ? 'Virtual Events' : 'All Events')}
           <span className="ml-2 text-sm font-normal" style={{ color: 'var(--color-muted)' }}>
             ({filtered.length})
@@ -332,7 +344,8 @@ export default function EventsPage() {
         </h2>
 
         {filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed py-16"
+          <div
+            className="flex flex-col items-center justify-center rounded-2xl border border-dashed py-16"
             style={{ borderColor: 'var(--color-glass-border)' }}
           >
             <span className="mb-3 text-3xl">🔍</span>
@@ -366,16 +379,25 @@ export default function EventsPage() {
                     {event.category}
                   </span>
                   {event.virtual && (
-                    <span className="rounded-full px-2 py-0.5 text-[9px] font-mono" style={{ backgroundColor: 'rgba(16,185,129,0.1)', color: '#10b981' }}>
+                    <span
+                      className="rounded-full px-2 py-0.5 text-[9px] font-mono"
+                      style={{ backgroundColor: 'rgba(16,185,129,0.1)', color: '#10b981' }}
+                    >
                       🌐 Virtual
                     </span>
                   )}
                 </div>
 
-                <h3 className="mt-3 font-heading text-base font-bold" style={{ color: 'var(--color-fg)' }}>
+                <h3
+                  className="mt-3 font-heading text-base font-bold"
+                  style={{ color: 'var(--color-fg)' }}
+                >
                   {event.name}
                 </h3>
-                <p className="mt-1 text-xs line-clamp-2" style={{ color: 'var(--color-fg-secondary)' }}>
+                <p
+                  className="mt-1 text-xs line-clamp-2"
+                  style={{ color: 'var(--color-fg-secondary)' }}
+                >
                   {event.description}
                 </p>
 
@@ -390,7 +412,9 @@ export default function EventsPage() {
                   </div>
                   <div className="flex items-center gap-1.5">
                     <span>👥</span>
-                    <span className="font-mono" style={{ color: MOB_COLOR }}>{event.attendees.toLocaleString()} attending</span>
+                    <span className="font-mono" style={{ color: MOB_COLOR }}>
+                      {event.attendees.toLocaleString()} attending
+                    </span>
                   </div>
                 </div>
 
@@ -408,7 +432,10 @@ export default function EventsPage() {
         )}
       </section>
 
-      <footer className="mt-12 border-t py-8 text-center" style={{ borderColor: 'var(--color-glass-border)' }}>
+      <footer
+        className="mt-12 border-t py-8 text-center"
+        style={{ borderColor: 'var(--color-glass-border)' }}
+      >
         <p className="text-xs text-[var(--color-muted)]">
           Event data from Mobilizon, the federated event platform. DegenFeed embeds it in our shell.
         </p>

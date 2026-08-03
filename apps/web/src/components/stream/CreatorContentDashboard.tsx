@@ -126,9 +126,7 @@ function RevenueRow({
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-white/80">{label}</span>
-            <span className="text-xs font-bold text-white tabular-nums">
-              ${usd.toFixed(2)}
-            </span>
+            <span className="text-xs font-bold text-white tabular-nums">${usd.toFixed(2)}</span>
           </div>
           <div className="flex items-center gap-2 mt-1">
             {/* Progress bar */}
@@ -168,7 +166,9 @@ export function CreatorContentDashboard({ compact = false }: CreatorContentDashb
   );
 
   const earnings = data?.earnings;
-  const [activeSection, setActiveSection] = useState<'all' | 'emoji' | 'gift' | 'filter' | 'sticker'>('all');
+  const [activeSection, setActiveSection] = useState<
+    'all' | 'emoji' | 'gift' | 'filter' | 'sticker'
+  >('all');
 
   // ─── Compact sidebar version ─────────────────────────────────────────
 
@@ -189,9 +189,7 @@ export function CreatorContentDashboard({ compact = false }: CreatorContentDashb
           </button>
         </div>
 
-        {error && (
-          <p className="text-[8px] text-red-400">Failed to load</p>
-        )}
+        {error && <p className="text-[8px] text-red-400">Failed to load</p>}
 
         {!earnings && !error && (
           <div className="py-4 text-center">
@@ -278,7 +276,12 @@ export function CreatorContentDashboard({ compact = false }: CreatorContentDashb
             />
             <StatCard
               label="Items Sold"
-              value={(earnings.emojiSoldCount + earnings.giftSoldCount + earnings.filterSoldCount + earnings.stickerSoldCount).toLocaleString()}
+              value={(
+                earnings.emojiSoldCount +
+                earnings.giftSoldCount +
+                earnings.filterSoldCount +
+                earnings.stickerSoldCount
+              ).toLocaleString()}
               icon="📦"
               color="#8B5CF6"
             />

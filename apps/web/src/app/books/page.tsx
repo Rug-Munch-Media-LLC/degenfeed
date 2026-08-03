@@ -10,7 +10,7 @@
  * DegenFeed's cyberpunk shell.
  */
 
-import { ProtocolShell, PROTOCOL_META } from '@degenfeed/ui/protocol-shell';
+import { PROTOCOL_META, ProtocolShell } from '@degenfeed/ui/protocol-shell';
 import Link from 'next/link';
 import { useCallback, useState } from 'react';
 
@@ -136,9 +136,7 @@ export default function BooksPage() {
     if (activeGenre && book.genre !== activeGenre) return false;
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
-      return (
-        book.title.toLowerCase().includes(q) || book.author.toLowerCase().includes(q)
-      );
+      return book.title.toLowerCase().includes(q) || book.author.toLowerCase().includes(q);
     }
     return true;
   });
@@ -181,14 +179,11 @@ export default function BooksPage() {
           frameAspectRatio={16 / 9}
           sandboxed={true}
           noSidebar={true}
-          breadcrumbs={[
-            { label: 'Books', href: '/books' },
-            { label: book.title },
-          ]}
+          breadcrumbs={[{ label: 'Books', href: '/books' }, { label: book.title }]}
           featureFlags={{
-            'Federated': true,
-            'Reviews': true,
-            'Track': true,
+            Federated: true,
+            Reviews: true,
+            Track: true,
           }}
         />
       </div>
@@ -200,7 +195,9 @@ export default function BooksPage() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
       <nav className="mb-4 flex items-center gap-1.5 text-xs text-[var(--color-muted)]">
-        <Link href="/feed" className="transition-colors hover:text-[var(--color-fg)]">Feed</Link>
+        <Link href="/feed" className="transition-colors hover:text-[var(--color-fg)]">
+          Feed
+        </Link>
         <span className="opacity-40">/</span>
         <span style={{ color: 'var(--color-fg-secondary)' }}>Books</span>
       </nav>
@@ -254,10 +251,12 @@ export default function BooksPage() {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="w-full rounded-xl border bg-[var(--color-card)] py-2.5 px-4 text-sm text-[var(--color-fg)] placeholder:text-[var(--color-muted)] transition-colors focus:outline-none focus:ring-2"
-          style={{
-            borderColor: 'var(--color-glass-border)',
-            '--tw-ring-color': BW_COLOR,
-          } as React.CSSProperties}
+          style={
+            {
+              borderColor: 'var(--color-glass-border)',
+              '--tw-ring-color': BW_COLOR,
+            } as React.CSSProperties
+          }
           aria-label="Search books"
         />
       </div>
@@ -295,7 +294,10 @@ export default function BooksPage() {
 
       {/* Book grid */}
       <section>
-        <h2 className="mb-4 font-heading text-lg font-bold tracking-tight" style={{ color: 'var(--color-fg)' }}>
+        <h2
+          className="mb-4 font-heading text-lg font-bold tracking-tight"
+          style={{ color: 'var(--color-fg)' }}
+        >
           {activeGenre || 'All Books'}
           <span className="ml-2 text-sm font-normal" style={{ color: 'var(--color-muted)' }}>
             ({filtered.length})
@@ -330,7 +332,10 @@ export default function BooksPage() {
                 </div>
 
                 <div className="min-w-0 flex-1">
-                  <h3 className="font-heading text-sm font-bold" style={{ color: 'var(--color-fg)' }}>
+                  <h3
+                    className="font-heading text-sm font-bold"
+                    style={{ color: 'var(--color-fg)' }}
+                  >
                     {book.title}
                   </h3>
                   <p className="text-xs" style={{ color: 'var(--color-fg-secondary)' }}>
@@ -347,7 +352,10 @@ export default function BooksPage() {
                     </span>
                   </div>
 
-                  <p className="mt-1.5 text-xs line-clamp-2" style={{ color: 'var(--color-fg-secondary)' }}>
+                  <p
+                    className="mt-1.5 text-xs line-clamp-2"
+                    style={{ color: 'var(--color-fg-secondary)' }}
+                  >
                     {book.description}
                   </p>
 
@@ -380,7 +388,10 @@ export default function BooksPage() {
         </div>
       </section>
 
-      <footer className="mt-12 border-t py-8 text-center" style={{ borderColor: 'var(--color-glass-border)' }}>
+      <footer
+        className="mt-12 border-t py-8 text-center"
+        style={{ borderColor: 'var(--color-glass-border)' }}
+      >
         <p className="text-xs text-[var(--color-muted)]">
           Book data from BookWyrm, the federated book catalog. DegenFeed embeds it in our shell.
         </p>

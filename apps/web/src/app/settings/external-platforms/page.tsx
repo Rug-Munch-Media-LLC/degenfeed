@@ -48,9 +48,7 @@ function AccountCard({
         </span>
         <div>
           <p className="font-medium text-[var(--color-fg)]">{meta.name}</p>
-          <p className="text-sm text-[var(--color-muted)]">
-            {account.displayName}
-          </p>
+          <p className="text-sm text-[var(--color-muted)]">{account.displayName}</p>
           <p className="text-xs text-[var(--color-muted)]">
             Connected {connectedDate}
             {account.lastUsedAt && (
@@ -132,21 +130,17 @@ export default function ExternalPlatformsSettingsPage() {
     <div className="mx-auto max-w-3xl px-4 py-8">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="mb-2 text-2xl font-bold text-[var(--color-fg)]">
-          🌐 External Platforms
-        </h1>
+        <h1 className="mb-2 text-2xl font-bold text-[var(--color-fg)]">🌐 External Platforms</h1>
         <p className="text-sm text-[var(--color-muted)]">
-          Connect YouTube, Twitch, Kick, TikTok, Instagram, and LinkedIn
-          to post, schedule, and go live from DegenFeed.
+          Connect YouTube, Twitch, Kick, TikTok, Instagram, and LinkedIn to post, schedule, and go
+          live from DegenFeed.
         </p>
       </div>
 
       {/* Connected Accounts */}
       <section className="mb-8">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-[var(--color-fg)]">
-            Connected Accounts
-          </h2>
+          <h2 className="text-lg font-semibold text-[var(--color-fg)]">Connected Accounts</h2>
           <button
             type="button"
             onClick={() => setShowConnectModal(true)}
@@ -159,20 +153,15 @@ export default function ExternalPlatformsSettingsPage() {
         {loading ? (
           <div className="space-y-3">
             {[1, 2, 3].map((i) => (
-              <div
-                key={i}
-                className="h-16 animate-pulse rounded-xl bg-white/[0.03]"
-              />
+              <div key={i} className="h-16 animate-pulse rounded-xl bg-white/[0.03]" />
             ))}
           </div>
         ) : accounts.length === 0 ? (
           <div className="rounded-xl border border-[var(--color-glass-border)] bg-white/[0.02] p-8 text-center">
-            <p className="mb-2 text-lg text-[var(--color-fg)]">
-              No external platforms connected
-            </p>
+            <p className="mb-2 text-lg text-[var(--color-fg)]">No external platforms connected</p>
             <p className="mb-4 text-sm text-[var(--color-muted)]">
-              Connect YouTube, Twitch, Kick, TikTok, Instagram, or LinkedIn
-              to start posting across the web.
+              Connect YouTube, Twitch, Kick, TikTok, Instagram, or LinkedIn to start posting across
+              the web.
             </p>
             <button
               type="button"
@@ -198,9 +187,7 @@ export default function ExternalPlatformsSettingsPage() {
 
       {/* Live Dashboard */}
       <section className="mb-8">
-        <h2 className="mb-4 text-lg font-semibold text-[var(--color-fg)]">
-          Live Streaming
-        </h2>
+        <h2 className="mb-4 text-lg font-semibold text-[var(--color-fg)]">Live Streaming</h2>
         <ExternalLiveDashboard />
       </section>
 

@@ -35,15 +35,78 @@ export interface ProtocolBadgeConfig {
 }
 
 const PROTOCOL_BADGES: Record<ChatProtocol, ProtocolBadgeConfig> = {
-  degenfeed: { protocol: 'degenfeed', label: 'DegenFeed', emoji: '🌀', color: '#00ff41', bgColor: 'rgba(0,255,65,0.12)', shortLabel: 'DF' },
-  nostr: { protocol: 'nostr', label: 'Nostr', emoji: '⚡', color: '#E87928', bgColor: 'rgba(232,121,40,0.12)', shortLabel: 'NSTR' },
-  farcaster: { protocol: 'farcaster', label: 'Farcaster', emoji: '📱', color: '#8A63D2', bgColor: 'rgba(138,99,210,0.12)', shortLabel: 'FC' },
-  bluesky: { protocol: 'bluesky', label: 'Bluesky', emoji: '☁️', color: '#0285FF', bgColor: 'rgba(2,133,255,0.12)', shortLabel: 'BSKY' },
-  mastodon: { protocol: 'mastodon', label: 'Mastodon', emoji: '🐘', color: '#6364FF', bgColor: 'rgba(99,100,255,0.12)', shortLabel: 'MAST' },
-  telegram: { protocol: 'telegram', label: 'Telegram', emoji: '✈️', color: '#0088cc', bgColor: 'rgba(0,136,204,0.12)', shortLabel: 'TG' },
-  lens: { protocol: 'lens', label: 'Lens', emoji: '👁️', color: '#ABFE2C', bgColor: 'rgba(171,254,44,0.12)', shortLabel: 'LENS' },
-  zora: { protocol: 'zora', label: 'Zora', emoji: '🎨', color: '#FF6B35', bgColor: 'rgba(255,107,53,0.12)', shortLabel: 'ZORA' },
-  activitypub: { protocol: 'activitypub', label: 'ActivityPub', emoji: '🌐', color: '#00BCD4', bgColor: 'rgba(0,188,212,0.12)', shortLabel: 'AP' },
+  degenfeed: {
+    protocol: 'degenfeed',
+    label: 'DegenFeed',
+    emoji: '🌀',
+    color: '#00ff41',
+    bgColor: 'rgba(0,255,65,0.12)',
+    shortLabel: 'DF',
+  },
+  nostr: {
+    protocol: 'nostr',
+    label: 'Nostr',
+    emoji: '⚡',
+    color: '#E87928',
+    bgColor: 'rgba(232,121,40,0.12)',
+    shortLabel: 'NSTR',
+  },
+  farcaster: {
+    protocol: 'farcaster',
+    label: 'Farcaster',
+    emoji: '📱',
+    color: '#8A63D2',
+    bgColor: 'rgba(138,99,210,0.12)',
+    shortLabel: 'FC',
+  },
+  bluesky: {
+    protocol: 'bluesky',
+    label: 'Bluesky',
+    emoji: '☁️',
+    color: '#0285FF',
+    bgColor: 'rgba(2,133,255,0.12)',
+    shortLabel: 'BSKY',
+  },
+  mastodon: {
+    protocol: 'mastodon',
+    label: 'Mastodon',
+    emoji: '🐘',
+    color: '#6364FF',
+    bgColor: 'rgba(99,100,255,0.12)',
+    shortLabel: 'MAST',
+  },
+  telegram: {
+    protocol: 'telegram',
+    label: 'Telegram',
+    emoji: '✈️',
+    color: '#0088cc',
+    bgColor: 'rgba(0,136,204,0.12)',
+    shortLabel: 'TG',
+  },
+  lens: {
+    protocol: 'lens',
+    label: 'Lens',
+    emoji: '👁️',
+    color: '#ABFE2C',
+    bgColor: 'rgba(171,254,44,0.12)',
+    shortLabel: 'LENS',
+  },
+  zora: {
+    protocol: 'zora',
+    label: 'Zora',
+    emoji: '🎨',
+    color: '#FF6B35',
+    bgColor: 'rgba(255,107,53,0.12)',
+    shortLabel: 'ZORA',
+  },
+  activitypub: {
+    protocol: 'activitypub',
+    label: 'ActivityPub',
+    emoji: '🌐',
+    color: '#00BCD4',
+    bgColor: 'rgba(0,188,212,0.12)',
+    shortLabel: 'AP',
+  },
 };
 
 export function getProtocolBadge(protocol: ChatProtocol): ProtocolBadgeConfig {
@@ -197,7 +260,10 @@ export function useUnifiedChat({
         wsRef.current = ws;
 
         ws.onopen = () => {
-          if (!mounted) { ws?.close(); return; }
+          if (!mounted) {
+            ws?.close();
+            return;
+          }
           setIsConnected(true);
           setError(null);
           // Clear any poll fallback
@@ -345,11 +411,13 @@ export function useUnifiedChat({
 
       // Send via WebSocket or REST
       if (wsRef.current?.readyState === WebSocket.OPEN) {
-        wsRef.current.send(JSON.stringify({
-          type: 'message',
-          text: text.trim(),
-          protocol: protocol || myProtocolRef.current,
-        }));
+        wsRef.current.send(
+          JSON.stringify({
+            type: 'message',
+            text: text.trim(),
+            protocol: protocol || myProtocolRef.current,
+          }),
+        );
       } else {
         try {
           await fetch(`/api/live/chat/${streamId}/message`, {

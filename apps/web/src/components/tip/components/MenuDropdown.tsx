@@ -1,7 +1,7 @@
 'use client';
 
-import type { TipMenuOption } from '../types';
 import { AMOUNT_PRESETS_SATS, AMOUNT_PRESETS_USD } from '../constants';
+import type { TipMenuOption } from '../types';
 
 export function MenuDropdown({
   options,
@@ -92,7 +92,8 @@ export function MenuDropdown({
               type="button"
               onClick={() => {
                 if (opt.available) onSelect(opt.method);
-                else if (opt.method === 'degenfeed_tip' || opt.method === 'qr_code') onConnectAndTip();
+                else if (opt.method === 'degenfeed_tip' || opt.method === 'qr_code')
+                  onConnectAndTip();
               }}
               disabled={!opt.available && !opt.isBridge}
               className={`w-full flex items-center gap-2.5 rounded-lg border px-2.5 py-2 text-left transition-all ${
@@ -106,18 +107,28 @@ export function MenuDropdown({
               <span className="text-base">{opt.icon}</span>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5">
-                  <span className="text-xs font-medium text-[var(--color-fg)] truncate">{opt.label}</span>
+                  <span className="text-xs font-medium text-[var(--color-fg)] truncate">
+                    {opt.label}
+                  </span>
                   {opt.recommended && (
-                    <span className="shrink-0 rounded-full bg-degen-500/20 px-1.5 py-0.5 text-[8px] font-medium text-degen-400">Best</span>
+                    <span className="shrink-0 rounded-full bg-degen-500/20 px-1.5 py-0.5 text-[8px] font-medium text-degen-400">
+                      Best
+                    </span>
                   )}
                   {opt.isNative && (
-                    <span className="shrink-0 rounded-full bg-purple-900/20 px-1.5 py-0.5 text-[8px] font-medium text-purple-400">Native</span>
+                    <span className="shrink-0 rounded-full bg-purple-900/20 px-1.5 py-0.5 text-[8px] font-medium text-purple-400">
+                      Native
+                    </span>
                   )}
                   {opt.isBridge && (
-                    <span className="shrink-0 rounded-full bg-cyan-900/20 px-1.5 py-0.5 text-[8px] font-medium text-cyan-400">Bridge</span>
+                    <span className="shrink-0 rounded-full bg-cyan-900/20 px-1.5 py-0.5 text-[8px] font-medium text-cyan-400">
+                      Bridge
+                    </span>
                   )}
                 </div>
-                <span className="text-[9px] text-[var(--color-muted)] line-clamp-1">{opt.description}</span>
+                <span className="text-[9px] text-[var(--color-muted)] line-clamp-1">
+                  {opt.description}
+                </span>
               </div>
               <span className="shrink-0 text-[9px] text-[var(--color-muted)]">{opt.fee}</span>
             </button>
@@ -192,7 +203,9 @@ export function MenuDropdown({
       </div>
 
       <div className="border-t border-[var(--color-border)] px-3 py-2">
-        <p className="text-center text-[8px] text-[var(--color-muted)]">Powered by DegenFeed • No platform fees</p>
+        <p className="text-center text-[8px] text-[var(--color-muted)]">
+          Powered by DegenFeed • No platform fees
+        </p>
       </div>
     </div>
   );

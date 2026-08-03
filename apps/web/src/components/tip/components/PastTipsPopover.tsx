@@ -31,11 +31,19 @@ export function PastTipsPopover({
               className="flex items-center justify-between rounded-md px-2 py-1 hover:bg-[var(--color-card)] transition-colors"
             >
               <div className="flex items-center gap-1.5 min-w-0">
-                {i === 0 && <span className="shrink-0" title="Top Tipper">👑</span>}
-                <span className="truncate text-[10px] text-[var(--color-fg)]">{tip.tipperName}</span>
+                {i === 0 && (
+                  <span className="shrink-0" title="Top Tipper">
+                    👑
+                  </span>
+                )}
+                <span className="truncate text-[10px] text-[var(--color-fg)]">
+                  {tip.tipperName}
+                </span>
               </div>
               <div className="flex items-center gap-1 shrink-0">
-                <span className="text-[10px] font-medium text-[var(--color-fg)]">${tip.amountUsd.toFixed(2)}</span>
+                <span className="text-[10px] font-medium text-[var(--color-fg)]">
+                  ${tip.amountUsd.toFixed(2)}
+                </span>
                 <span className="text-[8px] text-[var(--color-muted)]">{tip.method}</span>
               </div>
             </div>
@@ -46,7 +54,8 @@ export function PastTipsPopover({
       {pastTips.length > 0 && (
         <div className="mt-2 rounded-lg bg-amber-900/10 border border-amber-900/30 px-2 py-1.5">
           <p className="text-[9px] text-amber-400">
-            👑 <strong>Top Tipper:</strong> {pastTips[0].tipperName} (${pastTips[0].amountUsd.toFixed(2)})
+            👑 <strong>Top Tipper:</strong> {pastTips[0].tipperName} ($
+            {pastTips[0].amountUsd.toFixed(2)})
           </p>
         </div>
       )}

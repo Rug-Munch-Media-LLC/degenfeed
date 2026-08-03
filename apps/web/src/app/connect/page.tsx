@@ -9,12 +9,12 @@
  * Enterprise tier ($20/mo) or standalone add-on ($15/mo).
  */
 
+import Link from 'next/link';
 import { useCallback, useState } from 'react';
 import { ConnectPlatformModal } from '../../components/external-platforms/ConnectPlatformModal';
-import { ExternalPostComposer } from '../../components/external-platforms/ExternalPostComposer';
 import { ExternalLiveDashboard } from '../../components/external-platforms/ExternalLiveDashboard';
+import { ExternalPostComposer } from '../../components/external-platforms/ExternalPostComposer';
 import { usePremium } from '../../hooks/usePremium';
-import Link from 'next/link';
 
 // ─── Feature Card ─────────────────────────────────────────────────────────
 
@@ -48,20 +48,21 @@ const PLATFORMS = [
 ];
 
 const DECENTRALIZED_PROTOCOLS = [
-  'Mastodon', 'Nostr', 'Farcaster', 'Lens', 'Bluesky',
-  'Threads', 'Reddit', 'Telegram', 'Discord', 'Lemmy',
-  'PeerTube', 'Pixelfed',
+  'Mastodon',
+  'Nostr',
+  'Farcaster',
+  'Lens',
+  'Bluesky',
+  'Threads',
+  'Reddit',
+  'Telegram',
+  'Discord',
+  'Lemmy',
+  'PeerTube',
+  'Pixelfed',
 ];
 
-function PlatformBadge({
-  name,
-  icon,
-  color,
-}: {
-  name: string;
-  icon: string;
-  color?: string;
-}) {
+function PlatformBadge({ name, icon, color }: { name: string; icon: string; color?: string }) {
   return (
     <div
       className="flex items-center gap-2 rounded-lg border border-[var(--color-glass-border)] bg-white/[0.03] px-3 py-2 text-sm"
@@ -165,12 +166,14 @@ export default function ConnectPage() {
           <span>New: DegenFeed Connect</span>
         </div>
         <h1 className="mb-4 text-4xl font-bold tracking-tight text-[var(--color-fg)] sm:text-5xl lg:text-6xl">
-          Post <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">Everywhere</span>
+          Post{' '}
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
+            Everywhere
+          </span>
         </h1>
         <p className="mx-auto mb-8 max-w-2xl text-lg text-[var(--color-muted)]">
-          Schedule and post to ALL social platforms from one dashboard.
-          YouTube, Twitch, Kick, TikTok, Instagram, LinkedIn + 12 decentralized protocols.
-          No more jumping between apps.
+          Schedule and post to ALL social platforms from one dashboard. YouTube, Twitch, Kick,
+          TikTok, Instagram, LinkedIn + 12 decentralized protocols. No more jumping between apps.
         </p>
 
         {/* CTA Buttons */}
@@ -355,18 +358,16 @@ export default function ConnectPage() {
           FAQ
          ════════════════════════════════════════════════════ */}
       <section className="mb-16">
-        <h2 className="mb-6 text-center text-2xl font-bold text-[var(--color-fg)]">
-          FAQ
-        </h2>
+        <h2 className="mb-6 text-center text-2xl font-bold text-[var(--color-fg)]">FAQ</h2>
         <div className="mx-auto max-w-2xl space-y-4">
           <div className="rounded-xl border border-[var(--color-glass-border)] bg-white/[0.02] p-4">
             <h3 className="mb-1 font-medium text-[var(--color-fg)]">
               How does the OAuth connection work?
             </h3>
             <p className="text-sm text-[var(--color-muted)]">
-              When you click Connect, you&apos;re redirected to the platform&apos;s
-              authorization page. After authorizing, Postiz securely stores the
-              tokens. DegenFeed never sees your platform credentials.
+              When you click Connect, you&apos;re redirected to the platform&apos;s authorization
+              page. After authorizing, Postiz securely stores the tokens. DegenFeed never sees your
+              platform credentials.
             </p>
           </div>
           <div className="rounded-xl border border-[var(--color-glass-border)] bg-white/[0.02] p-4">
@@ -374,8 +375,8 @@ export default function ConnectPage() {
               Can I post to both decentralized protocols AND external platforms at once?
             </h3>
             <p className="text-sm text-[var(--color-muted)]">
-              Yes! With Enterprise tier, you can cross-post to all 12 decentralized
-              protocols and all 6 external platforms simultaneously from one composer.
+              Yes! With Enterprise tier, you can cross-post to all 12 decentralized protocols and
+              all 6 external platforms simultaneously from one composer.
             </p>
           </div>
           <div className="rounded-xl border border-[var(--color-glass-border)] bg-white/[0.02] p-4">
@@ -383,18 +384,16 @@ export default function ConnectPage() {
               What&apos;s the difference between Connect Standalone and Enterprise?
             </h3>
             <p className="text-sm text-[var(--color-muted)]">
-              Connect Standalone ($15/mo) gives you external platform posting only.
-              Enterprise ($20/mo) includes everything — external platforms, all
-              decentralized protocols, full analytics, API access, and team accounts.
+              Connect Standalone ($15/mo) gives you external platform posting only. Enterprise
+              ($20/mo) includes everything — external platforms, all decentralized protocols, full
+              analytics, API access, and team accounts.
             </p>
           </div>
           <div className="rounded-xl border border-[var(--color-glass-border)] bg-white/[0.02] p-4">
-            <h3 className="mb-1 font-medium text-[var(--color-fg)]">
-              Can I cancel anytime?
-            </h3>
+            <h3 className="mb-1 font-medium text-[var(--color-fg)]">Can I cancel anytime?</h3>
             <p className="text-sm text-[var(--color-muted)]">
-              Yes. Cancel anytime and your access stays active until the end of
-              the billing period. No lock-in, no hidden fees.
+              Yes. Cancel anytime and your access stays active until the end of the billing period.
+              No lock-in, no hidden fees.
             </p>
           </div>
         </div>
@@ -403,10 +402,7 @@ export default function ConnectPage() {
       {/* ════════════════════════════════════════════════════
           Connect Modal
          ════════════════════════════════════════════════════ */}
-      <ConnectPlatformModal
-        isOpen={showConnectModal}
-        onClose={() => setShowConnectModal(false)}
-      />
+      <ConnectPlatformModal isOpen={showConnectModal} onClose={() => setShowConnectModal(false)} />
     </div>
   );
 }

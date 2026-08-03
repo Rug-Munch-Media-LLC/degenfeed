@@ -4,12 +4,12 @@ import { ErrorBoundary } from '@degenfeed/ui';
 import { useState } from 'react';
 import { useAuth } from '../../../components/AuthProvider';
 import { useWeb3 } from '../../../components/Web3Provider';
-import StudioTabBar from './StudioTabBar';
-import ShortsTab from './ShortsTab';
-import VideoTab from './VideoTab';
-import LiveTab from './LiveTab';
 import ContentTab from './ContentTab';
+import LiveTab from './LiveTab';
+import ShortsTab from './ShortsTab';
+import StudioTabBar from './StudioTabBar';
 import type { VideoTab as VideoTabType } from './types';
+import VideoTab from './VideoTab';
 
 export default function CreatorVideoStudioPage() {
   const { ready, walletAddress, openSignIn } = useAuth();
@@ -38,7 +38,9 @@ export default function CreatorVideoStudioPage() {
           Connect your wallet to create shorts, upload videos, and go live across all platforms.
         </p>
         <div className="mt-8">
-          <button type="button" onClick={openSignIn} className="btn-primary text-sm">Connect Wallet</button>
+          <button type="button" onClick={openSignIn} className="btn-primary text-sm">
+            Connect Wallet
+          </button>
         </div>
       </div>
     );
@@ -57,13 +59,19 @@ export default function CreatorVideoStudioPage() {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <a href="/creator/videos"
-              className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] px-4 py-2 text-xs font-medium text-[var(--color-muted)] transition-colors hover:text-[var(--color-fg)] hover:border-degen-500/30">
-              <span>📁</span><span className="hidden sm:inline">Legacy Videos</span>
+            <a
+              href="/creator/videos"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] px-4 py-2 text-xs font-medium text-[var(--color-muted)] transition-colors hover:text-[var(--color-fg)] hover:border-degen-500/30"
+            >
+              <span>📁</span>
+              <span className="hidden sm:inline">Legacy Videos</span>
             </a>
-            <a href="/creator/content"
-              className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] px-4 py-2 text-xs font-medium text-[var(--color-muted)] transition-colors hover:text-[var(--color-fg)] hover:border-degen-500/30">
-              <span>📝</span><span className="hidden sm:inline">Content Studio</span>
+            <a
+              href="/creator/content"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] px-4 py-2 text-xs font-medium text-[var(--color-muted)] transition-colors hover:text-[var(--color-fg)] hover:border-degen-500/30"
+            >
+              <span>📝</span>
+              <span className="hidden sm:inline">Content Studio</span>
             </a>
           </div>
         </div>
