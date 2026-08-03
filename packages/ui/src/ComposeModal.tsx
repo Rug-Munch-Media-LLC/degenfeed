@@ -28,6 +28,7 @@ import { clearDraft, loadDraft, saveDraft } from './ComposeDraftManager';
 import { ComposePreview } from './ComposePreview';
 import { getProtocolColor, getProtocolIcon, getProtocolLabel } from './ProtocolBadge';
 import { TokenGateConfigurator } from './TokenGateConfigurator';
+import { useSwipeToDismiss } from './hooks/useSwipeToDismiss';
 
 interface ComposeTarget {
   id: string;
@@ -164,6 +165,7 @@ export function ComposeModal({
   const [uploadingImage, setUploadingImage] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const swipeHandlers = useSwipeToDismiss(onClose);
 
   // Token gate state
   const [tokenGate, setTokenGate] = useState<TokenGate | null>(null);
@@ -589,6 +591,8 @@ export function ComposeModal({
         className="flex w-full max-w-lg flex-col rounded-t-2xl border border-[var(--color-border)] bg-[var(--color-card)] shadow-2xl sm:rounded-2xl"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
+        onTouchStart={swipeHandlers.onTouchStart}
+        onTouchEnd={swipeHandlers.onTouchEnd}
         role="dialog"
         style={{ maxHeight: '90vh' }}
       >

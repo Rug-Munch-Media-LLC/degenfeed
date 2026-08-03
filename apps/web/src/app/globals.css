@@ -168,11 +168,11 @@
   }
   h5 {
     font-size: var(--text-h5);
-    line-height: var(--leading-h4);
+    line-height: var(--leading-h5);
   }
   h6 {
     font-size: var(--text-h6);
-    line-height: var(--leading-h4);
+    line-height: var(--leading-h6);
   }
 
   p,
@@ -497,14 +497,14 @@
   /* ═══ Backgrounds ═══ */
   .bg-cyber {
     background:
-      radial-gradient(ellipse at 20% 20%, rgba(0, 255, 65, 0.08) 0%, transparent 50%),
+      radial-gradient(ellipse at 20% 20%, rgba(29, 155, 240, 0.08) 0%, transparent 50%),
       radial-gradient(ellipse at 80% 80%, rgba(139, 92, 246, 0.06) 0%, transparent 50%),
-      radial-gradient(ellipse at 50% 50%, rgba(0, 255, 65, 0.03) 0%, transparent 60%);
+      radial-gradient(ellipse at 50% 50%, rgba(29, 155, 240, 0.03) 0%, transparent 60%);
   }
 
   .bg-hero-glow {
     background:
-      radial-gradient(ellipse at 50% 0%, rgba(0, 255, 65, 0.15) 0%, transparent 60%),
+      radial-gradient(ellipse at 50% 0%, rgba(29, 155, 240, 0.15) 0%, transparent 60%),
       radial-gradient(ellipse at 20% 40%, rgba(139, 92, 246, 0.08) 0%, transparent 50%),
       radial-gradient(ellipse at 80% 30%, rgba(249, 24, 128, 0.05) 0%, transparent 50%);
   }
@@ -1512,7 +1512,7 @@
   z-index: 0;
   opacity: 0.4;
   background:
-    radial-gradient(ellipse at 20% 50%, rgba(0, 255, 65, 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 20% 50%, rgba(29, 155, 240, 0.06) 0%, transparent 50%),
     radial-gradient(ellipse at 80% 20%, rgba(139, 92, 246, 0.04) 0%, transparent 50%),
     radial-gradient(ellipse at 50% 80%, rgba(249, 24, 128, 0.03) 0%, transparent 50%);
 }
@@ -1685,23 +1685,23 @@
 
 .aurora--1 {
   background:
-    radial-gradient(ellipse at 20% 50%, rgba(0, 255, 65, 0.15) 0%, transparent 50%),
+    radial-gradient(ellipse at 20% 50%, rgba(29, 155, 240, 0.15) 0%, transparent 50%),
     radial-gradient(ellipse at 80% 20%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
-    radial-gradient(ellipse at 40% 80%, rgba(0, 255, 65, 0.05) 0%, transparent 50%);
+    radial-gradient(ellipse at 40% 80%, rgba(29, 155, 240, 0.05) 0%, transparent 50%);
   animation: aurora-pan 20s ease-in-out infinite;
 }
 
 .aurora--2 {
   background:
     radial-gradient(ellipse at 60% 30%, rgba(139, 92, 246, 0.12) 0%, transparent 50%),
-    radial-gradient(ellipse at 10% 70%, rgba(0, 255, 65, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 10% 70%, rgba(29, 155, 240, 0.08) 0%, transparent 50%),
     radial-gradient(ellipse at 90% 60%, rgba(249, 24, 128, 0.06) 0%, transparent 50%);
   animation: aurora-pan-2 25s ease-in-out infinite;
 }
 
 .aurora--3 {
   background:
-    radial-gradient(ellipse at 30% 60%, rgba(0, 255, 65, 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 30% 60%, rgba(29, 155, 240, 0.06) 0%, transparent 50%),
     radial-gradient(ellipse at 70% 80%, rgba(139, 92, 246, 0.08) 0%, transparent 50%);
   animation: aurora-pan 30s ease-in-out infinite;
   opacity: 0.5;
@@ -1728,7 +1728,7 @@
   border-radius: var(--radius-xl);
   font-weight: 700;
   color: #000;
-  background: linear-gradient(135deg, var(--color-accent), #00cc34);
+  background: linear-gradient(135deg, var(--color-accent), #0e6cb8);
   border: none;
   cursor: pointer;
   transition: all var(--duration-normal) var(--ease-out-expo);
@@ -1742,7 +1742,7 @@
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: linear-gradient(135deg, #1d9bf0, #10b981);
+  background: linear-gradient(135deg, #1d9bf0, #60a5fa);
   opacity: 0;
   transition: opacity var(--duration-normal) ease;
 }
@@ -1810,7 +1810,7 @@
 
 .feature-card:hover {
   transform: translateY(-4px);
-  border-color: rgba(0, 255, 65, 0.25) !important;
+  border-color: rgba(29, 155, 240, 0.25) !important;
   box-shadow:
     0 8px 40px rgba(0, 0, 0, 0.4),
     0 0 30px var(--color-accent-glow);
@@ -1854,7 +1854,7 @@
 .protocol-chip:hover {
   transform: scale(1.08);
   filter: brightness(1.2);
-  box-shadow: 0 0 20px rgba(0, 255, 65, 0.1);
+  box-shadow: 0 0 20px rgba(29, 155, 240, 0.1);
 }
 
 /* ═══ Landing — Post Action Button ═════════════════════════════ */
@@ -2073,21 +2073,21 @@
 @keyframes pulse-glow {
   0%,
   100% {
-    box-shadow: 0 0 20px rgba(0, 255, 65, 0.1);
+    box-shadow: 0 0 20px rgba(29, 155, 240, 0.1);
   }
   50% {
-    box-shadow: 0 0 40px rgba(0, 255, 65, 0.2);
+    box-shadow: 0 0 40px rgba(29, 155, 240, 0.2);
   }
 }
 @keyframes celebration-pulse {
   0%,
   100% {
     transform: scale(1);
-    box-shadow: 0 0 40px rgba(0, 255, 65, 0.2);
+    box-shadow: 0 0 40px rgba(29, 155, 240, 0.2);
   }
   50% {
     transform: scale(1.05);
-    box-shadow: 0 0 60px rgba(0, 255, 65, 0.3);
+    box-shadow: 0 0 60px rgba(29, 155, 240, 0.3);
   }
 }
 @keyframes confetti-fall {

@@ -30,7 +30,7 @@ type FeedTab = 'gts-local' | 'federated';
 const GTS_INSTANCE = {
   host: 'social.degenfeed.xyz',
   label: 'GoToSocial',
-  color: '#00ff41',
+  color: '#1d9bf0',
   icon: '◈',
   description: "DegenFeed's GoToSocial instance — web3 social on ActivityPub",
 };
@@ -56,7 +56,7 @@ function ContentWarningOverlay({ warning, onReveal }: { warning: string; onRevea
     <div
       className="relative mb-3 overflow-hidden rounded-xl border transition-all cursor-pointer"
       style={{
-        borderColor: 'rgba(0, 255, 65, 0.15)',
+        borderColor: 'rgba(29, 155, 240, 0.15)',
         background:
           'repeating-linear-gradient(45deg, rgba(10,10,10,0.95) 0px, rgba(10,10,10,0.95) 10px, rgba(0,0,0,0.8) 10px, rgba(0,0,0,0.8) 20px)',
       }}

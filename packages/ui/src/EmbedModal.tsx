@@ -1,6 +1,7 @@
 'use client';
 
 import { memo, useCallback, useMemo, useState } from 'react';
+import { useSwipeToDismiss } from './hooks/useSwipeToDismiss';
 
 export interface EmbedModalProps {
   open: boolean;
@@ -37,6 +38,7 @@ export const EmbedModal = memo(function EmbedModal({
   const [showBadge, setShowBadge] = useState(true);
   const [showEngagement, setShowEngagement] = useState(true);
   const [copied, setCopied] = useState(false);
+  const swipeHandlers = useSwipeToDismiss(onClose);
 
   const dfUri = postUri || `df://${protocol}:${postId.replace(`${protocol}:`, '')}`;
   const postUrl = `${window.location.origin}/post/${encodeURIComponent(postId)}`;
@@ -93,6 +95,8 @@ export const EmbedModal = memo(function EmbedModal({
         role="none"
         className="flex w-full max-w-lg flex-col rounded-t-2xl border border-[var(--color-border)] bg-[var(--color-card)] shadow-2xl sm:rounded-2xl"
         onClick={(e) => e.stopPropagation()}
+        onTouchStart={swipeHandlers.onTouchStart}
+        onTouchEnd={swipeHandlers.onTouchEnd}
         style={{ maxHeight: '90vh' }}
       >
         {/* Header */}

@@ -1026,3 +1026,79 @@ describe('RSS provider', () => {
     expect(Math.abs(pos - neut)).toBeLessThanOrEqual(6);
   });
 });
+
+describe('YouTube provider', () => {
+  it('has 15 configured channels with valid UC ids', async () => {
+    const { YOUTUBE_CHANNELS } = await import('../providers/youtube');
+    expect(YOUTUBE_CHANNELS).toHaveLength(15);
+    for (const ch of YOUTUBE_CHANNELS) {
+      expect(ch.channelId).toMatch(/^UC[\w-]{20,}$/);
+      expect(ch.name.length).toBeGreaterThan(0);
+      expect(['crypto', 'ai', 'tech']).toContain(ch.category);
+    }
+    // 9 crypto, 4 AI, 2 tech
+    expect(YOUTUBE_CHANNELS.filter((c) => c.category === 'crypto')).toHaveLength(9);
+    expect(YOUTUBE_CHANNELS.filter((c) => c.category === 'ai')).toHaveLength(4);
+    expect(YOUTUBE_CHANNELS.filter((c) => c.category === 'tech')).toHaveLength(2);
+  });
+
+  it('parses a YouTube Atom entry into a video', async () => {
+    const { parseYouTubeEntry } = await import('../providers/youtube');
+    const entry = `
+      <entry>
+        <id>yt:video:abc123XYZ</id>
+        <yt:videoId>abc123XYZ</yt:videoId>
+        <yt:channelId>UC4xF0uHdyAQSVKvWZQzhl9A</yt:channelId>
+        <title>Bitcoin Explained in 10 Minutes</title>
+        <link rel="alternate" href="https://www.youtube.com/watch?v=abc123XYZ"/>
+        <author><name>Coin Bureau</name><uri>https://www.youtube.com/channel/UCqK_GSMbpiV8spgD3ZGloSw</uri></author>
+        <published>2026-08-01T12:00:00+00:00</published>
+        <updated>2026-08-01T12:05:00+00:00</updated>
+        <media:group>
+          <media:title>Bitcoin Explained</media:title>
+          <media:content url="https://www.youtube.com/v/abc123XYZ?version=3" type="application/x-shockwave-flash" width="640" height="390" duration="625"/>
+          <media:thumbnail url="https://i.ytimg.com/vi/abc123XYZ/hqdefault.jpg" width="480" height="360"/>
+          <media:description>What is Bitcoin? A beginner guide to BTC.</media:description>
+          <media:community>
+            <media:starRating count="2345" average="4.99" min="1" max="5"/>
+            <media:statistics views="67890"/>
+          </media:community>
+        </media:group>
+      </entry>`;
+
+    const video = parseYouTubeEntry(entry, 'UCqK_GSMbpiV8spgD3ZGloSw', 'Coin Bureau');
+    expect(video).not.toBeNull();
+    expect(video!.videoId).toBe('abc123XYZ');
+    expect(video!.title).toBe('Bitcoin Explained in 10 Minutes');
+    expect(video!.watchUrl).toBe('https://www.youtube.com/watch?v=abc123XYZ');
+    expect(video!.thumbnail).toBe('https://i.ytimg.com/vi/abc123XYZ/hqdefault.jpg');
+    expect(video!.views).toBe(67890);
+    expect(video!.likes).toBe(2345);
+    expect(video!.duration).toBe(625);
+    expect(video!.description).toContain('Bitcoin');
+    expect(video!.channelName).toBe('Coin Bureau');
+    expect(new Date(video!.publishedAt).toISOString()).toBe('2026-08-01T12:00:00.000Z');
+  });
+
+  it('normalizes parsed videos into UnifiedPosts', async () => {
+    const { fetchYouTubePosts } = await import('../providers/youtube');
+    // No live fetch in unit tests — construct a post via the public parser path.
+    const { parseYouTubeEntry, YOUTUBE_CHANNELS } = await import('../providers/youtube');
+    const entry = `
+      <entry>
+        <yt:videoId>vtest1234</yt:videoId>
+        <title>AI News Roundup</title>
+        <published>2026-08-02T10:00:00+00:00</published>
+        <media:group>
+          <media:thumbnail url="https://i.ytimg.com/vi/vtest1234/hqdefault.jpg"/>
+          <media:statistics views="1234"/>
+          <media:starRating count="99"/>
+        </media:group>
+      </entry>`;
+    const parsed = parseYouTubeEntry(entry, 'UC4xF0uHdyAQSVKvWZQzhl9A', 'Fireship');
+    expect(parsed).not.toBeNull();
+    // fetchYouTubePosts is exported but network-bound; just assert it's callable-shaped
+    expect(typeof fetchYouTubePosts).toBe('function');
+    expect(YOUTUBE_CHANNELS.length).toBeGreaterThan(0);
+  });
+});

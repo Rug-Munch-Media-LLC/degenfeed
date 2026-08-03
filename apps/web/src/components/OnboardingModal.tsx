@@ -355,7 +355,7 @@ export function OnboardingModal() {
           {/* Header */}
           <div className="relative flex items-center justify-between px-6 pt-6 pb-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-degen-500/10 text-sm text-degen-400 shadow-[0_0_12px_rgba(0,255,65,0.15)]">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-degen-500/10 text-sm text-degen-400 shadow-[0_0_12px_rgba(29,155,240,0.15)]">
                 ◆
               </div>
               <span className="text-sm font-semibold tracking-tight text-white/80">DegenFeed</span>
@@ -387,8 +387,8 @@ export function OnboardingModal() {
               {/* == Step 0: Welcome == */}
               {step === 0 && (
                 <div className="text-center">
-                  <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-degen-500/20 via-degen-500/10 to-transparent text-4xl shadow-[0_0_30px_rgba(0,255,65,0.15)]">
-                    <span className="drop-shadow-[0_0_8px_rgba(0,255,65,0.5)]">◆</span>
+                  <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-degen-500/20 via-degen-500/10 to-transparent text-4xl shadow-[0_0_30px_rgba(29,155,240,0.15)]">
+                    <span className="drop-shadow-[0_0_8px_rgba(29,155,240,0.5)]">◆</span>
                   </div>
                   <h2 className="mb-2 text-2xl font-bold tracking-tight text-white">
                     Welcome to DegenFeed
@@ -434,7 +434,7 @@ export function OnboardingModal() {
                           key={p.id}
                           className={`group relative flex cursor-pointer items-start gap-3 rounded-xl border p-3.5 text-left transition-all duration-200 ${
                             selected
-                              ? 'border-degen-500/40 bg-degen-500/[0.06] shadow-[0_0_20px_rgba(0,255,65,0.06)]'
+                              ? 'border-degen-500/40 bg-degen-500/[0.06] shadow-[0_0_20px_rgba(29,155,240,0.06)]'
                               : 'border-white/[0.06] bg-white/[0.02] hover:border-white/[0.12] hover:bg-white/[0.04]'
                           }`}
                         >
@@ -448,7 +448,7 @@ export function OnboardingModal() {
                           <div
                             className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-lg transition-all ${
                               selected
-                                ? 'shadow-[0_0_12px_rgba(0,255,65,0.15)]'
+                                ? 'shadow-[0_0_12px_rgba(29,155,240,0.15)]'
                                 : 'border border-white/[0.06]'
                             }`}
                             style={{
@@ -539,7 +539,7 @@ export function OnboardingModal() {
                           key={topic.id}
                           className={`group inline-flex cursor-pointer items-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium transition-all duration-200 ${
                             selected
-                              ? 'bg-degen-500/15 text-degen-400 shadow-[0_0_12px_rgba(0,255,65,0.1)] ring-1 ring-degen-500/30'
+                              ? 'bg-degen-500/15 text-degen-400 shadow-[0_0_12px_rgba(29,155,240,0.1)] ring-1 ring-degen-500/30'
                               : 'bg-white/[0.04] text-white/50 hover:bg-white/[0.08] hover:text-white/70 ring-1 ring-white/[0.06]'
                           }`}
                         >
@@ -611,7 +611,7 @@ export function OnboardingModal() {
                               className={`shrink-0 rounded-lg px-3.5 py-1.5 text-xs font-semibold transition-all ${
                                 following
                                   ? 'bg-white/[0.06] text-white/60 hover:bg-red-500/10 hover:text-red-400'
-                                  : 'bg-degen-500 text-black hover:bg-degen-400 hover:shadow-[0_0_12px_rgba(0,255,65,0.25)]'
+                                  : 'bg-degen-500 text-black hover:bg-degen-400 hover:shadow-[0_0_12px_rgba(29,155,240,0.25)]'
                               }`}
                             >
                               {following ? 'Following' : 'Follow'}
@@ -631,7 +631,7 @@ export function OnboardingModal() {
               {step === 4 && (
                 <div>
                   <div className="mb-6 text-center">
-                    <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-degen-500/20 via-degen-500/10 to-transparent text-3xl shadow-[0_0_20px_rgba(0,255,65,0.12)]">
+                    <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-degen-500/20 via-degen-500/10 to-transparent text-3xl shadow-[0_0_20px_rgba(29,155,240,0.12)]">
                       🔗
                     </div>
                     <h2 className="mb-1 text-xl font-bold text-white">Connect your protocols</h2>
@@ -809,8 +809,8 @@ export function OnboardingModal() {
               {/* == Step 5: Done == */}
               {step === 5 && (
                 <div className="text-center">
-                  <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-degen-500/20 via-degen-500/10 to-transparent shadow-[0_0_40px_rgba(0,255,65,0.15)]">
-                    <span className="text-3xl drop-shadow-[0_0_12px_rgba(0,255,65,0.4)]">✦</span>
+                  <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-degen-500/20 via-degen-500/10 to-transparent shadow-[0_0_40px_rgba(29,155,240,0.15)]">
+                    <span className="text-3xl drop-shadow-[0_0_12px_rgba(29,155,240,0.4)]">✦</span>
                   </div>
                   <h2 className="mb-2 text-2xl font-bold text-white">You&apos;re all set!</h2>
                   <p className="mb-6 text-sm text-white/50">

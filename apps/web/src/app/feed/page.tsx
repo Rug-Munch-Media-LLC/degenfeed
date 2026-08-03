@@ -6,7 +6,6 @@ import {
   ErrorBoundary,
   NotificationBell,
   PostCard,
-  ProtocolBadge,
   ScrollToTop,
 } from '@degenfeed/ui';
 import dynamic from 'next/dynamic';
@@ -755,19 +754,13 @@ export default function FeedPage() {
 
           {state === 'loaded' && (
             <>
-              <div className="space-y-4 stagger-enter">
+              <div className="stagger-enter">
                 {memoizedFeed.map((post, i) => (
                   <div
                     key={post.id}
                     className="relative"
                     style={{ '--stagger-i': i } as React.CSSProperties}
                   >
-                    {/* Protocol source indicator */}
-                    {post.protocol && (
-                      <div className="mb-1.5 flex items-center gap-2">
-                        <ProtocolBadge protocol={post.protocol} size="sm" showLabel />
-                      </div>
-                    )}
                     <PostCard post={post} onEngage={handleEngage} />
                   </div>
                 ))}

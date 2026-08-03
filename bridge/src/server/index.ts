@@ -780,6 +780,7 @@ const server = http.createServer(async (req, res) => {
           'https://discord.com/api/v10/gateway', // Discord
           'https://matrix.org/', // Matrix
           'https://api.github.com/', // GitHub
+          'https://www.youtube.com/feeds/videos.xml?channel_id=UCsBjURrPoezykLs9EqgamOA', // YouTube (Fireship)
         ].map(checkSourceHealth),
       );
       const [
@@ -799,6 +800,7 @@ const server = http.createServer(async (req, res) => {
         discordHealthy,
         matrixHealthy,
         githubHealthy,
+        youtubeHealthy,
       ] = results;
       // Farcaster is checked separately — Hubble may be on a different port
       // than the health probe list assumes, and Neynar fallback is valid.
@@ -841,6 +843,7 @@ const server = http.createServer(async (req, res) => {
           discord: { healthy: discordHealthy },
           matrix: { healthy: matrixHealthy },
           github: { healthy: githubHealthy },
+          youtube: { healthy: youtubeHealthy },
         },
       });
     }
@@ -1003,6 +1006,13 @@ const server = http.createServer(async (req, res) => {
       return jsonOk(res, { archive, meta: { total: archive.length, source: 'owncast', fetchedAt: Date.now() } });
     }
 
+    // GET /api/feed/youtube/channels — configured YouTube channels
+    if (path === '/api/feed/youtube/channels') {
+      const { getYouTubeFeeds } = await import('../providers/youtube');
+      const channels = getYouTubeFeeds();
+      return jsonOk(res, { channels, meta: { total: channels.length, source: 'youtube', fetchedAt: Date.now() } });
+    }
+
     if (path.startsWith('/api/feed/')) {
       const proto = path.replace('/api/feed/', '');
       const limit = Math.min(parseInt(searchParams.get('limit') || '25', 10), 200);
@@ -1067,6 +1077,7 @@ const server = http.createServer(async (req, res) => {
         'matrix',
         'github',
         'podcast',
+        'youtube',
       ];
       if (allowed.includes(proto)) {
         const singleCacheKey = `feed:single:${proto}:${limit}`;
@@ -1210,7 +1221,7 @@ server.listen(PORT, BRIDGE_HOST, () => {
   console.log(`[bridge] DegenFeed Bridge v0.4.0 running on http://${BRIDGE_HOST}:${PORT}`);
   console.log('[bridge] Realtime WebSocket: /ws/realtime (heartbeat 30s)');
   console.log(
-    '[bridge] Data sources: Mastodon/GTS, Reddit, RSS, Lemmy, PeerTube, Bluesky, Nostr, Farcaster, Lens, Pixelfed, Threads, Zora, DTube, LBRY, Gab, Minds, Aether, Scuttlebutt, Hive, Mirror, Funkwhale, Castopod, WriteFreely, MediaGoblin, Owncast, BookWyrm, Mobilizon, Forgejo, Bonfire, Mitra, Takahe, Orbis, XMTP, Push, Huddle01, Ceramic, Tableland, Telegram, Discord, Matrix, GitHub',
+    '[bridge] Data sources: Mastodon/GTS, Reddit, RSS, Lemmy, PeerTube, YouTube, Bluesky, Nostr, Farcaster, Lens, Pixelfed, Threads, Zora, DTube, LBRY, Gab, Minds, Aether, Scuttlebutt, Hive, Mirror, Funkwhale, Castopod, WriteFreely, MediaGoblin, Owncast, BookWyrm, Mobilizon, Forgejo, Bonfire, Mitra, Takahe, Orbis, XMTP, Push, Huddle01, Ceramic, Tableland, Telegram, Discord, Matrix, GitHub',
   );
   console.log(
     '[bridge] Cross-poster: GTS→Nostr, GTS→Bluesky, GTS→PeerTube, GTS→Lens, GTS→Farcaster, GTS→Pixelfed, GTS→WriteFreely, Pixelfed→Mastodon, Lemmy→Nostr, BookWyrm→All, Mobilizon→All, Forgejo→Fediverse',

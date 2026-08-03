@@ -119,7 +119,7 @@ const THEME_STYLES = `
     font-family: var(--font-body);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    line-height: 1.6;
+    line-height: 1.5;
     overflow-x: hidden;
   }
 

@@ -32,7 +32,6 @@ for (const p of PROTOCOL_LIST) {
 const EXTRA_LINKS = [
   { id: 'discord', label: 'Discord', icon: '💬', color: '#5865f2', href: '/feed/discord' },
   { id: 'telegram', label: 'Telegram', icon: '✈', color: '#26a5e4', href: '/feed/telegram' },
-  { id: 'youtube', label: 'YouTube', icon: '▶', color: '#ff0000', href: '/feed/youtube' },
   { id: 'github', label: 'GitHub', icon: '◉', color: '#6e40c9', href: '/feed/github' },
   { id: 'hive', label: 'Hive', icon: '◆', color: '#e31337', href: '/feed/hive' },
 ];

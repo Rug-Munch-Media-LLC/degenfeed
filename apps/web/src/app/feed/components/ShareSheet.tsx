@@ -93,6 +93,7 @@ export function ShareSheet({ post, open, onClose, onToast }: ShareSheetProps) {
   const [closing, setClosing] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [showSheet, setShowSheet] = useState(false);
+  const touchStartY = useRef<number | null>(null);
 
   const handleClose = useCallback(() => {
     setClosing(true);
@@ -101,6 +102,22 @@ export function ShareSheet({ post, open, onClose, onToast }: ShareSheetProps) {
       onClose();
     }, 200);
   }, [onClose]);
+
+  // Swipe down to dismiss (mobile bottom sheet)
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    touchStartY.current = e.touches[0]?.clientY ?? null;
+  }, []);
+
+  const handleTouchEnd = useCallback(
+    (e: React.TouchEvent) => {
+      if (touchStartY.current === null) return;
+      const dy = (e.changedTouches[0]?.clientY ?? touchStartY.current) - touchStartY.current;
+      touchStartY.current = null;
+      // Dismiss on a downward swipe past 80px (only for bottom-sheet layout)
+      if (dy > 80 && window.matchMedia('(max-width: 640px)').matches) handleClose();
+    },
+    [handleClose],
+  );
 
   // Close on Escape
   useEffect(() => {
@@ -224,6 +241,8 @@ export function ShareSheet({ post, open, onClose, onToast }: ShareSheetProps) {
         }`}
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
       >
         {/* Drag handle (mobile) */}
         <div

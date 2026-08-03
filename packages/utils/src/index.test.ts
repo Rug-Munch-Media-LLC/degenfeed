@@ -29,23 +29,23 @@ describe('formatTimeAgo', () => {
 
   it('should display minutes for timestamps 1–59 minutes ago', async () => {
     const { formatTimeAgo } = await import('./index');
-    expect(formatTimeAgo(now - 60_000)).toBe('1m');
-    expect(formatTimeAgo(now - 30 * 60_000)).toBe('30m');
-    expect(formatTimeAgo(now - 59 * 60_000)).toBe('59m');
+    expect(formatTimeAgo(now - 60_000)).toBe('1m ago');
+    expect(formatTimeAgo(now - 30 * 60_000)).toBe('30m ago');
+    expect(formatTimeAgo(now - 59 * 60_000)).toBe('59m ago');
   });
 
   it('should display hours for timestamps 1–23 hours ago', async () => {
     const { formatTimeAgo } = await import('./index');
-    expect(formatTimeAgo(now - 60 * 60_000)).toBe('1h');
-    expect(formatTimeAgo(now - 6 * 60 * 60_000)).toBe('6h');
-    expect(formatTimeAgo(now - 23 * 60 * 60_000)).toBe('23h');
+    expect(formatTimeAgo(now - 60 * 60_000)).toBe('1h ago');
+    expect(formatTimeAgo(now - 6 * 60 * 60_000)).toBe('6h ago');
+    expect(formatTimeAgo(now - 23 * 60 * 60_000)).toBe('23h ago');
   });
 
   it('should display days for timestamps 1–6 days ago', async () => {
     const { formatTimeAgo } = await import('./index');
-    expect(formatTimeAgo(now - 24 * 60 * 60_000)).toBe('1d');
-    expect(formatTimeAgo(now - 3 * 24 * 60 * 60_000)).toBe('3d');
-    expect(formatTimeAgo(now - 6 * 24 * 60 * 60_000)).toBe('6d');
+    expect(formatTimeAgo(now - 24 * 60 * 60_000)).toBe('1d ago');
+    expect(formatTimeAgo(now - 3 * 24 * 60 * 60_000)).toBe('3d ago');
+    expect(formatTimeAgo(now - 6 * 24 * 60 * 60_000)).toBe('6d ago');
   });
 
   it('should return a formatted date for timestamps 7+ days ago', async () => {
@@ -53,7 +53,7 @@ describe('formatTimeAgo', () => {
     const sevenDaysAgo = now - 7 * 24 * 60 * 60_000;
     const result = formatTimeAgo(sevenDaysAgo);
     expect(result).not.toBe('now');
-    expect(result).not.toMatch(/^\d+[mhd]$/);
+    expect(result).not.toMatch(/^\d+[mhd] ago$/);
     expect(result).toMatch(/^[A-Z][a-z]{2}\s\d{1,2}$/);
   });
 

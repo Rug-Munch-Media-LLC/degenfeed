@@ -366,6 +366,23 @@ const DEV_FEEDS: FeedSource[] = [
     category: 'dev-technical',
     niches: ['ethereum', 'dev'],
   },
+  // ── GitHub trending repos (added 2026-08-03) ──────────────────────
+  // Primary: rsshub.app (public RSSHub instance) — may be Cloudflare-
+  // challenged from datacenter IPs; the self-hosted RSS-Bridge below is
+  // the working fallback that serves the same content.
+  {
+    url: 'https://rsshub.app/github/trending/daily',
+    label: 'GitHub Trending (RSSHub)',
+    category: 'dev-technical',
+    niches: ['tech', 'dev', 'oss'],
+    featured: true,
+  },
+  {
+    url: 'http://127.0.0.1:8282/?action=display&bridge=GithubTrendingBridge&format=Atom&date_range=today',
+    label: 'GitHub Trending (self-hosted)',
+    category: 'dev-technical',
+    niches: ['tech', 'dev', 'oss'],
+  },
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -529,6 +546,22 @@ const TECH_FEEDS: FeedSource[] = [
     label: 'Hacker News',
     category: 'tech',
     niches: ['tech', 'startups'],
+    featured: true,
+  },
+  // Hacker News front page — the 20 top-ranked stories (added 2026-08-03)
+  {
+    url: 'https://hnrss.org/frontpage',
+    label: 'Hacker News Front Page',
+    category: 'tech',
+    niches: ['tech', 'startups'],
+    featured: true,
+  },
+  // Product Hunt daily launches (Atom feed, added 2026-08-03)
+  {
+    url: 'https://www.producthunt.com/feed',
+    label: 'Product Hunt',
+    category: 'tech',
+    niches: ['startups', 'tech', 'products'],
     featured: true,
   },
   {
