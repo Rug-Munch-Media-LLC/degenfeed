@@ -35,8 +35,8 @@ import { handlePublishRoute } from './publish-routes';
 import { attachRealtimeWebSocket } from './realtime-ws';
 import { feedCache } from './response-cache';
 import { handleSsoRoute } from './sso-routes';
-
 import type { UnifiedPost } from './types';
+import { handleWebhookRoute } from './webhook-routes';
 
 export { buildFeed, DEFAULT_PREFERENCES, PROVIDERS } from './feeds';
 export type { SchemaGuard, UnifiedIdentity, UnifiedPost } from './types';
@@ -752,8 +752,8 @@ const server = http.createServer(async (req, res) => {
           'http://127.0.0.1:3012/xrpc/com.atproto.server.describeServer',
           'http://127.0.0.1:8085/',
           'http://127.0.0.1:8086/',
-          'http://127.0.0.1:8087/api/v1/timelines/public',
-          'https://api.zora.co/graphql',
+          'http://127.0.0.1:8096/api/v1/instance',
+          'http://127.0.0.1:8091/',
           'http://127.0.0.1:8092/api/status',
           'http://127.0.0.1:2281/v1/info',
           'http://127.0.0.1:8099/health',
@@ -1132,6 +1132,14 @@ const server = http.createServer(async (req, res) => {
     // Returns per-protocol results. Replaces the previous stub.
     const publishHandled = await handlePublishRoute(path, req, res);
     if (publishHandled) return;
+
+    // ── Live Video Webhooks (Phase 2) ─────────────────────────────
+    // POST /api/webhooks/owncast — Owncast stream lifecycle → auto-restream
+    //   STREAM_STARTED: PeerTube live + Restreamer process (HLS → RTMP)
+    //   STREAM_STOPPED: stop restreamer, end PeerTube live, Nostr "ended"
+    // GET  /api/webhooks/status — list active restream processes
+    const webhookHandled = await handleWebhookRoute(path, req.method || 'GET', req, res);
+    if (webhookHandled) return;
 
     return jsonOk(res, { status: 'ok', path, service: 'degenfeed-bridge' });
   } catch (err) {

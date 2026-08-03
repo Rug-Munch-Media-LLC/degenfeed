@@ -607,6 +607,7 @@ export const DEFAULT_HOME_PROTOCOLS = [
   'farcaster',
   'lens',
   'pixelfed',
+  'zora',
 ];
 
 const FEED_CACHE_TTL_MS = 30_000; // 30s — matches HTTP-level response cache TTL
