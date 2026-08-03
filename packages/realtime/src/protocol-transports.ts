@@ -16,7 +16,7 @@
  */
 
 import type { Env } from '@degenfeed/types';
-import { getDeliveryProtocols, type ResolvedIdentity, resolveIdentity } from './identity-resolver';
+import { getDeliveryProtocols, type ResolvedIdentity } from './identity-resolver';
 
 export type { Env };
 
@@ -200,8 +200,6 @@ export class ProtocolTransports {
     env: Env,
     identity: ResolvedIdentity,
   ): Promise<TransportResult> {
-    const startTime = Date.now();
-
     switch (protocol) {
       case 'nostr':
         return this.deliverViaNostrNip17(message, env, identity);
@@ -372,7 +370,6 @@ export class ProtocolTransports {
         return { protocol, ok: false, error: 'Invalid Farcaster FID', attemptedAt: start };
       }
 
-      const mnemonic = env.FARCASTER_MNEMONIC;
       const hubUrl = env.FARCASTER_HUB_URL || 'http://127.0.0.1:2281';
 
       // Build message payload
@@ -671,8 +668,8 @@ export class ProtocolTransports {
         return { protocol, ok: false, error: 'No Matrix identity', attemptedAt: start };
       }
 
-      const accessToken = env.MATRIX_ACCESS_TOKEN;
-      const homeserver = env.MATRIX_INSTANCE_URL || 'https://matrix.degenfeed.xyz';
+      const accessToken = env.MATRIX_ACCESS_TOKEN as string;
+      const homeserver = (env.MATRIX_INSTANCE_URL || 'https://matrix.degenfeed.xyz') as string;
 
       if (!accessToken) {
         return { protocol, ok: false, error: 'Matrix not configured', attemptedAt: start };
@@ -831,7 +828,7 @@ export class ProtocolTransports {
       // Lens DM uses the Lens API with encrypted content
       // In production: use @lens-protocol/client for proper DM
       // For now, post as a comment on Lens with encrypted payload
-      const lensApiUrl = env.LENS_API_URL || 'https://api.lens.dev';
+      const lensApiUrl = (env.LENS_API_URL || 'https://api.lens.dev') as string;
 
       const res = await fetch(lensApiUrl, {
         method: 'POST',
@@ -1122,7 +1119,6 @@ export class ProtocolTransports {
       }
 
       const rcChannelId = rcIdentity.id; // Rocket.Chat room/group ID
-      const rcUsername = rcIdentity.handle; // Rocket.Chat username
 
       // Rocket.Chat federates as a Matrix homeserver.
       // The bridged room format is typically: #rc_<channel>:<rc-homeserver>
@@ -1207,13 +1203,15 @@ export class ProtocolTransports {
       try {
         const mod = await import(/* @vite-ignore */ '../../../workers/api/src/ws-broadcast');
         if (mod?.broadcastToUser) {
-          delivered = mod.broadcastToUser(message.toId, 'dm:new', {
-            id: message.id,
-            fromId: message.fromId,
-            encryptedBlob: message.encryptedBlob ?? message.body,
-            metadata: message.metadata,
-            createdAt: Date.now(),
-          });
+          delivered = Boolean(
+            mod.broadcastToUser(message.toId, 'dm:new', {
+              id: message.id,
+              fromId: message.fromId,
+              encryptedBlob: message.encryptedBlob ?? message.body,
+              metadata: message.metadata,
+              createdAt: Date.now(),
+            }),
+          );
         }
       } catch {
         // broadcast unavailable in current context — queue for later

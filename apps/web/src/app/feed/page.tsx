@@ -179,6 +179,7 @@ export default function FeedPage() {
       const timer = setTimeout(checkAndAutoInsert, 500);
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [realtimeFeed.newPostCount, handleRealtimeInsert]);
 
   // Reset the insertion flag when posts change (e.g., tab switch)
@@ -371,6 +372,7 @@ export default function FeedPage() {
       document.addEventListener('mousedown', handler);
       return () => document.removeEventListener('mousedown', handler);
     }
+    return undefined;
   }, [contextMenuPostId]);
 
   const loadMore = useCallback(() => {

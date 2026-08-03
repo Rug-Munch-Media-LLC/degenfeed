@@ -146,14 +146,14 @@ function MiniSparkline({
   const max = Math.max(...data, 1);
   const min = Math.min(...data, 0);
   const range = max - min || 1;
-  const isUp = data[data.length - 1] >= data[0];
+  const isUp = data[data.length - 1]! >= data[0]!;
   const color = isUp ? '#00ff41' : '#ff4444';
 
   const points = data
     .map((v, i) => `${(i / (data.length - 1)) * width},${height - ((v - min) / range) * height}`)
     .join(' ');
 
-  const lastY = height - ((data[data.length - 1] - min) / range) * height;
+  const lastY = height - ((data[data.length - 1]! - min) / range) * height;
   const fillPoints = `${points} ${width},${height} 0,${height}`;
 
   return (
@@ -453,7 +453,7 @@ export default function CoinStatsPage() {
     const counts = [0, 0, 0, 0, 0];
     for (const c of coins) {
       if (c.bondingCurvePhase >= 0 && c.bondingCurvePhase <= 4) {
-        counts[c.bondingCurvePhase]++;
+        counts[c.bondingCurvePhase] = (counts[c.bondingCurvePhase] ?? 0) + 1;
       }
     }
     return counts;
@@ -592,9 +592,9 @@ export default function CoinStatsPage() {
             <PieChart
               size={140}
               segments={phaseDist.map((count, i) => ({
-                label: phaseLabels[i],
+                label: phaseLabels[i] ?? '',
                 value: count,
-                color: phaseColors[i],
+                color: phaseColors[i] ?? '#888888',
               }))}
             />
           </div>

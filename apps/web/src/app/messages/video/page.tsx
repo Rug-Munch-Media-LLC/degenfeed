@@ -46,6 +46,7 @@ export default function VideoPage() {
       const interval = setInterval(fetchRooms, 15000);
       return () => clearInterval(interval);
     }
+    return undefined;
   }, [fetchRooms, selectedRoomId]);
 
   if (!hasSignedIn) {

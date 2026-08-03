@@ -65,6 +65,7 @@ export interface PairStats {
   lastSuccessAt: number | null;
   lastError: string | null;
   consecutiveFailures: number;
+  circuitState: 'closed' | 'open' | 'half-open';
   rateLimitRemaining: number;
   enabled: boolean;
 }

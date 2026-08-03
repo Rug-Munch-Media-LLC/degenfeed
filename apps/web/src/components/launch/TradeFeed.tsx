@@ -219,6 +219,7 @@ export default function TradeFeed({
       const timer = setTimeout(() => setShowWhaleAnim(false), 5000);
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [trades]);
 
   // Separate whale trades for display

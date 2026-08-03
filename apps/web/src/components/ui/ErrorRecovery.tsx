@@ -282,6 +282,7 @@ export function ErrorRecovery({
       const timer = setTimeout(() => setDismissed(true), autoDismissMs);
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [autoDismissMs, compact]);
 
   const handleRecover = useCallback(() => {

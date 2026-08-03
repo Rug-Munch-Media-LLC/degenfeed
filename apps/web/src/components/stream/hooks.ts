@@ -38,6 +38,7 @@ export function useBandwidthDetect(settings: PlaybackSettings) {
       const interval = setInterval(runDetection, 60000);
       return () => clearInterval(interval);
     }
+    return undefined;
   }, [settings.bandwidthSaver, runDetection]);
 
   return { estimatedMbps, detecting };

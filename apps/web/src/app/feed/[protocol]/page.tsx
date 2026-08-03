@@ -129,6 +129,7 @@ function ProtocolFeedContent({ protocol }: { protocol: string }) {
       }, 500);
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [realtimeFeed.newPostCount, handleRealtimeInsert]);
 
   // Fetch feed

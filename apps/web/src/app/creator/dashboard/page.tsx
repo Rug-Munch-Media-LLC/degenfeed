@@ -1413,12 +1413,12 @@ export default function CreatorDashboardPage() {
                 <p className="text-[10px] text-[var(--color-muted)]">
                   Creator tokens are locked in a audited vesting contract at{' '}
                   <span className="font-mono text-degen-400">0xVesting...Contract</span>. Verified
-                  on {selectedCoin.chain === 'solana' ? 'Solscan' : 'Etherscan'}.
+                  on {selectedCoin?.chain === 'solana' ? 'Solscan' : 'Etherscan'}.
                 </p>
               </div>
               <a
                 href={
-                  selectedCoin.chain === 'solana' ? 'https://solscan.io' : 'https://basescan.org'
+                  selectedCoin?.chain === 'solana' ? 'https://solscan.io' : 'https://basescan.org'
                 }
                 target="_blank"
                 rel="noopener noreferrer"

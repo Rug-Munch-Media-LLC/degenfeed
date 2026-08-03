@@ -54,8 +54,8 @@ export function PastTipsPopover({
       {pastTips.length > 0 && (
         <div className="mt-2 rounded-lg bg-amber-900/10 border border-amber-900/30 px-2 py-1.5">
           <p className="text-[9px] text-amber-400">
-            👑 <strong>Top Tipper:</strong> {pastTips[0].tipperName} ($
-            {pastTips[0].amountUsd.toFixed(2)})
+            👑 <strong>Top Tipper:</strong> {pastTips[0]!.tipperName} ($
+            {pastTips[0]!.amountUsd.toFixed(2)})
           </p>
         </div>
       )}

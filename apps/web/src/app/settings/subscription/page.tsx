@@ -281,7 +281,7 @@ function PlanComparison({
 // ─── Usage Overview ─────────────────────────────────────────────────────
 
 function UsageOverview({ tier }: { tier: string }) {
-  const config = TIER_CONFIGS.find((t) => t.id === tier) ?? TIER_CONFIGS[0];
+  const config = TIER_CONFIGS.find((t) => t.id === tier) ?? TIER_CONFIGS[0]!;
   const limits = config.limits;
 
   return (

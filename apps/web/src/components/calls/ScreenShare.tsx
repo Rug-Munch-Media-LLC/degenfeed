@@ -47,6 +47,11 @@ export function useScreenShare(
         });
         screenShareStream.current = screenStream;
         const screenTrack = screenStream.getVideoTracks()[0];
+        if (!screenTrack) {
+          setIsScreenSharing(false);
+          screenShareStream.current = null;
+          return;
+        }
 
         peerConnections.current.forEach((pc) => {
           const sender = pc.getSenders().find((s) => s.track?.kind === 'video');

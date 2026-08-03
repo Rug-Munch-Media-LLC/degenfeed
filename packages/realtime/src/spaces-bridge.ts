@@ -2,7 +2,6 @@
  * @degenfeed/realtime — Spaces + Chat Integration Bridge
  * Connects audio Spaces with cross-protocol encrypted chat.
  */
-import { getInbox } from './unified-inbox';
 
 export type SpaceEventType =
   | 'space:created'
@@ -35,21 +34,21 @@ export interface SpaceBroadcastResult {
 
 export class SpacesBridge {
   async broadcastEvent(
-    event: SpaceEvent,
-    participantWallets: string[],
-    env: any,
+    _event: SpaceEvent,
+    _participantWallets: string[],
+    _env: any,
   ): Promise<SpaceBroadcastResult> {
     return { participantsNotified: 0, protocolsUsed: [], errors: [] };
   }
-  async bridgeChatMessage(params: any): Promise<void> {}
-  async handleHandRaise(params: any): Promise<void> {}
-  async handleRecordingAvailable(params: any): Promise<SpaceBroadcastResult> {
+  async bridgeChatMessage(_params: any): Promise<void> {}
+  async handleHandRaise(_params: any): Promise<void> {}
+  async handleRecordingAvailable(_params: any): Promise<SpaceBroadcastResult> {
     return { participantsNotified: 0, protocolsUsed: [], errors: [] };
   }
-  async handleClipCreated(params: any): Promise<SpaceBroadcastResult> {
+  async handleClipCreated(_params: any): Promise<SpaceBroadcastResult> {
     return { participantsNotified: 0, protocolsUsed: [], errors: [] };
   }
-  async handleSpeakerEvent(params: any): Promise<SpaceBroadcastResult> {
+  async handleSpeakerEvent(_params: any): Promise<SpaceBroadcastResult> {
     return { participantsNotified: 0, protocolsUsed: [], errors: [] };
   }
 }

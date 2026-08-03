@@ -45,6 +45,7 @@ export default function VoicePage() {
       const interval = setInterval(fetchRooms, 10000);
       return () => clearInterval(interval);
     }
+    return undefined;
   }, [fetchRooms, selectedRoomId]);
 
   useEffect(() => {

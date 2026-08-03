@@ -527,8 +527,9 @@ export const CATEGORY_PROTOCOLS: Record<ProtocolCategory, string[]> = (() => {
     map[cat] = [];
   }
   for (const protocol of PROTOCOL_LIST) {
-    if (map[protocol.category]) {
-      map[protocol.category].push(protocol.id);
+    const bucket = map[protocol.category];
+    if (bucket) {
+      bucket.push(protocol.id);
     }
   }
   return map as Record<ProtocolCategory, string[]>;

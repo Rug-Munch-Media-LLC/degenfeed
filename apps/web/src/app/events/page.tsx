@@ -13,7 +13,7 @@ import { PROTOCOL_META, ProtocolShell } from '@degenfeed/ui/protocol-shell';
 import Link from 'next/link';
 import { useCallback, useState } from 'react';
 
-const MOB_META = PROTOCOL_META.mobilizon;
+const MOB_META = PROTOCOL_META.mobilizon!;
 const MOB_COLOR = MOB_META.color;
 
 // ─── Types & Data ───────────────────────────────────────────────────────
@@ -197,7 +197,7 @@ export default function EventsPage() {
             },
             {
               label: 'Location',
-              value: event.virtual ? '🌐 Virtual' : event.location.split(',')[0],
+              value: event.virtual ? '🌐 Virtual' : (event.location.split(',')[0] ?? ''),
             },
           ]}
           frameAspectRatio={16 / 9}

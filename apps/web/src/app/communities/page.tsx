@@ -14,7 +14,7 @@ import { PROTOCOL_META, ProtocolShell } from '@degenfeed/ui/protocol-shell';
 import Link from 'next/link';
 import { useCallback, useState } from 'react';
 
-const LEMMY_META = PROTOCOL_META.lemmy;
+const LEMMY_META = PROTOCOL_META.lemmy!;
 const LEMMY_COLOR = LEMMY_META.color;
 
 // ─── Featured communities ───────────────────────────────────────────────
