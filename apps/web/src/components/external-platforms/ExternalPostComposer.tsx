@@ -71,9 +71,7 @@ function PlatformToggle({
     >
       <span>{platform.icon}</span>
       <span>{platform.name}</span>
-      {!platform.connected && (
-        <span className="ml-auto text-xs text-red-400">⚠️</span>
-      )}
+      {!platform.connected && <span className="ml-auto text-xs text-red-400">⚠️</span>}
     </button>
   );
 }
@@ -85,8 +83,7 @@ export function ExternalPostComposer({
   onPosted,
 }: ExternalPostComposerProps) {
   const [platforms, setPlatforms] = useState<PlatformInfo[]>([]);
-  const [selectedPlatforms, setSelectedPlatforms] =
-    useState<string[]>(initialPlatforms);
+  const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>(initialPlatforms);
   const [text, setText] = useState('');
   const [title, setTitle] = useState('');
   const [hashtags, setHashtags] = useState('');
@@ -114,7 +111,15 @@ export function ExternalPostComposer({
         // Merge with platform definitions
         const platformDefsRes = await fetch('/api/external/platforms');
         const platformDefs = (await platformDefsRes.json()) as {
-          data?: { platforms?: Array<{ id: string; name: string; icon: string; description: string; capabilities: string[] }> };
+          data?: {
+            platforms?: Array<{
+              id: string;
+              name: string;
+              icon: string;
+              description: string;
+              capabilities: string[];
+            }>;
+          };
         };
 
         const defs = platformDefs.data?.platforms ?? [];
@@ -136,9 +141,7 @@ export function ExternalPostComposer({
 
         // Auto-select connected platforms that match initialPlatforms
         if (initialPlatforms.length > 0) {
-          setSelectedPlatforms(
-            initialPlatforms.filter((id) => accountMap.has(id)),
-          );
+          setSelectedPlatforms(initialPlatforms.filter((id) => accountMap.has(id)));
         }
       } catch {
         setError('Failed to load connected platforms');
@@ -152,9 +155,7 @@ export function ExternalPostComposer({
   // Toggle platform selection
   const togglePlatform = useCallback((id: string) => {
     setSelectedPlatforms((prev) =>
-      prev.includes(id)
-        ? prev.filter((p) => p !== id)
-        : [...prev, id],
+      prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id],
     );
   }, []);
 
@@ -242,23 +243,28 @@ export function ExternalPostComposer({
         setPosting(false);
       }
     },
-    [text, title, selectedPlatforms, hashtags, mediaUrls, linkUrl, scheduleMode, getScheduledAt, onPosted],
+    [
+      text,
+      title,
+      selectedPlatforms,
+      hashtags,
+      mediaUrls,
+      linkUrl,
+      scheduleMode,
+      getScheduledAt,
+      onPosted,
+    ],
   );
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       {/* Platform selector */}
       <div>
-        <label className="mb-2 block text-sm font-medium text-[var(--color-fg)]">
-          Post to
-        </label>
+        <label className="mb-2 block text-sm font-medium text-[var(--color-fg)]">Post to</label>
         {platformsLoading ? (
           <div className="flex gap-2">
             {[1, 2, 3].map((i) => (
-              <div
-                key={i}
-                className="h-10 w-24 animate-pulse rounded-lg bg-white/5"
-              />
+              <div key={i} className="h-10 w-24 animate-pulse rounded-lg bg-white/5" />
             ))}
           </div>
         ) : (
@@ -309,9 +315,7 @@ export function ExternalPostComposer({
           placeholder="What do you want to share?"
           className="w-full rounded-lg border border-[var(--color-glass-border)] bg-white/[0.03] px-3 py-2 text-sm text-[var(--color-fg)] placeholder:text-[var(--color-muted)] focus:border-white/30 focus:outline-none"
         />
-        <p className="mt-1 text-xs text-[var(--color-muted)]">
-          {text.length} characters
-        </p>
+        <p className="mt-1 text-xs text-[var(--color-muted)]">{text.length} characters</p>
       </div>
 
       {/* Media URLs */}
@@ -432,11 +436,7 @@ export function ExternalPostComposer({
                 <span>{result.success ? '✓' : '✗'}</span>
                 <span className="font-medium capitalize">{platform}:</span>
                 <span className="text-[var(--color-muted)]">
-                  {result.success
-                    ? result.url
-                      ? 'Posted ✓'
-                      : 'Published'
-                    : result.error}
+                  {result.success ? (result.url ? 'Posted ✓' : 'Published') : result.error}
                 </span>
               </div>
             ))}

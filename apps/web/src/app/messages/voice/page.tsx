@@ -4,10 +4,10 @@ import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../../../components/AuthProvider';
 import { useAnnouncer } from '../../../components/ScreenReaderAnnouncer';
 import { retryFetchJson } from '../../../lib/retryFetch';
+import { CreateRoomModal, JoinRoomModal } from './InviteModal';
+import { VoiceRoomView } from './ParticipantsPanel';
 import type { VoiceRoomSummary } from './types';
 import { timeAgo } from './types';
-import { VoiceRoomView } from './ParticipantsPanel';
-import { CreateRoomModal, JoinRoomModal } from './InviteModal';
 
 export default function VoicePage() {
   const { ready, signedInProtocols } = useAuth();
@@ -25,14 +25,20 @@ export default function VoicePage() {
     setLoading(true);
     try {
       const data = await retryFetchJson<{ rooms: VoiceRoomSummary[] }>(
-        '/api/voice/active?type=voice', { maxRetries: 2 },
+        '/api/voice/active?type=voice',
+        { maxRetries: 2 },
       );
       setRooms(data.rooms ?? []);
-    } catch { /* Handle error */ }
-    finally { setLoading(false); }
+    } catch {
+      /* Handle error */
+    } finally {
+      setLoading(false);
+    }
   }, [hasSignedIn]);
 
-  useEffect(() => { fetchRooms(); }, [fetchRooms]);
+  useEffect(() => {
+    fetchRooms();
+  }, [fetchRooms]);
 
   useEffect(() => {
     if (!selectedRoomId) {
@@ -45,26 +51,46 @@ export default function VoicePage() {
     const params = new URLSearchParams(window.location.search);
     const inviteCode = params.get('invite');
     if (inviteCode) {
-      retryFetchJson<{ ok: boolean; room: VoiceRoomSummary }>(`/api/voice/invite/${inviteCode}`, { maxRetries: 1 })
+      retryFetchJson<{ ok: boolean; room: VoiceRoomSummary }>(`/api/voice/invite/${inviteCode}`, {
+        maxRetries: 1,
+      })
         .then((data) => {
           if (data.ok && data.room) {
             retryFetchJson(`/api/voice/${data.room.id}/join`, {
-              fetchOptions: { method: 'POST', headers: { 'content-type': 'application/json' }, credentials: 'include' },
+              fetchOptions: {
+                method: 'POST',
+                headers: { 'content-type': 'application/json' },
+                credentials: 'include',
+              },
             })
-              .then(() => { setSelectedRoomId(data.room.id); announce('Joined room from invite', 'polite'); })
-              .catch(() => { setJoinTarget(data.room); });
+              .then(() => {
+                setSelectedRoomId(data.room.id);
+                announce('Joined room from invite', 'polite');
+              })
+              .catch(() => {
+                setJoinTarget(data.room);
+              });
           }
         })
-        .catch(() => { /* Invalid invite */ });
+        .catch(() => {
+          /* Invalid invite */
+        });
     }
   }, [announce]);
 
   if (!hasSignedIn) {
     return (
       <div className="mx-auto flex h-[calc(100dvh-8rem)] flex-col items-center justify-center p-6 lg:h-[calc(100dvh-4rem)]">
-        <span className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-2xl text-3xl bg-[var(--color-overlay)] text-[var(--color-muted)]" aria-hidden="true">🎤</span>
+        <span
+          className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-2xl text-3xl bg-[var(--color-overlay)] text-[var(--color-muted)]"
+          aria-hidden="true"
+        >
+          🎤
+        </span>
         <p className="text-base font-semibold text-[var(--color-fg)]">Sign in to use Voice Rooms</p>
-        <p className="mt-1.5 text-sm text-[var(--color-muted)]">Real-time voice chat with your community.</p>
+        <p className="mt-1.5 text-sm text-[var(--color-muted)]">
+          Real-time voice chat with your community.
+        </p>
       </div>
     );
   }
@@ -81,16 +107,35 @@ export default function VoicePage() {
     <div className="mx-auto flex h-[calc(100dvh-8rem)] flex-col lg:h-[calc(100dvh-4rem)]">
       <header className="flex items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-glass-bg)] px-4 py-2.5 shrink-0">
         <div className="flex items-center gap-3">
-          <span className="text-xl" aria-hidden="true">🎤</span>
+          <span className="text-xl" aria-hidden="true">
+            🎤
+          </span>
           <div>
-            <h1 className="text-base font-bold text-[var(--color-fg)] leading-tight">Voice Rooms</h1>
-            <p className="text-[10px] text-[var(--color-muted)]">{rooms.length} active room{rooms.length !== 1 ? 's' : ''}</p>
+            <h1 className="text-base font-bold text-[var(--color-fg)] leading-tight">
+              Voice Rooms
+            </h1>
+            <p className="text-[10px] text-[var(--color-muted)]">
+              {rooms.length} active room{rooms.length !== 1 ? 's' : ''}
+            </p>
           </div>
         </div>
-        <button type="button" onClick={() => setShowCreate(true)}
-          className="flex items-center gap-1.5 rounded-xl bg-degen-500 px-3 py-2 text-xs font-bold text-black hover:bg-degen-400 transition-all">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
-            <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+        <button
+          type="button"
+          onClick={() => setShowCreate(true)}
+          className="flex items-center gap-1.5 rounded-xl bg-degen-500 px-3 py-2 text-xs font-bold text-black hover:bg-degen-400 transition-all"
+        >
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            aria-hidden="true"
+          >
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
           </svg>
           Create Room
         </button>
@@ -104,28 +149,49 @@ export default function VoicePage() {
         )}
         {!loading && rooms.length === 0 && (
           <div className="flex flex-col items-center justify-center py-20 px-4 text-center">
-            <span className="mb-4 text-4xl opacity-30" aria-hidden="true">🎤</span>
+            <span className="mb-4 text-4xl opacity-30" aria-hidden="true">
+              🎤
+            </span>
             <p className="text-sm font-medium text-[var(--color-fg)]">No active voice rooms</p>
-            <p className="mt-1 text-xs text-[var(--color-muted)]">Create a room and invite others to join.</p>
-            <button type="button" onClick={() => setShowCreate(true)}
-              className="mt-4 rounded-xl bg-degen-500 px-4 py-2 text-xs font-bold text-black hover:bg-degen-400 transition-all">Create Your First Room</button>
+            <p className="mt-1 text-xs text-[var(--color-muted)]">
+              Create a room and invite others to join.
+            </p>
+            <button
+              type="button"
+              onClick={() => setShowCreate(true)}
+              className="mt-4 rounded-xl bg-degen-500 px-4 py-2 text-xs font-bold text-black hover:bg-degen-400 transition-all"
+            >
+              Create Your First Room
+            </button>
           </div>
         )}
         {rooms.map((room) => (
-          <button key={room.id} type="button"
+          <button
+            key={room.id}
+            type="button"
             onClick={() => {
-              if (room.hasPassword || room.inviteOnly) { setJoinTarget(room); }
-              else {
+              if (room.hasPassword || room.inviteOnly) {
+                setJoinTarget(room);
+              } else {
                 retryFetchJson(`/api/voice/${room.id}/join`, {
-                  fetchOptions: { method: 'POST', headers: { 'content-type': 'application/json' }, credentials: 'include' },
+                  fetchOptions: {
+                    method: 'POST',
+                    headers: { 'content-type': 'application/json' },
+                    credentials: 'include',
+                  },
                 })
                   .then(() => setSelectedRoomId(room.id))
-                  .catch(() => { setJoinTarget(room); });
+                  .catch(() => {
+                    setJoinTarget(room);
+                  });
               }
             }}
-            className="flex w-full items-center gap-3 border-b border-[var(--color-border)] px-4 py-3.5 text-left hover:bg-[var(--color-overlay)] transition-colors">
+            className="flex w-full items-center gap-3 border-b border-[var(--color-border)] px-4 py-3.5 text-left hover:bg-[var(--color-overlay)] transition-colors"
+          >
             <div className="relative shrink-0">
-              <span className={`flex h-10 w-10 items-center justify-center rounded-xl text-lg ${room.participantCount > 0 ? 'bg-degen-500/15' : 'bg-[var(--color-overlay)]'}`}>
+              <span
+                className={`flex h-10 w-10 items-center justify-center rounded-xl text-lg ${room.participantCount > 0 ? 'bg-degen-500/15' : 'bg-[var(--color-overlay)]'}`}
+              >
                 {room.hasPassword ? '🔒' : '🎤'}
               </span>
               {room.participantCount > 0 && (
@@ -138,11 +204,18 @@ export default function VoicePage() {
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium text-[var(--color-fg)] truncate">{room.name}</p>
               <div className="flex items-center gap-2 mt-0.5">
-                <span className="text-[11px] text-[var(--color-muted)]">{room.participantCount} participant{room.participantCount !== 1 ? 's' : ''}</span>
+                <span className="text-[11px] text-[var(--color-muted)]">
+                  {room.participantCount} participant{room.participantCount !== 1 ? 's' : ''}
+                </span>
                 <span className="text-[var(--color-muted)]">&middot;</span>
-                <span className="text-[10px] text-[var(--color-muted)]">{timeAgo(room.lastActivity)}</span>
+                <span className="text-[10px] text-[var(--color-muted)]">
+                  {timeAgo(room.lastActivity)}
+                </span>
                 {room.inviteOnly && (
-                  <><span className="text-[var(--color-muted)]">&middot;</span><span className="text-[10px] text-amber-400">Invite only</span></>
+                  <>
+                    <span className="text-[var(--color-muted)]">&middot;</span>
+                    <span className="text-[10px] text-amber-400">Invite only</span>
+                  </>
                 )}
               </div>
             </div>
@@ -155,10 +228,22 @@ export default function VoicePage() {
         ))}
       </div>
 
-      <CreateRoomModal open={showCreate} onClose={() => setShowCreate(false)}
-        onCreated={(room) => { setRooms((prev) => [room, ...prev]); setSelectedRoomId(room.id); }} />
-      <JoinRoomModal room={joinTarget} open={!!joinTarget} onClose={() => setJoinTarget(null)}
-        onJoined={() => { if (joinTarget) setSelectedRoomId(joinTarget.id); }} />
+      <CreateRoomModal
+        open={showCreate}
+        onClose={() => setShowCreate(false)}
+        onCreated={(room) => {
+          setRooms((prev) => [room, ...prev]);
+          setSelectedRoomId(room.id);
+        }}
+      />
+      <JoinRoomModal
+        room={joinTarget}
+        open={!!joinTarget}
+        onClose={() => setJoinTarget(null)}
+        onJoined={() => {
+          if (joinTarget) setSelectedRoomId(joinTarget.id);
+        }}
+      />
     </div>
   );
 }

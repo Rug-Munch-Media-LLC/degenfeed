@@ -45,13 +45,7 @@ const LIVE_PLATFORMS: Array<{
 
 // ─── Go-Live Modal ────────────────────────────────────────────────────────
 
-function GoLiveForm({
-  platform,
-  onClose,
-}: {
-  platform: LivePlatformInfo;
-  onClose: () => void;
-}) {
+function GoLiveForm({ platform, onClose }: { platform: LivePlatformInfo; onClose: () => void }) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState('');
@@ -196,9 +190,7 @@ function GoLiveForm({
 
 // ─── Main Dashboard ───────────────────────────────────────────────────────
 
-export function ExternalLiveDashboard({
-  compact = false,
-}: ExternalLiveDashboardProps) {
+export function ExternalLiveDashboard({ compact = false }: ExternalLiveDashboardProps) {
   const [platforms, setPlatforms] = useState<LivePlatformInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [goLivePlatform, setGoLivePlatform] = useState<LivePlatformInfo | null>(null);
@@ -212,9 +204,7 @@ export function ExternalLiveDashboard({
           data?: { accounts?: Array<{ platform: string; displayName: string }> };
         };
         const accounts = data.data?.accounts ?? [];
-        const connectedMap = new Map(
-          accounts.map((a) => [a.platform, a.displayName]),
-        );
+        const connectedMap = new Map(accounts.map((a) => [a.platform, a.displayName]));
 
         setPlatforms(
           LIVE_PLATFORMS.map((p) => ({
@@ -243,13 +233,15 @@ export function ExternalLiveDashboard({
   const connectedCount = platforms.filter((p) => p.connected).length;
 
   return (
-    <div className={compact ? '' : 'rounded-xl border border-[var(--color-glass-border)] bg-white/[0.02] p-4'}>
+    <div
+      className={
+        compact ? '' : 'rounded-xl border border-[var(--color-glass-border)] bg-white/[0.02] p-4'
+      }
+    >
       {/* Header */}
       {!compact && (
         <div className="mb-4">
-          <h3 className="font-semibold text-[var(--color-fg)]">
-            📡 Live Streaming
-          </h3>
+          <h3 className="font-semibold text-[var(--color-fg)]">📡 Live Streaming</h3>
           <p className="text-xs text-[var(--color-muted)]">
             {connectedCount} of {platforms.length} platforms connected
           </p>
@@ -270,13 +262,9 @@ export function ExternalLiveDashboard({
                 {p.icon}
               </span>
               <div>
-                <p className="text-sm font-medium text-[var(--color-fg)]">
-                  {p.name}
-                </p>
+                <p className="text-sm font-medium text-[var(--color-fg)]">{p.name}</p>
                 {p.connected && p.displayName && (
-                  <p className="text-xs text-[var(--color-muted)]">
-                    {p.displayName}
-                  </p>
+                  <p className="text-xs text-[var(--color-muted)]">{p.displayName}</p>
                 )}
               </div>
             </div>
@@ -284,9 +272,7 @@ export function ExternalLiveDashboard({
             <div className="flex items-center gap-2">
               {/* Connection indicator */}
               <span
-                className={`h-2 w-2 rounded-full ${
-                  p.connected ? 'bg-green-400' : 'bg-gray-600'
-                }`}
+                className={`h-2 w-2 rounded-full ${p.connected ? 'bg-green-400' : 'bg-gray-600'}`}
                 title={p.connected ? 'Connected' : 'Not connected'}
               />
 
@@ -308,10 +294,7 @@ export function ExternalLiveDashboard({
 
       {/* Go Live modal */}
       {goLivePlatform && (
-        <GoLiveForm
-          platform={goLivePlatform}
-          onClose={() => setGoLivePlatform(null)}
-        />
+        <GoLiveForm platform={goLivePlatform} onClose={() => setGoLivePlatform(null)} />
       )}
     </div>
   );
@@ -319,9 +302,7 @@ export function ExternalLiveDashboard({
 
 // ─── Premium-Gated Export ─────────────────────────────────────────────────
 
-export function GatedExternalLiveDashboard({
-  compact,
-}: ExternalLiveDashboardProps) {
+export function GatedExternalLiveDashboard({ compact }: ExternalLiveDashboardProps) {
   return (
     <PremiumGate requiredTier="enterprise" feature="External Platform Live Streaming">
       <ExternalLiveDashboard compact={compact} />

@@ -168,7 +168,10 @@ export default function FarcasterFramesPage() {
         <div className="grid gap-8 lg:grid-cols-2">
           {/* Frame preview */}
           <div>
-            <h2 className="mb-3 font-heading text-lg font-bold" style={{ color: 'var(--color-fg)' }}>
+            <h2
+              className="mb-3 font-heading text-lg font-bold"
+              style={{ color: 'var(--color-fg)' }}
+            >
               {frame.title}
             </h2>
             <p className="mb-4 text-sm" style={{ color: 'var(--color-fg-secondary)' }}>
@@ -203,13 +206,19 @@ export default function FarcasterFramesPage() {
               className="rounded-xl border p-4"
               style={{ borderColor: `${FC_COLOR}22`, backgroundColor: `${FC_COLOR}04` }}
             >
-              <h3 className="mb-2 text-xs font-semibold tracking-wider uppercase" style={{ color: 'var(--color-muted)' }}>
+              <h3
+                className="mb-2 text-xs font-semibold tracking-wider uppercase"
+                style={{ color: 'var(--color-muted)' }}
+              >
                 Frame Details
               </h3>
               <dl className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <dt style={{ color: 'var(--color-muted)' }}>Source</dt>
-                  <dd className="font-mono text-xs truncate ml-4" style={{ color: 'var(--color-fg)' }}>
+                  <dd
+                    className="font-mono text-xs truncate ml-4"
+                    style={{ color: 'var(--color-fg)' }}
+                  >
                     {frame.url}
                   </dd>
                 </div>
@@ -233,7 +242,10 @@ export default function FarcasterFramesPage() {
               className="rounded-xl border p-4"
               style={{ borderColor: 'var(--color-glass-border)' }}
             >
-              <h3 className="mb-3 text-xs font-semibold tracking-wider uppercase" style={{ color: 'var(--color-muted)' }}>
+              <h3
+                className="mb-3 text-xs font-semibold tracking-wider uppercase"
+                style={{ color: 'var(--color-muted)' }}
+              >
                 Share This Frame
               </h3>
               <div className="flex flex-wrap gap-2">
@@ -259,7 +271,10 @@ export default function FarcasterFramesPage() {
                     navigator.clipboard?.writeText(frame.url).catch(() => {});
                   }}
                   className="rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-[var(--color-overlay-hover)]"
-                  style={{ borderColor: 'var(--color-glass-border)', color: 'var(--color-fg-secondary)' }}
+                  style={{
+                    borderColor: 'var(--color-glass-border)',
+                    color: 'var(--color-fg-secondary)',
+                  }}
                 >
                   📋 Copy URL
                 </button>
@@ -271,14 +286,20 @@ export default function FarcasterFramesPage() {
               className="rounded-xl border p-4"
               style={{ borderColor: 'var(--color-glass-border)' }}
             >
-              <h3 className="mb-2 text-xs font-semibold tracking-wider uppercase" style={{ color: 'var(--color-muted)' }}>
+              <h3
+                className="mb-2 text-xs font-semibold tracking-wider uppercase"
+                style={{ color: 'var(--color-muted)' }}
+              >
                 Embed This Frame
               </h3>
               <pre
                 className="overflow-x-auto rounded-lg p-3 text-[10px] leading-relaxed"
-                style={{ backgroundColor: 'var(--color-bg-tertiary)', color: 'var(--color-fg-secondary)' }}
+                style={{
+                  backgroundColor: 'var(--color-bg-tertiary)',
+                  color: 'var(--color-fg-secondary)',
+                }}
               >
-{`<iframe
+                {`<iframe
   src="https://app.degenfeed.xyz/farcaster/frames?url=${encodeURIComponent(frame.url)}"
   width="400"
   height="${frame.aspectRatio === '1:1' ? '400' : '350'}"
@@ -289,9 +310,11 @@ export default function FarcasterFramesPage() {
               <button
                 type="button"
                 onClick={() => {
-                  navigator.clipboard?.writeText(
-                    `<iframe src="https://app.degenfeed.xyz/farcaster/frames?url=${encodeURIComponent(frame.url)}" width="400" height="${frame.aspectRatio === '1:1' ? '400' : '350'}" frameborder="0" title="${frame.title}"></iframe>`,
-                  ).catch(() => {});
+                  navigator.clipboard
+                    ?.writeText(
+                      `<iframe src="https://app.degenfeed.xyz/farcaster/frames?url=${encodeURIComponent(frame.url)}" width="400" height="${frame.aspectRatio === '1:1' ? '400' : '350'}" frameborder="0" title="${frame.title}"></iframe>`,
+                    )
+                    .catch(() => {});
                 }}
                 className="mt-2 rounded-lg px-3 py-1.5 text-[11px] font-medium transition-colors"
                 style={{
@@ -345,9 +368,7 @@ export default function FarcasterFramesPage() {
             🖼
           </span>
           <div>
-            <h1 className="font-heading text-3xl font-bold tracking-tight">
-              Farcaster Frames
-            </h1>
+            <h1 className="font-heading text-3xl font-bold tracking-tight">Farcaster Frames</h1>
             <p className="mt-1 text-sm" style={{ color: 'var(--color-fg-secondary)' }}>
               Render, interact with, and share Farcaster Frames. Load any Frame URL or browse
               popular ones below.
@@ -361,7 +382,11 @@ export default function FarcasterFramesPage() {
         className="mb-8 rounded-xl border p-4"
         style={{ borderColor: `${FC_COLOR}22`, backgroundColor: `${FC_COLOR}04` }}
       >
-        <label htmlFor="frame-url" className="mb-2 block text-xs font-semibold tracking-wider uppercase" style={{ color: 'var(--color-fg)' }}>
+        <label
+          htmlFor="frame-url"
+          className="mb-2 block text-xs font-semibold tracking-wider uppercase"
+          style={{ color: 'var(--color-fg)' }}
+        >
           Load Any Frame URL
         </label>
         <div className="flex gap-2">
@@ -372,11 +397,15 @@ export default function FarcasterFramesPage() {
             value={customFrameUrl}
             onChange={(e) => setCustomFrameUrl(e.target.value)}
             className="flex-1 rounded-lg border bg-[var(--color-card)] px-3 py-2.5 text-sm text-[var(--color-fg)] placeholder:text-[var(--color-muted)] transition-colors focus:outline-none focus:ring-2"
-            style={{
-              borderColor: 'var(--color-glass-border)',
-              '--tw-ring-color': FC_COLOR,
-            } as React.CSSProperties}
-            onKeyDown={(e) => { if (e.key === 'Enter') handleCustomFrameLoad(); }}
+            style={
+              {
+                borderColor: 'var(--color-glass-border)',
+                '--tw-ring-color': FC_COLOR,
+              } as React.CSSProperties
+            }
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleCustomFrameLoad();
+            }}
           />
           <button
             type="button"
@@ -391,7 +420,10 @@ export default function FarcasterFramesPage() {
 
       {/* Demo frames grid */}
       <section>
-        <h2 className="mb-4 font-heading text-lg font-bold tracking-tight" style={{ color: 'var(--color-fg)' }}>
+        <h2
+          className="mb-4 font-heading text-lg font-bold tracking-tight"
+          style={{ color: 'var(--color-fg)' }}
+        >
           Popular Frames
         </h2>
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -402,7 +434,10 @@ export default function FarcasterFramesPage() {
       </section>
 
       {/* Footer */}
-      <footer className="mt-12 border-t py-8 text-center" style={{ borderColor: 'var(--color-glass-border)' }}>
+      <footer
+        className="mt-12 border-t py-8 text-center"
+        style={{ borderColor: 'var(--color-glass-border)' }}
+      >
         <div className="flex flex-col items-center gap-2">
           <span className="text-xs text-[var(--color-muted)]">
             Frames are interactive miniapps that run inside Farcaster clients.
@@ -439,7 +474,9 @@ function FrameCard({
         backgroundColor: 'var(--color-card)',
       }}
       onClick={() => onSelect(frame)}
-      onKeyDown={(e) => { if (e.key === 'Enter') onSelect(frame); }}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') onSelect(frame);
+      }}
       role="button"
       tabIndex={0}
       aria-label={`View frame: ${frame.title}`}

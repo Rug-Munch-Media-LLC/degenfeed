@@ -294,8 +294,8 @@ export default function FarcasterMiniappsPage() {
           ]}
           featureFlags={{
             'Cross-post': true,
-            'Share': true,
-            'Embed': true,
+            Share: true,
+            Embed: true,
             'Powered by Farcaster': true,
           }}
         />
@@ -358,7 +358,8 @@ export default function FarcasterMiniappsPage() {
       </nav>
 
       {/* Hero header */}
-      <header className="relative mb-8 overflow-hidden rounded-2xl border p-6 sm:p-8"
+      <header
+        className="relative mb-8 overflow-hidden rounded-2xl border p-6 sm:p-8"
         style={{
           borderColor: `${FC_COLOR}33`,
           background: `linear-gradient(135deg, ${FC_COLOR}10 0%, var(--color-card) 60%)`,
@@ -387,8 +388,8 @@ export default function FarcasterMiniappsPage() {
                   Farcaster Miniapps
                 </h1>
                 <p className="mt-1 text-sm text-[var(--color-fg-secondary)]">
-                  Launch popular Farcaster miniapps inside DegenFeed.
-                  Everything keeps our cyberpunk look.
+                  Launch popular Farcaster miniapps inside DegenFeed. Everything keeps our cyberpunk
+                  look.
                 </p>
               </div>
             </div>
@@ -438,7 +439,10 @@ export default function FarcasterMiniappsPage() {
       <div className="mb-6 flex flex-wrap items-center gap-3">
         {/* Search input */}
         <div className="relative flex-1 min-w-[200px]">
-          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[var(--color-muted)]" aria-hidden="true">
+          <span
+            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[var(--color-muted)]"
+            aria-hidden="true"
+          >
             🔍
           </span>
           <input
@@ -447,10 +451,12 @@ export default function FarcasterMiniappsPage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full rounded-xl border bg-[var(--color-card)] py-2.5 pl-9 pr-3 text-sm text-[var(--color-fg)] placeholder:text-[var(--color-muted)] transition-colors focus:outline-none focus:ring-2"
-            style={{
-              borderColor: 'var(--color-glass-border)',
-              '--tw-ring-color': FC_COLOR,
-            } as React.CSSProperties}
+            style={
+              {
+                borderColor: 'var(--color-glass-border)',
+                '--tw-ring-color': FC_COLOR,
+              } as React.CSSProperties
+            }
             aria-label="Search miniapps"
           />
         </div>
@@ -509,7 +515,10 @@ export default function FarcasterMiniappsPage() {
       {/* Trending section */}
       {!activeCategory && !searchQuery && !showOnlyPopular && (
         <section className="mb-10">
-          <h2 className="mb-4 font-heading text-lg font-bold tracking-tight" style={{ color: 'var(--color-fg)' }}>
+          <h2
+            className="mb-4 font-heading text-lg font-bold tracking-tight"
+            style={{ color: 'var(--color-fg)' }}
+          >
             🔥 Trending Miniapps
           </h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -522,15 +531,25 @@ export default function FarcasterMiniappsPage() {
 
       {/* All / filtered miniapps grid */}
       <section>
-        <h2 className="mb-4 font-heading text-lg font-bold tracking-tight" style={{ color: 'var(--color-fg)' }}>
-          {activeCategory ? activeCategory : searchQuery ? 'Search Results' : showOnlyPopular ? 'Popular Miniapps' : 'All Miniapps'}
+        <h2
+          className="mb-4 font-heading text-lg font-bold tracking-tight"
+          style={{ color: 'var(--color-fg)' }}
+        >
+          {activeCategory
+            ? activeCategory
+            : searchQuery
+              ? 'Search Results'
+              : showOnlyPopular
+                ? 'Popular Miniapps'
+                : 'All Miniapps'}
           <span className="ml-2 text-sm font-normal" style={{ color: 'var(--color-muted)' }}>
             ({filteredMiniapps.length})
           </span>
         </h2>
 
         {filteredMiniapps.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed py-16"
+          <div
+            className="flex flex-col items-center justify-center rounded-2xl border border-dashed py-16"
             style={{ borderColor: 'var(--color-glass-border)' }}
           >
             <span className="text-3xl mb-3">🔍</span>
@@ -561,7 +580,8 @@ export default function FarcasterMiniappsPage() {
       </section>
 
       {/* Footer info */}
-      <footer className="mt-12 border-t py-8 text-center"
+      <footer
+        className="mt-12 border-t py-8 text-center"
         style={{ borderColor: 'var(--color-glass-border)' }}
       >
         <div className="flex flex-col items-center gap-2">
@@ -648,10 +668,16 @@ function MiniappCard({
 
       {/* Content */}
       <div className="mt-4">
-        <h3 className="font-heading text-base font-bold tracking-tight" style={{ color: 'var(--color-fg)' }}>
+        <h3
+          className="font-heading text-base font-bold tracking-tight"
+          style={{ color: 'var(--color-fg)' }}
+        >
           {app.name}
         </h3>
-        <p className="mt-1.5 text-xs leading-relaxed" style={{ color: 'var(--color-fg-secondary)' }}>
+        <p
+          className="mt-1.5 text-xs leading-relaxed"
+          style={{ color: 'var(--color-fg-secondary)' }}
+        >
           {app.description}
         </p>
       </div>
@@ -679,7 +705,8 @@ function MiniappCard({
       </div>
 
       {/* Stats */}
-      <div className="mt-4 flex gap-4 border-t pt-3"
+      <div
+        className="mt-4 flex gap-4 border-t pt-3"
         style={{ borderColor: 'var(--color-glass-border)' }}
       >
         {app.stats.slice(0, 2).map((stat) => (
@@ -732,15 +759,7 @@ function MiniappCard({
 
 // ─── Share Button ───────────────────────────────────────────────────────
 
-function ShareButton({
-  label,
-  href,
-  icon,
-}: {
-  label: string;
-  href: string;
-  icon: string;
-}) {
+function ShareButton({ label, href, icon }: { label: string; href: string; icon: string }) {
   return (
     <a
       href={href}

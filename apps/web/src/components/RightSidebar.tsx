@@ -254,7 +254,10 @@ function LiveNowCard() {
                 </svg>
               </div>
               <div className="min-w-0 flex-1">
-                <div className="text-sm font-semibold truncate" style={{ color: 'var(--color-fg)' }}>
+                <div
+                  className="text-sm font-semibold truncate"
+                  style={{ color: 'var(--color-fg)' }}
+                >
                   {space.name}
                 </div>
                 <div className="flex items-center gap-2 text-xs text-[var(--color-muted)]">

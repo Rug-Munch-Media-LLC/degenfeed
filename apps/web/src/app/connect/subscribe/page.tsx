@@ -6,8 +6,8 @@
  * Purchase DegenFeed Connect as a standalone add-on ($15/mo or $150/yr).
  */
 
-import { useCallback, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useCallback, useState } from 'react';
 
 export default function ConnectSubscribePage() {
   const router = useRouter();
@@ -61,17 +61,13 @@ export default function ConnectSubscribePage() {
             <h2 className="mb-2 text-xl font-bold text-[var(--color-fg)]">
               DegenFeed Connect Activated!
             </h2>
-            <p className="text-sm text-[var(--color-muted)]">
-              Redirecting to settings...
-            </p>
+            <p className="text-sm text-[var(--color-muted)]">Redirecting to settings...</p>
           </div>
         ) : (
           <>
             <div className="mb-6 text-center">
               <span className="mb-2 block text-3xl">🚀</span>
-              <h1 className="text-2xl font-bold text-[var(--color-fg)]">
-                DegenFeed Connect
-              </h1>
+              <h1 className="text-2xl font-bold text-[var(--color-fg)]">DegenFeed Connect</h1>
               <p className="mt-1 text-sm text-[var(--color-muted)]">
                 Standalone add-on for external platform posting
               </p>
@@ -123,10 +119,7 @@ export default function ConnectSubscribePage() {
                 'Basic cross-platform analytics',
                 'Cancel anytime',
               ].map((f) => (
-                <li
-                  key={f}
-                  className="flex items-center gap-2 text-sm text-[var(--color-muted)]"
-                >
+                <li key={f} className="flex items-center gap-2 text-sm text-[var(--color-muted)]">
                   <span className="text-green-400">✓</span>
                   {f}
                 </li>
@@ -151,8 +144,8 @@ export default function ConnectSubscribePage() {
             </button>
 
             <p className="mt-4 text-center text-xs text-[var(--color-muted)]">
-              By subscribing, you agree to our Terms of Service.
-              Cancel anytime — access remains until end of billing period.
+              By subscribing, you agree to our Terms of Service. Cancel anytime — access remains
+              until end of billing period.
             </p>
           </>
         )}

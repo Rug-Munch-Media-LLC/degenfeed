@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { CollapsibleSection } from './CollapsibleSection';
 import type { DeleteStatus } from '../types';
+import { CollapsibleSection } from './CollapsibleSection';
 
 export function DeleteAccountSection({
   deleteStatus,

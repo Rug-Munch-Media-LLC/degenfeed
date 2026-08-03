@@ -17,7 +17,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import useSWR from 'swr';
-import { GiftAnimationOverlay, type GiftAnimationEvent } from './GiftAnimation';
+import { type GiftAnimationEvent, GiftAnimationOverlay } from './GiftAnimation';
 
 // ─── Types ───────────────────────────────────────────────────────────────
 
@@ -124,7 +124,9 @@ export function GiftPanel({
   const [showPackages, setShowPackages] = useState(false);
   const [showSubscription, setShowSubscription] = useState(false);
   const [activeAnimation, setActiveAnimation] = useState<GiftAnimationEvent | null>(null);
-  const [recentGifts, setRecentGifts] = useState<Array<{ giftType: GiftTypeInfo; timestamp: number }>>([]);
+  const [recentGifts, setRecentGifts] = useState<
+    Array<{ giftType: GiftTypeInfo; timestamp: number }>
+  >([]);
 
   // Fetch gift types
   const { data: giftData, error: giftError } = useSWR<GiftTypesResponse>(
@@ -160,7 +162,9 @@ export function GiftPanel({
           creatorId,
           creatorLabel,
           senderId: walletAddress,
-          senderLabel: walletAddress ? `${walletAddress.slice(0, 6)}…${walletAddress.slice(-4)}` : undefined,
+          senderLabel: walletAddress
+            ? `${walletAddress.slice(0, 6)}…${walletAddress.slice(-4)}`
+            : undefined,
           chain: method,
           isAnonymous,
           platform: 'degenfeed',
@@ -174,7 +178,9 @@ export function GiftPanel({
 
         if (!res.ok) {
           const errData = await res.json().catch(() => ({}));
-          throw new Error((errData as Record<string, string>).error ?? `Send failed: ${res.status}`);
+          throw new Error(
+            (errData as Record<string, string>).error ?? `Send failed: ${res.status}`,
+          );
         }
 
         const data = (await res.json()) as {
@@ -284,7 +290,16 @@ export function GiftPanel({
         setIsSending(false);
       }
     },
-    [streamId, creatorId, creatorLabel, walletAddress, selectedMethod, isSending, gifts, onGiftSent],
+    [
+      streamId,
+      creatorId,
+      creatorLabel,
+      walletAddress,
+      selectedMethod,
+      isSending,
+      gifts,
+      onGiftSent,
+    ],
   );
 
   // Handle animation complete
@@ -373,7 +388,14 @@ export function GiftPanel({
                 className="flex h-7 w-7 items-center justify-center rounded-lg text-white/40 hover:text-white hover:bg-white/10 transition-colors"
                 aria-label="Close gift panel"
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
                   <line x1="18" y1="6" x2="6" y2="18" />
                   <line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
@@ -411,7 +433,9 @@ export function GiftPanel({
                     <span className="text-2xl">{gift.icon}</span>
                     <span className="text-[10px] font-semibold text-white/80">{gift.name}</span>
                     <span className="text-[9px] text-white/50">${gift.usd.toFixed(2)}</span>
-                    <span className="text-[8px] text-white/30">{gift.sats.toLocaleString()} sats</span>
+                    <span className="text-[8px] text-white/30">
+                      {gift.sats.toLocaleString()} sats
+                    </span>
 
                     {/* Creator earnings hint */}
                     {isSelected && (
@@ -446,7 +470,11 @@ export function GiftPanel({
                       }`}
                       style={
                         selectedMethod === method.id
-                          ? { borderColor: `${method.color}40`, backgroundColor: `${method.color}15`, color: method.color }
+                          ? {
+                              borderColor: `${method.color}40`,
+                              backgroundColor: `${method.color}15`,
+                              color: method.color,
+                            }
                           : {}
                       }
                     >
@@ -507,8 +535,8 @@ export function GiftPanel({
 
               {/* Creator earns notice */}
               <p className="text-[8px] text-white/30 text-center">
-                Creator earns ${selectedGift.creatorEarnsUsd.toFixed(4)} (85%).{' '}
-                Platform fee: ${selectedGift.platformFeeUsd.toFixed(4)} (15%).
+                Creator earns ${selectedGift.creatorEarnsUsd.toFixed(4)} (85%). Platform fee: $
+                {selectedGift.platformFeeUsd.toFixed(4)} (15%).
               </p>
             </div>
           )}
@@ -541,9 +569,7 @@ export function GiftPanel({
                     className="flex flex-col items-center gap-1 rounded-xl border border-yellow-500/20 bg-yellow-500/5 p-3 transition-all hover:bg-yellow-500/10 hover:border-yellow-500/30 disabled:opacity-50"
                   >
                     <span className="text-xl">{pkg.giftIcon}</span>
-                    <span className="text-[10px] font-semibold text-white/80">
-                      {pkg.name}
-                    </span>
+                    <span className="text-[10px] font-semibold text-white/80">{pkg.name}</span>
                     <span className="text-[9px] text-white/50">
                       {pkg.count}× {pkg.giftTypeName}
                     </span>
@@ -587,9 +613,7 @@ export function GiftPanel({
           {/* Error state */}
           {giftError && (
             <div className="border-t border-red-500/20 px-4 py-2">
-              <p className="text-[9px] text-red-400">
-                Failed to load gift types. Please refresh.
-              </p>
+              <p className="text-[9px] text-red-400">Failed to load gift types. Please refresh.</p>
             </div>
           )}
         </div>
