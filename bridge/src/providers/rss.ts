@@ -28,7 +28,16 @@ export interface FeedSource {
   label: string;
   category: FeedCategory;
   niches: string[];
-  platform?: 'rss' | 'atom' | 'substack' | 'medium' | 'mirror' | 'paragraph' | 'ghost' | 'beehiiv';
+  platform?:
+    | 'rss'
+    | 'atom'
+    | 'substack'
+    | 'medium'
+    | 'mirror'
+    | 'paragraph'
+    | 'ghost'
+    | 'beehiiv'
+    | 'podcast';
   language?: string;
   ttlMinutes?: number;
   featured?: boolean;
@@ -55,7 +64,8 @@ export type FeedCategory =
   | 'business'
   | 'world'
   | 'culture'
-  | 'politics';
+  | 'politics'
+  | 'podcast';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // CRYPTO NEWS (25 feeds)
@@ -1773,6 +1783,86 @@ const REGULATION_FEEDS: FeedSource[] = [
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════
+// CRYPTO & WEB3 PODCASTS (10 feeds)
+// ═══════════════════════════════════════════════════════════════════════════
+
+const PODCAST_FEEDS: FeedSource[] = [
+  {
+    url: 'https://feeds.libsyn.com/247424/rss',
+    label: 'Bankless',
+    category: 'podcast',
+    platform: 'podcast',
+    niches: ['crypto', 'ethereum', 'defi'],
+    featured: true,
+  },
+  {
+    url: 'https://feeds.megaphone.fm/LSHML4761942757',
+    label: 'Unchained',
+    category: 'podcast',
+    platform: 'podcast',
+    niches: ['crypto', 'interviews', 'bitcoin'],
+    featured: true,
+  },
+  {
+    url: 'https://thedefiant.io/feed/podcast',
+    label: 'The Defiant Podcast',
+    category: 'podcast',
+    platform: 'podcast',
+    niches: ['defi', 'crypto', 'ethereum'],
+  },
+  {
+    url: 'https://feeds.simplecast.com/puPuLj25',
+    label: 'UpOnly',
+    category: 'podcast',
+    platform: 'podcast',
+    niches: ['crypto', 'defi', 'interviews', 'nft'],
+  },
+  {
+    url: 'https://feeds.megaphone.fm/empire',
+    label: 'Empire',
+    category: 'podcast',
+    platform: 'podcast',
+    niches: ['crypto', 'defi', 'business'],
+    featured: true,
+  },
+  {
+    url: 'https://feeds.megaphone.fm/0xresearch',
+    label: '0xResearch',
+    category: 'podcast',
+    platform: 'podcast',
+    niches: ['crypto', 'research', 'macro'],
+  },
+  {
+    url: 'https://feeds.megaphone.fm/bellcurve',
+    label: 'Bell Curve',
+    category: 'podcast',
+    platform: 'podcast',
+    niches: ['crypto', 'macro', 'business'],
+  },
+  {
+    url: 'https://feeds.megaphone.fm/TCB',
+    label: 'Chopping Block',
+    category: 'podcast',
+    platform: 'podcast',
+    niches: ['crypto', 'defi', 'news'],
+  },
+  {
+    url: 'https://feeds.megaphone.fm/lightspeed',
+    label: 'Lightspeed',
+    category: 'podcast',
+    platform: 'podcast',
+    niches: ['solana', 'crypto', 'defi'],
+  },
+  {
+    url: 'https://www.omnycontent.com/d/playlist/88b564ea-a9a6-4751-910a-a5d800019396/8163fac4-9321-4388-ac94-aee50022baf8/1e8cd755-5985-45a4-9020-aee5003fcd31/podcast.rss',
+    label: 'The Block Podcast',
+    category: 'podcast',
+    platform: 'podcast',
+    niches: ['crypto', 'news', 'business'],
+  },
+];
+
+// ═══════════════════════════════════════════════════════════════════════════
 // MASTER FEED LIST — All sources aggregated
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -1801,6 +1891,7 @@ export const ALL_FEEDS: FeedSource[] = [
   ...GHOST_BLOGS,
   ...BEEHIIV_PUBLICATIONS,
   ...REGULATION_FEEDS,
+  ...PODCAST_FEEDS,
 ];
 
 export const FEED_COUNT = ALL_FEEDS.length;
@@ -1826,6 +1917,11 @@ export function getNewsletterFeeds(): FeedSource[] {
       f.platform === 'ghost' ||
       f.platform === 'beehiiv',
   );
+}
+
+/** Get podcast feeds only */
+export function getPodcastFeeds(): FeedSource[] {
+  return ALL_FEEDS.filter((f) => f.category === 'podcast' || f.platform === 'podcast');
 }
 
 // ─── Helpers ───────────────────────────────────────────────────────────
@@ -1922,6 +2018,27 @@ export function extractEnclosures(e: string): { url?: string; type?: string }[] 
     }
   }
   return enclosures;
+}
+
+/**
+ * Parse a podcast episode duration from an RSS item.
+ * Handles iTunes-style "HH:MM:SS", "MM:SS", or plain seconds.
+ */
+export function parsePodcastDuration(e: string): number | undefined {
+  const match = e.match(/<itunes:duration[^>]*>([^<]+)<\/itunes:duration>/i);
+  if (!match || !match[1]) return undefined;
+  const raw = match[1].trim();
+  const parts = raw.split(':').map((p) => Number.parseInt(p, 10));
+  if (parts.some((p) => Number.isNaN(p))) return undefined;
+  if (parts.length === 3) {
+    const [h = 0, m = 0, s = 0] = parts;
+    return h * 3600 + m * 60 + s;
+  }
+  if (parts.length === 2) {
+    const [m = 0, s = 0] = parts;
+    return m * 60 + s;
+  }
+  return parts[0] ?? 0;
 }
 
 /**
@@ -2377,6 +2494,8 @@ export interface ParsedFeedItem {
   featuredImage?: string;
   categories: string[];
   enclosures: { url?: string; type?: string }[];
+  /** Podcast episode duration in seconds (parsed from itunes:duration) */
+  duration?: number;
   id: string;
 }
 
@@ -2486,6 +2605,7 @@ function parseAtomEntry(e: string): ParsedFeedItem | null {
     featuredImage,
     categories,
     enclosures,
+    duration: parsePodcastDuration(e),
     id,
   };
 }
@@ -2537,6 +2657,7 @@ function parseRssItem(e: string): ParsedFeedItem | null {
     featuredImage,
     categories,
     enclosures,
+    duration: parsePodcastDuration(e),
     id,
   };
 }
@@ -2585,6 +2706,34 @@ async function fetchSingleFeed(feed: FeedSource, limit: number): Promise<Unified
         });
       }
 
+      // Podcast feeds: promote the audio enclosure to a first-class audio
+      // embed so clients can render an inline player. Falls back to the
+      // first enclosure URL when no audio type is declared.
+      const isPodcast = feed.category === 'podcast' || feed.platform === 'podcast';
+      let audioUrl: string | undefined;
+      if (isPodcast) {
+        const audioEnclosure =
+          item.enclosures.find(
+            (en) =>
+              en.url &&
+              (en.type?.startsWith('audio/') ||
+                /\.(mp3|m4a|ogg|wav|aac|opus|flac|webm)(\?|$)/i.test(en.url)),
+          ) ||
+          item.enclosures.find((en) => en.url);
+        audioUrl = audioEnclosure?.url;
+        if (audioUrl) {
+          embeds.push({
+            kind: 'audio',
+            url: audioUrl,
+            meta: {
+              duration: item.duration,
+              podcast: feed.label,
+              title: item.title,
+            },
+          });
+        }
+      }
+
       const platformLabel = feed.platform ? `${feed.label} (${feed.platform})` : feed.label;
 
       return {
@@ -2627,6 +2776,10 @@ async function fetchSingleFeed(feed: FeedSource, limit: number): Promise<Unified
           platform: feed.platform,
           image: featuredImage,
           sentiment,
+          // Podcast episode metadata (present on podcast feeds)
+          audioUrl,
+          duration: isPodcast ? item.duration : undefined,
+          podcastTitle: isPodcast ? feed.label : undefined,
           // Ground News-style ratings — free informational metadata
           bias: sourceBias(feed.label),
           factualRating: sourceFactuality(feed.label),
@@ -2634,7 +2787,7 @@ async function fetchSingleFeed(feed: FeedSource, limit: number): Promise<Unified
           priceImpact: extractPriceImpact(`${item.title} ${item.contentText}`),
         },
         niches: allNiches,
-        contentType: 'link',
+        contentType: isPodcast ? 'podcast' : 'link',
       };
     });
   } catch (err) {
@@ -4362,12 +4515,39 @@ export async function fetchFeaturedPosts(limit = 30): Promise<UnifiedPost[]> {
   return deduplicatePosts(all, limit);
 }
 
+/**
+ * Fetch only podcast feeds (crypto/web3 shows). Episodes carry an audio
+ * enclosure embed and `contentType: 'podcast'` plus raw audioUrl/duration
+ * metadata so clients can render inline players.
+ */
+export async function fetchPodcastPosts(limit = 30): Promise<UnifiedPost[]> {
+  const podcasts = getPodcastFeeds();
+  if (podcasts.length === 0) return [];
+
+  const all: UnifiedPost[] = [];
+  // Fetch a little more per feed than the target so dedup + ranking leaves
+  // a healthy pool of recent episodes.
+  const perFeed = Math.max(3, Math.ceil((limit * 1.5) / podcasts.length));
+
+  const results = await Promise.allSettled(podcasts.map((feed) => fetchFeed(feed, perFeed)));
+
+  for (const r of results) {
+    if (r.status === 'fulfilled') all.push(...r.value);
+  }
+
+  // Deduplicate by episode link/guid, then rank by publish recency so the
+  // most recent episodes surface first (like a podcast app inbox).
+  const deduped = deduplicatePosts(all, Math.max(limit, 25));
+  const ranked = [...deduped].sort((a, b) => b.createdAt - a.createdAt);
+  return ranked.slice(0, limit);
+}
+
 // ─── Schema & Exports ────────────────────────────────────────────────
 
 export const schema: SchemaGuard = {
   id: 'rss',
   name: 'RSS & Newsletter Aggregator',
-  description: `Aggregates from ${FEED_COUNT}+ RSS feeds and newsletters across crypto, DeFi, AI, security, and tech`,
+  description: `Aggregates from ${FEED_COUNT}+ RSS feeds, newsletters, and podcasts across crypto, DeFi, AI, security, and tech`,
   endpoint: '/api/feed/news',
   requiresAuth: false,
   contentType: 'link',

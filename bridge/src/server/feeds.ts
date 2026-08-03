@@ -172,6 +172,15 @@ export const PROVIDERS: Record<string, ProviderEntry> = {
       return fetchNewsletterPosts(limit);
     },
   },
+  podcast: {
+    name: 'Podcasts (Bankless/Unchained/Empire/0xResearch/etc.)',
+    rateLimit: { maxRequests: 60, windowMs: 60_000 },
+    category: 'content',
+    fetch: async (limit) => {
+      const { fetchPodcastPosts } = await import('../providers/rss');
+      return fetchPodcastPosts(limit);
+    },
+  },
   rssbridge: {
     name: 'RSS-Bridge (legacy)',
     fetch: fetchRssBridgePosts,
