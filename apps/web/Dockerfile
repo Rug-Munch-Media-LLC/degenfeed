@@ -83,6 +83,12 @@ COPY --from=builder --chown=nextjs:nodejs \
 COPY --from=builder --chown=nextjs:nodejs \
     /app/apps/web/public ./apps/web/public
 
+# Copy startup entrypoint — pre-warms feed caches so the first user request
+# after a container restart is fast (avoids ~20s bridge provider aggregation)
+COPY --chown=nextjs:nodejs \
+    apps/web/docker-entrypoint.sh ./apps/web/docker-entrypoint.sh
+RUN chmod +x apps/web/docker-entrypoint.sh
+
 # Switch to unprivileged user
 USER nextjs
 
@@ -96,4 +102,4 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
     CMD ["wget", "-qO-", "http://127.0.0.1:3000/api/health"]
 
-CMD ["node", "apps/web/server.js"]
+CMD ["sh", "apps/web/docker-entrypoint.sh"]
