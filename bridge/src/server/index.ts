@@ -25,6 +25,7 @@ import { handleEventRoute } from './event-routes';
 import { buildFeed, DEFAULT_PREFERENCES, PROVIDERS } from './feeds';
 import { handleGtsRoute } from './gts-routes';
 import { handleNostrRoute } from './nostr-routes';
+import { handlePublishRoute } from './publish-routes';
 import { attachRealtimeWebSocket } from './realtime-ws';
 import { feedCache } from './response-cache';
 import { handleSsoRoute } from './sso-routes';
@@ -62,8 +63,10 @@ async function checkSourceHealth(url: string): Promise<boolean> {
 function sanitizeControlChars(value: unknown): unknown {
   if (typeof value === 'string') {
     // Strip control chars except \t (0x09), \n (0x0a), \r (0x0d)
+    // eslint-disable no-control-regex -- intentional control-char stripping for JSON sanitization
     // biome-ignore lint/suspicious/noControlCharactersInRegex: intentional — we need to match specific control char ranges to sanitize JSON payloads
     return value.replace(/[\x00-\x08\x0b\x0c\x0e-\x1f]/g, '');
+    // eslint-enable no-control-regex
   }
   if (Array.isArray(value)) {
     return value.map(sanitizeControlChars);
@@ -355,7 +358,10 @@ async function crossProtocolSearch(
         const authorId = String(hit.authorId || '');
         if (!authorId) continue;
         if (identityMap.has(authorId)) {
-          (identityMap.get(authorId)!.postCount as number)++;
+          const identity = identityMap.get(authorId);
+          if (identity) {
+            identity.postCount = (identity.postCount as number) + 1;
+          }
         } else {
           identityMap.set(authorId, {
             id: authorId,
@@ -967,6 +973,7 @@ const server = http.createServer(async (req, res) => {
         'mastodon',
         'lemmy',
         'peertube',
+        'piefed',
         'bluesky',
         'nostr',
         'farcaster',
@@ -1062,7 +1069,11 @@ const server = http.createServer(async (req, res) => {
               totalPosts += e.value.count;
             }
           }
-          return { totalPosts, sources, fetchedAt: Date.now() } as any;
+          return {
+            totalPosts,
+            sources,
+            fetchedAt: Date.now(),
+          } as unknown as { posts: UnifiedPost[]; meta: Record<string, unknown> };
         },
         60_000, // 60 second cache
       );
@@ -1102,7 +1113,13 @@ const server = http.createServer(async (req, res) => {
         res,
         req.method === 'GET' ? { authenticated: false, user: null } : { ok: true },
       );
-    if (path.startsWith('/api/publish')) return jsonOk(res, { ok: true, id: `post:${Date.now()}` });
+
+    // ── Cross-Protocol Publish (real fan-out) ─────────────────────
+    // POST /api/publish — { content, protocols, media?, options? }
+    // Returns per-protocol results. Replaces the previous stub.
+    const publishHandled = await handlePublishRoute(path, req, res);
+    if (publishHandled) return;
+
     return jsonOk(res, { status: 'ok', path, service: 'degenfeed-bridge' });
   } catch (err) {
     console.error('[bridge] Error:', err);
@@ -1115,8 +1132,9 @@ const server = http.createServer(async (req, res) => {
 // upgrade listener is registered on the HTTP server.
 attachRealtimeWebSocket(server);
 
-server.listen(PORT, '127.0.0.1', () => {
-  console.log(`[bridge] DegenFeed Bridge v0.4.0 running on http://127.0.0.1:${PORT}`);
+const BRIDGE_HOST = process.env.BRIDGE_HOST || '127.0.0.1';
+server.listen(PORT, BRIDGE_HOST, () => {
+  console.log(`[bridge] DegenFeed Bridge v0.4.0 running on http://${BRIDGE_HOST}:${PORT}`);
   console.log('[bridge] Realtime WebSocket: /ws/realtime (heartbeat 30s)');
   console.log(
     '[bridge] Data sources: Mastodon/GTS, Reddit, RSS, Lemmy, PeerTube, Bluesky, Nostr, Farcaster, Lens, Pixelfed, Threads, Zora, DTube, LBRY, Gab, Minds, Aether, Scuttlebutt, Hive, Mirror, Funkwhale, Castopod, WriteFreely, MediaGoblin, Owncast, BookWyrm, Mobilizon, Forgejo, Bonfire, Mitra, Takahe, Orbis, XMTP, Push, Huddle01, Ceramic, Tableland, Telegram, Discord, Matrix, GitHub',

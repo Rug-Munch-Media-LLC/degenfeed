@@ -6,7 +6,7 @@ packages:
   - workers/*
 allowBuilds:
   '@biomejs/biome': true
-  '@bundled-es-modules/glob': set this to true or false
+  '@bundled-es-modules/glob': false
   '@reown/appkit': true
   '@stellar/stellar-sdk': true
   bigint-buffer: true
@@ -15,7 +15,7 @@ allowBuilds:
   esbuild: true
   protobufjs: true
   sharp: true
-  style-dictionary: set this to true or false
+  style-dictionary: false
   tiny-secp256k1: true
   usb: true
   utf-8-validate: true
@@ -35,6 +35,10 @@ minimumReleaseAgeExclude:
   - miniflare@4.20260722.1
   - wrangler@4.115.0
 overrides:
+  # GHSA-3gc7-fjrx-p6mg: bigint-buffer <=1.1.5 buffer overflow
+  # (transitive via @solana/web3.js -> creator-coin, bundled into the web app)
+  # NOTE: no fix version exists yet — 1.1.5 is the latest. Tracked for upstream release.
+  bigint-buffer: ^1.1.5
   ws: ^8.21.1
   undici: '>=6.27.0'
   valibot: ^1.2.0
