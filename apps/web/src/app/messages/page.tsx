@@ -8,9 +8,11 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../../components/AuthProvider';
+import { DegenChatLogo, DegenChatWordmark } from '../../components/DegenChatBrand';
 import { useMessages } from '../../hooks/useMessages';
+import { usePushNotifications } from '../../hooks/usePushNotifications';
 import { ChatView } from './ChatView';
 import { ComposeBar } from './ComposeBar';
 import { ConversationList } from './ConversationList';
@@ -96,6 +98,14 @@ export default function MessagesPage() {
   const pathname = usePathname();
   const { ready, signedInProtocols, tokens } = useAuth();
   const hasSignedIn = ready && Object.values(signedInProtocols).some(Boolean);
+  const { register: registerPush } = usePushNotifications();
+
+  // Best-effort push registration for chat notifications when signed in
+  useEffect(() => {
+    if (hasSignedIn) {
+      registerPush();
+    }
+  }, [hasSignedIn, registerPush]);
 
   const {
     filteredConversations,
@@ -130,6 +140,9 @@ export default function MessagesPage() {
   const myIds = useMemo(() => getMyIds(tokens), [tokens]);
   const isActiveTab = (href: string) => pathname === href;
 
+  // Multi-protocol compose: which protocols to send to
+  const [composeProtocols, setComposeProtocols] = useState<string[]>(['nostr']);
+
   const handleSelectConv = useCallback(
     (conv: { conversationId: string }) => {
       selectConv(conv.conversationId);
@@ -143,9 +156,14 @@ export default function MessagesPage() {
     handleSend({ protocol: selectedConv.protocol, toId: other });
   }, [selectedConv, handleSend]);
 
-  const handleSendNew = useCallback(() => {
-    handleSend({ protocol: sendingProtocol, toId: sendToId });
-  }, [handleSend, sendingProtocol, sendToId]);
+  const handleSendNew = useCallback(async () => {
+    const text = composeText.trim();
+    if (!text || !sendToId) return;
+    // Fan out to every selected protocol
+    for (const protocol of composeProtocols) {
+      await handleSend({ protocol, toId: sendToId, content: text });
+    }
+  }, [composeText, sendToId, composeProtocols, handleSend]);
 
   const handleUserTyping = useCallback(() => {
     if (selectedConvId) handleTyping(selectedConvId);
@@ -166,6 +184,9 @@ export default function MessagesPage() {
         className="flex items-center gap-1 border-b border-[var(--color-border)] bg-[var(--color-glass-bg)] px-3 py-1.5 shrink-0 overflow-x-auto"
         aria-label="Chat features"
       >
+        <div className="mr-2 hidden shrink-0 items-center md:flex">
+          <DegenChatWordmark size="sm" />
+        </div>
         {CHAT_TABS.map((tab) => {
           const active = isActiveTab(tab.href);
           return (
@@ -196,17 +217,13 @@ export default function MessagesPage() {
         (!hasSignedIn ? (
           <div className="flex flex-1 items-center justify-center p-6">
             <div className="text-center max-w-sm">
-              <span
-                className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-2xl text-3xl"
-                style={{ backgroundColor: 'var(--color-overlay)', color: 'var(--color-muted)' }}
-                aria-hidden="true"
-              >
-                💬
-              </span>
-              <p className="text-base font-semibold text-[var(--color-fg)]">Sign in to use DMs</p>
+              <div className="mb-4 flex justify-center">
+                <DegenChatWordmark size="md" />
+              </div>
+              <p className="text-base font-semibold text-[var(--color-fg)]">Sign in to use DegenChat</p>
               <p className="mt-1.5 text-sm text-[var(--color-muted)] leading-relaxed">
-                Cross-protocol direct messages across Nostr, Farcaster, Lens, Bluesky, Mastodon, and
-                more.
+                Chat across every protocol — Nostr, Farcaster, Mastodon, Bluesky, Lens, Matrix,
+                and XMPP in one inbox.
                 <strong className="text-degen-400"> End-to-end encrypted by default.</strong>
               </p>
             </div>
@@ -297,6 +314,9 @@ export default function MessagesPage() {
                 sending={sending}
                 sendError={sendError}
                 protocol={sendingProtocol}
+                protocols={TRANSPORT_OPTIONS.map((p) => p.id)}
+                multiProtocols={composeProtocols}
+                onMultiProtocolsChange={setComposeProtocols}
                 encrypted={true}
               />
             </div>
@@ -326,21 +346,15 @@ export default function MessagesPage() {
               {!selectedConvId ? (
                 <div className="flex flex-1 items-center justify-center">
                   <div className="text-center max-w-xs px-4">
-                    <span
-                      className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-2xl text-3xl"
-                      style={{
-                        backgroundColor: 'var(--color-overlay)',
-                        color: 'var(--color-muted)',
-                      }}
-                      aria-hidden="true"
-                    >
-                      💬
-                    </span>
+                    <div className="mb-4 flex justify-center">
+                      <DegenChatLogo size={56} />
+                    </div>
                     <p className="text-sm font-medium text-[var(--color-fg)]">
                       Select a conversation
                     </p>
                     <p className="mt-1.5 text-xs text-[var(--color-muted)] leading-relaxed">
-                      Choose a conversation from the left panel or start a new message.
+                      Choose a conversation from the left panel or start a new message. Chat across
+                      every protocol.
                     </p>
                   </div>
                 </div>

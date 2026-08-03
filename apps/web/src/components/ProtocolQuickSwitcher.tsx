@@ -28,7 +28,7 @@ const PAGES: QuickItem[] = [
     description: 'Your home feed',
     href: '/feed',
     icon: '\u2302',
-    color: '#00ff41',
+    color: '#8b5cf6',
     type: 'page',
   },
   {

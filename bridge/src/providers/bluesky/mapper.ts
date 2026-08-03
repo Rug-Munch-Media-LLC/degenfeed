@@ -1,5 +1,11 @@
 import type { UnifiedPost } from '../../server';
-import { detectContentType, extractMediaFromPost, guessNiches } from './helpers';
+import {
+  buildRichTextHtml,
+  detectContentType,
+  extractMediaFromPost,
+  extractQuoteFromPost,
+  guessNiches,
+} from './helpers';
 import type { BskyPostView } from './types';
 
 export function postToUnified(post: BskyPostView): UnifiedPost {
@@ -18,6 +24,19 @@ export function postToUnified(post: BskyPostView): UnifiedPost {
       },
     });
   }
+  // Native Bluesky video → kind 'video' with HLS playlist URL
+  const videoView = post.embed?.video;
+  if (videoView?.playlist) {
+    embeds.push({
+      kind: 'video',
+      url: videoView.playlist,
+      meta: {
+        thumbnail: videoView.thumbnail,
+        duration: videoView.duration,
+        aspectRatio: videoView.aspectRatio,
+      },
+    });
+  }
   if (post.embed?.external) {
     embeds.push({
       kind: 'link',
@@ -29,7 +48,7 @@ export function postToUnified(post: BskyPostView): UnifiedPost {
       },
     });
   }
-  if (!embeds.length && post.record.embed?.external) {
+  if (!embeds.some((e) => e.kind === 'link') && post.record.embed?.external) {
     embeds.push({
       kind: 'link',
       url: post.record.embed.external.uri,
@@ -39,7 +58,25 @@ export function postToUnified(post: BskyPostView): UnifiedPost {
       },
     });
   }
+  // Quote post (app.bsky.embed.record#view) → kind 'quote'
+  const quote = extractQuoteFromPost(post);
+  if (quote) {
+    embeds.push({
+      kind: 'quote',
+      url: `https://bsky.app/profile/${encodeURIComponent(quote.author)}/post/${quote.uri.split('/').pop() || ''}`,
+      meta: {
+        uri: quote.uri,
+        author: quote.author,
+        displayName: quote.displayName,
+        text: quote.text,
+      },
+    });
+  }
+
   const contentType = detectContentType(post);
+  const richHtml = buildRichTextHtml(post.record.text, post.record.facets);
+  const nativeId = post.uri.split('/').pop() || post.cid;
+
   return {
     id: `bluesky:${post.uri}`,
     protocol: 'bluesky',
@@ -52,18 +89,25 @@ export function postToUnified(post: BskyPostView): UnifiedPost {
       avatarUrl: post.author.avatar || '',
       followerCount: 0,
       followingCount: 0,
-      links: [],
+      links: [
+        {
+          label: 'profile',
+          url: `https://bsky.app/profile/${encodeURIComponent(post.author.handle || post.author.did)}`,
+        },
+      ],
       keys: { did: post.author.did },
     },
     text: post.record.text,
-    contentType,
+    html: post.record.facets?.length ? richHtml : undefined,
     embeds,
+    parentId: post.record.reply?.parent.uri ? `bluesky:${post.record.reply.parent.uri}` : undefined,
+    rootId: post.record.reply?.root.uri ? `bluesky:${post.record.reply.root.uri}` : undefined,
     createdAt: new Date(post.record.createdAt).getTime(),
     metrics: {
       likes: post.likeCount ?? 0,
       reposts: post.repostCount ?? 0,
       replies: post.replyCount ?? 0,
-      quotes: 0,
+      quotes: post.quoteCount ?? 0,
     },
     engagement: {
       viewerLiked: false,
@@ -73,10 +117,12 @@ export function postToUnified(post: BskyPostView): UnifiedPost {
         likes: post.likeCount ?? 0,
         reposts: post.repostCount ?? 0,
         replies: post.replyCount ?? 0,
-        quotes: 0,
+        quotes: post.quoteCount ?? 0,
       },
     },
     raw: post,
     niches: guessNiches(post.record.text),
+    dfUri: `df://bluesky:${nativeId}`,
+    canonicalUrl: `https://bsky.app/profile/${encodeURIComponent(post.author.handle || post.author.did)}/post/${nativeId}`,
   };
 }

@@ -71,7 +71,7 @@ const LOCK_THRESHOLD_PX = 60; // Pixels to slide up to lock
 function Waveform({
   samples,
   active = false,
-  color = 'var(--degen-400, #00ff41)',
+  color = 'var(--degen-400, #8b5cf6)',
   height = 48,
   barWidth = 3,
   played,

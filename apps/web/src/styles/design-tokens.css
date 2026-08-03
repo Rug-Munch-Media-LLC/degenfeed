@@ -1,16 +1,21 @@
 /* ═══════════════════════════════════════════════════════════════════════════
- * DEGENFEED DESIGN TOKENS v2.1 — Elk Twitter-clone Default Theme
+ * DEGENFEED DESIGN TOKENS v3.0 — Degen Theme (THE standard)
  *
- * Default theme: Elk-style dark-first (blue accent #1d9bf0).
- * Cyberpunk (green #00ff41) preserved as alternate via
+ * The Degen theme is the single design language for app.degenfeed.xyz.
+ * Polished Twitter-clone look: true-black bg, #1d9bf0 accent (it works),
+ * #8b5cf6 brand purple for DegenFeed identity, #00ff41 success green
+ * reserved for positive finance signals, #ef4444 danger.
+ *
+ * Elk remains the client for social.degenfeed.xyz (Mastodon) — separate.
+ * Cyberpunk (green accent) preserved as an alternate preset via
  * [data-theme-preset=cyberpunk] toggle.
  * ═══════════════════════════════════════════════════════════════════════════ */
 
 :root {
-  /* ═══ Core Colors — Elk Dark ═══════════════════════════════════════════ */
+  /* ═══ Core Colors — Degen Dark ═════════════════════════════════════════ */
 
   --color-bg: #000000;
-  --color-bg-secondary: #0a0d10;
+  --color-bg-secondary: #0f0f0f;
   --color-bg-tertiary: #16181c;
   --color-surface: #16181c;
   --color-fg: #e7e9ea;
@@ -30,8 +35,8 @@
   --color-card: #1a1d23;
   --color-card-hover: #20242b;
   --color-card-elevated: #23272f;
-  --color-danger: #f4212e;
-  --color-success: #00ba7c;
+  --color-danger: #ef4444;
+  --color-success: #00ff41;
   --color-warning: #f59e0b;
 
   /* ═══ Glass & Surface Effects ═══════════════════════════════════════════ */
@@ -301,7 +306,7 @@ html[data-theme-preset='cyberpunk'] {
   --color-card: #0a0a0a;
   --color-card-hover: #111113;
   --color-card-elevated: #141416;
-  --color-danger: #f4212e;
+  --color-danger: #ef4444;
   --color-success: #00ff41;
   --color-warning: #f59e0b;
 
@@ -370,8 +375,8 @@ html[data-theme-preset='cyberpunk'] {
   --color-card: #ffffff;
   --color-card-hover: #f7f9fa;
   --color-card-elevated: #ffffff;
-  --color-danger: #e0245e;
-  --color-success: #00ba7c;
+  --color-danger: #ef4444;
+  --color-success: #00ff41;
   --color-warning: #d97706;
 
   --color-glass-bg: rgba(255, 255, 255, 0.85);
@@ -439,7 +444,7 @@ html[data-theme-preset='cyberpunk'] {
   --color-card: #ffffff;
   --color-card-hover: #f7f7f7;
   --color-card-elevated: #ffffff;
-  --color-danger: #e0245e;
+  --color-danger: #ef4444;
   --color-success: #16a34a;
   --color-warning: #d97706;
 

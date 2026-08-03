@@ -145,7 +145,7 @@ export function ProtocolNavSection() {
         href="/feed"
         icon="◆"
         label="All Sources"
-        color="#00ff41"
+        color="#8b5cf6"
         isActive={pathname === '/feed'}
         count={totalPosts > 0 ? totalPosts : undefined}
         showDot={totalPosts > 0}

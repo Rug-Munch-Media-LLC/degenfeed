@@ -21,7 +21,7 @@ const PLATFORMS: Array<{
     icon: '📡',
     description: 'Self-hosted on our Owncast instance',
     features: ['No censorship', 'Own your content', 'Embed anywhere', 'IRC chat'],
-    color: '#00ff41',
+    color: '#ec4899',
   },
   {
     id: 'peertube',

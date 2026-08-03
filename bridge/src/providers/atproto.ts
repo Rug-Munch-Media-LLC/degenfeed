@@ -57,10 +57,14 @@ interface ATProtoFeedResponse {
 // ─── AT Protocol API Helpers ──────────────────────────────────────────
 
 /**
- * Fetch the feed skeleton from the AT Protocol public API.
+ * Fetch the feed from the AT Protocol public AppView.
+ *
+ * Uses app.bsky.feed.getFeed (hydrated posts) — the getFeedSkeleton
+ * variant is NOT implemented on the public API (HTTP 501) and would
+ * require a second hydration pass anyway.
  */
 async function fetchAtprotoFeed(feed: string, limit: number): Promise<ATProtoFeedViewPost[]> {
-  const url = `${ATPROTO_PUBLIC_URL}/xrpc/app.bsky.feed.getFeedSkeleton?feed=${encodeURIComponent(feed)}&limit=${Math.min(limit, 30)}`;
+  const url = `${ATPROTO_PUBLIC_URL}/xrpc/app.bsky.feed.getFeed?feed=${encodeURIComponent(feed)}&limit=${Math.min(limit, 30)}`;
 
   try {
     const controller = new AbortController();
@@ -77,7 +81,7 @@ async function fetchAtprotoFeed(feed: string, limit: number): Promise<ATProtoFee
     clearTimeout(timeoutId);
 
     if (!res.ok) {
-      console.warn(`[bridge] ATProto: HTTP ${res.status} from feed skeleton`);
+      console.warn(`[bridge] ATProto: HTTP ${res.status} from feed`);
       return [];
     }
 

@@ -467,7 +467,7 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
     if (wasProtocol && nowProtocol && wasProtocol !== nowProtocol) {
       const color =
         getComputedStyle(document.documentElement).getPropertyValue('--color-accent').trim() ||
-        '#00ff41';
+        '#8b5cf6';
       const overlay = document.createElement('div');
       overlay.className = 'protocol-transition-overlay';
       overlay.style.backgroundColor = color;

@@ -99,7 +99,7 @@ export const PLATFORM_CONFIG: Record<SourcePlatform, PlatformConfig> = {
     id: 'degenfeed',
     label: 'DegenFeed',
     icon: '🌀',
-    color: '#00ff41',
+    color: '#8b5cf6',
     greeting: 'Welcome back!',
     subtext: 'You are signed in. Full access unlocked.',
     ctaLabel: 'Go to Dashboard',

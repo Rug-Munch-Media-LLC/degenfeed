@@ -101,7 +101,7 @@ export const PROTOCOL_META: Record<
   },
   degenfeed: {
     label: 'DegenFeed',
-    color: '#00ff41',
+    color: '#8b5cf6',
     icon: 'DegenFeed',
     shortLabel: 'DF',
   },

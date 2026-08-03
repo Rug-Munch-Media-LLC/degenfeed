@@ -49,6 +49,7 @@
   },
   "dependencies": {
     "@degenfeed/creator-coin": "workspace:*",
+    "@degenfeed/degenchat": "workspace:*",
     "@degenfeed/monetization": "workspace:*",
     "@degenfeed/spaces-bridge": "workspace:*",
     "@noble/curves": "^2.2.0",

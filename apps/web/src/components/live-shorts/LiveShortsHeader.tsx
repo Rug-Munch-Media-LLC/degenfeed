@@ -44,7 +44,7 @@ function ProtocolPills({ protocols }: { protocols?: string[] }) {
   if (!protocols || protocols.length === 0) return null;
 
   const protocolColors: Record<string, { label: string; color: string }> = {
-    degenfeed: { label: 'DegenFeed', color: '#00ff41' },
+    degenfeed: { label: 'DegenFeed', color: '#8b5cf6' },
     farcaster: { label: 'Farcaster', color: '#8a63d2' },
     nostr: { label: 'Nostr', color: '#8b5cf6' },
     lens: { label: 'Lens', color: '#abfe2c' },

@@ -38,6 +38,14 @@ export interface UnifiedPost {
   raw: unknown;
   niches: string[];
   contentType?: string;
+  /** Parent post id for reply threading */
+  parentId?: string;
+  /** Root post id for thread tracking */
+  rootId?: string;
+  /** DegenFeed unified URI (df://protocol:rkey) for cross-protocol replies */
+  dfUri?: string;
+  /** Canonical URL on the native protocol (bsky.app post link) */
+  canonicalUrl?: string;
 }
 
 // ─── Cross-Protocol Event Types ──────────────────────────────────────────

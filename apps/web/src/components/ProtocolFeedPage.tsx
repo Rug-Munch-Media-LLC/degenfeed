@@ -235,7 +235,7 @@ export function ProtocolFeedPage({ protocol }: Props) {
       const prev = prevProtocolRef.current;
       prevProtocolRef.current = protocol;
       const prevConfig = PROTOCOL_CONFIGS[prev];
-      const flashColor = prevConfig?.color ?? config?.color ?? '#00ff41';
+      const flashColor = prevConfig?.color ?? config?.color ?? '#8b5cf6';
       const overlay = document.createElement('div');
       overlay.className = 'protocol-transition-overlay';
       overlay.style.backgroundColor = flashColor;

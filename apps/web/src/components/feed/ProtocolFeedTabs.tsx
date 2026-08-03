@@ -29,7 +29,7 @@ export interface ProtocolFeedTabsProps {
 }
 
 const DEFAULT_TABS: ProtocolTab[] = [
-  { id: null, label: 'All', icon: '\u2606', color: '#00ff41' },
+  { id: null, label: 'All', icon: '\u2606', color: '#8b5cf6' },
   { id: 'nostr', label: 'Nostr', icon: '\u26A1', color: getProtocolColor('nostr') },
   { id: 'farcaster', label: 'Farcaster', icon: '\u25C8', color: getProtocolColor('farcaster') },
   { id: 'lens', label: 'Lens', icon: '\u25CE', color: getProtocolColor('lens') },
@@ -57,7 +57,7 @@ export function ProtocolFeedTabs({
     width: number;
     color: string;
     opacity: number;
-  }>({ left: 0, width: 0, color: '#00ff41', opacity: 0 });
+  }>({ left: 0, width: 0, color: '#8b5cf6', opacity: 0 });
 
   const updateIndicator = useCallback(() => {
     if (!tabsRef.current) return;
@@ -72,7 +72,7 @@ export function ProtocolFeedTabs({
     setIndicatorStyle({
       left: btnRect.left - containerRect.left,
       width: btnRect.width,
-      color: tabs[activeIdx]?.color ?? '#00ff41',
+      color: tabs[activeIdx]?.color ?? '#8b5cf6',
       opacity: 1,
     });
   }, [tabs, activeTab]);

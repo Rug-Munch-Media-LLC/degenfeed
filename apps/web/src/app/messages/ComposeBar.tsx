@@ -18,6 +18,10 @@ export interface ComposeBarProps {
   protocol: string;
   protocols?: string[];
   onProtocolChange?: (protocol: string) => void;
+  /** Multi-protocol send: which protocols to deliver to. When provided, the
+   *  selector toggles each protocol instead of picking a single one. */
+  multiProtocols?: string[];
+  onMultiProtocolsChange?: (protocols: string[]) => void;
   onTyping?: () => void;
   maxChars?: number;
   disabled?: boolean;
@@ -365,6 +369,8 @@ export function ComposeBar({
   protocol,
   protocols,
   onProtocolChange,
+  multiProtocols,
+  onMultiProtocolsChange,
   onTyping,
   maxChars,
   disabled = false,
@@ -474,16 +480,29 @@ export function ComposeBar({
       {/* Protocol switcher */}
       {availableProtocols.length > 1 && (
         <div className="flex items-center gap-1 px-3 pt-1 pb-1">
-          <span className="text-[9px] font-medium text-[var(--color-muted)] mr-1">Send via:</span>
+          <span className="text-[9px] font-medium text-[var(--color-muted)] mr-1">
+            {multiProtocols ? 'Send to:' : 'Send via:'}
+          </span>
           {availableProtocols.map((p) => {
-            const isActive = p === protocol;
+            const isActive = multiProtocols
+              ? multiProtocols.includes(p)
+              : p === protocol;
             const color = getProtocolColor(p);
             const icon = getProtocolIcon(p);
             return (
               <button
                 key={p}
                 type="button"
-                onClick={() => onProtocolChange?.(p)}
+                onClick={() => {
+                  if (multiProtocols && onMultiProtocolsChange) {
+                    const next = isActive
+                      ? multiProtocols.filter((x) => x !== p)
+                      : [...multiProtocols, p];
+                    onMultiProtocolsChange(next.length > 0 ? next : [p]);
+                  } else {
+                    onProtocolChange?.(p);
+                  }
+                }}
                 disabled={disabled || sending}
                 className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium transition-all ${
                   isActive ? 'shadow-sm' : 'opacity-50 hover:opacity-80'
@@ -498,6 +517,9 @@ export function ComposeBar({
               >
                 <span className="text-[9px]">{icon}</span>
                 <span className="hidden sm:inline">{getProtocolLabel(p)}</span>
+                {multiProtocols && isActive && (
+                  <span className="text-[8px] text-[var(--color-fg)]">✓</span>
+                )}
               </button>
             );
           })}

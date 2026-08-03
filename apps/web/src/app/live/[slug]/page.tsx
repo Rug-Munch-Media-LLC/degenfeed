@@ -212,12 +212,12 @@ function StreamVideoPlayer({
 
 function SourceBadge({ source }: { source: string }) {
   const badges: Record<string, { label: string; color: string; bg: string }> = {
-    owncast: { label: 'Owncast', color: '#00ff41', bg: 'bg-green-500/15' },
+    owncast: { label: 'Owncast', color: '#ec4899', bg: 'bg-pink-500/15' },
     peertube: { label: 'PeerTube', color: '#F1684B', bg: 'bg-orange-500/15' },
     youtube: { label: 'YouTube', color: '#FF0000', bg: 'bg-red-500/15' },
     twitch: { label: 'Twitch', color: '#9146FF', bg: 'bg-purple-500/15' },
     spaces: { label: 'Spaces', color: '#00BCD4', bg: 'bg-cyan-500/15' },
-    degenfeed: { label: 'DegenFeed', color: '#00ff41', bg: 'bg-degen-500/15' },
+    degenfeed: { label: 'DegenFeed', color: '#8b5cf6', bg: 'bg-degen-500/15' },
   };
 
   const info = badges[source] || { label: source, color: '#888', bg: 'bg-white/5' };

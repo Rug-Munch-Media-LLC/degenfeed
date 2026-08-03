@@ -1,12 +1,22 @@
 /**
  * Bluesky Fetchers
  *
+ * Full AT Protocol content pull:
+ *  1. Local PDS repos (com.atproto.repo.listRecords)
+ *  2. Authenticated home timeline via PDS (app.bsky.feed.getTimeline)
+ *  3. "What's Hot" / Discover feed via public AppView (app.bsky.feed.getFeed)
+ *  4. Trending topics via public AppView (app.bsky.unspecced.getTrendingTopics)
+ *  5. Popular custom feed generators (app.bsky.unspecced.getPopularFeedGenerators)
+ *  6. Curated crypto actors (app.bsky.feed.getAuthorFeed)
+ *  7. Search fallback (app.bsky.feed.searchPosts) — may be rate-limited by CDN
+ *
  * Rate Limit: 3000 requests/5 minutes (public API - app.bsky.app)
  * Rate Limit: self-hosted PDS is local, effectively unlimited
  */
 
-import { checkRateLimit } from '../../../rate-limiter';
-import type { UnifiedPost } from '../../../server';
+import { checkRateLimit } from '../../rate-limiter';
+import type { UnifiedPost } from '../../server';
+import { getFirehosePosts, startFirehose } from './firehose';
 import { postToUnified } from './mapper';
 import type { BskyFeedResponse, BskyPostView } from './types';
 
@@ -15,19 +25,31 @@ const $fetch = globalThis.fetch;
 const PDS_BASE = 'http://127.0.0.1:3012';
 const BSKY_PUBLIC = 'https://public.api.bsky.app';
 
+// ─── Feed generator URIs (resolved 2026-08-03) ───────────────────────
+const WHATS_HOT_FEED = 'at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.feed.generator/whats-hot';
+const WITH_FRIENDS_FEED =
+  'at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.feed.generator/with-friends';
+const TRENDING_GENERATOR_DID = 'did:plc:qrz3lhbyuxbeilrc6nekdqme'; // trending.bsky.app
+
+// Popular custom feeds (from getPopularFeedGenerators, verified live)
+const CUSTOM_FEEDS = [
+  'at://did:plc:3guzzweuqraryl3rdkimjamk/app.bsky.feed.generator/for-you',
+  'at://did:plc:tenurhgjptubkk5zf5qhi3og/app.bsky.feed.generator/mutuals',
+  'at://did:plc:kkf4naxqmweop7dv4l2iqqf5/app.bsky.feed.generator/verified-news',
+  'at://did:plc:y7crv2yh74s7qhmtx3mvbgv5/app.bsky.feed.generator/art-new',
+];
+
 const CURATED_ACTORS = [
-  'jay.bsky.social',
   'naval.bsky.social',
-  'balajis.com',
+  'pmarca.bsky.social',
+  'solana.com',
+  'tier10k.bsky.social',
+  'jack.bsky.social',
+  'wiillowthecat.bsky.social',
   'vitalik.eth.xyz',
+  'balajis.com',
   'a16z.com',
   'coinbase.com',
-  'solana.com',
-  'defi.bsky.social',
-  'pmarca.bsky.social',
-  'cdixon.bsky.social',
-  'tier10k.bsky.social',
-  'autismcapital.bsky.social',
   'karbonbased.bsky.social',
   'crypto_birb.bsky.social',
 ];
@@ -57,6 +79,34 @@ function extractBlobCid(blob: unknown): string {
   if (typeof b.link === 'string') return b.link;
   if (typeof b.cid === 'string') return b.cid;
   return '';
+}
+
+// ─── Session cache (authenticated PDS access) ─────────────────────────
+
+let cachedAccessJwt: string | null = null;
+let cachedJwtExpiresAt = 0;
+
+async function getPdsSession(): Promise<string | null> {
+  if (cachedAccessJwt && Date.now() < cachedJwtExpiresAt) return cachedAccessJwt;
+  const identifier = process.env.BLUESKY_IDENTIFIER || '';
+  const appPassword = process.env.BLUESKY_APP_PASSWORD || '';
+  if (!identifier || !appPassword) return null;
+  try {
+    const res = await $fetch(`${PDS_BASE}/xrpc/com.atproto.server.createSession`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ identifier, password: appPassword }),
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!res.ok) return null;
+    const data = (await res.json()) as { accessJwt?: string; expiresInSec?: number };
+    if (!data.accessJwt) return null;
+    cachedAccessJwt = data.accessJwt;
+    cachedJwtExpiresAt = Date.now() + (data.expiresInSec || 600) * 1000 - 60_000;
+    return cachedAccessJwt;
+  } catch {
+    return null;
+  }
 }
 
 async function fetchFromPds(limit: number): Promise<UnifiedPost[]> {
@@ -115,6 +165,7 @@ async function fetchFromPds(limit: number): Promise<UnifiedPost[]> {
               embed?: Record<string, unknown>;
               reply?: { parent: { uri: string }; root: { uri: string } };
               $type?: string;
+              facets?: unknown[];
             };
           }>;
         };
@@ -169,6 +220,7 @@ async function fetchFromPds(limit: number): Promise<UnifiedPost[]> {
             record: {
               text: record.value.text || '',
               createdAt: record.value.createdAt || new Date().toISOString(),
+              facets: (record.value.facets as BskyPostView['record']['facets']) || undefined,
               embed:
                 embedImages || embedExternal
                   ? {
@@ -209,7 +261,7 @@ async function fetchAuthorFeed(actor: string, limit: number): Promise<UnifiedPos
       headers: { 'User-Agent': 'DegenFeed-Bridge/0.1' },
       signal: AbortSignal.timeout(5000),
     }).catch(() => null);
-    if (!res.ok) return [];
+    if (!res || !res.ok) return [];
     const data = (await res.json()) as BskyFeedResponse;
     return (
       data.feed
@@ -230,7 +282,10 @@ async function searchPosts(query: string, limit: number): Promise<UnifiedPost[]>
       headers: { 'User-Agent': 'DegenFeed-Bridge/0.1' },
       signal: AbortSignal.timeout(5000),
     });
-    if (!res.ok) return [];
+    if (!res.ok) {
+      console.log(`[bluesky] searchPosts(${query}): HTTP ${res.status}`);
+      return [];
+    }
     const data = (await res.json()) as BskyFeedResponse;
     return data.posts?.slice(0, limit).map(postToUnified) ?? [];
   } catch {
@@ -238,16 +293,116 @@ async function searchPosts(query: string, limit: number): Promise<UnifiedPost[]>
   }
 }
 
-async function fetchAllCuratedPosts(limit: number): Promise<UnifiedPost[]> {
-  const all: UnifiedPost[] = [];
-  const actorsToFetch = CURATED_ACTORS.slice(0, 8);
-  const perActor = Math.max(3, Math.ceil(limit / actorsToFetch.length));
-  const results = await Promise.allSettled(actorsToFetch.map((a) => fetchAuthorFeed(a, perActor)));
-  for (const r of results) {
-    if (r.status === 'fulfilled') all.push(...r.value);
+/**
+ * Fetch a hydrated feed by generator URI (app.bsky.feed.getFeed).
+ * This is the primary AT Protocol content surface — What's Hot, custom
+ * feeds, and trending topic feeds all route through it.
+ */
+async function fetchFeedByUri(feedUri: string, limit: number, authJwt?: string): Promise<UnifiedPost[]> {
+  try {
+    const url = `${BSKY_PUBLIC}/xrpc/app.bsky.feed.getFeed?feed=${encodeURIComponent(feedUri)}&limit=${Math.min(limit, 50)}`;
+    const res = await $fetch(url, {
+      headers: {
+        'User-Agent': 'DegenFeed-Bridge/0.1',
+        ...(authJwt ? { Authorization: `Bearer ${authJwt}` } : {}),
+      },
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!res.ok) {
+      console.log(`[bluesky] getFeed(${feedUri.split('/').pop()}): HTTP ${res.status}`);
+      return [];
+    }
+    const data = (await res.json()) as BskyFeedResponse;
+    return (
+      data.feed
+        ?.map((f) => f.post)
+        .filter(Boolean)
+        .slice(0, limit)
+        .map(postToUnified) ?? []
+    );
+  } catch {
+    return [];
   }
+}
+
+/** Fetch the authenticated home timeline via our PDS (Popular with Friends equivalent). */
+async function fetchHomeTimeline(limit: number): Promise<UnifiedPost[]> {
+  const jwt = await getPdsSession();
+  if (!jwt) return [];
+  try {
+    const url = `${PDS_BASE}/xrpc/app.bsky.feed.getTimeline?limit=${Math.min(limit, 50)}`;
+    const res = await $fetch(url, {
+      headers: { Authorization: `Bearer ${jwt}`, 'User-Agent': 'DegenFeed-Bridge/0.1' },
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!res.ok) return [];
+    const data = (await res.json()) as BskyFeedResponse;
+    return data.feed?.map((f) => f.post).filter(Boolean).map(postToUnified) ?? [];
+  } catch {
+    return [];
+  }
+}
+
+/** Fetch "Popular with Friends" feed via authenticated session. */
+async function fetchWithFriends(limit: number): Promise<UnifiedPost[]> {
+  const jwt = await getPdsSession();
+  if (!jwt) return [];
+  try {
+    const url = `${PDS_BASE}/xrpc/app.bsky.feed.getFeed?feed=${encodeURIComponent(WITH_FRIENDS_FEED)}&limit=${Math.min(limit, 50)}`;
+    const res = await $fetch(url, {
+      headers: { Authorization: `Bearer ${jwt}`, 'User-Agent': 'DegenFeed-Bridge/0.1' },
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!res.ok) return [];
+    const data = (await res.json()) as BskyFeedResponse;
+    return data.feed?.map((f) => f.post).filter(Boolean).map(postToUnified) ?? [];
+  } catch {
+    return [];
+  }
+}
+
+/** Fetch trending topics and map them to trending.bsky.app feed URIs. */
+async function fetchTrendingTopics(limit: number): Promise<UnifiedPost[]> {
+  try {
+    const res = await $fetch(`${BSKY_PUBLIC}/xrpc/app.bsky.unspecced.getTrendingTopics?limit=8`, {
+      headers: { 'User-Agent': 'DegenFeed-Bridge/0.1' },
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!res.ok) {
+      console.log(`[bluesky] getTrendingTopics: HTTP ${res.status}`);
+      return [];
+    }
+    const data = (await res.json()) as {
+      topics?: Array<{ topic: string; link?: string }>;
+    };
+    const links = (data.topics ?? [])
+      .map((t) => t.link)
+      .filter((l): l is string => !!l)
+      .map((l) => {
+        // "/profile/trending.bsky.app/feed/817966476" → feed URI
+        const m = /\/feed\/([^/]+)$/.exec(l);
+        if (!m?.[1]) return null;
+        return `at://${TRENDING_GENERATOR_DID}/app.bsky.feed.generator/${m[1]}`;
+      })
+      .filter((l): l is string => !!l)
+      .slice(0, 4);
+
+    const all: UnifiedPost[] = [];
+    const perFeed = Math.max(3, Math.ceil(limit / Math.max(links.length, 1)));
+    const results = await Promise.allSettled(
+      links.map((feedUri) => fetchFeedByUri(feedUri, perFeed)),
+    );
+    for (const r of results) if (r.status === 'fulfilled') all.push(...r.value);
+    console.log(`[bluesky] Trending topics: ${all.length} posts`);
+    return all.slice(0, limit);
+  } catch {
+    return [];
+  }
+}
+
+function dedupe(posts: UnifiedPost[], limit: number): UnifiedPost[] {
   const seen = new Set<string>();
-  return all
+  return posts
     .filter((p) => {
       const k = p.text.slice(0, 60);
       if (seen.has(k)) return false;
@@ -270,31 +425,17 @@ export async function fetchBlueskyImageFeed(limit = 30): Promise<UnifiedPost[]> 
     }
   }
   const filtered = all.filter((p) => p.embeds.some((e) => e.kind === 'image'));
-  const seen = new Set<string>();
-  const deduped = filtered
-    .filter((p) => {
-      const k = p.text.slice(0, 60);
-      if (seen.has(k)) return false;
-      seen.add(k);
-      return true;
-    })
-    .slice(0, limit);
+  const deduped = dedupe(filtered, limit);
   console.log(`[bridge] Bluesky Image Feed: ${deduped.length} posts`);
   return deduped;
 }
 
 export async function fetchBlueskyVideoFeed(limit = 20): Promise<UnifiedPost[]> {
   const all = await fetchAllCuratedPosts(Math.ceil(limit * 2));
-  const filtered = all.filter((p) => p.embeds.some((e) => e.kind === 'link' || e.kind === 'video'));
-  const seen = new Set<string>();
-  const deduped = filtered
-    .filter((p) => {
-      const k = p.text.slice(0, 60);
-      if (seen.has(k)) return false;
-      seen.add(k);
-      return true;
-    })
-    .slice(0, limit);
+  const filtered = all.filter((p) =>
+    p.embeds.some((e) => e.kind === 'link' || e.kind === 'video'),
+  );
+  const deduped = dedupe(filtered, limit);
   console.log(`[bridge] Bluesky Video Feed: ${deduped.length} posts`);
   return deduped;
 }
@@ -307,17 +448,20 @@ export async function fetchBlueskyTrending(limit = 20): Promise<UnifiedPost[]> {
     const curated = await fetchAllCuratedPosts(Math.ceil(limit / 2));
     all.push(...curated);
   }
-  const seen = new Set<string>();
-  const deduped = all
-    .filter((p) => {
-      const k = p.text.slice(0, 60);
-      if (seen.has(k)) return false;
-      seen.add(k);
-      return true;
-    })
-    .slice(0, limit);
+  const deduped = dedupe(all, limit);
   console.log(`[bridge] Bluesky Trending: ${deduped.length} posts`);
   return deduped;
+}
+
+async function fetchAllCuratedPosts(limit: number): Promise<UnifiedPost[]> {
+  const all: UnifiedPost[] = [];
+  const actorsToFetch = CURATED_ACTORS.slice(0, 8);
+  const perActor = Math.max(3, Math.ceil(limit / actorsToFetch.length));
+  const results = await Promise.allSettled(actorsToFetch.map((a) => fetchAuthorFeed(a, perActor)));
+  for (const r of results) {
+    if (r.status === 'fulfilled') all.push(...r.value);
+  }
+  return dedupe(all, limit);
 }
 
 export async function fetchBlueskyPosts(limit = 20): Promise<UnifiedPost[]> {
@@ -327,17 +471,46 @@ export async function fetchBlueskyPosts(limit = 20): Promise<UnifiedPost[]> {
     return [];
   }
   const all: UnifiedPost[] = [];
-  const pdsPosts = await fetchFromPds(Math.ceil(limit / 4));
-  all.push(...pdsPosts);
-  const actorsToFetch = CURATED_ACTORS.slice(0, 6);
-  const results = await Promise.allSettled(
-    actorsToFetch.map((a) =>
-      fetchAuthorFeed(a, Math.max(2, Math.ceil(limit / actorsToFetch.length))),
-    ),
+
+  // 0. Real-time firehose posts (Jetstream — no API rate cost)
+  startFirehose();
+  const firehosePosts = getFirehosePosts(Math.max(2, Math.ceil(limit / 6)));
+  all.push(...firehosePosts);
+
+  // 1. Authenticated home timeline (Popular with Friends equivalent)
+  const timeline = await fetchHomeTimeline(Math.max(3, Math.ceil(limit / 5)));
+  all.push(...timeline);
+
+  // 1b. Popular with Friends feed (explicit feed generator, auth-gated)
+  const withFriends = await fetchWithFriends(Math.max(3, Math.ceil(limit / 6)));
+  all.push(...withFriends);
+
+  // 2. What's Hot / Discover feed — the primary global surface
+  const whatsHot = await fetchFeedByUri(WHATS_HOT_FEED, Math.max(5, Math.ceil(limit / 3)));
+  all.push(...whatsHot);
+
+  // 3. Custom algorithmic feeds
+  const perCustom = Math.max(3, Math.ceil(limit / (CUSTOM_FEEDS.length + 2)));
+  const customResults = await Promise.allSettled(
+    CUSTOM_FEEDS.map((f) => fetchFeedByUri(f, perCustom)),
   );
-  for (const r of results) {
-    if (r.status === 'fulfilled') all.push(...r.value);
+  for (const r of customResults) if (r.status === 'fulfilled') all.push(...r.value);
+
+  // 4. Trending topics (live feed generators)
+  if (all.length < limit) {
+    const trending = await fetchTrendingTopics(Math.ceil(limit / 3));
+    all.push(...trending);
   }
+
+  // 5. Local PDS repos (federation: content hosted on OUR PDS)
+  const pdsPosts = await fetchFromPds(Math.max(2, Math.ceil(limit / 6)));
+  all.push(...pdsPosts);
+
+  // 6. Curated crypto actors
+  const curated = await fetchAllCuratedPosts(Math.ceil(limit / 4));
+  all.push(...curated);
+
+  // 7. Search fallback — only if we still need content
   if (all.length < limit / 2) {
     const searchResults = await Promise.allSettled(
       SEARCH_QUERIES.slice(0, 4).map((q) => searchPosts(q, Math.max(3, Math.ceil(limit / 4)))),
@@ -346,23 +519,19 @@ export async function fetchBlueskyPosts(limit = 20): Promise<UnifiedPost[]> {
       if (r.status === 'fulfilled') all.push(...r.value);
     }
   }
-  const seen = new Set<string>();
-  const deduped = all
-    .filter((p) => {
-      const k = p.text.slice(0, 60);
-      if (seen.has(k)) return false;
-      seen.add(k);
-      return true;
-    })
-    .slice(0, limit);
-  console.log(`[bridge] Bluesky: ${deduped.length} posts (PDS: ${pdsPosts.length})`);
+
+  const deduped = dedupe(all, limit);
+  console.log(
+    `[bridge] Bluesky: ${deduped.length} posts (firehose: ${firehosePosts.length}, timeline: ${timeline.length}, whats-hot: ${whatsHot.length}, pds: ${pdsPosts.length})`,
+  );
   return deduped;
 }
 
 export const schema = {
   id: 'bluesky',
-  name: 'Bluesky/PDS',
-  description: 'AT Protocol social network \u2014 curated actors + search',
+  name: 'Bluesky/AT Protocol',
+  description:
+    'AT Protocol social network — What\'s Hot, custom feeds, trending topics, PDS federation, firehose',
   endpoint: '/api/feed/bluesky',
   requiresAuth: false,
   contentType: 'mixed',

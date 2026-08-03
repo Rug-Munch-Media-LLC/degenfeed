@@ -55,7 +55,7 @@ export default function DAOSettingsPage({ params }: { params: { id: string } }) 
   const [daoName, setDaoName] = useState(MOCK_DAO.name);
   const [daoDescription, setDaoDescription] = useState(MOCK_DAO.description);
   const [daoAvatar, setDaoAvatar] = useState(MOCK_DAO.avatar);
-  const [bannerColor, setBannerColor] = useState('#00ff41');
+  const [bannerColor, setBannerColor] = useState('#8b5cf6');
   const [twitterLink, setTwitterLink] = useState(MOCK_DAO.socialLinks.twitter);
   const [discordLink, setDiscordLink] = useState(MOCK_DAO.socialLinks.discord);
   const [telegramLink, setTelegramLink] = useState(MOCK_DAO.socialLinks.telegram);
