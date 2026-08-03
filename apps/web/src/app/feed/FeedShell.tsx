@@ -22,6 +22,7 @@ import {
   type ProtocolCategory,
   SIDEBAR_ORDER,
 } from '../../components/feed/feed-protocols';
+import { ProtocolSwitcherSheet } from '../../components/feed/ProtocolSwitcherSheet';
 
 // ─── Protocol icon/color mapping for sidebar ─────────────────────────
 
@@ -147,6 +148,7 @@ export function FeedShell({ children }: FeedShellProps) {
   const [touchStart, setTouchStart] = useState(0);
   const [touchDelta, setTouchDelta] = useState(0);
   const [isSwiping, setIsSwiping] = useState(false);
+  const [switcherOpen, setSwitcherOpen] = useState(false);
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     setTouchStart(e.touches[0]?.clientX ?? 0);

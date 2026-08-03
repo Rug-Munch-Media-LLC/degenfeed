@@ -15,6 +15,7 @@ import {
 import type { ContentProof, EngagementAction } from '@degenfeed/types';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { EmbedModal } from './EmbedModal';
+import { CrossPostVersions } from './CrossPostVersions';
 import {
   applyOptimistic,
   PostCardEngagement,
@@ -23,11 +24,6 @@ import {
 import { MAX_TEXT_LENGTH, scheduleIdle } from './PostCardHelpers';
 import type { LocalState, PostCardProps } from './PostCardTypes';
 import { PostBody, PostHeader, PostMedia, PostMetrics, PostThread } from './post-card';
-import {
-  getProtocolColor,
-  getProtocolIcon,
-  getProtocolLabel,
-} from './ProtocolBadge';
 import { ReportModal } from './ReportModal';
 import { TranslationPreview } from './TranslationPreview';
 
@@ -119,6 +115,7 @@ function PostCardComponent({
   onShowLessLikeThis,
   onWhyThisPost,
   onContextMenu,
+  postMetaSlot,
 }: PostCardProps): React.ReactElement | null {
   const [showFullText, setShowFullText] = useState(expanded ?? false);
   const [localState, setLocalState] = useState<LocalState>({
@@ -554,20 +551,11 @@ function PostCardComponent({
           onTranslate={handleTranslate}
         />
 
-        {/* Protocol badge (left) + Why this post? ⓘ icon (right) */}
+        {/* Protocol badge row (left) + Why this post? ⓘ icon (right).
+            The protocol badge itself lives in the PostHeader (top-left);
+            this row only carries the demo flag and the transparency button. */}
         <div className="mb-1 flex items-center justify-between">
           <span className="flex items-center gap-1.5">
-            <span
-              className="protocol-badge inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold leading-none"
-              style={{
-                backgroundColor: `${getProtocolColor(post.protocol)}18`,
-                color: getProtocolColor(post.protocol),
-              }}
-              title={getProtocolLabel(post.protocol)}
-            >
-              <span className="text-[0.8em]" aria-hidden="true">{getProtocolIcon(post.protocol)}</span>
-              <span>{getProtocolLabel(post.protocol)}</span>
-            </span>
             {isDemo && (
               <span
                 className="inline-flex items-center rounded-full bg-amber-950/40 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-400"
@@ -609,6 +597,12 @@ function PostCardComponent({
 
         {/* Niche tags */}
         <PostMetrics post={post} />
+
+        {/* Protocol-native metadata as inline badges (not a separate section) */}
+        {postMetaSlot?.(post)}
+
+        {/* Cross-posted siblings — e.g. Nostr post that also lives on Farcaster */}
+        <CrossPostVersions post={post} className="mb-3" />
 
         {/* Permanence badge */}
         {post.contentProof && (

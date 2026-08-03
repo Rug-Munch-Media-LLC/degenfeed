@@ -10,7 +10,8 @@
     "./redis-hub": "./src/redis-hub.ts",
     "./protocol-adapters": "./src/protocol-adapters.ts",
     "./identity": "./src/identity.ts",
-    "./channels": "./src/channels.ts"
+    "./channels": "./src/channels.ts",
+    "./offline-queue": "./src/offline-queue.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

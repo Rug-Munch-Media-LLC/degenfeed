@@ -2,6 +2,7 @@
  * @degenfeed/ui — PostCard Types
  */
 
+import type { ReactNode } from 'react';
 import type { EngagementAction, UnifiedPost } from '@degenfeed/types';
 import type { ReputationBadgeProgress, ReputationBadgeScore } from './ReputationBadge';
 
@@ -41,6 +42,13 @@ export interface PostCardProps {
   onShowLessLikeThis?: (topic: string) => void;
   onWhyThisPost?: (post: UnifiedPost) => void;
   onOpenShareSheet?: (post: UnifiedPost) => void;
+  /**
+   * Protocol-native metadata slot rendered inline inside the card
+   * (e.g. NIP-05, zaps, relay chips, subreddit). Inline badges rather
+   * than a separate strip so every protocol card keeps one consistent
+   * layout. Receives the post being rendered.
+   */
+  postMetaSlot?: (post: UnifiedPost) => ReactNode;
 }
 
 export interface LocalState {

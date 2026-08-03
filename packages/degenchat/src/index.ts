@@ -13,6 +13,8 @@
  *   protocol-adapters   — 7 native protocol adapters (Nostr NIP-04/NIP-29, …)
  *   relay               — relay service wiring hub → adapters
  *   identity            — useIdentityResolution hook (npub ↔ fid ↔ did ↔ acct ↔ wallet)
+ *   offline-queue       — persisted offline message queue with replay
+ *   useDegenChatConnection — per-adapter connection status + auto-reconnect
  */
 
 export { DEGENCHAT_TAGLINE } from './brand';
@@ -38,6 +40,24 @@ export {
   type UseIdentityResolutionResult,
   useIdentityResolution,
 } from './identity';
+export {
+  createOfflineQueue,
+  getOfflineQueue,
+  OFFLINE_QUEUE_KEY,
+  OFFLINE_QUEUE_MAX,
+  OFFLINE_QUEUE_MAX_ATTEMPTS,
+  type DegenChatQueuedDraft,
+  type DegenChatQueuedMessage,
+  type OfflineQueue,
+  type StorageLike,
+  resetOfflineQueue,
+} from './offline-queue';
+export {
+  type AdapterConnectionState,
+  type DegenChatConnectionOptions,
+  type DegenChatConnectionResult,
+  useDegenChatConnection,
+} from './useDegenChatConnection';
 export {
   checkAdapterHealth,
   DEGENCHAT_ADAPTERS,
