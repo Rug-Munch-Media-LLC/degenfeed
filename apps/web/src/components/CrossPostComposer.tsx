@@ -1,6 +1,7 @@
 'use client';
 
-import { useCallback, useMemo, useRef, useState } from 'react';
+import Link from 'next/link';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from './AuthProvider';
 import { useToast } from './Toast';
 
@@ -17,6 +18,8 @@ interface PlatformInfo {
   supportsRichText: boolean;
   supportsCW: boolean;
   tip: string;
+  /** True when the bridge /api/publish fan-out can publish to this protocol. */
+  bridgeProtocol?: boolean;
 }
 
 const PLATFORMS: PlatformInfo[] = [
@@ -30,6 +33,7 @@ const PLATFORMS: PlatformInfo[] = [
     supportsVideo: true,
     supportsRichText: false,
     supportsCW: false,
+    bridgeProtocol: true,
     tip: 'Long-form notes, NIP-23 for articles',
   },
   {
@@ -42,6 +46,7 @@ const PLATFORMS: PlatformInfo[] = [
     supportsVideo: false,
     supportsRichText: false,
     supportsCW: false,
+    bridgeProtocol: true,
     tip: 'Keep it short—links go in embeds',
   },
   {
@@ -54,6 +59,7 @@ const PLATFORMS: PlatformInfo[] = [
     supportsVideo: false,
     supportsRichText: false,
     supportsCW: true,
+    bridgeProtocol: true,
     tip: 'Hashtags help discovery; alt text required for images',
   },
   {
@@ -66,6 +72,7 @@ const PLATFORMS: PlatformInfo[] = [
     supportsVideo: true,
     supportsRichText: false,
     supportsCW: true,
+    bridgeProtocol: true,
     tip: 'Hashtags at the end work best; CW for sensitive content',
   },
   {
@@ -169,9 +176,9 @@ const PLATFORMS: PlatformInfo[] = [
 // ─── Character Limit Bar Colors ───────────────────────────────────────────
 
 function getCharIndicatorColor(used: number, limit: number): string {
-  if (limit <= 0) return '#00ff41'; // unlimited = green
+  if (limit <= 0) return 'var(--color-accent)'; // unlimited = green
   const ratio = used / limit;
-  if (ratio <= 0.7) return '#00ff41'; // green
+  if (ratio <= 0.7) return 'var(--color-accent)'; // green
   if (ratio <= 0.9) return '#ffa500'; // yellow/amber
   return '#ff4444'; // red
 }
@@ -222,6 +229,37 @@ export function CrossPostComposer({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [mediaFiles, setMediaFiles] = useState<Array<{ url: string; alt: string }>>([]);
 
+  // ── Per-protocol publish status + protocol-specific options ──
+  const [publishStatus, setPublishStatus] = useState<
+    Record<string, { status: 'idle' | 'publishing' | 'published' | 'failed'; error?: string }>
+  >({});
+  const [protocolOptions, setProtocolOptions] = useState<Record<string, Record<string, unknown>>>(
+    {},
+  );
+  const [expandedOptions, setExpandedOptions] = useState<string | null>(null);
+
+  const isConnected = (id: string) => !!signedInProtocols[id];
+
+  // Seed the selection with protocols the user is actually connected to.
+  // Only adds — never removes a user's explicit selection.
+  useEffect(() => {
+    const connectedBridgeProtocols = PLATFORMS.filter(
+      (p) => p.bridgeProtocol && signedInProtocols[p.id],
+    ).map((p) => p.id);
+    if (connectedBridgeProtocols.length === 0) return;
+    setSelectedPlatforms((prev) => {
+      let changed = false;
+      const next = new Set(prev);
+      for (const id of connectedBridgeProtocols) {
+        if (!next.has(id)) {
+          next.add(id);
+          changed = true;
+        }
+      }
+      return changed ? next : prev;
+    });
+  }, [signedInProtocols]);
+
   // ── Character limit tracking ──
   const charCount = text.length;
 
@@ -237,14 +275,19 @@ export function CrossPostComposer({
   }, [charCount, selectedPlatforms]);
 
   // ── Toggle platform ──
-  const togglePlatform = useCallback((id: string) => {
-    setSelectedPlatforms((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }, []);
+  const togglePlatform = useCallback(
+    (id: string) => {
+      // Gate on auth state: green protocols are connected, grey need setup
+      if (!signedInProtocols[id]) return;
+      setSelectedPlatforms((prev) => {
+        const next = new Set(prev);
+        if (next.has(id)) next.delete(id);
+        else next.add(id);
+        return next;
+      });
+    },
+    [signedInProtocols],
+  );
 
   // ── Add hashtag ──
   const addHashtag = useCallback(() => {
@@ -283,7 +326,8 @@ export function CrossPostComposer({
 
   const removeMedia = useCallback((index: number) => {
     setMediaFiles((prev) => {
-      URL.revokeObjectURL(prev[index].url);
+      const item = prev[index];
+      if (item) URL.revokeObjectURL(item.url);
       return prev.filter((_, i) => i !== index);
     });
   }, []);
@@ -314,7 +358,7 @@ export function CrossPostComposer({
         if (firstProtocol) setPreviewProtocol(firstProtocol);
       }
     } catch {
-      showToast('Failed to load previews', 'error');
+      showToast('error', 'Failed to load previews');
     }
   }, [text, title, hashtags, selectedPlatforms, showToast]);
 
@@ -322,8 +366,23 @@ export function CrossPostComposer({
   const handlePublish = useCallback(async () => {
     if (!text.trim() || selectedPlatforms.size === 0) return;
 
+    // Only protocols the bridge fan-out supports can be published to.
+    const publishable = Array.from(selectedPlatforms).filter(
+      (id) => PLATFORMS.find((p) => p.id === id)?.bridgeProtocol,
+    );
+    if (publishable.length === 0) {
+      setResult('❌ None of the selected protocols are supported by the bridge yet.');
+      return;
+    }
+    const skipped = Array.from(selectedPlatforms).filter((id) => !publishable.includes(id));
+
     setPublishing(true);
     setResult(null);
+    setPublishStatus((prev) => {
+      const next = { ...prev };
+      for (const id of publishable) next[id] = { status: 'publishing' };
+      return next;
+    });
 
     try {
       const body = {
@@ -336,7 +395,8 @@ export function CrossPostComposer({
               ? mediaFiles.map((m) => ({ url: m.url, alt: m.alt, mimeType: 'image/jpeg' }))
               : undefined,
         },
-        protocols: Array.from(selectedPlatforms),
+        protocols: publishable,
+        options: Object.keys(protocolOptions).length > 0 ? protocolOptions : undefined,
       };
 
       const res = await fetch('/api/publish/selected', {
@@ -349,16 +409,25 @@ export function CrossPostComposer({
       if (res.ok) {
         const data = (await res.json()) as {
           batchId: string;
-          results: Array<{ protocol: string; status: string; error?: string }>;
+          results: Array<{ protocol: string; status: string; error?: string; url?: string }>;
         };
 
-        const successCount = data.results.filter(
-          (r) => r.status === 'published' || r.status === 'scheduled',
-        ).length;
+        setPublishStatus((prev) => {
+          const next = { ...prev };
+          for (const r of data.results) {
+            next[r.protocol] = {
+              status: r.status === 'published' ? 'published' : 'failed',
+              ...(r.error ? { error: r.error } : {}),
+            };
+          }
+          return next;
+        });
+
+        const successCount = data.results.filter((r) => r.status === 'published').length;
         const failCount = data.results.filter((r) => r.status === 'failed').length;
 
         setResult(
-          `✅ Published to ${successCount} platform(s)${failCount > 0 ? ` (${failCount} failed)` : ''}`,
+          `✅ Published to ${successCount} platform(s)${failCount > 0 ? ` (${failCount} failed)` : ''}${skipped.length > 0 ? ` — skipped (not bridge-supported): ${skipped.join(', ')}` : ''}`,
         );
 
         // Clear form on success
@@ -370,26 +439,49 @@ export function CrossPostComposer({
         }
 
         showToast(
+          failCount === 0 ? 'success' : 'warning',
           failCount === 0
             ? `Published to ${successCount} platforms!`
             : `Published to ${successCount}, ${failCount} failed`,
-          failCount === 0 ? 'success' : 'warning',
         );
 
         onPublishComplete?.(data);
       } else {
         const err = (await res.json()) as { error?: string };
         setResult(`❌ ${err.error ?? 'Publish failed'}`);
-        showToast(err.error ?? 'Publish failed', 'error');
+        showToast('error', err.error ?? 'Publish failed');
+        setPublishStatus((prev) => {
+          const next = { ...prev };
+          for (const id of publishable) {
+            next[id] = { status: 'failed', error: err.error ?? 'Publish failed' };
+          }
+          return next;
+        });
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Publish failed';
       setResult(`❌ ${msg}`);
-      showToast(msg, 'error');
+      showToast('error', msg);
+      setPublishStatus((prev) => {
+        const next = { ...prev };
+        for (const id of publishable) {
+          next[id] = { status: 'failed', error: msg };
+        }
+        return next;
+      });
     } finally {
       setPublishing(false);
     }
-  }, [text, title, hashtags, mediaFiles, selectedPlatforms, showToast, onPublishComplete]);
+  }, [
+    text,
+    title,
+    hashtags,
+    mediaFiles,
+    selectedPlatforms,
+    protocolOptions,
+    showToast,
+    onPublishComplete,
+  ]);
 
   // ── Schedule ──
   const handleSchedule = useCallback(async () => {
@@ -420,7 +512,7 @@ export function CrossPostComposer({
 
       if (res.ok) {
         setResult(`✅ Scheduled for ${scheduleDate} at ${scheduleTime}`);
-        showToast(`Post scheduled for ${scheduleDate} ${scheduleTime}`, 'success');
+        showToast('success', `Post scheduled for ${scheduleDate} ${scheduleTime}`);
         setShowSchedule(false);
       } else {
         const err = (await res.json()) as { error?: string };
@@ -636,13 +728,19 @@ export function CrossPostComposer({
                 {PLATFORMS.map((p) => {
                   const isSelected = selectedPlatforms.has(p.id);
                   const isOverLimit = p.charLimit > 0 && charCount > p.charLimit;
+                  const connected = isConnected(p.id);
+                  const st = publishStatus[p.id];
 
                   return (
                     <button
                       key={p.id}
                       type="button"
                       onClick={() => togglePlatform(p.id)}
-                      title={p.tip}
+                      title={
+                        connected
+                          ? `${p.tip} (${charCount}/${p.charLimit})`
+                          : `Not connected — set up ${p.label} first`
+                      }
                       className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium transition-all ${
                         isSelected
                           ? 'border shadow-[0_0_8px_rgba(0,0,0,0.08)]'
@@ -658,6 +756,27 @@ export function CrossPostComposer({
                           : {}
                       }
                     >
+                      {/* Auth indicator: green dot = connected, grey lock = needs setup */}
+                      {connected ? (
+                        <span
+                          role="img"
+                          className="h-1.5 w-1.5 rounded-full"
+                          style={{ backgroundColor: p.color }}
+                          aria-label={`${p.label} connected`}
+                        />
+                      ) : (
+                        <span className="text-[9px] text-[var(--color-muted)]" aria-hidden="true">
+                          🔒
+                        </span>
+                      )}
+                      {/* Publish status indicator */}
+                      {st?.status === 'publishing' && <span className="text-[10px]">⏳</span>}
+                      {st?.status === 'published' && (
+                        <span className="text-[10px] text-degen-400">✅</span>
+                      )}
+                      {st?.status === 'failed' && (
+                        <span className="text-[10px] text-red-400">❌</span>
+                      )}
                       <span>{p.icon}</span>
                       <span>{p.label}</span>
                       {isOverLimit && isSelected && (
@@ -667,7 +786,205 @@ export function CrossPostComposer({
                   );
                 })}
               </div>
+
+              {/* Per-protocol publish status detail */}
+              {Object.values(publishStatus).some((s) => s.status !== 'idle') && (
+                <div className="mt-2 space-y-1">
+                  {PLATFORMS.filter((p) => publishStatus[p.id]?.status !== 'idle').map((p) => {
+                    const s = publishStatus[p.id];
+                    if (!s) return null;
+                    return (
+                      <div key={p.id} className="flex items-center gap-2 text-[11px]">
+                        <span style={{ color: p.color }}>
+                          {s.status === 'published' && '✅ published to'}
+                          {s.status === 'failed' && '❌ failed on'}
+                          {s.status === 'publishing' && '⏳ publishing to'}
+                          {s.status === 'idle' && ''}
+                        </span>
+                        <span className="font-medium text-[var(--color-fg)]">{p.label}</span>
+                        {s.error && <span className="text-[var(--color-muted)]">— {s.error}</span>}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Connect CTA for unauthenticated protocols */}
+              {PLATFORMS.some((p) => !isConnected(p.id)) && (
+                <div className="mt-2 rounded-lg bg-yellow-500/5 p-2 text-center text-[11px] text-yellow-400">
+                  Locked protocols need setup —{' '}
+                  <Link href="/connect" className="underline hover:text-yellow-300">
+                    connect accounts
+                  </Link>{' '}
+                  to publish to them.
+                </div>
+              )}
             </div>
+
+            {/* Protocol-specific options */}
+            {PLATFORMS.filter((p) => p.bridgeProtocol && selectedPlatforms.has(p.id)).length >
+              0 && (
+              <div className="mb-4">
+                <div className="mb-2 flex flex-wrap items-center gap-1.5">
+                  <span className="text-[10px] font-medium uppercase tracking-wider text-[var(--color-muted)]">
+                    Protocol options
+                  </span>
+                  {PLATFORMS.filter((p) => p.bridgeProtocol && selectedPlatforms.has(p.id)).map(
+                    (p) => (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => setExpandedOptions(expandedOptions === p.id ? null : p.id)}
+                        className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium transition-colors ${
+                          expandedOptions === p.id
+                            ? 'border-current opacity-100'
+                            : 'border-[var(--color-border)] text-[var(--color-muted)] hover:opacity-80'
+                        }`}
+                        style={expandedOptions === p.id ? { color: p.color } : {}}
+                      >
+                        ⚙ {p.label}
+                      </button>
+                    ),
+                  )}
+                </div>
+
+                {expandedOptions === 'nostr' && (
+                  <div className="space-y-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] p-3">
+                    <input
+                      type="text"
+                      placeholder="Additional relays (comma-separated): wss://relay.damus.io"
+                      defaultValue={(protocolOptions.nostr?.relays as string[])?.join(', ') ?? ''}
+                      onBlur={(e) =>
+                        setProtocolOptions((prev) => ({
+                          ...prev,
+                          nostr: {
+                            ...prev.nostr,
+                            relays: e.target.value
+                              .split(',')
+                              .map((r) => r.trim())
+                              .filter(Boolean),
+                          },
+                        }))
+                      }
+                      className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-overlay)] px-3 py-1.5 text-xs text-[var(--color-fg)] placeholder:text-[var(--color-muted)] focus:border-purple-500 focus:outline-none"
+                    />
+                    <input
+                      type="text"
+                      placeholder="NIP-05 identity: you@yourdomain.com"
+                      defaultValue={(protocolOptions.nostr?.nip05 as string) ?? ''}
+                      onBlur={(e) =>
+                        setProtocolOptions((prev) => ({
+                          ...prev,
+                          nostr: { ...prev.nostr, nip05: e.target.value },
+                        }))
+                      }
+                      className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-overlay)] px-3 py-1.5 text-xs text-[var(--color-fg)] placeholder:text-[var(--color-muted)] focus:border-purple-500 focus:outline-none"
+                    />
+                  </div>
+                )}
+
+                {expandedOptions === 'mastodon' && (
+                  <div className="space-y-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] p-3">
+                    <input
+                      type="text"
+                      placeholder="Content warning (spoiler)"
+                      defaultValue={(protocolOptions.mastodon?.cw as string) ?? ''}
+                      onBlur={(e) =>
+                        setProtocolOptions((prev) => ({
+                          ...prev,
+                          mastodon: { ...prev.mastodon, cw: e.target.value },
+                        }))
+                      }
+                      className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-overlay)] px-3 py-1.5 text-xs text-[var(--color-fg)] placeholder:text-[var(--color-muted)] focus:border-indigo-500 focus:outline-none"
+                    />
+                    <select
+                      defaultValue={(protocolOptions.mastodon?.visibility as string) ?? 'public'}
+                      onChange={(e) =>
+                        setProtocolOptions((prev) => ({
+                          ...prev,
+                          mastodon: { ...prev.mastodon, visibility: e.target.value },
+                        }))
+                      }
+                      className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-overlay)] px-3 py-1.5 text-xs text-[var(--color-fg)] focus:border-indigo-500 focus:outline-none"
+                    >
+                      <option value="public">Public</option>
+                      <option value="unlisted">Unlisted</option>
+                      <option value="private">Followers only</option>
+                      <option value="direct">Direct message</option>
+                    </select>
+                  </div>
+                )}
+
+                {expandedOptions === 'bluesky' && (
+                  <div className="space-y-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] p-3">
+                    <input
+                      type="text"
+                      placeholder="Labels (comma-separated): nsfw, sexual"
+                      defaultValue={(protocolOptions.bluesky?.labels as string[])?.join(', ') ?? ''}
+                      onBlur={(e) =>
+                        setProtocolOptions((prev) => ({
+                          ...prev,
+                          bluesky: {
+                            ...prev.bluesky,
+                            labels: e.target.value
+                              .split(',')
+                              .map((l) => l.trim().toLowerCase())
+                              .filter(Boolean),
+                          },
+                        }))
+                      }
+                      className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-overlay)] px-3 py-1.5 text-xs text-[var(--color-fg)] placeholder:text-[var(--color-muted)] focus:border-sky-500 focus:outline-none"
+                    />
+                    <label className="flex items-center gap-2 text-xs text-[var(--color-muted)]">
+                      <input
+                        type="checkbox"
+                        defaultChecked={(protocolOptions.bluesky?.threadGate as boolean) ?? false}
+                        onChange={(e) =>
+                          setProtocolOptions((prev) => ({
+                            ...prev,
+                            bluesky: {
+                              ...prev.bluesky,
+                              threadGate: e.target.checked,
+                            },
+                          }))
+                        }
+                        className="h-3 w-3 rounded text-sky-500"
+                      />
+                      Thread gate — only replies from people you mention
+                    </label>
+                  </div>
+                )}
+
+                {expandedOptions === 'farcaster' && (
+                  <div className="space-y-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] p-3">
+                    <input
+                      type="text"
+                      placeholder="Channel (e.g. degen)"
+                      defaultValue={(protocolOptions.farcaster?.channel as string) ?? ''}
+                      onBlur={(e) =>
+                        setProtocolOptions((prev) => ({
+                          ...prev,
+                          farcaster: { ...prev.farcaster, channel: e.target.value },
+                        }))
+                      }
+                      className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-overlay)] px-3 py-1.5 text-xs text-[var(--color-fg)] placeholder:text-[var(--color-muted)] focus:border-violet-500 focus:outline-none"
+                    />
+                    <input
+                      type="url"
+                      placeholder="Embed URL: https://..."
+                      defaultValue={(protocolOptions.farcaster?.embed as string) ?? ''}
+                      onBlur={(e) =>
+                        setProtocolOptions((prev) => ({
+                          ...prev,
+                          farcaster: { ...prev.farcaster, embed: e.target.value },
+                        }))
+                      }
+                      className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-overlay)] px-3 py-1.5 text-xs text-[var(--color-fg)] placeholder:text-[var(--color-muted)] focus:border-violet-500 focus:outline-none"
+                    />
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Platform tips */}
             {selectedPlatforms.size > 0 && (
