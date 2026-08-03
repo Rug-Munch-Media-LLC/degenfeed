@@ -108,9 +108,9 @@ const _DEFAULT_CATEGORIES = [
 export function ShortsPlayer({
   shorts,
   initialIndex = 0,
-  categories,
-  activeCategory,
-  onCategoryChange,
+  _categories,
+  _activeCategory,
+  _onCategoryChange,
   onEndReached,
   onWatchEvent,
   onLike,
@@ -147,6 +147,59 @@ export function ShortsPlayer({
 
   const currentShort = shorts[currentIndex];
   const totalShorts = shorts.length;
+
+  // ── Track Watch Event ──────────────────────────────────────────────
+
+  const trackWatchEvent = useCallback(
+    (event: {
+      shortId: string;
+      watchPercent: number;
+      liked: boolean;
+      shared: boolean;
+      watchedFull: boolean;
+      skipped: boolean;
+      watchDurationMs: number;
+    }) => {
+      onWatchEvent?.(event);
+    },
+    [onWatchEvent],
+  );
+
+  // ── Watch Timer ─────────────────────────────────────────────────────
+
+  const stopWatchTimer = useCallback(() => {
+    if (watchTimerRef.current) {
+      clearInterval(watchTimerRef.current);
+      watchTimerRef.current = null;
+    }
+  }, []);
+
+  const startWatchTimer = useCallback(() => {
+    stopWatchTimer();
+    watchStartRef.current = Date.now();
+
+    watchTimerRef.current = setInterval(() => {
+      const video = videoRef.current;
+      if (!video || !currentShort) return;
+
+      const elapsed = Date.now() - watchStartRef.current;
+      const watchPercent = video.duration > 0 ? video.currentTime / video.duration : 0;
+      setProgress(Math.min(watchPercent, 1));
+
+      // Track full watch
+      if (watchPercent >= 0.9) {
+        trackWatchEvent({
+          shortId: currentShort.id,
+          watchPercent: 0.95,
+          liked: likedSet.has(currentShort.id),
+          shared: false,
+          watchedFull: true,
+          skipped: false,
+          watchDurationMs: elapsed,
+        });
+      }
+    }, 500);
+  }, [currentShort?.id, likedSet, trackWatchEvent, stopWatchTimer, currentShort]);
 
   // ── Video Playback ──────────────────────────────────────────────────
 
@@ -190,59 +243,6 @@ export function ShortsPlayer({
       videoRef.current.muted = muted;
     }
   }, [muted]);
-
-  // ── Watch Timer ─────────────────────────────────────────────────────
-
-  const startWatchTimer = useCallback(() => {
-    stopWatchTimer();
-    watchStartRef.current = Date.now();
-
-    watchTimerRef.current = setInterval(() => {
-      const video = videoRef.current;
-      if (!video || !currentShort) return;
-
-      const elapsed = Date.now() - watchStartRef.current;
-      const watchPercent = video.duration > 0 ? video.currentTime / video.duration : 0;
-      setProgress(Math.min(watchPercent, 1));
-
-      // Track full watch
-      if (watchPercent >= 0.9) {
-        trackWatchEvent({
-          shortId: currentShort.id,
-          watchPercent: 0.95,
-          liked: likedSet.has(currentShort.id),
-          shared: false,
-          watchedFull: true,
-          skipped: false,
-          watchDurationMs: elapsed,
-        });
-      }
-    }, 500);
-  }, [currentShort?.id, likedSet, trackWatchEvent, stopWatchTimer, currentShort]);
-
-  const stopWatchTimer = useCallback(() => {
-    if (watchTimerRef.current) {
-      clearInterval(watchTimerRef.current);
-      watchTimerRef.current = null;
-    }
-  }, []);
-
-  // ── Track Watch Event ──────────────────────────────────────────────
-
-  const trackWatchEvent = useCallback(
-    (event: {
-      shortId: string;
-      watchPercent: number;
-      liked: boolean;
-      shared: boolean;
-      watchedFull: boolean;
-      skipped: boolean;
-      watchDurationMs: number;
-    }) => {
-      onWatchEvent?.(event);
-    },
-    [onWatchEvent],
-  );
 
   // ── Navigation ─────────────────────────────────────────────────────
 
@@ -480,6 +480,7 @@ export function ShortsPlayer({
           </p>
           {onRetry && (
             <button
+              type="button"
               onClick={onRetry}
               className="rounded-lg bg-degen-500 px-5 py-2 text-xs font-semibold text-black transition-all hover:bg-degen-400"
             >
@@ -530,6 +531,7 @@ export function ShortsPlayer({
           <p className="text-xs text-white/40">More shorts coming soon</p>
           {onRetry && (
             <button
+              type="button"
               onClick={onRetry}
               className="rounded-lg border border-white/10 bg-white/5 px-4 py-1.5 text-xs text-white/40 transition-colors hover:bg-white/10 hover:text-white"
             >
@@ -614,6 +616,7 @@ export function ShortsPlayer({
 
       {/* Mute/Unmute Button */}
       <button
+        type="button"
         onClick={(e) => {
           e.stopPropagation();
           setMuted(!muted);
@@ -693,6 +696,7 @@ export function ShortsPlayer({
                 )}
               </div>
               <button
+                type="button"
                 onClick={(e) => {
                   e.stopPropagation();
                   onFollow?.(currentShort.creatorName);
@@ -706,6 +710,7 @@ export function ShortsPlayer({
             {/* Caption */}
             <div className="mb-1">
               <button
+                type="button"
                 onClick={(e) => {
                   e.stopPropagation();
                   toggleCaptionExpand();
@@ -763,6 +768,7 @@ export function ShortsPlayer({
           <div className="absolute bottom-24 right-3 z-10 flex flex-col items-center gap-4">
             {/* Like */}
             <button
+              type="button"
               onClick={(e) => {
                 e.stopPropagation();
                 toggleLike();
@@ -793,6 +799,7 @@ export function ShortsPlayer({
 
             {/* Comment */}
             <button
+              type="button"
               onClick={(e) => {
                 e.stopPropagation();
                 onComment?.(currentShort.id);
@@ -821,6 +828,7 @@ export function ShortsPlayer({
 
             {/* Share */}
             <button
+              type="button"
               onClick={(e) => {
                 e.stopPropagation();
                 onShare?.(currentShort.id);
@@ -848,6 +856,7 @@ export function ShortsPlayer({
 
             {/* Tip */}
             <button
+              type="button"
               onClick={(e) => {
                 e.stopPropagation();
                 onTip?.(currentShort.id);
