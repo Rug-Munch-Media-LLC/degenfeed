@@ -1,6 +1,8 @@
 'use client';
 import Image from 'next/image';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { renderMarkdown } from '../../lib/markdown';
+import { sanitizeHtml } from '../../lib/sanitize';
 import {
   ACTIVITY_CONFIG,
   CONTENT_TABS,
@@ -383,6 +385,81 @@ export function ProtocolBadgesRow({ identities }: { identities: ResolvedIdentity
               {shortenAddress(id.address)}
             </span>
           )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── Markdown Bio ──────────────────────────────────────────────────────
+
+/**
+ * MarkdownBio — renders a bio as a safe Markdown subset.
+ * Output is sanitized with DOMPurify before injection.
+ */
+export function MarkdownBio({ bio, className }: { bio?: string; className?: string }) {
+  const [html, setHtml] = useState('');
+  useEffect(() => {
+    setHtml(sanitizeHtml(renderMarkdown(bio ?? '')));
+  }, [bio]);
+
+  if (!bio) return null;
+
+  return (
+    <p
+      className={
+        className ??
+        'mx-auto mt-2 max-w-lg text-sm text-[var(--color-muted)] leading-relaxed [&_a]:text-degen-400 [&_a]:underline [&_code]:rounded [&_code]:bg-[var(--color-overlay)] [&_code]:px-1 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-[11px]'
+      }
+      // biome-ignore lint/security/noDangerouslySetInnerHtml: sanitized with DOMPurify
+      dangerouslySetInnerHTML={{ __html: html }}
+    />
+  );
+}
+
+// ─── Platform Follower Breakdown ───────────────────────────────────────
+
+/**
+ * PlatformFollowerBreakdown — per-platform follower/following counts shown as
+ * a compact row of chips on the profile header.
+ */
+export function PlatformFollowerBreakdown({
+  followersByProtocol,
+  followingByProtocol,
+  identities,
+}: {
+  followersByProtocol?: Record<string, number>;
+  followingByProtocol?: Record<string, number>;
+  identities: ResolvedIdentity[];
+}) {
+  const counts = new Map<string, { followers?: number; following?: number }>();
+  for (const id of identities) {
+    if (id.protocol.startsWith('ethereum') || id.protocol.startsWith('solana')) continue;
+    counts.set(id.protocol, {
+      followers: followersByProtocol?.[id.protocol],
+      following: followingByProtocol?.[id.protocol],
+    });
+  }
+  if (counts.size === 0) return null;
+
+  return (
+    <div className="mt-3 flex flex-wrap items-center justify-center gap-1.5">
+      {[...counts.entries()].map(([protocol, countsFor]) => (
+        <div
+          key={protocol}
+          className="inline-flex items-center gap-1.5 rounded-full border border-[var(--color-glass-border)] bg-[var(--color-card)] px-2.5 py-1"
+          title={`${PROTOCOL_LABELS[protocol] ?? protocol} follower/following counts`}
+        >
+          <span className="text-[10px]">{getProtocolIcon(protocol)}</span>
+          <span className="text-[10px] font-medium" style={{ color: PROTOCOL_COLORS[protocol] ?? '#666' }}>
+            {PROTOCOL_LABELS[protocol] ?? protocol}
+          </span>
+          <span className="text-[10px] text-[var(--color-muted)]">
+            {countsFor.followers != null ? `${formatCount(countsFor.followers)} fol` : ''}
+            {countsFor.following != null
+              ? `${countsFor.followers != null ? ' · ' : ''}${formatCount(countsFor.following)} folg`
+              : ''}
+          </span>
         </div>
       ))}
     </div>

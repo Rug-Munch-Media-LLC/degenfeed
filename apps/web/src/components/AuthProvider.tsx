@@ -119,6 +119,8 @@ export interface AuthActionValue {
   ) => Promise<{ ok: boolean; nativeId?: string; error?: string }>;
   setPrimaryIdentity: (id: string) => Promise<void>;
   unlinkIdentity: (id: string) => Promise<void>;
+  /** Reload identities + wallets from local storage (after linking/unlinking). */
+  refresh: () => Promise<void>;
 }
 
 /** Combined type for backward compatibility with existing consumers */
@@ -811,6 +813,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       crossReply: handleCrossReply,
       setPrimaryIdentity: handleSetPrimary,
       unlinkIdentity: handleUnlink,
+      refresh,
       switchWallet,
       addWallet,
       removeWallet,
@@ -829,6 +832,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       handleCrossReply,
       handleSetPrimary,
       handleUnlink,
+      refresh,
       switchWallet,
       addWallet,
       removeWallet,

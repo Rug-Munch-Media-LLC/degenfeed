@@ -21,6 +21,34 @@ import { PROTOCOL_ID_REGISTRY } from '@degenfeed/utils';
 
 export type { CrossProtocolIdentity, Protocol, ProtocolId, UnifiedIdentity };
 
+// ─── BYOA platform linking + verification ───────────────────────────────
+
+export type {
+  ExternalPlatformId,
+  LinkablePlatformId,
+  PlatformLinkMeta,
+  VerifyablePlatformId,
+} from './platforms';
+export {
+  ALL_LINKABLE_PLATFORMS,
+  EXTERNAL_PLATFORMS,
+  extractHandleFromUrl,
+  getPlatformMeta,
+  isExternalPlatform,
+  isVerifyablePlatform,
+  VERIFYABLE_PLATFORMS,
+} from './platforms';
+export type { NostrVerifyInput, VerificationMethod, VerifiedIdentity } from './verify';
+export {
+  verifyBlueskyIdentity,
+  verifyExternalIdentity,
+  verifyFarcasterIdentity,
+  verifyFediverseIdentity,
+  verifyIdentity,
+  verifyLensIdentity,
+  verifyNostrIdentity,
+} from './verify';
+
 // ─── Identity mapping types ────────────────────────────────────────────
 
 export interface IdentityLink {

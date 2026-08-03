@@ -11,6 +11,10 @@ import { ErrorBoundary } from '@degenfeed/ui';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '../../../components/AuthProvider';
 import { useToast } from '../../../components/Toast';
+import { CustomLinksEditor } from '../../../components/profile/CustomLinksEditor';
+import { ConnectAccountPanel } from '../../../components/profile/ConnectAccountPanel';
+import { renderMarkdown } from '../../../lib/markdown';
+import { sanitizeHtml } from '../../../lib/sanitize';
 import { PROTOCOL_COLORS, PROTOCOL_LABELS } from '../constants';
 import type { CreatorSettings } from '../types';
 
@@ -32,7 +36,15 @@ const SETTINGS_TABS: { id: SettingsTab; label: string; icon: string }[] = [
 ];
 
 const DEFAULT_SETTINGS: CreatorSettings = {
-  profile: { displayName: '', bio: '', avatarUrl: '', coverUrl: '', website: '', location: '' },
+  profile: {
+    displayName: '',
+    bio: '',
+    avatarUrl: '',
+    coverUrl: '',
+    website: '',
+    location: '',
+    customLinks: [],
+  },
   crossPosting: { defaultProtocols: [], autoPost: true, defaultLicense: 'cc-by' },
   monetization: {
     evmAddress: '',
@@ -231,7 +243,7 @@ export default function SettingsPage() {
                     className="mb-1 block text-xs text-[var(--color-muted)]"
                     htmlFor="settings-bio"
                   >
-                    Bio
+                    Bio (Markdown supported: **bold**, *italic*, `code`, [links](https://...))
                   </label>
                   <textarea
                     id="settings-bio"
@@ -241,6 +253,52 @@ export default function SettingsPage() {
                     className="w-full rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-bg)] px-4 py-2.5 text-sm text-[var(--color-fg)] outline-none focus:border-degen-500/30 resize-none"
                     placeholder="Tell your story..."
                   />
+                  {settings.profile.bio && (
+                    <div className="mt-2 rounded-lg border border-[var(--color-glass-border)] bg-[var(--color-overlay)] px-3 py-2">
+                      <p className="mb-1 text-[10px] uppercase tracking-wider text-[var(--color-muted)]">
+                        Preview
+                      </p>
+                      <p
+                        className="text-xs leading-relaxed text-[var(--color-fg)] [&_a]:text-degen-400 [&_a]:underline [&_code]:rounded [&_code]:bg-[var(--color-card)] [&_code]:px-1 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-[10px]"
+                        // biome-ignore lint/security/noDangerouslySetInnerHtml: sanitized with DOMPurify
+                        dangerouslySetInnerHTML={{ __html: sanitizeHtml(renderMarkdown(settings.profile.bio)) }}
+                      />
+                    </div>
+                  )}
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label
+                      className="mb-1 block text-xs text-[var(--color-muted)]"
+                      htmlFor="settings-avatarUrl"
+                    >
+                      Profile Picture URL
+                    </label>
+                    <input
+                      id="settings-avatarUrl"
+                      type="url"
+                      value={settings.profile.avatarUrl || ''}
+                      onChange={(e) => updateProfile({ avatarUrl: e.target.value })}
+                      className="w-full rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-bg)] px-4 py-2.5 text-sm text-[var(--color-fg)] outline-none focus:border-degen-500/30"
+                      placeholder="https://.../avatar.png"
+                    />
+                  </div>
+                  <div>
+                    <label
+                      className="mb-1 block text-xs text-[var(--color-muted)]"
+                      htmlFor="settings-coverUrl"
+                    >
+                      Cover / Banner URL
+                    </label>
+                    <input
+                      id="settings-coverUrl"
+                      type="url"
+                      value={settings.profile.coverUrl || ''}
+                      onChange={(e) => updateProfile({ coverUrl: e.target.value })}
+                      className="w-full rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-bg)] px-4 py-2.5 text-sm text-[var(--color-fg)] outline-none focus:border-degen-500/30"
+                      placeholder="https://.../cover.png"
+                    />
+                  </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -277,6 +335,15 @@ export default function SettingsPage() {
                   </div>
                 </div>
               </div>
+            </div>
+
+            {/* Custom links (linktree-style) */}
+            <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-5">
+              <h2 className="mb-4 text-sm font-bold text-[var(--color-fg)]">Custom Links</h2>
+              <CustomLinksEditor
+                value={settings.profile.customLinks ?? []}
+                onChange={(links) => updateProfile({ customLinks: links })}
+              />
             </div>
           </div>
         )}
@@ -537,52 +604,14 @@ export default function SettingsPage() {
         {activeTab === 'protocols' && (
           <div className="space-y-4">
             <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-5">
-              <h2 className="mb-4 text-sm font-bold text-[var(--color-fg)]">Connected Protocols</h2>
-              <div className="space-y-3">
-                {allProtocols.map((protocol) => {
-                  const isConnected =
-                    linkedIdentities.some((i) => i.protocol === protocol) ||
-                    primaryIdentity?.protocol === protocol;
-                  return (
-                    <div
-                      key={protocol}
-                      className="flex items-center justify-between rounded-lg border border-[var(--color-glass-border)] px-4 py-3"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div
-                          className="flex h-8 w-8 items-center justify-center rounded-lg text-xs font-bold"
-                          style={{
-                            backgroundColor: `${PROTOCOL_COLORS[protocol] || '#666'}22`,
-                            color: PROTOCOL_COLORS[protocol] || '#666',
-                          }}
-                        >
-                          {protocol.slice(0, 2).toUpperCase()}
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-[var(--color-fg)]">
-                            {PROTOCOL_LABELS[protocol] || protocol}
-                          </p>
-                          <p className="text-[11px] text-[var(--color-muted)]">
-                            {isConnected ? 'Connected' : 'Not connected'}
-                          </p>
-                        </div>
-                      </div>
-                      <span
-                        className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium ${
-                          isConnected
-                            ? 'bg-degen-500/15 text-degen-400'
-                            : 'bg-[var(--color-overlay)] text-[var(--color-muted)]'
-                        }`}
-                      >
-                        <span
-                          className={`inline-block h-1.5 w-1.5 rounded-full ${isConnected ? 'bg-degen-400' : 'bg-[var(--color-muted)]'}`}
-                        />
-                        {isConnected ? 'Active' : 'Inactive'}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
+              <h2 className="mb-1 text-sm font-bold text-[var(--color-fg)]">
+                Connect Accounts
+              </h2>
+              <p className="mb-4 text-xs text-[var(--color-muted)]">
+                Bring your existing accounts into DegenFeed. Verified connections show as badges
+                on your profile and feed the unified identity graph.
+              </p>
+              <ConnectAccountPanel onConnected={() => setSaved(false)} />
             </div>
           </div>
         )}
