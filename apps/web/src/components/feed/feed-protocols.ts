@@ -220,6 +220,21 @@ export const PROTOCOLS: Record<string, ProtocolConfig> = {
       { label: 'mints today', value: '10k+' },
     ],
   },
+  live: {
+    id: 'live',
+    label: 'Live',
+    color: '#ef4444',
+    icon: '●',
+    description: 'Live streams from Owncast, PeerTube Live & spaces-bridge',
+    endpoint: '/api/feed/live',
+    route: '/feed/live',
+    postNoun: 'stream',
+    category: 'video',
+    stats: [
+      { label: 'sources', value: 'Owncast/PeerTube' },
+      { label: 'streams', value: 'live' },
+    ],
+  },
   audius: {
     id: 'audius',
     label: 'Audius',
@@ -521,6 +536,7 @@ export const CATEGORY_PROTOCOLS: Record<ProtocolCategory, string[]> = (() => {
 
 /** Ordered list of protocols for the sidebar/tabs */
 export const SIDEBAR_ORDER = [
+  'live',
   'mastodon',
   'bluesky',
   'audius',
@@ -548,4 +564,6 @@ export const SIDEBAR_ORDER = [
   'writefreely',
   'pixelfed',
   'owncast',
+  'rss',
+  'media',
 ];
