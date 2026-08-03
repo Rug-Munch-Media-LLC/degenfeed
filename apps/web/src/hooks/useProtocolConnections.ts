@@ -1,17 +1,29 @@
 'use client';
 
 /**
- * useProtocolConnections — shared state for protocol connection status.
+ * useProtocolConnections — real bridge-health protocol status.
  *
- * Manages connection state for Mastodon, Bluesky, and other protocols.
- * Each protocol has: id, name, icon, color, connected state, handle/instance,
- * and connect/disconnect actions.
+ * Previously this hook simulated an OAuth "connect" flow with a fake
+ * 1.2s setTimeout and persisted fake state to localStorage. It never
+ * checked real health.
+ *
+ * Now it fetches live health from `/api/feed/health` and derives an
+ * honest per-protocol status:
+ *   - green  (`connected: true`)  → bridge reports the protocol healthy
+ *   - yellow (`status: 'unhealthy'`) → bridge reports the protocol down
+ *   - grey   (`status: 'unconfigured'`) → not reported by the bridge
+ *
+ * There is no user-level "connect" action in this build — `connect()`
+ * just re-checks real health and reports whether the protocol is
+ * actually flowing data. `disconnect()` is a no-op refresh.
  */
 
 import { getProtocolColor, getProtocolLabel, PROTOCOL_ICONS } from '@degenfeed/ui';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 /* ─── Types ─────────────────────────────────────────────────── */
+
+export type ProtocolStatus = 'healthy' | 'unhealthy' | 'unconfigured';
 
 export interface ProtocolConnection {
   id: string;
@@ -19,6 +31,8 @@ export interface ProtocolConnection {
   icon: string;
   color: string;
   connected: boolean;
+  /** Derived from real bridge health: healthy / unhealthy / unconfigured */
+  status: ProtocolStatus;
   handle?: string;
   instanceUrl?: string;
   avatar?: string;
@@ -30,20 +44,20 @@ export interface ProtocolConnectionsState {
   connections: ProtocolConnectionMap;
   connectedCount: number;
   totalCount: number;
-  /** Number of protocols reported healthy (status "up") by the live health endpoint. */
+  /** Number of protocols the bridge reports as healthy (data flowing). */
   healthyCount: number;
-  /** Epoch ms of the last successful health check (0 before the first check). */
-  healthCheckedAt: number;
   isConnecting: string | null;
   connect: (
     protocolId: string,
-    credentials: { handle?: string; instanceUrl?: string; token?: string },
+    credentials?: { handle?: string; instanceUrl?: string; token?: string },
   ) => Promise<boolean>;
   disconnect: (protocolId: string) => void;
   connectionError: string | null;
+  /** True once the first health fetch has resolved. */
+  loaded: boolean;
 }
 
-const STORAGE_KEY = 'df_protocol_connections';
+const HEALTH_ENDPOINT = '/api/feed/health';
 
 /* ─── Default protocol list ─────────────────────────────────── */
 
@@ -54,6 +68,7 @@ const DEFAULT_PROTOCOLS: ProtocolConnection[] = [
     icon: PROTOCOL_ICONS.nostr ?? 'N',
     color: getProtocolColor('nostr'),
     connected: false,
+    status: 'unconfigured',
   },
   {
     id: 'farcaster',
@@ -61,6 +76,7 @@ const DEFAULT_PROTOCOLS: ProtocolConnection[] = [
     icon: PROTOCOL_ICONS.farcaster ?? 'F',
     color: getProtocolColor('farcaster'),
     connected: false,
+    status: 'unconfigured',
   },
   {
     id: 'lens',
@@ -68,6 +84,7 @@ const DEFAULT_PROTOCOLS: ProtocolConnection[] = [
     icon: PROTOCOL_ICONS.lens ?? 'L',
     color: getProtocolColor('lens'),
     connected: false,
+    status: 'unconfigured',
   },
   {
     id: 'bluesky',
@@ -75,6 +92,7 @@ const DEFAULT_PROTOCOLS: ProtocolConnection[] = [
     icon: PROTOCOL_ICONS.bluesky ?? 'B',
     color: getProtocolColor('bluesky'),
     connected: false,
+    status: 'unconfigured',
   },
   {
     id: 'mastodon',
@@ -82,159 +100,138 @@ const DEFAULT_PROTOCOLS: ProtocolConnection[] = [
     icon: PROTOCOL_ICONS.mastodon ?? 'M',
     color: getProtocolColor('mastodon'),
     connected: false,
+    status: 'unconfigured',
   },
-  { id: 'reddit', name: 'Reddit', icon: 'R', color: getProtocolColor('reddit'), connected: false },
-  { id: 'rss', name: 'RSS', icon: 'A', color: getProtocolColor('rss'), connected: false },
+  {
+    id: 'reddit',
+    name: 'Reddit',
+    icon: 'R',
+    color: getProtocolColor('reddit'),
+    connected: false,
+    status: 'unconfigured',
+  },
+  { id: 'rss', name: 'RSS', icon: 'A', color: getProtocolColor('rss'), connected: false, status: 'unconfigured' },
 ];
+
+interface HealthPayload {
+  sources?: Record<string, { healthy?: boolean }>;
+}
 
 /* ─── Hook ──────────────────────────────────────────────────── */
 
 export function useProtocolConnections(): ProtocolConnectionsState {
   const [connections, setConnections] = useState<ProtocolConnectionMap>(() => {
-    if (typeof window === 'undefined') return {};
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored) as ProtocolConnectionMap;
-        return parsed;
-      }
-    } catch {
-      // ignore parse errors
-    }
-    return {};
+    const map: ProtocolConnectionMap = {};
+    for (const proto of DEFAULT_PROTOCOLS) map[proto.id] = proto;
+    return map;
   });
-
   const [isConnecting, setIsConnecting] = useState<string | null>(null);
   const [connectionError, setConnectionError] = useState<string | null>(null);
-  const [healthyCount, setHealthyCount] = useState(0);
-  const [healthCheckedAt, setHealthCheckedAt] = useState(0);
+  const [loaded, setLoaded] = useState(false);
+  const lastHealthRef = useRef<HealthPayload['sources'] | null>(null);
 
-  // Real health check — queries the app's health endpoint (which proxies the
-  // bridge's live per-protocol health) so the sidebar badge reflects actual
-  // protocol availability instead of always showing 0.
-  useEffect(() => {
-    let cancelled = false;
-    async function checkHealth() {
-      try {
-        const res = await fetch('/api/health/protocols', {
-          cache: 'no-store',
-          headers: { 'cache-control': 'no-store' },
-        });
-        if (!res.ok) return;
-        const data = (await res.json()) as {
-          protocols: Record<string, { status: 'up' | 'degraded' | 'down' }>;
+  const applyHealth = useCallback((sources: HealthPayload['sources']) => {
+    lastHealthRef.current = sources;
+    setConnections((prev) => {
+      const next: ProtocolConnectionMap = {};
+      for (const proto of DEFAULT_PROTOCOLS) {
+        const health = sources?.[proto.id];
+        let status: ProtocolStatus = 'unconfigured';
+        if (health) status = health.healthy === true ? 'healthy' : 'unhealthy';
+        const existing = prev[proto.id] ?? proto;
+        next[proto.id] = {
+          ...proto,
+          icon: existing.icon ?? proto.icon,
+          color: existing.color ?? proto.color,
+          connected: status === 'healthy',
+          status,
         };
-        if (cancelled) return;
-        const up = Object.values(data.protocols).filter((p) => p.status === 'up').length;
-        setHealthyCount(up);
-        setHealthCheckedAt(Date.now());
-      } catch {
-        // keep previous count; never crash the sidebar
       }
-    }
-    void checkHealth();
-    const id = setInterval(checkHealth, 60_000);
-    return () => {
-      cancelled = true;
-      clearInterval(id);
-    };
+      return next;
+    });
   }, []);
 
-  // Persist to localStorage
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
+  const fetchHealth = useCallback(async (): Promise<HealthPayload['sources'] | null> => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(connections));
+      const res = await fetch(HEALTH_ENDPOINT, { credentials: 'include' });
+      if (!res.ok) return null;
+      const data = (await res.json()) as HealthPayload;
+      return data.sources ?? null;
     } catch {
-      // storage full or unavailable
+      return null;
     }
-  }, [connections]);
+  }, []);
+
+  const refresh = useCallback(async () => {
+    const sources = await fetchHealth();
+    if (sources) {
+      applyHealth(sources);
+      setLoaded(true);
+      setConnectionError(null);
+    } else {
+      // Keep last known state; surface the failure once so the UI can
+      // show that status is unknown rather than pretending it's fine.
+      setConnectionError('Unable to reach feed health endpoint');
+    }
+  }, [applyHealth, fetchHealth]);
+
+  // Initial load + periodic refresh.
+  useEffect(() => {
+    void refresh();
+    const timer = setInterval(() => void refresh(), 60_000);
+    return () => clearInterval(timer);
+  }, [refresh]);
 
   const connect = useCallback(
     async (
       protocolId: string,
-      credentials: { handle?: string; instanceUrl?: string; token?: string },
+      _credentials?: { handle?: string; instanceUrl?: string; token?: string },
     ): Promise<boolean> => {
+      // No user-level OAuth exists in this build. Re-check real health
+      // and report whether the protocol is actually flowing data.
       setIsConnecting(protocolId);
       setConnectionError(null);
-
-      try {
-        // Simulate OAuth flow — in production, this would redirect to provider
-        await new Promise((resolve) => setTimeout(resolve, 1200));
-
-        setConnections((prev) => ({
-          ...prev,
-          [protocolId]: {
-            ...(prev[protocolId] ?? {
-              id: protocolId,
-              name: getProtocolLabel(protocolId) || protocolId,
-              icon: PROTOCOL_ICONS[protocolId] ?? '?',
-              color: getProtocolColor(protocolId),
-              connected: false,
-            }),
-            connected: true,
-            handle: credentials.handle || credentials.instanceUrl || protocolId,
-            instanceUrl: credentials.instanceUrl,
-          },
-        }));
-
-        setIsConnecting(null);
-        return true;
-      } catch (err) {
-        setConnectionError(err instanceof Error ? err.message : 'Connection failed');
-        setIsConnecting(null);
-        return false;
+      const sources = await fetchHealth();
+      if (sources) applyHealth(sources);
+      const health = (sources ?? lastHealthRef.current)?.[protocolId];
+      const ok = health?.healthy === true;
+      if (!ok) {
+        setConnectionError(
+          `${getProtocolLabel(protocolId)} is not currently healthy on the bridge.`,
+        );
       }
+      setIsConnecting(null);
+      setLoaded(true);
+      return ok;
     },
-    [],
+    [applyHealth, fetchHealth],
   );
 
-  const disconnect = useCallback((protocolId: string) => {
-    setConnections((prev) => ({
-      ...prev,
-      [protocolId]: {
-        ...(prev[protocolId] ?? {
-          id: protocolId,
-          name: getProtocolLabel(protocolId) || protocolId,
-          icon: PROTOCOL_ICONS[protocolId] ?? '?',
-          color: getProtocolColor(protocolId),
-          connected: false,
-        }),
-        connected: false,
-        handle: undefined,
-        instanceUrl: undefined,
-        avatar: undefined,
-      },
-    }));
-  }, []);
+  const disconnect = useCallback(
+    (_protocolId: string) => {
+      // No per-user disconnect endpoint in this build — refresh real status.
+      void refresh();
+    },
+    [refresh],
+  );
 
-  // Merge saved connections with defaults
   const merged: ProtocolConnectionMap = {};
-  const allProtocols = [...DEFAULT_PROTOCOLS];
-
-  for (const proto of allProtocols) {
-    const saved = connections[proto.id];
-    merged[proto.id] = saved ?? proto;
-  }
-
-  // Include any extras that might be saved
-  for (const [id, saved] of Object.entries(connections)) {
-    if (!merged[id]) {
-      merged[id] = saved;
-    }
+  for (const proto of DEFAULT_PROTOCOLS) {
+    merged[proto.id] = connections[proto.id] ?? proto;
   }
 
   const connectedCount = Object.values(merged).filter((c) => c.connected).length;
+  const healthyCount = Object.values(merged).filter((c) => c.status === 'healthy').length;
 
   return {
     connections: merged,
     connectedCount,
-    totalCount: allProtocols.length,
+    totalCount: DEFAULT_PROTOCOLS.length,
     healthyCount,
-    healthCheckedAt,
     isConnecting,
     connect,
     disconnect,
     connectionError,
+    loaded,
   };
 }

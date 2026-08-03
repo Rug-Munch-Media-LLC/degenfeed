@@ -21,7 +21,16 @@ export async function GET(
 ) {
   try {
     const slug = (await params).slug;
-    const path = `/api/feed/${slug.join('/')}`;
+
+    // The bridge implements /api/feed/{protocol}, not /api/feed/protocol/{p}/{sort}.
+    // Rewrite the protocol+sort path to the bridge's single-provider feed endpoint
+    // so /api/feed/protocol/nostr/popular proxies to /api/feed/nostr.
+    // (Literal paths like /api/feed/protocol-sections are unaffected.)
+    let path = `/api/feed/${slug.join('/')}`;
+    if (slug[0] === 'protocol' && slug[1]) {
+      path = `/api/feed/${encodeURIComponent(slug[1])}`;
+    }
+
     return await proxyGet(path, request);
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Internal server error';

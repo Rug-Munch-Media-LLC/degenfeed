@@ -8,7 +8,8 @@
  *   1. WORKER_URL
  *   2. NEXT_PUBLIC_WORKER_URL
  *   3. NEXT_PUBLIC_API_BASE
- *   4. http://localhost:8787 (fallback)
+ *   4. NEXT_PUBLIC_API_URL
+ *   5. http://host.docker.internal:8787 (fallback — Docker bridge to host)
  */
 
 function resolveWorkerUrl(): string {
@@ -17,7 +18,7 @@ function resolveWorkerUrl(): string {
     process.env.NEXT_PUBLIC_WORKER_URL ??
     process.env.NEXT_PUBLIC_API_BASE ??
     process.env.NEXT_PUBLIC_API_URL ??
-    'http://localhost:8787'
+    'http://host.docker.internal:8787'
   );
 }
 

@@ -25,6 +25,7 @@ import { handleEventRoute } from './event-routes';
 import { buildFeed, DEFAULT_PREFERENCES, PROVIDERS } from './feeds';
 import { handleGtsRoute } from './gts-routes';
 import { handleNostrRoute } from './nostr-routes';
+import { attachRealtimeWebSocket } from './realtime-ws';
 import { feedCache } from './response-cache';
 import { handleSsoRoute } from './sso-routes';
 
@@ -1110,8 +1111,13 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
+// Attach realtime WebSocket endpoint (/ws/realtime) BEFORE listen so the
+// upgrade listener is registered on the HTTP server.
+attachRealtimeWebSocket(server);
+
 server.listen(PORT, '127.0.0.1', () => {
   console.log(`[bridge] DegenFeed Bridge v0.4.0 running on http://127.0.0.1:${PORT}`);
+  console.log('[bridge] Realtime WebSocket: /ws/realtime (heartbeat 30s)');
   console.log(
     '[bridge] Data sources: Mastodon/GTS, Reddit, RSS, Lemmy, PeerTube, Bluesky, Nostr, Farcaster, Lens, Pixelfed, Threads, Zora, DTube, LBRY, Gab, Minds, Aether, Scuttlebutt, Hive, Mirror, Funkwhale, Castopod, WriteFreely, MediaGoblin, Owncast, BookWyrm, Mobilizon, Forgejo, Bonfire, Mitra, Takahe, Orbis, XMTP, Push, Huddle01, Ceramic, Tableland, Telegram, Discord, Matrix, GitHub',
   );

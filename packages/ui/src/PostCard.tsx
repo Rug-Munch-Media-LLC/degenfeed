@@ -150,6 +150,13 @@ function PostCardComponent({
 
   const isSelf = post.author.id === 'self' || post.author.id.startsWith('self:');
 
+  // Seed/demo content is flagged `_demo: true` (top-level by the bridge,
+  // or nested in `raw` by the seed-content provider). Surface it honestly
+  // instead of presenting demo posts as real network content.
+  const isDemo =
+    (post as unknown as { _demo?: boolean })._demo === true ||
+    ((post.raw as { _demo?: boolean } | undefined)?._demo === true);
+
   useEffect(() => {
     if (typeof window === 'undefined' || !post.author.id) return;
     let cancelled = false;
@@ -549,16 +556,26 @@ function PostCardComponent({
 
         {/* Protocol badge (left) + Why this post? ⓘ icon (right) */}
         <div className="mb-1 flex items-center justify-between">
-          <span
-            className="protocol-badge inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold leading-none"
-            style={{
-              backgroundColor: `${getProtocolColor(post.protocol)}18`,
-              color: getProtocolColor(post.protocol),
-            }}
-            title={getProtocolLabel(post.protocol)}
-          >
-            <span className="text-[0.8em]" aria-hidden="true">{getProtocolIcon(post.protocol)}</span>
-            <span>{getProtocolLabel(post.protocol)}</span>
+          <span className="flex items-center gap-1.5">
+            <span
+              className="protocol-badge inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold leading-none"
+              style={{
+                backgroundColor: `${getProtocolColor(post.protocol)}18`,
+                color: getProtocolColor(post.protocol),
+              }}
+              title={getProtocolLabel(post.protocol)}
+            >
+              <span className="text-[0.8em]" aria-hidden="true">{getProtocolIcon(post.protocol)}</span>
+              <span>{getProtocolLabel(post.protocol)}</span>
+            </span>
+            {isDemo && (
+              <span
+                className="inline-flex items-center rounded-full bg-amber-950/40 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-400"
+                title="This is placeholder demo content — the live source is temporarily unavailable"
+              >
+                Demo
+              </span>
+            )}
           </span>
           <button
             type="button"

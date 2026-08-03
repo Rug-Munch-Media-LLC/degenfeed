@@ -14,9 +14,11 @@
     "@degenfeed/nostr-sdk": "workspace:*",
     "@degenfeed/types": "workspace:*",
     "@degenfeed/utils": "workspace:*",
-    "meilisearch": "^0.60.0"
+    "meilisearch": "^0.60.0",
+    "ws": "^8.21.1"
   },
   "devDependencies": {
+    "@types/ws": "^8.18.1",
     "tsx": "^4",
     "typescript": "^5.5.0",
     "vitest": "^3.2.7"
