@@ -33,7 +33,6 @@ import {
   FeedErrorState,
   FeedLoadingSkeleton,
   FeedNewPostsBanner,
-  FeedPersonalizedBanner,
   FeedProtocolSummary,
 } from '../../components/feed/FeedStates';
 import { FEED_PRESETS } from '../../components/feed/feedPresets';
@@ -635,7 +634,6 @@ export default function FeedPage() {
             </div>
           )}
           {!hasSignedIn && <FeedAuthBanner onSignIn={openSignIn} />}
-          {hasSignedIn && <FeedPersonalizedBanner walletAddress={walletAddress} />}
           {!isCompact && <GettingStartedChecklist />}
           {returnUser && <GuidedTour />}
 
