@@ -22,7 +22,7 @@ const $fetch = globalThis.fetch;
 // ─── Constants ─────────────────────────────────────────────────────────
 
 const OWNCAST_INSTANCES = [
-  { url: 'http://127.0.0.1:8081', name: 'DegenFeed Live' },
+  { url: 'http://127.0.0.1:8092', name: 'DegenFeed Live' },
   { url: 'https://watch.owncast.online', name: 'Owncast Directory' },
   { url: 'https://live.andy.gg', name: "Andy's Live" },
 ];
@@ -133,7 +133,9 @@ async function fetchFromInstance(instance: {
         headers: { 'User-Agent': 'DegenFeed-Bridge/0.1 (Owncast)' },
         signal: AbortSignal.timeout(5000),
       }),
-      $fetch(`${instance.url}/api/info`, {
+      // Owncast v0.2.x exposes /api/config for server metadata; /api/info
+      // is only available on newer builds and returns 404 here.
+      $fetch(`${instance.url}/api/config`, {
         headers: { 'User-Agent': 'DegenFeed-Bridge/0.1 (Owncast)' },
         signal: AbortSignal.timeout(5000),
       }),

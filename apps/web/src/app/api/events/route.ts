@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from 'next/server';
-import { proxyGet, proxyPost } from '../_proxy';
+import { proxyGet } from '../_proxy';
 
 export const dynamic = 'force-dynamic';
 

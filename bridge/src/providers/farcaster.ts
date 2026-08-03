@@ -396,7 +396,15 @@ interface NeynarCast {
   };
   text: string;
   timestamp: string;
-  reactions: { likes: number; recasts: number; replies: number };
+  // Neynar v2 returns likes_count/recasts_count as numbers and likes/recasts
+  // as arrays of viewer reactions. Map the counts, never the arrays.
+  reactions: {
+    likes_count?: number;
+    recasts_count?: number;
+    likes?: unknown[];
+    recasts?: unknown[];
+  };
+  replies?: { count?: number };
   embeds: Array<{ url: string }>;
 }
 
@@ -447,9 +455,9 @@ async function fetchFromNeynar(limit: number): Promise<UnifiedPost[]> {
         contentType: 'text' as const,
         createdAt: Number.isNaN(published) ? Date.now() : published,
         metrics: {
-          likes: cast.reactions?.likes ?? 0,
-          reposts: cast.reactions?.recasts ?? 0,
-          replies: cast.reactions?.replies ?? 0,
+          likes: cast.reactions?.likes_count ?? 0,
+          reposts: cast.reactions?.recasts_count ?? 0,
+          replies: cast.replies?.count ?? 0,
           quotes: 0,
         },
         engagement: {
@@ -457,9 +465,9 @@ async function fetchFromNeynar(limit: number): Promise<UnifiedPost[]> {
           viewerReposted: false,
           viewerBookmarked: false,
           raw: {
-            likes: cast.reactions?.likes ?? 0,
-            reposts: cast.reactions?.recasts ?? 0,
-            replies: cast.reactions?.replies ?? 0,
+            likes: cast.reactions?.likes_count ?? 0,
+            reposts: cast.reactions?.recasts_count ?? 0,
+            replies: cast.replies?.count ?? 0,
             quotes: 0,
           },
         },
