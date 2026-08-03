@@ -15,7 +15,8 @@
   },
   "dependencies": {
     "@degenfeed/nostr-sdk": "workspace:*",
-    "@degenfeed/types": "workspace:*"
+    "@degenfeed/types": "workspace:*",
+    "@degenfeed/utils": "workspace:*"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.5",

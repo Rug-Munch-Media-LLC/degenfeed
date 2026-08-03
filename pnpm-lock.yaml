@@ -607,6 +607,9 @@ importers:
       '@degenfeed/types':
         specifier: workspace:*
         version: link:../types
+      '@degenfeed/utils':
+        specifier: workspace:*
+        version: link:../utils
     devDependencies:
       '@biomejs/biome':
         specifier: ^2.5.5
