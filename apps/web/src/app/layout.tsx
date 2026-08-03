@@ -156,7 +156,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           href="/icon-512.png"
           media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)"
         />
-        <link rel="mask-icon" href="/icon.svg" color="#00ff41" />
+        <link rel="mask-icon" href="/icon.svg" color="#1d9bf0" />
         <meta name="msapplication-TileColor" content="#000000" />
         <meta name="msapplication-tap-highlight" content="no" />
         <meta name="msapplication-TileImage" content="/icon-512.png" />
@@ -196,7 +196,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <style nonce={nonce} data-critical="1">
           {[
             'body{--bg:#000;--fg:#e7e9ea;background:var(--bg);color:var(--fg);margin:0;font-family:"Plus Jakarta Sans",Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}',
-            '.skip-link{position:absolute;top:-100%;left:0;z-index:100;padding:8px 16px;background:var(--color-accent,#00ff41);color:#000;font-weight:600}',
+            '.skip-link{position:absolute;top:-100%;left:0;z-index:100;padding:8px 16px;background:var(--color-accent,#1d9bf0);color:#fff;font-weight:600}',
             '.skip-link:focus{top:0}',
             '.scanline{position:fixed;inset:0;pointer-events:none;z-index:9998;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.03) 2px,rgba(0,0,0,0.03) 4px)}',
             'img,video{max-width:100%;height:auto;vertical-align:middle}',

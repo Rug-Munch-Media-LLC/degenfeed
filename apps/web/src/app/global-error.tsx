@@ -60,23 +60,23 @@ export default function GlobalError({
                 height: '80px',
                 margin: '0 auto 24px',
                 borderRadius: '20px',
-                background: 'rgba(0, 255, 65, 0.08)',
-                border: '1px solid rgba(0, 255, 65, 0.15)',
+                background: 'rgba(29, 155, 240, 0.08)',
+                border: '1px solid rgba(29, 155, 240, 0.15)',
               }}
               aria-hidden="true"
             >
               <svg aria-hidden="true" width="40" height="40" viewBox="0 0 40 40" fill="none">
-                <circle cx="20" cy="16" r="8" stroke="#00ff41" strokeWidth="1.5" opacity="0.5" />
+                <circle cx="20" cy="16" r="8" stroke="#1d9bf0" strokeWidth="1.5" opacity="0.5" />
                 <path
                   d="M10 32c0-6 4-9 10-9s10 3 10 9"
-                  stroke="#00ff41"
+                  stroke="#1d9bf0"
                   strokeWidth="1.5"
                   strokeLinecap="round"
                   opacity="0.4"
                 />
                 <path
                   d="M16 13l8 8M24 13l-8 8"
-                  stroke="#00ff41"
+                  stroke="#1d9bf0"
                   strokeWidth="2"
                   strokeLinecap="round"
                   opacity="0.6"
@@ -136,8 +136,8 @@ export default function GlobalError({
                   borderRadius: '9999px',
                   fontSize: '0.875rem',
                   fontWeight: 700,
-                  color: '#000',
-                  background: '#00ff41',
+                  color: '#fff',
+                  background: '#1d9bf0',
                   border: 'none',
                   cursor: 'pointer',
                   lineHeight: 1,

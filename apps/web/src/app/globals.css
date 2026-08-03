@@ -292,7 +292,7 @@
   }
 
   .gradient-text-green {
-    background: linear-gradient(135deg, #00ff41, #1aff6e, #00cc34);
+    background: linear-gradient(135deg, #1d9bf0, #60a5fa, #1a8cd8);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -1742,7 +1742,7 @@
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: linear-gradient(135deg, #00ff41, #10b981);
+  background: linear-gradient(135deg, #1d9bf0, #10b981);
   opacity: 0;
   transition: opacity var(--duration-normal) ease;
 }

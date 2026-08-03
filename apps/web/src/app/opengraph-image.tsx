@@ -17,7 +17,7 @@ export default function Image() {
         justifyContent: 'center',
         width: '100%',
         height: '100%',
-        background: 'linear-gradient(135deg, #000000 0%, #0a0f0a 50%, #000000 100%)',
+        background: 'linear-gradient(135deg, #000000 0%, #0a1017 50%, #000000 100%)',
         fontFamily: 'Inter',
       }}
     >
@@ -31,7 +31,7 @@ export default function Image() {
           bottom: 0,
           opacity: 0.03,
           backgroundImage:
-            'radial-gradient(circle at 30% 50%, #00ff41 0%, transparent 60%), radial-gradient(circle at 70% 50%, #00ff41 0%, transparent 60%)',
+            'radial-gradient(circle at 30% 50%, #1d9bf0 0%, transparent 60%), radial-gradient(circle at 70% 50%, #1d9bf0 0%, transparent 60%)',
         }}
       />
       <div
@@ -39,9 +39,9 @@ export default function Image() {
           display: 'flex',
           fontSize: 96,
           fontWeight: 900,
-          color: '#00ff41',
+          color: '#1d9bf0',
           letterSpacing: '-0.03em',
-          textShadow: '0 0 80px rgba(0, 255, 65, 0.3), 0 0 160px rgba(0, 255, 65, 0.15)',
+          textShadow: '0 0 80px rgba(29, 155, 240, 0.3), 0 0 160px rgba(29, 155, 240, 0.15)',
           marginBottom: 24,
         }}
       >
