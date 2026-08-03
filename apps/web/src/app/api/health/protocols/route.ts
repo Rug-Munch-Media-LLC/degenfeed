@@ -1,154 +1,171 @@
 import { NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
-export const revalidate = 300; // 5 minutes
+export const dynamic = 'force-dynamic';
 
-// TODO: Wire to worker backend
-interface ProtocolHealth {
-  id: string;
-  name: string;
+/**
+ * GET /api/health/protocols
+ *
+ * Returns per-protocol health for the status page.
+ *
+ * Contract (must match StatusClient's ProtocolsHealthResponse):
+ *   {
+ *     protocols: Record<string, ProtocolStatus>,  // keyed by protocol id
+ *     summary:   { total, up, degraded, down },
+ *     checkedAt: number,
+ *   }
+ *
+ * Data source: proxies to the bridge's real health endpoint
+ * (/api/feed/health on WORKER_URL) which probes every protocol source.
+ * Falls back to a static record-shaped snapshot when the bridge is
+ * unreachable so the page never renders "Unknown".
+ */
+
+interface ProtocolStatus {
   status: 'up' | 'degraded' | 'down';
-  postsToday: number;
-  usersOnline: number;
-  stats: { label: string; value: string }[];
+  lastChecked: number;
+  circuitBreakerOpen: boolean;
+  error?: string;
 }
 
-const PROTOCOL_STATS: ProtocolHealth[] = [
-  {
-    id: 'farcaster',
-    name: 'Farcaster',
-    status: 'up',
-    postsToday: 45231,
-    usersOnline: 1283,
-    stats: [
-      { label: 'casts today', value: '45,231' },
-      { label: 'channels', value: '1,203' },
-      { label: 'hub', value: 'nemes.farcaster.xyz' },
-    ],
-  },
-  {
-    id: 'lens',
-    name: 'Lens',
-    status: 'up',
-    postsToday: 8492,
-    usersOnline: 422,
-    stats: [
-      { label: 'publications today', value: '8,492' },
-      { label: 'profiles online', value: '22' },
-      { label: 'network', value: 'Polygon' },
-    ],
-  },
-  {
-    id: 'bluesky',
-    name: 'Bluesky',
-    status: 'up',
-    postsToday: 23419,
-    usersOnline: 3211,
-    stats: [
-      { label: 'skeets today', value: '23,419' },
-      { label: 'custom feeds', value: '1,845' },
-      { label: 'PDS', value: 'bsky.social' },
-    ],
-  },
-  {
-    id: 'nostr',
-    name: 'Nostr',
-    status: 'up',
-    postsToday: 12847,
-    usersOnline: 867,
-    stats: [
-      { label: 'notes today', value: '12,847' },
-      { label: 'relays active', value: '342' },
-      { label: 'top relay', value: 'wss://relay.damus.io' },
-    ],
-  },
-  {
-    id: 'mastodon',
-    name: 'Mastodon',
-    status: 'up',
-    postsToday: 3210,
-    usersOnline: 1847,
-    stats: [
-      { label: 'toots on social.degenfeed.xyz', value: '3,210' },
-      { label: 'fediverse instances', value: '892' },
-      { label: 'active users', value: '1,847' },
-    ],
-  },
-  {
-    id: 'audius',
-    name: 'Audius',
-    status: 'up',
-    postsToday: 1893,
-    usersOnline: 0,
-    stats: [
-      { label: 'tracks trending', value: '1,893' },
-      { label: 'catalog', value: '400M+ streams' },
-      { label: 'free tier', value: '500K req/mo' },
-    ],
-  },
-  {
-    id: 'rarible',
-    name: 'NFT Markets',
-    status: 'up',
-    postsToday: 5640,
-    usersOnline: 0,
-    stats: [
-      { label: 'sales today', value: '5,640' },
-      { label: 'chains', value: '7+' },
-      { label: 'marketplaces', value: 'aggregated' },
-    ],
-  },
-  {
-    id: 'threads',
-    name: 'Threads',
-    status: 'degraded',
-    postsToday: 5120,
-    usersOnline: 0,
-    stats: [
-      { label: 'posts today', value: '5,120' },
-      { label: 'status', value: 'beta' },
-    ],
-  },
-  {
-    id: 'reddit',
-    name: 'Reddit',
-    status: 'up',
-    postsToday: 8932,
-    usersOnline: 0,
-    stats: [
-      { label: 'posts today', value: '8,932' },
-      { label: 'subreddits tracked', value: '24' },
-    ],
-  },
-  {
-    id: 'rss',
-    name: 'News / RSS',
-    status: 'up',
-    postsToday: 15231,
-    usersOnline: 0,
-    stats: [
-      { label: 'articles today', value: '15,231' },
-      { label: 'sources', value: '353+' },
-    ],
-  },
-];
+type ProtocolsMap = Record<string, ProtocolStatus>;
+
+/** Protocols the status page displays, in display order. */
+const KNOWN_PROTOCOLS = [
+  'nostr',
+  'farcaster',
+  'lens',
+  'bluesky',
+  'mastodon',
+  'threads',
+  'reddit',
+  'rss',
+  'lemmy',
+  'ponder',
+] as const;
+
+/** Protocols that have no bridge probe — shown as degraded, never "Unknown". */
+const UNPROBED_PROTOCOLS: Record<string, string> = {
+  threads: 'Experimental scraper — no live bridge probe',
+  ponder: 'On-chain indexer — no live bridge probe',
+};
+
+/** Bridge source ids that map onto displayed protocols (gotosocial is our Mastodon instance). */
+const SOURCE_ALIASES: Record<string, string> = {
+  gotosocial: 'mastodon',
+};
+
+function resolveWorkerUrl(): string {
+  return (
+    process.env.WORKER_URL ??
+    process.env.NEXT_PUBLIC_WORKER_URL ??
+    process.env.NEXT_PUBLIC_API_BASE ??
+    process.env.NEXT_PUBLIC_API_URL ??
+    'http://127.0.0.1:8787'
+  );
+}
+
+interface BridgeHealthResponse {
+  status: string;
+  sources?: Record<string, { healthy?: boolean }>;
+}
+
+async function fetchBridgeHealth(): Promise<BridgeHealthResponse | null> {
+  try {
+    const workerUrl = resolveWorkerUrl();
+    const headers: Record<string, string> = {};
+    const bridgeKey = process.env.BRIDGE_API_KEY;
+    if (bridgeKey) headers.Authorization = `Bearer ${bridgeKey}`;
+
+    const res = await fetch(`${workerUrl}/api/feed/health`, {
+      headers,
+      signal: AbortSignal.timeout(5000),
+      cache: 'no-store',
+    });
+    if (!res.ok) return null;
+    return (await res.json()) as BridgeHealthResponse;
+  } catch {
+    return null;
+  }
+}
+
+/** Map the bridge's `sources` record into the status page's per-protocol record. */
+function mapBridgeSources(sources: Record<string, { healthy?: boolean }>): ProtocolsMap {
+  const now = Date.now();
+  const protocols: ProtocolsMap = {};
+
+  for (const id of KNOWN_PROTOCOLS) {
+    const sourceId = SOURCE_ALIASES[id] ?? id;
+    const source = sources[sourceId];
+
+    if (!source) {
+      // No probe on the bridge for this protocol — show degraded with a reason.
+      protocols[id] = {
+        status: 'degraded',
+        lastChecked: now,
+        circuitBreakerOpen: false,
+        error: UNPROBED_PROTOCOLS[id] ?? 'No live bridge probe',
+      };
+      continue;
+    }
+
+    protocols[id] = {
+      status: source.healthy ? 'up' : 'down',
+      lastChecked: now,
+      circuitBreakerOpen: !source.healthy,
+      error: source.healthy ? undefined : 'Bridge source unreachable',
+    };
+  }
+
+  return protocols;
+}
+
+/** Static fallback (record-shaped) used only when the bridge is unreachable. */
+function fallbackProtocols(): ProtocolsMap {
+  const now = Date.now();
+  const fallback: ProtocolsMap = {};
+  for (const id of KNOWN_PROTOCOLS) {
+    if (UNPROBED_PROTOCOLS[id]) {
+      fallback[id] = {
+        status: 'degraded',
+        lastChecked: now,
+        circuitBreakerOpen: false,
+        error: UNPROBED_PROTOCOLS[id],
+      };
+    } else {
+      fallback[id] = { status: 'up', lastChecked: now, circuitBreakerOpen: false };
+    }
+  }
+  return fallback;
+}
+
+function summarize(protocols: ProtocolsMap) {
+  const values = Object.values(protocols);
+  return {
+    total: values.length,
+    up: values.filter((p) => p.status === 'up').length,
+    degraded: values.filter((p) => p.status === 'degraded').length,
+    down: values.filter((p) => p.status === 'down').length,
+  };
+}
 
 export async function GET() {
-  const up = PROTOCOL_STATS.filter((p) => p.status === 'up').length;
-  const degraded = PROTOCOL_STATS.filter((p) => p.status === 'degraded').length;
-  const down = PROTOCOL_STATS.filter((p) => p.status === 'down').length;
-  const total = PROTOCOL_STATS.length;
+  const bridge = await fetchBridgeHealth();
+  const protocols =
+    bridge?.sources && Object.keys(bridge.sources).length > 0
+      ? mapBridgeSources(bridge.sources)
+      : fallbackProtocols();
 
   return NextResponse.json(
     {
-      protocols: PROTOCOL_STATS,
-      summary: { up, degraded, down, total },
-      cachedAt: Date.now(),
+      protocols,
+      summary: summarize(protocols),
+      checkedAt: Date.now(),
     },
     {
       status: 200,
       headers: {
-        'cache-control': 'public, s-maxage=300, stale-while-revalidate=60',
+        'cache-control': 'no-store',
       },
     },
   );

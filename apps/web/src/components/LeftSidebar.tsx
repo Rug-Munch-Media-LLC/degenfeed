@@ -135,14 +135,6 @@ function SettingsIcon() {
 
 /* === Nav items ============================================== */
 
-interface SidebarItem {
-  href: string;
-  label: string;
-  icon: React.ReactNode;
-  badge?: number;
-  requiresAuth?: boolean;
-}
-
 /* === Main Component ========================================= */
 
 export const LeftSidebar = memo(function LeftSidebar({
@@ -163,7 +155,7 @@ export const LeftSidebar = memo(function LeftSidebar({
   const { showToast } = useToast();
   const hasSignedIn = Object.values(signedInProtocols).some(Boolean);
   const { unreadCount } = useNotifications(hasSignedIn);
-  const { connections, connectedCount } = useProtocolConnections();
+  const { connections, connectedCount, healthyCount } = useProtocolConnections();
 
   const isActive = (href: string) => {
     if (href === '/feed')
@@ -250,7 +242,7 @@ export const LeftSidebar = memo(function LeftSidebar({
             <>
               <span className="sidebar-nav-label">Protocols</span>
               <span className="ml-auto flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-degen-500/15 px-1.5 text-[9px] font-bold text-degen-400">
-                {connectedCount}
+                {connectedCount > 0 ? connectedCount : healthyCount}
               </span>
             </>
           )}
@@ -476,6 +468,7 @@ export const LeftSidebar = memo(function LeftSidebar({
                 <>
                   <span className="sidebar-nav-label">{conn.name}</span>
                   <span
+                    role="img"
                     className={`ml-auto flex h-2 w-2 rounded-full ${conn.connected ? 'bg-degen-500' : 'bg-[var(--color-muted)]'}`}
                     aria-label={conn.connected ? 'Connected' : 'Not connected'}
                   />

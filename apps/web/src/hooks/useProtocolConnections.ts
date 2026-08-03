@@ -30,6 +30,10 @@ export interface ProtocolConnectionsState {
   connections: ProtocolConnectionMap;
   connectedCount: number;
   totalCount: number;
+  /** Number of protocols reported healthy (status "up") by the live health endpoint. */
+  healthyCount: number;
+  /** Epoch ms of the last successful health check (0 before the first check). */
+  healthCheckedAt: number;
   isConnecting: string | null;
   connect: (
     protocolId: string,
@@ -102,6 +106,39 @@ export function useProtocolConnections(): ProtocolConnectionsState {
 
   const [isConnecting, setIsConnecting] = useState<string | null>(null);
   const [connectionError, setConnectionError] = useState<string | null>(null);
+  const [healthyCount, setHealthyCount] = useState(0);
+  const [healthCheckedAt, setHealthCheckedAt] = useState(0);
+
+  // Real health check — queries the app's health endpoint (which proxies the
+  // bridge's live per-protocol health) so the sidebar badge reflects actual
+  // protocol availability instead of always showing 0.
+  useEffect(() => {
+    let cancelled = false;
+    async function checkHealth() {
+      try {
+        const res = await fetch('/api/health/protocols', {
+          cache: 'no-store',
+          headers: { 'cache-control': 'no-store' },
+        });
+        if (!res.ok) return;
+        const data = (await res.json()) as {
+          protocols: Record<string, { status: 'up' | 'degraded' | 'down' }>;
+        };
+        if (cancelled) return;
+        const up = Object.values(data.protocols).filter((p) => p.status === 'up').length;
+        setHealthyCount(up);
+        setHealthCheckedAt(Date.now());
+      } catch {
+        // keep previous count; never crash the sidebar
+      }
+    }
+    void checkHealth();
+    const id = setInterval(checkHealth, 60_000);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, []);
 
   // Persist to localStorage
   useEffect(() => {
@@ -193,6 +230,8 @@ export function useProtocolConnections(): ProtocolConnectionsState {
     connections: merged,
     connectedCount,
     totalCount: allProtocols.length,
+    healthyCount,
+    healthCheckedAt,
     isConnecting,
     connect,
     disconnect,
