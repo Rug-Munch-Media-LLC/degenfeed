@@ -2,7 +2,7 @@
 
 import { addBookmark, removeBookmark } from '@degenfeed/storage';
 import type { EngagementAction, UnifiedPost } from '@degenfeed/types';
-import { ErrorBoundary, getProtocolColor } from '@degenfeed/ui';
+import { CrossPostVersions, ErrorBoundary, getProtocolColor } from '@degenfeed/ui';
 import { formatTimeAgo } from '@degenfeed/utils';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
@@ -297,6 +297,7 @@ function PostCard({
         <span>{metrics.replies} replies</span>
         {metrics.quotes > 0 && <span>{metrics.quotes} zaps</span>}
       </div>
+      <CrossPostVersions post={post} className="mb-4" />
       <PostEngagementBar
         liked={liked}
         reposted={reposted}

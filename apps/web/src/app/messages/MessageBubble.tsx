@@ -126,7 +126,11 @@ function DeliveryBadges({ statuses }: { statuses: DeliveryBadge[] }) {
         <ProtocolBadge key={`ok-${s.protocol}`} protocol={s.protocol} ok={true} />
       ))}
       {failed.length > 0 && (
-        <span className="text-[8px] text-red-400 ml-0.5" aria-label={`${failed.length} failed`}>
+        <span
+          className="text-[8px] text-red-400 ml-0.5"
+          role="img"
+          aria-label={`${failed.length} failed`}
+        >
           ✗
         </span>
       )}
@@ -162,6 +166,7 @@ function DisappearingIcon({ minutes }: { minutes: number }) {
   return (
     <span
       className="inline-flex items-center text-[8px] text-[var(--color-muted)]"
+      role="img"
       title={`Disappears after ${label}`}
       aria-label={`Disappears after ${label}`}
     >
@@ -181,7 +186,7 @@ function DisappearingIcon({ minutes }: { minutes: number }) {
   );
 }
 
-function ReadReceipts({status}: { read: boolean; status?: string }) {
+function ReadReceipts({ status }: { read: boolean; status?: string }) {
   const color =
     status === 'read'
       ? '#60a5fa'
@@ -189,7 +194,12 @@ function ReadReceipts({status}: { read: boolean; status?: string }) {
         ? 'var(--color-muted)'
         : 'var(--color-muted)';
   return (
-    <span className="inline-flex text-[9px]" style={{ color }} aria-label={status ?? 'sent'}>
+    <span
+      className="inline-flex text-[9px]"
+      style={{ color }}
+      role="img"
+      aria-label={status ?? 'sent'}
+    >
       {status === 'read' ? '✓✓' : status === 'delivered' ? '✓✓' : '✓'}
     </span>
   );
@@ -565,6 +575,15 @@ export function MessageBubble({
             ? 'bg-[var(--color-msg-sent)] text-[var(--color-fg)] rounded-br-md'
             : 'bg-[var(--color-msg-received)] text-[var(--color-fg)] rounded-bl-md'
         } ${encrypted && isMe ? 'ring-1 ring-degen-500/20' : ''} ${pinned ? 'ring-2 ring-amber-500/40' : ''}`}
+        style={{
+          border: `1px solid ${protocolColor}26`,
+          ...(isMe
+            ? { borderRight: `3px solid ${protocolColor}` }
+            : { borderLeft: `3px solid ${protocolColor}` }),
+          backgroundColor: `color-mix(in srgb, ${protocolColor} 7%, ${
+            isMe ? 'var(--color-msg-sent)' : 'var(--color-msg-received)'
+          })`,
+        }}
         onContextMenu={handleContextMenu}
       >
         {/* Pinned indicator */}

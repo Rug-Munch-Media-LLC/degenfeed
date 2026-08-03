@@ -17,7 +17,12 @@
  *   useDegenChatConnection — per-adapter connection status + auto-reconnect
  */
 
-export { DEGENCHAT_TAGLINE } from './brand';
+export {
+  DEGENCHAT_BRAND_COLORS,
+  DEGENCHAT_COLOR,
+  DEGENCHAT_NAME,
+  DEGENCHAT_TAGLINE,
+} from './brand';
 export {
   DEGENCHAT_CHANNEL_LIST,
   DEGENCHAT_CHANNELS,
@@ -42,22 +47,16 @@ export {
 } from './identity';
 export {
   createOfflineQueue,
+  type DegenChatQueuedDraft,
+  type DegenChatQueuedMessage,
   getOfflineQueue,
   OFFLINE_QUEUE_KEY,
   OFFLINE_QUEUE_MAX,
   OFFLINE_QUEUE_MAX_ATTEMPTS,
-  type DegenChatQueuedDraft,
-  type DegenChatQueuedMessage,
   type OfflineQueue,
-  type StorageLike,
   resetOfflineQueue,
+  type StorageLike,
 } from './offline-queue';
-export {
-  type AdapterConnectionState,
-  type DegenChatConnectionOptions,
-  type DegenChatConnectionResult,
-  useDegenChatConnection,
-} from './useDegenChatConnection';
 export {
   checkAdapterHealth,
   DEGENCHAT_ADAPTERS,
@@ -87,3 +86,14 @@ export {
   type RelayDeliveryResult,
   resetDegenChatRelay,
 } from './relay';
+export {
+  type UseChatUnreadOptions,
+  type UseChatUnreadResult,
+  useChatUnread,
+} from './useChatUnread';
+export {
+  type AdapterConnectionState,
+  type DegenChatConnectionOptions,
+  type DegenChatConnectionResult,
+  useDegenChatConnection,
+} from './useDegenChatConnection';

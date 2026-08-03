@@ -1,5 +1,6 @@
 'use client';
 
+import { getOfflineQueue } from '@degenfeed/degenchat';
 import { CHANNELS, useRealtime } from '@degenfeed/ui';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../components/AuthProvider';
@@ -283,6 +284,23 @@ export function useMessages() {
           setSendError(data.error || 'Failed to send');
         }
       } catch (err) {
+        // Transport-level failure (network down, bridge unreachable): stash
+        // the message in the DegenChat offline queue so it replays on
+        // reconnect instead of silently vanishing.
+        try {
+          getOfflineQueue().enqueue({
+            id: `offline-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+            conversationId: selectedConvId ?? '',
+            toId,
+            body: text,
+            protocol,
+            protocols: [protocol],
+            timestamp: Date.now(),
+          });
+          window.dispatchEvent(new CustomEvent('degenchat:offline-queue'));
+        } catch {
+          // queue write failed too — surface the original error
+        }
         setSendError(err instanceof Error ? err.message : 'Failed to send');
       } finally {
         setSending(false);

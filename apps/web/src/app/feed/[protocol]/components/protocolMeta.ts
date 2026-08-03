@@ -70,6 +70,24 @@ export const PROTOCOL_INFO: Record<string, ProtocolInfo> = {
     likeVerb: 'Favourite',
     repostVerb: 'Boost',
   },
+  matrix: {
+    id: 'matrix',
+    label: 'Matrix',
+    icon: '🧩',
+    color: '#0dbd8b',
+    postNoun: 'message',
+    likeVerb: 'React',
+    repostVerb: 'Share',
+  },
+  xmpp: {
+    id: 'xmpp',
+    label: 'XMPP',
+    icon: '✉',
+    color: '#0022ff',
+    postNoun: 'message',
+    likeVerb: 'Like',
+    repostVerb: 'Share',
+  },
   lemmy: {
     id: 'lemmy',
     label: 'Lemmy',
@@ -183,7 +201,7 @@ async function encodeNpub(hexPubkey: string): Promise<string> {
 
 /** Native-app permalink for a post, per protocol. Returns null when unknown. */
 export async function nativeAppUrl(post: UnifiedPost): Promise<string | null> {
-  const raw = (post.raw ?? {}) as Record<string, any>;
+  const raw = (post.raw ?? {}) as Record<string, unknown>;
   const nativeId = nativeIdOf(post);
   const author = post.author;
   const handle = author.handles?.[post.protocol] ?? author.handles?.nostr ?? '';
@@ -236,7 +254,7 @@ export async function nativeAppUrl(post: UnifiedPost): Promise<string | null> {
 /** Whether the post raw payload carries a Farcaster frame URL. */
 export function hasFarcasterFrame(post: UnifiedPost): boolean {
   if (post.protocol !== 'farcaster') return false;
-  const raw = (post.raw ?? {}) as Record<string, any>;
+  const raw = (post.raw ?? {}) as Record<string, unknown>;
   const embeds: Array<{ url?: string }> = raw.embeds ?? [];
   return embeds.some((e) => typeof e.url === 'string' && e.url.length > 0);
 }
@@ -253,7 +271,7 @@ export interface ProtocolMetaChips {
  * Returns an array of { label, value } pairs for the per-protocol card strip.
  */
 export async function extractProtocolMeta(post: UnifiedPost): Promise<ProtocolMetaChips[]> {
-  const raw = (post.raw ?? {}) as Record<string, any>;
+  const raw = (post.raw ?? {}) as Record<string, unknown>;
   const author = post.author;
   const handle = author.handles?.[post.protocol] ?? '';
 

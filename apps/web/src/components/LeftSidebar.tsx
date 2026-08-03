@@ -1,5 +1,6 @@
 'use client';
 
+import { useChatUnread } from '@degenfeed/degenchat';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -7,6 +8,7 @@ import { memo, useEffect, useMemo, useState } from 'react';
 import { useNotifications } from '../hooks/useNotifications';
 import { useProtocolConnections } from '../hooks/useProtocolConnections';
 import { useAuth } from './AuthProvider';
+import { DegenChatLogo } from './DegenChatBrand';
 import {
   CATEGORY_DISPLAY_ORDER,
   CATEGORY_PROTOCOLS,
@@ -121,24 +123,6 @@ function SettingsIcon() {
     >
       <circle cx="12" cy="12" r="3" />
       <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" />
-    </svg>
-  );
-}
-
-function MessagesIcon({ active }: { active: boolean }) {
-  return (
-    <svg
-      width="22"
-      height="22"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={active ? 2.5 : 1.5}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
     </svg>
   );
 }
@@ -284,6 +268,7 @@ export const LeftSidebar = memo(function LeftSidebar({
   const { showToast } = useToast();
   const hasSignedIn = Object.values(signedInProtocols).some(Boolean);
   const { unreadCount } = useNotifications(hasSignedIn);
+  const { total: chatUnread } = useChatUnread({ enabled: hasSignedIn });
   const { connections, healthyCount, loaded } = useProtocolConnections();
 
   /* ── Section collapse state (persisted) ──────────────────── */
@@ -405,6 +390,8 @@ export const LeftSidebar = memo(function LeftSidebar({
   const renderFeatureLink = (f: FeatureLink) => {
     const active = isFeatureActive(f.href);
     const showUnread = f.id === 'notifications' && unreadCount > 0;
+    const isMessages = f.id === 'messages';
+    const showChatUnread = isMessages && chatUnread > 0;
     return (
       <Link
         key={f.id}
@@ -415,12 +402,16 @@ export const LeftSidebar = memo(function LeftSidebar({
       >
         <span
           className="sidebar-nav-icon flex h-6 w-6 items-center justify-center rounded-lg text-xs font-bold"
-          style={{
-            backgroundColor: active ? `${f.color}1a` : 'transparent',
-            color: active ? f.color : 'var(--color-muted)',
-          }}
+          style={
+            isMessages
+              ? { backgroundColor: 'transparent' }
+              : {
+                  backgroundColor: active ? `${f.color}1a` : 'transparent',
+                  color: active ? f.color : 'var(--color-muted)',
+                }
+          }
         >
-          {f.icon}
+          {isMessages ? <DegenChatLogo size={18} /> : f.icon}
         </span>
         <span className="sidebar-nav-label">{f.label}</span>
         {f.live && (
@@ -430,6 +421,15 @@ export const LeftSidebar = memo(function LeftSidebar({
             title="Live"
             className="ml-auto h-2 w-2 shrink-0 animate-pulse rounded-full bg-red-500"
           />
+        )}
+        {showChatUnread && (
+          <span
+            role="status"
+            className="ml-auto flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-degen-500 px-1.5 text-[11px] font-bold text-black"
+            aria-label={`${chatUnread} unread chat messages`}
+          >
+            {chatUnread > 99 ? '99+' : chatUnread}
+          </span>
         )}
         {showUnread && (
           <span
@@ -619,17 +619,26 @@ export const LeftSidebar = memo(function LeftSidebar({
               )}
             </Link>
 
-            {/* Messages */}
+            {/* Messages — DegenChat */}
             <Link
               href="/messages"
               onClick={handleClick}
-              className={`sidebar-nav-item justify-center px-0 ${isFeatureActive('/messages') ? 'sidebar-nav-active' : ''}`}
+              className={`sidebar-nav-item relative justify-center px-0 ${isFeatureActive('/messages') ? 'sidebar-nav-active' : ''}`}
               aria-current={isFeatureActive('/messages') ? 'page' : undefined}
               title="Messages"
             >
               <span className="sidebar-nav-icon">
-                <MessagesIcon active={isFeatureActive('/messages')} />
+                <DegenChatLogo size={20} />
               </span>
+              {chatUnread > 0 && (
+                <span
+                  role="status"
+                  className="absolute right-1 top-1 flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-degen-500 px-1 text-[9px] font-bold text-black"
+                  aria-label={`${chatUnread} unread chat messages`}
+                >
+                  {chatUnread > 99 ? '99+' : chatUnread}
+                </span>
+              )}
             </Link>
 
             {/* Settings */}
