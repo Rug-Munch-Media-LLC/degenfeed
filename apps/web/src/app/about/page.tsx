@@ -4,24 +4,26 @@ import Link from 'next/link';
 export const revalidate = 86400;
 
 export const metadata: Metadata = {
-  title: 'About — DegenFeed: Our Story, Mission & Technology',
+  title: 'Why DegenFeed — Bridging Web2 & Web3 Social',
   description:
-    'DegenFeed unifies the fragmented decentralized social web. We fight for data independence, creator ownership, and network sovereignty. Open source, self-hostable, protocol-agnostic. Built by Rug Munch Media LLC.',
+    'DegenFeed unifies the fragmented decentralized social web. One app, every protocol — read, post, and interact across Nostr, Farcaster, Lens, Bluesky, Mastodon and more, simultaneously. Open source, self-hostable, protocol-agnostic. Built by Rug Munch Media LLC.',
   keywords: [
-    'about degenfeed',
+    'why degenfeed',
+    'web2 web3 bridge',
     'web3 social media mission',
-    'decentralized social network story',
+    'decentralized social network',
+    'cross protocol social platform',
     'data independence',
     'creator ownership',
     'network sovereignty',
     'open source social aggregator',
+    'nostr farcaster lens bluesky mastodon',
     'rug munch media',
-    'cross protocol social platform',
   ],
   openGraph: {
-    title: 'About DegenFeed — The Web3 Social Universe',
+    title: 'Why DegenFeed — One App for Every Protocol',
     description:
-      '25 protocols, one app, your data. We exist to unify the fragmented decentralized social web. Open source. Self-hostable. Never sell your data.',
+      'Web2 social is siloed. Web3 social is fragmented. DegenFeed bridges them: one app, every protocol, your data.',
     url: 'https://app.degenfeed.xyz/about',
     siteName: 'DegenFeed',
     type: 'website',
@@ -30,19 +32,133 @@ export const metadata: Metadata = {
         url: 'https://app.degenfeed.xyz/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'About DegenFeed — the Web3 social universe',
+        alt: 'Why DegenFeed — bridging web2 and web3 social',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'About DegenFeed — The Web3 Social Universe',
+    title: 'Why DegenFeed — One App for Every Protocol',
     description:
-      '25 protocols, one app, your data. Fighting for data independence and creator ownership.',
+      'Web2 social is siloed. Web3 social is fragmented. DegenFeed bridges them — your data, never sold.',
     images: ['https://app.degenfeed.xyz/og-image.png'],
   },
   alternates: { canonical: 'https://app.degenfeed.xyz/about' },
 };
+
+/* === Mission data ============================================= */
+
+const protocolGuide = [
+  {
+    name: 'Nostr',
+    icon: '⚡',
+    color: '#8e30eb',
+    route: '/feed/nostr',
+    blurb: 'Notes relayed by anyone. Bitcoin-native, censorship-resistant, no server required.',
+  },
+  {
+    name: 'Farcaster',
+    icon: '◈',
+    color: '#8a63d2',
+    route: '/feed/farcaster',
+    blurb: 'Sufficiently decentralized social for the Ethereum crowd, with channels and frames.',
+  },
+  {
+    name: 'Lens',
+    icon: '🌿',
+    color: '#abfe2c',
+    route: '/feed/lens',
+    blurb: 'User-owned social graph on Polygon — profiles, collects, and open actions.',
+  },
+  {
+    name: 'Bluesky',
+    icon: '🦋',
+    color: '#1185fe',
+    route: '/feed/bluesky',
+    blurb: 'The AT Protocol: portable identity, custom feeds, and algorithmic choice.',
+  },
+  {
+    name: 'Mastodon',
+    icon: '🐘',
+    color: '#6364ff',
+    route: '/feed/mastodon',
+    blurb: 'The fediverse flagship — federated microblogging across thousands of instances.',
+  },
+  {
+    name: 'Lemmy',
+    icon: '🗣️',
+    color: '#2d9cdb',
+    route: '/feed/lemmy',
+    blurb: 'Reddit, but federated — link aggregators and communities with real discussion.',
+  },
+  {
+    name: 'PeerTube',
+    icon: '🎬',
+    color: '#f1680d',
+    route: '/feed/peertube',
+    blurb: 'Decentralized video hosting on ActivityPub — no single platform controls the feed.',
+  },
+  {
+    name: 'Pixelfed',
+    icon: '📷',
+    color: '#f9a825',
+    route: '/feed/pixelfed',
+    blurb: 'Federated image sharing — an Instagram that no corporation owns.',
+  },
+  {
+    name: 'Zora',
+    icon: '🎨',
+    color: '#6b21a8',
+    route: '/feed/zora',
+    blurb: 'On-chain minting and creator coins — art, culture, and ownership together.',
+  },
+];
+
+const web2Bridge = [
+  {
+    icon: '📰',
+    title: 'RSS / News',
+    body: '350+ crypto news sources normalized into one stream — Substack, Medium, Mirror, Ghost, Hacker News, arXiv. The oldest open web protocol, still the backbone of publishing.',
+  },
+  {
+    icon: '▶️',
+    title: 'YouTube',
+    body: 'Top crypto, tech & AI channels aggregated into a unified video feed — the same videos you watch on the biggest web2 platform, ranked alongside decentralized video.',
+  },
+  {
+    icon: '🔴',
+    title: 'Reddit',
+    body: 'Crypto subreddits and community discussions pulled in via RSS and JSON — the largest community platform on the web, readable right next to Nostr notes.',
+  },
+  {
+    icon: '🌐',
+    title: 'WordPress & more',
+    body: '43% of the web runs WordPress, and much of it now federates via ActivityPub. Plus newsletters, podcasts, Twitch, Vimeo, SoundCloud — web2 content, web3 ownership.',
+  },
+];
+
+const openSourceRepos = [
+  {
+    href: 'https://git.rugmunch.io/RugMunchMedia/degenfeed-web',
+    name: 'degenfeed-web',
+    desc: 'This monorepo — Next.js frontend, protocol SDKs, feed engines, and docs.',
+  },
+  {
+    href: 'https://git.rugmunch.io/RugMunchMedia/rmi-backend',
+    name: 'rmi-backend',
+    desc: 'FastAPI crypto intelligence backend — scanners, risk scoring, DataBus providers.',
+  },
+  {
+    href: 'https://git.rugmunch.io/RugMunchMedia/pryscraper',
+    name: 'pryscraper',
+    desc: 'Open source web scraping framework powering RSS and source aggregation.',
+  },
+  {
+    href: 'https://git.rugmunch.io/RugMunchMedia/rmi-rag',
+    name: 'rmi-rag',
+    desc: 'Retrieval-augmented generation for the DegenFeed knowledge layer.',
+  },
+];
 
 const values = [
   {
@@ -85,23 +201,357 @@ export default function AboutPage() {
             color: 'var(--color-accent)',
           }}
         >
-          About DegenFeed
+          Why DegenFeed
         </span>
         <h1
           className="text-3xl md:text-5xl font-black mb-4"
           style={{ fontFamily: 'var(--font-heading)' }}
         >
-          The Web3 <span className="gradient-text">Social Universe</span>
+          One App. Every Protocol. <span className="gradient-text">Your Data.</span>
         </h1>
         <p
           className="text-base md:text-lg leading-relaxed"
           style={{ color: 'var(--color-fg-secondary)' }}
         >
-          25 protocols. One app. Your data, never sold.
+          Web2 social is siloed. Web3 social is fragmented.
           <br />
-          We exist to unify the fragmented decentralized social web.
+          DegenFeed bridges both — so you never have to choose again.
         </p>
       </div>
+
+      {/* The Problem */}
+      <section className="mb-12">
+        <h2 className="text-xl font-bold mb-4 text-[var(--color-fg)]">The Problem</h2>
+        <div
+          className="rounded-2xl border p-6"
+          style={{ borderColor: 'var(--color-border)', background: 'var(--color-card)' }}
+        >
+          <p className="text-sm leading-relaxed mb-3" style={{ color: 'var(--color-muted)' }}>
+            Web2 social is a set of walled gardens. Elon&apos;s Twitter, Zuck&apos;s Threads,
+            Google&apos;s YouTube — each one owns your feed, your audience, and your attention. The
+            algorithm decides what you see. The corporation decides who can speak. Your data is the
+            product, and your followers are rented, not owned.
+          </p>
+          <p className="text-sm leading-relaxed mb-3" style={{ color: 'var(--color-muted)' }}>
+            Web3 social fixed the ownership problem — but created a fragmentation problem. Nostr is
+            for Bitcoiners. Farcaster is for the ETH degens. Lens is for the on-chain social crowd.
+            Bluesky for the AT Protocol enthusiasts. Mastodon for the fediverse purists. Each
+            protocol is a different app, a different identity, a different community. None of them
+            talk to each other.
+          </p>
+          <p className="text-sm leading-relaxed" style={{ color: 'var(--color-muted)' }}>
+            So the person who wants to stay in the loop has to run five apps, maintain five
+            identities, and miss most of the conversation anyway. The open web we were promised
+            turned into a thousand disconnected islands.
+          </p>
+        </div>
+      </section>
+
+      {/* The Solution */}
+      <section className="mb-12">
+        <h2 className="text-xl font-bold mb-4 text-[var(--color-fg)]">The Solution</h2>
+        <div
+          className="rounded-2xl border p-6"
+          style={{ borderColor: 'var(--color-border)', background: 'var(--color-card)' }}
+        >
+          <p className="text-sm leading-relaxed mb-3" style={{ color: 'var(--color-muted)' }}>
+            <strong className="text-[var(--color-fg)]">One app, every protocol.</strong> DegenFeed
+            is a single interface for the entire decentralized social web — plus the web2 sources
+            that still matter. Read, post, and interact across Nostr, Farcaster, Lens, Bluesky,
+            Mastodon, PeerTube, Lemmy, Pixelfed, Zora, RSS, YouTube, Reddit and more —{' '}
+            <em>simultaneously</em>.
+          </p>
+          <p className="text-sm leading-relaxed mb-3" style={{ color: 'var(--color-muted)' }}>
+            Post once, publish everywhere. Every protocol gets its native treatment — a signed Nostr
+            event, a Farcaster cast, a Lens publication, an AT Protocol post, an ActivityPub status
+            — all from one composer. Engagement flows back into one unified feed.
+          </p>
+          <p className="text-sm leading-relaxed" style={{ color: 'var(--color-muted)' }}>
+            DegenFeed treats protocols as interchangeable backends, not silos to bridge. That means
+            your feed isn&apos;t a patched-together mess of iframes — it&apos;s a single ranked
+            stream where a Nostr note, a Farcaster cast, a YouTube video, and a Reddit thread sit
+            side by side.
+          </p>
+        </div>
+      </section>
+
+      {/* Why It Matters */}
+      <section className="mb-12">
+        <h2 className="text-xl font-bold mb-4 text-[var(--color-fg)]">Why It Matters</h2>
+        <div className="grid gap-4 sm:grid-cols-2">
+          {[
+            {
+              title: 'You own your content',
+              body: 'Your posts live on open protocols, signed with keys you control. No platform can delete, shadowban, or quietly copyright-strike your own words.',
+            },
+            {
+              title: 'No algorithm controls your feed',
+              body: 'DegenFeed ranks with a transparent, open-source scoring model — and you can flip to chronological any time. The feed is yours, not an ad auction.',
+            },
+            {
+              title: 'Cross-post once, reach everyone',
+              body: 'One post fans out to every protocol you belong to. Your words land with Bitcoiners on Nostr, degens on Farcaster, and the fediverse on Mastodon.',
+            },
+            {
+              title: 'Never lose your followers to a platform decision',
+              body: 'When a platform changes its API, bans a topic, or shuts down, your audience follows you — because it was never the platform&apos;s audience.',
+            },
+          ].map((card) => (
+            <div
+              key={card.title}
+              className="rounded-xl border p-5"
+              style={{ borderColor: 'var(--color-border)', background: 'var(--color-card)' }}
+            >
+              <h3 className="mb-2 text-sm font-bold text-[var(--color-fg)]">{card.title}</h3>
+              <p className="text-xs leading-relaxed" style={{ color: 'var(--color-muted)' }}>
+                {card.body}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* How It Works */}
+      <section className="mb-12">
+        <h2 className="text-xl font-bold mb-4 text-[var(--color-fg)]">How It Works</h2>
+        <p className="mb-4 text-sm leading-relaxed" style={{ color: 'var(--color-muted)' }}>
+          DegenFeed is a bridge, not a platform. Your identity stays on the protocols; we provide
+          the connectors and the unified view.
+        </p>
+        <div
+          className="rounded-2xl border p-5 md:p-6"
+          style={{ borderColor: 'var(--color-border)', background: 'var(--color-card)' }}
+        >
+          <div className="flex flex-col md:flex-row items-stretch gap-3 md:gap-4">
+            {/* Source protocols */}
+            <div
+              className="flex-1 rounded-xl border p-4"
+              style={{ borderColor: 'var(--color-border)' }}
+            >
+              <div
+                className="mb-3 text-center text-[10px] font-bold uppercase tracking-wider"
+                style={{ color: 'var(--color-accent)' }}
+              >
+                Your Protocols
+              </div>
+              <div className="flex flex-wrap justify-center gap-1.5">
+                {[
+                  '⚡ Nostr',
+                  '◈ Farcaster',
+                  '🌿 Lens',
+                  '🦋 Bluesky',
+                  '🐘 Mastodon',
+                  '🗣️ Lemmy',
+                  '🎬 PeerTube',
+                  '📷 Pixelfed',
+                ].map((p) => (
+                  <span
+                    key={p}
+                    className="rounded-full border px-2.5 py-1 text-[11px] font-medium"
+                    style={{ borderColor: 'var(--color-border)', color: 'var(--color-fg)' }}
+                  >
+                    {p}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* Arrows */}
+            <div
+              className="flex items-center justify-center text-xl"
+              style={{ color: 'var(--color-accent)' }}
+            >
+              <span className="md:rotate-0 -rotate-90">→</span>
+            </div>
+
+            {/* Bridge */}
+            <div
+              className="flex-1 rounded-xl border p-4"
+              style={{ borderColor: 'var(--color-accent)', background: 'var(--color-accent-soft)' }}
+            >
+              <div
+                className="mb-3 text-center text-[10px] font-bold uppercase tracking-wider"
+                style={{ color: 'var(--color-accent)' }}
+              >
+                DegenFeed Bridge
+              </div>
+              <div
+                className="space-y-1.5 text-center text-[11px] leading-relaxed"
+                style={{ color: 'var(--color-fg)' }}
+              >
+                <div>One adapter per protocol (30+ SDKs)</div>
+                <div>Edge cache + live relay pools</div>
+                <div>Client-side key signing — keys never leave your browser</div>
+                <div>Cross-post composer &amp; df:// resolver</div>
+              </div>
+            </div>
+
+            {/* Arrows */}
+            <div
+              className="flex items-center justify-center text-xl"
+              style={{ color: 'var(--color-accent)' }}
+            >
+              <span className="md:rotate-0 -rotate-90">→</span>
+            </div>
+
+            {/* Unified feed */}
+            <div
+              className="flex-1 rounded-xl border p-4"
+              style={{ borderColor: 'var(--color-border)' }}
+            >
+              <div
+                className="mb-3 text-center text-[10px] font-bold uppercase tracking-wider"
+                style={{ color: 'var(--color-accent)' }}
+              >
+                Unified Feed
+              </div>
+              <div
+                className="space-y-1.5 text-center text-[11px] leading-relaxed"
+                style={{ color: 'var(--color-fg)' }}
+              >
+                <div>One ranked, merged stream</div>
+                <div>Cross-protocol engagement (likes, tips, replies)</div>
+                <div>One identity, many handles</div>
+                <div>Unified notifications &amp; analytics</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p className="mt-3 text-center text-xs" style={{ color: 'var(--color-muted)' }}>
+          Want the deep dive?{' '}
+          <Link href="/docs/protocols" className="underline hover:text-[var(--color-fg)]">
+            Read the protocol integration guide
+          </Link>
+          .
+        </p>
+      </section>
+
+      {/* Protocol Guide */}
+      <section className="mb-12">
+        <h2 className="text-xl font-bold mb-4 text-[var(--color-fg)]">Protocol Guide</h2>
+        <p className="mb-4 text-sm leading-relaxed" style={{ color: 'var(--color-muted)' }}>
+          Every protocol is a first-class citizen. Here&apos;s what each one is and why it matters —
+          with the full explainer on the{' '}
+          <Link href="/protocols" className="underline hover:text-[var(--color-fg)]">
+            Protocol Guide page
+          </Link>
+          .
+        </p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {protocolGuide.map((p) => (
+            <Link
+              key={p.name}
+              href={p.route}
+              className="rounded-xl border p-4 transition-colors hover:bg-[var(--color-overlay)]"
+              style={{ borderColor: 'var(--color-border)', background: 'var(--color-card)' }}
+            >
+              <div className="flex items-center gap-2 mb-1.5">
+                <span
+                  className="flex h-7 w-7 items-center justify-center rounded-lg text-sm"
+                  style={{ backgroundColor: `${p.color}1a`, color: p.color }}
+                  aria-hidden="true"
+                >
+                  {p.icon}
+                </span>
+                <span className="text-sm font-bold text-[var(--color-fg)]">{p.name}</span>
+              </div>
+              <p className="text-xs leading-relaxed" style={{ color: 'var(--color-muted)' }}>
+                {p.blurb}
+              </p>
+            </Link>
+          ))}
+        </div>
+        <div className="mt-4 text-center">
+          <Link href="/protocols" className="btn-secondary px-6 py-2.5 text-sm gap-2">
+            Explore the full Protocol Guide
+          </Link>
+        </div>
+      </section>
+
+      {/* Web2 ↔ Web3 Bridge */}
+      <section className="mb-12">
+        <h2 className="text-xl font-bold mb-4 text-[var(--color-fg)]">The Web2 ↔ Web3 Bridge</h2>
+        <p className="mb-4 text-sm leading-relaxed" style={{ color: 'var(--color-muted)' }}>
+          Most people don&apos;t live only on open protocols — yet. DegenFeed meets them where they
+          are, bringing web2 sources into the same ranked feed as web3 posts, so the bridge is
+          seamless in both directions.
+        </p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          {web2Bridge.map((item) => (
+            <div
+              key={item.title}
+              className="rounded-xl border p-5"
+              style={{ borderColor: 'var(--color-border)', background: 'var(--color-card)' }}
+            >
+              <div
+                className="mb-2 flex h-9 w-9 items-center justify-center rounded-lg text-sm font-bold"
+                style={{ background: 'var(--color-accent-soft)', color: 'var(--color-accent)' }}
+              >
+                {item.icon}
+              </div>
+              <h3 className="mb-2 text-sm font-bold text-[var(--color-fg)]">{item.title}</h3>
+              <p className="text-xs leading-relaxed" style={{ color: 'var(--color-muted)' }}>
+                {item.body}
+              </p>
+            </div>
+          ))}
+        </div>
+        <p className="mt-4 text-sm leading-relaxed" style={{ color: 'var(--color-muted)' }}>
+          The bridge goes both ways. Web2 content is readable in your unified feed today — and when
+          you post from DegenFeed, your content is written to open protocols with keys you control.
+          You can start on the closed web and migrate to the open web without losing your audience,
+          your content, or your workflow.
+        </p>
+      </section>
+
+      {/* Open Source */}
+      <section className="mb-12">
+        <h2 className="text-xl font-bold mb-4 text-[var(--color-fg)]">Open Source</h2>
+        <div
+          className="rounded-2xl border p-6"
+          style={{ borderColor: 'var(--color-border)', background: 'var(--color-card)' }}
+        >
+          <p className="text-sm leading-relaxed mb-4" style={{ color: 'var(--color-muted)' }}>
+            DegenFeed is <strong className="text-[var(--color-fg)]">AGPL-3.0 licensed</strong> and
+            self-hostable by design. Every line of code is inspectable, forkable, and improvable.
+            The ranking algorithm is transparent — every post shows its score breakdown. No
+            closed-source modules, no obfuscated logic, no hidden data collection.
+          </p>
+          <div className="space-y-2 mb-4">
+            {openSourceRepos.map((repo) => (
+              <a
+                key={repo.name}
+                href={repo.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block rounded-xl border p-4 transition-colors hover:bg-[var(--color-overlay)]"
+                style={{ borderColor: 'var(--color-border)' }}
+              >
+                <div className="text-sm font-bold text-[var(--color-fg)]">{repo.name}</div>
+                <div className="text-xs leading-relaxed" style={{ color: 'var(--color-muted)' }}>
+                  {repo.desc}
+                </div>
+              </a>
+            ))}
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <a
+              href="https://git.rugmunch.io/RugMunchMedia/degenfeed-web"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-primary px-6 py-2.5 text-sm gap-2"
+            >
+              Contribute on Forgejo
+            </a>
+            <Link href="/docs/contributing" className="btn-secondary px-6 py-2.5 text-sm gap-2">
+              Contribution Guide
+            </Link>
+            <Link href="/docs" className="btn-secondary px-6 py-2.5 text-sm gap-2">
+              Self-Host Docs
+            </Link>
+          </div>
+        </div>
+      </section>
 
       {/* Our Story */}
       <section className="mb-12">
@@ -281,6 +731,9 @@ export default function AboutPage() {
         <div className="flex flex-wrap justify-center gap-3">
           <Link href="/feed" className="btn-primary px-6 py-2.5 text-sm gap-2">
             Browse the Feed
+          </Link>
+          <Link href="/protocols" className="btn-secondary px-6 py-2.5 text-sm gap-2">
+            Meet the Protocols
           </Link>
           <a
             href="https://git.rugmunch.io/RugMunchMedia/degenfeed-web"

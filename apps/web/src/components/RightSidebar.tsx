@@ -36,6 +36,7 @@ interface LiveStreamItem {
 
 const FOOTER_LINKS = [
   { href: '/about', label: 'About' },
+  { href: '/protocols', label: 'Protocols' },
   { href: '/faq', label: 'FAQ' },
   { href: '/docs', label: 'Docs' },
   { href: '/api-docs', label: 'API' },
