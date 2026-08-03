@@ -170,7 +170,6 @@ export function ComposeModal({
   const [gateSymbol, _setGateSymbol] = useState<string>('');
   const [gateResolving, _setGateResolving] = useState(false);
   const [gateError, _setGateError] = useState<string | undefined>(undefined);
-  const _gateResolveTimeout = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   // Token gate state is now managed by ComposeGateConfig component
 

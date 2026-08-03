@@ -22,43 +22,6 @@ function estimateReadingTime(text: string): number {
   return Math.max(1, Math.ceil(wordCount / wordsPerMinute));
 }
 
-/** Random Web3 quote for "while you wait" easter egg (TASK 6) */
-function _Web3Quote() {
-  const quotes = [
-    { text: "Don't trust, verify.", cite: 'Bitcoin Maximalist' },
-    { text: 'Code is law.', cite: 'Lawrence Lessig' },
-    { text: 'Be your own bank.', cite: 'Bitcoin Meme' },
-    { text: 'We need to fundamentally change the way the internet works.', cite: 'Juan Benet' },
-    {
-      text: "The internet of money shouldn't be slower than the internet of information.",
-      cite: 'Vitalik Buterin',
-    },
-    { text: 'In cyberspace, everyone is a pseudonym.', cite: 'Wei Dai' },
-    { text: 'Privacy is not secrecy.', cite: 'Zooko Wilcox' },
-    { text: "Satoshi's vision was peer-to-peer electronic cash.", cite: 'Hal Finney' },
-    { text: 'The cypherpunks are writing code.', cite: 'Eric Hughes' },
-    {
-      text: "Decentralization is not an end state, it's a continuous process.",
-      cite: 'Balaji Srinivasan',
-    },
-    { text: 'Web3 is the internet owned by the builders and users.', cite: 'Packy McCormick' },
-    { text: "Nostr doesn't require any infrastructure — it just needs relays.", cite: 'fiatjaf' },
-    { text: 'Farcaster is a sufficiently decentralized social network.', cite: 'Dan Romero' },
-    { text: 'The AT Protocol is a protocol for decentralized social media.', cite: 'Bluesky Team' },
-    { text: 'Lens Protocol is a user-owned, open social graph.', cite: 'Stani Kulechov' },
-  ];
-  const quote = quotes[Math.floor(Math.random() * quotes.length)] ?? {
-    text: 'The future is decentralized.',
-    cite: 'Unknown',
-  };
-  return (
-    <div className="web3-quote mt-4">
-      <blockquote>&ldquo;{quote.text}&rdquo;</blockquote>
-      <cite>&mdash; {quote.cite}</cite>
-    </div>
-  );
-}
-
 export const PostBody = memo(function PostBody({
   post,
   showFullText,

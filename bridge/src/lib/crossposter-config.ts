@@ -62,7 +62,7 @@ export const DEFAULT_CONFIG: CrossPairConfig[] = [
     id: 'gts-to-lens',
     source: 'mastodon',
     targets: ['lens'],
-    enabled: true,
+    enabled: false, // [DS] 2026-08-03: LENS_REFRESH_TOKEN missing (not in gopass) — disabled until credentials provisioned
     pollIntervalMs: 60000,
     rateLimit: { maxPosts: 5, windowMs: 3600000 },
     sourceConfig: {},
@@ -87,7 +87,7 @@ export const DEFAULT_CONFIG: CrossPairConfig[] = [
     id: 'gts-to-writefreely',
     source: 'mastodon',
     targets: ['writefreely'],
-    enabled: true,
+    enabled: false, // [DS] 2026-08-03: WRITEFREELY_TOKEN not valid (gopass holds admin password; login 401, DB tokens corrupted) — disabled until real token provisioned
     pollIntervalMs: 120000,
     rateLimit: { maxPosts: 6, windowMs: 3600000 },
     sourceConfig: {},
@@ -98,7 +98,7 @@ export const DEFAULT_CONFIG: CrossPairConfig[] = [
     id: 'pixelfed-to-mastodon',
     source: 'pixelfed',
     targets: ['mastodon'],
-    enabled: true,
+    enabled: false, // [DS] 2026-08-03: MASTODON_ACCESS_TOKEN in gopass is stale (401 on live GTS) — disabled until valid token restored
     pollIntervalMs: 120000,
     rateLimit: { maxPosts: 4, windowMs: 3600000 },
     sourceConfig: {},

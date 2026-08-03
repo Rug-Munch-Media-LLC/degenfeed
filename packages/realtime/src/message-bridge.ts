@@ -906,7 +906,7 @@ export class MessageBridge {
     if (res.ok) {
       const data = (await res.json()) as { rooms: Array<{ room_id: string }> };
       if (data.rooms?.length > 0) {
-        return data.rooms[0]?.room_id;
+        return data.rooms[0]?.room_id ?? '';
       }
     }
 

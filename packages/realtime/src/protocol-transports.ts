@@ -306,13 +306,13 @@ export class ProtocolTransports {
 
       // Fallback to NIP-04 (kind 4 encrypted DM)
       if (!result) {
-        const encryptedContent = await nostr.nip04Encrypt(
+        const encryptedContent = await (nostr as any).nip04Encrypt(
           senderNsec,
           recipientPubkey,
           message.encryptedBlob ?? message.body,
         );
 
-        const ev = nostr.finishEvent(
+        const ev = (nostr as any).finishEvent(
           {
             kind: 4,
             tags: [['p', recipientPubkey]],

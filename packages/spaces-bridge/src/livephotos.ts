@@ -12,14 +12,6 @@
 
 import type { CreateSpaceOptions, PlatformBridge, SpaceItem, SpacePlatformData } from './types';
 
-// ─── Shared: Upload image to Nostr ──────────────────────────────────────
-
-async function _uploadToNostrBlob(imageUrl: string): Promise<string | null> {
-  // In production, upload to a nostr blob storage service
-  // For now, return the original URL
-  return imageUrl;
-}
-
 // ─── Nostr Kind 20 (Picture Events) ────────────────────────────────────
 
 async function publishNostrPictureEvent(

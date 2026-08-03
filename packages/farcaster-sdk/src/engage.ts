@@ -140,6 +140,8 @@ export interface BuildCastMessageOpts {
   /** Optional parent cast (only when replying to a real Farcaster cast) */
   parentFid?: number;
   parentHashHex?: string;
+  /** Optional embedded URLs to attach to the cast */
+  embeds?: { url: string }[];
 }
 
 function bytesToHex(bytes: Uint8Array): string {

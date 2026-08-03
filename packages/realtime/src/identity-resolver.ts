@@ -21,7 +21,7 @@ export interface ResolvedIdentity {
   /** Detected protocol of the raw identifier */
   sourceProtocol: ResolvableProtocol;
   /** Resolved protocol-specific identifiers */
-  protocols: Partial<Record<Protocol, ProtocolIdentity>>;
+  protocols: Partial<Record<string, ProtocolIdentity>>;
   /** Display name if resolvable */
   displayName?: string;
   /** Avatar URL if resolvable */

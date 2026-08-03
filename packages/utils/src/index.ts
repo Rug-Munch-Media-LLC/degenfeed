@@ -262,6 +262,11 @@ export { CURRENCY_META } from './protocolCurrency';
 export type { CrossProtocolIdentity, ProtocolId } from './crossProtocolIdentity';
 export { IDENTITY_KV_PREFIX, identityKey, PROTOCOL_ID_REGISTRY } from './crossProtocolIdentity';
 
+// ─── Handle resolution ─────────────────────────────────────────────────
+
+export type { HandleResolution } from './identity';
+export { resolveHandle, resolveFediverseHandle } from './identity';
+
 // ─── Universal Content Addressing (df:// URIs) ─────────────────────────
 
 export type { ProtocolSource } from './contentUri';

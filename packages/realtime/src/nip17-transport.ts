@@ -140,7 +140,7 @@ async function nip44Decrypt(
   const iv = base64urlToArray(nonce);
 
   const decrypted = await crypto.subtle.decrypt(
-    { name: 'AES-GCM', iv, tagLength: NIP44_TAG_LENGTH },
+    { name: 'AES-GCM', iv: iv as BufferSource, tagLength: NIP44_TAG_LENGTH },
     key,
     ct,
   );
@@ -209,7 +209,7 @@ export async function createNip17GiftWrap(
 
     // Publish gift wrap event — in production this is kind 1059
     // with the encrypted seal as content and 'p' tag to recipient
-    const ev = nostr.finishEvent(
+    const ev = (nostr as any).finishEvent(
       {
         kind: 1059, // NIP-17 gift wrap
         tags: [['p', recipientPubkey]],
