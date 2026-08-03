@@ -45,17 +45,6 @@ export interface PostHeaderProps {
   onTranslate: (protocol: string) => void;
 }
 
-/** Map: protocol → human-readable badge label for protocol-native styling */
-const PROTOCOL_BADGES: Record<string, { label: string; icon: string; description: string }> = {
-  nostr: { label: 'Nostr', icon: '\u26A1', description: 'Relay Network' },
-  farcaster: { label: 'Farcaster', icon: '\u25C8', description: 'Warpcast' },
-  bluesky: { label: 'AT Protocol', icon: '\u2601', description: 'Bluesky' },
-  mastodon: { label: 'Mastodon', icon: '\uD83D\uDC18', description: 'Fediverse' },
-  lens: { label: 'Lens', icon: '\u25CE', description: 'Polygon' },
-  reddit: { label: 'Reddit', icon: 'R', description: 'Reddit' },
-  rss: { label: 'RSS', icon: '\uD83D\uDCF0', description: 'News Feed' },
-};
-
 /** Farcaster avatar ring style */
 const FARCASTER_RING = 'ring-2 ring-offset-1 ring-offset-[var(--color-bg)] ring-[#8a63d2]';
 
@@ -137,7 +126,6 @@ export const PostHeader = memo(function PostHeader({
     if (onShowTranslateMenu) onShowTranslateMenu();
   };
 
-  const _protocolBadgeInfo = PROTOCOL_BADGES[post.protocol];
   const avatarClass = getProtocolAvatarClass(post.protocol);
 
   return (

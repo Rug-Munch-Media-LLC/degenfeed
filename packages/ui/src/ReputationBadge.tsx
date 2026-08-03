@@ -123,23 +123,6 @@ export function ReputationBadge({
   const displayIcon = tier?.icon || style.icon;
   const displayLabel = tier?.label || style.label;
 
-  // Tooltip content
-  const _tooltipContent = useMemo(() => {
-    if (!score) return '';
-    const lines = [
-      `${displayIcon} ${displayLabel}`,
-      `Total: ${score.total.toLocaleString()}`,
-      `Earned: ${score.earned.toLocaleString()}`,
-      `Staked: ${score.staked.toLocaleString()}`,
-      `Slashed: ${score.slashed.toLocaleString()}`,
-    ];
-    if (progress?.next) {
-      const pct = Math.round(progress.progress * 100);
-      lines.push(`Next: ${progress.next} (${pct}%)`);
-    }
-    return lines.join('\n');
-  }, [score, displayIcon, displayLabel, progress]);
-
   // Progress bar
   const progressBar = useMemo(() => {
     if (!showProgress || !progress?.next) return null;

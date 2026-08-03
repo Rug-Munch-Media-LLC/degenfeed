@@ -40,7 +40,6 @@ export const EmbedModal = memo(function EmbedModal({
 
   const dfUri = postUri || `df://${protocol}:${postId.replace(`${protocol}:`, '')}`;
   const postUrl = `${window.location.origin}/post/${encodeURIComponent(postId)}`;
-  const _embedUrl = `${window.location.origin}/embed/${encodeURIComponent(dfUri)}`;
 
   const embedSnippet = useMemo(() => {
     const textPreview = truncate(text, 280);

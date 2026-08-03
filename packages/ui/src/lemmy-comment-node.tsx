@@ -9,7 +9,7 @@
 
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { LemmyTipButton } from './LemmyTipButton';
-import { formatScore, getExactTime, getThreadColor, MAX_NESTING_DEPTH } from './lemmy-helpers';
+import { formatScore, getExactTime, getThreadColor } from './lemmy-helpers';
 import { MediaContent, parseContentMedia } from './lemmy-media';
 import { ReplyForm } from './lemmy-reply-form';
 import type { CommentNodeProps, VirtualizedCommentListProps } from './lemmy-types';
@@ -38,7 +38,6 @@ const CommentNode = memo(function CommentNode({
 
   const color = getThreadColor(depth);
   const hasReplies = comment.replies.length > 0;
-  const _isMaxDepth = depth >= MAX_NESTING_DEPTH;
 
   useEffect(() => {
     if (externalVote !== undefined) setLocalVote(externalVote);
@@ -85,7 +84,6 @@ const CommentNode = memo(function CommentNode({
   const toggleReplyForm = useCallback(() => setShowReplyForm((v) => !v), []);
 
   const borderColor = `${color}22`;
-  const _activeColor = color;
 
   return (
     <div

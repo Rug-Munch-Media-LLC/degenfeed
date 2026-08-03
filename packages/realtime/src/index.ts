@@ -8,6 +8,8 @@
  * and chat discovery.
  */
 
+/// <reference path="./cloudflare-types.d.ts" />
+
 export type { ChannelName } from './channels';
 export { CHANNEL_LIST, CHANNELS } from './channels';
 // ─── Chat Discovery ─────────────────────────────────────────────────────────

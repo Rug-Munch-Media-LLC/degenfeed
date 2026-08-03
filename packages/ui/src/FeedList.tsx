@@ -33,23 +33,6 @@ export type { UnifiedPost };
 
 export type FeedState = 'loading' | 'loaded' | 'empty' | 'error';
 
-/**
- * Debounce a function — coalesces rapid-fire calls into a single trailing
- * invocation. Prevents layout thrashing from scroll/resize handlers.
- */
-// biome-ignore lint/suspicious/noExplicitAny: intentional
-function _debounce<T extends (...args: any[]) => void>(fn: T, ms: number): T {
-  let timer: ReturnType<typeof setTimeout> | null = null;
-  const debounced = (...args: unknown[]) => {
-    if (timer) clearTimeout(timer);
-    timer = setTimeout(() => {
-      fn(...args);
-      timer = null;
-    }, ms);
-  };
-  return debounced as T;
-}
-
 /** A single discoverable topic/category suggestion */
 export interface DiscoverSuggestion {
   id: string;

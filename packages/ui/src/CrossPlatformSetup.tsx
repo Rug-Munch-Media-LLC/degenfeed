@@ -56,9 +56,6 @@ export interface CrossPlatformSetupProps {
 
 // ─── Platform metadata ────────────────────────────────────────────────
 
-const _PREMIUM_PLATFORMS = new Set<RegistrationPlatform>(['farcaster', 'lens', 'bluesky']);
-const _FREE_PLATFORMS = new Set<RegistrationPlatform>(['mastodon', 'nostr']);
-
 const PLATFORM_META: Record<
   RegistrationPlatform,
   {
@@ -231,9 +228,6 @@ export function CrossPlatformSetup({
   // ── Derived state ─────────────────────────────────────────────
 
   const connectedCount = accounts.filter((a) => a.status === 'created').length;
-  const _connectedPlatformNames = accounts
-    .filter((a) => a.status === 'created')
-    .map((a) => a.platform);
 
   // ── Render ───────────────────────────────────────────────────
 
@@ -302,7 +296,6 @@ export function CrossPlatformSetup({
           const account = accounts.find((a) => a.platform === platform);
           const isConnected = account?.status === 'created';
           const isFailed = account?.status === 'failed';
-          const _isPending = account?.status === 'pending' && !isFailed;
           const isRegistering = registeringFor === platform;
           const usernameInput = usernameInputs[platform] || '';
 

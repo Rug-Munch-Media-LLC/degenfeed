@@ -46,7 +46,7 @@ export interface ProtocolSidebarProps {
 // ─── Component ──────────────────────────────────────────────────────────
 
 export function ProtocolSidebar({
-  protocol,
+  protocol: _protocol,
   color,
   protocolLabel,
   sections,

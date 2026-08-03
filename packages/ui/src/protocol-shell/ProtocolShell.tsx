@@ -19,7 +19,6 @@ import {
 } from './ProtocolHeader';
 import {
   ProtocolSidebar,
-  type ProtocolSidebarLink,
   type ProtocolSidebarSection,
 } from './ProtocolSidebar';
 import { ProtocolFrame } from './ProtocolFrame';
