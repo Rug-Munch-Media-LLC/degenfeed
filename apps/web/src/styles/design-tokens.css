@@ -1,49 +1,51 @@
 /* ═══════════════════════════════════════════════════════════════════════════
- * DEGENFEED DESIGN TOKENS v2.0 — Cyberpunk Web3 Edition
+ * DEGENFEED DESIGN TOKENS v2.1 — Elk Twitter-clone Default Theme
  *
- * Dark-first design system with neon accents, glass morphism, and
- * a distinctive web3 social personality.
+ * Default theme: Elk-style dark-first (blue accent #1d9bf0).
+ * Cyberpunk (green #00ff41) preserved as alternate via
+ * [data-theme-preset=cyberpunk] toggle.
  * ═══════════════════════════════════════════════════════════════════════════ */
 
 :root {
-  /* ═══ Core Colors — Dark-First Cyberpunk ═══════════════════════════════ */
+  /* ═══ Core Colors — Elk Dark ═══════════════════════════════════════════ */
 
   --color-bg: #000000;
-  --color-bg-secondary: #050505;
-  --color-bg-tertiary: #0a0a0a;
+  --color-bg-secondary: #0a0d10;
+  --color-bg-tertiary: #16181c;
+  --color-surface: #16181c;
   --color-fg: #e7e9ea;
   --color-fg-secondary: #b0b3b8;
-  --color-accent: #00ff41;
-  --color-accent-soft: rgba(0, 255, 65, 0.15);
-  --color-accent-glow: rgba(0, 255, 65, 0.12);
-  --color-accent-glow-strong: rgba(0, 255, 65, 0.25);
+  --color-accent: #1d9bf0;
+  --color-accent-soft: rgba(29, 155, 240, 0.15);
+  --color-accent-glow: rgba(29, 155, 240, 0.1);
+  --color-accent-glow-strong: rgba(29, 155, 240, 0.2);
   --color-accent-secondary: #8b5cf6;
   --color-accent-secondary-glow: rgba(139, 92, 246, 0.15);
   --color-accent-tertiary: #f59e0b;
   --color-accent-tertiary-glow: rgba(245, 158, 11, 0.15);
-  --color-muted: #8b8f93;
-  --color-muted-bg: #141414;
+  --color-muted: #71767b;
+  --color-muted-bg: #16181c;
   --color-border: #2f3336;
   --color-border-light: rgba(255, 255, 255, 0.06);
-  --color-card: #0a0a0a;
-  --color-card-hover: #111113;
-  --color-card-elevated: #141416;
+  --color-card: #1a1d23;
+  --color-card-hover: #20242b;
+  --color-card-elevated: #23272f;
   --color-danger: #f4212e;
-  --color-success: #00ff41;
+  --color-success: #00ba7c;
   --color-warning: #f59e0b;
 
   /* ═══ Glass & Surface Effects ═══════════════════════════════════════════ */
 
-  --color-glass-bg: rgba(10, 10, 10, 0.78);
+  --color-glass-bg: rgba(22, 24, 28, 0.78);
   --color-glass-border: rgba(255, 255, 255, 0.06);
   --color-glass-highlight: rgba(255, 255, 255, 0.03);
-  --color-glass-bg-heavy: rgba(10, 10, 10, 0.92);
+  --color-glass-bg-heavy: rgba(22, 24, 28, 0.92);
   --color-overlay: rgba(255, 255, 255, 0.04);
   --color-overlay-hover: rgba(255, 255, 255, 0.08);
 
   /* ═══ Message / Social Colors ══════════════════════════════════════════ */
 
-  --color-msg-sent: rgba(0, 255, 65, 0.15);
+  --color-msg-sent: rgba(29, 155, 240, 0.15);
   --color-msg-received: rgba(255, 255, 255, 0.06);
   --color-compose-bg: rgba(255, 255, 255, 0.03);
   --color-like-active: #f91880;
@@ -127,14 +129,14 @@
   --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
   --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.6);
-  --shadow-glow: 0 0 20px rgba(0, 255, 65, 0.12);
-  --shadow-glow-strong: 0 0 30px rgba(0, 255, 65, 0.2);
+  --shadow-glow: 0 0 20px rgba(29, 155, 240, 0.12);
+  --shadow-glow-strong: 0 0 30px rgba(29, 155, 240, 0.2);
   --shadow-glow-violet: 0 0 20px rgba(139, 92, 246, 0.12);
   --shadow-glow-pink: 0 0 20px rgba(249, 24, 128, 0.12);
 
   --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.4);
   --shadow-card-hover: 0 8px 32px rgba(0, 0, 0, 0.5);
-  --shadow-card-glow: 0 0 24px rgba(0, 255, 65, 0.08);
+  --shadow-card-glow: 0 0 24px rgba(29, 155, 240, 0.08);
 
   /* ═══ Animation & Duration ═══════════════════════════════════════════════ */
 
@@ -230,7 +232,7 @@
   --color-protocol-youtube: #ff0000;
   --color-protocol-twitch: #9146ff;
 
-  /* ═══ Protocol Background Tints (TASK 2) ═══ */
+  /* ═══ Protocol Background Tints ═══ */
   --color-bg-protocol-nostr: rgba(139, 92, 246, 0.04);
   --color-bg-protocol-farcaster: rgba(138, 99, 210, 0.04);
   --color-bg-protocol-lens: rgba(171, 254, 44, 0.03);
@@ -245,7 +247,7 @@
   --color-bg-protocol-twitch: rgba(145, 70, 255, 0.04);
   --color-bg-protocol-pixelfed: rgba(196, 74, 139, 0.04);
 
-  /* ═══ Protocol Avatar Ring Colors (TASK 2) ═══ */
+  /* ═══ Protocol Avatar Ring Colors ═══ */
   --color-ring-protocol-farcaster: linear-gradient(135deg, #8a63d2, #6a3fc2);
   --color-ring-protocol-lens: linear-gradient(135deg, #abfe2c, #7ad100);
   --color-ring-protocol-nostr: linear-gradient(135deg, #8b5cf6, #a78bfa);
@@ -256,15 +258,168 @@
 
   --progress-bar-height: 3px;
   --scrollbar-width: 6px;
+
+  /* ═══ Degen Palette (Elk blue — consumed by tailwind via rgb(var())) ════ */
+
+  --degen-50: 239 246 255;
+  --degen-100: 219 234 254;
+  --degen-200: 191 219 254;
+  --degen-300: 147 197 253;
+  --degen-400: 96 165 250;
+  --degen-500: 29 155 240;
+  --degen-600: 24 130 204;
+  --degen-700: 21 104 163;
+  --degen-800: 17 78 122;
+  --degen-900: 10 50 82;
 }
 
-/* ═══ Light Theme — High-Contrast Social ════════════════════════════════════ */
+/* ═══ Cyberpunk Alternate (preserved via data-theme-preset) ═══════════════ */
+
+:root[data-theme-preset='cyberpunk'],
+:root[data-theme-preset='cyberpunk'].dark,
+html[data-theme-preset='cyberpunk'] {
+  --color-bg: #000000;
+  --color-bg-secondary: #050505;
+  --color-bg-tertiary: #0a0a0a;
+  --color-surface: #0a0a0a;
+  --color-fg: #e7e9ea;
+  --color-fg-secondary: #b0b3b8;
+  --color-accent: #00ff41;
+  --color-accent-soft: rgba(0, 255, 65, 0.15);
+  --color-accent-glow: rgba(0, 255, 65, 0.12);
+  --color-accent-glow-strong: rgba(0, 255, 65, 0.25);
+  --color-accent-secondary: #8b5cf6;
+  --color-accent-secondary-glow: rgba(139, 92, 246, 0.15);
+  --color-accent-tertiary: #f59e0b;
+  --color-accent-tertiary-glow: rgba(245, 158, 11, 0.15);
+  --color-muted: #8b8f93;
+  --color-muted-bg: #141414;
+  --color-border: #2f3336;
+  --color-border-light: rgba(255, 255, 255, 0.06);
+  --color-card: #0a0a0a;
+  --color-card-hover: #111113;
+  --color-card-elevated: #141416;
+  --color-danger: #f4212e;
+  --color-success: #00ff41;
+  --color-warning: #f59e0b;
+
+  --color-glass-bg: rgba(10, 10, 10, 0.78);
+  --color-glass-border: rgba(255, 255, 255, 0.06);
+  --color-glass-highlight: rgba(255, 255, 255, 0.03);
+  --color-glass-bg-heavy: rgba(10, 10, 10, 0.92);
+  --color-overlay: rgba(255, 255, 255, 0.04);
+  --color-overlay-hover: rgba(255, 255, 255, 0.08);
+
+  --color-msg-sent: rgba(0, 255, 65, 0.15);
+  --color-msg-received: rgba(255, 255, 255, 0.06);
+  --color-compose-bg: rgba(255, 255, 255, 0.03);
+  --color-like-active: #f91880;
+  --color-like-glow: rgba(249, 24, 128, 0.2);
+  --color-repost-active: #00ba7c;
+  --color-repost-glow: rgba(0, 186, 124, 0.2);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
+  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.6);
+  --shadow-glow: 0 0 20px rgba(0, 255, 65, 0.12);
+  --shadow-glow-strong: 0 0 30px rgba(0, 255, 65, 0.2);
+  --shadow-glow-violet: 0 0 20px rgba(139, 92, 246, 0.12);
+  --shadow-glow-pink: 0 0 20px rgba(249, 24, 128, 0.12);
+
+  --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.4);
+  --shadow-card-hover: 0 8px 32px rgba(0, 0, 0, 0.5);
+  --shadow-card-glow: 0 0 24px rgba(0, 255, 65, 0.08);
+
+  --degen-50: 230 255 236;
+  --degen-100: 179 255 204;
+  --degen-200: 128 255 173;
+  --degen-300: 77 255 141;
+  --degen-400: 26 255 110;
+  --degen-500: 0 255 65;
+  --degen-600: 0 204 52;
+  --degen-700: 0 153 39;
+  --degen-800: 0 102 26;
+  --degen-900: 0 51 13;
+}
+
+/* ═══ Light Theme — Elk Light ═════════════════════════════════════════════ */
 
 .light,
 :root.light {
   --color-bg: #ffffff;
+  --color-bg-secondary: #f7f9fa;
+  --color-bg-tertiary: #eff3f4;
+  --color-surface: #eff3f4;
+  --color-fg: #0f1419;
+  --color-fg-secondary: #536471;
+  --color-accent: #1d9bf0;
+  --color-accent-soft: rgba(29, 155, 240, 0.1);
+  --color-accent-glow: rgba(29, 155, 240, 0.08);
+  --color-accent-glow-strong: rgba(29, 155, 240, 0.15);
+  --color-accent-secondary: #7c3aed;
+  --color-accent-secondary-glow: rgba(124, 58, 237, 0.1);
+  --color-accent-tertiary: #d97706;
+  --color-accent-tertiary-glow: rgba(217, 119, 6, 0.1);
+  --color-muted: #536471;
+  --color-muted-bg: #eff3f4;
+  --color-border: #e1e4e8;
+  --color-border-light: rgba(0, 0, 0, 0.04);
+  --color-card: #ffffff;
+  --color-card-hover: #f7f9fa;
+  --color-card-elevated: #ffffff;
+  --color-danger: #e0245e;
+  --color-success: #00ba7c;
+  --color-warning: #d97706;
+
+  --color-glass-bg: rgba(255, 255, 255, 0.85);
+  --color-glass-border: rgba(0, 0, 0, 0.06);
+  --color-glass-highlight: rgba(255, 255, 255, 0.9);
+  --color-glass-bg-heavy: rgba(255, 255, 255, 0.95);
+  --color-overlay: rgba(0, 0, 0, 0.03);
+  --color-overlay-hover: rgba(0, 0, 0, 0.06);
+
+  --color-msg-sent: rgba(29, 155, 240, 0.12);
+  --color-msg-received: rgba(0, 0, 0, 0.04);
+  --color-compose-bg: rgba(0, 0, 0, 0.02);
+  --color-like-active: #e0245e;
+  --color-like-glow: rgba(224, 36, 94, 0.12);
+  --color-repost-active: #00ba7c;
+  --color-repost-glow: rgba(0, 186, 124, 0.12);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.08);
+  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.1);
+  --shadow-glow: 0 0 20px rgba(29, 155, 240, 0.08);
+  --shadow-glow-strong: 0 0 30px rgba(29, 155, 240, 0.12);
+  --shadow-glow-violet: 0 0 20px rgba(124, 58, 237, 0.08);
+  --shadow-glow-pink: 0 0 20px rgba(224, 36, 94, 0.08);
+
+  --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.04);
+  --shadow-card-hover: 0 8px 32px rgba(0, 0, 0, 0.06);
+  --shadow-card-glow: 0 0 24px rgba(29, 155, 240, 0.04);
+
+  --degen-50: 239 246 255;
+  --degen-100: 219 234 254;
+  --degen-200: 191 219 254;
+  --degen-300: 147 197 253;
+  --degen-400: 96 165 250;
+  --degen-500: 29 155 240;
+  --degen-600: 24 130 204;
+  --degen-700: 21 104 163;
+  --degen-800: 17 78 122;
+  --degen-900: 10 50 82;
+}
+
+/* ═══ Light Cyberpunk Alternate ═══════════════════════════════════════════ */
+
+:root[data-theme-preset='cyberpunk'].light,
+:root.light[data-theme-preset='cyberpunk'] {
+  --color-bg: #ffffff;
   --color-bg-secondary: #f7f7f7;
   --color-bg-tertiary: #f0f0f0;
+  --color-surface: #f0f0f0;
   --color-fg: #0f1419;
   --color-fg-secondary: #536471;
   --color-accent: #16a34a;
@@ -313,4 +468,15 @@
   --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.04);
   --shadow-card-hover: 0 8px 32px rgba(0, 0, 0, 0.06);
   --shadow-card-glow: 0 0 24px rgba(22, 163, 74, 0.04);
+
+  --degen-50: 230 255 236;
+  --degen-100: 179 255 204;
+  --degen-200: 128 255 173;
+  --degen-300: 77 255 141;
+  --degen-400: 26 255 110;
+  --degen-500: 0 255 65;
+  --degen-600: 0 204 52;
+  --degen-700: 0 153 39;
+  --degen-800: 0 102 26;
+  --degen-900: 0 51 13;
 }

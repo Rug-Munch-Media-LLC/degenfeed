@@ -40,8 +40,15 @@ export function NewsStoryCard({
   onShare?: () => void;
 }) {
   const img = story.heroImage || story.imageUrl;
-  const tier = TIER_STYLES[story.sourceMeta.tier] || TIER_STYLES[4];
+  const tier = TIER_STYLES[story.sourceMeta.tier] || TIER_STYLES[4] || {
+    label: 'Standard',
+    bg: 'bg-gray-500/15',
+    text: 'text-gray-400',
+    ring: 'ring-gray-500/30',
+  };
   const primaryCat = story.niches?.[0] || story.sourceMeta?.category || 'crypto';
+  const biasStyle = story.bias ? BIAS_STYLES[story.bias] : undefined;
+  const factualStyle = story.factualRating ? FACTUAL_STYLES[story.factualRating] : undefined;
   const catColor = CATEGORY_COLORS[primaryCat] || {
     badge: 'bg-gray-500/15',
     text: 'text-gray-300',
@@ -111,21 +118,21 @@ export function NewsStoryCard({
           </span>
           <span className="text-[10px] text-gray-500">{story.source}</span>
           {/* Ground News-style Bias Badge */}
-          {story.bias && BIAS_STYLES[story.bias] && (
+          {biasStyle && (
             <span
-              className={`rounded px-1 py-0.5 text-[8px] font-bold ${BIAS_STYLES[story.bias].bg} ${BIAS_STYLES[story.bias].ring} ring-1`}
-              style={{ color: BIAS_STYLES[story.bias].color }}
+              className={`rounded px-1 py-0.5 text-[8px] font-bold ${biasStyle.bg} ${biasStyle.ring} ring-1`}
+              style={{ color: biasStyle.color }}
             >
-              {BIAS_STYLES[story.bias].label}
+              {biasStyle.label}
             </span>
           )}
           {/* Factual Rating Badge */}
-          {story.factualRating && FACTUAL_STYLES[story.factualRating] && (
+          {factualStyle && (
             <span
-              className={`rounded px-1 py-0.5 text-[8px] font-bold ${FACTUAL_STYLES[story.factualRating].bg}`}
-              style={{ color: FACTUAL_STYLES[story.factualRating].color }}
+              className={`rounded px-1 py-0.5 text-[8px] font-bold ${factualStyle.bg}`}
+              style={{ color: factualStyle.color }}
             >
-              {FACTUAL_STYLES[story.factualRating].label}
+              {factualStyle.label}
             </span>
           )}
           {/* Sentiment Score Badge */}

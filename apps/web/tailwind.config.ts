@@ -7,16 +7,16 @@ const config: Config = {
     extend: {
       colors: {
         degen: {
-          50: '#e6ffec',
-          100: '#b3ffcc',
-          200: '#80ffad',
-          300: '#4dff8d',
-          400: '#1aff6e',
-          500: '#00ff41',
-          600: '#00cc34',
-          700: '#009927',
-          800: '#00661a',
-          900: '#00330d',
+          50: 'rgb(var(--degen-50) / <alpha-value>)',
+          100: 'rgb(var(--degen-100) / <alpha-value>)',
+          200: 'rgb(var(--degen-200) / <alpha-value>)',
+          300: 'rgb(var(--degen-300) / <alpha-value>)',
+          400: 'rgb(var(--degen-400) / <alpha-value>)',
+          500: 'rgb(var(--degen-500) / <alpha-value>)',
+          600: 'rgb(var(--degen-600) / <alpha-value>)',
+          700: 'rgb(var(--degen-700) / <alpha-value>)',
+          800: 'rgb(var(--degen-800) / <alpha-value>)',
+          900: 'rgb(var(--degen-900) / <alpha-value>)',
         },
         cosmic: {
           50: '#f3e8ff',

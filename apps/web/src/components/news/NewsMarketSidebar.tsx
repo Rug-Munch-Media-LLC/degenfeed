@@ -1,23 +1,5 @@
 'use client';
 
-/** Mini sparkline SVG */
-function _Sparkline({ data, color }: { data: number[]; color: string }) {
-  if (!data.length) return null;
-  const w = 60;
-  const h = 20;
-  const min = Math.min(...data);
-  const max = Math.max(...data);
-  const range = max - min || 1;
-  const points = data
-    .map((v, i) => `${(i / (data.length - 1)) * w},${h - ((v - min) / range) * h}`)
-    .join(' ');
-  return (
-    <svg aria-hidden="true" width={w} height={h} className="shrink-0">
-      <polyline fill="none" stroke={color} strokeWidth="1.5" points={points} />
-    </svg>
-  );
-}
-
 export function MarketPriceCard({
   symbol,
   price,
@@ -57,11 +39,9 @@ export function MarketPriceCard({
 export function NewsMarketSidebar({
   marketPrices,
   pricesLoading,
-  priceHistory,
 }: {
   marketPrices: Record<string, { price: string; change24h: number }>;
   pricesLoading: boolean;
-  priceHistory?: Record<string, number[]>;
 }) {
   return (
     <div className="rounded-xl border border-gray-800 bg-gray-900/50 p-4">

@@ -5,6 +5,7 @@ export interface NewsSourceMeta {
   name: string;
   tier: number;
   credibility: number;
+  category?: string;
 }
 
 export interface SentimentResult {
