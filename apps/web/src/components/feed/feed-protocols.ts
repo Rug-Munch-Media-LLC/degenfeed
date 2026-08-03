@@ -525,6 +525,7 @@ export const SIDEBAR_ORDER = [
   'bluesky',
   'audius',
   'rarible',
+  'zora',
   'nostr',
   'farcaster',
   'lens',

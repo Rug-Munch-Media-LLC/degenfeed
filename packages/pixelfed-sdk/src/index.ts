@@ -5,7 +5,7 @@
  * Pixelfed implements the Mastodon API so all endpoints follow the same
  * patterns as @degenfeed/mastodon-sdk but scoped to Pixelfed instances.
  *
- * Our self-hosted instance: http://127.0.0.1:8087
+ * Our self-hosted instance: http://127.0.0.1:8096
  * Public federated instances: pixelfed.social, pixelfed.de, gram.social, …
  *
  * ─── API Coverage ──────────────────────────────────────────────────
@@ -144,7 +144,7 @@ export interface PixelfedPublishResult {
 export const DEFAULT_USER_AGENT = 'DegenFeed/0.1 (+https://degenfeed.xyz)';
 
 /** Default self-hosted Pixelfed instance */
-export const PIXELFED_LOCAL_INSTANCE = 'http://127.0.0.1:8087';
+export const PIXELFED_LOCAL_INSTANCE = 'http://127.0.0.1:8096';
 
 /** Well-known public Pixelfed instances for federation fallback */
 export const PUBLIC_PIXELFED_INSTANCES = [
@@ -177,6 +177,8 @@ export interface ApiFetchOptions {
   headers?: Record<string, string>;
   body?: string;
   timeout?: number;
+  /** Optional Bearer access token for authenticated endpoints (e.g. public timeline on instances with auth required). */
+  accessToken?: string;
 }
 
 /**
@@ -195,6 +197,10 @@ export async function apiFetch<T>(
     'user-agent': DEFAULT_USER_AGENT,
     ...options.headers,
   };
+
+  if (options.accessToken) {
+    headers.authorization = `Bearer ${options.accessToken}`;
+  }
 
   const controller = new AbortController();
   const timeoutMs = options.timeout ?? 8000;
@@ -234,6 +240,7 @@ export async function getPublicTimeline(
     onlyMedia?: boolean;
     local?: boolean;
     signal?: AbortSignal;
+    accessToken?: string;
   },
 ): Promise<PixelfedStatus[]> {
   const limit = options?.limit ?? 20;
@@ -247,6 +254,7 @@ export async function getPublicTimeline(
 
   return apiFetch<PixelfedStatus[]>(instanceUrl, `/api/v1/timelines/public?${params.toString()}`, {
     timeout: 6000,
+    accessToken: options?.accessToken,
   });
 }
 
@@ -259,6 +267,7 @@ export async function getTagTimeline(
   instanceUrl: string,
   tag: string,
   limit = 20,
+  accessToken?: string,
 ): Promise<PixelfedStatus[]> {
   const params = new URLSearchParams({
     limit: String(Math.min(limit, 40)),
@@ -267,7 +276,7 @@ export async function getTagTimeline(
   return apiFetch<PixelfedStatus[]>(
     instanceUrl,
     `/api/v1/timelines/tag/${encodeURIComponent(tag)}?${params.toString()}`,
-    { timeout: 6000 },
+    { timeout: 6000, accessToken },
   );
 }
 
@@ -280,6 +289,7 @@ export async function getAccountPosts(
   instanceUrl: string,
   accountId: string,
   limit = 20,
+  accessToken?: string,
 ): Promise<PixelfedStatus[]> {
   const params = new URLSearchParams({
     limit: String(Math.min(limit, 40)),
@@ -288,7 +298,7 @@ export async function getAccountPosts(
   return apiFetch<PixelfedStatus[]>(
     instanceUrl,
     `/api/v1/accounts/${encodeURIComponent(accountId)}/statuses?${params.toString()}`,
-    { timeout: 6000 },
+    { timeout: 6000, accessToken },
   );
 }
 

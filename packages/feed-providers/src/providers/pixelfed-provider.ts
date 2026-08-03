@@ -7,11 +7,15 @@
  * from the MastodonProvider but scoped specifically to Pixelfed instances.
  *
  * Fetch strategies (in priority order):
- * 1. Our self-hosted Pixelfed instance (photos.degenfeed.xyz → 127.0.0.1:8087)
+ * 1. Our self-hosted Pixelfed instance (photos.degenfeed.xyz → 127.0.0.1:8096)
  * 2. Federated Pixelfed instances (pixelfed.social, pixelfed.de, etc.)
  * 3. Hashtag searches for crypto/tech/photography content
  *
  * Health check: /api/v1/instance or /api/v1/apps/verify_credentials
+ *
+ * Auth: our self-hosted instance requires a Bearer token for the public
+ * timeline (PIXELFED_ACCESS_TOKEN). The token is only sent to the primary
+ * instance; federated fallbacks are fetched anonymously.
  */
 
 import { CircuitBreaker, CircuitBreakerError } from '@degenfeed/feed-core';
@@ -118,6 +122,8 @@ export interface PixelfedProviderOptions {
   fallbackInstances?: string[];
   /** Max posts to fetch per source */
   limit?: number;
+  /** Bearer access token for the primary instance (falls back to PIXELFED_ACCESS_TOKEN env) */
+  accessToken?: string;
 }
 
 export class PixelfedProvider implements FeedProvider {
@@ -126,6 +132,7 @@ export class PixelfedProvider implements FeedProvider {
 
   private readonly primaryUrl: string;
   private readonly fallbackUrls: string[];
+  private readonly accessToken: string | undefined;
   private readonly breaker = new CircuitBreaker('pixelfed');
 
   constructor(options: PixelfedProviderOptions = {}) {
@@ -133,6 +140,7 @@ export class PixelfedProvider implements FeedProvider {
     this.fallbackUrls =
       options.fallbackInstances ??
       PUBLIC_PIXELFED_INSTANCES.map((i) => i.url).filter((u) => u !== this.primaryUrl);
+    this.accessToken = options.accessToken;
   }
 
   async fetchFeed(opts: FetchOptions = {}): Promise<FeedResult> {
@@ -142,11 +150,15 @@ export class PixelfedProvider implements FeedProvider {
         const limit = opts.timeoutMs ? 20 : 50;
         const allStatuses: PixelfedStatus[] = [];
 
-        // ── 1. Self-hosted instance public timeline (media only) ──
+        // ── 1. Self-hosted instance public timeline (media only, authenticated) ──
         try {
           const localStart = performance.now();
           const localPosts = await withTimeout(
-            getPublicTimeline(this.primaryUrl, { limit: Math.ceil(limit / 3), onlyMedia: true }),
+            getPublicTimeline(this.primaryUrl, {
+              limit: Math.ceil(limit / 3),
+              onlyMedia: true,
+              accessToken: this.accessToken,
+            }),
             Math.min(timeoutMs, 5000),
             'pixelfed:local',
           );
@@ -196,7 +208,14 @@ export class PixelfedProvider implements FeedProvider {
           async ({ instanceUrl, tag }) => {
             try {
               return await withTimeout(
-                getTagTimeline(instanceUrl, tag, 5),
+                getTagTimeline(
+                  instanceUrl,
+                  tag,
+                  5,
+                  // Only the primary instance accepts our token; federated
+                  // instances would reject it, so fetch those anonymously.
+                  instanceUrl === this.primaryUrl ? this.accessToken : undefined,
+                ),
                 4000,
                 `pixelfed:tag:${tag}@${new URL(instanceUrl).hostname}`,
               );

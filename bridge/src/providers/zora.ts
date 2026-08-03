@@ -68,6 +68,7 @@ interface IndexerToken {
   mint_block_number: number | null;
   mint_chain_id: number;
   originator_address: string | null;
+  created_at: string | null;
 }
 
 interface IndexerResponse<T> {
@@ -205,9 +206,13 @@ function tokenToPost(token: IndexerToken): UnifiedPost | null {
     meta?: Record<string, unknown>;
   }> = [];
 
+  const mime = (token.mime_type || '').toLowerCase();
+  const isVideoMime = mime.startsWith('video/');
+
   if (token.image_url) {
     embeds.push({
-      kind: 'image',
+      // Zora mints can be video (e.g. video/mp4) — surface those as video embeds
+      kind: isVideoMime ? 'video' : 'image',
       url: token.image_url,
       meta: {
         width: token.image_width,
@@ -258,7 +263,7 @@ function tokenToPost(token: IndexerToken): UnifiedPost | null {
     },
     text,
     embeds,
-    createdAt: Date.now(),
+    createdAt: token.created_at ? new Date(token.created_at).getTime() : Date.now(),
     metrics: {
       likes: 0,
       reposts: 0,
