@@ -89,7 +89,8 @@ services:
     deploy:
       resources:
         limits:
-          memory: 512M
+          # 2026-08-03 swap-defense: 512M -> 256M (anon RSS ~79M)
+          memory: 256M
           cpus: "1.0"
         reservations:
           memory: 128M
