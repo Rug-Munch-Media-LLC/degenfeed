@@ -927,7 +927,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (path === '/api/feed/newsletter') {
-      const { fetchNewsletterPosts, getNewsletterFeeds } = await import('../providers/rss');
+      const { fetchNewsletterPosts, getNewsletterFeeds } = await import('../providers/newsletter');
       const limit = Math.min(parseInt(searchParams.get('limit') || '20', 10), 50);
       const newsletterPosts = await fetchNewsletterPosts(limit);
       return jsonOk(res, {

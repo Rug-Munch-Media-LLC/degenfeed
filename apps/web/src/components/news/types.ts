@@ -110,6 +110,8 @@ export const READING_LIST_KEY = 'degenfeed:reading-list';
 
 export function formatTime(ts: number): string {
   const diff = Date.now() - ts;
+  const secs = Math.floor(diff / 1000);
+  if (secs < 60) return 'just now';
   const mins = Math.floor(diff / 60000);
   if (mins < 60) return `${mins}m ago`;
   const hours = Math.floor(mins / 60);
@@ -134,7 +136,56 @@ export function sentimentEmoji(s: SentimentResult | null | undefined): string {
   if (!s) return '⚪';
   if (s.label === 'bullish') return '🟢';
   if (s.label === 'bearish') return '🔴';
-  return '⚪';
+  return '🟡';
+}
+
+export function sentimentScoreEmoji(score: number | null | undefined): string {
+  if (score == null || score === 0) return '➖';
+  if (score >= 30) return '🔥';
+  if (score >= 10) return '📈';
+  if (score <= -30) return '🧊';
+  if (score <= -10) return '📉';
+  return '➖';
+}
+
+export function sentimentScoreColor(score: number | null | undefined): string {
+  if (score == null || score === 0) return 'text-gray-400';
+  if (score >= 20) return 'text-green-400';
+  if (score <= -20) return 'text-red-400';
+  return 'text-yellow-400';
+}
+
+/**
+ * Compact sentiment badge label from an optional AFINN-style normalized
+ * score (-1..+1). Used for the green/yellow/red sentiment chip.
+ */
+export function sentimentChip(normalized: number | null | undefined): {
+  emoji: string;
+  label: string;
+  cls: string;
+} {
+  if (normalized == null || !Number.isFinite(normalized) || normalized === 0) {
+    return {
+      emoji: '🟡',
+      label: 'Neutral',
+      cls: 'text-yellow-300 bg-yellow-500/10 border-yellow-500/20',
+    };
+  }
+  if (normalized > 0.05) {
+    return {
+      emoji: '🟢',
+      label: 'Positive',
+      cls: 'text-green-400 bg-green-500/10 border-green-500/20',
+    };
+  }
+  if (normalized < -0.05) {
+    return { emoji: '🔴', label: 'Negative', cls: 'text-red-400 bg-red-500/10 border-red-500/20' };
+  }
+  return {
+    emoji: '🟡',
+    label: 'Neutral',
+    cls: 'text-yellow-300 bg-yellow-500/10 border-yellow-500/20',
+  };
 }
 
 // ── Ground News-style rating helpers ──────────────────────────────
@@ -166,22 +217,6 @@ export const FACTUAL_STYLES: Record<string, { label: string; color: string; bg: 
   low: { label: 'Low', color: '#ef4444', bg: 'bg-red-500/15' },
   unrated: { label: 'Unrated', color: '#6b7280', bg: 'bg-gray-500/10' },
 };
-
-export function sentimentScoreEmoji(score: number | null | undefined): string {
-  if (score == null || score === 0) return '➖';
-  if (score >= 30) return '🔥';
-  if (score >= 10) return '📈';
-  if (score <= -30) return '🧊';
-  if (score <= -10) return '📉';
-  return '➖';
-}
-
-export function sentimentScoreColor(score: number | null | undefined): string {
-  if (score == null || score === 0) return 'text-gray-400';
-  if (score >= 20) return 'text-green-400';
-  if (score <= -20) return 'text-red-400';
-  return 'text-yellow-400';
-}
 
 export function biasColor(bias: string | null | undefined): string {
   const style = BIAS_STYLES[bias || ''];

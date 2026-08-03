@@ -759,7 +759,10 @@ describe('RSS provider', () => {
     const { ALL_FEEDS, FEED_COUNT } = await import('../providers/rss');
 
     expect(FEED_COUNT).toBe(ALL_FEEDS.length);
-    expect(FEED_COUNT).toBeGreaterThan(100);
+    // Feed list was pruned during the 2026-08-03 dead-feed audit (75 feeds);
+    // the 2026-08-03 source expansion added high-quality general/crypto
+    // sources back — verify we stayed well above the pruned baseline.
+    expect(FEED_COUNT).toBeGreaterThan(80);
 
     // Check categories exist
     const categories = new Set(ALL_FEEDS.map((f) => f.category));
@@ -767,6 +770,24 @@ describe('RSS provider', () => {
     expect(categories.has('security')).toBe(true);
     expect(categories.has('ai')).toBe(true);
     expect(categories.has('defi')).toBe(true);
+
+    // Verify the new high-quality sources from the source-expansion pass
+    const labels = ALL_FEEDS.map((f) => f.label);
+    for (const expected of [
+      'Bankless',
+      'CNBC Crypto',
+      'MIT Tech Review',
+      'Ars Technica',
+      'Wired',
+      'Rest of World',
+      'The Conversation',
+      'TechCrunch',
+      'The Register',
+      'The Guardian Tech',
+      'IEEE Spectrum',
+    ]) {
+      expect(labels).toContain(expected);
+    }
   });
 
   it('getFeedsByCategory filters correctly', async () => {
@@ -798,5 +819,111 @@ describe('RSS provider', () => {
     expect(meta.description).toBeUndefined();
     expect(meta.authorName).toBeUndefined();
     expect(meta.keywords).toBeUndefined();
+  });
+
+  it('extractOpenGraphImage finds og:image meta tag', async () => {
+    const { extractOpenGraphImage } = await import('../providers/rss');
+
+    const html = '<html><head><meta property="og:image" content="https://example.com/og.png"/></head></html>';
+    expect(extractOpenGraphImage(html)).toBe('https://example.com/og.png');
+  });
+
+  it('extractOpenGraphImage handles reversed attribute order', async () => {
+    const { extractOpenGraphImage } = await import('../providers/rss');
+
+    const html = '<meta content="https://example.com/img.jpg" property="og:image"/>';
+    expect(extractOpenGraphImage(html)).toBe('https://example.com/img.jpg');
+  });
+
+  it('extractOpenGraphImage returns undefined without og meta', async () => {
+    const { extractOpenGraphImage } = await import('../providers/rss');
+
+    expect(extractOpenGraphImage('<html><head><title>No image</title></head></html>')).toBeUndefined();
+    expect(extractOpenGraphImage('')).toBeUndefined();
+  });
+
+  it('extractMediaImage finds media:thumbnail url', async () => {
+    const { extractMediaImage } = await import('../providers/rss');
+
+    const item = '<item><media:thumbnail url="https://example.com/thumb.jpg" width="200"/></item>';
+    expect(extractMediaImage(item)).toBe('https://example.com/thumb.jpg');
+    expect(extractMediaImage('<item><title>x</title></item>')).toBeUndefined();
+  });
+
+  it('parseFeedXml extracts feed-level image', async () => {
+    const { parseFeedXml } = await import('../providers/rss');
+
+    const xml = `<?xml version="1.0"?>
+<rss version="2.0">
+  <channel>
+    <title>Feed With Logo</title>
+    <image><url>https://example.com/feed-logo.png</url><title>Feed</title></image>
+    <item><title>Post</title><link>https://example.com/p</link></item>
+  </channel>
+</rss>`;
+    const parsed = parseFeedXml(xml);
+    expect(parsed.image).toBe('https://example.com/feed-logo.png');
+  });
+
+  it('analyzeNewsSentiment scores positive and negative headlines', async () => {
+    const { analyzeNewsSentiment } = await import('../lib/sentiment');
+
+    const positive = analyzeNewsSentiment('Bitcoin surges to new all-time high as ETF inflows hit record');
+    expect(positive.normalized).toBeGreaterThan(0);
+    expect(positive.positive.length).toBeGreaterThan(0);
+
+    const negative = analyzeNewsSentiment('Protocol exploited, $40M drained in rugpull');
+    expect(negative.normalized).toBeLessThan(0);
+    expect(negative.negative.length).toBeGreaterThan(0);
+
+    const neutral = analyzeNewsSentiment('Report on market conditions published today');
+    expect(neutral.normalized).toBeGreaterThanOrEqual(-0.05);
+    expect(neutral.normalized).toBeLessThanOrEqual(0.05);
+  });
+
+  it('rankNewsPost includes a bounded sentiment signal', async () => {
+    const mod = await import('../providers/rss');
+
+    const makePost = (sentimentNormalized: number): UnifiedPost => ({
+      id: 'rss:sent:1',
+      protocol: 'rss',
+      author: {
+        id: 'rss:sent',
+        primary: { protocol: 'rss', id: 'sent' },
+        handles: {},
+        displayName: 'Sentiment Test',
+        bio: '',
+        avatarUrl: '',
+        followerCount: 0,
+        followingCount: 0,
+        links: [],
+        keys: {},
+      },
+      text: 'Test headline',
+      embeds: [],
+      createdAt: Date.now() - 3_600_000,
+      metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
+      engagement: {
+        viewerLiked: false,
+        viewerReposted: false,
+        viewerBookmarked: false,
+        raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
+      },
+      raw: {
+        feedLabel: 'CoinDesk',
+        sentiment: { normalized: sentimentNormalized },
+      },
+      niches: ['crypto'],
+    });
+
+    const now = Date.now();
+    const pos = mod.rankNewsPost(makePost(0.5), now);
+    const neg = mod.rankNewsPost(makePost(-0.5), now);
+    const neut = mod.rankNewsPost(makePost(0), now);
+
+    expect(pos).toBeGreaterThan(neg);
+    expect(neut).toBeGreaterThan(neg);
+    // Signal is marginal (±5% max), not a complete reordering driver
+    expect(Math.abs(pos - neut)).toBeLessThanOrEqual(6);
   });
 });

@@ -163,11 +163,11 @@ export const PROVIDERS: Record<string, ProviderEntry> = {
     category: 'content',
   },
   newsletter: {
-    name: 'Newsletters (Substack/Medium/Mirror/Paragraph/Ghost/Beehiiv)',
+    name: 'Newsletters (Substack/Medium/Mirror/Paragraph/Ghost)',
     rateLimit: { maxRequests: 60, windowMs: 60_000 },
     category: 'content',
     fetch: async (limit) => {
-      const { fetchNewsletterPosts } = await import('../providers/rss');
+      const { fetchNewsletterPosts } = await import('../providers/newsletter');
       return fetchNewsletterPosts(limit);
     },
   },
@@ -600,6 +600,7 @@ export const DEFAULT_HOME_PROTOCOLS = [
   'mastodon',
   'reddit',
   'rss',
+  'newsletter',
   'lemmy',
   'peertube',
   'bluesky',

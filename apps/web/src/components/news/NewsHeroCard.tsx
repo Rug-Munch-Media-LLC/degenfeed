@@ -37,12 +37,13 @@ export function NewsHeroCard({
   onShare?: () => void;
 }) {
   const img = story.heroImage || story.imageUrl;
-  const tier = TIER_STYLES[story.sourceMeta.tier] || TIER_STYLES[4] || {
-    label: 'Standard',
-    bg: 'bg-gray-500/15',
-    text: 'text-gray-400',
-    ring: 'ring-gray-500/30',
-  };
+  const tier = TIER_STYLES[story.sourceMeta.tier] ||
+    TIER_STYLES[4] || {
+      label: 'Standard',
+      bg: 'bg-gray-500/15',
+      text: 'text-gray-400',
+      ring: 'ring-gray-500/30',
+    };
   const primaryCat = story.niches?.[0] || story.sourceMeta?.category || 'crypto';
   const biasStyle = story.bias ? BIAS_STYLES[story.bias] : undefined;
   const factualStyle = story.factualRating ? FACTUAL_STYLES[story.factualRating] : undefined;
@@ -89,11 +90,12 @@ export function NewsHeroCard({
               BREAKING
             </span>
           )}
-          {/* Source + Tier badge */}
+          {/* Source + Tier badge — prominent colored chip */}
           <span
-            className={`rounded-md px-1.5 py-0.5 text-[9px] font-bold ${tier.bg} ${tier.text} ${tier.ring} ring-1`}
+            className={`rounded-md px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${tier.bg} ${tier.text} ${tier.ring} ring-1`}
+            title={`Source tier ${story.sourceMeta.tier || 4} — higher is more authoritative`}
           >
-            {story.source} · {tier.label}
+            {story.source} · T{story.sourceMeta.tier || 4} · {tier.label}
           </span>
           {/* Ground News-style Bias Badge */}
           {biasStyle && (
