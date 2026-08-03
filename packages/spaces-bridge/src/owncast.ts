@@ -7,7 +7,7 @@
  *   - Built-in chat (WebSocket-based, no auth needed for read)
  *   - REST API for stream status and viewer count
  *
- * Our owncast instance is at http://127.0.0.1:8099 (internal)
+ * Our owncast instance is at http://127.0.0.1:8092 (internal)
  * or https://owncast.degenfeed.xyz (external via reverse proxy).
  *
  * Audio-only streams: Configure OBS with audio-only output → Owncast
@@ -24,7 +24,7 @@ import type { CreateSpaceOptions, PlatformBridge, SpaceItem, SpacePlatformData }
 
 // ─── Constants ───────────────────────────────────────────────────────────
 
-const OWCAST_INTERNAL = 'http://127.0.0.1:8099';
+const OWCAST_INTERNAL = 'http://127.0.0.1:8092';
 const OWCAST_EXTERNAL = 'https://owncast.degenfeed.xyz';
 
 /** Default Owncast endpoint (internal for production, configurable) */

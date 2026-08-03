@@ -30,6 +30,8 @@ interface PeerTubeVideo {
   url: string;
   duration: number;
   views: number;
+  isLive?: boolean;
+  viewers?: number;
   likes: number;
   dislikes?: number;
   thumbnailPath?: string;
@@ -57,6 +59,19 @@ interface PeerTubeVideo {
 interface PeerTubeResponse {
   total: number;
   data: PeerTubeVideo[];
+}
+
+/** Structured live-stream entry returned by the /api/feed/live aggregator. */
+export interface PeerTubeLiveStream {
+  platform: 'peertube';
+  title: string;
+  viewers: number;
+  thumbnail: string;
+  url: string;
+  online: boolean;
+  streamer: string;
+  startedAt?: number;
+  uuid: string;
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────
@@ -179,3 +194,66 @@ export async function fetchPeerTubePosts(limit = 20): Promise<UnifiedPost[]> {
 
 /** @alias Use `fetch` as the standardized export name */
 export const fetch = fetchPeerTubePosts;
+
+/**
+ * Fetch currently-live PeerTube videos from the local instance.
+ *
+ * PeerTube exposes live streams through the same /api/v1/videos endpoint
+ * with `isLive=true` (the legacy `filter=live` parameter is deprecated).
+ * Live videos are real-time streams, so we map them into the unified
+ * live-stream shape used by /api/feed/live.
+ */
+export async function fetchPeerTubeLiveStreams(limit = 20): Promise<PeerTubeLiveStream[]> {
+  // Rate limit: 50 requests/minute (shared budget with VOD fetches)
+  if (!checkRateLimit('peertube', { maxRequests: 50, windowMs: 60_000 })) {
+    console.log('[peertube] Rate limited, skipping live fetch');
+    return [];
+  }
+  try {
+    const url = `${PEERTUBE_BASE}/api/v1/videos?isLive=true&count=${Math.min(
+      limit,
+      50,
+    )}&sort=-publishedAt`;
+    const res = await $fetch(url, {
+      headers: { 'User-Agent': 'DegenFeed-Bridge/0.1' },
+      signal: AbortSignal.timeout(5000),
+    });
+
+    if (!res.ok) {
+      console.log(`[bridge] PeerTube live: HTTP ${res.status}`);
+      return [];
+    }
+
+    const data = (await res.json()) as PeerTubeResponse;
+    if (!data.data || data.data.length === 0) {
+      console.log('[bridge] PeerTube live: no live videos');
+      return [];
+    }
+
+    const streams: PeerTubeLiveStream[] = [];
+    for (const video of data.data) {
+      if (!video.isLive) continue;
+      const account = video.account || video.channel;
+      const streamer = account?.displayName || account?.name || 'PeerTube';
+      const viewers = video.viewers ?? video.views ?? 0;
+      const videoUrl = video.url || `${PEERTUBE_BASE}/videos/watch/${video.uuid}`;
+      streams.push({
+        platform: 'peertube',
+        title: video.name,
+        viewers,
+        thumbnail: video.thumbnailPath ? `${PEERTUBE_BASE}${video.thumbnailPath}` : '',
+        url: videoUrl,
+        online: true,
+        streamer,
+        startedAt: video.publishedAt ? new Date(video.publishedAt).getTime() : Date.now(),
+        uuid: video.uuid,
+      });
+    }
+
+    console.log(`[bridge] PeerTube live: ${streams.length} stream(s)`);
+    return streams.slice(0, limit);
+  } catch (err) {
+    console.log(`[bridge] PeerTube live: error - ${(err as Error).message}`);
+    return [];
+  }
+}
