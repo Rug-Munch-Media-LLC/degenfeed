@@ -326,8 +326,8 @@ function generateMockTrades(): TradeEntry[] {
     { addr: '0x2222222222222222222222222222222222222222', label: 'community' as WalletLabel },
     { addr: '0x3333333333333333333333333333333333333333', label: 'community' as WalletLabel },
   ];
-  return Array.from({ length: 40 }, (_, i) => {
-    const wallet = wallets[Math.floor(Math.random() * wallets.length)];
+  return Array.from({ length: 40 }, (_, i): TradeEntry => {
+    const wallet = wallets[Math.floor(Math.random() * wallets.length)]!;
     const isBuy = Math.random() > 0.45;
     return {
       txHash: `0x${(i + 1).toString(16).padStart(64, '0')}`,

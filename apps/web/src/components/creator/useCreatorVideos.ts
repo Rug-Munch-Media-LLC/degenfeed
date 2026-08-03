@@ -8,6 +8,7 @@ import useSWR, { mutate } from 'swr';
 /** Video metadata from the creator API. */
 export interface CreatorVideoMeta {
   uuid: string;
+  id?: string;
   title: string;
   description?: string;
   url?: string;
@@ -23,6 +24,10 @@ export interface CreatorVideoMeta {
   category?: number;
   isLive?: boolean;
   source?: string;
+  type?: 'video' | 'short' | 'stream';
+  tipRevenue?: number;
+  watchTime?: number;
+  newFollowers?: number;
 }
 
 /** Analytics data for a single video. */

@@ -18,27 +18,6 @@ import type { CallHistoryEntry, CallInfo, CallViewState, IncomingCall } from './
 
 export type { CallHistoryEntry, CallInfo, CallViewState, IncomingCall } from './types';
 
-// ─── Peer Connection Manager ────────────────────────────────────────
-
-function _createPeerConnection(
-  stunServers: string[],
-  onIceCandidate: (candidate: RTCIceCandidateInit, peerId: string) => void,
-  onTrack: (stream: MediaStream, peerId: string) => void,
-): RTCPeerConnection {
-  const config: RTCConfiguration = {
-    iceServers: stunServers.map((url) => ({ urls: url })),
-    iceCandidatePoolSize: 10,
-  };
-  const pc = new RTCPeerConnection(config);
-  pc.onicecandidate = (event) => {
-    if (event.candidate) onIceCandidate(event.candidate.toJSON(), 'peer');
-  };
-  pc.ontrack = (event) => {
-    onTrack(event.streams[0], 'peer');
-  };
-  return pc;
-}
-
 // ─── User Media Hook ────────────────────────────────────────────────
 
 function useUserMedia(type: 'audio' | 'video') {
@@ -105,10 +84,12 @@ function useUserMedia(type: 'audio' | 'video') {
           video: { facingMode },
         });
         const newTrack = newStream.getVideoTracks()[0];
-        videoTrack.stop();
-        localStream.removeTrack(videoTrack);
-        localStream.addTrack(newTrack);
-        setVideoMuted(false);
+        if (newTrack) {
+          videoTrack.stop();
+          localStream.removeTrack(videoTrack);
+          localStream.addTrack(newTrack);
+          setVideoMuted(false);
+        }
       }
     }
   }, [localStream]);
@@ -203,15 +184,12 @@ interface VideoCallProps {
 // ═════════════════════════════════════════════════════════════════════
 
 export function VideoCall({
-  activeCallId,
   callType: initialCallType,
-  targetPeer,
   onCallEnd,
   incomingCall,
   onAcceptIncoming,
   onDeclineIncoming,
   callHistory: externalHistory,
-  showCallButtons,
 }: VideoCallProps) {
   const { tokens } = useAuth();
   const wallet = tokens.evmAddress || tokens.solanaAddress || null;
@@ -244,31 +222,6 @@ export function VideoCall({
     flipCamera,
   } = useUserMedia(initialCallType || 'video');
   const signaling = useSignaling(callInfo?.callId ?? null, wallet);
-
-  const _createCall = useCallback(
-    async (type: 'audio' | 'video', peer: string) => {
-      if (!wallet) return;
-      setViewState('calling');
-      try {
-        const res = await fetch('/api/calls/create', {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({ type, participants: [peer] }),
-        });
-        if (!res.ok) {
-          setViewState('idle');
-          return;
-        }
-        const data = await res.json();
-        setCallInfo(data.call);
-        setViewState('calling');
-      } catch {
-        setViewState('idle');
-      }
-    },
-    [wallet],
-  );
 
   const setupPeerConnections = useCallback(
     async (
@@ -349,15 +302,17 @@ export function VideoCall({
         });
         screenShareStream.current = screenStream;
         const screenTrack = screenStream.getVideoTracks()[0];
-        peerConnections.current.forEach((pc) => {
-          const sender = pc.getSenders().find((s) => s.track?.kind === 'video');
-          if (sender) sender.replaceTrack(screenTrack).catch(() => {});
-        });
-        screenTrack.onended = () => {
-          setIsScreenSharing(false);
-          screenShareStream.current = null;
-        };
-        setIsScreenSharing(true);
+        if (screenTrack) {
+          peerConnections.current.forEach((pc) => {
+            const sender = pc.getSenders().find((s) => s.track?.kind === 'video');
+            if (sender) sender.replaceTrack(screenTrack).catch(() => {});
+          });
+          screenTrack.onended = () => {
+            setIsScreenSharing(false);
+            screenShareStream.current = null;
+          };
+          setIsScreenSharing(true);
+        }
       } catch {
         /* User cancelled */
       }

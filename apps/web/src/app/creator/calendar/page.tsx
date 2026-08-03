@@ -84,7 +84,7 @@ const PROTOCOL_ICONS: Record<string, string> = {
 // ─── Calendar Component ───────────────────────────────────────────────────
 
 export default function CalendarPage() {
-  const { walletAddress, signedInProtocols } = useAuth();
+  const { walletAddress } = useAuth();
   const { showToast } = useToast();
 
   // ── Navigation ──
@@ -127,8 +127,8 @@ export default function CalendarPage() {
 
     setLoading(true);
     try {
-      const startStr = viewStart.toISOString().split('T')[0];
-      const endStr = viewEnd.toISOString().split('T')[0];
+      const startStr = viewStart.toISOString().split('T')[0] ?? '';
+      const endStr = viewEnd.toISOString().split('T')[0] ?? '';
 
       const [calRes, timesRes] = await Promise.all([
         fetch(`/api/premium/calendar?start=${startStr}&end=${endStr}`, {
@@ -149,7 +149,7 @@ export default function CalendarPage() {
         setAiSuggestions(timesData.bestTimes ?? []);
       }
     } catch {
-      showToast('Failed to load calendar', 'error');
+      showToast('error', 'Failed to load calendar');
     } finally {
       setLoading(false);
     }
@@ -202,14 +202,14 @@ export default function CalendarPage() {
         });
 
         if (res.ok) {
-          showToast(`Rescheduled to ${targetDate}`, 'success');
+          showToast('success', `Rescheduled to ${targetDate}`);
           fetchCalendar();
         } else {
           const err = (await res.json()) as { error?: string };
-          showToast(err.error ?? 'Failed to reschedule', 'error');
+          showToast('error', err.error ?? 'Failed to reschedule');
         }
       } catch {
-        showToast('Failed to reschedule', 'error');
+        showToast('error', 'Failed to reschedule');
       }
 
       setDraggedEntry(null);
@@ -234,16 +234,16 @@ export default function CalendarPage() {
       });
 
       if (res.ok) {
-        showToast('Post queued with AI-optimized time', 'success');
+        showToast('success', 'Post queued with AI-optimized time');
         setQuickScheduleText('');
         setShowQuickSchedule(false);
         fetchCalendar();
       } else {
         const err = (await res.json()) as { error?: string };
-        showToast(err.error ?? 'Failed to queue', 'error');
+        showToast('error', err.error ?? 'Failed to queue');
       }
     } catch {
-      showToast('Failed to queue post', 'error');
+      showToast('error', 'Failed to queue post');
     }
   }, [quickScheduleText, fetchCalendar, showToast]);
 
@@ -506,7 +506,7 @@ export default function CalendarPage() {
       ) : (
         <DayView
           date={currentDate}
-          entries={getEntriesForDate(currentDate.toISOString().split('T')[0])}
+          entries={getEntriesForDate(currentDate.toISOString().split('T')[0] ?? '')}
           onDragStart={handleDragStart}
         />
       )}
@@ -551,7 +551,7 @@ function MonthView({
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const daysInPrevMonth = new Date(year, month, 0).getDate();
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = new Date().toISOString().split('T')[0] ?? '';
 
   const weeks = useMemo(() => {
     const rows: Array<{ date: string; day: number; isCurrentMonth: boolean }[]> = [];
@@ -560,13 +560,13 @@ function MonthView({
     // Previous month padding
     for (let i = firstDay - 1; i >= 0; i--) {
       const d = daysInPrevMonth - i;
-      const dateStr = new Date(year, month - 1, d).toISOString().split('T')[0];
+      const dateStr = new Date(year, month - 1, d).toISOString().split('T')[0] ?? '';
       cells.push({ date: dateStr, day: d, isCurrentMonth: false });
     }
 
     // Current month
     for (let day = 1; day <= daysInMonth; day++) {
-      const dateStr = new Date(year, month, day).toISOString().split('T')[0];
+      const dateStr = new Date(year, month, day).toISOString().split('T')[0] ?? '';
       cells.push({ date: dateStr, day, isCurrentMonth: true });
       if (cells.length === 7) {
         rows.push(cells);
@@ -578,7 +578,7 @@ function MonthView({
     if (cells.length > 0) {
       let nextDay = 1;
       while (cells.length < 7) {
-        const dateStr = new Date(year, month + 1, nextDay).toISOString().split('T')[0];
+        const dateStr = new Date(year, month + 1, nextDay).toISOString().split('T')[0] ?? '';
         cells.push({ date: dateStr, day: nextDay, isCurrentMonth: false });
         nextDay++;
       }
@@ -641,7 +641,7 @@ function MonthView({
                         onDragStart={() => onDragStart(entry)}
                         className="cursor-grab truncate rounded px-1 py-0.5 text-[9px] font-medium text-white"
                         style={{
-                          backgroundColor: PROTOCOL_COLORS[entry.protocols[0]] ?? '#6364ff',
+                          backgroundColor: PROTOCOL_COLORS[entry.protocols[0] ?? ''] ?? '#6364ff',
                           opacity: 0.85,
                         }}
                         title={entry.masterPost.text.slice(0, 100)}
@@ -682,7 +682,7 @@ function WeekView({
   onDragStart: (entry: CalendarEntry) => void;
   onDateClick: (date: string) => void;
 }) {
-  const today = new Date().toISOString().split('T')[0];
+  const today = new Date().toISOString().split('T')[0] ?? '';
 
   const days = Array.from({ length: 7 }, (_, i) => {
     const date = new Date(startDate);
@@ -698,7 +698,7 @@ function WeekView({
       <div className="grid grid-cols-[60px_repeat(7,1fr)] border-b border-[var(--color-border)]">
         <div className="px-2 py-2" />
         {days.map((day) => {
-          const dateStr = day.toISOString().split('T')[0];
+          const dateStr = day.toISOString().split('T')[0] ?? '';
           const isToday = dateStr === today;
           return (
             <div
@@ -729,7 +729,7 @@ function WeekView({
               {hour.toString().padStart(2, '0')}:00
             </div>
             {days.map((day) => {
-              const dateStr = day.toISOString().split('T')[0];
+              const dateStr = day.toISOString().split('T')[0] ?? '';
               const entries = getEntriesForDate(dateStr);
               const hourEntries = entries.filter((e) => {
                 if (!e.scheduledAt) return false;
@@ -751,7 +751,7 @@ function WeekView({
                       onDragStart={() => onDragStart(entry)}
                       className="mb-0.5 cursor-grab truncate rounded px-1 py-0.5 text-[9px] font-medium text-white"
                       style={{
-                        backgroundColor: PROTOCOL_COLORS[entry.protocols[0]] ?? '#6364ff',
+                        backgroundColor: PROTOCOL_COLORS[entry.protocols[0] ?? ''] ?? '#6364ff',
                         opacity: 0.85,
                       }}
                       title={entry.masterPost.text.slice(0, 100)}
@@ -781,7 +781,6 @@ function DayView({
   entries: CalendarEntry[];
   onDragStart: (entry: CalendarEntry) => void;
 }) {
-  const _dateStr = date.toISOString().split('T')[0];
 
   // Group entries by status
   const scheduled = entries.filter((e) => e.status === 'scheduled');
@@ -938,10 +937,10 @@ function EntryCard({
           {entry.status}
         </span>
 
-        {entry.hashtags && entry.hashtags.length > 0 && (
+        {entry.masterPost.hashtags && entry.masterPost.hashtags.length > 0 && (
           <span className="text-[9px] text-[var(--color-muted)]">
-            #{entry.hashtags.slice(0, 2).join(' #')}
-            {entry.hashtags.length > 2 && ` +${entry.hashtags.length - 2}`}
+            #{entry.masterPost.hashtags.slice(0, 2).join(' #')}
+            {entry.masterPost.hashtags.length > 2 && ` +${entry.masterPost.hashtags.length - 2}`}
           </span>
         )}
       </div>

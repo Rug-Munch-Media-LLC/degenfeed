@@ -202,8 +202,8 @@ function ContentCard({
 
     // Find best and second best
     const sorted = protocols.sort(([, a], [, b]) => b.engagement.likes - a.engagement.likes);
-    const best = sorted[0];
-    const second = sorted[1];
+    const best = sorted[0]!;
+    const second = sorted[1]!;
 
     if (best[1].engagement.likes > 0 && second[1].engagement.likes > 0) {
       const ratio = (best[1].engagement.likes / second[1].engagement.likes).toFixed(1);
@@ -278,7 +278,7 @@ function ContentCard({
                 {Object.keys(record.protocols)
                   .slice(0, 4)
                   .map((p) => {
-                    const meta = PLATFORM_META[p] ?? { icon: '📄', color: '#666' };
+                    const meta = PLATFORM_META[p] ?? { label: p, icon: '📄', color: '#666' };
                     return (
                       <span
                         key={p}

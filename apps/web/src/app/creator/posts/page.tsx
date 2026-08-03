@@ -183,8 +183,8 @@ function EngagementComparison({ copies }: { copies: CrossPostRecord['copies'] })
 
   if (sorted.length < 2) return null;
 
-  const best = sorted[0];
-  const second = sorted[1];
+  const best = sorted[0]!;
+  const second = sorted[1]!;
   const bestMetrics = metrics[best.protocol];
   const secondMetrics = metrics[second.protocol];
 
@@ -220,7 +220,7 @@ function EngagementComparison({ copies }: { copies: CrossPostRecord['copies'] })
             icon: '📄',
             color: '#666',
           };
-          const maxLikes = sorted.length > 0 ? (metrics[sorted[0].protocol]?.likes ?? 1) : 1;
+          const maxLikes = sorted.length > 0 ? (metrics[sorted[0]!.protocol]?.likes ?? 1) : 1;
           const barWidth = Math.max(5, (m.likes / maxLikes) * 100);
 
           return (
@@ -559,7 +559,7 @@ function ContentLibrarySection({
           <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-3">
             <div className="text-[10px] text-[var(--color-muted)]">Best Posting Time</div>
             <div className="text-sm font-bold text-degen-400">
-              {bestHours[0].hour.toString().padStart(2, '0')}:00 UTC
+              {bestHours[0]!.hour.toString().padStart(2, '0')}:00 UTC
             </div>
           </div>
           <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-3">
