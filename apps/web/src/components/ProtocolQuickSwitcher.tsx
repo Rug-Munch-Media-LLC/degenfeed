@@ -118,7 +118,7 @@ export function ProtocolQuickSwitcher({ open, onClose }: QuickSwitcherProps) {
         id,
         label: conn.name,
         description: conn.connected ? `Connected as ${conn.handle ?? ''}` : 'Not connected',
-        href: `/${id}`,
+        href: conn.route ?? `/${id}`,
         icon: conn.icon,
         color: conn.color,
         type: 'protocol' as const,

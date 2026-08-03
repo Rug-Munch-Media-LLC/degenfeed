@@ -3,37 +3,42 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { memo } from 'react';
+import { memo, useEffect, useMemo, useState } from 'react';
 import { useNotifications } from '../hooks/useNotifications';
 import { useProtocolConnections } from '../hooks/useProtocolConnections';
 import { useAuth } from './AuthProvider';
+import {
+  CATEGORY_DISPLAY_ORDER,
+  CATEGORY_PROTOCOLS,
+  EXTRA_PROTOCOLS,
+  type ProtocolCategory,
+} from './feed/feed-protocols';
 import { useToast } from './Toast';
 import { UnifiedComposerButton } from './UnifiedComposerButton';
 
 /* === SVG Icon Components ==================================== */
 
 function HomeIcon({ active }: { active: boolean }) {
-  return active ? (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <path d="M21 20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.49a1 1 0 01.386-.79l8-6.222a1 1 0 011.228 0l8 6.222a1 1 0 01.386.79V20z" />
-    </svg>
-  ) : (
+  return (
     <svg
       width="22"
       height="22"
       viewBox="0 0 24 24"
-      fill="none"
+      fill={active ? 'currentColor' : 'none'}
       stroke="currentColor"
-      strokeWidth="1.5"
+      strokeWidth={active ? 2.5 : 1.5}
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden="true"
     >
-      <path d="M21 20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.49a1 1 0 01.386-.79l8-6.222a1 1 0 011.228 0l8 6.222a1 1 0 01.386.79V20z" />
+      {active ? (
+        <path d="M21 20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.49a1 1 0 01.386-.79l8-6.222a1 1 0 011.228 0l8 6.222a1 1 0 01.386.79V20z" />
+      ) : (
+        <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+      )}
     </svg>
   );
 }
-
 
 function ProtocolsIcon({ active }: { active: boolean }) {
   return (
@@ -74,25 +79,29 @@ function SearchIcon() {
 }
 
 function NotifIcon({ active }: { active: boolean }) {
-  return active ? (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <path d="M11.996 2c-4.062 0-7 2.692-7 6v3.089c0 1.036-.633 1.965-1.516 2.355C2.685 13.997 2 14.996 2 16.05v.698c0 .832.538 1.252 1.184 1.252h17.632c.646 0 1.184-.42 1.184-1.252v-.699c0-1.052-.685-2.052-1.48-2.506-.883-.39-1.516-1.319-1.516-2.355V8c0-3.308-2.938-6-7.004-6z" />
-      <path d="M15 19a3 3 0 11-6 0" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-    </svg>
-  ) : (
+  return (
     <svg
       width="22"
       height="22"
       viewBox="0 0 24 24"
-      fill="none"
+      fill={active ? 'currentColor' : 'none'}
       stroke="currentColor"
-      strokeWidth="1.5"
+      strokeWidth={active ? 2.5 : 1.5}
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden="true"
     >
-      <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
-      <path d="M13.73 21a2 2 0 01-3.46 0" />
+      {active ? (
+        <path d="M11.996 2c-4.062 0-7 2.692-7 6v3.089c0 1.036-.633 1.965-1.516 2.355C2.685 13.997 2 14.996 2 16.05v.698c0 .832.538 1.252 1.184 1.252h17.632c.646 0 1.184-.42 1.184-1.252v-.699c0-1.052-.685-2.052-1.48-2.506-.883-.39-1.516-1.319-1.516-2.355V8c0-3.308-2.938-6-7.004-6z" />
+      ) : (
+        <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
+      )}
+      <path
+        d="M15 19a3 3 0 11-6 0"
+        stroke={active ? 'currentColor' : 'currentColor'}
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }
@@ -116,7 +125,136 @@ function SettingsIcon() {
   );
 }
 
-/* === Nav items ============================================== */
+function MessagesIcon({ active }: { active: boolean }) {
+  return (
+    <svg
+      width="22"
+      height="22"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={active ? 2.5 : 1.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+    </svg>
+  );
+}
+
+function ChevronIcon({ collapsed }: { collapsed: boolean }) {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      className={`transition-transform duration-200 ${collapsed ? '-rotate-90' : ''}`}
+    >
+      <polyline points="6 9 12 15 18 9" />
+    </svg>
+  );
+}
+
+/* === Nav model =============================================== */
+
+type SectionId = 'social' | 'content' | 'video' | 'web3' | 'tools';
+
+const SECTION_IDS: SectionId[] = ['social', 'content', 'video', 'web3', 'tools'];
+
+const SECTION_META: Record<SectionId, { label: string; icon: string }> = {
+  social: { label: 'Social', icon: '💬' },
+  content: { label: 'Content', icon: '📝' },
+  video: { label: 'Video', icon: '🎬' },
+  web3: { label: 'Web3', icon: '🔗' },
+  tools: { label: 'Tools', icon: '🛠️' },
+};
+
+/** Map the canonical protocol registry categories onto sidebar sections. */
+const CATEGORY_TO_SECTION: Record<ProtocolCategory, SectionId> = {
+  social: 'social',
+  communities: 'social',
+  content: 'content',
+  news: 'content',
+  media: 'content',
+  video: 'video',
+  web3: 'web3',
+};
+
+interface FeatureLink {
+  id: string;
+  label: string;
+  href: string;
+  icon: string;
+  color: string;
+  /** Renders a pulsing red dot (used for Live). */
+  live?: boolean;
+}
+
+const SECTION_FEATURES: Record<SectionId, FeatureLink[]> = {
+  social: [
+    { id: 'spaces', label: 'Spaces', href: '/spaces', icon: '🎙️', color: '#22d3ee' },
+    { id: 'communities', label: 'Communities', href: '/c', icon: '👥', color: '#a78bfa' },
+  ],
+  content: [
+    { id: 'news', label: 'News', href: '/news', icon: '📰', color: '#f97316' },
+    { id: 'newsletters', label: 'Newsletters', href: '/newsletter', icon: '📬', color: '#e63946' },
+    { id: 'podcasts', label: 'Podcasts', href: '/podcasts', icon: '🎙️', color: '#7c3aed' },
+    { id: 'visual', label: 'Visual / Photos', href: '/visual', icon: '🖼️', color: '#ec4899' },
+    { id: 'images', label: 'Images', href: '/images', icon: '📷', color: '#f59e0b' },
+    { id: 'articles', label: 'Articles', href: '/articles', icon: '📄', color: '#22c55e' },
+    { id: 'digest', label: 'Digest', href: '/digest', icon: '📥', color: '#f43f5e' },
+  ],
+  video: [
+    { id: 'youtube', label: 'YouTube', href: '/youtube', icon: '▶️', color: '#ff0000' },
+    { id: 'videos', label: 'Videos', href: '/videos', icon: '🎬', color: '#a855f7' },
+    { id: 'shorts', label: 'Shorts', href: '/shorts', icon: '⚡', color: '#facc15' },
+    { id: 'live', label: 'Live', href: '/live', icon: '🔴', color: '#ef4444', live: true },
+  ],
+  web3: [
+    { id: 'dao', label: 'DAO', href: '/dao/create', icon: '🏛️', color: '#6366f1' },
+    { id: 'creator-coins', label: 'Creator Coins', href: '/coins', icon: '🪙', color: '#f59e0b' },
+    { id: 'launch', label: 'Launch', href: '/launch', icon: '🚀', color: '#22d3ee' },
+    { id: 'connect', label: 'Connect', href: '/connect', icon: '🔗', color: '#10b981' },
+  ],
+  tools: [
+    { id: 'search', label: 'Search', href: '/search', icon: '🔍', color: '#6366f1' },
+    {
+      id: 'notifications',
+      label: 'Notifications',
+      href: '/notifications',
+      icon: '🔔',
+      color: '#ec4899',
+    },
+    { id: 'messages', label: 'Messages', href: '/messages', icon: '💬', color: '#3b82f6' },
+    { id: 'creator', label: 'Creator Studio', href: '/creator', icon: '✏️', color: '#a78bfa' },
+    { id: 'trending', label: 'Trending', href: '/trending', icon: '📈', color: '#f97316' },
+    { id: 'leaderboard', label: 'Leaderboard', href: '/leaderboard', icon: '🏆', color: '#eab308' },
+    { id: 'discover', label: 'Discover', href: '/discover', icon: '🧭', color: '#06b6d4' },
+    { id: 'feeds', label: 'Feeds', href: '/feeds', icon: '📚', color: '#8b5cf6' },
+    { id: 'pricing', label: 'Pricing', href: '/pricing', icon: '💎', color: '#22c55e' },
+    { id: 'premium', label: 'Premium', href: '/premium', icon: '👑', color: '#fbbf24' },
+    { id: 'status', label: 'Status', href: '/status', icon: '💚', color: '#10b981' },
+    { id: 'settings', label: 'Settings', href: '/settings', icon: '⚙️', color: '#94a3b8' },
+    { id: 'docs', label: 'Docs', href: '/docs', icon: '📖', color: '#64748b' },
+  ],
+};
+
+const SECTION_STORAGE_KEY = 'df_sidebar_sections';
+
+/**
+ * Protocol rows that duplicate a section feature link (e.g. "YouTube" hub
+ * vs the /feed/youtube protocol feed). The feature link covers the concept
+ * in the sidebar; the underlying feed stays reachable via FeedShell and the
+ * quick switcher, so we don't render the row twice.
+ */
+const FEATURE_DUPLICATE_PROTOCOL_IDS = new Set(['youtube', 'live', 'newsletter', 'podcast']);
 
 /* === Main Component ========================================= */
 
@@ -134,35 +272,246 @@ export const LeftSidebar = memo(function LeftSidebar({
   onCollapseToggle?: () => void;
 }) {
   const pathname = usePathname();
-  const { ready, signedInProtocols, openSignIn, walletAddress } = useAuth();
+  const { ready, signedInProtocols, openSignIn, walletAddress, primaryIdentity } = useAuth();
   const { showToast } = useToast();
   const hasSignedIn = Object.values(signedInProtocols).some(Boolean);
   const { unreadCount } = useNotifications(hasSignedIn);
-  const { connections, connectedCount, healthyCount, loaded } = useProtocolConnections();
+  const { connections, healthyCount, loaded } = useProtocolConnections();
 
-  const isActive = (href: string) => {
-    if (href === '/feed')
-      return (
-        pathname === '/feed' || pathname === '/home/all' || pathname === '/home' || pathname === '/'
-      );
-    if (href === '/notifications')
-      return pathname === '/notifications' || pathname.startsWith('/notifications/');
-    if (href === '/settings') return pathname === '/settings' || pathname.startsWith('/settings/');
-    if (href === '/search') return pathname === '/search';
-    if (href === '/status') return pathname === '/status';
-    return pathname === href || pathname.startsWith(`${href}/`);
+  /* ── Section collapse state (persisted) ──────────────────── */
+
+  const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>(() => {
+    if (typeof window === 'undefined') return {};
+    try {
+      const raw = window.localStorage.getItem(SECTION_STORAGE_KEY);
+      return raw ? (JSON.parse(raw) as Record<string, boolean>) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(SECTION_STORAGE_KEY, JSON.stringify(collapsedSections));
+    } catch {
+      // ignore quota / privacy-mode errors
+    }
+  }, [collapsedSections]);
+
+  const isSectionCollapsed = (sid: SectionId) => collapsedSections[sid] === true;
+
+  const toggleSection = (sid: SectionId) => {
+    setCollapsedSections((prev) => ({ ...prev, [sid]: !prev[sid] }));
   };
 
-  const isProtocolPage = (pid: string) => {
-    return pathname === `/${pid}` || pathname.startsWith(`/${pid}/`);
+  /* ── Protocol → section mapping ───────────────────────────── */
+
+  const sectionProtocolIds = useMemo(() => {
+    const ordered: { section: SectionId; id: string }[] = [];
+    for (const cat of CATEGORY_DISPLAY_ORDER) {
+      const section = CATEGORY_TO_SECTION[cat];
+      for (const id of CATEGORY_PROTOCOLS[cat] ?? []) ordered.push({ section, id });
+    }
+    for (const p of EXTRA_PROTOCOLS) {
+      ordered.push({ section: CATEGORY_TO_SECTION[p.category], id: p.id });
+    }
+    const map: Record<SectionId, string[]> = {
+      social: [],
+      content: [],
+      video: [],
+      web3: [],
+      tools: [],
+    };
+    const seen = new Set<string>();
+    for (const { section, id } of ordered) {
+      if (seen.has(id)) continue;
+      seen.add(id);
+      map[section].push(id);
+    }
+    return map;
+  }, []);
+
+  const sectionHealthyCounts = useMemo(() => {
+    const counts: Record<SectionId, number> = {
+      social: 0,
+      content: 0,
+      video: 0,
+      web3: 0,
+      tools: 0,
+    };
+    for (const sid of SECTION_IDS) {
+      counts[sid] = sectionProtocolIds[sid].filter(
+        (id) => connections[id]?.status === 'healthy',
+      ).length;
+    }
+    return counts;
+  }, [sectionProtocolIds, connections]);
+
+  /* ── Active-state helpers ─────────────────────────────────── */
+
+  const isFeatureActive = (href: string) => {
+    switch (href) {
+      case '/feed':
+        return (
+          pathname === '/feed' ||
+          pathname === '/home' ||
+          pathname === '/home/all' ||
+          pathname === '/'
+        );
+      case '/search':
+        return pathname === '/search';
+      case '/notifications':
+        return pathname === '/notifications' || pathname.startsWith('/notifications/');
+      case '/settings':
+        return pathname === '/settings' || pathname.startsWith('/settings/');
+      case '/status':
+        return pathname === '/status';
+      case '/pricing':
+        return pathname === '/pricing';
+      case '/news':
+        return pathname === '/news' || pathname.startsWith('/news/');
+      case '/c':
+        return pathname === '/c' || pathname.startsWith('/c/');
+      case '/dao/create':
+        return pathname === '/dao' || pathname.startsWith('/dao/');
+      default:
+        return pathname === href || pathname.startsWith(`${href}/`);
+    }
+  };
+
+  const isProtocolActive = (pid: string, route: string) => {
+    return (
+      pathname === route ||
+      pathname.startsWith(`${route}/`) ||
+      pathname === `/${pid}` ||
+      pathname.startsWith(`/${pid}/`)
+    );
   };
 
   const handleClick = () => {
     onNavClick?.();
   };
 
-  // Protocols sidebar items
-  const protocolIds = ['nostr', 'farcaster', 'lens', 'bluesky', 'mastodon', 'reddit', 'rss'];
+  /* ── Renders ──────────────────────────────────────────────── */
+
+  const renderFeatureLink = (f: FeatureLink) => {
+    const active = isFeatureActive(f.href);
+    const showUnread = f.id === 'notifications' && unreadCount > 0;
+    return (
+      <Link
+        key={f.id}
+        href={f.href}
+        onClick={handleClick}
+        className={`sidebar-nav-item ${active ? 'sidebar-nav-active' : ''}`}
+        aria-current={active ? 'page' : undefined}
+      >
+        <span
+          className="sidebar-nav-icon flex h-6 w-6 items-center justify-center rounded-lg text-xs font-bold"
+          style={{
+            backgroundColor: active ? `${f.color}1a` : 'transparent',
+            color: active ? f.color : 'var(--color-muted)',
+          }}
+        >
+          {f.icon}
+        </span>
+        <span className="sidebar-nav-label">{f.label}</span>
+        {f.live && (
+          <span
+            role="img"
+            aria-label="Live"
+            title="Live"
+            className="ml-auto h-2 w-2 shrink-0 animate-pulse rounded-full bg-red-500"
+          />
+        )}
+        {showUnread && (
+          <span
+            role="status"
+            className="ml-auto flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-degen-500 px-1.5 text-[11px] font-bold text-black"
+            aria-label={`${unreadCount} unread notifications`}
+          >
+            {unreadCount > 99 ? '99+' : unreadCount}
+          </span>
+        )}
+      </Link>
+    );
+  };
+
+  const renderProtocolRow = (pid: string) => {
+    const conn = connections[pid];
+    if (!conn) return null;
+    const active = isProtocolActive(pid, conn.route);
+    const healthy = conn.status === 'healthy';
+    const unhealthy = conn.status === 'unhealthy';
+    const dotClass = healthy
+      ? 'bg-degen-500'
+      : unhealthy
+        ? 'bg-yellow-500'
+        : 'bg-[var(--color-muted)]';
+    const dotLabel = healthy ? 'Healthy' : unhealthy ? 'Unhealthy' : 'Not reported by bridge';
+    return (
+      <Link
+        key={pid}
+        href={conn.route}
+        onClick={handleClick}
+        className={`sidebar-nav-item ${active ? 'sidebar-nav-active' : ''}`}
+        aria-current={active ? 'page' : undefined}
+      >
+        <span
+          className="sidebar-nav-icon flex h-6 w-6 items-center justify-center rounded-lg text-xs font-bold"
+          style={{
+            backgroundColor: healthy ? `${conn.color}1a` : 'transparent',
+            color: healthy ? conn.color : 'var(--color-muted)',
+          }}
+        >
+          {conn.icon}
+        </span>
+        <span className="sidebar-nav-label">{conn.name}</span>
+        <span
+          role="img"
+          className={`ml-auto h-2 w-2 shrink-0 rounded-full ${dotClass}`}
+          aria-label={dotLabel}
+          title={dotLabel}
+        />
+      </Link>
+    );
+  };
+
+  const renderSection = (sid: SectionId) => {
+    const meta = SECTION_META[sid];
+    const isCollapsed = isSectionCollapsed(sid);
+    const healthyCount = sectionHealthyCounts[sid];
+    return (
+      <div key={sid} className="mb-0.5">
+        <button
+          type="button"
+          onClick={() => toggleSection(sid)}
+          className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-[10px] font-semibold uppercase tracking-wider transition-colors hover:bg-[var(--color-overlay)]"
+          style={{ color: 'var(--color-muted)' }}
+          aria-expanded={!isCollapsed}
+          aria-controls={`sidebar-section-${sid}`}
+        >
+          <span className="text-xs" aria-hidden="true">
+            {meta.icon}
+          </span>
+          <span className="flex-1 text-left">{meta.label}</span>
+          {healthyCount > 0 && (
+            <span className="rounded-full bg-degen-500/15 px-1.5 text-[9px] font-bold text-degen-400">
+              {healthyCount}
+            </span>
+          )}
+          <ChevronIcon collapsed={isCollapsed} />
+        </button>
+        {!isCollapsed && (
+          <div id={`sidebar-section-${sid}`} className="space-y-0.5 px-1">
+            {SECTION_FEATURES[sid].map(renderFeatureLink)}
+            {sectionProtocolIds[sid]
+              .filter((id) => !FEATURE_DUPLICATE_PROTOCOL_IDS.has(id))
+              .map(renderProtocolRow)}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <aside
@@ -194,58 +543,146 @@ export const LeftSidebar = memo(function LeftSidebar({
 
       {/* Primary navigation */}
       <nav className="flex-1 space-y-0.5 px-1" aria-label="Sidebar">
-        {/* Home / Feed */}
-        <Link
-          href="/feed"
-          onClick={handleClick}
-          className={`sidebar-nav-item ${isActive('/feed') ? 'sidebar-nav-active' : ''} ${collapsed ? 'justify-center px-0' : ''}`}
-          aria-current={isActive('/feed') ? 'page' : undefined}
-          title={collapsed ? 'Home' : undefined}
-        >
-          <span className="sidebar-nav-icon">
-            <HomeIcon active={isActive('/feed')} />
-          </span>
-          {!collapsed && <span className="sidebar-nav-label">Home</span>}
-        </Link>
+        {collapsed ? (
+          /* ── Mini-mode: the most important 5-6 icons ── */
+          <>
+            {/* Home */}
+            <Link
+              href="/feed"
+              onClick={handleClick}
+              className={`sidebar-nav-item justify-center px-0 ${isFeatureActive('/feed') ? 'sidebar-nav-active' : ''}`}
+              aria-current={isFeatureActive('/feed') ? 'page' : undefined}
+              title="Home"
+            >
+              <span className="sidebar-nav-icon">
+                <HomeIcon active={isFeatureActive('/feed')} />
+              </span>
+            </Link>
 
-        {/* Protocols — opens connect flow */}
-        <button
-          type="button"
-          onClick={() => {
-            handleClick();
-            onProtocolConnectOpen?.();
-          }}
-          className={`sidebar-nav-item w-full ${collapsed ? 'justify-center px-0' : ''}`}
-          title={collapsed ? 'Protocols' : undefined}
-        >
-          <span className="sidebar-nav-icon">
-            <ProtocolsIcon active={false} />
-          </span>
-          {!collapsed && (
-            <>
+            {/* Search (quick switcher) */}
+            <button
+              type="button"
+              onClick={() => {
+                handleClick();
+                onQuickSwitcherOpen?.();
+              }}
+              className="sidebar-nav-item w-full justify-center px-0"
+              title="Search"
+            >
+              <span className="sidebar-nav-icon">
+                <SearchIcon />
+              </span>
+            </button>
+
+            {/* Protocols */}
+            <button
+              type="button"
+              onClick={() => {
+                handleClick();
+                onProtocolConnectOpen?.();
+              }}
+              className="sidebar-nav-item w-full justify-center px-0"
+              title="Protocols"
+            >
+              <span className="sidebar-nav-icon">
+                <ProtocolsIcon active={false} />
+              </span>
+            </button>
+
+            {/* Notifications */}
+            <Link
+              href="/notifications"
+              onClick={handleClick}
+              className={`sidebar-nav-item relative justify-center px-0 ${isFeatureActive('/notifications') ? 'sidebar-nav-active' : ''}`}
+              aria-current={isFeatureActive('/notifications') ? 'page' : undefined}
+              title="Notifications"
+            >
+              <span className="sidebar-nav-icon">
+                <NotifIcon active={isFeatureActive('/notifications')} />
+              </span>
+              {unreadCount > 0 && (
+                <span
+                  role="status"
+                  className="absolute right-1 top-1 flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-degen-500 px-1 text-[9px] font-bold text-black"
+                  aria-label={`${unreadCount} unread notifications`}
+                >
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
+            </Link>
+
+            {/* Messages */}
+            <Link
+              href="/messages"
+              onClick={handleClick}
+              className={`sidebar-nav-item justify-center px-0 ${isFeatureActive('/messages') ? 'sidebar-nav-active' : ''}`}
+              aria-current={isFeatureActive('/messages') ? 'page' : undefined}
+              title="Messages"
+            >
+              <span className="sidebar-nav-icon">
+                <MessagesIcon active={isFeatureActive('/messages')} />
+              </span>
+            </Link>
+
+            {/* Settings */}
+            <Link
+              href="/settings"
+              onClick={handleClick}
+              className={`sidebar-nav-item justify-center px-0 ${isFeatureActive('/settings') ? 'sidebar-nav-active' : ''}`}
+              aria-current={isFeatureActive('/settings') ? 'page' : undefined}
+              title="Settings"
+            >
+              <span className="sidebar-nav-icon">
+                <SettingsIcon />
+              </span>
+            </Link>
+          </>
+        ) : (
+          /* ── Full mode: primary + collapsible sections ── */
+          <>
+            {/* Home */}
+            <Link
+              href="/feed"
+              onClick={handleClick}
+              className={`sidebar-nav-item ${isFeatureActive('/feed') ? 'sidebar-nav-active' : ''}`}
+              aria-current={isFeatureActive('/feed') ? 'page' : undefined}
+            >
+              <span className="sidebar-nav-icon">
+                <HomeIcon active={isFeatureActive('/feed')} />
+              </span>
+              <span className="sidebar-nav-label">Home</span>
+            </Link>
+
+            {/* Protocols — opens connect flow */}
+            <button
+              type="button"
+              onClick={() => {
+                handleClick();
+                onProtocolConnectOpen?.();
+              }}
+              className="sidebar-nav-item w-full"
+            >
+              <span className="sidebar-nav-icon">
+                <ProtocolsIcon active={false} />
+              </span>
               <span className="sidebar-nav-label">Protocols</span>
               <span className="ml-auto flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-degen-500/15 px-1.5 text-[9px] font-bold text-degen-400">
-                {connectedCount > 0 ? connectedCount : healthyCount}
+                {loaded ? healthyCount : '—'}
               </span>
-            </>
-          )}
-        </button>
+            </button>
 
-        {/* Search */}
-        <button
-          type="button"
-          onClick={() => {
-            handleClick();
-            onQuickSwitcherOpen?.();
-          }}
-          className={`sidebar-nav-item w-full ${collapsed ? 'justify-center px-0' : ''}`}
-          title={collapsed ? 'Search' : undefined}
-        >
-          <span className="sidebar-nav-icon">
-            <SearchIcon />
-          </span>
-          {!collapsed && (
-            <>
+            {/* Search (quick switcher) */}
+            <button
+              type="button"
+              onClick={() => {
+                handleClick();
+                onQuickSwitcherOpen?.();
+              }}
+              className="sidebar-nav-item w-full"
+            >
+              <span className="sidebar-nav-icon">
+                <SearchIcon />
+              </span>
               <span className="sidebar-nav-label">Search</span>
               <kbd
                 className="ml-auto rounded-md border border-white/10 bg-white/[0.06] px-1.5 py-0.5 font-mono text-[9px] font-medium leading-none"
@@ -253,225 +690,15 @@ export const LeftSidebar = memo(function LeftSidebar({
               >
                 ⌘K
               </kbd>
-            </>
-          )}
-        </button>
+            </button>
 
-        {/* Live */}
-        <Link
-          href="/live"
-          onClick={handleClick}
-          className={`sidebar-nav-item ${isActive('/live') ? 'sidebar-nav-active' : ''} ${collapsed ? 'justify-center px-0' : ''}`}
-          aria-current={isActive('/live') ? 'page' : undefined}
-          title={collapsed ? 'Live' : undefined}
-        >
-          <span className="sidebar-nav-icon">
-            <svg
-              width="22"
-              height="22"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={isActive('/live') ? 2.5 : 1.5}
-              strokeLinecap="round"
-              aria-hidden="true"
-            >
-              <polygon points="5 3 19 12 5 21 5 3" />
-            </svg>
-          </span>
-          {!collapsed && (
-            <>
-              <span className="sidebar-nav-label">Live</span>
-              <span className="ml-auto flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-red-500/15 px-1.5 text-[9px] font-bold text-red-400">
-                {loaded ? healthyCount : '—'}
-              </span>
-            </>
-          )}
-        </Link>
+            {/* Divider */}
+            <div className="my-2 border-t border-[var(--color-glass-border)]" />
 
-        {/* Creator Studio */}
-        <Link
-          href="/creator"
-          onClick={handleClick}
-          className={`sidebar-nav-item ${isActive('/creator') ? 'sidebar-nav-active' : ''} ${collapsed ? 'justify-center px-0' : ''}`}
-          aria-current={isActive('/creator') ? 'page' : undefined}
-          title={collapsed ? 'Creator' : undefined}
-        >
-          <span className="sidebar-nav-icon">
-            <svg
-              width="22"
-              height="22"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={isActive('/creator') ? 2.5 : 1.5}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
-              <circle cx="9" cy="7" r="4" />
-              <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
-            </svg>
-          </span>
-          {!collapsed && <span className="sidebar-nav-label">Creator Studio</span>}
-        </Link>
-
-        {/* Pricing */}
-        <Link
-          href="/pricing"
-          onClick={handleClick}
-          className={`sidebar-nav-item ${isActive('/pricing') ? 'sidebar-nav-active' : ''} ${collapsed ? 'justify-center px-0' : ''}`}
-          aria-current={isActive('/pricing') ? 'page' : undefined}
-          title={collapsed ? 'Pricing' : undefined}
-        >
-          <span className="sidebar-nav-icon">
-            <svg
-              width="22"
-              height="22"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={isActive('/pricing') ? 2.5 : 1.5}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <circle cx="12" cy="12" r="10" />
-              <path d="M12 6v12M9 9.5c-.87-.5-2-.5-2.5-.5s-1.5.5-1.5 1.5.67 1.5 1.5 2 3.5.5 4.5 1 1 1.5 1 2.5-1.5 2-3 2-2.5-.5-3-1" />
-            </svg>
-          </span>
-          {!collapsed && <span className="sidebar-nav-label">Pricing</span>}
-        </Link>
-
-        {/* Notifications */}
-        <Link
-          href="/notifications"
-          onClick={handleClick}
-          className={`sidebar-nav-item ${isActive('/notifications') ? 'sidebar-nav-active' : ''} ${collapsed ? 'justify-center px-0' : ''}`}
-          aria-current={isActive('/notifications') ? 'page' : undefined}
-          title={collapsed ? 'Notifications' : undefined}
-        >
-          <span className="sidebar-nav-icon">
-            <NotifIcon active={isActive('/notifications')} />
-          </span>
-          {!collapsed && <span className="sidebar-nav-label">Notifications</span>}
-          {!collapsed && unreadCount > 0 && (
-            <span
-              role="status"
-              className="ml-auto flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-degen-500 px-1.5 text-[11px] font-bold text-black"
-              aria-label={`${unreadCount} unread notifications`}
-            >
-              {unreadCount > 99 ? '99+' : unreadCount}
-            </span>
-          )}
-        </Link>
-
-        {/* Settings */}
-        <Link
-          href="/settings"
-          onClick={handleClick}
-          className={`sidebar-nav-item ${isActive('/settings') ? 'sidebar-nav-active' : ''} ${collapsed ? 'justify-center px-0' : ''}`}
-          aria-current={isActive('/settings') ? 'page' : undefined}
-          title={collapsed ? 'Settings' : undefined}
-        >
-          <span className="sidebar-nav-icon">
-            <SettingsIcon />
-          </span>
-          {!collapsed && <span className="sidebar-nav-label">Settings</span>}
-        </Link>
-
-        {/* Status / Health */}
-        <Link
-          href="/status"
-          onClick={handleClick}
-          className={`sidebar-nav-item ${isActive('/status') ? 'sidebar-nav-active' : ''} ${collapsed ? 'justify-center px-0' : ''}`}
-          aria-current={isActive('/status') ? 'page' : undefined}
-          title={collapsed ? 'Status' : undefined}
-        >
-          <span className="sidebar-nav-icon">
-            <svg
-              width="22"
-              height="22"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={isActive('/status') ? 2.5 : 1.5}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <path d="M12 20V10" />
-              <path d="M18 20V4" />
-              <path d="M6 20v-4" />
-            </svg>
-          </span>
-          {!collapsed && <span className="sidebar-nav-label">Status</span>}
-        </Link>
-
-        {/* Divider */}
-        {!collapsed && <div className="my-2 border-t border-[var(--color-glass-border)]" />}
-
-        {/* Protocol sections */}
-        {!collapsed && (
-          <div className="px-3 py-1">
-            <span
-              className="text-[10px] font-semibold uppercase tracking-wider"
-              style={{ color: 'var(--color-muted)' }}
-            >
-              Your Networks
-            </span>
-          </div>
+            {/* Collapsible sections */}
+            {SECTION_IDS.map(renderSection)}
+          </>
         )}
-
-        {protocolIds.map((pid) => {
-          const conn = connections[pid];
-          if (!conn) return null;
-          const color = conn.color;
-          const active = isProtocolPage(pid);
-          const dotClass =
-            conn.status === 'healthy'
-              ? 'bg-degen-500'
-              : conn.status === 'unhealthy'
-                ? 'bg-yellow-500'
-                : 'bg-[var(--color-muted)]';
-          const dotLabel =
-            conn.status === 'healthy'
-              ? 'Healthy'
-              : conn.status === 'unhealthy'
-                ? 'Unhealthy'
-                : 'Not configured';
-          return (
-            <Link
-              key={pid}
-              href={`/${pid}`}
-              onClick={handleClick}
-              className={`sidebar-nav-item ${active ? 'sidebar-nav-active' : ''} ${collapsed ? 'justify-center px-0' : ''}`}
-              aria-current={active ? 'page' : undefined}
-              title={collapsed ? conn.name : undefined}
-            >
-              <span
-                className="sidebar-nav-icon flex items-center justify-center rounded-lg text-sm font-bold"
-                style={{
-                  backgroundColor: conn.status === 'healthy' ? `${color}1a` : 'transparent',
-                  color: conn.status === 'healthy' ? color : 'var(--color-muted)',
-                }}
-              >
-                {conn.icon}
-              </span>
-              {!collapsed && (
-                <>
-                  <span className="sidebar-nav-label">{conn.name}</span>
-                  <span
-                    role="img"
-                    className={`ml-auto flex h-2 w-2 rounded-full ${dotClass}`}
-                    aria-label={dotLabel}
-                  />
-                </>
-              )}
-            </Link>
-          );
-        })}
       </nav>
 
       {/* UnifiedComposerButton — one "Create Post" button that works everywhere */}
@@ -543,7 +770,7 @@ export const LeftSidebar = memo(function LeftSidebar({
         </div>
       )}
 
-      {/* Profile / Wallet at bottom */}
+      {/* Profile / Wallet at bottom — Sign In transforms into the user avatar */}
       <div
         className={`border-t border-[var(--color-glass-border)] ${collapsed ? 'px-1 py-2' : 'px-2 py-2'}`}
       >
@@ -551,25 +778,50 @@ export const LeftSidebar = memo(function LeftSidebar({
           <div
             className={`skeleton rounded-full ${collapsed ? 'h-10 w-10 mx-auto' : 'h-12 w-full'}`}
           />
-        ) : hasSignedIn && walletAddress ? (
-          <div className="flex items-center gap-2">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-degen-500/20 text-sm font-mono font-bold text-degen-400">
-              {walletAddress.slice(2, 4).toUpperCase()}
-            </div>
+        ) : hasSignedIn ? (
+          <Link
+            href="/profile"
+            onClick={handleClick}
+            className={`flex w-full items-center gap-2 rounded-full p-2 transition-colors hover:bg-[var(--color-overlay)] ${collapsed ? 'justify-center' : ''}`}
+            aria-label={
+              primaryIdentity?.displayName ? `Profile: ${primaryIdentity.displayName}` : 'Profile'
+            }
+            title={collapsed ? (primaryIdentity?.displayName ?? 'Profile') : undefined}
+          >
+            {primaryIdentity?.avatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={primaryIdentity.avatarUrl}
+                alt=""
+                className="h-10 w-10 shrink-0 rounded-full object-cover"
+              />
+            ) : (
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-degen-500/20 text-sm font-mono font-bold text-degen-400">
+                {primaryIdentity?.displayName
+                  ? primaryIdentity.displayName.slice(0, 2).toUpperCase()
+                  : walletAddress
+                    ? walletAddress.slice(2, 4).toUpperCase()
+                    : 'DF'}
+              </div>
+            )}
             {!collapsed && (
               <div className="min-w-0 flex-1">
                 <div
-                  className="text-sm font-semibold truncate"
+                  className="truncate text-sm font-semibold"
                   style={{ color: 'var(--color-fg)' }}
                 >
-                  {walletAddress.slice(0, 6)}&hellip;{walletAddress.slice(-4)}
+                  {primaryIdentity?.displayName ??
+                    primaryIdentity?.handle ??
+                    (walletAddress
+                      ? `${walletAddress.slice(0, 6)}…${walletAddress.slice(-4)}`
+                      : 'Signed in')}
                 </div>
-                <div className="text-xs truncate" style={{ color: 'var(--color-muted)' }}>
-                  {connectedCount} protocol{connectedCount !== 1 ? 's' : ''} connected
+                <div className="truncate text-xs" style={{ color: 'var(--color-muted)' }}>
+                  {healthyCount} protocol{healthyCount !== 1 ? 's' : ''} healthy
                 </div>
               </div>
             )}
-          </div>
+          </Link>
         ) : (
           <button
             type="button"
