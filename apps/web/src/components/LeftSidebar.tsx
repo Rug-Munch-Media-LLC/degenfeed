@@ -155,7 +155,7 @@ export const LeftSidebar = memo(function LeftSidebar({
   const { showToast } = useToast();
   const hasSignedIn = Object.values(signedInProtocols).some(Boolean);
   const { unreadCount } = useNotifications(hasSignedIn);
-  const { connections, connectedCount, healthyCount } = useProtocolConnections();
+  const { connections, connectedCount, healthyCount, loaded } = useProtocolConnections();
 
   const isActive = (href: string) => {
     if (href === '/feed')
