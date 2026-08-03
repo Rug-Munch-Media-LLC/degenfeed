@@ -14,10 +14,10 @@
  * posts that passed the crypto/category filter.
  */
 
+import WebSocket from 'ws';
 import type { UnifiedPost } from '../../server';
 import { postToUnified } from './mapper';
 import type { BskyPostView, JetstreamCommit } from './types';
-import WebSocket from 'ws';
 
 const JETSTREAM_URL =
   process.env.BLUESKY_JETSTREAM_URL ||
@@ -61,9 +61,7 @@ function jetstreamRecordToPostView(evt: JetstreamCommit): BskyPostView | null {
       text: record.text,
       createdAt: record.createdAt || new Date().toISOString(),
       facets: record.facets || undefined,
-      embed: record.embed
-        ? (record.embed as BskyPostView['record']['embed'])
-        : undefined,
+      embed: record.embed ? (record.embed as BskyPostView['record']['embed']) : undefined,
       reply: record.reply,
     },
     likeCount: 0,
@@ -115,7 +113,10 @@ function handleMessage(data: unknown): void {
 }
 
 function openSocket(): void {
-  if (state.ws && (state.ws.readyState === WebSocket.OPEN || state.ws.readyState === WebSocket.CONNECTING)) {
+  if (
+    state.ws &&
+    (state.ws.readyState === WebSocket.OPEN || state.ws.readyState === WebSocket.CONNECTING)
+  ) {
     return;
   }
   try {
