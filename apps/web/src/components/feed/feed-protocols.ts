@@ -311,6 +311,22 @@ export const PROTOCOLS: Record<string, ProtocolConfig> = {
       { label: 'publications', value: '15+' },
     ],
   },
+  podcast: {
+    id: 'podcast',
+    label: 'Podcasts',
+    color: '#7c3aed',
+    icon: '🎙️',
+    description:
+      'Top crypto & web3 podcasts — Bankless, Unchained, Empire, 0xResearch, Bell Curve and more',
+    endpoint: '/api/feed/podcast',
+    route: '/feed/podcast',
+    postNoun: 'episode',
+    category: 'news',
+    stats: [
+      { label: 'shows', value: '10' },
+      { label: 'updated', value: 'recent episodes' },
+    ],
+  },
   reddit: {
     id: 'reddit',
     label: 'Reddit',
@@ -583,5 +599,6 @@ export const SIDEBAR_ORDER = [
   'owncast',
   'rss',
   'newsletter',
+  'podcast',
   'media',
 ];

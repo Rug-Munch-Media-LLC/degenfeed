@@ -1066,6 +1066,7 @@ const server = http.createServer(async (req, res) => {
         'discord',
         'matrix',
         'github',
+        'podcast',
       ];
       if (allowed.includes(proto)) {
         const singleCacheKey = `feed:single:${proto}:${limit}`;

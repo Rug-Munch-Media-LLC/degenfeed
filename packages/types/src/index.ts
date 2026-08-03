@@ -195,7 +195,7 @@ export interface UnifiedIdentity {
 }
 
 export interface Embed {
-  kind: 'image' | 'video' | 'link' | 'frame' | 'quote' | 'code';
+  kind: 'image' | 'video' | 'link' | 'frame' | 'quote' | 'code' | 'audio';
   url: string;
   /** Protocol-specific extra data */
   meta?: Record<string, unknown>;
@@ -319,8 +319,12 @@ export interface UnifiedPost {
   };
   /** Number of tips received on this post */
   tipCount?: number;
-  /** Content type: article, video, image, thread, link */
-  contentType?: 'article' | 'video' | 'image' | 'thread' | 'link' | 'text';
+  /** Content type: article, video, image, thread, link, podcast */
+  contentType?: 'article' | 'video' | 'image' | 'thread' | 'link' | 'text' | 'podcast';
+  /** Convenience image URL (provider/og:image enrichment) — mirrors embeds. */
+  image?: string;
+  /** Legacy alias for image URL. */
+  media?: string;
   /** Freshness flags set server-side */
   isNew?: boolean;
   isHot?: boolean;
