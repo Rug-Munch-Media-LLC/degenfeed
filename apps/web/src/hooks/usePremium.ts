@@ -5,7 +5,7 @@ import { useAuth } from '../components/AuthProvider';
 
 // === Types ===============================================================
 
-export type PremiumTier = 'free' | 'creator' | 'pro' | 'enterprise';
+export type PremiumTier = 'free' | 'creator' | 'pro' | 'enterprise' | 'basic' | 'platinum';
 
 /** Bridge helper: convert legacy tiers to new names */
 export function normalizeTier(tier: string): PremiumTier {

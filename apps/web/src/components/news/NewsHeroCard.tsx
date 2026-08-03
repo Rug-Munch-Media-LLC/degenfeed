@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import { categoryFallback } from './categoryFallback';
 import type { NewsStory } from './types';
 import {
   BIAS_STYLES,
@@ -73,7 +74,11 @@ export function NewsHeroCard({
             priority
           />
         ) : (
-          <div className="flex h-full items-center justify-center text-5xl opacity-20">📰</div>
+          <div
+            className={`flex h-full items-center justify-center text-5xl ${categoryFallback(primaryCat).text}`}
+          >
+            {categoryFallback(primaryCat).glyph}
+          </div>
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-gray-900/80 via-transparent to-transparent md:bg-gradient-to-r md:from-gray-900/80 md:via-gray-900/40 md:to-transparent" />
         {/* Category badge */}

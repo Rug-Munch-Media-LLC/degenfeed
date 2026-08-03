@@ -323,7 +323,7 @@ function PostWithContentWarning({
   // Check if post has a content warning / spoiler
   const cw =
     post.meta?.contentWarning ||
-    ((post as Record<string, unknown>).spoiler_text as string | undefined);
+    ((post as unknown as Record<string, unknown>).spoiler_text as string | undefined);
 
   if (cw && !revealed) {
     return <ContentWarningOverlay warning={cw} onReveal={() => setRevealed(true)} />;

@@ -35,7 +35,7 @@ export default function SpaceDetailPage({
 
     async function fetchSpace() {
       try {
-        const res = await fetch(`/api/spaces/${encodeURIComponent(id)}`);
+        const res = await fetch(`/api/spaces/${encodeURIComponent(id ?? '')}`);
         if (res.ok) {
           const data = (await res.json()) as { space: SpaceItem };
           if (!cancelled) setSpace(data.space);

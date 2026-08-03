@@ -30,15 +30,22 @@ interface GeneratedKeys {
 
 type RegistrationStep = 'generate' | 'username' | 'registering' | 'complete' | 'error';
 
-
-interface RpcResponse {
-  jsonrpc: '2.0';
-  id: number;
-  result?: unknown;
-  error?: { code: number; message: string };
-}
-
 // ─── Nostr SDK Bridge (loaded dynamically) ───────────────────────────────
+
+/** Check if a Nostr browser extension (Alby / nos2x) is available. */
+async function getExtensionPubkey(): Promise<string | null> {
+  try {
+    const w = window as unknown as {
+      nostr?: { getPublicKey?: () => Promise<string> };
+    };
+    if (typeof w.nostr?.getPublicKey === 'function') {
+      return (await w.nostr.getPublicKey()) || null;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
 
 async function loadNostrSdk() {
   // Dynamic import to reduce bundle size

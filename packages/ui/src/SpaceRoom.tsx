@@ -37,7 +37,7 @@ export interface SpaceData {
   hostName: string;
   hostAvatarUrl?: string;
   coHosts: string[];
-  protocols: string[];
+  protocols?: string[];
   status: 'live' | 'scheduled' | 'ended';
   listeners: number;
   speakers: Speaker[];
@@ -383,7 +383,7 @@ export function SpaceRoom({
           {/* Protocol badges + End btn */}
           <div className="flex items-center gap-2">
             <div className="flex gap-1">
-              {space.protocols.map((protocol) => (
+              {(space.protocols ?? []).map((protocol) => (
                 <span
                   key={protocol}
                   className="inline-flex h-6 w-6 items-center justify-center rounded-full text-[10px]"

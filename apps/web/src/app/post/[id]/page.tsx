@@ -348,7 +348,7 @@ export default function PostPage({ params }: Props) {
     async function load() {
       setState('loading');
       try {
-        const res = await fetch(`/api/feed/post/${encodeURIComponent(id)}`, {
+        const res = await fetch(`/api/feed/post/${encodeURIComponent(id ?? '')}`, {
           credentials: 'include',
         });
         const data = (await res.json()) as { data?: UnifiedPost; error?: string };

@@ -243,7 +243,7 @@ function ValueCell({ val, tier }: { val: boolean | string; tier: Tier }) {
 
 /* ─── Pricing Card ────────────────────────────────────────────── */
 
-function PricingCard({ tier, billing }: { tier: (typeof TIERS)[0]; billing: BillingPeriod }) {
+function PricingCard({ tier, billing }: { tier: (typeof TIERS)[number]; billing: BillingPeriod }) {
   const price = billing === 'monthly' ? tier.monthly : tier.annual;
   const isPopular = tier.popular;
 

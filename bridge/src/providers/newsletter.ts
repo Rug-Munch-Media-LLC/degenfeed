@@ -19,12 +19,36 @@
  */
 
 import type { SchemaGuard, UnifiedPost } from '../server/types';
-import { deduplicatePosts, extractFeaturedImage, guessNiches, parseFeedXml } from './rss';
+import {
+  extractFeaturedImage,
+  extractLinkUrl,
+  guessNiches,
+  normalizeUrlKey,
+  parseFeedXml,
+  titleSimilarity,
+} from './rss';
 
-const USER_AGENT = 'DegenFeed-Bridge/0.2 (Newsletter Aggregator)';
+const USER_AGENT = 'DegenFeed-Bridge/0.3 (Newsletter Aggregator)';
 
 const MIRROR_BRIDGE_URL = process.env.MIRROR_BRIDGE_URL || 'http://127.0.0.1:8240';
 const PARAGRAPH_BRIDGE_URL = process.env.PARAGRAPH_BRIDGE_URL || 'http://127.0.0.1:8241';
+
+/** Official keyless Paragraph API feed (better data quality than RSS). */
+const PARAGRAPH_API_FEED = 'https://public.api.paragraph.com/api/v1/posts/feed';
+
+/**
+ * Platform quality tiers used for cross-platform dedup. Lower number = higher
+ * quality, kept as the canonical copy when the same story appears on
+ * multiple platforms (e.g. Substack + Mirror + Paragraph).
+ */
+const PLATFORM_TIER: Record<NewsletterPlatform, number> = {
+  substack: 1,
+  ghost: 1,
+  medium: 3,
+  mirror: 2,
+  paragraph: 2,
+  custom: 3,
+};
 
 // ─── Types ─────────────────────────────────────────────────────────────
 
@@ -381,23 +405,31 @@ async function fetchMirrorBridge(limit: number): Promise<UnifiedPost[]> {
   try {
     const res = await globalThis.fetch(`${MIRROR_BRIDGE_URL}/api/mirror/articles?limit=${limit}`, {
       headers: { 'User-Agent': USER_AGENT },
-      signal: AbortSignal.timeout(4000),
+      signal: AbortSignal.timeout(5000),
     });
     if (!res.ok) {
       console.log(`[newsletter] mirror-bridge: HTTP ${res.status}`);
       return [];
     }
     const data = (await res.json()) as { articles?: MirrorBridgeArticle[] };
-    const articles = data.articles || [];
+    const articles = (data.articles || []).filter((a) => {
+      // Drop placeholder / empty content txs (profile updates, metadata-only).
+      const hasRealTitle = a.title && a.title !== 'Mirror Article';
+      const hasBody = Boolean(a.body?.trim());
+      return hasRealTitle || hasBody;
+    });
 
     return articles
       .map((a) => {
-        const author =
-          a.author || a.tags?.find((t) => t.name === 'Contributor')?.value || 'Mirror writer';
-        const url = `https://mirror.xyz/${author}/${a.digest || a.arweaveTxId || ''}`;
+        const contributor = a.author || a.tags?.find((t) => t.name === 'Contributor')?.value || '';
+        const author = contributor ? shortAddress(contributor) : 'Mirror writer';
+        const url = `https://mirror.xyz/${contributor || '0x0'}/${a.digest || a.arweaveTxId || ''}`;
         const date = a.publishedAt ? new Date(a.publishedAt).getTime() : Date.now();
         const n: NewsletterPost = {
-          title: a.title && a.title !== 'Mirror Article' ? a.title : 'Mirror Article',
+          title:
+            a.title && a.title !== 'Mirror Article'
+              ? a.title
+              : (a.body || '').slice(0, 80) || 'Mirror Article',
           author,
           platform: 'mirror',
           url,
@@ -427,7 +459,37 @@ async function fetchMirrorBridge(limit: number): Promise<UnifiedPost[]> {
   }
 }
 
-// ─── Paragraph bridge container ────────────────────────────────────────
+/** Shorten an Ethereum address for display (0x1234…abcd). */
+function shortAddress(addr: string): string {
+  if (!addr) return '';
+  return addr.length > 12 ? `${addr.slice(0, 6)}…${addr.slice(-4)}` : addr;
+}
+
+// ─── Paragraph (official keyless API, bridge fallback) ────────────────
+
+interface ParagraphFeedItem {
+  post?: {
+    id?: string;
+    title?: string;
+    slug?: string;
+    publishedAt?: string;
+    imageUrl?: string;
+  };
+  publication?: {
+    id?: string;
+    name?: string;
+    slug?: string;
+    customDomain?: string;
+    summary?: string;
+    logoUrl?: string;
+  };
+  user?: {
+    id?: string;
+    name?: string;
+    walletAddress?: string;
+    avatarUrl?: string;
+  };
+}
 
 interface ParagraphBridgePost {
   id?: string;
@@ -439,8 +501,70 @@ interface ParagraphBridgePost {
   slug?: string;
 }
 
+/** Official Paragraph API feed — keyless, rich author/publication data. */
+async function fetchParagraphOfficial(limit: number): Promise<UnifiedPost[]> {
+  const res = await globalThis.fetch(`${PARAGRAPH_API_FEED}?limit=${Math.min(limit, 30)}`, {
+    headers: {
+      'User-Agent': USER_AGENT,
+      Accept: 'application/json',
+    },
+    signal: AbortSignal.timeout(7000),
+  });
+  if (!res.ok) {
+    console.log(`[newsletter] paragraph official API: HTTP ${res.status}`);
+    return [];
+  }
+  const data = (await res.json()) as { items?: ParagraphFeedItem[] };
+  const items = (data.items || []).slice(0, limit);
+
+  return items
+    .map((it) => {
+      const pub = it.publication || {};
+      const post = it.post || {};
+      const user = it.user || {};
+      const publication = pub.name || 'Paragraph';
+      const slug = pub.slug || '';
+      const title = post.title && post.title !== 'Untitled' ? post.title : 'Paragraph article';
+      const author = user.name || pub.name || 'Paragraph writer';
+      const url = pub.customDomain
+        ? `https://${pub.customDomain}/${post.slug || ''}`
+        : `https://paragraph.xyz/@${slug}/${post.slug || ''}`;
+      const date = post.publishedAt ? new Date(post.publishedAt).getTime() : Date.now();
+      const n: NewsletterPost = {
+        title,
+        author,
+        platform: 'paragraph',
+        url,
+        date,
+        excerpt: (pub.summary || '').slice(0, 500),
+        image: post.imageUrl || pub.logoUrl,
+        publication,
+      };
+      return toUnifiedPost(
+        {
+          name: publication,
+          author,
+          platform: 'paragraph',
+          feedUrl: PARAGRAPH_API_FEED,
+          homeUrl: pub.customDomain
+            ? `https://${pub.customDomain}`
+            : `https://paragraph.xyz/@${slug}`,
+          category: 'web3',
+          niches: ['web3', 'crypto'],
+        },
+        n,
+      );
+    })
+    .filter(Boolean);
+}
+
 async function fetchParagraphBridge(limit: number): Promise<UnifiedPost[]> {
   try {
+    // Prefer the official keyless API for better data quality.
+    const official = await fetchParagraphOfficial(limit);
+    if (official.length > 0) return official;
+
+    // Fallback: legacy paragraph-bridge container (RSS-based).
     const res = await globalThis.fetch(
       `${PARAGRAPH_BRIDGE_URL}/api/paragraph/posts?limit=${limit}`,
       {
@@ -493,6 +617,97 @@ async function fetchParagraphBridge(limit: number): Promise<UnifiedPost[]> {
 // ─── Main ──────────────────────────────────────────────────────────────
 
 /**
+ * Extract the canonical platform for a newsletter post (raw.newsletter.platform).
+ */
+function newsletterPlatformOf(post: UnifiedPost): NewsletterPlatform {
+  const raw = post.raw as { newsletter?: NewsletterPost } | undefined;
+  return raw?.newsletter?.platform || 'custom';
+}
+
+/**
+ * Cross-platform dedup for newsletter posts.
+ *
+ * Strategy:
+ *   1. canonical URL normalization (strip params, lowercase host) — exact match
+ *   2. title similarity (Jaccard > 0.6) — catches the same story syndicated
+ *      across Substack / Mirror / Paragraph / Medium
+ *   3. prefer the highest-quality platform as canonical (platform tier)
+ *
+ * Duplicates are merged into the kept post's crossReference metadata so the
+ * ranking/grounding pass can see the story was covered by multiple platforms.
+ */
+export function deduplicateNewsletterPosts(posts: UnifiedPost[], limit: number): UnifiedPost[] {
+  // Highest-quality platform first, then freshest. This makes the canonical
+  // copy the best source for the same story.
+  const sorted = [...posts].sort((a, b) => {
+    const ta = PLATFORM_TIER[newsletterPlatformOf(a)] ?? 9;
+    const tb = PLATFORM_TIER[newsletterPlatformOf(b)] ?? 9;
+    if (ta !== tb) return ta - tb;
+    return b.createdAt - a.createdAt;
+  });
+
+  const kept: UnifiedPost[] = [];
+  const TITLE_THRESHOLD = 0.6;
+  const WINDOW = 80;
+
+  for (const post of sorted) {
+    const url = extractLinkUrl(post);
+    const urlKey = url ? normalizeUrlKey(url) : '';
+    const platform = newsletterPlatformOf(post);
+    let matched: UnifiedPost | undefined;
+
+    // Layer 1: exact canonical URL
+    if (urlKey) {
+      matched = kept.find((p) => {
+        const pu = extractLinkUrl(p);
+        return pu ? normalizeUrlKey(pu) === urlKey : false;
+      });
+    }
+
+    // Layer 2: fuzzy title similarity (Jaccard > 0.6) within a bounded window
+    if (!matched && post.text.length > 10) {
+      let bestSim = 0;
+      for (const p of kept.slice(0, WINDOW)) {
+        const sim = titleSimilarity(post.text, p.text);
+        if (sim > bestSim) bestSim = sim;
+      }
+      if (bestSim >= TITLE_THRESHOLD)
+        matched = kept.find((p) => titleSimilarity(post.text, p.text) === bestSim);
+    }
+
+    if (matched) {
+      // Merge niches into the canonical copy
+      matched.niches = [...new Set([...matched.niches, ...post.niches])];
+
+      // Record cross-platform reference (grounding signal)
+      const mRaw = matched.raw as Record<string, unknown> | undefined;
+      if (mRaw) {
+        const refs = new Set<string>((mRaw.crossReference as string[] | undefined) ?? []);
+        refs.add(platform);
+        const otherPlatform = newsletterPlatformOf(post);
+        if (otherPlatform) refs.add(otherPlatform);
+        mRaw.crossReference = [...refs];
+        const urls = new Set<string>((mRaw.crossReferenceUrls as string[] | undefined) ?? []);
+        if (url) urls.add(url);
+        const otherUrl = extractLinkUrl(post);
+        if (otherUrl) urls.add(otherUrl);
+        mRaw.crossReferenceUrls = [...urls];
+      }
+    } else {
+      // Fresh canonical copy — seed cross-reference tracking
+      const raw = post.raw as Record<string, unknown> | undefined;
+      if (raw) {
+        raw.crossReference = [platform];
+        if (url) raw.crossReferenceUrls = [url];
+      }
+      kept.push(post);
+    }
+  }
+
+  return kept.slice(0, limit);
+}
+
+/**
  * Aggregate newsletter posts from Substack, Medium, Mirror, Paragraph, and Ghost.
  */
 export async function fetchNewsletterPosts(limit = 30): Promise<UnifiedPost[]> {
@@ -513,9 +728,10 @@ export async function fetchNewsletterPosts(limit = 30): Promise<UnifiedPost[]> {
     else failed++;
   }
 
-  const deduped = deduplicatePosts(all, limit);
+  const deduped = deduplicateNewsletterPosts(all, limit);
+  const platforms = new Set(deduped.map(newsletterPlatformOf));
   console.log(
-    `[newsletter] ${deduped.length} posts from ${rssSources.length} RSS sources + mirror-bridge + paragraph-bridge (${failed} fetch groups failed)`,
+    `[newsletter] ${deduped.length} posts from ${rssSources.length} RSS sources + mirror-bridge + paragraph-api across ${platforms.size} platforms (${failed} fetch groups failed)`,
   );
   return deduped;
 }

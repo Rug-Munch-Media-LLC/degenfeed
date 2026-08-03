@@ -244,7 +244,7 @@ export default function AdminPlatformsPage() {
           lastError: h.error || p.lastError,
         };
       });
-      setPlatforms(merged);
+      setPlatforms(merged as PlatformStatus[]);
     } catch {
       // use defaults
     }

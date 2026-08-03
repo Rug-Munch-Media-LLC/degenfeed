@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import SubscribeButton from './SubscribeButton';
+import { SubscribeButton } from './SubscribeButton';
 
 interface SubscriptionGuardProps {
   creator: string;

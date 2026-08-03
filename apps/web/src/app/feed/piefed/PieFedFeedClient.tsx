@@ -20,7 +20,7 @@
 
 'use client';
 
-import type { UnifiedPost } from '@degenfeed/types';
+import type { EngagementAction, UnifiedPost } from '@degenfeed/types';
 import { ErrorBoundary, FeedList } from '@degenfeed/ui';
 import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../../../components/AuthProvider';
@@ -225,7 +225,7 @@ export function PieFedFeedClient() {
   ): Promise<{ ok: boolean; error?: string }> => {
     const post = posts.find((p) => p.id === postId);
     if (!post) return { ok: false, error: 'Post not found' };
-    return engage(action, postId, post.protocol, {});
+    return engage(action as EngagementAction, postId, post.protocol, {});
   };
 
   return (

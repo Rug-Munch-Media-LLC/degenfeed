@@ -79,7 +79,7 @@ export default function MusicTabContent({ creatorId, artistName }: MusicTabConte
                 : undefined,
               duration: upload ? Number(upload.duration || 0) : 0,
               listens: Number(
-                post.metrics?.likes || (post.metrics as Record<string, unknown>)?.likes || 0,
+                (post.metrics as Record<string, unknown> | undefined)?.likes || 0,
               ),
               tipsReceived: '0',
               publishedAt: post.createdAt as number,

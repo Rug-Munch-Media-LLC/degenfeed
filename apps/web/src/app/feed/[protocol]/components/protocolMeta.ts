@@ -270,11 +270,12 @@ export async function extractProtocolMeta(post: UnifiedPost): Promise<ProtocolMe
         chips.push({ label: 'relay', value: relay, title: relay });
       }
       const nip05 =
-        author.handles?.nip05 || (raw.tags ?? []).find((t: string[]) => t[0] === 'nip05')?.[1];
+        (author.handles as Record<string, string | null> | undefined)?.nip05 ||
+        (raw.tags ?? []).find((t: string[]) => t[0] === 'nip05')?.[1];
       if (nip05) {
         chips.push({ label: 'NIP-05', value: nip05, title: `Verified: ${nip05}`, accent: true });
       }
-      const zaps = post.metrics.zaps ?? 0;
+      const zaps = (post.metrics as { zaps?: number }).zaps ?? 0;
       if (zaps > 0) chips.push({ label: 'zaps', value: `${zaps}`, accent: true });
       return chips;
     }

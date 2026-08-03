@@ -213,7 +213,7 @@ export function VoiceRoomView({ roomId, onLeave }: { roomId: string; onLeave: ()
   const [loading, setLoading] = useState(true);
   const [pushToTalk, setPushToTalk] = useState(false);
   const [copiedInvite, setCopiedInvite] = useState(false);
-  const pollingRef = useRef<ReturnType<typeof setInterval>>();
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pushToTalkRef = useRef(false);
 
   const fetchRoom = useCallback(async () => {

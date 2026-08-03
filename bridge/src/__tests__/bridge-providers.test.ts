@@ -770,6 +770,10 @@ describe('RSS provider', () => {
     expect(categories.has('security')).toBe(true);
     expect(categories.has('ai')).toBe(true);
     expect(categories.has('defi')).toBe(true);
+    // Topic-expansion categories (2026-08-03)
+    expect(categories.has('science')).toBe(true);
+    expect(categories.has('geopolitics')).toBe(true);
+    expect(categories.has('business')).toBe(true);
 
     // Verify the new high-quality sources from the source-expansion pass
     const labels = ALL_FEEDS.map((f) => f.label);
@@ -785,6 +789,28 @@ describe('RSS provider', () => {
       'The Register',
       'The Guardian Tech',
       'IEEE Spectrum',
+    ]) {
+      expect(labels).toContain(expected);
+    }
+
+    // Topic-expansion sources (verified live 2026-08-03)
+    for (const expected of [
+      'Nature',
+      'Science Daily',
+      'Quanta Magazine',
+      'Foreign Affairs',
+      'Council on Foreign Relations',
+      'The Diplomat',
+      'BBC World',
+      'Al Jazeera',
+      'NYT World',
+      'The Guardian World',
+      'The Economist',
+      'FT Alphaville',
+      'WSJ World',
+      'CNBC Top News',
+      'Bloomberg Markets',
+      'Stratechery',
     ]) {
       expect(labels).toContain(expected);
     }
@@ -824,7 +850,8 @@ describe('RSS provider', () => {
   it('extractOpenGraphImage finds og:image meta tag', async () => {
     const { extractOpenGraphImage } = await import('../providers/rss');
 
-    const html = '<html><head><meta property="og:image" content="https://example.com/og.png"/></head></html>';
+    const html =
+      '<html><head><meta property="og:image" content="https://example.com/og.png"/></head></html>';
     expect(extractOpenGraphImage(html)).toBe('https://example.com/og.png');
   });
 
@@ -838,7 +865,9 @@ describe('RSS provider', () => {
   it('extractOpenGraphImage returns undefined without og meta', async () => {
     const { extractOpenGraphImage } = await import('../providers/rss');
 
-    expect(extractOpenGraphImage('<html><head><title>No image</title></head></html>')).toBeUndefined();
+    expect(
+      extractOpenGraphImage('<html><head><title>No image</title></head></html>'),
+    ).toBeUndefined();
     expect(extractOpenGraphImage('')).toBeUndefined();
   });
 
@@ -848,6 +877,74 @@ describe('RSS provider', () => {
     const item = '<item><media:thumbnail url="https://example.com/thumb.jpg" width="200"/></item>';
     expect(extractMediaImage(item)).toBe('https://example.com/thumb.jpg');
     expect(extractMediaImage('<item><title>x</title></item>')).toBeUndefined();
+  });
+
+  it('extractOpenGraphImage handles og:image:url and twitter:image:src variants', async () => {
+    const { extractOpenGraphImage } = await import('../providers/rss');
+
+    const html = '<meta property="og:image:url" content="https://example.com/og-url.png"/>';
+    expect(extractOpenGraphImage(html)).toBe('https://example.com/og-url.png');
+
+    const twitter = '<meta name="twitter:image:src" content="https://example.com/tw.png"/>';
+    expect(extractOpenGraphImage(twitter)).toBe('https://example.com/tw.png');
+  });
+
+  it('extractOpenGraphImage prefers plain og:image over variants', async () => {
+    const { extractOpenGraphImage } = await import('../providers/rss');
+
+    const html =
+      '<meta property="og:image:url" content="https://example.com/variant.png"/>' +
+      '<meta property="og:image" content="https://example.com/plain.png"/>';
+    expect(extractOpenGraphImage(html)).toBe('https://example.com/plain.png');
+  });
+
+  it('extractOpenGraphImage skips favicon and icon URLs', async () => {
+    const { extractOpenGraphImage } = await import('../providers/rss');
+
+    const html = '<meta property="og:image" content="https://example.com/favicon.ico"/>';
+    expect(extractOpenGraphImage(html)).toBeUndefined();
+
+    const icon = '<meta property="og:image" content="https://example.com/icons/logo.png"/>';
+    expect(extractOpenGraphImage(icon)).toBeUndefined();
+  });
+
+  it('extractLargestImage picks the largest declared image', async () => {
+    const { extractLargestImage } = await import('../providers/rss');
+
+    const html =
+      '<img src="https://example.com/icon.png" width="32" height="32"/>' +
+      '<img src="https://example.com/hero.jpg" width="1200" height="630"/>' +
+      '<img src="https://example.com/small.jpg" width="300" height="200"/>';
+    expect(extractLargestImage(html)).toBe('https://example.com/hero.jpg');
+  });
+
+  it('extractLargestImage ignores icons and below-threshold images', async () => {
+    const { extractLargestImage } = await import('../providers/rss');
+
+    const html =
+      '<img src="https://example.com/favicon.png" width="16" height="16"/>' +
+      '<img src="https://example.com/badge.png" width="120" height="40"/>' +
+      '<img src="https://example.com/thumb.jpg" width="180" height="120"/>';
+    expect(extractLargestImage(html)).toBeUndefined();
+  });
+
+  it('extractLargestImage scores srcset candidates by descriptor', async () => {
+    const { extractLargestImage } = await import('../providers/rss');
+
+    const html =
+      '<img srcset="https://example.com/hero-480.jpg 480w, https://example.com/hero-1600.jpg 1600w" src="https://example.com/hero-480.jpg"/>';
+    expect(extractLargestImage(html)).toBe('https://example.com/hero-1600.jpg');
+  });
+
+  it('extractFeaturedImage skips icons and prefers srcset', async () => {
+    const { extractFeaturedImage } = await import('../providers/rss');
+
+    const iconHtml = '<p>Text</p><img src="https://example.com/favicon.ico"/>';
+    expect(extractFeaturedImage(iconHtml)).toBeUndefined();
+
+    const srcsetHtml =
+      '<img srcset="https://example.com/a-200.jpg 200w, https://example.com/a-800.jpg 800w" src="https://example.com/a-200.jpg"/>';
+    expect(extractFeaturedImage(srcsetHtml)).toBe('https://example.com/a-800.jpg');
   });
 
   it('parseFeedXml extracts feed-level image', async () => {
@@ -868,7 +965,9 @@ describe('RSS provider', () => {
   it('analyzeNewsSentiment scores positive and negative headlines', async () => {
     const { analyzeNewsSentiment } = await import('../lib/sentiment');
 
-    const positive = analyzeNewsSentiment('Bitcoin surges to new all-time high as ETF inflows hit record');
+    const positive = analyzeNewsSentiment(
+      'Bitcoin surges to new all-time high as ETF inflows hit record',
+    );
     expect(positive.normalized).toBeGreaterThan(0);
     expect(positive.positive.length).toBeGreaterThan(0);
 

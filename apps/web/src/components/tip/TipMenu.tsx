@@ -46,7 +46,7 @@ export function TipMenu({
   const [error, setError] = useState<string | null>(null);
 
   const menuRef = useRef<HTMLDivElement>(null);
-  const sentTimer = useRef<ReturnType<typeof setTimeout>>();
+  const sentTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const options = useMemo<TipMenuOption[]>(() => {
     if (venue === 'our_network') return OUR_NETWORK_OPTIONS;

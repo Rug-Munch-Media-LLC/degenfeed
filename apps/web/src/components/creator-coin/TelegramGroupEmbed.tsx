@@ -507,7 +507,7 @@ export function TelegramGroupEmbed({
               >
                 <div className="flex items-center gap-2">
                   <span className="text-[10px] font-medium text-[var(--color-fg)]">
-                    {'fromUser' in msg ? msg.fromUser : msg.fromUser}
+                    {msg.fromUser}
                   </span>
                   <span className="text-[9px] text-[var(--color-muted)]">
                     {new Date(msg.timestamp).toLocaleTimeString([], {
@@ -517,7 +517,7 @@ export function TelegramGroupEmbed({
                   </span>
                 </div>
                 <p className="mt-0.5 text-xs text-[var(--color-muted)] line-clamp-1">
-                  {'text' in msg ? msg.text : msg.text}
+                  {msg.text}
                 </p>
               </div>
             ))}

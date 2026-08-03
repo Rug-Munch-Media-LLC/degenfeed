@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import { categoryFallback } from './categoryFallback';
 import type { NewsStory } from './types';
 import {
   BIAS_STYLES,
@@ -79,11 +80,13 @@ export function NewsStoryCard({
             loading="lazy"
           />
         ) : (
-          /* Gradient fallback for cards without images */
+          /* Branded category fallback (CSS gradient + category glyph, no image asset) */
           <div
-            className={`h-full w-full bg-gradient-to-br ${catColor.badge} flex items-center justify-center`}
+            className={`h-full w-full ${categoryFallback(primaryCat).bg} flex items-center justify-center`}
           >
-            <div className="text-4xl opacity-15">📰</div>
+            <div className={`text-4xl ${categoryFallback(primaryCat).text}`}>
+              {categoryFallback(primaryCat).glyph}
+            </div>
           </div>
         )}
         {/* Bottom gradient overlay */}

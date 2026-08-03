@@ -471,7 +471,7 @@ export default function CoinStatsPage() {
     const segments = top5.map((c) => ({
       label: c.symbol,
       value: c.holders,
-      color: phaseColors[top5.indexOf(c) % phaseColors.length],
+      color: phaseColors[top5.indexOf(c) % phaseColors.length] ?? '#888888',
     }));
     if (otherHolders > 0) {
       segments.push({ label: 'Others', value: otherHolders, color: '#2f3336' });

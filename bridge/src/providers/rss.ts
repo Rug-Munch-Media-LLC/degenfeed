@@ -49,7 +49,10 @@ export type FeedCategory =
   | 'regulation'
   | 'bitcoin'
   | 'ethereum'
-  | 'solana';
+  | 'solana'
+  | 'science'
+  | 'geopolitics'
+  | 'business';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // CRYPTO NEWS (25 feeds)
@@ -461,12 +464,18 @@ const TECH_FEEDS: FeedSource[] = [
     category: 'tech',
     niches: ['tech', 'ai', 'research'],
   },
+  {
+    url: 'https://stratechery.com/feed/',
+    label: 'Stratechery',
+    category: 'tech',
+    niches: ['tech', 'business', 'strategy'],
+    featured: true,
+  },
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════
 // DEFI-SPECIFIC (8 feeds)
 // ═══════════════════════════════════════════════════════════════════════════
-
 const DEFI_FEEDS: FeedSource[] = [
   {
     url: 'https://curve.substack.com/feed',
@@ -506,6 +515,129 @@ const AI_FEEDS: FeedSource[] = [
     label: 'Hugging Face Blog',
     category: 'ai',
     niches: ['ai', 'dev', 'research'],
+  },
+];
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SCIENCE (verified 2026-08-03)
+// ═══════════════════════════════════════════════════════════════════════════
+
+const SCIENCE_FEEDS: FeedSource[] = [
+  {
+    url: 'https://www.nature.com/nature.rss',
+    label: 'Nature',
+    category: 'science',
+    niches: ['science', 'research', 'academic'],
+    featured: true,
+  },
+  {
+    url: 'https://www.sciencedaily.com/rss/all.xml',
+    label: 'Science Daily',
+    category: 'science',
+    niches: ['science', 'research'],
+  },
+  {
+    url: 'https://www.quantamagazine.org/feed/',
+    label: 'Quanta Magazine',
+    category: 'science',
+    niches: ['science', 'research', 'tech'],
+    featured: true,
+  },
+  {
+    url: 'https://www.economist.com/science-and-technology/rss.xml',
+    label: 'The Economist Science',
+    category: 'science',
+    niches: ['science', 'tech', 'research'],
+  },
+];
+
+// ═══════════════════════════════════════════════════════════════════════════
+// GEOPOLITICS & WORLD AFFAIRS (verified 2026-08-03)
+// ═══════════════════════════════════════════════════════════════════════════
+
+const GEOPOLITICS_FEEDS: FeedSource[] = [
+  {
+    url: 'https://foreignaffairs.com/rss.xml',
+    label: 'Foreign Affairs',
+    category: 'geopolitics',
+    niches: ['geopolitics', 'policy', 'world'],
+    featured: true,
+  },
+  {
+    url: 'https://www.cfr.org/feed',
+    label: 'Council on Foreign Relations',
+    category: 'geopolitics',
+    niches: ['geopolitics', 'policy', 'world'],
+    featured: true,
+  },
+  {
+    url: 'https://thediplomat.com/feed/',
+    label: 'The Diplomat',
+    category: 'geopolitics',
+    niches: ['geopolitics', 'asia', 'world'],
+  },
+  {
+    url: 'http://feeds.bbci.co.uk/news/world/rss.xml',
+    label: 'BBC World',
+    category: 'geopolitics',
+    niches: ['world', 'geopolitics'],
+  },
+  {
+    url: 'https://www.aljazeera.com/xml/rss/all.xml',
+    label: 'Al Jazeera',
+    category: 'geopolitics',
+    niches: ['world', 'geopolitics', 'middle-east'],
+  },
+  {
+    url: 'https://rss.nytimes.com/services/xml/rss/nyt/World.xml',
+    label: 'NYT World',
+    category: 'geopolitics',
+    niches: ['world', 'geopolitics'],
+    featured: true,
+  },
+  {
+    url: 'https://www.theguardian.com/world/rss',
+    label: 'The Guardian World',
+    category: 'geopolitics',
+    niches: ['world', 'geopolitics'],
+  },
+];
+
+// ═══════════════════════════════════════════════════════════════════════════
+// BUSINESS & ECONOMICS (verified 2026-08-03)
+// ═══════════════════════════════════════════════════════════════════════════
+
+const BUSINESS_FEEDS: FeedSource[] = [
+  {
+    url: 'https://www.economist.com/finance-and-economics/rss.xml',
+    label: 'The Economist',
+    category: 'business',
+    niches: ['business', 'economics', 'markets'],
+    featured: true,
+  },
+  {
+    url: 'https://www.ft.com/alphaville?format=rss',
+    label: 'FT Alphaville',
+    category: 'business',
+    niches: ['business', 'economics', 'markets'],
+  },
+  {
+    url: 'https://feeds.content.dowjones.io/public/rss/RSSWorldNews',
+    label: 'WSJ World',
+    category: 'business',
+    niches: ['business', 'world', 'markets'],
+  },
+  {
+    url: 'https://www.cnbc.com/id/100003114/device/rss/rss.html',
+    label: 'CNBC Top News',
+    category: 'business',
+    niches: ['business', 'markets'],
+  },
+  {
+    url: 'https://feeds.bloomberg.com/markets/news.rss',
+    label: 'Bloomberg Markets',
+    category: 'business',
+    niches: ['business', 'markets'],
   },
 ];
 
@@ -726,6 +858,9 @@ export const ALL_FEEDS: FeedSource[] = [
   ...SECURITY_FEEDS,
   ...ACADEMIC_FEEDS,
   ...TECH_FEEDS,
+  ...SCIENCE_FEEDS,
+  ...GEOPOLITICS_FEEDS,
+  ...BUSINESS_FEEDS,
   ...DEFI_FEEDS,
   ...NFT_FEEDS,
   ...AI_FEEDS,
@@ -796,21 +931,21 @@ export function stripHtml(html: string): string {
 }
 
 /**
- * Extract the first image URL from HTML content
+ * Extract the first usable image URL from HTML content.
+ * Skips data URIs, icons, badges, and favicons.
  */
 export function extractFeaturedImage(html: string): string | undefined {
   if (!html) return undefined;
-  const imgMatch = html.match(/<img[^>]+src=["']([^"']+)["']/i);
-  if (imgMatch?.[1]) {
-    const url = imgMatch[1];
-    // Skip data URIs and very small icons
-    if (!url.startsWith('data:') && !url.includes('favicon') && !url.includes('1x1')) {
-      return url;
-    }
+  // Prefer the largest candidate from a srcset when present, else the src.
+  for (const tag of html.match(/<img\b[^>]*>/gi) ?? []) {
+    const src = tag.match(/\bsrc=["']([^"']+)["']/i)?.[1];
+    const srcset = tag.match(/\bsrcset=["']([^"']+)["']/i)?.[1];
+    const candidate = srcsetLargest(srcset) || src;
+    if (candidate && isLikelyHeroImage(candidate)) return candidate;
   }
   // Try <figure> with <img> inside
   const figureMatch = html.match(/<figure[^>]*>[\s\S]*?<img[^>]+src=["']([^"']+)["']/i);
-  if (figureMatch?.[1]) return figureMatch[1];
+  if (figureMatch?.[1] && isLikelyHeroImage(figureMatch[1])) return figureMatch[1];
 
   return undefined;
 }
@@ -860,20 +995,128 @@ export function extractEnclosures(e: string): { url?: string; type?: string }[] 
 }
 
 /**
+ * Minimum acceptable article hero image dimensions (CSS pixels).
+ * Smaller images are icons/badges/trackers and are skipped so cards
+ * never render a 1×1 pixel or a 16×16 favicon as a hero.
+ */
+export const MIN_IMAGE_WIDTH = 200;
+export const MIN_IMAGE_HEIGHT = 150;
+
+/**
+ * URL patterns that identify icons, badges, avatars, sprites and other
+ * non-hero images. Used to filter candidates before dimension checks.
+ */
+const IMAGE_JUNK_PATTERNS = [
+  'favicon',
+  'icon',
+  'badge',
+  'avatar',
+  'button',
+  'sprite',
+  'logo',
+  'tracking',
+  'pixel',
+  '1x1',
+  'spacer',
+  'blank.gif',
+  'transparent',
+];
+
+/** True when a URL is a plausible hero image (not an obvious icon/badge). */
+export function isLikelyHeroImage(url: string): boolean {
+  if (!url?.startsWith('http')) return false;
+  const lower = url.toLowerCase();
+  return !IMAGE_JUNK_PATTERNS.some((p) => lower.includes(p));
+}
+
+/** Parse an <img> tag's declared width/height attributes (if present). */
+function imgTagSize(tag: string): { width?: number; height?: number } {
+  const w = tag.match(/\bwidth=["']?(\d+)/i)?.[1];
+  const h = tag.match(/\bheight=["']?(\d+)/i)?.[1];
+  return {
+    width: w ? Number.parseInt(w, 10) : undefined,
+    height: h ? Number.parseInt(h, 10) : undefined,
+  };
+}
+
+/** Pick the largest candidate URL from a srcset attribute (descriptor `w` wins). */
+function srcsetLargest(srcset: string | undefined): string | undefined {
+  if (!srcset) return undefined;
+  let best: { url: string; weight: number } | undefined;
+  for (const part of srcset.split(',')) {
+    const [rawUrl, descriptor] = part.trim().split(/\s+/);
+    if (!rawUrl?.startsWith('http')) continue;
+    const weight = descriptor?.endsWith('w')
+      ? Number.parseInt(descriptor, 10) || 0
+      : descriptor?.endsWith('x')
+        ? Number.parseFloat(descriptor) || 0
+        : 0;
+    if (!best || weight > best.weight) best = { url: rawUrl, weight };
+  }
+  return best?.url;
+}
+
+/**
+ * Readability-style largest-image extraction. Scores every <img> in the
+ * article HTML by declared width×height (falling back to srcset weight)
+ * and returns the largest candidate that plausibly is a hero image
+ * (≥ MIN_IMAGE_WIDTH×MIN_IMAGE_HEIGHT when dimensions are declared,
+ * and not an icon/badge/spacer by URL pattern).
+ *
+ * Returns undefined when no usable candidate exists.
+ */
+export function extractLargestImage(html: string): string | undefined {
+  if (!html) return undefined;
+  const imgRe = /<img\b[^>]*>/gi;
+  let best: { url: string; area: number; weight: number } | undefined;
+
+  for (const tag of html.match(imgRe) ?? []) {
+    const src = tag.match(/\bsrc=["']([^"']+)["']/i)?.[1];
+    const srcset = tag.match(/\bsrcset=["']([^"']+)["']/i)?.[1];
+    const candidate = srcsetLargest(srcset) || src;
+    if (!candidate || !isLikelyHeroImage(candidate)) continue;
+
+    const { width, height } = imgTagSize(tag);
+    // Declared dimensions below the hero threshold → skip outright
+    if (width !== undefined && height !== undefined) {
+      if (width < MIN_IMAGE_WIDTH || height < MIN_IMAGE_HEIGHT) continue;
+      const area = width * height;
+      if (!best || area > best.area) best = { url: candidate, area, weight: 0 };
+      continue;
+    }
+    // No dimensions — score by srcset weight (falls back to area 0)
+    const parsed = srcsetLargest(srcset);
+    const weight = parsed ? Number.parseInt(parsed.split(/\s+/)[1] ?? '0', 10) : 0;
+    if (!best || weight > best.weight) best = { url: candidate, area: 0, weight };
+  }
+  return best?.url;
+}
+
+/**
  * Extract OpenGraph / Twitter Card image from article HTML:
  *   <meta property="og:image" content="...">
  *   <meta name="twitter:image" content="...">
- * Handles attribute order variants and skips favicons.
+ *   <meta property="og:image:url" content="...">
+ *   <meta property="og:image:secure_url" content="...">
+ * Handles attribute order variants and skips favicons/icons/badges.
+ * Prefers plain og:image over og:image:url/secure_url variants.
  */
 export function extractOpenGraphImage(html: string): string | undefined {
   if (!html) return undefined;
-  const metaRe = /<meta[^>]+(?:property|name)=["'](?:og:image|twitter:image)["'][^>]*>/gi;
+  const metaRe =
+    /<meta[^>]+(?:property|name)=["'](?:og:image(?::url|:secure_url)?|twitter:image(?::src)?)["'][^>]*>/gi;
+  const candidates: { url: string; priority: number }[] = [];
   for (const tag of html.match(metaRe) ?? []) {
     const content = tag.match(/(?:content|value)=["']([^"']+)["']/i);
     const url = content?.[1];
-    if (url?.startsWith('http') && !url.includes('favicon')) return url;
+    if (!url || !isLikelyHeroImage(url)) continue;
+    const property = tag.match(/(?:property|name)=["']([^"']+)["']/i)?.[1] || '';
+    // Plain og:image and twitter:image are preferred over the :url/:secure_url variants
+    const priority = property === 'og:image' || property === 'twitter:image' ? 2 : 1;
+    candidates.push({ url, priority });
   }
-  return undefined;
+  candidates.sort((a, b) => b.priority - a.priority);
+  return candidates[0]?.url;
 }
 
 /**
@@ -886,7 +1129,7 @@ export function extractMediaImage(itemXml: string): string | undefined {
   const matches = [...itemXml.matchAll(mediaRe)];
   for (const m of matches) {
     const url = m[1];
-    if (url?.startsWith('http') && !url.includes('favicon')) return url;
+    if (url && isLikelyHeroImage(url)) return url;
   }
   return undefined;
 }
@@ -915,7 +1158,7 @@ function cacheOgImage(url: string, image: string | undefined): void {
  * so concurrent enrichment passes never duplicate a request.
  */
 export async function fetchOpenGraphImage(url: string): Promise<string | undefined> {
-  if (!url || !url.startsWith('http')) return undefined;
+  if (!url?.startsWith('http')) return undefined;
 
   const cached = ogImageCache.get(url);
   if (cached) {
@@ -946,8 +1189,14 @@ async function fetchOpenGraphImageInner(url: string): Promise<string | undefined
       return undefined;
     }
     // We only need <head> metadata — cap the body to bound memory on huge pages.
-    const html = (await res.text()).slice(0, 200_000);
-    const image = extractOpenGraphImage(html) || extractFeaturedImage(html);
+    // 300KB keeps room for og:image + the top-of-article hero <img> that the
+    // readability-style fallback scores.
+    const html = (await res.text()).slice(0, 300_000);
+    // Priority: OpenGraph/Twitter meta → readability-style largest image →
+    // first inline <img> (legacy). Each candidate is validated to skip
+    // icons, badges and tracking pixels.
+    const og = extractOpenGraphImage(html);
+    const image = og || extractLargestImage(html) || extractFeaturedImage(html);
     cacheOgImage(url, image);
     return image;
   } catch {
@@ -1041,6 +1290,24 @@ export function guessNiches(text: string, baseNiches: string[]): string[] {
   if (/\b(rwa|real.?world|tokenization)\b/.test(lower)) niches.add('rwa');
   if (/\b(stablecoin|usdc|usdt|dai|fdusd)\b/.test(lower)) niches.add('stablecoin');
   if (/\b(privacy|monero|tornado|anonymity)\b/.test(lower)) niches.add('privacy');
+
+  // World / science / business topics (topic expansion)
+  if (
+    /\b(climate|physics|biology|genome|space|nasa|quantum|dna|vaccine|neutron|telescope)\b/.test(
+      lower,
+    )
+  )
+    niches.add('science');
+  if (
+    /\b(war|sanction|diplomacy|nato|election|foreign|policy|geopolitic|treaty|summit)\b/.test(lower)
+  )
+    niches.add('geopolitics');
+  if (
+    /\b(economy|recession|inflation|gdp|fed|interest rate|tariff|trade war|unemployment|central bank)\b/.test(
+      lower,
+    )
+  )
+    niches.add('business');
 
   // Add crypto as default if nothing matched and no base niches
   if (niches.size === 0) niches.add('crypto');
@@ -1470,12 +1737,16 @@ export function normalizeUrlKey(url: string): string {
     ]) {
       u.searchParams.delete(p);
     }
-    let host = u.hostname.replace(/^www\./i, '');
+    const host = u.hostname.replace(/^www\./i, '');
     let path = u.pathname.replace(/\/+$/, '');
     if (path === '') path = '/';
     return `${host}${path}`.toLowerCase();
   } catch {
-    return url.toLowerCase().replace(/^https?:\/\//, '').replace(/\/+$/, '').split('?')[0];
+    return url
+      .toLowerCase()
+      .replace(/^https?:\/\//, '')
+      .replace(/\/+$/, '')
+      .split('?')[0];
   }
 }
 
@@ -1492,9 +1763,35 @@ export function extractLinkUrl(post: UnifiedPost): string | undefined {
  * drop very short tokens and common stopwords.
  */
 const TITLE_STOPWORDS = new Set([
-  'the', 'a', 'an', 'and', 'or', 'but', 'for', 'with', 'from', 'its', 'this',
-  'that', 'these', 'those', 'are', 'was', 'were', 'has', 'have', 'had', 'will',
-  'would', 'could', 'should', 'into', 'over', 'under', 'after', 'before',
+  'the',
+  'a',
+  'an',
+  'and',
+  'or',
+  'but',
+  'for',
+  'with',
+  'from',
+  'its',
+  'this',
+  'that',
+  'these',
+  'those',
+  'are',
+  'was',
+  'were',
+  'has',
+  'have',
+  'had',
+  'will',
+  'would',
+  'could',
+  'should',
+  'into',
+  'over',
+  'under',
+  'after',
+  'before',
 ]);
 
 export function titleTokens(title: string): string[] {
@@ -1546,7 +1843,10 @@ export function deduplicatePosts(posts: UnifiedPost[], limit: number): UnifiedPo
   for (const post of sorted) {
     const url = extractLinkUrl(post);
     const urlKey = url ? normalizeUrlKey(url) : '';
-    const contentKey = post.text.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 120);
+    const contentKey = post.text
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '')
+      .slice(0, 120);
     const raw = post.raw as Record<string, unknown> | undefined;
     const feedLabel = (raw?.feedLabel as string | undefined) || post.author?.displayName || '';
     let matched: UnifiedPost | undefined;
@@ -1562,7 +1862,10 @@ export function deduplicatePosts(posts: UnifiedPost[], limit: number): UnifiedPo
     // Layer 2: exact content key (same title text verbatim)
     if (!matched && contentKey.length >= 20) {
       matched = kept.find((p) => {
-        const pk = p.text.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 120);
+        const pk = p.text
+          .toLowerCase()
+          .replace(/[^a-z0-9]/g, '')
+          .slice(0, 120);
         return pk === contentKey;
       });
     }
@@ -1589,16 +1892,12 @@ export function deduplicatePosts(posts: UnifiedPost[], limit: number): UnifiedPo
       // Record cross-reference (grounding signal): which feed labels cover
       // this same story. Also copy over the original URLs for authority.
       const mRaw = matched.raw as Record<string, unknown> | undefined;
-      const refs = new Set<string>(
-        (mRaw?.crossReference as string[] | undefined) ?? [],
-      );
+      const refs = new Set<string>((mRaw?.crossReference as string[] | undefined) ?? []);
       if (feedLabel) refs.add(feedLabel);
       const otherRef = (raw?.feedLabel as string | undefined) || feedLabel;
       if (otherRef) refs.add(otherRef);
       if (mRaw) mRaw.crossReference = [...refs];
-      const urls = new Set<string>(
-        (mRaw?.crossReferenceUrls as string[] | undefined) ?? [],
-      );
+      const urls = new Set<string>((mRaw?.crossReferenceUrls as string[] | undefined) ?? []);
       if (url) urls.add(url);
       const otherUrl = extractLinkUrl(post);
       if (otherUrl) urls.add(otherUrl);
@@ -1628,28 +1927,96 @@ export function deduplicatePosts(posts: UnifiedPost[], limit: number): UnifiedPo
  */
 export const SOURCE_TIERS: Record<string, number> = {
   // Tier 1 — flagship crypto news & research
-  'CoinDesk': 1, 'CoinTelegraph': 1, 'Decrypt': 1, 'The Block': 1,
-  'Blockworks': 1, 'BitcoinMagazine': 1, 'The Defiant': 1, 'CoinMetrics': 1,
-  'Dune Analytics': 1, 'Messari': 1, 'a16z Crypto': 1, 'Paradigm': 1,
-  'Pantera Capital': 1, 'Electric Capital': 1, 'Kraken Blog': 1,
-  'Chainalysis': 1, 'CryptoSlate': 1, 'Unchained Crypto': 1, 'Bankless': 1,
-  'CNBC Crypto': 1, 'MIT Tech Review': 1, 'Ars Technica': 1, 'Wired': 1,
-  'TechCrunch': 1, 'The Guardian Tech': 1, 'IEEE Spectrum': 1,
+  CoinDesk: 1,
+  CoinTelegraph: 1,
+  Decrypt: 1,
+  'The Block': 1,
+  Blockworks: 1,
+  BitcoinMagazine: 1,
+  'The Defiant': 1,
+  CoinMetrics: 1,
+  'Dune Analytics': 1,
+  Messari: 1,
+  'a16z Crypto': 1,
+  Paradigm: 1,
+  'Pantera Capital': 1,
+  'Electric Capital': 1,
+  'Kraken Blog': 1,
+  Chainalysis: 1,
+  CryptoSlate: 1,
+  'Unchained Crypto': 1,
+  Bankless: 1,
+  'CNBC Crypto': 1,
+  'MIT Tech Review': 1,
+  'Ars Technica': 1,
+  Wired: 1,
+  TechCrunch: 1,
+  'The Guardian Tech': 1,
+  'IEEE Spectrum': 1,
+  // Tier 1 — world / science / business flagship (topic expansion)
+  Nature: 1,
+  'Quanta Magazine': 1,
+  'Foreign Affairs': 1,
+  'Council on Foreign Relations': 1,
+  'NYT World': 1,
+  'The Economist': 1,
+  'Bloomberg Markets': 1,
+  Stratechery: 1,
+  'WSJ World': 1,
   // Tier 2 — established but secondary
-  'CryptoPotato': 2, 'UToday': 2, 'CryptoBriefing': 2, 'Bitcoin.com News': 2,
-  'BeInCrypto': 2, 'AMBCrypto': 2, 'Daily Hodl': 2, 'NewsBTC': 2,
-  'The Hacker News': 2, 'BleepingComputer': 2, 'OpenAI Blog': 2,
-  'Google AI': 2, 'Hugging Face Blog': 2, 'Trail of Bits': 2,
-  'SlowMist': 2, 'Halborn': 2, 'Web3 is Going Great': 2, 'Curve Finance': 2,
-  'Ethereum Blog': 2, 'Solana Blog': 2, 'Polygon Blog': 2,
-  'Chainlink Blog': 2, 'Coin Center': 2, 'SEC Press': 2,
-  'The Verge': 2, 'Hacker News': 2, 'FreeCodeCamp': 2, 'Hacker Noon': 2,
-  'The Register': 2, 'Rest of World': 2, 'The Conversation': 2,
+  CryptoPotato: 2,
+  UToday: 2,
+  CryptoBriefing: 2,
+  'Bitcoin.com News': 2,
+  BeInCrypto: 2,
+  AMBCrypto: 2,
+  'Daily Hodl': 2,
+  NewsBTC: 2,
+  'The Hacker News': 2,
+  BleepingComputer: 2,
+  'OpenAI Blog': 2,
+  'Google AI': 2,
+  'Hugging Face Blog': 2,
+  'Trail of Bits': 2,
+  SlowMist: 2,
+  Halborn: 2,
+  'Web3 is Going Great': 2,
+  'Curve Finance': 2,
+  'Ethereum Blog': 2,
+  'Solana Blog': 2,
+  'Polygon Blog': 2,
+  'Chainlink Blog': 2,
+  'Coin Center': 2,
+  'SEC Press': 2,
+  'The Verge': 2,
+  'Hacker News': 2,
+  FreeCodeCamp: 2,
+  'Hacker Noon': 2,
+  'The Register': 2,
+  'Rest of World': 2,
+  'The Conversation': 2,
+  'Science Daily': 2,
+  'The Diplomat': 2,
+  'BBC World': 2,
+  'Al Jazeera': 2,
+  'The Guardian World': 2,
+  'FT Alphaville': 2,
+  'CNBC Top News': 2,
+  'The Economist Science': 2,
   // Tier 3 — niche / long tail
-  'Bitcoinist': 3, 'Live Bitcoin News': 3, 'ZyCrypto': 3, 'NullTX': 3,
-  'CryptoNewsZ': 3, 'CoinPedia': 3, 'Ethereum World News': 3,
-  'Blockchain Association': 3, 'CoinDesk Policy': 3, 'CoinDesk Opinion': 3,
-  'NFT Now': 3, 'Rarible Blog': 3, 'Decrypt NFT': 3,
+  Bitcoinist: 3,
+  'Live Bitcoin News': 3,
+  ZyCrypto: 3,
+  NullTX: 3,
+  CryptoNewsZ: 3,
+  CoinPedia: 3,
+  'Ethereum World News': 3,
+  'Blockchain Association': 3,
+  'CoinDesk Policy': 3,
+  'CoinDesk Opinion': 3,
+  'NFT Now': 3,
+  'Rarible Blog': 3,
+  'Decrypt NFT': 3,
 };
 
 /**
