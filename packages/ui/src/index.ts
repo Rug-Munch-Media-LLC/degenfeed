@@ -32,6 +32,8 @@ export type {
   RegistrationStatus,
 } from './CrossPlatformSetup';
 export { CrossPlatformSetup } from './CrossPlatformSetup';
+export type { CrossPostVersionsProps } from './CrossPostVersions';
+export { CrossPostVersions, crossPostSiblings } from './CrossPostVersions';
 export type {
   CrossProtocolReplyCount,
   CrossProtocolThreadIndicatorProps,

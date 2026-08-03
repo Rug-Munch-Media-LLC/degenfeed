@@ -25,7 +25,8 @@ export const PROTOCOL_COLORS: Record<string, string> = {
   discord: '#5865f2',
   telegram: '#26a5e4',
   twitter: '#1da1f2',
-  matrix: '#000000',
+  matrix: '#0dbd8b',
+  xmpp: '#0022ff',
   // Video
   youtube: '#ff0000',
   twitch: '#9146ff',
@@ -64,6 +65,7 @@ export const PROTOCOL_LABELS: Record<string, string> = {
   telegram: 'Telegram',
   twitter: 'X',
   matrix: 'Matrix',
+  xmpp: 'XMPP',
   // Video
   youtube: 'YouTube',
   twitch: 'Twitch',
@@ -102,6 +104,7 @@ export const PROTOCOL_ICONS: Record<string, string> = {
   telegram: 'T',
   twitter: 'X',
   matrix: 'M',
+  xmpp: 'X',
   // Video
   youtube: '\u25B6',
   twitch: 'T',

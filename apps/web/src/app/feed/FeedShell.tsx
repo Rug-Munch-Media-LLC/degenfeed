@@ -398,6 +398,17 @@ export function FeedShell({ children }: FeedShellProps) {
               </Link>
             );
           })}
+          {/* Open the full bottom-sheet protocol picker */}
+          <button
+            type="button"
+            onClick={() => setSwitcherOpen(true)}
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-[var(--color-glass-border)] px-3 py-1.5 text-xs font-medium whitespace-nowrap text-[var(--color-muted)] transition-colors hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)]"
+            aria-label="All protocols"
+            aria-haspopup="dialog"
+          >
+            <span aria-hidden="true">☰</span>
+            <span>More</span>
+          </button>
         </div>
 
         {/* ── Protocol indicator (mobile) ── */}
@@ -473,6 +484,9 @@ export function FeedShell({ children }: FeedShellProps) {
           )}
         </div>
       </aside>
+
+      {/* Mobile bottom-sheet protocol picker */}
+      <ProtocolSwitcherSheet open={switcherOpen} onClose={() => setSwitcherOpen(false)} />
     </div>
   );
 }

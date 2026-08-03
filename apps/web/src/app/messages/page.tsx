@@ -6,13 +6,22 @@
  * Tabbed navigation between messaging features.
  */
 
+import {
+  type DegenIdentity,
+  getOfflineQueue,
+  resolveDegenIdentity,
+  useChatUnread,
+  useDegenChatConnection,
+} from '@degenfeed/degenchat';
+import { getProtocolColor, getProtocolLabel } from '@degenfeed/ui';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../../components/AuthProvider';
 import { DegenChatLogo, DegenChatWordmark } from '../../components/DegenChatBrand';
 import { useMessages } from '../../hooks/useMessages';
 import { usePushNotifications } from '../../hooks/usePushNotifications';
+import { retryFetch } from '../../lib/retryFetch';
 import { ChatView } from './ChatView';
 import { ComposeBar } from './ComposeBar';
 import { ConversationList } from './ConversationList';
@@ -27,7 +36,6 @@ const CHAT_TABS = [
 ] as const;
 
 /* ─── Constants ──────────────────────────────────────────────────────── */
-
 
 const TRANSPORT_OPTIONS = [
   { id: 'nostr', label: 'Nostr', icon: '☀️', color: '#E33A3A', e2e: true },
@@ -125,6 +133,7 @@ export default function MessagesPage() {
     composeText,
     searchQuery,
     typingUsersForSelected,
+    realtimeConnected,
     setComposeText,
     setSendProtocol,
     setSendToId,
@@ -174,6 +183,88 @@ export default function MessagesPage() {
     setSearchQuery('');
   }, [setShowCompose, setSearchQuery]);
 
+  // ── DegenChat connection status (Redis hub + per-adapter states) ──────
+  const { adapterStates, hubStatus, reconnecting, restart } = useDegenChatConnection({
+    signedInProtocols,
+  });
+
+  // ── Offline queue: pending messages waiting for replay ────────────────
+  const { pending: pendingCount } = useChatUnread({ enabled: false });
+
+  const flushOfflineQueue = useCallback(async () => {
+    const queue = getOfflineQueue();
+    const result = await queue.flush(async (message) => {
+      try {
+        const res = await retryFetch('/api/messages/send', {
+          maxRetries: 1,
+          fetchOptions: {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({
+              to: message.toId,
+              body: message.body,
+              preferredProtocol: message.protocol,
+              nostrPubkey: tokens.nostr_pubkey,
+              auth: tokens,
+            }),
+          },
+        });
+        return res.ok;
+      } catch {
+        return false;
+      }
+    });
+    window.dispatchEvent(new CustomEvent('degenchat:offline-queue'));
+    return result;
+  }, [tokens]);
+
+  // Auto-flush the offline queue whenever realtime connectivity returns.
+  const prevRealtimeConnected = useRef<boolean | null>(null);
+  useEffect(() => {
+    if (!hasSignedIn) return;
+    const was = prevRealtimeConnected.current;
+    prevRealtimeConnected.current = realtimeConnected;
+    if (realtimeConnected && (was === false || was === null) && getOfflineQueue().size > 0) {
+      void flushOfflineQueue();
+    }
+  }, [realtimeConnected, hasSignedIn, flushOfflineQueue]);
+
+  // ── Compose: resolve the recipient's cross-protocol identity ──────────
+  const [resolvedIdentity, setResolvedIdentity] = useState<DegenIdentity | null>(null);
+  const [resolvingIdentity, setResolvingIdentity] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    const identifier = sendToId.trim();
+    if (!identifier) {
+      setResolvedIdentity(null);
+      setResolvingIdentity(false);
+      return;
+    }
+    setResolvingIdentity(true);
+    const timer = setTimeout(async () => {
+      try {
+        const resolved = await resolveDegenIdentity(identifier);
+        if (cancelled) return;
+        setResolvedIdentity(resolved);
+        // Auto-select reachable delivery protocols for the fan-out.
+        const reachable = resolved.deliveryProtocols.filter((p) =>
+          TRANSPORT_OPTIONS.some((t) => t.id === p),
+        );
+        if (reachable.length > 0) setComposeProtocols(reachable.slice(0, 5));
+      } catch {
+        if (!cancelled) setResolvedIdentity(null);
+      } finally {
+        if (!cancelled) setResolvingIdentity(false);
+      }
+    }, 350);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [sendToId]);
+
   // Count total unread across all chat features
   const totalUnread = unreadTotal;
 
@@ -212,6 +303,25 @@ export default function MessagesPage() {
         })}
       </nav>
 
+      {/* Offline queue banner — messages queued while disconnected */}
+      {hasSignedIn && pendingCount > 0 && (
+        <div
+          className="flex shrink-0 items-center justify-between gap-2 border-b border-amber-500/20 bg-amber-500/10 px-4 py-2"
+          role="status"
+        >
+          <span className="text-[11px] font-medium text-amber-400">
+            ⏳ {pendingCount} message{pendingCount > 1 ? 's' : ''} pending in the offline queue
+          </span>
+          <button
+            type="button"
+            onClick={() => void flushOfflineQueue()}
+            className="rounded-lg bg-amber-500/20 px-2.5 py-1 text-[10px] font-semibold text-amber-400 transition-colors hover:bg-amber-500/30"
+          >
+            Send now
+          </button>
+        </div>
+      )}
+
       {/* DM content (child routes render their own) */}
       {pathname === '/messages' &&
         (!hasSignedIn ? (
@@ -220,10 +330,12 @@ export default function MessagesPage() {
               <div className="mb-4 flex justify-center">
                 <DegenChatWordmark size="md" />
               </div>
-              <p className="text-base font-semibold text-[var(--color-fg)]">Sign in to use DegenChat</p>
+              <p className="text-base font-semibold text-[var(--color-fg)]">
+                Sign in to use DegenChat
+              </p>
               <p className="mt-1.5 text-sm text-[var(--color-muted)] leading-relaxed">
-                Chat across every protocol — Nostr, Farcaster, Mastodon, Bluesky, Lens, Matrix,
-                and XMPP in one inbox.
+                Chat across every protocol — Nostr, Farcaster, Mastodon, Bluesky, Lens, Matrix, and
+                XMPP in one inbox.
                 <strong className="text-degen-400"> End-to-end encrypted by default.</strong>
               </p>
             </div>
@@ -307,6 +419,39 @@ export default function MessagesPage() {
                   className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-3.5 py-2.5 text-sm text-[var(--color-fg)] placeholder:text-[var(--color-muted)] focus:border-degen-500/30 focus:ring-1 focus:ring-degen-500/30 transition-shadow"
                 />
               </div>
+              {resolvingIdentity && (
+                <p className="text-[10px] text-[var(--color-muted)]" role="status">
+                  Resolving identity…
+                </p>
+              )}
+              {resolvedIdentity && !resolvingIdentity && (
+                <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-3 py-2">
+                  <div className="flex items-center gap-2">
+                    <span className="truncate text-[10px] font-semibold text-[var(--color-fg)]">
+                      {resolvedIdentity.displayName ?? resolvedIdentity.raw}
+                    </span>
+                    <span className="ml-auto shrink-0 text-[9px] text-[var(--color-muted)]">
+                      {resolvedIdentity.deliveryProtocols.length} reachable
+                    </span>
+                  </div>
+                  {resolvedIdentity.deliveryProtocols.length > 0 && (
+                    <div className="mt-1.5 flex flex-wrap gap-1">
+                      {resolvedIdentity.deliveryProtocols.map((p) => (
+                        <span
+                          key={p}
+                          className="inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[9px] font-semibold"
+                          style={{
+                            backgroundColor: `${getProtocolColor(p)}18`,
+                            color: getProtocolColor(p),
+                          }}
+                        >
+                          {getProtocolLabel(p)}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
               <ComposeBar
                 value={composeText}
                 onChange={setComposeText}
@@ -326,6 +471,49 @@ export default function MessagesPage() {
             <aside
               className={`w-full shrink-0 border-r border-[var(--color-border)] sm:w-[300px] ${selectedConvId && !showCompose ? 'hidden sm:flex sm:flex-col' : 'flex flex-col'}`}
             >
+              {/* DegenChat hub + adapter status */}
+              {hasSignedIn && (
+                <div className="flex shrink-0 items-center gap-1 border-b border-[var(--color-border)] bg-[var(--color-glass-bg)] px-3 py-1.5">
+                  <span
+                    className="mr-1 text-[9px] font-semibold uppercase tracking-wider text-[var(--color-muted)]"
+                    aria-hidden="true"
+                  >
+                    Hubs
+                  </span>
+                  {Object.entries(adapterStates).map(([protocol, state]) => (
+                    <span
+                      key={protocol}
+                      className="h-2 w-2 rounded-full"
+                      style={{
+                        backgroundColor:
+                          state === 'connected'
+                            ? getProtocolColor(protocol)
+                            : state === 'connecting'
+                              ? '#f59e0b'
+                              : 'var(--color-muted)',
+                        opacity: state === 'disconnected' ? 0.4 : 1,
+                      }}
+                      role="img"
+                      title={`${getProtocolLabel(protocol)}: ${state}`}
+                      aria-label={`${getProtocolLabel(protocol)}: ${state}`}
+                    />
+                  ))}
+                  {reconnecting && (
+                    <span className="ml-1 text-[9px] text-amber-400" role="status">
+                      reconnecting…
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={restart}
+                    className="ml-auto rounded px-1.5 py-0.5 text-[10px] text-[var(--color-muted)] transition-colors hover:bg-[var(--color-overlay)] hover:text-degen-400"
+                    title={`DegenChat hub: ${hubStatus ? `${hubStatus.mode} (${hubStatus.connected ? 'connected' : 'disconnected'})` : 'starting…'} — click to restart`}
+                    aria-label="Restart DegenChat hub"
+                  >
+                    ↻
+                  </button>
+                </div>
+              )}
               <ConversationList
                 conversations={filteredConversations}
                 loading={convLoading}
