@@ -15,7 +15,7 @@
  *   - One-click with saved wallet
  */
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import useSWR from 'swr';
 import { type GiftAnimationEvent, GiftAnimationOverlay } from './GiftAnimation';
 
@@ -122,7 +122,7 @@ export function GiftPanel({
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [showPackages, setShowPackages] = useState(false);
-  const [showSubscription, setShowSubscription] = useState(false);
+  const [_showSubscription, setShowSubscription] = useState(false);
   const [activeAnimation, setActiveAnimation] = useState<GiftAnimationEvent | null>(null);
   const [recentGifts, setRecentGifts] = useState<
     Array<{ giftType: GiftTypeInfo; timestamp: number }>
@@ -389,6 +389,7 @@ export function GiftPanel({
                 aria-label="Close gift panel"
               >
                 <svg
+                  aria-hidden="true"
                   width="14"
                   height="14"
                   viewBox="0 0 24 24"

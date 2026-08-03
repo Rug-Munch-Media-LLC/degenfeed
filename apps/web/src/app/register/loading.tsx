@@ -2,7 +2,6 @@ import {
   CardSkeleton,
   ContentShellSkeleton,
   FormFieldSkeleton,
-  Line,
 } from '@/components/loading/PageSkeleton';
 
 export default function RegisterLoading() {

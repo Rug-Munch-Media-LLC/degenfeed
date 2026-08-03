@@ -61,8 +61,14 @@ export function MilestoneEditor({
             </button>
           </div>
           <div className="mb-2">
-            <label className="mb-1 block text-[9px] text-[var(--color-muted)]">Description</label>
+            <label
+              className="mb-1 block text-[9px] text-[var(--color-muted)]"
+              htmlFor="field-446391c6"
+            >
+              Description
+            </label>
             <input
+              id="field-446391c6"
               type="text"
               value={ms.description}
               onChange={(e) => updateMilestone(ms.id, 'description', e.target.value)}
@@ -72,8 +78,14 @@ export function MilestoneEditor({
           </div>
           <div className="flex items-center gap-2">
             <div className="flex-1">
-              <label className="mb-1 block text-[9px] text-[var(--color-muted)]">Amount</label>
+              <label
+                className="mb-1 block text-[9px] text-[var(--color-muted)]"
+                htmlFor="field-4bc1830a"
+              >
+                Amount
+              </label>
               <input
+                id="field-4bc1830a"
                 type="text"
                 value={ms.amount}
                 onChange={(e) => updateMilestone(ms.id, 'amount', e.target.value)}
@@ -82,8 +94,14 @@ export function MilestoneEditor({
               />
             </div>
             <div className="w-24">
-              <label className="mb-1 block text-[9px] text-[var(--color-muted)]">Token</label>
+              <label
+                className="mb-1 block text-[9px] text-[var(--color-muted)]"
+                htmlFor="field-daa7761e"
+              >
+                Token
+              </label>
               <select
+                id="field-daa7761e"
                 value={ms.token}
                 onChange={(e) => updateMilestone(ms.id, 'token', e.target.value)}
                 className="w-full rounded-lg border border-[var(--color-glass-border)] bg-[var(--color-card)] px-3 py-2 text-xs text-[var(--color-fg)] outline-none focus:border-degen-500 transition-colors"

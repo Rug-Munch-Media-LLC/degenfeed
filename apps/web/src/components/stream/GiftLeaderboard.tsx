@@ -124,7 +124,9 @@ export function GiftLeaderboard({
     return null; // No gifts yet
   }
 
-  const displayEntries = expanded ? entries : entries.slice(0, (compact ? 3 : Math.min(maxEntries, 5)));
+  const displayEntries = expanded
+    ? entries
+    : entries.slice(0, compact ? 3 : Math.min(maxEntries, 5));
 
   // ─── Compact Mode (top 3 mini leaderboard) ─────────────────────
 
@@ -143,7 +145,9 @@ export function GiftLeaderboard({
         <div className="space-y-1.5">
           {displayEntries.map((entry) => {
             const medal = entry.rank <= 3 ? MEDALS[entry.rank - 1] : '';
-            const giftIcon = entry.topGift ? (GIFT_ICONS[entry.topGift.giftTypeId]?.icon ?? '🎁') : '🎁';
+            const giftIcon = entry.topGift
+              ? (GIFT_ICONS[entry.topGift.giftTypeId]?.icon ?? '🎁')
+              : '🎁';
 
             return (
               <div
@@ -155,17 +159,13 @@ export function GiftLeaderboard({
                   <span className="text-[10px] font-medium text-white/80 truncate max-w-[100px]">
                     {entry.senderLabel}
                   </span>
-                  {entry.rank === 1 && (
-                    <span className="text-[9px]">{giftIcon}</span>
-                  )}
+                  {entry.rank === 1 && <span className="text-[9px]">{giftIcon}</span>}
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <span className="text-[10px] font-semibold text-yellow-400">
                     ${entry.totalUsd.toFixed(2)}
                   </span>
-                  <span className="text-[8px] text-white/40">
-                    {entry.giftCount} gifts
-                  </span>
+                  <span className="text-[8px] text-white/40">{entry.giftCount} gifts</span>
                 </div>
               </div>
             );
@@ -197,7 +197,15 @@ export function GiftLeaderboard({
           className="flex h-6 w-6 items-center justify-center rounded text-white/30 hover:text-white/60 transition-colors"
           title="Refresh"
         >
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg
+            aria-hidden="true"
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
             <polyline points="23 4 23 10 17 10" />
             <polyline points="1 20 1 14 7 14" />
             <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
@@ -217,7 +225,9 @@ export function GiftLeaderboard({
       <div className="space-y-0.5 px-2 pb-2">
         {displayEntries.map((entry) => {
           const medal = entry.rank <= 3 ? MEDALS[entry.rank - 1] : `#${entry.rank}`;
-          const giftIcon = entry.topGift ? (GIFT_ICONS[entry.topGift.giftTypeId]?.icon ?? '🎁') : '🎁';
+          const giftIcon = entry.topGift
+            ? (GIFT_ICONS[entry.topGift.giftTypeId]?.icon ?? '🎁')
+            : '🎁';
 
           return (
             <div
@@ -253,7 +263,9 @@ export function GiftLeaderboard({
 
       {/* Footer total */}
       <div className="border-t border-white/10 px-4 py-2 flex items-center justify-between text-[9px] text-white/40">
-        <span>{uniqueGifters} gifters · {totalGifts} gifts</span>
+        <span>
+          {uniqueGifters} gifters · {totalGifts} gifts
+        </span>
         <span>⚡ {totalSats.toLocaleString()} sats</span>
       </div>
     </div>

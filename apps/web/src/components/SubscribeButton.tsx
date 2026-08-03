@@ -237,7 +237,7 @@ export function SubscribeButton({
           onClick={() => setIsOpen(true)}
           className={`inline-flex items-center gap-1.5 rounded-full border border-green-500/30 bg-green-500/10 font-semibold text-green-400 transition-all hover:bg-green-500/20 active:scale-95 ${sizeClasses[size]}`}
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+          <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
             <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
           </svg>
           Subscribed
@@ -249,6 +249,7 @@ export function SubscribeButton({
           className={`inline-flex items-center gap-1.5 rounded-full bg-degen-500 font-semibold text-white transition-all hover:opacity-90 active:scale-95 ${sizeClasses[size]}`}
         >
           <svg
+            aria-hidden="true"
             width="14"
             height="14"
             viewBox="0 0 24 24"
@@ -268,6 +269,7 @@ export function SubscribeButton({
           style={{ borderColor: 'var(--color-glass-border)', color: 'var(--color-fg)' }}
         >
           <svg
+            aria-hidden="true"
             width="14"
             height="14"
             viewBox="0 0 24 24"
@@ -303,6 +305,7 @@ export function SubscribeButton({
                 className="text-[var(--color-muted)] hover:text-[var(--color-fg)]"
               >
                 <svg
+                  aria-hidden="true"
                   width="20"
                   height="20"
                   viewBox="0 0 24 24"
@@ -469,6 +472,7 @@ export function SubscribeButton({
               <div className="space-y-4 text-center">
                 <div className="mx-auto w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center">
                   <svg
+                    aria-hidden="true"
                     width="32"
                     height="32"
                     viewBox="0 0 24 24"

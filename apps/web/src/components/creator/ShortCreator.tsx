@@ -401,7 +401,7 @@ export default function ShortCreator({ onClose, onSuccess }: ShortCreatorProps) 
         className="absolute right-3 top-3 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white transition-colors hover:bg-black/70"
         aria-label="Close"
       >
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="none">
           <path
             d="M4 4l8 8M12 4l-8 8"
             stroke="currentColor"
@@ -479,7 +479,7 @@ export default function ShortCreator({ onClose, onSuccess }: ShortCreatorProps) 
                 className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur transition-colors hover:bg-white/30"
                 aria-label="Toggle camera"
               >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none">
                   <path
                     d="M23 7l-4 4V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2v-3l4 4V7z"
                     stroke="currentColor"
@@ -637,7 +637,7 @@ export default function ShortCreator({ onClose, onSuccess }: ShortCreatorProps) 
                   />
                 </button>
                 <div className="flex-1">
-                  <label className="text-xs font-medium text-white/80">Mint as Zora NFT</label>
+                  <span className="text-xs font-medium text-white/80">Mint as Zora NFT</span>
                   <p className="text-[10px] text-white/40">
                     Becomes a tradeable video NFT on Zora Network
                   </p>
@@ -676,6 +676,7 @@ export default function ShortCreator({ onClose, onSuccess }: ShortCreatorProps) 
           <div className="flex flex-col items-center justify-center px-6 py-16 text-center">
             <div className="mb-6">
               <svg
+                aria-hidden="true"
                 className="h-12 w-12 animate-spin text-degen-400"
                 viewBox="0 0 24 24"
                 fill="none"
@@ -718,6 +719,7 @@ export default function ShortCreator({ onClose, onSuccess }: ShortCreatorProps) 
             <div className="flex items-center gap-3 mb-4">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-degen-500/10">
                 <svg
+                  aria-hidden="true"
                   className="h-5 w-5 animate-spin text-degen-400"
                   viewBox="0 0 24 24"
                   fill="none"

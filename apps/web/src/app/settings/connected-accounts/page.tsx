@@ -466,6 +466,7 @@ function DiscordSection() {
             <span className="flex items-center justify-between">
               {showGuilds ? 'Hide' : 'Show'} my Discord servers
               <svg
+                aria-hidden="true"
                 width="12"
                 height="12"
                 viewBox="0 0 24 24"

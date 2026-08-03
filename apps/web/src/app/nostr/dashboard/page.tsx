@@ -127,7 +127,7 @@ export default function NostrDashboardPage() {
 
       // Create and sign the event client-side
       const event = sdk.createTextNote(noteContent.trim(), sdk.nsecDecode(nsecStored).hex);
-      const npub = sdk.npubEncode(event.pubkey);
+      const _npub = sdk.npubEncode(event.pubkey);
 
       // Publish via our API
       const res = await fetch('/api/nostr/publish', {

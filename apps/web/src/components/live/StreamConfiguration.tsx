@@ -103,9 +103,7 @@ export function StreamConfiguration({ config, onChange }: Props) {
         />
       </div>
       <div>
-        <label className="mb-1.5 block text-sm font-semibold text-[var(--color-fg)]">
-          Category
-        </label>
+        <span className="mb-1.5 block text-sm font-semibold text-[var(--color-fg)]">Category</span>
         <div className="grid grid-cols-5 gap-1.5">
           {CATEGORIES.map((cat) => (
             <button
@@ -121,9 +119,9 @@ export function StreamConfiguration({ config, onChange }: Props) {
         </div>
       </div>
       <div>
-        <label className="mb-1.5 block text-sm font-semibold text-[var(--color-fg)]">
+        <span className="mb-1.5 block text-sm font-semibold text-[var(--color-fg)]">
           Tags <span className="text-[var(--color-muted)]">(click to toggle)</span>
-        </label>
+        </span>
         <div className="flex flex-wrap gap-1.5">
           {TAGS_PRESETS.map((tag) => (
             <button
@@ -138,7 +136,10 @@ export function StreamConfiguration({ config, onChange }: Props) {
         </div>
       </div>
       <div>
-        <label className="mb-1.5 block text-sm font-semibold text-[var(--color-fg)]">
+        <label
+          className="mb-1.5 block text-sm font-semibold text-[var(--color-fg)]"
+          htmlFor="field-1ce9f1c8"
+        >
           Thumbnail <span className="text-[var(--color-muted)]">(optional)</span>
         </label>
         <div className="flex items-center gap-3">
@@ -160,6 +161,7 @@ export function StreamConfiguration({ config, onChange }: Props) {
             )}
           </button>
           <input
+            id="field-1ce9f1c8"
             ref={fileInputRef}
             type="file"
             accept="image/*"
@@ -174,7 +176,7 @@ export function StreamConfiguration({ config, onChange }: Props) {
         </div>
       </div>
       <div>
-        <label className="mb-1.5 block text-sm font-semibold text-[var(--color-fg)]">Privacy</label>
+        <span className="mb-1.5 block text-sm font-semibold text-[var(--color-fg)]">Privacy</span>
         <div className="flex gap-2">
           {(['public', 'unlisted', 'private'] as const).map((p) => (
             <button

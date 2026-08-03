@@ -207,9 +207,9 @@ export default function NewsletterPage() {
             </p>
             <form onSubmit={handleSubscribe}>
               <div className="mb-5">
-                <label className="mb-2 block text-xs font-semibold uppercase tracking-widest text-[var(--color-muted)]">
+                <span className="mb-2 block text-xs font-semibold uppercase tracking-widest text-[var(--color-muted)]">
                   Topics
-                </label>
+                </span>
                 <div className="flex flex-wrap gap-1.5">
                   {ALL_NICHES.map((n) => (
                     <button
@@ -224,9 +224,9 @@ export default function NewsletterPage() {
                 </div>
               </div>
               <div className="mb-5">
-                <label className="mb-2 block text-xs font-semibold uppercase tracking-widest text-[var(--color-muted)]">
+                <span className="mb-2 block text-xs font-semibold uppercase tracking-widest text-[var(--color-muted)]">
                   Sources
-                </label>
+                </span>
                 <div className="flex flex-wrap gap-1.5">
                   {ALL_PROTOCOLS.map((p) => (
                     <button
@@ -241,7 +241,10 @@ export default function NewsletterPage() {
                 </div>
               </div>
               <div className="mb-4">
-                <label className="mb-1.5 block text-xs font-medium text-[var(--color-muted)]">
+                <label
+                  className="mb-1.5 block text-xs font-medium text-[var(--color-muted)]"
+                  htmlFor="newsletter-email"
+                >
                   Email address
                 </label>
                 <input

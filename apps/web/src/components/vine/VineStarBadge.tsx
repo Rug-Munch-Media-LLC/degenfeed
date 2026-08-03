@@ -26,15 +26,18 @@ export interface VineStarBadgeProps {
 
 // ─── Tier Config ──────────────────────────────────────────────────────────
 
-const TIER_CONFIG: Record<VineStarTier, {
-  label: string;
-  emoji: string;
-  color: string;
-  bgColor: string;
-  borderColor: string;
-  glowColor: string;
-  minScore: number;
-}> = {
+const TIER_CONFIG: Record<
+  VineStarTier,
+  {
+    label: string;
+    emoji: string;
+    color: string;
+    bgColor: string;
+    borderColor: string;
+    glowColor: string;
+    minScore: number;
+  }
+> = {
   bronze: {
     label: 'Bronze Vine Star',
     emoji: '🥉',
@@ -120,10 +123,7 @@ export function VineStarBadge({
     >
       <span className="text-sm">{config.emoji}</span>
       {showLabel && (
-        <span
-          className="text-[10px] font-bold tracking-wide"
-          style={{ color: config.color }}
-        >
+        <span className="text-[10px] font-bold tracking-wide" style={{ color: config.color }}>
           Vine Star
         </span>
       )}

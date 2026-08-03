@@ -156,6 +156,7 @@ function StreamVideoPlayer({
           title={theaterMode ? 'Exit theater mode' : 'Theater mode'}
         >
           <svg
+            aria-hidden="true"
             width="14"
             height="14"
             viewBox="0 0 24 24"
@@ -191,6 +192,7 @@ function StreamVideoPlayer({
           title="Exit theater mode"
         >
           <svg
+            aria-hidden="true"
             width="18"
             height="18"
             viewBox="0 0 24 24"
@@ -281,7 +283,7 @@ function StreamInfoHeader({ stream }: { stream: StreamDetails['stream'] }) {
             type="button"
             className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 px-3 py-2 text-xs font-bold text-white transition-all hover:from-purple-500 hover:to-pink-500"
           >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+            <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
               <path d="M23 12l-2.44-2.78.34-3.68-3.61-.82-1.89-3.18L12 3 8.6 1.54 6.71 4.72l-3.61.81.34 3.68L1 12l2.44 2.78-.34 3.69 3.61.82 1.89 3.18L12 21l3.4 1.46 1.89-3.18 3.61-.82-.34-3.68L23 12z" />
             </svg>
             Tip
@@ -298,6 +300,7 @@ function StreamInfoHeader({ stream }: { stream: StreamDetails['stream'] }) {
             ) : (
               <>
                 <svg
+                  aria-hidden="true"
                   width="12"
                   height="12"
                   viewBox="0 0 24 24"
@@ -537,7 +540,13 @@ function ChatSidebar({
               {isSending ? (
                 <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-black border-t-transparent" />
               ) : (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <svg
+                  aria-hidden="true"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                >
                   <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
                 </svg>
               )}

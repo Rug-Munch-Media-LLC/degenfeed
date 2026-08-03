@@ -36,7 +36,15 @@ export function MenuTrigger({
         aria-label={`Tip ${authorDisplayName}`}
         aria-expanded={isOpen}
       >
-        <svg width={compact ? '12' : '14'} height={compact ? '12' : '14'} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+        <svg
+          width={compact ? '12' : '14'}
+          height={compact ? '12' : '14'}
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          aria-hidden="true"
+        >
           <path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5" />
           <path d="M8.5 8.5v.01" />
           <path d="M16 15a4 4 0 0 0-8 0" />

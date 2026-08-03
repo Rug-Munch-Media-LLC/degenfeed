@@ -39,7 +39,7 @@ export default function AllocationPieChart({
 
   return (
     <div className="flex flex-col items-center gap-3">
-      <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`}>
+      <svg aria-hidden="true" width={w} height={h} viewBox={`0 0 ${w} ${h}`}>
         {paths.map((p) => (
           <path key={p.label} d={p.d} fill={p.color} opacity="0.7" stroke="#111" strokeWidth="1" />
         ))}

@@ -52,7 +52,13 @@ export function StreamingSection() {
               type="button"
               className="flex items-center gap-1.5 rounded-full border border-degen-500/30 bg-degen-500/10 px-3 py-1.5 text-[10px] font-medium text-degen-400"
             >
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
+              <svg
+                aria-hidden="true"
+                width="10"
+                height="10"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+              >
                 <path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z" />
               </svg>
               {p}

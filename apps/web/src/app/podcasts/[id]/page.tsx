@@ -592,10 +592,14 @@ export default function PodcastDetailPage() {
             </div>
 
             {/* Amount */}
-            <label className="mb-1 block text-sm font-medium text-[var(--color-text-secondary)]">
+            <label
+              className="mb-1 block text-sm font-medium text-[var(--color-text-secondary)]"
+              htmlFor="field-f865bbe8"
+            >
               Amount ({tipChain === 'ethereum' ? 'ETH' : 'SOL'})
             </label>
             <input
+              id="field-f865bbe8"
               type="number"
               value={tipAmount}
               onChange={(e) => setTipAmount(e.target.value)}

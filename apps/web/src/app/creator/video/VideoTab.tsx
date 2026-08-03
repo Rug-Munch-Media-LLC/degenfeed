@@ -8,7 +8,7 @@ import { CATEGORIES } from './types';
 
 export default function VideoTab() {
   const [mode, setMode] = useState<'upload' | 'metadata' | 'publishing' | 'done'>('upload');
-  const [file, setFile] = useState<File | null>(null);
+  const [_file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -24,7 +24,7 @@ export default function VideoTab() {
   const [tipsEnabled, setTipsEnabled] = useState(true);
   const [tokenGated, setTokenGated] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [error, setError] = useState<string | null>(null);
+  const [_error, setError] = useState<string | null>(null);
 
   const togglePublishTarget = useCallback((target: PublishTarget) => {
     setPublishTargets((prev) => {
@@ -112,8 +112,14 @@ export default function VideoTab() {
         </div>
         <div className="space-y-4 max-h-[500px] overflow-y-auto pr-1">
           <div>
-            <label className="mb-1 block text-xs font-medium text-[var(--color-fg)]">Title</label>
+            <label
+              className="mb-1 block text-xs font-medium text-[var(--color-fg)]"
+              htmlFor="field-01017dcf"
+            >
+              Title
+            </label>
             <input
+              id="field-01017dcf"
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -123,10 +129,14 @@ export default function VideoTab() {
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-[var(--color-fg)]">
+            <label
+              className="mb-1 block text-xs font-medium text-[var(--color-fg)]"
+              htmlFor="field-dfc108ec"
+            >
               Description
             </label>
             <textarea
+              id="field-dfc108ec"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Describe your video..."
@@ -135,10 +145,14 @@ export default function VideoTab() {
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-[var(--color-fg)]">
+            <label
+              className="mb-1 block text-xs font-medium text-[var(--color-fg)]"
+              htmlFor="field-79555a99"
+            >
               Tags (comma separated)
             </label>
             <input
+              id="field-79555a99"
               type="text"
               value={tags}
               onChange={(e) => setTags(e.target.value)}
@@ -147,10 +161,14 @@ export default function VideoTab() {
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-[var(--color-fg)]">
+            <label
+              className="mb-1 block text-xs font-medium text-[var(--color-fg)]"
+              htmlFor="field-960baa7a"
+            >
               Category
             </label>
             <select
+              id="field-960baa7a"
               value={category}
               onChange={(e) => setCategory(e.target.value)}
               className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-3 py-2 text-xs text-[var(--color-fg)]"
@@ -163,9 +181,9 @@ export default function VideoTab() {
             </select>
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-[var(--color-fg)]">
+            <span className="mb-1 block text-xs font-medium text-[var(--color-fg)]">
               Visibility
-            </label>
+            </span>
             <div className="flex gap-2">
               {(['public', 'unlisted', 'followers', 'token-gated'] as const).map((v) => (
                 <button
@@ -200,9 +218,9 @@ export default function VideoTab() {
             </label>
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-[var(--color-fg)]">
+            <span className="mb-1 block text-xs font-medium text-[var(--color-fg)]">
               Publish to
-            </label>
+            </span>
             <PublishTargetPills selected={publishTargets} onToggle={togglePublishTarget} />
           </div>
           <div className="flex gap-2 pt-2">

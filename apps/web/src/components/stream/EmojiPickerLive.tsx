@@ -144,7 +144,7 @@ export function EmojiPickerLive({ onSelect, onClose }: EmojiPickerLiveProps) {
     [onSelect],
   );
 
-  const getEmojiClass = (emoji: EmojiItem): string => {
+  const _getEmojiClass = (emoji: EmojiItem): string => {
     if (emoji.effectClass && EFFECT_CLASS_MAP[emoji.effectClass]) {
       return EFFECT_CLASS_MAP[emoji.effectClass]!;
     }
@@ -179,6 +179,7 @@ export function EmojiPickerLive({ onSelect, onClose }: EmojiPickerLiveProps) {
             aria-label="Close emoji picker"
           >
             <svg
+              aria-hidden="true"
               width="12"
               height="12"
               viewBox="0 0 24 24"

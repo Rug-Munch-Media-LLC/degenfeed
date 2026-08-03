@@ -29,7 +29,7 @@ export default function StepBenefits({ form, update }: StepBenefitsProps) {
       <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-5">
         <h2 className="mb-4 text-sm font-bold text-[var(--color-fg)]">Token Holder Benefits</h2>
         <div className="space-y-4">
-          <label className="flex items-center justify-between">
+          <label className="flex items-center justify-between" htmlFor="field-351c2622">
             <div>
               <div className="flex items-center text-xs font-medium text-[var(--color-fg)]">
                 <span className="mr-1.5">🔐</span> Token-Gated Content
@@ -50,6 +50,7 @@ export default function StepBenefits({ form, update }: StepBenefitsProps) {
                   Min tokens for access:
                 </span>
                 <input
+                  id="field-351c2622"
                   type="text"
                   value={form.minTokensForAccess}
                   onChange={(e) => update('minTokensForAccess', e.target.value)}
@@ -62,7 +63,7 @@ export default function StepBenefits({ form, update }: StepBenefitsProps) {
             </div>
           )}
 
-          <label className="flex items-center justify-between">
+          <label className="flex items-center justify-between" htmlFor="field-26308a9d">
             <div>
               <div className="flex items-center text-xs font-medium text-[var(--color-fg)]">
                 <span className="mr-1.5">💰</span> Revenue Share
@@ -81,6 +82,7 @@ export default function StepBenefits({ form, update }: StepBenefitsProps) {
               <label className="flex items-center gap-2">
                 <span className="text-[10px] text-[var(--color-muted)]">Share %:</span>
                 <input
+                  id="field-26308a9d"
                   type="range"
                   min={1}
                   max={50}
@@ -95,7 +97,7 @@ export default function StepBenefits({ form, update }: StepBenefitsProps) {
             </div>
           )}
 
-          <label className="flex items-center justify-between">
+          <span className="flex items-center justify-between">
             <div>
               <div className="flex items-center text-xs font-medium text-[var(--color-fg)]">
                 <span className="mr-1.5">🗳️</span> Governance
@@ -108,9 +110,9 @@ export default function StepBenefits({ form, update }: StepBenefitsProps) {
               checked={form.governanceEnabled}
               onChange={() => update('governanceEnabled', !form.governanceEnabled)}
             />
-          </label>
+          </span>
 
-          <label className="flex items-center justify-between">
+          <label className="flex items-center justify-between" htmlFor="field-4d00fb07">
             <div>
               <div className="flex items-center text-xs font-medium text-[var(--color-fg)]">
                 <span className="mr-1.5">💬</span> Community Access
@@ -129,6 +131,7 @@ export default function StepBenefits({ form, update }: StepBenefitsProps) {
               <label className="flex items-center gap-2">
                 <span className="text-[10px] text-[var(--color-muted)]">Invite link:</span>
                 <input
+                  id="field-4d00fb07"
                   type="text"
                   placeholder="https://t.me/..."
                   value={form.communityLink}
@@ -139,7 +142,7 @@ export default function StepBenefits({ form, update }: StepBenefitsProps) {
             </div>
           )}
 
-          <label className="flex items-center justify-between">
+          <span className="flex items-center justify-between">
             <div>
               <div className="flex items-center text-xs font-medium text-[var(--color-fg)]">
                 <span className="mr-1.5">🎙️</span> Live AMA Scheduling
@@ -152,7 +155,7 @@ export default function StepBenefits({ form, update }: StepBenefitsProps) {
               checked={form.amaScheduling}
               onChange={() => update('amaScheduling', !form.amaScheduling)}
             />
-          </label>
+          </span>
         </div>
       </div>
     </div>

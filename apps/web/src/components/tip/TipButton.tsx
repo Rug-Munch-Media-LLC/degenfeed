@@ -14,7 +14,7 @@ import { useSolana } from '../SolanaProvider';
 import { useWeb3 } from '../Web3Provider';
 import TipModal from './TipModal';
 import type { SmartChainOption, TipStep } from './useTip';
-import { CHAIN_ICONS, FIAT_PRESETS, PROTOCOL_EMOJIS, SATS_PRESETS, useTip } from './useTip';
+import { FIAT_PRESETS, SATS_PRESETS, useTip } from './useTip';
 
 export interface TipButtonContext {
   protocol: string;

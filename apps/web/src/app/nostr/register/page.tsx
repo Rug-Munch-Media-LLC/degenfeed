@@ -85,7 +85,7 @@ export default function NostrRegisterPage() {
   const [error, setError] = useState('');
   const [registeredInfo, setRegisteredInfo] = useState<Record<string, string> | null>(null);
   const [extensionAvailable, setExtensionAvailable] = useState(false);
-  const [usingExtension, setUsingExtension] = useState(false);
+  const [_usingExtension, setUsingExtension] = useState(false);
 
   useEffect(() => {
     getExtensionPubkey().then((pk) => setExtensionAvailable(!!pk));
@@ -363,10 +363,14 @@ export default function NostrRegisterPage() {
 
               <div className="space-y-4">
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-[var(--color-fg)]">
+                  <label
+                    className="mb-1 block text-sm font-medium text-[var(--color-fg)]"
+                    htmlFor="field-77ec4007"
+                  >
                     Username <span className="text-[var(--color-muted)]">@nostr.degenfeed.xyz</span>
                   </label>
                   <input
+                    id="field-77ec4007"
                     type="text"
                     value={username}
                     onChange={(e) =>
@@ -382,10 +386,14 @@ export default function NostrRegisterPage() {
                 </div>
 
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-[var(--color-fg)]">
+                  <label
+                    className="mb-1 block text-sm font-medium text-[var(--color-fg)]"
+                    htmlFor="field-88f9e869"
+                  >
                     Display Name (optional)
                   </label>
                   <input
+                    id="field-88f9e869"
                     type="text"
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
@@ -396,10 +404,14 @@ export default function NostrRegisterPage() {
                 </div>
 
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-[var(--color-fg)]">
+                  <label
+                    className="mb-1 block text-sm font-medium text-[var(--color-fg)]"
+                    htmlFor="field-97219001"
+                  >
                     Bio (optional)
                   </label>
                   <textarea
+                    id="field-97219001"
                     value={about}
                     onChange={(e) => setAbout(e.target.value)}
                     placeholder="Tell the world about yourself"

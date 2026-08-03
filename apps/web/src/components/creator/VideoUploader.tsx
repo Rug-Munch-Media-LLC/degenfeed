@@ -179,7 +179,7 @@ export default function VideoUploader({ mode, onClose, onSuccess }: VideoUploade
             className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--color-muted)] transition-colors hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)]"
             aria-label="Close"
           >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="none">
               <path
                 d="M4 4l8 8M12 4l-8 8"
                 stroke="currentColor"
@@ -261,10 +261,14 @@ export default function VideoUploader({ mode, onClose, onSuccess }: VideoUploade
 
             {/* Title */}
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-[var(--color-muted)]">
+              <label
+                className="mb-1.5 block text-xs font-medium text-[var(--color-muted)]"
+                htmlFor="field-2755c998"
+              >
                 Title *
               </label>
               <input
+                id="field-2755c998"
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
@@ -279,10 +283,14 @@ export default function VideoUploader({ mode, onClose, onSuccess }: VideoUploade
 
             {/* Description */}
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-[var(--color-muted)]">
+              <label
+                className="mb-1.5 block text-xs font-medium text-[var(--color-muted)]"
+                htmlFor="field-2417f4eb"
+              >
                 Description
               </label>
               <textarea
+                id="field-2417f4eb"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Describe your video..."
@@ -294,10 +302,14 @@ export default function VideoUploader({ mode, onClose, onSuccess }: VideoUploade
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               {/* Tags */}
               <div>
-                <label className="mb-1.5 block text-xs font-medium text-[var(--color-muted)]">
+                <label
+                  className="mb-1.5 block text-xs font-medium text-[var(--color-muted)]"
+                  htmlFor="field-15fc7de5"
+                >
                   Tags (comma separated)
                 </label>
                 <input
+                  id="field-15fc7de5"
                   type="text"
                   value={tags}
                   onChange={(e) => setTags(e.target.value)}
@@ -308,10 +320,14 @@ export default function VideoUploader({ mode, onClose, onSuccess }: VideoUploade
 
               {/* Privacy */}
               <div>
-                <label className="mb-1.5 block text-xs font-medium text-[var(--color-muted)]">
+                <label
+                  className="mb-1.5 block text-xs font-medium text-[var(--color-muted)]"
+                  htmlFor="field-69dcb5f6"
+                >
                   Privacy
                 </label>
                 <select
+                  id="field-69dcb5f6"
                   value={privacy}
                   onChange={(e) => setPrivacy(Number(e.target.value) as 1 | 2 | 3)}
                   className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-overlay)] px-3 py-2 text-sm text-[var(--color-fg)] outline-none transition-colors focus:border-degen-500/50"
@@ -325,10 +341,14 @@ export default function VideoUploader({ mode, onClose, onSuccess }: VideoUploade
 
             {/* Schedule (optional) */}
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-[var(--color-muted)]">
+              <label
+                className="mb-1.5 block text-xs font-medium text-[var(--color-muted)]"
+                htmlFor="field-15513209"
+              >
                 Schedule publish (optional)
               </label>
               <input
+                id="field-15513209"
                 type="datetime-local"
                 value={scheduleAt}
                 onChange={(e) => setScheduleAt(e.target.value)}
@@ -338,10 +358,14 @@ export default function VideoUploader({ mode, onClose, onSuccess }: VideoUploade
 
             {/* Thumbnail */}
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-[var(--color-muted)]">
+              <label
+                className="mb-1.5 block text-xs font-medium text-[var(--color-muted)]"
+                htmlFor="field-99e69de6"
+              >
                 Thumbnail (optional)
               </label>
               <input
+                id="field-99e69de6"
                 type="file"
                 accept="image/*"
                 onChange={(e) => setThumbnail(e.target.files?.[0] ?? null)}

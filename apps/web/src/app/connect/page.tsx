@@ -9,7 +9,6 @@
  * Enterprise tier ($20/mo) or standalone add-on ($15/mo).
  */
 
-import Link from 'next/link';
 import { useCallback, useState } from 'react';
 import { ConnectPlatformModal } from '../../components/external-platforms/ConnectPlatformModal';
 import { ExternalLiveDashboard } from '../../components/external-platforms/ExternalLiveDashboard';

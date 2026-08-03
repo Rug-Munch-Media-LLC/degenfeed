@@ -223,6 +223,7 @@ export function JoinAllProtocols({ username, onComplete, onSkip, initialProcessi
                     </span>
                     {isChecked && (
                       <svg
+                        aria-hidden="true"
                         className="h-4 w-4 shrink-0 text-degen-400"
                         viewBox="0 0 24 24"
                         fill="none"

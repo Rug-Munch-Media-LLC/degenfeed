@@ -14,7 +14,6 @@
  */
 
 import { FrameEmbed } from '@degenfeed/ui';
-import { ProtocolShell } from '@degenfeed/ui/protocol-shell';
 import Link from 'next/link';
 import { useCallback, useState } from 'react';
 
@@ -122,7 +121,7 @@ const DEMO_FRAMES: FrameData[] = [
 export default function FarcasterFramesPage() {
   const [customFrameUrl, setCustomFrameUrl] = useState('');
   const [activeFrame, setActiveFrame] = useState<FrameData | null>(null);
-  const [showCreateMode, setShowCreateMode] = useState(false);
+  const [_showCreateMode, _setShowCreateMode] = useState(false);
 
   const handleCustomFrameLoad = useCallback(() => {
     if (!customFrameUrl.trim()) return;

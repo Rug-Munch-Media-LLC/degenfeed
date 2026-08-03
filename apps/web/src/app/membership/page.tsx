@@ -20,6 +20,7 @@ const TIER_ORDER: Tier[] = ['free', 'pro', 'creator', 'enterprise'];
 function CheckIcon({ muted = false }: { muted?: boolean }) {
   return (
     <svg
+      aria-hidden="true"
       width="16"
       height="16"
       viewBox="0 0 24 24"
@@ -37,6 +38,7 @@ function CheckIcon({ muted = false }: { muted?: boolean }) {
 function DashIcon() {
   return (
     <svg
+      aria-hidden="true"
       width="16"
       height="16"
       viewBox="0 0 24 24"
@@ -54,6 +56,7 @@ function DashIcon() {
 function LockIcon() {
   return (
     <svg
+      aria-hidden="true"
       width="14"
       height="14"
       viewBox="0 0 24 24"

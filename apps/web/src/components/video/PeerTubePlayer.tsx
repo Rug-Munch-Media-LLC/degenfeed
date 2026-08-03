@@ -241,6 +241,7 @@ export function PeerTubePlayer({
               ) : (
                 <div className="flex h-full items-center justify-center text-[var(--color-muted)]">
                   <svg
+                    aria-hidden="true"
                     width="20"
                     height="20"
                     viewBox="0 0 24 24"
@@ -290,6 +291,7 @@ export function PeerTubePlayer({
             className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
           >
             <svg
+              aria-hidden="true"
               width="16"
               height="16"
               viewBox="0 0 24 24"

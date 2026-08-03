@@ -86,7 +86,7 @@ export default function VideoEditor({ video, onClose, onSaved }: VideoEditorProp
             className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--color-muted)] transition-colors hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)]"
             aria-label="Close"
           >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="none">
               <path
                 d="M4 4l8 8M12 4l-8 8"
                 stroke="currentColor"
@@ -108,10 +108,14 @@ export default function VideoEditor({ video, onClose, onSaved }: VideoEditorProp
           <div className="space-y-4">
             {/* Title */}
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-[var(--color-muted)]">
+              <label
+                className="mb-1.5 block text-xs font-medium text-[var(--color-muted)]"
+                htmlFor="field-8eef81cb"
+              >
                 Title
               </label>
               <input
+                id="field-8eef81cb"
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
@@ -122,10 +126,14 @@ export default function VideoEditor({ video, onClose, onSaved }: VideoEditorProp
 
             {/* Description */}
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-[var(--color-muted)]">
+              <label
+                className="mb-1.5 block text-xs font-medium text-[var(--color-muted)]"
+                htmlFor="field-f8f1c3fe"
+              >
                 Description
               </label>
               <textarea
+                id="field-f8f1c3fe"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={4}
@@ -136,10 +144,14 @@ export default function VideoEditor({ video, onClose, onSaved }: VideoEditorProp
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               {/* Tags */}
               <div>
-                <label className="mb-1.5 block text-xs font-medium text-[var(--color-muted)]">
+                <label
+                  className="mb-1.5 block text-xs font-medium text-[var(--color-muted)]"
+                  htmlFor="field-ac2ac6c9"
+                >
                   Tags (comma separated)
                 </label>
                 <input
+                  id="field-ac2ac6c9"
                   type="text"
                   value={tags}
                   onChange={(e) => setTags(e.target.value)}
@@ -149,10 +161,14 @@ export default function VideoEditor({ video, onClose, onSaved }: VideoEditorProp
 
               {/* Privacy */}
               <div>
-                <label className="mb-1.5 block text-xs font-medium text-[var(--color-muted)]">
+                <label
+                  className="mb-1.5 block text-xs font-medium text-[var(--color-muted)]"
+                  htmlFor="field-6144271d"
+                >
                   Privacy
                 </label>
                 <select
+                  id="field-6144271d"
                   value={privacy}
                   onChange={(e) => setPrivacy(Number(e.target.value) as 1 | 2 | 3)}
                   className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-overlay)] px-3 py-2 text-sm text-[var(--color-fg)] outline-none transition-colors focus:border-degen-500/50"
@@ -166,10 +182,14 @@ export default function VideoEditor({ video, onClose, onSaved }: VideoEditorProp
 
             {/* Category */}
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-[var(--color-muted)]">
+              <label
+                className="mb-1.5 block text-xs font-medium text-[var(--color-muted)]"
+                htmlFor="field-b435992f"
+              >
                 Category
               </label>
               <select
+                id="field-b435992f"
                 value={category}
                 onChange={(e) => setCategory(Number(e.target.value))}
                 className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-overlay)] px-3 py-2 text-sm text-[var(--color-fg)] outline-none transition-colors focus:border-degen-500/50"
@@ -191,10 +211,14 @@ export default function VideoEditor({ video, onClose, onSaved }: VideoEditorProp
 
             {/* Thumbnail */}
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-[var(--color-muted)]">
+              <label
+                className="mb-1.5 block text-xs font-medium text-[var(--color-muted)]"
+                htmlFor="field-7c45902e"
+              >
                 New Thumbnail (optional)
               </label>
               <input
+                id="field-7c45902e"
                 type="file"
                 accept="image/*"
                 onChange={(e) => setThumbnail(e.target.files?.[0] ?? null)}

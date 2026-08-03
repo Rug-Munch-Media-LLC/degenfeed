@@ -66,10 +66,14 @@ export function AddProtocolWizardModal({
         {wizard.step === 1 && (
           <div className="space-y-4">
             <div>
-              <label className="mb-1 block text-xs font-medium text-[var(--color-muted)]">
+              <label
+                className="mb-1 block text-xs font-medium text-[var(--color-muted)]"
+                htmlFor="field-0e63f51a"
+              >
                 Protocol Name
               </label>
               <input
+                id="field-0e63f51a"
                 type="text"
                 value={wizard.name}
                 onChange={(e) => onUpdate({ name: e.target.value })}
@@ -78,10 +82,14 @@ export function AddProtocolWizardModal({
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-[var(--color-muted)]">
+              <label
+                className="mb-1 block text-xs font-medium text-[var(--color-muted)]"
+                htmlFor="field-d5bb0287"
+              >
                 Protocol Type
               </label>
               <select
+                id="field-d5bb0287"
                 value={wizard.type}
                 onChange={(e) => onUpdate({ type: e.target.value })}
                 className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-muted)] px-4 py-2.5 text-sm text-[var(--color-fg)] focus:border-degen-500 focus:outline-none"
@@ -97,10 +105,14 @@ export function AddProtocolWizardModal({
               </select>
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-[var(--color-muted)]">
+              <label
+                className="mb-1 block text-xs font-medium text-[var(--color-muted)]"
+                htmlFor="field-fc9d26e9"
+              >
                 Icon (emoji)
               </label>
               <input
+                id="field-fc9d26e9"
                 type="text"
                 value={wizard.icon}
                 onChange={(e) => onUpdate({ icon: e.target.value })}
@@ -115,10 +127,14 @@ export function AddProtocolWizardModal({
         {wizard.step === 2 && (
           <div className="space-y-4">
             <div>
-              <label className="mb-1 block text-xs font-medium text-[var(--color-muted)]">
+              <label
+                className="mb-1 block text-xs font-medium text-[var(--color-muted)]"
+                htmlFor="field-3399268e"
+              >
                 API Endpoint / URL
               </label>
               <input
+                id="field-3399268e"
                 type="text"
                 value={wizard.endpoint}
                 onChange={(e) => onUpdate({ endpoint: e.target.value })}
@@ -127,10 +143,14 @@ export function AddProtocolWizardModal({
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-[var(--color-muted)]">
+              <label
+                className="mb-1 block text-xs font-medium text-[var(--color-muted)]"
+                htmlFor="field-8fc82fb2"
+              >
                 API Key (optional)
               </label>
               <input
+                id="field-8fc82fb2"
                 type="password"
                 value={wizard.apiKey}
                 onChange={(e) => onUpdate({ apiKey: e.target.value })}

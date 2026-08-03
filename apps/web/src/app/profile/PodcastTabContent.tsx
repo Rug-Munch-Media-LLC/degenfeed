@@ -8,7 +8,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { formatCount, timeAgo } from './constants';
+import { timeAgo } from './constants';
 import type { ProfilePodcast, ProfilePodcastEpisode } from './types';
 
 // ─── Helpers ───────────────────────────────────────────────────────────
@@ -161,7 +161,7 @@ export default function PodcastTabContent({ creatorId, initialPodcasts }: Podcas
                 </div>
                 <div className="divide-y divide-[var(--color-glass-border)]">
                   {latestEpisodes.map((ep) => {
-                    const epData =
+                    const _epData =
                       'podcast' in ep
                         ? (ep as ProfilePodcastEpisode & { podcast: ProfilePodcast })
                         : null;

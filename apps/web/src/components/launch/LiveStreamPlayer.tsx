@@ -210,10 +210,14 @@ export default function LiveStreamPlayer({
               <div className="mt-4 space-y-4">
                 {/* Stream title */}
                 <div>
-                  <label className="block text-xs font-medium text-[var(--color-muted)] mb-1">
+                  <label
+                    className="block text-xs font-medium text-[var(--color-muted)] mb-1"
+                    htmlFor="field-f29d97f9"
+                  >
                     Stream Title
                   </label>
                   <input
+                    id="field-f29d97f9"
                     type="text"
                     value={streamTitle}
                     onChange={(e) => setStreamTitle(e.target.value)}
@@ -225,10 +229,14 @@ export default function LiveStreamPlayer({
 
                 {/* Stream description */}
                 <div>
-                  <label className="block text-xs font-medium text-[var(--color-muted)] mb-1">
+                  <label
+                    className="block text-xs font-medium text-[var(--color-muted)] mb-1"
+                    htmlFor="field-c48b07d7"
+                  >
                     Description
                   </label>
                   <textarea
+                    id="field-c48b07d7"
                     value={streamDescription}
                     onChange={(e) => setStreamDescription(e.target.value)}
                     placeholder="What's this stream about?"
@@ -240,9 +248,9 @@ export default function LiveStreamPlayer({
 
                 {/* Stream platform */}
                 <div>
-                  <label className="block text-xs font-medium text-[var(--color-muted)] mb-1">
+                  <span className="block text-xs font-medium text-[var(--color-muted)] mb-1">
                     Platform
-                  </label>
+                  </span>
                   <div className="grid grid-cols-2 gap-2">
                     <button
                       type="button"
@@ -277,9 +285,9 @@ export default function LiveStreamPlayer({
                 {/* Stream type (legacy only) */}
                 {streamPlatform === 'legacy' && (
                   <div>
-                    <label className="block text-xs font-medium text-[var(--color-muted)] mb-1">
+                    <span className="block text-xs font-medium text-[var(--color-muted)] mb-1">
                       Stream Type
-                    </label>
+                    </span>
                     <div className="grid grid-cols-3 gap-2">
                       {(['video', 'audio', 'spaces'] as const).map((type) => (
                         <button
@@ -305,7 +313,10 @@ export default function LiveStreamPlayer({
 
                 {/* Token gating */}
                 <div>
-                  <label className="block text-xs font-medium text-[var(--color-muted)] mb-1">
+                  <label
+                    className="block text-xs font-medium text-[var(--color-muted)] mb-1"
+                    htmlFor="tokenGated"
+                  >
                     Access Requirements
                   </label>
                   <div className="space-y-2">

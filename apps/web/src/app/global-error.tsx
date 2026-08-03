@@ -65,7 +65,7 @@ export default function GlobalError({
               }}
               aria-hidden="true"
             >
-              <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+              <svg aria-hidden="true" width="40" height="40" viewBox="0 0 40 40" fill="none">
                 <circle cx="20" cy="16" r="8" stroke="#00ff41" strokeWidth="1.5" opacity="0.5" />
                 <path
                   d="M10 32c0-6 4-9 10-9s10 3 10 9"
@@ -143,7 +143,7 @@ export default function GlobalError({
                   lineHeight: 1,
                 }}
               >
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                <svg aria-hidden="true" width="14" height="14" viewBox="0 0 16 16" fill="none">
                   <path
                     d="M3 8a5 5 0 019.9-1"
                     stroke="currentColor"
@@ -179,7 +179,7 @@ export default function GlobalError({
                   lineHeight: 1,
                 }}
               >
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                <svg aria-hidden="true" width="14" height="14" viewBox="0 0 16 16" fill="none">
                   <path
                     d="M1 8l7-6 7 6"
                     stroke="currentColor"

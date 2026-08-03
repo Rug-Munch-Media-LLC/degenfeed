@@ -245,7 +245,12 @@ function MarketOverviewChart({ data }: { data: number[] }) {
   return (
     <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-4">
       <h3 className="mb-3 text-xs font-bold text-[var(--color-fg)]">Total Market Cap (7d)</h3>
-      <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-44" preserveAspectRatio="none">
+      <svg
+        aria-hidden="true"
+        viewBox={`0 0 ${w} ${h}`}
+        className="w-full h-44"
+        preserveAspectRatio="none"
+      >
         {/* Grid */}
         {[0, 0.25, 0.5, 0.75, 1].map((y) => (
           <line

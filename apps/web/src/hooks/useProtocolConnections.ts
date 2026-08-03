@@ -110,7 +110,14 @@ const DEFAULT_PROTOCOLS: ProtocolConnection[] = [
     connected: false,
     status: 'unconfigured',
   },
-  { id: 'rss', name: 'RSS', icon: 'A', color: getProtocolColor('rss'), connected: false, status: 'unconfigured' },
+  {
+    id: 'rss',
+    name: 'RSS',
+    icon: 'A',
+    color: getProtocolColor('rss'),
+    connected: false,
+    status: 'unconfigured',
+  },
 ];
 
 interface HealthPayload {

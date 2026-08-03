@@ -1,7 +1,7 @@
 'use client';
 
-import type { StorageForecast } from '../types';
 import { formatSize } from '../constants';
+import type { StorageForecast } from '../types';
 
 export function StoragePrediction({ forecast }: { forecast: StorageForecast }) {
   const projectedReadable30d = formatSize(forecast.projectedBytes30d);

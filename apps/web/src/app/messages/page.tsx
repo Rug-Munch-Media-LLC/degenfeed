@@ -60,7 +60,7 @@ function EncryptionInfoBanner() {
     <div className="mx-3 mt-2 rounded-lg border border-degen-500/15 bg-degen-500/5 px-3 py-2">
       <div className="flex items-start gap-2">
         <span className="mt-0.5 shrink-0 text-degen-400" aria-hidden="true">
-          <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+          <svg aria-hidden="true" width="12" height="12" viewBox="0 0 16 16" fill="none">
             <rect
               x="3"
               y="7"

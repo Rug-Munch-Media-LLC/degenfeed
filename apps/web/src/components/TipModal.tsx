@@ -658,9 +658,9 @@ export function TipModal({
               {/* == Chain selector (on-chain only) ==================== */}
               {isOnchain && (
                 <div className="mb-4">
-                  <label className="mb-2 block text-xs font-medium uppercase tracking-widest text-[var(--color-muted)]">
+                  <span className="mb-2 block text-xs font-medium uppercase tracking-widest text-[var(--color-muted)]">
                     Network
-                  </label>
+                  </span>
                   <div className="flex gap-2">
                     {ONCHAIN_CHAINS.map((chain) => {
                       const cfg = TIP_CHAIN_CONFIG[chain];

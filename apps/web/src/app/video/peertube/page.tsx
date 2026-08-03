@@ -180,6 +180,7 @@ function UploadModal({ onClose, onUploaded }: { onClose: () => void; onUploaded:
             className="text-[var(--color-muted)] hover:text-[var(--color-fg)]"
           >
             <svg
+              aria-hidden="true"
               width="20"
               height="20"
               viewBox="0 0 24 24"
@@ -196,10 +197,14 @@ function UploadModal({ onClose, onUploaded }: { onClose: () => void; onUploaded:
         <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
           {/* File picker */}
           <div>
-            <label className="mb-1 block text-xs font-medium text-[var(--color-muted)]">
+            <label
+              className="mb-1 block text-xs font-medium text-[var(--color-muted)]"
+              htmlFor="field-79ccc209"
+            >
               Video File *
             </label>
             <input
+              id="field-79ccc209"
               type="file"
               accept="video/*"
               onChange={(e) => setSelectedFile(e.target.files?.[0] ?? null)}
@@ -214,10 +219,14 @@ function UploadModal({ onClose, onUploaded }: { onClose: () => void; onUploaded:
 
           {/* Title */}
           <div>
-            <label className="mb-1 block text-xs font-medium text-[var(--color-muted)]">
+            <label
+              className="mb-1 block text-xs font-medium text-[var(--color-muted)]"
+              htmlFor="field-79f13db6"
+            >
               Title *
             </label>
             <input
+              id="field-79f13db6"
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -229,10 +238,14 @@ function UploadModal({ onClose, onUploaded }: { onClose: () => void; onUploaded:
 
           {/* Description */}
           <div>
-            <label className="mb-1 block text-xs font-medium text-[var(--color-muted)]">
+            <label
+              className="mb-1 block text-xs font-medium text-[var(--color-muted)]"
+              htmlFor="field-15a851cb"
+            >
               Description
             </label>
             <textarea
+              id="field-15a851cb"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
@@ -243,10 +256,14 @@ function UploadModal({ onClose, onUploaded }: { onClose: () => void; onUploaded:
 
           {/* Category */}
           <div>
-            <label className="mb-1 block text-xs font-medium text-[var(--color-muted)]">
+            <label
+              className="mb-1 block text-xs font-medium text-[var(--color-muted)]"
+              htmlFor="field-a122251a"
+            >
               Category
             </label>
             <select
+              id="field-a122251a"
               value={category}
               onChange={(e) => setCategory(e.target.value)}
               className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] px-3 py-2 text-sm text-[var(--color-fg)]"
@@ -592,8 +609,11 @@ export default function PeerTubeExplorerPage() {
         {/* Sort + Channels toggle */}
         <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <label className="text-xs text-[var(--color-muted)]">Sort:</label>
+            <label className="text-xs text-[var(--color-muted)]" htmlFor="field-aa929f56">
+              Sort:
+            </label>
             <select
+              id="field-aa929f56"
               value={sort}
               onChange={(e) => setSort(e.target.value)}
               className="rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] px-2.5 py-1.5 text-xs text-[var(--color-fg)]"

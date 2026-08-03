@@ -38,7 +38,7 @@ interface ConnectPlatformModalProps {
 
 // ─── Platform Data ────────────────────────────────────────────────────────
 
-const PLATFORMS: Omit<PlatformInfo, 'connected'>[] = [
+const _PLATFORMS: Omit<PlatformInfo, 'connected'>[] = [
   {
     id: 'youtube',
     name: 'YouTube',

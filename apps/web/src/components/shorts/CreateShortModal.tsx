@@ -400,7 +400,7 @@ export function CreateShortModal({ open, onClose, onCreated }: CreateShortModalP
 
         {/* == Protocol Selector == */}
         <div>
-          <label className="mb-2 block text-xs font-medium text-white/70">Publish to</label>
+          <span className="mb-2 block text-xs font-medium text-white/70">Publish to</span>
           <div className="flex flex-wrap gap-2">
             {AVAILABLE_PROTOCOLS.map((p) => {
               const active = selectedProtocols.has(p.key);
@@ -469,7 +469,7 @@ export function CreateShortModal({ open, onClose, onCreated }: CreateShortModalP
               />
             </button>
             <div className="flex-1">
-              <label className="text-xs font-medium text-white/80">Mint as Zora NFT</label>
+              <span className="text-xs font-medium text-white/80">Mint as Zora NFT</span>
               <p className="text-[10px] text-white/40">
                 Your short becomes a tradeable video NFT on Zora Network
               </p>
@@ -515,7 +515,12 @@ export function CreateShortModal({ open, onClose, onCreated }: CreateShortModalP
     return (
       <div className="flex flex-col items-center gap-4 py-8">
         <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-degen-500/10">
-          <svg className="h-8 w-8 animate-spin text-degen-400" viewBox="0 0 24 24" fill="none">
+          <svg
+            aria-hidden="true"
+            className="h-8 w-8 animate-spin text-degen-400"
+            viewBox="0 0 24 24"
+            fill="none"
+          >
             <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.3" />
             <path
               d="M12 2a10 10 0 019.95 9"
@@ -549,7 +554,12 @@ export function CreateShortModal({ open, onClose, onCreated }: CreateShortModalP
       <div className="flex flex-col gap-4 py-4">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-degen-500/10">
-            <svg className="h-5 w-5 animate-spin text-degen-400" viewBox="0 0 24 24" fill="none">
+            <svg
+              aria-hidden="true"
+              className="h-5 w-5 animate-spin text-degen-400"
+              viewBox="0 0 24 24"
+              fill="none"
+            >
               <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.3" />
               <path
                 d="M12 2a10 10 0 019.95 9"

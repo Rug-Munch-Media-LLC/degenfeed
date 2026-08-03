@@ -154,6 +154,7 @@ export function HardwareWalletVerify({
             aria-label="Collapse"
           >
             <svg
+              aria-hidden="true"
               width="16"
               height="16"
               viewBox="0 0 24 24"
@@ -194,9 +195,9 @@ export function HardwareWalletVerify({
         {/* Challenge message box */}
         {challenge && (
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-[var(--color-fg)]">
+            <span className="mb-1.5 block text-xs font-medium text-[var(--color-fg)]">
               Sign this message with your hardware wallet:
-            </label>
+            </span>
             <pre className="overflow-auto whitespace-pre-wrap rounded-lg border border-[var(--color-glass-border)] bg-[var(--color-bg)] p-3 font-mono text-xs text-[var(--color-fg)] leading-relaxed select-all">
               {challenge}
             </pre>
@@ -228,6 +229,7 @@ export function HardwareWalletVerify({
           <div className="flex items-center gap-3 rounded-lg border border-degen-500/20 bg-degen-500/5 px-4 py-3">
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-degen-500/20 text-degen-400">
               <svg
+                aria-hidden="true"
                 width="16"
                 height="16"
                 viewBox="0 0 24 24"

@@ -46,6 +46,7 @@ export default function CreateCoinPage() {
           className="inline-flex items-center gap-1.5 text-xs text-[var(--color-muted)] hover:text-degen-400 transition-colors"
         >
           <svg
+            aria-hidden="true"
             width="12"
             height="12"
             viewBox="0 0 24 24"

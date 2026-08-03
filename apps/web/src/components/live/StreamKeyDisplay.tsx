@@ -31,9 +31,9 @@ export function StreamKeyDisplay({ connection }: { connection: StreamConnection 
         </p>
       </div>
       <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-4">
-        <label className="mb-1.5 block text-xs font-semibold text-[var(--color-muted)]">
+        <span className="mb-1.5 block text-xs font-semibold text-[var(--color-muted)]">
           RTMP URL
-        </label>
+        </span>
         <div className="flex items-center gap-2">
           <code className="flex-1 overflow-x-auto rounded-lg bg-black/30 px-3 py-2 text-xs text-degen-400 font-mono whitespace-nowrap">
             {connection.rtmpUrl}
@@ -48,6 +48,7 @@ export function StreamKeyDisplay({ connection }: { connection: StreamConnection 
               '✓'
             ) : (
               <svg
+                aria-hidden="true"
                 width="14"
                 height="14"
                 viewBox="0 0 24 24"
@@ -63,8 +64,9 @@ export function StreamKeyDisplay({ connection }: { connection: StreamConnection 
         </div>
       </div>
       <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4">
-        <label className="mb-1.5 flex items-center gap-2 text-xs font-semibold text-amber-400">
+        <span className="mb-1.5 flex items-center gap-2 text-xs font-semibold text-amber-400">
           <svg
+            aria-hidden="true"
             width="12"
             height="12"
             viewBox="0 0 24 24"
@@ -76,7 +78,7 @@ export function StreamKeyDisplay({ connection }: { connection: StreamConnection 
             <path d="M7 11V7a5 5 0 0110 0v4" />
           </svg>
           Stream Key — Keep this private!
-        </label>
+        </span>
         <div className="flex items-center gap-2">
           <code className="flex-1 overflow-x-auto rounded-lg bg-black/50 px-3 py-2 text-sm text-amber-300 font-mono tracking-wider">
             {connection.streamKey}
@@ -91,6 +93,7 @@ export function StreamKeyDisplay({ connection }: { connection: StreamConnection 
               '✓'
             ) : (
               <svg
+                aria-hidden="true"
                 width="14"
                 height="14"
                 viewBox="0 0 24 24"
@@ -138,9 +141,9 @@ export function StreamKeyDisplay({ connection }: { connection: StreamConnection 
       </details>
       {connection.playbackUrl && (
         <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-4">
-          <label className="mb-1.5 block text-xs font-semibold text-[var(--color-muted)]">
+          <span className="mb-1.5 block text-xs font-semibold text-[var(--color-muted)]">
             Playback URL
-          </label>
+          </span>
           <div className="flex items-center gap-2">
             <code className="flex-1 overflow-x-auto rounded-lg bg-black/30 px-3 py-2 text-xs text-degen-400 font-mono">
               {connection.playbackUrl}
@@ -152,6 +155,7 @@ export function StreamKeyDisplay({ connection }: { connection: StreamConnection 
               title="Copy playback URL"
             >
               <svg
+                aria-hidden="true"
                 width="14"
                 height="14"
                 viewBox="0 0 24 24"

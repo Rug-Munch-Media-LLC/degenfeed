@@ -1,7 +1,13 @@
 /* === Barrel Exports for Stream Components ====================== */
 
+export { CreatorContentDashboard } from './CreatorContentDashboard';
 export { CreatorDashboard } from './CreatorDashboard';
+export { CustomGiftPanel } from './CustomGiftPanel';
+// TikTok-Style Live Content
+export { type EmojiItem, EmojiPickerLive } from './EmojiPickerLive';
+export { FaceFilterOverlay, type FilterItem } from './FaceFilterOverlay';
 export { GoLiveSetup } from './GoLiveSetup';
+export { type StickerItem, StickerOverlay, StickerPanel } from './StickerOverlay';
 export { BadgeShowcase, StreamBadge } from './StreamBadges';
 export { StreamCategoriesBar, StreamCategoryGrid, StreamCategoryPill } from './StreamCategories';
 export { StreamChat } from './StreamChat';
@@ -38,10 +44,3 @@ export {
   type ViewerAnalytics,
   type VOD,
 } from './types';
-
-// TikTok-Style Live Content
-export { EmojiPickerLive, type EmojiItem } from './EmojiPickerLive';
-export { CustomGiftPanel } from './CustomGiftPanel';
-export { FaceFilterOverlay, type FilterItem } from './FaceFilterOverlay';
-export { StickerOverlay, StickerPanel, type StickerItem } from './StickerOverlay';
-export { CreatorContentDashboard } from './CreatorContentDashboard';

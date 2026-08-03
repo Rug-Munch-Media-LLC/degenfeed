@@ -213,7 +213,12 @@ export function VinePlayer({
           <div className="flex flex-col items-center gap-2 text-center px-6">
             <div className="flex h-12 w-12 items-center justify-center rounded-full border border-red-500/30 bg-red-500/10">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M12 9v4M12 17h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" stroke="currentColor" strokeWidth="1.5" className="text-red-400" />
+                <path
+                  d="M12 9v4M12 17h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  className="text-red-400"
+                />
               </svg>
             </div>
             <p className="text-xs text-white/50">Couldn&apos;t load video</p>
@@ -252,9 +257,7 @@ export function VinePlayer({
         <div className="pointer-events-none absolute right-3 top-3 z-10">
           <span className="rounded-full bg-black/50 px-2 py-0.5 text-[9px] font-mono text-white/50 backdrop-blur-sm">
             {loopDuration}s
-            {loopCount > 0 && (
-              <span className="ml-1 text-vine-400">×{loopCount + 1}</span>
-            )}
+            {loopCount > 0 && <span className="ml-1 text-vine-400">×{loopCount + 1}</span>}
           </span>
         </div>
       )}

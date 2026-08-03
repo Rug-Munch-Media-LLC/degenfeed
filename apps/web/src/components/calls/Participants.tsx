@@ -15,8 +15,13 @@ interface VideoGridProps {
 /* ─── Video Grid ───────────────────────────────────────────────────── */
 
 export function VideoGrid({
-  localStream, remoteStreams, participants, myWallet,
-  displayNames, mutedState, type,
+  localStream,
+  remoteStreams,
+  participants,
+  myWallet,
+  displayNames,
+  mutedState,
+  type,
 }: VideoGridProps) {
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRefs = useRef<Map<string, HTMLVideoElement>>(new Map());
@@ -45,10 +50,13 @@ export function VideoGrid({
     return 4;
   }, [participants.length]);
 
-  const setRemoteRef = useCallback((peerId: string) => (el: HTMLVideoElement | null) => {
-    if (el) remoteVideoRefs.current.set(peerId, el);
-    else remoteVideoRefs.current.delete(peerId);
-  }, []);
+  const setRemoteRef = useCallback(
+    (peerId: string) => (el: HTMLVideoElement | null) => {
+      if (el) remoteVideoRefs.current.set(peerId, el);
+      else remoteVideoRefs.current.delete(peerId);
+    },
+    [],
+  );
 
   const shortAddr = useCallback((addr: string) => {
     if (addr.length <= 12) return addr;
@@ -63,7 +71,13 @@ export function VideoGrid({
       {/* Local video */}
       <div className="relative aspect-video overflow-hidden rounded-xl bg-gray-900">
         {type === 'video' ? (
-          <video ref={localVideoRef} autoPlay muted playsInline className="h-full w-full object-cover" />
+          <video
+            ref={localVideoRef}
+            autoPlay
+            muted
+            playsInline
+            className="h-full w-full object-cover"
+          />
         ) : (
           <div className="flex h-full items-center justify-center">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-degen-500/20 text-lg font-bold text-degen-400">
@@ -83,9 +97,17 @@ export function VideoGrid({
           const stream = remoteStreams.get(peerId);
           const muted = mutedState.get(peerId);
           return (
-            <div key={peerId} className="relative aspect-video overflow-hidden rounded-xl bg-gray-900">
+            <div
+              key={peerId}
+              className="relative aspect-video overflow-hidden rounded-xl bg-gray-900"
+            >
               {stream ? (
-                <video ref={setRemoteRef(peerId)} autoPlay playsInline className="h-full w-full object-cover" />
+                <video
+                  ref={setRemoteRef(peerId)}
+                  autoPlay
+                  playsInline
+                  className="h-full w-full object-cover"
+                />
               ) : (
                 <div className="flex h-full items-center justify-center">
                   <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-lg font-bold text-white">

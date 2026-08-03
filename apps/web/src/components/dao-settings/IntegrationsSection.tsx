@@ -177,10 +177,14 @@ export function IntegrationsSection() {
                   Enter your Snapshot space ENS or ID.
                 </p>
                 <div className="mb-4">
-                  <label className="mb-1.5 block text-[10px] font-medium text-[var(--color-muted)]">
+                  <label
+                    className="mb-1.5 block text-[10px] font-medium text-[var(--color-muted)]"
+                    htmlFor="field-e89d1286"
+                  >
                     Snapshot Space ID
                   </label>
                   <input
+                    id="field-e89d1286"
                     type="text"
                     value={snapshotSpaceInput}
                     onChange={(e) => setSnapshotSpaceInput(e.target.value)}
@@ -226,10 +230,14 @@ export function IntegrationsSection() {
                   Enter your DegenFeedGovernor contract address.
                 </p>
                 <div className="mb-4">
-                  <label className="mb-1.5 block text-[10px] font-medium text-[var(--color-muted)]">
+                  <label
+                    className="mb-1.5 block text-[10px] font-medium text-[var(--color-muted)]"
+                    htmlFor="field-57de2f4c"
+                  >
                     Governor Address
                   </label>
                   <input
+                    id="field-57de2f4c"
                     type="text"
                     value={governorAddressInput}
                     onChange={(e) => setGovernorAddressInput(e.target.value)}
@@ -275,10 +283,14 @@ export function IntegrationsSection() {
                   Enter your Realm ID (Solana pubkey).
                 </p>
                 <div className="mb-4">
-                  <label className="mb-1.5 block text-[10px] font-medium text-[var(--color-muted)]">
+                  <label
+                    className="mb-1.5 block text-[10px] font-medium text-[var(--color-muted)]"
+                    htmlFor="field-544e8ec4"
+                  >
                     Realm ID
                   </label>
                   <input
+                    id="field-544e8ec4"
                     type="text"
                     value={realmIdInput}
                     onChange={(e) => setRealmIdInput(e.target.value)}

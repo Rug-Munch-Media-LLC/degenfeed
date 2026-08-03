@@ -117,10 +117,15 @@ function SingleGateEditor({
     <div className="space-y-3">
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-xs font-medium mb-1" style={{ color: 'var(--color-muted)' }}>
+          <label
+            className="block text-xs font-medium mb-1"
+            style={{ color: 'var(--color-muted)' }}
+            htmlFor="field-b5e67108"
+          >
             Chain
           </label>
           <select
+            id="field-b5e67108"
             value={gate.chain}
             onChange={(e) => onChange({ ...gate, chain: e.target.value as TokenGateChain })}
             className="w-full rounded-lg border px-3 py-2 text-sm bg-[var(--color-card)]"
@@ -134,10 +139,15 @@ function SingleGateEditor({
           </select>
         </div>
         <div>
-          <label className="block text-xs font-medium mb-1" style={{ color: 'var(--color-muted)' }}>
+          <label
+            className="block text-xs font-medium mb-1"
+            style={{ color: 'var(--color-muted)' }}
+            htmlFor="field-6e372ae6"
+          >
             Token Type
           </label>
           <select
+            id="field-6e372ae6"
             value={gate.type}
             onChange={(e) => onChange({ ...gate, type: e.target.value as TokenGateType })}
             className="w-full rounded-lg border px-3 py-2 text-sm bg-[var(--color-card)]"
@@ -153,10 +163,15 @@ function SingleGateEditor({
       </div>
 
       <div>
-        <label className="block text-xs font-medium mb-1" style={{ color: 'var(--color-muted)' }}>
+        <label
+          className="block text-xs font-medium mb-1"
+          style={{ color: 'var(--color-muted)' }}
+          htmlFor="field-5efe157b"
+        >
           Contract Address
         </label>
         <input
+          id="field-5efe157b"
           type="text"
           value={gate.contractAddress}
           onChange={(e) => onChange({ ...gate, contractAddress: e.target.value })}
@@ -168,10 +183,15 @@ function SingleGateEditor({
 
       {gate.type === 'erc721' && (
         <div>
-          <label className="block text-xs font-medium mb-1" style={{ color: 'var(--color-muted)' }}>
+          <label
+            className="block text-xs font-medium mb-1"
+            style={{ color: 'var(--color-muted)' }}
+            htmlFor="field-445a8512"
+          >
             Token ID (optional — leave empty for any)
           </label>
           <input
+            id="field-445a8512"
             type="text"
             value={gate.tokenId || ''}
             onChange={(e) => onChange({ ...gate, tokenId: e.target.value || undefined })}
@@ -188,10 +208,12 @@ function SingleGateEditor({
             <label
               className="block text-xs font-medium mb-1"
               style={{ color: 'var(--color-muted)' }}
+              htmlFor="field-710d0504"
             >
               Min Balance
             </label>
             <input
+              id="field-710d0504"
               type="number"
               value={gate.minBalance ?? 1}
               onChange={(e) => onChange({ ...gate, minBalance: Number(e.target.value) || 1 })}
@@ -205,10 +227,12 @@ function SingleGateEditor({
             <label
               className="block text-xs font-medium mb-1"
               style={{ color: 'var(--color-muted)' }}
+              htmlFor="field-be8d481f"
             >
               Decimals
             </label>
             <input
+              id="field-be8d481f"
               type="number"
               value={gate.minBalanceDecimals ?? 18}
               onChange={(e) =>
@@ -262,10 +286,15 @@ function CombinedGateEditor({
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-3">
-        <label className="text-xs font-medium" style={{ color: 'var(--color-muted)' }}>
+        <label
+          className="text-xs font-medium"
+          style={{ color: 'var(--color-muted)' }}
+          htmlFor="field-3a3a568d"
+        >
           Logic:
         </label>
         <select
+          id="field-3a3a568d"
           value={operator}
           onChange={(e) => onOperatorChange(e.target.value as 'AND' | 'OR')}
           className="rounded-lg border px-3 py-1.5 text-sm bg-[var(--color-card)]"
@@ -566,10 +595,12 @@ export const TokenGateConfig = memo(function TokenGateConfig({
             <label
               className="block text-xs font-medium mb-1"
               style={{ color: 'var(--color-muted)' }}
+              htmlFor="field-e56a4d49"
             >
               Content Type
             </label>
             <select
+              id="field-e56a4d49"
               value={config.contentType || 'post'}
               onChange={(e) => updateConfig({ contentType: e.target.value as ContentType })}
               className="w-full rounded-lg border px-3 py-2 text-sm bg-[var(--color-card)]"
@@ -588,10 +619,12 @@ export const TokenGateConfig = memo(function TokenGateConfig({
             <label
               className="block text-xs font-medium mb-1"
               style={{ color: 'var(--color-muted)' }}
+              htmlFor="field-d7ae2d01"
             >
               Access Mode
             </label>
             <select
+              id="field-d7ae2d01"
               value={config.accessMode}
               onChange={(e) => updateConfig({ accessMode: e.target.value as GateAccessMode })}
               className="w-full rounded-lg border px-3 py-2 text-sm bg-[var(--color-card)]"
@@ -606,12 +639,12 @@ export const TokenGateConfig = memo(function TokenGateConfig({
 
           {/* Gate Type */}
           <div>
-            <label
+            <span
               className="block text-xs font-medium mb-1"
               style={{ color: 'var(--color-muted)' }}
             >
               Gate Type
-            </label>
+            </span>
             <div className="flex gap-2">
               {(['single', 'combined', 'tiered'] as GateTypeMode[]).map((gt) => (
                 <button
@@ -660,10 +693,12 @@ export const TokenGateConfig = memo(function TokenGateConfig({
             <label
               className="block text-xs font-medium mb-1"
               style={{ color: 'var(--color-muted)' }}
+              htmlFor="field-ef67fa9b"
             >
               Gate Description (shown to users)
             </label>
             <input
+              id="field-ef67fa9b"
               type="text"
               value={config.description || ''}
               onChange={(e) => updateConfig({ description: e.target.value })}
@@ -675,12 +710,12 @@ export const TokenGateConfig = memo(function TokenGateConfig({
 
           {/* Preview */}
           <div>
-            <label
+            <span
               className="block text-xs font-medium mb-1"
               style={{ color: 'var(--color-muted)' }}
             >
               Preview
-            </label>
+            </span>
             <GatePreview config={config} />
           </div>
         </>

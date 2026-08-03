@@ -93,6 +93,7 @@ export default function CreatorInfo({
               <div className="flex">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <svg
+                    aria-hidden="true"
                     key={star}
                     width="10"
                     height="10"

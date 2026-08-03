@@ -196,10 +196,14 @@ export function DeleteAccountSection({
               </div>
 
               <div className="mb-3">
-                <label className="mb-1 block text-xs font-medium text-[var(--color-fg)]">
+                <label
+                  className="mb-1 block text-xs font-medium text-[var(--color-fg)]"
+                  htmlFor="field-8cb9f046"
+                >
                   Signature
                 </label>
                 <textarea
+                  id="field-8cb9f046"
                   value={signatureInput}
                   onChange={(e) => setSignatureInput(e.target.value)}
                   placeholder="Paste your wallet signature here..."

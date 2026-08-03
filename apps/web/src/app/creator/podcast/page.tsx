@@ -558,10 +558,14 @@ export default function CreatorPodcastPage() {
             <div className="space-y-4">
               {/* Title */}
               <div>
-                <label className="mb-1 block text-sm font-medium text-[var(--color-text-secondary)]">
+                <label
+                  className="mb-1 block text-sm font-medium text-[var(--color-text-secondary)]"
+                  htmlFor="field-35aa15ed"
+                >
                   Podcast Title *
                 </label>
                 <input
+                  id="field-35aa15ed"
                   type="text"
                   value={newPodcast.title}
                   onChange={(e) => setNewPodcast((p) => ({ ...p, title: e.target.value }))}
@@ -573,10 +577,14 @@ export default function CreatorPodcastPage() {
 
               {/* Description */}
               <div>
-                <label className="mb-1 block text-sm font-medium text-[var(--color-text-secondary)]">
+                <label
+                  className="mb-1 block text-sm font-medium text-[var(--color-text-secondary)]"
+                  htmlFor="field-2e0862aa"
+                >
                   Description *
                 </label>
                 <textarea
+                  id="field-2e0862aa"
                   value={newPodcast.description}
                   onChange={(e) => setNewPodcast((p) => ({ ...p, description: e.target.value }))}
                   placeholder="Tell listeners what your podcast is about…"
@@ -588,9 +596,9 @@ export default function CreatorPodcastPage() {
 
               {/* Category */}
               <div>
-                <label className="mb-1 block text-sm font-medium text-[var(--color-text-secondary)]">
+                <span className="mb-1 block text-sm font-medium text-[var(--color-text-secondary)]">
                   Category
-                </label>
+                </span>
                 <div className="grid grid-cols-2 gap-2">
                   {CATEGORIES.map((cat) => (
                     <button
@@ -645,10 +653,14 @@ export default function CreatorPodcastPage() {
             <div className="space-y-4">
               {/* Title */}
               <div>
-                <label className="mb-1 block text-sm font-medium text-[var(--color-text-secondary)]">
+                <label
+                  className="mb-1 block text-sm font-medium text-[var(--color-text-secondary)]"
+                  htmlFor="field-8c196ee5"
+                >
                   Episode Title *
                 </label>
                 <input
+                  id="field-8c196ee5"
                   type="text"
                   value={newEpisode.title}
                   onChange={(e) => setNewEpisode((ep) => ({ ...ep, title: e.target.value }))}
@@ -660,10 +672,14 @@ export default function CreatorPodcastPage() {
 
               {/* Description */}
               <div>
-                <label className="mb-1 block text-sm font-medium text-[var(--color-text-secondary)]">
+                <label
+                  className="mb-1 block text-sm font-medium text-[var(--color-text-secondary)]"
+                  htmlFor="field-92754445"
+                >
                   Description
                 </label>
                 <textarea
+                  id="field-92754445"
                   value={newEpisode.description}
                   onChange={(e) => setNewEpisode((ep) => ({ ...ep, description: e.target.value }))}
                   placeholder="Episode summary and show notes…"
@@ -674,10 +690,14 @@ export default function CreatorPodcastPage() {
 
               {/* Audio URL */}
               <div>
-                <label className="mb-1 block text-sm font-medium text-[var(--color-text-secondary)]">
+                <label
+                  className="mb-1 block text-sm font-medium text-[var(--color-text-secondary)]"
+                  htmlFor="field-68a2ca6a"
+                >
                   Audio URL * (IPFS, Arweave, or direct URL)
                 </label>
                 <input
+                  id="field-68a2ca6a"
                   type="url"
                   value={newEpisode.audioUrl}
                   onChange={(e) => setNewEpisode((ep) => ({ ...ep, audioUrl: e.target.value }))}
@@ -689,10 +709,14 @@ export default function CreatorPodcastPage() {
               {/* Duration + Episode Number */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-[var(--color-text-secondary)]">
+                  <label
+                    className="mb-1 block text-sm font-medium text-[var(--color-text-secondary)]"
+                    htmlFor="field-fddb09ed"
+                  >
                     Duration (seconds)
                   </label>
                   <input
+                    id="field-fddb09ed"
                     type="number"
                     value={newEpisode.duration || ''}
                     onChange={(e) =>
@@ -703,10 +727,14 @@ export default function CreatorPodcastPage() {
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-[var(--color-text-secondary)]">
+                  <label
+                    className="mb-1 block text-sm font-medium text-[var(--color-text-secondary)]"
+                    htmlFor="field-ccddf45f"
+                  >
                     Episode Number
                   </label>
                   <input
+                    id="field-ccddf45f"
                     type="number"
                     value={newEpisode.episodeNumber || ''}
                     onChange={(e) =>
@@ -723,9 +751,9 @@ export default function CreatorPodcastPage() {
 
               {/* Publish status */}
               <div>
-                <label className="mb-2 block text-sm font-medium text-[var(--color-text-secondary)]">
+                <span className="mb-2 block text-sm font-medium text-[var(--color-text-secondary)]">
                   Status
-                </label>
+                </span>
                 <div className="flex gap-3">
                   {(['draft', 'published'] as const).map((status) => (
                     <button
@@ -792,9 +820,9 @@ export default function CreatorPodcastPage() {
 
               {showEditEpisode.activityPubId && (
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-[var(--color-text-secondary)]">
+                  <span className="mb-1 block text-sm font-medium text-[var(--color-text-secondary)]">
                     ActivityPub ID
-                  </label>
+                  </span>
                   <p className="truncate rounded-xl bg-[var(--color-bg-secondary)] px-3 py-2 text-xs text-[var(--color-text-tertiary)]">
                     {showEditEpisode.activityPubId}
                   </p>

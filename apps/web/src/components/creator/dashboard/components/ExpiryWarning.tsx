@@ -1,7 +1,7 @@
 'use client';
 
-import type { ExpiringVideo } from '../types';
 import { formatSize } from '../constants';
+import type { ExpiringVideo } from '../types';
 
 export function ExpiryWarning({
   items,

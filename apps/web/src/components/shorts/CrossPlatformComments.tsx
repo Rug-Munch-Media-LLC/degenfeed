@@ -275,6 +275,7 @@ export function CrossPlatformComments({
                   className="mt-0.5 flex items-center gap-1 text-[9px] text-white/40 transition-colors hover:text-white/70"
                 >
                   <svg
+                    aria-hidden="true"
                     width="10"
                     height="10"
                     viewBox="0 0 24 24"

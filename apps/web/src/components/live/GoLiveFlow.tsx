@@ -164,6 +164,7 @@ export function GoLiveFlow({ isOpen, onClose, onLiveStarted }: GoLiveFlowProps) 
           >
             {step === 1 ? (
               <svg
+                aria-hidden="true"
                 width="18"
                 height="18"
                 viewBox="0 0 24 24"
@@ -176,6 +177,7 @@ export function GoLiveFlow({ isOpen, onClose, onLiveStarted }: GoLiveFlowProps) 
               </svg>
             ) : (
               <svg
+                aria-hidden="true"
                 width="18"
                 height="18"
                 viewBox="0 0 24 24"

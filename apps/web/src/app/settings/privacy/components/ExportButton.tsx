@@ -65,6 +65,7 @@ export function ExportButton({
           <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
         ) : (
           <svg
+            aria-hidden="true"
             width="16"
             height="16"
             viewBox="0 0 24 24"

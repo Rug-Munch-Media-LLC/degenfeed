@@ -177,6 +177,7 @@ export function ProtocolStatusSection({ walletAddress, isOwnProfile }: Props) {
                   {info.registered ? (
                     <span className="flex h-5 w-5 items-center justify-center rounded-full bg-green-500/20">
                       <svg
+                        aria-hidden="true"
                         width="10"
                         height="10"
                         viewBox="0 0 24 24"

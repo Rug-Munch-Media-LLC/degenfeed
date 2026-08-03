@@ -124,7 +124,7 @@ function PlatformRow({
         }`}
       >
         {selected && (
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+          <svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" fill="none">
             <path
               d="M2.5 6l2.5 2.5 4.5-5"
               stroke="white"
@@ -324,10 +324,14 @@ export default function CrossPlatformPublisher({
       {/* Text editor */}
       {showEditor && (
         <div>
-          <label className="mb-1.5 block text-xs font-medium text-[var(--color-muted)]">
+          <label
+            className="mb-1.5 block text-xs font-medium text-[var(--color-muted)]"
+            htmlFor="field-0df6432d"
+          >
             Post Text
           </label>
           <textarea
+            id="field-0df6432d"
             value={publishText}
             onChange={(e) => setPublishText(e.target.value)}
             placeholder="Write a post to accompany your video..."

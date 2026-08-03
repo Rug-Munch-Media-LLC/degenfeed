@@ -288,9 +288,9 @@ export function GuestSignUp({
 
         {/* Method selector */}
         <div>
-          <label className="mb-1.5 block text-xs font-medium text-[var(--color-fg)]">
+          <span className="mb-1.5 block text-xs font-medium text-[var(--color-fg)]">
             Sign up with
-          </label>
+          </span>
           <div className="flex gap-2">
             <button
               type="button"

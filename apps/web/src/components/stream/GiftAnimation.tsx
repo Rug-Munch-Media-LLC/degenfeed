@@ -15,7 +15,7 @@
  * Streak bonuses stack on top of the base animation.
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 // ─── Types ───────────────────────────────────────────────────────────────
 
@@ -48,7 +48,7 @@ interface GiftAnimationProps {
 
 // ─── Particle Generators ─────────────────────────────────────────────────
 
-function generateParticles(
+function _generateParticles(
   count: number,
   emoji: string,
   area: { w: number; h: number },
@@ -79,7 +79,9 @@ function generateParticles(
 // ─── Gift Animations ─────────────────────────────────────────────────────
 
 function RoseAnimation({ duration }: { duration: number }) {
-  const [particles, setParticles] = useState<Array<{ id: number; x: number; y: number; scale: number }>>([]);
+  const [particles, setParticles] = useState<
+    Array<{ id: number; x: number; y: number; scale: number }>
+  >([]);
   const areaRef = useRef({ w: typeof window !== 'undefined' ? window.innerWidth : 800, h: 600 });
 
   useEffect(() => {
@@ -110,7 +112,9 @@ function RoseAnimation({ duration }: { duration: number }) {
 
   return (
     <div className="pointer-events-none absolute inset-0 z-50 overflow-hidden">
-      <div className="absolute bottom-1/4 left-1/2 z-10 -translate-x-1/2 text-6xl animate-bounce">🌹</div>
+      <div className="absolute bottom-1/4 left-1/2 z-10 -translate-x-1/2 text-6xl animate-bounce">
+        🌹
+      </div>
       {particles.map((p) => (
         <span
           key={p.id}
@@ -130,7 +134,9 @@ function RoseAnimation({ duration }: { duration: number }) {
 }
 
 function BalloonAnimation({ duration }: { duration: number }) {
-  const [balloons, setBalloons] = useState<Array<{ id: number; x: number; y: number; color: string }>>([]);
+  const [balloons, setBalloons] = useState<
+    Array<{ id: number; x: number; y: number; color: string }>
+  >([]);
 
   useEffect(() => {
     const colors = ['#FF6B6B', '#4ECDC4', '#FFE66D', '#95E1D3', '#F38181', '#AA96DA'];
@@ -161,7 +167,9 @@ function BalloonAnimation({ duration }: { duration: number }) {
 
   return (
     <div className="pointer-events-none absolute inset-0 z-50 overflow-hidden">
-      <div className="absolute bottom-1/3 left-1/2 z-10 -translate-x-1/2 text-6xl animate-bounce">🎈</div>
+      <div className="absolute bottom-1/3 left-1/2 z-10 -translate-x-1/2 text-6xl animate-bounce">
+        🎈
+      </div>
       {balloons.map((b) => (
         <span
           key={b.id}
@@ -180,13 +188,18 @@ function BalloonAnimation({ duration }: { duration: number }) {
 }
 
 function DiamondAnimation({ duration }: { duration: number }) {
-  const [sparkles, setSparkles] = useState<Array<{ id: number; x: number; y: number; delay: number }>>([]);
+  const [sparkles, setSparkles] = useState<
+    Array<{ id: number; x: number; y: number; delay: number }>
+  >([]);
 
   useEffect(() => {
     const particles = Array.from({ length: 50 }, (_, i) => ({
       id: i,
-      x: (typeof window !== 'undefined' ? window.innerWidth : 800) / 2 + (Math.random() - 0.5) * 400,
-      y: (typeof window !== 'undefined' ? window.innerHeight : 600) / 2 + (Math.random() - 0.5) * 300,
+      x:
+        (typeof window !== 'undefined' ? window.innerWidth : 800) / 2 + (Math.random() - 0.5) * 400,
+      y:
+        (typeof window !== 'undefined' ? window.innerHeight : 600) / 2 +
+        (Math.random() - 0.5) * 300,
       delay: Math.random() * 0.5,
     }));
     setSparkles(particles);
@@ -251,10 +264,7 @@ function RocketAnimation({ duration }: { duration: number }) {
         style={{ top: rocketY + 50, opacity: rocketY > -100 ? 0.8 : 0 }}
       />
       {/* Rocket */}
-      <span
-        className="absolute left-1/2 z-10 -translate-x-1/2 text-6xl"
-        style={{ top: rocketY }}
-      >
+      <span className="absolute left-1/2 z-10 -translate-x-1/2 text-6xl" style={{ top: rocketY }}>
         🚀
       </span>
       {/* Smoke particles */}
@@ -289,7 +299,8 @@ function CrownAnimation({ duration }: { duration: number }) {
       return {
         id: i,
         x: (typeof window !== 'undefined' ? window.innerWidth : 800) / 2 + Math.cos(angle) * radius,
-        y: (typeof window !== 'undefined' ? window.innerHeight : 600) / 2 + Math.sin(angle) * radius,
+        y:
+          (typeof window !== 'undefined' ? window.innerHeight : 600) / 2 + Math.sin(angle) * radius,
       };
     });
     setParticles(p);
@@ -308,7 +319,10 @@ function CrownAnimation({ duration }: { duration: number }) {
         <>
           {/* Crown glow */}
           <div className="absolute h-40 w-40 rounded-full bg-yellow-400/20 blur-3xl animate-ping" />
-          <span className="relative z-10 text-8xl animate-bounce" style={{ animationDuration: '0.8s' }}>
+          <span
+            className="relative z-10 text-8xl animate-bounce"
+            style={{ animationDuration: '0.8s' }}
+          >
             👑
           </span>
           {/* Fanfare */}
@@ -423,17 +437,12 @@ function WhaleAnimation({ duration }: { duration: number }) {
 function StreakBonus({ streak }: { streak: NonNullable<GiftAnimationEvent['streak']> }) {
   return (
     <div className="pointer-events-none absolute inset-0 z-[60] flex items-center justify-center">
-      <div
-        className="animate-bounce text-center"
-        style={{ animationDuration: '0.5s' }}
-      >
+      <div className="animate-bounce text-center" style={{ animationDuration: '0.5s' }}>
         <div className="rounded-2xl bg-gradient-to-r from-orange-500/40 via-red-500/40 to-purple-500/40 px-8 py-4 backdrop-blur-md border border-white/20">
           <div className="text-3xl font-black text-white drop-shadow-[0_0_15px_rgba(255,200,0,0.5)]">
             {streak.label}
           </div>
-          <div className="mt-1 text-sm text-white/80">
-            {streak.count} gifts in a row!
-          </div>
+          <div className="mt-1 text-sm text-white/80">{streak.count} gifts in a row!</div>
         </div>
       </div>
     </div>
@@ -452,12 +461,14 @@ function GiftSenderLabel({ event }: { event: GiftAnimationEvent }) {
             <span>sent</span>
             <span className="text-2xl">{event.icon}</span>
             {event.isAnonymous && (
-              <span className="rounded bg-white/10 px-1.5 py-0.5 text-[9px] text-white/60">Anonymous</span>
+              <span className="rounded bg-white/10 px-1.5 py-0.5 text-[9px] text-white/60">
+                Anonymous
+              </span>
             )}
           </div>
           <div className="mt-1 text-[10px] text-white/60">
-            {event.isPackage ? `${event.packageLabel} — ` : ''}
-            ${event.usd.toFixed(2)} ({event.sats.toLocaleString()} sats)
+            {event.isPackage ? `${event.packageLabel} — ` : ''}${event.usd.toFixed(2)} (
+            {event.sats.toLocaleString()} sats)
           </div>
         </div>
       </div>
@@ -491,11 +502,14 @@ export function GiftAnimationOverlay({ event, onComplete }: GiftAnimationProps) 
     }
 
     // Auto-dismiss
-    timerRef.current = setTimeout(() => {
-      setVisible(false);
-      setShowStreak(false);
-      onComplete();
-    }, event.animationDurationSec * 1000 + 500);
+    timerRef.current = setTimeout(
+      () => {
+        setVisible(false);
+        setShowStreak(false);
+        onComplete();
+      },
+      event.animationDurationSec * 1000 + 500,
+    );
 
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);

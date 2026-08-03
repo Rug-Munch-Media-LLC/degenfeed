@@ -489,6 +489,7 @@ export function TradingSignalsFeed({
           className="flex items-center gap-1 transition-colors hover:text-degen-400"
         >
           <svg
+            aria-hidden="true"
             width="10"
             height="10"
             viewBox="0 0 24 24"

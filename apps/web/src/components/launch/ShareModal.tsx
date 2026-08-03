@@ -184,6 +184,7 @@ export default function ShareModal({
           aria-label="Close"
         >
           <svg
+            aria-hidden="true"
             width="16"
             height="16"
             viewBox="0 0 24 24"
@@ -231,6 +232,7 @@ export default function ShareModal({
               </span>
               <span className="flex-1 text-left">{platform.label}</span>
               <svg
+                aria-hidden="true"
                 width="14"
                 height="14"
                 viewBox="0 0 24 24"

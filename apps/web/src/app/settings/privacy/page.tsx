@@ -13,15 +13,15 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../../../components/AuthProvider';
 import { useToast } from '../../../components/Toast';
-import { usePreferences } from '../../../hooks/usePreferences';
 import PageHeader from '../../../components/ui/PageHeader';
+import { usePreferences } from '../../../hooks/usePreferences';
 import { CollapsibleSection } from './components/CollapsibleSection';
 import { DataInventoryRow } from './components/DataInventoryRow';
 import { ExportButton } from './components/ExportButton';
 import { MigrationCard } from './components/MigrationCard';
 import { PrivacyToggle } from './components/PrivacyToggle';
 import { DATA_INVENTORY, EXPORT_FORMATS, MIGRATION_PLATFORMS, PROTOCOL_ICONS } from './constants';
-import type { ThirdPartyConnection, DeleteStatus } from './types';
+import type { DeleteStatus, ThirdPartyConnection } from './types';
 
 export default function PrivacySettingsPage() {
   const { walletAddress, linkedIdentities, primaryIdentity } = useAuth();

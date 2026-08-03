@@ -28,7 +28,6 @@ import {
   type ChatProtocol,
   getProtocolBadge,
   type LiveChatMessage,
-  type ProtocolBadgeConfig,
   useUnifiedChat,
 } from './useUnifiedChat';
 
@@ -258,6 +257,7 @@ function MessageBubble({
               title="React"
             >
               <svg
+                aria-hidden="true"
                 width="11"
                 height="11"
                 viewBox="0 0 24 24"
@@ -736,6 +736,7 @@ function ChatInput({
             aria-label="Emotes"
           >
             <svg
+              aria-hidden="true"
               width="16"
               height="16"
               viewBox="0 0 24 24"
@@ -761,7 +762,7 @@ function ChatInput({
           className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-degen-500 text-black transition-all hover:bg-degen-400 disabled:opacity-30"
           aria-label="Send"
         >
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+          <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
             <polygon points="5 3 19 12 5 21 5 3" />
           </svg>
         </button>
@@ -814,7 +815,7 @@ export function UnifiedLiveChat({
   const [searchQuery, setSearchQuery] = useState('');
   const [currentProtocol, setCurrentProtocol] = useState<ChatProtocol>('degenfeed');
   const [viewerCount, setViewerCount] = useState(initialViewerCount);
-  const [platformBreakdown, setPlatformBreakdown] = useState<Record<string, number>>({});
+  const [platformBreakdown, _setPlatformBreakdown] = useState<Record<string, number>>({});
 
   // Auto-scroll
   useEffect(() => {
@@ -910,6 +911,7 @@ export function UnifiedLiveChat({
             title="Search chat"
           >
             <svg
+              aria-hidden="true"
               width="11"
               height="11"
               viewBox="0 0 24 24"
@@ -931,6 +933,7 @@ export function UnifiedLiveChat({
               title="Chat analytics"
             >
               <svg
+                aria-hidden="true"
                 width="11"
                 height="11"
                 viewBox="0 0 24 24"
@@ -1100,6 +1103,7 @@ export function UnifiedLiveChat({
           aria-label="Scroll to bottom"
         >
           <svg
+            aria-hidden="true"
             width="11"
             height="11"
             viewBox="0 0 24 24"

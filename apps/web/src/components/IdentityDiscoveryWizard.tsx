@@ -145,6 +145,7 @@ function IdentityCard({
           {isVerified ? (
             <span className="inline-flex items-center gap-0.5 rounded-full bg-degen-500/15 px-1.5 py-0.5 text-[9px] font-semibold text-degen-400">
               <svg
+                aria-hidden="true"
                 width="8"
                 height="8"
                 viewBox="0 0 24 24"
@@ -470,6 +471,7 @@ export function IdentityDiscoveryWizard({
               className="rounded-lg p-1.5 text-[var(--color-muted)] transition-all hover:bg-[var(--color-glass-border)]"
             >
               <svg
+                aria-hidden="true"
                 width="16"
                 height="16"
                 viewBox="0 0 24 24"

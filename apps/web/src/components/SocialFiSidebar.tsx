@@ -270,6 +270,7 @@ function RecentTipsWidget({ tips, compact }: { tips: TipActivity[]; compact?: bo
                   {tip.fromLabel}
                 </span>
                 <svg
+                  aria-hidden="true"
                   width="10"
                   height="10"
                   viewBox="0 0 24 24"

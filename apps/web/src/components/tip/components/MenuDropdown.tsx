@@ -137,9 +137,9 @@ export function MenuDropdown({
 
         {showAmount && selectedMethod && (
           <div className="mb-3">
-            <label className="mb-1.5 block text-[9px] font-medium uppercase tracking-wider text-[var(--color-muted)]">
+            <span className="mb-1.5 block text-[9px] font-medium uppercase tracking-wider text-[var(--color-muted)]">
               Amount {isLightning ? '(sats)' : '(USD)'}
-            </label>
+            </span>
             <div className="flex gap-1 mb-2">
               {amountPresets.map((preset) => (
                 <button

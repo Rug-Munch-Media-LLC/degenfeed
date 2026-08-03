@@ -285,6 +285,7 @@ export default function TradeFeed({
       >
         <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-[var(--color-accent-glow)]">
           <svg
+            aria-hidden="true"
             width="18"
             height="18"
             viewBox="0 0 24 24"

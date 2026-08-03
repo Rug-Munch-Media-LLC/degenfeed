@@ -296,6 +296,7 @@ export default function CoinLaunchStreamPage() {
             className="flex items-center gap-1.5 text-xs text-[var(--color-muted)] hover:text-degen-400 transition-colors shrink-0"
           >
             <svg
+              aria-hidden="true"
               width="14"
               height="14"
               viewBox="0 0 24 24"

@@ -10,7 +10,7 @@
  * Telegram-like: displays "You've earned 50,000 sats this stream"
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import useSWR from 'swr';
 
 // ─── Types ───────────────────────────────────────────────────────────────
@@ -70,7 +70,7 @@ function AnimatedNumber({
       const elapsed = now - startTime;
       const progress = Math.min(elapsed / duration, 1);
       // Ease-out cubic
-      const eased = 1 - Math.pow(1 - progress, 3);
+      const eased = 1 - (1 - progress) ** 3;
       setDisplayValue(Math.round(prev + diff * eased));
 
       if (progress < 1) {
@@ -92,7 +92,9 @@ function AnimatedNumber({
 
   return (
     <span className="tabular-nums">
-      {prefix}{displayValue.toLocaleString()}{suffix}
+      {prefix}
+      {displayValue.toLocaleString()}
+      {suffix}
     </span>
   );
 }
@@ -118,7 +120,7 @@ export function EarningsCounter({
   const [totalSats, setTotalSats] = useState(0);
   const [totalUsd, setTotalUsd] = useState(0);
   const [totalGifts, setTotalGifts] = useState(0);
-  const [isVisible, setIsVisible] = useState(true);
+  const [_isVisible, _setIsVisible] = useState(true);
 
   const queryParams = streamId
     ? `streamId=${encodeURIComponent(streamId)}`
@@ -207,9 +209,7 @@ export function EarningsCounter({
           <span className="text-[9px] text-white/50">sats</span>
         </div>
         <div className="h-3 w-px bg-white/10" />
-        <span className="text-[10px] font-medium text-degen-400">
-          ${totalUsd.toFixed(2)}
-        </span>
+        <span className="text-[10px] font-medium text-degen-400">${totalUsd.toFixed(2)}</span>
       </div>
     );
   }
@@ -324,7 +324,8 @@ export function EarningsCounter({
                   <span className="ml-1">sats in gifts</span>
                 </div>
                 <div className="text-[8px] text-white/40">
-                  ${totalUsd.toFixed(2)} · {totalGifts} gifts from {data?.streams.length ?? 0} streams
+                  ${totalUsd.toFixed(2)} · {totalGifts} gifts from {data?.streams.length ?? 0}{' '}
+                  streams
                 </div>
               </>
             )}
@@ -362,11 +363,7 @@ export function EarningsCounter({
       )}
 
       {/* Error state */}
-      {error && (
-        <p className="mt-1 text-[8px] text-red-400">
-          Earnings data may be delayed.
-        </p>
-      )}
+      {error && <p className="mt-1 text-[8px] text-red-400">Earnings data may be delayed.</p>}
     </div>
   );
 }
