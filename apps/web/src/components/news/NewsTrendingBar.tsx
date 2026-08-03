@@ -2,10 +2,23 @@
 
 import type { NewsStory } from './types';
 
+/** Cross-reference count for a story: number of other sources covering it. */
+function crossRefCount(s: NewsStory): number {
+  return s.alsoCoveredByCount ?? (s.alsoCoveredBy ? s.alsoCoveredBy.length - 1 : 0);
+}
+
 export function NewsTrendingBar({ stories }: { stories: NewsStory[] }) {
   const breaking = stories
     .filter((s) => s.isBreaking || s.velocity > 2)
-    .sort((a, b) => b.velocity - a.velocity)
+    .sort((a, b) => {
+      // Trending authority: most cross-referenced story first (grounding),
+      // then velocity, then freshness as tie-breakers.
+      const refDiff = crossRefCount(b) - crossRefCount(a);
+      if (refDiff !== 0) return refDiff;
+      const velDiff = b.velocity - a.velocity;
+      if (velDiff !== 0) return velDiff;
+      return b.publishedAt - a.publishedAt;
+    })
     .slice(0, 8);
   if (breaking.length === 0) return null;
 

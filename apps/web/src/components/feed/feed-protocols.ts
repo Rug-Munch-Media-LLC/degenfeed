@@ -295,6 +295,22 @@ export const PROTOCOLS: Record<string, ProtocolConfig> = {
       { label: 'updated', value: 'hourly' },
     ],
   },
+  newsletter: {
+    id: 'newsletter',
+    label: 'Newsletters',
+    color: '#e63946',
+    icon: '📬',
+    description:
+      'Curated crypto & web3 newsletters from Substack, Medium, Mirror, Paragraph, Ghost',
+    endpoint: '/api/feed/newsletter',
+    route: '/feed/newsletter',
+    postNoun: 'newsletter',
+    category: 'news',
+    stats: [
+      { label: 'platforms', value: '5' },
+      { label: 'publications', value: '15+' },
+    ],
+  },
   reddit: {
     id: 'reddit',
     label: 'Reddit',
@@ -566,5 +582,6 @@ export const SIDEBAR_ORDER = [
   'pixelfed',
   'owncast',
   'rss',
+  'newsletter',
   'media',
 ];

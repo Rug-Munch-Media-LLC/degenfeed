@@ -15,6 +15,7 @@
  * - Respects TTL/update frequency hints from feeds
  */
 
+import { analyzeNewsSentiment } from '../lib/sentiment';
 import { checkRateLimit } from '../rate-limiter';
 import type { SchemaGuard, UnifiedPost } from '../server/types';
 
@@ -175,6 +176,20 @@ const CRYPTO_NEWS_FEEDS: FeedSource[] = [
     label: 'CryptoSlate',
     category: 'crypto-news',
     niches: ['crypto'],
+    featured: true,
+  },
+  {
+    url: 'https://www.bankless.com/feed?xml',
+    label: 'Bankless',
+    category: 'crypto-news',
+    niches: ['crypto', 'research', 'ethereum'],
+    featured: true,
+  },
+  {
+    url: 'https://www.cnbc.com/id/10001147/device/rss/rss.html',
+    label: 'CNBC Crypto',
+    category: 'crypto-news',
+    niches: ['crypto', 'markets'],
     featured: true,
   },
 ];
@@ -387,6 +402,64 @@ const TECH_FEEDS: FeedSource[] = [
     label: 'DeepMind',
     category: 'tech',
     niches: ['ai', 'research'],
+  },
+  {
+    url: 'https://www.technologyreview.com/feed/',
+    label: 'MIT Tech Review',
+    category: 'tech',
+    niches: ['tech', 'ai', 'research'],
+    featured: true,
+  },
+  {
+    url: 'https://feeds.arstechnica.com/arstechnica/index',
+    label: 'Ars Technica',
+    category: 'tech',
+    niches: ['tech', 'dev'],
+    featured: true,
+  },
+  {
+    url: 'https://www.wired.com/feed/rss',
+    label: 'Wired',
+    category: 'tech',
+    niches: ['tech', 'ai'],
+    featured: true,
+  },
+  {
+    url: 'https://techcrunch.com/feed/',
+    label: 'TechCrunch',
+    category: 'tech',
+    niches: ['tech', 'startups'],
+    featured: true,
+  },
+  {
+    url: 'https://www.theregister.com/headlines.rss',
+    label: 'The Register',
+    category: 'tech',
+    niches: ['tech', 'security'],
+  },
+  {
+    url: 'https://www.theguardian.com/technology/rss',
+    label: 'The Guardian Tech',
+    category: 'tech',
+    niches: ['tech'],
+  },
+  {
+    url: 'https://restofworld.org/feed/',
+    label: 'Rest of World',
+    category: 'tech',
+    niches: ['tech', 'global'],
+  },
+  {
+    url: 'https://theconversation.com/us/articles.atom',
+    label: 'The Conversation',
+    category: 'tech',
+    niches: ['tech', 'research', 'academic'],
+  },
+  {
+    url: 'https://spectrum.ieee.org/feeds/feed.rss',
+    label: 'IEEE Spectrum',
+    category: 'tech',
+    niches: ['tech', 'ai', 'research'],
   },
 ];
 
@@ -787,6 +860,156 @@ export function extractEnclosures(e: string): { url?: string; type?: string }[] 
 }
 
 /**
+ * Extract OpenGraph / Twitter Card image from article HTML:
+ *   <meta property="og:image" content="...">
+ *   <meta name="twitter:image" content="...">
+ * Handles attribute order variants and skips favicons.
+ */
+export function extractOpenGraphImage(html: string): string | undefined {
+  if (!html) return undefined;
+  const metaRe = /<meta[^>]+(?:property|name)=["'](?:og:image|twitter:image)["'][^>]*>/gi;
+  for (const tag of html.match(metaRe) ?? []) {
+    const content = tag.match(/(?:content|value)=["']([^"']+)["']/i);
+    const url = content?.[1];
+    if (url?.startsWith('http') && !url.includes('favicon')) return url;
+  }
+  return undefined;
+}
+
+/**
+ * Extract the first media:thumbnail / media:content image from a raw feed
+ * item (RSS Media RSS namespace). Returns undefined when absent.
+ */
+export function extractMediaImage(itemXml: string): string | undefined {
+  if (!itemXml) return undefined;
+  const mediaRe = /<media:(?:content|thumbnail)[^>]*url=["']([^"']+)["']/gi;
+  const matches = [...itemXml.matchAll(mediaRe)];
+  for (const m of matches) {
+    const url = m[1];
+    if (url?.startsWith('http') && !url.includes('favicon')) return url;
+  }
+  return undefined;
+}
+
+// ─── OpenGraph Image Cache ────────────────────────────────────────────
+// Extracted article images are cached in-memory so the bridge doesn't
+// re-fetch every article page on every 5-minute feed cycle. Positive hits
+// live for 7 days (og:image rarely changes); misses are cached 1 hour so
+// slow/broken article pages aren't hammered repeatedly.
+
+const OG_IMAGE_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+const OG_IMAGE_NEGATIVE_TTL_MS = 60 * 60 * 1000; // 1 hour
+const ogImageCache = new Map<string, { url: string; expiresAt: number }>();
+const ogImageInFlight = new Map<string, Promise<string | undefined>>();
+
+function cacheOgImage(url: string, image: string | undefined): void {
+  ogImageCache.set(url, {
+    url: image ?? '',
+    expiresAt: Date.now() + (image ? OG_IMAGE_CACHE_TTL_MS : OG_IMAGE_NEGATIVE_TTL_MS),
+  });
+}
+
+/**
+ * Fetch an article page and extract its OpenGraph image.
+ * In-memory cached (positive 7d, negative 1h) and single-flight deduplicated
+ * so concurrent enrichment passes never duplicate a request.
+ */
+export async function fetchOpenGraphImage(url: string): Promise<string | undefined> {
+  if (!url || !url.startsWith('http')) return undefined;
+
+  const cached = ogImageCache.get(url);
+  if (cached) {
+    if (cached.expiresAt > Date.now()) return cached.url || undefined;
+    ogImageCache.delete(url);
+  }
+
+  const inFlight = ogImageInFlight.get(url);
+  if (inFlight) return inFlight;
+
+  const promise = fetchOpenGraphImageInner(url).finally(() => ogImageInFlight.delete(url));
+  ogImageInFlight.set(url, promise);
+  return promise;
+}
+
+async function fetchOpenGraphImageInner(url: string): Promise<string | undefined> {
+  try {
+    const res = await globalThis.fetch(url, {
+      headers: {
+        'User-Agent': USER_AGENT,
+        Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      },
+      redirect: 'follow',
+      signal: AbortSignal.timeout(2500),
+    });
+    if (!res.ok) {
+      cacheOgImage(url, undefined);
+      return undefined;
+    }
+    // We only need <head> metadata — cap the body to bound memory on huge pages.
+    const html = (await res.text()).slice(0, 200_000);
+    const image = extractOpenGraphImage(html) || extractFeaturedImage(html);
+    cacheOgImage(url, image);
+    return image;
+  } catch {
+    cacheOgImage(url, undefined);
+    return undefined;
+  }
+}
+
+/** Read the current best image for a post (raw.image, then image embed). */
+export function getPostImage(post: UnifiedPost): string | undefined {
+  const raw = post.raw as Record<string, unknown> | undefined;
+  const rawImage = raw?.image as string | undefined;
+  if (rawImage) return rawImage;
+  return post.embeds.find((e) => e.kind === 'image')?.url;
+}
+
+/** Attach an image to a post: sets raw.image and the image embed. */
+export function setPostImage(post: UnifiedPost, image: string): void {
+  const raw = post.raw as Record<string, unknown>;
+  raw.image = image;
+  const idx = post.embeds.findIndex((e) => e.kind === 'image');
+  if (idx >= 0) {
+    post.embeds[idx] = { kind: 'image', url: image, meta: post.embeds[idx].meta };
+  } else {
+    post.embeds.push({ kind: 'image', url: image });
+  }
+}
+
+/**
+ * Enrich posts that lack an image by fetching og:image from the article
+ * page. Bounded: concurrency-limited and hard time-budgeted so enrichment
+ * can never stall the RSS provider past its provider timeout.
+ */
+export async function enrichPostImages(
+  posts: UnifiedPost[],
+  budgetMs = 3000,
+  concurrency = 5,
+): Promise<UnifiedPost[]> {
+  const missing = posts.filter((p) => !getPostImage(p));
+  if (missing.length === 0) return posts;
+
+  const deadline = Date.now() + budgetMs;
+  let cursor = 0;
+
+  async function worker(): Promise<void> {
+    while (cursor < missing.length) {
+      if (Date.now() >= deadline) return; // time budget exhausted — keep what we have
+      const i = cursor++;
+      const post = missing[i];
+      if (!post) continue;
+      const url = extractLinkUrl(post);
+      if (!url) continue;
+      const image = await fetchOpenGraphImage(url);
+      if (image) setPostImage(post, image);
+    }
+  }
+
+  await Promise.all(Array.from({ length: Math.min(concurrency, missing.length) }, worker));
+  return posts;
+}
+
+/**
  * Detect niche categories from text content
  */
 export function guessNiches(text: string, baseNiches: string[]): string[] {
@@ -849,6 +1072,7 @@ export function parseFeedXml(xml: string): {
   title?: string;
   description?: string;
   link?: string;
+  image?: string;
   items: ParsedFeedItem[];
 } {
   const result: ParsedFeedItem[] = [];
@@ -858,6 +1082,11 @@ export function parseFeedXml(xml: string): {
     xml.match(/<subtitle[^>]*>([\s\S]*?)<\/subtitle>/i) ||
     xml.match(/<description[^>]*>([\s\S]*?)<\/description>/i);
   const feedLinkMatch = xml.match(/<link[^>]*href=["']([^"']+)["']/i);
+
+  // Feed-level image: RSS <image><url> or Atom <logo>
+  const feedImageMatch =
+    xml.match(/<image>[\s\S]*?<url[^>]*>([\s\S]*?)<\/url>[\s\S]*?<\/image>/i) ||
+    xml.match(/<logo[^>]*>([\s\S]*?)<\/logo>/i);
 
   // Try Atom entries first
   const entryRe = /<entry[\s>]([\s\S]*?)<\/entry>/gi;
@@ -884,6 +1113,7 @@ export function parseFeedXml(xml: string): {
     title: feedTitleMatch ? stripHtml(feedTitleMatch[1]).trim() : undefined,
     description: feedDescMatch ? stripHtml(feedDescMatch[1]).trim().slice(0, 500) : undefined,
     link: feedLinkMatch?.[1],
+    image: feedImageMatch?.[1] ? stripHtml(feedImageMatch[1]).trim() : undefined,
     items: result,
   };
 }
@@ -922,7 +1152,8 @@ function parseAtomEntry(e: string): ParsedFeedItem | null {
   const categories = categoryMatches.map((cm) => cm[1].toLowerCase());
 
   const enclosures = extractEnclosures(e);
-  const featuredImage = extractFeaturedImage(contentHtml) || enclosures[0]?.url;
+  const featuredImage =
+    extractFeaturedImage(contentHtml) || extractMediaImage(e) || enclosures[0]?.url;
 
   const idMatch = e.match(/<id[^>]*>([\s\S]*?)<\/id>/i);
   const id = idMatch ? stripHtml(idMatch[1]) : `entry:${title}:${publishedAt}`;
@@ -969,7 +1200,8 @@ function parseRssItem(e: string): ParsedFeedItem | null {
   const categories = categoryMatches.map((cm) => stripHtml(cm[1]).toLowerCase()).filter(Boolean);
 
   const enclosures = extractEnclosures(e);
-  const featuredImage = extractFeaturedImage(contentHtml) || enclosures[0]?.url;
+  const featuredImage =
+    extractFeaturedImage(contentHtml) || extractMediaImage(e) || enclosures[0]?.url;
 
   const guidMatch = e.match(/<guid[^>]*>([\s\S]*?)<\/guid>/i);
   const id = guidMatch ? stripHtml(guidMatch[1]) : `rss:${title}:${publishedAt}`;
@@ -1020,15 +1252,20 @@ async function fetchSingleFeed(feed: FeedSource, limit: number): Promise<Unified
     return items.map((item, i) => {
       const allNiches = guessNiches(`${item.title} ${item.contentText}`, feed.niches);
       const embedUrl = item.link || feed.url;
+      // Image priority: item content <img> → media:thumbnail/content → enclosure
+      // → feed-level image (channel <image> / Atom <logo>).
+      const featuredImage = item.featuredImage || parsed.image;
+      // Sentiment runs locally on the headline + description (AFINN-based).
+      const sentiment = analyzeNewsSentiment(`${item.title}. ${item.description || ''}`);
 
       const embeds: { kind: string; url: string; meta?: Record<string, unknown> }[] = [
         { kind: 'link', url: embedUrl },
       ];
 
-      if (item.featuredImage) {
+      if (featuredImage) {
         embeds.push({
           kind: 'image',
-          url: item.featuredImage,
+          url: featuredImage,
           meta: { source: feed.label, caption: item.title },
         });
       }
@@ -1061,6 +1298,10 @@ async function fetchSingleFeed(feed: FeedSource, limit: number): Promise<Unified
           viewerBookmarked: false,
           raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
         },
+        // Top-level image/media fields: convenience for API consumers and
+        // the frontend (og:image enrichment backfills via setPostImage).
+        image: featuredImage,
+        media: featuredImage,
         raw: {
           description: item.description,
           contentText: item.contentText.slice(0, 1000),
@@ -1069,6 +1310,8 @@ async function fetchSingleFeed(feed: FeedSource, limit: number): Promise<Unified
           feedCategory: feed.category,
           feedUrl: feed.url,
           platform: feed.platform,
+          image: featuredImage,
+          sentiment,
         },
         niches: allNiches,
         contentType: 'link',
@@ -1389,7 +1632,9 @@ export const SOURCE_TIERS: Record<string, number> = {
   'Blockworks': 1, 'BitcoinMagazine': 1, 'The Defiant': 1, 'CoinMetrics': 1,
   'Dune Analytics': 1, 'Messari': 1, 'a16z Crypto': 1, 'Paradigm': 1,
   'Pantera Capital': 1, 'Electric Capital': 1, 'Kraken Blog': 1,
-  'Chainalysis': 1, 'CryptoSlate': 1, 'Unchained Crypto': 1,
+  'Chainalysis': 1, 'CryptoSlate': 1, 'Unchained Crypto': 1, 'Bankless': 1,
+  'CNBC Crypto': 1, 'MIT Tech Review': 1, 'Ars Technica': 1, 'Wired': 1,
+  'TechCrunch': 1, 'The Guardian Tech': 1, 'IEEE Spectrum': 1,
   // Tier 2 — established but secondary
   'CryptoPotato': 2, 'UToday': 2, 'CryptoBriefing': 2, 'Bitcoin.com News': 2,
   'BeInCrypto': 2, 'AMBCrypto': 2, 'Daily Hodl': 2, 'NewsBTC': 2,
@@ -1399,6 +1644,7 @@ export const SOURCE_TIERS: Record<string, number> = {
   'Ethereum Blog': 2, 'Solana Blog': 2, 'Polygon Blog': 2,
   'Chainlink Blog': 2, 'Coin Center': 2, 'SEC Press': 2,
   'The Verge': 2, 'Hacker News': 2, 'FreeCodeCamp': 2, 'Hacker Noon': 2,
+  'The Register': 2, 'Rest of World': 2, 'The Conversation': 2,
   // Tier 3 — niche / long tail
   'Bitcoinist': 3, 'Live Bitcoin News': 3, 'ZyCrypto': 3, 'NullTX': 3,
   'CryptoNewsZ': 3, 'CoinPedia': 3, 'Ethereum World News': 3,
@@ -1445,6 +1691,7 @@ export function crossReferenceScore(crossReference: unknown): number {
  *  - source reputation (tier 1 → high)
  *  - freshness decay (newer → higher)
  *  - cross-reference grounding (multiple feeds → higher authority)
+ *  - sentiment (marginally boost positive/neutral over negative)
  *
  * Scores are stored on `raw.rank` and `raw.rankSignals` for transparency.
  */
@@ -1456,8 +1703,17 @@ export function rankNewsPost(post: UnifiedPost, now = Date.now()): number {
   const freshness = freshnessScore(post.createdAt, now);
   const grounding = crossReferenceScore(raw?.crossReference);
 
+  // Sentiment signal: normalized -1..+1 scaled to a ±5% rank adjustment.
+  // Positive/neutral headlines are marginally boosted over negative ones;
+  // neutral (0) scores land exactly in the middle and are unaffected.
+  const sentimentRaw = raw?.sentiment as { normalized?: number } | undefined;
+  const rawSentiment = sentimentRaw?.normalized;
+  const sentimentValue =
+    typeof rawSentiment === 'number' && Number.isFinite(rawSentiment) ? rawSentiment : 0;
+  const sentimentSignal = Math.max(-1, Math.min(1, sentimentValue)) * 0.05;
+
   const score = Math.round(
-    (reputation * 0.45 + freshness * 0.35 + grounding * 0.2) * 100,
+    (reputation * 0.45 + freshness * 0.35 + grounding * 0.2 + sentimentSignal) * 100,
   );
 
   if (raw) {
@@ -1467,6 +1723,7 @@ export function rankNewsPost(post: UnifiedPost, now = Date.now()): number {
       sourceReputation: Math.round(reputation * 100) / 100,
       freshness: Math.round(freshness * 100) / 100,
       crossReference: Math.round(grounding * 100) / 100,
+      sentiment: Math.round(sentimentSignal * 100) / 100,
     };
   }
   return score;
@@ -1517,6 +1774,9 @@ export async function fetchRssPosts(limit = 50): Promise<UnifiedPost[]> {
     console.log('[rss] Rate limited, skipping fetch');
     return [];
   }
+  // Overall start time — used to bound the og:image enrichment so the RSS
+  // provider stays inside the bridge's provider timeout (~5s).
+  const fetchStartedAt = Date.now();
   const all: UnifiedPost[] = [];
 
   // Determine how many items to fetch per feed based on total feeds and desired limit
@@ -1554,6 +1814,11 @@ export async function fetchRssPosts(limit = 50): Promise<UnifiedPost[]> {
   // Rank by source reputation + freshness + cross-reference grounding
   const ranked = rankNewsPosts(deduped);
 
+  // Backfill missing images from article OpenGraph tags (bounded time budget
+  // that shrinks with feed-fetch time so the provider stays < ~4.5s total).
+  const enrichBudgetMs = Math.max(400, 3200 - (Date.now() - fetchStartedAt));
+  const enriched = await enrichPostImages(ranked, enrichBudgetMs);
+
   // Log stats
   const byCategory = new Map<string, number>();
   for (const feed of activeFeeds) {
@@ -1573,10 +1838,10 @@ export async function fetchRssPosts(limit = 50): Promise<UnifiedPost[]> {
     console.log(`[rss]   ${cat}: ${count} posts`);
   }
 
-  // Update cache with deduplicated + ranked results
-  rssCache = { posts: ranked, fetchedAt: Date.now() };
+  // Update cache with deduplicated + ranked + image-enriched results
+  rssCache = { posts: enriched, fetchedAt: Date.now() };
 
-  return ranked;
+  return enriched;
 }
 
 /**
