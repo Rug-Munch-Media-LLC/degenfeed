@@ -60,6 +60,10 @@ export const PROTOCOL_LABELS: Record<string, string> = {
   owncast: 'Owncast',
   reddit: 'Reddit',
   youtube: 'YouTube',
+  twitter: 'X / Twitter',
+  github: 'GitHub',
+  discord: 'Discord',
+  telegram: 'Telegram',
 };
 
 /** Content tab definitions — 17 tabs as specified */
@@ -286,6 +290,11 @@ export const PROTOCOL_ICONS: Record<string, string> = {
   mobilizon: '📅',
   bookwyrm: '📚',
   owncast: '📡',
+  twitter: '𝕏',
+  youtube: '▶️',
+  github: '🐙',
+  discord: '🎮',
+  telegram: '✈️',
 };
 
 export function shortenAddress(addr: string): string {

@@ -19,6 +19,8 @@ export interface ProfileStats {
   tipsReceived: number;
   /** Followers keyed by protocol (e.g. { nostr: 120, farcaster: 80 }) */
   followersByProtocol?: Record<string, number>;
+  /** Following keyed by protocol */
+  followingByProtocol?: Record<string, number>;
   /** Posts keyed by protocol */
   postsByProtocol?: Record<string, number>;
 }
@@ -289,6 +291,8 @@ export interface CreatorSettings {
     coverUrl?: string;
     website?: string;
     location?: string;
+    /** Linktree-style custom links shown on the profile */
+    customLinks?: Array<{ label: string; url: string }>;
   };
   crossPosting: {
     defaultProtocols: string[];

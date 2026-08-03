@@ -8,8 +8,8 @@
  * The @degenfeed/nostr-sdk module is mocked via vi.mock for NIP-05/npub paths.
  */
 
-import { describe, expect, it, vi, beforeEach } from 'vitest';
 import type { CrossProtocolIdentity } from '@degenfeed/utils';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock nostr-sdk for NIP-05 and npub resolution
 vi.mock('@degenfeed/nostr-sdk', () => ({
@@ -47,7 +47,7 @@ describe('resolveFediverseHandle', () => {
 
     // Verify correct WebFinger URL was called
     expect(mockFetch).toHaveBeenCalledTimes(1);
-    const callUrl = mockFetch.mock.calls[0][0] as string;
+    const callUrl = (mockFetch.mock.calls[0]?.[0] as string) ?? '';
     expect(callUrl).toContain('.well-known/webfinger');
     expect(callUrl).toContain('resource=acct:user%40mastodon.social');
   });
@@ -79,9 +79,9 @@ describe('resolveFediverseHandle', () => {
 
   it('should return null if WebFinger returns 404', async () => {
     const { resolveFediverseHandle } = await import('../index');
-    const mockFetch = vi.fn<typeof fetch>().mockResolvedValue(
-      new Response('Not Found', { status: 404 }),
-    );
+    const mockFetch = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(new Response('Not Found', { status: 404 }));
 
     const result = await resolveFediverseHandle('missing@example.com', mockFetch);
     expect(result).toBeNull();
@@ -93,7 +93,9 @@ describe('resolveFediverseHandle', () => {
       new Response(
         JSON.stringify({
           subject: 'acct:user@example.com',
-          links: [{ rel: 'http://webfinger.net/rel/profile-page', href: 'https://example.com/@user' }],
+          links: [
+            { rel: 'http://webfinger.net/rel/profile-page', href: 'https://example.com/@user' },
+          ],
         }),
         { status: 200 },
       ),
@@ -177,7 +179,9 @@ describe('resolveHandle — npub', () => {
   it('should decode an npub to a hex pubkey', async () => {
     const nostrSdk = await import('@degenfeed/nostr-sdk');
     const mockNpubDecode = vi.mocked(nostrSdk.npubDecode);
-    mockNpubDecode.mockReturnValue('7e2e0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9');
+    mockNpubDecode.mockReturnValue(
+      '7e2e0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9',
+    );
 
     const { resolveHandle } = await import('../index');
     const result = await resolveHandle('npub1abc123def456');
@@ -209,9 +213,9 @@ describe('resolveHandle — npub', () => {
 describe('resolveHandle — Farcaster', () => {
   it('should resolve a numeric FID', async () => {
     const { resolveHandle } = await import('../index');
-    const mockFetch = vi.fn<typeof fetch>().mockResolvedValue(
-      new Response(JSON.stringify({}), { status: 200 }),
-    );
+    const mockFetch = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(new Response(JSON.stringify({}), { status: 200 }));
 
     const result = await resolveHandle('12345', mockFetch);
 
@@ -220,16 +224,16 @@ describe('resolveHandle — Farcaster', () => {
     expect(result!.id).toBe('12345');
 
     // Should call the Farcaster hub
-    const callUrl = mockFetch.mock.calls[0][0] as string;
+    const callUrl = (mockFetch.mock.calls[0]?.[0] as string) ?? '';
     expect(callUrl).toContain('hub.farcaster.standardcrypto.vc');
     expect(callUrl).toContain('fid=12345');
   });
 
   it('should resolve a @username', async () => {
     const { resolveHandle } = await import('../index');
-    const mockFetch = vi.fn<typeof fetch>().mockResolvedValue(
-      new Response(JSON.stringify({ fid: 67890 }), { status: 200 }),
-    );
+    const mockFetch = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(new Response(JSON.stringify({ fid: 67890 }), { status: 200 }));
 
     const result = await resolveHandle('@vitalik', mockFetch);
 
@@ -238,15 +242,15 @@ describe('resolveHandle — Farcaster', () => {
     expect(result!.id).toBe('67890');
     expect(result!.handle).toBe('@vitalik');
 
-    const callUrl = mockFetch.mock.calls[0][0] as string;
+    const callUrl = (mockFetch.mock.calls[0]?.[0] as string) ?? '';
     expect(callUrl).toContain('username=vitalik');
   });
 
   it('should return null when Farcaster hub returns 404', async () => {
     const { resolveHandle } = await import('../index');
-    const mockFetch = vi.fn<typeof fetch>().mockResolvedValue(
-      new Response('Not Found', { status: 404 }),
-    );
+    const mockFetch = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(new Response('Not Found', { status: 404 }));
 
     const result = await resolveHandle('@nonexistent', mockFetch);
     expect(result).toBeNull();
@@ -258,9 +262,9 @@ describe('resolveHandle — Farcaster', () => {
 describe('resolveHandle — Bluesky', () => {
   it('should resolve a DID to Bluesky', async () => {
     const { resolveHandle } = await import('../index');
-    const mockFetch = vi.fn<typeof fetch>().mockResolvedValue(
-      new Response(JSON.stringify({}), { status: 200 }),
-    );
+    const mockFetch = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(new Response(JSON.stringify({}), { status: 200 }));
 
     const result = await resolveHandle('did:plc:abc123def456', mockFetch);
 
@@ -268,18 +272,15 @@ describe('resolveHandle — Bluesky', () => {
     expect(result!.protocol).toBe('bluesky');
     expect(result!.id).toBe('did:plc:abc123def456');
 
-    const callUrl = mockFetch.mock.calls[0][0] as string;
+    const callUrl = (mockFetch.mock.calls[0]?.[0] as string) ?? '';
     expect(callUrl).toContain('plc.directory');
   });
 
   it('should resolve a domain handle (like bsky.app)', async () => {
     const { resolveHandle } = await import('../index');
-    const mockFetch = vi.fn<typeof fetch>().mockResolvedValue(
-      new Response(
-        JSON.stringify({ did: 'did:plc:xyz789' }),
-        { status: 200 },
-      ),
-    );
+    const mockFetch = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(new Response(JSON.stringify({ did: 'did:plc:xyz789' }), { status: 200 }));
 
     const result = await resolveHandle('alice.bsky.social', mockFetch);
 
@@ -287,15 +288,15 @@ describe('resolveHandle — Bluesky', () => {
     expect(result!.protocol).toBe('bluesky');
     expect(result!.id).toBe('did:plc:xyz789');
 
-    const callUrl = mockFetch.mock.calls[0][0] as string;
+    const callUrl = (mockFetch.mock.calls[0]?.[0] as string) ?? '';
     expect(callUrl).toContain('public.api.bsky.app');
   });
 
   it('should return null when Bluesky resolve fails', async () => {
     const { resolveHandle } = await import('../index');
-    const mockFetch = vi.fn<typeof fetch>().mockResolvedValue(
-      new Response('Not Found', { status: 404 }),
-    );
+    const mockFetch = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(new Response('Not Found', { status: 404 }));
 
     const result = await resolveHandle('missing.bsky.social', mockFetch);
     expect(result).toBeNull();
@@ -323,18 +324,17 @@ describe('resolveHandle — Lens', () => {
     expect(result!.id).toBe('0x1234');
     expect(result!.handle).toBe('lens/stani.lens');
 
-    const callUrl = mockFetch.mock.calls[0][0] as string;
+    const callUrl = (mockFetch.mock.calls[0]?.[0] as string) ?? '';
     expect(callUrl).toContain('api.lens.xyz');
   });
 
   it('should return null when Lens profile not found', async () => {
     const { resolveHandle } = await import('../index');
-    const mockFetch = vi.fn<typeof fetch>().mockResolvedValue(
-      new Response(
-        JSON.stringify({ data: { profile: null } }),
-        { status: 200 },
-      ),
-    );
+    const mockFetch = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(
+        new Response(JSON.stringify({ data: { profile: null } }), { status: 200 }),
+      );
 
     const result = await resolveHandle('nonexistent', mockFetch);
     expect(result).toBeNull();
@@ -366,9 +366,7 @@ describe('formatCrossProtocolFollowers', () => {
 
   it('should include network count when > 1', async () => {
     const { formatCrossProtocolFollowers } = await import('../index');
-    expect(formatCrossProtocolFollowers(5000, 3)).toBe(
-      '5.0K followers across 3 networks',
-    );
+    expect(formatCrossProtocolFollowers(5000, 3)).toBe('5.0K followers across 3 networks');
   });
 
   it('should handle edge case count of 1', async () => {
@@ -404,9 +402,9 @@ describe('buildUnifiedProfile', () => {
     expect(profile.walletAddress).toBe('0x1234');
     expect(profile.networkCount).toBe(1);
     expect(profile.handles).toHaveLength(1);
-    expect(profile.handles[0].protocol).toBe('nostr');
-    expect(profile.handles[0].handle).toBe('npub1abc');
-    expect(profile.handles[0].verified).toBe(true);
+    expect(profile.handles[0]!.protocol).toBe('nostr');
+    expect(profile.handles[0]!.handle).toBe('npub1abc');
+    expect(profile.handles[0]!.verified).toBe(true);
     expect(profile.primaryProtocol).toBe('nostr');
     expect(profile.dfUri).toBe('df://profile/0x1234');
   });
@@ -468,7 +466,7 @@ describe('buildUnifiedProfile', () => {
 
     expect(profile.networkCount).toBe(1);
     expect(profile.handles).toHaveLength(1);
-    expect(profile.handles[0].protocol).toBe('bluesky');
+    expect(profile.handles[0]!.protocol).toBe('bluesky');
     expect(profile.primaryProtocol).toBe('bluesky');
   });
 
@@ -528,7 +526,7 @@ describe('mergeIdentities', () => {
         displayName: 'Alice Onchain',
         verified: [{ protocol: 'farcaster', badge: 'FID' }],
         followerCount: 500,
-        keys: { farcasterFid: 123 },
+        keys: { fid: 123 },
       },
     ]);
 
@@ -541,9 +539,10 @@ describe('mergeIdentities', () => {
     expect(merged.verified).toHaveLength(2);
     // Later followerCount overrides
     expect(merged.followerCount).toBe(500);
+    // Keys from both inputs are merged (keys is an open-ended record)
     expect(merged.keys).toMatchObject({
       nostrPubkey: 'pubkey1',
-      farcasterFid: 123,
+      fid: 123,
     });
   });
 

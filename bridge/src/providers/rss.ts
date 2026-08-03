@@ -52,7 +52,10 @@ export type FeedCategory =
   | 'solana'
   | 'science'
   | 'geopolitics'
-  | 'business';
+  | 'business'
+  | 'world'
+  | 'culture'
+  | 'politics';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // CRYPTO NEWS (25 feeds)
@@ -903,6 +906,668 @@ const BUSINESS_FEEDS: FeedSource[] = [
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════
+// WORLD NEWS (verified 2026-08-03 — Ground News breadth play)
+// ═══════════════════════════════════════════════════════════════════════════
+
+const WORLD_FEEDS: FeedSource[] = [
+  {
+    url: 'https://www.ft.com/rss/home',
+    label: 'FT',
+    category: 'world',
+    niches: ['world', 'business', 'markets'],
+    featured: true,
+  },
+  {
+    url: 'https://feeds.content.dowjones.io/public/rss/mw_topstories',
+    label: 'MarketWatch',
+    category: 'world',
+    niches: ['business', 'markets', 'world'],
+  },
+  {
+    url: 'https://finance.yahoo.com/news/rssindex',
+    label: 'Yahoo Finance',
+    category: 'world',
+    niches: ['business', 'markets', 'world'],
+  },
+  {
+    url: 'https://fortune.com/feed/',
+    label: 'Fortune',
+    category: 'world',
+    niches: ['business', 'world'],
+  },
+  {
+    url: 'https://www.businessinsider.com/rss',
+    label: 'Business Insider',
+    category: 'world',
+    niches: ['business', 'world', 'tech'],
+  },
+  {
+    url: 'https://qz.com/feed',
+    label: 'Quartz',
+    category: 'world',
+    niches: ['business', 'world', 'tech'],
+  },
+  {
+    url: 'https://www.cnbc.com/id/20910258/device/rss/rss.html',
+    label: 'CNBC Markets',
+    category: 'world',
+    niches: ['business', 'markets'],
+  },
+  {
+    url: 'https://www.cnbc.com/id/19854910/device/rss/rss.html',
+    label: 'CNBC Tech',
+    category: 'world',
+    niches: ['business', 'tech'],
+  },
+  {
+    url: 'https://feeds.bloomberg.com/technology/news.rss',
+    label: 'Bloomberg Tech',
+    category: 'world',
+    niches: ['business', 'tech'],
+  },
+  {
+    url: 'https://feeds.bloomberg.com/crypto/news.rss',
+    label: 'Bloomberg Crypto',
+    category: 'world',
+    niches: ['crypto', 'business', 'markets'],
+  },
+  {
+    url: 'https://rss.nytimes.com/services/xml/rss/nyt/Business.xml',
+    label: 'NYT Business',
+    category: 'world',
+    niches: ['business', 'markets', 'world'],
+  },
+  {
+    url: 'https://www.inc.com/rss',
+    label: 'Inc',
+    category: 'world',
+    niches: ['business', 'startups'],
+  },
+  {
+    url: 'https://www.fastcompany.com/rss',
+    label: 'Fast Company',
+    category: 'world',
+    niches: ['business', 'tech'],
+  },
+  {
+    url: 'https://marginalrevolution.com/feed',
+    label: 'Marginal Revolution',
+    category: 'world',
+    niches: ['business', 'economics'],
+  },
+  {
+    url: 'http://feeds.bbci.co.uk/news/world/africa/rss.xml',
+    label: 'BBC Africa',
+    category: 'world',
+    niches: ['world', 'africa'],
+  },
+  {
+    url: 'http://feeds.bbci.co.uk/news/business/rss.xml',
+    label: 'BBC Business',
+    category: 'world',
+    niches: ['business', 'world'],
+  },
+  {
+    url: 'http://rss.cnn.com/rss/edition_world.rss',
+    label: 'CNN World',
+    category: 'world',
+    niches: ['world'],
+  },
+  {
+    url: 'https://www.cbsnews.com/latest/rss/main',
+    label: 'CBS News',
+    category: 'world',
+    niches: ['world'],
+  },
+  {
+    url: 'https://abcnews.go.com/abcnews/topstories',
+    label: 'ABC News',
+    category: 'world',
+    niches: ['world'],
+  },
+  {
+    url: 'https://feeds.nbcnews.com/nbcnews/public/news',
+    label: 'NBC News',
+    category: 'world',
+    niches: ['world'],
+  },
+  {
+    url: 'https://feeds.npr.org/1004/rss.xml',
+    label: 'NPR World',
+    category: 'world',
+    niches: ['world', 'us'],
+  },
+  {
+    url: 'https://feeds.washingtonpost.com/rss/world',
+    label: 'Washington Post World',
+    category: 'world',
+    niches: ['world'],
+  },
+  {
+    url: 'https://time.com/feed/',
+    label: 'Time World',
+    category: 'world',
+    niches: ['world'],
+  },
+  {
+    url: 'https://www.theguardian.com/us-news/rss',
+    label: 'Guardian US',
+    category: 'world',
+    niches: ['world', 'us'],
+  },
+  {
+    url: 'https://www.france24.com/en/rss',
+    label: 'France24',
+    category: 'world',
+    niches: ['world', 'europe'],
+  },
+  {
+    url: 'https://rss.dw.com/rdf/rss-en-all',
+    label: 'DW',
+    category: 'world',
+    niches: ['world', 'europe', 'germany'],
+  },
+  {
+    url: 'https://www3.nhk.or.jp/rss/news/cat0.xml',
+    label: 'NHK World',
+    category: 'world',
+    niches: ['world', 'asia', 'japan'],
+  },
+  {
+    url: 'https://www.scmp.com/rss/91/feed',
+    label: 'SCMP',
+    category: 'world',
+    niches: ['world', 'asia', 'china'],
+  },
+  {
+    url: 'https://www.euronews.com/rss?level=theme&culture=en',
+    label: 'EuroNews',
+    category: 'world',
+    niches: ['world', 'europe'],
+  },
+  {
+    url: 'https://www.independent.co.uk/news/world/rss',
+    label: 'The Independent',
+    category: 'world',
+    niches: ['world', 'uk'],
+  },
+  {
+    url: 'https://www.standard.co.uk/rss',
+    label: 'Evening Standard',
+    category: 'world',
+    niches: ['world', 'uk', 'london'],
+  },
+  {
+    url: 'https://feeds.skynews.com/feeds/rss/world.xml',
+    label: 'Sky News',
+    category: 'world',
+    niches: ['world', 'uk'],
+  },
+  {
+    url: 'https://www.irishtimes.com/cmlink/news-1.1319192',
+    label: 'Irish Times',
+    category: 'world',
+    niches: ['world', 'ireland', 'europe'],
+  },
+  {
+    url: 'https://www.theage.com.au/rss/feed.xml',
+    label: 'The Age',
+    category: 'world',
+    niches: ['world', 'australia'],
+  },
+  {
+    url: 'https://www.rnz.co.nz/rss/news',
+    label: 'RNZ',
+    category: 'world',
+    niches: ['world', 'new-zealand'],
+  },
+  {
+    url: 'https://www.rappler.com/feed/',
+    label: 'Rappler',
+    category: 'world',
+    niches: ['world', 'asia', 'philippines'],
+  },
+  {
+    url: 'https://www.straitstimes.com/news/world/rss.xml',
+    label: 'The Straits Times',
+    category: 'world',
+    niches: ['world', 'asia', 'singapore'],
+  },
+  {
+    url: 'https://www.japantimes.co.jp/feed/',
+    label: 'The Japan Times',
+    category: 'world',
+    niches: ['world', 'asia', 'japan'],
+  },
+  {
+    url: 'https://www.tagesschau.de/xml/rss2/',
+    label: 'Tagesschau',
+    category: 'world',
+    niches: ['world', 'europe', 'germany'],
+  },
+  {
+    url: 'https://www.spiegel.de/international/index.rss',
+    label: 'Der Spiegel',
+    category: 'world',
+    niches: ['world', 'europe', 'germany'],
+  },
+  {
+    url: 'https://www.lemonde.fr/en/rss/une.xml',
+    label: 'Le Monde',
+    category: 'world',
+    niches: ['world', 'europe', 'france'],
+  },
+  {
+    url: 'https://feeds.elpais.com/mrss-s/pages/ep/site/english.elpais.com/portada',
+    label: 'El Pais',
+    category: 'world',
+    niches: ['world', 'europe', 'spain'],
+  },
+  {
+    url: 'https://www.al-monitor.com/rss',
+    label: 'Al Monitor',
+    category: 'world',
+    niches: ['world', 'middle-east'],
+  },
+  {
+    url: 'https://www.middleeasteye.net/rss',
+    label: 'Middle East Eye',
+    category: 'world',
+    niches: ['world', 'middle-east'],
+  },
+  {
+    url: 'https://allafrica.com/tools/headlines/rdf/latest/headlines.rdf',
+    label: 'AllAfrica',
+    category: 'world',
+    niches: ['world', 'africa'],
+  },
+  {
+    url: 'https://www.premiumtimesng.com/feed',
+    label: 'Premium Times',
+    category: 'world',
+    niches: ['world', 'africa', 'nigeria'],
+  },
+  {
+    url: 'https://punchng.com/feed/',
+    label: 'Punch',
+    category: 'world',
+    niches: ['world', 'africa', 'nigeria'],
+  },
+  {
+    url: 'https://www.theafricareport.com/feed/',
+    label: 'Africa Report',
+    category: 'world',
+    niches: ['world', 'africa', 'business'],
+  },
+];
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SCIENCE & TECH (verified 2026-08-03 — Ground News breadth play)
+// ═══════════════════════════════════════════════════════════════════════════
+
+const SCIENCE_TECH_FEEDS: FeedSource[] = [
+  {
+    url: 'https://news.mit.edu/rss/feed',
+    label: 'MIT News',
+    category: 'science',
+    niches: ['science', 'tech', 'research'],
+    featured: true,
+  },
+  {
+    url: 'https://news.harvard.edu/gazette/feed/',
+    label: 'Harvard Gazette',
+    category: 'science',
+    niches: ['science', 'research', 'academic'],
+  },
+  {
+    url: 'https://news.berkeley.edu/feed/',
+    label: 'Berkeley News',
+    category: 'science',
+    niches: ['science', 'research', 'academic'],
+  },
+  {
+    url: 'https://phys.org/rss-feed/',
+    label: 'Phys.org',
+    category: 'science',
+    niches: ['science', 'research'],
+  },
+  {
+    url: 'https://www.science.org/rss/news_current.xml',
+    label: 'Science.org',
+    category: 'science',
+    niches: ['science', 'research', 'academic'],
+  },
+  {
+    url: 'https://www.sciencenews.org/feed',
+    label: 'Science News',
+    category: 'science',
+    niches: ['science', 'research'],
+  },
+  {
+    url: 'https://www.livescience.com/feeds/all',
+    label: 'Live Science',
+    category: 'science',
+    niches: ['science'],
+  },
+  {
+    url: 'https://www.smithsonianmag.com/rss/latest_articles/',
+    label: 'Smithsonian',
+    category: 'science',
+    niches: ['science', 'culture', 'history'],
+  },
+  {
+    url: 'https://www.space.com/feeds/all',
+    label: 'Space.com',
+    category: 'science',
+    niches: ['science', 'space'],
+  },
+  {
+    url: 'https://www.universetoday.com/feed/',
+    label: 'Universe Today',
+    category: 'science',
+    niches: ['science', 'space'],
+  },
+  {
+    url: 'https://www.popsci.com/feed/',
+    label: 'Popular Science',
+    category: 'science',
+    niches: ['science', 'tech'],
+  },
+  {
+    url: 'https://rss.nytimes.com/services/xml/rss/nyt/Science.xml',
+    label: 'NYT Science',
+    category: 'science',
+    niches: ['science', 'world'],
+  },
+  {
+    url: 'http://feeds.bbci.co.uk/news/science_and_environment/rss.xml',
+    label: 'BBC Science',
+    category: 'science',
+    niches: ['science'],
+  },
+  {
+    url: 'https://www.theguardian.com/science/rss',
+    label: 'Guardian Science',
+    category: 'science',
+    niches: ['science'],
+  },
+  {
+    url: 'https://www.engadget.com/rss.xml',
+    label: 'Engadget',
+    category: 'tech',
+    niches: ['tech', 'gadgets'],
+  },
+  {
+    url: 'https://gizmodo.com/rss',
+    label: 'Gizmodo',
+    category: 'tech',
+    niches: ['tech'],
+  },
+  {
+    url: 'https://www.zdnet.com/news/rss.xml',
+    label: 'ZDNet',
+    category: 'tech',
+    niches: ['tech', 'security'],
+  },
+  {
+    url: 'https://rss.slashdot.org/Slashdot/slashdotMain',
+    label: 'Slashdot',
+    category: 'tech',
+    niches: ['tech', 'dev'],
+  },
+  {
+    url: 'https://www.cnet.com/rss/news/',
+    label: 'CNET',
+    category: 'tech',
+    niches: ['tech', 'gadgets'],
+  },
+  {
+    url: 'https://venturebeat.com/feed/',
+    label: 'VentureBeat',
+    category: 'tech',
+    niches: ['tech', 'ai', 'startups'],
+  },
+  {
+    url: 'https://rss.nytimes.com/services/xml/rss/nyt/Technology.xml',
+    label: 'NYT Tech',
+    category: 'tech',
+    niches: ['tech'],
+  },
+  {
+    url: 'https://feeds.washingtonpost.com/rss/business/technology',
+    label: 'Washington Post Tech',
+    category: 'tech',
+    niches: ['tech'],
+  },
+  {
+    url: 'http://feeds.bbci.co.uk/news/technology/rss.xml',
+    label: 'BBC Technology',
+    category: 'tech',
+    niches: ['tech'],
+  },
+];
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CULTURE & POLITICS (verified 2026-08-03 — Ground News breadth play)
+// ═══════════════════════════════════════════════════════════════════════════
+
+const CULTURE_FEEDS: FeedSource[] = [
+  {
+    url: 'https://www.theatlantic.com/feed/all/',
+    label: 'The Atlantic',
+    category: 'culture',
+    niches: ['culture', 'politics', 'world'],
+    featured: true,
+  },
+  {
+    url: 'https://www.newyorker.com/feed/news',
+    label: 'New Yorker',
+    category: 'culture',
+    niches: ['culture', 'politics'],
+  },
+  {
+    url: 'https://www.vox.com/rss/index.xml',
+    label: 'Vox',
+    category: 'culture',
+    niches: ['culture', 'politics', 'world'],
+  },
+  {
+    url: 'https://theintercept.com/feed/?rss',
+    label: 'The Intercept',
+    category: 'culture',
+    niches: ['politics', 'world'],
+  },
+  {
+    url: 'https://www.propublica.org/feeds/propublica/main',
+    label: 'ProPublica',
+    category: 'culture',
+    niches: ['politics', 'investigation'],
+  },
+  {
+    url: 'https://aeon.co/feed',
+    label: 'Aeon',
+    category: 'culture',
+    niches: ['culture', 'philosophy', 'science'],
+  },
+  {
+    url: 'https://nautil.us/feed/',
+    label: 'Nautilus',
+    category: 'culture',
+    niches: ['culture', 'science'],
+  },
+  {
+    url: 'https://longreads.com/feed/',
+    label: 'Longreads',
+    category: 'culture',
+    niches: ['culture', 'longform'],
+  },
+  {
+    url: 'https://longform.org/feed',
+    label: 'Longform',
+    category: 'culture',
+    niches: ['culture', 'longform'],
+  },
+  {
+    url: 'https://thebrowser.com/feed/',
+    label: 'The Browser',
+    category: 'culture',
+    niches: ['culture', 'reading'],
+  },
+  {
+    url: 'https://www.theguardian.com/news/series/the-long-read/rss',
+    label: 'Guardian Long Read',
+    category: 'culture',
+    niches: ['culture', 'longform'],
+  },
+  {
+    url: 'https://www.motherjones.com/feed/',
+    label: 'Mother Jones',
+    category: 'culture',
+    niches: ['politics'],
+  },
+  {
+    url: 'https://www.thenation.com/feed/',
+    label: 'The Nation',
+    category: 'culture',
+    niches: ['politics'],
+  },
+  {
+    url: 'https://www.salon.com/feed/',
+    label: 'Salon',
+    category: 'culture',
+    niches: ['politics', 'culture'],
+  },
+  {
+    url: 'https://reason.com/feed/',
+    label: 'Reason',
+    category: 'culture',
+    niches: ['politics', 'libertarian'],
+  },
+  {
+    url: 'https://www.nationalreview.com/feed/',
+    label: 'National Review',
+    category: 'culture',
+    niches: ['politics', 'conservative'],
+  },
+  {
+    url: 'https://www.theamericanconservative.com/feed/',
+    label: 'American Conservative',
+    category: 'culture',
+    niches: ['politics', 'conservative'],
+  },
+  {
+    url: 'https://www.washingtonexaminer.com/feed/',
+    label: 'Washington Examiner',
+    category: 'culture',
+    niches: ['politics'],
+  },
+  {
+    url: 'https://dailycaller.com/feed/',
+    label: 'Daily Caller',
+    category: 'culture',
+    niches: ['politics'],
+  },
+  {
+    url: 'https://www.theonion.com/rss',
+    label: 'The Onion',
+    category: 'culture',
+    niches: ['culture', 'satire'],
+  },
+  {
+    url: 'https://slate.com/feeds/all.rss',
+    label: 'Slate',
+    category: 'culture',
+    niches: ['culture', 'politics'],
+  },
+  {
+    url: 'https://jacobin.com/feed',
+    label: 'Jacobin',
+    category: 'culture',
+    niches: ['politics', 'left'],
+  },
+  {
+    url: 'https://www.dissentmagazine.org/feed',
+    label: 'Dissent',
+    category: 'culture',
+    niches: ['politics'],
+  },
+  {
+    url: 'https://www.democracynow.org/democracynow.rss',
+    label: 'Democracy Now',
+    category: 'culture',
+    niches: ['politics', 'world'],
+  },
+  {
+    url: 'https://truthout.org/feed/',
+    label: 'Truthout',
+    category: 'culture',
+    niches: ['politics'],
+  },
+  {
+    url: 'https://thehill.com/feed/',
+    label: 'The Hill',
+    category: 'culture',
+    niches: ['politics', 'us'],
+  },
+  {
+    url: 'https://www.theguardian.com/politics/rss',
+    label: 'Guardian Politics',
+    category: 'culture',
+    niches: ['politics', 'uk'],
+  },
+  {
+    url: 'https://rss.nytimes.com/services/xml/rss/nyt/Politics.xml',
+    label: 'NYT Politics',
+    category: 'culture',
+    niches: ['politics', 'us'],
+  },
+  {
+    url: 'https://moxie.foxnews.com/google-publisher/world.xml',
+    label: 'Fox News',
+    category: 'culture',
+    niches: ['politics', 'us'],
+  },
+  {
+    url: 'https://warontherocks.com/feed/',
+    label: 'War on the Rocks',
+    category: 'culture',
+    niches: ['geopolitics', 'defense', 'world'],
+  },
+  {
+    url: 'https://www.defenseone.com/rss/all/',
+    label: 'Defense One',
+    category: 'culture',
+    niches: ['defense', 'geopolitics'],
+  },
+  {
+    url: 'https://www.bellingcat.com/feed/',
+    label: 'Bellingcat',
+    category: 'culture',
+    niches: ['investigation', 'world', 'geopolitics'],
+  },
+  {
+    url: 'https://foreignpolicy.com/feed/',
+    label: 'Foreign Policy',
+    category: 'culture',
+    niches: ['geopolitics', 'world', 'policy'],
+    featured: true,
+  },
+  {
+    url: 'https://www.worldpoliticsreview.com/feed/',
+    label: 'World Politics Review',
+    category: 'culture',
+    niches: ['geopolitics', 'world', 'policy'],
+  },
+  {
+    url: 'https://globalvoices.org/feed/',
+    label: 'Global Voices',
+    category: 'culture',
+    niches: ['world', 'culture', 'global'],
+  },
+];
+
+
+// ═══════════════════════════════════════════════════════════════════════════
 // NEWSLETTER PLATFORMS
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -1123,6 +1788,9 @@ export const ALL_FEEDS: FeedSource[] = [
   ...SCIENCE_FEEDS,
   ...GEOPOLITICS_FEEDS,
   ...BUSINESS_FEEDS,
+  ...WORLD_FEEDS,
+  ...SCIENCE_TECH_FEEDS,
+  ...CULTURE_FEEDS,
   ...DEFI_FEEDS,
   ...NFT_FEEDS,
   ...AI_FEEDS,
@@ -1959,6 +2627,9 @@ async function fetchSingleFeed(feed: FeedSource, limit: number): Promise<Unified
           platform: feed.platform,
           image: featuredImage,
           sentiment,
+          // Ground News-style ratings — free informational metadata
+          bias: sourceBias(feed.label),
+          factualRating: sourceFactuality(feed.label),
           // CryptoPanic-style price impact: which coins this article affects.
           priceImpact: extractPriceImpact(`${item.title} ${item.contentText}`),
         },
@@ -2440,6 +3111,145 @@ export const SOURCE_TIERS: Record<string, number> = {
   'The Protocol': 2,
   Sequoia: 2,
   'Forbes Innovation': 2,
+  // 2026-08-03 world news expansion (Ground News breadth play)
+  FT: 1,
+  MarketWatch: 2,
+  'Yahoo Finance': 2,
+  Fortune: 2,
+  'Business Insider': 2,
+  Quartz: 2,
+  'CNBC Markets': 2,
+  'CNBC Tech': 2,
+  'Bloomberg Tech': 2,
+  'Bloomberg Crypto': 1,
+  'NYT Business': 1,
+  Inc: 2,
+  'Fast Company': 2,
+  'Marginal Revolution': 2,
+  'BBC Africa': 2,
+  'BBC Business': 2,
+  'CNN World': 2,
+  'CBS News': 2,
+  'ABC News': 2,
+  'NBC News': 2,
+  'NPR World': 1,
+  'Washington Post World': 1,
+  'Time World': 2,
+  'Guardian US': 1,
+  France24: 2,
+  DW: 2,
+  'NHK World': 2,
+  SCMP: 2,
+  EuroNews: 2,
+  'The Independent': 2,
+  'Evening Standard': 3,
+  'Sky News': 2,
+  'Irish Times': 2,
+  'The Age': 2,
+  RNZ: 2,
+  Rappler: 2,
+  'The Straits Times': 2,
+  'The Japan Times': 2,
+  Tagesschau: 2,
+  'Der Spiegel': 2,
+  'Le Monde': 2,
+  'El Pais': 2,
+  'Al Monitor': 2,
+  'Middle East Eye': 3,
+  AllAfrica: 3,
+  'Premium Times': 3,
+  Punch: 3,
+  'Africa Report': 2,
+  // 2026-08-03 science & tech expansion (Tier 1/2)
+  'MIT News': 1,
+  'Harvard Gazette': 1,
+  'Berkeley News': 2,
+  'Phys.org': 2,
+  'Science.org': 1,
+  'Science News': 2,
+  'Live Science': 2,
+  Smithsonian: 2,
+  'Space.com': 2,
+  'Universe Today': 3,
+  'Popular Science': 2,
+  'NYT Science': 1,
+  'BBC Science': 2,
+  'Guardian Science': 1,
+  Engadget: 2,
+  Gizmodo: 2,
+  ZDNet: 2,
+  Slashdot: 3,
+  CNET: 2,
+  VentureBeat: 2,
+  'NYT Tech': 1,
+  'Washington Post Tech': 1,
+  'BBC Technology': 2,
+  // 2026-08-03 culture & politics expansion (Tier 1/2)
+  'The Atlantic': 1,
+  'New Yorker': 1,
+  Vox: 2,
+  'The Intercept': 2,
+  ProPublica: 1,
+  Aeon: 2,
+  Nautilus: 2,
+  Longreads: 2,
+  Longform: 2,
+  'The Browser': 2,
+  'Guardian Long Read': 1,
+  'Mother Jones': 2,
+  'The Nation': 2,
+  Salon: 3,
+  Reason: 2,
+  'National Review': 2,
+  'American Conservative': 3,
+  'Washington Examiner': 3,
+  'Daily Caller': 3,
+  'The Onion': 3,
+  Slate: 2,
+  Jacobin: 3,
+  Dissent: 2,
+  'Democracy Now': 2,
+  Truthout: 3,
+  'The Hill': 2,
+  'Guardian Politics': 1,
+  'NYT Politics': 1,
+  'Fox News': 2,
+  'War on the Rocks': 2,
+  'Defense One': 2,
+  Bellingcat: 2,
+  'Foreign Policy': 1,
+  'World Politics Review': 2,
+  'Global Voices': 2,
+  // 2026-08-03 backlog tier fixes (academic/dev/newsletter)
+  'arXiv AI': 2,
+  'arXiv Cryptography': 2,
+  'arXiv Machine Learning': 2,
+  'arXiv Software Engineering': 2,
+  'IACR ePrint': 2,
+  'IEEE Blockchain': 2,
+  EthResearch: 2,
+  'Ethereum Magicians': 2,
+  DeepMind: 2,
+  'Castle Island VC': 2,
+  Validity: 2,
+  'The Bear Cave': 2,
+  'Casey Caruso': 2,
+  Cobie: 2,
+  Technically: 2,
+  'Proof of Work': 2,
+  'DeFi Education': 2,
+  'Andrew Moore': 2,
+  'Market Meditations': 2,
+  'The Defiant (Substack)': 2,
+  'Dose of DeFi': 2,
+  'Web3 Weekly': 2,
+  Coinmonks: 3,
+  'The Capital': 3,
+  'Better Programming': 3,
+  'Towards Data Science': 2,
+  'Blockchain Review': 3,
+  ETHGlobal: 2,
+  'Chainlink Community': 2,
 };
 
 /**
@@ -2448,6 +3258,302 @@ export const SOURCE_TIERS: Record<string, number> = {
 export function sourceTier(label: string | undefined): number {
   if (!label) return 3;
   return SOURCE_TIERS[label] ?? 3;
+}
+
+// ─── Bias & Factuality Ratings (Ground News killer feature) ──────────
+// Free curated dataset compiled 2026-08-03 from MBFC-style research
+// (see docs/NEWS-SYSTEM-UPGRADE-RESEARCH.md §5). Ground News charges for
+// these; we provide them free as informational metadata — never used to
+// censor or penalize. Bias labels follow the 5-point AllSides/MBFC scale.
+
+export type BiasLabel = 'left' | 'center-left' | 'center' | 'center-right' | 'right';
+export type FactualityLabel = 'very-high' | 'high' | 'mixed' | 'low' | 'very-low';
+
+/**
+ * Political bias per source (5-point scale). Keyed by feed label —
+ * matches SOURCE_TIERS keys so ratings ride along with tiers.
+ */
+export const SOURCE_BIAS: Record<string, BiasLabel> = {
+  // Left-leaning
+  'Democracy Now': 'left',
+  'Jacobin': 'left',
+  'Truthout': 'left',
+  'Common Dreams': 'left',
+  'The Intercept': 'left',
+  'Mother Jones': 'center-left',
+  'Salon': 'center-left',
+  'The Nation': 'left',
+  'Dissent': 'left',
+  'Vox': 'center-left',
+  'NYT Politics': 'center-left',
+  'NYT Business': 'center-left',
+  'NYT World': 'center-left',
+  'NYT Science': 'center-left',
+  'NYT Tech': 'center-left',
+  'Washington Post World': 'center-left',
+  'Washington Post Tech': 'center-left',
+  'Guardian Politics': 'center-left',
+  'Guardian US': 'center-left',
+  'Guardian World': 'center-left',
+  'Guardian Science': 'center-left',
+  'Guardian Business': 'center-left',
+  'Guardian Long Read': 'center-left',
+  'The Guardian Tech': 'center-left',
+  'HuffPost': 'center-left',
+  'The New Republic': 'center-left',
+  'Slate': 'center-left',
+  'Time World': 'center-left',
+  'ProPublica': 'center-left',
+  'The Atlantic': 'center-left',
+  'New Yorker': 'center-left',
+  'The Independent': 'center-left',
+  'The Hill': 'center',
+  'Le Monde': 'center-left',
+  'El Pais': 'center-left',
+  'Der Spiegel': 'center-left',
+  // Center
+  'BBC World': 'center',
+  'BBC Business': 'center',
+  'BBC Science': 'center',
+  'BBC Technology': 'center',
+  'BBC Africa': 'center',
+  'Sky News': 'center',
+  'Reuters': 'center',
+  AP: 'center',
+  'AP News': 'center',
+  'NPR World': 'center',
+  'CBS News': 'center',
+  'NBC News': 'center',
+  'ABC News': 'center',
+  'USA Today': 'center',
+  'Financial Times': 'center',
+  FT: 'center',
+  'FT Alphaville': 'center',
+  'The Economist': 'center',
+  'The Economist Science': 'center',
+  'Bloomberg Markets': 'center',
+  'Bloomberg Tech': 'center',
+  'Bloomberg Crypto': 'center',
+  'CNBC Top News': 'center',
+  'CNBC Markets': 'center',
+  'CNBC Tech': 'center',
+  'CNBC Crypto': 'center',
+  'WSJ World': 'center',
+  'MarketWatch': 'center',
+  'Yahoo Finance': 'center',
+  'Fortune': 'center',
+  'Quartz': 'center',
+  'Business Insider': 'center',
+  'Inc': 'center',
+  'Fast Company': 'center',
+  'Marginal Revolution': 'center',
+  'France24': 'center',
+  DW: 'center',
+  'EuroNews': 'center',
+  'NHK World': 'center',
+  'SCMP': 'center',
+  'The Straits Times': 'center',
+  'The Japan Times': 'center',
+  'The Age': 'center',
+  'RNZ': 'center',
+  'Rappler': 'center',
+  'Irish Times': 'center',
+  'Tagesschau': 'center',
+  'Al Monitor': 'center',
+  'AllAfrica': 'center',
+  'Africa Report': 'center',
+  'MIT News': 'center',
+  'Harvard Gazette': 'center',
+  'Berkeley News': 'center-left',
+  'Phys.org': 'center',
+  'Science.org': 'center',
+  'Science News': 'center',
+  'Live Science': 'center',
+  'Smithsonian': 'center',
+  'Space.com': 'center',
+  'Universe Today': 'center',
+  'Popular Science': 'center',
+  'The Conversation': 'center',
+  'Quanta Magazine': 'center',
+  'Aeon': 'center',
+  'Nautilus': 'center',
+  'Longreads': 'center',
+  'Longform': 'center',
+  'The Browser': 'center',
+  'CFR': 'center',
+  'Council on Foreign Relations': 'center',
+  'Foreign Affairs': 'center',
+  'Foreign Policy': 'center',
+  'World Politics Review': 'center',
+  'Global Voices': 'center',
+  'War on the Rocks': 'center',
+  'Defense One': 'center',
+  'Bellingcat': 'center',
+  'The Diplomat': 'center',
+  'Rest of World': 'center',
+  'Middle East Eye': 'center',
+  'CNN World': 'center',
+  // Center-right / right
+  'Washington Examiner': 'center-right',
+  'National Review': 'right',
+  'American Conservative': 'right',
+  'Daily Caller': 'right',
+  'Fox News': 'right',
+  'Reason': 'center-right',
+  'The Spectator': 'center-right',
+  'Daily Mail': 'right',
+  'The Telegraph': 'center-right',
+  'The Times': 'center-right',
+  'New York Post': 'right',
+  'Breitbart': 'right',
+};
+
+/**
+ * Factuality rating per source (MBFC 5-point scale).
+ */
+export const SOURCE_FACTUALITY: Record<string, FactualityLabel> = {
+  // Very high factuality — flagship wire services / journals
+  'Reuters': 'very-high',
+  AP: 'very-high',
+  'AP News': 'very-high',
+  'BBC World': 'very-high',
+  'BBC Business': 'very-high',
+  'BBC Science': 'very-high',
+  'BBC Technology': 'very-high',
+  'BBC Africa': 'very-high',
+  'Financial Times': 'very-high',
+  FT: 'very-high',
+  'FT Alphaville': 'very-high',
+  'The Economist': 'very-high',
+  'The Economist Science': 'very-high',
+  'WSJ World': 'very-high',
+  'Bloomberg Markets': 'very-high',
+  'Bloomberg Tech': 'very-high',
+  'Bloomberg Crypto': 'very-high',
+  'NYT Business': 'very-high',
+  'NYT World': 'very-high',
+  'NYT Science': 'very-high',
+  'NYT Tech': 'very-high',
+  'NYT Politics': 'high',
+  'Washington Post World': 'very-high',
+  'Washington Post Tech': 'very-high',
+  'Guardian World': 'very-high',
+  'Guardian US': 'very-high',
+  'Guardian Politics': 'very-high',
+  'Guardian Science': 'very-high',
+  'Guardian Business': 'very-high',
+  'Guardian Long Read': 'very-high',
+  'The Guardian Tech': 'very-high',
+  'The Atlantic': 'very-high',
+  'New Yorker': 'very-high',
+  'ProPublica': 'very-high',
+  'MIT News': 'very-high',
+  'Harvard Gazette': 'very-high',
+  'Science.org': 'very-high',
+  'Nature': 'very-high',
+  'Quanta Magazine': 'very-high',
+  'CFR': 'very-high',
+  'Council on Foreign Relations': 'very-high',
+  'Foreign Affairs': 'very-high',
+  'Foreign Policy': 'high',
+  'NPR World': 'high',
+  'CBS News': 'high',
+  'NBC News': 'high',
+  'ABC News': 'high',
+  'CNN World': 'high',
+  'France24': 'high',
+  DW: 'high',
+  'EuroNews': 'high',
+  'NHK World': 'high',
+  'The Straits Times': 'high',
+  'The Japan Times': 'high',
+  'The Age': 'high',
+  'RNZ': 'high',
+  'Rappler': 'high',
+  'Irish Times': 'high',
+  'Tagesschau': 'high',
+  'Le Monde': 'high',
+  'El Pais': 'high',
+  'Der Spiegel': 'high',
+  'Al Monitor': 'high',
+  'Middle East Eye': 'high',
+  'The Diplomat': 'high',
+  'Rest of World': 'high',
+  'War on the Rocks': 'high',
+  'Defense One': 'high',
+  'Bellingcat': 'high',
+  'Science News': 'high',
+  'Live Science': 'high',
+  'Phys.org': 'high',
+  'Berkeley News': 'high',
+  'Popular Science': 'high',
+  'Space.com': 'high',
+  'Universe Today': 'mixed',
+  'Smithsonian': 'high',
+  'The Conversation': 'high',
+  'The Hill': 'high',
+  // Mixed / lower factuality
+  'Vox': 'mixed',
+  'Slate': 'mixed',
+  'The Intercept': 'mixed',
+  'Mother Jones': 'mixed',
+  'The Nation': 'mixed',
+  'Salon': 'mixed',
+  'Time World': 'mixed',
+  'Fortune': 'high',
+  'Business Insider': 'mixed',
+  'Quartz': 'mixed',
+  'MarketWatch': 'high',
+  'Yahoo Finance': 'high',
+  'Inc': 'mixed',
+  'Fast Company': 'mixed',
+  'Marginal Revolution': 'high',
+  'Washington Examiner': 'mixed',
+  'National Review': 'mixed',
+  'American Conservative': 'mixed',
+  'Reason': 'high',
+  'Daily Caller': 'low',
+  'Fox News': 'mixed',
+  'The Onion': 'mixed',
+  'Jacobin': 'mixed',
+  'Dissent': 'mixed',
+  'Democracy Now': 'mixed',
+  'Truthout': 'low',
+  'Aeon': 'high',
+  'Nautilus': 'high',
+  'Longreads': 'high',
+  'Longform': 'high',
+  'The Browser': 'high',
+  'Global Voices': 'high',
+  'World Politics Review': 'high',
+  'Africa Report': 'mixed',
+  'AllAfrica': 'mixed',
+  'Premium Times': 'mixed',
+  'Punch': 'mixed',
+  'SCMP': 'high',
+  'Evening Standard': 'mixed',
+  'Sky News': 'high',
+  'The Independent': 'mixed',
+  'CNBC Top News': 'high',
+  'CNBC Markets': 'high',
+  'CNBC Tech': 'high',
+  'CNBC Crypto': 'high',
+};
+
+/**
+ * Map a feed label to its political bias (defaults to 'center' when unknown).
+ */
+export function sourceBias(label: string | undefined): BiasLabel {
+  if (!label) return 'center';
+  return SOURCE_BIAS[label] ?? 'center';
+}
+
+/**
+ * Map a feed label to its factuality rating (defaults to 'high' when unknown).
+ */
+export function sourceFactuality(label: string | undefined): FactualityLabel {
+  if (!label) return 'high';
+  return SOURCE_FACTUALITY[label] ?? 'high';
 }
 
 /**
@@ -2703,10 +3809,350 @@ export function rankNewsPosts(posts: UnifiedPost[], ctx: RankContext = {}): Unif
   return scored.map((s) => s.post);
 }
 
+// ─── Story Coverage & Blindspot Detection (Ground News killer) ────────
+// Pure functions over the deduped/ranked post batch. The dedup pass already
+// records `raw.crossReference` (feed labels covering the same story), so we
+// can compute per-story coverage WITHOUT re-clustering titles: each post is
+// its own story; the cross-reference list IS the multi-source coverage.
+// These power the frontend "Full Coverage" and "Blindspot" sections.
+
+export interface BiasDistribution {
+  left: number;
+  'center-left': number;
+  center: number;
+  'center-right': number;
+  right: number;
+}
+
+export interface StoryCoverage {
+  /** Unique source labels covering this story (own feed + cross-reference). */
+  sources: string[];
+  sourceCount: number;
+  bias: BiasDistribution;
+  factuality: { 'very-high': number; high: number; mixed: number; low: number; 'very-low': number };
+  /** True when coverage skews heavily to one political side. */
+  echoChamber: boolean;
+  echoDirection: 'left' | 'right' | null;
+}
+
+const EMPTY_BIAS: BiasDistribution = { left: 0, 'center-left': 0, center: 0, 'center-right': 0, right: 0 };
+
+function emptyCoverage(sources: string[]): StoryCoverage {
+  return {
+    sources,
+    sourceCount: sources.length,
+    bias: { ...EMPTY_BIAS },
+    factuality: { 'very-high': 0, high: 0, mixed: 0, low: 0, 'very-low': 0 },
+    echoChamber: false,
+    echoDirection: null,
+  };
+}
+
+/**
+ * Compute per-story coverage: which sources, bias distribution, and whether
+ * the story is an echo chamber (>=3 sources, >=75% one political side).
+ * Attaches the result to `raw.coverage` on each post and returns it.
+ */
+export function computeStoryCoverage(posts: UnifiedPost[]): StoryCoverage[] {
+  const coverages: StoryCoverage[] = [];
+  for (const post of posts) {
+    const raw = post.raw as Record<string, unknown> | undefined;
+    const ownLabel = (raw?.feedLabel as string | undefined) || post.author?.displayName || '';
+    const refs = Array.isArray(raw?.crossReference) ? (raw.crossReference as string[]) : [];
+    const sources = Array.from(new Set([ownLabel, ...refs].filter(Boolean)));
+
+    const coverage = emptyCoverage(sources);
+    for (const label of sources) {
+      const bias = sourceBias(label);
+      coverage.bias[bias] = (coverage.bias[bias] ?? 0) + 1;
+      const factual = sourceFactuality(label);
+      coverage.factuality[factual] = (coverage.factuality[factual] ?? 0) + 1;
+    }
+
+    if (sources.length >= 3) {
+      const leftish = coverage.bias.left + coverage.bias['center-left'];
+      const rightish = coverage.bias.right + coverage.bias['center-right'];
+      const total = sources.length;
+      if (leftish / total >= 0.75) {
+        coverage.echoChamber = true;
+        coverage.echoDirection = 'left';
+      } else if (rightish / total >= 0.75) {
+        coverage.echoChamber = true;
+        coverage.echoDirection = 'right';
+      }
+    }
+
+    if (raw) raw.coverage = coverage;
+    coverages.push(coverage);
+  }
+  return coverages;
+}
+
+export interface BlindspotItem {
+  postId: string;
+  title: string;
+  url: string;
+  source: string;
+  tier: number;
+  type: 'under-the-radar' | 'echo-chamber';
+  reason: string;
+  coverage: StoryCoverage;
+  /** Suggested "other side" sources covering the same story (for echo chambers). */
+  otherSideSources: string[];
+  publishedAt: number;
+  rank: number;
+}
+
+/**
+ * Blindspot detection — the Ground News signature feature, for free.
+ *
+ * Two signals:
+ *  1. "Under the radar": high-credibility (tier 1/2) stories with LOW
+ *     cross-source coverage — good stories the mainstream echo missed.
+ *  2. "Echo chamber alert": stories covered by >=3 sources where >=75%
+ *     come from one political side. The "other side" perspective is
+ *     suggested by sourcing stories whose bias distribution is opposite.
+ */
+export function computeBlindspots(posts: UnifiedPost[], max = 10): BlindspotItem[] {
+  const coverages = computeStoryCoverage(posts);
+  const items: BlindspotItem[] = [];
+
+  posts.forEach((post, i) => {
+    const raw = post.raw as Record<string, unknown> | undefined;
+    const coverage = coverages[i];
+    if (!coverage) return;
+    const label = (raw?.feedLabel as string | undefined) || post.author?.displayName || '';
+    const tier = sourceTier(label);
+    const rank = typeof raw?.rank === 'number' ? (raw.rank as number) : 0;
+    const url = extractLinkUrl(post) || '';
+    const refs = Array.isArray(raw?.crossReference) ? (raw.crossReference as string[]) : [];
+    const otherSideSources = otherSideFor(coverage, posts);
+
+    if (coverage.echoChamber) {
+      items.push({
+        postId: post.id,
+        title: post.text,
+        url,
+        source: label,
+        tier,
+        type: 'echo-chamber',
+        reason:
+          coverage.echoDirection === 'left'
+            ? `Covered by ${coverage.sourceCount} sources, ${Math.round(
+                ((coverage.bias.left + coverage.bias['center-left']) / coverage.sourceCount) * 100,
+              )}% left-leaning — you're likely only seeing one side.`
+            : `Covered by ${coverage.sourceCount} sources, ${Math.round(
+                ((coverage.bias.right + coverage.bias['center-right']) / coverage.sourceCount) * 100,
+              )}% right-leaning — you're likely only seeing one side.`,
+        coverage,
+        otherSideSources,
+        publishedAt: post.createdAt,
+        rank,
+      });
+    } else if (tier <= 2 && refs.length <= 1 && rank >= 55) {
+      items.push({
+        postId: post.id,
+        title: post.text,
+        url,
+        source: label,
+        tier,
+        type: 'under-the-radar',
+        reason: `High-credibility story (${label}) barely covered elsewhere — worth a look before the echo picks it up.`,
+        coverage,
+        otherSideSources: [],
+        publishedAt: post.createdAt,
+        rank,
+      });
+    }
+  });
+
+  // Echo chambers first (most dangerous), then by rank
+  return items
+    .sort((a, b) => {
+      if (a.type !== b.type) return a.type === 'echo-chamber' ? -1 : 1;
+      return b.rank - a.rank;
+    })
+    .slice(0, max);
+}
+
+/**
+ * Suggest "other side" sources for an echo-chamber story: high-factuality
+ * sources whose bias is opposite to the dominant direction and that cover
+ * the same story (share a cross-reference URL or are a known alternative).
+ */
+function otherSideFor(coverage: StoryCoverage, posts: UnifiedPost[]): string[] {
+  const dominant = coverage.echoDirection;
+  if (!dominant) return [];
+  const wanted: BiasLabel[] =
+    dominant === 'left' ? ['center-right', 'right', 'center'] : ['center-left', 'left', 'center'];
+  const candidates: string[] = [];
+  for (const post of posts) {
+    const raw = post.raw as Record<string, unknown> | undefined;
+    const label = (raw?.feedLabel as string | undefined) || post.author?.displayName || '';
+    if (!label) continue;
+    const bias = sourceBias(label);
+    if (wanted.includes(bias)) {
+      const tier = sourceTier(label);
+      const factual = sourceFactuality(label);
+      if (tier <= 2 && factual !== 'low' && factual !== 'very-low') {
+        candidates.push(label);
+      }
+    }
+    if (candidates.length >= 4) break;
+  }
+  return Array.from(new Set(candidates));
+}
+
+// ─── Story Clustering (Ground News "Full Coverage") ───────────────────
+// Groups posts about the same event into stories using Jaccard title
+// similarity + existing cross-reference data. Each cluster shows the
+// representative headline, how many sources cover it, and the bias
+// distribution (e.g. "3 left, 2 center, 1 right").
+
+export interface StoryClusterOutput {
+  id: string;
+  title: string;
+  storyCount: number;
+  sources: string[];
+  bias: BiasDistribution;
+  factuality: { 'very-high': number; high: number; mixed: number; low: number; 'very-low': number };
+  topCategories: string[];
+  /** Per-perspective headline snippets for the "Full Coverage" view. */
+  perspectives: Array<{ source: string; title: string; url: string; bias: BiasLabel }>;
+  firstSeen: number;
+  lastSeen: number;
+  score: number;
+}
+
+/**
+ * Cluster a batch of posts into stories. Two layers:
+ *  1. Cross-reference groups: posts that were already merged by the dedup
+ *     pass share a crossReference — those are one story.
+ *  2. Fuzzy title similarity (Jaccard > 0.55 within a bounded window) for
+ *     near-duplicate headlines that the dedup pass missed.
+ *
+ * The representative post is the highest-ranked; perspectives are the
+ * cross-referenced source labels with their own headlines when available.
+ */
+export function clusterStories(posts: UnifiedPost[], limit = 12): StoryClusterOutput[] {
+  const clusters: StoryClusterOutput[] = [];
+  const used = new Set<string>();
+
+  for (const post of posts) {
+    if (used.has(post.id)) continue;
+    const raw = post.raw as Record<string, unknown> | undefined;
+    const ownLabel = (raw?.feedLabel as string | undefined) || post.author?.displayName || '';
+    const refs = Array.isArray(raw?.crossReference) ? (raw.crossReference as string[]) : [];
+
+    // Layer 1: cross-reference group (same story merged by dedup)
+    const members = [post];
+    used.add(post.id);
+    for (const other of posts) {
+      if (used.has(other.id)) continue;
+      const oRaw = other.raw as Record<string, unknown> | undefined;
+      const oLabel = (oRaw?.feedLabel as string | undefined) || other.author?.displayName || '';
+      const oRefs = Array.isArray(oRaw?.crossReference) ? (oRaw.crossReference as string[]) : [];
+      // Same story if either shares a cross-reference label with our group
+      const groupLabels = new Set<string>([ownLabel, ...refs, ...members.map((m) => {
+        const mr = m.raw as Record<string, unknown> | undefined;
+        return (mr?.feedLabel as string | undefined) || m.author?.displayName || '';
+      })]);
+      if (oRefs.some((r) => groupLabels.has(r)) || groupLabels.has(oLabel)) {
+        members.push(other);
+        used.add(other.id);
+      }
+    }
+
+    // Layer 2: fuzzy title similarity against the group
+    if (members.length === 1) {
+      for (const other of posts) {
+        if (used.has(other.id)) continue;
+        if (titleSimilarity(post.text, other.text) > 0.55) {
+          members.push(other);
+          used.add(other.id);
+        }
+      }
+    }
+
+    if (members.length === 0) continue;
+
+    // Representative = highest ranked member
+    const sortedMembers = [...members].sort((a, b) => {
+      const ar = (a.raw as Record<string, unknown> | undefined)?.rank as number | undefined;
+      const br = (b.raw as Record<string, unknown> | undefined)?.rank as number | undefined;
+      return (br ?? 0) - (ar ?? 0);
+    });
+    const rep = sortedMembers[0];
+    if (!rep) continue;
+    const repRaw = rep.raw as Record<string, unknown> | undefined;
+
+    const sourceSet = new Set<string>();
+    for (const m of members) {
+      const mr = m.raw as Record<string, unknown> | undefined;
+      const label = (mr?.feedLabel as string | undefined) || m.author?.displayName || '';
+      if (label) sourceSet.add(label);
+      if (Array.isArray(mr?.crossReference)) {
+        for (const ref of mr.crossReference as string[]) if (ref) sourceSet.add(ref);
+      }
+    }
+    const sources = Array.from(sourceSet);
+
+    const bias: BiasDistribution = { ...EMPTY_BIAS };
+    const factuality: StoryCoverage['factuality'] = {
+      'very-high': 0,
+      high: 0,
+      mixed: 0,
+      low: 0,
+      'very-low': 0,
+    };
+    for (const s of sources) {
+      bias[sourceBias(s)] = (bias[sourceBias(s)] ?? 0) + 1;
+      factuality[sourceFactuality(s)] = (factuality[sourceFactuality(s)] ?? 0) + 1;
+    }
+
+    // Perspectives: each member's own headline + source
+    const perspectives = sortedMembers.slice(0, 6).map((m) => {
+      const mr = m.raw as Record<string, unknown> | undefined;
+      const label = (mr?.feedLabel as string | undefined) || m.author?.displayName || '';
+      return {
+        source: label,
+        title: m.text,
+        url: extractLinkUrl(m) || '',
+        bias: sourceBias(label),
+      };
+    });
+
+    const categories = Array.from(
+      new Set(members.flatMap((m) => m.niches ?? []).slice(0, 5)),
+    );
+
+    clusters.push({
+      id: `story:${rep.id}`,
+      title: rep.text,
+      storyCount: sources.length,
+      sources,
+      bias,
+      factuality,
+      topCategories: categories,
+      perspectives,
+      firstSeen: Math.min(...members.map((m) => m.createdAt)),
+      lastSeen: Math.max(...members.map((m) => m.createdAt)),
+      score: (repRaw?.rank as number | undefined) ?? 0,
+    });
+  }
+
+  return clusters.sort((a, b) => b.storyCount - a.storyCount || b.score - a.score).slice(0, limit);
+}
+
 // ─── Lazy Cache ──────────────────────────────────────────────────────
 
 const RSS_CACHE_TTL = 300_000; // 5 minutes
-let rssCache: { posts: UnifiedPost[]; fetchedAt: number } | null = null;
+let rssCache: {
+  posts: UnifiedPost[];
+  clusters: StoryClusterOutput[];
+  blindspots: BlindspotItem[];
+  fetchedAt: number;
+} | null = null;
 
 /**
  * Fetch from ALL RSS feeds (100+ sources) with lazy initialization + TTL cache.
@@ -2773,6 +4219,10 @@ export async function fetchRssPosts(limit = 50): Promise<UnifiedPost[]> {
   // Rank by source reputation + freshness + cross-reference grounding
   const ranked = rankNewsPosts(deduped);
 
+  // Ground News-beating features: story clusters (Full Coverage) + blindspots
+  const clusters = clusterStories(ranked, 12);
+  const blindspots = computeBlindspots(ranked, 10);
+
   // Backfill missing images from article OpenGraph tags (bounded time budget
   // that shrinks with feed-fetch time so the provider stays < ~4.5s total).
   const enrichBudgetMs = Math.max(400, 3200 - (Date.now() - fetchStartedAt));
@@ -2798,9 +4248,37 @@ export async function fetchRssPosts(limit = 50): Promise<UnifiedPost[]> {
   }
 
   // Update cache with deduplicated + ranked + image-enriched results
-  rssCache = { posts: enriched, fetchedAt: Date.now() };
+  rssCache = { posts: enriched, clusters, blindspots, fetchedAt: Date.now() };
 
   return enriched;
+}
+
+/**
+ * Return the latest story clusters (computed on the last RSS fetch).
+ * If the cache is cold, triggers a fetch. Returns [] on failure.
+ */
+export async function fetchStoryClusters(limit = 12): Promise<StoryClusterOutput[]> {
+  try {
+    await fetchRssPosts(Math.max(limit * 4, 60));
+  } catch {
+    // fall through — return whatever is cached
+  }
+  if (rssCache && rssCache.clusters) return rssCache.clusters.slice(0, limit);
+  return [];
+}
+
+/**
+ * Return the latest blindspot items (computed on the last RSS fetch).
+ * If the cache is cold, triggers a fetch. Returns [] on failure.
+ */
+export async function fetchBlindspots(max = 10): Promise<BlindspotItem[]> {
+  try {
+    await fetchRssPosts(Math.max(max * 6, 60));
+  } catch {
+    // fall through — return whatever is cached
+  }
+  if (rssCache && rssCache.blindspots) return rssCache.blindspots.slice(0, max);
+  return [];
 }
 
 /**
