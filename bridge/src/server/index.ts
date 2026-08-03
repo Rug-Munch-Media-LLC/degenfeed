@@ -943,6 +943,15 @@ const server = http.createServer(async (req, res) => {
       });
     }
 
+    // GET /api/feed/live — unified live stream feed
+    // Aggregates Owncast status + PeerTube live videos + spaces-bridge sources
+    if (path === '/api/feed/live') {
+      const limit = Math.min(parseInt(searchParams.get('limit') || '50', 10), 100);
+      const { fetchLiveFeed } = await import('../providers/live-feed');
+      const liveFeed = await fetchLiveFeed(limit);
+      return jsonOk(res, liveFeed);
+    }
+
     if (path.startsWith('/api/feed/')) {
       const proto = path.replace('/api/feed/', '');
       const limit = Math.min(parseInt(searchParams.get('limit') || '25', 10), 200);
