@@ -422,9 +422,9 @@ export default function CreatorNewsletterPage() {
 
               {/* Tier Selector */}
               <div>
-                <label className="mb-1.5 block text-xs font-medium text-[var(--color-muted)]">
+                <span className="mb-1.5 block text-xs font-medium text-[var(--color-muted)]">
                   Audience
-                </label>
+                </span>
                 <div className="flex gap-2">
                   {(['free', 'paid', 'token-gated'] as const).map((t) => (
                     <button

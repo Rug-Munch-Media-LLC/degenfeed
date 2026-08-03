@@ -137,6 +137,7 @@ export function GroupChatView({ groupId, onBack }: { groupId: string; onBack: ()
           aria-label="Back to groups"
         >
           <svg
+            aria-hidden="true"
             width="18"
             height="18"
             viewBox="0 0 24 24"
@@ -375,6 +376,7 @@ export function GroupChatView({ groupId, onBack }: { groupId: string; onBack: ()
                       aria-label={`Remove ${shortAddr(member.walletAddress)}`}
                     >
                       <svg
+                        aria-hidden="true"
                         width="12"
                         height="12"
                         viewBox="0 0 24 24"
@@ -411,6 +413,7 @@ export function GroupChatView({ groupId, onBack }: { groupId: string; onBack: ()
               aria-label="Close info"
             >
               <svg
+                aria-hidden="true"
                 width="18"
                 height="18"
                 viewBox="0 0 24 24"

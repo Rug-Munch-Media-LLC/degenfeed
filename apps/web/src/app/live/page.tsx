@@ -165,6 +165,7 @@ function FeaturedCreatorSection({ stream }: { stream: LiveStream }) {
             {/* Viewer count */}
             <div className="absolute bottom-2 left-2 z-10 flex items-center gap-1 rounded-md bg-black/60 px-2 py-1 text-xs font-medium text-white/90 backdrop-blur-sm">
               <svg
+                aria-hidden="true"
                 width="12"
                 height="12"
                 viewBox="0 0 24 24"
@@ -226,7 +227,13 @@ function FeaturedCreatorSection({ stream }: { stream: LiveStream }) {
                 onClick={() => (window.location.href = `/live/${stream.id}`)}
                 className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-degen-500 to-emerald-500 px-5 py-2.5 text-sm font-bold text-black shadow-lg shadow-degen-500/20 transition-all hover:from-degen-400 hover:to-emerald-400 active:scale-[0.97]"
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <svg
+                  aria-hidden="true"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                >
                   <polygon points="5 3 19 12 5 21 5 3" />
                 </svg>
                 Watch Now
@@ -590,6 +597,7 @@ export default function LivePage() {
                 <div className="relative z-10">
                   <span className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-degen-500/20 to-emerald-500/20 mb-4">
                     <svg
+                      aria-hidden="true"
                       width="24"
                       height="24"
                       viewBox="0 0 24 24"
@@ -616,7 +624,13 @@ export default function LivePage() {
                       onClick={handleGoLive}
                       className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-degen-500 to-emerald-500 px-6 py-3 text-sm font-bold text-black shadow-lg shadow-degen-500/20 transition-all hover:from-degen-400 hover:to-emerald-400 active:scale-[0.97]"
                     >
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                      <svg
+                        aria-hidden="true"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                      >
                         <polygon points="5 3 19 12 5 21 5 3" />
                       </svg>
                       Go Live Now
@@ -801,6 +815,7 @@ function HeroFeaturedSection({
               aria-label="Previous featured"
             >
               <svg
+                aria-hidden="true"
                 width="12"
                 height="12"
                 viewBox="0 0 24 24"
@@ -820,6 +835,7 @@ function HeroFeaturedSection({
               aria-label="Next featured"
             >
               <svg
+                aria-hidden="true"
                 width="12"
                 height="12"
                 viewBox="0 0 24 24"

@@ -119,10 +119,14 @@ function DangerConfirmModal({ action, onClose }: { action: string; onClose: () =
         <h3 className="mb-2 text-base font-bold text-[var(--color-fg)]">{d.title}</h3>
         <p className="mb-4 text-xs text-[var(--color-muted)]">{d.description}</p>
         <div className="mb-4">
-          <label className="mb-1.5 block text-[10px] font-medium text-[var(--color-muted)]">
+          <label
+            className="mb-1.5 block text-[10px] font-medium text-[var(--color-muted)]"
+            htmlFor="field-b7d6d328"
+          >
             {d.confirmText}
           </label>
           <input
+            id="field-b7d6d328"
             type="text"
             value={confirmInput}
             onChange={(e) => setConfirmInput(e.target.value)}

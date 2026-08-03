@@ -131,12 +131,12 @@ export function CreateRoomModal({
               className={`absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white transition-transform ${inviteOnly ? 'translate-x-4' : ''}`}
             />
           </button>
-          <label
+          <span
             className="text-sm text-[var(--color-fg)] cursor-pointer select-none"
             onClick={() => setInviteOnly(!inviteOnly)}
           >
             Invite-only room
-          </label>
+          </span>
         </div>
         {error && (
           <p className="mb-4 text-xs text-red-400 flex items-center gap-1.5" role="alert">

@@ -55,7 +55,8 @@
 }
 
 @keyframes diamond-glow {
-  0%, 100% {
+  0%,
+  100% {
     filter: brightness(1) drop-shadow(0 0 0 transparent);
   }
   50% {
@@ -85,8 +86,13 @@
 }
 
 @keyframes rocket-shake {
-  0%, 100% { transform: translateX(0); }
-  50% { transform: translateX(3px); }
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(3px);
+  }
 }
 
 .gift-animation-rocket .flame {
@@ -141,7 +147,8 @@
 }
 
 @keyframes whale-splash {
-  0%, 100% {
+  0%,
+  100% {
     filter: brightness(1);
   }
   50% {
@@ -182,29 +189,56 @@
 }
 
 @keyframes streak-glow {
-  0%, 100% { box-shadow: 0 0 5px rgba(255, 150, 0, 0.3); }
-  50% { box-shadow: 0 0 20px rgba(255, 150, 0, 0.8); }
+  0%,
+  100% {
+    box-shadow: 0 0 5px rgba(255, 150, 0, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(255, 150, 0, 0.8);
+  }
 }
 
 @keyframes streak-fire {
-  0%, 100% { filter: hue-rotate(0deg); }
-  50% { filter: hue-rotate(30deg) brightness(1.2); }
+  0%,
+  100% {
+    filter: hue-rotate(0deg);
+  }
+  50% {
+    filter: hue-rotate(30deg) brightness(1.2);
+  }
 }
 
 @keyframes streak-lightning {
-  0%, 100% { filter: brightness(1); }
-  50% { filter: brightness(2) drop-shadow(0 0 10px rgba(255, 255, 0, 0.8)); }
+  0%,
+  100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(2) drop-shadow(0 0 10px rgba(255, 255, 0, 0.8));
+  }
 }
 
 @keyframes streak-legendary {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
 }
 
 @keyframes streak-godmode {
-  0%, 100% { transform: scale(1) rotate(0deg); }
-  25% { transform: scale(1.1) rotate(-2deg); }
-  75% { transform: scale(1.1) rotate(2deg); }
+  0%,
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
+  25% {
+    transform: scale(1.1) rotate(-2deg);
+  }
+  75% {
+    transform: scale(1.1) rotate(2deg);
+  }
 }
 
 /* ─── Shared Keyframes ───────────────────────────────────────────── */
@@ -220,8 +254,12 @@
 }
 
 @keyframes fadeOut {
-  0% { opacity: 1; }
-  100% { opacity: 0; }
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
 }
 
 @keyframes fade-in-up {

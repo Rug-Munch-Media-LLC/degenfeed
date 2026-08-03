@@ -92,7 +92,7 @@ function TipModal({
             ) : (
               <>
                 <div className="mb-4">
-                  <label className="mb-1 block text-xs text-[#9ca3af]">Currency</label>
+                  <span className="mb-1 block text-xs text-[#9ca3af]">Currency</span>
                   <div className="flex gap-2">
                     {(['ETH', 'SOL', 'BTC'] as const).map((c) => (
                       <button
@@ -111,8 +111,11 @@ function TipModal({
                 </div>
 
                 <div className="mb-4">
-                  <label className="mb-1 block text-xs text-[#9ca3af]">Amount</label>
+                  <label className="mb-1 block text-xs text-[#9ca3af]" htmlFor="field-d616cb55">
+                    Amount
+                  </label>
                   <input
+                    id="field-d616cb55"
                     type="number"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}

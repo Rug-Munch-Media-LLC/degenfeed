@@ -53,7 +53,7 @@ export default function NostrImportPage() {
       }
 
       const secretKeyBytes = bech32.fromWords(decoded.words);
-      const secretKeyHex = bytesToHex(secretKeyBytes);
+      const _secretKeyHex = bytesToHex(secretKeyBytes);
       const pubkeyHex = bytesToHex(schnorr.getPublicKey(secretKeyBytes));
 
       // Register with server (only pubkey sent)
@@ -106,11 +106,15 @@ export default function NostrImportPage() {
             <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-6">
               <div className="space-y-4">
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-[var(--color-fg)]">
+                  <label
+                    className="mb-1 block text-sm font-medium text-[var(--color-fg)]"
+                    htmlFor="field-7bb98ea2"
+                  >
                     Your Existing nsec
                   </label>
                   <div className="relative">
                     <input
+                      id="field-7bb98ea2"
                       type={showNsec ? 'text' : 'password'}
                       value={nsec}
                       onChange={(e) => setNsec(e.target.value)}
@@ -131,11 +135,15 @@ export default function NostrImportPage() {
                 </div>
 
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-[var(--color-fg)]">
+                  <label
+                    className="mb-1 block text-sm font-medium text-[var(--color-fg)]"
+                    htmlFor="field-66b6d507"
+                  >
                     Desired Username
                     <span className="text-[var(--color-muted)]"> @nostr.degenfeed.xyz</span>
                   </label>
                   <input
+                    id="field-66b6d507"
                     type="text"
                     value={username}
                     onChange={(e) =>

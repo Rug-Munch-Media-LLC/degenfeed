@@ -45,7 +45,9 @@ export default function DropZone({
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       onClick={handleClick}
-      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleClick(); }}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') handleClick();
+      }}
       role="button"
       tabIndex={0}
       aria-label={label}
@@ -59,12 +61,18 @@ export default function DropZone({
         {dragging ? '🎯' : '🎬'}
       </span>
       <p className="mb-1 text-sm font-medium" style={{ color: 'var(--color-fg)' }}>
-        {dragging ? 'Drop it like it\'s hot!' : label}
+        {dragging ? "Drop it like it's hot!" : label}
       </p>
       <p className="text-[11px]" style={{ color: 'var(--color-muted)' }}>
         Supports MP4, WebM, MOV &middot; Max 4GB
       </p>
-      <input ref={inputRef} type="file" accept={accept} onChange={handleChange} className="hidden" />
+      <input
+        ref={inputRef}
+        type="file"
+        accept={accept}
+        onChange={handleChange}
+        className="hidden"
+      />
     </div>
   );
 }

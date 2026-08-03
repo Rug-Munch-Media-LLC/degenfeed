@@ -19,15 +19,15 @@ export default function ShortsTab() {
   );
   const [recording, setRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
-  const [recordedBlob, setRecordedBlob] = useState<Blob | null>(null);
+  const [_recordedBlob, setRecordedBlob] = useState<Blob | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [cameraFacing, setCameraFacing] = useState<'user' | 'environment'>('user');
   const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
+  const [_description, setDescription] = useState('');
   const [hashtags, setHashtags] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('none');
   const [selectedMusic, setSelectedMusic] = useState('none');
-  const [textOverlay, setTextOverlay] = useState('');
+  const [_textOverlay, setTextOverlay] = useState('');
   const [publishTargets, setPublishTargets] = useState<Set<PublishTarget>>(new Set(['degenfeed']));
   const [uploadProgress, setUploadProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -193,6 +193,7 @@ export default function ShortsTab() {
               aria-label="Flip camera"
             >
               <svg
+                aria-hidden="true"
                 width="18"
                 height="18"
                 viewBox="0 0 24 24"
@@ -224,6 +225,7 @@ export default function ShortsTab() {
                 aria-label="Cancel"
               >
                 <svg
+                  aria-hidden="true"
                   width="16"
                   height="16"
                   viewBox="0 0 24 24"
@@ -252,7 +254,7 @@ export default function ShortsTab() {
         </div>
         <div className="space-y-4 max-h-[500px] overflow-y-auto pr-1">
           <div>
-            <label className="mb-1 block text-xs font-medium text-[var(--color-fg)]">Filter</label>
+            <span className="mb-1 block text-xs font-medium text-[var(--color-fg)]">Filter</span>
             <div className="flex gap-1.5 flex-wrap">
               {FILTERS.map((f) => (
                 <button
@@ -267,7 +269,7 @@ export default function ShortsTab() {
             </div>
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-[var(--color-fg)]">Music</label>
+            <span className="mb-1 block text-xs font-medium text-[var(--color-fg)]">Music</span>
             <div className="flex gap-1.5 flex-wrap">
               {MUSIC_TRACKS.map((m) => (
                 <button
@@ -282,8 +284,14 @@ export default function ShortsTab() {
             </div>
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-[var(--color-fg)]">Title</label>
+            <label
+              className="mb-1 block text-xs font-medium text-[var(--color-fg)]"
+              htmlFor="field-702d8788"
+            >
+              Title
+            </label>
             <input
+              id="field-702d8788"
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -293,10 +301,14 @@ export default function ShortsTab() {
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-[var(--color-fg)]">
+            <label
+              className="mb-1 block text-xs font-medium text-[var(--color-fg)]"
+              htmlFor="field-0e50c1bb"
+            >
               Hashtags
             </label>
             <input
+              id="field-0e50c1bb"
               type="text"
               value={hashtags}
               onChange={(e) => setHashtags(e.target.value)}
@@ -305,9 +317,9 @@ export default function ShortsTab() {
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-[var(--color-fg)]">
+            <span className="mb-1 block text-xs font-medium text-[var(--color-fg)]">
               Publish to
-            </label>
+            </span>
             <PublishTargetPills selected={publishTargets} onToggle={togglePublishTarget} />
           </div>
           <div className="flex gap-2 pt-2">

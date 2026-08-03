@@ -32,13 +32,55 @@ interface DimensionConfig {
 }
 
 const DIMENSIONS: DimensionConfig[] = [
-  { key: 'humor', label: 'Humor', emoji: '😂', description: 'How funny is this?', color: '#FF6B35' },
-  { key: 'creativity', label: 'Creativity', emoji: '🎨', description: 'Creative execution', color: '#9C27B0' },
-  { key: 'originality', label: 'Originality', emoji: '💡', description: 'Fresh & unique', color: '#00BCD4' },
-  { key: 'replayValue', label: 'Replay Value', emoji: '🔄', description: 'Watch again & again', color: '#4CAF50' },
-  { key: 'productionQuality', label: 'Production', emoji: '🎬', description: 'Production quality', color: '#FF9800' },
-  { key: 'engagementVelocity', label: 'Engagement', emoji: '📈', description: 'Engagement velocity', color: '#E91E63' },
-  { key: 'viralPotential', label: 'Viral Potential', emoji: '🔥', description: 'Could this blow up?', color: '#F44336' },
+  {
+    key: 'humor',
+    label: 'Humor',
+    emoji: '😂',
+    description: 'How funny is this?',
+    color: '#FF6B35',
+  },
+  {
+    key: 'creativity',
+    label: 'Creativity',
+    emoji: '🎨',
+    description: 'Creative execution',
+    color: '#9C27B0',
+  },
+  {
+    key: 'originality',
+    label: 'Originality',
+    emoji: '💡',
+    description: 'Fresh & unique',
+    color: '#00BCD4',
+  },
+  {
+    key: 'replayValue',
+    label: 'Replay Value',
+    emoji: '🔄',
+    description: 'Watch again & again',
+    color: '#4CAF50',
+  },
+  {
+    key: 'productionQuality',
+    label: 'Production',
+    emoji: '🎬',
+    description: 'Production quality',
+    color: '#FF9800',
+  },
+  {
+    key: 'engagementVelocity',
+    label: 'Engagement',
+    emoji: '📈',
+    description: 'Engagement velocity',
+    color: '#E91E63',
+  },
+  {
+    key: 'viralPotential',
+    label: 'Viral Potential',
+    emoji: '🔥',
+    description: 'Could this blow up?',
+    color: '#F44336',
+  },
 ];
 
 // ─── VibeScore Component ──────────────────────────────────────────────────
@@ -73,12 +115,17 @@ export function VibeScore({ score, onClose }: VibeScoreProps) {
           </div>
         </div>
         <div className="text-right">
-          <span className="text-[10px] font-medium" style={{ color: tier.color }}>{tier.label}</span>
+          <span className="text-[10px] font-medium" style={{ color: tier.color }}>
+            {tier.label}
+          </span>
         </div>
         {onClose && (
           <button
             type="button"
-            onClick={(e) => { e.stopPropagation(); onClose(); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              onClose();
+            }}
             className="flex h-5 w-5 items-center justify-center rounded-full bg-white/10 text-[10px] text-white/50 hover:bg-white/20"
             aria-label="Close vibe scores"
           >

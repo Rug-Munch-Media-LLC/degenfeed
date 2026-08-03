@@ -260,7 +260,7 @@ export function ExternalPostComposer({
     <form onSubmit={handleSubmit} className="space-y-5">
       {/* Platform selector */}
       <div>
-        <label className="mb-2 block text-sm font-medium text-[var(--color-fg)]">Post to</label>
+        <span className="mb-2 block text-sm font-medium text-[var(--color-fg)]">Post to</span>
         {platformsLoading ? (
           <div className="flex gap-2">
             {[1, 2, 3].map((i) => (
@@ -374,9 +374,7 @@ export function ExternalPostComposer({
 
       {/* Schedule */}
       <div>
-        <label className="mb-2 block text-sm font-medium text-[var(--color-fg)]">
-          When to post
-        </label>
+        <span className="mb-2 block text-sm font-medium text-[var(--color-fg)]">When to post</span>
         <div className="flex flex-wrap gap-2">
           {SCHEDULE_PRESETS.map((preset) => (
             <button

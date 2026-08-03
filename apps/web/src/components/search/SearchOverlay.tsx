@@ -310,6 +310,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
               aria-label="Clear search"
             >
               <svg
+                aria-hidden="true"
                 width="14"
                 height="14"
                 viewBox="0 0 24 24"
@@ -405,6 +406,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
                   className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-[var(--color-fg)] hover:bg-[var(--color-overlay)] transition-colors text-left group"
                 >
                   <svg
+                    aria-hidden="true"
                     width="14"
                     height="14"
                     viewBox="0 0 24 24"
@@ -419,6 +421,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
                   </svg>
                   <span className="truncate flex-1">{q}</span>
                   <svg
+                    aria-hidden="true"
                     width="12"
                     height="12"
                     viewBox="0 0 24 24"
@@ -463,6 +466,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
           <div className="rounded-2xl bg-[var(--color-card)] shadow-lg shadow-black/10 py-12 text-center">
             <div className="mb-4 text-[var(--color-muted)] opacity-30">
               <svg
+                aria-hidden="true"
                 width="48"
                 height="48"
                 viewBox="0 0 24 24"

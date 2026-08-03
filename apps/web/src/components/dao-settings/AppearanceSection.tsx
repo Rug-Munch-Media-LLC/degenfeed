@@ -13,11 +13,15 @@ export function AppearanceSection({
     <SettingsSection title="Appearance" description="Customize your DAO's visual identity.">
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <label className="mb-1.5 block text-[10px] font-medium text-[var(--color-muted)]">
+          <label
+            className="mb-1.5 block text-[10px] font-medium text-[var(--color-muted)]"
+            htmlFor="field-cdbb3a0c"
+          >
             Accent Color
           </label>
           <div className="flex items-center gap-3">
             <input
+              id="field-cdbb3a0c"
               type="color"
               value={bannerColor}
               onChange={(e) => setBannerColor(e.target.value)}
@@ -27,9 +31,9 @@ export function AppearanceSection({
           </div>
         </div>
         <div>
-          <label className="mb-1.5 block text-[10px] font-medium text-[var(--color-muted)]">
+          <span className="mb-1.5 block text-[10px] font-medium text-[var(--color-muted)]">
             Preview
-          </label>
+          </span>
           <div
             className="h-10 rounded-lg border border-[var(--color-glass-border)]"
             style={{ backgroundColor: `${bannerColor}20`, borderColor: `${bannerColor}40` }}

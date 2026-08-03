@@ -181,11 +181,15 @@ export function GoLiveSetup({ onStart, onCancel, initialData }: GoLiveSetupProps
           </div>
 
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-white/80">
+            <label
+              className="mb-1.5 block text-sm font-medium text-white/80"
+              htmlFor="field-7802d9f3"
+            >
               Tags <span className="text-white/30">(up to 5)</span>
             </label>
             <div className="flex gap-2">
               <input
+                id="field-7802d9f3"
                 type="text"
                 value={tagInput}
                 onChange={(e) => setTagInput(e.target.value)}
@@ -276,7 +280,7 @@ export function GoLiveSetup({ onStart, onCancel, initialData }: GoLiveSetupProps
 
           {/* Latency */}
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-white/80">Stream Latency</label>
+            <span className="mb-1.5 block text-sm font-medium text-white/80">Stream Latency</span>
             <div className="flex gap-2">
               {[
                 {

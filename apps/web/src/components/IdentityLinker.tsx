@@ -363,10 +363,14 @@ export function IdentityLinker() {
                 <div className="border-t border-[var(--color-glass-border)] px-4 py-3 space-y-3">
                   {LINK_FIELDS[protocol].map((field) => (
                     <div key={field.key}>
-                      <label className="mb-1 block text-xs text-[var(--color-muted)]">
+                      <label
+                        className="mb-1 block text-xs text-[var(--color-muted)]"
+                        htmlFor="field-1c7a494b"
+                      >
                         {field.label}
                       </label>
                       <input
+                        id="field-1c7a494b"
                         type="text"
                         value={form.values[protocol]?.[field.key] || ''}
                         onChange={(e) =>

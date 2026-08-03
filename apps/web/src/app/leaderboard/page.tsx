@@ -568,6 +568,7 @@ export default function LeaderboardPage() {
           style={{ color: 'var(--color-muted)' }}
         >
           <svg
+            aria-hidden="true"
             width="12"
             height="12"
             viewBox="0 0 24 24"

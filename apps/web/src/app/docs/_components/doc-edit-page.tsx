@@ -20,6 +20,7 @@ export function EditPage() {
       rel="noopener"
     >
       <svg
+        aria-hidden="true"
         width="14"
         height="14"
         viewBox="0 0 24 24"

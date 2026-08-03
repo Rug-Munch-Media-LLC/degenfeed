@@ -177,6 +177,7 @@ export function CreateGroupModal({
                     aria-label={`Remove ${shortAddr(addr)}`}
                   >
                     <svg
+                      aria-hidden="true"
                       width="10"
                       height="10"
                       viewBox="0 0 24 24"

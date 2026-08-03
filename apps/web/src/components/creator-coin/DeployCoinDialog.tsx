@@ -85,8 +85,14 @@ export function DeployCoinDialog({ open, onClose, onDeploy }: DeployCoinDialogPr
         <div className="space-y-4">
           {/* Name */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">Name</label>
+            <label
+              className="block text-sm font-medium text-gray-300 mb-1"
+              htmlFor="field-746d4ac7"
+            >
+              Name
+            </label>
             <input
+              id="field-746d4ac7"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Alice Coin"
@@ -96,8 +102,14 @@ export function DeployCoinDialog({ open, onClose, onDeploy }: DeployCoinDialogPr
 
           {/* Symbol */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">Symbol</label>
+            <label
+              className="block text-sm font-medium text-gray-300 mb-1"
+              htmlFor="field-b7c2755b"
+            >
+              Symbol
+            </label>
             <input
+              id="field-b7c2755b"
               value={symbol}
               onChange={(e) => setSymbol(e.target.value.toUpperCase())}
               placeholder="ALICE"
@@ -108,7 +120,7 @@ export function DeployCoinDialog({ open, onClose, onDeploy }: DeployCoinDialogPr
 
           {/* Chain Selection */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Deploy On</label>
+            <span className="block text-sm font-medium text-gray-300 mb-2">Deploy On</span>
             <div className="grid grid-cols-2 gap-2">
               <button
                 onClick={() => setChain('solana')}
@@ -162,10 +174,14 @@ export function DeployCoinDialog({ open, onClose, onDeploy }: DeployCoinDialogPr
           {/* Fee Sliders */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-gray-400 mb-1">
+              <label
+                className="block text-xs font-medium text-gray-400 mb-1"
+                htmlFor="field-4bfbf332"
+              >
                 Creator Allocation: {creatorAlloc / 100}%
               </label>
               <input
+                id="field-4bfbf332"
                 type="range"
                 min={0}
                 max={1500}
@@ -176,10 +192,14 @@ export function DeployCoinDialog({ open, onClose, onDeploy }: DeployCoinDialogPr
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-400 mb-1">
+              <label
+                className="block text-xs font-medium text-gray-400 mb-1"
+                htmlFor="field-35e0abaa"
+              >
                 Creator Fee: {creatorFee / 100}%
               </label>
               <input
+                id="field-35e0abaa"
                 type="range"
                 min={0}
                 max={200}

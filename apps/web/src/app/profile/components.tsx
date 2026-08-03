@@ -80,7 +80,13 @@ export function ProtocolConnectivityRing({
   const segmentAngle = 360 / Math.max(total, 1);
 
   return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="shrink-0">
+    <svg
+      aria-hidden="true"
+      width={size}
+      height={size}
+      viewBox={`0 0 ${size} ${size}`}
+      className="shrink-0"
+    >
       {/* Background ring */}
       <circle
         cx={size / 2}
@@ -1133,6 +1139,7 @@ export function ProfileSearchBar({
   return (
     <div className="relative">
       <svg
+        aria-hidden="true"
         className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-muted)]"
         width="14"
         height="14"
@@ -1160,6 +1167,7 @@ export function ProfileSearchBar({
           className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-muted)] hover:text-[var(--color-fg)]"
         >
           <svg
+            aria-hidden="true"
             width="14"
             height="14"
             viewBox="0 0 24 24"
@@ -1513,6 +1521,7 @@ export function ProfileSearchInput({
   return (
     <div className="relative">
       <svg
+        aria-hidden="true"
         className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-muted)]"
         width="14"
         height="14"
@@ -1540,6 +1549,7 @@ export function ProfileSearchInput({
           className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-muted)] hover:text-[var(--color-fg)]"
         >
           <svg
+            aria-hidden="true"
             width="14"
             height="14"
             viewBox="0 0 24 24"

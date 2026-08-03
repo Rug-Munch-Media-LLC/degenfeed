@@ -59,11 +59,15 @@ export default function FeeConfigPanel({
 
       {/* Custom input */}
       <div className="mt-4">
-        <label className="mb-1.5 block text-[11px] font-medium text-[var(--color-muted)]">
+        <label
+          className="mb-1.5 block text-[11px] font-medium text-[var(--color-muted)]"
+          htmlFor="field-51a96555"
+        >
           Custom fee (basis points)
         </label>
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
           <input
+            id="field-51a96555"
             type="number"
             value={feeBps}
             onChange={(e) => {

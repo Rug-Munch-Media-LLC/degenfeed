@@ -92,11 +92,15 @@ export default function NostrExportPage() {
             <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-6">
               <div className="space-y-4">
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-[var(--color-fg)]">
+                  <label
+                    className="mb-1 block text-sm font-medium text-[var(--color-fg)]"
+                    htmlFor="field-a416727d"
+                  >
                     Your nsec
                   </label>
                   <div className="relative">
                     <input
+                      id="field-a416727d"
                       type={showNsec ? 'text' : 'password'}
                       value={nsec}
                       onChange={(e) => setNsec(e.target.value)}
@@ -114,10 +118,14 @@ export default function NostrExportPage() {
                 </div>
 
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-[var(--color-fg)]">
+                  <label
+                    className="mb-1 block text-sm font-medium text-[var(--color-fg)]"
+                    htmlFor="field-1dbe9ea8"
+                  >
                     Encryption Password
                   </label>
                   <input
+                    id="field-1dbe9ea8"
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -127,10 +135,14 @@ export default function NostrExportPage() {
                 </div>
 
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-[var(--color-fg)]">
+                  <label
+                    className="mb-1 block text-sm font-medium text-[var(--color-fg)]"
+                    htmlFor="field-02637786"
+                  >
                     Confirm Password
                   </label>
                   <input
+                    id="field-02637786"
                     type="password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}

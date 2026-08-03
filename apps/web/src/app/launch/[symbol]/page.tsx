@@ -324,6 +324,7 @@ export default function CoinPage() {
               aria-label="Share coin"
             >
               <svg
+                aria-hidden="true"
                 width="14"
                 height="14"
                 viewBox="0 0 24 24"
@@ -359,6 +360,7 @@ export default function CoinPage() {
                   aria-label="Refresh chart"
                 >
                   <svg
+                    aria-hidden="true"
                     width="14"
                     height="14"
                     viewBox="0 0 24 24"

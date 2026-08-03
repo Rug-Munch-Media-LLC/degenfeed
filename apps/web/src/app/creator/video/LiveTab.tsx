@@ -88,10 +88,14 @@ export default function LiveTab({ format }: { format: 'portrait' | 'landscape' }
           </p>
         )}
         <div>
-          <label className="mb-1 block text-xs font-medium text-[var(--color-fg)]">
+          <label
+            className="mb-1 block text-xs font-medium text-[var(--color-fg)]"
+            htmlFor="field-85e9bc98"
+          >
             Stream Title
           </label>
           <input
+            id="field-85e9bc98"
             type="text"
             value={config.title}
             onChange={(e) => updateConfig({ title: e.target.value })}
@@ -101,10 +105,14 @@ export default function LiveTab({ format }: { format: 'portrait' | 'landscape' }
           />
         </div>
         <div>
-          <label className="mb-1 block text-xs font-medium text-[var(--color-fg)]">
+          <label
+            className="mb-1 block text-xs font-medium text-[var(--color-fg)]"
+            htmlFor="field-aa7f96d4"
+          >
             Description
           </label>
           <textarea
+            id="field-aa7f96d4"
             value={config.description}
             onChange={(e) => updateConfig({ description: e.target.value })}
             placeholder="What's this stream about?"
@@ -114,10 +122,14 @@ export default function LiveTab({ format }: { format: 'portrait' | 'landscape' }
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="mb-1 block text-xs font-medium text-[var(--color-fg)]">
+            <label
+              className="mb-1 block text-xs font-medium text-[var(--color-fg)]"
+              htmlFor="field-a034f7e4"
+            >
               Category
             </label>
             <select
+              id="field-a034f7e4"
               value={config.category}
               onChange={(e) => updateConfig({ category: e.target.value })}
               className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-3 py-2 text-xs text-[var(--color-fg)]"
@@ -131,7 +143,7 @@ export default function LiveTab({ format }: { format: 'portrait' | 'landscape' }
           </div>
         </div>
         <div>
-          <label className="mb-1 block text-xs font-medium text-[var(--color-fg)]">Stream to</label>
+          <span className="mb-1 block text-xs font-medium text-[var(--color-fg)]">Stream to</span>
           <PublishTargetPills selected={new Set(config.platforms)} onToggle={togglePlatform} />
         </div>
         <div className="flex items-center gap-4">

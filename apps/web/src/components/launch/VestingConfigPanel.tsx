@@ -277,6 +277,7 @@ export default function VestingConfigPanel({
               {preset.locked && preset.lockReason && (
                 <div className="mt-1 flex items-center gap-1 text-[10px] text-yellow-400">
                   <svg
+                    aria-hidden="true"
                     width="10"
                     height="10"
                     viewBox="0 0 24 24"
@@ -316,7 +317,7 @@ export default function VestingConfigPanel({
           {/* Initial unlock */}
           <div>
             <div className="flex justify-between mb-1">
-              <label className="text-xs text-[var(--color-muted)]">Initial Unlock</label>
+              <span className="text-xs text-[var(--color-muted)]">Initial Unlock</span>
               <span className="text-xs font-medium tabular-nums text-[var(--color-fg)]">
                 {(config.initialUnlockBps / 100).toFixed(0)}%
               </span>
@@ -339,7 +340,7 @@ export default function VestingConfigPanel({
           {/* Cliff */}
           <div>
             <div className="flex justify-between mb-1">
-              <label className="text-xs text-[var(--color-muted)]">Cliff Duration</label>
+              <span className="text-xs text-[var(--color-muted)]">Cliff Duration</span>
               <span className="text-xs font-medium tabular-nums text-[var(--color-fg)]">
                 {config.cliffDuration === 0
                   ? 'None'
@@ -367,7 +368,7 @@ export default function VestingConfigPanel({
           {/* Vesting duration */}
           <div>
             <div className="flex justify-between mb-1">
-              <label className="text-xs text-[var(--color-muted)]">Vesting Duration</label>
+              <span className="text-xs text-[var(--color-muted)]">Vesting Duration</span>
               <span className="text-xs font-medium tabular-nums text-[var(--color-fg)]">
                 {Math.round(config.vestingDuration / 86400)} days
               </span>

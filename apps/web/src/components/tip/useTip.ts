@@ -6,8 +6,7 @@
  * shared between TipButton and TipMenu.
  */
 
-import { useCallback, useState } from 'react';
-export type { TipMethod, TipIntent, TipState, TipPostContext } from '../../hooks/useTip';
+export type { TipIntent, TipMethod, TipPostContext, TipState } from '../../hooks/useTip';
 export { useTip } from '../../hooks/useTip';
 
 /** Steps for the TipButton's modal flow */
@@ -43,14 +42,26 @@ export const SATS_PRESETS = [
 ];
 
 export const PROTOCOL_EMOJIS: Record<string, string> = {
-  nostr: '⚡', farcaster: '◈', lens: '◎', bluesky: '☁️',
-  mastodon: '🐘', peertube: '🎬', owncast: '📡', youtube: '▶',
-  zora: '⧫', degenfeed: '◆',
+  nostr: '⚡',
+  farcaster: '◈',
+  lens: '◎',
+  bluesky: '☁️',
+  mastodon: '🐘',
+  peertube: '🎬',
+  owncast: '📡',
+  youtube: '▶',
+  zora: '⧫',
+  degenfeed: '◆',
 };
 
 export const CHAIN_ICONS: Record<string, string> = {
-  lightning: '⚡', ethereum: '⟠', solana: '◎', base: '◈',
-  polygon: '⬡', optimism: '⬠', arbitrum: '◆',
+  lightning: '⚡',
+  ethereum: '⟠',
+  solana: '◎',
+  base: '◈',
+  polygon: '⬡',
+  optimism: '⬠',
+  arbitrum: '◆',
 };
 
 export const PROTOCOL_BADGES: Record<string, { bg: string; text: string; border: string }> = {

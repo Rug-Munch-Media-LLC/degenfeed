@@ -245,9 +245,9 @@ export default function CreateProposalPage({ params }: { params: { id: string } 
             />
           </div>
           <div>
-            <label className="mb-1.5 block text-xs font-semibold text-[var(--color-fg)]">
+            <span className="mb-1.5 block text-xs font-semibold text-[var(--color-fg)]">
               Attachments
-            </label>
+            </span>
             <div className="flex flex-wrap gap-2">
               {attachments.map((att, i) => (
                 <div
@@ -347,9 +347,9 @@ export default function CreateProposalPage({ params }: { params: { id: string } 
                 </div>
               </div>
               <div>
-                <label className="mb-1.5 block text-xs font-semibold text-[var(--color-fg)]">
+                <span className="mb-1.5 block text-xs font-semibold text-[var(--color-fg)]">
                   Payment Type
-                </label>
+                </span>
                 <div className="flex gap-2">
                   {(['one-time', 'streaming', 'milestone'] as const).map((pt) => (
                     <button
@@ -379,9 +379,9 @@ export default function CreateProposalPage({ params }: { params: { id: string } 
                 ⚖️ Constitutional Proposal Details
               </h3>
               <div>
-                <label className="mb-1.5 block text-xs font-semibold text-[var(--color-fg)]">
+                <span className="mb-1.5 block text-xs font-semibold text-[var(--color-fg)]">
                   Parameter to Change <span className="text-red-400">*</span>
-                </label>
+                </span>
                 <div className="grid gap-2 sm:grid-cols-2">
                   {CONSTITUTIONAL_PARAMS.map((param) => (
                     <button

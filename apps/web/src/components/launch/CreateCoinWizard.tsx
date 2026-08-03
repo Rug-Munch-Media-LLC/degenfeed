@@ -109,7 +109,12 @@ function StepCoinDetails({
 
       {/* Image upload — larger touch target */}
       <div>
-        <label className="mb-2 block text-sm font-medium text-[var(--color-fg)]">Coin Image</label>
+        <label
+          className="mb-2 block text-sm font-medium text-[var(--color-fg)]"
+          htmlFor="coin-image-input"
+        >
+          Coin Image
+        </label>
         <div
           className="flex cursor-pointer items-center justify-center rounded-xl border-2 border-dashed border-[var(--color-border)] bg-[var(--color-overlay)] p-8 sm:p-6 transition-colors hover:border-degen-500/30 touch-target"
           onClick={() => document.getElementById('coin-image-input')?.click()}

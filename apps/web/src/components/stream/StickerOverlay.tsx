@@ -69,15 +69,24 @@ interface FloatingStickerProps {
   delay?: number;
 }
 
-function FloatingSticker({ sticker, triggererLabel, onComplete, xOffset = 0, delay = 0 }: FloatingStickerProps) {
+function FloatingSticker({
+  sticker,
+  triggererLabel,
+  onComplete,
+  xOffset = 0,
+  delay = 0,
+}: FloatingStickerProps) {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
     const appear = setTimeout(() => setVisible(true), delay * 1000);
-    const disappear = setTimeout(() => {
-      setVisible(false);
-      onComplete();
-    }, (delay + sticker.floatDurationSec) * 1000);
+    const disappear = setTimeout(
+      () => {
+        setVisible(false);
+        onComplete();
+      },
+      (delay + sticker.floatDurationSec) * 1000,
+    );
 
     return () => {
       clearTimeout(appear);
@@ -88,19 +97,25 @@ function FloatingSticker({ sticker, triggererLabel, onComplete, xOffset = 0, del
   if (!visible) return null;
 
   const animClass =
-    sticker.floatAnimation === 'up' ? 'sticker-float-up' :
-    sticker.floatAnimation === 'diagonal' ? 'sticker-float-diagonal' :
-    sticker.floatAnimation === 'rain' ? 'sticker-rain' :
-    sticker.floatAnimation === 'explode' ? 'sticker-explode' :
-    'sticker-float-up';
+    sticker.floatAnimation === 'up'
+      ? 'sticker-float-up'
+      : sticker.floatAnimation === 'diagonal'
+        ? 'sticker-float-diagonal'
+        : sticker.floatAnimation === 'rain'
+          ? 'sticker-rain'
+          : sticker.floatAnimation === 'explode'
+            ? 'sticker-explode'
+            : 'sticker-float-up';
 
   return (
     <div
       className={`pointer-events-none z-30 ${animClass} ${SIZE_MAP[sticker.sizeClass] ?? 'text-4xl'}`}
-      style={{
-        '--sticker-x': `${xOffset}px`,
-        animationDuration: `${sticker.floatDurationSec}s`,
-      } as React.CSSProperties}
+      style={
+        {
+          '--sticker-x': `${xOffset}px`,
+          animationDuration: `${sticker.floatDurationSec}s`,
+        } as React.CSSProperties
+      }
     >
       {sticker.imageUrl.match(/[❤️⚔️🎙️🎁🚀🌙🔥🎊]/) ? (
         <span className="inline-block drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
@@ -112,8 +127,10 @@ function FloatingSticker({ sticker, triggererLabel, onComplete, xOffset = 0, del
           alt={sticker.name}
           className="inline-block object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]"
           style={{
-            width: sticker.sizeClass === 'sm' ? '24px' : sticker.sizeClass === 'lg' ? '64px' : '40px',
-            height: sticker.sizeClass === 'sm' ? '24px' : sticker.sizeClass === 'lg' ? '64px' : '40px',
+            width:
+              sticker.sizeClass === 'sm' ? '24px' : sticker.sizeClass === 'lg' ? '64px' : '40px',
+            height:
+              sticker.sizeClass === 'sm' ? '24px' : sticker.sizeClass === 'lg' ? '64px' : '40px',
           }}
         />
       )}
@@ -139,7 +156,7 @@ interface RainDrop {
   size: number;
 }
 
-function EmojiRain({ emoji, count = 30 }: { emoji: string; count?: number }) {
+function _EmojiRain({ emoji, count = 30 }: { emoji: string; count?: number }) {
   const [drops] = useState<RainDrop[]>(() =>
     Array.from({ length: count }, (_, i) => ({
       id: i,
@@ -182,13 +199,15 @@ interface StickerOverlayProps {
 // ─── Component ───────────────────────────────────────────────────────────
 
 export function StickerOverlay({ streamId, onTrigger }: StickerOverlayProps) {
-  const [activeStickers, setActiveStickers] = useState<Array<{
-    id: string;
-    sticker: StickerItem;
-    triggererLabel?: string;
-    xOffset: number;
-    delay: number;
-  }>>([]);
+  const [activeStickers, setActiveStickers] = useState<
+    Array<{
+      id: string;
+      sticker: StickerItem;
+      triggererLabel?: string;
+      xOffset: number;
+      delay: number;
+    }>
+  >([]);
 
   // Poll for active sticker triggers from server
   const { data } = useSWR<ActiveStickersResponse>(
@@ -198,11 +217,9 @@ export function StickerOverlay({ streamId, onTrigger }: StickerOverlayProps) {
   );
 
   // Match triggered stickers to definitions
-  const { data: stickerDefs } = useSWR<StickersResponse>(
-    '/api/live/stickers',
-    fetcher,
-    { revalidateOnFocus: false },
-  );
+  const { data: stickerDefs } = useSWR<StickersResponse>('/api/live/stickers', fetcher, {
+    revalidateOnFocus: false,
+  });
 
   const allStickers = stickerDefs?.stickers ?? [];
 
@@ -308,11 +325,7 @@ export function StickerOverlay({ streamId, onTrigger }: StickerOverlayProps) {
               {sticker.imageUrl.match(/[❤️⚔️🎙️🎁🚀🌙🔥🎊]/) ? (
                 <span>{sticker.imageUrl}</span>
               ) : (
-                <img
-                  src={sticker.imageUrl}
-                  alt={sticker.name}
-                  className="h-5 w-5 object-contain"
-                />
+                <img src={sticker.imageUrl} alt={sticker.name} className="h-5 w-5 object-contain" />
               )}
             </button>
           ))}
@@ -331,11 +344,9 @@ interface StickerPanelProps {
 }
 
 export function StickerPanel({ streamId, onClose, onStickerTriggered }: StickerPanelProps) {
-  const { data, error } = useSWR<StickersResponse>(
-    '/api/live/stickers',
-    fetcher,
-    { revalidateOnFocus: false },
-  );
+  const { data, error } = useSWR<StickersResponse>('/api/live/stickers', fetcher, {
+    revalidateOnFocus: false,
+  });
 
   const stickers = data?.stickers ?? [];
   const [buyingId, setBuyingId] = useState<string | null>(null);
@@ -356,23 +367,20 @@ export function StickerPanel({ streamId, onClose, onStickerTriggered }: StickerP
     [streamId, onStickerTriggered],
   );
 
-  const handleBuy = useCallback(
-    async (sticker: StickerItem) => {
-      setBuyingId(sticker.id);
-      try {
-        await fetch(`/api/live/stickers/${sticker.id}/buy`, {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ chain: 'ethereum' }),
-        });
-      } catch {
-        // silently fail
-      } finally {
-        setBuyingId(null);
-      }
-    },
-    [],
-  );
+  const handleBuy = useCallback(async (sticker: StickerItem) => {
+    setBuyingId(sticker.id);
+    try {
+      await fetch(`/api/live/stickers/${sticker.id}/buy`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ chain: 'ethereum' }),
+      });
+    } catch {
+      // silently fail
+    } finally {
+      setBuyingId(null);
+    }
+  }, []);
 
   return (
     <div className="gift-panel-wrapper">
@@ -385,8 +393,17 @@ export function StickerPanel({ streamId, onClose, onStickerTriggered }: StickerP
             className="flex h-7 w-7 items-center justify-center rounded-lg text-white/40 hover:text-white hover:bg-white/10 transition-colors"
             aria-label="Close"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+            <svg
+              aria-hidden="true"
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
           </button>
         </div>
@@ -403,20 +420,26 @@ export function StickerPanel({ streamId, onClose, onStickerTriggered }: StickerP
           {/* Free stickers */}
           {stickers.filter((s) => s.isFree).length > 0 && (
             <div>
-              <p className="mb-2 text-[9px] font-medium uppercase tracking-wider text-white/40">Free</p>
+              <p className="mb-2 text-[9px] font-medium uppercase tracking-wider text-white/40">
+                Free
+              </p>
               <div className="grid grid-cols-4 gap-2">
-                {stickers.filter((s) => s.isFree).map((sticker) => (
-                  <button
-                    key={sticker.id}
-                    type="button"
-                    onClick={() => handleTrigger(sticker)}
-                    className="flex flex-col items-center gap-1 rounded-xl border border-white/10 bg-white/5 p-3 transition-all hover:bg-white/10 hover:border-white/20 active:scale-95"
-                    title={sticker.name}
-                  >
-                    <span className="text-2xl">{sticker.imageUrl}</span>
-                    <span className="text-[8px] text-white/50 truncate max-w-full">{sticker.name}</span>
-                  </button>
-                ))}
+                {stickers
+                  .filter((s) => s.isFree)
+                  .map((sticker) => (
+                    <button
+                      key={sticker.id}
+                      type="button"
+                      onClick={() => handleTrigger(sticker)}
+                      className="flex flex-col items-center gap-1 rounded-xl border border-white/10 bg-white/5 p-3 transition-all hover:bg-white/10 hover:border-white/20 active:scale-95"
+                      title={sticker.name}
+                    >
+                      <span className="text-2xl">{sticker.imageUrl}</span>
+                      <span className="text-[8px] text-white/50 truncate max-w-full">
+                        {sticker.name}
+                      </span>
+                    </button>
+                  ))}
               </div>
             </div>
           )}
@@ -424,30 +447,36 @@ export function StickerPanel({ streamId, onClose, onStickerTriggered }: StickerP
           {/* Premium stickers */}
           {stickers.filter((s) => !s.isFree).length > 0 && (
             <div>
-              <p className="mb-2 text-[9px] font-medium uppercase tracking-wider text-white/40">Premium</p>
+              <p className="mb-2 text-[9px] font-medium uppercase tracking-wider text-white/40">
+                Premium
+              </p>
               <div className="grid grid-cols-2 gap-2">
-                {stickers.filter((s) => !s.isFree).map((sticker) => (
-                  <div
-                    key={sticker.id}
-                    className="flex items-center gap-2 rounded-xl border border-yellow-500/20 bg-yellow-500/5 p-2"
-                  >
-                    <span className="text-xl">{sticker.imageUrl}</span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[10px] font-medium text-white/70 truncate">{sticker.name}</p>
+                {stickers
+                  .filter((s) => !s.isFree)
+                  .map((sticker) => (
+                    <div
+                      key={sticker.id}
+                      className="flex items-center gap-2 rounded-xl border border-yellow-500/20 bg-yellow-500/5 p-2"
+                    >
+                      <span className="text-xl">{sticker.imageUrl}</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[10px] font-medium text-white/70 truncate">
+                          {sticker.name}
+                        </p>
+                      </div>
+                      {buyingId === sticker.id ? (
+                        <span className="h-3 w-3 animate-spin rounded-full border-2 border-yellow-400 border-t-transparent" />
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => handleBuy(sticker)}
+                          className="rounded-lg bg-gradient-to-r from-yellow-500 to-orange-500 px-2.5 py-1 text-[8px] font-bold text-white"
+                        >
+                          ${sticker.purchaseUsd.toFixed(2)}
+                        </button>
+                      )}
                     </div>
-                    {buyingId === sticker.id ? (
-                      <span className="h-3 w-3 animate-spin rounded-full border-2 border-yellow-400 border-t-transparent" />
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => handleBuy(sticker)}
-                        className="rounded-lg bg-gradient-to-r from-yellow-500 to-orange-500 px-2.5 py-1 text-[8px] font-bold text-white"
-                      >
-                        ${sticker.purchaseUsd.toFixed(2)}
-                      </button>
-                    )}
-                  </div>
-                ))}
+                  ))}
               </div>
             </div>
           )}

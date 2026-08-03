@@ -627,7 +627,7 @@ export default function RoomPage() {
             className="p-1.5 rounded-lg hover:bg-degen-800 transition-colors"
             aria-label="Back to messages"
           >
-            <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+            <svg aria-hidden="true" width="18" height="18" viewBox="0 0 20 20" fill="none">
               <path
                 d="M12 4l-6 6 6 6"
                 stroke="currentColor"
@@ -653,7 +653,7 @@ export default function RoomPage() {
             className="p-2 rounded-lg hover:bg-degen-800 transition-colors relative"
             aria-label="Toggle member list"
           >
-            <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+            <svg aria-hidden="true" width="18" height="18" viewBox="0 0 20 20" fill="none">
               <circle cx="7" cy="6" r="2.5" stroke="currentColor" strokeWidth="1.3" />
               <circle cx="14" cy="6" r="2.5" stroke="currentColor" strokeWidth="1.3" />
               <path
@@ -682,7 +682,7 @@ export default function RoomPage() {
             className="p-2 rounded-lg hover:bg-degen-800 transition-colors"
             aria-label="Invite to room"
           >
-            <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+            <svg aria-hidden="true" width="18" height="18" viewBox="0 0 20 20" fill="none">
               <circle cx="10" cy="10" r="7.5" stroke="currentColor" strokeWidth="1.3" />
               <path
                 d="M10 6.5v7M6.5 10h7"
@@ -699,7 +699,7 @@ export default function RoomPage() {
             className="p-2 rounded-lg hover:bg-red-900/30 transition-colors text-red-400/60 hover:text-red-400"
             aria-label="Leave room"
           >
-            <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+            <svg aria-hidden="true" width="16" height="16" viewBox="0 0 20 20" fill="none">
               <path
                 d="M8 3h8a1 1 0 011 1v12a1 1 0 01-1 1H8"
                 stroke="currentColor"
@@ -779,7 +779,7 @@ export default function RoomPage() {
                 {sending ? (
                   <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
                 ) : (
-                  <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+                  <svg aria-hidden="true" width="16" height="16" viewBox="0 0 20 20" fill="none">
                     <path d="M3 10l14-7-7 14-2-5-5-2z" fill="currentColor" />
                   </svg>
                 )}
@@ -833,7 +833,7 @@ export default function RoomPage() {
                   onClick={() => setShowMembers(false)}
                   className="p-1 rounded hover:bg-degen-800"
                 >
-                  <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+                  <svg aria-hidden="true" width="16" height="16" viewBox="0 0 20 20" fill="none">
                     <path
                       d="M5 5l10 10M15 5l-10 10"
                       stroke="currentColor"

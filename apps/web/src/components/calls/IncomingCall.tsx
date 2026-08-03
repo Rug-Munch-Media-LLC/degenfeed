@@ -36,6 +36,7 @@ export default function IncomingCallBanner({
               aria-label="Accept call"
             >
               <svg
+                aria-hidden="true"
                 width="20"
                 height="20"
                 viewBox="0 0 24 24"
@@ -56,6 +57,7 @@ export default function IncomingCallBanner({
               aria-label="Decline call"
             >
               <svg
+                aria-hidden="true"
                 width="20"
                 height="20"
                 viewBox="0 0 24 24"
@@ -94,6 +96,7 @@ export function CallButtons({
         aria-label={`Call ${peerDisplayName || peerId}`}
       >
         <svg
+          aria-hidden="true"
           width="14"
           height="14"
           viewBox="0 0 24 24"
@@ -114,6 +117,7 @@ export function CallButtons({
         aria-label={`Video call ${peerDisplayName || peerId}`}
       >
         <svg
+          aria-hidden="true"
           width="14"
           height="14"
           viewBox="0 0 24 24"
@@ -166,6 +170,7 @@ export function CallHistoryList({
             aria-label="Close"
           >
             <svg
+              aria-hidden="true"
               width="16"
               height="16"
               viewBox="0 0 24 24"

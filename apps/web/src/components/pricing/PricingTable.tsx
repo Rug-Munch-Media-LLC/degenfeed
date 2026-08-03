@@ -31,6 +31,7 @@ function CheckIcon({ highlight }: { highlight?: boolean }) {
       aria-hidden="true"
     >
       <svg
+        aria-hidden="true"
         width="16"
         height="16"
         viewBox="0 0 24 24"
@@ -53,6 +54,7 @@ function DashIcon() {
       aria-hidden="true"
     >
       <svg
+        aria-hidden="true"
         width="16"
         height="16"
         viewBox="0 0 24 24"

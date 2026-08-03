@@ -121,7 +121,7 @@ export interface UseVineFeedResult {
 
 const INITIAL_LIMIT = 20;
 const LOAD_MORE_LIMIT = 10;
-const QUEUE_SIZE = 50;
+const _QUEUE_SIZE = 50;
 
 // ─── Hook ─────────────────────────────────────────────────────────────────
 
@@ -191,9 +191,7 @@ export function useVineFeed(opts: UseVineFeedOptions = {}): UseVineFeedResult {
         const data = (await res.json()) as VineFeedResponse;
 
         setFeedState((prev) => ({
-          shorts: append
-            ? [...prev.shorts, ...data.shorts]
-            : data.shorts,
+          shorts: append ? [...prev.shorts, ...data.shorts] : data.shorts,
           loading: false,
           error: null,
           hasMore: data.hasMore,
@@ -278,9 +276,7 @@ export function useVineFeed(opts: UseVineFeedOptions = {}): UseVineFeedResult {
       setFeedState((prev) => ({
         ...prev,
         shorts: prev.shorts.map((s) =>
-          s.id === shortId
-            ? { ...s, revineCount: s.revineCount + 1, hasRevined: true }
-            : s,
+          s.id === shortId ? { ...s, revineCount: s.revineCount + 1, hasRevined: true } : s,
         ),
       }));
 
@@ -292,54 +288,48 @@ export function useVineFeed(opts: UseVineFeedOptions = {}): UseVineFeedResult {
 
   // ── Record watch ─────────────────────────────────────────────────────
 
-  const recordWatch = useCallback(
-    async (shortId: string, watchPercent: number, liked = false) => {
-      try {
-        await fetch('/api/shorts/vine/watch', {
-          method: 'POST',
-          credentials: 'include',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({
-            shortId,
-            watchPercent,
-            liked,
-            watchedFull: watchPercent >= 0.9,
-            skipped: watchPercent < 0.3,
-            watchDurationMs: Math.round(watchPercent * 6000),
-          }),
-        });
-      } catch {
-        // Non-critical
-      }
-    },
-    [],
-  );
+  const recordWatch = useCallback(async (shortId: string, watchPercent: number, liked = false) => {
+    try {
+      await fetch('/api/shorts/vine/watch', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          shortId,
+          watchPercent,
+          liked,
+          watchedFull: watchPercent >= 0.9,
+          skipped: watchPercent < 0.3,
+          watchDurationMs: Math.round(watchPercent * 6000),
+        }),
+      });
+    } catch {
+      // Non-critical
+    }
+  }, []);
 
   // ── Feedback ─────────────────────────────────────────────────────────
 
-  const feedback = useCallback(
-    async (shortId: string, action: 'like' | 'not_interested') => {
-      try {
-        await fetch('/api/shorts/feedback', {
-          method: 'POST',
-          credentials: 'include',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ shortId, action }),
-        });
+  const feedback = useCallback(async (shortId: string, action: 'like' | 'not_interested') => {
+    try {
+      await fetch('/api/shorts/feedback', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ shortId, action }),
+      });
 
-        // If "not interested", remove from feed
-        if (action === 'not_interested') {
-          setFeedState((prev) => ({
-            ...prev,
-            shorts: prev.shorts.filter((s) => s.id !== shortId),
-          }));
-        }
-      } catch {
-        // Non-critical
+      // If "not interested", remove from feed
+      if (action === 'not_interested') {
+        setFeedState((prev) => ({
+          ...prev,
+          shorts: prev.shorts.filter((s) => s.id !== shortId),
+        }));
       }
-    },
-    [],
-  );
+    } catch {
+      // Non-critical
+    }
+  }, []);
 
   // ── Initial load ─────────────────────────────────────────────────────
 

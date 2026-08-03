@@ -32,6 +32,7 @@ export default function LaunchCTA({ className = '' }: LaunchCTAProps) {
             className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-degen-500 px-6 py-3.5 text-sm font-bold text-black transition-all hover:bg-degen-400 hover:shadow-[0_0_30px_rgba(0,255,65,0.4)] active:scale-[0.98] touch-target"
           >
             <svg
+              aria-hidden="true"
               width="16"
               height="16"
               viewBox="0 0 24 24"
@@ -51,6 +52,7 @@ export default function LaunchCTA({ className = '' }: LaunchCTAProps) {
           >
             Learn More
             <svg
+              aria-hidden="true"
               width="14"
               height="14"
               viewBox="0 0 24 24"

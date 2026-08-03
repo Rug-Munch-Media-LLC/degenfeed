@@ -1,9 +1,4 @@
-import {
-  CardSkeleton,
-  ContentShellSkeleton,
-  Line,
-  RowSkeleton,
-} from '@/components/loading/PageSkeleton';
+import { CardSkeleton, ContentShellSkeleton, Line } from '@/components/loading/PageSkeleton';
 
 export default function ConnectLoading() {
   return (

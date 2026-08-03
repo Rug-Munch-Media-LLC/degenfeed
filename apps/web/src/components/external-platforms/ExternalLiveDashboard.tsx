@@ -115,10 +115,14 @@ function GoLiveForm({ platform, onClose }: { platform: LivePlatformInfo; onClose
 
         <form onSubmit={handleGoLive} className="space-y-4">
           <div>
-            <label className="mb-1 block text-sm font-medium text-[var(--color-fg)]">
+            <label
+              className="mb-1 block text-sm font-medium text-[var(--color-fg)]"
+              htmlFor="field-be2444d8"
+            >
               Stream Title *
             </label>
             <input
+              id="field-be2444d8"
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -129,10 +133,14 @@ function GoLiveForm({ platform, onClose }: { platform: LivePlatformInfo; onClose
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-[var(--color-fg)]">
+            <label
+              className="mb-1 block text-sm font-medium text-[var(--color-fg)]"
+              htmlFor="field-7c89ac40"
+            >
               Description
             </label>
             <textarea
+              id="field-7c89ac40"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
@@ -142,10 +150,14 @@ function GoLiveForm({ platform, onClose }: { platform: LivePlatformInfo; onClose
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-[var(--color-fg)]">
+            <label
+              className="mb-1 block text-sm font-medium text-[var(--color-fg)]"
+              htmlFor="field-ba547496"
+            >
               Category / Game
             </label>
             <input
+              id="field-ba547496"
               type="text"
               value={category}
               onChange={(e) => setCategory(e.target.value)}

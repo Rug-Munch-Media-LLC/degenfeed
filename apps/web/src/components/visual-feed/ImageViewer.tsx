@@ -172,6 +172,7 @@ export function ImageViewer({
         aria-label="Close viewer"
       >
         <svg
+          aria-hidden="true"
           width="20"
           height="20"
           viewBox="0 0 24 24"
@@ -192,6 +193,7 @@ export function ImageViewer({
           aria-label="Previous image"
         >
           <svg
+            aria-hidden="true"
             width="24"
             height="24"
             viewBox="0 0 24 24"
@@ -211,6 +213,7 @@ export function ImageViewer({
           aria-label="Next image"
         >
           <svg
+            aria-hidden="true"
             width="24"
             height="24"
             viewBox="0 0 24 24"
@@ -310,6 +313,7 @@ export function ImageViewer({
               aria-label="Zoom out"
             >
               <svg
+                aria-hidden="true"
                 width="16"
                 height="16"
                 viewBox="0 0 24 24"
@@ -329,6 +333,7 @@ export function ImageViewer({
               aria-label="Zoom in"
             >
               <svg
+                aria-hidden="true"
                 width="16"
                 height="16"
                 viewBox="0 0 24 24"
@@ -357,6 +362,7 @@ export function ImageViewer({
               className="flex h-8 items-center gap-1.5 rounded-lg bg-yellow-500/20 px-3 text-xs font-medium text-yellow-400 transition-colors hover:bg-yellow-500/30"
             >
               <svg
+                aria-hidden="true"
                 width="14"
                 height="14"
                 viewBox="0 0 24 24"
@@ -388,6 +394,7 @@ export function ImageViewer({
               aria-label="Download"
             >
               <svg
+                aria-hidden="true"
                 width="16"
                 height="16"
                 viewBox="0 0 24 24"
@@ -413,6 +420,7 @@ export function ImageViewer({
                 className="flex h-8 items-center gap-1.5 rounded-lg bg-white/10 px-3 text-xs text-white transition-colors hover:bg-white/20"
               >
                 <svg
+                  aria-hidden="true"
                   width="14"
                   height="14"
                   viewBox="0 0 24 24"
@@ -457,6 +465,7 @@ export function ImageViewer({
             aria-label="Close comments"
           >
             <svg
+              aria-hidden="true"
               width="16"
               height="16"
               viewBox="0 0 24 24"
@@ -488,6 +497,7 @@ export function ImageViewer({
         aria-label="Toggle comments"
       >
         <svg
+          aria-hidden="true"
           width="16"
           height="16"
           viewBox="0 0 24 24"

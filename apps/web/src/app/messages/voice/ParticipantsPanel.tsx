@@ -5,7 +5,7 @@ import { useAuth } from '../../../components/AuthProvider';
 import { useAnnouncer } from '../../../components/ScreenReaderAnnouncer';
 import { retryFetchJson } from '../../../lib/retryFetch';
 import type { VoiceParticipant, VoiceRoom } from './types';
-import { getInitials, timeAgo } from './types';
+import { getInitials } from './types';
 
 /* ─── Participant Row ──────────────────────────────────────────────── */
 

@@ -196,7 +196,10 @@ export default function BuySellInterface({
 
         {/* Amount input */}
         <div>
-          <label className="mb-1 block text-[11px] font-medium text-[var(--color-muted)]">
+          <label
+            className="mb-1 block text-[11px] font-medium text-[var(--color-muted)]"
+            htmlFor="field-4bbcf4d5"
+          >
             Amount ({mode === 'buy' ? 'ETH' : symbol})
             <span
               className="ml-1.5 inline-flex cursor-help items-center rounded-full border border-[var(--color-border)] px-1.5 py-0.5 text-[8px] font-medium text-[var(--color-muted)] hover:border-degen-500/30 hover:text-degen-400 transition-colors"
@@ -208,6 +211,7 @@ export default function BuySellInterface({
           </label>
           <div className="relative">
             <input
+              id="field-4bbcf4d5"
               ref={inputRef}
               type="number"
               value={amount}

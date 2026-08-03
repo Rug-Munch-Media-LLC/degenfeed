@@ -743,6 +743,7 @@ const FEATURES: Feature[] = [
   {
     icon: (
       <svg
+        aria-hidden="true"
         width="22"
         height="22"
         viewBox="0 0 24 24"
@@ -762,6 +763,7 @@ const FEATURES: Feature[] = [
   {
     icon: (
       <svg
+        aria-hidden="true"
         width="22"
         height="22"
         viewBox="0 0 24 24"
@@ -781,6 +783,7 @@ const FEATURES: Feature[] = [
   {
     icon: (
       <svg
+        aria-hidden="true"
         width="22"
         height="22"
         viewBox="0 0 24 24"
@@ -801,6 +804,7 @@ const FEATURES: Feature[] = [
   {
     icon: (
       <svg
+        aria-hidden="true"
         width="22"
         height="22"
         viewBox="0 0 24 24"
@@ -821,6 +825,7 @@ const FEATURES: Feature[] = [
   {
     icon: (
       <svg
+        aria-hidden="true"
         width="22"
         height="22"
         viewBox="0 0 24 24"
@@ -841,6 +846,7 @@ const FEATURES: Feature[] = [
   {
     icon: (
       <svg
+        aria-hidden="true"
         width="22"
         height="22"
         viewBox="0 0 24 24"
@@ -923,6 +929,7 @@ export default function LandingPage() {
               aria-label="Launch App"
             >
               <svg
+                aria-hidden="true"
                 width="18"
                 height="18"
                 viewBox="0 0 24 24"

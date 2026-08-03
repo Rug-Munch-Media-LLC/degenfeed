@@ -41,10 +41,14 @@ function formatCount(n: number): string {
 
 function getRankStyle(rank: number): { emoji: string; color: string } {
   switch (rank) {
-    case 1: return { emoji: '🥇', color: '#FFD700' };
-    case 2: return { emoji: '🥈', color: '#C0C0C0' };
-    case 3: return { emoji: '🥉', color: '#CD7F32' };
-    default: return { emoji: `#${rank}`, color: 'rgba(255,255,255,0.4)' };
+    case 1:
+      return { emoji: '🥇', color: '#FFD700' };
+    case 2:
+      return { emoji: '🥈', color: '#C0C0C0' };
+    case 3:
+      return { emoji: '🥉', color: '#CD7F32' };
+    default:
+      return { emoji: `#${rank}`, color: 'rgba(255,255,255,0.4)' };
   }
 }
 
@@ -130,10 +134,7 @@ export function VineLeaderboard({
               >
                 {/* Rank */}
                 <div className="flex w-8 shrink-0 items-center justify-center">
-                  <span
-                    className="text-sm font-bold"
-                    style={{ color: rankStyle.color }}
-                  >
+                  <span className="text-sm font-bold" style={{ color: rankStyle.color }}>
                     {rankStyle.emoji}
                   </span>
                 </div>
@@ -147,17 +148,13 @@ export function VineLeaderboard({
                       className="h-full w-full object-cover"
                     />
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center text-lg">
-                      🎬
-                    </div>
+                    <div className="flex h-full w-full items-center justify-center text-lg">🎬</div>
                   )}
                 </div>
 
                 {/* Info */}
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-white">
-                    {short.title}
-                  </p>
+                  <p className="truncate text-sm font-medium text-white">{short.title}</p>
                   <p className="flex items-center gap-1.5 text-xs text-white/50">
                     <span>{short.creatorName}</span>
                     <span>·</span>
@@ -179,10 +176,7 @@ export function VineLeaderboard({
                 {/* Vine Star badge for star leaderboard */}
                 {type === 'stars' && (
                   <div className="shrink-0">
-                    <VineStarBadge
-                      tier={getTierFromScore(entry.vibeScore)}
-                      compact
-                    />
+                    <VineStarBadge tier={getTierFromScore(entry.vibeScore)} compact />
                   </div>
                 )}
               </button>

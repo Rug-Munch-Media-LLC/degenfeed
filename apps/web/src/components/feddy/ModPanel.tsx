@@ -122,10 +122,14 @@ export function ModPanel({
       {/* Settings form */}
       <div className="space-y-4">
         <div>
-          <label className="mb-1 block text-xs font-medium text-[var(--color-fg)]">
+          <label
+            className="mb-1 block text-xs font-medium text-[var(--color-fg)]"
+            htmlFor="field-306750ce"
+          >
             Display Name
           </label>
           <input
+            id="field-306750ce"
             type="text"
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
@@ -135,10 +139,14 @@ export function ModPanel({
         </div>
 
         <div>
-          <label className="mb-1 block text-xs font-medium text-[var(--color-fg)]">
+          <label
+            className="mb-1 block text-xs font-medium text-[var(--color-fg)]"
+            htmlFor="field-3d656e5f"
+          >
             Description
           </label>
           <textarea
+            id="field-3d656e5f"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={4}
@@ -148,10 +156,14 @@ export function ModPanel({
         </div>
 
         <div>
-          <label className="mb-1 block text-xs font-medium text-[var(--color-fg)]">
+          <label
+            className="mb-1 block text-xs font-medium text-[var(--color-fg)]"
+            htmlFor="field-bb252df5"
+          >
             Rules (one per line)
           </label>
           <textarea
+            id="field-bb252df5"
             value={rules}
             onChange={(e) => setRules(e.target.value)}
             rows={5}
@@ -163,10 +175,14 @@ export function ModPanel({
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="mb-1 block text-xs font-medium text-[var(--color-fg)]">
+            <label
+              className="mb-1 block text-xs font-medium text-[var(--color-fg)]"
+              htmlFor="field-77c8543c"
+            >
               Avatar URL
             </label>
             <input
+              id="field-77c8543c"
               type="text"
               value={avatarUrl}
               onChange={(e) => setAvatarUrl(e.target.value)}
@@ -175,10 +191,14 @@ export function ModPanel({
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-[var(--color-fg)]">
+            <label
+              className="mb-1 block text-xs font-medium text-[var(--color-fg)]"
+              htmlFor="field-41eb7234"
+            >
               Banner URL
             </label>
             <input
+              id="field-41eb7234"
               type="text"
               value={bannerUrl}
               onChange={(e) => setBannerUrl(e.target.value)}

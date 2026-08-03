@@ -37,6 +37,7 @@ function CloseIcon({ onClick }: { onClick: () => void }) {
       aria-label="Close"
     >
       <svg
+        aria-hidden="true"
         width="18"
         height="18"
         viewBox="0 0 24 24"
@@ -180,6 +181,7 @@ function StepPaymentMethod({
               <div className="text-xs text-[var(--color-muted)]">{m.desc}</div>
             </div>
             <svg
+              aria-hidden="true"
               width="16"
               height="16"
               viewBox="0 0 24 24"

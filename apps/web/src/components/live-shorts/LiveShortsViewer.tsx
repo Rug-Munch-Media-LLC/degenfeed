@@ -330,7 +330,7 @@ export function LiveShortsViewer({ session, onClose, onShare }: LiveShortsViewer
       {/* Mobile chat drawer */}
       {chatOpen && (
         <div className="fixed inset-0 z-50 flex items-end md:hidden">
-          {/* biome-ignore jsx-a11y/no-static-element-interactions: backdrop click */}
+          {/* biome-ignore lint/a11y/noStaticElementInteractions: backdrop click */}
           <div
             className="absolute inset-0 bg-black/50"
             onClick={() => setChatOpen(false)}

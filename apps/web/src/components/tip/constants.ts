@@ -3,57 +3,135 @@ import type { TipMenuOption } from './types';
 export const PROTOCOL_OPTIONS: Record<
   string,
   {
-    nativeMethod: { method: string; label: string; icon: string; fee: string; feeUsd: number } | null;
-    bridgeMethod: { method: string; label: string; icon: string; fee: string; feeUsd: number } | null;
+    nativeMethod: {
+      method: string;
+      label: string;
+      icon: string;
+      fee: string;
+      feeUsd: number;
+    } | null;
+    bridgeMethod: {
+      method: string;
+      label: string;
+      icon: string;
+      fee: string;
+      feeUsd: number;
+    } | null;
     supportsOnChain: boolean;
     supportsLightning: boolean;
   }
 > = {
   nostr: {
-    nativeMethod: { method: 'lightning_zap', label: '⚡ Zap (NIP-57)', icon: '⚡', fee: '< $0.001', feeUsd: 0.001 },
+    nativeMethod: {
+      method: 'lightning_zap',
+      label: '⚡ Zap (NIP-57)',
+      icon: '⚡',
+      fee: '< $0.001',
+      feeUsd: 0.001,
+    },
     bridgeMethod: null,
     supportsOnChain: true,
     supportsLightning: true,
   },
   farcaster: {
-    nativeMethod: { method: 'farcaster_frame', label: '◈ Tip Frame', icon: '◈', fee: '< $0.01', feeUsd: 0.01 },
+    nativeMethod: {
+      method: 'farcaster_frame',
+      label: '◈ Tip Frame',
+      icon: '◈',
+      fee: '< $0.01',
+      feeUsd: 0.01,
+    },
     bridgeMethod: null,
     supportsOnChain: true,
     supportsLightning: true,
   },
   lens: {
-    nativeMethod: { method: 'lens_collect', label: '◎ Lens Collect', icon: '◎', fee: '~$0.01', feeUsd: 0.01 },
+    nativeMethod: {
+      method: 'lens_collect',
+      label: '◎ Lens Collect',
+      icon: '◎',
+      fee: '~$0.01',
+      feeUsd: 0.01,
+    },
     bridgeMethod: null,
     supportsOnChain: true,
     supportsLightning: true,
   },
   zora: {
-    nativeMethod: { method: 'zora_mint', label: '🎨 Bid on Zora', icon: '🎨', fee: '~$0.01-0.05', feeUsd: 0.03 },
-    bridgeMethod: { method: 'degenfeed_tip', label: '🔄 Tip via DegenFeed', icon: '🔄', fee: '< $0.01', feeUsd: 0.01 },
+    nativeMethod: {
+      method: 'zora_mint',
+      label: '🎨 Bid on Zora',
+      icon: '🎨',
+      fee: '~$0.01-0.05',
+      feeUsd: 0.03,
+    },
+    bridgeMethod: {
+      method: 'degenfeed_tip',
+      label: '🔄 Tip via DegenFeed',
+      icon: '🔄',
+      fee: '< $0.01',
+      feeUsd: 0.01,
+    },
     supportsOnChain: true,
     supportsLightning: true,
   },
   bluesky: {
-    nativeMethod: { method: 'bluesky_custom', label: '☁️ Bluesky Tip', icon: '☁️', fee: '~$0.001', feeUsd: 0.001 },
-    bridgeMethod: { method: 'qr_code', label: '📱 QR Code (DegenFeed)', icon: '📱', fee: 'Free', feeUsd: 0 },
+    nativeMethod: {
+      method: 'bluesky_custom',
+      label: '☁️ Bluesky Tip',
+      icon: '☁️',
+      fee: '~$0.001',
+      feeUsd: 0.001,
+    },
+    bridgeMethod: {
+      method: 'qr_code',
+      label: '📱 QR Code (DegenFeed)',
+      icon: '📱',
+      fee: 'Free',
+      feeUsd: 0,
+    },
     supportsOnChain: false,
     supportsLightning: true,
   },
   mastodon: {
     nativeMethod: null,
-    bridgeMethod: { method: 'bridge', label: '🌉 DegenFeed Bridge', icon: '🌉', fee: '< $0.01', feeUsd: 0.01 },
+    bridgeMethod: {
+      method: 'bridge',
+      label: '🌉 DegenFeed Bridge',
+      icon: '🌉',
+      fee: '< $0.01',
+      feeUsd: 0.01,
+    },
     supportsOnChain: false,
     supportsLightning: true,
   },
   lemmy: {
     nativeMethod: null,
-    bridgeMethod: { method: 'bridge', label: '🌉 DegenFeed Bridge', icon: '🌉', fee: '< $0.01', feeUsd: 0.01 },
+    bridgeMethod: {
+      method: 'bridge',
+      label: '🌉 DegenFeed Bridge',
+      icon: '🌉',
+      fee: '< $0.01',
+      feeUsd: 0.01,
+    },
     supportsOnChain: false,
     supportsLightning: true,
   },
   github: {
-    nativeMethod: { method: 'github_sponsors', label: '🐙 GitHub Sponsors', icon: '🐙', fee: 'Free', feeUsd: 0 },
-    bridgeMethod: { method: 'link', label: '🔗 Tip Link (DegenFeed)', icon: '🔗', fee: 'Free', feeUsd: 0 },
+    nativeMethod: {
+      method: 'github_sponsors',
+      label: '🐙 GitHub Sponsors',
+      icon: '🐙',
+      fee: 'Free',
+      feeUsd: 0,
+    },
+    bridgeMethod: {
+      method: 'link',
+      label: '🔗 Tip Link (DegenFeed)',
+      icon: '🔗',
+      fee: 'Free',
+      feeUsd: 0,
+    },
     supportsOnChain: false,
     supportsLightning: true,
   },

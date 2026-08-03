@@ -1,4 +1,8 @@
-import { ContentShellSkeleton, GridSkeleton, HeaderSkeleton } from '@/components/loading/PageSkeleton';
+import {
+  ContentShellSkeleton,
+  GridSkeleton,
+  HeaderSkeleton,
+} from '@/components/loading/PageSkeleton';
 
 export default function SocialLoading() {
   return (

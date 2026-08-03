@@ -137,7 +137,7 @@ function ScoreGauge({ score, maxScore, breakdown }: SovereigntyScore) {
     <div className="flex flex-col items-center gap-3 sm:flex-row sm:gap-6">
       {/* Score Ring */}
       <div className="relative h-28 w-28 shrink-0">
-        <svg className="h-full w-full -rotate-90" viewBox="0 0 120 120">
+        <svg aria-hidden="true" className="h-full w-full -rotate-90" viewBox="0 0 120 120">
           <circle
             cx="60"
             cy="60"
@@ -872,6 +872,7 @@ export default function DigitalRightsPage() {
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
                     <svg
+                      aria-hidden="true"
                       width="16"
                       height="16"
                       viewBox="0 0 24 24"

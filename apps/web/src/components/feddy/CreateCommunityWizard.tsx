@@ -58,10 +58,14 @@ function StepName({
       </div>
 
       <div>
-        <label className="mb-1.5 block text-sm font-medium text-[var(--color-fg)]">
+        <label
+          className="mb-1.5 block text-sm font-medium text-[var(--color-fg)]"
+          htmlFor="field-49264bcd"
+        >
           Community Name
         </label>
         <input
+          id="field-49264bcd"
           type="text"
           value={name}
           onChange={(e) => onChange(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
@@ -123,10 +127,14 @@ function StepDetails({
   return (
     <div className="space-y-5">
       <div>
-        <label className="mb-1.5 block text-sm font-medium text-[var(--color-fg)]">
+        <label
+          className="mb-1.5 block text-sm font-medium text-[var(--color-fg)]"
+          htmlFor="field-79f03a6f"
+        >
           Display Name
         </label>
         <input
+          id="field-79f03a6f"
           type="text"
           value={displayName}
           onChange={(e) => onChange('displayName', e.target.value)}
@@ -137,10 +145,14 @@ function StepDetails({
       </div>
 
       <div>
-        <label className="mb-1.5 block text-sm font-medium text-[var(--color-fg)]">
+        <label
+          className="mb-1.5 block text-sm font-medium text-[var(--color-fg)]"
+          htmlFor="field-bf107d56"
+        >
           Description
         </label>
         <textarea
+          id="field-bf107d56"
           value={description}
           onChange={(e) => onChange('description', e.target.value)}
           placeholder="A community for crypto artists to share their work, collaborate, and discuss NFTs, generative art, and on-chain creativity."
@@ -152,7 +164,7 @@ function StepDetails({
       </div>
 
       <div>
-        <label className="mb-1.5 block text-sm font-medium text-[var(--color-fg)]">Category</label>
+        <span className="mb-1.5 block text-sm font-medium text-[var(--color-fg)]">Category</span>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           {categories.map(([cat, label]) => (
             <button
@@ -173,10 +185,14 @@ function StepDetails({
       </div>
 
       <div>
-        <label className="mb-1.5 block text-sm font-medium text-[var(--color-fg)]">
+        <label
+          className="mb-1.5 block text-sm font-medium text-[var(--color-fg)]"
+          htmlFor="field-17557141"
+        >
           Tags <span className="text-[var(--color-muted)]">(comma separated)</span>
         </label>
         <input
+          id="field-17557141"
           type="text"
           value={tags}
           onChange={(e) => onChange('tags', e.target.value)}
@@ -186,10 +202,14 @@ function StepDetails({
       </div>
 
       <div>
-        <label className="mb-1.5 block text-sm font-medium text-[var(--color-fg)]">
+        <label
+          className="mb-1.5 block text-sm font-medium text-[var(--color-fg)]"
+          htmlFor="field-9923f348"
+        >
           Linked Creator Coin <span className="text-[var(--color-muted)]">(optional)</span>
         </label>
         <input
+          id="field-9923f348"
           type="text"
           value={linkedCoin}
           onChange={(e) => onChange('linkedCoin', e.target.value)}
@@ -222,10 +242,14 @@ function StepRules({
       </div>
 
       <div>
-        <label className="mb-1.5 block text-sm font-medium text-[var(--color-fg)]">
+        <label
+          className="mb-1.5 block text-sm font-medium text-[var(--color-fg)]"
+          htmlFor="field-1610c378"
+        >
           Community Rules <span className="text-[var(--color-muted)]">(one per line)</span>
         </label>
         <textarea
+          id="field-1610c378"
           value={rulesText}
           onChange={(e) => onChange(e.target.value)}
           placeholder="No spam or self-promotion&#10;Be respectful to all members&#10;Stay on topic&#10;No harassing or bullying&#10;Follow the platform ToS"
@@ -276,10 +300,14 @@ function StepAppearance({
   return (
     <div className="space-y-5">
       <div>
-        <label className="mb-1.5 block text-sm font-medium text-[var(--color-fg)]">
+        <label
+          className="mb-1.5 block text-sm font-medium text-[var(--color-fg)]"
+          htmlFor="field-09627017"
+        >
           Avatar URL <span className="text-[var(--color-muted)]">(optional)</span>
         </label>
         <input
+          id="field-09627017"
           type="text"
           value={avatarUrl}
           onChange={(e) => onChange('avatarUrl', e.target.value)}
@@ -289,10 +317,14 @@ function StepAppearance({
       </div>
 
       <div>
-        <label className="mb-1.5 block text-sm font-medium text-[var(--color-fg)]">
+        <label
+          className="mb-1.5 block text-sm font-medium text-[var(--color-fg)]"
+          htmlFor="field-810d47fe"
+        >
           Banner URL <span className="text-[var(--color-muted)]">(optional)</span>
         </label>
         <input
+          id="field-810d47fe"
           type="text"
           value={bannerUrl}
           onChange={(e) => onChange('bannerUrl', e.target.value)}

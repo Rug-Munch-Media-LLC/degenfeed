@@ -8,7 +8,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { formatCount, timeAgo } from './constants';
+import { formatCount } from './constants';
 import type { ProfileMusicAlbum, ProfileMusicTrack } from './types';
 
 // ─── Helpers ───────────────────────────────────────────────────────────
@@ -32,7 +32,7 @@ interface MusicTabContentProps {
 
 export default function MusicTabContent({ creatorId, artistName }: MusicTabContentProps) {
   const [tracks, setTracks] = useState<ProfileMusicTrack[]>([]);
-  const [albums, setAlbums] = useState<ProfileMusicAlbum[]>([]);
+  const [albums, _setAlbums] = useState<ProfileMusicAlbum[]>([]);
   const [loading, setLoading] = useState(true);
   const [playingTrack, setPlayingTrack] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);

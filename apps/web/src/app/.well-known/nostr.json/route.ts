@@ -60,10 +60,9 @@ export async function GET(request: NextRequest) {
       process.env.NEXT_PUBLIC_API_BASE ??
       'http://localhost:8787';
 
-    const bridgeRes = await fetch(
-      `${workerUrl}/api/nostr/relays`,
-      { signal: AbortSignal.timeout(3000) },
-    );
+    const bridgeRes = await fetch(`${workerUrl}/api/nostr/relays`, {
+      signal: AbortSignal.timeout(3000),
+    });
 
     if (bridgeRes.ok) {
       const bridgeData = (await bridgeRes.json()) as {

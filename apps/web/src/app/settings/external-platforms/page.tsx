@@ -11,7 +11,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ConnectPlatformModal } from '../../../components/external-platforms/ConnectPlatformModal';
 import { ExternalLiveDashboard } from '../../../components/external-platforms/ExternalLiveDashboard';
-import { PremiumGate } from '../../../components/PremiumGate';
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
@@ -84,7 +83,7 @@ export default function ExternalPlatformsSettingsPage() {
   const [accounts, setAccounts] = useState<ConnectedAccount[]>([]);
   const [loading, setLoading] = useState(true);
   const [showConnectModal, setShowConnectModal] = useState(false);
-  const [disconnecting, setDisconnecting] = useState<string | null>(null);
+  const [_disconnecting, setDisconnecting] = useState<string | null>(null);
 
   const fetchAccounts = useCallback(async () => {
     setLoading(true);

@@ -90,6 +90,7 @@ export function PlatformSelection({ selected, onChange }: Props) {
               {isActive && (
                 <div className="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full bg-degen-500">
                   <svg
+                    aria-hidden="true"
                     width="10"
                     height="10"
                     viewBox="0 0 24 24"

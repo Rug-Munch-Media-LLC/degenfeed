@@ -69,6 +69,7 @@ export function SubscriptionSection({
         className="mb-3 flex items-center gap-2 rounded-lg border border-degen-500/20 bg-degen-500/5 px-3 py-2 text-xs font-medium text-degen-400 hover:bg-degen-500/10 transition-colors"
       >
         <svg
+          aria-hidden="true"
           width="14"
           height="14"
           viewBox="0 0 24 24"

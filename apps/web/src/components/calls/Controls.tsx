@@ -45,6 +45,7 @@ export function ControlsBar({
         aria-label={audioMuted ? 'Unmute microphone' : 'Mute microphone'}
       >
         <svg
+          aria-hidden="true"
           width="20"
           height="20"
           viewBox="0 0 24 24"
@@ -85,6 +86,7 @@ export function ControlsBar({
         aria-label={videoMuted ? 'Turn on camera' : 'Turn off camera'}
       >
         <svg
+          aria-hidden="true"
           width="20"
           height="20"
           viewBox="0 0 24 24"
@@ -120,6 +122,7 @@ export function ControlsBar({
         aria-label={isScreenSharing ? 'Stop sharing screen' : 'Share screen'}
       >
         <svg
+          aria-hidden="true"
           width="20"
           height="20"
           viewBox="0 0 24 24"
@@ -143,6 +146,7 @@ export function ControlsBar({
         aria-label="Flip camera"
       >
         <svg
+          aria-hidden="true"
           width="20"
           height="20"
           viewBox="0 0 24 24"
@@ -166,6 +170,7 @@ export function ControlsBar({
         aria-label="Picture-in-Picture"
       >
         <svg
+          aria-hidden="true"
           width="20"
           height="20"
           viewBox="0 0 24 24"
@@ -188,6 +193,7 @@ export function ControlsBar({
         aria-label="End call"
       >
         <svg
+          aria-hidden="true"
           width="22"
           height="22"
           viewBox="0 0 24 24"
@@ -250,6 +256,7 @@ export function CallingScreen({ callee, type, onCancel }: CallingScreenProps) {
         aria-label="Cancel call"
       >
         <svg
+          aria-hidden="true"
           width="24"
           height="24"
           viewBox="0 0 24 24"
@@ -310,6 +317,7 @@ export function PiPOverlay({ localStream, duration, onExpand, onEndCall }: PiPOv
           aria-label="End call"
         >
           <svg
+            aria-hidden="true"
             width="10"
             height="10"
             viewBox="0 0 24 24"

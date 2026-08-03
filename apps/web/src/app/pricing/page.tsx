@@ -196,6 +196,7 @@ const FAQS = [
 function CheckIcon({ filled }: { filled?: boolean }) {
   return (
     <svg
+      aria-hidden="true"
       width="16"
       height="16"
       viewBox="0 0 24 24"
@@ -213,6 +214,7 @@ function CheckIcon({ filled }: { filled?: boolean }) {
 function DashIcon() {
   return (
     <svg
+      aria-hidden="true"
       width="16"
       height="16"
       viewBox="0 0 24 24"
@@ -293,6 +295,7 @@ function PricingCard({ tier, billing }: { tier: (typeof TIERS)[0]; billing: Bill
             className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-[var(--color-glass-border)] bg-[var(--color-card)] py-2.5 text-sm font-bold text-[var(--color-fg)] transition-all hover:border-amber-500/30"
           >
             <svg
+              aria-hidden="true"
               width="16"
               height="16"
               viewBox="0 0 24 24"
@@ -449,6 +452,7 @@ function FAQSection() {
             >
               <span>{faq.q}</span>
               <svg
+                aria-hidden="true"
                 width="14"
                 height="14"
                 viewBox="0 0 24 24"
@@ -556,6 +560,7 @@ export default function PricingPage() {
         <div className="flex flex-wrap items-center justify-center gap-3">
           <span className="flex h-9 w-9 items-center justify-center rounded-full bg-degen-500/15 text-degen-400">
             <svg
+              aria-hidden="true"
               width="18"
               height="18"
               viewBox="0 0 24 24"
@@ -597,6 +602,7 @@ export default function PricingPage() {
           className="inline-flex items-center gap-2 rounded-xl border-2 border-[var(--color-glass-border)] bg-[var(--color-card)] px-6 py-3 text-sm font-bold text-[var(--color-fg)] transition-all hover:border-amber-500/30"
         >
           <svg
+            aria-hidden="true"
             width="16"
             height="16"
             viewBox="0 0 24 24"

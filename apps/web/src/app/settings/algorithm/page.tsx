@@ -104,7 +104,7 @@ function Slider({
               {icon}
             </span>
           )}
-          <label className="text-sm font-medium text-[var(--color-fg)]">{label}</label>
+          <span className="text-sm font-medium text-[var(--color-fg)]">{label}</span>
         </div>
         <span className="text-sm font-bold tabular-nums text-degen-400 min-w-[3ch] text-right">
           {value}
@@ -271,7 +271,7 @@ function ProtocolPieChart({ weights }: { weights: ProtocolWeights }) {
 
   return (
     <div className="flex flex-col items-center gap-3">
-      <svg width="160" height="160" viewBox="0 0 160 160" className="shrink-0">
+      <svg aria-hidden="true" width="160" height="160" viewBox="0 0 160 160" className="shrink-0">
         {piePaths}
         <circle cx={cx} cy={cy} r={30} fill="var(--color-card)" />
       </svg>

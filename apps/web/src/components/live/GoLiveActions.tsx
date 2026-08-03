@@ -71,9 +71,9 @@ export function GoLiveActions({
         </div>
       </div>
       <div>
-        <label className="mb-2 block text-xs font-semibold text-[var(--color-muted)]">
+        <span className="mb-2 block text-xs font-semibold text-[var(--color-muted)]">
           Share Your Stream
-        </label>
+        </span>
         <div className="flex flex-wrap gap-2">
           <ShareButton
             href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`}

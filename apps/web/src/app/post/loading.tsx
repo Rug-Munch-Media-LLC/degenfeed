@@ -1,4 +1,9 @@
-import { ContentShellSkeleton, CardSkeleton, Line, Avatar } from '@/components/loading/PageSkeleton';
+import {
+  Avatar,
+  CardSkeleton,
+  ContentShellSkeleton,
+  Line,
+} from '@/components/loading/PageSkeleton';
 
 export default function PostLoading() {
   return (

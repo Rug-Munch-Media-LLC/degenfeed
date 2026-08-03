@@ -12,7 +12,7 @@ function _Sparkline({ data, color }: { data: number[]; color: string }) {
     .map((v, i) => `${(i / (data.length - 1)) * w},${h - ((v - min) / range) * h}`)
     .join(' ');
   return (
-    <svg width={w} height={h} className="shrink-0">
+    <svg aria-hidden="true" width={w} height={h} className="shrink-0">
       <polyline fill="none" stroke={color} strokeWidth="1.5" points={points} />
     </svg>
   );

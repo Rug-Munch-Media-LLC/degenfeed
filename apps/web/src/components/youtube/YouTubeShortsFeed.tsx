@@ -85,6 +85,7 @@ export const YouTubeShortsFeed = memo(function YouTubeShortsFeed({
             aria-label="Scroll left"
           >
             <svg
+              aria-hidden="true"
               width="14"
               height="14"
               viewBox="0 0 24 24"
@@ -103,6 +104,7 @@ export const YouTubeShortsFeed = memo(function YouTubeShortsFeed({
             aria-label="Scroll right"
           >
             <svg
+              aria-hidden="true"
               width="14"
               height="14"
               viewBox="0 0 24 24"

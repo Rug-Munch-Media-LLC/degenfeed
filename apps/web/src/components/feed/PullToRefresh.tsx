@@ -106,6 +106,7 @@ export function PullToRefresh({ onRefresh, children, disabled }: PullToRefreshPr
           {phase === 'refreshing' ? (
             <div className="flex items-center gap-2">
               <svg
+                aria-hidden="true"
                 className="ptr-arrow animate-ptr-spin"
                 viewBox="0 0 24 24"
                 fill="none"
@@ -119,6 +120,7 @@ export function PullToRefresh({ onRefresh, children, disabled }: PullToRefreshPr
           ) : phase === 'ready' ? (
             <div className="flex items-center gap-2">
               <svg
+                aria-hidden="true"
                 className="ptr-arrow"
                 viewBox="0 0 24 24"
                 fill="none"
@@ -132,6 +134,7 @@ export function PullToRefresh({ onRefresh, children, disabled }: PullToRefreshPr
           ) : (
             <div className="flex items-center gap-2">
               <svg
+                aria-hidden="true"
                 className="ptr-arrow"
                 viewBox="0 0 24 24"
                 fill="none"

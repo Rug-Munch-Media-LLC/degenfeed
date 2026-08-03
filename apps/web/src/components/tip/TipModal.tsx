@@ -6,7 +6,6 @@
  * Features: chain selector, amount presets, message, confirm, send, success.
  */
 
-import { useMemo } from 'react';
 import type { SmartChainOption, TipStep } from './useTip';
 import {
   CHAIN_ICONS,
@@ -134,7 +133,7 @@ export default function TipModal({
             type="button"
             aria-label="Close"
           >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="none">
               <path
                 d="M12 4L4 12M4 4l8 8"
                 stroke="currentColor"
@@ -150,9 +149,9 @@ export default function TipModal({
           {step === 'select-amount' && (
             <>
               <div className="mb-4">
-                <label className="mb-2 block text-xs font-medium uppercase tracking-widest text-[var(--color-muted)]">
+                <span className="mb-2 block text-xs font-medium uppercase tracking-widest text-[var(--color-muted)]">
                   Chain
-                </label>
+                </span>
                 {chainLoading ? (
                   <div className="flex items-center gap-2 py-2">
                     <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-degen-500 border-t-transparent" />
@@ -192,9 +191,9 @@ export default function TipModal({
               </div>
 
               <div className="mb-4">
-                <label className="mb-2 block text-xs font-medium uppercase tracking-widest text-[var(--color-muted)]">
+                <span className="mb-2 block text-xs font-medium uppercase tracking-widest text-[var(--color-muted)]">
                   Amount {isLightning ? '(sats)' : '(USD)'}
-                </label>
+                </span>
                 <div className="grid grid-cols-5 gap-1.5">
                   {presets.map((p) => (
                     <button
@@ -241,9 +240,9 @@ export default function TipModal({
 
               {!isLightning && selectedChain && (
                 <div className="mb-4">
-                  <label className="mb-2 block text-xs font-medium uppercase tracking-widest text-[var(--color-muted)]">
+                  <span className="mb-2 block text-xs font-medium uppercase tracking-widest text-[var(--color-muted)]">
                     Token
-                  </label>
+                  </span>
                   <div className="flex gap-2">
                     {['USDC', 'ETH', 'SOL', 'DAI']
                       .filter((t) => {
@@ -525,6 +524,7 @@ export default function TipModal({
                   >
                     View on block explorer
                     <svg
+                      aria-hidden="true"
                       width="12"
                       height="12"
                       viewBox="0 0 24 24"

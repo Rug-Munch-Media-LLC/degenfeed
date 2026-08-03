@@ -92,10 +92,14 @@ export default function RecipientSplitEditor({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {/* Name */}
                 <div>
-                  <label className="mb-0.5 block text-[10px] font-medium text-[var(--color-muted)]">
+                  <label
+                    className="mb-0.5 block text-[10px] font-medium text-[var(--color-muted)]"
+                    htmlFor="field-0b8c6a13"
+                  >
                     Name
                   </label>
                   <input
+                    id="field-0b8c6a13"
                     type="text"
                     value={recipient.name}
                     onChange={(e) => updateRecipient(recipient.id, { name: e.target.value })}
@@ -107,10 +111,14 @@ export default function RecipientSplitEditor({
 
                 {/* Percentage */}
                 <div>
-                  <label className="mb-0.5 block text-[10px] font-medium text-[var(--color-muted)]">
+                  <label
+                    className="mb-0.5 block text-[10px] font-medium text-[var(--color-muted)]"
+                    htmlFor="field-b2ef7ced"
+                  >
                     Split %
                   </label>
                   <input
+                    id="field-b2ef7ced"
                     type="number"
                     value={recipient.percentage}
                     onChange={(e) => {
@@ -131,10 +139,14 @@ export default function RecipientSplitEditor({
 
               {/* Address — full width */}
               <div>
-                <label className="mb-0.5 block text-[10px] font-medium text-[var(--color-muted)]">
+                <label
+                  className="mb-0.5 block text-[10px] font-medium text-[var(--color-muted)]"
+                  htmlFor="field-d3588639"
+                >
                   Wallet Address
                 </label>
                 <input
+                  id="field-d3588639"
                   type="text"
                   value={recipient.address}
                   onChange={(e) => updateRecipient(recipient.id, { address: e.target.value })}

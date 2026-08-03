@@ -17,6 +17,7 @@ export function StreakFlame({ streak, size = 'md' }: StreakFlameProps) {
   return (
     <div className="relative inline-flex items-center gap-1" title={`${streak}-day streak! 🔥`}>
       <svg
+        aria-hidden="true"
         width={px}
         height={px}
         viewBox="0 0 24 24"

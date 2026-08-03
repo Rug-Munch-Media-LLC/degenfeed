@@ -518,6 +518,7 @@ export function UnifiedVideoEmbed({
                 className="absolute bottom-3 right-3 z-10 flex items-center gap-1.5 rounded-lg bg-blue-500 px-3 py-1.5 text-xs font-medium text-white shadow-lg hover:bg-blue-600 transition-colors"
               >
                 <svg
+                  aria-hidden="true"
                   width="14"
                   height="14"
                   viewBox="0 0 24 24"
@@ -697,6 +698,7 @@ export function UnifiedVideoEmbed({
             aria-label="Exit theater mode"
           >
             <svg
+              aria-hidden="true"
               width="16"
               height="16"
               viewBox="0 0 24 24"
@@ -733,6 +735,7 @@ export function UnifiedVideoEmbed({
             className="absolute bottom-14 right-3 z-10 flex items-center gap-1.5 rounded-lg bg-degen-500 px-3 py-1.5 text-xs font-medium text-black shadow-lg hover:bg-degen-400 transition-colors"
           >
             <svg
+              aria-hidden="true"
               width="14"
               height="14"
               viewBox="0 0 24 24"
@@ -754,6 +757,7 @@ export function UnifiedVideoEmbed({
             className="absolute bottom-3 right-3 z-10 flex items-center gap-1.5 rounded-lg bg-black/60 px-2.5 py-1.5 text-[11px] font-medium text-white/80 backdrop-blur-sm hover:bg-black/80 hover:text-white transition-colors"
           >
             <svg
+              aria-hidden="true"
               width="12"
               height="12"
               viewBox="0 0 24 24"
@@ -800,12 +804,24 @@ export function UnifiedVideoEmbed({
               title={isPlaying ? 'Pause' : 'Play'}
             >
               {isPlaying ? (
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                <svg
+                  aria-hidden="true"
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                >
                   <rect x="6" y="4" width="4" height="16" />
                   <rect x="14" y="4" width="4" height="16" />
                 </svg>
               ) : (
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                <svg
+                  aria-hidden="true"
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                >
                   <polygon points="5 3 19 12 5 21 5 3" />
                 </svg>
               )}
@@ -821,6 +837,7 @@ export function UnifiedVideoEmbed({
             >
               {isMuted || volume === 0 ? (
                 <svg
+                  aria-hidden="true"
                   width="14"
                   height="14"
                   viewBox="0 0 24 24"
@@ -834,6 +851,7 @@ export function UnifiedVideoEmbed({
                 </svg>
               ) : (
                 <svg
+                  aria-hidden="true"
                   width="14"
                   height="14"
                   viewBox="0 0 24 24"
@@ -874,6 +892,7 @@ export function UnifiedVideoEmbed({
                 title="Theater mode"
               >
                 <svg
+                  aria-hidden="true"
                   width="14"
                   height="14"
                   viewBox="0 0 24 24"
@@ -899,6 +918,7 @@ export function UnifiedVideoEmbed({
             >
               {isFullscreen ? (
                 <svg
+                  aria-hidden="true"
                   width="14"
                   height="14"
                   viewBox="0 0 24 24"
@@ -913,6 +933,7 @@ export function UnifiedVideoEmbed({
                 </svg>
               ) : (
                 <svg
+                  aria-hidden="true"
                   width="14"
                   height="14"
                   viewBox="0 0 24 24"

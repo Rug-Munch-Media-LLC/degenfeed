@@ -24,20 +24,20 @@
  */
 import { ErrorBoundary } from '@degenfeed/ui';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { UseVineFeedResult, VineShortItem } from './useVineFeed';
+import type { UseVineFeedResult } from './useVineFeed';
+import { VibeScore } from './VibeScore';
+import { VineActions } from './VineActions';
+import { VinePlayer } from './VinePlayer';
+import { VineStarBadge } from './VineStarBadge';
 import type { VineCategory } from './vineConstants';
 import { VINE_CATEGORY_META } from './vineConstants';
-import { VinePlayer } from './VinePlayer';
-import { VineActions } from './VineActions';
-import { VibeScore } from './VibeScore';
-import { VineStarBadge } from './VineStarBadge';
 
 // ─── Constants ────────────────────────────────────────────────────────────
 
-const PRELOAD_AHEAD = 1;
+const _PRELOAD_AHEAD = 1;
 const LOAD_MORE_BUFFER = 3;
 const AUTO_ADVANCE_MS = 30_000;
-const NEW_CONTENT_INJECTION_RATE = 0.2;
+const _NEW_CONTENT_INJECTION_RATE = 0.2;
 
 // ─── Props ────────────────────────────────────────────────────────────────
 
@@ -50,9 +50,18 @@ export interface VineFeedProps {
 
 export function VineFeed({ vineFeed, onDismiss }: VineFeedProps) {
   const {
-    shorts, loading, error, hasMore, loadMore, refresh,
-    revine, recordWatch, feedback,
-    activeCategories, vibeRange, featured,
+    shorts,
+    loading,
+    error,
+    hasMore,
+    loadMore,
+    refresh,
+    revine,
+    recordWatch,
+    feedback,
+    activeCategories,
+    vibeRange,
+    featured,
   } = vineFeed;
 
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -185,16 +194,19 @@ export function VineFeed({ vineFeed, onDismiss }: VineFeedProps) {
       // Swipe navigation
       if (absY > 50 && !isTransitioning.current) {
         isTransitioning.current = true;
-        const newIndex = deltaY < 0
-          ? Math.min(shorts.length - 1, currentIndex + 1)
-          : Math.max(0, currentIndex - 1);
+        const newIndex =
+          deltaY < 0
+            ? Math.min(shorts.length - 1, currentIndex + 1)
+            : Math.max(0, currentIndex - 1);
 
         if (newIndex !== currentIndex) {
           const target = document.querySelector(`[data-vine-index="${newIndex}"]`);
           target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
           setCurrentIndex(newIndex);
         }
-        setTimeout(() => { isTransitioning.current = false; }, 400);
+        setTimeout(() => {
+          isTransitioning.current = false;
+        }, 400);
       }
     },
     [currentIndex, shorts.length],
@@ -285,7 +297,8 @@ export function VineFeed({ vineFeed, onDismiss }: VineFeedProps) {
       if (
         document.activeElement?.tagName === 'INPUT' ||
         document.activeElement?.tagName === 'TEXTAREA'
-      ) return;
+      )
+        return;
 
       switch (e.key) {
         case 'ArrowUp':
@@ -338,7 +351,14 @@ export function VineFeed({ vineFeed, onDismiss }: VineFeedProps) {
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [currentIndex, shorts.length, handleLike, handleRevine, toggleVibeScores, handleNotInterested]);
+  }, [
+    currentIndex,
+    shorts.length,
+    handleLike,
+    handleRevine,
+    toggleVibeScores,
+    handleNotInterested,
+  ]);
 
   // ── Toast Timer ──────────────────────────────────────────────────────
 
@@ -350,7 +370,7 @@ export function VineFeed({ vineFeed, onDismiss }: VineFeedProps) {
 
   // ── Format Helpers ───────────────────────────────────────────────────
 
-  const formatCount = (n: number): string => {
+  const _formatCount = (n: number): string => {
     if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
     if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
     return String(n);
@@ -381,7 +401,12 @@ export function VineFeed({ vineFeed, onDismiss }: VineFeedProps) {
         <div className="flex flex-col items-center gap-4 text-center">
           <div className="flex h-16 w-16 items-center justify-center rounded-full border border-red-500/30 bg-red-500/10">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M12 9v4M12 17h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" stroke="currentColor" strokeWidth="1.5" className="text-red-400" />
+              <path
+                d="M12 9v4M12 17h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                className="text-red-400"
+              />
             </svg>
           </div>
           <p className="text-sm text-white/60">Couldn&apos;t load vines</p>
@@ -405,8 +430,23 @@ export function VineFeed({ vineFeed, onDismiss }: VineFeedProps) {
       <div className="fixed inset-0 z-40 flex items-center justify-center bg-black px-6">
         <div className="flex flex-col items-center gap-4 text-center">
           <div className="flex h-16 w-16 items-center justify-center rounded-full border border-vine-500/30 bg-vine-500/10">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="text-vine-400">
-              <rect x="4" y="4" width="16" height="16" rx="3" stroke="currentColor" strokeWidth="1.5" />
+            <svg
+              width="28"
+              height="28"
+              viewBox="0 0 24 24"
+              fill="none"
+              aria-hidden="true"
+              className="text-vine-400"
+            >
+              <rect
+                x="4"
+                y="4"
+                width="16"
+                height="16"
+                rx="3"
+                stroke="currentColor"
+                strokeWidth="1.5"
+              />
               <path d="M10 9L16 12L10 15V9Z" fill="currentColor" />
             </svg>
           </div>
@@ -443,7 +483,8 @@ export function VineFeed({ vineFeed, onDismiss }: VineFeedProps) {
         {/* Video Slides */}
         {shorts.map((short, idx) => {
           const isCurrent = idx === currentIndex;
-          const isNearby = idx === currentIndex || idx === currentIndex + 1 || idx === currentIndex - 1;
+          const isNearby =
+            idx === currentIndex || idx === currentIndex + 1 || idx === currentIndex - 1;
 
           return (
             <div
@@ -500,9 +541,7 @@ export function VineFeed({ vineFeed, onDismiss }: VineFeedProps) {
                           </div>
 
                           {/* Vine Star Badge */}
-                          {short.creatorAddress && (
-                            <VineStarBadge tier="bronze" compact />
-                          )}
+                          {short.creatorAddress && <VineStarBadge tier="bronze" compact />}
 
                           {/* Follow Button */}
                           {short.creatorAddress && (
@@ -520,7 +559,10 @@ export function VineFeed({ vineFeed, onDismiss }: VineFeedProps) {
                         <div className="mb-1">
                           <button
                             type="button"
-                            onClick={(e) => { e.stopPropagation(); toggleCaption(short.id); }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleCaption(short.id);
+                            }}
                             className="block text-left"
                           >
                             <p className="text-sm leading-snug text-white/90 drop-shadow-lg">
@@ -598,10 +640,7 @@ export function VineFeed({ vineFeed, onDismiss }: VineFeedProps) {
                       {/* Vibe Score Breakdown */}
                       {showVibeScores.has(short.id) && isCurrent && (
                         <div className="absolute left-4 top-20 z-30">
-                          <VibeScore
-                            score={short.vibeScore}
-                            onClose={toggleVibeScores}
-                          />
+                          <VibeScore score={short.vibeScore} onClose={toggleVibeScores} />
                         </div>
                       )}
                     </div>
@@ -716,7 +755,13 @@ export function VineFeed({ vineFeed, onDismiss }: VineFeedProps) {
             aria-label="Back"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <path
+                d="M15 18l-6-6 6-6"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
             <span className="hidden sm:inline">Back</span>
           </button>

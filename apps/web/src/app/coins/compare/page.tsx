@@ -604,6 +604,7 @@ export default function CoinComparePage() {
             className="input w-full pl-9 pr-4 py-3 text-sm"
           />
           <svg
+            aria-hidden="true"
             className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--color-muted)]"
             fill="none"
             viewBox="0 0 24 24"

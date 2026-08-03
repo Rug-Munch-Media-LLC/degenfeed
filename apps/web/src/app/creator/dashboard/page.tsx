@@ -15,7 +15,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 // ══════════════════════════════════════════════════════════════════════
 // TYPES
@@ -498,6 +498,7 @@ function Tile({
             className={`flex items-center gap-0.5 text-[10px] font-semibold ${trend.up ? 'text-degen-400' : 'text-red-400'}`}
           >
             <svg
+              aria-hidden="true"
               width="10"
               height="10"
               viewBox="0 0 24 24"
@@ -1134,7 +1135,7 @@ type DashboardTab =
   | 'transparency';
 
 export default function CreatorDashboardPage() {
-  const router = useRouter();
+  const _router = useRouter();
   const [activeTab, setActiveTab] = useState<DashboardTab>('overview');
   const [selectedCoinIdx, setSelectedCoinIdx] = useState(0);
 
@@ -1162,7 +1163,7 @@ export default function CreatorDashboardPage() {
     setTrades(generateMockTrades());
   }, [selectedCoin]);
 
-  const firstCoin = coins[0];
+  const _firstCoin = coins[0];
 
   if (coins.length === 0) {
     return (

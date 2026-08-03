@@ -66,6 +66,7 @@ export const YouTubeCategoryBar = memo(function YouTubeCategoryBar({
           aria-label="Scroll categories left"
         >
           <svg
+            aria-hidden="true"
             width="14"
             height="14"
             viewBox="0 0 24 24"
@@ -117,6 +118,7 @@ export const YouTubeCategoryBar = memo(function YouTubeCategoryBar({
           aria-label="Scroll categories right"
         >
           <svg
+            aria-hidden="true"
             width="14"
             height="14"
             viewBox="0 0 24 24"

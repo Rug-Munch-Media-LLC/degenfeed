@@ -477,6 +477,7 @@ export default function UnifiedVideoFeedPage() {
                   >
                     {watchLater.has(item.id) ? (
                       <svg
+                        aria-hidden="true"
                         className="h-4 w-4 text-yellow-400"
                         fill="currentColor"
                         viewBox="0 0 24 24"
@@ -485,6 +486,7 @@ export default function UnifiedVideoFeedPage() {
                       </svg>
                     ) : (
                       <svg
+                        aria-hidden="true"
                         className="h-4 w-4 text-white"
                         fill="none"
                         stroke="currentColor"
@@ -517,7 +519,12 @@ export default function UnifiedVideoFeedPage() {
               >
                 {loadingMore ? (
                   <span className="flex items-center gap-2">
-                    <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                    <svg
+                      aria-hidden="true"
+                      className="h-4 w-4 animate-spin"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                    >
                       <circle
                         className="opacity-25"
                         cx="12"

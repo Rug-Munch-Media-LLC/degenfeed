@@ -7,16 +7,16 @@
  * delegates UI to sub-components and hooks.
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '../AuthProvider';
-import type { CallInfo, CallHistoryEntry, CallViewState, IncomingCall } from './types';
-import { ControlsBar, CallingScreen, PiPOverlay } from './Controls';
+import { CallingScreen, ControlsBar, PiPOverlay } from './Controls';
+import IncomingCallBanner from './IncomingCall';
 import { VideoGrid } from './Participants';
-import IncomingCallBanner, { CallHistoryList, CallButtons } from './IncomingCall';
+import type { CallHistoryEntry, CallInfo, CallViewState, IncomingCall } from './types';
 
 // ─── Re-exported types ──────────────────────────────────────────────
 
-export type { CallInfo, CallHistoryEntry, IncomingCall, CallViewState } from './types';
+export type { CallHistoryEntry, CallInfo, CallViewState, IncomingCall } from './types';
 
 // ─── Peer Connection Manager ────────────────────────────────────────
 
@@ -51,9 +51,10 @@ function useUserMedia(type: 'audio' | 'video') {
     try {
       const constraints: MediaStreamConstraints = {
         audio: true,
-        video: type === 'video'
-          ? { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' }
-          : false,
+        video:
+          type === 'video'
+            ? { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' }
+            : false,
       };
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       setLocalStream(stream);
@@ -77,14 +78,20 @@ function useUserMedia(type: 'audio' | 'video') {
   const toggleAudio = useCallback(() => {
     if (localStream) {
       const audioTrack = localStream.getAudioTracks()[0];
-      if (audioTrack) { audioTrack.enabled = !audioTrack.enabled; setAudioMuted(!audioTrack.enabled); }
+      if (audioTrack) {
+        audioTrack.enabled = !audioTrack.enabled;
+        setAudioMuted(!audioTrack.enabled);
+      }
     }
   }, [localStream]);
 
   const toggleVideo = useCallback(() => {
     if (localStream) {
       const videoTrack = localStream.getVideoTracks()[0];
-      if (videoTrack) { videoTrack.enabled = !videoTrack.enabled; setVideoMuted(!videoTrack.enabled); }
+      if (videoTrack) {
+        videoTrack.enabled = !videoTrack.enabled;
+        setVideoMuted(!videoTrack.enabled);
+      }
     }
   }, [localStream]);
 
@@ -93,7 +100,10 @@ function useUserMedia(type: 'audio' | 'video') {
       const videoTrack = localStream.getVideoTracks()[0];
       if (videoTrack) {
         const facingMode = videoTrack.getSettings().facingMode === 'user' ? 'environment' : 'user';
-        const newStream = await navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode } });
+        const newStream = await navigator.mediaDevices.getUserMedia({
+          audio: false,
+          video: { facingMode },
+        });
         const newTrack = newStream.getVideoTracks()[0];
         videoTrack.stop();
         localStream.removeTrack(videoTrack);
@@ -103,7 +113,17 @@ function useUserMedia(type: 'audio' | 'video') {
     }
   }, [localStream]);
 
-  return { localStream, error, audioMuted, videoMuted, startMedia, stopMedia, toggleAudio, toggleVideo, flipCamera };
+  return {
+    localStream,
+    error,
+    audioMuted,
+    videoMuted,
+    startMedia,
+    stopMedia,
+    toggleAudio,
+    toggleVideo,
+    flipCamera,
+  };
 }
 
 // ─── Signaling Hook ─────────────────────────────────────────────────
@@ -111,45 +131,58 @@ function useUserMedia(type: 'audio' | 'video') {
 function useSignaling(callId: string | null, _wallet: string | null) {
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const sendSignal = useCallback(async (
-    type: 'offer' | 'answer' | 'ice',
-    to: string,
-    data: { sdp?: string; candidate?: string; sdpMid?: string; sdpMLineIndex?: number },
-  ) => {
-    if (!callId) return;
-    try {
-      await fetch(`/api/calls/${callId}/signal`, {
-        method: 'POST', headers: { 'content-type': 'application/json' }, credentials: 'include',
-        body: JSON.stringify({ type, to, ...data }),
-      });
-    } catch (err) { console.error('[VideoCall] signal failed:', err); }
-  }, [callId]);
-
-  const startPolling = useCallback((onSignal: (signals: unknown[], iceCandidates: unknown[]) => void) => {
-    if (!callId) return;
-    if (pollRef.current) clearInterval(pollRef.current);
-    pollRef.current = setInterval(async () => {
+  const sendSignal = useCallback(
+    async (
+      type: 'offer' | 'answer' | 'ice',
+      to: string,
+      data: { sdp?: string; candidate?: string; sdpMid?: string; sdpMLineIndex?: number },
+    ) => {
+      if (!callId) return;
       try {
-        const res = await fetch(`/api/calls/${callId}/signal/poll`, { credentials: 'include' });
-        if (!res.ok) return;
-        const data = await res.json();
-        if (data.signals?.length > 0 || data.iceCandidates?.length > 0) {
-          onSignal(data.signals, data.iceCandidates);
+        await fetch(`/api/calls/${callId}/signal`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ type, to, ...data }),
+        });
+      } catch (err) {
+        console.error('[VideoCall] signal failed:', err);
+      }
+    },
+    [callId],
+  );
+
+  const startPolling = useCallback(
+    (onSignal: (signals: unknown[], iceCandidates: unknown[]) => void) => {
+      if (!callId) return;
+      if (pollRef.current) clearInterval(pollRef.current);
+      pollRef.current = setInterval(async () => {
+        try {
+          const res = await fetch(`/api/calls/${callId}/signal/poll`, { credentials: 'include' });
+          if (!res.ok) return;
+          const data = await res.json();
+          if (data.signals?.length > 0 || data.iceCandidates?.length > 0) {
+            onSignal(data.signals, data.iceCandidates);
+          }
+        } catch {
+          /* Polling failed silently */
         }
-      } catch { /* Polling failed silently */ }
-    }, 1000);
-  }, [callId]);
+      }, 1000);
+    },
+    [callId],
+  );
 
   const stopPolling = useCallback(() => {
-    if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
+    if (pollRef.current) {
+      clearInterval(pollRef.current);
+      pollRef.current = null;
+    }
   }, []);
 
   useEffect(() => () => stopPolling(), [stopPolling]);
 
   return { sendSignal, startPolling, stopPolling };
 }
-
-
 
 // ─── Main VideoCall Props ────────────────────────────────────────────
 
@@ -170,9 +203,15 @@ interface VideoCallProps {
 // ═════════════════════════════════════════════════════════════════════
 
 export function VideoCall({
-  activeCallId, callType: initialCallType, targetPeer, onCallEnd,
-  incomingCall, onAcceptIncoming, onDeclineIncoming,
-  callHistory: externalHistory, showCallButtons,
+  activeCallId,
+  callType: initialCallType,
+  targetPeer,
+  onCallEnd,
+  incomingCall,
+  onAcceptIncoming,
+  onDeclineIncoming,
+  callHistory: externalHistory,
+  showCallButtons,
 }: VideoCallProps) {
   const { tokens } = useAuth();
   const wallet = tokens.evmAddress || tokens.solanaAddress || null;
@@ -181,7 +220,9 @@ export function VideoCall({
   const [callInfo, setCallInfo] = useState<CallInfo | null>(null);
   const [remoteStreams, setRemoteStreams] = useState<Map<string, MediaStream>>(new Map());
   const [displayNames, _setDisplayNames] = useState<Map<string, string>>(new Map());
-  const [mutedState, _setMutedState] = useState<Map<string, { audio: boolean; video: boolean }>>(new Map());
+  const [mutedState, _setMutedState] = useState<Map<string, { audio: boolean; video: boolean }>>(
+    new Map(),
+  );
   const [isScreenSharing, setIsScreenSharing] = useState(false);
   const [isPiP, setIsPiP] = useState(false);
   const [callDuration, setCallDuration] = useState(0);
@@ -192,40 +233,73 @@ export function VideoCall({
   const peerConnections = useRef<Map<string, RTCPeerConnection>>(new Map());
   const screenShareStream = useRef<MediaStream | null>(null);
 
-  const { localStream, audioMuted, videoMuted, startMedia, stopMedia, toggleAudio, toggleVideo, flipCamera } =
-    useUserMedia(initialCallType || 'video');
+  const {
+    localStream,
+    audioMuted,
+    videoMuted,
+    startMedia,
+    stopMedia,
+    toggleAudio,
+    toggleVideo,
+    flipCamera,
+  } = useUserMedia(initialCallType || 'video');
   const signaling = useSignaling(callInfo?.callId ?? null, wallet);
 
-  const _createCall = useCallback(async (type: 'audio' | 'video', peer: string) => {
-    if (!wallet) return;
-    setViewState('calling');
-    try {
-      const res = await fetch('/api/calls/create', {
-        method: 'POST', headers: { 'content-type': 'application/json' }, credentials: 'include',
-        body: JSON.stringify({ type, participants: [peer] }),
-      });
-      if (!res.ok) { setViewState('idle'); return; }
-      const data = await res.json();
-      setCallInfo(data.call);
+  const _createCall = useCallback(
+    async (type: 'audio' | 'video', peer: string) => {
+      if (!wallet) return;
       setViewState('calling');
-    } catch { setViewState('idle'); }
-  }, [wallet]);
+      try {
+        const res = await fetch('/api/calls/create', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ type, participants: [peer] }),
+        });
+        if (!res.ok) {
+          setViewState('idle');
+          return;
+        }
+        const data = await res.json();
+        setCallInfo(data.call);
+        setViewState('calling');
+      } catch {
+        setViewState('idle');
+      }
+    },
+    [wallet],
+  );
 
-  const setupPeerConnections = useCallback(async (
-    _stream: MediaStream, _call: CallInfo, _signalingData: { peers: string[]; host: string; groupMode: string },
-  ) => {
-    signaling.startPolling((signals, iceCandidates) => {
-      for (const _signal of signals) { /* Handle offers/answers */ }
-      for (const _candidate of iceCandidates) { /* Handle ICE candidates */ }
-    });
-  }, [signaling]);
+  const setupPeerConnections = useCallback(
+    async (
+      _stream: MediaStream,
+      _call: CallInfo,
+      _signalingData: { peers: string[]; host: string; groupMode: string },
+    ) => {
+      signaling.startPolling((signals, iceCandidates) => {
+        for (const _signal of signals) {
+          /* Handle offers/answers */
+        }
+        for (const _candidate of iceCandidates) {
+          /* Handle ICE candidates */
+        }
+      });
+    },
+    [signaling],
+  );
 
   const acceptCall = useCallback(async () => {
     if (!incomingCall || !wallet) return;
     setViewState('connecting');
     try {
-      const res = await fetch(`/api/calls/${incomingCall.callId}/join`, { method: 'POST', credentials: 'include' });
-      if (!res.ok) { setViewState('idle'); return; }
+      const res = await fetch(`/api/calls/${incomingCall.callId}/join`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      if (!res.ok) {
+        setViewState('idle');
+        return;
+      }
       const data = await res.json();
       setCallInfo(data.call);
       onAcceptIncoming?.(incomingCall.callId);
@@ -234,12 +308,17 @@ export function VideoCall({
         setViewState('active');
         await setupPeerConnections(stream, data.call, data.signaling);
       }
-    } catch { setViewState('idle'); }
+    } catch {
+      setViewState('idle');
+    }
   }, [incomingCall, wallet, startMedia, onAcceptIncoming, setupPeerConnections]);
 
   const declineCall = useCallback(() => {
     if (incomingCall) {
-      fetch(`/api/calls/${incomingCall.callId}/end`, { method: 'POST', credentials: 'include' }).catch(() => {});
+      fetch(`/api/calls/${incomingCall.callId}/end`, {
+        method: 'POST',
+        credentials: 'include',
+      }).catch(() => {});
       onDeclineIncoming?.(incomingCall.callId);
     }
     setViewState('idle');
@@ -264,36 +343,58 @@ export function VideoCall({
       setIsScreenSharing(false);
     } else {
       try {
-        const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+        const screenStream = await navigator.mediaDevices.getDisplayMedia({
+          video: true,
+          audio: true,
+        });
         screenShareStream.current = screenStream;
         const screenTrack = screenStream.getVideoTracks()[0];
         peerConnections.current.forEach((pc) => {
           const sender = pc.getSenders().find((s) => s.track?.kind === 'video');
           if (sender) sender.replaceTrack(screenTrack).catch(() => {});
         });
-        screenTrack.onended = () => { setIsScreenSharing(false); screenShareStream.current = null; };
+        screenTrack.onended = () => {
+          setIsScreenSharing(false);
+          screenShareStream.current = null;
+        };
         setIsScreenSharing(true);
-      } catch { /* User cancelled */ }
+      } catch {
+        /* User cancelled */
+      }
     }
   }, [isScreenSharing, localStream]);
 
   const endCall = useCallback(async () => {
     if (callInfo) {
-      try { await fetch(`/api/calls/${callInfo.callId}/end`, { method: 'POST', credentials: 'include' }); } catch { }
+      try {
+        await fetch(`/api/calls/${callInfo.callId}/end`, {
+          method: 'POST',
+          credentials: 'include',
+        });
+      } catch {}
     }
     peerConnections.current.forEach((pc) => pc.close());
     peerConnections.current.clear();
-    if (screenShareStream.current) { screenShareStream.current.getTracks().forEach((t) => t.stop()); screenShareStream.current = null; }
+    if (screenShareStream.current) {
+      screenShareStream.current.getTracks().forEach((t) => t.stop());
+      screenShareStream.current = null;
+    }
     stopMedia();
     signaling.stopPolling();
-    if (durationRef.current) { clearInterval(durationRef.current); durationRef.current = null; }
+    if (durationRef.current) {
+      clearInterval(durationRef.current);
+      durationRef.current = null;
+    }
     setViewState('ended');
     setCallInfo(null);
     setRemoteStreams(new Map());
     setIsScreenSharing(false);
     setIsPiP(false);
     setCallDuration(0);
-    setTimeout(() => { setViewState('idle'); onCallEnd?.(); }, 2000);
+    setTimeout(() => {
+      setViewState('idle');
+      onCallEnd?.();
+    }, 2000);
   }, [callInfo, stopMedia, signaling, onCallEnd]);
 
   const togglePiP = useCallback(() => setIsPiP(!isPiP), [isPiP]);
@@ -307,16 +408,22 @@ export function VideoCall({
       clearInterval(durationRef.current);
       durationRef.current = null;
     }
-    return () => { if (durationRef.current) clearInterval(durationRef.current); };
+    return () => {
+      if (durationRef.current) clearInterval(durationRef.current);
+    };
   }, [viewState]);
 
   useEffect(() => {
     if (!externalHistory && wallet) {
       fetch('/api/calls/history', { credentials: 'include' })
         .then((res) => (res.ok ? res.json() : null))
-        .then((data) => { if (data?.history) setHistory(data.history); })
+        .then((data) => {
+          if (data?.history) setHistory(data.history);
+        })
         .catch(() => {});
-    } else if (externalHistory) { setHistory(externalHistory); }
+    } else if (externalHistory) {
+      setHistory(externalHistory);
+    }
   }, [wallet, externalHistory]);
 
   // ─── Render ─────────────────────────────────────────────────
@@ -325,7 +432,14 @@ export function VideoCall({
   }
 
   if (isPiP && viewState === 'active') {
-    return <PiPOverlay localStream={localStream} duration={callDuration} onExpand={() => setIsPiP(false)} onEndCall={endCall} />;
+    return (
+      <PiPOverlay
+        localStream={localStream}
+        duration={callDuration}
+        onExpand={() => setIsPiP(false)}
+        onEndCall={endCall}
+      />
+    );
   }
 
   if (viewState !== 'idle') {
@@ -350,33 +464,54 @@ export function VideoCall({
               </span>
             )}
             <span className="text-[10px] text-white/40">
-              {callInfo?.participants.length || 1} participant{callInfo?.participants.length !== 1 ? 's' : ''}
+              {callInfo?.participants.length || 1} participant
+              {callInfo?.participants.length !== 1 ? 's' : ''}
             </span>
           </div>
         </div>
 
         {viewState === 'calling' && callInfo?.participants ? (
-          <CallingScreen callee={callInfo.participants.find((p) => p !== wallet) || 'Unknown'}
-            type={callInfo.type} onCancel={endCall} />
+          <CallingScreen
+            callee={callInfo.participants.find((p) => p !== wallet) || 'Unknown'}
+            type={callInfo.type}
+            onCancel={endCall}
+          />
         ) : viewState === 'ended' ? (
           <div className="flex flex-1 items-center justify-center">
             <div className="text-center">
               <p className="text-lg text-white/60 font-medium">Call ended</p>
-              {callDuration > 0 && <p className="text-sm text-white/40 mt-1">Duration: {Math.floor(callDuration / 60)}m {callDuration % 60}s</p>}
+              {callDuration > 0 && (
+                <p className="text-sm text-white/40 mt-1">
+                  Duration: {Math.floor(callDuration / 60)}m {callDuration % 60}s
+                </p>
+              )}
             </div>
           </div>
         ) : (
-          <VideoGrid localStream={localStream} remoteStreams={remoteStreams}
-            participants={callInfo?.participants || []} myWallet={wallet || ''}
-            displayNames={displayNames} mutedState={mutedState} type={callInfo?.type || 'video'} />
+          <VideoGrid
+            localStream={localStream}
+            remoteStreams={remoteStreams}
+            participants={callInfo?.participants || []}
+            myWallet={wallet || ''}
+            displayNames={displayNames}
+            mutedState={mutedState}
+            type={callInfo?.type || 'video'}
+          />
         )}
 
         {viewState === 'active' && (
-          <ControlsBar audioMuted={audioMuted} videoMuted={videoMuted}
-            isScreenSharing={isScreenSharing} callActive={viewState === 'active'}
-            onToggleAudio={toggleAudio} onToggleVideo={toggleVideo}
-            onScreenShare={toggleScreenShare} onFlipCamera={flipCamera}
-            onEndCall={endCall} onPiP={togglePiP} />
+          <ControlsBar
+            audioMuted={audioMuted}
+            videoMuted={videoMuted}
+            isScreenSharing={isScreenSharing}
+            callActive={viewState === 'active'}
+            onToggleAudio={toggleAudio}
+            onToggleVideo={toggleVideo}
+            onScreenShare={toggleScreenShare}
+            onFlipCamera={flipCamera}
+            onEndCall={endCall}
+            onPiP={togglePiP}
+          />
         )}
       </div>
     );
@@ -397,24 +532,47 @@ export function useVideoCall() {
   const refreshHistory = useCallback(async () => {
     try {
       const res = await fetch('/api/calls/history', { credentials: 'include' });
-      if (res.ok) { const data = await res.json(); setCallHistory(data.history || []); }
-    } catch { /* Non-critical */ }
+      if (res.ok) {
+        const data = await res.json();
+        setCallHistory(data.history || []);
+      }
+    } catch {
+      /* Non-critical */
+    }
   }, []);
 
   const startCall = useCallback((type: 'audio' | 'video', peerId: string) => {
-    setCallType(type); setTargetPeer(peerId); setActiveCallId('new');
+    setCallType(type);
+    setTargetPeer(peerId);
+    setActiveCallId('new');
   }, []);
 
   const handleCallEnd = useCallback(() => {
-    setActiveCallId(undefined); setIncomingCall(null); refreshHistory();
+    setActiveCallId(undefined);
+    setIncomingCall(null);
+    refreshHistory();
   }, [refreshHistory]);
 
   const handleAcceptIncoming = useCallback((callId: string) => {
-    setActiveCallId(callId); setIncomingCall(null);
+    setActiveCallId(callId);
+    setIncomingCall(null);
   }, []);
 
-  const handleDeclineIncoming = useCallback((_callId: string) => { setIncomingCall(null); }, []);
+  const handleDeclineIncoming = useCallback((_callId: string) => {
+    setIncomingCall(null);
+  }, []);
 
-  return { activeCallId, incomingCall, callHistory, callType, targetPeer,
-    setIncomingCall, startCall, handleCallEnd, handleAcceptIncoming, handleDeclineIncoming, refreshHistory };
+  return {
+    activeCallId,
+    incomingCall,
+    callHistory,
+    callType,
+    targetPeer,
+    setIncomingCall,
+    startCall,
+    handleCallEnd,
+    handleAcceptIncoming,
+    handleDeclineIncoming,
+    refreshHistory,
+  };
 }

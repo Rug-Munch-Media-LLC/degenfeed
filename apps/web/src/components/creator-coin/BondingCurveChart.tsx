@@ -70,7 +70,7 @@ export function BondingCurveChart({
       </div>
 
       {/* SVG Chart */}
-      <svg viewBox={`0 0 ${width} ${height + 30}`} className="w-full h-auto">
+      <svg aria-hidden="true" viewBox={`0 0 ${width} ${height + 30}`} className="w-full h-auto">
         {/* Grid lines */}
         {[0, 0.25, 0.5, 0.75, 1].map((frac) => (
           <line

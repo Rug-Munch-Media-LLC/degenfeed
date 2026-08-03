@@ -296,10 +296,11 @@ export function ShortsStudio({ open, onClose, onPublished }: ShortsStudioProps) 
     return (
       <div className="flex flex-col gap-4">
         <div>
-          <label className="mb-1 block text-xs font-medium text-white/70">
+          <label className="mb-1 block text-xs font-medium text-white/70" htmlFor="field-4d5f9128">
             Video URL <span className="text-white/30">(MP4, WebM, or HLS)</span>
           </label>
           <input
+            id="field-4d5f9128"
             type="url"
             value={videoUrl}
             onChange={(e) => {
@@ -330,7 +331,7 @@ export function ShortsStudio({ open, onClose, onPublished }: ShortsStudioProps) 
 
         {/* Duration selector */}
         <div>
-          <label className="mb-1.5 block text-xs font-medium text-white/70">Duration</label>
+          <span className="mb-1.5 block text-xs font-medium text-white/70">Duration</span>
           <div className="flex gap-1.5">
             {durationPresets.map((d) => (
               <button
@@ -351,10 +352,11 @@ export function ShortsStudio({ open, onClose, onPublished }: ShortsStudioProps) 
 
         {/* Thumbnail */}
         <div>
-          <label className="mb-1 block text-xs font-medium text-white/70">
+          <label className="mb-1 block text-xs font-medium text-white/70" htmlFor="field-179c0a41">
             Thumbnail URL <span className="text-white/30">(optional)</span>
           </label>
           <input
+            id="field-179c0a41"
             type="url"
             value={thumbnailUrl}
             onChange={(e) => setThumbnailUrl(e.target.value)}
@@ -381,10 +383,11 @@ export function ShortsStudio({ open, onClose, onPublished }: ShortsStudioProps) 
       <div className="flex flex-col gap-4">
         {/* Title */}
         <div>
-          <label className="mb-1 block text-xs font-medium text-white/70">
+          <label className="mb-1 block text-xs font-medium text-white/70" htmlFor="field-083bdbc2">
             Title <span className="text-white/30">*</span>
           </label>
           <input
+            id="field-083bdbc2"
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
@@ -396,8 +399,11 @@ export function ShortsStudio({ open, onClose, onPublished }: ShortsStudioProps) 
 
         {/* Caption */}
         <div>
-          <label className="mb-1 block text-xs font-medium text-white/70">Caption</label>
+          <label className="mb-1 block text-xs font-medium text-white/70" htmlFor="field-a77b9de9">
+            Caption
+          </label>
           <textarea
+            id="field-a77b9de9"
             value={caption}
             onChange={(e) => setCaption(e.target.value)}
             placeholder="Describe your short..."
@@ -409,8 +415,11 @@ export function ShortsStudio({ open, onClose, onPublished }: ShortsStudioProps) 
 
         {/* Hashtags */}
         <div>
-          <label className="mb-1 block text-xs font-medium text-white/70">Hashtags</label>
+          <label className="mb-1 block text-xs font-medium text-white/70" htmlFor="field-3683985d">
+            Hashtags
+          </label>
           <input
+            id="field-3683985d"
             type="text"
             value={hashtags}
             onChange={(e) => setHashtags(e.target.value)}
@@ -421,7 +430,7 @@ export function ShortsStudio({ open, onClose, onPublished }: ShortsStudioProps) 
 
         {/* Publish targets */}
         <div>
-          <label className="mb-2 block text-xs font-medium text-white/70">Publish to</label>
+          <span className="mb-2 block text-xs font-medium text-white/70">Publish to</span>
           <div className="flex flex-wrap gap-2">
             {PUBLISH_TARGETS.map((t) => {
               const active = selectedTargets.has(t.key);
@@ -467,7 +476,7 @@ export function ShortsStudio({ open, onClose, onPublished }: ShortsStudioProps) 
               />
             </button>
             <div className="flex-1">
-              <label className="text-xs font-medium text-white/80">Mint as Zora NFT</label>
+              <span className="text-xs font-medium text-white/80">Mint as Zora NFT</span>
               <p className="text-[10px] text-white/40">Your short becomes a tradeable video NFT</p>
             </div>
           </div>

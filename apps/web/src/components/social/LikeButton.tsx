@@ -100,6 +100,7 @@ export function LikeButton({
       aria-pressed={liked}
     >
       <svg
+        aria-hidden="true"
         width={size === 'sm' ? 16 : size === 'md' ? 18 : 22}
         height={size === 'sm' ? 16 : size === 'md' ? 18 : 22}
         viewBox="0 0 24 24"
