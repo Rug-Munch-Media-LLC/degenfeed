@@ -1,58 +1,53 @@
 'use client';
 
 /**
- * SortSelector — Sort options for the unified feed.
+ * SortSelector — Sort dropdown for the unified feed.
  *
- * Presents "Latest", "Trending", "Most Active" as sort modes.
- * Uses a segmented control layout.
+ * Presents "Latest", "Trending", "Quality", "Most Zapped", "Most Engaged"
+ * as the primary feed ordering. Uses a styled native <select> for
+ * accessibility (keyboard, screen readers) and mobile friendliness.
  */
 
-export type SortMode = 'latest' | 'trending' | 'most-active';
+import { type FeedSort, SORT_LABELS } from '../../lib/feedRanking';
+
+export type SortMode = FeedSort;
 
 export interface SortSelectorProps {
   mode: SortMode;
   onChange: (mode: SortMode) => void;
 }
 
-const SORT_OPTIONS: { id: SortMode; label: string; icon: string }[] = [
-  { id: 'latest', label: 'Latest', icon: '\u23F1' },
-  { id: 'trending', label: 'Trending', icon: '\uD83D\uDD25' },
-  { id: 'most-active', label: 'Most Active', icon: '\u26A1' },
-];
+const SORT_OPTIONS = (Object.keys(SORT_LABELS) as FeedSort[]).map((id) => ({
+  id,
+  ...SORT_LABELS[id],
+}));
 
 export function SortSelector({ mode, onChange }: SortSelectorProps) {
   return (
-    <div
-      className="flex rounded-xl border border-[var(--color-glass-border)] p-0.5"
-      role="radiogroup"
-      aria-label="Sort by"
-    >
-      {SORT_OPTIONS.map((opt) => {
-        const isActive = mode === opt.id;
-        return (
-          <button
-            key={opt.id}
-            type="button"
-            role="radio"
-            aria-checked={isActive}
-            onClick={() => onChange(opt.id)}
-            className={`
-              flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium
-              transition-all duration-200
-              ${isActive ? 'shadow-sm' : 'hover:text-[var(--color-fg)]'}
-            `}
-            style={{
-              backgroundColor: isActive ? 'var(--color-accent-glow)' : 'transparent',
-              color: isActive ? 'var(--color-accent)' : 'var(--color-muted)',
-            }}
-          >
-            <span aria-hidden="true" className="text-[0.85em]">
-              {opt.icon}
-            </span>
-            <span>{opt.label}</span>
-          </button>
-        );
-      })}
-    </div>
+    <label className="relative inline-flex items-center" aria-label="Sort feed by">
+      <span
+        className="pointer-events-none absolute left-2.5 text-[0.9em] text-[var(--color-muted)]"
+        aria-hidden="true"
+      >
+        {SORT_LABELS[mode].icon}
+      </span>
+      <select
+        value={mode}
+        onChange={(e) => onChange(e.target.value as SortMode)}
+        className="appearance-none rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card-bg)] py-2 pl-8 pr-8 text-xs font-semibold text-[var(--color-fg)] outline-none transition-colors hover:border-[var(--color-glass-border)] focus:border-degen-500/50"
+      >
+        {SORT_OPTIONS.map((opt) => (
+          <option key={opt.id} value={opt.id}>
+            {opt.label}
+          </option>
+        ))}
+      </select>
+      <span
+        className="pointer-events-none absolute right-2.5 text-[0.7em] text-[var(--color-muted)]"
+        aria-hidden="true"
+      >
+        ▾
+      </span>
+    </label>
   );
 }

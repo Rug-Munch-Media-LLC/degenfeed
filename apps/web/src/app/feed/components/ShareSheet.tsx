@@ -92,6 +92,7 @@ export function ShareSheet({ post, open, onClose, onToast }: ShareSheetProps) {
   const sheetRef = useRef<HTMLDivElement>(null);
   const [closing, setClosing] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [showSheet, setShowSheet] = useState(false);
 
   const handleClose = useCallback(() => {
     setClosing(true);
@@ -191,19 +192,17 @@ export function ShareSheet({ post, open, onClose, onToast }: ShareSheetProps) {
     [post, handleClose, onToast],
   );
 
-  if (!open) return null;
-
-  // On mobile, try native share
-  const [showSheet, setShowSheet] = useState(false);
+  // Only try native share on first open
   useEffect(() => {
     if (!open) return;
-    // Only try native share on first open
     const checkNative = async () => {
       const shared = await handleNativeShare();
       if (!shared) setShowSheet(true);
     };
     checkNative();
   }, [open, handleNativeShare]);
+
+  if (!open) return null;
 
   if (!showSheet) return null;
 

@@ -25,6 +25,7 @@ import {
   saveFeedMixConfig,
   saveSavedMixes,
 } from '../../components/FeedTuner';
+import { FeedControls } from '../../components/feed/FeedControls';
 import { FeedFilterBar, FeedTabBar } from '../../components/feed/FeedFilterBar';
 import {
   FeedAuthBanner,
@@ -32,18 +33,18 @@ import {
   FeedErrorState,
   FeedLoadingSkeleton,
   FeedNewPostsBanner,
+  FeedPersonalizedBanner,
   FeedProtocolSummary,
 } from '../../components/feed/FeedStates';
 import { FEED_PRESETS } from '../../components/feed/feedPresets';
-import { getProtocolTabs, ProtocolFeedTabs } from '../../components/feed/ProtocolFeedTabs';
 import { PullToRefresh } from '../../components/feed/PullToRefresh';
-import { SortSelector } from '../../components/feed/SortSelector';
 import { GettingStartedChecklist } from '../../components/GettingStartedChecklist';
 import { GuidedTour } from '../../components/GuidedTour';
 import { PostContextMenu } from '../../components/PostContextMenu';
 import { useAnnouncer } from '../../components/ScreenReaderAnnouncer';
 import { useToast } from '../../components/Toast';
 import { useEdgeSwipeBack } from '../../hooks/useEdgeSwipeBack';
+import { useFeedControls } from '../../hooks/useFeedControls';
 import { useFeedLayout } from '../../hooks/useFeedLayout';
 import { useFeedPosition } from '../../hooks/useFeedPosition';
 import { useHapticFeedback } from '../../hooks/useHapticFeedback';
@@ -51,6 +52,7 @@ import { useNotifications } from '../../hooks/useNotifications';
 import { useRealtimeFeed } from '../../hooks/useRealtimeFeed';
 import { useReturningUser } from '../../hooks/useReturningUser';
 import { useSwipeTabs } from '../../hooks/useSwipeTabs';
+import { applyFeedControls, type FeedControls as FeedControlsState } from '../../lib/feedRanking';
 import { fetchWithSwr, getCached } from '../../lib/fetchWithCache';
 import { ReadingProgressBar } from './components/ReadingProgressBar';
 import { ShareSheet } from './components/ShareSheet';
@@ -115,7 +117,15 @@ export default function FeedPage() {
   const [showOriginalContent, setShowOriginalContent] = useState(false);
   const [minEngagement, setMinEngagement] = useState(0);
   const [maxPerNiche, setMaxPerNiche] = useState(5);
-  const [protocolFilter, setProtocolFilter] = useState<string | null>(null);
+  // User-controllable feed controls: sort, protocols, content type, time,
+  // niches, and "My Algorithm" weights. Persisted to URL + localStorage by
+  // the hook; forwarded to the bridge feed endpoint and applied client-side
+  // (the bridge returns a deduplicated, unsorted mix today).
+  const {
+    controls,
+    setControls: setFeedControls,
+    patchControls: patchFeedControls,
+  } = useFeedControls();
   const [algorithmTransparent, setAlgorithmTransparent] = useState(false);
   const [freshnessPreference, setFreshnessPreference] = useState(50);
   const [creatorDiversity, setCreatorDiversity] = useState(5);
@@ -135,9 +145,10 @@ export default function FeedPage() {
   const returnUser = useReturningUser();
 
   // ── Real-time feed updates via WebSocket ──
+  const realtimeProtocol = controls.protocols.length === 1 ? controls.protocols[0] : null;
   const realtimeFeed = useRealtimeFeed(
     activeTab === 'trending' ? 'trending' : activeTab === 'following' ? 'home' : 'for-you',
-    protocolFilter,
+    realtimeProtocol,
   );
   const realtimeInsertedRef = useRef(false);
 
@@ -239,6 +250,22 @@ export default function FeedPage() {
     }, 800);
   }, []);
 
+  // FeedControls → state + URL/localStorage (hook) + server preference sync.
+  const handleControlsChange = useCallback(
+    (next: FeedControlsState) => {
+      setFeedControls(next);
+      persistPrefs({
+        sort: next.sort,
+        protocols: next.protocols,
+        timeRange: next.timeRange,
+        contentTypes: next.contentTypes,
+        niches: next.niches,
+        algorithm: next.algorithm,
+      });
+    },
+    [setFeedControls, persistPrefs],
+  );
+
   const handleFeedMixChange = useCallback((config: FeedMixConfig) => {
     setFeedMixConfig(config);
     saveFeedMixConfig(config);
@@ -304,7 +331,7 @@ export default function FeedPage() {
         if (typeof data.allowNonCrypto === 'boolean') setAllowNonCrypto(data.allowNonCrypto);
         if (data.recencyWeight) setRecencyWeight(data.recencyWeight);
         if (data.engagementWeight) setEngagementWeight(data.engagementWeight);
-        if (data.protocolFilter) setProtocolFilter(data.protocolFilter);
+        if (data.protocolFilter) patchFeedControls({ protocols: [data.protocolFilter] });
         if (typeof data.freshnessPreference === 'number')
           setFreshnessPreference(data.freshnessPreference);
         if (typeof data.creatorDiversity === 'number') setCreatorDiversity(data.creatorDiversity);
@@ -323,7 +350,7 @@ export default function FeedPage() {
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, []);
+  }, [patchFeedControls]);
 
   const [contextMenuPostId, setContextMenuPostId] = useState<string | null>(null);
   const [_contextMenuPos, _setContextMenuPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
@@ -371,23 +398,51 @@ export default function FeedPage() {
             ? '/api/feed/for-you'
             : '/api/feed/home'
           : '/api/feed/home';
-        const cacheKey = `feed_${hasSignedIn ? 'signed' : 'anon'}_${activeTab}_${protocolFilter ?? 'all'}_${loadedLimit}_${hideLowQuality}_${allowNonCrypto}_${showOriginalContent}_${minEngagement}_${maxPerNiche}_${recencyWeight}_${engagementWeight}_${freshnessPreference}_${creatorDiversity}_${exploreRatio}_${algorithmTransparent}_${activePreset ?? 'none'}`;
+        const controlsKey = [
+          controls.sort,
+          controls.protocols.join('|') || 'all',
+          controls.timeRange,
+          controls.contentTypes.join('|') || 'any',
+          controls.niches.join('|') || 'any',
+          controls.algorithm.recencyQuality,
+          controls.algorithm.engagementDiversity,
+          controls.algorithm.protocolDiversity,
+        ].join('_');
+        const cacheKey = `feed_${hasSignedIn ? 'signed' : 'anon'}_${activeTab}_${controlsKey}_${loadedLimit}_${hideLowQuality}_${allowNonCrypto}_${showOriginalContent}_${minEngagement}_${maxPerNiche}_${recencyWeight}_${engagementWeight}_${freshnessPreference}_${creatorDiversity}_${exploreRatio}_${algorithmTransparent}_${activePreset ?? 'none'}`;
         const url = new URL(endpoint, window.location.origin);
         url.searchParams.set('limit', String(loadedLimit));
-        const protocolsToFetch = protocolFilter
-          ? [protocolFilter]
-          : [
-              'nostr',
-              'farcaster',
-              'lens',
-              'bluesky',
-              'mastodon',
-              'lemmy',
-              'peertube',
-              'reddit',
-              'rss',
-            ];
+        const protocolsToFetch =
+          controls.protocols.length > 0
+            ? controls.protocols
+            : [
+                'nostr',
+                'farcaster',
+                'lens',
+                'bluesky',
+                'mastodon',
+                'lemmy',
+                'peertube',
+                'reddit',
+                'rss',
+              ];
         url.searchParams.set('protocols', protocolsToFetch.join(','));
+        // User-controlled feed params — forwarded to the bridge feed endpoint.
+        // The bridge honors protocols/limit today; the rest are applied
+        // client-side and ready for server-side adoption.
+        url.searchParams.set('sort', controls.sort);
+        url.searchParams.set('time', controls.timeRange);
+        if (controls.contentTypes.length > 0)
+          url.searchParams.set('contentType', controls.contentTypes.join(','));
+        if (controls.niches.length > 0) url.searchParams.set('niches', controls.niches.join(','));
+        if (controls.algorithm.recencyQuality !== 50)
+          url.searchParams.set('recencyQuality', String(controls.algorithm.recencyQuality));
+        if (controls.algorithm.engagementDiversity !== 50)
+          url.searchParams.set(
+            'engagementDiversity',
+            String(controls.algorithm.engagementDiversity),
+          );
+        if (controls.algorithm.protocolDiversity !== 50)
+          url.searchParams.set('protocolDiversity', String(controls.algorithm.protocolDiversity));
         if (activeTab === 'following') url.searchParams.set('filter', 'following');
         if (hideLowQuality) {
           url.searchParams.set('hideLowQuality', 'true');
@@ -427,6 +482,9 @@ export default function FeedPage() {
             /* ignore */
           }
         }
+
+        // Apply user-controlled sort / filters / algorithm weights.
+        feed = applyFeedControls(feed, controls);
 
         if (checkOnly && feed.length > 0 && feed[0]?.id !== lastPostIdRef.current) {
           setNewAvailable(true);
@@ -472,7 +530,7 @@ export default function FeedPage() {
       maxPerNiche,
       recencyWeight,
       engagementWeight,
-      protocolFilter,
+      controls,
       topicWeights,
       algorithmTransparent,
       freshnessPreference,
@@ -577,21 +635,16 @@ export default function FeedPage() {
             </div>
           )}
           {!hasSignedIn && <FeedAuthBanner onSignIn={openSignIn} />}
+          {hasSignedIn && <FeedPersonalizedBanner walletAddress={walletAddress} />}
           {!isCompact && <GettingStartedChecklist />}
           {returnUser && <GuidedTour />}
 
-          {/* Protocol filter tabs */}
-          <div className="mb-4">
-            <ProtocolFeedTabs
-              tabs={getProtocolTabs()}
-              activeTab={protocolFilter}
-              onTabChange={(id) => {
-                setProtocolFilter(id);
-                persistPrefs({ protocolFilter: id });
-              }}
-              showCounts
-            />
-          </div>
+          {/* Feed controls: sort, protocols, content type, time, niches, algorithm */}
+          <FeedControls
+            controls={controls}
+            onChange={handleControlsChange}
+            resultCount={state === 'loaded' ? posts.length : undefined}
+          />
 
           {/* Live indicator */}
           <div className="mb-3 flex items-center gap-2">
@@ -624,7 +677,6 @@ export default function FeedPage() {
               onTabChange={(id) => setActiveTab(id as Tab)}
             />
             <div className="flex items-center gap-2">
-              <SortSelector mode="latest" onChange={() => {}} />
               <NotificationBell
                 notifications={[]}
                 unreadCount={unreadCount}
@@ -674,11 +726,12 @@ export default function FeedPage() {
               setMinEngagement(v);
               persistPrefs({ minEngagement: v });
             }}
-            protocolFilter={protocolFilter}
-            onProtocolFilterChange={(v) => {
-              setProtocolFilter(v);
-              persistPrefs({ protocolFilter: v });
-            }}
+            protocolFilter={
+              controls.protocols.length === 1 ? (controls.protocols[0] ?? null) : null
+            }
+            onProtocolFilterChange={(v) =>
+              handleControlsChange({ ...controls, protocols: v ? [v] : [] })
+            }
             onOpenTuner={() => setShowTuner(true)}
           />
 

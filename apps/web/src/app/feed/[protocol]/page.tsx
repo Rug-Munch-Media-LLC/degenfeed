@@ -8,7 +8,10 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../../../components/AuthProvider';
 import { useRealtimeFeed } from '../../../hooks/useRealtimeFeed';
+import { ProtocolEmptyState } from './components/ProtocolEmptyState';
 import { ProtocolHeader } from './components/ProtocolHeader';
+import { ProtocolHealthBanner } from './components/ProtocolHealthBanner';
+import { ProtocolPostMeta } from './components/ProtocolPostMeta';
 import { ProtocolStats } from './components/ProtocolStats';
 import { ProtocolTrending } from './components/ProtocolTrending';
 
@@ -35,6 +38,10 @@ interface FeedMeta {
   protocolLabel?: string;
   activeUsers24h?: number;
   engagementVelocity?: number;
+  source?: string;
+  isDemo?: boolean;
+  perProtocol?: Record<string, number>;
+  providerSources?: Record<string, string>;
 }
 
 type SortMode = 'popular' | 'trending' | 'newest' | 'videos';
@@ -235,6 +242,9 @@ function ProtocolFeedContent({ protocol }: { protocol: string }) {
           activeUsers24h={feedMeta.activeUsers24h}
         />
 
+        {/* Protocol health banner (green/yellow/red) from live bridge health */}
+        <ProtocolHealthBanner protocol={protocol} meta={feedMeta} />
+
         {/* Stats Cards */}
         <ProtocolStats
           protocol={protocol}
@@ -372,51 +382,35 @@ function ProtocolFeedContent({ protocol }: { protocol: string }) {
           </div>
         )}
 
-        {/* Empty state */}
-        {state === 'empty' && (
-          <div
-            className="mt-6 rounded-xl border py-10 text-center"
-            style={{ borderColor: `${color}20`, backgroundColor: `${color}04` }}
-          >
-            <div
-              className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full text-2xl"
-              style={{ backgroundColor: `${color}15`, color }}
-            >
-              {protocol === 'nostr'
-                ? '⚡'
-                : protocol === 'farcaster'
-                  ? '◈'
-                  : protocol === 'lens'
-                    ? '◎'
-                    : protocol === 'bluesky'
-                      ? '☁'
-                      : '●'}
-            </div>
-            <h3 className="mb-1 text-base font-bold" style={{ color }}>
-              No posts found
-            </h3>
-            <p className="mx-auto max-w-xs text-sm text-[var(--color-muted)]">
-              No{activeSort === 'videos' ? ' media' : ''} posts from this protocol right now. Try a
-              different sort order or check back later.
-            </p>
-            <button
-              type="button"
-              onClick={handleRetry}
-              className="mt-4 rounded-lg px-4 py-2 text-sm font-medium text-white transition-all hover:opacity-90"
-              style={{ backgroundColor: color }}
-            >
-              Retry
-            </button>
-          </div>
-        )}
-
-        {/* Feed list */}
+        {/* Feed list (protocol-specific empty state via emptySlot) */}
         <FeedList
           state={state}
           posts={posts}
           error={error}
           protocolLabel={feedMeta.protocolLabel ?? protocol}
           protocolColor={color}
+          emptySlot={
+            state === 'empty' ? (
+              <ProtocolEmptyState protocol={protocol} sort={activeSort} onRetry={handleRetry} />
+            ) : undefined
+          }
+          postMetaSlot={(post) => (
+            <ProtocolPostMeta
+              post={post}
+              onEngage={handleEngage}
+              onReply={(p) => {
+                const nativeId = p.id.replace(
+                  /^(nostr:|farcaster:|lens:|bluesky:|mastodon:|reddit:|rss:|threads:)/,
+                  '',
+                );
+                openComposeReply({
+                  parentPostUri: p.dfUri ?? `df://${p.protocol}:${nativeId}`,
+                  parentProtocol: p.protocol,
+                  parentPreview: p.text.slice(0, 120),
+                });
+              }}
+            />
+          )}
           onPostClick={(id) => router.push(`/post/${encodeURIComponent(id)}`)}
           onEngage={handleEngage}
           onTip={(post) => setTipPost(post)}
