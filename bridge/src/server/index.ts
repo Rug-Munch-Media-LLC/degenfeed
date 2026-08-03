@@ -28,6 +28,7 @@ import {
   DEFAULT_PREFERENCES,
   PROVIDERS,
   prewarmFeedCache,
+  startFeedCacheRefresher,
 } from './feeds';
 import { handleGtsRoute } from './gts-routes';
 import { handleNostrRoute } from './nostr-routes';
@@ -57,6 +58,25 @@ async function checkSourceHealth(url: string): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+/**
+ * Farcaster is healthy if EITHER the self-hosted Hubble node responds OR a
+ * Neynar API key is configured. The farcaster provider prefers Hubble when it
+ * is fully synced, but falls back to the Neynar public API when Hubble is
+ * unreachable/syncing — so both paths represent "real data flowing".
+ */
+async function checkFarcasterHealth(): Promise<boolean> {
+  const hubbleBase =
+    process.env.HUBBLE_URL || process.env.HUBBLE_ALT_URL || 'http://127.0.0.1:8200';
+  try {
+    const res = await fetch(`${hubbleBase}/v1/info`, { signal: AbortSignal.timeout(3000) });
+    if (res.ok) return true;
+  } catch {
+    // fall through — check Neynar fallback below
+  }
+  // Hubble down or unsynced → provider uses Neynar public API fallback
+  return Boolean(process.env.NEYNAR_API_KEY);
 }
 
 /**
@@ -755,7 +775,6 @@ const server = http.createServer(async (req, res) => {
           'http://127.0.0.1:8096/api/v1/instance',
           'http://127.0.0.1:8091/',
           'http://127.0.0.1:8092/api/status',
-          'http://127.0.0.1:2281/v1/info',
           'http://127.0.0.1:8099/health',
           'https://api.telegram.org/', // Telegram
           'https://discord.com/api/v10/gateway', // Discord
@@ -775,13 +794,15 @@ const server = http.createServer(async (req, res) => {
         pixelfedHealthy,
         zoraHealthy,
         owncastHealthy,
-        farcasterHealthy,
         lensHealthy,
         telegramHealthy,
         discordHealthy,
         matrixHealthy,
         githubHealthy,
       ] = results;
+      // Farcaster is checked separately — Hubble may be on a different port
+      // than the health probe list assumes, and Neynar fallback is valid.
+      const farcasterHealthy = await checkFarcasterHealth();
       return jsonOk(res, {
         status: results.some(Boolean) ? 'ok' : 'degraded',
         sources: {
@@ -1213,4 +1234,7 @@ server.listen(PORT, BRIDGE_HOST, () => {
   // Pre-warm the feed result cache so the first user request is fast
   // (fixes 20s cold start from aggregating 30+ providers on first request)
   void prewarmFeedCache();
+  // Keep the feed caches warm between user visits so a stale cache can never
+  // force a slow synchronous rebuild on the next request.
+  startFeedCacheRefresher();
 });

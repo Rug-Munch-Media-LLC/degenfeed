@@ -2,6 +2,7 @@
 
 import type { PlatformAccount } from '@degenfeed/ui';
 import { CrossPlatformSetup, ErrorBoundary, ReputationBadge } from '@degenfeed/ui';
+import { useState } from 'react';
 import {
   CredentialCard,
   CredentialSecurityNote,
@@ -12,6 +13,7 @@ import { EditProfileModal } from '../../components/EditProfileModal';
 import { IdentityLinker } from '../../components/IdentityLinker';
 import { ProtocolStatusSection } from '../../components/onboarding/ProtocolStatusSection';
 import { PremiumPaymentModal } from '../../components/PremiumPaymentModal';
+import { ConnectAccountPanel } from '../../components/profile/ConnectAccountPanel';
 import { GoLiveModal } from '../../components/streams/GoLiveModal';
 import { UnifiedComposerButton } from '../../components/UnifiedComposerButton';
 import {
@@ -29,7 +31,7 @@ import {
   UnifiedProfileHeader,
   WhoToFollow,
 } from './components';
-import { PROTOCOL_COLORS } from './constants';
+import { PROTOCOL_COLORS, PROTOCOL_LABELS } from './constants';
 import { useProfile } from './use-profile';
 
 export const dynamic = 'force-dynamic';
@@ -89,6 +91,12 @@ function GuestView({ onOpenSignIn }: { onOpenSignIn: () => void }) {
 }
 
 function SignedInView({ p }: { p: ReturnType<typeof useProfile> }) {
+  const [showConnectMore, setShowConnectMore] = useState(false);
+
+  const verifiedIdentities = p.identities.filter(
+    (id) => !id.protocol.startsWith('ethereum') && !id.protocol.startsWith('solana'),
+  );
+
   return (
     <div className="flex flex-col lg:flex-row gap-6">
       {/* ─── Main Content ─────────────────────────────────────────── */}
@@ -326,6 +334,80 @@ function SignedInView({ p }: { p: ReturnType<typeof useProfile> }) {
 
         {/* Who to Follow */}
         <WhoToFollow profiles={p.whoToFollow} loading={p.whoToFollowLoading} />
+
+        {/* Wallet & Verification */}
+        <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-3">
+          <h4 className="mb-2 text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)]">
+            Wallet &amp; Verification
+          </h4>
+
+          {/* Connected wallet address (truncated) */}
+          <div className="mb-3">
+            <div className="mb-1 text-[10px] text-[var(--color-muted)]">Wallet</div>
+            {p.walletAddress ? (
+              <div className="flex items-center gap-2">
+                <span className="rounded-lg bg-degen-500/10 px-2.5 py-1 font-mono text-xs font-semibold text-degen-400">
+                  {p.walletAddress.slice(0, 6)}&hellip;{p.walletAddress.slice(-4)}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    void navigator.clipboard.writeText(p.walletAddress ?? '');
+                    p.showToast('success', '✓ Wallet address copied');
+                  }}
+                  className="rounded-md border border-[var(--color-glass-border)] px-2 py-1 text-[10px] text-[var(--color-muted)] transition-colors hover:border-gray-500 hover:text-[var(--color-fg)]"
+                >
+                  Copy
+                </button>
+              </div>
+            ) : (
+              <p className="text-xs text-[var(--color-muted)]">No wallet connected</p>
+            )}
+          </div>
+
+          {/* Linked protocols with verification badges */}
+          <div className="mb-1 text-[10px] text-[var(--color-muted)]">Linked protocols</div>
+          <div className="flex flex-wrap gap-1.5">
+            {verifiedIdentities.length > 0 ? (
+              verifiedIdentities.map((id) => (
+                <span
+                  key={id.id}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-[var(--color-glass-border)] bg-[var(--color-muted)] px-2.5 py-1 text-[10px] font-medium text-[var(--color-fg)]"
+                  title={id.handle}
+                >
+                  <span
+                    className="inline-block h-1.5 w-1.5 rounded-full"
+                    style={{ backgroundColor: PROTOCOL_COLORS[id.protocol] ?? '#666' }}
+                  />
+                  {PROTOCOL_LABELS[id.protocol] ?? id.protocol}
+                  {id.verified ? (
+                    <span className="text-degen-400" role="img" aria-label="Verified">
+                      ✓
+                    </span>
+                  ) : null}
+                </span>
+              ))
+            ) : (
+              <p className="text-[10px] text-[var(--color-muted)]">No protocols linked yet</p>
+            )}
+          </div>
+
+          {/* Connect more protocols */}
+          <button
+            type="button"
+            onClick={() => setShowConnectMore((v) => !v)}
+            className="mt-3 w-full rounded-lg bg-degen-500/15 px-3 py-2 text-[11px] font-semibold text-degen-400 transition-colors hover:bg-degen-500/25"
+          >
+            {showConnectMore ? 'Hide connect panel' : 'Connect More Protocols +'}
+          </button>
+
+          {/* Inline connect panel */}
+          {showConnectMore && (
+            <div className="mt-3 border-t border-[var(--color-glass-border)] pt-3">
+              <ConnectAccountPanel onConnected={() => p.refreshPremium()} />
+            </div>
+          )}
+        </div>
 
         {/* Quick Stats */}
         <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-3">

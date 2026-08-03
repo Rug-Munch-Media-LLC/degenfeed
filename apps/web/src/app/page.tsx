@@ -1,6 +1,60 @@
+import type { Metadata } from 'next';
+import { headers } from 'next/headers';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { LandingStats } from '../components/LandingStats';
+
+/* ─── SEO ────────────────────────────────────────────────────────────── */
+
+export const metadata: Metadata = {
+  title: 'DegenFeed — The Web3 Social Universe',
+  description:
+    'One free feed for the entire open social graph. Read Nostr, Farcaster, Lens, Bluesky, Mastodon, and 248 news sources in one place — with bias ratings, blindspot detection, and zero sign-up required.',
+  keywords: [
+    'web3 social media',
+    'decentralized social network',
+    'multi protocol social feed',
+    'nostr farcaster lens bluesky mastodon',
+    'crypto news aggregator',
+    'fediverse reader',
+    'cross protocol posting',
+    'decentralized twitter alternative',
+    'open source social media',
+    'web3 news feed',
+  ],
+  alternates: {
+    canonical: 'https://app.degenfeed.xyz',
+    languages: {
+      'en': 'https://app.degenfeed.xyz',
+      'x-default': 'https://app.degenfeed.xyz',
+    },
+  },
+  openGraph: {
+    title: 'DegenFeed — The Web3 Social Universe',
+    description:
+      'One free feed for the entire open social graph. Nostr, Farcaster, Lens, Bluesky, Mastodon + 248 news sources with bias ratings. No sign-up needed.',
+    url: 'https://app.degenfeed.xyz',
+    siteName: 'DegenFeed',
+    type: 'website',
+    locale: 'en_US',
+    images: [
+      {
+        url: '/opengraph-image',
+        width: 1200,
+        height: 630,
+        alt: 'DegenFeed — The Web3 Social Universe',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'DegenFeed — The Web3 Social Universe',
+    description:
+      'One free feed for the entire open social graph. Nostr, Farcaster, Lens, Bluesky, Mastodon + 248 news sources with bias ratings.',
+    images: ['/opengraph-image'],
+    creator: '@degenfeed',
+  },
+};
 
 /* ─── LOGO (inlined from public/icon.svg) ─────────────────────────────── */
 
@@ -156,12 +210,13 @@ const THEME_STYLES = `
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    padding: 8px 20px;
+    padding: 10px 20px;
     background: var(--accent);
     color: #000 !important;
     font-weight: 700;
     font-size: 14px;
     border-radius: 9999px;
+    min-height: 44px;
     transition: all 0.2s;
   }
   .header-cta:hover {
@@ -186,8 +241,8 @@ const THEME_STYLES = `
       font-weight: 700;
       font-size: 13px;
       border-radius: 9999px;
-      width: 36px;
-      height: 36px;
+      width: 44px;
+      height: 44px;
     }
   }
 
@@ -222,8 +277,8 @@ const THEME_STYLES = `
     position: absolute;
     inset: 0;
     background-image:
-      linear-gradient(rgba(0, 255, 65, 0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(0, 255, 65, 0.03) 1px, transparent 1px);
+      linear-gradient(rgba(29, 155, 240, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(29, 155, 240, 0.05) 1px, transparent 1px);
     background-size: 60px 60px;
     mask-image: radial-gradient(ellipse at center, black 30%, transparent 70%);
     -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 70%);
@@ -240,7 +295,7 @@ const THEME_STYLES = `
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 6px 14px;
+    padding: 8px 14px;
     border-radius: 9999px;
     font-size: 12px;
     font-weight: 600;
@@ -250,7 +305,7 @@ const THEME_STYLES = `
   .badge-green {
     background: var(--accent-subtle);
     color: var(--accent);
-    border: 1px solid rgba(0, 255, 65, 0.2);
+    border: 1px solid rgba(29, 155, 240, 0.25);
   }
   .badge-green::before {
     content: '';
@@ -289,7 +344,7 @@ const THEME_STYLES = `
     z-index: 1;
     font-size: clamp(1rem, 2.2vw, 1.25rem);
     color: var(--fg-secondary);
-    max-width: 640px;
+    max-width: 680px;
     margin: 0 auto 36px;
     line-height: 1.7;
   }
@@ -304,12 +359,14 @@ const THEME_STYLES = `
   .btn {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
     padding: 14px 32px;
     border-radius: 9999px;
     font-family: var(--font-body);
     font-weight: 700;
     font-size: 16px;
+    min-height: 52px;
     transition: all 0.25s;
     cursor: pointer;
     border: none;
@@ -321,7 +378,7 @@ const THEME_STYLES = `
   .btn-primary:hover {
     background: var(--accent-dim);
     transform: translateY(-2px);
-    box-shadow: 0 0 30px rgba(0, 255, 65, 0.25);
+    box-shadow: 0 0 30px rgba(29, 155, 240, 0.3);
   }
   .btn-secondary {
     background: transparent;
@@ -361,7 +418,7 @@ const THEME_STYLES = `
     flex-direction: column;
     align-items: center;
     padding: 8px 24px;
-    min-width: 120px;
+    min-width: 130px;
   }
   .stat-value {
     font-family: var(--font-heading);
@@ -378,19 +435,11 @@ const THEME_STYLES = `
     text-transform: uppercase;
     letter-spacing: 0.06em;
   }
-  .stat-divider {
-    width: 1px;
-    background: var(--border);
-    align-self: stretch;
-    margin: 4px 0;
-  }
 
   @media (max-width: 640px) {
     .stats-bar { padding: 16px; gap: 8px; }
-    .stat-item { min-width: 80px; padding: 6px 12px; }
+    .stat-item { min-width: 42%; padding: 6px 8px; }
     .stat-value { font-size: 22px; }
-    .stat-divider { display: none; }
-    .stats-bar { flex-direction: row; flex-wrap: wrap; justify-content: center; }
   }
 
   /* ── Section shared ── */
@@ -438,164 +487,339 @@ const THEME_STYLES = `
     text-align: center;
     font-size: 16px;
     color: var(--fg-secondary);
-    max-width: 580px;
+    max-width: 620px;
     margin: 0 auto 48px;
     line-height: 1.7;
   }
 
-  /* ── Features grid ── */
-  .features-grid {
+  /* ── What We Offer (3-column) ── */
+  .offer-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    grid-template-columns: repeat(3, 1fr);
     gap: 16px;
     margin-bottom: 80px;
   }
-  .feature-card {
-    padding: 28px;
+  .offer-card {
+    padding: 32px 28px;
     border: 1px solid var(--border);
     border-radius: 16px;
     background: var(--card);
     transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
   }
-  .feature-card:hover {
-    border-color: rgba(0, 255, 65, 0.15);
+  .offer-card:hover {
+    border-color: rgba(29, 155, 240, 0.25);
     transform: translateY(-4px);
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
   }
-  .feature-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
-    background: var(--accent-subtle);
-    color: var(--accent);
-    margin-bottom: 16px;
-  }
-  .feature-card h3 {
-    font-family: var(--font-heading);
-    font-weight: 700;
-    font-size: 18px;
-    margin-bottom: 8px;
-    letter-spacing: -0.01em;
-  }
-  .feature-card p {
-    font-size: 14px;
-    line-height: 1.7;
-    color: var(--fg-secondary);
-  }
-
-  /* ── Protocol list ── */
-  .protocol-strip {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 10px;
-    margin-bottom: 80px;
-  }
-  .protocol-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 16px;
-    border: 1px solid var(--border);
-    border-radius: 9999px;
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--fg);
-    background: var(--surface);
-    transition: all 0.2s;
-  }
-  .protocol-chip:hover {
-    border-color: var(--accent);
-    color: var(--accent);
-    background: var(--accent-subtle);
-  }
-  .protocol-chip-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    flex-shrink: 0;
-  }
-
-  /* ── How It Works ── */
-  .steps-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 24px;
-    margin-bottom: 80px;
-  }
-  .step-card {
-    text-align: center;
-    padding: 32px 20px;
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    background: var(--card);
-  }
-  .step-num {
+  .offer-icon {
     display: flex;
     align-items: center;
     justify-content: center;
     width: 48px;
     height: 48px;
-    border-radius: 50%;
+    border-radius: 12px;
     background: var(--accent-subtle);
     color: var(--accent);
-    font-family: var(--font-mono);
-    font-weight: 800;
-    font-size: 18px;
-    margin: 0 auto 16px;
+    margin-bottom: 16px;
   }
-  .step-card h3 {
+  .offer-card h3 {
     font-family: var(--font-heading);
     font-weight: 700;
-    font-size: 18px;
-    margin-bottom: 8px;
+    font-size: 19px;
+    margin-bottom: 10px;
+    letter-spacing: -0.01em;
   }
-  .step-card p {
+  .offer-card p {
     font-size: 14px;
-    color: var(--fg-secondary);
     line-height: 1.7;
+    color: var(--fg-secondary);
   }
 
-  /* ── Quote ── */
-  .quote-card {
-    max-width: 680px;
-    margin: 0 auto 64px;
-    padding: 40px 32px;
+  /* ── Protocol showcase grid ── */
+  .protocol-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 80px;
+  }
+  .protocol-tile {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface);
+    transition: all 0.2s;
+    min-height: 64px;
+  }
+  .protocol-tile:hover {
+    border-color: var(--accent);
+    background: var(--accent-subtle);
+  }
+  .protocol-tile-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    flex-shrink: 0;
+  }
+  .protocol-tile-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--fg);
+  }
+  .protocol-tile-tag {
+    font-size: 11px;
+    color: var(--fg-tertiary);
+  }
+
+  /* ── News section ── */
+  .news-section {
+    margin-bottom: 80px;
     border: 1px solid var(--border);
     border-radius: 20px;
-    background: var(--card);
-    text-align: center;
+    background: linear-gradient(180deg, var(--card), var(--surface));
+    padding: 48px 40px;
     position: relative;
     overflow: hidden;
   }
-  .quote-card::before {
-    content: '"';
+  .news-section::before {
+    content: '';
     position: absolute;
-    top: -10px;
-    left: 20px;
-    font-size: 100px;
-    font-family: var(--font-heading);
-    color: var(--accent);
-    opacity: 0.08;
-    line-height: 1;
+    top: -120px;
+    right: -120px;
+    width: 360px;
+    height: 360px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(29, 155, 240, 0.10) 0%, transparent 65%);
+    pointer-events: none;
   }
-  .quote-text {
-    position: relative;
-    z-index: 1;
-    font-size: 18px;
-    line-height: 1.7;
+  .news-grid {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 40px;
+    align-items: center;
+  }
+  .news-copy h2 {
+    text-align: left;
+    font-size: clamp(1.6rem, 3.6vw, 2.2rem);
+    margin-bottom: 16px;
+  }
+  .news-copy p {
+    font-size: 15px;
     color: var(--fg-secondary);
-    font-style: italic;
+    line-height: 1.7;
+    margin-bottom: 24px;
+    max-width: 520px;
   }
-  .quote-attribution {
-    margin-top: 16px;
+  .news-stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  .news-stat {
+    padding: 18px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--card);
+  }
+  .news-stat-value {
+    font-family: var(--font-heading);
+    font-weight: 800;
+    font-size: 24px;
+    color: var(--accent);
+    letter-spacing: -0.02em;
+  }
+  .news-stat-label {
+    font-size: 12px;
+    color: var(--fg-tertiary);
+    margin-top: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 600;
+  }
+  .bias-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    font-size: 12px;
+    color: var(--fg-tertiary);
+    margin-top: 12px;
+  }
+  .bias-pill {
+    padding: 3px 10px;
+    border-radius: 9999px;
+    font-weight: 700;
+    font-size: 11px;
+  }
+  .bias-left { background: rgba(59, 130, 246, 0.15); color: #93c5fd; }
+  .bias-center { background: rgba(148, 163, 184, 0.15); color: #cbd5e1; }
+  .bias-right { background: rgba(239, 68, 68, 0.15); color: #fca5a5; }
+
+  /* ── Pricing ── */
+  .pricing-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 80px;
+  }
+  .price-card {
+    display: flex;
+    flex-direction: column;
+    padding: 32px 28px;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: var(--card);
+    transition: all 0.3s;
+  }
+  .price-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+  }
+  .price-card.popular {
+    border-color: rgba(29, 155, 240, 0.45);
+    background: linear-gradient(180deg, rgba(29, 155, 240, 0.06), var(--card));
+  }
+  .price-badge {
+    align-self: flex-start;
+    padding: 4px 12px;
+    border-radius: 9999px;
+    background: var(--accent);
+    color: #000;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 14px;
+  }
+  .price-name {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: 20px;
+    margin-bottom: 6px;
+  }
+  .price-amount {
+    font-family: var(--font-heading);
+    font-weight: 800;
+    font-size: 40px;
+    letter-spacing: -0.03em;
+    margin-bottom: 4px;
+  }
+  .price-amount span {
+    font-size: 16px;
+    color: var(--fg-tertiary);
+    font-weight: 600;
+  }
+  .price-desc {
+    font-size: 13px;
+    color: var(--fg-secondary);
+    line-height: 1.6;
+    margin-bottom: 20px;
+    flex-grow: 1;
+  }
+  .price-features {
+    list-style: none;
+    margin-bottom: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .price-features li {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--fg-secondary);
+  }
+  .price-features svg {
+    flex-shrink: 0;
+    margin-top: 2px;
+    color: var(--accent);
+  }
+  .price-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 20px;
+    border-radius: 9999px;
+    font-weight: 700;
+    font-size: 14px;
+    min-height: 48px;
+    transition: all 0.2s;
+  }
+  .price-btn.primary {
+    background: var(--accent);
+    color: #000;
+  }
+  .price-btn.primary:hover {
+    background: var(--accent-dim);
+  }
+  .price-btn.secondary {
+    border: 1px solid var(--border);
+    color: var(--fg);
+  }
+  .price-btn.secondary:hover {
+    border-color: var(--fg-secondary);
+    background: var(--surface-raised);
+  }
+  .pricing-note {
+    text-align: center;
     font-size: 13px;
     color: var(--fg-tertiary);
-    font-style: normal;
+    margin: -56px 0 80px;
   }
+  .pricing-note a { color: var(--accent); }
+
+  /* ── FAQ ── */
+  .faq-list {
+    max-width: 720px;
+    margin: 0 auto 80px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .faq-item {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--card);
+    overflow: hidden;
+  }
+  .faq-item summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 20px 24px;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--fg);
+    cursor: pointer;
+    list-style: none;
+    min-height: 60px;
+    transition: color 0.2s;
+  }
+  .faq-item summary::-webkit-details-marker { display: none; }
+  .faq-item summary:hover { color: var(--accent); }
+  .faq-item summary .faq-chevron {
+    flex-shrink: 0;
+    transition: transform 0.25s;
+    color: var(--fg-tertiary);
+  }
+  .faq-item[open] summary .faq-chevron { transform: rotate(45deg); }
+  .faq-item[open] summary { color: var(--accent); }
+  .faq-answer {
+    padding: 0 24px 20px;
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--fg-secondary);
+  }
+  .faq-answer a { color: var(--accent); }
 
   /* ── Final CTA ── */
   .cta-final {
@@ -701,18 +925,26 @@ const THEME_STYLES = `
   }
   .footer-socials a:hover { color: var(--accent); }
 
+  @media (max-width: 900px) {
+    .protocol-grid { grid-template-columns: repeat(3, 1fr); }
+  }
   @media (max-width: 768px) {
     .footer-grid {
       grid-template-columns: 1fr 1fr;
       gap: 24px;
     }
     .footer-brand-area { grid-column: 1 / -1; }
-    .features-grid { grid-template-columns: 1fr; }
-    .steps-grid { grid-template-columns: 1fr; }
+    .offer-grid { grid-template-columns: 1fr; }
+    .protocol-grid { grid-template-columns: repeat(2, 1fr); }
+    .news-grid { grid-template-columns: 1fr; gap: 24px; }
+    .news-section { padding: 32px 20px; }
+    .pricing-grid { grid-template-columns: 1fr; }
+    .pricing-note { margin-top: 0; }
   }
   @media (max-width: 480px) {
     .footer-grid { grid-template-columns: 1fr; }
     .footer-bottom { flex-direction: column; text-align: center; }
+    .news-stats { grid-template-columns: 1fr; }
   }
 
   /* ── Animations ── */
@@ -732,167 +964,245 @@ const THEME_STYLES = `
   .fade-up-d6 { animation-delay: 0.6s; }
 `;
 
-/* ─── FEATURES DATA ───────────────────────────────────────────────────── */
+/* ─── ICONS ──────────────────────────────────────────────────────────── */
 
-interface Feature {
+const ICON_GL = (
+  <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10" />
+    <path d="M12 8v8M8 12h8" />
+  </svg>
+);
+const ICON_SHIELD = (
+  <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4z" />
+    <path d="M9 12l2 2 4-4" />
+  </svg>
+);
+const ICON_NEWS = (
+  <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M4 22h16a2 2 0 002-2V4a2 2 0 00-2-2H8a2 2 0 00-2 2v16a2 2 0 01-2 2zm0 0a2 2 0 01-2-2v-9c0-1.1.9-2 2-2h2" />
+    <path d="M18 14h-8M15 18h-5M10 6h8v4h-8V6z" />
+  </svg>
+);
+const ICON_CHECK = (
+  <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M20 6L9 17l-5-5" />
+  </svg>
+);
+const ICON_CHEVRON = (
+  <svg className="faq-chevron" aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 5v14M5 12h14" />
+  </svg>
+);
+
+/* ─── PROTOCOL ICONS ─────────────────────────────────────────────────── */
+
+interface Protocol {
+  name: string;
+  color: string;
+  tag: string;
+  icon: ReactNode;
+}
+
+const PROTOCOLS: Protocol[] = [
+  {
+    name: 'Nostr',
+    color: '#8e30eb',
+    tag: 'Protocol',
+    icon: (
+      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z" />
+      </svg>
+    ),
+  },
+  {
+    name: 'Farcaster',
+    color: '#8a63d2',
+    tag: 'Protocol',
+    icon: (
+      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 2c2 0 3 1 3 3v5h4l2 12h-4l-1-6h-1v6h-6v-6H7l-1 6H2L4 10h4V5c0-2 1-3 3-3z" />
+      </svg>
+    ),
+  },
+  {
+    name: 'Lens',
+    color: '#abfe2c',
+    tag: 'Protocol',
+    icon: (
+      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M2 12s3.5-6.5 10-6.5S22 12 22 12s-3.5 6.5-10 6.5S2 12 2 12z" />
+        <circle cx="12" cy="12" r="3" />
+      </svg>
+    ),
+  },
+  {
+    name: 'Bluesky',
+    color: '#1185fe',
+    tag: 'Protocol',
+    icon: (
+      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 10.5c-1.5-3-4.5-5-7-4.5-2.5.5-3.5 3-3 5 .5 2 2 3 3.5 3.5-1.5.5-3 1.5-3.5 3.5-.5 2 .5 4.5 3 5 2.5.5 5.5-1.5 7-4.5 1.5 3 4.5 5 7 4.5 2.5-.5 3.5-3 3-5-.5-2-2-3-3.5-3.5 1.5-.5 3-1.5 3.5-3.5.5-2-.5-4.5-3-5-2.5-.5-5.5 1.5-7 4.5z" />
+      </svg>
+    ),
+  },
+  {
+    name: 'Mastodon',
+    color: '#6364ff',
+    tag: 'Protocol',
+    icon: (
+      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 2C7.6 2 4 3.6 4 7.5v8.3c0 1.8.8 3.1 2.4 4 .8.5 2.6 1 4.8 1.1l.2-2.2c-1.4-.2-2.3-.6-2.9-1 .6.6 1.5 1.1 2.7 1.3l.4.1c2.3.3 5.4-.1 7.4-2 1.6-.9 2.4-2.2 2.4-4V7.5C20 3.6 16.4 2 12 2zm5.3 12.2l-2.6-.4c-.2 0-.4.2-.4.4l.1 1.7c0 .2-.2.4-.4.3-2.4-.7-4.4-2.6-4.6-6.1-.1-1.5.9-2.5 2.2-2.5 1.2 0 2.3.8 2.5 2 .2 1.2.2 2.8.2 2.8h3.3s0-1.6.2-2.8c.2-1.2 1.3-2 2.5-2 1.3 0 2.3 1 2.2 2.5-.2 3.5-2.2 5.4-4.6 6.1-.2.1-.4-.1-.4-.3l.1-1.7c.1-.2 0-.4-.3-.4z" />
+      </svg>
+    ),
+  },
+  {
+    name: 'Lemmy',
+    color: '#f2690d',
+    tag: 'Community',
+    icon: (
+      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+        <circle cx="12" cy="12" r="10" />
+        <path d="M7 10c1.5-2 4-3 5-3s3.5 1 5 3c-1.5 1-3 1.5-5 1.5S8.5 11 7 10z" fill="#0d0d0d" />
+      </svg>
+    ),
+  },
+  {
+    name: 'PeerTube',
+    color: '#f2690d',
+    tag: 'Video',
+    icon: (
+      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M8 5v14l11-7L8 5z" />
+      </svg>
+    ),
+  },
+  {
+    name: 'RSS',
+    color: '#ffa500',
+    tag: 'News',
+    icon: (
+      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M4 11a9 9 0 019 9" />
+        <path d="M4 4a16 16 0 0116 16" />
+        <circle cx="5" cy="19" r="1.6" fill="currentColor" stroke="none" />
+      </svg>
+    ),
+  },
+];
+
+/* ─── OFFERS DATA ────────────────────────────────────────────────────── */
+
+interface Offer {
   icon: ReactNode;
   title: string;
   desc: string;
 }
 
-const FEATURES: Feature[] = [
+const OFFERS: Offer[] = [
   {
-    icon: (
-      <svg
-        aria-hidden="true"
-        width="22"
-        height="22"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <circle cx="12" cy="12" r="10" />
-        <path d="M12 8v8M8 12h8" />
-      </svg>
-    ),
-    title: 'Multi-Protocol Feed',
-    desc: 'Aggregate Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, Reddit, RSS, YouTube, and more into one unified timeline. Filter by network, topic, or creator.',
+    icon: ICON_GL,
+    title: 'All Protocols, One Feed',
+    desc: 'Read Nostr, Farcaster, Lens, Bluesky, Mastodon, Lemmy, PeerTube, and 30+ more networks in one unified, ranked timeline. Filter by protocol, topic, or creator — no app-hopping, ever.',
   },
   {
-    icon: (
-      <svg
-        aria-hidden="true"
-        width="22"
-        height="22"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <rect x="3" y="3" width="18" height="18" rx="4" />
-        <path d="M9 12l2 2 4-4" />
-      </svg>
-    ),
-    title: 'Zero Sign-Up Required',
-    desc: 'No account, no wallet, no key needed. Open the app and start reading every protocol immediately. Zero friction, zero data collection.',
+    icon: ICON_SHIELD,
+    title: 'Your Content, Your Rules',
+    desc: 'No ads, no algorithm manipulation, no data selling. Sign in with the keys you already own, cross-post to every network at once, and keep full control of your identity.',
   },
   {
-    icon: (
-      <svg
-        aria-hidden="true"
-        width="22"
-        height="22"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M12 3v18M3 12h18" />
-        <path d="M8 16l4 4 4-4" opacity="0.6" />
-        <path d="M8 8l4-4 4 4" opacity="0.6" />
-      </svg>
-    ),
-    title: 'Cross-Post Everywhere',
-    desc: 'Compose once. Publish to Nostr, Farcaster, Lens, Bluesky, Mastodon, and Threads simultaneously. Partial failures retry automatically in the background.',
-  },
-  {
-    icon: (
-      <svg
-        aria-hidden="true"
-        width="22"
-        height="22"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <rect x="4" y="4" width="16" height="16" rx="3" />
-        <circle cx="12" cy="12" r="3" />
-        <path d="M7 7h.01" />
-      </svg>
-    ),
-    title: 'Your Keys, Your Data',
-    desc: 'Sign in with your existing Nostr key, Farcaster signer, or Lens wallet. Your keys never leave your browser. We never store or touch your private data.',
-  },
-  {
-    icon: (
-      <svg
-        aria-hidden="true"
-        width="22"
-        height="22"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M12 2L2 7l10 5 10-5-10-5z" />
-        <path d="M2 17l10 5 10-5" opacity="0.7" />
-        <path d="M2 12l10 5 10-5" opacity="0.5" />
-      </svg>
-    ),
-    title: '100% Open Source',
-    desc: 'MIT licensed. Self-hostable. Public API. No tokens, no ads, no VC funding. Built by Rug Munch Media LLC for the community.',
-  },
-  {
-    icon: (
-      <svg
-        aria-hidden="true"
-        width="22"
-        height="22"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
-      </svg>
-    ),
-    title: 'Real-Time Updates',
-    desc: 'Live streaming across all protocols. See posts, likes, and reposts as they happen. No refresh needed — WebSocket-powered instant updates.',
+    icon: ICON_NEWS,
+    title: 'Best News in Web3',
+    desc: '248 crypto, DeFi, AI, and tech sources ranked by credibility, recency, and sentiment — with bias ratings and blindspot detection so you see both sides of every story.',
   },
 ];
 
-/* ─── PROTOCOLS DATA ──────────────────────────────────────────────────── */
+/* ─── FAQ DATA ───────────────────────────────────────────────────────── */
 
-interface Protocol {
-  name: string;
-  color: string;
+interface Faq {
+  q: string;
+  a: string;
 }
 
-const PROTOCOLS: Protocol[] = [
-  { name: 'Nostr', color: '#8e30eb' },
-  { name: 'Farcaster', color: '#8a63d2' },
-  { name: 'Lens', color: '#abfe2c' },
-  { name: 'Bluesky', color: '#1185fe' },
-  { name: 'Mastodon', color: '#6364ff' },
-  { name: 'Threads', color: '#888' },
-  { name: 'Reddit', color: '#ff4500' },
-  { name: 'PeerTube', color: '#f2690d' },
-  { name: 'PixelFed', color: '#ff0080' },
-  { name: 'YouTube', color: '#ff0000' },
-  { name: 'RSS', color: '#ffa500' },
-  { name: 'Discourse', color: '#00aeef' },
+const FAQS: Faq[] = [
+  {
+    q: 'What protocols does DegenFeed support?',
+    a: 'DegenFeed reads the entire open social graph: Nostr, Farcaster, Lens, Bluesky, Mastodon, Lemmy, PeerTube, Pixelfed, Threads, Reddit, RSS/Atom, YouTube, and 30+ more networks. The full bridge is live today — browse everything from a single feed with zero sign-up.',
+  },
+  {
+    q: 'How does cross-posting work?',
+    a: 'Open the composer, pick which protocols to publish to, and hit post. DegenFeed sends your content to each network using its native API — Nostr events, Farcaster protobufs, Bluesky XRPC, Mastodon REST — and retries partial failures in the background. One post, everywhere.',
+  },
+  {
+    q: 'Is it really free?',
+    a: 'Yes. Browsing every protocol and reading all 248 news sources is free forever — no account, no wallet, no credit card. Free users can connect one protocol identity and post. Paid tiers unlock all identities, cross-posting to everything, scheduling, and creator tools.',
+  },
+  {
+    q: 'Do I need a wallet or crypto to use DegenFeed?',
+    a: 'No. You can read everything with zero setup. To post, connect the identity you already have — a Nostr key, Farcaster signer, Bluesky account, or Mastodon token. Crypto is only involved if you want to tip creators or collect your own creator coin.',
+  },
+  {
+    q: 'How is your news different from Ground News?',
+    a: 'DegenFeed gives you Ground News-style bias ratings and echo-chamber detection for free — no paywall. 248 sources are ranked by credibility tier, tagged with a 5-point political bias, and stories flagged when coverage skews to one side, with suggested sources from the other.',
+  },
+  {
+    q: 'Is my data safe? Is DegenFeed open source?',
+    a: 'Your keys never leave your browser, we never sell your data, and there are no trackers beyond privacy-friendly analytics. The platform is open source (MIT) and self-hostable, and the ranking algorithm is transparent — no black-box feeds here.',
+  },
 ];
 
-/* ─── PAGE COMPONENT ──────────────────────────────────────────────────── */
+/* ─── PRICING DATA ───────────────────────────────────────────────────── */
 
-export default function LandingPage() {
+interface PriceTier {
+  name: string;
+  price: string;
+  per: string;
+  desc: string;
+  features: string[];
+  cta: string;
+  popular?: boolean;
+}
+
+const PRICE_TIERS: PriceTier[] = [
+  {
+    name: 'Free',
+    price: '$0',
+    per: 'forever',
+    desc: 'Everything you need to start exploring the open social graph.',
+    features: ['Read all 30+ protocols', '248 news sources with bias ratings', 'Connect 1 protocol identity', 'Basic posts on 3 protocols'],
+    cta: 'Get Started Free',
+  },
+  {
+    name: 'Pro',
+    price: '$9.99',
+    per: 'per month',
+    desc: 'For power readers who want the whole graph and every identity.',
+    features: ['All protocol identities', 'Cross-post to 10+ networks', 'Verified badge', '100 scheduled posts', 'Cross-network DMs'],
+    cta: 'Go Pro',
+    popular: true,
+  },
+  {
+    name: 'Creator+',
+    price: '$24.99',
+    per: 'per month',
+    desc: 'For creators building an audience across every protocol.',
+    features: ['Cross-post to ALL protocols', 'Creator coin creation', 'Newsletter + monetization', 'Unlimited scheduling + Buffer', 'Full analytics'],
+    cta: 'Become a Creator',
+  },
+];
+
+/* ─── PAGE COMPONENT ─────────────────────────────────────────────────── */
+
+export default async function LandingPage() {
+  // CSP nonce for the inline theme <style> block (see src/proxy.ts). Without a
+  // nonce the browser's style-src policy silently drops the landing theme, so
+  // the page falls back to bare globals.css styling.
+  const headersList = await headers();
+  const nonce = headersList.get('x-csp-nonce') || '';
+
   return (
     <>
-      <style>{THEME_STYLES}</style>
+      <style nonce={nonce}>{THEME_STYLES}</style>
       <div className="scanline" aria-hidden="true" />
 
       {/* ════════════ HEADER ════════════ */}
@@ -904,7 +1214,8 @@ export default function LandingPage() {
           </Link>
           <nav className="header-nav" aria-label="Primary">
             <Link href="https://app.degenfeed.xyz/feed">Feed</Link>
-            <Link href="https://social.degenfeed.xyz">Social</Link>
+            <Link href="https://app.degenfeed.xyz/news">News</Link>
+            <Link href="https://app.degenfeed.xyz/pricing">Pricing</Link>
             <Link href="https://blog.degenfeed.xyz">Blog</Link>
             <Link href="https://docs.degenfeed.xyz">Docs</Link>
             <Link href="https://app.degenfeed.xyz/feed" className="header-cta">
@@ -966,14 +1277,15 @@ export default function LandingPage() {
           </h1>
 
           <p className="hero-sub">
-            Aggregate every protocol. Read everything for free.
+            One free feed for every protocol and every side of the news.
             <br />
-            Sign in with your existing identity to like, reply, and cross-post everywhere.
+            Read Nostr, Farcaster, Lens, Bluesky, Mastodon, and 248 news sources — then post to all
+            of them at once with the identity you already own.
           </p>
 
           <div className="hero-cta">
             <Link href="https://app.degenfeed.xyz/feed" className="btn btn-primary">
-              Launch App
+              Explore Feeds
               <svg
                 width="20"
                 height="20"
@@ -991,8 +1303,8 @@ export default function LandingPage() {
                 />
               </svg>
             </Link>
-            <Link href="https://social.degenfeed.xyz" className="btn btn-secondary">
-              Create Free Account
+            <Link href="https://app.degenfeed.xyz/register" className="btn btn-secondary">
+              Get Started
               <svg
                 width="20"
                 height="20"
@@ -1018,7 +1330,32 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* ════════════ PROTOCOLS ════════════ */}
+        {/* ════════════ WHAT WE OFFER ════════════ */}
+        <section className="section-wrap" aria-labelledby="offers-title">
+          <div className="section-label">
+            <span className="section-label-line" aria-hidden="true" />
+            <span className="section-label-text">What We Offer</span>
+            <span className="section-label-line" aria-hidden="true" />
+          </div>
+          <h2 id="offers-title" className="section-title">
+            Everything You Need, <span className="accent">Nothing You Don&rsquo;t</span>
+          </h2>
+          <p className="section-sub">
+            The entire open social graph, your identity, and the best news in web3 — unified,
+            transparent, and free to read.
+          </p>
+          <div className="offer-grid">
+            {OFFERS.map((o) => (
+              <article key={o.title} className="offer-card fade-up">
+                <div className="offer-icon">{o.icon}</div>
+                <h3>{o.title}</h3>
+                <p>{o.desc}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        {/* ════════════ PROTOCOL SHOWCASE ════════════ */}
         <section className="section-wrap" aria-labelledby="protocols-title">
           <div className="section-label">
             <span className="section-label-line" aria-hidden="true" />
@@ -1029,94 +1366,161 @@ export default function LandingPage() {
             One Window Into <span className="accent">Every</span> Protocol
           </h2>
           <p className="section-sub">
-            Read and interact across the entire open social graph from a single interface.
+            Read and interact across the entire open social graph from a single interface — with
+            30+ networks online right now.
           </p>
-          <div className="protocol-strip">
+          <div className="protocol-grid">
             {PROTOCOLS.map((p) => (
-              <span key={p.name} className="protocol-chip">
-                <span className="protocol-chip-dot" style={{ background: p.color }} />
-                {p.name}
-              </span>
+              <div key={p.name} className="protocol-tile">
+                <span className="protocol-tile-icon" style={{ background: `${p.color}1f`, color: p.color }}>
+                  {p.icon}
+                </span>
+                <div>
+                  <div className="protocol-tile-name">{p.name}</div>
+                  <div className="protocol-tile-tag">{p.tag}</div>
+                </div>
+              </div>
             ))}
           </div>
         </section>
 
-        {/* ════════════ FEATURES ════════════ */}
-        <section className="section-wrap" aria-labelledby="features-title">
+        {/* ════════════ NEWS BEATS EVERYONE ════════════ */}
+        <section className="section-wrap" aria-labelledby="news-title">
+          <div className="news-section">
+            <div className="news-grid">
+              <div className="news-copy">
+                <div className="section-label" style={{ justifyContent: 'flex-start' }}>
+                  <span className="section-label-text">News Beats Everyone</span>
+                </div>
+                <h2 id="news-title" className="section-title">
+                  Smarter than the <span className="accent">Echo Chamber</span>
+                </h2>
+                <p>
+                  DegenFeed aggregates <strong>248 news sources</strong> across crypto, DeFi, AI,
+                  and tech — ranked by credibility, recency, and sentiment. Every story gets a
+                  transparent bias rating and blindspot detection that flags one-sided coverage and
+                  points you to the other side. Ground News-style transparency,{' '}
+                  <strong>free forever</strong> — no paywall.
+                </p>
+                <div className="bias-row">
+                  <span>Bias-rated on a 5-point scale:</span>
+                  <span className="bias-pill bias-left">Left</span>
+                  <span className="bias-pill bias-center">Center</span>
+                  <span className="bias-pill bias-right">Right</span>
+                </div>
+                <div style={{ marginTop: 24 }}>
+                  <Link href="https://app.degenfeed.xyz/news" className="btn btn-primary">
+                    Read the News
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 20 20"
+                      fill="none"
+                      className="btn-arrow"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M4 10h12M10 4l6 6-6 6"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </Link>
+                </div>
+              </div>
+              <div className="news-stats">
+                <div className="news-stat">
+                  <div className="news-stat-value">248</div>
+                  <div className="news-stat-label">News Sources</div>
+                </div>
+                <div className="news-stat">
+                  <div className="news-stat-value">5-pt</div>
+                  <div className="news-stat-label">Bias Rating</div>
+                </div>
+                <div className="news-stat">
+                  <div className="news-stat-value">∞</div>
+                  <div className="news-stat-label">Blindspot Alerts</div>
+                </div>
+                <div className="news-stat">
+                  <div className="news-stat-value">$0</div>
+                  <div className="news-stat-label">No Paywall</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ════════════ PRICING ════════════ */}
+        <section className="section-wrap" aria-labelledby="pricing-title">
           <div className="section-label">
             <span className="section-label-line" aria-hidden="true" />
-            <span className="section-label-text">Platform Capabilities</span>
+            <span className="section-label-text">Pricing</span>
             <span className="section-label-line" aria-hidden="true" />
           </div>
-          <h2 id="features-title" className="section-title">
-            Everything You Need to <span className="accent">Navigate</span> the Open Social Graph
+          <h2 id="pricing-title" className="section-title">
+            Free to Read. <span className="accent">Fair to Upgrade.</span>
           </h2>
-          <div className="features-grid">
-            {FEATURES.map((f) => (
-              <article key={f.title} className="feature-card">
-                <div className="feature-icon">{f.icon}</div>
-                <h3>{f.title}</h3>
-                <p>{f.desc}</p>
-              </article>
+          <p className="section-sub">
+            Browsing every protocol and reading the news is free forever. Upgrade only when you
+            want the full creator toolkit.
+          </p>
+          <div className="pricing-grid">
+            {PRICE_TIERS.map((t) => (
+              <div key={t.name} className={`price-card${t.popular ? ' popular' : ''}`}>
+                {t.popular ? <span className="price-badge">Most Popular</span> : null}
+                <h3 className="price-name">{t.name}</h3>
+                <div className="price-amount">
+                  {t.price} <span>/ {t.per}</span>
+                </div>
+                <p className="price-desc">{t.desc}</p>
+                <ul className="price-features">
+                  {t.features.map((f) => (
+                    <li key={f}>
+                      {ICON_CHECK}
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <Link
+                  href="https://app.degenfeed.xyz/pricing"
+                  className={`price-btn ${t.popular ? 'primary' : 'secondary'}`}
+                >
+                  {t.cta}
+                </Link>
+              </div>
             ))}
           </div>
+          <p className="pricing-note">
+            See the full comparison, annual plans, and Enterprise options on{' '}
+            <Link href="https://app.degenfeed.xyz/pricing">the pricing page</Link>.
+          </p>
         </section>
 
-        {/* ════════════ HOW IT WORKS ════════════ */}
-        <section className="section-wrap" aria-labelledby="how-title">
+        {/* ════════════ FAQ ════════════ */}
+        <section className="section-wrap" aria-labelledby="faq-title">
           <div className="section-label">
             <span className="section-label-line" aria-hidden="true" />
-            <span className="section-label-text">How It Works</span>
+            <span className="section-label-text">FAQ</span>
             <span className="section-label-line" aria-hidden="true" />
           </div>
-          <h2 id="how-title" className="section-title">
-            Three Steps to <span className="accent">Connect</span> Everything
+          <h2 id="faq-title" className="section-title">
+            Questions, <span className="accent">Answered</span>
           </h2>
-          <div className="steps-grid">
-            <div className="step-card">
-              <div className="step-num">01</div>
-              <h3>Open the App</h3>
-              <p>
-                No sign-up, no wallet, no key. All protocols and RSS feeds load instantly. Start
-                reading in seconds.
-              </p>
-            </div>
-            <div className="step-card">
-              <div className="step-num">02</div>
-              <h3>Connect Your Identity</h3>
-              <p>
-                Nostr key, Farcaster signer, Lens wallet, Bluesky password, Mastodon token — use
-                what you already have.
-              </p>
-            </div>
-            <div className="step-card">
-              <div className="step-num">03</div>
-              <h3>Cross-Post Everywhere</h3>
-              <p>
-                Link multiple accounts and compose once. DegenFeed publishes to every network in
-                parallel.
-              </p>
-            </div>
-          </div>
-        </section>
-
-        {/* ════════════ QUOTE ════════════ */}
-        <section className="section-wrap" aria-labelledby="manifesto-title">
-          <div className="quote-card">
-            <div className="section-label">
-              <span className="section-label-line" aria-hidden="true" />
-              <span className="section-label-text">Our Philosophy</span>
-              <span className="section-label-line" aria-hidden="true" />
-            </div>
-            <h2 id="manifesto-title" className="section-title" style={{ marginBottom: 24 }}>
-              The Window to the <span className="accent">Open Social Graph</span>
-            </h2>
-            <blockquote className="quote-text">
-              &ldquo;The open social graph is fractured across a dozen protocols, each with its own
-              app, its own feed, its own set of accounts to manage. DegenFeed is the window that
-              sees them all. The graph belongs to the protocols. The window belongs to you.&rdquo;
-            </blockquote>
-            <p className="quote-attribution">&mdash; DegenFeed Team</p>
+          <p className="section-sub">
+            Everything you need to know about the Web3 Social Universe.
+          </p>
+          <div className="faq-list">
+            {FAQS.map((f) => (
+              <details key={f.q} className="faq-item">
+                <summary>
+                  {f.q}
+                  {ICON_CHEVRON}
+                </summary>
+                <div className="faq-answer">{f.a}</div>
+              </details>
+            ))}
           </div>
         </section>
 
@@ -1134,7 +1538,7 @@ export default function LandingPage() {
           </p>
           <div className="btns">
             <Link href="https://app.degenfeed.xyz/feed" className="btn btn-primary">
-              Launch App
+              Explore Feeds
               <svg
                 width="20"
                 height="20"
@@ -1152,8 +1556,8 @@ export default function LandingPage() {
                 />
               </svg>
             </Link>
-            <Link href="https://social.degenfeed.xyz" className="btn btn-secondary">
-              Create Free Account
+            <Link href="https://app.degenfeed.xyz/register" className="btn btn-secondary">
+              Get Started
               <svg
                 width="20"
                 height="20"
@@ -1186,23 +1590,23 @@ export default function LandingPage() {
               </div>
               <p className="footer-desc">
                 The Web3 Social Universe. Aggregate Nostr, Farcaster, Lens, Bluesky, Mastodon, and
-                more into one unified feed. Built on open protocols by{' '}
-                <strong>Rug Munch Media LLC</strong>.
+                more into one unified feed — plus 248 news sources with bias ratings. Built on open
+                protocols by <strong>Rug Munch Media LLC</strong>.
               </p>
             </div>
             <div className="footer-col">
               <h4>Product</h4>
-              <a href="https://app.degenfeed.xyz/feed">Launch App</a>
+              <a href="https://app.degenfeed.xyz/feed">Explore Feeds</a>
+              <a href="https://app.degenfeed.xyz/news">News</a>
+              <a href="https://app.degenfeed.xyz/pricing">Pricing</a>
               <a href="https://docs.degenfeed.xyz">Documentation</a>
-              <a href="https://status.degenfeed.xyz">Status</a>
-              <a href="https://blog.degenfeed.xyz">Blog</a>
             </div>
             <div className="footer-col">
               <h4>Network</h4>
               <a href="https://social.degenfeed.xyz">Social</a>
+              <a href="https://status.degenfeed.xyz">Status</a>
+              <a href="https://blog.degenfeed.xyz">Blog</a>
               <a href="https://community.degenfeed.xyz">Community</a>
-              <a href="https://video.degenfeed.xyz">Video</a>
-              <a href="https://photos.degenfeed.xyz">Photos</a>
             </div>
             <div className="footer-col">
               <h4>Legal</h4>

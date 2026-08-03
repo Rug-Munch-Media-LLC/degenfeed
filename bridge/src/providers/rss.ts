@@ -4147,18 +4147,33 @@ export function clusterStories(posts: UnifiedPost[], limit = 12): StoryClusterOu
 // ─── Lazy Cache ──────────────────────────────────────────────────────
 
 const RSS_CACHE_TTL = 300_000; // 5 minutes
+/**
+ * Minimum number of posts to fetch + cache on every RSS refresh, regardless
+ * of the requested limit. Prevents the bridge prewarm (which calls providers
+ * with a small per-provider limit) from caching only ~5 posts and then serving
+ * an empty/starved /api/feed/rss to larger requests.
+ */
+const RSS_CACHE_MIN_POOL = 50;
 let rssCache: {
   posts: UnifiedPost[];
   clusters: StoryClusterOutput[];
   blindspots: BlindspotItem[];
   fetchedAt: number;
 } | null = null;
+/** Single-flight lock: coalesce concurrent cold fetches into one refresh. */
+let rssFetchInFlight: Promise<UnifiedPost[]> | null = null;
 
 /**
  * Fetch from ALL RSS feeds (100+ sources) with lazy initialization + TTL cache.
  * Respects per-source limits to ensure diversity.
  */
 export async function fetchRssPosts(limit = 50): Promise<UnifiedPost[]> {
+  // Always fetch and cache a minimum pool of posts (50) so small requests
+  // (e.g. the bridge prewarm calling with perProviderLimit=5) never poison
+  // the 5-minute cache with only a handful of entries. A later request with
+  // a larger limit then still gets a useful cache hit.
+  const cacheLimit = Math.max(limit, RSS_CACHE_MIN_POOL);
+
   // Return cached data if still fresh
   if (rssCache && Date.now() - rssCache.fetchedAt < RSS_CACHE_TTL) {
     const cached = rssCache.posts.slice(0, limit);
@@ -4179,14 +4194,25 @@ export async function fetchRssPosts(limit = 50): Promise<UnifiedPost[]> {
     console.log('[rss] Rate limited, skipping fetch');
     return [];
   }
+
+  // Single-flight: if a cold RSS refresh is already in progress (e.g. the
+  // prewarm and a live request both miss the cache at once), join it instead
+  // of starting a second full 248-feed fetch that would hammer sources and
+  // race to overwrite the shared cache with a degraded result.
+  if (rssFetchInFlight) {
+    const posts = await rssFetchInFlight;
+    return posts.slice(0, limit);
+  }
+
   // Overall start time — used to bound the og:image enrichment so the RSS
   // provider stays inside the bridge's provider timeout (~5s).
   const fetchStartedAt = Date.now();
   const all: UnifiedPost[] = [];
 
-  // Determine how many items to fetch per feed based on total feeds and desired limit
+  // Determine how many items to fetch per feed based on total feeds and
+  // desired cache pool size.
   const activeFeeds = ALL_FEEDS;
-  const perFeed = Math.max(1, Math.ceil((limit * 2) / activeFeeds.length));
+  const perFeed = Math.max(1, Math.ceil((cacheLimit * 2) / activeFeeds.length));
 
   console.log(`[rss] Fetching ${activeFeeds.length} feeds, ${perFeed} items per feed`);
 
@@ -4204,8 +4230,8 @@ export async function fetchRssPosts(limit = 50): Promise<UnifiedPost[]> {
       }
     }
 
-    // Early exit once we have enough raw posts for the requested limit
-    if (all.length >= limit) break;
+    // Early exit once we have enough raw posts for the requested cache pool
+    if (all.length >= cacheLimit) break;
 
     // Small delay between batches to avoid hammering servers
     if (i + BATCH_SIZE < activeFeeds.length) {
@@ -4213,8 +4239,8 @@ export async function fetchRssPosts(limit = 50): Promise<UnifiedPost[]> {
     }
   }
 
-  // Deduplicate
-  const deduped = deduplicatePosts(all, limit);
+  // Deduplicate — against the cache pool size, not the requested limit
+  const deduped = deduplicatePosts(all, cacheLimit);
 
   // Rank by source reputation + freshness + cross-reference grounding
   const ranked = rankNewsPosts(deduped);
@@ -4250,7 +4276,7 @@ export async function fetchRssPosts(limit = 50): Promise<UnifiedPost[]> {
   // Update cache with deduplicated + ranked + image-enriched results
   rssCache = { posts: enriched, clusters, blindspots, fetchedAt: Date.now() };
 
-  return enriched;
+  return enriched.slice(0, limit);
 }
 
 /**

@@ -48,24 +48,29 @@ export const metadata: Metadata = {
     template: '%s — DegenFeed',
   },
   description:
-    'The Web3 Social Universe. Aggregate Nostr, Farcaster, Lens, Bluesky, Mastodon, and more into one unified feed. Cross-post, tip creators in crypto, and follow web3 communities without switching apps.',
+    'One free feed for the entire open social graph. Read Nostr, Farcaster, Lens, Bluesky, Mastodon, and 248 news sources with bias ratings and blindspot detection. No sign-up required.',
   keywords: [
+    'web3 social media',
+    'decentralized social network',
     'nostr feed',
     'farcaster client',
     'lens protocol app',
     'bluesky aggregator',
     'mastodon reader',
-    '101+ protocols',
-    'fediverse cross-post',
+    'multi protocol social feed',
+    'crypto news aggregator',
+    'fediverse reader',
+    'cross protocol posting',
     'web3 social feed',
-    'crypto tipping app',
-    'multi protocol social',
+    'decentralized twitter alternative',
+    'open source social media',
+    'web3 news feed',
     'decentralized social media',
   ],
   openGraph: {
     title: 'DegenFeed — The Web3 Social Universe',
     description:
-      'Aggregate Nostr, Farcaster, Lens, Bluesky, Mastodon, and more into one unified feed. Cross-post and tip creators in crypto.',
+      'One free feed for the entire open social graph. Nostr, Farcaster, Lens, Bluesky, Mastodon + 248 news sources with bias ratings. No sign-up needed.',
     url: 'https://app.degenfeed.xyz',
     siteName: 'DegenFeed',
     type: 'website',
@@ -83,8 +88,9 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'DegenFeed — The Web3 Social Universe',
     description:
-      'Aggregate Nostr, Farcaster, Lens, Bluesky, Mastodon, and more in one unified feed. Cross-post and tip creators in crypto.',
+      'One free feed for the entire open social graph. Nostr, Farcaster, Lens, Bluesky, Mastodon + 248 news sources with bias ratings.',
     images: ['/og-image.png'],
+    creator: '@degenfeed',
   },
   robots: {
     index: true,
@@ -95,6 +101,10 @@ export const metadata: Metadata = {
   },
   alternates: {
     canonical: 'https://app.degenfeed.xyz',
+    languages: {
+      'en': 'https://app.degenfeed.xyz',
+      'x-default': 'https://app.degenfeed.xyz',
+    },
   },
 };
 
@@ -271,22 +281,34 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               name: 'DegenFeed',
               url: 'https://app.degenfeed.xyz',
               description:
-                'The Web3 Social Universe. Aggregate Nostr, Farcaster, Lens, Bluesky, Mastodon, and more.',
+                'The Web3 Social Universe. One free feed for Nostr, Farcaster, Lens, Bluesky, Mastodon, and 248 news sources with bias ratings and blindspot detection.',
               applicationCategory: 'SocialNetworkingApplication',
               operatingSystem: 'All',
-              offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+              inLanguage: 'en',
+              offers: {
+                '@type': 'AggregateOffer',
+                lowPrice: '0',
+                highPrice: '24.99',
+                priceCurrency: 'USD',
+                offers: [
+                  { '@type': 'Offer', name: 'Free', price: '0', priceCurrency: 'USD' },
+                  { '@type': 'Offer', name: 'Pro', price: '9.99', priceCurrency: 'USD' },
+                  { '@type': 'Offer', name: 'Creator+', price: '24.99', priceCurrency: 'USD' },
+                ],
+              },
               author: {
                 '@type': 'Organization',
                 name: 'Rug Munch Media LLC',
                 url: 'https://app.degenfeed.xyz',
               },
               featureList: [
-                'Multi-protocol feed aggregation across 101+ protocols',
-                'Nostr, Farcaster, Lens, Bluesky, Mastodon, PeerTube, and more',
-                'Cross-protocol search',
-                'Real-time notifications',
+                'Multi-protocol feed aggregation across 30+ live protocols',
+                'Nostr, Farcaster, Lens, Bluesky, Mastodon, Lemmy, PeerTube, and more',
+                '248 news sources with bias ratings and blindspot detection',
+                'Cross-protocol posting to every network at once',
+                'Real-time notifications and live streaming',
                 'Creator coins and tipping on Base + Solana',
-                'Live streaming across protocols',
+                'Open source (MIT), self-hostable, zero sign-up to read',
               ],
             }),
           }}

@@ -4,12 +4,12 @@
  * LandingStats — honest stats bar for the marketing landing page.
  *
  * Fetches real counts from the bridge instead of fabricated numbers:
- *   - Protocols  → number of sources reported by /api/feed/health
- *   - RSS Sources → totalSources from /api/rss/sources
- *   - Reddit Communities / YouTube Channels / Reachable → no real data
- *     source exists, so we show "—" rather than inventing numbers.
+ *   - Protocols      → number of sources reported by /api/feed/health
+ *   - News Sources   → totalSources from /api/rss/sources
+ *   - Trending Topics→ topics.length from /api/feed/trending
+ *   - Live Mentions  → sum of topic counts from /api/feed/trending
  *
- * If a fetch fails, the affected stat shows "—".
+ * If a fetch fails, the affected stat shows "—" rather than inventing a number.
  */
 
 import { useEffect, useState } from 'react';
@@ -27,12 +27,24 @@ interface RssSourcesPayload {
   totalSources?: number;
 }
 
+interface TrendingPayload {
+  topics?: Array<{ topic: string; count: number; score?: number }>;
+}
+
 const FALLBACK_STATS: Stat[] = [
   { label: 'Protocols', value: '—' },
-  { label: 'RSS Sources', value: '—' },
-  { label: 'Reddit Communities', value: '—' },
-  { label: 'YouTube Channels', value: '—' },
+  { label: 'News Sources', value: '—' },
+  { label: 'Trending Topics', value: '—' },
+  { label: 'Live Mentions', value: '—' },
 ];
+
+function formatCompact(n: number): string {
+  if (n >= 1000) {
+    const k = n / 1000;
+    return `${k >= 10 ? Math.round(k) : k.toFixed(1)}K`;
+  }
+  return String(n);
+}
 
 export function LandingStats() {
   const [stats, setStats] = useState<Stat[] | null>(null);
@@ -42,7 +54,9 @@ export function LandingStats() {
 
     async function load() {
       let protocols = '—';
-      let rssSources = '—';
+      let sources = '—';
+      let trendingTopics = '—';
+      let liveMentions = '—';
 
       try {
         const healthRes = await fetch('/api/feed/health', { credentials: 'include' });
@@ -58,7 +72,22 @@ export function LandingStats() {
         const rssRes = await fetch('/api/rss/sources', { credentials: 'include' });
         if (rssRes.ok) {
           const rss = (await rssRes.json()) as RssSourcesPayload;
-          if (typeof rss.totalSources === 'number') rssSources = String(rss.totalSources);
+          if (typeof rss.totalSources === 'number') sources = String(rss.totalSources);
+        }
+      } catch {
+        // keep "—"
+      }
+
+      try {
+        const trendingRes = await fetch('/api/feed/trending', { credentials: 'include' });
+        if (trendingRes.ok) {
+          const trending = (await trendingRes.json()) as TrendingPayload;
+          const topics = trending.topics ?? [];
+          if (topics.length > 0) {
+            trendingTopics = String(topics.length);
+            const total = topics.reduce((acc, t) => acc + (t.count || 0), 0);
+            if (total > 0) liveMentions = formatCompact(total);
+          }
         }
       } catch {
         // keep "—"
@@ -67,9 +96,9 @@ export function LandingStats() {
       if (cancelled) return;
       setStats([
         { label: 'Protocols', value: protocols },
-        { label: 'RSS Sources', value: rssSources },
-        { label: 'Reddit Communities', value: '—' },
-        { label: 'YouTube Channels', value: '—' },
+        { label: 'News Sources', value: sources },
+        { label: 'Trending Topics', value: trendingTopics },
+        { label: 'Live Mentions', value: liveMentions },
       ]);
     }
 
@@ -89,11 +118,6 @@ export function LandingStats() {
           <span className="stat-label">{stat.label}</span>
         </span>
       ))}
-      <span className="stat-divider" aria-hidden="true" />
-      <span className="stat-item">
-        <span className="stat-value">—</span>
-        <span className="stat-label">Reachable</span>
-      </span>
     </>
   );
 }

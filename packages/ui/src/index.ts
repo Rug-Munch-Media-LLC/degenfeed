@@ -150,7 +150,7 @@ export type {
 } from './ReputationBadge';
 export { ReputationBadge } from './ReputationBadge';
 export { ScrollToTop } from './ScrollToTop';
-export type { ProtocolOption, SignInModalProps, WalletOption } from './SignInModal';
+export type { AuthTab, ProtocolOption, SignInModalProps, WalletOption } from './SignInModal';
 export { SignInModal } from './SignInModal';
 export type { SpaceData, SpaceRoomProps } from './SpaceRoom';
 export { SpaceRoom } from './SpaceRoom';
