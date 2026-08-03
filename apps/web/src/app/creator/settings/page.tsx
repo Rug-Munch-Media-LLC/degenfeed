@@ -635,10 +635,10 @@ function BrandingSection() {
             <div className="flex items-center gap-2">
               <input
                 type="color"
-                defaultValue="#00ff41"
+                defaultValue="#8b5cf6"
                 className="h-10 w-10 cursor-pointer rounded-xl border border-[var(--color-glass-border)] bg-transparent"
               />
-              <input type="text" defaultValue="#00ff41" className="input text-sm flex-1" />
+              <input type="text" defaultValue="#8b5cf6" className="input text-sm flex-1" />
             </div>
           </label>
           <label className="block">

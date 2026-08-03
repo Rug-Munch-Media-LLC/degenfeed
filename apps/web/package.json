@@ -31,6 +31,7 @@
     "@degenfeed/auth": "workspace:*",
     "@degenfeed/bluesky-sdk": "workspace:*",
     "@degenfeed/creator-coin": "workspace:*",
+    "@degenfeed/degenchat": "workspace:*",
     "@degenfeed/farcaster-sdk": "workspace:*",
     "@degenfeed/feed-core": "workspace:*",
     "@degenfeed/feed-providers": "workspace:*",

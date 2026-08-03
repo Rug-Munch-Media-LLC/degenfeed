@@ -25,6 +25,7 @@ import { FeedPollerBanner } from '../FeedPollerBanner';
 import { useAlgorithmTransparency } from './AlgorithmTransparency';
 import { PROTOCOLS, type ProtocolConfig } from './feed-protocols';
 import { type AlgorithmUserPreferences, loadAlgorithmPrefs } from './feed-tuner-types';
+import { ProtocolPostMeta } from '../../app/feed/[protocol]/components/ProtocolPostMeta';
 
 const TipModal = dynamic(() => import('../TipModal').then((m) => ({ default: m.TipModal })), {
   ssr: false,
@@ -410,6 +411,13 @@ export function ProtocolFeed({
             onTip={(post) => setTipPost(post)}
             onRetry={handleRetry}
             onCrossReplyOpen={handleCrossReplyOpen}
+            postMetaSlot={(post) => (
+              <ProtocolPostMeta
+                post={post}
+                onEngage={handleEngage}
+                onReply={(p) => handleCrossReplyOpen(p)}
+              />
+            )}
           />
         </div>
 

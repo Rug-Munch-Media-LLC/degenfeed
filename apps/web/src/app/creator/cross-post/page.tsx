@@ -144,7 +144,7 @@ const PLATFORM_COLORS: Record<string, string> = {
   linkedin: '#0a66c2',
   reddit: '#ff4500',
   pinterest: '#bd081c',
-  mirror: '#00ff41',
+  mirror: '#222222',
   paragraph: '#ff6b6b',
 };
 

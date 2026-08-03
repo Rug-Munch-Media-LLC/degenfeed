@@ -66,7 +66,7 @@ export const TABS: { id: VideoTab; label: string; icon: string; desc: string }[]
 
 export const PUBLISH_TARGETS: { id: PublishTarget; label: string; icon: string; color: string }[] =
   [
-    { id: 'degenfeed', label: 'DegenFeed', icon: '◆', color: '#00ff41' },
+    { id: 'degenfeed', label: 'DegenFeed', icon: '◆', color: '#8b5cf6' },
     { id: 'peertube', label: 'PeerTube', icon: '▶', color: '#f2691d' },
     { id: 'farcaster', label: 'Farcaster', icon: '◈', color: '#8a63d2' },
     { id: 'zora', label: 'Zora', icon: '⧫', color: '#f5a623' },

@@ -64,9 +64,9 @@ export function ProfileArticlesWidget({
     return (
       <div className="space-y-3">
         {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="animate-pulse rounded-lg bg-[#1f2937] p-3">
-            <div className="mb-2 h-4 w-3/4 rounded bg-[#374151]" />
-            <div className="h-3 w-1/2 rounded bg-[#374151]" />
+          <div key={i} className="animate-pulse rounded-lg bg-[var(--color-border)] p-3">
+            <div className="mb-2 h-4 w-3/4 rounded bg-[var(--color-border)]" />
+            <div className="h-3 w-1/2 rounded bg-[var(--color-border)]" />
           </div>
         ))}
       </div>
@@ -75,11 +75,11 @@ export function ProfileArticlesWidget({
 
   if (error) {
     return (
-      <div className="rounded-lg border border-[#1f2937] p-4 text-center">
-        <p className="text-xs text-[#ef4444]">{error}</p>
+      <div className="rounded-lg border border-[var(--color-border)] p-4 text-center">
+        <p className="text-xs text-[var(--color-danger)]">{error}</p>
         <button
           onClick={() => window.location.reload()}
-          className="mt-2 rounded bg-[#00ff41] px-3 py-1 text-xs text-black"
+          className="mt-2 rounded bg-[var(--color-accent)] px-3 py-1 text-xs text-black"
         >
           Retry
         </button>
@@ -89,8 +89,8 @@ export function ProfileArticlesWidget({
 
   if (articles.length === 0) {
     return (
-      <div className="rounded-lg border border-[#1f2937] p-4 text-center">
-        <p className="text-xs text-[#6b7280]">No articles published yet.</p>
+      <div className="rounded-lg border border-[var(--color-border)] p-4 text-center">
+        <p className="text-xs text-[var(--color-muted)]">No articles published yet.</p>
       </div>
     );
   }
@@ -100,10 +100,10 @@ export function ProfileArticlesWidget({
     return (
       <div className="space-y-2">
         <div className="mb-3 flex items-center justify-between">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-[#9ca3af]">
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
             📄 Latest Articles
           </h3>
-          <Link href="/articles" className="text-[10px] text-[#00ff41] hover:underline">
+          <Link href="/articles" className="text-[10px] text-[var(--color-accent)] hover:underline">
             View All
           </Link>
         </div>
@@ -111,15 +111,15 @@ export function ProfileArticlesWidget({
           <Link
             key={article.id}
             href={`/articles/${article.slug}`}
-            className="group block rounded-lg border border-[#1f2937] p-3 transition-colors hover:border-[#00ff41]/20"
+            className="group block rounded-lg border border-[var(--color-border)] p-3 transition-colors hover:border-[var(--color-accent)]/20"
           >
-            <h4 className="text-sm font-medium text-[#e5e7eb] group-hover:text-[#00ff41] transition-colors line-clamp-1">
+            <h4 className="text-sm font-medium text-[var(--color-fg)] group-hover:text-[var(--color-accent)] transition-colors line-clamp-1">
               {article.title}
             </h4>
-            <p className="mt-1 text-xs text-[#6b7280] line-clamp-1">
+            <p className="mt-1 text-xs text-[var(--color-muted)] line-clamp-1">
               {article.excerpt?.slice(0, 100) || ''}
             </p>
-            <div className="mt-2 flex items-center gap-2 text-[10px] text-[#6b7280]">
+            <div className="mt-2 flex items-center gap-2 text-[10px] text-[var(--color-muted)]">
               <span>{article.readingTime} min read</span>
               <span>·</span>
               <span>{formatTimeAgo(new Date(article.publishedAt).getTime())}</span>
@@ -140,8 +140,8 @@ export function ProfileArticlesWidget({
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-base font-semibold text-[#e5e7eb]">📄 Articles</h2>
-        <Link href="/articles" className="text-xs text-[#00ff41] hover:underline">
+        <h2 className="text-base font-semibold text-[var(--color-fg)]">📄 Articles</h2>
+        <Link href="/articles" className="text-xs text-[var(--color-accent)] hover:underline">
           View All
         </Link>
       </div>
@@ -150,7 +150,7 @@ export function ProfileArticlesWidget({
           <Link
             key={article.id}
             href={`/articles/${article.slug}`}
-            className="group overflow-hidden rounded-xl border border-[#1f2937] bg-[#111827] transition-colors hover:border-[#00ff41]/30"
+            className="group overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] transition-colors hover:border-[var(--color-accent)]/30"
           >
             {article.featuredImage && (
               <div className="aspect-video overflow-hidden">
@@ -162,18 +162,18 @@ export function ProfileArticlesWidget({
               </div>
             )}
             <div className="p-4">
-              <h3 className="mb-1 text-sm font-semibold text-[#e5e7eb] group-hover:text-[#00ff41] transition-colors line-clamp-2">
+              <h3 className="mb-1 text-sm font-semibold text-[var(--color-fg)] group-hover:text-[var(--color-accent)] transition-colors line-clamp-2">
                 {article.title}
               </h3>
-              <p className="mb-3 text-xs text-[#9ca3af] line-clamp-2">
+              <p className="mb-3 text-xs text-[var(--color-muted)] line-clamp-2">
                 {article.excerpt?.slice(0, 150) || ''}
               </p>
-              <div className="flex items-center justify-between text-[10px] text-[#6b7280]">
+              <div className="flex items-center justify-between text-[10px] text-[var(--color-muted)]">
                 <span>{article.readingTime} min read</span>
                 <span>{formatTimeAgo(new Date(article.publishedAt).getTime())}</span>
               </div>
               {Number(article.tippedAmount) > 0 && (
-                <div className="mt-2 text-[10px] text-[#00ff41]">
+                <div className="mt-2 text-[10px] text-[var(--color-success)]">
                   ✦ {article.tippedAmount} tipped
                 </div>
               )}

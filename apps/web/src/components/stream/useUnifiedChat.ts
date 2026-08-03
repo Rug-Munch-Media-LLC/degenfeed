@@ -39,8 +39,8 @@ const PROTOCOL_BADGES: Record<ChatProtocol, ProtocolBadgeConfig> = {
     protocol: 'degenfeed',
     label: 'DegenFeed',
     emoji: '🌀',
-    color: '#00ff41',
-    bgColor: 'rgba(0,255,65,0.12)',
+    color: '#8b5cf6',
+    bgColor: 'rgba(139,92,246,0.12)',
     shortLabel: 'DF',
   },
   nostr: {

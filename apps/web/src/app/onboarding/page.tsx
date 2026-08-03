@@ -39,7 +39,7 @@ const INTERESTS: Interest[] = [
   { id: 'defi', label: 'DeFi', icon: '🏦', emoji: '🏦', color: '#00ff41' },
   { id: 'nfts', label: 'NFTs & Art', icon: '🎨', emoji: '🎨', color: '#8b5cf6' },
   { id: 'meme-coins', label: 'Meme Coins', icon: '🐸', emoji: '🐸', color: '#f59e0b' },
-  { id: 'gaming', label: 'Gaming', icon: '🎮', emoji: '🎮', color: '#f4212e' },
+  { id: 'gaming', label: 'Gaming', icon: '🎮', emoji: '🎮', color: '#ef4444' },
   { id: 'infra', label: 'Infrastructure', icon: '⚙️', emoji: '⚙️', color: '#1185fe' },
   { id: 'social', label: 'Social', icon: '💬', emoji: '💬', color: '#f91880' },
   { id: 'bitcoin', label: 'Bitcoin', icon: '₿', emoji: '₿', color: '#f7931a' },

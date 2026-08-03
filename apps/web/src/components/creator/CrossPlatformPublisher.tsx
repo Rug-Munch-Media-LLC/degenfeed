@@ -46,7 +46,7 @@ const PLATFORMS: PlatformOption[] = [
     label: 'DegenFeed',
     sublabel: 'Primary',
     icon: '🔵',
-    color: '#00ff41',
+    color: '#8b5cf6',
     children: ['Video Hub', 'Shorts Feed', 'Discover'],
   },
   {

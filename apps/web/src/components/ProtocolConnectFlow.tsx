@@ -202,8 +202,8 @@ export function ProtocolConnectFlow({ open, protocolId, onClose }: ProtocolConne
               <span
                 className="flex h-8 w-8 items-center justify-center rounded-lg text-sm font-bold"
                 style={{
-                  backgroundColor: `${flowState.protocolId ? getProtocolColor(flowState.protocolId) : '#00ff41'}1a`,
-                  color: flowState.protocolId ? getProtocolColor(flowState.protocolId) : '#00ff41',
+                  backgroundColor: `${flowState.protocolId ? getProtocolColor(flowState.protocolId) : '#8b5cf6'}1a`,
+                  color: flowState.protocolId ? getProtocolColor(flowState.protocolId) : '#8b5cf6',
                 }}
               >
                 {flowState.protocolId ? (connections[flowState.protocolId]?.icon ?? '?') : '\u26A1'}
