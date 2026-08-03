@@ -30,7 +30,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 256m
+          memory: 512m
           cpus: '0.5'
 
     labels:
@@ -89,8 +89,8 @@ services:
     deploy:
       resources:
         limits:
-          # 2026-08-03 swap-defense: 512M -> 256M (anon RSS ~79M)
-          memory: 256M
+          # 2026-08-03 OOM-fix: 256M too tight (98% usage), raised back to 512M
+          memory: 512M
           cpus: "1.0"
         reservations:
           memory: 128M
