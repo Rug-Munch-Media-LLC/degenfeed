@@ -62,6 +62,7 @@ import { fetchOrbisPosts } from '../providers/orbis';
 import { fetchOwncastPosts } from '../providers/owncast';
 import { fetchParagraphPosts } from '../providers/paragraph';
 import { fetchPeerTubePosts } from '../providers/peertube';
+import { fetchPieFedPosts } from '../providers/piefed';
 import { fetchPixelfedPosts } from '../providers/pixelfed';
 import { fetchPleromaPosts } from '../providers/pleroma';
 import { fetchPushPosts } from '../providers/push';
@@ -189,6 +190,7 @@ export const PROVIDERS: Record<string, ProviderEntry> = {
     category: 'content',
   },
   pixelfed: { name: 'Pixelfed', fetch: fetchPixelfedPosts, category: 'content' },
+  piefed: { name: 'PieFed', fetch: fetchPieFedPosts, category: 'content' },
   threads: { name: 'Threads (Meta)', fetch: fetchThreadsPosts, category: 'content' },
   zora: { name: 'Zora (NFT)', fetch: fetchZoraPosts, category: 'content' },
   dtube: { name: 'DTube (Hive Video)', fetch: fetchDTubePosts, category: 'content' },
@@ -353,8 +355,8 @@ export const PROVIDERS: Record<string, ProviderEntry> = {
     fetch: async (limit: number) => {
       const { AudiusProvider } = await import('../providers/audius');
       const p = new AudiusProvider();
-      const raw = await p.fetch({ limit } as any);
-      return (raw || []).slice(0, limit).map((r: any) => p.normalize(r));
+      const raw = await p.fetch({ limit });
+      return (raw || []).slice(0, limit).map((r) => p.normalize(r));
     },
   },
   rarible: {
@@ -363,8 +365,8 @@ export const PROVIDERS: Record<string, ProviderEntry> = {
     fetch: async (limit: number) => {
       const { RaribleProvider } = await import('../providers/rarible');
       const p = new RaribleProvider();
-      const raw = await p.fetch({ limit } as any);
-      return (raw || []).slice(0, limit).map((r: any) => p.normalize(r));
+      const raw = await p.fetch({ limit });
+      return (raw || []).slice(0, limit).map((r) => p.normalize(r));
     },
   },
 
@@ -565,12 +567,14 @@ async function runWithConcurrencyLimit<T, R>(
   concurrency: number,
   fn: (item: T) => Promise<R>,
 ): Promise<R[]> {
-  const results: R[] = new Array(items.length);
+  const results: R[] = Array.from<R>({ length: items.length });
   const queue = items.map((item, index) => ({ item, index }));
 
   async function worker(): Promise<void> {
     while (queue.length > 0) {
-      const { item, index } = queue.shift()!;
+      const entry = queue.shift();
+      if (!entry) break;
+      const { item, index } = entry;
       results[index] = await fn(item);
     }
   }
@@ -584,7 +588,102 @@ async function runWithConcurrencyLimit<T, R>(
   return results;
 }
 
-/** Build a deduplicated feed from multiple protocols with reliability */
+// ─── Feed Result Cache ───────────────────────────────────────────────────
+// Fixes the 20s cold start: the bridge aggregates 30+ providers on the first
+// request after a restart (Promise.all across providers, slow ones up to 15s).
+// Caching complete feed results with a 30s TTL means cold starts hit the
+// cache instead of providers, and prewarmFeedCache() warms it at startup so
+// the first user request is fast.
+
+/** Protocol set used by the HTTP handler when the client omits `protocols`. */
+export const DEFAULT_HOME_PROTOCOLS = [
+  'mastodon',
+  'reddit',
+  'rss',
+  'lemmy',
+  'peertube',
+  'bluesky',
+  'nostr',
+  'farcaster',
+  'lens',
+  'pixelfed',
+];
+
+const FEED_CACHE_TTL_MS = 30_000; // 30s — matches HTTP-level response cache TTL
+const FEED_CACHE_MAX_ENTRIES = 20;
+
+interface FeedResult {
+  posts: UnifiedPost[];
+  meta: Record<string, unknown>;
+}
+
+interface FeedCacheEntry {
+  data: FeedResult;
+  expiresAt: number;
+}
+
+const feedResultCache = new Map<string, FeedCacheEntry>();
+/** Single-flight lock: coalesce concurrent requests for the same protocol set. */
+const feedInFlight = new Map<string, Promise<FeedResult>>();
+
+/**
+ * Cache key is the protocol set only (limit-agnostic) — a cached result built
+ * at a given limit can serve any request with a smaller limit via slicing.
+ */
+function feedCacheKey(protocols: string[]): string {
+  return `feed:${[...protocols].sort().join(',')}`;
+}
+
+function resolveActiveProtocols(protocols: string[]): string[] {
+  const active = protocols.filter(
+    (p) => p in PROVIDERS && PROVIDERS[p].category !== 'infrastructure',
+  );
+  return active.length > 0 ? active : [...DEFAULT_HOME_PROTOCOLS];
+}
+
+/**
+ * Defensive copy so callers (HTTP layer) can mutate meta.page / posts
+ * (e.g. demo-content seeding) without corrupting the shared cache entry.
+ */
+function cloneFeedResult(data: FeedResult): FeedResult {
+  return {
+    posts: data.posts.slice(),
+    meta: {
+      ...data.meta,
+      notices: Array.isArray(data.meta.notices) ? [...data.meta.notices] : data.meta.notices,
+      errors: Array.isArray(data.meta.errors) ? [...data.meta.errors] : data.meta.errors,
+    },
+  };
+}
+
+function getCachedFeed(key: string): FeedResult | null {
+  const entry = feedResultCache.get(key);
+  if (entry && Date.now() < entry.expiresAt) return entry.data;
+  return null;
+}
+
+function setCachedFeed(key: string, data: FeedResult): void {
+  if (!feedResultCache.has(key) && feedResultCache.size >= FEED_CACHE_MAX_ENTRIES) {
+    // Evict the entry that expires soonest to bound memory
+    let oldestKey: string | null = null;
+    let oldestExpiry = Infinity;
+    for (const [k, e] of feedResultCache) {
+      if (e.expiresAt < oldestExpiry) {
+        oldestExpiry = e.expiresAt;
+        oldestKey = k;
+      }
+    }
+    if (oldestKey) feedResultCache.delete(oldestKey);
+  }
+  feedResultCache.set(key, { data, expiresAt: Date.now() + FEED_CACHE_TTL_MS });
+}
+
+/**
+ * Build a deduplicated feed from multiple protocols with reliability.
+ *
+ * Cached: fresh results are served from a 30s TTL cache (limit-agnostic),
+ * and concurrent identical requests coalesce into a single provider fetch.
+ */
 export async function buildFeed(
   protocols: string[],
   limit: number,
@@ -592,34 +691,62 @@ export async function buildFeed(
   // Lazy-initialize reliability on first data request (not at module import)
   initializeReliability();
 
+  const activeProtocols = resolveActiveProtocols(protocols);
+  const key = feedCacheKey(activeProtocols);
+
+  // 1) Fresh cache hit — serve immediately (sliced to the requested limit)
+  const cached = getCachedFeed(key);
+  if (cached) {
+    if (cached.posts.length >= limit) {
+      return {
+        posts: cached.posts.slice(0, limit),
+        meta: {
+          ...cached.meta,
+          limit,
+          total: Math.min(cached.posts.length, limit),
+          source: cached.meta.source ?? 'cached',
+        },
+      };
+    }
+    // Cached result is smaller than the requested limit — rebuild below
+  }
+
+  // 2) Single-flight: coalesce concurrent requests for the same protocol set
+  const inFlight = feedInFlight.get(key);
+  if (inFlight) return inFlight;
+
+  const promise = buildFeedInternal(activeProtocols, limit);
+  feedInFlight.set(key, promise);
+  try {
+    const result = await promise;
+    setCachedFeed(key, result);
+    return cloneFeedResult(result);
+  } finally {
+    feedInFlight.delete(key);
+  }
+}
+
+/** Uncached feed aggregation — used by buildFeed() behind the result cache. */
+async function buildFeedInternal(
+  activeProtocols: string[],
+  limit: number,
+): Promise<{ posts: UnifiedPost[]; meta: Record<string, unknown> }> {
   const perProtocol: Record<string, number> = {};
   const errors: string[] = [];
   const notices: string[] = [];
   const providerSources: Record<string, string> = {};
   const cacheAges: Record<string, number> = {};
 
-  // Only include content providers (exclude infrastructure)
-  const activeProtocols = protocols.filter(
-    (p) => p in PROVIDERS && PROVIDERS[p].category !== 'infrastructure',
-  );
-  if (activeProtocols.length === 0)
-    activeProtocols.push(
-      'mastodon',
-      'reddit',
-      'rss',
-      'lemmy',
-      'bluesky',
-      'nostr',
-      'farcaster',
-      'lens',
-      'pixelfed',
-    );
-
   const perProviderLimit = Math.max(
     3,
     Math.ceil((limit * 1.2) / Math.max(activeProtocols.length, 1)),
   );
-  const FETCH_TIMEOUT_MS = 15000;
+  // Global per-provider timeout. 5s bounds cold-start aggregation latency to
+  // ~5s (slowest expected providers: Hubble Farcaster 3.5s, Mastodon/GTS 5s)
+  // while slow/broken providers (e.g. Reddit multi-strategy) get cut fast
+  // instead of stalling the whole feed for 15-20s. The result cache makes any
+  // per-provider truncation invisible to repeat requests.
+  const FETCH_TIMEOUT_MS = 5000;
   const MAX_CONCURRENT = 20; // Limit to 20 concurrent provider fetches to prevent OOM
 
   const results = await runWithConcurrencyLimit(
@@ -686,7 +813,13 @@ export async function buildFeed(
 
         if (failoverRouter.hasStrategy(protocol)) {
           try {
-            const failoverResult = await failoverRouter.execute(protocol, perProviderLimit);
+            // Failover fallbacks can be slow (unbounded before) — cap them so a
+            // failed provider can never extend the feed latency past 3s extra.
+            const failoverResult = await withTimeout(
+              failoverRouter.execute(protocol, perProviderLimit),
+              3_000,
+              `failover:${protocol}`,
+            );
             if (failoverResult.status === 'fallback') {
               return {
                 protocol,
@@ -818,6 +951,38 @@ export async function buildFeed(
       source: 'live',
     },
   };
+}
+
+/**
+ * Pre-warm the feed result cache at startup so the first user request after a
+ * bridge restart hits cache instead of re-aggregating 30+ providers.
+ *
+ * Fire-and-forget: never throws. Warm the protocol sets the app actually
+ * requests (HTTP default home set, the frontend 7-protocol set, and trending)
+ * at limit=50 so the limit-agnostic cache can serve any request with a smaller
+ * limit while keeping the prewarm itself fast.
+ */
+export async function prewarmFeedCache(): Promise<void> {
+  const started = Date.now();
+  try {
+    console.log('[feeds] Pre-warming feed result cache...');
+    const targets: Array<{ protocols: string[]; limit: number }> = [
+      // limit=50: RSS provider early-exits after ~50 raw posts (~3s total build),
+      // and the limit-agnostic cache serves any request with limit <= 50.
+      { protocols: DEFAULT_HOME_PROTOCOLS, limit: 50 },
+      {
+        protocols: ['nostr', 'farcaster', 'lens', 'bluesky', 'mastodon', 'reddit', 'rss'],
+        limit: 50,
+      },
+      { protocols: ['mastodon', 'reddit', 'rss', 'nostr', 'farcaster', 'lens'], limit: 50 },
+    ];
+    for (const target of targets) {
+      await buildFeed(target.protocols, target.limit);
+    }
+    console.log(`[feeds] Feed cache pre-warmed in ${Date.now() - started}ms`);
+  } catch (err) {
+    console.error('[feeds] Feed cache pre-warm failed:', err);
+  }
 }
 
 export const DEFAULT_PREFERENCES = {
