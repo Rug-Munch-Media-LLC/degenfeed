@@ -33,6 +33,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { path: '/nostr', changefreq: 'hourly', priority: 0.8 },
     { path: '/mastodon', changefreq: 'hourly', priority: 0.8 },
     { path: '/about', changefreq: 'monthly', priority: 0.5 },
+    { path: '/protocols', changefreq: 'monthly', priority: 0.5 },
     { path: '/faq', changefreq: 'monthly', priority: 0.5 },
     { path: '/docs', changefreq: 'monthly', priority: 0.5 },
     { path: '/api-docs', changefreq: 'monthly', priority: 0.5 },

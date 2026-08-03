@@ -243,6 +243,14 @@ const SECTION_FEATURES: Record<SectionId, FeatureLink[]> = {
     { id: 'status', label: 'Status', href: '/status', icon: '💚', color: '#10b981' },
     { id: 'settings', label: 'Settings', href: '/settings', icon: '⚙️', color: '#94a3b8' },
     { id: 'docs', label: 'Docs', href: '/docs', icon: '📖', color: '#64748b' },
+    {
+      id: 'protocol-guide',
+      label: 'Protocol Guide',
+      href: '/protocols',
+      icon: '🗺️',
+      color: '#8e30eb',
+    },
+    { id: 'about', label: 'About', href: '/about', icon: 'ℹ️', color: '#64748b' },
   ],
 };
 
