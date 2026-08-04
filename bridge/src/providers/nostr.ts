@@ -10,9 +10,9 @@
  * events, and merges results.
  */
 
+import { npubDecode } from '@degenfeed/nostr-sdk';
 import { checkRateLimit } from '../rate-limiter';
 import type { SchemaGuard, UnifiedPost } from '../server/types';
-import { npubDecode } from '@degenfeed/nostr-sdk';
 
 const _$fetch = globalThis.fetch;
 
@@ -33,6 +33,13 @@ const RELAYS = [
   { url: 'wss://relay.damus.io', local: false },
   { url: 'wss://relay.primal.net', local: false },
   { url: 'wss://relay.nostr.band', local: false },
+  // Verified-healthy public relays (2026-08-04). Damus and nostr.band were
+  // observed erroring/timing out during bridge operation, so we overweight
+  // the working set: more relays means the per-relay share stays small and
+  // the fan-out still completes inside the 3.5s budget even when a couple
+  // of relays are slow.
+  { url: 'wss://relay.snort.social', local: false },
+  { url: 'wss://eden.nostr.land', local: false },
 ];
 
 /**
@@ -291,7 +298,7 @@ export async function fetchNostrPosts(limit = 20): Promise<UnifiedPost[]> {
     console.log('[nostr] Rate limited, skipping fetch');
     return [];
   }
-  const perRelay = Math.max(3, Math.ceil(limit / RELAYS.length));
+  const perRelay = Math.max(4, Math.ceil(limit / RELAYS.length));
   const curatedShare = Math.max(2, Math.ceil(perRelay * 0.6));
   const generalShare = Math.max(2, Math.ceil(perRelay * 0.4));
 
@@ -316,7 +323,7 @@ export async function fetchNostrPosts(limit = 20): Promise<UnifiedPost[]> {
         }),
       ]),
     ),
-    3500,
+    4000,
   );
   // Budget may elapse before allSettled finishes — treat missing results as empty.
   const results: PromiseSettledResult<{ events: NostrEvent[]; profiles: NostrEvent[] }>[] =

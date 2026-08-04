@@ -169,7 +169,9 @@ function FeatureTable() {
                   <Dash key={c.key} />
                 )
               ) : (
-                <span key={c.key} className="text-xs text-[var(--color-muted)]">{val}</span>
+                <span key={c.key} className="text-xs text-[var(--color-muted)]">
+                  {val}
+                </span>
               );
             });
             return (

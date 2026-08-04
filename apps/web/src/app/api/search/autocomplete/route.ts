@@ -76,7 +76,7 @@ export async function GET(request: NextRequest) {
 
         for (const hit of data.hits ?? []) {
           const authorName = hit.authorName || hit.authorHandle;
-          if (authorName && authorName.toLowerCase().includes(q.toLowerCase())) {
+          if (authorName?.toLowerCase().includes(q.toLowerCase())) {
             const key = `author:${authorName}`;
             if (!seen.has(key)) {
               seen.add(key);

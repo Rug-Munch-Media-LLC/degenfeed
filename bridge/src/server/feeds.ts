@@ -45,6 +45,7 @@ import { fetchLemmyPosts } from '../providers/lemmy';
 import { fetchLensPosts } from '../providers/lens';
 import { fetchLitPosts } from '../providers/lit';
 import { fetchLobstersPosts } from '../providers/lobsters';
+import { fetchLoopsPosts } from '../providers/loops';
 import { fetchMatrixPosts } from '../providers/matrix';
 import { fetchMbinPosts } from '../providers/mbin';
 import { fetchMediaGoblinPosts } from '../providers/mediagoblin';
@@ -87,9 +88,9 @@ import { fetchUnlockPosts } from '../providers/unlock';
 import { fetchVimeoPosts } from '../providers/vimeo';
 import { fetchWordPressPosts } from '../providers/wordpress';
 import { fetchWriteFreelyPosts } from '../providers/writefreely';
-import { fetchYouTubePosts } from '../providers/youtube';
 // ─── Infrastructure Providers (status-only, not in main feed) ─────
 import { fetchXmtpPosts } from '../providers/xmtp';
+import { fetchYouTubePosts } from '../providers/youtube';
 import { fetchZoraPosts } from '../providers/zora';
 import type { RateLimitConfig } from '../rate-limiter';
 import { checkRateLimit } from '../rate-limiter';
@@ -101,8 +102,8 @@ import {
   registerFailoverStrategies,
 } from '../reliability/register-all';
 import { deadLetterQueue } from '../reliability/retry';
-import { getSeedContent } from './seed-content';
 import { feedCache } from './response-cache';
+import { getSeedContent } from './seed-content';
 import type { UnifiedPost } from './types';
 
 interface ProviderEntry {
@@ -439,6 +440,12 @@ export const PROVIDERS: Record<string, ProviderEntry> = {
   vimeo: {
     name: 'Vimeo (Professional Video)',
     fetch: fetchVimeoPosts,
+    rateLimit: { maxRequests: 30, windowMs: 60_000 },
+    category: 'content',
+  },
+  loops: {
+    name: 'Loops (Self-Hosted Short Video)',
+    fetch: fetchLoopsPosts,
     rateLimit: { maxRequests: 30, windowMs: 60_000 },
     category: 'content',
   },
@@ -1262,6 +1269,24 @@ export async function prewarmFeedCache(): Promise<void> {
   const started = Date.now();
   try {
     console.log('[feeds] Pre-warming feed result cache...');
+
+    // Slow-protocol direct warm-up FIRST, bypassing the 5s buildFeed fetch
+    // wrapper (FETCH_TIMEOUT_MS). These providers hold their own internal
+    // caches (rssCache in rss.ts, nostr profileCache, peertube category
+    // cache) that buildFeed's per-provider timeout would starve:
+    //   - RSS cold fetch spans ~262 feeds and takes 8-9s — far over the 5s
+    //     buildFeed cap. Warming it directly here means /api/feed/rss and
+    //     the home feed hit a full 50-post rssCache instead of a poisoned
+    //     few-post result written by the killed background continuation.
+    //   - PeerTube local + federated instance fan-out benefits from the
+    //     category map being cached before the first user request.
+    //   - Nostr relay connections + profile cache benefit from one early
+    //     fan-out while the event loop is still quiet.
+    // Each direct warm is individually fire-and-forget with allSettled so a
+    // slow provider can never block the rest of the prewarm or crash it.
+    await Promise.allSettled([fetchRssPosts(50), fetchPeerTubePosts(20), fetchNostrPosts(20)]);
+    console.log(`[feeds] Slow-protocol caches pre-warmed in ${Date.now() - started}ms`);
+
     const targets: Array<{ protocols: string[]; limit: number }> = [
       // limit=50: RSS provider early-exits after ~50 raw posts (~3s total build),
       // and the limit-agnostic cache serves any request with limit <= 50.

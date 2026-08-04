@@ -90,7 +90,7 @@ export default function NostrDashboardPage() {
   // Store nsec in session for publishing
   const handleStoreNsec = useCallback(() => {
     const nsec = prompt('Enter your nsec (stored only in session, cleared on tab close):');
-    if (nsec && nsec.startsWith('nsec1')) {
+    if (nsec?.startsWith('nsec1')) {
       sessionStorage.setItem('nostr_nsec', nsec);
       setNsecStored(nsec);
     } else if (nsec) {

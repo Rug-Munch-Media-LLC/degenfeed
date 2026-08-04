@@ -117,7 +117,7 @@ export default function CreatorStudioPage() {
       update('deployedAddress', `0x${crypto.randomUUID().replace(/-/g, '').slice(0, 40)}`);
       update('txHash', `0x${crypto.randomUUID().replace(/-/g, '')}`);
     }
-  }, [form]);
+  }, [form, update]);
 
   const daoDeploy = async () => {
     if (form.daoDeploying) return;

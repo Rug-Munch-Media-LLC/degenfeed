@@ -176,9 +176,9 @@ export function ConnectPlatformModal({ isOpen, onClose, onRefresh }: ConnectPlat
           connected: connectedMap.has(p.id),
           connectedAccount: connectedMap.get(p.id)
             ? {
-                displayName: connectedMap.get(p.id)!.displayName,
-                avatarUrl: connectedMap.get(p.id)!.avatarUrl,
-                connectedAt: connectedMap.get(p.id)!.connectedAt,
+                displayName: connectedMap.get(p.id)?.displayName,
+                avatarUrl: connectedMap.get(p.id)?.avatarUrl,
+                connectedAt: connectedMap.get(p.id)?.connectedAt,
               }
             : undefined,
         })),

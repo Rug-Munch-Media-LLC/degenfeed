@@ -1609,7 +1609,6 @@ const CULTURE_FEEDS: FeedSource[] = [
   },
 ];
 
-
 // ═══════════════════════════════════════════════════════════════════════════
 // NEWSLETTER PLATFORMS
 // ═══════════════════════════════════════════════════════════════════════════
@@ -2360,18 +2359,30 @@ export function guessNiches(text: string, baseNiches: string[]): string[] {
   if (/\b(nft|art|collectible|punk|ens|soulbound)\b/.test(lower)) niches.add('nft');
   if (/\b(ai|artificial|intelligence|llm|agent|gpt|transformer|neural)\b/.test(lower))
     niches.add('ai');
-  if (/\b(ai.?agent|ai.?crypto|decentralized.?ai|compute.?marketplace|bittensor|fetch\.?ai)\b/.test(lower))
+  if (
+    /\b(ai.?agent|ai.?crypto|decentralized.?ai|compute.?marketplace|bittensor|fetch\.?ai)\b/.test(
+      lower,
+    )
+  )
     niches.add('aicrypto');
   if (/\b(storage|filecoin|arweave|ipfs|datacap|decentralized.?storage|storj)\b/.test(lower))
     niches.add('storage');
-  if (/\b(identity|did|verifiable.?credential|soulbound|worldcoin|proof.?of.?personhood)\b/.test(lower))
+  if (
+    /\b(identity|did|verifiable.?credential|soulbound|worldcoin|proof.?of.?personhood)\b/.test(
+      lower,
+    )
+  )
     niches.add('identity');
   if (/\b(social|farcaster|lens|bluesky|socialfi|content|creator.?economy|deso)\b/.test(lower))
     niches.add('social');
   if (/\b(insurance|underwrit|coverage|nexus.?mutual|cover)\b/.test(lower)) niches.add('insurance');
   if (/\b(carbon|offset|verra|gold.?standard|regen|toucan|moss|ecosystem.?credit)\b/.test(lower))
     niches.add('carbon');
-  if (/\b(payment|remittance|payments|crypto.?pay|lightning|visa|mastercard|paypal|stripe)\b/.test(lower))
+  if (
+    /\b(payment|remittance|payments|crypto.?pay|lightning|visa|mastercard|paypal|stripe)\b/.test(
+      lower,
+    )
+  )
     niches.add('payments');
   if (/\b(rwa|real.?world.?asset|tokeniz|tokenization|syndicate|centrifuge)\b/.test(lower))
     niches.add('rwa');
@@ -2751,8 +2762,7 @@ async function fetchSingleFeed(feed: FeedSource, limit: number): Promise<Unified
               en.url &&
               (en.type?.startsWith('audio/') ||
                 /\.(mp3|m4a|ogg|wav|aac|opus|flac|webm)(\?|$)/i.test(en.url)),
-          ) ||
-          item.enclosures.find((en) => en.url);
+          ) || item.enclosures.find((en) => en.url);
         audioUrl = audioEnclosure?.url;
         if (audioUrl) {
           embeds.push({
@@ -3462,15 +3472,15 @@ export type FactualityLabel = 'very-high' | 'high' | 'mixed' | 'low' | 'very-low
 export const SOURCE_BIAS: Record<string, BiasLabel> = {
   // Left-leaning
   'Democracy Now': 'left',
-  'Jacobin': 'left',
-  'Truthout': 'left',
+  Jacobin: 'left',
+  Truthout: 'left',
   'Common Dreams': 'left',
   'The Intercept': 'left',
   'Mother Jones': 'center-left',
-  'Salon': 'center-left',
+  Salon: 'center-left',
   'The Nation': 'left',
-  'Dissent': 'left',
-  'Vox': 'center-left',
+  Dissent: 'left',
+  Vox: 'center-left',
   'NYT Politics': 'center-left',
   'NYT Business': 'center-left',
   'NYT World': 'center-left',
@@ -3485,11 +3495,11 @@ export const SOURCE_BIAS: Record<string, BiasLabel> = {
   'Guardian Business': 'center-left',
   'Guardian Long Read': 'center-left',
   'The Guardian Tech': 'center-left',
-  'HuffPost': 'center-left',
+  HuffPost: 'center-left',
   'The New Republic': 'center-left',
-  'Slate': 'center-left',
+  Slate: 'center-left',
   'Time World': 'center-left',
-  'ProPublica': 'center-left',
+  ProPublica: 'center-left',
   'The Atlantic': 'center-left',
   'New Yorker': 'center-left',
   'The Independent': 'center-left',
@@ -3504,7 +3514,7 @@ export const SOURCE_BIAS: Record<string, BiasLabel> = {
   'BBC Technology': 'center',
   'BBC Africa': 'center',
   'Sky News': 'center',
-  'Reuters': 'center',
+  Reuters: 'center',
   AP: 'center',
   'AP News': 'center',
   'NPR World': 'center',
@@ -3525,28 +3535,28 @@ export const SOURCE_BIAS: Record<string, BiasLabel> = {
   'CNBC Tech': 'center',
   'CNBC Crypto': 'center',
   'WSJ World': 'center',
-  'MarketWatch': 'center',
+  MarketWatch: 'center',
   'Yahoo Finance': 'center',
-  'Fortune': 'center',
-  'Quartz': 'center',
+  Fortune: 'center',
+  Quartz: 'center',
   'Business Insider': 'center',
-  'Inc': 'center',
+  Inc: 'center',
   'Fast Company': 'center',
   'Marginal Revolution': 'center',
-  'France24': 'center',
+  France24: 'center',
   DW: 'center',
-  'EuroNews': 'center',
+  EuroNews: 'center',
   'NHK World': 'center',
-  'SCMP': 'center',
+  SCMP: 'center',
   'The Straits Times': 'center',
   'The Japan Times': 'center',
   'The Age': 'center',
-  'RNZ': 'center',
-  'Rappler': 'center',
+  RNZ: 'center',
+  Rappler: 'center',
   'Irish Times': 'center',
-  'Tagesschau': 'center',
+  Tagesschau: 'center',
   'Al Monitor': 'center',
-  'AllAfrica': 'center',
+  AllAfrica: 'center',
   'Africa Report': 'center',
   'MIT News': 'center',
   'Harvard Gazette': 'center',
@@ -3555,18 +3565,18 @@ export const SOURCE_BIAS: Record<string, BiasLabel> = {
   'Science.org': 'center',
   'Science News': 'center',
   'Live Science': 'center',
-  'Smithsonian': 'center',
+  Smithsonian: 'center',
   'Space.com': 'center',
   'Universe Today': 'center',
   'Popular Science': 'center',
   'The Conversation': 'center',
   'Quanta Magazine': 'center',
-  'Aeon': 'center',
-  'Nautilus': 'center',
-  'Longreads': 'center',
-  'Longform': 'center',
+  Aeon: 'center',
+  Nautilus: 'center',
+  Longreads: 'center',
+  Longform: 'center',
   'The Browser': 'center',
-  'CFR': 'center',
+  CFR: 'center',
   'Council on Foreign Relations': 'center',
   'Foreign Affairs': 'center',
   'Foreign Policy': 'center',
@@ -3574,7 +3584,7 @@ export const SOURCE_BIAS: Record<string, BiasLabel> = {
   'Global Voices': 'center',
   'War on the Rocks': 'center',
   'Defense One': 'center',
-  'Bellingcat': 'center',
+  Bellingcat: 'center',
   'The Diplomat': 'center',
   'Rest of World': 'center',
   'Middle East Eye': 'center',
@@ -3585,13 +3595,13 @@ export const SOURCE_BIAS: Record<string, BiasLabel> = {
   'American Conservative': 'right',
   'Daily Caller': 'right',
   'Fox News': 'right',
-  'Reason': 'center-right',
+  Reason: 'center-right',
   'The Spectator': 'center-right',
   'Daily Mail': 'right',
   'The Telegraph': 'center-right',
   'The Times': 'center-right',
   'New York Post': 'right',
-  'Breitbart': 'right',
+  Breitbart: 'right',
 };
 
 /**
@@ -3599,7 +3609,7 @@ export const SOURCE_BIAS: Record<string, BiasLabel> = {
  */
 export const SOURCE_FACTUALITY: Record<string, FactualityLabel> = {
   // Very high factuality — flagship wire services / journals
-  'Reuters': 'very-high',
+  Reuters: 'very-high',
   AP: 'very-high',
   'AP News': 'very-high',
   'BBC World': 'very-high',
@@ -3632,13 +3642,13 @@ export const SOURCE_FACTUALITY: Record<string, FactualityLabel> = {
   'The Guardian Tech': 'very-high',
   'The Atlantic': 'very-high',
   'New Yorker': 'very-high',
-  'ProPublica': 'very-high',
+  ProPublica: 'very-high',
   'MIT News': 'very-high',
   'Harvard Gazette': 'very-high',
   'Science.org': 'very-high',
-  'Nature': 'very-high',
+  Nature: 'very-high',
   'Quanta Magazine': 'very-high',
-  'CFR': 'very-high',
+  CFR: 'very-high',
   'Council on Foreign Relations': 'very-high',
   'Foreign Affairs': 'very-high',
   'Foreign Policy': 'high',
@@ -3647,17 +3657,17 @@ export const SOURCE_FACTUALITY: Record<string, FactualityLabel> = {
   'NBC News': 'high',
   'ABC News': 'high',
   'CNN World': 'high',
-  'France24': 'high',
+  France24: 'high',
   DW: 'high',
-  'EuroNews': 'high',
+  EuroNews: 'high',
   'NHK World': 'high',
   'The Straits Times': 'high',
   'The Japan Times': 'high',
   'The Age': 'high',
-  'RNZ': 'high',
-  'Rappler': 'high',
+  RNZ: 'high',
+  Rappler: 'high',
   'Irish Times': 'high',
-  'Tagesschau': 'high',
+  Tagesschau: 'high',
   'Le Monde': 'high',
   'El Pais': 'high',
   'Der Spiegel': 'high',
@@ -3667,7 +3677,7 @@ export const SOURCE_FACTUALITY: Record<string, FactualityLabel> = {
   'Rest of World': 'high',
   'War on the Rocks': 'high',
   'Defense One': 'high',
-  'Bellingcat': 'high',
+  Bellingcat: 'high',
   'Science News': 'high',
   'Live Science': 'high',
   'Phys.org': 'high',
@@ -3675,48 +3685,48 @@ export const SOURCE_FACTUALITY: Record<string, FactualityLabel> = {
   'Popular Science': 'high',
   'Space.com': 'high',
   'Universe Today': 'mixed',
-  'Smithsonian': 'high',
+  Smithsonian: 'high',
   'The Conversation': 'high',
   'The Hill': 'high',
   // Mixed / lower factuality
-  'Vox': 'mixed',
-  'Slate': 'mixed',
+  Vox: 'mixed',
+  Slate: 'mixed',
   'The Intercept': 'mixed',
   'Mother Jones': 'mixed',
   'The Nation': 'mixed',
-  'Salon': 'mixed',
+  Salon: 'mixed',
   'Time World': 'mixed',
-  'Fortune': 'high',
+  Fortune: 'high',
   'Business Insider': 'mixed',
-  'Quartz': 'mixed',
-  'MarketWatch': 'high',
+  Quartz: 'mixed',
+  MarketWatch: 'high',
   'Yahoo Finance': 'high',
-  'Inc': 'mixed',
+  Inc: 'mixed',
   'Fast Company': 'mixed',
   'Marginal Revolution': 'high',
   'Washington Examiner': 'mixed',
   'National Review': 'mixed',
   'American Conservative': 'mixed',
-  'Reason': 'high',
+  Reason: 'high',
   'Daily Caller': 'low',
   'Fox News': 'mixed',
   'The Onion': 'mixed',
-  'Jacobin': 'mixed',
-  'Dissent': 'mixed',
+  Jacobin: 'mixed',
+  Dissent: 'mixed',
   'Democracy Now': 'mixed',
-  'Truthout': 'low',
-  'Aeon': 'high',
-  'Nautilus': 'high',
-  'Longreads': 'high',
-  'Longform': 'high',
+  Truthout: 'low',
+  Aeon: 'high',
+  Nautilus: 'high',
+  Longreads: 'high',
+  Longform: 'high',
   'The Browser': 'high',
   'Global Voices': 'high',
   'World Politics Review': 'high',
   'Africa Report': 'mixed',
-  'AllAfrica': 'mixed',
+  AllAfrica: 'mixed',
   'Premium Times': 'mixed',
-  'Punch': 'mixed',
-  'SCMP': 'high',
+  Punch: 'mixed',
+  SCMP: 'high',
   'Evening Standard': 'mixed',
   'Sky News': 'high',
   'The Independent': 'mixed',
@@ -4021,7 +4031,13 @@ export interface StoryCoverage {
   echoDirection: 'left' | 'right' | null;
 }
 
-const EMPTY_BIAS: BiasDistribution = { left: 0, 'center-left': 0, center: 0, 'center-right': 0, right: 0 };
+const EMPTY_BIAS: BiasDistribution = {
+  left: 0,
+  'center-left': 0,
+  center: 0,
+  'center-right': 0,
+  right: 0,
+};
 
 function emptyCoverage(sources: string[]): StoryCoverage {
   return {
@@ -4128,7 +4144,8 @@ export function computeBlindspots(posts: UnifiedPost[], max = 10): BlindspotItem
                 ((coverage.bias.left + coverage.bias['center-left']) / coverage.sourceCount) * 100,
               )}% left-leaning — you're likely only seeing one side.`
             : `Covered by ${coverage.sourceCount} sources, ${Math.round(
-                ((coverage.bias.right + coverage.bias['center-right']) / coverage.sourceCount) * 100,
+                ((coverage.bias.right + coverage.bias['center-right']) / coverage.sourceCount) *
+                  100,
               )}% right-leaning — you're likely only seeing one side.`,
         coverage,
         otherSideSources,
@@ -4239,10 +4256,14 @@ export function clusterStories(posts: UnifiedPost[], limit = 12): StoryClusterOu
       const oLabel = (oRaw?.feedLabel as string | undefined) || other.author?.displayName || '';
       const oRefs = Array.isArray(oRaw?.crossReference) ? (oRaw.crossReference as string[]) : [];
       // Same story if either shares a cross-reference label with our group
-      const groupLabels = new Set<string>([ownLabel, ...refs, ...members.map((m) => {
-        const mr = m.raw as Record<string, unknown> | undefined;
-        return (mr?.feedLabel as string | undefined) || m.author?.displayName || '';
-      })]);
+      const groupLabels = new Set<string>([
+        ownLabel,
+        ...refs,
+        ...members.map((m) => {
+          const mr = m.raw as Record<string, unknown> | undefined;
+          return (mr?.feedLabel as string | undefined) || m.author?.displayName || '';
+        }),
+      ]);
       if (oRefs.some((r) => groupLabels.has(r)) || groupLabels.has(oLabel)) {
         members.push(other);
         used.add(other.id);
@@ -4308,9 +4329,7 @@ export function clusterStories(posts: UnifiedPost[], limit = 12): StoryClusterOu
       };
     });
 
-    const categories = Array.from(
-      new Set(members.flatMap((m) => m.niches ?? []).slice(0, 5)),
-    );
+    const categories = Array.from(new Set(members.flatMap((m) => m.niches ?? []).slice(0, 5)));
 
     clusters.push({
       id: `story:${rep.id}`,
@@ -4347,7 +4366,7 @@ let rssCache: {
   fetchedAt: number;
 } | null = null;
 /** Single-flight lock: coalesce concurrent cold fetches into one refresh. */
-let rssFetchInFlight: Promise<UnifiedPost[]> | null = null;
+const rssFetchInFlight: Promise<UnifiedPost[]> | null = null;
 
 /**
  * Fetch from ALL RSS feeds (100+ sources) with lazy initialization + TTL cache.
@@ -4457,6 +4476,25 @@ export async function fetchRssPosts(limit = 50): Promise<UnifiedPost[]> {
   );
   for (const [cat, count] of byCategory) {
     console.log(`[rss]   ${cat}: ${count} posts`);
+  }
+
+  // Anti-poisoning: never replace a healthy cache with a degraded fetch.
+  // The bridge's feed builder kills provider fetches after FETCH_TIMEOUT_MS
+  // (5s), but the killed promise keeps running in the background and would
+  // otherwise overwrite rssCache with whatever it scraped before the kill —
+  // often a handful of posts that then serve /api/feed/rss for the whole
+  // 5-minute TTL. If we already have a larger, fresher cache, keep it and
+  // serve from it instead of writing the degraded result.
+  if (
+    rssCache &&
+    Date.now() - rssCache.fetchedAt < RSS_CACHE_TTL &&
+    rssCache.posts.length > 0 &&
+    deduped.length < Math.min(RSS_CACHE_MIN_POOL, rssCache.posts.length)
+  ) {
+    console.log(
+      `[rss] Degraded fetch (${deduped.length} posts) — keeping existing cache (${rssCache.posts.length} posts, age ${Math.round((Date.now() - rssCache.fetchedAt) / 1000)}s)`,
+    );
+    return rssCache.posts.slice(0, limit);
   }
 
   // Update cache with deduplicated + ranked + image-enriched results

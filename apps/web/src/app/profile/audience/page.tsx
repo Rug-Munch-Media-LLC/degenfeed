@@ -173,7 +173,7 @@ export default function AudiencePage() {
             <h3 className="mb-4 text-sm font-bold text-[var(--color-fg)]">Follower Growth</h3>
             <div className="relative h-40">
               <div className="absolute inset-0 flex items-end gap-[2px]">
-                {data!.growth.values.map((value, i) => {
+                {data?.growth.values.map((value, i) => {
                   const height = (value / maxGrowth) * 100;
                   return (
                     <div
@@ -183,7 +183,7 @@ export default function AudiencePage() {
                         height: `${Math.max(height, 1)}%`,
                         background: `linear-gradient(to top, rgba(236,72,153,0.2), rgba(236,72,153,0.7))`,
                       }}
-                      title={`${data!.growth.labels[i] ?? ''}: ${value}`}
+                      title={`${data?.growth.labels[i] ?? ''}: ${value}`}
                     />
                   );
                 })}
@@ -203,11 +203,11 @@ export default function AudiencePage() {
             <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-5">
               <h3 className="mb-3 text-sm font-bold text-[var(--color-fg)]">Top Instances</h3>
               <div className="space-y-2">
-                {Object.entries(data!.demographics.byInstance)
+                {Object.entries(data?.demographics.byInstance)
                   .sort(([, a], [, b]) => b - a)
                   .slice(0, 8)
                   .map(([instance, count]) => {
-                    const max = Math.max(...Object.values(data!.demographics.byInstance), 1);
+                    const max = Math.max(...Object.values(data?.demographics.byInstance), 1);
                     return (
                       <div key={instance} className="flex items-center gap-2">
                         <span className="w-0 flex-1 truncate text-[11px] text-[var(--color-fg)]">
@@ -234,11 +234,11 @@ export default function AudiencePage() {
             <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-5">
               <h3 className="mb-3 text-sm font-bold text-[var(--color-fg)]">Top Communities</h3>
               <div className="space-y-2">
-                {data!.demographics.byCommunity
+                {data?.demographics.byCommunity
                   .sort((a, b) => b.count - a.count)
                   .slice(0, 8)
                   .map((c) => {
-                    const max = Math.max(...data!.demographics.byCommunity.map((x) => x.count), 1);
+                    const max = Math.max(...data?.demographics.byCommunity.map((x) => x.count), 1);
                     return (
                       <div key={c.name} className="flex items-center gap-2">
                         <span className="w-0 flex-1 truncate text-[11px] text-[var(--color-fg)]">

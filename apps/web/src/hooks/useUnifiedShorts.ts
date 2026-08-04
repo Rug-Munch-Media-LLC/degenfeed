@@ -147,7 +147,6 @@ export function useUnifiedShorts(opts: UseUnifiedShortsOptions = {}): UseUnified
         case 'loops-only':
           endpoint = '/api/shorts/unified/loops';
           break;
-        case 'for-you':
         default:
           endpoint = '/api/shorts/unified/feed';
           break;

@@ -266,7 +266,7 @@ export default function EarningsPage() {
           <div className="mb-8 rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-5">
             <h3 className="mb-4 text-sm font-bold text-[var(--color-fg)]">Earnings by Protocol</h3>
             <div className="space-y-3">
-              {Object.entries(data!.byProtocol)
+              {Object.entries(data?.byProtocol)
                 .sort(([, a], [, b]) => b - a)
                 .map(([protocol, usd]) => (
                   <div key={protocol} className="flex items-center gap-3">
@@ -309,7 +309,7 @@ export default function EarningsPage() {
           <div className="mb-8 rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-5">
             <h3 className="mb-4 text-sm font-bold text-[var(--color-fg)]">Earnings by Chain</h3>
             <div className="space-y-3">
-              {Object.entries(data!.byChain)
+              {Object.entries(data?.byChain)
                 .sort(([, a], [, b]) => b - a)
                 .map(([chain, usd]) => (
                   <div key={chain} className="flex items-center gap-3">
@@ -355,7 +355,7 @@ export default function EarningsPage() {
             </h3>
             <div className="relative h-40">
               <div className="absolute inset-0 flex items-end gap-[2px]">
-                {data!.history.values.map((value, i) => {
+                {data?.history.values.map((value, i) => {
                   const height = maxHistory > 0 ? (value / maxHistory) * 100 : 0;
                   return (
                     <div
@@ -365,7 +365,7 @@ export default function EarningsPage() {
                         height: `${Math.max(height, 1)}%`,
                         background: `linear-gradient(to top, rgba(245,166,35,0.3), rgba(245,166,35,0.8))`,
                       }}
-                      title={`${data!.history.labels[i] ?? ''}: $${value.toFixed(2)}`}
+                      title={`${data?.history.labels[i] ?? ''}: $${value.toFixed(2)}`}
                     />
                   );
                 })}
@@ -385,7 +385,7 @@ export default function EarningsPage() {
               Top Earning Content
             </h2>
             <div className="space-y-2">
-              {data!.topContent.slice(0, 5).map((item, i) => (
+              {data?.topContent.slice(0, 5).map((item, i) => (
                 <div
                   key={item.id}
                   className="flex items-center gap-3 rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] px-4 py-3 transition-all hover:border-amber-500/20"

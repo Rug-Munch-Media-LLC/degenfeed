@@ -73,12 +73,6 @@ const CATEGORY_FALLBACKS: Record<string, CategoryFallbackStyle> = {
     text: 'text-emerald-400/80',
     badge: 'bg-emerald-500/15',
   },
-  macro: {
-    glyph: '📊',
-    bg: 'bg-gradient-to-br from-amber-950/80 to-yellow-900/40',
-    text: 'text-amber-400/80',
-    badge: 'bg-amber-500/15',
-  },
   tech: {
     glyph: '💻',
     bg: 'bg-gradient-to-br from-slate-800/90 to-slate-900/60',

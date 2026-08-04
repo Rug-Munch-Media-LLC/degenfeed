@@ -106,7 +106,7 @@ export function VineFeed({ vineFeed, onDismiss }: VineFeedProps) {
     for (const slide of slides) observer.observe(slide);
 
     return () => observer.disconnect();
-  }, [currentIndex, shorts.length]);
+  }, [currentIndex]);
 
   // ── Infinite Scroll ──────────────────────────────────────────────────
 
@@ -220,7 +220,7 @@ export function VineFeed({ vineFeed, onDismiss }: VineFeedProps) {
     } else {
       lastTapTime.current = now;
     }
-  }, [currentShort]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [handleLike]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Like Action ──────────────────────────────────────────────────────
 
