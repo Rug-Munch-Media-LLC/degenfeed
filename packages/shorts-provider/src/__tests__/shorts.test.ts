@@ -4,7 +4,7 @@
  * Tests the utility functions, deduplication, source colors,
  * and internal helpers that don't require network mocking.
  */
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
   deduplicateVideos,
   SHORTS_MAX_DURATION,
