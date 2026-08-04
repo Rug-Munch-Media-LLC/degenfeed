@@ -471,4 +471,3 @@ async function fetchFeed(feed: FeedSource, limit: number): Promise<UnifiedPost[]
       return fetchSingleFeed(feed, limit);
   }
 }
-

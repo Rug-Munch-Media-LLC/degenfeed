@@ -180,4 +180,3 @@ export const TRENDING_COINS: ReadonlySet<string> = new Set([
   'SHIB',
   'MEW',
 ]);
-

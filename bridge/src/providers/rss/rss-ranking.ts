@@ -253,4 +253,3 @@ export function rankNewsPosts(posts: UnifiedPost[], ctx: RankContext = {}): Unif
 // can compute per-story coverage WITHOUT re-clustering titles: each post is
 // its own story; the cross-reference list IS the multi-source coverage.
 // These power the frontend "Full Coverage" and "Blindspot" sections.
-
