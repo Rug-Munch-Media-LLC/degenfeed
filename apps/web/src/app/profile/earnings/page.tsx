@@ -67,7 +67,9 @@ export default function EarningsPage() {
   const fetchData = useCallback(async (selPeriod: string) => {
     setLoading(true);
     try {
-      const workerBase = process.env.NEXT_PUBLIC_WORKER_API_URL || 'https://api.degenfeed.xyz';
+      // Same-origin relative by default: /api/creator/earnings is proxied by
+      // the Next.js server (rewrite) to the self-hosted API — no CF worker.
+      const workerBase = process.env.NEXT_PUBLIC_WORKER_API_URL || '';
       const res = await fetch(`${workerBase}/api/creator/earnings?period=${selPeriod}`, {
         credentials: 'include',
       });

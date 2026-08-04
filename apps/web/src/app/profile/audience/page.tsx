@@ -20,7 +20,9 @@ export default function AudiencePage() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const workerBase = process.env.NEXT_PUBLIC_WORKER_API_URL || 'https://api.degenfeed.xyz';
+      // Same-origin relative by default: /api/analytics is proxied by the
+      // Next.js server (rewrite) to the self-hosted API — no CF worker.
+      const workerBase = process.env.NEXT_PUBLIC_WORKER_API_URL || '';
       const res = await fetch(`${workerBase}/api/analytics`, { credentials: 'include' });
       if (res.ok) {
         const json = (await res.json()) as {

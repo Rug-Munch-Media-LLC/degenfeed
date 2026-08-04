@@ -9,6 +9,11 @@ services:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
+      # NEXT_PUBLIC_* values are inlined at BUILD time into client + server
+      # bundles, so they MUST stay public same-origin URLs (https://degenfeed.xyz
+      # → nginx → this container → self-hosted API). The self-hosted API target
+      # is controlled at RUNTIME via WORKER_URL + API_PROXY_TARGET
+      # (http://host.docker.internal:3101) — set those in the env file.
       args:
         NEXT_PUBLIC_ADMIN_WALLETS: "0x1e3ac01d0fdb976179790bdd02823196a92705c9"
         NEXT_PUBLIC_APP_URL: "https://app.degenfeed.xyz"

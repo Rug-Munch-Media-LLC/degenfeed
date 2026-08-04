@@ -172,14 +172,6 @@ export const DEFAULT_DNS: DnsSslEntry[] = [
     ip: '[INTERNAL]',
   },
   {
-    domain: 'api.degenfeed.xyz',
-    dnsStatus: 'resolved',
-    sslStatus: 'valid',
-    sslExpiry: Date.now() + 7776000000,
-    issuer: 'Cloudflare',
-    ip: '[INTERNAL]',
-  },
-  {
     domain: 'degenfeed.xyz',
     dnsStatus: 'resolved',
     sslStatus: 'valid',

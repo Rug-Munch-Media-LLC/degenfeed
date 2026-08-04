@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
 
     // Proxy to bridge server for relay publishing
     const workerUrl =
-      process.env.WORKER_URL ?? process.env.NEXT_PUBLIC_WORKER_URL ?? 'http://localhost:8787';
+      process.env.WORKER_URL ?? process.env.NEXT_PUBLIC_WORKER_URL ?? 'http://host.docker.internal:3101';
 
     const bridgeRes = await fetch(`${workerUrl}/api/nostr/publish`, {
       method: 'POST',

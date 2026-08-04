@@ -26,7 +26,7 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
   try {
     const workerUrl =
-      process.env.WORKER_URL ?? process.env.NEXT_PUBLIC_WORKER_URL ?? 'http://localhost:8787';
+      process.env.WORKER_URL ?? process.env.NEXT_PUBLIC_WORKER_URL ?? 'http://host.docker.internal:3101';
 
     const res = await fetch(`${workerUrl}/api/nostr/relays`, {
       signal: AbortSignal.timeout(3000),

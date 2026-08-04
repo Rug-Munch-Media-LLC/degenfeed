@@ -12,7 +12,7 @@
  * the response shape consistent with every other /api/feed/* route.
  *
  * Environment:
- *   WORKER_URL  — bridge base URL (default http://host.docker.internal:8787)
+ *   WORKER_URL  — bridge base URL (default http://host.docker.internal:3101)
  *   MASTODON_INSTANCE_URL — no longer used directly; bridge handles GtS.
  */
 

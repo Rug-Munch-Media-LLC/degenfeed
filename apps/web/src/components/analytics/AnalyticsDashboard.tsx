@@ -47,7 +47,9 @@ export default function AnalyticsDashboard() {
         if (walletAddress) params.set('wallet', walletAddress);
         if (forceRefresh) params.set('refresh', 'true');
         const qs = params.toString();
-        const workerBase = process.env.NEXT_PUBLIC_WORKER_API_URL || 'https://api.degenfeed.xyz';
+        // Same-origin relative by default: /api/analytics is proxied by the
+        // Next.js server (rewrite) to the self-hosted API — no CF worker.
+        const workerBase = process.env.NEXT_PUBLIC_WORKER_API_URL || '';
         const res = await retryFetch(`${workerBase}/api/analytics${qs ? `?${qs}` : ''}`, {
           maxRetries: 2,
         });
