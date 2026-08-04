@@ -170,7 +170,6 @@ zoraVideo.post('/mint', async (c) => {
       editionSize,
       royaltyBps,
       linkedCreatorCoin: (body.linkedCreatorCoin || undefined) as `0x${string}` | undefined,
-      referrer: (body.referrer || undefined) as `0x${string}` | undefined,
       chain,
     });
 
@@ -312,7 +311,6 @@ zoraVideo.get('/trending', async (c) => {
       {
         limit,
         network: chain as 'base' | 'ethereum' | 'zora',
-        cursor,
       },
       { CACHE: c.env.CACHE },
     );
@@ -627,7 +625,7 @@ zoraVideo.post('/upload', async (c) => {
     const pinataJwt = `${pinataKey}:${pinataSecret}`;
 
     // Use the ZoraVideoSDK to upload
-    const { ZoraVideoSDK, uploadToIpfs } = await import('@degenfeed/zora-sdk/video');
+    const { uploadToIpfs } = await import('@degenfeed/zora-sdk/video');
     const result = await uploadToIpfs(
       file,
       (formData.fileName as string) || `video-${Date.now()}.mp4`,
@@ -635,14 +633,16 @@ zoraVideo.post('/upload', async (c) => {
       { pinToArweave: formData.pinToArweave === 'true' },
     );
 
+    const ipfsCid = result.ipfsUri.replace(/^ipfs:\/\//, '');
+
     return noCacheJsonResponse(
       {
         ok: true,
         upload: {
           ipfsUri: result.ipfsUri,
-          ipfsCid: result.ipfsCid,
+          ipfsCid,
           arweaveUri: result.arweaveUri ?? null,
-          gatewayUrl: `https://gateway.pinata.cloud/ipfs/${result.ipfsCid}`,
+          gatewayUrl: `https://gateway.pinata.cloud/ipfs/${ipfsCid}`,
         },
       },
       201,

@@ -203,11 +203,13 @@ zoraNFT.post('/gasless-prepare', async (c) => {
       deadline: body.deadline ? BigInt(body.deadline as number) : undefined,
     });
 
+    const typedMessage = typedData.message as { deadline?: bigint | number | string };
+
     return noCacheJsonResponse({
       ok: true,
       typedData,
       signature,
-      deadline: typedData.message.deadline.toString(),
+      deadline: typedMessage.deadline?.toString() ?? '',
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
@@ -310,6 +312,9 @@ zoraNFT.get('/:address/:tokenId', async (c) => {
     }
 
     const token = data.data[0];
+    if (!token) {
+      return jsonResponse({ error: 'NFT not found' }, 404);
+    }
     const zoraChain = (token.mint_chain_id as number) === 7777777 ? 'zora' : 'base';
 
     return noCacheJsonResponse({

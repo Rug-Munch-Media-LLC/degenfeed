@@ -317,8 +317,6 @@ export interface Env {
   PDS_INSTANCE_URL?: string;
   /** Nostr relay instance URL — relay.degenfeed.xyz */
   RELAY_INSTANCE_URL?: string;
-  /** Matrix homeserver URL — matrix.degenfeed.xyz */
-  MATRIX_INSTANCE_URL?: string;
   /** Ghost CMS instance URL — articles.degenfeed.xyz */
   GHOST_INSTANCE_URL?: string;
   /** WriteFreely instance URL — blog.degenfeed.xyz */
@@ -351,10 +349,6 @@ export interface Env {
   FARCASTER_SIGNER_KEY?: string;
   /** Farcaster FID for the bot account used for live short announcements */
   FARCASTER_FID?: string;
-  /** Bluesky access JWT for AT Protocol live short announcements */
-  BSKY_ACCESS_TOKEN?: string;
-  /** Lens API access token for Lens live short publishing */
-  LENS_ACCESS_TOKEN?: string;
   /** Livepeer Studio API key for Livepeer-backed streaming (Zora, generic) */
   LIVEPEER_API_KEY?: string;
   /** Cloudflare Stream API token for enterprise CDN streaming */
@@ -429,6 +423,8 @@ export interface Env {
   ZORA_RELAYER_URL?: string;
   /** x402 relayer for payment-gated content */
   X402_RELAYER_URL?: string;
+  /** x402 relayer signer private key (hex) for gasless minting */
+  X402_RELAYER_KEY?: string;
   /** Farcaster watchlist for live activity monitoring */
   FARCASTER_WATCHLIST?: string;
 
@@ -463,8 +459,6 @@ export interface Env {
   // ─── Multi-Protocol Coin Announcement ───────────────────────────────
   /** Bluesky app password for bot posting (not the main password) */
   BSKY_APP_PASSWORD?: string;
-  /** Mastodon/GTS access token for bot tooting */
-  MASTODON_ACCESS_TOKEN?: string;
   /** Telegram chat ID for coin launch announcements */
   TELEGRAM_ANNOUNCEMENT_CHAT_ID?: string;
   /** Telegram coin announcement chat ID (overrides TELEGRAM_ANNOUNCEMENT_CHAT_ID) */
