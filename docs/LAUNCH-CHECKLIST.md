@@ -34,9 +34,9 @@
 - [ ] All 4 DBs backing up ❌
   - Postgres ✅ (today, encrypted .age) · ClickHouse ✅ (today) · Redis ✅ (today) · Qdrant ✅ (20 collections → R2 `rag-backup`, today)
   - **Neo4j ❌ — latest dump is 2026-07-17 17:23; today's 00:00 run logged `--- Neo4j ---` then produced nothing (silent hang/failure)**
-- [ ] Off-site R2 sync ❌ **CRITICAL**
-  - `offsite-backup.sh` logs `Off-site backup replication FAILED (multi-dest)` — R2 destination not confirmed.
-  - Root cause verified: **`r2-crypt:backups` contains 0 files / 0 bytes.** A plaintext `backups/` dir sits inside `r2:fleet-backup`, which the crypt remote (directory_name_encryption=true) cannot decrypt → "Skipping undecryptable dir name". Nothing is actually replicated off-site.
+- [ ] Off-site B2 sync ❌ **CRITICAL**
+  - `offsite-backup.sh` logs `Off-site backup replication FAILED (multi-dest)` — B2 destination not confirmed.
+  - Root cause verified: **`b2-crypt:backups` contains 0 files / 0 bytes.** A plaintext `backups/` dir sits inside `b2:fleet-backup`, which the crypt remote (directory_name_encryption=true) cannot decrypt → "Skipping undecryptable dir name". Nothing is actually replicated off-site.
 - [ ] Hydra backups working ⚠️
   - `hydra-backup.sh` completed 2026-07-18 01:17 (5.8G in /backups/hydra) — but **disk is now 100% full**, so tonight's run will fail.
 - [ ] Backup alerting active ⚠️
@@ -113,7 +113,7 @@
 | # | Failure | Fix | Effort |
 |---|---------|-----|--------|
 | B1 | **Hydra disk 100% full** | Prune old /backups/hydra archives + docker system prune; add retention cap; add disk alert at 85% | 1–2h |
-| B2 | **Off-site R2 sync broken (0 bytes replicated)** | Remove plaintext `backups/` dir from `r2:fleet-backup`, re-run `offsite-backup.sh`, verify `rclone lsf r2-crypt:backups` non-empty; add file-count check to multi-dest confirm | 2–4h |
+| B2 | **Off-site B2 sync broken (0 bytes replicated)** | Remove plaintext `backups/` dir from `b2:fleet-backup`, re-run `offsite-backup.sh`, verify `rclone lsf b2-crypt:backups` non-empty; add file-count check to multi-dest confirm | 2–4h |
 | B3 | **Neo4j backup silently failing** | Debug `db-backup.sh` Neo4j section (likely `neo4j-admin dump` hang or disk pressure); add per-DB timeout + failure exit code | 2–3h |
 | B4 | **/api/feed/home 10–23s latency** | Profile aggregator: parallelize provider fetches, cap per-provider timeout (~2s), serve stale-while-revalidate from KV/cache | 1–2d |
 | B5 | **Talos disk 94–95%** | Prune docker images/volumes, rotate ClickHouse/Loki retention, move cold backups off-box (after B2) | 2–4h |
