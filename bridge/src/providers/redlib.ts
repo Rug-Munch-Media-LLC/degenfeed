@@ -77,6 +77,23 @@ const SUBREDDITS = [
   'Futurology',
   'WallStreetBetsCrypto',
   'CryptoTechnology',
+  // Additional crypto/tech subreddits (2026-08-04) — more niche coverage
+  // for the OAuth/JSON paths and a wider RSS rotation.
+  'ethtrader',
+  'cardano',
+  'chainlink',
+  'CryptoCurrencyTrading',
+  'altcoin',
+  'Crypto_com',
+  'Monero',
+  'BitcoinMarkets',
+  'SatoshiStreetBets',
+  'CryptoMoonShots',
+  'bittensor',
+  'OpenAI',
+  'artificialintelligence',
+  'singularity',
+  'aipromptprogramming',
 ];
 
 // ─── Helpers ──────────────────────────────────────────────────────────
@@ -541,9 +558,11 @@ export async function fetchRedditPosts(limit = 20): Promise<UnifiedPost[]> {
   const hasOAuth = getRedditOAuth().isConfigured;
 
   // PRIMARY: RSS feeds — the only strategy verified working from this host.
-  // Keep the request count LOW: one subreddit usually satisfies small limits,
-  // and each call is wrapped in buildFeed's 5s timeout, so we must return fast.
-  const rssSubs = ['CryptoCurrency', 'Bitcoin', 'ethereum'];
+  // Keep the request count LOW: a handful of subreddits satisfies small
+  // limits, and each call is wrapped in buildFeed's 5s timeout, so we must
+  // return fast. Rotation is deterministic per call so different requests
+  // surface different subreddits while staying within the rate budget.
+  const rssSubs = ['CryptoCurrency', 'Bitcoin', 'ethereum', 'ethtrader', 'defi'];
   const perSubRss = Math.max(2, Math.ceil(limit / rssSubs.length));
   for (const sub of rssSubs) {
     try {

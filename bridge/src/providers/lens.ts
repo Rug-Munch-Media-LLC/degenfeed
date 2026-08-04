@@ -161,8 +161,76 @@ function mapPublication(pub: IndexerPublication): UnifiedPost | null {
 
 // ─── Fetch from Local Indexer ─────────────────────────────────────────
 
+/** Engagement score used to rank "trending" publications. */
+function engagementScore(pub: IndexerPublication): number {
+  return (
+    Number(pub.stats_reactions) * 2 +
+    Number(pub.stats_reposts) * 3 +
+    Number(pub.stats_comments) * 1
+  );
+}
+
+/**
+ * Select a trending + recent mix from a batch of publications.
+ *
+ * The local indexer stores thousands of publications but does not expose
+ * a trending sort. We rank the most recent batch by engagement (reactions,
+ * reposts, comments) and by aggregate per-author engagement — authors whose
+ * posts collectively score highest are the "trending profiles" in the
+ * current window. The result is ~40% high-engagement ("trending") posts
+ * followed by the freshest remaining posts, deduped by id.
+ */
+function selectTrendingMix(pubs: IndexerPublication[], limit: number): IndexerPublication[] {
+  if (pubs.length === 0) return [];
+
+  // Aggregate engagement per author → trending profile ranking.
+  const authorScore = new Map<string, number>();
+  for (const p of pubs) {
+    authorScore.set(p.author_address, (authorScore.get(p.author_address) || 0) + engagementScore(p));
+  }
+  const authorRank = new Map<string, number>();
+  [...authorScore.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .forEach(([addr], i) => authorRank.set(addr, i));
+
+  const scored = pubs.map((p) => ({
+    p,
+    score: engagementScore(p),
+    rank: authorRank.get(p.author_address) ?? 999,
+    ts: new Date(p.timestamp).getTime(),
+  }));
+
+  // Trending: highest engagement, with a boost for authors who rank high.
+  const trending = [...scored].sort(
+    (a, b) => a.rank - b.rank || b.score - a.score || b.ts - a.ts,
+  );
+  // Recent: newest first.
+  const recent = [...scored].sort((a, b) => b.ts - a.ts);
+
+  const out: IndexerPublication[] = [];
+  const seen = new Set<string>();
+  const trendingShare = Math.min(Math.max(1, Math.ceil(limit * 0.4)), limit);
+  for (const item of trending) {
+    if (out.length >= trendingShare) break;
+    if (!seen.has(item.p.id)) {
+      seen.add(item.p.id);
+      out.push(item.p);
+    }
+  }
+  for (const item of recent) {
+    if (out.length >= limit) break;
+    if (!seen.has(item.p.id)) {
+      seen.add(item.p.id);
+      out.push(item.p);
+    }
+  }
+  return out.slice(0, limit);
+}
+
 async function fetchPosts(limit: number): Promise<UnifiedPost[]> {
-  const url = `${LENS_INDEXER_URL}/api/publications?limit=${limit}`;
+  // Pull a wider batch (capped) so we have room to rank a trending mix.
+  const fetchLimit = Math.min(Math.max(limit * 3, limit + 10), 100);
+  const url = `${LENS_INDEXER_URL}/api/publications?limit=${fetchLimit}`;
 
   try {
     const res = await $fetch(url, {
@@ -182,13 +250,17 @@ async function fetchPosts(limit: number): Promise<UnifiedPost[]> {
       return [];
     }
 
+    const selected = selectTrendingMix(data.data, limit);
+
     const posts: UnifiedPost[] = [];
-    for (const pub of data.data) {
+    for (const pub of selected) {
       const post = mapPublication(pub);
       if (post) posts.push(post);
     }
 
-    console.log(`[bridge] Lens Indexer: ${posts.length} posts (from ${data.meta.total} local)`);
+    console.log(
+      `[bridge] Lens Indexer: ${posts.length} posts (trending mix of ${data.meta.total} local)`,
+    );
     return posts.slice(0, limit);
   } catch (err) {
     console.warn(

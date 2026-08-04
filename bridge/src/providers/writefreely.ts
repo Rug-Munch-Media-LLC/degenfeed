@@ -41,6 +41,10 @@ const CURATED_BLOGS: BlogSource[] = [
   { alias: 'freedog', instance: 'https://write.as', displayName: 'FreeDog' },
   { alias: 'press', instance: 'https://write.as', displayName: 'Write.as Press' },
   { alias: 'tech', instance: 'https://writing.exchange', displayName: 'Writing Exchange' },
+  // Additional federated WriteFreely blog (verified reachable 2026-08-04)
+  // with unique, non-cross-posted articles — helps the feed exceed the
+  // 10-post floor once cross-post duplicates are deduped.
+  { alias: 'tedomum', instance: 'https://write.tedomum.net', displayName: 'Tedomum Blog' },
 ];
 
 const _PUBLIC_INSTANCES = [

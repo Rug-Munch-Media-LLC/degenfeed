@@ -152,6 +152,12 @@ export const PUBLIC_PIXELFED_INSTANCES = [
   { url: 'https://pixelfed.de', label: 'pixelfed.de' },
   { url: 'https://gram.social', label: 'gram.social' },
   { url: 'https://pixey.org', label: 'pixey.org' },
+  // Additional public instances (verified reachable 2026-08-04) — art,
+  // NZ, photo communities and general image sharing for wider coverage.
+  { url: 'https://pixelfed.art', label: 'pixelfed.art' },
+  { url: 'https://pixelfed.nz', label: 'pixelfed.nz' },
+  { url: 'https://photog.social', label: 'photog.social' },
+  { url: 'https://graphics.social', label: 'graphics.social' },
 ];
 
 // ─── Helpers ───────────────────────────────────────────────────────

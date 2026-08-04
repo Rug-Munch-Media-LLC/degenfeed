@@ -33,6 +33,23 @@ const PUBLIC_INSTANCES = [
   'https://mas.to',
   'https://mstdn.social',
   'https://techhub.social',
+  // Additional fediverse instances (2026-08-04) — general, tech, art,
+  // open-source, science and music communities for broader content
+  // diversity. Unreachable instances are skipped gracefully by the
+  // per-instance catch, so adding more sources is strictly additive.
+  'https://mastodon.online',
+  'https://mastodon.world',
+  'https://mastodon.art',
+  'https://hackers.town',
+  'https://mastodon.cloud',
+  'https://universeodon.com',
+  'https://floss.social',
+  'https://norden.social',
+  'https://mastodon.ie',
+  'https://todon.eu',
+  'https://social.treehouse.systems',
+  'https://metalhead.club',
+  'https://mastodon.green',
 ];
 
 // ─── Helpers ──────────────────────────────────────────────────────────

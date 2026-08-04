@@ -48,6 +48,18 @@ const HASHTAGS = [
   'photography',
   'art',
   'landscape',
+  // Additional hashtags (2026-08-04) — AI, tech and photo communities for
+  // a broader mix beyond the crypto niche.
+  'blockchain',
+  'ai',
+  'technology',
+  'space',
+  'travel',
+  'nature',
+  'streetphotography',
+  'architecture',
+  'minimalism',
+  'city',
 ];
 
 let _adapter: typeof import('@degenfeed/feed-providers') | null = null;
@@ -118,7 +130,7 @@ export async function fetchPixelfedPosts(limit = 20): Promise<UnifiedPost[]> {
 
   // ── 4. Hashtag timelines on the local instance (best-effort) ──
   const tagResults = await Promise.allSettled(
-    HASHTAGS.slice(0, 6).map(async (tag) => {
+    HASHTAGS.slice(0, 8).map(async (tag) => {
       const statuses = await getTagTimeline(PIXELFED_BASE_URL, tag, 5, accessToken);
       return statuses.map(toUnified);
     }),

@@ -37,6 +37,14 @@ const CUSTOM_FEEDS = [
   'at://did:plc:tenurhgjptubkk5zf5qhi3og/app.bsky.feed.generator/mutuals',
   'at://did:plc:kkf4naxqmweop7dv4l2iqqf5/app.bsky.feed.generator/verified-news',
   'at://did:plc:y7crv2yh74s7qhmtx3mvbgv5/app.bsky.feed.generator/art-new',
+  // Additional popular feed generators (verified via getPopularFeedGenerators
+  // 2026-08-04) — broadens topical diversity beyond crypto into science,
+  // gaming, astronomy and general interest.
+  'at://did:plc:jfhpnnst6flqway4eaeqzj2a/app.bsky.feed.generator/for-science',
+  'at://did:plc:w4xbfzo7kqfes5zb7r6qv3rw/app.bsky.feed.generator/blacksky',
+  'at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.feed.generator/hot-classic',
+  'at://did:plc:4jrld6fwpnwqehtce56qshzv/app.bsky.feed.generator/game-dev',
+  'at://did:plc:jcoy7v3a2t4rcfdh6i4kza25/app.bsky.feed.generator/astro',
 ];
 
 const CURATED_ACTORS = [
@@ -52,6 +60,18 @@ const CURATED_ACTORS = [
   'coinbase.com',
   'karbonbased.bsky.social',
   'crypto_birb.bsky.social',
+  // Additional curated actors (handles verified via resolveHandle
+  // 2026-08-04) — crypto, tech, media and AI voices for a wider mix.
+  'saylor.bsky.social',
+  'brian.bsky.social',
+  'paulg.bsky.social',
+  'elon.bsky.social',
+  'jessepollak.bsky.social',
+  'shaw.bsky.social',
+  'alexblania.bsky.social',
+  'bankless.bsky.social',
+  'thedefiant.bsky.social',
+  'cointelegraph.bsky.social',
 ];
 const SEARCH_QUERIES = [
   'bitcoin OR btc',
@@ -455,7 +475,8 @@ export async function fetchBlueskyTrending(limit = 20): Promise<UnifiedPost[]> {
 
 async function fetchAllCuratedPosts(limit: number): Promise<UnifiedPost[]> {
   const all: UnifiedPost[] = [];
-  const actorsToFetch = CURATED_ACTORS.slice(0, 8);
+  // Cover the expanded curated actor list (bounded for latency).
+  const actorsToFetch = CURATED_ACTORS.slice(0, 12);
   const perActor = Math.max(3, Math.ceil(limit / actorsToFetch.length));
   const results = await Promise.allSettled(actorsToFetch.map((a) => fetchAuthorFeed(a, perActor)));
   for (const r of results) {
