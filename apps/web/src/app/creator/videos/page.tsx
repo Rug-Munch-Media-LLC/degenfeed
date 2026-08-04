@@ -108,7 +108,6 @@ export default function CreatorVideosPage() {
   const handleConfirmDelete = useCallback(async () => {
     if (!confirmDeleteUuid) return;
     try {
-      
       // Can't call hooks outside component — use direct fetch instead
       const res = await fetch(`/api/creator/videos/${confirmDeleteUuid}`, {
         method: 'DELETE',
