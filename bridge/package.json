@@ -11,7 +11,12 @@
   "dependencies": {
     "@degenfeed/bluesky-sdk": "workspace:*",
     "@degenfeed/crossplatform-register": "workspace:*",
+    "@degenfeed/farcaster-sdk": "workspace:*",
+    "@degenfeed/lens-sdk": "workspace:*",
+    "@degenfeed/mastodon-sdk": "workspace:*",
     "@degenfeed/nostr-sdk": "workspace:*",
+    "@degenfeed/pixelfed-sdk": "workspace:*",
+    "@degenfeed/spaces-bridge": "workspace:*",
     "@degenfeed/types": "workspace:*",
     "@degenfeed/utils": "workspace:*",
     "meilisearch": "^0.60.0",

@@ -757,17 +757,6 @@ function HeroFeaturedSection({
 }) {
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  if (isLoading) {
-    return (
-      <section aria-label="Featured stream" className="mb-8">
-        <div className="aspect-video w-full rounded-2xl skeleton" />
-      </section>
-    );
-  }
-  if (streams.length === 0) return null;
-
-  const featured = streams[currentIndex % streams.length]!;
-
   const handlePrev = useCallback(() => {
     setCurrentIndex((i) => (i - 1 + streams.length) % streams.length);
   }, [streams.length]);
@@ -784,6 +773,17 @@ function HeroFeaturedSection({
     }, 12000);
     return () => clearInterval(interval);
   }, [streams.length]);
+
+  if (isLoading) {
+    return (
+      <section aria-label="Featured stream" className="mb-8">
+        <div className="aspect-video w-full rounded-2xl skeleton" />
+      </section>
+    );
+  }
+  if (streams.length === 0) return null;
+
+  const featured = streams[currentIndex % streams.length]!;
 
   return (
     <section aria-label="Featured stream" className="mb-8">

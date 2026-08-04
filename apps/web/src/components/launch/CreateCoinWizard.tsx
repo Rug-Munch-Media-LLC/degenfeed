@@ -157,6 +157,7 @@ function StepCoinDetails({
                 stroke="currentColor"
                 strokeWidth="1.5"
                 className="mx-auto mb-2 text-[var(--color-muted)]"
+                aria-hidden="true"
               >
                 <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
                 <circle cx="8.5" cy="8.5" r="1.5" />

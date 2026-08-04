@@ -8,6 +8,7 @@ vi.mock('@degenfeed/nostr-sdk', () => ({
   RelayPool: vi.fn(() => ({
     publish: vi.fn(),
     disconnectAll: vi.fn(),
+    getConnectedRelays: vi.fn(() => ['wss://relay.test']),
   })),
 }));
 

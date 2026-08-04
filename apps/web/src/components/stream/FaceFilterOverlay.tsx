@@ -130,8 +130,6 @@ export function FaceFilterOverlay({
     }
   }, [activeCategory, visible]);
 
-  if (!visible) return null;
-
   // ─── Filtered list for current category ───────────────────────────
 
   const categoryFilters = useMemo(() => {
@@ -141,6 +139,8 @@ export function FaceFilterOverlay({
     );
     return { owned, unowned };
   }, [allFilters, activeCategory]);
+
+  if (!visible) return null;
 
   // ─── Render ────────────────────────────────────────────────────────
 

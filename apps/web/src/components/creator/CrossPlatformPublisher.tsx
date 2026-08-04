@@ -413,7 +413,7 @@ export default function CrossPlatformPublisher({
             className="btn-primary flex items-center gap-2 text-sm"
           >
             {results?.some((r) => !r.ok) ? 'Retry Failed' : 'Publish to Selected'}
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
               <path
                 d="M1 7h12M7 1l6 6-6 6"
                 stroke="currentColor"
@@ -426,7 +426,12 @@ export default function CrossPlatformPublisher({
         )}
         {publishing && (
           <div className="flex items-center gap-2 text-sm text-[var(--color-muted)]">
-            <svg className="h-4 w-4 animate-spin text-degen-400" viewBox="0 0 24 24" fill="none">
+            <svg
+              className="h-4 w-4 animate-spin text-degen-400"
+              viewBox="0 0 24 24"
+              fill="none"
+              aria-hidden="true"
+            >
               <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.3" />
               <path
                 d="M12 2a10 10 0 019.95 9"
@@ -464,7 +469,7 @@ export default function CrossPlatformPublisher({
                 className="ml-4 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[var(--color-muted)] transition-colors hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)]"
                 aria-label="Close"
               >
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                   <path
                     d="M4 4l8 8M12 4l-8 8"
                     stroke="currentColor"

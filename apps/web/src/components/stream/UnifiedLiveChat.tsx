@@ -122,6 +122,11 @@ function MessageBubble({
   onPin: (msgId: string) => void;
   onUnpin: (msgId: string) => void;
 }) {
+  const isPinned = pinnedIds.includes(msg.id);
+  const badge = getProtocolBadge(msg.protocol);
+  const initials = msg.displayName[0]?.toUpperCase() || '?';
+  const [showActions, setShowActions] = useState(false);
+
   if (msg.isDeleted) {
     return (
       <div className="flex items-center gap-2 px-3 py-1 opacity-40">
@@ -129,11 +134,6 @@ function MessageBubble({
       </div>
     );
   }
-
-  const isPinned = pinnedIds.includes(msg.id);
-  const badge = getProtocolBadge(msg.protocol);
-  const initials = msg.displayName[0]?.toUpperCase() || '?';
-  const [showActions, setShowActions] = useState(false);
 
   return (
     <div

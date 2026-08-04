@@ -80,7 +80,7 @@ export class RelayPool {
       maxReconnects: opts.maxReconnects ?? 5,
       logLevel: opts.logLevel ?? 'warn',
     };
-    this.logger = self.console; // Use global console
+    this.logger = globalThis.console; // Use global console (works in Node + browser)
 
     for (const url of relayUrls) {
       this.addRelay(url);

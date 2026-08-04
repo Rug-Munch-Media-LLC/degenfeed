@@ -62,6 +62,32 @@ export default function CreatorVideosPage() {
     setAnalyticsVideo(video);
   }, []);
 
+  // Confirm-delete state is declared before the wallet gate so hooks stay at
+  // the top level (Rules of Hooks).
+  const [confirmDeleteUuid, setConfirmDeleteUuid] = useState<string | null>(null);
+
+  const handleConfirmDelete = useCallback(async () => {
+    if (!confirmDeleteUuid) return;
+    try {
+      // Can't call hooks outside component — use direct fetch instead
+      const res = await fetch(`/api/creator/videos/${confirmDeleteUuid}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      if (res.ok) {
+        setDeletingVideo(null);
+        setConfirmDeleteUuid(null);
+        // Force re-fetch by triggering a navigation-like effect
+        window.location.reload();
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Delete failed');
+      }
+    } catch {
+      alert('Delete failed');
+    }
+  }, [confirmDeleteUuid]);
+
   // == Wallet Gate ====================================================
 
   if (!ready) {
@@ -100,32 +126,6 @@ export default function CreatorVideosPage() {
       </div>
     );
   }
-
-  // == Confirm Delete =================================================
-
-  const [confirmDeleteUuid, setConfirmDeleteUuid] = useState<string | null>(null);
-
-  const handleConfirmDelete = useCallback(async () => {
-    if (!confirmDeleteUuid) return;
-    try {
-      // Can't call hooks outside component — use direct fetch instead
-      const res = await fetch(`/api/creator/videos/${confirmDeleteUuid}`, {
-        method: 'DELETE',
-        credentials: 'include',
-      });
-      if (res.ok) {
-        setDeletingVideo(null);
-        setConfirmDeleteUuid(null);
-        // Force re-fetch by triggering a navigation-like effect
-        window.location.reload();
-      } else {
-        const data = await res.json();
-        alert(data.error || 'Delete failed');
-      }
-    } catch {
-      alert('Delete failed');
-    }
-  }, [confirmDeleteUuid]);
 
   // == Dashboard ======================================================
 

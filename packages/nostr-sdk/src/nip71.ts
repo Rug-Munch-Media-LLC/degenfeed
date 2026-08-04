@@ -1,8 +1,9 @@
 /**
  * @degenfeed/nostr-sdk — NIP-71: Video Events
  *
- * NIP-71 defines video content via kind:34235 (Video Event).
- * These events represent video posts similar to how kind:1 represents text.
+ * NIP-71 defines video content via two event kinds:
+ *   - kind:34235 (Video Event)      — full-length video posts
+ *   - kind:34236 (Short-form Video) — TikTok-style short video posts
  *
  * Video events have:
  *   - d tag: unique identifier
@@ -24,6 +25,8 @@
 export interface NostrVideoEvent {
   /** Unique event ID */
   id: string;
+  /** Event kind (34235 = video, 34236 = short video) */
+  kind: number;
   /** Event pubkey (creator) */
   pubkey: string;
   /** Title of the video */
@@ -78,6 +81,10 @@ export interface NostrVideoFilter {
 // ─── Constants ──────────────────────────────────────────────────────────
 
 export const VIDEO_EVENT_KIND = 34235;
+/** NIP-71 short-form video event (TikTok-style, kind 34236) */
+export const SHORT_VIDEO_EVENT_KIND = 34236;
+/** All NIP-71 video event kinds (34235 = video, 34236 = short video) */
+export const VIDEO_EVENT_KINDS = [VIDEO_EVENT_KIND, SHORT_VIDEO_EVENT_KIND] as const;
 
 /** MIME types considered as "short-form vertical video" */
 const SHORT_MIME_TYPES = ['video/mp4', 'video/webm', 'video/quicktime'];
@@ -103,7 +110,7 @@ export function parseVideoEvent(event: {
   created_at: number;
   sig?: string;
 }): NostrVideoEvent | null {
-  if (event.kind !== VIDEO_EVENT_KIND) return null;
+  if (!VIDEO_EVENT_KINDS.includes(event.kind as (typeof VIDEO_EVENT_KINDS)[number])) return null;
 
   const tags = event.tags ?? [];
   const tagMap = new Map<string, string[]>();
@@ -173,8 +180,10 @@ export function parseVideoEvent(event: {
 
   const summary = event.content && event.content !== title ? event.content : undefined;
 
-  // Determine if short-form
+  // Determine if short-form: kind 34236 is short-form by definition; kind
+  // 34235 is short when the duration is under the threshold or MIME matches.
   const isShort = !!(
+    event.kind === SHORT_VIDEO_EVENT_KIND ||
     isShortDuration(duration) ||
     (mimeType &&
       SHORT_MIME_TYPES.includes(mimeType) &&
@@ -188,6 +197,7 @@ export function parseVideoEvent(event: {
 
   return {
     id,
+    kind: event.kind,
     pubkey: event.pubkey,
     title,
     url,
@@ -221,6 +231,7 @@ export function serializeVideoEvent(opts: {
   summary?: string;
   publishedAt?: number;
   isShort?: boolean;
+  kind?: number;
   tags?: string[];
   contentWarning?: string;
 }): { kind: number; tags: string[][]; content: string } {
@@ -248,7 +259,7 @@ export function serializeVideoEvent(opts: {
   }
 
   return {
-    kind: VIDEO_EVENT_KIND,
+    kind: opts.kind ?? (opts.isShort ? SHORT_VIDEO_EVENT_KIND : VIDEO_EVENT_KIND),
     tags,
     content: opts.summary ?? '',
   };
@@ -344,7 +355,7 @@ export async function fetchNostrVideoEvents(
 
     const events: NostrVideoEvent[] = [];
     const subFilter: Record<string, unknown> = {
-      kinds: [VIDEO_EVENT_KIND],
+      kinds: filter.shortsOnly ? [SHORT_VIDEO_EVENT_KIND] : [...VIDEO_EVENT_KINDS],
       limit: filter.limit ?? 50,
     };
     if (filter.authors?.length) subFilter.authors = filter.authors;

@@ -306,7 +306,6 @@ export default function SubscribePage() {
                   type="button"
                   onClick={() => handleSelectTier(tier)}
                   className="btn-primary mt-6 w-full"
-                  type="button"
                 >
                   Subscribe ${tier.price}/mo
                 </button>
@@ -333,7 +332,6 @@ export default function SubscribePage() {
                   key={m.value}
                   onClick={() => handleSign(subscribeState.tier, m.value)}
                   className="flex w-full items-center gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-left transition-all hover:border-degen-500/50"
-                  type="button"
                 >
                   <span className="text-lg">{m.icon}</span>
                   <div className="min-w-0 flex-1">
@@ -348,7 +346,6 @@ export default function SubscribePage() {
             type="button"
             onClick={() => setSubscribeState({ step: 'select' })}
             className="text-xs text-[var(--color-muted)] hover:text-[var(--color-muted)] transition-colors"
-            type="button"
           >
             ← Choose a different tier
           </button>
@@ -402,7 +399,6 @@ export default function SubscribePage() {
             type="button"
             onClick={() => setSubscribeState({ step: 'select' })}
             className="btn-primary mt-4 text-sm"
-            type="button"
           >
             Try Again
           </button>

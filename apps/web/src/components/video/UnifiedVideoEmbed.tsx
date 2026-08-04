@@ -587,6 +587,7 @@ export function UnifiedVideoEmbed({
             onPause={() => setIsPlaying(false)}
             preload="metadata"
           >
+            <track kind="captions" />
             <p>Your browser does not support HTML5 video.</p>
           </video>
         );
@@ -608,6 +609,7 @@ export function UnifiedVideoEmbed({
             preload="metadata"
             crossOrigin="anonymous"
           >
+            <track kind="captions" />
             <source src={resolvedUrl} type="video/mp4" />
             <source src={resolvedUrl} type="video/webm" />
             <p>
@@ -634,6 +636,7 @@ export function UnifiedVideoEmbed({
               onError={handleNativeVideoError}
               preload="metadata"
             >
+              <track kind="captions" />
               <source src={resolvedUrl} type="application/x-mpegURL" />
               <p>HLS playback not supported in this browser.</p>
             </video>
@@ -648,7 +651,9 @@ export function UnifiedVideoEmbed({
             controls
             onError={handleNativeVideoError}
             preload="metadata"
-          />
+          >
+            <track kind="captions" />
+          </video>
         );
       }
       default: {
@@ -673,6 +678,7 @@ export function UnifiedVideoEmbed({
             preload="metadata"
             crossOrigin="anonymous"
           >
+            <track kind="captions" />
             <source src={resolvedUrl} type={mimeType} />
             <p>Your browser does not support HTML5 video.</p>
           </video>

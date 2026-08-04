@@ -73,6 +73,17 @@ function encodeEmbedCastId(fid: number, hashHex: string): Uint8Array {
   return encodeLengthDelimited(2, castId);
 }
 
+/**
+ * Encode a URL embed for CastAddBody (current protocol: `repeated Embed
+ * embeds = 7`, where `Embed { string url = 1 }`). Without this, casts that
+ * pass `embeds` to buildFarcasterCastMessage silently lose their embeds —
+ * which breaks Frames (the frame URL is only delivered as an embed).
+ */
+function encodeEmbedUrl(url: string): Uint8Array {
+  const embedInner = encodeLengthDelimited(1, new TextEncoder().encode(url)); // Embed.url = 1
+  return encodeLengthDelimited(7, embedInner); // CastAddBody.embeds = 7
+}
+
 function encodeReactionBody(
   reactionType: number,
   targetFid: number,

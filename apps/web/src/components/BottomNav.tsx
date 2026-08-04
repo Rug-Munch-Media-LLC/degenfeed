@@ -178,9 +178,6 @@ export function BottomNav() {
     return () => cancelAnimationFrame(timer);
   }, []);
 
-  // Hide bottom nav on landing page
-  if (pathname === '/') return null;
-
   const handleCompose = useCallback(() => {
     if (signedIn) {
       openCompose();
@@ -188,6 +185,9 @@ export function BottomNav() {
       openSignIn();
     }
   }, [signedIn, openCompose, openSignIn]);
+
+  // Hide bottom nav on landing page
+  if (pathname === '/') return null;
 
   return (
     <nav

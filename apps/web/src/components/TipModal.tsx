@@ -784,7 +784,6 @@ export function TipModal({
                           type="button"
                           onClick={() => navigator.clipboard.writeText(state.txHash || '')}
                           className="shrink-0 rounded-lg bg-[var(--color-card)] px-2 py-1 text-[10px] text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
-                          type="button"
                         >
                           Copy Invoice
                         </button>
@@ -818,7 +817,6 @@ export function TipModal({
                           type="button"
                           onClick={() => navigator.clipboard.writeText(state.txHash || '')}
                           className="shrink-0 rounded-lg bg-[var(--color-card)] px-2 py-1 text-[10px] text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
-                          type="button"
                         >
                           Copy Tx
                         </button>

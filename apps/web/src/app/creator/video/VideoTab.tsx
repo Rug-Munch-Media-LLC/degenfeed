@@ -96,7 +96,9 @@ export default function VideoTab() {
             src={previewUrl}
             controls
             className="w-full rounded-2xl max-h-[300px] object-contain bg-black"
-          />
+          >
+            <track kind="captions" />
+          </video>
           <div className="mt-3 flex items-center gap-3">
             <button
               type="button"
