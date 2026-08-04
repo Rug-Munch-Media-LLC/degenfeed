@@ -48,6 +48,13 @@ export interface ShortVideoItem {
   creatorCoinAddress?: string;
 }
 
+export interface UserInterestProfile {
+  /** Topic name → interest weight (0-1, >0.5 = interested) */
+  topics: Record<string, number>;
+  /** Wallet address (for personalization) */
+  wallet?: string;
+}
+
 export interface ShortsFeedResult {
   videos: ShortVideoItem[];
   sources: {

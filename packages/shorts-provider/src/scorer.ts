@@ -12,16 +12,11 @@
  * which adds a small random boost for content discovery.
  */
 
-import type { ShortVideoItem } from './types';
+import type { ShortVideoItem, UserInterestProfile } from './types';
+
+export type { UserInterestProfile } from './types';
 
 // ─── Types ────────────────────────────────────────────────────────────────
-
-export interface UserInterestProfile {
-  /** Topic name → interest weight (0-1, >0.5 = interested) */
-  topics: Record<string, number>;
-  /** Wallet address (for personalization) */
-  wallet?: string;
-}
 
 export interface ShortScoreBreakdown {
   topicMatch: number;
