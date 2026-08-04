@@ -1,20 +1,7 @@
 import type { AnalyticsData, TabId } from './types';
 
-export const PROTOCOL_COLORS: Record<string, string> = {
-  nostr: '#8e30eb',
-  farcaster: '#8a63d2',
-  lens: '#abfe2c',
-  bluesky: '#1185fe',
-  mastodon: '#6364ff',
-};
-
-export const PROTOCOL_LABELS: Record<string, string> = {
-  nostr: 'Nostr',
-  farcaster: 'Farcaster',
-  lens: 'Lens',
-  bluesky: 'Bluesky',
-  mastodon: 'Mastodon',
-};
+// Protocol colors/labels come from the canonical registry (@degenfeed/utils).
+export { PROTOCOL_COLORS, PROTOCOL_LABELS } from '@degenfeed/utils';
 
 export const PROTOCOL_ORDER = ['nostr', 'farcaster', 'lens', 'bluesky', 'mastodon'];
 

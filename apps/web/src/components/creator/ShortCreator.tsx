@@ -199,7 +199,7 @@ export default function ShortCreator({ onClose, onSuccess }: ShortCreatorProps) 
       };
 
       recorder.onstop = () => {
-        stream.getTracks().forEach((t) => t.stop());
+        stream.getTracks().forEach((t) => { t.stop(); });
         const blob = new Blob(chunksRef.current, { type: 'video/webm' });
         setRecordedBlob(blob);
         setPreviewUrl(URL.createObjectURL(blob));
@@ -220,7 +220,7 @@ export default function ShortCreator({ onClose, onSuccess }: ShortCreatorProps) 
       setStage('recording');
     } catch (_e) {
       setError('Failed to start recording.');
-      stream.getTracks().forEach((t) => t.stop());
+      stream.getTracks().forEach((t) => { t.stop(); });
     }
   }, [startCamera, handleStopRecording]);
 
@@ -382,7 +382,7 @@ export default function ShortCreator({ onClose, onSuccess }: ShortCreatorProps) 
   const cleanup = useCallback(() => {
     if (timerRef.current) clearInterval(timerRef.current);
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-      mediaRecorderRef.current.stream.getTracks().forEach((t) => t.stop());
+      mediaRecorderRef.current.stream.getTracks().forEach((t) => { t.stop(); });
     }
     if (previewUrl) URL.revokeObjectURL(previewUrl);
   }, [previewUrl]);

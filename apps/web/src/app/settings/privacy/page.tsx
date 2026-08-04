@@ -24,7 +24,8 @@ import { DATA_INVENTORY, EXPORT_FORMATS, MIGRATION_PLATFORMS, PROTOCOL_ICONS } f
 import type { DeleteStatus, ThirdPartyConnection } from './types';
 
 export default function PrivacySettingsPage() {
-  const {walletAddress} = useAuth();  const { prefs, setPrivacy, saveToServer, saving } = usePreferences();
+  const { walletAddress } = useAuth();
+  const { prefs, setPrivacy, saveToServer, saving } = usePreferences();
   const { showToast } = useToast();
   const [connectedAccounts, setConnectedAccounts] = useState<ThirdPartyConnection[]>([]);
   const [loadingAccounts, setLoadingAccounts] = useState(true);

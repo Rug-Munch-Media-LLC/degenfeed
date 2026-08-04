@@ -516,9 +516,7 @@ export function TelegramGroupEmbed({
                     })}
                   </span>
                 </div>
-                <p className="mt-0.5 text-xs text-[var(--color-muted)] line-clamp-1">
-                  {msg.text}
-                </p>
+                <p className="mt-0.5 text-xs text-[var(--color-muted)] line-clamp-1">{msg.text}</p>
               </div>
             ))}
           </div>

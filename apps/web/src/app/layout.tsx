@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { JetBrains_Mono, Plus_Jakarta_Sans, Syne } from 'next/font/google';
-import { headers} from 'next/headers';
+import { headers } from 'next/headers';
 import Script from 'next/script';
 
 import '../styles/design-tokens.css';
@@ -102,7 +102,7 @@ export const metadata: Metadata = {
   alternates: {
     canonical: 'https://app.degenfeed.xyz',
     languages: {
-      'en': 'https://app.degenfeed.xyz',
+      en: 'https://app.degenfeed.xyz',
       'x-default': 'https://app.degenfeed.xyz',
     },
   },
@@ -118,7 +118,6 @@ export const viewport: Viewport = {
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-
   // Read CSP nonce from middleware-injected request header
   const headersList = await headers();
   const nonce = headersList.get('x-csp-nonce') || '';

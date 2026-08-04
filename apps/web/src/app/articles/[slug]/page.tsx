@@ -67,8 +67,11 @@ function TipModal({
           <div className="text-center">
             <div className="mb-3 text-3xl">✦</div>
             <h3 className="mb-2 text-lg font-semibold text-[var(--color-fg)]">Tip Sent!</h3>
-            <p className="mb-4 text-sm text-[var(--color-muted)]">Thank you for supporting this article.</p>
+            <p className="mb-4 text-sm text-[var(--color-muted)]">
+              Thank you for supporting this article.
+            </p>
             <button
+              type="button"
               onClick={onClose}
               className="rounded-lg bg-[var(--color-accent)] px-6 py-2 text-sm font-semibold text-black transition-colors hover:opacity-90"
             >
@@ -84,8 +87,13 @@ function TipModal({
 
             {!address ? (
               <div className="mb-4 rounded-lg bg-[var(--color-bg-secondary)] p-4 text-center">
-                <p className="mb-2 text-sm text-[var(--color-muted)]">Connect your wallet to send a tip</p>
-                <button className="rounded-lg bg-[var(--color-accent)] px-4 py-2 text-sm font-semibold text-black">
+                <p className="mb-2 text-sm text-[var(--color-muted)]">
+                  Connect your wallet to send a tip
+                </p>
+                <button
+                  type="button"
+                  className="rounded-lg bg-[var(--color-accent)] px-4 py-2 text-sm font-semibold text-black"
+                >
                   Connect Wallet
                 </button>
               </div>
@@ -96,6 +104,7 @@ function TipModal({
                   <div className="flex gap-2">
                     {(['ETH', 'SOL', 'BTC'] as const).map((c) => (
                       <button
+                        type="button"
                         key={c}
                         onClick={() => setCurrency(c)}
                         className={`rounded-lg border px-4 py-2 text-sm transition-colors ${
@@ -111,7 +120,10 @@ function TipModal({
                 </div>
 
                 <div className="mb-4">
-                  <label className="mb-1 block text-xs text-[var(--color-muted)]" htmlFor="field-d616cb55">
+                  <label
+                    className="mb-1 block text-xs text-[var(--color-muted)]"
+                    htmlFor="field-d616cb55"
+                  >
                     Amount
                   </label>
                   <input
@@ -126,7 +138,9 @@ function TipModal({
                 </div>
 
                 <div className="mb-4 rounded-lg bg-[var(--color-bg-secondary)] p-3">
-                  <p className="text-xs text-[var(--color-muted)]">From: {shortenAddress(address)}</p>
+                  <p className="text-xs text-[var(--color-muted)]">
+                    From: {shortenAddress(address)}
+                  </p>
                   <p className="mt-1 text-xs text-[var(--color-muted)]">
                     You will send {amount} {currency}
                   </p>
@@ -134,12 +148,14 @@ function TipModal({
 
                 <div className="flex gap-3">
                   <button
+                    type="button"
                     onClick={onClose}
                     className="flex-1 rounded-lg border border-[var(--color-border)] py-2 text-sm text-[var(--color-muted)] transition-colors hover:border-[var(--color-border)]"
                   >
                     Cancel
                   </button>
                   <button
+                    type="button"
                     onClick={handleTip}
                     disabled={sending}
                     className="flex-1 rounded-lg bg-[var(--color-accent)] py-2 text-sm font-semibold text-black transition-colors hover:opacity-90 disabled:opacity-50"
@@ -204,6 +220,7 @@ function ShareMenu({ post }: { post: GhostPost }) {
     <div className="flex flex-wrap gap-2">
       {shareLinks.map((link) => (
         <button
+          type="button"
           key={link.name}
           onClick={() => handleShare(link)}
           className="rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-xs transition-colors hover:border-[var(--color-border)]"
@@ -250,7 +267,9 @@ function NewsletterCTA() {
 
   return (
     <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-6">
-      <h3 className="mb-1 text-sm font-semibold text-[var(--color-fg)]">📫 Subscribe to DegenFeed</h3>
+      <h3 className="mb-1 text-sm font-semibold text-[var(--color-fg)]">
+        📫 Subscribe to DegenFeed
+      </h3>
       <p className="mb-4 text-xs text-[var(--color-muted)]">
         Get the best of web3, AI, and crypto delivered weekly. Free forever.
       </p>
@@ -334,12 +353,14 @@ function TokenGate({ post }: { post: GhostPost }) {
       </p>
       <div className="flex justify-center gap-3">
         <button
+          type="button"
           onClick={() => (window.location.href = '/premium')}
           className="rounded-lg bg-[var(--color-accent)] px-6 py-2 text-sm font-semibold text-black transition-colors hover:opacity-90"
         >
           Upgrade to Premium
         </button>
         <button
+          type="button"
           onClick={() => window.history.back()}
           className="rounded-lg border border-[var(--color-border)] px-4 py-2 text-sm text-[var(--color-muted)]"
         >
@@ -355,7 +376,7 @@ function TokenGate({ post }: { post: GhostPost }) {
 export default function ArticlePage() {
   const params = useParams();
   const slug = params.slug as string;
-  const {} = useWeb3();
+  useWeb3();
   const [post, setPost] = useState<GhostPost | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -491,6 +512,7 @@ export default function ArticlePage() {
           </div>
 
           <button
+            type="button"
             onClick={() => setShowTipModal(true)}
             className="flex items-center gap-1.5 rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-sm text-[var(--color-fg)] transition-colors hover:border-[var(--color-accent)]/50"
           >
@@ -527,11 +549,16 @@ export default function ArticlePage() {
       {/* Cross-Platform Tip Bar */}
       {post.tipAddresses && (
         <div className="mb-8 rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-6">
-          <h3 className="mb-3 text-sm font-semibold text-[var(--color-fg)]">✦ Support the Author</h3>
-          <p className="mb-4 text-xs text-[var(--color-muted)]">Send tips via your preferred network</p>
+          <h3 className="mb-3 text-sm font-semibold text-[var(--color-fg)]">
+            ✦ Support the Author
+          </h3>
+          <p className="mb-4 text-xs text-[var(--color-muted)]">
+            Send tips via your preferred network
+          </p>
           <div className="flex flex-wrap gap-2">
             {post.tipAddresses.eth && (
               <button
+                type="button"
                 onClick={() => setShowTipModal(true)}
                 className="rounded-lg border border-[#627eea]/30 bg-[#627eea]/5 px-4 py-2 text-sm text-[#627eea] transition-colors hover:bg-[#627eea]/10"
               >
@@ -540,6 +567,7 @@ export default function ArticlePage() {
             )}
             {post.tipAddresses.sol && (
               <button
+                type="button"
                 onClick={() => setShowTipModal(true)}
                 className="rounded-lg border border-[#9945ff]/30 bg-[#9945ff]/5 px-4 py-2 text-sm text-[#9945ff] transition-colors hover:bg-[#9945ff]/10"
               >
@@ -548,6 +576,7 @@ export default function ArticlePage() {
             )}
             {post.tipAddresses.lightning && (
               <button
+                type="button"
                 onClick={() => setShowTipModal(true)}
                 className="rounded-lg border border-[#f5a623]/30 bg-[#f5a623]/5 px-4 py-2 text-sm text-[#f5a623] transition-colors hover:bg-[#f5a623]/10"
               >
@@ -556,6 +585,7 @@ export default function ArticlePage() {
             )}
             {post.tipAddresses.btc && (
               <button
+                type="button"
                 onClick={() => setShowTipModal(true)}
                 className="rounded-lg border border-[#f7931a]/30 bg-[#f7931a]/5 px-4 py-2 text-sm text-[#f7931a] transition-colors hover:bg-[#f7931a]/10"
               >

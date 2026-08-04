@@ -408,7 +408,7 @@ export function ChatView({
 
   // Rich features
   const convId = conversation?.conversationId;
-  const {toggleReaction, editMessage, deleteMessage, pinMessage} =    useChatFeatures(convId);
+  const { toggleReaction, editMessage, deleteMessage, pinMessage } = useChatFeatures(convId);
 
   // Online status polling (simulated — would use WebSocket in production)
   useEffect(() => {

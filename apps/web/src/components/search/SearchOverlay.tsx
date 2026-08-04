@@ -49,10 +49,10 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
   // Build flat list for keyboard navigation
   const flatItems: FlatItem[] = useMemo(() => {
     const items: FlatItem[] = [];
-    identities.forEach((d) => items.push({ type: 'identity', data: d }));
-    results.forEach((d) => items.push({ type: 'post', data: d }));
-    communities.forEach((d) => items.push({ type: 'community', data: d }));
-    videos.forEach((d) => items.push({ type: 'video', data: d }));
+    identities.forEach((d) => { items.push({ type: 'identity', data: d }); });
+    results.forEach((d) => { items.push({ type: 'post', data: d }); });
+    communities.forEach((d) => { items.push({ type: 'community', data: d }); });
+    videos.forEach((d) => { items.push({ type: 'video', data: d }); });
     return items;
   }, [identities, results, communities, videos]);
 

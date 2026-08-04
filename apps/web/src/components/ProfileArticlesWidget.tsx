@@ -78,6 +78,7 @@ export function ProfileArticlesWidget({
       <div className="rounded-lg border border-[var(--color-border)] p-4 text-center">
         <p className="text-xs text-[var(--color-danger)]">{error}</p>
         <button
+          type="button"
           onClick={() => window.location.reload()}
           className="mt-2 rounded bg-[var(--color-accent)] px-3 py-1 text-xs text-black"
         >

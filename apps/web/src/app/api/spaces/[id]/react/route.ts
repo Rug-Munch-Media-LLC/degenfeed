@@ -6,7 +6,8 @@ export const dynamic = 'force-dynamic';
  * POST /api/spaces/[id]/react — Send a reaction
  */
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const {} = await params;  try {
+  void params;
+  try {
     const body = await request.json();
     const { userId, emoji } = body;
     if (!userId || !emoji) {

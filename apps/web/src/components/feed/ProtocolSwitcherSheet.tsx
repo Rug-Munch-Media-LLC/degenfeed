@@ -48,13 +48,7 @@ const EXTRA_LINKS = [
   { id: 'hive', label: 'Hive', icon: '◆', color: '#e31337', href: '/feed/hive' },
 ];
 
-export function ProtocolSwitcherSheet({
-  open,
-  onClose,
-}: {
-  open: boolean;
-  onClose: () => void;
-}) {
+export function ProtocolSwitcherSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
   const router = useRouter();
   const pathname = usePathname();
 
@@ -152,13 +146,7 @@ export function ProtocolSwitcherSheet({
 
         <div className="flex-1 overflow-y-auto px-3 py-2">
           {/* All / unified feed */}
-          {renderRow(
-            'all',
-            '/feed',
-            '#1d9bf0',
-            '◆',
-            'All Sources',
-          )}
+          {renderRow('all', '/feed', '#1d9bf0', '◆', 'All Sources')}
 
           {/* Quick links */}
           <p
@@ -167,9 +155,7 @@ export function ProtocolSwitcherSheet({
           >
             Quick Links
           </p>
-          {EXTRA_LINKS.map((p) =>
-            renderRow(p.id, p.href, p.color, p.icon, p.label),
-          )}
+          {EXTRA_LINKS.map((p) => renderRow(p.id, p.href, p.color, p.icon, p.label))}
 
           {/* Protocols grouped by category */}
           {CATEGORY_DISPLAY_ORDER.map((catId) => {

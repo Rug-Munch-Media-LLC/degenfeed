@@ -24,7 +24,6 @@ export function TipButton({ post, onTip, size = 'sm' }: TipButtonProps) {
     [post, onTip],
   );
 
-
   return (
     <button
       type="button"

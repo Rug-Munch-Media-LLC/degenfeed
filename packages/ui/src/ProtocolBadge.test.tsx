@@ -21,7 +21,8 @@ afterEach(() => {
 
 describe('ProtocolBadge — Color Mapping', () => {
   it('has colors defined for all major protocols', () => {
-    expect(PROTOCOL_COLORS.nostr).toBe('#8b5cf6');
+    // Values sourced from the canonical registry (@degenfeed/utils protocols)
+    expect(PROTOCOL_COLORS.nostr).toBe('#8e30eb');
     expect(PROTOCOL_COLORS.farcaster).toBe('#8a63d2');
     expect(PROTOCOL_COLORS.lens).toBe('#abfe2c');
     expect(PROTOCOL_COLORS.bluesky).toBe('#1185fe');
@@ -37,7 +38,7 @@ describe('ProtocolBadge — Color Mapping', () => {
   });
 
   it('getProtocolColor returns correct color for known protocol', () => {
-    expect(getProtocolColor('nostr')).toBe('#8b5cf6');
+    expect(getProtocolColor('nostr')).toBe('#8e30eb');
     expect(getProtocolColor('bluesky')).toBe('#1185fe');
   });
 

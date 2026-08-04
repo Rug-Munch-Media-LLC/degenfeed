@@ -182,6 +182,7 @@ function MiniAudioPlayer({
 
         {/* Controls */}
         <button
+          type="button"
           onClick={togglePlay}
           className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--color-accent)] text-black transition-all hover:brightness-110"
         >
@@ -190,6 +191,7 @@ function MiniAudioPlayer({
 
         {/* Close */}
         <button
+          type="button"
           onClick={onClose}
           className="text-[var(--color-text-tertiary)] transition-colors hover:text-[var(--color-text-primary)]"
         >
@@ -425,6 +427,7 @@ export default function PodcastDetailPage() {
               {/* Actions */}
               <div className="mt-4 flex flex-wrap gap-2">
                 <button
+                  type="button"
                   onClick={handleSubscribe}
                   className="flex items-center gap-2 rounded-xl bg-[var(--color-accent)] px-4 py-2 text-sm font-semibold text-black transition-all hover:brightness-110"
                 >
@@ -432,6 +435,7 @@ export default function PodcastDetailPage() {
                   <span>{subscribed ? 'Subscribed' : 'Subscribe'}</span>
                 </button>
                 <button
+                  type="button"
                   onClick={() => setShowTipModal(true)}
                   className="flex items-center gap-2 rounded-xl border border-[var(--color-border)] px-4 py-2 text-sm font-semibold transition-all hover:border-[var(--color-accent)]"
                 >
@@ -439,6 +443,7 @@ export default function PodcastDetailPage() {
                   <span>Tip Host</span>
                 </button>
                 <button
+                  type="button"
                   onClick={handleShare}
                   className="flex items-center gap-2 rounded-xl border border-[var(--color-border)] px-4 py-2 text-sm font-semibold transition-all hover:border-[var(--color-accent)]"
                 >
@@ -500,6 +505,7 @@ export default function PodcastDetailPage() {
               >
                 {/* Play Button */}
                 <button
+                  type="button"
                   onClick={() => setPlayingEpisode(playingEpisode?.id === ep.id ? null : ep)}
                   className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[var(--color-accent)] text-black transition-all hover:brightness-110"
                 >
@@ -560,6 +566,7 @@ export default function PodcastDetailPage() {
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-lg font-bold">💜 Tip the Host</h3>
               <button
+                type="button"
                 onClick={() => {
                   setShowTipModal(false);
                   setTipStatus({ sending: false });
@@ -578,6 +585,7 @@ export default function PodcastDetailPage() {
             <div className="mb-4 flex gap-2">
               {(['ethereum', 'solana'] as const).map((chain) => (
                 <button
+                  type="button"
                   key={chain}
                   onClick={() => setTipChain(chain)}
                   className={`flex-1 rounded-xl border px-3 py-2 text-sm font-medium transition-all ${
@@ -611,6 +619,7 @@ export default function PodcastDetailPage() {
             {tipStatus.error && <p className="mb-3 text-sm text-red-400">{tipStatus.error}</p>}
 
             <button
+              type="button"
               onClick={handleTip}
               disabled={tipStatus.sending}
               className="w-full rounded-xl bg-[var(--color-accent)] py-3 text-sm font-semibold text-black transition-all hover:brightness-110 disabled:opacity-50"

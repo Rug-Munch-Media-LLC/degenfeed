@@ -41,7 +41,6 @@ interface Podcast {
   language?: string;
 }
 
-
 interface PodcastEpisode {
   id: string;
   podcastId: string;
@@ -503,6 +502,7 @@ export default function PodcastHubPage() {
         <div className="mb-4 flex gap-2">
           {TABS.map((tab) => (
             <button
+              type="button"
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-all ${
@@ -521,6 +521,7 @@ export default function PodcastHubPage() {
         <div className="mb-6 flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
           {CATEGORIES.map((cat) => (
             <button
+              type="button"
               key={cat.id}
               onClick={() => setActiveCategory(cat.id)}
               className={`flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-all ${
@@ -567,6 +568,7 @@ export default function PodcastHubPage() {
             <span className="text-4xl">⚠️</span>
             <p className="text-[var(--color-text-secondary)]">{error}</p>
             <button
+              type="button"
               onClick={() => window.location.reload()}
               className="rounded-xl bg-[var(--color-accent)] px-4 py-2 text-sm font-semibold text-black"
             >

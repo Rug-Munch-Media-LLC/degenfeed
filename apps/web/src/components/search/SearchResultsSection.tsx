@@ -43,7 +43,7 @@ export function SearchResultsContainer({
   // Extract unique topics/niches from all results
   const topics = useMemo(() => {
     const topicSet = new Set<string>();
-    results.forEach((r) => r.niches?.forEach((n) => topicSet.add(n)));
+    results.forEach((r) => { r.niches?.forEach((n) => topicSet.add(n)); });
     return Array.from(topicSet).slice(0, 8);
   }, [results]);
 

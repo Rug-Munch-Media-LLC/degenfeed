@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useIsMobile} from '../../hooks/useMobileResponsive';
+import { useIsMobile } from '../../hooks/useMobileResponsive';
 import { usePeerTubeStream } from '../../hooks/usePeerTubeStream';
 import { useActiveStream, useTokenStreams } from '../../hooks/useTokenStreams';
 import LiveCommentFeed from './LiveCommentFeed';
@@ -162,6 +162,7 @@ export default function LiveStreamPlayer({
         </p>
         {isCreator && (
           <button
+            type="button"
             onClick={() => setShowStartModal(true)}
             className="rounded-lg bg-degen-500 px-4 py-2 text-sm font-medium text-white hover:bg-degen-600"
           >
@@ -170,6 +171,7 @@ export default function LiveStreamPlayer({
         )}
         {!isCreator && (
           <button
+            type="button"
             onClick={() => setNotifySubscribed(true)}
             className="rounded-lg border border-[var(--color-border)] px-4 py-2 text-sm text-[var(--color-fg)]"
           >
@@ -691,7 +693,6 @@ function LiveStreamView({
 }
 
 /* === Stream Offline State ============================ */
-
 
 /* === Skeleton Loading ================================ */
 

@@ -3,7 +3,7 @@
 import { ErrorBoundary, ReputationBadge } from '@degenfeed/ui';
 import nextDynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
-import { useEffect, use } from 'react';
+import { use, useEffect } from 'react';
 import {
   CrossProtocolActivityFeed,
   ProfileContentTabs,

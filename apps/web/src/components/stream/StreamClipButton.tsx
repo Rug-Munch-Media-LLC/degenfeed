@@ -6,7 +6,7 @@ interface StreamClipButtonProps {
   streamId: string;
 }
 
-export function StreamClipButton({}: StreamClipButtonProps) {
+export function StreamClipButton(_props: StreamClipButtonProps) {
   const [creating, setCreating] = useState(false);
   const [done, setDone] = useState(false);
 

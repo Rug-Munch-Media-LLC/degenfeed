@@ -60,7 +60,6 @@ function formatPercent(n: number): string {
   return `${(n * 100).toFixed(1)}%`;
 }
 
-
 // === Stat Card =============================================
 
 function StatCard({

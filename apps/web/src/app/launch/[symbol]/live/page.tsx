@@ -200,11 +200,7 @@ export default function CoinLaunchStreamPage() {
   const tokenSymbol = coinMeta?.symbol ?? symbol.toUpperCase();
 
   // Bonding curve data
-  const {
-    price,
-    progress,
-    recentTrades,
-  } = useBondingCurve(coinAddress);
+  const { price, progress, recentTrades } = useBondingCurve(coinAddress);
 
   // Stream data
   const { stream, isLoading: streamLoading } = useActiveStream(coinAddress);

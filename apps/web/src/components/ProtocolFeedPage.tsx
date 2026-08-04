@@ -5,7 +5,7 @@ import type { EngagementAction, UnifiedPost } from '@degenfeed/types';
 import { ErrorBoundary, FeedList } from '@degenfeed/ui';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { useRouter} from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
 import { useRealtimeFeed } from '../hooks/useRealtimeFeed';
 import { useAuth } from './AuthProvider';

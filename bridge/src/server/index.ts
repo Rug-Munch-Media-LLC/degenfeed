@@ -731,10 +731,9 @@ const server = http.createServer(async (req, res) => {
 
     // ── Nostr Routes ───────────────────────────────────────────
     // Route: /api/nostr/* (registration, auth, publish, relay management, health)
-    if (path.startsWith('/api/nostr/')) {
-      const nostrHandled = await handleNostrRoute(path, req, res);
-      if (nostrHandled) return;
-    }
+    // handleNostrRoute self-guards on /api/nostr/* — no prefix check needed here.
+    const nostrHandled = await handleNostrRoute(path, req, res);
+    if (nostrHandled) return;
 
     // ── Bluesky/AT Protocol Routes ──────────────────────────────
     // Route: /api/bluesky/* (all bluesky operations through our PDS)
@@ -755,11 +754,10 @@ const server = http.createServer(async (req, res) => {
     //   POST /api/podcast/episode/:id/publish — Publish episode
     //   POST /api/podcast/episode/:id/tip     — Tip episode
     //   DELETE /api/podcast/episode/:id       — Delete episode
-    if (path.startsWith('/api/podcast/')) {
-      const { handlePodcastRoute } = await import('./podcast-routes');
-      const podcastHandled = await handlePodcastRoute(path, req.method || 'GET', req, res);
-      if (podcastHandled) return;
-    }
+    // handlePodcastRoute self-guards on /api/podcast/* — no prefix check here.
+    const { handlePodcastRoute } = await import('./podcast-routes');
+    const podcastHandled = await handlePodcastRoute(path, req.method || 'GET', req, res);
+    if (podcastHandled) return;
 
     if (path === '/api/feed/health') {
       const results = await Promise.all(
@@ -1172,16 +1170,11 @@ const server = http.createServer(async (req, res) => {
       '/api/identity',
       '/v1/identity',
     ];
+    // All STUB routes return an empty data envelope. The previous ternary
+    // (auth/publish variants) was dead code — no STUB entry contains those.
     for (const ep of STUB) {
       if (path.startsWith(ep)) {
-        return jsonOk(
-          res,
-          ep.includes('auth')
-            ? { authenticated: false, user: null }
-            : ep.includes('publish')
-              ? { ok: true, id: `post:${Date.now()}` }
-              : { data: [], meta: { total: 0 } },
-        );
+        return jsonOk(res, { data: [], meta: { total: 0 } });
       }
     }
     if (path.startsWith('/api/auth') || path.startsWith('/v1/auth'))

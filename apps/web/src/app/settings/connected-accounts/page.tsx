@@ -54,7 +54,8 @@ interface DiscordChannel {
 // ─── Connect Telegram Section ──────────────────────────────────────────────
 
 function TelegramSection() {
-  const {} = useAuth();  const { showToast } = useToast();
+  useAuth();
+  const { showToast } = useToast();
   const [telegram, setTelegram] = useState<TelegramLinkedUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [_bridgedGroups, _setBridgedGroups] = useState<

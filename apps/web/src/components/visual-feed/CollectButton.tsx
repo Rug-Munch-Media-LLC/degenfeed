@@ -27,7 +27,6 @@ export function CollectButton({ post, size = 'sm' }: CollectButtonProps) {
 
   if (!post.collectUrl) return null;
 
-
   return (
     <button
       type="button"

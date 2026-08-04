@@ -666,7 +666,8 @@ function UnlockPrompts({
 // ─── Page Component ────────────────────────────────────────────────────────
 
 export default function MembershipPage() {
-  const {status, cancel} = useMembership();  const [showUpgrade, setShowUpgrade] = useState<Tier | null>(null);
+  const { status, cancel } = useMembership();
+  const [showUpgrade, setShowUpgrade] = useState<Tier | null>(null);
   const [upgradeLoading, setUpgradeLoading] = useState(false);
   const [showCancel, setShowCancel] = useState(false);
   const [upgradeSuccess, _setUpgradeSuccess] = useState<string | null>(null);

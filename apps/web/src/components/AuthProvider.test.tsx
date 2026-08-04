@@ -154,7 +154,12 @@ function TestConsumer({ onReady }: { onReady?: (val: ReturnType<typeof useAuth>)
       <span data-testid="is-wallet-only">{String(auth.isWalletOnly)}</span>
       <span data-testid="nostr-pubid">{auth.nostrPublicId ?? 'none'}</span>
       {auth.ready && (
-        <button data-testid="sign-out-btn" onClick={() => auth.signOut()} type="button">
+        <button
+          type="button"
+          data-testid="sign-out-btn"
+          onClick={() => auth.signOut()}
+          type="button"
+        >
           Sign Out
         </button>
       )}

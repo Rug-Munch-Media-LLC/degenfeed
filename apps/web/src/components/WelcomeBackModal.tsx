@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useEffect, useState} from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 const LAST_VISIT_KEY = 'df_last_visit';
 const TWELVE_HOURS_MS = 12 * 60 * 60 * 1000;
@@ -97,6 +97,7 @@ export function WelcomeBackModal() {
       <div className="relative w-full max-w-md rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] p-6 shadow-2xl animate-in zoom-in-95 duration-200">
         {/* Close button */}
         <button
+          type="button"
           onClick={handleDismiss}
           className="absolute top-4 right-4 text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
           aria-label="Close"
@@ -147,6 +148,7 @@ export function WelcomeBackModal() {
             📋 View Digest
           </Link>
           <button
+            type="button"
             onClick={handleDismiss}
             className="block w-full py-2.5 rounded-xl border border-[var(--color-border)] text-sm text-[var(--color-muted)] hover:text-[var(--color-fg)] hover:border-degen-400/40 transition-colors"
           >

@@ -48,7 +48,6 @@ interface GiftAnimationProps {
 
 // ─── Particle Generators ─────────────────────────────────────────────────
 
-
 // ─── Gift Animations ─────────────────────────────────────────────────────
 
 function RoseAnimation({ duration }: { duration: number }) {

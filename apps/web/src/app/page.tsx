@@ -25,7 +25,7 @@ export const metadata: Metadata = {
   alternates: {
     canonical: 'https://app.degenfeed.xyz',
     languages: {
-      'en': 'https://app.degenfeed.xyz',
+      en: 'https://app.degenfeed.xyz',
       'x-default': 'https://app.degenfeed.xyz',
     },
   },
@@ -967,30 +967,81 @@ const THEME_STYLES = `
 /* ─── ICONS ──────────────────────────────────────────────────────────── */
 
 const ICON_GL = (
-  <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+  <svg
+    aria-hidden="true"
+    width="22"
+    height="22"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
     <circle cx="12" cy="12" r="10" />
     <path d="M12 8v8M8 12h8" />
   </svg>
 );
 const ICON_SHIELD = (
-  <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+  <svg
+    aria-hidden="true"
+    width="22"
+    height="22"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
     <path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4z" />
     <path d="M9 12l2 2 4-4" />
   </svg>
 );
 const ICON_NEWS = (
-  <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+  <svg
+    aria-hidden="true"
+    width="22"
+    height="22"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
     <path d="M4 22h16a2 2 0 002-2V4a2 2 0 00-2-2H8a2 2 0 00-2 2v16a2 2 0 01-2 2zm0 0a2 2 0 01-2-2v-9c0-1.1.9-2 2-2h2" />
     <path d="M18 14h-8M15 18h-5M10 6h8v4h-8V6z" />
   </svg>
 );
 const ICON_CHECK = (
-  <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+  <svg
+    aria-hidden="true"
+    width="15"
+    height="15"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
     <path d="M20 6L9 17l-5-5" />
   </svg>
 );
 const ICON_CHEVRON = (
-  <svg className="faq-chevron" aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+  <svg
+    className="faq-chevron"
+    aria-hidden="true"
+    width="18"
+    height="18"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
     <path d="M12 5v14M5 12h14" />
   </svg>
 );
@@ -1030,7 +1081,17 @@ const PROTOCOLS: Protocol[] = [
     color: '#abfe2c',
     tag: 'Protocol',
     icon: (
-      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <svg
+        aria-hidden="true"
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
         <path d="M2 12s3.5-6.5 10-6.5S22 12 22 12s-3.5 6.5-10 6.5S2 12 2 12z" />
         <circle cx="12" cy="12" r="3" />
       </svg>
@@ -1082,7 +1143,17 @@ const PROTOCOLS: Protocol[] = [
     color: '#ffa500',
     tag: 'News',
     icon: (
-      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <svg
+        aria-hidden="true"
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
         <path d="M4 11a9 9 0 019 9" />
         <path d="M4 4a16 16 0 0116 16" />
         <circle cx="5" cy="19" r="1.6" fill="currentColor" stroke="none" />
@@ -1169,7 +1240,12 @@ const PRICE_TIERS: PriceTier[] = [
     price: '$0',
     per: 'forever',
     desc: 'Everything you need to start exploring the open social graph.',
-    features: ['Read all 30+ protocols', '248 news sources with bias ratings', 'Connect 1 protocol identity', 'Basic posts on 3 protocols'],
+    features: [
+      'Read all 30+ protocols',
+      '248 news sources with bias ratings',
+      'Connect 1 protocol identity',
+      'Basic posts on 3 protocols',
+    ],
     cta: 'Get Started Free',
   },
   {
@@ -1177,7 +1253,13 @@ const PRICE_TIERS: PriceTier[] = [
     price: '$9.99',
     per: 'per month',
     desc: 'For power readers who want the whole graph and every identity.',
-    features: ['All protocol identities', 'Cross-post to 10+ networks', 'Verified badge', '100 scheduled posts', 'Cross-network DMs'],
+    features: [
+      'All protocol identities',
+      'Cross-post to 10+ networks',
+      'Verified badge',
+      '100 scheduled posts',
+      'Cross-network DMs',
+    ],
     cta: 'Go Pro',
     popular: true,
   },
@@ -1186,7 +1268,13 @@ const PRICE_TIERS: PriceTier[] = [
     price: '$24.99',
     per: 'per month',
     desc: 'For creators building an audience across every protocol.',
-    features: ['Cross-post to ALL protocols', 'Creator coin creation', 'Newsletter + monetization', 'Unlimited scheduling + Buffer', 'Full analytics'],
+    features: [
+      'Cross-post to ALL protocols',
+      'Creator coin creation',
+      'Newsletter + monetization',
+      'Unlimited scheduling + Buffer',
+      'Full analytics',
+    ],
     cta: 'Become a Creator',
   },
 ];
@@ -1366,13 +1454,16 @@ export default async function LandingPage() {
             One Window Into <span className="accent">Every</span> Protocol
           </h2>
           <p className="section-sub">
-            Read and interact across the entire open social graph from a single interface — with
-            30+ networks online right now.
+            Read and interact across the entire open social graph from a single interface — with 30+
+            networks online right now.
           </p>
           <div className="protocol-grid">
             {PROTOCOLS.map((p) => (
               <div key={p.name} className="protocol-tile">
-                <span className="protocol-tile-icon" style={{ background: `${p.color}1f`, color: p.color }}>
+                <span
+                  className="protocol-tile-icon"
+                  style={{ background: `${p.color}1f`, color: p.color }}
+                >
                   {p.icon}
                 </span>
                 <div>
@@ -1463,8 +1554,8 @@ export default async function LandingPage() {
             Free to Read. <span className="accent">Fair to Upgrade.</span>
           </h2>
           <p className="section-sub">
-            Browsing every protocol and reading the news is free forever. Upgrade only when you
-            want the full creator toolkit.
+            Browsing every protocol and reading the news is free forever. Upgrade only when you want
+            the full creator toolkit.
           </p>
           <div className="pricing-grid">
             {PRICE_TIERS.map((t) => (
@@ -1508,9 +1599,7 @@ export default async function LandingPage() {
           <h2 id="faq-title" className="section-title">
             Questions, <span className="accent">Answered</span>
           </h2>
-          <p className="section-sub">
-            Everything you need to know about the Web3 Social Universe.
-          </p>
+          <p className="section-sub">Everything you need to know about the Web3 Social Universe.</p>
           <div className="faq-list">
             {FAQS.map((f) => (
               <details key={f.q} className="faq-item">

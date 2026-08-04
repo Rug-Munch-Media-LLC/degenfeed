@@ -25,7 +25,6 @@ interface TradingSignal {
   priceUsd?: number;
 }
 
-
 // ─── Constants ────────────────────────────────────────────────────────────
 
 const SIGNAL_ICONS: Record<TradingSignalType, string> = {

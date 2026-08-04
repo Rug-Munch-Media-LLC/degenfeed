@@ -36,7 +36,6 @@ const WelcomeBackModal = dynamic(
   { ssr: false, loading: () => null },
 );
 
-
 /* === Page title ============================================= */
 
 const TITLE_OVERRIDES: Record<string, string> = {

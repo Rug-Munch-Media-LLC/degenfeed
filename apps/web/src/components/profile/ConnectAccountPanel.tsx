@@ -16,17 +16,17 @@
 import { buildIdentityRecord } from '@degenfeed/auth';
 import {
   ALL_LINKABLE_PLATFORMS,
-  type PlatformLinkMeta,
   isExternalPlatform,
+  type PlatformLinkMeta,
+  type VerifiedIdentity,
   verifyExternalIdentity,
   verifyIdentity,
-  type VerifiedIdentity,
 } from '@degenfeed/identity';
 import { saveIdentity } from '@degenfeed/storage';
 import { useCallback, useMemo, useState } from 'react';
+import { PROTOCOL_COLORS, PROTOCOL_LABELS } from '../../app/profile/constants';
 import { useAuth } from '../AuthProvider';
 import { useToast } from '../Toast';
-import { PROTOCOL_COLORS, PROTOCOL_LABELS } from '../../app/profile/constants';
 
 interface ConnectFormValues {
   input: string;
@@ -38,37 +38,46 @@ interface ConnectAccountPanelProps {
 }
 
 /** Which fields each platform's connect form needs */
-const FORM_FIELDS: Record<string, Array<{ key: 'input' | 'nip05'; label: string; placeholder: string }>> = {
+const FORM_FIELDS: Record<
+  string,
+  Array<{ key: 'input' | 'nip05'; label: string; placeholder: string }>
+> = {
   nostr: [
     { key: 'input', label: 'npub or NIP-05', placeholder: 'npub1... or you@example.com' },
-    { key: 'nip05', label: 'NIP-05 (optional, verifies ownership)', placeholder: 'you@example.com' },
+    {
+      key: 'nip05',
+      label: 'NIP-05 (optional, verifies ownership)',
+      placeholder: 'you@example.com',
+    },
   ],
-  bluesky: [
-    { key: 'input', label: 'Handle or DID', placeholder: 'alice.bsky.social' },
-  ],
-  farcaster: [
-    { key: 'input', label: 'FID or username', placeholder: '12345 or vitalik' },
-  ],
-  lens: [
-    { key: 'input', label: 'Lens handle', placeholder: 'stani.lens' },
-  ],
-  mastodon: [
-    { key: 'input', label: 'Mastodon handle', placeholder: 'user@instance.social' },
-  ],
+  bluesky: [{ key: 'input', label: 'Handle or DID', placeholder: 'alice.bsky.social' }],
+  farcaster: [{ key: 'input', label: 'FID or username', placeholder: '12345 or vitalik' }],
+  lens: [{ key: 'input', label: 'Lens handle', placeholder: 'stani.lens' }],
+  mastodon: [{ key: 'input', label: 'Mastodon handle', placeholder: 'user@instance.social' }],
   twitter: [
     { key: 'input', label: 'X handle or URL', placeholder: '@alice or https://x.com/alice' },
   ],
   youtube: [
-    { key: 'input', label: 'Channel handle or URL', placeholder: '@channel or https://youtube.com/@channel' },
+    {
+      key: 'input',
+      label: 'Channel handle or URL',
+      placeholder: '@channel or https://youtube.com/@channel',
+    },
   ],
   github: [
-    { key: 'input', label: 'GitHub username or URL', placeholder: 'octocat or https://github.com/octocat' },
+    {
+      key: 'input',
+      label: 'GitHub username or URL',
+      placeholder: 'octocat or https://github.com/octocat',
+    },
   ],
-  discord: [
-    { key: 'input', label: 'Username or user id', placeholder: 'alice#1234' },
-  ],
+  discord: [{ key: 'input', label: 'Username or user id', placeholder: 'alice#1234' }],
   telegram: [
-    { key: 'input', label: 'Telegram username or URL', placeholder: '@alice or https://t.me/alice' },
+    {
+      key: 'input',
+      label: 'Telegram username or URL',
+      placeholder: '@alice or https://t.me/alice',
+    },
   ],
 };
 
@@ -169,7 +178,10 @@ export function ConnectAccountPanel({ onConnected }: ConnectAccountPanelProps) {
         await refresh();
         setOpen(null);
         setValues((v) => ({ ...v, [meta.id]: { input: '' } }));
-        showToast('success', `✓ Connected ${meta.label}${verified.handle ? ` (${verified.handle})` : ''}`);
+        showToast(
+          'success',
+          `✓ Connected ${meta.label}${verified.handle ? ` (${verified.handle})` : ''}`,
+        );
         onConnected?.(meta.id);
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Connection failed';
@@ -183,9 +195,7 @@ export function ConnectAccountPanel({ onConnected }: ConnectAccountPanelProps) {
 
   const handleUnlink = useCallback(
     async (protocol: string) => {
-      const identity = [...linkedIdentities, primaryIdentity].find(
-        (i) => i?.protocol === protocol,
-      );
+      const identity = [...linkedIdentities, primaryIdentity].find((i) => i?.protocol === protocol);
       if (!identity) return;
       try {
         const { deleteIdentity } = await import('@degenfeed/storage');
@@ -280,7 +290,10 @@ export function ConnectAccountPanel({ onConnected }: ConnectAccountPanelProps) {
                         onChange={(e) =>
                           setValues((v) => ({
                             ...v,
-                            [meta.id]: { ...(v[meta.id] ?? { input: '' }), [field.key]: e.target.value },
+                            [meta.id]: {
+                              ...(v[meta.id] ?? { input: '' }),
+                              [field.key]: e.target.value,
+                            },
                           }))
                         }
                         className="w-full rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-bg)] px-3 py-2 text-sm text-[var(--color-fg)] outline-none focus:border-degen-500/30"

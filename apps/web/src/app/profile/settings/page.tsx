@@ -10,9 +10,9 @@
 import { ErrorBoundary } from '@degenfeed/ui';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '../../../components/AuthProvider';
-import { useToast } from '../../../components/Toast';
-import { CustomLinksEditor } from '../../../components/profile/CustomLinksEditor';
 import { ConnectAccountPanel } from '../../../components/profile/ConnectAccountPanel';
+import { CustomLinksEditor } from '../../../components/profile/CustomLinksEditor';
+import { useToast } from '../../../components/Toast';
 import { renderMarkdown } from '../../../lib/markdown';
 import { sanitizeHtml } from '../../../lib/sanitize';
 import { PROTOCOL_COLORS, PROTOCOL_LABELS } from '../constants';
@@ -261,7 +261,9 @@ export default function SettingsPage() {
                       <p
                         className="text-xs leading-relaxed text-[var(--color-fg)] [&_a]:text-degen-400 [&_a]:underline [&_code]:rounded [&_code]:bg-[var(--color-card)] [&_code]:px-1 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-[10px]"
                         // biome-ignore lint/security/noDangerouslySetInnerHtml: sanitized with DOMPurify
-                        dangerouslySetInnerHTML={{ __html: sanitizeHtml(renderMarkdown(settings.profile.bio)) }}
+                        dangerouslySetInnerHTML={{
+                          __html: sanitizeHtml(renderMarkdown(settings.profile.bio)),
+                        }}
                       />
                     </div>
                   )}
@@ -604,12 +606,10 @@ export default function SettingsPage() {
         {activeTab === 'protocols' && (
           <div className="space-y-4">
             <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-5">
-              <h2 className="mb-1 text-sm font-bold text-[var(--color-fg)]">
-                Connect Accounts
-              </h2>
+              <h2 className="mb-1 text-sm font-bold text-[var(--color-fg)]">Connect Accounts</h2>
               <p className="mb-4 text-xs text-[var(--color-muted)]">
-                Bring your existing accounts into DegenFeed. Verified connections show as badges
-                on your profile and feed the unified identity graph.
+                Bring your existing accounts into DegenFeed. Verified connections show as badges on
+                your profile and feed the unified identity graph.
               </p>
               <ConnectAccountPanel onConnected={() => setSaved(false)} />
             </div>

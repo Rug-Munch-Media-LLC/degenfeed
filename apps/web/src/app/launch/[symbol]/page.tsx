@@ -2,7 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { useParams} from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import BondingCurveChart from '../../../components/launch/BondingCurveChart';
 import BuySellInterface from '../../../components/launch/BuySellInterface';

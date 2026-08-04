@@ -37,7 +37,6 @@ const PHASE_BADGES: Record<string, { label: string; color: string }> = {
   graduated: { label: '✅ Graduated', color: 'text-fuchsia-400 bg-fuchsia-500/10' },
 };
 
-
 export default function CoinCard({ coin, rank, featured = false, className = '' }: CoinCardProps) {
   const phaseBadge = (PHASE_BADGES[coin.phase as keyof typeof PHASE_BADGES] ?? PHASE_BADGES.early)!;
   const priceUp = (coin.priceChange24h ?? 0) >= 0;

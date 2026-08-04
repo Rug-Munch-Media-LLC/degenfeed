@@ -282,9 +282,9 @@
 
 /* ═══ Cyberpunk Alternate (preserved via data-theme-preset) ═══════════════ */
 
-:root[data-theme-preset='cyberpunk'],
-:root[data-theme-preset='cyberpunk'].dark,
-html[data-theme-preset='cyberpunk'] {
+:root[data-theme-preset="cyberpunk"],
+:root[data-theme-preset="cyberpunk"].dark,
+html[data-theme-preset="cyberpunk"] {
   --color-bg: #000000;
   --color-bg-secondary: #050505;
   --color-bg-tertiary: #0a0a0a;
@@ -421,8 +421,8 @@ html[data-theme-preset='cyberpunk'] {
 
 /* ═══ Light Cyberpunk Alternate ═══════════════════════════════════════════ */
 
-:root[data-theme-preset='cyberpunk'].light,
-:root.light[data-theme-preset='cyberpunk'] {
+:root[data-theme-preset="cyberpunk"].light,
+:root.light[data-theme-preset="cyberpunk"] {
   --color-bg: #ffffff;
   --color-bg-secondary: #f7f7f7;
   --color-bg-tertiary: #f0f0f0;

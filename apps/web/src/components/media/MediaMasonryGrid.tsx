@@ -33,7 +33,6 @@ interface MediaMasonryGridProps {
 
 // ─── Helpers ─────────────────────────────────────────────────────
 
-
 // ─── Masonry Grid ────────────────────────────────────────────────
 
 export function MediaMasonryGrid({

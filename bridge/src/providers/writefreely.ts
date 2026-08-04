@@ -212,19 +212,42 @@ function wfPostToPost(
 // ─── Fetch Logic ──────────────────────────────────────────────────────
 
 async function fetchBlogPosts(blog: BlogSource, limit: number): Promise<UnifiedPost[]> {
+  // WriteFreely serves 10 posts/page via the collection API. Loop through
+  // pages until we have `limit` posts, hit the end of the collection, or
+  // reach a safety cap (10 pages = 100 posts) so a misbehaving instance
+  // can't hang the provider. Dedupe by post id across pages.
+  const all: UnifiedPost[] = [];
+  const seen = new Set<string>();
+  const MAX_PAGES = 10;
   try {
-    const res = await $fetch(`${blog.instance}/api/collections/${blog.alias}/posts`, {
-      headers: { 'User-Agent': 'DegenFeed-Bridge/0.1 (WriteFreely)' },
-      signal: AbortSignal.timeout(8000),
-    });
-    if (!res.ok) return [];
-    const data = (await res.json()) as WriteFreelyCollectionResponse;
-    const items = extractCollectionPosts(data?.data ?? data?.items ?? data);
-    if (!Array.isArray(items) || items.length === 0) return [];
-    return items.slice(0, limit).map((item) => wfPostToPost(item, blog));
+    for (let page = 1; page <= MAX_PAGES; page++) {
+      if (all.length >= limit) break;
+      const res = await $fetch(
+        `${blog.instance}/api/collections/${blog.alias}/posts?page=${page}`,
+        {
+          headers: { 'User-Agent': 'DegenFeed-Bridge/0.1 (WriteFreely)' },
+          signal: AbortSignal.timeout(8000),
+        },
+      );
+      if (!res.ok) break;
+      const data = (await res.json()) as WriteFreelyCollectionResponse;
+      const items = extractCollectionPosts(data?.data ?? data?.items ?? data);
+      if (!Array.isArray(items) || items.length === 0) break;
+      for (const item of items) {
+        const post = wfPostToPost(item, blog);
+        if (!seen.has(post.id)) {
+          seen.add(post.id);
+          all.push(post);
+        }
+        if (all.length >= limit) break;
+      }
+      // A short page means we've reached the end of the collection.
+      if (items.length < 10) break;
+    }
+    return all;
   } catch (err) {
     console.log(`[bridge] WriteFreely REST error (${blog.alias}): ${(err as Error).message}`);
-    return [];
+    return all;
   }
 }
 
@@ -287,15 +310,23 @@ export const schema: SchemaGuard = {
 };
 
 export async function fetchWriteFreelyPosts(limit = 20): Promise<UnifiedPost[]> {
-  const perBlog = Math.max(3, Math.ceil(limit / CURATED_BLOGS.length));
+  // The local DegenFeed collection is the most reliable source (69+ posts
+  // across 7+ pages). Prioritize it so we can surface 10+ posts even when
+  // remote Write.as blogs are unreachable, then fill the remainder from
+  // the remote blogs.
+  const localBlog = CURATED_BLOGS[0];
+  const remoteBlogs = CURATED_BLOGS.slice(1);
+  const localShare = Math.min(Math.max(limit, 15), 100);
+  const remoteShare = Math.max(3, Math.ceil(Math.max(0, limit - localShare) / remoteBlogs.length));
 
-  const results = await Promise.allSettled(
-    CURATED_BLOGS.map(async (blog) => {
-      const posts = await fetchBlogPosts(blog, perBlog);
+  const results = await Promise.allSettled([
+    fetchBlogPosts(localBlog, localShare),
+    ...remoteBlogs.map(async (blog) => {
+      const posts = await fetchBlogPosts(blog, remoteShare);
       if (posts.length > 0) return posts;
-      return fetchRssFallback(blog, perBlog);
+      return fetchRssFallback(blog, remoteShare);
     }),
-  );
+  ]);
 
   const all: UnifiedPost[] = [];
   for (const r of results) {

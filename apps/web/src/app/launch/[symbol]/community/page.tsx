@@ -41,12 +41,7 @@ function CommunitySkeleton() {
 export default function TokenCommunityPage({ params }: CommunityPageProps) {
   const { symbol } = params;
   // Derive token address from the symbol — in production this comes from the metadata
-  const {
-    curve,
-    totalRaised,
-    holderCount,
-    isLoading: curveLoading,
-  } = useBondingCurve(symbol);
+  const { curve, totalRaised, holderCount, isLoading: curveLoading } = useBondingCurve(symbol);
 
   const tokenAddress = curve?.tokenAddress || '';
 

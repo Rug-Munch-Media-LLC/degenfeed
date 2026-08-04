@@ -19,8 +19,8 @@ import {
   dismissBanner,
   incrementPageView,
   markModalSeen,
-  readFlags,
   type PromptSurface,
+  readFlags,
 } from '../lib/registrationPrompt';
 import { useAuth } from './AuthProvider';
 
@@ -32,7 +32,8 @@ export function RegistrationPrompt() {
   const [count, setCount] = useState(0);
   const [surface, setSurface] = useState<PromptSurface>('none');
 
-  const signedIn = !!walletAddress || !!primaryIdentity || Object.keys(signedInProtocols).length > 0;
+  const signedIn =
+    !!walletAddress || !!primaryIdentity || Object.keys(signedInProtocols).length > 0;
 
   // Increment the anonymous page-view counter once per route.
   useEffect(() => {
@@ -81,9 +82,7 @@ export function RegistrationPrompt() {
             🍿
           </span>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-[var(--color-fg)]">
-              Enjoying DegenFeed?
-            </p>
+            <p className="text-sm font-semibold text-[var(--color-fg)]">Enjoying DegenFeed?</p>
             <p className="text-xs text-[var(--color-muted)]">
               Create a free account to customize your feed.
             </p>
@@ -174,11 +173,7 @@ export function RegistrationPrompt() {
             </ul>
 
             <div className="space-y-2">
-              <button
-                type="button"
-                onClick={openSignUp}
-                className="btn-primary w-full"
-              >
+              <button type="button" onClick={openSignUp} className="btn-primary w-full">
                 Create free account
               </button>
               <button

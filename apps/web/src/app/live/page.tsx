@@ -35,7 +35,6 @@ function countBySource(streams: LiveStream[]): Record<string, number> {
   return counts;
 }
 
-
 /* ─── Filter Types ────────────────────────────────────────────── */
 
 type MediaFilter = 'all' | 'audio' | 'video';
@@ -455,7 +454,8 @@ function StartingSoonSection() {
 /* === Main Live Page =========================================== */
 
 export default function LivePage() {
-  const {streams, featured, total, isLoading, isValidating} = useLiveStreams();  const [activeTab, setActiveTab] = useState<StreamType | 'all'>('all');
+  const { streams, featured, total, isLoading, isValidating } = useLiveStreams();
+  const [activeTab, setActiveTab] = useState<StreamType | 'all'>('all');
   const [activeCategory, setActiveCategory] = useState<StreamCategory | 'all'>('all');
   const [activeMedia, setActiveMedia] = useState<MediaFilter>('all');
   const [activePlatform, setActivePlatform] = useState<PlatformFilter>('all');

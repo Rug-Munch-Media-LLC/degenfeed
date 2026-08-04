@@ -4,7 +4,6 @@ import type { UnifiedPost } from '@degenfeed/types';
 import { parseVideoUrl, type VideoInfo } from '@degenfeed/utils';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-
 interface ShortsCallbacks {
   liked: boolean;
   likeCount: number;

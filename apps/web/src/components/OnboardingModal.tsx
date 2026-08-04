@@ -606,6 +606,7 @@ export function OnboardingModal() {
                               <p className="truncate text-xs text-white/40">{s.bio}</p>
                             </div>
                             <button
+                              type="button"
                               onClick={() => toggleFollow(s.id)}
                               type="button"
                               className={`shrink-0 rounded-lg px-3.5 py-1.5 text-xs font-semibold transition-all ${
@@ -927,6 +928,7 @@ export function OnboardingModal() {
                   </button>
                 ) : (
                   <button
+                    type="button"
                     onClick={() => goTo(step + 1)}
                     type="button"
                     disabled={!canProceed}

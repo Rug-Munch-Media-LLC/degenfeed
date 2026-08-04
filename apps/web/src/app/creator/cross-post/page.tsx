@@ -150,7 +150,6 @@ const PLATFORM_COLORS: Record<string, string> = {
 
 // === Helpers ==============================================================
 
-
 function formatDate(iso: string): string {
   const d = new Date(iso);
   return d.toLocaleDateString('en-US', {
@@ -724,7 +723,8 @@ function SubstackSetupModal({ onClose }: { onClose: () => void }) {
 // ═══════════════════════════════════════════════════════════════════════════
 
 export default function CrossPostPage() {
-  const {ready, walletAddress} = useAuth();  const [accounts, setAccounts] = useState<ConnectedAccount[]>([]);
+  const { ready, walletAddress } = useAuth();
+  const [accounts, setAccounts] = useState<ConnectedAccount[]>([]);
   const [loading, setLoading] = useState(true);
   const [showSubstackModal, setShowSubstackModal] = useState(false);
 

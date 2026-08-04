@@ -2,6 +2,7 @@
 
 import type { EngagementAction, UnifiedPost } from '@degenfeed/types';
 import { ErrorBoundary, FeedList } from '@degenfeed/ui';
+import { getProtocolColor } from '@degenfeed/utils';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -53,37 +54,7 @@ const SORT_TABS: { id: SortMode; label: string; icon: string }[] = [
   { id: 'videos', label: 'Videos', icon: '🎬' },
 ];
 
-const PROTOCOL_COLORS: Record<string, string> = {
-  nostr: '#8e30eb',
-  farcaster: '#8a63d2',
-  lens: '#abfe2c',
-  bluesky: '#1185fe',
-  mastodon: '#6364ff',
-  reddit: '#ff4500',
-  rss: '#ffa500',
-  threads: '#888',
-  lemmy: '#2d9cdb',
-  pixelfed: '#f9a825',
-  peertube: '#f1680d',
-  zora: '#6b21a8',
-  audius: '#cc0fe0',
-  rarible: '#feda02',
-  github: '#6e40c9',
-  youtube: '#ff0000',
-  telegram: '#26a5e4',
-  discord: '#5865f2',
-  hive: '#e31337',
-  misskey: '#86b300',
-  pleroma: '#fba740',
-  mirror: '#222',
-  paragraph: '#6c5ce7',
-  ethereum: '#627eea',
-  solana: '#14f195',
-};
-
-function getProtocolColor(protocol: string): string {
-  return PROTOCOL_COLORS[protocol] ?? '#666';
-}
+// Protocol colors sourced from the canonical registry (@degenfeed/utils)
 
 // ─── Component ──────────────────────────────────────────────────────
 

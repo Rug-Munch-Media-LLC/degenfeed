@@ -484,9 +484,7 @@ export function ComposeBar({
             {multiProtocols ? 'Send to:' : 'Send via:'}
           </span>
           {availableProtocols.map((p) => {
-            const isActive = multiProtocols
-              ? multiProtocols.includes(p)
-              : p === protocol;
+            const isActive = multiProtocols ? multiProtocols.includes(p) : p === protocol;
             const color = getProtocolColor(p);
             const icon = getProtocolIcon(p);
             return (

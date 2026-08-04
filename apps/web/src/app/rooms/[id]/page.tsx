@@ -303,12 +303,14 @@ function InviteModal({
 
         <div className="flex gap-2 mt-4">
           <button
+            type="button"
             onClick={onClose}
             className="flex-1 px-3 py-2 rounded-lg text-sm border border-degen-600 text-degen-300 hover:bg-degen-800 transition-colors"
           >
             Cancel
           </button>
           <button
+            type="button"
             onClick={handleSubmit}
             disabled={inviting || !target.trim()}
             className="flex-1 px-3 py-2 rounded-lg text-sm font-medium bg-degen-400 text-black hover:bg-degen-300 disabled:opacity-40 transition-colors"
@@ -357,6 +359,7 @@ function TransportSelector({
       <span className="text-[9px] text-degen-400/50 mr-1">via</span>
       {TRANSPORT_OPTIONS.map((opt) => (
         <button
+          type="button"
           key={opt.id}
           onClick={() => onSelect(opt.id)}
           className={`px-2 py-1 rounded-md text-[10px] transition-colors ${
@@ -598,6 +601,7 @@ export default function RoomPage() {
         <div className="text-center">
           <p className="text-sm text-red-400 mb-2">{error}</p>
           <button
+            type="button"
             onClick={fetchRoom}
             className="px-3 py-1.5 rounded-lg text-sm border border-degen-600 hover:bg-degen-800 transition-colors"
           >
@@ -623,6 +627,7 @@ export default function RoomPage() {
         <div className="flex items-center gap-3 px-4 py-3">
           {/* Back */}
           <button
+            type="button"
             onClick={() => router.push('/messages')}
             className="p-1.5 rounded-lg hover:bg-degen-800 transition-colors"
             aria-label="Back to messages"
@@ -649,6 +654,7 @@ export default function RoomPage() {
 
           {/* Member count toggle */}
           <button
+            type="button"
             onClick={() => setShowMembers(!showMembers)}
             className="p-2 rounded-lg hover:bg-degen-800 transition-colors relative"
             aria-label="Toggle member list"
@@ -678,6 +684,7 @@ export default function RoomPage() {
 
           {/* Invite */}
           <button
+            type="button"
             onClick={() => setShowInvite(true)}
             className="p-2 rounded-lg hover:bg-degen-800 transition-colors"
             aria-label="Invite to room"
@@ -695,6 +702,7 @@ export default function RoomPage() {
 
           {/* Leave */}
           <button
+            type="button"
             onClick={handleLeave}
             className="p-2 rounded-lg hover:bg-red-900/30 transition-colors text-red-400/60 hover:text-red-400"
             aria-label="Leave room"
@@ -771,6 +779,7 @@ export default function RoomPage() {
                 className="flex-1 px-3 py-2 rounded-xl bg-degen-800 border border-degen-700 text-sm placeholder:text-degen-400/30 outline-none resize-none focus:border-degen-400 transition-colors max-h-32"
               />
               <button
+                type="button"
                 onClick={handleSend}
                 disabled={!composeText.trim() || sending}
                 className="p-2.5 rounded-xl bg-degen-400 text-black hover:bg-degen-300 disabled:opacity-30 transition-colors shrink-0"
@@ -830,6 +839,7 @@ export default function RoomPage() {
                   Members ({room.members.length})
                 </h3>
                 <button
+                  type="button"
                   onClick={() => setShowMembers(false)}
                   className="p-1 rounded hover:bg-degen-800"
                 >
