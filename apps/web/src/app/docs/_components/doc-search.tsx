@@ -170,6 +170,127 @@ const searchIndex: { title: string; href: string; section: string; content: stri
     section: 'Protocols',
     content: 'How to add a new protocol to DegenFeed. Provider interface, normalization, testing.',
   },
+  {
+    title: 'Using Each Protocol Through DegenFeed',
+    href: '/docs/protocols#using-each-protocol',
+    section: 'Protocols',
+    content:
+      'How to connect, read, and post to Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, Reddit, Minds, RSS, PeerTube, YouTube, Owncast, Odysee, Rumble, Substack, Mirror, and Paragraph.',
+  },
+  {
+    title: 'PeerTube Integration',
+    href: '/docs/protocols#peertube',
+    section: 'Protocols',
+    content:
+      'PeerTube integration. Federated video catalog, live streams via RTMP, creator channels.',
+  },
+  {
+    title: 'YouTube Integration',
+    href: '/docs/protocols#youtube',
+    section: 'Protocols',
+    content:
+      'YouTube integration. Channel videos, trending content, live streams via Invidious aggregation, 68 RSS channels.',
+  },
+  {
+    title: 'Owncast Integration',
+    href: '/docs/protocols#owncast',
+    section: 'Protocols',
+    content: 'Owncast integration. Live streams from self-hosted instances, stream registration.',
+  },
+  {
+    title: 'Minds Integration',
+    href: '/docs/protocols#minds',
+    section: 'Protocols',
+    content: 'Minds integration. Public posts from curated channels, token-gated content.',
+  },
+  {
+    title: 'Substack Integration',
+    href: '/docs/protocols#substack',
+    section: 'Protocols',
+    content:
+      'Substack integration. Newsletter posts from 30+ crypto and tech publications via RSS.',
+  },
+  {
+    title: 'Mirror Integration',
+    href: '/docs/protocols#mirror',
+    section: 'Protocols',
+    content:
+      'Mirror integration. On-chain publishing articles backed by Arweave, token-gated editions.',
+  },
+  {
+    title: 'Paragraph Integration',
+    href: '/docs/protocols#paragraph',
+    section: 'Protocols',
+    content:
+      'Paragraph integration. On-chain newsletter posts and token-gated content collections via RSS.',
+  },
+
+  // Cross-Posting
+  {
+    title: 'Cross-Posting Guide',
+    href: '/docs/cross-posting',
+    section: 'Cross-Posting',
+    content:
+      'Publish one post to Nostr, Farcaster, Bluesky, Mastodon, Threads, Reddit and more at once. Protocol limits, scheduling, engagement aggregation.',
+  },
+  {
+    title: 'How Cross-Posting Works',
+    href: '/docs/cross-posting#how-it-works',
+    section: 'Cross-Posting',
+    content:
+      'Content adaptation, client-side signing, parallel fan-out, and engagement aggregation.',
+  },
+  {
+    title: 'Protocol Limits',
+    href: '/docs/cross-posting#protocol-limits',
+    section: 'Cross-Posting',
+    content:
+      'Character limits and media support per protocol: Nostr, Farcaster, Bluesky, Mastodon, Threads, Lens, Reddit, RSS.',
+  },
+  {
+    title: 'Scheduling Cross-Posts',
+    href: '/docs/cross-posting#scheduling',
+    section: 'Cross-Posting',
+    content: 'Schedule posts to publish at a future time. Creator Studio management.',
+  },
+
+  // Video
+  {
+    title: 'Video Streaming Guide',
+    href: '/docs/video',
+    section: 'Video',
+    content:
+      'Watch and stream video across YouTube, Twitch, Rumble, PeerTube, Owncast, Odysee and more in one place.',
+  },
+  {
+    title: 'Live Streaming',
+    href: '/docs/video#live-streaming',
+    section: 'Video',
+    content:
+      'Go live with OBS via RTMP/SRT. Distribute to Nostr, Farcaster, Bluesky, Mastodon and more at once. Monetize with tips.',
+  },
+  {
+    title: 'Supported Video Platforms',
+    href: '/docs/video#supported-platforms',
+    section: 'Video',
+    content:
+      'YouTube via Invidious, Twitch, Rumble, PeerTube, Owncast, Odysee, Zora, Loops short-form.',
+  },
+  {
+    title: 'Short-Form Video',
+    href: '/docs/video#shorts',
+    section: 'Video',
+    content: 'TikTok-style shorts feed with Blossom storage and IPFS pinning.',
+  },
+
+  // FAQ
+  {
+    title: 'FAQ — Frequently Asked Questions',
+    href: '/faq',
+    section: 'FAQ',
+    content:
+      '27+ frequently asked questions about DegenFeed: protocols, cross-posting, tipping, creator coins, self-hosting, wallets.',
+  },
 
   // Architecture
   {

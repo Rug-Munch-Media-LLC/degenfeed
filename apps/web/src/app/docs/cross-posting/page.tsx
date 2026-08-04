@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Badge } from '../_components/doc-badge';
+import { DocBreadcrumbs } from '../_components/doc-breadcrumbs';
 import { Callout } from '../_components/doc-callout';
 import { CodeBlock } from '../_components/doc-code-block';
 import { H2, H3 } from '../_components/doc-heading';
@@ -48,6 +49,7 @@ export const metadata: Metadata = {
 export default function CrossPostingPage() {
   return (
     <div className="mx-auto max-w-4xl px-6 py-10 lg:px-10">
+      <DocBreadcrumbs items={[{ label: 'Docs', href: '/docs' }, { label: 'Cross-Posting' }]} />
       {/* Hero */}
       <div className="mb-2 flex items-center gap-2">
         <Badge color="green">Cross-Posting</Badge>
@@ -168,8 +170,36 @@ export default function CrossPostingPage() {
             media: 'Images, video, audio',
             notes: 'Publications are signed on Polygon; supported via Lens API.',
           },
+          {
+            protocol: 'Threads',
+            limit: '500 chars',
+            media: 'Images, video',
+            notes: 'Threads API posting requires a linked Instagram account.',
+          },
+          {
+            protocol: 'Reddit',
+            limit: '40,000 chars (post body)',
+            media: 'Images, links',
+            notes: 'Cross-posting to Reddit requires a Reddit API credential.',
+          },
+          {
+            protocol: 'RSS / Atom',
+            limit: 'Source-dependent',
+            media: 'Text, media enclosures',
+            notes: 'Publishing via RSS requires a compatible publishing endpoint.',
+          },
         ]}
       />
+
+      <Callout type="info">
+        Protocol availability for cross-posting depends on your plan. Free accounts can post to up
+        to 3 protocols; <strong>Pro</strong> unlocks 10+; <strong>Creator+</strong> posts to every
+        supported network. See the{' '}
+        <a href="/docs/protocols" className="text-degen-400 underline">
+          Protocol Guide
+        </a>{' '}
+        for full details on each network.
+      </Callout>
 
       <H2 id="scheduling">Scheduling Cross-Posts</H2>
       <p className="text-sm leading-relaxed text-[var(--color-muted)]">

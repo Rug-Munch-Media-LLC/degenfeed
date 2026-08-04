@@ -2,7 +2,7 @@ import { ImageResponse } from 'next/og';
 
 export const runtime = 'edge';
 
-export const alt = 'DegenFeed — The social feed of web3';
+export const alt = 'DegenFeed — One Protocol for All Web3 Social';
 export const size = { width: 1200, height: 630 };
 
 export const contentType = 'image/png';
@@ -17,7 +17,7 @@ export default function Image() {
         justifyContent: 'center',
         width: '100%',
         height: '100%',
-        background: 'linear-gradient(135deg, #000000 0%, #0a1017 50%, #000000 100%)',
+        background: 'linear-gradient(135deg, #000000 0%, #07100a 50%, #000000 100%)',
         fontFamily: 'Inter',
       }}
     >
@@ -29,9 +29,9 @@ export default function Image() {
           left: 0,
           right: 0,
           bottom: 0,
-          opacity: 0.03,
+          opacity: 0.04,
           backgroundImage:
-            'radial-gradient(circle at 30% 50%, #1d9bf0 0%, transparent 60%), radial-gradient(circle at 70% 50%, #1d9bf0 0%, transparent 60%)',
+            'radial-gradient(circle at 30% 50%, #00ff41 0%, transparent 60%), radial-gradient(circle at 70% 50%, #00ff41 0%, transparent 60%)',
         }}
       />
       <div
@@ -39,9 +39,9 @@ export default function Image() {
           display: 'flex',
           fontSize: 96,
           fontWeight: 900,
-          color: '#1d9bf0',
+          color: '#00ff41',
           letterSpacing: '-0.03em',
-          textShadow: '0 0 80px rgba(29, 155, 240, 0.3), 0 0 160px rgba(29, 155, 240, 0.15)',
+          textShadow: '0 0 80px rgba(0, 255, 65, 0.3), 0 0 160px rgba(0, 255, 65, 0.15)',
           marginBottom: 24,
         }}
       >
@@ -56,7 +56,7 @@ export default function Image() {
           marginBottom: 80,
         }}
       >
-        The social feed of web3
+        One Protocol for All Web3 Social
       </div>
       <div
         style={{
@@ -71,7 +71,7 @@ export default function Image() {
           color: '#4b5563',
         }}
       >
-        degenfeed.xyz &middot; Open source, zero sign-ups
+        degenfeed.xyz &middot; 18+ protocols &middot; Open source, zero sign-ups
       </div>
     </div>,
     { ...size },

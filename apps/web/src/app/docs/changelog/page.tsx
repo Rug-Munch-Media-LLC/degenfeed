@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Badge } from '../_components/doc-badge';
+import { DocBreadcrumbs } from '../_components/doc-breadcrumbs';
 import { Callout } from '../_components/doc-callout';
 import { H2 } from '../_components/doc-heading';
 
@@ -160,6 +161,7 @@ export default function ChangelogPage() {
 
   return (
     <div className="mx-auto max-w-4xl px-6 py-10 lg:px-10">
+      <DocBreadcrumbs items={[{ label: 'Docs', href: '/docs' }, { label: 'Changelog' }]} />
       <div className="mb-2 flex items-center gap-2">
         <Badge color="green">{latest.version}</Badge>
         <Badge>Changelog</Badge>

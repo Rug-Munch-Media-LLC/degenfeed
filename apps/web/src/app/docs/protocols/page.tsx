@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Badge } from '../_components/doc-badge';
+import { DocBreadcrumbs } from '../_components/doc-breadcrumbs';
 import { Callout } from '../_components/doc-callout';
 import { CodeBlock } from '../_components/doc-code-block';
 import { H2, H3 } from '../_components/doc-heading';
@@ -10,11 +11,11 @@ export const revalidate = 86400;
 export const metadata: Metadata = {
   title: 'Protocol Integration Guide — DegenFeed',
   description:
-    'How DegenFeed integrates Nostr, Farcaster, Lens, Bluesky, Mastodon, Lemmy, Threads, Reddit, and RSS protocols. Data sources, limitations, and rate limits.',
+    'How DegenFeed integrates Nostr, Farcaster, Lens, Bluesky, Mastodon, Lemmy, Threads, Reddit, PeerTube, YouTube, Owncast, Odysee, Rumble, Minds, Substack, Mirror, Paragraph and RSS protocols. Data sources, limitations, and rate limits.',
   alternates: { canonical: 'https://app.degenfeed.xyz/docs/protocols' },
   openGraph: {
     title: 'DegenFeed Protocol Integration Guide',
-    description: 'Detailed protocol integration guide for all 9 supported networks plus RSS/Atom.',
+    description: 'Detailed protocol integration guide for all 18 supported networks plus RSS/Atom.',
   },
 };
 
@@ -205,6 +206,142 @@ const protocols: ProtocolInfo[] = [
     health:
       'Feed parse success rate, staleness tracking, source adapter error rate. Circuit breaker for persistently failing feeds.',
   },
+  {
+    id: 'peertube',
+    name: 'PeerTube',
+    color: '#f2690d',
+    endpoint: 'peertube-provider (federated instances)',
+    status: 'Production',
+    data: [
+      'Federated video catalog from public instances',
+      'Live streams (RTMP ingest relay)',
+      'Creator channels and uploads',
+      'Video engagement metrics',
+    ],
+    auth: 'Optional account for uploading. Read-only aggregation of public instances.',
+    limits:
+      'Instance-dependent. Aggregates 20+ public instances; per-instance API rate limits apply.',
+    health:
+      'Instance response time, federation lag, upload/stream relay status. Per-instance circuit breakers.',
+  },
+  {
+    id: 'youtube',
+    name: 'YouTube',
+    color: '#ff0000',
+    endpoint: 'youtube-provider + 68 RSS channels',
+    status: 'Production',
+    data: [
+      'Channel videos and metadata',
+      'Trending and featured content',
+      'Live streams via Invidious aggregation',
+      'Video engagement metrics',
+    ],
+    auth: 'No authentication for read-only RSS-based aggregation.',
+    limits: 'Invidious instance rate limits; RSS channel polling (default 15-60min).',
+    health:
+      'Invidious instance availability, RSS freshness, video parse success rate. Degraded when Invidious instances are blocked.',
+  },
+  {
+    id: 'owncast',
+    name: 'Owncast',
+    color: '#8e30eb',
+    endpoint: 'owncast register adapter',
+    status: 'Beta',
+    data: [
+      'Live streams from Owncast instances',
+      'Stream metadata and chat',
+      'Federated discovery of self-hosted broadcasters',
+    ],
+    auth: 'Instance URL + admin key required for stream registration. Read-only for viewers.',
+    limits: 'Per-instance. Self-hosted instances define their own limits.',
+    health: 'Instance reachability, stream liveness, registration success rate.',
+  },
+  {
+    id: 'odysee',
+    name: 'Odysee',
+    color: '#ef1970',
+    endpoint: 'Odysee API + RSS',
+    status: 'Beta',
+    data: [
+      'Channel videos and livestreams',
+      'Comments and engagement',
+      'Content claims (LBRY protocol)',
+    ],
+    auth: 'No authentication for read-only aggregation.',
+    limits: 'Odysee API rate limits; RSS polling fallback.',
+    health: 'API response time, claim resolution success rate, data freshness.',
+  },
+  {
+    id: 'rumble',
+    name: 'Rumble',
+    color: '#85c742',
+    endpoint: 'Rumble RSS + public pages',
+    status: 'Read-only',
+    data: ['Channel videos and livestreams', 'Public engagement metrics', 'RSS feed aggregation'],
+    auth: 'No authentication. Public HTML/RSS only.',
+    limits: 'RSS polling interval (15-60min). No formal public API.',
+    health: 'Feed parse success rate, page fetch reliability, data freshness.',
+  },
+  {
+    id: 'minds',
+    name: 'Minds',
+    color: '#25d366',
+    endpoint: 'Minds API (public feeds)',
+    status: 'Beta',
+    data: [
+      'Public posts from curated channels',
+      'Token-gated community content',
+      'Engagement metrics',
+    ],
+    auth: 'No authentication for public read-only feeds.',
+    limits: 'Minds API rate limits. Curated channel list.',
+    health: 'API response time, feed parse success rate, token-gate resolution.',
+  },
+  {
+    id: 'substack',
+    name: 'Substack',
+    color: '#ff6719',
+    endpoint: 'Substack RSS feeds',
+    status: 'Production',
+    data: [
+      'Newsletter posts from 30+ crypto/tech publications',
+      'Full-text articles via RSS',
+      'Author metadata and publication info',
+    ],
+    auth: 'No authentication. Public RSS feeds only.',
+    limits: 'Per-publication RSS refresh interval (default 15-60min).',
+    health: 'Feed parse success rate, staleness tracking, publication availability.',
+  },
+  {
+    id: 'mirror',
+    name: 'Mirror',
+    color: '#7c3aed',
+    endpoint: 'Mirror.xyz /feed/atom',
+    status: 'Production',
+    data: [
+      'On-chain publishing articles (Arweave-backed)',
+      'Token-gated entries and editions',
+      'Author collections via RSS/Atom',
+    ],
+    auth: 'No authentication. Public RSS/Atom feeds only.',
+    limits: 'Per-publication RSS refresh interval.',
+    health: 'Feed parse success rate, Arweave gateway reachability, entry freshness.',
+  },
+  {
+    id: 'paragraph',
+    name: 'Paragraph',
+    color: '#00bfff',
+    endpoint: 'paragraph.xyz /feed',
+    status: 'Production',
+    data: [
+      'On-chain newsletter posts',
+      'Token-gated content collections',
+      'Author publications via RSS',
+    ],
+    auth: 'No authentication. Public RSS feeds only.',
+    limits: 'Per-publication RSS refresh interval.',
+    health: 'Feed parse success rate, publication availability, token-gate resolution.',
+  },
 ];
 
 const statusColors: Record<string, 'green' | 'yellow' | 'gray'> = {
@@ -216,17 +353,18 @@ const statusColors: Record<string, 'green' | 'yellow' | 'gray'> = {
 export default function ProtocolsPage() {
   return (
     <div className="mx-auto max-w-4xl px-6 py-10 lg:px-10">
+      <DocBreadcrumbs items={[{ label: 'Docs', href: '/docs' }, { label: 'Protocols' }]} />
       <div className="mb-2 flex items-center gap-2">
         <Badge>Protocols</Badge>
-        <Badge color="purple">9 Protocols + RSS</Badge>
+        <Badge color="purple">18 Protocols</Badge>
       </div>
       <h1 className="text-4xl font-bold tracking-tight text-[var(--color-fg)]">
         Protocol Integration Guide
       </h1>
       <p className="mt-3 max-w-2xl text-base leading-relaxed text-[var(--color-muted)]">
-        DegenFeed aggregates content from 9 decentralized and federated protocols plus RSS/Atom.
-        Each protocol has a dedicated provider adapter that handles authentication, content
-        normalization, and health monitoring.
+        DegenFeed aggregates content from 18 decentralized, federated, and publishing protocols plus
+        RSS/Atom. Each protocol has a dedicated provider adapter that handles authentication,
+        content normalization, and health monitoring.
       </p>
 
       {/* Protocol cards */}
@@ -295,6 +433,134 @@ export default function ProtocolsPage() {
                     </div>
                   </div>
                 </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* How to use each protocol through DegenFeed */}
+      <H2 id="using-each-protocol">Using Each Protocol Through DegenFeed</H2>
+      <p className="text-sm leading-relaxed text-[var(--color-muted)]">
+        Here&rsquo;s how to connect, read, and post to each supported network from the DegenFeed
+        interface. For posting to multiple networks at once, see the{' '}
+        <Link href="/docs/cross-posting" className="text-degen-400 underline">
+          Cross-Posting Guide
+        </Link>
+        .
+      </p>
+
+      <div className="mt-6 space-y-3">
+        {[
+          {
+            name: 'Nostr',
+            connect:
+              'Install a NIP-07 browser extension (Alby, nos2x) or paste your nsec/npub. Keys never leave your device — all signing is client-side with Schnorr signatures.',
+            use: 'Read kind-1 notes, kind-6 reposts, kind-7 reactions, and kind-30023 long-form articles. Tip creators with Lightning zaps (LNURL).',
+          },
+          {
+            name: 'Farcaster',
+            connect:
+              'Sign in with the wallet that owns your Farcaster ID. The Hub API confirms your identity via Ed25519 signatures.',
+            use: 'Read casts, replies, reactions, and channels. Post up to 320 characters with embeds. Open interactive Frames directly from the feed.',
+          },
+          {
+            name: 'Lens',
+            connect:
+              'Authenticate with your Lens profile on Polygon via challenge-response signing with your connected wallet.',
+            use: 'Read publications, mirrors, and comments. Collect posts as NFTs and use Open Actions. Post up to 5,000 characters.',
+          },
+          {
+            name: 'Bluesky',
+            connect:
+              'Enter your handle and an app password (create one in Bluesky Settings → App Passwords).',
+            use: 'Read the AT Protocol firehose with rich text facets. Post up to 300 characters with images and video via XRPC.',
+          },
+          {
+            name: 'Mastodon / ActivityPub',
+            connect:
+              'Authorize via OAuth on your instance (including social.degenfeed.xyz, a GotoSocial instance).',
+            use: 'Read home, local, and federated timelines plus trending tags. Post up to 500 characters with content-warning support.',
+          },
+          {
+            name: 'Threads',
+            connect: 'Read-only for now — no account connection required.',
+            use: 'Follow curated crypto/tech handles aggregated from public Threads pages.',
+          },
+          {
+            name: 'Reddit',
+            connect: 'Read-only via RSS/JSON — no account connection required.',
+            use: 'Browse 91 default subreddits with real engagement data and comments.',
+          },
+          {
+            name: 'Minds',
+            connect: 'Read-only for public feeds — no account connection required.',
+            use: 'Follow curated Minds channels with token-gated community content.',
+          },
+          {
+            name: 'RSS / Atom',
+            connect: 'No authentication — public feeds only.',
+            use: 'Read 353+ sources including Substack, Mirror, Paragraph, and YouTube channels normalized into one feed.',
+          },
+          {
+            name: 'PeerTube',
+            connect:
+              'Optional account for uploading. Read-only aggregation of 20+ public instances.',
+            use: 'Watch federated video and live streams. Stream via RTMP ingest relay.',
+          },
+          {
+            name: 'YouTube',
+            connect: 'No authentication for read-only aggregation.',
+            use: 'Watch channel videos, trending content, and live streams via Invidious (no tracking).',
+          },
+          {
+            name: 'Owncast',
+            connect: 'Self-hosted instance URL + admin key to register streams.',
+            use: 'Watch live streams from independent Owncast broadcasters alongside other video sources.',
+          },
+          {
+            name: 'Odysee',
+            connect: 'No authentication for read-only aggregation.',
+            use: 'Watch LBRY-protocol content claims, channel videos, and livestreams.',
+          },
+          {
+            name: 'Rumble',
+            connect: 'No authentication. Public HTML/RSS only.',
+            use: 'Watch channel videos and livestreams aggregated from public pages.',
+          },
+          {
+            name: 'Substack',
+            connect: 'No authentication. Public RSS feeds.',
+            use: 'Read full newsletter posts from 30+ crypto and tech publications.',
+          },
+          {
+            name: 'Mirror',
+            connect: 'No authentication. Public RSS/Atom feeds.',
+            use: 'Read on-chain publishing articles backed by Arweave, including token-gated editions.',
+          },
+          {
+            name: 'Paragraph',
+            connect: 'No authentication. Public RSS feeds.',
+            use: 'Read on-chain newsletter posts and token-gated content collections.',
+          },
+        ].map((p) => (
+          <div
+            key={p.name}
+            className="rounded-lg border border-[var(--color-glass-border)] bg-white/[0.02] p-4"
+          >
+            <div className="text-sm font-semibold text-[var(--color-fg)]">{p.name}</div>
+            <div className="mt-2 grid gap-3 sm:grid-cols-2">
+              <div>
+                <div className="text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)] mb-1">
+                  Connect
+                </div>
+                <p className="text-xs text-[var(--color-muted)]">{p.connect}</p>
+              </div>
+              <div>
+                <div className="text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)] mb-1">
+                  Use
+                </div>
+                <p className="text-xs text-[var(--color-muted)]">{p.use}</p>
               </div>
             </div>
           </div>

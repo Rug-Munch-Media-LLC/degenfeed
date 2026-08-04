@@ -16,8 +16,20 @@ interface DocSection {
 
 const sections: DocSection[] = [
   { id: 'home', label: 'Home', icon: '◎', href: '/docs' },
-  { id: 'quickstart', label: 'Quickstart', icon: '▶', href: '/docs/quickstart' },
+  {
+    id: 'quickstart',
+    label: 'Getting Started',
+    icon: '▶',
+    href: '/docs/quickstart',
+    subsections: [
+      { id: 'connect-wallet', label: 'Connect Wallet', href: '/docs/quickstart#connect-wallet' },
+      { id: 'link-protocol', label: 'Link Protocol', href: '/docs/quickstart#link-protocol' },
+      { id: 'first-post', label: 'First Post', href: '/docs/quickstart#first-post' },
+    ],
+  },
   { id: 'user-guide', label: 'User Guide', icon: '📖', href: '/docs/user-guide' },
+  { id: 'cross-posting', label: 'Cross-Posting', icon: '⇄', href: '/docs/cross-posting' },
+  { id: 'video', label: 'Video Streaming', icon: '▶', href: '/docs/video' },
   {
     id: 'api',
     label: 'API Reference',
@@ -30,6 +42,7 @@ const sections: DocSection[] = [
   { id: 'changelog', label: 'Changelog', icon: '☰', href: '/docs/changelog' },
   { id: 'troubleshooting', label: 'Troubleshooting', icon: '⚠', href: '/docs/troubleshooting' },
   { id: 'comparison', label: 'Comparison', icon: '◆', href: '/docs/comparison' },
+  { id: 'faq', label: 'FAQ', icon: '?', href: '/faq' },
 ];
 
 export default function DocsLayout({ children }: { children: React.ReactNode }) {

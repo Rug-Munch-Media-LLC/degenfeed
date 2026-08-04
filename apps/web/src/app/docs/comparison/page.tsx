@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { DocBreadcrumbs } from '../_components/doc-breadcrumbs';
 
 export const revalidate = 86400;
 
@@ -199,6 +200,7 @@ function FeatureTable() {
 export default function ComparisonPage() {
   return (
     <div className="mx-auto max-w-4xl px-6 py-10 lg:px-10">
+      <DocBreadcrumbs items={[{ label: 'Docs', href: '/docs' }, { label: 'Comparison' }]} />
       <div className="mb-2 flex items-center gap-2">
         <Badge>Platform Comparison</Badge>
       </div>

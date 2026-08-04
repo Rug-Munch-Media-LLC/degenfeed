@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
+import { DocBreadcrumbs } from '../_components/doc-breadcrumbs';
 
 const issues = [
   {
@@ -155,6 +156,7 @@ export default function TroubleshootingPage() {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
+      <DocBreadcrumbs items={[{ label: 'Docs', href: '/docs' }, { label: 'Troubleshooting' }]} />
       {/* Header */}
       <div className="mb-2 flex items-center gap-2">
         <span className="inline-flex items-center rounded-md border border-yellow-500/20 bg-yellow-500/10 px-1.5 py-0.5 font-mono text-[11px] font-medium text-yellow-400">

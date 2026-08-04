@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Badge } from './_components/doc-badge';
+import { DocBreadcrumbs } from './_components/doc-breadcrumbs';
 import { DocSearchClient } from './_components/doc-search-client';
 
 export const revalidate = 86400;
@@ -135,6 +136,7 @@ export default function DocsLandingPage() {
     <div className="mx-auto max-w-4xl px-6 py-10 lg:px-10">
       {/* Hero */}
       <section className="mb-12">
+        <DocBreadcrumbs items={[{ label: 'Docs', href: '/docs' }]} />
         <div className="mb-3 flex items-center gap-2">
           <Badge color="green">v0.2.0</Badge>
           <Badge>MIT Licensed</Badge>
