@@ -66,7 +66,7 @@ export function VinePlayer({
       videoEl.pause();
       setIsPaused(true);
     }
-  }, [isActive, video.videoUrl]);
+  }, [isActive]);
 
   // ── Reset when video changes ─────────────────────────────────────────
 
@@ -75,7 +75,7 @@ export function VinePlayer({
     setHasError(false);
     setProgress(0);
     setLoopCount(0);
-  }, [video.id, video.videoUrl]);
+  }, []);
 
   // ── Progress tracking ────────────────────────────────────────────────
 
@@ -90,7 +90,7 @@ export function VinePlayer({
 
     progressIntervalRef.current = setInterval(() => {
       const videoEl = videoRef.current;
-      if (!videoEl || !videoEl.duration) return;
+      if (!videoEl?.duration) return;
 
       const pct = videoEl.currentTime / videoEl.duration;
       setProgress(Math.min(pct, 1));

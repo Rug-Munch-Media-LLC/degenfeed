@@ -282,7 +282,7 @@ export function useUnifiedChat({
               case 'live_chat_message':
                 if (parsed.message) {
                   setMessages((prev) => {
-                    if (prev.some((m) => m.id === parsed.message!.id)) return prev;
+                    if (prev.some((m) => m.id === parsed.message?.id)) return prev;
                     const next = [...prev, parsed.message!];
                     return next.length > maxMessages ? next.slice(-maxMessages) : next;
                   });

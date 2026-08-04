@@ -425,9 +425,9 @@ export function TipIncentives({
           </h3>
           <p className="text-[11px] text-[var(--color-fg)]">
             Thank{' '}
-            <strong className="text-purple-400">{leaderboard.topTippers[0]!.tipperName}</strong> for
+            <strong className="text-purple-400">{leaderboard.topTippers[0]?.tipperName}</strong> for
             being the top tipper with{' '}
-            <strong>${leaderboard.topTippers[0]!.totalUsd.toFixed(2)}</strong>!
+            <strong>${leaderboard.topTippers[0]?.totalUsd.toFixed(2)}</strong>!
           </p>
 
           {/* Auto-shoutout button */}

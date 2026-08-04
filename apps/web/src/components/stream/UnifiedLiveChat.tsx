@@ -827,7 +827,7 @@ export function UnifiedLiveChat({
     if (!autoScroll && messages.length > 0) {
       // Only increment for incoming messages (not our own)
     }
-  }, [autoScroll]);
+  }, [autoScroll, messages.length]);
 
   const handleScroll = useCallback(() => {
     const el = containerRef.current;
@@ -971,7 +971,6 @@ export function UnifiedLiveChat({
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search messages..."
             className="w-full rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5 text-[11px] text-white outline-none placeholder:text-white/30 focus:border-degen-500/40"
-            autoFocus
           />
         </div>
       )}

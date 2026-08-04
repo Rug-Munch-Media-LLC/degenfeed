@@ -476,8 +476,6 @@ function FrameCard({
       onKeyDown={(e) => {
         if (e.key === 'Enter') onSelect(frame);
       }}
-      role="button"
-      tabIndex={0}
       aria-label={`View frame: ${frame.title}`}
     >
       {/* Preview image */}

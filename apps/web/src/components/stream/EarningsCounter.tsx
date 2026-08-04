@@ -194,7 +194,7 @@ export function EarningsCounter({
     return () => {
       if (ws) ws.close();
     };
-  }, [streamId, creatorId]);
+  }, []);
 
   // ─── Compact Mode ────────────────────────────────────────────
 

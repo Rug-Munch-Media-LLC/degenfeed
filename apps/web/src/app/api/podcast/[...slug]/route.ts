@@ -48,7 +48,7 @@ export async function GET(
   { params }: { params: Promise<{ slug?: string[] }> },
 ): Promise<Response> {
   const slug = (await params).slug;
-  const path = slug && slug.length ? `/api/podcast/${slug.join('/')}` : '/api/podcast';
+  const path = slug?.length ? `/api/podcast/${slug.join('/')}` : '/api/podcast';
   return proxyToBridge('GET', path, request);
 }
 
@@ -57,7 +57,7 @@ export async function POST(
   { params }: { params: Promise<{ slug?: string[] }> },
 ): Promise<Response> {
   const slug = (await params).slug;
-  const path = slug && slug.length ? `/api/podcast/${slug.join('/')}` : '/api/podcast';
+  const path = slug?.length ? `/api/podcast/${slug.join('/')}` : '/api/podcast';
   return proxyToBridge('POST', path, request);
 }
 
@@ -66,7 +66,7 @@ export async function DELETE(
   { params }: { params: Promise<{ slug?: string[] }> },
 ): Promise<Response> {
   const slug = (await params).slug;
-  const path = slug && slug.length ? `/api/podcast/${slug.join('/')}` : '/api/podcast';
+  const path = slug?.length ? `/api/podcast/${slug.join('/')}` : '/api/podcast';
   return proxyToBridge('DELETE', path, request);
 }
 

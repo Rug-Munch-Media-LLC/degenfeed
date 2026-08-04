@@ -439,6 +439,21 @@ export const PROTOCOLS: Record<string, ProtocolConfig> = {
       { label: 'streamers', value: '7M+' },
     ],
   },
+  loops: {
+    id: 'loops',
+    label: 'Loops',
+    color: '#22d3ee',
+    icon: '🔄',
+    description: 'Self-hosted short-form video platform (TikTok alternative) — loops.degenfeed.xyz',
+    endpoint: '/api/feed/loops',
+    route: '/feed/loops',
+    postNoun: 'loop',
+    category: 'video',
+    stats: [
+      { label: 'instance', value: 'loops.degenfeed.xyz' },
+      { label: 'federated', value: 'ActivityPub' },
+    ],
+  },
   wordpress: {
     id: 'wordpress',
     label: 'WordPress + ActivityPub',
@@ -806,6 +821,7 @@ export const SIDEBAR_ORDER = [
   'threads',
   'peertube',
   'youtube',
+  'loops',
   'gancio',
   'soundcloud',
   'bandcamp',
@@ -923,19 +939,28 @@ function collectRegistry(
 
 /** Protocol → brand color. Derived from the canonical registries. */
 export const PROTOCOL_COLORS: Record<string, string> = {
-  ...collectRegistry((c) => c.color, (c) => c.color),
+  ...collectRegistry(
+    (c) => c.color,
+    (c) => c.color,
+  ),
   ...LEGACY_PROTOCOL_COLORS,
 };
 
 /** Protocol → display label. Derived from the canonical registries. */
 export const PROTOCOL_LABELS: Record<string, string> = {
-  ...collectRegistry((c) => c.label, (c) => c.label),
+  ...collectRegistry(
+    (c) => c.label,
+    (c) => c.label,
+  ),
   ...LEGACY_PROTOCOL_LABELS,
 };
 
 /** Protocol → icon glyph. Derived from the canonical registries. */
 export const PROTOCOL_ICONS: Record<string, string> = {
-  ...collectRegistry((c) => c.icon, (c) => c.icon),
+  ...collectRegistry(
+    (c) => c.icon,
+    (c) => c.icon,
+  ),
   ...LEGACY_PROTOCOL_ICONS,
 };
 

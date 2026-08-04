@@ -13,7 +13,7 @@
  */
 
 import { usePathname, useRouter } from 'next/navigation';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect } from 'react';
 import {
   CATEGORIES,
   CATEGORY_DISPLAY_ORDER,

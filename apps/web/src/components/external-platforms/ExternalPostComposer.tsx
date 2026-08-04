@@ -131,9 +131,9 @@ export function ExternalPostComposer({
             connected: accountMap.has(def.id),
             connectedAccount: accountMap.get(def.id)
               ? {
-                  displayName: accountMap.get(def.id)!.displayName ?? def.name,
-                  avatarUrl: accountMap.get(def.id)!.avatarUrl,
-                  connectedAt: accountMap.get(def.id)!.connectedAt,
+                  displayName: accountMap.get(def.id)?.displayName ?? def.name,
+                  avatarUrl: accountMap.get(def.id)?.avatarUrl,
+                  connectedAt: accountMap.get(def.id)?.connectedAt,
                 }
               : undefined,
           })),

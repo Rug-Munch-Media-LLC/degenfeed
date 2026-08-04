@@ -769,6 +769,7 @@ const server = http.createServer(async (req, res) => {
           'https://cointelegraph.com/rss', // RSS direct (no RSS-Bridge)
           'http://127.0.0.1:8536/api/v3/post/list?sort=Hot&limit=1',
           'http://127.0.0.1:9011/api/v1/videos?count=1',
+          'http://127.0.0.1:8136/api/web/feed', // Loops (self-hosted short video)
           'http://127.0.0.1:3012/xrpc/com.atproto.server.describeServer',
           'http://127.0.0.1:8085/',
           'http://127.0.0.1:8086/',
@@ -789,6 +790,7 @@ const server = http.createServer(async (req, res) => {
         rssHealthy,
         lemmyHealthy,
         peertubeHealthy,
+        loopsHealthy,
         blueskyHealthy,
         nostrHealthy,
         writefreelyHealthy,
@@ -819,6 +821,7 @@ const server = http.createServer(async (req, res) => {
           rss: { healthy: rssHealthy },
           lemmy: { healthy: lemmyHealthy },
           peertube: { healthy: peertubeHealthy },
+          loops: { healthy: loopsHealthy },
           bluesky: { healthy: blueskyHealthy },
           nostr: { healthy: nostrHealthy },
           writefreely: { healthy: writefreelyHealthy },
@@ -1103,6 +1106,7 @@ const server = http.createServer(async (req, res) => {
         'github',
         'podcast',
         'youtube',
+        'loops',
       ];
       if (allowed.includes(proto)) {
         const singleCacheKey = `feed:single:${proto}:${limit}`;
@@ -1241,7 +1245,7 @@ server.listen(PORT, BRIDGE_HOST, () => {
   console.log(`[bridge] DegenFeed Bridge v0.4.0 running on http://${BRIDGE_HOST}:${PORT}`);
   console.log('[bridge] Realtime WebSocket: /ws/realtime (heartbeat 30s)');
   console.log(
-    '[bridge] Data sources: Mastodon/GTS, Reddit, RSS, Lemmy, PeerTube, YouTube, Bluesky, Nostr, Farcaster, Lens, Pixelfed, Threads, Zora, DTube, LBRY, Gab, Minds, Aether, Scuttlebutt, Hive, Mirror, Funkwhale, Castopod, WriteFreely, MediaGoblin, Owncast, BookWyrm, Mobilizon, Forgejo, Bonfire, Mitra, Takahe, Orbis, XMTP, Push, Huddle01, Ceramic, Tableland, Telegram, Discord, Matrix, GitHub',
+    '[bridge] Data sources: Mastodon/GTS, Reddit, RSS, Lemmy, PeerTube, Loops, YouTube, Bluesky, Nostr, Farcaster, Lens, Pixelfed, Threads, Zora, DTube, LBRY, Gab, Minds, Aether, Scuttlebutt, Hive, Mirror, Funkwhale, Castopod, WriteFreely, MediaGoblin, Owncast, BookWyrm, Mobilizon, Forgejo, Bonfire, Mitra, Takahe, Orbis, XMTP, Push, Huddle01, Ceramic, Tableland, Telegram, Discord, Matrix, GitHub',
   );
   console.log(
     '[bridge] Cross-poster: GTS→Nostr, GTS→Bluesky, GTS→PeerTube, GTS→Lens, GTS→Farcaster, GTS→Pixelfed, GTS→WriteFreely, Pixelfed→Mastodon, Lemmy→Nostr, BookWyrm→All, Mobilizon→All, Forgejo→Fediverse',

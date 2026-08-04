@@ -24,7 +24,9 @@ export function useScreenShare(
     if (getIsScreenSharing()) {
       // Stop screen share
       if (screenShareStream.current) {
-        screenShareStream.current.getTracks().forEach((t) => { t.stop(); });
+        screenShareStream.current.getTracks().forEach((t) => {
+          t.stop();
+        });
         screenShareStream.current = null;
       }
       // Restore camera track
@@ -71,7 +73,9 @@ export function useScreenShare(
 
   const cleanupScreenShare = useCallback(() => {
     if (screenShareStream.current) {
-      screenShareStream.current.getTracks().forEach((t) => { t.stop(); });
+      screenShareStream.current.getTracks().forEach((t) => {
+        t.stop();
+      });
       screenShareStream.current = null;
     }
   }, []);
