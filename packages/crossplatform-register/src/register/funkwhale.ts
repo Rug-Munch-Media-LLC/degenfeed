@@ -141,11 +141,14 @@ export async function registerFunkwhale(
       }
     }
 
+    // Encrypt the access token using the caller-supplied seal function before KV storage.
+    // The raw token is never stored in plaintext — only the AES-256-GCM sealed blob.
+    const accessTokenToStore = opts.sealSecret ? await opts.sealSecret(accessToken) : accessToken;
     const accountInfo: Record<string, string> = {
       username: desiredUsername,
       displayName,
       instance: instanceUrl,
-      accessToken,
+      _sealedAccessToken: accessTokenToStore,
       userId,
       profileUrl: `${instanceUrl}/library/${desiredUsername}`,
       email,
@@ -158,7 +161,14 @@ export async function registerFunkwhale(
       platform: 'funkwhale',
       status: 'created',
       username: `${desiredUsername}@music.degenfeed.xyz`,
-      accountInfo,
+      accountInfo: {
+        username: desiredUsername,
+        displayName,
+        instance: instanceUrl,
+        userId,
+        profileUrl: `${instanceUrl}/library/${desiredUsername}`,
+        email,
+      },
     };
   } catch (err) {
     return {

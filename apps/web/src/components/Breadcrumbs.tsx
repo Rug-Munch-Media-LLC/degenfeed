@@ -55,9 +55,12 @@ function ChevronIcon() {
 export function Breadcrumbs({
   overrides,
   className = '',
+  forceShow = false,
 }: {
   overrides?: Record<string, string>;
   className?: string;
+  /** Render even on shallow (2-segment) paths like /feed/nostr. Default false. */
+  forceShow?: boolean;
 }) {
   const pathname = usePathname();
 
@@ -77,8 +80,8 @@ export function Breadcrumbs({
     return crumbs;
   }, [pathname, overrides]);
 
-  // Don't show on top-level pages
-  if (segments.length <= 2) return null;
+  // Don't show on top-level pages (unless forced for deep feed pages)
+  if (!forceShow && segments.length <= 2) return null;
 
   return (
     <nav aria-label="Breadcrumb" className={`mb-3 ${className}`}>

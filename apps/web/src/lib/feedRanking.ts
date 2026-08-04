@@ -27,6 +27,10 @@ export interface FeedAlgorithmPrefs {
   engagementDiversity: number;
   /** 0 = no mixing enforcement … 100 = strict protocol interleave */
   protocolDiversity: number;
+  /** 0 = familiar (boost your bubble) … 100 = discover (serendipity ~20%) */
+  familiarDiscover: number;
+  /** 0 = indie/small creators … 100 = big accounts with large followings */
+  creatorSize: number;
 }
 
 export interface FeedControls {
@@ -50,6 +54,8 @@ export const DEFAULT_ALGORITHM: FeedAlgorithmPrefs = {
   recencyQuality: 50,
   engagementDiversity: 50,
   protocolDiversity: 50,
+  familiarDiscover: 50,
+  creatorSize: 50,
 };
 
 export const DEFAULT_FEED_CONTROLS: FeedControls = {
@@ -319,8 +325,14 @@ export function serializeControls(controls: FeedControls): Record<string, string
   if (controls.timeRange !== DEFAULT_FEED_CONTROLS.timeRange) params.time = controls.timeRange;
   if (controls.niches.length > 0) params.niches = controls.niches.join(',');
   const a = controls.algorithm;
-  if (a.recencyQuality !== 50 || a.engagementDiversity !== 50 || a.protocolDiversity !== 50) {
-    params.algo = `${a.recencyQuality},${a.engagementDiversity},${a.protocolDiversity}`;
+  if (
+    a.recencyQuality !== 50 ||
+    a.engagementDiversity !== 50 ||
+    a.protocolDiversity !== 50 ||
+    a.familiarDiscover !== 50 ||
+    a.creatorSize !== 50
+  ) {
+    params.algo = `${a.recencyQuality},${a.engagementDiversity},${a.protocolDiversity},${a.familiarDiscover},${a.creatorSize}`;
   }
   return params;
 }
@@ -361,6 +373,8 @@ export function parseControlsFromParams(params: URLSearchParams): Partial<FeedCo
       recencyQuality: clampNum(parts[0] ?? 50, 0, 100),
       engagementDiversity: clampNum(parts[1] ?? 50, 0, 100),
       protocolDiversity: clampNum(parts[2] ?? 50, 0, 100),
+      familiarDiscover: clampNum(parts[3] ?? 50, 0, 100),
+      creatorSize: clampNum(parts[4] ?? 50, 0, 100),
     };
   }
   return patch;

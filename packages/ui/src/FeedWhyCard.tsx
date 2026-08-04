@@ -38,6 +38,15 @@ const SIGNAL_LABELS: Record<string, string> = {
   'muted-penalty': 'This topic was partially reduced because you muted similar content',
   'author-diversity': 'Shown less often to keep the feed varied',
   'high-quality': 'High-quality content detected by our quality filter',
+  // ── Top-tier 2026 algorithm signals ──────────────────────────────
+  personalized: 'Matches your engagement patterns — you engage with this network',
+  'creator-coin': 'This creator has an active creator coin — boosting their reach',
+  discovery: 'New creator — fresh accounts get a first-24h discovery boost',
+  serendipity: 'Explored outside your usual topics and networks to keep the feed varied',
+  'indie-creator': 'From a small or independent creator you asked to see more of',
+  'big-creator': 'From a large, established account',
+  'indie-mode': 'Boosted because your Creator Size control favors independent creators',
+  'protocol-boost': 'This network is weighted up in your Protocol Mix controls',
 };
 
 const SIGNAL_ICONS: Record<string, string> = {
@@ -51,6 +60,14 @@ const SIGNAL_ICONS: Record<string, string> = {
   'trending-now': '📈',
   followed: '👤',
   'high-quality': '💎',
+  personalized: '🎯',
+  'creator-coin': '🪙',
+  discovery: '💡',
+  serendipity: '🧭',
+  'indie-creator': '🌱',
+  'big-creator': '⭐',
+  'indie-mode': '🌱',
+  'protocol-boost': '🌐',
 };
 
 // ─── Signal priority for determining the "main reason" ────────────
@@ -62,8 +79,16 @@ const SIGNAL_PRIORITY: Record<string, number> = {
   viral: 70,
   'trending-now': 65,
   'on-topic': 60,
+  personalized: 58,
+  discovery: 55,
+  'creator-coin': 52,
+  'indie-mode': 50,
+  serendipity: 45,
   'original-content': 50,
   'established-author': 40,
+  'big-creator': 42,
+  'indie-creator': 38,
+  'protocol-boost': 35,
   media: 30,
   fresh: 20,
 };

@@ -15,21 +15,13 @@
  */
 
 // ══════════════════════════════════════════════════════════════════════
-// ⚠️  DEMO DATA — NOT REAL
+// DATA SOURCES
 // ══════════════════════════════════════════════════════════════════════
-// This coin detail page renders demo/simulated data for development
-// and testing purposes. Market data, price charts, holder lists, and
-// trading interfaces shown here do NOT represent real blockchain data
-// unless the application is connected to a live RPC endpoint with a
-// configured data provider.
-//
-// In production, all data should be fetched from on-chain sources
-// and verified before display. See DEPLOYMENT.md for production
-// configuration requirements.
-//
-// TODO: Replace demo data with real API calls from on-chain data providers.
-// Price chart uses seeded deterministic data from symbol hash (no Math.random()).
-// Holder and trade sections show "Coming Soon" until real data sources are connected.
+// Market data + price history come from CoinGecko via /api/creator-coin/info
+// (REAL data). When DEPLOYED_COIN_ADDRESS is configured, /api/creator-coin/onchain
+// supplies real on-chain price/supply/progress from the DegenFeedCoinV4 contract.
+// Trading posts to /api/creator-coin/trade which submits a REAL transaction.
+// If a source is unavailable the UI shows an explicit error — never fake data.
 // ══════════════════════════════════════════════════════════════════════
 
 import Link from 'next/link';
@@ -65,6 +57,25 @@ interface CoinDetail {
   links: { label: string; url: string }[];
 }
 
+/** Real on-chain state returned by /api/creator-coin/onchain */
+interface OnchainInfo {
+  configured: boolean;
+  chain?: 'base' | 'solana';
+  address?: string;
+  name?: string;
+  symbol?: string;
+  price?: string;
+  progressBps?: string;
+  phaseName?: string;
+  phaseIndex?: number;
+  totalSupply?: string;
+  totalRaised?: string;
+  uniqueBuyers?: number;
+  graduated?: boolean;
+  creator?: string;
+  error?: string;
+}
+
 interface VestingInfo {
   totalLocked: number;
   totalUnlocked: number;
@@ -73,30 +84,6 @@ interface VestingInfo {
   vestingEndDate: string;
   nextUnlockDate: string;
   nextUnlockAmount: number;
-}
-
-// ══════════════════════════════════════════════════════════════════════
-// DEMO DATA GENERATORS (stable, deterministic for development)
-// ══════════════════════════════════════════════════════════════════════
-// These produce deterministic placeholder data for UI demo features.
-// They use a seeded value based on the symbol to ensure consistent
-// output per coin across renders. NO Math.random() in production paths.
-
-function seededRandom(seed: number): () => number {
-  let s = seed;
-  return () => {
-    s = (s * 16807 + 0) % 2147483647;
-    return (s - 1) / 2147483646;
-  };
-}
-
-function generatePriceData(days: number, seed = 42): number[] {
-  const rng = seededRandom(seed);
-  let price = 50;
-  return Array.from({ length: days }, () => {
-    price = Math.max(5, Math.min(95, price + (rng() - 0.48) * 8));
-    return price;
-  });
 }
 
 function generateVestingInfo(): VestingInfo {
@@ -116,15 +103,17 @@ function generateVestingInfo(): VestingInfo {
 // ══════════════════════════════════════════════════════════════════════
 
 /**
- * Warning banner displayed at the top of the coin detail page
- * to clearly indicate that all data is for demo/development purposes.
+ * Warning banner displayed at the top of the coin detail page.
+ * Shows REAL on-chain status when a contract is deployed, otherwise an
+ * explicit "CONTRACTS NOT DEPLOYED" setup message — never fake data.
  */
-function WarningBanner() {
+function WarningBanner({ onchain }: { onchain: OnchainInfo | null }) {
+  const isLive = onchain?.configured === true;
   return (
     <div
       style={{
-        background: '#1a0000',
-        border: '1px solid #ff4444',
+        background: isLive ? '#001a0d' : '#1a0000',
+        border: isLive ? '1px solid #00ff41' : '1px solid #ff4444',
         borderRadius: '8px',
         padding: '12px 16px',
         marginBottom: '16px',
@@ -134,15 +123,25 @@ function WarningBanner() {
       }}
       role="alert"
     >
-      <span style={{ fontSize: '18px', flexShrink: 0 }}>⚠️</span>
+      <span style={{ fontSize: '18px', flexShrink: 0 }}>{isLive ? '✅' : '⚠️'}</span>
       <div>
-        <p style={{ color: '#ff6666', fontWeight: 700, fontSize: '13px', margin: 0 }}>
-          Demo Data — Not Connected to Live Price Feeds
+        <p
+          style={{
+            color: isLive ? '#00ff41' : '#ff6666',
+            fontWeight: 700,
+            fontSize: '13px',
+            margin: 0,
+          }}
+        >
+          {isLive
+            ? 'Live On-Chain Data — Contracts Deployed'
+            : 'CONTRACTS NOT DEPLOYED — Demo Mode'}
         </p>
         <p style={{ color: '#999', fontSize: '11px', margin: '4px 0 0 0' }}>
-          All prices, charts, holder lists, and trading interfaces shown on this page are simulated.
-          Data does NOT represent real blockchain activity. Connect to on-chain data providers for
-          production use.
+          {isLive
+            ? `Connected to DegenFeedCoinV4 at ${shortenAddress(onchain?.address ?? '')}. Prices, supply, and trades reflect real blockchain state.`
+            : onchain?.error ||
+              'Trading contracts are not deployed yet. Set DEPLOYED_COIN_ADDRESS (plus BASE_RPC_URL / CREATOR_COIN_PRIVATE_KEY or SOLANA equivalents) to enable live trading. Until then, prices come from CoinGecko.'}
         </p>
       </div>
     </div>
@@ -797,6 +796,10 @@ export default function CoinDetailPage() {
   const [dataError, setDataError] = useState<string | null>(null);
   const [vesting] = useState<VestingInfo>(generateVestingInfo);
   const [timeframe, setTimeframe] = useState('24H');
+  const [priceHistory, setPriceHistory] = useState<number[]>([]);
+
+  // Real on-chain state (only when DEPLOYED_COIN_ADDRESS is configured)
+  const [onchain, setOnchain] = useState<OnchainInfo | null>(null);
 
   // Trade UI
   const [tradeMode, setTradeMode] = useState<'buy' | 'sell'>('buy');
@@ -805,38 +808,40 @@ export default function CoinDetailPage() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const [showSlippageConfig, setShowSlippageConfig] = useState(false);
+  const [trading, setTrading] = useState(false);
+  const [tradeError, setTradeError] = useState<string | null>(null);
+  const [tradeResult, setTradeResult] = useState<{
+    txHash: string;
+    explorerUrl: string;
+    action?: 'buy' | 'sell';
+    amount?: string;
+    symbol?: string;
+  } | null>(null);
 
   const [activeTab, setActiveTab] = useState<DetailTab>('info');
 
-  // Price chart data — deterministic from symbol seed (demo only)
+  // Real price chart data — CoinGecko market history via the info route.
   const priceData = useMemo(() => {
-    if (!symbol) return [];
-    const days =
-      timeframe === '1H'
-        ? 60
-        : timeframe === '24H'
-          ? 24
-          : timeframe === '7D'
-            ? 7
-            : timeframe === '30D'
-              ? 30
-              : 365;
-    const seed = symbol.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-    return generatePriceData(days, seed);
-  }, [timeframe, symbol]);
+    if (priceHistory.length >= 2) return priceHistory;
+    return [];
+  }, [priceHistory]);
 
   useEffect(() => {
     if (!symbol) return;
+    let cancelled = false;
     const fetchData = async () => {
       try {
-        const res = await fetch(`/api/creator-coin/info?symbol=${symbol}`);
+        const res = await fetch(`/api/creator-coin/info?symbol=${symbol}&timeframe=${timeframe}`);
         if (res.status === 503) {
-          setDataError('Price data temporarily unavailable');
-          setLoading(false);
+          if (!cancelled) {
+            setDataError('Price data temporarily unavailable');
+            setLoading(false);
+          }
           return;
         }
         const data = await res.json();
         if (data.found) {
+          if (cancelled) return;
           setDetail({
             address: `coin_${data.id || symbol.toLowerCase()}`,
             name: data.name || `${symbol} Token`,
@@ -861,15 +866,67 @@ export default function CoinDetailPage() {
             tags: [],
             links: data.links || [],
           });
-        } else {
+          // Real CoinGecko history — empty means the chart shows "no data",
+          // never a synthetic curve.
+          if (Array.isArray(data.priceHistory)) {
+            const values = (data.priceHistory as Array<[number, number]>).map(([, p]) => p);
+            setPriceHistory(values);
+          } else {
+            setPriceHistory([]);
+          }
+        } else if (!cancelled) {
           setDataError(`No price data found for "${symbol}"`);
         }
       } catch {
-        setDataError('Price data temporarily unavailable');
+        if (!cancelled) setDataError('Price data temporarily unavailable');
       }
-      setLoading(false);
+      if (!cancelled) setLoading(false);
     };
     fetchData();
+    return () => {
+      cancelled = true;
+    };
+  }, [symbol, timeframe]);
+
+  // Real on-chain state — reads DegenFeedCoinV4 when DEPLOYED_COIN_ADDRESS
+  // is set. When not configured this returns { configured: false } and the
+  // trading UI shows an explicit setup message instead of fake success.
+  useEffect(() => {
+    let cancelled = false;
+    const fetchOnchain = async () => {
+      try {
+        const res = await fetch(`/api/creator-coin/onchain?symbol=${encodeURIComponent(symbol)}`);
+        const data: OnchainInfo = await res.json();
+        if (cancelled) return;
+        setOnchain(data);
+        // Merge real on-chain values into detail so the UI renders actual
+        // contract data (address, price, supply, phase) instead of the
+        // CoinGecko fallback once a contract is deployed.
+        if (data.configured && data.address) {
+          setDetail((prev) => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              address: data.address ?? prev.address,
+              chain: data.chain ?? prev.chain,
+              name: data.name ?? prev.name,
+              price: data.price ? Number(data.price) / 1e9 : prev.price,
+              totalSupply: data.totalSupply ? Number(data.totalSupply) / 1e18 : prev.totalSupply,
+              holderCount: data.uniqueBuyers ?? prev.holderCount,
+              graduated: data.graduated ?? prev.graduated,
+              bondingPhase: data.phaseIndex ?? prev.bondingPhase,
+              creator: data.creator ?? prev.creator,
+            };
+          });
+        }
+      } catch {
+        if (!cancelled) setOnchain(null);
+      }
+    };
+    fetchOnchain();
+    return () => {
+      cancelled = true;
+    };
   }, [symbol]);
 
   const handleTrade = useCallback(() => {
@@ -884,10 +941,62 @@ export default function CoinDetailPage() {
     setShowConfirm(true);
   }, [isConnected, tradeAmount]);
 
-  const executeTrade = useCallback(() => {
-    alert(`✅ ${tradeMode === 'buy' ? 'Bought' : 'Sold'} ${tradeAmount} ${symbol} successfully!`);
-    setTradeAmount('');
-  }, [tradeMode, tradeAmount, symbol]);
+  const executeTrade = useCallback(async () => {
+    if (!detail) return;
+    setTrading(true);
+    setTradeError(null);
+    setTradeResult(null);
+    try {
+      const res = await fetch('/api/creator-coin/trade', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          symbol,
+          action: tradeMode,
+          amount: tradeAmount,
+          tokenAddress: onchain?.configured && onchain.address ? onchain.address : detail.address,
+        }),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        configured?: boolean;
+        txHash?: string;
+        explorerUrl?: string;
+        error?: string;
+      };
+
+      // Contracts not deployed / env not configured — explicit setup message.
+      if (data.configured === false) {
+        setTradeError(data.error || 'Trading not configured — contracts are not deployed yet.');
+        return;
+      }
+      // Real transaction submitted — show the hash + explorer link.
+      if (data.txHash) {
+        setTradeResult({
+          txHash: data.txHash,
+          explorerUrl: data.explorerUrl || '',
+          action: tradeMode,
+          amount: tradeAmount,
+          symbol,
+        });
+        setTradeAmount('');
+        return;
+      }
+      // Backend returned a real error.
+      if (data.error) {
+        setTradeError(data.error);
+        return;
+      }
+      if (!res.ok) {
+        setTradeError(`Trade failed (HTTP ${res.status})`);
+        return;
+      }
+      setTradeError('Unexpected response from trade endpoint');
+    } catch {
+      setTradeError('Trade failed — network error. Please try again.');
+    } finally {
+      setTrading(false);
+    }
+  }, [tradeMode, tradeAmount, symbol, onchain, detail]);
 
   if (loading) {
     return (
@@ -904,7 +1013,7 @@ export default function CoinDetailPage() {
   if (dataError || !detail) {
     return (
       <div className="mx-auto max-w-6xl px-4 py-6">
-        <WarningBanner />
+        <WarningBanner onchain={onchain} />
         <nav className="mb-3 flex items-center gap-2 text-xs text-[var(--color-muted)]">
           <Link href="/coins" className="hover:text-degen-400 transition-colors">
             Coins
@@ -937,8 +1046,8 @@ export default function CoinDetailPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-6 animate-page-enter">
-      {/* ⚠️ Demo data warning banner */}
-      <WarningBanner />
+      {/* ⚠️ Demo/on-chain data warning banner */}
+      <WarningBanner onchain={onchain} />
 
       {/* Breadcrumb */}
       <nav className="mb-3 flex items-center gap-2 text-xs text-[var(--color-muted)]">
@@ -1286,6 +1395,35 @@ export default function CoinDetailPage() {
                 </div>
               )}
             </div>
+            {trading && (
+              <div className="mb-3 rounded-lg border border-[var(--color-glass-border)] bg-[var(--color-overlay)] p-2 text-center text-[10px] text-[var(--color-muted)]">
+                ⏳ Submitting {tradeMode} transaction on-chain…
+              </div>
+            )}
+            {tradeError && (
+              <div
+                className="mb-3 rounded-lg border border-red-500/30 bg-red-500/10 p-2 text-[10px] text-red-400"
+                role="alert"
+              >
+                {tradeError}
+              </div>
+            )}
+            {tradeResult && (
+              <div className="mb-3 rounded-lg border border-degen-500/30 bg-degen-500/10 p-2 text-[10px]">
+                <div className="font-semibold text-degen-400">
+                  ✅ {tradeResult.action === 'sell' ? 'Sold' : 'Bought'} {tradeResult.amount}{' '}
+                  {tradeResult.symbol || detail.symbol}
+                </div>
+                <a
+                  href={tradeResult.explorerUrl || '#'}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-1 inline-block font-mono text-[var(--color-muted)] hover:text-degen-400"
+                >
+                  View transaction: {shortenAddress(tradeResult.txHash)} ↗
+                </a>
+              </div>
+            )}
             {!isConnected ? (
               <button
                 type="button"
@@ -1298,7 +1436,7 @@ export default function CoinDetailPage() {
               <button
                 type="button"
                 onClick={handleTrade}
-                disabled={!tradeAmount || Number(tradeAmount) <= 0}
+                disabled={!tradeAmount || Number(tradeAmount) <= 0 || trading}
                 className={`w-full rounded-xl py-3 text-xs font-bold text-white transition-all active:scale-[0.98] disabled:opacity-40 ${tradeMode === 'buy' ? 'bg-gradient-to-r from-degen-600 to-degen-400' : 'bg-gradient-to-r from-red-600 to-rose-500'}`}
               >
                 {tradeMode === 'buy' ? `Buy ${detail.symbol}` : `Sell ${detail.symbol}`}

@@ -117,10 +117,13 @@ export async function registerBookWyrm(
       accessToken = tokenData.access_token ?? '';
     }
 
+    // Encrypt the access token using the caller-supplied seal function before KV storage.
+    // The raw token is never stored in plaintext — only the AES-256-GCM sealed blob.
+    const accessTokenToStore = opts.sealSecret ? await opts.sealSecret(accessToken) : accessToken;
     const accountInfo: Record<string, string> = {
       username: desiredUsername,
       instance: instanceUrl,
-      accessToken,
+      _sealedAccessToken: accessTokenToStore,
       profileUrl: `${instanceUrl}/user/${desiredUsername}`,
       email,
     };
@@ -132,7 +135,12 @@ export async function registerBookWyrm(
       platform: 'bookwyrm',
       status: 'created',
       username: `${desiredUsername}@books.degenfeed.xyz`,
-      accountInfo,
+      accountInfo: {
+        username: desiredUsername,
+        instance: instanceUrl,
+        profileUrl: `${instanceUrl}/user/${desiredUsername}`,
+        email,
+      },
     };
   } catch (err) {
     return {

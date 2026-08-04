@@ -32,6 +32,7 @@ import {
 } from '@degenfeed/crossplatform-register';
 import { identityKey } from '@degenfeed/utils';
 import { log } from '../index';
+import { sealForWallet } from '../lib/crypto-seal';
 import {
   checkProtocolAccess,
   getProtocolUpgradeCta,
@@ -43,7 +44,7 @@ import {
 import {
   jsonResponse,
   methodNotAllowed,
-  noCacheJsonResponse,
+  // noCacheJsonResponse — unused, kept for reference
   serverError,
 } from '../response-helpers';
 import { requireSession } from '../session';
@@ -216,7 +217,7 @@ async function registerOnProtocol(
   const opts = {
     walletAddress,
     storage: env.PLATFORM_ACCOUNTS,
-    sealSecret: undefined,
+    sealSecret: (plaintext: string) => sealForWallet(env, plaintext, walletAddress, 'protocol-key'),
     baseRpcUrl: env.BASE_RPC_URL,
     premiumWalletPrivateKey: env.PREMIUM_WALLET_KEY,
     polygonRpcUrl: env.POLYGON_RPC_URL,

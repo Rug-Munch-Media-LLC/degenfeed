@@ -7,6 +7,7 @@
 
 import { registerOnPlatform } from '@degenfeed/crossplatform-register';
 import type { Env } from '../../index';
+import { sealForWallet } from '../crypto-seal';
 import {
   ALL_SSO_PROTOCOLS,
   SSO_PROTOCOL_MAP,
@@ -200,6 +201,8 @@ export async function provisionAllProtocols(
       const opts: Record<string, any> = {
         walletAddress,
         storage: env.PLATFORM_ACCOUNTS,
+        sealSecret: (plaintext: string) =>
+          sealForWallet(env, plaintext, walletAddress, 'protocol-key'),
       };
       if (protoConfig) {
         opts[protoConfig.instanceUrlKey] = protoConfig.defaultUrl;
@@ -285,6 +288,8 @@ export async function provisionSingleProtocol(
     const opts: Record<string, any> = {
       walletAddress,
       storage: env.PLATFORM_ACCOUNTS,
+      sealSecret: (plaintext: string) =>
+        sealForWallet(env, plaintext, walletAddress, 'protocol-key'),
     };
     if (protoConfig) {
       opts[protoConfig.instanceUrlKey] = protoConfig.defaultUrl;

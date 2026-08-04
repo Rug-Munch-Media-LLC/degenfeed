@@ -25,18 +25,28 @@ export const SECONDS_PER_DAY = 86_400;
 export const SECONDS_PER_WEEK = 604_800;
 
 // ─── Rate Limiting Defaults ─────────────────────────────────────────
+// Sensible tiers: auth 5/60s, tip 10/60s, publish 20/60s, admin 20/60s,
+// writes 30/60s, reads 100/60s.
 
 export const RATE_LIMIT = {
   DEFAULT_WINDOW_MS: 5_000,
   DEFAULT_MAX_REQ: 20,
 
-  // Brute force (wallet verify)
-  BRUTE_FORCE_MAX: 5,
-  BRUTE_FORCE_WINDOW_MS: 60_000,
-  BRUTE_FORCE_BLOCK_MAX: 3,
-  BRUTE_FORCE_BLOCK_WINDOW_MS: 1_800_000, // 30 min
-  BRUTE_FORCE_BLOCK_RATE: 1,
-  BRUTE_FORCE_BLOCK_RATE_WINDOW_MS: 60_000,
+  // Auth (wallet verify)
+  AUTH_MAX: 5,
+  AUTH_WINDOW_MS: 60_000,
+  AUTH_BLOCK_MAX: 3,
+  AUTH_BLOCK_WINDOW_MS: 1_800_000, // 30 min
+  AUTH_BLOCK_RATE: 1,
+  AUTH_BLOCK_RATE_WINDOW_MS: 60_000,
+
+  // Tip
+  TIP_MAX: 10,
+  TIP_WINDOW_MS: 60_000,
+
+  // Publish
+  PUBLISH_MAX: 20,
+  PUBLISH_WINDOW_MS: 60_000,
 
   // Enumeration (email auth)
   ENUMERATION_MAX: 3,
@@ -44,17 +54,20 @@ export const RATE_LIMIT = {
   ENUMERATION_BACKOFF_BASE_MS: 10_000,
   ENUMERATION_BACKOFF_MAX_MS: 300_000,
 
-  // Scraping (feed endpoints)
-  ANON_SCRAPE_MAX: 30,
-  AUTH_SCRAPE_MAX: 120,
-  SCRAPE_WINDOW_MS: 60_000,
+  // Reads (feed endpoints)
+  READS_MAX: 100,
+  READS_WINDOW_MS: 60_000,
+
+  // Writes (state-changing)
+  WRITES_MAX: 30,
+  WRITES_WINDOW_MS: 60_000,
 
   // Global DDoS
   GLOBAL_DDOS_MAX: 1_000,
   GLOBAL_DDOS_WINDOW_MS: 60_000,
 
   // Admin
-  ADMIN_MAX: 10,
+  ADMIN_MAX: 20,
   ADMIN_WINDOW_MS: 60_000,
 } as const;
 

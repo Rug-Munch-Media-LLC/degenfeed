@@ -17,8 +17,8 @@
 
 import type { CrossProtocolIdentity } from '@degenfeed/utils';
 import { identityKey } from '@degenfeed/utils';
+import { log } from '../logger';
 import type { Env } from '../types';
-import { log } from '../types';
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
@@ -477,8 +477,17 @@ export async function storeAllIdentities(
   // Use unknown intermediate to set dynamic properties
   const updatable = updated as unknown as Record<string, unknown>;
 
+  // A registration only counts as verified if it actually succeeded.
+  // A result carrying an error (or ok: false) must NEVER be persisted as
+  // a verified, auto-created identity. The predicate narrows `identifier`
+  // to a defined string so downstream writes are type-safe.
+  const isSuccessful = (
+    r: AccountResult | undefined,
+  ): r is AccountResult & { identifier: string } =>
+    !!r && r.ok === true && !r.error && !!r.identifier;
+
   // ActivityPub (GoToSocial / Mastodon)
-  if (results.activitypub?.ok && results.activitypub.identifier) {
+  if (isSuccessful(results.activitypub)) {
     updatable.mastodon = {
       handle: results.activitypub.identifier,
       instance: 'social.degenfeed.xyz',
@@ -488,7 +497,7 @@ export async function storeAllIdentities(
   }
 
   // AT Protocol (Bluesky PDS)
-  if (results.atproto?.ok && results.atproto.identifier) {
+  if (isSuccessful(results.atproto)) {
     updatable.atproto = {
       did: results.atproto.identifier,
       handle: results.atproto.handle || '',
@@ -499,7 +508,7 @@ export async function storeAllIdentities(
   }
 
   // Nostr
-  if (results.nostr?.ok && results.nostr.identifier) {
+  if (isSuccessful(results.nostr)) {
     updatable.nostr = {
       npub: results.nostr.identifier,
       relays: [],
@@ -509,7 +518,7 @@ export async function storeAllIdentities(
   }
 
   // RSS
-  if (results.rss?.ok && results.rss.identifier) {
+  if (isSuccessful(results.rss)) {
     updatable.rss = {
       url: results.rss.identifier,
       verified: true,
@@ -518,7 +527,7 @@ export async function storeAllIdentities(
   }
 
   // Farcaster
-  if (results.farcaster?.ok && results.farcaster.identifier) {
+  if (isSuccessful(results.farcaster)) {
     updatable.farcaster = {
       fid: Number(results.farcaster.identifier.replace('fid:', '')),
       username: results.farcaster.username || results.farcaster.handle || '',
@@ -528,7 +537,7 @@ export async function storeAllIdentities(
   }
 
   // Lens
-  if (results.lens?.ok && results.lens.identifier) {
+  if (isSuccessful(results.lens)) {
     updatable.lens = {
       profileId: results.lens.identifier,
       handle: results.lens.handle || '',
@@ -537,7 +546,7 @@ export async function storeAllIdentities(
   }
 
   // Lemmy
-  if (results.lemmy?.ok && results.lemmy.identifier) {
+  if (isSuccessful(results.lemmy)) {
     updatable.lemmy = {
       handle: results.lemmy.handle || results.lemmy.identifier,
       instance: 'community.degenfeed.xyz',
@@ -547,7 +556,7 @@ export async function storeAllIdentities(
   }
 
   // PeerTube
-  if (results.peertube?.ok && results.peertube.identifier) {
+  if (isSuccessful(results.peertube)) {
     updatable.peertube = {
       handle: results.peertube.handle || results.peertube.identifier,
       instance: 'video.degenfeed.xyz',
@@ -557,7 +566,7 @@ export async function storeAllIdentities(
   }
 
   // Pixelfed
-  if (results.pixelfed?.ok && results.pixelfed.identifier) {
+  if (isSuccessful(results.pixelfed)) {
     updatable.pixelfed = {
       handle: results.pixelfed.handle || results.pixelfed.identifier,
       instance: 'pixelfed.social',

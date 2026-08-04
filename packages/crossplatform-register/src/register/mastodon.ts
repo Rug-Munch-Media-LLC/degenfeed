@@ -87,11 +87,16 @@ export async function registerMastodon(
         status: 'failed',
         error: 'Account created but failed to obtain access token',
       };
+    // Encrypt the access token using the caller-supplied seal function before KV storage.
+    // The raw token is never stored in plaintext — only the AES-256-GCM sealed blob.
+    const accessTokenToStore = opts.sealSecret
+      ? await opts.sealSecret(tokenData.access_token)
+      : tokenData.access_token;
     const accountInfo: Record<string, string> = {
       accountId: createData.id,
       username: createData.username || desiredUsername,
       instance: instanceUrl,
-      accessToken: tokenData.access_token,
+      _sealedAccessToken: accessTokenToStore,
     };
     const { persistPlatformAccount } = await import('./kv');
     await persistPlatformAccount('mastodon', walletAddress, accountInfo, opts.storage);
@@ -99,7 +104,11 @@ export async function registerMastodon(
       platform: 'mastodon',
       status: 'created',
       username: `${desiredUsername}@${new URL(instanceUrl).hostname}`,
-      accountInfo,
+      accountInfo: {
+        accountId: createData.id,
+        username: createData.username || desiredUsername,
+        instance: instanceUrl,
+      },
     };
   } catch (err) {
     return {

@@ -18,7 +18,7 @@ import { Hono } from 'hono';
 import { apiKeyMiddleware } from './api-key';
 import { applyCors, getAllowedOrigin, isAllowedOrigin, parseOriginHeader } from './cors';
 import { tieredRateLimit } from './rate-limit';
-import { jsonResponse } from './response-helpers';
+import { jsonResponse, rateLimitResponse } from './response-helpers';
 import { validateBodySize } from './sanitize';
 import { parseSessionCookie, validateCsrfToken } from './session';
 import type { Env } from './types';
@@ -289,7 +289,8 @@ app.use('/v1/*', apiKeyMiddleware);
 
 // ─── Middleware: rate limiting (tiered) ──────────────────────
 app.use('*', async (c, next) => {
-  // Public API: 20 req/5s
+  // Tiered rate limits: auth 5/60s, tip 10/60s, publish 20/60s,
+  // admin 20/60s, writes 30/60s, reads 100/60s.
   const ip = c.req.header('cf-connecting-ip') || c.req.header('x-forwarded-for') || 'unknown';
   const authHeader = c.req.header('authorization');
   const cookieHeader = c.req.header('cookie');
@@ -297,7 +298,10 @@ app.use('*', async (c, next) => {
     authHeader?.startsWith('Bearer ') || cookieHeader?.includes('session=')
   );
 
-  await tieredRateLimit(c.env, ip, c.req.path, isAuthenticated);
+  const rl = await tieredRateLimit(c.env, ip, c.req.path, isAuthenticated, c.req.method);
+  if (!rl.allowed) {
+    return rateLimitResponse(rl.retryAfter);
+  }
 
   await next();
 });

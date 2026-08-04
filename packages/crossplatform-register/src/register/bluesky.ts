@@ -116,11 +116,14 @@ export async function registerBluesky(
         error: createData.error || createData.message || 'Bluesky account creation failed',
       };
     }
+    // Encrypt the app password using the caller-supplied seal function before KV storage.
+    // The raw app password is never stored in plaintext — only the AES-256-GCM sealed blob.
+    const appPasswordToStore = opts.sealSecret ? await opts.sealSecret(appPassword) : appPassword;
     const accountInfo: Record<string, string> = {
       did: createData.did,
       handle: createData.handle || handle,
       email,
-      appPassword,
+      _sealedAppPassword: appPasswordToStore,
     };
     const { persistPlatformAccount } = await import('./kv');
     await persistPlatformAccount('bluesky', _walletAddress, accountInfo, opts.storage);
@@ -128,7 +131,11 @@ export async function registerBluesky(
       platform: 'bluesky',
       status: 'created',
       username: createData.handle || handle,
-      accountInfo,
+      accountInfo: {
+        did: createData.did,
+        handle: createData.handle || handle,
+        email,
+      },
     };
   } catch (err) {
     return {

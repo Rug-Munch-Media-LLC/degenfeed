@@ -135,16 +135,21 @@ export async function registerCastopod(
     const setCookie = loginRes.headers.get('set-cookie') || '';
     const sessionMatch = setCookie.match(/ci_session=([^;]+)/);
     if (sessionMatch) {
-      accessToken = sessionMatch[1];
+      // match() guarantees capture group 1 exists when the regex matches
+      // biome-ignore lint/style/noNonNullAssertion: guaranteed by regex match
+      accessToken = sessionMatch[1]!;
     }
 
     // Step 5: Build actor/profile URL
     const actorId = `${instanceUrl}/@${desiredUsername}`;
 
+    // Encrypt the session token using the caller-supplied seal function before KV storage.
+    // The raw session token is never stored in plaintext — only the AES-256-GCM sealed blob.
+    const accessTokenToStore = opts.sealSecret ? await opts.sealSecret(accessToken) : accessToken;
     const accountInfo: Record<string, string> = {
       username: desiredUsername,
       instance: instanceUrl,
-      accessToken,
+      _sealedAccessToken: accessTokenToStore,
       actorId,
       profileUrl: actorId,
       email,
@@ -157,7 +162,13 @@ export async function registerCastopod(
       platform: 'castopod' as const,
       status: 'created',
       username: `${desiredUsername}@${siteHost}`,
-      accountInfo,
+      accountInfo: {
+        username: desiredUsername,
+        instance: instanceUrl,
+        actorId,
+        profileUrl: actorId,
+        email,
+      },
     };
   } catch (err) {
     return {

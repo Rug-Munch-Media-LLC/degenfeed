@@ -2,7 +2,7 @@
 
 import { addBookmark, getFollows, removeBookmark } from '@degenfeed/storage';
 import type { EngagementAction, UnifiedPost } from '@degenfeed/types';
-import { ErrorBoundary, NotificationBell, PostCard, ScrollToTop } from '@degenfeed/ui';
+import { ErrorBoundary, FeedWhyCard, NotificationBell, PostCard, ScrollToTop } from '@degenfeed/ui';
 import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../../components/AuthProvider';
@@ -35,6 +35,7 @@ import { GettingStartedChecklist } from '../../components/GettingStartedChecklis
 import { GuidedTour } from '../../components/GuidedTour';
 import { PostContextMenu } from '../../components/PostContextMenu';
 import { useAnnouncer } from '../../components/ScreenReaderAnnouncer';
+import { useAlgorithmProfile } from '../../hooks/useAlgorithmProfile';
 import { useEdgeSwipeBack } from '../../hooks/useEdgeSwipeBack';
 import { useFeedControls } from '../../hooks/useFeedControls';
 import { useFeedLayout } from '../../hooks/useFeedLayout';
@@ -44,7 +45,8 @@ import { useNotifications } from '../../hooks/useNotifications';
 import { useRealtimeFeed } from '../../hooks/useRealtimeFeed';
 import { useReturningUser } from '../../hooks/useReturningUser';
 import { useSwipeTabs } from '../../hooks/useSwipeTabs';
-import { applyFeedControls, type FeedControls as FeedControlsState } from '../../lib/feedRanking';
+import { rankTopAlgo } from '../../lib/topAlgo';
+import type { FeedControls as FeedControlsState } from '../../lib/feedRanking';
 import { fetchWithSwr, getCached } from '../../lib/fetchWithCache';
 import { ReadingProgressBar } from './components/ReadingProgressBar';
 import { ShareSheet } from './components/ShareSheet';
@@ -122,6 +124,14 @@ export default function FeedPage() {
   const [creatorDiversity, setCreatorDiversity] = useState(5);
   const [exploreRatio, setExploreRatio] = useState(30);
   const [activePreset, setActivePreset] = useState<string | null>(null);
+  // Top-tier 2026 algorithm: engagement profile (localStorage) powers
+  // personalization + serendipity; the "Why this?" card explains each post.
+  const { profile: algoProfile, recordEngagement: recordAlgoEngagement } = useAlgorithmProfile();
+  const [whyPost, setWhyPost] = useState<UnifiedPost | null>(null);
+  // Ref mirrors the latest profile so fetchFeed can personalize without being
+  // re-created (and re-fetching) on every engagement action.
+  const algoProfileRef = useRef(algoProfile);
+  algoProfileRef.current = algoProfile;
   const hasSignedIn = ready && Object.values(signedInProtocols).some(Boolean);
   const { unreadCount } = useNotifications(hasSignedIn);
   const { layout, setLayout, isCompact } = useFeedLayout();
@@ -400,6 +410,8 @@ export default function FeedPage() {
           controls.algorithm.recencyQuality,
           controls.algorithm.engagementDiversity,
           controls.algorithm.protocolDiversity,
+          controls.algorithm.familiarDiscover,
+          controls.algorithm.creatorSize,
         ].join('_');
         const cacheKey = `feed_${hasSignedIn ? 'signed' : 'anon'}_${activeTab}_${controlsKey}_${loadedLimit}_${hideLowQuality}_${allowNonCrypto}_${showOriginalContent}_${minEngagement}_${maxPerNiche}_${recencyWeight}_${engagementWeight}_${freshnessPreference}_${creatorDiversity}_${exploreRatio}_${algorithmTransparent}_${activePreset ?? 'none'}`;
         const url = new URL(endpoint, window.location.origin);
@@ -436,6 +448,10 @@ export default function FeedPage() {
           );
         if (controls.algorithm.protocolDiversity !== 50)
           url.searchParams.set('protocolDiversity', String(controls.algorithm.protocolDiversity));
+        if (controls.algorithm.familiarDiscover !== 50)
+          url.searchParams.set('familiarDiscover', String(controls.algorithm.familiarDiscover));
+        if (controls.algorithm.creatorSize !== 50)
+          url.searchParams.set('creatorSize', String(controls.algorithm.creatorSize));
         if (activeTab === 'following') url.searchParams.set('filter', 'following');
         if (hideLowQuality) {
           url.searchParams.set('hideLowQuality', 'true');
@@ -476,8 +492,19 @@ export default function FeedPage() {
           }
         }
 
-        // Apply user-controlled sort / filters / algorithm weights.
-        feed = applyFeedControls(feed, controls);
+        // Apply the top-tier 2026 algorithm: user sliders (recency/quality,
+        // familiar/discover, creator size, protocol weights) blended with the
+        // engagement profile, genre-aware freshness, creator reputation,
+        // engagement velocity, author-diversity caps, cold-start discovery,
+        // and serendipity injection. Every post gets a score + reasons so the
+        // "Why this?" card can explain it.
+        const protocolWeights = Object.fromEntries(
+          Object.entries(feedMixConfig.protocols).map(([id, p]) => [id, p.weight]),
+        );
+        feed = rankTopAlgo(feed, controls, {
+          profile: algoProfileRef.current,
+          protocolWeights,
+        });
 
         if (checkOnly && feed.length > 0 && feed[0]?.id !== lastPostIdRef.current) {
           setNewAvailable(true);
@@ -577,12 +604,20 @@ export default function FeedPage() {
             post.author.displayName || '',
           );
         else await removeBookmark(postId);
+        if (action === 'bookmark') recordAlgoEngagement(post, 'bookmark');
         return { ok: true };
       } catch (err) {
         return { ok: false, error: err instanceof Error ? err.message : 'Bookmark failed' };
       }
     }
-    return engage(action, postId, post.protocol, { content: content ?? '' });
+    const engageResult = await engage(action, postId, post.protocol, { content: content ?? '' });
+    // Feed the algorithm's engagement profile so it can personalize + explain.
+    if (engageResult.ok) {
+      if (action === 'like' || action === 'repost' || action === 'reply') {
+        recordAlgoEngagement(post, action);
+      }
+    }
+    return engageResult;
   };
 
   useEffect(() => {
@@ -756,7 +791,7 @@ export default function FeedPage() {
                     className="relative"
                     style={{ '--stagger-i': i } as React.CSSProperties}
                   >
-                    <PostCard post={post} onEngage={handleEngage} />
+                    <PostCard post={post} onEngage={handleEngage} onWhyThisPost={setWhyPost} />
                   </div>
                 ))}
               </div>
@@ -767,15 +802,35 @@ export default function FeedPage() {
                   </button>
                 </div>
               )}
-              {/* Context menu */}
-              {contextMenuPostId && (
-                <PostContextMenu
-                  postId={contextMenuPostId ?? ''}
-                  onClose={() => setContextMenuPostId(null)}
-                  open={!!contextMenuPostId}
-                  position={{ x: 0, y: 0 }}
-                />
-              )}
+          {/* Context menu */}
+          {contextMenuPostId && (
+            <PostContextMenu
+              postId={contextMenuPostId ?? ''}
+              onClose={() => setContextMenuPostId(null)}
+              open={!!contextMenuPostId}
+              position={{ x: 0, y: 0 }}
+            />
+          )}
+
+          {/* Algorithm transparency — "Why this?" on every post */}
+          {whyPost && (
+            <div
+              className="fixed inset-0 z-[95] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
+              onClick={() => setWhyPost(null)}
+              role="presentation"
+            >
+              <div
+                className="w-full max-w-md"
+                onClick={(e) => e.stopPropagation()}
+                role="dialog"
+                aria-modal="true"
+                aria-label="Why this post?"
+              >
+                <FeedWhyCard post={whyPost} onClose={() => setWhyPost(null)} />
+              </div>
+            </div>
+          )}
+
             </>
           )}
 

@@ -38,6 +38,7 @@ import {
 import type { CrossProtocolIdentity } from '@degenfeed/utils';
 import { identityKey } from '@degenfeed/utils';
 import { log } from '../index';
+import { sealForWallet } from '../lib/crypto-seal';
 import { jsonResponse, methodNotAllowed, noCacheJsonResponse } from '../response-helpers';
 import { requireSession } from '../session';
 import type { Env } from '../types';
@@ -363,6 +364,7 @@ async function registerOnProtocol(
   const opts = {
     walletAddress,
     storage: env.PLATFORM_ACCOUNTS,
+    sealSecret: (plaintext: string) => sealForWallet(env, plaintext, walletAddress, 'protocol-key'),
     mastodonInstanceUrl: env.GOTOSOCIAL_INSTANCE_URL || 'https://social.degenfeed.xyz',
     lemmyInstanceUrl: env.LEMMY_INSTANCE_URL || 'https://community.degenfeed.xyz',
     peertubeInstanceUrl: env.PEERTUBE_INSTANCE_URL || 'https://video.degenfeed.xyz',

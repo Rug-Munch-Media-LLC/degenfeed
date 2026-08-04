@@ -220,7 +220,8 @@ function EngagementComparison({ copies }: { copies: CrossPostRecord['copies'] })
             icon: '📄',
             color: '#666',
           };
-          const maxLikes = sorted.length > 0 ? (metrics[sorted[0]?.protocol]?.likes ?? 1) : 1;
+          const firstProtocol = sorted[0]?.protocol;
+          const maxLikes = sorted.length > 0 ? (firstProtocol ? (metrics[firstProtocol]?.likes ?? 1) : 1) : 1;
           const barWidth = Math.max(5, (m.likes / maxLikes) * 100);
 
           return (

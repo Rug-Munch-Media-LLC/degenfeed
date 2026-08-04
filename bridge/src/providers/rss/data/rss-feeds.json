@@ -1,0 +1,2493 @@
+[
+  {
+    "url": "https://thedefiant.io/feed.xml",
+    "label": "The Defiant",
+    "category": "crypto-news",
+    "niches": [
+      "crypto",
+      "defi",
+      "ethereum"
+    ]
+  },
+  {
+    "url": "https://blockworks.co/feed",
+    "label": "Blockworks",
+    "category": "crypto-news",
+    "niches": [
+      "crypto",
+      "research"
+    ],
+    "featured": true
+  },
+  {
+    "url": "https://cointelegraph.com/rss",
+    "label": "CoinTelegraph",
+    "category": "crypto-news",
+    "niches": [
+      "crypto"
+    ],
+    "featured": true
+  },
+  {
+    "url": "https://decrypt.co/feed",
+    "label": "Decrypt",
+    "category": "crypto-news",
+    "niches": [
+      "crypto"
+    ],
+    "featured": true
+  },
+  {
+    "url": "https://www.coindesk.com/arc/outboundfeeds/rss/",
+    "label": "CoinDesk",
+    "category": "crypto-news",
+    "niches": [
+      "crypto"
+    ],
+    "featured": true
+  },
+  {
+    "url": "https://cryptopotato.com/feed/",
+    "label": "CryptoPotato",
+    "category": "crypto-news",
+    "niches": [
+      "crypto"
+    ]
+  },
+  {
+    "url": "https://u.today/rss",
+    "label": "UToday",
+    "category": "crypto-news",
+    "niches": [
+      "crypto"
+    ]
+  },
+  {
+    "url": "https://cryptobriefing.com/feed/",
+    "label": "CryptoBriefing",
+    "category": "crypto-news",
+    "niches": [
+      "crypto"
+    ]
+  },
+  {
+    "url": "https://bitcoinmagazine.com/.rss/full/",
+    "label": "BitcoinMagazine",
+    "category": "crypto-news",
+    "niches": [
+      "bitcoin"
+    ],
+    "featured": true
+  },
+  {
+    "url": "https://news.bitcoin.com/feed/",
+    "label": "Bitcoin.com News",
+    "category": "crypto-news",
+    "niches": [
+      "bitcoin",
+      "crypto"
+    ]
+  },
+  {
+    "url": "https://bitcoinist.com/feed/",
+    "label": "Bitcoinist",
+    "category": "crypto-news",
+    "niches": [
+      "bitcoin"
+    ]
+  },
+  {
+    "url": "https://www.newsbtc.com/feed/",
+    "label": "NewsBTC",
+    "category": "crypto-news",
+    "niches": [
+      "bitcoin"
+    ]
+  },
+  {
+    "url": "https://www.livebitcoinnews.com/feed/",
+    "label": "Live Bitcoin News",
+    "category": "crypto-news",
+    "niches": [
+      "bitcoin"
+    ]
+  },
+  {
+    "url": "https://ambcrypto.com/feed/",
+    "label": "AMBCrypto",
+    "category": "crypto-news",
+    "niches": [
+      "crypto"
+    ]
+  },
+  {
+    "url": "https://dailyhodl.com/feed/",
+    "label": "Daily Hodl",
+    "category": "crypto-news",
+    "niches": [
+      "crypto"
+    ]
+  },
+  {
+    "url": "https://nulltx.com/feed/",
+    "label": "NullTX",
+    "category": "crypto-news",
+    "niches": [
+      "crypto"
+    ]
+  },
+  {
+    "url": "https://www.zycrypto.com/feed/",
+    "label": "ZyCrypto",
+    "category": "crypto-news",
+    "niches": [
+      "crypto"
+    ]
+  },
+  {
+    "url": "https://beincrypto.com/feed/",
+    "label": "BeInCrypto",
+    "category": "crypto-news",
+    "niches": [
+      "crypto"
+    ]
+  },
+  {
+    "url": "https://www.cryptonewsz.com/feed/",
+    "label": "CryptoNewsZ",
+    "category": "crypto-news",
+    "niches": [
+      "crypto"
+    ]
+  },
+  {
+    "url": "https://coinpedia.org/feed/",
+    "label": "CoinPedia",
+    "category": "crypto-news",
+    "niches": [
+      "crypto"
+    ]
+  },
+  {
+    "url": "https://cryptoslate.com/feed/",
+    "label": "CryptoSlate",
+    "category": "crypto-news",
+    "niches": [
+      "crypto"
+    ],
+    "featured": true
+  },
+  {
+    "url": "https://www.bankless.com/feed?xml",
+    "label": "Bankless",
+    "category": "crypto-news",
+    "niches": [
+      "crypto",
+      "research",
+      "ethereum"
+    ],
+    "featured": true
+  },
+  {
+    "url": "https://www.cnbc.com/id/10001147/device/rss/rss.html",
+    "label": "CNBC Crypto",
+    "category": "crypto-news",
+    "niches": [
+      "crypto",
+      "markets"
+    ],
+    "featured": true
+  },
+  {
+    "url": "https://www.onchaintimes.com/feed/",
+    "label": "On Chain Times",
+    "category": "crypto-news",
+    "niches": [
+      "crypto",
+      "onchain"
+    ]
+  },
+  {
+    "url": "https://ethdaily.io/feed/",
+    "label": "ETH Daily",
+    "category": "crypto-news",
+    "niches": [
+      "crypto",
+      "ethereum"
+    ]
+  },
+  {
+    "url": "https://thedailydegen.substack.com/feed",
+    "label": "The Daily Degen",
+    "category": "crypto-news",
+    "niches": [
+      "crypto",
+      "memecoin"
+    ],
+    "platform": "substack"
+  },
+  {
+    "url": "https://www.daotimes.com/feed",
+    "label": "DAO Times",
+    "category": "crypto-news",
+    "niches": [
+      "crypto",
+      "dao",
+      "governance"
+    ]
+  },
+  {
+    "url": "https://coingecko.com/rss",
+    "label": "CoinGecko",
+    "category": "crypto-news",
+    "niches": [
+      "crypto",
+      "markets"
+    ]
+  },
+  {
+    "url": "https://coingape.com/feed/",
+    "label": "CoinGape",
+    "category": "crypto-news",
+    "niches": [
+      "crypto"
+    ]
+  },
+  {
+    "url": "https://watcher.guru/news/feed/",
+    "label": "Watcher.Guru",
+    "category": "crypto-news",
+    "niches": [
+      "crypto"
+    ]
+  },
+  {
+    "url": "https://cryptonews.com/news/feed/",
+    "label": "CryptoNews",
+    "category": "crypto-news",
+    "niches": [
+      "crypto"
+    ]
+  },
+  {
+    "url": "https://finbold.com/feed/",
+    "label": "Finbold",
+    "category": "crypto-news",
+    "niches": [
+      "crypto",
+      "markets"
+    ]
+  },
+  {
+    "url": "https://forkast.news/feed/",
+    "label": "Forkast",
+    "category": "crypto-news",
+    "niches": [
+      "crypto",
+      "asia"
+    ]
+  },
+  {
+    "url": "https://www.crypto-news-flash.com/feed/",
+    "label": "Crypto News Flash",
+    "category": "crypto-news",
+    "niches": [
+      "crypto"
+    ]
+  },
+  {
+    "url": "https://thebittimes.com/feed",
+    "label": "TheBitTimes",
+    "category": "crypto-news",
+    "niches": [
+      "crypto"
+    ]
+  },
+  {
+    "url": "https://cointelegraph.com/rss/tag/bitcoin",
+    "label": "CoinTelegraph Bitcoin",
+    "category": "crypto-news",
+    "niches": [
+      "crypto",
+      "bitcoin"
+    ]
+  },
+  {
+    "url": "https://decrypt.co/feed/defi",
+    "label": "Decrypt DeFi",
+    "category": "crypto-news",
+    "niches": [
+      "crypto",
+      "defi"
+    ]
+  },
+  {
+    "url": "https://www.theblock.co/rss.xml",
+    "label": "The Block",
+    "category": "crypto-research",
+    "niches": [
+      "crypto",
+      "research"
+    ],
+    "featured": true
+  },
+  {
+    "url": "https://unchainedcrypto.com/feed/",
+    "label": "Unchained Crypto",
+    "category": "crypto-research",
+    "niches": [
+      "crypto",
+      "research"
+    ]
+  },
+  {
+    "url": "https://www.chainalysis.com/blog/feed/",
+    "label": "Chainalysis",
+    "category": "crypto-research",
+    "niches": [
+      "crypto",
+      "research",
+      "security"
+    ],
+    "featured": true
+  },
+  {
+    "url": "https://blog.ethereum.org/feed.xml",
+    "label": "Ethereum Blog",
+    "category": "crypto-research",
+    "niches": [
+      "ethereum"
+    ],
+    "featured": true
+  },
+  {
+    "url": "https://www.castleisland.vc/feed/",
+    "label": "Castle Island VC",
+    "category": "vc-investment",
+    "niches": [
+      "crypto",
+      "vc",
+      "bitcoin"
+    ]
+  },
+  {
+    "url": "https://blog.kraken.com/feed/",
+    "label": "Kraken Blog",
+    "category": "vc-investment",
+    "niches": [
+      "crypto",
+      "exchange"
+    ]
+  },
+  {
+    "url": "https://ethresear.ch/posts.rss",
+    "label": "EthResearch",
+    "category": "dev-technical",
+    "niches": [
+      "ethereum",
+      "research"
+    ]
+  },
+  {
+    "url": "https://ethereum-magicians.org/posts.rss",
+    "label": "Ethereum Magicians",
+    "category": "dev-technical",
+    "niches": [
+      "ethereum",
+      "dev"
+    ]
+  },
+  {
+    "url": "https://rsshub.app/github/trending/daily",
+    "label": "GitHub Trending (RSSHub)",
+    "category": "dev-technical",
+    "niches": [
+      "tech",
+      "dev",
+      "oss"
+    ],
+    "featured": true
+  },
+  {
+    "url": "http://127.0.0.1:8282/?action=display&bridge=GithubTrendingBridge&format=Atom&date_range=today",
+    "label": "GitHub Trending (self-hosted)",
+    "category": "dev-technical",
+    "niches": [
+      "tech",
+      "dev",
+      "oss"
+    ]
+  },
+  {
+    "url": "https://solana.com/news/rss.xml",
+    "label": "Solana Blog",
+    "category": "crypto-research",
+    "niches": [
+      "solana",
+      "dev"
+    ],
+    "featured": true
+  },
+  {
+    "url": "https://arbitrumfoundation.medium.com/feed",
+    "label": "Arbitrum",
+    "category": "crypto-research",
+    "niches": [
+      "layer2",
+      "ethereum",
+      "research"
+    ],
+    "platform": "medium"
+  },
+  {
+    "url": "https://medium.com/feed/ethereum-optimism",
+    "label": "Optimism",
+    "category": "crypto-research",
+    "niches": [
+      "layer2",
+      "ethereum",
+      "research"
+    ],
+    "platform": "medium"
+  },
+  {
+    "url": "https://medium.com/feed/starkware",
+    "label": "Starknet",
+    "category": "crypto-research",
+    "niches": [
+      "layer2",
+      "zero-knowledge",
+      "ethereum"
+    ],
+    "platform": "medium"
+  },
+  {
+    "url": "https://medium.com/feed/zksync",
+    "label": "zkSync",
+    "category": "crypto-research",
+    "niches": [
+      "layer2",
+      "zero-knowledge",
+      "ethereum"
+    ],
+    "platform": "medium"
+  },
+  {
+    "url": "https://medium.com/feed/avalancheavax",
+    "label": "Avalanche",
+    "category": "crypto-research",
+    "niches": [
+      "crypto",
+      "layer2",
+      "research"
+    ],
+    "platform": "medium"
+  },
+  {
+    "url": "https://medium.com/feed/near-protocol",
+    "label": "Near",
+    "category": "crypto-research",
+    "niches": [
+      "crypto",
+      "layer2",
+      "research"
+    ],
+    "platform": "medium"
+  },
+  {
+    "url": "https://bittensor.substack.com/feed",
+    "label": "Bittensor",
+    "category": "crypto-research",
+    "niches": [
+      "aicrypto",
+      "ai",
+      "crypto"
+    ],
+    "platform": "substack"
+  },
+  {
+    "url": "https://web3isgoinggreat.com/feed.xml",
+    "label": "Web3 is Going Great",
+    "category": "security",
+    "niches": [
+      "security",
+      "crypto",
+      "hack"
+    ]
+  },
+  {
+    "url": "https://blog.trailofbits.com/feed/",
+    "label": "Trail of Bits",
+    "category": "security",
+    "niches": [
+      "security",
+      "research"
+    ],
+    "featured": true
+  },
+  {
+    "url": "https://slowmist.medium.com/feed",
+    "label": "SlowMist",
+    "category": "security",
+    "niches": [
+      "security",
+      "crypto"
+    ]
+  },
+  {
+    "url": "https://www.halborn.com/blog/feed.xml",
+    "label": "Halborn",
+    "category": "security",
+    "niches": [
+      "security",
+      "crypto"
+    ]
+  },
+  {
+    "url": "https://rss.arxiv.org/rss/cs.CR",
+    "label": "arXiv Cryptography",
+    "category": "academic",
+    "niches": [
+      "crypto",
+      "research",
+      "academic"
+    ]
+  },
+  {
+    "url": "https://rss.arxiv.org/rss/cs.AI",
+    "label": "arXiv AI",
+    "category": "academic",
+    "niches": [
+      "ai",
+      "research",
+      "academic"
+    ]
+  },
+  {
+    "url": "https://rss.arxiv.org/rss/cs.LG",
+    "label": "arXiv Machine Learning",
+    "category": "academic",
+    "niches": [
+      "ai",
+      "research",
+      "academic"
+    ]
+  },
+  {
+    "url": "https://rss.arxiv.org/rss/cs.SE",
+    "label": "arXiv Software Engineering",
+    "category": "academic",
+    "niches": [
+      "tech",
+      "research",
+      "academic"
+    ]
+  },
+  {
+    "url": "https://eprint.iacr.org/rss/atom.xml",
+    "label": "IACR ePrint",
+    "category": "academic",
+    "niches": [
+      "crypto",
+      "research",
+      "academic"
+    ]
+  },
+  {
+    "url": "https://blockchain.ieee.org/feed",
+    "label": "IEEE Blockchain",
+    "category": "academic",
+    "niches": [
+      "crypto",
+      "research",
+      "academic"
+    ]
+  },
+  {
+    "url": "https://hackernoon.com/feed",
+    "label": "Hacker Noon",
+    "category": "tech",
+    "niches": [
+      "tech",
+      "crypto"
+    ],
+    "featured": true
+  },
+  {
+    "url": "https://www.freecodecamp.org/news/rss/",
+    "label": "FreeCodeCamp",
+    "category": "tech",
+    "niches": [
+      "tech",
+      "dev"
+    ]
+  },
+  {
+    "url": "https://news.ycombinator.com/rss",
+    "label": "Hacker News",
+    "category": "tech",
+    "niches": [
+      "tech",
+      "startups"
+    ],
+    "featured": true
+  },
+  {
+    "url": "https://hnrss.org/frontpage",
+    "label": "Hacker News Front Page",
+    "category": "tech",
+    "niches": [
+      "tech",
+      "startups"
+    ],
+    "featured": true
+  },
+  {
+    "url": "https://www.producthunt.com/feed",
+    "label": "Product Hunt",
+    "category": "tech",
+    "niches": [
+      "startups",
+      "tech",
+      "products"
+    ],
+    "featured": true
+  },
+  {
+    "url": "https://www.theverge.com/rss/index.xml",
+    "label": "The Verge",
+    "category": "tech",
+    "niches": [
+      "tech"
+    ]
+  },
+  {
+    "url": "https://feeds.feedburner.com/TheHackersNews",
+    "label": "The Hacker News",
+    "category": "tech",
+    "niches": [
+      "security",
+      "tech"
+    ]
+  },
+  {
+    "url": "https://www.bleepingcomputer.com/feed/",
+    "label": "BleepingComputer",
+    "category": "tech",
+    "niches": [
+      "security",
+      "tech"
+    ]
+  },
+  {
+    "url": "https://blog.google/technology/ai/rss/",
+    "label": "Google AI",
+    "category": "tech",
+    "niches": [
+      "ai",
+      "tech"
+    ]
+  },
+  {
+    "url": "https://openai.com/blog/rss.xml",
+    "label": "OpenAI Blog",
+    "category": "tech",
+    "niches": [
+      "ai"
+    ],
+    "featured": true
+  },
+  {
+    "url": "https://deepmind.google/blog/rss.xml",
+    "label": "DeepMind",
+    "category": "tech",
+    "niches": [
+      "ai",
+      "research"
+    ]
+  },
+  {
+    "url": "https://www.technologyreview.com/feed/",
+    "label": "MIT Tech Review",
+    "category": "tech",
+    "niches": [
+      "tech",
+      "ai",
+      "research"
+    ],
+    "featured": true
+  },
+  {
+    "url": "https://feeds.arstechnica.com/arstechnica/index",
+    "label": "Ars Technica",
+    "category": "tech",
+    "niches": [
+      "tech",
+      "dev"
+    ],
+    "featured": true
+  },
+  {
+    "url": "https://www.wired.com/feed/rss",
+    "label": "Wired",
+    "category": "tech",
+    "niches": [
+      "tech",
+      "ai"
+    ],
+    "featured": true
+  },
+  {
+    "url": "https://techcrunch.com/feed/",
+    "label": "TechCrunch",
+    "category": "tech",
+    "niches": [
+      "tech",
+      "startups"
+    ],
+    "featured": true
+  },
+  {
+    "url": "https://www.theregister.com/headlines.rss",
+    "label": "The Register",
+    "category": "tech",
+    "niches": [
+      "tech",
+      "security"
+    ]
+  },
+  {
+    "url": "https://www.theguardian.com/technology/rss",
+    "label": "The Guardian Tech",
+    "category": "tech",
+    "niches": [
+      "tech"
+    ]
+  },
+  {
+    "url": "https://restofworld.org/feed/",
+    "label": "Rest of World",
+    "category": "tech",
+    "niches": [
+      "tech",
+      "global"
+    ]
+  },
+  {
+    "url": "https://theconversation.com/us/articles.atom",
+    "label": "The Conversation",
+    "category": "tech",
+    "niches": [
+      "tech",
+      "research",
+      "academic"
+    ]
+  },
+  {
+    "url": "https://spectrum.ieee.org/feeds/feed.rss",
+    "label": "IEEE Spectrum",
+    "category": "tech",
+    "niches": [
+      "tech",
+      "ai",
+      "research"
+    ]
+  },
+  {
+    "url": "https://stratechery.com/feed/",
+    "label": "Stratechery",
+    "category": "tech",
+    "niches": [
+      "tech",
+      "business",
+      "strategy"
+    ],
+    "featured": true
+  },
+  {
+    "url": "https://www.generalist.com/feed",
+    "label": "The Generalist",
+    "category": "tech",
+    "niches": [
+      "tech",
+      "startups",
+      "business"
+    ],
+    "featured": true
+  },
+  {
+    "url": "https://www.exponentialview.co/feed",
+    "label": "Exponential View",
+    "category": "tech",
+    "niches": [
+      "tech",
+      "ai",
+      "research"
+    ]
+  },
+  {
+    "url": "https://www.ben-evans.com/benedictevans?format=rss",
+    "label": "Benedict Evans",
+    "category": "tech",
+    "niches": [
+      "tech",
+      "ai",
+      "business"
+    ]
+  },
+  {
+    "url": "https://www.notboring.co/feed",
+    "label": "Not Boring",
+    "category": "tech",
+    "niches": [
+      "tech",
+      "startups",
+      "business"
+    ]
+  },
+  {
+    "url": "https://thenetwork.substack.com/feed",
+    "label": "The Network",
+    "category": "tech",
+    "niches": [
+      "tech",
+      "ai",
+      "research"
+    ],
+    "platform": "substack"
+  },
+  {
+    "url": "https://theprotocol.substack.com/feed",
+    "label": "The Protocol",
+    "category": "tech",
+    "niches": [
+      "tech",
+      "startups"
+    ],
+    "platform": "substack"
+  },
+  {
+    "url": "https://www.sequoiacap.com/feed/",
+    "label": "Sequoia",
+    "category": "tech",
+    "niches": [
+      "startups",
+      "vc",
+      "business"
+    ]
+  },
+  {
+    "url": "https://a16zcrypto.substack.com/feed",
+    "label": "a16z Crypto",
+    "category": "tech",
+    "niches": [
+      "crypto",
+      "vc",
+      "research"
+    ],
+    "platform": "substack"
+  },
+  {
+    "url": "https://www.forbes.com/innovation/feed/",
+    "label": "Forbes Innovation",
+    "category": "tech",
+    "niches": [
+      "tech",
+      "ai",
+      "business"
+    ]
+  },
+  {
+    "url": "https://www.nature.com/nature.rss",
+    "label": "Nature",
+    "category": "science",
+    "niches": [
+      "science",
+      "research",
+      "academic"
+    ],
+    "featured": true
+  },
+  {
+    "url": "https://www.sciencedaily.com/rss/all.xml",
+    "label": "Science Daily",
+    "category": "science",
+    "niches": [
+      "science",
+      "research"
+    ]
+  },
+  {
+    "url": "https://www.quantamagazine.org/feed/",
+    "label": "Quanta Magazine",
+    "category": "science",
+    "niches": [
+      "science",
+      "research",
+      "tech"
+    ],
+    "featured": true
+  },
+  {
+    "url": "https://www.economist.com/science-and-technology/rss.xml",
+    "label": "The Economist Science",
+    "category": "science",
+    "niches": [
+      "science",
+      "tech",
+      "research"
+    ]
+  },
+  {
+    "url": "https://foreignaffairs.com/rss.xml",
+    "label": "Foreign Affairs",
+    "category": "geopolitics",
+    "niches": [
+      "geopolitics",
+      "policy",
+      "world"
+    ],
+    "featured": true
+  },
+  {
+    "url": "https://www.cfr.org/feed",
+    "label": "Council on Foreign Relations",
+    "category": "geopolitics",
+    "niches": [
+      "geopolitics",
+      "policy",
+      "world"
+    ],
+    "featured": true
+  },
+  {
+    "url": "https://thediplomat.com/feed/",
+    "label": "The Diplomat",
+    "category": "geopolitics",
+    "niches": [
+      "geopolitics",
+      "asia",
+      "world"
+    ]
+  },
+  {
+    "url": "http://feeds.bbci.co.uk/news/world/rss.xml",
+    "label": "BBC World",
+    "category": "geopolitics",
+    "niches": [
+      "world",
+      "geopolitics"
+    ]
+  },
+  {
+    "url": "https://www.aljazeera.com/xml/rss/all.xml",
+    "label": "Al Jazeera",
+    "category": "geopolitics",
+    "niches": [
+      "world",
+      "geopolitics",
+      "middle-east"
+    ]
+  },
+  {
+    "url": "https://rss.nytimes.com/services/xml/rss/nyt/World.xml",
+    "label": "NYT World",
+    "category": "geopolitics",
+    "niches": [
+      "world",
+      "geopolitics"
+    ],
+    "featured": true
+  },
+  {
+    "url": "https://www.theguardian.com/world/rss",
+    "label": "The Guardian World",
+    "category": "geopolitics",
+    "niches": [
+      "world",
+      "geopolitics"
+    ]
+  },
+  {
+    "url": "https://www.economist.com/finance-and-economics/rss.xml",
+    "label": "The Economist",
+    "category": "business",
+    "niches": [
+      "business",
+      "economics",
+      "markets"
+    ],
+    "featured": true
+  },
+  {
+    "url": "https://www.ft.com/alphaville?format=rss",
+    "label": "FT Alphaville",
+    "category": "business",
+    "niches": [
+      "business",
+      "economics",
+      "markets"
+    ]
+  },
+  {
+    "url": "https://feeds.content.dowjones.io/public/rss/RSSWorldNews",
+    "label": "WSJ World",
+    "category": "business",
+    "niches": [
+      "business",
+      "world",
+      "markets"
+    ]
+  },
+  {
+    "url": "https://www.cnbc.com/id/100003114/device/rss/rss.html",
+    "label": "CNBC Top News",
+    "category": "business",
+    "niches": [
+      "business",
+      "markets"
+    ]
+  },
+  {
+    "url": "https://feeds.bloomberg.com/markets/news.rss",
+    "label": "Bloomberg Markets",
+    "category": "business",
+    "niches": [
+      "business",
+      "markets"
+    ]
+  },
+  {
+    "url": "https://www.ft.com/rss/home",
+    "label": "FT",
+    "category": "world",
+    "niches": [
+      "world",
+      "business",
+      "markets"
+    ],
+    "featured": true
+  },
+  {
+    "url": "https://feeds.content.dowjones.io/public/rss/mw_topstories",
+    "label": "MarketWatch",
+    "category": "world",
+    "niches": [
+      "business",
+      "markets",
+      "world"
+    ]
+  },
+  {
+    "url": "https://finance.yahoo.com/news/rssindex",
+    "label": "Yahoo Finance",
+    "category": "world",
+    "niches": [
+      "business",
+      "markets",
+      "world"
+    ]
+  },
+  {
+    "url": "https://fortune.com/feed/",
+    "label": "Fortune",
+    "category": "world",
+    "niches": [
+      "business",
+      "world"
+    ]
+  },
+  {
+    "url": "https://www.businessinsider.com/rss",
+    "label": "Business Insider",
+    "category": "world",
+    "niches": [
+      "business",
+      "world",
+      "tech"
+    ]
+  },
+  {
+    "url": "https://qz.com/feed",
+    "label": "Quartz",
+    "category": "world",
+    "niches": [
+      "business",
+      "world",
+      "tech"
+    ]
+  },
+  {
+    "url": "https://www.cnbc.com/id/20910258/device/rss/rss.html",
+    "label": "CNBC Markets",
+    "category": "world",
+    "niches": [
+      "business",
+      "markets"
+    ]
+  },
+  {
+    "url": "https://www.cnbc.com/id/19854910/device/rss/rss.html",
+    "label": "CNBC Tech",
+    "category": "world",
+    "niches": [
+      "business",
+      "tech"
+    ]
+  },
+  {
+    "url": "https://feeds.bloomberg.com/technology/news.rss",
+    "label": "Bloomberg Tech",
+    "category": "world",
+    "niches": [
+      "business",
+      "tech"
+    ]
+  },
+  {
+    "url": "https://feeds.bloomberg.com/crypto/news.rss",
+    "label": "Bloomberg Crypto",
+    "category": "world",
+    "niches": [
+      "crypto",
+      "business",
+      "markets"
+    ]
+  },
+  {
+    "url": "https://rss.nytimes.com/services/xml/rss/nyt/Business.xml",
+    "label": "NYT Business",
+    "category": "world",
+    "niches": [
+      "business",
+      "markets",
+      "world"
+    ]
+  },
+  {
+    "url": "https://www.inc.com/rss",
+    "label": "Inc",
+    "category": "world",
+    "niches": [
+      "business",
+      "startups"
+    ]
+  },
+  {
+    "url": "https://www.fastcompany.com/rss",
+    "label": "Fast Company",
+    "category": "world",
+    "niches": [
+      "business",
+      "tech"
+    ]
+  },
+  {
+    "url": "https://marginalrevolution.com/feed",
+    "label": "Marginal Revolution",
+    "category": "world",
+    "niches": [
+      "business",
+      "economics"
+    ]
+  },
+  {
+    "url": "http://feeds.bbci.co.uk/news/world/africa/rss.xml",
+    "label": "BBC Africa",
+    "category": "world",
+    "niches": [
+      "world",
+      "africa"
+    ]
+  },
+  {
+    "url": "http://feeds.bbci.co.uk/news/business/rss.xml",
+    "label": "BBC Business",
+    "category": "world",
+    "niches": [
+      "business",
+      "world"
+    ]
+  },
+  {
+    "url": "http://rss.cnn.com/rss/edition_world.rss",
+    "label": "CNN World",
+    "category": "world",
+    "niches": [
+      "world"
+    ]
+  },
+  {
+    "url": "https://www.cbsnews.com/latest/rss/main",
+    "label": "CBS News",
+    "category": "world",
+    "niches": [
+      "world"
+    ]
+  },
+  {
+    "url": "https://abcnews.go.com/abcnews/topstories",
+    "label": "ABC News",
+    "category": "world",
+    "niches": [
+      "world"
+    ]
+  },
+  {
+    "url": "https://feeds.nbcnews.com/nbcnews/public/news",
+    "label": "NBC News",
+    "category": "world",
+    "niches": [
+      "world"
+    ]
+  },
+  {
+    "url": "https://feeds.npr.org/1004/rss.xml",
+    "label": "NPR World",
+    "category": "world",
+    "niches": [
+      "world",
+      "us"
+    ]
+  },
+  {
+    "url": "https://feeds.washingtonpost.com/rss/world",
+    "label": "Washington Post World",
+    "category": "world",
+    "niches": [
+      "world"
+    ]
+  },
+  {
+    "url": "https://time.com/feed/",
+    "label": "Time World",
+    "category": "world",
+    "niches": [
+      "world"
+    ]
+  },
+  {
+    "url": "https://www.theguardian.com/us-news/rss",
+    "label": "Guardian US",
+    "category": "world",
+    "niches": [
+      "world",
+      "us"
+    ]
+  },
+  {
+    "url": "https://www.france24.com/en/rss",
+    "label": "France24",
+    "category": "world",
+    "niches": [
+      "world",
+      "europe"
+    ]
+  },
+  {
+    "url": "https://rss.dw.com/rdf/rss-en-all",
+    "label": "DW",
+    "category": "world",
+    "niches": [
+      "world",
+      "europe",
+      "germany"
+    ]
+  },
+  {
+    "url": "https://www3.nhk.or.jp/rss/news/cat0.xml",
+    "label": "NHK World",
+    "category": "world",
+    "niches": [
+      "world",
+      "asia",
+      "japan"
+    ]
+  },
+  {
+    "url": "https://www.scmp.com/rss/91/feed",
+    "label": "SCMP",
+    "category": "world",
+    "niches": [
+      "world",
+      "asia",
+      "china"
+    ]
+  },
+  {
+    "url": "https://www.euronews.com/rss?level=theme&culture=en",
+    "label": "EuroNews",
+    "category": "world",
+    "niches": [
+      "world",
+      "europe"
+    ]
+  },
+  {
+    "url": "https://www.independent.co.uk/news/world/rss",
+    "label": "The Independent",
+    "category": "world",
+    "niches": [
+      "world",
+      "uk"
+    ]
+  },
+  {
+    "url": "https://www.standard.co.uk/rss",
+    "label": "Evening Standard",
+    "category": "world",
+    "niches": [
+      "world",
+      "uk",
+      "london"
+    ]
+  },
+  {
+    "url": "https://feeds.skynews.com/feeds/rss/world.xml",
+    "label": "Sky News",
+    "category": "world",
+    "niches": [
+      "world",
+      "uk"
+    ]
+  },
+  {
+    "url": "https://www.irishtimes.com/cmlink/news-1.1319192",
+    "label": "Irish Times",
+    "category": "world",
+    "niches": [
+      "world",
+      "ireland",
+      "europe"
+    ]
+  },
+  {
+    "url": "https://www.theage.com.au/rss/feed.xml",
+    "label": "The Age",
+    "category": "world",
+    "niches": [
+      "world",
+      "australia"
+    ]
+  },
+  {
+    "url": "https://www.rnz.co.nz/rss/news",
+    "label": "RNZ",
+    "category": "world",
+    "niches": [
+      "world",
+      "new-zealand"
+    ]
+  },
+  {
+    "url": "https://www.rappler.com/feed/",
+    "label": "Rappler",
+    "category": "world",
+    "niches": [
+      "world",
+      "asia",
+      "philippines"
+    ]
+  },
+  {
+    "url": "https://www.straitstimes.com/news/world/rss.xml",
+    "label": "The Straits Times",
+    "category": "world",
+    "niches": [
+      "world",
+      "asia",
+      "singapore"
+    ]
+  },
+  {
+    "url": "https://www.japantimes.co.jp/feed/",
+    "label": "The Japan Times",
+    "category": "world",
+    "niches": [
+      "world",
+      "asia",
+      "japan"
+    ]
+  },
+  {
+    "url": "https://www.tagesschau.de/xml/rss2/",
+    "label": "Tagesschau",
+    "category": "world",
+    "niches": [
+      "world",
+      "europe",
+      "germany"
+    ]
+  },
+  {
+    "url": "https://www.spiegel.de/international/index.rss",
+    "label": "Der Spiegel",
+    "category": "world",
+    "niches": [
+      "world",
+      "europe",
+      "germany"
+    ]
+  },
+  {
+    "url": "https://www.lemonde.fr/en/rss/une.xml",
+    "label": "Le Monde",
+    "category": "world",
+    "niches": [
+      "world",
+      "europe",
+      "france"
+    ]
+  },
+  {
+    "url": "https://feeds.elpais.com/mrss-s/pages/ep/site/english.elpais.com/portada",
+    "label": "El Pais",
+    "category": "world",
+    "niches": [
+      "world",
+      "europe",
+      "spain"
+    ]
+  },
+  {
+    "url": "https://www.al-monitor.com/rss",
+    "label": "Al Monitor",
+    "category": "world",
+    "niches": [
+      "world",
+      "middle-east"
+    ]
+  },
+  {
+    "url": "https://www.middleeasteye.net/rss",
+    "label": "Middle East Eye",
+    "category": "world",
+    "niches": [
+      "world",
+      "middle-east"
+    ]
+  },
+  {
+    "url": "https://allafrica.com/tools/headlines/rdf/latest/headlines.rdf",
+    "label": "AllAfrica",
+    "category": "world",
+    "niches": [
+      "world",
+      "africa"
+    ]
+  },
+  {
+    "url": "https://www.premiumtimesng.com/feed",
+    "label": "Premium Times",
+    "category": "world",
+    "niches": [
+      "world",
+      "africa",
+      "nigeria"
+    ]
+  },
+  {
+    "url": "https://punchng.com/feed/",
+    "label": "Punch",
+    "category": "world",
+    "niches": [
+      "world",
+      "africa",
+      "nigeria"
+    ]
+  },
+  {
+    "url": "https://www.theafricareport.com/feed/",
+    "label": "Africa Report",
+    "category": "world",
+    "niches": [
+      "world",
+      "africa",
+      "business"
+    ]
+  },
+  {
+    "url": "https://news.mit.edu/rss/feed",
+    "label": "MIT News",
+    "category": "science",
+    "niches": [
+      "science",
+      "tech",
+      "research"
+    ],
+    "featured": true
+  },
+  {
+    "url": "https://news.harvard.edu/gazette/feed/",
+    "label": "Harvard Gazette",
+    "category": "science",
+    "niches": [
+      "science",
+      "research",
+      "academic"
+    ]
+  },
+  {
+    "url": "https://news.berkeley.edu/feed/",
+    "label": "Berkeley News",
+    "category": "science",
+    "niches": [
+      "science",
+      "research",
+      "academic"
+    ]
+  },
+  {
+    "url": "https://phys.org/rss-feed/",
+    "label": "Phys.org",
+    "category": "science",
+    "niches": [
+      "science",
+      "research"
+    ]
+  },
+  {
+    "url": "https://www.science.org/rss/news_current.xml",
+    "label": "Science.org",
+    "category": "science",
+    "niches": [
+      "science",
+      "research",
+      "academic"
+    ]
+  },
+  {
+    "url": "https://www.sciencenews.org/feed",
+    "label": "Science News",
+    "category": "science",
+    "niches": [
+      "science",
+      "research"
+    ]
+  },
+  {
+    "url": "https://www.livescience.com/feeds/all",
+    "label": "Live Science",
+    "category": "science",
+    "niches": [
+      "science"
+    ]
+  },
+  {
+    "url": "https://www.smithsonianmag.com/rss/latest_articles/",
+    "label": "Smithsonian",
+    "category": "science",
+    "niches": [
+      "science",
+      "culture",
+      "history"
+    ]
+  },
+  {
+    "url": "https://www.space.com/feeds/all",
+    "label": "Space.com",
+    "category": "science",
+    "niches": [
+      "science",
+      "space"
+    ]
+  },
+  {
+    "url": "https://www.universetoday.com/feed/",
+    "label": "Universe Today",
+    "category": "science",
+    "niches": [
+      "science",
+      "space"
+    ]
+  },
+  {
+    "url": "https://www.popsci.com/feed/",
+    "label": "Popular Science",
+    "category": "science",
+    "niches": [
+      "science",
+      "tech"
+    ]
+  },
+  {
+    "url": "https://rss.nytimes.com/services/xml/rss/nyt/Science.xml",
+    "label": "NYT Science",
+    "category": "science",
+    "niches": [
+      "science",
+      "world"
+    ]
+  },
+  {
+    "url": "http://feeds.bbci.co.uk/news/science_and_environment/rss.xml",
+    "label": "BBC Science",
+    "category": "science",
+    "niches": [
+      "science"
+    ]
+  },
+  {
+    "url": "https://www.theguardian.com/science/rss",
+    "label": "Guardian Science",
+    "category": "science",
+    "niches": [
+      "science"
+    ]
+  },
+  {
+    "url": "https://www.engadget.com/rss.xml",
+    "label": "Engadget",
+    "category": "tech",
+    "niches": [
+      "tech",
+      "gadgets"
+    ]
+  },
+  {
+    "url": "https://gizmodo.com/rss",
+    "label": "Gizmodo",
+    "category": "tech",
+    "niches": [
+      "tech"
+    ]
+  },
+  {
+    "url": "https://www.zdnet.com/news/rss.xml",
+    "label": "ZDNet",
+    "category": "tech",
+    "niches": [
+      "tech",
+      "security"
+    ]
+  },
+  {
+    "url": "https://rss.slashdot.org/Slashdot/slashdotMain",
+    "label": "Slashdot",
+    "category": "tech",
+    "niches": [
+      "tech",
+      "dev"
+    ]
+  },
+  {
+    "url": "https://www.cnet.com/rss/news/",
+    "label": "CNET",
+    "category": "tech",
+    "niches": [
+      "tech",
+      "gadgets"
+    ]
+  },
+  {
+    "url": "https://venturebeat.com/feed/",
+    "label": "VentureBeat",
+    "category": "tech",
+    "niches": [
+      "tech",
+      "ai",
+      "startups"
+    ]
+  },
+  {
+    "url": "https://rss.nytimes.com/services/xml/rss/nyt/Technology.xml",
+    "label": "NYT Tech",
+    "category": "tech",
+    "niches": [
+      "tech"
+    ]
+  },
+  {
+    "url": "https://feeds.washingtonpost.com/rss/business/technology",
+    "label": "Washington Post Tech",
+    "category": "tech",
+    "niches": [
+      "tech"
+    ]
+  },
+  {
+    "url": "http://feeds.bbci.co.uk/news/technology/rss.xml",
+    "label": "BBC Technology",
+    "category": "tech",
+    "niches": [
+      "tech"
+    ]
+  },
+  {
+    "url": "https://www.theatlantic.com/feed/all/",
+    "label": "The Atlantic",
+    "category": "culture",
+    "niches": [
+      "culture",
+      "politics",
+      "world"
+    ],
+    "featured": true
+  },
+  {
+    "url": "https://www.newyorker.com/feed/news",
+    "label": "New Yorker",
+    "category": "culture",
+    "niches": [
+      "culture",
+      "politics"
+    ]
+  },
+  {
+    "url": "https://www.vox.com/rss/index.xml",
+    "label": "Vox",
+    "category": "culture",
+    "niches": [
+      "culture",
+      "politics",
+      "world"
+    ]
+  },
+  {
+    "url": "https://theintercept.com/feed/?rss",
+    "label": "The Intercept",
+    "category": "culture",
+    "niches": [
+      "politics",
+      "world"
+    ]
+  },
+  {
+    "url": "https://www.propublica.org/feeds/propublica/main",
+    "label": "ProPublica",
+    "category": "culture",
+    "niches": [
+      "politics",
+      "investigation"
+    ]
+  },
+  {
+    "url": "https://aeon.co/feed",
+    "label": "Aeon",
+    "category": "culture",
+    "niches": [
+      "culture",
+      "philosophy",
+      "science"
+    ]
+  },
+  {
+    "url": "https://nautil.us/feed/",
+    "label": "Nautilus",
+    "category": "culture",
+    "niches": [
+      "culture",
+      "science"
+    ]
+  },
+  {
+    "url": "https://longreads.com/feed/",
+    "label": "Longreads",
+    "category": "culture",
+    "niches": [
+      "culture",
+      "longform"
+    ]
+  },
+  {
+    "url": "https://longform.org/feed",
+    "label": "Longform",
+    "category": "culture",
+    "niches": [
+      "culture",
+      "longform"
+    ]
+  },
+  {
+    "url": "https://thebrowser.com/feed/",
+    "label": "The Browser",
+    "category": "culture",
+    "niches": [
+      "culture",
+      "reading"
+    ]
+  },
+  {
+    "url": "https://www.theguardian.com/news/series/the-long-read/rss",
+    "label": "Guardian Long Read",
+    "category": "culture",
+    "niches": [
+      "culture",
+      "longform"
+    ]
+  },
+  {
+    "url": "https://www.motherjones.com/feed/",
+    "label": "Mother Jones",
+    "category": "culture",
+    "niches": [
+      "politics"
+    ]
+  },
+  {
+    "url": "https://www.thenation.com/feed/",
+    "label": "The Nation",
+    "category": "culture",
+    "niches": [
+      "politics"
+    ]
+  },
+  {
+    "url": "https://www.salon.com/feed/",
+    "label": "Salon",
+    "category": "culture",
+    "niches": [
+      "politics",
+      "culture"
+    ]
+  },
+  {
+    "url": "https://reason.com/feed/",
+    "label": "Reason",
+    "category": "culture",
+    "niches": [
+      "politics",
+      "libertarian"
+    ]
+  },
+  {
+    "url": "https://www.nationalreview.com/feed/",
+    "label": "National Review",
+    "category": "culture",
+    "niches": [
+      "politics",
+      "conservative"
+    ]
+  },
+  {
+    "url": "https://www.theamericanconservative.com/feed/",
+    "label": "American Conservative",
+    "category": "culture",
+    "niches": [
+      "politics",
+      "conservative"
+    ]
+  },
+  {
+    "url": "https://www.washingtonexaminer.com/feed/",
+    "label": "Washington Examiner",
+    "category": "culture",
+    "niches": [
+      "politics"
+    ]
+  },
+  {
+    "url": "https://dailycaller.com/feed/",
+    "label": "Daily Caller",
+    "category": "culture",
+    "niches": [
+      "politics"
+    ]
+  },
+  {
+    "url": "https://www.theonion.com/rss",
+    "label": "The Onion",
+    "category": "culture",
+    "niches": [
+      "culture",
+      "satire"
+    ]
+  },
+  {
+    "url": "https://slate.com/feeds/all.rss",
+    "label": "Slate",
+    "category": "culture",
+    "niches": [
+      "culture",
+      "politics"
+    ]
+  },
+  {
+    "url": "https://jacobin.com/feed",
+    "label": "Jacobin",
+    "category": "culture",
+    "niches": [
+      "politics",
+      "left"
+    ]
+  },
+  {
+    "url": "https://www.dissentmagazine.org/feed",
+    "label": "Dissent",
+    "category": "culture",
+    "niches": [
+      "politics"
+    ]
+  },
+  {
+    "url": "https://www.democracynow.org/democracynow.rss",
+    "label": "Democracy Now",
+    "category": "culture",
+    "niches": [
+      "politics",
+      "world"
+    ]
+  },
+  {
+    "url": "https://truthout.org/feed/",
+    "label": "Truthout",
+    "category": "culture",
+    "niches": [
+      "politics"
+    ]
+  },
+  {
+    "url": "https://thehill.com/feed/",
+    "label": "The Hill",
+    "category": "culture",
+    "niches": [
+      "politics",
+      "us"
+    ]
+  },
+  {
+    "url": "https://www.theguardian.com/politics/rss",
+    "label": "Guardian Politics",
+    "category": "culture",
+    "niches": [
+      "politics",
+      "uk"
+    ]
+  },
+  {
+    "url": "https://rss.nytimes.com/services/xml/rss/nyt/Politics.xml",
+    "label": "NYT Politics",
+    "category": "culture",
+    "niches": [
+      "politics",
+      "us"
+    ]
+  },
+  {
+    "url": "https://moxie.foxnews.com/google-publisher/world.xml",
+    "label": "Fox News",
+    "category": "culture",
+    "niches": [
+      "politics",
+      "us"
+    ]
+  },
+  {
+    "url": "https://warontherocks.com/feed/",
+    "label": "War on the Rocks",
+    "category": "culture",
+    "niches": [
+      "geopolitics",
+      "defense",
+      "world"
+    ]
+  },
+  {
+    "url": "https://www.defenseone.com/rss/all/",
+    "label": "Defense One",
+    "category": "culture",
+    "niches": [
+      "defense",
+      "geopolitics"
+    ]
+  },
+  {
+    "url": "https://www.bellingcat.com/feed/",
+    "label": "Bellingcat",
+    "category": "culture",
+    "niches": [
+      "investigation",
+      "world",
+      "geopolitics"
+    ]
+  },
+  {
+    "url": "https://foreignpolicy.com/feed/",
+    "label": "Foreign Policy",
+    "category": "culture",
+    "niches": [
+      "geopolitics",
+      "world",
+      "policy"
+    ],
+    "featured": true
+  },
+  {
+    "url": "https://www.worldpoliticsreview.com/feed/",
+    "label": "World Politics Review",
+    "category": "culture",
+    "niches": [
+      "geopolitics",
+      "world",
+      "policy"
+    ]
+  },
+  {
+    "url": "https://globalvoices.org/feed/",
+    "label": "Global Voices",
+    "category": "culture",
+    "niches": [
+      "world",
+      "culture",
+      "global"
+    ]
+  },
+  {
+    "url": "https://curve.substack.com/feed",
+    "label": "Curve Finance",
+    "category": "defi",
+    "niches": [
+      "defi",
+      "ethereum"
+    ]
+  },
+  {
+    "url": "https://medium.com/feed/compound-finance",
+    "label": "Compound",
+    "category": "defi",
+    "niches": [
+      "defi",
+      "ethereum"
+    ],
+    "platform": "medium"
+  },
+  {
+    "url": "https://blog.lido.fi/rss/",
+    "label": "Lido",
+    "category": "defi",
+    "niches": [
+      "defi",
+      "staking",
+      "ethereum"
+    ]
+  },
+  {
+    "url": "https://medium.com/feed/uniswap-labs",
+    "label": "Uniswap",
+    "category": "defi",
+    "niches": [
+      "defi",
+      "dex",
+      "ethereum"
+    ],
+    "platform": "medium"
+  },
+  {
+    "url": "https://medium.com/feed/iearn",
+    "label": "Yearn",
+    "category": "defi",
+    "niches": [
+      "defi",
+      "yield",
+      "ethereum"
+    ],
+    "platform": "medium"
+  },
+  {
+    "url": "https://medium.com/feed/gmx-io",
+    "label": "GMX",
+    "category": "defi",
+    "niches": [
+      "defi",
+      "dex",
+      "perpetuals"
+    ],
+    "platform": "medium"
+  },
+  {
+    "url": "https://forum.makerdao.com/posts.rss",
+    "label": "MakerDAO",
+    "category": "defi",
+    "niches": [
+      "defi",
+      "stablecoin",
+      "governance"
+    ]
+  },
+  {
+    "url": "https://uniswap.substack.com/feed",
+    "label": "Uniswap Blog",
+    "category": "defi",
+    "niches": [
+      "defi",
+      "dex",
+      "ethereum"
+    ],
+    "platform": "substack"
+  },
+  {
+    "url": "https://blog.bitfinex.com/feed/",
+    "label": "Bitfinex Blog",
+    "category": "defi",
+    "niches": [
+      "crypto",
+      "exchange",
+      "research"
+    ]
+  },
+  {
+    "url": "https://nftnow.com/feed/",
+    "label": "NFT Now",
+    "category": "nft",
+    "niches": [
+      "nft",
+      "crypto"
+    ]
+  },
+  {
+    "url": "https://decrypt.co/feed/nft",
+    "label": "Decrypt NFT",
+    "category": "nft",
+    "niches": [
+      "nft",
+      "crypto"
+    ]
+  },
+  {
+    "url": "https://rarible.substack.com/feed",
+    "label": "Rarible Blog",
+    "category": "nft",
+    "niches": [
+      "nft",
+      "ethereum"
+    ]
+  },
+  {
+    "url": "https://huggingface.co/blog/feed.xml",
+    "label": "Hugging Face Blog",
+    "category": "ai",
+    "niches": [
+      "ai",
+      "dev",
+      "research"
+    ]
+  },
+  {
+    "url": "https://validity.substack.com/feed",
+    "label": "Validity",
+    "category": "newsletter",
+    "niches": [
+      "crypto",
+      "research"
+    ],
+    "platform": "substack"
+  },
+  {
+    "url": "https://cryptoslate.substack.com/feed",
+    "label": "CryptoSlate",
+    "category": "newsletter",
+    "niches": [
+      "crypto"
+    ],
+    "platform": "substack"
+  },
+  {
+    "url": "https://thebearcave.substack.com/feed",
+    "label": "The Bear Cave",
+    "category": "newsletter",
+    "niches": [
+      "crypto",
+      "research"
+    ],
+    "platform": "substack"
+  },
+  {
+    "url": "https://caseycaruso.substack.com/feed",
+    "label": "Casey Caruso",
+    "category": "newsletter",
+    "niches": [
+      "crypto",
+      "vc"
+    ],
+    "platform": "substack"
+  },
+  {
+    "url": "https://cobie.substack.com/feed",
+    "label": "Cobie",
+    "category": "newsletter",
+    "niches": [
+      "crypto"
+    ],
+    "platform": "substack"
+  },
+  {
+    "url": "https://technically.substack.com/feed",
+    "label": "Technically",
+    "category": "newsletter",
+    "niches": [
+      "tech",
+      "ai"
+    ],
+    "platform": "substack"
+  },
+  {
+    "url": "https://proofofwork.substack.com/feed",
+    "label": "Proof of Work",
+    "category": "newsletter",
+    "niches": [
+      "bitcoin",
+      "crypto"
+    ],
+    "platform": "substack"
+  },
+  {
+    "url": "https://defieducation.substack.com/feed",
+    "label": "DeFi Education",
+    "category": "newsletter",
+    "niches": [
+      "defi",
+      "ethereum"
+    ],
+    "platform": "substack"
+  },
+  {
+    "url": "https://andrewmoore.substack.com/feed",
+    "label": "Andrew Moore",
+    "category": "newsletter",
+    "niches": [
+      "crypto",
+      "research"
+    ],
+    "platform": "substack"
+  },
+  {
+    "url": "https://marketmeditations.substack.com/feed",
+    "label": "Market Meditations",
+    "category": "newsletter",
+    "niches": [
+      "crypto",
+      "trading"
+    ],
+    "platform": "substack"
+  },
+  {
+    "url": "https://thedefiant.substack.com/feed",
+    "label": "The Defiant (Substack)",
+    "category": "newsletter",
+    "niches": [
+      "defi",
+      "crypto"
+    ],
+    "platform": "substack"
+  },
+  {
+    "url": "https://doseofdefi.substack.com/feed",
+    "label": "Dose of DeFi",
+    "category": "newsletter",
+    "niches": [
+      "defi",
+      "crypto"
+    ],
+    "platform": "substack"
+  },
+  {
+    "url": "https://web3weekly.substack.com/feed",
+    "label": "Web3 Weekly",
+    "category": "newsletter",
+    "niches": [
+      "crypto",
+      "web3"
+    ],
+    "platform": "substack"
+  },
+  {
+    "url": "https://medium.com/feed/coinmonks",
+    "label": "Coinmonks",
+    "category": "newsletter",
+    "niches": [
+      "crypto"
+    ],
+    "platform": "medium"
+  },
+  {
+    "url": "https://medium.com/feed/the-capital",
+    "label": "The Capital",
+    "category": "newsletter",
+    "niches": [
+      "crypto",
+      "finance"
+    ],
+    "platform": "medium"
+  },
+  {
+    "url": "https://medium.com/feed/better-programming",
+    "label": "Better Programming",
+    "category": "newsletter",
+    "niches": [
+      "tech",
+      "dev"
+    ],
+    "platform": "medium"
+  },
+  {
+    "url": "https://medium.com/feed/towards-data-science",
+    "label": "Towards Data Science",
+    "category": "newsletter",
+    "niches": [
+      "ai",
+      "data"
+    ],
+    "platform": "medium"
+  },
+  {
+    "url": "https://medium.com/feed/blockchain-review",
+    "label": "Blockchain Review",
+    "category": "newsletter",
+    "niches": [
+      "crypto"
+    ],
+    "platform": "medium"
+  },
+  {
+    "url": "https://medium.com/feed/ethglobal",
+    "label": "ETHGlobal",
+    "category": "newsletter",
+    "niches": [
+      "ethereum",
+      "dev"
+    ],
+    "platform": "medium"
+  },
+  {
+    "url": "https://medium.com/feed/chainlink-community",
+    "label": "Chainlink Community",
+    "category": "newsletter",
+    "niches": [
+      "crypto",
+      "oracle"
+    ],
+    "platform": "medium"
+  },
+  {
+    "url": "https://www.sec.gov/rss/news/press.xml",
+    "label": "SEC Press",
+    "category": "regulation",
+    "niches": [
+      "regulation",
+      "crypto"
+    ]
+  },
+  {
+    "url": "https://www.coincenter.org/feed/",
+    "label": "Coin Center",
+    "category": "regulation",
+    "niches": [
+      "regulation",
+      "crypto"
+    ]
+  },
+  {
+    "url": "https://feeds.libsyn.com/247424/rss",
+    "label": "Bankless",
+    "category": "podcast",
+    "platform": "podcast",
+    "niches": [
+      "crypto",
+      "ethereum",
+      "defi"
+    ],
+    "featured": true
+  },
+  {
+    "url": "https://feeds.megaphone.fm/LSHML4761942757",
+    "label": "Unchained",
+    "category": "podcast",
+    "platform": "podcast",
+    "niches": [
+      "crypto",
+      "interviews",
+      "bitcoin"
+    ],
+    "featured": true
+  },
+  {
+    "url": "https://thedefiant.io/feed/podcast",
+    "label": "The Defiant Podcast",
+    "category": "podcast",
+    "platform": "podcast",
+    "niches": [
+      "defi",
+      "crypto",
+      "ethereum"
+    ]
+  },
+  {
+    "url": "https://feeds.simplecast.com/puPuLj25",
+    "label": "UpOnly",
+    "category": "podcast",
+    "platform": "podcast",
+    "niches": [
+      "crypto",
+      "defi",
+      "interviews",
+      "nft"
+    ]
+  },
+  {
+    "url": "https://feeds.megaphone.fm/empire",
+    "label": "Empire",
+    "category": "podcast",
+    "platform": "podcast",
+    "niches": [
+      "crypto",
+      "defi",
+      "business"
+    ],
+    "featured": true
+  },
+  {
+    "url": "https://feeds.megaphone.fm/0xresearch",
+    "label": "0xResearch",
+    "category": "podcast",
+    "platform": "podcast",
+    "niches": [
+      "crypto",
+      "research",
+      "macro"
+    ]
+  },
+  {
+    "url": "https://feeds.megaphone.fm/bellcurve",
+    "label": "Bell Curve",
+    "category": "podcast",
+    "platform": "podcast",
+    "niches": [
+      "crypto",
+      "macro",
+      "business"
+    ]
+  },
+  {
+    "url": "https://feeds.megaphone.fm/TCB",
+    "label": "Chopping Block",
+    "category": "podcast",
+    "platform": "podcast",
+    "niches": [
+      "crypto",
+      "defi",
+      "news"
+    ]
+  },
+  {
+    "url": "https://feeds.megaphone.fm/lightspeed",
+    "label": "Lightspeed",
+    "category": "podcast",
+    "platform": "podcast",
+    "niches": [
+      "solana",
+      "crypto",
+      "defi"
+    ]
+  },
+  {
+    "url": "https://www.omnycontent.com/d/playlist/88b564ea-a9a6-4751-910a-a5d800019396/8163fac4-9321-4388-ac94-aee50022baf8/1e8cd755-5985-45a4-9020-aee5003fcd31/podcast.rss",
+    "label": "The Block Podcast",
+    "category": "podcast",
+    "platform": "podcast",
+    "niches": [
+      "crypto",
+      "news",
+      "business"
+    ]
+  }
+]

@@ -18,9 +18,9 @@
  *   5. JWT used for all write operations (post, comment, vote)
  */
 
-import { generateKeyPairBetween } from '@degenfeed/utils';
+// generateKeyPairBetween from @degenfeed/utils — unused, removed
 import { log } from '../index';
-import { sealForWallet } from '../lib/crypto-seal';
+import { sealForWallet, unsealForWallet } from '../lib/crypto-seal';
 import { jsonResponse, noCacheJsonResponse } from '../response-helpers';
 import { requireSession } from '../session';
 import type { Env } from '../types';
@@ -481,10 +481,11 @@ async function persistCredentials(
     expirationTtl: 60 * 60 * 24 * 365 * 5, // 5 years
   });
 
-  // Also store JWT separately for quick access
+  // Also store JWT separately for quick access (sealed, never plaintext)
   if (jwt) {
     const jwtKey = `lemmy:jwt:${walletAddress}`;
-    await env.PLATFORM_ACCOUNTS.put(jwtKey, jwt, {
+    const sealedJwt = await sealForWallet(env, jwt, walletAddress, 'lemmy-jwt');
+    await env.PLATFORM_ACCOUNTS.put(jwtKey, sealedJwt, {
       expirationTtl: 60 * 60 * 24 * 30, // 30 days
     });
   }
@@ -498,11 +499,17 @@ async function getCredentials(walletAddress: string, env: Env): Promise<LemmyCre
   if (!raw) return null;
 
   try {
-    // Try JSON parse first (unencrypted fallback)
+    // Try JSON parse first (legacy unencrypted records)
     return JSON.parse(raw) as LemmyCredentials;
   } catch {
-    // Encrypted — would need unseal (simplified for now)
-    return null;
+    // Sealed AES-256-GCM payload — unseal with the same purpose used at write time
+    try {
+      const plain = await unsealForWallet(env, raw, walletAddress, 'lemmy');
+      if (!plain) return null;
+      return JSON.parse(plain) as LemmyCredentials;
+    } catch {
+      return null;
+    }
   }
 }
 

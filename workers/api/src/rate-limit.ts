@@ -14,10 +14,21 @@
  * permissive "always allow" result and logs once — never blocks real users.
  */
 
+import { log } from './logger';
 import type { Env, RateLimitResult } from './types';
 
 const DEFAULT_RATE_WINDOW = 5000;
 const DEFAULT_RATE_MAX = 20;
+
+// Log the dev-only RATE_LIMIT_DISABLED bypass once per isolate so it is
+// visible in observability without spamming every request.
+let rateLimitDisabledWarned = false;
+
+function warnRateLimitDisabled(): void {
+  if (rateLimitDisabledWarned) return;
+  rateLimitDisabledWarned = true;
+  log('warn', '[rate-limit] RATE_LIMIT_DISABLED=true — rate limiting bypassed (dev only)');
+}
 
 /**
  * KV-backed fixed-window rate limiter.
@@ -30,6 +41,7 @@ export async function rateLimit(
   windowMs: number = DEFAULT_RATE_WINDOW,
 ): Promise<RateLimitResult> {
   if (env.RATE_LIMIT_DISABLED === 'true') {
+    warnRateLimitDisabled();
     return { allowed: true, retryAfter: 0 };
   }
   if (!env.CACHE) {
@@ -66,31 +78,41 @@ export async function rateLimit(
 }
 
 // ─── Tiered rate limiters ────────────────────────────────────────────
+// Sensible tiers (target): auth 5/60s, tip 10/60s, publish 20/60s,
+// admin 20/60s, writes 30/60s, reads 100/60s.
 
-const BRUTE_FORCE_MAX = 5;
-const BRUTE_FORCE_WINDOW_MS = 60_000;
-const BRUTE_FORCE_BLOCK_MAX = 3;
-const BRUTE_FORCE_BLOCK_WINDOW_MS = 1_800_000; // 30 minutes
-const BRUTE_FORCE_BLOCK_RATE = 1; // 1 req/min when blocked
-const BRUTE_FORCE_BLOCK_RATE_WINDOW_MS = 60_000;
+const AUTH_MAX = 5;
+const AUTH_WINDOW_MS = 60_000;
+const AUTH_BLOCK_MAX = 3;
+const AUTH_BLOCK_WINDOW_MS = 1_800_000; // 30 minutes
+const AUTH_BLOCK_RATE = 1; // 1 req/min when blocked
+const AUTH_BLOCK_RATE_WINDOW_MS = 60_000;
+
+const TIP_MAX = 10;
+const TIP_WINDOW_MS = 60_000;
+
+const PUBLISH_MAX = 20;
+const PUBLISH_WINDOW_MS = 60_000;
 
 const ENUMERATION_MAX = 3;
 const ENUMERATION_WINDOW_MS = 60_000;
 const ENUMERATION_BACKOFF_BASE_MS = 10_000; // Start at 10s
 const ENUMERATION_BACKOFF_MAX_MS = 300_000; // Cap at 5min
 
-const ANON_SCRAPE_MAX = 30;
-const AUTH_SCRAPE_MAX = 120;
-const SCRAPE_WINDOW_MS = 60_000;
+const READS_MAX = 100;
+const READS_WINDOW_MS = 60_000;
+
+const WRITES_MAX = 30;
+const WRITES_WINDOW_MS = 60_000;
 
 const GLOBAL_DDOS_MAX = 1000;
 const GLOBAL_DDOS_WINDOW_MS = 60_000;
 
-const ADMIN_MAX = 10;
+const ADMIN_MAX = 20;
 const ADMIN_WINDOW_MS = 60_000;
 
 /**
- * Check if a path is a feed/scrape endpoint.
+ * Check if a path is a feed/scrape endpoint (reads tier).
  */
 function isScrapePath(path: string): boolean {
   return (
@@ -100,6 +122,24 @@ function isScrapePath(path: string): boolean {
     path.startsWith('/api/shorts/feed') ||
     path.startsWith('/api/shorts/trending') ||
     path.startsWith('/api/shorts/for-you')
+  );
+}
+
+/**
+ * Check if a path is a tip endpoint (tip tier).
+ */
+function isTipPath(path: string): boolean {
+  return path.includes('/tip');
+}
+
+/**
+ * Check if a path is a publish endpoint (publish tier).
+ */
+function isPublishPath(path: string): boolean {
+  return (
+    path.startsWith('/api/publish') ||
+    path === '/api/shorts/publish' ||
+    path === '/api/shorts/create'
   );
 }
 
@@ -134,23 +174,25 @@ function isBruteForcePath(path: string): boolean {
  * Tiered rate limit dispatch.
  *
  * Returns the appropriate rate limit for the request context.
- * More specific checks (brute force, enumeration) take priority over
- * general scraping/DDoS limits.
+ * More specific checks (brute force, enumeration, tip, publish) take
+ * priority over general reads/writes/DDoS limits.
  */
 export async function tieredRateLimit(
   env: Env,
   ip: string,
   path: string,
-  isAuthenticated: boolean,
+  _isAuthenticated: boolean,
+  method: string = 'GET',
 ): Promise<RateLimitResult> {
   if (env.RATE_LIMIT_DISABLED === 'true') {
+    warnRateLimitDisabled();
     return { allowed: true, retryAfter: 0 };
   }
   if (!env.CACHE) {
     return { allowed: true, retryAfter: 0 };
   }
 
-  // ── Brute force protection (wallet verify) ─────────────────────
+  // ── Brute force protection (wallet verify) — auth 5/60s ────────
   if (isBruteForcePath(path)) {
     const failureKey = `bf:fail:${ip}`;
     const now = Date.now();
@@ -170,12 +212,12 @@ export async function tieredRateLimit(
     }
 
     // If in blocked state (>3 failures), use stricter rate
-    if (failureCount >= BRUTE_FORCE_BLOCK_MAX) {
-      return rateLimit(env, ip, path, BRUTE_FORCE_BLOCK_RATE, BRUTE_FORCE_BLOCK_RATE_WINDOW_MS);
+    if (failureCount >= AUTH_BLOCK_MAX) {
+      return rateLimit(env, ip, path, AUTH_BLOCK_RATE, AUTH_BLOCK_RATE_WINDOW_MS);
     }
 
     // Normal: 5/min
-    return rateLimit(env, ip, path, BRUTE_FORCE_MAX, BRUTE_FORCE_WINDOW_MS);
+    return rateLimit(env, ip, path, AUTH_MAX, AUTH_WINDOW_MS);
   }
 
   // ── Enumeration protection ─────────────────────────────────────
@@ -223,15 +265,24 @@ export async function tieredRateLimit(
     return rateLimit(env, ip, path, ENUMERATION_MAX, ENUMERATION_WINDOW_MS);
   }
 
-  // ── Scraping protection (feed/search endpoints) ────────────────
-  if (isScrapePath(path)) {
-    const maxReq = isAuthenticated ? AUTH_SCRAPE_MAX : ANON_SCRAPE_MAX;
-    return rateLimit(env, ip, path, maxReq, SCRAPE_WINDOW_MS);
+  // ── Tip protection — 10/60s ────────────────────────────────────
+  if (isTipPath(path)) {
+    return rateLimit(env, ip, path, TIP_MAX, TIP_WINDOW_MS);
   }
 
-  // ── Admin endpoints ────────────────────────────────────────────
+  // ── Publish protection — 20/60s ────────────────────────────────
+  if (isPublishPath(path)) {
+    return rateLimit(env, ip, path, PUBLISH_MAX, PUBLISH_WINDOW_MS);
+  }
+
+  // ── Admin endpoints — 20/60s ───────────────────────────────────
   if (isAdminPath(path)) {
     return rateLimit(env, ip, path, ADMIN_MAX, ADMIN_WINDOW_MS);
+  }
+
+  // ── Scraping protection (feed/search endpoints) — reads 100/60s
+  if (isScrapePath(path)) {
+    return rateLimit(env, ip, path, READS_MAX, READS_WINDOW_MS);
   }
 
   // ── Global DDoS protection ─────────────────────────────────────
@@ -261,10 +312,12 @@ export async function tieredRateLimit(
     return { allowed: false, retryAfter: Math.max(0, globalResetAt - now) };
   }
 
-  // ── Default: use the existing per-path rate limit ──────────────
-  const maxReq = Number(env.RATE_MAX_REQ) || DEFAULT_RATE_MAX;
-  const windowMs = Number(env.RATE_WINDOW_MS) || DEFAULT_RATE_WINDOW;
-  return rateLimit(env, ip, path, maxReq, windowMs);
+  // ── Default: split by request type — writes 30/60s, reads 100/60s
+  const isWrite = method.toUpperCase() !== 'GET' && method.toUpperCase() !== 'HEAD';
+  if (isWrite) {
+    return rateLimit(env, ip, path, WRITES_MAX, WRITES_WINDOW_MS);
+  }
+  return rateLimit(env, ip, path, READS_MAX, READS_WINDOW_MS);
 }
 
 /**
@@ -275,7 +328,7 @@ export async function recordBruteForceFailure(env: Env, ip: string): Promise<voi
   if (!env.CACHE) return;
   const failureKey = `bf:fail:${ip}`;
   const now = Date.now();
-  const windowMs = BRUTE_FORCE_BLOCK_WINDOW_MS;
+  const windowMs = AUTH_BLOCK_WINDOW_MS;
   const bucketSec = Math.max(1, Math.ceil(windowMs / 1000));
 
   let count = 1;

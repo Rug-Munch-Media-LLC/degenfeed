@@ -186,7 +186,7 @@ export function CreatorCoinDashboard({
             address: token.address,
             name: token.name,
             symbol: token.symbol,
-            chain: token.chain,
+            chain: token.chain === 'solana' ? 'solana' : 'base',
             price: priceNum,
             priceChange24h: 0,
             marketCap: priceNum * supplyNum,
