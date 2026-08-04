@@ -204,6 +204,7 @@ export default function BuySellInterface({
             <span
               className="ml-1.5 inline-flex cursor-help items-center rounded-full border border-[var(--color-border)] px-1.5 py-0.5 text-[8px] font-medium text-[var(--color-muted)] hover:border-degen-500/30 hover:text-degen-400 transition-colors"
               title="Paired with ETH on Base for simpler trading. No ZORA token needed."
+              role="img"
               aria-label="Paired with ETH on Base for simpler trading. No ZORA token needed."
             >
               ⓘ

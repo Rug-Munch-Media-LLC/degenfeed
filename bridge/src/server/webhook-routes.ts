@@ -36,6 +36,8 @@
 import type http from 'node:http';
 import { getPublicKey, signEvent } from '@degenfeed/nostr-sdk';
 import WebSocket from 'ws';
+import { distributeLiveEnd, distributeLiveStart } from './live-distribution';
+import { findSessionForWebhook } from './live-routes';
 
 // ─── Types ───────────────────────────────────────────────────────────────
 
@@ -524,6 +526,19 @@ async function handleStreamStarted(
       startedAt: Date.now(),
     });
 
+    // 4. Fan out to the creator's selected live platforms (Nostr NIP-53,
+    //    Farcaster Frame cast, Lens Livepeer+Momoka, Bluesky, Mastodon).
+    //    Distribution is best-effort and never fails the webhook response.
+    const session = findSessionForWebhook({ streamId, streamTitle });
+    if (session) {
+      session.owncastStreamId = streamId;
+      await distributeLiveStart(session);
+    } else {
+      console.warn(
+        `[webhook] No pending live session matched "${streamTitle}" (${streamId}) — skipping distribution`,
+      );
+    }
+
     publishNostrStatus(cfg, 'started', streamTitle);
 
     return {
@@ -535,6 +550,7 @@ async function handleStreamStarted(
         videoId: live.videoId,
         videoUuid: live.videoUuid,
         restreamTarget: 'peertube',
+        ...(session ? { sessionId: session.streamId, distribution: session.distribution } : {}),
       },
     };
   } catch (err) {
@@ -586,6 +602,13 @@ async function handleStreamStopped(
   // 3. Nostr status = ended (best effort)
   publishNostrStatus(cfg, 'ended', streamTitle);
 
+  // 4. End distribution for the matched live session (Nostr status:ended,
+  //    Farcaster ended cast, Livepeer stream delete, Bluesky/Mastodon delete).
+  const session = findSessionForWebhook({ streamId, streamTitle });
+  if (session) {
+    await distributeLiveEnd(session);
+  }
+
   liveProcesses.delete(streamId);
 
   return {
@@ -594,6 +617,7 @@ async function handleStreamStopped(
       ok: errors.length === 0,
       streamId,
       ended: true,
+      ...(session ? { sessionId: session.streamId, distribution: session.distribution } : {}),
       ...(errors.length > 0 ? { errors } : {}),
     },
   };

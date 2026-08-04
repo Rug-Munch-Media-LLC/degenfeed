@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNotifications } from '../hooks/useNotifications';
 import { useAuth } from './AuthProvider';
+import { CreateBottomSheet } from './create/CreateBottomSheet';
 
 interface NavItem {
   href: string;
@@ -165,11 +166,12 @@ function isActiveMatch(pathname: string, item: NavItem): boolean {
  */
 export function BottomNav() {
   const pathname = usePathname() ?? '/';
-  const { ready, signedInProtocols, openCompose, openSignIn } = useAuth();
+  const { ready, signedInProtocols, openSignIn } = useAuth();
   const hasSignedIn = ready && Object.values(signedInProtocols).some(Boolean);
   const signedIn = ready && hasSignedIn;
   const { unreadCount } = useNotifications(signedIn);
   const [mounted, setMounted] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
   const prevActiveRef = useRef<string>('/feed');
 
   // Mount animation: slide in from bottom after route mount
@@ -180,11 +182,12 @@ export function BottomNav() {
 
   const handleCompose = useCallback(() => {
     if (signedIn) {
-      openCompose();
+      // The center "+" opens the unified Create sheet (TikTok-style).
+      setCreateOpen(true);
     } else {
       openSignIn();
     }
-  }, [signedIn, openCompose, openSignIn]);
+  }, [signedIn, openSignIn]);
 
   // Hide bottom nav on landing page
   if (pathname === '/') return null;
@@ -304,6 +307,9 @@ export function BottomNav() {
           );
         })}
       </div>
+
+      {/* Unified Create sheet (TikTok-style "+") */}
+      <CreateBottomSheet isOpen={createOpen} onClose={() => setCreateOpen(false)} />
     </nav>
   );
 }

@@ -1,15 +1,40 @@
 // Root loading state — minimal flash. Shows header + subtle pulse.
 // Matches the new landing page design to avoid jarring transitions.
 
-const LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="36" height="36">
-  <defs><linearGradient id="lb" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#0d0d0d"/><stop offset="100%" stop-color="#000000"/></linearGradient><linearGradient id="ld" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#60a5fa"/><stop offset="100%" stop-color="#1d9bf0"/></linearGradient></defs>
-  <rect width="512" height="512" fill="url(#lb)" rx="96"/>
-  <g stroke="url(#ld)" stroke-width="52" stroke-linecap="round" stroke-linejoin="round" fill="none">
-    <line x1="160" y1="92" x2="160" y2="420"/>
-    <path d="M 160 92 A 148 164 0 0 1 160 420"/>
-  </g>
-  <circle cx="230" cy="256" r="100" fill="#1d9bf0" opacity="0.08"/>
-</svg>`;
+function LoadingLogo() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 512 512"
+      width="36"
+      height="36"
+      aria-hidden="true"
+    >
+      <defs>
+        <linearGradient id="lb" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#0d0d0d" />
+          <stop offset="100%" stopColor="#000000" />
+        </linearGradient>
+        <linearGradient id="ld" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#60a5fa" />
+          <stop offset="100%" stopColor="#1d9bf0" />
+        </linearGradient>
+      </defs>
+      <rect width="512" height="512" fill="url(#lb)" rx="96" />
+      <g
+        stroke="url(#ld)"
+        strokeWidth="52"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+      >
+        <line x1="160" y1="92" x2="160" y2="420" />
+        <path d="M 160 92 A 148 164 0 0 1 160 420" />
+      </g>
+      <circle cx="230" cy="256" r="100" fill="#1d9bf0" opacity="0.08" />
+    </svg>
+  );
+}
 
 export default function RootLoading() {
   return (
@@ -50,15 +75,15 @@ export default function RootLoading() {
         @media (prefers-reduced-motion: reduce) { .loading-pulse { animation: none; } }
       `}</style>
       <div className="loading-scanline" aria-hidden="true" />
-      <header className="loading-header" role="banner">
+      <header className="loading-header">
         <div className="loading-inner">
           <div className="loading-brand">
-            <span dangerouslySetInnerHTML={{ __html: LOGO_SVG }} />
+            <LoadingLogo />
             <span>DegenFeed</span>
           </div>
         </div>
       </header>
-      <div className="loading-pulse" aria-label="Loading" />
+      <div className="loading-pulse" role="status" aria-label="Loading" />
     </>
   );
 }

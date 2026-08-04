@@ -256,7 +256,7 @@ function AudioPlayer({
 
       {/* Played indicator */}
       {played && (
-        <div className="shrink-0" title="Played" aria-label="Voice note has been played">
+        <div className="shrink-0" role="img" title="Played" aria-label="Voice note has been played">
           <svg
             width="12"
             height="12"

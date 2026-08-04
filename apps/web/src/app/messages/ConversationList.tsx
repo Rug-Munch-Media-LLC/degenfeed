@@ -203,6 +203,7 @@ export function ConversationList({
                 {isE2E && (
                   <span
                     className="absolute -top-[2px] -right-[2px] flex h-3.5 w-3.5 items-center justify-center rounded-full bg-degen-500 border border-black text-black"
+                    role="img"
                     title="End-to-end encrypted"
                     aria-label="End-to-end encrypted"
                   >

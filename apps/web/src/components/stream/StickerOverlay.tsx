@@ -117,7 +117,7 @@ function FloatingSticker({
         } as React.CSSProperties
       }
     >
-      {sticker.imageUrl.match(/[❤️⚔️🎙️🎁🚀🌙🔥🎊]/) ? (
+      {sticker.imageUrl.match(/❤️|⚔️|🎙️|🎁|🚀|🌙|🔥|🎊/) ? (
         <span className="inline-block drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
           {sticker.imageUrl}
         </span>
@@ -279,7 +279,7 @@ export function StickerOverlay({ streamId, onTrigger }: StickerOverlayProps) {
               title={sticker.name}
               aria-label={`Trigger ${sticker.name} sticker`}
             >
-              {sticker.imageUrl.match(/[❤️⚔️🎙️🎁🚀🌙🔥🎊]/) ? (
+              {sticker.imageUrl.match(/❤️|⚔️|🎙️|🎁|🚀|🌙|🔥|🎊/) ? (
                 <span>{sticker.imageUrl}</span>
               ) : (
                 <img src={sticker.imageUrl} alt={sticker.name} className="h-5 w-5 object-contain" />

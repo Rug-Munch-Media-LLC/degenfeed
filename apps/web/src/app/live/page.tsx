@@ -630,7 +630,7 @@ export default function LivePage() {
                       href="/docs/streaming"
                       className="rounded-xl border border-[var(--color-glass-border)] px-6 py-3 text-sm font-medium text-[var(--color-muted)] transition-colors hover:text-[var(--color-fg)] hover:border-degen-500/30"
                     >
-                      Learn More
+                      Learn more about streaming
                     </a>
                   </div>
                 </div>

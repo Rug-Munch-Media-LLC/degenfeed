@@ -215,7 +215,9 @@ export function FaceFilterOverlay({
                         : 'border-white/15 bg-white/10'
                     }`}
                   >
-                    {filter.thumbnailUrl.match(/[🤠👑🧙🎩🎉🐱🐶🤖👽💀✨🌟🌸🌫️🌌🌃😎🧐]/u) ? (
+                    {filter.thumbnailUrl.match(
+                      /🤠|👑|🧙|🎩|🎉|🐱|🐶|🤖|👽|💀|✨|🌟|🌸|🌫️|🌌|🌃|😎|🧐/u,
+                    ) ? (
                       <span className="text-3xl filter-effect-hover">{filter.thumbnailUrl}</span>
                     ) : (
                       <span className="text-xl">{filter.thumbnailUrl}</span>

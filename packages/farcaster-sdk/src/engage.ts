@@ -102,6 +102,9 @@ function encodeCastAddBody(opts: {
   parentHashHex?: string;
   embedCastFid?: number;
   embedCastHashHex?: string;
+  /** URL embeds (field 7: repeated Embed). Encoded via encodeEmbedUrl so
+   *  frames and video links survive cast submission. */
+  embeds?: { url: string }[];
 }): Uint8Array {
   const parts: Uint8Array[] = [];
   const encoder = new TextEncoder();
@@ -116,6 +119,11 @@ function encodeCastAddBody(opts: {
   }
   if (opts.parentFid !== undefined && opts.parentHashHex) {
     parts.push(encodeLengthDelimited(5, encodeCastId(opts.parentFid, opts.parentHashHex)));
+  }
+  if (opts.embeds) {
+    for (const embed of opts.embeds) {
+      if (embed.url) parts.push(encodeEmbedUrl(embed.url));
+    }
   }
 
   return concatBytes(...parts);
@@ -182,6 +190,7 @@ export function buildFarcasterCastMessage(opts: BuildCastMessageOpts): {
       text: opts.text,
       parentFid: opts.parentFid,
       parentHashHex: opts.parentHashHex,
+      embeds: opts.embeds,
     });
     const messageData = encodeMessageData({
       type: MESSAGE_TYPE_CAST_ADD,

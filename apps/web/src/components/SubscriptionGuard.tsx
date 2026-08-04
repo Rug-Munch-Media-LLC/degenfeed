@@ -85,7 +85,12 @@ export default function SubscriptionGuard({ creator, children, fallback }: Subsc
   // Loading state — skeleton pulse
   if (access.status === 'loading') {
     return (
-      <div className="relative" aria-busy="true" aria-label="Checking subscription access">
+      <div
+        className="relative"
+        role="status"
+        aria-busy="true"
+        aria-label="Checking subscription access"
+      >
         <div className="pointer-events-none select-none blur-sm">{children}</div>
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="h-12 w-48 animate-pulse rounded-xl bg-[var(--color-muted)]" />

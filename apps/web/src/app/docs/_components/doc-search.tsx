@@ -382,7 +382,8 @@ export function DocSearch() {
 
   // Group results by section
   const grouped = results.reduce<Record<string, SearchResult[]>>((acc, r) => {
-    (acc[r.section] ??= []).push(r);
+    if (!acc[r.section]) acc[r.section] = [];
+    acc[r.section].push(r);
     return acc;
   }, {});
 
