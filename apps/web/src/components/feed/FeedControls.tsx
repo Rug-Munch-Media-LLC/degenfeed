@@ -196,7 +196,13 @@ export function FeedControls({
 
   const algoDirty = useMemo(() => {
     const a = controls.algorithm;
-    return a.recencyQuality !== 50 || a.engagementDiversity !== 50 || a.protocolDiversity !== 50;
+    return (
+      a.recencyQuality !== 50 ||
+      a.engagementDiversity !== 50 ||
+      a.protocolDiversity !== 50 ||
+      a.familiarDiscover !== 50 ||
+      a.creatorSize !== 50
+    );
   }, [controls.algorithm]);
 
   const toggleProtocol = (id: string) => {
@@ -412,6 +418,22 @@ export function FeedControls({
             value={controls.algorithm.protocolDiversity}
             onChange={(v) => setAlgorithm({ protocolDiversity: v })}
             hint="Mixed enforces rotation across networks (Nostr, Farcaster, Bluesky…)."
+          />
+          <AlgoSlider
+            label="Familiar ↔ Discover"
+            left="Familiar"
+            right="Discover"
+            value={controls.algorithm.familiarDiscover}
+            onChange={(v) => setAlgorithm({ familiarDiscover: v })}
+            hint="Discover reserves a slice of your feed (up to ~20%) for protocols and topics outside your usual bubble."
+          />
+          <AlgoSlider
+            label="Creator size"
+            left="Indie"
+            right="Big"
+            value={controls.algorithm.creatorSize}
+            onChange={(v) => setAlgorithm({ creatorSize: v })}
+            hint="Indie boosts small and new creators (with a first-24h discovery boost); Big favors established accounts."
           />
           <p className="text-[10px] text-[var(--color-muted)]">
             Current sort:{' '}

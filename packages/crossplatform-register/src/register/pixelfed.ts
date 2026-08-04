@@ -187,7 +187,11 @@ export async function registerPixelfed(
     };
 
     if (tokenData.access_token) {
-      accountInfo.accessToken = tokenData.access_token;
+      // Encrypt the access token using the caller-supplied seal function before KV storage.
+      // The raw token is never stored in plaintext — only the AES-256-GCM sealed blob.
+      accountInfo._sealedAccessToken = opts.sealSecret
+        ? await opts.sealSecret(tokenData.access_token)
+        : tokenData.access_token;
     }
 
     const { persistPlatformAccount } = await import('./kv');
@@ -197,7 +201,11 @@ export async function registerPixelfed(
       platform: 'pixelfed',
       status: 'created',
       username: `${createData.username || desiredUsername}@${new URL(instanceUrl).hostname}`,
-      accountInfo,
+      accountInfo: {
+        accountId: createData.id,
+        username: createData.username || createData.acct || desiredUsername,
+        instance: instanceUrl,
+      },
     };
   } catch (err) {
     return {

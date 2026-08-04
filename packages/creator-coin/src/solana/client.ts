@@ -4,13 +4,21 @@
  * Client for deploying and trading creator coins on Solana via Anchor.
  */
 
-import { type AnchorProvider, BN, Program } from '@coral-xyz/anchor';
+import { AnchorProvider, BN, Program } from '@coral-xyz/anchor';
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   getAssociatedTokenAddressSync,
   TOKEN_PROGRAM_ID,
 } from '@solana/spl-token';
-import { PublicKey, SYSVAR_RENT_PUBKEY, SystemProgram } from '@solana/web3.js';
+import {
+  Connection,
+  Keypair,
+  PublicKey,
+  SYSVAR_RENT_PUBKEY,
+  SystemProgram,
+  Transaction,
+  VersionedTransaction,
+} from '@solana/web3.js';
 import type {
   BuyInput,
   CreatorCoinConfig,
@@ -22,7 +30,22 @@ import type {
 
 // ─── Constants ─────────────────────────────────────────────────────────────
 
-export const PROGRAM_ID = new PublicKey('DFCCrTn111111111111111111111111111111111111');
+/**
+ * Anchor program ID for the `degenfeed_creator_token` program.
+ *
+ * CONTRACTS NOT DEPLOYED — the Anchor program source lives at
+ * `src/solana/program/programs/degenfeed-creator-token/` but has NOT been
+ * deployed to any cluster. The default address below is a placeholder.
+ * Set `SOLANA_PROGRAM_ID` (env var) to the real program ID after:
+ *   anchor deploy --provider.cluster devnet
+ */
+export const PROGRAM_ID = (() => {
+  const fromEnv = process.env.SOLANA_PROGRAM_ID;
+  if (fromEnv && fromEnv.trim().length > 0) {
+    return new PublicKey(fromEnv.trim());
+  }
+  return new PublicKey('DFCCrTn111111111111111111111111111111111111');
+})();
 
 const SEED_TOKEN_STATE = new TextEncoder().encode('token-state');
 const SEED_TOKEN_MINT = new TextEncoder().encode('token-mint');
@@ -64,6 +87,70 @@ export function derivePlatformFeeVault(): [PublicKey, number] {
 }
 
 // ─── SDK Client ────────────────────────────────────────────────────────────
+
+/**
+ * Minimal Anchor `wallet` adapter for a locally-managed keypair.
+ *
+ * Anchor's `Wallet` (NodeWallet) export is only conditionally assigned at
+ * runtime in `@coral-xyz/anchor`'s ESM entry (`exports.Wallet = ...`), which
+ * static bundlers (Turbopack/webpack) cannot resolve — it breaks `next build`.
+ * This implements the same interface directly so the package stays
+ * importable in the Next.js app.
+ */
+function keypairWallet(keypair: Keypair): AnchorProvider['wallet'] {
+  return {
+    publicKey: keypair.publicKey,
+    async signTransaction<T extends Transaction | VersionedTransaction>(tx: T): Promise<T> {
+      if (tx instanceof VersionedTransaction) {
+        tx.sign([keypair]);
+      } else {
+        tx.partialSign(keypair);
+      }
+      return tx;
+    },
+    async signAllTransactions<T extends Transaction | VersionedTransaction>(
+      txs: T[],
+    ): Promise<T[]> {
+      for (const tx of txs) {
+        if (tx instanceof VersionedTransaction) {
+          tx.sign([keypair]);
+        } else {
+          tx.partialSign(keypair);
+        }
+      }
+      return txs;
+    },
+  };
+}
+
+/**
+ * Build a Solana client from env-style config (server-side).
+ *
+ * `secretKey` is a 64-byte array in solana-keygen JSON format
+ * (e.g. `[1,2,3,...]` from `solana-keygen new --no-outfile`).
+ * When omitted, a read-only wallet is used (queries only — trading throws).
+ */
+export function createCreatorCoinSolanaClient(opts: {
+  rpcUrl?: string;
+  secretKey?: number[] | Uint8Array;
+}): CreatorCoinSolanaClient {
+  const connection = new Connection(
+    opts.rpcUrl || 'https://api.mainnet-beta.solana.com',
+    'confirmed',
+  );
+
+  let wallet: AnchorProvider['wallet'];
+  if (opts.secretKey && opts.secretKey.length > 0) {
+    const keypair = Keypair.fromSecretKey(Uint8Array.from(opts.secretKey));
+    wallet = keypairWallet(keypair);
+  } else {
+    // Read-only wallet — sufficient for getTokenInfo / account queries.
+    wallet = { publicKey: PublicKey.unique() } as AnchorProvider['wallet'];
+  }
+
+  const provider = new AnchorProvider(connection, wallet, { commitment: 'confirmed' });
+  return new CreatorCoinSolanaClient(provider);
+}
 
 export class CreatorCoinSolanaClient {
   private program: Program;

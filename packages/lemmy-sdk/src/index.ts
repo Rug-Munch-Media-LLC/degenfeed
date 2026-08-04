@@ -39,10 +39,10 @@ export const LEMMY_INSTANCES = [
 export interface LemmyPerson {
   id: number;
   name: string;
-  display_name?: string;
-  avatar?: string;
-  banner?: string;
-  bio?: string;
+  display_name?: string | null;
+  avatar?: string | null;
+  banner?: string | null;
+  bio?: string | null;
   actor_id: string;
   local: boolean;
   published: string;
@@ -52,9 +52,9 @@ export interface LemmyCommunity {
   id: number;
   name: string;
   title: string;
-  description?: string;
-  icon?: string;
-  banner?: string;
+  description?: string | null;
+  icon?: string | null;
+  banner?: string | null;
   actor_id: string;
   local: boolean;
   published: string;
@@ -80,14 +80,14 @@ export interface LemmyCommunityView {
 export interface LemmyPost {
   id: number;
   name: string;
-  body?: string;
-  url?: string;
-  thumbnail_url?: string;
-  embed_title?: string;
-  embed_description?: string;
-  embed_html?: string;
+  body?: string | null;
+  url?: string | null;
+  thumbnail_url?: string | null;
+  embed_title?: string | null;
+  embed_description?: string | null;
+  embed_html?: string | null;
   published: string;
-  updated?: string;
+  updated?: string | null;
   removed: boolean;
   deleted: boolean;
   nsfw: boolean;
@@ -128,7 +128,7 @@ export interface LemmyComment {
   content: string;
   path: string;
   published: string;
-  updated?: string;
+  updated?: string | null;
   removed: boolean;
   deleted: boolean;
   ap_id: string;
@@ -541,7 +541,7 @@ export function lemmyToUnifiedPost(postView: LemmyPostView, meta: LemmyFeedMeta)
     displayName: creator.display_name || creator.name,
     bio: creator.bio || '',
     avatarUrl: creator.avatar || '',
-    bannerUrl: creator.banner,
+    bannerUrl: creator.banner ?? undefined,
     verified: [],
     followerCount: 0,
     followingCount: 0,
@@ -617,7 +617,7 @@ export function lemmyCommentToComment(
     displayName: creator.display_name || creator.name,
     bio: creator.bio || '',
     avatarUrl: creator.avatar || '',
-    bannerUrl: creator.banner,
+    bannerUrl: creator.banner ?? undefined,
     verified: [],
     followerCount: 0,
     followingCount: 0,

@@ -289,6 +289,12 @@ export interface Env {
   POLYGON_RPC_URL?: string;
   /** Private key of the premium wallet for paying on-chain registration fees */
   PREMIUM_WALLET_KEY?: string;
+  /**
+   * Receiver address that must match the `to` field of a registration
+   * payment txHash (EVM). When set, register-all only proceeds with a paid
+   * plan if the verified payment actually arrived at this address.
+   */
+  REGISTRATION_PAYMENT_ADDRESS?: string;
   /** Application base URL — e.g. https://app.degenfeed.xyz */
   APP_BASE_URL?: string;
   /** GoToSocial instance URL (ActivityPub-compatible Mastodon API) for account creation */

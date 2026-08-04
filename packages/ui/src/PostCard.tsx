@@ -571,7 +571,7 @@ function PostCardComponent({
               e.stopPropagation();
               onWhyThisPost?.(post);
             }}
-            className="flex h-6 w-6 items-center justify-center rounded-full text-[11px] text-[var(--color-muted)] opacity-0 transition-all hover:bg-degen-500/10 hover:text-degen-400 group-hover:opacity-100 focus-visible:opacity-100"
+            className="flex h-6 w-6 items-center justify-center rounded-full text-[11px] text-[var(--color-muted)] opacity-60 transition-all hover:bg-degen-500/10 hover:text-degen-400 group-hover:opacity-100 focus-visible:opacity-100"
             aria-label="Why this post?"
             title="Why am I seeing this?"
           >

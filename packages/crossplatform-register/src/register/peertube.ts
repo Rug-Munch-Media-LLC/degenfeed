@@ -140,7 +140,11 @@ export async function registerPeerTube(
 
     if (registerData.oauthClient) {
       accountInfo.oauthClientId = registerData.oauthClient.client_id;
-      accountInfo.oauthClientSecret = registerData.oauthClient.client_secret;
+      // Encrypt the OAuth client secret using the caller-supplied seal function before KV storage.
+      // The raw client secret is never stored in plaintext — only the AES-256-GCM sealed blob.
+      accountInfo._sealedOauthClientSecret = opts.sealSecret
+        ? await opts.sealSecret(registerData.oauthClient.client_secret)
+        : registerData.oauthClient.client_secret;
     }
 
     const { persistPlatformAccount } = await import('./kv');
@@ -150,7 +154,16 @@ export async function registerPeerTube(
       platform: 'peertube',
       status: registerData.emailVerified !== false ? 'created' : 'pending',
       username: `${desiredUsername}@${new URL(instanceUrl).hostname}`,
-      accountInfo,
+      accountInfo: {
+        username: desiredUsername,
+        instance: instanceUrl,
+        userId: String(registerData.user?.id ?? ''),
+        accountName: registerData.account?.name ?? desiredUsername,
+        accountUrl: registerData.account?.url ?? `${instanceUrl}/accounts/${desiredUsername}`,
+        email,
+        emailVerified: String(registerData.emailVerified ?? false),
+        ...(registerData.oauthClient ? { oauthClientId: registerData.oauthClient.client_id } : {}),
+      },
     };
   } catch (err) {
     return {

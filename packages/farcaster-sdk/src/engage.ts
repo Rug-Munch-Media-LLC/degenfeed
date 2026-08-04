@@ -2,6 +2,9 @@ import { ed25519 } from '@noble/curves/ed25519';
 import { blake3 } from '@noble/hashes/blake3';
 
 const FARCASTER_NETWORK_MAINNET = 1;
+/** Farcaster epoch = Jan 1, 2021 00:00:00 UTC. Message timestamps are
+ *  seconds since this epoch, NOT unix seconds. */
+export const FARCASTER_EPOCH_SECONDS = 1609459200;
 
 const MESSAGE_TYPE_CAST_ADD = 1;
 const MESSAGE_TYPE_REACTION_ADD = 6;
@@ -10,6 +13,7 @@ const MESSAGE_TYPE_REACTION_REMOVE = 7;
 const REACTION_TYPE_LIKE = 1;
 
 const HASH_SCHEME_BLAKE3 = 1;
+const SIGNATURE_SCHEME_ED25519 = 1;
 
 function encodeVarint(value: number): Uint8Array {
   const out: number[] = [];
@@ -75,13 +79,13 @@ function encodeEmbedCastId(fid: number, hashHex: string): Uint8Array {
 
 /**
  * Encode a URL embed for CastAddBody (current protocol: `repeated Embed
- * embeds = 7`, where `Embed { string url = 1 }`). Without this, casts that
+ * embeds = 6`, where `Embed { string url = 1 }`). Without this, casts that
  * pass `embeds` to buildFarcasterCastMessage silently lose their embeds —
  * which breaks Frames (the frame URL is only delivered as an embed).
  */
 function encodeEmbedUrl(url: string): Uint8Array {
   const embedInner = encodeLengthDelimited(1, new TextEncoder().encode(url)); // Embed.url = 1
-  return encodeLengthDelimited(7, embedInner); // CastAddBody.embeds = 7
+  return encodeLengthDelimited(6, embedInner); // CastAddBody.embeds = 6
 }
 
 function encodeReactionBody(
@@ -96,13 +100,23 @@ function encodeReactionBody(
   return inner;
 }
 
+/**
+ * CastAddBody wire layout (current protocol):
+ *   1 = embeds_deprecated (skip)
+ *   2 = mentions (skip)
+ *   3 = parent_cast_id (CastId)
+ *   4 = text
+ *   5 = mentions_positions (skip)
+ *   6 = embeds (repeated Embed)
+ *   7 = parent_url
+ */
 function encodeCastAddBody(opts: {
   text?: string;
   parentFid?: number;
   parentHashHex?: string;
   embedCastFid?: number;
   embedCastHashHex?: string;
-  /** URL embeds (field 7: repeated Embed). Encoded via encodeEmbedUrl so
+  /** URL embeds (field 6: repeated Embed). Encoded via encodeEmbedUrl so
    *  frames and video links survive cast submission. */
   embeds?: { url: string }[];
 }): Uint8Array {
@@ -110,15 +124,15 @@ function encodeCastAddBody(opts: {
   const encoder = new TextEncoder();
 
   if (opts.text) {
-    parts.push(encodeLengthDelimited(1, encoder.encode(opts.text)));
+    parts.push(encodeLengthDelimited(4, encoder.encode(opts.text)));
   }
   if (opts.embedCastFid !== undefined && opts.embedCastHashHex) {
     parts.push(
-      encodeLengthDelimited(2, encodeEmbedCastId(opts.embedCastFid, opts.embedCastHashHex)),
+      encodeLengthDelimited(6, encodeEmbedCastId(opts.embedCastFid, opts.embedCastHashHex)),
     );
   }
   if (opts.parentFid !== undefined && opts.parentHashHex) {
-    parts.push(encodeLengthDelimited(5, encodeCastId(opts.parentFid, opts.parentHashHex)));
+    parts.push(encodeLengthDelimited(3, encodeCastId(opts.parentFid, opts.parentHashHex)));
   }
   if (opts.embeds) {
     for (const embed of opts.embeds) {
@@ -136,7 +150,7 @@ function encodeMessageData(opts: {
   bodyField: number;
   timestamp?: number;
 }): Uint8Array {
-  const ts = opts.timestamp ?? Math.floor(Date.now() / 1000);
+  const ts = opts.timestamp ?? Math.floor(Date.now() / 1000) - FARCASTER_EPOCH_SECONDS;
   const parts = [
     encodeVarintField(1, opts.type),
     encodeVarintField(2, opts.fid),
@@ -200,12 +214,16 @@ export function buildFarcasterCastMessage(opts: BuildCastMessageOpts): {
     });
     const hash = blake3(messageData, { dkLen: 20 });
     const signature = ed25519.sign(hash, signerBytes);
+    // Top-level Message wire layout (current protocol):
+    //   1 = data, 2 = hash, 3 = hash_scheme, 4 = signature,
+    //   5 = signature_scheme (ed25519), 6 = signer (pubkey)
     const message = concatBytes(
       encodeLengthDelimited(1, messageData),
       encodeLengthDelimited(2, hash),
       encodeVarintField(3, HASH_SCHEME_BLAKE3),
       encodeLengthDelimited(4, signature),
-      encodeLengthDelimited(5, pubKey),
+      encodeVarintField(5, SIGNATURE_SCHEME_ED25519),
+      encodeLengthDelimited(6, pubKey),
     );
     return { ok: true, messageHex: bytesToHex(message) };
   } catch (err) {
@@ -273,12 +291,16 @@ export async function engageFarcaster(opts: FarcasterEngageOpts): Promise<Farcas
 
     const signature = ed25519.sign(hash, signerBytes);
 
+    // Top-level Message wire layout (current protocol):
+    //   1 = data, 2 = hash, 3 = hash_scheme, 4 = signature,
+    //   5 = signature_scheme (ed25519), 6 = signer (pubkey)
     const message = concatBytes(
       encodeLengthDelimited(1, messageData),
       encodeLengthDelimited(2, hash),
       encodeVarintField(3, HASH_SCHEME_BLAKE3),
       encodeLengthDelimited(4, signature),
-      encodeLengthDelimited(5, pubKey),
+      encodeVarintField(5, SIGNATURE_SCHEME_ED25519),
+      encodeLengthDelimited(6, pubKey),
     );
 
     await submitToHub(message);

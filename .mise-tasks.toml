@@ -6,7 +6,7 @@
 [tasks.lint]
 description = "Lint all code (biome + ruff + stylelint + cspell)"
 run = """
-  biome check --no-errors-on-unmatched . 2>/dev/null || true
+  biome check --no-errors-on-unmatched .
   ruff check . 2>/dev/null || true
   stylelint "src/**/*.css" --allow-empty-input 2>/dev/null || true
   cspell "**/*.{ts,tsx,py,md}" --no-progress
@@ -24,7 +24,7 @@ run = """
 description = "Type check (mypy + tsc)"
 run = """
   mypy . --config-file=pyproject.toml --ignore-missing-imports 2>/dev/null || true
-  tsc --noEmit 2>/dev/null || true
+  tsc --noEmit
 """
 
 [tasks.test]

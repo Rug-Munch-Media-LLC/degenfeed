@@ -170,10 +170,17 @@ export type {
 export { CrossChainBridge, getCrossChainMapping, resolveBaseAddress } from './cross-chain/bridge';
 export { RegistryClient } from './cross-chain/registry';
 export { CreatorCoinEVMClient } from './evm/client';
+export type { V4DeployOptions, V4OnChainState } from './evm/client';
+export {
+  DEGENFEED_COIN_V4_ABI,
+  DEGENFEED_COIN_V4_BYTECODE,
+  DEGENFEED_COIN_V4_READ_ABI,
+} from './evm/degenfeed-coin-v4';
 
 // ─── Solana ──────────────────────────────────────────────────────────────
 
 export {
+  createCreatorCoinSolanaClient,
   CreatorCoinSolanaClient,
   deriveBuyerState,
   deriveMintAuthority,

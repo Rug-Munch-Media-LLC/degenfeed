@@ -175,6 +175,7 @@ registerAll.post('/all', async (c) => {
       handle?: string;
       username?: string;
       redirectUrl?: string;
+      password?: string;
     }
   > = {};
 
@@ -194,31 +195,28 @@ registerAll.post('/all', async (c) => {
       };
     } else {
       results.activitypub = {
-        ok: true,
-        identifier: `${gtsUsername}@social.degenfeed.xyz`,
-        handle: `${gtsUsername}@social.degenfeed.xyz`,
-        // Account may already exist — still count it as ok
+        ok: false,
+        error: gts.error || 'GoToSocial (ActivityPub) registration failed',
       };
     }
-  } catch (_e) {
-    // Fallback: username might already exist
-    const gtsUsername = deriveGtsHandle(walletAddress);
+  } catch (err) {
     results.activitypub = {
-      ok: true,
-      identifier: `${gtsUsername}@social.degenfeed.xyz`,
-      handle: `${gtsUsername}@social.degenfeed.xyz`,
+      ok: false,
+      error: err instanceof Error ? err.message : 'GoToSocial (ActivityPub) registration failed',
     };
   }
 
   // ── Step 2: AT Protocol PDS (always free) ────────────────────────────
   try {
     const pdsHandle = derivePdsHandle(walletAddress);
+    const pdsPassword = generateAppPassword();
     const pdsRes = await fetch('https://pds.degenfeed.xyz/xrpc/com.atproto.server.createAccount', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
         handle: pdsHandle,
         email: `${walletAddress.slice(2, 10)}-df@degenfeed.xyz`,
+        password: pdsPassword,
       }),
     });
     if (pdsRes.ok) {
@@ -226,22 +224,26 @@ registerAll.post('/all', async (c) => {
       results.atproto = {
         ok: true,
         identifier: pdsData.did,
-        handle: pdsData.handle,
+        handle: pdsData.handle || pdsHandle,
+        password: pdsPassword,
       };
     } else {
-      // May already exist — check
+      const pdsErr = (await pdsRes.json().catch(() => null)) as {
+        error?: string;
+        message?: string;
+      } | null;
       results.atproto = {
-        ok: true,
-        identifier: `did:plc:${walletAddress.slice(2, 26).toLowerCase()}`,
-        handle: pdsHandle,
+        ok: false,
+        error:
+          pdsErr?.error ||
+          pdsErr?.message ||
+          `AT Protocol PDS registration failed (HTTP ${pdsRes.status})`,
       };
     }
-  } catch {
-    const pdsHandle = derivePdsHandle(walletAddress);
+  } catch (err) {
     results.atproto = {
-      ok: true,
-      identifier: `did:plc:${walletAddress.slice(2, 26).toLowerCase()}`,
-      handle: pdsHandle,
+      ok: false,
+      error: err instanceof Error ? err.message : 'AT Protocol PDS registration failed',
     };
   }
 
@@ -256,21 +258,21 @@ registerAll.post('/all', async (c) => {
         walletAddress,
       },
     );
-    if (nostrResult.status === 'created') {
+    if (nostrResult.status === 'created' && nostrResult.accountInfo?.npub) {
       results.nostr = {
         ok: true,
-        identifier: nostrResult.accountInfo?.npub || `npub1${sha256Prefix(walletAddress, 20)}`,
+        identifier: nostrResult.accountInfo.npub,
       };
     } else {
       results.nostr = {
-        ok: true,
-        identifier: `npub1${sha256Prefix(walletAddress, 20)}`,
+        ok: false,
+        error: nostrResult.error || 'Nostr keypair generation failed',
       };
     }
-  } catch {
+  } catch (err) {
     results.nostr = {
-      ok: true,
-      identifier: `npub1${sha256Prefix(walletAddress, 20)}`,
+      ok: false,
+      error: err instanceof Error ? err.message : 'Nostr keypair generation failed',
     };
   }
 
@@ -292,12 +294,14 @@ registerAll.post('/all', async (c) => {
       handle: `${lemmyUsername}@community.degenfeed.xyz`,
       error: lemmy.status === 'failed' ? lemmy.error : undefined,
     };
-  } catch (_e) {
+  } catch (err) {
     const lemmyUsername = deriveGtsHandle(walletAddress);
     results.lemmy = {
-      ok: true,
-      identifier: `${lemmyUsername}@community.degenfeed.xyz`,
-      handle: `${lemmyUsername}@community.degenfeed.xyz`,
+      ok: false,
+      error:
+        err instanceof Error
+          ? err.message
+          : `Lemmy registration failed for ${lemmyUsername}@community.degenfeed.xyz`,
     };
   }
 
@@ -315,12 +319,14 @@ registerAll.post('/all', async (c) => {
       handle: `${ptUsername}@video.degenfeed.xyz`,
       error: pt.status === 'failed' ? pt.error : undefined,
     };
-  } catch (_e) {
+  } catch (err) {
     const ptUsername = deriveGtsHandle(walletAddress);
     results.peertube = {
-      ok: true,
-      identifier: `${ptUsername}@video.degenfeed.xyz`,
-      handle: `${ptUsername}@video.degenfeed.xyz`,
+      ok: false,
+      error:
+        err instanceof Error
+          ? err.message
+          : `PeerTube registration failed for ${ptUsername}@video.degenfeed.xyz`,
     };
   }
 
@@ -338,12 +344,14 @@ registerAll.post('/all', async (c) => {
       handle: `${pfUsername}@pixelfed.social`,
       error: pf.status === 'failed' ? pf.error : undefined,
     };
-  } catch (_e) {
+  } catch (err) {
     const pfUsername = deriveGtsHandle(walletAddress);
     results.pixelfed = {
-      ok: true,
-      identifier: `${pfUsername}@pixelfed.social`,
-      handle: `${pfUsername}@pixelfed.social`,
+      ok: false,
+      error:
+        err instanceof Error
+          ? err.message
+          : `Pixelfed registration failed for ${pfUsername}@pixelfed.social`,
     };
   }
 
@@ -742,20 +750,15 @@ registerAll.get('/export', async (c) => {
 });
 
 /**
- * Deterministic prefix hash for generating placeholder identifiers from a wallet.
- * Produces a bech32-friendly lowercase alphanumeric string.
+ * Generate a random app password for AT Protocol PDS account creation.
+ * Mirrors register/bluesky.ts's generateBlueskyAppPassword so the PDS
+ * createAccount call includes the required `password` field.
  */
-function sha256Prefix(input: string, chars: number): string {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(input);
-  let hash = 0;
-  for (let i = 0; i < data.length; i++) {
-    const byte = data[i];
-    hash = (hash << 5) - hash + byte;
-    hash = hash & hash; // Convert to 32bit integer
-  }
-  const abs = Math.abs(hash).toString(36);
-  return abs.slice(0, chars).padEnd(chars, '0');
+function generateAppPassword(): string {
+  const chars = 'abcdefghijklmnopqrstuvwxyz-123456789';
+  let result = 'df-';
+  for (let i = 0; i < 16; i++) result += chars.charAt(Math.floor(Math.random() * chars.length));
+  return result;
 }
 
 export default registerAll;

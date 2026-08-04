@@ -119,10 +119,13 @@ export async function registerLemmy(
       };
     }
 
+    // Encrypt the jwt using the caller-supplied seal function before KV storage.
+    // The raw jwt is never stored in plaintext — only the AES-256-GCM sealed blob.
+    const jwtToStore = opts.sealSecret ? await opts.sealSecret(registerData.jwt) : registerData.jwt;
     const accountInfo: Record<string, string> = {
       username: desiredUsername,
       instance: instanceUrl,
-      jwt: registerData.jwt,
+      _sealedJwt: jwtToStore,
       email,
       verifyEmailSent: String(registerData.verify_email_sent ?? false),
     };
@@ -134,7 +137,12 @@ export async function registerLemmy(
       platform: 'lemmy',
       status: registerData.verify_email_sent ? 'pending' : 'created',
       username: `${desiredUsername}@${new URL(instanceUrl).hostname}`,
-      accountInfo,
+      accountInfo: {
+        username: desiredUsername,
+        instance: instanceUrl,
+        email,
+        verifyEmailSent: String(registerData.verify_email_sent ?? false),
+      },
     };
   } catch (err) {
     return {

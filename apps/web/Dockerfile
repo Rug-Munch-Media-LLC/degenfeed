@@ -56,11 +56,9 @@ COPY apps/web/package.json \
 COPY apps/web/public ./apps/web/public
 
 # Build the web app directly via pnpm (avoid root package's turbo run build recursion)
-# TypeScript errors are pre-existing and validated separately in CI;
-# ignore them here to keep the image build fast and focused on packaging.
+# TypeScript is authoritative: type errors fail the image build (ignoreBuildErrors: false).
 WORKDIR /app/apps/web
-RUN sed -i 's/typescript: { ignoreBuildErrors: false }/typescript: { ignoreBuildErrors: true }/' next.config.mjs && \
-    pnpm run build
+RUN pnpm run build
 WORKDIR /app
 
 # Stage 4: Runner — minimal production image

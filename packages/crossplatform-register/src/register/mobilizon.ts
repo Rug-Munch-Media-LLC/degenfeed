@@ -185,10 +185,13 @@ export async function registerMobilizon(
       }
     }
 
+    // Encrypt the access token using the caller-supplied seal function before KV storage.
+    // The raw token is never stored in plaintext — only the AES-256-GCM sealed blob.
+    const accessTokenToStore = opts.sealSecret ? await opts.sealSecret(accessToken) : accessToken;
     const accountInfo: Record<string, string> = {
       username: desiredUsername,
       instance: instanceUrl,
-      accessToken,
+      _sealedAccessToken: accessTokenToStore,
       userId: String(registerData.user?.id ?? ''),
       profileUrl,
       email,
@@ -201,7 +204,13 @@ export async function registerMobilizon(
       platform: 'mobilizon',
       status: 'created',
       username: `${desiredUsername}@events.degenfeed.xyz`,
-      accountInfo,
+      accountInfo: {
+        username: desiredUsername,
+        instance: instanceUrl,
+        userId: String(registerData.user?.id ?? ''),
+        profileUrl,
+        email,
+      },
     };
   } catch (err) {
     return {
