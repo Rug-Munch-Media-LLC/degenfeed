@@ -201,23 +201,43 @@ export interface CoinPrice {
 }
 
 /**
- * Raw coin data from Zora's Coins API.
+ * Raw coin data from Zora's 2026 Coins API (GraphQL-shaped node).
+ * Mirrors the response of /explore edges[].node and /coin zora20Token.
  */
 export interface ZoraCoin {
   address: string;
   name: string;
   symbol: string;
-  creator: string;
-  uri: string;
-  price: string;
-  marketCap: string;
-  totalSupply: string;
-  totalRaised: string;
-  holderCount: number;
-  volume24h: string;
-  priceChange24h: number;
-  graduated: boolean;
-  poolAddress?: string;
+  description?: string;
+  coinType?: string;
+  totalSupply?: string;
+  totalVolume?: string;
+  volume24h?: string;
+  createdAt?: string;
+  creatorAddress?: string;
+  creatorProfile?: {
+    handle?: string;
+    avatar?: { previewImage?: { medium?: string; small?: string } } | null;
+    socialAccounts?: unknown[];
+  } | null;
+  poolCurrencyToken?: {
+    address?: string;
+    name?: string;
+    decimals?: number;
+  } | null;
+  tokenPrice?: {
+    priceInUsdc?: string;
+    priceInPoolToken?: string;
+    currencyAddress?: string;
+  } | null;
+  marketCap?: string;
+  marketCapDelta24h?: string;
+  chainId?: number;
+  tokenUri?: string;
+  uniqueHolders?: number;
+  uniswapV3PoolAddress?: string | null;
+  uniswapV4PoolKey?: string | null;
+  platformBlocked?: boolean;
 }
 
 /**

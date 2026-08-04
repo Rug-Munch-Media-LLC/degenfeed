@@ -290,8 +290,8 @@ async function fetchNostrLive(filter: LiveHubFilter): Promise<UnifiedLiveStream[
 
 async function fetchZoraLiveMints(filter: LiveHubFilter): Promise<UnifiedLiveStream[]> {
   try {
-    // @ts-expect-error - @degenfeed/zora-sdk/live-mint is lazy optional peer dependency
     const { fetchZoraLiveMints, normalizeZoraLiveMint } = await import(
+      // @ts-expect-error - @degenfeed/zora-sdk/live-mint is lazy optional peer dependency
       '@degenfeed/zora-sdk/live-mint'
     );
     const mints = await fetchZoraLiveMints({ limit: filter.limit ?? 20 });

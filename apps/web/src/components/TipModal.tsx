@@ -3,6 +3,7 @@
 import { TIP_CHAIN_CONFIG, tipOnChain } from '@degenfeed/web3';
 import { QRCodeSVG } from 'qrcode.react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { SPL_TOKEN_MINTS, type SplTokenSymbol } from '../lib/solana-spl';
 import type { TipPostContext } from '../hooks/useTip';
 import { useTip } from '../hooks/useTip';
 import { useAnnouncer } from './ScreenReaderAnnouncer';
@@ -44,6 +45,8 @@ export function TipModal({
   const [onchainChain, setOnchainChain] = useState<string>('base');
   /** True while a direct on-chain tx is pending confirmation. */
   const [onchainPending, setOnchainPending] = useState(false);
+  /** SPL token for Solana tips — SOL (native) or a well-known SPL mint. */
+  const [solanaToken, setSolanaToken] = useState<SplTokenSymbol | 'SOL'>('SOL');
 
   // Resolve tipping methods on open + inject on-chain method client-side
   useEffect(() => {
@@ -109,6 +112,7 @@ export function TipModal({
   const handleClose = useCallback(() => {
     setInvoice(null);
     setOnchainPending(false);
+    setSolanaToken('SOL');
     onClose();
   }, [onClose]);
 
@@ -289,6 +293,9 @@ export function TipModal({
         const { signature } = await signAndSendTransaction(
           intent.intent.to,
           Number.parseFloat(amount),
+          solanaToken === 'SOL'
+            ? undefined
+            : { mint: SPL_TOKEN_MINTS[solanaToken].address },
         );
         setTipStatus('sent', signature);
         window.dispatchEvent(
@@ -573,7 +580,7 @@ export function TipModal({
                         : selected?.method === 'base'
                           ? 'ETH (Base)'
                           : selected?.method === 'solana'
-                            ? 'SOL'
+                            ? solanaToken
                             : isOnchain
                               ? `ETH (${chainCfg?.name ?? 'Base'})`
                               : ''}
@@ -684,6 +691,38 @@ export function TipModal({
                     {chainCfg
                       ? `L2 gas only — typically $0.01-0.10 on ${chainCfg.name}`
                       : 'Select an L2 network'}
+                  </p>
+                </div>
+              )}
+
+              {/* == Solana token picker (SOL / USDC / BONK) ============ */}
+              {selectedMethod === 'solana' && (
+                <div className="mb-4">
+                  <span className="mb-2 block text-xs font-medium uppercase tracking-widest text-[var(--color-muted)]">
+                    Token
+                  </span>
+                  <div className="flex gap-2">
+                    {(['SOL', 'USDC', 'BONK'] as const).map((token) => (
+                      <button
+                        key={token}
+                        type="button"
+                        onClick={() => setSolanaToken(token)}
+                        className={`flex-1 rounded-lg border px-3 py-2 text-center text-xs font-medium transition-colors ${
+                          solanaToken === token
+                            ? 'border-purple-500 bg-purple-500/20 text-purple-300'
+                            : 'border-[var(--color-border)] text-[var(--color-muted)] hover:border-[var(--color-border)]'
+                        }`}
+                      >
+                        {token === 'SOL'
+                          ? '◎ SOL'
+                          : `$${token} (${token === 'BONK' ? '🐕' : '💵'})`}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="mt-1.5 text-[10px] text-[var(--color-muted)]">
+                    {solanaToken === 'SOL'
+                      ? 'Native SOL — sub-cent fees'
+                      : `${solanaToken} via SPL token transfer — sub-cent fees`}
                   </p>
                 </div>
               )}
