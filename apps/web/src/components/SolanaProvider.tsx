@@ -1,6 +1,11 @@
 'use client';
 
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from 'react';
+import {
+  createSolanaConnection,
+  transferSol,
+  transferSPLToken,
+} from '../lib/solana-spl';
 
 interface SolanaWalletProvider {
   isPhantom?: boolean;
@@ -21,12 +26,21 @@ declare global {
   }
 }
 
+export interface SolanaTransferOptions {
+  /** SPL token mint address. When omitted, sends native SOL. */
+  mint?: string;
+}
+
 interface SolanaContextValue {
   account: string | null;
   isConnected: boolean;
   connect: () => Promise<string>;
   disconnect: () => void;
-  signAndSendTransaction: (to: string, amount: number) => Promise<{ signature: string }>;
+  signAndSendTransaction: (
+    to: string,
+    amount: number,
+    opts?: SolanaTransferOptions,
+  ) => Promise<{ signature: string }>;
   providerName: string;
 }
 
@@ -70,6 +84,11 @@ function getSolanaProvider(): { provider: SolanaWalletProvider; name: string } |
   return null;
 }
 
+/** Coerce a provider public key into a plain string address. */
+function publicKeyToString(pubKey: { toString(): string } | undefined): string {
+  return pubKey ? pubKey.toString() : '';
+}
+
 export function SolanaProvider({ children }: { children: ReactNode }) {
   const [account, setAccount] = useState<string | null>(null);
   const [providerName, setProviderName] = useState('');
@@ -91,7 +110,7 @@ export function SolanaProvider({ children }: { children: ReactNode }) {
       throw new Error('No Solana wallet detected. Install Phantom, Solflare, or Backpack.');
     try {
       const resp = await provider.connect();
-      const pubKey = resp.publicKey?.toString() || provider.publicKey?.toString() || '';
+      const pubKey = publicKeyToString(resp.publicKey) || publicKeyToString(provider.publicKey);
       if (pubKey) setAccount(pubKey);
       return pubKey;
     } catch (err) {
@@ -106,15 +125,31 @@ export function SolanaProvider({ children }: { children: ReactNode }) {
   }, [getProvider]);
 
   const signAndSendTransaction = useCallback(
-    async (_to: string, _amount: number): Promise<{ signature: string }> => {
-      // NOTE: @solana/web3.js was removed to save 200KB bundle weight.
-      // Re-add via `pnpm add @solana/web3.js` if Solana tx sending is needed.
-      throw new Error(
-        'Solana transaction sending is not available in this build. ' +
-          'Contact the team if you need this feature.',
-      );
+    async (to: string, amount: number, opts?: SolanaTransferOptions): Promise<{ signature: string }> => {
+      const provider = getProvider();
+      if (!provider)
+        throw new Error('No Solana wallet detected. Install Phantom, Solflare, or Backpack.');
+
+      // Ensure we have an account (connect on demand).
+      let from = account;
+      if (!from) from = await connect();
+      if (!from) throw new Error('Could not determine Solana wallet address');
+
+      const wallet = {
+        publicKey: { toString: () => from },
+        signTransaction: provider.signTransaction,
+      };
+      const connection = createSolanaConnection();
+
+      // SPL token transfer (USDC / USDT / BONK / any mint).
+      if (opts?.mint) {
+        return transferSPLToken(connection, wallet, to, opts.mint, amount);
+      }
+
+      // Native SOL transfer.
+      return transferSol(connection, wallet, to, amount);
     },
-    [],
+    [account, connect, getProvider],
   );
 
   const value: SolanaContextValue = {

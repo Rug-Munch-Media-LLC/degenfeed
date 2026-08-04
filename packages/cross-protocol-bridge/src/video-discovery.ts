@@ -267,6 +267,7 @@ async function fetchFarcasterShorts(_filter: UnifiedShortsFilter): Promise<Unifi
 async function fetchZoraShorts(filter: UnifiedShortsFilter): Promise<UnifiedShort[]> {
   try {
     const { fetchZoraShortVideos, normalizeZoraShort } = await import(
+      // @ts-expect-error - @degenfeed/zora-sdk/live-mint is lazy optional peer dependency
       '@degenfeed/zora-sdk/live-mint'
     );
     const nfts = await fetchZoraShortVideos({ limit: filter.limit ?? 20 });
@@ -304,7 +305,6 @@ async function fetchZoraShorts(filter: UnifiedShortsFilter): Promise<UnifiedShor
 async function fetchLensShorts(_filter: UnifiedShortsFilter): Promise<UnifiedShort[]> {
   // Lens shorts come from publications with video media
   try {
-    // @ts-expect-error - @degenfeed/lens-sdk/video is lazy optional peer dependency
     await import('@degenfeed/lens-sdk/video');
     // Would use LensClient to fetch publications
     return [];
