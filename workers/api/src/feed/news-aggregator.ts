@@ -37,6 +37,13 @@ import {
 } from './news-helpers';
 import { fetchRssFeed, parseFeedXml } from './news-rss-parser';
 import { NEWS_SOURCES, NEWSLETTER_FEEDS } from './news-source-tiers';
+import {
+  computeBiasDistribution,
+  sourceBias,
+  sourceBiasScore,
+  sourceFactuality,
+  type BiasLabel,
+} from './news-bias';
 
 /**
  * Total number of unique news sources.
@@ -311,6 +318,7 @@ export async function aggregateNews(
     const bodyText = text || item.description || item.title || '';
     const readingTime = estimateReadingTime(bodyText);
     const hash = contentHash(text, 500);
+    const bias: BiasLabel = sourceBias(source.name);
 
     const story: AggregatedStory = {
       id: `news:${canonicalUrl.slice(0, 128).replace(/[^a-zA-Z0-9_-]/g, '_')}`,
@@ -339,6 +347,10 @@ export async function aggregateNews(
       heroImage: item.image || item.mediaThumbnail || undefined,
       metaDescription: item.description?.slice(0, 300),
       authorName: item.creator || undefined,
+      // Ground News-style ratings — free informational metadata
+      bias,
+      biasScore: sourceBiasScore(source.name),
+      factualRating: sourceFactuality(source.name),
     };
 
     // Dedup Layer 1: URL exact match
@@ -424,6 +436,26 @@ export async function aggregateNews(
     if (story.entities.people.length > 0) story.score += 0.2;
   }
 
+  // 5b. Bias diversity boost (Ground News-style balance): gently lift
+  // stories from bias groups that are under-represented in the top slice
+  // so the feed shows a balanced mix of left / center / right coverage.
+  const topStories = [...stories].sort((a, b) => b.score - a.score).slice(0, 50);
+  const biasCounts: Record<string, number> = { left: 0, center: 0, right: 0 };
+  for (const s of topStories) {
+    const label = s.bias ?? 'center';
+    const bucket = label === 'left' || label === 'center-left' ? 'left' : label === 'right' || label === 'center-right' ? 'right' : 'center';
+    biasCounts[bucket] = (biasCounts[bucket] ?? 0) + 1;
+  }
+  const maxBias = Math.max(1, ...Object.values(biasCounts));
+  for (const story of stories) {
+    const label = story.bias ?? 'center';
+    const bucket = label === 'left' || label === 'center-left' ? 'left' : label === 'right' || label === 'center-right' ? 'right' : 'center';
+    const share = biasCounts[bucket] ?? 0;
+    // Under-represented buckets get up to a +1.8 score lift.
+    const boost = (1 - share / maxBias) * 1.8;
+    if (boost > 0) story.score += boost;
+  }
+
   // 6. Story clustering
   const clusters = clusterStories(stories);
 
@@ -499,6 +531,7 @@ export async function aggregateNews(
       errors,
       sentiment: sentimentTotals,
       trending,
+      biasDistribution: computeBiasDistribution(filtered),
     },
   };
 }

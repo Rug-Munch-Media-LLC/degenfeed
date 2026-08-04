@@ -2,6 +2,8 @@
 
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
+import { CreatorCoinComingSoon } from '@/components/creator-coin/CreatorCoinComingSoon';
+import { CREATOR_COIN_ENABLED } from '@/lib/creatorCoinConfig';
 
 const CreateCoinWizard = dynamic(() => import('../../../components/launch/CreateCoinWizard'), {
   ssr: false,
@@ -37,6 +39,19 @@ const CreateCoinWizard = dynamic(() => import('../../../components/launch/Create
 });
 
 export default function CreateCoinPage() {
+  // Token launch creation is gated behind CREATOR_COIN_ENABLED.
+  if (!CREATOR_COIN_ENABLED) {
+    return (
+      <div className="mx-auto max-w-6xl px-4 py-6">
+        <CreatorCoinComingSoon
+          variant="page"
+          title="Token Launch — Coming Soon"
+          description="Launching a new creator coin is not yet open to the public. The backend is live in closed testing; the launch flow will be enabled once the contracts have passed end-to-end verification."
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen py-6 sm:py-10">
       {/* Back link */}

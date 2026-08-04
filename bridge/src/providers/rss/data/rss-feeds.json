@@ -2489,5 +2489,214 @@
       "news",
       "business"
     ]
+  },
+  {
+    "url": "https://messari.io/rss",
+    "label": "Messari",
+    "category": "crypto-research",
+    "niches": [
+      "crypto",
+      "research"
+    ],
+    "featured": true
+  },
+  {
+    "url": "https://www.delphidigital.io/rss",
+    "label": "Delphi Digital",
+    "category": "crypto-research",
+    "niches": [
+      "crypto",
+      "research"
+    ],
+    "featured": true
+  },
+  {
+    "url": "https://www.galaxy.com/insights/research/feed/",
+    "label": "Galaxy Research",
+    "category": "crypto-research",
+    "niches": [
+      "crypto",
+      "research"
+    ]
+  },
+  {
+    "url": "https://feeds.a.dj.com/rss/RSSMarketsMain.xml",
+    "label": "WSJ Crypto",
+    "category": "business",
+    "niches": [
+      "crypto",
+      "markets",
+      "finance"
+    ]
+  },
+  {
+    "url": "https://feeds.reuters.com/reuters/technologyNews",
+    "label": "Reuters",
+    "category": "world",
+    "niches": [
+      "tech",
+      "markets",
+      "finance"
+    ]
+  },
+  {
+    "url": "https://www.coinspeaker.com/feed/",
+    "label": "Coinspeaker",
+    "category": "crypto-news",
+    "niches": [
+      "crypto"
+    ]
+  },
+  {
+    "url": "https://feeds.feedburner.com/zerohedge/feed",
+    "label": "ZeroHedge",
+    "category": "business",
+    "niches": [
+      "crypto",
+      "markets",
+      "macro"
+    ]
+  },
+  {
+    "url": "https://www.vice.com/en/rss",
+    "label": "Vice",
+    "category": "culture",
+    "niches": [
+      "tech",
+      "culture"
+    ]
+  },
+  {
+    "url": "https://www.vice.com/en/rss/tag/tech",
+    "label": "Motherboard",
+    "category": "tech",
+    "niches": [
+      "tech",
+      "privacy"
+    ]
+  },
+  {
+    "url": "https://defillama.com/rss",
+    "label": "DeFi Llama",
+    "category": "defi",
+    "niches": [
+      "defi",
+      "tvl"
+    ]
+  },
+  {
+    "url": "https://blog.curve.fi/rss/",
+    "label": "Curve",
+    "category": "defi",
+    "niches": [
+      "defi",
+      "stablecoin"
+    ]
+  },
+  {
+    "url": "https://aave.mirror.xyz/feed",
+    "label": "Aave",
+    "category": "defi",
+    "niches": [
+      "defi",
+      "lending"
+    ],
+    "platform": "mirror"
+  },
+  {
+    "url": "https://www.milkroad.com/feed",
+    "label": "Milk Road",
+    "category": "newsletter",
+    "niches": [
+      "crypto",
+      "markets"
+    ]
+  },
+  {
+    "url": "https://steadylads.substack.com/feed",
+    "label": "Steady Lads",
+    "category": "newsletter",
+    "niches": [
+      "crypto",
+      "memecoin"
+    ],
+    "platform": "substack"
+  },
+  {
+    "url": "https://kermankohli.substack.com/feed",
+    "label": "Kerman Kohli",
+    "category": "newsletter",
+    "niches": [
+      "crypto",
+      "research"
+    ],
+    "platform": "substack"
+  },
+  {
+    "url": "https://alphaplease.co/feed",
+    "label": "Alpha Please",
+    "category": "newsletter",
+    "niches": [
+      "crypto",
+      "research"
+    ]
+  },
+  {
+    "url": "https://www.therollup.co/feed",
+    "label": "The Rollup",
+    "category": "newsletter",
+    "niches": [
+      "crypto",
+      "defi"
+    ]
+  },
+  {
+    "url": "https://defidad.substack.com/feed",
+    "label": "DeFi Dad",
+    "category": "newsletter",
+    "niches": [
+      "crypto",
+      "defi"
+    ],
+    "platform": "substack"
+  },
+  {
+    "url": "https://0xresearch.substack.com/feed",
+    "label": "0x Research",
+    "category": "newsletter",
+    "niches": [
+      "crypto",
+      "research"
+    ],
+    "platform": "substack"
+  },
+  {
+    "url": "https://zora.mirror.xyz/feed",
+    "label": "Zora Mirror",
+    "category": "nft",
+    "niches": [
+      "nft",
+      "social"
+    ],
+    "platform": "mirror"
+  },
+  {
+    "url": "https://public--assembly.mirror.xyz/feed",
+    "label": "Public Assembly",
+    "category": "culture",
+    "niches": [
+      "nft",
+      "culture"
+    ],
+    "platform": "mirror"
+  },
+  {
+    "url": "https://arkive.mirror.xyz/feed",
+    "label": "Arkive",
+    "category": "nft",
+    "niches": [
+      "nft"
+    ],
+    "platform": "mirror"
   }
 ]

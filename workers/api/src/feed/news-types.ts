@@ -57,6 +57,10 @@ export interface AggregatedStory {
   alsoCoveredByCount?: number;
   contentHash?: string;
   dedupSimilarity?: number;
+  // Ground News-style ratings — free informational metadata
+  bias?: 'left' | 'center-left' | 'center' | 'center-right' | 'right';
+  biasScore?: number; // -1.0 (left) .. +1.0 (right)
+  factualRating?: 'very-high' | 'high' | 'mixed' | 'low' | 'very-low';
 }
 
 // ─── Story Entities ──────────────────────────────────────────────────
@@ -127,6 +131,7 @@ export interface AggregationResult {
     errors: string[];
     sentiment: { bullish: number; bearish: number; neutral: number };
     trending: Array<{ topic: string; count: number; score: number }>;
+    biasDistribution?: { left: number; center: number; right: number };
   };
 }
 

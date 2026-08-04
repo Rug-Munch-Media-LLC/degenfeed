@@ -54,6 +54,10 @@ interface NewsStoryResponse {
   heroImage?: string;
   authorName?: string;
   metaDescription?: string;
+  // Ground News-style ratings
+  bias?: 'left' | 'center-left' | 'center' | 'center-right' | 'right';
+  biasScore?: number;
+  factualRating?: 'very-high' | 'high' | 'mixed' | 'low' | 'very-low';
 }
 
 interface StoryClusterResponse {
@@ -89,6 +93,7 @@ interface NewsMetaResponse {
     count: number;
     avgConfidence: number;
   }>;
+  biasDistribution?: { left: number; center: number; right: number };
 }
 
 // ─── Cache ────────────────────────────────────────────────────────────
@@ -147,6 +152,9 @@ function mapStory(s: AggregatedStory): NewsStoryResponse {
     heroImage: s.heroImage || undefined,
     authorName: s.authorName || undefined,
     metaDescription: s.metaDescription || s.summary?.slice(0, 300),
+    bias: s.bias,
+    biasScore: s.biasScore,
+    factualRating: s.factualRating,
   };
 }
 
@@ -215,6 +223,7 @@ function buildMeta(result: AggregationResult, opts: AggregationOptions): NewsMet
     query: opts.query || undefined,
     personalized: false,
     topCategories,
+    biasDistribution: result.meta.biasDistribution,
   };
 }
 
