@@ -20,24 +20,37 @@ const _$fetch = globalThis.fetch;
  * Our relay + public relays.
  *
  * Order matters: the local relay is queried first (fast, self-hosted data),
- * then reliable public relays. Known-flaky relays are kept but queried with
- * a short timeout so they never block the feed: the bridge feed builder
- * wraps every provider fetch in a 5s budget (FETCH_TIMEOUT_MS in feeds.ts),
- * so any relay that hangs for its full per-relay timeout would cause the
- * whole provider to be killed and fail over to a different protocol.
+ * then the fastest verified public relays, then the well-known relays that
+ * are required for network coverage even when they are slow or currently
+ * unreachable from this host (they cost nothing — every relay fetch runs in
+ * parallel under a hard total budget, so a dead relay just contributes zero
+ * events without blocking the working set).
+ *
+ * Verified live 2026-08-04 from this host (WS connect + kind-1 EVENT within
+ * ~1.2s): nos.lol, relay.primal.net, purplepag.es, nostr.wine, offchain.pub,
+ * relay.nostr.net, nostr.land, relay.mostr.pub, relay.nostrview.com.
+ * damus.io is slow (~7s) and nostr.band / snort.social / eden.nostr.land are
+ * currently unreachable from this host — they are kept (well-known relays,
+ * may recover) but placed last so their timeouts never starve the fast set.
+ *
+ * The bridge feed builder wraps every provider fetch in a 5s budget
+ * (FETCH_TIMEOUT_MS in feeds.ts), and this provider's own fan-out budget
+ * (withTotalBudget) is 4.5s — so no single relay can stall the feed.
  */
 const RELAYS = [
   { url: 'ws://127.0.0.1:8085', local: true },
   { url: 'wss://nos.lol', local: false },
-  { url: 'wss://purplepag.es', local: false },
-  { url: 'wss://relay.damus.io', local: false },
   { url: 'wss://relay.primal.net', local: false },
+  { url: 'wss://purplepag.es', local: false },
+  { url: 'wss://nostr.wine', local: false },
+  { url: 'wss://offchain.pub', local: false },
+  { url: 'wss://relay.nostr.net', local: false },
+  { url: 'wss://nostr.land', local: false },
+  { url: 'wss://relay.mostr.pub', local: false },
+  { url: 'wss://relay.nostrview.com', local: false },
+  // Well-known relays — required coverage even if slow/unreachable today.
+  { url: 'wss://relay.damus.io', local: false },
   { url: 'wss://relay.nostr.band', local: false },
-  // Verified-healthy public relays (2026-08-04). Damus and nostr.band were
-  // observed erroring/timing out during bridge operation, so we overweight
-  // the working set: more relays means the per-relay share stays small and
-  // the fan-out still completes inside the 3.5s budget even when a couple
-  // of relays are slow.
   { url: 'wss://relay.snort.social', local: false },
   { url: 'wss://eden.nostr.land', local: false },
 ];
@@ -151,6 +164,25 @@ function parseProfile(content: string): NostrProfile | null {
   }
 }
 
+/**
+ * Reject common kind-1 spam shapes that public relays store alongside real
+ * notes: JSON-array payloads (e.g. [{"id":...,"service":"youtube-tab",...}])
+ * and bare JSON strings. These are not human notes and pollute the feed.
+ */
+function isSpamContent(content: string): boolean {
+  const t = (content || '').trim();
+  if (!t) return true;
+  if (t.length > 80 && (t.startsWith('[') || t.startsWith('{'))) {
+    try {
+      const parsed = JSON.parse(t);
+      if (Array.isArray(parsed) || (parsed && typeof parsed === 'object')) return true;
+    } catch {
+      /* not valid JSON — keep */
+    }
+  }
+  return false;
+}
+
 // ─── Relay Fetch ───────────────────────────────────────────────────────
 
 /**
@@ -175,7 +207,7 @@ async function withTotalBudget<T>(promise: Promise<T>, ms: number): Promise<T> {
 function fetchFromRelay(
   relayUrl: string,
   filter: { kinds: number[]; limit: number; authors?: string[] },
-  timeout = 2500,
+  timeout = 3000,
 ): Promise<{ events: NostrEvent[]; profiles: NostrEvent[] }> {
   return new Promise((resolve) => {
     const events: NostrEvent[] = [];
@@ -298,9 +330,9 @@ export async function fetchNostrPosts(limit = 20): Promise<UnifiedPost[]> {
     console.log('[nostr] Rate limited, skipping fetch');
     return [];
   }
-  const perRelay = Math.max(4, Math.ceil(limit / RELAYS.length));
-  const curatedShare = Math.max(2, Math.ceil(perRelay * 0.6));
-  const generalShare = Math.max(2, Math.ceil(perRelay * 0.4));
+  const perRelay = Math.max(6, Math.ceil(limit / RELAYS.length));
+  const curatedShare = Math.max(3, Math.ceil(perRelay * 0.6));
+  const generalShare = Math.max(3, Math.ceil(perRelay * 0.4));
 
   // Total budget for the whole relay fan-out. The feed builder (feeds.ts)
   // kills provider fetches after 5s (FETCH_TIMEOUT_MS), so we must always
@@ -323,7 +355,7 @@ export async function fetchNostrPosts(limit = 20): Promise<UnifiedPost[]> {
         }),
       ]),
     ),
-    4000,
+    4500,
   );
   // Budget may elapse before allSettled finishes — treat missing results as empty.
   const results: PromiseSettledResult<{ events: NostrEvent[]; profiles: NostrEvent[] }>[] =
@@ -351,7 +383,7 @@ export async function fetchNostrPosts(limit = 20): Promise<UnifiedPost[]> {
   const sorted = allEvents.sort((a, b) => b.created_at - a.created_at);
 
   for (const ev of sorted) {
-    if (!seen.has(ev.id) && ev.content && ev.content.trim()) {
+    if (!seen.has(ev.id) && !isSpamContent(ev.content)) {
       seen.add(ev.id);
       unique.push(ev);
       if (unique.length >= limit) break;
