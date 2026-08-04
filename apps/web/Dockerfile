@@ -33,6 +33,11 @@ ARG NEXT_PUBLIC_APP_URL
 ARG NEXT_PUBLIC_API_BASE
 ARG NEXT_PUBLIC_API_URL
 ARG NEXT_PUBLIC_WS_URL
+# API proxy target is baked into rewrites() at build time — must be set here
+# (defaults to the docker-DNS api-server container which is reachable from
+# the web container on the degenfeed_default network).
+ARG API_PROXY_TARGET=http://degenfeed-api:3001
+ENV API_PROXY_TARGET=$API_PROXY_TARGET
 
 WORKDIR /app
 
