@@ -856,4 +856,16 @@ export const TIER_1_SOURCES: NewsSourceMeta[] = [
     nicheTags: ['regulation', 'aml', 'kyc', 'banking', 'compliance'],
     imageSupport: true,
   },
+  {
+    id: 'reuters',
+    name: 'Reuters',
+    category: 'business',
+    tier: 1,
+    credibility: 0.93,
+    weight: 1.4,
+    url: 'https://feeds.reuters.com/reuters/technologyNews',
+    type: 'rss',
+    nicheTags: ['tech', 'markets', 'finance', 'world'],
+    imageSupport: true,
+  },
 ];

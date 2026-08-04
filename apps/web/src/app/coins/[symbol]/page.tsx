@@ -27,6 +27,8 @@
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { CreatorCoinComingSoon } from '@/components/creator-coin/CreatorCoinComingSoon';
+import { CREATOR_COIN_ENABLED } from '@/lib/creatorCoinConfig';
 
 // ══════════════════════════════════════════════════════════════════════
 // TYPES
@@ -1315,134 +1317,144 @@ export default function CoinDetailPage() {
 
         {/* ════════ RIGHT: Buy/Sell + Quick Info ════════ */}
         <div className="space-y-4">
-          {/* Trade Card */}
-          <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-4">
-            <div className="mb-4 flex rounded-xl bg-[var(--color-overlay)] p-0.5">
-              <button
-                type="button"
-                onClick={() => setTradeMode('buy')}
-                className={`flex-1 rounded-lg py-2 text-xs font-bold transition-all ${tradeMode === 'buy' ? 'bg-degen-500/20 text-degen-400 shadow-sm' : 'text-[var(--color-muted)]'}`}
-              >
-                Buy
-              </button>
-              <button
-                type="button"
-                onClick={() => setTradeMode('sell')}
-                className={`flex-1 rounded-lg py-2 text-xs font-bold transition-all ${tradeMode === 'sell' ? 'bg-red-500/20 text-red-400 shadow-sm' : 'text-[var(--color-muted)]'}`}
-              >
-                Sell
-              </button>
-            </div>
-            <div className="mb-4 text-center">
-              <div className="text-lg font-black tabular-nums text-[var(--color-fg)]">
-                ${formatPrice(detail.price)}
-              </div>
-              <div className={`text-xs font-semibold ${isUp ? 'text-degen-400' : 'text-red-400'}`}>
-                {isUp ? '+' : ''}
-                {detail.priceChange24h.toFixed(2)}%
-              </div>
-            </div>
-            <label className="mb-3 block">
-              <span className="mb-1 flex items-center justify-between text-[10px] text-[var(--color-muted)]">
-                <span>Amount</span>
-                <span>Balance: —</span>
-              </span>
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="0.0"
-                  value={tradeAmount}
-                  onChange={(e) => setTradeAmount(e.target.value.replace(/[^0-9.]/g, ''))}
-                  className="input w-full pr-14 text-sm font-mono"
-                />
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-semibold text-[var(--color-muted)]">
-                  {detail.symbol}
-                </span>
-              </div>
-            </label>
-            <div className="mb-3 flex items-center justify-between text-[10px] text-[var(--color-muted)]">
-              <span>Total</span>
-              <span className="font-mono text-[var(--color-fg)]">
-                ${(Number(tradeAmount || 0) * detail.price).toFixed(4)}
-              </span>
-            </div>
-            <div className="mb-4">
-              <div className="flex items-center justify-between">
+          {/* Trade Card — gated behind CREATOR_COIN_ENABLED */}
+          {CREATOR_COIN_ENABLED ? (
+            <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-4">
+              <div className="mb-4 flex rounded-xl bg-[var(--color-overlay)] p-0.5">
                 <button
                   type="button"
-                  onClick={() => setShowSlippageConfig(!showSlippageConfig)}
-                  className="flex items-center gap-1 text-[10px] text-[var(--color-muted)] hover:text-[var(--color-fg)]"
+                  onClick={() => setTradeMode('buy')}
+                  className={`flex-1 rounded-lg py-2 text-xs font-bold transition-all ${tradeMode === 'buy' ? 'bg-degen-500/20 text-degen-400 shadow-sm' : 'text-[var(--color-muted)]'}`}
                 >
-                  ⚙️ Slippage: {slippage}%
+                  Buy
                 </button>
-                <span className="text-[9px] text-[var(--color-muted)]">Fee: 1.5% total</span>
+                <button
+                  type="button"
+                  onClick={() => setTradeMode('sell')}
+                  className={`flex-1 rounded-lg py-2 text-xs font-bold transition-all ${tradeMode === 'sell' ? 'bg-red-500/20 text-red-400 shadow-sm' : 'text-[var(--color-muted)]'}`}
+                >
+                  Sell
+                </button>
               </div>
-              {showSlippageConfig && (
-                <div className="mt-2 flex items-center gap-1">
-                  {[0.5, 1.0, 2.0, 3.0, 5.0].map((s) => (
-                    <button
-                      key={s}
-                      type="button"
-                      onClick={() => {
-                        setSlippage(s);
-                        setShowSlippageConfig(false);
-                      }}
-                      className={`rounded-lg px-2.5 py-1 text-[9px] font-medium transition-all ${slippage === s ? 'bg-degen-500/15 text-degen-400' : 'bg-[var(--color-overlay)] text-[var(--color-muted)] hover:text-[var(--color-fg)]'}`}
-                    >
-                      {s}%
-                    </button>
-                  ))}
+              <div className="mb-4 text-center">
+                <div className="text-lg font-black tabular-nums text-[var(--color-fg)]">
+                  ${formatPrice(detail.price)}
+                </div>
+                <div
+                  className={`text-xs font-semibold ${isUp ? 'text-degen-400' : 'text-red-400'}`}
+                >
+                  {isUp ? '+' : ''}
+                  {detail.priceChange24h.toFixed(2)}%
+                </div>
+              </div>
+              <label className="mb-3 block">
+                <span className="mb-1 flex items-center justify-between text-[10px] text-[var(--color-muted)]">
+                  <span>Amount</span>
+                  <span>Balance: —</span>
+                </span>
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="0.0"
+                    value={tradeAmount}
+                    onChange={(e) => setTradeAmount(e.target.value.replace(/[^0-9.]/g, ''))}
+                    className="input w-full pr-14 text-sm font-mono"
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-semibold text-[var(--color-muted)]">
+                    {detail.symbol}
+                  </span>
+                </div>
+              </label>
+              <div className="mb-3 flex items-center justify-between text-[10px] text-[var(--color-muted)]">
+                <span>Total</span>
+                <span className="font-mono text-[var(--color-fg)]">
+                  ${(Number(tradeAmount || 0) * detail.price).toFixed(4)}
+                </span>
+              </div>
+              <div className="mb-4">
+                <div className="flex items-center justify-between">
+                  <button
+                    type="button"
+                    onClick={() => setShowSlippageConfig(!showSlippageConfig)}
+                    className="flex items-center gap-1 text-[10px] text-[var(--color-muted)] hover:text-[var(--color-fg)]"
+                  >
+                    ⚙️ Slippage: {slippage}%
+                  </button>
+                  <span className="text-[9px] text-[var(--color-muted)]">Fee: 1.5% total</span>
+                </div>
+                {showSlippageConfig && (
+                  <div className="mt-2 flex items-center gap-1">
+                    {[0.5, 1.0, 2.0, 3.0, 5.0].map((s) => (
+                      <button
+                        key={s}
+                        type="button"
+                        onClick={() => {
+                          setSlippage(s);
+                          setShowSlippageConfig(false);
+                        }}
+                        className={`rounded-lg px-2.5 py-1 text-[9px] font-medium transition-all ${slippage === s ? 'bg-degen-500/15 text-degen-400' : 'bg-[var(--color-overlay)] text-[var(--color-muted)] hover:text-[var(--color-fg)]'}`}
+                      >
+                        {s}%
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              {trading && (
+                <div className="mb-3 rounded-lg border border-[var(--color-glass-border)] bg-[var(--color-overlay)] p-2 text-center text-[10px] text-[var(--color-muted)]">
+                  ⏳ Submitting {tradeMode} transaction on-chain…
                 </div>
               )}
-            </div>
-            {trading && (
-              <div className="mb-3 rounded-lg border border-[var(--color-glass-border)] bg-[var(--color-overlay)] p-2 text-center text-[10px] text-[var(--color-muted)]">
-                ⏳ Submitting {tradeMode} transaction on-chain…
-              </div>
-            )}
-            {tradeError && (
-              <div
-                className="mb-3 rounded-lg border border-red-500/30 bg-red-500/10 p-2 text-[10px] text-red-400"
-                role="alert"
-              >
-                {tradeError}
-              </div>
-            )}
-            {tradeResult && (
-              <div className="mb-3 rounded-lg border border-degen-500/30 bg-degen-500/10 p-2 text-[10px]">
-                <div className="font-semibold text-degen-400">
-                  ✅ {tradeResult.action === 'sell' ? 'Sold' : 'Bought'} {tradeResult.amount}{' '}
-                  {tradeResult.symbol || detail.symbol}
-                </div>
-                <a
-                  href={tradeResult.explorerUrl || '#'}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-1 inline-block font-mono text-[var(--color-muted)] hover:text-degen-400"
+              {tradeError && (
+                <div
+                  className="mb-3 rounded-lg border border-red-500/30 bg-red-500/10 p-2 text-[10px] text-red-400"
+                  role="alert"
                 >
-                  View transaction: {shortenAddress(tradeResult.txHash)} ↗
-                </a>
-              </div>
-            )}
-            {!isConnected ? (
-              <button
-                type="button"
-                onClick={() => setIsConnected(true)}
-                className="w-full rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 py-3 text-xs font-bold text-white transition-all hover:from-purple-500 hover:to-blue-500 active:scale-[0.98]"
-              >
-                Connect Wallet to Trade
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={handleTrade}
-                disabled={!tradeAmount || Number(tradeAmount) <= 0 || trading}
-                className={`w-full rounded-xl py-3 text-xs font-bold text-white transition-all active:scale-[0.98] disabled:opacity-40 ${tradeMode === 'buy' ? 'bg-gradient-to-r from-degen-600 to-degen-400' : 'bg-gradient-to-r from-red-600 to-rose-500'}`}
-              >
-                {tradeMode === 'buy' ? `Buy ${detail.symbol}` : `Sell ${detail.symbol}`}
-              </button>
-            )}
-          </div>
+                  {tradeError}
+                </div>
+              )}
+              {tradeResult && (
+                <div className="mb-3 rounded-lg border border-degen-500/30 bg-degen-500/10 p-2 text-[10px]">
+                  <div className="font-semibold text-degen-400">
+                    ✅ {tradeResult.action === 'sell' ? 'Sold' : 'Bought'} {tradeResult.amount}{' '}
+                    {tradeResult.symbol || detail.symbol}
+                  </div>
+                  <a
+                    href={tradeResult.explorerUrl || '#'}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-1 inline-block font-mono text-[var(--color-muted)] hover:text-degen-400"
+                  >
+                    View transaction: {shortenAddress(tradeResult.txHash)} ↗
+                  </a>
+                </div>
+              )}
+              {!isConnected ? (
+                <button
+                  type="button"
+                  onClick={() => setIsConnected(true)}
+                  className="w-full rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 py-3 text-xs font-bold text-white transition-all hover:from-purple-500 hover:to-blue-500 active:scale-[0.98]"
+                >
+                  Connect Wallet to Trade
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleTrade}
+                  disabled={!tradeAmount || Number(tradeAmount) <= 0 || trading}
+                  className={`w-full rounded-xl py-3 text-xs font-bold text-white transition-all active:scale-[0.98] disabled:opacity-40 ${tradeMode === 'buy' ? 'bg-gradient-to-r from-degen-600 to-degen-400' : 'bg-gradient-to-r from-red-600 to-rose-500'}`}
+                >
+                  {tradeMode === 'buy' ? `Buy ${detail.symbol}` : `Sell ${detail.symbol}`}
+                </button>
+              )}
+            </div>
+          ) : (
+            <CreatorCoinComingSoon
+              variant="card"
+              title="Trading — Coming Soon"
+              description="Creator coin trading is not yet open to the public. The chart and on-chain info above are live; buy/sell will be enabled once the system has passed end-to-end verification."
+            />
+          )}
 
           {/* Quick Stats */}
           <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-3">
@@ -1548,8 +1560,8 @@ export default function CoinDetailPage() {
         </div>
       </div>
 
-      {/* Trade Confirmation Modal */}
-      {showConfirm && (
+      {/* Trade Confirmation Modal (only reachable when creator coins are enabled) */}
+      {CREATOR_COIN_ENABLED && showConfirm && (
         <TradeConfirmModal
           type={tradeMode}
           amount={tradeAmount}

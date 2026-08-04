@@ -1,9 +1,29 @@
 export type BiasLabel = 'left' | 'center-left' | 'center' | 'center-right' | 'right';
 export type FactualityLabel = 'very-high' | 'high' | 'mixed' | 'low' | 'very-low';
 
+/** Numeric bias score, -1.0 (far left) .. +1.0 (far right). 0 = center. */
+export type BiasScore = number;
+
+/**
+ * Default numeric score for each bias label on the 5-point scale.
+ * Used when a source has no explicit per-source score override.
+ */
+export const BIAS_LABEL_SCORE: Record<BiasLabel, number> = {
+  left: -1.0,
+  'center-left': -0.5,
+  center: 0,
+  'center-right': 0.5,
+  right: 1.0,
+};
+
 /**
  * Political bias per source (5-point scale). Keyed by feed label —
  * matches SOURCE_TIERS keys so ratings ride along with tiers.
+ *
+ * Crypto/finance additions compiled 2026-08-04 from AllSides/MBFC-style
+ * research (see docs/NEWS-SYSTEM-UPGRADE-RESEARCH.md §5). These are
+ * informational metadata for reader transparency — never used to censor
+ * or penalize a source.
  */
 export const SOURCE_BIAS: Record<string, BiasLabel> = {
   // Left-leaning
@@ -12,6 +32,19 @@ export const SOURCE_BIAS: Record<string, BiasLabel> = {
   Truthout: 'left',
   'Common Dreams': 'left',
   'The Intercept': 'left',
+  Motherboard: 'left',
+  Vice: 'left',
+  // Lean-left crypto / tech
+  CoinDesk: 'center-left',
+  Decrypt: 'center-left',
+  'The Block': 'center-left',
+  'The Defiant': 'center-left',
+  TechCrunch: 'center-left',
+  'The Verge': 'center-left',
+  Engadget: 'center-left',
+  Gizmodo: 'center-left',
+  Wired: 'center-left',
+  'The Register': 'center-left',
   'Mother Jones': 'center-left',
   Salon: 'center-left',
   'The Nation': 'left',
@@ -43,6 +76,38 @@ export const SOURCE_BIAS: Record<string, BiasLabel> = {
   'Le Monde': 'center-left',
   'El Pais': 'center-left',
   'Der Spiegel': 'center-left',
+  // Center — crypto / finance
+  CoinTelegraph: 'center',
+  'CoinTelegraph Bitcoin': 'center',
+  'CryptoSlate': 'center',
+  'Blockworks': 'center',
+  'Reuters Crypto': 'center',
+  'Reuters': 'center',
+  'AP': 'center',
+  'AP News': 'center',
+  'Bloomberg Crypto': 'center',
+  'FT Alphaville': 'center',
+  'WSJ Crypto': 'center-right',
+  'Bankless': 'center',
+  'Messari': 'center',
+  'Delphi Digital': 'center',
+  'CoinMetrics': 'center',
+  'Glassnode Insights': 'center',
+  'DeFi Llama': 'center',
+  'DeFiLlama': 'center',
+  'Yearn': 'center',
+  'Curve': 'center',
+  'Curve Finance': 'center',
+  'Aave': 'center',
+  'Lido': 'center',
+  'Uniswap': 'center',
+  'CoinGecko': 'center',
+  'CoinMarketCap': 'center',
+  'a16z Crypto': 'center',
+  'Paradigm': 'center',
+  'Pantera Capital': 'center',
+  'Galaxy Research': 'center',
+  'Grayscale Research': 'center',
   // Center
   'BBC World': 'center',
   'BBC Business': 'center',
@@ -138,7 +203,85 @@ export const SOURCE_BIAS: Record<string, BiasLabel> = {
   'The Times': 'center-right',
   'New York Post': 'right',
   Breitbart: 'right',
+  // Lean-right / right — crypto & finance
+  'Bitcoin Magazine': 'center-right',
+  BitcoinMagazine: 'center-right',
+  Coinspeaker: 'center-right',
+  'Bitcoin.com News': 'center-right',
+  'Bitcoinist': 'center-right',
+  'NewsBTC': 'center-right',
+  'Daily Hodl': 'center-right',
+  'Watcher.Guru': 'center-right',
+  'Zero Hedge Crypto': 'right',
+  ZeroHedge: 'right',
 };
+
+/**
+ * Explicit numeric bias scores per source (overrides the label default).
+ * -1.0 = far left, 0 = center, +1.0 = far right.
+ * Only sources whose score differs from their label default are listed.
+ */
+export const SOURCE_BIAS_SCORE: Record<string, BiasScore> = {
+  // Crypto media — most sit slightly off-center; keep scores conservative.
+  CoinDesk: -0.4,
+  Decrypt: -0.35,
+  'The Block': -0.35,
+  'The Defiant': -0.4,
+  CoinTelegraph: -0.1,
+  Blockworks: 0.1,
+  CryptoSlate: 0.0,
+  'Bitcoin Magazine': 0.55,
+  BitcoinMagazine: 0.55,
+  Coinspeaker: 0.45,
+  'Bitcoin.com News': 0.5,
+  Bitcoinist: 0.5,
+  NewsBTC: 0.5,
+  'Daily Hodl': 0.45,
+  'Watcher.Guru': 0.5,
+  ZeroHedge: 0.9,
+  'Zero Hedge Crypto': 0.9,
+  Breitbart: 0.95,
+  // Left / lean-left crypto-adjacent
+  Motherboard: -0.8,
+  Vice: -0.7,
+  'The Intercept': -0.85,
+  Wired: -0.35,
+  TechCrunch: -0.3,
+  'The Verge': -0.35,
+  // Finance
+  'WSJ Crypto': 0.35,
+  'Financial Times': 0.15,
+  FT: 0.15,
+  'FT Alphaville': 0.2,
+  'Bloomberg Crypto': 0.1,
+  'The Economist': 0.2,
+  Reuters: 0.0,
+  'Reuters Crypto': 0.0,
+  AP: 0.0,
+  'AP News': 0.0,
+};
+
+/**
+ * Map a feed label to its numeric bias score (-1.0 .. +1.0).
+ * Prefers an explicit SOURCE_BIAS_SCORE override, then falls back to the
+ * label default, then to 0 (center) for unknown sources.
+ */
+export function sourceBiasScore(label: string | undefined): BiasScore {
+  if (!label) return 0;
+  const explicit = SOURCE_BIAS_SCORE[label];
+  if (typeof explicit === 'number') return explicit;
+  const labelBias = SOURCE_BIAS[label];
+  if (labelBias) return BIAS_LABEL_SCORE[labelBias];
+  return 0;
+}
+
+/**
+ * Map a feed label to its human-readable bias label. Alias of sourceBias
+ * kept for clarity when consumers want the 5-point label explicitly.
+ */
+export function sourceBiasLabel(label: string | undefined): BiasLabel {
+  return sourceBias(label);
+}
 
 /**
  * Factuality rating per source (MBFC 5-point scale).
@@ -270,6 +413,57 @@ export const SOURCE_FACTUALITY: Record<string, FactualityLabel> = {
   'CNBC Markets': 'high',
   'CNBC Tech': 'high',
   'CNBC Crypto': 'high',
+  // Crypto / finance factuality (2026-08-04 additions)
+  'CoinDesk': 'high',
+  'Decrypt': 'high',
+  'The Block': 'high',
+  'CoinTelegraph': 'high',
+  'CoinTelegraph Bitcoin': 'high',
+  'CryptoSlate': 'mixed',
+  'Blockworks': 'high',
+  'The Defiant': 'mixed',
+  'Bankless': 'mixed',
+  'Messari': 'high',
+  'Delphi Digital': 'high',
+  'CoinMetrics': 'high',
+  'Glassnode Insights': 'high',
+  'Reuters Crypto': 'very-high',
+  'Reuters': 'very-high',
+  'WSJ Crypto': 'very-high',
+  'Bloomberg Crypto': 'very-high',
+  'DeFi Llama': 'high',
+  'DeFiLlama': 'high',
+  'Yearn': 'high',
+  'Curve': 'high',
+  'Curve Finance': 'high',
+  'Aave': 'high',
+  'Lido': 'high',
+  'Uniswap': 'high',
+  'CoinGecko': 'high',
+  'CoinMarketCap': 'high',
+  'a16z Crypto': 'high',
+  'Paradigm': 'high',
+  'Pantera Capital': 'high',
+  'Galaxy Research': 'high',
+  'Grayscale Research': 'high',
+  'Bitcoin Magazine': 'mixed',
+  'BitcoinMagazine': 'mixed',
+  'Coinspeaker': 'mixed',
+  'Bitcoin.com News': 'mixed',
+  'Bitcoinist': 'mixed',
+  'NewsBTC': 'mixed',
+  'Daily Hodl': 'mixed',
+  'Watcher.Guru': 'low',
+  'Zero Hedge Crypto': 'mixed',
+  'ZeroHedge': 'mixed',
+  'Motherboard': 'high',
+  'Vice': 'mixed',
+  'TechCrunch': 'high',
+  'The Verge': 'high',
+  'Engadget': 'high',
+  'Gizmodo': 'mixed',
+  'Wired': 'high',
+  'The Register': 'mixed',
 };
 
 /**
@@ -287,8 +481,3 @@ export function sourceFactuality(label: string | undefined): FactualityLabel {
   if (!label) return 'high';
   return SOURCE_FACTUALITY[label] ?? 'high';
 }
-
-/**
- * Freshness decay score 0..1 — newer articles rank higher.
- * Half-life of ~12 hours, floor at 0.05.
- */

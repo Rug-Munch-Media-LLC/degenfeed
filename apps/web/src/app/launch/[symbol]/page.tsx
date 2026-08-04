@@ -4,6 +4,8 @@ import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
+import { CreatorCoinComingSoon } from '@/components/creator-coin/CreatorCoinComingSoon';
+import { CREATOR_COIN_ENABLED } from '@/lib/creatorCoinConfig';
 import BondingCurveChart from '../../../components/launch/BondingCurveChart';
 import BuySellInterface from '../../../components/launch/BuySellInterface';
 import CommunityStats from '../../../components/launch/CommunityStats';
@@ -537,18 +539,26 @@ export default function CoinPage() {
 
         {/* ════════ RIGHT: Buy/Sell + Trades + Holders ════════ */}
         <div className="w-full shrink-0 space-y-5 lg:w-96 xl:w-[420px]">
-          {/* Buy/Sell Interface */}
-          <BuySellInterface
-            price={price}
-            symbol={coinSymbol}
-            maxPerWallet={displayData.antiSnipeMax || '2 ETH'}
-            graduated={isGraduated}
-            phaseLabel={curve?.phaseLabel || 'Prebonding'}
-            loading={curveLoading}
-            error={txError ?? undefined}
-            onBuy={handleBuy}
-            onSell={handleSell}
-          />
+          {/* Buy/Sell Interface — gated behind CREATOR_COIN_ENABLED */}
+          {CREATOR_COIN_ENABLED ? (
+            <BuySellInterface
+              price={price}
+              symbol={coinSymbol}
+              maxPerWallet={displayData.antiSnipeMax || '2 ETH'}
+              graduated={isGraduated}
+              phaseLabel={curve?.phaseLabel || 'Prebonding'}
+              loading={curveLoading}
+              error={txError ?? undefined}
+              onBuy={handleBuy}
+              onSell={handleSell}
+            />
+          ) : (
+            <CreatorCoinComingSoon
+              variant="card"
+              title="Trading — Coming Soon"
+              description="Buying and selling this creator coin is not yet open to the public. The chart and live data above are real; trading will be enabled once the system has passed end-to-end verification."
+            />
+          )}
 
           {/* Go Live / Watch Live */}
           <div className="flex gap-2">

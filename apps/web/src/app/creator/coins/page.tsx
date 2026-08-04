@@ -1,6 +1,8 @@
 'use client';
 
 import dynamic from 'next/dynamic';
+import { CreatorCoinComingSoon } from '@/components/creator-coin/CreatorCoinComingSoon';
+import { CREATOR_COIN_ENABLED } from '@/lib/creatorCoinConfig';
 
 const CreatorCoinDashboard = dynamic(
   () =>
@@ -24,6 +26,19 @@ function CoinDashboardSkeleton() {
 }
 
 export default function CreatorCoinsPage() {
+  // Creator coin management is gated behind CREATOR_COIN_ENABLED.
+  if (!CREATOR_COIN_ENABLED) {
+    return (
+      <div className="mx-auto max-w-6xl px-4 py-6">
+        <CreatorCoinComingSoon
+          variant="page"
+          title="Creator Coins — Coming Soon"
+          description="Managing and deploying creator coins is not yet open to the public. The backend is live in closed testing; creation will be enabled once the contracts have passed end-to-end verification."
+        />
+      </div>
+    );
+  }
+
   // In production: get creator address from auth context
   const creatorAddress = 'placeholder_creator_address';
 

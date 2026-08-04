@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useMemo, useRef, useState } from 'react';
+import { CREATOR_COIN_ENABLED } from '@/lib/creatorCoinConfig';
 
 /* ─── Types ───────────────────────────────────────────────────── */
 
@@ -508,22 +509,31 @@ export default function CreatorDashboardPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Link href="/creator/coins" className="btn-primary text-sm">
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              aria-hidden="true"
+          {CREATOR_COIN_ENABLED ? (
+            <Link href="/creator/coins" className="btn-primary text-sm">
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                aria-hidden="true"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 6v12M9 9.5c-.87-.5-2-.5-2.5-.5s-1.5.5-1.5 1.5.67 1.5 1.5 2 3.5.5 4.5 1 1 1.5 1 2.5-1.5 2-3 2-2.5-.5-3-1" />
+              </svg>
+              Launch Coin
+            </Link>
+          ) : (
+            <span
+              className="inline-flex cursor-not-allowed items-center gap-2 rounded-xl border border-amber-500/20 bg-amber-500/[0.06] px-4 py-2.5 text-sm font-semibold text-amber-400"
+              title="Creator coins are not launched yet"
             >
-              <circle cx="12" cy="12" r="10" />
-              <path d="M12 6v12M9 9.5c-.87-.5-2-.5-2.5-.5s-1.5.5-1.5 1.5.67 1.5 1.5 2 3.5.5 4.5 1 1 1.5 1 2.5-1.5 2-3 2-2.5-.5-3-1" />
-            </svg>
-            Launch Coin
-          </Link>
+              🚧 Launch Coin — Coming Soon
+            </span>
+          )}
           <Link
             href="/creator/settings"
             className="btn-secondary text-sm px-3"
@@ -562,8 +572,11 @@ export default function CreatorDashboardPage() {
         </h2>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {QUICK_ACTIONS.map((action) => {
-            const sharedClasses =
-              'group relative overflow-hidden rounded-2xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-4 transition-all hover:border-degen-500/20 hover:shadow-[0_0_20px_rgba(0,255,65,0.04)]';
+            // Creator coin creation is gated behind CREATOR_COIN_ENABLED.
+            const gated = !CREATOR_COIN_ENABLED && action.label === 'Create New Coin';
+            const sharedClasses = gated
+              ? 'group relative overflow-hidden rounded-2xl border border-dashed border-amber-500/30 bg-amber-500/[0.03] p-4'
+              : 'group relative overflow-hidden rounded-2xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-4 transition-all hover:border-degen-500/20 hover:shadow-[0_0_20px_rgba(0,255,65,0.04)]';
             const inner = (
               <>
                 <div
@@ -572,23 +585,36 @@ export default function CreatorDashboardPage() {
                 >
                   {action.icon}
                 </div>
-                <div className="text-sm font-bold text-[var(--color-fg)]">{action.label}</div>
-                <div className="mt-0.5 text-[10px] text-[var(--color-muted)] leading-relaxed">
-                  {action.desc}
-                </div>
-                <svg
-                  className="absolute right-3 top-3 h-3.5 w-3.5 text-[var(--color-muted)] transition-transform group-hover:translate-x-0.5"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  aria-hidden="true"
+                <div
+                  className={`text-sm font-bold ${gated ? 'text-amber-400' : 'text-[var(--color-fg)]'}`}
                 >
-                  <path d="M5 12h14M12 5l7 7-7 7" />
-                </svg>
+                  {gated ? `${action.label} — Coming Soon` : action.label}
+                </div>
+                <div className="mt-0.5 text-[10px] text-[var(--color-muted)] leading-relaxed">
+                  {gated ? 'Not launched yet — backend is in closed testing.' : action.desc}
+                </div>
+                {!gated && (
+                  <svg
+                    className="absolute right-3 top-3 h-3.5 w-3.5 text-[var(--color-muted)] transition-transform group-hover:translate-x-0.5"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M5 12h14M12 5l7 7-7 7" />
+                  </svg>
+                )}
               </>
             );
+            if (gated) {
+              return (
+                <div key={action.label} className={sharedClasses} role="status">
+                  {inner}
+                </div>
+              );
+            }
             return action.href ? (
               <Link key={action.label} href={action.href} className={sharedClasses}>
                 {inner}

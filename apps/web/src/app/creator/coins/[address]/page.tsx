@@ -4,6 +4,8 @@ import type { TokenInfo } from '@degenfeed/creator-coin/types';
 import dynamic from 'next/dynamic';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { CreatorCoinComingSoon } from '@/components/creator-coin/CreatorCoinComingSoon';
+import { CREATOR_COIN_ENABLED } from '@/lib/creatorCoinConfig';
 
 const BondingCurveChart = dynamic(
   () =>
@@ -43,6 +45,19 @@ export default function CoinDetailPage() {
     };
     fetchToken();
   }, [address]);
+
+  // Creator coin trading is gated behind CREATOR_COIN_ENABLED.
+  if (!CREATOR_COIN_ENABLED) {
+    return (
+      <div className="mx-auto max-w-6xl px-4 py-6">
+        <CreatorCoinComingSoon
+          variant="page"
+          title="Creator Coin Trading — Coming Soon"
+          description="Trading this creator coin is not yet open to the public. The backend is live in closed testing; trading will be enabled once the contracts have passed end-to-end verification."
+        />
+      </div>
+    );
+  }
 
   if (loading) {
     return (

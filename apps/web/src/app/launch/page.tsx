@@ -2,6 +2,8 @@
 
 import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
+import { CreatorCoinComingSoon } from '@/components/creator-coin/CreatorCoinComingSoon';
+import { CREATOR_COIN_ENABLED } from '@/lib/creatorCoinConfig';
 import type { CoinCardData } from '../../components/launch/CoinCard';
 import CoinCard from '../../components/launch/CoinCard';
 import LaunchCTA from '../../components/launch/LaunchCTA';
@@ -133,8 +135,18 @@ export default function LaunchPage() {
             className="mb-8"
           />
 
-          {/* Launch CTA */}
-          <LaunchCTA className="mb-8" />
+          {/* Launch CTA — gated behind CREATOR_COIN_ENABLED */}
+          {CREATOR_COIN_ENABLED ? (
+            <LaunchCTA className="mb-8" />
+          ) : (
+            <div className="mb-8">
+              <CreatorCoinComingSoon
+                variant="banner"
+                title="Token Launches — Coming Soon"
+                description="Launching new creator coins is not yet open to the public. Browse prebonding coins and live charts below; the launch flow will be enabled once the contracts have passed end-to-end verification."
+              />
+            </div>
+          )}
 
           {/* Graduated coins section */}
           {coins.filter((c) => c.phase === 'graduated').length > 0 && (
