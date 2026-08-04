@@ -22,10 +22,20 @@ const PEERTUBE_BASE = 'http://127.0.0.1:9011';
  * The local instance has only a handful of videos, so when it runs dry we
  * pull recent videos from public federated instances to keep the feed
  * populated with fresh content.
+ *
+ * Verified reachable public instances (2026-08-04) spanning makers/DIY,
+ * science & tech, activism, crypto (Monero Talk) and general content.
  */
 const PEERTUBE_FEDERATED = [
   'https://framatube.org',
   'https://peertube.tv',
+  'https://makertube.net',
+  'https://diode.zone',
+  'https://video.tedomum.net',
+  'https://videos.thegreenwizard.win',
+  'https://peertube.lightnode.ru',
+  'https://watch.monerotalk.live',
+  'https://spectra.video',
 ];
 
 interface PeerTubeVideo {

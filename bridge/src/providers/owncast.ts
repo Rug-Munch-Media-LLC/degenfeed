@@ -26,6 +26,18 @@ const OWNCAST_INSTANCES = [
   { url: 'https://watch.owncast.online', name: 'Owncast TV' },
   { url: 'https://tv.theindiebeat.fm', name: 'The Indie Beat TV' },
   { url: 'https://live.mustics.com', name: 'Mustics Live' },
+  // Additional public Owncast instances (verified reachable 2026-08-04).
+  // Each reachable instance contributes a status entry to the Owncast feed
+  // and a stream entry to the /api/feed/live aggregator — boosting both
+  // feeds with minimal latency (each has its own 3s timeout).
+  { url: 'https://video.myocci.net', name: 'Myocci Video' },
+  { url: 'https://live.smittystream.com', name: 'Smittystream Live' },
+  { url: 'https://owncast.kreative-kompas.com', name: 'Kreative Kompas' },
+  { url: 'https://streamlive.ntrx.top', name: 'NTRX Live' },
+  { url: 'https://live.webair.xyz', name: 'WebAir Live' },
+  { url: 'https://stream.bdltv.com', name: 'BDL TV' },
+  { url: 'https://owncast.meowcate.space', name: 'Meowcate Space' },
+  { url: 'https://owncast.home.thomsen-jones.dk', name: 'Thomsen-Jones' },
 ];
 
 // ─── Types ─────────────────────────────────────────────────────────────

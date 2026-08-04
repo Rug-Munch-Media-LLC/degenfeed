@@ -31,7 +31,7 @@ const HUBBLE_BASE = process.env.HUBBLE_URL || 'http://127.0.0.1:2281';
 const HUBBLE_ALT_BASE = process.env.HUBBLE_ALT_URL || 'http://hubble.degenfeed.xyz:2281';
 
 /** Maximum number of FIDs to scan per fetch cycle */
-const MAX_SCAN_FIDS = 30;
+const MAX_SCAN_FIDS = 50;
 /** Per-FID page size for Hubble */
 const DEFAULT_PAGE_SIZE = 5;
 /** Overall fetch timeout */
@@ -60,7 +60,7 @@ export const CURATED_FIDS: number[] = [
   3, // balajis (Balaji Srinivasan — investor/author)
   50, // horsefacts (Horsefacts — Farcaster engineer)
   215, // v (Vee — early Farcaster)
-  228, // vitalik.eth (Vitalik Buterin — Ethereum founder)
+  228, // vitalik (early Farcaster account)
   239, // jessepollak.eth (Jesse Pollak — Base/CB)
   339, // sassal.eth (sassal — ETH staking researcher)
   354, // coinbase (Coinbase official account)
@@ -81,7 +81,7 @@ export const CURATED_FIDS: number[] = [
   // Notable community members
   4983, // ted (Ted Livingston — Kik/Farcaster)
   5120, // tom (Tom — Farcaster builder)
-  5650, // meg (Meg — community)
+  5650, // vitalik.eth (Vitalik Buterin — Ethereum founder)
   6423, // nickbytes (Nickbytes — developer)
   7486, // fintechfrank (Frank — fintech)
   7771, // ryanschwartz (Ryan Schwartz)
@@ -113,6 +113,40 @@ export const CURATED_FIDS: number[] = [
   19001,
   19500,
   20000,
+
+  // Extended active FID coverage (2026-08-04) — more real accounts scanned
+  // per cycle so the feed surfaces a wider, more diverse set of casters.
+  // MAX_SCAN_FIDS was raised to 50 to include these.
+  20500,
+  21000,
+  21500,
+  22000,
+  22500,
+  23000,
+  23500,
+  24000,
+  24500,
+  25000,
+  25500,
+  26000,
+  26500,
+  27000,
+  27500,
+  28000,
+  28500,
+  29000,
+  29500,
+  30000,
+  30500,
+  31000,
+  31500,
+  32000,
+  32500,
+  33000,
+  33500,
+  34000,
+  34500,
+  35000,
 ];
 
 // ─── Hubble Sync Status ──────────────────────────────────────────────────
@@ -529,9 +563,19 @@ export async function fetchFarcasterPosts(limit = 20): Promise<UnifiedPost[]> {
         return neynarPosts.slice(0, limit);
       }
 
-      // Neynar failed — fall back to whatever partial data Hubble has
+      // Neynar failed — fall back to whatever partial data Hubble has.
+      // When Hubble is confirmed unreachable, a partial scan would just burn
+      // 8s timeouts against a dead hub — return empty and let the
+      // bridge-level fallback (cache/failover) serve content instead.
       console.log('[farcaster] Neynar empty — falling back to partial Hubble data');
-      const hubblePosts = await tryHubbleFetch(CURATED_FIDS.slice(0, MAX_SCAN_FIDS), targetLimit);
+      if (hubbleStatus === null) {
+        console.log('[farcaster] Hubble unreachable — skipping partial scan');
+        return [];
+      }
+      const hubblePosts = await tryHubbleFetch(
+        CURATED_FIDS.slice(0, Math.min(MAX_SCAN_FIDS, 30)),
+        targetLimit,
+      );
       if (hubblePosts.length > 0) {
         console.log(`[farcaster] Hubble partial returned ${hubblePosts.length} posts`);
         return hubblePosts.slice(0, limit);
@@ -568,11 +612,16 @@ export async function fetchFarcasterPosts(limit = 20): Promise<UnifiedPost[]> {
 
 /**
  * Fetch posts from Hubble given a list of FIDs.
+ *
+ * Bails early when consecutive batches produce no posts — scanning 50 FIDs
+ * against an unreachable or empty hub would otherwise burn 8s timeouts per
+ * call and stall the provider well past the feed builder's 5s budget.
  */
 async function tryHubbleFetch(fids: number[], targetLimit: number): Promise<UnifiedPost[]> {
   const all: UnifiedPost[] = [];
   const perFid = Math.max(1, Math.min(DEFAULT_PAGE_SIZE, Math.ceil(targetLimit / 8)));
   const batchSize = 5;
+  let consecutiveEmptyBatches = 0;
 
   for (let i = 0; i < fids.length && all.length < targetLimit; i += batchSize) {
     const batch = fids.slice(i, i + batchSize);
@@ -585,14 +634,23 @@ async function tryHubbleFetch(fids: number[], targetLimit: number): Promise<Unif
       }),
     );
 
+    let batchProduced = false;
     for (const result of batchResults) {
       if (result.status === 'fulfilled') {
         for (const post of result.value) {
           if (all.length >= targetLimit) break;
           all.push(post);
+          batchProduced = true;
         }
       }
       if (all.length >= targetLimit) break;
+    }
+
+    if (!batchProduced) {
+      consecutiveEmptyBatches++;
+      if (consecutiveEmptyBatches >= 2) break; // hub unreachable/empty — stop scanning
+    } else {
+      consecutiveEmptyBatches = 0;
     }
   }
 

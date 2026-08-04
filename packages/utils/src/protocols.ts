@@ -803,6 +803,7 @@ export const SIDEBAR_ORDER = [
   'nostr',
   'farcaster',
   'lens',
+  'threads',
   'peertube',
   'youtube',
   'gancio',

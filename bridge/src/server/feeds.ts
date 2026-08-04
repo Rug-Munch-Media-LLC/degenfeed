@@ -208,7 +208,12 @@ export const PROVIDERS: Record<string, ProviderEntry> = {
   },
   pixelfed: { name: 'Pixelfed', fetch: fetchPixelfedPosts, category: 'content' },
   piefed: { name: 'PieFed', fetch: fetchPieFedPosts, category: 'content' },
-  threads: { name: 'Threads (Meta)', fetch: fetchThreadsPosts, category: 'content' },
+  threads: {
+    name: 'Threads (Meta)',
+    fetch: fetchThreadsPosts,
+    rateLimit: { maxRequests: 40, windowMs: 600_000 },
+    category: 'content',
+  },
   zora: { name: 'Zora (NFT)', fetch: fetchZoraPosts, category: 'content' },
   dtube: { name: 'DTube (Hive Video)', fetch: fetchDTubePosts, category: 'content' },
   lbry: { name: 'Odysee/LBRY (Video)', fetch: fetchLBRYPosts, category: 'content' },
@@ -629,6 +634,85 @@ export const DEFAULT_HOME_PROTOCOLS = [
   'zora',
 ];
 
+/**
+ * Discovery mode pool — content protocols a user would NOT normally see on
+ * the home feed. buildFeedInternal occasionally injects a small slice from
+ * 1-2 of these (rotating on a 60s window) so the feed surfaces diverse
+ * protocols the user hasn't opted into. Posts are flagged `_discovery`.
+ */
+const DISCOVERY_POOL = [
+  'minds',
+  'hive',
+  'steem',
+  'diaspora',
+  'friendica',
+  'pleroma',
+  'misskey',
+  'kbin',
+  'mbin',
+  'lobsters',
+  'snapshot',
+  'tally',
+  'juicebox',
+  'unlock',
+  'gancio',
+  'soundcloud',
+  'bandcamp',
+  'vimeo',
+  'twitch',
+  'wordpress',
+  'mirror',
+  'paragraph',
+  'funkwhale',
+  'castopod',
+  'writefreely',
+  'owncast',
+  'dtube',
+  'lbry',
+  'gab',
+  'arena',
+  'bookwyrm',
+  'mobilizon',
+  'forgejo',
+  'bonfire',
+  'mitra',
+  'takahe',
+  'mediagoblin',
+  'flarum',
+  'discourse',
+  'ghost',
+  'github',
+  'telegram',
+  'discord',
+  'matrix',
+  'opensea',
+  'smokesignal',
+  'arweave',
+  'faircamp',
+  'orbis',
+];
+
+/**
+ * Select 1-2 discovery protocols NOT in the active set.
+ *
+ * Deterministic within a 60s window so concurrent single-flight requests and
+ * the 60s result cache stay consistent, but the selection rotates every
+ * minute so the feed gradually surfaces new protocols over time.
+ */
+export function selectDiscoveryProtocols(active: string[], now = Date.now()): string[] {
+  const candidates = DISCOVERY_POOL.filter(
+    (p) => !active.includes(p) && PROVIDERS[p] && PROVIDERS[p].category === 'content',
+  );
+  if (candidates.length === 0) return [];
+  const windowIdx = Math.floor(now / 60_000);
+  const count = Math.min(2, candidates.length);
+  const selected: string[] = [];
+  for (let i = 0; i < count; i++) {
+    selected.push(candidates[(windowIdx * 5 + i * 7) % candidates.length]);
+  }
+  return selected;
+}
+
 const FEED_CACHE_TTL_MS = 60_000; // 60s — matches HTTP-level response cache TTL
 const FEED_CACHE_MAX_ENTRIES = 20;
 
@@ -710,7 +794,11 @@ function setCachedFeed(key: string, data: FeedResult): void {
 // threads, duplicated news links). A single normalized fingerprint catches
 // exact dupes; a URL fingerprint catches bridged copies that add a prefix
 // (e.g. "via nostr:" / "cross-posted from X"). After dedup we interleave so
-// the feed never shows 5+ posts from one protocol in a row.
+// the feed never shows more than MAX_CONSECUTIVE_SAME_PROTOCOL posts from
+// one protocol in a row.
+
+/** Hard cap on consecutive posts from the same protocol in any multi-protocol feed. */
+export const MAX_CONSECUTIVE_SAME_PROTOCOL = 3;
 
 /**
  * Normalize post text into a stable, comparable fingerprint.
@@ -769,10 +857,23 @@ function postUrlFingerprints(p: UnifiedPost): string[] {
  *  2. URL fingerprint when the text fingerprint is too short to be reliable —
  *     catches "check this out https://..." copies across protocols
  *
- * Interleave: round-robin over protocols so consecutive posts are diverse.
- * Within a protocol, posts keep their provider order (newest first).
+ * Interleave: pass-based round-robin over protocols. Each pass takes at most
+ * `maxConsecutive` posts from a protocol (default MAX_CONSECUTIVE_SAME_PROTOCOL,
+ * clamped to it), so a run of same-protocol posts can NEVER exceed the cap —
+ * even when one protocol dominates and every other source is exhausted.
+ * A single-source feed (e.g. /api/feed/owncast) is exempt from the cap and
+ * returns its full list so volume is never sacrificed when only one protocol
+ * has content.
  */
-export function dedupeAndInterleave(posts: UnifiedPost[], limit: number): UnifiedPost[] {
+export function dedupeAndInterleave(
+  posts: UnifiedPost[],
+  limit: number,
+  options: { maxConsecutive?: number } = {},
+): UnifiedPost[] {
+  const maxConsecutive = Math.min(
+    Math.max(1, options.maxConsecutive ?? MAX_CONSECUTIVE_SAME_PROTOCOL),
+    MAX_CONSECUTIVE_SAME_PROTOCOL,
+  );
   const seenText = new Set<string>();
   const seenUrls = new Set<string>();
   const unique: UnifiedPost[] = [];
@@ -805,7 +906,7 @@ export function dedupeAndInterleave(posts: UnifiedPost[], limit: number): Unifie
     unique.push(p);
   }
 
-  // Interleave round-robin across protocols for diversity.
+  // Group remaining unique posts by protocol for interleaving.
   const byProtocol = new Map<string, UnifiedPost[]>();
   for (const p of unique) {
     const arr = byProtocol.get(p.protocol);
@@ -813,26 +914,52 @@ export function dedupeAndInterleave(posts: UnifiedPost[], limit: number): Unifie
     else byProtocol.set(p.protocol, [p]);
   }
 
-  const interleaved: UnifiedPost[] = [];
+  const nonEmpty = [...byProtocol.entries()].filter(([, arr]) => arr.length > 0);
+  if (nonEmpty.length === 0) return [];
+  // Single-source feed — the diversity cap does not apply; return up to limit.
+  if (nonEmpty.length === 1) return nonEmpty[0][1].slice(0, limit);
+
   // Deterministic but varied order: rotate the starting protocol so the same
   // post list from cache can still produce different mixes per request when
   // served sliced (limit changes rotate the start point).
-  const protocolOrder = [...byProtocol.keys()].sort();
-  const startIdx = protocolOrder.length > 0 ? (limit % protocolOrder.length) : 0;
-  let cursor = startIdx;
-  let remaining = protocolOrder.length;
+  const order = nonEmpty.map(([p]) => p).sort();
+  const startIdx = order.length > 0 ? limit % order.length : 0;
+  const rotated = [...order.slice(startIdx), ...order.slice(0, startIdx)];
 
-  while (interleaved.length < limit && remaining > 0) {
-    const proto = protocolOrder[cursor % protocolOrder.length];
-    if (!proto) break;
-    const arr = byProtocol.get(proto);
-    if (arr && arr.length > 0) {
-      interleaved.push(arr.shift()!);
-      remaining = protocolOrder.length; // reset — still have work in this proto
-    } else {
-      remaining--;
+  const interleaved: UnifiedPost[] = [];
+  let lastProtocol: string | null = null;
+  let consecutive = 0;
+
+  while (interleaved.length < limit) {
+    let pushedThisPass = false;
+    for (const proto of rotated) {
+      const arr = byProtocol.get(proto);
+      if (!arr || arr.length === 0) continue;
+
+      // Live sources = protocols that still have posts to emit this pass.
+      let liveSources = 0;
+      for (const a of byProtocol.values()) if (a.length > 0) liveSources++;
+
+      // Enforce the contiguous-run cap: never exceed `maxConsecutive` posts
+      // from the same protocol in a row while OTHER protocols still have
+      // content. When the protocol is the sole remaining source, the cap is
+      // waived so the feed still fills to `limit` (volume over diversity —
+      // there is nothing left to interleave with).
+      const wouldExceedCap =
+        proto === lastProtocol && consecutive >= maxConsecutive && liveSources > 1;
+      if (wouldExceedCap) continue;
+
+      const take = Math.min(maxConsecutive, arr.length, limit - interleaved.length);
+      for (let i = 0; i < take; i++) {
+        interleaved.push(arr.shift()!);
+      }
+      consecutive = proto === lastProtocol ? consecutive + take : take;
+      lastProtocol = proto;
+      pushedThisPass = true;
+      if (interleaved.length >= limit) break;
     }
-    cursor++;
+    // No protocol produced anything this pass — everything is exhausted.
+    if (!pushedThisPass) break;
   }
 
   return interleaved;
@@ -891,9 +1018,19 @@ async function buildFeedInternal(
   const providerSources: Record<string, string> = {};
   const cacheAges: Record<string, number> = {};
 
+  // ── Discovery mode ─────────────────────────────────────────────────
+  // Multi-protocol feeds (home, for-you, trending) get 1-2 extra protocols
+  // injected from DISCOVERY_POOL — content the user didn't opt into, so the
+  // feed occasionally surfaces diverse protocols. Single-protocol feeds
+  // (e.g. /api/feed/nostr) stay pure. Discovery posts are flagged
+  // `_discovery` and surface naturally through the capped interleave.
+  const discoveryProtocols =
+    activeProtocols.length >= 3 ? selectDiscoveryProtocols(activeProtocols) : [];
+  const fetchProtocols = [...new Set([...activeProtocols, ...discoveryProtocols])];
+
   const perProviderLimit = Math.max(
     3,
-    Math.ceil((limit * 1.2) / Math.max(activeProtocols.length, 1)),
+    Math.ceil((limit * 1.2) / Math.max(fetchProtocols.length, 1)),
   );
   // Global per-provider timeout. 5s bounds cold-start aggregation latency to
   // ~5s (slowest expected providers: Hubble Farcaster 3.5s, Mastodon/GTS 5s)
@@ -904,7 +1041,7 @@ async function buildFeedInternal(
   const MAX_CONCURRENT = 20; // Limit to 20 concurrent provider fetches to prevent OOM
 
   const results = await runWithConcurrencyLimit(
-    activeProtocols,
+    fetchProtocols,
     MAX_CONCURRENT,
     async (protocol) => {
       const provider = PROVIDERS[protocol];
@@ -1035,7 +1172,14 @@ async function buildFeedInternal(
     perProtocol[protocol] = posts?.length ?? 0;
     providerSources[protocol] = source ?? 'live';
     if (cacheAgeMs) cacheAges[protocol] = cacheAgeMs;
-    if (posts) allPosts.push(...posts);
+    if (posts) {
+      // Flag discovery-mode posts so callers can distinguish injected content.
+      const isDiscovery = discoveryProtocols.includes(protocol);
+      for (const p of posts) {
+        if (isDiscovery) (p as Record<string, unknown>)._discovery = true;
+      }
+      allPosts.push(...posts);
+    }
     if (error) errors.push(`${protocol}: ${error}`);
     if (notice) notices.push(`${protocol}: ${notice}`);
   }
@@ -1060,6 +1204,7 @@ async function buildFeedInternal(
         cacheAges,
         errors: errors.length > 0 ? errors : undefined,
         notices,
+        discoveryProtocols,
         page: 1,
         fetchedAt: Date.now(),
         source: 'demo',
@@ -1091,6 +1236,7 @@ async function buildFeedInternal(
       providerSources,
       cacheAges: Object.keys(cacheAges).length > 0 ? cacheAges : undefined,
       degraded: degradedCount > 0 ? degradedCount : undefined,
+      discoveryProtocols: discoveryProtocols.length > 0 ? discoveryProtocols : undefined,
       errors: errors.length > 0 ? errors : undefined,
       notices: notices.length > 0 ? notices : undefined,
       fetchedAt: Date.now(),
