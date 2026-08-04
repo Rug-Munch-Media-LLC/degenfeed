@@ -19,9 +19,7 @@
     "resolveJsonModule": true,
     "jsx": "preserve",
     "allowSyntheticDefaultImports": true,
-    "incremental": true,
-    "baseUrl": ".",
-    "paths": {}
+    "incremental": true
   },
   "exclude": ["node_modules", "**/dist", "**/.next", "**/.turbo", "**/coverage"]
 }
