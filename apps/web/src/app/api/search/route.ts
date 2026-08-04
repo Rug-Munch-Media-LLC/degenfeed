@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
       process.env.NEXT_PUBLIC_WORKER_URL ||
       process.env.NEXT_PUBLIC_API_BASE ||
       process.env.NEXT_PUBLIC_API_URL ||
-      'http://localhost:8787';
+      'http://host.docker.internal:3101';
 
     // Forward to the backend with correctly mapped parameter names
     const targetUrl = `${workerUrl}/api/search?q=${encodeURIComponent(q)}&sources=${encodeURIComponent(protocols)}&page=${encodeURIComponent(page)}&limit=${encodeURIComponent(limit)}`;

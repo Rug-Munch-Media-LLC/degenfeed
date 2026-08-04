@@ -1,15 +1,15 @@
 /**
  * @degenfeed/web — Shared proxy helper for worker/bridge API routes.
  *
- * Forwards requests to the local bridge worker using WORKER_URL.
- * Automatically injects BRIDGE_API_KEY so the bridge can authenticate.
+ * Forwards requests to the self-hosted API using WORKER_URL.
+ * Automatically injects BRIDGE_API_KEY so the API can authenticate.
  *
  * Environment variable priority for WORKER_URL:
  *   1. WORKER_URL
  *   2. NEXT_PUBLIC_WORKER_URL
  *   3. NEXT_PUBLIC_API_BASE
  *   4. NEXT_PUBLIC_API_URL
- *   5. http://host.docker.internal:8787 (fallback — Docker bridge to host)
+ *   5. http://host.docker.internal:3101 (fallback — self-hosted API on host)
  */
 
 function resolveWorkerUrl(): string {
@@ -18,7 +18,7 @@ function resolveWorkerUrl(): string {
     process.env.NEXT_PUBLIC_WORKER_URL ??
     process.env.NEXT_PUBLIC_API_BASE ??
     process.env.NEXT_PUBLIC_API_URL ??
-    'http://host.docker.internal:8787'
+    'http://host.docker.internal:3101'
   );
 }
 

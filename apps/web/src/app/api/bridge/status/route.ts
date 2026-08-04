@@ -12,7 +12,7 @@ export async function GET() {
   try {
     // Try to get live stats from the bridge worker
     const workerUrl =
-      process.env.WORKER_URL || process.env.NEXT_PUBLIC_WORKER_URL || 'http://localhost:8787';
+      process.env.WORKER_URL || process.env.NEXT_PUBLIC_WORKER_URL || 'http://host.docker.internal:3101';
 
     try {
       const headers: Record<string, string> = {};

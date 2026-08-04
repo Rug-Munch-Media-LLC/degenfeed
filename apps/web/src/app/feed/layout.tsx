@@ -50,12 +50,51 @@ export const metadata: Metadata = {
   alternates: { canonical: 'https://app.degenfeed.xyz/feed' },
 };
 
-export default function FeedLayout({ children }: { children: React.ReactNode }) {
+async function getInitialFeedData() {
+  // Fetch feed data server-side so the SSR HTML has content (no loading flash).
+  // Uses the self-hosted API at host.docker.internal:3101 (Docker) or 127.0.0.1:3101 (bare metal).
+  const apiBase = process.env.API_PROXY_TARGET || 'http://127.0.0.1:3101';
+  const protocols = ['nostr', 'farcaster', 'mastodon', 'bluesky', 'rss'];
+  try {
+    const results = await Promise.allSettled(
+      protocols.map(async (p) => {
+        const res = await fetch(`${apiBase}/api/feed/${p}?limit=5`, {
+          signal: AbortSignal.timeout(6000),
+        });
+        if (!res.ok) return [];
+        const json = await res.json();
+        return (json.data || []).map((item: Record<string, unknown>) => ({
+          ...item,
+          protocol: item.protocol || p,
+        }));
+      }),
+    );
+    return results
+      .filter((r): r is PromiseFulfilledResult<unknown[]> => r.status === 'fulfilled')
+      .flatMap((r) => r.value)
+      .slice(0, 20);
+  } catch {
+    return [];
+  }
+}
+
+export default async function FeedLayout({ children }: { children: React.ReactNode }) {
+  const initialPosts = await getInitialFeedData();
+
   return (
     <>
       <Script id="breadcrumb-feed" type="application/ld+json">
         {JSON.stringify(breadcrumbStructuredData)}
       </Script>
+      {initialPosts.length > 0 && (
+        <Script
+          id="feed-initial-data"
+          type="application/json"
+          data-initial-feed="true"
+        >
+          {JSON.stringify(initialPosts)}
+        </Script>
+      )}
       <FeedShell>{children}</FeedShell>
     </>
   );

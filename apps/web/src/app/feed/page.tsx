@@ -97,8 +97,27 @@ export default function FeedPage() {
   const isAdmin = walletAddress ? ADMIN_WALLETS.has(walletAddress.toLowerCase()) : false;
 
   const [activeTab, setActiveTab] = useState<Tab>('for-you');
-  const [posts, setPosts] = useState<UnifiedPost[]>([]);
-  const [state, setState] = useState<'loading' | 'loaded' | 'empty' | 'error'>('loading');
+  const [posts, setPosts] = useState<UnifiedPost[]>(() => {
+    try {
+      const el = document.getElementById('feed-initial-data');
+      if (el && el.textContent) {
+        const initial = JSON.parse(el.textContent);
+        if (Array.isArray(initial)) return initial;
+      }
+    } catch { /* ignore */ }
+    return [];
+  });
+  // Read server-side preloaded feed data so the page renders content immediately.
+  const [state, setState] = useState<'loading' | 'loaded' | 'empty' | 'error'>(() => {
+    try {
+      const el = document.getElementById('feed-initial-data');
+      if (el && el.textContent) {
+        const initial = JSON.parse(el.textContent);
+        if (Array.isArray(initial) && initial.length > 0) return 'loaded';
+      }
+    } catch { /* ignore */ }
+    return 'loading';
+  });
   const [error, setError] = useState<string>();
   const [tipPost, setTipPost] = useState<UnifiedPost | null>(null);
   const [feedMeta, setFeedMeta] = useState<FeedMeta>({});

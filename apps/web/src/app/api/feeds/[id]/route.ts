@@ -9,7 +9,7 @@ function workerUrl(path: string): string {
     process.env.NEXT_PUBLIC_WORKER_URL ??
     process.env.NEXT_PUBLIC_API_BASE ??
     process.env.NEXT_PUBLIC_API_URL ??
-    'http://localhost:8787';
+    'http://host.docker.internal:3101';
   return `${base}${path}`;
 }
 

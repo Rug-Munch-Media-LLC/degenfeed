@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
       process.env.WORKER_URL ??
       process.env.NEXT_PUBLIC_WORKER_URL ??
       process.env.NEXT_PUBLIC_API_BASE ??
-      'http://localhost:8787';
+      'http://host.docker.internal:3101';
 
     const bridgeRes = await fetch(`${workerUrl}/api/nostr/relays`, {
       signal: AbortSignal.timeout(3000),
