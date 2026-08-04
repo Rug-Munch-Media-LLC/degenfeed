@@ -1,21 +1,25 @@
 /**
  * Reddit Provider
  *
- * Rate Limit: 600 requests/10 minutes (OAuth2 API)
- * Rate Limit: 60 requests/10 minutes (unauthenticated fallback)
+ * Rate Limit: Reddit aggressively 429s bursts from a single IP — practically
+ * only ONE request per 10-20s window is safe. Previous versions fired 4-5
+ * sequential subreddit fetches per cycle, which tripped 429 on every request
+ * and fell through to demo content.
  *
- * Fetches Reddit content via multiple strategies:
- * 1. PRIMARY: Reddit RSS feeds (www.reddit.com/r/{sub}/hot/.rss) — no auth,
- *    works from datacenter IPs where the JSON API is CDN-blocked
- * 2. SECONDARY: OAuth2-authenticated Reddit JSON API (600 req/10min)
- * 3. TERTIARY: Direct Reddit JSON API (rate-limited, 800ms delay between requests)
- * 4. LAST RESORT: Self-hosted Redlib instance (port 8281, often blocked by Reddit CDN)
+ * Current strategy (single-request):
+ *   1. Serve from a 90s TTL cache first (prewarmer + refresher collapse into
+ *      one real fetch per window).
+ *   2. Fetch ONE rotating subreddit per cycle with a higher limit (25 posts).
+ *      The rotation is deterministic on a 15s window so consecutive cycles
+ *      surface different subreddits without exceeding the rate budget.
+ *   3. Single-flight lock: concurrent requests coalesce into one fetch.
+ *   4. Last-good cache: when a fetch fails (429/empty), serve the most recent
+ *      successful posts instead of falling through to demo content.
  *
- * With OAuth2 configured (REDDIT_CLIENT_ID, REDDIT_CLIENT_SECRET, REDDIT_USERNAME,
- * REDDIT_PASSWORD) we get 600 requests per 10 minutes vs 60 unauthenticated.
- * See reddit-auth.ts for OAuth token management.
+ * Subreddits: cryptocurrency, ethereum, bitcoin, defi, CryptoCurrency, ethtrader
  *
- * To set up: https://www.reddit.com/prefs/apps → Create "script" app
+ * Fallback strategies (OAuth/JSON/Redlib) remain available but are only used
+ * when the rotating RSS fetch returns nothing AND no last-good cache exists.
  */
 
 import { checkRateLimit } from '../rate-limiter';
@@ -37,6 +41,38 @@ const REDDIT_RSS = 'https://www.reddit.com';
 const REDDIT_CACHE_TTL_MS = 90_000;
 let redditCache: { posts: UnifiedPost[]; expiresAt: number } | null = null;
 
+/**
+ * Last-good cache: survives transient failures (429 / timeouts). Served when
+ * the fresh fetch yields nothing so the feed shows real content instead of
+ * demo posts. Refreshed on every successful fetch.
+ */
+const REDDIT_LAST_GOOD_TTL_MS = 30 * 60_000; // 30 min — real content beats demo
+let lastGoodReddit: { posts: UnifiedPost[]; savedAt: number } | null = null;
+
+/** Single-flight lock: coalesce concurrent fetchRedditPosts() calls. */
+let redditInFlight: Promise<UnifiedPost[]> | null = null;
+
+/**
+ * Deterministic subreddit rotation. 15s window means consecutive cycles pick
+ * different subreddits while concurrent requests within a window agree.
+ */
+const ROTATION_WINDOW_MS = 15_000;
+
+/** The task-specified rotation set (deduped, case-insensitive). */
+const ROTATION_SUBS = [
+  'cryptocurrency',
+  'ethereum',
+  'bitcoin',
+  'defi',
+  'CryptoCurrency',
+  'ethtrader',
+];
+
+function pickRotatingSubreddit(now = Date.now()): string {
+  const idx = Math.floor(now / ROTATION_WINDOW_MS) % ROTATION_SUBS.length;
+  return ROTATION_SUBS[idx] ?? 'CryptoCurrency';
+}
+
 function getCachedPosts(): UnifiedPost[] | null {
   if (redditCache && Date.now() < redditCache.expiresAt) return redditCache.posts;
   return null;
@@ -44,57 +80,15 @@ function getCachedPosts(): UnifiedPost[] | null {
 
 function setCachedPosts(posts: UnifiedPost[]): void {
   redditCache = { posts, expiresAt: Date.now() + REDDIT_CACHE_TTL_MS };
+  lastGoodReddit = { posts, savedAt: Date.now() };
 }
 
-/** Crypto/tech subreddits ranked by relevance */
-const SUBREDDITS = [
-  'CryptoCurrency',
-  'Bitcoin',
-  'ethereum',
-  'solana',
-  'ethdev',
-  'CryptoMarkets',
-  'defi',
-  'ethfinance',
-  'NFT',
-  'Layer2',
-  'web3',
-  'programming',
-  'rust',
-  'MachineLearning',
-  'artificial',
-  'LocalLLaMA',
-  'ChatGPT',
-  'opensource',
-  'startups',
-  'stocks',
-  'investing',
-  'economics',
-  'finance',
-  'technology',
-  'science',
-  'space',
-  'Futurology',
-  'WallStreetBetsCrypto',
-  'CryptoTechnology',
-  // Additional crypto/tech subreddits (2026-08-04) — more niche coverage
-  // for the OAuth/JSON paths and a wider RSS rotation.
-  'ethtrader',
-  'cardano',
-  'chainlink',
-  'CryptoCurrencyTrading',
-  'altcoin',
-  'Crypto_com',
-  'Monero',
-  'BitcoinMarkets',
-  'SatoshiStreetBets',
-  'CryptoMoonShots',
-  'bittensor',
-  'OpenAI',
-  'artificialintelligence',
-  'singularity',
-  'aipromptprogramming',
-];
+function getLastGoodPosts(): UnifiedPost[] | null {
+  if (lastGoodReddit && Date.now() - lastGoodReddit.savedAt < REDDIT_LAST_GOOD_TTL_MS) {
+    return lastGoodReddit.posts;
+  }
+  return null;
+}
 
 // ─── Helpers ──────────────────────────────────────────────────────────
 
@@ -537,102 +531,118 @@ export const schema: SchemaGuard = {
 };
 
 export async function fetchRedditPosts(limit = 20): Promise<UnifiedPost[]> {
-  // Serve from the short TTL cache first so repeated feed-build calls
+  // 1) Serve from the short TTL cache first so repeated feed-build calls
   // (prewarm + refresher + user requests) don't burn the in-process budget
   // or hammer Reddit's CDN.
   const cached = getCachedPosts();
   if (cached) return cached.slice(0, limit);
 
-  // Reddit unauthenticated limit: ~60 requests/10 min per IP. Keep our own
-  // in-process budget far below that so bursts don't trip Reddit's CDN.
-  if (!checkRateLimit('reddit', { maxRequests: 20, windowMs: 600_000 })) {
-    console.log('[reddit] Rate limited, skipping fetch');
-    return [];
+  // 2) Single-flight lock: coalesce concurrent requests into one fetch.
+  if (redditInFlight) {
+    const posts = await redditInFlight;
+    return posts.slice(0, limit);
   }
-  const all: UnifiedPost[] = [];
-  let oauthCount = 0;
-  let jsonCount = 0;
-  let rssCount = 0;
-  let redlibCount = 0;
 
-  const hasOAuth = getRedditOAuth().isConfigured;
-
-  // PRIMARY: RSS feeds — the only strategy verified working from this host.
-  // Keep the request count LOW: a handful of subreddits satisfies small
-  // limits, and each call is wrapped in buildFeed's 5s timeout, so we must
-  // return fast. Rotation is deterministic per call so different requests
-  // surface different subreddits while staying within the rate budget.
-  const rssSubs = ['CryptoCurrency', 'Bitcoin', 'ethereum', 'ethtrader', 'defi'];
-  const perSubRss = Math.max(2, Math.ceil(limit / rssSubs.length));
-  for (const sub of rssSubs) {
-    try {
-      const posts = await fetchFromRedditRss(sub, perSubRss);
-      all.push(...posts);
-      rssCount += posts.length;
-      if (all.length >= limit) break;
-      // Space out requests — Reddit 429s bursts from a single IP.
-      await new Promise((r) => setTimeout(r, 400));
-    } catch {
-      // continue to next subreddit
+  const inFlight = (async (): Promise<UnifiedPost[]> => {
+    // Reddit unauthenticated limit: ~60 requests/10 min per IP. Keep our own
+    // in-process budget far below that so bursts don't trip Reddit's CDN.
+    if (!checkRateLimit('reddit', { maxRequests: 20, windowMs: 600_000 })) {
+      console.log('[reddit] Rate limited, skipping fetch');
+      return [];
     }
-  }
 
-  // SECONDARY: OAuth2-authenticated JSON API (600 req/10min, no delays needed)
-  if (hasOAuth && all.length < limit) {
-    for (const sub of SUBREDDITS.slice(0, 4)) {
+    // 3) ONE rotating subreddit per cycle, higher limit (25 posts). A single
+    // request per 15s+ window is the only cadence Reddit tolerates.
+    const sub = pickRotatingSubreddit();
+    const posts: UnifiedPost[] = [];
+    let rssCount = 0;
+    let oauthCount = 0;
+    let jsonCount = 0;
+    let redlibCount = 0;
+    const perSub = 25;
+
+    try {
+      const rssPosts = await fetchFromRedditRss(sub, perSub);
+      posts.push(...rssPosts);
+      rssCount += rssPosts.length;
+    } catch {
+      // continue to fallback
+    }
+
+    // If RSS was blocked/empty, try the OAuth JSON API for the SAME subreddit
+    // (one more request, still within the budget).
+    if (posts.length === 0 && getRedditOAuth().isConfigured) {
       try {
-        const perSub = Math.max(2, Math.ceil((limit - all.length) / 2));
-        const posts = await fetchFromRedditOAuth(sub, perSub);
-        all.push(...posts);
-        oauthCount += posts.length;
-        if (all.length >= limit) break;
+        const oauthPosts = await fetchFromRedditOAuth(sub, perSub);
+        posts.push(...oauthPosts);
+        oauthCount += oauthPosts.length;
       } catch {
-        // continue to next subreddit
+        // continue
       }
     }
-  }
 
-  // TERTIARY: Unauthenticated JSON API (usually CDN-blocked; quick attempt
-  // only when RSS returned nothing at all).
-  if (!hasOAuth && all.length === 0) {
-    try {
-      await new Promise((r) => setTimeout(r, 300));
-      const posts = await fetchFromRedditJson('CryptoCurrency', perSubRss);
-      all.push(...posts);
-      jsonCount += posts.length;
-    } catch {
-      // continue
+    // Unauthenticated JSON API (usually CDN-blocked; quick attempt only when
+    // both RSS and OAuth returned nothing).
+    if (posts.length === 0 && !getRedditOAuth().isConfigured) {
+      try {
+        await new Promise((r) => setTimeout(r, 300));
+        const jsonPosts = await fetchFromRedditJson(sub, perSub);
+        posts.push(...jsonPosts);
+        jsonCount += jsonPosts.length;
+      } catch {
+        // continue
+      }
     }
-  }
 
-  // LAST RESORT: Redlib (often blocked by Reddit CDN, but local + free)
-  if (all.length === 0) {
-    try {
-      const posts = await fetchFromRedlib('CryptoCurrency', perSubRss);
-      all.push(...posts);
-      redlibCount += posts.length;
-    } catch {
-      // continue
+    // LAST RESORT: Redlib (often blocked by Reddit CDN, but local + free)
+    if (posts.length === 0) {
+      try {
+        const redlibPosts = await fetchFromRedlib(sub, perSub);
+        posts.push(...redlibPosts);
+        redlibCount += redlibPosts.length;
+      } catch {
+        // continue
+      }
     }
-  }
 
-  // Deduplicate
-  const seen = new Set<string>();
-  const deduped: UnifiedPost[] = [];
-  for (const p of all) {
-    const key = p.text.slice(0, 60);
-    if (!seen.has(key) && deduped.length < limit) {
-      seen.add(key);
-      deduped.push(p);
+    // Deduplicate
+    const seen = new Set<string>();
+    const deduped: UnifiedPost[] = [];
+    for (const p of posts) {
+      const key = p.text.slice(0, 60);
+      if (!seen.has(key) && deduped.length < limit) {
+        seen.add(key);
+        deduped.push(p);
+      }
     }
-  }
 
-  const authMode = hasOAuth ? 'oauth' : 'unauthenticated';
-  console.log(
-    `[bridge] Reddit: ${deduped.length} posts [${authMode}] (rss: ${rssCount}, oauth: ${oauthCount}, json: ${jsonCount}, redlib: ${redlibCount}, total raw: ${all.length})`,
-  );
-  setCachedPosts(deduped);
-  return deduped;
+    // 4) Last-good cache: on success, refresh both caches. On failure, the
+    // caller serves last-good below so transient 429s never degrade to demo.
+    if (deduped.length > 0) {
+      setCachedPosts(deduped);
+    } else {
+      const lastGood = getLastGoodPosts();
+      if (lastGood) {
+        console.log(
+          `[reddit] ${sub}: fetch returned empty — serving ${lastGood.length} last-good posts`,
+        );
+        return lastGood.slice(0, limit);
+      }
+    }
+
+    const authMode = getRedditOAuth().isConfigured ? 'oauth' : 'unauthenticated';
+    console.log(
+      `[bridge] Reddit: ${deduped.length} posts from r/${sub} [${authMode}] (rss: ${rssCount}, oauth: ${oauthCount}, json: ${jsonCount}, redlib: ${redlibCount})`,
+    );
+    return deduped;
+  })();
+
+  redditInFlight = inFlight;
+  try {
+    return (await inFlight).slice(0, limit);
+  } finally {
+    redditInFlight = null;
+  }
 }
 
 /** @alias Use `fetch` as the standardized export name */

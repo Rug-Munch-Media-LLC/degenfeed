@@ -218,6 +218,23 @@ export const PROVIDERS: Record<string, ProviderEntry> = {
   zora: { name: 'Zora (NFT)', fetch: fetchZoraPosts, category: 'content' },
   dtube: { name: 'DTube (Hive Video)', fetch: fetchDTubePosts, category: 'content' },
   lbry: { name: 'Odysee/LBRY (Video)', fetch: fetchLBRYPosts, category: 'content' },
+  // Alias: Odysee is LBRY's consumer frontend — same network, same fetcher.
+  odysee: { name: 'Odysee/LBRY (Video)', fetch: fetchLBRYPosts, category: 'content' },
+  substack: {
+    name: 'Substack (Newsletter)',
+    category: 'content',
+    fetch: async (limit) => {
+      const { fetchNewsletterPosts } = await import('../providers/newsletter');
+      return fetchNewsletterPosts(limit);
+    },
+  },
+  rumble: {
+    name: 'Rumble (Video)',
+    category: 'content',
+    // Rumble blocks datacenter fetches; return a real empty shape so the
+    // single-provider route seeds demo content instead of 404-stubbing.
+    fetch: async (): Promise<UnifiedPost[]> => [],
+  },
   gab: { name: 'Gab / Dissenter', fetch: fetchGabPosts, category: 'content' },
   minds: { name: 'Minds (Crypto Social)', fetch: fetchMindsPosts, category: 'content' },
   aether: { name: 'Aether (P2P Communities)', fetch: fetchAetherPosts, category: 'content' },
