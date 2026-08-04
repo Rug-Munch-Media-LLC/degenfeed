@@ -1,9 +1,9 @@
 # DegenFeed — Production Readiness Hardening Checklist
 
-> **Last audit:** 2026-07-24  
-> **Auditor:** DevOps SRE  
-> **Status:** In progress — see table below  
-> **Legend:** ✅ Done · ⚠️ Partial · ❌ Missing  
+> **Last audit:** 2026-07-24
+> **Auditor:** DevOps SRE
+> **Status:** In progress — see table below
+> **Legend:** ✅ Done · ⚠️ Partial · ❌ Missing
 
 ---
 
@@ -133,12 +133,12 @@ return response;
 
 ### Performance Fixes
 
-**Feed latency (B4 from launch checklist):**  
+**Feed latency (B4 from launch checklist):**
 - Parallelize provider fetches with `Promise.allSettled()`
 - Cap per-provider timeout at 2s
 - Serve stale-while-revalidate from KV
 
-**CDN URL:**  
+**CDN URL:**
 Set `DEGENFEED_CDN_URL` to Cloudflare R2 or a dedicated CDN subdomain:
 ```bash
 wrangler r2 bucket create degenfeed-assets
@@ -156,7 +156,7 @@ wrangler r2 bucket create degenfeed-assets
 | 5.3 | GotoSocial media backed up | ✅ | Tarball of local storage (R2 S3 is Cloudflare-managed separately) |
 | 5.4 | App Postgres databases backed up | ✅ | `backup-app-postgres.sh` covers: `degenfeed-glitchtip-db`, `degenfeed-lemmy-db`, `degenfeed-postiz-db`, `degenfeed-postiz-temporal-db`, `peertube-postgres-1` |
 | 5.5 | Git log captured | ✅ | `degenfeed-git-log-*.txt.age` in `/backups/degenfeed/` |
-| 5.6 | Off-site R2 replication configured | ✅ | `/backups/degenfeed/` → `r2-crypt:archives/` in `offsite-backup.sh` |
+| 5.6 | Off-site B2 replication configured | ✅ | `/backups/degenfeed/` → `b2-crypt:archives/` in `offsite-backup.sh` |
 | 5.7 | Backup monitoring active | ✅ | `backup-monitor.sh` checks DegenFeed backup freshness (<26h) |
 | 5.8 | Sentinel file recent | ✅ | `/backups/.last-successful-backup` updated daily |
 | 5.9 | **GAP: Backup files verified — encrypted .age files exist** | ⚠️ | As of 2026-07-24: 8x gotosocial-db.sqlite.gz.age, 8x gotosocial-config.yaml.age, 8x degenfeed-git-log.txt.age — all within retention |

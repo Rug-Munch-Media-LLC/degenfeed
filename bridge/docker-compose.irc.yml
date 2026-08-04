@@ -8,7 +8,6 @@
 #   matrix-appservice-irc <--> Synapse/Matrix homeserver <--> DegenFeed WS
 #                            (matrix.degenfeed.xyz)
 
-version: '3.8'
 
 services:
   # ── Matrix Appservice IRC ──────────────────────────────────────────────
