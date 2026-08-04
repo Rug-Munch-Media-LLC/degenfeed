@@ -450,15 +450,17 @@ async function fetchFromNeynar(limit: number): Promise<UnifiedPost[]> {
   }
 
   try {
-    // Fetch recent casts from curated FIDs via Neynar's casts API
-    const fids = CURATED_FIDS.slice(0, 10).join(',');
+    // Fetch recent casts from curated FIDs via Neynar's casts API. More FIDs
+    // = more diverse casters per page; Neynar accepts up to 100 comma-separated
+    // FIDs. We scan 30 so a single call yields a wide, fresh mix.
+    const fids = CURATED_FIDS.slice(0, 30).join(',');
     const url = `${NEYNAR_API}/v2/farcaster/feed?feed_type=filter&filter_type=fids&fids=${fids}&limit=${Math.min(limit, 50)}`;
     const res = await fetch(url, {
       headers: {
         accept: 'application/json',
         'x-api-key': apiKey,
       },
-      signal: AbortSignal.timeout(8000),
+      signal: AbortSignal.timeout(9000),
     });
     if (!res.ok) {
       console.log(`[farcaster] Neynar returned ${res.status}`);
@@ -467,52 +469,89 @@ async function fetchFromNeynar(limit: number): Promise<UnifiedPost[]> {
     const data = (await res.json()) as { casts?: NeynarCast[] };
     if (!data.casts?.length) return [];
 
-    return data.casts.slice(0, limit).map((cast) => {
-      const published = Date.parse(cast.timestamp);
-      return {
-        id: `farcaster:neynar:${cast.hash}`,
-        protocol: 'farcaster' as const,
-        author: {
-          id: `farcaster:${cast.author.fid}`,
-          primary: { protocol: 'farcaster' as const, id: String(cast.author.fid) },
-          handles: { farcaster: cast.author.username },
-          displayName: cast.author.display_name || cast.author.username,
-          bio: cast.author.bio || '',
-          avatarUrl: cast.author.pfp_url || '',
-          followerCount: 0,
-          followingCount: 0,
-          links: [],
-          keys: { fid: String(cast.author.fid) },
-        },
-        text: cast.text,
-        embeds: (cast.embeds || []).map((e) => ({ kind: 'link' as const, url: e.url })),
-        contentType: 'text' as const,
-        createdAt: Number.isNaN(published) ? Date.now() : published,
-        metrics: {
-          likes: cast.reactions?.likes_count ?? 0,
-          reposts: cast.reactions?.recasts_count ?? 0,
-          replies: cast.replies?.count ?? 0,
-          quotes: 0,
-        },
-        engagement: {
-          viewerLiked: false,
-          viewerReposted: false,
-          viewerBookmarked: false,
-          raw: {
-            likes: cast.reactions?.likes_count ?? 0,
-            reposts: cast.reactions?.recasts_count ?? 0,
-            replies: cast.replies?.count ?? 0,
-            quotes: 0,
-          },
-        },
-        raw: cast,
-        niches: guessFarcasterNiches(cast.text),
-      } as UnifiedPost;
-    });
+    // Skip casts with neither text nor embeds (blank cards).
+    const meaningful = data.casts.filter(
+      (cast) => (cast.text || '').trim() || (cast.embeds || []).length > 0,
+    );
+    return meaningful.slice(0, limit).map((cast) => neynarCastToPost(cast));
   } catch (err: any) {
     console.log(`[farcaster] Neynar fallback failed: ${err?.message || err}`);
-    return [];
+    // One bounded retry: Neynar occasionally times out on the first attempt
+    // (cold connection / upstream slowness). A single retry is cheap and the
+    // caller still respects the feed builder's 5s provider budget.
+    try {
+      const fids = CURATED_FIDS.slice(0, 30).join(',');
+      const url = `${NEYNAR_API}/v2/farcaster/feed?feed_type=filter&filter_type=fids&fids=${fids}&limit=${Math.min(limit, 50)}`;
+      const res = await fetch(url, {
+        headers: {
+          accept: 'application/json',
+          'x-api-key': apiKey,
+        },
+        signal: AbortSignal.timeout(6000),
+      });
+      if (!res.ok) {
+        console.log(`[farcaster] Neynar retry returned ${res.status}`);
+        return [];
+      }
+      const data = (await res.json()) as { casts?: NeynarCast[] };
+      if (!data.casts?.length) return [];
+      const meaningful = data.casts.filter(
+        (cast) => (cast.text || '').trim() || (cast.embeds || []).length > 0,
+      );
+      return meaningful.slice(0, limit).map((cast) => neynarCastToPost(cast));
+    } catch (retryErr: any) {
+      console.log(`[farcaster] Neynar retry failed: ${retryErr?.message || retryErr}`);
+      return [];
+    }
   }
+}
+
+/** Map a Neynar cast to a UnifiedPost (shared by primary fetch and retry). */
+function neynarCastToPost(cast: NeynarCast): UnifiedPost {
+  const published = Date.parse(cast.timestamp);
+  const text = (cast.text || '').trim();
+  const embedUrl = (cast.embeds || []).find((e) => e.url)?.url || '';
+  return {
+    id: `farcaster:neynar:${cast.hash}`,
+    protocol: 'farcaster' as const,
+    author: {
+      id: `farcaster:${cast.author.fid}`,
+      primary: { protocol: 'farcaster' as const, id: String(cast.author.fid) },
+      handles: { farcaster: cast.author.username },
+      displayName: cast.author.display_name || cast.author.username,
+      bio: cast.author.bio || '',
+      avatarUrl: cast.author.pfp_url || '',
+      followerCount: 0,
+      followingCount: 0,
+      links: [],
+      keys: { fid: String(cast.author.fid) },
+    },
+    // Image/media-only casts have empty text — surface the embed URL so the
+    // post is never a blank card.
+    text: text || embedUrl,
+    embeds: (cast.embeds || []).map((e) => ({ kind: 'link' as const, url: e.url })),
+    contentType: 'text' as const,
+    createdAt: Number.isNaN(published) ? Date.now() : published,
+    metrics: {
+      likes: cast.reactions?.likes_count ?? 0,
+      reposts: cast.reactions?.recasts_count ?? 0,
+      replies: cast.replies?.count ?? 0,
+      quotes: 0,
+    },
+    engagement: {
+      viewerLiked: false,
+      viewerReposted: false,
+      viewerBookmarked: false,
+      raw: {
+        likes: cast.reactions?.likes_count ?? 0,
+        reposts: cast.reactions?.recasts_count ?? 0,
+        replies: cast.replies?.count ?? 0,
+        quotes: 0,
+      },
+    },
+    raw: cast,
+    niches: guessFarcasterNiches(text),
+  } as UnifiedPost;
 }
 
 /**

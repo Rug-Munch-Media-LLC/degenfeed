@@ -2836,7 +2836,7 @@ async function fetchSingleFeed(feed: FeedSource, limit: number): Promise<Unified
         'User-Agent': USER_AGENT,
         Accept: 'application/rss+xml, application/atom+xml, application/xml, text/xml',
       },
-      signal: AbortSignal.timeout(4000),
+      signal: AbortSignal.timeout(3000),
     });
 
     if (!res.ok) {
@@ -2983,7 +2983,7 @@ async function fetchMirrorFeed(feed: FeedSource, limit: number): Promise<Unified
   try {
     const res = await globalThis.fetch(feed.url, {
       headers: { 'User-Agent': USER_AGENT },
-      signal: AbortSignal.timeout(4000),
+      signal: AbortSignal.timeout(3000),
     });
     if (!res.ok) return [];
 
@@ -3664,32 +3664,32 @@ export const SOURCE_BIAS: Record<string, BiasLabel> = {
   // Center — crypto / finance
   CoinTelegraph: 'center',
   'CoinTelegraph Bitcoin': 'center',
-  'CryptoSlate': 'center',
-  'Blockworks': 'center',
+  CryptoSlate: 'center',
+  Blockworks: 'center',
   'Reuters Crypto': 'center',
-  'Reuters': 'center',
-  'AP': 'center',
+  Reuters: 'center',
+  AP: 'center',
   'AP News': 'center',
   'Bloomberg Crypto': 'center',
   'FT Alphaville': 'center',
   'WSJ Crypto': 'center-right',
-  'Bankless': 'center',
-  'Messari': 'center',
+  Bankless: 'center',
+  Messari: 'center',
   'Delphi Digital': 'center',
-  'CoinMetrics': 'center',
+  CoinMetrics: 'center',
   'Glassnode Insights': 'center',
   'DeFi Llama': 'center',
-  'DeFiLlama': 'center',
-  'Yearn': 'center',
-  'Curve': 'center',
+  DeFiLlama: 'center',
+  Yearn: 'center',
+  Curve: 'center',
   'Curve Finance': 'center',
-  'Aave': 'center',
-  'Lido': 'center',
-  'Uniswap': 'center',
-  'CoinGecko': 'center',
-  'CoinMarketCap': 'center',
+  Aave: 'center',
+  Lido: 'center',
+  Uniswap: 'center',
+  CoinGecko: 'center',
+  CoinMarketCap: 'center',
   'a16z Crypto': 'center',
-  'Paradigm': 'center',
+  Paradigm: 'center',
   'Pantera Capital': 'center',
   'Galaxy Research': 'center',
   'Grayscale Research': 'center',
@@ -3793,8 +3793,8 @@ export const SOURCE_BIAS: Record<string, BiasLabel> = {
   BitcoinMagazine: 'center-right',
   Coinspeaker: 'center-right',
   'Bitcoin.com News': 'center-right',
-  'Bitcoinist': 'center-right',
-  'NewsBTC': 'center-right',
+  Bitcoinist: 'center-right',
+  NewsBTC: 'center-right',
   'Daily Hodl': 'center-right',
   'Watcher.Guru': 'center-right',
   'Zero Hedge Crypto': 'right',
@@ -3999,55 +3999,55 @@ export const SOURCE_FACTUALITY: Record<string, FactualityLabel> = {
   'CNBC Tech': 'high',
   'CNBC Crypto': 'high',
   // Crypto / finance factuality (2026-08-04 additions)
-  'CoinDesk': 'high',
-  'Decrypt': 'high',
+  CoinDesk: 'high',
+  Decrypt: 'high',
   'The Block': 'high',
-  'CoinTelegraph': 'high',
+  CoinTelegraph: 'high',
   'CoinTelegraph Bitcoin': 'high',
-  'CryptoSlate': 'mixed',
-  'Blockworks': 'high',
+  CryptoSlate: 'mixed',
+  Blockworks: 'high',
   'The Defiant': 'mixed',
-  'Bankless': 'mixed',
-  'Messari': 'high',
+  Bankless: 'mixed',
+  Messari: 'high',
   'Delphi Digital': 'high',
-  'CoinMetrics': 'high',
+  CoinMetrics: 'high',
   'Glassnode Insights': 'high',
   'Reuters Crypto': 'very-high',
-  'Reuters': 'very-high',
+  Reuters: 'very-high',
   'WSJ Crypto': 'very-high',
   'Bloomberg Crypto': 'very-high',
   'DeFi Llama': 'high',
-  'DeFiLlama': 'high',
-  'Yearn': 'high',
-  'Curve': 'high',
+  DeFiLlama: 'high',
+  Yearn: 'high',
+  Curve: 'high',
   'Curve Finance': 'high',
-  'Aave': 'high',
-  'Lido': 'high',
-  'Uniswap': 'high',
-  'CoinGecko': 'high',
-  'CoinMarketCap': 'high',
+  Aave: 'high',
+  Lido: 'high',
+  Uniswap: 'high',
+  CoinGecko: 'high',
+  CoinMarketCap: 'high',
   'a16z Crypto': 'high',
-  'Paradigm': 'high',
+  Paradigm: 'high',
   'Pantera Capital': 'high',
   'Galaxy Research': 'high',
   'Grayscale Research': 'high',
   'Bitcoin Magazine': 'mixed',
-  'BitcoinMagazine': 'mixed',
-  'Coinspeaker': 'mixed',
+  BitcoinMagazine: 'mixed',
+  Coinspeaker: 'mixed',
   'Bitcoin.com News': 'mixed',
-  'Bitcoinist': 'mixed',
-  'NewsBTC': 'mixed',
+  Bitcoinist: 'mixed',
+  NewsBTC: 'mixed',
   'Daily Hodl': 'mixed',
   'Watcher.Guru': 'low',
   'Zero Hedge Crypto': 'mixed',
-  'ZeroHedge': 'mixed',
-  'Motherboard': 'high',
-  'Vice': 'mixed',
-  'TechCrunch': 'high',
+  ZeroHedge: 'mixed',
+  Motherboard: 'high',
+  Vice: 'mixed',
+  TechCrunch: 'high',
   'The Verge': 'high',
-  'Engadget': 'high',
-  'Gizmodo': 'mixed',
-  'Wired': 'high',
+  Engadget: 'high',
+  Gizmodo: 'mixed',
+  Wired: 'high',
   'The Register': 'mixed',
 };
 
@@ -4671,9 +4671,10 @@ const RSS_CACHE_TTL = 300_000; // 5 minutes
  * Minimum number of posts to fetch + cache on every RSS refresh, regardless
  * of the requested limit. Prevents the bridge prewarm (which calls providers
  * with a small per-provider limit) from caching only ~5 posts and then serving
- * an empty/starved /api/feed/rss to larger requests.
+ * an empty/starved /api/feed/rss to larger requests. 100 posts gives the feed
+ * a healthy 50-100 item pool per protocol target.
  */
-const RSS_CACHE_MIN_POOL = 50;
+const RSS_CACHE_MIN_POOL = 100;
 let rssCache: {
   posts: UnifiedPost[];
   clusters: StoryClusterOutput[];
@@ -4681,14 +4682,14 @@ let rssCache: {
   fetchedAt: number;
 } | null = null;
 /** Single-flight lock: coalesce concurrent cold fetches into one refresh. */
-const rssFetchInFlight: Promise<UnifiedPost[]> | null = null;
+let rssFetchInFlight: Promise<UnifiedPost[]> | null = null;
 
 /**
  * Fetch from ALL RSS feeds (100+ sources) with lazy initialization + TTL cache.
  * Respects per-source limits to ensure diversity.
  */
 export async function fetchRssPosts(limit = 50): Promise<UnifiedPost[]> {
-  // Always fetch and cache a minimum pool of posts (50) so small requests
+  // Always fetch and cache a minimum pool of posts (100) so small requests
   // (e.g. the bridge prewarm calling with perProviderLimit=5) never poison
   // the 5-minute cache with only a handful of entries. A later request with
   // a larger limit then still gets a useful cache hit.
@@ -4717,105 +4718,118 @@ export async function fetchRssPosts(limit = 50): Promise<UnifiedPost[]> {
 
   // Single-flight: if a cold RSS refresh is already in progress (e.g. the
   // prewarm and a live request both miss the cache at once), join it instead
-  // of starting a second full 248-feed fetch that would hammer sources and
-  // race to overwrite the shared cache with a degraded result.
+  // of starting a second full 281-feed fetch that would hammer sources and
+  // race to overwrite the shared cache with a degraded result. The previous
+  // implementation declared this lock as a constant `null` and never assigned
+  // it, so every cold request started its own full fetch — during prewarm the
+  // bridge fired 3+ simultaneous RSS cold fetches and saturated the connection
+  // pool, which is what made ~90% of feeds time out.
   if (rssFetchInFlight) {
     const posts = await rssFetchInFlight;
     return posts.slice(0, limit);
   }
 
-  // Overall start time — used to bound the og:image enrichment so the RSS
-  // provider stays inside the bridge's provider timeout (~5s).
-  const fetchStartedAt = Date.now();
-  const all: UnifiedPost[] = [];
+  const run = async (): Promise<UnifiedPost[]> => {
+    // Overall start time — used to bound the og:image enrichment so the RSS
+    // provider stays inside the bridge's provider timeout (~5s).
+    const fetchStartedAt = Date.now();
+    const all: UnifiedPost[] = [];
 
-  // Determine how many items to fetch per feed based on total feeds and
-  // desired cache pool size.
-  const activeFeeds = ALL_FEEDS;
-  const perFeed = Math.max(1, Math.ceil((cacheLimit * 2) / activeFeeds.length));
+    // Determine how many items to fetch per feed based on total feeds and
+    // desired cache pool size.
+    const activeFeeds = ALL_FEEDS;
+    const perFeed = Math.max(1, Math.ceil((cacheLimit * 2) / activeFeeds.length));
 
-  console.log(`[rss] Fetching ${activeFeeds.length} feeds, ${perFeed} items per feed`);
+    console.log(`[rss] Fetching ${activeFeeds.length} feeds, ${perFeed} items per feed`);
 
-  // Fetch feeds in parallel with concurrency control. Stop fetching once we
-  // have enough posts (early exit) — fetching all 148 feeds for a small limit
-  // was the dominant cold-start cost (~7s).
-  const BATCH_SIZE = 25;
-  for (let i = 0; i < activeFeeds.length; i += BATCH_SIZE) {
-    const batch = activeFeeds.slice(i, i + BATCH_SIZE);
-    const results = await Promise.allSettled(batch.map((feed) => fetchFeed(feed, perFeed)));
+    // Fetch feeds in parallel with concurrency control. Stop fetching once we
+    // have enough posts (early exit) — fetching all 148 feeds for a small limit
+    // was the dominant cold-start cost (~7s).
+    const BATCH_SIZE = 25;
+    for (let i = 0; i < activeFeeds.length; i += BATCH_SIZE) {
+      const batch = activeFeeds.slice(i, i + BATCH_SIZE);
+      const results = await Promise.allSettled(batch.map((feed) => fetchFeed(feed, perFeed)));
 
-    for (const r of results) {
-      if (r.status === 'fulfilled') {
-        all.push(...r.value);
+      for (const r of results) {
+        if (r.status === 'fulfilled') {
+          all.push(...r.value);
+        }
+      }
+
+      // Early exit once we have enough raw posts for the requested cache pool
+      if (all.length >= cacheLimit) break;
+
+      // Small delay between batches to avoid hammering servers
+      if (i + BATCH_SIZE < activeFeeds.length) {
+        await new Promise((resolve) => setTimeout(resolve, 50));
       }
     }
 
-    // Early exit once we have enough raw posts for the requested cache pool
-    if (all.length >= cacheLimit) break;
+    // Deduplicate — against the cache pool size, not the requested limit
+    const deduped = deduplicatePosts(all, cacheLimit);
 
-    // Small delay between batches to avoid hammering servers
-    if (i + BATCH_SIZE < activeFeeds.length) {
-      await new Promise((resolve) => setTimeout(resolve, 50));
+    // Rank by source reputation + freshness + cross-reference grounding
+    const ranked = rankNewsPosts(deduped);
+
+    // Ground News-beating features: story clusters (Full Coverage) + blindspots
+    const clusters = clusterStories(ranked, 12);
+    const blindspots = computeBlindspots(ranked, 10);
+
+    // Backfill missing images from article OpenGraph tags (bounded time budget
+    // that shrinks with feed-fetch time so the provider stays < ~4.5s total).
+    const enrichBudgetMs = Math.max(400, 3200 - (Date.now() - fetchStartedAt));
+    const enriched = await enrichPostImages(ranked, enrichBudgetMs);
+
+    // Log stats
+    const byCategory = new Map<string, number>();
+    for (const feed of activeFeeds) {
+      const count = all.filter((p) => {
+        const raw = p.raw as { feedLabel?: string };
+        return raw.feedLabel === feed.label;
+      }).length;
+      if (count > 0) {
+        byCategory.set(feed.category, (byCategory.get(feed.category) || 0) + count);
+      }
     }
-  }
 
-  // Deduplicate — against the cache pool size, not the requested limit
-  const deduped = deduplicatePosts(all, cacheLimit);
-
-  // Rank by source reputation + freshness + cross-reference grounding
-  const ranked = rankNewsPosts(deduped);
-
-  // Ground News-beating features: story clusters (Full Coverage) + blindspots
-  const clusters = clusterStories(ranked, 12);
-  const blindspots = computeBlindspots(ranked, 10);
-
-  // Backfill missing images from article OpenGraph tags (bounded time budget
-  // that shrinks with feed-fetch time so the provider stays < ~4.5s total).
-  const enrichBudgetMs = Math.max(400, 3200 - (Date.now() - fetchStartedAt));
-  const enriched = await enrichPostImages(ranked, enrichBudgetMs);
-
-  // Log stats
-  const byCategory = new Map<string, number>();
-  for (const feed of activeFeeds) {
-    const count = all.filter((p) => {
-      const raw = p.raw as { feedLabel?: string };
-      return raw.feedLabel === feed.label;
-    }).length;
-    if (count > 0) {
-      byCategory.set(feed.category, (byCategory.get(feed.category) || 0) + count);
-    }
-  }
-
-  console.log(
-    `[rss] Total: ${deduped.length} posts from ~${activeFeeds.length} feeds (${all.length} raw)`,
-  );
-  for (const [cat, count] of byCategory) {
-    console.log(`[rss]   ${cat}: ${count} posts`);
-  }
-
-  // Anti-poisoning: never replace a healthy cache with a degraded fetch.
-  // The bridge's feed builder kills provider fetches after FETCH_TIMEOUT_MS
-  // (5s), but the killed promise keeps running in the background and would
-  // otherwise overwrite rssCache with whatever it scraped before the kill —
-  // often a handful of posts that then serve /api/feed/rss for the whole
-  // 5-minute TTL. If we already have a larger, fresher cache, keep it and
-  // serve from it instead of writing the degraded result.
-  if (
-    rssCache &&
-    Date.now() - rssCache.fetchedAt < RSS_CACHE_TTL &&
-    rssCache.posts.length > 0 &&
-    deduped.length < Math.min(RSS_CACHE_MIN_POOL, rssCache.posts.length)
-  ) {
     console.log(
-      `[rss] Degraded fetch (${deduped.length} posts) — keeping existing cache (${rssCache.posts.length} posts, age ${Math.round((Date.now() - rssCache.fetchedAt) / 1000)}s)`,
+      `[rss] Total: ${deduped.length} posts from ~${activeFeeds.length} feeds (${all.length} raw)`,
     );
-    return rssCache.posts.slice(0, limit);
+    for (const [cat, count] of byCategory) {
+      console.log(`[rss]   ${cat}: ${count} posts`);
+    }
+
+    // Anti-poisoning: never replace a healthy cache with a degraded fetch.
+    // The bridge's feed builder kills provider fetches after FETCH_TIMEOUT_MS
+    // (5s), but the killed promise keeps running in the background and would
+    // otherwise overwrite rssCache with whatever it scraped before the kill —
+    // often a handful of posts that then serve /api/feed/rss for the whole
+    // 5-minute TTL. If we already have a larger, fresher cache, keep it and
+    // serve from it instead of writing the degraded result.
+    if (
+      rssCache &&
+      Date.now() - rssCache.fetchedAt < RSS_CACHE_TTL &&
+      rssCache.posts.length > 0 &&
+      deduped.length < Math.min(RSS_CACHE_MIN_POOL, rssCache.posts.length)
+    ) {
+      console.log(
+        `[rss] Degraded fetch (${deduped.length} posts) — keeping existing cache (${rssCache.posts.length} posts, age ${Math.round((Date.now() - rssCache.fetchedAt) / 1000)}s)`,
+      );
+      return rssCache.posts.slice(0, limit);
+    }
+
+    // Update cache with deduplicated + ranked + image-enriched results
+    rssCache = { posts: enriched, clusters, blindspots, fetchedAt: Date.now() };
+
+    return enriched.slice(0, limit);
+  };
+
+  rssFetchInFlight = run();
+  try {
+    return await rssFetchInFlight;
+  } finally {
+    rssFetchInFlight = null;
   }
-
-  // Update cache with deduplicated + ranked + image-enriched results
-  rssCache = { posts: enriched, clusters, blindspots, fetchedAt: Date.now() };
-
-  return enriched.slice(0, limit);
 }
 
 /**

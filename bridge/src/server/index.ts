@@ -1043,7 +1043,10 @@ const server = http.createServer(async (req, res) => {
 
     if (path.startsWith('/api/feed/')) {
       const proto = path.replace('/api/feed/', '');
-      const limit = Math.min(parseInt(searchParams.get('limit') || '25', 10), 200);
+      // Default 50 (was 25) so single-protocol feeds ask providers for more
+      // items per cycle (perProviderLimit = ceil(50*1.2) = 60) — the bridge
+      // then keeps 50-100 items per protocol available instead of 5-10.
+      const limit = Math.min(parseInt(searchParams.get('limit') || '50', 10), 200);
       const page = parseInt(searchParams.get('page') || '1', 10);
       // Override: route zora requests through the zora provider directly
       if (proto === 'zora') {
