@@ -30,6 +30,7 @@ import { requireAdminFromSession } from './lib/admin-guard';
 // ─── Route registration ─────────────────────────────────────
 // Delegated to register/ sub-modules under ./routes/register/
 
+import { registerAuthRoutes } from './routes/register/auth';
 import { registerCoinsRoutes } from './routes/register/coins';
 import { registerCoreRoutes } from './routes/register/core';
 import { registerDaoRoutes } from './routes/register/dao';
@@ -39,6 +40,7 @@ import { registerFramesRoutes } from './routes/register/frames';
 import { registerLensRoutes } from './routes/register/lens';
 import { registerLiveRoutes } from './routes/register/live';
 import { registerMediaRoutes } from './routes/register/media';
+import { registerMembershipRoutes } from './routes/register/membership';
 import { registerMessagingRoutes } from './routes/register/messaging';
 import { registerNostrGroupRoutes } from './routes/register/nostr-groups';
 import { registerPremiumRoutes } from './routes/register/premium';
@@ -339,12 +341,14 @@ app.use('/api/admin/*', async (c, next) => {
 // ═══════════════════════════════════════════════════════════════
 
 registerCoreRoutes(app);
+registerAuthRoutes(app);
 registerFeedRoutes(app);
 registerSocialRoutes(app);
 registerDaoRoutes(app);
 registerCoinsRoutes(app);
 registerLensRoutes(app);
 registerMediaRoutes(app);
+registerMembershipRoutes(app);
 registerMessagingRoutes(app);
 registerLiveRoutes(app);
 registerPremiumRoutes(app);

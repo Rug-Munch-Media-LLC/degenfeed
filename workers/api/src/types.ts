@@ -29,6 +29,8 @@ export interface Env {
   FARCASTER_BOT_FID?: string;
   FARCASTER_BOT_SIGNER_KEY?: string;
   FARCASTER_BOT_HUB_URL?: string;
+  /** Farcaster OAuth client id (Warpcast sign-in, auth.farcaster.xyz) */
+  FARCASTER_CLIENT_ID?: string;
   REDDIT_CLIENT_ID?: string;
   REDDIT_CLIENT_SECRET?: string;
   GOOGLE_CLIENT_ID?: string;

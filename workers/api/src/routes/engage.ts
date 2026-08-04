@@ -351,23 +351,53 @@ async function handleMastodon(
 
   try {
     if (action === 'like') {
-      await client.like(statusId);
+      const status = await client.like(statusId);
+      return jsonResponse({
+        success: true,
+        nativeReference: {
+          protocol: 'mastodon',
+          action,
+          nativeId: String(status?.id ?? statusId),
+          url: status?.url,
+        },
+      });
     } else if (action === 'unlike') {
       await client.unlike(statusId);
+      return jsonResponse({ success: true });
     } else if (action === 'repost') {
-      await client.repost(statusId);
+      const status = await client.repost(statusId);
+      return jsonResponse({
+        success: true,
+        nativeReference: {
+          protocol: 'mastodon',
+          action: 'boost',
+          nativeId: String(status?.id ?? statusId),
+          url: status?.url,
+        },
+      });
     } else if (action === 'unrepost') {
       await client.unrepost(statusId);
+      return jsonResponse({ success: true });
     } else if (action === 'bookmark') {
       await client.bookmark(statusId);
+      return jsonResponse({ success: true });
     } else if (action === 'unbookmark') {
       await client.unbookmark(statusId);
+      return jsonResponse({ success: true });
     } else if (action === 'reply') {
-      await client.publish(content, { inReplyToId: statusId });
+      const status = await client.publish(content, { inReplyToId: statusId });
+      return jsonResponse({
+        success: true,
+        nativeReference: {
+          protocol: 'mastodon',
+          action,
+          nativeId: String(status?.id ?? ''),
+          url: status?.url,
+        },
+      });
     } else {
       return jsonResponse({ error: `${action} not supported on mastodon` }, 400);
     }
-    return jsonResponse({ success: true });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Mastodon engagement failed';
     return jsonResponse({ error: message }, 500);
@@ -408,10 +438,22 @@ async function handleLemmy(
         body: JSON.stringify({ post_id: Number(postId), score: 0 }),
       });
     } else if (action === 'reply') {
-      await fetch(`${instance}/api/v3/comment`, {
+      const res = await fetch(`${instance}/api/v3/comment`, {
         method: 'POST',
         headers,
         body: JSON.stringify({ post_id: Number(postId), content }),
+      });
+      if (!res.ok) {
+        return jsonResponse({ error: 'Lemmy comment failed' }, 502);
+      }
+      const data = (await res.json()) as { comment_view?: { comment?: { id: number } } };
+      return jsonResponse({
+        success: true,
+        nativeReference: {
+          protocol: 'lemmy',
+          action,
+          nativeId: String(data.comment_view?.comment?.id ?? ''),
+        },
       });
     } else {
       return jsonResponse({ error: `${action} not supported on lemmy` }, 400);

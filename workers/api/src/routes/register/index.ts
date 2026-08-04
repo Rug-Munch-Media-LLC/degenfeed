@@ -10,6 +10,7 @@
 
 import type { Hono } from 'hono';
 import type { Env } from '../../types';
+import { registerAuthRoutes } from './auth';
 import { registerCoinsRoutes } from './coins';
 import { registerCoreRoutes } from './core';
 import { registerDaoRoutes } from './dao';
@@ -17,6 +18,7 @@ import { registerFeedRoutes } from './feed';
 import { registerFramesRoutes } from './frames';
 import { registerLiveRoutes } from './live';
 import { registerMediaRoutes } from './media';
+import { registerMembershipRoutes } from './membership';
 import { registerMessagingRoutes } from './messaging';
 import { registerNostrGroupRoutes } from './nostr-groups';
 import { registerSocialRoutes } from './social';
@@ -24,11 +26,13 @@ import { registerZoraRoutes } from './zora';
 
 export function registerRoutes(app: Hono<{ Bindings: Env }>): void {
   registerCoreRoutes(app);
+  registerAuthRoutes(app);
   registerFeedRoutes(app);
   registerSocialRoutes(app);
   registerDaoRoutes(app);
   registerCoinsRoutes(app);
   registerMediaRoutes(app);
+  registerMembershipRoutes(app);
   registerMessagingRoutes(app);
   registerLiveRoutes(app);
   registerFramesRoutes(app);

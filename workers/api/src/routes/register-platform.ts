@@ -23,8 +23,11 @@ import type { Env } from '../types';
 
 // ─── POST /api/register-platform ──────────────────────────────────────
 
-const PREMIUM_PLATFORMS = new Set(['farcaster', 'lens', 'bluesky']);
-const FREE_PLATFORMS = new Set(['mastodon', 'nostr', 'lemmy', 'peertube', 'pixelfed']);
+// Gating model reconciled with register-all.ts (single source of truth):
+//   free    — mastodon (GtS), nostr, lemmy, peertube, pixelfed, bluesky (AT PDS)
+//   premium — farcaster, lens
+const PREMIUM_PLATFORMS = new Set(['farcaster', 'lens']);
+const FREE_PLATFORMS = new Set(['mastodon', 'nostr', 'lemmy', 'peertube', 'pixelfed', 'bluesky']);
 const VALID_PLATFORMS = new Set([...PREMIUM_PLATFORMS, ...FREE_PLATFORMS]);
 
 export async function handleRegisterPlatform(request: Request, env: Env): Promise<Response> {
