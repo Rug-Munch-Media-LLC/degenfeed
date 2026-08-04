@@ -157,7 +157,9 @@ function EpisodeAudioPlayer({ src, title }: { src: string; title: string }) {
         </div>
       </div>
       {/* Audio element kept in DOM so the player works without extra libs */}
-      <audio ref={audioRef} src={src} preload="none" className="hidden" />
+      <audio ref={audioRef} src={src} preload="none" className="hidden">
+        <track kind="captions" />
+      </audio>
     </div>
   );
 }

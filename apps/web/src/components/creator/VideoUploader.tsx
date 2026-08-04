@@ -401,7 +401,12 @@ export default function VideoUploader({ mode, onClose, onSuccess }: VideoUploade
         {stage === 'uploading' && (
           <div className="space-y-6 py-8 text-center">
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-degen-500/20">
-              <svg className="h-8 w-8 animate-spin text-degen-400" viewBox="0 0 24 24" fill="none">
+              <svg
+                className="h-8 w-8 animate-spin text-degen-400"
+                viewBox="0 0 24 24"
+                fill="none"
+                aria-hidden="true"
+              >
                 <circle
                   cx="12"
                   cy="12"

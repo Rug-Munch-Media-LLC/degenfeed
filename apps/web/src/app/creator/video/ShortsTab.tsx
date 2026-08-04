@@ -34,14 +34,20 @@ export default function ShortsTab() {
 
   useEffect(() => {
     return () => {
-      if (streamRef.current) streamRef.current.getTracks().forEach((t) => { t.stop(); });
+      if (streamRef.current)
+        streamRef.current.getTracks().forEach((t) => {
+          t.stop();
+        });
       if (timerRef.current) clearInterval(timerRef.current);
     };
   }, []);
 
   const startCamera = useCallback(async (facing: 'user' | 'environment') => {
     try {
-      if (streamRef.current) streamRef.current.getTracks().forEach((t) => { t.stop(); });
+      if (streamRef.current)
+        streamRef.current.getTracks().forEach((t) => {
+          t.stop();
+        });
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: facing, width: { ideal: 1080 }, height: { ideal: 1920 } },
         audio: true,
@@ -87,7 +93,10 @@ export default function ShortsTab() {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
       mediaRecorderRef.current.stop();
     }
-    if (streamRef.current) streamRef.current.getTracks().forEach((t) => { t.stop(); });
+    if (streamRef.current)
+      streamRef.current.getTracks().forEach((t) => {
+        t.stop();
+      });
     setRecording(false);
     if (timerRef.current) {
       clearInterval(timerRef.current);
@@ -250,7 +259,9 @@ export default function ShortsTab() {
     return (
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div className="rounded-2xl overflow-hidden bg-black">
-          <video src={previewUrl} controls className="w-full max-h-[400px] object-contain" />
+          <video src={previewUrl} controls className="w-full max-h-[400px] object-contain">
+            <track kind="captions" />
+          </video>
         </div>
         <div className="space-y-4 max-h-[500px] overflow-y-auto pr-1">
           <div>

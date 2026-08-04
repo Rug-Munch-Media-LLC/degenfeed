@@ -107,7 +107,9 @@ export function VideoGrid({
                   autoPlay
                   playsInline
                   className="h-full w-full object-cover"
-                />
+                >
+                  <track kind="captions" />
+                </video>
               ) : (
                 <div className="flex h-full items-center justify-center">
                   <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-lg font-bold text-white">

@@ -69,6 +69,12 @@ export {
   getAnnounceBridge,
   getConfiguredAnnouncePlatforms,
 } from './announce';
+export type { PublishLiveEventOptions, PublishLiveEventResult, RelayPublishResult } from './nostr';
+export {
+  endNip53LiveEvent,
+  publishNip53LiveEvent,
+  publishSignedEvent,
+} from './nostr';
 export { checkAllGates, checkTokenGate, getGateLabel } from './premium';
 
 export type {

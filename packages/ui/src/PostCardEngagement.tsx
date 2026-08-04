@@ -271,7 +271,10 @@ export const PostCardEngagement = memo(function PostCardEngagement({
                   </svg>
                 )}
               </span>{' '}
-              <span aria-label={`${localState.metrics.likes} ${getActionVerb(post.protocol, 'like').toLowerCase()}s`}>
+              <span
+                role="text"
+                aria-label={`${localState.metrics.likes} ${getActionVerb(post.protocol, 'like').toLowerCase()}s`}
+              >
                 {formatCount(localState.metrics.likes)}
               </span>
             </button>
@@ -307,7 +310,10 @@ export const PostCardEngagement = memo(function PostCardEngagement({
                   <path d="M21 13v2a4 4 0 0 1-4 4H3" />
                 </svg>
               </span>{' '}
-              <span aria-label={`${localState.metrics.reposts} ${getActionVerb(post.protocol, 'repost').toLowerCase()}s`}>
+              <span
+                role="text"
+                aria-label={`${localState.metrics.reposts} ${getActionVerb(post.protocol, 'repost').toLowerCase()}s`}
+              >
                 {formatCount(localState.metrics.reposts)}
               </span>
             </button>
@@ -336,6 +342,7 @@ export const PostCardEngagement = memo(function PostCardEngagement({
                 </svg>
               </span>{' '}
               <span
+                role="text"
                 aria-label={`${localState.metrics.replies} ${getActionVerb(post.protocol, 'reply').toLowerCase()}s`}
               >
                 {formatCount(localState.metrics.replies)}

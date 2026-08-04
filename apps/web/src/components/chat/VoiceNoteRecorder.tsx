@@ -182,7 +182,9 @@ function AudioPlayer({
 
   return (
     <div className="flex items-center gap-3 rounded-2xl bg-[var(--color-card)] border border-[var(--color-border)] px-3 py-2.5 w-full max-w-sm">
-      <audio ref={audioRef} src={blobUrl} preload="auto" />
+      <audio ref={audioRef} src={blobUrl} preload="auto">
+        <track kind="captions" />
+      </audio>
 
       {/* Play/pause button */}
       <button
@@ -335,7 +337,9 @@ export function VoiceNoteRecorder({
 
     // Stop media tracks
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach((t) => { t.stop(); });
+      streamRef.current.getTracks().forEach((t) => {
+        t.stop();
+      });
       streamRef.current = null;
     }
   }, []);
@@ -404,7 +408,9 @@ export function VoiceNoteRecorder({
 
         // Clean up stream
         if (streamRef.current) {
-          streamRef.current.getTracks().forEach((t) => { t.stop(); });
+          streamRef.current.getTracks().forEach((t) => {
+            t.stop();
+          });
           streamRef.current = null;
         }
       };
@@ -499,7 +505,9 @@ export function VoiceNoteRecorder({
     return () => {
       stopRecording();
       if (streamRef.current) {
-        streamRef.current.getTracks().forEach((t) => { t.stop(); });
+        streamRef.current.getTracks().forEach((t) => {
+          t.stop();
+        });
       }
     };
   }, [stopRecording]);

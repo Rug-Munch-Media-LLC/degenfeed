@@ -324,6 +324,7 @@ function VideoCard({ video }: { video: PeerTubeVideoItem }) {
               fill="none"
               stroke="currentColor"
               strokeWidth="1.5"
+              aria-hidden="true"
             >
               <polygon points="23 7 16 12 23 17 23 7" />
               <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
@@ -416,6 +417,7 @@ function ChannelCard({ channel }: { channel: PeerTubeChannelItem }) {
             fill="none"
             stroke="currentColor"
             strokeWidth="2"
+            aria-hidden="true"
           >
             <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
           </svg>
@@ -555,6 +557,7 @@ export default function PeerTubeExplorerPage() {
               fill="none"
               stroke="currentColor"
               strokeWidth="2"
+              aria-hidden="true"
             >
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
               <polyline points="17 8 12 3 7 8" />
@@ -575,6 +578,7 @@ export default function PeerTubeExplorerPage() {
               fill="none"
               stroke="currentColor"
               strokeWidth="2"
+              aria-hidden="true"
             >
               <circle cx="11" cy="11" r="8" />
               <line x1="21" y1="21" x2="16.65" y2="16.65" />
@@ -717,6 +721,7 @@ export default function PeerTubeExplorerPage() {
                   stroke="currentColor"
                   strokeWidth="1.5"
                   className="text-[var(--color-muted)]"
+                  aria-hidden="true"
                 >
                   <polygon points="23 7 16 12 23 17 23 7" />
                   <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />

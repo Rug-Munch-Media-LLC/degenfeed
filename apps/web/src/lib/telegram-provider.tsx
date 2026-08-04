@@ -10,17 +10,14 @@
  */
 
 import {
-  type BackButton,
   backButton,
-  type HapticFeedback,
   hapticFeedback,
   type InitData,
   init,
   initData,
-  type MainButton,
-  type MiniApp,
   mainButton,
   miniApp,
+  popup,
   type ThemeParams,
   themeParams,
 } from '@telegram-apps/sdk';
@@ -51,13 +48,13 @@ export interface TelegramContextValue {
   /** Current Telegram theme params */
   theme: ThemeParams | undefined;
   /** Mini App API */
-  miniApp: MiniApp | undefined;
+  miniApp: typeof miniApp | undefined;
   /** MainButton API */
-  mainButton: MainButton | undefined;
+  mainButton: typeof mainButton | undefined;
   /** BackButton API */
-  backButton: BackButton | undefined;
+  backButton: typeof backButton | undefined;
   /** HapticFeedback API */
-  hapticFeedback: HapticFeedback | undefined;
+  hapticFeedback: typeof hapticFeedback | undefined;
   /** Show a toast/notification (works in both Telegram and standalone modes) */
   showNotification: (text: string) => void;
   /** Close the Mini App */
@@ -75,10 +72,12 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
   const [isTelegram, setIsTelegram] = useState(false);
   const [isStandalone, setIsStandalone] = useState(true);
   const [data, setData] = useState<InitData | undefined>(undefined);
-  const [miniAppApi, setMiniAppApi] = useState<MiniApp | undefined>(undefined);
-  const [mainButtonApi, setMainButtonApi] = useState<MainButton | undefined>(undefined);
-  const [backButtonApi, setBackButtonApi] = useState<BackButton | undefined>(undefined);
-  const [hapticFeedbackApi, setHapticFeedbackApi] = useState<HapticFeedback | undefined>(undefined);
+  const [miniAppApi, setMiniAppApi] = useState<typeof miniApp | undefined>(undefined);
+  const [mainButtonApi, setMainButtonApi] = useState<typeof mainButton | undefined>(undefined);
+  const [backButtonApi, setBackButtonApi] = useState<typeof backButton | undefined>(undefined);
+  const [hapticFeedbackApi, setHapticFeedbackApi] = useState<typeof hapticFeedback | undefined>(
+    undefined,
+  );
 
   const initialized = useRef(false);
 
@@ -105,13 +104,12 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
       setIsStandalone(false);
 
       // Get init data (contains user, start params, etc.)
-      const iData = initData();
+      const iData = initData.state();
       setData(iData);
 
       // Expose MainButton
-      if (mainButton.isSupported()) {
-        setMainButtonApi(mainButton);
-      }
+      mainButton.mount();
+      setMainButtonApi(mainButton);
 
       // Expose BackButton
       if (backButton.isSupported()) {
@@ -142,7 +140,7 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
       if (miniAppApi) {
         // In Telegram, show a popup
         try {
-          miniAppApi.showPopup({ message: text, buttons: [{ type: 'ok' }] });
+          popup.open({ message: text, buttons: [{ type: 'ok' }] });
           return;
         } catch {
           // fall through to alert
@@ -172,7 +170,7 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
       isStandalone,
       initData: data,
       user: data?.user,
-      theme: themeParams,
+      theme: themeParams.state(),
       miniApp: miniAppApi,
       mainButton: mainButtonApi,
       backButton: backButtonApi,

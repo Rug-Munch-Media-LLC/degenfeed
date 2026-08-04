@@ -405,18 +405,17 @@ export default function TelegramMiniAppPage() {
 
   // Set up MainButton if available
   useEffect(() => {
-    if (tg.mainButton && tg.isTelegram) {
-      tg.mainButton.setText('Open DegenFeed');
-      tg.mainButton.on('click', () => {
-        window.location.href = 'https://app.degenfeed.xyz';
-      });
-      tg.mainButton.show();
-    }
+    if (!tg.mainButton || !tg.isTelegram) return;
+    tg.mainButton.mount();
+    tg.mainButton.setParams({ text: 'Open DegenFeed' });
+    const offClick = tg.mainButton.onClick(() => {
+      window.location.href = 'https://app.degenfeed.xyz';
+    });
+    tg.mainButton.setParams({ isVisible: true });
 
     return () => {
-      if (tg.mainButton) {
-        tg.mainButton.hide();
-      }
+      offClick();
+      tg.mainButton?.setParams({ isVisible: false });
     };
   }, [tg.mainButton, tg.isTelegram]);
 

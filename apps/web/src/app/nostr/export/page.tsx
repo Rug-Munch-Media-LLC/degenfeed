@@ -111,7 +111,6 @@ export default function NostrExportPage() {
                       type="button"
                       onClick={() => setShowNsec(!showNsec)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[var(--color-muted)]"
-                      type="button"
                     >
                       {showNsec ? '🙈' : '👁️'}
                     </button>

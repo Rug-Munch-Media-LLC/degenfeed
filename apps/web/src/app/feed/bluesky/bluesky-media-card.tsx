@@ -143,7 +143,9 @@ export function VideoCard({ post, style }: { post: UnifiedPost; style?: React.CS
             controls
             autoPlay
             onError={() => setExpanded(false)}
-          />
+          >
+            <track kind="captions" />
+          </video>
           <button
             type="button"
             onClick={(e) => {

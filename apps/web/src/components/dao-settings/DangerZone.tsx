@@ -102,8 +102,8 @@ function DangerConfirmModal({ action, onClose }: { action: string; onClose: () =
   };
 
   const d = DANGER_ACTIONS[action];
-  if (!d) return null;
   const [confirmInput, setConfirmInput] = useState('');
+  if (!d) return null;
 
   return (
     <div

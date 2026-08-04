@@ -608,7 +608,6 @@ export function OnboardingModal() {
                             <button
                               type="button"
                               onClick={() => toggleFollow(s.id)}
-                              type="button"
                               className={`shrink-0 rounded-lg px-3.5 py-1.5 text-xs font-semibold transition-all ${
                                 following
                                   ? 'bg-white/[0.06] text-white/60 hover:bg-red-500/10 hover:text-red-400'
@@ -930,7 +929,6 @@ export function OnboardingModal() {
                   <button
                     type="button"
                     onClick={() => goTo(step + 1)}
-                    type="button"
                     disabled={!canProceed}
                     className="btn-primary text-sm px-5 py-2.5"
                   >

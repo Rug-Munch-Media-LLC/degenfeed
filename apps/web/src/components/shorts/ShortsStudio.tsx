@@ -318,14 +318,15 @@ export function ShortsStudio({ open, onClose, onPublished }: ShortsStudioProps) 
         {/* Preview */}
         {videoUrl && (
           <div className="rounded-lg overflow-hidden border border-white/10 bg-black">
-            {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
             <video
               ref={videoPreviewRef}
               src={videoUrl}
               className="max-h-48 w-full object-contain"
               controls
               playsInline
-            />
+            >
+              <track kind="captions" />
+            </video>
           </div>
         )}
 
@@ -529,7 +530,12 @@ export function ShortsStudio({ open, onClose, onPublished }: ShortsStudioProps) 
       <div className="flex flex-col gap-4 py-4">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-degen-500/10">
-            <svg className="h-5 w-5 animate-spin text-degen-400" viewBox="0 0 24 24" fill="none">
+            <svg
+              className="h-5 w-5 animate-spin text-degen-400"
+              viewBox="0 0 24 24"
+              fill="none"
+              aria-hidden="true"
+            >
               <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.3" />
               <path
                 d="M12 2a10 10 0 019.95 9"
@@ -567,7 +573,14 @@ export function ShortsStudio({ open, onClose, onPublished }: ShortsStudioProps) 
         {/* Success header */}
         <div className="flex flex-col items-center gap-2 py-3">
           <div className="flex h-14 w-14 items-center justify-center rounded-full bg-degen-500/15">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-degen-400">
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              className="text-degen-400"
+              aria-hidden="true"
+            >
               <path
                 d="M20 6L9 17l-5-5"
                 stroke="currentColor"

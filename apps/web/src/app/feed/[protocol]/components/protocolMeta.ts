@@ -11,6 +11,69 @@
 
 import type { UnifiedPost } from '@degenfeed/types';
 
+/**
+ * Protocol-native `raw` payload shape. Every field is optional and defensive:
+ * providers differ in casing, nesting, and presence, so extractors must treat
+ * each field as absent-safe. `raw` originates as `unknown` on `UnifiedPost`.
+ */
+interface RawAuthor {
+  username?: string;
+  handle?: string;
+  did?: string;
+  fid?: string | number;
+  acct?: string;
+  name?: string;
+  title?: string;
+  actor_id?: string;
+  ap_id?: string;
+}
+
+interface ProtocolRawPayload {
+  pubkey?: string;
+  hash?: string;
+  uri?: string;
+  url?: string;
+  id?: string;
+  subreddit?: string;
+  permalink?: string;
+  feedUrl?: string;
+  feedLabel?: string;
+  score?: string | number;
+  num_comments?: string | number;
+  replyCount?: number;
+  quoteCount?: number;
+  favourite_count?: number;
+  favourites_count?: number;
+  reblogs_count?: number;
+  sensitive?: boolean;
+  spoiler_text?: string;
+  author_username?: string;
+  stats_reposts?: string | number;
+  stats_comments?: string | number;
+  stats_reactions?: string | number;
+  embeds?: Array<{ url?: string }>;
+  tags?: string[][];
+  author?: RawAuthor;
+  account?: RawAuthor;
+  reactions?: {
+    likes_count?: number;
+    recasts_count?: number;
+  };
+  replies?: { count?: number };
+  community?: {
+    name?: string;
+    title?: string;
+    actor_id?: string;
+  };
+  post?: { ap_id?: string };
+  counts?: { upvotes?: number; downvotes?: number };
+}
+
+/** Read the protocol-native raw payload as a typed, defensive record. */
+function rawPayload(post: UnifiedPost): ProtocolRawPayload {
+  return (post.raw ?? {}) as ProtocolRawPayload;
+}
+
 export interface ProtocolInfo {
   id: string;
   label: string;
@@ -201,7 +264,7 @@ async function encodeNpub(hexPubkey: string): Promise<string> {
 
 /** Native-app permalink for a post, per protocol. Returns null when unknown. */
 export async function nativeAppUrl(post: UnifiedPost): Promise<string | null> {
-  const raw = (post.raw ?? {}) as Record<string, unknown>;
+  const raw = rawPayload(post);
   const nativeId = nativeIdOf(post);
   const author = post.author;
   const handle = author.handles?.[post.protocol] ?? author.handles?.nostr ?? '';
@@ -254,7 +317,7 @@ export async function nativeAppUrl(post: UnifiedPost): Promise<string | null> {
 /** Whether the post raw payload carries a Farcaster frame URL. */
 export function hasFarcasterFrame(post: UnifiedPost): boolean {
   if (post.protocol !== 'farcaster') return false;
-  const raw = (post.raw ?? {}) as Record<string, unknown>;
+  const raw = rawPayload(post);
   const embeds: Array<{ url?: string }> = raw.embeds ?? [];
   return embeds.some((e) => typeof e.url === 'string' && e.url.length > 0);
 }
@@ -271,7 +334,7 @@ export interface ProtocolMetaChips {
  * Returns an array of { label, value } pairs for the per-protocol card strip.
  */
 export async function extractProtocolMeta(post: UnifiedPost): Promise<ProtocolMetaChips[]> {
-  const raw = (post.raw ?? {}) as Record<string, unknown>;
+  const raw = rawPayload(post);
   const author = post.author;
   const handle = author.handles?.[post.protocol] ?? '';
 

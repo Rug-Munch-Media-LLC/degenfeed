@@ -247,7 +247,6 @@ export default function NostrDashboardPage() {
                     ? 'border-purple-500 text-purple-400'
                     : 'border-transparent text-[var(--color-muted)] hover:text-[var(--color-fg)]'
                 }`}
-                type="button"
               >
                 {tab.label}
               </button>
@@ -388,7 +387,6 @@ export default function NostrDashboardPage() {
                     type="button"
                     onClick={() => setShowNsec(!showNsec)}
                     className="ml-3 text-xs text-[var(--color-muted)] underline"
-                    type="button"
                   >
                     {showNsec ? 'Hide' : 'Show'}
                   </button>
