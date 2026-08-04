@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { DocBreadcrumbs } from '../_components/doc-breadcrumbs';
 
 export const revalidate = 86400;
 
@@ -140,6 +141,7 @@ function Step({
 export default function UserGuidePage() {
   return (
     <div className="mx-auto max-w-4xl px-6 py-10 lg:px-10">
+      <DocBreadcrumbs items={[{ label: 'Docs', href: '/docs' }, { label: 'User Guide' }]} />
       <div className="mb-2 flex items-center gap-2">
         <span className="inline-flex items-center rounded-md border border-degen-500/20 bg-degen-500/10 px-1.5 py-0.5 font-mono text-[11px] font-medium text-degen-400">
           User Guide

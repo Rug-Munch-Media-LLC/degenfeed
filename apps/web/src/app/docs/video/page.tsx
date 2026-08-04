@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Badge } from '../_components/doc-badge';
+import { DocBreadcrumbs } from '../_components/doc-breadcrumbs';
 import { Callout } from '../_components/doc-callout';
 import { CodeBlock } from '../_components/doc-code-block';
 import { H2, H3 } from '../_components/doc-heading';
@@ -49,6 +50,7 @@ export const metadata: Metadata = {
 export default function VideoPage() {
   return (
     <div className="mx-auto max-w-4xl px-6 py-10 lg:px-10">
+      <DocBreadcrumbs items={[{ label: 'Docs', href: '/docs' }, { label: 'Video Streaming' }]} />
       {/* Hero */}
       <div className="mb-2 flex items-center gap-2">
         <Badge color="green">Video</Badge>
@@ -131,8 +133,44 @@ export default function VideoPage() {
           ['Twitch', 'Live and VOD content with creator presence'],
           ['Rumble', 'Independent video platform content'],
           ['PeerTube', 'Federated, self-hosted video (ActivityPub)'],
+          ['Owncast', 'Self-hosted live streaming instances'],
+          ['Odysee', 'LBRY-protocol video and livestreams'],
           ['Zora', 'On-chain media and creator content'],
           ['Loops', 'Short-form clips with cross-protocol sharing'],
+        ].map(([name, desc]) => (
+          <div
+            key={name}
+            className="rounded-lg border border-[var(--color-glass-border)] bg-white/[0.02] p-4"
+          >
+            <div className="text-sm font-semibold text-[var(--color-fg)]">{name}</div>
+            <p className="mt-1 text-xs text-[var(--color-muted)]">{desc}</p>
+          </div>
+        ))}
+      </div>
+
+      <H2 id="protocol-guides">Protocol-Specific Video Guides</H2>
+      <div className="mt-4 space-y-3">
+        {[
+          [
+            'PeerTube',
+            'Connect a PeerTube account to upload, then stream via RTMP. Your stream is federated to the ActivityPub network automatically.',
+          ],
+          [
+            'YouTube',
+            'No account needed to watch. Live streams and VODs are aggregated via Invidious instances so you can browse the catalog without tracking.',
+          ],
+          [
+            'Owncast',
+            'Self-host your own Owncast instance, register it in DegenFeed, and your live streams appear in the video hub alongside every other source.',
+          ],
+          [
+            'Rumble',
+            'Watch independent videos and livestreams aggregated from public pages. Rumble content appears in Trending and category rows.',
+          ],
+          [
+            'Odysee',
+            'LBRY-protocol content claims are resolved and indexed so you can watch channels and livestreams in the same unified feed.',
+          ],
         ].map(([name, desc]) => (
           <div
             key={name}

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Badge } from '../_components/doc-badge';
+import { DocBreadcrumbs } from '../_components/doc-breadcrumbs';
 import { Callout } from '../_components/doc-callout';
 import { CodeBlock, CodeTabs } from '../_components/doc-code-block';
 import { H2, H3 } from '../_components/doc-heading';
@@ -219,6 +220,7 @@ function EndpointRow({
 export default function ApiPage() {
   return (
     <div className="mx-auto max-w-4xl px-6 py-10 lg:px-10">
+      <DocBreadcrumbs items={[{ label: 'Docs', href: '/docs' }, { label: 'API Reference' }]} />
       <div className="mb-2 flex items-center gap-2">
         <Badge>API Reference</Badge>
         <Badge color="blue">REST</Badge>

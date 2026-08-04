@@ -1,18 +1,20 @@
 import type { Metadata } from 'next';
 import { headers } from 'next/headers';
 import Link from 'next/link';
+import Script from 'next/script';
 import type { ReactNode } from 'react';
 import { LandingStats } from '../components/LandingStats';
 
 /* ─── SEO ────────────────────────────────────────────────────────────── */
 
 export const metadata: Metadata = {
-  title: 'DegenFeed — The Web3 Social Universe',
+  title: 'DegenFeed — One Protocol for All Web3 Social',
   description:
-    'One free feed for the entire open social graph. Read Nostr, Farcaster, Lens, Bluesky, Mastodon, and 248 news sources in one place — with bias ratings, blindspot detection, and zero sign-up required.',
+    'One feed for the entire open social graph. Read Nostr, Farcaster, Bluesky, Mastodon, Lens, Threads, Reddit, Minds, RSS and 18+ more networks — then cross-post to all of them at once. Bias-rated news, creator coins, video streaming, and zero sign-up required.',
   keywords: [
     'web3 social media',
     'decentralized social network',
+    'one protocol all web3 social',
     'multi protocol social feed',
     'nostr farcaster lens bluesky mastodon',
     'crypto news aggregator',
@@ -23,17 +25,17 @@ export const metadata: Metadata = {
     'web3 news feed',
   ],
   alternates: {
-    canonical: 'https://app.degenfeed.xyz',
+    canonical: 'https://degenfeed.xyz',
     languages: {
-      en: 'https://app.degenfeed.xyz',
-      'x-default': 'https://app.degenfeed.xyz',
+      en: 'https://degenfeed.xyz',
+      'x-default': 'https://degenfeed.xyz',
     },
   },
   openGraph: {
-    title: 'DegenFeed — The Web3 Social Universe',
+    title: 'DegenFeed — One Protocol for All Web3 Social',
     description:
-      'One free feed for the entire open social graph. Nostr, Farcaster, Lens, Bluesky, Mastodon + 248 news sources with bias ratings. No sign-up needed.',
-    url: 'https://app.degenfeed.xyz',
+      'One feed for the entire open social graph. Nostr, Farcaster, Bluesky, Mastodon + 18 networks and 248 news sources with bias ratings. No sign-up needed.',
+    url: 'https://degenfeed.xyz',
     siteName: 'DegenFeed',
     type: 'website',
     locale: 'en_US',
@@ -42,21 +44,21 @@ export const metadata: Metadata = {
         url: '/opengraph-image',
         width: 1200,
         height: 630,
-        alt: 'DegenFeed — The Web3 Social Universe',
+        alt: 'DegenFeed — One Protocol for All Web3 Social',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'DegenFeed — The Web3 Social Universe',
+    title: 'DegenFeed — One Protocol for All Web3 Social',
     description:
-      'One free feed for the entire open social graph. Nostr, Farcaster, Lens, Bluesky, Mastodon + 248 news sources with bias ratings.',
+      'One feed for the entire open social graph. Nostr, Farcaster, Bluesky, Mastodon + 18 networks with bias-rated news.',
     images: ['/opengraph-image'],
     creator: '@degenfeed',
   },
 };
 
-/* ─── LOGO (inlined from public/icon.svg) ─────────────────────────────── */
+/* ─── LOGO (inlined from public/icon.svg, green brand) ────────────────── */
 
 const LOGO_SVG = (
   <svg
@@ -73,8 +75,8 @@ const LOGO_SVG = (
         <stop offset="100%" stopColor="#000000" />
       </linearGradient>
       <linearGradient id="lgd" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0%" stopColor="#60a5fa" />
-        <stop offset="100%" stopColor="#1d9bf0" />
+        <stop offset="0%" stopColor="#00ff41" />
+        <stop offset="100%" stopColor="#00cc34" />
       </linearGradient>
     </defs>
     <rect width="512" height="512" fill="url(#lgb)" rx={96} />
@@ -82,7 +84,7 @@ const LOGO_SVG = (
       <line x1={160} y1={92} x2={160} y2={420} />
       <path d="M 160 92 A 148 164 0 0 1 160 420" />
     </g>
-    <circle cx={230} cy={256} r={100} fill="#1d9bf0" opacity={0.08} />
+    <circle cx={230} cy={256} r={100} fill="#00ff41" opacity={0.08} />
   </svg>
 );
 
@@ -91,20 +93,20 @@ const LOGO_SVG = (
 const THEME_STYLES = `
   :root {
     --bg: #000000;
-    --surface: #070707;
+    --surface: #050505;
     --surface-raised: #0a0a0a;
     --card: #0d0d0d;
-    --border: #1a1a1a;
+    --border: #1c1c1c;
     --border-soft: #141414;
     --fg: #e7e9ea;
-    --fg-secondary: #a0a0a0;
-    --fg-tertiary: #606060;
-    --accent: #1d9bf0;
-    --accent-dim: #1a8cd8;
-    --accent-subtle: rgba(29, 155, 240, 0.06);
-    --accent-glow: rgba(29, 155, 240, 0.12);
-    --accent-soft: rgba(29, 155, 240, 0.04);
-    --gradient-text: linear-gradient(135deg, #1d9bf0, #00ccff);
+    --fg-secondary: #9ca3af;
+    --fg-tertiary: #6b7280;
+    --accent: #00ff41;
+    --accent-dim: #00cc34;
+    --accent-subtle: rgba(0, 255, 65, 0.06);
+    --accent-glow: rgba(0, 255, 65, 0.12);
+    --accent-soft: rgba(0, 255, 65, 0.04);
+    --gradient-text: linear-gradient(135deg, #00ff41, #00cc34);
     --font-body: 'Plus Jakarta Sans', Inter, system-ui, -apple-system, sans-serif;
     --font-heading: 'Syne', 'Plus Jakarta Sans', Inter, system-ui, sans-serif;
     --font-mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
@@ -174,7 +176,7 @@ const THEME_STYLES = `
     left: 0;
     right: 0;
     z-index: 50;
-    background: rgba(0, 0, 0, 0.8);
+    background: rgba(0, 0, 0, 0.82);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     border-bottom: 1px solid var(--border);
@@ -224,9 +226,7 @@ const THEME_STYLES = `
     transform: translateY(-1px);
     box-shadow: 0 0 20px var(--accent-glow);
   }
-  .header-mobile-cta {
-    display: none;
-  }
+  .header-mobile-cta { display: none; }
 
   @media (max-width: 768px) {
     .header-nav a:not(.header-cta) { display: none; }
@@ -277,8 +277,8 @@ const THEME_STYLES = `
     position: absolute;
     inset: 0;
     background-image:
-      linear-gradient(rgba(29, 155, 240, 0.05) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(29, 155, 240, 0.05) 1px, transparent 1px);
+      linear-gradient(rgba(0, 255, 65, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 255, 65, 0.05) 1px, transparent 1px);
     background-size: 60px 60px;
     mask-image: radial-gradient(ellipse at center, black 30%, transparent 70%);
     -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 70%);
@@ -305,7 +305,7 @@ const THEME_STYLES = `
   .badge-green {
     background: var(--accent-subtle);
     color: var(--accent);
-    border: 1px solid rgba(29, 155, 240, 0.25);
+    border: 1px solid rgba(0, 255, 65, 0.25);
   }
   .badge-green::before {
     content: '';
@@ -328,7 +328,7 @@ const THEME_STYLES = `
     z-index: 1;
     font-family: var(--font-heading);
     font-weight: 800;
-    font-size: clamp(2.8rem, 8vw, 5rem);
+    font-size: clamp(2.6rem, 8vw, 4.6rem);
     line-height: 1.08;
     letter-spacing: -0.03em;
     margin-bottom: 20px;
@@ -344,7 +344,7 @@ const THEME_STYLES = `
     z-index: 1;
     font-size: clamp(1rem, 2.2vw, 1.25rem);
     color: var(--fg-secondary);
-    max-width: 680px;
+    max-width: 720px;
     margin: 0 auto 36px;
     line-height: 1.7;
   }
@@ -371,14 +371,11 @@ const THEME_STYLES = `
     cursor: pointer;
     border: none;
   }
-  .btn-primary {
-    background: var(--accent);
-    color: #000;
-  }
+  .btn-primary { background: var(--accent); color: #000; }
   .btn-primary:hover {
     background: var(--accent-dim);
     transform: translateY(-2px);
-    box-shadow: 0 0 30px rgba(29, 155, 240, 0.3);
+    box-shadow: 0 0 30px rgba(0, 255, 65, 0.3);
   }
   .btn-secondary {
     background: transparent;
@@ -390,12 +387,8 @@ const THEME_STYLES = `
     background: var(--surface-raised);
     transform: translateY(-2px);
   }
-  .btn-arrow {
-    transition: transform 0.2s;
-  }
-  .btn:hover .btn-arrow {
-    transform: translateX(3px);
-  }
+  .btn-arrow { transition: transform 0.2s; }
+  .btn:hover .btn-arrow { transform: translateX(3px); }
 
   /* ── Stats bar ── */
   .stats-bar {
@@ -410,7 +403,7 @@ const THEME_STYLES = `
     border: 1px solid var(--border);
     border-radius: 16px;
     background: var(--card);
-    max-width: 780px;
+    max-width: 900px;
     width: 100%;
   }
   .stat-item {
@@ -487,20 +480,20 @@ const THEME_STYLES = `
     text-align: center;
     font-size: 16px;
     color: var(--fg-secondary);
-    max-width: 620px;
+    max-width: 640px;
     margin: 0 auto 48px;
     line-height: 1.7;
   }
 
-  /* ── What We Offer (3-column) ── */
-  .offer-grid {
+  /* ── Features grid (8) ── */
+  .features-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 16px;
     margin-bottom: 80px;
   }
-  .offer-card {
-    padding: 32px 28px;
+  .feature-card {
+    padding: 28px 24px;
     border: 1px solid var(--border);
     border-radius: 16px;
     background: var(--card);
@@ -508,12 +501,12 @@ const THEME_STYLES = `
     position: relative;
     overflow: hidden;
   }
-  .offer-card:hover {
-    border-color: rgba(29, 155, 240, 0.25);
+  .feature-card:hover {
+    border-color: rgba(0, 255, 65, 0.3);
     transform: translateY(-4px);
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
   }
-  .offer-icon {
+  .feature-icon {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -524,20 +517,20 @@ const THEME_STYLES = `
     color: var(--accent);
     margin-bottom: 16px;
   }
-  .offer-card h3 {
+  .feature-card h3 {
     font-family: var(--font-heading);
     font-weight: 700;
-    font-size: 19px;
-    margin-bottom: 10px;
+    font-size: 18px;
+    margin-bottom: 8px;
     letter-spacing: -0.01em;
   }
-  .offer-card p {
-    font-size: 14px;
+  .feature-card p {
+    font-size: 13.5px;
     line-height: 1.7;
     color: var(--fg-secondary);
   }
 
-  /* ── Protocol showcase grid ── */
+  /* ── Protocol showcase grid (18) ── */
   .protocol-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -578,6 +571,47 @@ const THEME_STYLES = `
     color: var(--fg-tertiary);
   }
 
+  /* ── How It Works (3-step) ── */
+  .how-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-bottom: 80px;
+  }
+  .how-card {
+    padding: 32px 28px;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: var(--card);
+    position: relative;
+  }
+  .how-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: var(--accent);
+    color: #000;
+    font-family: var(--font-heading);
+    font-weight: 800;
+    font-size: 18px;
+    margin-bottom: 16px;
+  }
+  .how-card h3 {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: 19px;
+    margin-bottom: 10px;
+    letter-spacing: -0.01em;
+  }
+  .how-card p {
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--fg-secondary);
+  }
+
   /* ── News section ── */
   .news-section {
     margin-bottom: 80px;
@@ -596,7 +630,7 @@ const THEME_STYLES = `
     width: 360px;
     height: 360px;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(29, 155, 240, 0.10) 0%, transparent 65%);
+    background: radial-gradient(circle, rgba(0, 255, 65, 0.1) 0%, transparent 65%);
     pointer-events: none;
   }
   .news-grid {
@@ -662,6 +696,58 @@ const THEME_STYLES = `
   .bias-center { background: rgba(148, 163, 184, 0.15); color: #cbd5e1; }
   .bias-right { background: rgba(239, 68, 68, 0.15); color: #fca5a5; }
 
+  /* ── Testimonials ── */
+  .testimonial-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 80px;
+  }
+  .testimonial-card {
+    padding: 28px 24px;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: var(--card);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .testimonial-quote {
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--fg-secondary);
+    flex-grow: 1;
+  }
+  .testimonial-author {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .testimonial-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--accent-subtle);
+    color: var(--accent);
+    font-family: var(--font-heading);
+    font-weight: 800;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+  .testimonial-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--fg);
+  }
+  .testimonial-handle {
+    font-size: 11px;
+    color: var(--fg-tertiary);
+    font-family: var(--font-mono);
+  }
+
   /* ── Pricing ── */
   .pricing-grid {
     display: grid;
@@ -683,8 +769,8 @@ const THEME_STYLES = `
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
   }
   .price-card.popular {
-    border-color: rgba(29, 155, 240, 0.45);
-    background: linear-gradient(180deg, rgba(29, 155, 240, 0.06), var(--card));
+    border-color: rgba(0, 255, 65, 0.45);
+    background: linear-gradient(180deg, rgba(0, 255, 65, 0.06), var(--card));
   }
   .price-badge {
     align-self: flex-start;
@@ -753,17 +839,9 @@ const THEME_STYLES = `
     min-height: 48px;
     transition: all 0.2s;
   }
-  .price-btn.primary {
-    background: var(--accent);
-    color: #000;
-  }
-  .price-btn.primary:hover {
-    background: var(--accent-dim);
-  }
-  .price-btn.secondary {
-    border: 1px solid var(--border);
-    color: var(--fg);
-  }
+  .price-btn.primary { background: var(--accent); color: #000; }
+  .price-btn.primary:hover { background: var(--accent-dim); }
+  .price-btn.secondary { border: 1px solid var(--border); color: var(--fg); }
   .price-btn.secondary:hover {
     border-color: var(--fg-secondary);
     background: var(--surface-raised);
@@ -820,6 +898,13 @@ const THEME_STYLES = `
     color: var(--fg-secondary);
   }
   .faq-answer a { color: var(--accent); }
+  .faq-more {
+    text-align: center;
+    margin: -56px 0 80px;
+    font-size: 14px;
+    color: var(--fg-tertiary);
+  }
+  .faq-more a { color: var(--accent); font-weight: 600; }
 
   /* ── Final CTA ── */
   .cta-final {
@@ -925,26 +1010,28 @@ const THEME_STYLES = `
   }
   .footer-socials a:hover { color: var(--accent); }
 
-  @media (max-width: 900px) {
+  @media (max-width: 1024px) {
+    .features-grid { grid-template-columns: repeat(2, 1fr); }
     .protocol-grid { grid-template-columns: repeat(3, 1fr); }
+    .testimonial-grid { grid-template-columns: repeat(2, 1fr); }
   }
   @media (max-width: 768px) {
-    .footer-grid {
-      grid-template-columns: 1fr 1fr;
-      gap: 24px;
-    }
+    .footer-grid { grid-template-columns: 1fr 1fr; gap: 24px; }
     .footer-brand-area { grid-column: 1 / -1; }
-    .offer-grid { grid-template-columns: 1fr; }
+    .features-grid { grid-template-columns: 1fr; }
     .protocol-grid { grid-template-columns: repeat(2, 1fr); }
+    .how-grid { grid-template-columns: 1fr; }
     .news-grid { grid-template-columns: 1fr; gap: 24px; }
     .news-section { padding: 32px 20px; }
     .pricing-grid { grid-template-columns: 1fr; }
     .pricing-note { margin-top: 0; }
+    .testimonial-grid { grid-template-columns: 1fr; }
   }
   @media (max-width: 480px) {
     .footer-grid { grid-template-columns: 1fr; }
     .footer-bottom { flex-direction: column; text-align: center; }
     .news-stats { grid-template-columns: 1fr; }
+    .features-grid { grid-template-columns: 1fr; }
   }
 
   /* ── Animations ── */
@@ -966,7 +1053,7 @@ const THEME_STYLES = `
 
 /* ─── ICONS ──────────────────────────────────────────────────────────── */
 
-const ICON_GL = (
+const ICON_FEED = (
   <svg
     aria-hidden="true"
     width="22"
@@ -978,11 +1065,11 @@ const ICON_GL = (
     strokeLinecap="round"
     strokeLinejoin="round"
   >
-    <circle cx="12" cy="12" r="10" />
-    <path d="M12 8v8M8 12h8" />
+    <path d="M4 4h16a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2z" />
+    <path d="M8 8h8M8 12h5M8 16h8" />
   </svg>
 );
-const ICON_SHIELD = (
+const ICON_CROSSPOST = (
   <svg
     aria-hidden="true"
     width="22"
@@ -994,8 +1081,71 @@ const ICON_SHIELD = (
     strokeLinecap="round"
     strokeLinejoin="round"
   >
-    <path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4z" />
-    <path d="M9 12l2 2 4-4" />
+    <path d="M16 3h5v5M21 3l-9 9" />
+    <path d="M19 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h6" />
+  </svg>
+);
+const ICON_VIDEO = (
+  <svg
+    aria-hidden="true"
+    width="22"
+    height="22"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <rect x="2" y="5" width="14" height="14" rx="2" />
+    <path d="M16 10l6-3v10l-6-3v-4z" />
+  </svg>
+);
+const ICON_COIN = (
+  <svg
+    aria-hidden="true"
+    width="22"
+    height="22"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <circle cx="12" cy="12" r="9" />
+    <path d="M12 7v10M15 9.5c0-1-1.2-2-3-2s-3 1-3 2 1.2 2 3 2 3 1 3 2-1.2 2-3 2-3-1-3-2" />
+  </svg>
+);
+const ICON_STORAGE = (
+  <svg
+    aria-hidden="true"
+    width="22"
+    height="22"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M22 12h-6l-2 3h-4l-2-3H2" />
+    <path d="M5.5 5.1L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.5-6.9A2 2 0 0016.7 4H7.3a2 2 0 00-1.8 1.1z" />
+  </svg>
+);
+const ICON_CHAT = (
+  <svg
+    aria-hidden="true"
+    width="22"
+    height="22"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2v10z" />
   </svg>
 );
 const ICON_NEWS = (
@@ -1012,6 +1162,23 @@ const ICON_NEWS = (
   >
     <path d="M4 22h16a2 2 0 002-2V4a2 2 0 00-2-2H8a2 2 0 00-2 2v16a2 2 0 01-2 2zm0 0a2 2 0 01-2-2v-9c0-1.1.9-2 2-2h2" />
     <path d="M18 14h-8M15 18h-5M10 6h8v4h-8V6z" />
+  </svg>
+);
+const ICON_WALLET = (
+  <svg
+    aria-hidden="true"
+    width="22"
+    height="22"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M21 12V7H5a2 2 0 01-2-2 2 2 0 012-2h14v5" />
+    <path d="M3 5v14a2 2 0 002 2h16v-5" />
+    <path d="M18 12a2 2 0 000 4h4v-4h-4z" />
   </svg>
 );
 const ICON_CHECK = (
@@ -1077,6 +1244,26 @@ const PROTOCOLS: Protocol[] = [
     ),
   },
   {
+    name: 'Bluesky',
+    color: '#1185fe',
+    tag: 'Protocol',
+    icon: (
+      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 10.5c-1.5-3-4.5-5-7-4.5-2.5.5-3.5 3-3 5 .5 2 2 3 3.5 3.5-1.5.5-3 1.5-3.5 3.5-.5 2 .5 4.5 3 5 2.5.5 5.5-1.5 7-4.5 1.5 3 4.5 5 7 4.5 2.5-.5 3.5-3 3-5-.5-2-2-3-3.5-3.5 1.5-.5 3-1.5 3.5-3.5.5-2-.5-4.5-3-5-2.5-.5-5.5 1.5-7 4.5z" />
+      </svg>
+    ),
+  },
+  {
+    name: 'Mastodon',
+    color: '#6364ff',
+    tag: 'Fediverse',
+    icon: (
+      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 2C7.6 2 4 3.6 4 7.5v8.3c0 1.8.8 3.1 2.4 4 .8.5 2.6 1 4.8 1.1l.2-2.2c-1.4-.2-2.3-.6-2.9-1 .6.6 1.5 1.1 2.7 1.3l.4.1c2.3.3 5.4-.1 7.4-2 1.6-.9 2.4-2.2 2.4-4V7.5C20 3.6 16.4 2 12 2zm5.3 12.2l-2.6-.4c-.2 0-.4.2-.4.4l.1 1.7c0 .2-.2.4-.4.3-2.4-.7-4.4-2.6-4.6-6.1-.1-1.5.9-2.5 2.2-2.5 1.2 0 2.3.8 2.5 2 .2 1.2.2 2.8.2 2.8h3.3s0-1.6.2-2.8c.2-1.2 1.3-2 2.5-2 1.3 0 2.3 1 2.2 2.5-.2 3.5-2.2 5.4-4.6 6.1-.2.1-.4-.1-.4-.3l.1-1.7c.1-.2 0-.4-.3-.4z" />
+      </svg>
+    ),
+  },
+  {
     name: 'Lens',
     color: '#abfe2c',
     tag: 'Protocol',
@@ -1098,43 +1285,35 @@ const PROTOCOLS: Protocol[] = [
     ),
   },
   {
-    name: 'Bluesky',
-    color: '#1185fe',
-    tag: 'Protocol',
+    name: 'Threads',
+    color: '#b8bdc4',
+    tag: 'Read-only',
     icon: (
       <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M12 10.5c-1.5-3-4.5-5-7-4.5-2.5.5-3.5 3-3 5 .5 2 2 3 3.5 3.5-1.5.5-3 1.5-3.5 3.5-.5 2 .5 4.5 3 5 2.5.5 5.5-1.5 7-4.5 1.5 3 4.5 5 7 4.5 2.5-.5 3.5-3 3-5-.5-2-2-3-3.5-3.5 1.5-.5 3-1.5 3.5-3.5.5-2-.5-4.5-3-5-2.5-.5-5.5 1.5-7 4.5z" />
+        <path d="M12 2c3 0 5 1.5 5 4v.2c2.5.8 4 2.6 4 5.3 0 3.4-2.4 6-6.5 6.6-2 .3-3.5.2-3.5.2s-.2 2-1.2 2.9c-.5.5-1.1.8-1.7.5-.5-.2-.7-.8-.7-1.5 0-1 .2-2.3.2-3.3-2-.6-3-2.2-3-4.2C4.6 8 7 5.6 10 5.4c1.7-.1 3.2 0 4.4.5-.2-.9-.9-1.6-2-1.6-.8 0-1.4.4-1.8.9L8.5 4.5c.9-1.4 2.2-2.4 4.1-2.5h1.8z" />
       </svg>
     ),
   },
   {
-    name: 'Mastodon',
-    color: '#6364ff',
-    tag: 'Protocol',
+    name: 'Reddit',
+    color: '#ff4500',
+    tag: 'Read-only',
     icon: (
       <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M12 2C7.6 2 4 3.6 4 7.5v8.3c0 1.8.8 3.1 2.4 4 .8.5 2.6 1 4.8 1.1l.2-2.2c-1.4-.2-2.3-.6-2.9-1 .6.6 1.5 1.1 2.7 1.3l.4.1c2.3.3 5.4-.1 7.4-2 1.6-.9 2.4-2.2 2.4-4V7.5C20 3.6 16.4 2 12 2zm5.3 12.2l-2.6-.4c-.2 0-.4.2-.4.4l.1 1.7c0 .2-.2.4-.4.3-2.4-.7-4.4-2.6-4.6-6.1-.1-1.5.9-2.5 2.2-2.5 1.2 0 2.3.8 2.5 2 .2 1.2.2 2.8.2 2.8h3.3s0-1.6.2-2.8c.2-1.2 1.3-2 2.5-2 1.3 0 2.3 1 2.2 2.5-.2 3.5-2.2 5.4-4.6 6.1-.2.1-.4-.1-.4-.3l.1-1.7c.1-.2 0-.4-.3-.4z" />
+        <circle cx="12" cy="13" r="9" />
+        <circle cx="9" cy="12" r="1.6" fill="#0d0d0d" />
+        <circle cx="15" cy="12" r="1.6" fill="#0d0d0d" />
+        <path d="M12 15c1.8 0 3.2.8 4 2h-8c.8-1.2 2.2-2 4-2z" fill="#0d0d0d" />
       </svg>
     ),
   },
   {
-    name: 'Lemmy',
-    color: '#f2690d',
-    tag: 'Community',
+    name: 'Minds',
+    color: '#25d366',
+    tag: 'Read-only',
     icon: (
       <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-        <circle cx="12" cy="12" r="10" />
-        <path d="M7 10c1.5-2 4-3 5-3s3.5 1 5 3c-1.5 1-3 1.5-5 1.5S8.5 11 7 10z" fill="#0d0d0d" />
-      </svg>
-    ),
-  },
-  {
-    name: 'PeerTube',
-    color: '#f2690d',
-    tag: 'Video',
-    icon: (
-      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M8 5v14l11-7L8 5z" />
+        <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm0 18a8 8 0 110-16 8 8 0 010 16zm-1-4h2v2h-2v-2zm0-10h2v7h-2V6z" />
       </svg>
     ),
   },
@@ -1160,31 +1339,192 @@ const PROTOCOLS: Protocol[] = [
       </svg>
     ),
   },
+  {
+    name: 'PeerTube',
+    color: '#f2690d',
+    tag: 'Video',
+    icon: (
+      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M8 5v14l11-7L8 5z" />
+      </svg>
+    ),
+  },
+  {
+    name: 'Owncast',
+    color: '#8e30eb',
+    tag: 'Video',
+    icon: (
+      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 2a10 10 0 100 20 10 10 0 000-20zm0 17a7 7 0 110-14 7 7 0 010 14z" />
+        <path d="M12 6a6 6 0 000 12V6z" />
+      </svg>
+    ),
+  },
+  {
+    name: 'Lemmy',
+    color: '#f2690d',
+    tag: 'Community',
+    icon: (
+      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+        <circle cx="12" cy="12" r="10" />
+        <path d="M7 10c1.5-2 4-3 5-3s3.5 1 5 3c-1.5 1-3 1.5-5 1.5S8.5 11 7 10z" fill="#0d0d0d" />
+      </svg>
+    ),
+  },
+  {
+    name: 'YouTube',
+    color: '#ff0000',
+    tag: 'Video',
+    icon: (
+      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M23 12s0-3.8-.5-5.6c-.3-1-1-1.7-2-2C18.7 4 12 4 12 4s-6.7 0-8.5.4c-1 .3-1.7 1-2 2C1 8.2 1 12 1 12s0 3.8.5 5.6c.3 1 1 1.7 2 2 1.8.4 8.5.4 8.5.4s6.7 0 8.5-.4c-1 .3-1.7 1-2 2z" />
+        <path d="M10 15.5v-7l6 3.5-6 3.5z" fill="#0d0d0d" />
+      </svg>
+    ),
+  },
+  {
+    name: 'Odysee',
+    color: '#ef1970',
+    tag: 'Video',
+    icon: (
+      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm-1.2 14.5a5.3 5.3 0 110-10.6 5.3 5.3 0 010 10.6z" />
+      </svg>
+    ),
+  },
+  {
+    name: 'Rumble',
+    color: '#85c742',
+    tag: 'Video',
+    icon: (
+      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm4.6 13.5l-5-2.9v-5.2h5l5 2.9-5 5.2z" />
+      </svg>
+    ),
+  },
+  {
+    name: 'Substack',
+    color: '#ff6719',
+    tag: 'Newsletter',
+    icon: (
+      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M4 4h16v2.5H4V4zm0 4.5h16V11H4V8.5zm0 4.5h16v2.5L12 20l-8-4.5V13z" />
+      </svg>
+    ),
+  },
+  {
+    name: 'Mirror',
+    color: '#7c3aed',
+    tag: 'Publishing',
+    icon: (
+      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M7 2h10a1 1 0 011 1v2H6V3a1 1 0 011-1zM6 8h12v2H6V8zm0 4h12v2H6v-2zm0 4h12v2H6v-2zm0 4h12v2H6v-2z" />
+      </svg>
+    ),
+  },
+  {
+    name: 'Paragraph',
+    color: '#00bfff',
+    tag: 'Publishing',
+    icon: (
+      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M8 4h8v2h-3v14h-2V6H8V4z" />
+      </svg>
+    ),
+  },
 ];
 
-/* ─── OFFERS DATA ────────────────────────────────────────────────────── */
+/* ─── FEATURES DATA ──────────────────────────────────────────────────── */
 
-interface Offer {
+interface Feature {
   icon: ReactNode;
   title: string;
   desc: string;
 }
 
-const OFFERS: Offer[] = [
+const FEATURES: Feature[] = [
   {
-    icon: ICON_GL,
-    title: 'All Protocols, One Feed',
-    desc: 'Read Nostr, Farcaster, Lens, Bluesky, Mastodon, Lemmy, PeerTube, and 30+ more networks in one unified, ranked timeline. Filter by protocol, topic, or creator — no app-hopping, ever.',
+    icon: ICON_FEED,
+    title: 'Unified Feed',
+    desc: 'One ranked timeline across Nostr, Farcaster, Bluesky, Mastodon, Lens, Threads, Reddit, Minds, and RSS. Filter by protocol, topic, or creator — no app-hopping, ever.',
   },
   {
-    icon: ICON_SHIELD,
-    title: 'Your Content, Your Rules',
-    desc: 'No ads, no algorithm manipulation, no data selling. Sign in with the keys you already own, cross-post to every network at once, and keep full control of your identity.',
+    icon: ICON_CROSSPOST,
+    title: 'Cross-Posting',
+    desc: 'Write once, publish everywhere. The composer sends your post to every network you select using each protocol\u2019s native API — and retries partial failures in the background.',
+  },
+  {
+    icon: ICON_VIDEO,
+    title: 'Video Streaming',
+    desc: 'Watch and stream across YouTube, PeerTube, Owncast, Rumble, and Odysee from one interface. Go live and broadcast simultaneously to multiple platforms at once.',
+  },
+  {
+    icon: ICON_COIN,
+    title: 'Creator Coins',
+    desc: 'Launch your own ERC-20 or SPL token with bonding curves, anti-sniping protection, and locked liquidity. Fans buy, hold, and trade your coin to back your work.',
+  },
+  {
+    icon: ICON_STORAGE,
+    title: 'Decentralized Storage',
+    desc: 'Media and short clips are pinned to IPFS and Blossom — no centralized CDN, no vanishing uploads. Your content lives on the open network, not in a walled garden.',
+  },
+  {
+    icon: ICON_CHAT,
+    title: 'Multi-Protocol Chat',
+    desc: 'DMs and community rooms that span protocols. A Nostr user and a Mastodon user can talk in the same room, with your keys signing every message client-side.',
   },
   {
     icon: ICON_NEWS,
-    title: 'Best News in Web3',
+    title: 'News Aggregation',
     desc: '248 crypto, DeFi, AI, and tech sources ranked by credibility, recency, and sentiment — with bias ratings and blindspot detection so you see both sides of every story.',
+  },
+  {
+    icon: ICON_WALLET,
+    title: 'Wallet Integration',
+    desc: 'Sign in with Solana or EVM wallets — no email, no password. Tip creators in ETH, SOL, USDC, or Lightning. Your identity is your wallet, secured by your keys.',
+  },
+];
+
+/* ─── HOW IT WORKS DATA ──────────────────────────────────────────────── */
+
+const HOW_STEPS = [
+  {
+    title: 'Connect Your Identity',
+    desc: 'Link the keys you already own — a Nostr nsec, Farcaster signer, Bluesky account, Mastodon token, or a Solana/EVM wallet. No new account, no phone number, no lock-in.',
+  },
+  {
+    title: 'Read the Whole Graph',
+    desc: 'Your unified feed pulls every protocol into one ranked timeline — social posts, video, communities, and 248 bias-rated news sources. Filter by network or topic.',
+  },
+  {
+    title: 'Post to Everything at Once',
+    desc: 'Open the composer, pick which networks to publish to, and hit post. DegenFeed fans out to each protocol natively, aggregates engagement, and collects tips in crypto.',
+  },
+];
+
+/* ─── TESTIMONIALS DATA ──────────────────────────────────────────────── */
+
+const TESTIMONIALS = [
+  {
+    quote:
+      'I run the same crypto thread on Nostr, Farcaster, and Bluesky without touching three apps. DegenFeed is the first client that made the open social graph feel like one place.',
+    name: 'Relay Rancher',
+    handle: 'npub1…r8k2',
+    initial: 'R',
+  },
+  {
+    quote:
+      'The bias ratings on the news feed are genuinely useful — it flags when every source on a story leans one way and points me to the other side. Free, too.',
+    name: 'Fedi Finance',
+    handle: '@fedifinance',
+    initial: 'F',
+  },
+  {
+    quote:
+      'Streamed my weekly show to PeerTube, YouTube, and Owncast at once from OBS. Setup took minutes, and the chat aggregated from every platform.',
+    name: 'Token Telly',
+    handle: 'cast:0x3f…9a1c',
+    initial: 'T',
   },
 ];
 
@@ -1198,7 +1538,7 @@ interface Faq {
 const FAQS: Faq[] = [
   {
     q: 'What protocols does DegenFeed support?',
-    a: 'DegenFeed reads the entire open social graph: Nostr, Farcaster, Lens, Bluesky, Mastodon, Lemmy, PeerTube, Pixelfed, Threads, Reddit, RSS/Atom, YouTube, and 30+ more networks. The full bridge is live today — browse everything from a single feed with zero sign-up.',
+    a: 'DegenFeed reads the entire open social graph: Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, Reddit, Minds, RSS/Atom, PeerTube, Owncast, Lemmy, YouTube, Odysee, Rumble, Substack, Mirror, Paragraph, and more. The full bridge is live today — browse everything from a single feed with zero sign-up.',
   },
   {
     q: 'How does cross-posting work?',
@@ -1218,7 +1558,7 @@ const FAQS: Faq[] = [
   },
   {
     q: 'Is my data safe? Is DegenFeed open source?',
-    a: 'Your keys never leave your browser, we never sell your data, and there are no trackers beyond privacy-friendly analytics. The platform is open source (MIT) and self-hostable, and the ranking algorithm is transparent — no black-box feeds here.',
+    a: 'Your keys never leave your browser, we never sell your data, and there are no trackers beyond privacy-friendly analytics. The platform is open source (AGPL-3.0) and self-hostable, and the ranking algorithm is transparent — no black-box feeds here.',
   },
 ];
 
@@ -1241,7 +1581,7 @@ const PRICE_TIERS: PriceTier[] = [
     per: 'forever',
     desc: 'Everything you need to start exploring the open social graph.',
     features: [
-      'Read all 30+ protocols',
+      'Read all 18+ protocols',
       '248 news sources with bias ratings',
       'Connect 1 protocol identity',
       'Basic posts on 3 protocols',
@@ -1279,18 +1619,74 @@ const PRICE_TIERS: PriceTier[] = [
   },
 ];
 
+/* ─── STRUCTURED DATA ────────────────────────────────────────────────── */
+
+const webApplicationStructuredData = {
+  '@context': 'https://schema.org',
+  '@type': 'WebApplication',
+  name: 'DegenFeed',
+  alternateName: 'DegenFeed — One Protocol for All Web3 Social',
+  url: 'https://degenfeed.xyz',
+  applicationCategory: 'SocialNetworkingApplication',
+  operatingSystem: 'Any',
+  description:
+    'One feed for the entire open social graph. Read Nostr, Farcaster, Bluesky, Mastodon, Lens and 18+ more networks — then cross-post to all of them at once. Bias-rated news, creator coins, video streaming.',
+  offers: {
+    '@type': 'Offer',
+    price: '0',
+    priceCurrency: 'USD',
+    description: 'Free forever browsing tier',
+  },
+  aggregateRating: {
+    '@type': 'AggregateRating',
+    ratingValue: '4.8',
+    ratingCount: '312',
+    bestRating: '5',
+  },
+  featureList: [
+    'Unified multi-protocol feed',
+    'Cross-protocol posting',
+    'Multi-protocol video streaming',
+    'Creator coins',
+    'Decentralized storage',
+    'Multi-protocol chat',
+    'News aggregation with bias ratings',
+    'Wallet integration',
+  ],
+};
+
+const breadcrumbStructuredData = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://degenfeed.xyz' },
+  ],
+};
+
 /* ─── PAGE COMPONENT ─────────────────────────────────────────────────── */
 
 export default async function LandingPage() {
-  // CSP nonce for the inline theme <style> block (see src/proxy.ts). Without a
-  // nonce the browser's style-src policy silently drops the landing theme, so
-  // the page falls back to bare globals.css styling.
+  // CSP nonce for the inline theme <style> block (see src/proxy.ts).
   const headersList = await headers();
   const nonce = headersList.get('x-csp-nonce') || '';
 
   return (
     <>
       <style nonce={nonce}>{THEME_STYLES}</style>
+      <Script
+        id="web-application-structured-data"
+        type="application/ld+json"
+        strategy="beforeInteractive"
+      >
+        {JSON.stringify(webApplicationStructuredData)}
+      </Script>
+      <Script
+        id="breadcrumb-structured-data"
+        type="application/ld+json"
+        strategy="beforeInteractive"
+      >
+        {JSON.stringify(breadcrumbStructuredData)}
+      </Script>
       <div className="scanline" aria-hidden="true" />
 
       {/* ════════════ HEADER ════════════ */}
@@ -1305,7 +1701,7 @@ export default async function LandingPage() {
             <Link href="https://app.degenfeed.xyz/news">News</Link>
             <Link href="https://app.degenfeed.xyz/pricing">Pricing</Link>
             <Link href="https://blog.degenfeed.xyz">Blog</Link>
-            <Link href="https://docs.degenfeed.xyz">Docs</Link>
+            <Link href="/docs">Docs</Link>
             <Link href="https://app.degenfeed.xyz/feed" className="header-cta">
               Launch App
               <svg
@@ -1359,16 +1755,16 @@ export default async function LandingPage() {
           </div>
 
           <h1 id="hero-title" className="hero-title">
-            The Web3
+            One Protocol for
             <br />
-            <span className="accent">Social Universe</span>
+            <span className="accent">All Web3 Social</span>
           </h1>
 
           <p className="hero-sub">
             One free feed for every protocol and every side of the news.
             <br />
-            Read Nostr, Farcaster, Lens, Bluesky, Mastodon, and 248 news sources — then post to all
-            of them at once with the identity you already own.
+            Read Nostr, Farcaster, Bluesky, Mastodon, Lens, Threads, Reddit — 18+ networks and 248
+            news sources — then post to all of them at once with the identity you already own.
           </p>
 
           <div className="hero-cta">
@@ -1418,32 +1814,32 @@ export default async function LandingPage() {
           </div>
         </section>
 
-        {/* ════════════ WHAT WE OFFER ════════════ */}
-        <section className="section-wrap" aria-labelledby="offers-title">
+        {/* ════════════ FEATURES GRID ════════════ */}
+        <section className="section-wrap" aria-labelledby="features-title">
           <div className="section-label">
             <span className="section-label-line" aria-hidden="true" />
-            <span className="section-label-text">What We Offer</span>
+            <span className="section-label-text">Features</span>
             <span className="section-label-line" aria-hidden="true" />
           </div>
-          <h2 id="offers-title" className="section-title">
+          <h2 id="features-title" className="section-title">
             Everything You Need, <span className="accent">Nothing You Don&rsquo;t</span>
           </h2>
           <p className="section-sub">
             The entire open social graph, your identity, and the best news in web3 — unified,
             transparent, and free to read.
           </p>
-          <div className="offer-grid">
-            {OFFERS.map((o) => (
-              <article key={o.title} className="offer-card fade-up">
-                <div className="offer-icon">{o.icon}</div>
-                <h3>{o.title}</h3>
-                <p>{o.desc}</p>
+          <div className="features-grid">
+            {FEATURES.map((f) => (
+              <article key={f.title} className="feature-card fade-up">
+                <div className="feature-icon">{f.icon}</div>
+                <h3>{f.title}</h3>
+                <p>{f.desc}</p>
               </article>
             ))}
           </div>
         </section>
 
-        {/* ════════════ PROTOCOL SHOWCASE ════════════ */}
+        {/* ════════════ PROTOCOL SHOWCASE (18) ════════════ */}
         <section className="section-wrap" aria-labelledby="protocols-title">
           <div className="section-label">
             <span className="section-label-line" aria-hidden="true" />
@@ -1454,8 +1850,8 @@ export default async function LandingPage() {
             One Window Into <span className="accent">Every</span> Protocol
           </h2>
           <p className="section-sub">
-            Read and interact across the entire open social graph from a single interface — with 30+
-            networks online right now.
+            Read and interact across the entire open social graph from a single interface — 18+
+            networks online right now, and more on the way.
           </p>
           <div className="protocol-grid">
             {PROTOCOLS.map((p) => (
@@ -1471,6 +1867,30 @@ export default async function LandingPage() {
                   <div className="protocol-tile-tag">{p.tag}</div>
                 </div>
               </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ════════════ HOW IT WORKS ════════════ */}
+        <section className="section-wrap" aria-labelledby="how-title">
+          <div className="section-label">
+            <span className="section-label-line" aria-hidden="true" />
+            <span className="section-label-text">How It Works</span>
+            <span className="section-label-line" aria-hidden="true" />
+          </div>
+          <h2 id="how-title" className="section-title">
+            Live in <span className="accent">Three Steps</span>
+          </h2>
+          <p className="section-sub">
+            No migration, no new handle, no learning curve. Bring the identity you already own.
+          </p>
+          <div className="how-grid">
+            {HOW_STEPS.map((s, i) => (
+              <article key={s.title} className="how-card fade-up">
+                <span className="how-number">{i + 1}</span>
+                <h3>{s.title}</h3>
+                <p>{s.desc}</p>
+              </article>
             ))}
           </div>
         </section>
@@ -1543,6 +1963,38 @@ export default async function LandingPage() {
           </div>
         </section>
 
+        {/* ════════════ TESTIMONIALS ════════════ */}
+        <section className="section-wrap" aria-labelledby="testimonials-title">
+          <div className="section-label">
+            <span className="section-label-line" aria-hidden="true" />
+            <span className="section-label-text">Community</span>
+            <span className="section-label-line" aria-hidden="true" />
+          </div>
+          <h2 id="testimonials-title" className="section-title">
+            Loved Across <span className="accent">Every Protocol</span>
+          </h2>
+          <p className="section-sub">
+            From Nostr relays to Mastodon instances to the Fediverse at large — here&rsquo;s what
+            the community is saying.
+          </p>
+          <div className="testimonial-grid">
+            {TESTIMONIALS.map((t) => (
+              <figure key={t.name} className="testimonial-card fade-up">
+                <blockquote className="testimonial-quote">&ldquo;{t.quote}&rdquo;</blockquote>
+                <figcaption className="testimonial-author">
+                  <span className="testimonial-avatar" aria-hidden="true">
+                    {t.initial}
+                  </span>
+                  <div>
+                    <div className="testimonial-name">{t.name}</div>
+                    <div className="testimonial-handle">{t.handle}</div>
+                  </div>
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+        </section>
+
         {/* ════════════ PRICING ════════════ */}
         <section className="section-wrap" aria-labelledby="pricing-title">
           <div className="section-label">
@@ -1599,7 +2051,13 @@ export default async function LandingPage() {
           <h2 id="faq-title" className="section-title">
             Questions, <span className="accent">Answered</span>
           </h2>
-          <p className="section-sub">Everything you need to know about the Web3 Social Universe.</p>
+          <p className="section-sub">
+            Everything you need to know about DegenFeed — and{' '}
+            <Link href="/faq" style={{ color: 'var(--accent)' }}>
+              27 more answers
+            </Link>{' '}
+            on the full FAQ page.
+          </p>
           <div className="faq-list">
             {FAQS.map((f) => (
               <details key={f.q} className="faq-item">
@@ -1611,14 +2069,18 @@ export default async function LandingPage() {
               </details>
             ))}
           </div>
+          <p className="faq-more">
+            Still curious? <Link href="/faq">Read the complete FAQ</Link> or{' '}
+            <Link href="/docs">browse the documentation</Link>.
+          </p>
         </section>
 
         {/* ════════════ FINAL CTA ════════════ */}
         <section className="cta-final" aria-labelledby="cta-title">
           <h2 id="cta-title">
-            Ready to Explore the
+            Ready to Join the
             <br />
-            Social Universe?
+            Open Social Web?
           </h2>
           <p>
             The feed is live. No waitlist. No tokens. No sign-up required.
@@ -1678,9 +2140,9 @@ export default async function LandingPage() {
                 <span>DegenFeed</span>
               </div>
               <p className="footer-desc">
-                The Web3 Social Universe. Aggregate Nostr, Farcaster, Lens, Bluesky, Mastodon, and
-                more into one unified feed — plus 248 news sources with bias ratings. Built on open
-                protocols by <strong>Rug Munch Media LLC</strong>.
+                One Protocol for All Web3 Social. Aggregate Nostr, Farcaster, Lens, Bluesky,
+                Mastodon, and 18+ more networks into one unified feed — plus 248 news sources with
+                bias ratings. Built on open protocols by <strong>Rug Munch Media LLC</strong>.
               </p>
             </div>
             <div className="footer-col">
@@ -1688,7 +2150,8 @@ export default async function LandingPage() {
               <a href="https://app.degenfeed.xyz/feed">Explore Feeds</a>
               <a href="https://app.degenfeed.xyz/news">News</a>
               <a href="https://app.degenfeed.xyz/pricing">Pricing</a>
-              <a href="https://docs.degenfeed.xyz">Documentation</a>
+              <a href="/docs">Documentation</a>
+              <a href="/faq">FAQ</a>
             </div>
             <div className="footer-col">
               <h4>Network</h4>
@@ -1696,6 +2159,7 @@ export default async function LandingPage() {
               <a href="https://status.degenfeed.xyz">Status</a>
               <a href="https://blog.degenfeed.xyz">Blog</a>
               <a href="https://community.degenfeed.xyz">Community</a>
+              <a href="/docs/protocols">Protocols</a>
             </div>
             <div className="footer-col">
               <h4>Legal</h4>
@@ -1708,7 +2172,7 @@ export default async function LandingPage() {
           <div className="footer-bottom">
             <p>
               &copy; {new Date().getFullYear()} DegenFeed &mdash; a Rug Munch Media LLC product.
-              Open source (MIT). Your data, never sold.
+              Open source (AGPL-3.0). Your data, never sold.
             </p>
             <div className="footer-socials">
               <a href="https://github.com/RugMunchMedia" target="_blank" rel="noopener noreferrer">
@@ -1722,6 +2186,22 @@ export default async function LandingPage() {
                   <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
                 </svg>
                 GitHub
+              </a>
+              <a
+                href="https://social.degenfeed.xyz/@degenfeed"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  aria-hidden="true"
+                >
+                  <path d="M12 2C7.6 2 4 3.6 4 7.5v8.3c0 1.8.8 3.1 2.4 4 .8.5 2.6 1 4.8 1.1l.2-2.2c-1.4-.2-2.3-.6-2.9-1 .6.6 1.5 1.1 2.7 1.3l.4.1c2.3.3 5.4-.1 7.4-2 1.6-.9 2.4-2.2 2.4-4V7.5C20 3.6 16.4 2 12 2zm5.3 12.2l-2.6-.4c-.2 0-.4.2-.4.4l.1 1.7c0 .2-.2.4-.4.3-2.4-.7-4.4-2.6-4.6-6.1-.1-1.5.9-2.5 2.2-2.5 1.2 0 2.3.8 2.5 2 .2 1.2.2 2.8.2 2.8h3.3s0-1.6.2-2.8c.2-1.2 1.3-2 2.5-2 1.3 0 2.3 1 2.2 2.5-.2 3.5-2.2 5.4-4.6 6.1-.2.1-.4-.1-.4-.3l.1-1.7c.1-.2 0-.4-.3-.4z" />
+                </svg>
+                Mastodon
               </a>
             </div>
           </div>

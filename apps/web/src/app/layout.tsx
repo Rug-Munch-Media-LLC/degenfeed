@@ -72,14 +72,15 @@ export const metadata: Metadata = {
   },
   metadataBase: new URL('https://app.degenfeed.xyz'),
   title: {
-    default: 'DegenFeed — The Web3 Social Universe | Nostr, Farcaster, Lens, Bluesky',
+    default: 'DegenFeed — One Protocol for All Web3 Social | Nostr, Farcaster, Lens, Bluesky',
     template: '%s — DegenFeed',
   },
   description:
-    'One free feed for the entire open social graph. Read Nostr, Farcaster, Lens, Bluesky, Mastodon, and 248 news sources with bias ratings and blindspot detection. No sign-up required.',
+    'One feed for the entire open social graph. Read Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, Reddit and 18+ more networks — then cross-post to all of them at once. Bias-rated news, creator coins, video streaming. No sign-up required.',
   keywords: [
     'web3 social media',
     'decentralized social network',
+    'one protocol all web3 social',
     'nostr feed',
     'farcaster client',
     'lens protocol app',
@@ -96,9 +97,9 @@ export const metadata: Metadata = {
     'decentralized social media',
   ],
   openGraph: {
-    title: 'DegenFeed — The Web3 Social Universe',
+    title: 'DegenFeed — One Protocol for All Web3 Social',
     description:
-      'One free feed for the entire open social graph. Nostr, Farcaster, Lens, Bluesky, Mastodon + 248 news sources with bias ratings. No sign-up needed.',
+      'One feed for the entire open social graph. Nostr, Farcaster, Bluesky, Mastodon + 18 networks and 248 news sources with bias ratings. No sign-up needed.',
     url: 'https://app.degenfeed.xyz',
     siteName: 'DegenFeed',
     type: 'website',
@@ -108,15 +109,15 @@ export const metadata: Metadata = {
         url: '/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'DegenFeed — The Web3 Social Universe',
+        alt: 'DegenFeed — One Protocol for All Web3 Social',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'DegenFeed — The Web3 Social Universe',
+    title: 'DegenFeed — One Protocol for All Web3 Social',
     description:
-      'One free feed for the entire open social graph. Nostr, Farcaster, Lens, Bluesky, Mastodon + 248 news sources with bias ratings.',
+      'One feed for the entire open social graph. Nostr, Farcaster, Bluesky, Mastodon + 18 networks with bias-rated news.',
     images: ['/og-image.png'],
     creator: '@degenfeed',
   },
