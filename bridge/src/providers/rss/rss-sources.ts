@@ -285,4 +285,3 @@ export function sourceTier(label: string | undefined): number {
 // (see docs/NEWS-SYSTEM-UPGRADE-RESEARCH.md §5). Ground News charges for
 // these; we provide them free as informational metadata — never used to
 // censor or penalize. Bias labels follow the 5-point AllSides/MBFC scale.
-
