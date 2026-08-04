@@ -30,7 +30,8 @@ import {
 } from '@degenfeed/feed-providers';
 import type { Protocol, UnifiedPost } from '@degenfeed/types';
 import { rmiUrl } from '@degenfeed/utils';
-import { type Env, log } from '../types';
+import type { Env } from '../types';
+import { log } from '../logger';
 import { readProviderCache, writeProviderCache } from './feed-cache';
 import { sanitizePosts } from './feed-enricher';
 

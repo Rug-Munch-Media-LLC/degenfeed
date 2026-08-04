@@ -74,6 +74,7 @@ function SidebarLink({
   return (
     <Link
       href={href}
+      prefetch
       className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
         isActive
           ? 'bg-[var(--color-overlay)] text-[var(--color-fg)]'
@@ -315,6 +316,7 @@ export function FeedShell({ children }: FeedShellProps) {
           {/* ── Live link ── */}
           <Link
             href="/feed/live"
+            prefetch
             className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
               pathname === '/feed/live'
                 ? 'bg-[var(--color-overlay)] text-[var(--color-fg)]'
@@ -348,6 +350,7 @@ export function FeedShell({ children }: FeedShellProps) {
         >
           <Link
             href="/feed"
+            prefetch
             data-active={pathname === '/feed' ? 'true' : undefined}
             className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-colors ${
               pathname === '/feed'
@@ -365,6 +368,7 @@ export function FeedShell({ children }: FeedShellProps) {
               <Link
                 key={pid}
                 href={meta.route}
+                prefetch
                 data-active={isActive ? 'true' : undefined}
                 className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-colors ${
                   isActive
@@ -386,6 +390,7 @@ export function FeedShell({ children }: FeedShellProps) {
               <Link
                 key={p.id}
                 href={p.href}
+                prefetch
                 data-active={isActive ? 'true' : undefined}
                 className="inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-colors"
                 style={{

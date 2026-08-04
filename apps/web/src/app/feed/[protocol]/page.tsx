@@ -6,7 +6,7 @@ import { getProtocolColor } from '@degenfeed/utils';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useState } from 'react';
+import { use, useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../../../components/AuthProvider';
 import { useRealtimeFeed } from '../../../hooks/useRealtimeFeed';
 import { ProtocolEmptyState } from './components/ProtocolEmptyState';
@@ -316,6 +316,7 @@ function ProtocolFeedContent({ protocol }: { protocol: string }) {
           {/* Link to trending page */}
           <Link
             href={`/feed/${protocol}/trending`}
+            prefetch
             className="ml-auto text-[10px] font-medium transition-colors hover:underline"
             style={{ color }}
           >
@@ -416,8 +417,13 @@ function ProtocolFeedContent({ protocol }: { protocol: string }) {
 }
 
 // ─── Page Export ────────────────────────────────────────────────────
+//
+// Client Components cannot be async. Read the `params` promise with
+// React's `use()` so the page is a pure client component — navigation
+// between protocols is a lightweight client-side transition with no
+// per-navigation server render round-trip (no Suspense skeleton flash).
 
-export default async function ProtocolFeedPage({ params }: Props) {
-  const { protocol } = await params;
+export default function ProtocolFeedPage({ params }: Props) {
+  const { protocol } = use(params);
   return <ProtocolFeedContent protocol={protocol} />;
 }

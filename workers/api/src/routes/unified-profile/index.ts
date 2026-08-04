@@ -4,7 +4,10 @@
 
 export { handleProfileBadges } from './badges';
 export {
+  handleActivityFeed,
   handleAggregateProfile,
+  handleContentPerformance,
+  handleRevenueSummary,
   handleSearchProfiles,
   handleSuggestedProfiles,
   handleTrendingProfiles,

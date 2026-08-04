@@ -12,7 +12,7 @@
  */
 
 import type { Env } from '../types';
-import { log } from '../types';
+import { log } from '../logger';
 import { getIPFSGatewayUrl, uploadBufferToIPFS } from './ipfs-storage';
 import { uploadToR2 } from './r2-storage';
 import { storeVideo } from './video-storage-router';

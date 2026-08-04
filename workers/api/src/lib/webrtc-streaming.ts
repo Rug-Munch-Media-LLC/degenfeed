@@ -20,7 +20,7 @@
  */
 
 import type { Env } from '../types';
-import { jsonResponse, noCacheJsonResponse } from '../types';
+import { jsonResponse, noCacheJsonResponse } from '../response-helpers';
 import { methodNotAllowed } from '../response-helpers';
 
 // ─── Types ──────────────────────────────────────────────────────────────

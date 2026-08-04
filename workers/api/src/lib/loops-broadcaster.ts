@@ -16,7 +16,7 @@
  */
 
 import type { Env } from '../types';
-import { log } from '../types';
+import { log } from '../logger';
 
 // ─── Types ────────────────────────────────────────────────────────────────
 

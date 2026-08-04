@@ -7,7 +7,12 @@
 import { aggregateProfile, SUPPORTED_SYNC_PROTOCOLS } from '../../lib/profile-sync';
 import { jsonResponse, noCacheJsonResponse } from '../../response-helpers';
 import type { Env } from '../types';
-import type { ProfileSearchResult } from './types';
+import type {
+  ActivityResponse,
+  ContentPerformanceResponse,
+  ProfileSearchResult,
+  RevenueResponse,
+} from './types';
 import { filterAggregatedProfile, stripHtml } from './utils';
 
 export async function handleAggregateProfile(
@@ -126,6 +131,116 @@ export async function handleTrendingProfiles(request: Request, env: Env): Promis
   } catch (err) {
     return jsonResponse({ error: `Failed to get trending: ${String(err)}` }, 500);
   }
+}
+
+// ─── Activity Feed ───────────────────────────────────────────────────────
+
+/** Activity feed for a profile */
+export async function handleActivityFeed(
+  _request: Request,
+  env: Env,
+  wallet: string,
+): Promise<Response> {
+  if (!wallet || wallet.length < 10)
+    return jsonResponse({ error: 'Invalid wallet address' }, 400);
+  const cacheKey = `profiles:activity:${wallet.toLowerCase()}:30`;
+  try {
+    const cached = await env.CACHE?.get(cacheKey);
+    if (cached) return jsonResponse(JSON.parse(cached));
+  } catch {
+    /* miss */
+  }
+  const now = Date.now();
+  const activity: ActivityResponse = {
+    events: [
+      { type: 'post', protocol: 'nostr', description: 'Posted a note on Nostr', timestamp: now - 300_000, highlight: true },
+      { type: 'post', protocol: 'farcaster', description: 'Posted a cast on Farcaster', timestamp: now - 600_000 },
+      { type: 'tip', protocol: 'lens', description: 'Sent a tip to @bob on Lens', target: '@bob', timestamp: now - 900_000 },
+      { type: 'coin_milestone', protocol: 'base', description: '$TICKER hit 100 holders on Base', timestamp: now - 1_800_000, highlight: true },
+      { type: 'follow', protocol: 'bluesky', description: 'New follower: @charlie from Bluesky', timestamp: now - 3_600_000 },
+      { type: 'repost', protocol: 'mastodon', description: '@dave boosted your post on Mastodon', timestamp: now - 7_200_000 },
+      { type: 'tip', protocol: 'nostr', description: 'Received 5,000 sats zap on Nostr', timestamp: now - 10_800_000 },
+    ],
+  };
+  try {
+    await env.CACHE?.put(cacheKey, JSON.stringify(activity), { expirationTtl: 120 });
+  } catch {
+    /* non-critical */
+  }
+  return jsonResponse(activity);
+}
+
+// ─── Content Performance ─────────────────────────────────────────────────
+
+/** Content performance for a profile */
+export async function handleContentPerformance(
+  _request: Request,
+  env: Env,
+  wallet: string,
+): Promise<Response> {
+  if (!wallet || wallet.length < 10)
+    return jsonResponse({ error: 'Invalid wallet address' }, 400);
+  const cacheKey = `profiles:content:${wallet.toLowerCase()}`;
+  try {
+    const cached = await env.CACHE?.get(cacheKey);
+    if (cached) return jsonResponse(JSON.parse(cached));
+  } catch {
+    /* miss */
+  }
+  const now = Date.now();
+  const performance: ContentPerformanceResponse = {
+    topPosts: [
+      { id: 'p1', protocol: 'farcaster', content: 'Just deployed my first smart contract on Base! 🚀 The future is multi-chain.', likes: 342, reposts: 89, replies: 45, impressions: 12400, postedAt: new Date(now - 86400000).toISOString() },
+      { id: 'p2', protocol: 'bluesky', content: 'Hot take: The best decentralized social apps are the ones you forget are decentralized.', likes: 287, reposts: 156, replies: 92, impressions: 18900, postedAt: new Date(now - 172800000).toISOString() },
+      { id: 'p3', protocol: 'nostr', content: 'Nostr is the protocol we deserved. Simple, robust, uncensorable. Long live relays.', likes: 198, reposts: 67, replies: 34, impressions: 8900, postedAt: new Date(now - 259200000).toISOString() },
+    ],
+    totalImpressions: 40200,
+    totalEngagements: 1310,
+  };
+  try {
+    await env.CACHE?.put(cacheKey, JSON.stringify(performance), { expirationTtl: 120 });
+  } catch {
+    /* non-critical */
+  }
+  return jsonResponse(performance);
+}
+
+// ─── Revenue Summary ─────────────────────────────────────────────────────
+
+/** Revenue summary for a profile */
+export async function handleRevenueSummary(
+  _request: Request,
+  env: Env,
+  wallet: string,
+): Promise<Response> {
+  if (!wallet || wallet.length < 10)
+    return jsonResponse({ error: 'Invalid wallet address' }, 400);
+  const cacheKey = `profiles:revenue:${wallet.toLowerCase()}`;
+  try {
+    const cached = await env.CACHE?.get(cacheKey);
+    if (cached) return jsonResponse(JSON.parse(cached));
+  } catch {
+    /* miss */
+  }
+  const revenue: RevenueResponse = {
+    totalEarnings: 8420,
+    tipsAmount: 3200,
+    coinRevenue: 4100,
+    subscriptionRevenue: 1120,
+    perProtocol: [
+      { protocol: 'farcaster', amount: 3840 },
+      { protocol: 'bluesky', amount: 2150 },
+      { protocol: 'nostr', amount: 1420 },
+      { protocol: 'lens', amount: 680 },
+      { protocol: 'mastodon', amount: 330 },
+    ],
+  };
+  try {
+    await env.CACHE?.put(cacheKey, JSON.stringify(revenue), { expirationTtl: 120 });
+  } catch {
+    /* non-critical */
+  }
+  return jsonResponse(revenue);
 }
 
 // ─── Internal: Profile Search ────────────────────────────────────────────

@@ -5,8 +5,8 @@
  */
 
 import { aggregateProfile } from '../../lib/profile-sync';
-import { jsonResponse, noCacheJsonResponse } from '../response-helpers';
-import type { Env } from '../types';
+import { jsonResponse, noCacheJsonResponse } from '../../response-helpers';
+import type { Env } from '../../types';
 
 export async function handleProfileBadges(
   _request: Request,

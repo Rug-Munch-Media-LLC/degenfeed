@@ -20,7 +20,7 @@
  */
 
 import type { Env } from '../types';
-import { log } from '../types';
+import { log } from '../logger';
 import type { TransportMessage, TransportProtocol, TransportResult } from './message-transport';
 
 // ─── Types ────────────────────────────────────────────────────────────────

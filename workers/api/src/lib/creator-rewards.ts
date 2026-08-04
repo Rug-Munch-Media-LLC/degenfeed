@@ -17,7 +17,8 @@
  *   rewards:metrics:{address} → Creator weekly metrics for formula computation
  */
 
-import { type Env, jsonResponse } from '../types';
+import type { Env } from '../types';
+import { jsonResponse } from '../response-helpers';
 import { requireSession } from '../session';
 
 // ─── Types ────────────────────────────────────────────────────────────────

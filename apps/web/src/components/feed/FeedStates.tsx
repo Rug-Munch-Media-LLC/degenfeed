@@ -43,7 +43,13 @@ export function FeedLoadingSkeleton() {
   );
 }
 
-export function FeedEmptyState({ activeTab }: { activeTab: string }) {
+export function FeedEmptyState({
+  activeTab,
+  onRefresh,
+}: {
+  activeTab: string;
+  onRefresh?: () => void;
+}) {
   return (
     <div className="card border-[var(--color-border)] bg-[var(--color-card)] py-16 text-center">
       <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-[var(--color-border)] bg-[var(--color-overlay)]">
@@ -62,6 +68,11 @@ export function FeedEmptyState({ activeTab }: { activeTab: string }) {
             : 'Your feed is empty. Try following some accounts or exploring trending topics.'}
       </p>
       <div className="flex flex-wrap items-center justify-center gap-2">
+        {onRefresh && (
+          <button type="button" onClick={onRefresh} className="btn-primary text-sm">
+            Refresh
+          </button>
+        )}
         <Link
           href="/trending"
           className="inline-flex min-h-[44px] items-center justify-center rounded-full bg-[var(--color-accent)] px-5 text-sm font-semibold text-black transition-all hover:opacity-90 hover:shadow-[0_0_16px_var(--color-accent-glow)]"

@@ -14,7 +14,7 @@
  */
 
 import type { Env } from '../types';
-import { log } from '../types';
+import { log } from '../logger';
 import { FILE_INDEX_PREFIX, FILE_PREFIX, getFileCategory, QUOTA_PREFIX } from './chat-files';
 import { uploadBufferToIPFS } from './ipfs-storage';
 import { uploadToR2 } from './r2-storage';

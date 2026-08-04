@@ -14,7 +14,7 @@
  */
 
 import type { Env } from '../types';
-import { log } from '../types';
+import { log } from '../logger';
 import { SimulcastEngine, type SimulcastPlatform } from './simulcast';
 import {
   type SimulcastTarget,

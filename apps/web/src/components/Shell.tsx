@@ -9,6 +9,7 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useFeedLayout } from '../hooks/useFeedLayout';
 import { OnboardingProvider } from '../hooks/useOnboarding';
 import { useRecentVisited } from '../hooks/useRecentVisited';
+import { applyThemeClass } from '../lib/theme';
 import { AddToHomeScreenToast } from './AddToHomeScreenToast';
 import { BottomNav } from './BottomNav';
 import { ProtocolNavSection } from './feed/ProtocolNavSection';
@@ -507,7 +508,7 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
     const stored = localStorage.getItem('df_theme');
     const resolved = stored === 'light' ? 'light' : 'dark';
     setTheme(resolved);
-    document.documentElement.classList.toggle('dark', resolved === 'dark');
+    applyThemeClass(resolved);
     document.cookie = `df_theme=${resolved}; path=/; max-age=31536000; SameSite=Lax; Secure`;
   }, []);
 
@@ -523,7 +524,7 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
         e.preventDefault();
         setTheme((prev) => {
           const next = prev === 'dark' ? 'light' : 'dark';
-          document.documentElement.classList.toggle('dark', next === 'dark');
+          applyThemeClass(next);
           localStorage.setItem('df_theme', next);
           document.cookie = `df_theme=${next}; path=/; max-age=31536000; SameSite=Lax; Secure`;
           return next;

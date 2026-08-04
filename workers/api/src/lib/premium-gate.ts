@@ -16,7 +16,7 @@
  */
 
 import type { Env } from '../types';
-import { jsonResponse } from '../types';
+import { jsonResponse } from '../response-helpers';
 import { type PremiumTier, requirePremiumTier, TIER_LIMITS } from '../premium';
 import { createPostizSchedule, getSchedulingEngine, shouldUsePostiz } from './postiz-bridge';
 

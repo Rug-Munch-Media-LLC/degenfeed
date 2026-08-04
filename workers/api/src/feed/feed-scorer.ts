@@ -32,7 +32,8 @@ import {
   scorePost as unifiedScorePost,
 } from '@degenfeed/ranking';
 import type { UnifiedPost } from '@degenfeed/types';
-import { type Env, log } from '../types';
+import type { Env } from '../types';
+import { log } from '../logger';
 import type { StoredUserPreferences } from './feed-cache';
 
 // ─── Preference parsing & merging ──────────────────────────────────
