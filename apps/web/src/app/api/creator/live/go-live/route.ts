@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { proxyPost } from '../../../_proxy';
 
 export const dynamic = 'force-dynamic';
 
@@ -8,6 +9,11 @@ export const dynamic = 'force-dynamic';
  * One-click Go Live orchestration. Accepts the stream config (title,
  * description, format, platforms) and asks the worker backend to create the
  * live stream + announce it on every selected platform.
+ *
+ * Proxies to the bridge's POST /api/live/go-live via the shared `_proxy`
+ * helper, which injects BRIDGE_API_KEY for bridge-level auth. The web's
+ * format (portrait/landscape) is translated to the bridge's LiveStyle
+ * (vertical/horizontal) before forwarding.
  *
  * Falls back to a locally-computed stream connection when the worker is
  * unreachable so the flow works end-to-end in local development.
@@ -34,27 +40,48 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Select at least one platform' }, { status: 400 });
     }
 
-    const baseUrl =
-      process.env.WORKER_URL ??
-      process.env.NEXT_PUBLIC_WORKER_URL ??
-      process.env.NEXT_PUBLIC_API_BASE ??
-      process.env.NEXT_PUBLIC_API_URL ??
-      'http://host.docker.internal:8787';
-
-    const forwardedHeaders: Record<string, string> = {};
-    const cookie = request.headers.get('cookie');
-    if (cookie) forwardedHeaders.Cookie = cookie;
-    const auth = request.headers.get('authorization');
-    if (auth) forwardedHeaders.Authorization = auth;
+    // Bridge LiveStyle is vertical (9:16 portrait) | horizontal (16:9 landscape).
+    const style = body.format === 'portrait' ? 'vertical' : 'horizontal';
 
     try {
-      const res = await fetch(`${baseUrl}/api/creator/live/go-live`, {
-        method: 'POST',
-        headers: { ...forwardedHeaders, 'content-type': 'application/json' },
-        body: JSON.stringify(body),
-        signal: AbortSignal.timeout(8000),
-      });
+      // proxyPost resolves WORKER_URL and injects BRIDGE_API_KEY.
+      const res = await proxyPost(
+        '/api/live/go-live',
+        new Request(request.url, {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+            cookie: request.headers.get('cookie') ?? '',
+            authorization: request.headers.get('authorization') ?? '',
+          },
+          body: JSON.stringify({ ...body, style }),
+        }),
+      );
       const data = await res.json();
+
+      // The bridge returns a flat session object; wrap it into the shape the
+      // LiveCreatorFlow consumes ({ stream: { streamId, rtmpUrl, ... } }).
+      if (res.ok && data.ok && data.streamId) {
+        const streamId = data.streamId as string;
+        const confirmed = Array.isArray(data.platforms) ? data.platforms : platforms;
+        const platformMessages: Record<string, { ok: boolean; id: string; url: string }> = {};
+        for (const p of confirmed) {
+          platformMessages[p] = {
+            ok: true,
+            id: `${p}_${streamId}`,
+            url: `https://degenfeed.xyz/live/${p}/${streamId}`,
+          };
+        }
+        return NextResponse.json({
+          stream: {
+            streamId,
+            rtmpUrl: data.rtmpUrl ?? '',
+            streamKey: data.streamKey ?? '',
+            playbackUrl: data.playbackUrl ?? '',
+            platformMessages,
+          },
+        });
+      }
       return NextResponse.json(data, { status: res.status });
     } catch {
       // Worker unreachable — build a valid stream connection locally so the
