@@ -10,7 +10,7 @@
  *   GET  /api/sso/provision/status — Check provisioning status
  */
 
-import { execSync } from 'node:child_process';
+import { execSync, spawnSync } from 'node:child_process';
 import crypto from 'node:crypto';
 import type http from 'node:http';
 import { registerOnPlatform } from '@degenfeed/crossplatform-register';
@@ -364,6 +364,154 @@ async function handleSsoProvisionStatus(
   });
 }
 
+// ─── Unified Signup ────────────────────────────────────────────────────
+// POST /api/auth/signup
+//
+// One signup → account on GTS (ActivityPub) + PDS (AT Protocol) + all
+// other DegenFeed mesh services. Delegates the actual provisioning to the
+// canonical Python provisioner (/srv/degenfeed/scripts/provision-all-instances.py),
+// which creates accounts via direct SQLite/API/CLI per instance.
+//
+// Body:
+//   {
+//     username: string,          // desired username (required)
+//     email?: string,            // defaults to {username}@degenfeed.xyz
+//     password?: string,         // defaults to a generated strong password
+//     displayName?: string,
+//     walletAddress?: string     // stored for identity linking
+//   }
+
+const PROVISIONER_SCRIPT = '/srv/degenfeed/scripts/provision-all-instances.py';
+
+function generateStrongPassword(): string {
+  return generateRandomPassword();
+}
+
+function normalizeUsername(input: string): string {
+  return input.toLowerCase().replace(/[^a-z0-9_]/g, '_');
+}
+
+/**
+ * Spawn the canonical Python provisioner synchronously and parse its JSON.
+ * Uses spawnSync so JSON output is captured even when the script exits
+ * non-zero (e.g. partial failures — some instances are not deployed).
+ */
+function runPythonProvisioner(
+  username: string,
+  email: string,
+  password: string,
+  displayName: string,
+): Record<string, unknown> {
+  const args = [
+    PROVISIONER_SCRIPT,
+    `--username=${username}`,
+    `--email=${email}`,
+    `--password=${password}`,
+    `--display-name=${displayName}`,
+    '--json',
+  ];
+  const result = spawnSync('python3', args, {
+    timeout: 90_000,
+    maxBuffer: 4 * 1024 * 1024,
+    encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+  if (result.status === null && result.error) {
+    throw result.error;
+  }
+  const stdout = (result.stdout || '') + (result.stderr || '');
+  const jsonMatch = stdout.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) {
+    throw new Error(`Provisioner produced no JSON output: ${stdout.slice(0, 300)}`);
+  }
+  return JSON.parse(jsonMatch[0]) as Record<string, unknown>;
+}
+
+async function handleUnifiedSignup(
+  req: http.IncomingMessage,
+  res: http.ServerResponse,
+): Promise<void> {
+  try {
+    const body = await readBody(req);
+    const { username, email, password, displayName, walletAddress } = body as {
+      username?: string;
+      email?: string;
+      password?: string;
+      displayName?: string;
+      walletAddress?: string;
+    };
+
+    if (!username || typeof username !== 'string' || !username.trim()) {
+      return jsonError(res, 400, 'VALIDATION_ERROR', 'username is required');
+    }
+
+    const cleanUsername = normalizeUsername(username.trim());
+    if (!/^[a-z0-9_]{1,30}$/.test(cleanUsername)) {
+      return jsonError(
+        res,
+        400,
+        'VALIDATION_ERROR',
+        'Username must be 1-30 characters (lowercase letters, numbers, underscores)',
+      );
+    }
+
+    const resolvedEmail =
+      email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? email : `${cleanUsername}@degenfeed.xyz`;
+    const resolvedPassword = password && password.length >= 8 ? password : generateStrongPassword();
+    const resolvedDisplay = displayName || cleanUsername;
+
+    // The Python provisioner requires >= 10 char passwords (Lemmy constraint).
+    const finalPassword =
+      resolvedPassword.length >= 10 ? resolvedPassword : generateStrongPassword();
+
+    const result = runPythonProvisioner(
+      cleanUsername,
+      resolvedEmail,
+      finalPassword,
+      resolvedDisplay,
+    );
+
+    const summary = (result.summary || {}) as Record<string, number>;
+    const results = (result.results || {}) as Record<
+      string,
+      {
+        success?: boolean;
+        skipped?: boolean;
+        error?: string;
+        handle?: string;
+        did?: string;
+        account_id?: string;
+      }
+    >;
+
+    return jsonOk(res, {
+      ok: (summary.failures || 0) === 0,
+      username: cleanUsername,
+      email: resolvedEmail,
+      displayName: resolvedDisplay,
+      walletAddress: walletAddress || generateWalletAddress(cleanUsername),
+      provisioner: result,
+      instances: results,
+      summary,
+      credentials: {
+        // Returned once so the user can log in to the provisioned services.
+        email: resolvedEmail,
+        password: finalPassword,
+        handle: results.pds?.handle || `${cleanUsername}.degenfeed.xyz`,
+        did: results.pds?.did || null,
+        gtsAccountId: results.gotosocial?.account_id || null,
+      },
+      message: summary.failures
+        ? `Account created on ${summary.successes || 0}/${summary.total || 8} services with ${summary.failures} skipped/failed.`
+        : 'Account created on all DegenFeed services.',
+    });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'Unknown error';
+    console.error('[sso] Unified signup error:', msg);
+    return jsonError(res, 500, 'SIGNUP_FAILED', `Signup failed: ${msg}`);
+  }
+}
+
 // ─── Router ─────────────────────────────────────────────────────────────
 
 /**
@@ -376,6 +524,11 @@ export async function handleSsoRoute(
   req: http.IncomingMessage,
   res: http.ServerResponse,
 ): Promise<boolean> {
+  if (path === '/api/auth/signup' && method === 'POST') {
+    await handleUnifiedSignup(req, res);
+    return true;
+  }
+
   if (path === '/api/sso/provision' && method === 'POST') {
     await handleSsoProvision(req, res);
     return true;
