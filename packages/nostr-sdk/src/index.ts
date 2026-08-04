@@ -58,6 +58,23 @@ export {
 } from './nip29';
 export type { Nip46ConnectOptions } from './nip46';
 export { connectNostrConnect } from './nip46';
+// ─── NIP-71 Video Events ─────────────────────────────────────────────────
+export type {
+  NostrVideoEvent,
+  NostrVideoFilter,
+} from './nip71';
+export {
+  createVideoEvent,
+  fetchNostrVideoEvents,
+  filterVideoEvents,
+  normalizeVideoEvent,
+  parseVideoEvent,
+  publishVideoEvent,
+  SHORT_VIDEO_EVENT_KIND,
+  serializeVideoEvent,
+  VIDEO_EVENT_KIND,
+  VIDEO_EVENT_KINDS,
+} from './nip71';
 export type { NostrProfileContent } from './profile';
 export {
   createProfileEvent,

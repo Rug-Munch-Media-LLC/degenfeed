@@ -26,7 +26,7 @@ const PLATFORM_COLOR_ARWEAVE = '#9C27B0';
 
 // Public IPFS gateways (for resolving CIDs to viewable URLs)
 const IPFS_GATEWAYS = [
-  'https://cloudflare-ipfs.com/ipfs/',
+  'https://ipfs.degenfeed.xyz/ipfs/',
   'https://ipfs.io/ipfs/',
   'https://dweb.link/ipfs/',
   'https://gateway.pinata.cloud/ipfs/',
@@ -34,20 +34,6 @@ const IPFS_GATEWAYS = [
 
 // Public Arweave gateways
 const ARWEAVE_GATEWAYS = ['https://arweave.net/', 'https://gateway.arweave.xyz/'];
-
-// ─── Types ─────────────────────────────────────────────────────────────
-
-interface DiscoveredIPFSVideo {
-  cid: string;
-  title: string;
-  description?: string;
-  creatorName: string;
-  creatorId: string;
-  duration: number;
-  mimeType: string;
-  thumbnailUrl?: string;
-  publishedAt: string;
-}
 
 // ─── Resolve IPFS CID to gateway URL ───────────────────────────────────
 
@@ -169,7 +155,7 @@ export async function fetchIPFSVideoList(
     const videos: UnifiedVideo[] = [];
     for (const cid of knownContentCIDs.slice(0, _limit)) {
       try {
-        const metaUrl = `https://cloudflare-ipfs.com/ipfs/${cid}/metadata.json`;
+        const metaUrl = `https://ipfs.degenfeed.xyz/ipfs/${cid}/metadata.json`;
         const res = await fetch(metaUrl, { signal });
         if (!res.ok) continue;
 

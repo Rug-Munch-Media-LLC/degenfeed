@@ -243,7 +243,6 @@ const IPFS_GATEWAYS = [
   { url: 'https://ipfs.degenfeed.xyz/ipfs/{cid}', priority: 0, region: 'us-central' },
   { url: 'https://dweb.link/ipfs/{cid}', priority: 1, region: 'global' },
   { url: 'https://ipfs.io/ipfs/{cid}', priority: 2, region: 'global' },
-  { url: 'https://cloudflare-ipfs.com/ipfs/{cid}', priority: 3, region: 'global' },
   { url: 'https://gateway.pinata.cloud/ipfs/{cid}', priority: 4, region: 'us-east' },
 ];
 
