@@ -968,6 +968,7 @@ const server = http.createServer(async (req, res) => {
       const limit = Math.min(parseInt(searchParams.get('limit') || '20', 10), 50);
       const newsletterPosts = await fetchNewsletterPosts(limit);
       return jsonOk(res, {
+        data: newsletterPosts,
         posts: newsletterPosts,
         meta: {
           total: newsletterPosts.length,
@@ -1110,6 +1111,14 @@ const server = http.createServer(async (req, res) => {
         'podcast',
         'youtube',
         'loops',
+        'minds',
+        'mirror',
+        'paragraph',
+        'lbry',
+        'odysee',
+        'substack',
+        'rumble',
+        'newsletter',
       ];
       if (allowed.includes(proto)) {
         const singleCacheKey = `feed:single:${proto}:${limit}`;
