@@ -9,7 +9,7 @@
  * Design: Dark neon glass card with progress ring. Completing all items
  * shows a celebratory state.
  *
- * Accessibility: All items are <button>s with aria-labels. Role="list".
+ * Accessibility: All items are <button type="button">s with aria-labels. Role="list".
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react';

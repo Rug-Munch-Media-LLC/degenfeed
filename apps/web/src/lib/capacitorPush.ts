@@ -109,7 +109,7 @@ class CapacitorPushService {
           platform: this.detectPlatform(),
         };
         this.token = token;
-        this.tokenHandlers.forEach((h) => h(token));
+        this.tokenHandlers.forEach((h) => { h(token); });
       });
 
       // Listen for errors
@@ -120,7 +120,7 @@ class CapacitorPushService {
       // Listen for incoming notifications (foreground)
       PushNotifications.addListener('pushNotificationReceived', (event) => {
         const payload = this.normalizeCapacitorPayload(event);
-        this.nativeHandlers.forEach((h) => h(payload));
+        this.nativeHandlers.forEach((h) => { h(payload); });
       });
 
       // Listen for notification tap (background → foreground)
@@ -130,7 +130,7 @@ class CapacitorPushService {
         if (payload.url) {
           window.location.href = payload.url;
         }
-        this.nativeHandlers.forEach((h) => h(payload));
+        this.nativeHandlers.forEach((h) => { h(payload); });
       });
 
       // Register with APNs / FCM
@@ -181,7 +181,7 @@ class CapacitorPushService {
         platform: 'web',
       };
       this.token = token;
-      this.tokenHandlers.forEach((h) => h(token));
+      this.tokenHandlers.forEach((h) => { h(token); });
 
       // Web push notifications are handled by the SW (push event →
       // showNotification).  We don't need to duplicate that handler.
@@ -189,7 +189,7 @@ class CapacitorPushService {
       // via a custom event bridge.
       this._messageListener = (event: MessageEvent) => {
         if (event.data?.type === 'degenfeed-notification-tap') {
-          this.webHandlers.forEach((h) => h(event.data.payload));
+          this.webHandlers.forEach((h) => { h(event.data.payload); });
           if (event.data.payload?.url) {
             window.location.href = event.data.payload.url;
           }

@@ -20,8 +20,8 @@
  * (videoId, channelTitle, views, likes, duration, description).
  */
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { UnifiedPost } from '@degenfeed/types';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 const ACCENT = '#ff0000';
 const YT_COLOR = '#ff0000';
@@ -84,13 +84,16 @@ function getVideoMeta(post: UnifiedPost): VideoMeta {
   const imageEmbed = post.embeds?.find((e) => e.kind === 'image');
   return {
     videoId: (raw.videoId as string) || (videoMeta.videoId as string) || extractVideoId(post),
-    thumbnail: (raw.thumbnail as string) || (videoMeta.thumbnail as string) || imageEmbed?.url || post.image,
-    channelTitle: (raw.channelTitle as string) || (videoMeta.channel as string) || post.author.displayName,
+    thumbnail:
+      (raw.thumbnail as string) || (videoMeta.thumbnail as string) || imageEmbed?.url || post.image,
+    channelTitle:
+      (raw.channelTitle as string) || (videoMeta.channel as string) || post.author.displayName,
     channelHandle: raw.channelHandle as string,
     views: (raw.views as number) || (videoMeta.views as number) || post.metrics?.views,
     likes: (raw.likes as number) || post.metrics?.likes,
     duration: (raw.duration as number) || (videoMeta.duration as number),
-    description: (raw.description as string) || stripHtml(post.html) || post.text.replace(/^▶\s*/, ''),
+    description:
+      (raw.description as string) || stripHtml(post.html) || post.text.replace(/^▶\s*/, ''),
   };
 }
 
@@ -142,7 +145,10 @@ function VideoCard({ post }: { post: UnifiedPost }) {
           <>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={meta.thumbnail || `https://i.ytimg.com/vi/${meta.videoId ?? 'unknown'}/hqdefault.jpg`}
+              src={
+                meta.thumbnail ||
+                `https://i.ytimg.com/vi/${meta.videoId ?? 'unknown'}/hqdefault.jpg`
+              }
               alt={post.text}
               className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
               loading="lazy"
@@ -200,9 +206,13 @@ function VideoCard({ post }: { post: UnifiedPost }) {
         </div>
 
         <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-[var(--color-muted)]">
-          <span title={new Date(post.createdAt).toLocaleString()}>📅 {timeAgo(post.createdAt)}</span>
+          <span title={new Date(post.createdAt).toLocaleString()}>
+            📅 {timeAgo(post.createdAt)}
+          </span>
           {formatViews(meta.views) ? <span>👁 {formatViews(meta.views)}</span> : null}
-          {meta.likes ? <span>👍 {meta.likes >= 1000 ? `${(meta.likes / 1000).toFixed(1)}K` : meta.likes}</span> : null}
+          {meta.likes ? (
+            <span>👍 {meta.likes >= 1000 ? `${(meta.likes / 1000).toFixed(1)}K` : meta.likes}</span>
+          ) : null}
         </div>
 
         {description && (

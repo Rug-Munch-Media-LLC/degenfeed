@@ -10,13 +10,13 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
   BANNER_DISMISSED_KEY,
   BANNER_THRESHOLD,
-  MODAL_SEEN_KEY,
-  MODAL_THRESHOLD,
-  PAGE_VIEW_KEY,
   decidePromptSurface,
   dismissBanner,
   incrementPageView,
+  MODAL_SEEN_KEY,
+  MODAL_THRESHOLD,
   markModalSeen,
+  PAGE_VIEW_KEY,
   readFlags,
   readPageViewCount,
 } from './registrationPrompt';

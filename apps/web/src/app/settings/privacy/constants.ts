@@ -159,11 +159,5 @@ export const MIGRATION_PLATFORMS: MigrationPlatform[] = [
   { id: 'farcaster', label: 'Farcaster', icon: '🏠', direction: 'import' },
 ];
 
-export const PROTOCOL_ICONS: Record<string, string> = {
-  nostr: '⚡',
-  farcaster: '🏠',
-  lens: '🌿',
-  bluesky: '☁️',
-  mastodon: '🐘',
-  activitypub: '🔄',
-};
+// Protocol icons come from the canonical registry (@degenfeed/utils).
+export { PROTOCOL_ICONS } from '@degenfeed/utils';

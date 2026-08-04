@@ -29,13 +29,7 @@ const SHARE_PLATFORMS = [
 
 // === Main Component ===============================================
 
-export function SpaceShare({
-  spaceId,
-  title,
-  hostName,
-  isLive,
-  scheduledAt,
-}: SpaceShareProps) {
+export function SpaceShare({ spaceId, title, hostName, isLive, scheduledAt }: SpaceShareProps) {
   const [copied, setCopied] = useState(false);
   const [showShareMenu, setShowShareMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);

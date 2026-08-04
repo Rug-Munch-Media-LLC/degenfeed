@@ -79,6 +79,7 @@ export default function CoinDetailPage() {
           <span>{token.chain === 'solana' ? '◎ Solana' : '⧫ Base'}</span>
           <span>{token.uniqueBuyers} holders</span>
           <button
+            type="button"
             onClick={() => navigator.clipboard.writeText(address)}
             className="font-mono text-degen-400 hover:text-degen-300"
           >

@@ -132,7 +132,8 @@ export default function StepTreasury({
               label: '🏦 Reserve',
               desc: 'Emergency fund, long-term holdings',
             },
-          ].map(({key, label}) => (            <label key={key} className="block">
+          ].map(({ key, label }) => (
+            <label key={key} className="block">
               <span className="mb-1 flex items-center justify-between text-[11px] font-medium text-[var(--color-fg)]">
                 <span>{label}</span>
                 <span className="text-[var(--color-accent)]">{form[key]}%</span>

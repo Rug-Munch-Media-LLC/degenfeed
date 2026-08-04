@@ -64,7 +64,6 @@ function formatCompactNum(n: number): string {
   return String(n);
 }
 
-
 function generateSparklineData(): number[] {
   let price = 30 + Math.random() * 40;
   return Array.from({ length: 7 }, () => {

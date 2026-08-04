@@ -13,10 +13,10 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  pushService,
   type NotificationHandler,
   type PushPayload,
   type PushToken,
+  pushService,
 } from '../lib/capacitorPush';
 
 export interface UsePushNotificationsResult {
@@ -48,9 +48,7 @@ export function usePushNotifications(): UsePushNotificationsResult {
       return;
     }
     setSupported(true);
-    setPermission(
-      'Notification' in window ? Notification.permission : 'unsupported',
-    );
+    setPermission('Notification' in window ? Notification.permission : 'unsupported');
 
     // Track existing token
     if (pushService.currentToken) setToken(pushService.currentToken);

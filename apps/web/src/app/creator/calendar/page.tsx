@@ -781,7 +781,6 @@ function DayView({
   entries: CalendarEntry[];
   onDragStart: (entry: CalendarEntry) => void;
 }) {
-
   // Group entries by status
   const scheduled = entries.filter((e) => e.status === 'scheduled');
   const queued = entries.filter((e) => e.status === 'queued');

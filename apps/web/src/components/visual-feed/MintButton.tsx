@@ -27,7 +27,6 @@ export function MintButton({ post, size = 'sm' }: MintButtonProps) {
 
   if (!post.isNFT || !post.mintUrl) return null;
 
-
   return (
     <button
       type="button"

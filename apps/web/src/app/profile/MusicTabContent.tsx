@@ -78,9 +78,7 @@ export default function MusicTabContent({ creatorId, artistName }: MusicTabConte
                   )
                 : undefined,
               duration: upload ? Number(upload.duration || 0) : 0,
-              listens: Number(
-                (post.metrics as Record<string, unknown> | undefined)?.likes || 0,
-              ),
+              listens: Number((post.metrics as Record<string, unknown> | undefined)?.likes || 0),
               tipsReceived: '0',
               publishedAt: post.createdAt as number,
             } as ProfileMusicTrack;
@@ -166,6 +164,7 @@ export default function MusicTabContent({ creatorId, artistName }: MusicTabConte
       {/* View toggle */}
       <div className="flex items-center gap-2">
         <button
+          type="button"
           onClick={() => setViewMode('tracks')}
           className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
             viewMode === 'tracks'
@@ -176,6 +175,7 @@ export default function MusicTabContent({ creatorId, artistName }: MusicTabConte
           🎵 Tracks
         </button>
         <button
+          type="button"
           onClick={() => setViewMode('albums')}
           className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
             viewMode === 'albums'
@@ -199,6 +199,7 @@ export default function MusicTabContent({ creatorId, artistName }: MusicTabConte
             >
               {/* Track Number / Play */}
               <button
+                type="button"
                 onClick={() => playTrack(track)}
                 className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--color-accent)] text-black transition-all hover:brightness-110"
                 aria-label={playingTrack === track.id ? 'Pause' : 'Play'}
@@ -239,6 +240,7 @@ export default function MusicTabContent({ creatorId, artistName }: MusicTabConte
               {/* Actions */}
               <div className="flex shrink-0 items-center gap-1">
                 <button
+                  type="button"
                   onClick={() => handleTip(track)}
                   className="rounded-lg px-2 py-1 text-xs font-medium text-[var(--color-muted)] transition-colors hover:text-[var(--color-fg)]"
                   title="Tip this track"

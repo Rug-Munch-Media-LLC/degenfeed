@@ -121,6 +121,7 @@ export default function NostrImportPage() {
                       className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] px-4 py-2.5 pr-10 font-mono text-sm text-[var(--color-fg)] placeholder-[var(--color-muted)] focus:border-purple-500 focus:outline-none"
                     />
                     <button
+                      type="button"
                       onClick={() => setShowNsec(!showNsec)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[var(--color-muted)]"
                       type="button"

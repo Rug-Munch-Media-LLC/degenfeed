@@ -670,7 +670,6 @@ interface CreateCoinWizardProps {
 }
 
 export default function CreateCoinWizard({ className = '' }: CreateCoinWizardProps) {
-
   const [step, setStep] = useState<StepId>(1);
   const [deploying, setDeploying] = useState(false);
   const [deployError, setDeployError] = useState<string | null>(null);

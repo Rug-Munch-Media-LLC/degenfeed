@@ -49,7 +49,7 @@ function useUserMedia(type: 'audio' | 'video') {
 
   const stopMedia = useCallback(() => {
     if (localStream) {
-      localStream.getTracks().forEach((t) => t.stop());
+      localStream.getTracks().forEach((t) => { t.stop(); });
       setLocalStream(null);
     }
   }, [localStream]);
@@ -280,7 +280,7 @@ export function VideoCall({
   const toggleScreenShare = useCallback(async () => {
     if (isScreenSharing) {
       if (screenShareStream.current) {
-        screenShareStream.current.getTracks().forEach((t) => t.stop());
+        screenShareStream.current.getTracks().forEach((t) => { t.stop(); });
         screenShareStream.current = null;
       }
       if (localStream) {
@@ -328,10 +328,10 @@ export function VideoCall({
         });
       } catch {}
     }
-    peerConnections.current.forEach((pc) => pc.close());
+    peerConnections.current.forEach((pc) => { pc.close(); });
     peerConnections.current.clear();
     if (screenShareStream.current) {
-      screenShareStream.current.getTracks().forEach((t) => t.stop());
+      screenShareStream.current.getTracks().forEach((t) => { t.stop(); });
       screenShareStream.current = null;
     }
     stopMedia();

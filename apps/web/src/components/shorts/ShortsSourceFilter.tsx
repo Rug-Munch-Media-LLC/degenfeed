@@ -77,7 +77,6 @@ export const ALL_SOURCE_OPTIONS: SourceOption[] = [
   { key: 'degenfeed', label: 'DegenFeed', group: 'native', description: 'Native DegenFeed' },
 ];
 
-
 // ─── Component ───────────────────────────────────────────────────────────
 
 export function ShortsSourceFilter({

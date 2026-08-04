@@ -18,6 +18,7 @@ import { ErrorBoundary, FeedList } from '@degenfeed/ui';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ProtocolPostMeta } from '../../app/feed/[protocol]/components/ProtocolPostMeta';
 import { useAuth } from '../AuthProvider';
 import { ContentFilterBar, type ContentType } from '../ContentFilterBar';
 import { type DensityMode, DensityToggle } from '../DensityToggle';
@@ -25,7 +26,6 @@ import { FeedPollerBanner } from '../FeedPollerBanner';
 import { useAlgorithmTransparency } from './AlgorithmTransparency';
 import { PROTOCOLS, type ProtocolConfig } from './feed-protocols';
 import { type AlgorithmUserPreferences, loadAlgorithmPrefs } from './feed-tuner-types';
-import { ProtocolPostMeta } from '../../app/feed/[protocol]/components/ProtocolPostMeta';
 
 const TipModal = dynamic(() => import('../TipModal').then((m) => ({ default: m.TipModal })), {
   ssr: false,

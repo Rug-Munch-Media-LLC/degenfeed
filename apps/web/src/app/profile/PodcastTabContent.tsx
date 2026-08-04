@@ -161,9 +161,9 @@ export default function PodcastTabContent({ creatorId, initialPodcasts }: Podcas
                 </div>
                 <div className="divide-y divide-[var(--color-glass-border)]">
                   {latestEpisodes.map((ep) => {
-                      'podcast' in ep
-                        ? (ep as ProfilePodcastEpisode & { podcast: ProfilePodcast })
-                        : null;
+                    'podcast' in ep
+                      ? (ep as ProfilePodcastEpisode & { podcast: ProfilePodcast })
+                      : null;
                     const epObj = 'podcast' in ep ? ep : (ep as ProfilePodcastEpisode);
 
                     return (
@@ -173,6 +173,7 @@ export default function PodcastTabContent({ creatorId, initialPodcasts }: Podcas
                       >
                         {/* Play Button */}
                         <button
+                          type="button"
                           onClick={() => playEpisode(epObj)}
                           className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--color-accent)] text-black transition-all hover:brightness-110"
                           aria-label={playingEpisode === epObj.id ? 'Pause' : 'Play'}
@@ -201,6 +202,7 @@ export default function PodcastTabContent({ creatorId, initialPodcasts }: Podcas
                         {/* Actions */}
                         <div className="flex shrink-0 items-center gap-1">
                           <button
+                            type="button"
                             onClick={() => handleTip(epObj)}
                             className="rounded-lg px-2 py-1 text-xs font-medium text-[var(--color-muted)] transition-colors hover:text-[var(--color-fg)]"
                             title="Tip this episode"
@@ -252,6 +254,7 @@ export default function PodcastTabContent({ creatorId, initialPodcasts }: Podcas
 
                 {/* Subscribe */}
                 <button
+                  type="button"
                   onClick={() => handleSubscribe(podcast)}
                   className="shrink-0 rounded-xl bg-[var(--color-accent)] px-4 py-2 text-xs font-semibold text-black transition-all hover:brightness-110"
                 >

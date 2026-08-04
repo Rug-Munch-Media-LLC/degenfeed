@@ -78,9 +78,7 @@ function BondingCurveChart({ progress }: { progress: number }) {
 
 /* === Main Component =========================================== */
 
-export function StreamCoinOverlay({
-  stream,
-}: StreamCoinOverlayProps) {
+export function StreamCoinOverlay({ stream }: StreamCoinOverlayProps) {
   const { showToast } = useToast();
   const { ready, signedInProtocols } = useAuth();
   const hasSignedIn = ready && Object.values(signedInProtocols).some(Boolean);

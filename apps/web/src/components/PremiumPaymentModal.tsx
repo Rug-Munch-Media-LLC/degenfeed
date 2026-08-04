@@ -21,7 +21,6 @@ type PaymentStep = 'select-tier' | 'payment-method' | 'confirm' | 'processing' |
 
 type PaymentMethod = 'eth-base' | 'usdc-base' | 'sol' | null;
 
-
 // === Close icon ==========================================================
 
 function CloseIcon({ onClick }: { onClick: () => void }) {
@@ -378,7 +377,8 @@ export function PremiumPaymentModal({
   initialTier,
   onSuccess,
 }: PremiumPaymentModalProps) {
-  const {} = useAuth();  const { showToast } = useToast();
+  useAuth();
+  const { showToast } = useToast();
 
   const [step, setStep] = useState<PaymentStep>('select-tier');
   const [selectedTier, setSelectedTier] = useState<TierConfig | null>(

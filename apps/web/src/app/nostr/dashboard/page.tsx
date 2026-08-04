@@ -25,7 +25,6 @@ interface RelayInfo {
   nip05WellKnown: string;
 }
 
-
 export default function NostrDashboardPage() {
   const [relayInfo, setRelayInfo] = useState<RelayInfo | null>(null);
   const [relayHealth, setRelayHealth] = useState<{
@@ -240,6 +239,7 @@ export default function NostrDashboardPage() {
               ] as const
             ).map((tab) => (
               <button
+                type="button"
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`border-b-2 px-1 py-3 text-sm font-medium transition ${
@@ -385,6 +385,7 @@ export default function NostrDashboardPage() {
                     Clear
                   </button>
                   <button
+                    type="button"
                     onClick={() => setShowNsec(!showNsec)}
                     className="ml-3 text-xs text-[var(--color-muted)] underline"
                     type="button"

@@ -1,10 +1,10 @@
-import { type NextRequest, NextResponse } from 'next/server';
 import {
   getPlatformMeta,
   isExternalPlatform,
   isVerifyablePlatform,
   verifyIdentity,
 } from '@degenfeed/identity';
+import { type NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 

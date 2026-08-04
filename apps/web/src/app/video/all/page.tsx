@@ -115,8 +115,6 @@ interface TrendingItemAPI {
 
 // ─── Helpers ────────────────────────────────────────────────────────
 
-
-
 function formatCount(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
   if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
@@ -278,6 +276,7 @@ export default function UnifiedVideoFeedPage() {
             <div className="flex gap-1 min-w-max pb-2">
               {VIDEO_PLATFORMS.map((platform) => (
                 <button
+                  type="button"
                   key={platform.id}
                   onClick={() => setActivePlatform(platform.id)}
                   className={`relative flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-medium transition-all whitespace-nowrap ${
@@ -311,6 +310,7 @@ export default function UnifiedVideoFeedPage() {
           <div className="mb-6 flex flex-wrap gap-1.5">
             {CATEGORY_OPTIONS.map((cat) => (
               <button
+                type="button"
                 key={cat}
                 onClick={() => setActiveCategory(cat)}
                 className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
@@ -377,6 +377,7 @@ export default function UnifiedVideoFeedPage() {
             <div className="rounded-lg border border-red-500/20 bg-red-500/5 p-4 text-center text-red-400">
               {error}
               <button
+                type="button"
                 onClick={() => {
                   setError(null);
                   fetchFeed(false);
@@ -451,6 +452,7 @@ export default function UnifiedVideoFeedPage() {
 
                   {/* Watch Later button */}
                   <button
+                    type="button"
                     onClick={() => handleToggleWatchLater(item.id)}
                     className="absolute right-2 top-2 z-10 rounded-full bg-black/60 p-1.5 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-black/80"
                     title={
@@ -495,6 +497,7 @@ export default function UnifiedVideoFeedPage() {
           {hasMore && items.length > 0 && (
             <div className="mt-8 text-center">
               <button
+                type="button"
                 onClick={handleLoadMore}
                 disabled={loadingMore}
                 className="rounded-lg border border-white/20 bg-white/5 px-6 py-2.5 text-sm font-medium transition-colors hover:bg-white/10 disabled:opacity-50"

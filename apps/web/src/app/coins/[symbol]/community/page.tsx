@@ -432,7 +432,7 @@ function ActivityTab({ data }: { data: CoinCommunityData }) {
 // ─── Events Tab ─────────────────────────────────────────────────────────────
 
 function EventsTab({ data }: { data: CoinCommunityData }) {
-  const {} = useToast();
+  useToast();
   if (!data.events || data.events.length === 0) {
     return (
       <div className="rounded-xl border border-dashed border-[var(--color-glass-border)] p-8 text-center">
@@ -586,7 +586,8 @@ function formatTimeAgo(ts: number): string {
 export default function CoinCommunityPage() {
   const params = useParams();
   const symbol = typeof params.symbol === 'string' ? params.symbol.toUpperCase() : '';
-  const {} = useAuth();  const {} = useToast();
+  useAuth();
+  useToast();
   const [data, setData] = useState<CoinCommunityData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');

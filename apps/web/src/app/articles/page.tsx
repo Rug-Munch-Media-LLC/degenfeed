@@ -139,7 +139,9 @@ function NewsletterBanner() {
   return (
     <div className="rounded-xl border border-[var(--color-border)] bg-gradient-to-r from-[var(--color-card)] to-[var(--color-bg-secondary)] p-6 md:p-8">
       <div className="mx-auto max-w-xl text-center">
-        <h2 className="mb-2 text-lg font-semibold text-[var(--color-fg)]">📫 Never Miss an Article</h2>
+        <h2 className="mb-2 text-lg font-semibold text-[var(--color-fg)]">
+          📫 Never Miss an Article
+        </h2>
         <p className="mb-5 text-sm text-[var(--color-muted)]">
           Get the best of web3, AI, and crypto delivered to your inbox. Free + Premium tiers
           available.
@@ -188,6 +190,7 @@ function FilterBar({
   return (
     <div className="flex flex-wrap gap-2">
       <button
+        type="button"
         onClick={() => onSelectTag(null)}
         className={`rounded-full px-3 py-1 text-xs transition-colors ${
           selectedTag === null
@@ -199,6 +202,7 @@ function FilterBar({
       </button>
       {uniqueTags.map((tag) => (
         <button
+          type="button"
           key={tag}
           onClick={() => onSelectTag(tag)}
           className={`rounded-full px-3 py-1 text-xs transition-colors ${
@@ -277,6 +281,7 @@ export default function ArticlesPage() {
         <div className="rounded-xl border border-[var(--color-border)] p-8 text-center">
           <p className="text-sm text-[var(--color-danger)]">{error}</p>
           <button
+            type="button"
             onClick={() => window.location.reload()}
             className="mt-4 rounded-lg bg-[var(--color-accent)] px-4 py-2 text-sm font-semibold text-black"
           >

@@ -295,6 +295,7 @@ export default function ShortsPage() {
           <div className="flex items-center gap-2">
             {/* Category Toggle */}
             <button
+              type="button"
               onClick={() => setShowCategories(!showCategories)}
               className="pointer-events-auto rounded-full border border-white/10 bg-black/40 px-2.5 py-1.5 text-[10px] font-medium text-white/50 backdrop-blur-sm transition-all hover:border-white/20 hover:text-white"
               aria-label="Toggle categories"
@@ -311,6 +312,7 @@ export default function ShortsPage() {
 
             {/* Upload Button */}
             <button
+              type="button"
               onClick={() => setShowCreateModal(true)}
               className="pointer-events-auto rounded-full border border-degen-500/30 bg-degen-500/10 px-3 py-1.5 text-xs font-medium text-degen-400 backdrop-blur-lg transition-all hover:bg-degen-500/20 hover:shadow-[0_0_12px_rgba(0,255,65,0.2)]"
               aria-label="Upload short"
@@ -328,6 +330,7 @@ export default function ShortsPage() {
                 const isActive = cat.id === 'all' ? !category : category === cat.id;
                 return (
                   <button
+                    type="button"
                     key={cat.id}
                     onClick={() => changeCategory(cat.id === 'all' ? undefined : cat.id)}
                     className={`whitespace-nowrap rounded-full border px-2.5 py-1 text-[10px] font-medium transition-all ${

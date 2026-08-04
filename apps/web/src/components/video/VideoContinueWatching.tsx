@@ -19,7 +19,7 @@ interface VideoContinueWatchingProps {
 }
 
 export function VideoContinueWatching({ onPlay, maxItems = 10 }: VideoContinueWatchingProps) {
-  const {items} = useContinueWatching();
+  const { items } = useContinueWatching();
 
   const handlePlay = useCallback(
     (video: UnifiedVideo) => {

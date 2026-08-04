@@ -38,7 +38,8 @@ const PROTOCOL_INFO: Record<string, { name: string; icon: string; color: string 
 // === Metadata =========================================================
 
 export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
-  const {type} = await params;  const { ref } = await searchParams;
+  const { type } = await params;
+  const { ref } = await searchParams;
 
   const baseTitle = type === 'space' ? 'Audio Space' : 'Live Stream';
   const protocol = ref ? (PROTOCOL_INFO[ref] ?? null) : null;
@@ -302,7 +303,10 @@ function JoinPageContent({
           </a>
 
           {type === 'space' && (
-            <button className="inline-flex items-center gap-2 rounded-full border border-gray-700 bg-gray-900 px-6 py-3 text-sm font-medium text-gray-300 transition-all hover:border-gray-600 hover:text-white">
+            <button
+              type="button"
+              className="inline-flex items-center gap-2 rounded-full border border-gray-700 bg-gray-900 px-6 py-3 text-sm font-medium text-gray-300 transition-all hover:border-gray-600 hover:text-white"
+            >
               Request to Speak
             </button>
           )}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState} from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '../../../components/AuthProvider';
 import { useAnnouncer } from '../../../components/ScreenReaderAnnouncer';
 import { retryFetchJson } from '../../../lib/retryFetch';

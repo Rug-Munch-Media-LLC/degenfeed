@@ -9,7 +9,6 @@ interface EmbedPageClientProps {
   dfUri: string;
 }
 
-
 function getProtocolColor(p: string): string {
   const colors: Record<string, string> = {
     nostr: '#8e30eb',

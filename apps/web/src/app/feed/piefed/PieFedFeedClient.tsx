@@ -40,7 +40,6 @@ interface FeedMeta {
 
 // ─── Post type badge ───────────────────────────────────────────────────
 
-
 // ─── Header ────────────────────────────────────────────────────────────
 
 function PieFedHeader({ total }: { total?: number }) {

@@ -12,7 +12,6 @@ function formatViews(n: number): string {
   return String(n);
 }
 
-
 export function StreamClips({ clips }: StreamClipsProps) {
   const items = clips ?? generateMockClips();
 

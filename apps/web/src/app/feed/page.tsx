@@ -2,12 +2,7 @@
 
 import { addBookmark, getFollows, removeBookmark } from '@degenfeed/storage';
 import type { EngagementAction, UnifiedPost } from '@degenfeed/types';
-import {
-  ErrorBoundary,
-  NotificationBell,
-  PostCard,
-  ScrollToTop,
-} from '@degenfeed/ui';
+import { ErrorBoundary, NotificationBell, PostCard, ScrollToTop } from '@degenfeed/ui';
 import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../../components/AuthProvider';

@@ -303,6 +303,7 @@ export default function SubscribePage() {
                   ))}
                 </ul>
                 <button
+                  type="button"
                   onClick={() => handleSelectTier(tier)}
                   className="btn-primary mt-6 w-full"
                   type="button"
@@ -328,6 +329,7 @@ export default function SubscribePage() {
             <div className="space-y-2">
               {METHOD_OPTIONS.map((m) => (
                 <button
+                  type="button"
                   key={m.value}
                   onClick={() => handleSign(subscribeState.tier, m.value)}
                   className="flex w-full items-center gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-left transition-all hover:border-degen-500/50"
@@ -343,6 +345,7 @@ export default function SubscribePage() {
             </div>
           </div>
           <button
+            type="button"
             onClick={() => setSubscribeState({ step: 'select' })}
             className="text-xs text-[var(--color-muted)] hover:text-[var(--color-muted)] transition-colors"
             type="button"
@@ -396,6 +399,7 @@ export default function SubscribePage() {
           <h2 className="text-lg font-bold text-red-400">Subscription Failed</h2>
           <p className="mt-2 text-sm text-[var(--color-muted)]">{subscribeState.error}</p>
           <button
+            type="button"
             onClick={() => setSubscribeState({ step: 'select' })}
             className="btn-primary mt-4 text-sm"
             type="button"

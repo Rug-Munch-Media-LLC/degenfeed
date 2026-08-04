@@ -62,12 +62,7 @@ const PRESETS: VestingPreset[] = [
 
 /* === Vesting Timeline Visualization =================== */
 
-function VestingTimeline({
-  config,
-}: {
-  config: VestingConfig;
-  allocationPct: number;
-}) {
+function VestingTimeline({ config }: { config: VestingConfig; allocationPct: number }) {
   const totalDays = Math.ceil((config.cliffDuration + config.vestingDuration) / 86400);
   const daysToShow = Math.min(totalDays, 180); // cap visual at 180 days
   const segments: Array<{ label: string; pct: number; color: string }> = [];

@@ -781,6 +781,7 @@ export function TipModal({
                           {state.txHash.slice(0, 40)}...
                         </code>
                         <button
+                          type="button"
                           onClick={() => navigator.clipboard.writeText(state.txHash || '')}
                           className="shrink-0 rounded-lg bg-[var(--color-card)] px-2 py-1 text-[10px] text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
                           type="button"
@@ -814,6 +815,7 @@ export function TipModal({
                             : 'View transaction'}
                         </a>
                         <button
+                          type="button"
                           onClick={() => navigator.clipboard.writeText(state.txHash || '')}
                           className="shrink-0 rounded-lg bg-[var(--color-card)] px-2 py-1 text-[10px] text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
                           type="button"

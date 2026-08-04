@@ -314,6 +314,7 @@ export default function CreatorPodcastPage() {
           You need to connect your wallet to create and manage podcasts.
         </p>
         <button
+          type="button"
           onClick={openSignIn}
           className="rounded-xl bg-[var(--color-accent)] px-6 py-3 font-semibold text-black transition-all hover:brightness-110"
         >
@@ -334,6 +335,7 @@ export default function CreatorPodcastPage() {
           </p>
         </div>
         <button
+          type="button"
           onClick={() => setShowCreatePodcast(true)}
           className="flex items-center gap-2 rounded-xl bg-[var(--color-accent)] px-5 py-2.5 text-sm font-semibold text-black transition-all hover:brightness-110"
         >
@@ -365,6 +367,7 @@ export default function CreatorPodcastPage() {
               <div className="rounded-2xl border border-dashed border-[var(--color-border)] p-6 text-center">
                 <p className="text-sm text-[var(--color-text-secondary)]">No podcasts yet</p>
                 <button
+                  type="button"
                   onClick={() => setShowCreatePodcast(true)}
                   className="mt-3 text-sm font-semibold text-[var(--color-accent)] hover:underline"
                 >
@@ -375,6 +378,7 @@ export default function CreatorPodcastPage() {
               <div className="space-y-2">
                 {podcasts.map((p) => (
                   <button
+                    type="button"
                     key={p.id}
                     onClick={() => setSelectedPodcast(p)}
                     className={`w-full rounded-xl border p-3 text-left transition-all ${
@@ -437,6 +441,7 @@ export default function CreatorPodcastPage() {
                       </a>
                     )}
                     <button
+                      type="button"
                       onClick={() => setShowAddEpisode(true)}
                       className="flex items-center gap-1 rounded-xl bg-[var(--color-accent)] px-4 py-2 text-xs font-semibold text-black transition-all hover:brightness-110"
                     >
@@ -510,6 +515,7 @@ export default function CreatorPodcastPage() {
                         <div className="flex shrink-0 items-center gap-1">
                           {ep.status === 'draft' && (
                             <button
+                              type="button"
                               onClick={() => handlePublishEpisode(ep.id)}
                               className="rounded-lg px-3 py-1.5 text-xs font-semibold text-green-400 transition-all hover:bg-green-500/10"
                               title="Publish to ActivityPub"
@@ -518,6 +524,7 @@ export default function CreatorPodcastPage() {
                             </button>
                           )}
                           <button
+                            type="button"
                             onClick={() => setShowEditEpisode(ep)}
                             className="rounded-lg px-3 py-1.5 text-xs font-semibold text-[var(--color-text-tertiary)] transition-all hover:bg-[var(--color-bg-tertiary)]"
                             title="Edit"
@@ -525,6 +532,7 @@ export default function CreatorPodcastPage() {
                             ✏️
                           </button>
                           <button
+                            type="button"
                             onClick={() => handleDeleteEpisode(ep.id)}
                             className="rounded-lg px-3 py-1.5 text-xs font-semibold text-red-400 transition-all hover:bg-red-500/10"
                             title="Delete"
@@ -549,6 +557,7 @@ export default function CreatorPodcastPage() {
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-bold">Create New Podcast</h2>
               <button
+                type="button"
                 onClick={() => setShowCreatePodcast(false)}
                 className="text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)]"
               >
@@ -603,6 +612,7 @@ export default function CreatorPodcastPage() {
                 <div className="grid grid-cols-2 gap-2">
                   {CATEGORIES.map((cat) => (
                     <button
+                      type="button"
                       key={cat.id}
                       onClick={() => setNewPodcast((p) => ({ ...p, category: cat.id }))}
                       className={`rounded-xl border px-3 py-2 text-sm font-medium transition-all ${
@@ -620,12 +630,14 @@ export default function CreatorPodcastPage() {
 
             <div className="mt-6 flex justify-end gap-3">
               <button
+                type="button"
                 onClick={() => setShowCreatePodcast(false)}
                 className="rounded-xl border border-[var(--color-border)] px-4 py-2 text-sm font-semibold transition-all hover:border-[var(--color-border)]/50"
               >
                 Cancel
               </button>
               <button
+                type="button"
                 onClick={handleCreatePodcast}
                 disabled={!newPodcast.title.trim() || !newPodcast.description.trim()}
                 className="rounded-xl bg-[var(--color-accent)] px-6 py-2 text-sm font-semibold text-black transition-all hover:brightness-110 disabled:opacity-50"
@@ -644,6 +656,7 @@ export default function CreatorPodcastPage() {
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-bold">Add Episode</h2>
               <button
+                type="button"
                 onClick={() => setShowAddEpisode(false)}
                 className="text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)]"
               >
@@ -758,6 +771,7 @@ export default function CreatorPodcastPage() {
                 <div className="flex gap-3">
                   {(['draft', 'published'] as const).map((status) => (
                     <button
+                      type="button"
                       key={status}
                       onClick={() => setNewEpisode((ep) => ({ ...ep, status }))}
                       className={`flex-1 rounded-xl border px-3 py-2 text-sm font-medium transition-all ${
@@ -775,12 +789,14 @@ export default function CreatorPodcastPage() {
 
             <div className="mt-6 flex justify-end gap-3">
               <button
+                type="button"
                 onClick={() => setShowAddEpisode(false)}
                 className="rounded-xl border border-[var(--color-border)] px-4 py-2 text-sm font-semibold transition-all hover:border-[var(--color-border)]/50"
               >
                 Cancel
               </button>
               <button
+                type="button"
                 onClick={handleAddEpisode}
                 disabled={!newEpisode.title.trim() || !newEpisode.audioUrl.trim()}
                 className="rounded-xl bg-[var(--color-accent)] px-6 py-2 text-sm font-semibold text-black transition-all hover:brightness-110 disabled:opacity-50"
@@ -799,6 +815,7 @@ export default function CreatorPodcastPage() {
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-bold">Episode Details</h2>
               <button
+                type="button"
                 onClick={() => setShowEditEpisode(null)}
                 className="text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)]"
               >
@@ -856,6 +873,7 @@ export default function CreatorPodcastPage() {
 
             <div className="mt-6 flex justify-end">
               <button
+                type="button"
                 onClick={() => setShowEditEpisode(null)}
                 className="rounded-xl bg-[var(--color-accent)] px-6 py-2 text-sm font-semibold text-black transition-all hover:brightness-110"
               >

@@ -335,7 +335,7 @@ export function VoiceNoteRecorder({
 
     // Stop media tracks
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach((t) => t.stop());
+      streamRef.current.getTracks().forEach((t) => { t.stop(); });
       streamRef.current = null;
     }
   }, []);
@@ -404,7 +404,7 @@ export function VoiceNoteRecorder({
 
         // Clean up stream
         if (streamRef.current) {
-          streamRef.current.getTracks().forEach((t) => t.stop());
+          streamRef.current.getTracks().forEach((t) => { t.stop(); });
           streamRef.current = null;
         }
       };
@@ -494,13 +494,12 @@ export function VoiceNoteRecorder({
     stopRecording,
   ]);
 
-
   // Cleanup on unmount
   useEffect(() => {
     return () => {
       stopRecording();
       if (streamRef.current) {
-        streamRef.current.getTracks().forEach((t) => t.stop());
+        streamRef.current.getTracks().forEach((t) => { t.stop(); });
       }
     };
   }, [stopRecording]);

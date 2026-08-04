@@ -18,8 +18,8 @@
  * an `audio` embed, and raw metadata (audioUrl, duration, podcastTitle).
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
 import type { UnifiedPost } from '@degenfeed/types';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 const ACCENT = '#7c3aed';
 
@@ -72,7 +72,8 @@ function getEpisodeMeta(post: UnifiedPost): EpisodeMeta {
   return {
     audioUrl: (raw.audioUrl as string) || audioEmbed?.url,
     duration: (raw.duration as number) || (audioMeta.duration as number),
-    podcastTitle: (raw.podcastTitle as string) || (audioMeta.podcast as string) || post.author.displayName,
+    podcastTitle:
+      (raw.podcastTitle as string) || (audioMeta.podcast as string) || post.author.displayName,
     description: (raw.description as string) || stripHtml(post.html) || post.text,
     feedLabel: raw.feedLabel as string,
     image: (raw.image as string) || (post.image as string) || (post.media as string),
@@ -281,7 +282,10 @@ export function PodcastFeed({ limit = 25 }: { limit?: number }) {
       {/* Header */}
       <div
         className="overflow-hidden rounded-xl border"
-        style={{ borderColor: `${ACCENT}33`, background: `linear-gradient(135deg, ${ACCENT}15 0%, ${ACCENT}05 100%)` }}
+        style={{
+          borderColor: `${ACCENT}33`,
+          background: `linear-gradient(135deg, ${ACCENT}15 0%, ${ACCENT}05 100%)`,
+        }}
       >
         <div className="flex items-center gap-4 p-4">
           <div
@@ -294,12 +298,14 @@ export function PodcastFeed({ limit = 25 }: { limit?: number }) {
             <div className="flex items-center gap-2">
               <h2 className="text-lg font-bold text-[var(--color-fg)]">Podcasts</h2>
               {state === 'loaded' && (
-                <span className="text-[10px] text-[var(--color-muted)]">{meta.total ?? posts.length} episodes</span>
+                <span className="text-[10px] text-[var(--color-muted)]">
+                  {meta.total ?? posts.length} episodes
+                </span>
               )}
             </div>
             <p className="text-xs text-[var(--color-muted)]">
-              Top crypto & web3 shows — Bankless, Unchained, Empire, 0xResearch, Bell Curve, Chopping
-              Block, Lightspeed and more.
+              Top crypto & web3 shows — Bankless, Unchained, Empire, 0xResearch, Bell Curve,
+              Chopping Block, Lightspeed and more.
             </p>
           </div>
           <div className="hidden gap-3 sm:flex">

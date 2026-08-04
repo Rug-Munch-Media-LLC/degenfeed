@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const {action, tokenAddress, chain, amountIn} = body;
+    const { action, tokenAddress, chain, amountIn } = body;
     if (!action || !tokenAddress || !amountIn) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }

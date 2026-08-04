@@ -14,7 +14,7 @@
 
 import { ErrorBoundary } from '@degenfeed/ui';
 import Link from 'next/link';
-import { useParams} from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { UnifiedVideo } from '../../../components/video/useVideoHub';
 import { VideoPlayer } from '../../../components/video/VideoPlayer';

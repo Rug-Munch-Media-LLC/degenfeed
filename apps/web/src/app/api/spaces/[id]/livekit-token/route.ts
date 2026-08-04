@@ -36,7 +36,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
   try {
     const body = await request.json();
-    const {userId} = body;
+    const { userId } = body;
     // In production, generate a proper LiveKit JWT:
     // import { AccessToken } from 'livekit-server-sdk';
     // const at = new AccessToken(config.apiKey, config.apiSecret, {

@@ -34,14 +34,14 @@ export default function ShortsTab() {
 
   useEffect(() => {
     return () => {
-      if (streamRef.current) streamRef.current.getTracks().forEach((t) => t.stop());
+      if (streamRef.current) streamRef.current.getTracks().forEach((t) => { t.stop(); });
       if (timerRef.current) clearInterval(timerRef.current);
     };
   }, []);
 
   const startCamera = useCallback(async (facing: 'user' | 'environment') => {
     try {
-      if (streamRef.current) streamRef.current.getTracks().forEach((t) => t.stop());
+      if (streamRef.current) streamRef.current.getTracks().forEach((t) => { t.stop(); });
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: facing, width: { ideal: 1080 }, height: { ideal: 1920 } },
         audio: true,
@@ -87,7 +87,7 @@ export default function ShortsTab() {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
       mediaRecorderRef.current.stop();
     }
-    if (streamRef.current) streamRef.current.getTracks().forEach((t) => t.stop());
+    if (streamRef.current) streamRef.current.getTracks().forEach((t) => { t.stop(); });
     setRecording(false);
     if (timerRef.current) {
       clearInterval(timerRef.current);

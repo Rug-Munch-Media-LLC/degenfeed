@@ -6,20 +6,9 @@ export function estimateReadTime(text: string): string {
   return `${Math.max(1, Math.ceil(words / WORDS_PER_MINUTE))} min read`;
 }
 
-export const PROTOCOL_LABELS: Record<string, string> = {
-  nostr: 'Nostr',
-  farcaster: 'Farcaster',
-  lens: 'Lens',
-  bluesky: 'Bluesky',
-  threads: 'Threads (Experimental)',
-  mastodon: 'Mastodon',
-  lemmy: 'Lemmy',
-  rss: 'RSS',
-  reddit: 'Reddit',
-};
-export function protocolLabel(p: string): string {
-  return PROTOCOL_LABELS[p] ?? p;
-}
+// Protocol labels come from the canonical registry (@degenfeed/utils).
+// Keep this alias so existing importers (e.g. app/post/[id]/page.tsx) work.
+export { getProtocolLabel as protocolLabel, PROTOCOL_LABELS } from '@degenfeed/utils';
 
 export interface EmbedData {
   title?: string;

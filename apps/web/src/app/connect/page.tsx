@@ -144,7 +144,8 @@ function PricingCard({
 // ─── Main Page ────────────────────────────────────────────────────────────
 
 export default function ConnectPage() {
-  const {tier} = usePremium();  const [showConnectModal, setShowConnectModal] = useState(false);
+  const { tier } = usePremium();
+  const [showConnectModal, setShowConnectModal] = useState(false);
   const [showComposer, setShowComposer] = useState(false);
 
   const handleUpgrade = useCallback(() => {

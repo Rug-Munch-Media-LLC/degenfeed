@@ -41,7 +41,7 @@ function getCoinExplorerUrl(deployTarget: string, address: string): string {
   }
 }
 
-export default function StepReview({form, update}: StepReviewProps) {
+export default function StepReview({ form, update }: StepReviewProps) {
   return (
     <div className="space-y-5">
       <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-5">
@@ -189,6 +189,7 @@ export default function StepReview({form, update}: StepReviewProps) {
                   {form.deployedAddress.slice(0, 16)}...{form.deployedAddress.slice(-8)}
                 </a>
                 <button
+                  type="button"
                   onClick={() => navigator.clipboard.writeText(form.deployedAddress)}
                   className="text-degen-400 hover:text-degen-300"
                 >
@@ -208,7 +209,8 @@ export default function StepReview({form, update}: StepReviewProps) {
                   </a>
                   <span className="text-[9px] text-[var(--color-muted)]">
                     ↗{' '}
-                    {form.deployTarget === 'solana' || (form.deployTarget as string) === 'solana_devnet'
+                    {form.deployTarget === 'solana' ||
+                    (form.deployTarget as string) === 'solana_devnet'
                       ? 'Solscan'
                       : 'BaseScan'}
                   </span>

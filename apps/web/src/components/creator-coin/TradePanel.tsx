@@ -68,6 +68,7 @@ export function TradePanel({
       {/* Mode Toggle */}
       <div className="mb-4 flex rounded-lg bg-gray-800 p-1">
         <button
+          type="button"
           onClick={() => setMode('buy')}
           className={`flex-1 rounded-md py-2 text-sm font-semibold transition-all ${
             mode === 'buy'
@@ -78,6 +79,7 @@ export function TradePanel({
           Buy
         </button>
         <button
+          type="button"
           onClick={() => setMode('sell')}
           className={`flex-1 rounded-md py-2 text-sm font-semibold transition-all ${
             mode === 'sell'
@@ -115,6 +117,7 @@ export function TradePanel({
         <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
           <span>{mode === 'buy' ? 'You spend' : 'You sell'}</span>
           <button
+            type="button"
             onClick={() => setInputAmount(mode === 'buy' ? '0.1' : '1000')}
             className="text-degen-400 hover:text-degen-300"
           >
@@ -155,6 +158,7 @@ export function TradePanel({
         <div className="flex gap-1">
           {[0.5, 1.0, 2.0].map((s) => (
             <button
+              type="button"
               key={s}
               onClick={() => setSlippage(s)}
               className={`rounded px-2 py-0.5 transition-all ${
@@ -171,6 +175,7 @@ export function TradePanel({
 
       {/* Trade Button */}
       <button
+        type="button"
         onClick={handleTrade}
         disabled={disabled || trading || !inputAmount || inputNum <= 0}
         className={`w-full rounded-lg py-3 font-bold text-white transition-all ${

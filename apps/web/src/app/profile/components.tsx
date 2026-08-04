@@ -451,7 +451,10 @@ export function PlatformFollowerBreakdown({
           title={`${PROTOCOL_LABELS[protocol] ?? protocol} follower/following counts`}
         >
           <span className="text-[10px]">{getProtocolIcon(protocol)}</span>
-          <span className="text-[10px] font-medium" style={{ color: PROTOCOL_COLORS[protocol] ?? '#666' }}>
+          <span
+            className="text-[10px] font-medium"
+            style={{ color: PROTOCOL_COLORS[protocol] ?? '#666' }}
+          >
             {PROTOCOL_LABELS[protocol] ?? protocol}
           </span>
           <span className="text-[10px] text-[var(--color-muted)]">
@@ -732,6 +735,7 @@ function AudioPlayer({
 }) {
   return (
     <button
+      type="button"
       onClick={(e) => {
         e.stopPropagation();
         onToggle();

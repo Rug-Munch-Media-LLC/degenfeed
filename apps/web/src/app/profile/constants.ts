@@ -1,70 +1,10 @@
 import type { StoredIdentity } from '@degenfeed/storage';
 import type { ResolvedIdentity, TabDefinition } from './types';
 
-/** Extended protocol colors covering all fediverse + web3 protocols */
-export const PROTOCOL_COLORS: Record<string, string> = {
-  nostr: '#8b5cf6',
-  farcaster: '#8a63d2',
-  lens: '#abfe2c',
-  bluesky: '#1185fe',
-  mastodon: '#6364ff',
-  threads: '#888',
-  ethereum: '#627eea',
-  solana: '#9945ff',
-  // Extended protocols
-  gotosocial: '#6ad4e6',
-  lemmy: '#7c3aed',
-  peertube: '#f1680d',
-  pixelfed: '#f7004c',
-  writefreely: '#0d9dff',
-  castopod: '#ff6f00',
-  funkwhale: '#f85a8b',
-  mobilizon: '#0f9831',
-  bookwyrm: '#7cb342',
-  owncast: '#00a98f',
-  podcast: '#ff5722',
-  music: '#e91e63',
-  events: '#4caf50',
-  books: '#8bc34a',
-  media: '#ff9800',
-  coins: '#ffc107',
-  daos: '#9c27b0',
-  tips: '#00bcd4',
-  reddit: '#ff4500',
-  youtube: '#ff0000',
-  discord: '#5865f2',
-  telegram: '#0088cc',
-  github: '#333333',
-};
-
-/** Extended protocol labels */
-export const PROTOCOL_LABELS: Record<string, string> = {
-  nostr: 'Nostr',
-  farcaster: 'Farcaster',
-  lens: 'Lens',
-  bluesky: 'Bluesky',
-  mastodon: 'Mastodon',
-  threads: 'Threads (Experimental)',
-  ethereum: 'EVM',
-  solana: 'Solana',
-  // Extended
-  gotosocial: 'GoToSocial',
-  lemmy: 'Lemmy',
-  peertube: 'PeerTube',
-  pixelfed: 'Pixelfed',
-  writefreely: 'WriteFreely',
-  castopod: 'Castopod',
-  funkwhale: 'Funkwhale',
-  mobilizon: 'Mobilizon',
-  bookwyrm: 'BookWyrm',
-  owncast: 'Owncast',
-  reddit: 'Reddit',
-  youtube: 'YouTube',
-  twitter: 'X / Twitter',
-  github: 'GitHub',
-  discord: 'Discord',
-  telegram: 'Telegram',
-};
+// Protocol colors/labels/icons come from the canonical registry
+// (@degenfeed/utils protocols). Keep the export names for existing
+// importers; values are the single-source-of-truth maps.
+export { PROTOCOL_COLORS, PROTOCOL_LABELS } from '@degenfeed/utils';
 
 /** Content tab definitions — 17 tabs as specified */
 export const CONTENT_TABS: TabDefinition[] = [
@@ -273,29 +213,8 @@ export const ACTIVITY_CONFIG: Record<string, { icon: string; color: string; labe
   },
 };
 
-/** Protocol icons for display */
-export const PROTOCOL_ICONS: Record<string, string> = {
-  nostr: '⚡',
-  farcaster: '🔵',
-  bluesky: '🦋',
-  mastodon: '🐘',
-  gotosocial: '👥',
-  lens: '🌿',
-  lemmy: '🔮',
-  peertube: '📺',
-  pixelfed: '📷',
-  writefreely: '✍️',
-  castopod: '🎙️',
-  funkwhale: '🎵',
-  mobilizon: '📅',
-  bookwyrm: '📚',
-  owncast: '📡',
-  twitter: '𝕏',
-  youtube: '▶️',
-  github: '🐙',
-  discord: '🎮',
-  telegram: '✈️',
-};
+/** Protocol icons for display — sourced from the canonical registry */
+export { PROTOCOL_ICONS } from '@degenfeed/utils';
 
 export function shortenAddress(addr: string): string {
   if (addr.length < 10) return addr;

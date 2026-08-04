@@ -152,6 +152,7 @@ export function CreatorCoinDashboard({
           <p className="text-sm text-gray-400">Your tokens with bonding curve economics</p>
         </div>
         <button
+          type="button"
           onClick={() => setShowDeploy(true)}
           className="rounded-lg bg-gradient-to-r from-degen-500 to-purple-600 px-4 py-2 text-sm font-bold text-white transition-all hover:from-degen-400 hover:to-purple-500"
         >
@@ -169,6 +170,7 @@ export function CreatorCoinDashboard({
               Deploy your first coin to start the bonding curve
             </p>
             <button
+              type="button"
               onClick={() => setShowDeploy(true)}
               className="rounded-lg bg-degen-500/20 px-4 py-2 text-sm font-medium text-degen-400 hover:bg-degen-500/30"
             >
@@ -224,6 +226,7 @@ export function CreatorCoinDashboard({
             <div className="flex items-center gap-2 text-xs text-gray-500">
               <span>{selectedToken.chain === 'solana' ? '◎ Solana' : '⧫ Base'}</span>
               <button
+                type="button"
                 onClick={() => setSelectedToken(null)}
                 className="rounded-full bg-gray-800 px-2 py-1 hover:text-white"
               >
@@ -254,7 +257,9 @@ export function CreatorCoinDashboard({
                 <span>⧫</span>
                 <span>
                   This coin has a wrapped version on Base.{' '}
-                  <button className="underline hover:text-blue-300">View on Base</button>
+                  <button type="button" className="underline hover:text-blue-300">
+                    View on Base
+                  </button>
                 </span>
               </div>
             </div>

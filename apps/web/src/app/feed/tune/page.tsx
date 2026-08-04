@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useEffect, useState} from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import RuleBuilder, { RuleItem } from './CustomRules';
 import { SignalSourcesSection } from './SignalSources';
 import type { AlgorithmWeights, CustomRule, SignalSource, WeightPreset } from './types';

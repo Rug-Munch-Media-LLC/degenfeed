@@ -546,6 +546,7 @@ export default function NostrRegisterPage() {
             <h2 className="mb-2 text-xl font-bold text-red-400">Registration Failed</h2>
             <p className="mb-4 text-sm text-red-300/70">{error}</p>
             <button
+              type="button"
               onClick={() => setStep('username')}
               className="rounded-lg bg-purple-600 px-6 py-2 font-bold text-white transition hover:bg-purple-500"
               type="button"

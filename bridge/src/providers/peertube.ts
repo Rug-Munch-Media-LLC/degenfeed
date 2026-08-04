@@ -17,6 +17,17 @@ const $fetch = globalThis.fetch;
 
 const PEERTUBE_BASE = 'http://127.0.0.1:9011';
 
+/**
+ * Federated PeerTube instances used to supplement the local VOD feed.
+ * The local instance has only a handful of videos, so when it runs dry we
+ * pull recent videos from public federated instances to keep the feed
+ * populated with fresh content.
+ */
+const PEERTUBE_FEDERATED = [
+  'https://framatube.org',
+  'https://peertube.tv',
+];
+
 interface PeerTubeVideo {
   id: number;
   uuid: string;
@@ -364,6 +375,9 @@ export async function fetchPeerTubePosts(limit = 20): Promise<UnifiedPost[]> {
     console.log('[peertube] Rate limited, skipping fetch');
     return [];
   }
+  const all: UnifiedPost[] = [];
+
+  // 1. Local instance — highest priority
   try {
     const url = `${PEERTUBE_BASE}/api/v1/videos?count=${Math.min(limit, 50)}&sort=-publishedAt`;
     const res = await $fetch(url, {
@@ -371,37 +385,66 @@ export async function fetchPeerTubePosts(limit = 20): Promise<UnifiedPost[]> {
       signal: AbortSignal.timeout(5000),
     });
 
-    if (!res.ok) {
-      console.log(`[bridge] PeerTube: HTTP ${res.status}`);
-      return [];
-    }
-
-    const data = (await res.json()) as PeerTubeResponse;
-    if (!data.data || data.data.length === 0) {
-      console.log('[bridge] PeerTube: empty response');
-      return [];
-    }
-
-    const categoryMap = await fetchPeerTubeCategories();
-    const posts = data.data.slice(0, limit).map((video) => {
-      const enriched = { ...video };
-      // PeerTube list responses often omit the category label — attach the
-      // human-readable label from the categories map when we have the id.
-      const categoryId = video.category?.id;
-      if (categoryId != null && categoryMap[String(categoryId)]) {
-        enriched.category = {
-          id: categoryId,
-          label: categoryMap[String(categoryId)] ?? 'Unknown',
-        };
+    if (res.ok) {
+      const data = (await res.json()) as PeerTubeResponse;
+      if (data.data && data.data.length > 0) {
+        const categoryMap = await fetchPeerTubeCategories();
+        all.push(
+          ...data.data.slice(0, limit).map((video) => {
+            const enriched = { ...video };
+            const categoryId = video.category?.id;
+            if (categoryId != null && categoryMap[String(categoryId)]) {
+              enriched.category = {
+                id: categoryId,
+                label: categoryMap[String(categoryId)] ?? 'Unknown',
+              };
+            }
+            return videoToPost(enriched);
+          }),
+        );
       }
-      return videoToPost(enriched);
-    });
-    console.log(`[bridge] PeerTube: ${posts.length} posts`);
-    return posts;
+    }
   } catch (err) {
-    console.log(`[bridge] PeerTube: error - ${(err as Error).message}`);
-    return [];
+    console.log(`[bridge] PeerTube local: error - ${(err as Error).message}`);
   }
+
+  // 2. Federated instances — only when the local instance is thin, so the
+  // feed never goes empty and stays fresh with new uploads.
+  if (all.length < limit) {
+    const federatedShare = Math.max(3, Math.ceil(limit / PEERTUBE_FEDERATED.length));
+    const federated = await Promise.allSettled(
+      PEERTUBE_FEDERATED.map(async (instance) => {
+        try {
+          const url = `${instance}/api/v1/videos?count=${Math.min(federatedShare, 50)}&sort=-publishedAt`;
+          const res = await $fetch(url, {
+            headers: { 'User-Agent': 'DegenFeed-Bridge/0.1' },
+            signal: AbortSignal.timeout(5000),
+          });
+          if (!res.ok) return [] as UnifiedPost[];
+          const data = (await res.json()) as PeerTubeResponse;
+          return (data.data ?? []).slice(0, federatedShare).map(videoToPost);
+        } catch {
+          return [] as UnifiedPost[];
+        }
+      }),
+    );
+    for (const r of federated) {
+      if (r.status === 'fulfilled') all.push(...r.value);
+    }
+  }
+
+  // 3. Deduplicate by id
+  const seen = new Set<string>();
+  const deduped: UnifiedPost[] = [];
+  for (const p of all) {
+    if (!seen.has(p.id) && deduped.length < limit) {
+      seen.add(p.id);
+      deduped.push(p);
+    }
+  }
+
+  console.log(`[bridge] PeerTube: ${deduped.length} posts`);
+  return deduped;
 }
 
 /** @alias Use `fetch` as the standardized export name */

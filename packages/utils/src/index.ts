@@ -182,53 +182,29 @@ export async function withConcurrencyLimit<T, R>(
   return results;
 }
 
-// ─── Protocol color/emoji maps ────────────────────────────────────────
+// ─── Protocol registry (canonical) ──────────────────────────────────
+// Colors, labels, icons and metadata now live in ./protocols — the single
+// source of truth for protocol config. Local maps in app/UI packages must
+// derive from here instead of redefining protocol colors.
 
-export const PROTOCOL_COLORS: Record<string, string> = {
-  nostr: '#8e30eb',
-  farcaster: '#8a63d2',
-  lens: '#abfe2c',
-  bluesky: '#1185fe',
-  threads: '#888888',
-  mastodon: '#6364ff',
-  lemmy: '#00b868',
-  rss: '#ffa500',
-  reddit: '#ff4500',
-  ethereum: '#627eea',
-  solana: '#9945ff',
-  peertube: '#f1680d',
-  youtube: '#ff0000',
-  atproto: '#0085ff',
-  zora: '#0052FF',
-  telegram: '#0088cc',
-};
-
-export const PROTOCOL_EMOJI: Record<string, string> = {
-  nostr: '⚡',
-  farcaster: '🟣',
-  lens: '🌿',
-  bluesky: '🦋',
-  threads: '🧵',
-  mastodon: '🐘',
-  lemmy: '🍋',
-  rss: '📡',
-  reddit: '🔴',
-  ethereum: '◆',
-  solana: '◎',
-  peertube: '📹',
-  youtube: '▶️',
-  atproto: '🦋',
-  zora: '◆',
-  telegram: '✈',
-};
-
-export function getProtocolColor(p: string): string {
-  return PROTOCOL_COLORS[p] ?? '#666';
-}
-
-export function getProtocolEmoji(p: string): string {
-  return PROTOCOL_EMOJI[p] ?? '●';
-}
+export type { ExtraProtocolConfig, ProtocolCategory, ProtocolConfig } from './protocols';
+export {
+  CATEGORIES,
+  CATEGORY_DISPLAY_ORDER,
+  CATEGORY_PROTOCOLS,
+  EXTRA_PROTOCOLS,
+  getProtocolColor,
+  getProtocolEmoji,
+  getProtocolIcon,
+  getProtocolLabel,
+  PROTOCOL_COLORS,
+  PROTOCOL_EMOJI,
+  PROTOCOL_ICONS,
+  PROTOCOL_LABELS,
+  PROTOCOL_LIST,
+  PROTOCOLS,
+  SIDEBAR_ORDER,
+} from './protocols';
 
 // ─── String utilities ────────────────────────────────────────────────
 

@@ -27,14 +27,11 @@ export function renderMarkdown(md: string): string {
   html = html.replace(/`([^`\n]+)`/g, (_m, code: string) => `<code>${code}</code>`);
 
   // Links [label](url) — only http/https allowed
-  html = html.replace(
-    /\[([^\]\n]+)\]\(([^)\s]+)\)/g,
-    (_m, label: string, url: string) => {
-      const trimmed = url.trim();
-      if (!isValidHttpUrl(trimmed)) return `[${label}](${url})`;
-      return `<a href="${trimmed}" target="_blank" rel="noopener noreferrer nofollow">${label}</a>`;
-    },
-  );
+  html = html.replace(/\[([^\]\n]+)\]\(([^)\s]+)\)/g, (_m, label: string, url: string) => {
+    const trimmed = url.trim();
+    if (!isValidHttpUrl(trimmed)) return `[${label}](${url})`;
+    return `<a href="${trimmed}" target="_blank" rel="noopener noreferrer nofollow">${label}</a>`;
+  });
 
   // Bold **text** (not spanning newlines)
   html = html.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
@@ -48,9 +45,7 @@ export function renderMarkdown(md: string): string {
     .map((p) => p.trim())
     .filter(Boolean);
   if (paragraphs.length > 0) {
-    html = paragraphs
-      .map((p) => `<p>${p.replace(/\n/g, '<br />')}</p>`)
-      .join('\n');
+    html = paragraphs.map((p) => `<p>${p.replace(/\n/g, '<br />')}</p>`).join('\n');
   } else {
     html = html.replace(/\n/g, '<br />');
   }

@@ -70,6 +70,7 @@ export function DeployCoinDialog({ open, onClose, onDeploy }: DeployCoinDialogPr
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
       <div className="relative w-full max-w-lg rounded-2xl border border-white/10 bg-gray-900 p-6 shadow-2xl">
         <button
+          type="button"
           onClick={onClose}
           className="absolute right-4 top-4 text-gray-400 hover:text-white transition-colors"
         >
@@ -123,6 +124,7 @@ export function DeployCoinDialog({ open, onClose, onDeploy }: DeployCoinDialogPr
             <span className="block text-sm font-medium text-gray-300 mb-2">Deploy On</span>
             <div className="grid grid-cols-2 gap-2">
               <button
+                type="button"
                 onClick={() => setChain('solana')}
                 className={`rounded-lg border p-3 text-left transition-all ${
                   chain === 'solana'
@@ -134,6 +136,7 @@ export function DeployCoinDialog({ open, onClose, onDeploy }: DeployCoinDialogPr
                 <div className="text-xs opacity-70">$0.002 gas</div>
               </button>
               <button
+                type="button"
                 onClick={() => setChain('base')}
                 className={`rounded-lg border p-3 text-left transition-all ${
                   chain === 'base'
@@ -158,6 +161,7 @@ export function DeployCoinDialog({ open, onClose, onDeploy }: DeployCoinDialogPr
               </div>
             </div>
             <button
+              type="button"
               onClick={() => setCrossChain(!crossChain)}
               className={`relative h-6 w-11 rounded-full transition-colors ${
                 crossChain ? 'bg-degen-500' : 'bg-gray-600'
@@ -232,6 +236,7 @@ export function DeployCoinDialog({ open, onClose, onDeploy }: DeployCoinDialogPr
 
           {/* Submit */}
           <button
+            type="button"
             onClick={handleDeploy}
             disabled={deploying}
             className="w-full rounded-lg bg-gradient-to-r from-degen-500 to-purple-600 py-3 font-bold text-white transition-all hover:from-degen-400 hover:to-purple-500 disabled:opacity-50"
