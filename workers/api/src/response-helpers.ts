@@ -71,6 +71,8 @@ export interface RateLimitResult {
 // ─── Status-specific response helpers ───────────────────────
 
 export function ok(data: unknown): Response {
+  // Pass through existing Response objects (handlers return pre-built Responses)
+  if (data instanceof Response) return data;
   return new Response(JSON.stringify(data), {
     status: 200,
     headers: { 'content-type': 'application/json' },

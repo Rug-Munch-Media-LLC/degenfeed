@@ -7,7 +7,8 @@
  * Layer in the feed stack: fetch → enrich → dedup → cluster → score → rank
  */
 
-import { type Env, log } from '../types';
+import type { Env } from '../types';
+import { log } from '../logger';
 import { detectNiches } from '@degenfeed/feed-core';
 import type {
   AggregatedStory,

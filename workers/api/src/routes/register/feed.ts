@@ -72,6 +72,7 @@ import {
   handleNetworkFeed,
   handleSourceDiscovery,
   handleTrendingContent,
+  handleUnifiedFeed,
   handleUnifiedSearch,
 } from '../../routes/feed-unified';
 import { handleFeedback, handleForYouFeed, handleRecordDwell } from '../../routes/for-you';
@@ -180,7 +181,7 @@ import {
   handleShortsTrending,
   handleShortsTrendingV2,
   handleShortsWatch,
-  handleUnifiedFeed,
+  handleUnifiedFeed as handleUnifiedShortsFeed,
   handleUnifiedFeedBySource,
   handleUnifiedFollowing,
   handleUnifiedLoopsOnly,
@@ -296,7 +297,7 @@ export function registerFeedRoutes(app: Hono<{ Bindings: Env }>): void {
   // --- Unified multi-protocol feed ---
   app.get('/api/shorts/unified/feed', async (c) => {
     try {
-      const result = await handleUnifiedFeed(c.req.raw, c.env);
+      const result = await handleUnifiedShortsFeed(c.req.raw, c.env);
       return ok(result);
     } catch (err) {
       return serverError(err instanceof Error ? err.message : 'Unknown error');

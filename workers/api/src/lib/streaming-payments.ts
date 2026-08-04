@@ -14,7 +14,7 @@
 
 import type { Address } from 'viem';
 import type { Env } from '../types';
-import { log } from '../types';
+import { log } from '../logger';
 import { streamAnalyticsKey, streamEventKey, streamIndexKey, streamKey } from '../kv-key-patterns';
 
 // ─── Constants ────────────────────────────────────────────────────────────

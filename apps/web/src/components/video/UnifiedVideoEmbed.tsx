@@ -250,13 +250,52 @@ function resolveArweave(url: string, preferredGateway = 'https://arweave.degenfe
   return `${preferredGateway}/${id}`;
 }
 
-// ─── HLS.js Dynamic Import ──────────────────────────────────────────────
+// ─── HLS.js + P2P Media Loader Dynamic Import ──────────────────────────
 
-async function loadHls(): Promise<typeof import('hls.js') | null> {
+/** P2P tracker — every viewer becomes a peer, cutting origin bandwidth. */
+const P2P_TRACKER_URL = 'wss://video.degenfeed.xyz/tracker/socket/';
+
+type HlsEvents = typeof import('hls.js')['default']['Events'];
+
+/**
+ * Hls.js constructor shape used by this component. When the p2p-media-loader
+ * mixin is applied, the constructor additionally accepts the `p2p` config key
+ * (plain Hls.js ignores unknown keys, so the fallback stays safe).
+ */
+interface HlsPlayerConstructor {
+  isSupported(): boolean;
+  Events: HlsEvents;
+  new (
+    config?: Partial<import('hls.js').HlsConfig> & { p2p?: unknown },
+  ): {
+    loadSource(url: string): void;
+    attachMedia(element: HTMLMediaElement): void;
+    on(event: string, callback: (...args: unknown[]) => void): void;
+    destroy(): void;
+  };
+}
+
+/**
+ * Load Hls.js with the p2p-media-loader mixin injected BEFORE the player is
+ * created. Every viewer becomes a peer (WebRTC segment sharing), which is
+ * critical for P2P bandwidth savings on HLS/VOD traffic.
+ *
+ * Falls back to plain Hls.js when the p2p loader is unavailable.
+ */
+async function loadHls(): Promise<HlsPlayerConstructor | null> {
   try {
-    return await import('hls.js');
+    const hlsModule = await import('hls.js');
+    const { HlsJsP2PEngine } = await import('p2p-media-loader-hlsjs');
+    // Inject into Hls.js before creating the player
+    const HlsWithP2P = HlsJsP2PEngine.injectMixin(hlsModule.default);
+    return HlsWithP2P as unknown as HlsPlayerConstructor;
   } catch {
-    return null;
+    try {
+      const hlsModule = await import('hls.js');
+      return hlsModule.default as unknown as HlsPlayerConstructor;
+    } catch {
+      return null;
+    }
   }
 }
 
@@ -315,24 +354,35 @@ export function UnifiedVideoEmbed({
     let destroyed = false;
 
     (async () => {
-      const Hls = await loadHls();
-      if (!(Hls as unknown as { isSupported?: () => boolean })?.isSupported?.()) {
+      const HlsClass = await loadHls();
+      if (!HlsClass?.isSupported?.()) {
         setHlsSupported(false);
         return;
       }
       if (destroyed) return;
 
-      hlsInstance = new Hls.default();
+      hlsInstance = new HlsClass({
+        // p2p-media-loader: every viewer is a peer. The `p2p` key is ignored
+        // by plain Hls.js when the mixin is unavailable (graceful fallback).
+        p2p: {
+          core: {
+            announceTrackers: [P2P_TRACKER_URL],
+            rtcConfig: {
+              iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
+            },
+          },
+        },
+      });
       hlsInstance.loadSource(resolvedUrl);
       hlsInstance.attachMedia(videoRef.current!);
 
-      hlsInstance.on(Hls.default.Events.MANIFEST_PARSED, () => {
+      hlsInstance.on(HlsClass.Events.MANIFEST_PARSED, () => {
         if (autoplay && videoRef.current) {
           videoRef.current.play().catch(() => {});
         }
       });
 
-      hlsInstance.on(Hls.default.Events.ERROR, (_event: any, data: any) => {
+      hlsInstance.on(HlsClass.Events.ERROR, (_event: any, data: any) => {
         if (data.fatal) {
           setLoadError(true);
           setErrorMessage('HLS playback error');

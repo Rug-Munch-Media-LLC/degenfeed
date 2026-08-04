@@ -5,4 +5,12 @@
  * @see ./profile-sync/index.ts
  */
 
-export {} from './profile-sync/index';
+export {
+  SUPPORTED_SYNC_PROTOCOLS,
+  aggregateProfile,
+  getSyncStatus,
+  pushProfile,
+  setPrimaryOverride,
+  syncProfile,
+} from './profile-sync/index';
+export type { PrimaryFieldOverride, ProtocolProfile } from './profile-sync/types';

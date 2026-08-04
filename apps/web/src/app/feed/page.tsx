@@ -394,13 +394,12 @@ export default function FeedPage() {
     async (checkOnly = false) => {
       if (!checkOnly) setState('loading');
       try {
-        // Anonymous users always read the public timeline. The personalized
-        // "for-you" endpoint is only used once the user has signed in.
-        const endpoint = hasSignedIn
-          ? activeTab === 'for-you'
-            ? '/api/feed/for-you'
-            : '/api/feed/home'
-          : '/api/feed/home';
+        // Try the unified cross-protocol timeline first. Anonymous and
+        // signed-in users read the same aggregated feed; personalization is
+        // applied client-side below via rankTopAlgo. If the bridge worker is
+        // stale and returns an empty/error payload, fetchFeed falls back to
+        // per-protocol feeds below.
+        const endpoint = '/api/feed/unified';
         const controlsKey = [
           controls.sort,
           controls.protocols.join('|') || 'all',
@@ -474,13 +473,78 @@ export default function FeedPage() {
         if (exploreRatio !== 30) url.searchParams.set('exploreRatio', String(exploreRatio));
         if (activePreset) url.searchParams.set('preset', activePreset);
 
-        const swrResult = await fetchWithSwr<{ data?: UnifiedPost[]; meta?: FeedMeta }>(
-          url.toString(),
-          cacheKey,
-          { credentials: 'include' },
-        );
-        const data = swrResult.data;
-        let feed = data.data ?? [];
+        // Try the unified feed first. If it returns empty or errors (e.g. a
+        // stale bridge worker), fall back to fetching each protocol
+        // individually in parallel so the feed still renders.
+        let feed: UnifiedPost[] = [];
+        let feedMetaData: FeedMeta = {};
+        let swrFromCache = false;
+        let swrStale = false;
+
+        try {
+          const swrResult = await fetchWithSwr<{ data?: UnifiedPost[]; meta?: FeedMeta }>(
+            url.toString(),
+            cacheKey,
+            { credentials: 'include' },
+          );
+          const data = swrResult.data;
+          feed = data.data ?? [];
+          feedMetaData = data.meta ?? {};
+          swrFromCache = swrResult.fromCache;
+          swrStale = swrResult.stale;
+        } catch {
+          // Unified feed errored — fall through to the per-protocol fallback.
+        }
+
+        // ── Per-protocol fallback ──
+        // When the unified feed is empty or errored, fetch each protocol
+        // individually (limit 10 each) in parallel, then merge + dedupe +
+        // sort by date (newest first).
+        let fallbackRan = false;
+        let fallbackAllErrored = false;
+        if (feed.length === 0) {
+          fallbackRan = true;
+          const fallbackProtocols =
+            controls.protocols.length > 0
+              ? controls.protocols
+              : ['nostr', 'farcaster', 'rss', 'mastodon', 'bluesky'];
+          const results = await Promise.allSettled(
+            fallbackProtocols.map((p) =>
+              fetch(`/api/feed/${encodeURIComponent(p)}?limit=10`, {
+                credentials: 'include',
+                cache: 'no-store',
+              }).then((r) => r.json() as Promise<{ data?: UnifiedPost[]; error?: string }>),
+            ),
+          );
+          const successful = fallbackProtocols
+            .map((protocol, i) => {
+              const r = results[i];
+              return r && r.status === 'fulfilled' && !r.value.error && Array.isArray(r.value.data)
+                ? { protocol, posts: r.value.data as UnifiedPost[] }
+                : null;
+            })
+            .filter((x): x is { protocol: string; posts: UnifiedPost[] } => x !== null);
+          const allPosts = successful.flatMap((s) => s.posts);
+          fallbackAllErrored = results.length > 0 && successful.length === 0;
+          if (allPosts.length > 0) {
+            const seen = new Set<string>();
+            feed = allPosts
+              .filter((p) => {
+                if (!p || seen.has(p.id)) return false;
+                seen.add(p.id);
+                return true;
+              })
+              .sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0));
+            feedMetaData = {
+              ...feedMetaData,
+              perProtocol: Object.fromEntries(successful.map((s) => [s.protocol, s.posts.length])),
+              notices: [
+                ...(feedMetaData.notices ?? []),
+                'Unified feed unavailable — showing per-protocol results.',
+              ],
+            };
+          }
+        }
 
         if (activeTab === 'following') {
           try {
@@ -514,13 +578,21 @@ export default function FeedPage() {
           lastPostIdRef.current = (feed[0]?.id as string) ?? '';
         }
         setPosts(feed);
-        setFeedMeta(data.meta || {});
-        setState(feed.length ? 'loaded' : 'empty');
-        if (swrResult.stale) setError('Showing cached results. Updating…');
-        else setError(undefined);
+        setFeedMeta(feedMetaData);
+        // Show the error state only when the unified feed AND every protocol
+        // fallback failed. A partially successful fallback renders as loaded;
+        // an all-empty result renders as empty.
+        setState(feed.length ? 'loaded' : fallbackRan && fallbackAllErrored ? 'error' : 'empty');
+        if (feed.length === 0 && fallbackRan && fallbackAllErrored) {
+          setError('All feed sources are unavailable right now.');
+        } else if (swrStale) {
+          setError('Showing cached results. Updating…');
+        } else {
+          setError(undefined);
+        }
         if (!checkOnly && feed.length > 0)
           announceFeed(
-            `${feed.length} posts loaded${swrResult.fromCache ? ' (cached)' : ''}`,
+            `${feed.length} posts loaded${swrFromCache ? ' (cached)' : ''}`,
             'polite',
           );
       } catch (err) {
@@ -777,7 +849,9 @@ export default function FeedPage() {
           )}
 
           {state === 'loading' && <FeedLoadingSkeleton />}
-          {state === 'empty' && <FeedEmptyState activeTab={activeTab} />}
+          {state === 'empty' && (
+            <FeedEmptyState activeTab={activeTab} onRefresh={() => fetchFeed(false)} />
+          )}
           {state === 'error' && (
             <FeedErrorState error={error || 'Unknown error'} onRetry={() => fetchFeed(false)} />
           )}

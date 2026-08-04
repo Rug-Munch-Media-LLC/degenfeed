@@ -183,6 +183,18 @@ const ALLOWED_URL_HOSTS = new Set([
   // Self-hosted proxy services for feed fetching
   'redlib.degenfeed.xyz',
   'rss-bridge.degenfeed.xyz',
+  // Video Wrapper enrichment hosts (oEmbed metadata for PeerTube/Blossom/
+  // IPFS/YouTube/Vimeo embeds — see routes/video/embed.ts)
+  'video.degenfeed.xyz',
+  'ipfs.degenfeed.xyz',
+  'cdn.degenfeed.xyz',
+  'blossom.nostr.build',
+  'b.nostr.build',
+  'nostr.build',
+  'www.youtube.com',
+  'youtu.be',
+  'vimeo.com',
+  'player.vimeo.com',
 ]);
 
 // ─── Private IP detection ──────────────────────────────────────────

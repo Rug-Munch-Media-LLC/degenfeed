@@ -11,7 +11,7 @@
 
 import type { Context, Next } from 'hono';
 import type { Env } from '../types';
-import { jsonResponse } from '../types';
+import { jsonResponse } from '../response-helpers';
 import {
   checkPremiumStatus,
   FEATURE_TIER_REQUIREMENTS,

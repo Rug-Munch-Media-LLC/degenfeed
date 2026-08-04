@@ -100,7 +100,7 @@ export async function scheduled(
 
   // ── Feed cache warmup — every 5 minutes ────────────────────────────
   if (cron === '*/5 * * * *') {
-    const { warmupFeedCache } = await import('../routes/feed');
+    const { warmupFeedCache } = await import('./routes/feed');
     await warmupFeedCache(env).catch((err) =>
       log('warn', '[scheduled] feed cache warmup failed', err),
     );

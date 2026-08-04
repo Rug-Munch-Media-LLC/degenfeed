@@ -13,6 +13,7 @@
 import { getDb } from '@degenfeed/storage';
 import type { Protocol } from '@degenfeed/types';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { applyThemeClass } from '../lib/theme';
 
 /* === IndexedDB helpers for muted/blocked ====================== */
 
@@ -173,16 +174,9 @@ function setCookie(name: string, value: string, days = 365): void {
 
 function applyTheme(theme: Theme): void {
   if (typeof document === 'undefined') return;
-  const root = document.documentElement;
-  if (theme === 'light') {
-    root.classList.remove('dark');
-  } else if (theme === 'dark') {
-    root.classList.add('dark');
-  } else {
-    // auto — follow system
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    root.classList.toggle('dark', prefersDark);
-  }
+  // Keep <html> classes/data-theme consistent with the pre-paint bootstrap
+  // script in the root layout (exactly one of dark/light, never both).
+  applyThemeClass(theme);
 }
 
 function applyDensity(density: LayoutDensity): void {

@@ -35,6 +35,34 @@ const jetbrainsMono = JetBrains_Mono({
   variable: '--font-mono',
 });
 
+/**
+ * ⚡ Theme bootstrap — runs synchronously in <head> BEFORE the first paint,
+ * before the CSS bundle, and before React hydrates. Prevents the light/blank
+ * "shit version" flash on every page (including protocol switches).
+ *
+ * Resolves the theme from localStorage → df_theme cookie → df-theme cookie
+ * (defaults to dark), then sets the `data-theme` attribute AND the
+ * `dark`/`light` class on <html> so both the token system (design-tokens.css)
+ * and any data-theme consumers agree from the very first frame.
+ */
+const THEME_BOOTSTRAP_SCRIPT = [
+  '(function(){',
+  'try{',
+  'var t=null;',
+  'try{t=localStorage.getItem("df_theme")}catch(e){}',
+  'if(!t){var m=document.cookie.match("(^|; )df_theme=([^;]*)(;|$)");t=m?decodeURIComponent(m[2]):null}',
+  'if(!t){var m2=document.cookie.match("(^|; )df-theme=([^;]*)(;|$)");t=m2?decodeURIComponent(m2[2]):null}',
+  'if(t==="auto"){try{t=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}catch(e2){t="dark"}}',
+  'var theme=(t==="light")?"light":"dark";',
+  'var root=document.documentElement;',
+  'root.classList.remove("dark","light");',
+  'root.classList.add(theme==="dark"?"dark":"light");',
+  'root.setAttribute("data-theme",theme);',
+  'try{var d=localStorage.getItem("df_layout");if(d)root.classList.add("layout-"+d)}catch(e3){}',
+  '}catch(e){}',
+  '})();',
+].join('');
+
 export const metadata: Metadata = {
   manifest: '/manifest.json',
   icons: {
@@ -125,30 +153,31 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html
       lang="en"
+      data-theme="dark"
       className={`dark ${plusJakarta.variable} ${syne.variable} ${jetbrainsMono.variable}`}
       suppressHydrationWarning
     >
+      <head>
+        {/* ⚡ SSR-safe theme: sync cookie/localStorage to <html> BEFORE first paint to prevent flash */}
+        <script nonce={nonce} dangerouslySetInnerHTML={{ __html: THEME_BOOTSTRAP_SCRIPT }} />
+        {/* == Critical CSS inlining — above-the-fold styles, in <head> so the
+             dark background is guaranteed before the CSS bundle arrives == */}
+        <style nonce={nonce} data-critical="1">
+          {[
+            'html{background:#000}',
+            'body{--bg:#000;--fg:#e7e9ea;background:var(--bg);color:var(--fg);margin:0;font-family:"Plus Jakarta Sans",Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}',
+            '.skip-link{position:absolute;top:-100%;left:0;z-index:100;padding:8px 16px;background:var(--color-accent,#1d9bf0);color:#fff;font-weight:600}',
+            '.skip-link:focus{top:0}',
+            '.scanline{position:fixed;inset:0;pointer-events:none;z-index:9998;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.03) 2px,rgba(0,0,0,0.03) 4px)}',
+            'img,video{max-width:100%;height:auto;vertical-align:middle}',
+            '@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}',
+          ].join('')}
+        </style>
+      </head>
       <body className="antialiased">
         <a href="#main-content" className="skip-link">
           Skip to content
         </a>
-        {/* ⚡ SSR-safe theme: sync localStorage before paint to prevent flash */}
-        <script
-          nonce={nonce}
-          dangerouslySetInnerHTML={{
-            __html: [
-              '(function(){',
-              'try{',
-              'var t=localStorage.getItem("df_theme");',
-              'if(t==="light")document.documentElement.classList.remove("dark");',
-              'if(t==="dark")document.documentElement.classList.add("dark");',
-              'var d=localStorage.getItem("df_layout");',
-              'if(d)document.documentElement.classList.add("layout-"+d);',
-              '}catch(e){}',
-              '})();',
-            ].join(''),
-          }}
-        />
         {/* == PWA platform tags == */}
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -198,18 +227,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
         {/* == LCP: Preload critical assets == */}
         <link rel="preload" href="/icon.svg" as="image" fetchPriority="high" />
-
-        {/* == Critical CSS inlining — above-the-fold styles == */}
-        <style nonce={nonce} data-critical="1">
-          {[
-            'body{--bg:#000;--fg:#e7e9ea;background:var(--bg);color:var(--fg);margin:0;font-family:"Plus Jakarta Sans",Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}',
-            '.skip-link{position:absolute;top:-100%;left:0;z-index:100;padding:8px 16px;background:var(--color-accent,#1d9bf0);color:#fff;font-weight:600}',
-            '.skip-link:focus{top:0}',
-            '.scanline{position:fixed;inset:0;pointer-events:none;z-index:9998;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.03) 2px,rgba(0,0,0,0.03) 4px)}',
-            'img,video{max-width:100%;height:auto;vertical-align:middle}',
-            '@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}',
-          ].join('')}
-        </style>
 
         <ErrorTracker />
         <Script

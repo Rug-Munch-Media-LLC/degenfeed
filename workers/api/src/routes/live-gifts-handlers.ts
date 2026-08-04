@@ -18,7 +18,7 @@
  */
 
 import { getPlatformBadge } from '../lib/stream-chat';
-import { broadcastToAll } from '../lib/ws-broadcast';
+import { broadcastToAll } from '../ws-broadcast';
 import { jsonResponse } from '../response-helpers';
 import { hasSuspiciousPayload, sanitizeString, validateBodySize } from '../sanitize';
 import { requireSession } from '../session';

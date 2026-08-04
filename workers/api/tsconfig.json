@@ -45,7 +45,8 @@
       "@degenfeed/cross-protocol-bridge": ["packages/cross-protocol-bridge/src"],
       "@degenfeed/realtime": ["packages/realtime/src"],
       "@degenfeed/realtime/*": ["packages/realtime/src/*"],
-      "@degenfeed/pixelfed-sdk": ["packages/pixelfed-sdk/src"]
+      "@degenfeed/pixelfed-sdk": ["packages/pixelfed-sdk/src"],
+      "@degenfeed/chat-super-app": ["packages/chat-super-app/src"]
     }
   },
   "include": ["src"],

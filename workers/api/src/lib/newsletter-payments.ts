@@ -20,7 +20,8 @@
  *   nlp:discount:{newsletterId}       → DiscountConfig
  */
 
-import { type Env, log } from '../types';
+import type { Env } from '../types';
+import { log } from '../logger';
 import type { SubscriptionTier } from '../routes/newsletter-subscriptions';
 
 // ─── Types ─────────────────────────────────────────────────────────────

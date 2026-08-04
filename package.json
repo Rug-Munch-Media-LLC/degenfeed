@@ -57,6 +57,7 @@
     "@scure/base": "^2.2.0",
     "@telegram-apps/sdk": "^3.11.8",
     "hls.js": "^1.6.16",
+    "p2p-media-loader-hlsjs": "^3.0.1",
     "swr": "^2.4.2"
   }
 }

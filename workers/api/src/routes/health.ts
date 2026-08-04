@@ -1,7 +1,7 @@
 import { DEFAULT_RELAYS } from '../index';
 import { getQueueStats } from '../lib/offline-queue';
 import { getTxMonitorStats } from '../lib/transaction-monitor';
-import { jsonResponse } from '../response-helpers';
+import { jsonResponse, ok } from '../response-helpers';
 import type { Env } from '../types';
 
 /**

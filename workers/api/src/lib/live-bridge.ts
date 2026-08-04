@@ -13,7 +13,7 @@
 import type { LiveSource } from '../feed/live-aggregator';
 import { methodNotAllowed } from '../response-helpers';
 import type { Env } from '../types';
-import { jsonResponse, noCacheJsonResponse } from '../types';
+import { jsonResponse, noCacheJsonResponse } from '../response-helpers';
 import { broadcastToAll } from '../ws-broadcast';
 import { CHANNELS } from '../ws-channels';
 import { recordBridgeOperation } from './bridge-reliability';

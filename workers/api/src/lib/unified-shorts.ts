@@ -21,7 +21,9 @@
  */
 
 import type { Protocol } from '@degenfeed/types';
+import { log } from '../logger';
 import type { Env } from '../types';
+import { BLOSSOM_MAX_BYTES } from './blossom-storage';
 import { orchestratePublish, type PublishReport } from './publish-orchestrator';
 import { ZoraVideoIntegration } from './zora-video';
 
@@ -896,7 +898,25 @@ export class UnifiedShortsPipeline {
   }
 
   private async uploadToPermanentStorage(_file: File): Promise<string> {
-    // Upload to IPFS via web3.storage or Pinata, or to Arweave
+    // FIRST CHOICE: Blossom free tier (nostr.build) — 20MB max, global CDN,
+    // zero cost. Requires NOSTR_NSEC for NIP-98 auth. Falls back to IPFS.
+    const buffer = await _file.arrayBuffer();
+    const fileName = `shorts/${Date.now()}-${_file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+
+    if (_file.size <= BLOSSOM_MAX_BYTES) {
+      const { uploadBufferToBlossom } = await import('./blossom-storage');
+      const blossom = await uploadBufferToBlossom(buffer, fileName, _file.type, this.env);
+      if (blossom.ok && blossom.url) {
+        return blossom.url;
+      }
+      log(
+        'warn',
+        `[unified-shorts] Blossom upload skipped/failed, falling back to IPFS`,
+        blossom.error,
+      );
+    }
+
+    // Fallback: Upload to IPFS via web3.storage or Pinata, or to Arweave
     // Requires WEB3_STORAGE_API_KEY or PINATA_API_KEY env var
     const hasStorageConfig = !!(this.env.PINATA_API_KEY || this.env.WEB3_STORAGE_API_KEY);
     if (!hasStorageConfig) {
@@ -906,9 +926,6 @@ export class UnifiedShortsPipeline {
       );
     }
     try {
-      // Upload to IPFS via Pinata or web3.storage
-      const buffer = await _file.arrayBuffer();
-      const fileName = `shorts/${Date.now()}-${_file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
       const { uploadBufferToIPFS } = await import('./ipfs-storage');
       const result = await uploadBufferToIPFS(buffer, fileName, _file.type, this.env);
       return result.gatewayUrl || `https://ipfs.degenfeed.xyz/ipfs/${result.cid}`;

@@ -58,6 +58,7 @@
     "dompurify": "^3.4.12",
     "hls.js": "^1.6.16",
     "next": "^16.2.11",
+    "p2p-media-loader-hlsjs": "^3.0.1",
     "qrcode.react": "^4.2.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",

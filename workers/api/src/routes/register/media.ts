@@ -81,6 +81,7 @@ import {
   handleParagraphTrending,
 } from '../../routes/paragraph';
 import unifiedVideoFeed from '../../routes/unified-video-feed';
+import { videoEmbed } from '../../routes/video/embed';
 import { videoAggregator } from '../../routes/video-aggregator';
 import { videoBridges } from '../../routes/video-bridges';
 import videoHub from '../../routes/video-hub';
@@ -110,6 +111,10 @@ export function registerMediaRoutes(app: Hono<{ Bindings: Env }>): void {
 
   // --- API: Unified Video Feed (all platforms, zero-cost hosting) ---
   app.route('/api/video/unified-feed', unifiedVideoFeed);
+
+  // --- API: Video Wrapper (unified oEmbed discovery + Media RSS) ---
+  // Registered BEFORE /api/video (videoHub) so the more specific path wins.
+  app.route('/api/video/embed', videoEmbed);
 
   // --- API: Video Hub (categorized video discovery across all sources) ---
   app.route('/api/video', videoHub);

@@ -10,6 +10,38 @@ import type { Env } from '../../types';
 import type { PaginatedResponse, PeerTubeVideo } from './types';
 import { getPeerTubeClient, mapVideoForResponse, peertubeFetch } from './utils';
 
+/**
+ * Fire-and-forget auto-crosspost after a successful PeerTube upload.
+ * Fail-open — never blocks or changes the upload response.
+ */
+async function announceUpload(
+  c: { env: Env; executionCtx: { waitUntil(p: Promise<unknown>): void } },
+  video: {
+    uuid: string;
+    name: string;
+    url: string;
+    embedPath: string;
+  },
+): Promise<void> {
+  const { announceVideoPublished, announcedVideoFromPeerTube } = await import(
+    '../../lib/video-announcer'
+  );
+  const instanceUrl = (c.env.PEERTUBE_INSTANCE_URL ?? 'https://video.degenfeed.xyz').replace(
+    /\/+$/,
+    '',
+  );
+  const announced = announcedVideoFromPeerTube({
+    id: video.uuid,
+    title: video.name,
+    url: video.url || `${instanceUrl}/videos/watch/${video.uuid}`,
+    fileUrl: video.url || `${instanceUrl}/videos/watch/${video.uuid}`,
+    mimeType: 'video/mp4',
+    tags: ['peertube', 'degenfeed'],
+  });
+  // Run in the background — the upload response must not wait on relays.
+  c.executionCtx.waitUntil(announceVideoPublished(c.env, announced));
+}
+
 export function registerVideoRoutes(router: Hono<{ Bindings: Env }>): void {
   router.post('/upload', async (c) => {
     try {
@@ -73,6 +105,15 @@ export function registerVideoRoutes(router: Hono<{ Bindings: Env }>): void {
           embedPath: string;
         };
       };
+
+      // Part D: auto-crosspost the new video (Nostr NIP-71, RSS, native AP).
+      // Fail-open — runs in the background, never affects the upload response.
+      try {
+        await announceUpload(c, result.video);
+      } catch {
+        /* announce failures must never break the upload response */
+      }
+
       return noCacheJsonResponse(
         {
           video: {

@@ -340,6 +340,10 @@ export interface Env {
   /** Pinata secret key for IPFS pinning (Content Permanence API) */
   PINATA_SECRET_KEY?: string;
 
+  // ─── Blossom (decentralized free-tier video hosting) ─────────────────
+  /** Blossom-compatible server base URL (default: https://blossom.nostr.build) */
+  BLOSSOM_SERVER_URL?: string;
+
   // ─── Live Shorts / Protocol Streaming ──────────────────────────────
   /** Farcaster signer private key hex for live short frame posting */
   FARCASTER_SIGNER_KEY?: string;

@@ -43,6 +43,9 @@ importers:
       hls.js:
         specifier: ^1.6.16
         version: 1.6.16
+      p2p-media-loader-hlsjs:
+        specifier: ^3.0.1
+        version: 3.0.1(supports-color@10.2.2)
       swr:
         specifier: ^2.4.2
         version: 2.4.2(react@19.2.8)
@@ -194,6 +197,9 @@ importers:
       next:
         specifier: ^16.2.11
         version: 16.2.11(@playwright/test@1.61.1)(@types/node@20.19.43)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      p2p-media-loader-hlsjs:
+        specifier: ^3.0.1
+        version: 3.0.1(supports-color@10.2.2)
       qrcode.react:
         specifier: ^4.2.0
         version: 4.2.0(react@19.2.8)
@@ -348,7 +354,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^3.2.6
-        version: 3.2.7(@types/node@22.20.1)(happy-dom@20.11.1(bufferutil@4.1.0)(utf-8-validate@6.0.6))(jiti@1.21.7)(jsdom@30.0.1(@noble/hashes@2.2.0))(lightningcss@1.33.0)(supports-color@10.2.2)(terser@5.48.0)(tsx@4.23.1)(yaml@2.9.0)
+        version: 3.2.7(@types/debug@4.1.13)(@types/node@22.20.1)(happy-dom@20.11.1(bufferutil@4.1.0)(utf-8-validate@6.0.6))(jiti@1.21.7)(jsdom@30.0.1(@noble/hashes@2.2.0))(lightningcss@1.33.0)(supports-color@10.2.2)(terser@5.48.0)(tsx@4.23.1)(yaml@2.9.0)
 
   packages/creator-coin:
     dependencies:
@@ -3383,6 +3389,9 @@ packages:
   '@types/connect@3.4.38':
     resolution: {integrity: sha512-K6uROf1LD88uDQqJCktA4yzL1YYAK6NgfsI0v/mTgyPKWsX1CnJ0XPSDhViejru1GcRkLWb8RlzFYJRqGUbaug==}
 
+  '@types/debug@4.1.13':
+    resolution: {integrity: sha512-KSVgmQmzMwPlmtljOomayoR89W4FynCAi3E8PPs7vmDVPe84hT+vGPKkJfThkmXs0x0jAaa9U8uW8bbfyS2fWw==}
+
   '@types/deep-eql@4.0.2':
     resolution: {integrity: sha512-c9h9dVVMigMPc4bwTvC5dxqtqJZwQPePsWjPlpSOnojbor6pGqdk541lfA7AqFQr5pB1BRdq0juY9db81BwyFw==}
 
@@ -3406,6 +3415,9 @@ packages:
 
   '@types/mdurl@2.0.0':
     resolution: {integrity: sha512-RGdgjQUZba5p6QEFAVx2OGb8rQDL/cPRG7GiedRzMcJ1tYnUANBncjbSB1NRGwbvjcPeikRABz2nshyPk1bhWg==}
+
+  '@types/ms@2.1.0':
+    resolution: {integrity: sha512-GsCCIZDE/p3i96vtEqx+7dBUGXrc7zeSK3wwPHIaRThS+9OhWIXRqzs4d6k1SVU8g91DrNRWxWUGhp5KXQb2VA==}
 
   '@types/node@12.20.55':
     resolution: {integrity: sha512-J8xLz7q2OFulZ2cyGTLE1TbbZcjpno7FaN6zdJNrgAdrJ+DZzh/uFR6YrTb4C+nXakvud8Q4+rbhoIWlYQbUFQ==}
@@ -5191,6 +5203,12 @@ packages:
   p-try@2.2.0:
     resolution: {integrity: sha512-R4nPAVTAU0B9D35/Gk3uJf/7XYbQcyohSKdvAxIRSNghFl4e71hVoGnBNQz9cWaXxO2I10KTC+3jMdvvoKw6dQ==}
     engines: {node: '>=6'}
+
+  p2p-media-loader-core@3.0.1:
+    resolution: {integrity: sha512-u+osan3mFU361s7hEcTaEgU1mQQNu2YeMNu2MEzHErEgTQTZSYrcVAMVERvZ+UZuCvxN7l77y1Iw1rPafSZRjA==}
+
+  p2p-media-loader-hlsjs@3.0.1:
+    resolution: {integrity: sha512-TGZTwjIDj2IXbFN1FeBMrPVRL39h1qT74tDpe2IVyiY+tJ+xbUMgkuo4TAW5sv44lmLF/KU6QTMZMqpoW+tldg==}
 
   package-json-from-dist@1.0.1:
     resolution: {integrity: sha512-UEZIS3/by4OC8vL3P2dTXRETpebLI2NiI5vIrjaD/5UtrkFX/tNbwjTSRAGC/+7CAo2pIcBaRgWmcBBHcsaCIw==}
@@ -8311,6 +8329,10 @@ snapshots:
     dependencies:
       '@types/node': 26.1.1
 
+  '@types/debug@4.1.13':
+    dependencies:
+      '@types/ms': 2.1.0
+
   '@types/deep-eql@4.0.2': {}
 
   '@types/estree@1.0.9': {}
@@ -8335,6 +8357,8 @@ snapshots:
       '@types/unist': 3.0.3
 
   '@types/mdurl@2.0.0': {}
+
+  '@types/ms@2.1.0': {}
 
   '@types/node@12.20.55': {}
 
@@ -10251,6 +10275,19 @@ snapshots:
 
   p-try@2.2.0: {}
 
+  p2p-media-loader-core@3.0.1(supports-color@10.2.2):
+    dependencies:
+      '@types/debug': 4.1.13
+      debug: 4.4.3(supports-color@10.2.2)
+    transitivePeerDependencies:
+      - supports-color
+
+  p2p-media-loader-hlsjs@3.0.1(supports-color@10.2.2):
+    dependencies:
+      p2p-media-loader-core: 3.0.1(supports-color@10.2.2)
+    transitivePeerDependencies:
+      - supports-color
+
   package-json-from-dist@1.0.1: {}
 
   package-manager-detector@0.2.11:
@@ -11365,7 +11402,7 @@ snapshots:
       - typescript
       - universal-cookie
 
-  vitest@3.2.7(@types/node@22.20.1)(happy-dom@20.11.1(bufferutil@4.1.0)(utf-8-validate@6.0.6))(jiti@1.21.7)(jsdom@30.0.1(@noble/hashes@2.2.0))(lightningcss@1.33.0)(supports-color@10.2.2)(terser@5.48.0)(tsx@4.23.1)(yaml@2.9.0):
+  vitest@3.2.7(@types/debug@4.1.13)(@types/node@22.20.1)(happy-dom@20.11.1(bufferutil@4.1.0)(utf-8-validate@6.0.6))(jiti@1.21.7)(jsdom@30.0.1(@noble/hashes@2.2.0))(lightningcss@1.33.0)(supports-color@10.2.2)(terser@5.48.0)(tsx@4.23.1)(yaml@2.9.0):
     dependencies:
       '@types/chai': 5.2.3
       '@vitest/expect': 3.2.7
@@ -11391,6 +11428,7 @@ snapshots:
       vite-node: 3.2.4(@types/node@22.20.1)(jiti@1.21.7)(lightningcss@1.33.0)(supports-color@10.2.2)(terser@5.48.0)(tsx@4.23.1)(yaml@2.9.0)
       why-is-node-running: 2.3.0
     optionalDependencies:
+      '@types/debug': 4.1.13
       '@types/node': 22.20.1
       happy-dom: 20.11.1(bufferutil@4.1.0)(utf-8-validate@6.0.6)
       jsdom: 30.0.1(@noble/hashes@2.2.0)

@@ -22,7 +22,8 @@
  */
 
 import type { Env } from '../types';
-import { jsonResponse, log, noCacheJsonResponse } from '../types';
+import { jsonResponse, noCacheJsonResponse } from '../response-helpers';
+import { log } from '../logger';
 import { methodNotAllowed } from '../response-helpers';
 
 // ─── Types ──────────────────────────────────────────────────────────────

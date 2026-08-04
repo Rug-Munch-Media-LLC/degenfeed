@@ -17,7 +17,7 @@
  */
 
 import type { Env } from '../types';
-import { log } from '../types';
+import { log } from '../logger';
 import { getIPFSGatewayUrl, uploadBufferToIPFS } from './ipfs-storage';
 import { deleteFromR2, getR2Object, uploadToR2 } from './r2-storage';
 
