@@ -6,12 +6,15 @@
  *
  * Routes:
  *   POST /api/gts/register            — Free (ActivityPub)
- *   POST /api/nostr/register          — Pro+
- *   POST /api/bluesky/register        — Creator+
- *   POST /api/lemmy/register          — Creator+
+ *   POST /api/nostr/register          — Free
+ *   POST /api/bluesky/register        — Free
+ *   POST /api/lemmy/register          — Free
  *   POST /api/farcaster/register      — Enterprise
  *   POST /api/lens/register           — Enterprise
  *   POST /api/zora/mint               — Enterprise
+ *
+ * Tier gating is read from membership-tiers PROTOCOL_ACCESS (reconciled
+ * with register-all.ts). The hardcoded minTier below only feeds error copy.
  *
  * Each handler:
  *   1. Validates the session
@@ -60,9 +63,9 @@ const REGISTRATION_ROUTES: Array<{
   minTier: Tier;
 }> = [
   { path: '/api/gts/register', protocol: 'gts', minTier: 'free' },
-  { path: '/api/nostr/register', protocol: 'nostr', minTier: 'pro' },
-  { path: '/api/bluesky/register', protocol: 'bluesky', minTier: 'creator' },
-  { path: '/api/lemmy/register', protocol: 'lemmy', minTier: 'creator' },
+  { path: '/api/nostr/register', protocol: 'nostr', minTier: 'free' },
+  { path: '/api/bluesky/register', protocol: 'bluesky', minTier: 'free' },
+  { path: '/api/lemmy/register', protocol: 'lemmy', minTier: 'free' },
   { path: '/api/farcaster/register', protocol: 'farcaster', minTier: 'enterprise' },
   { path: '/api/lens/register', protocol: 'lens', minTier: 'enterprise' },
   { path: '/api/zora/mint', protocol: 'zora', minTier: 'enterprise' },
@@ -159,7 +162,7 @@ async function handleGatedRegistration(
     const existing = accounts.find(
       (a) => a.platform === protocol || a.platform === mapProtocolToPlatform(protocol),
     );
-    if (existing && existing.identifier) {
+    if (existing?.identifier) {
       return jsonResponse(
         {
           error: `Already registered on ${PROTOCOL_ACCESS[protocol]?.label ?? protocol}`,

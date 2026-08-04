@@ -5,7 +5,7 @@
  */
 
 import type { Hono } from 'hono';
-import { methodNotAllowed, notFound, ok, serverError } from '../../response-helpers';
+import { badRequest, methodNotAllowed, notFound, ok, serverError } from '../../response-helpers';
 import {
   handleAddRule,
   handleGetSignals as handleAlgoGetSignals,
@@ -464,6 +464,24 @@ export function registerSocialCoreRoutes(app: Hono<{ Bindings: Env }>): void {
   app.all('/api/engage', async (c) => {
     try {
       return await withSession(c, () => handleEngage(c.req.raw, c.env));
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  // --- API: Unified Interaction (tip / reply / like / boost across protocols) ---
+  app.post('/api/interaction', async (c) => {
+    try {
+      const { handleUnifiedInteraction } = await import('../../routes/unified-interaction');
+      return await withSession(c, () => handleUnifiedInteraction(c.req.raw, c.env));
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  // --- API: Interaction ledger status (per-protocol interaction counts) ---
+  app.get('/api/interaction/status', async (c) => {
+    try {
+      const { handleInteractionStatus } = await import('../../routes/unified-interaction');
+      return await handleInteractionStatus(c.req.raw, c.env);
     } catch (err) {
       return serverError(err instanceof Error ? err.message : 'Unknown error');
     }

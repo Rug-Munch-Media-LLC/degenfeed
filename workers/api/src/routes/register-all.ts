@@ -27,14 +27,13 @@ import {
 import type { CrossProtocolIdentity } from '@degenfeed/utils';
 import { identityKey } from '@degenfeed/utils';
 import { Hono } from 'hono';
+import { type RegistrationPaymentProof, verifyRegistrationPayment } from '../lib/register-payment';
 import {
   calculateCharges,
-  checkGasBudget,
   createRssFeed,
   deriveGtsHandle,
   derivePdsHandle,
   generateRecoveryPackage,
-  getLensHandleCost,
   isPlanPaid,
   REGISTRATION_PLANS,
   recordEnsIntent,
@@ -104,7 +103,8 @@ registerAll.post('/all', async (c) => {
     farcasterUsername?: string;
     lensHandle?: string;
     ensName?: string;
-    confirmedOverage?: boolean;
+    paymentTxHash?: string;
+    paymentIntentId?: string;
   };
   try {
     body = await c.req.json<{
@@ -112,7 +112,8 @@ registerAll.post('/all', async (c) => {
       farcasterUsername?: string;
       lensHandle?: string;
       ensName?: string;
-      confirmedOverage?: boolean;
+      paymentTxHash?: string;
+      paymentIntentId?: string;
     }>();
   } catch {
     return jsonResponse({ error: 'Invalid JSON body' }, 400);
@@ -127,32 +128,31 @@ registerAll.post('/all', async (c) => {
   const premium = await checkPremiumStatus(walletAddress, c.env);
   const isPremium = !!premium;
 
-  // ── Profit Guarantee: Gas Budget Gate ─────────────────────────────────
-  // We never proceed with a registration that would lose us money.
-  // If gas costs exceed the plan budget, the user must explicitly confirm.
+  // ── Payment Gate: paid plans require a verified on-chain payment ──────
+  // The old gate was `confirmedOverage: true`, a client-supplied boolean,
+  // which let anyone claim paid plans for free (CVSS 8.1). A paid plan now
+  // requires a real, confirmed, single-use on-chain paymentTxHash before any
+  // paid registration steps (Farcaster/Lens gas) are executed. Premium
+  // subscribers are exempt — their subscription covers registration gas.
   if (!isPremium && isPlanPaid(plan)) {
-    const handleCost = body.lensHandle ? getLensHandleCost(body.lensHandle) : { gasCost: 2 };
-    const fcGas = 5; // Base gas cost for Farcaster on Base
-    const lensGas = handleCost.gasCost;
-    const ensGas = plan === 'complete' ? 10 : 0;
-
-    const gasResult = checkGasBudget(plan, fcGas, lensGas, ensGas);
-
-    if (!gasResult.withinBudget && !body.confirmedOverage) {
+    const proof: RegistrationPaymentProof = {
+      txHash: body.paymentTxHash,
+      paymentIntentId: body.paymentIntentId,
+    };
+    const payment = await verifyRegistrationPayment(c.env, proof, {
+      walletAddress,
+      expectedCents: calculateCharges(plan, false, body.lensHandle).totalCents,
+      plan,
+    });
+    if (!payment.verified) {
       return c.json(
         {
-          requiresConfirmation: true,
-          message:
-            gasResult.overage > 0
-              ? `Gas costs are higher than usual ($${gasResult.actualCost}). Continue (+$${gasResult.overage.toFixed(2)} extra) or wait for lower gas.`
-              : `Gas costs ($${gasResult.actualCost}) exceed plan budget.`,
-          proposedTotal: `$${gasResult.proposedTotal}`,
-          ourProfit: `$${gasResult.ourProfit}`,
-          overage: gasResult.overage,
-          action: 'Resubmit with confirmedOverage: true to proceed, or wait for lower gas.',
+          error: payment.error ?? 'Payment verification failed',
+          plan,
+          requiresPayment: true,
         },
         402,
-      ); // Payment Required
+      );
     }
   }
 
@@ -378,7 +378,7 @@ registerAll.post('/all', async (c) => {
           redirectUrl: 'https://warpcast.com/~/signup',
         };
       }
-    } catch (_e) {
+    } catch {
       results.farcaster = {
         ok: false,
         error: 'Farcaster registration failed — try Warpcast redirect',
@@ -415,7 +415,7 @@ registerAll.post('/all', async (c) => {
           error: lens.error || 'Lens registration failed — try manual signup',
         };
       }
-    } catch (_e) {
+    } catch {
       results.lens = {
         ok: false,
         error: 'Lens registration failed — try manual signup',
@@ -439,7 +439,7 @@ registerAll.post('/all', async (c) => {
   try {
     const typedResults = results as unknown as Parameters<typeof storeAllIdentities>[2];
     await storeAllIdentities(c.env, walletAddress, typedResults);
-  } catch (_e) {
+  } catch {
     // Non-fatal — registration succeeded even if KV storage failed
   }
 
@@ -612,9 +612,13 @@ registerAll.post('/farcaster', async (c) => {
   if (session instanceof Response) return session;
 
   const walletAddress = session.address;
-  let body: { username?: string };
+  let body: { username?: string; paymentTxHash?: string; paymentIntentId?: string };
   try {
-    body = await c.req.json<{ username?: string }>();
+    body = await c.req.json<{
+      username?: string;
+      paymentTxHash?: string;
+      paymentIntentId?: string;
+    }>();
   } catch {
     return jsonResponse({ error: 'Invalid JSON body' }, 400);
   }
@@ -622,6 +626,28 @@ registerAll.post('/farcaster', async (c) => {
   const username = body.username || deriveGtsHandle(walletAddress);
 
   const premium = await checkPremiumStatus(walletAddress, c.env);
+
+  // ── Payment gate: standalone Farcaster costs $5 gas — require proof ──
+  if (!premium) {
+    const proof: RegistrationPaymentProof = {
+      txHash: body.paymentTxHash,
+      paymentIntentId: body.paymentIntentId,
+    };
+    const payment = await verifyRegistrationPayment(c.env, proof, {
+      walletAddress,
+      expectedCents: 500,
+      plan: 'farcaster',
+    });
+    if (!payment.verified) {
+      return c.json(
+        {
+          error: payment.error ?? 'Payment verification failed',
+          requiresPayment: true,
+        },
+        402,
+      );
+    }
+  }
 
   try {
     const result = await registerOnPlatform('farcaster', username, walletAddress, {
@@ -653,7 +679,7 @@ registerAll.post('/farcaster', async (c) => {
       },
       400,
     );
-  } catch (_e) {
+  } catch {
     return jsonResponse(
       {
         ok: false,
@@ -672,15 +698,41 @@ registerAll.post('/lens', async (c) => {
   if (session instanceof Response) return session;
 
   const walletAddress = session.address;
-  let body: { handle?: string };
+  let body: { handle?: string; paymentTxHash?: string; paymentIntentId?: string };
   try {
-    body = await c.req.json<{ handle?: string }>();
+    body = await c.req.json<{
+      handle?: string;
+      paymentTxHash?: string;
+      paymentIntentId?: string;
+    }>();
   } catch {
     return jsonResponse({ error: 'Invalid JSON body' }, 400);
   }
 
   const lensHandle = body.handle || deriveGtsHandle(walletAddress);
   const premium = await checkPremiumStatus(walletAddress, c.env);
+
+  // ── Payment gate: standalone Lens costs $2 gas — require proof ───────
+  if (!premium) {
+    const proof: RegistrationPaymentProof = {
+      txHash: body.paymentTxHash,
+      paymentIntentId: body.paymentIntentId,
+    };
+    const payment = await verifyRegistrationPayment(c.env, proof, {
+      walletAddress,
+      expectedCents: 200,
+      plan: 'lens',
+    });
+    if (!payment.verified) {
+      return c.json(
+        {
+          error: payment.error ?? 'Payment verification failed',
+          requiresPayment: true,
+        },
+        402,
+      );
+    }
+  }
 
   try {
     const result = await registerOnPlatform('lens', lensHandle, walletAddress, {
@@ -712,7 +764,7 @@ registerAll.post('/lens', async (c) => {
       },
       400,
     );
-  } catch (_e) {
+  } catch {
     return jsonResponse(
       {
         ok: false,
@@ -744,7 +796,7 @@ registerAll.get('/export', async (c) => {
       exportedAt: new Date().toISOString(),
       data: JSON.parse(raw),
     });
-  } catch (_err) {
+  } catch {
     return jsonResponse({ error: 'Failed to export registration data' }, 500);
   }
 });

@@ -238,7 +238,8 @@ export const FEATURES: Record<Feature, FeatureDef> = {
   MULTI_PLATFORM_SIMULCAST: {
     key: 'MULTI_PLATFORM_SIMULCAST',
     label: 'Multi-platform simulcast streaming',
-    description: 'Stream once to Loops, simulcast to YouTube, TikTok, Twitch, Kick, and all protocols',
+    description:
+      'Stream once to Loops, simulcast to YouTube, TikTok, Twitch, Kick, and all protocols',
     minTier: 'enterprise',
   },
   SELF_HOSTED_CUSTOM_DOMAIN: {
@@ -377,8 +378,9 @@ export interface ProtocolDef {
 
 /**
  * Every protocol, the minimum tier required for registration.
- * Free tier gets all ActivityPub services (massive value at $0).
- * Pro adds Nostr. Creator adds Bluesky + Lemmy. Enterprise adds Farcaster + Lens + Zora.
+ * Gating reconciled with register-all.ts (single source of truth):
+ *   Free tier gets all ActivityPub services plus Nostr, Bluesky (AT PDS)
+ *   and Lemmy. Paid (Enterprise) adds Farcaster + Lens + Zora.
  */
 export const PROTOCOL_ACCESS: Record<ProtocolId, ProtocolDef> = {
   // ── Free Tier — All ActivityPub services ─────────────────────────────
@@ -467,7 +469,7 @@ export const PROTOCOL_ACCESS: Record<ProtocolId, ProtocolDef> = {
     benefits: [
       'Track reading progress',
       'Write book reviews',
-      'Follow friends\' reading',
+      "Follow friends' reading",
       'Discover new books',
     ],
   },
@@ -532,13 +534,13 @@ export const PROTOCOL_ACCESS: Record<ProtocolId, ProtocolDef> = {
     ],
   },
 
-  // ── Pro Tier ($5/mo) — Add Nostr ────────────────────────────────────
+  // ── Free Tier — Nostr (register-all creates Nostr keys for free) ──────
   nostr: {
     id: 'nostr',
     label: 'Nostr',
     description: 'Decentralized relay-based social network with keypair identity',
     shortDescription: 'Censorship-resistant social',
-    minTier: 'pro',
+    minTier: 'free',
     federated: false,
     icon: '⚡',
     benefits: [
@@ -548,16 +550,15 @@ export const PROTOCOL_ACCESS: Record<ProtocolId, ProtocolDef> = {
       'Zap lightning tips',
       'Cross-post between Nostr relays',
     ],
-    upgradeCta: 'Get Nostr access — upgrade to Pro ($5/mo)',
   },
 
-  // ── Creator Tier ($10/mo) — Add Bluesky + Lemmy ─────────────────────
+  // ── Free Tier — Bluesky / AT Protocol PDS (register-all creates PDS for free) ──
   bluesky: {
     id: 'bluesky',
     label: 'Bluesky (AT Protocol)',
     description: 'AT Protocol PDS account — Bluesky social network with federation',
     shortDescription: 'AT Protocol social identity',
-    minTier: 'creator',
+    minTier: 'free',
     federated: true,
     icon: '☁️',
     benefits: [
@@ -567,14 +568,13 @@ export const PROTOCOL_ACCESS: Record<ProtocolId, ProtocolDef> = {
       'Bluesky feed generator access',
       'Cross-posting to Bluesky',
     ],
-    upgradeCta: 'Get Bluesky access — upgrade to Creator ($10/mo)',
   },
   lemmy: {
     id: 'lemmy',
     label: 'Lemmy',
     description: 'Federated community platform — Reddit alternative on ActivityPub',
     shortDescription: 'Community discussions & forums',
-    minTier: 'creator',
+    minTier: 'free',
     federated: true,
     icon: '🔮',
     benefits: [
@@ -583,7 +583,6 @@ export const PROTOCOL_ACCESS: Record<ProtocolId, ProtocolDef> = {
       'Vote and comment system',
       'Moderation tools',
     ],
-    upgradeCta: 'Get Lemmy access — upgrade to Creator ($10/mo)',
   },
 
   // ── Enterprise Tier ($20/mo) — Add Farcaster + Lens + Zora ──────────
@@ -642,14 +641,20 @@ export const PROTOCOL_ACCESS: Record<ProtocolId, ProtocolDef> = {
 
 /** ActivityPub service IDs (all free-tier) */
 export const ACTIVITYPUB_PROTOCOLS: ProtocolId[] = [
-  'gts', 'mastodon', 'peertube', 'pixelfed', 'writefreely',
-  'bookwyrm', 'mobilizon', 'funkwhale', 'owncast', 'castopod',
+  'gts',
+  'mastodon',
+  'peertube',
+  'pixelfed',
+  'writefreely',
+  'bookwyrm',
+  'mobilizon',
+  'funkwhale',
+  'owncast',
+  'castopod',
 ];
 
 /** Paid protocol IDs that require a subscription (not $0) */
-export const PAID_PROTOCOLS: ProtocolId[] = [
-  'nostr', 'bluesky', 'lemmy', 'farcaster', 'lens', 'zora',
-];
+export const PAID_PROTOCOLS: ProtocolId[] = ['farcaster', 'lens', 'zora'];
 
 /**
  * Get all protocols accessible by a given tier.
