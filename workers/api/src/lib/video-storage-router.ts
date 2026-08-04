@@ -2,16 +2,17 @@
  * @degenfeed/api-worker — Decentralized Video Storage Router
  *
  * ZERO-COST HOSTING PRIORITY:
- *   1. PeerTube federation (videos on other instances — $0)
- *   2. YouTube embeds (link to YouTube — $0)
- *   3. Twitch embeds (link to Twitch VODs — $0)
- *   4. DTube/Steem (blockchain-stored — $0)
- *   5. Odysee/LBRY (P2P hosting — $0)
- *   6. Nostr NIP-71 (video events on relays — $0)
- *   7. Farcaster Frames (external video links — $0)
- *   8. IPFS (via web3.storage free tier, public gateways — $0)
- *   9. Arweave (permanent, one-time fee ~$0.01/MB — cheap)
- *   10. R2 ($0.015/GB/month)
+ *   1. Blossom (nostr.build free tier — 20MB/clip, 3min max, global CDN, $0)
+ *   2. PeerTube federation (videos on other instances — $0)
+ *   3. YouTube embeds (link to YouTube — $0)
+ *   4. Twitch embeds (link to Twitch VODs — $0)
+ *   5. DTube/Steem (blockchain-stored — $0)
+ *   6. Odysee/LBRY (P2P hosting — $0)
+ *   7. Nostr NIP-71 (video events on relays — $0)
+ *   8. Farcaster Frames (external video links — $0)
+ *   9. IPFS (via web3.storage free tier, public gateways — $0)
+ *   10. Arweave (permanent, one-time fee ~$0.01/MB — cheap)
+ *   11. R2 ($0.015/GB/month)
  *
  * Only fall back to R2/IPFS if creator explicitly wants "native upload".
  *
@@ -19,8 +20,8 @@
  * Content classification determines routing strategy.
  */
 
+import { log } from '../logger';
 import type { Env } from '../types';
-import { log } from '../types';
 import type { IPFSUploadResult } from './ipfs-storage';
 import { getIPFSGatewayUrl, uploadBufferToIPFS } from './ipfs-storage';
 import type { R2UploadResult } from './r2-storage';
@@ -46,6 +47,7 @@ export type StorageBackend =
   | 'odysee-lbry'
   | 'nostr-nip71'
   | 'farcaster-frame'
+  | 'blossom' // Blossom-compatible file server (nostr.build free tier: 20MB/clip, 3min)
   | 'ipfs'
   | 'r2'
   | 'arweave'
@@ -411,7 +413,6 @@ export async function storeVideo(
 
   let primaryUrl = '';
   let ipfsHash: string | undefined;
-  let arweaveTxId: string | undefined;
 
   // Upload to IPFS
   if (route.backend === 'ipfs' || route.mirrorToIPFS) {
@@ -477,7 +478,6 @@ export async function storeVideo(
     backend: route.backend,
     url: primaryUrl,
     ipfsHash,
-    arweaveTxId,
     isZeroCost: route.isZeroCost,
     cost: {
       monthlyStorage,
@@ -514,7 +514,6 @@ export async function getCreatorStorageUsage(
 
   try {
     let totalBytes = 0;
-    let totalCount = 0;
     const byBackend: Record<string, { bytes: number; readable: string; count: number }> = {
       ipfs: { ...zeroUsage },
       r2: { ...zeroUsage },
@@ -527,7 +526,6 @@ export async function getCreatorStorageUsage(
       const listed = await r2.list({ limit: 1000 });
       for (const obj of listed.objects) {
         totalBytes += obj.size;
-        totalCount++;
         byBackend.r2.bytes += obj.size;
         byBackend.r2.count++;
       }

@@ -8,15 +8,15 @@
  * NO paid providers. NO Infura (deprecated — Infura IPFS requires paid plan).
  *
  * Generates gateway URLs for content delivery:
- *   - ipfs.io
+ *   - ipfs.degenfeed.xyz (our own CF gateway — 50GB/mo free, priority)
  *   - dweb.link
- *   - Our own gateway if configured
+ *   - ipfs.io
  *
  * Tracks pin status in KV for monitoring.
  */
 
+import { log } from '../logger';
 import type { Env } from '../types';
-import { log } from '../types';
 
 // ─── Constants ──────────────────────────────────────────────────────────
 
@@ -24,10 +24,13 @@ const WEB3_STORAGE_API = 'https://api.web3.storage/upload';
 const PINATA_API = 'https://api.pinata.cloud/pinning/pinFileToIPFS';
 // Infura IPFS removed — no paid providers. Use web3.storage (free tier) or Pinata.
 
+/** Our own Cloudflare IPFS gateway (50GB/mo free) — first priority. */
+export const DEGENFEED_IPFS_GATEWAY = 'https://ipfs.degenfeed.xyz/ipfs/{cid}';
+
 export const IPFS_GATEWAYS = [
-  { url: 'https://{cid}.ipfs.dweb.link', name: 'dweb', priority: 1 },
-  { url: 'https://ipfs.io/ipfs/{cid}', name: 'ipfs-io', priority: 2 },
-  { url: 'https://cloudflare-ipfs.com/ipfs/{cid}', name: 'cf-ipfs', priority: 3 },
+  { url: DEGENFEED_IPFS_GATEWAY, name: 'degenfeed', priority: 1 },
+  { url: 'https://{cid}.ipfs.dweb.link', name: 'dweb', priority: 2 },
+  { url: 'https://ipfs.io/ipfs/{cid}', name: 'ipfs-io', priority: 3 },
   { url: 'https://gateway.pinata.cloud/ipfs/{cid}', name: 'pinata-gw', priority: 4 },
 ] as const;
 
@@ -292,9 +295,9 @@ export async function checkIPFSHealth(): Promise<boolean> {
  */
 export async function verifyIPFSContent(cid: string): Promise<boolean> {
   const urls = [
+    `https://ipfs.degenfeed.xyz/ipfs/${cid}`,
     `https://ipfs.io/ipfs/${cid}`,
     `https://${cid}.ipfs.dweb.link`,
-    `https://cloudflare-ipfs.com/ipfs/${cid}`,
   ];
 
   for (const url of urls) {

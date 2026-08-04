@@ -16,8 +16,8 @@
  * Served via Cloudflare IPFS gateway for CDN acceleration.
  */
 
+import { log } from '../logger';
 import type { Env } from '../types';
-import { log } from '../types';
 import type { IPFSUploadResult } from './ipfs-storage';
 import { uploadToIPFS } from './ipfs-storage';
 
@@ -49,8 +49,8 @@ export type ImageSizeName = keyof typeof IMAGE_SIZES;
 const KV_PREFIX = 'image:meta:';
 const KV_CONTENT_PREFIX = 'image:content:';
 
-/** Default IPFS gateway for CDN delivery */
-const CF_IPFS_GATEWAY = 'https://cloudflare-ipfs.com/ipfs';
+/** Default IPFS gateway for CDN delivery — our own CF gateway (ipfs.degenfeed.xyz) */
+const CF_IPFS_GATEWAY = 'https://ipfs.degenfeed.xyz/ipfs';
 
 // ─── Types ──────────────────────────────────────────────────────────────
 
@@ -553,9 +553,9 @@ async function findExistingByHash(env: Env, hash: string): Promise<ImageUploadRe
       },
       metadata: meta,
       allGateways: [
+        `https://ipfs.degenfeed.xyz/ipfs/${cid}`,
         `https://${cid}.ipfs.dweb.link`,
         `https://ipfs.io/ipfs/${cid}`,
-        `https://cloudflare-ipfs.com/ipfs/${cid}`,
       ],
     };
   } catch {
@@ -634,7 +634,7 @@ export async function getCreatorImages(
  * Generate an optimized image URL using Cloudflare Image Resizing.
  *
  * The /cdn-cgi/image/ endpoint transforms images on-the-fly:
- *   https://cloudflare-ipfs.com/cdn-cgi/image/width=150,quality=80/ipfs/{cid}
+ *   https://ipfs.degenfeed.xyz/cdn-cgi/image/width=150,quality=80/ipfs/{cid}
  *
  * If Cloudflare Image Resizing is not available, falls back to the IPFS gateway.
  */
@@ -655,7 +655,7 @@ export function getOptimizedImageUrl(cid: string, params: ImageQueryParams): str
   cdnTransform.push('metadata=none'); // Strip EXIF at CDN level too
 
   const transformStr = cdnTransform.join(',');
-  return `https://cloudflare-ipfs.com/cdn-cgi/image/${transformStr}/ipfs/${cid}`;
+  return `https://ipfs.degenfeed.xyz/cdn-cgi/image/${transformStr}/ipfs/${cid}`;
 }
 
 /**
@@ -685,7 +685,7 @@ export async function checkImageServiceHealth(): Promise<{
   gateway_url: string;
 }> {
   try {
-    const response = await fetch('https://cloudflare-ipfs.com/ipfs/', {
+    const response = await fetch('https://ipfs.degenfeed.xyz/ipfs/', {
       method: 'HEAD',
       signal: AbortSignal.timeout(5_000),
     });

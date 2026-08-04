@@ -17,14 +17,14 @@
  *   :id   = CID | txId | R2 key
  */
 
+import { log } from '../logger';
 import type { Env } from '../types';
-import { log } from '../types';
 
 // ─── Constants ──────────────────────────────────────────────────────────
 
 /** IPFS gateways in priority order */
 const IPFS_GATEWAYS = [
-  { url: 'https://cloudflare-ipfs.com/ipfs/{cid}', name: 'cf-ipfs', priority: 1 },
+  { url: 'https://ipfs.degenfeed.xyz/ipfs/{cid}', name: 'degenfeed', priority: 1 },
   { url: 'https://{cid}.ipfs.dweb.link', name: 'dweb', priority: 2 },
   { url: 'https://ipfs.io/ipfs/{cid}', name: 'ipfs-io', priority: 3 },
   { url: 'https://gateway.pinata.cloud/ipfs/{cid}', name: 'pinata-gw', priority: 4 },
@@ -500,7 +500,7 @@ export function buildTransformUrl(
   params.push('metadata=none'); // Strip EXIF
   params.push('onerror=redirect'); // Fallback to original on error
 
-  return `https://cloudflare-ipfs.com/cdn-cgi/image/${params.join(',')}/ipfs/${cid}`;
+  return `https://ipfs.degenfeed.xyz/cdn-cgi/image/${params.join(',')}/ipfs/${cid}`;
 }
 
 // ─── Content Verification ─────────────────────────────────────────────

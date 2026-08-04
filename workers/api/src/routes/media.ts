@@ -251,7 +251,7 @@ export async function handleGetImage(request: Request, _env: Env, cid: string): 
 
     // If format is 'original', redirect to the IPFS gateway directly (no transform)
     if (formatParam === 'original') {
-      const gwUrl = `https://cloudflare-ipfs.com/ipfs/${cid}`;
+      const gwUrl = `https://ipfs.degenfeed.xyz/ipfs/${cid}`;
       return Response.redirect(gwUrl, 302);
     }
 
@@ -296,7 +296,7 @@ export async function handleGetImageMetadata(
       cid,
       metadata,
       urls: {
-        original: `https://cloudflare-ipfs.com/ipfs/${cid}`,
+        original: `https://ipfs.degenfeed.xyz/ipfs/${cid}`,
         thumbnail: getDefaultImageUrl(cid, 'thumbnail'),
         medium: getDefaultImageUrl(cid, 'medium'),
         full: getDefaultImageUrl(cid, 'full'),
@@ -495,7 +495,7 @@ export async function handleCreatorMediaDashboard(request: Request, env: Env): P
       },
       images: stats.images.map((img) => ({
         cid: img.cid,
-        url: `https://cloudflare-ipfs.com/ipfs/${img.cid}`,
+        url: `https://ipfs.degenfeed.xyz/ipfs/${img.cid}`,
         fileName: img.metadata.fileName,
         width: img.metadata.width,
         height: img.metadata.height,
@@ -506,9 +506,9 @@ export async function handleCreatorMediaDashboard(request: Request, env: Env): P
         exifStripped: img.metadata.exifStripped,
         isAnimated: img.metadata.isAnimated,
         variants: {
-          thumbnail: `https://cloudflare-ipfs.com/cdn-cgi/image/width=150,format=webp,quality=80/ipfs/${img.cid}`,
-          medium: `https://cloudflare-ipfs.com/cdn-cgi/image/width=600,format=webp,quality=85/ipfs/${img.cid}`,
-          full: `https://cloudflare-ipfs.com/cdn-cgi/image/width=2048,format=webp,quality=90/ipfs/${img.cid}`,
+          thumbnail: `https://ipfs.degenfeed.xyz/cdn-cgi/image/width=150,format=webp,quality=80/ipfs/${img.cid}`,
+          medium: `https://ipfs.degenfeed.xyz/cdn-cgi/image/width=600,format=webp,quality=85/ipfs/${img.cid}`,
+          full: `https://ipfs.degenfeed.xyz/cdn-cgi/image/width=2048,format=webp,quality=90/ipfs/${img.cid}`,
         },
       })),
     });

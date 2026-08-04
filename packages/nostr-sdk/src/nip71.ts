@@ -13,9 +13,12 @@
  *   - m: MIME type of the video
  *   - image: thumbnail / cover image
  *   - duration: video duration in seconds
+ *   - size: file size in bytes
+ *   - dim: video dimensions as WxH (e.g. "1080x1920")
  *   - t: content tags (hashtags)
  *   - p: participant pubkeys
  *   - i: identifier for external content IDs
+ *   - imeta: media metadata (url, m, x, dim, alt)
  *
  * Reference: https://github.com/nostr-protocol/nips/blob/master/71.md
  */
@@ -234,6 +237,12 @@ export function serializeVideoEvent(opts: {
   kind?: number;
   tags?: string[];
   contentWarning?: string;
+  /** Video dimensions as `WxH` (e.g. "1080x1920") */
+  dimensions?: string;
+  /** SHA-256 content hash of the video file (x tag / imeta x) */
+  contentHash?: string;
+  /** Alt text for the media (imeta alt) */
+  alt?: string;
 }): { kind: number; tags: string[][]; content: string } {
   const tags: string[][] = [
     ['d', opts.id],
@@ -246,7 +255,16 @@ export function serializeVideoEvent(opts: {
   if (opts.thumbnailUrl) tags.push(['image', opts.thumbnailUrl]);
   if (opts.duration) tags.push(['duration', String(opts.duration)]);
   if (opts.size) tags.push(['size', String(opts.size)]);
+  if (opts.dimensions) tags.push(['dim', opts.dimensions]);
   if (opts.contentWarning) tags.push(['content-warning', opts.contentWarning]);
+
+  // Media metadata (NIP-92 imeta) for clients that render inline
+  const imetaParts: string[] = [`url ${opts.url}`];
+  if (opts.mimeType) imetaParts.push(`m ${opts.mimeType}`);
+  if (opts.contentHash) imetaParts.push(`x ${opts.contentHash}`);
+  if (opts.dimensions) imetaParts.push(`dim ${opts.dimensions}`);
+  if (opts.alt) imetaParts.push(`alt ${opts.alt.slice(0, 200)}`);
+  tags.push(['imeta', ...imetaParts]);
 
   if (opts.tags) {
     for (const t of opts.tags) tags.push(['t', t]);
@@ -380,4 +398,123 @@ export async function fetchNostrVideoEvents(
   } catch {
     return [];
   }
+}
+
+// ─── Publishing ─────────────────────────────────────────────────────────
+
+import type { NostrEvent } from './event';
+import { getPublicKey, signEvent } from './event';
+
+/**
+ * Create a signed NIP-71 video event (kind 34235 video / 34236 short).
+ *
+ * Combines `serializeVideoEvent` with `signEvent` so publishers can push
+ * a ready-to-publish event straight to relays. The event includes title,
+ * description (content), thumbnail, video URL, duration, dimensions and
+ * content hash.
+ */
+export function createVideoEvent(
+  opts: {
+    id: string;
+    title: string;
+    url: string;
+    mimeType?: string;
+    thumbnailUrl?: string;
+    duration?: number;
+    size?: number;
+    summary?: string;
+    publishedAt?: number;
+    isShort?: boolean;
+    kind?: number;
+    tags?: string[];
+    contentWarning?: string;
+    /** Video dimensions as `WxH` (e.g. "1080x1920") */
+    dimensions?: string;
+    /** SHA-256 content hash of the video file */
+    contentHash?: string;
+    alt?: string;
+  },
+  secretKey: string,
+): NostrEvent {
+  const { kind, tags, content } = serializeVideoEvent(opts);
+  return createSignedEvent({ kind, tags, content }, secretKey);
+}
+
+/**
+ * Sign an already-serialized event shape (kind/tags/content) with a secret key.
+ */
+function createSignedEvent(
+  serialized: { kind: number; tags: string[][]; content: string },
+  secretKey: string,
+): NostrEvent {
+  const pubkey = getPublicKey(secretKey);
+  return signEvent(
+    {
+      pubkey,
+      created_at: Math.floor(Date.now() / 1000),
+      kind: serialized.kind,
+      tags: serialized.tags,
+      content: serialized.content,
+    },
+    secretKey,
+  );
+}
+
+/**
+ * Publish a NIP-71 video event to the given relays.
+ *
+ * Returns per-relay publish results. A relay is considered successful when
+ * it sends an OK frame for the event id; relays that time out or reject are
+ * reported individually (fail-open — one good relay is enough).
+ */
+export async function publishVideoEvent(
+  event: NostrEvent,
+  relays: string[],
+  timeoutMs = 10_000,
+): Promise<{
+  eventId: string;
+  successful: string[];
+  failed: string[];
+  results: Array<{ relay: string; ok: boolean; message?: string }>;
+}> {
+  const { RelayPool } = await import('./relay');
+  const pool = new RelayPool(relays, {
+    connectTimeout: timeoutMs / 2,
+    eoseTimeout: timeoutMs / 2,
+    maxReconnects: 0,
+  });
+
+  return new Promise((resolve) => {
+    const results: Array<{ relay: string; ok: boolean; message?: string }> = [];
+    const successful: string[] = [];
+    const failed: string[] = [];
+
+    const timer = setTimeout(() => {
+      pool.disconnectAll();
+      resolve({ eventId: event.id, successful, failed, results });
+    }, timeoutMs);
+
+    // Wait a beat for connections to establish, then publish.
+    setTimeout(() => {
+      pool.publish(event, {
+        onOk: (relayUrl, eventId, success, message) => {
+          if (eventId !== event.id) return;
+          results.push({ relay: relayUrl, ok: success, message });
+          if (success && !successful.includes(relayUrl)) successful.push(relayUrl);
+          else if (!success && !failed.includes(relayUrl)) failed.push(relayUrl);
+        },
+        onError: (relayUrl, message) => {
+          results.push({ relay: relayUrl, ok: false, message });
+          if (!failed.includes(relayUrl)) failed.push(relayUrl);
+        },
+      });
+
+      // Allow OK frames to arrive; fail-open on timeout.
+      setTimeout(() => {
+        clearTimeout(timer);
+        pool.disconnectAll();
+        resolve({ eventId: event.id, successful, failed, results });
+      }, timeoutMs - 200);
+    }, 500);
+  });
 }

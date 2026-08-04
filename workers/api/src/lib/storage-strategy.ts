@@ -10,7 +10,8 @@
  *   - Current storage costs across backends
  *
  * TIER MAP:
- *   TIER 1 (FREE):    IPFS via Storacha (web3.storage) — 5GB free
+ *   TIER 1 (FREE):    Blossom (nostr.build) — 20MB/clip, 3min max, zero cost
+ *                      IPFS via Storacha (web3.storage) — 5GB free
  *                      Pinata (1GB free fallback)
  *                      PeerTube federation
  *   TIER 2 (CHEAP):   Cloudflare R2 ($0.015/GB/mo) — default VODs
@@ -32,8 +33,8 @@
  *   - video-storage.ts (legacy S3/R2)
  */
 
+import { log } from '../logger';
 import type { Env } from '../types';
-import { log } from '../types';
 import type { RoutingDecision, VideoContentType } from './video-storage-router';
 import { formatSize } from './video-storage-router';
 
@@ -41,6 +42,7 @@ import { formatSize } from './video-storage-router';
 
 /** Cost per GB per month for each backend (USD). 0 = free tier */
 export const BACKEND_COSTS: Record<string, number> = {
+  blossom: 0, // Free — nostr.build Blossom (20MB/clip, 3min max)
   ipfs_storacha: 0, // Free 5GB via Storacha (web3.storage)
   ipfs_pinata: 0, // Free 1GB via Pinata
   ipfs_4everland: 0, // Free 5GB via 4EVERLAND
@@ -56,6 +58,7 @@ export const BACKEND_COSTS: Record<string, number> = {
 
 /** Free tier limits per backend */
 export const FREE_TIER_LIMITS: Record<string, number> = {
+  blossom: 20 * 1024 * 1024, // 20MB per clip (per-file, nostr.build free)
   ipfs_storacha: 5 * 1024 * 1024 * 1024, // 5 GiB
   ipfs_pinata: 1 * 1024 * 1024 * 1024, // 1 GB
   ipfs_4everland: 5 * 1024 * 1024 * 1024, // 5 GB
@@ -66,6 +69,9 @@ export const FREE_TIER_LIMITS: Record<string, number> = {
 /** Content size thresholds for routing decisions */
 const SHORT_MAX_DURATION = 60; // seconds
 const SHORT_MAX_SIZE = 50 * 1024 * 1024; // 50MB
+/** Blossom free tier: 20MB max, 3min max — prefer for short clips */
+const BLOSSOM_MAX_SIZE = 20 * 1024 * 1024; // 20MB
+const BLOSSOM_MAX_DURATION = 180; // 3 minutes
 const MEDIUM_MAX_SIZE = 500 * 1024 * 1024; // 500MB
 const LARGE_MAX_SIZE = 2 * 1024 * 1024 * 1024; // 2GB
 
@@ -182,7 +188,6 @@ export function determineStorageTier(
   const {
     contentType,
     isPremium = false,
-    creatorTier = 'free',
     currentIPFSUsage = 0,
     currentR2Usage = 0,
     viewCount7d = 0,
@@ -216,12 +221,32 @@ export function determineStorageTier(
     };
   }
 
-  // ─── Shorts (<60s, <50MB) → IPFS (free tier) ────────────────────
+  // ─── Shorts (<60s, <50MB) → Blossom / IPFS (free tier) ────────────
   if (
     contentType === 'short' ||
     contentType === 'podcast' ||
     (duration > 0 && duration <= SHORT_MAX_DURATION && size <= SHORT_MAX_SIZE)
   ) {
+    // Blossom free tier: <20MB and <3min — completely free, global CDN.
+    if (size <= BLOSSOM_MAX_SIZE && duration <= BLOSSOM_MAX_DURATION) {
+      return {
+        backend: 'blossom',
+        contentType: contentType ?? 'short',
+        reason: `Short clip (${duration}s, ${formatSize(size)}) → Blossom (nostr.build) — free 20MB/3min tier`,
+        mirrorToIPFS: false,
+        mirrorToArweave: false,
+        estimatedMonthlyCostUsd: 0,
+        retentionDays: 0,
+        storageTier: 'tier1_free',
+        specificBackend: 'blossom',
+        backendLabel: 'Blossom (nostr.build) — Free',
+        annualCostUsd: 0,
+        estimatedEgressMonthlyUsd: 0,
+        shouldPin: false,
+        autoMigrateTarget: null,
+        autoMigrateAfterDays: null,
+      };
+    }
     // Use Storacha if free tier remains, otherwise fall back to Pinata, then R2
     if (size <= ipfsFreeRemaining) {
       return {
@@ -265,10 +290,32 @@ export function determineStorageTier(
 
   // ─── VODs (≥60s) ─────────────────────────────────────────────────
   // Size-based routing:
+  //   <20MB & <3min → Blossom (Tier 1 free — zero cost CDN)
   //   <50MB → IPFS (Tier 1 free)
   //   50MB–500MB → R2 Standard (Tier 2 cheap)
   //   500MB–2GB → B2 (Tier 2 cheap, lowest rate)
   //   >2GB → B2 (Tier 2 cheap) with CDN caching
+
+  if (size <= BLOSSOM_MAX_SIZE && duration <= BLOSSOM_MAX_DURATION) {
+    // Short-enough VODs can still use the Blossom free tier
+    return {
+      backend: 'blossom',
+      contentType: contentType ?? 'longform',
+      reason: `Short VOD (${duration}s, ${formatSize(size)}) → Blossom (nostr.build) — free`,
+      mirrorToIPFS: false,
+      mirrorToArweave: false,
+      estimatedMonthlyCostUsd: 0,
+      retentionDays: 0,
+      storageTier: 'tier1_free',
+      specificBackend: 'blossom',
+      backendLabel: 'Blossom (nostr.build) — Free',
+      annualCostUsd: 0,
+      estimatedEgressMonthlyUsd: 0,
+      shouldPin: false,
+      autoMigrateTarget: null,
+      autoMigrateAfterDays: null,
+    };
+  }
 
   if (size < 50 * 1024 * 1024 && size <= ipfsFreeRemaining) {
     // Small VODs can still go to IPFS
@@ -730,7 +777,9 @@ export async function getStrategyStats(
     stats.estimatedMonthlySpend += estimateMonthlyCost(item.size, item.backend);
 
     // Classify into tiers
-    if (['ipfs_storacha', 'ipfs_pinata', 'ipfs_4everland', 'ipfs'].includes(item.backend)) {
+    if (
+      ['ipfs_storacha', 'ipfs_pinata', 'ipfs_4everland', 'ipfs', 'blossom'].includes(item.backend)
+    ) {
       stats.byTier.tier1_free++;
     } else if (['arweave'].includes(item.backend)) {
       stats.byTier.tier3_premium++;
@@ -754,6 +803,7 @@ export async function getStrategyStats(
  */
 export function getBackendLabel(backend: string): string {
   const labels: Record<string, string> = {
+    blossom: 'Blossom (nostr.build) — free CDN',
     ipfs: 'IPFS (decentralized)',
     ipfs_storacha: 'IPFS via Storacha (web3.storage)',
     ipfs_pinata: 'IPFS via Pinata',
@@ -794,6 +844,7 @@ export function getTierColor(tier: StorageTier): string {
  */
 export function getBackendEmoji(backend: string): string {
   const emojis: Record<string, string> = {
+    blossom: '🌸',
     ipfs: '🌐',
     ipfs_storacha: '🌐',
     ipfs_pinata: '📌',

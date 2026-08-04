@@ -911,7 +911,7 @@ export class UnifiedShortsPipeline {
       const fileName = `shorts/${Date.now()}-${_file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
       const { uploadBufferToIPFS } = await import('./ipfs-storage');
       const result = await uploadBufferToIPFS(buffer, fileName, _file.type, this.env);
-      return result.gatewayUrl || `https://cloudflare-ipfs.com/ipfs/${result.cid}`;
+      return result.gatewayUrl || `https://ipfs.degenfeed.xyz/ipfs/${result.cid}`;
     } catch (err) {
       throw new Error(`Upload failed: ${err instanceof Error ? err.message : String(err)}`);
     }

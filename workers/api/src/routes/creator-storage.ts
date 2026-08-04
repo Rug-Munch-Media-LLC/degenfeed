@@ -20,7 +20,7 @@ import { jsonResponse, methodNotAllowed, noCacheJsonResponse } from '../response
 import { requireSession } from '../session';
 import type { Env } from '../types';
 
-const CF_IPFS_GATEWAY = 'https://cloudflare-ipfs.com/ipfs';
+const CF_IPFS_GATEWAY = 'https://ipfs.degenfeed.xyz/ipfs';
 
 /**
  * GET /api/creator/storage
@@ -61,7 +61,7 @@ export async function handleCreatorStorage(request: Request, env: Env): Promise<
       cdn: 'Served via Cloudflare CDN, cached globally',
       cdnUrl: CF_IPFS_GATEWAY,
       gatewayUrls: [
-        'https://cloudflare-ipfs.com/ipfs/',
+        'https://ipfs.degenfeed.xyz/ipfs/',
         'https://ipfs.io/ipfs/',
         'https://dweb.link/ipfs/',
       ],
@@ -83,9 +83,9 @@ export async function handleCreatorStorage(request: Request, env: Env): Promise<
         exifStripped: img.metadata.exifStripped,
         isAnimated: img.metadata.isAnimated,
         variants: {
-          thumbnail: `https://cloudflare-ipfs.com/cdn-cgi/image/width=150,format=webp,quality=80/ipfs/${img.cid}`,
-          medium: `https://cloudflare-ipfs.com/cdn-cgi/image/width=600,format=webp,quality=85/ipfs/${img.cid}`,
-          full: `https://cloudflare-ipfs.com/cdn-cgi/image/width=2048,format=webp,quality=90/ipfs/${img.cid}`,
+          thumbnail: `https://ipfs.degenfeed.xyz/cdn-cgi/image/width=150,format=webp,quality=80/ipfs/${img.cid}`,
+          medium: `https://ipfs.degenfeed.xyz/cdn-cgi/image/width=600,format=webp,quality=85/ipfs/${img.cid}`,
+          full: `https://ipfs.degenfeed.xyz/cdn-cgi/image/width=2048,format=webp,quality=90/ipfs/${img.cid}`,
         },
       })),
     };
