@@ -175,7 +175,7 @@ export default async function AuthCallbackPage({ searchParams }: AuthCallbackPro
               <div className="h-full w-full animate-pulse rounded-full bg-green-500" />
             </div>
           </div>
-          <script
+          <script // biome-ignore lint/security/noDangerouslySetInnerHtml: inline script must run before hydration; identity is JSON-escaped
             dangerouslySetInnerHTML={{
               __html: `try {
                 localStorage.setItem('degenfeed_pending_identity', ${JSON.stringify(pending).replace(/</g, '\\u003c')});

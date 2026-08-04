@@ -31,6 +31,8 @@ import {
   startFeedCacheRefresher,
 } from './feeds';
 import { handleGtsRoute } from './gts-routes';
+import { initLiveDistribution } from './live-distribution';
+import { handleLiveRoute } from './live-routes';
 import { handleNostrRoute } from './nostr-routes';
 import { handlePublishRoute } from './publish-routes';
 import { attachRealtimeWebSocket } from './realtime-ws';
@@ -852,6 +854,16 @@ const server = http.createServer(async (req, res) => {
       return jsonOk(res, result);
     }
 
+    // ── Creator Live Routes (Phase 2) ─────────────────────────────
+    // POST /api/live/go-live     — register creator live session (RTMP info)
+    // GET  /api/live/sessions    — list active sessions
+    // GET  /api/live/sessions/:id — single session
+    // POST /api/live/end         — manually end a session (best effort)
+    // handleLiveRoute self-guards on /api/live/* — placed after the exact
+    // `/api/live` provider fetch so that path keeps returning live feeds.
+    const liveHandled = await handleLiveRoute(path, req.method || 'GET', req, res);
+    if (liveHandled) return;
+
     if (path === '/api/feed/trending' || path === '/api/trending/sidebar') {
       const { posts } = await buildFeed(
         ['mastodon', 'reddit', 'rss', 'nostr', 'farcaster', 'lens'],
@@ -979,7 +991,10 @@ const server = http.createServer(async (req, res) => {
       const limit = Math.min(parseInt(searchParams.get('limit') || '12', 10), 50);
       const { fetchPeerTubeTrending } = await import('../providers/peertube');
       const posts = await fetchPeerTubeTrending(limit);
-      return jsonOk(res, { posts, meta: { total: posts.length, limit, source: 'peertube', fetchedAt: Date.now() } });
+      return jsonOk(res, {
+        posts,
+        meta: { total: posts.length, limit, source: 'peertube', fetchedAt: Date.now() },
+      });
     }
 
     // GET /api/feed/peertube/channels — local PeerTube channel subscriptions
@@ -987,28 +1002,40 @@ const server = http.createServer(async (req, res) => {
       const limit = Math.min(parseInt(searchParams.get('limit') || '20', 10), 100);
       const { fetchPeerTubeChannels } = await import('../providers/peertube');
       const channels = await fetchPeerTubeChannels(limit);
-      return jsonOk(res, { channels, meta: { total: channels.length, limit, source: 'peertube', fetchedAt: Date.now() } });
+      return jsonOk(res, {
+        channels,
+        meta: { total: channels.length, limit, source: 'peertube', fetchedAt: Date.now() },
+      });
     }
 
     // GET /api/feed/owncast/schedule — upcoming Owncast streams
     if (path === '/api/feed/owncast/schedule') {
       const { fetchOwncastSchedule } = await import('../providers/owncast');
       const schedule = await fetchOwncastSchedule();
-      return jsonOk(res, { schedule, meta: { total: schedule.length, source: 'owncast', fetchedAt: Date.now() } });
+      return jsonOk(res, {
+        schedule,
+        meta: { total: schedule.length, source: 'owncast', fetchedAt: Date.now() },
+      });
     }
 
     // GET /api/feed/owncast/archive — past Owncast streams with thumbnails
     if (path === '/api/feed/owncast/archive') {
       const { fetchOwncastArchive } = await import('../providers/owncast');
       const archive = await fetchOwncastArchive();
-      return jsonOk(res, { archive, meta: { total: archive.length, source: 'owncast', fetchedAt: Date.now() } });
+      return jsonOk(res, {
+        archive,
+        meta: { total: archive.length, source: 'owncast', fetchedAt: Date.now() },
+      });
     }
 
     // GET /api/feed/youtube/channels — configured YouTube channels
     if (path === '/api/feed/youtube/channels') {
       const { getYouTubeFeeds } = await import('../providers/youtube');
       const channels = getYouTubeFeeds();
-      return jsonOk(res, { channels, meta: { total: channels.length, source: 'youtube', fetchedAt: Date.now() } });
+      return jsonOk(res, {
+        channels,
+        meta: { total: channels.length, source: 'youtube', fetchedAt: Date.now() },
+      });
     }
 
     if (path.startsWith('/api/feed/')) {
@@ -1236,6 +1263,8 @@ server.listen(PORT, BRIDGE_HOST, () => {
     .catch((err) => {
       console.error('[bridge] Search indexer failed:', err);
     });
+  // Log which live distribution platforms are configured at startup
+  initLiveDistribution();
   // Pre-warm the feed result cache so the first user request is fast
   // (fixes 20s cold start from aggregating 30+ providers on first request)
   void prewarmFeedCache();

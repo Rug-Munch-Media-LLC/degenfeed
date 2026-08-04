@@ -24,7 +24,14 @@ import type http from 'node:http';
 // ─── Types ─────────────────────────────────────────────────────────────
 
 export type LiveStyle = 'vertical' | 'horizontal';
-export type CreatorLivePlatform = 'owncast' | 'peertube' | 'lens' | 'farcaster' | 'nostr';
+export type CreatorLivePlatform =
+  | 'owncast'
+  | 'peertube'
+  | 'lens'
+  | 'farcaster'
+  | 'nostr'
+  | 'bluesky'
+  | 'mastodon';
 
 export const LIVE_STYLES: LiveStyle[] = ['vertical', 'horizontal'];
 export const LIVE_PLATFORMS: CreatorLivePlatform[] = [
@@ -33,11 +40,15 @@ export const LIVE_PLATFORMS: CreatorLivePlatform[] = [
   'lens',
   'farcaster',
   'nostr',
+  'bluesky',
+  'mastodon',
 ];
 
 export interface DistributionResult {
   ok: boolean;
   error?: string;
+  /** Optional informational note (e.g. nothing to clean up) */
+  note?: string;
   eventId?: string;
   dTag?: string;
   relaysAccepted?: string[];

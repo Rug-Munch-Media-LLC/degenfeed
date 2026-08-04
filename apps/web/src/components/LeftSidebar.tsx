@@ -196,6 +196,13 @@ const SECTION_FEATURES: Record<SectionId, FeatureLink[]> = {
     { id: 'digest', label: 'Digest', href: '/digest', icon: '📥', color: '#f43f5e' },
   ],
   video: [
+    {
+      id: 'create',
+      label: 'Create',
+      href: '/create',
+      icon: '➕',
+      color: '#22c55e',
+    },
     { id: 'youtube', label: 'YouTube', href: '/youtube', icon: '▶️', color: '#ff0000' },
     { id: 'videos', label: 'Videos', href: '/videos', icon: '🎬', color: '#a855f7' },
     { id: 'shorts', label: 'Shorts', href: '/shorts', icon: '⚡', color: '#facc15' },

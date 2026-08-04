@@ -62,7 +62,9 @@ export function renderHighlightedContent(
   let lastIndex = 0;
   let match: RegExpExecArray | null;
 
-  while ((match = regex.exec(content)) !== null) {
+  while (true) {
+    match = regex.exec(content);
+    if (match === null) break;
     // Text before highlight
     if (match.index > lastIndex) {
       parts.push({ text: content.slice(lastIndex, match.index), highlighted: false });

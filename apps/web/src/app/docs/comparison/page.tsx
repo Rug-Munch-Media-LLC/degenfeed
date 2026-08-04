@@ -164,12 +164,12 @@ function FeatureTable() {
               const val = row[c.key];
               return typeof val === 'boolean' ? (
                 val ? (
-                  <Check />
+                  <Check key={c.key} />
                 ) : (
-                  <Dash />
+                  <Dash key={c.key} />
                 )
               ) : (
-                <span className="text-xs text-[var(--color-muted)]">{val}</span>
+                <span key={c.key} className="text-xs text-[var(--color-muted)]">{val}</span>
               );
             });
             return (

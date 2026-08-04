@@ -131,6 +131,7 @@ function ProtocolIcon({ protocol }: { protocol: string }) {
     <span
       className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px]"
       style={{ backgroundColor: `${config.color}20` }}
+      role="img"
       title={config.label}
       aria-label={config.label}
     >

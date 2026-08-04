@@ -79,22 +79,20 @@ export function CategoryBreakCard({ niches, index }: CategoryBreakProps) {
     // Fallback to first niche or generic
     const fallbackLabel = niches[0] ?? 'Content';
     return (
-      <div
+      <section
         className="category-break feed-item-enter border-b border-[var(--color-glass-border)] px-4 py-5"
         style={{ '--stagger-i': index } as React.CSSProperties}
-        role="separator"
         aria-label={`${fallbackLabel} section`}
       >
         <hr className="border-t border-[var(--color-glass-border)]" />
-      </div>
+      </section>
     );
   }
 
   return (
-    <div
+    <section
       className="category-break feed-item-enter border-b border-[var(--color-glass-border)] px-4 py-5"
       style={{ '--stagger-i': index } as React.CSSProperties}
-      role="separator"
       aria-label={`${meta.label} section`}
     >
       <div className="flex items-center justify-between gap-3">
@@ -151,7 +149,7 @@ export function CategoryBreakCard({ niches, index }: CategoryBreakProps) {
           </svg>
         </Link>
       </div>
-    </div>
+    </section>
   );
 }
 

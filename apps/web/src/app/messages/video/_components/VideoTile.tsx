@@ -103,7 +103,7 @@ export function VideoTile({
             </svg>
           )}
           {participant.handRaised && (
-            <span className="text-[12px]" aria-label="Hand raised">
+            <span className="text-[12px]" role="img" aria-label="Hand raised">
               ✋
             </span>
           )}

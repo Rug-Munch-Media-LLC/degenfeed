@@ -4,6 +4,7 @@ import { formatTimeAgo, shortenAddress } from '@degenfeed/utils';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useWeb3 } from '../../../components/Web3Provider';
+import { sanitizeHtml } from '../../../lib/sanitize';
 
 // === Types =========================================================
 
@@ -336,9 +337,9 @@ function TokenGate({ post }: { post: GhostPost }) {
 
   if (hasToken) {
     return (
-      <div
+      <div // biome-ignore lint/security/noDangerouslySetInnerHtml: sanitized with DOMPurify
+        dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.html) }}
         className="prose prose-invert max-w-none"
-        dangerouslySetInnerHTML={{ __html: post.html }}
       />
     );
   }
@@ -539,9 +540,9 @@ export default function ArticlePage() {
         {post.subscriberOnly ? (
           <TokenGate post={post} />
         ) : (
-          <div
+          <div // biome-ignore lint/security/noDangerouslySetInnerHtml: sanitized with DOMPurify
+            dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.html) }}
             className="article-content prose prose-invert max-w-none"
-            dangerouslySetInnerHTML={{ __html: post.html }}
           />
         )}
       </div>

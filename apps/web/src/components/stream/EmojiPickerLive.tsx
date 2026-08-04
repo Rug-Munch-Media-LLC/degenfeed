@@ -230,7 +230,7 @@ export function EmojiPickerLive({ onSelect, onClose }: EmojiPickerLiveProps) {
                 <span
                   className={`${emoji.isDefault ? '' : 'drop-shadow-[0_0_8px_rgba(0,255,65,0.3)]'}`}
                 >
-                  {emoji.imageUrl.match(/[😊🔥🚀😂👋❤️😎🙏👏💀☕🐂🐻💎👀💰🐸⚔️]/u) ? (
+                  {emoji.imageUrl.match(/😊|🔥|🚀|😂|👋|❤️|😎|🙏|👏|💀|☕|🐂|🐻|💎|👀|💰|🐸|⚔️/u) ? (
                     <span className="text-xl">{emoji.imageUrl}</span>
                   ) : (
                     <img
@@ -328,7 +328,7 @@ function MarketplaceView({ onBuy }: { onBuy: () => void }) {
           >
             {/* Emoji preview */}
             <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-white/5 text-2xl">
-              {emoji.imageUrl.match(/[😊🔥🚀😂👋❤️😎🙏👏💀☕🐂🐻💎👀💰🐸⚔️]/u) ? (
+              {emoji.imageUrl.match(/😊|🔥|🚀|😂|👋|❤️|😎|🙏|👏|💀|☕|🐂|🐻|💎|👀|💰|🐸|⚔️/u) ? (
                 <span>{emoji.imageUrl}</span>
               ) : (
                 <img

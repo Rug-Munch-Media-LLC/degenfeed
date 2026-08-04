@@ -98,7 +98,7 @@ function ParticipantRow({
             <span className="text-[10px] text-[var(--color-muted)]">Connected</span>
           )}
           {participant.handRaised && (
-            <span className="text-[12px]" aria-label="Hand raised">
+            <span className="text-[12px]" role="img" aria-label="Hand raised">
               ✋
             </span>
           )}

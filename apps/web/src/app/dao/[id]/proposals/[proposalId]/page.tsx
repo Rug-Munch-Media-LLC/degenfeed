@@ -462,7 +462,10 @@ export default function ProposalDetailPage({
                   <div className="flex items-center gap-2 text-[10px] text-[var(--color-muted)]">
                     <span>Transaction:</span>
                     <code className="font-mono text-degen-400">0x8f3c...7ad2</code>
-                    <a href="#" className="text-degen-400 hover:underline">
+                    <a // biome-ignore lint/a11y/useValidAnchor: mock demo link — no real explorer URL for truncated tx hash
+                      href="#"
+                      className="text-degen-400 hover:underline"
+                    >
                       View on Explorer ↗
                     </a>
                   </div>

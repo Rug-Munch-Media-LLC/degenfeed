@@ -44,8 +44,9 @@ export function PlatformGreeting({ platform, compact = false, onDismiss }: Platf
 
   if (dismissed) return null;
 
-  // Native dialog for accessibility
-  const role = isDegenFeed ? 'status' : 'complementary';
+  // Native dialog for accessibility — static role so ARIA props can be validated.
+  // 'complementary' landmark + polite live region preserves the announcement for
+  // DegenFeed without a dynamic role attribute.
   const ariaLabel = isDegenFeed
     ? 'Welcome back to DegenFeed'
     : `Welcome from ${cfg?.label ?? 'external platform'}`;
@@ -53,7 +54,8 @@ export function PlatformGreeting({ platform, compact = false, onDismiss }: Platf
   return (
     <div
       ref={bannerRef}
-      role={role}
+      role="complementary"
+      aria-live={isDegenFeed ? 'polite' : undefined}
       aria-label={ariaLabel}
       className={`
         relative overflow-hidden rounded-2xl border transition-all duration-500 ease-out

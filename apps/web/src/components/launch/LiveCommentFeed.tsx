@@ -148,7 +148,7 @@ export default function LiveCommentFeed({
             setCollapsed(!collapsed);
           }
         }}
-        role={isMobile ? 'button' : undefined}
+        role="button"
         tabIndex={isMobile ? 0 : undefined}
         aria-label={collapsed ? 'Expand comments' : 'Collapse comments'}
         aria-expanded={!collapsed}

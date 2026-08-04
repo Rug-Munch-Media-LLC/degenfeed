@@ -92,6 +92,7 @@ export default function SubscriberBadge({
       }}
       onMouseEnter={() => showTooltip && setShowTip(true)}
       onMouseLeave={() => showTooltip && setShowTip(false)}
+      role="img"
       aria-label={`${config.label} subscriber`}
     >
       <SparkleStars count={config.stars} color={config.color} />

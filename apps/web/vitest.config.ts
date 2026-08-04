@@ -7,8 +7,11 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
-  esbuild: {
-    jsx: 'automatic',
+  // Vite 6+ (rolldown) uses oxc instead of esbuild; the JSX transform option
+  // must be configured under `oxc` or JSX test files fail to parse.
+  oxc: {
+    jsx: { runtime: 'automatic' },
+    include: /\.(tsx?|jsx)$/,
   },
   test: {
     globals: true,
