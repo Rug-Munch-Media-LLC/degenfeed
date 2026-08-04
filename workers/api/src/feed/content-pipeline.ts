@@ -16,7 +16,9 @@
  *     └── assemble UnifiedFeed with sourceBreakdown
  */
 
-import type { Protocol, UnifiedPost } from '@degenfeed/types';
+import { type CategorySlug, classifyPost, computeLanguageQuality } from '@degenfeed/feed-core';
+import { interleaveByProtocol, scorePost } from '@degenfeed/ranking';
+import type { PostScore, Protocol, UnifiedPost } from '@degenfeed/types';
 import type { Env } from '../types';
 import { deduplicateCrossProtocol } from './content-dedup';
 import {
@@ -33,7 +35,6 @@ import {
   type ExecutionContext,
   fetchFromProviders,
 } from './feed-fetcher';
-import { applyQualityPipeline } from './feed-quality-gates';
 import { getSeedContent } from './seed-content';
 import type { UnifiedFeedPost } from './unified-feed';
 import { fetchLemmyPosts, fetchPeerTubeVideos, fetchYouTubeVideos } from './unified-fetchers';
@@ -138,6 +139,8 @@ export interface BuildFeedOptions {
   niches?: string[];
   /** Only include these content types (text, image, video, link, thread). */
   contentTypes?: string[];
+  /** Only include posts newer than this many hours (0/undefined = no time filter). */
+  timeRangeHours?: number;
   /** Minimum total engagement (likes + reposts). */
   minEngagement?: number;
   /** Protocols to exclude entirely. */
@@ -425,6 +428,46 @@ export const DEFAULT_FEED_CATEGORIES: DefaultCategory[] = [
   { id: 'news', label: 'News', tags: ['news', 'politics', 'world'] },
 ];
 
+/**
+ * Core protocols used when the unified feed is requested WITHOUT an
+ * explicit `protocols` or `sources` filter. Fetching these in parallel
+ * guarantees real aggregated content (never an empty pipeline that would
+ * trigger the demo/seed fallback). Kept deliberately small so a default
+ * request stays fast; the full 68+ protocol list is still available via
+ * the explicit `protocols` query param.
+ */
+export const CORE_FEED_PROTOCOLS: Protocol[] = [
+  'nostr',
+  'farcaster',
+  'mastodon',
+  'bluesky',
+  'rss',
+  'lens',
+  'lemmy',
+  'reddit',
+];
+
+/**
+ * Category slugs treated as crypto/web3/DeFi relevant. Posts classified
+ * into one of these get a niche-relevance boost in the unified feed.
+ */
+const CRYPTO_CATEGORIES: Set<CategorySlug> = new Set([
+  'defi',
+  'nft',
+  'trading',
+  'memecoin',
+  'security',
+  'news',
+  'bitcoin',
+  'ethereum',
+  'solana',
+  'layer2',
+  'stablecoin',
+  'regulation',
+  'onchain',
+  'macro',
+]);
+
 // ─── ContentPipeline ────────────────────────────────────────────────────
 
 export class ContentPipeline {
@@ -504,16 +547,26 @@ export class ContentPipeline {
       }
     }
 
-    // 6. Score every post
+    // 6. Score every post. Explicitly requested niches (query params) are
+    //    merged with any wallet-derived preferences so niche selection both
+    //    filters (applyRecipeFilters) and boosts (scoreContent) the feed.
+    const requestedNiches = new Set((opts.niches ?? []).map((n) => n.toLowerCase()));
+    const scoringNiches = new Set<string>([...preferredNiches, ...requestedNiches]);
     const scored = await Promise.all(
       posts.slice(0, limit).map(async (p) => ({
         post: p,
-        score: await this.scoreContent(p, preferredNiches),
+        score: await this.scoreContent(p, scoringNiches),
       })),
     );
+    const scoreById = new Map(scored.map((s) => [s.post.id, s.score]));
 
-    // 7. Diversify
-    const diversified = await this.diversifyFeed(scored.map((s) => s.post));
+    // 7. Diversify (interleave protocols, rotate authors, mix categories)
+    const diversified = await this.diversifyFeed(
+      scored.map((s) => s.post),
+      {
+        sort: opts.sort,
+      },
+    );
 
     // 8. Compute source breakdown
     const sourceBreakdown: Record<string, number> = {};
@@ -522,15 +575,43 @@ export class ContentPipeline {
       sourceBreakdown[src] = (sourceBreakdown[src] ?? 0) + 1;
     }
 
-    // 9. Attach badges
+    // 9. Attach badges + quality scores (0-100) for transparency
     const enriched = diversified.map((p) => {
       const badge = this.badgeFor(p.protocol);
+      const cs = scoreById.get(p.id) ?? {
+        quality: 0,
+        engagement: 0,
+        freshness: 0,
+        relevance: 0,
+        diversity: 0,
+        composite: 0,
+      };
+      const existingDebug = (p as unknown as Record<string, unknown>).feedDebug as
+        | Record<string, unknown>
+        | undefined;
+      const score: PostScore = {
+        total: Math.round(cs.composite) / 100,
+        recency: cs.freshness / 100,
+        engagement: cs.engagement / 100,
+        relevance: cs.relevance / 100,
+        quality: cs.quality / 100,
+        diversity: cs.diversity / 100,
+        source: 0.8,
+        velocity: 0.5,
+        reasons: [],
+      };
       return {
         ...p,
         sourceBadge: badge.emoji,
         sourceColor: badge.color,
         sourceLabel: badge.label,
-      } as UnifiedFeedPost;
+        qualityScore: cs.composite,
+        score,
+        feedDebug: {
+          ...existingDebug,
+          qualityScore: cs.composite / 100,
+        },
+      } as unknown as UnifiedFeedPost;
     });
 
     return {
@@ -626,68 +707,161 @@ export class ContentPipeline {
   /**
    * Score content on quality, engagement, freshness, relevance, and diversity.
    * Returns 0-100 scores with a weighted composite.
+   *
+   * Built on the shared @degenfeed/ranking scorePost() 8-factor scorer and
+   * layered with unified-feed-specific signals:
+   *   - Content length: penalize too-short, reward substantive
+   *   - Media bonus: images/video score higher
+   *   - Verified author bonus: known quality creators
+   *   - Crypto/web3 relevance: posts matching DeFi/NFT/Trading/etc. categories
+   *     and user-selected niches get boosted
    */
   async scoreContent(post: UnifiedPost, preferredNiches?: Set<string>): Promise<ContentScore> {
     const now = Date.now();
-    const ageHours = (now - post.createdAt) / 3600000;
 
-    // Quality (0-100): use existing quality score or heuristic
-    const qualityScore = post.feedDebug?.qualityScore ?? 0.5;
-    const quality = Math.round(qualityScore * 100);
+    // Unified 8-factor scorer: recency, engagement, relevance, quality,
+    // reputation, diversity, source, velocity.
+    const unified = scorePost(post, {
+      mode: 'standard',
+      userNiches: preferredNiches ?? new Set<string>(),
+      now,
+    });
 
-    // Engagement (0-100): normalize likes+reposts+replies
-    const totalEng =
-      post.metrics.likes +
-      post.metrics.reposts * 2 +
-      post.metrics.replies * 3 +
-      (post.metrics.quotes ?? 0);
-    const engagement = Math.round(Math.min(totalEng / 10, 1) * 100);
+    // Quality (0-100): blend unified quality factor with language-quality V3.
+    const quality = Math.round(
+      unified.breakdown.quality * 50 + (computeLanguageQuality(post) / 100) * 50,
+    );
 
-    // Freshness (0-100): decay over 72h
-    const freshness = Math.round(Math.max(0, 1 - ageHours / 72) * 100);
+    // Engagement (0-100): log-scaled likes+reposts+replies normalized.
+    const engagement = Math.round(unified.breakdown.engagement * 100);
 
-    // Relevance (0-100): match to user interests
-    let relevance = 0;
-    if (preferredNiches && preferredNiches.size > 0) {
-      const matchCount = post.niches.filter((n) => preferredNiches.has(n.toLowerCase())).length;
-      relevance = Math.round(Math.min(matchCount / Math.max(preferredNiches.size, 1), 1) * 100);
+    // Freshness (0-100): exponential recency decay.
+    const freshness = Math.round(unified.breakdown.recency * 100);
+
+    // Relevance (0-100): niche match to user interests + crypto/web3 boost.
+    const cryptoBoost = this.computeCryptoRelevance(post);
+    let relevance = Math.round(unified.breakdown.relevance * 100);
+    if (!preferredNiches || preferredNiches.size === 0) {
+      // No user preferences — crypto relevance anchors relevance so the
+      // default (anonymous) feed still surfaces web3 content.
+      relevance = Math.max(relevance, 40 + cryptoBoost);
     } else {
-      // No preferences = moderate relevance for everything
-      relevance = 50;
+      relevance = Math.min(100, relevance + cryptoBoost);
     }
 
-    // Diversity (0-100): base score; caller adjusts via diversifyFeed
+    // Content length: reward substantive content, penalize too-short posts.
+    const textLen = (post.text ?? '').trim().length;
+    let lengthScore = 50;
+    if (textLen >= 300) lengthScore = 85;
+    else if (textLen >= 100) lengthScore = 70;
+    else if (textLen >= 30) lengthScore = 50;
+    else if (textLen > 0) lengthScore = 30;
+    else lengthScore = 10;
+
+    // Media bonus: images/video score higher.
+    const hasMedia = post.embeds.some((e) => e.kind === 'image' || e.kind === 'video');
+    const mediaBonus = hasMedia ? 8 : 0;
+
+    // Verified author bonus: known quality creators.
+    const verifiedBonus = post.author.verified.length > 0 ? 8 : 0;
+
+    // Diversity (0-100): base score; caller adjusts via diversifyFeed.
     const diversity = 50;
 
-    // Composite: weighted average
+    // Composite: weighted average of the above, capped at 100.
     const composite = Math.round(
-      quality * 0.25 + engagement * 0.2 + freshness * 0.2 + relevance * 0.25 + diversity * 0.1,
+      Math.min(
+        100,
+        quality * 0.22 +
+          engagement * 0.22 +
+          freshness * 0.16 +
+          relevance * 0.2 +
+          lengthScore * 0.08 +
+          mediaBonus +
+          verifiedBonus +
+          cryptoBoost,
+      ),
     );
 
     return { quality, engagement, freshness, relevance, diversity, composite };
   }
 
+  /**
+   * Crypto/web3/DeFi niche-relevance boost (0-20).
+   * Uses category classification (Trading, DeFi, NFTs, Development, News,
+   * Education, Macro, Security…) plus text/ticker signals.
+   */
+  private computeCryptoRelevance(post: UnifiedPost): number {
+    const primary = classifyPost(post).primary;
+    if (primary && CRYPTO_CATEGORIES.has(primary)) {
+      return primary === 'general' ? 5 : 14;
+    }
+    const text = `${post.text} ${post.niches.join(' ')}`.toLowerCase();
+    if (/[$][A-Z]{2,10}/.test(text)) return 12;
+    if (
+      /\b(btc|eth|sol|crypto|defi|web3|nft|token|chain|wallet|dex|cex|mining|staking|yield|airdrop|blockchain|onchain|memecoin|layer ?2|rollup|stablecoin)\b/.test(
+        text,
+      )
+    ) {
+      return 10;
+    }
+    return 0;
+  }
+
   // ── Content Diversity ─────────────────────────────────────────
 
   /**
-   * Ensure feed has diverse sources (not all from one protocol).
-   * Uses the existing source diversity logic from quality gates.
+   * Ensure the feed is diverse: no single protocol dominates, creators are
+   * rotated (max 2 posts per author per page), and categories are mixed.
+   *
+   * - `newest` sort keeps pure date ordering (only author rotation applies)
+   *   so the "newest first" contract is never violated.
+   * - Trending/curated/for-you additionally interleave protocols
+   *   round-robin and cap repeated categories.
    */
-  async diversifyFeed(posts: UnifiedPost[]): Promise<UnifiedPost[]> {
+  async diversifyFeed(
+    posts: UnifiedPost[],
+    opts: { sort?: BuildFeedOptions['sort'] } = {},
+  ): Promise<UnifiedPost[]> {
     if (posts.length === 0) return posts;
 
-    // Use the quality pipeline's source diversity
-    const result = applyQualityPipeline(posts, {
-      minQualityScore: 0, // don't filter on quality, just enforce diversity
-      enforceEngagementFloor: false,
-      preferEnglish: false,
-      filterNsfwSpam: false,
-      crossProtocolDedup: false,
-      freshnessConfig: null,
-      maxPctPerSource: 35,
-    });
+    // 1. Rotate creators — max 2 posts from the same author per page.
+    const authorCounts = new Map<string, number>();
+    const rotated: UnifiedPost[] = [];
+    for (const p of posts) {
+      const count = authorCounts.get(p.author.id) ?? 0;
+      if (count >= 2) continue;
+      authorCounts.set(p.author.id, count + 1);
+      rotated.push(p);
+    }
 
-    return result.posts;
+    // Newest-first must stay date-ordered — only apply author rotation.
+    if (opts.sort === 'newest') return rotated;
+
+    // 2. Interleave by protocol so we never show a run of one source.
+    const interleaved = interleaveByProtocol(rotated);
+
+    // 3. Mix categories — cap repeated primary categories so one niche
+    //    (e.g. all news) can't dominate the page.
+    const categorized = interleaved.map((p) => ({
+      post: p,
+      category: classifyPost(p).primary ?? ('general' as CategorySlug),
+    }));
+    const uniqueCategories = new Set(categorized.map((c) => c.category)).size;
+    const maxPerCategory = Math.max(
+      3,
+      Math.ceil(interleaved.length / Math.max(uniqueCategories, 1)),
+    );
+    const categoryCounts = new Map<string, number>();
+    const mixed: UnifiedPost[] = [];
+    for (const entry of categorized) {
+      const count = categoryCounts.get(entry.category) ?? 0;
+      if (count >= maxPerCategory && categoryCounts.size > 1) continue;
+      categoryCounts.set(entry.category, count + 1);
+      mixed.push(entry.post);
+    }
+
+    return mixed.length > 0 ? mixed : interleaved;
   }
 
   // ─── Default Feed for New Users ──────────────────────────────────
@@ -833,6 +1007,14 @@ export class ContentPipeline {
       return this.fetchAllAvailable(protocols, limit);
     }
 
+    // No explicit protocols AND no explicit sources → fetch the core
+    // protocols by default. Previously this returned [] which made the
+    // unified feed always fall back to demo/seed content on default
+    // requests (no `protocols`/`sources` query params).
+    if (!sources || sources.length === 0) {
+      return this.fetchAllAvailable(CORE_FEED_PROTOCOLS, limit);
+    }
+
     // Map source keys to provider protocols
     const providerProtocols = new Set<Protocol>();
     const useDirect = new Set<FeedSourceKey>();
@@ -902,6 +1084,12 @@ export class ContentPipeline {
         const ct = (p.contentType ?? 'text').toLowerCase();
         return validTypes.has(ct);
       });
+    }
+
+    // Filter by time range (e.g. last 1h / 24h / 7d)
+    if (opts.timeRangeHours && opts.timeRangeHours > 0) {
+      const cutoff = Date.now() - opts.timeRangeHours * 3600000;
+      filtered = filtered.filter((p) => p.createdAt >= cutoff);
     }
 
     // Filter by minimum engagement

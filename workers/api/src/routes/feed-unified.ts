@@ -74,12 +74,40 @@ function parseProtocols(raw: string | null): Protocol[] | undefined {
 function parseSort(raw: string | null): BuildFeedOptions['sort'] {
   switch (raw) {
     case 'trending':
-    case 'newest':
     case 'curated':
     case 'for-you':
       return raw;
+    case 'newest':
+    case 'latest': // Frontend default sort — newest first
+      return 'newest';
     default:
       return 'trending';
+  }
+}
+
+/**
+ * Parse a time-range filter into hours. Accepts the frontend's `time`
+ * param values (1h, 24h, 7d, all) as well as the API's `timeRange`.
+ */
+function parseTimeRangeHours(raw: string | null): number | undefined {
+  if (!raw) return undefined;
+  switch (raw.trim()) {
+    case '1h':
+    case '1':
+      return 1;
+    case '24h':
+    case '24':
+      return 24;
+    case '7d':
+    case '168':
+      return 168;
+    case 'all':
+    case '0':
+      return undefined;
+    default: {
+      const parsed = Number(raw);
+      return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
+    }
   }
 }
 
@@ -100,6 +128,26 @@ export async function handleUnifiedFeed(request: Request, env: Env): Promise<Res
   const categoriesRaw = params.get('categories');
   const categories = categoriesRaw ? categoriesRaw.split(',').filter(Boolean) : undefined;
 
+  // ── Quality/diversity params (forwarded by the frontend) ──────
+  const niches = params
+    .get('niches')
+    ?.split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const contentTypes = params
+    .get('contentType')
+    ?.split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const timeRangeHours = parseTimeRangeHours(params.get('time') ?? params.get('timeRange'));
+  const minEngagement = Number(params.get('minEngagement')) || 0;
+  const excludeProtocols = parseProtocols(params.get('excludeProtocols'));
+  const excludeWords = params
+    .get('excludeWords')
+    ?.split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+
   const pipeline = new ContentPipeline(env);
   const feed = await pipeline.buildFeed({
     wallet,
@@ -109,9 +157,16 @@ export async function handleUnifiedFeed(request: Request, env: Env): Promise<Res
     sort,
     limit,
     cursor,
+    niches,
+    contentTypes,
+    timeRangeHours,
+    minEngagement,
+    excludeProtocols,
+    excludeWords,
   });
 
-  // Never return empty — serve seed content if all real sources failed
+  // Real aggregated posts when any provider returned content. Seed/demo
+  // content is only served when EVERY real source failed.
   const posts = feed.posts.length > 0 ? feed.posts : seedFallback(limit);
 
   return jsonResponse({
@@ -122,6 +177,20 @@ export async function handleUnifiedFeed(request: Request, env: Env): Promise<Res
       nextCursor: feed.nextCursor,
       generatedAt: feed.generatedAt,
       isDemo: feed.posts.length === 0,
+      sort,
+      quality: {
+        applied: true,
+        scorer: 'unified-v3',
+        fields: [
+          'engagement',
+          'freshness',
+          'content-length',
+          'media',
+          'verified-author',
+          'niche-relevance',
+        ],
+        diversity: { interleaveProtocols: true, maxPostsPerAuthor: 2, mixCategories: true },
+      },
     },
   });
 }
