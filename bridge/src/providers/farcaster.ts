@@ -22,6 +22,7 @@
  *   SIWF (Sign in With Farcaster) — OAuth-like flow via EIP-4361
  */
 
+import { filterFreshPosts } from '../lib/freshness';
 import { checkRateLimit } from '../rate-limiter';
 import type { SchemaGuard, UnifiedPost } from '../server/types';
 
@@ -325,7 +326,7 @@ async function fetchCastsForFid(fid: number, pageSize: number): Promise<UnifiedP
         embeds: (body.embeds || [])
           .map((e: any) => {
             const url = typeof e === 'string' ? e : e?.url;
-            return url ? ({ kind: 'link' as const, url }) : null;
+            return url ? { kind: 'link' as const, url } : null;
           })
           .filter((e): e is { kind: 'link'; url: string } => e !== null),
         contentType: 'text' as const,
@@ -532,7 +533,7 @@ function neynarCastToPost(cast: NeynarCast): UnifiedPost {
     // post is never a blank card.
     text: text || embedUrl,
     embeds: (cast.embeds || [])
-      .map((e: any) => (e?.url ? ({ kind: 'link' as const, url: e.url }) : null))
+      .map((e: any) => (e?.url ? { kind: 'link' as const, url: e.url } : null))
       .filter((e): e is { kind: 'link'; url: string } => e !== null),
     contentType: 'text' as const,
     createdAt: Number.isNaN(published) ? Date.now() : published,
@@ -603,7 +604,7 @@ export async function fetchFarcasterPosts(limit = 20): Promise<UnifiedPost[]> {
       const neynarPosts = await fetchFromNeynar(targetLimit).catch(() => [] as UnifiedPost[]);
       if (neynarPosts.length > 0) {
         console.log(`[farcaster] Neynar returned ${neynarPosts.length} posts`);
-        return neynarPosts.slice(0, limit);
+        return filterFreshPosts(neynarPosts).slice(0, limit);
       }
 
       // Neynar failed — fall back to whatever partial data Hubble has.
@@ -621,7 +622,7 @@ export async function fetchFarcasterPosts(limit = 20): Promise<UnifiedPost[]> {
       );
       if (hubblePosts.length > 0) {
         console.log(`[farcaster] Hubble partial returned ${hubblePosts.length} posts`);
-        return hubblePosts.slice(0, limit);
+        return filterFreshPosts(hubblePosts).slice(0, limit);
       }
       return []; // Let bridge-level fallback handle it
     }
@@ -647,7 +648,7 @@ export async function fetchFarcasterPosts(limit = 20): Promise<UnifiedPost[]> {
     const neynarPosts = await fetchFromNeynar(targetLimit).catch(() => [] as UnifiedPost[]);
     if (neynarPosts.length > 0) {
       console.log(`[farcaster] Neynar emergency fallback: ${neynarPosts.length} posts`);
-      return neynarPosts.slice(0, limit);
+      return filterFreshPosts(neynarPosts).slice(0, limit);
     }
     return [];
   }
@@ -701,13 +702,15 @@ async function tryHubbleFetch(fids: number[], targetLimit: number): Promise<Unif
 }
 
 /**
- * Deduplicate farcaster posts by text prefix, sort newest-first, apply limit.
+ * Deduplicate farcaster posts by text prefix, sort newest-first, apply
+ * freshness filter (FEED_MAX_AGE_HOURS) and limit.
  */
 function dedupeFarcasterPosts(posts: UnifiedPost[], limit: number): UnifiedPost[] {
-  posts.sort((a, b) => b.createdAt - a.createdAt);
+  const fresh = filterFreshPosts(posts);
+  fresh.sort((a, b) => b.createdAt - a.createdAt);
   const seen = new Set<string>();
   const deduped: UnifiedPost[] = [];
-  for (const p of posts) {
+  for (const p of fresh) {
     const key = p.text.slice(0, 60);
     if (!seen.has(key) && deduped.length < limit) {
       seen.add(key);

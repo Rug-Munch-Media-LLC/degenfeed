@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Script from 'next/script';
+import { fetchInitialFeedData } from '../../lib/feedApi';
 import { FeedShell } from './FeedShell';
 
 const breadcrumbStructuredData = {
@@ -52,30 +53,9 @@ export const metadata: Metadata = {
 
 async function getInitialFeedData() {
   // Fetch feed data server-side so the SSR HTML has content (no loading flash).
-  // Uses the self-hosted API at host.docker.internal:3101 (Docker) or 127.0.0.1:3101 (bare metal).
-  const apiBase = process.env.API_PROXY_TARGET || 'http://127.0.0.1:3101';
-  const protocols = ['nostr', 'farcaster', 'mastodon', 'bluesky', 'rss'];
-  try {
-    const results = await Promise.allSettled(
-      protocols.map(async (p) => {
-        const res = await fetch(`${apiBase}/api/feed/${p}?limit=5`, {
-          signal: AbortSignal.timeout(6000),
-        });
-        if (!res.ok) return [];
-        const json = await res.json();
-        return (json.data || []).map((item: Record<string, unknown>) => ({
-          ...item,
-          protocol: item.protocol || p,
-        }));
-      }),
-    );
-    return results
-      .filter((r): r is PromiseFulfilledResult<unknown[]> => r.status === 'fulfilled')
-      .flatMap((r) => r.value)
-      .slice(0, 20);
-  } catch {
-    return [];
-  }
+  // Uses the bounded preload helper in lib/feedApi.ts: hard 1.6s overall
+  // budget, never blocks SSR on a cold/slow API.
+  return fetchInitialFeedData();
 }
 
 export default async function FeedLayout({ children }: { children: React.ReactNode }) {
@@ -87,11 +67,7 @@ export default async function FeedLayout({ children }: { children: React.ReactNo
         {JSON.stringify(breadcrumbStructuredData)}
       </Script>
       {initialPosts.length > 0 && (
-        <Script
-          id="feed-initial-data"
-          type="application/json"
-          data-initial-feed="true"
-        >
+        <Script id="feed-initial-data" type="application/json" data-initial-feed="true">
           {JSON.stringify(initialPosts)}
         </Script>
       )}

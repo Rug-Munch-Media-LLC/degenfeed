@@ -14,8 +14,8 @@ import {
 } from '@degenfeed/storage';
 import type { ContentProof, EngagementAction } from '@degenfeed/types';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
-import { EmbedModal } from './EmbedModal';
 import { CrossPostVersions } from './CrossPostVersions';
+import { EmbedModal } from './EmbedModal';
 import {
   applyOptimistic,
   PostCardEngagement,
@@ -115,6 +115,7 @@ function PostCardComponent({
   onShowLessLikeThis,
   onWhyThisPost,
   onContextMenu,
+  mediaPriority = false,
   postMetaSlot,
 }: PostCardProps): React.ReactElement | null {
   const [showFullText, setShowFullText] = useState(expanded ?? false);
@@ -152,7 +153,7 @@ function PostCardComponent({
   // instead of presenting demo posts as real network content.
   const isDemo =
     (post as unknown as { _demo?: boolean })._demo === true ||
-    ((post.raw as { _demo?: boolean } | undefined)?._demo === true);
+    (post.raw as { _demo?: boolean } | undefined)?._demo === true;
 
   useEffect(() => {
     if (typeof window === 'undefined' || !post.author.id) return;
@@ -526,6 +527,7 @@ function PostCardComponent({
         <PostHeader
           post={post}
           isSelf={isSelf}
+          mediaPriority={mediaPriority}
           reputation={reputation}
           reputationProgress={reputationProgress}
           crossProtocolBadges={crossProtocolBadges}
@@ -596,7 +598,11 @@ function PostCardComponent({
 
         {/* Media embeds (images, videos, links, frames) */}
         <div className="mb-3">
-          <PostMedia post={post} authorName={post.author.displayName} />
+          <PostMedia
+            post={post}
+            authorName={post.author.displayName}
+            mediaPriority={mediaPriority}
+          />
         </div>
 
         {/* Niche tags */}

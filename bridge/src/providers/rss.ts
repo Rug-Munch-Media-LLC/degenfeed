@@ -5034,7 +5034,7 @@ export function clusterStories(posts: UnifiedPost[], limit = 12): StoryClusterOu
 
 // ─── Lazy Cache ──────────────────────────────────────────────────────
 
-const RSS_CACHE_TTL = 300_000; // 5 minutes
+const RSS_CACHE_TTL = 60_000; // 60s — reduced from 5min so the master feed never serves stale news
 /**
  * Minimum number of posts to fetch + cache on every RSS refresh, regardless
  * of the requested limit. Prevents the bridge prewarm (which calls providers

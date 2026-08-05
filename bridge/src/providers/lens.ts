@@ -15,6 +15,7 @@
  * Endpoint: http://127.0.0.1:8088/api/publications
  */
 
+import { filterFreshPosts } from '../lib/freshness';
 import { checkRateLimit } from '../rate-limiter';
 import type { SchemaGuard, UnifiedPost } from '../server/types';
 
@@ -164,9 +165,7 @@ function mapPublication(pub: IndexerPublication): UnifiedPost | null {
 /** Engagement score used to rank "trending" publications. */
 function engagementScore(pub: IndexerPublication): number {
   return (
-    Number(pub.stats_reactions) * 2 +
-    Number(pub.stats_reposts) * 3 +
-    Number(pub.stats_comments) * 1
+    Number(pub.stats_reactions) * 2 + Number(pub.stats_reposts) * 3 + Number(pub.stats_comments) * 1
   );
 }
 
@@ -186,7 +185,10 @@ function selectTrendingMix(pubs: IndexerPublication[], limit: number): IndexerPu
   // Aggregate engagement per author → trending profile ranking.
   const authorScore = new Map<string, number>();
   for (const p of pubs) {
-    authorScore.set(p.author_address, (authorScore.get(p.author_address) || 0) + engagementScore(p));
+    authorScore.set(
+      p.author_address,
+      (authorScore.get(p.author_address) || 0) + engagementScore(p),
+    );
   }
   const authorRank = new Map<string, number>();
   [...authorScore.entries()]
@@ -201,9 +203,7 @@ function selectTrendingMix(pubs: IndexerPublication[], limit: number): IndexerPu
   }));
 
   // Trending: highest engagement, with a boost for authors who rank high.
-  const trending = [...scored].sort(
-    (a, b) => a.rank - b.rank || b.score - a.score || b.ts - a.ts,
-  );
+  const trending = [...scored].sort((a, b) => a.rank - b.rank || b.score - a.score || b.ts - a.ts);
   // Recent: newest first.
   const recent = [...scored].sort((a, b) => b.ts - a.ts);
 
@@ -261,7 +261,8 @@ async function fetchPosts(limit: number): Promise<UnifiedPost[]> {
     console.log(
       `[bridge] Lens Indexer: ${posts.length} posts (trending mix of ${data.meta.total} local)`,
     );
-    return posts.slice(0, limit);
+    // Freshness: discard posts outside the FEED_MAX_AGE_HOURS window (48h).
+    return filterFreshPosts(posts).slice(0, limit);
   } catch (err) {
     console.warn(
       '[bridge] Lens Indexer: Error fetching posts:',

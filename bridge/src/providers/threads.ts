@@ -31,6 +31,7 @@
  *   THREADS_FETCH_TIMEOUT_MS  per-request timeout (default 10_000)
  */
 
+import { filterFreshPosts } from '../lib/freshness';
 import { checkRateLimit } from '../rate-limiter';
 import type { SchemaGuard, UnifiedPost } from '../server/types';
 
@@ -630,7 +631,7 @@ export const schema: SchemaGuard = {
 export async function fetchThreadsPosts(limit = 20): Promise<UnifiedPost[]> {
   // Serve from cache first — repeated feed-build calls must not hammer Meta.
   const cached = getCachedPosts();
-  if (cached) return cached.slice(0, limit);
+  if (cached) return filterFreshPosts(cached).slice(0, limit);
 
   if (!checkRateLimit('threads', { maxRequests: 40, windowMs: 600_000 })) {
     console.log('[threads] Rate limited, skipping fetch');
@@ -671,10 +672,14 @@ export async function fetchThreadsPosts(limit = 20): Promise<UnifiedPost[]> {
   );
   await Promise.all(workers);
 
+  // Freshness: discard posts outside the FEED_MAX_AGE_HOURS window (48h)
+  // BEFORE dedup so the cap fills with fresh content only.
+  const fresh = filterFreshPosts(all);
+
   // Deduplicate by id
   const seen = new Set<string>();
   const deduped: UnifiedPost[] = [];
-  for (const p of all) {
+  for (const p of fresh) {
     if (!seen.has(p.id) && deduped.length < limit) {
       seen.add(p.id);
       deduped.push(p);
@@ -685,8 +690,9 @@ export async function fetchThreadsPosts(limit = 20): Promise<UnifiedPost[]> {
   // query the federated instance for Threads content.
   if (deduped.length === 0 && isBridgyConfigured()) {
     const apPosts = await fetchViaActivityPub(limit);
-    setCachedPosts(apPosts);
-    return apPosts;
+    const freshAp = filterFreshPosts(apPosts);
+    setCachedPosts(freshAp);
+    return freshAp;
   }
 
   console.log(

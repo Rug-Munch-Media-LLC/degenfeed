@@ -2,7 +2,15 @@
 
 import { addBookmark, getFollows, removeBookmark } from '@degenfeed/storage';
 import type { EngagementAction, UnifiedPost } from '@degenfeed/types';
-import { ErrorBoundary, FeedWhyCard, NotificationBell, PostCard, ScrollToTop } from '@degenfeed/ui';
+import {
+  CardSkeleton,
+  ErrorBoundary,
+  FeedWhyCard,
+  NotificationBell,
+  PostCard,
+  PostCardGuard,
+  ScrollToTop,
+} from '@degenfeed/ui';
 import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../../components/AuthProvider';
@@ -98,7 +106,15 @@ export default function FeedPage() {
 
   const [activeTab, setActiveTab] = useState<Tab>('for-you');
   const [posts, setPosts] = useState<UnifiedPost[]>([]);
-  const [state, setState] = useState<'loading' | 'loaded' | 'empty' | 'error'>('loaded');
+  // Start in 'loading' (skeleton) so a cold client fetch never shows a blank
+  // feed. The effect below swaps in the server-rendered #feed-initial-data as
+  // soon as it runs (immediately after hydration), then fetchFeed refreshes.
+  const [state, setState] = useState<'loading' | 'loaded' | 'empty' | 'error'>('loading');
+  // True while a full (non-checkOnly) feed fetch is in flight. When posts
+  // already exist we keep showing them (SWR stale-while-revalidate) and just
+  // surface a subtle "Loading fresh content…" indicator instead of wiping the
+  // timeline or flashing skeletons over content.
+  const [refreshing, setRefreshing] = useState(false);
 
   // After mount, check for server-side preloaded feed data and start in loaded state.
   useEffect(() => {
@@ -410,7 +426,10 @@ export default function FeedPage() {
 
   const fetchFeed = useCallback(
     async (checkOnly = false) => {
-      // Skip loading state — page always shows content or empty state
+      // Skip hard loading state when content already exists — page keeps
+      // showing the current timeline while revalidating in the background.
+      // Only the very first load (no posts yet) falls back to the skeleton.
+      if (!checkOnly) setRefreshing(true);
       try {
         // Try the unified cross-protocol timeline first. Anonymous and
         // signed-in users read the same aggregated feed; personalization is
@@ -623,6 +642,8 @@ export default function FeedPage() {
             setState('error');
           }
         }
+      } finally {
+        if (!checkOnly) setRefreshing(false);
       }
     },
     [
@@ -863,7 +884,33 @@ export default function FeedPage() {
             </div>
           )}
 
-          {state === 'loading' && <FeedLoadingSkeleton />}
+          {/* Stale-while-revalidate indicator: fresh data is being fetched in
+              the background but the current timeline stays visible. */}
+          {refreshing && state === 'loaded' && posts.length > 0 && (
+            <div
+              className="mb-3 flex items-center justify-center gap-2 rounded-lg border border-degen-500/20 bg-degen-500/5 px-3 py-1.5"
+              role="status"
+              aria-live="polite"
+            >
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-degen-400" />
+              <span className="text-[10px] font-medium text-degen-400">Loading fresh content…</span>
+            </div>
+          )}
+
+          {state === 'loading' && (
+            <div role="status" aria-live="polite">
+              <div className="mb-3 flex items-center justify-center gap-2 rounded-lg border border-degen-500/20 bg-degen-500/5 px-3 py-1.5">
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-degen-400" />
+                <span className="text-[10px] font-medium text-degen-400">
+                  Loading fresh content…
+                </span>
+              </div>
+              {/* CardSkeleton mirrors PostCard dimensions exactly (h-8 w-8
+                  avatar, three text lines, engagement row) so there's no
+                  layout shift when real posts replace it. */}
+              <CardSkeleton count={5} avatar lines={3} />
+            </div>
+          )}
           {state === 'empty' && (
             <FeedEmptyState activeTab={activeTab} onRefresh={() => fetchFeed(false)} />
           )}
@@ -880,12 +927,14 @@ export default function FeedPage() {
                     className="relative"
                     style={{ '--stagger-i': i } as React.CSSProperties}
                   >
-                    <PostCard
-                      post={post}
-                      onEngage={handleEngage}
-                      onWhyThisPost={setWhyPost}
-                      mediaPriority={i === 0}
-                    />
+                    <PostCardGuard postId={post.id}>
+                      <PostCard
+                        post={post}
+                        onEngage={handleEngage}
+                        onWhyThisPost={setWhyPost}
+                        mediaPriority={i < 3}
+                      />
+                    </PostCardGuard>
                   </div>
                 ))}
               </div>

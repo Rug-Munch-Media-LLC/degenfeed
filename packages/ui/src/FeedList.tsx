@@ -28,6 +28,7 @@ import type { UnifiedPost } from '@degenfeed/types';
 import { memo, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CardSkeleton } from './LoadingSkeleton';
 import { type EngageHandler, PostCard } from './PostCard';
+import { PostCardGuard } from './PostCardGuard';
 
 export type { UnifiedPost };
 
@@ -723,22 +724,25 @@ export const FeedList = memo(function FeedList({
                 } as React.CSSProperties
               }
             >
-              <PostCard
-                post={post}
-                onClick={() => handlePostClick(post.id)}
-                onTip={onTip}
-                onEngage={onEngage}
-                onReport={onReport}
-                onCrossReplyOpen={onCrossReplyOpen}
-                isAdmin={isAdmin}
-                onAdminRemove={onAdminRemove}
-                onAdminBan={onAdminBan}
-                onWhyThisPost={onWhyThisPost}
-                onShowMoreLikeThis={onShowMoreLikeThis}
-                onShowLessLikeThis={onShowLessLikeThis}
-                onContextMenu={onContextMenu}
-                postMetaSlot={postMetaSlot}
-              />
+              <PostCardGuard postId={post.id}>
+                <PostCard
+                  post={post}
+                  mediaPriority={i < 3}
+                  onClick={() => handlePostClick(post.id)}
+                  onTip={onTip}
+                  onEngage={onEngage}
+                  onReport={onReport}
+                  onCrossReplyOpen={onCrossReplyOpen}
+                  isAdmin={isAdmin}
+                  onAdminRemove={onAdminRemove}
+                  onAdminBan={onAdminBan}
+                  onWhyThisPost={onWhyThisPost}
+                  onShowMoreLikeThis={onShowMoreLikeThis}
+                  onShowLessLikeThis={onShowLessLikeThis}
+                  onContextMenu={onContextMenu}
+                  postMetaSlot={postMetaSlot}
+                />
+              </PostCardGuard>
             </article>,
           );
         }

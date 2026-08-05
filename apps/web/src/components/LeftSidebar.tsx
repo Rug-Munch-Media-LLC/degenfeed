@@ -456,13 +456,22 @@ export const LeftSidebar = memo(function LeftSidebar({
     if (!conn) return null;
     const active = isProtocolActive(pid, conn.route);
     const healthy = conn.status === 'healthy';
+    const down = conn.status === 'down';
     const unhealthy = conn.status === 'unhealthy';
     const dotClass = healthy
       ? 'bg-degen-500'
-      : unhealthy
-        ? 'bg-yellow-500'
-        : 'bg-[var(--color-muted)]';
-    const dotLabel = healthy ? 'Healthy' : unhealthy ? 'Unhealthy' : 'Not reported by bridge';
+      : down
+        ? 'bg-red-500'
+        : unhealthy
+          ? 'bg-yellow-500'
+          : 'bg-[var(--color-muted)]';
+    const dotLabel = healthy
+      ? 'Healthy'
+      : down
+        ? 'Down'
+        : unhealthy
+          ? 'Low volume'
+          : 'Not reported by bridge';
     return (
       <Link
         key={pid}
