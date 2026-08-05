@@ -27,32 +27,37 @@ const _$fetch = globalThis.fetch;
  * events without blocking the working set).
  *
  * Verified live 2026-08-04 from this host (WS connect + kind-1 EVENT within
- * ~1.2s): nos.lol, relay.primal.net, purplepag.es, nostr.wine, offchain.pub,
- * relay.nostr.net, nostr.land, relay.mostr.pub, relay.nostrview.com.
- * damus.io is slow (~7s) and nostr.band / snort.social / eden.nostr.land are
- * currently unreachable from this host — they are kept (well-known relays,
- * may recover) but placed last so their timeouts never starve the fast set.
+ * ~1.2s): nos.lol, relay.primal.net, nostr.wine, offchain.pub, relay.nostr.net,
+ * nostr.land, relay.mostr.pub, relay.nostrview.com, nostr.bitcoiner.social,
+ * nostr.mom, relay.nostr.moe, relay.snort.social, eden.nostr.land.
+ * purplepag.es connects but returns zero kind-1 events (kept last — no cost).
+ * damus.io is slow/erroring and nostr.band times out from this host — they are
+ * kept (well-known relays, may recover) but placed last so their timeouts
+ * never starve the fast set.
  *
  * The bridge feed builder wraps every provider fetch in a 5s budget
  * (FETCH_TIMEOUT_MS in feeds.ts), and this provider's own fan-out budget
  * (withTotalBudget) is 4.5s — so no single relay can stall the feed.
  */
-const RELAYS = [
+export const RELAYS: { url: string; local: boolean }[] = [
   { url: 'ws://127.0.0.1:8085', local: true },
   { url: 'wss://nos.lol', local: false },
   { url: 'wss://relay.primal.net', local: false },
-  { url: 'wss://purplepag.es', local: false },
   { url: 'wss://nostr.wine', local: false },
   { url: 'wss://offchain.pub', local: false },
   { url: 'wss://relay.nostr.net', local: false },
   { url: 'wss://nostr.land', local: false },
   { url: 'wss://relay.mostr.pub', local: false },
   { url: 'wss://relay.nostrview.com', local: false },
+  { url: 'wss://nostr.bitcoiner.social', local: false },
+  { url: 'wss://nostr.mom', local: false },
+  { url: 'wss://relay.nostr.moe', local: false },
+  { url: 'wss://relay.snort.social', local: false },
+  { url: 'wss://eden.nostr.land', local: false },
   // Well-known relays — required coverage even if slow/unreachable today.
   { url: 'wss://relay.damus.io', local: false },
   { url: 'wss://relay.nostr.band', local: false },
-  { url: 'wss://relay.snort.social', local: false },
-  { url: 'wss://eden.nostr.land', local: false },
+  { url: 'wss://purplepag.es', local: false },
 ];
 
 /**
@@ -274,6 +279,104 @@ function fetchFromRelay(
   });
 }
 
+// ─── Relay Health Probe ──────────────────────────────────────────────────
+
+export interface RelayHealth {
+  url: string;
+  local: boolean;
+  healthy: boolean;
+  events: number;
+  latencyMs: number | null;
+  error?: string;
+}
+
+const relayHealthCache: { at: number; data: RelayHealth[] } = { at: 0, data: [] };
+const RELAY_HEALTH_TTL_MS = 30_000;
+
+/**
+ * Probe a single relay: open a WS, REQ one kind-1 event, and resolve as soon
+ * as an EVENT arrives or EOSE fires. Never blocks longer than `timeoutMs`.
+ */
+function probeRelay(url: string, timeoutMs = 2500): Promise<RelayHealth> {
+  const start = Date.now();
+  return new Promise((resolve) => {
+    let done = false;
+    let events = 0;
+    let ws: WebSocket | null = null;
+
+    const finish = (healthy: boolean, error?: string) => {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      if (ws) {
+        try {
+          ws.close();
+        } catch {}
+      }
+      resolve({
+        url,
+        local: url.startsWith('ws://127.0.0.1') || url.includes('localhost'),
+        healthy,
+        events,
+        latencyMs: healthy ? Date.now() - start : null,
+        error,
+      });
+    };
+
+    const timer = setTimeout(() => finish(false, 'timeout'), timeoutMs);
+    try {
+      ws = new WebSocket(url);
+    } catch {
+      return finish(false, 'connect-failed');
+    }
+
+    ws.addEventListener('open', () => {
+      ws?.send(
+        JSON.stringify([
+          'REQ',
+          `df-health-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          { kinds: [1], limit: 1 },
+        ]),
+      );
+    });
+    ws.addEventListener('message', (event: MessageEvent) => {
+      try {
+        const msg = JSON.parse(event.data as string);
+        if (msg[0] === 'EVENT') events++;
+        if (events >= 1 || msg[0] === 'EOSE') finish(true);
+      } catch {
+        /* skip malformed */
+      }
+    });
+    ws.addEventListener('error', () => finish(false, 'ws-error'));
+    ws.addEventListener('close', () => finish(events > 0, 'closed'));
+  });
+}
+
+/**
+ * Per-relay health snapshot for the bridge health endpoint + diagnostics.
+ * Cached for RELAY_HEALTH_TTL_MS so probing does not hammer relays; pass
+ * `force=true` to bypass the cache (used by the health dashboard).
+ */
+export async function getRelayHealth(force = false): Promise<RelayHealth[]> {
+  if (
+    !force &&
+    relayHealthCache.data.length > 0 &&
+    Date.now() - relayHealthCache.at < RELAY_HEALTH_TTL_MS
+  ) {
+    return relayHealthCache.data;
+  }
+  const settled = await Promise.allSettled(RELAYS.map((r) => probeRelay(r.url)));
+  const data = RELAYS.map((r, i) => {
+    const res = settled[i];
+    if (res?.status === 'fulfilled') return { ...res.value, local: r.local };
+    return { url: r.url, local: r.local, healthy: false, events: 0, latencyMs: null, error: 'probe-failed' };
+  });
+  relayHealthCache.at = Date.now();
+  relayHealthCache.data = data;
+  return data;
+}
+
 // ─── Mapping ───────────────────────────────────────────────────────────
 
 export function eventToPost(ev: NostrEvent, relayUrl: string, profile?: NostrProfile): UnifiedPost {
@@ -325,8 +428,10 @@ export const schema: SchemaGuard = {
 };
 
 export async function fetchNostrPosts(limit = 20): Promise<UnifiedPost[]> {
-  // Rate limit: 30 requests/minute per relay; check total across relays
-  if (!checkRateLimit('nostr', { maxRequests: 30, windowMs: 60_000 })) {
+  // Rate limit: 45 requests/minute across all relays — high enough that the
+  // feed cache + warm-up tasks never starve the working relay set, low enough
+  // to stay polite. (Each call fans out to ~2 WS requests per relay.)
+  if (!checkRateLimit('nostr', { maxRequests: 45, windowMs: 60_000 })) {
     console.log('[nostr] Rate limited, skipping fetch');
     return [];
   }

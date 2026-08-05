@@ -533,8 +533,25 @@ const server = http.createServer(async (req, res) => {
   console.log(`[bridge] ${req.method} ${path}`);
 
   try {
-    if (['/api/health', '/health', '/api'].includes(path))
-      return jsonOk(res, { status: 'ok', service: 'degenfeed-bridge', version: '0.4.0' });
+    if (['/api/health', '/health', '/api'].includes(path)) {
+      // Include live per-relay health for Nostr so operators can diagnose
+      // feed-volume drops ("Nostr serving 3 items") without grepping logs.
+      const { getRelayHealth } = await import('../providers/nostr');
+      const relays = await getRelayHealth();
+      const nostrHealthy = relays.filter((r) => r.healthy && !r.local).length > 0;
+      return jsonOk(res, {
+        status: 'ok',
+        service: 'degenfeed-bridge',
+        version: '0.4.0',
+        relays: {
+          nostr,
+          checkedAt: new Date().toISOString(),
+        },
+        sources: {
+          nostr: { healthy: nostrHealthy, relays: relays.length, reachable: relays.filter((r) => r.healthy).length },
+        },
+      });
+    }
 
     // ═══════════════════════════════════════════════════════════════════
     // Cross-Protocol Event Routes

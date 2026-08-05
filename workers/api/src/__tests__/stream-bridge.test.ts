@@ -17,7 +17,10 @@ vi.mock('@degenfeed/nostr-sdk', () => {
     disconnectAll: vi.fn(),
   };
   return {
-    RelayPool: vi.fn().mockImplementation(() => mockPool),
+    // Must be a regular function (not arrow) so vitest can construct it with `new`.
+    RelayPool: vi.fn().mockImplementation(function () {
+      return mockPool;
+    }),
     getPublicKey: vi.fn().mockReturnValue('mock-pubkey-hex'),
     finalizeEvent: vi.fn().mockReturnValue({ id: 'mock-event-id', sig: 'mock-sig' }),
     serializeEvent: vi.fn().mockReturnValue(new Uint8Array(256)),

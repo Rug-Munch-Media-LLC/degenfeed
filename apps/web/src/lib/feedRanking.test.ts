@@ -116,7 +116,13 @@ describe('feedRanking — algorithm blend', () => {
     const controls: FeedControls = {
       ...DEFAULT_FEED_CONTROLS,
       sort: 'latest',
-      algorithm: { recencyQuality: 100, engagementDiversity: 100, protocolDiversity: 100 },
+      algorithm: {
+        recencyQuality: 100,
+        engagementDiversity: 100,
+        protocolDiversity: 100,
+        familiarDiscover: 50,
+        creatorSize: 50,
+      },
     };
     const out = applyFeedControls([a, b], controls, now);
     expect(out.map((p) => p.id)).toEqual(['a', 'b']);
@@ -135,7 +141,13 @@ describe('feedRanking — algorithm blend', () => {
     const controls: FeedControls = {
       ...DEFAULT_FEED_CONTROLS,
       sort: 'engaged',
-      algorithm: { recencyQuality: 50, engagementDiversity: 50, protocolDiversity: 100 },
+      algorithm: {
+        recencyQuality: 50,
+        engagementDiversity: 50,
+        protocolDiversity: 100,
+        familiarDiscover: 50,
+        creatorSize: 50,
+      },
     };
     const out = applyFeedControls(posts, controls, now);
     // No two consecutive posts from the same protocol.
@@ -145,6 +157,133 @@ describe('feedRanking — algorithm blend', () => {
       if (!prev || !cur) continue;
       expect(cur.protocol).not.toBe(prev.protocol);
     }
+  });
+
+  it('boosts posts with media over plain text at equal engagement', () => {
+    const now = Date.now();
+    const text = makePost({
+      id: 'text',
+      metrics: { likes: 100, reposts: 10, replies: 5, quotes: 0 },
+    });
+    const media = makePost({
+      id: 'media',
+      contentType: 'image',
+      embeds: [{ kind: 'image', url: 'https://x/img.png' }],
+      metrics: { likes: 100, reposts: 10, replies: 5, quotes: 0 },
+    });
+    const controls: FeedControls = {
+      ...DEFAULT_FEED_CONTROLS,
+      sort: 'engaged',
+      algorithm: { ...DEFAULT_FEED_CONTROLS.algorithm },
+    };
+    const out = applyFeedControls([text, media], controls, now);
+    expect(out[0]?.id).toBe('media');
+  });
+
+  it('downweights low-engagement posts from big accounts', () => {
+    const now = Date.now();
+    // 1M-follower account with near-zero engagement (signal-poor).
+    const bigLowEng = makePost({
+      id: 'big-low',
+      metrics: { likes: 3, reposts: 0, replies: 0, quotes: 0 },
+      author: { ...makePost({ id: 'x' }).author, followerCount: 1_000_000 },
+    });
+    // Small account with strong engagement.
+    const smallHighEng = makePost({
+      id: 'small-high',
+      metrics: { likes: 300, reposts: 50, replies: 20, quotes: 0 },
+      author: { ...makePost({ id: 'x' }).author, followerCount: 200 },
+    });
+    const controls: FeedControls = {
+      ...DEFAULT_FEED_CONTROLS,
+      sort: 'engaged',
+      algorithm: { ...DEFAULT_FEED_CONTROLS.algorithm },
+    };
+    const out = applyFeedControls([bigLowEng, smallHighEng], controls, now);
+    expect(out[0]?.id).toBe('small-high');
+  });
+
+  it('creatorSize slider prefers indie creators when low, big accounts when high', () => {
+    const now = Date.now();
+    const indie = makePost({
+      id: 'indie',
+      metrics: { likes: 50, reposts: 5, replies: 2, quotes: 0 },
+      author: { ...makePost({ id: 'x' }).author, followerCount: 50 },
+    });
+    const big = makePost({
+      id: 'big',
+      metrics: { likes: 500, reposts: 50, replies: 20, quotes: 0 },
+      author: { ...makePost({ id: 'x' }).author, followerCount: 500_000 },
+    });
+    const indieControls: FeedControls = {
+      ...DEFAULT_FEED_CONTROLS,
+      sort: 'engaged',
+      algorithm: { ...DEFAULT_FEED_CONTROLS.algorithm, creatorSize: 0 },
+    };
+    const bigControls: FeedControls = {
+      ...DEFAULT_FEED_CONTROLS,
+      sort: 'engaged',
+      algorithm: { ...DEFAULT_FEED_CONTROLS.algorithm, creatorSize: 100 },
+    };
+    const indieFirst = applyFeedControls([indie, big], indieControls, now);
+    const bigFirst = applyFeedControls([indie, big], bigControls, now);
+    // Low creatorSize → indie outranks big (follower penalty dominates).
+    expect(indieFirst[0]?.id).toBe('indie');
+    // High creatorSize → big account is boosted above indie.
+    expect(bigFirst[0]?.id).toBe('big');
+  });
+
+  it('freshness slider changes engaged ranking (fresh beats engaged)', () => {
+    const now = Date.now();
+    // Older post with much higher engagement.
+    const oldEngaged = makePost({
+      id: 'old-engaged',
+      createdAt: now - 20 * 60 * 60 * 1000, // 20h old
+      metrics: { likes: 1000, reposts: 200, replies: 50, quotes: 0 },
+      qualityScore: { score: 90, max: 100, ratio: 0.9, reasons: [] },
+    });
+    // Fresh post with modest engagement.
+    const freshLight = makePost({
+      id: 'fresh-light',
+      createdAt: now - 10 * 60 * 1000, // 10m old
+      metrics: { likes: 10, reposts: 2, replies: 1, quotes: 0 },
+    });
+    const freshControls: FeedControls = {
+      ...DEFAULT_FEED_CONTROLS,
+      sort: 'engaged',
+      algorithm: { ...DEFAULT_FEED_CONTROLS.algorithm, recencyQuality: 0 },
+    };
+    const qualityControls: FeedControls = {
+      ...DEFAULT_FEED_CONTROLS,
+      sort: 'engaged',
+      algorithm: { ...DEFAULT_FEED_CONTROLS.algorithm, recencyQuality: 100 },
+    };
+    const freshFirst = applyFeedControls([oldEngaged, freshLight], freshControls, now);
+    const engagedFirst = applyFeedControls([oldEngaged, freshLight], qualityControls, now);
+    // rq=0 → pure freshness blend → fresh post first.
+    expect(freshFirst[0]?.id).toBe('fresh-light');
+    // rq=100 → quality/engagement dominates → old engaged post first.
+    expect(engagedFirst[0]?.id).toBe('old-engaged');
+  });
+
+  it('familiarDiscover slider boosts verified creators when high', () => {
+    const now = Date.now();
+    const verified = makePost({
+      id: 'verified',
+      qualityBadge: 'verified',
+      metrics: { likes: 5, reposts: 0, replies: 0, quotes: 0 },
+    });
+    const anonymous = makePost({
+      id: 'anon',
+      metrics: { likes: 8, reposts: 1, replies: 0, quotes: 0 },
+    });
+    const familiarControls: FeedControls = {
+      ...DEFAULT_FEED_CONTROLS,
+      sort: 'engaged',
+      algorithm: { ...DEFAULT_FEED_CONTROLS.algorithm, familiarDiscover: 100 },
+    };
+    const out = applyFeedControls([anonymous, verified], familiarControls, now);
+    expect(out[0]?.id).toBe('verified');
   });
 });
 
@@ -156,7 +295,13 @@ describe('feedRanking — URL serialization', () => {
       contentTypes: ['media'],
       timeRange: '7d',
       niches: ['defi'],
-      algorithm: { recencyQuality: 70, engagementDiversity: 40, protocolDiversity: 80 },
+      algorithm: {
+        recencyQuality: 70,
+        engagementDiversity: 40,
+        protocolDiversity: 80,
+        familiarDiscover: 30,
+        creatorSize: 60,
+      },
     };
     const params = serializeControls(controls);
     const parsed = parseControlsFromParams(new URLSearchParams(params));
@@ -166,7 +311,13 @@ describe('feedRanking — URL serialization', () => {
       contentTypes: ['media'],
       timeRange: '7d',
       niches: ['defi'],
-      algorithm: { recencyQuality: 70, engagementDiversity: 40, protocolDiversity: 80 },
+      algorithm: {
+        recencyQuality: 70,
+        engagementDiversity: 40,
+        protocolDiversity: 80,
+        familiarDiscover: 30,
+        creatorSize: 60,
+      },
     });
   });
 

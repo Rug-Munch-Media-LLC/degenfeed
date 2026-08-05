@@ -34,6 +34,7 @@ interface ProtocolRawPayload {
   uri?: string;
   url?: string;
   id?: string;
+  kind?: number | string;
   subreddit?: string;
   permalink?: string;
   feedUrl?: string;
@@ -48,13 +49,18 @@ interface ProtocolRawPayload {
   sensitive?: boolean;
   spoiler_text?: string;
   author_username?: string;
+  author_address?: string;
   stats_reposts?: string | number;
   stats_comments?: string | number;
   stats_reactions?: string | number;
   embeds?: Array<{ url?: string }>;
   tags?: string[][];
-  author?: RawAuthor;
-  account?: RawAuthor;
+  labels?: Array<{ uri?: string; cid?: string; val?: string; src?: string } | string>;
+  author?: RawAuthor & { custody_address?: string; followers_count?: number };
+  account?: RawAuthor & { followers_count?: number };
+  channel?: { name?: string; id?: string; parent_url?: string };
+  channel_name?: string;
+  custody_address?: string;
   reactions?: {
     likes_count?: number;
     recasts_count?: number;
@@ -358,6 +364,24 @@ export async function extractProtocolMeta(post: UnifiedPost): Promise<ProtocolMe
       }
       const zaps = (post.metrics as { zaps?: number }).zaps ?? 0;
       if (zaps > 0) chips.push({ label: 'zaps', value: `${zaps}`, accent: true });
+      // NIP-23 long-form notes (kind 30023) and NIP-17 encrypted DMs (kind 14)
+      // are the "quality / privacy" events Nostr users care about.
+      const kind = Number(raw.kind);
+      if (kind === 30023) {
+        chips.push({
+          label: 'NIP-23',
+          value: 'long-form',
+          title: 'Long-form article note (NIP-23)',
+          accent: true,
+        });
+      } else if (kind === 14) {
+        chips.push({
+          label: 'NIP-17',
+          value: 'DM',
+          title: 'Encrypted direct message (NIP-17)',
+          accent: true,
+        });
+      }
       return chips;
     }
     case 'farcaster': {
@@ -365,6 +389,23 @@ export async function extractProtocolMeta(post: UnifiedPost): Promise<ProtocolMe
       const fid = raw.author?.fid ?? author.keys?.fid ?? author.id.replace(/^farcaster:/, '');
       if (fid != null && fid !== '') {
         chips.push({ label: 'FID', value: String(fid), title: `Farcaster ID ${fid}` });
+      }
+      const channelName = raw.channel?.name ?? raw.channel_name;
+      if (channelName) {
+        chips.push({
+          label: 'channel',
+          value: `/${channelName}`,
+          title: `Farcaster channel: ${channelName}`,
+          accent: true,
+        });
+      }
+      const custody = raw.author?.custody_address ?? raw.custody_address;
+      if (custody) {
+        chips.push({
+          label: 'custody',
+          value: shortId(custody, 8, 6),
+          title: `Custody address: ${custody}`,
+        });
       }
       const reactions = raw.reactions ?? {};
       const likes = typeof reactions.likes_count === 'number' ? reactions.likes_count : 0;
@@ -382,8 +423,27 @@ export async function extractProtocolMeta(post: UnifiedPost): Promise<ProtocolMe
       const chips: ProtocolMetaChips[] = [];
       const did = raw.author?.did || author.id.replace(/^bluesky:/, '');
       if (did) chips.push({ label: 'DID', value: shortId(did, 12, 8), title: did });
+      // Full AT URI — the canonical identifier for any Bluesky post.
+      const atUri = raw.uri || (author.keys as { atprotoDid?: string })?.atprotoDid;
+      if (atUri && typeof atUri === 'string' && atUri.startsWith('at://')) {
+        chips.push({ label: 'AT-URI', value: shortId(atUri, 18, 10), title: atUri });
+      }
       const pds = hostFrom(handle);
       if (pds) chips.push({ label: 'PDS', value: pds, title: `Origin PDS: ${pds}` });
+      // Moderation / labeler labels (raw.labels from the AppView).
+      const labels = Array.isArray(raw.labels)
+        ? raw.labels
+            .map((l) => (typeof l === 'string' ? l : l?.val))
+            .filter((v): v is string => Boolean(v))
+        : [];
+      if (labels.length > 0) {
+        chips.push({
+          label: 'labels',
+          value: labels.slice(0, 2).join(', '),
+          title: `Labels: ${labels.join(', ')}`,
+          accent: true,
+        });
+      }
       if (typeof raw.replyCount === 'number' && raw.replyCount > 0)
         chips.push({ label: 'replies', value: String(raw.replyCount) });
       if (typeof raw.quoteCount === 'number' && raw.quoteCount > 0)
@@ -398,6 +458,18 @@ export async function extractProtocolMeta(post: UnifiedPost): Promise<ProtocolMe
           label: 'handle',
           value: username.startsWith('@') ? username : `@${username}`,
           title: `Lens handle: ${username}`,
+        });
+      }
+      // Lens profile id — the on-chain account address in this provider.
+      const profileId =
+        raw.author_address ||
+        (author.keys as { lensProfileId?: string })?.lensProfileId ||
+        author.id.replace(/^lens:/, '');
+      if (profileId && profileId.length > 0) {
+        chips.push({
+          label: 'profile',
+          value: shortId(profileId, 8, 6),
+          title: `Lens profile: ${profileId}`,
         });
       }
       const mirrors = Number(raw.stats_reposts) || 0;
@@ -418,6 +490,15 @@ export async function extractProtocolMeta(post: UnifiedPost): Promise<ProtocolMe
           label: 'author',
           value: `@${full}`,
           title: `Federated identity: @${full}`,
+        });
+      }
+      if (instance) chips.push({ label: 'instance', value: instance, title: instance });
+      const followers = raw.account?.followers_count ?? 0;
+      if (followers > 0) {
+        chips.push({
+          label: 'followers',
+          value: followers >= 1000 ? `${(followers / 1000).toFixed(1)}k` : String(followers),
+          title: `${followers} followers`,
         });
       }
       if (typeof raw.favourites_count === 'number' && raw.favourites_count > 0)
@@ -484,6 +565,17 @@ export async function extractProtocolMeta(post: UnifiedPost): Promise<ProtocolMe
             month: 'short',
             day: 'numeric',
           }),
+        });
+      }
+      // Article length (word count) — lets readers judge depth at a glance.
+      const wordCount = (post.text ?? '').trim().split(/\s+/).filter(Boolean).length;
+      if (wordCount > 0) {
+        const len = wordCount < 100 ? 'short' : wordCount < 400 ? 'medium' : 'long-form';
+        chips.push({
+          label: 'length',
+          value: `${wordCount.toLocaleString('en-US')}w · ${len}`,
+          title: `${wordCount} words`,
+          accent: wordCount >= 400,
         });
       }
       return chips;

@@ -1,24 +1,30 @@
 import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('@degenfeed/nostr-sdk', () => ({
-  RelayPool: vi.fn().mockImplementation(() => ({
-    list: vi.fn().mockResolvedValue([]),
-    disconnectAll: vi.fn(),
-  })),
+  RelayPool: vi.fn().mockImplementation(function () {
+    return {
+      list: vi.fn().mockResolvedValue([]),
+      disconnectAll: vi.fn(),
+    };
+  }),
 }));
 
 vi.mock('@degenfeed/farcaster-sdk', () => ({
-  HubClient: vi.fn().mockImplementation(() => ({
-    getCastsByFid: vi.fn().mockResolvedValue([]),
-    castToUnifiedPost: vi.fn().mockReturnValue({}),
-  })),
+  HubClient: vi.fn().mockImplementation(function () {
+    return {
+      getCastsByFid: vi.fn().mockResolvedValue([]),
+      castToUnifiedPost: vi.fn().mockReturnValue({}),
+    };
+  }),
 }));
 
 vi.mock('@degenfeed/bluesky-sdk', () => ({
-  BskyClient: vi.fn().mockImplementation(() => ({
-    getTimeline: vi.fn().mockResolvedValue({ posts: [] }),
-    postToUnifiedPost: vi.fn().mockReturnValue({}),
-  })),
+  BskyClient: vi.fn().mockImplementation(function () {
+    return {
+      getTimeline: vi.fn().mockResolvedValue({ posts: [] }),
+      postToUnifiedPost: vi.fn().mockReturnValue({}),
+    };
+  }),
 }));
 
 vi.mock('@degenfeed/rss-sdk', () => ({

@@ -1,10 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('@degenfeed/nostr-sdk', () => ({
-  RelayPool: vi.fn().mockImplementation(() => ({
-    list: vi.fn().mockResolvedValue([]),
-    disconnectAll: vi.fn(),
-  })),
+  RelayPool: vi.fn().mockImplementation(function () {
+    return {
+      list: vi.fn().mockResolvedValue([]),
+      disconnectAll: vi.fn(),
+    };
+  }),
 }));
 
 import type { Env } from '../index';

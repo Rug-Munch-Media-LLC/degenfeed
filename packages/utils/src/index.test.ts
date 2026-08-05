@@ -300,7 +300,7 @@ describe('protocol display helpers', () => {
   it('should return emoji for known protocols', async () => {
     const { getProtocolEmoji } = await import('./index');
     expect(getProtocolEmoji('nostr')).toBe('⚡');
-    expect(getProtocolEmoji('farcaster')).toBe('🟣');
+    expect(getProtocolEmoji('farcaster')).toBe('◈');
   });
 
   it('should return fallback emoji for unknown protocols', async () => {
