@@ -11,7 +11,7 @@ export interface PostMediaProps {
 }
 
 export const PostMedia = memo(function PostMedia({ post, authorName }: PostMediaProps) {
-  if (post.embeds.length === 0) return null;
+  if (!post.embeds || post.embeds.length === 0) return null;
 
   // Guard against url-less embeds (some bridges emit `{ kind: 'link' }` with
   // no URL). Never pass undefined into Image/Link/Video renderers.
