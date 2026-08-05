@@ -134,7 +134,7 @@ export const PROVIDERS: Record<string, ProviderEntry> = {
   nostr: {
     name: 'Nostr',
     fetch: fetchNostrPosts,
-    rateLimit: { maxRequests: 30, windowMs: 60_000 },
+    rateLimit: { maxRequests: 45, windowMs: 60_000 },
     category: 'content',
   },
   farcaster: {

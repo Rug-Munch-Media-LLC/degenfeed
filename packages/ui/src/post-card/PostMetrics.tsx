@@ -8,7 +8,7 @@ export interface PostMetricsProps {
 }
 
 export const PostMetrics = memo(function PostMetrics({ post }: PostMetricsProps) {
-  if (post.niches.length === 0) return null;
+  if (!post.niches || post.niches.length === 0) return null;
 
   return (
     <div className="niche-tags mb-3 flex flex-wrap gap-1">

@@ -97,27 +97,24 @@ export default function FeedPage() {
   const isAdmin = walletAddress ? ADMIN_WALLETS.has(walletAddress.toLowerCase()) : false;
 
   const [activeTab, setActiveTab] = useState<Tab>('for-you');
-  const [posts, setPosts] = useState<UnifiedPost[]>(() => {
+  const [posts, setPosts] = useState<UnifiedPost[]>([]);
+  const [state, setState] = useState<'loading' | 'loaded' | 'empty' | 'error'>('loaded');
+
+  // After mount, check for server-side preloaded feed data and start in loaded state.
+  useEffect(() => {
     try {
       const el = document.getElementById('feed-initial-data');
       if (el && el.textContent) {
         const initial = JSON.parse(el.textContent);
-        if (Array.isArray(initial)) return initial;
+        if (Array.isArray(initial) && initial.length > 0) {
+          setPosts(initial);
+          setState('loaded');
+          return;
+        }
       }
     } catch { /* ignore */ }
-    return [];
-  });
-  // Read server-side preloaded feed data so the page renders content immediately.
-  const [state, setState] = useState<'loading' | 'loaded' | 'empty' | 'error'>(() => {
-    try {
-      const el = document.getElementById('feed-initial-data');
-      if (el && el.textContent) {
-        const initial = JSON.parse(el.textContent);
-        if (Array.isArray(initial) && initial.length > 0) return 'loaded';
-      }
-    } catch { /* ignore */ }
-    return 'loading';
-  });
+    // No preloaded data — let fetchFeed handle it
+  }, []);
   const [error, setError] = useState<string>();
   const [tipPost, setTipPost] = useState<UnifiedPost | null>(null);
   const [feedMeta, setFeedMeta] = useState<FeedMeta>({});
@@ -411,7 +408,7 @@ export default function FeedPage() {
 
   const fetchFeed = useCallback(
     async (checkOnly = false) => {
-      if (!checkOnly) setState('loading');
+      // Skip loading state — page always shows content or empty state
       try {
         // Try the unified cross-protocol timeline first. Anonymous and
         // signed-in users read the same aggregated feed; personalization is

@@ -154,8 +154,12 @@ export function diversifyFeed(
     );
 
     if (pick === null) {
-      // No post can meet constraints — relax and take highest score
+      // No post can meet even relaxed constraints — drop the highest-scoring
+      // remaining post when it exceeds hard total caps, otherwise take it.
       const highest = remaining.shift()!;
+      if (violatesTotalConstraints(highest, state, config)) {
+        continue;
+      }
       result.push(highest);
       updateDiversityState(state, highest, config);
       recordUsage(stats, highest);
@@ -229,16 +233,34 @@ function findBestDiversePick(
     }
   }
 
-  // ── Phase 4: Relax consecutive constraints only ────────────────────
+  // ── Phase 4: Relax protocol consecutive constraint only ────────────
+  // Keep category + creator consecutive limits and hard total caps, so a
+  // feed that is homogeneous on one axis (e.g. all posts from one protocol)
+  // still interleaves on the other axes.
   for (let i = 0; i < remaining.length; i++) {
     const item = remaining[i]!;
-    // Allow breaking consecutive limits but not total limits
+    if (!violatesConsecutiveExcept(item, state, config, ['protocol'])) {
+      return { pick: item, pickIndex: i, reason: 'rotation' };
+    }
+  }
+
+  // ── Phase 5: Relax protocol + creator consecutive constraints ──────
+  for (let i = 0; i < remaining.length; i++) {
+    const item = remaining[i]!;
+    if (!violatesConsecutiveExcept(item, state, config, ['protocol', 'creator'])) {
+      return { pick: item, pickIndex: i, reason: 'rotation' };
+    }
+  }
+
+  // ── Phase 6: Relax all consecutive constraints, keep hard totals ───
+  for (let i = 0; i < remaining.length; i++) {
+    const item = remaining[i]!;
     if (!violatesTotalConstraints(item, state, config)) {
       return { pick: item, pickIndex: i, reason: 'rotation' };
     }
   }
 
-  // ── Phase 5: Everything relaxed — take the best remaining ─────────
+  // ── Phase 7: Everything relaxed — signal the caller to drop ────────
   return { pick: null, pickIndex: -1, reason: 'relaxed' };
 }
 
@@ -281,6 +303,47 @@ function violatesConstraints(
   return false;
 }
 
+/**
+ * Check the consecutive-count constraints for all axes EXCEPT the ones
+ * listed in `relaxedAxes`. Total caps are always enforced. Used for
+ * phased relaxation so a homogeneous feed still rotates on other axes.
+ */
+function violatesConsecutiveExcept(
+  item: ScoredItem,
+  state: DiversityState,
+  config: DiversityConfig,
+  relaxedAxes: Array<'category' | 'creator' | 'protocol'>,
+): boolean {
+  const category = getItemCategory(item);
+  const creator = item.post.author.id;
+  const protocol = item.post.protocol;
+
+  if (
+    !relaxedAxes.includes('category') &&
+    category === state.lastCategory &&
+    state.consecutiveCategory >= config.maxConsecutiveCategory
+  ) {
+    return true;
+  }
+  if (
+    !relaxedAxes.includes('creator') &&
+    creator === state.lastCreator &&
+    state.consecutiveCreator >= config.maxConsecutiveCreator
+  ) {
+    return true;
+  }
+  if (
+    !relaxedAxes.includes('protocol') &&
+    protocol === state.lastProtocol &&
+    state.consecutiveProtocol >= config.maxConsecutiveProtocol
+  ) {
+    return true;
+  }
+
+  // Total caps are hard limits and are never relaxed.
+  return violatesTotalConstraints(item, state, config);
+}
+
 function violatesTotalConstraints(
   item: ScoredItem,
   state: DiversityState,
@@ -291,13 +354,13 @@ function violatesTotalConstraints(
   const protocol = item.post.protocol;
 
   const catCount = state.categoryCounts.get(category) ?? 0;
-  if (catCount >= config.maxTotalCategory * 1.5) return true;
+  if (catCount >= config.maxTotalCategory) return true;
 
   const creatorCount = state.creatorCounts.get(creator) ?? 0;
-  if (creatorCount >= config.maxTotalCreator * 1.5) return true;
+  if (creatorCount >= config.maxTotalCreator) return true;
 
   const protocolCount = state.protocolCounts.get(protocol) ?? 0;
-  if (protocolCount >= config.maxTotalProtocol * 2) return true;
+  if (protocolCount >= config.maxTotalProtocol) return true;
 
   return false;
 }

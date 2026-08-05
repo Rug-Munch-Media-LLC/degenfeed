@@ -401,7 +401,7 @@ export const PostHeader = memo(function PostHeader({
                     Flag as spam
                   </button>
 
-                  {post.niches.length > 0 && onShowMoreLikeThis && (
+                  {post.niches && post.niches.length > 0 && onShowMoreLikeThis && (
                     <button
                       type="button"
                       role="menuitem"
@@ -430,7 +430,7 @@ export const PostHeader = memo(function PostHeader({
                       Show more like this
                     </button>
                   )}
-                  {post.niches.length > 0 && onShowLessLikeThis && (
+                  {post.niches && post.niches.length > 0 && onShowLessLikeThis && (
                     <button
                       type="button"
                       role="menuitem"

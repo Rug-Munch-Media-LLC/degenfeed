@@ -193,7 +193,38 @@ function engagementNorm(post: UnifiedPost): number {
   const m = post.metrics;
   const raw = m.likes + m.reposts * 2 + m.replies * 3 + (m.quotes ?? 0) * 4 + (m.views ?? 0) / 10;
   const log = Math.log(1 + raw);
-  return clamp01(log / Math.log(1 + 10_000));
+  let norm = clamp01(log / Math.log(1 + 10_000));
+
+  // Reduce the weight of low-engagement posts from big accounts: a 1M-follower
+  // account pulling 5 likes is a signal-poor post. Scale the engagement score
+  // down by how far it falls below the account's ~1% follower baseline.
+  const followers = post.author.followerCount ?? 0;
+  if (followers >= 10_000) {
+    const expected = Math.log(1 + followers * 0.01);
+    if (expected > 1 && log < expected) {
+      norm *= clamp01(log / expected);
+    }
+  }
+  return norm;
+}
+
+/** Media signal 0-1 — images/video are the highest-engagement formats. */
+function mediaBoost(post: UnifiedPost): number {
+  if (post.contentType === 'video' || post.contentType === 'image') return 1;
+  const hasRichEmbed = post.embeds.some(
+    (e) => e.kind === 'image' || e.kind === 'video' || e.kind === 'audio',
+  );
+  if (hasRichEmbed) return 1;
+  if (postHasMedia(post)) return 1;
+  if (postHasLink(post)) return 0.5;
+  return 0;
+}
+
+/** Verified / quality-badged creator signal 0-1. */
+function creatorVerified(post: UnifiedPost): number {
+  if (post.qualityBadge === 'verified') return 1;
+  if (Array.isArray(post.author.verified) && post.author.verified.length > 0) return 1;
+  return 0;
 }
 
 /** Zaps/tips are the on-protocol "value" signal (Nostr zaps, tips). */
@@ -253,11 +284,17 @@ export function sortFeed(posts: UnifiedPost[], sort: FeedSort, now = Date.now())
 
 /**
  * Apply user slider weights on top of the base sort.
- * - recencyQuality: blends recency ↔ quality for trending/quality sorts.
+ * - recencyQuality: blends recency ↔ quality for EVERY non-chronological sort
+ *   (trending, quality, zapped, engaged) — the "freshness" slider genuinely
+ *   changes the feed, not just the trending tab.
  * - engagementDiversity: blends engagement ↔ author diversity for
  *   trending/engaged sorts.
  * - protocolDiversity: enforces protocol interleaving (network mixing).
- * Chronological ("latest") is explicit — sliders do not distort it.
+ * - familiarDiscover: 0 = serendipity (boost diversity), 100 = boost
+ *   followed + verified creators ("my bubble").
+ * - creatorSize: 0 = indie/small creators, 100 = big accounts with large
+ *   followings.
+ * Chronological ("latest") is explicit — sliders only tiebreak equal timestamps.
  */
 export function blendAlgorithm(
   posts: UnifiedPost[],
@@ -266,28 +303,75 @@ export function blendAlgorithm(
   now = Date.now(),
 ): UnifiedPost[] {
   if (posts.length <= 1) return posts;
-  const { recencyQuality: rq, engagementDiversity: ed, protocolDiversity: pd } = algo;
+  const {
+    recencyQuality: rq,
+    engagementDiversity: ed,
+    protocolDiversity: pd,
+    familiarDiscover: fd,
+    creatorSize: cs,
+  } = algo;
   const wQ = clamp01(rq / 100);
   const wD = clamp01(ed / 100);
+  const wF = clamp01(fd / 100);
+  const wS = clamp01(cs / 100);
 
   const authorCounts = new Map<string, number>();
   for (const p of posts) authorCounts.set(p.author.id, (authorCounts.get(p.author.id) ?? 0) + 1);
   const divNorm = diversityNorm(posts, authorCounts);
 
   const scored = posts.map((p) => {
+    const recency = recencyNorm(p, now);
+    const quality = qualityRatio(p);
+    const eng = engagementNorm(p);
+    const media = mediaBoost(p);
+    const verified = creatorVerified(p);
+    const followers = p.author.followerCount ?? 0;
+
+    if (sort === 'latest') {
+      // Preserve chronological order; quality is only a tiebreak for equal
+      // timestamps so the freshness slider never distorts "latest".
+      return { p, score: p.createdAt + wQ * quality };
+    }
+
     let score = baseScore(p, sort, now);
-    if (sort === 'trending' || sort === 'quality') {
-      const recency = recencyNorm(p, now);
-      const quality = qualityRatio(p);
-      // rq=0 → pure recency, rq=100 → pure quality
-      score =
-        wQ * quality + (1 - wQ) * (sort === 'quality' ? recency : 0.5 * recency + 0.5 * score);
+
+    // Freshness ↔ quality blend — applied to every ranking sort so the
+    // "freshness" slider genuinely changes the feed everywhere.
+    // rq=0 → pure recency, rq=100 → pure quality (matches slider semantics).
+    switch (sort) {
+      case 'quality':
+        score = wQ * quality + (1 - wQ) * recency;
+        break;
+      case 'trending':
+        score = wQ * quality + (1 - wQ) * (0.5 * recency + 0.5 * score);
+        break;
+      case 'engaged':
+        score = wQ * quality + (1 - wQ) * (0.5 * recency + 0.5 * eng);
+        break;
+      default: // zapped
+        score = wQ * quality + (1 - wQ) * (0.5 * recency + 0.5 * score);
+        break;
     }
+
+    // Engagement ↔ diversity blend for trending/engaged.
     if (sort === 'trending' || sort === 'engaged') {
-      // ed=0 → pure engagement, ed=100 → pure diversity
-      const eng = sort === 'engaged' ? score : engagementNorm(p);
-      score = (1 - wD) * eng + wD * (divNorm.get(p.id) ?? 0.5);
+      score = (1 - wD) * score + wD * (divNorm.get(p.id) ?? 0.5);
     }
+
+    // Media boost — media-rich posts surface even in text-heavy feeds.
+    score += media * 0.12;
+    // Verified / quality-badged creator boost.
+    score += verified * 0.08;
+
+    // Creator size: cs=0 → indie/small creators, cs=100 → big accounts.
+    const sizeNorm = clamp01(Math.log10(1 + followers) / Math.log10(1 + 1_000_000));
+    score += ((1 - wS) * (1 - sizeNorm) + wS * sizeNorm) * 0.1;
+
+    // Familiar/Discover: fd=0 → serendipity (boost author diversity),
+    // fd=100 → familiar (boost followed + verified creators).
+    const familiarity = (p.feedDebug?.isFollowed ? 0.7 : 0) + verified * 0.3;
+    score += (wF * familiarity + (1 - wF) * (divNorm.get(p.id) ?? 0.5)) * 0.1;
+
     return { p, score };
   });
 
