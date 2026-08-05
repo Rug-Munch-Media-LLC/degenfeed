@@ -7,6 +7,7 @@
  * Last cleanup: 2026-07-25 — Removed 14 dead providers, implemented 8 real ones
  */
 
+import { FEED_MAX_AGE_HOURS, filterFreshPosts } from '../lib/freshness';
 import { fetchAetherPosts } from '../providers/aether';
 import { fetchArenaPosts } from '../providers/arena';
 import { fetchArweavePosts } from '../providers/arweave';
@@ -68,7 +69,7 @@ import { fetchPixelfedPosts } from '../providers/pixelfed';
 import { fetchPleromaPosts } from '../providers/pleroma';
 import { fetchPushPosts } from '../providers/push';
 import { fetchRedditPosts } from '../providers/redlib';
-import { fetch as fetchRssPosts, computeBiasDistribution } from '../providers/rss';
+import { computeBiasDistribution, fetch as fetchRssPosts } from '../providers/rss';
 import { fetchRssBridgePosts } from '../providers/rssbridge';
 import { fetchScuttlebuttPosts } from '../providers/scuttlebutt';
 import { fetchSessionPosts } from '../providers/session';
@@ -1251,7 +1252,21 @@ async function buildFeedInternal(
     };
   }
 
-  const deduped = dedupeAndInterleave(allPosts, limit);
+  // ── Global freshness safety net ─────────────────────────────────────
+  // Most providers now filter their own fetch pipelines (FEED_MAX_AGE_HOURS,
+  // default 48h) but this catches any provider that still returns stale
+  // content (cached fallbacks, circuit-breaker caches, providers without
+  // per-provider filters). Only fall back to the unfiltered set when the
+  // entire batch is stale so the feed never goes empty — demo content is
+  // strictly worse than slightly-old content.
+  const freshAll = filterFreshPosts(allPosts);
+  const feedPool = freshAll.length > 0 ? freshAll : allPosts;
+  const droppedStale = allPosts.length - feedPool.length;
+  if (droppedStale > 0) {
+    notices.push(`Freshness: ${droppedStale} stale post(s) dropped (>${FEED_MAX_AGE_HOURS}h old)`);
+  }
+
+  const deduped = dedupeAndInterleave(feedPool, limit);
 
   // Ground News-style bias distribution for the returned feed:
   // { bias: { left, center, right } } — counts posts per 3-bucket bias.

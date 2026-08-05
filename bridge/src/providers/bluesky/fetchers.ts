@@ -14,6 +14,7 @@
  * Rate Limit: self-hosted PDS is local, effectively unlimited
  */
 
+import { filterFreshPosts } from '../../lib/freshness';
 import { checkRateLimit } from '../../rate-limiter';
 import type { UnifiedPost } from '../../server';
 import { getFirehosePosts, startFirehose } from './firehose';
@@ -24,6 +25,50 @@ const $fetch = globalThis.fetch;
 
 const PDS_BASE = 'http://127.0.0.1:3012';
 const BSKY_PUBLIC = 'https://public.api.bsky.app';
+
+// ─── Profile avatar cache ─────────────────────────────────────────────
+// PDS-repo and firehose posts arrive with a minimal author (did + handle,
+// no avatar). Resolving the avatar requires an app.bsky.actor.getProfile
+// call per DID, so we cache results (30 min TTL) to keep the fan-out cheap
+// while still surfacing real avatars on those posts.
+
+const AVATAR_CACHE_TTL_MS = 30 * 60 * 1000;
+const avatarCache = new Map<string, { avatar: string; at: number }>();
+
+/** Resolve an author's avatar URL from the public AppView (cached). */
+export async function getAvatarForDid(did: string): Promise<string> {
+  if (!did) return '';
+  const cached = avatarCache.get(did);
+  if (cached && Date.now() - cached.at < AVATAR_CACHE_TTL_MS) return cached.avatar;
+  try {
+    const url = `${BSKY_PUBLIC}/xrpc/app.bsky.actor.getProfile?actor=${encodeURIComponent(did)}`;
+    const res = await $fetch(url, {
+      headers: { 'User-Agent': 'DegenFeed-Bridge/0.1' },
+      signal: AbortSignal.timeout(5000),
+    }).catch(() => null);
+    if (!res || !res.ok) return '';
+    const data = (await res.json()) as { avatar?: string };
+    const avatar = data.avatar || '';
+    avatarCache.set(did, { avatar, at: Date.now() });
+    return avatar;
+  } catch {
+    return '';
+  }
+}
+
+/** Enrich an array of posts whose authors came from non-hydrated sources. */
+export async function enrichMissingAvatars(posts: UnifiedPost[]): Promise<UnifiedPost[]> {
+  if (posts.length === 0) return posts;
+  const missing = posts.filter((p) => !p.author.avatarUrl && p.author.primary?.protocol === 'bluesky');
+  if (missing.length === 0) return posts;
+  const results = await Promise.allSettled(
+    missing.map((p) => getAvatarForDid(p.author.primary?.id || p.author.id.replace(/^bluesky:/, ''))),
+  );
+  results.forEach((r, i) => {
+    if (r.status === 'fulfilled' && r.value) missing[i]!.author.avatarUrl = r.value;
+  });
+  return posts;
+}
 
 // ─── Feed generator URIs (resolved 2026-08-03) ───────────────────────
 const WHATS_HOT_FEED = 'at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.feed.generator/whats-hot';
@@ -45,6 +90,15 @@ const CUSTOM_FEEDS = [
   'at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.feed.generator/hot-classic',
   'at://did:plc:4jrld6fwpnwqehtce56qshzv/app.bsky.feed.generator/game-dev',
   'at://did:plc:jcoy7v3a2t4rcfdh6i4kza25/app.bsky.feed.generator/astro',
+];
+
+// Crypto-relevant feed generator subscriptions (2026-08-05). These are the
+// protocol-level "crypto" and "what's-crypto" feed generators; they are
+// fetched alongside the general custom feeds so the Bluesky surface always
+// carries on-niche content.
+const CRYPTO_FEEDS = [
+  'at://did:plc:z72i7hdynmk6r22z27z2q6yo/app.bsky.feed.generator/crypto',
+  'at://did:plc:q6gjnaw2blty4crtr3nm2f6o/app.bsky.feed.generator/whats-crypto',
 ];
 
 const CURATED_ACTORS = [
@@ -276,7 +330,7 @@ async function fetchFromPds(limit: number): Promise<UnifiedPost[]> {
 
 async function fetchAuthorFeed(actor: string, limit: number): Promise<UnifiedPost[]> {
   try {
-    const url = `${BSKY_PUBLIC}/xrpc/app.bsky.feed.getAuthorFeed?actor=${encodeURIComponent(actor)}&limit=${Math.min(limit, 50)}`;
+    const url = `${BSKY_PUBLIC}/xrpc/app.bsky.feed.getAuthorFeed?actor=${encodeURIComponent(actor)}&limit=${Math.min(limit, 100)}`;
     const res = await $fetch(url, {
       headers: { 'User-Agent': 'DegenFeed-Bridge/0.1' },
       signal: AbortSignal.timeout(5000),
@@ -297,7 +351,7 @@ async function fetchAuthorFeed(actor: string, limit: number): Promise<UnifiedPos
 
 async function searchPosts(query: string, limit: number): Promise<UnifiedPost[]> {
   try {
-    const url = `${BSKY_PUBLIC}/xrpc/app.bsky.feed.searchPosts?q=${encodeURIComponent(query)}&limit=${Math.min(limit, 50)}&sort=latest`;
+    const url = `${BSKY_PUBLIC}/xrpc/app.bsky.feed.searchPosts?q=${encodeURIComponent(query)}&limit=${Math.min(limit, 100)}&sort=latest`;
     const res = await $fetch(url, {
       headers: { 'User-Agent': 'DegenFeed-Bridge/0.1' },
       signal: AbortSignal.timeout(5000),
@@ -318,9 +372,13 @@ async function searchPosts(query: string, limit: number): Promise<UnifiedPost[]>
  * This is the primary AT Protocol content surface — What's Hot, custom
  * feeds, and trending topic feeds all route through it.
  */
-async function fetchFeedByUri(feedUri: string, limit: number, authJwt?: string): Promise<UnifiedPost[]> {
+async function fetchFeedByUri(
+  feedUri: string,
+  limit: number,
+  authJwt?: string,
+): Promise<UnifiedPost[]> {
   try {
-    const url = `${BSKY_PUBLIC}/xrpc/app.bsky.feed.getFeed?feed=${encodeURIComponent(feedUri)}&limit=${Math.min(limit, 50)}`;
+    const url = `${BSKY_PUBLIC}/xrpc/app.bsky.feed.getFeed?feed=${encodeURIComponent(feedUri)}&limit=${Math.min(limit, 100)}`;
     const res = await $fetch(url, {
       headers: {
         'User-Agent': 'DegenFeed-Bridge/0.1',
@@ -350,14 +408,19 @@ async function fetchHomeTimeline(limit: number): Promise<UnifiedPost[]> {
   const jwt = await getPdsSession();
   if (!jwt) return [];
   try {
-    const url = `${PDS_BASE}/xrpc/app.bsky.feed.getTimeline?limit=${Math.min(limit, 50)}`;
+    const url = `${PDS_BASE}/xrpc/app.bsky.feed.getTimeline?limit=${Math.min(limit, 100)}`;
     const res = await $fetch(url, {
       headers: { Authorization: `Bearer ${jwt}`, 'User-Agent': 'DegenFeed-Bridge/0.1' },
       signal: AbortSignal.timeout(8000),
     });
     if (!res.ok) return [];
     const data = (await res.json()) as BskyFeedResponse;
-    return data.feed?.map((f) => f.post).filter(Boolean).map(postToUnified) ?? [];
+    return (
+      data.feed
+        ?.map((f) => f.post)
+        .filter(Boolean)
+        .map(postToUnified) ?? []
+    );
   } catch {
     return [];
   }
@@ -368,14 +431,19 @@ async function fetchWithFriends(limit: number): Promise<UnifiedPost[]> {
   const jwt = await getPdsSession();
   if (!jwt) return [];
   try {
-    const url = `${PDS_BASE}/xrpc/app.bsky.feed.getFeed?feed=${encodeURIComponent(WITH_FRIENDS_FEED)}&limit=${Math.min(limit, 50)}`;
+    const url = `${PDS_BASE}/xrpc/app.bsky.feed.getFeed?feed=${encodeURIComponent(WITH_FRIENDS_FEED)}&limit=${Math.min(limit, 100)}`;
     const res = await $fetch(url, {
       headers: { Authorization: `Bearer ${jwt}`, 'User-Agent': 'DegenFeed-Bridge/0.1' },
       signal: AbortSignal.timeout(8000),
     });
     if (!res.ok) return [];
     const data = (await res.json()) as BskyFeedResponse;
-    return data.feed?.map((f) => f.post).filter(Boolean).map(postToUnified) ?? [];
+    return (
+      data.feed
+        ?.map((f) => f.post)
+        .filter(Boolean)
+        .map(postToUnified) ?? []
+    );
   } catch {
     return [];
   }
@@ -452,9 +520,7 @@ export async function fetchBlueskyImageFeed(limit = 30): Promise<UnifiedPost[]> 
 
 export async function fetchBlueskyVideoFeed(limit = 20): Promise<UnifiedPost[]> {
   const all = await fetchAllCuratedPosts(Math.ceil(limit * 2));
-  const filtered = all.filter((p) =>
-    p.embeds.some((e) => e.kind === 'link' || e.kind === 'video'),
-  );
+  const filtered = all.filter((p) => p.embeds.some((e) => e.kind === 'link' || e.kind === 'video'));
   const deduped = dedupe(filtered, limit);
   console.log(`[bridge] Bluesky Video Feed: ${deduped.length} posts`);
   return deduped;
@@ -517,6 +583,14 @@ export async function fetchBlueskyPosts(limit = 20): Promise<UnifiedPost[]> {
   );
   for (const r of customResults) if (r.status === 'fulfilled') all.push(...r.value);
 
+  // 3b. Crypto feed generator subscriptions — on-niche content is boosted
+  // with a larger per-feed share so it competes with the general feeds.
+  const perCryptoFeed = Math.max(3, Math.ceil(limit / (CRYPTO_FEEDS.length + 2)));
+  const cryptoFeedResults = await Promise.allSettled(
+    CRYPTO_FEEDS.map((f) => fetchFeedByUri(f, perCryptoFeed)),
+  );
+  for (const r of cryptoFeedResults) if (r.status === 'fulfilled') all.push(...r.value);
+
   // 4. Trending topics (live feed generators)
   if (all.length < limit) {
     const trending = await fetchTrendingTopics(Math.ceil(limit / 3));
@@ -541,7 +615,10 @@ export async function fetchBlueskyPosts(limit = 20): Promise<UnifiedPost[]> {
     }
   }
 
-  const deduped = dedupe(all, limit);
+  // Freshness: discard posts outside the FEED_MAX_AGE_HOURS window (48h)
+  // BEFORE dedup so the cap fills with fresh content only.
+  const fresh = filterFreshPosts(all);
+  const deduped = dedupe(fresh, limit);
   console.log(
     `[bridge] Bluesky: ${deduped.length} posts (firehose: ${firehosePosts.length}, timeline: ${timeline.length}, whats-hot: ${whatsHot.length}, pds: ${pdsPosts.length})`,
   );
@@ -552,7 +629,7 @@ export const schema = {
   id: 'bluesky',
   name: 'Bluesky/AT Protocol',
   description:
-    'AT Protocol social network — What\'s Hot, custom feeds, trending topics, PDS federation, firehose',
+    "AT Protocol social network — What's Hot, custom feeds, trending topics, PDS federation, firehose",
   endpoint: '/api/feed/bluesky',
   requiresAuth: false,
   contentType: 'mixed',

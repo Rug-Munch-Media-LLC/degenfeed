@@ -21,7 +21,7 @@ interface FailoverStrategy {
 class FailoverRouter {
   private strategies = new Map<string, FailoverStrategy>();
 
-  register(protocol: string, fallbacks: string[], cacheTTL = 300000): void {
+  register(protocol: string, fallbacks: string[], cacheTTL = 60000): void {
     this.strategies.set(protocol, { primary: protocol, fallbacks, cacheTTL });
   }
 
@@ -83,7 +83,7 @@ export interface FallbackCacheEntry {
 
 class FallbackCache {
   private cache = new Map<string, FallbackCacheEntry>();
-  private maxAge = 300000; // 5 minutes
+  private maxAge = 60000; // 60s — reduced from 5min for fresher degraded feeds
 
   set(protocol: string, posts: UnifiedPost[]): void {
     this.cache.set(protocol, { posts, fetchedAt: Date.now() });
@@ -114,10 +114,7 @@ export const fallbackCache = _fallbackCache;
  * Try to fetch from a fallback provider by its protocol key.
  * Dynamically imports the provider module and calls its fetch function.
  */
-async function tryFallbackProvider(
-  protocol: string,
-  limit: number,
-): Promise<UnifiedPost[]> {
+async function tryFallbackProvider(protocol: string, limit: number): Promise<UnifiedPost[]> {
   try {
     // Map known protocol keys to their module paths
     const providerModules: Record<string, string> = {
@@ -196,7 +193,12 @@ async function tryFallbackProvider(
     };
 
     const fetchFn =
-      mod.fetch ?? mod.fetchPosts ?? (mod as Record<string, unknown>)[`fetch${capitalize(protocol)}Posts`] as ((limit: number) => Promise<UnifiedPost[]>) | undefined ?? mod.default;
+      mod.fetch ??
+      mod.fetchPosts ??
+      ((mod as Record<string, unknown>)[`fetch${capitalize(protocol)}Posts`] as
+        | ((limit: number) => Promise<UnifiedPost[]>)
+        | undefined) ??
+      mod.default;
 
     if (typeof fetchFn !== 'function') return [];
 

@@ -2,8 +2,8 @@
  * @degenfeed/ui — PostCard Types
  */
 
-import type { ReactNode } from 'react';
 import type { EngagementAction, UnifiedPost } from '@degenfeed/types';
+import type { ReactNode } from 'react';
 import type { ReputationBadgeProgress, ReputationBadgeScore } from './ReputationBadge';
 
 export type { ReportModalProps } from './ReportModal';
@@ -42,6 +42,12 @@ export interface PostCardProps {
   onShowLessLikeThis?: (topic: string) => void;
   onWhyThisPost?: (post: UnifiedPost) => void;
   onOpenShareSheet?: (post: UnifiedPost) => void;
+  /**
+   * True for the first few posts above the fold. Their avatar and media
+   * images load eagerly instead of lazy so above-the-fold content paints
+   * immediately; everything below stays lazy.
+   */
+  mediaPriority?: boolean;
   /**
    * Protocol-native metadata slot rendered inline inside the card
    * (e.g. NIP-05, zaps, relay chips, subreddit). Inline badges rather

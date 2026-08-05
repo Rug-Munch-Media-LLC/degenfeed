@@ -18,6 +18,7 @@
  *   PARAGRAPH_BRIDGE_URL  (default http://127.0.0.1:8241)
  */
 
+import { filterFreshPosts } from '../lib/freshness';
 import type { SchemaGuard, UnifiedPost } from '../server/types';
 import {
   extractFeaturedImage,
@@ -728,7 +729,10 @@ export async function fetchNewsletterPosts(limit = 30): Promise<UnifiedPost[]> {
     else failed++;
   }
 
-  const deduped = deduplicateNewsletterPosts(all, limit);
+  // Freshness: discard posts published outside the FEED_MAX_AGE_HOURS
+  // window (48h) BEFORE the fuzzy cross-platform dedup.
+  const fresh = filterFreshPosts(all);
+  const deduped = deduplicateNewsletterPosts(fresh, limit);
   const platforms = new Set(deduped.map(newsletterPlatformOf));
   console.log(
     `[newsletter] ${deduped.length} posts from ${rssSources.length} RSS sources + mirror-bridge + paragraph-api across ${platforms.size} platforms (${failed} fetch groups failed)`,

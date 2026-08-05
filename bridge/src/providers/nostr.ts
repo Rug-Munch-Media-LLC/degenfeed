@@ -124,7 +124,18 @@ interface NostrEvent {
   sig: string;
 }
 
-const profileCache = new Map<string, NostrProfile>();
+/**
+ * Profile cache with a 10-minute TTL so profile pics stay fresh.
+ *
+ * Kind-0 metadata (especially `picture`) changes when users update their
+ * profiles. An unbounded, never-expiring cache would freeze avatars at the
+ * first-seen value forever; 10 minutes balances freshness against the
+ * relay fan-out cost of re-requesting kind-0 events for every author on
+ * every fetch.
+ */
+const PROFILE_CACHE_TTL_MS = 10 * 60 * 1000;
+
+const profileCache = new Map<string, { profile: NostrProfile; at: number }>();
 
 interface NostrProfile {
   name?: string;
@@ -132,6 +143,22 @@ interface NostrProfile {
   about?: string;
   picture?: string;
   nip05?: string;
+}
+
+/** Read a cached profile, dropping entries older than the 10-minute TTL. */
+function getProfile(pubkey: string): NostrProfile | undefined {
+  const entry = profileCache.get(pubkey);
+  if (!entry) return undefined;
+  if (Date.now() - entry.at > PROFILE_CACHE_TTL_MS) {
+    profileCache.delete(pubkey);
+    return undefined;
+  }
+  return entry.profile;
+}
+
+/** Write a profile with the current timestamp. */
+function setProfile(pubkey: string, profile: NostrProfile): void {
+  profileCache.set(pubkey, { profile, at: Date.now() });
 }
 
 // ─── Helpers ───────────────────────────────────────────────────────────
@@ -386,6 +413,71 @@ export async function getRelayHealth(force = false): Promise<RelayHealth[]> {
 
 // ─── Mapping ───────────────────────────────────────────────────────────
 
+/**
+ * Extract media embeds from a Nostr kind-1 event's tags.
+ *
+ * NIP-92 `imeta` tags carry inline media metadata:
+ *   ["imeta", "url https://…", "m image/jpeg", "x <sha256>", "alt …"]
+ * Legacy clients also emit `url`/`i` tags pointing directly at a media URL.
+ * The MIME type is used when present; otherwise the URL extension decides
+ * between image and video. Non-media URLs are skipped (they are text links,
+ * not embeds).
+ */
+const IMAGE_EXT_RE = /\.(png|jpe?g|gif|webp|avif|svg|bmp|ico)(\?|#|$)/i;
+const VIDEO_EXT_RE = /\.(mp4|webm|mov|avi|mkv|m4v)(\?|#|$)/i;
+
+function mimeKind(mime: string | undefined, url: string): 'image' | 'video' | null {
+  if (!mime) {
+    if (IMAGE_EXT_RE.test(url)) return 'image';
+    if (VIDEO_EXT_RE.test(url)) return 'video';
+    return null;
+  }
+  if (mime.startsWith('image/')) return 'image';
+  if (mime.startsWith('video/')) return 'video';
+  return null;
+}
+
+export function extractNostrEmbeds(
+  tags: string[][],
+): Array<{ kind: string; url: string; meta?: Record<string, unknown> }> {
+  const embeds: Array<{ kind: string; url: string; meta?: Record<string, unknown> }> = [];
+  const seen = new Set<string>();
+
+  for (const tag of tags) {
+    if (!Array.isArray(tag)) continue;
+    const [name, ...rest] = tag;
+    if (name === 'imeta') {
+      // imeta tag is a list of "key value" pairs; pull `url` + `m` (mime).
+      const kv = new Map<string, string>();
+      for (const part of rest) {
+        if (typeof part !== 'string') continue;
+        const idx = part.indexOf(' ');
+        if (idx < 0) continue;
+        kv.set(part.slice(0, idx), part.slice(idx + 1).trim());
+      }
+      const url = kv.get('url');
+      if (!url || !/^https?:\/\//i.test(url) || seen.has(url)) continue;
+      const kind = mimeKind(kv.get('m'), url);
+      if (!kind) continue;
+      seen.add(url);
+      const meta: Record<string, unknown> = {};
+      if (kv.get('m')) meta.mime = kv.get('m');
+      if (kv.get('alt')) meta.alt = kv.get('alt');
+      if (kv.get('x')) meta.sha256 = kv.get('x');
+      if (kv.get('dim')) meta.dim = kv.get('dim');
+      embeds.push({ kind, url, meta });
+    } else if ((name === 'url' || name === 'i') && rest[0]) {
+      const url = rest[0];
+      if (!/^https?:\/\//i.test(url) || seen.has(url)) continue;
+      const kind = mimeKind(undefined, url);
+      if (!kind) continue;
+      seen.add(url);
+      embeds.push({ kind, url });
+    }
+  }
+  return embeds;
+}
+
 export function eventToPost(ev: NostrEvent, relayUrl: string, profile?: NostrProfile): UnifiedPost {
   const relayName = new URL(relayUrl).hostname;
   const pubkeyShort = hexToBech32(ev.pubkey);
@@ -408,7 +500,7 @@ export function eventToPost(ev: NostrEvent, relayUrl: string, profile?: NostrPro
       keys: { npub: pubkeyShort },
     },
     text: ev.content,
-    embeds: [],
+    embeds: extractNostrEmbeds(ev.tags),
     contentType: 'text',
     createdAt: ev.created_at * 1000,
     metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0, zaps: 0 },
@@ -459,6 +551,15 @@ export async function fetchNostrPosts(limit = 20): Promise<UnifiedPost[]> {
   // posts. After the first pass we issue a targeted kind-0 request with an
   // `authors` filter for every pubkey we still miss — all inside the same
   // 4.5s budget, and cached in profileCache for subsequent fetches.
+  //
+  // firstResults is assigned the moment the first pass settles so that, even
+  // if the enrichment phase pushes the total past the 4.5s budget, the
+  // provider returns real events instead of an empty array (which would make
+  // the single-provider route fall back to demo content).
+  let firstResults: PromiseSettledResult<{
+    events: NostrEvent[];
+    profiles: NostrEvent[];
+  }>[] = [];
   const settled = await withTotalBudget(
     (async () => {
       const first = await Promise.allSettled(
@@ -474,17 +575,22 @@ export async function fetchNostrPosts(limit = 20): Promise<UnifiedPost[]> {
           }),
         ]),
       );
+      firstResults = first;
 
       // Cache whatever kind-0 metadata the first pass collected.
       for (const result of first) {
         if (result.status !== 'fulfilled') continue;
         for (const p of result.value.profiles) {
           const parsed = parseProfile(p.content);
-          if (parsed) profileCache.set(p.pubkey, parsed);
+          if (parsed) setProfile(p.pubkey, parsed);
         }
       }
 
-      // Enrich: fetch kind-0 events for authors we still have no profile for.
+      // Enrich: fetch kind-0 events for authors we still have no profile for,
+      // OR whose cached profile is missing a `picture` (avatar). A cached
+      // profile without a picture is not "complete" — re-requesting kind-0
+      // for those authors is how avatars eventually resolve when the first
+      // pass only received partial metadata (e.g. name/bio but no picture).
       const missingPubkeys = [
         ...new Set(
           first
@@ -494,7 +600,10 @@ export async function fetchNostrPosts(limit = 20): Promise<UnifiedPost[]> {
             )
             .flatMap((r) => r.value.events.map((ev) => ev.pubkey)),
         ),
-      ].filter((pk) => !profileCache.has(pk));
+      ].filter((pk) => {
+        const profile = getProfile(pk);
+        return !profile || !profile.picture;
+      });
 
       if (missingPubkeys.length > 0) {
         // Use the fastest/verified relays (local + curated set) and cap the
@@ -512,7 +621,7 @@ export async function fetchNostrPosts(limit = 20): Promise<UnifiedPost[]> {
           if (result.status !== 'fulfilled') continue;
           for (const p of result.value.profiles) {
             const parsed = parseProfile(p.content);
-            if (parsed) profileCache.set(p.pubkey, parsed);
+            if (parsed) setProfile(p.pubkey, parsed);
           }
         }
       }
@@ -521,9 +630,12 @@ export async function fetchNostrPosts(limit = 20): Promise<UnifiedPost[]> {
     })(),
     4500,
   );
-  // Budget may elapse before allSettled finishes — treat missing results as empty.
+  // Budget may elapse before allSettled finishes — treat missing results as
+  // empty, BUT never discard the first-pass events: they are the reason this
+  // provider exists and dropping them on a slow enrichment is what caused
+  // intermittent 0-post (→ demo content) responses.
   const results: PromiseSettledResult<{ events: NostrEvent[]; profiles: NostrEvent[] }>[] =
-    Array.isArray(settled) ? settled : [];
+    Array.isArray(settled) && settled.length > 0 ? settled : firstResults;
 
   const allEvents: NostrEvent[] = [];
   const allProfiles: NostrEvent[] = [];
@@ -538,7 +650,7 @@ export async function fetchNostrPosts(limit = 20): Promise<UnifiedPost[]> {
   // Cache profiles
   for (const p of allProfiles) {
     const parsed = parseProfile(p.content);
-    if (parsed) profileCache.set(p.pubkey, parsed);
+    if (parsed) setProfile(p.pubkey, parsed);
   }
 
   // Sort by created_at descending, deduplicate by id
@@ -555,7 +667,7 @@ export async function fetchNostrPosts(limit = 20): Promise<UnifiedPost[]> {
   }
 
   const posts = unique.map((ev) => {
-    const profile = profileCache.get(ev.pubkey);
+    const profile = getProfile(ev.pubkey);
     return eventToPost(ev, RELAYS[0].url, profile);
   });
 

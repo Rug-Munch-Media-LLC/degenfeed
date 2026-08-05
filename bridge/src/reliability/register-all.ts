@@ -95,7 +95,7 @@ export function registerFailoverStrategies(_providers: Record<string, { name: st
   };
 
   for (const [primary, fallbacks] of Object.entries(strategies)) {
-    failoverRouter.register(primary, fallbacks, 300000);
+    failoverRouter.register(primary, fallbacks, 60000);
   }
 
   console.log(`[reliability] Registered ${Object.keys(strategies).length} failover strategies`);

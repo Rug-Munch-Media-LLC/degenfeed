@@ -10,6 +10,7 @@
  * API: GET /api/v1/videos?count=N&sort=-publishedAt
  */
 
+import { filterFreshPosts } from '../lib/freshness';
 import { checkRateLimit } from '../rate-limiter';
 import type { SchemaGuard, UnifiedPost } from '../server/types';
 
@@ -159,10 +160,7 @@ export async function fetchPeerTubeTrending(limit = 12): Promise<UnifiedPost[]> 
     return [];
   }
   try {
-    const url = `${PEERTUBE_BASE}/api/v1/videos?count=${Math.min(
-      limit,
-      50,
-    )}&sort=-trendingScore`;
+    const url = `${PEERTUBE_BASE}/api/v1/videos?count=${Math.min(limit, 50)}&sort=-trendingScore`;
     const res = await $fetch(url, {
       headers: { 'User-Agent': 'DegenFeed-Bridge/0.1' },
       signal: AbortSignal.timeout(5000),
@@ -443,10 +441,14 @@ export async function fetchPeerTubePosts(limit = 20): Promise<UnifiedPost[]> {
     }
   }
 
+  // Freshness: discard videos published outside the FEED_MAX_AGE_HOURS
+  // window (48h) BEFORE dedup so the cap fills with fresh uploads only.
+  const fresh = filterFreshPosts(all);
+
   // 3. Deduplicate by id
   const seen = new Set<string>();
   const deduped: UnifiedPost[] = [];
-  for (const p of all) {
+  for (const p of fresh) {
     if (!seen.has(p.id) && deduped.length < limit) {
       seen.add(p.id);
       deduped.push(p);
@@ -495,25 +497,25 @@ export async function fetchPeerTubeLiveStreams(limit = 20): Promise<PeerTubeLive
       return [];
     }
 
-      const streams: PeerTubeLiveStream[] = [];
-      for (const video of data.data) {
-        if (!video.isLive) continue;
-        const account = video.account || video.channel;
-        const streamer = account?.displayName || account?.name || 'PeerTube';
-        const viewers = video.viewers ?? video.views ?? 0;
-        const videoUrl = video.url || `${PEERTUBE_BASE}/videos/watch/${video.uuid}`;
-        streams.push({
-          platform: 'peertube',
-          title: video.name,
-          viewers,
-          thumbnail: videoThumbnailUrl(video),
-          url: videoUrl,
-          online: true,
-          streamer,
-          startedAt: video.publishedAt ? new Date(video.publishedAt).getTime() : Date.now(),
-          uuid: video.uuid,
-        });
-      }
+    const streams: PeerTubeLiveStream[] = [];
+    for (const video of data.data) {
+      if (!video.isLive) continue;
+      const account = video.account || video.channel;
+      const streamer = account?.displayName || account?.name || 'PeerTube';
+      const viewers = video.viewers ?? video.views ?? 0;
+      const videoUrl = video.url || `${PEERTUBE_BASE}/videos/watch/${video.uuid}`;
+      streams.push({
+        platform: 'peertube',
+        title: video.name,
+        viewers,
+        thumbnail: videoThumbnailUrl(video),
+        url: videoUrl,
+        online: true,
+        streamer,
+        startedAt: video.publishedAt ? new Date(video.publishedAt).getTime() : Date.now(),
+        uuid: video.uuid,
+      });
+    }
 
     console.log(`[bridge] PeerTube live: ${streams.length} stream(s)`);
     return streams.slice(0, limit);

@@ -50,7 +50,16 @@ function FrameCard({ url }: { url: string }) {
 
 // ─── Link Preview ──────────────────────────────────────────────────
 
-function LinkPreview({ embed, authorName }: { embed: Embed; authorName?: string }) {
+function LinkPreview({
+  embed,
+  authorName,
+  mediaPriority = false,
+}: {
+  embed: Embed;
+  authorName?: string;
+  /** Eager-load the preview image for above-the-fold cards. */
+  mediaPriority?: boolean;
+}) {
   const meta = embed.meta as { title?: string; description?: string; image?: string } | undefined;
   const title = meta?.title;
   const description = meta?.description;
@@ -81,7 +90,8 @@ function LinkPreview({ embed, authorName }: { embed: Embed; authorName?: string 
             fill
             sizes="(max-width: 640px) 100vw, 600px"
             className="object-cover transition-transform duration-500 group-hover:scale-105"
-            loading="lazy"
+            loading={mediaPriority ? 'eager' : 'lazy'}
+            priority={mediaPriority}
             decoding="async"
           />
         </div>
@@ -138,7 +148,16 @@ function VideoEmbedCard({ videoInfo }: { videoInfo: VideoInfo }) {
 
 // ─── Image Grid ────────────────────────────────────────────────────
 
-function ImageGrid({ images, authorName }: { images: string[]; authorName?: string }) {
+function ImageGrid({
+  images,
+  authorName,
+  mediaPriority = false,
+}: {
+  images: string[];
+  authorName?: string;
+  /** Eager-load images for above-the-fold cards. */
+  mediaPriority?: boolean;
+}) {
   const altText = authorName ? `Image in post by ${authorName}` : 'Post image';
 
   if (images.length === 1) {
@@ -154,7 +173,8 @@ function ImageGrid({ images, authorName }: { images: string[]; authorName?: stri
           width={200}
           height={200}
           className="h-full w-full object-cover"
-          loading="lazy"
+          loading={mediaPriority ? 'eager' : 'lazy'}
+          priority={mediaPriority}
           decoding="async"
         />
       </div>
@@ -175,7 +195,8 @@ function ImageGrid({ images, authorName }: { images: string[]; authorName?: stri
             width={200}
             height={200}
             className="aspect-square w-full object-cover"
-            loading="lazy"
+            loading={mediaPriority ? 'eager' : 'lazy'}
+            priority={mediaPriority}
             decoding="async"
           />
         ))}
@@ -196,7 +217,8 @@ function ImageGrid({ images, authorName }: { images: string[]; authorName?: stri
             width={200}
             height={200}
             className="h-full w-full object-cover"
-            loading="lazy"
+            loading={mediaPriority ? 'eager' : 'lazy'}
+            priority={mediaPriority}
             decoding="async"
           />
           {idx === 3 && images.length > 4 && (

@@ -122,6 +122,7 @@ export type {
 export { PostCard } from './PostCard';
 export type { PostCardEmptyProps } from './PostCardEmpty';
 export { PostCardEmpty } from './PostCardEmpty';
+export { PostCardGuard } from './PostCardGuard';
 export type { PostCardSkeletonProps } from './PostCardSkeleton';
 export { InlineSkeleton, PostCardSkeleton } from './PostCardSkeleton';
 export { PricePill, usePricesForText } from './PricePill';

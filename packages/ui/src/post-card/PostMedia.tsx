@@ -8,9 +8,15 @@ import { FrameCard, ImageGrid, LinkPreview, VideoEmbedCard } from '../PostCardMe
 export interface PostMediaProps {
   post: UnifiedPost;
   authorName?: string;
+  /** Eager-load media for above-the-fold cards. */
+  mediaPriority?: boolean;
 }
 
-export const PostMedia = memo(function PostMedia({ post, authorName }: PostMediaProps) {
+export const PostMedia = memo(function PostMedia({
+  post,
+  authorName,
+  mediaPriority = false,
+}: PostMediaProps) {
   if (!post.embeds || post.embeds.length === 0) return null;
 
   // Guard against url-less embeds (some bridges emit `{ kind: 'link' }` with
@@ -24,7 +30,9 @@ export const PostMedia = memo(function PostMedia({ post, authorName }: PostMedia
 
   return (
     <>
-      {images.length > 0 && <ImageGrid images={images} authorName={authorName} />}
+      {images.length > 0 && (
+        <ImageGrid images={images} authorName={authorName} mediaPriority={mediaPriority} />
+      )}
       {frames.map((embed) => (
         <FrameCard key={`frame-${embed.url}`} url={embed.url} />
       ))}
@@ -37,7 +45,14 @@ export const PostMedia = memo(function PostMedia({ post, authorName }: PostMedia
         if (linkVideoInfo) {
           return <VideoEmbedCard key={`link-video-${embed.url}`} videoInfo={linkVideoInfo} />;
         }
-        return <LinkPreview key={`link-${embed.url}`} embed={embed} authorName={authorName} />;
+        return (
+          <LinkPreview
+            key={`link-${embed.url}`}
+            embed={embed}
+            authorName={authorName}
+            mediaPriority={mediaPriority}
+          />
+        );
       })}
       {videos.map((embed) => {
         const videoInfo = parseVideoUrl(embed.url);

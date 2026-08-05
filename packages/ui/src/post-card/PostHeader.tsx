@@ -28,6 +28,11 @@ export interface PostHeaderProps {
   showTranslateMenu: boolean;
   translating: boolean;
   translateTarget: string | null;
+  /**
+   * True for the first few posts above the fold — their avatar loads
+   * eagerly (no lazy) so profile pictures appear immediately.
+   */
+  mediaPriority?: boolean;
   onToggleFollow: (e: React.MouseEvent) => void;
   onToggleMute: (e: React.MouseEvent) => void;
   onBlock: () => void;
@@ -77,6 +82,7 @@ export const PostHeader = memo(function PostHeader({
   showTranslateMenu,
   translating,
   translateTarget,
+  mediaPriority = false,
   onToggleFollow,
   onToggleMute,
   onBlock,
@@ -97,7 +103,14 @@ export const PostHeader = memo(function PostHeader({
   const [showMenu, setShowMenu] = useState(false);
   const [showMuteWordMenu, setShowMuteWordMenu] = useState(false);
   const [internalTranslateMenu, setInternalTranslateMenu] = useState(false);
+  const [avatarFailed, setAvatarFailed] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  // Reset the avatar error state when the source URL changes (e.g. list
+  // re-render with a different post identity).
+  useEffect(() => {
+    setAvatarFailed(false);
+  }, [post.author.avatarUrl]);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -134,7 +147,7 @@ export const PostHeader = memo(function PostHeader({
 
   return (
     <div className="author-row group mb-2 flex items-center gap-3">
-      {post.author.avatarUrl ? (
+      {post.author.avatarUrl && !avatarFailed ? (
         <Image
           src={post.author.avatarUrl}
           alt={`Avatar of ${post.author.displayName}`}
@@ -142,8 +155,10 @@ export const PostHeader = memo(function PostHeader({
           height={32}
           sizes="32px"
           className={avatarClass}
-          loading="lazy"
+          loading={mediaPriority ? 'eager' : 'lazy'}
+          priority={mediaPriority}
           decoding="async"
+          onError={() => setAvatarFailed(true)}
         />
       ) : (
         <div

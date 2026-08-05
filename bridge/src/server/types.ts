@@ -46,6 +46,12 @@ export interface UnifiedPost {
   dfUri?: string;
   /** Canonical URL on the native protocol (bsky.app post link) */
   canonicalUrl?: string;
+  /**
+   * Cross-protocol duplicate signal — set by `deduplicateFeed` on the copies
+   * that lost a duplicate group. Points at the `id` of the surviving
+   * canonical post (the one kept in the master feed).
+   */
+  crossPostOf?: string;
 }
 
 // ─── Cross-Protocol Event Types ──────────────────────────────────────────

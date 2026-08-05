@@ -11,6 +11,7 @@
  * which serve /api/v1/timelines/public without authentication.
  */
 
+import { filterFreshPosts } from '../lib/freshness';
 import { guessNiches, stripHtml } from '../lib/utils';
 import { checkRateLimit } from '../rate-limiter';
 
@@ -50,6 +51,14 @@ const PUBLIC_INSTANCES = [
   'https://social.treehouse.systems',
   'https://metalhead.club',
   'https://mastodon.green',
+  // Additional crypto/tech-friendly instances (verified public timeline
+  // 2026-08-05). mastodon.nl and mastodon.scot are large general instances
+  // with strong tech/crypto communities; phpc.social and journa.host are
+  // tech/verification communities.
+  'https://mastodon.nl',
+  'https://mastodon.scot',
+  'https://phpc.social',
+  'https://journa.host',
 ];
 
 // ─── Helpers ──────────────────────────────────────────────────────────
@@ -232,6 +241,32 @@ async function fetchFromPublicInstances(limit: number): Promise<UnifiedPost[]> {
   return results;
 }
 
+// ─── Crypto/web3 keyword filter ────────────────────────────────────────
+// Mastodon is a general social network — most public-instance posts are
+// off-niche. We keep crypto/web3-relevant posts first and drop the rest when
+// enough matches exist, so the feed stays on-niche without ever returning
+// empty when matches are scarce.
+
+const CRYPTO_KEYWORDS =
+  /(bitcoin|btc|ethereum|eth|solana|sol\b|crypto|defi|nft|web3|blockchain|onchain|on-chain|altcoin|token|airdrop|staking|stake|yield|liquidity|memecoin|meme coin|stablecoin|etf|sec|regulation|wallet|dex|cex|layer ?2|l2|arbitrum|optimism|base\b|polygon|rollup|zk|mining|halving|sats|lightning|jupiter|uniswap|aave|compound|farcaster|nostr|bitcoin hack|hodl|btc\b)/i;
+
+function isCryptoPost(post: UnifiedPost): boolean {
+  return CRYPTO_KEYWORDS.test(post.text || '');
+}
+
+/**
+ * Sort a post batch so crypto/web3-relevant posts surface first. When at
+ * least 70% of the requested limit is matched, non-matching posts are
+ * dropped entirely; otherwise the full mix is preserved (never return
+ * empty).
+ */
+function boostCryptoPosts(posts: UnifiedPost[], limit: number): UnifiedPost[] {
+  const matching = posts.filter(isCryptoPost);
+  const nonMatching = posts.filter((p) => !isCryptoPost(p));
+  if (matching.length >= Math.ceil(limit * 0.7)) return matching.slice(0, limit);
+  return [...matching, ...nonMatching].slice(0, limit);
+}
+
 // ─── Main ────────────────────────────────────────────────────────────
 
 export const schema: SchemaGuard = {
@@ -256,10 +291,17 @@ export async function fetchMastodonPosts(limit = 20): Promise<UnifiedPost[]> {
 
   const all = [...gts, ...publics];
 
+  // Freshness: discard posts outside the FEED_MAX_AGE_HOURS window (48h)
+  // BEFORE dedup so the cap fills with fresh content only.
+  const fresh = filterFreshPosts(all);
+
+  // Crypto/web3 relevance filter — keep the feed on-niche, never empty.
+  const boosted = boostCryptoPosts(fresh, limit);
+
   // Deduplicate by content
   const seen = new Set<string>();
   const deduped: UnifiedPost[] = [];
-  for (const p of all) {
+  for (const p of boosted) {
     const key = p.text.slice(0, 80);
     if (!seen.has(key) && deduped.length < limit) {
       seen.add(key);

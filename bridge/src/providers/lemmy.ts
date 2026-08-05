@@ -11,6 +11,7 @@
  * DeFi, NFTs, tech, and web3.
  */
 
+import { filterFreshPosts } from '../lib/freshness';
 import { checkRateLimit } from '../rate-limiter';
 import type { SchemaGuard, UnifiedPost } from '../server/types';
 
@@ -482,10 +483,14 @@ export async function fetchLemmyPosts(limit = 20): Promise<UnifiedPost[]> {
     }
   }
 
+  // Freshness: discard posts outside the FEED_MAX_AGE_HOURS window (48h)
+  // BEFORE dedup so the cap fills with fresh content only.
+  const fresh = filterFreshPosts(all);
+
   // Deduplicate by content hash
   const seen = new Set<string>();
   const deduped: UnifiedPost[] = [];
-  for (const p of all) {
+  for (const p of fresh) {
     const key = p.text.slice(0, 60);
     if (!seen.has(key) && deduped.length < limit) {
       seen.add(key);
