@@ -13,8 +13,12 @@
  *   - `degenfeed.xyz` keeps the landing page at `/`.
  *
  * CSP strategy:
- *   - Per-request nonce for inline scripts/styles (no unsafe-inline)
- *   - strict-dynamic for trusted script loading chains
+ *   - Per-request nonce + strict-dynamic for inline SCRIPTS (XSS-hardened)
+ *   - style-src uses 'unsafe-inline' (NOT the nonce) — required for CSS-in-JS:
+ *     React sets inline style="" attributes, which nonces cannot authorize,
+ *     and browsers IGNORE 'unsafe-inline' when a nonce is present in the
+ *     same style-src directive. Keeping the nonce in style-src blocks all
+ *     CSS-in-JS (222 violations/page). script-src stays nonce-only.
  *   - No unsafe-eval (blocks eval(), setTimeout('string'), etc.)
  *   - Nonce passed via x-csp-nonce request header for RSC consumption
  *
@@ -55,7 +59,10 @@ function buildCspHeader(nonce: string): string {
   return [
     "default-src 'self'",
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`,
-    `style-src 'self' 'nonce-${nonce}'`,
+    // style-src deliberately has NO nonce: browsers ignore 'unsafe-inline'
+    // when a nonce is present, and nonces don't apply to style attributes —
+    // so a nonce here would block all CSS-in-JS inline styles.
+    "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: https: blob:",
     "connect-src 'self' https: wss:",
     "frame-src 'self' https:",
