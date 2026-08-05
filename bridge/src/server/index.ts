@@ -544,7 +544,7 @@ const server = http.createServer(async (req, res) => {
         service: 'degenfeed-bridge',
         version: '0.4.0',
         relays: {
-          nostr,
+          nostr: relays,
           checkedAt: new Date().toISOString(),
         },
         sources: {
