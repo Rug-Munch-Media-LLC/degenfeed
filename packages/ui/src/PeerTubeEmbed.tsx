@@ -109,7 +109,7 @@ export const PeerTubeEmbed = memo(function PeerTubeEmbed({
     fetchPeerTubeVideo(instanceDomain, uuid)
       .then((data) => {
         if (cancelled) return;
-        if (data && data.files.length > 0) {
+        if (data && data.files?.length > 0) {
           // Pick the highest quality file (last in the sorted array is highest res)
           const files = data.files;
           const bestFile = files[files.length - 1]?.fileUrl ?? files[0]?.fileUrl;

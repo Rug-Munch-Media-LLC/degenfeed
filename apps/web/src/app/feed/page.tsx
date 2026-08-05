@@ -688,7 +688,7 @@ export default function FeedPage() {
             postId,
             post.dfUri ?? '',
             post.protocol,
-            post.text.slice(0, 60),
+            (post.text ?? '').slice(0, 60),
             post.author.displayName || '',
           );
         else await removeBookmark(postId);

@@ -209,9 +209,13 @@ function PostCardComponent({
     };
   }, [post.dfUri, expanded, showReply]);
 
-  const needsTruncation = !expanded && post.text.length > MAX_TEXT_LENGTH;
+  // Some protocol bridges emit posts with no `text` — never call .length/.slice
+  // on undefined (same class of crash as the LinkPreview/PostMedia/PostMetrics
+  // TypeError series).
+  const postText = post.text ?? '';
+  const needsTruncation = !expanded && postText.length > MAX_TEXT_LENGTH;
   const displayText =
-    needsTruncation && !showFullText ? `${post.text.slice(0, MAX_TEXT_LENGTH)}...` : post.text;
+    needsTruncation && !showFullText ? `${postText.slice(0, MAX_TEXT_LENGTH)}...` : postText;
 
   const perform = useCallback(
     async (action: EngagementAction, content?: string) => {
@@ -234,7 +238,7 @@ function PostCardComponent({
             post.id,
             `df://${post.protocol}:${post.id.replace(/^(nostr:|farcaster:|lens:|bluesky:|mastodon:|reddit:|rss:|threads:)/, '')}`,
             post.protocol,
-            post.text.slice(0, 120) || post.id,
+            (post.text ?? '').slice(0, 120) || post.id,
             post.author.displayName || post.author.handles[post.protocol] || 'Unknown',
           );
         } catch {
