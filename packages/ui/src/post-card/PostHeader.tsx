@@ -8,6 +8,7 @@ import { IdentityBadge } from '../IdentityBadge';
 import {
   getProtocolIcon as _getProtocolIcon,
   getProtocolLabel as _getProtocolLabel,
+  getProtocolColor,
   ProtocolBadge,
 } from '../ProtocolBadge';
 import type { ReputationBadgeProgress, ReputationBadgeScore } from '../ReputationBadge';
@@ -133,19 +134,31 @@ export const PostHeader = memo(function PostHeader({
 
   return (
     <div className="author-row group mb-2 flex items-center gap-3">
-      <Image
-        src={
-          post.author.avatarUrl ||
-          'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 fill=%22%23333%22/%3E%3Ctext x=%2216%22 y=%2222%22 text-anchor=%22middle%22 fill=%22%23999%22 font-size=%2216%22%3E%40%3C/text%3E%3C/svg%3E'
-        }
-        alt={`Avatar of ${post.author.displayName}`}
-        width={32}
-        height={32}
-        sizes="32px"
-        className={avatarClass}
-        loading="lazy"
-        decoding="async"
-      />
+      {post.author.avatarUrl ? (
+        <Image
+          src={post.author.avatarUrl}
+          alt={`Avatar of ${post.author.displayName}`}
+          width={32}
+          height={32}
+          sizes="32px"
+          className={avatarClass}
+          loading="lazy"
+          decoding="async"
+        />
+      ) : (
+        <div
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold"
+          style={{
+            backgroundColor: `${getProtocolColor(post.protocol)}1f`,
+            color: getProtocolColor(post.protocol),
+            border: `1px solid ${getProtocolColor(post.protocol)}40`,
+          }}
+          role="img"
+          aria-label={`Avatar of ${post.author.displayName}`}
+        >
+          {post.author.displayName?.[0]?.toUpperCase() || _getProtocolIcon(post.protocol) || '?'}
+        </div>
+      )}
       <div className="flex-1 min-w-0">
         {post.protocol === 'lemmy' && post.community && (
           <div className="lemmy-community-row mb-0.5">

@@ -919,7 +919,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (path === '/api/feed/news') {
-      const { fetchRssPosts } = await import('../providers/rss');
+      const { fetchRssPosts, computeBiasDistribution } = await import('../providers/rss');
       const limit = Math.min(parseInt(searchParams.get('limit') || '25', 10), 100);
       const rssPosts = await fetchRssPosts(limit);
       return jsonOk(res, {
@@ -929,6 +929,7 @@ const server = http.createServer(async (req, res) => {
           page: 1,
           limit,
           source: 'rss-aggregator',
+          bias: computeBiasDistribution(rssPosts),
           fetchedAt: Date.now(),
           feedCount: (await import('../providers/rss')).FEED_COUNT,
         },

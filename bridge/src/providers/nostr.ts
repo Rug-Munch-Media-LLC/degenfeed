@@ -370,7 +370,14 @@ export async function getRelayHealth(force = false): Promise<RelayHealth[]> {
   const data = RELAYS.map((r, i) => {
     const res = settled[i];
     if (res?.status === 'fulfilled') return { ...res.value, local: r.local };
-    return { url: r.url, local: r.local, healthy: false, events: 0, latencyMs: null, error: 'probe-failed' };
+    return {
+      url: r.url,
+      local: r.local,
+      healthy: false,
+      events: 0,
+      latencyMs: null,
+      error: 'probe-failed',
+    };
   });
   relayHealthCache.at = Date.now();
   relayHealthCache.data = data;
@@ -446,20 +453,72 @@ export async function fetchNostrPosts(limit = 20): Promise<UnifiedPost[]> {
   // Hybrid query per relay: (1) curated npubs via `authors` filter for
   // quality content, (2) unfiltered recent notes so the feed stays full
   // of fresh global activity even when curated authors are quiet.
+  //
+  // Phase 2 (profile enrichment): relays frequently resolve the kind-1
+  // query before sending kind-0 events, which left avatarUrl empty on most
+  // posts. After the first pass we issue a targeted kind-0 request with an
+  // `authors` filter for every pubkey we still miss — all inside the same
+  // 4.5s budget, and cached in profileCache for subsequent fetches.
   const settled = await withTotalBudget(
-    Promise.allSettled(
-      RELAYS.flatMap((r) => [
-        fetchFromRelay(r.url, {
-          kinds: [0, 1],
-          authors: CURATED_PUBKEYS,
-          limit: curatedShare,
-        }),
-        fetchFromRelay(r.url, {
-          kinds: [0, 1],
-          limit: generalShare,
-        }),
-      ]),
-    ),
+    (async () => {
+      const first = await Promise.allSettled(
+        RELAYS.flatMap((r) => [
+          fetchFromRelay(r.url, {
+            kinds: [0, 1],
+            authors: CURATED_PUBKEYS,
+            limit: curatedShare,
+          }),
+          fetchFromRelay(r.url, {
+            kinds: [0, 1],
+            limit: generalShare,
+          }),
+        ]),
+      );
+
+      // Cache whatever kind-0 metadata the first pass collected.
+      for (const result of first) {
+        if (result.status !== 'fulfilled') continue;
+        for (const p of result.value.profiles) {
+          const parsed = parseProfile(p.content);
+          if (parsed) profileCache.set(p.pubkey, parsed);
+        }
+      }
+
+      // Enrich: fetch kind-0 events for authors we still have no profile for.
+      const missingPubkeys = [
+        ...new Set(
+          first
+            .filter(
+              (r): r is PromiseFulfilledResult<{ events: NostrEvent[]; profiles: NostrEvent[] }> =>
+                r.status === 'fulfilled',
+            )
+            .flatMap((r) => r.value.events.map((ev) => ev.pubkey)),
+        ),
+      ].filter((pk) => !profileCache.has(pk));
+
+      if (missingPubkeys.length > 0) {
+        // Use the fastest/verified relays (local + curated set) and cap the
+        // authors filter at 100 pubkeys — a safe bound for relay limits.
+        const enrich = await Promise.allSettled(
+          RELAYS.slice(0, 6).map((r) =>
+            fetchFromRelay(r.url, {
+              kinds: [0],
+              authors: missingPubkeys.slice(0, 100),
+              limit: missingPubkeys.length,
+            }),
+          ),
+        );
+        for (const result of enrich) {
+          if (result.status !== 'fulfilled') continue;
+          for (const p of result.value.profiles) {
+            const parsed = parseProfile(p.content);
+            if (parsed) profileCache.set(p.pubkey, parsed);
+          }
+        }
+      }
+
+      return first;
+    })(),
     4500,
   );
   // Budget may elapse before allSettled finishes — treat missing results as empty.

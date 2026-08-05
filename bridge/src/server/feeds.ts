@@ -68,7 +68,7 @@ import { fetchPixelfedPosts } from '../providers/pixelfed';
 import { fetchPleromaPosts } from '../providers/pleroma';
 import { fetchPushPosts } from '../providers/push';
 import { fetchRedditPosts } from '../providers/redlib';
-import { fetch as fetchRssPosts } from '../providers/rss';
+import { fetch as fetchRssPosts, computeBiasDistribution } from '../providers/rss';
 import { fetchRssBridgePosts } from '../providers/rssbridge';
 import { fetchScuttlebuttPosts } from '../providers/scuttlebutt';
 import { fetchSessionPosts } from '../providers/session';
@@ -1056,12 +1056,24 @@ async function buildFeedInternal(
     3,
     Math.ceil((limit * 1.2) / Math.max(fetchProtocols.length, 1)),
   );
-  // Global per-provider timeout. 5s bounds cold-start aggregation latency to
-  // ~5s (slowest expected providers: Hubble Farcaster 3.5s, Mastodon/GTS 5s)
-  // while slow/broken providers (e.g. Reddit multi-strategy) get cut fast
-  // instead of stalling the whole feed for 15-20s. The result cache makes any
-  // per-provider truncation invisible to repeat requests.
-  const FETCH_TIMEOUT_MS = 5000;
+  // Global per-provider timeout. Bounds cold-start aggregation latency while
+  // slow/broken providers get cut instead of stalling the whole feed. The RSS
+  // provider fans out over 281 feeds (13.5s cold), so the default is 12s —
+  // configured via FEED_FETCH_TIMEOUT_MS (default 12000). Its internal
+  // 5-minute cache + prewarm make subsequent requests fast. The result cache
+  // makes any per-provider truncation invisible to repeat requests.
+  const FETCH_TIMEOUT_MS = (() => {
+    try {
+      const raw = process.env.FEED_FETCH_TIMEOUT_MS;
+      if (raw !== undefined) {
+        const n = Number(raw);
+        if (Number.isFinite(n) && n > 0) return n;
+      }
+    } catch {
+      /* fall through to default */
+    }
+    return 12_000;
+  })();
   const MAX_CONCURRENT = 20; // Limit to 20 concurrent provider fetches to prevent OOM
 
   const results = await runWithConcurrencyLimit(
@@ -1241,6 +1253,10 @@ async function buildFeedInternal(
 
   const deduped = dedupeAndInterleave(allPosts, limit);
 
+  // Ground News-style bias distribution for the returned feed:
+  // { bias: { left, center, right } } — counts posts per 3-bucket bias.
+  const bias = computeBiasDistribution(deduped);
+
   const degradedCount = Object.keys(cacheAges).length;
 
   console.log(
@@ -1263,6 +1279,7 @@ async function buildFeedInternal(
       discoveryProtocols: discoveryProtocols.length > 0 ? discoveryProtocols : undefined,
       errors: errors.length > 0 ? errors : undefined,
       notices: notices.length > 0 ? notices : undefined,
+      bias,
       fetchedAt: Date.now(),
       source: 'live',
     },

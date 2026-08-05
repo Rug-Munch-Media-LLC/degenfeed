@@ -21,6 +21,27 @@ import type { SchemaGuard, UnifiedPost } from '../server/types';
 
 const USER_AGENT = 'DegenFeed-Bridge/0.2 (RSS Aggregator)';
 
+/**
+ * Per-feed HTTP timeout (ms). The RSS provider fans out over 281 feeds;
+ * large feeds (The Intercept ~460KB, The Guardian, Vice) need more than 3s
+ * to download and previously timed out — starving the feed of left-leaning
+ * sources entirely. Default 12s (configurable via RSS_FEED_TIMEOUT_MS).
+ * The 5-minute RSS cache + prewarm make repeat requests fast, so a longer
+ * per-feed timeout only affects the initial cold fetch.
+ */
+const RSS_FEED_TIMEOUT_MS = (() => {
+  try {
+    const raw = process.env.RSS_FEED_TIMEOUT_MS;
+    if (raw !== undefined) {
+      const n = Number(raw);
+      if (Number.isFinite(n) && n > 0) return n;
+    }
+  } catch {
+    /* fall through to default */
+  }
+  return 12_000;
+})();
+
 // ─── Feeds by Category ──────────────────────────────────────────────────
 
 export interface FeedSource {
@@ -2836,7 +2857,7 @@ async function fetchSingleFeed(feed: FeedSource, limit: number): Promise<Unified
         'User-Agent': USER_AGENT,
         Accept: 'application/rss+xml, application/atom+xml, application/xml, text/xml',
       },
-      signal: AbortSignal.timeout(3000),
+      signal: AbortSignal.timeout(RSS_FEED_TIMEOUT_MS),
     });
 
     if (!res.ok) {
@@ -2909,7 +2930,7 @@ async function fetchSingleFeed(feed: FeedSource, limit: number): Promise<Unified
           handles: { rss: feed.label },
           displayName: item.authorName || platformLabel,
           bio: feed.category ? `${feed.category.replace(/-/g, ' ')} feed` : 'RSS feed',
-          avatarUrl: '',
+          avatarUrl: rssAvatarUrl(feed.url, parsed.image),
           followerCount: 0,
           followingCount: 0,
           links: feed.url ? [{ label: 'source', url: feed.url }] : [],
@@ -2946,6 +2967,8 @@ async function fetchSingleFeed(feed: FeedSource, limit: number): Promise<Unified
           podcastTitle: isPodcast ? feed.label : undefined,
           // Ground News-style ratings — free informational metadata
           bias: sourceBias(feed.label),
+          biasScore: sourceBiasScore(feed.label),
+          biasLabel: biasDisplayLabel(feed.label),
           factualRating: sourceFactuality(feed.label),
           // CryptoPanic-style price impact: which coins this article affects.
           priceImpact: extractPriceImpact(`${item.title} ${item.contentText}`),
@@ -2961,6 +2984,24 @@ async function fetchSingleFeed(feed: FeedSource, limit: number): Promise<Unified
 }
 
 // ─── Newsletter Platform Fetchers ────────────────────────────────────
+
+/**
+ * Resolve an avatar for an RSS/Atom feed:
+ * 1. Feed-level image (RSS <image><url> or Atom <logo>) — the source's logo.
+ * 2. Favicon of the feed host — a stable per-source fallback so RSS posts
+ *    never render as a blank/grey avatar.
+ * Empty when the URL cannot be derived (feeds without any of the above).
+ */
+function rssAvatarUrl(feedUrl: string, feedImage?: string): string {
+  if (feedImage?.trim()) return feedImage.trim();
+  try {
+    const host = new URL(feedUrl).hostname;
+    if (!host) return '';
+    return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(host)}&sz=64`;
+  } catch {
+    return '';
+  }
+}
 
 /**
  * Parse a Substack RSS feed. Substack uses standard RSS 2.0.
@@ -2983,7 +3024,7 @@ async function fetchMirrorFeed(feed: FeedSource, limit: number): Promise<Unified
   try {
     const res = await globalThis.fetch(feed.url, {
       headers: { 'User-Agent': USER_AGENT },
-      signal: AbortSignal.timeout(3000),
+      signal: AbortSignal.timeout(RSS_FEED_TIMEOUT_MS),
     });
     if (!res.ok) return [];
 
@@ -3820,12 +3861,12 @@ export const SOURCE_BIAS_SCORE: Record<string, BiasScore> = {
   'The Defiant': -0.15,
   CoinTelegraph: 0.0,
   'CoinTelegraph Bitcoin': 0.0,
-  Blockworks: 0.1,
+  Blockworks: 0.2,
   CryptoSlate: 0.0,
   'Bitcoin Magazine': 0.6,
   BitcoinMagazine: 0.6,
   Coinspeaker: 0.3,
-  'Bitcoin.com News': 0.55,
+  'Bitcoin.com News': 0.4,
   Bitcoinist: 0.5,
   NewsBTC: 0.5,
   'Daily Hodl': 0.45,
@@ -3833,15 +3874,28 @@ export const SOURCE_BIAS_SCORE: Record<string, BiasScore> = {
   ZeroHedge: 0.8,
   'Zero Hedge Crypto': 0.8,
   Breitbart: 0.9,
+  'Daily Caller': 0.7,
   // Left / lean-left crypto-adjacent
   Motherboard: -0.6,
   Vice: -0.6,
   'The Intercept': -0.7,
-  Wired: -0.35,
-  TechCrunch: -0.3,
-  'The Verge': -0.35,
+  Jacobin: -0.8,
+  'The Nation': -0.7,
+  'Democracy Now': -0.6,
+  Wired: -0.2,
+  TechCrunch: -0.1,
+  'The Verge': -0.1,
+  // The Guardian (all section feeds share the outlet-level rating)
+  'The Guardian Tech': -0.4,
+  'The Guardian World': -0.4,
+  'Guardian US': -0.4,
+  'Guardian Politics': -0.4,
+  'Guardian Science': -0.4,
+  'Guardian Business': -0.4,
+  'Guardian Long Read': -0.4,
   // Finance
-  'WSJ Crypto': 0.35,
+  'WSJ Crypto': 0.1,
+  'WSJ World': 0.1,
   'Financial Times': 0.15,
   FT: 0.15,
   'FT Alphaville': 0.2,
@@ -4106,6 +4160,62 @@ export const FEED_MAX_AGE_HOURS = (() => {
   return 48;
 })();
 
+/** Posts younger than this (hours) get the freshness boost. Default 2h. */
+export const FEED_FRESH_BOOST_HOURS = (() => {
+  try {
+    const raw = process.env.FEED_FRESH_BOOST_HOURS;
+    if (raw !== undefined) {
+      const n = Number(raw);
+      if (Number.isFinite(n) && n >= 0) return n;
+    }
+  } catch {
+    /* fall through to default */
+  }
+  return 2;
+})();
+
+/** Rank multiplier applied to posts younger than FEED_FRESH_BOOST_HOURS. Default +30%. */
+export const FEED_FRESH_BOOST_MULT = (() => {
+  try {
+    const raw = process.env.FEED_FRESH_BOOST_MULT;
+    if (raw !== undefined) {
+      const n = Number(raw);
+      if (Number.isFinite(n) && n > 0) return n;
+    }
+  } catch {
+    /* fall through to default */
+  }
+  return 1.3;
+})();
+
+/** Posts older than this (hours) get the stale penalty. Default 24h. */
+export const FEED_STALE_HOURS = (() => {
+  try {
+    const raw = process.env.FEED_STALE_HOURS;
+    if (raw !== undefined) {
+      const n = Number(raw);
+      if (Number.isFinite(n) && n >= 0) return n;
+    }
+  } catch {
+    /* fall through to default */
+  }
+  return 24;
+})();
+
+/** Rank multiplier applied to posts older than FEED_STALE_HOURS. Default -50%. */
+export const FEED_STALE_PENALTY_MULT = (() => {
+  try {
+    const raw = process.env.FEED_STALE_PENALTY_MULT;
+    if (raw !== undefined) {
+      const n = Number(raw);
+      if (Number.isFinite(n) && n >= 0) return n;
+    }
+  } catch {
+    /* fall through to default */
+  }
+  return 0.5;
+})();
+
 /** True when a post is within the max-age window (48h default). */
 export function isFreshEnough(createdAt: number, now = Date.now()): boolean {
   if (FEED_MAX_AGE_HOURS <= 0) return true;
@@ -4361,13 +4471,16 @@ export function rankNewsPost(post: UnifiedPost, now = Date.now(), ctx: RankConte
     sentimentSignal +
     nicheBoost * 0.12;
 
-  // Freshness boost (Fix 3): posts younger than 2h get +30%.
+  // Freshness boost (Fix 3): posts younger than FEED_FRESH_BOOST_HOURS get
+  // +30% (configurable via FEED_FRESH_BOOST_MULT).
   const ageHours = Math.max(0, now - post.createdAt) / 3_600_000;
-  if (ageHours < 2) {
-    score *= 1.3;
-  } else if (ageHours > 24) {
-    // Stale penalty (Fix 3): posts older than 24h get -50%.
-    score *= 0.5;
+  if (ageHours < FEED_FRESH_BOOST_HOURS) {
+    score *= FEED_FRESH_BOOST_MULT;
+  } else if (ageHours >= FEED_STALE_HOURS) {
+    // Stale penalty (Fix 3): posts older than FEED_STALE_HOURS (24h) get
+    // -50% (configurable via FEED_STALE_PENALTY_MULT). Posts older than
+    // FEED_MAX_AGE_HOURS (48h) are filtered out entirely by rankNewsPosts.
+    score *= FEED_STALE_PENALTY_MULT;
   }
 
   const finalScore = Math.max(0, Math.min(100, Math.round(score * 100)));
@@ -4390,8 +4503,8 @@ export function rankNewsPost(post: UnifiedPost, now = Date.now(), ctx: RankConte
       categoryBoost: Math.round(categoryBoost * 100) / 100,
       sentiment: Math.round(sentimentSignal * 100) / 100,
       nicheRelevance: Math.round(nicheBoost * 100) / 100,
-      freshnessBoost: ageHours < 2 ? 0.3 : 0,
-      stalePenalty: ageHours > 24 ? 0.5 : 0,
+      freshnessBoost: Math.round((FEED_FRESH_BOOST_MULT - 1) * 100) / 100,
+      stalePenalty: Math.round((1 - FEED_STALE_PENALTY_MULT) * 100) / 100,
     };
   }
   return finalScore;
@@ -4443,6 +4556,40 @@ function biasBucketOf(label: string | undefined): BiasBucket {
   if (score <= -0.2) return LEFT_BIAS_BUCKET;
   if (score >= 0.2) return RIGHT_BIAS_BUCKET;
   return CENTER_BIAS_BUCKET;
+}
+
+/**
+ * Human-readable bias label with emoji for the 3-bucket diversity display:
+ *   🟦 Left, 🟨 Center, 🟥 Right.
+ * Ground News shows a bias tag on every card; this is the free equivalent.
+ */
+export function biasDisplayLabel(label: string | undefined): string {
+  switch (biasBucketOf(label)) {
+    case LEFT_BIAS_BUCKET:
+      return '🟦 Left';
+    case RIGHT_BIAS_BUCKET:
+      return '🟥 Right';
+    default:
+      return '🟨 Center';
+  }
+}
+
+/**
+ * Count posts per bias bucket (left/center/right) for feed meta:
+ * `{ bias: { left, center, right } }`.
+ */
+export function computeBiasDistribution(posts: UnifiedPost[]): {
+  left: number;
+  center: number;
+  right: number;
+} {
+  const dist = { left: 0, center: 0, right: 0 };
+  for (const post of posts) {
+    const raw = post.raw as { feedLabel?: string } | undefined;
+    const label = raw?.feedLabel ?? post.author?.displayName;
+    dist[biasBucketOf(label)] += 1;
+  }
+  return dist;
 }
 
 /**
@@ -4965,8 +5112,17 @@ export async function fetchRssPosts(limit = 50): Promise<UnifiedPost[]> {
 
     // Fetch feeds in parallel with concurrency control. Stop fetching once we
     // have enough posts (early exit) — fetching all 148 feeds for a small limit
-    // was the dominant cold-start cost (~7s).
+    // was the dominant cold-start cost (~7s). The early exit is BIAS-AWARE:
+    // crypto-news feeds (the first ~160 sources in ALL_FEEDS) are prolific, so
+    // a pure count-based exit would break before reaching CULTURE_FEEDS where
+    // left-leaning sources (Vice, The Intercept, Jacobin, The Nation, Democracy
+    // Now, Guardian) live — starving the diversity mix of 🟦 Left entirely.
     const BATCH_SIZE = 40;
+    const hasBiasBucket = (bucket: BiasBucket): boolean =>
+      all.some((p) => {
+        const raw = p.raw as { feedLabel?: string } | undefined;
+        return biasBucketOf(raw?.feedLabel ?? p.author?.displayName) === bucket;
+      });
     for (let i = 0; i < activeFeeds.length; i += BATCH_SIZE) {
       const batch = activeFeeds.slice(i, i + BATCH_SIZE);
       const results = await Promise.allSettled(batch.map((feed) => fetchFeed(feed, perFeed)));
@@ -4978,7 +5134,10 @@ export async function fetchRssPosts(limit = 50): Promise<UnifiedPost[]> {
       }
 
       // Early exit once we have enough raw posts for the requested cache pool
-      if (all.length >= cacheLimit) break;
+      // AND at least one post from each bias bucket (left/center/right), so the
+      // diversity pass below always has material to interleave. Falls through to
+      // fetch everything when a bucket simply has no reachable feeds.
+      if (all.length >= cacheLimit && hasBiasBucket('left') && hasBiasBucket('right')) break;
 
       // Small delay between batches to avoid hammering servers
       if (i + BATCH_SIZE < activeFeeds.length) {

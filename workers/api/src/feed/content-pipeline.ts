@@ -35,7 +35,6 @@ import {
   type ExecutionContext,
   fetchFromProviders,
 } from './feed-fetcher';
-import { getSeedContent } from './seed-content';
 import type { UnifiedFeedPost } from './unified-feed';
 import { fetchLemmyPosts, fetchPeerTubeVideos, fetchYouTubeVideos } from './unified-fetchers';
 
@@ -97,6 +96,8 @@ export interface ContentScore {
   relevance: number; // 0-100: match to user interests / niches
   diversity: number; // 0-100: source diversity bonus
   composite: number; // weighted average
+  /** Human-readable ranking signals ("high-engagement", "verified-author", ...) */
+  reasons: string[];
 }
 
 export interface UnifiedFeed {
@@ -444,7 +445,9 @@ export const CORE_FEED_PROTOCOLS: Protocol[] = [
   'rss',
   'lens',
   'lemmy',
-  'reddit',
+  'peertube',
+  'threads',
+  'youtube',
 ];
 
 /**
@@ -550,21 +553,27 @@ export class ContentPipeline {
     // 6. Score every post. Explicitly requested niches (query params) are
     //    merged with any wallet-derived preferences so niche selection both
     //    filters (applyRecipeFilters) and boosts (scoreContent) the feed.
+    //    A larger candidate pool is scored than the final page size so the
+    //    diversity pass can guarantee minimum representation per protocol
+    //    and cap any single protocol at 40% of the page.
     const requestedNiches = new Set((opts.niches ?? []).map((n) => n.toLowerCase()));
     const scoringNiches = new Set<string>([...preferredNiches, ...requestedNiches]);
+    const candidatePool = posts.slice(0, Math.min(limit * 3, 600));
     const scored = await Promise.all(
-      posts.slice(0, limit).map(async (p) => ({
+      candidatePool.map(async (p) => ({
         post: p,
         score: await this.scoreContent(p, scoringNiches),
       })),
     );
     const scoreById = new Map(scored.map((s) => [s.post.id, s.score]));
 
-    // 7. Diversify (interleave protocols, rotate authors, mix categories)
+    // 7. Diversify (interleave protocols, rotate authors, mix categories,
+    //    guarantee ≥2 posts per available protocol, cap ≤40% per protocol)
     const diversified = await this.diversifyFeed(
       scored.map((s) => s.post),
       {
         sort: opts.sort,
+        limit,
       },
     );
 
@@ -575,7 +584,10 @@ export class ContentPipeline {
       sourceBreakdown[src] = (sourceBreakdown[src] ?? 0) + 1;
     }
 
-    // 9. Attach badges + quality scores (0-100) for transparency
+    // 9. Attach badges + quality scores for transparency. `qualityScore` is
+    //    an object ({ score, max, ratio, reasons }) matching the frontend
+    //    `UnifiedPost` contract — NOT a plain integer (that mismatch crashed
+    //    the Q-score tooltip).
     const enriched = diversified.map((p) => {
       const badge = this.badgeFor(p.protocol);
       const cs = scoreById.get(p.id) ?? {
@@ -585,6 +597,7 @@ export class ContentPipeline {
         relevance: 0,
         diversity: 0,
         composite: 0,
+        reasons: [] as string[],
       };
       const existingDebug = (p as unknown as Record<string, unknown>).feedDebug as
         | Record<string, unknown>
@@ -598,14 +611,19 @@ export class ContentPipeline {
         diversity: cs.diversity / 100,
         source: 0.8,
         velocity: 0.5,
-        reasons: [],
+        reasons: cs.reasons,
       };
       return {
         ...p,
         sourceBadge: badge.emoji,
         sourceColor: badge.color,
         sourceLabel: badge.label,
-        qualityScore: cs.composite,
+        qualityScore: {
+          score: Math.round(cs.composite),
+          max: 100,
+          ratio: Math.min(1, cs.composite / 100),
+          reasons: cs.reasons,
+        },
         score,
         feedDebug: {
           ...existingDebug,
@@ -711,13 +729,17 @@ export class ContentPipeline {
    * Built on the shared @degenfeed/ranking scorePost() 8-factor scorer and
    * layered with unified-feed-specific signals:
    *   - Content length: penalize too-short, reward substantive
-   *   - Media bonus: images/video score higher
-   *   - Verified author bonus: known quality creators
+   *   - Links/media bonus: posts with links or media score higher
+   *   - Creator authority: verified authors +15%, quality-badge creators +10%
    *   - Crypto/web3 relevance: posts matching DeFi/NFT/Trading/etc. categories
    *     and user-selected niches get boosted
+   *   - Recency: exponential age decay blended with the unified freshness
+   *   - Protocol weight: smaller/social protocols (nostr, farcaster, lens)
+   *     get a slight boost so high-volume Mastodon doesn't drown them out
    */
   async scoreContent(post: UnifiedPost, preferredNiches?: Set<string>): Promise<ContentScore> {
     const now = Date.now();
+    const reasons: string[] = [];
 
     // Unified 8-factor scorer: recency, engagement, relevance, quality,
     // reputation, diversity, source, velocity.
@@ -731,15 +753,31 @@ export class ContentPipeline {
     const quality = Math.round(
       unified.breakdown.quality * 50 + (computeLanguageQuality(post) / 100) * 50,
     );
+    if (quality >= 65) reasons.push('high-quality');
 
-    // Engagement (0-100): log-scaled likes+reposts+replies normalized.
-    const engagement = Math.round(unified.breakdown.engagement * 100);
+    // Engagement (0-100): weighted sum of likes + 2×reposts + 3×replies,
+    // log-normalized so per-protocol baselines (a 5-like Nostr post vs a
+    // 500-like Mastodon post) don't dwarf each other.
+    const rawEng =
+      (post.metrics.likes ?? 0) +
+      (post.metrics.reposts ?? 0) * 2 +
+      (post.metrics.replies ?? 0) * 3 +
+      (post.metrics.quotes ?? 0) * 3;
+    const engagementSignal = Math.min(100, Math.round(Math.log10(1 + rawEng) * 25));
+    const engagement = Math.round(
+      (unified.breakdown.engagement * 0.7 + (engagementSignal / 100) * 0.3) * 100,
+    );
+    if (engagement >= 60) reasons.push('high-engagement');
 
-    // Freshness (0-100): exponential recency decay.
-    const freshness = Math.round(unified.breakdown.recency * 100);
+    // Freshness (0-100): exponential recency decay (half-life ≈ 16.6h)
+    // blended with the unified recency factor.
+    const ageHours = Math.max(0, (now - post.createdAt) / 3600000);
+    const expDecay = Math.exp(-ageHours / 24) * 100;
+    const freshness = Math.round(unified.breakdown.recency * 100 * 0.6 + expDecay * 0.4);
+    if (ageHours < 1) reasons.push('fresh');
 
     // Relevance (0-100): niche match to user interests + crypto/web3 boost.
-    const cryptoBoost = this.computeCryptoRelevance(post);
+    const cryptoBoost = this.computeCryptoRelevance(post); // 0-20
     let relevance = Math.round(unified.breakdown.relevance * 100);
     if (!preferredNiches || preferredNiches.size === 0) {
       // No user preferences — crypto relevance anchors relevance so the
@@ -748,6 +786,7 @@ export class ContentPipeline {
     } else {
       relevance = Math.min(100, relevance + cryptoBoost);
     }
+    if (cryptoBoost > 0) reasons.push('crypto-relevant');
 
     // Content length: reward substantive content, penalize too-short posts.
     const textLen = (post.text ?? '').trim().length;
@@ -757,53 +796,82 @@ export class ContentPipeline {
     else if (textLen >= 30) lengthScore = 50;
     else if (textLen > 0) lengthScore = 30;
     else lengthScore = 10;
+    if (textLen >= 100) reasons.push('substantive');
 
-    // Media bonus: images/video score higher.
+    // Media + link bonus: images/video/links score higher than plain "gm".
     const hasMedia = post.embeds.some((e) => e.kind === 'image' || e.kind === 'video');
+    const hasLink = post.embeds.some((e) => e.kind === 'link' || Boolean(e.url));
     const mediaBonus = hasMedia ? 8 : 0;
+    const linkBonus = hasLink ? 5 : 0;
+    if (hasMedia) reasons.push('has-media');
 
-    // Verified author bonus: known quality creators.
-    const verifiedBonus = post.author.verified.length > 0 ? 8 : 0;
+    // Creator authority: verified authors get +15, quality-badge +10.
+    const verified = (post.author.verified?.length ?? 0) > 0;
+    const qualityBadged =
+      (post as unknown as { qualityBadge?: string | null }).qualityBadge === 'verified';
+    const authorityBonus = verified ? 15 : qualityBadged ? 10 : 0;
+    if (verified) reasons.push('verified-author');
+    else if (qualityBadged) reasons.push('quality-badge-creator');
 
     // Diversity (0-100): base score; caller adjusts via diversifyFeed.
     const diversity = 50;
 
-    // Composite: weighted average of the above, capped at 100.
+    // Protocol weight: prefer smaller decentralized-social protocols so a
+    // flood of Mastodon posts can't crowd out Nostr/Farcaster/Lens quality.
+    const PROTOCOL_WEIGHTS: Record<string, number> = {
+      mastodon: 0.95,
+      bluesky: 1.0,
+      nostr: 1.05,
+      farcaster: 1.05,
+      lens: 1.1,
+      lemmy: 1.0,
+      reddit: 0.95,
+      rss: 0.9,
+      peertube: 1.0,
+      youtube: 0.9,
+      threads: 1.0,
+    };
+    const protocolWeight = PROTOCOL_WEIGHTS[post.protocol] ?? 1.0;
+
+    // Composite: weighted average of the above (0-100), capped at 100.
     const composite = Math.round(
       Math.min(
         100,
-        quality * 0.22 +
+        (quality * 0.2 +
           engagement * 0.22 +
-          freshness * 0.16 +
+          freshness * 0.14 +
           relevance * 0.2 +
           lengthScore * 0.08 +
           mediaBonus +
-          verifiedBonus +
-          cryptoBoost,
+          linkBonus +
+          cryptoBoost +
+          authorityBonus) *
+          protocolWeight,
       ),
     );
 
-    return { quality, engagement, freshness, relevance, diversity, composite };
+    return { quality, engagement, freshness, relevance, diversity, composite, reasons };
   }
 
   /**
    * Crypto/web3/DeFi niche-relevance boost (0-20).
    * Uses category classification (Trading, DeFi, NFTs, Development, News,
-   * Education, Macro, Security…) plus text/ticker signals.
+   * Education, Macro, Security…) plus text/ticker signals. Up to +20 points
+   * (≈20% of the 0-100 composite) for strongly on-topic posts.
    */
   private computeCryptoRelevance(post: UnifiedPost): number {
     const primary = classifyPost(post).primary;
     if (primary && CRYPTO_CATEGORIES.has(primary)) {
-      return primary === 'general' ? 5 : 14;
+      return primary === 'general' ? 8 : 20;
     }
     const text = `${post.text} ${post.niches.join(' ')}`.toLowerCase();
-    if (/[$][A-Z]{2,10}/.test(text)) return 12;
+    if (/[$][A-Z]{2,10}/.test(text)) return 16;
     if (
       /\b(btc|eth|sol|crypto|defi|web3|nft|token|chain|wallet|dex|cex|mining|staking|yield|airdrop|blockchain|onchain|memecoin|layer ?2|rollup|stablecoin)\b/.test(
         text,
       )
     ) {
-      return 10;
+      return 12;
     }
     return 0;
   }
@@ -814,16 +882,19 @@ export class ContentPipeline {
    * Ensure the feed is diverse: no single protocol dominates, creators are
    * rotated (max 2 posts per author per page), and categories are mixed.
    *
-   * - `newest` sort keeps pure date ordering (only author rotation applies)
-   *   so the "newest first" contract is never violated.
+   * - Every available protocol is guaranteed ≥2 posts (when data exists).
+   * - No single protocol may exceed 40% of the final page size.
+   * - `newest` sort keeps pure date ordering (only author rotation + the
+   *   40% cap apply) so the "newest first" contract is never violated.
    * - Trending/curated/for-you additionally interleave protocols
    *   round-robin and cap repeated categories.
    */
   async diversifyFeed(
     posts: UnifiedPost[],
-    opts: { sort?: BuildFeedOptions['sort'] } = {},
+    opts: { sort?: BuildFeedOptions['sort']; limit?: number } = {},
   ): Promise<UnifiedPost[]> {
     if (posts.length === 0) return posts;
+    const limit = opts.limit ?? posts.length;
 
     // 1. Rotate creators — max 2 posts from the same author per page.
     const authorCounts = new Map<string, number>();
@@ -835,13 +906,54 @@ export class ContentPipeline {
       rotated.push(p);
     }
 
-    // Newest-first must stay date-ordered — only apply author rotation.
-    if (opts.sort === 'newest') return rotated;
+    // Max 40% from any single protocol (never below the min-per-protocol).
+    const minPerProtocol = 2;
+    const maxPerProtocol = Math.max(minPerProtocol, Math.ceil(limit * 0.4));
 
-    // 2. Interleave by protocol so we never show a run of one source.
-    const interleaved = interleaveByProtocol(rotated);
+    // Newest-first must stay date-ordered — only apply author rotation +
+    // the 40% protocol cap (stable, order-preserving filter).
+    if (opts.sort === 'newest') {
+      const counts = new Map<string, number>();
+      const capped: UnifiedPost[] = [];
+      for (const p of rotated) {
+        const c = counts.get(p.protocol) ?? 0;
+        if (c >= maxPerProtocol) continue;
+        counts.set(p.protocol, c + 1);
+        capped.push(p);
+      }
+      return capped.slice(0, limit);
+    }
 
-    // 3. Mix categories — cap repeated primary categories so one niche
+    // 2. Guarantee minimum representation: keep the top 2 posts of each
+    //    available protocol (posts arrive score-sorted), then the rest.
+    const byProtocol = new Map<string, UnifiedPost[]>();
+    for (const p of rotated) {
+      const list = byProtocol.get(p.protocol) ?? [];
+      list.push(p);
+      byProtocol.set(p.protocol, list);
+    }
+    const guaranteed: UnifiedPost[] = [];
+    const pool: UnifiedPost[] = [];
+    for (const list of byProtocol.values()) {
+      guaranteed.push(...list.slice(0, minPerProtocol));
+      pool.push(...list.slice(minPerProtocol));
+    }
+
+    // 3. Cap: while walking [guaranteed, ...pool] drop any protocol that
+    //    would exceed 40% of the page.
+    const counts = new Map<string, number>();
+    const capped: UnifiedPost[] = [];
+    for (const p of [...guaranteed, ...pool]) {
+      const c = counts.get(p.protocol) ?? 0;
+      if (c >= maxPerProtocol) continue;
+      counts.set(p.protocol, c + 1);
+      capped.push(p);
+    }
+
+    // 4. Interleave by protocol so we never show a run of one source.
+    const interleaved = interleaveByProtocol(capped);
+
+    // 5. Mix categories — cap repeated primary categories so one niche
     //    (e.g. all news) can't dominate the page.
     const categorized = interleaved.map((p) => ({
       post: p,
@@ -861,7 +973,7 @@ export class ContentPipeline {
       mixed.push(entry.post);
     }
 
-    return mixed.length > 0 ? mixed : interleaved;
+    return (mixed.length > 0 ? mixed : interleaved).slice(0, limit);
   }
 
   // ─── Default Feed for New Users ──────────────────────────────────
@@ -886,22 +998,12 @@ export class ContentPipeline {
     const dedupResult = deduplicateCrossProtocol(allPosts);
     const posts = dedupResult.posts;
 
-    // If ALL sources returned nothing, serve seed content
+    // No demo/seed injection: if ALL sources returned nothing, the default
+    // feed is empty. Fake content must never masquerade as real posts.
     if (posts.length === 0) {
-      const seedPosts = getSeedContent(50);
-      const enriched = seedPosts.map(
-        (p) =>
-          ({
-            ...p,
-            sourceBadge: '●',
-            sourceColor: '#666',
-            sourceLabel: 'Demo',
-            _demo: true,
-          }) as UnifiedFeedPost,
-      );
       return {
-        posts: enriched,
-        sourceBreakdown: { _demo: enriched.length },
+        posts: [],
+        sourceBreakdown: {},
         generatedAt: Date.now(),
       };
     }

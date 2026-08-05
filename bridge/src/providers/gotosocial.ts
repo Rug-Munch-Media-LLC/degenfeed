@@ -64,6 +64,8 @@ interface MastodonAccount {
   display_name: string;
   note: string;
   avatar: string;
+  /** Static (non-animated) avatar — used when `avatar` is absent. */
+  avatar_static?: string;
   followers_count: number;
   following_count: number;
   header: string;
@@ -108,7 +110,7 @@ export function statusToPost(s: MastodonStatus, instanceHost: string): UnifiedPo
       handles: { mastodon: handle },
       displayName: acct.display_name || acct.username || 'Unknown',
       bio: stripHtml(acct.note || ''),
-      avatarUrl: acct.avatar || '',
+      avatarUrl: acct.avatar || acct.avatar_static || '',
       followerCount: acct.followers_count || 0,
       followingCount: acct.following_count || 0,
       links: [],
