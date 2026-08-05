@@ -21,12 +21,12 @@ export function buildScoreTooltip(score: NonNullable<UnifiedPost['score']>): str
     `  source: ${score.source.toFixed(2)}`,
     `  velocity: ${score.velocity.toFixed(2)}`,
   ];
-  if (score.reasons.length > 0) lines.push(`Signals: ${score.reasons.join(', ')}`);
+  if ((score.reasons?.length ?? 0) > 0) lines.push(`Signals: ${score.reasons.join(', ')}`);
   return lines.join('\n');
 }
 
 export function buildQualityTooltip(quality: NonNullable<UnifiedPost['qualityScore']>): string {
   const lines = [`Protocol quality: ${quality.score}/${quality.max}`];
-  if (quality.reasons.length > 0) lines.push(`Signals: ${quality.reasons.join(', ')}`);
+  if ((quality.reasons?.length ?? 0) > 0) lines.push(`Signals: ${quality.reasons.join(', ')}`);
   return lines.join('\n');
 }
