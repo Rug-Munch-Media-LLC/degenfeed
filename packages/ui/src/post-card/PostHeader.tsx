@@ -127,6 +127,9 @@ export const PostHeader = memo(function PostHeader({
   };
 
   const avatarClass = getProtocolAvatarClass(post.protocol);
+  // Guard createdAt: a missing/invalid timestamp would throw a RangeError from
+  // `new Date(undefined).toISOString()` (same class of crash as the others).
+  const hasValidCreatedAt = Number.isFinite(post.createdAt);
 
   return (
     <div className="author-row group mb-2 flex items-center gap-3">
@@ -855,10 +858,10 @@ export const PostHeader = memo(function PostHeader({
           </span>
           <span>·</span>
           <time
-            dateTime={new Date(post.createdAt).toISOString()}
-            title={new Date(post.createdAt).toLocaleString()}
+            dateTime={hasValidCreatedAt ? new Date(post.createdAt).toISOString() : undefined}
+            title={hasValidCreatedAt ? new Date(post.createdAt).toLocaleString() : undefined}
           >
-            {formatTimeAgo(post.createdAt)}
+            {hasValidCreatedAt ? formatTimeAgo(post.createdAt) : ''}
           </time>
           {post.score && (
             <>

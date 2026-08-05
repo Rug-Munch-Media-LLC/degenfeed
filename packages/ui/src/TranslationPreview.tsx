@@ -180,7 +180,7 @@ export function TranslationPreview({
           )}
 
           {/* ── Removed elements notice ── */}
-          {translated.removedProtocolElements.length > 0 && (
+          {(translated.removedProtocolElements?.length ?? 0) > 0 && (
             <div className="mt-2 flex items-start gap-1.5 rounded-lg border border-purple-900/40 bg-purple-950/20 px-2.5 py-1.5">
               <span className="mt-px shrink-0 text-[10px] text-purple-400" aria-hidden="true">
                 &#x26A0;

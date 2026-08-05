@@ -21,8 +21,8 @@ export const PostThread = memo(function PostThread({ post }: PostThreadProps) {
       {post.protocol === 'peertube' && (
         <PeerTubeEmbed
           url={
-            post.embeds.find((e) => e.kind === 'video')?.url ??
-            post.embeds.find((e) => e.kind === 'link')?.url ??
+            post.embeds?.find((e) => e.kind === 'video')?.url ??
+            post.embeds?.find((e) => e.kind === 'link')?.url ??
             ''
           }
           title={raw?.videoTitle as string | undefined}

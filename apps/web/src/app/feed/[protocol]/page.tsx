@@ -379,7 +379,7 @@ function ProtocolFeedContent({ protocol }: { protocol: string }) {
                 openComposeReply({
                   parentPostUri: p.dfUri ?? `df://${p.protocol}:${nativeId}`,
                   parentProtocol: p.protocol,
-                  parentPreview: p.text.slice(0, 120),
+                  parentPreview: (p.text ?? '').slice(0, 120),
                 });
               }}
             />
@@ -396,7 +396,7 @@ function ProtocolFeedContent({ protocol }: { protocol: string }) {
             openComposeReply({
               parentPostUri: post.dfUri ?? `df://${post.protocol}:${nativeId}`,
               parentProtocol: post.protocol,
-              parentPreview: post.text.slice(0, 120),
+              parentPreview: (post.text ?? '').slice(0, 120),
             });
           }}
         />

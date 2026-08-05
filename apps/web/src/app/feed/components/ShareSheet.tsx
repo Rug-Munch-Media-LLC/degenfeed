@@ -66,7 +66,7 @@ const SHARE_TARGETS: ShareTarget[] = [
 
 function buildShareUrl(target: ShareTarget, post: UnifiedPost): string {
   const postUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/post/${encodeURIComponent(post.dfUri || post.id)}`;
-  const text = post.text.slice(0, 200);
+  const text = (post.text ?? '').slice(0, 200);
 
   if (target.id === 'copy') return postUrl;
   if (target.id === 'nostr') return postUrl; // Nostr sharing may use the DegenFeed bridge
@@ -154,7 +154,7 @@ export function ShareSheet({ post, open, onClose, onToast }: ShareSheetProps) {
       if (navigator.share && window.matchMedia('(max-width: 768px)').matches) {
         await navigator.share({
           title: `Post by ${post.author.displayName}`,
-          text: post.text.slice(0, 200),
+          text: (post.text ?? '').slice(0, 200),
           url: shareUrl,
         });
         handleClose();
@@ -334,7 +334,7 @@ export function ShareSheet({ post, open, onClose, onToast }: ShareSheetProps) {
             </span>
           </div>
           <p className="text-xs text-[var(--color-muted)] line-clamp-2">
-            {post.text.slice(0, 150)}
+            {(post.text ?? '').slice(0, 150)}
           </p>
         </div>
       </div>
