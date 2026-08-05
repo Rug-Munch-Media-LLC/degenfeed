@@ -84,116 +84,6 @@ function usePageTitle() {
   }, [pathname]);
 }
 
-/* === Desktop Header (scroll-aware) ========================= */
-
-function DesktopHeader({
-  onSearchOpen,
-  className,
-}: {
-  onSearchOpen: () => void;
-  className?: string;
-}) {
-  return (
-    <div className={className}>
-      <div className="container-safe flex items-center justify-between h-14">
-        {/* Left: Logo */}
-        <Link href="/feed" className="flex items-center gap-2 shrink-0" aria-label="DegenFeed Home">
-          <Image
-            src="/icon.svg"
-            alt=""
-            width={28}
-            height={28}
-            className="h-7 w-7 rounded-lg logo-glow"
-            priority
-          />
-          <span
-            className="text-base font-bold tracking-tight hidden sm:inline"
-            style={{ color: 'var(--color-fg)' }}
-          >
-            DegenFeed
-          </span>
-        </Link>
-
-        {/* Center: Search */}
-        <div className="hidden md:flex flex-1 max-w-md mx-4">
-          <button
-            type="button"
-            onClick={onSearchOpen}
-            className="flex w-full items-center gap-2 rounded-full border border-[var(--color-glass-border)] bg-[var(--color-card)] px-4 py-2 text-sm text-[var(--color-muted)] transition-all hover:border-degen-500/30 hover:text-[var(--color-fg)] focus-visible:outline-2 focus-visible:outline-degen-500 focus-visible:outline-offset-2"
-            style={{ minHeight: '44px' }}
-            aria-label="Open search"
-          >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <circle cx="11" cy="11" r="8" />
-              <line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
-            <span className="flex-1 text-left">Search DegenFeed</span>
-            <kbd className="rounded-md border border-white/10 bg-white/[0.06] px-1.5 py-0.5 font-mono text-[9px] font-medium leading-none text-[var(--color-muted)] hidden sm:inline">
-              ⌘K
-            </kbd>
-          </button>
-        </div>
-
-        {/* Right: Actions */}
-        <div className="flex items-center gap-1">
-          <Link
-            href="/live"
-            className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--color-muted)] transition-colors hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)]"
-            style={{ minHeight: '44px', minWidth: '44px' }}
-            aria-label="Live streams"
-          >
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <circle cx="12" cy="12" r="10" />
-              <polygon points="10 8 16 12 10 16 10 8" />
-            </svg>
-          </Link>
-          <Link
-            href="/settings"
-            className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--color-muted)] transition-colors hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)]"
-            style={{ minHeight: '44px', minWidth: '44px' }}
-            aria-label="Settings"
-          >
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <circle cx="12" cy="12" r="3" />
-              <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" />
-            </svg>
-          </Link>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 /* === Mobile top bar ========================================= */
 
 function MobileTopBar({
@@ -401,22 +291,6 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
     localStorage.setItem('df_sidebar_collapsed', String(sidebarCollapsed));
   }, [sidebarCollapsed]);
 
-  // Scroll-aware header visibility
-  const [showDesktopHeader, setShowDesktopHeader] = useState(true);
-  const lastScrollY = useRef(0);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      const currentY = window.scrollY;
-      if (currentY < 50) setShowDesktopHeader(true);
-      else if (currentY < lastScrollY.current) setShowDesktopHeader(true);
-      else setShowDesktopHeader(false);
-      lastScrollY.current = currentY;
-    };
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
   // Swipe from left edge to open drawer on mobile
   useEffect(() => {
     if (mobileDrawerOpen) return;
@@ -564,24 +438,14 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
 
       <SkipLinks />
       <OfflineBanner />
-      {/* Spacer for safe area on desktop header */}
-      <div className="hidden lg:block safe-area-top" />
 
-      {/* Desktop header */}
-      <div
-        className={`hidden lg:block fixed top-0 inset-x-0 z-30 border-b border-[var(--color-glass-border)] backdrop-blur-xl transition-transform duration-300 ${showDesktopHeader ? 'translate-y-0' : '-translate-y-full'}`}
-        style={{ backgroundColor: 'var(--color-glass-bg)' }}
-      >
-        <DesktopHeader onSearchOpen={() => setSearchOpen(true)} />
-      </div>
-
-      {/* Three-column layout */}
-      <div className="container-safe flex flex-1 pt-0 lg:pt-14">
+      {/* Three-column layout — single left sidebar (no top navbar) */}
+      <div className="container-safe flex flex-1 pt-0">
         {/* Left Sidebar (desktop + tablet collapsed) */}
         {pathname !== '/' && (
           <>
             {/* Tablet: always collapsed icon sidebar */}
-            <div className="hidden md:block lg:hidden sticky top-14 h-[calc(100dvh-3.5rem)] w-[72px] shrink-0 overflow-y-auto scrollbar-none border-r border-[var(--color-glass-border)]">
+            <div className="hidden md:block lg:hidden sticky top-0 h-[100dvh] w-[72px] shrink-0 overflow-y-auto scrollbar-none border-r border-[var(--color-glass-border)]">
               <LeftSidebar
                 collapsed={true}
                 onQuickSwitcherOpen={() => setQuickSwitcherOpen(true)}
@@ -590,7 +454,7 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
             </div>
             {/* Desktop: configurable sidebar */}
             <div
-              className={`hidden lg:block sticky top-14 h-[calc(100dvh-3.5rem)] shrink-0 overflow-y-auto scrollbar-none border-r border-[var(--color-glass-border)] transition-[width] duration-200 ease-in-out ${sidebarWidth}`}
+              className={`hidden lg:block sticky top-0 h-[100dvh] shrink-0 overflow-y-auto scrollbar-none border-r border-[var(--color-glass-border)] transition-[width] duration-200 ease-in-out ${sidebarWidth}`}
             >
               <LeftSidebar
                 collapsed={sidebarCollapsed}
@@ -598,16 +462,13 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
                 onQuickSwitcherOpen={() => setQuickSwitcherOpen(true)}
                 onProtocolConnectOpen={() => setProtocolConnectOpen(true)}
               />
-              {/* ── Global protocol navigation (hidden on feed routes — FeedShell provides its own there) ── */}
-              {!sidebarCollapsed &&
-                pathname !== '/' &&
-                !pathname.startsWith('/feed') &&
-                !pathname.startsWith('/feeds/') && (
-                  <>
-                    <div className="mx-3 h-px bg-[var(--color-glass-border)]" />
-                    <ProtocolNavSection />
-                  </>
-                )}
+              {/* ── Global protocol navigation (single left sidebar: shown on every route) ── */}
+              {!sidebarCollapsed && pathname !== '/' && (
+                <>
+                  <div className="mx-3 h-px bg-[var(--color-glass-border)]" />
+                  <ProtocolNavSection />
+                </>
+              )}
             </div>
           </>
         )}

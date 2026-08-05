@@ -3807,29 +3807,36 @@ export const SOURCE_BIAS: Record<string, BiasLabel> = {
  * Only sources whose score differs from their label default are listed.
  */
 export const SOURCE_BIAS_SCORE: Record<string, BiasScore> = {
-  // Crypto media — most sit slightly off-center; keep scores conservative.
-  CoinDesk: -0.4,
-  Decrypt: -0.35,
-  'The Block': -0.35,
-  'The Defiant': -0.4,
-  CoinTelegraph: -0.1,
+  // Crypto media — curated bias ratings (2026-08-05, fleet-wide standard).
+  // Positive = pro-crypto / bullish-leaning coverage, negative = skeptical /
+  // critical coverage, 0 = neutral. Matches the product spec:
+  //   CoinDesk +0.2, CoinTelegraph 0.0, Decrypt -0.1, The Block -0.1,
+  //   Bitcoin Magazine +0.6, Coinspeaker +0.3, Reuters 0.0, AP 0.0,
+  //   Bloomberg -0.1, ZeroHedge +0.8, Breitbart +0.9,
+  //   Vice/Motherboard -0.6, The Intercept -0.7.
+  CoinDesk: 0.2,
+  Decrypt: -0.1,
+  'The Block': -0.1,
+  'The Defiant': -0.15,
+  CoinTelegraph: 0.0,
+  'CoinTelegraph Bitcoin': 0.0,
   Blockworks: 0.1,
   CryptoSlate: 0.0,
-  'Bitcoin Magazine': 0.55,
-  BitcoinMagazine: 0.55,
-  Coinspeaker: 0.45,
-  'Bitcoin.com News': 0.5,
+  'Bitcoin Magazine': 0.6,
+  BitcoinMagazine: 0.6,
+  Coinspeaker: 0.3,
+  'Bitcoin.com News': 0.55,
   Bitcoinist: 0.5,
   NewsBTC: 0.5,
   'Daily Hodl': 0.45,
   'Watcher.Guru': 0.5,
-  ZeroHedge: 0.9,
-  'Zero Hedge Crypto': 0.9,
-  Breitbart: 0.95,
+  ZeroHedge: 0.8,
+  'Zero Hedge Crypto': 0.8,
+  Breitbart: 0.9,
   // Left / lean-left crypto-adjacent
-  Motherboard: -0.8,
-  Vice: -0.7,
-  'The Intercept': -0.85,
+  Motherboard: -0.6,
+  Vice: -0.6,
+  'The Intercept': -0.7,
   Wired: -0.35,
   TechCrunch: -0.3,
   'The Verge': -0.35,
@@ -3838,7 +3845,9 @@ export const SOURCE_BIAS_SCORE: Record<string, BiasScore> = {
   'Financial Times': 0.15,
   FT: 0.15,
   'FT Alphaville': 0.2,
-  'Bloomberg Crypto': 0.1,
+  'Bloomberg Crypto': -0.1,
+  'Bloomberg Markets': -0.1,
+  'Bloomberg Tech': -0.1,
   'The Economist': 0.2,
   Reuters: 0.0,
   'Reuters Crypto': 0.0,
@@ -4081,6 +4090,79 @@ export function freshnessScore(createdAt: number, now = Date.now()): number {
   return 0.05;
 }
 
+// ─── Content freshness policy (Fix 3) ─────────────────────────────────
+// Posts older than this are rejected from the feed entirely. Configurable
+// via FEED_MAX_AGE_HOURS (default 48h). 0 disables the filter.
+export const FEED_MAX_AGE_HOURS = (() => {
+  try {
+    const raw = process.env.FEED_MAX_AGE_HOURS;
+    if (raw !== undefined) {
+      const n = Number(raw);
+      if (Number.isFinite(n) && n >= 0) return n;
+    }
+  } catch {
+    /* fall through to default */
+  }
+  return 48;
+})();
+
+/** True when a post is within the max-age window (48h default). */
+export function isFreshEnough(createdAt: number, now = Date.now()): boolean {
+  if (FEED_MAX_AGE_HOURS <= 0) return true;
+  return now - createdAt <= FEED_MAX_AGE_HOURS * 3_600_000;
+}
+
+/**
+ * Niche relevance keywords — crypto/web3/DeFi vocabulary that signals
+ * high-relevance content for the degenfeed audience. Matched against the
+ * post title + text (case-insensitive, word-boundary).
+ */
+export const NICHE_RELEVANCE_KEYWORDS: ReadonlyArray<string> = [
+  'bitcoin',
+  'ethereum',
+  'defi',
+  'nft',
+  'trading',
+  'blockchain',
+  'web3',
+  'solana',
+  'crypto',
+  'token',
+  'dex',
+  'layer2',
+  'stablecoin',
+  'onchain',
+  'dao',
+  'smart contract',
+  'yield',
+  'liquidity',
+  'airdrop',
+];
+
+const NICHE_RELEVANCE_RE = new RegExp(
+  `\\b(${NICHE_RELEVANCE_KEYWORDS.map((k) => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join(
+    '|',
+  )})\\b`,
+  'i',
+);
+
+/**
+ * Niche relevance boost (0..1): 0.12 for a single keyword hit, up to a
+ * 0.25 cap for 4+ hits. Rewards posts squarely inside the crypto/web3
+ * beat over tangential general news.
+ */
+export function nicheRelevanceBoost(text: string | undefined): number {
+  const haystack = (text || '').slice(0, 3000);
+  if (!haystack.trim()) return 0;
+  if (!NICHE_RELEVANCE_RE.test(haystack)) return 0;
+  let hits = 0;
+  for (const kw of NICHE_RELEVANCE_KEYWORDS) {
+    const re = new RegExp(`\\b${kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+    if (re.test(haystack)) hits++;
+  }
+  return Math.min(0.25, 0.12 + Math.max(0, hits - 1) * 0.05);
+}
+
 /**
  * Cross-reference grounding: an article covered by multiple feeds gets
  * higher authority. Diminishing returns after 5 sources.
@@ -4266,20 +4348,33 @@ export function rankNewsPost(post: UnifiedPost, now = Date.now(), ctx: RankConte
     typeof rawSentiment === 'number' && Number.isFinite(rawSentiment) ? rawSentiment : 0;
   const sentimentSignal = Math.max(-1, Math.min(1, sentimentValue)) * 0.05;
 
-  const score = Math.round(
-    (reputation * 0.3 +
-      freshness * 0.25 +
-      grounding * 0.12 +
-      impact * 0.1 +
-      signalScore * 0.15 +
-      categoryBoost * 0.08 +
-      sentimentSignal) *
-      100,
-  );
+  // Niche relevance: posts squarely in the crypto/web3/DeFi beat get a boost.
+  const nicheBoost = nicheRelevanceBoost(`${post.text ?? ''} ${raw?.description ?? ''}`);
+
+  let score =
+    reputation * 0.3 +
+    freshness * 0.25 +
+    grounding * 0.12 +
+    impact * 0.1 +
+    signalScore * 0.15 +
+    categoryBoost * 0.08 +
+    sentimentSignal +
+    nicheBoost * 0.12;
+
+  // Freshness boost (Fix 3): posts younger than 2h get +30%.
+  const ageHours = Math.max(0, now - post.createdAt) / 3_600_000;
+  if (ageHours < 2) {
+    score *= 1.3;
+  } else if (ageHours > 24) {
+    // Stale penalty (Fix 3): posts older than 24h get -50%.
+    score *= 0.5;
+  }
+
+  const finalScore = Math.max(0, Math.min(100, Math.round(score * 100)));
 
   if (raw) {
     raw.sourceTier = tier;
-    raw.rank = score;
+    raw.rank = finalScore;
     raw.signals = {
       votes: signals.votes,
       reasons: signals.reasons,
@@ -4294,9 +4389,12 @@ export function rankNewsPost(post: UnifiedPost, now = Date.now(), ctx: RankConte
       signalVotes: Math.round(signalScore * 100) / 100,
       categoryBoost: Math.round(categoryBoost * 100) / 100,
       sentiment: Math.round(sentimentSignal * 100) / 100,
+      nicheRelevance: Math.round(nicheBoost * 100) / 100,
+      freshnessBoost: ageHours < 2 ? 0.3 : 0,
+      stalePenalty: ageHours > 24 ? 0.5 : 0,
     };
   }
-  return score;
+  return finalScore;
 }
 
 /**
@@ -4309,15 +4407,138 @@ export function rankNewsPosts(posts: UnifiedPost[], ctx: RankContext = {}): Unif
   const now = Date.now();
   const velocity = computeCategoryVelocity(posts, now);
   const fullCtx: RankContext = { ...ctx, categoryVelocity: velocity };
-  const scored = posts.map((post) => ({
-    post,
-    rank: rankNewsPost(post, now, fullCtx),
-  }));
+  const scored = posts
+    .filter((p) => isFreshEnough(p.createdAt, now))
+    .map((post) => ({
+      post,
+      rank: rankNewsPost(post, now, fullCtx),
+    }));
   scored.sort((a, b) => {
     if (b.rank !== a.rank) return b.rank - a.rank;
     return b.post.createdAt - a.post.createdAt;
   });
   return scored.map((s) => s.post);
+}
+
+// ─── Bias diversity mix (Ground News killer) ───────────────────────────
+// The plain rank ordering can be dominated by the most prolific sources
+// (e.g. CoinTelegraph + CoinDesk crowding out every other perspective).
+// `ensureBiasDiversity` rebalances the top of the feed so the user sees a
+// BALANCED mix of left / center / right sources — without ever dropping
+// the single highest-ranked story, and without pulling in low-quality
+// sources just to fill a quota.
+//
+// Buckets follow the numeric bias score:
+//   left         bias <= -0.2
+//   center      -0.2 <  bias < +0.2
+//   right        bias >= +0.2
+
+const LEFT_BIAS_BUCKET = 'left';
+const CENTER_BIAS_BUCKET = 'center';
+const RIGHT_BIAS_BUCKET = 'right';
+type BiasBucket = typeof LEFT_BIAS_BUCKET | typeof CENTER_BIAS_BUCKET | typeof RIGHT_BIAS_BUCKET;
+
+function biasBucketOf(label: string | undefined): BiasBucket {
+  const score = sourceBiasScore(label);
+  if (score <= -0.2) return LEFT_BIAS_BUCKET;
+  if (score >= 0.2) return RIGHT_BIAS_BUCKET;
+  return CENTER_BIAS_BUCKET;
+}
+
+/**
+ * Rebalance a ranked post list toward bias diversity.
+ *
+ * Strategy (deterministic, score-preserving):
+ *  1. Start with the top-ranked post as the headline (never dropped).
+ *  2. Walk the remaining ranked list, always taking the highest-ranked post
+ *     whose bias bucket has not yet reached its quota for the current pass.
+ *  3. After every pick, rotate the quota priority so no bucket starves:
+ *     pass 1 favors center, pass 2 favors left, pass 3 favors right, repeat.
+ *  4. When a bucket is exhausted (or cannot be filled), fall back to the
+ *     next best post so the feed still fills.
+ *
+ * Returns the rebalanced list (up to `limit`).
+ */
+export function ensureBiasDiversity(
+  ranked: UnifiedPost[],
+  limit = 50,
+  minPerBucket = 2,
+): UnifiedPost[] {
+  if (ranked.length <= minPerBucket * 3) return ranked.slice(0, limit);
+
+  const buckets: Record<BiasBucket, UnifiedPost[]> = { left: [], center: [], right: [] };
+  for (const p of ranked) {
+    const raw = p.raw as { feedLabel?: string } | undefined;
+    const label = raw?.feedLabel ?? p.author?.displayName;
+    buckets[biasBucketOf(label)].push(p);
+  }
+
+  const out: UnifiedPost[] = [];
+  const quota: Record<BiasBucket, number> = {
+    left: minPerBucket,
+    center: minPerBucket,
+    right: minPerBucket,
+  };
+  const picked = new Set<string>();
+  const pickFrom = (bucket: BiasBucket): UnifiedPost | undefined => {
+    const arr = buckets[bucket];
+    for (let i = 0; i < arr.length; i++) {
+      const p = arr[i];
+      if (!picked.has(p.id)) {
+        picked.add(p.id);
+        quota[bucket] = Math.max(0, quota[bucket] - 1);
+        return p;
+      }
+    }
+    return undefined;
+  };
+
+  // Headline: the single highest-ranked post (diversity must never bury it).
+  const head = ranked[0];
+  out.push(head);
+  picked.add(head.id);
+  const headRaw = head.raw as { feedLabel?: string } | undefined;
+  const headBucket = biasBucketOf(headRaw?.feedLabel ?? head.author?.displayName);
+  quota[headBucket] = Math.max(0, quota[headBucket] - 1);
+
+  const order: BiasBucket[] = [CENTER_BIAS_BUCKET, LEFT_BIAS_BUCKET, RIGHT_BIAS_BUCKET];
+  let pass = 0;
+  let cursor = 0;
+
+  while (out.length < limit && cursor < ranked.length) {
+    const preferred = order[pass % order.length];
+    const tried: BiasBucket[] = [preferred, ...order.filter((b) => b !== preferred)];
+    let pickedThisPass = false;
+    for (const bucket of tried) {
+      if (quota[bucket] > 0) {
+        const p = pickFrom(bucket);
+        if (p) {
+          out.push(p);
+          pickedThisPass = true;
+          break;
+        }
+      }
+    }
+    if (pickedThisPass) {
+      pass++;
+      continue;
+    }
+    // All quotas met (or unfillable) — fill remaining slots by rank order.
+    const next = ranked[cursor];
+    if (next && !picked.has(next.id)) {
+      picked.add(next.id);
+      out.push(next);
+      pickedThisPass = true;
+    }
+    cursor++;
+    if (pickedThisPass) pass++;
+  }
+
+  // Safety: never shrink the result below what we already had if some
+  // pathological bucket interplay dropped posts.
+  if (out.length >= limit) return out.slice(0, limit);
+  const rest = ranked.filter((p) => !picked.has(p.id));
+  return [...out, ...rest].slice(0, limit);
 }
 
 // ─── Story Coverage & Blindspot Detection (Ground News killer) ────────
@@ -4674,7 +4895,7 @@ const RSS_CACHE_TTL = 300_000; // 5 minutes
  * an empty/starved /api/feed/rss to larger requests. 100 posts gives the feed
  * a healthy 50-100 item pool per protocol target.
  */
-const RSS_CACHE_MIN_POOL = 100;
+const RSS_CACHE_MIN_POOL = 80;
 let rssCache: {
   posts: UnifiedPost[];
   clusters: StoryClusterOutput[];
@@ -4745,7 +4966,7 @@ export async function fetchRssPosts(limit = 50): Promise<UnifiedPost[]> {
     // Fetch feeds in parallel with concurrency control. Stop fetching once we
     // have enough posts (early exit) — fetching all 148 feeds for a small limit
     // was the dominant cold-start cost (~7s).
-    const BATCH_SIZE = 25;
+    const BATCH_SIZE = 40;
     for (let i = 0; i < activeFeeds.length; i += BATCH_SIZE) {
       const batch = activeFeeds.slice(i, i + BATCH_SIZE);
       const results = await Promise.allSettled(batch.map((feed) => fetchFeed(feed, perFeed)));
@@ -4768,17 +4989,22 @@ export async function fetchRssPosts(limit = 50): Promise<UnifiedPost[]> {
     // Deduplicate — against the cache pool size, not the requested limit
     const deduped = deduplicatePosts(all, cacheLimit);
 
-    // Rank by source reputation + freshness + cross-reference grounding
+    // Rank by source reputation + freshness + cross-reference grounding.
+    // rankNewsPosts also rejects posts older than FEED_MAX_AGE_HOURS (48h).
     const ranked = rankNewsPosts(deduped);
 
+    // Bias diversity: ensure the top of the feed mixes left/center/right
+    // sources (Ground News killer). Never drops the top-ranked headline.
+    const diverse = ensureBiasDiversity(ranked, cacheLimit, 2);
+
     // Ground News-beating features: story clusters (Full Coverage) + blindspots
-    const clusters = clusterStories(ranked, 12);
-    const blindspots = computeBlindspots(ranked, 10);
+    const clusters = clusterStories(diverse, 12);
+    const blindspots = computeBlindspots(diverse, 10);
 
     // Backfill missing images from article OpenGraph tags (bounded time budget
     // that shrinks with feed-fetch time so the provider stays < ~4.5s total).
     const enrichBudgetMs = Math.max(400, 3200 - (Date.now() - fetchStartedAt));
-    const enriched = await enrichPostImages(ranked, enrichBudgetMs);
+    const enriched = await enrichPostImages(diverse, enrichBudgetMs);
 
     // Log stats
     const byCategory = new Map<string, number>();
