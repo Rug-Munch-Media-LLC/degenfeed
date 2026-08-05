@@ -45,9 +45,9 @@ import { useNotifications } from '../../hooks/useNotifications';
 import { useRealtimeFeed } from '../../hooks/useRealtimeFeed';
 import { useReturningUser } from '../../hooks/useReturningUser';
 import { useSwipeTabs } from '../../hooks/useSwipeTabs';
-import { rankTopAlgo } from '../../lib/topAlgo';
 import type { FeedControls as FeedControlsState } from '../../lib/feedRanking';
 import { fetchWithSwr, getCached } from '../../lib/fetchWithCache';
+import { rankTopAlgo } from '../../lib/topAlgo';
 import { ReadingProgressBar } from './components/ReadingProgressBar';
 import { ShareSheet } from './components/ShareSheet';
 
@@ -112,7 +112,9 @@ export default function FeedPage() {
           return;
         }
       }
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
     // No preloaded data — let fetchFeed handle it
   }, []);
   const [error, setError] = useState<string>();
@@ -607,10 +609,7 @@ export default function FeedPage() {
           setError(undefined);
         }
         if (!checkOnly && feed.length > 0)
-          announceFeed(
-            `${feed.length} posts loaded${swrFromCache ? ' (cached)' : ''}`,
-            'polite',
-          );
+          announceFeed(`${feed.length} posts loaded${swrFromCache ? ' (cached)' : ''}`, 'polite');
       } catch (err) {
         if (!checkOnly) {
           const cached = getCached<{ data?: UnifiedPost[]; meta?: FeedMeta }>(`feed_${activeTab}`);
@@ -881,7 +880,12 @@ export default function FeedPage() {
                     className="relative"
                     style={{ '--stagger-i': i } as React.CSSProperties}
                   >
-                    <PostCard post={post} onEngage={handleEngage} onWhyThisPost={setWhyPost} />
+                    <PostCard
+                      post={post}
+                      onEngage={handleEngage}
+                      onWhyThisPost={setWhyPost}
+                      mediaPriority={i === 0}
+                    />
                   </div>
                 ))}
               </div>
@@ -892,35 +896,34 @@ export default function FeedPage() {
                   </button>
                 </div>
               )}
-          {/* Context menu */}
-          {contextMenuPostId && (
-            <PostContextMenu
-              postId={contextMenuPostId ?? ''}
-              onClose={() => setContextMenuPostId(null)}
-              open={!!contextMenuPostId}
-              position={{ x: 0, y: 0 }}
-            />
-          )}
+              {/* Context menu */}
+              {contextMenuPostId && (
+                <PostContextMenu
+                  postId={contextMenuPostId ?? ''}
+                  onClose={() => setContextMenuPostId(null)}
+                  open={!!contextMenuPostId}
+                  position={{ x: 0, y: 0 }}
+                />
+              )}
 
-          {/* Algorithm transparency — "Why this?" on every post */}
-          {whyPost && (
-            <div
-              className="fixed inset-0 z-[95] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
-              onClick={() => setWhyPost(null)}
-              role="presentation"
-            >
-              <div
-                className="w-full max-w-md"
-                onClick={(e) => e.stopPropagation()}
-                role="dialog"
-                aria-modal="true"
-                aria-label="Why this post?"
-              >
-                <FeedWhyCard post={whyPost} onClose={() => setWhyPost(null)} />
-              </div>
-            </div>
-          )}
-
+              {/* Algorithm transparency — "Why this?" on every post */}
+              {whyPost && (
+                <div
+                  className="fixed inset-0 z-[95] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
+                  onClick={() => setWhyPost(null)}
+                  role="presentation"
+                >
+                  <div
+                    className="w-full max-w-md"
+                    onClick={(e) => e.stopPropagation()}
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label="Why this post?"
+                  >
+                    <FeedWhyCard post={whyPost} onClose={() => setWhyPost(null)} />
+                  </div>
+                </div>
+              )}
             </>
           )}
 
