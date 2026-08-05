@@ -55,11 +55,14 @@ function LinkPreview({ embed, authorName }: { embed: Embed; authorName?: string 
   const title = meta?.title;
   const description = meta?.description;
   const image = meta?.image;
-  const host = embed.url ? embed.url.replace(/^https?:\/\//, '').split('/')[0] : '';
+  // Some protocol bridges emit `{ kind: 'link' }` embeds without a URL (e.g.
+  // Farcaster casts with text-only embeds). Never call .replace() on undefined.
+  const url = embed.url || '';
+  const host = url ? url.replace(/^https?:\/\//, '').split('/')[0] : '';
 
   return (
     <a
-      href={embed.url}
+      href={url || undefined}
       target="_blank"
       rel="noopener noreferrer"
       className="link-preview group mt-2 block overflow-hidden rounded-[12px] border border-[var(--color-border)] bg-[var(--color-card)] transition-all hover:border-[color-mix(in_srgb,var(--color-accent)_30%,transparent)] hover:bg-[var(--color-card-hover)]"
@@ -97,8 +100,8 @@ function LinkPreview({ embed, authorName }: { embed: Embed; authorName?: string 
         {description && (
           <p className="link-desc text-xs text-[var(--color-muted)] line-clamp-2">{description}</p>
         )}
-        {!title && !description && (
-          <p className="truncate text-xs text-degen-500">{embed.url.replace(/^https?:\/\//, '')}</p>
+        {!title && !description && url && (
+          <p className="truncate text-xs text-degen-500">{url.replace(/^https?:\/\//, '')}</p>
         )}
       </div>
     </a>

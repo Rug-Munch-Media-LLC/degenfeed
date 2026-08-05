@@ -1,6 +1,6 @@
 'use client';
 
-import type { UnifiedPost } from '@degenfeed/types';
+import type { Embed, UnifiedPost } from '@degenfeed/types';
 import { parseVideoUrl } from '@degenfeed/utils';
 import { memo } from 'react';
 import { FrameCard, ImageGrid, LinkPreview, VideoEmbedCard } from '../PostCardMedia';
@@ -13,10 +13,14 @@ export interface PostMediaProps {
 export const PostMedia = memo(function PostMedia({ post, authorName }: PostMediaProps) {
   if (post.embeds.length === 0) return null;
 
-  const images = post.embeds.filter((e) => e.kind === 'image').map((e) => e.url);
-  const links = post.embeds.filter((e) => e.kind === 'link');
-  const videos = post.embeds.filter((e) => e.kind === 'video');
-  const frames = post.embeds.filter((e) => e.kind === 'frame');
+  // Guard against url-less embeds (some bridges emit `{ kind: 'link' }` with
+  // no URL). Never pass undefined into Image/Link/Video renderers.
+  const hasUrl = (e: Embed) => Boolean(e.url);
+
+  const images = post.embeds.filter((e) => e.kind === 'image' && hasUrl(e)).map((e) => e.url);
+  const links = post.embeds.filter((e) => e.kind === 'link' && hasUrl(e));
+  const videos = post.embeds.filter((e) => e.kind === 'video' && hasUrl(e));
+  const frames = post.embeds.filter((e) => e.kind === 'frame' && hasUrl(e));
 
   return (
     <>

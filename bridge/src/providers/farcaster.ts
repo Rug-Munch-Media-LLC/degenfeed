@@ -322,10 +322,12 @@ async function fetchCastsForFid(fid: number, pageSize: number): Promise<UnifiedP
           keys: { fid: String(fid) },
         },
         text,
-        embeds: (body.embeds || []).map((e: any) => ({
-          kind: 'link' as const,
-          url: e.url || (typeof e === 'string' ? e : ''),
-        })),
+        embeds: (body.embeds || [])
+          .map((e: any) => {
+            const url = typeof e === 'string' ? e : e?.url;
+            return url ? ({ kind: 'link' as const, url }) : null;
+          })
+          .filter((e): e is { kind: 'link'; url: string } => e !== null),
         contentType: 'text' as const,
         createdAt: ts,
         metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
@@ -529,7 +531,9 @@ function neynarCastToPost(cast: NeynarCast): UnifiedPost {
     // Image/media-only casts have empty text — surface the embed URL so the
     // post is never a blank card.
     text: text || embedUrl,
-    embeds: (cast.embeds || []).map((e) => ({ kind: 'link' as const, url: e.url })),
+    embeds: (cast.embeds || [])
+      .map((e: any) => (e?.url ? ({ kind: 'link' as const, url: e.url }) : null))
+      .filter((e): e is { kind: 'link'; url: string } => e !== null),
     contentType: 'text' as const,
     createdAt: Number.isNaN(published) ? Date.now() : published,
     metrics: {
