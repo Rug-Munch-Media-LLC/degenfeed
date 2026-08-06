@@ -33,6 +33,12 @@ const ComposeModal = dynamic(
   { ssr: false, loading: () => null },
 );
 
+import {
+  signIn as betterSignIn,
+  signOut as betterSignOut,
+  signUp as betterSignUp,
+  useSession,
+} from '@/lib/auth-client';
 import { useWeb3 } from '../components/Web3Provider';
 import { useCrossReply } from '../hooks/useCrossReply';
 import { useEngage } from '../hooks/useEngage';
@@ -192,6 +198,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { signInWithSolana, signingIn: solanaSigningIn } = useSolanaSignIn();
   const { showToast } = useToast();
 
+  // Better Auth server session (replaces the broken `/api/auth/session` fetch).
+  // `data.session` is null when logged out; `data.user` carries the account.
+  const { data: session, isPending: sessionPending } = useSession();
+
   // == Wallet persistence helpers ==================================
 
   /** Load wallet list from localStorage and merge with any stored identities */
@@ -267,52 +277,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Deferred background init: loads stored identities + session silently.
   // Does NOT block ready state — the app is usable immediately.
   useEffect(() => {
-    let cancelled = false;
     const init = async () => {
       // Load stored identities from IndexedDB (silent, no prompt).
       await refresh().catch(() => {});
-
-      // Try to restore server session (also silent).
-      try {
-        const res = await fetch('/api/auth/session', { credentials: 'include' });
-        if (!cancelled && res.ok) {
-          const data = (await res.json()) as {
-            address?: string;
-            chain?: 'ethereum' | 'solana';
-          };
-          if (data.address) {
-            const sessionChain = data.chain ?? 'ethereum';
-            const addr = data.address.toLowerCase();
-            const stored = getStoredWallets();
-            if (!stored.some((w) => w.address === addr)) {
-              addStoredWallet({
-                address: addr,
-                chain: sessionChain,
-                walletName: null,
-                chainId: sessionChain === 'ethereum' ? 1 : null,
-                addedAt: Date.now(),
-              });
-              loadWallets();
-            }
-            // Ensure signedInProtocols reflects the server session even
-            // when IndexedDB identities are not yet loaded or available.
-            setSignedInProtocols((prev) => {
-              if (prev[sessionChain]) return prev;
-              return { ...prev, [sessionChain]: true };
-            });
-          }
-        }
-      } catch {
-        /* session endpoint unavailable — continue without server session */
-      }
     };
     // Delay init slightly so the page renders first — no flash.
     const timer = setTimeout(init, 100);
     return () => {
-      cancelled = true;
       clearTimeout(timer);
     };
-  }, [refresh, loadWallets]);
+  }, [refresh]);
+
+  // Keep UI state in sync with the Better Auth server session. When a session
+  // exists the user is signed in server-side (email/social); reflect that in
+  // signedInProtocols so components see an authenticated user even before any
+  // protocol identity has been linked locally.
+  useEffect(() => {
+    if (sessionPending) return;
+    if (session?.user) {
+      setSignedInProtocols((prev) => {
+        if (prev.email) return prev;
+        return { ...prev, email: true };
+      });
+    } else {
+      // No server session — clear any email protocol flag derived from it.
+      setSignedInProtocols((prev) => {
+        if (!prev.email) return prev;
+        const next = { ...prev };
+        delete next.email;
+        return next;
+      });
+    }
+  }, [session, sessionPending]);
 
   useEffect(() => {
     if (!ready) return;
@@ -360,7 +356,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           handle = profile?.username || '';
           displayName = profile?.displayName || profile?.username || '';
         } else if (effectiveProtocol === 'twitter') {
-          handle = `@${profile?.username}` || '';
+          handle = profile?.username ? `@${profile?.username}` : '';
           displayName = profile?.displayName || profile?.username || '';
         } else if (effectiveProtocol === 'telegram') {
           handle = profile?.username ? `@${profile?.username}` : `tg:${profile?.id}`;
@@ -534,55 +530,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           case 'telegram':
           case 'threads':
           case 'reddit': {
-            // OAuth providers handled via redirect in SignInModal
-            // The callback page stores the result in localStorage
+            // Better Auth handles the OAuth dance server-side. Triggering
+            // signIn.social redirects the browser to the provider, then Better
+            // Auth completes the callback and lands the user back at
+            // `callbackURL` with a session cookie already set.
+            const { error: socialError } = await betterSignIn.social({
+              provider: protocol,
+              callbackURL: '/home',
+            });
+            if (socialError) throw new Error(socialError.message || 'OAuth sign-in failed');
             return;
           }
           case 'email': {
             const emailMethod = creds.method as string;
             if (emailMethod === 'register') {
-              const resp = await fetch('/api/auth/email/register', {
-                method: 'POST',
-                credentials: 'include',
-                headers: { 'content-type': 'application/json' },
-                body: JSON.stringify({
-                  email: creds.email,
-                  password: creds.password,
-                  displayName: creds.displayName,
-                }),
+              // Better Auth handles email signup — creates the account and
+              // (optionally) requires email verification before sign-in.
+              const { data: signUpData, error: signUpError } = await betterSignUp.email({
+                email: creds.email as string,
+                password: creds.password as string,
+                name:
+                  (creds.displayName as string) || (creds.email as string).split('@')[0] || 'user',
               });
-              const data = (await resp.json()) as {
-                success?: boolean;
-                message?: string;
-                error?: string;
-                requiresVerification?: boolean;
-              };
-              if (!resp.ok) throw new Error(data.error || 'Registration failed');
-              showToast('success', data.message || 'Check your email to verify your account.');
-              if (data.requiresVerification) {
+              if (signUpError) throw new Error(signUpError.message || 'Registration failed');
+              const requiresVerification = !signUpData?.user?.emailVerified;
+              if (requiresVerification) {
+                showToast('success', 'Check your email to verify your account, then sign in.');
                 setShowSignIn(false);
                 return;
               }
-              // Fall through to sign in after registration
+              // Fall through to sign in after successful (verified) registration
             }
-            const resp = await fetch('/api/auth/email/signin', {
-              method: 'POST',
-              credentials: 'include',
-              headers: { 'content-type': 'application/json' },
-              body: JSON.stringify({ email: creds.email, password: creds.password }),
+            const { data: signInData, error: signInError } = await betterSignIn.email({
+              email: creds.email as string,
+              password: creds.password as string,
             });
-            const data = (await resp.json()) as {
-              success?: boolean;
-              user?: { id?: string; email?: string; displayName?: string };
-              error?: string;
-            };
-            if (!resp.ok) throw new Error(data.error || 'Sign-in failed');
+            if (signInError) throw new Error(signInError.message || 'Sign-in failed');
+            const user = signInData?.user;
             const record = await buildIdentityRecord({
               protocol: 'email' as const,
-              publicId: data.user?.id || (creds.email as string),
-              handle: data.user?.displayName || (creds.email as string).split('@')[0] || 'user',
-              displayName:
-                data.user?.displayName || (creds.email as string).split('@')[0] || 'user',
+              publicId: user?.id || (creds.email as string),
+              handle: user?.name || (creds.email as string).split('@')[0] || 'user',
+              displayName: user?.name || (creds.email as string).split('@')[0] || 'user',
               secret: null,
               keys: { email: creds.email as string },
               isPrimary: false,
@@ -591,7 +580,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             await refresh();
             triggerOnboarding();
             setShowSignIn(false);
-            showToast('success', `Welcome, ${data.user?.displayName || 'user'}!`);
+            showToast('success', `Welcome, ${user?.name || 'user'}!`);
             return;
           }
           default:
@@ -618,7 +607,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const handleSignOut = useCallback(async () => {
     try {
-      await fetch('/api/auth/signout', { method: 'POST', credentials: 'include' });
+      await betterSignOut();
     } catch {
       /* ignore network errors — still clear local state */
     }
@@ -731,7 +720,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     (index: number) => {
       const stored = getStoredWallets();
       if (index < 0 || index >= stored.length) return;
-      const removed = stored[index]!;
+      const removed = stored[index];
+      if (!removed) return;
       const updated = removeStoredWallet(removed.address);
       setWalletMeta((prev) => {
         const next = { ...prev };

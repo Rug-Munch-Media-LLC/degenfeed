@@ -28,6 +28,12 @@ VAPID_PRIVATE_KEY=
 # Optional: RMI backend API key if gated
 RMI_API_KEY=
 
+# Queue processing via rmi-backend queue API ("true" default) vs legacy KV list()
+USE_RMI_QUEUE_API=true
+
+# Scheduled post executor throttle interval in minutes (default 5)
+SCHEDULED_EXECUTOR_INTERVAL_MINUTES=5
+
 # Optional: Solana RPC URL override
 SOLANA_RPC_URL=
 

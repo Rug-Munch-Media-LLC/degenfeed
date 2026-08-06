@@ -4,6 +4,7 @@
  * Fetches live streams from Owncast, PeerTube, Twitch, Spaces, Farcaster, Nostr.
  */
 
+import { edgeCacheGetOr } from '../lib/edge-cache';
 import type { Env } from '../types';
 import { trackSourceHealth } from './live-aggregator-health';
 import type { UnifiedLiveStream } from './live-aggregator-types';
@@ -306,11 +307,22 @@ export async function fetchDegenFeedSpaces(env: Env): Promise<UnifiedLiveStream[
   const startTime = Date.now();
 
   try {
-    const raw = await env.SPACES?.get('spaces:live');
+    // SPACES index + detail reads go through the edge Cache API (TTL 60s),
+    // falling back to the SPACES KV namespace.
+    const raw = await edgeCacheGetOr(
+      env,
+      'spaces:live',
+      60,
+      () => env.SPACES?.get('spaces:live') ?? null,
+    );
     const liveIds: string[] = raw ? (JSON.parse(raw) as string[]) : [];
     if (liveIds.length === 0) return streams;
 
-    const spaceResults = await Promise.all(liveIds.map((id) => env.SPACES?.get(`spaces:${id}`)));
+    const spaceResults = await Promise.all(
+      liveIds.map((id) =>
+        edgeCacheGetOr(env, `spaces:${id}`, 60, () => env.SPACES?.get(`spaces:${id}`) ?? null),
+      ),
+    );
     for (const raw of spaceResults) {
       if (!raw) continue;
       try {

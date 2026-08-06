@@ -3,6 +3,7 @@
  */
 
 import { spaceKey } from '../../kv-helpers';
+import { edgeCacheGetOr } from '../../lib/edge-cache';
 import { jsonResponse, methodNotAllowed, noCacheJsonResponse } from '../../response-helpers';
 import type { Env } from '../../types';
 import { broadcastToAll } from '../../ws-broadcast';
@@ -251,7 +252,11 @@ export async function handleSpacesLive(request: Request, env: Env): Promise<Resp
   try {
     const liveIds = await getLiveIds(env);
     if (liveIds.length === 0) return noCacheJsonResponse({ spaces: [] });
-    const spaceResults = await Promise.all(liveIds.map((id) => env.SPACES?.get(spaceKey(id))));
+    const spaceResults = await Promise.all(
+      liveIds.map((id) =>
+        edgeCacheGetOr(env, spaceKey(id), 15, () => env.SPACES?.get(spaceKey(id)) ?? null),
+      ),
+    );
     const spaces: SpaceRecord[] = [];
     for (const raw of spaceResults) {
       if (!raw) continue;
@@ -273,7 +278,11 @@ export async function handleSpacesUpcoming(request: Request, env: Env): Promise<
   try {
     const upcomingIds = await getUpcomingIds(env);
     if (upcomingIds.length === 0) return noCacheJsonResponse({ spaces: [] });
-    const spaceResults = await Promise.all(upcomingIds.map((id) => env.SPACES?.get(spaceKey(id))));
+    const spaceResults = await Promise.all(
+      upcomingIds.map((id) =>
+        edgeCacheGetOr(env, spaceKey(id), 15, () => env.SPACES?.get(spaceKey(id)) ?? null),
+      ),
+    );
     const spaces: SpaceRecord[] = [];
     for (const raw of spaceResults) {
       if (!raw) continue;
@@ -299,7 +308,11 @@ export async function handleSpacesPast(request: Request, env: Env): Promise<Resp
   try {
     const pastIds = await getPastIds(env);
     if (pastIds.length === 0) return noCacheJsonResponse({ spaces: [] });
-    const spaceResults = await Promise.all(pastIds.map((id) => env.SPACES?.get(spaceKey(id))));
+    const spaceResults = await Promise.all(
+      pastIds.map((id) =>
+        edgeCacheGetOr(env, spaceKey(id), 15, () => env.SPACES?.get(spaceKey(id)) ?? null),
+      ),
+    );
     const spaces: SpaceRecord[] = [];
     for (const raw of spaceResults) {
       if (!raw) continue;
@@ -329,7 +342,11 @@ export async function handleSpacesTrending(request: Request, env: Env): Promise<
     const pastIds = await getPastIds(env);
     const allIds = [...liveIds, ...upcomingIds, ...pastIds].slice(0, 50);
     if (allIds.length === 0) return noCacheJsonResponse({ spaces: [] });
-    const spaceResults = await Promise.all(allIds.map((id) => env.SPACES?.get(spaceKey(id))));
+    const spaceResults = await Promise.all(
+      allIds.map((id) =>
+        edgeCacheGetOr(env, spaceKey(id), 15, () => env.SPACES?.get(spaceKey(id)) ?? null),
+      ),
+    );
     const spaces: SpaceRecord[] = [];
     for (const raw of spaceResults) {
       if (!raw) continue;
@@ -446,7 +463,11 @@ export async function handleSpacesByCategory(request: Request, env: Env): Promis
     const pastIds = await getPastIds(env);
     const allIds = [...liveIds, ...upcomingIds, ...pastIds];
     if (allIds.length === 0) return noCacheJsonResponse({ spaces: [] });
-    const spaceResults = await Promise.all(allIds.map((id) => env.SPACES?.get(spaceKey(id))));
+    const spaceResults = await Promise.all(
+      allIds.map((id) =>
+        edgeCacheGetOr(env, spaceKey(id), 15, () => env.SPACES?.get(spaceKey(id)) ?? null),
+      ),
+    );
     const spaces: SpaceRecord[] = [];
     for (const raw of spaceResults) {
       if (!raw) continue;

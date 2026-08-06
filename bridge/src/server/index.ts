@@ -20,6 +20,7 @@ import http from 'node:http';
 import { getCrossPosterStats, startCrossPoster } from '../crossposter';
 import { getIndexerStatus, reindex, startIndexer } from '../search-indexer';
 import { validateAuth } from './auth-middleware';
+import { handleAuthRoute } from './auth-routes';
 import { handleBlueskyRoute } from './bluesky-routes';
 import { handleEventRoute } from './event-routes';
 import {
@@ -548,7 +549,11 @@ const server = http.createServer(async (req, res) => {
           checkedAt: new Date().toISOString(),
         },
         sources: {
-          nostr: { healthy: nostrHealthy, relays: relays.length, reachable: relays.filter((r) => r.healthy).length },
+          nostr: {
+            healthy: nostrHealthy,
+            relays: relays.length,
+            reachable: relays.filter((r) => r.healthy).length,
+          },
         },
       });
     }
@@ -1238,11 +1243,14 @@ const server = http.createServer(async (req, res) => {
         return jsonOk(res, { data: [], meta: { total: 0 } });
       }
     }
-    if (path.startsWith('/api/auth') || path.startsWith('/v1/auth'))
-      return jsonOk(
-        res,
-        req.method === 'GET' ? { authenticated: false, user: null } : { ok: true },
-      );
+    // ── Auth (real handlers — replaces the fake {authenticated:false} stub) ─
+    // GET  /api/auth/session | POST /api/auth/logout | email + OAuth routes.
+    // Better Auth (mounted by the api-server at /api/auth/better/*) is handled
+    // upstream; this covers the legacy /api/auth/* surface.
+    if (path.startsWith('/api/auth') || path.startsWith('/v1/auth')) {
+      const authHandled = await handleAuthRoute(path, req.method || 'GET', req, res);
+      if (authHandled) return;
+    }
 
     // ── Cross-Protocol Publish (real fan-out) ─────────────────────
     // POST /api/publish — { content, protocols, media?, options? }

@@ -1,13 +1,19 @@
 /**
  * @degenfeed/api-worker — Persistent Offline Queue
  *
- * KV-backed FIFO queue for deferred operation processing.
- * Handles transient failures by storing operations for retry.
+ * Deferred operation processing for transient-failure recovery.
+ *
+ * Queue source:
+ *   - Default (USE_RMI_QUEUE_API=true): uses the rmi-backend queue API
+ *     (GET /v1/queue/dequeue?queue=offline, POST /v1/queue/enqueue) instead
+ *     of KV list() + per-key get/put.
+ *   - Fallback (flag disabled, or API unreachable): legacy KV-backed FIFO
+ *     queue under `queue:op:` / `queue:pending`.
  *
  * Architecture:
  *   - Operations are stored in KV with a TTL (default 24h)
  *   - Each operation has: id, name, payload, status, retryCount, maxRetries
- *   - Processed via processQueue() which drains the queue in FIFO order
+ *   - Processed via processQueue() which drains the queue
  *   - Dead letters (max retries exceeded) are preserved for admin review
  *
  * Integration:
@@ -15,13 +21,21 @@
  *   - Used by transaction-monitor.ts for postponed checks
  *   - Can be consumed by any route handler needing deferred execution
  *
- * Key schema:
+ * Key schema (legacy mode only):
  *   queue:op:{queueKey}         → OperationRecord (staged)
  *   queue:pending               → Array<queueKey> (FIFO ordering)
  *   queue:dead-letter:{queueKey} → OperationRecord (exhausted)
  *   queue:cache:{cacheKey}      → CachedData (typed value)
  */
 
+import {
+  type QueueItem,
+  dequeueRaw,
+  enqueue as queueEnqueue,
+  getApiKey,
+  parsePayload,
+  useRmiQueueApi,
+} from './queue-client';
 import type { Env } from '../types';
 
 // ─── Types ─────────────────────────────────────────────────────────────────
@@ -78,7 +92,7 @@ const DEFAULT_MAX_RETRIES = 5;
  *
  * @param key   Unique key (deduplicates — if key exists, returns false)
  * @param data  Operation name and payload
- * @param env   KV bindings
+ * @param env   Worker bindings (KV used for dedup + legacy mode)
  * @param opts  Optional overrides for maxRetries and timeout
  */
 export async function enqueueOperation<T>(
@@ -87,18 +101,19 @@ export async function enqueueOperation<T>(
   env?: Env,
   opts?: { maxRetries?: number; timeoutMs?: number },
 ): Promise<boolean> {
-  if (!env?.CACHE) {
-    // No KV available — fire-and-forget (operation is lost on restart)
-    console.warn('[offline-queue] No KV available — operation not persisted');
+  if (!env) {
+    console.warn('[offline-queue] No env provided — operation not persisted');
     return false;
   }
 
   const opKey = `${OP_PREFIX}${key}`;
 
   try {
-    // Check for duplicate
-    const existing = await env.CACHE.get(opKey);
-    if (existing) return false; // Duplicate — reject
+    // Check for duplicate (KV still used for dedup in API mode when available)
+    if (env.CACHE) {
+      const existing = await env.CACHE.get(opKey);
+      if (existing) return false; // Duplicate — reject
+    }
 
     const record: OperationRecord<T> = {
       key,
@@ -113,6 +128,19 @@ export async function enqueueOperation<T>(
       timeoutMs: opts?.timeoutMs ?? 30_000,
       tag: data.tag,
     };
+
+    if (useRmiQueueApi(env)) {
+      // API mode — the backend queue owns the item. The pending list in KV
+      // is not needed anymore (dequeue replaces the list() scan).
+      await queueEnqueue('offline', opKey, record, getApiKey(env));
+      return true;
+    }
+
+    if (!env.CACHE) {
+      // No KV available in legacy mode — fire-and-forget (operation is lost on restart)
+      console.warn('[offline-queue] No KV available — operation not persisted');
+      return false;
+    }
 
     // Write operation + append to pending list
     await env.CACHE.put(opKey, JSON.stringify(record), {
@@ -137,12 +165,12 @@ export async function enqueueOperation<T>(
 // ─── Dequeue & Process ─────────────────────────────────────────────────────
 
 /**
- * Dequeue and process operations from the FIFO queue.
+ * Dequeue and process operations from the queue.
  *
  * @param handler  Async function that processes each record.
  *                 Return true for success, false for transient failure.
  * @param batchSize Max operations to process in one call (default 10)
- * @param env      KV bindings
+ * @param env      Worker bindings
  * @returns        Stats about the batch run
  */
 export async function processQueue<T>(
@@ -155,7 +183,113 @@ export async function processQueue<T>(
   failed: number;
   deadLettered: number;
 }> {
-  if (!env?.CACHE) return { processed: 0, succeeded: 0, failed: 0, deadLettered: 0 };
+  if (!env) return { processed: 0, succeeded: 0, failed: 0, deadLettered: 0 };
+
+  if (useRmiQueueApi(env)) {
+    return processQueueViaApi(handler, env, batchSize);
+  }
+
+  return processQueueViaKv(handler, env, batchSize);
+}
+
+/**
+ * API mode: dequeue records from the rmi-backend `offline` queue and process
+ * them. Failed (retryable) records are re-enqueued; exhausted records go to
+ * the local dead-letter audit copy.
+ */
+async function processQueueViaApi<T>(
+  handler: QueueHandler<T>,
+  env: Env,
+  batchSize: number,
+): Promise<{
+  processed: number;
+  succeeded: number;
+  failed: number;
+  deadLettered: number;
+}> {
+  let items: Array<QueueItem<unknown>>;
+  try {
+    items = await dequeueRaw('offline', batchSize, getApiKey(env));
+  } catch (err) {
+    console.warn('[offline-queue] Queue API unavailable — falling back to KV:', err);
+    return processQueueViaKv(handler, env, batchSize);
+  }
+
+  let processed = 0;
+  let succeeded = 0;
+  let failed = 0;
+  let deadLettered = 0;
+
+  for (const item of items) {
+    const record = parsePayload<OperationRecord<T>>(item.payload);
+    if (!record?.key) continue;
+
+    try {
+      record.status = 'processing';
+      record.lastAttemptAt = Date.now();
+
+      // Execute handler with timeout
+      const result = await executeWithTimeout(() => handler(record), record.timeoutMs);
+
+      if (result) {
+        // Success — backend queue already removed the item on dequeue.
+        succeeded++;
+      } else {
+        // Handler returned false — transient failure
+        record.retryCount++;
+        record.lastError = 'Handler returned false';
+        record.status = record.retryCount >= record.maxRetries ? 'dead-letter' : 'failed';
+
+        if (record.status === 'dead-letter') {
+          await moveToDeadLetter(record.key, record, env);
+          deadLettered++;
+        } else {
+          try {
+            await queueEnqueue('offline', `${OP_PREFIX}${record.key}`, record, getApiKey(env));
+          } catch (enqErr) {
+            console.error(`[offline-queue] Re-enqueue failed for ${record.key}:`, enqErr);
+          }
+        }
+        failed++;
+      }
+    } catch (err) {
+      // Handler threw — retry or dead-letter
+      record.retryCount++;
+      record.lastError = err instanceof Error ? err.message : String(err);
+      record.status = record.retryCount >= record.maxRetries ? 'dead-letter' : 'failed';
+
+      if (record.status === 'dead-letter') {
+        await moveToDeadLetter(record.key, record, env);
+        deadLettered++;
+      } else {
+        try {
+          await queueEnqueue('offline', `${OP_PREFIX}${record.key}`, record, getApiKey(env));
+        } catch (enqErr) {
+          console.error(`[offline-queue] Re-enqueue failed for ${record.key}:`, enqErr);
+        }
+      }
+      failed++;
+    }
+    processed++;
+  }
+
+  return { processed, succeeded, failed, deadLettered };
+}
+
+/**
+ * Legacy KV mode: drain the FIFO pending list.
+ */
+async function processQueueViaKv<T>(
+  handler: QueueHandler<T>,
+  env: Env,
+  batchSize: number,
+): Promise<{
+  processed: number;
+  succeeded: number;
+  failed: number;
+  deadLettered: number;
+}> {
+  if (!env.CACHE) return { processed: 0, succeeded: 0, failed: 0, deadLettered: 0 };
 
   let processed = 0;
   let succeeded = 0;
@@ -277,6 +411,9 @@ async function moveToDeadLetter<T>(
 /**
  * Retry all dead-letter operations.
  * Re-enqueues them with reset retry counts.
+ *
+ * Dead letters are KV audit copies; in API mode the re-enqueue goes through
+ * POST /v1/queue/enqueue instead of the KV put.
  */
 export async function retryDeadLetters(env?: Env, max = 50): Promise<number> {
   if (!env?.CACHE) return 0;
@@ -284,7 +421,7 @@ export async function retryDeadLetters(env?: Env, max = 50): Promise<number> {
   let retried = 0;
 
   try {
-    // List dead letters by scanning keys (simplified — in production use KV list)
+    // List dead letters by scanning keys (local audit copies)
     const deadLetterKeys = await listDeadLetterKeys(env, max);
 
     for (const key of deadLetterKeys) {
@@ -298,19 +435,29 @@ export async function retryDeadLetters(env?: Env, max = 50): Promise<number> {
       record.lastAttemptAt = null;
 
       // Re-enqueue
-      await env.CACHE.put(`${OP_PREFIX}${key}`, JSON.stringify(record), {
-        expirationTtl: DEFAULT_TTL,
-      });
-      await env.CACHE.delete(`${DEAD_LETTER_PREFIX}${key}`);
-
-      // Add back to pending list
-      const pendingRaw = await env.CACHE.get(PENDING_KEY);
-      const pending: string[] = pendingRaw ? (JSON.parse(pendingRaw) as string[]) : [];
-      if (!pending.includes(key)) {
-        pending.push(key);
-        await env.CACHE.put(PENDING_KEY, JSON.stringify(pending), {
+      if (useRmiQueueApi(env)) {
+        try {
+          await queueEnqueue('offline', `${OP_PREFIX}${key}`, record, getApiKey(env));
+        } catch (err) {
+          console.error(`[offline-queue] Dead-letter re-enqueue failed for ${key}:`, err);
+        }
+      } else {
+        await env.CACHE.put(`${OP_PREFIX}${key}`, JSON.stringify(record), {
           expirationTtl: DEFAULT_TTL,
         });
+      }
+      await env.CACHE.delete(`${DEAD_LETTER_PREFIX}${key}`);
+
+      // Add back to pending list (legacy FIFO ordering)
+      if (!useRmiQueueApi(env)) {
+        const pendingRaw = await env.CACHE.get(PENDING_KEY);
+        const pending: string[] = pendingRaw ? (JSON.parse(pendingRaw) as string[]) : [];
+        if (!pending.includes(key)) {
+          pending.push(key);
+          await env.CACHE.put(PENDING_KEY, JSON.stringify(pending), {
+            expirationTtl: DEFAULT_TTL,
+          });
+        }
       }
 
       retried++;
@@ -324,8 +471,7 @@ export async function retryDeadLetters(env?: Env, max = 50): Promise<number> {
 
 async function listDeadLetterKeys(env: Env, max: number): Promise<string[]> {
   const keys: string[] = [];
-  // Use KV list (available in Cloudflare Workers with wrangler)
-  // Fallback: iterate prefix keys
+  // Local KV audit copies only — the queue API has no dead-letter list surface.
   try {
     if (!env.CACHE) return [];
     const listed = await env.CACHE.list({
@@ -379,6 +525,11 @@ export async function getCached<T>(key: string, env?: Env): Promise<T | null> {
 
 /**
  * Get queue statistics for monitoring.
+ *
+ * In API mode the dead-letter count is unavailable from the worker (no
+ * queue-API stats surface yet) — reported as 0.
+ * [REVIEW] rmi-backend should expose queue stats if this endpoint needs
+ * live dead-letter counts.
  */
 export async function getQueueStats(env?: Env): Promise<QueueStats> {
   if (!env?.CACHE) {
@@ -396,13 +547,15 @@ export async function getQueueStats(env?: Env): Promise<QueueStats> {
     const pendingRaw = await env.CACHE.get(PENDING_KEY);
     const pending: string[] = pendingRaw ? (JSON.parse(pendingRaw) as string[]) : [];
 
-    // Count dead letters
+    // Count dead letters (legacy KV mode only; API mode reports 0)
     let deadLetter = 0;
-    try {
-      const listed = await env.CACHE.list({ prefix: DEAD_LETTER_PREFIX });
-      deadLetter = listed?.keys?.length ?? 0;
-    } catch {
-      // KV list not available
+    if (!useRmiQueueApi(env)) {
+      try {
+        const listed = await env.CACHE.list({ prefix: DEAD_LETTER_PREFIX });
+        deadLetter = listed?.keys?.length ?? 0;
+      } catch {
+        // KV list not available
+      }
     }
 
     // Find oldest pending

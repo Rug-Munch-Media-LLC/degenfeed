@@ -57,6 +57,7 @@
     "@solana/spl-token": "^0.4.15",
     "@solana/web3.js": "^1.98.4",
     "@telegram-apps/sdk": "^3.11.8",
+    "better-auth": "^1.6.25",
     "dompurify": "^3.4.12",
     "hls.js": "^1.6.16",
     "next": "^16.2.11",

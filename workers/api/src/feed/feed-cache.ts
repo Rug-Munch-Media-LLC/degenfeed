@@ -9,6 +9,7 @@
  */
 
 import type { Protocol, UnifiedPost } from '@degenfeed/types';
+import { edgeCacheGet, edgeCachePut } from '../lib/edge-cache';
 import type { Env } from '../types';
 
 export const CACHE_PROVIDER_TTL = 120;
@@ -94,10 +95,12 @@ export function cachedJsonResponse(data: unknown, status = 200, maxAge = 30): Re
   });
 }
 
-// ─── Per-provider KV cache (stale-while-revalidate) ────────────────
-// Caches provider results in KV with CACHE_PROVIDER_TTL expiry.
-// On cache hit the response is returned immediately and a background
-// refresh is triggered so subsequent requests see fresh data.
+// ─── Per-provider cache (stale-while-revalidate) ──────────────────
+// Caches provider results with CACHE_PROVIDER_TTL expiry. Reads go through
+// the edge Cache API first (fast, free, edge-local) and fall back to KV;
+// writes populate both. On cache hit the response is returned immediately
+// and a background refresh is triggered so subsequent requests see fresh
+// data (handled by feed-fetcher).
 
 export function providerCacheKey(protocol: string, limit: number): string {
   return `feed:provider:${protocol}:l=${limit}`;
@@ -108,11 +111,18 @@ export async function readProviderCache(
   protocol: string,
   limit: number,
 ): Promise<UnifiedPost[] | null> {
-  const cached = await readJsonCache<{
-    posts: UnifiedPost[];
-    fetchedAt: number;
-  }>(env, providerCacheKey(protocol, limit), 'readProviderCache');
-  return cached?.posts ?? null;
+  try {
+    const raw = await edgeCacheGet(env, providerCacheKey(protocol, limit));
+    if (!raw) return null;
+    const cached = JSON.parse(raw) as {
+      posts: UnifiedPost[];
+      fetchedAt: number;
+    };
+    return cached.posts ?? null;
+  } catch (err) {
+    console.warn('[feed] readProviderCache failed:', err instanceof Error ? err.message : err);
+    return null;
+  }
 }
 
 export async function writeProviderCache(
@@ -122,13 +132,16 @@ export async function writeProviderCache(
   posts: UnifiedPost[],
 ): Promise<void> {
   if (posts.length === 0) return;
-  await writeJsonCache(
-    env,
-    providerCacheKey(protocol, limit),
-    { posts, fetchedAt: Date.now() },
-    CACHE_PROVIDER_TTL,
-    'writeProviderCache',
-  );
+  try {
+    await edgeCachePut(
+      env,
+      providerCacheKey(protocol, limit),
+      JSON.stringify({ posts, fetchedAt: Date.now() }),
+      CACHE_PROVIDER_TTL,
+    );
+  } catch (err) {
+    console.warn('[feed] writeProviderCache failed:', err instanceof Error ? err.message : err);
+  }
 }
 
 // ─── Post KV store ─────────────────────────────────────────────────

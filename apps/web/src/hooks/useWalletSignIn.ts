@@ -5,10 +5,15 @@ import { buildSiweMessage, requestWalletNonce, verifyWalletSignature } from '@de
 import { saveWalletIdentity } from '@degenfeed/storage';
 import { useCallback, useState } from 'react';
 import { useWeb3 } from '../components/Web3Provider';
-import { setCsrfToken } from '../lib/csrf';
 
+/**
+ * EVM wallet sign-in via Better Auth (SIWE plugin).
+ *
+ * Flow: nonce → build ERC-4361 message → wallet signs it → verify at
+ * /api/auth/better/siwe/verify. Better Auth sets the httpOnly session cookie.
+ */
 export function useWalletSignIn() {
-  const { account, isConnected, connect, signMessage } = useWeb3();
+  const { account, chainId, isConnected, connect, signMessage } = useWeb3();
   const [signingIn, setSigningIn] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -27,13 +32,19 @@ export function useWalletSignIn() {
     setError(null);
 
     try {
-      const nonce = await requestWalletNonce(address);
-      const message = buildSiweMessage(address, nonce);
+      const evmChainId = chainId ?? 1;
+      const { nonce } = await requestWalletNonce(address, 'ethereum', evmChainId);
+      const message = buildSiweMessage(address, nonce, { chainId: evmChainId });
       const signature = await signMessage(message);
 
-      const session = await verifyWalletSignature(address, signature, message, 'ethereum', nonce);
-      // Store the CSRF token for subsequent state-changing requests
-      setCsrfToken(session.csrfToken);
+      const session = await verifyWalletSignature({
+        address,
+        signature,
+        message,
+        chain: 'ethereum',
+        nonce,
+        chainId: evmChainId,
+      });
       await saveWalletIdentity(session.address, session.chain);
 
       return session;
@@ -43,7 +54,7 @@ export function useWalletSignIn() {
     } finally {
       setSigningIn(false);
     }
-  }, [account, connect, signMessage]);
+  }, [account, chainId, connect, signMessage]);
 
   return {
     address: account,

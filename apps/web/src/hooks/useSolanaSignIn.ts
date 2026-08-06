@@ -1,7 +1,8 @@
 'use client';
 
-import { buildSolanaMessage, verifyWalletSignature } from '@degenfeed/auth';
+import { requestWalletNonce, verifyWalletSignature } from '@degenfeed/auth';
 import { saveWalletIdentity } from '@degenfeed/storage';
+import { base58 } from '@scure/base';
 import { useCallback, useState } from 'react';
 
 interface SolanaWallet {
@@ -22,6 +23,13 @@ function getSolanaWallet(): SolanaWallet | null {
   return w.solana || w.solflare || null;
 }
 
+/**
+ * Solana wallet sign-in via Better Auth (custom SIWS plugin).
+ *
+ * Flow: nonce → the server returns the EXACT message to sign → wallet signs
+ * it (Ed25519 detached) → base58 signature verified at
+ * /api/auth/better/solana/verify. Better Auth sets the httpOnly session cookie.
+ */
 export function useSolanaSignIn() {
   const [signingIn, setSigningIn] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -41,15 +49,20 @@ export function useSolanaSignIn() {
       }
       if (!address) throw new Error('Could not get Solana address');
 
-      const nonce = await requestWalletNonce(address);
-      const message = buildSolanaMessage(address, nonce);
-      const messageBytes = new TextEncoder().encode(message);
-      const signed = await wallet.signMessage(messageBytes);
-      const signature = Array.from(signed.signature)
-        .map((b) => b.toString(16).padStart(2, '0'))
-        .join('');
+      // The server returns the authoritative message to sign (binds domain,
+      // address, nonce and time bounds — no client-side message drift).
+      const { nonce, message } = await requestWalletNonce(address, 'solana');
+      if (!message) throw new Error('Solana nonce response missing message');
 
-      const session = await verifyWalletSignature(address, signature, message, 'solana', nonce);
+      const signed = await wallet.signMessage(new TextEncoder().encode(message));
+      const signature = base58.encode(signed.signature);
+
+      const session = await verifyWalletSignature({
+        address,
+        signature,
+        chain: 'solana',
+        nonce,
+      });
       await saveWalletIdentity(session.address, session.chain);
       return session;
     } catch (err) {
@@ -67,16 +80,4 @@ export function useSolanaSignIn() {
     error,
     signInWithSolana,
   };
-}
-
-async function requestWalletNonce(address: string): Promise<string> {
-  const res = await fetch(`/api/auth/wallet/nonce?address=${encodeURIComponent(address)}`, {
-    credentials: 'include',
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: 'Nonce request failed' }));
-    throw new Error(err.error || 'Nonce request failed');
-  }
-  const data = await res.json();
-  return data.nonce;
 }

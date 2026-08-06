@@ -6,6 +6,14 @@
 
 import type { MasterPost } from '@degenfeed/cross-protocol-bridge';
 import {
+  type QueueItem,
+  dequeueRaw,
+  enqueue as queueEnqueue,
+  getApiKey,
+  parsePayload,
+  useRmiQueueApi,
+} from '../../lib/queue-client';
+import {
   type AutoFormatOptions,
   autoFormatForProtocols,
   getBestPostingTime,
@@ -154,6 +162,20 @@ export async function handleQueueAdd(request: Request, env: Env): Promise<Respon
           JSON.stringify({ walletAddress: session.address.toLowerCase(), id }),
           { expirationTtl: 86400 * 365 },
         );
+      }
+    }
+    // Queue-API mode: mirror the scheduled index into the rmi-backend queue
+    // so the cron executor can dequeue instead of KV list().
+    if (useRmiQueueApi(env) && (scheduledAt || entry.aiOptimizedTime)) {
+      try {
+        await queueEnqueue(
+          'premium',
+          `premium:scheduled:${id}`,
+          { walletAddress: session.address.toLowerCase(), id },
+          getApiKey(env),
+        );
+      } catch (err) {
+        console.warn('[premium-queue] Queue API enqueue failed:', err);
       }
     }
     await incrementPremiumUsage(session.address, 'queuedPosts', 1, env);
@@ -358,6 +380,18 @@ export async function handleBatchPublish(request: Request, env: Env): Promise<Re
               { expirationTtl: 86400 * 90 },
             );
         }
+        if (useRmiQueueApi(env) && scheduledAt) {
+          try {
+            await queueEnqueue(
+              'premium',
+              `premium:scheduled:${id}`,
+              { walletAddress: address, id },
+              getApiKey(env),
+            );
+          } catch (err) {
+            console.warn('[premium-queue] Queue API enqueue failed:', err);
+          }
+        }
         created.push(queueEntry);
       } catch (err) {
         errors.push({ index: i, error: String(err) });
@@ -468,6 +502,103 @@ export async function handleQueueStats(request: Request, env: Env): Promise<Resp
 
 export async function executeDuePremiumPosts(env: Env): Promise<number> {
   if (!env.CACHE) return 0;
+
+  if (useRmiQueueApi(env)) {
+    return executeDuePremiumPostsViaApi(env);
+  }
+  return executeDuePremiumPostsViaKv(env);
+}
+
+/**
+ * API mode: dequeue due schedule refs from the rmi-backend `premium` queue,
+ * look up the actual queue entry in KV, publish it, and re-enqueue
+ * recurring/evergreen posts for their next slot. Falls back to the KV scan
+ * for this run if the API is unreachable.
+ */
+async function executeDuePremiumPostsViaApi(env: Env): Promise<number> {
+  if (!env.CACHE) return 0;
+  const now = Date.now();
+  let executed = 0;
+
+  let items: Array<QueueItem<unknown>>;
+  try {
+    items = await dequeueRaw('premium', 100, getApiKey(env));
+  } catch (err) {
+    console.warn('[premium-executor] Queue API unavailable — falling back to KV scan:', err);
+    return executeDuePremiumPostsViaKv(env);
+  }
+
+  for (const item of items) {
+    try {
+      const scheduleRef = parsePayload<{ walletAddress: string; id: string }>(item.payload);
+      if (!scheduleRef?.id) continue;
+
+      const entryRaw = await env.CACHE.get(
+        `${PREFIX_QUEUE}${scheduleRef.walletAddress}:${scheduleRef.id}`,
+      );
+      if (!entryRaw) continue;
+
+      const entry = JSON.parse(entryRaw) as QueueEntry;
+      if (entry.status !== 'scheduled') continue;
+      if (entry.scheduledAt && new Date(entry.scheduledAt).getTime() > now) continue;
+
+      await executeQueueEntry(entry, env);
+      entry.status = 'published';
+      entry.updatedAt = new Date().toISOString();
+      entry.recurrenceCount = (entry.recurrenceCount ?? 0) + 1;
+
+      let reEnqueue = false;
+      if (entry.recurrence && entry.recurrence !== 'once') {
+        entry.scheduledAt = calculateNextRecurrence(entry);
+        entry.status = 'scheduled';
+        reEnqueue = true;
+      }
+      if (entry.isEvergreen) {
+        entry.lastRepostedAt = new Date().toISOString();
+        entry.scheduledAt = calculateNextEvergreenRepost(entry);
+        entry.status = 'scheduled';
+        reEnqueue = true;
+      }
+
+      await env.CACHE.put(
+        `${PREFIX_QUEUE}${entry.walletAddress}:${entry.id}`,
+        JSON.stringify(entry),
+        { expirationTtl: 86400 * (entry.isEvergreen ? 365 : 90) },
+      );
+
+      // Clean up the local scheduled-index copy (if any) — the item was
+      // consumed by dequeue, so there is no KV index entry to remove.
+      await env.CACHE.delete(item.key).catch(() => {});
+
+      // Recurring / evergreen posts go back on the queue for their next slot.
+      if (reEnqueue) {
+        try {
+          await queueEnqueue(
+            'premium',
+            `premium:scheduled:${entry.id}`,
+            { walletAddress: entry.walletAddress, id: entry.id },
+            getApiKey(env),
+          );
+        } catch (enqErr) {
+          console.error(
+            `[premium-executor] Re-enqueue failed for ${entry.id}:`,
+            enqErr,
+          );
+        }
+      }
+      executed++;
+    } catch (err) {
+      console.error(`[premium-executor] Failed to execute ${item.key}:`, err);
+    }
+  }
+  return executed;
+}
+
+/**
+ * Legacy KV mode: scan the `premium:scheduled:` index.
+ */
+async function executeDuePremiumPostsViaKv(env: Env): Promise<number> {
+  if (!env.CACHE) return 0;
   const now = Date.now();
   let executed = 0;
   try {
@@ -476,18 +607,17 @@ export async function executeDuePremiumPosts(env: Env): Promise<number> {
       const page = await env.CACHE.list({ prefix: 'premium:scheduled:', cursor, limit: 100 });
       for (const key of page.keys) {
         try {
-          const raw = await env.CACHE.get(key.name, 'json');
+          const raw = await env.CACHE.get(key.name);
           if (!raw) continue;
-          const scheduleRef = raw as { walletAddress: string; id: string };
+          const scheduleRef = JSON.parse(raw) as { walletAddress: string; id: string };
           const entryRaw = await env.CACHE.get(
             `${PREFIX_QUEUE}${scheduleRef.walletAddress}:${scheduleRef.id}`,
-            'json',
           );
           if (!entryRaw) {
             await env.CACHE.delete(key.name);
             continue;
           }
-          const entry = JSON.parse(entryRaw as string) as QueueEntry;
+          const entry = JSON.parse(entryRaw) as QueueEntry;
           if (entry.status !== 'scheduled') continue;
           if (entry.scheduledAt && new Date(entry.scheduledAt).getTime() > now) continue;
           await executeQueueEntry(entry, env);

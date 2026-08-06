@@ -247,6 +247,12 @@ export const DEFAULT_RELAYS = [
   'wss://nostr.wine',
 ] as const;
 
+// ─── RMI Backend API ────────────────────────────────────────────
+// Self-hosted persistent backend (Talos). Used for cross-isolate rate
+// limit enforcement and as the persistent store replacing Cloudflare KV.
+
+export const RMI_API_URL = 'https://api.rugmunch.io';
+
 // ─── Default Protocol API URLs ───────────────────────────────────
 
 export const DEFAULT_API_URLS = {

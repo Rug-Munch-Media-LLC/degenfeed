@@ -89,11 +89,6 @@ id = "5add91e310144a6d83a791a507453ebd"
 preview_id = "98af1bd284164ecd95a5f9f244d20098"
 
 [[kv_namespaces]]
-binding = "LENS_COINS"
-id = "8ca2b0f0d7c742d0b36a6b48e7ecdb90"
-preview_id = "a53bc2fd73734b8caf40b7bebb2983aa"
-
-[[kv_namespaces]]
 binding = "XCHAIN_REGISTRY"
 id = "8c624401302c46ec83dde2d45a9f854c"
 preview_id = "a9a4079eb87945a880c254b0f4343ae4"
@@ -195,6 +190,18 @@ REDLIB_URL = "https://redlib.degenfeed.xyz"
 # Self-hosted RSS-Bridge instance for proxied RSS feed fetching
 FLARESOLVERR_URL = "http://localhost:8191"
 RMI_BACKEND_URL = "http://localhost:8000"
+# ── rmi-backend queue API (replaces KV list()-based queue processing) ──
+# USE_RMI_QUEUE_API: "true" (default) uses the rmi-backend queue API
+# (GET/POST /v1/queue/*) for scheduled/sync/offline/premium/bridgy queue
+# processing instead of KV list() scans, which burn the KV list operations
+# quota. Set to "false" to fall back to the legacy KV-backed behavior.
+USE_RMI_QUEUE_API = "true"
+# How often the scheduled post executor may run, in minutes. The cron trigger
+# still fires every minute; the executor self-throttles to this interval.
+SCHEDULED_EXECUTOR_INTERVAL_MINUTES = "5"
+# API key for the rmi-backend queue API. Placeholder only — the real key is
+# managed by the secrets pipeline ("wrangler secret put RMI_API_KEY").
+RMI_API_KEY = "${RMI_API_KEY}"
 RSS_BRIDGE_URL = "https://rss-bridge.degenfeed.xyz"
 # Bridge service URL for protocol feed fetching
 BRIDGE_INTERNAL_URL = "https://bridge.degenfeed.xyz"
