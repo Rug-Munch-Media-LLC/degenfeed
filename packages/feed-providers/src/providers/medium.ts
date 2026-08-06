@@ -23,7 +23,6 @@ import type { Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
 import type { FeedProvider, FeedResult, FetchOptions, HealthResult, SchemaGuard } from '../types';
 import {
   DEFAULT_TIMEOUT_MS,
-  DEFAULT_USER_AGENT,
   fetchRaw,
   fetchRss,
   withConcurrencyLimit,
@@ -42,6 +41,10 @@ export const CURATED_MEDIUM_TAGS = [
   'programming',
   'startup',
   'technology',
+  'bitcoin',
+  'nft',
+  'artificial-intelligence',
+  'data-science',
 ] as const;
 
 /** Top Medium publications + authors (RSS: https://medium.com/feed/{id}). */
@@ -50,6 +53,8 @@ export const CURATED_MEDIUM_PUBLICATIONS: Array<{ id: string; name: string; nich
   { id: 'coinmonks', name: 'Coinmonks', niche: 'crypto' },
   { id: 'better-programming', name: 'Better Programming', niche: 'tech' },
   { id: '@VitalikButerin', name: 'Vitalik Buterin', niche: 'crypto' },
+  { id: 'bankless', name: 'Bankless', niche: 'crypto' },
+  { id: 'the-dark-side', name: 'The Dark Side', niche: 'crypto' },
 ];
 
 export type MediumFeedKind = 'tag' | 'publication' | 'author';
@@ -73,9 +78,18 @@ export interface MediumProviderOptions {
   rssBridgeUrl?: string;
   /** Override the RSS URL builder (testing). */
   feedUrlFor?: (source: MediumSource) => string;
-  /** Per-feed concurrency (default 4). */
+  /** Per-feed concurrency (default 6). */
   concurrency?: number;
+  /** Items per feed (default 25). */
+  itemsPerFeed?: number;
 }
+
+/**
+ * Browser-like UA for Medium. Medium's edge rate-limits generic crawler
+ * UAs (the DegenFeed UA gets 429) while tolerating browser strings.
+ */
+export const MEDIUM_BROWSER_UA =
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36';
 
 interface MediumFeed {
   title: string;
@@ -230,6 +244,7 @@ export class MediumProvider implements FeedProvider {
   private readonly rssBridgeUrl?: string;
   private readonly feedUrlFor: (source: MediumSource) => string;
   private readonly concurrency: number;
+  private readonly itemsPerFeed: number;
   private readonly breaker = new CircuitBreaker('medium');
 
   constructor(options: MediumProviderOptions = {}) {
@@ -244,7 +259,8 @@ export class MediumProvider implements FeedProvider {
         if (source.kind === 'publication') return `https://medium.com/feed/${source.id}`;
         return `https://medium.com/feed/tag/${source.id}`;
       });
-    this.concurrency = options.concurrency ?? 4;
+    this.concurrency = options.concurrency ?? 6;
+    this.itemsPerFeed = options.itemsPerFeed ?? 25;
   }
 
   getSources(): MediumSource[] {
@@ -273,7 +289,7 @@ export class MediumProvider implements FeedProvider {
                 failed++;
                 return [] as UnifiedPost[];
               }
-              return feed.items.slice(0, 15).map((item, index) =>
+              return feed.items.slice(0, this.itemsPerFeed).map((item, index) =>
                 mediumItemToPost(source, feed, item, index),
               );
             } catch {
@@ -306,12 +322,19 @@ export class MediumProvider implements FeedProvider {
     opts: FetchOptions,
   ): Promise<MediumFeed | null> {
     const url = this.feedUrlFor(source);
+    // Medium's edge treats generic crawler UAs poorly (429) but serves
+    // browser strings reliably. Use the browser UA for the direct fetch.
+    const headers = {
+      'user-agent': MEDIUM_BROWSER_UA,
+      accept: 'application/rss+xml, application/atom+xml, application/xml, text/xml, */*',
+      ...opts.headers,
+    };
 
     // 1) Direct RSS fetch (works from most egress IPs)
     try {
       const xml = await withTimeout(
         fetchRss(url, {
-          headers: { 'user-agent': DEFAULT_USER_AGENT, ...opts.headers },
+          headers,
           signal: opts.signal,
         }),
         timeoutMs,
@@ -322,25 +345,29 @@ export class MediumProvider implements FeedProvider {
       // fall through to FlareSolverr
     }
 
-    // 2) FlareSolverr Cloudflare bypass
-    if (this.flareSolverrUrl) {
+    // 2) FlareSolverr Cloudflare bypass — fail fast (service often down).
+    //    Give it a short, hard cap so a dead service can't eat the whole
+    //    feed-generation budget for every source.
+    if (this.flareSolverrUrl && this.flareSolverrUrl !== 'http://127.0.0.1:8192') {
       try {
-        const xml = await this.fetchViaFlareSolverr(url, timeoutMs);
+        const xml = await this.fetchViaFlareSolverr(url, Math.min(timeoutMs, 4000));
         if (xml && !isChallengePage(xml)) return parseMediumRss(xml, url);
       } catch {
         // fall through to RSS-Bridge
       }
     }
 
-    // 3) RSS-Bridge proxy (if configured)
+    // 3) RSS-Bridge proxy (if configured) — the Medium bridge may not be
+    //    installed on the instance; try the specific bridge URL, else the
+    //    generic UrlBridge. Fail fast either way.
     if (this.rssBridgeUrl) {
       try {
-        const proxyUrl = `${this.rssBridgeUrl}/?action=display&bridge=UrlBridge&url=${encodeURIComponent(url)}&format=Atom`;
+        const proxyUrl = `${this.rssBridgeUrl}/?action=display&bridge=Medium&context=By+tag&tag=${encodeURIComponent(source.id)}&format=Atom`;
         const res = await withTimeout(
           fetchRaw(proxyUrl, {
-            headers: { 'user-agent': DEFAULT_USER_AGENT },
+            headers: { 'user-agent': MEDIUM_BROWSER_UA },
           }),
-          timeoutMs,
+          Math.min(timeoutMs, 4000),
           `medium:rssbridge:${source.id}`,
         );
         const body = await res.text();

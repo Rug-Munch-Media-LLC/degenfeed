@@ -30,10 +30,18 @@ interface FeedItem {
   id: string;
   protocol: string;
   text: string;
-  author: { displayName: string; handle: string; avatar?: string };
+  author: {
+    id?: string;
+    displayName: string;
+    handle?: string;
+    avatar?: string;
+    avatarUrl?: string;
+    handles?: Partial<Record<string, string | null>>;
+  };
   createdAt: number;
-  likes: number;
-  replies: number;
+  likes?: number;
+  replies?: number;
+  metrics?: { likes: number; replies: number; reposts: number; quotes: number };
 }
 
 export default function CommunityPage() {
@@ -299,57 +307,64 @@ export default function CommunityPage() {
                 </p>
               </div>
             ) : (
-              feed.map((item) => (
-                <div
-                  key={item.id}
-                  className="card flex items-start gap-3 transition-colors hover:border-white/20"
-                >
-                  {/* Avatar */}
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--color-muted)] text-xs text-[var(--color-fg)]">
-                    {item.author.avatar ? (
-                      <Image
-                        src={item.author.avatar}
-                        alt={item.author.displayName}
-                        width={36}
-                        height={36}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      item.author.displayName.charAt(0).toUpperCase()
-                    )}
-                  </div>
+              feed.map((item) => {
+                const authorAvatar = item.author.avatarUrl || item.author.avatar || '';
+                const authorHandle =
+                  item.author.handles?.[item.protocol] || item.author.handle || '';
+                const likes = item.metrics?.likes ?? item.likes ?? 0;
+                const replies = item.metrics?.replies ?? item.replies ?? 0;
+                return (
+                  <div
+                    key={item.id}
+                    className="card flex items-start gap-3 transition-colors hover:border-white/20"
+                  >
+                    {/* Avatar */}
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--color-muted)] text-xs text-[var(--color-fg)]">
+                      {authorAvatar ? (
+                        <Image
+                          src={authorAvatar}
+                          alt={item.author.displayName}
+                          width={36}
+                          height={36}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        item.author.displayName.charAt(0).toUpperCase()
+                      )}
+                    </div>
 
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold text-[var(--color-fg)]">
-                        {item.author.displayName}
-                      </span>
-                      <span className="text-xs text-[var(--color-muted)]">
-                        @{item.author.handle}
-                      </span>
-                      {/* Protocol badge */}
-                      <span
-                        className="ml-auto rounded-full px-1.5 py-0.5 text-[10px] font-medium"
-                        style={{
-                          backgroundColor: `${PROTOCOL_META[item.protocol]?.color || '#666'}22`,
-                          color: PROTOCOL_META[item.protocol]?.color || '#666',
-                        }}
-                      >
-                        {PROTOCOL_META[item.protocol]?.emoji || '●'}{' '}
-                        {PROTOCOL_META[item.protocol]?.label || item.protocol}
-                      </span>
-                    </div>
-                    <p className="mt-1 text-sm text-[var(--color-muted)] line-clamp-3">
-                      {item.text}
-                    </p>
-                    <div className="mt-2 flex items-center gap-3 text-xs text-[var(--color-muted)]">
-                      <span>{formatDate(item.createdAt)}</span>
-                      <span>♥ {item.likes}</span>
-                      <span>💬 {item.replies}</span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold text-[var(--color-fg)]">
+                          {item.author.displayName}
+                        </span>
+                        {authorHandle && (
+                          <span className="text-xs text-[var(--color-muted)]">@{authorHandle}</span>
+                        )}
+                        {/* Protocol badge */}
+                        <span
+                          className="ml-auto rounded-full px-1.5 py-0.5 text-[10px] font-medium"
+                          style={{
+                            backgroundColor: `${PROTOCOL_META[item.protocol]?.color || '#666'}22`,
+                            color: PROTOCOL_META[item.protocol]?.color || '#666',
+                          }}
+                        >
+                          {PROTOCOL_META[item.protocol]?.emoji || '●'}{' '}
+                          {PROTOCOL_META[item.protocol]?.label || item.protocol}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-sm text-[var(--color-muted)] line-clamp-3">
+                        {item.text}
+                      </p>
+                      <div className="mt-2 flex items-center gap-3 text-xs text-[var(--color-muted)]">
+                        <span>{formatDate(item.createdAt)}</span>
+                        <span>♥ {likes}</span>
+                        <span>💬 {replies}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         )}

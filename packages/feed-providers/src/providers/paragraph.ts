@@ -25,6 +25,10 @@ import { extractImagesFromItemXml, firstImage, stripArticleHtml } from './articl
 export const PARAGRAPH_BRIDGE_URL = 'http://127.0.0.1:8241';
 export const PARAGRAPH_FRONT = 'https://paragraph.xyz';
 
+/** Browser-like UA — paragraph's edge rate-limits generic crawler UAs. */
+export const PARAGRAPH_BROWSER_UA =
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36';
+
 /** Publications tracked by the bridge (also our RSS fallback list). */
 export const CURATED_PARAGRAPH_PUBLICATIONS: Array<{ slug: string; name: string }> = [
   { slug: 'bankless', name: 'Bankless' },
@@ -32,6 +36,19 @@ export const CURATED_PARAGRAPH_PUBLICATIONS: Array<{ slug: string; name: string 
   { slug: 'variant', name: 'Variant Fund' },
   { slug: 'doseofdefi', name: 'Dose of DeFi' },
   { slug: 'miles', name: 'Miles Deutscher' },
+  // Expanded 2026-08-06 — real paragraph publications (verified via
+  // paragraph.com search). More publications = more items for the feed.
+  { slug: 'ethdaily', name: 'ETH Daily' },
+  { slug: 'carboncopy', name: 'CARBON Copy' },
+  { slug: 'ensdao', name: 'ENS DAO' },
+  { slug: 'petar', name: 'The Web3 Explorer' },
+  { slug: 'cryptso', name: 'Tso Thoughts' },
+  { slug: 'lebthree', name: 'LebThree' },
+  { slug: 'w3sb', name: 'W3SB Web3 Security Bulletin' },
+  { slug: 'playlist', name: 'Playlist' },
+  { slug: 'rehashpod', name: 'Rehash Podcast' },
+  { slug: 'signumcapital', name: 'Signum Capital' },
+  { slug: 'paragraph-picks', name: 'Paragraph Picks' },
 ];
 
 export interface ParagraphBridgePost {
@@ -265,16 +282,20 @@ export class ParagraphProvider implements FeedProvider {
     opts: FetchOptions,
   ): Promise<UnifiedPost[]> {
     const all: UnifiedPost[] = [];
+    const headers = {
+      'user-agent': PARAGRAPH_BROWSER_UA,
+      accept: 'application/rss+xml, application/atom+xml, application/xml, text/xml, */*',
+      ...opts.headers,
+    };
     for (const pub of this.publications) {
       try {
         // Verified 2026-08-06: the canonical Paragraph publication RSS lives at
         // https://paragraph.xyz/@{slug}/rss (200 + real items). The legacy
         // /api/feeds/rss/@{slug} path returns 404 — do NOT revert.
+        // paragraph.xyz 301-redirects to paragraph.com; fetch follows it.
         const url = `${PARAGRAPH_FRONT}/@${pub.slug}/rss`;
         const xml = await withTimeout(
-          fetchRss(url, {
-            headers: { 'user-agent': DEFAULT_USER_AGENT, ...opts.headers },
-          }),
+          fetchRss(url, { headers }),
           timeoutMs,
           `paragraph:rss:${pub.slug}`,
         );

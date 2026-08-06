@@ -115,6 +115,9 @@ export type Protocol =
   | 'medium'
   // ─── Nostr NIP-29 groups / communities ────────────────────
   | 'nostr-groups'
+  // ─── Combined publishing newsletter feed ──────────────────
+  | 'newsletters'
+  // ─── Infrastructure (status-only, not in main feed) ────────
   | 'infra';
 
 export interface UnifiedIdentity {

@@ -18,6 +18,7 @@ interface UnifiedPost {
     displayName: string;
     handle?: string;
     avatarUrl?: string;
+    handles?: Partial<Record<string, string | null>>;
   };
   metrics: { likes: number; reposts: number; replies: number; quotes: number };
   niches: string[];
@@ -209,8 +210,10 @@ function PostRow({ post, onClick }: { post: UnifiedPost; onClick: (id: string) =
           <span className="truncate font-semibold text-[var(--color-fg)]">
             {post.author.displayName}
           </span>
-          {post.author.handle && (
-            <span className="truncate text-[var(--color-muted)]">@{post.author.handle}</span>
+          {(post.author.handles?.[post.protocol] || post.author.handle) && (
+            <span className="truncate text-[var(--color-muted)]">
+              @{post.author.handles?.[post.protocol] || post.author.handle}
+            </span>
           )}
           <span
             className="shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-medium"
