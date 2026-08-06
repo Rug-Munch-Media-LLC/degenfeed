@@ -89,6 +89,10 @@ export function ProtocolFeed({
   const [density, setDensity] = useState<DensityMode>('comfortable');
   const [newPostCount, setNewPostCount] = useState(0);
   const [tipPost, setTipPost] = useState<UnifiedPost | null>(null);
+  // Infinite scroll pagination state.
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const lastPostIdRef = useRef<string | null>(null);
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -154,38 +158,52 @@ export function ProtocolFeed({
     }
   }, [config]);
 
-  const fetchFeed = useCallback(async () => {
-    setState('loading');
-    try {
-      const endpoint = config?.endpoint ?? `/api/feed/${source}`;
-      const url = new URL(endpoint, window.location.origin);
-      url.searchParams.set('limit', String(limit));
+  const fetchFeed = useCallback(
+    async (append = false, pageNum = 1) => {
+      if (!append) setState('loading');
+      try {
+        const endpoint = config?.endpoint ?? `/api/feed/${source}`;
+        const url = new URL(endpoint, window.location.origin);
+        url.searchParams.set('limit', String(limit));
+        url.searchParams.set('page', String(pageNum));
 
-      const res = await fetch(url.toString(), {
-        credentials: 'include',
-        cache: 'no-store',
-      });
-      if (!res.ok) throw new Error(`Feed returned ${res.status}`);
+        const res = await fetch(url.toString(), {
+          credentials: 'include',
+          cache: 'no-store',
+        });
+        if (!res.ok) throw new Error(`Feed returned ${res.status}`);
 
-      const json = (await res.json()) as { posts?: UnifiedPost[]; meta?: FeedMeta };
-      const data = json as { data?: UnifiedPost[]; meta?: FeedMeta };
-      const feed = json.posts ?? data.data ?? [];
+        const json = (await res.json()) as { posts?: UnifiedPost[]; meta?: FeedMeta };
+        const data = json as { data?: UnifiedPost[]; meta?: FeedMeta };
+        const feed = json.posts ?? data.data ?? [];
 
-      if (feed.length > 0) {
-        lastPostIdRef.current = feed[0]?.id ?? '';
+        if (feed.length > 0) {
+          lastPostIdRef.current = feed[0]?.id ?? '';
+        }
+
+        // Apply algorithm reordering (only re-rank the newly appended page so
+        // previously loaded posts keep their scroll position).
+        const reordered = reorderWithAlgorithm(feed);
+
+        setPosts((prev) => {
+          if (!append) return reordered;
+          if (reordered.length === 0) return prev;
+          const seen = new Set(prev.map((p) => p.id));
+          return [...prev, ...reordered.filter((p) => !seen.has(p.id))];
+        });
+        setFeedMeta(data.meta ?? {});
+        setHasMore(data.meta?.hasMore ?? feed.length >= limit);
+        if (feed.length > 0) setState('loaded');
+        else if (!append) setState('empty');
+        setLoadingMore(false);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load feed');
+        if (!append) setState('error');
+        setLoadingMore(false);
       }
-
-      // Apply algorithm reordering
-      const reordered = reorderWithAlgorithm(feed);
-
-      setPosts(reordered);
-      setFeedMeta(data.meta ?? {});
-      setState(feed.length ? 'loaded' : 'empty');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load feed');
-      setState('error');
-    }
-  }, [config, source, limit, reorderWithAlgorithm]);
+    },
+    [config, source, limit, reorderWithAlgorithm],
+  );
 
   // Initial fetch + poll for new posts
   useEffect(() => {
@@ -213,12 +231,25 @@ export function ProtocolFeed({
 
   const handleRefresh = useCallback(() => {
     setNewPostCount(0);
-    void fetchFeed();
+    setPage(1);
+    setHasMore(true);
+    void fetchFeed(false, 1);
   }, [fetchFeed]);
 
   const handleRetry = useCallback(() => {
-    void fetchFeed();
+    setPage(1);
+    setHasMore(true);
+    void fetchFeed(false, 1);
   }, [fetchFeed]);
+
+  /** Fetch the next page and append it (infinite scroll). */
+  const loadMore = useCallback(() => {
+    if (loadingMore || !hasMore || state !== 'loaded') return;
+    setLoadingMore(true);
+    const next = page + 1;
+    setPage(next);
+    void fetchFeed(true, next);
+  }, [loadingMore, hasMore, state, page, fetchFeed]);
 
   const handleEngage = async (
     action: string,
@@ -406,6 +437,8 @@ export function ProtocolFeed({
             error={error}
             protocolLabel={config.label}
             protocolColor={accentColor}
+            hasMore={hasMore && !loadingMore}
+            onLoadMore={loadMore}
             onPostClick={(id) => router.push(`/post/${encodeURIComponent(id)}`)}
             onEngage={handleEngage}
             onTip={(post) => setTipPost(post)}

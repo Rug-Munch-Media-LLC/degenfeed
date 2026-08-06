@@ -3,7 +3,13 @@
 import type { Embed, UnifiedPost } from '@degenfeed/types';
 import { parseVideoUrl } from '@degenfeed/utils';
 import { memo } from 'react';
-import { FrameCard, ImageGrid, LinkPreview, VideoEmbedCard } from '../PostCardMedia';
+import {
+  AudioEmbedCard,
+  FrameCard,
+  ImageGrid,
+  LinkPreview,
+  VideoEmbedCard,
+} from '../PostCardMedia';
 
 export interface PostMediaProps {
   post: UnifiedPost;
@@ -27,6 +33,7 @@ export const PostMedia = memo(function PostMedia({
   const links = post.embeds.filter((e) => e.kind === 'link' && hasUrl(e));
   const videos = post.embeds.filter((e) => e.kind === 'video' && hasUrl(e));
   const frames = post.embeds.filter((e) => e.kind === 'frame' && hasUrl(e));
+  const audio = post.embeds.filter((e) => e.kind === 'audio' && hasUrl(e));
 
   return (
     <>
@@ -40,6 +47,9 @@ export const PostMedia = memo(function PostMedia({
         post.protocol === 'farcaster' &&
         links.length > 0 &&
         links[0]?.url && <FrameCard key={`link-frame-${links[0].url}`} url={links[0].url} />}
+      {audio.map((embed) => (
+        <AudioEmbedCard key={`audio-${embed.url}`} embed={embed} />
+      ))}
       {links.map((embed) => {
         const linkVideoInfo = parseVideoUrl(embed.url);
         if (linkVideoInfo) {

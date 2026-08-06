@@ -317,6 +317,46 @@ const BRIDGE_IMAGE_TYPES = [
   'image/bmp',
 ];
 
+// ─── Protocol-aware URL transformations (production mirror) ──────────────
+// Mirrors transformProtocolUrl() in workers/api/src/routes/image-proxy.ts.
+// Kept in sync manually — when changing one, change the other.
+
+function transformBridgeProtocolUrl(raw: string, protocol: string | null): string {
+  if (!raw) return raw;
+  const text = raw.trim();
+  if (!text) return raw;
+
+  // 1. nostr / nostrich URL schemes → unwrap embedded https URL.
+  const schemeMatch = text.match(/^(nostr|nostrich):(\/\/?)?(https?:\/\/\S+)$/i);
+  if (schemeMatch?.[3]) return schemeMatch[3];
+
+  // 2. SoundCloud: upgrade `-large` artwork to `-t500x500`.
+  if (protocol === 'soundcloud' || /sndcdn\.com/i.test(text)) {
+    const upgraded = text.replace(/-large(?=\.(?:jpg|jpeg|png|webp|gif))/i, '-t500x500');
+    if (upgraded !== text) return upgraded;
+  }
+
+  // 3. YouTube: extract video ID → maxresdefault thumbnail, or upgrade
+  //    existing low-res thumbnail.
+  if (protocol === 'youtube' || /(?:youtube\.com|youtu\.be|ytimg\.com)/i.test(text)) {
+    const id =
+      text.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/|embed\/)|youtu\.be\/)([\w-]{11})/)?.[1] ??
+      null;
+    if (id) return `https://i.ytimg.com/vi/${id}/maxresdefault.jpg`;
+    // Existing thumbnail (img.youtube.com / i.ytimg.com) → normalize to
+    // i.ytimg.com maxresdefault so the whole URL is stable + cacheable.
+    const upgraded = text.replace(
+      /^https?:\/\/(?:img\.youtube\.com|i\.ytimg\.com)\/vi\/([\w-]{11})\/(?:hqdefault|mqdefault|sddefault|0)\.jpg(?:\?.*)?$/i,
+      'https://i.ytimg.com/vi/$1/maxresdefault.jpg',
+    );
+    if (upgraded !== text) return upgraded;
+  }
+
+  // 4. Mastodon: remote URLs already proxied by instance — pass through.
+
+  return text;
+}
+
 function extractBridgeImageUrl(raw: string | null, protocol: string | null): string | null {
   if (!raw) return null;
   const text = raw.trim();
@@ -356,7 +396,9 @@ async function handleBridgeImageProxy(
   res: http.ServerResponse,
 ): Promise<boolean> {
   try {
-    const target = validateBridgeProxyUrl(extractBridgeImageUrl(rawUrl, protocol) ?? rawUrl);
+    const target = validateBridgeProxyUrl(
+      transformBridgeProtocolUrl(extractBridgeImageUrl(rawUrl, protocol) ?? rawUrl, protocol),
+    );
     if (!target) {
       res.writeHead(400, { 'Content-Type': 'text/plain' });
       res.end('Invalid or blocked url');
@@ -979,28 +1021,38 @@ const server = http.createServer(async (req, res) => {
 
     // ── Feed endpoints ──────────────────────────────────────────
     if (
-      ['/api/feed/for-you', '/api/feed/home', '/v1/feed/for-you', '/v1/feed/home'].includes(path)
+      [
+        '/api/feed/for-you',
+        '/api/feed/home',
+        '/api/feed/unified',
+        '/v1/feed/for-you',
+        '/v1/feed/home',
+      ].includes(path)
     ) {
       const limit = Math.min(parseInt(searchParams.get('limit') || '50', 10), 200);
-      const page = parseInt(searchParams.get('page') || '1', 10);
+      // Real offset pagination: page N slices [ (N-1)*limit, N*limit ) from a
+      // pool fetched large enough to cover it. The pool is cached per
+      // fetchLimit so every page of the same feed shares one provider build.
+      const page = Math.max(parseInt(searchParams.get('page') || '1', 10), 1);
+      const fetchLimit = Math.min(limit * page, 200);
       const protocolsRaw = searchParams.get('protocols') || DEFAULT_HOME_PROTOCOLS.join(',');
       const protocols = protocolsRaw
         .split(',')
         .map((p) => p.trim())
         .filter(Boolean);
 
-      // Build a cache key from the feed params
-      const cacheKey = `feed:${protocols.sort().join(',')}:${limit}`;
+      // Build a cache key from the feed params (fetchLimit-aware so each
+      // page's pool is built once and reused by smaller pages of the same pool).
+      const cacheKey = `feed:${protocols.sort().join(',')}:${fetchLimit}`;
 
       const result = await feedCache.getOrFetch(
         cacheKey,
         async () => {
-          const feedResult = await buildFeed(protocols, limit);
-          feedResult.meta.page = page;
+          const feedResult = await buildFeed(protocols, fetchLimit);
           // NEVER return empty — if buildFeed returned empty, serve seed content
           if (!feedResult.posts || feedResult.posts.length === 0) {
             const { getSeedContent } = await import('./seed-content');
-            const seedPosts = getSeedContent(limit);
+            const seedPosts = getSeedContent(fetchLimit);
             for (const p of seedPosts) (p as Record<string, unknown>)._demo = true;
             feedResult.posts = seedPosts;
             feedResult.meta.total = seedPosts.length;
@@ -1015,11 +1067,20 @@ const server = http.createServer(async (req, res) => {
         30_000, // 30 second TTL for feed responses (reduced from 45s)
       );
 
-      return jsonOk(res, {
-        data: result.posts,
-        posts: result.posts,
-        meta: { ...result.meta, page, cachedAt: Date.now() },
-      });
+      const pool = result.posts ?? [];
+      const start = (page - 1) * limit;
+      const posts = pool.slice(start, start + limit);
+      // buildFeed fills up to fetchLimit when providers have content, so a
+      // pool smaller than fetchLimit means the sources are nearly exhausted.
+      const meta = {
+        ...result.meta,
+        page,
+        limit,
+        total: pool.length,
+        hasMore: fetchLimit < 200 && pool.length >= limit,
+        cachedAt: Date.now(),
+      };
+      return jsonOk(res, { data: posts, posts, meta });
     }
 
     if (path === '/api/rss/sources') {
@@ -1472,15 +1533,21 @@ const server = http.createServer(async (req, res) => {
         'newsletter',
       ];
       if (allowed.includes(proto)) {
-        const singleCacheKey = `feed:single:${proto}:${limit}`;
+        // Real offset pagination: fetch a pool large enough to cover the
+        // requested page (capped at 200 — the same cap as `limit`), cache the
+        // pool per fetchLimit, then slice the page out of it. This keeps page
+        // boundaries deterministic (same pool, offset slice) instead of
+        // re-aggregating providers per request and repeating the same posts.
+        const fetchLimit = Math.min(limit * page, 200);
+        const singleCacheKey = `feed:single:${proto}:${fetchLimit}`;
         const result = await feedCache.getOrFetch(
           singleCacheKey,
           async () => {
-            const r = await buildFeed([proto], limit);
+            const r = await buildFeed([proto], fetchLimit);
             // NEVER return empty for single-provider feeds
             if (!r.posts || r.posts.length === 0) {
               const { getSeedContent } = await import('./seed-content');
-              const seedPosts = getSeedContent(limit, proto);
+              const seedPosts = getSeedContent(fetchLimit, proto);
               for (const p of seedPosts) (p as Record<string, unknown>)._demo = true;
               r.posts = seedPosts;
               r.meta.total = seedPosts.length;
@@ -1495,8 +1562,17 @@ const server = http.createServer(async (req, res) => {
           },
           45_000,
         );
-        result.meta.page = page;
-        return jsonOk(res, { data: result.posts, posts: result.posts, meta: result.meta });
+        const pool = result.posts ?? [];
+        const start = (page - 1) * limit;
+        const posts = pool.slice(start, start + limit);
+        result.meta = {
+          ...result.meta,
+          page,
+          limit,
+          total: pool.length,
+          hasMore: fetchLimit < 200 && pool.length >= limit,
+        };
+        return jsonOk(res, { data: posts, posts, meta: result.meta });
       }
     }
 

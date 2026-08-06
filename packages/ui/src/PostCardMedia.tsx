@@ -1,7 +1,7 @@
 'use client';
 
 import type { ContentProof, Embed } from '@degenfeed/types';
-import { isShortFormVideo, type VideoInfo } from '@degenfeed/utils';
+import { isShortFormVideo, proxyMediaUrl, type VideoInfo } from '@degenfeed/utils';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { FrameEmbed } from './FrameEmbed';
@@ -81,7 +81,7 @@ function LinkPreview({
       {image && (
         <div className="relative aspect-video w-full overflow-hidden">
           <Image
-            src={image}
+            src={proxyMediaUrl(image)}
             alt={
               authorName && title
                 ? `Preview image for ${title}`
@@ -93,6 +93,11 @@ function LinkPreview({
             loading={mediaPriority ? 'eager' : 'lazy'}
             priority={mediaPriority}
             decoding="async"
+            onError={(e) => {
+              // Broken preview image → collapse the image block instead of
+              // showing a broken-image icon.
+              (e.target as HTMLImageElement).style.display = 'none';
+            }}
           />
         </div>
       )}
@@ -122,6 +127,7 @@ function LinkPreview({
 
 function VideoEmbedCard({ videoInfo }: { videoInfo: VideoInfo }) {
   const isShort = isShortFormVideo(videoInfo);
+  const [open, setOpen] = useState(false);
 
   if (videoInfo.platform === 'youtube') {
     return (
@@ -136,17 +142,205 @@ function VideoEmbedCard({ videoInfo }: { videoInfo: VideoInfo }) {
     );
   }
 
+  // Direct (mp4/webm) and PeerTube videos: show a poster thumbnail with a
+  // play button overlay; tapping opens the full player in a modal/lightbox.
+  const poster = proxyMediaUrl(videoInfo.url);
+
   return (
-    <VideoPlayer
-      src={videoInfo.url}
-      platform="direct"
-      aspectRatio={isShort ? '9:16' : '16:9'}
-      className="mt-2"
-    />
+    <>
+      <div className="relative mt-2 overflow-hidden rounded-xl bg-black" style={{ aspectRatio: isShort ? '9/16' : '16/9' }}>
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="absolute inset-0 z-10 flex items-center justify-center bg-black/30 transition-colors hover:bg-black/40"
+          aria-label="Play video"
+        >
+          {/* Poster frame (proxy URL keeps hotlink-protected hosts working) */}
+          <img
+            src={poster}
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover opacity-70"
+            loading="lazy"
+            onError={(e) => {
+              (e.target as HTMLImageElement).style.display = 'none';
+            }}
+          />
+          <span className="relative flex h-14 w-14 items-center justify-center rounded-full bg-white/90 text-black shadow-xl backdrop-blur-sm transition-transform hover:scale-105 active:scale-95">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M8 5v14l11-7z" />
+            </svg>
+          </span>
+        </button>
+      </div>
+
+      {/* Lightbox modal */}
+      {open && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Video player"
+          onClick={() => setOpen(false)}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') setOpen(false);
+          }}
+        >
+          <div
+            className="w-full max-w-4xl overflow-hidden rounded-xl bg-black"
+            onClick={(e) => e.stopPropagation()}
+            style={{ maxHeight: '90vh' }}
+          >
+            <VideoPlayer
+              src={videoInfo.url}
+              platform="direct"
+              aspectRatio={isShort ? '9:16' : '16:9'}
+              className="max-h-[90vh]"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={() => setOpen(false)}
+            className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
+            aria-label="Close video"
+          >
+            <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+              <path d="M15 5L5 15M5 5l10 10" />
+            </svg>
+          </button>
+        </div>
+      )}
+    </>
+  );
+}
+
+// ─── Audio Embed ───────────────────────────────────────────────────
+
+function AudioEmbedCard({ embed }: { embed: Embed }) {
+  const title =
+    typeof embed.meta?.title === 'string'
+      ? embed.meta.title
+      : typeof embed.meta?.podcastTitle === 'string'
+        ? embed.meta.podcastTitle
+        : 'Audio';
+  const artist =
+    typeof embed.meta?.artist === 'string'
+      ? embed.meta.artist
+      : typeof embed.meta?.podcastHost === 'string'
+        ? embed.meta.podcastHost
+        : undefined;
+
+  return (
+    <div
+      className="mt-2 rounded-[12px] border border-[var(--color-border)] bg-[var(--color-card)] p-3"
+      role="group"
+      aria-label="Audio player"
+    >
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold text-[var(--color-fg)]">{title}</p>
+          {artist && <p className="truncate text-xs text-[var(--color-muted)]">{artist}</p>}
+        </div>
+        <span
+          className="inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider"
+          style={{ backgroundColor: 'var(--color-accent)20', color: 'var(--color-accent)' }}
+        >
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3a4.5 4.5 0 0 0-2.5-4.03v8.05A4.5 4.5 0 0 0 16.5 12z" />
+          </svg>
+          Audio
+        </span>
+      </div>
+
+      {/* Minimal waveform-style visualizer + native player */}
+      <div className="mb-2 flex h-8 items-center gap-[2px]" aria-hidden="true">
+        {Array.from({ length: 24 }).map((_, i) => (
+          <span
+            key={i}
+            className="w-full rounded-full"
+            style={{
+              height: `${30 + Math.abs(Math.sin(i * 1.7)) * 60}%`,
+              backgroundColor: 'var(--color-accent)55',
+              opacity: 0.4 + (Math.abs(Math.sin(i * 1.7)) * 0.6),
+            }}
+          />
+        ))}
+      </div>
+
+      <audio src={embed.url} controls preload="none" className="w-full" style={{ maxWidth: '100%' }} />
+    </div>
   );
 }
 
 // ─── Image Grid ────────────────────────────────────────────────────
+
+/**
+ * Single broken-image fallback for an image tile. Shown when the proxy
+ * returns 404/415 or the upstream host is unreachable.
+ */
+function BrokenImageTile({ label }: { label: string }) {
+  return (
+    <div
+      className="flex h-full w-full items-center justify-center bg-[var(--color-overlay)]"
+      role="img"
+      aria-label={`Image unavailable — ${label}`}
+    >
+      <span className="text-2xl opacity-30" aria-hidden="true">
+        🖼️
+      </span>
+    </div>
+  );
+}
+
+function ImageTile({
+  src,
+  alt,
+  className = '',
+  mediaPriority = false,
+  fill = false,
+}: {
+  src: string;
+  alt: string;
+  className?: string;
+  mediaPriority?: boolean;
+  fill?: boolean;
+}) {
+  const [error, setError] = useState(false);
+  const proxied = proxyMediaUrl(src);
+
+  if (error || !proxied) {
+    return <BrokenImageTile label={alt} />;
+  }
+
+  if (fill) {
+    return (
+      <Image
+        src={proxied}
+        alt={alt}
+        fill
+        sizes="(max-width: 640px) 100vw, 600px"
+        className={`object-cover ${className}`}
+        loading={mediaPriority ? 'eager' : 'lazy'}
+        priority={mediaPriority}
+        decoding="async"
+        onError={() => setError(true)}
+      />
+    );
+  }
+
+  return (
+    <Image
+      src={proxied}
+      alt={alt}
+      width={200}
+      height={200}
+      className={`object-cover ${className}`}
+      loading={mediaPriority ? 'eager' : 'lazy'}
+      priority={mediaPriority}
+      decoding="async"
+      onError={() => setError(true)}
+    />
+  );
+}
 
 function ImageGrid({
   images,
@@ -167,16 +361,7 @@ function ImageGrid({
         role="group"
         aria-label="Post images"
       >
-        <Image
-          src={images[0]!}
-          alt={altText}
-          width={200}
-          height={200}
-          className="h-full w-full object-cover"
-          loading={mediaPriority ? 'eager' : 'lazy'}
-          priority={mediaPriority}
-          decoding="async"
-        />
+        <ImageTile src={images[0]!} alt={altText} mediaPriority={mediaPriority} />
       </div>
     );
   }
@@ -188,17 +373,9 @@ function ImageGrid({
         aria-label="Post images"
       >
         {images.map((url) => (
-          <Image
-            key={url}
-            src={url}
-            alt={altText}
-            width={200}
-            height={200}
-            className="aspect-square w-full object-cover"
-            loading={mediaPriority ? 'eager' : 'lazy'}
-            priority={mediaPriority}
-            decoding="async"
-          />
+          <div key={url} className="relative aspect-square w-full overflow-hidden">
+            <ImageTile src={url} alt={altText} mediaPriority={mediaPriority} fill />
+          </div>
         ))}
       </div>
     );
@@ -210,17 +387,8 @@ function ImageGrid({
       aria-label="Post images"
     >
       {images.slice(0, 4).map((url, idx) => (
-        <div key={url} className="relative aspect-square">
-          <Image
-            src={url}
-            alt={altText}
-            width={200}
-            height={200}
-            className="h-full w-full object-cover"
-            loading={mediaPriority ? 'eager' : 'lazy'}
-            priority={mediaPriority}
-            decoding="async"
-          />
+        <div key={url} className="relative aspect-square w-full overflow-hidden">
+          <ImageTile src={url} alt={altText} mediaPriority={mediaPriority} fill />
           {idx === 3 && images.length > 4 && (
             <div className="absolute inset-0 flex items-center justify-center bg-black/60 text-sm font-bold text-[var(--color-fg)]">
               +{images.length - 4}
@@ -303,4 +471,11 @@ export interface MediaSectionProps {
   embed: Embed;
 }
 
-export { FrameCard, ImageGrid, LinkPreview, PermanenceBadge, VideoEmbedCard };
+export {
+  AudioEmbedCard,
+  FrameCard,
+  ImageGrid,
+  LinkPreview,
+  PermanenceBadge,
+  VideoEmbedCard,
+};

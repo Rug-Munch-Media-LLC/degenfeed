@@ -225,6 +225,25 @@ export interface Embed {
   meta?: Record<string, unknown>;
 }
 
+/**
+ * A single media attachment on a post (image / video / audio).
+ * Populated by providers during the raw → UnifiedPost mapping so the
+ * feed UI and image-proxy route can render media without re-parsing
+ * protocol-specific payloads. Mirrors the `embeds` image/video entries.
+ */
+export interface MediaAttachment {
+  /** Media kind: 'image' | 'video' | 'audio' | 'gif' */
+  type: string;
+  /** Direct URL to the media asset */
+  url: string;
+  /** Preferred display width in px (if known from the source API) */
+  width?: number;
+  /** Preferred display height in px (if known from the source API) */
+  height?: number;
+  /** Alt text / description (accessibility, some providers expose it) */
+  alt?: string;
+}
+
 export type EngagementAction =
   | 'like'
   | 'unlike'
@@ -347,8 +366,13 @@ export interface UnifiedPost {
   contentType?: 'article' | 'video' | 'image' | 'thread' | 'link' | 'text' | 'podcast';
   /** Convenience image URL (provider/og:image enrichment) — mirrors embeds. */
   image?: string;
-  /** Legacy alias for image URL. */
-  media?: string;
+  /**
+   * Media attachments (images/videos/audio) extracted from the source
+   * protocol during mapping. Mirrors the image/video entries in `embeds`
+   * but carries stable per-attachment metadata (type, width, height, alt)
+   * for rendering grids and the image-proxy route.
+   */
+  media?: MediaAttachment[];
   /** Freshness flags set server-side */
   isNew?: boolean;
   isHot?: boolean;
