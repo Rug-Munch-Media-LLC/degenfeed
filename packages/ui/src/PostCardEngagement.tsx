@@ -4,7 +4,7 @@ import type { EngagementAction, UnifiedPost } from '@degenfeed/types';
 import { formatCount } from '@degenfeed/utils';
 import { memo, useCallback, useState } from 'react';
 import { getProtocolLabel as _getProtocolLabel } from './ProtocolBadge';
-import { QuickTipButton } from './QuickTipButton';
+import { TipButton } from './TipButton';
 
 // ─── Action vocabulary per protocol ──────────────────────────────
 
@@ -157,6 +157,7 @@ export const PostCardEngagement = memo(function PostCardEngagement({
   onTip,
   onCrossReplyOpen,
   onOpenShareSheet,
+  viewerProtocols,
 }: PostCardEngagementProps) {
   const [animatingRepost, setAnimatingRepost] = useState(false);
   const [animatingBookmark, setAnimatingBookmark] = useState(false);
@@ -475,10 +476,12 @@ export const PostCardEngagement = memo(function PostCardEngagement({
           </button>
         )}
         {onTip && (
-          <QuickTipButton
+          <TipButton
             postId={post.id}
-            authorAddress={post.author.keys.evmAddress || post.author.keys.solanaAddress}
-            tipCount={post.tipCount}
+            protocol={post.protocol}
+            recipientAddress={post.author.keys.evmAddress || post.author.keys.solanaAddress}
+            authorProfile={post.author.bio}
+            connectedProtocols={viewerProtocols}
             onOpenModal={() => onTip(post)}
           />
         )}

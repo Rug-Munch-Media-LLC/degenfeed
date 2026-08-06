@@ -14,10 +14,11 @@ import {
   enrichPostNiches,
   isEnglishPost,
   isRelevantPost,
+  mediaFromEmbeds,
   spamScore,
 } from '@degenfeed/feed-core';
-import type { UnifiedPost } from '@degenfeed/types';
-import { getPostContentUri } from '@degenfeed/utils';
+import type { Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
+import { getExternalProfileUrl, getPostContentUri } from '@degenfeed/utils';
 
 // ─── Auto-moderation state ────────────────────────────────────────────
 
@@ -143,6 +144,71 @@ export function sanitizePosts(posts: UnifiedPost[]): UnifiedPost[] {
       return enriched;
     })
     .filter((p): p is UnifiedPost => p !== null);
+}
+
+/**
+ * Feed-author wire format. Every post served by the API exposes these flat
+ * fields on `author` so profile click-through works regardless of protocol:
+ *
+ *   author.name     → display name (falls back to handle)
+ *   author.handle   → `@username` or `user@instance` (no leading @)
+ *   author.avatar   → full avatar URL string
+ *   author.url      → profile URL on the author's home instance
+ *   author.protocol → the post's protocol
+ *
+ * The canonical `UnifiedIdentity` fields (id, primary, handles,
+ * displayName, avatarUrl, …) are preserved alongside — existing consumers
+ * keep working while the flat aliases satisfy the API contract.
+ */
+export type WireAuthor = UnifiedIdentity & {
+  name: string;
+  handle: string;
+  avatar: string;
+  url?: string;
+  protocol: Protocol;
+};
+
+/**
+ * Derive the flat `author.handle` for the wire format.
+ * Prefers the per-protocol handle; falls back to a protocol-native
+ * placeholder so the field is never empty/missing.
+ */
+function wireHandle(author: UnifiedIdentity, protocol: Protocol): string {
+  const handle = (author.handles as Record<string, string | null> | undefined)?.[protocol];
+  if (handle && handle.trim()) return handle.trim();
+  const keys = author.keys as Record<string, unknown> | undefined;
+  if (protocol === 'farcaster' && typeof keys?.fid === 'number') return `fid:${keys.fid}`;
+  const primaryId = author.primary?.id;
+  if (primaryId) return primaryId;
+  return author.displayName || '';
+}
+
+/**
+ * Augment a single UnifiedPost into the API wire format:
+ *  - populate `media` from embeds when the provider left it empty
+ *  - stamp flat author aliases (name/handle/avatar/url/protocol)
+ */
+export function toApiPost(post: UnifiedPost): UnifiedPost {
+  if (!post.media || post.media.length === 0) {
+    const derived = mediaFromEmbeds(post.embeds);
+    if (derived.length > 0) post.media = derived;
+  }
+  const protocol = post.protocol;
+  const author = post.author as WireAuthor;
+  author.name = author.name ?? author.displayName || wireHandle(author, protocol);
+  author.handle = author.handle ?? wireHandle(author, protocol);
+  author.avatar = author.avatar ?? author.avatarUrl || '';
+  author.url = author.url || getExternalProfileUrl(author, protocol) || undefined;
+  author.protocol = protocol;
+  return post;
+}
+
+/**
+ * Bulk-augment posts for the API wire format. Mutates in place (the posts
+ * are response-bound objects that are never shared after serialization).
+ */
+export function toApiPosts(posts: UnifiedPost[]): UnifiedPost[] {
+  return posts.map(toApiPost);
 }
 
 // ─── Everything below is unchanged from the original ──────────────────

@@ -50,6 +50,7 @@ import {
   setCachedFeed,
   setFeedCache,
   shouldTriggerSmartRefresh,
+  toApiPosts,
   updateFeedFreshness,
   updateLastSync,
   verifyDiversity,
@@ -418,7 +419,7 @@ async function generateAndCacheFeed(
   const categoryCounts = getCategoryCounts(freshnessSorted);
   const diversityCheck = verifyDiversity(freshnessSorted);
   const responseBody = {
-    data: freshnessSorted,
+    data: toApiPosts(freshnessSorted),
     meta: {
       total: freshnessSorted.length,
       limit,

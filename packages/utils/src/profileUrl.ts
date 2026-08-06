@@ -20,19 +20,48 @@
 import type { Protocol, UnifiedIdentity } from '@degenfeed/types';
 
 /**
+ * Protocols whose canonical internal profile id is the per-protocol HANDLE
+ * rather than `primary.id` (the native account id):
+ * - Mastodon/GoToSocial: acct `user@instance` (primary.id is a random UUID)
+ * - Lens: handle (primary.id is the EVM address)
+ * - Reddit: username
+ * - Lemmy/PieFed/kbin/Mbin: `user@instance`
+ * For every other protocol the canonical id is `primary.id` (npub/hex pubkey,
+ * DID, FID, channel id…).
+ */
+const HANDLE_PREFERRED_PROTOCOLS = new Set([
+  'mastodon',
+  'gotosocial',
+  'lens',
+  'reddit',
+  'lemmy',
+  'piefed',
+  'kbin',
+  'mbin',
+]);
+
+/**
  * Pick the best raw identifier for a protocol profile.
  * Prefers the canonical `primary.id` (pubkey, DID, FID, channel id…),
  * falling back to the per-protocol handle when the primary id is absent.
+ * For handle-preferred protocols (mastodon acct, lens handle, reddit
+ * username, lemmy `user@instance`) the handle wins instead.
  */
 export function getInternalProfileId(
   author: Pick<UnifiedIdentity, 'primary' | 'id' | 'handles'>,
   protocol?: string,
 ): string {
   const proto = protocol ?? author.primary?.protocol;
+  const handles = author.handles as Record<string, string | null> | undefined;
+
+  if (proto && HANDLE_PREFERRED_PROTOCOLS.has(proto)) {
+    const handle = handles?.[proto] ?? '';
+    if (handle !== '') return handle;
+  }
+
   const primaryId = author.primary?.id;
   if (primaryId) return primaryId;
 
-  const handles = author.handles as Record<string, string | null> | undefined;
   const handle = handles?.[proto ?? ''] ?? '';
   if (handle !== '') return handle;
 
@@ -43,9 +72,24 @@ export function getInternalProfileId(
   return raw;
 }
 
+/** Split a `user@instance` identifier; returns `[user, instance]`. */
+function splitUserInstance(id: string): [string, string] {
+  if (!id.includes('@')) return ['', ''];
+  const idx = id.indexOf('@');
+  return [id.slice(0, idx), id.slice(idx + 1)];
+}
+
+/** True for lemmy-style protocols that use a nested instance/username route. */
+function usesNestedProfilePath(proto: string): boolean {
+  return proto === 'lemmy' || proto === 'piefed' || proto === 'kbin' || proto === 'mbin';
+}
+
 /**
  * Internal DegenFeed profile path: `/profile/{protocol}/{id}`.
  * Used for author click-through on post cards.
+ *
+ * Lemmy-style protocols use a nested route so the instance is preserved:
+ * `/profile/lemmy/{instance}/{username}`.
  */
 export function getInternalProfilePath(
   author: Pick<UnifiedIdentity, 'primary' | 'id' | 'handles'>,
@@ -55,12 +99,26 @@ export function getInternalProfilePath(
   if (!proto) return '';
   const id = getInternalProfileId(author, proto);
   if (!id) return '';
-  return `/profile/${encodeURIComponent(proto)}/${encodeURIComponent(id)}`;
+  const cleanProto = encodeURIComponent(proto);
+
+  if (usesNestedProfilePath(proto)) {
+    const [user, instance] = splitUserInstance(id);
+    if (user && instance) {
+      return `/profile/${cleanProto}/${encodeURIComponent(instance)}/${encodeURIComponent(user)}`;
+    }
+    // Single-part id (numeric user id / community): keep the flat form.
+    return `/profile/${cleanProto}/${encodeURIComponent(id)}`;
+  }
+
+  return `/profile/${cleanProto}/${encodeURIComponent(id)}`;
 }
 
 /** Clean a lens handle (`lens/@foo` / `@foo` → `foo`). */
 function cleanLensHandle(handle: string): string {
-  return handle.replace(/^lens\//, '').replace(/^@/, '').trim();
+  return handle
+    .replace(/^lens\//, '')
+    .replace(/^@/, '')
+    .trim();
 }
 
 /** Clean a reddit handle (`u/foo` → `foo`). */
@@ -98,16 +156,19 @@ export function getExternalProfileUrl(
     }
     case 'bluesky': {
       if (handle) return `https://bsky.app/profile/${encodeURIComponent(handle)}`;
-      if (primaryId.startsWith('did:')) return `https://bsky.app/profile/${encodeURIComponent(primaryId)}`;
+      if (primaryId.startsWith('did:'))
+        return `https://bsky.app/profile/${encodeURIComponent(primaryId)}`;
       return '';
     }
     case 'mastodon':
     case 'gotosocial': {
-      if (handle.includes('@')) {
-        const [user, instance] = handle.split('@');
+      // `user@instance` (or `@user@instance`) → https://instance/@user
+      const clean = handle.replace(/^@/, '');
+      if (clean.includes('@')) {
+        const [user, instance] = splitUserInstance(clean);
         if (user && instance) return `https://${instance}/@${user}`;
       }
-      if (handle) return `https://social.degenfeed.xyz/@${handle}`;
+      if (clean) return `https://social.degenfeed.xyz/@${clean}`;
       return '';
     }
     case 'lens': {
@@ -121,7 +182,8 @@ export function getExternalProfileUrl(
       return '';
     }
     case 'youtube': {
-      if (primaryId.startsWith('UC')) return `https://www.youtube.com/channel/${encodeURIComponent(primaryId)}`;
+      if (primaryId.startsWith('UC'))
+        return `https://www.youtube.com/channel/${encodeURIComponent(primaryId)}`;
       if (handle) return `https://www.youtube.com/@${encodeURIComponent(handle.replace(/^@/, ''))}`;
       return '';
     }

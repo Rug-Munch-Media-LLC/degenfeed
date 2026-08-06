@@ -9,6 +9,7 @@
 import { enrichPostNiches, isSpamPost } from '@degenfeed/feed-core';
 import { FarcasterProvider } from '@degenfeed/feed-providers';
 import { identityKey } from '@degenfeed/utils';
+import { toApiPosts } from '../feed';
 import { noCacheJsonResponse } from '../response-helpers';
 import type { Env } from '../types';
 
@@ -69,7 +70,7 @@ export async function handleFarcasterFeed(_request: Request, env: Env): Promise<
 
   // 2. Never serve seed/demo content — return real posts or an explicit empty result
   return noCacheJsonResponse({
-    data: posts.slice(0, limit),
+    data: toApiPosts(posts.slice(0, limit)),
     meta: {
       total: posts.length,
       source: posts.length > 0 ? 'hub-live' : 'unavailable',

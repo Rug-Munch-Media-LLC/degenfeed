@@ -17,6 +17,7 @@ import {
   readCachedHealth,
   readJsonCache,
   sanitizePosts,
+  toApiPosts,
   writeCachedHealth,
   writeJsonCache,
 } from '../feed';
@@ -179,7 +180,7 @@ export async function handleProviderFeed(
       timeoutMs: PROVIDER_TIMEOUTS[protocol] ?? DEFAULT_TIMEOUT_MS,
       concurrency: 4,
     });
-    let posts = sanitizePosts(result.posts).slice(0, limit);
+    let posts = toApiPosts(sanitizePosts(result.posts)).slice(0, limit);
 
     // Fallback: if primary provider returned 0, try BridgeFeedProvider
     if (posts.length === 0) {
@@ -187,7 +188,7 @@ export async function handleProviderFeed(
       const bridgeProvider = new BridgeFeedProvider(protocol, env);
       try {
         const bridgeResult = await bridgeProvider.fetchFeed({ timeoutMs: 6000 });
-        posts = sanitizePosts(bridgeResult.posts).slice(0, limit);
+        posts = toApiPosts(sanitizePosts(bridgeResult.posts)).slice(0, limit);
         if (posts.length > 0) {
           return jsonResponse({
             data: posts,
@@ -226,7 +227,7 @@ export async function handleProviderFeed(
       const { BridgeFeedProvider } = await import('../feed/feed-fetcher');
       const bridgeProvider = new BridgeFeedProvider(protocol, env);
       const bridgeResult = await bridgeProvider.fetchFeed({ timeoutMs: 6000 });
-      const posts = sanitizePosts(bridgeResult.posts).slice(0, limit);
+      const posts = toApiPosts(sanitizePosts(bridgeResult.posts)).slice(0, limit);
       if (posts.length > 0) {
         return jsonResponse({
           data: posts,

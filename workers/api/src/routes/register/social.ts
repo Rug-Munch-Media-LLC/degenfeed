@@ -12,10 +12,12 @@ import { registerSocialIdentityRoutes } from './social-identity';
 import { registerSocialLemmyRoutes } from './social-lemmy';
 import { registerSocialPlatformsRoutes } from './social-platforms';
 import { registerSocialTipsRoutes } from './social-tips';
+import { registerTippingRoutes } from './tipping';
 
 export function registerSocialRoutes(app: Hono<{ Bindings: Env }>): void {
   registerSocialCoreRoutes(app);
   registerSocialTipsRoutes(app);
+  registerTippingRoutes(app);
   registerSocialLemmyRoutes(app);
   registerSocialPlatformsRoutes(app);
   registerSocialIdentityRoutes(app);
