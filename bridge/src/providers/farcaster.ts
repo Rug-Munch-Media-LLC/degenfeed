@@ -320,6 +320,9 @@ async function fetchCastsForFid(fid: number, pageSize: number): Promise<UnifiedP
           followerCount: 0,
           followingCount: 0,
           links: [],
+          url: userData.username
+            ? `https://warpcast.com/${userData.username}`
+            : `https://warpcast.com/~/profiles/${fid}`,
           keys: { fid: String(fid) },
         },
         text,
@@ -527,6 +530,9 @@ function neynarCastToPost(cast: NeynarCast): UnifiedPost {
       followerCount: 0,
       followingCount: 0,
       links: [],
+      url: cast.author.username
+        ? `https://warpcast.com/${cast.author.username}`
+        : `https://warpcast.com/~/profiles/${cast.author.fid}`,
       keys: { fid: String(cast.author.fid) },
     },
     // Image/media-only casts have empty text — surface the embed URL so the

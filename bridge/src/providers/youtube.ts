@@ -396,6 +396,7 @@ function videoToPost(v: ParsedYouTubeVideo, channel: YouTubeChannel): UnifiedPos
       avatarUrl: `https://www.youtube.com/@${channel.handle}`,
       followerCount: 0,
       followingCount: 0,
+      url: `https://www.youtube.com/channel/${channel.channelId}`,
       links: [],
       keys: {},
     },

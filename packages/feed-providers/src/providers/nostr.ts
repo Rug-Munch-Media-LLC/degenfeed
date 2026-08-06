@@ -55,9 +55,24 @@ export const CRYPTO_HASHTAGS = [
   'altcoin',
 ];
 
+export const POPULAR_HASHTAGS = [
+  'bitcoin',
+  'nostr',
+  'crypto',
+  'dev',
+  'art',
+  'music',
+];
+
 export const FALLBACK_HTTP_ENDPOINTS = [
   'https://api.nostr.band/v0/events.json',
   'https://relay.nostr.band',
+];
+
+/** nostr.band trending API — returns high-engagement notes network-wide. */
+export const TRENDING_HTTP_ENDPOINTS = [
+  'https://api.nostr.band/v0/trending/notes',
+  'https://nostr.band/v0/trending/notes',
 ];
 
 interface NostrEvent {
@@ -68,6 +83,31 @@ interface NostrEvent {
   tags: string[][];
   content: string;
   sig: string;
+}
+
+/**
+ * nostr.band trending response shape — a map of event id → detail.
+ * The detail carries engagement data (reactions, reposts, zaps) that we
+ * stamp into UnifiedPost metrics so the feed is engagement-rich.
+ */
+interface NostrBandTrendingResponse {
+  notes?: Record<
+    string,
+    {
+      event?: NostrEvent;
+      reactions?: { total?: number };
+      reposts?: { total?: number };
+      zaps?: { total?: number };
+      replies?: { total?: number };
+    }
+  >;
+}
+
+interface NostrEventWithEngagement extends NostrEvent {
+  __reactions?: number;
+  __reposts?: number;
+  __replies?: number;
+  __zaps?: number;
 }
 
 function eventToUnifiedPost(event: NostrEvent): UnifiedPost {
@@ -170,7 +210,12 @@ function eventToUnifiedPost(event: NostrEvent): UnifiedPost {
     parentNativeId,
     rootNativeId,
     createdAt: event.created_at * 1000,
-    metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
+    metrics: {
+      likes: (event as NostrEventWithEngagement).__reactions ?? 0,
+      reposts: (event as NostrEventWithEngagement).__reposts ?? 0,
+      replies: (event as NostrEventWithEngagement).__replies ?? 0,
+      quotes: 0,
+    },
     viewer: { liked: false, reposted: false },
     raw: event,
   });
@@ -219,7 +264,7 @@ function fetchFromWebSocket(
                   limit: limit * 3,
                   // NIP-01 tag filters: the '#t' key matches the 't' tag
                   // and the array holds the tag VALUES — no '#' prefix.
-                  '#t': CRYPTO_HASHTAGS.slice(0, 10),
+                  '#t': [...CRYPTO_HASHTAGS.slice(0, 10), ...POPULAR_HASHTAGS],
                 },
               ];
         ws.send(JSON.stringify(['REQ', subId, ...filters_]));
@@ -297,13 +342,39 @@ async function fetchFromHttp(limit: number, _timeoutMs: number): Promise<NostrEv
     const params: Record<string, string> = { limit: String(limit * 3) };
     if (base.includes('api.nostr.band')) {
       params.kinds = '1';
-      params['#t'] = CRYPTO_HASHTAGS.slice(0, 5).join(',');
+      params['#t'] = [...CRYPTO_HASHTAGS.slice(0, 5), ...POPULAR_HASHTAGS.slice(0, 3)].join(',');
     }
     const url = buildUrl(base, '', params);
     const data = await fetchJson<{ events?: NostrEvent[] }>(url, {
       headers: { 'user-agent': DEFAULT_USER_AGENT },
     });
     return data.events ?? [];
+  });
+}
+
+/**
+ * Fetch trending notes from nostr.band's trending API. Returns notes
+ * with real engagement data (reactions/reposts/zaps) stamped on each
+ * event so the feed surfaces the most popular content network-wide.
+ */
+async function fetchTrendingNotes(_timeoutMs: number): Promise<NostrEventWithEngagement[]> {
+  return fetchWithFallbacks(TRENDING_HTTP_ENDPOINTS, async (base) => {
+    const url = `${base.replace(/\/$/, '')}?limit=60`;
+    const data = await fetchJson<NostrBandTrendingResponse>(url, {
+      headers: { 'user-agent': DEFAULT_USER_AGENT },
+    });
+    const notes = data.notes ?? {};
+    const events: NostrEventWithEngagement[] = [];
+    for (const detail of Object.values(notes)) {
+      if (!detail?.event) continue;
+      const ev = detail.event as NostrEventWithEngagement;
+      ev.__reactions = detail.reactions?.total ?? 0;
+      ev.__reposts = detail.reposts?.total ?? 0;
+      ev.__replies = detail.replies?.total ?? 0;
+      ev.__zaps = detail.zaps?.total ?? 0;
+      events.push(ev);
+    }
+    return events;
   });
 }
 
@@ -327,18 +398,37 @@ export class NostrProvider implements FeedProvider {
     try {
       return await this.breaker.execute(async () => {
         const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
-        const limit = 50;
+        const limit = 100;
 
-        const [notes, articles] = await Promise.all([
+        const [notes, articles, trending] = await Promise.allSettled([
           this.fetchNotes(timeoutMs, limit),
           this.fetchLongForm(timeoutMs, Math.ceil(limit / 4)),
+          // Best-effort trending — never blocks the main feed.
+          withTimeout(fetchTrendingNotes(Math.min(timeoutMs, 6000)), Math.min(timeoutMs, 6000), 'nostr:trending').catch(
+            () => [] as NostrEventWithEngagement[],
+          ),
         ]);
 
-        const allEvents: NostrEvent[] = [...notes, ...articles];
+        const allEvents: NostrEvent[] = [
+          ...(notes.status === 'fulfilled' ? notes.value : []),
+          ...(articles.status === 'fulfilled' ? articles.value : []),
+          ...(trending.status === 'fulfilled' ? trending.value : []),
+        ];
         if (allEvents.length > 0) {
+          // Prioritize trending (high engagement) above raw relay notes.
           const seen = new Set<string>();
           const unique = allEvents
-            .sort((a, b) => b.created_at - a.created_at)
+            .sort((a, b) => {
+              const engA =
+                ((a as NostrEventWithEngagement).__reactions ?? 0) +
+                ((a as NostrEventWithEngagement).__reposts ?? 0) * 2 +
+                ((a as NostrEventWithEngagement).__replies ?? 0);
+              const engB =
+                ((b as NostrEventWithEngagement).__reactions ?? 0) +
+                ((b as NostrEventWithEngagement).__reposts ?? 0) * 2 +
+                ((b as NostrEventWithEngagement).__replies ?? 0);
+              return engB - engA;
+            })
             .filter((e) => {
               if (seen.has(e.id)) return false;
               seen.add(e.id);

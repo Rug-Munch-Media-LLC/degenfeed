@@ -55,23 +55,29 @@ export class MastodonProvider implements FeedProvider {
         const allStatuses: GtSStatus[] = [];
 
         // 0. Trending API — free public endpoint with high-engagement posts.
-        //    Expanded 2026-08-06: 150+ verified instances across Mastodon,
-        //    Pleroma, Misskey. Fetched with a concurrency limit so the
-        //    enlarged instance pool doesn't hammer the network at once.
+        //    Expanded 2026-08-06: 151+ verified instances across Mastodon,
+        //    Pleroma, Misskey. Each instance is fetched for 10 posts so the
+        //    raw pool is 1,500+ statuses; the final output is then capped
+        //    at 200 with per-instance diversity (max 3 per instance).
+        //    Fetched with a concurrency limit so the enlarged instance pool
+        //    doesn't hammer the network at once.
+        const PER_INSTANCE_FETCH = 10;
+        const MAX_INSTANCE_FETCH = Math.max(PER_INSTANCE_FETCH, 10);
         const trendingStart = performance.now();
         const trendingResults = await withConcurrencyLimit(
           TRENDING_INSTANCES,
-          12,
+          14,
           async (inst) => {
             const healthAdjWeight = instanceHealthScore(inst.url, inst.weight);
             // Skip instances that have proven unhealthy
             if (healthAdjWeight < 0.2) return [] as GtSStatus[];
 
             const isMisskey = inst.software === 'misskey' || inst.software === 'firefish';
+            const fetchCount = Math.ceil(MAX_INSTANCE_FETCH * inst.weight);
             const fetcher = isMisskey
-              ? fetchMisskeyTrendingNotes(inst.url, 10)
+              ? fetchMisskeyTrendingNotes(inst.url, fetchCount)
               : fetchJson<GtSStatus[]>(
-                  `${inst.url}/api/v1/trends/statuses?limit=${Math.ceil(10 * inst.weight)}`,
+                  `${inst.url}/api/v1/trends/statuses?limit=${fetchCount}`,
                   { headers: { 'user-agent': DEFAULT_USER_AGENT } },
                 );
 
@@ -99,7 +105,7 @@ export class MastodonProvider implements FeedProvider {
         );
         if (misskeyInstances.length > 0) {
           const misskeyTimelines = await Promise.allSettled(
-            misskeyInstances.slice(0, 3).map(async (inst) => {
+            misskeyInstances.slice(0, 6).map(async (inst) => {
               try {
                 return await withTimeout(
                   fetchMisskeyLocalTimeline(inst.url, 10),
@@ -134,7 +140,7 @@ export class MastodonProvider implements FeedProvider {
         //    Expanded from 5 tags to 15 for broader coverage.
         const allHashes = [...CRYPTO_HASHTAGS.slice(0, 8), ...TECH_HASHTAGS.slice(0, 7)];
         const hashtagTargets: Array<{ instanceUrl: string; tag: string }> = [];
-        const topEndpoints = endpoints.slice(0, 5);
+        const topEndpoints = endpoints.slice(0, 8);
         for (const instanceUrl of topEndpoints) {
           for (const tag of allHashes) {
             hashtagTargets.push({ instanceUrl, tag });
@@ -142,11 +148,11 @@ export class MastodonProvider implements FeedProvider {
         }
         const tagResults = await withConcurrencyLimit(
           hashtagTargets,
-          6,
+          8,
           async ({ instanceUrl, tag }) => {
             try {
               return await withTimeout(
-                fetchHashtagTimeline(instanceUrl, tag, 5),
+                fetchHashtagTimeline(instanceUrl, tag, 8),
                 Math.min(timeoutMs, 3000),
                 `fediverse:${new URL(instanceUrl).hostname}#${tag}`,
               );
@@ -159,13 +165,13 @@ export class MastodonProvider implements FeedProvider {
 
         // 4. Public timelines from top instances for variety
         const generalResults = await withConcurrencyLimit(
-          endpoints.slice(0, 5),
-          3,
+          endpoints.slice(0, 10),
+          4,
           async (instanceUrl) => {
             try {
               const start = performance.now();
               const posts = await withTimeout(
-                fetchPublicTimeline(instanceUrl, 8),
+                fetchPublicTimeline(instanceUrl, 10),
                 Math.min(timeoutMs, 3000),
                 `fediverse:${instanceUrl}`,
               );
@@ -191,14 +197,33 @@ export class MastodonProvider implements FeedProvider {
           return true;
         });
 
+        // 5.5 Per-instance diversity cap — never let a single instance
+        //     dominate the feed. After dedup, keep at most 3 statuses per
+        //     instance host so the output reflects the full 151-instance pool.
+        const instanceCounts = new Map<string, number>();
+        const diverse = unique.filter((s) => {
+          let host = '';
+          try {
+            host = new URL(s.url ?? `https://${s.account.acct.split('@')[1] ?? ''}`).hostname;
+          } catch {
+            /* keep as-is */
+          }
+          if (!host) return true;
+          const count = instanceCounts.get(host) ?? 0;
+          if (count >= 3) return false;
+          instanceCounts.set(host, count + 1);
+          return true;
+        });
+        const diversityPool = diverse.length > 0 ? diverse : unique;
+
         // 6. Content relevance filtering — keep only crypto/tech/web3 posts.
         //    Golden rule (2026-08-06): the protocol must NEVER show empty.
         //    If the relevance filter leaves fewer than MIN_POSTS, we fill
         //    with the highest-engagement posts from the full pool so users
         //    always have fresh content to scroll, even when niche content
         //    is sparse on a given instance.
-        const MIN_POSTS = 20;
-        const relevanceFiltered = unique.filter((s) => {
+        const MIN_POSTS = 50;
+        const relevanceFiltered = diversityPool.filter((s) => {
           const text = s.content ?? '';
           const tags = (s.tags ?? []).map((t) => t.name);
           const relevance = scoreFediverseRelevance(stripHtml(text), tags);
@@ -209,10 +234,10 @@ export class MastodonProvider implements FeedProvider {
 
         let finalPool = relevanceFiltered;
         let fillCount = 0;
-        if (finalPool.length < MIN_POSTS && unique.length > finalPool.length) {
+        if (finalPool.length < MIN_POSTS && diversityPool.length > finalPool.length) {
           const needed = MIN_POSTS - finalPool.length;
           const inFilter = new Set(relevanceFiltered);
-          const engagementFill = unique
+          const engagementFill = diversityPool
             .filter((s) => !inFilter.has(s))
             .sort((a, b) => {
               const engagementA = a.favourites_count + a.reblogs_count * 2 + a.replies_count;
@@ -223,6 +248,30 @@ export class MastodonProvider implements FeedProvider {
           fillCount = engagementFill.length;
           finalPool = [...relevanceFiltered, ...engagementFill];
         }
+
+        // 6.5 Cap final output at 200 posts with sort options:
+        //     - trending: highest engagement (favourites + reblogs + replies)
+        //     - popular:  same as trending (engagement-weighted)
+        //     - newest:   most recently created
+        //     Default (no sort / 'scored') keeps relevance-first ordering.
+        const sortOption = (opts as unknown as Record<string, unknown>).sort;
+        const MAX_OUTPUT = 200;
+        const sortFn =
+          sortOption === 'newest' || sortOption === 'latest'
+            ? (a: GtSStatus, b: GtSStatus) =>
+                Date.parse(b.created_at) - Date.parse(a.created_at)
+            : sortOption === 'popular' || sortOption === 'trending'
+              ? (a: GtSStatus, b: GtSStatus) => {
+                  const engA =
+                    (a.favourites_count ?? 0) + (a.reblogs_count ?? 0) * 2 + (a.replies_count ?? 0);
+                  const engB =
+                    (b.favourites_count ?? 0) + (b.reblogs_count ?? 0) * 2 + (b.replies_count ?? 0);
+                  return engB - engA;
+                }
+              : null;
+        const cappedPool = sortFn
+          ? [...finalPool].sort(sortFn).slice(0, MAX_OUTPUT)
+          : finalPool.slice(0, MAX_OUTPUT);
 
         // 7. Detect fediverse software for each instance for proper badge
         const instanceToSoftware = new Map<string, FediverseSoftware>();
@@ -251,7 +300,7 @@ export class MastodonProvider implements FeedProvider {
           return endpoints[0] ?? this.primaryUrl;
         };
 
-        const posts = finalPool.map((s) => {
+        const posts = cappedPool.map((s) => {
           const post = statusToUnifiedPost(s, pickInstance(s.account.acct));
           // Stamp fediverse software type on raw for badge rendering
           const hostname = pickInstance(s.account.acct);

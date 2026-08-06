@@ -123,6 +123,9 @@ export function statusToPost(s: MastodonStatus, instanceHost: string): UnifiedPo
       followerCount: acct.followers_count || 0,
       followingCount: acct.following_count || 0,
       links: [],
+      url: handle.includes('@')
+        ? `https://${handle.split('@')[1]}/@${handle.split('@')[0]}`
+        : '',
       keys: {},
     },
     text,

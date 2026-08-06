@@ -125,6 +125,9 @@ function mapPublication(pub: IndexerPublication): UnifiedPost | null {
       followerCount: 0,
       followingCount: 0,
       links: [],
+      url: pub.author_username
+        ? `https://hey.xyz/u/${pub.author_username}`
+        : `https://hey.xyz/u/${pub.author_address}`,
       keys: { address: pub.author_address },
     },
     text: content,

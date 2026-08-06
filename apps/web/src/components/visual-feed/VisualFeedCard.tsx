@@ -7,6 +7,7 @@
  */
 
 import type { VisualPost } from '@degenfeed/types';
+import { getAuthorProfileHref, getProtocolFeedPath } from '@degenfeed/utils';
 import { useCallback, useMemo, useRef } from 'react';
 import { TipMenu } from '../tip/TipMenu';
 import { CardOverlay } from './CardOverlay';
@@ -118,31 +119,41 @@ export function VisualFeedCard({
       {/* Bottom info bar with context-aware TipMenu */}
       <div className="flex items-center justify-between px-3 py-2 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
         <div className="flex items-center gap-1.5 min-w-0">
-          {post.author.avatarUrl ? (
-            <img
-              src={post.author.avatarUrl}
-              alt=""
-              className="h-5 w-5 flex-shrink-0 rounded-full object-cover"
-            />
-          ) : (
-            <div className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-[var(--color-overlay)] text-[8px] font-bold text-[var(--color-muted)]">
-              {post.author.displayName?.[0] ?? '?'}
-            </div>
-          )}
-          <span className="truncate text-[11px] font-medium text-[var(--color-fg)]">
-            {post.author.displayName || 'Anonymous'}
-          </span>
-          <span
-            className="inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[9px] font-medium"
+          <a
+            href={getAuthorProfileHref(post.author, post.protocol || post.source)}
+            className="flex min-w-0 items-center gap-1.5 no-underline"
+            onClick={(e) => e.stopPropagation()}
+            aria-label={`View ${post.author.displayName || 'creator'} profile`}
+          >
+            {post.author.avatarUrl ? (
+              <img
+                src={post.author.avatarUrl}
+                alt=""
+                className="h-5 w-5 flex-shrink-0 rounded-full object-cover"
+              />
+            ) : (
+              <div className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-[var(--color-overlay)] text-[8px] font-bold text-[var(--color-muted)]">
+                {post.author.displayName?.[0] ?? '?'}
+              </div>
+            )}
+            <span className="truncate text-[11px] font-medium text-[var(--color-fg)] hover:underline">
+              {post.author.displayName || 'Anonymous'}
+            </span>
+          </a>
+          <a
+            href={getProtocolFeedPath(post.protocol || post.source)}
+            className="inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[9px] font-medium no-underline"
             style={{
               backgroundColor: `${post.sourceColor}18`,
               color: post.sourceColor,
               border: `1px solid ${post.sourceColor}30`,
             }}
+            title={`View ${post.sourceLabel} feed`}
+            onClick={(e) => e.stopPropagation()}
           >
             <span aria-hidden="true">{post.sourceBadge}</span>
             <span className="sr-only">{post.sourceLabel}</span>
-          </span>
+          </a>
         </div>
 
         <div className="flex items-center gap-2">

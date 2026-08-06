@@ -190,6 +190,7 @@ async function fetchFeed(
           avatarUrl: '',
           followerCount: 0,
           followingCount: 0,
+          url: `https://soundcloud.com/${source.label.toLowerCase().replace(/\s+/g, '')}`,
           links: [],
           keys: {},
         },

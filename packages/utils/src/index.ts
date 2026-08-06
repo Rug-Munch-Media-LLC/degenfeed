@@ -243,6 +243,17 @@ export { IDENTITY_KV_PREFIX, identityKey, PROTOCOL_ID_REGISTRY } from './crossPr
 export type { HandleResolution } from './identity';
 export { resolveHandle, resolveFediverseHandle } from './identity';
 
+// ─── Profile URL generation ────────────────────────────────────────────
+
+export {
+  getAuthorProfileHref,
+  getExternalProfileUrl,
+  getInternalProfileId,
+  getInternalProfilePath,
+  getProfileUrlFromParts,
+  getProtocolFeedPath,
+} from './profileUrl';
+
 // ─── Universal Content Addressing (df:// URIs) ─────────────────────────
 
 export type { ProtocolSource } from './contentUri';
