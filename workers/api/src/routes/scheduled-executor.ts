@@ -78,7 +78,7 @@ export async function executeScheduledPosts(
     // The cron still fires every minute; the executor runs at most once
     // per SCHEDULED_EXECUTOR_INTERVAL_MINUTES (default 5).
     const intervalMinutes =
-      Number.parseInt(env.SCHEDULED_EXECUTOR_INTERVAL_MINUTES ?? '5', 10) || 5;
+      (Number.parseInt(env.SCHEDULED_EXECUTOR_INTERVAL_MINUTES ?? '5', 10)) || 5;
     const now = Date.now();
     const lastRunRaw = await env.CACHE.get(LAST_RUN_KEY);
     if (lastRunRaw) {
