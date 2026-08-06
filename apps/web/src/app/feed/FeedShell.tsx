@@ -62,6 +62,25 @@ const EXTRA_LINKS = [
   { id: 'hive', label: 'Hive', icon: '◆', color: '#e31337', href: '/feed/hive' },
 ];
 
+// ─── Mobile "most-used" protocol tabs ─────────────────────────────────
+// The mobile tab bar shows a compact, curated set of the most-used
+// protocols (not all 49+) so it stays tappable; the "More" sheet exposes
+// the full list. Kept in priority order for horizontal scanning.
+const MOBILE_TAB_PROTOCOLS = [
+  'nostr',
+  'farcaster',
+  'mastodon',
+  'bluesky',
+  'lens',
+  'reddit',
+  'lemmy',
+  'youtube',
+  'rss',
+  'peertube',
+  'threads',
+  'pixelfed',
+];
+
 interface FeedShellProps {
   children: ReactNode;
 }
@@ -128,19 +147,19 @@ export function FeedShell({ children }: FeedShellProps) {
     setIsSwiping(false);
     if (Math.abs(touchDelta) < 60) return;
 
-    // Find current index
-    const currentIdx = SIDEBAR_ORDER.indexOf(activeProtocol as (typeof SIDEBAR_ORDER)[number]);
+    // Find current index in the mobile tab list
+    const currentIdx = MOBILE_TAB_PROTOCOLS.indexOf(activeProtocol as string);
     if (currentIdx === -1) return;
 
-    if (touchDelta < 0 && currentIdx < SIDEBAR_ORDER.length - 1) {
+    if (touchDelta < 0 && currentIdx < MOBILE_TAB_PROTOCOLS.length - 1) {
       // Swipe left → next protocol
-      const nextId: string | undefined = SIDEBAR_ORDER[currentIdx + 1];
+      const nextId: string | undefined = MOBILE_TAB_PROTOCOLS[currentIdx + 1];
       if (!nextId) return;
       const nextRoute = PROTOCOL_META[nextId]?.route;
       if (nextRoute) router.push(nextRoute);
     } else if (touchDelta > 0 && currentIdx > 0) {
       // Swipe right → previous protocol
-      const prevId: string | undefined = SIDEBAR_ORDER[currentIdx - 1];
+      const prevId: string | undefined = MOBILE_TAB_PROTOCOLS[currentIdx - 1];
       if (!prevId) return;
       const prevRoute = PROTOCOL_META[prevId]?.route;
       if (prevRoute) router.push(prevRoute);
@@ -194,7 +213,7 @@ export function FeedShell({ children }: FeedShellProps) {
           >
             ◆ All
           </Link>
-          {SIDEBAR_ORDER.map((pid) => {
+          {MOBILE_TAB_PROTOCOLS.map((pid) => {
             const meta = PROTOCOL_META[pid];
             if (!meta) return null;
             const isActive = pathname === meta.route;

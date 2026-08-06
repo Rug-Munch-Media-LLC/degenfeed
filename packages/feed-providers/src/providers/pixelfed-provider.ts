@@ -147,7 +147,7 @@ export class PixelfedProvider implements FeedProvider {
     try {
       return await this.breaker.execute(async () => {
         const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
-        const limit = opts.timeoutMs ? 20 : 50;
+        const limit = 50;
         const allStatuses: PixelfedStatus[] = [];
 
         // ── 1. Self-hosted instance public timeline (media only, authenticated) ──

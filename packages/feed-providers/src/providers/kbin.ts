@@ -180,7 +180,7 @@ export class KbinProvider implements FeedProvider {
         try {
           const data = await withTimeout(
             fetchJson<MastodonTimelineResponse>(
-              buildUrl(instance, '/api/v1/timelines/public', { limit: '40' }),
+              buildUrl(instance, '/api/v1/timelines/public', { limit: '50' }),
               { headers: { 'user-agent': DEFAULT_USER_AGENT, accept: 'application/json' } },
             ),
             Math.min(timeoutMs, 5000),

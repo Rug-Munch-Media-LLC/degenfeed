@@ -203,7 +203,7 @@ export function resolvePeerTubeInstance(
 }
 
 export async function fetchPeerTubeVideos(
-  limit = 30,
+  limit = 50,
   instanceUrl?: string,
   env?: { PEERTUBE_INSTANCE_URL?: string },
 ): Promise<UnifiedPost[]> {
@@ -283,7 +283,7 @@ const YOUTUBE_FEEDS = [
 ];
 
 export async function fetchYouTubeVideos(
-  limit = 30,
+  limit = 50,
 ): Promise<{ posts: UnifiedPost[]; errors: string[] }> {
   const errors: string[] = [];
   const allPosts: UnifiedPost[] = [];

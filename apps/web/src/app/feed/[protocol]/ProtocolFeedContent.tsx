@@ -43,19 +43,27 @@ interface FeedMeta {
   providerSources?: Record<string, string>;
 }
 
-export type SortMode = 'popular' | 'trending' | 'newest' | 'videos';
+export type SortMode = 'latest' | 'trending' | 'popular' | 'top';
 
 const SORT_TABS: { id: SortMode; label: string; icon: string }[] = [
-  { id: 'popular', label: 'Popular', icon: '🔥' },
+  { id: 'latest', label: 'Latest', icon: '🕐' },
   { id: 'trending', label: 'Trending', icon: '📈' },
-  { id: 'newest', label: 'Newest', icon: '🕐' },
-  { id: 'videos', label: 'Videos', icon: '🎬' },
+  { id: 'popular', label: 'Popular', icon: '🔥' },
+  { id: 'top', label: 'Top', icon: '🏆' },
 ];
 
-const VALID_SORTS = new Set<SortMode>(['popular', 'trending', 'newest', 'videos']);
+const VALID_SORTS = new Set<SortMode>(['latest', 'trending', 'popular', 'top']);
+
+/** Legacy deep-link sort keys (pre-2026-08 protocol pages) mapped to the
+ *  current tabs so old URLs like /feed/nostr/newest keep working. */
+const LEGACY_SORT_MAP: Record<string, SortMode> = {
+  newest: 'latest',
+  videos: 'top',
+};
 
 export function normalizeSort(value: string | undefined | null): SortMode {
   if (value && VALID_SORTS.has(value as SortMode)) return value as SortMode;
+  if (value && LEGACY_SORT_MAP[value]) return LEGACY_SORT_MAP[value];
   return 'popular';
 }
 

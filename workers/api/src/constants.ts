@@ -99,13 +99,13 @@ export const NEWS = {
   /** Overall wall-clock budget for one aggregateNews() run (ms). */
   AGGREGATION_TIMEOUT_MS: 25_000,
   /** Stop fetching additional RSS sources once this many raw articles are collected. */
-  MAX_ARTICLES: 50,
+  MAX_ARTICLES: 150,
   /** Max concurrent RSS feed fetches. */
   RSS_FETCH_CONCURRENCY: 3,
   /** Per-feed HTTP timeout (ms). */
   RSS_FETCH_TIMEOUT_MS: 4_000,
   /** Default number of articles to HTML-enrich per run. */
-  ENRICH_LIMIT: 10,
+  ENRICH_LIMIT: 24,
   /** Max concurrent article enrichment fetches. */
   ENRICH_CONCURRENCY: 2,
   /** Per-article enrichment HTTP timeout (ms). */

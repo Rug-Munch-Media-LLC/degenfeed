@@ -67,7 +67,7 @@ export async function handleCategorySlugFeed(
 
   const params = new URL(request.url).searchParams;
   const requestedProtocols = parseProtocols(params.get('protocols'), DEFAULT_PROTOCOLS);
-  const limit = Math.min(Number(params.get('limit')) || 50, 200);
+  const limit = Math.min(Number(params.get('limit')) || 50, 100);
   const minScore = Number(params.get('minScore')) || 0.15;
   const _cookieHeader = request.headers.get('cookie') ?? '';
 
@@ -181,7 +181,7 @@ export async function handleCategoryMixFeed(
   const rawCategories = params.get('categories') ?? '';
   const rawRatios = params.get('ratio') ?? '';
   const requestedProtocols = parseProtocols(params.get('protocols'), DEFAULT_PROTOCOLS);
-  const limit = Math.min(Number(params.get('limit')) || 50, 200);
+  const limit = Math.min(Number(params.get('limit')) || 50, 100);
   const minScore = Number(params.get('minScore')) || 0.15;
   const _cookieHeader = request.headers.get('cookie') ?? '';
 
@@ -322,7 +322,7 @@ export async function handlePerProtocolCategoryFeed(
   }
 
   const params = new URL(request.url).searchParams;
-  const limit = Math.min(Number(params.get('limit')) || 50, 200);
+  const limit = Math.min(Number(params.get('limit')) || 50, 100);
   const _cookieHeader = request.headers.get('cookie') ?? '';
 
   const feedStartTime = Date.now();
@@ -449,7 +449,7 @@ async function generateEverythingFeed(
 ): Promise<Response> {
   const params = new URL(request.url).searchParams;
   const requestedProtocols = parseProtocols(params.get('protocols'), DEFAULT_PROTOCOLS);
-  const limit = Math.min(Number(params.get('limit')) || 50, 200);
+  const limit = Math.min(Number(params.get('limit')) || 50, 100);
   const _cookieHeader = request.headers.get('cookie') ?? '';
   const now = Date.now();
 

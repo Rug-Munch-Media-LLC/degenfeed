@@ -1428,6 +1428,277 @@ export const DEFAULT_CRYPTO_FEEDS: RssFeedConfig[] = [
   }),
 
   // ═══════════════════════════════════════════════════════════════════
+  // Social: Reddit — EXPANSION (2026-08-06)
+  // 30+ more subreddits across crypto/tech/gaming/science/news/general.
+  // ═══════════════════════════════════════════════════════════════════
+  // ── Crypto / DeFi / Web3 (requested set) ──
+  cfg('https://www.reddit.com/r/altcoin/.rss?limit=100', {
+    tier: 4,
+    weight: 0.7,
+    category: 'social',
+    tags: ['crypto', 'altcoin'],
+    authority: 1,
+  }),
+  cfg('https://www.reddit.com/r/ethdev/.rss?limit=100', {
+    tier: 4,
+    weight: 0.7,
+    category: 'social',
+    tags: ['ethereum', 'dev'],
+    authority: 1,
+  }),
+  cfg('https://www.reddit.com/r/solidity/.rss?limit=100', {
+    tier: 4,
+    weight: 0.7,
+    category: 'social',
+    tags: ['solidity', 'dev'],
+    authority: 1,
+  }),
+  cfg('https://www.reddit.com/r/cryptodevs/.rss?limit=100', {
+    tier: 4,
+    weight: 0.7,
+    category: 'social',
+    tags: ['crypto', 'dev'],
+    authority: 1,
+  }),
+  cfg('https://www.reddit.com/r/web3/.rss?limit=100', {
+    tier: 4,
+    weight: 0.7,
+    category: 'social',
+    tags: ['web3'],
+    authority: 1,
+  }),
+  cfg('https://www.reddit.com/r/NFT/.rss?limit=100', {
+    tier: 4,
+    weight: 0.7,
+    category: 'social',
+    tags: ['nft'],
+    authority: 1,
+  }),
+  cfg('https://www.reddit.com/r/CryptoMarkets/.rss?limit=100', {
+    tier: 4,
+    weight: 0.7,
+    category: 'social',
+    tags: ['crypto', 'markets'],
+    authority: 1,
+  }),
+  cfg('https://www.reddit.com/r/CryptoTechnology/.rss?limit=100', {
+    tier: 4,
+    weight: 0.7,
+    category: 'social',
+    tags: ['crypto', 'tech'],
+    authority: 1,
+  }),
+  cfg('https://www.reddit.com/r/BitcoinBeginners/.rss?limit=100', {
+    tier: 4,
+    weight: 0.7,
+    category: 'social',
+    tags: ['bitcoin', 'education'],
+    authority: 1,
+  }),
+  // ── Tech / Programming (requested set) ──
+  cfg('https://www.reddit.com/r/programming/.rss?limit=100', {
+    tier: 5,
+    weight: 0.6,
+    category: 'social',
+    tags: ['programming'],
+    authority: 1,
+  }),
+  cfg('https://www.reddit.com/r/technology/.rss?limit=100', {
+    tier: 5,
+    weight: 0.6,
+    category: 'social',
+    tags: ['tech'],
+    authority: 1,
+  }),
+  cfg('https://www.reddit.com/r/rust/.rss?limit=100', {
+    tier: 5,
+    weight: 0.6,
+    category: 'social',
+    tags: ['rust', 'programming'],
+    authority: 1,
+  }),
+  cfg('https://www.reddit.com/r/golang/.rss?limit=100', {
+    tier: 5,
+    weight: 0.6,
+    category: 'social',
+    tags: ['go', 'programming'],
+    authority: 1,
+  }),
+  cfg('https://www.reddit.com/r/javascript/.rss?limit=100', {
+    tier: 5,
+    weight: 0.6,
+    category: 'social',
+    tags: ['javascript', 'web'],
+    authority: 1,
+  }),
+  cfg('https://www.reddit.com/r/typescript/.rss?limit=100', {
+    tier: 5,
+    weight: 0.6,
+    category: 'social',
+    tags: ['typescript', 'web'],
+    authority: 1,
+  }),
+  cfg('https://www.reddit.com/r/python/.rss?limit=100', {
+    tier: 5,
+    weight: 0.6,
+    category: 'social',
+    tags: ['python', 'programming'],
+    authority: 1,
+  }),
+  cfg('https://www.reddit.com/r/ExperiencedDevs/.rss?limit=100', {
+    tier: 5,
+    weight: 0.6,
+    category: 'social',
+    tags: ['career', 'programming'],
+    authority: 1,
+  }),
+  cfg('https://www.reddit.com/r/linux/.rss?limit=100', {
+    tier: 5,
+    weight: 0.6,
+    category: 'social',
+    tags: ['linux', 'tech'],
+    authority: 1,
+  }),
+  cfg('https://www.reddit.com/r/selfhosted/.rss?limit=100', {
+    tier: 5,
+    weight: 0.6,
+    category: 'social',
+    tags: ['selfhosted', 'infra'],
+    authority: 1,
+  }),
+  cfg('https://www.reddit.com/r/homelab/.rss?limit=100', {
+    tier: 5,
+    weight: 0.6,
+    category: 'social',
+    tags: ['homelab', 'infra'],
+    authority: 1,
+  }),
+  cfg('https://www.reddit.com/r/opensource/.rss?limit=100', {
+    tier: 5,
+    weight: 0.6,
+    category: 'social',
+    tags: ['opensource'],
+    authority: 1,
+  }),
+  // ── Gaming (requested set) ──
+  cfg('https://www.reddit.com/r/gaming/.rss?limit=100', {
+    tier: 5,
+    weight: 0.6,
+    category: 'social',
+    tags: ['gaming'],
+    authority: 1,
+  }),
+  cfg('https://www.reddit.com/r/pcgaming/.rss?limit=100', {
+    tier: 5,
+    weight: 0.6,
+    category: 'social',
+    tags: ['gaming', 'pc'],
+    authority: 1,
+  }),
+  cfg('https://www.reddit.com/r/truegaming/.rss?limit=100', {
+    tier: 5,
+    weight: 0.6,
+    category: 'social',
+    tags: ['gaming', 'discussion'],
+    authority: 1,
+  }),
+  // ── Science (requested set) ──
+  cfg('https://www.reddit.com/r/science/.rss?limit=100', {
+    tier: 5,
+    weight: 0.6,
+    category: 'social',
+    tags: ['science'],
+    authority: 1,
+  }),
+  cfg('https://www.reddit.com/r/space/.rss?limit=100', {
+    tier: 5,
+    weight: 0.6,
+    category: 'social',
+    tags: ['space', 'science'],
+    authority: 1,
+  }),
+  cfg('https://www.reddit.com/r/Futurology/.rss?limit=100', {
+    tier: 5,
+    weight: 0.6,
+    category: 'social',
+    tags: ['future', 'tech'],
+    authority: 1,
+  }),
+  // ── News (requested set) ──
+  cfg('https://www.reddit.com/r/worldnews/.rss?limit=100', {
+    tier: 5,
+    weight: 0.6,
+    category: 'social',
+    tags: ['news', 'world'],
+    authority: 1,
+  }),
+  cfg('https://www.reddit.com/r/news/.rss?limit=100', {
+    tier: 5,
+    weight: 0.6,
+    category: 'social',
+    tags: ['news'],
+    authority: 1,
+  }),
+  cfg('https://www.reddit.com/r/geopolitics/.rss?limit=100', {
+    tier: 5,
+    weight: 0.6,
+    category: 'social',
+    tags: ['geopolitics', 'news'],
+    authority: 1,
+  }),
+  // ── General (requested set) ──
+  cfg('https://www.reddit.com/r/AskReddit/.rss?limit=100', {
+    tier: 5,
+    weight: 0.5,
+    category: 'social',
+    tags: ['general', 'discussion'],
+    authority: 1,
+  }),
+  cfg('https://www.reddit.com/r/interestingasfuck/.rss?limit=100', {
+    tier: 5,
+    weight: 0.5,
+    category: 'social',
+    tags: ['general', 'interesting'],
+    authority: 1,
+  }),
+  cfg('https://www.reddit.com/r/todayilearned/.rss?limit=100', {
+    tier: 5,
+    weight: 0.5,
+    category: 'social',
+    tags: ['general', 'education'],
+    authority: 1,
+  }),
+  cfg('https://www.reddit.com/r/dataisbeautiful/.rss?limit=100', {
+    tier: 5,
+    weight: 0.5,
+    category: 'social',
+    tags: ['data', 'visualization'],
+    authority: 1,
+  }),
+  // ── Extra expansion subs ──
+  cfg('https://www.reddit.com/r/ethereumdev/.rss?limit=100', {
+    tier: 5,
+    weight: 0.6,
+    category: 'social',
+    tags: ['ethereum', 'dev'],
+    authority: 1,
+  }),
+  cfg('https://www.reddit.com/r/software/.rss?limit=100', {
+    tier: 5,
+    weight: 0.6,
+    category: 'social',
+    tags: ['software'],
+    authority: 1,
+  }),
+  cfg('https://www.reddit.com/r/compsci/.rss?limit=100', {
+    tier: 5,
+    weight: 0.6,
+    category: 'social',
+    tags: ['cs', 'science'],
+    authority: 1,
+  }),
+
+  // ═══════════════════════════════════════════════════════════════════
   // Mastodon / Fediverse / Social
   // ═══════════════════════════════════════════════════════════════════
   cfg('https://social.degenfeed.xyz/@admin.rss', {

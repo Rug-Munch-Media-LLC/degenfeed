@@ -275,10 +275,10 @@ export class KickProvider implements FeedProvider {
         const liveChannels = channels
           .filter((c) => c.livestream != null)
           .sort((a, b) => (b.livestream?.viewers ?? 0) - (a.livestream?.viewers ?? 0))
-          .slice(0, 15);
+          .slice(0, 25);
         const posts: UnifiedPost[] = [
           ...liveChannels.map(liveChannelToUnifiedPost),
-          ...featured.slice(0, 15).map(featuredVideoToUnifiedPost),
+          ...featured.slice(0, 25).map(featuredVideoToUnifiedPost),
         ];
 
         if (posts.length === 0) {

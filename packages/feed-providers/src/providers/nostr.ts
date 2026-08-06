@@ -282,7 +282,7 @@ export class NostrProvider implements FeedProvider {
     try {
       return await this.breaker.execute(async () => {
         const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
-        const limit = 25;
+        const limit = 50;
 
         const [notes, articles] = await Promise.all([
           this.fetchNotes(timeoutMs, limit),

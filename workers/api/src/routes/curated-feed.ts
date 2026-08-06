@@ -70,7 +70,7 @@ export async function handleCuratedFeed(
 ): Promise<Response> {
   const params = new URL(request.url).searchParams;
   const requestedProtocols = parseProtocols(params.get('protocols'), DEFAULT_PROTOCOLS);
-  const limit = Math.min(Number(params.get('limit')) || 50, 200);
+  const limit = Math.min(Number(params.get('limit')) || 50, 100);
   const category = params.get('category')?.toLowerCase() ?? '';
   const cookieHeader = request.headers.get('cookie') ?? '';
 

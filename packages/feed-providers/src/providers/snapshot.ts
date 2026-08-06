@@ -240,7 +240,7 @@ export class SnapshotProvider implements FeedProvider {
           snapshotGql(
             this.url,
             PROPOSALS_QUERY,
-            { first: 20, skip: 0, spaceIn: this.spaces, state: 'active' },
+            { first: 50, skip: 0, spaceIn: this.spaces, state: 'active' },
           ),
           timeoutMs,
           'snapshot:proposals',

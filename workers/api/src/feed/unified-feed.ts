@@ -10,6 +10,7 @@ import type { Env } from '../types';
 import { applyCurationPipeline } from './feed-curation-rules';
 import type { ExecutionContext } from './feed-fetcher';
 import {
+  ALL_PROTOCOLS,
   collectProviderResults,
   FEED_GENERATION_TIMEOUT_MS,
   fetchFromProviders,
@@ -25,7 +26,13 @@ import {
 } from './feed-quality-gates';
 import { fetchLemmyPosts, fetchPeerTubeVideos, fetchYouTubeVideos } from './unified-fetchers';
 
-const SOCIAL_PROTOCOLS: Protocol[] = ['nostr', 'farcaster', 'lens', 'bluesky', 'mastodon'];
+/**
+ * Social protocols fetched through the main provider pipeline. The master
+ * unified feed pulls from EVERY registered protocol, not just a small
+ * subset — platform content (Lemmy, PeerTube, YouTube) is additionally
+ * fetched by dedicated fetchers and de-duplicated downstream.
+ */
+const SOCIAL_PROTOCOLS: Protocol[] = ALL_PROTOCOLS;
 
 export type SourceCategory =
   | 'social'
@@ -292,7 +299,7 @@ export async function buildUnifiedFeed(
     opts.showLessProtocol,
     opts.excludeProtocols,
   );
-  const limit = Math.min(opts.limit ?? 100, 200);
+  const limit = Math.min(opts.limit ?? 100, 100);
   const section = opts.section ?? 'hot';
 
   const fetchPromises: Promise<{
@@ -301,7 +308,9 @@ export async function buildUnifiedFeed(
     error?: string;
   }>[] = [];
 
-  // Social protocols via the main provider pipeline
+  // Social protocols via the main provider pipeline — all registered
+  // protocols, with the per-provider limit scaled by the protocol count so
+  // the aggregate stays near the requested mix weight.
   if (sources.has('social')) {
     fetchPromises.push(
       (async () => {
@@ -309,7 +318,7 @@ export async function buildUnifiedFeed(
           const results = await fetchFromProviders(
             env,
             SOCIAL_PROTOCOLS,
-            Math.ceil((limit * mix.social) / 5),
+            Math.max(1, Math.ceil((limit * mix.social) / SOCIAL_PROTOCOLS.length)),
             [],
             execCtx,
           );

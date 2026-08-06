@@ -108,7 +108,7 @@ export class PonderProvider implements FeedProvider {
       try {
         const url = `${this.baseUrl}:${ep.port}/graphql`;
         const query = {
-          query: `{ tokenTransfers(limit: 25, orderBy: "timestamp", orderDirection: "desc") { items { id fromAddress toAddress value txHash blockNumber timestamp chainId tokenAddress } } }`,
+          query: `{ tokenTransfers(limit: 50, orderBy: "timestamp", orderDirection: "desc") { items { id fromAddress toAddress value txHash blockNumber timestamp chainId tokenAddress } } }`,
         };
         const data = await withTimeout(
           fetchJson<{ data?: { tokenTransfers?: { items?: PonderTransfer[] } } }>(url, {

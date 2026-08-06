@@ -208,7 +208,7 @@ export class TallyProvider implements FeedProvider {
     this.url = options.url ?? TALLY_API_URL;
     this.apiKey = options.apiKey;
     this.organizationId = options.organizationId;
-    this.limit = options.limit ?? 25;
+    this.limit = options.limit ?? 50;
   }
 
   async fetchFeed(opts: FetchOptions = {}): Promise<FeedResult> {
