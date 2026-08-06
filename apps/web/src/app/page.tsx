@@ -67,9 +67,9 @@ const DEGENFEED_LOGO = (
   <img
     src="/degenfeedlogo.png"
     alt="DegenFeed"
-    width={180}
-    height={118}
-    style={{ maxWidth: '180px', height: 'auto' }}
+    width={400}
+    height={251}
+    style={{ maxWidth: 'min(400px, 80vw)', height: 'auto' }}
   />
 );
 

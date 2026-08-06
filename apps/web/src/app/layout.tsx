@@ -187,7 +187,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <meta name="apple-mobile-web-app-title" content="DegenFeed" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="application-name" content="DegenFeed" />
-        <link rel="icon" href="/degenfeedlogo.png" type="image/png" />
+        <link rel="icon" href="/favicon-32.png" type="image/png" />
+        <link rel="apple-touch-icon" href="/icon-192.png" />
         <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
         <link rel="apple-touch-icon" href="/icon-192.png" />
         <link
@@ -195,7 +196,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           href="/icon-512.png"
           media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)"
         />
-        <link rel="mask-icon" href="/degenfeedlogo.png" color="#00ff41" />
+        <link rel="mask-icon" href="/favicon-32.png" color="#00ff41" />
         <meta name="msapplication-TileColor" content="#000000" />
         <meta name="msapplication-tap-highlight" content="no" />
         <meta name="msapplication-TileImage" content="/icon-512.png" />
@@ -229,7 +230,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <link rel="dns-prefetch" href="https://cdn.bsky.app" />
 
         {/* == LCP: Preload critical assets == */}
-        <link rel="preload" href="/degenfeedlogo.png" as="image" fetchPriority="high" />
+        <link rel="preload" href="/degenfeedlogo-nav.png" as="image" fetchPriority="high" />
 
         <ErrorTracker />
         <Script

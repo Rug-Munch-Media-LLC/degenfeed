@@ -189,7 +189,7 @@ function MobileTopBar({
           className="flex items-center shrink-0 ml-0.5"
           aria-label="DegenFeed Home"
         >
-          <Image src="/degenfeedlogo.png" alt="DegenFeed" width={36} height={23} className="h-6 w-auto" />
+          <Image src="/degenfeedlogo-nav.png" alt="DegenFeed" width={120} height={75} className="h-7 w-auto" />
         </Link>
       </div>
     </div>
