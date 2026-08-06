@@ -136,17 +136,18 @@ async function lensGql(url: string, q: string, v?: unknown): Promise<unknown> {
 
 // Shared selection fragments for the 2026 Lens API (api.lens.xyz/graphql).
 // PostMetadata is a UNION — content lives on the concrete metadata types.
+// Media fields: ImageMetadata.image + attachments, VideoMetadata.video.
 const POST_FIELDS = `
   id timestamp
   metadata {
     ... on TextOnlyMetadata { content }
-    ... on ImageMetadata { content image { item } }
-    ... on VideoMetadata { content }
+    ... on ImageMetadata { content image { item altTag width height } attachments { ... on MediaImage { item altTag width height } ... on MediaVideo { item altTag width height cover durationSeconds } } }
+    ... on VideoMetadata { content video { item altTag width height cover durationSeconds } attachments { ... on MediaImage { item altTag width height } ... on MediaVideo { item altTag width height cover durationSeconds } } }
     ... on LinkMetadata { content }
     ... on ArticleMetadata { content }
   }
   author { address username { localName } metadata { name bio picture } }
-  stats { reactions comments reposts quotes }
+  stats { reactions comments reposts quotes collects }
 `;
 
 export class LensProvider implements FeedProvider {

@@ -537,10 +537,27 @@ export function adaptLemmyPost(raw: LemmyPostRaw, instanceDomain: string): Unifi
 
   // Build embeds
   const embeds: Array<{ kind: 'image' | 'video' | 'link'; url: string }> = [];
+  const media: MediaAttachment[] = [];
   if (p.url) {
     // Check if URL is an image
     const isImage = /\.(jpg|jpeg|png|gif|webp|avif|svg)$/i.test(p.url);
-    embeds.push({ kind: isImage ? 'image' : 'link', url: p.url });
+    const isVideo = /\.(mp4|webm|mov|m4v)$/i.test(p.url);
+    if (isImage) {
+      embeds.push({ kind: 'image', url: p.url });
+      media.push({ type: 'image', url: p.url });
+    } else if (isVideo) {
+      embeds.push({ kind: 'video', url: p.url });
+      media.push({ type: 'video', url: p.url });
+    } else {
+      embeds.push({ kind: 'link', url: p.url });
+    }
+  }
+  // Lemmy serves a pictrs thumbnail URL for link/image posts — surface it as
+  // image media so link posts still render a thumbnail.
+  const rawThumb = (p as unknown as { thumbnail_url?: string }).thumbnail_url;
+  if (rawThumb && !embeds.some((e) => e.url === rawThumb)) {
+    embeds.push({ kind: 'image', url: rawThumb });
+    media.push({ type: 'image', url: rawThumb });
   }
 
   // UnifiedIdentity — required by enrichPostNiches (accesses

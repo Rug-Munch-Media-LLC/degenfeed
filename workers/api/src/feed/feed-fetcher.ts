@@ -404,7 +404,12 @@ export function getProvider(protocol: Protocol, env: Env): FeedProvider {
     case 'lemmy':
       return new LemmyProvider();
     case 'threads':
-      return new ThreadsProvider();
+      // Wire the self-hosted RSS-Bridge ThreadsBridge URL into the provider —
+      // without it the primary RSS-Bridge path is skipped and the provider
+      // falls back to ActivityPub (unconfigured at the edge → 0 posts).
+      return new ThreadsProvider({
+        rssBridgeUrl: env.RSS_BRIDGE_URL || undefined,
+      });
     case 'reddit':
       return new RedditProvider({
         redlibUrl: env.REDLIB_URL,

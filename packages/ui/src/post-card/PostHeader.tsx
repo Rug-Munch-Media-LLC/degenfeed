@@ -1,6 +1,7 @@
 'use client';
 
 import type { UnifiedPost } from '@degenfeed/types';
+import { getAuthorProfileHref } from '@degenfeed/utils';
 import Image from 'next/image';
 import { memo, useEffect, useRef, useState } from 'react';
 import { CommunityBadge } from '../CommunityBadge';
@@ -13,7 +14,6 @@ import {
 } from '../ProtocolBadge';
 import type { ReputationBadgeProgress, ReputationBadgeScore } from '../ReputationBadge';
 import { ReputationBadge } from '../ReputationBadge';
-import { getAuthorProfileHref } from '@degenfeed/utils';
 
 export interface PostHeaderProps {
   post: UnifiedPost;
@@ -149,10 +149,17 @@ export const PostHeader = memo(function PostHeader({
   // Author profile click-through: prefer our internal profile page, fall back
   // to the protocol-native profile URL when no stable id exists.
   const authorHref = getAuthorProfileHref(post.author, post.protocol);
+  // External hrefs (njump.me, warpcast.com, …) open in a new tab so the SPA
+  // isn't navigated away from; internal /profile routes stay in-tab.
+  const authorHrefIsExternal = authorHref.startsWith('http');
+  const authorLinkProps = authorHrefIsExternal
+    ? { target: '_blank', rel: 'noopener noreferrer' }
+    : {};
   const AuthorLink = ({ children }: { children: React.ReactNode }) =>
     authorHref ? (
       <a
         href={authorHref}
+        {...authorLinkProps}
         className="group/author flex items-center gap-3 no-underline"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
@@ -245,6 +252,7 @@ export const PostHeader = memo(function PostHeader({
           {authorHref ? (
             <a
               href={authorHref}
+              {...authorLinkProps}
               className="min-w-0 no-underline"
               onClick={(e) => e.stopPropagation()}
               onKeyDown={(e) => e.stopPropagation()}
@@ -933,7 +941,7 @@ export const PostHeader = memo(function PostHeader({
         </div>
         <div className="author-handle flex items-center gap-2 text-xs text-[var(--color-muted)]">
           <span className="truncate">
-            {post.author.handles[post.protocol] ?? post.author.id.slice(0, 16)}
+            {post.author.handles[post.protocol] ?? (post.author.id ?? '').slice(0, 16)}
           </span>
           <span>·</span>
           <time

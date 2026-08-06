@@ -231,7 +231,7 @@ export function isValidEmail(s: string): boolean {
 
 // ─── Protocol → currency mapping for tipping ──────────────────────────
 
-export { CURRENCY_META } from './protocolCurrency';
+export { CURRENCY_META, PROTOCOL_DEFAULT_CURRENCY, getDefaultCurrency } from './protocolCurrency';
 
 // ─── Cross-protocol identity resolution ────────────────────────────────
 

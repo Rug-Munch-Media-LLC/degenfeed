@@ -13,6 +13,8 @@ export interface GtSAccount {
   followers_count: number;
   following_count: number;
   fields: { name: string; value: string; verified_at: string | null }[];
+  /** Native profile URL on the home instance (e.g. https://tech.lgbt/@ShadowJonathan). */
+  url?: string;
 }
 
 export interface GtSCard {
@@ -96,6 +98,14 @@ function escapeRegexForMention(str: string): string {
 export function accountToIdentity(account: GtSAccount, instanceUrl: string): UnifiedIdentity {
   const hostname = new URL(instanceUrl).hostname;
   const handle = account.acct.includes('@') ? account.acct : `${account.acct}@${hostname}`;
+  const localHandle = account.acct.includes('@') ? account.acct.split('@')[0] : account.acct;
+  // Preserve the native profile URL when the API provides it; otherwise
+  // derive it from the home instance (the post's origin instance) so the
+  // author is always clickable on their home server.
+  const profileUrl =
+    account.url && account.url.length > 0
+      ? account.url
+      : `${instanceUrl.replace(/\/+$/, '')}/@${encodeURIComponent(localHandle)}`;
   return {
     id: `mastodon:${account.id}@${hostname}`,
     primary: { protocol: 'mastodon', id: account.id },
@@ -112,6 +122,7 @@ export function accountToIdentity(account: GtSAccount, instanceUrl: string): Uni
     bio: stripHtml(account.note),
     avatarUrl: account.avatar,
     bannerUrl: account.header !== account.header_static ? account.header : undefined,
+    url: profileUrl,
     verified: account.fields
       .filter((f) => f.verified_at)
       .map((f) => ({ protocol: 'mastodon' as Protocol, badge: f.name })),

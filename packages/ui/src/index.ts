@@ -143,6 +143,8 @@ export { ProtocolHealthDots } from './ProtocolHealthDots';
 export type { ProtocolStatusItem, ProtocolStatusSectionProps } from './ProtocolStatusSection';
 export { ProtocolStatusSection } from './ProtocolStatusSection';
 export { QuickTipButton } from './QuickTipButton';
+export type { TipButtonProps, TippingDetectResult, TippingSendResult } from './TipButton';
+export { TipButton } from './TipButton';
 export type { ReportModalProps } from './ReportModal';
 export { ReportModal } from './ReportModal';
 export type {
