@@ -323,12 +323,11 @@ export const DEFAULT_SUBREDDITS: string[] = DEFAULT_CONFIGS.map((c) => c.name);
 
 // Community-run Reddit frontends used as fallback when self-hosted Redlib
 // is unreachable (e.g., from Cloudflare Workers if REDLIB_URL is not set).
-const COMMUNITY_REDDIT_FRONTENDS = [
-  'https://libreddit.kavin.rocks',
-  'https://libreddit.privacydev.net',
-  'https://lr.vern.cc',
-  'https://red.ngn.tf',
-];
+//
+// 2026-08-06: Most community libreddit/teddit instances are dead or hang for
+// 10s+ per request, which is what made the whole Reddit provider exceed its
+// timeout budget. Only the self-hosted Redlib (when configured) is used now.
+const COMMUNITY_REDDIT_FRONTENDS: string[] = [];
 
 // Reddit's own RSS feeds — these are public, no auth needed.
 const REDDIT_RSS_BASE = 'https://www.reddit.com';
@@ -389,10 +388,7 @@ async function getRedditOAuthToken(
     };
     return oauthTokenCache.token;
   } catch (err) {
-    console.warn(
-      '[reddit] OAuth token fetch failed:',
-      err instanceof Error ? err.message : err,
-    );
+    console.warn('[reddit] OAuth token fetch failed:', err instanceof Error ? err.message : err);
     return null;
   }
 }
@@ -814,25 +810,42 @@ async function fetchSubreddit(
     })),
   );
 
+  // Overall budget for ONE subreddit. The provider fans out across dozens of
+  // subs with a shared concurrency limit; a single slow sub must not blow the
+  // whole request. Each strategy has its own `withTimeout` too, but dead
+  // hosts can still stall on DNS/TLS until that fires — this caps the total.
+  const perSubBudgetMs = Math.max(3000, Math.floor(timeoutMs * 0.6));
+
   // Run strategies in order and return the first non-empty result.
   // Sequential execution keeps per-IP request volume low enough to avoid
   // Reddit's CDN rate limiting.
-  for (const strategy of strategies) {
-    try {
-      const posts = await withTimeout(strategy.fn(), timeoutMs, `reddit:${strategy.name}`);
-      if (posts.length === 0) continue;
-      // Apply enrichPost to every post (quality filter + weight + category tags)
-      const enriched = posts
-        .map((post) => enrichPost(post, config))
-        .filter((post): post is UnifiedPost => post !== null);
-      if (enriched.length > 0) return enriched;
-    } catch {
-      // try next strategy
+  const strategyLoop = (async () => {
+    for (const strategy of strategies) {
+      try {
+        const posts = await withTimeout(strategy.fn(), timeoutMs, `reddit:${strategy.name}`);
+        if (posts.length === 0) continue;
+        // Apply enrichPost to every post (quality filter + weight + category tags)
+        const enriched = posts
+          .map((post) => enrichPost(post, config))
+          .filter((post): post is UnifiedPost => post !== null);
+        if (enriched.length > 0) return enriched;
+      } catch {
+        // try next strategy
+      }
+      // Small spacing between strategies to stay under per-IP rate limits.
+      await new Promise((r) => setTimeout(r, 150));
     }
-    // Small spacing between strategies to stay under per-IP rate limits.
-    await new Promise((r) => setTimeout(r, 250));
+    return [] as UnifiedPost[];
+  })();
+
+  try {
+    return await Promise.race([
+      strategyLoop,
+      new Promise<UnifiedPost[]>((resolve) => setTimeout(() => resolve([]), perSubBudgetMs)),
+    ]);
+  } finally {
+    // no-op — the timeout path already resolved
   }
-  return [];
 }
 
 // ─── Provider Class ──────────────────────────────────────────────────────────
@@ -889,30 +902,47 @@ export class RedditProvider implements FeedProvider {
         }
 
         const subsToFetch = oauthToken ? this.configs.slice(0, 20) : this.configs;
-        const capSubs = Math.min(subsToFetch.length, oauthToken ? 20 : 50);
+        // 2026-08-06: cap the fan-out so the whole fetch fits inside the
+        // request budget. 24 subs × ~1s RSS fetch / concurrency 6 ≈ 4-6s.
+        // The old 50-sub sweep regularly blew past the 10s provider timeout
+        // and the endpoint returned empty.
+        const capSubs = Math.min(subsToFetch.length, oauthToken ? 20 : 24);
         const perSub = oauthToken
           ? Math.max(5, Math.ceil(limit / capSubs))
-          : Math.max(3, Math.ceil(limit / capSubs));
-        const concurrency = oauthToken ? 5 : 4;
+          : Math.max(4, Math.ceil(limit / capSubs));
+        const concurrency = oauthToken ? 5 : 6;
 
-        const results = await withConcurrencyLimit(
-          subsToFetch.slice(0, capSubs),
-          concurrency,
-          async (config) => {
-            try {
-              return await fetchSubreddit(
-                config,
-                this.sort,
-                perSub,
-                timeoutMs,
-                this.frontends,
-                oauthToken,
-              );
-            } catch {
-              return [] as UnifiedPost[];
-            }
-          },
-        );
+        // Interleave crypto + legacy (tech/gaming/science) subs so the 24-sub
+        // sample is not all crypto: take the first half from crypto configs
+        // and fill the remainder from legacy subs.
+        let sample = subsToFetch.slice(0, capSubs);
+        if (!oauthToken && capSubs < subsToFetch.length) {
+          const cryptoSubs = CRYPTO_SUBREDDIT_CONFIGS.filter((c) =>
+            subsToFetch.some((s) => s.name === c.name),
+          );
+          const legacyNames = new Set(subsToFetch.map((s) => s.name));
+          const legacySubs = this.configs
+            .filter((c) => !cryptoSubs.some((cs) => cs.name === c.name))
+            .filter((c) => !legacyNames.has(c.name))
+            .slice(0, Math.floor(capSubs / 2));
+          const ordered = [...cryptoSubs.slice(0, Math.ceil(capSubs / 2)), ...legacySubs];
+          if (ordered.length > 0) sample = ordered;
+        }
+
+        const results = await withConcurrencyLimit(sample, concurrency, async (config) => {
+          try {
+            return await fetchSubreddit(
+              config,
+              this.sort,
+              perSub,
+              timeoutMs,
+              this.frontends,
+              oauthToken,
+            );
+          } catch {
+            return [] as UnifiedPost[];
+          }
+        });
 
         const posts = results.flat().slice(0, limit);
         if (posts.length > 0) return { posts };

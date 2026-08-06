@@ -119,23 +119,6 @@ export const LEMMY_NICHE_LABELS: Record<string, string> = {
 };
 
 const CURATED_COMMUNITIES: Array<{ community: string; niche: string }> = [
-  // ── DegenFeed local communities (self-hosted) ─────────────────
-  { community: 'crypto@community.degenfeed.xyz', niche: 'crypto' },
-  { community: 'defi@community.degenfeed.xyz', niche: 'defi' },
-  { community: 'nft@community.degenfeed.xyz', niche: 'nft' },
-  { community: 'tech@community.degenfeed.xyz', niche: 'tech' },
-  { community: 'trading@community.degenfeed.xyz', niche: 'trading' },
-  { community: 'memes@community.degenfeed.xyz', niche: 'memes' },
-  { community: 'news@community.degenfeed.xyz', niche: 'news' },
-  { community: 'governance@community.degenfeed.xyz', niche: 'governance' },
-  { community: 'security@community.degenfeed.xyz', niche: 'security' },
-  { community: 'privacy@community.degenfeed.xyz', niche: 'privacy' },
-  { community: 'gaming@community.degenfeed.xyz', niche: 'gaming' },
-  { community: 'art@community.degenfeed.xyz', niche: 'art' },
-  { community: 'music@community.degenfeed.xyz', niche: 'music' },
-  { community: 'science@community.degenfeed.xyz', niche: 'science' },
-  { community: 'philosophy@community.degenfeed.xyz', niche: 'philosophy' },
-
   // ── Crypto / Web3 ─────────────────────────────────────────────
   { community: 'cryptocurrency@lemmy.world', niche: 'crypto' },
   { community: 'bitcoin@lemmy.ml', niche: 'bitcoin' },
@@ -408,6 +391,27 @@ const CURATED_COMMUNITIES: Array<{ community: string; niche: string }> = [
   { community: 'sports@fanaticus.social', niche: 'sports' },
   { community: 'baseball@fanaticus.social', niche: 'sports' },
   { community: 'basketball@fanaticus.social', niche: 'sports' },
+
+  // ── DegenFeed local communities (self-hosted) ─────────────────
+  // Kept LAST on purpose (2026-08-06): the feed must surface real
+  // lemmyverse content first. Our own communities are a small supplement —
+  // they were previously first, which made the whole Lemmy feed look like
+  // self-promotion ("What is DegenFeed?").
+  { community: 'crypto@community.degenfeed.xyz', niche: 'crypto' },
+  { community: 'defi@community.degenfeed.xyz', niche: 'defi' },
+  { community: 'nft@community.degenfeed.xyz', niche: 'nft' },
+  { community: 'tech@community.degenfeed.xyz', niche: 'tech' },
+  { community: 'trading@community.degenfeed.xyz', niche: 'trading' },
+  { community: 'memes@community.degenfeed.xyz', niche: 'memes' },
+  { community: 'news@community.degenfeed.xyz', niche: 'news' },
+  { community: 'governance@community.degenfeed.xyz', niche: 'governance' },
+  { community: 'security@community.degenfeed.xyz', niche: 'security' },
+  { community: 'privacy@community.degenfeed.xyz', niche: 'privacy' },
+  { community: 'gaming@community.degenfeed.xyz', niche: 'gaming' },
+  { community: 'art@community.degenfeed.xyz', niche: 'art' },
+  { community: 'music@community.degenfeed.xyz', niche: 'music' },
+  { community: 'science@community.degenfeed.xyz', niche: 'science' },
+  { community: 'philosophy@community.degenfeed.xyz', niche: 'philosophy' },
 ];
 
 // ─── Raw API types ──────────────────────────────────────────────────
@@ -606,9 +610,7 @@ export function adaptLemmyPost(raw: LemmyPostRaw, instanceDomain: string): Unifi
       },
     },
     embeds,
-    url: p.url
-      ? `https://${instance}/post/${p.id}`
-      : `https://${instance}/c/${communityName}`,
+    url: p.url ? `https://${instance}/post/${p.id}` : `https://${instance}/c/${communityName}`,
     dfUri: `df://lemmy/${instance}/c/${communityName}/${p.id}`,
     contentType,
     niches: [],
@@ -692,7 +694,9 @@ export class LemmyProvider implements FeedProvider {
           },
         );
         for (const posts of communityResults) allPosts.push(...posts);
-        console.log(`[lemmy] phase 1: ${allPosts.length} posts from ${communityBatches.length} communities`);
+        console.log(
+          `[lemmy] phase 1: ${allPosts.length} posts from ${communityBatches.length} communities`,
+        );
 
         // Phase 2 — general Hot feed fallback. The protocol must NEVER
         // show empty: if curated communities produced fewer than
