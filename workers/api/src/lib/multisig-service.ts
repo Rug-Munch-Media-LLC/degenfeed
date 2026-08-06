@@ -126,11 +126,11 @@ export interface TransactionFilter {
 // ─── Service ──────────────────────────────────────────────────────────────
 
 export class MultiSigService {
-  private kv: KVNamespace;
+  private kv: KVNamespace | undefined;
 
   constructor(env: Env) {
     this.env = env;
-    this.kv = env.TREASURY as unknown as KVNamespace;
+    this.kv = env.TREASURY;
   }
 
   // ─── Configuration ──────────────────────────────────────────────────
@@ -140,7 +140,7 @@ export class MultiSigService {
    */
   async getConfig(daoId: string): Promise<MultiSigConfig | null> {
     try {
-      const raw = await this.kv.get(multisigConfigKey(daoId));
+      const raw = await this.kv?.get(multisigConfigKey(daoId));
       return raw ? (JSON.parse(raw) as MultiSigConfig) : null;
     } catch {
       return null;
@@ -155,7 +155,7 @@ export class MultiSigService {
       ...config,
       updatedAt: Date.now(),
     };
-    await this.kv.put(multisigConfigKey(config.daoId), JSON.stringify(updated));
+    await this.kv?.put(multisigConfigKey(config.daoId), JSON.stringify(updated));
     log('info', '[multisig] Config saved', {
       daoId: config.daoId,
       threshold: config.threshold,
@@ -203,7 +203,7 @@ export class MultiSigService {
       createdAt: now,
     };
 
-    await this.kv.put(multisigTxKey(daoId, id), JSON.stringify(transaction), {
+    await this.kv?.put(multisigTxKey(daoId, id), JSON.stringify(transaction), {
       expirationTtl: DEFAULT_TTL,
     });
 
@@ -257,7 +257,7 @@ export class MultiSigService {
 
     // Check if signer already voted
     const existingSigKey = multisigSignatureKey(daoId, txId, signer);
-    const existingSig = await this.kv.get(existingSigKey);
+    const existingSig = await this.kv?.get(existingSigKey);
     if (existingSig) {
       throw new Error(`Signer ${signer.slice(0, 10)} has already voted`);
     }
@@ -271,7 +271,7 @@ export class MultiSigService {
     };
 
     // Store individual signature
-    await this.kv.put(existingSigKey, JSON.stringify(sigRecord), {
+    await this.kv?.put(existingSigKey, JSON.stringify(sigRecord), {
       expirationTtl: DEFAULT_TTL,
     });
 
@@ -284,7 +284,7 @@ export class MultiSigService {
       tx.status = 'signed';
     }
 
-    await this.kv.put(multisigTxKey(daoId, txId), JSON.stringify(tx), {
+    await this.kv?.put(multisigTxKey(daoId, txId), JSON.stringify(tx), {
       expirationTtl: DEFAULT_TTL,
     });
 
@@ -336,7 +336,7 @@ export class MultiSigService {
     tx.executionTx = executionTx;
     tx.error = executionTx ? undefined : 'Execution requires on-chain submission';
 
-    await this.kv.put(multisigTxKey(daoId, txId), JSON.stringify(tx), {
+    await this.kv?.put(multisigTxKey(daoId, txId), JSON.stringify(tx), {
       expirationTtl: DEFAULT_TTL,
     });
 
@@ -455,7 +455,7 @@ export class MultiSigService {
     tx.resolvedAt = Date.now();
     tx.error = reason || 'Cancelled by signer';
 
-    await this.kv.put(multisigTxKey(daoId, txId), JSON.stringify(tx), {
+    await this.kv?.put(multisigTxKey(daoId, txId), JSON.stringify(tx), {
       expirationTtl: DEFAULT_TTL,
     });
 
@@ -537,7 +537,7 @@ export class MultiSigService {
 
   async #getTransaction(daoId: string, txId: string): Promise<MultiSigTransaction | null> {
     try {
-      const raw = await this.kv.get(multisigTxKey(daoId, txId));
+      const raw = await this.kv?.get(multisigTxKey(daoId, txId));
       return raw ? (JSON.parse(raw) as MultiSigTransaction) : null;
     } catch {
       return null;
@@ -546,17 +546,17 @@ export class MultiSigService {
 
   async #addToIndex(daoId: string, txId: string): Promise<void> {
     const key = multisigIndexKey(daoId);
-    const existing = await this.kv.get(key);
+    const existing = await this.kv?.get(key);
     const index: string[] = existing ? (JSON.parse(existing) as string[]) : [];
     index.unshift(txId);
-    await this.kv.put(key, JSON.stringify(index), {
+    await this.kv?.put(key, JSON.stringify(index), {
       expirationTtl: DEFAULT_TTL,
     });
   }
 
   async #getIndex(daoId: string): Promise<string[]> {
     try {
-      const raw = await this.kv.get(multisigIndexKey(daoId));
+      const raw = await this.kv?.get(multisigIndexKey(daoId));
       return raw ? (JSON.parse(raw) as string[]) : [];
     } catch {
       return [];

@@ -142,11 +142,11 @@ export interface StreamFilter {
 // ─── Service ──────────────────────────────────────────────────────────────
 
 export class StreamingPaymentsService {
-  private kv: KVNamespace;
+  private kv: KVNamespace | undefined;
 
   constructor(env: Env) {
     this.env = env;
-    this.kv = env.TREASURY as unknown as KVNamespace;
+    this.kv = env.TREASURY;
   }
 
   // ─── Create Stream ────────────────────────────────────────────────
@@ -189,7 +189,7 @@ export class StreamingPaymentsService {
       metadata: input.metadata,
     };
 
-    await this.kv.put(streamKey(daoId, id), JSON.stringify(stream), { expirationTtl: DEFAULT_TTL });
+    await this.kv?.put(streamKey(daoId, id), JSON.stringify(stream), { expirationTtl: DEFAULT_TTL });
 
     await this.#addToIndex(daoId, id);
 
@@ -302,7 +302,7 @@ export class StreamingPaymentsService {
       stream.metadata = { ...stream.metadata, ...updates.metadata };
     }
 
-    await this.kv.put(streamKey(daoId, streamId), JSON.stringify(stream), {
+    await this.kv?.put(streamKey(daoId, streamId), JSON.stringify(stream), {
       expirationTtl: DEFAULT_TTL,
     });
 
@@ -384,7 +384,7 @@ export class StreamingPaymentsService {
     stream.lastCalculatedAt = Date.now();
     stream.paused = true;
 
-    await this.kv.put(streamKey(daoId, streamId), JSON.stringify(stream), {
+    await this.kv?.put(streamKey(daoId, streamId), JSON.stringify(stream), {
       expirationTtl: DEFAULT_TTL,
     });
 
@@ -414,7 +414,7 @@ export class StreamingPaymentsService {
     stream.paused = false;
     stream.lastCalculatedAt = Date.now();
 
-    await this.kv.put(streamKey(daoId, streamId), JSON.stringify(stream), {
+    await this.kv?.put(streamKey(daoId, streamId), JSON.stringify(stream), {
       expirationTtl: DEFAULT_TTL,
     });
 
@@ -443,7 +443,8 @@ export class StreamingPaymentsService {
 
     // List keys by prefix (requires KV list support)
     try {
-      const listed = await this.kv.list({ prefix });
+      const listed =
+        (await this.kv?.list({ prefix })) ?? { keys: [], list_complete: true, cursor: '' };
       for (const key of listed.keys) {
         keys.push(key.name);
       }
@@ -457,7 +458,7 @@ export class StreamingPaymentsService {
     const events: StreamEvent[] = [];
     for (const key of keys.slice(0, limit)) {
       try {
-        const raw = await this.kv.get(key);
+        const raw = await this.kv?.get(key);
         if (raw) {
           events.push(JSON.parse(raw) as StreamEvent);
         }
@@ -548,7 +549,7 @@ export class StreamingPaymentsService {
     };
 
     // Cache analytics
-    await this.kv.put(
+    await this.kv?.put(
       streamAnalyticsKey(daoId),
       JSON.stringify(analytics),
       { expirationTtl: 3600 }, // 1 hour cache
@@ -634,7 +635,7 @@ export class StreamingPaymentsService {
 
   async #getStreamConfig(daoId: string, streamId: string): Promise<StreamConfig | null> {
     try {
-      const raw = await this.kv.get(streamKey(daoId, streamId));
+      const raw = await this.kv?.get(streamKey(daoId, streamId));
       return raw ? (JSON.parse(raw) as StreamConfig) : null;
     } catch {
       return null;
@@ -694,28 +695,28 @@ export class StreamingPaymentsService {
 
   async #addToIndex(daoId: string, streamId: string): Promise<void> {
     const key = streamIndexKey(daoId);
-    const existing = await this.kv.get(key);
+    const existing = await this.kv?.get(key);
     const index: string[] = existing ? (JSON.parse(existing) as string[]) : [];
     index.unshift(streamId);
-    await this.kv.put(key, JSON.stringify(index), {
+    await this.kv?.put(key, JSON.stringify(index), {
       expirationTtl: DEFAULT_TTL,
     });
   }
 
   async #removeFromIndex(daoId: string, streamId: string): Promise<void> {
     const key = streamIndexKey(daoId);
-    const existing = await this.kv.get(key);
+    const existing = await this.kv?.get(key);
     if (!existing) return;
     const index: string[] = JSON.parse(existing) as string[];
     const filtered = index.filter((id) => id !== streamId);
-    await this.kv.put(key, JSON.stringify(filtered), {
+    await this.kv?.put(key, JSON.stringify(filtered), {
       expirationTtl: DEFAULT_TTL,
     });
   }
 
   async #getIndex(daoId: string): Promise<string[]> {
     try {
-      const raw = await this.kv.get(streamIndexKey(daoId));
+      const raw = await this.kv?.get(streamIndexKey(daoId));
       return raw ? (JSON.parse(raw) as string[]) : [];
     } catch {
       return [];
@@ -744,7 +745,7 @@ export class StreamingPaymentsService {
     };
 
     const eventKey = streamEventKey(daoId, streamId, `${event.timestamp}-${id}`);
-    await this.kv.put(eventKey, JSON.stringify(eventRecord), {
+    await this.kv?.put(eventKey, JSON.stringify(eventRecord), {
       expirationTtl: DEFAULT_TTL,
     });
   }

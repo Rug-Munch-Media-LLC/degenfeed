@@ -3,11 +3,17 @@
  *
  * Single Sign-On bridge across all self-hosted protocol instances.
  * Provides session management, identity provisioning, and cross-network activity tracking.
+ *
+ * Storage: SSO records (sessions, wallet state, export bundles, recovery
+ * codes, activity feeds, last-active) are persisted to rmi-backend via the
+ * generic /api/v1/sessions store (id → JSON blob with TTL), with the legacy
+ * IDENTITIES KV namespace kept as a warm fallback when the API is down.
  */
 
 import { registerOnPlatform } from '@degenfeed/crossplatform-register';
 import type { Env } from '../../index';
 import { sealForWallet } from '../crypto-seal';
+import { getSession, setSession } from '../rmi-client';
 import {
   ALL_SSO_PROTOCOLS,
   SSO_PROTOCOL_MAP,
@@ -19,6 +25,43 @@ import {
   ssoWalletStateKey,
 } from './constants';
 import type { SSOAccountState, SSOExportBundle, SSOSession, SSOWalletState } from './types';
+
+// ─── Persistent store helpers (rmi-backend primary, KV fallback) ──────
+//
+// SSO records are arbitrary-id key/value blobs. The rmi-backend /sessions
+// API is the closest persistent store (id → data with TTL), so SSO writes go
+// there as `{ value: <raw JSON string> }`; every read unwraps `data.value`.
+// The legacy IDENTITIES KV namespace remains the fallback when the API is
+// unreachable. KV access uses optional chaining because IDENTITIES is
+// unbound in local/dev environments.
+
+async function ssoStoreGet(env: Env, id: string): Promise<string | null> {
+  try {
+    const data = await getSession(env, id);
+    const raw = data && typeof data.value === 'string' ? data.value : null;
+    if (raw !== null) return raw;
+  } catch {
+    // API unavailable — fall through to KV
+  }
+  try {
+    return (await env.IDENTITIES?.get(id)) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+async function ssoStoreSet(env: Env, id: string, value: string, ttl?: number): Promise<void> {
+  try {
+    await setSession(env, id, { value }, ttl ?? 86400);
+  } catch {
+    // API unavailable — KV below is the fallback persistence
+  }
+  try {
+    await env.IDENTITIES?.put(id, value, ttl ? { expirationTtl: ttl } : undefined);
+  } catch {
+    // Non-critical mirror
+  }
+}
 
 // ─── Protocol Health ──────────────────────────────────────────────────
 
@@ -45,15 +88,15 @@ export async function createCrossNetworkSession(
   const now = Date.now();
   const expiresAt = now + 24 * 60 * 60 * 1000; // 24 hours
   const session: SSOSession = {
-    nonce,
-    walletAddress,
+    sessionId: nonce,
+    wallet: walletAddress,
+    protocols: ALL_SSO_PROTOCOLS.map((p) => p.id),
     createdAt: now,
     expiresAt,
-    protocols: ALL_SSO_PROTOCOLS,
+    lastUsed: now,
+    issuedAt: now,
   };
-  await env.IDENTITIES.put(ssoSessionKey(nonce), JSON.stringify(session), {
-    expirationTtl: 86400,
-  });
+  await ssoStoreSet(env, ssoSessionKey(nonce, nonce), JSON.stringify(session), 86400);
   return session;
 }
 
@@ -61,55 +104,58 @@ export async function refreshCrossNetworkSession(
   nonce: string,
   env: Env,
 ): Promise<SSOSession | null> {
-  const raw = await env.IDENTITIES.get(ssoSessionKey(nonce));
+  const raw = await ssoStoreGet(env, ssoSessionKey(nonce, nonce));
   if (!raw) return null;
   const session: SSOSession = JSON.parse(raw);
   session.expiresAt = Date.now() + 24 * 60 * 60 * 1000;
-  await env.IDENTITIES.put(ssoSessionKey(nonce), JSON.stringify(session), {
-    expirationTtl: 86400,
-  });
+  session.lastUsed = Date.now();
+  await ssoStoreSet(env, ssoSessionKey(nonce, nonce), JSON.stringify(session), 86400);
   return session;
 }
 
 export async function verifySessionToken(token: string, env: Env): Promise<SSOSession | null> {
-  const raw = await env.IDENTITIES.get(ssoSessionKey(token));
+  const raw = await ssoStoreGet(env, ssoSessionKey(token, token));
   if (!raw) return null;
   const session: SSOSession = JSON.parse(raw);
   if (session.expiresAt < Date.now()) return null;
-  const revoked = await env.IDENTITIES.get(ssoRevokedKey(token));
+  const revoked = await ssoStoreGet(env, ssoRevokedKey(token));
   if (revoked) return null;
   return session;
 }
 
 export async function signSessionToken(session: SSOSession): Promise<string> {
   // In production, use a proper JWT or similar
-  return session.nonce;
+  return session.sessionId;
 }
 
 export async function revokeSession(nonce: string, env: Env): Promise<boolean> {
-  await env.IDENTITIES.put(ssoRevokedKey(nonce), '1', { expirationTtl: 86400 * 7 });
+  await ssoStoreSet(env, ssoRevokedKey(nonce), '1', 86400 * 7);
   return true;
 }
 
 export async function revokeAllSessions(walletAddress: string, env: Env): Promise<number> {
-  // For now, we revoke the current sessions by listing from KV
+  // Revoke the current sessions by listing SSO session keys from KV.
   let count = 0;
-  const list = await env.IDENTITIES.list({ prefix: `session:` });
-  for (const key of list.keys) {
-    const raw = await env.IDENTITIES.get(key.name);
-    if (raw) {
-      const session: SSOSession = JSON.parse(raw);
-      if (session.walletAddress === walletAddress) {
-        await revokeSession(session.nonce, env);
-        count++;
+  try {
+    const list = await env.IDENTITIES?.list({ prefix: 'sso:session:' });
+    for (const key of list?.keys ?? []) {
+      const raw = await ssoStoreGet(env, key.name);
+      if (raw) {
+        const session: SSOSession = JSON.parse(raw);
+        if (session.wallet === walletAddress) {
+          await revokeSession(session.sessionId, env);
+          count++;
+        }
       }
     }
+  } catch {
+    // list unavailable — best-effort revocation
   }
   return count;
 }
 
 export async function isSessionRevoked(nonce: string, env: Env): Promise<boolean> {
-  const revoked = await env.IDENTITIES.get(ssoRevokedKey(nonce));
+  const revoked = await ssoStoreGet(env, ssoRevokedKey(nonce));
   return revoked !== null;
 }
 
@@ -119,15 +165,16 @@ export async function getOrInitWalletState(
   walletAddress: string,
   env: Env,
 ): Promise<SSOWalletState> {
-  const raw = await env.IDENTITIES.get(ssoWalletStateKey(walletAddress));
-  if (raw) return JSON.parse(raw);
+  const raw = await ssoStoreGet(env, ssoWalletStateKey(walletAddress));
+  if (raw) return JSON.parse(raw) as SSOWalletState;
   const state: SSOWalletState = {
-    walletAddress,
-    accounts: {},
+    wallet: walletAddress,
+    accounts: [],
+    masterSessionId: null,
     lastActive: Date.now(),
-    createdAt: Date.now(),
+    provisionedAt: Date.now(),
   };
-  await env.IDENTITIES.put(ssoWalletStateKey(walletAddress), JSON.stringify(state));
+  await ssoStoreSet(env, ssoWalletStateKey(walletAddress), JSON.stringify(state));
   return state;
 }
 
@@ -182,8 +229,8 @@ export async function provisionAllProtocols(
     const protocolId = protocolDef.id;
 
     // Skip protocols that are already provisioned in wallet state
-    const existingAccount = state.accounts[protocolId];
-    if (existingAccount && existingAccount.status === 'active') {
+    const existingAccount = state.accounts.find((a) => a.protocol === protocolId);
+    if (existingAccount?.registered) {
       alreadyExistedCount++;
       provisioned.push(protocolId);
       results.push({
@@ -227,14 +274,14 @@ export async function provisionAllProtocols(
         });
 
         // Update wallet state with actual account info
-        state.accounts[protocolId] = {
+        state.accounts.push({
           protocol: protocolId,
           registered: registration.status === 'created',
           username: registration.username || username,
           profileUrl: registration.accountInfo?.profileUrl || null,
           lastActive: Date.now(),
           createdAt: Date.now(),
-        } as SSOAccountState;
+        } as SSOAccountState);
 
         console.log(
           `[sso-bridge] Provisioned ${protocolId} for ${walletAddress.slice(0, 8)} as ${registration.username}`,
@@ -261,7 +308,7 @@ export async function provisionAllProtocols(
   }
 
   // Persist updated wallet state
-  await env.IDENTITIES.put(ssoWalletStateKey(walletAddress), JSON.stringify(state));
+  await ssoStoreSet(env, ssoWalletStateKey(walletAddress), JSON.stringify(state));
 
   return {
     provisioned,
@@ -306,15 +353,15 @@ export async function provisionSingleProtocol(
     if (registration.status === 'created' || registration.status === 'pending') {
       // Update wallet state
       const state = await getOrInitWalletState(walletAddress, env);
-      state.accounts[protocolId] = {
+      state.accounts.push({
         protocol: protocolId,
         registered: registration.status === 'created',
         username: registration.username || username,
         profileUrl: registration.accountInfo?.profileUrl || null,
         lastActive: Date.now(),
         createdAt: Date.now(),
-      } as SSOAccountState;
-      await env.IDENTITIES.put(ssoWalletStateKey(walletAddress), JSON.stringify(state));
+      } as SSOAccountState);
+      await ssoStoreSet(env, ssoWalletStateKey(walletAddress), JSON.stringify(state));
 
       console.log(
         `[sso-bridge] Provisioned single ${protocolId} for ${walletAddress.slice(0, 8)} as ${registration.username}`,
@@ -346,9 +393,9 @@ export async function exportIdentityBundle(
   walletAddress: string,
   env: Env,
 ): Promise<SSOExportBundle | null> {
-  const raw = await env.IDENTITIES.get(ssoExportKey(walletAddress));
+  const raw = await ssoStoreGet(env, ssoExportKey(walletAddress));
   if (!raw) return null;
-  return JSON.parse(raw);
+  return JSON.parse(raw) as SSOExportBundle;
 }
 
 export async function importIdentityBundle(
@@ -356,7 +403,7 @@ export async function importIdentityBundle(
   bundle: SSOExportBundle,
   env: Env,
 ): Promise<boolean> {
-  await env.IDENTITIES.put(ssoExportKey(walletAddress), JSON.stringify(bundle));
+  await ssoStoreSet(env, ssoExportKey(walletAddress), JSON.stringify(bundle));
   return true;
 }
 
@@ -366,12 +413,12 @@ export async function generateRecoveryCode(walletAddress: string, env: Env): Pro
   const code = Array.from(crypto.getRandomValues(new Uint8Array(8)))
     .map((b) => b.toString(16).padStart(2, '0'))
     .join('');
-  await env.IDENTITIES.put(`recovery:${code}`, walletAddress, { expirationTtl: 86400 * 7 });
+  await ssoStoreSet(env, `recovery:${code}`, walletAddress, 86400 * 7);
   return code;
 }
 
 export async function recoverWithCode(code: string, env: Env): Promise<string | null> {
-  return env.IDENTITIES.get(`recovery:${code}`);
+  return ssoStoreGet(env, `recovery:${code}`);
 }
 
 // ─── Activity ──────────────────────────────────────────────────────────
@@ -381,7 +428,7 @@ export async function getActivityFeed(
   env: Env,
   limit = 50,
 ): Promise<Array<{ type: string; protocol: string; timestamp: number; data: string }>> {
-  const raw = await env.IDENTITIES.get(ssoActivityFeedKey(walletAddress));
+  const raw = await ssoStoreGet(env, ssoActivityFeedKey(walletAddress));
   if (!raw) return [];
   const activities = JSON.parse(raw) as Array<{
     type: string;
@@ -399,14 +446,14 @@ export async function recordActivity(
   data: string,
   env: Env,
 ): Promise<void> {
-  const raw = await env.IDENTITIES.get(ssoActivityFeedKey(walletAddress));
-  const activities = raw ? JSON.parse(raw) : [];
+  const raw = await ssoStoreGet(env, ssoActivityFeedKey(walletAddress));
+  const activities = raw ? (JSON.parse(raw) as Array<Record<string, unknown>>) : [];
   activities.unshift({ type, protocol, timestamp: Date.now(), data });
   if (activities.length > 200) activities.length = 200;
-  await env.IDENTITIES.put(ssoActivityFeedKey(walletAddress), JSON.stringify(activities));
+  await ssoStoreSet(env, ssoActivityFeedKey(walletAddress), JSON.stringify(activities));
 }
 
 export async function getLastActive(walletAddress: string, env: Env): Promise<number | null> {
-  const raw = await env.IDENTITIES.get(ssoLastActiveKey(walletAddress));
+  const raw = await ssoStoreGet(env, ssoLastActiveKey(walletAddress));
   return raw ? parseInt(raw, 10) : null;
 }

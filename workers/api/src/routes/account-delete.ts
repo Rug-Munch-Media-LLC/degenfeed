@@ -23,6 +23,7 @@
  */
 
 import { log } from '../index';
+import { getBookmarks, removeBookmark } from '../lib/rmi-client';
 import { jsonResponse, noCacheJsonResponse } from '../response-helpers';
 import { requireSession, revokeAllSessionsForAddress } from '../session';
 import type { Env } from '../types';
@@ -98,6 +99,23 @@ function topicsKey(address: string): string {
 /** Bookmarks key in BOOKMARKS KV */
 function bookmarksKey(address: string): string {
   return `bookmarks:${address.toLowerCase()}`;
+}
+
+/**
+ * Best-effort purge of a wallet's bookmarks from rmi-backend.
+ * [REVIEW] The deployed backend has no DELETE /bookmarks endpoint, so each
+ * bookmark removal is a harmless no-op today (405). Once the backend adds
+ * DELETE support, account deletion will also purge the persistent store.
+ */
+async function purgeRemoteBookmarks(address: string, env: Env): Promise<void> {
+  const postIds = await getBookmarks(env, address);
+  for (const postId of postIds) {
+    try {
+      await removeBookmark(env, address, postId);
+    } catch {
+      // best-effort — continue with the rest
+    }
+  }
 }
 
 /** Custom feeds owned by the user */
@@ -599,7 +617,12 @@ async function executeDeletion(address: string, env: Env): Promise<DeletionResul
     }
   }
 
-  // 4. Delete bookmarks from BOOKMARKS KV
+  // 4. Delete bookmarks — purge rmi-backend (best-effort) + BOOKMARKS KV
+  try {
+    await purgeRemoteBookmarks(walletAddress, env);
+  } catch {
+    log('warn', 'Failed to purge remote bookmarks', { address: walletAddress });
+  }
   if (env.BOOKMARKS) {
     try {
       const key = bookmarksKey(walletAddress);

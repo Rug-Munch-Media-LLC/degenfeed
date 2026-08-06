@@ -251,11 +251,11 @@ export interface GrantFilter {
 // ─── Service ──────────────────────────────────────────────────────────────
 
 export class GrantsService {
-  private kv: KVNamespace;
+  private kv: KVNamespace | undefined;
 
   constructor(env: Env) {
     this.env = env;
-    this.kv = env.TREASURY as unknown as KVNamespace;
+    this.kv = env.TREASURY;
   }
 
   // ─── Create Grant Program ─────────────────────────────────────────
@@ -292,7 +292,7 @@ export class GrantsService {
       metadata: input.metadata,
     };
 
-    await this.kv.put(grantProgramKey(daoId, id), JSON.stringify(program), {
+    await this.kv?.put(grantProgramKey(daoId, id), JSON.stringify(program), {
       expirationTtl: DEFAULT_TTL,
     });
 
@@ -316,7 +316,7 @@ export class GrantsService {
    */
   async getGrantProgram(daoId: string, programId: string): Promise<GrantProgram | null> {
     try {
-      const raw = await this.kv.get(grantProgramKey(daoId, programId));
+      const raw = await this.kv?.get(grantProgramKey(daoId, programId));
       return raw ? (JSON.parse(raw) as GrantProgram) : null;
     } catch {
       return null;
@@ -440,7 +440,7 @@ export class GrantsService {
       metadata: input.metadata,
     };
 
-    await this.kv.put(grantApplicationKey(daoId, id), JSON.stringify(application), {
+    await this.kv?.put(grantApplicationKey(daoId, id), JSON.stringify(application), {
       expirationTtl: DEFAULT_TTL,
     });
 
@@ -464,7 +464,7 @@ export class GrantsService {
    */
   async getApplication(daoId: string, appId: string): Promise<GrantApplication | null> {
     try {
-      const raw = await this.kv.get(grantApplicationKey(daoId, appId));
+      const raw = await this.kv?.get(grantApplicationKey(daoId, appId));
       return raw ? (JSON.parse(raw) as GrantApplication) : null;
     } catch {
       return null;
@@ -536,7 +536,7 @@ export class GrantsService {
       app.status = 'under_review';
     }
 
-    await this.kv.put(grantApplicationKey(daoId, appId), JSON.stringify(app), {
+    await this.kv?.put(grantApplicationKey(daoId, appId), JSON.stringify(app), {
       expirationTtl: DEFAULT_TTL,
     });
 
@@ -587,11 +587,11 @@ export class GrantsService {
     app.updatedAt = Date.now();
 
     // Store vote separately for audit
-    await this.kv.put(grantVoteKey(daoId, appId, voter), JSON.stringify(vote), {
+    await this.kv?.put(grantVoteKey(daoId, appId, voter), JSON.stringify(vote), {
       expirationTtl: DEFAULT_TTL,
     });
 
-    await this.kv.put(grantApplicationKey(daoId, appId), JSON.stringify(app), {
+    await this.kv?.put(grantApplicationKey(daoId, appId), JSON.stringify(app), {
       expirationTtl: DEFAULT_TTL,
     });
 
@@ -631,7 +631,7 @@ export class GrantsService {
       if (program) {
         const newRemaining = BigInt(program.remainingBudget) - BigInt(app.requestedAmount);
         program.remainingBudget = newRemaining.toString();
-        await this.kv.put(grantProgramKey(daoId, app.programId), JSON.stringify(program), {
+        await this.kv?.put(grantProgramKey(daoId, app.programId), JSON.stringify(program), {
           expirationTtl: DEFAULT_TTL,
         });
       }
@@ -647,7 +647,7 @@ export class GrantsService {
       });
     }
 
-    await this.kv.put(grantApplicationKey(daoId, appId), JSON.stringify(app), {
+    await this.kv?.put(grantApplicationKey(daoId, appId), JSON.stringify(app), {
       expirationTtl: DEFAULT_TTL,
     });
 
@@ -696,11 +696,11 @@ export class GrantsService {
     milestone.submittedAt = Date.now();
     app.updatedAt = Date.now();
 
-    await this.kv.put(grantMilestoneKey(daoId, appId, milestoneId), JSON.stringify(milestone), {
+    await this.kv?.put(grantMilestoneKey(daoId, appId, milestoneId), JSON.stringify(milestone), {
       expirationTtl: DEFAULT_TTL,
     });
 
-    await this.kv.put(grantApplicationKey(daoId, appId), JSON.stringify(app), {
+    await this.kv?.put(grantApplicationKey(daoId, appId), JSON.stringify(app), {
       expirationTtl: DEFAULT_TTL,
     });
 
@@ -738,11 +738,11 @@ export class GrantsService {
     milestone.resolvedAt = Date.now();
     app.updatedAt = Date.now();
 
-    await this.kv.put(grantMilestoneKey(daoId, appId, milestoneId), JSON.stringify(milestone), {
+    await this.kv?.put(grantMilestoneKey(daoId, appId, milestoneId), JSON.stringify(milestone), {
       expirationTtl: DEFAULT_TTL,
     });
 
-    await this.kv.put(grantApplicationKey(daoId, appId), JSON.stringify(app), {
+    await this.kv?.put(grantApplicationKey(daoId, appId), JSON.stringify(app), {
       expirationTtl: DEFAULT_TTL,
     });
 
@@ -753,7 +753,7 @@ export class GrantsService {
       );
       if (allApproved) {
         app.status = 'completed';
-        await this.kv.put(grantApplicationKey(daoId, appId), JSON.stringify(app), {
+        await this.kv?.put(grantApplicationKey(daoId, appId), JSON.stringify(app), {
           expirationTtl: DEFAULT_TTL,
         });
 
@@ -844,7 +844,7 @@ export class GrantsService {
     };
 
     // Cache analytics
-    await this.kv.put(grantAnalyticsKey(daoId), JSON.stringify(analytics), { expirationTtl: 3600 });
+    await this.kv?.put(grantAnalyticsKey(daoId), JSON.stringify(analytics), { expirationTtl: 3600 });
 
     return analytics;
   }
@@ -868,17 +868,17 @@ export class GrantsService {
 
   async #addToProgramIndex(daoId: string, programId: string): Promise<void> {
     const key = grantProgramIndexKey(daoId);
-    const existing = await this.kv.get(key);
+    const existing = await this.kv?.get(key);
     const index: string[] = existing ? JSON.parse(existing) : [];
     index.unshift(programId);
-    await this.kv.put(key, JSON.stringify(index), {
+    await this.kv?.put(key, JSON.stringify(index), {
       expirationTtl: DEFAULT_TTL,
     });
   }
 
   async #getProgramIndex(daoId: string): Promise<string[]> {
     try {
-      const raw = await this.kv.get(grantProgramIndexKey(daoId));
+      const raw = await this.kv?.get(grantProgramIndexKey(daoId));
       return raw ? (JSON.parse(raw) as string[]) : [];
     } catch {
       return [];
@@ -887,17 +887,17 @@ export class GrantsService {
 
   async #addToApplicationIndex(daoId: string, appId: string): Promise<void> {
     const key = grantApplicationIndexKey(daoId);
-    const existing = await this.kv.get(key);
+    const existing = await this.kv?.get(key);
     const index: string[] = existing ? JSON.parse(existing) : [];
     index.unshift(appId);
-    await this.kv.put(key, JSON.stringify(index), {
+    await this.kv?.put(key, JSON.stringify(index), {
       expirationTtl: DEFAULT_TTL,
     });
   }
 
   async #getApplicationIndex(daoId: string): Promise<string[]> {
     try {
-      const raw = await this.kv.get(grantApplicationIndexKey(daoId));
+      const raw = await this.kv?.get(grantApplicationIndexKey(daoId));
       return raw ? (JSON.parse(raw) as string[]) : [];
     } catch {
       return [];

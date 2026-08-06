@@ -19,6 +19,7 @@
 import type { CrossProtocolIdentity } from '@degenfeed/utils';
 import { identityKey } from '@degenfeed/utils';
 import type { Env } from '../types';
+import { getIdentity, setIdentity } from './rmi-client';
 
 // ─── Types ──────────────────────────────────────────────────────────────
 
@@ -123,20 +124,28 @@ export async function discoverIdentities(
     }
   }
 
-  // Fetch existing linked identities from KV
+  // Fetch existing linked identities — rmi-backend first, KV as fallback
   const alreadyLinked: string[] = [];
+  let existingIdentity: Record<string, unknown> | null = null;
   try {
-    const raw = await env.IDENTITIES?.get(identityKey(wallet));
-    if (raw) {
-      const existing = JSON.parse(raw) as CrossProtocolIdentity;
-      for (const key of Object.keys(existing)) {
-        if (key !== 'walletAddress' && key !== 'linkedAt' && key !== 'lastVerified') {
-          alreadyLinked.push(key);
-        }
+    existingIdentity = await getIdentity(env, wallet);
+  } catch {
+    existingIdentity = null;
+  }
+  if (!existingIdentity && env.IDENTITIES) {
+    try {
+      const raw = await env.IDENTITIES.get(identityKey(wallet));
+      if (raw) existingIdentity = JSON.parse(raw) as Record<string, unknown>;
+    } catch {
+      // no existing record
+    }
+  }
+  if (existingIdentity) {
+    for (const key of Object.keys(existingIdentity)) {
+      if (key !== 'walletAddress' && key !== 'linkedAt' && key !== 'lastVerified') {
+        alreadyLinked.push(key);
       }
     }
-  } catch {
-    // no existing record
   }
 
   const discovered: DiscoveredIdentity[] = [];
@@ -927,13 +936,21 @@ export async function linkDiscoveredIdentities(
 ): Promise<{ linked: number; identities: CrossProtocolIdentity }> {
   const wallet = walletAddress.toLowerCase();
 
-  // Load existing identity record
+  // Load existing identity record — rmi-backend first, KV as fallback
   let existing: CrossProtocolIdentity | null = null;
   try {
-    const raw = await env.IDENTITIES?.get(identityKey(wallet));
-    if (raw) existing = JSON.parse(raw) as CrossProtocolIdentity;
+    const identity = await getIdentity(env, wallet);
+    if (identity) existing = identity as unknown as CrossProtocolIdentity;
   } catch {
-    // no existing
+    // API unavailable — fall through to KV
+  }
+  if (!existing && env.IDENTITIES) {
+    try {
+      const raw = await env.IDENTITIES.get(identityKey(wallet));
+      if (raw) existing = JSON.parse(raw) as CrossProtocolIdentity;
+    } catch {
+      // no existing
+    }
   }
 
   const now = Date.now();
@@ -979,10 +996,18 @@ export async function linkDiscoveredIdentities(
   updated.lastVerified = now;
 
   if (linked > 0) {
+    // Primary: persist to rmi-backend. KV mirror stays warm for legacy readers.
+    let apiOk = false;
+    try {
+      await setIdentity(env, wallet, updated as unknown as Record<string, unknown>);
+      apiOk = true;
+    } catch {
+      apiOk = false;
+    }
     try {
       await env.IDENTITIES?.put(identityKey(wallet), JSON.stringify(updated));
     } catch (err) {
-      throw new Error(`Failed to store identities: ${String(err)}`);
+      if (!apiOk) throw new Error(`Failed to store identities: ${String(err)}`);
     }
   }
 

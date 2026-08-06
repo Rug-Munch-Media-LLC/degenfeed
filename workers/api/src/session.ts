@@ -1,4 +1,5 @@
 import { bytesToHex, hexToBytes } from '@noble/hashes/utils';
+import { getSession, setSession } from './lib/rmi-client';
 import type { Env } from './types';
 
 export interface SessionPayload {
@@ -30,11 +31,19 @@ export function revokedSessionKey(nonce: string): string {
 /**
  * Add a session nonce to the revocation blocklist.
  * The blocklist entry lives until the session would have naturally expired.
- * Returns `true` if the revocation was persisted, `false` if KV is down.
+ * Returns `true` if the revocation was persisted, `false` if storage is down.
+ *
+ * Primary store: rmi-backend /api/v1/sessions; KV (CACHE) is the fallback.
  */
 export async function revokeSession(nonce: string, expEpochMs: number, env: Env): Promise<boolean> {
-  if (!env.CACHE) return false;
   const remainingSeconds = Math.max(60, Math.ceil((expEpochMs - Date.now()) / 1000));
+  try {
+    await setSession(env, revokedSessionKey(nonce), { revoked: true }, remainingSeconds);
+    return true;
+  } catch {
+    // API unavailable (401/5xx/network) — fall back to KV
+  }
+  if (!env.CACHE) return false;
   try {
     await env.CACHE.put(revokedSessionKey(nonce), '1', {
       expirationTtl: remainingSeconds,
@@ -48,10 +57,22 @@ export async function revokeSession(nonce: string, expEpochMs: number, env: Env)
 /**
  * Check if a session nonce has been revoked.
  *
- * DESIGN DECISION: fail-closed during KV outages to prevent compromised
+ * DESIGN DECISION: fail-closed during storage outages to prevent compromised
  * sessions from being used; operators will be alerted via error logs.
  */
 export async function isSessionRevoked(nonce: string, env: Env): Promise<boolean> {
+  // Primary: rmi-backend sessions store. The backend returns HTTP 200 with
+  // `data: {}` for unknown sessions, so presence of the `revoked` flag (or
+  // any non-empty record) marks the session revoked.
+  try {
+    const data = await getSession(env, revokedSessionKey(nonce));
+    if (data !== null && data !== undefined) {
+      if (data.revoked === true) return true;
+      if (Object.keys(data).length > 0) return true;
+    }
+  } catch {
+    // API unavailable — fall through to KV
+  }
   if (!env.CACHE) return false;
   try {
     const result = await env.CACHE.get(revokedSessionKey(nonce));
@@ -69,20 +90,25 @@ export async function isSessionRevoked(nonce: string, env: Env): Promise<boolean
 
 /**
  * Revoke ALL sessions for a given wallet address.
- * Iterates the session blocklist is not practical with KV, so this
- * relies on the wallet address being included in the revocation audit log.
+ * Relies on the wallet address being included in the revocation audit log.
  * For now, individual session revocation must be used (via nonce).
  */
 export async function revokeAllSessionsForAddress(
   address: string,
   env: Env,
 ): Promise<{ ok: boolean; message: string }> {
-  if (!env.CACHE) return { ok: false, message: 'KV not available' };
-  // Store a marker that triggers a nonce-agnostic block.
-  // All sessions with this address will fail verification.
-  // TTL: 7 days to cover the max session lifetime.
+  const key = `revoked:address:${address.toLowerCase()}`;
+  // Primary: rmi-backend sessions store with a 7-day TTL covering the max
+  // session lifetime. KV is the fallback.
   try {
-    await env.CACHE.put(`revoked:address:${address.toLowerCase()}`, '1', {
+    await setSession(env, key, { revoked: true }, 7 * 86400);
+    return { ok: true, message: `All sessions revoked for ${address}` };
+  } catch {
+    // API unavailable — fall back to KV
+  }
+  if (!env.CACHE) return { ok: false, message: 'KV not available' };
+  try {
+    await env.CACHE.put(key, '1', {
       expirationTtl: 7 * 86400,
     });
     return { ok: true, message: `All sessions revoked for ${address}` };
@@ -95,9 +121,19 @@ export async function revokeAllSessionsForAddress(
  * Check if a wallet address has had all its sessions revoked.
  */
 async function isAddressRevoked(address: string, env: Env): Promise<boolean> {
+  const key = `revoked:address:${address.toLowerCase()}`;
+  try {
+    const data = await getSession(env, key);
+    if (data !== null && data !== undefined) {
+      if (data.revoked === true) return true;
+      if (Object.keys(data).length > 0) return true;
+    }
+  } catch {
+    // API unavailable — fall through to KV
+  }
   if (!env.CACHE) return false;
   try {
-    const result = await env.CACHE.get(`revoked:address:${address.toLowerCase()}`);
+    const result = await env.CACHE.get(key);
     return result !== null;
   } catch {
     // KV hiccup — fail-closed: treat address as revoked during KV outage
