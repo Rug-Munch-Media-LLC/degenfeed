@@ -18,7 +18,25 @@ export interface QueueItem<T = unknown> {
   payload: T;
 }
 
-const API_BASE = 'https://api.rugmunch.io/v1';
+const API_BASE = 'https://api.rugmunch.io/api/v1';
+
+/**
+ * Queue names accepted by the rmi-backend queue API.
+ * (Literal["sync","offline","premium"] in kv_migration.py)
+ */
+const VALID_QUEUES = new Set(['sync', 'offline', 'premium']);
+
+/**
+ * Normalize a queue name to one the backend accepts.
+ * Unknown queue names are mapped to "sync" and the original name is
+ * embedded in the payload as `_queue` so the backend can inspect it.
+ */
+function normalizeQueue(
+  queue: string,
+): { queue: string; embedOriginal: boolean } {
+  if (VALID_QUEUES.has(queue)) return { queue, embedOriginal: false };
+  return { queue: 'sync', embedOriginal: true };
+}
 
 /**
  * Feature flag: USE_RMI_QUEUE_API defaults to ENABLED. Set it to "false"
@@ -44,10 +62,18 @@ export async function enqueue(
   payload: unknown,
   apiKey: string,
 ): Promise<void> {
+  const { queue: normalizedQueue, embedOriginal } = normalizeQueue(queue);
+  const body: Record<string, unknown> = {
+    queue: normalizedQueue,
+    key,
+    payload: embedOriginal
+      ? { _queue: queue, ...(typeof payload === 'object' && payload !== null ? (payload as Record<string, unknown>) : { _data: payload }) }
+      : payload,
+  };
   const res = await fetch(`${API_BASE}/queue/enqueue`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'X-API-Key': apiKey },
-    body: JSON.stringify({ queue, key, payload }),
+    body: JSON.stringify(body),
   });
   if (!res.ok) {
     throw new Error(`[queue-client] enqueue ${queue}/${key} failed: HTTP ${res.status}`);
@@ -64,7 +90,8 @@ export async function dequeueRaw(
   limit = 50,
   apiKey: string,
 ): Promise<Array<QueueItem<unknown>>> {
-  const res = await fetch(`${API_BASE}/queue/dequeue?queue=${queue}&limit=${limit}`, {
+  const { queue: normalizedQueue } = normalizeQueue(queue);
+  const res = await fetch(`${API_BASE}/queue/dequeue?queue=${normalizedQueue}&limit=${limit}`, {
     headers: { 'X-API-Key': apiKey },
   });
   if (!res.ok) {
