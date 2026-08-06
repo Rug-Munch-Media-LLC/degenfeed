@@ -61,55 +61,32 @@ export const metadata: Metadata = {
 /* ─── LOGOS ───────────────────────────────────────────────────────────── */
 
 /**
- * RugMunch skull mark — the company brand. Rendered inline as an SVG
- * (no external asset, works under the nonce CSP). Skull + crossed bones
- * drawn with the DegenFeed green gradient so it sits on both dark and
- * light surfaces.
+ * DegenFeed logo — neon green wordmark, inline SVG.
  */
-const RUGMUNCH_LOGO_SVG = (
+const DEGENFEED_LOGO = (
   <svg
     xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 512 512"
-    width="36"
-    height="36"
+    viewBox="0 0 260 48"
+    width="180"
+    height="34"
     role="img"
-    aria-label="Rug Munch Media logo"
+    aria-label="DegenFeed logo"
   >
     <defs>
-      <linearGradient id="rm-bg" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0%" stopColor="#0d0d0d" />
-        <stop offset="100%" stopColor="#000000" />
-      </linearGradient>
-      <linearGradient id="rm-s" x1="0" y1="0" x2="1" y2="1">
+      <linearGradient id="df-logo-grad" x1="0%" y1="0%" x2="100%" y2="100%">
         <stop offset="0%" stopColor="#00ff41" />
-        <stop offset="100%" stopColor="#00cc34" />
+        <stop offset="50%" stopColor="#00cc34" />
+        <stop offset="100%" stopColor="#009928" />
       </linearGradient>
+      <filter id="df-logo-glow">
+        <feGaussianBlur stdDeviation="2" result="blur" />
+        <feMerge>
+          <feMergeNode in="blur" />
+          <feMergeNode in="SourceGraphic" />
+        </feMerge>
+      </filter>
     </defs>
-    <rect width="512" height="512" fill="url(#rm-bg)" rx={96} />
-    {/* Skull cranium */}
-    <path
-      d="M176 180c0-44 36-76 80-76s80 32 80 76c0 30-12 52-26 66v34c0 12-10 22-22 22h-64c-12 0-22-10-22-22v-34c-14-14-26-36-26-66z"
-      fill="url(#rm-s)"
-    />
-    {/* Eye sockets */}
-    <circle cx="224" cy="196" r="16" fill="#000" />
-    <circle cx="288" cy="196" r="16" fill="#000" />
-    {/* Nose */}
-    <path d="M256 216l-10 20a10 10 0 0020 0z" fill="#000" />
-    {/* Teeth */}
-    <rect x="224" y="278" width="8" height="14" rx="2" fill="#000" />
-    <rect x="240" y="278" width="8" height="14" rx="2" fill="#000" />
-    <rect x="256" y="278" width="8" height="14" rx="2" fill="#000" />
-    <rect x="272" y="278" width="8" height="14" rx="2" fill="#000" />
-    {/* Crossed bones behind skull */}
-    <g stroke="url(#rm-s)" strokeWidth="18" strokeLinecap="round">
-      <path d="M150 392 L266 276" />
-      <path d="M266 392 L150 276" />
-      <circle cx="150" cy="276" r="10" fill="url(#rm-s)" stroke="none" />
-      <circle cx="266" cy="276" r="10" fill="url(#rm-s)" stroke="none" />
-      <circle cx="150" cy="392" r="10" fill="url(#rm-s)" stroke="none" />
-      <circle cx="266" cy="392" r="10" fill="url(#rm-s)" stroke="none" />
-    </g>
+    <text x="0" y="36" font-family="'Inter','SF Pro Display',system-ui,sans-serif" font-weight="800" font-size="36" fill="url(#df-logo-grad)" filter="url(#df-logo-glow)" letter-spacing="-1">DegenFeed</text>
   </svg>
 );
 
@@ -1755,7 +1732,7 @@ export default async function LandingPage() {
       <header className="header">
         <div className="header-inner">
           <Link href="/" className="header-brand" aria-label="DegenFeed home — by Rug Munch Media">
-            {RUGMUNCH_LOGO_SVG}
+            {DEGENFEED_LOGO}
             <span>
               DegenFeed
               <span className="header-brand-sub">by Rug Munch Media</span>
@@ -2201,7 +2178,7 @@ export default async function LandingPage() {
           <div className="footer-grid">
             <div className="footer-brand-area">
               <div className="footer-brand-row">
-                {RUGMUNCH_LOGO_SVG}
+                {DEGENFEED_LOGO}
                 <span>DegenFeed</span>
               </div>
               <p className="footer-desc">

@@ -38,12 +38,27 @@ export {
   fetchPleromaPosts,
   fetchWriteFreelyPosts,
 } from './adapters';
+export {
+  AUDIUS_API_URL,
+  AudiusProvider,
+  type AudiusProviderOptions,
+  type AudiusTrack,
+  isAudiusTrack,
+} from './providers/audius';
 export { BlueskyProvider, CURATED_BSKY_ACTORS } from './providers/bluesky';
 export { CURATED_FARCASTER_FIDS, DEFAULT_HUB_URL, FarcasterProvider } from './providers/farcaster';
 export {
   KBIN_INSTANCES,
   KbinProvider,
 } from './providers/kbin';
+export {
+  isKickChannel,
+  isKickFeaturedVideo,
+  KICK_API_URL,
+  KICK_TOP_CHANNELS,
+  KickProvider,
+  type KickProviderOptions,
+} from './providers/kick';
 export {
   type DiscoverCommunitiesOptions,
   discoverCommunities,
@@ -62,6 +77,20 @@ export {
   PUBLIC_MASTODON_INSTANCES,
   TRENDING_INSTANCES,
 } from './providers/mastodon';
+export {
+  CURATED_MEDIUM_PUBLICATIONS,
+  CURATED_MEDIUM_TAGS,
+  isChallengePage,
+  MediumProvider,
+  parseMediumRss,
+} from './providers/medium';
+export {
+  CURATED_MIRROR_WRITERS,
+  extractMarkdownImages,
+  MIRROR_BRIDGE_URL,
+  MirrorProvider,
+  mirrorArticleToPost,
+} from './providers/mirror';
 export { DEFAULT_RELAYS, NostrProvider } from './providers/nostr';
 export {
   isOpenSeaCollection,
@@ -70,13 +99,19 @@ export {
   type OpenSeaProviderOptions,
 } from './providers/opensea';
 export {
+  CURATED_PARAGRAPH_PUBLICATIONS,
+  PARAGRAPH_BRIDGE_URL,
+  ParagraphProvider,
+  parseParagraphRss,
+} from './providers/paragraph';
+export { PixelfedProvider, type PixelfedProviderOptions } from './providers/pixelfed';
+export {
   isPolymarketEvent,
   isPolymarketMarket,
-  parseOutcomePrices,
   PolymarketProvider,
   type PolymarketProviderOptions,
+  parseOutcomePrices,
 } from './providers/polymarket';
-export { PixelfedProvider, type PixelfedProviderOptions } from './providers/pixelfed';
 export { PonderProvider } from './providers/ponder';
 export {
   CRYPTO_SUBREDDIT_CONFIGS,
@@ -95,18 +130,6 @@ export {
   DEFAULT_RMI_BACKEND_URL,
   RmiDataBusProvider,
 } from './providers/rmi-databus';
-export {
-  isSnapshotProposal,
-  SNAPSHOT_GRAPHQL_URL,
-  SNAPSHOT_SPACES,
-  SnapshotProvider,
-  type SnapshotProviderOptions,
-} from './providers/snapshot';
-export {
-  isTallyProposal,
-  TallyProvider,
-  type TallyProviderOptions,
-} from './providers/tally';
 export type { QualityScore, RssCategory, RssFeedConfig } from './providers/rss';
 export {
   DEFAULT_CRYPTO_FEEDS,
@@ -118,6 +141,24 @@ export {
 } from './providers/rss';
 export { RssBridgeProvider } from './providers/rss-bridge';
 export {
+  isSnapshotProposal,
+  SNAPSHOT_GRAPHQL_URL,
+  SNAPSHOT_SPACES,
+  SnapshotProvider,
+  type SnapshotProviderOptions,
+} from './providers/snapshot';
+export {
+  CURATED_SUBSTACKS,
+  parseSubstackRss,
+  SubstackProvider,
+  substackItemToPost,
+} from './providers/substack';
+export {
+  isTallyProposal,
+  TallyProvider,
+  type TallyProviderOptions,
+} from './providers/tally';
+export {
   CURATED_THREADS_HANDLES,
   GTS_INSTANCE,
   isAvailable,
@@ -128,6 +169,15 @@ export {
   TILDES_GROUPS,
   TildesProvider,
 } from './providers/tildes';
+export {
+  isTwitchClip,
+  isTwitchGame,
+  isTwitchStream,
+  TWITCH_API_URL,
+  TwitchProvider,
+  type TwitchProviderOptions,
+  twitchThumbnailUrl,
+} from './providers/twitch';
 export type { FeedProvider, FeedResult, FetchOptions, HealthResult, SchemaGuard } from './types';
 export {
   buildUrl,

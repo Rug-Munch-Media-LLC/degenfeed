@@ -449,6 +449,21 @@ export const PROTOCOLS: Record<string, ProtocolConfig> = {
       { label: 'streamers', value: '7M+' },
     ],
   },
+  kick: {
+    id: 'kick',
+    label: 'Kick',
+    color: '#53fc18',
+    icon: 'K',
+    description: 'Live streams & featured videos — top channels, viewer counts & gaming',
+    endpoint: '/api/feed/kick',
+    route: '/feed/kick',
+    postNoun: 'stream',
+    category: 'video',
+    stats: [
+      { label: 'live', value: 'channels' },
+      { label: 'viewers', value: 'real-time' },
+    ],
+  },
   loops: {
     id: 'loops',
     label: 'Loops',
@@ -821,6 +836,22 @@ export const EXTRA_PROTOCOLS: ExtraProtocolConfig[] = [
     category: 'publishing',
   },
   {
+    id: 'substack',
+    label: 'Substack',
+    color: '#ff6719',
+    icon: 'S',
+    route: '/feed/substack',
+    category: 'publishing',
+  },
+  {
+    id: 'medium',
+    label: 'Medium',
+    color: '#000000',
+    icon: 'M',
+    route: '/feed/medium',
+    category: 'publishing',
+  },
+  {
     id: 'ghost',
     label: 'Ghost',
     color: '#15171a',
@@ -928,6 +959,7 @@ export const SIDEBAR_ORDER = [
   'peertube',
   'vimeo',
   'twitch',
+  'kick',
   'loops',
   'owncast',
   // Audio
@@ -939,6 +971,10 @@ export const SIDEBAR_ORDER = [
   'writefreely',
   'wordpress',
   'newsletter',
+  'substack',
+  'medium',
+  'mirror',
+  'paragraph',
   // Governance
   'snapshot',
   'tally',

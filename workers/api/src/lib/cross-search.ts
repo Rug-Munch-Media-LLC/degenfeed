@@ -78,6 +78,8 @@ export const PROTOCOL_META: Record<string, ProtocolMeta> = {
   youtube: { label: 'YouTube', color: '#ff0000', icon: '▶' },
   mirror: { label: 'Mirror.xyz', color: '#0a0a0a', icon: 'M' },
   paragraph: { label: 'Paragraph', color: '#6b21a8', icon: 'P' },
+  substack: { label: 'Substack', color: '#ff6719', icon: 'S' },
+  medium: { label: 'Medium', color: '#000000', icon: 'M' },
   zora: { label: 'Zora', color: '#7c3aed', icon: 'Z' },
   ghost: { label: 'Ghost', color: '#15171a', icon: 'G' },
   threads: { label: 'Threads', color: '#101010', icon: '▣' },

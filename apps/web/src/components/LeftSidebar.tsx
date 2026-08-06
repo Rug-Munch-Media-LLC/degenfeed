@@ -164,11 +164,16 @@ const SECTION_META: Record<SectionId, { label: string; icon: string }> = {
 const CATEGORY_TO_SECTION: Record<ProtocolCategory, SectionId> = {
   social: 'social',
   communities: 'social',
-  content: 'content',
+  discussion: 'social',
   news: 'content',
   media: 'content',
+  audio: 'content',
+  publishing: 'content',
+  reading: 'content',
   video: 'video',
   web3: 'web3',
+  governance: 'web3',
+  markets: 'web3',
 };
 
 interface FeatureLink {

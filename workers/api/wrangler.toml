@@ -258,6 +258,16 @@ BSKY_ACCESS_TOKEN = ""
 # YouTube Data API v3 key
 YOUTUBE_API_KEY = ""
 
+# ── Audio / Video Streaming feed providers ─────────────────────────
+# Twitch Helix API — TWITCH_CLIENT_ID is non-secret (safe in vars).
+# TWITCH_ACCESS_TOKEN (OAuth client-credentials token) and
+# TWITCH_CLIENT_SECRET are secrets — set via:
+#   wrangler secret put TWITCH_ACCESS_TOKEN
+#   wrangler secret put TWITCH_CLIENT_SECRET
+TWITCH_CLIENT_ID = ""
+TWITCH_ACCESS_TOKEN = ""
+TWITCH_CLIENT_SECRET = ""
+
 # Solana — RPC URL for wallet verification, Blinks, and billing
 SOLANA_RPC_URL = "https://api.mainnet-beta.solana.com"
 SOLANA_DEVNET_RPC_URL = "https://api.devnet.solana.com"

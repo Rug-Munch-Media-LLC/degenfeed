@@ -507,6 +507,10 @@ export interface Env {
   /** OpenSea API v2 key (optional — sent as X-API-KEY header). */
   OPENSEA_API_KEY?: string;
 
+  // ─── Audio / Video Streaming Feed Providers (2026-08-06) ───────────
+  /** Twitch OAuth access token (client credentials grant). Used by the Twitch feed provider. */
+  TWITCH_ACCESS_TOKEN?: string;
+
   // ─── News Aggregation ──────────────────────────────────────────────
   /** Overall wall-clock budget for one aggregateNews() run (ms). Default 25000. */
   NEWS_AGGREGATION_TIMEOUT_MS?: string;

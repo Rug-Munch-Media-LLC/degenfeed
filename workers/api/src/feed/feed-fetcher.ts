@@ -12,25 +12,32 @@
  */
 
 import {
+  AudiusProvider,
   BlueskyProvider,
   FarcasterProvider,
   type FeedProvider,
   type FeedResult,
   type FetchOptions,
   type HealthResult,
+  KickProvider,
   LemmyProvider,
   LensProvider,
   MastodonProvider,
+  MediumProvider,
+  MirrorProvider,
   NostrProvider,
   OpenSeaProvider,
+  ParagraphProvider,
   PolymarketProvider,
   PonderProvider,
   RedditProvider,
   RmiDataBusProvider,
   RssProvider,
   SnapshotProvider,
+  SubstackProvider,
   TallyProvider,
   ThreadsProvider,
+  TwitchProvider,
 } from '@degenfeed/feed-providers';
 import type { Protocol, UnifiedPost } from '@degenfeed/types';
 import { rmiUrl } from '@degenfeed/utils';
@@ -132,6 +139,13 @@ export const ALL_PROTOCOLS: Protocol[] = [
   'vimeo',
   'loops',
   'wordpress',
+  // ── Audio / Video Streaming (NEW 2026-08-06) ────────────
+  'twitch',
+  'kick',
+  // ── Publishing / Newsletters (NEW 2026-08-06) ──────────
+  'substack',
+  'medium',
+  'paragraph',
 ];
 
 /** Default protocols used when no explicit filter is provided */
@@ -156,6 +170,13 @@ export const DIRECT_FEED_PROTOCOLS: Protocol[] = [
   'threads',
   'youtube',
   'soundcloud',
+  'audius',
+  'twitch',
+  'kick',
+  'substack',
+  'medium',
+  'paragraph',
+  'mirror',
 ];
 
 export const DEFAULT_TIMEOUT_MS = 6000;
@@ -248,6 +269,12 @@ export const PROVIDER_TIMEOUTS: Record<Protocol, number> = {
   tally: 5000,
   polymarket: 6000,
   opensea: 6000,
+  // ── Audio / Video Streaming (NEW 2026-08-06) ────────────
+  twitch: 5000,
+  kick: 5000,
+  // ── Publishing / Newsletters (NEW 2026-08-06) ───────────
+  substack: 5000,
+  medium: 7000, // Cloudflare-bypass fallback can be slow
 };
 
 // ─── Per-provider fetch timer ────────────────────────────────────
@@ -384,6 +411,24 @@ export function getProvider(protocol: Protocol, env: Env): FeedProvider {
       return new YouTubeRssProvider();
     case 'soundcloud':
       return new SoundCloudRssProvider();
+    case 'audius':
+      return new AudiusProvider({});
+    case 'twitch':
+      return new TwitchProvider({
+        clientId: env.TWITCH_CLIENT_ID,
+        accessToken: env.TWITCH_ACCESS_TOKEN,
+        clientSecret: env.TWITCH_CLIENT_SECRET,
+      });
+    case 'kick':
+      return new KickProvider({});
+    case 'substack':
+      return new SubstackProvider({});
+    case 'medium':
+      return new MediumProvider({});
+    case 'paragraph':
+      return new ParagraphProvider({});
+    case 'mirror':
+      return new MirrorProvider({});
     default:
       // Fall back to bridge API for all other protocols (50+)
       return new BridgeFeedProvider(protocol, env);
@@ -550,12 +595,15 @@ class YouTubeRssProvider implements FeedProvider {
 // edge. No API key — the public RSS endpoints work without auth.
 
 const SOUNDCLOUD_FEEDS: Array<{ url: string; name: string }> = [
-  { url: 'https://feeds.soundcloud.com/users/soundcloud:users:3034543/sounds.rss', name: 'Bankless' },
-  { url: 'https://feeds.soundcloud.com/users/soundcloud:users:308177174/sounds.rss', name: 'Unchained' },
-  { url: 'https://feeds.soundcloud.com/users/soundcloud:users:333233826/sounds.rss', name: 'The Pomp Podcast' },
-  { url: 'https://feeds.soundcloud.com/users/soundcloud:users:203315527/sounds.rss', name: 'The Defiant Podcast' },
-  { url: 'https://feeds.soundcloud.com/users/soundcloud:users:552520050/sounds.rss', name: 'Delphi Digital' },
-  { url: 'https://feeds.soundcloud.com/users/soundcloud:users:211193132/sounds.rss', name: 'Real Vision Crypto' },
+  // Verified RSS-enabled 2026-08-06 — aligned with bridge/src/providers/soundcloud.ts
+  { url: 'https://feeds.soundcloud.com/users/soundcloud:users:8553751/sounds.rss', name: 'Monstercat' },
+  { url: 'https://feeds.soundcloud.com/users/soundcloud:users:53282567/sounds.rss', name: 'CloudKid' },
+  { url: 'https://feeds.soundcloud.com/users/soundcloud:users:1444689353/sounds.rss', name: 'NCS' },
+  { url: 'https://feeds.soundcloud.com/users/soundcloud:users:371762/sounds.rss', name: 'Proximity' },
+  { url: 'https://feeds.soundcloud.com/users/soundcloud:users:26057743/sounds.rss', name: 'Trap City' },
+  { url: 'https://feeds.soundcloud.com/users/soundcloud:users:856062/sounds.rss', name: 'Skrillex' },
+  { url: 'https://feeds.soundcloud.com/users/soundcloud:users:16730/sounds.rss', name: 'Diplo' },
+  { url: 'https://feeds.soundcloud.com/users/soundcloud:users:203410014/sounds.rss', name: 'deadmau5' },
 ];
 
 class SoundCloudRssProvider implements FeedProvider {
