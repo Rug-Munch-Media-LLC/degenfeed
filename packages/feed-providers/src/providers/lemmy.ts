@@ -663,8 +663,8 @@ export class LemmyProvider implements FeedProvider {
         // Per-community fetch asks for 40 posts; the general Hot fallback
         // asks for 50 from each reachable instance.
         const MIN_POSTS = 200;
-        const PER_COMMUNITY_LIMIT = '40';
-        const GENERAL_LIMIT = '50';
+        const PER_COMMUNITY_LIMIT = '50';
+        const GENERAL_LIMIT = '75';
 
         // Phase 1 — curated communities on their expected instance.
         // One subrequest per community (concurrency-capped) so the whole

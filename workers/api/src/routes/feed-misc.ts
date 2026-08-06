@@ -34,7 +34,7 @@ import type { Env } from '../types';
  */
 export async function handlePolymarketFeed(request: Request, env: Env): Promise<Response> {
   const params = new URL(request.url).searchParams;
-  const limit = Math.min(Number(params.get('limit')) || 50, 100);
+  const limit = Math.min(Number(params.get('limit')) || 50, 200);
   const cacheKey = `polymarket:v1:${limit}`;
   const cached = await readJsonCache<unknown>(env, cacheKey, 'polymarket cache read');
   if (cached) return jsonResponse(cached);
@@ -66,7 +66,7 @@ export async function handlePolymarketFeed(request: Request, env: Env): Promise<
 export async function handleRedditFeed(request: Request, env: Env): Promise<Response> {
   const params = new URL(request.url).searchParams;
   const subreddit = params.get('subreddit');
-  const limit = Math.min(Number(params.get('limit')) || 50, 100);
+  const limit = Math.min(Number(params.get('limit')) || 50, 200);
   const cacheKey = `reddit:v1:${subreddit || 'all'}:${limit}`;
   const cached = await readJsonCache<unknown>(env, cacheKey, 'reddit cache read');
   if (cached) return jsonResponse(cached);
@@ -134,7 +134,7 @@ export async function handleProviderFeed(
   // Accept ANY protocol — falls through to BridgeFeedProvider for unregistered ones
   const valid = new Set<Protocol>(DEFAULT_PROTOCOLS);
   const params = new URL(request.url).searchParams;
-  const limit = Math.min(Number(params.get('limit')) || 50, 100);
+  const limit = Math.min(Number(params.get('limit')) || 50, 200);
 
   // Helper: serve an explicit empty result when real content is unavailable
   // (never demo/seed content)

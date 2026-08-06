@@ -372,8 +372,8 @@ export class BlueskyProvider implements FeedProvider {
       const all: BskyPostView[] = [];
 
       // 1. Crypto keyword search (primary signal). Query in parallel with
-      //    25 posts per query so each query contributes a rich slice.
-      const queries = CRYPTO_SEARCH_QUERIES.slice(0, 6);
+      //    50 posts per query so each query contributes a rich slice.
+      const queries = CRYPTO_SEARCH_QUERIES.slice(0, 8);
       const searchResults = await withConcurrencyLimit(
         queries,
         4,
@@ -381,7 +381,7 @@ export class BlueskyProvider implements FeedProvider {
           try {
             return await withTimeout(
               this.withFallback((baseUrl) =>
-                searchPosts(baseUrl, q, 25, this.accessJwt),
+                searchPosts(baseUrl, q, 50, this.accessJwt),
               ),
               timeoutMs,
               `bluesky:search:${q}`,
@@ -394,7 +394,7 @@ export class BlueskyProvider implements FeedProvider {
       for (const r of searchResults) all.push(...r);
 
       // 2. ALL feed generators (What's Hot + curated feeds) in parallel —
-      //    every feed is fetched, not just a subset. 25 posts per feed.
+      //    every feed is fetched, not just a subset. 50 posts per feed.
       const feedResults = await withConcurrencyLimit(
         this.feedUris,
         7,
@@ -402,7 +402,7 @@ export class BlueskyProvider implements FeedProvider {
           try {
             return await withTimeout(
               this.withFallback((baseUrl) =>
-                fetchFeedGenerator(baseUrl, feedUri, 25, this.accessJwt),
+                fetchFeedGenerator(baseUrl, feedUri, 50, this.accessJwt),
               ),
               timeoutMs,
               `bluesky:feed:${feedUri}`,
@@ -419,7 +419,7 @@ export class BlueskyProvider implements FeedProvider {
       try {
         const trendingPosts = await withTimeout(
           this.withFallback((baseUrl) =>
-            fetchTrendingFeedPosts(baseUrl, 25, this.accessJwt),
+            fetchTrendingFeedPosts(baseUrl, 50, this.accessJwt),
           ),
           timeoutMs,
           'bluesky:trending-topics',
@@ -436,7 +436,7 @@ export class BlueskyProvider implements FeedProvider {
         try {
           return await withTimeout(
             this.withFallback((baseUrl) =>
-              fetchAuthorFeed(baseUrl, actor, 12, this.accessJwt),
+              fetchAuthorFeed(baseUrl, actor, 25, this.accessJwt),
             ),
             timeoutMs,
             `bluesky:${actor}`,

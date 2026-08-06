@@ -273,7 +273,7 @@ export class MediumProvider implements FeedProvider {
                 failed++;
                 return [] as UnifiedPost[];
               }
-              return feed.items.slice(0, 5).map((item, index) =>
+              return feed.items.slice(0, 15).map((item, index) =>
                 mediumItemToPost(source, feed, item, index),
               );
             } catch {

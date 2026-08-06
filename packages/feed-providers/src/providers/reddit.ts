@@ -678,7 +678,7 @@ async function fetchFromRedditJson(
 ): Promise<UnifiedPost[]> {
   const sortPath = sort === 'new' ? 'new' : sort === 'top' ? 'top' : 'hot';
   const url = buildUrl(REDDIT_RSS_BASE, `/r/${encodeURIComponent(subreddit)}/${sortPath}.json`, {
-    limit: String(Math.min(limit, 50)),
+    limit: String(Math.min(limit, 100)),
   });
   const data = await fetchJson<{ data?: { children?: RedditJsonPost[] } }>(url, {
     headers: redditHeaders(),
@@ -724,7 +724,7 @@ async function fetchFromOAuthJson(
 ): Promise<UnifiedPost[]> {
   const sortPath = sort === 'new' ? 'new' : sort === 'top' ? 'top' : 'hot';
   const url = buildUrl(REDDIT_OAUTH_BASE, `/r/${encodeURIComponent(subreddit)}/${sortPath}`, {
-    limit: String(Math.min(limit, 50)),
+    limit: String(Math.min(limit, 100)),
     raw_json: '1',
   });
   const data = await fetchJson<{ data?: { children?: RedditJsonPost[] } }>(url, {
@@ -769,7 +769,7 @@ async function fetchFromRedditRss(
 ): Promise<UnifiedPost[]> {
   const sortPath = sort === 'new' ? 'new' : sort === 'top' ? 'top' : 'hot';
   const xml = await fetchRss(
-    `${REDDIT_RSS_BASE}/r/${encodeURIComponent(subreddit)}/${sortPath}/.rss?limit=${Math.min(limit, 50)}`,
+    `${REDDIT_RSS_BASE}/r/${encodeURIComponent(subreddit)}/${sortPath}/.rss?limit=${Math.min(limit, 100)}`,
     { headers: redditHeaders() },
   );
   // RSS has no quality data — posts pass through unfiltered
@@ -888,29 +888,25 @@ export class RedditProvider implements FeedProvider {
     try {
       return await this.breaker.execute(async () => {
         const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
-        // Internal target: 50-100 posts per request. Raised from 25
-        // (2026-08-06). The feed fetcher doesn't pass limit directly, so
-        // we default internally and the route slices to the request limit.
-        const limit = 100;
+        // Internal target: 150-200 posts per request (raised 2026-08-06).
+        // The route slices to the requested limit (default 50, max 200).
+        const limit = 200;
 
         // OAuth path: fewer subreddits with a bigger per-sub slice so the
         // whole fetch fits in the request budget (10s provider timeout).
-        // Unauthenticated path: more subreddits, 3 per sub (quality headroom).
+        // Unauthenticated path: more subreddits, 25 per sub (quality headroom).
         let oauthToken: string | null = null;
         if (this.clientId && this.clientSecret) {
           oauthToken = await getRedditOAuthToken(this.clientId, this.clientSecret);
         }
 
-        const subsToFetch = oauthToken ? this.configs.slice(0, 20) : this.configs;
-        // 2026-08-06: cap the fan-out so the whole fetch fits inside the
-        // request budget. 24 subs × ~1s RSS fetch / concurrency 6 ≈ 4-6s.
-        // The old 50-sub sweep regularly blew past the 10s provider timeout
-        // and the endpoint returned empty.
-        const capSubs = Math.min(subsToFetch.length, oauthToken ? 20 : 24);
-        const perSub = oauthToken
-          ? Math.max(5, Math.ceil(limit / capSubs))
-          : Math.max(4, Math.ceil(limit / capSubs));
-        const concurrency = oauthToken ? 5 : 6;
+        const subsToFetch = oauthToken ? this.configs.slice(0, 30) : this.configs;
+        // 2026-08-06: fan out to 40+ subreddits so the RSS path alone yields
+        // 40 × 25 = 1000 raw posts → 200 after dedup. 40 subs × ~1s RSS fetch
+        // / concurrency 8 ≈ 5s, inside the 10s provider timeout.
+        const capSubs = Math.min(subsToFetch.length, oauthToken ? 30 : 42);
+        const perSub = Math.max(25, Math.ceil(limit / capSubs));
+        const concurrency = oauthToken ? 5 : 8;
 
         // Interleave crypto + legacy (tech/gaming/science) subs so the 24-sub
         // sample is not all crypto: take the first half from crypto configs

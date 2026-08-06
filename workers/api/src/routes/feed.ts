@@ -146,7 +146,9 @@ async function generateAndCacheFeed(
   const cookieHeader = request.headers.get('cookie') ?? '';
   const now = Date.now();
 
-  const limit = Math.min(Number(params.get('limit')) || 50, 100);
+  // Default limit 50, max 200 (raised from 100 on 2026-08-06 so every
+  // protocol feed can return 50+ posts).
+  const limit = Math.min(Number(params.get('limit')) || 50, 200);
   const category = params.get('category')?.toLowerCase() ?? '';
   const sort = params.get('sort') || 'scored';
   const cursor = Number(params.get('cursor')) || 0;

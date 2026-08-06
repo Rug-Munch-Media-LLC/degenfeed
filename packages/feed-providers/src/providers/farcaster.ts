@@ -257,7 +257,7 @@ export class FarcasterProvider implements FeedProvider {
     const [castData, userData] = await Promise.all([
       withTimeout(
         fetchJson<{ messages?: HubCastMessage[] }>(
-          buildUrl(hub, '/v1/castsByFid', { fid: String(fid), pageSize: '15' }),
+          buildUrl(hub, '/v1/castsByFid', { fid: String(fid), pageSize: '50' }),
           { headers: { 'user-agent': DEFAULT_USER_AGENT, accept: 'application/json' } },
         ),
         Math.min(timeoutMs, 5000),
@@ -344,7 +344,7 @@ export class FarcasterProvider implements FeedProvider {
   ): Promise<UnifiedPost[]> {
     const data = await withTimeout(
       fetchJson<{ messages?: HubCastMessage[] }>(
-        buildUrl(hub, '/v1/castsByParent', { url: channelUrl, pageSize: '25' }),
+        buildUrl(hub, '/v1/castsByParent', { url: channelUrl, pageSize: '50' }),
         { headers: { 'user-agent': DEFAULT_USER_AGENT, accept: 'application/json' } },
       ),
       Math.min(timeoutMs, 5000),
@@ -578,11 +578,11 @@ export class FarcasterProvider implements FeedProvider {
           return true;
         });
 
-        // Golden rule: never return less than 50 posts. If the merged
+        // Golden rule: never return less than 100 posts. If the merged
         // sources produced fewer, fall back to a broad recentCasts sweep
         // across hubs to pad the feed.
         let finalPosts = unique;
-        if (unique.length < 50) {
+        if (unique.length < 100) {
           const padding: UnifiedPost[] = [];
           const padResults = await withConcurrencyLimit(
             hubPool,
@@ -653,7 +653,7 @@ export class FarcasterProvider implements FeedProvider {
           finalPosts = [...unique, ...padUnique];
         }
 
-        const merged = [...finalPosts].sort((a, b) => b.createdAt - a.createdAt);
+        const merged = [...finalPosts].sort((a, b) => b.createdAt - a.createdAt).slice(0, 200);
         return merged.length
           ? { posts: merged.map(enrichPostNiches) }
           : { posts: [], notice: 'Farcaster unavailable' };

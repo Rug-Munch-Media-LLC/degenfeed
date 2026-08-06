@@ -206,7 +206,7 @@ export const PROVIDER_TIMEOUTS: Record<Protocol, number> = {
   lemmy: 8000, // fans out across 40+ communities/instances
   pixelfed: 5000,
   peertube: 5000,
-  threads: 2000, // Scraping-based — aggressive
+  threads: 8000, // RSS-Bridge fan-out across curated handles — needs headroom
   zora: 8000,
   rss: 3000, // Slow feed parser — aggressive
   mirror: 5000,
@@ -439,6 +439,7 @@ export function getProvider(protocol: Protocol, env: Env): FeedProvider {
         clientId: env.TWITCH_CLIENT_ID,
         accessToken: env.TWITCH_ACCESS_TOKEN,
         clientSecret: env.TWITCH_CLIENT_SECRET,
+        rssBridgeUrl: env.RSS_BRIDGE_URL || undefined,
       });
     case 'kick':
       return new KickProvider({});
@@ -625,7 +626,7 @@ class YouTubeRssProvider implements FeedProvider {
   async fetchFeed(_opts: FetchOptions = {}): Promise<FeedResult> {
     try {
       const { fetchYouTubeVideos } = await import('./unified-fetchers');
-      const { posts, errors } = await fetchYouTubeVideos(50);
+      const { posts, errors } = await fetchYouTubeVideos(100);
       return {
         posts,
         notice: errors.length > 0 ? `youtube: ${errors.length} feeds failed` : undefined,

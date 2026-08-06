@@ -61,8 +61,8 @@ export class MastodonProvider implements FeedProvider {
         //    at 200 with per-instance diversity (max 3 per instance).
         //    Fetched with a concurrency limit so the enlarged instance pool
         //    doesn't hammer the network at once.
-        const PER_INSTANCE_FETCH = 10;
-        const MAX_INSTANCE_FETCH = Math.max(PER_INSTANCE_FETCH, 10);
+        const PER_INSTANCE_FETCH = 25;
+        const MAX_INSTANCE_FETCH = Math.max(PER_INSTANCE_FETCH, 25);
         const trendingStart = performance.now();
         const trendingResults = await withConcurrencyLimit(
           TRENDING_INSTANCES,
