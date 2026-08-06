@@ -41,8 +41,8 @@ import {
 } from '@degenfeed/feed-providers';
 import type { Protocol, UnifiedPost } from '@degenfeed/types';
 import { rmiUrl } from '@degenfeed/utils';
-import type { Env } from '../types';
 import { log } from '../logger';
+import type { Env } from '../types';
 import { readProviderCache, writeProviderCache } from './feed-cache';
 import { sanitizePosts } from './feed-enricher';
 
@@ -193,8 +193,8 @@ export const PROVIDER_TIMEOUTS: Record<Protocol, number> = {
   bluesky: 8000,
   mastodon: 6000,
   // ── Tier 2: Established ──────────────────────────────────
-  reddit: 5000,
-  lemmy: 5000,
+  reddit: 10000, // OAuth + RSS + frontend fallback chain needs headroom
+  lemmy: 8000, // fans out across 40+ communities/instances
   pixelfed: 5000,
   peertube: 5000,
   threads: 2000, // Scraping-based — aggressive
@@ -394,7 +394,11 @@ export function getProvider(protocol: Protocol, env: Env): FeedProvider {
     case 'threads':
       return new ThreadsProvider();
     case 'reddit':
-      return new RedditProvider({ redlibUrl: env.REDLIB_URL });
+      return new RedditProvider({
+        redlibUrl: env.REDLIB_URL,
+        clientId: env.REDDIT_CLIENT_ID,
+        clientSecret: env.REDDIT_CLIENT_SECRET,
+      });
     case 'ponder':
       return new PonderProvider();
     case 'rss':
@@ -489,14 +493,22 @@ export class BridgeFeedProvider implements FeedProvider {
         const body = (await res.json()) as {
           data?: UnifiedPost[];
           posts?: UnifiedPost[];
-          meta?: { isDemo?: boolean; source?: string; demoNote?: string; notices?: string[]; errors?: string[] };
+          meta?: {
+            isDemo?: boolean;
+            source?: string;
+            demoNote?: string;
+            notices?: string[];
+            errors?: string[];
+          };
         };
         const posts = body.data ?? body.posts ?? [];
 
         // Detect demo/seed content — the bridge marks it with meta.isDemo
         // and per-post `_demo` flags. Never silently serve demo content as if
         // it were real; surface it in the notice so callers can distinguish.
-        const isDemo = body.meta?.isDemo === true || posts.some((p) => (p as Record<string, unknown>)?._demo === true);
+        const isDemo =
+          body.meta?.isDemo === true ||
+          posts.some((p) => (p as Record<string, unknown>)?._demo === true);
         if (isDemo) {
           log('warn', `bridge:${this.protocol}: provider returned empty — demo content served`, {
             provider: this.protocol,
@@ -519,7 +531,9 @@ export class BridgeFeedProvider implements FeedProvider {
             bridgeErrors: body.meta?.errors,
           });
         } else {
-          log('info', `bridge:${this.protocol}: fetched ${count} posts`, { provider: this.protocol });
+          log('info', `bridge:${this.protocol}: fetched ${count} posts`, {
+            provider: this.protocol,
+          });
         }
         return { posts: posts.slice(0, 50) };
       } catch (err) {
@@ -572,7 +586,7 @@ class YouTubeRssProvider implements FeedProvider {
   async fetchFeed(_opts: FetchOptions = {}): Promise<FeedResult> {
     try {
       const { fetchYouTubeVideos } = await import('./unified-fetchers');
-      const { posts, errors } = await fetchYouTubeVideos(30);
+      const { posts, errors } = await fetchYouTubeVideos(50);
       return {
         posts,
         notice: errors.length > 0 ? `youtube: ${errors.length} feeds failed` : undefined,
@@ -596,14 +610,32 @@ class YouTubeRssProvider implements FeedProvider {
 
 const SOUNDCLOUD_FEEDS: Array<{ url: string; name: string }> = [
   // Verified RSS-enabled 2026-08-06 — aligned with bridge/src/providers/soundcloud.ts
-  { url: 'https://feeds.soundcloud.com/users/soundcloud:users:8553751/sounds.rss', name: 'Monstercat' },
-  { url: 'https://feeds.soundcloud.com/users/soundcloud:users:53282567/sounds.rss', name: 'CloudKid' },
+  {
+    url: 'https://feeds.soundcloud.com/users/soundcloud:users:8553751/sounds.rss',
+    name: 'Monstercat',
+  },
+  {
+    url: 'https://feeds.soundcloud.com/users/soundcloud:users:53282567/sounds.rss',
+    name: 'CloudKid',
+  },
   { url: 'https://feeds.soundcloud.com/users/soundcloud:users:1444689353/sounds.rss', name: 'NCS' },
-  { url: 'https://feeds.soundcloud.com/users/soundcloud:users:371762/sounds.rss', name: 'Proximity' },
-  { url: 'https://feeds.soundcloud.com/users/soundcloud:users:26057743/sounds.rss', name: 'Trap City' },
-  { url: 'https://feeds.soundcloud.com/users/soundcloud:users:856062/sounds.rss', name: 'Skrillex' },
+  {
+    url: 'https://feeds.soundcloud.com/users/soundcloud:users:371762/sounds.rss',
+    name: 'Proximity',
+  },
+  {
+    url: 'https://feeds.soundcloud.com/users/soundcloud:users:26057743/sounds.rss',
+    name: 'Trap City',
+  },
+  {
+    url: 'https://feeds.soundcloud.com/users/soundcloud:users:856062/sounds.rss',
+    name: 'Skrillex',
+  },
   { url: 'https://feeds.soundcloud.com/users/soundcloud:users:16730/sounds.rss', name: 'Diplo' },
-  { url: 'https://feeds.soundcloud.com/users/soundcloud:users:203410014/sounds.rss', name: 'deadmau5' },
+  {
+    url: 'https://feeds.soundcloud.com/users/soundcloud:users:203410014/sounds.rss',
+    name: 'deadmau5',
+  },
 ];
 
 class SoundCloudRssProvider implements FeedProvider {
@@ -611,7 +643,7 @@ class SoundCloudRssProvider implements FeedProvider {
   readonly schema: import('@degenfeed/feed-providers').SchemaGuard = () => true;
 
   async fetchFeed(_opts: FetchOptions = {}): Promise<FeedResult> {
-    const limit = 30;
+    const limit = 50;
     const errors: string[] = [];
     const posts: UnifiedPost[] = [];
 
@@ -1282,9 +1314,18 @@ export function collectProviderResults(results: ProviderResult[]): ProviderFetch
 
 export async function fetchRedditPosts(env: Env, subreddit: string | null): Promise<FeedResult> {
   const provider = subreddit
-    ? new RedditProvider({ subreddits: [subreddit], redlibUrl: env.REDLIB_URL })
-    : new RedditProvider({ redlibUrl: env.REDLIB_URL });
-  return provider.fetchFeed({ timeoutMs: 5000 });
+    ? new RedditProvider({
+        subreddits: [subreddit],
+        redlibUrl: env.REDLIB_URL,
+        clientId: env.REDDIT_CLIENT_ID,
+        clientSecret: env.REDDIT_CLIENT_SECRET,
+      })
+    : new RedditProvider({
+        redlibUrl: env.REDLIB_URL,
+        clientId: env.REDDIT_CLIENT_ID,
+        clientSecret: env.REDDIT_CLIENT_SECRET,
+      });
+  return provider.fetchFeed({ timeoutMs: 10000 });
 }
 
 export interface ProviderHealth {

@@ -361,6 +361,23 @@ function finalizeNewsResult(
   else if (sort === 'trending') filtered.sort((a, b) => b.velocity - a.velocity);
   else filtered.sort((a, b) => b.score - a.score);
 
+  // Source diversity: cap any single outlet at ~30% of the returned feed so
+  // no one publication dominates the page (Ground News-style balance). The
+  // cap is only enforced past the first story of each source, and only when
+  // enough unique sources exist to fill the page.
+  const maxPerSource = Math.max(1, Math.ceil(limit * 0.3));
+  const sourceCounts = new Map<string, number>();
+  const diversified: AggregatedStory[] = [];
+  for (const story of filtered) {
+    const source = story.source || 'unknown';
+    const used = sourceCounts.get(source) ?? 0;
+    if (used >= maxPerSource && sourceCounts.size >= 2) continue;
+    sourceCounts.set(source, used + 1);
+    diversified.push(story);
+    if (diversified.length >= limit) break;
+  }
+  filtered = diversified;
+
   // Aggregate sentiment.
   const sentimentTotals = { bullish: 0, bearish: 0, neutral: 0 };
   for (const s of filtered) {

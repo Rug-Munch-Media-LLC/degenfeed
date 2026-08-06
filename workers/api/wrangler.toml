@@ -168,8 +168,12 @@ THREADS_PDS_URL = "https://public.threads.net"
 THREADS_APP_ID = ""
 # Farcaster Warpcast OAuth — for /api/auth/warpcast/* routes
 FARCASTER_CLIENT_ID = ""
-# Reddit OAuth — for /api/auth/reddit/callback route
+# Reddit OAuth — for /api/auth/reddit/callback route AND the Reddit feed
+# provider (client-credentials OAuth for ~100 QPM instead of being blocked
+# from datacenter IPs). ID is non-secret; SECRET must be set via:
+#   wrangler secret put REDDIT_CLIENT_SECRET
 REDDIT_CLIENT_ID = ""
+REDDIT_CLIENT_SECRET = ""
 # Comma-separated admin wallet addresses for moderation/admin API access.
 # Set via wrangler secret in production; example value here for preview/dev.
 # ADMIN_WALLETS = "0x1e3ac01d0fdb976179790bdd02823196a92705c9"

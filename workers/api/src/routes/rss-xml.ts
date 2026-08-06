@@ -144,7 +144,7 @@ async function gather(env: Env, _requested: Protocol[]): Promise<UnifiedPost[]> 
 export async function handleRssXml(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
   const category = url.searchParams.get('category')?.toLowerCase() ?? '';
-  const limit = Math.min(Number(url.searchParams.get('limit')) || 50, 200);
+  const limit = Math.min(Number(url.searchParams.get('limit')) || 50, 100);
   const query = url.searchParams.get('q')?.toLowerCase() ?? '';
   const protocols = parseProtocols(url.searchParams.get('protocols'));
 

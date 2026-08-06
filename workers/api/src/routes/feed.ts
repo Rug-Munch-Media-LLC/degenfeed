@@ -24,9 +24,9 @@ import {
   computeTrending,
   countNewSinceLastVisit,
   DEFAULT_PROTOCOLS,
+  DIRECT_FEED_PROTOCOLS,
   deduplicateCrossProtocol,
   deprioritizeStaleContent,
-  DIRECT_FEED_PROTOCOLS,
   enrichNostrEngagement,
   FEED_GENERATION_TIMEOUT_MS,
   type FeedType,
@@ -145,7 +145,7 @@ async function generateAndCacheFeed(
   const cookieHeader = request.headers.get('cookie') ?? '';
   const now = Date.now();
 
-  const limit = Math.min(Number(params.get('limit')) || 50, 200);
+  const limit = Math.min(Number(params.get('limit')) || 50, 100);
   const category = params.get('category')?.toLowerCase() ?? '';
   const sort = params.get('sort') || 'scored';
   const cursor = Number(params.get('cursor')) || 0;
@@ -175,9 +175,7 @@ async function generateAndCacheFeed(
   // demo/seed posts.
   if (feedType === 'home') {
     if (!env.BRIDGE_API_KEY) {
-      notices.push(
-        'BRIDGE_API_KEY not configured — skipping bridge, using direct providers',
-      );
+      notices.push('BRIDGE_API_KEY not configured — skipping bridge, using direct providers');
       console.warn('[feed] BRIDGE_API_KEY not configured — home feed will use direct providers');
     } else {
       const bridgeProvider = new BridgeFeedProvider(
@@ -220,16 +218,12 @@ async function generateAndCacheFeed(
     // out only to the 10 direct providers.
     const fetchProtocols = env.BRIDGE_API_KEY
       ? requestedProtocols
-      : requestedProtocols.filter((p) =>
-          (DIRECT_FEED_PROTOCOLS as readonly string[]).includes(p),
-        );
+      : requestedProtocols.filter((p) => (DIRECT_FEED_PROTOCOLS as readonly string[]).includes(p));
     if (!env.BRIDGE_API_KEY) {
       notices.push(
         `BRIDGE_API_KEY not configured — limiting to direct providers (${fetchProtocols.length}/${requestedProtocols.length})`,
       );
-      console.warn(
-        '[feed] BRIDGE_API_KEY not configured — skipping bridge-backed protocols',
-      );
+      console.warn('[feed] BRIDGE_API_KEY not configured — skipping bridge-backed protocols');
     }
     const results = await Promise.race([
       fetchFromProviders(env, fetchProtocols, limit, notices, execCtx, timer),
@@ -400,8 +394,7 @@ async function generateAndCacheFeed(
         limit,
         perProtocol,
         errors: errors.length > 0 ? errors : undefined,
-        notices:
-          notices.length > 0 ? notices : ['No posts available from any provider'],
+        notices: notices.length > 0 ? notices : ['No posts available from any provider'],
         fetchedAt: now,
         isDemo: false,
         source: 'direct',

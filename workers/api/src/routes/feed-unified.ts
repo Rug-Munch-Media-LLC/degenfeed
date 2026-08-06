@@ -106,7 +106,7 @@ export async function handleUnifiedFeed(request: Request, env: Env): Promise<Res
   const params = new URL(request.url).searchParams;
   const wallet = params.get('wallet') ?? undefined;
   const sort = parseSort(params.get('sort'));
-  const limit = Math.min(Number(params.get('limit')) || 50, 200);
+  const limit = Math.min(Number(params.get('limit')) || 50, 100);
   const cursor = params.get('cursor') ?? undefined;
   const sources = parseSources(params.get('sources'));
   const protocols = parseProtocols(params.get('protocols'));
@@ -186,7 +186,7 @@ export async function handleUnifiedFeed(request: Request, env: Env): Promise<Res
  */
 export async function handleTrendingContent(request: Request, env: Env): Promise<Response> {
   const params = new URL(request.url).searchParams;
-  const limit = Math.min(Number(params.get('limit')) || 50, 200);
+  const limit = Math.min(Number(params.get('limit')) || 50, 100);
   const windowHours = Number(params.get('window')) || 24;
   const minEngagement = Number(params.get('minEngagement')) || 1;
   const protocols = parseProtocols(params.get('protocols'));
@@ -220,7 +220,7 @@ export async function handleTrendingContent(request: Request, env: Env): Promise
 export async function handleForYouFeed(request: Request, env: Env): Promise<Response> {
   const params = new URL(request.url).searchParams;
   const wallet = params.get('wallet') ?? undefined;
-  const limit = Math.min(Number(params.get('limit')) || 50, 200);
+  const limit = Math.min(Number(params.get('limit')) || 50, 100);
 
   const pipeline = new ContentPipeline(env);
 
@@ -258,7 +258,7 @@ export async function handleCategoryFeed(
   categoryId: string,
 ): Promise<Response> {
   const params = new URL(request.url).searchParams;
-  const limit = Math.min(Number(params.get('limit')) || 50, 200);
+  const limit = Math.min(Number(params.get('limit')) || 50, 100);
   const wallet = params.get('wallet') ?? undefined;
 
   // Check if this is one of our default categories
@@ -319,7 +319,7 @@ export async function handleCategoryFeed(
 export async function handleUnifiedSearch(request: Request, env: Env): Promise<Response> {
   const params = new URL(request.url).searchParams;
   const query = params.get('q');
-  const limit = Math.min(Number(params.get('limit')) || 50, 200);
+  const limit = Math.min(Number(params.get('limit')) || 50, 100);
 
   if (!query || query.trim().length === 0) {
     return jsonResponse({ data: [], meta: { total: 0, query: '' } });
@@ -408,7 +408,7 @@ export async function handleSourceDiscovery(_request: Request, env: Env): Promis
  */
 export async function handleDefaultFeed(_request: Request, env: Env): Promise<Response> {
   const feed = await buildDefaultFeed(env);
-  const limit = Math.min(Number(new URL(_request.url).searchParams.get('limit')) || 50, 200);
+  const limit = Math.min(Number(new URL(_request.url).searchParams.get('limit')) || 50, 100);
 
   // No demo/seed injection for the new-user default feed either.
   const posts = feed.posts;
@@ -436,7 +436,7 @@ export async function handleNetworkFeed(
   network: string,
 ): Promise<Response> {
   const params = new URL(request.url).searchParams;
-  const limit = Math.min(Number(params.get('limit')) || 50, 200);
+  const limit = Math.min(Number(params.get('limit')) || 50, 100);
 
   const validNetworks: NetworkCategory[] = [
     'decentralized-social',

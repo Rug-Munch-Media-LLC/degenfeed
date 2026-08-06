@@ -447,7 +447,7 @@ export class TwitchProvider implements FeedProvider {
         const cryptoTech = streams.filter(keyword);
         const ordered = (cryptoTech.length >= 3 ? cryptoTech : streams)
           .sort((a, b) => (b.viewer_count ?? 0) - (a.viewer_count ?? 0))
-          .slice(0, 20);
+          .slice(0, 50);
 
         const posts: UnifiedPost[] = [
           ...ordered.map(streamToUnifiedPost),

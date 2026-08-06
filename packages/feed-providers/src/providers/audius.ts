@@ -237,7 +237,7 @@ export class AudiusProvider implements FeedProvider {
 
   /** Fetch trending tracks (primary signal). */
   private async fetchTrendingTracks(timeoutMs: number): Promise<AudiusTrack[]> {
-    const url = `${this.baseUrl}/tracks/trending?limit=25`;
+    const url = `${this.baseUrl}/tracks/trending?limit=50`;
     const data = await withTimeout(
       fetchJson<AudiusResponse | AudiusTrack[]>(url),
       timeoutMs,
@@ -280,7 +280,7 @@ export class AudiusProvider implements FeedProvider {
         // Tracks first (sorted by play count desc), then a few playlists.
         tracks.sort((a, b) => (b.play_count ?? 0) - (a.play_count ?? 0));
         const posts: UnifiedPost[] = [
-          ...tracks.slice(0, 25).map(trackToUnifiedPost),
+          ...tracks.slice(0, 50).map(trackToUnifiedPost),
           ...playlists.slice(0, 5).map(playlistToUnifiedPost),
         ];
 

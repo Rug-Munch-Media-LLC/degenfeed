@@ -5,6 +5,7 @@
  * routes/feed.ts.
  */
 
+import { PolymarketProvider } from '@degenfeed/feed-providers';
 import type { Protocol, UnifiedPost } from '@degenfeed/types';
 import {
   checkProvidersHealth,
@@ -12,13 +13,13 @@ import {
   DEFAULT_TIMEOUT_MS,
   fetchRedditPosts,
   getProvider,
+  PROVIDER_TIMEOUTS,
   readCachedHealth,
   readJsonCache,
   sanitizePosts,
   writeCachedHealth,
   writeJsonCache,
 } from '../feed';
-import { PolymarketProvider } from '@degenfeed/feed-providers';
 import { jsonResponse } from '../response-helpers';
 import type { Env } from '../types';
 
@@ -32,7 +33,7 @@ import type { Env } from '../types';
  */
 export async function handlePolymarketFeed(request: Request, env: Env): Promise<Response> {
   const params = new URL(request.url).searchParams;
-  const limit = Math.min(Number(params.get('limit')) || 50, 200);
+  const limit = Math.min(Number(params.get('limit')) || 50, 100);
   const cacheKey = `polymarket:v1:${limit}`;
   const cached = await readJsonCache<unknown>(env, cacheKey, 'polymarket cache read');
   if (cached) return jsonResponse(cached);
@@ -64,7 +65,7 @@ export async function handlePolymarketFeed(request: Request, env: Env): Promise<
 export async function handleRedditFeed(request: Request, env: Env): Promise<Response> {
   const params = new URL(request.url).searchParams;
   const subreddit = params.get('subreddit');
-  const limit = Math.min(Number(params.get('limit')) || 50, 200);
+  const limit = Math.min(Number(params.get('limit')) || 50, 100);
   const cacheKey = `reddit:v1:${subreddit || 'all'}:${limit}`;
   const cached = await readJsonCache<unknown>(env, cacheKey, 'reddit cache read');
   if (cached) return jsonResponse(cached);
@@ -132,7 +133,7 @@ export async function handleProviderFeed(
   // Accept ANY protocol — falls through to BridgeFeedProvider for unregistered ones
   const valid = new Set<Protocol>(DEFAULT_PROTOCOLS);
   const params = new URL(request.url).searchParams;
-  const limit = Math.min(Number(params.get('limit')) || 50, 200);
+  const limit = Math.min(Number(params.get('limit')) || 50, 100);
 
   // Helper: serve an explicit empty result when real content is unavailable
   // (never demo/seed content)
@@ -175,7 +176,7 @@ export async function handleProviderFeed(
   try {
     const feedProvider = getProvider(protocol, env);
     const result = await feedProvider.fetchFeed({
-      timeoutMs: DEFAULT_TIMEOUT_MS,
+      timeoutMs: PROVIDER_TIMEOUTS[protocol] ?? DEFAULT_TIMEOUT_MS,
       concurrency: 4,
     });
     let posts = sanitizePosts(result.posts).slice(0, limit);

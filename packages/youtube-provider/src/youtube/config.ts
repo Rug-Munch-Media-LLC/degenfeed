@@ -29,8 +29,8 @@ export const CRYPTO_CHANNELS: YouTubeChannel[] = [
   },
   {
     name: 'Crypto Banter',
-    feed: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCN9Nj4tjXbVTLYWN0EKlylQ',
-    channelId: 'UCN9Nj4tjXbVTLYWN0EKlylQ',
+    feed: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCN9Nj4tjXbVTLYWN0EKly_Q',
+    channelId: 'UCN9Nj4tjXbVTLYWN0EKly_Q',
     category: 'market_analysis',
     subcategory: 'daily-news',
     weight: 0.9,
@@ -110,6 +110,24 @@ export const CRYPTO_CHANNELS: YouTubeChannel[] = [
     weight: 0.9,
     niches: ['crypto', 'news', 'interviews'],
   },
+  {
+    name: 'Messari',
+    feed: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCFEHdhuB_BEUHA_eL9cjqHA',
+    channelId: 'UCFEHdhuB_BEUHA_eL9cjqHA',
+    category: 'market_analysis',
+    subcategory: 'market-commentary',
+    weight: 0.8,
+    niches: ['crypto', 'research', 'analytics', 'defi'],
+  },
+  {
+    name: 'ETHGlobal',
+    feed: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCfF9ZO8Ug4xk_AJd4aeT5HA',
+    channelId: 'UCfF9ZO8Ug4xk_AJd4aeT5HA',
+    category: 'security_tech',
+    subcategory: 'web3-dev',
+    weight: 0.7,
+    niches: ['ethereum', 'hackathon', 'web3', 'development'],
+  },
 
   // ── market-sentiment ───────────────────────────────────────────────
   {
@@ -143,8 +161,8 @@ export const CRYPTO_CHANNELS: YouTubeChannel[] = [
   // ── interviews ────────────────────────────────────────────────────
   {
     name: 'Thinking Crypto',
-    feed: 'https://www.youtube.com/feeds/videos.xml?channel_id=UC1eRVoBfyUYQvsG8k42ksjQ',
-    channelId: 'UC1eRVoBfyUYQvsG8k42ksjQ',
+    feed: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCjpkwsuHgYx9fBE0ojsJ_-w',
+    channelId: 'UCjpkwsuHgYx9fBE0ojsJ_-w',
     category: 'market_analysis',
     subcategory: 'interviews',
     weight: 0.8,
@@ -232,8 +250,8 @@ export const CRYPTO_CHANNELS: YouTubeChannel[] = [
   // ── protocol-deep-dives ────────────────────────────────────────────
   {
     name: 'Finematics',
-    feed: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCn2cHmXby69CRaR5eowM7lQ',
-    channelId: 'UCn2cHmXby69CRaR5eowM7lQ',
+    feed: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCh1ob28ceGdqohUnR7vBACA',
+    channelId: 'UCh1ob28ceGdqohUnR7vBACA',
     category: 'defi',
     subcategory: 'protocol-deep-dives',
     weight: 0.9,
@@ -241,8 +259,8 @@ export const CRYPTO_CHANNELS: YouTubeChannel[] = [
   },
   {
     name: 'a16z Crypto',
-    feed: 'https://www.youtube.com/feeds/videos.xml?channel_id=UC8gx6RzYYdqWB3K_dKsC6kQ',
-    channelId: 'UC8gx6RzYYdqWB3K_dKsC6kQ',
+    feed: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCTHq3W46BiAYjKUYZq2qm-Q',
+    channelId: 'UCTHq3W46BiAYjKUYZq2qm-Q',
     category: 'defi',
     subcategory: 'protocol-deep-dives',
     weight: 0.9,
@@ -250,8 +268,8 @@ export const CRYPTO_CHANNELS: YouTubeChannel[] = [
   },
   {
     name: 'The Defiant',
-    feed: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCL0iXkca1rL9K8Yf1Ae1EMg',
-    channelId: 'UCL0iXkca1rL9K8Yf1Ae1EMg',
+    feed: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCL0J4MLEdLP0-UyLu0hCktg',
+    channelId: 'UCL0J4MLEdLP0-UyLu0hCktg',
     category: 'defi',
     subcategory: 'protocol-deep-dives',
     weight: 0.8,
@@ -308,8 +326,8 @@ export const CRYPTO_CHANNELS: YouTubeChannel[] = [
   // ── defi-analysis ─────────────────────────────────────────────────
   {
     name: 'Whiteboard Crypto',
-    feed: 'https://www.youtube.com/feeds/videos.xml?channel_id=UC5sYBAiOnT4v0QBseBRh_sg',
-    channelId: 'UC5sYBAiOnT4v0QBseBRh_sg',
+    feed: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCsYYksPHiGqXHPoHI-fm5sg',
+    channelId: 'UCsYYksPHiGqXHPoHI-fm5sg',
     category: 'defi',
     subcategory: 'defi-analysis',
     weight: 0.8,
@@ -586,8 +604,8 @@ export const CRYPTO_CHANNELS: YouTubeChannel[] = [
   // ── beginner-friendly ──────────────────────────────────────────────
   {
     name: 'Crypto Casey',
-    feed: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCW8zQLw5KQ3F4KgeJzxJ7jA',
-    channelId: 'UCW8zQLw5KQ3F4KgeJzxJ7jA',
+    feed: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCi7RBPfTtRkVchV6qO8PUzg',
+    channelId: 'UCi7RBPfTtRkVchV6qO8PUzg',
     category: 'macro_bitcoin',
     subcategory: 'beginner-friendly',
     weight: 0.8,

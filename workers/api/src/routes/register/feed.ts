@@ -60,10 +60,12 @@ import {
 import {
   handleProtocolFeed,
   handleProtocolNewest,
+  handleProtocolLatest,
   handleProtocolPopular,
-  handleProtocolsList,
+  handleProtocolTop,
   handleProtocolTrendingRoute,
   handleProtocolVideos,
+  handleProtocolsList,
 } from '../../routes/feed-protocol';
 import { qualityDashboardRoutes } from '../../routes/feed-quality-dashboard';
 import {
@@ -926,6 +928,32 @@ export function registerFeedRoutes(app: Hono<{ Bindings: Env }>): void {
   app.get('/api/feed/protocol/:protocol/videos', async (c) => {
     try {
       const result = await handleProtocolVideos(
+        c.req.raw,
+        c.env,
+        c.req.param('protocol'),
+        c.executionCtx,
+      );
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/feed/protocol/:protocol/latest', async (c) => {
+    try {
+      const result = await handleProtocolLatest(
+        c.req.raw,
+        c.env,
+        c.req.param('protocol'),
+        c.executionCtx,
+      );
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/feed/protocol/:protocol/top', async (c) => {
+    try {
+      const result = await handleProtocolTop(
         c.req.raw,
         c.env,
         c.req.param('protocol'),

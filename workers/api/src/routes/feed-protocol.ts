@@ -224,7 +224,7 @@ async function generateProtocolFeed(
   const now = Date.now();
   const userId = null; // Protocol feeds don't need per-user cache
 
-  const limit = Math.min(Number(params.get('limit')) || 50, 200);
+  const limit = Math.min(Number(params.get('limit')) || 50, 100);
 
   // 1. Fetch from providers for this protocol
   const notices: string[] = [];
@@ -304,6 +304,7 @@ async function generateProtocolFeed(
     }
 
     case 'newest':
+    case 'latest':
       sorted = [...relevant].sort((a, b) => b.createdAt - a.createdAt);
       break;
 
@@ -319,8 +320,10 @@ async function generateProtocolFeed(
       break;
     }
 
+    case 'top':
+    case 'scored':
     default: {
-      // 'scored' — use the full scoring pipeline
+      // 'top' and 'scored' — full scoring pipeline ranking
       const mergedPrefs = mergePreferences(
         parsePrefsFromQuery(params),
         userCtx.preferences,
@@ -492,6 +495,38 @@ export async function handleProtocolNewest(
     return jsonResponse({ error: `Unknown protocol: "${protocol}"` }, 404);
   }
   return generateProtocolFeed(request, env, execCtx, protocol, 'newest');
+}
+
+/**
+ * GET /api/feed/protocol/:protocol/latest
+ * Newest posts in chronological order (user-facing "Latest" sort).
+ */
+export async function handleProtocolLatest(
+  request: Request,
+  env: Env,
+  protocol: string,
+  execCtx?: ExecCtx,
+): Promise<Response> {
+  if (!isValidProtocol(protocol)) {
+    return jsonResponse({ error: `Unknown protocol: "${protocol}"` }, 404);
+  }
+  return generateProtocolFeed(request, env, execCtx, protocol, 'latest');
+}
+
+/**
+ * GET /api/feed/protocol/:protocol/top
+ * Top-ranked posts using the full scoring pipeline.
+ */
+export async function handleProtocolTop(
+  request: Request,
+  env: Env,
+  protocol: string,
+  execCtx?: ExecCtx,
+): Promise<Response> {
+  if (!isValidProtocol(protocol)) {
+    return jsonResponse({ error: `Unknown protocol: "${protocol}"` }, 404);
+  }
+  return generateProtocolFeed(request, env, execCtx, protocol, 'top');
 }
 
 /**

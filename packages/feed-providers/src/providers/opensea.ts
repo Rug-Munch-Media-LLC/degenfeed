@@ -194,7 +194,7 @@ export class OpenSeaProvider implements FeedProvider {
 
   /** Fetch trending collections (primary signal). */
   private async fetchTrendingCollections(timeoutMs: number): Promise<OpenSeaCollection[]> {
-    const url = `${this.baseUrl}/collections/trending?limit=20`;
+    const url = `${this.baseUrl}/collections/trending?limit=50`;
     const data = await withTimeout(
       fetchJson<OpenSeaCollectionsResponse | OpenSeaCollection[]>(url, { headers: this.headers() }),
       timeoutMs,
@@ -241,7 +241,7 @@ export class OpenSeaProvider implements FeedProvider {
         );
 
         const posts: UnifiedPost[] = [
-          ...collections.slice(0, 20).map(collectionToUnifiedPost),
+          ...collections.slice(0, 50).map(collectionToUnifiedPost),
           ...sales.slice(0, 8).map(saleToUnifiedPost),
         ];
 

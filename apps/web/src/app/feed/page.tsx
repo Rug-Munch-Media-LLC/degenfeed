@@ -229,7 +229,7 @@ export default function FeedPage() {
   const [_showFeedInfo, _setShowFeedInfo] = useState(false);
   const [showTuner, setShowTuner] = useState(false);
   const [newAvailable, setNewAvailable] = useState(false);
-  const [loadedLimit, setLoadedLimit] = useState(25);
+  const [loadedLimit, setLoadedLimit] = useState(50);
   const lastPostIdRef = useRef('');
   const [feedMixConfig, setFeedMixConfig] = useState<FeedMixConfig>(() => loadFeedMixConfig());
   const [savedMixes, setSavedMixes] = useState<SavedMix[]>(() => loadSavedMixes());
@@ -414,7 +414,7 @@ export default function FeedPage() {
   }, [contextMenuPostId]);
 
   const loadMore = useCallback(() => {
-    setLoadedLimit((p) => p + 25);
+    setLoadedLimit((p) => p + 50);
   }, []);
 
   // useViewportPrefetch(posts, (post) => post);
@@ -452,21 +452,13 @@ export default function FeedPage() {
         const cacheKey = `feed_${hasSignedIn ? 'signed' : 'anon'}_${activeTab}_${controlsKey}_${loadedLimit}_${hideLowQuality}_${allowNonCrypto}_${showOriginalContent}_${minEngagement}_${maxPerNiche}_${recencyWeight}_${engagementWeight}_${freshnessPreference}_${creatorDiversity}_${exploreRatio}_${algorithmTransparent}_${activePreset ?? 'none'}`;
         const url = new URL(endpoint, window.location.origin);
         url.searchParams.set('limit', String(loadedLimit));
-        const protocolsToFetch =
-          controls.protocols.length > 0
-            ? controls.protocols
-            : [
-                'nostr',
-                'farcaster',
-                'lens',
-                'bluesky',
-                'mastodon',
-                'lemmy',
-                'peertube',
-                'reddit',
-                'rss',
-              ];
-        url.searchParams.set('protocols', protocolsToFetch.join(','));
+        // Only send an explicit `protocols` filter when the user has chosen
+        // one. With no filter, the worker aggregates EVERY registered
+        // protocol (68+) into the master unified feed instead of a small
+        // hard-coded subset.
+        if (controls.protocols.length > 0) {
+          url.searchParams.set('protocols', controls.protocols.join(','));
+        }
         // User-controlled feed params — forwarded to the bridge feed endpoint.
         // The bridge honors protocols/limit today; the rest are applied
         // client-side and ready for server-side adoption.

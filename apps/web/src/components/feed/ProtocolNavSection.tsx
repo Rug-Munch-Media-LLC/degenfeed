@@ -86,6 +86,9 @@ function SidebarLink({
 export function ProtocolNavSection() {
   const pathname = usePathname();
 
+  // ── Protocol search/filter ──────────────────────────────────────
+  const [filter, setFilter] = useState('');
+
   // Stats for live indicators
   interface SourceStat {
     count: number;
@@ -135,6 +138,18 @@ export function ProtocolNavSection() {
         count={stat?.count}
         showDot={stat && stat.count > 0}
       />
+    );
+  };
+
+  // Filter protocols by label or id when the user types in the search box.
+  const trimmedFilter = filter.trim().toLowerCase();
+  const matchesFilter = (pid: string): boolean => {
+    if (!trimmedFilter) return true;
+    const meta = PROTOCOL_META[pid];
+    if (!meta) return false;
+    return (
+      meta.label.toLowerCase().includes(trimmedFilter) ||
+      pid.toLowerCase().includes(trimmedFilter)
     );
   };
 
@@ -189,10 +204,39 @@ export function ProtocolNavSection() {
         </span>
       </div>
 
+      {/* Search/filter box */}
+      <div className="px-1 pb-1">
+        <div className="relative">
+          <span className="pointer-events-none absolute inset-y-0 left-2.5 flex items-center text-xs text-[var(--color-muted)] opacity-60">
+            ⌕
+          </span>
+          <input
+            type="search"
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            placeholder="Search protocols…"
+            aria-label="Search protocols"
+            className="w-full rounded-lg border border-[var(--color-glass-border)] bg-[var(--color-overlay)] py-1.5 pl-7 pr-2 text-xs text-[var(--color-fg)] placeholder:text-[var(--color-muted)] placeholder:opacity-60 focus:border-[var(--color-accent)] focus:outline-none transition-colors"
+          />
+        </div>
+        {trimmedFilter && (
+          <button
+            type="button"
+            onClick={() => setFilter('')}
+            className="mt-1 text-[9px] font-medium text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
+          >
+            Clear search ({countProtocolMatches(trimmedFilter, CATEGORY_PROTOCOLS, matchesFilter)})
+          </button>
+        )}
+      </div>
+
       {CATEGORY_DISPLAY_ORDER.map((catId) => {
         const catInfo = CATEGORIES[catId];
         const protocolIds = CATEGORY_PROTOCOLS[catId];
         if (!protocolIds || protocolIds.length === 0) return null;
+
+        const visibleIds = protocolIds.filter(matchesFilter);
+        if (visibleIds.length === 0) return null;
 
         return (
           <div key={catId} className="mb-1">
@@ -204,7 +248,7 @@ export function ProtocolNavSection() {
                 {catInfo.icon} {catInfo.label}
               </span>
             </div>
-            {protocolIds.map(renderProtocolLink)}
+            {visibleIds.map(renderProtocolLink)}
           </div>
         );
       })}
@@ -236,4 +280,19 @@ export function ProtocolNavSection() {
       </Link>
     </nav>
   );
+}
+
+/** Count protocols that match the active filter across all categories. */
+function countProtocolMatches(
+  filter: string,
+  categoryProtocols: Record<string, string[]>,
+  matches: (pid: string) => boolean,
+): number {
+  const seen = new Set<string>();
+  for (const ids of Object.values(categoryProtocols)) {
+    for (const id of ids) {
+      if (matches(id)) seen.add(id);
+    }
+  }
+  return seen.size;
 }

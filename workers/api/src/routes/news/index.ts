@@ -6,6 +6,7 @@
  * for RSS feed fetching, deduplication, scoring, and clustering.
  */
 
+import { NEWS } from '../../constants';
 import type {
   AggregatedStory,
   AggregationOptions,
@@ -13,7 +14,6 @@ import type {
   StoryCluster,
 } from '../../feed/news-types';
 import { edgeCacheGet, edgeCachePut } from '../../lib/edge-cache';
-import { NEWS } from '../../constants';
 import {
   badRequest,
   conflict,
@@ -260,7 +260,7 @@ function buildMeta(result: AggregationResult, opts: AggregationOptions): NewsMet
 function parseOpts(url: URL): AggregationOptions {
   const opts: AggregationOptions = {};
   const limit = url.searchParams.get('limit');
-  if (limit) opts.limit = Math.min(Number(limit) || 50, 200);
+  if (limit) opts.limit = Math.min(Number(limit) || 50, 100);
 
   const sort = url.searchParams.get('sort');
   if (sort === 'newest' || sort === 'trending') opts.sort = sort;
@@ -327,7 +327,7 @@ export async function handleNewsTrending(request: Request, env: Env): Promise<Re
   try {
     const url = new URL(request.url);
     const opts: AggregationOptions = {
-      limit: Math.min(Number(url.searchParams.get('limit')) || 20, 50),
+      limit: Math.min(Number(url.searchParams.get('limit')) || 50, 100),
       sort: 'trending',
     };
     const result = await getCachedOrFetch(env, opts);
@@ -347,7 +347,7 @@ export async function handleNewsForYou(request: Request, env: Env): Promise<Resp
   try {
     const url = new URL(request.url);
     const opts: AggregationOptions = {
-      limit: Math.min(Number(url.searchParams.get('limit')) || 20, 50),
+      limit: Math.min(Number(url.searchParams.get('limit')) || 50, 100),
     };
     const result = await getCachedOrFetch(env, opts);
     const meta = buildMeta(result, opts);
@@ -363,7 +363,7 @@ export async function handleNewsForYou(request: Request, env: Env): Promise<Resp
  */
 export async function handleNewsHot(request: Request, env: Env): Promise<Response> {
   try {
-    const limit = Math.min(Number(new URL(request.url).searchParams.get('limit')) || 20, 50);
+    const limit = Math.min(Number(new URL(request.url).searchParams.get('limit')) || 50, 100);
     const result = await getCachedOrFetch(env, { limit: 100 });
     const hot = result.stories.filter((s) => s.velocity > 0 || s.isBreaking).slice(0, limit);
     return ok({ data: hot.map(mapStory) });
@@ -377,7 +377,7 @@ export async function handleNewsHot(request: Request, env: Env): Promise<Respons
  */
 export async function handleNewsDeepDives(request: Request, env: Env): Promise<Response> {
   try {
-    const limit = Math.min(Number(new URL(request.url).searchParams.get('limit')) || 20, 50);
+    const limit = Math.min(Number(new URL(request.url).searchParams.get('limit')) || 50, 100);
     const result = await getCachedOrFetch(env, { limit: 100 });
     const deepDives = result.stories
       .filter((s) => (s.readingTime || 0) > 3 || (s.summary?.length || 0) > 500)
@@ -393,7 +393,7 @@ export async function handleNewsDeepDives(request: Request, env: Env): Promise<R
  */
 export async function handleNewsQuickReads(request: Request, env: Env): Promise<Response> {
   try {
-    const limit = Math.min(Number(new URL(request.url).searchParams.get('limit')) || 20, 50);
+    const limit = Math.min(Number(new URL(request.url).searchParams.get('limit')) || 50, 100);
     const result = await getCachedOrFetch(env, { limit: 100 });
     const quick = result.stories.filter((s) => (s.readingTime || 5) <= 2).slice(0, limit);
     return ok({ data: quick.map(mapStory) });
@@ -415,7 +415,7 @@ export async function handleNewsCategory(request: Request, env: Env): Promise<Re
     if (!cat) return badRequest('Missing category parameter');
 
     const opts: AggregationOptions = {
-      limit: Math.min(Number(url.searchParams.get('limit')) || 50, 200),
+      limit: Math.min(Number(url.searchParams.get('limit')) || 50, 100),
       category: cat,
     };
     const result = await getCachedOrFetch(env, opts);
@@ -457,7 +457,7 @@ export async function handleNewsSearch(request: Request, env: Env): Promise<Resp
     if (!q) return badRequest('Missing search query');
 
     const opts: AggregationOptions = {
-      limit: Math.min(Number(url.searchParams.get('limit')) || 50, 200),
+      limit: Math.min(Number(url.searchParams.get('limit')) || 50, 100),
       query: q,
     };
     const result = await getCachedOrFetch(env, opts);

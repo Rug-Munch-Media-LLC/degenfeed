@@ -56,6 +56,14 @@ export const CRYPTO_SUBREDDIT_CONFIGS: SubredditConfig[] = [
   { name: 'CryptoTechnology', weight: 0.7, category: 'crypto' },
   { name: 'cryptocurrencymemes', weight: 0.5, category: 'crypto' },
   { name: 'cryptomoonshots', weight: 0.3, category: 'crypto' },
+  // ── Crypto General – expansion (2026-08-06) ────────────────────
+  { name: 'altcoin', weight: 0.7, category: 'crypto' },
+  { name: 'Litecoin', weight: 0.5, category: 'crypto' },
+  { name: 'dogecoin', weight: 0.5, category: 'crypto' },
+  { name: 'XRP', weight: 0.5, category: 'crypto' },
+  { name: 'BitcoinCash', weight: 0.4, category: 'crypto' },
+  { name: 'BitcoinMarkets', weight: 0.7, category: 'crypto' },
+  { name: 'blockchain', weight: 0.6, category: 'crypto' },
   // ── Crypto General – sub-categories ──────────────────────────────
   { name: 'CryptoMemes', weight: 0.4, category: 'crypto' },
   { name: 'CryptoShitposting', weight: 0.3, category: 'crypto' },
@@ -100,6 +108,12 @@ export const CRYPTO_SUBREDDIT_CONFIGS: SubredditConfig[] = [
   { name: 'ethtrader', weight: 0.5, category: 'chain' },
   { name: 'polygon', weight: 0.5, category: 'chain' },
   { name: 'optimism', weight: 0.5, category: 'chain' },
+  // ── Chain-specific – expansion (2026-08-06) ────────────────────
+  { name: 'Chainlink', weight: 0.6, category: 'chain' },
+  { name: 'Monero', weight: 0.5, category: 'chain' },
+  { name: 'Stellar', weight: 0.4, category: 'chain' },
+  { name: 'base', weight: 0.5, category: 'chain' },
+  { name: 'Injective', weight: 0.4, category: 'chain' },
   // ── Chain-specific – emerging L1s/L2s ───────────────────────────
   { name: 'Hedera', weight: 0.5, category: 'chain' },
   { name: 'Algorand', weight: 0.5, category: 'chain' },
@@ -155,6 +169,9 @@ export const CRYPTO_SUBREDDIT_CONFIGS: SubredditConfig[] = [
   { name: 'cryptodevs', weight: 0.6, category: 'web3' },
   { name: 'BlockchainStartups', weight: 0.5, category: 'web3' },
   { name: 'TokenEngineering', weight: 0.4, category: 'web3' },
+  // ── Web3 – expansion (2026-08-06) ──────────────────────────────
+  { name: 'EthereumDev', weight: 0.6, category: 'web3' },
+  { name: 'solidity', weight: 0.6, category: 'web3' },
 ];
 
 /**
@@ -217,6 +234,66 @@ const LEGACY_SUBREDDITS: string[] = [
   'frontend',
   'opensource',
   'github',
+  // ── Tech / Programming – expansion (2026-08-06) ───────────────
+  'technology',
+  'ExperiencedDevs',
+  'cscareerquestions',
+  'learnprogramming',
+  'reactjs',
+  'vuejs',
+  'node',
+  'PostgreSQL',
+  'SQL',
+  'java',
+  'cpp',
+  'csharp',
+  'coding',
+  'compsci',
+  'algorithms',
+  'DataEngineering',
+  'sysadmin',
+  'HomeNetworking',
+  'privacy',
+  // ── Gaming – expansion (2026-08-06) ───────────────────────────
+  'gaming',
+  'pcgaming',
+  'truegaming',
+  'Games',
+  'gamedev',
+  'GameDeals',
+  'patientgamers',
+  // ── Science – expansion (2026-08-06) ──────────────────────────
+  'askscience',
+  'astronomy',
+  'chemistry',
+  'biology',
+  'Physics',
+  'engineering',
+  'environment',
+  'genetics',
+  'neuroscience',
+  // ── News – expansion (2026-08-06) ─────────────────────────────
+  'worldnews',
+  'news',
+  'geopolitics',
+  'politics',
+  'economy',
+  'business',
+  // ── General – expansion (2026-08-06) ──────────────────────────
+  'AskReddit',
+  'interestingasfuck',
+  'todayilearned',
+  'dataisbeautiful',
+  'aww',
+  'funny',
+  'mildlyinteresting',
+  'UpliftingNews',
+  'Damnthatsinteresting',
+  'educationalgifs',
+  'LifeProTips',
+  'food',
+  'travel',
+  'history',
 ];
 
 /**
@@ -256,11 +333,77 @@ const COMMUNITY_REDDIT_FRONTENDS = [
 // Reddit's own RSS feeds — these are public, no auth needed.
 const REDDIT_RSS_BASE = 'https://www.reddit.com';
 
-function redditHeaders(): Record<string, string> {
-  return {
+// OAuth API base — used when REDDIT_CLIENT_ID + REDDIT_CLIENT_SECRET
+// are configured. The OAuth client-credentials flow gets ~100 QPM per
+// client (vs ~10 QPM unauthenticated) and is NOT blocked from datacenter
+// IPs the way www.reddit.com/.rss and .json are.
+const REDDIT_OAUTH_BASE = 'https://oauth.reddit.com';
+const REDDIT_OAUTH_TOKEN_URL = 'https://www.reddit.com/api/v1/access_token';
+
+/** Module-level OAuth token cache (Workers are per-isolate, so this survives warm isolates). */
+let oauthTokenCache: { token: string; expiresAt: number } | null = null;
+
+interface RedditOAuthToken {
+  access_token: string;
+  token_type: string;
+  expires_in: number;
+  scope: string;
+}
+
+/**
+ * Fetch a client-credentials OAuth token for Reddit's API. Caches the
+ * token until 60s before it expires. Returns null when credentials are
+ * missing or the token endpoint rejects us (so callers fall back to RSS).
+ */
+async function getRedditOAuthToken(
+  clientId: string | undefined,
+  clientSecret: string | undefined,
+): Promise<string | null> {
+  if (!clientId || !clientSecret) return null;
+  if (oauthTokenCache && Date.now() < oauthTokenCache.expiresAt) {
+    return oauthTokenCache.token;
+  }
+  try {
+    const basic = btoa(`${encodeURIComponent(clientId)}:${encodeURIComponent(clientSecret)}`);
+    const res = await fetch(REDDIT_OAUTH_TOKEN_URL, {
+      method: 'POST',
+      headers: {
+        Authorization: `Basic ${basic}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'user-agent': 'Mozilla/5.0 (compatible; DegenFeed/1.0; +https://degenfeed.xyz)',
+      },
+      body: 'grant_type=client_credentials',
+    });
+    if (!res.ok) {
+      console.warn(`[reddit] OAuth token request failed: HTTP ${res.status}`);
+      return null;
+    }
+    const data = (await res.json()) as RedditOAuthToken;
+    if (!data.access_token) {
+      console.warn('[reddit] OAuth token response missing access_token');
+      return null;
+    }
+    oauthTokenCache = {
+      token: data.access_token,
+      expiresAt: Date.now() + (data.expires_in > 0 ? data.expires_in : 3600) * 1000 - 60000,
+    };
+    return oauthTokenCache.token;
+  } catch (err) {
+    console.warn(
+      '[reddit] OAuth token fetch failed:',
+      err instanceof Error ? err.message : err,
+    );
+    return null;
+  }
+}
+
+function redditHeaders(token?: string): Record<string, string> {
+  const headers: Record<string, string> = {
     'user-agent': 'Mozilla/5.0 (compatible; DegenFeed/1.0; +https://degenfeed.xyz)',
     accept: 'application/rss+xml, application/atom+xml, application/json, text/xml, */*',
   };
+  if (token) headers.Authorization = `Bearer ${token}`;
+  return headers;
 }
 
 interface RssItem {
@@ -572,6 +715,53 @@ async function fetchFromRedditJson(
 }
 
 /**
+ * Strategy 1.5: Reddit's OAuth JSON API (oauth.reddit.com).
+ * Requires client credentials. Gets ~100 QPM per client and is not
+ * blocked from datacenter IPs the way www.reddit.com is. This is the
+ * preferred strategy when credentials are configured.
+ */
+async function fetchFromOAuthJson(
+  subreddit: string,
+  sort: string,
+  limit: number,
+  token: string,
+): Promise<UnifiedPost[]> {
+  const sortPath = sort === 'new' ? 'new' : sort === 'top' ? 'top' : 'hot';
+  const url = buildUrl(REDDIT_OAUTH_BASE, `/r/${encodeURIComponent(subreddit)}/${sortPath}`, {
+    limit: String(Math.min(limit, 50)),
+    raw_json: '1',
+  });
+  const data = await fetchJson<{ data?: { children?: RedditJsonPost[] } }>(url, {
+    headers: redditHeaders(token),
+  });
+  return (data.data?.children ?? []).map((child) => {
+    const d = child.data;
+    const sub = d.subreddit ?? subreddit;
+    const link = d.url?.startsWith('/r/') ? `https://www.reddit.com${d.url}` : d.url;
+    const item: RssItem = {
+      title: d.title,
+      link: `https://www.reddit.com${d.permalink}`,
+      contentSnippet: d.selftext,
+      author: d.author,
+    };
+    const post = itemToUnifiedPost(item, sub, d.score ?? 0, d.num_comments ?? 0);
+    if (link) post.embeds.unshift({ kind: 'link', url: link });
+    post.createdAt = d.created_utc * 1000;
+
+    // Attach full quality data from JSON API
+    (post.raw as Record<string, unknown>)._redditQuality = {
+      score: d.score ?? 0,
+      upvoteRatio: d.upvote_ratio,
+      isStickied: d.stickied ?? false,
+      selfText: d.selftext,
+      isSelf: d.is_self ?? false,
+    } satisfies PostQualityData;
+
+    return post;
+  });
+}
+
+/**
  * Strategy 3: Reddit's own RSS feed at www.reddit.com.
  * Public, no auth, parses cleanly. Does NOT include score or metadata,
  * so quality filtering is bypassed for RSS-sourced posts.
@@ -603,17 +793,26 @@ async function fetchSubreddit(
   limit: number,
   timeoutMs: number,
   frontends: string[],
+  oauthToken?: string | null,
 ): Promise<UnifiedPost[]> {
   const { name: subreddit } = config;
 
-  const strategies: Array<{ name: string; fn: () => Promise<UnifiedPost[]> }> = [
+  const strategies: Array<{ name: string; fn: () => Promise<UnifiedPost[]> }> = [];
+  // OAuth first — best rate limits, not blocked from datacenter IPs.
+  if (oauthToken) {
+    strategies.push({
+      name: 'oauth-json',
+      fn: () => fetchFromOAuthJson(subreddit, sort, limit, oauthToken as string),
+    });
+  }
+  strategies.push(
     { name: 'rss', fn: () => fetchFromRedditRss(subreddit, sort, limit) },
     { name: 'json', fn: () => fetchFromRedditJson(subreddit, sort, limit) },
     ...frontends.map((frontend) => ({
       name: `frontend:${frontend}`,
       fn: () => fetchFromFrontend(frontend, subreddit, sort, limit),
     })),
-  ];
+  );
 
   // Run strategies in order and return the first non-empty result.
   // Sequential execution keeps per-IP request volume low enough to avoid
@@ -644,6 +843,9 @@ export interface RedditProviderOptions {
   sort?: 'hot' | 'new' | 'top';
   /** Base URL of a self-hosted Redlib instance (e.g. https://redlib.degenfeed.xyz) */
   redlibUrl?: string;
+  /** Reddit OAuth app credentials (client_credentials flow). Optional — RSS fallback used when absent. */
+  clientId?: string;
+  clientSecret?: string;
 }
 
 export class RedditProvider implements FeedProvider {
@@ -653,6 +855,8 @@ export class RedditProvider implements FeedProvider {
   private readonly configs: SubredditConfig[];
   private readonly sort: 'hot' | 'new' | 'top';
   private readonly frontends: string[];
+  private readonly clientId?: string;
+  private readonly clientSecret?: string;
   private readonly breaker = new CircuitBreaker('reddit');
 
   constructor(options: RedditProviderOptions = {}) {
@@ -663,25 +867,52 @@ export class RedditProvider implements FeedProvider {
     this.sort = options.sort ?? 'hot';
     const selfHostedRedlib = options.redlibUrl ?? 'http://127.0.0.1:8281';
     this.frontends = [selfHostedRedlib, ...COMMUNITY_REDDIT_FRONTENDS];
+    this.clientId = options.clientId;
+    this.clientSecret = options.clientSecret;
   }
 
   async fetchFeed(opts: FetchOptions = {}): Promise<FeedResult> {
     try {
       return await this.breaker.execute(async () => {
         const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
-        // Increased from 50 to 100 for richer content (2026-07-18).
-        // The feed fetcher doesn't pass limit directly, so we default internally.
-        // We fetch at least 3 per sub for quality filtering headroom, capped at 100 total.
+        // Internal target: 50-100 posts per request. Raised from 25
+        // (2026-08-06). The feed fetcher doesn't pass limit directly, so
+        // we default internally and the route slices to the request limit.
         const limit = 100;
-        const perSub = Math.max(3, Math.ceil(limit / Math.min(this.configs.length, 50)));
 
-        const results = await withConcurrencyLimit(this.configs, 2, async (config) => {
-          try {
-            return await fetchSubreddit(config, this.sort, perSub, timeoutMs, this.frontends);
-          } catch {
-            return [] as UnifiedPost[];
-          }
-        });
+        // OAuth path: fewer subreddits with a bigger per-sub slice so the
+        // whole fetch fits in the request budget (10s provider timeout).
+        // Unauthenticated path: more subreddits, 3 per sub (quality headroom).
+        let oauthToken: string | null = null;
+        if (this.clientId && this.clientSecret) {
+          oauthToken = await getRedditOAuthToken(this.clientId, this.clientSecret);
+        }
+
+        const subsToFetch = oauthToken ? this.configs.slice(0, 20) : this.configs;
+        const capSubs = Math.min(subsToFetch.length, oauthToken ? 20 : 50);
+        const perSub = oauthToken
+          ? Math.max(5, Math.ceil(limit / capSubs))
+          : Math.max(3, Math.ceil(limit / capSubs));
+        const concurrency = oauthToken ? 5 : 4;
+
+        const results = await withConcurrencyLimit(
+          subsToFetch.slice(0, capSubs),
+          concurrency,
+          async (config) => {
+            try {
+              return await fetchSubreddit(
+                config,
+                this.sort,
+                perSub,
+                timeoutMs,
+                this.frontends,
+                oauthToken,
+              );
+            } catch {
+              return [] as UnifiedPost[];
+            }
+          },
+        );
 
         const posts = results.flat().slice(0, limit);
         if (posts.length > 0) return { posts };
@@ -698,6 +929,24 @@ export class RedditProvider implements FeedProvider {
   async healthCheck(opts: FetchOptions = {}): Promise<HealthResult> {
     const start = Date.now();
     try {
+      // Prefer OAuth health probe when credentials are configured.
+      if (this.clientId && this.clientSecret) {
+        const token = await getRedditOAuthToken(this.clientId, this.clientSecret);
+        if (token) {
+          const data = await withTimeout(
+            fetchJson<{ data?: { children?: RedditJsonPost[] } }>(
+              buildUrl(REDDIT_OAUTH_BASE, '/r/Bitcoin/hot', { limit: '1', raw_json: '1' }),
+              { headers: redditHeaders(token) },
+            ),
+            opts.timeoutMs ?? DEFAULT_TIMEOUT_MS,
+            'reddit:health',
+          );
+          if ((data.data?.children?.length ?? 0) > 0) {
+            return { healthy: true, latencyMs: Date.now() - start };
+          }
+          return { healthy: false, latencyMs: Date.now() - start, error: 'empty response' };
+        }
+      }
       const xml = await withTimeout(
         fetchRss(`${REDDIT_RSS_BASE}/r/Bitcoin/hot/.rss?limit=1`, { headers: redditHeaders() }),
         opts.timeoutMs ?? DEFAULT_TIMEOUT_MS,

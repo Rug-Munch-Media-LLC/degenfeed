@@ -109,7 +109,7 @@ export class FarcasterProvider implements FeedProvider {
                       };
                       hash: string;
                     }>;
-                  }>(buildUrl(hub, '/v1/castsByFid', { fid: String(fid), pageSize: '3' }), {
+                  }>(buildUrl(hub, '/v1/castsByFid', { fid: String(fid), pageSize: '7' }), {
                     headers: { 'user-agent': DEFAULT_USER_AGENT, accept: 'application/json' },
                   }),
                   Math.min(timeoutMs, 5000),

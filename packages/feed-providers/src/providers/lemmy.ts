@@ -21,7 +21,14 @@ import {
 } from '@degenfeed/feed-core';
 import type { Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
 import type { FeedProvider, FeedResult, FetchOptions, HealthResult, SchemaGuard } from '../types';
-import { buildUrl, DEFAULT_TIMEOUT_MS, DEFAULT_USER_AGENT, fetchJson, withTimeout } from '../utils';
+import {
+  buildUrl,
+  DEFAULT_TIMEOUT_MS,
+  DEFAULT_USER_AGENT,
+  fetchJson,
+  withConcurrencyLimit,
+  withTimeout,
+} from '../utils';
 
 /**
  * Priority-ordered list of Lemmy instances to query.
@@ -600,8 +607,8 @@ export function adaptLemmyPost(raw: LemmyPostRaw, instanceDomain: string): Unifi
     },
     embeds,
     url: p.url
-      ? `https://talk.degenfeed.xyz/post/${p.id}`
-      : `https://talk.degenfeed.xyz/c/${communityName}`,
+      ? `https://${instance}/post/${p.id}`
+      : `https://${instance}/c/${communityName}`,
     dfUri: `df://lemmy/${instance}/c/${communityName}/${p.id}`,
     contentType,
     niches: [],
@@ -632,71 +639,76 @@ export class LemmyProvider implements FeedProvider {
         const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
         const allPosts: UnifiedPost[] = [];
 
-        // Increased community limit to 36 and per-community to 15 (2026-08-06)
-        // to cover the expanded 33-instance network.
-        // Fallback chain is capped at 4 instances per community (expected
-        // instance + 3 alternates) and per-attempt timeout at 3s so the
-        // whole provider stays well under the worker's 5s provider budget.
-        const MIN_POSTS = 20;
-        const communityBatches = this.communities.slice(0, 36);
-        const results = await Promise.allSettled(
-          communityBatches.map(async ({ community }) => {
+        // Default target: serve 50+ posts per request. Raised from 20
+        // (2026-08-06) so the protocol feed is rich by default.
+        // Per-community fetch asks for 25 posts; the general Hot fallback
+        // asks for 50 from each reachable instance.
+        const MIN_POSTS = 50;
+        const PER_COMMUNITY_LIMIT = '25';
+        const GENERAL_LIMIT = '50';
+
+        // Phase 1 — curated communities on their expected instance.
+        // One subrequest per community (concurrency-capped) so the whole
+        // provider stays well under the Worker 50-subrequest budget even
+        // when every community fails on the first try. Failures are logged
+        // verbosely instead of silently swallowed.
+        const communityBatches = this.communities.slice(0, 40);
+        const communityResults = await withConcurrencyLimit(
+          communityBatches,
+          8,
+          async ({ community }) => {
             const parts = community.split('@');
             const communityName = parts[0] ?? community;
             const expectedInstance = parts[1] ? `https://${parts[1]}` : null;
+            if (!expectedInstance) return [] as UnifiedPost[];
 
-            const tryInstances = expectedInstance
-              ? [
-                  expectedInstance,
-                  ...this.instances.filter((i) => i !== expectedInstance).slice(0, 3),
-                ]
-              : this.instances.slice(0, 4);
-
-            for (const instance of tryInstances) {
-              try {
-                const data = await withTimeout(
-                  fetchJson<LemmyPostListResponse>(
-                    buildUrl(instance, '/api/v3/post/list', {
-                      community_name: communityName,
-                      sort: 'Hot',
-                      limit: '15',
-                    }),
-                    { headers: { 'user-agent': DEFAULT_USER_AGENT, accept: 'application/json' } },
-                  ),
-                  Math.min(timeoutMs, 3000),
-                  `lemmy:${community}`,
+            try {
+              const data = await withTimeout(
+                fetchJson<LemmyPostListResponse>(
+                  buildUrl(expectedInstance, '/api/v3/post/list', {
+                    community_name: communityName,
+                    sort: 'Hot',
+                    limit: PER_COMMUNITY_LIMIT,
+                  }),
+                  { headers: { 'user-agent': DEFAULT_USER_AGENT, accept: 'application/json' } },
+                ),
+                Math.min(timeoutMs, 3000),
+                `lemmy:${community}`,
+              );
+              const posts = (data.posts ?? []).map((raw) => adaptLemmyPost(raw, expectedInstance));
+              if (posts.length === 0) {
+                console.warn(
+                  `[lemmy] community ${community} returned 0 posts on ${expectedInstance} (may not exist or is idle)`,
                 );
-                const posts = (data.posts ?? []).map((raw) => adaptLemmyPost(raw, instance));
-                // An instance that responds with posts wins immediately.
-                // An instance that responds empty (community exists but is
-                // idle) also wins — fall back to the general Hot feed below
-                // if the total stays under MIN_POSTS.
-                return posts;
-              } catch {
-                /* try next instance */
               }
+              return posts;
+            } catch (err) {
+              console.warn(
+                `[lemmy] community ${community} failed on ${expectedInstance}:`,
+                err instanceof Error ? err.message : err,
+              );
+              return [] as UnifiedPost[];
             }
-            return [];
-          }),
+          },
         );
+        for (const posts of communityResults) allPosts.push(...posts);
+        console.log(`[lemmy] phase 1: ${allPosts.length} posts from ${communityBatches.length} communities`);
 
-        for (const r of results) {
-          if (r.status === 'fulfilled') allPosts.push(...r.value);
-        }
-
-        // Golden rule (2026-08-06): the protocol must NEVER show empty.
-        // If curated communities produced fewer than MIN_POSTS, fetch the
-        // general Hot feed from reachable instances (no community filter)
-        // so users always have fresh content to scroll.
+        // Phase 2 — general Hot feed fallback. The protocol must NEVER
+        // show empty: if curated communities produced fewer than
+        // MIN_POSTS, fetch the general Hot feed from reachable instances
+        // (no community filter) so users always have fresh content.
         if (allPosts.length < MIN_POSTS) {
-          const generalResults = await Promise.allSettled(
-            this.instances.slice(0, 8).map(async (instance) => {
+          const generalResults = await withConcurrencyLimit(
+            this.instances.slice(0, 6),
+            3,
+            async (instance) => {
               try {
                 const data = await withTimeout(
                   fetchJson<LemmyPostListResponse>(
                     buildUrl(instance, '/api/v3/post/list', {
                       sort: 'Hot',
-                      limit: '20',
+                      limit: GENERAL_LIMIT,
                     }),
                     { headers: { 'user-agent': DEFAULT_USER_AGENT, accept: 'application/json' } },
                   ),
@@ -704,25 +716,42 @@ export class LemmyProvider implements FeedProvider {
                   `lemmy:general:${instance}`,
                 );
                 return (data.posts ?? []).map((raw) => adaptLemmyPost(raw, instance));
-              } catch {
+              } catch (err) {
+                console.warn(
+                  `[lemmy] general Hot feed failed on ${instance}:`,
+                  err instanceof Error ? err.message : err,
+                );
                 return [] as UnifiedPost[];
               }
-            }),
+            },
           );
-          for (const r of generalResults) {
-            if (r.status === 'fulfilled') allPosts.push(...r.value);
-          }
+          for (const posts of generalResults) allPosts.push(...posts);
+          console.log(`[lemmy] phase 2: ${allPosts.length} posts after general Hot fallback`);
         }
 
         if (allPosts.length === 0) {
+          console.warn('[lemmy] ALL instances returned 0 posts — feed empty');
           return { posts: [], notice: 'Lemmy unavailable' };
         }
-        return { posts: allPosts.map(enrichPostNiches) };
+
+        // Enrich per-post so a single malformed post can never zero the
+        // whole feed (regression guard for enrichPostNiches throwing).
+        return {
+          posts: allPosts.map((p) => {
+            try {
+              return enrichPostNiches(p);
+            } catch (err) {
+              console.warn('[lemmy] enrichPostNiches failed for a post — returning raw', err);
+              return p;
+            }
+          }),
+        };
       });
     } catch (err) {
       if (err instanceof CircuitBreakerError) {
         return { posts: [], notice: 'Lemmy: circuit breaker open — temporarily unavailable' };
       }
+      console.warn('[lemmy] fetchFeed failed:', err instanceof Error ? err.message : err);
       return { posts: [], notice: 'Lemmy unavailable' };
     }
   }

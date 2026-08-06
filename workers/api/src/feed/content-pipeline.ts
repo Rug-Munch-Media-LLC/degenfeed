@@ -453,24 +453,17 @@ export const DEFAULT_FEED_CATEGORIES: DefaultCategory[] = [
 
 /**
  * Core protocols used when the unified feed is requested WITHOUT an
- * explicit `protocols` or `sources` filter. Fetching these in parallel
- * guarantees real aggregated content (never an empty pipeline that would
- * trigger the demo/seed fallback). Kept deliberately small so a default
- * request stays fast; the full 68+ protocol list is still available via
- * the explicit `protocols` query param.
+ * explicit `protocols` or `sources` filter.
+ *
+ * The master unified feed must aggregate EVERY registered protocol, so this
+ * mirrors DEFAULT_PROTOCOLS (the full 68+ protocol registry from
+ * feed-fetcher.ts). Individual providers are fetched in parallel with
+ * per-provider timeouts and KV-backed provider caches, so a default request
+ * stays bounded even with the full registry. Protocol coverage is then
+ * diversified (≥2 posts per available protocol, ≤40% per protocol) in
+ * diversifyFeed() so no single network dominates the timeline.
  */
-export const CORE_FEED_PROTOCOLS: Protocol[] = [
-  'nostr',
-  'farcaster',
-  'mastodon',
-  'bluesky',
-  'rss',
-  'lens',
-  'lemmy',
-  'peertube',
-  'threads',
-  'youtube',
-];
+export const CORE_FEED_PROTOCOLS: Protocol[] = DEFAULT_PROTOCOLS;
 
 /**
  * Category slugs treated as crypto/web3/DeFi relevant. Posts classified
@@ -494,6 +487,80 @@ const CRYPTO_CATEGORIES: Set<CategorySlug> = new Set([
 ]);
 
 // ─── ContentPipeline ────────────────────────────────────────────────────
+
+/**
+ * Resolve a post's effective content type, preferring the explicit field and
+ * falling back to the first embed kind.
+ */
+function postContentType(post: UnifiedPost): string {
+  if (post.contentType) return post.contentType.toLowerCase();
+  const firstEmbed = post.embeds?.[0]?.kind;
+  if (firstEmbed === 'video') return 'video';
+  if (firstEmbed === 'image') return 'image';
+  if (firstEmbed === 'link') return 'link';
+  if (firstEmbed === 'quote') return 'quote';
+  if (firstEmbed === 'frame') return 'frame';
+  return 'text';
+}
+
+/**
+ * Reorder posts so content types are mixed across the page. Consecutive
+ * same-type runs are capped at `maxConsecutive` while preserving the
+ * relative score order as much as possible (lower-ranked posts of an
+ * already-saturated type are pushed later so rare types surface early).
+ */
+export function mixContentTypes(posts: UnifiedPost[], maxConsecutive = 3): UnifiedPost[] {
+  if (posts.length <= maxConsecutive) return posts;
+
+  const byType = new Map<string, UnifiedPost[]>();
+  for (const post of posts) {
+    const type = postContentType(post);
+    const list = byType.get(type) ?? [];
+    list.push(post);
+    byType.set(type, list);
+  }
+
+  // Round-robin across types with a consecutive-run cap: walk type queues,
+  // skipping a type that already produced maxConsecutive in a row.
+  const result: UnifiedPost[] = [];
+  const cursor = new Map<string, number>();
+  let consecutiveType = '';
+  let consecutiveCount = 0;
+  let remaining = posts.length;
+
+  while (remaining > 0) {
+    let advanced = false;
+    for (const [type, list] of byType) {
+      const index = cursor.get(type) ?? 0;
+      if (index >= list.length) continue;
+      if (type === consecutiveType && consecutiveCount >= maxConsecutive) continue;
+      const post = list[index];
+      if (!post) continue;
+      result.push(post);
+      cursor.set(type, index + 1);
+      const prevType = consecutiveType;
+      consecutiveType = type;
+      consecutiveCount = type === prevType ? consecutiveCount + 1 : 1;
+      remaining--;
+      advanced = true;
+    }
+    // Every remaining type is saturated in a row — allow one overflow pass.
+    if (!advanced) {
+      for (const [type, list] of byType) {
+        const index = cursor.get(type) ?? 0;
+        const post = list[index];
+        if (!post) continue;
+        result.push(post);
+        cursor.set(type, index + 1);
+        consecutiveType = type;
+        consecutiveCount = 1;
+        remaining--;
+      }
+    }
+  }
+
+  return result;
+}
 
 export class ContentPipeline {
   private env: Env;
@@ -995,7 +1062,13 @@ export class ContentPipeline {
       mixed.push(entry.post);
     }
 
-    return (mixed.length > 0 ? mixed : interleaved).slice(0, limit);
+    // 6. Mix content types (text / video / image / link / thread) so the
+    //    master feed shows a balanced blend instead of a wall of one type.
+    //    Consecutive same-type runs are capped; types with fewer posts are
+    //    spread across the page rather than clumped at the end.
+    const mixedContentTypes = mixContentTypes(mixed.length > 0 ? mixed : interleaved);
+
+    return mixedContentTypes.slice(0, limit);
   }
 
   // ─── Default Feed for New Users ──────────────────────────────────
