@@ -195,9 +195,9 @@ export function toApiPost(post: UnifiedPost): UnifiedPost {
   }
   const protocol = post.protocol;
   const author = post.author as WireAuthor;
-  author.name = author.name ?? author.displayName || wireHandle(author, protocol);
+  author.name = (author.name ?? author.displayName) || wireHandle(author, protocol);
   author.handle = author.handle ?? wireHandle(author, protocol);
-  author.avatar = author.avatar ?? author.avatarUrl || '';
+  author.avatar = (author.avatar ?? author.avatarUrl) || '';
   author.url = author.url || getExternalProfileUrl(author, protocol) || undefined;
   author.protocol = protocol;
   return post;
