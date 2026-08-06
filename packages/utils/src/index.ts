@@ -276,6 +276,10 @@ export {
   parseYouTubeUrl,
 } from './detectVideo';
 
+// ─── Media proxy (image-proxy URL helper) ─────────────────────────────
+
+export { proxyMediaUrl, proxyUrl } from './mediaProxy';
+
 // ─── Protocol content translation ─────────────────────────────────────
 
 export type { TranslationResult } from './protocolTranslator';

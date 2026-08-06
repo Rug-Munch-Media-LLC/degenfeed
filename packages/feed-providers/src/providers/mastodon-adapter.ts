@@ -1,5 +1,5 @@
 import { buildUnifiedPost } from '@degenfeed/feed-core';
-import type { Embed, Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
+import type { Embed, MediaAttachment, Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
 import { buildUrl, DEFAULT_USER_AGENT, fetchJson } from '../utils';
 export interface GtSAccount {
   id: string;
@@ -25,6 +25,8 @@ export interface GtSCard {
 export interface GtSMediaAttachment {
   type: 'image' | 'video' | 'gifv' | 'audio' | 'unknown';
   url: string;
+  preview_url?: string;
+  meta?: { original?: { width?: number; height?: number } };
 }
 
 /**
@@ -199,10 +201,28 @@ export function statusToUnifiedPost(status: GtSStatus, instanceUrl: string): Uni
   );
 
   const embeds: Embed[] = [];
-  for (const media of original.media_attachments) {
-    if (media.type === 'image' || media.type === 'gifv')
-      embeds.push({ kind: 'image', url: media.url });
-    else if (media.type === 'video') embeds.push({ kind: 'video', url: media.url });
+  const media: MediaAttachment[] = [];
+  for (const att of original.media_attachments) {
+    if (att.type === 'image' || att.type === 'gifv') {
+      embeds.push({ kind: 'image', url: att.url });
+      media.push({
+        type: att.type === 'gifv' ? 'gif' : 'image',
+        url: att.url,
+        width: att.meta?.original?.width,
+        height: att.meta?.original?.height,
+      });
+    } else if (att.type === 'video') {
+      embeds.push({ kind: 'video', url: att.url });
+      media.push({
+        type: 'video',
+        url: att.url,
+        width: att.meta?.original?.width,
+        height: att.meta?.original?.height,
+      });
+    } else if (att.type === 'audio') {
+      embeds.push({ kind: 'audio', url: att.url });
+      media.push({ type: 'audio', url: att.url });
+    }
   }
   if (original.card) {
     embeds.push({
@@ -214,6 +234,9 @@ export function statusToUnifiedPost(status: GtSStatus, instanceUrl: string): Uni
         image: original.card.image,
       },
     });
+    if (original.card.image) {
+      media.push({ type: 'image', url: original.card.image });
+    }
   }
 
   const finalText = original.spoiler_text
@@ -228,6 +251,7 @@ export function statusToUnifiedPost(status: GtSStatus, instanceUrl: string): Uni
     text: finalText,
     html: enrichedHtml,
     embeds,
+    media,
     parentNativeId: original.in_reply_to_id ?? undefined,
     createdAt: new Date(original.created_at).getTime(),
     metrics: {

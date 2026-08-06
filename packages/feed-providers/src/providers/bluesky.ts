@@ -4,7 +4,7 @@ import {
   CircuitBreakerError,
   enrichPostNiches,
 } from '@degenfeed/feed-core';
-import type { Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
+import type { MediaAttachment, Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
 import { isBskyPostView } from '../schemas';
 import type { FeedProvider, FeedResult, FetchOptions, HealthResult, SchemaGuard } from '../types';
 import {
@@ -130,7 +130,7 @@ interface BskyPostView {
     createdAt: string;
     embed?: {
       type?: string;
-      external?: { uri: string; title?: string; description?: string };
+      external?: { uri: string; title?: string; description?: string; thumb?: string };
       images?: { image: { ref: string }; alt: string }[];
     };
     reply?: { parent: { uri: string }; root: { uri: string } };
@@ -167,6 +167,7 @@ function authorToIdentity(author: BskyAuthor): UnifiedIdentity {
 
 function postToUnifiedPost(post: BskyPostView): UnifiedPost {
   const embeds: { kind: 'image' | 'link'; url: string; meta?: Record<string, unknown> }[] = [];
+  const media: MediaAttachment[] = [];
   if (post.record.embed?.external) {
     embeds.push({
       kind: 'link',
@@ -176,13 +177,21 @@ function postToUnifiedPost(post: BskyPostView): UnifiedPost {
         description: post.record.embed.external.description,
       },
     });
+    // Link card thumbnail
+    const external = post.record.embed.external as { thumb?: string };
+    if (external.thumb) {
+      media.push({ type: 'image', url: external.thumb });
+    }
   }
   if (post.record.embed?.images) {
     for (const img of post.record.embed.images) {
+      const thumb = `https://cdn.bsky.app/img/feed_thumbnail/plain/${img.image.ref}@jpeg`;
       embeds.push({
         kind: 'image',
-        url: `https://cdn.bsky.app/img/feed_thumbnail/plain/${img.image.ref}@jpeg`,
+        url: thumb,
+        meta: { alt: img.alt },
       });
+      media.push({ type: 'image', url: thumb, alt: img.alt });
     }
   }
 
@@ -203,6 +212,7 @@ function postToUnifiedPost(post: BskyPostView): UnifiedPost {
     viewer: { liked: false, reposted: false },
     raw: post,
     embeds,
+    media,
   });
 }
 

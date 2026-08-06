@@ -91,6 +91,67 @@ export function validateProxyUrl(raw: string | null): URL | null {
   return parsed;
 }
 
+// ─── Protocol-aware URL transformations ──────────────────────────────────
+
+/**
+ * Apply protocol-specific URL transformations so the upstream host returns
+ * the best available image size / the direct media URL.
+ *
+ * Supported transformations:
+ *   - nostr:      `nostr:` / `nostrich:` scheme URLs are unwrapped to their
+ *                 embedded https URL (some clients emit media as
+ *                 `nostrich:https://…` or `nostr:https://…`).
+ *   - soundcloud: `-large` artwork URLs are upgraded to `-t500x500`.
+ *   - youtube:    watch/shorts/embed URLs are converted to the
+ *                 `i.ytimg.com/vi/{id}/maxresdefault.jpg` thumbnail; existing
+ *                 `hqdefault|mqdefault|sddefault` thumbnails are upgraded to
+ *                 `maxresdefault`.
+ *   - mastodon:   remote media URLs are already served via the instance's own
+ *                 proxy — pass them through unchanged.
+ *
+ * Returns the transformed URL, or the original string when no transform
+ * applies. Never returns null for a non-empty input.
+ */
+export function transformProtocolUrl(raw: string, protocol: string | null): string {
+  if (!raw) return raw;
+  const text = raw.trim();
+  if (!text) return raw;
+
+  // 1. nostr / nostrich URL schemes → unwrap embedded https URL.
+  //    Accepts both `nostr:https://…` and `nostrich:https://…` shapes
+  //    (with or without the `//` after the colon).
+  const schemeMatch = text.match(/^(nostr|nostrich):(\/\/?)?(https?:\/\/\S+)$/i);
+  if (schemeMatch?.[3]) return schemeMatch[3];
+
+  // 2. SoundCloud: upgrade `-large` artwork to `-t500x500`.
+  //    e.g. https://i1.sndcdn.com/artworks-XXX-large.jpg → -t500x500.jpg
+  if (protocol === 'soundcloud' || /sndcdn\.com/i.test(text)) {
+    const upgraded = text.replace(/-large(?=\.(?:jpg|jpeg|png|webp|gif))/i, '-t500x500');
+    if (upgraded !== text) return upgraded;
+  }
+
+  // 3. YouTube: extract the video ID and build the maxresdefault thumbnail,
+  //    or upgrade an existing low-res thumbnail to maxresdefault.
+  if (protocol === 'youtube' || /(?:youtube\.com|youtu\.be|ytimg\.com)/i.test(text)) {
+    const id =
+      text.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/|embed\/)|youtu\.be\/)([\w-]{11})/)?.[1] ??
+      null;
+    if (id) return `https://i.ytimg.com/vi/${id}/maxresdefault.jpg`;
+    // Existing thumbnail (img.youtube.com / i.ytimg.com) → normalize to
+    // i.ytimg.com maxresdefault so the whole URL is stable + cacheable.
+    const upgraded = text.replace(
+      /^https?:\/\/(?:img\.youtube\.com|i\.ytimg\.com)\/vi\/([\w-]{11})\/(?:hqdefault|mqdefault|sddefault|0)\.jpg(?:\?.*)?$/i,
+      'https://i.ytimg.com/vi/$1/maxresdefault.jpg',
+    );
+    if (upgraded !== text) return upgraded;
+  }
+
+  // 4. Mastodon: remote URLs are already proxied by the instance — pass
+  //    through unchanged (the generic https validation below still applies).
+
+  return text;
+}
+
 // ─── Protocol-aware image extraction ─────────────────────────────────────
 
 function looksLikeImageUrl(raw: string): boolean {
@@ -317,7 +378,7 @@ export async function handleImageProxy(request: Request, _env: Env): Promise<Res
     return new Response('Missing url', { status: 400 });
   }
 
-  const target = validateProxyUrl(extractImageUrl(rawUrl, protocol) ?? rawUrl);
+  const target = validateProxyUrl(transformProtocolUrl(extractImageUrl(rawUrl, protocol) ?? rawUrl, protocol));
   if (!target) {
     return new Response('Invalid or blocked url', { status: 400 });
   }

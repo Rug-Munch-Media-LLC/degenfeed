@@ -5,7 +5,7 @@ import {
   enrichPostNiches,
   extractEmbeds,
 } from '@degenfeed/feed-core';
-import type { Protocol, UnifiedPost } from '@degenfeed/types';
+import type { MediaAttachment, Protocol, UnifiedPost } from '@degenfeed/types';
 import { isNostrEvent } from '../schemas';
 import type { FeedProvider, FeedResult, FetchOptions, HealthResult, SchemaGuard } from '../types';
 import {
@@ -95,6 +95,50 @@ function eventToUnifiedPost(event: NostrEvent): UnifiedPost {
     }
   }
 
+  // ── Media extraction from tags + content ─────────────────────────
+  // Nostr events attach media via ["imeta", "url <u>", "dim <w>x<h>", ...]
+  // or legacy ["picture", "<url>"] tags. Some clients also leave image
+  // URLs directly in the content — extract those too as a fallback.
+  const media: MediaAttachment[] = [];
+  const mediaSeen = new Set<string>();
+  const pushMedia = (url: string | undefined, type = 'image'): void => {
+    if (!url) return;
+    if (mediaSeen.has(url)) return;
+    mediaSeen.add(url);
+    media.push({ type, url });
+  };
+  for (const tag of event.tags) {
+    if (!Array.isArray(tag)) continue;
+    if (tag[0] === 'imeta') {
+      let url = '';
+      let dim = '';
+      for (const part of tag) {
+        if (typeof part !== 'string') continue;
+        if (part.startsWith('url ')) url = part.slice(4).trim();
+        else if (part.startsWith('dim ')) dim = part.slice(4).trim();
+      }
+      const [w, h] = dim.split('x').map((n) => Number.parseInt(n, 10));
+      if (url) {
+        const type = /\.(?:mp4|webm|mov|m4v)(?:\?|$)/i.test(url) ? 'video' : 'image';
+        media.push({
+          type,
+          url,
+          width: Number.isFinite(w) ? w : undefined,
+          height: Number.isFinite(h) ? h : undefined,
+        });
+        mediaSeen.add(url);
+      }
+    } else if (tag[0] === 'picture' && typeof tag[1] === 'string') {
+      pushMedia(tag[1]);
+    }
+  }
+  // Fallback: scan content for image/video URLs
+  const contentUrlRe = /https?:\/\/[^\s<>"']+/gi;
+  for (const u of text.match(contentUrlRe) ?? []) {
+    if (/\.(?:jpg|jpeg|png|gif|webp|avif)(?:\?|$)/i.test(u)) pushMedia(u);
+    else if (/\.(?:mp4|webm|mov)(?:\?|$)/i.test(u)) pushMedia(u, 'video');
+  }
+
   return buildUnifiedPost({
     protocol: 'nostr',
     nativeId: event.id,
@@ -122,6 +166,7 @@ function eventToUnifiedPost(event: NostrEvent): UnifiedPost {
     text,
     html: text,
     embeds: extractEmbeds(text, embeds),
+    media,
     parentNativeId,
     rootNativeId,
     createdAt: event.created_at * 1000,

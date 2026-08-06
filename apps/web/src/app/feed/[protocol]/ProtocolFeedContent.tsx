@@ -29,6 +29,8 @@ interface FeedMeta {
   protocol?: string;
   total?: number;
   limit?: number;
+  page?: number;
+  hasMore?: boolean;
   errors?: string[];
   notices?: string[];
   trending?: { topic: string; count: number; score: number }[];
@@ -88,6 +90,11 @@ export function ProtocolFeedContent({
   const [feedMeta, setFeedMeta] = useState<FeedMeta>({});
   const [activeSort, setActiveSort] = useState<SortMode>(initialSort);
   const [isFollowing, setIsFollowing] = useState(false);
+  // Infinite scroll pagination: page N is fetched with ?page=N and appended
+  // to the timeline (deduped). hasMore comes from the API meta.
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   const color = getProtocolColor(protocol);
 
@@ -122,99 +129,123 @@ export function ProtocolFeedContent({
     return undefined;
   }, [realtimeFeed.newPostCount, handleRealtimeInsert]);
 
-  // Fetch feed
-  const fetchFeed = useCallback(async () => {
-    setState('loading');
-    let status: number | undefined;
-    try {
-      const endpoint = `/api/feed/protocol/${encodeURIComponent(protocol)}/${activeSort}`;
-      const url = new URL(endpoint, window.location.origin);
-      url.searchParams.set('limit', '50');
+  /**
+   * Commit a fetched page to state.
+   * append=false replaces the timeline (initial load / refresh);
+   * append=true merges new posts at the end, deduping by id so scrolling
+   * never duplicates posts across page boundaries.
+   */
+  const applyFeed = useCallback((feed: UnifiedPost[], meta: FeedMeta, append: boolean) => {
+    setPosts((prev) => {
+      if (!append) return feed;
+      if (feed.length === 0) return prev;
+      const seen = new Set(prev.map((p) => p.id));
+      return [...prev, ...feed.filter((p) => !seen.has(p.id))];
+    });
+    setFeedMeta(meta);
+    // hasMore from the API (bridge/api-server both set it); fall back to a
+    // full page implying more when the field is absent (older deployments).
+    setHasMore(meta.hasMore ?? feed.length >= 50);
+    if (feed.length > 0) setState('loaded');
+    else if (!append) setState('empty');
+    setLoadingMore(false);
+  }, []);
 
-      const res = await fetch(url.toString(), {
-        credentials: 'include',
-        cache: 'no-store',
-        headers: { 'cache-control': 'no-store' },
-      });
-      status = res.status;
+  // Fetch feed. append=true fetches the next page and merges it in.
+  const fetchFeed = useCallback(
+    async (append = false, pageNum = 1) => {
+      if (!append) setState('loading');
+      let status: number | undefined;
+      try {
+        const endpoint = `/api/feed/protocol/${encodeURIComponent(protocol)}/${activeSort}`;
+        const url = new URL(endpoint, window.location.origin);
+        url.searchParams.set('limit', '50');
+        url.searchParams.set('page', String(pageNum));
 
-      // Auth errors → send the user to sign in instead of showing a feed error
-      if (res.status === 401 || res.status === 403) {
-        const next = encodeURIComponent(
-          `/feed/${encodeURIComponent(protocol)}?sort=${activeSort}`,
-        );
-        router.push(`/auth?next=${next}`);
-        return;
-      }
-
-      // Parse the primary response defensively. The bridge does not implement
-      // /api/feed/protocol/{p}/{sort}: production can return HTTP 400
-      // ("Unknown provider") and localhost returns a {status:"ok"} stub with no
-      // posts/data array. Treat both as "not a feed payload".
-      let json: { posts?: UnifiedPost[]; data?: UnifiedPost[]; meta?: FeedMeta } | null = null;
-      if (res.ok) {
-        try {
-          json = (await res.json()) as {
-            posts?: UnifiedPost[];
-            data?: UnifiedPost[];
-            meta?: FeedMeta;
-          };
-        } catch {
-          json = null;
-        }
-      }
-
-      // Fallback to the working bridge endpoint at /api/feed/{protocol} when the
-      // protocol+sort endpoint errors OR returns no posts/data.
-      if (!res.ok || !json || (!json.posts && !json.data)) {
-        const fallbackUrl = new URL(
-          `/api/feed/${encodeURIComponent(protocol)}`,
-          window.location.origin,
-        );
-        fallbackUrl.searchParams.set('limit', '50');
-        const fallbackRes = await fetch(fallbackUrl.toString(), {
+        const res = await fetch(url.toString(), {
           credentials: 'include',
           cache: 'no-store',
+          headers: { 'cache-control': 'no-store' },
         });
-        status = fallbackRes.status;
-        if (fallbackRes.status === 401 || fallbackRes.status === 403) {
+        status = res.status;
+
+        // Auth errors → send the user to sign in instead of showing a feed error
+        if (res.status === 401 || res.status === 403) {
           const next = encodeURIComponent(
             `/feed/${encodeURIComponent(protocol)}?sort=${activeSort}`,
           );
           router.push(`/auth?next=${next}`);
           return;
         }
-        if (!fallbackRes.ok) throw new Error(`Feed returned ${fallbackRes.status}`);
-        const fallbackJson = (await fallbackRes.json()) as {
-          posts?: UnifiedPost[];
-          data?: UnifiedPost[];
-          meta?: FeedMeta;
-        };
-        const feed = fallbackJson.posts ?? fallbackJson.data ?? [];
-        setPosts(feed);
-        setFeedMeta(fallbackJson.meta ?? {});
-        setState(feed.length ? 'loaded' : 'empty');
-        return;
-      }
 
-      const feed = json.posts ?? json.data ?? [];
-      setPosts(feed);
-      setFeedMeta(json.meta ?? {});
-      setState(feed.length ? 'loaded' : 'empty');
-    } catch (err) {
-      const classified = classifyFeedError(err, status);
-      if (classified.kind === 'auth') {
-        const next = encodeURIComponent(`/feed/${encodeURIComponent(protocol)}`);
-        router.push(`/auth?next=${next}`);
-        return;
+        // Parse the primary response defensively. The bridge does not implement
+        // /api/feed/protocol/{p}/{sort}: production can return HTTP 400
+        // ("Unknown provider") and localhost returns a {status:"ok"} stub with no
+        // posts/data array. Treat both as "not a feed payload".
+        let json: { posts?: UnifiedPost[]; data?: UnifiedPost[]; meta?: FeedMeta } | null = null;
+        if (res.ok) {
+          try {
+            json = (await res.json()) as {
+              posts?: UnifiedPost[];
+              data?: UnifiedPost[];
+              meta?: FeedMeta;
+            };
+          } catch {
+            json = null;
+          }
+        }
+
+        // Fallback to the working bridge endpoint at /api/feed/{protocol} when the
+        // protocol+sort endpoint errors OR returns no posts/data.
+        if (!res.ok || !json || (!json.posts && !json.data)) {
+          const fallbackUrl = new URL(
+            `/api/feed/${encodeURIComponent(protocol)}`,
+            window.location.origin,
+          );
+          fallbackUrl.searchParams.set('limit', '50');
+          fallbackUrl.searchParams.set('page', String(pageNum));
+          const fallbackRes = await fetch(fallbackUrl.toString(), {
+            credentials: 'include',
+            cache: 'no-store',
+          });
+          status = fallbackRes.status;
+          if (fallbackRes.status === 401 || fallbackRes.status === 403) {
+            const next = encodeURIComponent(
+              `/feed/${encodeURIComponent(protocol)}?sort=${activeSort}`,
+            );
+            router.push(`/auth?next=${next}`);
+            return;
+          }
+          if (!fallbackRes.ok) throw new Error(`Feed returned ${fallbackRes.status}`);
+          const fallbackJson = (await fallbackRes.json()) as {
+            posts?: UnifiedPost[];
+            data?: UnifiedPost[];
+            meta?: FeedMeta;
+          };
+          const fallbackFeed = fallbackJson.posts ?? fallbackJson.data ?? [];
+          applyFeed(fallbackFeed, fallbackJson.meta ?? {}, append);
+          return;
+        }
+
+        const feed = json.posts ?? json.data ?? [];
+        applyFeed(feed, json.meta ?? {}, append);
+      } catch (err) {
+        const classified = classifyFeedError(err, status);
+        if (classified.kind === 'auth') {
+          const next = encodeURIComponent(`/feed/${encodeURIComponent(protocol)}`);
+          router.push(`/auth?next=${next}`);
+          return;
+        }
+        setError(classified.message);
+        if (!append) setState('error');
+        setLoadingMore(false);
       }
-      setError(classified.message);
-      setState('error');
-    }
-  }, [protocol, activeSort, router]);
+    },
+    [protocol, activeSort, router, applyFeed],
+  );
 
   useEffect(() => {
-    void fetchFeed();
+    void fetchFeed(false, 1);
   }, [fetchFeed]);
 
   // Reset local state when switching protocols (client-side nav reuses this
@@ -225,6 +256,9 @@ export function ProtocolFeedContent({
     setError(undefined);
     setFeedMeta({});
     setActiveSort(initialSort);
+    setPage(1);
+    setHasMore(true);
+    setLoadingMore(false);
   }, [protocol, initialSort]);
 
   const handleEngage = async (
@@ -239,12 +273,26 @@ export function ProtocolFeedContent({
   };
 
   const handleRetry = useCallback(() => {
-    void fetchFeed();
+    setPage(1);
+    setHasMore(true);
+    void fetchFeed(false, 1);
   }, [fetchFeed]);
 
   const handleTabChange = useCallback((sort: SortMode) => {
     setActiveSort(sort);
+    setPage(1);
+    setHasMore(true);
+    setLoadingMore(false);
   }, []);
+
+  /** Fetch the next page and append it (infinite scroll). */
+  const loadMore = useCallback(() => {
+    if (loadingMore || !hasMore || state !== 'loaded') return;
+    setLoadingMore(true);
+    const next = page + 1;
+    setPage(next);
+    void fetchFeed(true, next);
+  }, [loadingMore, hasMore, state, page, fetchFeed]);
 
   if (!protocol) {
     return (
@@ -419,6 +467,8 @@ export function ProtocolFeedContent({
           error={error}
           protocolLabel={feedMeta.protocolLabel ?? protocol}
           protocolColor={color}
+          hasMore={hasMore && !loadingMore}
+          onLoadMore={loadMore}
           emptySlot={
             state === 'empty' ? (
               <ProtocolEmptyState protocol={protocol} sort={activeSort} onRetry={handleRetry} />

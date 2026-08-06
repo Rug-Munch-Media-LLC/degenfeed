@@ -85,6 +85,8 @@ const FEED_TABS = [
 interface FeedMeta {
   total?: number;
   limit?: number;
+  page?: number;
+  hasMore?: boolean;
   perProtocol?: Record<string, number>;
   errors?: string[];
   notices?: string[];
@@ -229,7 +231,11 @@ export default function FeedPage() {
   const [_showFeedInfo, _setShowFeedInfo] = useState(false);
   const [showTuner, setShowTuner] = useState(false);
   const [newAvailable, setNewAvailable] = useState(false);
-  const [loadedLimit, setLoadedLimit] = useState(50);
+  // Infinite scroll pagination: page N is requested with ?page=N and appended
+  // (deduped) to the timeline. hasMore comes from the API meta.
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const lastPostIdRef = useRef('');
   const [feedMixConfig, setFeedMixConfig] = useState<FeedMixConfig>(() => loadFeedMixConfig());
   const [savedMixes, setSavedMixes] = useState<SavedMix[]>(() => loadSavedMixes());
@@ -414,8 +420,12 @@ export default function FeedPage() {
   }, [contextMenuPostId]);
 
   const loadMore = useCallback(() => {
-    setLoadedLimit((p) => p + 50);
-  }, []);
+    if (loadingMore || !hasMore || state !== 'loaded') return;
+    setLoadingMore(true);
+    const next = page + 1;
+    setPage(next);
+    void fetchFeed(false, next, true);
+  }, [loadingMore, hasMore, state, page, fetchFeed]);
 
   // useViewportPrefetch(posts, (post) => post);
   // useHoverPrefetch(posts, (post) => post);
@@ -425,11 +435,12 @@ export default function FeedPage() {
   }, []);
 
   const fetchFeed = useCallback(
-    async (checkOnly = false) => {
+    async (checkOnly = false, pageNum = 1, append = false) => {
       // Skip hard loading state when content already exists — page keeps
       // showing the current timeline while revalidating in the background.
       // Only the very first load (no posts yet) falls back to the skeleton.
-      if (!checkOnly) setRefreshing(true);
+      // Append-mode (infinite scroll) shows the sentinel spinner instead.
+      if (!checkOnly && !append) setRefreshing(true);
       try {
         // Try the unified cross-protocol timeline first. Anonymous and
         // signed-in users read the same aggregated feed; personalization is
@@ -449,9 +460,12 @@ export default function FeedPage() {
           controls.algorithm.familiarDiscover,
           controls.algorithm.creatorSize,
         ].join('_');
-        const cacheKey = `feed_${hasSignedIn ? 'signed' : 'anon'}_${activeTab}_${controlsKey}_${loadedLimit}_${hideLowQuality}_${allowNonCrypto}_${showOriginalContent}_${minEngagement}_${maxPerNiche}_${recencyWeight}_${engagementWeight}_${freshnessPreference}_${creatorDiversity}_${exploreRatio}_${algorithmTransparent}_${activePreset ?? 'none'}`;
+        const cacheKey = `feed_${hasSignedIn ? 'signed' : 'anon'}_${activeTab}_${controlsKey}_${pageNum}_${hideLowQuality}_${allowNonCrypto}_${showOriginalContent}_${minEngagement}_${maxPerNiche}_${recencyWeight}_${engagementWeight}_${freshnessPreference}_${creatorDiversity}_${exploreRatio}_${algorithmTransparent}_${activePreset ?? 'none'}`;
         const url = new URL(endpoint, window.location.origin);
-        url.searchParams.set('limit', String(loadedLimit));
+        // Fixed 50-post pages; ?page=N advances the cursor (offset pagination
+        // implemented on the api-server + bridge).
+        url.searchParams.set('limit', '50');
+        url.searchParams.set('page', String(pageNum));
         // Only send an explicit `protocols` filter when the user has chosen
         // one. With no filter, the worker aggregates EVERY registered
         // protocol (68+) into the master unified feed instead of a small
@@ -539,7 +553,7 @@ export default function FeedPage() {
               : ['nostr', 'farcaster', 'rss', 'mastodon', 'bluesky'];
           const results = await Promise.allSettled(
             fallbackProtocols.map((p) =>
-              fetch(`/api/feed/${encodeURIComponent(p)}?limit=10`, {
+              fetch(`/api/feed/${encodeURIComponent(p)}?limit=10&page=${pageNum}`, {
                 credentials: 'include',
                 cache: 'no-store',
               }).then((r) => r.json() as Promise<{ data?: UnifiedPost[]; error?: string }>),
@@ -606,7 +620,22 @@ export default function FeedPage() {
         if (feed.length > 0) {
           lastPostIdRef.current = (feed[0]?.id as string) ?? '';
         }
+        const nextHasMore = feedMetaData.hasMore ?? feed.length >= 50;
+        if (append) {
+          // Infinite scroll: merge the next page at the end, deduping by id.
+          // Existing posts keep their position so the scroll stays put.
+          setPosts((prev) => {
+            if (feed.length === 0) return prev;
+            const seen = new Set(prev.map((p) => p.id));
+            return [...prev, ...feed.filter((p) => !seen.has(p.id))];
+          });
+          setHasMore(nextHasMore);
+          if (feed.length > 0) setState('loaded');
+          setLoadingMore(false);
+          return;
+        }
         setPosts(feed);
+        setHasMore(nextHasMore);
         setFeedMeta(feedMetaData);
         // Show the error state only when the unified feed AND every protocol
         // fallback failed. A partially successful fallback renders as loaded;
@@ -619,10 +648,11 @@ export default function FeedPage() {
         } else {
           setError(undefined);
         }
-        if (!checkOnly && feed.length > 0)
+        if (!checkOnly && !append && feed.length > 0)
           announceFeed(`${feed.length} posts loaded${swrFromCache ? ' (cached)' : ''}`, 'polite');
       } catch (err) {
-        if (!checkOnly) {
+        setLoadingMore(false);
+        if (!checkOnly && !append) {
           const cached = getCached<{ data?: UnifiedPost[]; meta?: FeedMeta }>(`feed_${activeTab}`);
           if (cached && (cached.data ?? []).length > 0) {
             setPosts(cached.data ?? []);
@@ -635,13 +665,12 @@ export default function FeedPage() {
           }
         }
       } finally {
-        if (!checkOnly) setRefreshing(false);
+        if (!checkOnly && !append) setRefreshing(false);
       }
     },
     [
       activeTab,
       hasSignedIn,
-      loadedLimit,
       hideLowQuality,
       hideThreshold,
       allowNonCrypto,
@@ -663,7 +692,9 @@ export default function FeedPage() {
 
   const refreshNow = useCallback(() => {
     setNewAvailable(false);
-    fetchFeed(false);
+    setPage(1);
+    setHasMore(true);
+    fetchFeed(false, 1);
   }, [fetchFeed]);
 
   // Composing requires auth — anonymous visitors are prompted to sign in
