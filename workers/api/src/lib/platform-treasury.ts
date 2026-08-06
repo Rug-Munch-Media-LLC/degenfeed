@@ -218,7 +218,7 @@ async function updateGlobalAggregate(env: Env, event: FeeEvent): Promise<void> {
       totalTrades: (existing?.totalTrades ?? 0) + 1,
       activeCoins: (existing?.activeCoins ?? 0) + 1,
       dailyVolume: String(
-        (Number.parseInt(existing?.dailyVolume ?? '0', 10) || 0) +
+        ((Number.parseInt(existing?.dailyVolume ?? '0', 10)) || 0) +
           Number.parseInt(event.tradeValue, 10),
       ),
       feeDistribution: {

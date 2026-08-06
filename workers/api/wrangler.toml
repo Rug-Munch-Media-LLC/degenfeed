@@ -109,11 +109,6 @@ id = "ab47c4c4222f4529b36c62bd801750ef"
 preview_id = "4e693a3fa9da4deba435f217c3d275ca"
 
 # ──────────────── Routes ────────────────────────────────
-routes = [
-  { pattern = "degenfeed.xyz/api/*", zone_id = "116a9676c3358def6796910ccb96f1fc" },
-  { pattern = "app.degenfeed.xyz/api/*", zone_id = "116a9676c3358def6796910ccb96f1fc" },
-  { pattern = "rugmunch.io/links", zone_id = "116a9676c3358def6796910ccb96f1fc" }
-]
 
 # Secrets — set with:
 #   wrangler secret put AUTH_SECRET
@@ -313,20 +308,12 @@ BSKY_SOCIAL_URL = "https://bsky.social"
 # Per-environment overrides. Preview deploys (PR builds) use --env preview.
 [env.preview]
 name = "degenfeed-api-preview"
-routes = [
-  { pattern = "preview.degenfeed.xyz/api/*", zone_id = "116a9676c3358def6796910ccb96f1fc" },
-  { pattern = "preview.degenfeed.xyz/*", zone_id = "116a9676c3358def6796910ccb96f1fc" }
-]
 [env.preview.vars]
 ALLOWED_ORIGINS = "https://preview.degenfeed.xyz,https://app.preview.degenfeed.xyz,http://localhost:3000"
 RATE_MAX_REQ = "600"
 
 [env.canary]
 name = "degenfeed-api-canary"
-routes = [
-  { pattern = "canary.degenfeed.xyz/api/*", zone_id = "116a9676c3358def6796910ccb96f1fc" },
-  { pattern = "canary.degenfeed.xyz/*", zone_id = "116a9676c3358def6796910ccb96f1fc" }
-]
 [env.canary.vars]
 ALLOWED_ORIGINS = "https://canary.degenfeed.xyz,http://localhost:3000"
 
