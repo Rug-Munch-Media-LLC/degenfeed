@@ -26,10 +26,15 @@ import { buildIdentity } from './shared';
 
 export const KICK_API_URL = 'https://kick.com/api';
 
+/** Browser-like UA — Kick's edge blocks generic crawler UAs (403). */
+export const KICK_BROWSER_UA =
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36';
+
 /**
  * Curated Kick channels to poll for live status. Kick's top channels skew
  * gaming/IRL; this list is editable — swap in crypto/tech streamers as the
- * Kick ecosystem grows.
+ * Kick ecosystem grows. Expanded 2026-08-06 so more channels are polled,
+ * increasing the number of live channels (and thus posts) per cycle.
  */
 export const KICK_TOP_CHANNELS: string[] = [
   'xqc',
@@ -42,6 +47,37 @@ export const KICK_TOP_CHANNELS: string[] = [
   'cyr',
   'frosty',
   'sodapoppin',
+  // Expanded list — crypto/tech/gaming streamers + Kick natives
+  'drama',
+  'mizkif',
+  'sneako',
+  'joeystudios',
+  'wraith',
+  'smashleyy',
+  'sidera',
+  '2thicc',
+  'lisa',
+  'samy',
+  'btmc',
+  'wes',
+  'the24',
+  'chase',
+  'kayo',
+  'montanablack88',
+  'eliasn97',
+  'staiy',
+  'trymacs',
+  'papaplatte',
+  'bastighg',
+  'reved',
+  'stevewilldoit',
+  'dhruvrathee',
+  'iceposeidon',
+  'kyedae',
+  'tenz',
+  'shroud',
+  'summit1g',
+  'ludwig',
 ];
 
 // ─── Kick API shapes ───────────────────────────────────────────────
@@ -225,7 +261,9 @@ export class KickProvider implements FeedProvider {
   private async fetchFeaturedVideos(timeoutMs: number): Promise<KickFeaturedVideo[]> {
     const url = `${this.baseUrl}/v1/video/featured`;
     const data = await withTimeout(
-      fetchJson<KickFeaturedResponse | KickFeaturedVideo[]>(url),
+      fetchJson<KickFeaturedResponse | KickFeaturedVideo[]>(url, {
+        headers: { 'user-agent': KICK_BROWSER_UA, referer: 'https://kick.com/' },
+      }),
       timeoutMs,
       'kick:featured',
     );
@@ -235,11 +273,13 @@ export class KickProvider implements FeedProvider {
 
   /** Poll curated top channels for live status (secondary signal). */
   private async fetchTopChannels(timeoutMs: number): Promise<KickChannel[]> {
-    const results = await withConcurrencyLimit(this.topChannels, 4, async (slug) => {
+    const results = await withConcurrencyLimit(this.topChannels, 6, async (slug) => {
       const url = `${this.baseUrl}/v2/channels/${encodeURIComponent(slug)}`;
       try {
         const data = await withTimeout(
-          fetchJson<KickChannel>(url),
+          fetchJson<KickChannel>(url, {
+            headers: { 'user-agent': KICK_BROWSER_UA, referer: 'https://kick.com/' },
+          }),
           timeoutMs,
           `kick:channel:${slug}`,
         );

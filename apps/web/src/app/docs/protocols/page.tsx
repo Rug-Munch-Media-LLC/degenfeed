@@ -661,17 +661,34 @@ export class MyProtocolProvider implements ProtocolProvider {
       id: \`myprotocol:\${raw.id}\`,
       protocol: 'myprotocol',
       author: {
-        displayName: raw.author.name,
-        handle: raw.author.handle,
-        avatar: raw.author.avatarUrl,
+        id: \`myprotocol:\${raw.author.id}\`,
+        primary: { protocol: 'myprotocol', id: raw.author.id },
+        handles: { myprotocol: raw.author.handle ?? null },
+        displayName: raw.author.displayName ?? raw.author.name ?? 'Unknown',
+        bio: raw.author.bio ?? '',
+        avatarUrl: raw.author.avatarUrl ?? '',
+        verified: [],
+        followerCount: raw.author.followerCount ?? 0,
+        followingCount: 0,
+        links: [],
       },
-      content: raw.body,
-      timestamp: new Date(raw.createdAt).getTime(),
-      stats: {
-        likes: raw.likeCount,
-        replies: raw.commentCount,
-        reposts: raw.shareCount,
+      text: raw.body,
+      embeds: [],
+      createdAt: new Date(raw.createdAt).getTime(),
+      metrics: {
+        likes: raw.likeCount ?? 0,
+        reposts: raw.shareCount ?? 0,
+        replies: raw.commentCount ?? 0,
+        quotes: 0,
       },
+      engagement: {
+        viewerLiked: false,
+        viewerReposted: false,
+        viewerBookmarked: false,
+        raw: {},
+      },
+      raw,
+      niches: [],
     };
   }
 

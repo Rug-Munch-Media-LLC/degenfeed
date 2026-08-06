@@ -1,6 +1,6 @@
 'use client';
 
-import type { UnifiedPost } from '@degenfeed/types';
+import type { UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
 import { getAuthorProfileHref } from '@degenfeed/utils';
 import Image from 'next/image';
 import { memo, useEffect, useRef, useState } from 'react';
@@ -107,11 +107,29 @@ export const PostHeader = memo(function PostHeader({
   const [avatarFailed, setAvatarFailed] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
+  // Author display values — tolerate BOTH the canonical UnifiedIdentity
+  // fields (displayName / avatarUrl / handles) and legacy provider shapes
+  // (name / avatar / handle) so every bridge's posts render real author
+  // data. Never show "Unknown" or a blank avatar when one format is present.
+  // Declared before the effects below that depend on them.
+  const authorIdentity = post.author as UnifiedIdentity & {
+    name?: string;
+    avatar?: string;
+    handle?: string;
+  };
+  const authorDisplayName = authorIdentity.displayName || authorIdentity.name || 'Unknown';
+  const authorAvatar = authorIdentity.avatarUrl || authorIdentity.avatar || '';
+  const authorHandle =
+    authorIdentity.handles?.[post.protocol] ||
+    authorIdentity.primary?.id ||
+    authorIdentity.handle ||
+    '';
+
   // Reset the avatar error state when the source URL changes (e.g. list
   // re-render with a different post identity).
   useEffect(() => {
     setAvatarFailed(false);
-  }, [post.author.avatarUrl]);
+  }, [authorAvatar]);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -163,7 +181,7 @@ export const PostHeader = memo(function PostHeader({
         className="group/author flex items-center gap-3 no-underline"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
-        aria-label={`View ${post.author.displayName} profile`}
+        aria-label={`View ${authorDisplayName} profile`}
       >
         {children}
       </a>
@@ -174,10 +192,10 @@ export const PostHeader = memo(function PostHeader({
   return (
     <div className="author-row group mb-2 flex items-center gap-3">
       <AuthorLink>
-        {post.author.avatarUrl && !avatarFailed ? (
+        {authorAvatar && !avatarFailed ? (
           <Image
-            src={post.author.avatarUrl}
-            alt={`Avatar of ${post.author.displayName}`}
+            src={authorAvatar}
+            alt={`Avatar of ${authorDisplayName}`}
             width={32}
             height={32}
             sizes="32px"
@@ -196,9 +214,9 @@ export const PostHeader = memo(function PostHeader({
               border: `1px solid ${getProtocolColor(post.protocol)}40`,
             }}
             role="img"
-            aria-label={`Avatar of ${post.author.displayName}`}
+            aria-label={`Avatar of ${authorDisplayName}`}
           >
-            {post.author.displayName?.[0]?.toUpperCase() || _getProtocolIcon(post.protocol) || '?'}
+            {authorDisplayName?.[0]?.toUpperCase() || _getProtocolIcon(post.protocol) || '?'}
           </div>
         )}
       </AuthorLink>
@@ -256,7 +274,7 @@ export const PostHeader = memo(function PostHeader({
               className="min-w-0 no-underline"
               onClick={(e) => e.stopPropagation()}
               onKeyDown={(e) => e.stopPropagation()}
-              aria-label={`View ${post.author.displayName} profile`}
+              aria-label={`View ${authorDisplayName} profile`}
             >
               <span
                 className="author-name block truncate text-sm font-semibold hover:underline"
@@ -275,7 +293,7 @@ export const PostHeader = memo(function PostHeader({
                               : 'var(--color-fg)',
                 }}
               >
-                {post.author.displayName}
+                {authorDisplayName}
               </span>
             </a>
           ) : (
@@ -296,10 +314,10 @@ export const PostHeader = memo(function PostHeader({
                             : 'var(--color-fg)',
               }}
             >
-              {post.author.displayName}
+              {authorDisplayName}
             </span>
           )}
-          {post.protocol === 'nostr' && post.author.handles.nostr?.includes('@') && (
+          {post.protocol === 'nostr' && authorIdentity.handles?.nostr?.includes('@') && (
             <span
               className="flex-shrink-0 dark:text-blue-300 text-blue-600 text-xs"
               title="NIP-05 verified"
@@ -912,8 +930,8 @@ export const PostHeader = memo(function PostHeader({
             }`}
             aria-label={
               following
-                ? `Unfollow ${post.author.handles[post.protocol] ?? post.author.displayName}`
-                : `Follow ${post.author.handles[post.protocol] ?? post.author.displayName}`
+                ? `Unfollow ${authorHandle || authorDisplayName}`
+                : `Follow ${authorHandle || authorDisplayName}`
             }
             aria-pressed={following}
             title={following ? 'Unfollow' : 'Follow'}
@@ -930,8 +948,8 @@ export const PostHeader = memo(function PostHeader({
             }`}
             aria-label={
               muted
-                ? `Unmute ${post.author.handles[post.protocol] ?? post.author.displayName}`
-                : `Mute ${post.author.handles[post.protocol] ?? post.author.displayName}`
+                ? `Unmute ${authorHandle || authorDisplayName}`
+                : `Mute ${authorHandle || authorDisplayName}`
             }
             aria-pressed={muted}
             title={muted ? 'Unmute author' : 'Mute author'}
@@ -940,9 +958,7 @@ export const PostHeader = memo(function PostHeader({
           </button>
         </div>
         <div className="author-handle flex items-center gap-2 text-xs text-[var(--color-muted)]">
-          <span className="truncate">
-            {post.author.handles[post.protocol] ?? (post.author.id ?? '').slice(0, 16)}
-          </span>
+          <span className="truncate">{authorHandle || (authorIdentity.id ?? '').slice(0, 16)}</span>
           <span>·</span>
           <time
             dateTime={hasValidCreatedAt ? new Date(post.createdAt).toISOString() : undefined}

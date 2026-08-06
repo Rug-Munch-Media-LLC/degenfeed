@@ -12,7 +12,7 @@ import {
   saveFollow,
   unmuteIdentity,
 } from '@degenfeed/storage';
-import type { ContentProof, EngagementAction } from '@degenfeed/types';
+import type { ContentProof, EngagementAction, UnifiedIdentity } from '@degenfeed/types';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { CrossPostVersions } from './CrossPostVersions';
 import { EmbedModal } from './EmbedModal';
@@ -148,6 +148,22 @@ function PostCardComponent({
 
   const isSelf = post.author.id === 'self' || post.author.id.startsWith('self:');
 
+  // Author display values — tolerate BOTH the canonical UnifiedIdentity
+  // fields (displayName / avatarUrl / handles) and legacy provider shapes
+  // (name / avatar / handle) so posts from every bridge render real author
+  // data.
+  const authorIdentity = post.author as UnifiedIdentity & {
+    name?: string;
+    avatar?: string;
+    handle?: string;
+  };
+  const authorDisplayName = authorIdentity.displayName || authorIdentity.name || 'Unknown';
+  const authorHandle =
+    authorIdentity.handles?.[post.protocol] ||
+    authorIdentity.primary?.id ||
+    authorIdentity.handle ||
+    '';
+
   useEffect(() => {
     if (typeof window === 'undefined' || !post.author.id) return;
     let cancelled = false;
@@ -233,7 +249,7 @@ function PostCardComponent({
             `df://${post.protocol}:${post.id.replace(/^(nostr:|farcaster:|lens:|bluesky:|mastodon:|reddit:|rss:|threads:)/, '')}`,
             post.protocol,
             (post.text ?? '').slice(0, 120) || post.id,
-            post.author.displayName || post.author.handles[post.protocol] || 'Unknown',
+            authorDisplayName || authorHandle || 'Unknown',
           );
         } catch {
           // offline — local state already updated
@@ -246,15 +262,7 @@ function PostCardComponent({
         }
       }
     },
-    [
-      onEngage,
-      post.id,
-      post.protocol,
-      post.text,
-      post.author.displayName,
-      post.author.handles,
-      localState,
-    ],
+    [onEngage, post.id, post.protocol, post.text, authorDisplayName, authorHandle, localState],
   );
 
   const toggleFollow = async (e: React.MouseEvent) => {
@@ -269,7 +277,7 @@ function PostCardComponent({
           identityId: 'self',
           targetId: authorId,
           targetProtocol: post.protocol,
-          targetHandle: post.author.handles[post.protocol] ?? post.author.displayName,
+          targetHandle: authorHandle || authorDisplayName,
           followedAt: Date.now(),
         });
       } else {
@@ -288,7 +296,7 @@ function PostCardComponent({
     setMuted(next);
     try {
       if (next) {
-        await muteIdentity(authorId, post.author.displayName, 'self');
+        await muteIdentity(authorId, authorDisplayName, 'self');
       } else {
         await unmuteIdentity(authorId, 'self');
       }
@@ -303,14 +311,14 @@ function PostCardComponent({
     setBlocked(next);
     try {
       if (next) {
-        await addBlockedUser(post.author.id, post.author.displayName, post.protocol, 'self');
+        await addBlockedUser(post.author.id, authorDisplayName, post.protocol, 'self');
       } else {
         await removeBlockedUser(post.author.id, 'self');
       }
     } catch {
       setBlocked(!next);
     }
-  }, [blocked, post.author.id, post.author.displayName, post.protocol]);
+  }, [blocked, post.author.id, authorDisplayName, post.protocol]);
 
   const handleMuteFromMenu = useCallback(async () => {
     if (!post.author.id) return;
@@ -318,14 +326,14 @@ function PostCardComponent({
     setMuted(next);
     try {
       if (next) {
-        await muteIdentity(post.author.id, post.author.displayName, 'self');
+        await muteIdentity(post.author.id, authorDisplayName, 'self');
       } else {
         await unmuteIdentity(post.author.id, 'self');
       }
     } catch {
       setMuted(!next);
     }
-  }, [muted, post.author.id, post.author.displayName]);
+  }, [muted, post.author.id, authorDisplayName]);
 
   const handleReport = useCallback(() => {
     setShowReportModal(true);
@@ -387,8 +395,8 @@ function PostCardComponent({
   }, [onAdminRemove, post.id]);
 
   const handleAdminBan = useCallback(() => {
-    onAdminBan?.(post.author.id, post.protocol, post.author.displayName);
-  }, [onAdminBan, post.author.id, post.author.displayName, post.protocol]);
+    onAdminBan?.(post.author.id, post.protocol, authorDisplayName);
+  }, [onAdminBan, post.author.id, authorDisplayName, post.protocol]);
 
   const handleTranslate = useCallback(
     async (targetProtocol: string) => {
@@ -445,7 +453,7 @@ function PostCardComponent({
   const handleShare = useCallback(async () => {
     const shareUrl = `${window.location.origin}/post/${encodeURIComponent(post.dfUri || post.id)}`;
     const shareData: ShareData = {
-      title: `Post by ${post.author.displayName}`,
+      title: `Post by ${authorDisplayName}`,
       text: (post.text || '').substring(0, 100),
       url: shareUrl,
     };
@@ -463,7 +471,7 @@ function PostCardComponent({
     } catch {
       // User cancelled the share dialog — no action needed
     }
-  }, [post.id, post.dfUri, post.author.displayName, post.text]);
+  }, [post.id, post.dfUri, authorDisplayName, post.text]);
 
   const handleReportSubmitted = useCallback(() => {
     onReport?.(post.id);
@@ -513,7 +521,7 @@ function PostCardComponent({
             onClick(post.id);
           }
         }}
-        aria-label={`Post by ${post.author.displayName}`}
+        aria-label={`Post by ${authorDisplayName}`}
         style={{ transitionDuration: 'var(--duration-fast)' }}
       >
         {/* Author row (avatar, name, badges, menu, follow/mute) */}
@@ -582,11 +590,7 @@ function PostCardComponent({
 
         {/* Media embeds (images, videos, links, frames) */}
         <div className="mb-3">
-          <PostMedia
-            post={post}
-            authorName={post.author.displayName}
-            mediaPriority={mediaPriority}
-          />
+          <PostMedia post={post} authorName={authorDisplayName} mediaPriority={mediaPriority} />
         </div>
 
         {/* Niche tags */}
@@ -617,7 +621,7 @@ function PostCardComponent({
         onClose={() => setShowEmbedModal(false)}
         postId={post.id}
         postUri={post.dfUri}
-        authorName={post.author.displayName || post.author.handles[post.protocol] || 'Unknown'}
+        authorName={authorDisplayName || authorHandle || 'Unknown'}
         protocol={post.protocol}
         text={post.text}
       />

@@ -119,6 +119,8 @@ export type Protocol =
   | 'lobsters'
   // ─── Nostr NIP-29 groups / communities ────────────────────
   | 'nostr-groups'
+  // ─── Combined publishing newsletter feed ──────────────────
+  | 'newsletters'
   // ─── Infrastructure (status-only, not in main feed) ────────
   | 'infra';
 
@@ -230,6 +232,8 @@ export const PROTOCOLS = [
   'lobsters',
   // Nostr NIP-29 groups / communities
   'nostr-groups',
+  // Combined publishing newsletter feed
+  'newsletters',
   // REMOVED: sublinks, firefish, iceshrimp, sharkey, akkoma, headscale, yggdrasil
 ] as const satisfies Protocol[];
 
